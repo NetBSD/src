@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.484 2022/11/30 20:59:28 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.485 2023/01/03 21:14:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.484 2022/11/30 20:59:28 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.485 2023/01/03 21:14:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3293,19 +3293,15 @@ build_bit_shift(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	return new_tnode(op, sys, ln->tn_type, ln, rn);
 }
 
-/*
- * Create a node for COLON.
- */
+/* See C99 6.5.15 "Conditional operator". */
 static tnode_t *
 build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 {
-	tspec_t	lt, rt, pdt;
+	tspec_t	lt, rt;
 	type_t	*tp;
-	tnode_t	*ntn;
 
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
-	pdt = PTRDIFF_TSPEC;
 
 	/*
 	 * Arithmetic types are balanced, all other type combinations
@@ -3328,16 +3324,12 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 		}
 		tp = ln->tn_type;
 	} else if (lt == PTR && is_integer(rt)) {
-		if (rt != pdt) {
-			rn = convert(NOOP, 0, gettyp(pdt), rn);
-			rt = pdt;
-		}
+		if (rt != PTRDIFF_TSPEC)
+			rn = convert(NOOP, 0, gettyp(PTRDIFF_TSPEC), rn);
 		tp = ln->tn_type;
 	} else if (rt == PTR && is_integer(lt)) {
-		if (lt != pdt) {
-			ln = convert(NOOP, 0, gettyp(pdt), ln);
-			lt = pdt;
-		}
+		if (lt != PTRDIFF_TSPEC)
+			ln = convert(NOOP, 0, gettyp(PTRDIFF_TSPEC), ln);
 		tp = rn->tn_type;
 	} else if (lt == PTR && ln->tn_type->t_subt->t_tspec == VOID) {
 		tp = merge_qualifiers(rn->tn_type, ln->tn_type);
@@ -3353,9 +3345,7 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 		tp = merge_qualifiers(ln->tn_type, rn->tn_type);
 	}
 
-	ntn = new_tnode(COLON, sys, tp, ln, rn);
-
-	return ntn;
+	return new_tnode(COLON, sys, tp, ln, rn);
 }
 
 /* TODO: check for varargs */
