@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.15 2023/01/02 10:12:08 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.16 2023/01/03 18:26:05 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -418,4 +418,21 @@ usr.bin/make/make.1				1.351-1.356
 
 	make(1): PR 57029 and various man page improvements.
 	[rillig, ticket #31]
+
+sys/conf/copyright				1.21
+
+	Welcome to 2023.
+	[gutteridge, ticket #34]
+
+sbin/fsck/partutil.c				1.18
+
+	PR 57134: fix newfs(8) when used for devices without
+	partition suffix (e.g. vnd0 instead of vnd0d or vnd0c).
+	[hannken, ticket #32]
+
+lib/libc/locale/setlocale.3			1.23
+
+	setlocale.3: Reflect state of NetBSD locale support in the 21st
+	century.
+	[nia, ticket #33]
 
