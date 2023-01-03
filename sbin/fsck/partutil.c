@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.c,v 1.15.18.2 2021/01/09 19:30:14 martin Exp $	*/
+/*	$NetBSD: partutil.c,v 1.15.18.3 2023/01/03 18:22:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: partutil.c,v 1.15.18.2 2021/01/09 19:30:14 martin Exp $");
+__RCSID("$NetBSD: partutil.c,v 1.15.18.3 2023/01/03 18:22:09 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -155,9 +155,8 @@ getdiskinfo(const char *s, int fd, const char *dt, struct disk_geom *geo,
 	if (stat(s, &sb) == -1)
 		return 0;
 
-	ptn = strchr(s, '\0')[-1] - 'a';
-	if ((unsigned)ptn >= lp->d_npartitions ||
-	    (devminor_t)ptn != DISKPART(sb.st_rdev))
+	ptn = DISKPART(sb.st_rdev);
+	if (ptn < 0 || ptn >= lp->d_npartitions)
 		return 0;
 
 	pp = &lp->d_partitions[ptn];
