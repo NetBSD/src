@@ -1,4 +1,4 @@
-/*	$NetBSD: op_colon.c,v 1.4 2023/01/03 22:02:20 rillig Exp $	*/
+/*	$NetBSD: op_colon.c,v 1.5 2023/01/04 05:08:22 rillig Exp $	*/
 # 3 "op_colon.c"
 
 /*
@@ -7,12 +7,12 @@
 
 /* lint1-extra-flags: -p */
 
-struct unknown {
+struct canary {
 	int member;
 };
 
 void
-sink(struct unknown *);
+sink(struct canary);
 
 void
 test_merge_qualifiers(_Bool cond, int *p, const int *c, volatile int *v,
@@ -66,10 +66,8 @@ c99_6_5_15_p8(
     const char *c_cp
 )
 {
-	/* FIXME: expect+2: ... 'pointer to const void' ... */
-	/* FIXME: expect+2: ... 'pointer to const void' ... */
-	/* expect+2: ... 'pointer to const int' ... */
-	/* expect+2: ... 'pointer to const int' ... */
+	/* expect+2: ... 'pointer to const void' ... */
+	/* expect+2: ... 'pointer to const void' ... */
 	sink(cond ? c_vp : c_ip);
 	sink(cond ? c_ip : c_vp);
 
@@ -83,10 +81,8 @@ c99_6_5_15_p8(
 	sink(cond ? c_ip : v_ip);
 	sink(cond ? v_ip : c_ip);
 
-	/* FIXME: expect+2: ... 'pointer to const void' ... */
-	/* FIXME: expect+2: ... 'pointer to const void' ... */
-	/* expect+2: ... 'pointer to const char' ... */
-	/* expect+2: ... 'pointer to const char' ... */
+	/* expect+2: ... 'pointer to const void' ... */
+	/* expect+2: ... 'pointer to const void' ... */
 	sink(cond ? vp : c_cp);
 	sink(cond ? c_cp : vp);
 
@@ -95,10 +91,8 @@ c99_6_5_15_p8(
 	sink(cond ? ip : c_ip);
 	sink(cond ? c_ip : ip);
 
-	/* FIXME: expect+2: ... 'pointer to void' ... */
-	/* FIXME: expect+2: ... 'pointer to void' ... */
-	/* expect+2: ... 'pointer to int' ... */
-	/* expect+2: ... 'pointer to int' ... */
+	/* expect+2: ... 'pointer to void' ... */
+	/* expect+2: ... 'pointer to void' ... */
 	sink(cond ? vp : ip);
 	sink(cond ? ip : vp);
 }
