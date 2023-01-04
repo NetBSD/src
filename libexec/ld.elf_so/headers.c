@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.70 2021/12/04 14:39:08 skrll Exp $	 */
+/*	$NetBSD: headers.c,v 1.71 2023/01/04 01:37:24 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.70 2021/12/04 14:39:08 skrll Exp $");
+__RCSID("$NetBSD: headers.c,v 1.71 2023/01/04 01:37:24 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -459,6 +459,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 	}
 }
 
+#ifdef RTLD_LOADER
 /*
  * Process a shared object's program header.  This is used only for the
  * main program, when the kernel has already loaded the main program
@@ -562,3 +563,4 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 	obj->entry = entry;
 	return obj;
 }
+#endif
