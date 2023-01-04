@@ -1,4 +1,4 @@
-/*	$NetBSD: op_colon.c,v 1.5 2023/01/04 05:08:22 rillig Exp $	*/
+/*	$NetBSD: op_colon.c,v 1.6 2023/01/04 05:25:08 rillig Exp $	*/
 # 3 "op_colon.c"
 
 /*
@@ -53,6 +53,16 @@ test_merge_qualifiers(_Bool cond, int *p, const int *c, volatile int *v,
 	sink(cond ? cv : v);
 	/* expect+1: ... 'pointer to const volatile int' ... */
 	sink(cond ? cv : cv);
+}
+
+/* null pointer constant + other pointer */
+void
+c99_6_5_15_p6(_Bool cond, const volatile double *cv_dp)
+{
+	/* expect+2: ... 'pointer to const volatile double' ... */
+	/* expect+2: ... 'pointer to const volatile double' ... */
+	sink(cond ? cv_dp : (void *)0);
+	sink(cond ? (void *)0 : cv_dp);
 }
 
 void
