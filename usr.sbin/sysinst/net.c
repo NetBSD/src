@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.43 2022/05/18 16:39:03 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.43.2.1 2023/01/04 05:30:44 snj Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -594,6 +594,7 @@ again:
 	selected_net = -1;
 	msg_display(MSG_asknetdev);
 	process_menu(menu_no, &selected_net);
+	msg_clear();
 
 	if (selected_net == -1) {
 		free_menu(menu_no);
