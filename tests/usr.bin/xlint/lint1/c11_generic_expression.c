@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.13 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.14 2023/01/04 05:32:01 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -8,7 +8,7 @@
  * The generic selection is typically used with macros, but since lint1 works
  * on the preprocessed source, the test cases look a bit strange.
  *
- * C99 6.5.1.1 "Generic selection"
+ * C11 6.5.1.1 "Generic selection"
  */
 
 /* lint1-extra-flags: -Ac11 */
