@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.6 2013/05/06 08:02:20 skrll Exp $	*/
+/*	$NetBSD: expand.c,v 1.7 2023/01/04 01:37:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: expand.c,v 1.6 2013/05/06 08:02:20 skrll Exp $");
+__RCSID("$NetBSD: expand.c,v 1.7 2023/01/04 01:37:00 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -69,7 +69,7 @@ static int mib[3][2] = {
 };
 
 static size_t
-expand(char *buf, const char *execname, int what, size_t bl)
+expand(char *buf, const char *execname, size_t what, size_t bl)
 {
 	const char *p, *ep;
 	char *bp = buf;
