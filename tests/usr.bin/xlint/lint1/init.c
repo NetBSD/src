@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.13 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.14 2023/01/04 06:04:07 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -34,9 +34,6 @@ typedef struct {
  * human readers, it is usually clearer to include them.
  *
  * Seen in external/ibm-public/postfix/dist/src/util/dict.c(624).
- *
- * TODO: Properly handle this situation; as of init.c 1.215 from 2021-12-17,
- *  the below initialization sets in->in_err but shouldn't.
  */
 const histogram_entry hgr[] = {
 	"odd", 5,
@@ -46,9 +43,6 @@ const histogram_entry hgr[] = {
 
 /*
  * Initialization with fewer braces than usual, must still be accepted.
- *
- * TODO: Properly handle this situation; as of init.c 1.215 from 2021-12-17,
- *  the below initialization sets in->in_err but shouldn't.
  */
 struct {
 	int x, y;
@@ -59,9 +53,6 @@ struct {
 
 /*
  * Initialization with fewer braces than usual, must still be accepted.
- *
- * TODO: Properly handle this situation; as of init.c 1.215 from 2021-12-17,
- *  the below initialization sets in->in_err but shouldn't.
  */
 void do_nothing(void);
 
