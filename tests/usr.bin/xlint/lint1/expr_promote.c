@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_promote.c,v 1.2 2021/08/16 20:27:31 rillig Exp $	*/
+/*	$NetBSD: expr_promote.c,v 1.3 2023/01/04 05:47:19 rillig Exp $	*/
 # 3 "expr_promote.c"
 
 /*
@@ -36,6 +36,7 @@ struct arithmetic_types {
 void
 caller(struct arithmetic_types *arg)
 {
+	/* See expr_promote.exp-ln for the resulting types. */
 	sink("",
 	    arg->boolean,		/* gets promoted to 'int' */
 	    arg->plain_char,		/* gets promoted to 'int' */
