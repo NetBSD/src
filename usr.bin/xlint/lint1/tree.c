@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.485 2023/01/03 21:14:14 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.486 2023/01/04 05:08:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.485 2023/01/03 21:14:14 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.486 2023/01/04 05:08:22 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3303,11 +3303,8 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
 
-	/*
-	 * Arithmetic types are balanced, all other type combinations
-	 * still need to be handled.
-	 */
 	if (is_arithmetic(lt) && is_arithmetic(rt)) {
+		/* The operands were already balanced in build_binary. */
 		tp = ln->tn_type;
 	} else if (lt == BOOL && rt == BOOL) {
 		tp = ln->tn_type;
@@ -3331,10 +3328,14 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 		if (lt != PTRDIFF_TSPEC)
 			ln = convert(NOOP, 0, gettyp(PTRDIFF_TSPEC), ln);
 		tp = rn->tn_type;
-	} else if (lt == PTR && ln->tn_type->t_subt->t_tspec == VOID) {
-		tp = merge_qualifiers(rn->tn_type, ln->tn_type);
-	} else if (rt == PTR && rn->tn_type->t_subt->t_tspec == VOID) {
+	} else if (lt == PTR && is_null_pointer(rn)) {
 		tp = merge_qualifiers(ln->tn_type, rn->tn_type);
+	} else if (rt == PTR && is_null_pointer(ln)) {
+		tp = merge_qualifiers(rn->tn_type, ln->tn_type);
+	} else if (lt == PTR && ln->tn_type->t_subt->t_tspec == VOID) {
+		tp = merge_qualifiers(ln->tn_type, rn->tn_type);
+	} else if (rt == PTR && rn->tn_type->t_subt->t_tspec == VOID) {
+		tp = merge_qualifiers(rn->tn_type, ln->tn_type);
 	} else {
 		/*
 		 * XXX For now we simply take the left type. This is
