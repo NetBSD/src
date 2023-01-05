@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.73 2023/01/05 18:29:46 jakllsch Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.74 2023/01/05 20:32:18 christos Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.73 2023/01/05 18:29:46 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.74 2023/01/05 20:32:18 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -4449,6 +4449,17 @@ out:
 	return error;
 }
 
+static bool
+wg_is_authorized(struct wg_softc *wg, u_long cmd)
+{
+	int au = cmd == SIOCGDRVSPEC ?
+	    KAUTH_REQ_NETWORK_INTERFACE_WG_GETPRIV :
+	    KAUTH_REQ_NETWORK_INTERFACE_WG_SETPRIV;
+	return kauth_authorize_network(kauth_cred_get(),
+	    KAUTH_NETWORK_INTERFACE_WG, au, &wg->wg_if,
+	    (void *)cmd, NULL) == 0;
+}
+
 static int
 wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 {
@@ -4463,10 +4474,7 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 	if (prop_dict == NULL)
 		goto error;
 
-	if (kauth_authorize_network(kauth_cred_get(),
-	    KAUTH_NETWORK_INTERFACE_WG,
-	    KAUTH_REQ_NETWORK_INTERFACE_WG_GETPRIV, &wg->wg_if,
-	    (void *)SIOCGDRVSPEC, NULL) == 0) {
+	if (wg_is_authorized(wg, SIOCGDRVSPEC)) {
 		if (!prop_dictionary_set_data(prop_dict, "private_key",
 			wg->wg_privkey, WG_STATIC_KEY_LEN))
 			goto error;
@@ -4512,10 +4520,7 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 		uint8_t psk_zero[WG_PRESHARED_KEY_LEN] = {0};
 		if (!consttime_memequal(wgp->wgp_psk, psk_zero,
 			sizeof(wgp->wgp_psk))) {
-			if (kauth_authorize_network(kauth_cred_get(),
-			    KAUTH_NETWORK_INTERFACE_WG,
-			    KAUTH_REQ_NETWORK_INTERFACE_WG_GETPRIV, &wg->wg_if,
-			    (void *)SIOCGDRVSPEC, NULL) == 0) {
+			if (wg_is_authorized(wg, SIOCGDRVSPEC)) {
 				if (!prop_dictionary_set_data(prop_peer,
 					"preshared_key",
 					wgp->wgp_psk, sizeof(wgp->wgp_psk)))
@@ -4659,10 +4664,7 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		return error;
 	case SIOCSDRVSPEC:
-		if (kauth_authorize_network(kauth_cred_get(),
-		    KAUTH_NETWORK_INTERFACE_WG,
-		    KAUTH_REQ_NETWORK_INTERFACE_WG_SETPRIV, &wg->wg_if,
-		    (void *)cmd, NULL) != 0) {
+		if (!wg_is_authorized(wg, cmd)) {
 			return EPERM;
 		}
 		switch (ifd->ifd_cmd) {
