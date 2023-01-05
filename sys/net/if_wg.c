@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.71 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.72 2023/01/05 02:38:51 jakllsch Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.71 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.72 2023/01/05 02:38:51 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -4649,6 +4649,12 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		return error;
 	case SIOCSDRVSPEC:
+		if (kauth_authorize_network(kauth_cred_get(),
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, &wg->wg_if,
+		    (void *)cmd, NULL) != 0) {
+			return EPERM;
+		}
 		switch (ifd->ifd_cmd) {
 		case WG_IOCTL_SET_PRIVATE_KEY:
 			error = wg_ioctl_set_private_key(wg, ifd);
@@ -4668,6 +4674,12 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		return error;
 	case SIOCGDRVSPEC:
+		if (kauth_authorize_network(kauth_cred_get(),
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, &wg->wg_if,
+		    (void *)cmd, NULL) != 0) {
+			return EPERM;
+		}
 		return wg_ioctl_get(wg, ifd);
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
