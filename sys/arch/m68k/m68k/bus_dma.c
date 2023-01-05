@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.38 2022/07/26 20:08:55 andvar Exp $ */
+/* $NetBSD: bus_dma.c,v 1.39 2023/01/05 18:27:48 tsutsui Exp $ */
 
 /*
  * This file was taken from alpha/common/bus_dma.c
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38 2022/07/26 20:08:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.39 2023/01/05 18:27:48 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,7 +494,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			}
 
 			/* flush cachelines per 128bytes */
-			while ((p < e) && (p & PAGE_MASK) != 0) {
+			while ((p + CACHELINE_SIZE * 8 <= e) &&
+			    (p & PAGE_MASK) != 0) {
 				DCFL(p);
 				p += CACHELINE_SIZE;
 				DCFL(p);
@@ -570,7 +571,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			}
 
 			/* purge cachelines per 128bytes */
-			while ((p < e) && (p & PAGE_MASK) != 0) {
+			while ((p + CACHELINE_SIZE * 8 <= e) &&
+			    (p & PAGE_MASK) != 0) {
 				DCPL(p);
 				p += CACHELINE_SIZE;
 				DCPL(p);
