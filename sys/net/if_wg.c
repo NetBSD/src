@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.72 2023/01/05 02:38:51 jakllsch Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.73 2023/01/05 18:29:46 jakllsch Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.72 2023/01/05 02:38:51 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.73 2023/01/05 18:29:46 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -4463,9 +4463,14 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 	if (prop_dict == NULL)
 		goto error;
 
-	if (!prop_dictionary_set_data(prop_dict, "private_key", wg->wg_privkey,
-		WG_STATIC_KEY_LEN))
-		goto error;
+	if (kauth_authorize_network(kauth_cred_get(),
+	    KAUTH_NETWORK_INTERFACE_WG,
+	    KAUTH_REQ_NETWORK_INTERFACE_WG_GETPRIV, &wg->wg_if,
+	    (void *)SIOCGDRVSPEC, NULL) == 0) {
+		if (!prop_dictionary_set_data(prop_dict, "private_key",
+			wg->wg_privkey, WG_STATIC_KEY_LEN))
+			goto error;
+	}
 
 	if (wg->wg_listen_port != 0) {
 		if (!prop_dictionary_set_uint16(prop_dict, "listen_port",
@@ -4507,10 +4512,15 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 		uint8_t psk_zero[WG_PRESHARED_KEY_LEN] = {0};
 		if (!consttime_memequal(wgp->wgp_psk, psk_zero,
 			sizeof(wgp->wgp_psk))) {
-			if (!prop_dictionary_set_data(prop_peer,
-				"preshared_key",
-				wgp->wgp_psk, sizeof(wgp->wgp_psk)))
-				goto next;
+			if (kauth_authorize_network(kauth_cred_get(),
+			    KAUTH_NETWORK_INTERFACE_WG,
+			    KAUTH_REQ_NETWORK_INTERFACE_WG_GETPRIV, &wg->wg_if,
+			    (void *)SIOCGDRVSPEC, NULL) == 0) {
+				if (!prop_dictionary_set_data(prop_peer,
+					"preshared_key",
+					wgp->wgp_psk, sizeof(wgp->wgp_psk)))
+					goto next;
+			}
 		}
 
 		wgsa = wg_get_endpoint_sa(wgp, &wgsa_psref);
@@ -4650,8 +4660,8 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		return error;
 	case SIOCSDRVSPEC:
 		if (kauth_authorize_network(kauth_cred_get(),
-		    KAUTH_NETWORK_INTERFACE,
-		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, &wg->wg_if,
+		    KAUTH_NETWORK_INTERFACE_WG,
+		    KAUTH_REQ_NETWORK_INTERFACE_WG_SETPRIV, &wg->wg_if,
 		    (void *)cmd, NULL) != 0) {
 			return EPERM;
 		}
@@ -4674,12 +4684,6 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		return error;
 	case SIOCGDRVSPEC:
-		if (kauth_authorize_network(kauth_cred_get(),
-		    KAUTH_NETWORK_INTERFACE,
-		    KAUTH_REQ_NETWORK_INTERFACE_GETPRIV, &wg->wg_if,
-		    (void *)cmd, NULL) != 0) {
-			return EPERM;
-		}
 		return wg_ioctl_get(wg, ifd);
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
