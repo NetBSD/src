@@ -1,4 +1,4 @@
-/* $NetBSD: README.md_defs,v 1.7 2021/09/11 20:28:06 andvar Exp $ */
+/* $NetBSD: README.md_defs,v 1.8 2023/01/06 15:05:52 martin Exp $ */
 
 The following is trying to document the most important machine dependent
 defines used in the sysinst code.
@@ -117,3 +117,15 @@ HAVE_EFI_BOOT			defined if the architecture may be able
 
 NO_DISKLABEL_BOOT		defined if the architecture can NOT boot
 				from a disklabel partitioned disk
+
+MD_DISKLABEL_PART_INDEX_CHECK	usually undefined
+
+				if defined evaluates to a boolean attribute
+				which is passed a struct disklabel, an integer
+				index and a const struct disk_part_info*.
+				The result qualifies the given new partition
+				to take the disklabel l_partition entry
+				with the given index. Used for example
+				in luna68k to move the FFSv1 boot partition
+				(which would otherwise end up as partition 'a')
+				to a partition past RAW_PART (so 'd' on luna68k)

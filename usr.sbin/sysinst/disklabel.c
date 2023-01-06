@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.50 2022/12/11 19:32:57 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.51 2023/01/06 15:05:52 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -1130,6 +1130,10 @@ disklabel_add_partition(struct disk_partitions *arg,
 #endif
 		if (parts->l.d_partitions[i].p_size > 0)
 			continue;
+#ifdef	MD_DISKLABEL_PART_INDEX_CHECK
+		if (!MD_DISKLABEL_PART_INDEX_CHECK(&parts->l, i, info))
+			continue;
+#endif
 		part = i;
 		break;
 	}
