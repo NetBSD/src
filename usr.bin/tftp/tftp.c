@@ -1,4 +1,4 @@
-/*	$NetBSD: tftp.c,v 1.36 2016/09/03 06:00:32 dholland Exp $	*/
+/*	$NetBSD: tftp.c,v 1.37 2023/01/06 17:18:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tftp.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: tftp.c,v 1.36 2016/09/03 06:00:32 dholland Exp $");
+__RCSID("$NetBSD: tftp.c,v 1.37 2023/01/06 17:18:56 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -260,7 +260,8 @@ sendfile(int fd, const char *name, const char *mode)
 		/*	size = read(fd, dp->th_data, SEGSIZE);	 */
 			size = readit(file, &dp, blksize, convert);
 			if (size < 0) {
-				nak(errno + 100, (struct sockaddr *)(void *)&peer);
+				nak(errno + 100,
+				    (struct sockaddr *)(void *)&peer);
 				break;
 			}
 			dp->th_opcode = htons((u_short)DATA);
@@ -309,8 +310,8 @@ send_data:
 			/* should verify packet came from server */
 			ap->th_opcode = ntohs(ap->th_opcode);
 			if (ap->th_opcode == ERROR) {
-				(void)printf("Error code %d: %s\n", ap->th_code,
-					ap->th_msg);
+				(void)printf("Error code %d: %s\n", 
+				    ntohs(ap->th_code), ap->th_msg);
 				goto abort;
 			}
 			if (ap->th_opcode == ACK) {
@@ -454,8 +455,8 @@ skip_ack:
 			/* should verify client address */
 			dp->th_opcode = ntohs(dp->th_opcode);
 			if (dp->th_opcode == ERROR) {
-				(void)printf("Error code %d: %s\n", dp->th_code,
-					dp->th_msg);
+				(void)printf("Error code %d: %s\n",
+				    ntohs(dp->th_code), dp->th_msg);
 				goto abort;
 			}
 			if (dp->th_opcode == DATA) {
@@ -474,7 +475,8 @@ skip_ack:
 				 */
 				j = synchnet(f, blksize);
 				if (j && trace) {
-					(void)printf("discarded %d packets\n", j);
+					(void)printf("discarded %d packets\n",
+					    j);
 				}
 				if (dp->th_block == (block-1)) {
 					goto send_ack;	/* resend ack */
@@ -674,7 +676,8 @@ tpacket(const char *s, struct tftphdr *tp, int n)
 		break;
 
 	case DATA:
-		(void)printf("<block=%d, %d bytes>\n", ntohs(tp->th_block), n - 4);
+		(void)printf("<block=%d, %d bytes>\n", ntohs(tp->th_block),
+		    n - 4);
 		break;
 
 	case ACK:
@@ -682,7 +685,8 @@ tpacket(const char *s, struct tftphdr *tp, int n)
 		break;
 
 	case ERROR:
-		(void)printf("<code=%d, msg=%s>\n", ntohs(tp->th_code), tp->th_msg);
+		(void)printf("<code=%d, msg=%s>\n", ntohs(tp->th_code),
+		    tp->th_msg);
 		break;
 
 	case OACK:
@@ -761,9 +765,11 @@ cmpport(struct sockaddr *sa, struct sockaddr *sb)
 {
 	char a[NI_MAXSERV], b[NI_MAXSERV];
 
-	if (getnameinfo(sa, (socklen_t)sa->sa_len, NULL, 0, a, sizeof(a), NI_NUMERICSERV))
+	if (getnameinfo(sa, (socklen_t)sa->sa_len, NULL, 0, a, sizeof(a),
+	    NI_NUMERICSERV))
 		return 0;
-	if (getnameinfo(sb, (socklen_t)sb->sa_len, NULL, 0, b, sizeof(b), NI_NUMERICSERV))
+	if (getnameinfo(sb, (socklen_t)sb->sa_len, NULL, 0, b, sizeof(b),
+	    NI_NUMERICSERV))
 		return 0;
 	if (strcmp(a, b) != 0)
 		return 0;
