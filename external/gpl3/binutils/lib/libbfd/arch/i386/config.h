@@ -17,7 +17,7 @@
 
 /* Define to 1 if you want to enable -z separate-code in ELF linker by
    default. */
-#define DEFAULT_LD_Z_SEPARATE_CODE 0
+#define DEFAULT_LD_Z_SEPARATE_CODE 1
 
 /* Define if you want run-time sanity checks. */
 /* #undef ENABLE_CHECKING */

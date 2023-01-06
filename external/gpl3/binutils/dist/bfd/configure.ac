@@ -136,10 +136,10 @@ AC_ARG_ENABLE(separate-code,
   yes) ac_default_ld_z_separate_code=1 ;;
   no) ac_default_ld_z_separate_code=0 ;;
 esac])
-# Enable -z separate-code by default for Linux/x86.
+# Enable -z separate-code by default for Linux/x86 and NetBSD/x86
 changequote(,)dnl
 case "${target}" in
-i[3-7]86-*-linux-* | x86_64-*-linux-*)
+i[3-7]86-*-linux-* | x86_64-*-linux-* | i[3-7]86-*-netbsd | x86_64-*-netbsd* )
 changequote([,])dnl
   if test ${ac_default_ld_z_separate_code} = unset; then
     ac_default_ld_z_separate_code=1
