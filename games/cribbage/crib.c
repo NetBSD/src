@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.25 2012/10/13 20:36:06 dholland Exp $	*/
+/*	$NetBSD: crib.c,v 1.26 2023/01/06 17:13:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.25 2012/10/13 20:36:06 dholland Exp $");
+__RCSID("$NetBSD: crib.c,v 1.26 2023/01/06 17:13:46 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ main(int argc, char *argv[])
 			err(1, "fcntl F_SETFD");
 	}
 
-	while ((ch = getopt(argc, argv, "eqr")) != -1)
+	while ((ch = getopt(argc, argv, "eqry")) != -1)
 		switch (ch) {
 		case 'e':
 			explain = TRUE;
@@ -108,9 +108,12 @@ main(int argc, char *argv[])
 		case 'r':
 			rflag = TRUE;
 			break;
+		case 'y':
+			yes = TRUE;
+			break;
 		case '?':
 		default:
-			(void) fprintf(stderr, "usage: cribbage [-eqr]\n");
+			(void) fprintf(stderr, "usage: cribbage [-eqry]\n");
 			exit(1);
 		}
 
@@ -154,7 +157,10 @@ main(int argc, char *argv[])
 			glimit = (getuchar() == 'S' ? SGAME : LGAME);
 		game();
 		msg("Another game? ");
-		playing = (getuchar() == 'Y');
+		if (!yes)
+		    playing = (getuchar() == 'Y');
+		else
+		    playing = (getuchar() != 'N');
 	} while (playing);
 
 	if (f != NULL) {
