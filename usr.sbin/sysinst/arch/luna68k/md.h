@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.6 2022/06/17 16:09:47 tsutsui Exp $	*/
+/*	$NetBSD: md.h,v 1.7 2023/01/06 18:14:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,3 +64,15 @@
  * the hand-edited disklabel will NOT be written by MI code.
  */
 #define DISKLABEL_CMD	"disklabel -w -r"
+
+/*
+ * Our boot partition is FFSv1, so it will be reported as PT_root
+ * and might take up disklabel slot 0 (partition 'a'), which we would
+ * like to avoid and make it use 'd' instead.
+ * Only allow PT_root partitions for slots before RAW_PART if they
+ * start past the boot partition size.
+ */
+#define	MD_DISKLABEL_PART_INDEX_CHECK(DL,NDX,INFO)	\
+	(((INFO)->nat_type->generic_ptype != PT_root)	\
+	|| (NDX > RAW_PART)				\
+	|| ((INFO)->start >= (PART_BOOT/512)))

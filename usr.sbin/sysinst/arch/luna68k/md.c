@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2022/01/29 16:01:19 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.11 2023/01/06 18:14:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,6 +117,23 @@ md_make_bsd_partitions(struct install_partition_desc *install)
 	return make_bsd_partitions(install);
 }
 
+static part_id
+find_boot_part(struct install_partition_desc *install)
+{
+	for (size_t i = 0; i < install->num; i++) {
+		if (install->infos[i].fs_type != PART_BOOT_TYPE)
+			continue;
+		if (install->infos[i].fs_version != PART_BOOT_SUBT)
+			continue;
+		if (install->infos[i].size < (PART_BOOT/512))
+			continue;
+		if (install->infos[i].cur_start > 0)
+			continue;
+		return i;
+	}
+	return NO_PART;
+}
+
 /*
  * any additional partition validation
  */
@@ -128,14 +145,12 @@ md_check_partitions(struct install_partition_desc *install)
 	 * Make sure that a boot partition (old 4.3BSD UFS) is prepared
 	 * properly for our native bootloader.
 	 */
-	if (install->num < 1 || install->infos[0].fs_type != PART_BOOT_TYPE ||
-	    install->infos[0].fs_version != PART_BOOT_SUBT ||
-	    !(install->infos[0].instflags & PUIINST_NEWFS)) {
-		msg_display(MSG_nobootpartdisklabel);
-		process_menu(MENU_ok, NULL);
-		return false;
-	}
-	return true;
+	if (find_boot_part(install) != NO_PART)
+		return true;
+
+	msg_display(MSG_nobootpartdisklabel);
+	process_menu(MENU_ok, NULL);
+	return false;
 }
 
 /*
@@ -187,16 +202,19 @@ int
 md_post_newfs(struct install_partition_desc *install)
 {
 	char rdisk[STRSIZE], disk[STRSIZE];
+	part_id boot_part = find_boot_part(install);
 
-	if (install->num < 1)
+	if (boot_part == NO_PART)
 		return 1;
 
-	if (!install->infos[0].parts->pscheme->get_part_device(
-	    install->infos[0].parts, install->infos[0].cur_part_id,
+	if (!install->infos[boot_part].parts->pscheme->get_part_device(
+	    install->infos[boot_part].parts,
+	    install->infos[boot_part].cur_part_id,
  	    rdisk, sizeof rdisk, NULL, raw_dev_name, true, true))
 		return 1;
-	if (!install->infos[0].parts->pscheme->get_part_device(
-	    install->infos[0].parts, install->infos[0].cur_part_id,
+	if (!install->infos[boot_part].parts->pscheme->get_part_device(
+	    install->infos[boot_part].parts,
+	    install->infos[boot_part].cur_part_id,
 	    disk, sizeof disk, NULL, plain_name, true, true))
 		return 1;
 
@@ -240,12 +258,14 @@ md_update(struct install_partition_desc *install)
 	struct stat sb;
 	bool hasboot = false;
 	char disk[STRSIZE];
+	part_id boot_part = find_boot_part(install);
 
-	if (install->num < 1)
+	if (boot_part == NO_PART)
 		return 0;
 
-	if (!install->infos[0].parts->pscheme->get_part_device(
-	    install->infos[0].parts, install->infos[0].cur_part_id,
+	if (!install->infos[boot_part].parts->pscheme->get_part_device(
+	    install->infos[boot_part].parts,
+	    install->infos[boot_part].cur_part_id,
  	    disk, sizeof disk, NULL, plain_name, true, true))
 		return 0;
 
@@ -288,4 +308,3 @@ md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
 	return true;
 }
 #endif
-
