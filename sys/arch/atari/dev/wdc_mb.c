@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_mb.c,v 1.41 2019/06/29 16:41:19 tsutsui Exp $	*/
+/*	$NetBSD: wdc_mb.c,v 1.42 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.41 2019/06/29 16:41:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_mb.c,v 1.42 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -234,7 +234,7 @@ claim_hw(struct ata_channel *chp, int maysleep)
 		    &wd_lock, 1, &chp->ch_lock))
 			return 0;
 	}
-	return 1;	
+	return 1;
 }
 
 static void

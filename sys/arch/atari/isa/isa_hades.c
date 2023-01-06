@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_hades.c,v 1.9 2009/03/18 10:22:25 cegger Exp $	*/
+/*	$NetBSD: isa_hades.c,v 1.10 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.9 2009/03/18 10:22:25 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.10 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -165,7 +165,7 @@ isa_intr_establish(isa_chipset_tag_t ic, int irq, int type, int level, int (*ih_
 	iinfo_p = &iinfo[slot];
 
 	if (iinfo_p->slot >= 0)
-	    panic("isa_intr_establish: interrupt was already established");
+		panic("isa_intr_establish: interrupt was already established");
 
 	ihand = intr_establish((slot == 0) ? 3 : 15, USER_VEC, 0,
 				(hw_ifun_t)iifun, (void *)slot);
@@ -198,7 +198,7 @@ isa_intr_disestablish(isa_chipset_tag_t ic, void *handler)
 	isa_intr_info_t *iinfo_p = (isa_intr_info_t *)handler;
 
 	if (iinfo_p->slot < 0)
-	    panic("isa_intr_disestablish: interrupt was not established");
+		panic("isa_intr_disestablish: interrupt was not established");
 
 	(void) intr_disestablish(iinfo_p->ihand);
 	iinfo_p->slot = -1;

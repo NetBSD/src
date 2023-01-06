@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.18 2022/07/02 08:43:28 tsutsui Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.19 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.18 2022/07/02 08:43:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.19 2023/01/06 10:28:27 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,13 +65,13 @@ init_stmem(void)
 
 	s = splhigh();
 	stmem_total = st_pool_size - sizeof(*mem);
-    
+
 	mem = (struct mem_node *)st_pool_virt;
 	mem->size = st_pool_size - sizeof(*mem);
 
 	TAILQ_INIT(&st_list);
 	TAILQ_INIT(&free_list);
-    
+
 	TAILQ_INSERT_HEAD(&st_list, mem, link);
 	TAILQ_INSERT_HEAD(&free_list, mem, free_link);
 	splx(s);
@@ -88,7 +88,7 @@ alloc_stmem(u_long size, void **phys_addr)
 
 	s = splhigh();
 
-	if ((size & ~(ST_BLOCKMASK)) != 0) 
+	if ((size & ~(ST_BLOCKMASK)) != 0)
 		size = (size & ST_BLOCKMASK) + ST_BLOCKSIZE;
 
 	/*
@@ -114,7 +114,7 @@ alloc_stmem(u_long size, void **phys_addr)
 
 	if ((mn->size - size) <= sizeof(*mn)) {
 		/*
-		 * our allocation would not leave room 
+		 * our allocation would not leave room
 		 * for a new node in between.
 		 */
 		TAILQ_REMOVE(&free_list, mn, free_link);

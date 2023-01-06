@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.14 2012/10/27 17:17:42 chs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.15 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,10 +49,10 @@ typedef struct {
 
 struct ite_softc;
 
-/* 
+/*
  * this struct is owned by the driver (grfcc)
- * and is passed to grf when grf is configed. The ite also 
- * uses it... 
+ * and is passed to grf when grf is configed. The ite also
+ * uses it...
  */
 struct	grf_softc {
 	device_t	g_device;	/* config sets this up.		*/

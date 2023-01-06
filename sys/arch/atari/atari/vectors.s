@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.23 2011/02/08 20:20:09 rmind Exp $	*/
+/*	$NetBSD: vectors.s,v 1.24 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -82,7 +82,7 @@ GLOBAL(autovects)
 #ifdef COMPAT_16
 	VECTOR(trap3)		| 35: compat_16_sigreturn special syscall
 #else
-	VECTOR(illinst)	
+	VECTOR(illinst)
 #endif
 	VECTOR(illinst)		| 36: TRAP instruction vector
 	VECTOR(illinst)		| 37: TRAP instruction vector
@@ -147,7 +147,7 @@ GLOBAL(uservects)
 	VECTOR(badmfpint)	|  72: Display enable counter
 	VECTOR(badmfpint)	|  73: modem port 1 - XMIT error
 	VECTOR(badmfpint)	|  74: modem port 1 - XMIT buffer empty
-	VECTOR(badmfpint)	|  75: modem port 1 - RCV error	
+	VECTOR(badmfpint)	|  75: modem port 1 - RCV error
 	VECTOR(badmfpint)	|  76: modem port 1 - RCV buffer full
 	ASVECTOR(mfp_tima)	|  77: Timer A (System clock)
 	VECTOR(badmfpint)	|  78: modem port 1 - RI

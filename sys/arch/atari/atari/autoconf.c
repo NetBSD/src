@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.73 2022/07/02 13:47:53 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.74 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.73 2022/07/02 13:47:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.74 2023/01/06 10:28:27 tsutsui Exp $");
 
 #include "opt_md.h"
 
@@ -134,8 +134,8 @@ simple_devprint(void *aux, const char *pnp)
 
 /*
  * use config_search_ia to find appropriate device, then call that device
- * directly with NULL device variable storage.  A device can then 
- * always tell the difference between the real and console init 
+ * directly with NULL device variable storage.  A device can then
+ * always tell the difference between the real and console init
  * by checking for NULL.
  */
 int
@@ -175,12 +175,12 @@ atari_config_found(cfdata_t pcfp, device_t parent, void *aux, cfprint_t pfn,
 
 /*
  * this function needs to get enough configured to do a console
- * basically this means start attaching the grfxx's that support 
+ * basically this means start attaching the grfxx's that support
  * the console. Kinda hacky but it works.
  */
 void
 config_console(void)
-{	
+{
 	cfdata_t cf;
 
 	config_init();
@@ -261,7 +261,7 @@ findroot(void)
 			if (dkp->dk_driver == NULL ||
 			    dkp->dk_driver->d_strategy == NULL)
 				continue;
-			
+
 			maj = devsw_name2blk(genericconf[i]->cd_name, NULL, 0);
 			if (maj == -1)
 				continue;
@@ -280,7 +280,7 @@ findroot(void)
 				continue;
 			(void)(*bdev->d_close)(MAKEDISKDEV(maj,
 			    unit, 0), FREAD|FNONBLOCK, 0, &lwp0);
-			
+
 			pp = &dkp->dk_label->d_partitions[booted_partition];
 			if (pp->p_size != 0 && pp->p_fstype == FS_BSDFFS) {
 				booted_device = devs[unit];
@@ -290,8 +290,8 @@ findroot(void)
 	}
 }
 
-/* 
- * mainbus driver 
+/*
+ * mainbus driver
  */
 CFATTACH_DECL_NEW(mainbus, 0,
     mbmatch, mbattach, NULL, NULL);

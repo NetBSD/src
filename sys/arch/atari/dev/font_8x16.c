@@ -1,10 +1,10 @@
-/*	$NetBSD: font_8x16.c,v 1.5 2022/06/21 15:40:20 tsutsui Exp $	*/
+/*	$NetBSD: font_8x16.c,v 1.6 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  *  Copyright (c) 1992, 1993, 1994 Hellmuth Michaelis and Joerg Wunsch
- *  
+ *
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -15,11 +15,11 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. All advertising materials mentioning features or use of this software
  *     must display the following acknowledgement:
- * 	This product includes software developed by
+ *	This product includes software developed by
  *	Hellmuth Michaelis and Joerg Wunsch
  *  4. The name authors may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  *  THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
  *  IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  *  OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -36,12 +36,12 @@
  * Translated into compiler and human readable for for the Atari-TT port of
  * NetBSD by Leo Weppelman.
  *
- * Reorganized and edited some chars to fit the iso-8859-1 fontset by 
+ * Reorganized and edited some chars to fit the iso-8859-1 fontset by
  * Thomas Gerner
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: font_8x16.c,v 1.5 2022/06/21 15:40:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: font_8x16.c,v 1.6 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <atari/dev/font.h>
 

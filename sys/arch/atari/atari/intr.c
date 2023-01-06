@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.30 2022/07/02 08:25:21 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.31 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30 2022/07/02 08:25:21 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.31 2023/01/06 10:28:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ intr_establish(int vector, int type, int pri, hw_ifun_t ih_fun, void *ih_arg)
 			 */
 			*hard_vec = (u_long)intr_glue;
 		}
-			
+
 		splx(s);
 
 		return ih;

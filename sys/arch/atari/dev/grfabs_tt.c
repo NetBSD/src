@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_tt.c,v 1.24 2021/08/17 22:00:27 andvar Exp $	*/
+/*	$NetBSD: grfabs_tt.c,v 1.25 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.24 2021/08/17 22:00:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.25 2023/01/06 10:28:28 tsutsui Exp $");
 
 #ifdef TT_VIDEO
 /*
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: grfabs_tt.c,v 1.24 2021/08/17 22:00:27 andvar Exp $"
 static void       init_view(view_t *, bmap_t *, dmode_t *, box_t *);
 static bmap_t	  *alloc_bitmap(u_long, u_long, u_char);
 static colormap_t *alloc_colormap(dmode_t *);
-static void 	  free_bitmap(bmap_t *);
+static void	  free_bitmap(bmap_t *);
 static void	  tt_display_view(view_t *);
 static view_t	  *tt_alloc_view(dmode_t *, dimen_t *, u_char);
 static void	  tt_free_view(view_t *);
@@ -288,7 +288,7 @@ tt_alloc_view(dmode_t *mode, dimen_t *dim, u_char depth)
 		v = malloc(sizeof(*v), M_DEVBUF, M_NOWAIT);
 	if (v == NULL)
 		return (NULL);
-	
+
 	bm = alloc_bitmap(mode->size.width, mode->size.height, mode->depth);
 	if (bm) {
 		box_t   box;
@@ -328,7 +328,7 @@ alloc_bitmap(u_long width, u_long height, u_char depth)
 	 * Sigh, it seems for mapping to work we need the bitplane data to
 	 *  1: be aligned on a page boundary.
 	 *  2: be n pages large.
-	 * 
+	 *
 	 * why? because the user gets a page aligned address, if this is before
 	 * your allocation, too bad.  Also it seems that the mapping routines
 	 * do not watch to closely to the allowable length. so if you go over

@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.17 2014/11/15 19:20:01 christos Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.18 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,6 +179,6 @@ struct zs_chanstate {
 /*
  * Split minor into unit, dialin/dialout & flag nibble.
  */
-#define	ZS_UNIT(dev)		(TTUNIT(dev) >> 4) 
-#define	ZS_FLAGS(dev)		(TTUNIT(dev) & 0xf) 
+#define	ZS_UNIT(dev)		(TTUNIT(dev) >> 4)
+#define	ZS_FLAGS(dev)		(TTUNIT(dev) & 0xf)
 #define	ZS_DIALOUT(dev)		TTDIALOUT(dev)

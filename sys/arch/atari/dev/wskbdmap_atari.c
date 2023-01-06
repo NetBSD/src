@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_atari.c,v 1.5 2018/09/19 23:28:58 rin Exp $	*/
+/*	$NetBSD: wskbdmap_atari.c,v 1.6 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_atari.c,v 1.5 2018/09/19 23:28:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_atari.c,v 1.6 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -147,7 +147,7 @@ static const keysym_t atarikbd_keydesc_de[] = {
     KC(11),  KS_0,		KS_equal,
     KC(12),  KS_ssharp,		KS_question,
     KC(13),  KS_dead_acute,	KS_dead_grave,
-    KC(16),  KS_q,		KS_Q,	
+    KC(16),  KS_q,		KS_Q,
     KC(21),  KS_z,
     KC(26),  KS_udiaeresis,	KS_Udiaeresis,	KS_at,		KS_backslash,
     KC(27),  KS_plus,		KS_asterisk,
@@ -250,7 +250,7 @@ static const keysym_t atarikbd_keydesc_fr[] = {
     KC(13),  KS_equal,		KS_plus,	KS_braceright,
     KC(16),  KS_a,
     KC(17),  KS_z,
-    KC(26),  KS_dead_circumflex, KS_dead_diaeresis, 
+    KC(26),  KS_dead_circumflex, KS_dead_diaeresis,
     KC(27),  KS_dollar,		KS_sterling,	KS_currency,
     KC(30),  KS_q,
     KC(39),  KS_m,

@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.91 2022/06/26 18:46:14 tsutsui Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.92 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.91 2022/06/26 18:46:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.92 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -236,12 +236,12 @@ struct fd_type {
  * The order of the types is the same as for the TT/Falcon....
  */
 struct fd_type fd_types[] = {
-        /* 360kB in 720kB drive */
-        {  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_125KBPS,0xf6,1,"360KB"  },
-        /* 3.5" 720kB diskette */
-        {  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_125KBPS,0xf6,1,"720KB"  },
-        /* 1.44MB diskette */
-        { 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_250KBPS,0xf6,1,"1.44MB" },
+	/* 360kB in 720kB drive */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,40, 720,2,FDC_125KBPS,0xf6,1,"360KB"  },
+	/* 3.5" 720kB diskette */
+	{  9,2,18,2,0xff,0xdf,0x2a,0x50,80,1440,1,FDC_125KBPS,0xf6,1,"720KB"  },
+	/* 1.44MB diskette */
+	{ 18,2,36,2,0xff,0xcf,0x1b,0x6c,80,2880,1,FDC_250KBPS,0xf6,1,"1.44MB" },
 };
 
 /* software state, per disk (with up to 4 disks per ctlr) */
@@ -257,7 +257,7 @@ struct fd_softc {
 
 	daddr_t		sc_blkno;	/* starting block number */
 	int		sc_bcount;	/* byte count left */
- 	int		sc_opts;	/* user-set options */
+	int		sc_opts;	/* user-set options */
 	int		sc_skip;	/* bytes already transferred */
 	int		sc_nblks;	/* #blocks currently transferring */
 	int		sc_nbytes;	/* #bytes currently transferring */
@@ -607,7 +607,7 @@ fdstrategy(struct buf *bp)
 {
 	struct fd_softc *fd = device_lookup_private(&hdfd_cd, FDUNIT(bp->b_dev));
 	int sz;
- 	int s;
+	int s;
 
 	/* Valid unit, controller, and request? */
 	if (bp->b_blkno < 0 ||
@@ -639,7 +639,7 @@ fdstrategy(struct buf *bp)
 	}
 
 	bp->b_rawblkno = bp->b_blkno;
- 	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE/DEV_BSIZE) / fd->sc_type->seccyl;
+	bp->b_cylinder = bp->b_blkno / (FDC_BSIZE/DEV_BSIZE) / fd->sc_type->seccyl;
 
 #ifdef FD_DEBUG
 	printf("fdstrategy: b_blkno %d b_bcount %ld blkno %qd cylin %ld sz"
@@ -962,7 +962,7 @@ loop:
 	fd = fdc->sc_drives.tqh_first;
 	if (fd == NULL) {
 		fdc->sc_state = DEVIDLE;
- 		return 1;
+		return 1;
 	}
 
 	/* Is there a transfer to this drive?  If not, deactivate drive. */
@@ -1448,7 +1448,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			fd_formb->fd_formb_secno(i) = il[i+1];
 			fd_formb->fd_formb_secsize(i) = fd->sc_type->secsize;
 		}
-		
+
 		error = fdformat(dev, fd_formb, l->l_proc);
 		kmem_free(fd_formb, sizeof(*fd_formb));
 		return error;
@@ -1514,7 +1514,7 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 			break;
 	}
 	mutex_exit(bp->b_objlock);
-       
+
 	if (rv == EWOULDBLOCK) {
 		/* timed out */
 		rv = EIO;
@@ -1588,12 +1588,12 @@ fdgetdefaultlabel(struct fd_softc *fd, struct disklabel *lp, int part)
 	lp->d_secperunit  = fd->sc_type->size;
 
 	lp->d_type        = DKTYPE_FLOPPY;
-	lp->d_rpm         = 300; 	/* good guess I suppose.	*/
+	lp->d_rpm         = 300;	/* good guess I suppose.	*/
 	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
 	lp->d_bbsize      = 0;
 	lp->d_sbsize      = 0;
 	lp->d_npartitions = part + 1;
-	lp->d_trkseek     = 6000; 	/* Who cares...			*/
+	lp->d_trkseek     = 6000;	/* Who cares...			*/
 	lp->d_magic       = DISKMAGIC;
 	lp->d_magic2      = DISKMAGIC;
 	lp->d_checksum    = dkcksum(lp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: itevar.h,v 1.15 2022/06/25 03:33:29 tsutsui Exp $	*/
+/*	$NetBSD: itevar.h,v 1.16 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -91,10 +91,10 @@ struct ite_softc {
 	short			top_margin;
 	short			bottom_margin;
 	short			inside_margins;
-	short 			eightbit_C1;
+	short			eightbit_C1;
 	short			emul_level;
-	enum 	ite_attr	attribute;
-	enum 	ite_attr	save_attribute;
+	enum	ite_attr	attribute;
+	enum	ite_attr	save_attribute;
 	int			curx;
 	int			save_curx;
 	int			cury;

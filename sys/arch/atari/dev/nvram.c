@@ -1,4 +1,4 @@
-/*	$NetBSD: nvram.c,v 1.22 2022/07/02 14:29:04 tsutsui Exp $	*/
+/*	$NetBSD: nvram.c,v 1.23 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.22 2022/07/02 14:29:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram.c,v 1.23 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -89,7 +89,7 @@ nvr_attach(device_t parent, device_t self, void *aux)
 {
 	struct nvr_softc *sc;
 	int nreg;
-	
+
 	/*
 	 * Check the validity of the NVram contents
 	 */
@@ -181,7 +181,7 @@ nvram_csum(void)
 {
 	uint8_t csum;
 	int nreg;
-	
+
 	for (csum = 0, nreg = MC_NVRAM_START; nreg < MC_NVRAM_CSUM; nreg++)
 		csum += mc146818_read(RTC, nreg);
 	return csum;

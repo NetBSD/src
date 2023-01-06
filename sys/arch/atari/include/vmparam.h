@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.34 2020/02/01 19:41:49 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.35 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,12 +112,12 @@
 
 #define	__HAVE_PMAP_PHYSSEG
 
-/* 
+/*
  * pmap-specific data stored in the vm_physmem[] array.
- */   
-struct pmap_physseg { 
+ */
+struct pmap_physseg {
 	struct pv_header *pvheader;	/* pv table for this seg */
-}; 
+};
 
 
 /*

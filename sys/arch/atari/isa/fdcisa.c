@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcisa.c,v 1.15 2019/06/29 16:41:19 tsutsui Exp $	*/
+/*	$NetBSD: fdcisa.c,v 1.16 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.15 2019/06/29 16:41:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.16 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ fdc_isa_probe(device_t parent, cfdata_t cfp, void *aux)
 
 	/* reset */
 	bus_space_write_1(iot, ioh, fdout, 0);
-	delay(100);     
+	delay(100);
 	bus_space_write_1(iot, ioh, fdout, FDO_FRST);
 
 	/* see if it can handle a command */

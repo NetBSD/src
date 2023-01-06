@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_tseng.c,v 1.13 2019/05/04 09:03:08 tsutsui Exp $	*/
+/*	$NetBSD: pci_tseng.c,v 1.14 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.13 2019/05/04 09:03:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_tseng.c,v 1.14 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -45,7 +45,7 @@ static void et6000_init(volatile uint8_t *, uint8_t *, int);
  * Use tables for the card init...
  */
 static const uint8_t seq_tab[] = {
- 	0x03, 0x01, 0x03, 0x00, 0x02, 0x00, 0x00, 0xb4
+	0x03, 0x01, 0x03, 0x00, 0x02, 0x00, 0x00, 0xb4
 };
 
 static const uint8_t gfx_tab[] = {
@@ -128,12 +128,12 @@ tseng_init(pci_chipset_tag_t pc, pcitag_t tag, int id, volatile uint8_t *ba,
 	for (i = 1; i < 8; i++)
 		WSeq(ba, i, seq_tab[i]);
 	WSeq(ba, SEQ_ID_RESET       ,     0x03);
-	
+
 	vgar(ba, VDAC_ADDRESS);	/* clear old state */
-        vgar(ba, VDAC_MASK);
-        vgar(ba, VDAC_MASK);
-        vgar(ba, VDAC_MASK);
-        vgar(ba, VDAC_MASK);
+	vgar(ba, VDAC_MASK);
+	vgar(ba, VDAC_MASK);
+	vgar(ba, VDAC_MASK);
+	vgar(ba, VDAC_MASK);
 	vgaw(ba, VDAC_MASK, 0);		/* set to palette */
 	vgar(ba, VDAC_ADDRESS);		/* clear state */
 	vgaw(ba, VDAC_MASK, 0xff);
@@ -184,7 +184,7 @@ et6000_init(volatile uint8_t *ba, uint8_t *fb, int iter)
 	ba[0x47] = 0x10;
 	ba[0x58] = 0x00;	/* Video Control 1			*/
 	ba[0x59] = 0x04;	/* Video Control 2			*/
-	
+
 	/*
 	 * Setup a 'standard' CLKDAC
 	 */
@@ -199,7 +199,7 @@ et6000_init(volatile uint8_t *ba, uint8_t *fb, int iter)
 
 		/*
 		 * XXX Black magic to get the bloody MDRAM's to function...
-                 * XXX _Only_ tested on my card! [leo]
+		 * XXX _Only_ tested on my card! [leo]
 		 */
 		bv = ba[45];
 		ba[0x45] = bv | 0x40;	/* Reset MDRAM's		*/

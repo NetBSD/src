@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_cc.c,v 1.46 2022/06/26 18:46:14 tsutsui Exp $	*/
+/*	$NetBSD: ite_cc.c,v 1.47 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.46 2022/06/26 18:46:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_cc.c,v 1.47 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -207,7 +207,7 @@ grfccattach(device_t parent, device_t self, void *aux)
 	extern const struct cdevsw grf_cdevsw;
 
 	/*
-	 * find our major device number 
+	 * find our major device number
 	 */
 	maj = cdevsw_lookup_major(&grf_cdevsw);
 
@@ -265,7 +265,7 @@ grfccattach(device_t parent, device_t self, void *aux)
 		aprint_normal(" monochrome\n");
 	else
 		aprint_normal(" colors %d\n", sc->g_display.gd_colors);
-	
+
 	/*
 	 * try and attach an ite
 	 */
@@ -302,7 +302,7 @@ grfcc_cnprobe(void)
 	return CN_INTERNAL;
 }
 /*
- * called from grf_cc to init ite portion of 
+ * called from grf_cc to init ite portion of
  * grf_softc struct
  */
 void
@@ -375,7 +375,7 @@ static int
 ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 {
 	struct view_size	vs;
-	ipriv_t			*cci = ip->priv;    
+	ipriv_t			*cci = ip->priv;
 	u_long			i, j;
 	int			error = 0;
 	view_t			*view;
@@ -394,7 +394,7 @@ ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 	/*
 	 * Reinitialize our structs
 	 */
-	ip->cols = view->display.width  / ip->font.width; 
+	ip->cols = view->display.width  / ip->font.width;
 	ip->rows = view->display.height / ip->font.height;
 
 	/*
@@ -436,7 +436,7 @@ ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 	cci->ft_y       = ip->font.height;
 	cci->row_bytes  = cci->row_offset * cci->ft_y;
 	cci->row_ptr[0] = view->bitmap->plane;
-	for (i = 1; i < ip->rows; i++) 
+	for (i = 1; i < ip->rows; i++)
 		cci->row_ptr[i] = cci->row_ptr[i - 1] + cci->row_bytes;
 
 	/*
@@ -445,14 +445,14 @@ ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 	 */
 	j = view->bitmap->depth * 2;
 	cci->column_offset[0] = 0;
-	for (i = 1; i < ip->cols; i++) 
+	for (i = 1; i < ip->cols; i++)
 		cci->column_offset[i] = ((i >> 1) * j) + (i & 1);
 
 	/* initialize the font cell pointers */
 	cci->font_cell[ip->font.font_lo] = ip->font.font_p;
 	for (i = ip->font.font_lo + 1; i <= ip->font.font_hi; i++)
 		cci->font_cell[i] = cci->font_cell[i - 1] + ip->font.height;
-	    
+
 	return error;
 }
 
@@ -481,8 +481,8 @@ itecc_ioctl(struct ite_softc *ip, u_long cmd, void * addr, int flag,
 			ws.ws_ypixel = view->display.height;
 			ite_reset(ip);
 			/*
-			 * XXX tell tty about the change 
-			 * XXX this is messy, but works 
+			 * XXX tell tty about the change
+			 * XXX this is messy, but works
 			 */
 			(*ite_cdevsw.d_ioctl)(ip->grf->g_itedev, TIOCSWINSZ,
 					      (void *)&ws, 0, l);
@@ -522,16 +522,16 @@ cursor32(struct ite_softc *ip, int flag)
 		cci->cursor_opt++;
 		return;		  /* if we are already opted. */
 	}
-    
-	if (cci->cursor_opt) 
+
+	if (cci->cursor_opt)
 		return;		  /* if we are still nested. */
 				  /* else we draw the cursor. */
-    
+
 	if (flag != DRAW_CURSOR && flag != END_CURSOROPT) {
 		/*
 		 * erase the cursor
 		 */
-		cend = ip->font.height - 1; 
+		cend = ip->font.height - 1;
 		pl   = cci->column_offset[ip->cursorx]
 				+ cci->row_ptr[ip->cursory];
 		__asm volatile
@@ -545,8 +545,8 @@ cursor32(struct ite_softc *ip, int flag)
 
 	if (flag != DRAW_CURSOR && flag != MOVE_CURSOR && flag != END_CURSOROPT)
 		return;
-	
-	/* 
+
+	/*
 	 * draw the cursor
 	 */
 	cend = uimin(ip->curx, ip->cols - 1);
@@ -555,7 +555,7 @@ cursor32(struct ite_softc *ip, int flag)
 		return;
 	ip->cursorx = cend;
 	ip->cursory = ip->cury;
-	cend        = ip->font.height - 1; 
+	cend        = ip->font.height - 1;
 	pl          = cci->column_offset[ip->cursorx]
 			+ cci->row_ptr[ip->cursory];
 
@@ -627,7 +627,7 @@ clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 		/* common case: clearing whole lines */
 		while (h--) {
 			int i;
-			u_char *ptr = cci->row_ptr[sy]; 
+			u_char *ptr = cci->row_ptr[sy];
 			for (i = 0; i < ip->font.height; i++) {
 				memset(ptr, 0, bm->bytes_per_row);
 				ptr += bm->bytes_per_row;
@@ -652,8 +652,8 @@ clear8(struct ite_softc *ip, int sy, int sx, int h, int w)
 			u_char *p = pls;
 			while (p <= ple)
 				*p++ = 0;
-			pls += bm->bytes_per_row; 
-			ple += bm->bytes_per_row; 
+			pls += bm->bytes_per_row;
+			ple += bm->bytes_per_row;
 		}
 	}
 }
@@ -674,7 +674,7 @@ scroll8(register struct ite_softc *ip, register int sy, int sx, int count,
 		    (ip->bottom_margin - dy + 1) * ip->font.height,
 		    0, -(count * ip->font.height));
 	} else if (dir == SCROLL_DOWN) {
-        	cursor32(ip, ERASE_CURSOR);
+		cursor32(ip, ERASE_CURSOR);
 		scrollbmap(bm, 0, sy * ip->font.height, bm->bytes_per_row >> 3,
 		    (ip->bottom_margin - sy + 1) * ip->font.height,
 		    0, count * ip->font.height);
@@ -697,7 +697,7 @@ scroll8(register struct ite_softc *ip, register int sy, int sx, int count,
 				    : "a" (pl), "d" (dofs2),
 				    "d" (ip->font.width), "d" (t));
 			}
-			pl += bm->bytes_per_row; 
+			pl += bm->bytes_per_row;
 		}
 	} else { /* SCROLL_LEFT */
 		int sofs = (sx) * ip->font.width;
@@ -719,12 +719,12 @@ scroll8(register struct ite_softc *ip, register int sy, int sx, int count,
 				sofs2 += ip->font.width;
 				dofs2 += ip->font.width;
 			}
-			pl += bm->bytes_per_row; 
+			pl += bm->bytes_per_row;
 		}
-	}		
+	}
 }
 
-static void 
+static void
 scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height,
     short dx, short dy)
 {
@@ -733,11 +733,11 @@ scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height,
 	if (dx) {
 		/* FIX: */
 		panic ("delta x not supported in scroll bitmap yet.");
-	} 
+	}
 
 	if (dy == 0) {
 	        return;
-    	}
+	}
 	if (dy > 0) {
 		u_long *pl       = (u_long *)bm->plane;
 		u_long *src_y    = pl + (lwpr * y);
@@ -746,13 +746,13 @@ scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height,
 		u_long *clr_y    = src_y;
 		u_long clr_count = dest_y - src_y;
 		u_long bc, cbc;
-		
+
 		src_y  += count - 1;
 		dest_y += count - 1;
 
 		bc = count >> 4;
 		count &= 0xf;
-		
+
 		while (bc--) {
 			*dest_y-- = *src_y--; *dest_y-- = *src_y--;
 			*dest_y-- = *src_y--; *dest_y-- = *src_y--;
@@ -780,7 +780,7 @@ scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height,
 	} else {
 		u_long	*pl       = (u_long *)bm->plane;
 		u_long	*src_y    = pl + (lwpr * (y - dy));
-		u_long	*dest_y   = pl + (lwpr * y); 
+		u_long	*dest_y   = pl + (lwpr * y);
 		long	count     = lwpr * (height + dy);
 		u_long	*clr_y    = dest_y + count;
 		u_long	clr_count = src_y - dest_y;
@@ -788,7 +788,7 @@ scrollbmap (bmap_t *bm, u_short x, u_short y, u_short width, u_short height,
 
 		bc = count >> 4;
 		count &= 0xf;
-		
+
 		while (bc--) {
 			*dest_y++ = *src_y++; *dest_y++ = *src_y++;
 			*dest_y++ = *src_y++; *dest_y++ = *src_y++;

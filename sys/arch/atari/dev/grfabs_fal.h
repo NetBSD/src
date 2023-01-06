@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.h,v 1.5 2009/10/21 21:57:39 snj Exp $	*/
+/*	$NetBSD: grfabs_fal.h,v 1.6 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -38,7 +38,7 @@ struct videl {
     u_char  vd_st_res;		/* ST resolution		    */
     u_short vd_fal_res;		/* Falcon resolution		    */
     u_short vd_h_hold_tim;	/* Falcon horizontal hold timer     */
-    u_short vd_h_bord_beg;  	/* Falcon horizontal border begin   */
+    u_short vd_h_bord_beg;	/* Falcon horizontal border begin   */
     u_short vd_h_bord_end;	/* Falcon horizontal border end     */
     u_short vd_h_dis_beg;	/* Falcon horizontal display begin  */
     u_short vd_h_dis_end;	/* Falcon horizontal display end    */

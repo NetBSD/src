@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd_intr.s,v 1.10 2010/12/20 00:25:30 matt Exp $
+/*	$NetBSD: hdfd_intr.s,v 1.11 2023/01/06 10:28:28 tsutsui Exp $
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -135,7 +135,7 @@ hdfdc_norm:
 	addl	%d0, _C_LABEL(intrcnt_user)+88	|  add another interrupt
 	CPUINFO_ADD(CI_NINTR, %d0)
 0:	jbsr	_C_LABEL(fdc_ctrl_intr)		|  handle interrupt
-	INTERRUPT_RESTOREREG 			|    and saved registers
+	INTERRUPT_RESTOREREG			|    and saved registers
 	jra	_ASM_LABEL(rei)
 
 	.data

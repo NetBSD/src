@@ -1,4 +1,4 @@
-/*	$NetBSD: le_bus.c,v 1.22 2021/09/16 20:17:47 andvar Exp $	*/
+/*	$NetBSD: le_bus.c,v 1.23 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.22 2021/09/16 20:17:47 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: le_bus.c,v 1.23 2023/01/06 10:28:27 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -353,21 +353,21 @@ leb_bus_space_peek_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 	return !badbaddr((void *)(h + o), 1);
 }
 
-static int 
+static int
 leb_bus_space_peek_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
 	return !badbaddr((void *)(h + o), 2);
 }
 
-static int 
+static int
 leb_bus_space_peek_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
 	return !badbaddr((void *)(h + o), 4);
 }
 
-static int 
+static int
 leb_bus_space_peek_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
@@ -514,7 +514,7 @@ leb_bus_space_write_stream_8(bus_space_tag_t t, bus_space_handle_t h,
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *		bus_space_handle_t bsh, bus_size_t offset, uintX_t *address,
- *	 	bus_size_t count);
+ *		bus_size_t count);
  *
  * Read 'count' 1, 2, 4, or 8 byte values from the bus_space described by
  * tag/handle at `offset' and store them in the address range starting at
@@ -605,7 +605,7 @@ leb_bus_space_write_multi_8(bus_space_tag_t t, bus_space_handle_t h,
 /*
  *	void bus_space_read_multi_stream_N(bus_space_tag_t tag,
  *		bus_space_handle_t bsh, bus_size_t offset, uintX_t *address,
- *	 	bus_size_t count);
+ *		bus_size_t count);
  *
  * Read 'count' 1, 2, 4, or 8 byte values from the bus_space described by
  * tag/handle at `offset' and store them in the address range starting at

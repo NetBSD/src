@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.35 2021/01/03 17:42:10 thorpej Exp $	*/
+/*	$NetBSD: md_root.c,v 1.36 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.35 2021/01/03 17:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.36 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,8 +281,8 @@ md_compressed(void * buf, int nbyte, struct read_info *rsp)
 {
 	static int	dotc = 0;
 	struct buf	*bp;
-	       int	nread = 0;
-	       int	done, error;
+	int		nread = 0;
+	int		done, error;
 
 
 	error  = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.55 2022/06/26 18:46:14 tsutsui Exp $	*/
+/*	$NetBSD: grf.c,v 1.56 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.55 2022/06/26 18:46:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.56 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -95,7 +95,7 @@ static int grfbusmatch(device_t, cfdata_t, void *);
 static void grfbusattach(device_t, device_t, void *);
 
 /*
- * pointers to grf drivers device structs 
+ * pointers to grf drivers device structs
  */
 struct grf_softc *grfsp[NGRF]; /* XXX */
 
@@ -214,7 +214,7 @@ grfioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 	switch (cmd) {
 	case OGRFIOCGINFO:
 	        /* argl.. no bank-member.. */
-	  	memcpy(data, (void *)&gp->g_display, sizeof(struct grfinfo)-4);
+		memcpy(data, (void *)&gp->g_display, sizeof(struct grfinfo)-4);
 		break;
 	case GRFIOCGINFO:
 		memcpy(data, (void *)&gp->g_display, sizeof(struct grfinfo));
@@ -263,7 +263,7 @@ grfioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 }
 
 /*
- * map the contents of a graphics display card into process' 
+ * map the contents of a graphics display card into process'
  * memory space.
  */
 static paddr_t
@@ -272,14 +272,14 @@ grfmmap(dev_t dev, off_t off, int prot)
 	struct grf_softc	*gp;
 	struct grfinfo		*gi;
 	u_int			vgabase, linbase;
-	
+
 	gp = grfsp[GRFUNIT(dev)];
 	gi = &gp->g_display;
 
 	vgabase = gi->gd_vgabase;
 	linbase = gi->gd_linbase;
 
-	/* 
+	/*
 	 * control registers
 	 */
 	if (off >= 0 && off < gi->gd_regsize)
@@ -373,9 +373,9 @@ grf_viewsync(struct grf_softc *gp)
 
 	(*view_cdevsw.d_ioctl)(gp->g_viewdev, VIOCGBMAP, (void *)&bm,
 			       0, NOLWP);
-  
+
 	gp->g_data = (void *) 0xDeadBeaf; /* not particularly clean.. */
-  
+
 	gi->gd_fbaddr  = bm.hw_address;
 	gi->gd_fbsize  = bm.phys_mappable;
 	gi->gd_linbase = bm.lin_base;
@@ -397,7 +397,7 @@ grf_viewsync(struct grf_softc *gp)
 	}
 	gi->gd_colors = 1 << vs.depth;
 	gi->gd_planes = vs.depth;
-  
+
 	gi->gd_fbwidth         = vs.width;
 	gi->gd_fbheight        = vs.height;
 	gi->gd_dyn.gdi_fbx     = 0;
@@ -406,7 +406,7 @@ grf_viewsync(struct grf_softc *gp)
 	gi->gd_dyn.gdi_dheight = vs.height;
 	gi->gd_dyn.gdi_dx      = 0;
 	gi->gd_dyn.gdi_dy      = 0;
-}    
+}
 
 /*
  * Change the mode of the display.

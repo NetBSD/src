@@ -1,4 +1,4 @@
-/*	$NetBSD: vmevar.h,v 1.8 2011/07/01 20:34:06 dyoung Exp $	*/
+/*	$NetBSD: vmevar.h,v 1.9 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/bus.h>
 
-/* 
+/*
  * Structures and definitions needed by the machine-dependent header.
  */
 struct vmebus_attach_args;

@@ -1,4 +1,4 @@
-/*	$NetBSD: leo.c,v 1.23 2022/07/03 15:25:54 tsutsui Exp $	*/
+/*	$NetBSD: leo.c,v 1.24 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -41,13 +41,13 @@
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  * This code is derived from software contributed to Berkeley by
- * 	Ralph Campbell and Rick Macklem.
+ *	Ralph Campbell and Rick Macklem.
  * This product includes software developed by the University of
  *	California, Berkeley and its contributors.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.23 2022/07/03 15:25:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leo.c,v 1.24 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -166,8 +166,8 @@ leo_match(device_t parent, cfdata_t cf, void *aux)
 			return 0;
 		}
 		if (bus_space_map(memt, vat.va_maddr, vat.va_msize,
-			  	  BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
-			  	  &memh)) {
+				  BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
+				  &memh)) {
 			bus_space_unmap(iot, ioh, vat.va_iosize);
 			printf("leo_match: cannot map memory area\n");
 			return 0;
@@ -332,9 +332,9 @@ leo_scroll(struct leo_softc *sc, int scroll)
 
 	if ((scroll < 0) || (scroll > 255))
 		return EINVAL;
-        bus_space_write_1(sc->sc_iot, sc->sc_ioh, LEO_REG_MSBSCROLL,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LEO_REG_MSBSCROLL,
 			  (scroll >> 6) & 0xff);
-        bus_space_write_1(sc->sc_iot, sc->sc_ioh, LEO_REG_LSBSCROLL,
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LEO_REG_LSBSCROLL,
 			  (scroll << 2) & 0xff);
 	return 0;
 }
@@ -354,33 +354,33 @@ leoclose(dev_t dev, int flags, int devtype, struct lwp *l)
 int
 leomove(dev_t dev, struct uio *uio, int flags)
 {
-        struct leo_softc *sc;
-        int length, size, error;
-        u_int8_t smallbuf[SMALLBSIZE];
+	struct leo_softc *sc;
+	int length, size, error;
+	u_int8_t smallbuf[SMALLBSIZE];
 	off_t offset;
 
-        sc = device_lookup_private(&leo_cd,minor(dev));
-        if (uio->uio_offset > sc->sc_msize)
-                return 0;
-        length = sc->sc_msize - uio->uio_offset;
-        if (length > uio->uio_resid)
-                length = uio->uio_resid;
-        while (length > 0) {
-                size = length;
-                if (size > SMALLBSIZE)
-                        size = SMALLBSIZE;
-                length -= size;
+	sc = device_lookup_private(&leo_cd,minor(dev));
+	if (uio->uio_offset > sc->sc_msize)
+		return 0;
+	length = sc->sc_msize - uio->uio_offset;
+	if (length > uio->uio_resid)
+		length = uio->uio_resid;
+	while (length > 0) {
+		size = length;
+		if (size > SMALLBSIZE)
+			size = SMALLBSIZE;
+		length -= size;
 		offset = uio->uio_offset;
-                if (uio->uio_rw == UIO_READ)
-                        bus_space_read_region_1(sc->sc_memt, sc->sc_memh,
-                                        offset, smallbuf, size);
-                if ((error = uiomove((void *)smallbuf, size, uio)))
-                        return (error);
-                if (uio->uio_rw == UIO_WRITE)
-                        bus_space_write_region_1(sc->sc_memt, sc->sc_memh,
-                                        offset, smallbuf, size);
-        }
-        return 0;
+		if (uio->uio_rw == UIO_READ)
+			bus_space_read_region_1(sc->sc_memt, sc->sc_memh,
+			    offset, smallbuf, size);
+		if ((error = uiomove((void *)smallbuf, size, uio)))
+			return (error);
+		if (uio->uio_rw == UIO_WRITE)
+			bus_space_write_region_1(sc->sc_memt, sc->sc_memh,
+			    offset, smallbuf, size);
+	}
+	return 0;
 }
 
 int
@@ -389,11 +389,11 @@ leoioctl(dev_t dev, u_long cmd, void *data, int flags, struct lwp *l)
 	struct leo_softc *sc;
 
 	sc = device_lookup_private(&leo_cd,minor(dev));
-        switch (cmd) {
-        case LIOCYRES:
+	switch (cmd) {
+	case LIOCYRES:
 		return leo_init(sc, *(int *)data);
 		break;
-        case LIOCSCRL:
+	case LIOCSCRL:
 		return leo_scroll(sc, *(int *)data);
 		break;
 	default:

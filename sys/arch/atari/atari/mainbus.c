@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2021/01/03 17:42:10 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2021/01/03 17:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2023/01/06 10:28:27 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -246,21 +246,21 @@ mb_bus_space_peek_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 	return !badbaddr((void *)(calc_addr(h, o, t->stride, t->wo_1)), 1);
 }
 
-static int 
+static int
 mb_bus_space_peek_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
 	return !badbaddr((void *)(calc_addr(h, o, t->stride, t->wo_2)), 2);
 }
 
-static int 
+static int
 mb_bus_space_peek_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
 	return !badbaddr((void *)(calc_addr(h, o, t->stride, t->wo_4)), 4);
 }
 
-static int 
+static int
 mb_bus_space_peek_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 

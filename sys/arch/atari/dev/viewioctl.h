@@ -1,4 +1,4 @@
-/*	$NetBSD: viewioctl.h,v 1.3 2021/09/19 10:34:08 andvar Exp $	*/
+/*	$NetBSD: viewioctl.h,v 1.4 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -54,6 +54,6 @@ struct view_size {
 #define VIOCSSIZE	_IOW('V', 0x2, struct view_size)
 #define VIOCGSIZE	_IOR('V', 0x3, struct view_size)
 #define VIOCGBMAP	_IOR('V', 0x4, bmap_t)
-#define VIOCSCMAP 	_IOW('V', 0x5, colormap_t)
-#define VIOCGCMAP 	_IOWR('V', 0x6, colormap_t)
+#define VIOCSCMAP	_IOW('V', 0x5, colormap_t)
+#define VIOCGCMAP	_IOWR('V', 0x6, colormap_t)
 

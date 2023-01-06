@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.34 2022/06/26 04:51:17 tsutsui Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.35 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.34 2022/06/26 04:51:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.35 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -189,7 +189,7 @@ lerdcsr(struct lance_softc *sc, uint16_t port)
 
 	s = splhigh();
 	bus_space_write_2(lesc->sc_iot, lesc->sc_ioh, LER_RAP, port);
-	val = bus_space_read_2(lesc->sc_iot, lesc->sc_ioh, LER_RDP); 
+	val = bus_space_read_2(lesc->sc_iot, lesc->sc_ioh, LER_RDP);
 	splx(s);
 
 	return val;
@@ -458,7 +458,7 @@ le_vme_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * XXX: We always use uservector 64....
 	 */
-	if ((lesc->sc_intr = intr_establish(64, USER_VEC, 0, 
+	if ((lesc->sc_intr = intr_establish(64, USER_VEC, 0,
 	    (hw_ifun_t)le_intr, lesc)) == NULL) {
 		aprint_error("le_vme_attach: Can't establish interrupt\n");
 		return;
@@ -567,7 +567,7 @@ bvme410_probe(bus_space_tag_t iot, bus_space_handle_t ioh)
 	bus_space_write_2(iot, ioh, BVME410_IVEC, 0x0000);
 	if (bus_space_read_2(iot, ioh, BVME410_IVEC) != 0xff00)
 		return 0;
-	
+
 	bus_space_write_2(iot, ioh, BVME410_IVEC, 0xffff);
 	if (bus_space_read_2(iot, ioh, BVME410_IVEC) != 0xffff)
 		return 0;
@@ -612,7 +612,7 @@ bvme410_copytobuf(struct lance_softc *sc, void *from, int boff, int len)
 
 	for (buf += boff; len != 0; buf++, f++, len--) {
 		do {
- 			*buf = *f;
+			*buf = *f;
 		} while (*buf != *f);
 	}
 }
@@ -624,7 +624,7 @@ bvme410_zerobuf(struct lance_softc *sc, int boff, int len)
 
 	for (buf += boff; len != 0; buf++, len--) {
 		do {
- 			*buf = '\0';
+			*buf = '\0';
 		} while (*buf != '\0');
 	}
 }
