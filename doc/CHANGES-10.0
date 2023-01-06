@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.18 2023/01/04 12:17:54 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.19 2023/01/06 13:58:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -445,4 +445,15 @@ sys/net/pfkeyv2.h				1.35
 
 	Fix libreswan build failure.
 	[knakahara, ticket #36]
+
+lib/libc/gen/err.3				1.23
+
+	Add errc() and verrc() to the list of functions which do not return,
+	but exit() instead.
+	[kre, ticket #37]
+
+sys/net/if_tap.c				1.128
+
+	tap(4): PR 57155: fix link state for an interface cloned from /dev/tap.
+	[ozaki-r, ticket #38]
 
