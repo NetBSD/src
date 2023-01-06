@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.24 2022/07/10 10:52:40 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.25 2023/01/06 18:13:40 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -219,7 +219,7 @@ do_install(void)
 		    make_filesystems(&install) ||
 		    make_fstab(&install) != 0 ||
 		    md_post_newfs(&install) != 0)
-		goto error;
+			goto error;
 	}
 
 	/* Unpack the distribution. */
