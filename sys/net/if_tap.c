@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.127 2022/04/10 09:50:46 andvar Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.128 2023/01/06 01:54:22 ozaki-r Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.127 2022/04/10 09:50:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.128 2023/01/06 01:54:22 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -735,6 +735,7 @@ tap_dev_cloner(struct lwp *l)
 	}
 
 	sc->sc_flags |= TAP_INUSE;
+	if_link_state_change(&sc->sc_ec.ec_if, LINK_STATE_UP);
 
 	return fd_clone(fp, fd, FREAD | FWRITE, &tap_fileops,
 	    (void *)(intptr_t)device_unit(sc->sc_dev));
