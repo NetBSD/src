@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.16 2019/05/04 08:20:05 tsutsui Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.17 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.16 2019/05/04 08:20:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.17 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -124,7 +124,7 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 
 /*
  * VGA related stuff...
- *  
+ *
  * It looks like the Milan BIOS is initializing the VGA card in a reasonably
  * standard text mode. However, the screen mode is 640*480 instead of 640*400.
  * Since wscons does not handle the right by default, the card is reprogrammed

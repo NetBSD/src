@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.8 2021/08/07 16:18:46 thorpej Exp $	*/
+/*	$NetBSD: device.h,v 1.9 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -34,9 +34,9 @@
 #ifndef _ATARI_DEVICE_H_
 #define _ATARI_DEVICE_H_
 
-/* 
+/*
  * devices that need to configure before console use this
- * *and know it* (i.e. everything is really tight certain params won't be 
+ * *and know it* (i.e. everything is really tight certain params won't be
  * passed in some cases and the devices will deal with it)
  */
 int atari_config_found(cfdata_t, device_t, void *, cfprint_t,

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.67 2022/07/26 20:08:55 andvar Exp $	*/
+/*	$NetBSD: bus.c,v 1.68 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.67 2022/07/26 20:08:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.68 2023/01/06 10:28:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ bootm_alloc(paddr_t pa, u_long size, int flags)
 						(u_long)pa, size);
 		return 0;
 	}
-	
+
 	pg  = &bootm_ptep[btoc(rva - bootm_ex->ex_start)];
 	epg = &pg[btoc(size)];
 	va  = rva;
@@ -379,7 +379,7 @@ static size_t
 _bus_dmamap_mapsize(int const nsegments)
 {
 
-	KASSERT(nsegments > 0); 
+	KASSERT(nsegments > 0);
 	return sizeof(struct atari_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 }

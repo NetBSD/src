@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380.c,v 1.77 2022/04/07 19:33:37 andvar Exp $	*/
+/*	$NetBSD: ncr5380.c,v 1.78 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.77 2022/04/07 19:33:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr5380.c,v 1.78 2023/01/06 10:28:28 tsutsui Exp $");
 
 /*
  * Bit mask of targets you want debugging to be shown
@@ -145,7 +145,7 @@ finish_req(SC_REQ *reqp)
 	/*
 	 * If we bounced, free the bounce buffer
 	 */
-	if (reqp->dr_flag & DRIVER_BOUNCING) 
+	if (reqp->dr_flag & DRIVER_BOUNCING)
 		free_bounceb(reqp->bounceb);
 #endif /* REAL_DMA */
 #ifdef DBG_REQ
@@ -486,7 +486,7 @@ scsi_main(struct ncr_softc *sc)
 					 * Found one, remove it from
 					 * the issue queue.
 					 */
-					if (prev == NULL) 
+					if (prev == NULL)
 						issue_q = req->next;
 					else
 						prev->next = req->next;
@@ -510,7 +510,7 @@ scsi_main(struct ncr_softc *sc)
 			if ((GET_5380_REG(NCR5380_IDSTAT) & (SC_S_SEL|SC_S_IO))
 			    == (SC_S_SEL|SC_S_IO)){
 				if (req != NULL) {
-					req->next = issue_q; 
+					req->next = issue_q;
 					issue_q = req;
 				}
 				splx(sps);
@@ -545,7 +545,7 @@ scsi_main(struct ncr_softc *sc)
 			 */
 			if (scsi_select(req, 0)) {
 				sps = splbio();
-				req->next = issue_q; 
+				req->next = issue_q;
 				issue_q = req;
 				splx(sps);
 #ifdef DBG_REQ
@@ -747,7 +747,7 @@ scsi_select(SC_REQ *reqp, int code)
 	 */
 	SET_5380_REG(NCR5380_DATA, SC_HOST_ID);
 	SET_5380_REG(NCR5380_MODE, SC_ARBIT);
- 
+
 	splx(sps);
 
 	cnt = 10;
@@ -899,7 +899,7 @@ scsi_select(SC_REQ *reqp, int code)
 	 * Since we followed the SCSI-spec and raised ATN while SEL was true
 	 * but before BSY was false during the selection, a 'MESSAGE OUT'
 	 * phase should follow.  Unfortunately, this does not happen on
-	 * all targets (Asante ethernet devices, for example), so we must 
+	 * all targets (Asante ethernet devices, for example), so we must
 	 * check the actual mode if the message transfer fails--if the
 	 * new phase is PH_CMD and has never been successfully selected
 	 * w/ATN in the past, then we assume that it is an old device
@@ -1104,7 +1104,7 @@ information_transfer(struct ncr_softc *sc)
 		reqp->status = tmp;
 		PID("info_transf6");
 		return -1;
-	   default :
+	default:
 		ncr_tprint(reqp, "Unknown phase\n");
 	}
 	PID("info_transf7");
@@ -1181,7 +1181,7 @@ handle_message(SC_REQ *reqp, u_int msg)
 	case MSG_ABORT:
 	case MSG_CMDCOMPLETE:
 		ack_message();
-		connected = NULL;	
+		connected = NULL;
 		busy     &= ~(1 << reqp->targ_id);
 		if ((reqp->dr_flag & DRIVER_AUTOSEN) == 0) {
 			reqp->xs->resid = reqp->xdata_len;
@@ -1228,7 +1228,7 @@ handle_message(SC_REQ *reqp, u_int msg)
 		nack_message(reqp, MSG_MESSAGE_REJECT);
 		PID("hmessage9");
 		return -1;
-	default: 
+	default:
 		if ((msg & 0x80) && (msg & 0x18) == 0) {	/* IDENTIFY */
 			PID("hmessage10");
 			ack_message();
@@ -1283,7 +1283,7 @@ reselect(struct ncr_softc *sc)
 	}
 
 	SET_5380_REG(NCR5380_ICOM, 0);
-	
+
 	/*
 	 * Check if the reselection is still valid. Check twice because
 	 * of possible line glitches - cheaper than delay(1) and we need
@@ -1365,12 +1365,12 @@ transfer_pio(u_char *phase, u_char *data, u_long *len, int dont_drop_ack)
 	SET_5380_REG(NCR5380_TCOM, ph);
 	do {
 		if (!wait_req_true()) {
-	    		DBG_PIOPRINT ("SCSI: transfer_pio: missing REQ\n",
+			DBG_PIOPRINT ("SCSI: transfer_pio: missing REQ\n",
 			    0, 0);
 			break;
 		}
 		if (((GET_5380_REG(NCR5380_IDSTAT) >> 2) & 7) != ph) {
-	    		DBG_PIOPRINT("SCSI: transfer_pio: phase mismatch\n",
+			DBG_PIOPRINT("SCSI: transfer_pio: phase mismatch\n",
 			    0, 0);
 			break;
 		}
@@ -1702,7 +1702,7 @@ reach_msg_out(struct ncr_softc *sc, u_long len)
 		}
 		ncr_aprint(sc, "Phase now: %d after %ld bytes.\n",
 		    phase, len - n);
-		
+
 	}
 	return -1;
 }

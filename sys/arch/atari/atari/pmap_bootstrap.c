@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.9 2018/03/10 02:48:51 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.10 2023/01/06 10:28:27 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* 
+/*
  * Copyright (c) 1991 Regents of the University of California.
  * All rights reserved.
  *
@@ -89,7 +89,7 @@ extern paddr_t	msgbufpa;
 /*
  * All those kernel PT submaps that BSD is so fond of
  */
-void 		*CADDR1, *CADDR2;
+void		*CADDR1, *CADDR2;
 char		*vmmap;
 
 /*

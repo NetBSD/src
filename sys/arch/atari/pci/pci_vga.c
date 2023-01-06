@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.19 2022/08/15 04:37:46 tsutsui Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.20 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.19 2022/08/15 04:37:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.20 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -215,7 +215,7 @@ check_for_vga(bus_space_tag_t iot, bus_space_tag_t memt)
 	/*
 	 * Generic parts of the initialization...
 	 */
-	
+
 	/* set ATC registers */
 	for (i = 0; i < 21; i++)
 		WAttr(regs, i, vga_atc[i]);
@@ -243,7 +243,7 @@ check_for_vga(bus_space_tag_t iot, bus_space_tag_t memt)
 	}
 	for (i = 56; *nbd; i += 2)
 		fb[i] = *nbd++;
-	
+
 	rv = 1;
 	vga_iot  = iot;
 	vga_memt = memt;
@@ -305,7 +305,7 @@ loadfont(volatile uint8_t *ba, uint8_t *fb)
 	WGfx(ba, GCT_ID_READ_MAP_SELECT, 0x02);
 	WGfx(ba, GCT_ID_GRAPHICS_MODE,	 0x00);
 	WGfx(ba, GCT_ID_MISC,		 0x0c);
-	
+
 	/*
 	 * load text font into beginning of display memory. Each
 	 * character cell is 32 bytes long (enough for 4 planes)

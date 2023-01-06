@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.56 2022/06/26 09:18:06 martin Exp $	*/
+/*	$NetBSD: kbd.c,v 1.57 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.56 2022/06/26 09:18:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.57 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include "mouse.h"
 #include "ite.h"
@@ -95,7 +95,7 @@ struct kbd_softc {
 	int		sc_pollingmode;	/* polling mode on? whatever it is... */
 #endif
 	void		*sc_sicookie;	/* softint(9) cookie		*/
-	krndsource_t	sc_rndsource;	/* rnd(9) entropy 		*/
+	krndsource_t	sc_rndsource;	/* rnd(9) entropy		*/
 };
 
 /* WSKBD */

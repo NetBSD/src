@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_et.c,v 1.37 2022/06/26 18:46:14 tsutsui Exp $	*/
+/*	$NetBSD: ite_et.c,v 1.38 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.37 2022/06/26 18:46:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_et.c,v 1.38 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ grfetattach(device_t parent, device_t self, void *aux)
 	extern const struct cdevsw grf_cdevsw;
 
 	/*
-	 * find our major device number 
+	 * find our major device number
 	 */
 	maj = cdevsw_lookup_major(&grf_cdevsw);
 
@@ -239,7 +239,7 @@ grfetattach(device_t parent, device_t self, void *aux)
 		aprint_normal(" monochrome\n");
 	else
 		aprint_normal(" colors %d\n", sc->g_display.gd_colors);
-	
+
 	/*
 	 * try and attach an ite
 	 */
@@ -370,7 +370,7 @@ ite_newsize(struct ite_softc *ip, struct itewinsize *winsz)
 	/*
 	 * Reinitialize our structs
 	 */
-	ip->cols = view->display.width  / ip->font.width; 
+	ip->cols = view->display.width  / ip->font.width;
 	ip->rows = view->display.height / ip->font.height;
 
 	/*
@@ -421,8 +421,8 @@ iteet_ioctl(struct ite_softc *ip, u_long cmd, void * addr, int flag,
 			ws.ws_ypixel = view->display.height;
 			ite_reset(ip);
 			/*
-			 * XXX tell tty about the change 
-			 * XXX this is messy, but works 
+			 * XXX tell tty about the change
+			 * XXX this is messy, but works
 			 */
 			(*ite_cdevsw.d_ioctl)(ip->grf->g_itedev, TIOCSWINSZ,
 					      (void *)&ws, 0, l);
@@ -462,9 +462,9 @@ et_cursor(struct ite_softc *ip, int flag)
 		return;
 
 	switch (flag) {
- 	    case DRAW_CURSOR:
+	case DRAW_CURSOR:
 		/*WCrt(ba, CRT_ID_CURSOR_START, & ~0x20); */
-	    case MOVE_CURSOR:
+	case MOVE_CURSOR:
 		cpos  =  RCrt(ba, CRT_ID_START_ADDR_LOW) & 0xff;
 		cpos |= (RCrt(ba, CRT_ID_START_ADDR_HIGH) & 0xff) << 8;
 		cpos += ip->curx + ip->cury * ip->cols;
@@ -475,13 +475,13 @@ et_cursor(struct ite_softc *ip, int flag)
 		ip->cursorx = ip->curx;
 		ip->cursory = ip->cury;
 		break;
-	    case ERASE_CURSOR:
+	case ERASE_CURSOR:
 		/*WCrt(ba, CRT_ID_CURSOR_START, | 0x20); */
-	    case START_CURSOROPT:
-	    case END_CURSOROPT:
-	    default:
+	case START_CURSOROPT:
+	case END_CURSOROPT:
+	default:
 		break;
-    	}
+	}
 }
 
 void
@@ -536,28 +536,28 @@ et_scroll(struct ite_softc *ip, int sy, int sx, int count, int dir)
 
 	fb = (u_short*)v->bitmap->plane + sy * ip->cols;
 	switch (dir) {
-	    case SCROLL_UP:
-			src = fb;
-			dst = fb - count * ip->cols;
-			len = (ip->bottom_margin + 1 - sy) * ip->cols;
-			break;
-	    case SCROLL_DOWN:
-			src = fb;
-			dst = fb + count * ip->cols;
-			len = (ip->bottom_margin + 1 - (sy + count)) * ip->cols;
-			break;
-	    case SCROLL_RIGHT:
-			src = fb + sx;
-			dst = fb + sx + count;
-			len = ip->cols - sx + count;
-			break;
-	    case SCROLL_LEFT:
-			src = fb + sx;
-			dst = fb + sx - count;
-			len = ip->cols - sx;
-			break;
-	    default:
-			return;
+	case SCROLL_UP:
+		src = fb;
+		dst = fb - count * ip->cols;
+		len = (ip->bottom_margin + 1 - sy) * ip->cols;
+		break;
+	case SCROLL_DOWN:
+		src = fb;
+		dst = fb + count * ip->cols;
+		len = (ip->bottom_margin + 1 - (sy + count)) * ip->cols;
+		break;
+	case SCROLL_RIGHT:
+		src = fb + sx;
+		dst = fb + sx + count;
+		len = ip->cols - sx + count;
+		break;
+	case SCROLL_LEFT:
+		src = fb + sx;
+		dst = fb + sx - count;
+		len = ip->cols - sx;
+		break;
+	default:
+		return;
 	}
 	if (src > dst) {
 		while (len--)
@@ -603,7 +603,7 @@ et_inittextmode(struct ite_softc *ip, et_sv_reg_t *etregs, int loadfont)
 		vgaw(ba, VDAC_ADDRESS_W, 0);
 		for (z = 0; z < 256; z++) {
 			y = (z & 1) ? ((z > 7) ? 2 : 1) : 0;
-    
+
 			vgaw(ba, VDAC_DATA, etconscolors[y][0]);
 			vgaw(ba, VDAC_DATA, etconscolors[y][1]);
 			vgaw(ba, VDAC_DATA, etconscolors[y][2]);
@@ -622,7 +622,7 @@ et_inittextmode(struct ite_softc *ip, et_sv_reg_t *etregs, int loadfont)
 		WGfx(ba, GCT_ID_GRAPHICS_MODE,	 0x00);
 		WGfx(ba, GCT_ID_MISC,		 0x04);
 		splx(s);
-	
+
 		/*
 		 * load text font into beginning of display memory. Each
 		 * character cell is 32 bytes long (enough for 4 planes)

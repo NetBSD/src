@@ -1,4 +1,4 @@
-/*	$NetBSD: et4000.c,v 1.27 2022/07/03 15:25:54 tsutsui Exp $	*/
+/*	$NetBSD: et4000.c,v 1.28 2023/01/06 10:28:28 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,7 +45,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.27 2022/07/03 15:25:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: et4000.c,v 1.28 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -156,7 +156,7 @@ const struct cdevsw et4k_cdevsw = {
  * Look for a ET4000 (Crazy Dots) card on the VME bus.  We might
  * match Spektrum cards too (untested).
  */
-int 
+int
 et4k_vme_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vme_attach_args *va = aux;
@@ -199,8 +199,8 @@ et4k_probe_addresses(struct vme_attach_args *va)
 			return 0;
 		}
 		if (bus_space_map(memt, vat.va_maddr, vat.va_msize,
-			  	  BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
-			  	  &memh)) {
+				  BUS_SPACE_MAP_LINEAR|BUS_SPACE_MAP_CACHEABLE,
+				  &memh)) {
 			bus_space_unmap(iot, ioh, vat.va_iosize);
 			printf("%s: cannot map memory area\n", __func__);
 			return 0;
@@ -468,7 +468,7 @@ et4kmmap(dev_t dev, off_t offset, int prot)
 
 	sc = device_lookup_private(&et4k_cd, minor(dev));
 
-	/* 
+	/*
 	 * control registers
 	 * mapped from offset 0x0 to REG_MAPPABLE
 	 */
@@ -492,7 +492,7 @@ et4kmmap(dev_t dev, off_t offset, int prot)
 	return -1;
 }
 
-int 
+int
 et4kon(dev_t dev)
 {
 	struct et4k_softc *sc;
@@ -505,7 +505,7 @@ et4kon(dev_t dev)
 	return 0;
 }
 
-int 
+int
 et4koff(dev_t dev)
 {
 

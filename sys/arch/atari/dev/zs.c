@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.80 2022/06/26 06:25:09 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.81 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.80 2022/06/26 06:25:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.81 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,7 +463,7 @@ zsopen(dev_t dev, int flags, int mode, struct lwp *l)
 	error = ttyopen(tp, ZS_DIALOUT(dev), (flags & O_NONBLOCK));
 	if (error)
 		goto bad;
-	
+
 	error = tp->t_linesw->l_open(dev, tp);
 	if (error)
 		goto bad;
@@ -556,7 +556,7 @@ zspoll(dev_t dev, int events, struct lwp *l)
 	sc   = device_lookup_private(&zs_cd, unit >> 1);
 	cs   = sc->sc_cs[unit & 1];
 	tp   = cs->cs_ttyp;
- 
+
 	return (*tp->t_linesw->l_poll)(tp, events, l);
 }
 
@@ -926,7 +926,7 @@ zsioctl(dev_t dev, u_long cmd, void * data, int flag, struct lwp *l)
 			cs->cs_creg[15] &= ~ZSWR15_DCD_IE;
 			ZS_WRITE(cs->cs_zc, 15, cs->cs_creg[15]);
 		} else if ((userbits & TIOCFLAG_CLOCAL) != 0) {
-			cs->cs_softcar = 0; 	/* turn off softcar */
+			cs->cs_softcar = 0;	/* turn off softcar */
 			cs->cs_preg[15] |= ZSWR15_DCD_IE; /* turn on dcd */
 			cs->cs_creg[15] |= ZSWR15_DCD_IE;
 			ZS_WRITE(cs->cs_zc, 15, cs->cs_creg[15]);

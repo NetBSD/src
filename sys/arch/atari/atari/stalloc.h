@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.h,v 1.6 2014/01/03 07:14:20 mlelstv Exp $	*/
+/*	$NetBSD: stalloc.h,v 1.7 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps (allocator stuff)
@@ -39,7 +39,7 @@
  * St-mem allocator stuff.
  */
 struct mem_node {
-	TAILQ_ENTRY(mem_node) link; 	
+	TAILQ_ENTRY(mem_node) link;
 	TAILQ_ENTRY(mem_node) free_link;
 	u_long size;		/* size of memory following node. */
 	u_char type;		/* free, used */
