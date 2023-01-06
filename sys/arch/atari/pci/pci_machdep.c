@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.62 2021/08/21 11:55:24 andvar Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.63 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.62 2021/08/21 11:55:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.63 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include "opt_mbtype.h"
 
@@ -232,7 +232,7 @@ init_pci_bus(void)
 
 	tag   = 0;
 	id    = 0;
-	
+
 	maxndevs = pci_bus_maxdevs(pc, 0);
 
 	for (device = 0; device < maxndevs; device++) {
@@ -284,7 +284,7 @@ overlap_pci_areas(struct pci_memreg *p, struct pci_memreg *self, u_int addr,
 
 	if (p == NULL)
 		return 0;
-    
+
 	q = p;
 	while (q != NULL) {
 		if ((q != self) && (q->csr & what)) {
@@ -732,7 +732,6 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih, char *buf,
 
 	snprintf(buf, len, "irq %d", ih);
 	return buf;
-	
 }
 
 const struct evcnt *

@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380var.h,v 1.8 2010/04/13 13:30:37 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380var.h,v 1.9 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -36,21 +36,21 @@
 #endif
 
 #ifdef DBG_SEL
-#define DBG_SELPRINT(a,b)	printf(a,b)
+#define DBG_SELPRINT(a, b)	printf(a, b)
 #else
-#define DBG_SELPRINT(a,b)
+#define DBG_SELPRINT(a, b)
 #endif
 
 #ifdef DBG_PIO
-#define DBG_PIOPRINT(a,b,c) 	printf(a,b,c)
+#define DBG_PIOPRINT(a, b, c)	printf(a, b, c)
 #else
-#define DBG_PIOPRINT(a,b,c)
+#define DBG_PIOPRINT(a, b, c)
 #endif
 
 #ifdef DBG_INF
-#define DBG_INFPRINT(a,b,c)	a(b,c)
+#define DBG_INFPRINT(a, b, c)	a(b, c)
 #else
-#define DBG_INFPRINT(a,b,c)
+#define DBG_INFPRINT(a, b, c)
 #endif
 
 #ifdef DBG_PID

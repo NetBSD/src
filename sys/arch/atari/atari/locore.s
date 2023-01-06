@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116 2022/05/30 09:56:03 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.117 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,7 +88,7 @@ ENTRY_NOPROFILE(doadump)
 
 /*
  * Trap/interrupt vector routines
- */ 
+ */
 #include <m68k/m68k/trap_subr.s>
 
 #if defined(M68040) || defined(M68060)
@@ -111,7 +111,7 @@ ENTRY_NOPROFILE(buserr60)
 	movl	%a0,%sp@(FR_SP)		|   in the savearea
 	movel	%sp@(FR_HW+12),%d0	| FSLW
 	btst	#2,%d0			| branch prediction error?
-	jeq	Lnobpe			
+	jeq	Lnobpe
 	movc	%cacr,%d2
 	orl	#IC60_CABC,%d2		| clear all branch cache entries
 	movc	%d2,%cacr
@@ -131,7 +131,7 @@ Lnobpe:
 Lberr3:
 	movl	%d1,%sp@-
 	movl	%d0,%sp@-		| code is FSLW now.
-	andw	#0x1f80,%d0 
+	andw	#0x1f80,%d0
 	jeq	Lisberr
 	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
 	jra	_ASM_LABEL(faultstkadj)	| and deal with it
@@ -642,7 +642,7 @@ ENTRY_NOPROFILE(spurintr)
 	addql	#1,_C_LABEL(intrcnt)+0
 	INTERRUPT_SAVEREG		|  save scratch registers
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG		|  restore scratch regs	
+	INTERRUPT_RESTOREREG		|  restore scratch regs
 	jra	_ASM_LABEL(rei)
 
 	/* MFP timer A handler --- System clock --- */
@@ -655,7 +655,7 @@ ASENTRY_NOPROFILE(mfp_tima)
 	addql	#1,_C_LABEL(intrcnt_user)+52
 					|  add another system clock interrupt
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG		|  restore scratch regs	
+	INTERRUPT_RESTOREREG		|  restore scratch regs
 	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		|  all done
 
@@ -667,7 +667,7 @@ ASENTRY_NOPROFILE(mfp_timc)
 	jbsr	_C_LABEL(statintr)	|  call statistics clock handler
 	addql	#1,_C_LABEL(intrcnt)+36	|  add another stat clock interrupt
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG		|  restore scratch regs	
+	INTERRUPT_RESTOREREG		|  restore scratch regs
 	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)		|  all done
 #endif /* STATCLOCK */
@@ -684,7 +684,7 @@ ASENTRY_NOPROFILE(mfp_kbd)
 	jbsr	_C_LABEL(kbdintr)	|  handle interrupt
 	addql	#4,%sp			|  pop SR
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG		|  restore scratch regs	
+	INTERRUPT_RESTOREREG		|  restore scratch regs
 	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 #endif /* NKBD */
@@ -701,7 +701,7 @@ ASENTRY_NOPROFILE(mfp2_5380dm)
 	jbsr	_C_LABEL(scsi_dma)	|  handle interrupt
 	addql	#4,%sp			|  pop SR
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG		|  restore scratch regs	
+	INTERRUPT_RESTOREREG		|  restore scratch regs
 	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 
@@ -716,7 +716,7 @@ ASENTRY_NOPROFILE(mfp2_5380)
 	jbsr	_C_LABEL(scsi_ctrl)	|  handle interrupt
 	addql	#4,%sp			|  pop SR
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG		|  restore scratch regs	
+	INTERRUPT_RESTOREREG		|  restore scratch regs
 	subql	#1,_C_LABEL(idepth)
 	jra	_ASM_LABEL(rei)
 #endif /* NNCRSCSI > 0 */
@@ -796,7 +796,7 @@ Lrei1:
 	clrl	%sp@-			|  code == none
 	movl	#T_ASTFLT,%sp@-		|  type == async system trap
 	pea	%sp@(12)		|  fp == address of trap frame
-	jbsr	_C_LABEL(trap)		|  go handle it	
+	jbsr	_C_LABEL(trap)		|  go handle it
 	lea	%sp@(16),%sp		|  pop value args
 	movl	%sp@(FR_SP),%a0		|  restore user SP
 	movl	%a0,%usp		|    from save area
@@ -838,15 +838,15 @@ Lgotsir:
 	pea	%sp@(12)		|  fp == address of trap frame
 	jbsr	_C_LABEL(trap)		|  go handle it
 	lea	%sp@(16),%sp		|  pop value args
-	movl	%sp@(FR_SP),%a0		|  restore	
+	movl	%sp@(FR_SP),%a0		|  restore
 	movl	%a0,%usp		|    user SP
 	moveml	%sp@+,#0x7FFF		|  and all remaining registers
-	addql	#8,%sp			|  pop SP and stack adjust	
+	addql	#8,%sp			|  pop SP and stack adjust
 	rte
 Lnosir:
 	movl	%sp@+,%d0		|  restore scratch register
 Ldorte:
-	rte				|  real return	
+	rte				|  real return
 
 /*
  * Initialization
@@ -1014,11 +1014,11 @@ Lcacheon:
 	 * When "main()" returns, we're running in process 1 and have
 	 * successfully faked the "execve()".  We load up the registers from
 	 * that set; the "rte" loads the PC and PSR, which jumps to "init".
- 	 */
+	 */
 	movl	#0,%a6			|  make DDB stack_trace() work
-  	clrw	%sp@-			|  vector offset/frame type
+	clrw	%sp@-			|  vector offset/frame type
 	clrl	%sp@-			|  PC - filled in by "execve"
-  	movw	#PSL_USER,%sp@-		|  in user mode
+	movw	#PSL_USER,%sp@-		|  in user mode
 	clrl	%sp@-			|  stack adjust count
 	lea	%sp@(-64),%sp		|  construct space for D0-D7/A0-A7
 	lea	_C_LABEL(lwp0),%a0	| lwp0 in a0
@@ -1037,7 +1037,7 @@ Lnoflush:
 	movl	%a0,%usp		|    user SP
 	moveml	%sp@+,#0x7FFF		|  load most registers (all but SSP)
 	addql	#8,%sp			|  pop SSP and stack adjust count
-  	rte
+	rte
 
 /*
  * Use common m68k sigcode.
@@ -1251,7 +1251,7 @@ Ldoboot0:
 Ldb1:
 	clrl	%a0@+
 	dbra	%d0,Ldb1
-	
+
 	lea	Ldoreboot,%a1		| a1 = start of copy range
 	lea	Ldorebootend,%a2	| a2 = end of copy range
 	movl	_C_LABEL(page_zero),%a0	| a0 = virtual base for page zero

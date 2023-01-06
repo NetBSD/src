@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.106 2022/07/03 16:03:08 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.107 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.106 2022/07/03 16:03:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.107 2023/01/06 10:28:27 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -120,7 +120,7 @@ static u_int milan_probe_bank(paddr_t paddr);
  */
 static cpu_kcore_hdr_t cpu_kcore_hdr;
 
-extern u_int 	lowram;
+extern u_int	lowram;
 int		machineid, mmutype, cputype, astpending;
 
 extern char		*esym;
@@ -180,16 +180,16 @@ int	reloc_kernel = RELOC_KERNEL;		/* Patchable	*/
  *	Interrupts are disabled
  *	PA == VA, we don't have to relocate addresses before enabling
  *		the MMU
- * 	Exec is no longer available (because we're loaded all over 
+ *	Exec is no longer available (because we're loaded all over
  *		low memory, no ExecBase is available anymore)
  *
  * It's purpose is:
- *	Do the things that are done in locore.s in the hp300 version, 
+ *	Do the things that are done in locore.s in the hp300 version,
  *		this includes allocation of kernel maps and enabling the MMU.
- * 
- * Some of the code in here is `stolen' from Amiga MACH, and was 
+ *
+ * Some of the code in here is `stolen' from Amiga MACH, and was
  * written by Bryan Ford and Niklas Hallqvist.
- * 
+ *
  * Very crude 68040 support by Michael L. Hitch.
  */
 int kernel_copyback = 1;
@@ -199,7 +199,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
     char *esym_addr)
 	/* id:			 Machine id			*/
 	/* ttphystart, ttphysize: Start address and size of TT-ram */
-	/* stphysize:		 Size of ST-ram 		*/
+	/* stphysize:		 Size of ST-ram			*/
 	/* esym_addr:		 Address of kernel '_esym' symbol */
 {
 	extern char	end[];
@@ -304,7 +304,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	machineid      = id;
 	esym           = esym_addr;
 
-	/* 
+	/*
 	 * the kernel ends at end() or esym.
 	 */
 	if (esym == NULL)
@@ -448,7 +448,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 		pg_proto += PAGE_SIZE;
 	}
 
-	/* 
+	/*
 	 * data, bss and dynamic tables are read/write
 	 */
 	pg_proto = (pg_proto & PG_FRAME) | PG_RW | PG_V;
@@ -608,8 +608,8 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	cpu_init_kcorehdr(kbase, Sysseg_pa);
 
 	/*
-	 * copy over the kernel (and all now initialized variables) 
-	 * to fastram.  DONT use bcopy(), this beast is much larger 
+	 * copy over the kernel (and all now initialized variables)
+	 * to fastram.  DONT use bcopy(), this beast is much larger
 	 * than 128k !
 	 */
 	if (kbase) {
@@ -632,8 +632,8 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 		 */
 		if (cputype == CPU_68060) {
 			/* XXX: Need the branch cache be cleared? */
-			__asm volatile (".word 0x4e7a,0x0002;" 
-				      "orl #0x400000,%%d0;" 
+			__asm volatile (".word 0x4e7a,0x0002;"
+				      "orl #0x400000,%%d0;"
 				      ".word 0x4e7b,0x0002" : : : "d0");
 		}
 		__asm volatile ("movel %0,%%a0;"
@@ -1101,7 +1101,7 @@ cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
 	m->sg_v		= SG_V;
 	m->sg_frame	= SG_FRAME;
 	m->sg_ishift	= SG_ISHIFT;
-	m->sg_pmask	= SG_PMASK; 
+	m->sg_pmask	= SG_PMASK;
 	m->sg40_shift1	= SG4_SHIFT1;
 	m->sg40_mask2	= SG4_MASK2;
 	m->sg40_shift2	= SG4_SHIFT2;
@@ -1164,7 +1164,7 @@ mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
 		pg_proto += PAGE_SIZE;
 	}
 
-	/* 
+	/*
 	 * Invalidate the remainder of the tables.
 	 */
 	esg = (st_entry_t *)sysseg_pa;
@@ -1315,7 +1315,7 @@ initcpu(void)
 			extern trapfun illinst;
 #endif
 
-			__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : : 
+			__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
 					"d"(m68060_pcr_init):"d0" );
 
 			/* bus/addrerr vectors */
@@ -1396,8 +1396,8 @@ dump_segtable(u_int *stp)
 		shift = SG_ISHIFT;
 	}
 
-	/* 
-	 * XXX need changes for 68040 
+	/*
+	 * XXX need changes for 68040
 	 */
 	for (i = 0; s < es; s++, i++)
 		if (*s & SG_V)

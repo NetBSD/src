@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.17 2021/01/03 17:42:10 thorpej Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.18 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.17 2021/01/03 17:42:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.18 2023/01/06 10:28:27 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -186,7 +186,7 @@ beb_alloc_bus_space_tag(bus_space_tag_t storage)
 		beb_t = kmem_alloc(sizeof(*beb_t), KM_SLEEP);
 	}
 	memset(beb_t, 0, sizeof(*beb_t));
-	
+
 	beb_t->abs_p_1   = beb_bus_space_peek_1;
 	beb_t->abs_p_2   = beb_bus_space_peek_2;
 	beb_t->abs_p_4   = beb_bus_space_peek_4;
@@ -269,21 +269,21 @@ beb_bus_space_peek_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 	return !badbaddr((void *)(h + o), 1);
 }
 
-static int 
+static int
 beb_bus_space_peek_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
 	return !badbaddr((void *)(h + o), 2);
 }
 
-static int 
+static int
 beb_bus_space_peek_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
 	return !badbaddr((void *)(h + o), 4);
 }
 
-static int 
+static int
 beb_bus_space_peek_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
@@ -368,7 +368,7 @@ beb_bus_space_write_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o,
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *		bus_space_handle_t bsh, bus_size_t offset, uintX_t *address,
- *	 	bus_size_t count);
+ *		bus_size_t count);
  *
  * Read 'count' 1, 2, 4, or 8 byte values from the bus_space described by
  * tag/handle at `offset' and store them in the address range starting at

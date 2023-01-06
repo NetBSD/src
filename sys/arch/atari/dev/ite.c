@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.84 2022/06/26 18:46:14 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.85 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.84 2022/06/26 18:46:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.85 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -184,7 +184,7 @@ static int		cons_ite = -1;
 static int
 itematch(device_t parent, cfdata_t cf, void *aux)
 {
-	
+
 	/*
 	 * Handle early console stuff. The first unit number
 	 * is the console unit. All other early matches will fail.
@@ -240,7 +240,7 @@ iteattach(device_t parent, device_t self, void *aux)
 			aprint_normal(" has keyboard");
 		aprint_normal("\n");
 		sc->flags |= ITE_ATTACHED;
- 	} else {
+	} else {
 		if (con_itesoftc.grf != NULL &&
 		    con_itesoftc.grf->g_conpri > gsc->g_conpri)
 			return;
@@ -272,7 +272,7 @@ getitesp(dev_t dev)
 void
 itecnprobe(struct consdev *cd)
 {
-	/* 
+	/*
 	 * return priority of the best ite (already picked from attach)
 	 * or CN_DEAD.
 	 */
@@ -346,7 +346,7 @@ itecnputc(dev_t dev, int c)
  * standard entry points to the device.
  */
 
-/* 
+/*
  * iteinit() is the standard entry point for initialization of
  * an ite device, it is also called from itecninit().
  *
@@ -512,7 +512,7 @@ iteioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 	struct itewinsize	*is;
 	struct itebell		*ib;
 	int error;
-	
+
 	sc   = getitesp(dev);
 	tp   = sc->tp;
 	view = viewview(sc->grf->g_viewdev);
@@ -606,7 +606,7 @@ itestart(struct tty *tp)
 
 		tp->t_state |= TS_BUSY;
 		rbp = &tp->t_outq;
-		
+
 		len = q_to_b(rbp, buf, ITEBURST);
 	} splx(s);
 
@@ -628,7 +628,7 @@ void
 ite_on(dev_t dev, int flag)
 {
 	struct ite_softc *sc;
-	sc = getitesp(dev); 
+	sc = getitesp(dev);
 
 	/* force ite active, overriding graphics mode */
 	if (flag & 1) {
@@ -689,7 +689,7 @@ ite_switch(int unit)
 	/*
 	 * Make sure the cursor's there too....
 	 */
-  	SUBR_CURSOR(sc, DRAW_CURSOR);
+	SUBR_CURSOR(sc, DRAW_CURSOR);
 }
 
 /* XXX called after changes made in underlying grf layer. */
@@ -777,7 +777,7 @@ ite_cnfilter(u_int c, enum caller caller)
 		splx(s);
 		return -1;
 	}
-	
+
 	/* translate modifiers */
 	if (kbd_modifier & KBD_MOD_SHIFT) {
 		if (kbd_modifier & KBD_MOD_ALT)
@@ -849,7 +849,7 @@ static void
 repeat_handler(void *arg)
 {
 	tout_pending = 0;
-	if (last_char) 
+	if (last_char)
 		add_sicallback((si_farg)ite_filter, (void *)last_char,
 						    (void *)ITEFILT_REPEATER);
 }
@@ -883,7 +883,7 @@ ite_filter(u_int c, enum caller caller)
 	/* have to make sure we're at spltty in here */
 	s = spltty();
 
-	/* 
+	/*
 	 * keyboard interrupts come at priority 2, while softint
 	 * generated keyboard-repeat interrupts come at level 1.  So,
 	 * to not allow a key-up event to get thru before a repeat for
@@ -969,7 +969,7 @@ ite_filter(u_int c, enum caller caller)
 	}
 	code = key.code;
 
-	/* 
+	/*
 	 * Arrange to repeat the keystroke. By doing this at the level
 	 * of scan-codes, we can have function keys, and keys that
 	 * send strings, repeat too. This also entitles an additional
@@ -1021,7 +1021,7 @@ ite_filter(u_int c, enum caller caller)
 		static const char * const out = "pqrstuvwxymlnMPQRS";
 			   char *cp  = strchr(in, code);
 
-		/* 
+		/*
 		 * keypad-appmode sends SS3 followed by the above
 		 * translated character
 		 */
@@ -1040,7 +1040,7 @@ ite_filter(u_int c, enum caller caller)
 		    3, 27, 'O', 'D'};
 
 		str = kbdmap->strings + code;
-		/* 
+		/*
 		 * if this is a cursor key, AND it has the default
 		 * keymap setting, AND we're in app-cursor mode, switch
 		 * to the above table. This is *nasty* !
@@ -1051,7 +1051,7 @@ ite_filter(u_int c, enum caller caller)
 		    strchr("ABCD", str[3]))
 			str = app_cursor + 4 * (str[3] - 'A');
 
-		/* 
+		/*
 		 * using a length-byte instead of 0-termination allows
 		 * to embed \0 into strings, although this is not used
 		 * in the default keymap
@@ -1082,87 +1082,89 @@ ite_sendstr(const char *str)
 static void
 alignment_display(struct ite_softc *sc)
 {
-  int i, j;
+	int i, j;
 
-  for (j = 0; j < sc->rows; j++)
-    for (i = 0; i < sc->cols; i++)
-      SUBR_PUTC(sc, 'E', j, i, ATTR_NOR);
-  attrclr(sc, 0, 0, sc->rows, sc->cols);
-  SUBR_CURSOR(sc, DRAW_CURSOR);
+	for (j = 0; j < sc->rows; j++)
+		for (i = 0; i < sc->cols; i++)
+			SUBR_PUTC(sc, 'E', j, i, ATTR_NOR);
+	attrclr(sc, 0, 0, sc->rows, sc->cols);
+	SUBR_CURSOR(sc, DRAW_CURSOR);
 }
 
 static inline void
 snap_cury(struct ite_softc *sc)
 {
-  if (sc->inside_margins)
-    {
-      if (sc->cury < sc->top_margin)
-	sc->cury = sc->top_margin;
-      if (sc->cury > sc->bottom_margin)
-	sc->cury = sc->bottom_margin;
-    }
+
+	if (sc->inside_margins) {
+		if (sc->cury < sc->top_margin)
+			sc->cury = sc->top_margin;
+		if (sc->cury > sc->bottom_margin)
+			sc->cury = sc->bottom_margin;
+	}
 }
 
 static inline void
 ite_dnchar(struct ite_softc *sc, int n)
 {
-  n = uimin(n, sc->cols - sc->curx);
-  if (n < sc->cols - sc->curx)
-    {
-      SUBR_SCROLL(sc, sc->cury, sc->curx + n, n, SCROLL_LEFT);
-      attrmov(sc, sc->cury, sc->curx + n, sc->cury, sc->curx,
-	      1, sc->cols - sc->curx - n);
-      attrclr(sc, sc->cury, sc->cols - n, 1, n);
-    }
-  while (n-- > 0)
-    SUBR_PUTC(sc, ' ', sc->cury, sc->cols - n - 1, ATTR_NOR);
-  SUBR_CURSOR(sc, DRAW_CURSOR);
+
+	n = uimin(n, sc->cols - sc->curx);
+	if (n < sc->cols - sc->curx) {
+		SUBR_SCROLL(sc, sc->cury, sc->curx + n, n, SCROLL_LEFT);
+		attrmov(sc, sc->cury, sc->curx + n, sc->cury, sc->curx,
+		    1, sc->cols - sc->curx - n);
+		attrclr(sc, sc->cury, sc->cols - n, 1, n);
+	}
+	while (n-- > 0)
+		SUBR_PUTC(sc, ' ', sc->cury, sc->cols - n - 1, ATTR_NOR);
+	SUBR_CURSOR(sc, DRAW_CURSOR);
 }
 
 static inline void
 ite_inchar(struct ite_softc *sc, int n)
 {
-  n = uimin(n, sc->cols - sc->curx);
-  if (n < sc->cols - sc->curx)
-    {
-      SUBR_SCROLL(sc, sc->cury, sc->curx, n, SCROLL_RIGHT);
-      attrmov(sc, sc->cury, sc->curx, sc->cury, sc->curx + n,
-	      1, sc->cols - sc->curx - n);
-      attrclr(sc, sc->cury, sc->curx, 1, n);
-    }
-  while (n--)
-    SUBR_PUTC(sc, ' ', sc->cury, sc->curx + n, ATTR_NOR);
-  SUBR_CURSOR(sc, DRAW_CURSOR);
+
+	n = uimin(n, sc->cols - sc->curx);
+	if (n < sc->cols - sc->curx) {
+		SUBR_SCROLL(sc, sc->cury, sc->curx, n, SCROLL_RIGHT);
+		attrmov(sc, sc->cury, sc->curx, sc->cury, sc->curx + n,
+		    1, sc->cols - sc->curx - n);
+		attrclr(sc, sc->cury, sc->curx, 1, n);
+	}
+	while (n--)
+		SUBR_PUTC(sc, ' ', sc->cury, sc->curx + n, ATTR_NOR);
+	SUBR_CURSOR(sc, DRAW_CURSOR);
 }
 
 static inline void
 ite_clrtoeol(struct ite_softc *sc)
 {
-  int y = sc->cury, x = sc->curx;
-  if (sc->cols - x > 0)
-    {
-      SUBR_CLEAR(sc, y, x, 1, sc->cols - x);
-      attrclr(sc, y, x, 1, sc->cols - x);
-      SUBR_CURSOR(sc, DRAW_CURSOR);
-    }
+	int y = sc->cury, x = sc->curx;
+
+	if (sc->cols - x > 0) {
+		SUBR_CLEAR(sc, y, x, 1, sc->cols - x);
+		attrclr(sc, y, x, 1, sc->cols - x);
+		SUBR_CURSOR(sc, DRAW_CURSOR);
+	}
 }
 
 static inline void
 ite_clrtobol(struct ite_softc *sc)
 {
-  int y = sc->cury, x = uimin(sc->curx + 1, sc->cols);
-  SUBR_CLEAR(sc, y, 0, 1, x);
-  attrclr(sc, y, 0, 1, x);
-  SUBR_CURSOR(sc, DRAW_CURSOR);
+	int y = sc->cury, x = uimin(sc->curx + 1, sc->cols);
+
+	SUBR_CLEAR(sc, y, 0, 1, x);
+	attrclr(sc, y, 0, 1, x);
+	SUBR_CURSOR(sc, DRAW_CURSOR);
 }
 
 static inline void
 ite_clrline(struct ite_softc *sc)
 {
-  int y = sc->cury;
-  SUBR_CLEAR(sc, y, 0, 1, sc->cols);
-  attrclr(sc, y, 0, 1, sc->cols);
-  SUBR_CURSOR(sc, DRAW_CURSOR);
+	int y = sc->cury;
+
+	SUBR_CLEAR(sc, y, 0, 1, sc->cols);
+	attrclr(sc, y, 0, 1, sc->cols);
+	SUBR_CURSOR(sc, DRAW_CURSOR);
 }
 
 
@@ -1170,33 +1172,35 @@ ite_clrline(struct ite_softc *sc)
 static inline void
 ite_clrtoeos(struct ite_softc *sc)
 {
-  ite_clrtoeol(sc);
-  if (sc->cury < sc->rows - 1)
-    {
-      SUBR_CLEAR(sc, sc->cury + 1, 0, sc->rows - 1 - sc->cury, sc->cols);
-      attrclr(sc, sc->cury, 0, sc->rows - sc->cury, sc->cols);
-      SUBR_CURSOR(sc, DRAW_CURSOR);
-    }
+
+	ite_clrtoeol(sc);
+	if (sc->cury < sc->rows - 1) {
+		SUBR_CLEAR(sc, sc->cury + 1, 0,
+		    sc->rows - 1 - sc->cury, sc->cols);
+		attrclr(sc, sc->cury, 0, sc->rows - sc->cury, sc->cols);
+		SUBR_CURSOR(sc, DRAW_CURSOR);
+	}
 }
 
 static inline void
 ite_clrtobos(struct ite_softc *sc)
 {
-  ite_clrtobol(sc);
-  if (sc->cury > 0)
-    {
-      SUBR_CLEAR(sc, 0, 0, sc->cury, sc->cols);
-      attrclr(sc, 0, 0, sc->cury, sc->cols);
-      SUBR_CURSOR(sc, DRAW_CURSOR);
-    }
+
+	ite_clrtobol(sc);
+	if (sc->cury > 0) {
+		SUBR_CLEAR(sc, 0, 0, sc->cury, sc->cols);
+		attrclr(sc, 0, 0, sc->cury, sc->cols);
+		SUBR_CURSOR(sc, DRAW_CURSOR);
+	}
 }
 
 static inline void
 ite_clrscreen(struct ite_softc *sc)
 {
-  SUBR_CLEAR(sc, 0, 0, sc->rows, sc->cols);
-  attrclr(sc, 0, 0, sc->rows, sc->cols);
-  SUBR_CURSOR(sc, DRAW_CURSOR);
+
+	SUBR_CLEAR(sc, 0, 0, sc->rows, sc->cols);
+	attrclr(sc, 0, 0, sc->rows, sc->cols);
+	SUBR_CURSOR(sc, DRAW_CURSOR);
 }
 
 
@@ -1204,139 +1208,144 @@ ite_clrscreen(struct ite_softc *sc)
 static inline void
 ite_dnline(struct ite_softc *sc, int n)
 {
-  /* interesting.. if the cursor is outside the scrolling
-     region, this command is simply ignored.. */
-  if (sc->cury < sc->top_margin || sc->cury > sc->bottom_margin)
-    return;
 
-  n = uimin(n, sc->bottom_margin + 1 - sc->cury);
-  if (n <= sc->bottom_margin - sc->cury)
-    {
-      SUBR_SCROLL(sc, sc->cury + n, 0, n, SCROLL_UP);
-      attrmov(sc, sc->cury + n, 0, sc->cury, 0,
-	      sc->bottom_margin + 1 - sc->cury - n, sc->cols);
-    }
-  SUBR_CLEAR(sc, sc->bottom_margin - n + 1, 0, n, sc->cols);
-  attrclr(sc, sc->bottom_margin - n + 1, 0, n, sc->cols);
-  SUBR_CURSOR(sc, DRAW_CURSOR);
+	/*
+	 * interesting.. if the cursor is outside the scrolling
+	 * region, this command is simply ignored..
+	 */
+	if (sc->cury < sc->top_margin || sc->cury > sc->bottom_margin)
+		return;
+
+	n = uimin(n, sc->bottom_margin + 1 - sc->cury);
+	if (n <= sc->bottom_margin - sc->cury) {
+		SUBR_SCROLL(sc, sc->cury + n, 0, n, SCROLL_UP);
+		attrmov(sc, sc->cury + n, 0, sc->cury, 0,
+		    sc->bottom_margin + 1 - sc->cury - n, sc->cols);
+	}
+	SUBR_CLEAR(sc, sc->bottom_margin - n + 1, 0, n, sc->cols);
+	attrclr(sc, sc->bottom_margin - n + 1, 0, n, sc->cols);
+	SUBR_CURSOR(sc, DRAW_CURSOR);
 }
 
 static inline void
 ite_inline(struct ite_softc *sc, int n)
 {
-  /* interesting.. if the cursor is outside the scrolling
-     region, this command is simply ignored.. */
-  if (sc->cury < sc->top_margin || sc->cury > sc->bottom_margin)
-    return;
 
-  n = uimin(n, sc->bottom_margin + 1 - sc->cury);
-  if (n <= sc->bottom_margin - sc->cury)
-    {
-      SUBR_SCROLL(sc, sc->cury, 0, n, SCROLL_DOWN);
-      attrmov(sc, sc->cury, 0, sc->cury + n, 0,
-	      sc->bottom_margin + 1 - sc->cury - n, sc->cols);
-    }
-  SUBR_CLEAR(sc, sc->cury, 0, n, sc->cols);
-  attrclr(sc, sc->cury, 0, n, sc->cols);
-  SUBR_CURSOR(sc, DRAW_CURSOR);
+	/*
+	 * interesting.. if the cursor is outside the scrolling
+	 * region, this command is simply ignored..
+	 */
+	if (sc->cury < sc->top_margin || sc->cury > sc->bottom_margin)
+		return;
+
+	n = uimin(n, sc->bottom_margin + 1 - sc->cury);
+	if (n <= sc->bottom_margin - sc->cury) {
+		SUBR_SCROLL(sc, sc->cury, 0, n, SCROLL_DOWN);
+		attrmov(sc, sc->cury, 0, sc->cury + n, 0,
+		    sc->bottom_margin + 1 - sc->cury - n, sc->cols);
+	}
+	SUBR_CLEAR(sc, sc->cury, 0, n, sc->cols);
+	attrclr(sc, sc->cury, 0, n, sc->cols);
+	SUBR_CURSOR(sc, DRAW_CURSOR);
 }
 
 static inline void
-ite_lf (struct ite_softc *sc)
+ite_lf(struct ite_softc *sc)
 {
-  ++sc->cury;
-  if ((sc->cury == sc->bottom_margin+1) || (sc->cury == sc->rows))
-    {
-      sc->cury--;
-      SUBR_SCROLL(sc, sc->top_margin + 1, 0, 1, SCROLL_UP);
-      ite_clrline(sc);
-    }
-  SUBR_CURSOR(sc, MOVE_CURSOR);
-  clr_attr(sc, ATTR_INV);
 
-  /* reset character set */
-  sc->G0 = CSET_ASCII;
-  sc->G1 = CSET_DECGRAPH;
-  sc->G2 = 0;
-  sc->G3 = 0;
-  sc->GL = &sc->G0;
-  sc->GR = &sc->G1;
+	++sc->cury;
+	if ((sc->cury == sc->bottom_margin+1) || (sc->cury == sc->rows)) {
+		sc->cury--;
+		SUBR_SCROLL(sc, sc->top_margin + 1, 0, 1, SCROLL_UP);
+		ite_clrline(sc);
+	}
+	SUBR_CURSOR(sc, MOVE_CURSOR);
+	clr_attr(sc, ATTR_INV);
+
+	/* reset character set */
+	sc->G0 = CSET_ASCII;
+	sc->G1 = CSET_DECGRAPH;
+	sc->G2 = 0;
+	sc->G3 = 0;
+	sc->GL = &sc->G0;
+	sc->GR = &sc->G1;
 }
 
 static inline void
-ite_crlf (struct ite_softc *sc)
+ite_crlf(struct ite_softc *sc)
 {
-  sc->curx = 0;
-  ite_lf (sc);
+
+	sc->curx = 0;
+	ite_lf(sc);
 }
 
 static inline void
-ite_cr (struct ite_softc *sc)
+ite_cr(struct ite_softc *sc)
 {
-  if (sc->curx)
-    {
-      sc->curx = 0;
-      SUBR_CURSOR(sc, MOVE_CURSOR);
-    }
+
+	if (sc->curx) {
+		sc->curx = 0;
+		SUBR_CURSOR(sc, MOVE_CURSOR);
+	}
 }
 
 static inline void
-ite_rlf (struct ite_softc *sc)
+ite_rlf(struct ite_softc *sc)
 {
-  sc->cury--;
-  if ((sc->cury < 0) || (sc->cury == sc->top_margin - 1))
-    {
-      sc->cury++;
-      SUBR_SCROLL(sc, sc->top_margin, 0, 1, SCROLL_DOWN);
-      ite_clrline(sc);
-    }
-  SUBR_CURSOR(sc, MOVE_CURSOR);
-  clr_attr(sc, ATTR_INV);
+
+	sc->cury--;
+	if ((sc->cury < 0) || (sc->cury == sc->top_margin - 1)) {
+		sc->cury++;
+		SUBR_SCROLL(sc, sc->top_margin, 0, 1, SCROLL_DOWN);
+		ite_clrline(sc);
+	}
+	SUBR_CURSOR(sc, MOVE_CURSOR);
+	clr_attr(sc, ATTR_INV);
 }
 
 static inline int
-atoi (const char *cp)
+atoi(const char *cp)
 {
-  int n;
+	int n;
 
-  for (n = 0; *cp && *cp >= '0' && *cp <= '9'; cp++)
-    n = n * 10 + *cp - '0';
+	for (n = 0; *cp && *cp >= '0' && *cp <= '9'; cp++)
+		n = n * 10 + *cp - '0';
 
-  return n;
+	return n;
 }
 
 static inline int
-ite_argnum (struct ite_softc *sc)
+ite_argnum(struct ite_softc *sc)
 {
-  char ch;
-  int n;
+	char ch;
+	int n;
 
-  /* convert argument string into number */
-  if (sc->ap == sc->argbuf)
-    return 1;
-  ch = *sc->ap;
-  *sc->ap = 0;
-  n = atoi (sc->argbuf);
-  *sc->ap = ch;
-  
-  return n;
+	/* convert argument string into number */
+	if (sc->ap == sc->argbuf)
+		return 1;
+	ch = *sc->ap;
+	*sc->ap = 0;
+	n = atoi (sc->argbuf);
+	*sc->ap = ch;
+
+	return n;
 }
 
 static inline int
-ite_zargnum (struct ite_softc *sc)
+ite_zargnum(struct ite_softc *sc)
 {
-  char ch;
-  int n;
+	char ch;
+	int n;
 
-  /* convert argument string into number */
-  if (sc->ap == sc->argbuf)
-    return 0;
-  ch = *sc->ap;
-  *sc->ap = 0;
-  n = atoi (sc->argbuf);
-  *sc->ap = ch;
-  
-  return n;	/* don't "n ? n : 1" here, <CSI>0m != <CSI>1m ! */
+	/* convert argument string into number */
+	if (sc->ap == sc->argbuf)
+		return 0;
+	ch = *sc->ap;
+	*sc->ap = 0;
+	n = atoi (sc->argbuf);
+	*sc->ap = ch;
+
+	return n;	/* don't "n ? n : 1" here, <CSI>0m != <CSI>1m ! */
 }
 
 static void
@@ -1344,12 +1353,12 @@ ite_putstr(const u_char *s, int len, dev_t dev)
 {
 	struct ite_softc *sc;
 	int i;
-	
+
 	sc = getitesp(dev);
 
 	/* XXX avoid problems */
 	if ((sc->flags & (ITE_ACTIVE|ITE_INGRF)) != ITE_ACTIVE)
-	  	return;
+		return;
 
 	SUBR_CURSOR(sc, START_CURSOROPT);
 	for (i = 0; i < len; i++)
@@ -1371,70 +1380,70 @@ iteputchar(register int c, struct ite_softc *sc)
 	else
 		kbd_tty = kbd_ite->tp;
 
-	if (sc->escape) 
+	if (sc->escape)
 	  {
-	    switch (sc->escape) 
+	    switch (sc->escape)
 	      {
 	      case ESC:
 	        switch (c)
 	          {
 		  /* first 7bit equivalents for the 8bit control characters */
-		  
+
 	          case 'D':
 		    c = IND;
 		    sc->escape = 0;
 		    break; /* and fall into the next switch below (same for all `break') */
-		    
+
 		  case 'E':
 		    c = NEL;
 		    sc->escape = 0;
 		    break;
-		    
+
 		  case 'H':
 		    c = HTS;
 		    sc->escape = 0;
 		    break;
-		    
+
 		  case 'M':
 		    c = RI;
 		    sc->escape = 0;
 		    break;
-		    
+
 		  case 'N':
 		    c = SS2;
 		    sc->escape = 0;
 		    break;
-		  
+
 		  case 'O':
 		    c = SS3;
 		    sc->escape = 0;
 		    break;
-		    
+
 		  case 'P':
 		    c = DCS;
 		    sc->escape = 0;
 		    break;
-		    
+
 		  case '[':
 		    c = CSI;
 		    sc->escape = 0;
 		    break;
-		    
+
 		  case '\\':
 		    c = ST;
 		    sc->escape = 0;
 		    break;
-		    
+
 		  case ']':
 		    c = OSC;
 		    sc->escape = 0;
 		    break;
-		    
+
 		  case '^':
 		    c = PM;
 		    sc->escape = 0;
 		    break;
-		    
+
 		  case '_':
 		    c = APC;
 		    sc->escape = 0;
@@ -1447,8 +1456,8 @@ iteputchar(register int c, struct ite_softc *sc)
 		     sc->escape = ' ';
 		     break;
 
-		  
-		  /* a lot of character set selections, not yet used... 
+
+		  /* a lot of character set selections, not yet used...
 		     94-character sets: */
 		  case '(':	/* G0 */
 		  case ')':	/* G1 */
@@ -1461,12 +1470,12 @@ iteputchar(register int c, struct ite_softc *sc)
 		  case 'A':	/* ISO latin 1 */
 		  case '<':	/* user preferred suplemental */
 		  case '0':	/* DEC special graphics */
-		  
+
 		  /* 96-character sets: */
 		  case '-':	/* G1 */
 		  case '.':	/* G2 */
 		  case '/':	/* G3 */
-		  
+
 		  /* national character sets: */
 		  case '4':	/* dutch */
 		  case '5':
@@ -1477,33 +1486,33 @@ iteputchar(register int c, struct ite_softc *sc)
 		  case 'Y':	/* italian */
 		  case '6':	/* norwegian/danish */
 		  /* note: %5 and %6 are not supported (two chars..) */
-		    
+
 		    sc->escape = 0;
 		    /* just ignore for now */
 		    return;
-		    
-		  
+
+
 		  /* locking shift modes (as you might guess, not yet supported..) */
 		  case '`':
 		    sc->GR = &sc->G1;
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case 'n':
 		    sc->GL = &sc->G2;
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case '}':
 		    sc->GR = &sc->G2;
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case 'o':
 		    sc->GL = &sc->G3;
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case '|':
 		    sc->GR = &sc->G3;
 		    sc->escape = 0;
@@ -1513,14 +1522,14 @@ iteputchar(register int c, struct ite_softc *sc)
 		    sc->GR = &sc->G1;
 		    sc->escape = 0;
 		    return;
-		    
-		  
+
+
 		  /* font width/height control */
 		  case '#':
 		    sc->escape = '#';
 		    return;
-		    
-		    
+
+
 		  /* hard terminal reset .. */
 		  case 'c':
 		    ite_reset (sc);
@@ -1542,7 +1551,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		    sc->sc_GR = sc->GR;
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case '8':
 		    /* restore cursor */
 		    sc->curx = sc->save_curx;
@@ -1557,17 +1566,17 @@ iteputchar(register int c, struct ite_softc *sc)
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case '=':
 		    sc->keypad_appmode = 1;
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case '>':
 		    sc->keypad_appmode = 0;
 		    sc->escape = 0;
 		    return;
-		  
+
 		  case 'Z':	/* request ID */
 		    if (sc->emul_level == EMUL_VT100)
 		      ite_sendstr ("\033[?61;0c"); /* XXX not clean */
@@ -1611,20 +1620,20 @@ iteputchar(register int c, struct ite_softc *sc)
 		    sc->eightbit_C1 = 0;
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case 'G':
 		    sc->eightbit_C1 = 1;
 		    sc->escape = 0;
 		    return;
-		    
+
 		  default:
 		    /* not supported */
 		    sc->escape = 0;
 		    return;
 		  }
 		break;
-		
-		
+
+
 	      case '#':
 		switch (c)
 		  {
@@ -1632,34 +1641,34 @@ iteputchar(register int c, struct ite_softc *sc)
 		    /* single height, single width */
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case '6':
 		    /* double width, single height */
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case '3':
 		    /* top half */
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case '4':
 		    /* bottom half */
 		    sc->escape = 0;
 		    return;
-		    
+
 		  case '8':
 		    /* screen alignment pattern... */
 		    alignment_display (sc);
 		    sc->escape = 0;
 		    return;
-		    
+
 		  default:
 		    sc->escape = 0;
 		    return;
 		  }
 		break;
-		  
+
 
 
 	      case CSI:
@@ -1688,14 +1697,14 @@ iteputchar(register int c, struct ite_softc *sc)
 	            if (! strncmp (sc->argbuf, "61\"", 3))
 	              sc->emul_level = EMUL_VT100;
 	            else if (! strncmp (sc->argbuf, "63;1\"", 5)
-	            	     || ! strncmp (sc->argbuf, "62;1\"", 5))
+		     || ! strncmp (sc->argbuf, "62;1\"", 5))
 	              sc->emul_level = EMUL_VT300_7;
 	            else
 	              sc->emul_level = EMUL_VT300_8;
 	            sc->escape = 0;
 	            return;
-	            
-	          
+
+
 	          case '?':
 		    *sc->ap = 0;
 	            sc->escape = '?';
@@ -1704,7 +1713,7 @@ iteputchar(register int c, struct ite_softc *sc)
 
 
 		  case 'c':
-  		    *sc->ap = 0;
+		    *sc->ap = 0;
 		    if (sc->argbuf[0] == '>')
 		      {
 		        ite_sendstr ("\033[>24;0;0;0c");
@@ -1737,8 +1746,8 @@ iteputchar(register int c, struct ite_softc *sc)
 		      }
 		    sc->escape = 0;
 		    return;
-	          
-  
+
+
 		  case 'x':
 		    switch (ite_zargnum(sc))
 		      {
@@ -1769,8 +1778,8 @@ iteputchar(register int c, struct ite_softc *sc)
 		    sc->escape = 0;
 		    return;
 
-	          
-  	          case 'h': case 'l':
+
+	          case 'h': case 'l':
 		    n = ite_zargnum (sc);
 		    switch (n)
 		      {
@@ -1790,7 +1799,7 @@ iteputchar(register int c, struct ite_softc *sc)
 	            sc->escape = 0;
 	            return;
 
-		  
+
 		  case 'L':
 		    ite_inline (sc, ite_argnum (sc));
 	            sc->escape = 0;
@@ -1801,7 +1810,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		    ite_dnchar (sc, ite_argnum (sc));
 	            sc->escape = 0;
 	            return;
-		    
+
 
 		  case '@':
 		    ite_inchar (sc, ite_argnum (sc));
@@ -1810,7 +1819,7 @@ iteputchar(register int c, struct ite_softc *sc)
 
 
 		  case 'G':
-		    /* this one was *not* in my vt320 manual but in 
+		    /* this one was *not* in my vt320 manual but in
 		       a vt320 termcap entry.. who is right?
 		       It's supposed to set the horizontal cursor position. */
 		    *sc->ap = 0;
@@ -1858,8 +1867,8 @@ iteputchar(register int c, struct ite_softc *sc)
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
 		    clr_attr (sc, ATTR_INV);
 		    return;
-		    
-		  case 'A':		    
+
+		  case 'A':
 		    n = ite_argnum (sc);
 		    n = sc->cury - (n ? n : 1);
 		    if (n < 0) n = 0;
@@ -1874,7 +1883,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
 		    clr_attr (sc, ATTR_INV);
 		    return;
-		  
+
 		  case 'B':
 		    n = ite_argnum (sc);
 		    n = sc->cury + (n ? n : 1);
@@ -1890,7 +1899,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
 		    clr_attr (sc, ATTR_INV);
 		    return;
-		  
+
 		  case 'C':
 		    n = ite_argnum (sc);
 		    n = n ? n : 1;
@@ -1899,7 +1908,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
 		    clr_attr (sc, ATTR_INV);
 		    return;
-		  
+
 		  case 'D':
 		    n = ite_argnum (sc);
 		    n = n ? n : 1;
@@ -1909,8 +1918,8 @@ iteputchar(register int c, struct ite_softc *sc)
 		    SUBR_CURSOR(sc, MOVE_CURSOR);
 		    clr_attr (sc, ATTR_INV);
 		    return;
-		  
-		    
+
+
 
 
 		  case 'J':
@@ -1949,7 +1958,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		    sc->escape = 0;
 		    return;
 
-	          
+
 	          case '}': case '`':
 	            /* status line control */
 	            sc->escape = 0;
@@ -1985,8 +1994,8 @@ iteputchar(register int c, struct ite_softc *sc)
 		      }
 		    sc->escape = 0;
 		    return;
-		    
-		  
+
+
 		  case 'm':
 		    /* big attribute setter/resetter */
 		    {
@@ -2004,12 +2013,12 @@ iteputchar(register int c, struct ite_softc *sc)
 			      clr_attr (sc, ATTR_ALL);
 			      chp++;
 			      break;
-			      
+
 			    case '1':
 			      set_attr (sc, ATTR_BOLD);
 			      chp++;
 			      break;
-			      
+
 			    case '2':
 			      switch (chp[1])
 			        {
@@ -2017,49 +2026,49 @@ iteputchar(register int c, struct ite_softc *sc)
 			          clr_attr (sc, ATTR_BOLD);
 			          chp += 2;
 			          break;
-			        
+
 			        case '4':
 			          clr_attr (sc, ATTR_UL);
 			          chp += 2;
 			          break;
-			          
+
 			        case '5':
 			          clr_attr (sc, ATTR_BLINK);
 			          chp += 2;
 			          break;
-			          
+
 			        case '7':
 			          clr_attr (sc, ATTR_INV);
 			          chp += 2;
 			          break;
-		        	
-		        	default:
-		        	  chp++;
-		        	  break;
-		        	}
+
+				default:
+				  chp++;
+				  break;
+				}
 			      break;
-			      
+
 			    case '4':
 			      set_attr (sc, ATTR_UL);
 			      chp++;
 			      break;
-			      
+
 			    case '5':
 			      set_attr (sc, ATTR_BLINK);
 			      chp++;
 			      break;
-			      
+
 			    case '7':
 			      set_attr (sc, ATTR_INV);
 			      chp++;
 			      break;
-			    
+
 			    default:
 			      chp++;
 			      break;
 			    }
 		        }
-		    
+
 		    }
 		    sc->escape = 0;
 		    return;
@@ -2071,8 +2080,8 @@ iteputchar(register int c, struct ite_softc *sc)
 		    sc->escape = 0;
 		    return;
 
-		  
-		  
+
+
 		  default:
 		    sc->escape = 0;
 		    return;
@@ -2082,8 +2091,7 @@ iteputchar(register int c, struct ite_softc *sc)
 
 
 	      case '?':	/* CSI ? */
-	      	switch (c)
-	      	  {
+		switch (c) {
 	          case '0': case '1': case '2': case '3': case '4':
 	          case '5': case '6': case '7': case '8': case '9':
 	          case ';': case '\"': case '$':
@@ -2101,11 +2109,11 @@ iteputchar(register int c, struct ite_softc *sc)
 		        if (! strncmp (sc->argbuf, "15", 2))
 		          /* printer status: no printer */
 		          ite_sendstr ("\033[13n");
-		          
+
 		        else if (! strncmp (sc->argbuf, "25", 2))
 		          /* udk status */
 		          ite_sendstr ("\033[20n");
-		          
+
 		        else if (! strncmp (sc->argbuf, "26", 2))
 		          /* keyboard dialect: US */
 		          ite_sendstr ("\033[27;1n");
@@ -2114,7 +2122,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		    return;
 
 
-  		  case 'h': case 'l':
+		  case 'h': case 'l':
 		    n = ite_zargnum (sc);
 		    switch (n)
 		      {
@@ -2158,14 +2166,14 @@ iteputchar(register int c, struct ite_softc *sc)
 		      }
 		    sc->escape = 0;
 		    return;
-		    
+
 		  default:
 		    sc->escape = 0;
 		    return;
 		  }
 		break;
 
-	      
+
 	      default:
 	        sc->escape = 0;
 	        return;
@@ -2177,7 +2185,7 @@ iteputchar(register int c, struct ite_softc *sc)
 	case VT:	/* VT is treated like LF */
 	case FF:	/* so is FF */
 	case LF:
-		/* cr->crlf distinction is done here, on output, 
+		/* cr->crlf distinction is done here, on output,
 		   not on input! */
 		if (sc->linefeed_newline)
 		  ite_crlf (sc);
@@ -2188,7 +2196,7 @@ iteputchar(register int c, struct ite_softc *sc)
 	case CR:
 		ite_cr (sc);
 		break;
-	
+
 	case BS:
 		if (--sc->curx < 0)
 			sc->curx = 0;
@@ -2214,7 +2222,7 @@ iteputchar(register int c, struct ite_softc *sc)
 	case SO:
 		sc->GL = &sc->G1;
 		break;
-		
+
 	case SI:
 		sc->GL = &sc->G0;
 		break;
@@ -2226,7 +2234,7 @@ iteputchar(register int c, struct ite_softc *sc)
 	case CAN:
 		sc->escape = 0;	/* cancel any escape sequence in progress */
 		break;
-		
+
 	case SUB:
 		sc->escape = 0;	/* dito, but see below */
 		/* should also display a reverse question mark!! */
@@ -2241,7 +2249,7 @@ iteputchar(register int c, struct ite_softc *sc)
 	case IND:	/* index: move cursor down, scroll */
 		ite_lf (sc);
 		break;
-		
+
 	case NEL:	/* next line. next line, first pos. */
 		ite_crlf (sc);
 		break;
@@ -2250,7 +2258,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		if (sc->curx < sc->cols)
 		  sc->tabs[sc->curx] = 1;
 		break;
-		
+
 	case RI:	/* reverse index */
 		ite_rlf (sc);
 		break;
@@ -2258,24 +2266,24 @@ iteputchar(register int c, struct ite_softc *sc)
 	case SS2:	/* go into G2 for one character */
 		/* not yet supported */
 		break;
-		
+
 	case SS3:	/* go into G3 for one character */
 		break;
-		
+
 	case DCS:	/* device control string introducer */
 		sc->escape = DCS;
 		sc->ap = sc->argbuf;
 		break;
-		
+
 	case CSI:	/* control sequence introducer */
 		sc->escape = CSI;
 		sc->ap = sc->argbuf;
 		break;
-		
+
 	case ST:	/* string terminator */
 		/* ignore, if not used as terminator */
 		break;
-		
+
 	case OSC:	/* introduces OS command. Ignore everything upto ST */
 		sc->escape = OSC;
 		break;
@@ -2283,7 +2291,7 @@ iteputchar(register int c, struct ite_softc *sc)
 	case PM:	/* privacy message, ignore everything upto ST */
 		sc->escape = PM;
 		break;
-		
+
 	case APC:	/* application program command, ignore everything upto ST */
 		sc->escape = APC;
 		break;
@@ -2298,8 +2306,7 @@ iteputchar(register int c, struct ite_softc *sc)
 		if ((sc->attribute & ATTR_INV) || attrtest(sc, ATTR_INV)) {
 			attrset(sc, ATTR_INV);
 			SUBR_PUTC(sc, c, sc->cury, sc->curx, ATTR_INV);
-		}			
-		else
+		} else
 			SUBR_PUTC(sc, c, sc->cury, sc->curx, ATTR_NOR);
 #else
 		SUBR_PUTC(sc, c, sc->cury, sc->curx, sc->attribute);

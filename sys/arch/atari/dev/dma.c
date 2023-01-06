@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.28 2017/10/07 16:05:31 jdolecek Exp $	*/
+/*	$NetBSD: dma.c,v 1.29 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.28 2017/10/07 16:05:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.29 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,7 @@ st_dmafree(void *softc, int *lock_stat)
 {
 	int s;
 	DMA_ENTRY *req;
-	
+
 	s = splhigh();
 
 	/*

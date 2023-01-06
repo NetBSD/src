@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs.c,v 1.18 2012/02/12 16:34:07 matt Exp $	*/
+/*	$NetBSD: grfabs.c,v 1.19 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.18 2012/02/12 16:34:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs.c,v 1.19 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ get_best_display_mode(dimen_t *dim, int depth, dmode_t *curr_mode)
 {
 	dmode_t		*save;
 	dmode_t		*dm;
-	long   		dx, dy, dd, ct;
+	long		dx, dy, dd, ct;
 	long		size_diff, depth_diff;
 
 	save       = NULL;

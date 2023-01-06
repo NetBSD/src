@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_reg.h,v 1.14 2009/03/14 14:45:56 dsl Exp $	*/
+/*	$NetBSD: grfabs_reg.h,v 1.15 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -147,7 +147,7 @@ struct grfabs_sw {
 	void	 (*free_view)(view_t *);
 	void	 (*remove_view)(view_t *);
 	void	 (*save_view)(view_t *);
-	int 	 (*use_colormap)(view_t *, colormap_t *);
+	int	 (*use_colormap)(view_t *, colormap_t *);
 };
 
 /* display mode */

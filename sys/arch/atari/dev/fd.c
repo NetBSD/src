@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.94 2022/06/26 18:46:14 tsutsui Exp $	*/
+/*	$NetBSD: fd.c,v 1.95 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.94 2022/06/26 18:46:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.95 2023/01/06 10:28:28 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ struct fd_types {
 
 /*
  * This is set only once at attach time. The value is determined by reading
- * the configuration switches and is one of the FLP_TYPE_*'s. 
+ * the configuration switches and is one of the FLP_TYPE_*'s.
  * This is similar to the way Atari handles the _FLP cookie.
  */
 static short	def_type = 0;		/* Reflects config-switches	*/
@@ -372,7 +372,7 @@ fdcprint(void *aux, const char *pnp)
 
 	if (pnp != NULL)
 		aprint_normal("fd%d at %s:", (int)aux, pnp);
-	
+
 	return UNCONF;
 }
 
@@ -1302,7 +1302,7 @@ fdgetdefaultlabel(struct fd_softc *sc, struct disklabel *lp, int part)
 	lp->d_secperunit  = sc->nblocks;
 
 	lp->d_type        = DKTYPE_FLOPPY;
-	lp->d_rpm         = 300; 	/* good guess I suppose.	*/
+	lp->d_rpm         = 300;	/* good guess I suppose.	*/
 	lp->d_interleave  = 1;		/* FIXME: is this OK?		*/
 	lp->d_bbsize      = 0;
 	lp->d_sbsize      = 0;

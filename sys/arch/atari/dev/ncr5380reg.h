@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr5380reg.h,v 1.23 2011/06/05 06:33:42 tsutsui Exp $	*/
+/*	$NetBSD: ncr5380reg.h,v 1.24 2023/01/06 10:28:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -102,7 +102,7 @@
 #define	SC_ACK_STAT	0x01	/* R  - State of ACK line		*/
 #define	SC_S_SEND	0x00	/* W  - Start DMA output		*/
 
-#define	SC_CLINT	{ 		/* Clear interrupts	*/	\
+#define	SC_CLINT	{		/* Clear interrupts	*/	\
 			int i = GET_5380_REG(NCR5380_IRCV);		\
 			}
 

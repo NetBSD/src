@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.117 2021/09/25 19:16:31 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.118 2023/01/06 10:28:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.117 2021/09/25 19:16:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.118 2023/01/06 10:28:27 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -369,7 +369,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 			BUS_OBJERR : BUS_ADRERR;
 		break;
 
-	/* 
+	/*
 	 * Kernel coprocessor violation
 	 */
 	case T_COPERR:
@@ -402,7 +402,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 			ILL_COPROC : ILL_ILLOPC;
 		break;
 
-	/* 
+	/*
 	 * User coprocessor violation
 	 */
 	case T_COPERR|T_USER:
@@ -411,8 +411,8 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		ksi.ksi_code = FPE_FLTINV;
 		break;
 
-	/* 
-	 * 6888x exceptions 
+	/*
+	 * 6888x exceptions
 	 */
 	case T_FPERR|T_USER:
 		/*
@@ -464,7 +464,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		break;
 
 	/*
-	 * divde by zero, CHK/TRAPV inst 
+	 * divde by zero, CHK/TRAPV inst
 	 */
 	case T_ZERODIV|T_USER:
 		ksi.ksi_code = FPE_FLTDIV;
@@ -511,7 +511,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		fp->f_sr &= ~PSL_T;
 		ksi.ksi_signo = SIGTRAP;
 		break;
-	/* 
+	/*
 	 * Kernel AST (should not happen)
 	 */
 	case T_ASTFLT:
@@ -572,8 +572,8 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 #endif
 		/*
 		 * It is only a kernel address space fault iff:
-		 * 	1. (type & T_USER) == 0  and
-		 * 	2. pcb_onfault not set or
+		 *	1. (type & T_USER) == 0  and
+		 *	2. pcb_onfault not set or
 		 *	3. pcb_onfault set but supervisor space data fault
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.
@@ -670,5 +670,5 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 	if ((type & T_USER) == 0)
 		return;
 out:
-	userret(l, fp, sticks, v, 1); 
+	userret(l, fp, sticks, v, 1);
 }
