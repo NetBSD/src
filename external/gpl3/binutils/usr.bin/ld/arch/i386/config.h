@@ -26,10 +26,10 @@
 #define DEFAULT_LD_EXECSTACK 1
 
 /* The default method for DT_TEXTREL check in ELF linker. */
-#define DEFAULT_LD_TEXTREL_CHECK textrel_check_none
+#define DEFAULT_LD_TEXTREL_CHECK textrel_check_warning
 
 /* Define to 1 if DT_TEXTREL check is warning in ELF linker by default. */
-#define DEFAULT_LD_TEXTREL_CHECK_WARNING 0
+#define DEFAULT_LD_TEXTREL_CHECK_WARNING 1
 
 /* Define to 1 if you want to enable --warn-execstack in ELF linker by
    default. */
@@ -44,7 +44,7 @@
 
 /* Define to 1 if you want to enable -z separate-code in ELF linker by
    default. */
-#define DEFAULT_LD_Z_SEPARATE_CODE 0
+#define DEFAULT_LD_Z_SEPARATE_CODE 1
 
 /* Define to 1 if you want to set DT_RUNPATH instead of DT_RPATH by default.
    */
