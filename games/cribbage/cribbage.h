@@ -1,4 +1,4 @@
-/*	$NetBSD: cribbage.h,v 1.17 2012/10/13 20:36:06 dholland Exp $	*/
+/*	$NetBSD: cribbage.h,v 1.18 2023/01/06 19:02:02 ryoon Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -53,6 +53,7 @@ extern  BOOLEAN		iwon;			/* if comp won last */
 extern  BOOLEAN		explain;		/* player mistakes explained */
 extern  BOOLEAN		rflag;			/* if all cuts random */
 extern  BOOLEAN		quiet;			/* if suppress random mess */
+extern  BOOLEAN		yes;			/* default 'y' to "Another game?" */
 
 extern  char		explan[];		/* string for explanation */
 
