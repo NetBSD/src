@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.71 2022/12/27 13:12:10 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.72 2023/01/06 18:19:27 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1702,6 +1702,8 @@ apply_settings_to_partitions(struct disk_partitions *parts,
 		struct disk_part_info t;
 
 		if (!parts->pscheme->get_part_info(parts, pno, &t))
+			continue;
+		if (t.flags & PTI_SPECIAL_PARTS)
 			continue;
 
 		for (i = 0; i < wanted->num; i++) {

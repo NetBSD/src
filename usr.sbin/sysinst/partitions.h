@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.28 2022/06/09 18:26:06 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.29 2023/01/06 18:19:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -132,6 +132,9 @@ struct part_type_desc {
 						 * persistent; may only be
 						 * set for a single partition!
 						 */
+#define	PTI_SPECIAL_PARTS	\
+	(PTI_PSCHEME_INTERNAL|PTI_WHOLE_DISK|PTI_SEC_CONTAINER|PTI_RAW_PART)
+
 
 /* A single partition */
 struct disk_part_info {
