@@ -1,4 +1,4 @@
-.\" $NetBSD: igpio.4,v 1.2 2022/03/24 16:33:58 wiz Exp $
+.\" $NetBSD: igpio.4,v 1.3 2023/01/07 13:56:21 msaitoh Exp $
 .\"
 .\" Copyright (c) 2022 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 24, 2022
+.Dd January 7, 2023
 .Dt IGPIO 4
 .Os
 .Sh NAME
@@ -42,23 +42,28 @@ provides a
 .Xr gpio 4
 interface for the following Intel chipsets:
 .Bl -tag -width autoselect -compact
-.It Alderlake
+.It Alder Lake-N
+.It Alder Lake-P
+.It Alder Lake-S
 .It Baytrail
-.It Cannonlake-H
-.It Cannonlake-LP
+.It Cannon Lake-H
+.It Cannon Lake-LP
 .It Cedarfork
+.It Coffee Lake-S
 .It Denverton
 .It Emmitsburg
-.It Geminilake
-.It Icelake
-.It Jasperlake
+.It Gemini Lake
+.It Ice Lake-LP
+.It Ice Lake-N
+.It Jasper Lake
 .It Lakefield
 .It Lewisburg
 .It Lynxpoint
+.It Raptor Lake-S
 .It Sunrisepoint-H
 .It Sunrisepoint-LP
-.It Tigerlake-H
-.It Tigerlake-LP
+.It Tiger Lake-H
+.It Tiger Lake-LP
 .El
 Support for Broxton and Cherryview is not enabled yet.
 .Pp
