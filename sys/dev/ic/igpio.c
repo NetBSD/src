@@ -1,4 +1,4 @@
-/* $NetBSD: igpio.c,v 1.4 2022/03/26 19:35:56 riastradh Exp $ */
+/* $NetBSD: igpio.c,v 1.5 2023/01/07 03:27:01 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2021,2022 Emmanuel Dreyfus
@@ -301,7 +301,7 @@ igpio_attach(struct igpio_softc *sc)
 		DPRINTF(("padbar[%d] = #%x\n", i, ib->ib_padbar));
 		if (ib->ib_padbar > sc->sc_length[i]) {
 			printf("PADBAR = #%x higher than max #%lx\n",
-			     ib->ib_padbar, sc->sc_length[i]);
+			    ib->ib_padbar, sc->sc_length[i]);
 			goto out;
 		}
 
@@ -320,7 +320,7 @@ igpio_attach(struct igpio_softc *sc)
 		npins = 1 + ibs->ibs_last_pin - ibs->ibs_first_pin;
 
 		ib->ib_intr =
-	    	    kmem_zalloc(sizeof(*ib->ib_intr) * npins, KM_SLEEP);
+		    kmem_zalloc(sizeof(*ib->ib_intr) * npins, KM_SLEEP);
 
 		sc->sc_npins += npins;
 	}
@@ -640,8 +640,8 @@ igpio_intr_establish(void *priv, int pin, int ipl, int irqmode,
 		newval |= IGPIO_PADCFG0_RXEVCFG_EDGE_BOTH;
 		break;
 	case GPIO_INTR_NEG_EDGE:
-                newval |= IGPIO_PADCFG0_RXEVCFG_EDGE;
-                newval |= IGPIO_PADCFG0_RXINV;
+		newval |= IGPIO_PADCFG0_RXEVCFG_EDGE;
+		newval |= IGPIO_PADCFG0_RXINV;
 		break;
 	case GPIO_INTR_POS_EDGE:
 		newval |= IGPIO_PADCFG0_RXEVCFG_EDGE;
