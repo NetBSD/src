@@ -1,4 +1,4 @@
-/* $NetBSD: igpioreg.h,v 1.2 2022/03/26 19:35:35 riastradh Exp $ */
+/* $NetBSD: igpioreg.h,v 1.3 2023/01/07 00:39:20 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2021 Emmanuel Dreyfus
@@ -180,9 +180,9 @@ struct igpio_bank_setup igpio_bank_setup[] = {
 
 	/* Lewisburg */
 	{ "INT3536",    0,   0,   7, 0x100, 0x110 },
-	{ "INT3536",    1,  72,  13, 0x100, 0x110 },
-	{ "INT3536",    3, 133,  14, 0x100, 0x110 },
-	{ "INT3536",    4, 144,  17, 0x100, 0x110 },
+	{ "INT3536",    1,  72, 132, 0x100, 0x110 },
+	{ "INT3536",    3, 133, 143, 0x100, 0x110 },
+	{ "INT3536",    4, 144, 178, 0x100, 0x110 },
 	{ "INT3536",    5, 179, 246, 0x100, 0x110 },
 
 	/* Emmitsburg */
