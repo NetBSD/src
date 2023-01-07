@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.38 2023/01/06 13:47:36 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.39 2023/01/07 15:04:01 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -540,4 +540,15 @@ lib/libc/gen/err.3				1.23
 	Add errc() and verrc() to the list of functions which do not return,
 	but exit() instead.
 	[kre, ticket #1563]
+
+sys/arch/m68k/m68k/bus_dma.c			1.39
+
+	PR 57107: fix out of bounds invalidate (and writeback) in
+	bus_dmamap_sync(9) ops.
+	[tsutsui, ticket #1564]
+
+sys/arch/mac68k/conf/INSTALL			1.58
+
+	Disable (comment out) options DIAGNOSTIC in INSTALL kernels.
+	[tsutsui, ticket #1565]
 
