@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.87 2022/11/28 04:52:04 chs Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.88 2023/01/07 19:41:30 chs Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -202,7 +202,7 @@ void	ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 void	ffs_load_inode(struct buf *, struct inode *, struct fs *, ino_t);
 int	ffs_getblk(struct vnode *, daddr_t, daddr_t, int, bool, buf_t **);
 #endif /* defined(_KERNEL) */
-void	ffs_fragacct(struct fs *, int, int32_t[], int, int);
+void	ffs_fragacct(struct fs *, int, uint32_t[], int, int);
 int	ffs_isblock(struct fs *, u_char *, int32_t);
 int	ffs_isfreeblock(struct fs *, u_char *, int32_t);
 void	ffs_clrblock(struct fs *, u_char *, int32_t);

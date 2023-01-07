@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.73 2022/11/17 06:40:41 chs Exp $	*/
+/*	$NetBSD: ffs.c,v 1.74 2023/01/07 19:41:30 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.73 2022/11/17 06:40:41 chs Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.74 2023/01/07 19:41:30 chs Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -1067,7 +1067,7 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	struct ufs2_dinode *dp2, *dip;
 	struct cg	*cgp;
 	struct fs	*fs;
-	int		cg, cgino, i;
+	uint32_t	cg, cgino, i;
 	daddr_t		d;
 	char		sbbuf[FFS_MAXBSIZE];
 	uint32_t	initediblk;

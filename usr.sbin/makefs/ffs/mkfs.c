@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.41 2022/11/17 06:40:41 chs Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.42 2023/01/07 19:41:30 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -48,7 +48,7 @@
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
 #ifdef __RCSID
-__RCSID("$NetBSD: mkfs.c,v 1.41 2022/11/17 06:40:41 chs Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.42 2023/01/07 19:41:30 chs Exp $");
 #endif
 #endif
 #endif /* not lint */
@@ -75,7 +75,7 @@ __RCSID("$NetBSD: mkfs.c,v 1.41 2022/11/17 06:40:41 chs Exp $");
 #include "ffs/ffs_extern.h"
 #include "ffs/newfs_extern.h"
 
-static void initcg(int, time_t, const fsinfo_t *);
+static void initcg(uint32_t, time_t, const fsinfo_t *);
 static int ilog2(int);
 
 static int count_digits(int);
@@ -141,7 +141,8 @@ struct fs *
 ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 {
 	int fragsperinode, optimalfpg, origdensity, minfpg, lastminfpg;
-	int32_t cylno, i, csfrags;
+	uint32_t cylno, i;
+	int32_t csfrags;
 	long long sizepb;
 	void *space;
 	int size;
@@ -443,7 +444,7 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 
 		sblock.fs_maxcluster = lp = space;
 		for (i = 0; i < sblock.fs_ncg; i++)
-		*lp++ = sblock.fs_contigsumsize;
+			*lp++ = sblock.fs_contigsumsize;
 	}
 
 	sblock.fs_sbsize = ffs_fragroundup(&sblock, sizeof(struct fs));
@@ -566,7 +567,8 @@ ffs_mkfs(const char *fsys, const fsinfo_t *fsopts, time_t tstamp)
 void
 ffs_write_superblock(struct fs *fs, const fsinfo_t *fsopts)
 {
-	int cylno, size, blks, i, saveflag;
+	int size, blks, i, saveflag;
+	uint32_t cylno;
 	void *space;
 	char *wrbuf;
 
@@ -606,10 +608,10 @@ ffs_write_superblock(struct fs *fs, const fsinfo_t *fsopts)
  * Initialize a cylinder group.
  */
 static void
-initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
+initcg(uint32_t cylno, time_t utime, const fsinfo_t *fsopts)
 {
 	daddr_t cbase, dmax;
-	int i, j, d, dlower, dupper, blkno;
+	uint32_t i, j, d, dlower, dupper, blkno;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 	int start;
@@ -671,7 +673,7 @@ initcg(int cylno, time_t utime, const fsinfo_t *fsopts)
 		acg.cg_nextfreeoff = acg.cg_clusteroff +
 		    howmany(ffs_fragstoblks(&sblock, sblock.fs_fpg), CHAR_BIT);
 	}
-	if (acg.cg_nextfreeoff > sblock.fs_cgsize) {
+	if (acg.cg_nextfreeoff > (unsigned)sblock.fs_cgsize) {
 		printf("Panic: cylinder group too big\n");
 		exit(37);
 	}
