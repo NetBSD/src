@@ -1,4 +1,4 @@
-/* $NetBSD: igpioreg.h,v 1.7 2023/01/07 11:09:51 msaitoh Exp $ */
+/* $NetBSD: igpioreg.h,v 1.8 2023/01/07 11:15:00 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2021 Emmanuel Dreyfus
@@ -82,8 +82,8 @@ struct igpio_bank_setup {
 	int ibs_barno;
 	int ibs_first_pin;
 	int ibs_last_pin;
-	int ibs_gpi_is;
-	int ibs_gpi_ie;
+	int ibs_gpi_is;		/* Interrupt Status */
+	int ibs_gpi_ie;		/* Interrupt Enable */
 };
 
 struct igpio_pin_group {
@@ -134,6 +134,12 @@ struct igpio_bank_setup igpio_bank_setup[] = {
 	{ "INT3455",    2, 153, 215, 0x100, 0x110 },
 	{ "INT3455",    3, 216, 240, 0x100, 0x110 },
 
+	/* Ice Lake-N */
+	{ "INT34C3",    0,   0,  71, 0x100, 0x120 },
+	{ "INT34C3",    1,  72, 174, 0x100, 0x120 },
+	{ "INT34C3",    2, 175, 204, 0x100, 0x120 },
+	{ "INT34C3",    3, 205, 212, 0x100, 0x120 },
+
 	/* Lakefield */
 	{ "INT34C4",    0,   0,  59, 0x100, 0x110 },
 	{ "INT34C4",    1,  60, 148, 0x100, 0x110 },
@@ -146,7 +152,7 @@ struct igpio_bank_setup igpio_bank_setup[] = {
 	{ "INT34C5",    2, 171, 259, 0x100, 0x120 },
 	{ "INT34C5",    3, 260, 276, 0x100, 0x120 },
 
-	/* Alder Lake-P (Same as Tigerlake-LP(INT34C5)) */
+	/* Alder Lake-P (Same as Tiger Lake-LP(INT34C5)) */
 	{ "INTC1055",   0,   0,  66, 0x100, 0x120 },
 	{ "INTC1055",   1,  67, 170, 0x100, 0x120 },
 	{ "INTC1055",   2, 171, 259, 0x100, 0x120 },
@@ -172,11 +178,18 @@ struct igpio_bank_setup igpio_bank_setup[] = {
 	{ "INTC1056",   3, 200, 269, 0x200, 0x220 },
 	{ "INTC1056",   4, 270, 303, 0x200, 0x220 },
 
-	/* Tiger Lake-LP */
+	/* Alder Lake-N */
 	{ "INTC1057",   0,   0,  66, 0x100, 0x120 },
-	{ "INTC1057",   1,  67, 170, 0x100, 0x120 },
-	{ "INTC1057",   2, 171, 259, 0x100, 0x120 },
-	{ "INTC1057",   3, 260, 276, 0x100, 0x120 },
+	{ "INTC1057",   1,  67, 168, 0x100, 0x120 },
+	{ "INTC1057",   2, 169, 248, 0x100, 0x120 },
+	{ "INTC1057",   3, 249, 256, 0x100, 0x120 },
+
+	/* Raptor Lake-S (Same as Alder Lake-S(INTC1056)) */
+	{ "INTC1085",   0,   0,  94, 0x200, 0x220 },
+	{ "INTC1085",   1,  95, 150, 0x200, 0x220 },
+	{ "INTC1085",   2, 151, 199, 0x200, 0x220 },
+	{ "INTC1085",   3, 200, 269, 0x200, 0x220 },
+	{ "INTC1085",   4, 270, 303, 0x200, 0x220 },
 
 	/* Lewisburg */
 	{ "INT3536",    0,   0,  71, 0x100, 0x110 },
@@ -222,33 +235,39 @@ struct igpio_bank_setup igpio_bank_setup[] = {
 
 struct igpio_pin_group igpio_pin_group[] = {
 	/* Sunrisepoint-LP */
-	{ "INT344B",   0, 151,  "A" },
+	{ "INT344B",   0,   0,  "GPP_A" },
+	{ "INT344B",   1,  24,  "GPP_B" },
+	{ "INT344B",   0,  48,  "GPP_C" },
+	{ "INT344B",   1,  72,  "GPP_D" },
+	{ "INT344B",   2,  96,  "GPP_E" },
+	{ "INT344B",   0, 120,  "GPP_F" },
 
 	/* Coffee Lake-S (Same as Sunrisepoint-H(INT345D)) */
-	{ "INT3451",   0,   0,  "A" },
-	{ "INT3451",   1,  24,  "B" },
-	{ "INT3451",   0,  48,  "C" },
-	{ "INT3451",   1,  72,  "D" },
-	{ "INT3451",   2,  96,  "E" },
-	{ "INT3451",   3, 109,  "F" },
-	{ "INT3451",   4, 133,  "G" },
-	{ "INT3451",   5, 157,  "H" },
-	{ "INT3451",   0, 181,  "I" },
+	{ "INT3451",   0,   0,  "GPP_A" },
+	{ "INT3451",   1,  24,  "GPP_B" },
+	{ "INT3451",   0,  48,  "GPP_C" },
+	{ "INT3451",   1,  72,  "GPP_D" },
+	{ "INT3451",   2,  96,  "GPP_E" },
+	{ "INT3451",   3, 109,  "GPP_F" },
+	{ "INT3451",   4, 133,  "GPP_G" },
+	{ "INT3451",   5, 157,  "GPP_H" },
+	{ "INT3451",   0, 181,  "GPP_I" },
 
 	/* Sunrisepoint-H */
-	{ "INT345D",   0,   0,  "A" },
-	{ "INT345D",   1,  24,  "B" },
-	{ "INT345D",   0,  48,  "C" },
-	{ "INT345D",   1,  72,  "D" },
-	{ "INT345D",   2,  96,  "E" },
-	{ "INT345D",   3, 109,  "F" },
-	{ "INT345D",   4, 133,  "G" },
-	{ "INT345D",   5, 157,  "H" },
-	{ "INT345D",   0, 181,  "I" },
+	{ "INT345D",   0,   0,  "GPP_A" },
+	{ "INT345D",   1,  24,  "GPP_B" },
+	{ "INT345D",   0,  48,  "GPP_C" },
+	{ "INT345D",   1,  72,  "GPP_D" },
+	{ "INT345D",   2,  96,  "GPP_E" },
+	{ "INT345D",   3, 109,  "GPP_F" },
+	{ "INT345D",   4, 133,  "GPP_G" },
+	{ "INT345D",   5, 157,  "GPP_H" },
+	{ "INT345D",   0, 181,  "GPP_I" },
 
 
 	/* Baytrail */
 	{ "INT33B2",   0, 101,  "A" },
+	{ "INT33FC",   0, 101,  "A" },
 
 	/* Lynxpoint */
 	{ "INT33C7",   0,  94,  "A" },
@@ -281,12 +300,120 @@ struct igpio_pin_group igpio_pin_group[] = {
 	{ "INT34BB",   0,  68,  "GPP_D" },
 	{ "INT34BB",   1,  93,  "GPP_F" },
 	{ "INT34BB",   2, 117,  "GPP_H" },
-	{ "INT34BB",   3, 141,  "vGPIO" },
-	{ "INT34BB",   4, 173,  "vGPIO" },
+	{ "INT34BB",   3, 141,  "vGPIO_0" },
+	{ "INT34BB",   4, 173,  "vGPIO_1" },
 	{ "INT34BB",   0, 181,  "GPP_C" },
 	{ "INT34BB",   1, 205,  "GPP_E" },
 	{ "INT34BB",   2, 229,  "JTAG" },
 	{ "INT34BB",   3, 238,  "HVCMOS" },
+
+	/* Ice Lake-LP */
+	{ "INT3455",   0,   0,  "GPP_G" },
+	{ "INT3455",   1,   8,  "GPP_B" },
+	{ "INT3455",   2,  34,  "GPP_A" },
+	{ "INT3455",   0,  59,  "GPP_H" },
+	{ "INT3455",   1,  83,  "GPP_D" },
+	{ "INT3455",   2, 104,  "GPP_F" },
+	{ "INT3455",   3, 124,  "vGPIO" },
+	{ "INT3455",   0, 153,  "GPP_C" },
+	{ "INT3455",   1, 177,  "HVCMOS" },
+	{ "INT3455",   2, 183,  "GPP_E" },
+	{ "INT3455",   3, 207,  "JTAG" },
+	{ "INT3455",   0, 216,  "GPP_R" },
+	{ "INT3455",   1, 224,  "GPP_S" },
+	{ "INT3455",   2, 232,  "SPI" },
+
+	/* Ice Lake-N */
+	{ "INT34C3",   0,   0,  "SPI" },
+	{ "INT34C3",   1,   9,  "GPP_B" },
+	{ "INT34C3",   2,  35,  "GPP_A" },
+	{ "INT34C3",   3,  56,  "GPP_S" },
+	{ "INT34C3",   4,  64,  "GPP_R" },
+	{ "INT34C3",   0,  72,  "GPP_H" },
+	{ "INT34C3",   1,  96,  "GPP_D" },
+	{ "INT34C3",   2, 122,  "vGPIO" },
+	{ "INT34C3",   3, 151,  "GPP_C" },
+	{ "INT34C3",   0, 175,  "HVCMOS" },
+	{ "INT34C3",   1, 181,  "GPP_E" },
+	{ "INT34C3",   0, 205,  "GPP_G" },
+
+	/* Lakefield */
+	{ "INT34C4",   0,   0,  "EAST_0" },
+	{ "INT34C4",   1,  32,  "EAST_1" },
+	{ "INT34C4",   0,  60,  "NORTHWEST_0" },
+	{ "INT34C4",   1,  92,  "NORTHWEST_1" },
+	{ "INT34C4",   2, 124,  "NORTHWEST_2" },
+	{ "INT34C4",   0, 149,  "WEST_0" },
+	{ "INT34C4",   1, 181,  "WEST_1" },
+	{ "INT34C4",   2, 213,  "WEST_2" },
+	{ "INT34C4",   0, 238,  "SOUTHEAST" },
+
+	/* Tiger Lake-LP */
+	{ "INT34C5",   0,   0,  "GPP_B" },
+	{ "INT34C5",   1,  26,  "GPP_T" },
+	{ "INT34C5",   2,  42,  "GPP_A" },
+	{ "INT34C5",   0,  67,  "GPP_S" },
+	{ "INT34C5",   1,  75,  "GPP_H" },
+	{ "INT34C5",   2,  99,  "GPP_D" },
+	{ "INT34C5",   3, 120,  "GPP_U" },
+	{ "INT34C5",   4, 144,  "vGPIO" },
+	{ "INT34C5",   0, 171,  "GPP_C" },
+	{ "INT34C5",   1, 195,  "GPP_F" },
+	{ "INT34C5",   2, 220,  "HVCMOS" },
+	{ "INT34C5",   3, 226,  "GPP_E" },
+	{ "INT34C5",   4, 251,  "JTAG" },
+	{ "INT34C5",   0, 260,  "GPP_R" },
+	{ "INT34C5",   1, 268,  "SPI" },
+
+	/* Alder Lake-P (Same as Tiger Lake-LP(INT34C5)) */
+	{ "INTC1055",  0,   0,  "GPP_B" },
+	{ "INTC1055",  1,  26,  "GPP_T" },
+	{ "INTC1055",  2,  42,  "GPP_A" },
+	{ "INTC1055",  0,  67,  "GPP_S" },
+	{ "INTC1055",  1,  75,  "GPP_H" },
+	{ "INTC1055",  2,  99,  "GPP_D" },
+	{ "INTC1055",  3, 120,  "GPP_U" },
+	{ "INTC1055",  4, 144,  "vGPIO" },
+	{ "INTC1055",  0, 171,  "GPP_C" },
+	{ "INTC1055",  1, 195,  "GPP_F" },
+	{ "INTC1055",  2, 220,  "HVCMOS" },
+	{ "INTC1055",  3, 226,  "GPP_E" },
+	{ "INTC1055",  4, 251,  "JTAG" },
+	{ "INTC1055",  0, 260,  "GPP_R" },
+	{ "INTC1055",  1, 268,  "SPI" },
+
+	/* Tiger Lake-H */
+	{ "INT34C6",   0,   0,  "GPP_A" },
+	{ "INT34C6",   1,  25,  "GPP_R" },
+	{ "INT34C6",   2,  45,  "GPP_B" },
+	{ "INT34C6",   3,  71,  "vGPIO_0" },
+	{ "INT34C6",   0,  79,  "GPP_D" },
+	{ "INT34C6",   1, 105,  "GPP_C" },
+	{ "INT34C6",   2, 129,  "GPP_S" },
+	{ "INT34C6",   3, 137,  "GPP_G" },
+	{ "INT34C6",   4, 154,  "vGPIO" },
+	{ "INT34C6",   0, 181,  "GPP_E" },
+	{ "INT34C6",   1, 194,  "GPP_F" },
+	{ "INT34C6",   0, 218,  "GPP_H" },
+	{ "INT34C6",   1, 242,  "GPP_J" },
+	{ "INT34C6",   2, 252,  "GPP_K" },
+	{ "INT34C6",   0, 267,  "GPP_I" },
+	{ "INT34C6",   1, 282,  "JTAG" },
+
+	/* Jasper Lake */
+	{ "INT34C8",   0,   0,  "GPP_F" },
+	{ "INT34C8",   1,  20,  "SPI" },
+	{ "INT34C8",   2,  29,  "GPP_B" },
+	{ "INT34C8",   3,  55,  "GPP_A" },
+	{ "INT34C8",   4,  76,  "GPP_S" },
+	{ "INT34C8",   5,  84,  "GPP_R" },
+	{ "INT34C8",   0,  92,  "GPP_H" },
+	{ "INT34C8",   1, 116,  "GPP_D" },
+	{ "INT34C8",   2, 142,  "vGPIO" },
+	{ "INT34C8",   3, 171,  "GPP_C" },
+	{ "INT34C8",   0, 195,  "HVCMOS" },
+	{ "INT34C8",   1, 201,  "GPP_E" },
+	{ "INT34C8",   0, 225,  "GPP_G" },
 
 	/* Alder Lake-S */
 	{ "INTC1056",  0,   0,  "GPP_I" },
@@ -307,125 +434,42 @@ struct igpio_pin_group igpio_pin_group[] = {
 	{ "INTC1056",  0, 270,  "GPP_D" },
 	{ "INTC1056",  1, 295,  "JTAG" },
 
+	/* Alder Lake-N */
+	{ "INTC1057",  0,   0,  "GPP_B" },
+	{ "INTC1057",  1,  26,  "GPP_T" },
+	{ "INTC1057",  2,  42,  "GPP_A" },
+	{ "INTC1057",  0,  67,  "GPP_S" },
+	{ "INTC1057",  1,  75,  "GPP_I" },
+	{ "INTC1057",  2,  95,  "GPP_H" },
+	{ "INTC1057",  3, 119,  "GPP_D" },
+	{ "INTC1057",  4, 140,  "vGPIO" },
+	{ "INTC1057",  0, 169,  "GPP_C" },
+	{ "INTC1057",  1, 193,  "GPP_F" },
+	{ "INTC1057",  2, 218,  "HVCMOS" },
+	{ "INTC1057",  3, 224,  "GPP_E" },
+	{ "INTC1057",  0, 249,  "GPP_R" },
 
-	/* Ice Lake */
-	{ "INT3455",   0,   0,  "GPP_G" },
-	{ "INT3455",   1,   8,  "GPP_B" },
-	{ "INT3455",   2,  34,  "GPP_A" },
-	{ "INT3455",   0,  59,  "GPP_H" },
-	{ "INT3455",   1,  83,  "GPP_D" },
-	{ "INT3455",   2, 104,  "GPP_F" },
-	{ "INT3455",   3, 124,  "vGPIO" },
-	{ "INT3455",   0, 153,  "GPP_C" },
-	{ "INT3455",   1, 177,  "HVCMOS" },
-	{ "INT3455",   2, 183,  "GPP_E" },
-	{ "INT3455",   3, 207,  "JTAG" },
-	{ "INT3455",   2, 232,  "SPI" },
-
-
-	/* Lakefield */
-	{ "INT34C4",   0,   0,  "EAST_0" },
-	{ "INT34C4",   1,  32,  "EAST_1" },
-	{ "INT34C4",   0,  60,  "NORTHWEST_0" },
-	{ "INT34C4",   1,  92,  "NORTHWEST_1" },
-	{ "INT34C4",   2, 124,  "NORTHWEST_2" },
-	{ "INT34C4",   0, 149,  "WEST_0" },
-	{ "INT34C4",   1, 181,  "WEST_1" },
-	{ "INT34C4",   2, 213,  "WEST_2" },
-	{ "INT34C4",   0, 238,  "SOUTHEAST" },
-
-
-	/* Tiger Lake-LP */
-	{ "INT34C5",   0,   0,  "GPP_A" },
-	{ "INT34C5",   1,  25,  "GPP_R" },
-	{ "INT34C5",   2,  45,  "GPP_B" },
-	{ "INT34C5",   3,  71,  "vGPIO_0" },
-	{ "INT34C5",   0,  79,  "GPP_D" },
-	{ "INT34C5",   1, 105,  "GPP_C" },
-	{ "INT34C5",   2, 129,  "GPP_S" },
-	{ "INT34C5",   3, 137,  "GPP_G" },
-	{ "INT34C5",   4, 154,  "vGPIO" },
-	{ "INT34C5",   0, 181,  "GPP_E" },
-	{ "INT34C5",   1, 194,  "GPP_F" },
-	{ "INT34C5",   0, 218,  "GPP_H" },
-	{ "INT34C5",   1, 242,  "GPP_J" },
-	{ "INT34C5",   2, 252,  "GPP_K" },
-	{ "INT34C5",   0, 267,  "GPP_I" },
-	{ "INT34C5",   1, 282,  "JTAG" },
-
-
-	/* Alder Lake-P (Same as Tigerlake-LP(INT34C5)) */
-	{ "INTC1055",  0,   0,  "GPP_A" },
-	{ "INTC1055",  1,  25,  "GPP_R" },
-	{ "INTC1055",  2,  45,  "GPP_B" },
-	{ "INTC1055",  3,  71,  "vGPIO_0" },
-	{ "INTC1055",  0,  79,  "GPP_D" },
-	{ "INTC1055",  1, 105,  "GPP_C" },
-	{ "INTC1055",  2, 129,  "GPP_S" },
-	{ "INTC1055",  3, 137,  "GPP_G" },
-	{ "INTC1055",  4, 154,  "vGPIO" },
-	{ "INTC1055",  0, 181,  "GPP_E" },
-	{ "INTC1055",  1, 194,  "GPP_F" },
-	{ "INTC1055",  0, 218,  "GPP_H" },
-	{ "INTC1055",  1, 242,  "GPP_J" },
-	{ "INTC1055",  2, 252,  "GPP_K" },
-	{ "INTC1055",  0, 267,  "GPP_I" },
-	{ "INTC1055",  1, 282,  "JTAG" },
-
-
-	/* Tiger Lake-LP */
-	{ "INTC1057",  0,   0,  "GPP_A" },
-	{ "INTC1057",  1,  25,  "GPP_R" },
-	{ "INTC1057",  2,  45,  "GPP_B" },
-	{ "INTC1057",  3,  71,  "vGPIO_0" },
-	{ "INTC1057",  0,  79,  "GPP_D" },
-	{ "INTC1057",  1, 105,  "GPP_C" },
-	{ "INTC1057",  2, 129,  "GPP_S" },
-	{ "INTC1057",  3, 137,  "GPP_G" },
-	{ "INTC1057",  4, 154,  "vGPIO" },
-	{ "INTC1057",  0, 181,  "GPP_E" },
-	{ "INTC1057",  1, 194,  "GPP_F" },
-	{ "INTC1057",  0, 218,  "GPP_H" },
-	{ "INTC1057",  1, 242,  "GPP_J" },
-	{ "INTC1057",  2, 252,  "GPP_K" },
-	{ "INTC1057",  0, 267,  "GPP_I" },
-	{ "INTC1057",  1, 282,  "JTAG" },
-
-	/* Tiger Lake-H */
-	{ "INT34C6",   0,   0,  "GPP_B" },
-	{ "INT34C6",   1,  26,  "GPP_T" },
-	{ "INT34C6",   2,  42,  "GPP_A" },
-	{ "INT34C6",   0,  67,  "GPP_S" },
-	{ "INT34C6",   1,  75,  "GPP_H" },
-	{ "INT34C6",   2,  99,  "GPP_D" },
-	{ "INT34C6",   3, 120,  "GPP_U" },
-	{ "INT34C6",   4, 144,  "vGPIO" },
-	{ "INT34C6",   0, 171,  "GPP_C" },
-	{ "INT34C6",   1, 195,  "GPP_F" },
-	{ "INT34C6",   2, 220,  "HVCMOS" },
-	{ "INT34C6",   3, 226,  "GPP_E" },
-	{ "INT34C6",   4, 251,  "JTAG" },
-	{ "INT34C6",   0, 260,  "GPP_R" },
-	{ "INT34C6",   1, 268,  "SPI" },
-
-	/* Jasper Lake */
-	{ "INT34C8",   0,   0,  "GPP_F" },
-	{ "INT34C8",   1,  20,  "SPI" },
-	{ "INT34C8",   2,  29,  "GPP_B" },
-	{ "INT34C8",   3,  55,  "GPP_A" },
-	{ "INT34C8",   4,  76,  "GPP_S" },
-	{ "INT34C8",   5,  84,  "GPP_R" },
-	{ "INT34C8",   0,  92,  "GPP_H" },
-	{ "INT34C8",   1, 116,  "GPP_D" },
-	{ "INT34C8",   2, 142,  "vGPIO" },
-	{ "INT34C8",   3, 171,  "GPP_C" },
-	{ "INT34C8",   0, 195,  "HVCMOS" },
-	{ "INT34C8",   1, 201,  "GPP_E" },
-	{ "INT34C8",   0, 225,  "GPP_G" },
-
+	/* Raptor Lake-S (Same as Alder Lake-S(INTC1056)) */
+	{ "INTC1085",  0,   0,  "GPP_I" },
+	{ "INTC1085",  1,  25,  "GPP_R" },
+	{ "INTC1085",  2,  48,  "GPP_J" },
+	{ "INTC1085",  3,  60,  "vGPIO" },
+	{ "INTC1085",  4,  87,  "vGPIO_0" },
+	{ "INTC1085",  0,  95,  "GPP_B" },
+	{ "INTC1085",  1, 119,  "GPP_G" },
+	{ "INTC1085",  2, 127,  "GPP_H" },
+	{ "INTC1085",  0, 151,  "SPI0" },
+	{ "INTC1085",  1, 160,  "GPP_A" },
+	{ "INTC1085",  2, 176,  "GPP_C" },
+	{ "INTC1085",  0, 200,  "GPP_S" },
+	{ "INTC1085",  1, 208,  "GPP_E" },
+	{ "INTC1085",  2, 231,  "GPP_K" },
+	{ "INTC1085",  3, 246,  "GPP_F" },
+	{ "INTC1085",  0, 270,  "GPP_D" },
+	{ "INTC1085",  1, 295,  "JTAG" },
 
 	/* Lewisburg */
-	{ "INT3536",   0,   7,  "" },
+	{ "INT3536",   0,   0,  "" },
 
 	/* Emmitsburg */
 	{ "INTC1071",  0,   0,  "GPP_A" },
@@ -443,14 +487,13 @@ struct igpio_pin_group igpio_pin_group[] = {
 	{ "INTC1071",  3, 244,  "GPP_N" },
 
 	/* Denverton */
-	{ "INTC3000",  0,   0,  "North" },
-	{ "INTC3000",  1,  32,  "North" },
-	{ "INTC3000",  0,  41,  "South" },
-	{ "INTC3000",  1,  59,  "South" },
-	{ "INTC3000",  2,  91,  "South" },
-	{ "INTC3000",  3, 112,  "South" },
-	{ "INTC3000",  4, 144,  "South" },
-
+	{ "INTC3000",  0,   0,  "North_ALL_0" },
+	{ "INTC3000",  1,  32,  "North_ALL_1" },
+	{ "INTC3000",  0,  41,  "South_DFX" },
+	{ "INTC3000",  1,  59,  "South_GPP0_0" },
+	{ "INTC3000",  2,  91,  "South_GPP0_1" },
+	{ "INTC3000",  3, 112,  "South_GPP1_0" },
+	{ "INTC3000",  4, 144,  "South_GPP1_1" },
 
 	/* Cedarfork */
 	{ "INTC3001",  0,   0,  "WEST2" },
