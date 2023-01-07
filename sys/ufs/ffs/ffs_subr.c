@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_subr.c,v 1.53 2022/05/24 06:28:02 andvar Exp $	*/
+/*	$NetBSD: ffs_subr.c,v 1.54 2023/01/07 19:41:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.53 2022/05/24 06:28:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_subr.c,v 1.54 2023/01/07 19:41:30 chs Exp $");
 
 #include <sys/param.h>
 
@@ -141,7 +141,7 @@ ffs_getblk(struct vnode *vp, daddr_t lblkno, daddr_t blkno, int size,
  * of some frags.
  */
 void
-ffs_fragacct(struct fs *fs, int fragmap, int32_t fraglist[], int cnt,
+ffs_fragacct(struct fs *fs, int fragmap, uint32_t fraglist[], int cnt,
     int needswap)
 {
 	int inblk;

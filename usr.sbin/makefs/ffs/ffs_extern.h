@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.8 2022/04/09 10:05:35 riastradh Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.9 2023/01/07 19:41:30 chs Exp $	*/
 /* From: NetBSD: ffs_extern.h,v 1.19 2001/08/17 02:18:48 lukem Exp */
 
 /*-
@@ -66,7 +66,7 @@ void ffs_csum_swap(struct csum *, struct csum *, int);
 void ffs_cg_swap(struct cg *, struct cg *, struct fs *);
 
 	/* ffs_subr.c */
-void ffs_fragacct(struct fs *, int, int32_t[], int, int);
+void ffs_fragacct(struct fs *, int, uint32_t[], int, int);
 int ffs_isblock(struct fs *, u_char *, int32_t);
 int ffs_isfreeblock(struct fs *, u_char *, int32_t);
 void ffs_clrblock(struct fs *, u_char *, int32_t);

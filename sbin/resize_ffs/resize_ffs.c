@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_ffs.c,v 1.57 2022/11/17 06:40:39 chs Exp $	*/
+/*	$NetBSD: resize_ffs.c,v 1.58 2023/01/07 19:41:30 chs Exp $	*/
 /* From sources sent on February 17, 2003 */
 /*-
  * As its sole author, I explicitly place this code in the public
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: resize_ffs.c,v 1.57 2022/11/17 06:40:39 chs Exp $");
+__RCSID("$NetBSD: resize_ffs.c,v 1.58 2023/01/07 19:41:30 chs Exp $");
 
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -327,7 +327,7 @@ alloconce(size_t nb, const char *tag)
 static void
 loadcgs(void)
 {
-	int cg;
+	uint32_t cg;
 	char *cgp;
 
 	cgblksz = roundup(oldsb->fs_cgsize, oldsb->fs_fsize);
@@ -460,7 +460,7 @@ blk_is_clr(unsigned char *bitvec, int blkbase, int blkfrags)
  *  bit simpler than it would otherwise be.
  */
 static void
-initcg(int cgn)
+initcg(uint32_t cgn)
 {
 	struct cg *cg;		/* The in-core cg, of course */
 	int64_t base;		/* Disk address of cg base */
@@ -658,7 +658,7 @@ find_freespace(unsigned int nfrags)
 {
 	static int hand = 0;	/* hand rotates through all frags in the fs */
 	int cgsize;		/* size of the cg hand currently points into */
-	int cgn;		/* number of cg hand currently points into */
+	uint32_t cgn;		/* number of cg hand currently points into */
 	int fwc;		/* frag-within-cg number of frag hand points
 				 * to */
 	unsigned int run;	/* length of run of free frags seen so far */
@@ -711,7 +711,7 @@ static int
 find_freeblock(void)
 {
 	static int hand = 0;	/* hand rotates through all frags in fs */
-	int cgn;		/* cg number of cg hand points into */
+	uint32_t cgn;		/* cg number of cg hand points into */
 	int fwc;		/* frag-within-cg number of frag hand points
 				 * to */
 	int cgsize;		/* size of cg hand points into */
@@ -754,8 +754,8 @@ static int
 find_freeinode(void)
 {
 	static int hand = 0;	/* hand rotates through all inodes in fs */
-	int cgn;		/* cg number of cg hand points into */
-	int iwc;		/* inode-within-cg number of inode hand points
+	uint32_t cgn;		/* cg number of cg hand points into */
+	uint32_t iwc;		/* inode-within-cg number of inode hand points
 				 * to */
 	int secondpass;		/* have we wrapped from end to beginning? */
 	unsigned char *bits;	/* cg_inosused()[] for cg hand points into */
@@ -895,7 +895,7 @@ csum_fixup(void)
 static void
 recompute_fs_dsize(void)
 {
-	int i;
+	uint32_t i;
 
 	newsb->fs_dsize = 0;
 	for (i = 0; i < newsb->fs_ncg; i++) {
@@ -986,7 +986,7 @@ makegeometry(int chatter)
 static void
 grow(void)
 {
-	int i;
+	uint32_t i;
 
 	if (makegeometry(1)) {
 		printf("New fs size %"PRIu64" = old fs size %"PRIu64
@@ -1252,7 +1252,8 @@ blkmove_init(void)
 static void
 loadinodes(void)
 {
-	int imax, ino, i, j;
+	int imax, ino, j;
+	uint32_t i;
 	struct ufs1_dinode *dp1 = NULL;
 	struct ufs2_dinode *dp2 = NULL;
 
@@ -1641,8 +1642,8 @@ static void
 evict_inodes(struct cg * cg)
 {
 	int inum;
-	int i;
 	int fi;
+	uint32_t i;
 
 	inum = newsb->fs_ipg * cg->cg_cgx;
 	for (i = 0; i < newsb->fs_ipg; i++, inum++) {
@@ -1751,7 +1752,7 @@ update_for_inode_move(void)
 static void
 shrink(void)
 {
-	int i;
+	uint32_t i;
 
 	if (makegeometry(1)) {
 		printf("New fs size %"PRIu64" = old fs size %"PRIu64
@@ -1864,7 +1865,7 @@ static void
 rescan_blkmaps(int cgn)
 {
 	struct cg *cg;
-	int f;
+	uint32_t f;
 	int b;
 	int blkfree;
 	int blkrun;
@@ -1983,7 +1984,7 @@ rescan_inomaps(int cgn)
 {
 	struct cg *cg;
 	int inum;
-	int iwc;
+	uint32_t iwc;
 
 	cg = cgs[cgn];
 	newsb->fs_cstotal.cs_ndir -= cg->cg_cs.cs_ndir;
@@ -2023,7 +2024,7 @@ rescan_inomaps(int cgn)
 static void
 flush_cgs(void)
 {
-	int i;
+	uint32_t i;
 
 	for (i = 0; i < newsb->fs_ncg; i++) {
 		progress_bar(special, "flush cg",
@@ -2057,7 +2058,7 @@ flush_cgs(void)
 static void
 write_sbs(void)
 {
-	int i;
+	uint32_t i;
 
 	if (newsb->fs_magic == FS_UFS1_MAGIC &&
 	    (newsb->fs_old_flags & FS_FLAGS_UPDATED) == 0) {
