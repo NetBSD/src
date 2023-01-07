@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.62 2022/11/18 07:41:31 martin Exp $	*/
+/*	$NetBSD: pass1.c,v 1.63 2023/01/07 19:41:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.62 2022/11/18 07:41:31 martin Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.63 2023/01/07 19:41:29 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ pass1(void)
 {
 	ino_t inumber, inosused, ninosused, ii;
 	size_t inospace;
-	int c;
+	uint32_t c;
 	daddr_t i, cgd;
 	struct inodesc idesc;
 	struct cg *cgp = cgrp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: quotacheck.c,v 1.50 2022/11/17 06:40:41 chs Exp $	*/
+/*	$NetBSD: quotacheck.c,v 1.51 2023/01/07 19:41:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)quotacheck.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: quotacheck.c,v 1.50 2022/11/17 06:40:41 chs Exp $");
+__RCSID("$NetBSD: quotacheck.c,v 1.51 2023/01/07 19:41:30 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -319,7 +319,8 @@ chkquota(const char *type, const char *fsname, const char *mntpt, void *v,
 	struct quotaname *qnp = v;
 	struct fileusage *fup;
 	union comb_dinode *dp;
-	int cg, i, mode, errs = 0, inosused;
+	int i, mode, errs = 0, inosused;
+	uint32_t cg;
 	ino_t ino;
 	struct cg *cgp;
 	char msgbuf[4096];

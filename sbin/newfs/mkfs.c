@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.132 2022/11/17 06:40:39 chs Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.133 2023/01/07 19:41:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.132 2022/11/17 06:40:39 chs Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.133 2023/01/07 19:41:29 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ union dinode {
 	struct ufs2_dinode dp2;
 };
 
-static void initcg(int, const struct timeval *);
+static void initcg(uint32_t, const struct timeval *);
 static int fsinit(const struct timeval *, mode_t, uid_t, gid_t);
 union Buffer;
 static int makedir(union Buffer *, struct direct *, int);
@@ -184,7 +184,8 @@ mkfs(const char *fsys, int fi, int fo,
 	uint fragsperinodeblk, ncg, u;
 	uint cgzero;
 	uint64_t inodeblks, cgall;
-	int32_t cylno, i, csfrags;
+	uint32_t cylno;
+	int i, csfrags;
 	int inodes_per_cg;
 	struct timeval tv;
 	long long sizepb;
@@ -773,11 +774,10 @@ mkfs(const char *fsys, int fi, int fo,
  * Initialize a cylinder group.
  */
 void
-initcg(int cylno, const struct timeval *tv)
+initcg(uint32_t cylno, const struct timeval *tv)
 {
 	daddr_t cbase, dmax;
-	int32_t i, d, dlower, dupper, blkno;
-	uint32_t u;
+	uint32_t i, d, dlower, dupper, blkno, u;
 	struct ufs1_dinode *dp1;
 	struct ufs2_dinode *dp2;
 	int start;
@@ -849,7 +849,7 @@ initcg(int cylno, const struct timeval *tv)
 		acg.cg_nextfreeoff = acg.cg_clusteroff +
 		    howmany(ffs_fragstoblks(&sblock, sblock.fs_fpg), CHAR_BIT);
 	}
-	if (acg.cg_nextfreeoff > sblock.fs_cgsize) {
+	if (acg.cg_nextfreeoff > (unsigned)sblock.fs_cgsize) {
 		printf("Panic: cylinder group too big\n");
 		fserr(37);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.57 2022/12/19 21:13:16 chs Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.58 2023/01/07 19:41:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.57 2022/12/19 21:13:16 chs Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.58 2023/01/07 19:41:30 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: tunefs.c,v 1.57 2022/12/19 21:13:16 chs Exp $");
 #include <fcntl.h>
 #include <fstab.h>
 #include <paths.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -103,11 +104,12 @@ __dead static	void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	int		i, ch, aflag, pflag, Aflag, Fflag, Nflag, openflags;
+	int		ch, aflag, pflag, Aflag, Fflag, Nflag, openflags;
 	const char	*special, *chg[2];
 	char		device[MAXPATHLEN];
 	int		maxbpg, minfree, optim, secsize;
-	int		avgfilesize, avgfpdir, active;
+	uint32_t	i, avgfilesize, avgfpdir;
+	bool		active;
 	long long	logfilesize;
 	int		secshift, fsbtodb;
 	const char  	*avalue, *pvalue, *name;
@@ -241,7 +243,7 @@ main(int argc, char *argv[])
 	getsb(&sblock, special);
 
 #define CHANGEVAL(old, new, type, suffix) do				\
-	if ((new) != -1) {						\
+	if ((uint32_t)(new) != (uint32_t)-1) {				\
 		if ((new) == (old))					\
 			warnx("%s remains unchanged at %d%s",		\
 			    (type), (old), (suffix));			\

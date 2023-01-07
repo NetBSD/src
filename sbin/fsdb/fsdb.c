@@ -1,4 +1,4 @@
-/*	$NetBSD: fsdb.c,v 1.53 2022/11/17 06:40:38 chs Exp $	*/
+/*	$NetBSD: fsdb.c,v 1.54 2023/01/07 19:41:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsdb.c,v 1.53 2022/11/17 06:40:38 chs Exp $");
+__RCSID("$NetBSD: fsdb.c,v 1.54 2023/01/07 19:41:29 chs Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -620,7 +620,8 @@ CMDFUNC(findblk)
 	uint32_t *wantedblk32 = NULL;
 	uint64_t *wantedblk64 = NULL;
 	struct cg *cgp = cgrp;
-	int i, c;
+	int i;
+	uint32_t c;
 
 	ocurrent = curinum;
 	wantedblksize = (argc - 1);

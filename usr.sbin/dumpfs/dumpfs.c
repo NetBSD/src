@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.67 2022/12/19 18:51:42 chs Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.68 2023/01/07 19:41:30 chs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.67 2022/12/19 18:51:42 chs Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.68 2023/01/07 19:41:30 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -493,6 +493,7 @@ print_cgsum(const char *name, int fd)
 {
 	struct csum *ccsp;
 	int i, j, size;
+	uint32_t cgnum;
 
 	afs.fs_csp = calloc(1, afs.fs_cssize);
 	for (i = 0, j = 0; i < afs.fs_cssize; i += afs.fs_bsize, j++) {
@@ -510,8 +511,8 @@ print_cgsum(const char *name, int fd)
 	}
 
 	printf("cs[].cs_(nbfree,ndir,nifree,nffree):\n\t");
-	for (i = 0; i < afs.fs_ncg; i++) {
-		struct csum *cs = &afs.fs_cs(&afs, i);
+	for (cgnum = 0; cgnum < afs.fs_ncg; cgnum++) {
+		struct csum *cs = &afs.fs_cs(&afs, cgnum);
 		if (i && i % 4 == 0)
 			printf("\n\t");
 		printf("(%d,%d,%d,%d) ",
@@ -534,7 +535,7 @@ static int
 print_alt_super(const char *name, int fd)
 {
 	union fsun alt;
-	int i;
+	uint32_t i;
 	off_t loc;
 	uint16_t alt_opostblsave[32*8];
 	int save_printold;
@@ -560,7 +561,7 @@ print_alt_super(const char *name, int fd)
 static int
 print_cginfo(const char *name, int fd)
 {
-	int i;
+	uint32_t i;
 
 	printf("\n");
 	for (i = 0; i < afs.fs_ncg; i++) {
@@ -578,7 +579,8 @@ print_inodes(const char *name, int fd, int c, int n)
 {
 	void *ino_buf = malloc(afs.fs_bsize);
 	void (*print_inode)(int, int, void *);
-	int i, inum;
+	ino_t inum;
+	uint32_t i;
 
 	if (ino_buf == 0)
 		return 1;

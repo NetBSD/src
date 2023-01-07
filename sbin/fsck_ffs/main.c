@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.90 2022/11/17 06:40:38 chs Exp $	*/
+/*	$NetBSD: main.c,v 1.91 2023/01/07 19:41:29 chs Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.90 2022/11/17 06:40:38 chs Exp $");
+__RCSID("$NetBSD: main.c,v 1.91 2023/01/07 19:41:29 chs Exp $");
 #endif
 #endif /* not lint */
 
@@ -368,7 +368,7 @@ checkfilesys(const char *filesys, const char *origfs, int child)
 	daddr_t n_ffree, n_bfree;
 	struct dups *dp;
 	struct zlncnt *zlnp;
-	int cylno;
+	uint32_t cylno;
 #ifdef LITE2BORKEN
 	int flags;
 #endif
