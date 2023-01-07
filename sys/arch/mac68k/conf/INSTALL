@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.57 2020/08/10 06:32:58 rin Exp $
+#	$NetBSD: INSTALL,v 1.57.20.1 2023/01/07 15:00:54 martin Exp $
 #
 # INSTALL
 
@@ -38,7 +38,7 @@ options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options - XXX remove these at some point
-options 	DIAGNOSTIC	# cheap kernel consistency checks
+#options 	DIAGNOSTIC	# cheap kernel consistency checks
 options 	DDB		# in-kernel debugger
 pseudo-device	ksyms
 #options 	ADB_DEBUG	# ADB debugging
