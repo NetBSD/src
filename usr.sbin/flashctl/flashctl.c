@@ -1,4 +1,4 @@
-/*	$NetBSD: flashctl.c,v 1.4 2011/05/24 13:01:53 joerg Exp $	*/
+/*	$NetBSD: flashctl.c,v 1.5 2023/01/08 15:37:56 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -229,12 +229,12 @@ to_intmax(intmax_t *num, const char *str)
 	char *endptr;
 
 	errno = 0;
-	if (str[0] == '0' && tolower((int )str[1]) == 'x') {
-		if (!isxdigit((int )str[0]))
+	if (str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) {
+		if (!isxdigit((unsigned char)str[2]))
 			return EINVAL;
 		*num = strtoimax(str, &endptr, 16);
 	} else {
-		if (!isdigit((int )str[0]))
+		if (!isdigit((unsigned char)str[0]))
 			return EINVAL;
 		*num = strtoimax(str, &endptr, 10);
 	}
