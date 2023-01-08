@@ -1,4 +1,4 @@
-/*	$NetBSD: flashctl.c,v 1.5 2023/01/08 15:37:56 rillig Exp $	*/
+/*	$NetBSD: flashctl.c,v 1.6 2023/01/08 15:49:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -72,29 +72,29 @@ main(int argc, char **argv)
 		err(EXIT_FAILURE, "can't open flash device");
 	}
 
-	if (!strcmp("erase", command)) {
+	if (strcmp("erase", command) == 0) {
 		struct flash_info_params ip;
 		struct flash_erase_params ep;
 
 		error = ioctl(fd, FLASH_GET_INFO, &ip);
-		if (error) {
+		if (error != 0) {
 			warn("ioctl: FLASH_GET_INFO");
 			goto out;
 		}
 
 		if (argc == 2) {
 			error = to_intmax(&n, argv[0]);
-			if (error) {
+			if (error != 0) {
 				warnx("%s", strerror(error));
 				goto out;
 			}
 			ep.ep_addr = n;
 
-			if (!strcmp("all", argv[1])) {
+			if (strcmp("all", argv[1]) == 0) {
 				ep.ep_len = ip.ip_flash_size;
 			} else {
 				error = to_intmax(&n, argv[1]);
-				if (error) {
+				if (error != 0) {
 					warnx("%s", strerror(error));
 					goto out;
 				}
@@ -105,20 +105,20 @@ main(int argc, char **argv)
 			error = 1;
 			goto out;
 		}
-		
+
 		printf("Erasing %jx bytes starting from %jx\n",
-		    (uintmax_t )ep.ep_len, (uintmax_t )ep.ep_addr);
-		
+		    (uintmax_t)ep.ep_len, (uintmax_t)ep.ep_addr);
+
 		error = ioctl(fd, FLASH_ERASE_BLOCK, &ep);
-		if (error) {
+		if (error != 0) {
 			warn("ioctl: FLASH_ERASE_BLOCK");
 			goto out;
 		}
-	} else if (!strcmp("identify", command)) {
+	} else if (strcmp("identify", command) == 0) {
 		struct flash_info_params ip;
-		
+
 		error = ioctl(fd, FLASH_GET_INFO, &ip);
-		if (error) {
+		if (error != 0) {
 			warn("ioctl: FLASH_GET_INFO");
 			goto out;
 		}
@@ -138,23 +138,23 @@ main(int argc, char **argv)
 
 		/* TODO: humanize */
 		printf("Capacity %jd Mbytes, %jd pages, %ju bytes/page\n", 
-		    (intmax_t )ip.ip_flash_size / 1024 / 1024,
-		    (intmax_t )ip.ip_flash_size / ip.ip_page_size,
-		    (intmax_t )ip.ip_page_size);
+		    (intmax_t)ip.ip_flash_size / 1024 / 1024,
+		    (intmax_t)ip.ip_flash_size / ip.ip_page_size,
+		    (intmax_t)ip.ip_page_size);
 
 		if (ip.ip_flash_type == FLASH_TYPE_NAND) {
 			printf("Block size %jd Kbytes, %jd pages/block\n",
-			    (intmax_t )ip.ip_erase_size / 1024,
-			    (intmax_t )ip.ip_erase_size / ip.ip_page_size);
+			    (intmax_t)ip.ip_erase_size / 1024,
+			    (intmax_t)ip.ip_erase_size / ip.ip_page_size);
 		}
-	} else if (!strcmp("badblocks", command)) {
+	} else if (strcmp("badblocks", command) == 0) {
 		struct flash_info_params ip;
 		struct flash_badblock_params bbp;
 		flash_off_t addr;
 		bool hasbad = false;
 
 		error = ioctl(fd, FLASH_GET_INFO, &ip);
-		if (error) {
+		if (error != 0) {
 			warn("ioctl: FLASH_GET_INFO");
 			goto out;
 		}
@@ -164,9 +164,9 @@ main(int argc, char **argv)
 		addr = 0;
 		while (addr < ip.ip_flash_size) {
 			bbp.bbp_addr = addr;
-			
+
 			error = ioctl(fd, FLASH_BLOCK_ISBAD, &bbp);
-			if (error) {
+			if (error != 0) {
 				warn("ioctl: FLASH_BLOCK_ISBAD");
 				goto out;
 			}
@@ -184,7 +184,7 @@ main(int argc, char **argv)
 		} else {
 			printf("No bad blocks found.\n");
 		}
-	} else if (!strcmp("markbad", command)) {
+	} else if (strcmp("markbad", command) == 0) {
 		flash_off_t address;
 
 		/* TODO: maybe we should let the user specify
@@ -195,26 +195,26 @@ main(int argc, char **argv)
 			error = 1;
 			goto out;
 		}
-		
+
 		error = to_intmax(&n, argv[0]);
-		if (error) {
+		if (error != 0) {
 			warnx("%s", strerror(error));
 			goto out;
 		}
 
 		address = n;
-		
+
 		printf("Marking block 0x%jx as bad.\n",
-		    (intmax_t )address);
+		    (intmax_t)address);
 
 		error = ioctl(fd, FLASH_BLOCK_MARKBAD, &address);
-		if (error) {
+		if (error != 0) {
 			warn("ioctl: FLASH_BLOCK_MARKBAD");
 			goto out;
 		}
 	} else {
 		warnx("Unknown command");
-		error = 1;
+		error = EXIT_FAILURE;
 		goto out;
 	}
 
