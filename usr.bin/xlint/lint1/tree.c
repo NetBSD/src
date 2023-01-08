@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.486 2023/01/04 05:08:22 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.487 2023/01/08 15:22:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.486 2023/01/04 05:08:22 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.487 2023/01/08 15:22:33 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2058,12 +2058,14 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 		return;
 
 	/*
-	 * If the largest enum constant is named '*_NUM_*', it is typically
-	 * not part of the allowed enum values but a marker for the number
-	 * of actual enum values.
+	 * If the name of the largest enum constant contains 'MAX' or 'NUM',
+	 * that constant is typically not part of the allowed enum values but
+	 * a marker for the number of actual enum values.
 	 */
 	if (max_enum_value == max_array_index + 1 &&
-	    (strstr(max_ec->s_name, "NUM") != NULL ||
+	    (strstr(max_ec->s_name, "MAX") != NULL ||
+	     strstr(max_ec->s_name, "max") != NULL ||
+	     strstr(max_ec->s_name, "NUM") != NULL ||
 	     strstr(max_ec->s_name, "num") != NULL))
 		return;
 
