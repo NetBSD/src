@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.134 2022/10/01 10:04:06 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.135 2023/01/08 22:46:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.134 2022/10/01 10:04:06 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.135 2023/01/08 22:46:00 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -398,11 +398,13 @@ initscan(void)
 }
 
 /*
- * Read a character and ensure that it is positive (except EOF).
- * Increment line count(s) if necessary.
+ * When scanning the remainder of a long token (see lex_input), read a byte
+ * and return it as an unsigned char or as EOF.
+ *
+ * Increment the line counts if necessary.
  */
 static int
-inpc(void)
+read_byte(void)
 {
 	int	c;
 
@@ -846,7 +848,7 @@ get_escaped_char(int delim)
 	int	n, c, v;
 
 	if (pbc == -1) {
-		c = inpc();
+		c = read_byte();
 	} else {
 		c = pbc;
 		pbc = -1;
@@ -868,7 +870,7 @@ get_escaped_char(int delim)
 	case EOF:
 		return -2;
 	case '\\':
-		switch (c = inpc()) {
+		switch (c = read_byte()) {
 		case '"':
 			if (!allow_c90 && delim == '\'')
 				/* \" inside character constants undef... */
@@ -913,7 +915,7 @@ get_escaped_char(int delim)
 			v = 0;
 			do {
 				v = (v << 3) + (c - '0');
-				c = inpc();
+				c = read_byte();
 			} while (--n > 0 && '0' <= c && c <= '7');
 			pbc = c;
 			if (v > TARG_UCHAR_MAX) {
@@ -928,7 +930,7 @@ get_escaped_char(int delim)
 				warning(82);
 			v = 0;
 			n = 0;
-			while (c = inpc(), isxdigit(c)) {
+			while (c = read_byte(), isxdigit(c)) {
 				c = isdigit(c) ?
 				    c - '0' : toupper(c) - 'A' + 10;
 				v = (v << 4) + c;
@@ -1048,7 +1050,7 @@ lex_directive(const char *yytext)
 		/* empty string means stdin */
 		if (fnl == 0) {
 			fn = "{standard input}";
-			fnl = 16;			/* strlen (fn) */
+			fnl = 16;	/* strlen (fn) */
 		}
 		curr_pos.p_file = record_filename(fn, fnl);
 		/*
@@ -1118,7 +1120,7 @@ lex_comment(void)
 	eoc = false;
 
 	/* Skip whitespace after the start of the comment */
-	while (c = inpc(), isspace(c))
+	while (c = read_byte(), isspace(c))
 		continue;
 
 	/* Read the potential keyword to keywd */
@@ -1128,7 +1130,7 @@ lex_comment(void)
 		if (islower(c) && l > 0 && ch_isupper(keywd[0]))
 			break;
 		keywd[l++] = (char)c;
-		c = inpc();
+		c = read_byte();
 	}
 	while (l > 0 && ch_isspace(keywd[l - 1]))
 		l--;
@@ -1144,14 +1146,14 @@ lex_comment(void)
 
 	/* skip whitespace after the keyword */
 	while (isspace(c))
-		c = inpc();
+		c = read_byte();
 
 	/* read the argument, if the keyword accepts one and there is one */
 	l = 0;
 	if (keywtab[i].arg) {
 		while (isdigit(c) && l < sizeof(arg) - 1) {
 			arg[l++] = (char)c;
-			c = inpc();
+			c = read_byte();
 		}
 	}
 	arg[l] = '\0';
@@ -1159,9 +1161,9 @@ lex_comment(void)
 
 	/* skip whitespace after the argument */
 	while (isspace(c))
-		c = inpc();
+		c = read_byte();
 
-	if (c != '*' || (c = inpc()) != '/') {
+	if (c != '*' || (c = read_byte()) != '/') {
 		if (keywtab[i].func != linted)
 			/* extra characters in lint comment */
 			warning(257);
@@ -1179,7 +1181,7 @@ lex_comment(void)
 skip_rest:
 	while (!eoc) {
 		lc = c;
-		if ((c = inpc()) == EOF) {
+		if ((c = read_byte()) == EOF) {
 			/* unterminated comment */
 			error(256);
 			break;
@@ -1201,7 +1203,7 @@ lex_slash_slash_comment(void)
 		/* %s does not support // comments */
 		gnuism(312, allow_c90 ? "C90" : "traditional C");
 
-	while ((c = inpc()) != EOF && c != '\n')
+	while ((c = read_byte()) != EOF && c != '\n')
 		continue;
 }
 
