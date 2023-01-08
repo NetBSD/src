@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_348.c,v 1.6 2023/01/08 15:18:02 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.7 2023/01/08 15:22:33 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message 348: maximum value %d of '%s' does not match maximum array index %d [348]
@@ -177,7 +177,6 @@ color_with_uc_count_name(enum color_with_uc_count color)
 enum uppercase_max {
 	M_FIRST,
 	M_SECOND,
-	/* expect+1: previous declaration of 'M_MAX' [260] */
 	M_MAX
 };
 
@@ -185,14 +184,12 @@ const char *
 uppercase_max_name(enum uppercase_max x)
 {
 	static const char *const name[] = { "first", "second" };
-	/* expect+1: warning: maximum value 2 of 'enum uppercase_max' does not match maximum array index 1 [348] */
 	return name[x];
 }
 
 enum lowercase_max {
 	M_first,
 	M_second,
-	/* expect+1: previous declaration of 'M_max' [260] */
 	M_max
 };
 
@@ -200,6 +197,5 @@ const char *
 lowercase_max_name(enum lowercase_max x)
 {
 	static const char *const name[] = { "first", "second" };
-	/* expect+1: warning: maximum value 2 of 'enum lowercase_max' does not match maximum array index 1 [348] */
 	return name[x];
 }
