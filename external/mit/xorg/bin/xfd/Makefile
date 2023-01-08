@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/05/09 08:39:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2023/01/08 09:56:11 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -7,6 +7,7 @@ SRCS=	xfd.c grid.c
 
 CPPFLAGS+=	-DXRENDER -DXFREE86_FT2 -I${DESTDIR}${X11INCDIR}/freetype2
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2/freetype
+CPPFLAGS+=	-D_CONST_X_STRING
 
 APPDEFS=Xfd
 
