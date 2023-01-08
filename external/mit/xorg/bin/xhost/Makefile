@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2023/01/08 11:20:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2023/01/08 12:00:21 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,8 +12,8 @@ CPPFLAGS+=-DUSE_GETTEXT -DLOCALEDIR=\"${LOCALEDIR}\"
 CPPFLAGS+=      -DIPv6
 .endif
 
-LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11
-DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
+LDADD+=	-lXmuu -lXt -lSM -lICE -lXext -lX11 -lintl
+DPADD+=	${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11} ${LIBINTL}
 
 .PATH:	${X11SRCDIR.${PROG}}
 .PATH:	${X11SRCDIR.${PROG}}/man
