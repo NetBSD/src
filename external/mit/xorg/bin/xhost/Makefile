@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/03/03 09:19:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2023/01/08 11:20:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ PROG=	xhost
 
 CPPFLAGS+=${X11FLAGS.CONNECTION} -DBSD44SOCKETS
 CPPFLAGS+=-DHAVE_INET_ATON
+CPPFLAGS+=-DUSE_GETTEXT -DLOCALEDIR=\"${LOCALEDIR}\"
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=      -DIPv6
