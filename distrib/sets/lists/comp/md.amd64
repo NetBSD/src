@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.293 2023/01/08 21:11:07 wiz Exp $
+# $NetBSD: md.amd64,v 1.294 2023/01/08 21:11:45 wiz Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1462,32 +1462,58 @@
 ./usr/libdata/ldscripts/elf_iamcu.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_k1om.x		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.x		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xbn		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xbn		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xc		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xc		comp-util-bin		binutils=234
 ./usr/libdata/ldscripts/elf_k1om.xc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xd		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xd		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xdc		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xdc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xdw		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xdw		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xn		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xn		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xr		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xr		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xs		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xs		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xsc		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xsc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xsw		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xsw		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xu		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xu		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_k1om.xw		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.xw		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.x		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.x		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xbn		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xbn		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xc		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xd		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xd		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xdc		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xdc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xdw		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xdw		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xn		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xn		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xr		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xr		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xs		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xs		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xsc		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xsc		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xsw		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xsw		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xu		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xu		comp-util-bin		binutils=234
+./usr/libdata/ldscripts/elf_l1om.xw		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_l1om.xw		comp-util-bin		binutils=234
 ./usr/libdata/ldscripts/elf_x86_64.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xbn		comp-util-bin		binutils
