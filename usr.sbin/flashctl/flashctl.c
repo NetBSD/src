@@ -1,4 +1,4 @@
-/*	$NetBSD: flashctl.c,v 1.6 2023/01/08 15:49:51 rillig Exp $	*/
+/*	$NetBSD: flashctl.c,v 1.7 2023/01/08 15:52:30 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -31,6 +31,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: flashctl.c,v 1.7 2023/01/08 15:52:30 rillig Exp $");
+
 #include <sys/ioctl.h>
 #include <sys/flashio.h>
 #include <fcntl.h>
@@ -45,8 +48,8 @@
 #include <errno.h>
 
 
-void usage(void);
-int to_intmax(intmax_t *, const char *);
+static void usage(void);
+static int to_intmax(intmax_t *, const char *);
 
 int
 main(int argc, char **argv)
