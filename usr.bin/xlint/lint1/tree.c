@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.488 2023/01/08 18:29:21 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.489 2023/01/08 18:37:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.488 2023/01/08 18:29:21 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.489 2023/01/08 18:37:12 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2223,9 +2223,11 @@ apply_usual_arithmetic_conversions(op_t op, tnode_t *tn, tspec_t t)
 {
 	type_t *ntp = expr_dup_type(tn->tn_type);
 	ntp->t_tspec = t;
-	/* usual arithmetic conversion for '%s' from '%s' to '%s' */
-	query_message(4, op_name(op),
-	    type_name(tn->tn_type), type_name(ntp));
+	if (tn->tn_op != CON) {
+		/* usual arithmetic conversion for '%s' from '%s' to '%s' */
+		query_message(4, op_name(op),
+		    type_name(tn->tn_type), type_name(ntp));
+	}
 	return convert(op, 0, ntp, tn);
 }
 
