@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2017/03/03 20:48:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2023/01/08 06:04:43 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ CPPFLAGS+=	-DHAVE_ASPRINTF -DHAVE_ARC4RANDOM_BUF
 CPPFLAGS+=	$(TRANS_INCLUDES) $(CONN_DEFINES) $(SOCK_DEFINES)
 
 PKGDIST=	${LIB}
+PKGCONFIG_SED_FLAGS=	-e "s,@LIBBSD_LIBS@,,"
 
 CWARNFLAGS.clang+=	-Wno-string-plus-int
 
