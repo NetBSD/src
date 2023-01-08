@@ -1,4 +1,4 @@
-/*	$NetBSD: flashctl.c,v 1.8 2023/01/08 15:55:25 rillig Exp $	*/
+/*	$NetBSD: flashctl.c,v 1.9 2023/01/08 16:01:49 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flashctl.c,v 1.8 2023/01/08 15:55:25 rillig Exp $");
+__RCSID("$NetBSD: flashctl.c,v 1.9 2023/01/08 16:01:49 rillig Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/flashio.h>
@@ -252,12 +252,12 @@ to_intmax(intmax_t *num, const char *str)
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s device identify\n",
+	fprintf(stderr, "usage: %s <device> identify\n",
 	    getprogname());
-	fprintf(stderr, "       %s device erase <start address> <size>|all\n",
+	fprintf(stderr, "       %s <device> erase <start address> <size>|all\n",
 	    getprogname());
-	fprintf(stderr, "       %s device badblocks\n",
+	fprintf(stderr, "       %s <device> badblocks\n",
 	    getprogname());
-	fprintf(stderr, "       %s device markbad <address>\n",
+	fprintf(stderr, "       %s <device> markbad <address>\n",
 	    getprogname());
 }
