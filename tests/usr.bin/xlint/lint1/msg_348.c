@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_348.c,v 1.5 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.6 2023/01/08 15:18:02 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message 348: maximum value %d of '%s' does not match maximum array index %d [348]
@@ -58,7 +58,7 @@ color_name_computed_index(enum color color)
 	    "green",
 	    "blue"
 	};
-	/* No warning since the array index is not a name. */
+	/* No warning since the array index is not a plain identifier. */
 	return name[color + 1];
 }
 
@@ -71,7 +71,10 @@ color_name_cast_from_int(int c)
 	    "green",
 	    "blue"
 	};
-	/* No warning since the array index before conversion is not a name. */
+	/*
+	 * No warning since the array index before conversion is not a plain
+	 * identifier.
+	 */
 	return name[(enum color)(c + 1)];
 }
 
@@ -89,7 +92,11 @@ color_name_explicit_cast_to_int(enum color color)
 const char *
 color_name_computed_pointer(enum color color, const char *name)
 {
-	/* No warning since 'name' is not an array. */
+	/*
+	 * No warning since the first operand of the selection expression
+	 * is '(&name)', whose type is not an array but instead a
+	 * 'pointer to pointer to const char'.
+	 */
 	return (&name)[color];
 }
 
@@ -131,7 +138,11 @@ const char *
 color_with_count_name(enum color_with_count color)
 {
 	static const char *const name[] = { "red", "green", "blue" };
-	/* No warning since the maximum enum constant is a count. */
+	/*
+	 * No warning since the word 'num' in the last enum constant
+	 * MAY indicate a convenience constant for the total number of
+	 * values, instead of a regular enum value.
+	 */
 	return name[color];
 }
 
@@ -161,4 +172,34 @@ color_with_uc_count_name(enum color_with_uc_count color)
 	static const char *const name[] = { "red", "green", "blue" };
 	/* No warning since the maximum enum constant is a count. */
 	return name[color];
+}
+
+enum uppercase_max {
+	M_FIRST,
+	M_SECOND,
+	/* expect+1: previous declaration of 'M_MAX' [260] */
+	M_MAX
+};
+
+const char *
+uppercase_max_name(enum uppercase_max x)
+{
+	static const char *const name[] = { "first", "second" };
+	/* expect+1: warning: maximum value 2 of 'enum uppercase_max' does not match maximum array index 1 [348] */
+	return name[x];
+}
+
+enum lowercase_max {
+	M_first,
+	M_second,
+	/* expect+1: previous declaration of 'M_max' [260] */
+	M_max
+};
+
+const char *
+lowercase_max_name(enum lowercase_max x)
+{
+	static const char *const name[] = { "first", "second" };
+	/* expect+1: warning: maximum value 2 of 'enum lowercase_max' does not match maximum array index 1 [348] */
+	return name[x];
 }
