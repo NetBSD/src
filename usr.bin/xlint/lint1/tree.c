@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.487 2023/01/08 15:22:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.488 2023/01/08 18:29:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.487 2023/01/08 15:22:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.488 2023/01/08 18:29:21 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2218,6 +2218,17 @@ promote(op_t op, bool farg, tnode_t *tn)
 	return tn;
 }
 
+static tnode_t *
+apply_usual_arithmetic_conversions(op_t op, tnode_t *tn, tspec_t t)
+{
+	type_t *ntp = expr_dup_type(tn->tn_type);
+	ntp->t_tspec = t;
+	/* usual arithmetic conversion for '%s' from '%s' to '%s' */
+	query_message(4, op_name(op),
+	    type_name(tn->tn_type), type_name(ntp));
+	return convert(op, 0, ntp, tn);
+}
+
 /*
  * Apply the "usual arithmetic conversions" (C99 6.3.1.8).
  *
@@ -2230,7 +2241,6 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	tspec_t	lt, rt, t;
 	int	i;
 	bool	u;
-	type_t	*ntp;
 	static const tspec_t tl[] = {
 		LDOUBLE, DOUBLE, FLOAT,
 #ifdef INT128_SIZE
@@ -2295,22 +2305,10 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 			t = unsigned_type(t);
 	}
 
-	if (t != lt) {
-		ntp = expr_dup_type((*lnp)->tn_type);
-		ntp->t_tspec = t;
-		/* usual arithmetic conversion for '%s' from '%s' to '%s' */
-		query_message(4, op_name(op),
-		    type_name((*lnp)->tn_type), type_name(ntp));
-		*lnp = convert(op, 0, ntp, *lnp);
-	}
-	if (t != rt) {
-		ntp = expr_dup_type((*rnp)->tn_type);
-		ntp->t_tspec = t;
-		/* usual arithmetic conversion for '%s' from '%s' to '%s' */
-		query_message(4, op_name(op),
-		    type_name((*rnp)->tn_type), type_name(ntp));
-		*rnp = convert(op, 0, ntp, *rnp);
-	}
+	if (t != lt)
+		*lnp = apply_usual_arithmetic_conversions(op, *lnp, t);
+	if (t != rt)
+		*rnp = apply_usual_arithmetic_conversions(op, *rnp, t);
 }
 
 static void
