@@ -1,4 +1,4 @@
-/*	$NetBSD: flashctl.c,v 1.7 2023/01/08 15:52:30 rillig Exp $	*/
+/*	$NetBSD: flashctl.c,v 1.8 2023/01/08 15:55:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: flashctl.c,v 1.7 2023/01/08 15:52:30 rillig Exp $");
+__RCSID("$NetBSD: flashctl.c,v 1.8 2023/01/08 15:55:25 rillig Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/flashio.h>
@@ -140,7 +140,7 @@ main(int argc, char **argv)
 		printf("\n");
 
 		/* TODO: humanize */
-		printf("Capacity %jd Mbytes, %jd pages, %ju bytes/page\n", 
+		printf("Capacity %jd Mbytes, %jd pages, %ju bytes/page\n",
 		    (intmax_t)ip.ip_flash_size / 1024 / 1024,
 		    (intmax_t)ip.ip_flash_size / ip.ip_page_size,
 		    (intmax_t)ip.ip_page_size);
