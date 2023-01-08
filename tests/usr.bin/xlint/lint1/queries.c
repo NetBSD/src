@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.7 2023/01/08 18:21:00 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.8 2023/01/08 18:37:12 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -96,13 +96,22 @@ unsigned long long
 Q4(signed char *ptr, int i, unsigned long long ull)
 {
 
-	/* expect+1: usual arithmetic conversion for '&' from 'int' to 'unsigned int' [Q4] */
+	/*
+	 * For constants, the usual arithmetic conversions are usually not
+	 * interesting, so omit them.
+	 */
 	u32 = u32 & 0xff;
+	u32 &= 0xff;
+
+	/* expect+2: usual arithmetic conversion for '&' from 'int' to 'unsigned int' [Q4] */
+	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
+	u32 = u32 & s32;
 	/*
 	 * XXX: C99 5.6.16.2 says that the usual arithmetic conversions
 	 * happen for compound assignments as well.
 	 */
-	u32 &= 0xff;
+	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
+	u32 &= s32;
 
 	/* expect+3: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
 	/* expect+2: usual arithmetic conversion for '&' from 'int' to 'unsigned int' [Q4] */
