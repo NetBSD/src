@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.136 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.137 2023/01/08 22:46:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: scan.l,v 1.136 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.137 2023/01/08 22:46:00 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -127,6 +127,12 @@ TL	([fFlL]?[i]?)
 
 %%
 
+/*
+ * In the above list of regular expressions, the tokens for character
+ * constants, string literals and comments are incomplete; they only match
+ * a prefix.  The remainder of these tokens is scanned by reading bytes
+ * directly from the input stream.
+ */
 int
 lex_input(void)
 {
