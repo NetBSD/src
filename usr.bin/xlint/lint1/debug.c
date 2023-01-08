@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.23 2022/07/16 22:23:38 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.24 2023/01/08 14:05:02 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.23 2022/07/16 22:23:38 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.24 2023/01/08 14:05:02 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -165,34 +165,40 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 	if (tn->tn_sys)
 		debug_printf(", sys");
 
-	if (op == NAME)
+	switch (op) {
+	case NAME:
 		debug_printf("\n");
-	else if (op == CON && is_floating(tn->tn_type->t_tspec))
-		debug_printf(", value %Lg\n", tn->tn_val->v_ldbl);
-	else if (op == CON && is_uinteger(tn->tn_type->t_tspec))
-		debug_printf(", value %llu\n",
-		    (unsigned long long)tn->tn_val->v_quad);
-	else if (op == CON && is_integer(tn->tn_type->t_tspec))
-		debug_printf(", value %lld\n",
-		    (long long)tn->tn_val->v_quad);
-	else if (op == CON && tn->tn_type->t_tspec == BOOL)
-		debug_printf(", value %s\n",
-		    tn->tn_val->v_quad != 0 ? "true" : "false");
-	else if (op == CON)
-		debug_printf(", unknown value\n");
-	else if (op == STRING && tn->tn_string->st_char)
-		debug_printf(", length %zu, \"%s\"\n",
-		    tn->tn_string->st_len,
-		    (const char *)tn->tn_string->st_mem);
-	else if (op == STRING) {
-		size_t n = MB_CUR_MAX * (tn->tn_string->st_len + 1);
-		char *s = xmalloc(n);
-		(void)wcstombs(s, tn->tn_string->st_mem, n);
-		debug_printf(", length %zu, L\"%s\"\n",
-		    tn->tn_string->st_len, s);
-		free(s);
-
-	} else {
+		break;
+	case CON:
+		if (is_floating(tn->tn_type->t_tspec))
+			debug_printf(", value %Lg\n", tn->tn_val->v_ldbl);
+		else if (is_uinteger(tn->tn_type->t_tspec))
+			debug_printf(", value %llu\n",
+			    (unsigned long long)tn->tn_val->v_quad);
+		else if (is_integer(tn->tn_type->t_tspec))
+			debug_printf(", value %lld\n",
+			    (long long)tn->tn_val->v_quad);
+		else if (tn->tn_type->t_tspec == BOOL)
+			debug_printf(", value %s\n",
+			    tn->tn_val->v_quad != 0 ? "true" : "false");
+		else
+			debug_printf(", unknown value\n");
+		break;
+	case STRING:
+		if (tn->tn_string->st_char)
+			debug_printf(", length %zu, \"%s\"\n",
+			    tn->tn_string->st_len,
+			    (const char *)tn->tn_string->st_mem);
+		else {
+			size_t n = MB_CUR_MAX * (tn->tn_string->st_len + 1);
+			char *s = xmalloc(n);
+			(void)wcstombs(s, tn->tn_string->st_mem, n);
+			debug_printf(", length %zu, L\"%s\"\n",
+			    tn->tn_string->st_len, s);
+			free(s);
+		}
+		break;
+	default:
 		debug_printf("\n");
 
 		debug_indent_inc();
