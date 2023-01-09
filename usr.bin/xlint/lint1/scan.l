@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.137 2023/01/08 22:46:00 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.138 2023/01/09 00:07:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: scan.l,v 1.137 2023/01/08 22:46:00 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.138 2023/01/09 00:07:30 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -44,30 +44,25 @@ __RCSID("$NetBSD: scan.l,v 1.137 2023/01/08 22:46:00 rillig Exp $");
 %}
 
 
-L	[_A-Za-z]
-D	[0-9]
-NZD	[1-9]
-BD	[0-1]
-OD	[0-7]
-HD	[0-9A-Fa-f]
-EX	([eE][+-]?[0-9]+)
-HX	(p[+-]?[0-9A-Fa-f]+)
-TL	([fFlL]?[i]?)
+HEX	[0-9A-Fa-f]
+EXP	([eE][+-]?[0-9]+)
+PEXP	(p[+-]?[0-9A-Fa-f]+)
+FSUF	([fFlL]?[i]?)
 
 %option nounput
 
 %%
 
-{L}({L}|{D})*			return lex_name(yytext, yyleng);
-0[bB]{BD}+[lLuU]*		return lex_integer_constant(yytext, yyleng, 2);
-0{OD}*[lLuU]*			return lex_integer_constant(yytext, yyleng, 8);
-{NZD}{D}*[lLuU]*		return lex_integer_constant(yytext, yyleng, 10);
-0[xX]{HD}+[lLuU]*		return lex_integer_constant(yytext, yyleng, 16);
-{D}+\.{D}*{EX}?{TL}		|
-{D}+{EX}{TL}			|
-0[xX]{HD}+\.{HD}*{HX}{TL}	|
-0[xX]{HD}+{HX}{TL}		|
-\.{D}+{EX}?{TL}			return lex_floating_constant(yytext, yyleng);
+[_A-Za-z][_A-Za-z0-9]*		return lex_name(yytext, yyleng);
+0[bB][01]+[lLuU]*		return lex_integer_constant(yytext, yyleng, 2);
+0[0-7]*[lLuU]*			return lex_integer_constant(yytext, yyleng, 8);
+[1-9][0-9]*[lLuU]*		return lex_integer_constant(yytext, yyleng, 10);
+0[xX]{HEX}+[lLuU]*		return lex_integer_constant(yytext, yyleng, 16);
+[0-9]+\.[0-9]*{EXP}?{FSUF}	|
+[0-9]+{EXP}{FSUF}		|
+0[xX]{HEX}+\.{HEX}*{PEXP}{FSUF}	|
+0[xX]{HEX}+{PEXP}{FSUF}		|
+\.[0-9]+{EXP}?{FSUF}		return lex_floating_constant(yytext, yyleng);
 "="				return T_ASSIGN;
 "*="				return lex_operator(T_OPASSIGN, MULASS);
 "/="				return lex_operator(T_OPASSIGN, DIVASS);
