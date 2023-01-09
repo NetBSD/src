@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.294 2023/01/08 21:11:45 wiz Exp $
+# $NetBSD: md.amd64,v 1.295 2023/01/09 14:37:50 christos Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1445,6 +1445,7 @@
 ./usr/libdata/ldscripts/elf_i386.xr		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xs		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xsce		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xw		comp-util-bin		binutils
@@ -1459,6 +1460,7 @@
 ./usr/libdata/ldscripts/elf_iamcu.xr		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xs		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xsce		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xw		comp-util-bin		binutils
@@ -1526,6 +1528,7 @@
 ./usr/libdata/ldscripts/elf_x86_64.xr		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xs		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xsc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xsce		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xsw		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xw		comp-util-bin		binutils
