@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.68 2023/01/09 16:26:08 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.69 2023/01/09 16:27:10 msaitoh Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.68 2023/01/09 16:26:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.69 2023/01/09 16:27:10 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +83,8 @@ struct piixpm_softc {
 	device_t		sc_dev;
 
 	bus_space_tag_t		sc_iot;
-#define	sc_pm_iot sc_iot
-#define sc_smb_iot sc_iot
 	bus_space_handle_t	sc_pm_ioh;
-	bus_space_handle_t	sc_sb800_ioh;
+	bus_space_handle_t	sc_sb800_bh;
 	bus_space_handle_t	sc_smb_ioh;
 	void *			sc_smb_ih;
 	int			sc_poll;
@@ -222,7 +220,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 
 	/* Map I/O space */
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_PM_BASE);
-	if (base == 0 || bus_space_map(sc->sc_pm_iot, PCI_MAPREG_IO_ADDR(base),
+	if (base == 0 || bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_PM_SIZE, 0, &sc->sc_pm_ioh)) {
 		aprint_error_dev(self,
 		    "can't map power management I/O space\n");
@@ -234,7 +232,7 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 	 * PIIX4 and PIIX4E have a bug in the timer latch, see Errata #20
 	 * in the "Specification update" (document #297738).
 	 */
-	acpipmtimer_attach(self, sc->sc_pm_iot, sc->sc_pm_ioh, PIIX_PM_PMTMR,
+	acpipmtimer_attach(self, sc->sc_iot, sc->sc_pm_ioh, PIIX_PM_PMTMR,
 	    (PCI_REVISION(pa->pa_class) < 3) ? ACPIPMT_BADLATCH : 0);
 
 nopowermanagement:
@@ -265,7 +263,7 @@ nopowermanagement:
 	/* Map I/O space */
 	base = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_BASE) & 0xffff;
 	if (base == 0 ||
-	    bus_space_map(sc->sc_smb_iot, PCI_MAPREG_IO_ADDR(base),
+	    bus_space_map(sc->sc_iot, PCI_MAPREG_IO_ADDR(base),
 	    PIIX_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
 		aprint_error_dev(self, "can't map smbus I/O space\n");
 		return;
@@ -464,7 +462,7 @@ piixpm_sb800_init(struct piixpm_softc *sc)
 			sc->sc_sb800_selen = true;
 	}
 
-	sc->sc_sb800_ioh = ioh;
+	sc->sc_sb800_bh = ioh;
 	aprint_debug_dev(sc->sc_dev, "SMBus @ 0x%04x\n", base_addr);
 
 	if (bus_space_map(iot, PCI_MAPREG_IO_ADDR(base_addr),
@@ -505,14 +503,14 @@ piixpm_i2c_sb800_acquire_bus(void *cookie, int flags)
 	uint8_t sctl, old_sda, index, mask, reg;
 	int i;
 
-	sctl = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_SC);
+	sctl = bus_space_read_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_SC);
 	for (i = 0; i < PIIX_SB800_TIMEOUT; i++) {
 		/* Try to acquire the host semaphore */
 		sctl &= ~PIIX_SMB_SC_SEMMASK;
-		bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_SC,
+		bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_SC,
 		    sctl | PIIX_SMB_SC_HOSTSEM);
 
-		sctl = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		sctl = bus_space_read_1(sc->sc_iot, sc->sc_smb_ioh,
 		    PIIX_SMB_SC);
 		if ((sctl & PIIX_SMB_SC_HOSTSEM) != 0)
 			break;
@@ -537,16 +535,16 @@ piixpm_i2c_sb800_acquire_bus(void *cookie, int flags)
 		mask = SB800_PM_SMBUS0_MASK_C;
 	}
 
-	bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+	bus_space_write_1(sc->sc_iot, sc->sc_sb800_bh,
 	    SB800_INDIRECTIO_INDEX, index);
-	reg = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_sb800_bh,
 	    SB800_INDIRECTIO_DATA);
 
 	old_sda = __SHIFTOUT(reg, mask);
 	if (smbus->sda != old_sda) {
 		reg &= ~mask;
 		reg |= __SHIFTIN(smbus->sda, mask);
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_bh,
 		    SB800_INDIRECTIO_DATA, reg);
 	}
 
@@ -575,22 +573,22 @@ piixpm_i2c_sb800_release_bus(void *cookie, int flags)
 		mask = SB800_PM_SMBUS0_MASK_C;
 	}
 
-	bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+	bus_space_write_1(sc->sc_iot, sc->sc_sb800_bh,
 	    SB800_INDIRECTIO_INDEX, index);
 	if (smbus->sda != smbus->sda_save) {
 		/* Restore the port number */
-		reg = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
+		reg = bus_space_read_1(sc->sc_iot, sc->sc_sb800_bh,
 		    SB800_INDIRECTIO_DATA);
 		reg &= ~mask;
 		reg |= __SHIFTIN(smbus->sda_save, mask);
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_bh,
 		    SB800_INDIRECTIO_DATA, reg);
 	}
 
 	/* Release the host semaphore */
-	sctl = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_SC);
+	sctl = bus_space_read_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_SC);
 	sctl &= ~PIIX_SMB_SC_SEMMASK;
-	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_SC,
+	bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_SC,
 	    sctl | PIIX_SMB_SC_CLRHOSTSEM);
 }
 
@@ -611,15 +609,15 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	mutex_enter(&sc->sc_exec_lock);
 
 	/* Clear status bits */
-	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS,
+	bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_HS,
 	    PIIX_SMB_HS_INTR | PIIX_SMB_HS_DEVERR |
 	    PIIX_SMB_HS_BUSERR | PIIX_SMB_HS_FAILED);
-	bus_space_barrier(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, 1,
+	bus_space_barrier(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_HS, 1,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
 
 	/* Wait for bus to be idle */
 	for (retries = 100; retries > 0; retries--) {
-		st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		st = bus_space_read_1(sc->sc_iot, sc->sc_smb_ioh,
 		    PIIX_SMB_HS);
 		if (!(st & PIIX_SMB_HS_BUSY))
 			break;
@@ -649,27 +647,27 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	sc->sc_i2c_xfer.done = false;
 
 	/* Set slave address and transfer direction */
-	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_TXSLVA,
+	bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_TXSLVA,
 	    PIIX_SMB_TXSLVA_ADDR(addr) |
 	    (I2C_OP_READ_P(op) ? PIIX_SMB_TXSLVA_READ : 0));
 
 	b = cmdbuf;
 	if (cmdlen > 0)
 		/* Set command byte */
-		bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh,
 		    PIIX_SMB_HCMD, b[0]);
 
 	if (I2C_OP_WRITE_P(op)) {
 		/* Write data */
 		b = buf;
 		if (cmdlen == 0 && len == 1)
-			bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+			bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HCMD, b[0]);
 		else if (len > 0)
-			bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+			bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD0, b[0]);
 		if (len > 1)
-			bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+			bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD1, b[1]);
 	}
 
@@ -691,7 +689,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 
 	/* Start transaction */
 	ctl |= PIIX_SMB_HC_START;
-	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HC, ctl);
+	bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_HC, ctl);
 
 	if (flags & I2C_F_POLL) {
 		/* Poll for completion */
@@ -700,7 +698,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		else
 			DELAY(PIIXPM_DELAY);
 		for (retries = 1000; retries > 0; retries--) {
-			st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+			st = bus_space_read_1(sc->sc_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HS);
 			if ((st & PIIX_SMB_HS_BUSY) == 0)
 				break;
@@ -728,14 +726,14 @@ timeout:
 	 * Transfer timeout. Kill the transaction and clear status bits.
 	 */
 	aprint_error_dev(sc->sc_dev, "timeout, status 0x%x\n", st);
-	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HC,
+	bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_HC,
 	    PIIX_SMB_HC_KILL);
 	DELAY(PIIXPM_DELAY);
-	st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS);
+	st = bus_space_read_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_HS);
 	if ((st & PIIX_SMB_HS_FAILED) == 0)
 		aprint_error_dev(sc->sc_dev,
 		    "transaction abort failed, status 0x%x\n", st);
-	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
+	bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
 	/*
 	 * CSB5 needs hard reset to unlock the smbus after timeout.
 	 */
@@ -754,7 +752,7 @@ piixpm_intr(void *arg)
 	size_t len;
 
 	/* Read status */
-	st = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS);
+	st = bus_space_read_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_HS);
 	if ((st & PIIX_SMB_HS_BUSY) != 0 || (st & (PIIX_SMB_HS_INTR |
 	    PIIX_SMB_HS_DEVERR | PIIX_SMB_HS_BUSERR |
 	    PIIX_SMB_HS_FAILED)) == 0)
@@ -767,7 +765,7 @@ piixpm_intr(void *arg)
 		mutex_enter(&sc->sc_exec_lock);
 
 	/* Clear status bits */
-	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
+	bus_space_write_1(sc->sc_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
 
 	/* Check for errors */
 	if (st & (PIIX_SMB_HS_DEVERR | PIIX_SMB_HS_BUSERR |
@@ -784,10 +782,10 @@ piixpm_intr(void *arg)
 		b = sc->sc_i2c_xfer.buf;
 		len = sc->sc_i2c_xfer.len;
 		if (len > 0)
-			b[0] = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+			b[0] = bus_space_read_1(sc->sc_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD0);
 		if (len > 1)
-			b[1] = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+			b[1] = bus_space_read_1(sc->sc_iot, sc->sc_smb_ioh,
 			    PIIX_SMB_HD1);
 	}
 
