@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.67 2022/04/01 15:34:34 pgoyette Exp $ */
+/* $NetBSD: piixpm.c,v 1.68 2023/01/09 16:26:08 msaitoh Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.67 2022/04/01 15:34:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.68 2023/01/09 16:26:08 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.67 2022/04/01 15:34:34 pgoyette Exp $")
 
 #define PIIXPM_IS_CSB5(sc)						      \
 	(PCI_VENDOR((sc)->sc_id) == PCI_VENDOR_SERVERWORKS &&		      \
-	PCI_PRODUCT((sc)->sc_id) == PCI_PRODUCT_SERVERWORKS_CSB5)
+	    PCI_PRODUCT((sc)->sc_id) == PCI_PRODUCT_SERVERWORKS_CSB5)
 #define PIIXPM_DELAY	200
 #define PIIXPM_TIMEOUT	1
 
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.67 2022/04/01 15:34:34 pgoyette Exp $")
 struct piixpm_smbus {
 	int			sda;
 	int			sda_save;
-	struct			piixpm_softc *softc;
+	struct piixpm_softc	*softc;
 };
 
 struct piixpm_softc {
@@ -424,7 +424,7 @@ piixpm_sb800_init(struct piixpm_softc *sc)
 	else
 		sc->sc_numbusses = 4;
 
-	/* Fetch SMB base address */
+	/* Check SMBus enable bit and Fetch SMB base address */
 	if (bus_space_map(iot,
 	    SB800_INDIRECTIO_BASE, SB800_INDIRECTIO_SIZE, 0, &ioh)) {
 		device_printf(sc->sc_dev, "couldn't map indirect I/O space\n");
