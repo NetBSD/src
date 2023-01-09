@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.69 2023/01/09 16:27:10 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.70 2023/01/09 16:29:39 msaitoh Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.69 2023/01/09 16:27:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.70 2023/01/09 16:29:39 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,8 +411,8 @@ piixpm_resume(device_t dv, const pmf_qual_t *qual)
 static int
 piixpm_sb800_init(struct piixpm_softc *sc)
 {
-	bus_space_tag_t iot = sc->sc_iot;
-	bus_space_handle_t ioh;	/* indirect I/O handle */
+	bus_space_tag_t sbt = sc->sc_iot;
+	bus_space_handle_t sbh;	/* indirect I/O handle */
 	uint16_t val, base_addr;
 	bool enabled;
 
@@ -423,49 +423,49 @@ piixpm_sb800_init(struct piixpm_softc *sc)
 		sc->sc_numbusses = 4;
 
 	/* Check SMBus enable bit and Fetch SMB base address */
-	if (bus_space_map(iot,
-	    SB800_INDIRECTIO_BASE, SB800_INDIRECTIO_SIZE, 0, &ioh)) {
+	if (bus_space_map(sbt,
+	    SB800_INDIRECTIO_BASE, SB800_INDIRECTIO_SIZE, 0, &sbh)) {
 		device_printf(sc->sc_dev, "couldn't map indirect I/O space\n");
 		return EBUSY;
 	}
 	if (PIIXPM_IS_FCHGRP(sc)) {
-		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
+		bus_space_write_1(sbt, sbh, SB800_INDIRECTIO_INDEX,
 		    AMDFCH41_PM_DECODE_EN0);
-		val = bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA);
+		val = bus_space_read_1(sbt, sbh, SB800_INDIRECTIO_DATA);
 		enabled = val & AMDFCH41_SMBUS_EN;
 		if (!enabled)
 			return ENOENT;
 
-		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
+		bus_space_write_1(sbt, sbh, SB800_INDIRECTIO_INDEX,
 		    AMDFCH41_PM_DECODE_EN1);
-		val = bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA) << 8;
+		val = bus_space_read_1(sbt, sbh, SB800_INDIRECTIO_DATA) << 8;
 		base_addr = val;
 	} else {
 		uint8_t data;
 
-		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
+		bus_space_write_1(sbt, sbh, SB800_INDIRECTIO_INDEX,
 		    SB800_PM_SMBUS0EN_LO);
-		val = bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA);
+		val = bus_space_read_1(sbt, sbh, SB800_INDIRECTIO_DATA);
 		enabled = val & SB800_PM_SMBUS0EN_ENABLE;
 		if (!enabled)
 			return ENOENT;
 
-		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
+		bus_space_write_1(sbt, sbh, SB800_INDIRECTIO_INDEX,
 		    SB800_PM_SMBUS0EN_HI);
-		val |= bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA) << 8;
+		val |= bus_space_read_1(sbt, sbh, SB800_INDIRECTIO_DATA) << 8;
 		base_addr = val & SB800_PM_SMBUS0EN_BADDR;
 
-		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
+		bus_space_write_1(sbt, sbh, SB800_INDIRECTIO_INDEX,
 		    SB800_PM_SMBUS0SELEN);
-		data = bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA);
+		data = bus_space_read_1(sbt, sbh, SB800_INDIRECTIO_DATA);
 		if ((data & SB800_PM_USE_SMBUS0SEL) != 0)
 			sc->sc_sb800_selen = true;
 	}
 
-	sc->sc_sb800_bh = ioh;
+	sc->sc_sb800_bh = sbh;
 	aprint_debug_dev(sc->sc_dev, "SMBus @ 0x%04x\n", base_addr);
 
-	if (bus_space_map(iot, PCI_MAPREG_IO_ADDR(base_addr),
+	if (bus_space_map(sbt, PCI_MAPREG_IO_ADDR(base_addr),
 	    SB800_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
 		aprint_error_dev(sc->sc_dev, "can't map smbus I/O space\n");
 		return EBUSY;
