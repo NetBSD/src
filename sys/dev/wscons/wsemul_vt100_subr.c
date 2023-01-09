@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.24 2018/12/06 01:42:20 uwe Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.25 2023/01/09 21:53:44 christos Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.24 2018/12/06 01:42:20 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.25 2023/01/09 21:53:44 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 	switch (A3(edp->modif1, edp->modif2, c)) {
 	    case A3('>', '\0', 'c'): /* DA secondary */
 		wsdisplay_emulinput(edp->cbcookie, WSEMUL_VT_ID2,
-				    sizeof(WSEMUL_VT_ID2));
+				    sizeof(WSEMUL_VT_ID2) - 1);
 		break;
 
 	    case A3('\0', '\0', 'J'): /* ED selective erase in display */
@@ -452,7 +452,7 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 	    case 'c': /* DA primary */
 		if (ARG(edp, 0) == 0)
 			wsdisplay_emulinput(edp->cbcookie, WSEMUL_VT_ID1,
-					    sizeof(WSEMUL_VT_ID1));
+					    sizeof(WSEMUL_VT_ID1) - 1);
 		break;
 	    case 'g': /* TBC */
 		KASSERT(edp->tabs != 0);
