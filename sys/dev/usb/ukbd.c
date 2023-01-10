@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.161 2022/04/06 21:51:29 mlelstv Exp $        */
+/*      $NetBSD: ukbd.c,v 1.162 2023/01/10 18:20:10 mrg Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.161 2022/04/06 21:51:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.162 2023/01/10 18:20:10 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -294,7 +294,8 @@ struct ukbd_softc {
 	int sc_npollchar;
 	uint16_t sc_pollchars[MAXKEYS];
 
-	u_char sc_dying;
+	bool sc_dying;
+	bool sc_attached;
 };
 
 #ifdef UKBD_DEBUG
@@ -520,6 +521,8 @@ ukbd_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint, CFARGS_NONE);
 
+	sc->sc_attached = true;
+
 	return;
 }
 
@@ -567,7 +570,7 @@ ukbd_activate(device_t self, enum devact act)
 
 	switch (act) {
 	case DVACT_DEACTIVATE:
-		sc->sc_dying = 1;
+		sc->sc_dying = true;
 		return 0;
 	default:
 		return EOPNOTSUPP;
@@ -583,6 +586,9 @@ ukbd_detach(device_t self, int flags)
 	DPRINTF(("%s: sc=%p flags=%d\n", __func__, sc, flags));
 
 	pmf_device_deregister(self);
+
+	if (!sc->sc_attached)
+		return rv;
 
 	if (sc->sc_console_keyboard) {
 		/*
