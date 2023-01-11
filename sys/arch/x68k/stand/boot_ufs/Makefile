@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2021/12/15 13:22:34 christos Exp $
+#	$NetBSD: Makefile,v 1.39 2023/01/11 09:35:06 isaki Exp $
 
 NOMAN=		# defined
 
@@ -29,6 +29,12 @@ LIBIOCS=	$M/stand/libiocs
 .PATH:		${LIBKERN} ${COMMONDIR}
 SRCS=	boot.S bootmain.c readufs.c readufs_ffs.c readufs_lfs.c
 SRCS+=	exec_image.S memset.S strcmp.S
+
+.PATH:	${S}/../common/lib/libc/quad
+SRCS+=	udivdi3.c umoddi3.c qdivrem.c
+
+.PATH:	${.CURDIR}/../xxboot
+SRCS+=	ashldi3.S
 
 .include "${S}/conf/newvers_stand.mk"
 
