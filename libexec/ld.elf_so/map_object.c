@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.63 2023/01/06 15:33:47 christos Exp $	 */
+/*	$NetBSD: map_object.c,v 1.64 2023/01/12 18:52:47 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.63 2023/01/06 15:33:47 christos Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.64 2023/01/12 18:52:47 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -95,12 +95,13 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	Elf_Addr	 tls_vaddr = 0; /* Noise GCC */
 #endif
 	Elf_Addr	 phdr_vaddr;
+	size_t		 phdr_memsz;
 	int i;
 #ifdef RTLD_LOADER
 	Elf_Addr	 clear_vaddr;
 	caddr_t	 	 clear_page;
 	caddr_t		 clear_addr;
-	size_t		 nclear;
+	size_t		 nclear, phsize;
 #endif
 #ifdef GNU_RELRO
 	Elf_Addr 	 relro_page;
@@ -177,12 +178,14 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
 	phtls = NULL;
 #endif
+	phsize = ehdr->e_phnum * sizeof(phdr[0]);
 	obj->phdr = NULL;
 #ifdef GNU_RELRO
 	relro_page = 0;
 	relro_size = 0;
 #endif
 	phdr_vaddr = EA_UNDEF;
+	phdr_memsz = 0;
 	phlimit = phdr + ehdr->e_phnum;
 	segs = xmalloc(sizeof(segs[0]) * ehdr->e_phnum);
 	if (segs == NULL) {
@@ -221,6 +224,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 
 		case PT_PHDR:
 			phdr_vaddr = phdr->p_vaddr;
+			phdr_memsz = phdr->p_memsz;
 			dbg(("%s: %s %p phsize %" PRImemsz, obj->path,
 			    "PT_PHDR",
 			    (void *)(uintptr_t)phdr->p_vaddr, phdr->p_memsz));
@@ -341,6 +345,7 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	}
 #endif
 
+	obj->phdr_loaded = false;
 	for (i = 0; i <= nsegs; i++) {
 		/* Overlay the segment onto the proper region. */
 		data_offset = round_down(segs[i]->p_offset);
@@ -405,11 +410,30 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 			}
 		}
 
-		if (phdr_vaddr == 0 && data_offset <= ehdr->e_phoff &&
-		    (data_vlimit - data_vaddr + data_offset) >=
-		    (ehdr->e_phoff + ehdr->e_phnum * sizeof (Elf_Phdr))) {
-			phdr_vaddr = data_vaddr + ehdr->e_phoff - data_offset;
+		if (phdr_vaddr != EA_UNDEF &&
+		    segs[i]->p_vaddr <= phdr_vaddr &&
+		    segs[i]->p_memsz >= phdr_memsz) {
+			obj->phdr_loaded = true;
 		}
+		if (segs[i]->p_offset <= ehdr->e_phoff &&
+		    segs[i]->p_memsz >= phsize) {
+			phdr_vaddr = segs[i]->p_vaddr + ehdr->e_phoff;
+			phdr_memsz = phsize;
+			obj->phdr_loaded = true;
+		}
+	}
+	if (obj->phdr_loaded) {
+		obj->phdr = (void *)(uintptr_t)phdr_vaddr;
+		obj->phsize = phdr_memsz;
+	} else {
+		Elf_Phdr *buf = xmalloc(phsize);
+		if (buf == NULL) {
+			_rtld_error("%s: cannot allocate program header", path);
+			goto error;
+		}
+		memcpy(buf, phdr, phsize);
+		obj->phdr = buf;
+		obj->phsize = phsize;
 	}
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
