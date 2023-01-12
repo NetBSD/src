@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.20 2023/01/07 15:02:00 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.21 2023/01/12 12:12:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -467,4 +467,27 @@ sys/arch/mac68k/conf/INSTALL			1.58
 
 	Disable (comment out) options DIAGNOSTIC in INSTALL kernels.
 	[tsutsui, ticket #40]
+
+usr.bin/ldd/ldd.c				1.28
+
+	ldd(1): avoid printing the wrong error message.
+	[mrg, ticket #41]
+
+usr.bin/netstat/if.c				1.109
+
+	netstat(1): if not given an interface to monitor by default,
+	pick the one with the most bytes in/out the first time and
+	keep using it.
+	[mrg, ticket #42]
+
+sys/dev/usb/ukbd.c				1.162
+
+	ukbd(4): fix crash reported in PR 57149 (but not the issue
+	reported).
+	[mrg, ticket #43]
+
+sys/arch/aarch64/aarch64/bus_space_asm_generic.S 1.6
+
+	aarch64: fix a bug in bus_space_read_region_{2,4,8}_swap().
+	[ryo, ticket #44]
 
