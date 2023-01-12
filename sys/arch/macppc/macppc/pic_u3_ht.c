@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_u3_ht.c,v 1.13 2022/12/28 06:50:23 macallan Exp $	*/
+/*	$NetBSD: pic_u3_ht.c,v 1.14 2023/01/12 01:19:21 macallan Exp $	*/
 /*-
  * Copyright (c) 2013 Phileas Fogg
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_u3_ht.c,v 1.13 2022/12/28 06:50:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_u3_ht.c,v 1.14 2023/01/12 01:19:21 macallan Exp $");
 
 #include "opt_openpic.h"
 #include "opt_interrupt.h"
@@ -138,8 +138,10 @@ int init_u3_ht(void)
 
 	u4 = OF_finddevice("/u4");
 	if (u4 == -1) {
+#ifdef U3HT_CASCADE
 		u4 = OF_finddevice("/u3");
 		if (u4 == -1)
+#endif
 			return FALSE;
 	}
 
