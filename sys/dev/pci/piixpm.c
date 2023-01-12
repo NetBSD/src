@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.71 2023/01/10 00:05:53 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.72 2023/01/12 10:10:10 msaitoh Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.71 2023/01/10 00:05:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.72 2023/01/12 10:10:10 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -461,7 +461,7 @@ piixpm_sb800_init(struct piixpm_softc *sc)
 		rv = bus_space_map(sbt, SB800_INDIRECTIO_BASE,
 		    SB800_INDIRECTIO_SIZE, 0, &sbh);
 	if (rv != 0) {
-		device_printf(sc->sc_dev, "couldn't map indirect I/O space\n");
+		device_printf(sc->sc_dev, "couldn't map indirect space\n");
 		return EBUSY;
 	}
 	sc->sc_sb800_bh = sbh;
