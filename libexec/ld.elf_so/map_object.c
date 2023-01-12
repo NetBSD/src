@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.64 2023/01/12 18:52:47 christos Exp $	 */
+/*	$NetBSD: map_object.c,v 1.65 2023/01/12 19:17:11 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.64 2023/01/12 18:52:47 christos Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.65 2023/01/12 19:17:11 christos Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -95,13 +95,13 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	Elf_Addr	 tls_vaddr = 0; /* Noise GCC */
 #endif
 	Elf_Addr	 phdr_vaddr;
-	size_t		 phdr_memsz;
+	size_t		 phdr_memsz, phsize;
 	int i;
 #ifdef RTLD_LOADER
 	Elf_Addr	 clear_vaddr;
 	caddr_t	 	 clear_page;
 	caddr_t		 clear_addr;
-	size_t		 nclear, phsize;
+	size_t		 nclear;
 #endif
 #ifdef GNU_RELRO
 	Elf_Addr 	 relro_page;
