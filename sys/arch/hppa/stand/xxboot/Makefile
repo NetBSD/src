@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2018/11/13 21:22:38 skrll Exp $
+#	$NetBSD: Makefile,v 1.4 2023/01/13 18:43:43 martin Exp $
 
 NODEBUG=yes
 PROG=	xxboot
@@ -11,7 +11,7 @@ CPPFLAGS+=	-I${.CURDIR}/../../../.. -I. -D_STANDALONE
 # configuration for readufs module
 CPPFLAGS+=	-DUSE_LFS -DUSE_FFS -DUSE_UFS1 -DUSE_UFS2
 # IODC can handle only 2GB, so this is enough
-CPPFLAGS+=	-D__daddr_t=int32_t
+CPPFLAGS+=	-D__daddr_t=int32_t -D__ino_t=uint32_t
 # ANSI C feature prevents from being relocatable
 #CPPFLAGS+=	-traditional	# would be best
 CPPFLAGS+=	-Dconst=
