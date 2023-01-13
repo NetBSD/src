@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.55 2020/09/08 14:12:57 christos Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.55.20.1 2023/01/13 19:00:20 martin Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.55 2020/09/08 14:12:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.55.20.1 2023/01/13 19:00:20 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -690,19 +690,6 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_NETWORK_INTERFACE_SLIP:
 		switch (req) {
 		case KAUTH_REQ_NETWORK_INTERFACE_SLIP_ADD:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-			break;
-
-		default:
-			break;
-		}
-
-		break;
-
-	case KAUTH_NETWORK_INTERFACE_STRIP:
-		switch (req) {
-		case KAUTH_REQ_NETWORK_INTERFACE_STRIP_ADD:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
 			break;
