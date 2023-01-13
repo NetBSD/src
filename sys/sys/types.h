@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.105 2020/05/16 18:31:53 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.106 2023/01/13 18:43:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -163,7 +163,17 @@ typedef	__gid_t		gid_t;		/* group id */
 #endif
 
 typedef	uint32_t	id_t;		/* group id, process id or user id */
+#ifdef __ino_t
+/*
+ * Some first stage bootloaders may want to avoid 64bit math, especially
+ * when the firmware can only access small disks/partitions anyway.
+ * Example: hppa/stand/xxboot
+ */
+typedef	__ino_t		ino_t;
+#undef __ino_t
+#else
 typedef	uint64_t	ino_t;		/* inode number */
+#endif
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
 
 #ifndef	mode_t
