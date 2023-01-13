@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.20 2022/05/20 21:18:54 rillig Exp $	*/
+/*	$NetBSD: mem.c,v 1.21 2023/01/13 19:41:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,26 +37,14 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem.c,v 1.20 2022/05/20 21:18:54 rillig Exp $");
+__RCSID("$NetBSD: mem.c,v 1.21 2023/01/13 19:41:50 rillig Exp $");
 #endif
 
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "lint.h"
-
-#if defined(IS_LINT1) || defined(IS_LINT2)
-size_t
-mem_block_size(void)
-{
-	unsigned int pagesize;
-
-	pagesize = (unsigned int)getpagesize();
-	return (MBLKSIZ + pagesize - 1) / pagesize * pagesize;
-}
-#endif
 
 static void *
 not_null(void *ptr)

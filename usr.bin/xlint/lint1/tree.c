@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.489 2023/01/08 18:37:12 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.490 2023/01/13 19:41:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.489 2023/01/08 18:37:12 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.490 2023/01/13 19:41:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4883,7 +4883,7 @@ check_precedence_confusion(tnode_t *tn)
 }
 
 typedef struct stmt_expr {
-	struct memory_block *se_mem;
+	memory_pool se_mem;
 	sym_t *se_sym;
 	struct stmt_expr *se_enclosing;
 } stmt_expr;
