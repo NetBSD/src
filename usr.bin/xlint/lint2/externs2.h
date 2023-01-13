@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.16 2021/11/16 22:03:12 rillig Exp $ */
+/* $NetBSD: externs2.h,v 1.17 2023/01/13 19:41:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -69,7 +69,6 @@ extern	void	mkstatic(hte_t *);
 /*
  * mem2.c
  */
-extern	void	initmem(void);
 extern	void	*xalloc(size_t);
 
 /*

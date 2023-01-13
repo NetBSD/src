@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.237 2022/08/28 12:04:47 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.238 2023/01/13 19:41:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.237 2022/08/28 12:04:47 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.238 2023/01/13 19:41:50 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -309,7 +309,6 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 	tnode_t *ln;
 	type_t *lutp;
 	tspec_t lt, rt;
-	struct memory_block *tmem;
 
 	lutp = expr_unqualified_type(ltp);
 
@@ -334,9 +333,9 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 	 * Preserve the tree memory. This is necessary because otherwise
 	 * expr() would free it.
 	 */
-	tmem = expr_save_memory();
+	memory_pool saved_mem = expr_save_memory();
 	expr(rn, true, false, true, false);
-	expr_restore_memory(tmem);
+	expr_restore_memory(saved_mem);
 
 	check_bit_field_init(ln, lt, rt);
 

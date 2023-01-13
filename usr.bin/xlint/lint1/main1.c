@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.65 2022/07/05 22:50:41 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.66 2023/01/13 19:41:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.65 2022/07/05 22:50:41 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.66 2023/01/13 19:41:50 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -259,7 +259,6 @@ main(int argc, char *argv[])
 #endif
 
 	(void)signal(SIGFPE, sigfpe);
-	initmem();
 	initdecl();
 	initscan();
 

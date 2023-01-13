@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.24 2022/05/20 21:18:55 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.25 2023/01/13 19:41:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main2.c,v 1.24 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.25 2023/01/13 19:41:50 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -152,8 +152,6 @@ main(int argc, char *argv[])
 
 	if (argc == 0)
 		usage();
-
-	initmem();
 
 	symtab_init();
 

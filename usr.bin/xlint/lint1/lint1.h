@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.158 2022/10/01 09:42:40 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.159 2023/01/13 19:41:50 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,6 +35,18 @@
 #include "lint.h"
 #include "err-msgs.h"
 #include "op.h"
+
+/*
+ * A memory pool collects allocated objects that must be available until:
+ * - the end of a block,
+ * - the end of an expression, or
+ * - the end of the translation unit.
+ */
+typedef struct memory_pool {
+	void	**items;
+	size_t	len;
+	size_t	cap;
+} memory_pool;
 
 /* See saved_lwarn in cgram.y. */
 #define LWARN_ALL	(-2)
@@ -426,7 +438,7 @@ typedef struct control_statement {
 	tnode_t	*c_switch_expr;
 	case_label_t *c_case_labels;	/* list of case values */
 
-	struct	memory_block *c_for_expr3_mem; /* saved memory for end of loop
+	memory_pool c_for_expr3_mem;	/* saved memory for end of loop
 					 * expression in for() */
 	tnode_t	*c_for_expr3;		/* end of loop expr in for() */
 	pos_t	c_for_expr3_pos;	/* position of end of loop expr */

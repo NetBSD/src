@@ -1,4 +1,4 @@
-/*	$NetBSD: mem2.c,v 1.15 2022/05/20 21:18:55 rillig Exp $	*/
+/*	$NetBSD: mem2.c,v 1.16 2023/01/13 19:41:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,51 +37,19 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem2.c,v 1.15 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: mem2.c,v 1.16 2023/01/13 19:41:50 rillig Exp $");
 #endif
 
-#include <sys/param.h>
 #include <string.h>
 
 #include "lint2.h"
 
-/* length of new allocated memory blocks */
-static size_t	mblklen;
-
-/* offset of next free byte in mbuf */
-static size_t	nxtfree;
-
-/* current buffer to server memory requests from */
-static void	*mbuf;
-
-void
-initmem(void)
-{
-
-	mblklen = mem_block_size();
-	nxtfree = mblklen;
-}
-
-/*
- * Allocate memory in large chunks to avoid space and time overhead of
- * malloc(). This is possible because memory allocated by xalloc()
- * need never to be freed.
- */
+/* Allocate zero-initialized memory that doesn't need to be freed. */
 void *
 xalloc(size_t sz)
 {
-	void	*ptr;
 
-	/* Align to at least 8 bytes. */
-	sz = (sz + 7) & ~7L;
-	if (nxtfree + sz > mblklen) {
-		mbuf = xmalloc(mblklen);
-		(void)memset(mbuf, 0, mblklen);
-		nxtfree = 0;
-	}
-
-	ptr = (char *)mbuf + nxtfree;
-	nxtfree += sz;
-
+	void *ptr = xmalloc(sz);
+	(void)memset(ptr, 0, sz);
 	return ptr;
 }
