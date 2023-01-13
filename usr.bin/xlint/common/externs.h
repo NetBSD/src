@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.24 2021/09/04 14:48:27 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.25 2023/01/13 19:41:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -45,7 +45,6 @@ extern	const	char *tspec_name(tspec_t);
 /*
  * mem.c
  */
-extern	size_t	mem_block_size(void);
 extern	void	*xmalloc(size_t);
 extern	void	*xcalloc(size_t, size_t);
 extern	void	*xrealloc(void *, size_t);

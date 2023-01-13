@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.63 2022/05/20 21:18:55 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.64 2023/01/13 19:41:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.63 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.64 2023/01/13 19:41:50 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -160,74 +160,60 @@ get_filename_id(const char *s)
 	return fn->fn_id;
 }
 
-/*
- * Memory for declarations and other things that must be available
- * until the end of a block (or the end of the translation unit)
- * is associated with the corresponding mem_block_level, which may be 0.
- * Because this memory is allocated in large blocks associated with
- * a given level it can be freed easily at the end of a block.
- */
-typedef struct memory_block {
-	void	*start;			/* beginning of memory block */
-	void	*first_free;		/* first free byte */
-	size_t	nfree;			/* # of free bytes */
-	struct	memory_block *next;
-} memory_block;
+/* Array of memory pools, indexed by mem_block_level. */
+typedef struct memory_pools {
+	struct memory_pool *pools;
+	size_t	cap;
+} memory_pools;
 
+static memory_pools mpools;
 
-static	size_t	mblk_size;	/* size of newly allocated memory blocks */
+/* The pool for the current expression is independent of any block level. */
+static memory_pool expr_pool;
 
-/* Array of lists of memory blocks, indexed by mem_block_level. */
-static	memory_block	**mblks;
-static	size_t	nmblks;		/* number of elements in *mblks */
-#define	ML_INC	((size_t)32)	/* Increment for length of *mblks */
-
-
-/* Allocate new memory, initialized with zero. */
-static void *
-xgetblk(memory_block **mbp, size_t s)
-{
-	memory_block	*mb;
-	void	*p;
-
-	size_t worst_align = 2 * sizeof(long) - 1;
-	s = (s + worst_align) & ~worst_align;
-
-	if ((mb = *mbp) == NULL || mb->nfree < s) {
-		size_t block_size = s > mblk_size ? s : mblk_size;
-		mb = xmalloc(sizeof(*mb));
-		mb->start = xmalloc(block_size);
-		mb->first_free = mb->start;
-		mb->nfree = block_size;
-		mb->next = *mbp;
-		*mbp = mb;
-	}
-
-	p = mb->first_free;
-	mb->first_free = (char *)mb->first_free + s;
-	mb->nfree -= s;
-	(void)memset(p, 0, s);
-	return p;
-}
-
-/* Free all blocks from list *fmbp. */
 static void
-xfreeblk(memory_block **fmbp)
+mpool_add(memory_pool *pool, void *item)
 {
-	memory_block	*mb;
 
-	while ((mb = *fmbp) != NULL) {
-		*fmbp = mb->next;
-		free(mb);
+	if (pool->len >= pool->cap) {
+		pool->cap = 2 * pool->len + 16;
+		pool->items = xrealloc(pool->items,
+		    sizeof(*pool->items) * pool->cap);
 	}
+	pool->items[pool->len++] = item;
 }
 
-void
-initmem(void)
+static void
+mpool_free(memory_pool *pool)
 {
 
-	mblk_size = mem_block_size();
-	mblks = xcalloc(nmblks = ML_INC, sizeof(*mblks));
+	for (; pool->len > 0; pool->len--)
+		free(pool->items[pool->len - 1]);
+}
+
+static void *
+mpool_zero_alloc(memory_pool *pool, size_t size)
+{
+
+	void *mem = xmalloc(size);
+	memset(mem, 0, size);
+	mpool_add(pool, mem);
+	return mem;
+}
+
+static memory_pool *
+mpool_at(size_t level)
+{
+
+	if (level >= mpools.cap) {
+		size_t prev_cap = mpools.cap;
+		mpools.cap = level + 16;
+		mpools.pools = xrealloc(mpools.pools,
+		    sizeof(*mpools.pools) * mpools.cap);
+		for (size_t i = prev_cap; i < mpools.cap; i++)
+			mpools.pools[i] = (memory_pool){ NULL, 0, 0 };
+	}
+	return mpools.pools + level;
 }
 
 
@@ -236,12 +222,7 @@ void *
 level_zero_alloc(size_t l, size_t s)
 {
 
-	while (l >= nmblks) {
-		mblks = xrealloc(mblks, (nmblks + ML_INC) * sizeof(*mblks));
-		(void)memset(&mblks[nmblks], 0, ML_INC * sizeof(*mblks));
-		nmblks += ML_INC;
-	}
-	return xgetblk(&mblks[l], s);
+	return mpool_zero_alloc(mpool_at(l), s);
 }
 
 /* Allocate memory that is freed at the end of the current block. */
@@ -256,18 +237,15 @@ void
 level_free_all(size_t level)
 {
 
-	xfreeblk(&mblks[level]);
+	mpool_free(mpool_at(level));
 }
-
-
-static	memory_block	*tmblk;
 
 /* Allocate memory that is freed at the end of the current expression. */
 void *
 expr_zero_alloc(size_t s)
 {
 
-	return xgetblk(&tmblk, s);
+	return mpool_zero_alloc(&expr_pool, s);
 }
 
 static bool
@@ -307,22 +285,21 @@ void
 expr_free_all(void)
 {
 
-	xfreeblk(&tmblk);
+	mpool_free(&expr_pool);
 }
 
 /*
  * Save the memory which is used by the current expression. This memory
- * is not freed by the next expr_free_all() call. The pointer returned can be
+ * is not freed by the next expr_free_all() call. The returned value can be
  * used to restore the memory.
  */
-memory_block *
+memory_pool
 expr_save_memory(void)
 {
-	memory_block	*tmem;
 
-	tmem = tmblk;
-	tmblk = NULL;
-	return tmem;
+	memory_pool saved_pool = expr_pool;
+	expr_pool = (memory_pool){ NULL, 0, 0 };
+	return saved_pool;
 }
 
 /*
@@ -331,13 +308,10 @@ expr_save_memory(void)
  * expr_free_all() frees the restored memory.
  */
 void
-expr_restore_memory(memory_block *tmem)
+expr_restore_memory(memory_pool saved_pool)
 {
 
 	expr_free_all();
-	if (tmblk != NULL) {
-		free(tmblk->start);
-		free(tmblk);
-	}
-	tmblk = tmem;
+	free(expr_pool.items);
+	expr_pool = saved_pool;
 }
