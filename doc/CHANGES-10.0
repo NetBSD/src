@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.21 2023/01/12 12:12:29 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.22 2023/01/13 19:15:32 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -490,4 +490,37 @@ sys/arch/aarch64/aarch64/bus_space_asm_generic.S 1.6
 
 	aarch64: fix a bug in bus_space_read_region_{2,4,8}_swap().
 	[ryo, ticket #44]
+
+share/examples/secmodel/secmodel_example.c	1.29
+sys/arch/sparc/conf/INSTALL			1.106
+sys/conf/files					1.1306
+sys/secmodel/suser/secmodel_suser.c		1.56
+sys/sys/kauth.h					1.88
+
+	Fix leftovers from strip(4) removal.
+	[jakllsch, ticket #45]
+
+sys/arch/x86/isa/rtc.c				1.2
+
+	x86: honor ACPI FADT Century byte; should fix many
+	"unknown CMOS layout" messages.
+	[jakllsch, ticket #46]
+
+etc/MAKEDEV.tmpl				1.233
+
+	Fix hexprint function.
+	[jakllsch, ticket #47]
+
+sys/dev/pci/virtio.c				1.64,1.65
+
+	vioif(4); fixes stalls in the transmit path.
+	[jakllsch, ticket #48]
+
+sys/net/if_wg.c					1.72-1.74
+sys/secmodel/suser/secmodel_suser.c		1.57
+sys/sys/kauth.h					1.89
+
+	wg(4): PR 57161 - allow non-root to retrieve information other
+	than the private key and the peer preshared key.
+	[jakllsch, ticket #49]
 
