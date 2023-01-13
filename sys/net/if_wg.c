@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.71 2022/11/04 09:00:58 ozaki-r Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.71.2.1 2023/01/13 19:14:13 martin Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.71 2022/11/04 09:00:58 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.71.2.1 2023/01/13 19:14:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -4449,6 +4449,17 @@ out:
 	return error;
 }
 
+static bool
+wg_is_authorized(struct wg_softc *wg, u_long cmd)
+{
+	int au = cmd == SIOCGDRVSPEC ?
+	    KAUTH_REQ_NETWORK_INTERFACE_WG_GETPRIV :
+	    KAUTH_REQ_NETWORK_INTERFACE_WG_SETPRIV;
+	return kauth_authorize_network(kauth_cred_get(),
+	    KAUTH_NETWORK_INTERFACE_WG, au, &wg->wg_if,
+	    (void *)cmd, NULL) == 0;
+}
+
 static int
 wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 {
@@ -4463,9 +4474,11 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 	if (prop_dict == NULL)
 		goto error;
 
-	if (!prop_dictionary_set_data(prop_dict, "private_key", wg->wg_privkey,
-		WG_STATIC_KEY_LEN))
-		goto error;
+	if (wg_is_authorized(wg, SIOCGDRVSPEC)) {
+		if (!prop_dictionary_set_data(prop_dict, "private_key",
+			wg->wg_privkey, WG_STATIC_KEY_LEN))
+			goto error;
+	}
 
 	if (wg->wg_listen_port != 0) {
 		if (!prop_dictionary_set_uint16(prop_dict, "listen_port",
@@ -4507,10 +4520,12 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 		uint8_t psk_zero[WG_PRESHARED_KEY_LEN] = {0};
 		if (!consttime_memequal(wgp->wgp_psk, psk_zero,
 			sizeof(wgp->wgp_psk))) {
-			if (!prop_dictionary_set_data(prop_peer,
-				"preshared_key",
-				wgp->wgp_psk, sizeof(wgp->wgp_psk)))
-				goto next;
+			if (wg_is_authorized(wg, SIOCGDRVSPEC)) {
+				if (!prop_dictionary_set_data(prop_peer,
+					"preshared_key",
+					wgp->wgp_psk, sizeof(wgp->wgp_psk)))
+					goto next;
+			}
 		}
 
 		wgsa = wg_get_endpoint_sa(wgp, &wgsa_psref);
@@ -4649,6 +4664,9 @@ wg_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		return error;
 	case SIOCSDRVSPEC:
+		if (!wg_is_authorized(wg, cmd)) {
+			return EPERM;
+		}
 		switch (ifd->ifd_cmd) {
 		case WG_IOCTL_SET_PRIVATE_KEY:
 			error = wg_ioctl_set_private_key(wg, ifd);
