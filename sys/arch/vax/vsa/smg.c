@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.61 2021/08/07 16:19:07 thorpej Exp $ */
+/*	$NetBSD: smg.c,v 1.62 2023/01/13 19:45:45 tsutsui Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.61 2021/08/07 16:19:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.62 2023/01/13 19:45:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,6 +241,7 @@ smg_attach(device_t parent, device_t self, void *aux)
 	callout_reset(&smg_cursor_ch, hz / 2, smg_crsr_blink, NULL);
 	curcmd = CUR_CMD_HSHI;
 	WRITECUR(CUR_CMD, curcmd);
+	wsfont_init();
 	if ((fcookie = wsfont_find(NULL, 8, 15, 0, WSDISPLAY_FONTORDER_R2L,
 	    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP)) < 0) {
 		aprint_error_dev(self, "could not find 8x15 font\n");
@@ -591,6 +592,7 @@ smgcninit(struct consdev *cndev)
 	curscr = &smg_conscreen;
 	wsdisplay_cnattach(&smg_stdscreen, &smg_conscreen, 0, 0, 0);
 	cn_tab->cn_pri = CN_INTERNAL;
+	wsfont_init();
 	if ((fcookie = wsfont_find(NULL, 8, 15, 0, WSDISPLAY_FONTORDER_R2L,
 	    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP)) < 0)
 	{
