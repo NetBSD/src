@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.17 2023/01/13 19:41:50 rillig Exp $ */
+/* $NetBSD: externs2.h,v 1.18 2023/01/13 19:50:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -65,11 +65,6 @@ extern	type_t	**tlst;
 
 extern	void	readfile(const char *);
 extern	void	mkstatic(hte_t *);
-
-/*
- * mem2.c
- */
-extern	void	*xalloc(size_t);
 
 /*
  * chk.c
