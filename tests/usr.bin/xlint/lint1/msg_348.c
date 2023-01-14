@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_348.c,v 1.7 2023/01/08 15:22:33 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.8 2023/01/14 11:15:07 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message 348: maximum value %d of '%s' does not match maximum array index %d [348]
@@ -8,6 +8,9 @@
 enum color {
 	red,
 	green,
+	/* expect+5: previous declaration of 'blue' [260] */
+	/* expect+4: previous declaration of 'blue' [260] */
+	/* expect+3: previous declaration of 'blue' [260] */
 	/* expect+2: previous declaration of 'blue' [260] */
 	/* expect+1: previous declaration of 'blue' [260] */
 	blue
@@ -98,6 +101,51 @@ color_name_computed_pointer(enum color color, const char *name)
 	 * 'pointer to pointer to const char'.
 	 */
 	return (&name)[color];
+}
+
+/*
+ * If the accessed array has character type, it may contain a trailing null
+ * character.
+ */
+void
+color_initial_letter(enum color color)
+{
+	static const char len_2_null[] = "RG";
+	static const char len_3_null[] = "RGB";
+	static const char len_4_null[] = "RGB_";
+
+	static const char len_2_of_3[3] = "RG";
+	static const char len_3_of_3[3] = "RGB";
+	static const char len_4_of_4[4] = "RGB_";
+
+	/* TODO: array is too short */
+	if (len_2_null[color] != '\0')
+		return;
+
+	/* FIXME: lint should not warn since the maximum usable array index is 2 */
+	/* expect+1: warning: maximum value 2 of 'enum color' does not match maximum array index 3 [348] */
+	if (len_3_null[color] != '\0')
+		return;
+
+	/* FIXME: lint should not warn since the maximum usable array index is 3, not 4 */
+	/* expect+1: warning: maximum value 2 of 'enum color' does not match maximum array index 4 [348] */
+	if (len_4_null[color] != '\0')
+		return;
+
+	/*
+	 * The array has 3 elements, as expected.  If lint were to inspect
+	 * the content of the array, it could see that [2] is a null
+	 * character.  That null character may be intended though.
+	 */
+	if (len_2_of_3[color] != '\0')
+		return;
+
+	if (len_3_of_3[color] != '\0')
+		return;
+
+	/* expect+1: warning: maximum value 2 of 'enum color' does not match maximum array index 3 [348] */
+	if (len_4_of_4[color])
+		return;
 }
 
 extern const char *incomplete_color_name[];
