@@ -1,4 +1,4 @@
-.\"	$NetBSD: aq.4,v 1.4 2020/04/24 04:37:27 ryo Exp $
+.\"	$NetBSD: aq.4,v 1.5 2023/01/14 13:20:40 ryo Exp $
 .\"
 .\" Copyright (c) 2020 Ryo Shimizu <ryo@nerv.org>
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 24, 2020
+.Dd January 14, 2023
 .Dt AQ 4
 .Os
 .Sh NAME
@@ -64,6 +64,22 @@ AQC111S 5 Gigabit Network Adapter
 .It
 AQC112S 2.5 Gigabit Network Adapter
 .It
+AQC113DEV 10 Gigabit Network Adapter
+.It
+AQC113 10 Gigabit Network Adapter
+.It
+AQC113C 10 Gigabit Network Adapter
+.It
+AQC113CA 10 Gigabit Network Adapter
+.It
+AQC113CS 10 Gigabit Network Adapter
+.It
+AQC114CS 5 Gigabit Network Adapter
+.It
+AQC115C 2.5 Gigabit Network Adapter
+.It
+AQC116C Gigabit Network Adapter
+.It
 D100 10 Gigabit Network Adapter
 .It
 D107 10 Gigabit Network Adapter
@@ -83,7 +99,7 @@ D109 2.5 Gigabit Network Adapter
 The
 .Nm
 driver first appeared in
-.Nx 10.0 ,
+.Nx 9.1 ,
 and is based on the
 .Fx
 driver of the same name, but has been drastically rewritten by Ryo Shimizu.
