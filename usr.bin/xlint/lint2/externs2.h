@@ -1,4 +1,4 @@
-/* $NetBSD: externs2.h,v 1.18 2023/01/13 19:50:00 rillig Exp $ */
+/* $NetBSD: externs2.h,v 1.19 2023/01/14 08:48:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -69,8 +69,8 @@ extern	void	mkstatic(hte_t *);
 /*
  * chk.c
  */
-extern	void	mainused(void);
-extern	void	chkname(const hte_t *);
+extern	void	mark_main_as_used(void);
+extern	void	check_name(const hte_t *);
 
 /*
  * msg.c
