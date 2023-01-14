@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.28 2022/05/20 21:18:55 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.29 2023/01/14 09:30:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit2.c,v 1.28 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.29 2023/01/14 09:30:07 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -94,7 +94,7 @@ outtype(type_t *tp)
 				outchar('.');
 				outint(tp->t_uniqpos.p_uniq);
 			} else
-				errx(1, "internal error: outtype() 2");
+				errx(1, "internal error: outtype");
 		} else if (ts == FUNC && tp->t_args != NULL) {
 			na = 0;
 			for (ap = tp->t_args; *ap != NULL; ap++)
@@ -189,7 +189,7 @@ dumpname(hte_t *hte)
 			def = sym;
 	}
 	if (def == NULL)
-		errx(1, "internal error: dumpname() %s", hte->h_name);
+		errx(1, "internal error: dumpname %s", hte->h_name);
 
 	outdef(hte, def);
 }

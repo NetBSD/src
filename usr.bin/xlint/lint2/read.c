@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.77 2023/01/13 19:50:00 rillig Exp $ */
+/* $NetBSD: read.c,v 1.78 2023/01/14 09:30:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.77 2023/01/13 19:50:00 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.78 2023/01/14 09:30:07 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -305,7 +305,7 @@ setfnid(int fid, const char *cp)
 	 * file by lint1 are always the previous index + 1.
 	 */
 	if ((size_t)fid >= ninpfns)
-		errx(1, "internal error: setfnid()");
+		errx(1, "internal error: setfnid");
 	inpfns[fid] = (unsigned short)getfnidx(cp);
 }
 
