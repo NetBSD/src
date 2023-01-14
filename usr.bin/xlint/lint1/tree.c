@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.490 2023/01/13 19:41:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.491 2023/01/14 10:17:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.490 2023/01/13 19:41:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.491 2023/01/14 10:17:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -556,6 +556,50 @@ build_string(strg_t *strg)
 }
 
 /*
+ * Return whether all struct/union members with the same name have the same
+ * type and offset.
+ */
+static bool
+all_members_compatible(const sym_t *msym)
+{
+	for (const sym_t *csym = msym;
+	     csym != NULL; csym = csym->s_symtab_next) {
+		if (csym->s_scl != MOS && csym->s_scl != MOU)
+			continue;
+		if (strcmp(msym->s_name, csym->s_name) != 0)
+			continue;
+
+		for (const sym_t *sym = csym->s_symtab_next;
+		     sym != NULL; sym = sym->s_symtab_next) {
+
+			if (sym->s_scl != MOS && sym->s_scl != MOU)
+				continue;
+			if (strcmp(csym->s_name, sym->s_name) != 0)
+				continue;
+			if (csym->u.s_member.sm_offset_in_bits !=
+			    sym->u.s_member.sm_offset_in_bits)
+				return false;
+
+			bool w = false;
+			if (!types_compatible(csym->s_type, sym->s_type,
+			    false, false, &w) && !w)
+				return false;
+			if (csym->s_bitfield != sym->s_bitfield)
+				return false;
+			if (csym->s_bitfield) {
+				type_t *tp1 = csym->s_type;
+				type_t *tp2 = sym->s_type;
+				if (tp1->t_flen != tp2->t_flen)
+					return false;
+				if (tp1->t_foffs != tp2->t_foffs)
+					return false;
+			}
+		}
+	}
+	return true;
+}
+
+/*
  * Returns a symbol which has the same name as the msym argument and is a
  * member of the struct or union specified by the tn argument.
  */
@@ -564,8 +608,6 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 {
 	struct_or_union	*str;
 	type_t	*tp;
-	sym_t	*sym, *csym;
-	bool	eq;
 	tspec_t	t;
 
 	/*
@@ -607,7 +649,8 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 * If this struct/union has a member with the name of msym, return it.
 	 */
 	if (str != NULL) {
-		for (sym = msym; sym != NULL; sym = sym->s_symtab_next) {
+		for (sym_t *sym = msym;
+		     sym != NULL; sym = sym->s_symtab_next) {
 			if (!is_member(sym))
 				continue;
 			if (sym->u.s_member.sm_sou_type != str)
@@ -618,56 +661,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		}
 	}
 
-	/*
-	 * Set eq to false if there are struct/union members with the same
-	 * name and different types and/or offsets.
-	 */
-	eq = true;
-	for (csym = msym; csym != NULL; csym = csym->s_symtab_next) {
-		if (csym->s_scl != MOS && csym->s_scl != MOU)
-			continue;
-		if (strcmp(msym->s_name, csym->s_name) != 0)
-			continue;
-		for (sym = csym->s_symtab_next; sym != NULL;
-		    sym = sym->s_symtab_next) {
-			bool w;
-
-			if (sym->s_scl != MOS && sym->s_scl != MOU)
-				continue;
-			if (strcmp(csym->s_name, sym->s_name) != 0)
-				continue;
-			if (csym->u.s_member.sm_offset_in_bits !=
-			    sym->u.s_member.sm_offset_in_bits) {
-				eq = false;
-				break;
-			}
-			w = false;
-			eq = types_compatible(csym->s_type, sym->s_type,
-			    false, false, &w) && !w;
-			if (!eq)
-				break;
-			if (csym->s_bitfield != sym->s_bitfield) {
-				eq = false;
-				break;
-			}
-			if (csym->s_bitfield) {
-				type_t	*tp1, *tp2;
-
-				tp1 = csym->s_type;
-				tp2 = sym->s_type;
-				if (tp1->t_flen != tp2->t_flen) {
-					eq = false;
-					break;
-				}
-				if (tp1->t_foffs != tp2->t_foffs) {
-					eq = false;
-					break;
-				}
-			}
-		}
-		if (!eq)
-			break;
-	}
+	bool eq = all_members_compatible(msym);
 
 	/*
 	 * Now handle the case in which the left operand refers really
