@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.96 2023/01/14 09:21:58 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.97 2023/01/14 10:38:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.96 2023/01/14 09:21:58 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.97 2023/01/14 10:38:36 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -269,7 +269,7 @@ terminate(int signo)
 		(void)close(cpp.outfd);
 	if (cpp.outfile != NULL) {
 		if (signo != 0 && getenv("LINT_KEEP_CPPOUT_ON_ERROR") != NULL)
-			printf("lint: preprocessor output kept in %s\n",
+			(void)printf("lint: preprocessor output kept in %s\n",
 			    cpp.outfile);
 		else
 			(void)remove(cpp.outfile);
@@ -318,12 +318,12 @@ usage(const char *fmt, ...)
 	va_list ap;
 
 	name = getprogname();
-	fprintf(stderr, "%s: ", name);
+	(void)fprintf(stderr, "%s: ", name);
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (fmt[0] != '\0')
-		fprintf(stderr, "\n");
+		(void)fprintf(stderr, "\n");
 
 	indent = (int)(strlen("usage: ") + strlen(name));
 	(void)fprintf(stderr,
