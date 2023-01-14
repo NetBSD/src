@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9 2021/08/03 17:27:48 rillig Exp $	*/
+/*	$NetBSD: param.h,v 1.10 2023/01/14 09:21:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,12 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- * The size of memory blocks which are used to allocate memory in larger
- * chunks.
- */
-#define	MBLKSIZ		((size_t)0x4000)
 
 /*
  * Sizes of hash tables
