@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.17 2022/05/20 21:18:54 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.18 2023/01/14 09:30:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit.c,v 1.17 2022/05/20 21:18:54 rillig Exp $");
+__RCSID("$NetBSD: emit.c,v 1.18 2023/01/14 09:30:07 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -112,7 +112,7 @@ outclr(void)
 		outchar('\n');
 		sz = ob.o_next - ob.o_buf;
 		if (sz > ob.o_len)
-			errx(1, "internal error: outclr() 1");
+			errx(1, "internal error: outclr");
 		if (fwrite(ob.o_buf, sz, 1, lout) != 1)
 			err(1, "cannot write to %s", loname);
 		ob.o_next = ob.o_buf;
