@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.95 2022/10/01 09:48:02 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.96 2023/01/14 09:21:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.95 2022/10/01 09:48:02 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.96 2023/01/14 09:21:58 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -915,36 +915,31 @@ static void
 cat(char *const *srcs, const char *dest)
 {
 	int	ifd, ofd, i;
-	char	*src, *buf;
+	char	*src;
 	ssize_t	rlen;
+	char	buf[0x4000];
 
 	if ((ofd = open(dest, O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
 		warn("cannot open %s", dest);
 		terminate(-1);
 	}
 
-	buf = xmalloc(MBLKSIZ);
-
 	for (i = 0; (src = srcs[i]) != NULL; i++) {
 		if ((ifd = open(src, O_RDONLY)) == -1) {
-			free(buf);
 			warn("cannot open %s", src);
 			terminate(-1);
 		}
 		do {
-			if ((rlen = read(ifd, buf, MBLKSIZ)) == -1) {
-				free(buf);
+			if ((rlen = read(ifd, buf, sizeof(buf))) == -1) {
 				warn("read error on %s", src);
 				terminate(-1);
 			}
 			if (write(ofd, buf, (size_t)rlen) == -1) {
-				free(buf);
 				warn("write error on %s", dest);
 				terminate(-1);
 			}
-		} while (rlen == MBLKSIZ);
+		} while (rlen == sizeof(buf));
 		(void)close(ifd);
 	}
 	(void)close(ofd);
-	free(buf);
 }
