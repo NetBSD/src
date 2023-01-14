@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.424 2022/10/01 09:42:40 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.425 2023/01/14 10:33:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.424 2022/10/01 09:42:40 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.425 2023/01/14 10:33:34 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -893,7 +893,9 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 struct_or_union:		/* C99 6.7.2.1 */
 	  T_STRUCT_OR_UNION {
 		symtyp = FTAG;
-		begin_declaration_level($1 == STRUCT ? DK_MOS : DK_MOU);
+		begin_declaration_level($1 == STRUCT
+		    ? DK_STRUCT_MEMBER
+		    : DK_UNION_MEMBER);
 		dcs->d_offset_in_bits = 0;
 		dcs->d_sou_align_in_bits = CHAR_SIZE;
 		$$ = $1;
@@ -1043,7 +1045,7 @@ enum_specifier:			/* C99 6.7.2.2 */
 enum:				/* helper for C99 6.7.2.2 */
 	  T_ENUM {
 		symtyp = FTAG;
-		begin_declaration_level(DK_ENUM_CONST);
+		begin_declaration_level(DK_ENUM_CONSTANT);
 	  }
 	;
 

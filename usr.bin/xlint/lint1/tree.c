@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.491 2023/01/14 10:17:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.492 2023/01/14 10:33:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.491 2023/01/14 10:17:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.492 2023/01/14 10:33:34 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -564,7 +564,7 @@ all_members_compatible(const sym_t *msym)
 {
 	for (const sym_t *csym = msym;
 	     csym != NULL; csym = csym->s_symtab_next) {
-		if (csym->s_scl != MOS && csym->s_scl != MOU)
+		if (!is_member(csym))
 			continue;
 		if (strcmp(msym->s_name, csym->s_name) != 0)
 			continue;
@@ -572,7 +572,7 @@ all_members_compatible(const sym_t *msym)
 		for (const sym_t *sym = csym->s_symtab_next;
 		     sym != NULL; sym = sym->s_symtab_next) {
 
-			if (sym->s_scl != MOS && sym->s_scl != MOU)
+			if (!is_member(sym))
 				continue;
 			if (strcmp(csym->s_name, sym->s_name) != 0)
 				continue;
@@ -619,7 +619,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		error(101, type_name(tn->tn_type), msym->s_name);
 		rmsym(msym);
 		msym->s_kind = FMEMBER;
-		msym->s_scl = MOS;
+		msym->s_scl = STRUCT_MEMBER;
 
 		struct_or_union *sou = expr_zero_alloc(sizeof(*sou));
 		sou->sou_tag = expr_zero_alloc(sizeof(*sou->sou_tag));
