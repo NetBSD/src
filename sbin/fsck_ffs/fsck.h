@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.56 2022/11/17 06:40:38 chs Exp $	*/
+/*	$NetBSD: fsck.h,v 1.57 2023/01/14 12:12:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -97,7 +97,7 @@ struct inostat {
  * which are described by the following structure.
  */
 extern struct inostatlist {
-	long    il_numalloced;  /* number of inodes allocated in this cg */
+	size_t  il_numalloced;  /* number of inodes allocated in this cg */
 	struct inostat *il_stat;/* inostat info for this cylinder group */
 } *inostathead;
 

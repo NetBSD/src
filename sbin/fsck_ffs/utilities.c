@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.67 2022/11/17 06:40:38 chs Exp $	*/
+/*	$NetBSD: utilities.c,v 1.68 2023/01/14 12:12:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.67 2022/11/17 06:40:38 chs Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.68 2023/01/14 12:12:50 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -590,7 +590,7 @@ inoinfo(ino_t inum)
 {
 	static struct inostat unallocated = { USTATE, 0, 0 };
 	struct inostatlist *ilp;
-	int iloff;
+	size_t iloff;
 
 	if (inum > maxino)
 		errexit("inoinfo: inumber %llu out of range",
