@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.40 2023/01/14 13:16:27 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.41 2023/01/14 13:17:20 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.40 2023/01/14 13:16:27 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.41 2023/01/14 13:17:20 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -931,7 +931,8 @@ struct aq_firmware_ops {
 #define AQ_EVCNT_ATTACH_MISC(sc, name, desc)				\
 	AQ_EVCNT_ATTACH(sc, name, desc, EVCNT_TYPE_MISC)
 #define AQ_EVCNT_DETACH(sc, name)					\
-	evcnt_detach(&(sc)->sc_evcount_##name##_ev)
+	if ((sc)->sc_evcount_##name##_name[0] != '\0')			\
+		evcnt_detach(&(sc)->sc_evcount_##name##_ev)
 #define AQ_EVCNT_ADD(sc, name, val)					\
 	((sc)->sc_evcount_##name##_ev.ev_count += (val))
 #endif /* AQ_EVENT_COUNTERS */
@@ -1587,6 +1588,9 @@ aq_detach(device_t self, int flags __unused)
 	struct ifnet * const ifp = &sc->sc_ethercom.ec_if;
 	int i;
 
+	if (sc->sc_dev == NULL)
+		return 0;
+
 	if (sc->sc_iosize != 0) {
 		if (ifp->if_softc != NULL) {
 			IFNET_LOCK(ifp);
@@ -1601,10 +1605,17 @@ aq_detach(device_t self, int flags __unused)
 			}
 		}
 		if (sc->sc_nintrs > 0) {
+			callout_stop(&sc->sc_tick_ch);
+
 			pci_intr_release(sc->sc_pc, sc->sc_intrs,
 			    sc->sc_nintrs);
 			sc->sc_intrs = NULL;
 			sc->sc_nintrs = 0;
+		}
+
+		if (sc->sc_reset_wq != NULL) {
+			workqueue_destroy(sc->sc_reset_wq);
+			sc->sc_reset_wq = NULL;
 		}
 
 		aq_txrx_rings_free(sc);
@@ -1614,7 +1625,6 @@ aq_detach(device_t self, int flags __unused)
 			if_detach(ifp);
 		}
 
-		aprint_debug_dev(sc->sc_dev, "%s: bus_space_unmap\n", __func__);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		sc->sc_iosize = 0;
 	}
@@ -1647,10 +1657,14 @@ aq_detach(device_t self, int flags __unused)
 	AQ_EVCNT_DETACH(sc, cprc);
 #endif
 
-	ifmedia_fini(&sc->sc_media);
+	if (sc->sc_ethercom.ec_ifmedia != NULL) {
+		ifmedia_fini(&sc->sc_media);
+		sc->sc_ethercom.ec_ifmedia = NULL;
+	}
 
 	mutex_destroy(&sc->sc_mpi_mutex);
 	mutex_destroy(&sc->sc_mutex);
+	sc->sc_dev = NULL;
 
 	return 0;
 }
