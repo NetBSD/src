@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.39 2022/11/02 20:38:22 andvar Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.40 2023/01/14 13:16:27 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.39 2022/11/02 20:38:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.40 2023/01/14 13:16:27 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1008,7 +1008,7 @@ struct aq_softc {
 #define FEATURES_REV_B0		0x20000000
 #define FEATURES_REV_B1		0x40000000
 #define FEATURES_REV_B		(FEATURES_REV_B0|FEATURES_REV_B1)
-	uint32_t sc_max_mtu;
+	int sc_max_mtu;
 	uint32_t sc_mbox_addr;
 
 	bool sc_rbl_enabled;
@@ -3874,7 +3874,7 @@ aq_watchdog_check(struct aq_softc * const sc)
 	AQ_LOCKED(sc);
 
 	bool ok = true;
-	for (u_int n = 0; n < sc->sc_nqueues; n++) {
+	for (int n = 0; n < sc->sc_nqueues; n++) {
 		struct aq_txring *txring = &sc->sc_queue[n].txring;
 
 		mutex_enter(&txring->txr_mutex);
@@ -4810,7 +4810,7 @@ aq_unset_stopping_flags(struct aq_softc *sc)
 	AQ_LOCKED(sc);
 
 	/* Must unset stopping flags in ascending order. */
-	for (unsigned i = 0; i < sc->sc_nqueues; i++) {
+	for (int i = 0; i < sc->sc_nqueues; i++) {
 		struct aq_txring *txr = &sc->sc_queue[i].txring;
 		struct aq_rxring *rxr = &sc->sc_queue[i].rxring;
 
@@ -4833,7 +4833,7 @@ aq_set_stopping_flags(struct aq_softc *sc)
 	AQ_LOCKED(sc);
 
 	/* Must unset stopping flags in ascending order. */
-	for (unsigned i = 0; i < sc->sc_nqueues; i++) {
+	for (int i = 0; i < sc->sc_nqueues; i++) {
 		struct aq_txring *txr = &sc->sc_queue[i].txring;
 		struct aq_rxring *rxr = &sc->sc_queue[i].rxring;
 
@@ -4920,7 +4920,7 @@ aq_handle_reset_work(struct work *work, void *arg)
 	    __func__, AQ_READ_REG(sc, AQ_INTR_MASK_REG),
 	    AQ_READ_REG(sc, AQ_INTR_STATUS_REG));
 
-	for (u_int n = 0; n < sc->sc_nqueues; n++) {
+	for (int n = 0; n < sc->sc_nqueues; n++) {
 		struct aq_txring *txring = &sc->sc_queue[n].txring;
 		u_int head = AQ_READ_REG_BIT(sc,
 		    TX_DMA_DESC_HEAD_PTR_REG(txring->txr_index),
