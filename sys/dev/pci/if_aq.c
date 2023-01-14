@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.41 2023/01/14 13:17:20 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.42 2023/01/14 13:17:50 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.41 2023/01/14 13:17:20 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.42 2023/01/14 13:17:50 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -5003,10 +5003,10 @@ aq_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 	case SIOCDELMULTI:
 		AQ_LOCK(sc);
 		if ((sc->sc_if_flags & IFF_RUNNING) != 0) {
-		       /*
-			* Multicast list has changed; set the hardware filter
-			* accordingly.
-			*/
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
 			error = aq_set_filter(sc);
 		}
 		AQ_UNLOCK(sc);
