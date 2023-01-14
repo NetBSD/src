@@ -1,4 +1,4 @@
-# $NetBSD: msg_001.ln,v 1.5 2022/10/01 10:04:06 rillig Exp $
+# $NetBSD: msg_001.ln,v 1.6 2023/01/14 08:48:18 rillig Exp $
 #
 # Test data for message 1 of lint2:
 #	%s defined( %s ), but never used
@@ -17,7 +17,7 @@ S msg_001.c
 12 d 0.12 e 4main F I
 
 # If a function is declared once in old-style and once with prototype,
-# the prototype definition is preferred; see chkname.
+# the prototype definition is preferred; see check_name.
 #
 # extern merge_old_style_and_prototype();
 20 d 0.20 e 29merge_old_style_and_prototype F I
