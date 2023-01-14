@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.159 2023/01/13 19:41:50 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.160 2023/01/14 10:33:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -214,8 +214,8 @@ typedef enum {
 	STRUCT_TAG,
 	UNION_TAG,
 	ENUM_TAG,
-	MOS,		/* member of struct */
-	MOU,		/* member of union */
+	STRUCT_MEMBER,
+	UNION_MEMBER,
 	BOOL_CONST,
 	ENUM_CONST,
 	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
@@ -335,9 +335,9 @@ struct array_size {
 
 typedef enum declaration_kind {
 	DK_EXTERN,		/* global variable or function */
-	DK_MOS,			/* struct member */
-	DK_MOU,			/* union member */
-	DK_ENUM_CONST,		/* enum constant */
+	DK_STRUCT_MEMBER,
+	DK_UNION_MEMBER,
+	DK_ENUM_CONSTANT,
 	DK_OLD_STYLE_ARG,	/* argument in an old-style function
 				 * definition */
 	DK_PROTO_ARG,		/* argument in a prototype function
@@ -596,5 +596,5 @@ is_struct_or_union(tspec_t t)
 static inline bool
 is_member(const sym_t *sym)
 {
-	return sym->s_scl == MOS || sym->s_scl == MOU;
+	return sym->s_scl == STRUCT_MEMBER || sym->s_scl == UNION_MEMBER;
 }
