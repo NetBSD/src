@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.97 2023/01/14 10:38:36 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.98 2023/01/15 14:43:39 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.97 2023/01/14 10:38:36 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.98 2023/01/15 14:43:39 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -122,9 +122,9 @@ static	const	char *currfn;
 static const char target_prefix[] = TARGET_PREFIX;
 
 static	void	fname(const char *);
-static	void	runchild(const char *, char *const *, const char *, int);
-static	void	findlibs(char *const *);
-static	bool	rdok(const char *);
+static	void	run_child(const char *, char *const *, const char *, int);
+static	void	find_libs(char *const *);
+static	bool	file_is_readable(const char *);
 static	void	run_lint2(void);
 static	void	cat(char *const *, const char *);
 
@@ -203,6 +203,13 @@ list_clear(char ***lstp)
 }
 
 static void
+pass_to_cpp(const char *opt)
+{
+
+	list_add(&cpp.flags, opt);
+}
+
+static void
 pass_to_lint1(const char *opt)
 {
 
@@ -212,12 +219,8 @@ pass_to_lint1(const char *opt)
 static void
 pass_flag_to_lint1(int flag)
 {
-	char buf[3];
 
-	buf[0] = '-';
-	buf[1] = (char)flag;
-	buf[2] = '\0';
-	pass_to_lint1(buf);
+	pass_to_lint1((const char[3]){ '-', (char)flag, '\0' });
 }
 
 static void
@@ -230,29 +233,19 @@ pass_to_lint2(const char *opt)
 static void
 pass_flag_to_lint2(int flag)
 {
-	char buf[3];
 
-	buf[0] = '-';
-	buf[1] = (char)flag;
-	buf[2] = '\0';
-	pass_to_lint2(buf);
-}
-
-static void
-pass_to_cpp(const char *opt)
-{
-
-	list_add(&cpp.flags, opt);
+	pass_to_lint2((const char[3]){ '-', (char)flag, '\0' });
 }
 
 static char *
 concat2(const char *s1, const char *s2)
 {
-	char	*s;
 
-	s = xmalloc(strlen(s1) + strlen(s2) + 1);
-	(void)strcpy(s, s1);
-	(void)strcat(s, s2);
+	size_t len1 = strlen(s1);
+	size_t len2 = strlen(s2);
+	char *s = xmalloc(len1 + len2 + 1);
+	memcpy(s, s1, len1);
+	memcpy(s + len1, s2, len2 + 1);
 
 	return s;
 }
@@ -614,8 +607,8 @@ main(int argc, char *argv[])
 		if ((ks = getenv("LIBDIR")) == NULL || strlen(ks) == 0)
 			ks = PATH_LINTLIB;
 		list_add(&libsrchpath, ks);
-		findlibs(libs);
-		findlibs(deflibs);
+		find_libs(libs);
+		find_libs(deflibs);
 	}
 
 	run_lint2();
@@ -710,7 +703,7 @@ fname(const char *name)
 		terminate(-1);
 	}
 
-	runchild(pathname, args, cpp.outfile, cpp.outfd);
+	run_child(pathname, args, cpp.outfile, cpp.outfd);
 	free(pathname);
 	list_clear(&args);
 
@@ -732,7 +725,7 @@ fname(const char *name)
 	list_add(&args, cpp.outfile);
 	list_add(&args, ofn);
 
-	runchild(pathname, args, ofn, -1);
+	run_child(pathname, args, ofn, -1);
 	free(pathname);
 	list_clear(&args);
 
@@ -776,7 +769,7 @@ needs_quoting:
 }
 
 static void
-runchild(const char *path, char *const *args, const char *crfn, int fdout)
+run_child(const char *path, char *const *args, const char *crfn, int fdout)
 {
 	int	status, rv, signo, i;
 
@@ -842,12 +835,12 @@ findlib(const char *lib)
 
 	for (dir = libsrchpath; *dir != NULL; dir++) {
 		lfn = xasprintf("%s/llib-l%s.ln", *dir, lib);
-		if (rdok(lfn))
+		if (file_is_readable(lfn))
 			goto found;
 		free(lfn);
 
 		lfn = xasprintf("%s/lint/llib-l%s.ln", *dir, lib);
-		if (rdok(lfn))
+		if (file_is_readable(lfn))
 			goto found;
 		free(lfn);
 	}
@@ -861,7 +854,7 @@ found:
 }
 
 static void
-findlibs(char *const *liblst)
+find_libs(char *const *liblst)
 {
 	char *const *p;
 
@@ -870,7 +863,7 @@ findlibs(char *const *liblst)
 }
 
 static bool
-rdok(const char *path)
+file_is_readable(const char *path)
 {
 	struct	stat sbuf;
 
@@ -905,7 +898,7 @@ run_lint2(void)
 	list_add_all(&args, lint2.inlibs);
 	list_add_all(&args, lint2.infiles);
 
-	runchild(path, args, lint2.outlib, -1);
+	run_child(path, args, lint2.outlib, -1);
 	free(path);
 	list_clear(&args);
 	free(args);
