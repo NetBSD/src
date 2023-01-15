@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.425 2023/01/14 10:33:34 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.426 2023/01/15 00:05:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.425 2023/01/14 10:33:34 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.426 2023/01/15 00:05:38 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2146,12 +2146,11 @@ read_until_rparen(void)
 	freeyyv(&yylval, yychar);
 
 	level = 1;
-	while (yychar != T_RPAREN || --level > 0) {
-		if (yychar == T_LPAREN) {
+	while (yychar > 0) {
+		if (yychar == T_LPAREN)
 			level++;
-		} else if (yychar <= 0) {
+		if (yychar == T_RPAREN && --level == 0)
 			break;
-		}
 		freeyyv(&yylval, yychar = yylex());
 	}
 
