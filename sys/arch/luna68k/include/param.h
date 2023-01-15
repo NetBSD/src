@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.14 2019/12/28 12:34:35 isaki Exp $ */
+/* $NetBSD: param.h,v 1.15 2023/01/15 05:08:33 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
 #ifndef _MACHINE_PARAM_H_
 #define _MACHINE_PARAM_H_
 
-#define _MACHINE 	luna68k
+#define _MACHINE	luna68k
 #define MACHINE		"luna68k"
 
 #define PGSHIFT		12		/* LOG2(NBPG) */

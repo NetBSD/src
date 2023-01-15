@@ -1,4 +1,4 @@
-/* $NetBSD: lunaws.c,v 1.41 2022/06/25 01:54:37 tsutsui Exp $ */
+/* $NetBSD: lunaws.c,v 1.42 2023/01/15 05:08:33 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.41 2022/06/25 01:54:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lunaws.c,v 1.42 2023/01/15 05:08:33 tsutsui Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "wsmouse.h"
@@ -525,7 +525,7 @@ omkbd_get_buzcmd(struct ws_softc *sc, struct wskbd_bell_data *wbd,
 		buzcmd |= OMKBD_BUZZER_150HZ;
 	else
 		buzcmd |= OMKBD_BUZZER_100HZ;
-		
+
 	/* no volume control for buzzer on the LUNA keyboards */
 
 	return buzcmd;

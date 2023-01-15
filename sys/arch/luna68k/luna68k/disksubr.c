@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.33 2022/04/16 18:15:21 andvar Exp $ */
+/* $NetBSD: disksubr.c,v 1.34 2023/01/15 05:08:33 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  *
  * Credits:
  * This file was based mostly on the i386/disksubr.c file:
- *  	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
+ *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  * The functions: disklabel_sun_to_bsd, disklabel_bsd_to_sun
  * were originally taken from arch/sparc/scsi/sun_disklabel.c
  * (which was written by Theo de Raadt) and then substantially
@@ -95,7 +95,7 @@
  *
  * Credits:
  * This file was based mostly on the i386/disksubr.c file:
- *  	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
+ *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  * The functions: disklabel_sun_to_bsd, disklabel_bsd_to_sun
  * were originally taken from arch/sparc/scsi/sun_disklabel.c
  * (which was written by Theo de Raadt) and then substantially
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.33 2022/04/16 18:15:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.34 2023/01/15 05:08:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC) {
 		if (dkcksum(dlp) == 0) {
-			*lp = *dlp; 	/* struct assignment */
+			*lp = *dlp;	/* struct assignment */
 			return (NULL);
 		}
 		printf("NetBSD disk label corrupted");
@@ -249,7 +249,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, str
 
 	/* implant NetBSD disklabel at LABELOFFSET. */
 	dlp = (struct disklabel *)(clp->cd_block + LABELOFFSET);
-	*dlp = *lp; 	/* struct assignment */
+	*dlp = *lp;	/* struct assignment */
 
 	error = disklabel_bsd_to_om(lp, clp->cd_block);
 	if (error)
