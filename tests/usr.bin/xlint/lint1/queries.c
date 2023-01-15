@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.8 2023/01/08 18:37:12 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.9 2023/01/15 14:00:09 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -246,6 +246,12 @@ Q7(void)
 	c64 = (c32_t)f32;
 	c64 = (c64_t)f32;
 
+
+	/*
+	 * Converting a void pointer type to an object pointer type requires
+	 * an explicit cast in C++, as it is a narrowing conversion. In C,
+	 * that conversion is done implicitly.
+	 */
 
 	/* expect+1: redundant cast from 'pointer to void' to 'pointer to char' before assignment [Q7] */
 	str = (char *)allocate();
