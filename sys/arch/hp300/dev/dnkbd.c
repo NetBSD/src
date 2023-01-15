@@ -1,4 +1,4 @@
-/*	$NetBSD: dnkbd.c,v 1.13 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: dnkbd.c,v 1.14 2023/01/15 06:19:45 tsutsui Exp $	*/
 /*	$OpenBSD: dnkbd.c,v 1.17 2009/07/23 21:05:56 blambert Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
  *
  *   0x00	go to cooked mode.
  *   0x01	go to 'raw' (scancode) mode.
- *   0x12,0x21	status report as <id1>\r<id2>\r<model>\r followed by 0xff 
+ *   0x12,0x21	status report as <id1>\r<id2>\r<model>\r followed by 0xff
  *		and then the cooked/raw status.
  *   0x21,0x81	beep on
  *   0x21,0x82	beep off

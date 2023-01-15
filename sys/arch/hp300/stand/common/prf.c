@@ -1,4 +1,4 @@
-/*	$NetBSD: prf.c,v 1.5 2005/12/11 12:17:19 christos Exp $	*/
+/*	$NetBSD: prf.c,v 1.6 2023/01/15 06:19:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -57,7 +57,7 @@ tgetchar(void)
 
 	if ((c = cngetc()) == 0)
         	return 0;
-        
+
 	if (c == '\r')
 		c = '\n';
 	else if (c == ('c'&037)) {

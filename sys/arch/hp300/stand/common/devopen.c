@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.13 2022/12/11 07:39:30 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.14 2023/01/15 06:19:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /*-
  *  Copyright (c) 1993 John Brezak
  *  All rights reserved.
- * 
+ *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions
  *  are met:
@@ -43,7 +43,7 @@
  *     documentation and/or other materials provided with the distribution.
  *  3. The name of the author may not be used to endorse or promote products
  *     derived from this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -87,7 +87,7 @@ devlookup(const char *d, int len)
 {
 	struct devsw *dp = devsw;
 	int i;
-    
+
 	for (i = 0; i < ndevs; i++, dp++) {
 		if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0) {
 			/*
@@ -194,7 +194,7 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 		/* isolate device */
 		for (s = (char *)fname; *s != ':' && !isdigit(*s); s++)
 			continue;
-	
+
 		/* lookup device and get index */
 		if ((*dev = devlookup(fname, s - fname)) < 0)
 			goto baddev;
@@ -206,11 +206,11 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 		*ctlr = temp % 8;
 		for (; isdigit(*s); s++)
 			continue;
-	
+
 		/* translate partition */
 		if (!ispart(*s))
 			goto bad;
-	
+
 		*part = *s++ - 'a';
 		if (*s != ':')
 			goto bad;
@@ -220,16 +220,16 @@ devparse(const char *fname, int *dev, int *adapt, int *ctlr, int *unit,
 	/* no device present */
 	else
 		*file = (char *)fname;
-    
+
 	/* return the remaining unparsed part as the file to boot */
 	return 0;
-    
+
  bad:
 	usage();
 
  baddev:
 	return -1;
-}    
+}
 
 
 int
@@ -264,7 +264,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		memcpy(file_system, file_system_ufs,
 		    sizeof(file_system_ufs));
 		nfsys = NFSYS_UFS;
-		break; 
+		break;
 
 	case 6:		/* le */
 		memcpy(file_system, file_system_nfs,
@@ -279,7 +279,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	}
 
 	dp = &devsw[dev];
-	
+
 	if (!dp->dv_open)
 		return ENODEV;
 

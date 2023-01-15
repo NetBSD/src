@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.13 2014/11/17 02:15:48 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.14 2023/01/15 06:19:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -145,7 +145,7 @@ clock_to_gmt(satime_t *timbuf)
 
 	for (i = 1; i < month; i++)
 	  	tmp += days_in_month(i);
-	
+
 	tmp += (day - 1);
 	tmp = ((tmp * 24 + hour) * 60 + min) * 60 + sec;
 

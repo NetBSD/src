@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.11 2011/07/17 20:54:40 joerg Exp $	*/
+/*	$NetBSD: sd.c,v 1.12 2023/01/15 06:19:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -138,7 +138,7 @@ sdgetinfo(struct sd_softc *ss)
 		printf("sdgetinfo: sdstrategy error %d\n", err);
 		return 0;
 	}
-	
+
 	msg = getdisklabel(io_buf, lp);
 	if (msg) {
 		printf("sd(%d,%d,%d): WARNING: %s\n",
@@ -173,7 +173,7 @@ sdopen(struct open_file *f, ...)
 	printf("sdopen: ctlr=%d unit=%d part=%d\n",
 	    ctlr, unit, part);
 #endif
-	
+
 	if (ctlr >= NSCSI || scsialive(ctlr) == 0)
 		return EADAPT;
 	if (unit >= NSD)
@@ -252,6 +252,6 @@ retry:
 		goto retry;
 	}
 	*rsize = size;
-	
+
 	return 0;
 }

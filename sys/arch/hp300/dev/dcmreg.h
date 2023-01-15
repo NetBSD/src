@@ -1,4 +1,4 @@
-/*	$NetBSD: dcmreg.h,v 1.10 2014/05/22 16:30:40 dholland Exp $	*/
+/*	$NetBSD: dcmreg.h,v 1.11 2023/01/15 06:19:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -196,7 +196,7 @@ struct	dcmpreg {
 #define BR_50		0x01
 #define BR_75		0x02
 #define BR_110		0x03
-#define BR_134  	0x04
+#define BR_134		0x04
 #define BR_150		0x05
 #define BR_300		0x06
 #define BR_600		0x07

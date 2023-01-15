@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.237 2022/10/16 15:20:59 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.238 2023/01/15 06:19:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.237 2022/10/16 15:20:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.238 2023/01/15 06:19:46 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -371,7 +371,7 @@ static void
 identifycpu(void)
 {
 	const char *t, *cpu, *s, *mmu;
-	int i; 
+	int i;
 	char fpu[64], cache[64];
 
 	/*

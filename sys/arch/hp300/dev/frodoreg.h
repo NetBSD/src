@@ -1,4 +1,4 @@
-/*	$NetBSD: frodoreg.h,v 1.5 2014/04/19 05:37:54 tsutsui Exp $	*/
+/*	$NetBSD: frodoreg.h,v 1.6 2023/01/15 06:19:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Smith.  All rights reserved.
@@ -81,7 +81,7 @@
 
 /* manipulate interrupt registers */
 #define	FRODO_GETMASK(sc)						\
-	((FRODO_READ((sc), FRODO_PIC_MU) << 8) | 			\
+	((FRODO_READ((sc), FRODO_PIC_MU) << 8) |			\
 	    FRODO_READ((sc), FRODO_PIC_ML))
 #define	FRODO_SETMASK(sc, val) do {					\
 	FRODO_WRITE((sc), FRODO_PIC_MU, ((val) >> 8) & 0xff);		\

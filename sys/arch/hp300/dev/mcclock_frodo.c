@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_frodo.c,v 1.1 2014/04/19 05:37:54 tsutsui Exp $	*/
+/*	$NetBSD: mcclock_frodo.c,v 1.2 2023/01/15 06:19:45 tsutsui Exp $	*/
 /*-
  * Copyright (c) 2014 Izumi Tsutsui.  All rights reserved.
  *
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_frodo.c,v 1.1 2014/04/19 05:37:54 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_frodo.c,v 1.2 2023/01/15 06:19:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -97,7 +97,7 @@ mcclock_frodo_attach(device_t parent, device_t self, void *aux)
 	mcclock_frodo_write(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 
 	/* make sure to start the 32.768kHz OSC */
-	mcclock_frodo_write(sc, MC_REGA, 
+	mcclock_frodo_write(sc, MC_REGA,
 	    (mcclock_frodo_read(sc, MC_REGA) & ~MC_REGA_DVMASK) |
 	    MC_BASE_32_KHz);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.110 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.111 2023/01/15 06:19:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.110 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.111 2023/01/15 06:19:46 tsutsui Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -222,7 +222,7 @@ struct dev_data {
 	int			dd_punit; /* and punit... */
 };
 typedef LIST_HEAD(, dev_data) ddlist_t;
-static ddlist_t	dev_data_list;	  	/* all dev_datas */
+static ddlist_t	dev_data_list;		/* all dev_datas */
 static ddlist_t	dev_data_list_hpib;	/* hpib controller dev_datas */
 static ddlist_t	dev_data_list_scsi;	/* scsi controller dev_datas */
 

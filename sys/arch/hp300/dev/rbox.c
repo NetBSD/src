@@ -1,4 +1,4 @@
-/*	$NetBSD: rbox.c,v 1.3 2011/02/18 19:15:43 tsutsui Exp $	*/
+/*	$NetBSD: rbox.c,v 1.4 2023/01/15 06:19:45 tsutsui Exp $	*/
 /*	$OpenBSD: rbox.c,v 1.14 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -323,7 +323,7 @@ rbox_restore(struct diofb *fb)
 	CM2GRN(fb)[0x01].value = 0xFF;
 	CM2BLU(fb)[0x01].value = 0xFF;
 
- 	rb->blink = 0x00;
+	rb->blink = 0x00;
 	rb->write_enable = 0x01;
 	rb->opwen = 0x00;
 

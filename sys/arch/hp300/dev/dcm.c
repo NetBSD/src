@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.90 2022/04/10 09:50:45 andvar Exp $	*/
+/*	$NetBSD: dcm.c,v 1.91 2023/01/15 06:19:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.90 2022/04/10 09:50:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.91 2023/01/15 06:19:45 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -302,7 +302,7 @@ CFATTACH_DECL_NEW(dcm, sizeof(struct dcm_softc),
 static	struct dcmdevice *dcm_cn = NULL;	/* pointer to hardware */
 static	int dcmconsinit;			/* has been initialized */
 #if 0
-static	int dcm_lastcnpri = CN_DEAD; 	/* XXX last priority */
+static	int dcm_lastcnpri = CN_DEAD;	/* XXX last priority */
 #endif
 
 static struct consdev dcm_cons = {

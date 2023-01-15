@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.44 2021/08/07 16:18:53 thorpej Exp $	*/
+/*	$NetBSD: hpib.c,v 1.45 2023/01/15 06:19:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.44 2021/08/07 16:18:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.45 2023/01/15 06:19:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ int	hpibdmathresh = 3;	/* byte count beyond which to attempt dma */
  * a device is attached to the system!
  *
  * * We nevertheless probe the whole (slave, punit) tuple space, since
- * drivers for devices with a unique ID know exactly where to attach; 
+ * drivers for devices with a unique ID know exactly where to attach;
  * and we disallow ``star'' locators for other drivers.
  */
 

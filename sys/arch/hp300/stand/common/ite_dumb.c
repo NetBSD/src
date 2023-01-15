@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_dumb.c,v 1.1 2011/02/12 05:08:41 tsutsui Exp $	*/
+/*	$NetBSD: ite_dumb.c,v 1.2 2023/01/15 06:19:46 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2011 Izumi Tsutsui.  All rights reserved.
@@ -187,7 +187,7 @@ dumb_putc(struct ite_data *ip, int c, int dy, int dx)
 	uint8_t *pc;
 	uint32_t *pc32;
 	uint32_t *fontp;
-	
+
 	pc = (uint8_t *)ip->fbbase +
 	    ((ip->ftheight * ip->cursory) * ip->fbwidth) +
 	    ip->ftwidth * ip->cursorx;

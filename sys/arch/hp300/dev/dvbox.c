@@ -1,4 +1,4 @@
-/*	$NetBSD: dvbox.c,v 1.3 2011/02/18 19:15:43 tsutsui Exp $	*/
+/*	$NetBSD: dvbox.c,v 1.4 2023/01/15 06:19:45 tsutsui Exp $	*/
 /*	$OpenBSD: dvbox.c,v 1.13 2006/08/11 18:33:13 miod Exp $	*/
 
 /*
@@ -278,7 +278,7 @@ dvbox_restore(struct diofb *fb)
 	volatile struct dvboxfb *db = (struct dvboxfb *)fb->regkva;
 	u_int i;
 
-  	db->regs.id = 0x80;
+	db->regs.id = 0x80;
 	DELAY(100);
 
 	db->regs.interrupt = 0x04;
@@ -329,7 +329,7 @@ dvbox_restore(struct diofb *fb)
 	 */
 	db->regs.interrupt = 0x04;
 	db->drive = 0x10;
- 	db->rep_rule = DVBOX_DUALROP(RR_COPY);
+	db->rep_rule = DVBOX_DUALROP(RR_COPY);
 	db->opwen = 0x01;
 	db->fbwen = 0x0;
 	db->fold = 0x01;
