@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.52 2022/11/22 16:17:29 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.53 2023/01/15 05:08:33 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.52 2022/11/22 16:17:29 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.53 2023/01/15 05:08:33 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "siotty.h"
@@ -700,10 +700,10 @@ struct consdev siottycons = {
 static void
 siottycninit(struct consdev *cn)
 {
-/*
- * Channel A is immediately initialized with 9600N1 right after cold
- * boot/reset/poweron.  ROM monitor emits one line message on CH.A.
- */
+	/*
+	 * Channel A is immediately initialized with 9600N1 right after cold
+	 * boot/reset/poweron.  ROM monitor emits one line message on CH.A.
+	 */
 	struct sioreg *sio, *sio_base, *sio_a, *sio_b;
 
 	sio_base = (struct sioreg *)OBIO_SIO;
@@ -711,8 +711,7 @@ siottycninit(struct consdev *cn)
 	sio_b = &sio_base[1];
 	sio   = sio_a;
 
-	siottycons.cn_dev =
-	    makedev(cdevsw_lookup_major(&siotty_cdevsw), 0);
+	siottycons.cn_dev = makedev(cdevsw_lookup_major(&siotty_cdevsw), 0);
 	cn_init_magic(&siotty_cnm_state);
 	cn_set_magic("\047\001");
 

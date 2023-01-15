@@ -1,4 +1,4 @@
-/*	$NetBSD: psgpam_enc.c,v 1.2 2022/10/01 13:41:12 tsutsui Exp $	*/
+/*	$NetBSD: psgpam_enc.c,v 1.3 2023/01/15 05:08:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2018 Yosuke Sugahara. All rights reserved.
@@ -106,7 +106,7 @@ dynamic_offset(struct psgpam_codecvar *ctx, auint_t v)
 	*d++ = ((t & 0x000f));						\
 } while (0)
 
-#define ENCODER_DEFINE(enc, TT, table, writer) 				\
+#define ENCODER_DEFINE(enc, TT, table, writer)				\
 void									\
 psgpam_aint_to_##enc(audio_filter_arg_t *arg)				\
 {									\

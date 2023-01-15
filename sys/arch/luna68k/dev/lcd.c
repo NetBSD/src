@@ -1,4 +1,4 @@
-/* $NetBSD: lcd.c,v 1.12 2020/12/29 17:17:14 tsutsui Exp $ */
+/* $NetBSD: lcd.c,v 1.13 2023/01/15 05:08:33 tsutsui Exp $ */
 /* $OpenBSD: lcd.c,v 1.7 2015/02/10 22:42:35 miod Exp $ */
 
 /*-
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>		/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.12 2020/12/29 17:17:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.13 2023/01/15 05:08:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,7 +297,7 @@ lcdbusywait(void)
 	s = splhigh();
 	p1->portC = POWER | READ_BUSY | DISABLE;
 	splx(s);
-}	
+}
 
 static void
 lcdput(int cc)

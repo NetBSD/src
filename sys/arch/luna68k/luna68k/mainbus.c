@@ -1,4 +1,4 @@
-/* $NetBSD: mainbus.c,v 1.18 2022/06/10 21:42:24 tsutsui Exp $ */
+/* $NetBSD: mainbus.c,v 1.19 2023/01/15 05:08:33 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2022/06/10 21:42:24 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19 2023/01/15 05:08:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,20 +43,20 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2022/06/10 21:42:24 tsutsui Exp $")
 static const struct mainbus_attach_args luna_devs[] = {
 	{ "clock",  0x45000000, -1 },	/* Mostek TimeKeeper */
 	{ "lcd",    0x4d000000, -1 },	/* Sharp LM16X212 LCD module */
-	{ "le",	    0xf1000000, 3 },	/* Am7990 */
+	{ "le",     0xf1000000, 3 },	/* Am7990 */
 	{ "sio",    0x51000000, 6 },	/* uPD7201A */
-	{ "xpbus",	0x71000000, -1 },	/* HD647180XP */
-	{ "fb",	    0xc1100000, -1 },	/* BrookTree RAMDAC */
+	{ "xpbus",  0x71000000, -1 },	/* HD647180XP */
+	{ "fb",     0xc1100000, -1 },	/* BrookTree RAMDAC */
 	{ "spc",    0xe1000000, 2 },	/* MB89352 */
 };
 
 static const struct mainbus_attach_args luna2_devs[] = {
 	{ "clock",  0x45000000, -1 },	/* Dallas TimeKeeper */
 	{ "lcd",    0x4d000000, -1 },	/* Sharp LM16X212 LCD module */
-	{ "le",	    0xf1000000, 3 },	/* Am7990 */
+	{ "le",     0xf1000000, 3 },	/* Am7990 */
 	{ "sio",    0x51000000, 6 },	/* uPD7201A */
 	{ "xp",     0x71000000, 1 },	/* HD647180XP */
-	{ "fb",	    0xc1100000, -1 },	/* BrookTree RAMDAC */
+	{ "fb",     0xc1100000, -1 },	/* BrookTree RAMDAC */
 	{ "spc",    0xe1000000, 2 },	/* internal MB89352 */
 	{ "spc",    0xe1000040, 2 },	/* external MB89352 */
 };

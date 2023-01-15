@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.23 2020/02/01 19:41:49 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.24 2023/01/15 05:08:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,8 +78,8 @@
 #define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
 #endif
 
-/* 
- * Mach derived constants       
+/*
+ * Mach derived constants
  */
 
 /* user/kernel map constants */
