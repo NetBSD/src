@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1240 2023/01/15 00:34:10 rillig Exp $
+# $NetBSD: mi,v 1.1241 2023/01/15 00:53:19 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6553,6 +6553,7 @@
 ./usr/tests/usr.bin/xlint/lint1/expr_promote_trad.exp-ln	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/expr_range.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/expr_range.exp			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/expr_sizeof.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/feat_stacktrace.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/feat_stacktrace.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_attribute.c			tests-usr.bin-tests	compattestfile,atf
