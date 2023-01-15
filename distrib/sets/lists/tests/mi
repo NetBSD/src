@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1239 2023/01/04 05:25:08 rillig Exp $
+# $NetBSD: mi,v 1.1240 2023/01/15 00:34:10 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -175,8 +175,8 @@
 ./usr/libdata/debug/usr/tests/net/if_tap		tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if_vether		tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/if_vlan		tests-net-debug		compattestfile,atf
-./usr/libdata/debug/usr/tests/net/inpcb			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/in_cksum		tests-net-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/net/inpcb			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/ipsec			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/mcast			tests-net-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/net/net			tests-net-debug		compattestfile,atf
@@ -4217,6 +4217,11 @@
 ./usr/tests/net/if_wg/t_interoperability		tests-net-tests		atf,rump
 ./usr/tests/net/if_wg/t_misc				tests-net-tests		atf,rump
 ./usr/tests/net/if_wg/t_tunnel				tests-net-tests		atf,rump
+./usr/tests/net/in_cksum				tests-net-tests		compattestfile,atf
+./usr/tests/net/in_cksum/Atffile			tests-net-tests		compattestfile,atf
+./usr/tests/net/in_cksum/Kyuafile			tests-net-tests		compattestfile,atf,kyua
+./usr/tests/net/in_cksum/in_cksum			tests-net-tests		compattestfile,atf
+./usr/tests/net/in_cksum/t_in_cksum			tests-net-tests		compattestfile,atf
 ./usr/tests/net/inpcb					tests-net-tests		compattestfile,atf
 ./usr/tests/net/inpcb/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/inpcb/Kyuafile				tests-net-tests		atf,rump,kyua
@@ -4224,11 +4229,6 @@
 ./usr/tests/net/inpcb/inpcb_bind			tests-net-tests		atf,rump
 ./usr/tests/net/inpcb/t_broadcast_bind			tests-net-tests		atf,rump
 ./usr/tests/net/inpcb/t_inpcb_bind			tests-net-tests		atf,rump
-./usr/tests/net/in_cksum				tests-net-tests		compattestfile,atf
-./usr/tests/net/in_cksum/Atffile			tests-net-tests		compattestfile,atf
-./usr/tests/net/in_cksum/Kyuafile			tests-net-tests		compattestfile,atf,kyua
-./usr/tests/net/in_cksum/in_cksum			tests-net-tests		compattestfile,atf
-./usr/tests/net/in_cksum/t_in_cksum			tests-net-tests		compattestfile,atf
 ./usr/tests/net/ipsec					tests-net-tests		compattestfile,atf
 ./usr/tests/net/ipsec/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/ipsec/Kyuafile				tests-net-tests		atf,rump,kyua
@@ -4273,10 +4273,10 @@
 ./usr/tests/net/net/Kyuafile				tests-net-tests		compattestfile,atf,kyua
 ./usr/tests/net/net/t_bind				tests-net-tests		atf
 ./usr/tests/net/net/t_forwarding			tests-net-tests		atf,rump
+./usr/tests/net/net/t_ip_reass				tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ipaddress				tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ipv6_lifetime			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_ipv6address			tests-net-tests		atf,rump
-./usr/tests/net/net/t_ip_reass				tests-net-tests		atf,rump
 ./usr/tests/net/net/t_mapped				tests-net-tests		atf
 ./usr/tests/net/net/t_mtudisc				tests-net-tests		atf,rump
 ./usr/tests/net/net/t_mtudisc6				tests-net-tests		atf,rump
@@ -4312,10 +4312,10 @@
 ./usr/tests/net/tcp					tests-net-tests		compattestfile,atf
 ./usr/tests/net/tcp/Atffile				tests-net-tests		atf,rump
 ./usr/tests/net/tcp/Kyuafile				tests-net-tests		atf,rump,kyua
-./usr/tests/net/tcp/tcp_shutdown			tests-net-tests		atf,rump
 ./usr/tests/net/tcp/t_tcp_connect_port			tests-net-tests		atf,rump
 ./usr/tests/net/tcp/t_tcp_nc				tests-net-tests		atf,rump
 ./usr/tests/net/tcp/t_tcp_shutdown			tests-net-tests		atf,rump
+./usr/tests/net/tcp/tcp_shutdown			tests-net-tests		atf,rump
 ./usr/tests/net/wireguard				tests-obsolete		obsolete
 ./usr/tests/net/wireguard/Atffile			tests-obsolete		obsolete
 ./usr/tests/net/wireguard/Kyuafile			tests-obsolete		obsolete
