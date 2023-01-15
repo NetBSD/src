@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.100 2023/01/15 21:27:36 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.101 2023/01/15 21:46:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.100 2023/01/15 21:27:36 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.101 2023/01/15 21:46:15 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -226,9 +226,7 @@ concat2(const char *s1, const char *s2)
 	return s;
 }
 
-/*
- * Clean up after a signal.
- */
+/* Clean up after a signal or at the regular end. */
 static void __attribute__((__noreturn__))
 terminate(int signo)
 {
@@ -264,16 +262,13 @@ terminate(int signo)
 static const char *
 lbasename(const char *strg, int delim)
 {
-	const	char *cp, *cp1, *cp2;
 
-	cp = cp1 = cp2 = strg;
-	while (*cp != '\0') {
-		if (*cp++ == delim) {
-			cp2 = cp1;
-			cp1 = cp;
-		}
+	const char *base = strg;
+	for (const char *p = strg; *p != '\0'; p++) {
+		if (p[0] == delim && p[1] != '\0')
+			base = p + 1;
 	}
-	return *cp1 == '\0' ? cp2 : cp1;
+	return base;
 }
 
 static void __attribute__((__noreturn__, __format__(__printf__, 1, 2)))
