@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_arm.S,v 1.10 2022/12/03 11:34:38 skrll Exp $")
+RCSID("$NetBSD: strlen_arm.S,v 1.11 2023/01/15 08:43:03 skrll Exp $")
 
 #if defined(__thumb__) && !defined(_ARM_ARCH_T2)
 #error Only Thumb2 or ARM supported
@@ -102,7 +102,7 @@ ENTRY(FUNCNAME)
 .Lmain_loop:
 #ifdef STRNLEN
 	cmp	r0, r5			/* gone too far? */
-	bge	.Lmaxed_out		/*   yes, return maxlen */
+	bhs	.Lmaxed_out		/*   yes, return maxlen */
 #endif
 	ldr	r3, [r0], #4		/* load next word */
 #if defined(_ARM_ARCH_6)
@@ -164,9 +164,9 @@ ENTRY(FUNCNAME)
 #ifdef STRNLEN
 	cmp	r0, r4			/* is it larger than maxlen? */
 #ifdef __thumb__
-	it	gt
+	it	hi
 #endif
-	movgt	r0, r4			/*   yes, return maxlen */
+	movhi	r0, r4			/*   yes, return maxlen */
 	pop	{r4, r5}		/* restore registers */
 #endif
 	RET				/* return */
