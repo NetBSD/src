@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.2 2023/01/15 13:30:04 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.3 2023/01/15 13:55:06 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -62,7 +62,12 @@ void
 variable_length_array(int n)
 {
 	int local_arr[n + 5];
-	/* FIXME: sizeof(local_arr) must be 20, not 4. */
+
+	/*
+	 * Since the array length is not constant, it cannot be used in a
+	 * typedef.  Code like this are already rejected by the compiler.  For
+	 * simplicity, lint assumes that the array has length 1.
+	 */
 	/* expect+1: error: negative array dimension (-4) [20] */
 	typedef int sizeof_local_arr[-(int)sizeof(local_arr)];
 }
