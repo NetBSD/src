@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.1 2023/01/15 00:53:19 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.2 2023/01/15 13:30:04 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -42,10 +42,27 @@ typedef int sizeof_paren_global_var[-(int)sizeof(s)];
 /*
  * Even though 'sizeof(s)' may look like a function call expression, the
  * parentheses around 's' are ordinary parentheses and do not influence the
- * associativity.  Therefore, the '.' following the '(s)' takes precedence
- * over the 'sizeof'.  Same for the '->' following the '(ps)'.
+ * precedence.
+ *
+ * Therefore, the '.' following the '(s)' takes precedence over the 'sizeof'.
+ * Same for the '->' following the '(ps)'.  Same for the '[0]' following the
+ * '(arr)'.
  */
 /* expect+1: error: negative array dimension (-4) [20] */
 typedef int sizeof_paren_global_struct_member[-(int)sizeof(s).member];
 /* expect+1: error: negative array dimension (-4) [20] */
 typedef int sizeof_paren_global_ptr_struct_member[-(int)sizeof(ps)->member];
+int arr[] = { 1, 2, 3 };
+/* expect+1: error: negative array dimension (-3) [20] */
+typedef int arr_count[-(int)sizeof(arr) / (int)sizeof(arr)[0]];
+
+/* FIXME: 'n' is actually used, for the variable length array. */
+/* expect+2: warning: argument 'n' unused in function 'variable_length_array' [231] */
+void
+variable_length_array(int n)
+{
+	int local_arr[n + 5];
+	/* FIXME: sizeof(local_arr) must be 20, not 4. */
+	/* expect+1: error: negative array dimension (-4) [20] */
+	typedef int sizeof_local_arr[-(int)sizeof(local_arr)];
+}
