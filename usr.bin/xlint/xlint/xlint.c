@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.103 2023/01/15 22:26:49 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.104 2023/01/15 23:32:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.103 2023/01/15 22:26:49 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.104 2023/01/15 23:32:10 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -750,7 +750,7 @@ run_child(const char *path, list *args, const char *crfn, int fdout)
 
 	if (Vflag) {
 		print_sh_quoted(args->items[0]);
-		for (size_t i = 1; i < args->len; i++) {
+		for (size_t i = 1; i < args->len - 1; i++) {
 			(void)printf(" ");
 			print_sh_quoted(args->items[i]);
 		}
