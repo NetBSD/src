@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1295 2023/01/15 10:54:56 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1296 2023/01/15 18:43:49 rillig Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -28,8 +28,8 @@ MACHINE_MIPS64= 	0
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
 #
-.if !empty(MACHINE:Mevbarm) || !empty(MACHINE:Mevbmips) \
-	|| !empty(MACHINE:Mevbsh3)
+.if ${MACHINE:Mevbarm} || ${MACHINE:Mevbmips} \
+	|| ${MACHINE:Mevbsh3}
 RELEASEMACHINEDIR?=	${MACHINE}-${MACHINE_ARCH}
 .else
 RELEASEMACHINEDIR?=	${MACHINE}
@@ -99,10 +99,10 @@ MKGCCCMDS?=	no
 # What binutils is used?
 #
 .if \
-    !empty(MACHINE_ARCH:Maarch64*) || \
+    ${MACHINE_ARCH:Maarch64*} || \
     ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "i386" || \
-    !empty(MACHINE_ARCH:Msparc*) || \
+    ${MACHINE_ARCH:Msparc*} || \
     ${MACHINE_ARCH} == "x86_64"
 HAVE_BINUTILS?=	239
 .else
@@ -149,7 +149,7 @@ EXTERNAL_OPENSSL_SUBDIR=/does/not/exist
 .if ${MACHINE} == "i386" || \
     ${MACHINE} == "amd64" || \
     ${MACHINE} == "ia64" || \
-    !empty(MACHINE_ARCH:Maarch64*)
+    ${MACHINE_ARCH:Maarch64*}
 HAVE_ACPI=	yes
 .else
 HAVE_ACPI=	no
@@ -161,8 +161,8 @@ HAVE_ACPI=	no
 .if ${MACHINE} == "i386" || \
     ${MACHINE} == "amd64" || \
     ${MACHINE} == "ia64" || \
-    !empty(MACHINE_ARCH:Mearmv7*) || \
-    !empty(MACHINE_ARCH:Maarch64*) || \
+    ${MACHINE_ARCH:Mearmv7*} || \
+    ${MACHINE_ARCH:Maarch64*} || \
     ${MACHINE_ARCH} == "riscv64"
 HAVE_UEFI=	yes
 .else
@@ -179,7 +179,7 @@ HAVE_NVMM=	no
 .endif
 
 
-.if !empty(MACHINE_ARCH:Mearm*)
+.if ${MACHINE_ARCH:Mearm*}
 _LIBC_COMPILER_RT.${MACHINE_ARCH}=	yes
 .endif
 
@@ -200,7 +200,7 @@ HAVE_LIBGCC?=	yes
 
 
 # Should libgcc have unwinding code?
-.if ${HAVE_LLVM:Uno} == "yes" || !empty(MACHINE_ARCH:Mearm*)
+.if ${HAVE_LLVM:Uno} == "yes" || ${MACHINE_ARCH:Mearm*}
 HAVE_LIBGCC_EH?=	no
 .else
 HAVE_LIBGCC_EH?=	yes
@@ -952,7 +952,7 @@ MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 # In order to identify NetBSD to GNU packages, we sometimes need
 # an "elf" tag for historically a.out platforms.
 #
-.if (!empty(MACHINE_ARCH:Mearm*))
+.if (${MACHINE_ARCH:Mearm*})
 MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf-${MACHINE_ARCH:C/eb//:C/v[4-7]//:S/earm/eabi/}
 .elif (${MACHINE_GNU_ARCH} == "arm" || \
      ${MACHINE_GNU_ARCH} == "armeb" || \
@@ -967,7 +967,7 @@ MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsdelf
 MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsd
 .endif
 
-.if !empty(MACHINE_ARCH:M*arm*)
+.if ${MACHINE_ARCH:M*arm*}
 # Flags to pass to CC for using the old APCS ABI on ARM for compat or stand.
 ARM_APCS_FLAGS=	-mabi=apcs-gnu -mfloat-abi=soft -marm
 ARM_APCS_FLAGS+= ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -mno-thumb-interwork :}
@@ -1056,7 +1056,7 @@ MK${var}:=	yes
     ${MACHINE_ARCH} == "powerpc64" || \
     (${MACHINE_ARCH} == "aarch64" && ${HAVE_GCC:U0} == 0) || \
     ${MACHINE_ARCH} == "riscv64" || \
-    !empty(MACHINE_ARCH:Mearm*)
+    ${MACHINE_ARCH:Mearm*}
 MKCOMPAT?=	yes
 .else
 # Don't let this build where it really isn't supported.
@@ -1100,7 +1100,7 @@ SOFTFLOAT_BITS=	32
 #
 .if ${MACHINE} == "amd64" || \
     ${MACHINE} == "sparc64" || \
-    !empty(MACHINE_ARCH:Maarch64*)
+    ${MACHINE_ARCH:Maarch64*}
 MKZFS?=		yes
 .endif
 
@@ -1110,7 +1110,7 @@ MKZFS?=		yes
 .if ${MACHINE} == "i386" || \
     ${MACHINE} == "amd64" || \
     ${MACHINE_ARCH} == "aarch64" || \
-    !empty(MACHINE_ARCH:Mearm*)
+    ${MACHINE_ARCH:Mearm*}
 MKDTRACE?=	yes
 MKCTF?=		yes
 .endif
@@ -1122,7 +1122,7 @@ MKCTF?=		yes
 .if !defined(COVERITY_TOP_CONFIG) && \
     (${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
-    !empty(MACHINE_ARCH:Maarch64*) || \
+    ${MACHINE_ARCH:Maarch64*} || \
     ${MACHINE_CPU} == "arm" || \
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "mips" || \
@@ -1138,7 +1138,7 @@ MKPIE?=		no
 #
 .if ${MACHINE} == "i386" || \
     ${MACHINE} == "amd64" || \
-    !empty(MACHINE_ARCH:Maarch64*)
+    ${MACHINE_ARCH:Maarch64*}
 MKRELRO?=	partial
 .else
 MKRELRO?=	no
@@ -1420,7 +1420,7 @@ MKMAN:=		no
 MKNLS:=		no
 .endif
 
-.if !empty(MACHINE_ARCH:Mearm*)
+.if ${MACHINE_ARCH:Mearm*}
 _NEEDS_LIBCXX.${MACHINE_ARCH}=	yes
 .endif
 _NEEDS_LIBCXX.aarch64=		yes
@@ -1528,7 +1528,7 @@ ${var}?= no
 .if ${USE_PIGZGZIP} == "no" && \
     (${MACHINE} == "amd64" || \
      ${MACHINE} == "sparc64" || \
-     !empty(MACHINE_ARCH:Maarch64*))
+     ${MACHINE_ARCH:Maarch64*})
 USE_XZ_SETS?= yes
 .else
 USE_XZ_SETS?= no
