@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.101 2023/01/15 21:46:15 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.102 2023/01/15 22:06:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.101 2023/01/15 21:46:15 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.102 2023/01/15 22:06:37 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -131,7 +131,6 @@ static	void	fname(const char *);
 static	void	run_child(const char *, list *, const char *, int);
 static	void	find_libs(const list *);
 static	bool	file_is_readable(const char *);
-static	void	run_lint2(void);
 static	void	cat(const list *, const char *);
 
 static void
@@ -301,6 +300,80 @@ usage(const char *fmt, ...)
 	terminate(-1);
 }
 
+static void
+run_cpp(const char *name)
+{
+
+	const char *cc = getenv("CC");
+	if (cc == NULL)
+		cc = DEFAULT_CC;
+
+	char *abs_cc = findcc(cc);
+	if (abs_cc == NULL && setenv("PATH", DEFAULT_PATH, 1) == 0)
+		abs_cc = findcc(cc);
+	if (abs_cc == NULL) {
+		(void)fprintf(stderr, "%s: %s: not found\n", getprogname(), cc);
+		exit(EXIT_FAILURE);
+	}
+
+	list args = { NULL, 0, 0 };
+	list_add_ref(&args, abs_cc);
+	list_add_all(&args, &cpp.flags);
+	list_add_all(&args, &cpp.lcflags);
+	list_add(&args, name);
+	list_add_ref(&args, NULL);
+
+	/* we reuse the same tmp file for cpp output, so rewind and truncate */
+	if (lseek(cpp.outfd, 0, SEEK_SET) != 0) {
+		warn("lseek");
+		terminate(-1);
+	}
+	if (ftruncate(cpp.outfd, 0) != 0) {
+		warn("ftruncate");
+		terminate(-1);
+	}
+
+	run_child(abs_cc, &args, cpp.outfile, cpp.outfd);
+	list_clear(&args);
+}
+
+static void
+run_lint1(const char *out_fname)
+{
+
+	char *abs_lint1 = libexec_dir != NULL
+	    ? concat2(libexec_dir, "/lint1")
+	    : xasprintf("%s/%slint1", PATH_LIBEXEC, target_prefix);
+
+	list args = { NULL, 0, 0 };
+	list_add_ref(&args, abs_lint1);
+	list_add_all(&args, &lint1.flags);
+	list_add(&args, cpp.outfile);
+	list_add(&args, out_fname);
+	list_add_ref(&args, NULL);
+
+	run_child(abs_lint1, &args, out_fname, -1);
+	list_clear(&args);
+}
+
+static void
+run_lint2(void)
+{
+
+	char *abs_lint2 = libexec_dir != NULL
+	    ? concat2(libexec_dir, "/lint2")
+	    : xasprintf("%s/%slint2", PATH_LIBEXEC, target_prefix);
+
+	list args = { NULL, 0, 0 };
+	list_add_ref(&args, abs_lint2);
+	list_add_all(&args, &lint2.flags);
+	list_add_all(&args, &lint2.inlibs);
+	list_add_all(&args, &lint2.infiles);
+	list_add_ref(&args, NULL);
+
+	run_child(abs_lint2, &args, lint2.outlib, -1);
+	list_clear(&args);
+}
 
 int
 main(int argc, char *argv[])
@@ -587,8 +660,8 @@ main(int argc, char *argv[])
 static void
 fname(const char *name)
 {
-	const	char *bn, *suff, *CC;
-	char	*ofn, *pathname;
+	const	char *bn, *suff;
+	char	*ofn;
 	size_t	len;
 	int	fd;
 
@@ -631,58 +704,8 @@ fname(const char *name)
 	if (!iflag)
 		list_add(&lint1.outfiles, ofn);
 
-	/* run cc */
-	if ((CC = getenv("CC")) == NULL)
-		CC = DEFAULT_CC;
-	if ((pathname = findcc(CC)) == NULL)
-		if (setenv("PATH", DEFAULT_PATH, 1) == 0)
-			pathname = findcc(CC);
-	if (pathname == NULL) {
-		(void)fprintf(stderr, "%s: %s: not found\n", getprogname(), CC);
-		exit(EXIT_FAILURE);
-	}
-
-	list args = { NULL, 0, 0 };
-	list_add_ref(&args, pathname);
-	list_add_all(&args, &cpp.flags);
-	list_add_all(&args, &cpp.lcflags);
-	list_add(&args, name);
-	list_add_ref(&args, NULL);
-
-	/* we reuse the same tmp file for cpp output, so rewind and truncate */
-	if (lseek(cpp.outfd, 0, SEEK_SET) != 0) {
-		warn("lseek");
-		terminate(-1);
-	}
-	if (ftruncate(cpp.outfd, 0) != 0) {
-		warn("ftruncate");
-		terminate(-1);
-	}
-
-	run_child(pathname, &args, cpp.outfile, cpp.outfd);
-	list_clear(&args);
-
-	/* run lint1 */
-
-	if (libexec_dir == NULL) {
-		pathname = xasprintf("%s/%slint1",
-		    PATH_LIBEXEC, target_prefix);
-	} else {
-		/*
-		 * XXX Unclear whether we should be using target_prefix
-		 * XXX here.  --thorpej@wasabisystems.com
-		 */
-		pathname = concat2(libexec_dir, "/lint1");
-	}
-
-	list_add_ref(&args, pathname);
-	list_add_all(&args, &lint1.flags);
-	list_add(&args, cpp.outfile);
-	list_add(&args, ofn);
-	list_add_ref(&args, NULL);
-
-	run_child(pathname, &args, ofn, -1);
-	list_clear(&args);
+	run_cpp(name);
+	run_lint1(ofn);
 
 	list_add(&lint2.infiles, ofn);
 	free(ofn);
@@ -826,32 +849,6 @@ file_is_readable(const char *path)
 	if (access(path, R_OK) == -1)
 		return false;
 	return true;
-}
-
-static void
-run_lint2(void)
-{
-	char	*path;
-
-	if (libexec_dir == NULL) {
-		path = xasprintf("%s/%slint2", PATH_LIBEXEC, target_prefix);
-	} else {
-		/*
-		 * XXX Unclear whether we should be using target_prefix
-		 * XXX here.  --thorpej@wasabisystems.com
-		 */
-		path = concat2(libexec_dir, "/lint2");
-	}
-
-	list args = { NULL, 0, 0 };
-	list_add_ref(&args, path);
-	list_add_all(&args, &lint2.flags);
-	list_add_all(&args, &lint2.inlibs);
-	list_add_all(&args, &lint2.infiles);
-	list_add_ref(&args, NULL);
-
-	run_child(path, &args, lint2.outlib, -1);
-	list_clear(&args);
 }
 
 static void
