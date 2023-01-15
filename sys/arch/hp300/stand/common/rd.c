@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.15 2022/11/25 13:06:27 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.16 2023/01/15 06:19:46 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -235,7 +235,7 @@ rdgetinfo(struct rd_softc *rs)
 		printf("rdgetinfo: rdstrategy error %d\n", err);
 		return 0;
 	}
-	
+
 	msg = getdisklabel(io_buf, lp);
 	if (msg) {
 		printf("rd(%d,%d,%d): WARNING: %s\n",

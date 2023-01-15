@@ -1,5 +1,5 @@
 /*	$OpenBSD: rboxreg.h,v 1.2 2005/01/24 21:36:39 miod Exp $	*/
-/*	$NetBSD: rboxreg.h,v 1.2 2011/02/12 16:40:29 tsutsui Exp $	*/
+/*	$NetBSD: rboxreg.h,v 1.3 2023/01/15 06:19:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,7 +70,7 @@ struct rboxfb {
 	uint8_t filler3[0x405b - 0x4048];
 	uint8_t scanbusy;		/* scan converteris active    0x405B */
 	uint8_t filler3b[0x4083 - 0x405c];
-	uint8_t video_enable;   	/* drive vid. refresh bus     0x4083 */
+	uint8_t video_enable;		/* drive vid. refresh bus     0x4083 */
 	uint8_t filler4[3];
 	uint8_t display_enable;		/* enable the display	      0x4087 */
 	uint8_t filler5[8];
