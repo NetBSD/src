@@ -11437,17 +11437,17 @@ rm -f conftest*
 
 
 # Add -Wstack-usage if the compiler is a sufficiently recent version of GCC.
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-__GNUC__
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "(^[0-4]$|^__GNUC__$)" >/dev/null 2>&1; then :
-
-else
-  GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wstack-usage=262144"
-fi
-rm -f conftest*
+#cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+#/* end confdefs.h.  */
+#__GNUC__
+#_ACEOF
+#if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+#  $EGREP "(^[0-4]$|^__GNUC__$)" >/dev/null 2>&1; then :
+#
+#else
+#  GCC_WARN_CFLAGS="$GCC_WARN_CFLAGS -Wstack-usage=262144"
+#fi
+#rm -f conftest*
 
 
 # Set WARN_WRITE_STRINGS if the compiler supports -Wwrite-strings.
@@ -11482,17 +11482,17 @@ rm -f conftest*
 
 
 # Add -Wstack-usage if the compiler is a sufficiently recent version of GCC.
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-__GNUC__
-_ACEOF
-if (eval "$ac_cpp_for_build conftest.$ac_ext") 2>&5 |
-  $EGREP "(^[0-4]$|^__GNUC__$)" >/dev/null 2>&1; then :
-
-else
-  GCC_WARN_CFLAGS_FOR_BUILD="$GCC_WARN_CFLAGS_FOR_BUILD -Wstack-usage=262144"
-fi
-rm -f conftest*
+#cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+#/* end confdefs.h.  */
+#__GNUC__
+#_ACEOF
+#if (eval "$ac_cpp_for_build conftest.$ac_ext") 2>&5 |
+#  $EGREP "(^[0-4]$|^__GNUC__$)" >/dev/null 2>&1; then :
+#
+#else
+#  GCC_WARN_CFLAGS_FOR_BUILD="$GCC_WARN_CFLAGS_FOR_BUILD -Wstack-usage=262144"
+#fi
+#rm -f conftest*
 
 
 # Check whether --enable-werror was given.
