@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.102 2023/01/15 22:06:37 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.103 2023/01/15 22:26:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.102 2023/01/15 22:06:37 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.103 2023/01/15 22:26:49 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -127,7 +127,7 @@ static	const	char *currfn;
 #endif
 static const char target_prefix[] = TARGET_PREFIX;
 
-static	void	fname(const char *);
+static	void	handle_filename(const char *);
 static	void	run_child(const char *, list *, const char *, int);
 static	void	find_libs(const list *);
 static	bool	file_is_readable(const char *);
@@ -270,6 +270,17 @@ lbasename(const char *strg, int delim)
 	return base;
 }
 
+static void
+set_tmpdir(void)
+{
+	const char *tmp;
+	size_t len;
+
+	tmpdir = (tmp = getenv("TMPDIR")) != NULL && (len = strlen(tmp)) != 0
+	    ? concat2(tmp, tmp[len - 1] == '/' ? "" : "/")
+	    : xstrdup(_PATH_TMP);
+}
+
 static void __attribute__((__noreturn__, __format__(__printf__, 1, 2)))
 usage(const char *fmt, ...)
 {
@@ -378,18 +389,9 @@ run_lint2(void)
 int
 main(int argc, char *argv[])
 {
-	int	c;
-	char	*tmp;
-	size_t	len;
-	const char *ks;
 
 	setprogname(argv[0]);
-
-	if ((tmp = getenv("TMPDIR")) == NULL || (len = strlen(tmp)) == 0) {
-		tmpdir = xstrdup(_PATH_TMP);
-	} else {
-		tmpdir = concat2(tmp, tmp[len - 1] == '/' ? "" : "/");
-	}
+	set_tmpdir();
 
 	cpp.outfile = concat2(tmpdir, "lint0.XXXXXX");
 	cpp.outfd = mkstemp(cpp.outfile);
@@ -408,7 +410,7 @@ main(int argc, char *argv[])
 	pass_to_cpp("-Wp,-CC");
 	pass_to_cpp("-Wcomment");
 	pass_to_cpp("-D__LINT__");
-	pass_to_cpp("-Dlint");		/* XXX don't def. with -s */
+	pass_to_cpp("-Dlint");		/* XXX don't define with -s */
 	pass_to_cpp("-D__lint");
 	pass_to_cpp("-D__lint__");
 
@@ -419,6 +421,8 @@ main(int argc, char *argv[])
 	(void)signal(SIGINT, terminate);
 	(void)signal(SIGQUIT, terminate);
 	(void)signal(SIGTERM, terminate);
+
+	int c;
 	while ((c = getopt(argc, argv,
 	    "abcd:eghil:no:pq:rstuvwxzA:B:C:D:FHI:L:M:PR:STU:VW:X:Z:")) != -1) {
 		switch (c) {
@@ -595,36 +599,30 @@ main(int argc, char *argv[])
 	 * In particular, only -l<lib> and -L<libdir> (and these with a space
 	 * after -l or -L) are allowed.
 	 */
-	while (argc > 0) {
+	for (; argc > 0; argc--, argv++) {
 		const char *arg = argv[0];
 
 		if (arg[0] == '-') {
 			list *lp;
 
-			/* option */
 			if (arg[1] == 'l')
 				lp = &libs;
 			else if (arg[1] == 'L')
 				lp = &libsrchpath;
-			else {
+			else
 				usage("Unknown late option '%s'", arg);
-				/* NOTREACHED */
-			}
 
 			if (arg[2] != '\0')
 				list_add_unique(lp, arg + 2);
 			else if (argc > 1) {
-				argc--;
-				list_add_unique(lp, *++argv);
+				argc--, argv++;
+				list_add_unique(lp, argv[0]);
 			} else
 				usage("Missing argument for l or L");
 		} else {
-			/* filename */
-			fname(arg);
+			handle_filename(arg);
 			first = false;
 		}
-		argc--;
-		argv++;
 	}
 
 	if (first)
@@ -634,7 +632,8 @@ main(int argc, char *argv[])
 		terminate(0);
 
 	if (!oflag) {
-		if ((ks = getenv("LIBDIR")) == NULL || strlen(ks) == 0)
+		const char *ks = getenv("LIBDIR");
+		if (ks == NULL || ks[0] == '\0')
 			ks = PATH_LINTLIB;
 		list_add(&libsrchpath, ks);
 		find_libs(&libs);
@@ -658,7 +657,7 @@ main(int argc, char *argv[])
  * and pass it through lint1 if it is a C source.
  */
 static void
-fname(const char *name)
+handle_filename(const char *name)
 {
 	const	char *bn, *suff;
 	char	*ofn;
@@ -804,7 +803,7 @@ run_child(const char *path, list *args, const char *crfn, int fdout)
 }
 
 static void
-findlib(const char *lib)
+find_lib(const char *lib)
 {
 	char *lfn;
 
@@ -834,7 +833,7 @@ find_libs(const list *l)
 {
 
 	for (size_t i = 0; i < l->len; i++)
-		findlib(l->items[i]);
+		find_lib(l->items[i]);
 }
 
 static bool
