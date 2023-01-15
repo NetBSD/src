@@ -1,4 +1,4 @@
-/*	$NetBSD: omkbdmap.c,v 1.2 2014/10/04 14:42:41 tsutsui Exp $	*/
+/*	$NetBSD: omkbdmap.c,v 1.3 2023/01/15 05:08:33 tsutsui Exp $	*/
 /*	$OpenBSD: omkbdmap.c,v 1.2 2013/11/16 18:31:44 miod Exp $	*/
 
 /* Partially from:
@@ -97,9 +97,9 @@ const uint8_t omkbd_raw[0x80] = {
 	0x0c,		/* 0x2c: equal */
 	0x0d,		/* 0x2d: asciitilde */
 	0x7d,		/* 0x2e: bar */
-	0x00, 		/* 0x2f */
-	0x00, 		/* 0x30: f13 */
-	0x00, 		/* 0x31: f14 */
+	0x00,		/* 0x2f */
+	0x00,		/* 0x30: f13 */
+	0x00,		/* 0x31: f14 */
 	0x10,		/* 0x32 */
 	0x11,		/* 0x33 */
 	0x12,		/* 0x34 */
@@ -207,7 +207,7 @@ static const keysym_t omkbd_keydesc_jp[] = {
 	KC(0x1d),			KS_KP_Left,
 	KC(0x1e),			KS_KP_Right,
 	KC(0x1f),			KS_KP_Down,
-	/* 0x20, 			KS_f11, */
+	/* 0x20,			KS_f11, */
 	/* 0x21,			KS_f12, */
 	KC(0x22),			KS_1,		KS_exclam,
 	KC(0x23),			KS_2,		KS_quotedbl,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.37 2016/12/22 16:05:15 cherry Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.38 2023/01/15 05:08:33 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.37 2016/12/22 16:05:15 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.38 2023/01/15 05:08:33 tsutsui Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -292,7 +292,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		/*
 		 * Initialize the one corresponding to SYSMAP_VA
 		 * to point to Sysptmap.
- 		 */
+		 */
 		ste = (st_entry_t *)kstpa;
 		ste = &ste[SYSMAP_VA >> SEGSHIFT];
 		pte = (pt_entry_t *)kptmpa;

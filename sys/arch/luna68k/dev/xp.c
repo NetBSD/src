@@ -1,4 +1,4 @@
-/* $NetBSD: xp.c,v 1.7 2022/06/10 21:42:23 tsutsui Exp $ */
+/* $NetBSD: xp.c,v 1.8 2023/01/15 05:08:33 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2016 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.7 2022/06/10 21:42:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xp.c,v 1.8 2023/01/15 05:08:33 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ xp_open(dev_t dev, int flags, int devtype, struct lwp *l)
 	struct xp_softc *sc;
 	int unit;
 	u_int a;
-	
+
 	DPRINTF(XP_DEBUG_ALL, ("%s\n", __func__));
 
 	unit = minor(dev);

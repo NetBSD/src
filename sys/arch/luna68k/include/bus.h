@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.16 2021/01/23 19:38:08 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.17 2023/01/15 05:08:33 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -561,5 +561,5 @@ __MACHINE_copy_region_N(4)
  * There is no bus_dma(9)'fied bus drivers on this port.
  */
 #define __HAVE_NO_BUS_DMA
- 
+
 #endif /* _MACHINE_BUS_H_ */

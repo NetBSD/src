@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.73 2021/09/25 19:16:31 tsutsui Exp $ */
+/* $NetBSD: trap.c,v 1.74 2023/01/15 05:08:33 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2021/09/25 19:16:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2023/01/15 05:08:33 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -476,8 +476,8 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 #endif
 		/*
 		 * It is only a kernel address space fault iff:
-		 * 	1. (type & T_USER) == 0  and
-		 * 	2. pcb_onfault not set or
+		 *	1. (type & T_USER) == 0  and
+		 *	2. pcb_onfault not set or
 		 *	3. pcb_onfault set but supervisor space data fault
 		 * The last can occur during an exec() copyin where the
 		 * argument space is lazy-allocated.

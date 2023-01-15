@@ -1,4 +1,4 @@
-/* $NetBSD: omrasops.c,v 1.25 2022/10/03 17:42:35 tsutsui Exp $ */
+/* $NetBSD: omrasops.c,v 1.26 2023/01/15 05:08:33 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.25 2022/10/03 17:42:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omrasops.c,v 1.26 2023/01/15 05:08:33 tsutsui Exp $");
 
 /*
  * Designed speficically for 'm68k bitorder';
@@ -150,7 +150,7 @@ static rowattr_t rowattr[OMRASOPS_MAX_ROWS];
 /* luna68k version GETBITS() that gets w bits from bit x at psrc memory */
 #define	FASTGETBITS(psrc, x, w, dst)					\
 	asm("bfextu %3{%1:%2},%0"					\
-	    : "=d" (dst) 						\
+	    : "=d" (dst)						\
 	    : "di" (x), "di" (w), "o" (*(uint32_t *)(psrc)))
 
 /* luna68k version PUTBITS() that puts w bits from bit x at pdst memory */

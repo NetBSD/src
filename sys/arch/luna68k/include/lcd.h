@@ -1,7 +1,7 @@
-/* $NetBSD: lcd.h,v 1.1 2017/03/09 14:05:58 tsutsui Exp $ */
+/* $NetBSD: lcd.h,v 1.2 2023/01/15 05:08:33 tsutsui Exp $ */
 /* $OpenBSD: lcd.h,v 1.2 2011/03/23 16:54:35 pirofti Exp $ */
 
-/* 
+/*
  * Copyright (c) 2007 Kenji AOYAMA <aoyama@nk-home.net>
  * All rights reserved.
  *
@@ -47,15 +47,15 @@
 
 /* argument value for each ioctl */
 
-/* LCDMODE; when a character data is written, then ... */ 
-#define	LCDMODE_C_LEFT	0x04	/* cursor moves left */	
+/* LCDMODE; when a character data is written, then ... */
+#define	LCDMODE_C_LEFT	0x04	/* cursor moves left */
 #define	LCDMODE_C_RIGHT	0x06	/* cursor moves right */
 #define	LCDMODE_D_LEFT	0x05	/* display area shifts to left */
 #define	LCDMODE_D_RIGHT	0x07	/* display area shifts to right */
 
 /* LCDDISP; you can use these values or'ed */
 #define	LCD_DISPLAY	0x04	/* LCD display on */
-#define	LCD_CURSOR	0x02 	/* Cursor on */
+#define	LCD_CURSOR	0x02	/* Cursor on */
 #define	LCD_BLINK	0x01	/* Blink on */
 
 /* LCDMOVE; just move the cursor or shift the display area */
