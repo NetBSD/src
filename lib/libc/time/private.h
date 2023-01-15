@@ -1,6 +1,6 @@
 /* Private header for tzdb code.  */
 
-/*	$NetBSD: private.h,v 1.64 2022/12/11 17:57:23 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.65 2023/01/15 18:12:37 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -646,7 +646,7 @@ char *asctime(struct tm const *);
 char *asctime_r(struct tm const *restrict, char *restrict);
 char *ctime(time_t const *);
 char *ctime_r(time_t const *, char *);
-double difftime(time_t, time_t) ATTRIBUTE_UNSEQUENCED;
+ATTRIBUTE_UNSEQUENCED double difftime(time_t, time_t);
 size_t strftime(char *restrict, size_t, char const *restrict,
 		struct tm const *restrict);
 # if HAVE_STRFTIME_L
@@ -762,10 +762,10 @@ timezone_t tzalloc(char const *);
 void tzfree(timezone_t);
 # ifdef STD_INSPIRED
 #  if TZ_TIME_T || !defined posix2time_z
-time_t posix2time_z(timezone_t __restrict, time_t) ATTRIBUTE_REPRODUCIBLE;
+ATTRIBUTE_REPRODUCIBLE time_t posix2time_z(timezone_t __restrict, time_t);
 #  endif
 #  if TZ_TIME_T || !defined time2posix_z
-time_t time2posix_z(timezone_t __restrict, time_t) ATTRIBUTE_REPRODUCIBLE;
+ATTRIBUTE_REPRODUCIBLE time_t time2posix_z(timezone_t __restrict, time_t);
 #  endif
 # endif
 #endif
