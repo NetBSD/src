@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.99 2023/01/15 15:20:18 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.100 2023/01/15 21:27:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.99 2023/01/15 15:20:18 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.100 2023/01/15 21:27:36 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -648,10 +648,11 @@ fname(const char *name)
 	}
 
 	list args = { NULL, 0, 0 };
-	list_add(&args, pathname);
+	list_add_ref(&args, pathname);
 	list_add_all(&args, &cpp.flags);
 	list_add_all(&args, &cpp.lcflags);
 	list_add(&args, name);
+	list_add_ref(&args, NULL);
 
 	/* we reuse the same tmp file for cpp output, so rewind and truncate */
 	if (lseek(cpp.outfd, 0, SEEK_SET) != 0) {
@@ -664,7 +665,6 @@ fname(const char *name)
 	}
 
 	run_child(pathname, &args, cpp.outfile, cpp.outfd);
-	free(pathname);
 	list_clear(&args);
 
 	/* run lint1 */
@@ -680,13 +680,13 @@ fname(const char *name)
 		pathname = concat2(libexec_dir, "/lint1");
 	}
 
-	list_add(&args, pathname);
+	list_add_ref(&args, pathname);
 	list_add_all(&args, &lint1.flags);
 	list_add(&args, cpp.outfile);
 	list_add(&args, ofn);
+	list_add_ref(&args, NULL);
 
 	run_child(pathname, &args, ofn, -1);
-	free(pathname);
 	list_clear(&args);
 
 	list_add(&lint2.infiles, ofn);
@@ -760,9 +760,7 @@ run_child(const char *path, list *args, const char *crfn, int fdout)
 			(void)dup2(fdout, STDOUT_FILENO);
 			(void)close(fdout);
 		}
-		list_add_ref(args, NULL);
 		(void)execvp(path, args->items);
-		args->len--;
 		warn("cannot exec %s", path);
 		_exit(1);
 		/* NOTREACHED */
@@ -851,13 +849,13 @@ run_lint2(void)
 	}
 
 	list args = { NULL, 0, 0 };
-	list_add(&args, path);
+	list_add_ref(&args, path);
 	list_add_all(&args, &lint2.flags);
 	list_add_all(&args, &lint2.inlibs);
 	list_add_all(&args, &lint2.infiles);
+	list_add_ref(&args, NULL);
 
 	run_child(path, &args, lint2.outlib, -1);
-	free(path);
 	list_clear(&args);
 }
 
