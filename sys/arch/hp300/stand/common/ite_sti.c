@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_sti.c,v 1.1 2014/04/13 15:45:27 tsutsui Exp $	*/
+/*	$NetBSD: ite_sti.c,v 1.2 2023/01/15 06:19:46 tsutsui Exp $	*/
 /*	$OpenBSD: ite_sti.c,v 1.2 2011/08/18 20:02:58 miod Exp $	*/
 /*
  * Copyright (c) 2006, 2011, Miodrag Vallat
@@ -66,7 +66,7 @@ void	sti_init(int);
 void	sti_inqcfg(struct sti_inqconfout *);
 void	sti_iteinit_common(struct ite_data *);
 
-#if 0 /* not yet */ 
+#if 0 /* not yet */
 /* kinda similar to sti_dio_probe() */
 int
 sti_dio_probe(struct ite_data *ip)

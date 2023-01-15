@@ -1,4 +1,4 @@
-/*	$NetBSD: sti_sgc.c,v 1.7 2022/07/03 11:30:48 andvar Exp $	*/
+/*	$NetBSD: sti_sgc.c,v 1.8 2023/01/15 06:19:45 tsutsui Exp $	*/
 /*	$OpenBSD: sti_sgc.c,v 1.14 2007/05/26 00:36:03 krw Exp $	*/
 
 /*
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.7 2022/07/03 11:30:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sti_sgc.c,v 1.8 2023/01/15 06:19:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -55,7 +55,7 @@ struct sti_sgc_softc {
  * 425e EVRX specific hardware
  */
 /*
- * EVRX RAMDAC (Bt458) is found at offset 0x060000 from SGC bus PA and 
+ * EVRX RAMDAC (Bt458) is found at offset 0x060000 from SGC bus PA and
  * offset 0x040000 length 0x1c0000 is mapped in MI sti via ROM region 2
  */
 #define STI_EVRX_REGNO2OFFSET	0x020000

@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.44 2021/09/06 20:55:08 andvar Exp $	*/
+/*	$NetBSD: dma.c,v 1.45 2023/01/15 06:19:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.44 2021/09/06 20:55:08 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.45 2023/01/15 06:19:45 tsutsui Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -601,7 +601,7 @@ dmaintr(void *arg)
 		if (dmadebug & DDB_IO) {
 			if (((dmadebug&DDB_WORD) && (dc->dm_cmd&DMA_WORD)) ||
 			    ((dmadebug&DDB_LWORD) && (dc->dm_cmd&DMA_LWORD)))
-			 	printf("dmaintr: flags %x unit %d stat %x "
+				printf("dmaintr: flags %x unit %d stat %x "
 				    "next %d\n",
 				    dc->dm_flags, i, stat, dc->dm_cur + 1);
 		}

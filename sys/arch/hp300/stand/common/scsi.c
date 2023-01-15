@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi.c,v 1.11 2014/01/02 17:43:32 tsutsui Exp $	*/
+/*	$NetBSD: scsi.c,v 1.12 2023/01/15 06:19:46 tsutsui Exp $	*/
 
 /*
  * This is reported to fix some odd failures when disklabeling
@@ -82,7 +82,7 @@ scsiinit(void)
 	struct scsi_softc *hs;
 	int i;
 	static int waitset = 0;
-	
+
 	i = 0;
 	for (hw = sc_table; i < NSCSI && hw < &sc_table[MAXCTLRS]; hw++) {
 		if (!HW_ISSCSI(hw))
