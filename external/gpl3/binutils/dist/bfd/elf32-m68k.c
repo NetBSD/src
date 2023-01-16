@@ -2804,7 +2804,7 @@ elf_m68k_check_relocs (bfd *abfd,
 		       || ELF32_R_TYPE (rel->r_info) == R_68K_PC16
 		       || ELF32_R_TYPE (rel->r_info) == R_68K_PC32))
 		{
-		  if (info->warn_shared_textrel)
+		  if (bfd_link_textrel_check(info))
 		    (*_bfd_error_handler)
 		      (_("warning: dynamic relocation to `%s' in readonly section `%s'"),
 		      h->root.root.string, sec->name); 
@@ -3258,7 +3258,7 @@ elf_m68k_discard_copies (struct elf_link_hash_entry *h,
 	       s = s->next)
 	    if ((s->section->flags & SEC_READONLY) != 0)
 	      {
-		if (info->warn_shared_textrel)
+		if (bfd_link_textrel_check(info))
 		  (*_bfd_error_handler)
 		    (_("warning: dynamic relocation to `%s' in readonly section `%s'"),
 		    h->root.root.string, s->section->name); 
