@@ -111,7 +111,7 @@ static bfd_reloc_status_type mips_elf64_final_gp
   (bfd *, asymbol *, bool, char **, bfd_vma *);
 static bool mips_elf64_object_p
   (bfd *);
-static bfd_boolean mips_elf64_is_local_label_name
+static bool mips_elf64_is_local_label_name
   (bfd *, const char *);
 static irix_compat_t elf64_mips_irix_compat
   (bfd *);
@@ -3370,7 +3370,7 @@ mips_elf64_be_swap_reloca_out (bfd *abfd, const Elf_Internal_Rela *src,
 			      (Elf64_Mips_External_Rela *) dst);
 }
 
-/* Set the GP value for OUTPUT_BFD.  Returns FALSE if this is a
+/* Set the GP value for OUTPUT_BFD.  Returns false if this is a
    dangerous relocation.  */
 
 static bool
@@ -4520,11 +4520,11 @@ mips_elf64_object_p (bfd *abfd)
 }
 
 /* MIPS ELF local labels start with "$L".  */
-static bfd_boolean
+static bool
 mips_elf64_is_local_label_name (bfd *abfd, const char *name)
 {
   if (name[0] == '$' && name[1] == 'L')
-    return TRUE;
+    return true;
 
   /* We accept the generic ELF local label syntax as well.  */
   return _bfd_elf_is_local_label_name (abfd, name);

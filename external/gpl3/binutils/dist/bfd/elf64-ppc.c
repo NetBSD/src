@@ -8099,7 +8099,7 @@ ppc64_elf_tls_setup (struct bfd_link_info *info)
   return true;
 }
 
-/* Return TRUE iff REL is a branch reloc with a global symbol matching
+/* Return true iff REL is a branch reloc with a global symbol matching
    any of HASH1, HASH2, HASH3, or HASH4.  */
 
 static bool
@@ -8720,7 +8720,7 @@ adjust_toc_syms (struct elf_link_hash_entry *h, void *inf)
   return true;
 }
 
-/* Return TRUE iff INSN with a relocation of R_TYPE is one we expect
+/* Return true iff INSN with a relocation of R_TYPE is one we expect
    on a _LO variety toc/got reloc.  */
 
 static bool
@@ -10274,7 +10274,7 @@ ppc64_elf_size_dynamic_sections (bfd *output_bfd,
 		  srel->size += count * sizeof (Elf64_External_Rela);
 		  if ((p->sec->output_section->flags & SEC_READONLY) != 0)
 		    {
-		      if (info->warn_shared_textrel)
+		      if (bfd_link_textrel_check(info))
 			(*_bfd_error_handler)
 			  (_("warning: dynamic relocation in readonly section `%s'"),
 			  p->sec->output_section->name);
@@ -10620,7 +10620,7 @@ ppc64_elf_size_dynamic_sections (bfd *output_bfd,
   return true;
 }
 
-/* Return TRUE if symbol should be hashed in the `.gnu.hash' section.  */
+/* Return true if symbol should be hashed in the `.gnu.hash' section.  */
 
 static bool
 ppc64_elf_hash_symbol (struct elf_link_hash_entry *h)
@@ -16470,7 +16470,7 @@ ppc64_elf_relocate_section (bfd *output_bfd,
 		  else
 		    {
 		      /* Tail calls don't need to worry about restoring TOC. */
-		      can_plt_call = TRUE;
+		      can_plt_call = true;
 		    }
 		}
 

@@ -497,21 +497,21 @@ elf32_vax_set_private_flags (bfd *abfd, flagword flags)
 }
 
 /* Copy vax-specific data from one module to another */
-static bfd_boolean
+static bool
 elf32_vax_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
   flagword in_flags;
 
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return TRUE;
+    return true;
  
   in_flags = elf_elfheader (ibfd)->e_flags;
  
   elf_elfheader (obfd)->e_flags = in_flags;
-  elf_flags_init (obfd) = TRUE;
+  elf_flags_init (obfd) = true;
  
-  return TRUE;
+  return true;
 }
 
 /* Merge backend specific data from an object file to the output
@@ -752,7 +752,7 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 
 		  if (sec->flags & SEC_READONLY)
 		    {
-			if (info->warn_shared_textrel)
+			if (bfd_link_textrel_check(info))
 			  (*_bfd_error_handler)
 			    (_("warning: dynamic relocation to `%s' in readonly section `%s'"),
 			     h ? h->root.root.string : "?", sec->name);
