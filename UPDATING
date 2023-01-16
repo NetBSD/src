@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.335 2022/11/17 06:40:38 chs Exp $
+$NetBSD: UPDATING,v 1.336 2023/01/16 08:49:55 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20230112:
+	New binutils require an updated ld.elf_so. If you are doing
+	(unsupported) in-place self builds (with the -E flag to build.sh),
+	make sure to have installed latest ld.elf_so before you rebuild
+	userland.
 
 20221116:
 
