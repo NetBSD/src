@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.3 2023/01/15 13:55:06 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.4 2023/01/16 00:37:59 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -65,7 +65,7 @@ variable_length_array(int n)
 
 	/*
 	 * Since the array length is not constant, it cannot be used in a
-	 * typedef.  Code like this are already rejected by the compiler.  For
+	 * typedef.  Code like this is already rejected by the compiler.  For
 	 * simplicity, lint assumes that the array has length 1.
 	 */
 	/* expect+1: error: negative array dimension (-4) [20] */
