@@ -653,6 +653,8 @@ ns32k-*-netbsd* | ns32k-pc532-lites*) targ_emul=ns32knbsd
 or1k-*-elf | or1knd-*-elf | or1k-*-rtems* | or1knd-*-rtems*)
 			targ_emul=elf32or1k
 			;;
+or1k-*-netbsd* | or1knd-*-netbsd*)	targ_emul=elf32or1k_nbsd
+			;;
 or1k-*-linux* | or1knd-*-linux*)	targ_emul=elf32or1k_linux
 			;;
 pdp11-*-*)		targ_emul=pdp11
