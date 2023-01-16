@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1297 2023/01/16 10:28:09 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.1298 2023/01/16 20:22:26 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -102,6 +102,7 @@ MKGCCCMDS?=	no
     ${MACHINE_ARCH:Maarch64*} || \
     ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_CPU} == "hppa" || \
     ${MACHINE_CPU} == "riscv" || \
     ${MACHINE_ARCH:Msparc*} || \
     ${MACHINE_ARCH} == "x86_64"
