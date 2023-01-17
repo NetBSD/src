@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.34 2023/01/17 01:56:43 riastradh Exp $
+.\"	$NetBSD: crypt.3,v 1.35 2023/01/17 14:27:11 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,7 +62,7 @@ performs password hashing.
 The password hashing scheme used by
 .Fn crypt
 is dependent upon the contents of the
-.Dv NUL Ns -terminated
+.Tn NUL Ns -terminated
 string
 .Ar setting .
 If it begins
@@ -78,19 +78,27 @@ If
 .Ar setting
 begins with the
 .Ql _
-character, DES password hashing with a user specified number of
+character,
+.Tn DES
+password hashing with a user specified number of
 perturbations is selected.
 If
 .Ar setting
-begins with any other character, DES password hashing with a fixed
+begins with any other character,
+.Tn DES
+password hashing with a fixed
 number of perturbations is selected.
 .Ss DES password hashing
-The DES password hashing scheme is derived from the
+The
+.Tn DES
+password hashing scheme is derived from the
 .Tn NBS
 Data Encryption Standard.
 Additional code has been added to deter key search attempts and to use
 stronger hashing algorithms.
-In the DES case, the second argument to
+In the
+.Tn DES
+case, the second argument to
 .Fn crypt
 is a character array, 9 bytes in length, consisting of an underscore
 .Pq Ql _
@@ -127,16 +135,24 @@ The
 .Ar key
 is divided into groups of 8 characters (a short final group is null-padded)
 and the low-order 7 bits of each character (56 bits per group) are
-used to form the DES key as follows: the first group of 56 bits becomes the
-initial DES key.
-For each additional group, the XOR of the group bits and the encryption of
-the DES key with itself becomes the next DES key.
-Then the final DES key is used to perform
+used to form the
+.Tn DES
+key as follows: the first group of 56 bits becomes the initial
+.Tn DES
+key.
+For each additional group, the XOR of the group bits and the encryption of the
+.Tn DES
+key with itself becomes the next
+.Tn DES
+key.
+Then the final
+.Tn DES
+key is used to perform
 .Ar count
 cumulative encryptions of a 64-bit constant yielding a
 .Sq ciphertext .
 The value returned is a
-.Dv NUL Ns -terminated
+.Tn NUL Ns -terminated
 string, 20 bytes in length, consisting
 of the
 .Ar setting
@@ -156,7 +172,7 @@ are available, at most 8
 characters of
 .Ar key
 are used, and the returned value is a
-.Dv NUL Ns -terminated
+.Tn NUL Ns -terminated
 string 13 bytes in length.
 .Pp
 The
@@ -174,7 +190,7 @@ The
 argument to
 .Fn setkey
 is a 64 character array of
-binary values (numeric 0 or 1).
+binary values (numeric 0 or\~1).
 A 56-bit key is derived from this array by dividing the array
 into groups of 8 and ignoring the last bit in each group.
 .Pp
@@ -245,6 +261,7 @@ by the
 .Ql $
 character.
 An encoded password hash looks like:
+.Pp
 .Dl "$1$2qGr5PPQ$eT08WBFev3RPLNChixg0H"
 .Pp
 The entire encoded MD5 password hash is passed as
@@ -258,15 +275,23 @@ It is recommended to use argon2id, which provides a hybrid combination
 using argon2i on the first pass, and argon2d on the remaining
 passes.
 We parameterize on three variables.
-First, m_cost (m), specifies the memory usage in KB.
-Second, t_cost (t), specifies the number of iterations.
-Third, parallelism (p) specifies the number of threads.
+First,
+.Va m_cost ( Li m ) ,
+specifies the memory usage in
+.Tn KB .
+Second,
+.Va t_cost ( Li t ) ,
+specifies the number of iterations.
+Third,
+.Va parallelism ( Li p )
+specifies the number of threads.
 This is currently ignored and one thread will always be used.
 An encoded Argon2 password hash looks like:
-.Bd -literal
-$argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB$ \
+.Bd -literal -offset indent
+$argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB$ \e
    yeYYrU/rh7E+LI2CAeHTSHVB3iO+OXiNIUHu6NPeTfo
 .Ed
+.Pp
 containing five fields delimited by
 .Ql $ .
 The fields, in order, are variant name, version, parameter set,
@@ -292,7 +317,7 @@ the password hash.
 The maximum password length is 72.
 The final Blowfish password output is created by encrypting the string
 .Pp
-.Dq OrpheanBeholderScryDoubt
+.Dl OrpheanBeholderScryDoubt
 .Pp
 with the
 .Tn Blowfish
@@ -306,7 +331,8 @@ An encoded
 .Sq 8
 would specify 256 rounds.
 An encoded Blowfish password hash looks like:
-.Dl $2a$12$eIAq8PR8sIUnJ1HaohxX2O9x9Qlm2vK97LJ5dsXdmB.eXF42qjchC
+.Pp
+.Dl "$2a$12$eIAq8PR8sIUnJ1HaohxX2O9x9Qlm2vK97LJ5dsXdmB.eXF42qjchC"
 .Pp
 The entire encoded Blowfish password hash is passed as
 .Fa setting
@@ -371,7 +397,9 @@ and
 did not return any value.
 They have been provided return values primarily to distinguish
 implementations where hardware support is provided but not
-available or where the DES encryption is not available due to the
+available or where the
+.Tn DES
+encryption is not available due to the
 usual political silliness.
 .Sh SEE ALSO
 .Xr login 1 ,
@@ -443,7 +471,7 @@ Before
 returned either
 .Dv NULL
 or
-.Dv \&:
+.Li \*q:\*q
 on error.
 .Pp
 The term
@@ -452,4 +480,5 @@ for password hashing does not match the terminology of modern
 cryptography, but the name of the library is entrenched.
 .Pp
 A library for password hashing has no business directly exposing the
-DES cipher itself, which is obsolete and broken as a cipher.
+.Tn DES
+cipher itself, which is obsolete and broken as a cipher.
