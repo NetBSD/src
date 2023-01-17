@@ -1,4 +1,4 @@
-/*	$NetBSD: zic.c,v 1.88 2023/01/15 18:12:37 christos Exp $	*/
+/*	$NetBSD: zic.c,v 1.89 2023/01/17 13:18:03 christos Exp $	*/
 /*
 ** This file is in the public domain, so clarified as of
 ** 2006-07-17 by Arthur David Olson.
@@ -11,7 +11,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zic.c,v 1.88 2023/01/15 18:12:37 christos Exp $");
+__RCSID("$NetBSD: zic.c,v 1.89 2023/01/17 13:18:03 christos Exp $");
 #endif /* !defined lint */
 
 /* Use the system 'time' function, instead of any private replacement.
@@ -3754,14 +3754,14 @@ getfields(char *cp, char **array, int arrayelts)
 	return nsubs;
 }
 
-static ATTRIBUTE_NORETURN void
+ATTRIBUTE_NORETURN static void
 time_overflow(void)
 {
 	error(_("time overflow"));
 	exit(EXIT_FAILURE);
 }
 
-static ATTRIBUTE_REPRODUCIBLE zic_t
+ATTRIBUTE_REPRODUCIBLE static zic_t
 oadd(zic_t t1, zic_t t2)
 {
 #ifdef ckd_add
