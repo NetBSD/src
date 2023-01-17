@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.33 2021/10/20 20:29:33 nia Exp $
+.\"	$NetBSD: crypt.3,v 1.34 2023/01/17 01:56:43 riastradh Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .Nm encrypt ,
 .Nm des_setkey ,
 .Nm des_cipher
-.Nd password encryption
+.Nd password hashing
 .Sh LIBRARY
 .Lb libcrypt
 .Sh SYNOPSIS
@@ -58,8 +58,8 @@
 The
 .Fn crypt
 function
-performs password encryption.
-The encryption scheme used by
+performs password hashing.
+The password hashing scheme used by
 .Fn crypt
 is dependent upon the contents of the
 .Dv NUL Ns -terminated
@@ -76,28 +76,32 @@ chooses MD5 hashing and a
 chooses Blowfish hashing; see below for more information.
 If
 .Ar setting
-begins with the ``_'' character, DES encryption with a user specified number
-of perturbations is selected.
+begins with the
+.Ql _
+character, DES password hashing with a user specified number of
+perturbations is selected.
 If
 .Ar setting
-begins with any other character, DES encryption with a fixed number
-of perturbations is selected.
-.Ss DES encryption
-The DES encryption scheme is derived from the
+begins with any other character, DES password hashing with a fixed
+number of perturbations is selected.
+.Ss DES password hashing
+The DES password hashing scheme is derived from the
 .Tn NBS
 Data Encryption Standard.
 Additional code has been added to deter key search attempts and to use
 stronger hashing algorithms.
 In the DES case, the second argument to
 .Fn crypt
-is a character array, 9 bytes in length, consisting of an underscore (``_'')
+is a character array, 9 bytes in length, consisting of an underscore
+.Pq Ql _
 followed by 4 bytes of iteration count and 4 bytes of salt.
 Both the iteration
 .Fa count
 and the
 .Fa salt
 are encoded with 6 bits per character, least significant bits first.
-The values 0 to 63 are encoded by the characters ``./0-9A-Za-z'',
+The values 0 to 63 are encoded by the characters
+.Ql ./0-9A-Za-z ,
 respectively.
 .Pp
 The
@@ -117,7 +121,8 @@ and
 .Em i+24
 are swapped in the
 .Tn DES
-``E'' box output).
+.Dq E
+box output).
 The
 .Ar key
 is divided into groups of 8 characters (a short final group is null-padded)
@@ -128,13 +133,15 @@ For each additional group, the XOR of the group bits and the encryption of
 the DES key with itself becomes the next DES key.
 Then the final DES key is used to perform
 .Ar count
-cumulative encryptions of a 64-bit constant.
+cumulative encryptions of a 64-bit constant yielding a
+.Sq ciphertext .
 The value returned is a
 .Dv NUL Ns -terminated
 string, 20 bytes in length, consisting
 of the
 .Ar setting
-followed by the encoded 64-bit encryption.
+followed by the encoded 64-bit
+.Sq ciphertext .
 .Pp
 For compatibility with historical versions of
 .Fn crypt ,
@@ -227,22 +234,24 @@ The
 specifies perturbations to
 .Tn DES
 as described above.
-.Ss MD5 encryption
+.Ss MD5 password hashing
 For the
 .Tn MD5
-encryption scheme, the version number (in this case ``1''),
+password hashing scheme, the version number (in this case
+.Ql 1 ) ,
 .Fa salt
 and the hashed password are separated
-by the ``$'' character.
-A valid password looks like this:
+by the
+.Ql $
+character.
+An encoded password hash looks like:
+.Dl "$1$2qGr5PPQ$eT08WBFev3RPLNChixg0H"
 .Pp
-``$1$2qGr5PPQ$eT08WBFev3RPLNChixg0H.''.
-.Pp
-The entire password string is passed as
+The entire encoded MD5 password hash is passed as
 .Fa setting
 for interpretation.
-.Ss Argon2 encryption
-Argon2 is a memory-hard hashing algorithm.
+.Ss Argon2 password hashing
+Argon2 is a memory-hard password hashing algorithm.
 .Fn crypt
 provides all three variants: argon2i, argon2d, and argon2id.
 It is recommended to use argon2id, which provides a hybrid combination
@@ -253,16 +262,18 @@ First, m_cost (m), specifies the memory usage in KB.
 Second, t_cost (t), specifies the number of iterations.
 Third, parallelism (p) specifies the number of threads.
 This is currently ignored and one thread will always be used.
-A valid Argon2 encoded password looks similar to
+An encoded Argon2 password hash looks like:
 .Bd -literal
 $argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB$ \
    yeYYrU/rh7E+LI2CAeHTSHVB3iO+OXiNIUHu6NPeTfo
 .Ed
-containing five fields delimited by '$'.
+containing five fields delimited by
+.Ql $ .
 The fields, in order, are variant name, version, parameter set,
-128-bit salt, and encoded password.
-The complete password string is required to be processed correctly.
-.Ss "Blowfish" crypt
+128-bit salt, and Argon2 hash encoded in base64.
+The entire encoded Argon2 password hash is required to be processed
+correctly.
+.Ss "Blowfish" bcrypt
 The
 .Tn Blowfish
 version of
@@ -277,9 +288,9 @@ cipher is expanded using the
 and the
 .Fa password
 repeating the process a variable number of rounds, which is encoded in
-the password string.
+the password hash.
 The maximum password length is 72.
-The final Blowfish password entry is created by encrypting the string
+The final Blowfish password output is created by encrypting the string
 .Pp
 .Dq OrpheanBeholderScryDoubt
 .Pp
@@ -294,17 +305,16 @@ character.
 An encoded
 .Sq 8
 would specify 256 rounds.
-A valid Blowfish password looks like this:
+An encoded Blowfish password hash looks like:
+.Dl $2a$12$eIAq8PR8sIUnJ1HaohxX2O9x9Qlm2vK97LJ5dsXdmB.eXF42qjchC
 .Pp
-.Dq $2a$12$eIAq8PR8sIUnJ1HaohxX2O9x9Qlm2vK97LJ5dsXdmB.eXF42qjchC .
-.Pp
-The whole Blowfish password string is passed as
+The entire encoded Blowfish password hash is passed as
 .Fa setting
 for interpretation.
 .Sh RETURN VALUES
 The function
 .Fn crypt
-returns a pointer to the encrypted value on success.
+returns a pointer to the encoded hash on success.
 .Pp
 The behavior of
 .Fn crypt
@@ -435,3 +445,11 @@ returned either
 or
 .Dv \&:
 on error.
+.Pp
+The term
+.Sq encryption
+for password hashing does not match the terminology of modern
+cryptography, but the name of the library is entrenched.
+.Pp
+A library for password hashing has no business directly exposing the
+DES cipher itself, which is obsolete and broken as a cipher.
