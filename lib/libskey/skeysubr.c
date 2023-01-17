@@ -1,4 +1,4 @@
-/*	$NetBSD: skeysubr.c,v 1.28 2012/03/22 22:59:43 joerg Exp $	*/
+/*	$NetBSD: skeysubr.c,v 1.29 2023/01/17 14:13:48 msaitoh Exp $	*/
 
 /* S/KEY v1.1b (skeysubr.c)
  *
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: skeysubr.c,v 1.28 2012/03/22 22:59:43 joerg Exp $");
+__RCSID("$NetBSD: skeysubr.c,v 1.29 2023/01/17 14:13:48 msaitoh Exp $");
 
 #include <ctype.h>
 #include <stdio.h>
@@ -432,7 +432,7 @@ const char *skipspace(const char *cp)
 		return cp;
 }
 
-/* Remove backspaced over charaters from the string */
+/* Remove backspaced over characters from the string */
 void backspace(char *buf)
 {
 	char bs = 0x8;
