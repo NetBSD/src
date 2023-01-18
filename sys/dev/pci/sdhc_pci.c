@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.14.16.1 2021/12/03 18:20:40 martin Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.14.16.2 2023/01/18 19:26:30 martin Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.14.16.1 2021/12/03 18:20:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.14.16.2 2023/01/18 19:26:30 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -151,7 +151,7 @@ static const struct sdhc_pci_quirk {
 
 	{
 		PCI_VENDOR_INTEL,
-		PCI_PRODUCT_INTEL_BSW_SSC_MMC,
+		PCI_PRODUCT_INTEL_BSW_SCC_MMC,
 		0xffff,
 		0xffff,
 		~0,
