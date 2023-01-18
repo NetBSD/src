@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.39 2023/01/07 15:04:01 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.40 2023/01/18 19:29:16 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -551,4 +551,16 @@ sys/arch/mac68k/conf/INSTALL			1.58
 
 	Disable (comment out) options DIAGNOSTIC in INSTALL kernels.
 	[tsutsui, ticket #1565]
+
+sys/dev/pci/pcidevs				1.1469-1.1476
+sys/dev/pci/sdhc_pci.c				1.20
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Add some AMD 17h/9xh, 17h/Axh and 19h/1xh devices.
+	- Add some Intel Xeon Scalable devices.
+	- Update Intel Elkhart Lake devices.
+	- Add Aquantia (Marvell) AQC113 Ethernet devices and the variants.
+	- Fix typo. s/SSC/SCC/.
+	[msaitoh, ticket #1566]
 
