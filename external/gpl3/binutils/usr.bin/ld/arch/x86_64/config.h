@@ -23,7 +23,7 @@
 
 /* Define to 0 if you want to disable the generation of an executable stack
    when a .note-GNU-stack section is missing. */
-#define DEFAULT_LD_EXECSTACK 1
+#define DEFAULT_LD_EXECSTACK 0
 
 /* The default method for DT_TEXTREL check in ELF linker. */
 #define DEFAULT_LD_TEXTREL_CHECK textrel_check_none
