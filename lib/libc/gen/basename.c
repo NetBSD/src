@@ -1,4 +1,4 @@
-/*	$NetBSD: basename.c,v 1.11 2014/07/16 10:52:26 christos Exp $	*/
+/*	$NetBSD: basename.c,v 1.12 2023/01/18 08:07:22 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: basename.c,v 1.11 2014/07/16 10:52:26 christos Exp $");
+__RCSID("$NetBSD: basename.c,v 1.12 2023/01/18 08:07:22 simonb Exp $");
 #endif /* !LIBC_SCCS && !lint */
 
 #include "namespace.h"
@@ -91,7 +91,8 @@ out:
 #if !HAVE_BASENAME
 
 char *
-basename(char *path) {
+basename(char *path)
+{
 	static char result[PATH_MAX];
 
 	(void)xbasename_r(path, result, sizeof(result));
