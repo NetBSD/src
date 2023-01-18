@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.booters,v 1.94 2020/09/06 07:20:28 mrg Exp $
+#	$NetBSD: Makefile.booters,v 1.95 2023/01/18 12:28:54 christos Exp $
 
 NOLIBCSANITIZER=
 NOSANITIZER=
@@ -77,7 +77,7 @@ cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:
 	-rm -rf lib
 
-LDFLAGS+=-Wl,-M -Wl,-e,start 	# -N does not work properly.
+LDFLAGS+=-Wl,-z,noseparate-code -Wl,-M -Wl,-e,start 	# -N does not work properly.
 
 LIBLIST=${LIBI386} ${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN} ${LIBI386} ${LIBSA}
 
