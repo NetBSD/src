@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1475 2023/01/14 13:18:17 ryo Exp $
+$NetBSD: pcidevs,v 1.1476 2023/01/18 11:52:38 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1054,11 +1054,38 @@ product AMD F17_7X_RESV_SPP	0x1485	Family17h/7xh Reserved SPP
 product AMD F17_7X_CCP		0x1486	Family17h/7xh Crypto
 product AMD F17_3X_HDA		0x1487	17h/7xh HD Audio
 product AMD F17_7X_USB3		0x149c	Family17h/7xh USB 3.0 Host Controller
+product AMD F19_1X_IOMMU	0x149e	19h/7xh IOMMU
+product AMD F19_1X_PCIE_DUMMY_HB 0x149f	19h/7xh PCIe Dummy Host Bridge
+product AMD F19_1X_RC		0x14a4	19h/1xh Root Complex
+product AMD F19_1X_GPPB_0	0x14a5	19h/1xh PCIe GPP Bridge
+product AMD F19_1X_RCEC		0x14a6	19h/1xh RCEC
+product AMD F19_1X_INTNL_GPPB	0x14a7	19h/1xh Internal PCIe GPP Bridge
+product AMD F19_1X_GPPB_1	0x14aa	19h/1xh PCIe GPP Bridge
+product AMD F19_1X_GPPB_2	0x14ab	19h/1xh PCIe GPP Bridge
+product AMD F19_1X_PCIE_DUMMY_0	0x14ac	19h/1xh PCIe Dummy Function
+product AMD F19_1X_DF_0		0x14ad	19h/1xh Data Fabric
+product AMD F19_1X_DF_1		0x14ae	19h/1xh Data Fabric
+product AMD F19_1X_DF_2		0x14af	19h/1xh Data Fabric
+product AMD F19_1X_DF_3		0x14b0	19h/1xh Data Fabric
+product AMD F19_1X_DF_4		0x14b1	19h/1xh Data Fabric
+product AMD F19_1X_DF_5		0x14b2	19h/1xh Data Fabric
+product AMD F19_1X_DF_6		0x14b3	19h/1xh Data Fabric
+product AMD F19_1X_DF_7		0x14b4	19h/1xh Data Fabric
 product AMD F17_AX_RC		0x14b5	17h/Axh Root Complex
 product AMD F17_AX_IOMMU	0x14b6	17h/Axh IOMMU
 product AMD F17_AX_PCIE_DUMMY_HB 0x14b7	17h/Axh PCIe Dummy Host Bridge
 product AMD F17_AX_INTNL_GPPB_0	0x14b9	17h/Axh Internal GPP Bridge 0
 product AMD F17_AX_GPPB		0x14ba	17h/Axh PCIe GPP Bridge
+product AMD F19_1X_NTB_0	0x14c0	19h/1xh Primary PCIe Non Transparent Bridge
+product AMD F19_1X_VNTB		0x14c1	19h/1xh Secondary vNTB
+product AMD F19_1X_PCIE_DUMMY_1	0x14c2	19h/1xh PCIe Dummy Function
+product AMD F19_1X_NTB_1	0x14c3	19h/1xh PCIe Non Transparent Bridge
+product AMD F19_1X_SWDS		0x14c4	19h/1xh Swith NBIF DS
+product AMD F19_1X_NVME		0x14c5	19h/1xh NVMe
+product AMD F19_1X_SWUS		0x14c6	19h/1xh Swith US in PCIe
+product AMD F19_1X_PSP		0x14ca	19h/1xh PSP
+product AMD F19_1X_ACP		0x14cb	19h/1xh ACP
+product AMD F19_1X_HDA		0x14cc	19h/1xh HD Audio
 product AMD F19_6X_RC		0x14d8	19h/6xh Root Complex
 product AMD F17_AX_XHCI_0	0x1503	17h/Axh USB 3.1 xHCI
 product AMD F17_AX_XHCI_1	0x1504	17h/Axh USB 3.1 xHCI
@@ -1095,6 +1122,7 @@ product AMD F15_6X_HDA		0x157a	15h/6xh Audio Controller
 product AMD F15_6X_HB		0x157b	15h/6xh Host Bridge
 product AMD F15_6X_RP		0x157c	15h/6xh Root Port
 product AMD F15_6X_HB_2		0x157d	15h/6xh Host Bridge
+product AMD F19_1X_XHCI		0x157f	19h/1xh USB 3.2
 product AMD F16_30_HT		0x1580	Family16h HyperTransport Configuration
 product AMD F16_30_ADDR		0x1581	Family16h Address Map Configuration
 product AMD F16_30_DRAM		0x1582	Family16h DRAM Configuration
