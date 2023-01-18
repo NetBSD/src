@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.161 2023/01/06 13:52:44 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.162 2023/01/18 19:35:44 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3000,4 +3000,16 @@ lib/libc/gen/err.3				1.23
 	Add errc() and verrc() to the list of functions which do not return,
 	but exit() instead.
 	[kre, ticket #1782]
+
+sys/dev/pci/pcidevs				1.1469-1.1476
+sys/dev/pci/sdhc_pci.c				1.20
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Add some AMD 17h/9xh, 17h/Axh and 19h/1xh devices.
+	- Add some Intel Xeon Scalable devices.
+	- Update Intel Elkhart Lake devices.
+	- Add Aquantia (Marvell) AQC113 Ethernet devices and the variants.
+	- Fix typo. s/SSC/SCC/.
+	[msaitoh, ticket #1783]
 
