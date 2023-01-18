@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.22 2023/01/13 19:15:32 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.23 2023/01/18 19:23:38 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -523,4 +523,15 @@ sys/sys/kauth.h					1.89
 	wg(4): PR 57161 - allow non-root to retrieve information other
 	than the private key and the peer preshared key.
 	[jakllsch, ticket #49]
+
+sys/dev/pci/pcidevs				1.1472-1.1476
+sys/dev/pci/sdhc_pci.c				1.20
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	- Update Intel Elkhart Lake devices.
+	- Add AMD 19h/1xh devices.
+	- Add Aquantia (Marvell) AQC113 Ethernet devices and the variants.
+	- Fix typo. s/SSC/SCC/.
+	[msaitoh, ticket #50]
 
