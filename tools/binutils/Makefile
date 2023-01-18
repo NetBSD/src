@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2022/12/31 05:44:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.37 2023/01/18 12:52:55 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -11,10 +11,15 @@ BRANDING?=	\
 	--with-bugurl="http://www.NetBSD.org/support/send-pr.html" \
 	--with-lib-path="=/usr/lib" --with-sysroot
 
-CONFIGURE_ARGS=	--target=${MACHINE_GNU_PLATFORM} --disable-nls \
+BASE_CONFIGURE_ARGS= \
+	--target=${MACHINE_GNU_PLATFORM} \
+	--enable-initfini-array=yes \
+	--enable-default-execstack=no \
+	${BRANDING}
+
+CONFIGURE_ARGS=	--disable-nls --disable-werror \
 		--program-transform-name="s,^,${MACHINE_GNU_PLATFORM}-," \
-		--disable-werror --enable-initfini-array=yes \
-		${BRANDING}
+		${BASE_CONFIGURE_ARGS}
 
 MAKE_ARGS=	MACHINE= MAKEINFO=${TOOL_MAKEINFO:Q}
 
@@ -61,9 +66,7 @@ native-binutils: .native/.configure_done
 			${HOST_SH} ${GNUHOSTDIST}/configure \
 			--build=`${GNUHOSTDIST}/config.guess` \
 			--host=${MACHINE_GNU_PLATFORM} \
-			--target=${MACHINE_GNU_PLATFORM} \
-			--enable-initfini-array=yes \
-			${BRANDING} \
+			${BASE_CONFIGURE_ARGS} \
 		)
 	PATH=${TOOLDIR}/bin:$$PATH; export PATH; \
 		(cd .native && ${MAKE} configure-host)
