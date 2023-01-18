@@ -1,4 +1,4 @@
-.\"	$NetBSD: inet.3,v 1.6 2022/12/04 01:29:32 uwe Exp $
+.\"	$NetBSD: inet.3,v 1.7 2023/01/18 23:16:05 riastradh Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -120,10 +120,19 @@ It returns NULL if a system error occurs (in which case,
 .Va errno
 will have been set), or it returns a pointer to the destination string.
 The
-.Ar size
+.Fa size
 parameter is the size of the
-.Ar buf
-argument.
+.Fa dst
+buffer.
+For
+.Dv AF_INET ,
+this must have space for
+.Dv INET_ADDRSTRLEN Pq 16
+bytes; for
+.Dv AF_INET6 ,
+this must have space for
+.Dv INET6_ADDRSTRLEN Pq 46
+bytes.
 .Pp
 The routine
 .Fn inet_ntoa
