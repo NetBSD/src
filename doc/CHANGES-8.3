@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.162 2023/01/18 19:35:44 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.163 2023/01/19 10:59:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3012,4 +3012,22 @@ sys/dev/pci/pcidevs_data.h			regen
 	- Add Aquantia (Marvell) AQC113 Ethernet devices and the variants.
 	- Fix typo. s/SSC/SCC/.
 	[msaitoh, ticket #1783]
+
+share/man/man4/lm.4				1.38
+sys/dev/ic/nslm7x.c				1.79
+sys/dev/isa/wbsio.c				1.30
+sys/dev/isa/wbsioreg.h				1.11
+
+	lm(4): Add Nuvoton NCT6797D support.
+	[msaitoh, ticket #1784]
+
+usr.bin/netstat/netstat.1			1.76
+
+	netstat(1): add note about "netstat -mssv".
+	[msaitoh, ticket #1785]
+
+sys/dev/usb/usb.h				1.121
+
+	usb(4): avoid undefined behavior in UGETDW().
+	[msaitoh, ticket #1786]
 
