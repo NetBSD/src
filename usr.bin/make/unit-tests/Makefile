@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.328 2023/01/19 19:55:27 rillig Exp $
+# $NetBSD: Makefile,v 1.329 2023/01/19 23:26:14 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -25,10 +25,6 @@
 #
 # Any added files must also be added to src/distrib/sets/lists/tests/mi.
 # To do that, just run "make sync-mi" in this directory.
-#
-# A few *.mk files are helper files for other tests (such as include-sub.mk)
-# and are thus not added to TESTS.  Such files must be ignored in
-# src/tests/usr.bin/make/t_make.sh.
 #
 
 .MAIN: all

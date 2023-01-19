@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1243 2023/01/16 00:23:55 rillig Exp $
+# $NetBSD: mi,v 1.1244 2023/01/19 23:26:14 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5758,8 +5758,10 @@
 ./usr/tests/usr.bin/make/unit-tests/impsrc.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/include-main.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/include-main.mk				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/include-sub.mk				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/include-subsub.mk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/include-sub.inc				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/include-sub.mk				tests-obsolete		obsolete
+./usr/tests/usr.bin/make/unit-tests/include-subsub.inc				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/include-subsub.mk				tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/job-flags.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/job-flags.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/job-output-long-lines.exp			tests-usr.bin-tests	compattestfile,atf
