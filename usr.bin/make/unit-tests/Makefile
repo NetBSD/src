@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.327 2022/09/25 12:32:56 rillig Exp $
+# $NetBSD: Makefile,v 1.328 2023/01/19 19:55:27 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -527,6 +527,7 @@ SED_CMDS.sh-dots+=		-e 's,^make: exec(\(.*\)) failed (.*)$$,<not found: \1>,'
 SED_CMDS.sh-dots+=		-e 's,^\(\*\*\* Error code \)[1-9][0-9]*,\1<nonzero>,'
 SED_CMDS.sh-errctl=		${STD_SED_CMDS.dj}
 SED_CMDS.sh-flags=		${STD_SED_CMDS.hide-from-output}
+SED_CMDS.sh-leading-hyphen=	${STD_SED_CMDS.shell}
 SED_CMDS.suff-main+=		${STD_SED_CMDS.dg1}
 SED_CMDS.suff-main-several+=	${STD_SED_CMDS.dg1}
 SED_CMDS.suff-transform-debug+=	${STD_SED_CMDS.dg1}
@@ -613,9 +614,11 @@ STD_SED_CMDS.hide-from-output= \
 #	bash 5.1.0	bash: line 1: /nonexistent: No such file or directory
 #	dash		dash: 1: cannot open /nonexistent: No such file
 #
+STD_SED_CMDS.shell+=		-e 's,^${.SHELL},${.SHELL:T},'
 STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: line [0-9][0-9]*: ,,'
 STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: [0-9][0-9]*: ,,'
 STD_SED_CMDS.shell+=		-e 's,^${.SHELL:T}: ,,'
+STD_SED_CMDS.shell+=		-e 's,: command not found,: not found,'
 
 # The actual error messages for a failed regcomp or regexec differ between the
 # implementations.
