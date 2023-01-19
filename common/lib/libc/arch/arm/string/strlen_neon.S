@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: strlen_neon.S,v 1.3 2012/12/28 05:15:08 matt Exp $")
+RCSID("$NetBSD: strlen_neon.S,v 1.4 2023/01/19 18:03:03 mlelstv Exp $")
 	.text
 
 ENTRY(strlen)
@@ -47,10 +47,10 @@ ENTRY(strlen)
 	bic	ip, ip, #15	/* qword align string address */
 	lsl	r1, r1, #3	/* convert to bits */
 	cmp	r1, #64
-	rsbgt	r1, r1, #128	/*   > 64? BE so we are shifting LSW right */
-	movgt	r2, #0		/*   > 64? leave MSW alone */
-	rsble	r2, r1, #64	/*   <=64? BE so we are shifting MSW right */
-	movle	r1, #64		/*   <=64? clear LSW */
+	rsbhi	r1, r1, #128	/*   > 64? BE so we are shifting LSW right */
+	movhi	r2, #0		/*   > 64? leave MSW alone */
+	rsbls	r2, r1, #64	/*   <=64? BE so we are shifting MSW right */
+	movls	r1, #64		/*   <=64? clear LSW */
 	vmov	d0, r1, r2	/* set shifts for lower and upper halves */
 	vmovl.u32 q0, d0	/* 2 U32 -> 2 U64 */
 	vshl.u64 q2, q2, q0	/* shift */

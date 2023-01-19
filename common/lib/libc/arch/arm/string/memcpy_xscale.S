@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_xscale.S,v 1.5 2013/12/17 01:27:21 joerg Exp $	*/
+/*	$NetBSD: memcpy_xscale.S,v 1.6 2023/01/19 18:03:03 mlelstv Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 ENTRY(memcpy)
 	pld	[r1]
 	cmp	r2, #0x0c
-	ble	.Lmemcpy_short		/* <= 12 bytes */
+	bls	.Lmemcpy_short		/* <= 12 bytes */
 	mov	r3, r0			/* We must not clobber r0 */
 
 	/* Word-align the destination buffer */
@@ -51,12 +51,12 @@ ENTRY(memcpy)
 	ldrb	ip, [r1], #0x01
 	sub	r2, r2, #0x01
 	strb	ip, [r3], #0x01
-	ldrble	ip, [r1], #0x01
-	suble	r2, r2, #0x01
-	strble	ip, [r3], #0x01
-	ldrblt	ip, [r1], #0x01
-	sublt	r2, r2, #0x01
-	strblt	ip, [r3], #0x01
+	ldrbls	ip, [r1], #0x01
+	subls	r2, r2, #0x01
+	strbls	ip, [r3], #0x01
+	ldrblo	ip, [r1], #0x01
+	sublo	r2, r2, #0x01
+	strblo	ip, [r3], #0x01
 
 	/* Destination buffer is now word aligned */
 .Lmemcpy_wordaligned:
@@ -72,7 +72,7 @@ ENTRY(memcpy)
 
 	/* Destination buffer quad aligned, source is at least word aligned */
 	subs	r2, r2, #0x80
-	blt	.Lmemcpy_w_lessthan128
+	blo	.Lmemcpy_w_lessthan128
 
 	/* Copy 128 bytes at a time */
 .Lmemcpy_w_loop128:
@@ -129,14 +129,14 @@ ENTRY(memcpy)
 	strd	r8, r9, [r3], #0x08	/* ST:70-77 */
 	subs	r2, r2, #0x80
 	strd	r4, r5, [r3], #0x08	/* ST:78-7f */
-	bge	.Lmemcpy_w_loop128
+	bhs	.Lmemcpy_w_loop128
 
 .Lmemcpy_w_lessthan128:
 	adds	r2, r2, #0x80		/* Adjust for extra sub */
 	popeq	{r4-r9}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x20
-	blt	.Lmemcpy_w_lessthan32
+	blo	.Lmemcpy_w_lessthan32
 
 	/* Copy 32 bytes at a time */
 .Lmemcpy_w_loop32:
@@ -154,7 +154,7 @@ ENTRY(memcpy)
 	strd	r8, r9, [r3], #0x08
 	subs	r2, r2, #0x20
 	strd	r4, r5, [r3], #0x08
-	bge	.Lmemcpy_w_loop32
+	bhs	.Lmemcpy_w_loop32
 
 .Lmemcpy_w_lessthan32:
 	adds	r2, r2, #0x20		/* Adjust for extra sub */
@@ -188,17 +188,17 @@ ENTRY(memcpy)
 	pop	{r4-r9}
 	RETc(eq)			/* Return now if done */
 	subs	r2, r2, #0x04
-	ldrge	ip, [r1], #0x04
-	strge	ip, [r3], #0x04
+	ldrhs	ip, [r1], #0x04
+	strhs	ip, [r3], #0x04
 	RETc(eq)			/* Return now if done */
-	addlt	r2, r2, #0x04
+	addlo	r2, r2, #0x04
 	ldrb	ip, [r1], #0x01
 	cmp	r2, #0x02
-	ldrbge	r2, [r1], #0x01
+	ldrbhs	r2, [r1], #0x01
 	strb	ip, [r3], #0x01
-	ldrbgt	ip, [r1]
-	strbge	r2, [r3], #0x01
-	strbgt	ip, [r3]
+	ldrbhi	ip, [r1]
+	strbhs	r2, [r3], #0x01
+	strbhi	ip, [r3]
 	RET
 
 
@@ -211,7 +211,7 @@ ENTRY(memcpy)
 	bic	r1, r1, #0x03
 	cmp	ip, #2
 	ldr	ip, [r1], #0x04
-	bgt	.Lmemcpy_bad3
+	bhi	.Lmemcpy_bad3
 	beq	.Lmemcpy_bad2
 	b	.Lmemcpy_bad1
 
@@ -251,9 +251,9 @@ ENTRY(memcpy)
 
 .Lmemcpy_bad1:
 	cmp	r2, #0x20
-	bge	.Lmemcpy_bad1_loop16
+	bhs	.Lmemcpy_bad1_loop16
 	cmp	r2, #0x10
-	blt	.Lmemcpy_bad1_loop16_short
+	blo	.Lmemcpy_bad1_loop16_short
 
 	/* copy last 16 bytes (without preload) */
 #ifdef __ARMEB__
@@ -292,8 +292,8 @@ ENTRY(memcpy)
 
 .Lmemcpy_bad1_loop16_short:
 	subs	r2, r2, #0x04
-	sublt	r1, r1, #0x03
-	blt	.Lmemcpy_bad_done
+	sublo	r1, r1, #0x03
+	blo	.Lmemcpy_bad_done
 
 .Lmemcpy_bad1_loop4:
 #ifdef __ARMEB__
@@ -309,7 +309,7 @@ ENTRY(memcpy)
 	orr	r4, r4, ip, lsl #24
 #endif
 	str	r4, [r3], #0x04
-	bge	.Lmemcpy_bad1_loop4
+	bhs	.Lmemcpy_bad1_loop4
 	sub	r1, r1, #0x03
 	b	.Lmemcpy_bad_done
 
@@ -349,9 +349,9 @@ ENTRY(memcpy)
 
 .Lmemcpy_bad2:
 	cmp	r2, #0x20
-	bge	.Lmemcpy_bad2_loop16
+	bhs	.Lmemcpy_bad2_loop16
 	cmp	r2, #0x10
-	blt	.Lmemcpy_bad2_loop16_short
+	blo	.Lmemcpy_bad2_loop16_short
 
 	/* copy last 16 bytes (without preload) */
 #ifdef __ARMEB__
@@ -390,8 +390,8 @@ ENTRY(memcpy)
 
 .Lmemcpy_bad2_loop16_short:
 	subs	r2, r2, #0x04
-	sublt	r1, r1, #0x02
-	blt	.Lmemcpy_bad_done
+	sublo	r1, r1, #0x02
+	blo	.Lmemcpy_bad_done
 
 .Lmemcpy_bad2_loop4:
 #ifdef __ARMEB__
@@ -407,7 +407,7 @@ ENTRY(memcpy)
 	orr	r4, r4, ip, lsl #16
 #endif
 	str	r4, [r3], #0x04
-	bge	.Lmemcpy_bad2_loop4
+	bhs	.Lmemcpy_bad2_loop4
 	sub	r1, r1, #0x02
 	b	.Lmemcpy_bad_done
 
@@ -447,9 +447,9 @@ ENTRY(memcpy)
 
 .Lmemcpy_bad3:
 	cmp	r2, #0x20
-	bge	.Lmemcpy_bad3_loop16
+	bhs	.Lmemcpy_bad3_loop16
 	cmp	r2, #0x10
-	blt	.Lmemcpy_bad3_loop16_short
+	blo	.Lmemcpy_bad3_loop16_short
 
 	/* copy last 16 bytes (without preload) */
 #ifdef __ARMEB__
@@ -488,8 +488,8 @@ ENTRY(memcpy)
 
 .Lmemcpy_bad3_loop16_short:
 	subs	r2, r2, #0x04
-	sublt	r1, r1, #0x01
-	blt	.Lmemcpy_bad_done
+	sublo	r1, r1, #0x01
+	blo	.Lmemcpy_bad_done
 
 .Lmemcpy_bad3_loop4:
 #ifdef __ARMEB__
@@ -505,7 +505,7 @@ ENTRY(memcpy)
 	orr	r4, r4, ip, lsl #8
 #endif
 	str	r4, [r3], #0x04
-	bge	.Lmemcpy_bad3_loop4
+	bhs	.Lmemcpy_bad3_loop4
 	sub	r1, r1, #0x01
 
 .Lmemcpy_bad_done:
@@ -514,11 +514,11 @@ ENTRY(memcpy)
 	RETc(eq)
 	ldrb	ip, [r1], #0x01
 	cmp	r2, #0x02
-	ldrbge	r2, [r1], #0x01
+	ldrbhs	r2, [r1], #0x01
 	strb	ip, [r3], #0x01
-	ldrbgt	ip, [r1]
-	strbge	r2, [r3], #0x01
-	strbgt	ip, [r3]
+	ldrbhi	ip, [r1]
+	strbhs	r2, [r3], #0x01
+	strbhi	ip, [r3]
 	RET
 
 

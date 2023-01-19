@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcpy_neon.S,v 1.1 2013/01/03 09:34:44 matt Exp $")
+RCSID("$NetBSD: memcpy_neon.S,v 1.2 2023/01/19 18:03:03 mlelstv Exp $")
 
 	.text
 ENTRY(memcpy)
@@ -40,7 +40,7 @@ ENTRY(memcpy)
 	mov	r3, r0			/* keep r0 unchanged */
 #if 0
 	cmp	r2, #16			/* copy less than 8 bytes? */
-	bge	.Ldst_aligner		/*   nope, do it the long way */
+	bhs	.Ldst_aligner		/*   nope, do it the long way */
 
 1:	ldrb	ip, [r1], #1		/* load a byte from src */
 	subs	r2, r2, #1		/* and more to transfer? */
@@ -78,7 +78,7 @@ ENTRY(memcpy)
 	vld1.64 {d1}, [r1:64]!		/* load a dword from src */
 
 	cmp	r2, r5			/* do we already have enough? */
-	bgt	.Lincongruent		/*   no, so read more */
+	bhi	.Lincongruent		/*   no, so read more */
 
 .Lincongruent_finish:
 	vtbl.8	d0, {d1-d2}, d0		/* merge last dwords */
@@ -86,14 +86,14 @@ ENTRY(memcpy)
 #ifdef __ARMEB__
 	vrev64.32 d0, d0		/* word swap to LE */
 #endif
-	blt	.Lfinish		/*   no, write final partial dword */
+	blo	.Lfinish		/*   no, write final partial dword */
 	vst1.32 {d0}, [r3:64]		/*   yes, write final full dword */
 	b	.Ldone			/* and we're done! */
 
 .Lincongruent:
 	vld1.64 {d2}, [r1:64]!		/* load a dword */
 	cmp	r2, #8			/* can we write a full dword? */
-	blt	.Lincongruent_finish	/*   no, finish it. */
+	blo	.Lincongruent_finish	/*   no, finish it. */
 	vtbl.8	d1, {d1-d2}, d0		/* reorder */
 	vst1.64 {d1}, [r3:64]!		/* store a dword */
 	subs	r2, r2, #8		/* have we written everything? */
@@ -109,10 +109,10 @@ ENTRY(memcpy)
 	 * last byte).
 	 */
 	cmp	r2, #32			/* can we write 4 more dwords? */
-	blt	.Lincongruent_dword	/*   no, handle dword by dword */
+	blo	.Lincongruent_dword	/*   no, handle dword by dword */
 	vld1.64 {d2-d5}, [r1:64]!	/* read 4 dwords */
 	cmp	r2, #64			/* can we write 4 more dwords? */
-	blt	.Lincongruent_4dword	/*   no, handle it */
+	blo	.Lincongruent_4dword	/*   no, handle it */
 
 1:	vld1.64 {d7-d10}, [r1:64]!	/* read 4 dwords */
 	vtbl.8	d1, {d1-d2}, d0		/* reorder */
@@ -122,7 +122,7 @@ ENTRY(memcpy)
 	vst1.64 {d1-d4}, [r3:64]!	/* write 4 dwords */
 	vmov	d6, d5			/* move out of the way the load */
 	cmp	r2, #96			/* have 8+4 dwords to write? */
-	blt	2f			/*   no more data, skip the load */
+	blo	2f			/*   no more data, skip the load */
 	vld1.64 {d2-d5}, [r1:64]!	/* more data, load 4 dwords */
 2:	vtbl.8	d6, {d6-d7}, d0		/* reorder */
 	vtbl.8	d7, {d7-d8}, d0		/* reorder */
@@ -133,14 +133,14 @@ ENTRY(memcpy)
 	beq	.Ldone
 	vmov	d1, d10
 	cmp	r2, #64
-	bge	1b
+	bhs	1b
 
 	/*
 	 * we have leftovers in d1 and new untranslated date in d2-d5.
 	 */
 .Lincongruent_4dword:
 	cmp	r2, #32
-	blt	.Lincongruent_dword
+	blo	.Lincongruent_dword
 
 	vtbl.8	d1, {d1-d2}, d0		/* reorder */
 	vtbl.8	d2, {d2-d3}, d0		/* reorder */
@@ -154,10 +154,10 @@ ENTRY(memcpy)
 .Lincongruent_dword:
 #if 0
 	cmp	r2, r5			/* enough in leftovers? */
-	ble	.Lincongruent_finish	/*   yes, finish it. */
+	bls	.Lincongruent_finish	/*   yes, finish it. */
 	vld1.64 {d2}, [r1:64]!		/* load a dword */
 	cmp	r2, #8			/* can we write a full dword? */
-	blt	.Lincongruent_finish	/*   no, finish it. */
+	blo	.Lincongruent_finish	/*   no, finish it. */
 	vtbl.8	d1, {d1-d2}, d0		/* reorder */
 	vst1.64 {d1}, [r3:64]!		/* store a dword */
 	subs	r2, r2, #8		/* have we written everything? */
@@ -165,7 +165,7 @@ ENTRY(memcpy)
 	b	.Lincongruent_dword	/* and go get it */
 #else
 	cmp	r2, r5			/* are the bytes we have enough? */
-	ble	.Lincongruent_finish	/*   yes, finish it. */
+	bls	.Lincongruent_finish	/*   yes, finish it. */
 	mov	ip, r2			/* get remaining count */
 	bic	ip, ip, #7		/* truncate to a dword */
 	rsb	ip, ip, #32		/* subtract from 32 */
@@ -196,7 +196,7 @@ ENTRY(memcpy)
 .Lcongruent_main:
 	vld1.32 {d0}, [r1:64]!		/* load next dword */
 	cmp	r2, #8			/* compare current ptr against end */
-	blt	.Lfinish		/*   greater so write final dword */
+	blo	.Lfinish		/*   greater so write final dword */
 	vst1.32 {d0}, [r3:64]!		/* store dword */
 	subs	r2, r2, #8		/* compare current ptr against end */
 	beq	.Ldone			/*   equal? we're done! */
@@ -204,10 +204,10 @@ ENTRY(memcpy)
 	bne	.Lcongruent_main	/*   no, write next word */
 
 	cmp	r2, #64			/* can we write 4 dwords? */
-	blt	.Lcongruent_loop	/*   no, this dword by dword */
+	blo	.Lcongruent_loop	/*   no, this dword by dword */
 	vldm	r1!, {d0-d7}		/* load next 7 dwords */
 	cmp	r2, #128		/* can we write 16 dwords */
-	blt	3f			/*   no, then deal with 8 dwords */
+	blo	3f			/*   no, then deal with 8 dwords */
 
 	/*
 	 * The following writes two 64-byte interleaving stores and loads.
@@ -215,15 +215,15 @@ ENTRY(memcpy)
 1:	vldm	r1!, {d8-d15}		/* load next 8 dwords */
 	vstm	r3!, {d0-d7}		/* store 8 more dwords */
 	cmp	r2, #192		/* can we write 16+8 dwords? */
-	blt	2f			/*   no, don't load the next 8 dwords */
+	blo	2f			/*   no, don't load the next 8 dwords */
 	vldm	r1!, {d0-d7}		/*   yes, load next 8 dwords */
 2:	vstm	r3!, {d8-d15}		/* store 8 more dwords */
 	sub	r2, r2, #128		/* we just stored 16 (8+8) dwords */
 	beq	.Ldone			/*   if 0, we're done! */
 	cmp	r2, #128		/* can we write 16 dwords */
-	bge	1b			/*   yes, do it again */
+	bhs	1b			/*   yes, do it again */
 	cmp	r2, #64			/* have we loaded 8 dwords? */
-	blt	.Lcongruent_loop	/*   no, proceed to do it dword */
+	blo	.Lcongruent_loop	/*   no, proceed to do it dword */
 
 	/*
 	 * We now have 8 dwords we can write in d0-d7.
@@ -235,14 +235,14 @@ ENTRY(memcpy)
 .Lcongruent_loop:
 	vld1.32 {d0}, [r1]!		/* load dword from src */
 	cmp	r2, #8			/* can we write a full dword? */
-	blt	.Lfinish		/*   no, write last partial dword */
+	blo	.Lfinish		/*   no, write last partial dword */
 .Lcongruent_loop_start:
 	vst1.32 {d0}, [r3]!		/* store dword into dst */
 	subs	r2, r2, #8		/* subtract it from length */
 	beq	.Ldone			/*   if 0, we're done! */
 	vld1.32 {d0}, [r1]!		/* load dword from src */
 	cmp	r2, #8			/* can we write a full dword? */
-	bge	.Lcongruent_loop_start	/*   yes, so do it */
+	bhs	.Lcongruent_loop_start	/*   yes, so do it */
 
 .Lfinish:
 	vmov	r4, r5, d0		/* get last dword from NEON */
