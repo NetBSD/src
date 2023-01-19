@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memset_naive.S,v 1.1 2013/01/08 20:15:00 matt Exp $")
+RCSID("$NetBSD: memset_naive.S,v 1.2 2023/01/19 18:03:03 mlelstv Exp $")
 
 /*
  * This isn't quite as simple/short as it could be but the truly trivial
@@ -40,7 +40,7 @@ ENTRY(memset)
 /* LINTSTUB: void *memset(void *, int, size_t) */
 	mov	ip, r0			/* need to preserve r0 */
 	cmp	r2, #10			/* 10 bytes or less? */
-	ble	.Lbyte_by_byte		/*    yes, bytewise is faster */
+	bls	.Lbyte_by_byte		/*    yes, bytewise is faster */
 	ands	r3, r1, #0xff		/* we are dealing with bytes */
 	orrne	r3, r3, r3, lsl #8	/* move value into 2nd byte lane */
 	orrne	r3, r3, r3, lsl #16	/* move value into all byte lanes */
@@ -60,9 +60,9 @@ ENTRY(memset)
 	 */
 1:	mov	r2, r3			/* duplicate fill value */
 2:	subs	r1, r1, #16		/* can we write 16 bytes? */
-	stmgeia	ip!, {r2,r3}		/*   yes, write the first 8 of them */
-	stmgeia	ip!, {r2,r3}		/*   yes, write the second 8 of them */
-	bgt	2b			/* more left to fill */
+	stmhsia	ip!, {r2,r3}		/*   yes, write the first 8 of them */
+	stmhsia	ip!, {r2,r3}		/*   yes, write the second 8 of them */
+	bhi	2b			/* more left to fill */
 	RETc(eq)			/*   no, return */
 	/*
 	 * Our count went negative but the bits below 16 haven't changed.
@@ -80,7 +80,7 @@ ENTRY(memset)
 
 .Lbyte_by_byte:
 	subs	r2, r2, #1		/* can we write a byte? */
-	RETc(lt)			/*   no, return */
+	RETc(lo)			/*   no, return */
 	strb	r3, [ip], #1		/* write a byte */
 	b	.Lbyte_by_byte		/* do next byte */
 END(memset)
