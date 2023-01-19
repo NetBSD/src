@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2020/10/10 09:17:33 nia Exp $
+#	$NetBSD: Makefile,v 1.9 2023/01/19 06:29:10 mrg Exp $
 
 .include <bsd.own.mk>
 
 .PATH:	. ${X11SRCDIR.fontconfig}/conf.d
 CONFIGFILES= \
+	05-reset-dirs-sample.conf \
+	09-autohint-if-no-hinting.conf \
 	10-autohint.conf \
 	10-hinting-full.conf \
 	10-hinting-medium.conf \
@@ -22,9 +24,11 @@ CONFIGFILES= \
 	20-unhint-small-vera.conf \
 	25-unhint-nonlatin.conf \
 	30-metric-aliases.conf \
+	35-lang-normalize.conf \
 	40-nonlatin.conf \
 	45-generic.conf \
 	45-latin.conf \
+	48-spacing.conf \
 	49-sansserif.conf \
 	50-user.conf \
 	51-local.conf \

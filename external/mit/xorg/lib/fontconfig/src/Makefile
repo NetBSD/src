@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2019/03/24 10:39:45 kre Exp $
+#	$NetBSD: Makefile,v 1.26 2023/01/19 06:29:10 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -267,9 +267,10 @@ TEMPLATEDIR=${FONTCONFIG_PATH}/fontconfig/conf.avail
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-DFONTCONFIG_PATH='"${FONTCONFIG_PATH}"' \
-		-DFC_DEFAULT_FONTS='"${X11FONTDIR}"' \
+		-DFC_DEFAULT_FONTS='"<dir>${X11FONTDIR}</dir>"' \
 		-DFC_TEMPLATEDIR='"${X11FONTDIR}"' \
 		-DFC_CACHEDIR='"/var/cache/fontconfig"' \
+		-DCONFIGDIR='"${FONTCONFIG_PATH}/conf.d"' \
 		-DHAVE_FT_BITMAP_SIZE_Y_PPEM \
 		-DHAVE_FT_GET_BDF_PROPERTY \
 		-DHAVE_FT_GET_NEXT_CHAR \
@@ -277,7 +278,9 @@ CPPFLAGS+=	-DFONTCONFIG_PATH='"${FONTCONFIG_PATH}"' \
 		-DHAVE_FT_GET_X11_FONT_FORMAT \
 		-DHAVE_FT_HAS_PS_GLYPH_NAMES \
 		-DHAVE_EXPAT -DXFREE86_FT2 -DHAVE_INTTYPES_H \
-		-DHAVE_STDINT_H -DHAVE_RANDOM
+		-DHAVE_STDINT_H -DHAVE_RANDOM \
+		-DHAVE_STRUCT_STAT_ST_MTIM \
+		-DHAVE_FT_DONE_MM_VAR
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
@@ -287,6 +290,9 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I${X11SRCDIR.${LIB}}/../include \
 		-I. \
 		-I${X11SRCDIR.${LIB}}
+
+CPPFLAGS.fccache.c+=	-Wno-error=discarded-qualifiers
+CPPFLAGS.fccfg.c+=	-Wno-error=discarded-qualifiers
 
 .include "Makefile.fcarch"
 

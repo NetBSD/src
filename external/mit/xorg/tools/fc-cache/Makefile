@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2022/02/24 06:34:32 martin Exp $
+#	$NetBSD: Makefile,v 1.20 2023/01/19 06:29:10 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -94,6 +94,7 @@ HOST_CPPFLAGS=	-DFONTCONFIG_PATH='"${DESTDIR}/etc/X11/fonts"' \
 		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' \
 		-DFC_TEMPLATEDIR='"${DESTDIR}${X11FONTDIR}"' \
 		-DFC_CACHEDIR='"${DESTDIR}/var/cache/fontconfig"' \
+		-DCONFIGDIR='"${DESTDIR}/etc/fonts/conf.d"' \
 		-DFC_GPERF_SIZE_T=unsigned \
 		-DFC_NO_MT=1 \
 		-DALIGNOF_VOID_P=8 \
@@ -110,7 +111,8 @@ HOST_CPPFLAGS=	-DFONTCONFIG_PATH='"${DESTDIR}/etc/X11/fonts"' \
 		-DHAVE_SYS_TYPES_H -DHAVE_FCNTL_H -DHAVE_SYS_STAT_H \
 		-DHAVE_MKSTEMP \
 		-DHAVE_SCANDIR \
-		-DFLEXIBLE_ARRAY_MEMBER="/**/"
+		-DFLEXIBLE_ARRAY_MEMBER="/**/" \
+		-DHAVE_DIRENT_H -DHAVE_UNISTD_H
 HOST_CPPFLAGS+=	-DFT_CONFIG_OPTION_DISABLE_BZIP2
 HOST_CPPFLAGS+=	-I${FONTCONFIG} -I${FREETYPE} \
 		-I${FREETYPE}/include -I${FREETYPE}/include/freetype \
