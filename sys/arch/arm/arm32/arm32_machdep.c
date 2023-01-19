@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.144 2022/07/28 09:14:23 riastradh Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.145 2023/01/19 08:03:51 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.144 2022/07/28 09:14:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.145 2023/01/19 08:03:51 mlelstv Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -575,6 +575,26 @@ parse_mi_bootargs(char *args)
 	    || get_bootconf_option(args, "-a", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= RB_ASKNAME;
+	if (get_bootconf_option(args, "userconf", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-c", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= RB_USERCONF;
+	if (get_bootconf_option(args, "halt", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-b", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= RB_HALT;
+	if (get_bootconf_option(args, "-1", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= RB_MD1;
+	if (get_bootconf_option(args, "-2", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= RB_MD2;
+	if (get_bootconf_option(args, "-3", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= RB_MD3;
+	if (get_bootconf_option(args, "-4", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= RB_MD4;
 
 /*	if (get_bootconf_option(args, "nbuf", BOOTOPT_TYPE_INT, &integer))
 		bufpages = integer;*/
@@ -603,6 +623,10 @@ parse_mi_bootargs(char *args)
 	    || get_bootconf_option(args, "-x", BOOTOPT_TYPE_BOOLEAN, &integer))
 		if (integer)
 			boothowto |= AB_DEBUG;
+	if (get_bootconf_option(args, "silent", BOOTOPT_TYPE_BOOLEAN, &integer)
+	    || get_bootconf_option(args, "-z", BOOTOPT_TYPE_BOOLEAN, &integer))
+		if (integer)
+			boothowto |= AB_SILENT;
 }
 
 #ifdef __HAVE_FAST_SOFTINTS
