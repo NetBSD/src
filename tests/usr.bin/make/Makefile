@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2021/04/17 11:21:17 rillig Exp $
+# $NetBSD: Makefile,v 1.4 2023/01/19 23:26:15 rillig Exp $
 
 # The tests for make(1) are maintained in src/usr.bin/make/unit-tests
 # (UNIT_TESTS_DISTDIR).  We copy them verbatim to ${FILESDIR}/unit-tests
@@ -25,7 +25,7 @@ UNIT_TESTS_DIR=		${FILESDIR}/unit-tests
 UNIT_TESTS_DISTDIR=	${NETBSDSRCDIR}/usr.bin/make/unit-tests
 
 # Which original files to copy
-DISTFILES!=	(cd ${UNIT_TESTS_DISTDIR} && echo Makefile *.mk *.exp)
+DISTFILES!=	(cd ${UNIT_TESTS_DISTDIR} && echo Makefile *.mk *.inc *.exp)
 
 # Instruct bsd.files.mk to make the copies
 .for f in ${DISTFILES:S,^,${UNIT_TESTS_DISTDIR}/,}
