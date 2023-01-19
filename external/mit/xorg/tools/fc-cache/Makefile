@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2023/01/19 06:29:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2023/01/19 17:07:38 martin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -89,7 +89,6 @@ SRCS.expat=	xmlparse.c xmltok.c xmlrole.c
 SRCS=	${SRCS.fc-cache} ${SRCS.fontconfig} ${SRCS.freetype} ${SRCS.expat}
 
 # XXX FONTCONFIG_PATH was arbitrarily chosen
-# XXX ALIGNOF_VOID_P=8 not valid for 32 bit, but probably ok?
 HOST_CPPFLAGS=	-DFONTCONFIG_PATH='"${DESTDIR}/etc/X11/fonts"' \
 		-DFC_DEFAULT_FONTS='"${X11FONTDIR}/Type1"' \
 		-DFC_TEMPLATEDIR='"${DESTDIR}${X11FONTDIR}"' \
@@ -97,7 +96,8 @@ HOST_CPPFLAGS=	-DFONTCONFIG_PATH='"${DESTDIR}/etc/X11/fonts"' \
 		-DCONFIGDIR='"${DESTDIR}/etc/fonts/conf.d"' \
 		-DFC_GPERF_SIZE_T=unsigned \
 		-DFC_NO_MT=1 \
-		-DALIGNOF_VOID_P=8 \
+		-DALIGNOF_VOID_P=${PTRSIZE} \
+		-DSIZEOF_VOID_P=${PTRSIZE} \
 		-DHAVE_FT_BITMAP_SIZE_Y_PPEM \
 		-DHAVE_FT_GET_BDF_PROPERTY \
 		-DHAVE_FT_GET_NEXT_CHAR \
@@ -131,4 +131,11 @@ LDADD=	-lz
 .include "../../lib/fontconfig/src/Makefile.fcarch"
 
 .include <bsd.x11.mk>
+
+.if empty(X11FLAGS.SERVER:M-D_XSERVER64)
+PTRSIZE=	4
+.else
+PTRSIZE=	8
+.endif
+
 .include <bsd.hostprog.mk>
