@@ -1,4 +1,4 @@
-# $NetBSD: test-variants.mk,v 1.4 2022/05/08 19:19:11 rillig Exp $
+# $NetBSD: test-variants.mk,v 1.5 2023/01/19 19:55:27 rillig Exp $
 #
 # Build several variants of make and run the tests on them.
 #
@@ -10,7 +10,7 @@
 usage:
 	@echo 'usage: ${MAKE} -f ${MAKEFILE} list'
 	@echo '       ${MAKE} -f ${MAKEFILE} all'
-	@echo '       ${MAKE} -f ${MAKEFILE} test...'
+	@echo '       ${MAKE} -f ${MAKEFILE} <test>...'
 
 
 TESTS+=			default
