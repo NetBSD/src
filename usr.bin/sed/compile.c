@@ -1,4 +1,4 @@
-/*	$NetBSD: compile.c,v 1.50 2021/03/13 15:46:54 christos Exp $	*/
+/*	$NetBSD: compile.c,v 1.51 2023/01/20 01:26:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.50 2021/03/13 15:46:54 christos Exp $");
+__RCSID("$NetBSD: compile.c,v 1.51 2023/01/20 01:26:02 msaitoh Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/compile.c 259132 2013-12-09 18:57:20Z eadler $");
 #endif
@@ -376,7 +376,7 @@ nonsel:		/* Now parse the command */
 }
 
 /*
- * Get a delimited string.  P points to the delimeter of the string; d points
+ * Get a delimited string.  P points to the delimiter of the string; d points
  * to a buffer area.  Newline and delimiter escapes are processed; other
  * escapes are ignored.
  *
