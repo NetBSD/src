@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.54 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.55 2023/01/20 01:35:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.54 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.55 2023/01/20 01:35:03 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -201,7 +201,7 @@ mhzc_attach(device_t parent, device_t self, void *aux)
 	 * an address suitable for the Ethernet portion.  We do this by
 	 * rounding up to the next 16-byte aligned address where 0x80
 	 * isn't set (the SMC Ethernet chip has a 16-byte address size)
-	 * and attemping to allocate a 16-byte region until we succeed.
+	 * and attempting to allocate a 16-byte region until we succeed.
 	 *
 	 * Sure would have been nice if Megahertz had made the card a
 	 * proper multi-function device.
