@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.25 2021/10/07 12:52:27 msaitoh Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.26 2023/01/20 01:35:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.25 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.26 2023/01/20 01:35:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 		break;
 	case 0xc: /* Core i7, Atom, model 1 */
 		/*
-		 * Newer CPUs will GP when attemping to access MSR_FSB_FREQ.
+		 * Newer CPUs will GP when attempting to access MSR_FSB_FREQ.
 		 * In the long-term, use ACPI instead of all this.
 		 */
 		if (rdmsr_safe(MSR_FSB_FREQ, &msr) == EFAULT) {
