@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.164 2022/08/06 18:26:43 andvar Exp $	*/
+/*	$NetBSD: util.c,v 1.165 2023/01/20 22:08:48 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.164 2022/08/06 18:26:43 andvar Exp $");
+__RCSID("$NetBSD: util.c,v 1.165 2023/01/20 22:08:48 andvar Exp $");
 #endif /* not lint */
 
 /*
@@ -209,7 +209,7 @@ getremoteinfo(void)
 			    os_len, reply_string + 4);
 		}
 		/*
-		 * Decide whether we should default to bninary.
+		 * Decide whether we should default to binary.
 		 * Traditionally checked for "215 UNIX Type: L8", but
 		 * some printers report "Linux" ! so be more forgiving.
 		 * In reality we probably almost never want text any more.
