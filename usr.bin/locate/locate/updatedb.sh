@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: updatedb.sh,v 1.17 2020/04/25 10:06:42 simonb Exp $
+#	$NetBSD: updatedb.sh,v 1.18 2023/01/20 13:07:09 uwe Exp $
 #
 # Copyright (c) 1989, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -216,6 +216,6 @@ if [ -z "$BIGRAMS" ]; then
 	echo 'locate: updatedb failed' >&2
 	exit 1
 else
-	$LIBDIR/locate.code "$BIGRAMS" <"$FILELIST" >"$FCODES"
+	$LIBDIR/locate.code -- "$BIGRAMS" <"$FILELIST" >"$FCODES"
 	chmod 644 "$FCODES"
 fi
