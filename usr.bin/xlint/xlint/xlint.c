@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.104 2023/01/15 23:32:10 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.105 2023/01/20 23:06:26 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.104 2023/01/15 23:32:10 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.105 2023/01/20 23:06:26 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -246,7 +246,7 @@ terminate(int signo)
 	if (lint2.outlib != NULL)
 		(void)remove(lint2.outlib);
 
-	if (currfn != NULL)
+	if (currfn != NULL && currfn != cpp.outfile)
 		(void)remove(currfn);
 
 	if (signo != 0)
