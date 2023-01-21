@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.137 2023/01/21 09:16:33 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.138 2023/01/21 09:42:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.137 2023/01/21 09:16:33 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.138 2023/01/21 09:42:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -181,9 +181,6 @@ static	sym_t	*symtab[HSHSIZ1];
 
 /* type of next expected symbol */
 symt_t	symtyp;
-
-
-static	int	get_escaped_char(int);
 
 
 static unsigned int
@@ -848,7 +845,7 @@ read_escaped_backslash(int delim)
 	case 'x':
 		return read_escaped_hex(c);
 	case '\n':
-		return get_escaped_char(delim);
+		return -3;
 	case EOF:
 		return -2;
 	default:
@@ -861,6 +858,51 @@ read_escaped_backslash(int delim)
 		}
 		return c;
 	}
+}
+
+/*
+ * Read a character which is part of a character constant or of a string
+ * and handle escapes.
+ *
+ * The argument is the character which delimits the character constant or
+ * string.
+ *
+ * Returns -1 if the end of the character constant or string is reached,
+ * -2 if the EOF is reached, and the character otherwise.
+ */
+static int
+get_escaped_char(int delim)
+{
+	int c;
+
+	if (prev_byte == -1) {
+		c = read_byte();
+	} else {
+		c = prev_byte;
+		prev_byte = -1;
+	}
+	if (c == delim)
+		return -1;
+	switch (c) {
+	case '\n':
+		if (!allow_c90) {
+			/* newline in string or char constant */
+			error(254);
+			return -2;
+		}
+		return c;
+	case '\0':
+		/* syntax error '%s' */
+		error(249, "EOF or null byte in literal");
+		return -2;
+	case EOF:
+		return -2;
+	case '\\':
+		c = read_escaped_backslash(delim);
+		if (c == -3)
+			return get_escaped_char(delim);
+	}
+	return c;
 }
 
 /* Called if lex found a leading "'". */
@@ -946,49 +988,6 @@ lex_wide_character_constant(void)
 	yylval.y_val->v_quad = wc;
 
 	return T_CON;
-}
-
-/*
- * Read a character which is part of a character constant or of a string
- * and handle escapes.
- *
- * The argument is the character which delimits the character constant or
- * string.
- *
- * Returns -1 if the end of the character constant or string is reached,
- * -2 if the EOF is reached, and the character otherwise.
- */
-static int
-get_escaped_char(int delim)
-{
-	int c;
-
-	if (prev_byte == -1) {
-		c = read_byte();
-	} else {
-		c = prev_byte;
-		prev_byte = -1;
-	}
-	if (c == delim)
-		return -1;
-	switch (c) {
-	case '\n':
-		if (!allow_c90) {
-			/* newline in string or char constant */
-			error(254);
-			return -2;
-		}
-		return c;
-	case '\0':
-		/* syntax error '%s' */
-		error(249, "EOF or null byte in literal");
-		return -2;
-	case EOF:
-		return -2;
-	case '\\':
-		return read_escaped_backslash(delim);
-	}
-	return c;
 }
 
 /* See https://gcc.gnu.org/onlinedocs/cpp/Preprocessor-Output.html */
