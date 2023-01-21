@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2023/01/19 06:29:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2023/01/21 04:04:30 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,7 @@ CONFIGFILES= \
 	10-hinting-medium.conf \
 	10-hinting-none.conf \
 	10-hinting-slight.conf \
+	10-no-antialias.conf \
 	10-no-sub-pixel.conf \
 	10-sub-pixel-bgr.conf \
 	10-sub-pixel-rgb.conf \
