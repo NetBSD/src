@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.131 2023/01/15 00:53:19 rillig Exp $
+# $NetBSD: Makefile,v 1.132 2023/01/21 11:57:03 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	349		# see lint1/err.c
@@ -18,8 +18,10 @@ archsubdir.sh:
 	@echo archsubdir=${ARCHSUBDIR} >${.TARGET}
 
 FILESDIR=	${TESTSDIR}
+FILES+=		c11_atomic.c
 FILES+=		c11_generic_expression.c
 FILES+=		c90.c
+FILES+=		c99_atomic.c
 FILES+=		c99_bool_strict_suppressed.c
 FILES+=		c99_init_array.c
 FILES+=		c99_init_designator.c
