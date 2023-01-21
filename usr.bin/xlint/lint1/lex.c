@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.136 2023/01/21 09:04:58 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.137 2023/01/21 09:16:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.136 2023/01/21 09:04:58 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.137 2023/01/21 09:16:33 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -798,6 +798,71 @@ read_escaped_hex(int c)
 	return v;
 }
 
+static int
+read_escaped_backslash(int delim)
+{
+	int c;
+
+	switch (c = read_byte()) {
+	case '"':
+		if (!allow_c90 && delim == '\'')
+			/* \" inside character constants undef... */
+			warning(262);
+		return '"';
+	case '\'':
+		return '\'';
+	case '?':
+		if (!allow_c90)
+			/* \? undefined in traditional C */
+			warning(263);
+		return '?';
+	case '\\':
+		return '\\';
+	case 'a':
+		if (!allow_c90)
+			/* \a undefined in traditional C */
+			warning(81);
+		return '\a';
+	case 'b':
+		return '\b';
+	case 'f':
+		return '\f';
+	case 'n':
+		return '\n';
+	case 'r':
+		return '\r';
+	case 't':
+		return '\t';
+	case 'v':
+		if (!allow_c90)
+			/* \v undefined in traditional C */
+			warning(264);
+		return '\v';
+	case '8': case '9':
+		/* bad octal digit %c */
+		warning(77, c);
+		/* FALLTHROUGH */
+	case '0': case '1': case '2': case '3':
+	case '4': case '5': case '6': case '7':
+		return read_escaped_oct(c);
+	case 'x':
+		return read_escaped_hex(c);
+	case '\n':
+		return get_escaped_char(delim);
+	case EOF:
+		return -2;
+	default:
+		if (isprint(c)) {
+			/* dubious escape \%c */
+			warning(79, c);
+		} else {
+			/* dubious escape \%o */
+			warning(80, c);
+		}
+		return c;
+	}
+}
+
 /* Called if lex found a leading "'". */
 int
 lex_character_constant(void)
@@ -921,63 +986,7 @@ get_escaped_char(int delim)
 	case EOF:
 		return -2;
 	case '\\':
-		switch (c = read_byte()) {
-		case '"':
-			if (!allow_c90 && delim == '\'')
-				/* \" inside character constants undef... */
-				warning(262);
-			return '"';
-		case '\'':
-			return '\'';
-		case '?':
-			if (!allow_c90)
-				/* \? undefined in traditional C */
-				warning(263);
-			return '?';
-		case '\\':
-			return '\\';
-		case 'a':
-			if (!allow_c90)
-				/* \a undefined in traditional C */
-				warning(81);
-			return '\a';
-		case 'b':
-			return '\b';
-		case 'f':
-			return '\f';
-		case 'n':
-			return '\n';
-		case 'r':
-			return '\r';
-		case 't':
-			return '\t';
-		case 'v':
-			if (!allow_c90)
-				/* \v undefined in traditional C */
-				warning(264);
-			return '\v';
-		case '8': case '9':
-			/* bad octal digit %c */
-			warning(77, c);
-			/* FALLTHROUGH */
-		case '0': case '1': case '2': case '3':
-		case '4': case '5': case '6': case '7':
-			return read_escaped_oct(c);
-		case 'x':
-			return read_escaped_hex(c);
-		case '\n':
-			return get_escaped_char(delim);
-		case EOF:
-			return -2;
-		default:
-			if (isprint(c)) {
-				/* dubious escape \%c */
-				warning(79, c);
-			} else {
-				/* dubious escape \%o */
-				warning(80, c);
-			}
-		}
+		return read_escaped_backslash(delim);
 	}
 	return c;
 }
