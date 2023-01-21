@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.135 2023/01/08 22:46:00 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.136 2023/01/21 09:04:58 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.135 2023/01/08 22:46:00 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.136 2023/01/21 09:04:58 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -746,6 +746,58 @@ lex_operator(int t, op_t o)
 	return t;
 }
 
+static int prev_byte = -1;
+
+static int
+read_escaped_oct(int c)
+{
+	int n = 3;
+	int v = 0;
+	do {
+		v = (v << 3) + (c - '0');
+		c = read_byte();
+	} while (--n > 0 && '0' <= c && c <= '7');
+	prev_byte = c;
+	if (v > TARG_UCHAR_MAX) {
+		/* character escape does not fit in character */
+		warning(76);
+		v &= CHAR_MASK;
+	}
+	return v;
+}
+
+static int
+read_escaped_hex(int c)
+{
+	if (!allow_c90)
+		/* \x undefined in traditional C */
+		warning(82);
+	int v = 0;
+	int n = 0;
+	while (c = read_byte(), isxdigit(c)) {
+		c = isdigit(c) ?
+		    c - '0' : toupper(c) - 'A' + 10;
+		v = (v << 4) + c;
+		if (n >= 0) {
+			if ((v & ~CHAR_MASK) != 0) {
+				/* overflow in hex escape */
+				warning(75);
+				n = -1;
+			} else {
+				n++;
+			}
+		}
+	}
+	prev_byte = c;
+	if (n == 0) {
+		/* no hex digits follow \x */
+		error(74);
+	} if (n == -1) {
+		v &= CHAR_MASK;
+	}
+	return v;
+}
+
 /* Called if lex found a leading "'". */
 int
 lex_character_constant(void)
@@ -844,14 +896,13 @@ lex_wide_character_constant(void)
 static int
 get_escaped_char(int delim)
 {
-	static	int pbc = -1;
-	int	n, c, v;
+	int c;
 
-	if (pbc == -1) {
+	if (prev_byte == -1) {
 		c = read_byte();
 	} else {
-		c = pbc;
-		pbc = -1;
+		c = prev_byte;
+		prev_byte = -1;
 	}
 	if (c == delim)
 		return -1;
@@ -911,47 +962,9 @@ get_escaped_char(int delim)
 			/* FALLTHROUGH */
 		case '0': case '1': case '2': case '3':
 		case '4': case '5': case '6': case '7':
-			n = 3;
-			v = 0;
-			do {
-				v = (v << 3) + (c - '0');
-				c = read_byte();
-			} while (--n > 0 && '0' <= c && c <= '7');
-			pbc = c;
-			if (v > TARG_UCHAR_MAX) {
-				/* character escape does not fit in character */
-				warning(76);
-				v &= CHAR_MASK;
-			}
-			return v;
+			return read_escaped_oct(c);
 		case 'x':
-			if (!allow_c90)
-				/* \x undefined in traditional C */
-				warning(82);
-			v = 0;
-			n = 0;
-			while (c = read_byte(), isxdigit(c)) {
-				c = isdigit(c) ?
-				    c - '0' : toupper(c) - 'A' + 10;
-				v = (v << 4) + c;
-				if (n >= 0) {
-					if ((v & ~CHAR_MASK) != 0) {
-						/* overflow in hex escape */
-						warning(75);
-						n = -1;
-					} else {
-						n++;
-					}
-				}
-			}
-			pbc = c;
-			if (n == 0) {
-				/* no hex digits follow \x */
-				error(74);
-			} if (n == -1) {
-				v &= CHAR_MASK;
-			}
-			return v;
+			return read_escaped_hex(c);
 		case '\n':
 			return get_escaped_char(delim);
 		case EOF:
