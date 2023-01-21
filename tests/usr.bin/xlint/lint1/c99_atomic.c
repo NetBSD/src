@@ -1,4 +1,4 @@
-/*	$NetBSD: c99_atomic.c,v 1.1 2023/01/21 11:57:03 rillig Exp $	*/
+/*	$NetBSD: c99_atomic.c,v 1.2 2023/01/21 13:07:22 rillig Exp $	*/
 # 3 "c99_atomic.c"
 
 /*
@@ -6,13 +6,10 @@
  * mode, the parser recognizes the keyword but flags it.
  */
 
-/* FIXME: The error messages are misleading. */
-
-/* expect+2: error: old-style declaration; add 'int' [1] */
-/* expect+1: error: syntax error 'int' [249] */
+/* expect+1: error: '_Atomic' requires C11 or later [350] */
 typedef _Atomic int atomic_int;
 
+/* expect+1: error: '_Atomic' requires C11 or later [350] */
 typedef _Atomic struct {
 	int field;
 } atomic_struct;
-/* expect-1: error: illegal type combination [4] */
