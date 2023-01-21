@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.492 2023/01/14 10:33:34 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.493 2023/01/21 20:07:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.492 2023/01/14 10:33:34 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.493 2023/01/21 20:07:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -388,7 +388,7 @@ static void
 fallback_symbol(sym_t *sym)
 {
 
-	if (fallback_symbol_strict_bool(sym))
+	if (Tflag && fallback_symbol_strict_bool(sym))
 		return;
 
 	if (block_level > 0 && (strcmp(sym->s_name, "__FUNCTION__") == 0 ||
