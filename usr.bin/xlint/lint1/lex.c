@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.142 2023/01/21 13:48:40 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.143 2023/01/21 18:03:37 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.142 2023/01/21 13:48:40 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.143 2023/01/21 18:03:37 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -212,12 +212,12 @@ symtab_add(sym_t *sym)
 }
 
 static sym_t *
-symtab_search(sbuf_t *sb)
+symtab_search(const char *name)
 {
 
-	unsigned int h = hash(sb->sb_name);
+	unsigned int h = hash(name);
 	for (sym_t *sym = symtab[h]; sym != NULL; sym = sym->s_symtab_next) {
-		if (strcmp(sym->s_name, sb->sb_name) != 0)
+		if (strcmp(sym->s_name, name) != 0)
 			continue;
 
 		const struct keyword *kw = sym->s_keyword;
@@ -448,34 +448,27 @@ lex_keyword(sym_t *sym)
 extern int
 lex_name(const char *yytext, size_t yyleng)
 {
-	char	*s;
-	sbuf_t	*sb;
-	sym_t	*sym;
-	int	tok;
 
-	sb = xmalloc(sizeof(*sb));
-	sb->sb_name = yytext;
-	sb->sb_len = yyleng;
-	if ((sym = symtab_search(sb)) != NULL && sym->s_keyword != NULL) {
-		free(sb);
+	sym_t *sym = symtab_search(yytext);
+	if (sym != NULL && sym->s_keyword != NULL)
 		return lex_keyword(sym);
-	}
 
+	sbuf_t *sb = xmalloc(sizeof(*sb));
+	sb->sb_len = yyleng;
 	sb->sb_sym = sym;
+	yylval.y_name = sb;
 
 	if (sym != NULL) {
 		lint_assert(block_level >= sym->s_block_level);
 		sb->sb_name = sym->s_name;
-		tok = sym->s_scl == TYPEDEF ? T_TYPENAME : T_NAME;
-	} else {
-		s = block_zero_alloc(yyleng + 1);
-		(void)memcpy(s, yytext, yyleng + 1);
-		sb->sb_name = s;
-		tok = T_NAME;
+		return sym->s_scl == TYPEDEF ? T_TYPENAME : T_NAME;
 	}
 
-	yylval.y_name = sb;
-	return tok;
+	char *s = block_zero_alloc(yyleng + 1);
+	(void)memcpy(s, yytext, yyleng + 1);
+	sb->sb_name = s;
+	return T_NAME;
+
 }
 
 /*
@@ -511,15 +504,13 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 
 	/* read suffixes */
 	l_suffix = u_suffix = 0;
-	for (;;) {
-		if ((c = cp[len - 1]) == 'l' || c == 'L') {
+	for (;; len--) {
+		if ((c = cp[len - 1]) == 'l' || c == 'L')
 			l_suffix++;
-		} else if (c == 'u' || c == 'U') {
+		else if (c == 'u' || c == 'U')
 			u_suffix++;
-		} else {
+		else
 			break;
-		}
-		len--;
 	}
 	if (l_suffix > 2 || u_suffix > 1) {
 		/* malformed integer constant */
@@ -668,7 +659,6 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 	tspec_t typ;
 	char	c, *eptr;
 	double	d;
-	float	f = 0;
 
 	cp = yytext;
 	len = yyleng;
@@ -719,20 +709,17 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 		warning(248);
 
 	if (typ == FLOAT) {
-		f = (float)d;
-		if (isfinite(f) == 0) {
+		d = (float)d;
+		if (isfinite(d) == 0) {
 			/* floating-point constant out of range */
 			warning(248);
-			f = f > 0 ? FLT_MAX : -FLT_MAX;
+			d = d > 0 ? FLT_MAX : -FLT_MAX;
 		}
 	}
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = typ;
-	if (typ == FLOAT)
-		yylval.y_val->v_ldbl = f;
-	else
-		yylval.y_val->v_ldbl = d;
+	yylval.y_val->v_ldbl = d;
 
 	return T_CON;
 }
@@ -1256,7 +1243,6 @@ lex_string(void)
 	unsigned char *s;
 	int	c;
 	size_t	len, max;
-	strg_t	*strg;
 
 	s = xmalloc(max = 64);
 
@@ -1272,7 +1258,7 @@ lex_string(void)
 		/* unterminated string constant */
 		error(258);
 
-	strg = xcalloc(1, sizeof(*strg));
+	strg_t *strg = xcalloc(1, sizeof(*strg));
 	strg->st_char = true;
 	strg->st_len = len;
 	strg->st_mem = s;
@@ -1284,15 +1270,10 @@ lex_string(void)
 int
 lex_wide_string(void)
 {
-	char	*s;
 	int	c, n;
-	size_t	i, wi;
-	size_t	len, max, wlen;
-	wchar_t	*ws;
-	strg_t	*strg;
 
-	s = xmalloc(max = 64);
-	len = 0;
+	size_t len = 0, max = 64;
+	char *s = xmalloc(max);
 	while ((c = get_escaped_char('"')) >= 0) {
 		/* +1 to save space for a trailing NUL character */
 		if (len + 1 >= max)
@@ -1306,7 +1287,8 @@ lex_wide_string(void)
 
 	/* get length of wide-character string */
 	(void)mblen(NULL, 0);
-	for (i = 0, wlen = 0; i < len; i += n, wlen++) {
+	size_t wlen = 0;
+	for (size_t i = 0; i < len; i += n, wlen++) {
 		if ((n = mblen(&s[i], MB_CUR_MAX)) == -1) {
 			/* invalid multibyte character */
 			error(291);
@@ -1316,11 +1298,11 @@ lex_wide_string(void)
 			n = 1;
 	}
 
-	ws = xmalloc((wlen + 1) * sizeof(*ws));
-
+	wchar_t	*ws = xmalloc((wlen + 1) * sizeof(*ws));
+	size_t wi = 0;
 	/* convert from multibyte to wide char */
 	(void)mbtowc(NULL, NULL, 0);
-	for (i = 0, wi = 0; i < len; i += n, wi++) {
+	for (size_t i = 0; i < len; i += n, wi++) {
 		if ((n = mbtowc(&ws[wi], &s[i], MB_CUR_MAX)) == -1)
 			break;
 		if (n == 0)
@@ -1329,7 +1311,7 @@ lex_wide_string(void)
 	ws[wi] = 0;
 	free(s);
 
-	strg = xcalloc(1, sizeof(*strg));
+	strg_t *strg = xcalloc(1, sizeof(*strg));
 	strg->st_char = false;
 	strg->st_len = wlen;
 	strg->st_mem = ws;
@@ -1373,11 +1355,8 @@ lex_unknown_character(int c)
 sym_t *
 getsym(sbuf_t *sb)
 {
-	dinfo_t	*di;
-	char	*s;
-	sym_t	*sym;
 
-	sym = sb->sb_sym;
+	sym_t *sym = sb->sb_sym;
 
 	/*
 	 * During member declaration it is possible that name() looked
@@ -1387,7 +1366,7 @@ getsym(sbuf_t *sb)
 	 */
 	if (symtyp == FMEMBER || symtyp == FLABEL) {
 		if (sym == NULL || sym->s_kind == FVFT)
-			sym = symtab_search(sb);
+			sym = symtab_search(sb->sb_name);
 	}
 
 	if (sym != NULL) {
@@ -1400,9 +1379,10 @@ getsym(sbuf_t *sb)
 	/* create a new symbol table entry */
 
 	/* labels must always be allocated at level 1 (outermost block) */
+	dinfo_t	*di;
 	if (symtyp == FLABEL) {
 		sym = level_zero_alloc(1, sizeof(*sym));
-		s = level_zero_alloc(1, sb->sb_len + 1);
+		char *s = level_zero_alloc(1, sb->sb_len + 1);
 		(void)memcpy(s, sb->sb_name, sb->sb_len + 1);
 		sym->s_name = s;
 		sym->s_block_level = 1;
@@ -1538,8 +1518,8 @@ clean_up_after_error(void)
 
 	symtab_remove_locals();
 
-	for (size_t i = mem_block_level; i > 0; i--)
-		level_free_all(i);
+	while (mem_block_level > 0)
+		level_free_all(mem_block_level--);
 }
 
 /* Create a new symbol with the same name as an existing symbol. */
