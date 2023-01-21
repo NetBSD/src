@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.429 2023/01/21 12:50:52 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.430 2023/01/21 13:07:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.429 2023/01/21 12:50:52 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.430 2023/01/21 13:07:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -206,7 +206,7 @@ is_either(const char *s, const char *a, const char *b)
  */
 %token	<y_tspec>	T_TYPE
 
-/* qualifiers (const, volatile, restrict, _Thread_local) */
+/* qualifiers (const, volatile, restrict, _Thread_local, _Atomic) */
 %token	<y_tqual>	T_QUAL
 
 /* struct or union */
@@ -1099,7 +1099,13 @@ enumerator:			/* C99 6.7.2.2 */
 	;
 
 type_qualifier:			/* C99 6.7.3 */
-	  T_QUAL
+	  T_QUAL {
+		/* TODO: First fix c11ism, then use it here. */
+		if ($1 == ATOMIC && !allow_c11)
+			/* '_Atomic' requires C11 or later */
+			error(350);
+		$$ = $1;
+	  }
 	;
 
 pointer:			/* C99 6.7.5 */

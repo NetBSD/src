@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.303 2023/01/14 10:33:34 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.304 2023/01/21 13:07:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.303 2023/01/14 10:33:34 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.304 2023/01/21 13:07:22 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -560,7 +560,7 @@ dcs_add_qualifier(tqual_t q)
 		}
 		dcs->d_volatile = true;
 	} else {
-		lint_assert(q == RESTRICT || q == THREAD);
+		lint_assert(q == RESTRICT || q == THREAD || q == ATOMIC);
 		/* Silently ignore these qualifiers. */
 	}
 }

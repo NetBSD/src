@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.160 2023/01/14 10:33:34 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.161 2023/01/21 13:07:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -92,7 +92,11 @@ typedef	struct strg {
  * qualifiers (only for lex/yacc interface)
  */
 typedef enum {
-	CONST, VOLATILE, RESTRICT, THREAD
+	CONST,
+	VOLATILE,
+	RESTRICT,
+	THREAD,			/* XXX: storage-class-qualifier */
+	ATOMIC,
 } tqual_t;
 
 /* An integer or floating-point value. */

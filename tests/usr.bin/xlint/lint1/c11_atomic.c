@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_atomic.c,v 1.1 2023/01/21 11:57:03 rillig Exp $	*/
+/*	$NetBSD: c11_atomic.c,v 1.2 2023/01/21 13:07:22 rillig Exp $	*/
 # 3 "c11_atomic.c"
 
 /*
@@ -12,16 +12,11 @@
 
 /* lint1-extra-flags: -Ac11 */
 
-/* FIXME: The error messages are misleading. */
-
 /* C11 6.7.3 "Type qualifiers" */
-/* expect+2: error: old-style declaration; add 'int' [1] */
-/* expect+1: error: syntax error 'int' [249] */
 typedef _Atomic int atomic_int;
 
 typedef _Atomic struct {
 	int field;
 } atomic_struct;
-/* expect-1: error: illegal type combination [4] */
 
 /* TODO: C11 6.7.2.4 "Atomic type specifiers" */
