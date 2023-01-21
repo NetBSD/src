@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.426 2023/01/15 00:05:38 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.427 2023/01/21 08:04:43 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.426 2023/01/15 00:05:38 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.427 2023/01/21 08:04:43 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -850,7 +850,7 @@ notype_type_specifier:		/* see C99 6.7.2 */
 		$$ = gettyp($1);
 	  }
 	| T_TYPEOF T_LPAREN expression T_RPAREN {	/* GCC extension */
-		$$ = block_dup_type($3->tn_type);
+		$$ = $3 != NULL ? block_dup_type($3->tn_type) : gettyp(INT);
 		$$->t_typeof = true;
 	  }
 	| struct_or_union_specifier {
