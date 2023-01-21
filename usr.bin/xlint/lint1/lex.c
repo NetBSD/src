@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.138 2023/01/21 09:42:12 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.139 2023/01/21 10:11:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.138 2023/01/21 09:42:12 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.139 2023/01/21 10:11:41 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -749,18 +749,18 @@ static int
 read_escaped_oct(int c)
 {
 	int n = 3;
-	int v = 0;
+	int value = 0;
 	do {
-		v = (v << 3) + (c - '0');
+		value = (value << 3) + (c - '0');
 		c = read_byte();
 	} while (--n > 0 && '0' <= c && c <= '7');
 	prev_byte = c;
-	if (v > TARG_UCHAR_MAX) {
+	if (value > TARG_UCHAR_MAX) {
 		/* character escape does not fit in character */
 		warning(76);
-		v &= CHAR_MASK;
+		value &= CHAR_MASK;
 	}
-	return v;
+	return value;
 }
 
 static int
@@ -769,30 +769,29 @@ read_escaped_hex(int c)
 	if (!allow_c90)
 		/* \x undefined in traditional C */
 		warning(82);
-	int v = 0;
-	int n = 0;
+	int value = 0;
+	int state = 0;		/* 0 = no digits, 1 = OK, -1 = overflow */
 	while (c = read_byte(), isxdigit(c)) {
-		c = isdigit(c) ?
-		    c - '0' : toupper(c) - 'A' + 10;
-		v = (v << 4) + c;
-		if (n >= 0) {
-			if ((v & ~CHAR_MASK) != 0) {
+		c = isdigit(c) ? c - '0' : toupper(c) - 'A' + 10;
+		value = (value << 4) + c;
+		if (state >= 0) {
+			if ((value & ~CHAR_MASK) != 0) {
 				/* overflow in hex escape */
 				warning(75);
-				n = -1;
+				state = -1;
 			} else {
-				n++;
+				state = 1;
 			}
 		}
 	}
 	prev_byte = c;
-	if (n == 0) {
+	if (state == 0) {
 		/* no hex digits follow \x */
 		error(74);
-	} if (n == -1) {
-		v &= CHAR_MASK;
 	}
-	return v;
+	if (state == -1)
+		value &= CHAR_MASK;
+	return value;
 }
 
 static int
