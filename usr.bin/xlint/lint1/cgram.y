@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.427 2023/01/21 08:04:43 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.428 2023/01/21 12:45:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.427 2023/01/21 08:04:43 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.428 2023/01/21 12:45:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -291,11 +291,12 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_sym>		enums_with_opt_comma
 %type	<y_sym>		enumerator_list
 %type	<y_sym>		enumerator
-%type	<y_qual_ptr>	type_qualifier
+%type	<y_tqual>	type_qualifier
 %type	<y_qual_ptr>	pointer
 %type	<y_qual_ptr>	asterisk
 %type	<y_qual_ptr>	type_qualifier_list_opt
 %type	<y_qual_ptr>	type_qualifier_list
+%type	<y_qual_ptr>	type_qualifier_list_elem
 %type	<y_sym>		notype_declarator
 %type	<y_sym>		type_declarator
 %type	<y_sym>		notype_direct_declarator
@@ -1098,13 +1099,7 @@ enumerator:			/* C99 6.7.2.2 */
 	;
 
 type_qualifier:			/* C99 6.7.3 */
-	  T_QUAL {
-		$$ = xcalloc(1, sizeof(*$$));
-		if ($1 == CONST)
-			$$->p_const = true;
-		if ($1 == VOLATILE)
-			$$->p_volatile = true;
-	  }
+	  T_QUAL
 	;
 
 pointer:			/* C99 6.7.5 */
@@ -1132,9 +1127,19 @@ type_qualifier_list_opt:	/* see C99 6.7.5 */
 	;
 
 type_qualifier_list:		/* C99 6.7.5 */
-	  type_qualifier
-	| type_qualifier_list type_qualifier {
+	  type_qualifier_list_elem
+	| type_qualifier_list type_qualifier_list_elem {
 		$$ = merge_qualified_pointer($1, $2);
+	  }
+	;
+
+type_qualifier_list_elem:	/* helper for 'pointer' */
+	type_qualifier {
+		$$ = xcalloc(1, sizeof(*$$));
+		if ($1 == CONST)
+			$$->p_const = true;
+		if ($1 == VOLATILE)
+			$$->p_volatile = true;
 	  }
 	;
 
