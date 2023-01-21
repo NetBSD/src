@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.24 2023/01/08 14:05:02 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.25 2023/01/21 13:07:22 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.24 2023/01/08 14:05:02 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.25 2023/01/21 13:07:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -284,6 +284,7 @@ tqual_name(tqual_t qual)
 		"volatile",
 		"restrict",
 		"_Thread_local",
+		"_Atomic",
 	};
 
 	return name[qual];
