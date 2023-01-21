@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.430 2023/01/21 13:07:22 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.431 2023/01/21 13:48:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.430 2023/01/21 13:07:22 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.431 2023/01/21 13:48:40 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -143,7 +143,7 @@ is_either(const char *s, const char *a, const char *b)
 
 %}
 
-%expect 129
+%expect 131
 
 %union {
 	val_t	*y_val;
@@ -206,8 +206,9 @@ is_either(const char *s, const char *a, const char *b)
  */
 %token	<y_tspec>	T_TYPE
 
-/* qualifiers (const, volatile, restrict, _Thread_local, _Atomic) */
+/* qualifiers (const, volatile, restrict, _Thread_local) */
 %token	<y_tqual>	T_QUAL
+%token	<y_tqual>	T_ATOMIC
 
 /* struct or union */
 %token	<y_tspec>	T_STRUCT_OR_UNION
@@ -276,6 +277,7 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_type>	begin_type_typespec
 %type	<y_type>	type_specifier
 %type	<y_type>	notype_type_specifier
+%type	<y_type>	atomic_type_specifier
 %type	<y_type>	struct_or_union_specifier
 %type	<y_tspec>	struct_or_union
 %type	<y_sym>		braced_struct_declaration_list
@@ -854,6 +856,7 @@ notype_type_specifier:		/* see C99 6.7.2 */
 		$$ = $3 != NULL ? block_dup_type($3->tn_type) : gettyp(INT);
 		$$->t_typeof = true;
 	  }
+	| atomic_type_specifier
 	| struct_or_union_specifier {
 		end_declaration_level();
 		$$ = $1;
@@ -861,6 +864,13 @@ notype_type_specifier:		/* see C99 6.7.2 */
 	| enum_specifier {
 		end_declaration_level();
 		$$ = $1;
+	  }
+	;
+
+/* K&R ---, C90 ---, C99 ---, C11 6.7.2.4 */
+atomic_type_specifier:
+	  atomic T_LPAREN type_name T_RPAREN {
+		$$ = $3;
 	  }
 	;
 
@@ -1099,12 +1109,18 @@ enumerator:			/* C99 6.7.2.2 */
 	;
 
 type_qualifier:			/* C99 6.7.3 */
-	  T_QUAL {
+	  T_QUAL
+	| atomic {
+		$$ = ATOMIC;
+	  }
+	;
+
+atomic:				/* helper */
+	  T_ATOMIC {
 		/* TODO: First fix c11ism, then use it here. */
-		if ($1 == ATOMIC && !allow_c11)
+		if (!allow_c11)
 			/* '_Atomic' requires C11 or later */
 			error(350);
-		$$ = $1;
 	  }
 	;
 
