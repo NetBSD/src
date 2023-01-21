@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.19 2022/06/22 19:23:17 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.20 2023/01/21 20:07:01 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.19 2022/06/22 19:23:17 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.20 2023/01/21 20:07:01 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -217,8 +217,6 @@ is_typeok_bool_compares_with_zero(const tnode_t *tn)
 {
 	tspec_t t;
 
-	lint_assert(Tflag);
-
 	while (tn->tn_op == COMMA)
 		tn = tn->tn_right;
 	tn = before_conversion(tn);
@@ -243,14 +241,14 @@ is_typeok_bool_compares_with_zero(const tnode_t *tn)
 bool
 fallback_symbol_strict_bool(sym_t *sym)
 {
-	if (Tflag && strcmp(sym->s_name, "__lint_false") == 0) {
+	if (strcmp(sym->s_name, "__lint_false") == 0) {
 		sym->s_scl = BOOL_CONST;
 		sym->s_type = gettyp(BOOL);
 		sym->u.s_bool_constant = false;
 		return true;
 	}
 
-	if (Tflag && strcmp(sym->s_name, "__lint_true") == 0) {
+	if (strcmp(sym->s_name, "__lint_true") == 0) {
 		sym->s_scl = BOOL_CONST;
 		sym->s_type = gettyp(BOOL);
 		sym->u.s_bool_constant = true;
