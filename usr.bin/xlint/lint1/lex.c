@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.143 2023/01/21 18:03:37 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.144 2023/01/21 21:26:40 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.143 2023/01/21 18:03:37 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.144 2023/01/21 21:26:40 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -420,16 +420,15 @@ read_byte(void)
 static int
 lex_keyword(sym_t *sym)
 {
-	int	t;
+	int tok = sym->u.s_keyword.sk_token;
 
-	if ((t = sym->u.s_keyword.sk_token) == T_SCLASS) {
+	if (tok == T_SCLASS)
 		yylval.y_scl = sym->s_scl;
-	} else if (t == T_TYPE || t == T_STRUCT_OR_UNION) {
+	if (tok == T_TYPE || tok == T_STRUCT_OR_UNION)
 		yylval.y_tspec = sym->u.s_keyword.sk_tspec;
-	} else if (t == T_QUAL) {
+	if (tok == T_QUAL)
 		yylval.y_tqual = sym->u.s_keyword.sk_qualifier;
-	}
-	return t;
+	return tok;
 }
 
 /*
@@ -464,9 +463,9 @@ lex_name(const char *yytext, size_t yyleng)
 		return sym->s_scl == TYPEDEF ? T_TYPENAME : T_NAME;
 	}
 
-	char *s = block_zero_alloc(yyleng + 1);
-	(void)memcpy(s, yytext, yyleng + 1);
-	sb->sb_name = s;
+	char *name = block_zero_alloc(yyleng + 1);
+	(void)memcpy(name, yytext, yyleng + 1);
+	sb->sb_name = name;
 	return T_NAME;
 
 }
