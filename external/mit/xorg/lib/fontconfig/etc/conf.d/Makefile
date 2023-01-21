@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2023/01/19 06:29:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2023/01/21 04:04:30 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,8 @@
 FONTCONFIG_LINKS= \
 	10-hinting-slight.conf \
 	10-scale-bitmap-fonts.conf \
+	10-yes-antialias.conf   \
+	10-sub-pixel-rgb.conf \
 	11-lcdfilter-default.conf \
 	20-unhint-small-vera.conf \
 	30-metric-aliases.conf \

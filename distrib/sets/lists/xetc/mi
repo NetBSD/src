@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.41 2023/01/19 06:29:10 mrg Exp $
+# $NetBSD: mi,v 1.42 2023/01/21 04:04:30 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -33,6 +33,7 @@
 ./etc/fonts/conf.avail/10-hinting-none.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/10-hinting-slight.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/10-no-sub-pixel.conf		xetc-fontconfig-etc	xorg
+./etc/fonts/conf.avail/10-no-antialias.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/10-scale-bitmap-fonts.conf	xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-bgr.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-rgb.conf		xetc-fontconfig-etc	xorg
@@ -68,6 +69,8 @@
 ./etc/fonts/conf.avail/90-synthetic.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/10-hinting-slight.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/10-scale-bitmap-fonts.conf		xetc-fontconfig-etc	xorg
+./etc/fonts/conf.d/10-sub-pixel-rgb.conf		xetc-fontconfig-etc	xorg
+./etc/fonts/conf.d/10-yes-antialias.conf 		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/11-lcdfilter-default.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.d/20-fix-globaladvance.conf		xetc-obsolete	obsolete
 ./etc/fonts/conf.d/20-unhint-small-vera.conf		xetc-fontconfig-etc	xorg
