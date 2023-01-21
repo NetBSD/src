@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.428 2023/01/21 12:45:27 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.429 2023/01/21 12:50:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.428 2023/01/21 12:45:27 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.429 2023/01/21 12:50:52 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -744,7 +744,7 @@ begin_type_declaration_specifiers:	/* see C99 6.7 */
 	;
 
 begin_type_declmods:		/* see C99 6.7 */
-	  begin_type T_QUAL {
+	  begin_type type_qualifier {
 		dcs_add_qualifier($2);
 	  }
 	| begin_type T_SCLASS {
@@ -765,7 +765,7 @@ begin_type_specifier_qualifier_list_postfix:
 	| begin_type_qualifier_list type_specifier {
 		dcs_add_type($2);
 	  }
-	| begin_type_specifier_qualifier_list_postfix T_QUAL {
+	| begin_type_specifier_qualifier_list_postfix type_qualifier {
 		dcs_add_qualifier($2);
 	  }
 	| begin_type_specifier_qualifier_list_postfix notype_type_specifier {
@@ -784,16 +784,16 @@ begin_type_typespec:
 	;
 
 begin_type_qualifier_list:
-	  begin_type T_QUAL {
+	  begin_type type_qualifier {
 		dcs_add_qualifier($2);
 	  }
-	| begin_type_qualifier_list T_QUAL {
+	| begin_type_qualifier_list type_qualifier {
 		dcs_add_qualifier($2);
 	  }
 	;
 
 declmod:
-	  T_QUAL {
+	  type_qualifier {
 		dcs_add_qualifier($1);
 	  }
 	| T_SCLASS {
@@ -1334,7 +1334,7 @@ array_size:
 		c11ism(343);
 		$$ = $3;
 	  }
-	| T_QUAL {
+	| type_qualifier {
 		/* C11 6.7.6.2 */
 		if ($1 != RESTRICT)
 			yyerror("Bad attribute");
@@ -1861,7 +1861,7 @@ asm_statement:			/* GCC extension */
 	  T_ASM T_LPAREN read_until_rparen T_SEMI {
 		dcs_set_asm();
 	  }
-	| T_ASM T_QUAL T_LPAREN read_until_rparen T_SEMI {
+	| T_ASM type_qualifier T_LPAREN read_until_rparen T_SEMI {
 		dcs_set_asm();
 	  }
 	| T_ASM error
@@ -2062,7 +2062,7 @@ gcc_attribute:
 	}
 	| T_NAME T_LPAREN T_RPAREN
 	| T_NAME T_LPAREN gcc_attribute_parameters T_RPAREN
-	| T_QUAL {
+	| type_qualifier {
 		if ($1 != CONST)
 			yyerror("Bad attribute");
 	  }
