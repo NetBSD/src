@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.106 2023/01/21 11:22:21 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.107 2023/01/21 11:29:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.106 2023/01/21 11:22:21 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.107 2023/01/21 11:29:30 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -845,7 +845,7 @@ cat(const list *srcs, const char *dest)
 				warn("read error on %s", src);
 				terminate(-1);
 			}
-			if (write(ofd, buf, (size_t)rlen) == -1) {
+			if (write(ofd, buf, (size_t)rlen) != rlen) {
 				warn("write error on %s", dest);
 				terminate(-1);
 			}
