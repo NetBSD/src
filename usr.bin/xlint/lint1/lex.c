@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.139 2023/01/21 10:11:41 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.140 2023/01/21 10:18:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.139 2023/01/21 10:11:41 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.140 2023/01/21 10:18:15 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -770,18 +770,18 @@ read_escaped_hex(int c)
 		/* \x undefined in traditional C */
 		warning(82);
 	int value = 0;
-	int state = 0;		/* 0 = no digits, 1 = OK, -1 = overflow */
+	int state = 0;		/* 0 = no digits, 1 = OK, 2 = overflow */
 	while (c = read_byte(), isxdigit(c)) {
 		c = isdigit(c) ? c - '0' : toupper(c) - 'A' + 10;
 		value = (value << 4) + c;
-		if (state >= 0) {
-			if ((value & ~CHAR_MASK) != 0) {
-				/* overflow in hex escape */
-				warning(75);
-				state = -1;
-			} else {
-				state = 1;
-			}
+		if (state == 2)
+			continue;
+		if ((value & ~CHAR_MASK) != 0) {
+			/* overflow in hex escape */
+			warning(75);
+			state = 2;
+		} else {
+			state = 1;
 		}
 	}
 	prev_byte = c;
@@ -789,7 +789,7 @@ read_escaped_hex(int c)
 		/* no hex digits follow \x */
 		error(74);
 	}
-	if (state == -1)
+	if (state == 2)
 		value &= CHAR_MASK;
 	return value;
 }
