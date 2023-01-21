@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.20 2022/06/26 21:35:53 riastradh Exp $ */
+/* $NetBSD: umcs.c,v 1.21 2023/01/21 16:50:05 andvar Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -36,12 +36,12 @@
  * http://www.moschip.com.  The datasheets don't contain full
  * programming information for the chip.
  *
- * It is nornal to have only two enabled ports in devices, based on
+ * It is normal to have only two enabled ports in devices, based on
  * quad-port mos7840.
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.20 2022/06/26 21:35:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.21 2023/01/21 16:50:05 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -244,7 +244,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	aprint_verbose_dev(self, "found %d active ports\n", sc->sc_numports);
 
 	if (!umcs7840_get_reg(sc, MCS7840_DEV_REG_MODE, &data)) {
-		aprint_verbose_dev(self, "On-die confguration: RST: active %s, "
+		aprint_verbose_dev(self, "On-die configuration: RST: active %s, "
 		    "HRD: %s, PLL: %s, POR: %s, Ports: %s, EEPROM write %s, "
 		    "IrDA is %savailable\n",
 		    (data & MCS7840_DEV_MODE_RESET) ? "low" : "high",
