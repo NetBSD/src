@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.105 2023/01/20 23:06:26 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.106 2023/01/21 11:22:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.105 2023/01/20 23:06:26 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.106 2023/01/21 11:22:21 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -152,6 +152,13 @@ list_add(list *l, const char *s)
 }
 
 static void
+list_add_flag(list *l, int c)
+{
+
+	list_add(l, (const char[3]){ '-', (char)c, '\0' });
+}
+
+static void
 list_add_unique(list *l, const char *s)
 {
 
@@ -175,41 +182,6 @@ list_clear(list *l)
 
 	while (l->len > 0)
 		free(l->items[--l->len]);
-}
-
-static void
-pass_to_cpp(const char *opt)
-{
-
-	list_add(&cpp.flags, opt);
-}
-
-static void
-pass_to_lint1(const char *opt)
-{
-
-	list_add(&lint1.flags, opt);
-}
-
-static void
-pass_flag_to_lint1(int flag)
-{
-
-	pass_to_lint1((const char[3]){ '-', (char)flag, '\0' });
-}
-
-static void
-pass_to_lint2(const char *opt)
-{
-
-	list_add(&lint2.flags, opt);
-}
-
-static void
-pass_flag_to_lint2(int flag)
-{
-
-	pass_to_lint2((const char[3]){ '-', (char)flag, '\0' });
 }
 
 static char *
@@ -400,19 +372,19 @@ main(int argc, char *argv[])
 		terminate(-1);
 	}
 
-	pass_to_cpp("-E");
-	pass_to_cpp("-x");
-	pass_to_cpp("c");
-	pass_to_cpp("-U__GNUC__");
-	pass_to_cpp("-U__PCC__");
-	pass_to_cpp("-U__SSE__");
-	pass_to_cpp("-U__SSE4_1__");
-	pass_to_cpp("-Wp,-CC");
-	pass_to_cpp("-Wcomment");
-	pass_to_cpp("-D__LINT__");
-	pass_to_cpp("-Dlint");		/* XXX don't define with -s */
-	pass_to_cpp("-D__lint");
-	pass_to_cpp("-D__lint__");
+	list_add(&cpp.flags, "-E");
+	list_add(&cpp.flags, "-x");
+	list_add(&cpp.flags, "c");
+	list_add(&cpp.flags, "-U__GNUC__");
+	list_add(&cpp.flags, "-U__PCC__");
+	list_add(&cpp.flags, "-U__SSE__");
+	list_add(&cpp.flags, "-U__SSE4_1__");
+	list_add(&cpp.flags, "-Wp,-CC");
+	list_add(&cpp.flags, "-Wcomment");
+	list_add(&cpp.flags, "-D__LINT__");
+	list_add(&cpp.flags, "-Dlint");	/* XXX don't define with -s */
+	list_add(&cpp.flags, "-D__lint");
+	list_add(&cpp.flags, "-D__lint__");
 
 	list_add(&deflibs, "c");
 
@@ -437,15 +409,15 @@ main(int argc, char *argv[])
 		case 'w':
 		case 'z':
 		case 'P':
-			pass_flag_to_lint1(c);
+			list_add_flag(&lint1.flags, c);
 			break;
 
 		case 'A':
 		case 'q':
 		case 'R':
 		case 'X':
-			pass_flag_to_lint1(c);
-			pass_to_lint1(optarg);
+			list_add_flag(&lint1.flags, c);
+			list_add(&lint1.flags, optarg);
 			break;
 
 		case 'F':
@@ -453,8 +425,8 @@ main(int argc, char *argv[])
 			/* FALLTHROUGH */
 		case 'u':
 		case 'h':
-			pass_flag_to_lint1(c);
-			pass_flag_to_lint2(c);
+			list_add_flag(&lint1.flags, c);
+			list_add_flag(&lint2.flags, c);
 			break;
 
 		case 'i':
@@ -473,7 +445,7 @@ main(int argc, char *argv[])
 				list_clear(&deflibs);
 				list_add(&deflibs, "c");
 			}
-			pass_flag_to_lint1(c);
+			list_add_flag(&lint1.flags, c);
 			break;
 
 		case 's':
@@ -486,20 +458,20 @@ main(int argc, char *argv[])
 			list_add(&cpp.lcflags, "-pedantic");
 			list_add(&cpp.lcflags, "-D__STRICT_ANSI__");
 			sflag = true;
-			pass_flag_to_lint1(c);
-			pass_flag_to_lint2(c);
+			list_add_flag(&lint1.flags, c);
+			list_add_flag(&lint2.flags, c);
 			break;
 
 		case 'S':
 			if (tflag)
 				usage("%c and %s flags cannot be specified "
 				    "together", 'S', "t");
-			pass_flag_to_lint1(c);
+			list_add_flag(&lint1.flags, c);
 			break;
 
 		case 'T':
-			pass_to_cpp("-I" PATH_STRICT_BOOL_INCLUDE);
-			pass_flag_to_lint1(c);
+			list_add(&cpp.flags, "-I" PATH_STRICT_BOOL_INCLUDE);
+			list_add_flag(&lint1.flags, c);
 			break;
 
 #if !HAVE_NBTOOL_CONFIG_H
@@ -513,14 +485,14 @@ main(int argc, char *argv[])
 			list_add(&cpp.lcflags, "-Wtraditional");
 			list_add(&cpp.lcflags, "-D" MACHINE);
 			list_add(&cpp.lcflags, "-D" MACHINE_ARCH);
-			pass_flag_to_lint1(c);
-			pass_flag_to_lint2(c);
+			list_add_flag(&lint1.flags, c);
+			list_add_flag(&lint2.flags, c);
 			break;
 #endif
 
 		case 'x':
 		case 'H':
-			pass_flag_to_lint2(c);
+			list_add_flag(&lint2.flags, c);
 			break;
 
 		case 'C':
@@ -530,8 +502,8 @@ main(int argc, char *argv[])
 				usage("%c and %s flags cannot be specified "
 				    "together", 'C', "o or i");
 			Cflag = true;
-			pass_flag_to_lint2(c);
-			pass_to_lint2(optarg);
+			list_add_flag(&lint2.flags, c);
+			list_add(&lint2.flags, optarg);
 			lint2.outlib = xasprintf("llib-l%s.ln", optarg);
 			list_clear(&deflibs);
 			break;
@@ -540,9 +512,9 @@ main(int argc, char *argv[])
 			if (dflag)
 				usage("%c flag already specified", 'd');
 			dflag = true;
-			pass_to_cpp("-nostdinc");
-			pass_to_cpp("-isystem");
-			pass_to_cpp(optarg);
+			list_add(&cpp.flags, "-nostdinc");
+			list_add(&cpp.flags, "-isystem");
+			list_add(&cpp.flags, optarg);
 			break;
 
 		case 'D':
@@ -581,7 +553,7 @@ main(int argc, char *argv[])
 			break;
 
 		case 'Z':
-			pass_to_cpp(optarg);
+			list_add(&cpp.flags, optarg);
 			break;
 
 		default:
