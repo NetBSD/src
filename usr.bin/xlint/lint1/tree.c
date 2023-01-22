@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.493 2023/01/21 20:07:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.494 2023/01/22 16:05:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.493 2023/01/21 20:07:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.494 2023/01/22 16:05:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3609,6 +3609,7 @@ fold(tnode_t *tn)
 		break;
 	case SHL:
 		/* TODO: warn about out-of-bounds 'sr'. */
+		/* TODO: warn about overflow in signed '<<'. */
 		q = utyp ? (int64_t)(ul << (sr & 63)) : sl << (sr & 63);
 		break;
 	case SHR:

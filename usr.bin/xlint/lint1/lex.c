@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.144 2023/01/21 21:26:40 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.145 2023/01/22 16:05:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.144 2023/01/21 21:26:40 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.145 2023/01/22 16:05:08 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -751,13 +751,13 @@ read_escaped_oct(int c)
 	return value;
 }
 
-static int
+static unsigned int
 read_escaped_hex(int c)
 {
 	if (!allow_c90)
 		/* \x undefined in traditional C */
 		warning(82);
-	int value = 0;
+	unsigned int value = 0;
 	int state = 0;		/* 0 = no digits, 1 = OK, 2 = overflow */
 	while (c = read_byte(), isxdigit(c)) {
 		c = isdigit(c) ? c - '0' : toupper(c) - 'A' + 10;
@@ -830,7 +830,7 @@ read_escaped_backslash(int delim)
 	case '4': case '5': case '6': case '7':
 		return read_escaped_oct(c);
 	case 'x':
-		return read_escaped_hex(c);
+		return (int)read_escaped_hex(c);
 	case '\n':
 		return -3;
 	case EOF:
@@ -902,15 +902,17 @@ lex_character_constant(void)
 	n = 0;
 	val = 0;
 	while ((c = get_escaped_char('\'')) >= 0) {
-		val = (val << CHAR_SIZE) + c;
+		val = (int)((unsigned int)val << CHAR_SIZE) + c;
 		n++;
 	}
 	if (c == -2) {
 		/* unterminated character constant */
 		error(253);
 	} else if (n > sizeof(int) || (n > 1 && (pflag || hflag))) {
-		/* XXX: should rather be sizeof(TARG_INT) */
-
+		/*
+		 * XXX: ^^ should rather be sizeof(TARG_INT). Luckily,
+		 * sizeof(int) is the same on all supported platforms.
+		 */
 		/* too many characters in character constant */
 		error(71);
 	} else if (n > 1) {
