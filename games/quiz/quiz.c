@@ -1,4 +1,4 @@
-/*	$NetBSD: quiz.c,v 1.28 2019/02/03 03:19:25 mrg Exp $	*/
+/*	$NetBSD: quiz.c,v 1.29 2023/01/22 17:19:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)quiz.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: quiz.c,v 1.28 2019/02/03 03:19:25 mrg Exp $");
+__RCSID("$NetBSD: quiz.c,v 1.29 2023/01/22 17:19:11 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,7 +362,7 @@ score(unsigned r, unsigned w, unsigned g)
 static void
 downcase(char *p)
 {
-	int ch;
+	unsigned char ch;
 
 	for (; (ch = *p) != '\0'; ++p)
 		if (isascii(ch) && isupper(ch))
