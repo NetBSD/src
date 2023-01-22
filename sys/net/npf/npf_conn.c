@@ -97,14 +97,14 @@
  *
  * Lock order
  *
- *	npf->config_lock ->
+ *	npf_t::config_lock ->
  *		conn_lock ->
  *			npf_conn_t::c_lock
  */
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.34 2022/02/13 19:20:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.35 2023/01/22 18:39:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
