@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.39 2023/01/22 18:39:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.40 2023/01/22 18:45:43 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -101,7 +101,7 @@ struct npf_table {
 
 	/*
 	 * Table ID, type and lock.  The ID may change during the
-	 * config reload, it is protected by the npf->config_lock.
+	 * config reload, it is protected by the npf_t::config_lock.
 	 */
 	int			t_type;
 	unsigned		t_id;
