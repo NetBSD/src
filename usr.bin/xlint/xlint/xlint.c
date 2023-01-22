@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.107 2023/01/21 11:29:30 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.108 2023/01/22 15:20:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.107 2023/01/21 11:29:30 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.108 2023/01/22 15:20:01 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -512,8 +512,7 @@ main(int argc, char *argv[])
 			if (dflag)
 				usage("%c flag already specified", 'd');
 			dflag = true;
-			list_add(&cpp.flags, "-nostdinc");
-			list_add(&cpp.flags, "-isystem");
+			list_add(&cpp.flags, "--sysroot");
 			list_add(&cpp.flags, optarg);
 			break;
 
