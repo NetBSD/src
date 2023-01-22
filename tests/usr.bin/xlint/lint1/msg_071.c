@@ -1,7 +1,14 @@
-/*	$NetBSD: msg_071.c,v 1.5 2022/06/15 20:18:31 rillig Exp $	*/
+/*	$NetBSD: msg_071.c,v 1.6 2023/01/22 16:05:08 rillig Exp $	*/
 # 3 "msg_071.c"
 
 // Test for message: too many characters in character constant [71]
+
+/*
+ * See also:
+ *	lex_char.c
+ *	lex_char_uchar.c
+ *	lex_wide_char.c
+ */
 
 /*
  * C11 6.4.4.4p7 says: Each hexadecimal escape sequence is the longest
