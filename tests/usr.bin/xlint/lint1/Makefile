@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.133 2023/01/21 13:07:22 rillig Exp $
+# $NetBSD: Makefile,v 1.134 2023/01/22 17:17:25 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	350		# see lint1/err.c
@@ -36,8 +36,6 @@ FILES+=		d_c99_complex_num.c
 FILES+=		d_c99_complex_split.c
 FILES+=		d_c99_compound_literal_comma.c
 FILES+=		d_c99_decls_after_stmt.c
-FILES+=		d_c99_decls_after_stmt2.c
-FILES+=		d_c99_decls_after_stmt3.c
 FILES+=		d_c99_flex_array_packed.c
 FILES+=		d_c99_for_loops.c
 FILES+=		d_c99_func.c
