@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.145 2023/01/22 16:05:08 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.146 2023/01/22 17:04:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.145 2023/01/22 16:05:08 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.146 2023/01/22 17:04:30 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -70,7 +70,7 @@ bool in_system_header;
 /*
  * Valid values for 'since' are 78, 90, 99, 11.
  *
- * As of 2022-04-30, lint treats 11 like 99, in order to provide good error
+ * The C11 keywords are added in C99 mode as well, to provide good error
  * messages instead of a simple parse error.  If the keyword '_Generic' were
  * not defined, it would be interpreted as an implicit function call, leading
  * to a parse error.
@@ -96,15 +96,15 @@ bool in_system_header;
 
 /* During initialization, these keywords are written to the symbol table. */
 static const struct keyword {
-	const	char *kw_name;	/* keyword */
+	const	char *kw_name;
 	int	kw_token;	/* token returned by yylex() */
-	scl_t	kw_scl;		/* storage class if kw_token T_SCLASS */
-	tspec_t	kw_tspec;	/* type spec. if kw_token
+	scl_t	kw_scl;		/* storage class if kw_token is T_SCLASS */
+	tspec_t	kw_tspec;	/* type spec if kw_token is
 				 * T_TYPE or T_STRUCT_OR_UNION */
-	tqual_t	kw_tqual;	/* type qual. if kw_token T_QUAL */
-	bool	kw_c90:1;	/* C90 keyword */
-	bool	kw_c99_or_c11:1; /* C99 or C11 keyword */
-	bool	kw_gcc:1;	/* GCC keyword */
+	tqual_t	kw_tqual;	/* type qualifier if kw_token is T_QUAL */
+	bool	kw_c90:1;	/* available in C90 mode */
+	bool	kw_c99_or_c11:1; /* available in C99 or C11 mode */
+	bool	kw_gcc:1;	/* available in GCC mode */
 	bool	kw_plain:1;	/* 'name' */
 	bool	kw_leading:1;	/* '__name' */
 	bool	kw_both:1;	/* '__name__' */
@@ -112,8 +112,8 @@ static const struct keyword {
 	kwdef_keyword(	"_Alignas",	T_ALIGNAS),
 	kwdef_keyword(	"_Alignof",	T_ALIGNOF),
 	kwdef_token(	"alignof",	T_ALIGNOF,		78,0,6),
-	kwdef_token(	"_Atomic",	T_ATOMIC,		11,0,1),
 	kwdef_token(	"asm",		T_ASM,			78,1,7),
+	kwdef_token(	"_Atomic",	T_ATOMIC,		11,0,1),
 	kwdef_token(	"attribute",	T_ATTRIBUTE,		78,1,6),
 	kwdef_sclass(	"auto",		AUTO,			78,0,1),
 	kwdef_type(	"_Bool",	BOOL,			99),
@@ -178,11 +178,17 @@ static const struct keyword {
 #undef kwdef_keyword
 };
 
-/* Symbol table */
-static	sym_t	*symtab[HSHSIZ1];
+/*
+ * The symbol table containing all keywords, identifiers and labels. The hash
+ * entries are linked via sym_t.s_symtab_next.
+ */
+static sym_t *symtab[HSHSIZ1];
 
-/* type of next expected symbol */
-symt_t	symtyp;
+/*
+ * The kind of the next expected symbol, to distinguish the namespaces of
+ * members, labels, type tags and other identifiers.
+ */
+symt_t symtyp;
 
 
 static unsigned int
@@ -272,7 +278,7 @@ struct syms {
 static void
 syms_add(struct syms *syms, const sym_t *sym)
 {
-	while (syms->len >= syms->cap) {
+	if (syms->len >= syms->cap) {
 		syms->cap *= 2;
 		syms->items = xrealloc(syms->items,
 		    syms->cap * sizeof(syms->items[0]));
@@ -324,29 +330,28 @@ debug_symtab(void)
 static void
 add_keyword(const struct keyword *kw, bool leading, bool trailing)
 {
-	sym_t *sym;
-	char buf[256];
-	const char *name;
 
+	const char *name;
 	if (!leading && !trailing) {
 		name = kw->kw_name;
 	} else {
+		char buf[256];
 		(void)snprintf(buf, sizeof(buf), "%s%s%s",
 		    leading ? "__" : "", kw->kw_name, trailing ? "__" : "");
 		name = xstrdup(buf);
 	}
 
-	sym = block_zero_alloc(sizeof(*sym));
+	sym_t *sym = block_zero_alloc(sizeof(*sym));
 	sym->s_name = name;
 	sym->s_keyword = kw;
-	sym->u.s_keyword.sk_token = kw->kw_token;
-	if (kw->kw_token == T_TYPE || kw->kw_token == T_STRUCT_OR_UNION) {
+	int tok = kw->kw_token;
+	sym->u.s_keyword.sk_token = tok;
+	if (tok == T_TYPE || tok == T_STRUCT_OR_UNION)
 		sym->u.s_keyword.sk_tspec = kw->kw_tspec;
-	} else if (kw->kw_token == T_SCLASS) {
+	if (tok == T_SCLASS)
 		sym->s_scl = kw->kw_scl;
-	} else if (kw->kw_token == T_QUAL) {
+	if (tok == T_QUAL)
 		sym->u.s_keyword.sk_qualifier = kw->kw_tqual;
-	}
 
 	symtab_add(sym);
 }
@@ -374,17 +379,14 @@ is_keyword_known(const struct keyword *kw)
 	return true;
 }
 
-/*
- * All keywords are written to the symbol table. This saves us looking
- * in an extra table for each name we found.
- */
+/* Write all keywords to the symbol table. */
 void
 initscan(void)
 {
-	const struct keyword *kw, *end;
 
-	end = keywords + sizeof(keywords) / sizeof(keywords[0]);
-	for (kw = keywords; kw != end; kw++) {
+	size_t n = sizeof(keywords) / sizeof(keywords[0]);
+	for (size_t i = 0; i < n; i++) {
+		const struct keyword *kw = keywords + i;
 		if (!is_keyword_known(kw))
 			continue;
 		if (kw->kw_plain)
@@ -432,17 +434,9 @@ lex_keyword(sym_t *sym)
 }
 
 /*
- * Lex has found a letter followed by zero or more letters or digits.
- * It looks for a symbol in the symbol table with the same name. This
- * symbol must either be a keyword or a symbol of the type required by
- * symtyp (label, member, tag, ...).
- *
- * If it is a keyword, the token is returned. In some cases it is described
- * more deeply by data written to yylval.
- *
- * If it is a symbol, T_NAME is returned and the name is stored in yylval.
- * If there is already a symbol of the same name and type in the symbol
- * table, yylval.y_name->sb_sym points there.
+ * Look up the definition of a name in the symbol table. This symbol must
+ * either be a keyword or a symbol of the type required by symtyp (label,
+ * member, tag, ...).
  */
 extern int
 lex_name(const char *yytext, size_t yyleng)
@@ -470,10 +464,6 @@ lex_name(const char *yytext, size_t yyleng)
 
 }
 
-/*
- * Convert a string representing an integer into internal representation.
- * Return T_CON, storing the numeric value in yylval, for yylex.
- */
 int
 lex_integer_constant(const char *yytext, size_t yyleng, int base)
 {
@@ -526,7 +516,6 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	typ = suffix_type[u_suffix][l_suffix];
 
 	errno = 0;
-
 	uq = (uint64_t)strtoull(cp, &eptr, base);
 	lint_assert(eptr == cp + len);
 	if (errno != 0) {
@@ -643,13 +632,6 @@ convert_integer(int64_t q, tspec_t t, unsigned int len)
 	    : (int64_t)(q | ~vbits);
 }
 
-/*
- * Convert a string representing a floating point value into its numerical
- * representation. Type and value are returned in yylval.
- *
- * XXX Currently it is not possible to convert constants of type
- * long double which are greater than DBL_MAX.
- */
 int
 lex_floating_constant(const char *yytext, size_t yyleng)
 {
@@ -682,14 +664,15 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 		warning(98);
 	}
 
+	/* TODO: Handle precision and exponents of 'long double'. */
 	errno = 0;
 	d = strtod(cp, &eptr);
 	if (eptr != cp + len) {
 		switch (*eptr) {
 			/*
-			 * XXX: non-native non-current strtod() may not handle hex
-			 * floats, ignore the rest if we find traces of hex float
-			 * syntax...
+			 * XXX: Non-native non-current strtod() may not
+			 * handle hex floats, ignore the rest if we find
+			 * traces of hex float syntax.
 			 */
 		case 'p':
 		case 'P':
@@ -851,8 +834,7 @@ read_escaped_backslash(int delim)
  * Read a character which is part of a character constant or of a string
  * and handle escapes.
  *
- * The argument is the character which delimits the character constant or
- * string.
+ * 'delim' is '\'' for character constants and '"' for string literals.
  *
  * Returns -1 if the end of the character constant or string is reached,
  * -2 if the EOF is reached, and the character otherwise.
@@ -860,14 +842,13 @@ read_escaped_backslash(int delim)
 static int
 get_escaped_char(int delim)
 {
-	int c;
 
-	if (prev_byte == -1) {
-		c = read_byte();
-	} else {
-		c = prev_byte;
+	int c = prev_byte;
+	if (c != -1)
 		prev_byte = -1;
-	}
+	else
+		c = read_byte();
+
 	if (c == delim)
 		return -1;
 	switch (c) {
@@ -1096,7 +1077,7 @@ lex_directive(const char *yytext)
 void
 lex_comment(void)
 {
-	int	c, lc;
+	int c;
 	static const struct {
 		const	char *keywd;
 		bool	arg;
@@ -1125,9 +1106,8 @@ lex_comment(void)
 	char	arg[32];
 	size_t	l, i;
 	int	a;
-	bool	eoc;
 
-	eoc = false;
+	bool seen_end_of_comment = false;
 
 	/* Skip whitespace after the start of the comment */
 	while (c = read_byte(), isspace(c))
@@ -1173,37 +1153,27 @@ lex_comment(void)
 	while (isspace(c))
 		c = read_byte();
 
-	if (c != '*' || (c = read_byte()) != '/') {
-		if (keywtab[i].func != linted)
-			/* extra characters in lint comment */
-			warning(257);
-	} else {
-		/*
-		 * remember that we have already found the end of the
-		 * comment
-		 */
-		eoc = true;
-	}
+	seen_end_of_comment = c == '*' && (c = read_byte()) == '/';
+	if (!seen_end_of_comment && keywtab[i].func != linted)
+		/* extra characters in lint comment */
+		warning(257);
 
 	if (keywtab[i].func != NULL)
-		(*keywtab[i].func)(a);
+		keywtab[i].func(a);
 
 skip_rest:
-	while (!eoc) {
-		lc = c;
+	while (!seen_end_of_comment) {
+		int lc = c;
 		if ((c = read_byte()) == EOF) {
 			/* unterminated comment */
 			error(256);
 			break;
 		}
 		if (lc == '*' && c == '/')
-			eoc = true;
+			seen_end_of_comment = true;
 	}
 }
 
-/*
- * Handle // style comments
- */
 void
 lex_slash_slash_comment(void)
 {
@@ -1233,11 +1203,6 @@ clear_warn_flags(void)
 	constcond_flag = false;
 }
 
-/*
- * Strings are stored in a dynamically allocated buffer and passed
- * in yylval.y_string to the parser. The parser or the routines called
- * by the parser are responsible for freeing this buffer.
- */
 int
 lex_string(void)
 {
@@ -1417,8 +1382,8 @@ getsym(sbuf_t *sb)
 }
 
 /*
- * Construct a temporary symbol. The symbol name starts with a digit, making
- * the name illegal.
+ * Construct a temporary symbol. The symbol name starts with a digit to avoid
+ * name clashes with other identifiers.
  */
 sym_t *
 mktempsym(type_t *tp)
@@ -1484,9 +1449,7 @@ rmsyms(sym_t *syms)
 	}
 }
 
-/*
- * Put a symbol into the symbol table.
- */
+/* Put a symbol into the symbol table. */
 void
 inssym(int level, sym_t *sym)
 {
@@ -1501,18 +1464,12 @@ inssym(int level, sym_t *sym)
 	 * that these symbols are preferred over symbols from the outer
 	 * blocks that happen to have the same name.
 	 */
-	lint_assert(sym->s_symtab_next != NULL
-	    ? sym->s_block_level >= sym->s_symtab_next->s_block_level
-	    : true);
+	const sym_t *next = sym->s_symtab_next;
+	if (next != NULL)
+		lint_assert(sym->s_block_level >= next->s_block_level);
 }
 
-/*
- * Called at level 0 after syntax errors.
- *
- * Removes all symbols which are not declared at level 0 from the
- * symbol table. Also frees all memory which is not associated with
- * level 0.
- */
+/* Called at level 0 after syntax errors. */
 void
 clean_up_after_error(void)
 {
