@@ -1,4 +1,4 @@
-/*	$NetBSD: enic.c,v 1.4 2014/02/24 22:34:08 christos Exp $	*/
+/*	$NetBSD: enic.c,v 1.5 2023/01/22 21:36:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@ enicinit(struct iodesc *desc, void *machdep_hint)
 #endif
 
     /*
-     * Yes we wan tDHCP adn this is our MAC
+     * Yes we want DHCP and this is our MAC
      */
 	try_bootp = 1;
     enic_getmac(the_enic,desc->myea);
