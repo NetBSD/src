@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2023/01/22 14:35:10 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2023/01/22 20:36:46 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -293,6 +293,11 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 
 CPPFLAGS.fccache.c+=	-Wno-error=discarded-qualifiers
 CPPFLAGS.fccfg.c+=	-Wno-error=discarded-qualifiers
+
+.if ${MACHINE_ARCH:Mvax}
+COPTS.fccache.c+=	-O0
+COPTS.fccfg.c+=	-O0
+.endif
 
 .include "Makefile.fcarch"
 
