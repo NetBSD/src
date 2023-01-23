@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.329 2023/01/19 23:26:14 rillig Exp $
+# $NetBSD: Makefile,v 1.330 2023/01/23 23:01:52 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -320,6 +320,7 @@ TESTS+=		ternary
 TESTS+=		unexport
 TESTS+=		unexport-env
 TESTS+=		use-inference
+TESTS+=		var-readonly
 TESTS+=		var-scope
 TESTS+=		var-scope-cmdline
 TESTS+=		var-scope-env

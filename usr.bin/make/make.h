@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.309 2023/01/19 21:33:06 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.310 2023/01/23 23:01:52 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1026,6 +1026,7 @@ void Var_ReexportVars(void);
 void Var_Export(VarExportMode, const char *);
 void Var_ExportVars(const char *);
 void Var_UnExport(bool, const char *);
+void Var_ReadOnly(const char *, bool);
 
 void Global_Set(const char *, const char *);
 void Global_Append(const char *, const char *);

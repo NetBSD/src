@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.690 2023/01/03 00:00:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.691 2023/01/23 23:01:52 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.690 2023/01/03 00:00:45 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.691 2023/01/23 23:01:52 sjg Exp $");
 
 /*
  * A file being read.
@@ -149,6 +149,7 @@ typedef enum ParseSpecial {
 	SP_NOMETA,	/* .NOMETA */
 	SP_NOMETA_CMP,	/* .NOMETA_CMP */
 	SP_NOPATH,	/* .NOPATH */
+	SP_NOREADONLY,	/* .NOREADONLY */
 	SP_NOT,		/* Not special */
 	SP_NOTPARALLEL,	/* .NOTPARALLEL or .NO_PARALLEL */
 	SP_NULL,	/* .NULL; not mentioned in the manual page */
@@ -161,6 +162,7 @@ typedef enum ParseSpecial {
 	SP_POSIX,	/* .POSIX; not mentioned in the manual page */
 #endif
 	SP_PRECIOUS,	/* .PRECIOUS */
+	SP_READONLY,	/* .READONLY */
 	SP_SHELL,	/* .SHELL */
 	SP_SILENT,	/* .SILENT */
 	SP_SINGLESHELL,	/* .SINGLESHELL; not mentioned in the manual page */
@@ -269,6 +271,7 @@ static const struct {
     { ".NOMETA",	SP_NOMETA,	OP_NOMETA },
     { ".NOMETA_CMP",	SP_NOMETA_CMP,	OP_NOMETA_CMP },
     { ".NOPATH",	SP_NOPATH,	OP_NOPATH },
+    { ".NOREADONLY",	SP_NOREADONLY,	OP_NONE },
     { ".NOTMAIN",	SP_ATTRIBUTE,	OP_NOTMAIN },
     { ".NOTPARALLEL",	SP_NOTPARALLEL,	OP_NONE },
     { ".NO_PARALLEL",	SP_NOTPARALLEL,	OP_NONE },
@@ -283,6 +286,7 @@ static const struct {
     { ".POSIX",		SP_POSIX,	OP_NONE },
 #endif
     { ".PRECIOUS",	SP_PRECIOUS,	OP_PRECIOUS },
+    { ".READONLY",	SP_READONLY,	OP_NONE },
     { ".RECURSIVE",	SP_ATTRIBUTE,	OP_MAKE },
     { ".SHELL",		SP_SHELL,	OP_NONE },
     { ".SILENT",	SP_SILENT,	OP_SILENT },
@@ -1306,11 +1310,17 @@ ParseDependencySourceSpecial(ParseSpecial special, const char *word,
 	case SP_LIBS:
 		Suff_AddLib(word);
 		break;
+	case SP_NOREADONLY:
+		Var_ReadOnly(word, false);
+		break;
 	case SP_NULL:
 		Suff_SetNull(word);
 		break;
 	case SP_OBJDIR:
 		Main_SetObjdir(false, "%s", word);
+		break;
+	case SP_READONLY:
+		Var_ReadOnly(word, true);
 		break;
 	default:
 		break;
@@ -1524,9 +1534,15 @@ ParseDependencySources(char *p, GNodeType targetAttr,
 	}
 
 	/* Now go for the sources. */
-	if (special == SP_SUFFIXES || special == SP_PATH ||
-	    special == SP_INCLUDES || special == SP_LIBS ||
-	    special == SP_NULL || special == SP_OBJDIR) {
+	switch (special) {
+	case SP_INCLUDES:
+	case SP_LIBS:
+	case SP_NOREADONLY:
+	case SP_NULL:
+	case SP_OBJDIR:
+	case SP_PATH:
+	case SP_READONLY:
+	case SP_SUFFIXES:
 		ParseDependencySourcesSpecial(p, special, *inout_paths);
 		if (*inout_paths != NULL) {
 			Lst_Free(*inout_paths);
@@ -1534,10 +1550,12 @@ ParseDependencySources(char *p, GNodeType targetAttr,
 		}
 		if (special == SP_PATH)
 			Dir_SetPATH();
-	} else {
+		break;
+	default:
 		assert(*inout_paths == NULL);
 		if (!ParseDependencySourcesMundane(p, special, targetAttr))
 			return;
+		break;
 	}
 
 	MaybeUpdateMainTarget();
