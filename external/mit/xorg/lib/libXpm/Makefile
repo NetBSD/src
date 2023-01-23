@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:30 cube Exp $
+#	$NetBSD: Makefile,v 1.2.56.1 2023/01/23 13:36:04 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -15,14 +15,13 @@ SRCS=	Attrib.c CrBufFrI.c CrBufFrP.c CrDatFrI.c CrDatFrP.c \
 INCS=	xpm.h
 INCSDIR=${X11INCDIR}/X11
 
-CPPFLAGS+=-DHAS_SNPRINTF
-CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11
-
 LIBDPLIBS=\
 	Xext	${.CURDIR}/../libXext \
 	X11	${.CURDIR}/../libX11/dynamic
 
 PKGDIST=	${LIB}
+
+.include "xpm.mk"
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
