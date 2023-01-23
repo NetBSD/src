@@ -1,4 +1,4 @@
-/* $NetBSD: igpiovar.h,v 1.1 2022/03/24 02:24:25 manu Exp $ */
+/* $NetBSD: igpiovar.h,v 1.1.4.1 2023/01/23 12:15:59 martin Exp $ */
 
 /*
  * Copyright (c) 2021 Emmanuel Dreyfus
@@ -31,7 +31,7 @@
 
 struct igpio_softc {
 	device_t		sc_dev;
-	const char 		*sc_acpi_hid;
+	const char		*sc_acpi_hid;
 	bus_space_tag_t		sc_bst;
 	int			sc_nbar;
 	bus_addr_t		*sc_base;
