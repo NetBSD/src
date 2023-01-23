@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.15.2.14 2022/09/16 18:39:16 martin Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.15.2.15 2023/01/23 12:25:06 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.14 2022/09/16 18:39:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.15 2023/01/23 12:25:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ static const char * const x86_features[][32] = {
 	"tsc_scale", "vmcb_clean", "flushbyasid", "decodeassists",
 	NULL, NULL, "pausefilter", NULL, "pfthreshold", "avic", NULL,
 	"v_vmsave_vmload",
-	"vgif", NULL, NULL, NULL, "v_spec_ctrl", NULL, NULL, NULL,
+	"vgif", NULL, "x2avic", NULL, "v_spec_ctrl", NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (16) 0x00000007:0 ecx */
@@ -183,7 +183,7 @@ static const char * const x86_features[][32] = {
 	NULL, "cldemote", NULL, "movdiri",
 	"movdir64b", "enqcmd", "sgx_lc", NULL},
 
-	{ /* (17) 0x80000007 ebx */
+	{ /* (17) AMD 0x80000007 ebx */
 	"overflow_recov", "succor", NULL, "smca", NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
