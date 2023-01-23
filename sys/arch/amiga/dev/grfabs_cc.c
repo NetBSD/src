@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_cc.c,v 1.37 2022/03/26 17:15:18 andvar Exp $ */
+/*	$NetBSD: grfabs_cc.c,v 1.38 2023/01/23 21:22:44 andvar Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
 #include "opt_amigaccgrf.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.37 2022/03/26 17:15:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_cc.c,v 1.38 2023/01/23 21:22:44 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ cc_init_monitor(void)
 	/* turn sprite DMA off. we don't support them yet. */
 	custom.dmacon = DMAF_SPRITE;
 
-	/* makre sure sprite data registers are clear as well */
+	/* make sure sprite data registers are clear as well */
 	custom.spr[0].data = 0;
 	custom.spr[0].datb = 0;
 
