@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84reg.h,v 1.3 2005/12/11 12:21:22 christos Exp $	*/
+/*	$NetBSD: m41st84reg.h,v 1.4 2023/01/23 22:20:59 andvar Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,13 +77,13 @@
 #define	M41ST84_CONTROL_FT		0x40	/* Frequency test bit */
 #define	M41ST84_CONTROL_OUT		0x80	/* Output level */
 
-#define	M41ST84_WATCHDOG_RB_MASK	0x03	/* Watchdog resulotion bits */
+#define	M41ST84_WATCHDOG_RB_MASK	0x03	/* Watchdog resolution bits */
 #define	M41ST84_WATCHDOG_BMB_MASK	0x7c	/* Watchdog multiplier bits */
 #define	M41ST84_WATCHDOG_WDS		0x80	/* Watchdog steering bit */
 
 #define	M41ST84_AL_MONTH_ABE		0x20	/* alarm in b-backup mode en */
 #define	M41ST84_AL_MONTH_SQWE		0x40	/* square wave enable */
-#define	M41ST84_AL_MONTH_AFE		0x80	/* alarm flage enable */
+#define	M41ST84_AL_MONTH_AFE		0x80	/* alarm flag enable */
 
 #define	M41ST84_AL_HOUR_HT		0x40	/* Halt Update Bit */
 
