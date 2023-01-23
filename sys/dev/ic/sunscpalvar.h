@@ -1,4 +1,4 @@
-/*	$NetBSD: sunscpalvar.h,v 1.9 2008/07/06 13:29:50 tsutsui Exp $	*/
+/*	$NetBSD: sunscpalvar.h,v 1.10 2023/01/23 22:16:44 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew Fredette
@@ -116,7 +116,7 @@
 #define SUNSCPAL_PHASE_INVALID	SUNSCPAL_PHASE_UNSPEC1
 
 /*
- * Transfers lager than 65535 bytes need to be split-up.
+ * Transfers larger than 65535 bytes need to be split-up.
  * (The DMA count register is only 16 bits.)
  * Make the size an integer multiple of the page size
  * to avoid buf/cluster remap problems.  (paranoid?)

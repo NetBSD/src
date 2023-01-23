@@ -1,4 +1,4 @@
-/*	$NetBSD: sivar.h,v 1.11 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: sivar.h,v 1.12 2023/01/23 22:16:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #define	MIN_DMA_LEN 128
 
 /*
- * Transfers lager than 65535 bytes need to be split-up.
+ * Transfers larger than 65535 bytes need to be split-up.
  * (Some of the FIFO logic has only 16 bits counters.)
  * Make the size an integer multiple of the page size
  * to avoid buf/cluster remap problems.  (paranoid?)

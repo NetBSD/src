@@ -1,4 +1,4 @@
-/*	$NetBSD: si_sebuf.c,v 1.31 2021/08/02 12:56:23 andvar Exp $	*/
+/*	$NetBSD: si_sebuf.c,v 1.32 2023/01/23 22:16:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.31 2021/08/02 12:56:23 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.32 2023/01/23 22:16:44 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: si_sebuf.c,v 1.31 2021/08/02 12:56:23 andvar Exp $")
 #define	MIN_DMA_LEN 128
 
 /*
- * Transfers lager than 65535 bytes need to be split-up.
+ * Transfers larger than 65535 bytes need to be split-up.
  * (Some of the FIFO logic has only 16 bits counters.)
  * Make the size an integer multiple of the page size
  * to avoid buf/cluster remap problems.  (paranoid?)
