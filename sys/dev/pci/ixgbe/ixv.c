@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.56.2.39 2022/06/03 12:31:10 martin Exp $ */
+/* $NetBSD: ixv.c,v 1.56.2.40 2023/01/23 14:07:25 martin Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.39 2022/06/03 12:31:10 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.56.2.40 2023/01/23 14:07:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3159,9 +3159,8 @@ ixv_handle_que(void *context)
 	IXGBE_EVC_ADD(&que->handleq, 1);
 
 	if (ifp->if_flags & IFF_RUNNING) {
-		more = ixgbe_rxeof(que);
 		IXGBE_TX_LOCK(txr);
-		more |= ixgbe_txeof(txr);
+		more = ixgbe_txeof(txr);
 		if (!(adapter->feat_en & IXGBE_FEATURE_LEGACY_TX))
 			if (!ixgbe_mq_ring_empty(ifp, txr->txr_interq))
 				ixgbe_mq_start_locked(ifp, txr);
@@ -3171,6 +3170,7 @@ ixv_handle_que(void *context)
 		    && (!ixgbe_legacy_ring_empty(ifp, NULL)))
 			ixgbe_legacy_start_locked(ifp, txr);
 		IXGBE_TX_UNLOCK(txr);
+		more |= ixgbe_rxeof(que);
 		if (more) {
 			IXGBE_EVC_ADD(&que->req, 1);
 			if (adapter->txrx_use_workqueue) {
