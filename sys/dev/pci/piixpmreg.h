@@ -1,4 +1,4 @@
-/* $NetBSD: piixpmreg.h,v 1.7.22.2 2020/08/05 16:11:56 martin Exp $ */
+/* $NetBSD: piixpmreg.h,v 1.7.22.3 2023/01/23 12:46:14 martin Exp $ */
 /*	$OpenBSD: piixreg.h,v 1.3 2006/01/03 22:39:03 grange Exp $	*/
 
 /*-
@@ -118,6 +118,10 @@
 #define SB800_INDIRECTIO_SIZE	2 
 #define SB800_INDIRECTIO_INDEX	0
 #define SB800_INDIRECTIO_DATA	1
+
+/* In the MMIO area */
+#define SB800_FCH_PM_BASE	0xfed80300
+#define SB800_FCH_PM_SIZE	8
 
 #define SB800_PM_SMBUS0EN_LO	0x2c
 #define SB800_PM_SMBUS0EN_HI	0x2d
