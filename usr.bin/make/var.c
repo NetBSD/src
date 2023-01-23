@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1036 2022/12/05 23:41:24 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1037 2023/01/23 23:01:52 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1036 2022/12/05 23:41:24 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1037 2023/01/23 23:01:52 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1219,6 +1219,22 @@ Var_Value(GNode *scope, const char *name)
 	VarFreeShortLived(v);
 
 	return FStr_InitOwn(value);
+}
+
+/*
+ * set readOnly attribute of specified var if it exists
+ */
+void
+Var_ReadOnly(const char *name, bool bf)
+{
+	Var *v;
+
+	v = VarFind(name, SCOPE_GLOBAL, false);
+	if (v == NULL) {
+		DEBUG1(VAR, "Var_ReadOnly: %s not found\n", name);
+		return;
+	}
+	v->readOnly = bf;
 }
 
 /*

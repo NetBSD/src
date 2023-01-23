@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1247 2023/01/22 17:17:24 rillig Exp $
+# $NetBSD: mi,v 1.1248 2023/01/23 23:01:52 sjg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6036,6 +6036,8 @@
 ./usr/tests/usr.bin/make/unit-tests/var-op-sunsh.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-op.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-op.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-readonly.exp				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/var-readonly.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-recursive.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-recursive.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/var-scope-cmdline.exp			tests-usr.bin-tests	compattestfile,atf
