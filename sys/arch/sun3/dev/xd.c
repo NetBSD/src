@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.77 2021/08/07 16:19:06 thorpej Exp $	*/
+/*	$NetBSD: xd.c,v 1.78 2023/01/23 21:52:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.77 2021/08/07 16:19:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.78 2023/01/23 21:52:01 andvar Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -2334,7 +2334,7 @@ xdc_e2str(int no)
 	case XD_ERR_DFLT:
 		return "Drive faulted";
 	case XD_ERR_HECY:
-		return "Header error/cyliner";
+		return "Header error/cylinder";
 	case XD_ERR_HEHD:
 		return "Header error/head";
 	case XD_ERR_NOCY:

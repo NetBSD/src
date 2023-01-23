@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.29 2018/12/09 11:14:01 jdolecek Exp $	*/
+/*	$NetBSD: artsata.c,v 1.30 2023/01/23 21:52:01 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.29 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.30 2023/01/23 21:52:01 andvar Exp $");
 
 #include "opt_pciide.h"
 
@@ -358,7 +358,7 @@ artisea_chip_map_dpa(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	    ARTISEA_DPA_PORT_BASE(0) + ARTISEA_SUPERSET_DPA_OFF +
 	    ARTISEA_SUPDPFR) & SUPDPFR_SSCEN) != 0) {
 		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-		    "Spread-specturm clocking not supported by device\n");
+		    "Spread-spectrum clocking not supported by device\n");
 		return;
 	}
 
