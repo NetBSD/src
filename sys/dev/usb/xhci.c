@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.107.2.10 2022/09/16 18:32:49 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.107.2.11 2023/01/23 12:05:36 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.10 2022/09/16 18:32:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.107.2.11 2023/01/23 12:05:36 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1177,7 +1177,11 @@ xhci_id_protocols(struct xhci_softc *sc, bus_size_t ecp)
 	case 0x0310:
 	case 0x0320:
 		aprint_debug_dev(sc->sc_dev, " %s ports %d - %d\n",
-		    major == 3 ? "ss" : "hs", cpo, cpo + cpc -1);
+		    major == 3 ? "ss" : "hs", cpo, cpo + cpc - 1);
+		if (major == 3)
+			sc->sc_usb3nports += cpo + cpc - 1;
+		else
+			sc->sc_usb2nports += cpo + cpc - 1;
 		break;
 	default:
 		aprint_error_dev(sc->sc_dev, " unknown major/minor (%d/%d)\n",
@@ -1399,11 +1403,13 @@ xhci_init(struct xhci_softc *sc)
 	/* default all ports to bus 0, i.e. usb 3 */
 	sc->sc_ctlrportbus = kmem_zalloc(
 	    howmany(sc->sc_maxports * sizeof(uint8_t), NBBY), KM_SLEEP);
-	sc->sc_ctlrportmap = kmem_zalloc(sc->sc_maxports * sizeof(int), KM_SLEEP);
+	sc->sc_ctlrportmap =
+	    kmem_zalloc(sc->sc_maxports * sizeof(int), KM_SLEEP);
 
 	/* controller port to bus roothub port map */
 	for (size_t j = 0; j < __arraycount(sc->sc_rhportmap); j++) {
-		sc->sc_rhportmap[j] = kmem_zalloc(sc->sc_maxports * sizeof(int), KM_SLEEP);
+		sc->sc_rhportmap[j] =
+		    kmem_zalloc(sc->sc_maxports * sizeof(int), KM_SLEEP);
 	}
 
 	/*
