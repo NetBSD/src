@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.104.2.11 2022/10/15 10:08:41 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.104.2.12 2023/01/23 13:04:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.104.2.11 2022/10/15 10:08:41 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.104.2.12 2023/01/23 13:04:11 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -351,7 +351,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x8c] = "11th gen Core (Tiger Lake)",
 				[0x8d] = "11th gen Core (Tiger Lake)",
 				[0x8e] = "7th or 8th gen Core (Kaby Lake, Coffee Lake) or Xeon E (Coffee Lake)",
-				[0x8f] = "future Xeon (Sapphire Rapids)",
+				[0x8f] = "4th gen Xeon Scalable (Sapphire Rapids)",
 				[0x96] = "Atom x6000E (Elkhart Lake)",
 				[0x97] = "12th gen Core (Alder Lake)",
 				[0x9a] = "12th gen Core (Alder Lake)",
@@ -361,7 +361,9 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0xa6] = "10th gen Core (Comet Lake)",
 				[0xa7] = "11th gen Core (Rocket Lake)",
 				[0xa8] = "11th gen Core (Rocket Lake)",
-				[0xbf] = "12th gen Core (Alder Lake)",
+				[0xba] = "13th gen Core (Raptor Lake)",
+				[0xb7] = "13th gen Core (Raptor Lake)",
+				[0xbf] = "13th gen Core (Raptor Lake)",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
@@ -2206,13 +2208,25 @@ identifycpu(int fd, const char *cpuname)
 	if ((ci->ci_max_cpuid >= 7)
 	    && ((cpu_vendor == CPUVENDOR_INTEL)
 		|| (cpu_vendor == CPUVENDOR_AMD))) {
+		unsigned int maxsubleaf;
+
 		x86_cpuid(7, descs);
+		maxsubleaf = descs[0];
 		aprint_verbose("%s: SEF highest subleaf %08x\n",
-		    cpuname, descs[0]);
-		if (descs[0] >= 1) {
+		    cpuname, maxsubleaf);
+		if (maxsubleaf >= 1) {
 			x86_cpuid2(7, 1, descs);
 			print_bits(cpuname, "SEF-subleaf1-eax",
 			    CPUID_SEF1_FLAGS_A, descs[0]);
+			print_bits(cpuname, "SEF-subleaf1-ebx",
+			    CPUID_SEF1_FLAGS_B, descs[1]);
+			print_bits(cpuname, "SEF-subleaf1-edx",
+			    CPUID_SEF1_FLAGS_D, descs[3]);
+		}
+		if (maxsubleaf >= 2) {
+			x86_cpuid2(7, 2, descs);
+			print_bits(cpuname, "SEF-subleaf2-edx",
+			    CPUID_SEF2_FLAGS_D, descs[3]);
 		}
 	}
 
@@ -2228,6 +2242,17 @@ identifycpu(int fd, const char *cpuname)
 	}
 
 	if (cpu_vendor == CPUVENDOR_AMD) {
+		if (ci->ci_max_ext_cpuid >= 0x80000021) {
+			x86_cpuid(0x80000021, descs);
+			print_bits(cpuname, "AMD Extended features2",
+			    CPUID_AMDEXT2_FLAGS, descs[0]);
+		}
+
+		if (ci->ci_max_ext_cpuid >= 0x80000007) {
+			x86_cpuid(0x80000007, descs);
+			print_bits(cpuname, "RAS features",
+			    CPUID_RAS_FLAGS, descs[1]);
+		}
 		if ((ci->ci_max_ext_cpuid >= 0x8000000a)
 		    && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
 			x86_cpuid(0x8000000a, descs);
@@ -2238,10 +2263,31 @@ identifycpu(int fd, const char *cpuname)
 			print_bits(cpuname, "SVM features",
 			    CPUID_AMD_SVM_FLAGS, descs[3]);
 		}
+		if (ci->ci_max_ext_cpuid >= 0x8000001b) {
+			x86_cpuid(0x8000001b, descs);
+			print_bits(cpuname, "IBS features",
+			    CPUID_IBS_FLAGS, descs[0]);
+		}
 		if (ci->ci_max_ext_cpuid >= 0x8000001f) {
 			x86_cpuid(0x8000001f, descs);
 			print_bits(cpuname, "Encrypted Memory features",
 			    CPUID_AMD_ENCMEM_FLAGS, descs[0]);
+		}
+		if (ci->ci_max_ext_cpuid >= 0x80000022) {
+			uint8_t ncore, nnb, nlbrs;
+
+			x86_cpuid(0x80000022, descs);
+			print_bits(cpuname, "Perfmon:",
+			    CPUID_AXPERF_FLAGS, descs[0]);
+
+			ncore = __SHIFTOUT(descs[1], CPUID_AXPERF_NCPC);
+			nnb = __SHIFTOUT(descs[1], CPUID_AXPERF_NNBPC);
+			nlbrs = __SHIFTOUT(descs[1], CPUID_AXPERF_NLBRSTACK);
+			aprint_verbose("%s: Perfmon: counters: "
+			    "Core %hhu, Northbridge %hhu\n", cpuname,
+			    ncore, nnb);
+			aprint_verbose("%s: Perfmon: LBR Stack %hhu entries\n",
+			    cpuname, nlbrs);
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
 		if (ci->ci_max_cpuid >= 0x0a) {
