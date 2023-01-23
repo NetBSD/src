@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.13.2.12 2022/01/30 16:06:35 martin Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.13.2.13 2023/01/23 14:07:24 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.13.2.12 2022/01/30 16:06:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.13.2.13 2023/01/23 14:07:24 martin Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -4142,7 +4142,7 @@ vlvf_update:
  * ixgbe_clear_vfta_generic - Clear VLAN filter table
  * @hw: pointer to hardware structure
  *
- * Clears the VLAN filer table, and the VMDq index associated with the filter
+ * Clears the VLAN filter table, and the VMDq index associated with the filter
  **/
 s32 ixgbe_clear_vfta_generic(struct ixgbe_hw *hw)
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.h,v 1.7.6.5 2022/06/03 12:31:10 martin Exp $ */
+/* $NetBSD: ixgbe_netbsd.h,v 1.7.6.6 2023/01/23 14:07:25 martin Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,6 +30,10 @@
 
 #ifndef _IXGBE_NETBSD_H
 #define _IXGBE_NETBSD_H
+
+#ifdef _KERNEL_OPT
+#include "opt_if_ixg.h"
+#endif
 
 #if 0 /* Enable this if you don't want to use TX multiqueue function */
 #define	IXGBE_LEGACY_TX	1
