@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82598.c,v 1.12.8.5 2022/01/30 15:58:28 martin Exp $ */
+/* $NetBSD: ixgbe_82598.c,v 1.12.8.6 2023/01/23 14:04:42 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82598.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_82598.c,v 1.12.8.5 2022/01/30 15:58:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_82598.c,v 1.12.8.6 2023/01/23 14:04:42 martin Exp $");
 
 #include "ixgbe_type.h"
 #include "ixgbe_82598.h"
@@ -1053,7 +1053,7 @@ s32 ixgbe_set_vfta_82598(struct ixgbe_hw *hw, u32 vlan, u32 vind,
  * ixgbe_clear_vfta_82598 - Clear VLAN filter table
  * @hw: pointer to hardware structure
  *
- * Clears the VLAN filer table, and the VMDq index associated with the filter
+ * Clears the VLAN filter table, and the VMDq index associated with the filter
  **/
 static s32 ixgbe_clear_vfta_82598(struct ixgbe_hw *hw)
 {

@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.54.2.10 2022/05/30 17:01:06 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.54.2.11 2023/01/23 14:04:42 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.54.2.10 2022/05/30 17:01:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ix_txrx.c,v 1.54.2.11 2023/01/23 14:04:42 martin Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -250,6 +250,11 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 		IXGBE_EVC_ADD(&txr->pcq_drops, 1);
 		return ENOBUFS;
 	}
+#ifdef IXGBE_ALWAYS_TXDEFER
+	kpreempt_disable();
+	softint_schedule(txr->txr_si);
+	kpreempt_enable();
+#else
 	if (IXGBE_TX_TRYLOCK(txr)) {
 		ixgbe_mq_start_locked(ifp, txr);
 		IXGBE_TX_UNLOCK(txr);
@@ -279,6 +284,7 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 			kpreempt_enable();
 		}
 	}
+#endif
 
 	return (0);
 } /* ixgbe_mq_start */
@@ -316,7 +322,7 @@ ixgbe_mq_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 #if __FreeBSD_version >= 1100036
 		/*
 		 * Since we're looking at the tx ring, we can check
-		 * to see if we're a VF by examing our tail register
+		 * to see if we're a VF by examining our tail register
 		 * address.
 		 */
 		if ((txr->adapter->feat_en & IXGBE_FEATURE_VF) &&
@@ -1977,7 +1983,7 @@ ixgbe_rxeof(struct ix_queue *que)
 		 * not be fragmented across sequential
 		 * descriptors, rather the next descriptor
 		 * is indicated in bits of the descriptor.
-		 * This also means that we might proceses
+		 * This also means that we might process
 		 * more than one packet at a time, something
 		 * that has never been true before, it
 		 * required eliminating global chain pointers
