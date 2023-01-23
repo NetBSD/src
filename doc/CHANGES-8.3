@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.163 2023/01/19 10:59:09 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.164 2023/01/23 14:11:22 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3030,4 +3030,126 @@ sys/dev/usb/usb.h				1.121
 
 	usb(4): avoid undefined behavior in UGETDW().
 	[msaitoh, ticket #1786]
+
+sys/dev/pci/xhci_pci.c				1.31 via patch
+sys/dev/usb/xhci.c				1.173-1.175
+sys/dev/usb/xhcivar.h				1.22
+
+	Support xHCI device which has USB 2 port only.
+	[msaitoh, ticket #1787]
+
+sys/arch/x86/x86/procfs_machdep.c		1.46
+
+	Add x2avic. Modify comment.
+	[msaitoh, ticket #1788]
+
+sys/arch/x86/pci/amdzentemp.c			1.16
+
+	amdzentemp(4): match zen3 "cezanne" (ryzen 5000-series APU.)
+	[msaitoh, ticket #1789]
+
+sys/dev/pci/piixpm.c				1.66,1.68-1.72 via patch
+sys/dev/pci/piixpmreg.h 			1.13
+
+	Add support new AMD chipsets that do not have indirect access
+	I/O ports.
+	[msaitoh, ticket #1790]
+
+sys/arch/x86/include/specialreg.h		1.193-1.198 via patch
+
+	- Add CPUID Fn0000_0006 %eax bit 24 IA32_THERM_INTERRUPT MSR bit 25
+	  Hardware Feedback Notification support.
+	- Add CPUID Fn0000_0007 %ecx bit 29 ENQCMD.
+	- Add CPUID Fn0000_0007 %edx bit 1 SGX-KEYS.
+	- Add CPUID Fn0000_0007 %edx bit 5 UINTR(User INTeRrupts).
+	- Add CPUID Fn0000_0007 %edx bit 11 RTM_ALWAYS_ABORT.
+	- Add CPUID Fn0000_0007 %edx bit 22 AMX_BF16.
+	- Add CPUID Fn0000_0007 %edx bit 23 AVX512_FP16.
+	- Add CPUID Fn0000_0007 %edx bit 24 AMX_TILE.
+	- Add CPUID Fn0000_0007 %edx bit 25 AMX_INT8.
+	- Add CPUID Fn0000_0007 sub-leaf 1 %edx bit 18 CET_SSS.
+	- Add CPUID Fn0000_0007 sub-leaf 2 %edx definitions.
+	- Add CPUID Fn0000_000d sub-leaf 1 %eax bit 4 XFD.
+	- Add CPUID Fn0000_001d Tile Information.
+	- Add CPUID Fn0000_001e TMUL Information.
+	- Add CPUID Fn8000_0007 %eax RAS capabilities.
+	- Add CPUID Fn8000_0008 %ebx BTC_NO,
+	- Add cpuid Fn8000_000a x2AVIC, VNMI, IBSVIRT and ROGPT.
+	- Add CPUID Fn8000_001b Instruction-Based Sampling.
+	- Add CPUID Fn8000_001e Processor Topology Information.
+	- Add CPUID Fn8000_001f %eax RPMQUERY, VmplSSS, TscAuxVirt,
+	  VmgexitParam, VirtualTomMsr, IbsVirtGuest, SmtProtection,
+	  vsmCommPageMSR and NestedVirtSnpMsr.
+	- Add CPUID Fn8000_0021 AMD Extended Features Identification 2.
+	- Add CPUID Fn8000_0022 AMD Extended Performance Monitoring and Debug.
+	- Rename HW_FEEDBACK to HWI (Hardware Feedback Interface).
+	- Rename TSX_FORCE_ABORT to RTM_FORCE_ABORT.
+	- Modify comment. Both Intel and AMD support CPUID Fn0000000b.
+	- Modify comment. Hybrid Information -> Native Model ID Information.
+	- Use __BIT(). Add comment. Whitespace fix.
+	[msaitoh, ticket #1791]
+
+usr.sbin/cpuctl/arch/i386.c			1.129-1.135 (via patch)
+
+	- Print cpuid 7 sub-leaf 1 %ebx, %edx and sub-leaf 2 %edx.
+	- Add Raptor Lake and Sapphire Rapids.
+	- Modify messages a little.
+	[msaitoh, ticket #1792]
+
+usr.bin/locate/locate/updatedb.sh		1.18
+
+	locate.updatedb(8): PR 57191: add -- to the invocation of locate.code.
+	[uwe, ticket #1793]
+
+xsrc/external/mit/libX11/dist/modules/om/generic/omGeneric.c	(apply patch)
+xsrc/external/mit/libXpm/dist/src/RdFToI.c			(apply patch)
+xsrc/external/mit/libXpm/dist/src/WrFFrI.c			(apply patch)
+xsrc/external/mit/libXpm/dist/src/create.c			(apply patch)
+xsrc/external/mit/libXpm/dist/src/data.c			(apply patch)
+xsrc/external/mit/libXpm/dist/src/parse.c			(apply patch)
+xsrc/external/mit/xorg-server/dist/Xext/saver.c			(apply patch)
+xsrc/external/mit/xorg-server/dist/Xext/xtest.c			(apply patch)
+xsrc/external/mit/xorg-server/dist/Xext/xvmain.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/Xi/xipassivegrab.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/Xi/xiproperty.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/dix/property.c		(apply patch)
+xsrc/external/mit/xorg-server/dist/xkb/xkbUtils.c		(apply patch)
+external/mit/xorg/bin/cxpm/Makefile				(apply patch)
+external/mit/xorg/bin/sxpm/Makefile				(apply patch)
+external/mit/xorg/lib/libXpm/Makefile				(apply patch)
+external/mit/xorg/lib/libXpm/xpm.mk				(apply patch)
+
+	Apply upstream fixes for the following CVEs:
+	CVE-2022-46285, CVE-2022-44617, CVE-2022-4883, CVE-2020-14363,
+	CVE-2022-46340, CVE-2022-46341, CVE-2022-46342 CVE-2022-46343,
+	CVE-2022-46344, CVE-2022-46283, CVE-2021-4008, CVE-2021-4009,
+	CVE-2021-4010, CVE-2021-4011
+	[mrg, ticket #1794]
+
+sys/dev/pci/if_wm.c				1.764-1.767 via patch
+sys/dev/pci/if_wmreg.h				1.128
+
+	- Workaround for some hypervisor environments. The environments
+	  cannot stop e1000 interrupt immediately.
+	- Rename nq_txdesc' member "nqrx_ctx" to "nqtx_ctx". No functional
+	  change.
+	- Add comment. Modify comment.
+	- KNF.
+	[msaitoh, ticket #1795]
+
+sys/dev/pci/files.pci				1.442
+sys/dev/pci/ixgbe/ix_txrx.c			1.99-1.100
+sys/dev/pci/ixgbe/ixgbe.c			1.320-1.324 via patch
+sys/dev/pci/ixgbe/ixgbe_82598.c 		1.19
+sys/dev/pci/ixgbe/ixgbe_api.c			1.28
+sys/dev/pci/ixgbe/ixgbe_common.c		1.43
+sys/dev/pci/ixgbe/ixgbe_netbsd.h		1.17
+sys/dev/pci/ixgbe/ixv.c 			1.183
+
+	- Add an option for Tx to use deferred softint regardless of whether
+	  can get txq lock or not. It's off by default.
+	- Call txeof first, then rxeof for the consistency.
+	- Make three "Unsupported SFP+ module..." messages the same.
+	- KNF. Modify comment. Fix typo.
+	[msaitoh, ticket #1796]
 
