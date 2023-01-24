@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1299 2023/01/21 10:41:51 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1300 2023/01/24 18:49:29 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -106,7 +106,8 @@ MKGCCCMDS?=	no
     ${MACHINE_CPU} == "powerpc" || \
     ${MACHINE_CPU} == "riscv" || \
     ${MACHINE_ARCH:Msparc*} || \
-    ${MACHINE_ARCH} == "x86_64"
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "vax" 
 HAVE_BINUTILS?=	239
 .else
 HAVE_BINUTILS?=	234
