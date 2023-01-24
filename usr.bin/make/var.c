@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1037 2023/01/23 23:01:52 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1038 2023/01/24 00:19:14 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1037 2023/01/23 23:01:52 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1038 2023/01/24 00:19:14 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -192,6 +192,7 @@ typedef struct Var {
 	 * The variable value cannot be changed anymore, and the variable
 	 * cannot be deleted.  Any attempts to do so are silently ignored,
 	 * they are logged with -dv though.
+	 * Use .[NO]READONLY: to adjust.
 	 *
 	 * See VAR_SET_READONLY.
 	 */
@@ -1235,6 +1236,7 @@ Var_ReadOnly(const char *name, bool bf)
 		return;
 	}
 	v->readOnly = bf;
+	DEBUG2(VAR, "Var_ReadOnly: %s %s\n", name, bf ? "true" : "false");
 }
 
 /*
