@@ -1,4 +1,4 @@
-/*	$NetBSD: memcpy_arm.S,v 1.6 2023/01/19 18:03:03 mlelstv Exp $	*/
+/*	$NetBSD: memcpy_arm.S,v 1.7 2023/01/24 07:04:27 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -111,8 +111,8 @@ ENTRY(memcpy)
 	blo	.Lmemcpy_l4
 
 	subs	r2, r2, #4
-	ldrlt	r3, [r1], #4
-	strlt	r3, [r0], #4
+	ldrlo	r3, [r1], #4
+	strlo	r3, [r0], #4
 	ldmiahs	r1!, {r3, r12}
 	stmiahs	r0!, {r3, r12}
 	subhs	r2, r2, #4
