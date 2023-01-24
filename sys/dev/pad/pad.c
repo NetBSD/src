@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.78 2022/03/31 19:30:16 pgoyette Exp $ */
+/* $NetBSD: pad.c,v 1.79 2023/01/24 08:17:11 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.78 2022/03/31 19:30:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.79 2023/01/24 08:17:11 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -148,7 +148,7 @@ static const struct audio_format pad_formats[PAD_NFORMATS] = {
 extern void	padattach(int);
 
 static int	pad_add_block(struct pad_softc *, uint8_t *, int);
-static int	pad_get_block(struct pad_softc *, pad_block_t *, int);
+static int	pad_get_block(struct pad_softc *, pad_block_t *, int, int);
 
 static dev_type_open(pad_open);
 
@@ -280,7 +280,7 @@ pad_childdet(device_t self, device_t child)
 static int
 pad_add_block(struct pad_softc *sc, uint8_t *blk, int blksize)
 {
-	int l;
+	int foff, flen, tlen;
 
 	KASSERT(blksize >= 0);
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
@@ -289,17 +289,26 @@ pad_add_block(struct pad_softc *sc, uint8_t *blk, int blksize)
 	    sc->sc_buflen > PAD_BUFSIZE - (unsigned)blksize)
 		return ENOBUFS;
 
-	if (sc->sc_wpos + blksize <= PAD_BUFSIZE)
-		memcpy(sc->sc_audiobuf + sc->sc_wpos, blk, blksize);
-	else {
-		l = PAD_BUFSIZE - sc->sc_wpos;
-		memcpy(sc->sc_audiobuf + sc->sc_wpos, blk, l);
-		memcpy(sc->sc_audiobuf, blk + l, blksize - l);
+	foff = sc->sc_wpos;
+	if (sc->sc_wpos + blksize <= PAD_BUFSIZE) {
+		flen = blksize;
+		tlen = 0;
+	} else {
+		flen = PAD_BUFSIZE - sc->sc_wpos;
+		tlen = blksize - flen;
 	}
 
-	sc->sc_wpos += blksize;
+	sc->sc_wpos = foff + blksize;
 	if (sc->sc_wpos >= PAD_BUFSIZE)
 		sc->sc_wpos -= PAD_BUFSIZE;
+
+	/*
+	 * release interrupt lock for bulk copy to audio buffer
+	 */
+	mutex_exit(&sc->sc_intr_lock);
+	memcpy(sc->sc_audiobuf + foff, blk, flen);
+	memcpy(sc->sc_audiobuf, blk + flen, tlen);
+	mutex_enter(&sc->sc_intr_lock);
 
 	sc->sc_buflen += blksize;
 	cv_broadcast(&sc->sc_condvar);
@@ -308,12 +317,15 @@ pad_add_block(struct pad_softc *sc, uint8_t *blk, int blksize)
 }
 
 static int
-pad_get_block(struct pad_softc *sc, pad_block_t *pb, int maxblksize)
+pad_get_block(struct pad_softc *sc, pad_block_t *pb, int maxblksize, int dowait)
 {
 	int l, blksize, error;
 
 	KASSERT(maxblksize > 0);
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
+	if (sc->sc_buflen == 0 && !dowait)
+		return EAGAIN;
 
 	while (sc->sc_buflen == 0) {
 		DPRINTF("%s: wait\n", __func__);
@@ -500,14 +512,20 @@ pad_read(struct pad_softc *sc, off_t *offp, struct uio *uio, kauth_cred_t cred,
     int ioflag)
 {
 	pad_block_t pb;
-	int err;
+	int err, first;
 
 	err = 0;
+	first = 1;
 	DPRINTF("%s: resid=%zu\n", __func__, uio->uio_resid);
 	while (uio->uio_resid > 0) {
 		mutex_enter(&sc->sc_intr_lock);
-		err = pad_get_block(sc, &pb, MIN(uio->uio_resid, INT_MAX));
+		err = pad_get_block(sc, &pb, MIN(uio->uio_resid, INT_MAX), first);
 		mutex_exit(&sc->sc_intr_lock);
+		first = 0;
+		if (err == EAGAIN) {
+			err = 0;
+			break;
+		}
 		if (err)
 			break;
 
@@ -557,7 +575,8 @@ pad_start_output(void *opaque, void *block, int blksize,
 {
 	struct pad_softc *sc = opaque;
 	int err;
-	int ms;
+	u_int framesize;
+	int ticks;
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
@@ -566,10 +585,20 @@ pad_start_output(void *opaque, void *block, int blksize,
 
 	DPRINTF("%s: blksize=%d\n", __func__, blksize);
 	err = pad_add_block(sc, block, blksize);
+	if (err) {
+		DPRINTF("%s: failed: %d\n", __func__, err);
+		/* "Silently" drop overflows, but keep pace */
+		err = 0;
+	}
 
-	ms = blksize * 1000 / PADCHAN / (PADPREC / NBBY) / PADFREQ;
+	framesize = PADCHAN * (PADPREC / NBBY) * PADFREQ;
+
+	sc->sc_resid += blksize;
+	ticks = mstohz(sc->sc_resid * 1000 / framesize);
+	sc->sc_resid -= hztoms(ticks) * framesize / 1000;
+
 	DPRINTF("%s: callout ms=%d\n", __func__, ms);
-	callout_schedule(&sc->sc_pcallout, mstohz(ms));
+	callout_schedule(&sc->sc_pcallout, ticks);
 
 	return err;
 }
@@ -587,6 +616,7 @@ pad_halt_output(void *opaque)
 	sc->sc_intr = NULL;
 	sc->sc_intrarg = NULL;
 	sc->sc_buflen = 0;
+	sc->sc_resid = 0;
 	sc->sc_rpos = sc->sc_wpos = 0;
 
 	return 0;
