@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.467 2022/03/28 12:39:37 riastradh Exp $ */
+/*	$NetBSD: wd.c,v 1.468 2023/01/24 08:34:18 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.467 2022/03/28 12:39:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.468 2023/01/24 08:34:18 mlelstv Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -412,17 +412,37 @@ wdattach(device_t parent, device_t self, void *aux)
 		wd->sc_capacity28 =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
+		/*
+		 * Force LBA48 addressing for invalid numbers.
+		 */
+		if (wd->sc_capacity28 > 0xfffffff)
+			wd->sc_capacity28 = 0xfffffff;
 	} else if ((wd->sc_flags & WDF_LBA) != 0) {
 		aprint_verbose(" LBA addressing\n");
-		wd->sc_capacity28 = wd->sc_capacity =
+		wd->sc_capacity28 =
 		    (wd->sc_params.atap_capacity[1] << 16) |
 		    wd->sc_params.atap_capacity[0];
+		/*
+		 * Limit capacity to LBA28 numbers to avoid overflow.
+		 */
+		if (wd->sc_capacity28 > 0xfffffff)
+			wd->sc_capacity28 = 0xfffffff;
+		wd->sc_capacity = wd->sc_capacity28;
 	} else {
 		aprint_verbose(" chs addressing\n");
-		wd->sc_capacity28 = wd->sc_capacity =
+		wd->sc_capacity =
 		    wd->sc_params.atap_cylinders *
 		    wd->sc_params.atap_heads *
 		    wd->sc_params.atap_sectors;
+		/*
+		 * LBA28 size is ignored for CHS addressing. Use a reasonable
+		 * value for debugging. The CHS values may be artifical and
+		 * are mostly ignored.
+		 */
+		if (wd->sc_capacity < 0xfffffff)
+			wd->sc_capacity28 = wd->sc_capacity;
+		else
+			wd->sc_capacity28 = 0xfffffff;
 	}
 	if ((wd->sc_params.atap_secsz & ATA_SECSZ_VALID_MASK) == ATA_SECSZ_VALID
 	    && ((wd->sc_params.atap_secsz & ATA_SECSZ_LLS) != 0)) {
