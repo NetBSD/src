@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.32 2022/10/28 21:57:58 riastradh Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.33 2023/01/24 08:45:47 mlelstv Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.32 2022/10/28 21:57:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.33 2023/01/24 08:45:47 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -229,7 +229,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	intrstr = pci_intr_string(pc, psc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
-	pci_intr_setattr(pa->pa_pc, &psc->sc_pihp[0], PCI_INTR_MPSAFE, true);
+	pci_intr_setattr(pc, &psc->sc_pihp[0], PCI_INTR_MPSAFE, true);
 	psc->sc_ih = pci_intr_establish_xname(pc, psc->sc_pihp[0], IPL_USB,
 	    xhci_intr, sc, device_xname(sc->sc_dev));
 	if (psc->sc_ih == NULL) {
