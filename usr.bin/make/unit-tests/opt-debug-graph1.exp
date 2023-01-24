@@ -48,7 +48,7 @@ MFLAGS           =   -r -k -d g1
 #  refs  hits  directory
 #     1     0  <curdir>
 #     1     0  .
-#     1     0  <defsyspath>
+#     2     0  <defsyspath>
 
 #*** Suffixes:
 #*** Transformations:

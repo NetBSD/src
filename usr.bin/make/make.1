@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.358 2023/01/23 23:01:52 sjg Exp $
+.\"	$NetBSD: make.1,v 1.359 2023/01/24 00:24:02 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -299,6 +299,8 @@ Furthermore, the system include path is appended to the search path used for
 include statements (see the
 .Fl I
 option).
+The system include path can be referenced via the read-only variable
+.Va .SYSPATH .
 .Pp
 If a directory name in the
 .Fl m
@@ -1326,6 +1328,13 @@ It is read-only.
 .It Va .SUFFIXES
 The list of known suffixes.
 It is read-only.
+.It Va .SYSPATH
+The space-separated list of directories that
+.Nm
+searches for makefiles, referred to as the system include path.
+To update this search list, use the special target
+.Sq Ic .SYSPATH
+rather than modifying the variable which is read-only.
 .It Va .TARGETS
 The list of targets explicitly specified on the command line, if any.
 .It Va VPATH
@@ -2534,6 +2543,14 @@ Example:
 \&.c.o:
 	cc \-o ${.TARGET} \-c ${.IMPSRC}
 .Ed
+.It Ic .SYSPATH
+The sources are directories which are to be added to the system
+include path which
+.Nm
+searches for makefiles.
+If no sources are specified,
+any previously specified directories are removed from the system
+include path.
 .El
 .Sh ENVIRONMENT
 .Nm
