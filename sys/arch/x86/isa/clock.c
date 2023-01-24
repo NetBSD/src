@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 2020/05/29 12:30:41 rin Exp $	*/
+/*	$NetBSD: clock.c,v 1.40 2023/01/24 09:57:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,28 +69,28 @@
  *
  *	@(#)clock.c	7.2 (Berkeley) 5/12/91
  */
-/* 
+/*
  * Mach Operating System
  * Copyright (c) 1991,1990,1989 Carnegie Mellon University
  * All Rights Reserved.
- * 
+ *
  * Permission to use, copy, modify and distribute this software and its
  * documentation is hereby granted, provided that both the copyright
  * notice and this permission notice appear in all copies of the
  * software, derivative works or modified versions, and any portions
  * thereof, and that both notices appear in supporting documentation.
- * 
+ *
  * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
  * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND FOR
  * ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
+ *
  * Carnegie Mellon requests users of this software to return to
- * 
+ *
  *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
- * 
+ *
  * any improvements or extensions that they make and grant Carnegie Mellon
  * the rights to redistribute these changes.
  */
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2020/05/29 12:30:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.40 2023/01/24 09:57:16 riastradh Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -150,7 +150,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2020/05/29 12:30:41 rin Exp $");
 #include <i386/isa/nvram.h>
 #include <x86/x86/tsc.h>
 #include <x86/lock.h>
-#include <machine/specialreg.h> 
+#include <machine/specialreg.h>
 #include <x86/rtc.h>
 
 #ifndef __x86_64__
@@ -346,7 +346,7 @@ startrtclock(void)
  * Must be called at splsched().
  */
 static void
-tickle_tc(void) 
+tickle_tc(void)
 {
 #if defined(MULTIPROCESSOR)
 	struct cpu_info *ci = curcpu();
@@ -398,7 +398,7 @@ i8254_get_timecount(struct timecounter *tc)
 	psl = x86_read_psl();
 	x86_disable_intr();
 	__cpu_simple_lock(&tmr_lock);
-	/* Select timer0 and latch counter value. */ 
+	/* Select timer0 and latch counter value. */
 	outb(IO_TIMER1 + TIMER_MODE, TIMER_SEL0 | TIMER_LATCH);
 	/* insb to make the read atomic */
 	rdval = inb(IO_TIMER1+TIMER_CNTR0);
@@ -422,7 +422,7 @@ gettick(void)
 {
 	uint16_t rdval;
 	u_long psl;
-	
+
 	if (clock_broken_latch)
 		return (gettick_broken_latch());
 
