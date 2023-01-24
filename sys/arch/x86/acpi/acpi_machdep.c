@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.34 2022/10/28 21:58:27 riastradh Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.35 2023/01/24 09:35:20 riastradh Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.34 2022/10/28 21:58:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.35 2023/01/24 09:35:20 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,15 +107,15 @@ acpi_md_OsGetRootPointer(void)
 
 #ifdef XENPV
 	/*
-	 * Obtain the ACPI RSDP from the hypervisor. 
-	 * This is the only way to go if Xen booted from EFI: the 
-	 * Extended BIOS Data Area (EBDA) is not mapped, and Xen 
+	 * Obtain the ACPI RSDP from the hypervisor.
+	 * This is the only way to go if Xen booted from EFI: the
+	 * Extended BIOS Data Area (EBDA) is not mapped, and Xen
 	 * does not pass an EFI SystemTable to the kernel.
 	 */
         struct xen_platform_op op = {
                 .cmd = XENPF_firmware_info,
                 .u.firmware_info = {
-                        .type = XEN_FW_EFI_INFO,  
+                        .type = XEN_FW_EFI_INFO,
                         .index = XEN_FW_EFI_CONFIG_TABLE
                 }
         };
@@ -125,7 +125,7 @@ acpi_md_OsGetRootPointer(void)
 		struct efi_cfgtbl *ct;
 		int i;
 
-		ct = AcpiOsMapMemory(info->cfg.addr, 
+		ct = AcpiOsMapMemory(info->cfg.addr,
 		    sizeof(*ct) * info->cfg.nent);
 
 		for (i = 0; i < info->cfg.nent; i++) {
@@ -135,7 +135,7 @@ acpi_md_OsGetRootPointer(void)
 				    (uintptr_t)ct[i].ct_data;
 				if (PhysicalAddress)
 					goto out;
-					
+
 			}
 		}
 
@@ -146,7 +146,7 @@ acpi_md_OsGetRootPointer(void)
 				    (uintptr_t)ct[i].ct_data;
 				if (PhysicalAddress)
 					goto out;
-					
+
 			}
 		}
 out:
@@ -163,8 +163,8 @@ out:
 			return PhysicalAddress;
 	}
 #endif
-	/* 
-	 * Get the ACPI RSDP from EFI SystemTable. This works when the 
+	/*
+	 * Get the ACPI RSDP from EFI SystemTable. This works when the
 	 * kernel was loaded from EFI bootloader.
 	 */
 	if (efi_probe()) {
@@ -321,14 +321,14 @@ acpi_md_intr_establish(uint32_t InterruptNumber, int ipl, int type,
 		ioapic = ioapic_find_bybase(irq);
 		if (ioapic != NULL) {
 			pic = &ioapic->sc_pic;
- 
+
 			if (pic->pic_type == PIC_IOAPIC) {
 				pin = irq - pic->pic_vecbase;
 				irq = -1;
 			} else {
 				pin = irq;
 			}
- 
+
 			mip = ioapic->sc_pins[pin].ip_map;
 			if (mip) {
 				mip->flags &= ~0xf;
@@ -344,7 +344,7 @@ acpi_md_intr_establish(uint32_t InterruptNumber, int ipl, int type,
 			}
 		}
 	}
- 
+
 	if (pic == NULL)
 #endif
 	{
