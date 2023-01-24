@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.2 2011/06/25 20:27:01 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.3 2023/01/24 08:01:25 mlelstv Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -452,6 +452,10 @@ fetch_ssl(conn_t *conn, int verbose)
 		return (-1);
 	}
 	SSL_set_fd(conn->ssl, conn->sd);
+	if (!SSL_set_tlsext_host_name(conn->ssl, conn->cache_url->host)) {
+		fprintf(stderr, "SSL hostname setting failed\n"); 
+		return (-1);
+	}
 	if (SSL_connect(conn->ssl) == -1){
 		ERR_print_errors_fp(stderr);
 		return (-1);
