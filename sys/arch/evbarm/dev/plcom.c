@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.66 2022/10/26 23:38:07 riastradh Exp $	*/
+/*	$NetBSD: plcom.c,v 1.67 2023/01/24 06:56:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.66 2022/10/26 23:38:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.67 2023/01/24 06:56:40 mlelstv Exp $");
 
 #include "opt_plcom.h"
 #include "opt_kgdb.h"
@@ -149,7 +149,7 @@ void	plcom_config	(struct plcom_softc *);
 void	plcom_shutdown	(struct plcom_softc *);
 int	pl010comspeed	(long, long);
 int	pl011comspeed	(long, long);
-static	u_char	cflag2lcr (tcflag_t);
+static	uint32_t	cflag2lcr (tcflag_t);
 int	plcomparam	(struct tty *, struct termios *);
 void	plcomstart	(struct tty *);
 int	plcomhwiflow	(struct tty *, int);
@@ -267,7 +267,17 @@ pread1(struct plcom_instance *pi, bus_size_t reg)
 	return bus_space_read_4(pi->pi_iot, pi->pi_ioh, reg & -4) >>
 	    (8 * (reg & 3));
 }
-int nhcr;
+
+static uint16_t
+pread2(struct plcom_instance *pi, bus_size_t reg)
+{
+	if (!ISSET(pi->pi_flags, PLC_FLAG_32BIT_ACCESS))
+		return bus_space_read_2(pi->pi_iot, pi->pi_ioh, reg);
+
+	return bus_space_read_4(pi->pi_iot, pi->pi_ioh, reg & -4) >>
+	    (8 * (reg & 3));
+}
+
 static void
 pwrite1(struct plcom_instance *pi, bus_size_t o, uint8_t val)
 {
@@ -278,6 +288,20 @@ pwrite1(struct plcom_instance *pi, bus_size_t o, uint8_t val)
 		o &= -4;
 		uint32_t tmp = bus_space_read_4(pi->pi_iot, pi->pi_ioh, o);
 		tmp = (val << shift) | (tmp & ~(0xff << shift));
+		bus_space_write_4(pi->pi_iot, pi->pi_ioh, o, tmp);
+	}
+}
+
+static void
+pwrite2(struct plcom_instance *pi, bus_size_t o, uint16_t val)
+{
+	if (!ISSET(pi->pi_flags, PLC_FLAG_32BIT_ACCESS)) {
+		bus_space_write_2(pi->pi_iot, pi->pi_ioh, o, val);
+	} else {
+		const size_t shift = 8 * (o & 3);
+		o &= -4;
+		uint32_t tmp = bus_space_read_4(pi->pi_iot, pi->pi_ioh, o);
+		tmp = (val << shift) | (tmp & ~(0xffff << shift));
 		bus_space_write_4(pi->pi_iot, pi->pi_ioh, o, tmp);
 	}
 }
@@ -297,11 +321,13 @@ pwritem1(struct plcom_instance *pi, bus_size_t o, const uint8_t *datap,
 }
 
 #define	PREAD1(pi, reg)		pread1(pi, reg)
+#define	PREAD2(pi, reg)		pread2(pi, reg)
 #define	PREAD4(pi, reg)		\
 	bus_space_read_4((pi)->pi_iot, (pi)->pi_ioh, (reg))
 
 #define	PWRITE1(pi, reg, val)	pwrite1(pi, reg, val)
 #define	PWRITEM1(pi, reg, d, c)	pwritem1(pi, reg, d, c)
+#define	PWRITE2(pi, reg, val)	pwrite2(pi, reg, val)
 #define	PWRITE4(pi, reg, val)	\
 	bus_space_write_4((pi)->pi_iot, (pi)->pi_ioh, (reg), (val))
 
@@ -381,14 +407,14 @@ plcomprobe1(bus_space_tag_t iot, bus_space_handle_t ioh)
 	/* Disable the UART.  */
 	bus_space_write_1(iot, ioh, plcom_cr, 0);
 	/* Make sure the FIFO is off.  */
-	bus_space_write_1(iot, ioh, plcom_lcr, PL01X_LCR_8BITS);
+	bus_space_write_4(iot, ioh, plcom_lcr, PL01X_LCR_8BITS);
 	/* Disable interrupts.  */
 	bus_space_write_1(iot, ioh, plcom_iir, 0);
 
 	/* Make sure we swallow anything in the receiving register.  */
 	data = bus_space_read_1(iot, ioh, plcom_dr);
 
-	if (bus_space_read_1(iot, ioh, plcom_lcr) != PL01X_LCR_8BITS)
+	if (bus_space_read_4(iot, ioh, plcom_lcr) != PL01X_LCR_8BITS)
 		return 0;
 
 	data = bus_space_read_1(iot, ioh, plcom_fr) & (PL01X_FR_RXFF | PL01X_FR_RXFE);
@@ -424,10 +450,11 @@ plcom_enable_debugport(struct plcom_softc *sc)
 		}
 		break;
 	case PLCOM_TYPE_PL011:
+	case PLCOM_TYPE_GENERIC_UART:
 		sc->sc_imsc = PL011_INT_RX | PL011_INT_RT;
 		SET(sc->sc_cr, PL011_CR_RXE | PL011_CR_TXE);
 		SET(sc->sc_cr, PL011_MCR(sc->sc_mcr));
-		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+		PWRITE2(pi, PL011COM_CR, sc->sc_cr);
 		PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
 		break;
 	}
@@ -446,6 +473,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	switch (pi->pi_type) {
 	case PLCOM_TYPE_PL010:
 	case PLCOM_TYPE_PL011:
+	case PLCOM_TYPE_GENERIC_UART:
 		break;
 	default:
 		aprint_error_dev(sc->sc_dev,
@@ -470,8 +498,24 @@ plcom_attach_subr(struct plcom_softc *sc)
 		 * hang when trying to print.
 		 */
 		sc->sc_cr = PL01X_CR_UARTEN;
-		if (pi->pi_type == PLCOM_TYPE_PL011)
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL011:
+		case PLCOM_TYPE_GENERIC_UART:
 			SET(sc->sc_cr, PL011_CR_RXE | PL011_CR_TXE);
+			break;
+		}
+	}
+
+	switch (pi->pi_type) {
+	case PLCOM_TYPE_PL011:
+		if (pi->pi_periphid == 0) {
+			pi->pi_periphid = PREAD1(pi, PL011COM_PID0) << 0
+				| PREAD1(pi, PL011COM_PID1) << 8
+				| PREAD1(pi, PL011COM_PID2) << 16
+				| PREAD1(pi, PL011COM_PID3) << 24;
+		}
+		aprint_debug_dev(sc->sc_dev, "PID %08x\n", pi->pi_periphid);
+		break;
 	}
 
 	switch (pi->pi_type) {
@@ -480,7 +524,8 @@ plcom_attach_subr(struct plcom_softc *sc)
 		break;
 
 	case PLCOM_TYPE_PL011:
-		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+	case PLCOM_TYPE_GENERIC_UART:
+		PWRITE2(pi, PL011COM_CR, sc->sc_cr);
 		PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
 		break;
 	}
@@ -496,18 +541,36 @@ plcom_attach_subr(struct plcom_softc *sc)
 			break;
 		case PLCOM_TYPE_PL011:
 			/* Some revisions have a 32 byte TX FIFO */
-			sc->sc_fifolen = 16;
+			switch (pi->pi_periphid & (PL011_DESIGNER_MASK | PL011_HWREV_MASK)) {
+			case PL011_DESIGNER_ARM | __SHIFTIN(0, PL011_HWREV_MASK):
+			case PL011_DESIGNER_ARM | __SHIFTIN(1, PL011_HWREV_MASK):
+			case PL011_DESIGNER_ARM | __SHIFTIN(2, PL011_HWREV_MASK):
+				sc->sc_fifolen = 16;
+				break;
+			default:
+				sc->sc_fifolen = 32;
+				break;
+			}
+			break;
+		case PLCOM_TYPE_GENERIC_UART:
+			/* At least 32 byte TX FIFO */
+			sc->sc_fifolen = 32;
 			break;
 		}
 	}
+
+	/* Safe amount of bytes to fill when TX FIFO signals empty */
+	sc->sc_burstlen = 1;
 
 	if (ISSET(sc->sc_hwflags, PLCOM_HW_TXFIFO_DISABLE)) {
 		sc->sc_fifolen = 1;
 		aprint_normal_dev(sc->sc_dev, "txfifo disabled\n");
 	}
 
-	if (sc->sc_fifolen > 1)
+	if (sc->sc_fifolen > 1) {
 		SET(sc->sc_hwflags, PLCOM_HW_FIFO);
+		aprint_normal_dev(sc->sc_dev, "txfifo %u bytes\n", sc->sc_fifolen);
+	}
 
 	tp = tty_alloc();
 	tp->t_oproc = plcomstart;
@@ -582,7 +645,8 @@ plcom_config(struct plcom_softc *sc)
 		break;
 
 	case PLCOM_TYPE_PL011:
-		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+	case PLCOM_TYPE_GENERIC_UART:
+		PWRITE2(pi, PL011COM_CR, sc->sc_cr);
 		PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
 		break;
 	}
@@ -704,6 +768,7 @@ plcom_shutdown(struct plcom_softc *sc)
 			SET(sc->sc_cr, PL010_CR_RIE | PL010_CR_RTIE);
 			break;
 		case PLCOM_TYPE_PL011:
+		case PLCOM_TYPE_GENERIC_UART:
 			SET(sc->sc_cr, PL011_CR_RXE);
 			SET(sc->sc_imsc, PL011_INT_RT | PL011_INT_RX);
 			break;
@@ -715,9 +780,10 @@ plcom_shutdown(struct plcom_softc *sc)
 		PWRITE1(pi, PL010COM_CR, sc->sc_cr);
 		break;
 	case PLCOM_TYPE_PL011:
+	case PLCOM_TYPE_GENERIC_UART:
 		SET(sc->sc_cr, PL011_CR_RXE | PL011_CR_TXE);
 		SET(sc->sc_imsc, PL011_INT_RT | PL011_INT_RX);
-		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+		PWRITE2(pi, PL011COM_CR, sc->sc_cr);
 		PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
 		break;
 	}
@@ -815,6 +881,7 @@ plcomopen(dev_t dev, int flag, int mode, struct lwp *l)
 			sc->sc_msr = PREAD1(pi, PL01XCOM_FR);
 			break;
 		case PLCOM_TYPE_PL011:
+		case PLCOM_TYPE_GENERIC_UART:
 			SET(sc->sc_cr, PL011_CR_RXE | PL011_CR_TXE);
 			SET(sc->sc_imsc, PL011_INT_RT | PL011_INT_RX |
 			    PL011_INT_MSMASK);
@@ -1297,10 +1364,10 @@ plcom_to_tiocm(struct plcom_softc *sc)
 	return ttybits;
 }
 
-static u_char
+static uint32_t
 cflag2lcr(tcflag_t cflag)
 {
-	u_char lcr = 0;
+	uint32_t lcr = 0;
 
 	switch (ISSET(cflag, CSIZE)) {
 	case CS5:
@@ -1333,8 +1400,8 @@ plcomparam(struct tty *tp, struct termios *t)
 	struct plcom_softc *sc =
 		device_lookup_private(&plcom_cd, PLCOMUNIT(tp->t_dev));
 	struct plcom_instance *pi = &sc->sc_pi;
-	int ospeed = -1;
-	u_char lcr;
+	int ospeed = -1, lvl;
+	uint32_t lcr;
 
 	if (PLCOM_ISALIVE(sc) == 0)
 		return EIO;
@@ -1344,6 +1411,7 @@ plcomparam(struct tty *tp, struct termios *t)
 		ospeed = pl010comspeed(t->c_ospeed, sc->sc_frequency);
 		break;
 	case PLCOM_TYPE_PL011:
+	case PLCOM_TYPE_GENERIC_UART:
 		ospeed = pl011comspeed(t->c_ospeed, sc->sc_frequency);
 		break;
 	}
@@ -1387,8 +1455,25 @@ plcomparam(struct tty *tp, struct termios *t)
 	else
 		sc->sc_fifo = 0;
 
-	if (sc->sc_fifo)
+	if (sc->sc_fifo) {
 		SET(sc->sc_lcr, PL01X_LCR_FEN);
+
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL010:
+			sc->sc_ifls = 0;
+			break;
+		case PLCOM_TYPE_PL011:
+		case PLCOM_TYPE_GENERIC_UART:
+			lvl = PL011_IFLS_3QUARTERS;
+			sc->sc_ifls = PL011_IFLS_RXIFLS(lvl);
+
+			lvl = PL011_IFLS_1QUARTER;
+			sc->sc_ifls |= PL011_IFLS_TXIFLS(lvl);
+			sc->sc_burstlen = uimin(sc->sc_fifolen * 3 / 4, 1);
+			break;
+		}
+	} else
+		sc->sc_ifls = 0;
 
 	/*
 	 * If we're not in a mode that assumes a connection is present, then
@@ -1404,8 +1489,19 @@ plcomparam(struct tty *tp, struct termios *t)
 	 */
 	if (ISSET(t->c_cflag, CRTSCTS)) {
 		sc->sc_mcr_dtr = PL01X_MCR_DTR;
-		sc->sc_mcr_rts = PL01X_MCR_RTS;
-		sc->sc_msr_cts = PL01X_MSR_CTS;
+
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL010:
+			sc->sc_mcr_rts = PL01X_MCR_RTS;
+			sc->sc_msr_cts = PL01X_MSR_CTS;
+			break;
+		case PLCOM_TYPE_PL011:
+		case PLCOM_TYPE_GENERIC_UART:
+			sc->sc_mcr_rts = 0;
+			sc->sc_msr_cts = 0;
+			SET(sc->sc_cr, PL011_CR_CTSEN | PL011_CR_RTSEN);
+			break;
+		}
 	} else if (ISSET(t->c_cflag, MDMBUF)) {
 		/*
 		 * For DTR/DCD flow control, make sure we don't toggle DTR for
@@ -1414,6 +1510,12 @@ plcomparam(struct tty *tp, struct termios *t)
 		sc->sc_mcr_dtr = 0;
 		sc->sc_mcr_rts = PL01X_MCR_DTR;
 		sc->sc_msr_cts = PL01X_MSR_DCD;
+
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL011:
+			CLR(sc->sc_cr, PL011_CR_CTSEN | PL011_CR_RTSEN);
+			break;
+		}
 	} else {
 		/*
 		 * If no flow control, then always set RTS.  This will make
@@ -1427,6 +1529,12 @@ plcomparam(struct tty *tp, struct termios *t)
 			SET(sc->sc_mcr, PL01X_MCR_RTS);
 		else
 			CLR(sc->sc_mcr, PL01X_MCR_RTS);
+		switch (pi->pi_type) {
+		case PLCOM_TYPE_PL011:
+		case PLCOM_TYPE_GENERIC_UART:
+			CLR(sc->sc_cr, PL011_CR_CTSEN | PL011_CR_RTSEN);
+			break;
+		}
 	}
 	sc->sc_msr_mask = sc->sc_msr_cts | sc->sc_msr_dcd;
 
@@ -1443,6 +1551,7 @@ plcomparam(struct tty *tp, struct termios *t)
 		sc->sc_rateh = (ospeed >> 8) & 0xff;
 		break;
 	case PLCOM_TYPE_PL011:
+	case PLCOM_TYPE_GENERIC_UART:
 		sc->sc_ratel = ospeed & ((1 << 6) - 1);
 		sc->sc_rateh = ospeed >> 6;
 		break;
@@ -1536,6 +1645,7 @@ void
 plcom_loadchannelregs(struct plcom_softc *sc)
 {
 	struct plcom_instance *pi = &sc->sc_pi;
+	uint16_t ifls;
 
 	/* XXXXX necessary? */
 	plcom_iflush(sc);
@@ -1559,16 +1669,23 @@ plcom_loadchannelregs(struct plcom_softc *sc)
 		break;
 
 	case PLCOM_TYPE_PL011:
-		PWRITE4(pi, PL011COM_CR, 0);
+	case PLCOM_TYPE_GENERIC_UART:
+		PWRITE2(pi, PL011COM_CR, 0);
 		if (sc->sc_frequency != 0) {
 			PWRITE1(pi, PL011COM_FBRD, sc->sc_ratel);
 			PWRITE4(pi, PL011COM_IBRD, sc->sc_rateh);
 		}
+
+		/* Bits 6..15 are reserved, don't modify, read as zero */
+		ifls = PREAD2(pi, PL011COM_IFLS) & ~PL011_IFLS_MASK;
+		ifls |= sc->sc_ifls & PL011_IFLS_MASK;
+		PWRITE2(pi, PL011COM_IFLS, ifls);
+
 		PWRITE1(pi, PL011COM_LCRH, sc->sc_lcr);
 		sc->sc_mcr_active = sc->sc_mcr;
 		CLR(sc->sc_cr, PL011_MCR(PL01X_MCR_RTS | PL01X_MCR_DTR));
 		SET(sc->sc_cr, PL011_MCR(sc->sc_mcr_active));
-		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+		PWRITE2(pi, PL011COM_CR, sc->sc_cr);
 		break;
 	}
 }
@@ -1633,9 +1750,10 @@ plcom_hwiflow(struct plcom_softc *sc)
 			     device_unit(sc->sc_dev), sc->sc_mcr_active);
 		break;
 	case PLCOM_TYPE_PL011:
+	case PLCOM_TYPE_GENERIC_UART:
 		CLR(sc->sc_cr, PL011_MCR(PL01X_MCR_RTS | PL01X_MCR_DTR));
 		SET(sc->sc_cr, PL011_MCR(sc->sc_mcr_active));
-		PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+		PWRITE2(pi, PL011COM_CR, sc->sc_cr);
 		break;
 	}
 }
@@ -1687,6 +1805,7 @@ plcomstart(struct tty *tp)
 		}
 		break;
 	case PLCOM_TYPE_PL011:
+	case PLCOM_TYPE_GENERIC_UART:
 		if (!ISSET(sc->sc_imsc, PL011_INT_TX)) {
 			SET(sc->sc_imsc, PL011_INT_TX);
 			PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
@@ -1699,8 +1818,8 @@ plcomstart(struct tty *tp)
 		int n;
 
 		n = sc->sc_tbc;
-		if (n > sc->sc_fifolen)
-			n = sc->sc_fifolen;
+		if (n > sc->sc_burstlen)
+			n = sc->sc_burstlen;
 		PWRITEM1(pi, PL01XCOM_DR, sc->sc_tba, n);
 		sc->sc_tbc -= n;
 		sc->sc_tba += n;
@@ -1820,7 +1939,6 @@ plcom_rxsoft(struct plcom_softc *sc, struct tty *tp)
 			get = sc->sc_rbuf;
 		cc--;
 	}
-
 	if (cc != scc) {
 		sc->sc_rbget = get;
 		mutex_spin_enter(&sc->sc_lock);
@@ -1837,6 +1955,7 @@ plcom_rxsoft(struct plcom_softc *sc, struct tty *tp)
 					PWRITE1(pi, PL010COM_CR, sc->sc_cr);
 					break;
 				case PLCOM_TYPE_PL011:
+				case PLCOM_TYPE_GENERIC_UART:
 					SET(sc->sc_imsc,
 					    PL011_INT_RX | PL011_INT_RT);
 					PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
@@ -1937,6 +2056,7 @@ plcom_intstatus(struct plcom_instance *pi, u_int *istatus)
 		ret = ISSET(stat, PL010_IIR_IMASK);
 		break;
 	case PLCOM_TYPE_PL011:
+	case PLCOM_TYPE_GENERIC_UART:
 		stat = PREAD4(pi, PL011COM_MIS);
 		ret = ISSET(stat, PL011_INT_ALLMASK);
 		break;
@@ -1989,6 +2109,7 @@ plcomintr(void *arg)
 				/* Clear any error status.  */
 				if (ISSET(rsr, PL01X_RSR_ERROR))
 					PWRITE1(pi, PL01XCOM_ECR, 0);
+
 				if (ISSET(rsr, PL01X_RSR_BE)) {
 					cn_trapped = 0;
 					cn_check_magic(sc->sc_tty->t_dev,
@@ -2060,6 +2181,7 @@ plcomintr(void *arg)
 					PWRITE1(pi, PL010COM_CR, sc->sc_cr);
 					break;
 				case PLCOM_TYPE_PL011:
+				case PLCOM_TYPE_GENERIC_UART:
 					CLR(sc->sc_imsc,
 					    PL011_INT_RT | PL011_INT_RX);
 					PWRITE4(pi, PL011COM_IMSC, sc->sc_imsc);
@@ -2078,11 +2200,12 @@ plcomintr(void *arg)
 				}
 				break;
 			case PLCOM_TYPE_PL011:
+			case PLCOM_TYPE_GENERIC_UART:
 				rxintr = ISSET(istatus, PL011_INT_RX);
 				if (rxintr) {
-					PWRITE4(pi, PL011COM_CR, 0);
+					PWRITE2(pi, PL011COM_CR, 0);
 					delay(10);
-					PWRITE4(pi, PL011COM_CR, sc->sc_cr);
+					PWRITE2(pi, PL011COM_CR, sc->sc_cr);
 					continue;
 				}
 				break;
@@ -2094,6 +2217,7 @@ plcomintr(void *arg)
 			msr = PREAD1(pi, PL01XCOM_FR);
 			break;
 		case PLCOM_TYPE_PL011:
+		case PLCOM_TYPE_GENERIC_UART:
 			msr = PREAD4(pi, PL01XCOM_FR);
 			break;
 		}
@@ -2109,6 +2233,7 @@ plcomintr(void *arg)
 			}
 			break;
 		case PLCOM_TYPE_PL011:
+		case PLCOM_TYPE_GENERIC_UART:
 			msintr = ISSET(istatus, PL011_INT_MSMASK);
 			if (msintr) {
 				PWRITE4(pi, PL011COM_ICR, PL011_INT_MSMASK);
@@ -2218,8 +2343,8 @@ plcomintr(void *arg)
 				int n;
 
 				n = sc->sc_tbc;
-				if (n > sc->sc_fifolen)
-					n = sc->sc_fifolen;
+				if (n > sc->sc_burstlen)
+					n = sc->sc_burstlen;
 				PWRITEM1(pi, PL01XCOM_DR, sc->sc_tba, n);
 				sc->sc_tbc -= n;
 				sc->sc_tba += n;
@@ -2237,6 +2362,7 @@ plcomintr(void *arg)
 					}
 					break;
 				case PLCOM_TYPE_PL011:
+				case PLCOM_TYPE_GENERIC_UART:
 					if (ISSET(sc->sc_imsc, PL011_INT_TX)) {
 						CLR(sc->sc_imsc, PL011_INT_TX);
 						PWRITE4(pi, PL011COM_IMSC,
@@ -2256,7 +2382,8 @@ plcomintr(void *arg)
 	mutex_spin_exit(&sc->sc_lock);
 
 	/* Wake up the poller. */
-	softint_schedule(sc->sc_si);
+	if ((sc->sc_rx_ready | sc->sc_st_check | sc->sc_tx_done) != 0)
+		softint_schedule(sc->sc_si);
 
 #ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, istatus | rsr);
@@ -2347,7 +2474,7 @@ plcom_common_putc(dev_t dev, struct plcom_instance *pi, int c)
 int
 plcominit(struct plcom_instance *pi, int rate, int frequency, tcflag_t cflag)
 {
-	u_char lcr;
+	uint32_t lcr;
 
 	switch (pi->pi_type) {
 	case PLCOM_TYPE_PL010:
@@ -2355,6 +2482,7 @@ plcominit(struct plcom_instance *pi, int rate, int frequency, tcflag_t cflag)
 			pi->pi_size = PL010COM_UART_SIZE;
 		break;
 	case PLCOM_TYPE_PL011:
+	case PLCOM_TYPE_GENERIC_UART:
 		if (pi->pi_size == 0)
 			pi->pi_size = PL011COM_UART_SIZE;
 		break;
@@ -2380,7 +2508,8 @@ plcominit(struct plcom_instance *pi, int rate, int frequency, tcflag_t cflag)
 		PWRITE1(pi, PL010COM_CR, PL01X_CR_UARTEN);
 		break;
 	case PLCOM_TYPE_PL011:
-		PWRITE4(pi, PL011COM_CR, 0);
+	case PLCOM_TYPE_GENERIC_UART:
+		PWRITE2(pi, PL011COM_CR, 0);
 
 		if (rate && frequency) {
 			rate = pl011comspeed(rate, frequency);
@@ -2388,7 +2517,7 @@ plcominit(struct plcom_instance *pi, int rate, int frequency, tcflag_t cflag)
 			PWRITE4(pi, PL011COM_IBRD, rate >> 6);
 		}
 		PWRITE1(pi, PL011COM_LCRH, lcr);
-		PWRITE4(pi, PL011COM_CR,
+		PWRITE2(pi, PL011COM_CR,
 		    PL01X_CR_UARTEN | PL011_CR_RXE | PL011_CR_TXE);
 		break;
 	}
@@ -2478,7 +2607,8 @@ plcomcnhalt(dev_t dev)
 		PWRITE1(pi, PL010COM_CR, PL01X_CR_UARTEN);
 		break;
 	case PLCOM_TYPE_PL011:
-		PWRITE4(pi, PL011COM_CR,
+	case PLCOM_TYPE_GENERIC_UART:
+		PWRITE2(pi, PL011COM_CR,
 		    PL01X_CR_UARTEN | PL011_CR_RXE | PL011_CR_TXE);
 		PWRITE4(pi, PL011COM_IMSC, 0);
 		break;

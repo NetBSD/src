@@ -1,4 +1,4 @@
-/* $NetBSD: plcom_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: plcom_fdt.c,v 1.6 2023/01/24 06:56:40 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.5 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_fdt.c,v 1.6 2023/01/24 06:56:40 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,7 +44,8 @@ static int	plcom_fdt_match(device_t, cfdata_t, void *);
 static void	plcom_fdt_attach(device_t, device_t, void *);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "arm,pl011" },
+	{ .compat = "arm,pl011", .value = PLCOM_TYPE_PL011 },
+	{ .compat = "arm,sbsa-uart", .value = PLCOM_TYPE_GENERIC_UART },
 	DEVICE_COMPAT_EOL
 };
 
@@ -70,6 +71,8 @@ plcom_fdt_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	void *ih;
+	const u_int *data;
+	int len;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": missing 'reg' property\n");
@@ -94,10 +97,13 @@ plcom_fdt_attach(device_t parent, device_t self, void *aux)
 			sc->sc_frequency = clk_get_rate(clk);
 	}
 
-	sc->sc_hwflags = PLCOM_HW_TXFIFO_DISABLE;
+	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
 
-	sc->sc_pi.pi_type = PLCOM_TYPE_PL011;
+	if ((data = fdtbus_get_prop(phandle, "arm,primecell-periphid", &len)) != NULL)
+                sc->sc_pi.pi_periphid = be32toh(data[0]);
+
+	sc->sc_pi.pi_type = of_compatible_lookup(faa->faa_phandle, compat_data)->value;
 	sc->sc_pi.pi_flags = PLC_FLAG_32BIT_ACCESS;
 	sc->sc_pi.pi_iot = faa->faa_bst;
 	sc->sc_pi.pi_iobase = addr;
