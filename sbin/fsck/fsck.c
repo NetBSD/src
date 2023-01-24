@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.52 2014/10/25 22:00:19 mlelstv Exp $	*/
+/*	$NetBSD: fsck.c,v 1.53 2023/01/24 08:09:37 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.52 2014/10/25 22:00:19 mlelstv Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.53 2023/01/24 08:09:37 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -557,10 +557,11 @@ getfslab(const char *str)
 	char p;
 	const char *vfstype;
 	u_char t;
+	char buf[MAXPATHLEN];
 
 	/* deduce the file system type from the disk label */
-	if ((fd = open(str, O_RDONLY)) == -1)
-		err(1, "cannot open `%s'", str);
+        if ((fd = opendisk(str, O_RDONLY, buf, sizeof(buf), 0)) == -1)
+		err(1, "cannot open `%s'", buf);
 
 	/* First check to see if it's a wedge. */
 	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == 0) {
@@ -570,22 +571,22 @@ getfslab(const char *str)
 	}
 
 	if (ioctl(fd, DIOCGDINFO, &dl) == -1)
-		err(1, "cannot get disklabel for `%s'", str);
+		err(1, "cannot get disklabel for `%s'", buf);
 
 	(void) close(fd);
 
-	p = str[strlen(str) - 1];
+	p = buf[strlen(buf) - 1];
 
 	if ((p - 'a') >= dl.d_npartitions)
-		errx(1, "partition `%s' is not defined on disk", str);
+		errx(1, "partition `%s' is not defined on disk", buf);
 
 	if ((t = dl.d_partitions[p - 'a'].p_fstype) >= FSMAXTYPES) 
 		errx(1, "partition `%s' is not of a legal vfstype",
-		    str);
+		    buf);
 
 	if ((vfstype = fscknames[t]) == NULL)
 		errx(1, "vfstype `%s' on partition `%s' is not supported",
-		    fstypenames[t], str);
+		    fstypenames[t], buf);
 
 	return vfstype;
 }
