@@ -1,4 +1,4 @@
-/* $NetBSD: plcom_acpi.c,v 1.3 2020/04/25 21:34:26 jmcneill Exp $ */
+/* $NetBSD: plcom_acpi.c,v 1.4 2023/01/24 06:56:40 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom_acpi.c,v 1.3 2020/04/25 21:34:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom_acpi.c,v 1.4 2023/01/24 06:56:40 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,9 +50,17 @@ static void	plcom_acpi_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(plcom_acpi, sizeof(struct plcom_softc), plcom_acpi_match, plcom_acpi_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"ARMH0011",
-	NULL
+enum plcom_acpi_variant {
+	PLCOM_ACPI_GENERIC,
+	PLCOM_ACPI_PL011,
+	PLCOM_ACPI_BCM2837
+};
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "BCM2837",		.value = PLCOM_ACPI_BCM2837 },
+	{ .compat = "ARMH0011",		.value = PLCOM_ACPI_PL011 },
+	{ .compat = "ARMHB000",		.value = PLCOM_ACPI_GENERIC },
+	DEVICE_COMPAT_EOL
 };
 
 static int
@@ -63,7 +71,7 @@ plcom_acpi_match(device_t parent, cfdata_t cf, void *aux)
 	if (aa->aa_node->ad_type != ACPI_TYPE_DEVICE)
 		return 0;
 
-	return acpi_match_hid(aa->aa_node->ad_devinfo, compatible);
+	return acpi_compatible_match(aa, compat_data);
 }
 
 static void
@@ -98,9 +106,19 @@ plcom_acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
-
+	sc->sc_fifolen = 0;
 	sc->sc_pi.pi_type = PLCOM_TYPE_PL011;
 	sc->sc_pi.pi_flags = PLC_FLAG_32BIT_ACCESS;
+
+	switch (acpi_compatible_lookup(aa, compat_data)->value) {
+	case PLCOM_ACPI_BCM2837:
+		sc->sc_fifolen = 16;
+		break;
+	case PLCOM_ACPI_GENERIC:
+		sc->sc_pi.pi_type = PLCOM_TYPE_GENERIC_UART;
+		break;
+	}
+
 	sc->sc_pi.pi_iot = aa->aa_memt;
 	sc->sc_pi.pi_iobase = mem->ar_base;
 	if (bus_space_map(aa->aa_memt, mem->ar_base, mem->ar_length, 0, &sc->sc_pi.pi_ioh) != 0) {

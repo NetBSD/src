@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_platform.c,v 1.34 2022/11/16 11:54:26 skrll Exp $ */
+/* $NetBSD: acpi_platform.c,v 1.35 2023/01/24 06:56:40 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.34 2022/11/16 11:54:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_platform.c,v 1.35 2023/01/24 06:56:40 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -188,7 +188,10 @@ acpi_platform_attach_uart(ACPI_TABLE_SPCR *spcr)
 	case ACPI_DBG2_ARM_PL011:
 	case ACPI_DBG2_ARM_SBSA_32BIT:
 	case ACPI_DBG2_ARM_SBSA_GENERIC:
-		plcom_console.pi_type = PLCOM_TYPE_PL011;
+		if (spcr->InterfaceType == ACPI_DBG2_ARM_PL011)
+			plcom_console.pi_type = PLCOM_TYPE_PL011;
+		else
+			plcom_console.pi_type = PLCOM_TYPE_GENERIC_UART;
 		plcom_console.pi_iot = &arm_generic_bs_tag;
 		plcom_console.pi_iobase = le64toh(spcr->SerialPort.Address);
 		plcom_console.pi_size = PL011COM_UART_SIZE;
