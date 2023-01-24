@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomreg.h,v 1.6 2019/12/27 08:22:50 msaitoh Exp $	*/
+/*	$NetBSD: plcomreg.h,v 1.7 2023/01/24 06:56:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -107,6 +107,7 @@
 #define	PL011_MSR_RI		PL011_FR_RI
 
 /* ifls */
+#define PL011_IFLS_MASK		0x001f
 #define	PL011_IFLS_1EIGHTH	0
 #define	PL011_IFLS_1QUARTER	1
 #define	PL011_IFLS_1HALF	2
@@ -133,6 +134,10 @@
 #define	PL011_INT_ALLMASK \
     (PL011_INT_RT | PL011_INT_TX | PL011_INT_RX | PL011_INT_MSMASK)
 
+/* PL011 HW revision bits in PID (0..3 combined little endian) */
+#define PL011_HWREV_MASK	0x00f00000
+#define PL011_DESIGNER_MASK	0x000ff000
+#define PL011_DESIGNER_ARM	0x00041000
 
 /* DMA control registers */
 #define	PL011_DMA_ONERR	0x4
@@ -161,6 +166,10 @@
 #define	PL011COM_MIS	0x40	/* Masked interrupt status register */
 #define	PL011COM_ICR	0x44	/* Interrupt clear register register */
 #define	PL011COM_DMACR	0x48	/* DMA control register register */
+#define	PL011COM_PID0	0xfe0	/* Peripheral ID register 0 */
+#define	PL011COM_PID1	0xfe4	/* Peripheral ID register 1 */
+#define	PL011COM_PID2	0xfe8	/* Peripheral ID register 2 */
+#define	PL011COM_PID3	0xfec	/* Peripheral ID register 3 */
 
 #define	PL010COM_UART_SIZE	0x100
 #define	PL011COM_UART_SIZE	0x1000

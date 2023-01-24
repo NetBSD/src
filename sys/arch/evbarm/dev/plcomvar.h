@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.18 2021/10/17 22:34:17 jmcneill Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.19 2023/01/24 06:56:40 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -70,10 +70,12 @@ struct plcom_instance {
 	u_int			pi_type;
 #define	PLCOM_TYPE_PL010 0
 #define	PLCOM_TYPE_PL011 1
+#define	PLCOM_TYPE_GENERIC_UART 2		/* SBSA generic uart */
 
 	uint32_t		pi_flags;	/* flags for this PLCOM */
 #define	PLC_FLAG_USE_DMA		0x0001
 #define	PLC_FLAG_32BIT_ACCESS		0x0002
+	uint32_t		pi_periphid;
 
 	void 			*pi_cookie;
 
@@ -103,6 +105,7 @@ struct plcom_softc {
 	int sc_hwflags,
 	    sc_swflags;
 	u_int sc_fifolen;
+	u_int sc_burstlen;
 
 	struct timeval sc_hup_pending;
 
@@ -131,9 +134,10 @@ struct plcom_softc {
 			sc_rx_ready;
 
 	volatile u_char sc_heldchange;
-	volatile u_int sc_cr, sc_ratel, sc_rateh, sc_imsc;
-	volatile u_int sc_msr, sc_msr_delta, sc_msr_mask;
-	volatile u_char sc_mcr, sc_mcr_active, sc_lcr;
+	volatile uint32_t sc_cr, sc_ratel, sc_rateh, sc_imsc;
+	volatile uint32_t sc_msr, sc_msr_delta, sc_msr_mask;
+	volatile uint32_t sc_lcr, sc_ifls;
+	volatile u_char sc_mcr, sc_mcr_active;
 	u_char sc_mcr_dtr, sc_mcr_rts, sc_msr_cts, sc_msr_dcd;
 	u_int sc_fifo;
 
