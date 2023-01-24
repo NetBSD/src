@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.56 2023/01/24 23:23:12 riastradh Exp $ */
+/*	$NetBSD: db_trace.c,v 1.57 2023/01/24 23:23:31 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.56 2023/01/24 23:23:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.57 2023/01/24 23:23:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -127,12 +127,8 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			}
 			(*pr)("lid %d ", l.l_lid);
 			pcb = lwp_getpcb(&l);
-#ifndef _KERNEL
 			db_read_bytes((db_addr_t)&pcb->pcb_sp,
 			    sizeof(frame), (char *)&frame);
-#else
-			frame = (vaddr_t)pcb->pcb_sp;
-#endif
 			(*pr)("at %p\n", frame);
 		} else {
 			frame = (vaddr_t)addr;
