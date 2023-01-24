@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.691 2023/01/23 23:01:52 sjg Exp $	*/
+/*	$NetBSD: parse.c,v 1.692 2023/01/24 00:24:02 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.691 2023/01/23 23:01:52 sjg Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.692 2023/01/24 00:24:02 sjg Exp $");
 
 /*
  * A file being read.
@@ -168,6 +168,7 @@ typedef enum ParseSpecial {
 	SP_SINGLESHELL,	/* .SINGLESHELL; not mentioned in the manual page */
 	SP_STALE,	/* .STALE */
 	SP_SUFFIXES,	/* .SUFFIXES */
+	SP_SYSPATH,	/* .SYSPATH */
 	SP_WAIT		/* .WAIT */
 } ParseSpecial;
 
@@ -293,6 +294,7 @@ static const struct {
     { ".SINGLESHELL",	SP_SINGLESHELL,	OP_NONE },
     { ".STALE",		SP_STALE,	OP_NONE },
     { ".SUFFIXES",	SP_SUFFIXES,	OP_NONE },
+    { ".SYSPATH",	SP_SYSPATH,	OP_NONE },
     { ".USE",		SP_ATTRIBUTE,	OP_USE },
     { ".USEBEFORE",	SP_ATTRIBUTE,	OP_USEBEFORE },
     { ".WAIT",		SP_WAIT,	OP_NONE },
@@ -923,6 +925,11 @@ HandleDependencyTargetSpecial(const char *targetName,
 			*inout_paths = Lst_New();
 		Lst_Append(*inout_paths, &dirSearchPath);
 		break;
+	case SP_SYSPATH:
+		if (*inout_paths == NULL)
+			*inout_paths = Lst_New();
+		Lst_Append(*inout_paths, sysIncPath);
+		break;
 	case SP_MAIN:
 		/*
 		 * Allow targets from the command line to override the
@@ -1129,15 +1136,17 @@ ParseDependencyOp(char **pp)
 }
 
 static void
-ClearPaths(SearchPathList *paths)
+ClearPaths(ParseSpecial special, SearchPathList *paths)
 {
 	if (paths != NULL) {
 		SearchPathListNode *ln;
 		for (ln = paths->first; ln != NULL; ln = ln->next)
 			SearchPath_Clear(ln->datum);
 	}
-
-	Dir_SetPATH();
+	if (special == SP_SYSPATH)
+		Dir_SetSYSPATH();
+	else
+		Dir_SetPATH();
 }
 
 static char *
@@ -1258,7 +1267,8 @@ HandleDependencySourcesEmpty(ParseSpecial special, SearchPathList *paths)
 		opts.silent = true;
 		break;
 	case SP_PATH:
-		ClearPaths(paths);
+	case SP_SYSPATH:
+		ClearPaths(special, paths);
 		break;
 #ifdef POSIX
 	case SP_POSIX:
@@ -1321,6 +1331,9 @@ ParseDependencySourceSpecial(ParseSpecial special, const char *word,
 		break;
 	case SP_READONLY:
 		Var_ReadOnly(word, true);
+		break;
+	case SP_SYSPATH:
+		AddToPaths(word, paths);
 		break;
 	default:
 		break;
@@ -1543,6 +1556,7 @@ ParseDependencySources(char *p, GNodeType targetAttr,
 	case SP_PATH:
 	case SP_READONLY:
 	case SP_SUFFIXES:
+	case SP_SYSPATH:
 		ParseDependencySourcesSpecial(p, special, *inout_paths);
 		if (*inout_paths != NULL) {
 			Lst_Free(*inout_paths);
@@ -1550,6 +1564,8 @@ ParseDependencySources(char *p, GNodeType targetAttr,
 		}
 		if (special == SP_PATH)
 			Dir_SetPATH();
+		if (special == SP_SYSPATH)
+			Dir_SetSYSPATH();
 		break;
 	default:
 		assert(*inout_paths == NULL);
