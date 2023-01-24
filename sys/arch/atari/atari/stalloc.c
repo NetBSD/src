@@ -1,4 +1,4 @@
-/*	$NetBSD: stalloc.c,v 1.19 2023/01/06 10:28:27 tsutsui Exp $	*/
+/*	$NetBSD: stalloc.c,v 1.20 2023/01/24 07:57:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman (Atari modifications)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.19 2023/01/06 10:28:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stalloc.c,v 1.20 2023/01/24 07:57:20 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -219,7 +219,7 @@ free_stmem(void *mem)
 			} else {
 				TAILQ_INSERT_HEAD(&free_list,mn,free_link);
 			}
-				mn->type = MNODE_FREE;
+			mn->type = MNODE_FREE;
 		}
 		stmem_total += mn->size;/* add our helpings to the pool. */
 	}
