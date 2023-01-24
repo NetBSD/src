@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.36 2022/11/17 06:40:39 chs Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.37 2023/01/24 08:05:07 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.36 2022/11/17 06:40:39 chs Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.37 2023/01/24 08:05:07 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: scan_ffs.c,v 1.36 2022/11/17 06:40:39 chs Exp $");
 
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -122,6 +123,14 @@ got_siginfo(int signo)
 static int
 ffs_checkver(struct sblockinfo *sbi)
 {
+	switch (sbi->ffs->fs_magic) {
+		case FS_UFS1_MAGIC_SWAPPED:
+		case FS_UFS2_MAGIC_SWAPPED:
+		case FS_UFS2EA_MAGIC_SWAPPED:
+			ffs_sb_swap(sbi->ffs, sbi->ffs);
+			break;
+	}
+
 	switch (sbi->ffs->fs_magic) {
 		case FS_UFS1_MAGIC:
 		case FS_UFS1_MAGIC_SWAPPED:
