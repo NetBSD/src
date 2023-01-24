@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.39 2021/08/03 23:12:14 andvar Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.40 2023/01/24 07:09:48 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.39 2021/08/03 23:12:14 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.40 2023/01/24 07:09:48 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,13 +411,12 @@ dsrtc_read(dev_t dev, struct uio *uio, int flags)
 		return ENXIO;
 
 	const struct dsrtc_model * const dm = &sc->sc_model;
-	if (uio->uio_offset >= dm->dm_nvram_size)
+	if (uio->uio_offset < 0 || uio->uio_offset >= dm->dm_nvram_size)
 		return EINVAL;
 
 	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0)
 		return error;
 
-	KASSERT(uio->uio_offset >= 0);
 	while (uio->uio_resid && uio->uio_offset < dm->dm_nvram_size) {
 		uint8_t ch, cmd;
 		const u_int a = uio->uio_offset;
