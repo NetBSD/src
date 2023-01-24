@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.587 2023/01/19 21:33:06 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.588 2023/01/24 00:24:02 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.587 2023/01/19 21:33:06 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.588 2023/01/24 00:24:02 sjg Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -428,6 +428,7 @@ MainParseArgSysInc(const char *argvalue)
 	}
 	Global_Append(MAKEFLAGS, "-m");
 	Global_Append(MAKEFLAGS, argvalue);
+	Dir_SetSYSPATH();
 }
 
 static bool
@@ -1477,6 +1478,10 @@ static void
 main_ReadFiles(void)
 {
 
+	if (Lst_IsEmpty(&sysIncPath->dirs))
+		SearchPath_AddAll(sysIncPath, defSysIncPath);
+
+	Dir_SetSYSPATH();
 	if (!opts.noBuiltins)
 		ReadBuiltinRules();
 

@@ -113,7 +113,7 @@ MFLAGS           =   -r -k -d mps -d 0 -d g1
 #  refs  hits  directory
 #     1     0  <curdir>
 #     1     0  .
-#     1     0  <defsyspath>
+#     2     0  <defsyspath>
 
 #*** Suffixes:
 # ".4" (num 1, ref 1)
