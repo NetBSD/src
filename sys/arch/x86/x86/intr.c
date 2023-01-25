@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.163 2022/10/29 13:59:04 riastradh Exp $	*/
+/*	$NetBSD: intr.c,v 1.164 2023/01/25 15:54:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.163 2022/10/29 13:59:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.164 2023/01/25 15:54:53 riastradh Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -161,6 +161,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.163 2022/10/29 13:59:04 riastradh Exp $")
 
 #include <machine/i8259.h>
 #include <machine/pio.h>
+
+#include <x86/intr_private.h>
 
 #include "ioapic.h"
 #include "lapic.h"
@@ -944,11 +946,21 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	ih->ih_slot = slot;
 	strlcpy(ih->ih_xname, xname, sizeof(ih->ih_xname));
 #ifdef KDTRACE_HOOKS
-	ih->ih_fun = intr_kdtrace_wrapper;
-	ih->ih_arg = ih;
+	/*
+	 * XXX i8254_clockintr is special -- takes a magic extra
+	 * argument.  This should be fixed properly in some way that
+	 * doesn't involve sketchy function pointer casts.  See also
+	 * the comments in x86/isa/clock.c.
+	 */
+	if (handler != __FPTRCAST(int (*)(void *), i8254_clockintr)) {
+		ih->ih_fun = intr_kdtrace_wrapper;
+		ih->ih_arg = ih;
+	}
 #endif
 #ifdef MULTIPROCESSOR
 	if (!mpsafe) {
+		KASSERT(handler !=			/* XXX */
+		    __FPTRCAST(int (*)(void *), i8254_clockintr));
 		ih->ih_fun = intr_biglock_wrapper;
 		ih->ih_arg = ih;
 	}
