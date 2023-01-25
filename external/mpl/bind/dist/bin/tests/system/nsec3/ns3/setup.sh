@@ -25,7 +25,9 @@ setup() {
 }
 
 for zn in nsec-to-nsec3 nsec3 nsec3-other nsec3-change nsec3-to-nsec \
-	  nsec3-to-optout nsec3-from-optout nsec3-dynamic nsec3-dynamic-change
+	  nsec3-to-optout nsec3-from-optout nsec3-dynamic \
+	  nsec3-dynamic-change nsec3-dynamic-to-inline \
+	  nsec3-inline-to-dynamic nsec3-dynamic-update-inline
 do
 	setup "${zn}.kasp"
 done

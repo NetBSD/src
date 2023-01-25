@@ -11,10 +11,6 @@
  * information regarding copyright ownership.
  */
 
-/*
- * Test stale-answer-client-timeout 0.
- */
-
 key rndc_key {
 	secret "1234abcd8765";
 	algorithm hmac-sha256;

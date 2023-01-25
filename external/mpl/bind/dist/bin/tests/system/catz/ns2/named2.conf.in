@@ -58,5 +58,5 @@ zone "catalog4.example" {
 
 key tsig_key. {
 	secret "LSAnCU+Z";
-	algorithm hmac-md5;
+	algorithm @DEFAULT_HMAC@;
 };

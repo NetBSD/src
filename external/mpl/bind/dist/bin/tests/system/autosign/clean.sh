@@ -49,7 +49,7 @@ rm -f ns3/kskonly.example.db
 rm -f ns3/named.ns3.prev
 rm -f ns3/noksk.example.db
 rm -f ns3/nozsk.example.db ns3/inaczsk.example.db
-rm -f ns3/nsec.example.db
+rm -f ns3/nsec-only.example.db
 rm -f ns3/nsec3-to-nsec.example.db
 rm -f ns3/nsec3.example.db
 rm -f ns3/nsec3.nsec3.example.db

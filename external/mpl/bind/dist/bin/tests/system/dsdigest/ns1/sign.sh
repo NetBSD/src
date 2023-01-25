@@ -23,8 +23,8 @@ zonefile=root.db
 cp ../ns2/dsset-good$TP .
 cp ../ns2/dsset-bad$TP .
 
-key1=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-key2=`$KEYGEN -q -a RSASHA1 -b 2048 -n zone -f KSK $zone`
+key1=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+key2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 
 cat $infile $key1.key $key2.key > $zonefile
 

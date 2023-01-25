@@ -1,0 +1,63 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+dnssec-policy "unsigning" {
+	dnskey-ttl 7200;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime P60D algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "nsec3" {
+	nsec3param iterations 0 optout no salt-length 0;
+};
+
+dnssec-policy "rsasha256" {
+	signatures-refresh P5D;
+	signatures-validity 30d;
+	signatures-validity-dnskey 30d;
+
+	keys {
+		ksk lifetime unlimited algorithm rsasha256;
+		zsk lifetime unlimited algorithm rsasha256;
+	};
+
+	dnskey-ttl 1h;
+	publish-safety PT1H;
+	retire-safety 2h;
+	zone-propagation-delay 3600;
+	max-zone-ttl 6h;
+	parent-propagation-delay pt1h;
+	parent-ds-ttl 7200;
+};
+
+dnssec-policy "ecdsa256" {
+	signatures-refresh P5D;
+	signatures-validity 30d;
+	signatures-validity-dnskey 30d;
+
+	keys {
+		ksk lifetime unlimited algorithm ecdsa256;
+		zsk lifetime unlimited algorithm ecdsa256;
+	};
+
+	dnskey-ttl 1h;
+	publish-safety PT1H;
+	retire-safety 2h;
+	zone-propagation-delay 3600;
+	max-zone-ttl 6h;
+	parent-propagation-delay pt1h;
+	parent-ds-ttl 7200;
+};

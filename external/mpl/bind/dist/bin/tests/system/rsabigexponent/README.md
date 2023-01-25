@@ -29,3 +29,11 @@ Do **not** remove `bigkey.c` as it may be needed to generate a new
 
 `bigkey` is used to both test that we are not running under PKCS#11 and
 generate a `DNSKEY` key with a large RSA exponent.
+
+To regenerate `ns2/example.db.bad` comment out the range test in
+opensslrsa_parse before signing the zone with a ZSK key generated
+by `bigkey`.
+
+        if (BN_num_bits(e) > RSA_MAX_PUBEXP_BITS) {
+                DST_RET(ISC_R_RANGE);
+        }

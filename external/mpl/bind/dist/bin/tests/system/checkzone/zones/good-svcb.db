@@ -24,3 +24,4 @@ svcb6		SVCB	6 . mandatory=port,alpn port=60 alpn=h3
 svcb7		SVCB	7 . mandatory=port,alpn port=60 alpn=h1,h3
 svcb8		SVCB	8 . mandatory=port,alpn port=60 alpn="h1\\,h2,h3"
 svcb9		SVCB	0 44._svbc.example.net.
+svcb10		SVCB	7 . alpn="h2,h3" dohpath=/{?dns}

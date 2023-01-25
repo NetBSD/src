@@ -22,36 +22,36 @@ mv ${unsupportedkey}.tmp ${unsupportedkey}.key
 zone=bits
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
 zone=noixfr
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
 zone=master
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
 zone=dynamic
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
 zone=updated
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 $SIGNER -S -O raw -L 2000042407 -o ${zone} ${zone}.db > /dev/null
 cp master2.db.in updated.db
@@ -60,92 +60,92 @@ cp master2.db.in updated.db
 zone=expired
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 $SIGNER -PS -s 20100101000000 -e 20110101000000 -O raw -L 2000042407 -o ${zone} ${zone}.db > /dev/null
 
 zone=retransfer
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
 zone=nsec3
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
 zone=retransfer3
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
 zone=inactiveksk
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone -P now -A now+3600 -f KSK $zone`
-keyname=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -P now -A now+3600 -f KSK $zone)
+keyname=$($KEYGEN -q -a ${ALTERNATIVE_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${ALTERNATIVE_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
 zone=inactivezsk
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone -P now -A now+3600 $zone`
-keyname=`$KEYGEN -q -a NSEC3RSASHA1 -b 1024 -n zone -f KSK $zone`
-keyname=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA256 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -P now -A now+3600 $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
+keyname=$($KEYGEN -q -a ${ALTERNATIVE_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${ALTERNATIVE_ALGORITHM} -n zone -f KSK $zone)
 $DSFROMKEY -T 1200 $keyname >> ../ns1/root.db
 
 zone=delayedkeys
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 # Keys for the "delayedkeys" zone should not be initially accessible.
 mv K${zone}.+*+*.* ../
 
 zone=removedkeys-primary
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 
 zone=removedkeys-secondary
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 
 for s in a c d h k l m q z
 do
 	zone=test-$s
-	keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
+	keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
 done
 
 for s in b f i o p t v
 do
 	zone=test-$s
-	keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone $zone`
-	keyname=`$KEYGEN -q -a RSASHA1 -b 1024 -n zone -f KSK $zone`
+	keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone $zone)
+	keyname=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -n zone -f KSK $zone)
 done
 
 zone=externalkey
 rm -f K${zone}.+*+*.key
 rm -f K${zone}.+*+*.private
 
-for alg in ECDSAP256SHA256 NSEC3RSASHA1
+for alg in ${DEFAULT_ALGORITHM} ${ALTERNATIVE_ALGORITHM}
 do
-    k1=`$KEYGEN -q -a $alg -b 1024 -n zone -f KSK $zone`
-    k2=`$KEYGEN -q -a $alg -b 1024 -n zone $zone`
-    k3=`$KEYGEN -q -a $alg -b 1024 -n zone $zone`
-    k4=`$KEYGEN -q -a $alg -b 1024 -n zone -f KSK $zone`
+    k1=$($KEYGEN -q -a $alg -n zone -f KSK $zone)
+    k2=$($KEYGEN -q -a $alg -n zone $zone)
+    k3=$($KEYGEN -q -a $alg -n zone $zone)
+    k4=$($KEYGEN -q -a $alg -n zone -f KSK $zone)
     $DSFROMKEY -T 1200 $k4 >> ../ns1/root.db
 
     # Convert k1 and k2 in to External Keys.

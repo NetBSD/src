@@ -134,3 +134,20 @@ zone "nsec3-fails-to-load.kasp" {
 	dnssec-policy "nsec3";
 	allow-update { any; };
 };
+
+/* These zones switch from dynamic to inline-signing or vice versa. */
+zone "nsec3-dynamic-to-inline.kasp" {
+	type primary;
+	file "nsec3-dynamic-to-inline.kasp.db";
+	inline-signing yes;
+	dnssec-policy "nsec3";
+	allow-update { any; };
+};
+
+zone "nsec3-inline-to-dynamic.kasp" {
+	type primary;
+	file "nsec3-inline-to-dynamic.kasp.db";
+	inline-signing no;
+	dnssec-policy "nsec3";
+	allow-update { any; };
+};

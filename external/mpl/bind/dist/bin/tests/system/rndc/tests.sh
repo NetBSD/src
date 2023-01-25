@@ -460,13 +460,13 @@ $DIG @10.53.0.4 -p ${PORT} -c ch -t txt foo12345.bind +qr > dig.out.1.test$n 2>&
 grep "query: foo12345.bind CH TXT.*(.*)$" ns4/named.run > /dev/null || ret=1
 # query for another builtin zone and check if query was logged (with +subnet=127.0.0.1)
 $DIG +subnet=127.0.0.1 @10.53.0.4 -p ${PORT} -c ch -t txt foo12346.bind +qr > dig.out.2.test$n 2>&1 || ret=1
-grep "query: foo12346.bind CH TXT.*\[ECS 127\.0\.0\.1\/32\/0]" ns4/named.run > /dev/null || ret=1
+grep "query: foo12346.bind CH TXT.*\[ECS 127\.0\.0\.1/32/0]" ns4/named.run > /dev/null || ret=1
 # query for another builtin zone and check if query was logged (with +subnet=127.0.0.1/24)
 $DIG +subnet=127.0.0.1/24 @10.53.0.4 -p ${PORT} -c ch -t txt foo12347.bind +qr > dig.out.3.test$n 2>&1 || ret=1
-grep "query: foo12347.bind CH TXT.*\[ECS 127\.0\.0\.0\/24\/0]" ns4/named.run > /dev/null || ret=1
+grep "query: foo12347.bind CH TXT.*\[ECS 127\.0\.0\.0/24/0]" ns4/named.run > /dev/null || ret=1
 # query for another builtin zone and check if query was logged (with +subnet=::1)
 $DIG +subnet=::1 @10.53.0.4 -p ${PORT} -c ch -t txt foo12348.bind +qr > dig.out.4.test$n 2>&1 || ret=1
-grep "query: foo12348.bind CH TXT.*\[ECS \:\:1\/128\/0]" ns4/named.run > /dev/null || ret=1
+grep "query: foo12348.bind CH TXT.*\[ECS ::1/128/0]" ns4/named.run > /dev/null || ret=1
 # toggle query logging and check again
 $RNDC -s 10.53.0.4 -p ${EXTRAPORT6} -c ns4/key6.conf querylog > /dev/null 2>&1 || ret=1
 grep "query logging is now off" ns4/named.run > /dev/null || ret=1
@@ -766,10 +766,10 @@ status=$((status+ret))
 n=$((n+1))
 echo_i "checking initial in-view zone file is loaded ($n)"
 ret=0
-TSIG="hmac-sha1:int:FrSt77yPTFx6hTs4i2tKLB9LmE0="
+TSIG="$DEFAULT_HMAC:int:FrSt77yPTFx6hTs4i2tKLB9LmE0="
 $DIGCMD @10.53.0.7 -y "$TSIG" text1.test. TXT > dig.out.1.test$n
 grep 'include 1' dig.out.1.test$n >/dev/null || ret=1
-TSIG="hmac-sha1:ext:FrSt77yPTFx6hTs4i2tKLB9LmE0="
+TSIG="$DEFAULT_HMAC:ext:FrSt77yPTFx6hTs4i2tKLB9LmE0="
 $DIGCMD @10.53.0.7 -y "$TSIG" text1.test. TXT > dig.out.2.test$n
 grep 'include 1' dig.out.2.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -777,7 +777,7 @@ status=$((status+ret))
 
 echo_i "update in-view zone ($n)"
 ret=0
-TSIG="hmac-sha1:int:FrSt77yPTFx6hTs4i2tKLB9LmE0="
+TSIG="$DEFAULT_HMAC:int:FrSt77yPTFx6hTs4i2tKLB9LmE0="
 $NSUPDATE -p ${PORT} -y "$TSIG" > /dev/null 2>&1 <<END || ret=1
 server 10.53.0.7
 zone test.
@@ -792,7 +792,7 @@ status=$((status+ret))
 
 echo_i "checking update ($n)"
 ret=0
-TSIG="hmac-sha1:int:FrSt77yPTFx6hTs4i2tKLB9LmE0="
+TSIG="$DEFAULT_HMAC:int:FrSt77yPTFx6hTs4i2tKLB9LmE0="
 $DIGCMD @10.53.0.7 -y "$TSIG" text2.test. TXT > dig.out.1.test$n
 grep 'addition 1' dig.out.1.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -822,10 +822,10 @@ wait_for_log 3 "all zones loaded" ns7/named.run
 n=$((n+1))
 echo_i "checking zone file edits are loaded ($n)"
 ret=0
-TSIG="hmac-sha1:int:FrSt77yPTFx6hTs4i2tKLB9LmE0="
+TSIG="$DEFAULT_HMAC:int:FrSt77yPTFx6hTs4i2tKLB9LmE0="
 $DIGCMD @10.53.0.7 -y "$TSIG" text1.test. TXT > dig.out.1.test$n
 grep 'include 2' dig.out.1.test$n >/dev/null || ret=1
-TSIG="hmac-sha1:ext:FrSt77yPTFx6hTs4i2tKLB9LmE0="
+TSIG="$DEFAULT_HMAC:ext:FrSt77yPTFx6hTs4i2tKLB9LmE0="
 $DIGCMD @10.53.0.7 -y "$TSIG" text1.test. TXT > dig.out.2.test$n
 grep 'include 2' dig.out.2.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi

@@ -30,6 +30,7 @@ options {
 
 	response-policy {
 	    zone "policy1" min-update-interval 0;
+	    zone "bl.tld2s" policy given;
 	} qname-wait-recurse yes
 	// add-soa yes # leave add-soa as default for unset test
 	nsip-enable yes
@@ -58,4 +59,9 @@ zone "policy1" {
 	also-notify { 10.53.0.3 port @EXTRAPORT1@; };
 	notify-delay 0;
 	allow-transfer  { any; };
+};
+
+zone "bl.tld2s." {
+    type primary;
+    file "bl.tld2s.db";
 };

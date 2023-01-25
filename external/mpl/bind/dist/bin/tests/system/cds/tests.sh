@@ -43,7 +43,7 @@ testcase() {
 
 check_stderr() {
 	if [ -n "${err:=}" ]; then
-		egrep "$err" err.$n >/dev/null && return 0
+		grep -E "$err" err.$n >/dev/null && return 0
 		echo_d "stderr did not match '$err'"
 	else
 		[ -s err.$n ] || return 0

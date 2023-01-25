@@ -278,7 +278,7 @@ set_zone "migrate-nomatch-algnum.kasp"
 set_policy "none" "2" "300"
 set_server "ns3" "10.53.0.3"
 
-init_migration_keys "5" "RSASHA1" "2048" "1024"
+init_migration_keys "8" "RSASHA256" "2048" "2048"
 init_migration_states "omnipresent" "omnipresent"
 
 # Make sure the zone is signed with legacy keys.
@@ -315,7 +315,7 @@ set_zone "migrate-nomatch-alglen.kasp"
 set_policy "none" "2" "300"
 set_server "ns3" "10.53.0.3"
 
-init_migration_keys "5" "RSASHA1" "1024" "1024"
+init_migration_keys "8" "RSASHA256" "2048" "2048"
 init_migration_states "omnipresent" "omnipresent"
 
 # Make sure the zone is signed with legacy keys.
@@ -567,7 +567,7 @@ set_policy "migrate-nomatch-algnum" "4" "300"
 set_server "ns3" "10.53.0.3"
 # The legacy keys need to be retired, but otherwise stay present until the
 # new keys are omnipresent, and can be used to construct a chain of trust.
-init_migration_keys "5" "RSASHA1" "2048" "1024"
+init_migration_keys "8" "RSASHA256" "2048" "2048"
 init_migration_states "hidden" "omnipresent"
 key_set "KEY1" "LEGACY" "no"
 key_set "KEY2" "LEGACY" "no"
@@ -683,20 +683,20 @@ set_server "ns3" "10.53.0.3"
 
 # The legacy keys need to be retired, but otherwise stay present until the
 # new keys are omnipresent, and can be used to construct a chain of trust.
-init_migration_keys "5" "RSASHA1" "1024" "1024"
+init_migration_keys "8" "RSASHA256" "2048" "2048"
 init_migration_states "hidden" "omnipresent"
 key_set "KEY1" "LEGACY" "no"
 key_set "KEY2" "LEGACY" "no"
 
 set_keyrole      "KEY3" "ksk"
 set_keylifetime  "KEY3" "0"
-set_keyalgorithm "KEY3" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY3" "8" "RSASHA256" "3072"
 set_keysigning   "KEY3" "yes"
 set_zonesigning  "KEY3" "no"
 
 set_keyrole      "KEY4" "zsk"
 set_keylifetime  "KEY4" "5184000"
-set_keyalgorithm "KEY4" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY4" "8" "RSASHA256" "3072"
 set_keysigning   "KEY4" "no"
 # This key is considered to be prepublished, so it is not yet signing.
 set_zonesigning  "KEY4" "no"
@@ -956,8 +956,8 @@ set_policy "rsasha256" "2" "300"
 set_server "ns4" "10.53.0.4"
 init_view_migration
 set_keyalgorithm "KEY1" "8" "RSASHA256" "2048"
-set_keyalgorithm "KEY2" "8" "RSASHA256" "1024"
-TSIG="hmac-sha1:external:$VIEW1"
+set_keyalgorithm "KEY2" "8" "RSASHA256" "2048"
+TSIG="$DEFAULT_HMAC:external:$VIEW1"
 wait_for_nsec
 # Make sure the zone is signed with legacy keys.
 check_keys
@@ -986,8 +986,8 @@ set_policy "rsasha256" "2" "300"
 set_server "ns4" "10.53.0.4"
 init_view_migration
 set_keyalgorithm "KEY1" "8" "RSASHA256" "2048"
-set_keyalgorithm "KEY2" "8" "RSASHA256" "1024"
-TSIG="hmac-sha1:internal:$VIEW2"
+set_keyalgorithm "KEY2" "8" "RSASHA256" "2048"
+TSIG="$DEFAULT_HMAC:internal:$VIEW2"
 wait_for_nsec
 # Make sure the zone is signed with legacy keys.
 check_keys
@@ -1026,7 +1026,7 @@ echo_i "${time_passed} seconds passed between start of tests and reconfig"
 set_zone "view-rsasha256.kasp"
 set_policy "rsasha256" "3" "300"
 set_server "ns4" "10.53.0.4"
-init_migration_keys "8" "RSASHA256" "2048" "1024"
+init_migration_keys "8" "RSASHA256" "2048" "2048"
 init_migration_states "omnipresent" "rumoured"
 # Key properties, timings and metadata should be the same as legacy keys above.
 # However, because the keys have a lifetime, kasp will set the retired time.
@@ -1045,14 +1045,14 @@ set_keystate     "KEY2" "GOAL" "hidden"
 set_keystate     "KEY3" "GOAL" "omnipresent"
 set_keyrole      "KEY3" "zsk"
 set_keylifetime  "KEY3" "8035200"
-set_keyalgorithm "KEY3" "8" "RSASHA256" "1024"
+set_keyalgorithm "KEY3" "8" "RSASHA256" "2048"
 set_keysigning   "KEY3" "no"
 set_zonesigning  "KEY3" "no" # not yet
 set_keystate     "KEY3" "STATE_DNSKEY" "rumoured"
 set_keystate     "KEY3" "STATE_ZRRSIG" "hidden"
 
 # Various signing policy checks (external).
-TSIG="hmac-sha1:external:$VIEW1"
+TSIG="$DEFAULT_HMAC:external:$VIEW1"
 check_keys
 wait_for_done_signing
 check_dnssecstatus "$SERVER" "$POLICY" "$ZONE" "ext"
@@ -1113,7 +1113,7 @@ check_apex
 dnssec_verify
 
 # Various signing policy checks (internal).
-TSIG="hmac-sha1:internal:$VIEW2"
+TSIG="$DEFAULT_HMAC:internal:$VIEW2"
 check_keys
 wait_for_done_signing
 check_dnssecstatus "$SERVER" "$POLICY" "$ZONE" "int"

@@ -31,3 +31,5 @@ rm -f keyname keyname.err
 rm -f ns*/named.lock
 rm -f ns1/example2.db
 rm -f ns*/managed-keys.bind*
+rm -f nsupdate.out.*
+rm -f ns*/named.run.prev

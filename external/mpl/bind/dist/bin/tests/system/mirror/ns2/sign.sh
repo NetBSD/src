@@ -21,8 +21,8 @@ for zonename in sub.example example initially-unavailable; do
 	infile=$zonename.db.in
 	zonefile=$zonename.db
 
-	keyname1=`$KEYGEN -a RSASHA256 -f KSK $zone 2> /dev/null`
-	keyname2=`$KEYGEN -a RSASHA256 $zone 2> /dev/null`
+	keyname1=$($KEYGEN -a ${DEFAULT_ALGORITHM} -f KSK $zone 2> /dev/null)
+	keyname2=$($KEYGEN -a ${DEFAULT_ALGORITHM} $zone 2> /dev/null)
 
 	cat $infile $keyname1.key $keyname2.key > $zonefile
 
@@ -40,23 +40,23 @@ zone=verify-csk
 infile=verify.db.in
 zonefile=verify-csk.db
 
-keyname=`$KEYGEN -a RSASHA256 $zone 2> /dev/null`
+keyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} $zone 2> /dev/null)
 cat $infile $keyname.key > $zonefile
 $SIGNER -P -o $zone $zonefile > /dev/null
 keys_to_trust="$keys_to_trust $keyname"
 
 # Prepare remaining zones used in the test.
-ORIGINAL_SERIAL=`awk '$2 == "SOA" {print $5}' verify.db.in`
-UPDATED_SERIAL_BAD=`expr ${ORIGINAL_SERIAL} + 1`
-UPDATED_SERIAL_GOOD=`expr ${ORIGINAL_SERIAL} + 2`
+ORIGINAL_SERIAL=$(awk '$2 == "SOA" {print $5}' verify.db.in)
+UPDATED_SERIAL_BAD=$((ORIGINAL_SERIAL + 1))
+UPDATED_SERIAL_GOOD=$((ORIGINAL_SERIAL + 2))
 
 for variant in addzone axfr ixfr load reconfig untrusted; do
 	zone=verify-$variant
 	infile=verify.db.in
 	zonefile=verify-$variant.db
 
-	keyname1=`$KEYGEN -a RSASHA256 -f KSK $zone 2> /dev/null`
-	keyname2=`$KEYGEN -a RSASHA256 $zone 2> /dev/null`
+	keyname1=$($KEYGEN -a ${DEFAULT_ALGORITHM} -f KSK $zone 2> /dev/null)
+	keyname2=$($KEYGEN -a ${DEFAULT_ALGORITHM} $zone 2> /dev/null)
 
 	cat $infile $keyname1.key $keyname2.key > $zonefile
 
