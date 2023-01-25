@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -110,14 +112,14 @@ ck_result() {
     # wait to the background mdig calls to complete.
     wait
     BAD=no
-    ADDRS=`egrep "^$2$" mdig.out-$1				2>/dev/null | wc -l`
+    ADDRS=`grep -E "^$2$" mdig.out-$1				2>/dev/null | wc -l`
     # count simple truncated and truncated NXDOMAIN as TC
-    TC=`egrep "^TC|NXDOMAINTC$" mdig.out-$1			2>/dev/null | wc -l`
-    DROP=`egrep "^drop$" mdig.out-$1				2>/dev/null | wc -l`
+    TC=`grep -E "^TC|NXDOMAINTC$" mdig.out-$1			2>/dev/null | wc -l`
+    DROP=`grep -E "^drop$" mdig.out-$1				2>/dev/null | wc -l`
     # count NXDOMAIN and truncated NXDOMAIN as NXDOMAIN
-    NXDOMAIN=`egrep "^NXDOMAIN|NXDOMAINTC$" mdig.out-$1		2>/dev/null | wc -l`
-    SERVFAIL=`egrep "^SERVFAIL$" mdig.out-$1			2>/dev/null | wc -l`
-    NOERROR=`egrep "^NOERROR$" mdig.out-$1			2>/dev/null | wc -l`
+    NXDOMAIN=`grep -E "^NXDOMAIN|NXDOMAINTC$" mdig.out-$1		2>/dev/null | wc -l`
+    SERVFAIL=`grep -E "^SERVFAIL$" mdig.out-$1			2>/dev/null | wc -l`
+    NOERROR=`grep -E "^NOERROR$" mdig.out-$1			2>/dev/null | wc -l`
     
     range $ADDRS "$3" 1 ||
     setret "$ADDRS instead of $3 '$2' responses for $1" &&

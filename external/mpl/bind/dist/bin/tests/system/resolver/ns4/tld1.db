@@ -30,3 +30,6 @@ edns-version.tld.	NS	ns.edns-version.tld.
 ns.edns-version.tld.	A	10.53.0.7
 cname			CNAME	ns7
 ns7			A	10.53.0.7
+mixedttl 10		A	10.0.0.1
+mixedttl 15		TXT	a TXT record
+mixedttl 20		AAAA	2001:db8::1

@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.c,v 1.1.1.6 2022/09/23 12:09:07 christos Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.1.1.7 2023/01/25 20:36:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -211,7 +211,8 @@ checkns(dns_zone_t *zone, const dns_name_t *name, const dns_name_t *owner,
 		 */
 		cur = ai;
 		while (cur != NULL && cur->ai_canonname == NULL &&
-		       cur->ai_next != NULL) {
+		       cur->ai_next != NULL)
+		{
 			cur = cur->ai_next;
 		}
 		if (cur != NULL && cur->ai_canonname != NULL &&
@@ -413,7 +414,8 @@ checkmx(dns_zone_t *zone, const dns_name_t *name, const dns_name_t *owner) {
 		 */
 		cur = ai;
 		while (cur != NULL && cur->ai_canonname == NULL &&
-		       cur->ai_next != NULL) {
+		       cur->ai_next != NULL)
+		{
 			cur = cur->ai_next;
 		}
 		if (cur != NULL && cur->ai_canonname != NULL &&
@@ -499,7 +501,8 @@ checksrv(dns_zone_t *zone, const dns_name_t *name, const dns_name_t *owner) {
 		 */
 		cur = ai;
 		while (cur != NULL && cur->ai_canonname == NULL &&
-		       cur->ai_next != NULL) {
+		       cur->ai_next != NULL)
+		{
 			cur = cur->ai_next;
 		}
 		if (cur != NULL && cur->ai_canonname != NULL &&
@@ -609,7 +612,7 @@ check_ttls(dns_zone_t *zone, dns_ttl_t maxttl) {
 		}
 		CHECK(result);
 
-		CHECK(dns_db_allrdatasets(db, node, version, 0, &rdsiter));
+		CHECK(dns_db_allrdatasets(db, node, version, 0, 0, &rdsiter));
 		for (result = dns_rdatasetiter_first(rdsiter);
 		     result == ISC_R_SUCCESS;
 		     result = dns_rdatasetiter_next(rdsiter))

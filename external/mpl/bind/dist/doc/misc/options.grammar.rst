@@ -33,7 +33,7 @@
   	answer-cookie <boolean>;
   	attach-cache <string>;
   	auth-nxdomain <boolean>; // default changed
-  	auto-dnssec ( allow | maintain | off );
+  	auto-dnssec ( allow | maintain | off ); // deprecated
   	automatic-interface-scan <boolean>;
   	avoid-v4-udp-ports { <portrange>; ... };
   	avoid-v6-udp-ports { <portrange>; ... };
@@ -300,6 +300,7 @@
   	trust-anchor-telemetry <boolean>; // experimental
   	try-tcp-refresh <boolean>;
   	update-check-ksk <boolean>;
+  	update-quota <integer>;
   	use-alt-transfer-source <boolean>;
   	use-v4-udp-ports { <portrange>; ... };
   	use-v6-udp-ports { <portrange>; ... };

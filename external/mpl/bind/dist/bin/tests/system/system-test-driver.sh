@@ -27,7 +27,7 @@ if [ "$?" -ne 4 ]; then
     exit 1
 fi
 
-OPTS=$(getopt --shell sh --name "$(basename "$0")" --options '' --longoptions test-name:,log-file:,trs-file:,color-tests:,expect-failure:,enable-hard-errors: -- "$@")
+OPTS=$(getopt --shell "sh" --name "$(basename "$0")" --options '' --longoptions test-name:,log-file:,trs-file:,color-tests:,expect-failure:,enable-hard-errors: -- "$@")
 
 if [ "$?" != 0 ] ; then echo "Failed parsing options." >&2 ; exit 1 ; fi
 
@@ -74,6 +74,7 @@ fi
 
 echo "Running $TEST_PROGRAM"
 
-./run.sh -p "$(($RANDOM%32000+32000))" "$@" "$TEST_PROGRAM"
+random=$(awk 'BEGIN { srand(); print int(rand()*32768) }' /dev/null)
+./run.sh -p "$((random%32000+32000))" "$@" "$TEST_PROGRAM"
 
 exit $?

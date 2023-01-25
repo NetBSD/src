@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.9 2022/09/23 12:09:24 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.10 2023/01/25 20:36:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -139,7 +139,8 @@ log_rr(dns_name_t *name, dns_rdata_t *rdata, uint32_t ttl) {
 	rdl.rdclass = rdata->rdclass;
 	rdl.ttl = ttl;
 	if (rdata->type == dns_rdatatype_sig ||
-	    rdata->type == dns_rdatatype_rrsig) {
+	    rdata->type == dns_rdatatype_rrsig)
+	{
 		rdl.covers = dns_rdata_covers(rdata);
 	} else {
 		rdl.covers = dns_rdatatype_none;
@@ -1517,7 +1518,8 @@ sendstream(xfrout_ctx_t *xfr) {
 		msgrdl->rdclass = rdata->rdclass;
 		msgrdl->ttl = ttl;
 		if (rdata->type == dns_rdatatype_sig ||
-		    rdata->type == dns_rdatatype_rrsig) {
+		    rdata->type == dns_rdatatype_rrsig)
+		{
 			msgrdl->covers = dns_rdata_covers(rdata);
 		} else {
 			msgrdl->covers = dns_rdatatype_none;

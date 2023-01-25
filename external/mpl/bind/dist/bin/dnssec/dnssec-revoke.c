@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.1.1.6 2022/09/23 12:09:08 christos Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.1.1.7 2023/01/25 20:36:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -153,7 +153,8 @@ main(int argc, char **argv) {
 	}
 
 	if (argc < isc_commandline_index + 1 ||
-	    argv[isc_commandline_index] == NULL) {
+	    argv[isc_commandline_index] == NULL)
+	{
 		fatal("The key file name was not specified");
 	}
 	if (argc > isc_commandline_index + 1) {

@@ -63,3 +63,10 @@ Bug Fixes
 - The ``blackhole`` ACL was inadvertently disabled for client queries.
   Blocked IP addresses were not used for upstream queries but queries
   from those addresses could still be answered. :gl:`#1936`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

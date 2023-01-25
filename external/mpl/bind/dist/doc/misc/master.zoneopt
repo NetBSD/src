@@ -7,7 +7,7 @@ zone <string> [ <class> ] {
 	also-notify [ port <integer> ] [ dscp <integer> ] { ( <remote-servers> | <ipv4_address> [ port <integer> ] | <ipv6_address> [ port <integer> ] ) [ key <string> ]; ... };
 	alt-transfer-source ( <ipv4_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
 	alt-transfer-source-v6 ( <ipv6_address> | * ) [ port ( <integer> | * ) ] [ dscp <integer> ];
-	auto-dnssec ( allow | maintain | off );
+	auto-dnssec ( allow | maintain | off ); // deprecated
 	check-dup-records ( fail | warn | ignore );
 	check-integrity <boolean>;
 	check-mx ( fail | warn | ignore );
@@ -55,7 +55,7 @@ zone <string> [ <class> ] {
 	sig-signing-type <integer>;
 	sig-validity-interval <integer> [ <integer> ];
 	update-check-ksk <boolean>;
-	update-policy ( local | { ( deny | grant ) <string> ( 6to4-self | external | krb5-self | krb5-selfsub | krb5-subdomain | ms-self | ms-selfsub | ms-subdomain | name | self | selfsub | selfwild | subdomain | tcp-self | wildcard | zonesub ) [ <string> ] <rrtypelist>; ... };
+	update-policy ( local | { ( deny | grant ) <string> ( 6to4-self | external | krb5-self | krb5-selfsub | krb5-subdomain | ms-self | ms-selfsub | ms-subdomain | name | self | selfsub | selfwild | subdomain | tcp-self | wildcard | zonesub ) [ <string> ] <rrtypelist>; ... } );
 	zero-no-soa-ttl <boolean>;
 	zone-statistics ( full | terse | none | <boolean> );
 };

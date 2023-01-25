@@ -67,3 +67,10 @@ Bug Fixes
 - When generating zone signing keys, KASP now also checks for key ID
   conflicts among newly created keys, rather than just between new and
   existing ones. :gl:`#2628`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

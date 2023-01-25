@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.1.1.10 2022/09/23 12:09:19 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.1.1.11 2023/01/25 20:36:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -774,7 +774,8 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 	result = dns_message_signer(msg, &tsigner);
 	if (result != ISC_R_SUCCESS) {
 		if (tkeyin.mode == DNS_TKEYMODE_GSSAPI &&
-		    result == ISC_R_NOTFOUND) {
+		    result == ISC_R_NOTFOUND)
+		{
 			signer = NULL;
 		} else {
 			tkey_log("dns_tkey_processquery: query was not "

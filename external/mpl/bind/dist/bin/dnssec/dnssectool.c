@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.c,v 1.1.1.6 2022/09/23 12:09:08 christos Exp $	*/
+/*	$NetBSD: dnssectool.c,v 1.1.1.7 2023/01/25 20:36:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -315,7 +315,8 @@ strtotime(const char *str, int64_t now, int64_t base, bool *setp) {
 	 */
 	n = strspn(str, "0123456789");
 	if ((n == 8u || n == 14u) &&
-	    (str[n] == '\0' || str[n] == '-' || str[n] == '+')) {
+	    (str[n] == '\0' || str[n] == '-' || str[n] == '+'))
+	{
 		char timestr[15];
 
 		strlcpy(timestr, str, sizeof(timestr));

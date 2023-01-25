@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_parse.c,v 1.1.1.7 2022/09/23 12:09:17 christos Exp $	*/
+/*	$NetBSD: dst_parse.c,v 1.1.1.8 2023/01/25 20:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -126,7 +126,8 @@ find_value(const char *s, const unsigned int alg) {
 
 	for (i = 0; map[i].tag != NULL; i++) {
 		if (strcasecmp(s, map[i].tag) == 0 &&
-		    (TAG_ALG(map[i].value) == alg)) {
+		    (TAG_ALG(map[i].value) == alg))
+		{
 			return (map[i].value);
 		}
 	}

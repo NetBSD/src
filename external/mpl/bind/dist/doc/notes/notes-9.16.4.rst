@@ -102,12 +102,19 @@ Bug Fixes
    of the current active key (the predecessor) was not changed and thus
    never removed from the zone. :gl:`#1846`
 
-- ``named-checkconf -p`` could include spurious text in
-  ``server-addresses`` statements due to an uninitialized DSCP value.
-  This has been fixed. :gl:`#1812`
+-  ``named-checkconf -p`` could include spurious text in
+   ``server-addresses`` statements due to an uninitialized DSCP value.
+   This has been fixed. :gl:`#1812`
 
 -  The ARM has been updated to indicate that the TSIG session key is
    generated when named starts, regardless of whether it is needed.
    :gl:`#1842`
+
+Known Issues
+~~~~~~~~~~~~
+
+-  There are no new known issues with this release. See :ref:`above
+   <relnotes_known_issues>` for a list of all known issues affecting
+   this BIND 9 branch.
 
 .. _Read the Docs: https://bind9.readthedocs.io/

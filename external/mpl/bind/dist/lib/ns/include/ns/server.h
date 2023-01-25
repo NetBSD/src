@@ -1,4 +1,4 @@
-/*	$NetBSD: server.h,v 1.1.1.5 2022/09/23 12:09:24 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.1.1.6 2023/01/25 20:36:51 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -88,6 +88,7 @@ struct ns_server {
 	isc_quota_t recursionquota;
 	isc_quota_t tcpquota;
 	isc_quota_t xfroutquota;
+	isc_quota_t updquota;
 
 	/*% Test options and other configurables */
 	uint32_t options;

@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddresses.c,v 1.1.1.5 2022/09/23 12:09:16 christos Exp $	*/
+/*	$NetBSD: getaddresses.c,v 1.1.1.6 2023/01/25 20:36:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -139,7 +139,8 @@ again:
 		return (ISC_R_FAILURE);
 	}
 	for (tmpai = ai, i = 0; tmpai != NULL && i < addrsize;
-	     tmpai = tmpai->ai_next) {
+	     tmpai = tmpai->ai_next)
+	{
 		if (tmpai->ai_family != AF_INET && tmpai->ai_family != AF_INET6)
 		{
 			continue;

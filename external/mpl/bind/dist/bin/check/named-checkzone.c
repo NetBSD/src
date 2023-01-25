@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkzone.c,v 1.1.1.6 2022/09/23 12:09:07 christos Exp $	*/
+/*	$NetBSD: named-checkzone.c,v 1.1.1.7 2023/01/25 20:36:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -475,7 +475,8 @@ main(int argc, char **argv) {
 			outputformat = dns_masterformat_raw;
 			rawversion = strtol(outputformatstr + 4, &end, 10);
 			if (end == outputformatstr + 4 || *end != '\0' ||
-			    rawversion > 1U) {
+			    rawversion > 1U)
+			{
 				fprintf(stderr, "unknown raw format version\n");
 				exit(1);
 			}

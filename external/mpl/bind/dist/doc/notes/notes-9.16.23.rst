@@ -18,3 +18,10 @@ Bug Fixes
 - Reloading a catalog zone which referenced a missing/deleted member
   zone triggered a runtime check failure, causing ``named`` to exit
   prematurely. This has been fixed. :gl:`#2308`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

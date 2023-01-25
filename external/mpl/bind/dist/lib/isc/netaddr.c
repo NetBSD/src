@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.c,v 1.1.1.6 2022/09/23 12:09:21 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.1.1.7 2023/01/25 20:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -251,7 +251,8 @@ isc_netaddr_prefixok(const isc_netaddr_t *na, unsigned int prefixlen) {
 		nbytes++;
 	}
 	if (nbytes < ipbytes &&
-	    memcmp(p + nbytes, zeros, ipbytes - nbytes) != 0) {
+	    memcmp(p + nbytes, zeros, ipbytes - nbytes) != 0)
+	{
 		return (ISC_R_FAILURE);
 	}
 	return (ISC_R_SUCCESS);

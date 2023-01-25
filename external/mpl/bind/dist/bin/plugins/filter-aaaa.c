@@ -1,4 +1,4 @@
-/*	$NetBSD: filter-aaaa.c,v 1.1.1.6 2022/09/23 12:09:09 christos Exp $	*/
+/*	$NetBSD: filter-aaaa.c,v 1.1.1.7 2023/01/25 20:36:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -624,7 +624,8 @@ process_section(const section_filter_t *filter) {
 		}
 
 		if (section == DNS_SECTION_ANSWER ||
-		    section == DNS_SECTION_AUTHORITY) {
+		    section == DNS_SECTION_AUTHORITY)
+		{
 			message->flags &= ~DNS_MESSAGEFLAG_AD;
 		}
 	}

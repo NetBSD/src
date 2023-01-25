@@ -25,8 +25,8 @@ cp bigserial.db ns1/
 cd ns1
 touch primary.db.signed
 echo '$INCLUDE "primary.db.signed"' >> primary.db
-$KEYGEN -a rsasha256 -q primary.example > /dev/null 2>&1
-$KEYGEN -a rsasha256 -qfk primary.example > /dev/null 2>&1
+$KEYGEN -a ${DEFAULT_ALGORITHM} -q primary.example > /dev/null 2>&1
+$KEYGEN -a ${DEFAULT_ALGORITHM} -qfk primary.example > /dev/null 2>&1
 $SIGNER -SD -o primary.example primary.db > /dev/null \
     2> signer.err || cat signer.err
 echo '$INCLUDE "soa.db"' > reload.db

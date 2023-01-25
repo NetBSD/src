@@ -1,3 +1,149 @@
+	--- 9.16.37 released ---
+
+6067.	[security]	Fix serve-stale crash when recursive clients soft quota
+			is reached. (CVE-2022-3924) [GL #3619]
+
+6066.	[security]	Handle RRSIG lookups when serve-stale is active.
+			(CVE-2022-3736) [GL #3622]
+
+6064.	[security]	An UPDATE message flood could cause named to exhaust all
+			available memory. This flaw was addressed by adding a
+			new "update-quota" statement that controls the number of
+			simultaneous UPDATE messages that can be processed or
+			forwarded. The default is 100. A stats counter has been
+			added to record events when the update quota is
+			exceeded, and the XML and JSON statistics version
+			numbers have been updated. (CVE-2022-3094) [GL #3523]
+
+6062.	[func]		The DSCP implementation, which has only been
+			partly operational since 9.16.0, is now marked as
+			deprecated. Configuring DSCP values in named.conf
+			will cause a warning will be logged. [GL #3773]
+
+6060.	[bug]		Fix a use-after-free bug in dns_zonemgr_releasezone()
+			by detaching from the zone manager outside of the write
+			lock. [GL #3768]
+
+6059.	[bug]		In some serve stale scenarios, like when following an
+			expired CNAME record, named could return SERVFAIL if the
+			previous request wasn't successful. Consider non-stale
+			data when in serve-stale mode. [GL #3678]
+
+6058.	[bug]		Prevent named from crashing when "rndc delzone"
+			attempts to delete a zone added by a catalog zone.
+			[GL #3745]
+
+6050.	[bug]		Changes to the RPZ response-policy min-update-interval
+			and add-soa options now take effect as expected when
+			named is reconfigured. [GL #3740]
+
+6048.	[bug]		Fix a log message error in dns_catz_update_from_db(),
+			where serials with values of 2^31 or larger were logged
+			incorrectly as negative numbers. [GL #3742]
+
+6045.	[cleanup]	The list of supported DNSSEC algorithms changed log
+			level from "warning" to "notice" to match named's other
+			startup messages. [GL !7217]
+
+6044.	[bug]		There was an "RSASHA236" typo in a log message.
+			[GL !7206]
+
+	--- 9.16.36 released ---
+
+6043.	[bug]		The key file IO locks objects would never get
+			deleted from the hashtable due to off-by-one error.
+			[GL #3727]
+
+6042.	[bug]		ANY responses could sometimes have the wrong TTL.
+			[GL #3613]
+
+6040.	[bug]		Speed up the named shutdown time by explicitly
+			canceling all recursing ns_client objects for
+			each ns_clientmgr. [GL #3183]
+
+6039.	[bug]		Removing a catalog zone from catalog-zones without
+			also removing the referenced zone could leave a
+			dangling pointer. [GL #3683]
+
+6031.	[bug]		Move the "final reference detached" log message
+			from dns_zone unit to the DEBUG(1) log level.
+			[GL #3707]
+
+6024.	[func]		Deprecate 'auto-dnssec'. [GL #3667]
+
+6021.	[bug]		Use the current domain name when checking answers from
+			a dual-stack-server. [GL #3607]
+
+6020.	[bug]		Ensure 'named-checkconf -z' respects the check-wildcard
+			option when loading a zone.  [GL #1905]
+
+6017.	[bug]		The view's zone table was not locked when it should
+			have been leading to race conditions when external
+			extensions that manipulate the zone table where in
+			use. [GL #3468]
+
+	--- 9.16.35 released ---
+
+6013.	[bug]		Fix a crash that could happen when you change
+			a dnssec-policy zone with NSEC3 to start using
+			inline-signing. [GL #3591]
+
+6009.	[bug]		Don't trust a placeholder KEYDATA from the managed-keys
+			zone by adding it into secroots. [GL #2895]
+
+6008.	[bug]		Fixed a race condition that could cause a crash
+			in dns_zone_synckeyzone(). [GL #3617]
+
+6002.	[bug]		Fix a resolver prefetch bug when the record's TTL value
+			is equal to the configured prefetch eligibility value,
+			but the record was erroneously not treated as eligible
+			for prefetching. [GL #3603]
+
+6001.	[bug]		Always call dns_adb_endudpfetch() after calling
+			dns_adb_beginudpfetch() for UDP queries in resolver.c,
+			in order to adjust back the quota. [GL #3598]
+
+6000.	[bug]		Fix a startup issue on Solaris systems with many
+			(reportedly > 510) CPUs. Thanks to Stacey Marshall from
+			Oracle for deep investigation of the problem. [GL #3563]
+
+5999.	[bug]		rpz-ip rules could be ineffective in some scenarios
+			with CD=1 queries. [GL #3247]
+
+5998.	[bug]		The RecursClients statistics counter could overflow
+			in certain resolution scenarios. [GL #3584]
+
+5996.	[bug]		Fix a couple of bugs in cfg_print_duration(), which
+			could result in generating incomplete duration values
+			when printing the configuration using named-checkconf.
+			[GL !6880]
+
+	--- 9.16.34 released ---
+
+5991.	[protocol]	Add support for parsing and validating "dohpath" to
+			SVCB. [GL #3544]
+
+5988.	[bug]		Some out of memory conditions in opensslrsa_link.c
+			could lead to memory leaks. [GL #3551]
+
+5984.	[func]		'named -V' now reports the list of supported
+			DNSSEC/DS/HMAC algorithms and the supported TKEY modes.
+			[GL #3541]
+
+5983.	[bug]		Changing just the TSIG key names for primaries in
+			catalog zones' member zones was not effective.
+			[GL #3557]
+
+5973.	[bug]		Fixed a possible invalid detach in UPDATE
+			processing. [GL #3522]
+
+5963.	[bug]		Ensure struct named_server is properly initialized.
+			[GL #6531]
+
+5921.	[test]		Convert system tests to use a default DNSKEY algorithm
+			where the test is not DNSKEY algorithm specific.
+			[GL #3440]
+
 	--- 9.16.33 released ---
 
 5962.	[security]	Fix memory leak in EdDSA verify processing.

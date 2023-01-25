@@ -27,11 +27,6 @@ export LANG=C
 #
 # Common lists of system tests to run.
 #
-# The "stress" test is not run by default since it creates enough
-# load on the machine to make it unusable to other users.
-# The "dialup", "delzone", and "dupsigs" tests are also not run by
-# default because they take a very long time to complete.
-#
 # The following tests are hard-coded to use ports 5300 and 9953. For
 # this reason, these must be run sequentially.
 #
@@ -54,7 +49,7 @@ SEQUENTIAL_COMMON="ecdsa eddsa tkey"
 # rpzrecurse are scheduled first, in order to get more benefit from
 # parallelism.
 #
-PARALLEL_COMMON="dnssec rpzrecurse serve-stale \
+PARALLEL_COMMON="dnssec rpzrecurse serve-stale dupsigs \
 acl \
 additional \
 addzone \
@@ -153,25 +148,25 @@ zonechecks"
 # Set up color-coded test output
 #
 if [ ${SYSTEMTEST_FORCE_COLOR:-0} -eq 1 ] || test -t 1 && type tput > /dev/null 2>&1 && tput setaf 7 > /dev/null 2>&1 ; then
-    COLOR_END=`tput setaf 4`    # blue
-    COLOR_FAIL=`tput setaf 1`   # red
-    COLOR_INFO=`tput bold`      # bold
-    COLOR_NONE=`tput sgr0`
-    COLOR_PASS=`tput setaf 2`   # green
-    COLOR_START=`tput setaf 4`  # blue
-    COLOR_WARN=`tput setaf 3`   # yellow
+    export COLOR_END=`tput setaf 4`    # blue
+    export COLOR_FAIL=`tput setaf 1`   # red
+    export COLOR_INFO=`tput bold`      # bold
+    export COLOR_NONE=`tput sgr0`
+    export COLOR_PASS=`tput setaf 2`   # green
+    export COLOR_START=`tput setaf 4`  # blue
+    export COLOR_WARN=`tput setaf 3`   # yellow
 else
     # set to empty strings so printf succeeds
-    COLOR_END=''
-    COLOR_FAIL=''
-    COLOR_INFO=''
-    COLOR_NONE=''
-    COLOR_PASS=''
-    COLOR_START=''
-    COLOR_WARN=''
+    export COLOR_END=''
+    export COLOR_FAIL=''
+    export COLOR_INFO=''
+    export COLOR_NONE=''
+    export COLOR_PASS=''
+    export COLOR_START=''
+    export COLOR_WARN=''
 fi
 
-SYSTESTDIR="`basename $PWD`"
+export SYSTESTDIR="`basename $PWD`"
 
 if type printf > /dev/null 2>&1
 then
@@ -269,11 +264,11 @@ digcomp() {
 }
 
 start_server() {
-    $PERL "$TOP_SRCDIR/bin/tests/system/start.pl" "$@"
+    $PERL "$TOP_SRCDIR/bin/tests/system/start.pl" "$SYSTESTDIR" "$@"
 }
 
 stop_server() {
-    $PERL "$TOP_SRCDIR/bin/tests/system/stop.pl" "$@"
+    $PERL "$TOP_SRCDIR/bin/tests/system/stop.pl" "$SYSTESTDIR" "$@"
 }
 
 send() {
@@ -284,27 +279,52 @@ send() {
 # Useful variables in test scripts
 #
 
+# The following script sets the following algorithm-related variables. These
+# are selected randomly at runtime from a list of supported algorithms. The
+# randomization is deterministic and remains stable for a period of time for a
+# given platform.
+#
 # Default algorithm for testing.
-DEFAULT_ALGORITHM=ECDSAP256SHA256
-DEFAULT_ALGORITHM_NUMBER=13
-DEFAULT_BITS=256
-
-# This is an alternative algorithm for test cases that require more than
-# one algorithm (for example algorithm rollover).  Must be different from
+# DEFAULT_ALGORITHM
+# DEFAULT_ALGORITHM_NUMBER
+# DEFAULT_BITS
+#
+# This is an alternative algorithm for test cases that require more than one
+# algorithm (for example algorithm rollover). Must be different from
 # DEFAULT_ALGORITHM.
-ALTERNATIVE_ALGORITHM=RSASHA256
-ALTERNATIVE_ALGORITHM_NUMBER=8
-ALTERNATIVE_BITS=1280
-
-# This is an algorithm that is used for tests against the
-# "disable-algorithms" configuration option.  Must be different from above
-# algorithms.
-DISABLED_ALGORITHM=ECDSAP384SHA384
-DISABLED_ALGORITHM_NUMBER=14
-DISABLED_BITS=384
+# ALTERNATIVE_ALGORITHM
+# ALTERNATIVE_ALGORITHM_NUMBER
+# ALTERNATIVE_BITS
+#
+# This is an algorithm that is used for tests against the "disable-algorithms"
+# configuration option. Must be different from above algorithms.
+# DISABLED_ALGORITHM
+# DISABLED_ALGORITHM_NUMBER
+# DISABLED_BITS
+#
+# There are multiple algoritms sets to choose from (see get_algorithms.py). To
+# override the default choice, set the ALGORITHM_SET env var (see mkeys system
+# test for example).
+if test -x "$PYTHON" && test -x "$KEYGEN"; then
+    eval "$($PYTHON "$TOP_SRCDIR/bin/tests/system/get_algorithms.py")"
+else
+    # 9.16 workarounds
+    #   - for ./configure which calls bin/tests/system/cleanall.sh, which
+    #     includes this file before $KEYGEN is compiled
+    #   - for our Windows CI which lacks Python
+    DEFAULT_ALGORITHM=ECDSAP256SHA256
+    DEFAULT_ALGORITHM_NUMBER=13
+    DEFAULT_BITS=256
+    ALTERNATIVE_ALGORITHM=RSASHA256
+    ALTERNATIVE_ALGORITHM_NUMBER=8
+    ALTERNATIVE_BITS=1280
+    DISABLED_ALGORITHM=ECDSAP384SHA384
+    DISABLED_ALGORITHM_NUMBER=14
+    DISABLED_BITS=384
+fi
 
 # Default HMAC algorithm.
-DEFAULT_HMAC=hmac-sha256
+export DEFAULT_HMAC=hmac-sha256
 
 #
 # Useful functions in test scripts
@@ -484,25 +504,25 @@ nextpartreset() {
 
 # nextpartread: read everything that's been appended to a file since the
 # last time nextpart() was called and print it to stdout, print the
-# total number of lines read from that file so far to stderr
+# total number of lines read from that file so far to file descriptor 3
 nextpartread() {
     [ -f $1.prev ] || nextpartreset $1
     prev=`cat $1.prev`
     awk "NR > $prev "'{ print }
-	 END          { print NR > "/dev/stderr" }' $1
+	 END          { print NR > "/dev/stderr" }' $1 2>&3
 }
 
 # nextpart: read everything that's been appended to a file since the
 # last time nextpart() was called
 nextpart() {
-	nextpartread $1 2> $1.prev.tmp
+	nextpartread $1 3> $1.prev.tmp
 	mv $1.prev.tmp $1.prev
 }
 
 # nextpartpeek: read everything that's been appended to a file since the
 # last time nextpart() was called
 nextpartpeek() {
-	nextpartread $1 2> /dev/null
+	nextpartread $1 3> /dev/null
 }
 
 # _search_log: look for message $1 in file $2 with nextpart().
@@ -721,49 +741,3 @@ copy_setports() {
         -e "s/${atsign}DISABLED_BITS${atsign}/${DISABLED_BITS}/g" \
         $1 > $2
 }
-
-#
-# Export command paths
-#
-export ARPANAME
-export BIGKEY
-export CDS
-export CHECKZONE
-export CYGWIN
-export DESCRIPTION
-export DIG
-export FEATURETEST
-export FSTRM_CAPTURE
-export GENCHECK
-export JOURNALPRINT
-export KEYCREATE
-export KEYDELETE
-export KEYFRLAB
-export KEYGEN
-export KEYSETTOOL
-export KEYSIGNER
-export KRB5_CONFIG
-export KRB5_KTNAME
-export MAKEJOURNAL
-export MDIG
-export NAMED
-export NSEC3HASH
-export NSLOOKUP
-export NSUPDATE
-export NZD2NZF
-export PERL
-export PIPEQUERIES
-export PK11DEL
-export PK11GEN
-export PK11LIST
-export PSSUSPEND
-export PYTHON
-export RESOLVE
-export RNDC
-export RRCHECKER
-export SIGNER
-export SUBDIRS
-export TMPDIR
-export TSIGKEYGEN
-export VERIFY
-export WIRETEST

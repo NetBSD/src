@@ -22,18 +22,18 @@ infile=root.db.in
 
 cat $infile ../ns2/dsset-example$TP ../ns2/dsset-bar$TP > $zonefile
 
-zskact=`$KEYGEN -3 -a RSASHA1 -q $zone`
-zskvanish=`$KEYGEN -3 -a RSASHA1 -q $zone`
-zskdel=`$KEYGEN -3 -a RSASHA1 -q -D now $zone`
-zskinact=`$KEYGEN -3 -a RSASHA1 -q -I now $zone`
-zskunpub=`$KEYGEN -3 -a RSASHA1 -q -G $zone`
-zsksby=`$KEYGEN -3 -a RSASHA1 -q -A none $zone`
-zskactnowpub1d=`$KEYGEN -3 -a RSASHA1 -q -A now -P +1d $zone`
-zsknopriv=`$KEYGEN -3 -a RSASHA1 -q $zone`
+zskact=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q $zone)
+zskvanish=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q $zone)
+zskdel=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -D now $zone)
+zskinact=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -I now $zone)
+zskunpub=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -G $zone)
+zsksby=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -A none $zone)
+zskactnowpub1d=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -A now -P +1d $zone)
+zsknopriv=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q $zone)
 rm $zsknopriv.private
 
-ksksby=`$KEYGEN -3 -a RSASHA1 -q -P now -A now+15s -fk $zone`
-kskrev=`$KEYGEN -3 -a RSASHA1 -q -R now+15s -fk $zone`
+ksksby=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -P now -A now+15s -fk $zone)
+kskrev=$($KEYGEN -3 -a ${DEFAULT_ALGORITHM} -q -R now+15s -fk $zone)
 
 keyfile_to_static_ds $ksksby > trusted.conf
 cp trusted.conf ../ns2/trusted.conf

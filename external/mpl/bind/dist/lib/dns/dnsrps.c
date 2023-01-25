@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.1.1.6 2022/09/23 12:09:17 christos Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.1.1.7 2023/01/25 20:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -474,7 +474,8 @@ rpsdb_bind_soa(dns_rdataset_t *rdataset, rpsdb_t *rpsdb) {
 	librpz_emsg_t emsg;
 
 	if (!librpz->rsp_soa(&emsg, &ttl, NULL, NULL, &rpsdb->result,
-			     rpsdb->rsp)) {
+			     rpsdb->rsp))
+	{
 		librpz->log(LIBRPZ_LOG_ERROR, NULL, "%s", emsg.c);
 		return (DNS_R_SERVFAIL);
 	}
@@ -708,7 +709,8 @@ rpsdb_rdataset_next(dns_rdataset_t *rdataset) {
 		}
 		RD_NEXT_RR(rdataset) = LIBRPZ_IDX_NULL;
 		if (!librpz->rsp_soa(&emsg, NULL, &rr, NULL, &rpsdb->result,
-				     rpsdb->rsp)) {
+				     rpsdb->rsp))
+		{
 			librpz->log(LIBRPZ_LOG_ERROR, NULL, "%s", emsg.c);
 			return (DNS_R_SERVFAIL);
 		}

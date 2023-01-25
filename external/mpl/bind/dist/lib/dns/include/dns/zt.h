@@ -1,4 +1,4 @@
-/*	$NetBSD: zt.h,v 1.1.1.5 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: zt.h,v 1.1.1.6 2023/01/25 20:36:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -172,7 +172,7 @@ dns_zt_freezezones(dns_zt_t *zt, dns_view_t *view, bool freeze);
  */
 
 isc_result_t
-dns_zt_apply(dns_zt_t *zt, bool stop, isc_result_t *sub,
+dns_zt_apply(dns_zt_t *zt, isc_rwlocktype_t lock, bool stop, isc_result_t *sub,
 	     isc_result_t (*action)(dns_zone_t *, void *), void *uap);
 /*%<
  * Apply a given 'action' to all zone zones in the table.

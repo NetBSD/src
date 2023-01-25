@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.1.1.10 2022/09/23 12:09:09 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.1.1.11 2023/01/25 20:36:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -891,7 +891,8 @@ setup_system(void) {
 		 */
 		ns_total = 0;
 		for (sa = ISC_LIST_HEAD(*nslist); sa != NULL;
-		     sa = ISC_LIST_NEXT(sa, link)) {
+		     sa = ISC_LIST_NEXT(sa, link))
+		{
 			switch (sa->type.sa.sa_family) {
 			case AF_INET:
 				if (have_ipv4) {
@@ -913,7 +914,8 @@ setup_system(void) {
 
 		i = 0;
 		for (sa = ISC_LIST_HEAD(*nslist); sa != NULL;
-		     sa = ISC_LIST_NEXT(sa, link)) {
+		     sa = ISC_LIST_NEXT(sa, link))
+		{
 			switch (sa->type.sa.sa_family) {
 			case AF_INET:
 				if (have_ipv4) {
@@ -1962,7 +1964,8 @@ parseclass:
 		dns_name_t *bad;
 
 		if (!dns_rdata_checkowner(name, rdata->rdclass, rdata->type,
-					  true)) {
+					  true))
+		{
 			char namebuf[DNS_NAME_FORMATSIZE];
 
 			dns_name_format(name, namebuf, sizeof(namebuf));
@@ -2228,7 +2231,8 @@ do_next_command(char *cmdline) {
 		return (evaluate_realm(cmdline));
 	}
 	if (strcasecmp(word, "check-names") == 0 ||
-	    strcasecmp(word, "checknames") == 0) {
+	    strcasecmp(word, "checknames") == 0)
+	{
 		return (evaluate_checknames(cmdline));
 	}
 	if (strcasecmp(word, "gsstsig") == 0) {
@@ -2692,7 +2696,8 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (rcvmsg->rcode != dns_rcode_noerror &&
-	    rcvmsg->rcode != dns_rcode_nxdomain) {
+	    rcvmsg->rcode != dns_rcode_nxdomain)
+	{
 		fatal("response to SOA query was unsuccessful");
 	}
 
@@ -3182,7 +3187,8 @@ recvgss(isc_task_t *task, isc_event_t *event) {
 	}
 
 	if (rcvmsg->rcode != dns_rcode_noerror &&
-	    rcvmsg->rcode != dns_rcode_nxdomain) {
+	    rcvmsg->rcode != dns_rcode_nxdomain)
+	{
 		fatal("response to GSS-TSIG query was unsuccessful");
 	}
 

@@ -48,3 +48,10 @@ Bug Fixes
 - Authentication of ``rndc`` messages could fail if a ``controls``
   statement was configured with multiple key algorithms for the same
   listener. This has been fixed. :gl:`#2756`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

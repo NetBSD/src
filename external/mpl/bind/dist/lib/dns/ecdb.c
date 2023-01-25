@@ -1,4 +1,4 @@
-/*	$NetBSD: ecdb.c,v 1.1.1.7 2022/09/23 12:09:17 christos Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.1.1.8 2023/01/25 20:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -486,7 +486,8 @@ createiterator(dns_db_t *db, unsigned int options,
 
 static isc_result_t
 allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
-	     isc_stdtime_t now, dns_rdatasetiter_t **iteratorp) {
+	     unsigned int options, isc_stdtime_t now,
+	     dns_rdatasetiter_t **iteratorp) {
 	dns_ecdb_t *ecdb = (dns_ecdb_t *)db;
 	dns_ecdbnode_t *ecdbnode = (dns_ecdbnode_t *)node;
 	isc_mem_t *mctx;
@@ -505,6 +506,7 @@ allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	iterator->common.node = NULL;
 	attachnode(db, node, &iterator->common.node);
 	iterator->common.version = version;
+	iterator->common.options = options;
 	iterator->common.now = now;
 
 	*iteratorp = (dns_rdatasetiter_t *)iterator;

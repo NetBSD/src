@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/bin/sh
 
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
@@ -18,7 +18,7 @@ set -e
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
-QPERF=`$SHELL qperf.sh`
+QPERF=$($SHELL qperf.sh)
 
 USAGE="$0: [-DNx]"
 DEBUG=
@@ -30,7 +30,7 @@ while getopts "DNx" c; do
 	*) echo "$USAGE" 1>&2; exit 1 ;;
     esac
 done
-shift `expr $OPTIND - 1 || true`
+shift $((OPTIND - 1))
 if test "$#" -ne 0; then
     echo "$USAGE" 1>&2
     exit 1
@@ -62,7 +62,7 @@ copy_setports dnsrpzd.conf.in dnsrpzd.conf
 # Note that dnsrps.conf and dnsrps-slave.conf are included in named.conf
 # and differ from dnsrpz.conf which is used by dnsrpzd.
 $SHELL ../ckdnsrps.sh -A $TEST_DNSRPS $DEBUG
-test -z "`grep 'dnsrps-enable yes' dnsrps.conf`" && TEST_DNSRPS=
+test -z "$(grep 'dnsrps-enable yes' dnsrps.conf)" && TEST_DNSRPS=
 
 # set up test policy zones.
 #   bl is the main test zone
@@ -88,7 +88,7 @@ cp ns5/expire.conf.in ns5/expire.conf
 # $3=input zone file
 # $4=output file
 signzone () {
-    KEYNAME=`$KEYGEN -q -a rsasha256 -K $1 $2`
+    KEYNAME=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -K $1 $2)
     cat $1/$3 $1/$KEYNAME.key > $1/tmp
     $SIGNER -P -K $1 -o $2 -f $1/$4 $1/tmp >/dev/null
     sed -n -e 's/\(.*\) IN DNSKEY \([0-9]\{1,\} [0-9]\{1,\} [0-9]\{1,\}\) \(.*\)/trust-anchors {"\1" static-key \2 "\3";};/p' $1/$KEYNAME.key >>trusted.conf
@@ -169,10 +169,11 @@ $PERL -e 'for ($cnt = $val = 1; $cnt <= 3000; ++$cnt) {
 cp ns2/bl.tld2.db.in ns2/bl.tld2.db
 cp ns5/empty.db.in ns5/empty.db
 cp ns5/empty.db.in ns5/policy2.db
+cp ns6/bl.tld2s.db.in ns6/bl.tld2s.db
 
 # Run dnsrpzd to get the license and prime the static policy zones
 if test -n "$TEST_DNSRPS"; then
-   DNSRPZD="`../rpz/dnsrps -p`"
+   DNSRPZD="$(../rpz/dnsrps -p)"
    cd ns3
    "$DNSRPZ" -D../dnsrpzd.rpzf -S../dnsrpzd.sock -C../dnsrpzd.conf \
              -w 0 -dddd -L stdout >./dnsrpzd.run 2>&1

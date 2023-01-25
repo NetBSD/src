@@ -1,4 +1,4 @@
-/*	$NetBSD: order.c,v 1.1.1.6 2022/09/23 12:09:18 christos Exp $	*/
+/*	$NetBSD: order.c,v 1.1.1.7 2023/01/25 20:36:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -113,7 +113,8 @@ dns_order_find(dns_order_t *order, const dns_name_t *name,
 			continue;
 		}
 		if (ent->rdclass != rdclass &&
-		    ent->rdclass != dns_rdataclass_any) {
+		    ent->rdclass != dns_rdataclass_any)
+		{
 			continue;
 		}
 		if (match(name, dns_fixedname_name(&ent->name))) {

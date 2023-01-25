@@ -1,4 +1,4 @@
-/*	$NetBSD: ht.c,v 1.1.1.6 2022/09/23 12:09:21 christos Exp $	*/
+/*	$NetBSD: ht.c,v 1.1.1.7 2023/01/25 20:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -125,7 +125,8 @@ isc_ht_add(isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
 	node = ht->table[hash & ht->mask];
 	while (node != NULL) {
 		if (keysize == node->keysize &&
-		    memcmp(key, node->key, keysize) == 0) {
+		    memcmp(key, node->key, keysize) == 0)
+		{
 			return (ISC_R_EXISTS);
 		}
 		node = node->next;
@@ -157,7 +158,8 @@ isc_ht_find(const isc_ht_t *ht, const unsigned char *key, uint32_t keysize,
 	node = ht->table[hash & ht->mask];
 	while (node != NULL) {
 		if (keysize == node->keysize &&
-		    memcmp(key, node->key, keysize) == 0) {
+		    memcmp(key, node->key, keysize) == 0)
+		{
 			if (valuep != NULL) {
 				*valuep = node->value;
 			}
@@ -182,7 +184,8 @@ isc_ht_delete(isc_ht_t *ht, const unsigned char *key, uint32_t keysize) {
 	node = ht->table[hash & ht->mask];
 	while (node != NULL) {
 		if (keysize == node->keysize &&
-		    memcmp(key, node->key, keysize) == 0) {
+		    memcmp(key, node->key, keysize) == 0)
+		{
 			if (prev == NULL) {
 				ht->table[hash & ht->mask] = node->next;
 			} else {

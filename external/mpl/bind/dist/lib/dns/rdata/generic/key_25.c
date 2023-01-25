@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.c,v 1.1.1.9 2022/09/23 12:09:20 christos Exp $	*/
+/*	$NetBSD: key_25.c,v 1.1.1.10 2023/01/25 20:36:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -178,7 +178,8 @@ generic_totext_key(ARGS_TOTEXT) {
 
 	if ((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0) {
 		if (rdata->type == dns_rdatatype_dnskey ||
-		    rdata->type == dns_rdatatype_cdnskey) {
+		    rdata->type == dns_rdatatype_cdnskey)
+		{
 			RETERR(str_totext(" ; ", target));
 			RETERR(str_totext(keyinfo, target));
 		}

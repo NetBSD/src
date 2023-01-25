@@ -1,4 +1,4 @@
-/*	$NetBSD: url.c,v 1.1.1.2 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: url.c,v 1.1.1.3 2023/01/25 20:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -633,7 +633,8 @@ isc_url_parse(const char *buf, size_t buflen, bool is_connect,
 
 	/* CONNECT requests can only contain "hostname:port" */
 	if (is_connect &&
-	    up->field_set != ((1 << ISC_UF_HOST) | (1 << ISC_UF_PORT))) {
+	    up->field_set != ((1 << ISC_UF_HOST) | (1 << ISC_UF_PORT)))
+	{
 		return (ISC_R_FAILURE);
 	}
 

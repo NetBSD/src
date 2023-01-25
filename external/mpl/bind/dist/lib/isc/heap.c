@@ -1,4 +1,4 @@
-/*	$NetBSD: heap.c,v 1.1.1.5 2022/09/23 12:09:21 christos Exp $	*/
+/*	$NetBSD: heap.c,v 1.1.1.6 2023/01/25 20:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -171,7 +171,8 @@ sink_down(isc_heap_t *heap, unsigned int i, void *elt) {
 		/* Find the smallest of the (at most) two children. */
 		j = heap_left(i);
 		if (j < size &&
-		    heap->compare(heap->array[j + 1], heap->array[j])) {
+		    heap->compare(heap->array[j + 1], heap->array[j]))
+		{
 			j++;
 		}
 		if (heap->compare(elt, heap->array[j])) {

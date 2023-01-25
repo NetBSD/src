@@ -24,55 +24,55 @@ cfile=child.db
 
 echo_i "generating child's keys"
 # active zsk
-czsk1=`$KEYGEN -q -a rsasha1 -L 30 $czone`
+czsk1=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -L 30 $czone)
 
 # not yet published or active
-czsk2=`$KEYGEN -q -a rsasha1 -P none -A none $czone`
+czsk2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -P none -A none $czone)
 
 # published but not active
-czsk3=`$KEYGEN -q -a rsasha1 -A none $czone`
+czsk3=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -A none $czone)
 
 # inactive
-czsk4=`$KEYGEN -q -a rsasha1 -P now-24h -A now-24h -I now $czone`
+czsk4=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -P now-24h -A now-24h -I now $czone)
 
 # active in 12 hours, inactive 12 hours after that...
-czsk5=`$KEYGEN -q -a rsasha1 -P now+12h -A now+12h -I now+24h $czone`
+czsk5=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -P now+12h -A now+12h -I now+24h $czone)
 
 # explicit successor to czk5
 # (suppressing warning about lack of removal date)
-czsk6=`$KEYGEN -q -S $czsk5 -i 6h 2>/dev/null` 
+czsk6=$($KEYGEN -q -S $czsk5 -i 6h 2>/dev/null)
 
 # active ksk
-cksk1=`$KEYGEN -q -a rsasha1 -fk -L 30 $czone`
+cksk1=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -fk -L 30 $czone)
 
 # published but not YET active; will be active in 20 seconds
-cksk2=`$KEYGEN -q -a rsasha1 -fk $czone`
+cksk2=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -fk $czone)
 # $SETTIME moved after other $KEYGENs
 
 echo_i "revoking key"
 # revoking key changes its ID
-cksk3=`$KEYGEN -q -a rsasha1 -fk $czone`
-cksk4=`$REVOKE $cksk3`
+cksk3=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -fk $czone)
+cksk4=$($REVOKE $cksk3)
 
 echo_i "setting up sync key"
-cksk5=`$KEYGEN -q -a rsasha1 -fk -P now+1mo -A now+1mo -Psync now $czone`
+cksk5=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -fk -P now+1mo -A now+1mo -Psync now $czone)
 
 echo_i "and future sync key"
-cksk6=`$KEYGEN -q -a rsasha1 -fk -P now+1mo -A now+1mo -Psync now+1mo $czone`
+cksk6=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -fk -P now+1mo -A now+1mo -Psync now+1mo $czone)
 
 echo_i "generating parent keys"
-pzsk=`$KEYGEN -q -a rsasha1 $pzone`
-pksk=`$KEYGEN -q -a rsasha1 -fk $pzone`
+pzsk=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} $pzone)
+pksk=$($KEYGEN -q -a ${DEFAULT_ALGORITHM} -fk $pzone)
 
 echo_i "setting child's activation time"
 # using now+30s to fix RT 24561
 $SETTIME -A now+30s $cksk2 > /dev/null
 
 echo_i "signing child zone"
-czoneout=`$SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile`
+czoneout=$($SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile)
 
 echo_i "signing parent zone"
-pzoneout=`$SIGNER -Sg -o $pzone $pfile`
+pzoneout=$($SIGNER -Sg -o $pzone $pfile)
 
 czactive=$(keyfile_to_key_id $czsk1)
 czgenerated=$(keyfile_to_key_id $czsk2)
@@ -99,13 +99,13 @@ if [ $ret != 0 ]; then
 	echo_i "child $czoneout"
 	echo_i "failed";
 fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "rechecking dnssec-signzone output with -x"
 ret=0
 # use an alternate output file so -x doesn't interfere with later checks
-pzoneout=`$SIGNER -Sxg -o $pzone -f ${pfile}2.signed $pfile`
-czoneout=`$SIGNER -Sxg -e now+1d -X now+2d -o $czone -f ${cfile}2.signed $cfile`
+pzoneout=$($SIGNER -Sxg -o $pzone -f ${pfile}2.signed $pfile)
+czoneout=$($SIGNER -Sxg -e now+1d -X now+2d -o $czone -f ${cfile}2.signed $cfile)
 echo "$pzoneout" | grep 'KSKs: 1 active, 0 stand-by, 0 revoked' > /dev/null || ret=1
 echo "$pzoneout" | grep 'ZSKs: 1 active, 0 present, 0 revoked' > /dev/null || ret=1
 echo "$czoneout" | grep 'KSKs: 1 active, 1 stand-by, 1 revoked' > /dev/null || ret=1
@@ -115,7 +115,7 @@ if [ $ret != 0 ]; then
 	echo_i "child $czoneout"
 	echo_i "failed";
 fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "checking parent zone DNSKEY set"
 ret=0
@@ -128,7 +128,7 @@ grep "key id = $pkid" $pfile.signed > /dev/null || {
 	echo_i "missing expected parent KSK id = $pkid"
 }
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "checking parent zone DS records"
 ret=0
@@ -139,7 +139,7 @@ grep -w "$ckpublished" dsset.out > /dev/null || ret=1
 grep -w "$ckprerevoke" dsset.out > /dev/null && ret=1
 grep -w "$ckrevoked" dsset.out > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "checking child zone DNSKEY set"
 ret=0
@@ -185,7 +185,7 @@ grep "key id = $czsuccessor\$" $cfile.signed > /dev/null && {
 #grep "key id = $czpredecessor\$" $cfile.signed > /dev/null && ret=1
 #grep "key id = $czsuccessor\$" $cfile.signed > /dev/null && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "checking key TTLs are correct"
 ret=0
@@ -197,23 +197,23 @@ grep "${czone}. 45 IN" ${czsk2}.key > /dev/null 2>&1 || ret=1
 $SETTIME -L 0 ${czsk2} > /dev/null
 grep "${czone}. IN" ${czsk2}.key > /dev/null 2>&1 || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "checking key TTLs were imported correctly"
 ret=0
 awk 'BEGIN {r = 0} $2 == "DNSKEY" && $1 != 30 {r = 1} END {exit r}' \
         ${cfile}.signed || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "re-signing and checking imported TTLs again"
 ret=0
 $SETTIME -L 15 ${czsk2} > /dev/null
-czoneout=`$SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile`
+czoneout=$($SIGNER -Sg -e now+1d -X now+2d -o $czone $cfile)
 awk 'BEGIN {r = 0} $2 == "DNSKEY" && $1 != 15 {r = 1} END {exit r}' \
         ${cfile}.signed || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 # There is some weirdness in Solaris 10 (Generic_120011-14), which
 # is why the next section has all those echo $ret > /dev/null;sync
@@ -314,44 +314,44 @@ if [ $ret != 0 ]; then
     sed 's/^/I:other sigs: /' < other.sigs
     echo_i "failed";
 fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "checking RRSIG expiry date correctness"
-dnskey_expiry=`$CHECKZONE -o - $czone $cfile.signed 2> /dev/null |
+dnskey_expiry=$($CHECKZONE -o - $czone $cfile.signed 2> /dev/null |
               awk '$4 == "RRSIG" && $5 == "DNSKEY" {print $9; exit}' |
-              cut -c1-10`
-soa_expiry=`$CHECKZONE -o - $czone $cfile.signed 2> /dev/null |
+              cut -c1-10)
+soa_expiry=$($CHECKZONE -o - $czone $cfile.signed 2> /dev/null |
            awk '$4 == "RRSIG" && $5 == "SOA" {print $9; exit}' |
-           cut -c1-10`
+           cut -c1-10)
 [ $dnskey_expiry -gt $soa_expiry ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "waiting 30 seconds for key activation"
 sleep 30
 echo_i "re-signing child zone"
-czoneout2=`$SIGNER -Sg -o $czone -f $cfile.new $cfile.signed`
+czoneout2=$($SIGNER -Sg -o $czone -f $cfile.new $cfile.signed)
 mv $cfile.new $cfile.signed
 
 echo_i "checking dnssec-signzone output matches expectations"
 ret=0
 echo "$czoneout2" | grep 'KSKs: 2 active, 0 stand-by, 1 revoked' > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "checking child zone signatures again"
 ret=0
 awk '$2 == "RRSIG" && $3 == "DNSKEY" { getline; print $3 }' $cfile.signed > dnskey.sigs
 grep -w "$ckpublished" dnskey.sigs > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "checking sync record publication"
 ret=0
 awk 'BEGIN { r=1 } $2 == "CDNSKEY" { r=0 } END { exit r }' $cfile.signed || ret=1
 awk 'BEGIN { r=1 } $2 == "CDS" { r=0 } END { exit r }' $cfile.signed || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 # this also checks that the future sync record is not yet published
 echo_i "checking sync record deletion"
@@ -362,7 +362,7 @@ mv $cfile.new $cfile.signed
 awk 'BEGIN { r=1 } $2 == "CDNSKEY" { r=0 } END { exit r }' $cfile.signed && ret=1
 awk 'BEGIN { r=1 } $2 == "CDS" { r=0 } END { exit r }' $cfile.signed && ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
-status=`expr $status + $ret`
+status=$((status + ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.1.1.6 2022/09/23 12:09:17 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.1.1.7 2023/01/25 20:36:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -136,7 +136,8 @@ dst_key_iszonekey(const dst_key_t *key) {
 		return (false);
 	}
 	if (key->key_proto != DNS_KEYPROTO_DNSSEC &&
-	    key->key_proto != DNS_KEYPROTO_ANY) {
+	    key->key_proto != DNS_KEYPROTO_ANY)
+	{
 		return (false);
 	}
 	return (true);
@@ -153,7 +154,8 @@ dst_key_isnullkey(const dst_key_t *key) {
 		return (false);
 	}
 	if (key->key_proto != DNS_KEYPROTO_DNSSEC &&
-	    key->key_proto != DNS_KEYPROTO_ANY) {
+	    key->key_proto != DNS_KEYPROTO_ANY)
+	{
 		return (false);
 	}
 	return (true);

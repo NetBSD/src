@@ -1,4 +1,4 @@
-/*	$NetBSD: zone_test.c,v 1.1.1.7 2022/09/23 12:09:09 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.1.1.8 2023/01/25 20:36:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -261,7 +261,8 @@ main(int argc, char **argv) {
 			memset(&addr, 0, sizeof(addr));
 			addr.type.sin.sin_family = AF_INET;
 			if (inet_pton(AF_INET, isc_commandline_argument,
-				      &addr.type.sin.sin_addr) != 1) {
+				      &addr.type.sin.sin_addr) != 1)
+			{
 				fprintf(stderr, "bad master address '%s'\n",
 					isc_commandline_argument);
 				exit(1);

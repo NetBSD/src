@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_postgres_driver.c,v 1.1.1.4 2022/09/23 12:09:14 christos Exp $	*/
+/*	$NetBSD: dlz_postgres_driver.c,v 1.1.1.5 2023/01/25 20:36:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -1110,7 +1110,8 @@ postgres_create(const char *dlzname, unsigned int argc, char *argv[],
 		/* if we cannot connect the first time, try 3 more times. */
 		for (j = 0;
 		     PQstatus((PGconn *)dbi->dbconn) != CONNECTION_OK && j < 3;
-		     j++) {
+		     j++)
+		{
 			PQreset((PGconn *)dbi->dbconn);
 		}
 

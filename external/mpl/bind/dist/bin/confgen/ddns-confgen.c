@@ -1,4 +1,4 @@
-/*	$NetBSD: ddns-confgen.c,v 1.1.1.5 2022/09/23 12:09:08 christos Exp $	*/
+/*	$NetBSD: ddns-confgen.c,v 1.1.1.6 2023/01/25 20:36:35 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -139,7 +139,8 @@ main(int argc, char **argv) {
 	isc_commandline_errprint = false;
 
 	while ((ch = isc_commandline_parse(argc, argv, "a:hk:Mmr:qs:y:z:")) !=
-	       -1) {
+	       -1)
+	{
 		switch (ch) {
 		case 'a':
 			algname = isc_commandline_argument;

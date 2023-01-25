@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.1.1.5 2022/09/23 12:09:21 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.1.1.6 2023/01/25 20:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -245,7 +245,8 @@ isc_app_ctxrun(isc_appctx_t *ctx) {
 		 */
 		LOCK(&ctx->lock);
 		for (event = ISC_LIST_HEAD(ctx->on_run); event != NULL;
-		     event = next_event) {
+		     event = next_event)
+		{
 			next_event = ISC_LIST_NEXT(event, ev_link);
 			ISC_LIST_UNLINK(ctx->on_run, event, ev_link);
 			task = event->ev_sender;

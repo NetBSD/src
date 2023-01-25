@@ -1,4 +1,4 @@
-/*	$NetBSD: siphash.c,v 1.1.1.5 2022/09/23 12:09:21 christos Exp $	*/
+/*	$NetBSD: siphash.c,v 1.1.1.6 2023/01/25 20:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -93,6 +93,7 @@ isc_siphash24(const uint8_t *k, const uint8_t *in, const size_t inlen,
 	      uint8_t *out) {
 	REQUIRE(k != NULL);
 	REQUIRE(out != NULL);
+	REQUIRE(inlen == 0 || in != NULL);
 
 	uint64_t k0 = U8TO64_LE(k);
 	uint64_t k1 = U8TO64_LE(k + 8);
@@ -104,7 +105,9 @@ isc_siphash24(const uint8_t *k, const uint8_t *in, const size_t inlen,
 
 	uint64_t b = ((uint64_t)inlen) << 56;
 
-	const uint8_t *end = in + inlen - (inlen % sizeof(uint64_t));
+	const uint8_t *end = (in == NULL)
+				     ? NULL
+				     : in + inlen - (inlen % sizeof(uint64_t));
 	const size_t left = inlen & 7;
 
 	for (; in != end; in += 8) {
@@ -171,6 +174,7 @@ isc_halfsiphash24(const uint8_t *k, const uint8_t *in, const size_t inlen,
 		  uint8_t *out) {
 	REQUIRE(k != NULL);
 	REQUIRE(out != NULL);
+	REQUIRE(inlen == 0 || in != NULL);
 
 	uint32_t k0 = U8TO32_LE(k);
 	uint32_t k1 = U8TO32_LE(k + 4);
@@ -182,7 +186,9 @@ isc_halfsiphash24(const uint8_t *k, const uint8_t *in, const size_t inlen,
 
 	uint32_t b = ((uint32_t)inlen) << 24;
 
-	const uint8_t *end = in + inlen - (inlen % sizeof(uint32_t));
+	const uint8_t *end = (in == NULL)
+				     ? NULL
+				     : in + inlen - (inlen % sizeof(uint32_t));
 	const int left = inlen & 3;
 
 	for (; in != end; in += 4) {

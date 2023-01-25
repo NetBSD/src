@@ -1,4 +1,4 @@
-/*	$NetBSD: zonekey.c,v 1.1.1.5 2022/09/23 12:09:19 christos Exp $	*/
+/*	$NetBSD: zonekey.c,v 1.1.1.6 2023/01/25 20:36:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,8 @@ dns_zonekey_iszonekey(dns_rdata_t *keyrdata) {
 		iszonekey = false;
 	}
 	if (key.protocol != DNS_KEYPROTO_DNSSEC &&
-	    key.protocol != DNS_KEYPROTO_ANY) {
+	    key.protocol != DNS_KEYPROTO_ANY)
+	{
 		iszonekey = false;
 	}
 

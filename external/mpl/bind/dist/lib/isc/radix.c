@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.1.1.6 2022/09/23 12:09:21 christos Exp $	*/
+/*	$NetBSD: radix.c,v 1.1.1.7 2023/01/25 20:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -125,7 +125,8 @@ _comp_with_mask(void *addr, void *dest, u_int mask) {
 		u_int m = ((~0U) << (8 - (mask % 8)));
 
 		if ((mask % 8) == 0 ||
-		    (((u_char *)addr)[n] & m) == (((u_char *)dest)[n] & m)) {
+		    (((u_char *)addr)[n] & m) == (((u_char *)dest)[n] & m))
+		{
 			return (1);
 		}
 	}
@@ -426,7 +427,8 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 				/* Merging nodes */
 				for (i = 0; i < RADIX_FAMILIES; i++) {
 					if (node->node_num[i] == -1 &&
-					    source->node_num[i] != -1) {
+					    source->node_num[i] != -1)
+					{
 						node->node_num[i] =
 							radix->num_added_node +
 							source->node_num[i];

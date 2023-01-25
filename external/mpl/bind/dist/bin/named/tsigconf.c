@@ -1,4 +1,4 @@
-/*	$NetBSD: tsigconf.c,v 1.1.1.5 2022/09/23 12:09:09 christos Exp $	*/
+/*	$NetBSD: tsigconf.c,v 1.1.1.6 2023/01/25 20:36:36 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -86,7 +86,8 @@ add_initial_keys(const cfg_obj_t *list, dns_tsig_keyring_t *ring,
 		 */
 		algstr = cfg_obj_asstring(algobj);
 		if (named_config_getkeyalgorithm(algstr, &alg, &bits) !=
-		    ISC_R_SUCCESS) {
+		    ISC_R_SUCCESS)
+		{
 			cfg_obj_log(algobj, named_g_lctx, ISC_LOG_ERROR,
 				    "key '%s': has a "
 				    "unsupported algorithm '%s'",

@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.1.1.7 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.1.1.8 2023/01/25 20:36:48 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -540,7 +540,8 @@ dispatch(isc_timermgr_t *manager, isc_time_t *now) {
 
 				LOCK(&timer->lock);
 				if (!isc_time_isepoch(&timer->idle) &&
-				    isc_time_compare(now, &timer->idle) >= 0) {
+				    isc_time_compare(now, &timer->idle) >= 0)
+				{
 					idle = true;
 				}
 				UNLOCK(&timer->lock);

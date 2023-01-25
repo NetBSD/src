@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.c,v 1.1.1.6 2022/09/23 12:09:22 christos Exp $	*/
+/*	$NetBSD: netmgr.c,v 1.1.1.7 2023/01/25 20:36:49 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2394,7 +2394,8 @@ isc___nm_uvreq_put(isc__nm_uvreq_t **req0, isc_nmsocket_t *sock FLARG) {
 
 #if !__SANITIZE_ADDRESS__ && !__SANITIZE_THREAD__
 	if (!isc__nmsocket_active(sock) ||
-	    !isc_astack_trypush(sock->inactivereqs, req)) {
+	    !isc_astack_trypush(sock->inactivereqs, req))
+	{
 		isc_mem_put(sock->mgr->mctx, req, sizeof(*req));
 	}
 #else  /* !__SANITIZE_ADDRESS__ && !__SANITIZE_THREAD__ */
