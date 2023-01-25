@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -13,23 +15,41 @@ SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
 
 status=0
+
+# Wait for the zone to be fully signed before beginning test
+#
+# We expect the zone to have the following:
+#
+# - 5 signatures for signing.test.
+# - 3 signatures for ns.signing.test.
+# - 2 x 500 signatures for a{0000-0499}.signing.test.
+#
+# for a total of 1008.
+fully_signed () {
+        $DIG axfr signing.test -p ${PORT} @10.53.0.1 |
+                awk 'BEGIN { lines = 0 }
+                     $4 == "RRSIG" {lines++}
+                     END { if (lines != 1008) exit(1) }'
+}
+retry_quiet 30 fully_signed || ret=1
+
 start=`date +%s`
-end=`expr $start + 1200`
 now=$start
-while test $now -lt $end
-do
-	et=`expr $now - $start`
+end=$((start + 140))
+
+while [ $now -lt $end ]; do
+        et=$((now - start))
 	echo "=============== $et ============"
 	$JOURNALPRINT ns1/signing.test.db.signed.jnl | $PERL check_journal.pl
-	$DIG axfr signing.test -p 5300 @10.53.0.1 > dig.out.at$et
+	$DIG axfr signing.test -p ${PORT} @10.53.0.1 > dig.out.at$et
 	awk '$4 == "RRSIG" { print $11 }' dig.out.at$et | sort | uniq -c
 	lines=`awk '$4 == "RRSIG" { print}' dig.out.at$et | wc -l`
-	if [ ${et} -ne 0 -a ${lines} -ne 4009 ]
+	if [ ${et} -ne 0 -a ${lines} -ne 1009 ]
 	then
 		echo_i "failed"
-		status=`expr $status + 1`
+                status=$((status + 1))
 	fi
-	sleep 20
+	sleep 5
 	now=`date +%s`
 done
 

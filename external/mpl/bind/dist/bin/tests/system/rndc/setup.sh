@@ -36,7 +36,7 @@ copy_setports ns7/named.conf.in ns7/named.conf
 make_key () {
     $RNDCCONFGEN -k key$1 -A $3 -s 10.53.0.4 -p $2 \
             > ns4/key${1}.conf 2> /dev/null
-    egrep -v '(^# Start|^# End|^# Use|^[^#])' ns4/key$1.conf | cut -c3- | \
+    grep -E -v '(^# Start|^# End|^# Use|^[^#])' ns4/key$1.conf | cut -c3- | \
             sed 's/allow { 10.53.0.4/allow { any/' >> ns4/named.conf
 }
 

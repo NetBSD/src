@@ -495,9 +495,11 @@ abbreviation is unambiguous; for example, ``+cd`` is equivalent to
    ``+notcflag``. This bit is ignored by the server for QUERY.
 
 ``+[no]tcp``
-   This option uses [or does not use] TCP when querying name servers. The default behavior
-   is to use UDP unless a type ``any`` or ``ixfr=N`` query is requested,
-   in which case the default is TCP. AXFR queries always use TCP.
+   This option uses [or does not use] TCP when querying name servers.
+   The default behavior is to use UDP unless a type ``any`` or
+   ``ixfr=N`` query is requested, in which case the default is TCP.
+   AXFR queries always use TCP. To prevent retry over TCP when TC=1
+   is returned from a UDP query, use ``+ignore``.
 
 ``+timeout=T``
    This option sets the timeout for a query to ``T`` seconds. The default timeout is

@@ -28,3 +28,10 @@ Bug Fixes
   ran, whether the metadata had changed or not. :iscman:`named` now
   checks whether changes were applied before writing out the key files.
   :gl:`#3302`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

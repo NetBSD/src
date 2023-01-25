@@ -34,7 +34,7 @@ rm -f ./keygen.err
 rm -f ./named.secroots.test*
 rm -f ./nosign.before
 rm -f ./ns*/*.nta
-rm -f ./ns*/managed-keys.bind* ./ns*/*.mkeys*
+rm -f ./ns*/managed-keys.bind ./ns*/managed-keys.bind.jnl ./ns*/*.mkeys*
 rm -f ./ns*/named.lock
 rm -f ./ns1/managed.key.id
 rm -f ./ns1/root.db ./ns2/example.db ./ns2/managed.db ./ns2/trusted.db
@@ -96,7 +96,6 @@ rm -f ./ns3/ttlpatch.example.db ./ns3/ttlpatch.example.db.signed
 rm -f ./ns3/ttlpatch.example.db.patched
 rm -f ./ns3/unsecure.example.db ./ns3/bogus.example.db ./ns3/keyless.example.db
 rm -f ./ns3/unsupported.managed.db.tmp ./ns3/unsupported.trusted.db.tmp
-rm -f ./ns4/managed-keys.bind*
 rm -f ./ns4/named_dump.db*
 rm -f ./ns6/optout-tld.db
 rm -f ./ns7/multiple.example.bk ./ns7/nsec3.example.bk ./ns7/optout.example.bk

@@ -186,6 +186,8 @@ The command formats and their meanings are as follows:
    update requests are sent. If no port number is specified, the default
    DNS port number of 53 is used.
 
+   .. note:: This command has no effect when GSS-TSIG is in use.
+
 ``local address port``
    This command sends all dynamic update requests using the local ``address``. When
    no local statement is provided, ``nsupdate`` sends updates using

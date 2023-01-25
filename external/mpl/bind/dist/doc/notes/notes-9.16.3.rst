@@ -39,6 +39,9 @@ Known Issues
    against either libuv 1.35 or libuv 1.37+; libuv 1.36 is still not
    usable with BIND. :gl:`#1761` :gl:`#1797`
 
+-  See :ref:`above <relnotes_known_issues>` for a list of all known
+   issues affecting this BIND 9 branch.
+
 Feature Changes
 ~~~~~~~~~~~~~~~
 

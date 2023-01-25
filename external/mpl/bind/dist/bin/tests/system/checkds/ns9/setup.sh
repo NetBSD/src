@@ -43,7 +43,8 @@ do
 	$SETTIME -s -g $O -k $O $T -r $O $T -z $O $T -d $R $T "$CSK" > settime.out.$zone 2>&1
 	cat template.db.in "${CSK}.key" > "$infile"
 	private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
-	$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+	cp $infile $zonefile
+	$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 done
 
 # DS Withdrawal.
@@ -57,5 +58,6 @@ do
 	$SETTIME -s -g $H -k $O $T -r $O $T -z $O $T -d $U $T "$CSK" > settime.out.$zone 2>&1
 	cat template.db.in "${CSK}.key" > "$infile"
 	private_type_record $zone $DEFAULT_ALGORITHM_NUMBER "$CSK" >> "$infile"
-	$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O full -f $zonefile $infile > signer.out.$zone.1 2>&1
+	cp $infile $zonefile
+	$SIGNER -S -z -x -s now-1h -e now+30d -o $zone -O raw -f "${zonefile}.signed" $infile > signer.out.$zone.1 2>&1
 done

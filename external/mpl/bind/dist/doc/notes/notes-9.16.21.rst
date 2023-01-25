@@ -59,3 +59,10 @@ Bug Fixes
   ``in-view`` statement, running ``rndc freeze`` always reported an
   ``already frozen`` error even though the zone was successfully
   frozen. This has been fixed. :gl:`#2844`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

@@ -65,3 +65,10 @@ Bug Fixes
   those releases were published, there have been no new reports of
   assertion failures matching this issue, but also no further diagnostic
   input, so we have closed the issue. :gl:`#2091`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

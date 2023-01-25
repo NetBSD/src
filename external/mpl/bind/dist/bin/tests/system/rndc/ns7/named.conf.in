@@ -24,12 +24,12 @@ key rndc_key {
 };
 
 key int {
-	algorithm "hmac-sha1";
+	algorithm @DEFAULT_HMAC@;
 	secret "FrSt77yPTFx6hTs4i2tKLB9LmE0=";
 };
 
 key ext {
-	algorithm "hmac-sha1";
+	algorithm @DEFAULT_HMAC@;
 	secret "FrSt77yPTFx6hTs4i2tKLB9LmE0=";
 };
 

@@ -37,7 +37,7 @@ controls {
 
 dnssec-policy "rsasha256" {
 	keys {
-		zsk key-directory lifetime P3M algorithm 8 1024;
+		zsk key-directory lifetime P3M algorithm 8 2048;
 		ksk key-directory lifetime P1Y algorithm 8 2048;
 	};
 
@@ -57,12 +57,12 @@ dnssec-policy "rsasha256" {
 };
 
 key "external" {
-	algorithm "hmac-sha1";
+	algorithm @DEFAULT_HMAC@;
 	secret "YPfMoAk6h+3iN8MDRQC004iSNHY=";
 };
 
 key "internal" {
-	algorithm "hmac-sha1";
+	algorithm @DEFAULT_HMAC@;
 	secret "4xILSZQnuO1UKubXHkYUsvBRPu8=";
 };
 

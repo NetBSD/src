@@ -12,10 +12,31 @@
 # information regarding copyright ownership.
 
 import os
+import subprocess
 
 import pytest
 
 
 long_test = pytest.mark.skipif(
     not os.environ.get("CI_ENABLE_ALL_TESTS"), reason="CI_ENABLE_ALL_TESTS not set"
+)
+
+
+def feature_test(feature):
+    feature_test_bin = os.environ["FEATURETEST"]
+    try:
+        subprocess.run([feature_test_bin, feature], check=True)
+    except subprocess.CalledProcessError as exc:
+        if exc.returncode != 1:
+            raise
+        return False
+    return True
+
+
+have_libxml2 = pytest.mark.skipif(
+    feature_test("--have-libxml2"), reason="libxml2 support disabled in the build"
+)
+
+have_json_c = pytest.mark.skipif(
+    feature_test("--have-json-c"), reason="json-c support disabled in the build"
 )

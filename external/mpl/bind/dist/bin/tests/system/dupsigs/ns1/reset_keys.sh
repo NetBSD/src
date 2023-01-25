@@ -53,14 +53,14 @@ $SETTIME -P $BASET -A $BASET $KEYDIR/$KSK
 $SETTIME -P $BASET -A $BASET $KEYDIR/$ZSK0
 
 # schedule the first roll
-R1=`expr $BASE + 300`
+R1=`expr $BASE + 50`
 R1T=`timetodnssec $R1`
 
 $SETTIME -I $R1T $KEYDIR/$ZSK0
 $SETTIME -P $BASET -A $R1T $KEYDIR/$ZSK1
 
 # schedule the second roll (which includes the delete of the first key)
-R2=`expr $R1 + 300`
+R2=`expr $R1 + 50`
 R2T=`timetodnssec $R2`
 DT=$R2
 DTT=`timetodnssec $DT`
@@ -70,8 +70,7 @@ $SETTIME -I $R2T $KEYDIR/$ZSK1
 $SETTIME -P $R1T -A $R2T $KEYDIR/$ZSK2
 
 # schedule the third roll
-# this isn't long enough for the signing to complete
-R3=`expr $R2 + 60`
+R3=`expr $R2 + 25`
 R3T=`timetodnssec $R3`
 
 $SETTIME -D $R3T $KEYDIR/$ZSK1
@@ -90,8 +89,10 @@ echo ZSK4=$ZSK4
 exit
 
 # schedule the fourth roll
-# this isn't long enough for the signing to complete
-R4=`expr $R3 + 30`
+# this isn't long enough for the signing to complete and would result in
+# duplicate signatures, see
+# https://gitlab.isc.org/isc-projects/bind9/-/merge_requests/231#note_9597
+R4=`expr $R3 + 10`
 R4T=`timetodnssec $R4`
 
 $SETTIME -D $R4T $KEYDIR/$ZSK2

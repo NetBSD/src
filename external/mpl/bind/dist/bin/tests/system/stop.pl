@@ -183,6 +183,10 @@ sub stop_rndc {
 	}
 
 	my $ip = "10.53.0.$n";
+	if (-e "$testdir/$server/named.ipv6-only") {
+		$ip = "fd92:7065:b8e:ffff::$n";
+	}
+
 	my $how = $halt ? "halt" : "stop";
 
 	# Ugly, but should work.

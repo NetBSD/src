@@ -29,5 +29,5 @@ zone "signing.test" {
 	key-directory "keys/signing.test";
 	inline-signing yes;
 	auto-dnssec maintain;
-	sig-validity-interval 120 30;
+	sig-validity-interval 20 5;
 };

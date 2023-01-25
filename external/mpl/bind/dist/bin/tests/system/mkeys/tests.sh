@@ -14,6 +14,7 @@
 set -e
 
 SYSTEMTESTTOP=..
+export ALGORITHM_SET="ecc_default"
 #shellcheck source=conf.sh
 . "$SYSTEMTESTTOP/conf.sh"
 
@@ -134,7 +135,7 @@ status=$((status+ret))
 n=$((n+1))
 echo_i "check new trust anchor can be added ($n)"
 ret=0
-standby1=$($KEYGEN -a rsasha256 -qfk -K ns1 .)
+standby1=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk -K ns1 .)
 mkeys_loadkeys_on 1 || ret=1
 mkeys_refresh_on 2 || ret=1
 mkeys_status_on 2 > rndc.out.$n 2>&1 || ret=1
@@ -301,11 +302,11 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
 echo_i "reinitialize trust anchors, add second key to bind.keys"
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port "${CONTROLPORT}" mkeys ns2
+stop_server --use-rndc --port "${CONTROLPORT}" ns2
 rm -f ns2/managed-keys.bind*
 keyfile_to_initial_ds ns1/"$original" ns1/"$standby1" > ns2/managed.conf
 nextpart ns2/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port "${PORT}" mkeys ns2
+start_server --noclean --restart --port "${PORT}" ns2
 
 n=$((n+1))
 echo_i "check that no key from bind.keys is marked as an initializing key ($n)"
@@ -317,11 +318,11 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
 echo_i "reinitialize trust anchors, revert to one key in bind.keys"
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port "${CONTROLPORT}" mkeys ns2
+stop_server --use-rndc --port "${CONTROLPORT}" ns2
 rm -f ns2/managed-keys.bind*
 mv ns2/managed1.conf ns2/managed.conf
 nextpart ns2/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port "${PORT}" mkeys ns2
+start_server --noclean --restart --port "${PORT}" ns2
 
 n=$((n+1))
 echo_i "check that standby key is now trusted ($n)"
@@ -343,7 +344,7 @@ status=$((status+ret))
 n=$((n+1))
 echo_i "revoke original key, add new standby ($n)"
 ret=0
-standby2=$($KEYGEN -a rsasha256 -qfk -K ns1 .)
+standby2=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk -K ns1 .)
 $SETTIME -R now -K ns1 "$original" > /dev/null
 mkeys_loadkeys_on 1 || ret=1
 mkeys_refresh_on 2 || ret=1
@@ -375,7 +376,7 @@ status=$((status+ret))
 n=$((n+1))
 echo_i "revoke standby before it is trusted ($n)"
 ret=0
-standby3=$($KEYGEN -a rsasha256 -qfk -K ns1 .)
+standby3=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk -K ns1 .)
 mkeys_loadkeys_on 1 || ret=1
 mkeys_refresh_on 2 || ret=1
 mkeys_status_on 2 > rndc.out.1.$n 2>&1 || ret=1
@@ -480,10 +481,10 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
 echo_i "reinitialize trust anchors"
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port "${CONTROLPORT}" mkeys ns2
+stop_server --use-rndc --port "${CONTROLPORT}" ns2
 rm -f ns2/managed-keys.bind*
 nextpart ns2/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port "${PORT}" mkeys ns2
+start_server --noclean --restart --port "${PORT}" ns2
 
 n=$((n+1))
 echo_i "check positive validation ($n)"
@@ -579,11 +580,11 @@ ret=0
 mkeys_refresh_on 2 || ret=1
 mkeys_status_on 2 > rndc.out.1.$n 2>&1 || ret=1
 t1=$(grep 'next refresh:' rndc.out.1.$n) || true
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port "${CONTROLPORT}" mkeys ns1
+stop_server --use-rndc --port "${CONTROLPORT}" ns1
 rm -f ns1/root.db.signed.jnl
 cp ns1/root.db ns1/root.db.signed
 nextpart ns1/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port "${PORT}" mkeys ns1
+start_server --noclean --restart --port "${PORT}" ns1
 wait_for_log 20 "all zones loaded" ns1/named.run || ret=1
 mkeys_refresh_on 2 || ret=1
 mkeys_status_on 2 > rndc.out.2.$n 2>&1 || ret=1
@@ -613,11 +614,11 @@ ret=0
 mkeys_refresh_on 2 || ret=1
 mkeys_status_on 2 > rndc.out.1.$n 2>&1 || ret=1
 t1=$(grep 'next refresh:' rndc.out.1.$n) || true
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port "${CONTROLPORT}" mkeys ns1
+stop_server --use-rndc --port "${CONTROLPORT}" ns1
 rm -f ns1/root.db.signed.jnl
 cat ns1/K*.key >> ns1/root.db.signed
 nextpart ns1/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port "${PORT}" mkeys ns1
+start_server --noclean --restart --port "${PORT}" ns1
 wait_for_log 20 "all zones loaded" ns1/named.run || ret=1
 # Less than a second may have passed since the last time ns2 received a
 # ./DNSKEY response from ns1.  Ensure keys are refreshed at a different
@@ -691,7 +692,7 @@ ret=0
 # compare against the known key.
 tathex=$(grep "query '_ta-[0-9a-f][0-9a-f]*/NULL/IN' approved" ns1/named.run | awk '{print $6; exit 0}' | sed -e 's/(_ta-\([0-9a-f][0-9a-f]*\)):/\1/') || true
 tatkey=$($PERL -e 'printf("%d\n", hex(@ARGV[0]));' "$tathex")
-realkey=$(rndccmd 10.53.0.2 secroots - | sed -n 's#.*SHA256/\([0-9][0-9]*\) ; .*managed.*#\1#p')
+realkey=$(rndccmd 10.53.0.2 secroots - | sed -n "s#.*${DEFAULT_ALGORITHM}/\([0-9][0-9]*\) ; .*managed.*#\1#p")
 [ "$tatkey" -eq "$realkey" ] || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
@@ -715,9 +716,9 @@ ret=0
 # ensure key refresh retry will be scheduled to one actual hour after the first
 # key refresh failure instead of just a few seconds, in order to prevent races
 # between the next scheduled key refresh time and startup time of restarted ns5.
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port "${CONTROLPORT}" mkeys ns5
+stop_server --use-rndc --port "${CONTROLPORT}" ns5
 nextpart ns5/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port "${PORT}" mkeys ns5
+start_server --noclean --restart --port "${PORT}" ns5
 wait_for_log 20 "Returned from key fetch in keyfetch_done()" ns5/named.run || ret=1
 # ns5/named.run will contain logs from both the old instance and the new
 # instance.  In order for the test to pass, both must attempt a fetch.
@@ -729,14 +730,14 @@ status=$((status+ret))
 n=$((n+1))
 echo_i "check key refreshes are resumed after root servers become available ($n)"
 ret=0
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port "${CONTROLPORT}" mkeys ns5
+stop_server --use-rndc --port "${CONTROLPORT}" ns5
 # Prevent previous check from affecting this one
 rm -f ns5/managed-keys.bind*
 # named2.args adds "-T mkeytimers=2/20/40" to named1.args as we need to wait for
 # an "hour" until keys are refreshed again after initial failure
 cp ns5/named2.args ns5/named.args
 nextpart ns5/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port "${PORT}" mkeys ns5
+start_server --noclean --restart --port "${PORT}" ns5
 wait_for_log 20 "Returned from key fetch in keyfetch_done() for '.': failure" ns5/named.run || ret=1
 mkeys_secroots_on 5 || ret=1
 grep '; initializing managed' ns5/named.secroots > /dev/null 2>&1 || ret=1
@@ -765,10 +766,10 @@ status=$((status+ret))
 n=$((n+1))
 echo_i "reinitialize trust anchors, add unsupported algorithm ($n)"
 ret=0
-$PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port "${CONTROLPORT}" mkeys ns6
+stop_server --use-rndc --port "${CONTROLPORT}" ns6
 rm -f ns6/managed-keys.bind*
 nextpart ns6/named.run > /dev/null
-$PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port "${PORT}" mkeys ns6
+start_server --noclean --restart --port "${PORT}" ns6
 # log when an unsupported algorithm is encountered during startup
 wait_for_log 20 "ignoring initial-key for 'unsupported.': algorithm is unsupported" ns6/named.run || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -778,7 +779,7 @@ n=$((n+1))
 echo_i "ignoring unsupported algorithm in managed-keys ($n)"
 ret=0
 mkeys_status_on 6 > rndc.out.$n 2>&1 || ret=1
-# there should still be only two keys listed (for . and rsasha256.)
+# there should still be only two keys listed (for . and island.)
 count=$(grep -c "keyid: " rndc.out.$n) || true
 [ "$count" -eq 2 ] || ret=1
 # two lines indicating trust status
@@ -805,7 +806,7 @@ ret=0
 mkeys_reload_on 1 || ret=1
 mkeys_refresh_on 6 || ret=1
 mkeys_status_on 6 > rndc.out.$n 2>&1 || ret=1
-# there should still be only two keys listed (for . and rsasha256.)
+# there should still be only two keys listed (for . and island.)
 count=$(grep -c "keyid: " rndc.out.$n) || true
 [ "$count" -eq 2 ] || ret=1
 # two lines indicating trust status

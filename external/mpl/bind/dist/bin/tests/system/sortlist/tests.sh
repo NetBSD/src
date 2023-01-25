@@ -39,13 +39,13 @@ b.example.		300	IN	A	10.53.0.$n
 EOF
 
 $DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.2 | sed 1q | \
-        egrep '10.53.0.(2|3)$' > test2.out &&
+        grep -E '10.53.0.(2|3)$' > test2.out &&
 $DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.3 | sed 1q | \
-        egrep '10.53.0.(2|3)$' >> test2.out &&
+        grep -E '10.53.0.(2|3)$' >> test2.out &&
 $DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.4 | sed 1q | \
-        egrep '10.53.0.4$' >> test2.out &&
+        grep -E '10.53.0.4$' >> test2.out &&
 $DIG $DIGOPTS b.example. @10.53.0.1 -b 10.53.0.5 | sed 1q | \
-        egrep '10.53.0.5$' >> test2.out || status=1
+        grep -E '10.53.0.5$' >> test2.out || status=1
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

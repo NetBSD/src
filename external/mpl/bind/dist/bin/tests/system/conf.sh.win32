@@ -20,68 +20,102 @@
 TOP=${SYSTEMTESTTOP:=.}/../../..
 
 # Make it absolute so that it continues to work after we cd.
-TOP=`cd $TOP && pwd`
-TOP_SRCDIR="$TOP"
+export TOP=`cd $TOP && pwd`
+export TOP_SRCDIR="$TOP"
 
 # This is the windows build. This disables certain tests cases
 # and changes some specific behaviors where necessary.
-CYGWIN=1
-
-# Load common values shared between windows and unix/linux.
-. $TOP/bin/tests/system/conf.sh.common
+export CYGWIN=1
 
 # Visual Studio build configurations are Release and Debug
-VSCONF=${VSCONF:-Debug}
+export VSCONF=${VSCONF:-Debug}
 
-ARPANAME=$TOP/Build/$VSCONF/arpaname@EXEEXT@
-CDS=$TOP/Build/$VSCONF/dnssec-cds@EXEEXT@
-CHECKCONF=$TOP/Build/$VSCONF/named-checkconf@EXEEXT@
-CHECKDS="$PYTHON `cygpath -w $TOP/bin/python/dnssec-checkds.py`"
-CHECKZONE=$TOP/Build/$VSCONF/named-checkzone@EXEEXT@
-COVERAGE="$PYTHON `cygpath -w $TOP/bin/python/dnssec-coverage.py`"
-DDNSCONFGEN=$TOP/Build/$VSCONF/ddns-confgen@EXEEXT@
-DELV=$TOP/Build/$VSCONF/delv@EXEEXT@
-DIG=$TOP/Build/$VSCONF/dig@EXEEXT@
-DNSTAPREAD=$TOP/Build/$VSCONF/dnstap-read@EXEEXT@
-DSFROMKEY=$TOP/Build/$VSCONF/dnssec-dsfromkey@EXEEXT@
-FEATURETEST=$TOP/Build/$VSCONF/feature-test@EXEEXT@
-FSTRM_CAPTURE=@FSTRM_CAPTURE@
-IMPORTKEY=$TOP/Build/$VSCONF/dnssec-importkey@EXEEXT@
-JOURNALPRINT=$TOP/Build/$VSCONF/named-journalprint@EXEEXT@
-KEYFRLAB=$TOP/Build/$VSCONF/dnssec-keyfromlabel@EXEEXT@
-KEYGEN=$TOP/Build/$VSCONF/dnssec-keygen@EXEEXT@
-KEYMGR="$PYTHON `cygpath -w $TOP/bin/python/dnssec-keymgr.py`"
-MDIG=$TOP/Build/$VSCONF/mdig@EXEEXT@
-NAMED=$TOP/Build/$VSCONF/named@EXEEXT@
-NSEC3HASH=$TOP/Build/$VSCONF/nsec3hash@EXEEXT@
-NSLOOKUP=$TOP/Build/$VSCONF/nslookup@EXEEXT@
-NSUPDATE=$TOP/Build/$VSCONF/nsupdate@EXEEXT@
-NZD2NZF=$TOP/Build/$VSCONF/named-nzd2nzf@EXEEXT@
-PK11DEL="$TOP/Build/$VSCONF/pkcs11-destroy@EXEEXT@ -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
-PK11GEN="$TOP/Build/$VSCONF/pkcs11-keygen@EXEEXT@ -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
-PK11LIST="$TOP/Build/$VSCONF/pkcs11-list@EXEEXT@ -s ${SLOT:-0} -p ${HSMPIN:-1234}"
-REVOKE=$TOP/Build/$VSCONF/dnssec-revoke@EXEEXT@
-RNDC=$TOP/Build/$VSCONF/rndc@EXEEXT@
-RNDCCONFGEN=$TOP/Build/$VSCONF/rndc-confgen@EXEEXT@
-RRCHECKER=$TOP/Build/$VSCONF/named-rrchecker@EXEEXT@
-SETTIME=$TOP/Build/$VSCONF/dnssec-settime@EXEEXT@
-SIGNER=$TOP/Build/$VSCONF/dnssec-signzone@EXEEXT@
-TSIGKEYGEN=$TOP/Build/$VSCONF/tsig-keygen@EXEEXT@
-VERIFY=$TOP/Build/$VSCONF/dnssec-verify@EXEEXT@
+# Interpreters for system tests
+export PERL=/usr/bin/perl
+if ! test -x "$PERL"; then
+    echo "Perl interpreter is required for system tests."
+    exit 77
+fi
+export PYTHON=@PYTHON@
+
+
+export ARPANAME=$TOP/Build/$VSCONF/arpaname@EXEEXT@
+export CDS=$TOP/Build/$VSCONF/dnssec-cds@EXEEXT@
+export CHECKCONF=$TOP/Build/$VSCONF/named-checkconf@EXEEXT@
+export CHECKDS="$PYTHON `cygpath -w $TOP/bin/python/dnssec-checkds.py`"
+export CHECKZONE=$TOP/Build/$VSCONF/named-checkzone@EXEEXT@
+export COVERAGE="$PYTHON `cygpath -w $TOP/bin/python/dnssec-coverage.py`"
+export DDNSCONFGEN=$TOP/Build/$VSCONF/ddns-confgen@EXEEXT@
+export DELV=$TOP/Build/$VSCONF/delv@EXEEXT@
+export DIG=$TOP/Build/$VSCONF/dig@EXEEXT@
+export DNSTAPREAD=$TOP/Build/$VSCONF/dnstap-read@EXEEXT@
+export DSFROMKEY=$TOP/Build/$VSCONF/dnssec-dsfromkey@EXEEXT@
+export FEATURETEST=$TOP/Build/$VSCONF/feature-test@EXEEXT@
+export FSTRM_CAPTURE=@FSTRM_CAPTURE@
+export IMPORTKEY=$TOP/Build/$VSCONF/dnssec-importkey@EXEEXT@
+export JOURNALPRINT=$TOP/Build/$VSCONF/named-journalprint@EXEEXT@
+export KEYFRLAB=$TOP/Build/$VSCONF/dnssec-keyfromlabel@EXEEXT@
+export KEYGEN=$TOP/Build/$VSCONF/dnssec-keygen@EXEEXT@
+export KEYMGR="$PYTHON `cygpath -w $TOP/bin/python/dnssec-keymgr.py`"
+export MDIG=$TOP/Build/$VSCONF/mdig@EXEEXT@
+export NAMED=$TOP/Build/$VSCONF/named@EXEEXT@
+export NSEC3HASH=$TOP/Build/$VSCONF/nsec3hash@EXEEXT@
+export NSLOOKUP=$TOP/Build/$VSCONF/nslookup@EXEEXT@
+export NSUPDATE=$TOP/Build/$VSCONF/nsupdate@EXEEXT@
+export NZD2NZF=$TOP/Build/$VSCONF/named-nzd2nzf@EXEEXT@
+export PK11DEL="$TOP/Build/$VSCONF/pkcs11-destroy@EXEEXT@ -s ${SLOT:-0} -p ${HSMPIN:-1234} -w 0"
+export PK11GEN="$TOP/Build/$VSCONF/pkcs11-keygen@EXEEXT@ -q -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+export PK11LIST="$TOP/Build/$VSCONF/pkcs11-list@EXEEXT@ -s ${SLOT:-0} -p ${HSMPIN:-1234}"
+export REVOKE=$TOP/Build/$VSCONF/dnssec-revoke@EXEEXT@
+export RNDC=$TOP/Build/$VSCONF/rndc@EXEEXT@
+export RNDCCONFGEN=$TOP/Build/$VSCONF/rndc-confgen@EXEEXT@
+export RRCHECKER=$TOP/Build/$VSCONF/named-rrchecker@EXEEXT@
+export SETTIME=$TOP/Build/$VSCONF/dnssec-settime@EXEEXT@
+export SIGNER=$TOP/Build/$VSCONF/dnssec-signzone@EXEEXT@
+export TSIGKEYGEN=$TOP/Build/$VSCONF/tsig-keygen@EXEEXT@
+export VERIFY=$TOP/Build/$VSCONF/dnssec-verify@EXEEXT@
 
 # to port WIRETEST=$TOP/Build/$VSCONF/wire_test@EXEEXT@
-WIRETEST=
+export WIRETEST=
 
-BIGKEY=$TOP/Build/$VSCONF/bigkey@EXEEXT@
-GENCHECK=$TOP/Build/$VSCONF/gencheck@EXEEXT@
-KEYCREATE=$TOP/Build/$VSCONF/keycreate@EXEEXT@
-KEYDELETE=$TOP/Build/$VSCONF/keydelete@EXEEXT@
-MAKEJOURNAL=$TOP/Build/$VSCONF/makejournal@EXEEXT@
-PIPEQUERIES=$TOP/Build/$VSCONF/pipequeries@EXEEXT@
-RESOLVE=$TOP/Build/$VSCONF/resolve@EXEEXT@
+export BIGKEY=$TOP/Build/$VSCONF/bigkey@EXEEXT@
+export GENCHECK=$TOP/Build/$VSCONF/gencheck@EXEEXT@
+export KEYCREATE=$TOP/Build/$VSCONF/keycreate@EXEEXT@
+export KEYDELETE=$TOP/Build/$VSCONF/keydelete@EXEEXT@
+export MAKEJOURNAL=$TOP/Build/$VSCONF/makejournal@EXEEXT@
+export PIPEQUERIES=$TOP/Build/$VSCONF/pipequeries@EXEEXT@
+export RESOLVE=$TOP/Build/$VSCONF/resolve@EXEEXT@
 
 # we don't want a KRB5_CONFIG setting breaking the tests
-KRB5_CONFIG=NUL
+export KRB5_CONFIG=NUL
+
+# Things that are different on Windows
+export KILL="/bin/kill -f"
+export DIFF="diff --strip-trailing-cr"
+export DOS2UNIX=dos2unix
+# No trailing period
+export TP=
+
+# Configure is launched from native environment, but tests are run in Cygwin -
+# so any detection is unreliable.
+export SHELL="/bin/bash -o igncr"
+export CURL=/usr/bin/curl
+export XMLLINT=/usr/bin/xmllint
+
+#
+# PsSuspend is part of PSTools and can be downloaded from
+# https://download.sysinternals.com/files/PSTools.zip
+#
+export PSSUSPEND=@PSSUSPEND@
+
+#
+# Determine if we support various optional features.
+#
+export CRYPTO=@CRYPTO@
+
+
+# The rest is shared between Windows and Unices
+. $TOP/bin/tests/system/conf.sh.common
 
 #
 # Construct the lists of tests to run
@@ -93,37 +127,3 @@ PARALLEL_WINDOWS="@CHECKDS@ @COVERAGE@ @DNSTAP@ @KEYMGR@"
 PARALLELDIRS="$PARALLEL_COMMON $PARALLEL_WINDOWS"
 
 SUBDIRS="$SEQUENTIALDIRS $PARALLELDIRS"
-
-# Things that are different on Windows
-KILL="/bin/kill -f"
-DIFF="diff --strip-trailing-cr"
-DOS2UNIX=dos2unix
-# No trailing period
-TP=
-
-# Configure is launched from native environment, but tests are run in Cygwin -
-# so any detection is unreliable.
-SHELL="/bin/bash -o igncr"
-CURL=/usr/bin/curl
-XMLLINT=/usr/bin/xmllint
-PERL=/usr/bin/perl
-
-#
-# PsSuspend is part of PSTools and can be downloaded from
-# https://download.sysinternals.com/files/PSTools.zip
-#
-PSSUSPEND=@PSSUSPEND@
-
-PYTHON=@PYTHON@
-
-#
-# Determine if we support various optional features.
-#
-HAVEXMLSTATS=@XMLSTATS@
-HAVEJSONSTATS=@JSONSTATS@
-HAVEZLIB=@ZLIB@
-NZD=@NZD_TOOLS@
-CRYPTO=@CRYPTO@
-
-# The rest is shared between Windows and Unices
-. $TOP/bin/tests/system/conf.sh.common

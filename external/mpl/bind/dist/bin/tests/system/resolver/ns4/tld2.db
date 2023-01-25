@@ -21,12 +21,15 @@ $TTL 300
 ns			A	10.53.0.4
 fetch.tld.		NS	ns.fetch.tld.
 ns.fetch.tld.		A	10.53.0.6
-fetchall  10              TXT     A short ttl
 fetchall  10              A     1.2.3.4
-fetchall  10              AAAA    ::1
+fetchall  10              AAAA  ::1
+fetchall  10              TXT   A short ttl
 no-edns-version.tld.	NS	ns.no-edns-version.tld.
 ns.no-edns-version.tld.	A	10.53.0.6
 edns-version.tld.	NS	ns.edns-version.tld.
 ns.edns-version.tld.	A	10.53.0.7
 cname			CNAME	ns7
 ns7			A	10.53.0.7
+mixedttl 10		A	10.0.0.1
+mixedttl 15		TXT	a TXT record
+mixedttl 20		AAAA	2001:db8::1

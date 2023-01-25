@@ -33,7 +33,7 @@ echo "$zone" >> zones
 ksktimes="-P -186d -A -186d -P sync -186d"
 zsktimes="-P -186d -A -186d"
 KSK=$($KEYGEN -a $algo -L 300 -b 2048 -f KSK $ksktimes $zone 2> keygen.out.$zone.1)
-ZSK=$($KEYGEN -a $algo -L 300 -b 1024        $zsktimes $zone 2> keygen.out.$zone.2)
+ZSK=$($KEYGEN -a $algo -L 300 -b 2048        $zsktimes $zone 2> keygen.out.$zone.2)
 
 echo_i "setting up zone $zone (external)"
 view="ext"

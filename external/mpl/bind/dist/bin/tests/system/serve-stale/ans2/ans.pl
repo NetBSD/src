@@ -58,6 +58,8 @@ my $CAA = "othertype.example 2 IN CAA 0 issue \"ca1.example.net\"";
 my $negSOA = "example 2 IN SOA . . 0 0 0 0 300";
 my $CNAME = "cname.example 7 IN CNAME target.example";
 my $TARGET = "target.example 9 IN A $localaddr";
+my $SHORTCNAME = "shortttl.cname.example 1 IN CNAME longttl.target.example";
+my $LONGTARGET = "longttl.target.example 600 IN A $localaddr";
 
 sub reply_handler {
     my ($qname, $qclass, $qtype) = @_;
@@ -160,6 +162,28 @@ sub reply_handler {
 	}
 	if ($qtype eq "A") {
 	    my $rr = new Net::DNS::RR($TARGET);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "shortttl.cname.example") {
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR($SHORTCNAME);
+	    push @ans, $rr;
+	} else {
+	    my $rr = new Net::DNS::RR($negSOA);
+	    push @auth, $rr;
+	}
+	$rcode = "NOERROR";
+    } elsif ($qname eq "longttl.target.example") {
+	if ($slow_response) {
+                print "  Sleeping 3 seconds\n";
+		sleep(3);
+	}
+	if ($qtype eq "A") {
+	    my $rr = new Net::DNS::RR($LONGTARGET);
 	    push @ans, $rr;
 	} else {
 	    my $rr = new Net::DNS::RR($negSOA);

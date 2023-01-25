@@ -1,0 +1,27 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 600
+@	IN SOA	ns hostmaster 1 1800 900 604800 600
+@	IN NS	ns
+ns	IN A	10.53.0.6
+
+; 10.53.1.* are non-responsive IP addresses
+$GENERATE 1-100    ns$.fake IN A 10.53.1.$
+$GENERATE 101-200  ns$.fake IN A 10.53.1.${-100}
+$GENERATE 201-300  ns$.fake IN A 10.53.1.${-200}
+$GENERATE 301-400  ns$.fake IN A 10.53.1.${-300}
+$GENERATE 401-500  ns$.fake IN A 10.53.1.${-400}
+$GENERATE 501-600  ns$.fake IN A 10.53.1.${-500}
+$GENERATE 601-700  ns$.fake IN A 10.53.1.${-600}
+$GENERATE 701-800  ns$.fake IN A 10.53.1.${-700}
+$GENERATE 801-900  ns$.fake IN A 10.53.1.${-800}
+$GENERATE 901-1000 ns$.fake IN A 10.53.1.${-900}

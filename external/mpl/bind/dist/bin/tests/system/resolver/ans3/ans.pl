@@ -20,11 +20,21 @@ use IO::Socket;
 use Net::DNS;
 use Net::DNS::Packet;
 
+# Ignore SIGPIPE so we won't fail if peer closes a TCP socket early
+local $SIG{PIPE} = 'IGNORE';
+
+# Flush logged output after every line
+local $| = 1;
+
 my $localport = int($ENV{'PORT'});
 if (!$localport) { $localport = 5300; }
 
-my $sock = IO::Socket::INET->new(LocalAddr => "10.53.0.3",
-   LocalPort => $localport, Proto => "udp") or die "$!";
+my $server_addr = "10.53.0.3";
+
+my $udpsock = IO::Socket::INET->new(LocalAddr => "$server_addr",
+   LocalPort => $localport, Proto => "udp", Reuse => 1) or die "$!";
+my $tcpsock = IO::Socket::INET->new(LocalAddr => "$server_addr",
+   LocalPort => $localport, Proto => "tcp", Listen => 5, Reuse => 1) or die "$!";
 
 my $pidf = new IO::File "ans.pid", "w" or die "cannot open pid file: $!";
 print $pidf "$$\n" or die "cannot write pid file: $!";
@@ -34,11 +44,8 @@ sub rmpid { unlink "ans.pid"; exit 1; };
 $SIG{INT} = \&rmpid;
 $SIG{TERM} = \&rmpid;
 
-for (;;) {
-	$sock->recv($buf, 512);
-
-	print "**** request from " , $sock->peerhost, " port ", $sock->peerport, "\n";
-
+sub handleQuery {
+	my $buf = shift;
 	my $packet;
 
 	if ($Net::DNS::VERSION > 0.68) {
@@ -100,6 +107,13 @@ for (;;) {
 	} elsif ($qname =~ /^nxdomain\.example\.net$/i) {
 		$packet->header->aa(1);
 		$packet->header->rcode(NXDOMAIN);
+	} elsif ($qname eq "large-referral.example.net") {
+		for (my $i = 1; $i < 1000; $i++) {
+			$packet->push("authority", new Net::DNS::RR("large-referral.example.net 300 NS ns" . $i . ".fake.redirect.com"));
+		}
+		# No glue records
+	} elsif ($qname eq "foo.bar.sub.tld1") {
+		$packet->push("answer", new Net::DNS::RR("$qname 300 TXT baz"));
 	} elsif ($qname eq "cname.sub.example.org") {
 		$packet->push("answer",
 			      new Net::DNS::RR($qname .
@@ -124,9 +138,46 @@ for (;;) {
 		$packet->push("answer", new Net::DNS::RR("www.example.com 300 A 1.2.3.4"));
 	}
 
-	$sock->send($packet->data);
-
 	print "RESPONSE:\n";
 	$packet->print;
-	print "\n";
+
+	return $packet->data;
+}
+
+# Main
+my $rin;
+my $rout;
+for (;;) {
+	$rin = '';
+	vec($rin, fileno($tcpsock), 1) = 1;
+	vec($rin, fileno($udpsock), 1) = 1;
+
+	select($rout = $rin, undef, undef, undef);
+
+	if (vec($rout, fileno($udpsock), 1)) {
+		printf "UDP request\n";
+		my $buf;
+		$udpsock->recv($buf, 512);
+		my $result = handleQuery($buf);
+		my $num_chars = $udpsock->send($result);
+		print "  Sent $num_chars bytes via UDP\n";
+	} elsif (vec($rout, fileno($tcpsock), 1)) {
+		my $conn = $tcpsock->accept;
+		my $buf;
+		for (;;) {
+			my $lenbuf;
+			my $n = $conn->sysread($lenbuf, 2);
+			last unless $n == 2;
+			my $len = unpack("n", $lenbuf);
+			$n = $conn->sysread($buf, $len);
+			last unless $n == $len;
+			print "TCP request\n";
+			my $result = handleQuery($buf);
+			$len = length($result);
+			$conn->syswrite(pack("n", $len), 2);
+			$n = $conn->syswrite($result, $len);
+			print "    Sent: $n chars via TCP\n";
+		}
+		$conn->close;
+	}
 }

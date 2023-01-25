@@ -214,6 +214,7 @@ retry_quiet 10 wait_for_serial 10.53.0.4 test. 1 dig.out.test$n || ret=1
 nextpart ns4/named.run > /dev/null
 
 # modify the primary
+sleep 1
 cp ns3/mytest1.db ns3/mytest.db
 $RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
 
@@ -241,6 +242,7 @@ ret=0
 # we want to make sure that a change to sub.test results in AXFR, while
 # changes to test. result in IXFR
 
+sleep 1
 cp ns3/subtest1.db ns3/subtest.db # change to sub.test zone, should be AXFR
 nextpart ns4/named.run > /dev/null
 $RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
@@ -264,6 +266,7 @@ status=$((status+ret))
 n=$((n+1))
 echo_i "testing 'request-ixfr yes' option inheritance from view ($n)"
 ret=0
+sleep 1
 cp ns3/mytest2.db ns3/mytest.db # change to test zone, should be IXFR
 nextpart ns4/named.run > /dev/null
 $RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
@@ -388,6 +391,7 @@ ret=0
 echo_i "testing fallback to AXFR when max-ixfr-ratio is exceeded ($n)"
 nextpart ns4/named.run > /dev/null
 
+sleep 1
 cp ns3/mytest3.db ns3/mytest.db # change to test zone, too big for IXFR
 $RNDCCMD 10.53.0.3 reload | sed 's/^/ns3 /' | cat_i
 

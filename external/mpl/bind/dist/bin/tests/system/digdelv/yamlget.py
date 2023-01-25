@@ -13,7 +13,6 @@ import sys
 
 try:
     import yaml
-# flake8: noqa: E722
 # pylint: disable=bare-except
 except:
     print("No python yaml module, skipping")

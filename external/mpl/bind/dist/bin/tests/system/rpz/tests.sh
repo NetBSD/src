@@ -220,7 +220,7 @@ restart () {
             done
         fi
     fi
-    $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpz ns$1
+    start_server --noclean --restart --port ${PORT} ns$1
     load_db
     dnsrps_loaded
     sleep 1
@@ -482,7 +482,7 @@ for mode in native dnsrps; do
       continue
     fi
     echo_i "attempting to configure servers with DNSRPS..."
-    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz
+    stop_server --use-rndc --port ${CONTROLPORT}
     $SHELL ./setup.sh -N -D $DEBUG
     for server in ns*; do
       resetstats $server
@@ -497,7 +497,7 @@ for mode in native dnsrps; do
       continue
     else
       echo_i "running DNSRPS sub-test"
-      $PERL $SYSTEMTESTTOP/start.pl --noclean --restart --port ${PORT} rpz
+      start_server --noclean --restart --port ${PORT}
       sleep 3
     fi
     ;;
@@ -819,7 +819,7 @@ EOF
 
   # restart the main test RPZ server to see if that creates a core file
   if test -z "$HAVE_CORE"; then
-    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz ns3
+    stop_server --use-rndc --port ${CONTROLPORT} ns3
     restart 3 "rebuild-bl-rpz"
     HAVE_CORE=`find ns* -name '*core*' -print`
     test -z "$HAVE_CORE" || setret "found $HAVE_CORE; memory leak?"
@@ -827,10 +827,10 @@ EOF
 
   # look for complaints from lib/dns/rpz.c and bin/name/query.c
   for runfile in ns*/named.run; do
-    EMSGS=`nextpart $runfile | egrep -l 'invalid rpz|rpz.*failed'`
+    EMSGS=`nextpart $runfile | grep -E -l 'invalid rpz|rpz.*failed'`
     if test -n "$EMSGS"; then
       setret "error messages in $runfile starting with:"
-      egrep 'invalid rpz|rpz.*failed' ns*/named.run | \
+      grep -E 'invalid rpz|rpz.*failed' ns*/named.run | \
               sed -e '10,$d' -e 's/^//' | cat_i
     fi
   done
@@ -839,11 +839,11 @@ EOF
     # restart the main test RPZ server with a bad zone.
     t=`expr $t + 1`
     echo_i "checking that ns3 with broken rpz does not crash (${t})"
-    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz ns3
+    stop_server --use-rndc --port ${CONTROLPORT} ns3
     cp ns3/broken.db.in ns3/bl.db
     restart 3 # do not rebuild rpz zones
     nocrash a3-1.tld2 -tA
-    $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz ns3
+    stop_server --use-rndc --port ${CONTROLPORT} ns3
     restart 3 "rebuild-bl-rpz"
 
     # reload a RPZ zone that is now deliberately broken.
@@ -918,7 +918,18 @@ EOF
 
   if [ native = "$mode" ]; then
     t=`expr $t + 1`
-    echo_i "checking that "add-soa unset" works (${t})"
+    echo_i "reconfiguring server with 'add-soa no' (${t})"
+    cp ns3/named.conf ns3/named.conf.tmp
+    sed -e "s/add-soa yes/add-soa no/g" < ns3/named.conf.tmp > ns3/named.conf
+    rndc_reconfig ns3 $ns3
+    echo_i "checking that 'add-soa no' at response-policy level works (${t})"
+    $DIG walled.tld2 -p ${PORT} +noall +add @$ns3 > dig.out.${t}
+    grep "^manual-update-rpz\..*SOA" dig.out.${t} > /dev/null && setret "failed"
+  fi
+
+  if [ native = "$mode" ]; then
+    t=`expr $t + 1`
+    echo_i "checking that 'add-soa unset' works (${t})"
     $DIG walled.tld2 -p ${PORT} +noall +add @$ns8 > dig.out.${t}
     grep "^manual-update-rpz\..*SOA" dig.out.${t} > /dev/null || setret "failed"
   fi
@@ -964,6 +975,15 @@ EOF
       status=`expr $status + $ret`
     done
   done
+
+  if [ native = "$mode" ]; then
+    t=`expr $t + 1`
+    echo_i "checking that rewriting CD=1 queries handles pending data correctly (${t})"
+    $RNDCCMD $ns3 flush
+    $RNDCCMD $ns6 flush
+    $DIG a7-2.tld2s -p ${PORT} @$ns6 +cd > dig.out.${t}
+    grep -w "1.1.1.1" dig.out.${t} > /dev/null || setret "failed"
+  fi
 
   [ $status -ne 0 ] && pf=fail || pf=pass
   case $mode in

@@ -103,3 +103,10 @@ Bug Fixes
 
 - Previously, a memory leak could occur when ``named`` failed to bind a
   UDP socket to a network interface. This has been fixed. :gl:`#2575`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

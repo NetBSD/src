@@ -17,7 +17,7 @@ dnssec-policy "csk-algoroll" {
 	signatures-validity-dnskey 30d;
 
 	keys {
-		csk lifetime unlimited algorithm rsasha1;
+		csk lifetime unlimited algorithm rsasha256;
 	};
 
 	dnskey-ttl 1h;

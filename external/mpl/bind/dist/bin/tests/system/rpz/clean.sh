@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Copyright (C) Internet Systems Consortium, Inc. ("ISC")
 #
 # SPDX-License-Identifier: MPL-2.0
@@ -30,7 +32,7 @@ fi
 # from the first test pass so the second pass can be set up correctly.
 # remove those files first, then decide whether to remove the others.
 rm -f ns*/*.key ns*/*.private
-rm -f ns2/tld2s.db ns2/bl.tld2.db
+rm -f ns2/tld2s.db */bl.tld2.db */bl.tld2s.db
 rm -f ns3/bl*.db ns3/fast-expire.db ns*/empty.db
 rm -f ns3/manual-update-rpz.db
 rm -f ns3/mixed-case-rpz.db

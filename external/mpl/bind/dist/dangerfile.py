@@ -9,7 +9,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import os
 import re
+
+import gitlab
 
 # Helper functions and variables
 
@@ -41,6 +44,15 @@ release_notes_regex = re.compile(r"doc/(arm|notes)/notes-.*\.(rst|xml)")
 modified_files = danger.git.modified_files
 mr_labels = danger.gitlab.mr.labels
 target_branch = danger.gitlab.mr.target_branch
+is_backport = "Backport" in mr_labels or "Backport::Partial" in mr_labels
+is_full_backport = is_backport and "Backport::Partial" not in mr_labels
+
+gl = gitlab.Gitlab(
+    url=f"https://{os.environ['CI_SERVER_HOST']}",
+    private_token=os.environ["DANGER_GITLAB_API_TOKEN"],
+)
+proj = gl.projects.get(os.environ["CI_PROJECT_ID"])
+mr = proj.mergerequests.get(os.environ["CI_MERGE_REQUEST_IID"])
 
 ###############################################################################
 # COMMIT MESSAGES
@@ -49,6 +61,9 @@ target_branch = danger.gitlab.mr.target_branch
 # - FAIL if any of the following is true for any commit on the MR branch:
 #
 #     * The subject line starts with "fixup!" or "Apply suggestion".
+#
+#     * The subject line starts with a prohibited word indicating a work in
+#       progress commit (e.g. "WIP").
 #
 #     * The subject line contains a trailing dot.
 #
@@ -75,6 +90,9 @@ target_branch = danger.gitlab.mr.target_branch
 #           "[2]", etc.) which allows e.g. long URLs to be included in the
 #           commit log message.
 
+PROHIBITED_WORDS_RE = re.compile(
+    "^(WIP|wip|DROP|drop|DROPME|checkpoint|experiment|TODO|todo)[^a-zA-Z]"
+)
 fixup_error_logged = False
 for commit in danger.git.commits:
     message_lines = commit.message.splitlines()
@@ -87,6 +105,12 @@ for commit in danger.git.commits:
             "Please squash them before merging."
         )
         fixup_error_logged = True
+    match = PROHIBITED_WORDS_RE.search(subject)
+    if match:
+        fail(
+            f"Prohibited keyword `{match.groups()[0]}` detected "
+            f"at the start of a subject line in commit {commit.sha}."
+        )
     if len(subject) > 72 and not subject.startswith("Merge branch "):
         warn(
             f"Subject line for commit {commit.sha} is too long: "
@@ -124,34 +148,97 @@ if not danger.gitlab.mr.milestone:
     fail("Please assign this merge request to a milestone.")
 
 ###############################################################################
-# VERSION LABELS
+# BACKPORT & VERSION LABELS
 ###############################################################################
 #
 # FAIL if any of the following is true for the merge request:
 #
-# * The "Backport" label is set and the number of version labels set is
+# * The MR is marked as Backport and the number of version labels set is
 #   different than 1.  (For backports, the version label is used for indicating
 #   its target branch.  This is a rather ugly attempt to address a UI
 #   deficiency - the target branch for each MR is not visible on milestone
 #   dashboards.)
 #
-# * Neither the "Backport" label nor any version label is set.  (If the merge
-#   request is not a backport, version labels are used for indicating
+# * The MR is not marked as "Backport" nor any version label is set.  (If the
+#   merge request is not a backport, version labels are used for indicating
 #   backporting preferences.)
+#
+# * The Backport MR doesn't have target branch in the merge request title.
+#
+# * The Backport MR doesn't link to the original MR is its description.
+#
+# * The original MR linked to from Backport MR hasn't been merged.
 
-backport_label_set = "Backport" in mr_labels
+BACKPORT_OF_RE = re.compile(
+    r"Backport\s+of.*(merge_requests/|!)([0-9]+)", flags=re.IGNORECASE
+)
+VERSION_LABEL_RE = re.compile(r"v9.([0-9]+)(-S)?")
+backport_desc = BACKPORT_OF_RE.search(danger.gitlab.mr.description)
 version_labels = [l for l in mr_labels if l.startswith("v9.")]
-if backport_label_set and len(version_labels) != 1:
-    fail(
-        "The *Backport* label is set for this merge request. "
-        "Please also set exactly one version label (*v9.x*)."
-    )
-if not backport_label_set and not version_labels:
-    fail(
-        "If this merge request is a backport, set the *Backport* label and "
-        "a single version label (*v9.x*) indicating the target branch. "
-        "If not, set version labels for all targeted backport branches."
-    )
+affects_labels = [l for l in mr_labels if l.startswith("Affects v9.")]
+if is_backport:
+    if len(version_labels) != 1:
+        fail(
+            "This MR was marked as *Backport*. "
+            "Please also set exactly one version label (*v9.x*)."
+        )
+    else:
+        minor_ver, edition = VERSION_LABEL_RE.search(version_labels[0]).groups()
+        edition = "" if edition is None else edition
+        title_re = f"^\\[9.{minor_ver}{edition}\\]"
+        match = re.search(title_re, danger.gitlab.mr.title)
+        if match is None:
+            fail(
+                "Backport MRs must have their target version in the title. "
+                f"Please put `[9.{minor_ver}{edition}]` at the start of the MR title."
+            )
+    if backport_desc is None:
+        fail(
+            "Backport MRs must link to the original MR. Please put "
+            "`Backport of MR !XXXX` in the MR description."
+        )
+    else:  # backport MR is linked to original MR
+        original_mr_id = backport_desc.groups()[1]
+        original_mr = proj.mergerequests.get(original_mr_id)
+        if original_mr.state != "merged":
+            fail(
+                f"Original MR !{original_mr_id} has not been merged. "
+                "Please re-run `danger` check once it's merged."
+            )
+        else:  # check for commit IDs once original MR is merged
+            original_mr_commits = list(original_mr.commits(all=True))
+            backport_mr_commits = list(mr.commits(all=True))
+            for orig_commit in original_mr_commits:
+                for backport_commit in backport_mr_commits:
+                    if orig_commit.id in backport_commit.message:
+                        break
+                else:
+                    msg = (
+                        f"Commit {orig_commit.id} from original MR !{original_mr_id} "
+                        "is not referenced in any of the backport commits."
+                    )
+                    if not is_full_backport:
+                        message(msg)
+                    else:
+                        msg += (
+                            " Please use `-x` when cherry-picking to include "
+                            "the full original commit ID. Alternately, use the "
+                            "`Backport::Partial` label if not all original "
+                            "commits are meant to be backported."
+                        )
+                        fail(msg)
+else:
+    if not version_labels:
+        fail(
+            "If this merge request is a backport, set the *Backport* label and "
+            "a single version label (*v9.x*) indicating the target branch. "
+            "If not, set version labels for all targeted backport branches."
+        )
+    if not affects_labels:
+        warn(
+            "Set `Affects v9.` label(s) for all versions that are affected by "
+            "the issue which this MR addresses."
+        )
 
 ###############################################################################
 # OTHER LABELS
@@ -165,15 +252,16 @@ if not backport_label_set and not version_labels:
 #   remind developers about the need to set the latter on merge requests which
 #   passed review.)
 
+approved = mr.approvals.get().approved
 if "Review" not in mr_labels:
     warn(
         "This merge request does not have the *Review* label set. "
         "Please set it if you would like the merge request to be reviewed."
     )
-elif "LGTM (Merge OK)" not in mr_labels:
+elif not approved:
     warn(
         "This merge request is currently in review. "
-        "It should not be merged until it is marked with the *LGTM* label."
+        "It should not be merged until it is approved."
     )
 
 ###############################################################################

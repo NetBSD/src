@@ -109,7 +109,7 @@ echo_i "reset and check that records are correctly cached initially ($n)"
 ret=0
 load_cache
 dump_cache
-nrecords=`filter_tree flushtest.example ns2/named_dump.db.test$n | egrep '(TXT|ANY)' | wc -l`
+nrecords=`filter_tree flushtest.example ns2/named_dump.db.test$n | grep -E '(TXT|ANY)' | wc -l`
 [ $nrecords -eq 18 ] || { ret=1; echo_i "found $nrecords records expected 18"; }
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -203,7 +203,7 @@ n=`expr $n + 1`
 echo_i "check the number of cached records remaining ($n)"
 ret=0
 dump_cache
-nrecords=`filter_tree flushtest.example ns2/named_dump.db.test$n | grep -v '^;' | egrep '(TXT|ANY)' | wc -l`
+nrecords=`filter_tree flushtest.example ns2/named_dump.db.test$n | grep -v '^;' | grep -E '(TXT|ANY)' | wc -l`
 [ $nrecords -eq 17 ] || { ret=1; echo_i "found $nrecords records expected 17"; }
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
@@ -221,7 +221,7 @@ n=`expr $n + 1`
 echo_i "check the number of cached records remaining ($n)"
 ret=0
 dump_cache
-nrecords=`filter_tree flushtest.example ns2/named_dump.db.test$n | egrep '(TXT|ANY)' | wc -l`
+nrecords=`filter_tree flushtest.example ns2/named_dump.db.test$n | grep -E '(TXT|ANY)' | wc -l`
 [ $nrecords -eq 1 ] || { ret=1; echo_i "found $nrecords records expected 1"; }
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`

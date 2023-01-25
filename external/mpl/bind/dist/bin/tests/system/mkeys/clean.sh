@@ -15,6 +15,7 @@ rm -f */K* */*.signed */trusted.conf */*.jnl */*.bk
 rm -f */managed*.conf ns1/managed.key ns1/managed.key.id
 rm -f */managed-keys.bind* */named.secroots
 rm -f */named.conf
+rm -f ns3/broken.conf
 rm -f */named.memstats */named.run */named.run.prev
 rm -f dig.out* delv.out* rndc.out* signer.out*
 rm -f dsset-. ns1/dsset-.

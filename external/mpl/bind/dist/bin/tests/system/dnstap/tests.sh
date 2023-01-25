@@ -798,14 +798,14 @@ test_dnstap_roll() (
 
 echo_i "checking 'rndc -roll <value>' (no versions)"
 ret=0
-start_server --noclean --restart --port "${PORT}" dnstap ns3
+start_server --noclean --restart --port "${PORT}" ns3
 _repeat 5 test_dnstap_roll 10.53.0.3 ns3 3 || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
 echo_i "checking 'rndc -roll <value>' (versions)"
 ret=0
-start_server --noclean --restart --port "${PORT}" dnstap ns2
+start_server --noclean --restart --port "${PORT}" ns2
 _repeat 5 test_dnstap_roll 10.53.0.2 ns2 3 || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
