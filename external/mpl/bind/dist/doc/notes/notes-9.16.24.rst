@@ -34,3 +34,10 @@ Bug Fixes
   running ``rndc reconfig``, then bringing back the removed
   ``catalog-zone`` clause and running ``rndc reconfig`` again caused
   ``named`` to crash. This has been fixed. :gl:`#1608`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.

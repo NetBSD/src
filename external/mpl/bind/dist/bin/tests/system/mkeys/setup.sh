@@ -12,7 +12,15 @@
 # information regarding copyright ownership.
 
 SYSTEMTESTTOP=..
+
+export ALGORITHM_SET="ecc_default"
 . $SYSTEMTESTTOP/conf.sh
+
+# Ensure the selected algorithm set is okay.
+if [ "$ALGORITHM_SET" = "error" ]; then
+    echofail "Algorithm selection failed." >&2
+    exit 1
+fi
 
 copy_setports ns1/named1.conf.in ns1/named.conf
 copy_setports ns2/named.conf.in ns2/named.conf

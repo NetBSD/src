@@ -30,4 +30,5 @@ rm -f ./python.out.*
 rm -f ./retired.*
 rm -f ./rndc.dnssec.*
 rm -f ./unused.key*
+rm -f ./verify.out.*
 

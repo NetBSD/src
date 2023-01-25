@@ -1729,11 +1729,16 @@ Boolean Options
 ``minimal-responses``
    This option controls the addition of records to the authority and
    additional sections of responses. Such records may be included in
-   responses to be helpful to clients; for example, NS or MX records may
+   responses to be helpful to clients; for example, MX records may
    have associated address records included in the additional section,
    obviating the need for a separate address lookup. However, adding
    these records to responses is not mandatory and requires additional
    database lookups, causing extra latency when marshalling responses.
+
+   Responses to DNSKEY, DS, CDNSKEY, and CDS requests will never have
+   optional additional records added. Responses to NS requests will
+   always have additional section processing.
+
    ``minimal-responses`` takes one of four values:
 
    -  ``no``: the server is as complete as possible when generating
@@ -3146,6 +3151,11 @@ system.
    value as ``tcp-keepalive-timeout``. This value can be updated at
    runtime by using ``rndc tcp-timeouts``.
 
+``update-quota``
+   This is the maximum number of simultaneous DNS UPDATE messages that
+   the server will accept for updating local authoritiative zones or
+   forwarding to a primary server. The default is ``100``.
+
 .. _intervals:
 
 Periodic Task Intervals
@@ -3656,7 +3666,7 @@ Tuning
 
    ``prefetch`` specifies the "trigger" TTL value at which prefetch
    of the current query takes place; when a cache record with a
-   lower TTL value is encountered during query processing, it is
+   lower or equal TTL value is encountered during query processing, it is
    refreshed. Valid trigger TTL values are 1 to 10 seconds. Values
    larger than 10 seconds are silently reduced to 10. Setting a
    trigger TTL to zero causes prefetch to be disabled. The default
@@ -4694,9 +4704,21 @@ If no port is specified, port 80 is used for HTTP channels. The asterisk
 Attempts to open a statistics channel are restricted by the
 optional ``allow`` clause. Connections to the statistics channel are
 permitted based on the ``address_match_list``. If no ``allow`` clause is
-present, ``named`` accepts connection attempts from any address; since
-the statistics may contain sensitive internal information, it is highly
-recommended to restrict the source of connection requests appropriately.
+present, ``named`` accepts connection attempts from any address. Since
+the statistics may contain sensitive internal information, the source of
+connection requests must be restricted appropriately so that only
+trusted parties can access the statistics channel.
+
+Gathering data exposed by the statistics channel locks various subsystems in
+``named``, which could slow down query processing if statistics data is
+requested too often.
+
+An issue in the statistics channel would be considered a security issue
+only if it could be exploited by unprivileged users circumventing the access
+control list. In other words, any issue in the statistics channel that could be
+used to access information unavailable otherwise, or to crash ``named``, is
+not considered a security issue if it can be avoided through the
+use of a secure configuration.
 
 If no ``statistics-channels`` statement is present, ``named`` does not
 open any communication channels.
@@ -4904,12 +4926,16 @@ Multiple key and signing policies can be configured.  To attach a policy
 to a zone, add a ``dnssec-policy`` option to the ``zone`` statement,
 specifying the name of the policy that should be used.
 
-By default, ``dnssec-policy`` assumes ``inline-signing``. This means that
-a signed version of the zone is maintained separately and is written out to
-a different file on disk (the zone's filename plus a ``.signed`` extension).
+The ``dnssec-policy`` statement requires dynamic DNS to be set up, or
+``inline-signing`` to be enabled.
+
+If ``inline-signing`` is enabled, this means that a signed version of the
+zone is maintained separately and is written out to a different file on disk
+(the zone's filename plus a ``.signed`` extension).
 
 If the zone is dynamic because it is configured with an ``update-policy`` or
-``allow-update``, the DNSSEC records are written to the filename set in the original zone's ``file``, unless ``inline-signing`` is explicitly set.
+``allow-update``, the DNSSEC records are written to the filename set in the
+original zone's ``file``, unless ``inline-signing`` is explicitly set.
 
 Key rollover timing is computed for each key according to the key
 lifetime defined in the KASP.  The lifetime may be modified by zone TTLs
@@ -5079,8 +5105,8 @@ The following options can be specified in a ``dnssec-policy`` statement:
     of the indicated length.
 
     .. warning::
-       Do not use extra :term:`iterations`, :term:`salt`, and
-       :term:`opt-out` unless their implications are fully understood.
+       Do not use extra :term:`iterations <Iterations>`, :term:`salt <Salt>`, and
+       :term:`opt-out <Opt-out>` unless their implications are fully understood.
        A higher number of iterations causes interoperability problems and opens
        servers to CPU-exhausting DoS attacks.
 
@@ -6018,6 +6044,8 @@ The ruletype field has 16 values: ``name``, ``subdomain``, ``zonesub``, ``wildca
 
     The daemon replies with a four-byte value in network byte order, containing either 0 or 1; 0 indicates that the specified update is not permitted, and 1 indicates that it is.
 
+       .. warning:: The external daemon must not delay communication. This policy is evaluated synchronously; any wait period negatively affects :iscman:`named` performance.
+
 .. _multiple_views:
 
 Multiple Views
@@ -6813,6 +6841,11 @@ Name Server Statistics Counters
 
 ``UpdateBadPrereq``
     This indicates the number of dynamic updates rejected due to a prerequisite failure.
+
+``UpdateQuota``
+    This indicates the number of times a dynamic update or update
+    forwarding request was rejected because the number of pending
+    requests exceeded ``update-quota``.
 
 ``RateDropped``
     This indicates the number of responses dropped due to rate limits.

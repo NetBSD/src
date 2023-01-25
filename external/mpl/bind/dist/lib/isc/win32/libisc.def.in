@@ -778,6 +778,7 @@ pkcs_C_VerifyUpdate
 @END PKCS11
 strlcat
 strlcpy
+strnstr
 syslog
 
 @IF NOLONGER

@@ -12,8 +12,10 @@
 Notes for BIND 9.16.0
 ---------------------
 
-*Note: this section only lists changes from BIND 9.14 (the previous
-stable branch of BIND).*
+.. note::
+
+   This section only lists changes from BIND 9.14 (the previous
+   stable branch of BIND).
 
 New Features
 ~~~~~~~~~~~~

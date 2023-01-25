@@ -84,13 +84,13 @@ set_zonesigning  "KEY2" "no"
 
 set_keyrole      "KEY3" "zsk"
 set_keylifetime  "KEY3" "2592000"
-set_keyalgorithm "KEY3" "8" "RSASHA256" "1024"
+set_keyalgorithm "KEY3" "8" "RSASHA256" "2048"
 set_keysigning   "KEY3" "no"
 set_zonesigning  "KEY3" "yes"
 
 set_keyrole      "KEY4" "zsk"
 set_keylifetime  "KEY4" "16070400"
-set_keyalgorithm "KEY4" "8" "RSASHA256" "2000"
+set_keyalgorithm "KEY4" "8" "RSASHA256" "3072"
 set_keysigning   "KEY4" "no"
 set_zonesigning  "KEY4" "yes"
 
@@ -250,8 +250,6 @@ _wait_for_done_apexnsec() {
 retry_quiet 30 _wait_for_done_apexnsec || ret=1
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
-
-next_key_event_threshold=$((next_key_event_threshold+i))
 
 # Test max-zone-ttl rejects zones with too high TTL.
 n=$((n+1))
@@ -788,55 +786,58 @@ set_keytimes_algorithm_policy() {
 #
 # Zone: rsasha1.kasp.
 #
-set_zone "rsasha1.kasp"
-set_policy "rsasha1" "3" "1234"
-set_server "ns3" "10.53.0.3"
-# Key properties.
-key_clear        "KEY1"
-set_keyrole      "KEY1" "ksk"
-set_keylifetime  "KEY1" "315360000"
-set_keyalgorithm "KEY1" "5" "RSASHA1" "2048"
-set_keysigning   "KEY1" "yes"
-set_zonesigning  "KEY1" "no"
+if $SHELL ../testcrypto.sh -q RSASHA1
+then
+	set_zone "rsasha1.kasp"
+	set_policy "rsasha1" "3" "1234"
+	set_server "ns3" "10.53.0.3"
+	# Key properties.
+	key_clear        "KEY1"
+	set_keyrole      "KEY1" "ksk"
+	set_keylifetime  "KEY1" "315360000"
+	set_keyalgorithm "KEY1" "5" "RSASHA1" "2048"
+	set_keysigning   "KEY1" "yes"
+	set_zonesigning  "KEY1" "no"
 
-key_clear        "KEY2"
-set_keyrole      "KEY2" "zsk"
-set_keylifetime  "KEY2" "157680000"
-set_keyalgorithm "KEY2" "5" "RSASHA1" "2048"
-set_keysigning   "KEY2" "no"
-set_zonesigning  "KEY2" "yes"
+	key_clear        "KEY2"
+	set_keyrole      "KEY2" "zsk"
+	set_keylifetime  "KEY2" "157680000"
+	set_keyalgorithm "KEY2" "5" "RSASHA1" "2048"
+	set_keysigning   "KEY2" "no"
+	set_zonesigning  "KEY2" "yes"
 
-key_clear        "KEY3"
-set_keyrole      "KEY3" "zsk"
-set_keylifetime  "KEY3" "31536000"
-set_keyalgorithm "KEY3" "5" "RSASHA1" "2000"
-set_keysigning   "KEY3" "no"
-set_zonesigning  "KEY3" "yes"
+	key_clear        "KEY3"
+	set_keyrole      "KEY3" "zsk"
+	set_keylifetime  "KEY3" "31536000"
+	set_keyalgorithm "KEY3" "5" "RSASHA1" "2000"
+	set_keysigning   "KEY3" "no"
+	set_zonesigning  "KEY3" "yes"
 
-# KSK: DNSKEY, RRSIG (ksk) published. DS needs to wait.
-# ZSK: DNSKEY, RRSIG (zsk) published.
-set_keystate "KEY1" "GOAL"         "omnipresent"
-set_keystate "KEY1" "STATE_DNSKEY" "rumoured"
-set_keystate "KEY1" "STATE_KRRSIG" "rumoured"
-set_keystate "KEY1" "STATE_DS"     "hidden"
+	# KSK: DNSKEY, RRSIG (ksk) published. DS needs to wait.
+	# ZSK: DNSKEY, RRSIG (zsk) published.
+	set_keystate "KEY1" "GOAL"         "omnipresent"
+	set_keystate "KEY1" "STATE_DNSKEY" "rumoured"
+	set_keystate "KEY1" "STATE_KRRSIG" "rumoured"
+	set_keystate "KEY1" "STATE_DS"     "hidden"
 
-set_keystate "KEY2" "GOAL"         "omnipresent"
-set_keystate "KEY2" "STATE_DNSKEY" "rumoured"
-set_keystate "KEY2" "STATE_ZRRSIG" "rumoured"
+	set_keystate "KEY2" "GOAL"         "omnipresent"
+	set_keystate "KEY2" "STATE_DNSKEY" "rumoured"
+	set_keystate "KEY2" "STATE_ZRRSIG" "rumoured"
 
-set_keystate "KEY3" "GOAL"         "omnipresent"
-set_keystate "KEY3" "STATE_DNSKEY" "rumoured"
-set_keystate "KEY3" "STATE_ZRRSIG" "rumoured"
-# Three keys only.
-key_clear "KEY4"
+	set_keystate "KEY3" "GOAL"         "omnipresent"
+	set_keystate "KEY3" "STATE_DNSKEY" "rumoured"
+	set_keystate "KEY3" "STATE_ZRRSIG" "rumoured"
+	# Three keys only.
+	key_clear "KEY4"
 
-check_keys
-check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
-set_keytimes_algorithm_policy
-check_keytimes
-check_apex
-check_subdomain
-dnssec_verify
+	check_keys
+	check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+	set_keytimes_algorithm_policy
+	check_keytimes
+	check_apex
+	check_subdomain
+	dnssec_verify
+fi
 
 #
 # Zone: unsigned.kasp.
@@ -910,28 +911,28 @@ dnssec_verify
 # Zone: inherit.kasp.
 #
 set_zone "inherit.kasp"
-set_policy "rsasha1" "3" "1234"
+set_policy "rsasha256" "3" "1234"
 set_server "ns3" "10.53.0.3"
 
 # Key properties.
 key_clear        "KEY1"
 set_keyrole      "KEY1" "ksk"
 set_keylifetime  "KEY1" "315360000"
-set_keyalgorithm "KEY1" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY1" "8" "RSASHA256" "2048"
 set_keysigning   "KEY1" "yes"
 set_zonesigning  "KEY1" "no"
 
 key_clear        "KEY2"
 set_keyrole      "KEY2" "zsk"
 set_keylifetime  "KEY2" "157680000"
-set_keyalgorithm "KEY2" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY2" "8" "RSASHA256" "2048"
 set_keysigning   "KEY2" "no"
 set_zonesigning  "KEY2" "yes"
 
 key_clear        "KEY3"
 set_keyrole      "KEY3" "zsk"
 set_keylifetime  "KEY3" "31536000"
-set_keyalgorithm "KEY3" "5" "RSASHA1" "2000"
+set_keyalgorithm "KEY3" "8" "RSASHA256" "3072"
 set_keysigning   "KEY3" "no"
 set_zonesigning  "KEY3" "yes"
 # KSK: DNSKEY, RRSIG (ksk) published. DS needs to wait.
@@ -963,7 +964,7 @@ dnssec_verify
 # Zone: dnssec-keygen.kasp.
 #
 set_zone "dnssec-keygen.kasp"
-set_policy "rsasha1" "3" "1234"
+set_policy "rsasha256" "3" "1234"
 set_server "ns3" "10.53.0.3"
 # Key properties, timings and states same as above.
 
@@ -979,7 +980,7 @@ dnssec_verify
 # Zone: some-keys.kasp.
 #
 set_zone "some-keys.kasp"
-set_policy "rsasha1" "3" "1234"
+set_policy "rsasha256" "3" "1234"
 set_server "ns3" "10.53.0.3"
 # Key properties, timings and states same as above.
 
@@ -997,7 +998,7 @@ dnssec_verify
 # There are more pregenerated keys than needed, hence the number of keys is
 # six, not three.
 set_zone "pregenerated.kasp"
-set_policy "rsasha1" "6" "1234"
+set_policy "rsasha256" "6" "1234"
 set_server "ns3" "10.53.0.3"
 # Key properties, timings and states same as above.
 
@@ -1014,7 +1015,7 @@ dnssec_verify
 #
 # There are three keys in rumoured state.
 set_zone "rumoured.kasp"
-set_policy "rsasha1" "3" "1234"
+set_policy "rsasha256" "3" "1234"
 set_server "ns3" "10.53.0.3"
 # Key properties, timings and states same as above.
 
@@ -1040,7 +1041,7 @@ dnssec_verify
 # Zone: secondary.kasp.
 #
 set_zone "secondary.kasp"
-set_policy "rsasha1" "3" "1234"
+set_policy "rsasha256" "3" "1234"
 set_server "ns3" "10.53.0.3"
 # Key properties, timings and states same as above.
 
@@ -1084,22 +1085,25 @@ status=$((status+ret))
 #
 # Zone: rsasha1-nsec3.kasp.
 #
-set_zone "rsasha1-nsec3.kasp"
-set_policy "rsasha1-nsec3" "3" "1234"
-set_server "ns3" "10.53.0.3"
-# Key properties.
-set_keyalgorithm "KEY1" "7" "NSEC3RSASHA1" "2048"
-set_keyalgorithm "KEY2" "7" "NSEC3RSASHA1" "2048"
-set_keyalgorithm "KEY3" "7" "NSEC3RSASHA1" "2000"
-# Key timings and states same as above.
+if $SHELL ../testcrypto.sh -q RSASHA1
+then
+	set_zone "rsasha1-nsec3.kasp"
+	set_policy "rsasha1-nsec3" "3" "1234"
+	set_server "ns3" "10.53.0.3"
+	# Key properties.
+	set_keyalgorithm "KEY1" "7" "NSEC3RSASHA1" "2048"
+	set_keyalgorithm "KEY2" "7" "NSEC3RSASHA1" "2048"
+	set_keyalgorithm "KEY3" "7" "NSEC3RSASHA1" "2000"
+	# Key timings and states same as above.
 
-check_keys
-check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
-set_keytimes_algorithm_policy
-check_keytimes
-check_apex
-check_subdomain
-dnssec_verify
+	check_keys
+	check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+	set_keytimes_algorithm_policy
+	check_keytimes
+	check_apex
+	check_subdomain
+	dnssec_verify
+fi
 
 #
 # Zone: rsasha256.kasp.
@@ -1110,7 +1114,7 @@ set_server "ns3" "10.53.0.3"
 # Key properties.
 set_keyalgorithm "KEY1" "8" "RSASHA256" "2048"
 set_keyalgorithm "KEY2" "8" "RSASHA256" "2048"
-set_keyalgorithm "KEY3" "8" "RSASHA256" "2000"
+set_keyalgorithm "KEY3" "8" "RSASHA256" "3072"
 # Key timings and states same as above.
 
 check_keys
@@ -1130,7 +1134,7 @@ set_server "ns3" "10.53.0.3"
 # Key properties.
 set_keyalgorithm "KEY1" "10" "RSASHA512" "2048"
 set_keyalgorithm "KEY2" "10" "RSASHA512" "2048"
-set_keyalgorithm "KEY3" "10" "RSASHA512" "2000"
+set_keyalgorithm "KEY3" "10" "RSASHA512" "3072"
 # Key timings and states same as above.
 
 check_keys
@@ -1370,9 +1374,10 @@ check_rrsig_reuse() {
 		dig_with_opts "$ZONE" "@${SERVER}" "$_qtype" > "dig.out.$DIR.test$n" || log_error "dig ${ZONE} ${_qtype} failed"
 		grep "status: NOERROR" "dig.out.$DIR.test$n" > /dev/null || log_error "mismatch status in DNS response"
 		grep "${ZONE}\..*IN.*RRSIG.*${_qtype}.*${ZONE}" "dig.out.$DIR.test$n" > "rrsig.out.$ZONE.$_qtype" || log_error "missing RRSIG (${_qtype}) record in response"
-		# If this exact RRSIG is also in the zone file it is not refreshed.
+		# If this exact RRSIG is also in the signed zone file it is not refreshed.
 		_rrsig=$(awk '{print $5, $6, $7, $8, $9, $10, $11, $12, $13, $14;}' < "rrsig.out.$ZONE.$_qtype")
-		grep "${_rrsig}" "${DIR}/${ZONE}.db" > /dev/null || log_error "RRSIG (${_qtype}) not reused in zone ${ZONE}"
+		$CHECKZONE -f raw -F text -s full -o zone.out.${ZONE}.test$n "${ZONE}" "${DIR}/${ZONE}.db.signed" > /dev/null
+		grep "${_rrsig}" zone.out.${ZONE}.test$n > /dev/null || log_error "RRSIG (${_qtype}) not reused in zone ${ZONE}"
 		test "$ret" -eq 0 || echo_i "failed"
 		status=$((status+ret))
 	done
@@ -1390,8 +1395,10 @@ check_rrsig_reuse() {
 			dig_with_opts "${_label}.${ZONE}" "@${SERVER}" "$_qtype" > "dig.out.$DIR.test$n" || log_error "dig ${_label}.${ZONE} ${_qtype} failed"
 			grep "status: NOERROR" "dig.out.$DIR.test$n" > /dev/null || log_error "mismatch status in DNS response"
 			grep "${ZONE}\..*IN.*RRSIG.*${_qtype}.*${ZONE}" "dig.out.$DIR.test$n" > "rrsig.out.$ZONE.$_qtype" || log_error "missing RRSIG (${_qtype}) record in response"
+			# If this exact RRSIG is also in the signed zone file it is not refreshed.
 			_rrsig=$(awk '{print $5, $6, $7, $8, $9, $10, $11, $12, $13, $14;}' < "rrsig.out.$ZONE.$_qtype")
-			grep "${_rrsig}" "${DIR}/${ZONE}.db" > /dev/null || log_error "RRSIG (${_qtype}) not reused in zone ${ZONE}"
+			$CHECKZONE -f raw -F text -s full -o zone.out.${ZONE}.test$n "${ZONE}" "${DIR}/${ZONE}.db.signed" > /dev/null
+			grep "${_rrsig}" zone.out.${ZONE}.test$n > /dev/null || log_error "RRSIG (${_qtype}) not reused in zone ${ZONE}"
 			test "$ret" -eq 0 || echo_i "failed"
 			status=$((status+ret))
 		done
@@ -1530,14 +1537,14 @@ set_server "ns3" "10.53.0.3"
 key_clear        "KEY1"
 set_keyrole      "KEY1" "ksk"
 set_keylifetime  "KEY1" "16070400"
-set_keyalgorithm "KEY1" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY1" "8" "RSASHA256" "2048"
 set_keysigning   "KEY1" "yes"
 set_zonesigning  "KEY1" "no"
 
 key_clear        "KEY2"
 set_keyrole      "KEY2" "zsk"
 set_keylifetime  "KEY2" "16070400"
-set_keyalgorithm "KEY2" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY2" "8" "RSASHA256" "2048"
 set_keysigning   "KEY2" "no"
 set_zonesigning  "KEY2" "yes"
 # KSK: DNSKEY, RRSIG (ksk) published. DS needs to wait.
@@ -1882,7 +1889,7 @@ dnssec_verify
 # Test with views.
 set_zone "example.net"
 set_server "ns4" "10.53.0.4"
-TSIG="hmac-sha1:keyforview1:$VIEW1"
+TSIG="$DEFAULT_HMAC:keyforview1:$VIEW1"
 wait_for_nsec
 check_keys
 check_dnssecstatus "$SERVER" "$POLICY" "$ZONE" "example1"
@@ -1909,7 +1916,7 @@ check_signatures TXT "dig.out.$DIR.test$n.txt" "ZSK"
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
 
-TSIG="hmac-sha1:keyforview2:$VIEW2"
+TSIG="$DEFAULT_HMAC:keyforview2:$VIEW2"
 wait_for_nsec
 check_keys
 check_dnssecstatus "$SERVER" "$POLICY" "$ZONE" "example2"
@@ -1934,7 +1941,7 @@ check_signatures TXT "dig.out.$DIR.test$n.txt" "ZSK"
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
 
-TSIG="hmac-sha1:keyforview3:$VIEW3"
+TSIG="$DEFAULT_HMAC:keyforview3:$VIEW3"
 wait_for_nsec
 check_keys
 check_dnssecstatus "$SERVER" "$POLICY" "$ZONE" "example3"
@@ -3535,6 +3542,34 @@ set_policy "default" "1" "3600"
 set_server "ns3" "10.53.0.3"
 # TODO (GL #2471).
 
+# Test dynamic zones that switch to inline-signing.
+set_zone "dynamic2inline.kasp"
+set_policy "default" "1" "3600"
+set_server "ns6" "10.53.0.6"
+# Key properties.
+key_clear        "KEY1"
+set_keyrole      "KEY1" "csk"
+set_keylifetime  "KEY1" "0"
+set_keyalgorithm "KEY1" "13" "ECDSAP256SHA256" "256"
+set_keysigning   "KEY1" "yes"
+set_zonesigning  "KEY1" "yes"
+key_clear "KEY2"
+key_clear "KEY3"
+key_clear "KEY4"
+
+# The CSK is rumoured.
+set_keystate "KEY1" "GOAL"         "omnipresent"
+set_keystate "KEY1" "STATE_DNSKEY" "rumoured"
+set_keystate "KEY1" "STATE_KRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_ZRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_DS"     "hidden"
+# Various signing policy checks.
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+check_apex
+check_subdomain
+dnssec_verify
+
 #
 # Testing algorithm rollover.
 #
@@ -3547,20 +3582,20 @@ IretZSK=0
 # Zone: step1.algorithm-roll.kasp
 #
 set_zone "step1.algorithm-roll.kasp"
-set_policy "rsasha1" "2" "3600"
+set_policy "rsasha256" "2" "3600"
 set_server "ns6" "10.53.0.6"
 # Key properties.
 key_clear        "KEY1"
 set_keyrole      "KEY1" "ksk"
 set_keylifetime  "KEY1" "0"
-set_keyalgorithm "KEY1" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY1" "8" "RSASHA256" "2048"
 set_keysigning   "KEY1" "yes"
 set_zonesigning  "KEY1" "no"
 
 key_clear        "KEY2"
 set_keyrole      "KEY2" "zsk"
 set_keylifetime  "KEY2" "0"
-set_keyalgorithm "KEY2" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY2" "8" "RSASHA256" "2048"
 set_keysigning   "KEY2" "no"
 set_zonesigning  "KEY2" "yes"
 key_clear "KEY3"
@@ -3601,7 +3636,7 @@ set_server "ns6" "10.53.0.6"
 key_clear        "KEY1"
 set_keyrole      "KEY1" "csk"
 set_keylifetime  "KEY1" "0"
-set_keyalgorithm "KEY1" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY1" "8" "RSASHA256" "2048"
 set_keysigning   "KEY1" "yes"
 set_zonesigning  "KEY1" "yes"
 key_clear "KEY2"
@@ -3802,6 +3837,34 @@ wait_for_done_signing() {
 	status=$((status+ret))
 }
 
+# Test dynamic zones that switch to inline-signing.
+set_zone "dynamic2inline.kasp"
+set_policy "default" "1" "3600"
+set_server "ns6" "10.53.0.6"
+# Key properties.
+key_clear        "KEY1"
+set_keyrole      "KEY1" "csk"
+set_keylifetime  "KEY1" "0"
+set_keyalgorithm "KEY1" "13" "ECDSAP256SHA256" "256"
+set_keysigning   "KEY1" "yes"
+set_zonesigning  "KEY1" "yes"
+key_clear "KEY2"
+key_clear "KEY3"
+key_clear "KEY4"
+
+# The CSK is rumoured.
+set_keystate "KEY1" "GOAL"         "omnipresent"
+set_keystate "KEY1" "STATE_DNSKEY" "rumoured"
+set_keystate "KEY1" "STATE_KRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_ZRRSIG" "rumoured"
+set_keystate "KEY1" "STATE_DS"     "hidden"
+# Various signing policy checks.
+check_keys
+check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
+check_apex
+check_subdomain
+dnssec_verify
+
 #
 # Testing going insecure.
 #
@@ -3969,8 +4032,6 @@ key_clear "KEY4"
 # Various signing policy checks.
 check_keys
 check_dnssecstatus "$SERVER" "$POLICY" "$ZONE"
-check_apex
-check_subdomain
 dnssec_verify
 
 #
@@ -3993,14 +4054,14 @@ set_server "ns6" "10.53.0.6"
 key_clear        "KEY1"
 set_keyrole      "KEY1" "ksk"
 set_keylifetime  "KEY1" "0"
-set_keyalgorithm "KEY1" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY1" "8" "RSASHA256" "2048"
 set_keysigning   "KEY1" "yes"
 set_zonesigning  "KEY1" "no"
 
 key_clear        "KEY2"
 set_keyrole      "KEY2" "zsk"
 set_keylifetime  "KEY2" "0"
-set_keyalgorithm "KEY2" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY2" "8" "RSASHA256" "2048"
 set_keysigning   "KEY2" "no"
 set_zonesigning  "KEY2" "yes"
 # New ECDSAP256SHA256 keys.
@@ -4395,7 +4456,7 @@ set_server "ns6" "10.53.0.6"
 key_clear	 "KEY1"
 set_keyrole      "KEY1" "csk"
 set_keylifetime  "KEY1" "0"
-set_keyalgorithm "KEY1" "5" "RSASHA1" "2048"
+set_keyalgorithm "KEY1" "8" "RSASHA256" "2048"
 set_keysigning   "KEY1" "yes"
 set_zonesigning  "KEY1" "yes"
 # New ECDSAP256SHA256 key.
@@ -4725,12 +4786,12 @@ echo_i "Check that restart with zone changes and deleted journal works ($n)"
 TSIG=
 ret=0
 dig_with_opts @10.53.0.6 example SOA > dig.out.ns6.test$n.soa1 || ret=1
-stop_server --use-rndc --port ${CONTROLPORT} kasp ns6
+stop_server --use-rndc --port ${CONTROLPORT} ns6
 # TTL of all records change from 300 to 400
 cp ns6/example3.db.in ns6/example.db || ret=1
 rm ns6/example.db.jnl
 nextpart ns6/named.run > /dev/null
-start_server --noclean --restart --port ${PORT} kasp ns6
+start_server --noclean --restart --port ${PORT} ns6
 wait_for_log 3 "all zones loaded" ns6/named.run
 # Check that the SOA SERIAL increases and check the TTLs (should be changed
 # from 300 to 400 as defined in ns6/example3.db.in).

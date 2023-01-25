@@ -1701,7 +1701,7 @@ AS_IF([test "$enable_tcp_fastopen" = "yes"],
 #
 # Check for some other useful functions that are not ever-present.
 #
-AC_CHECK_FUNCS([strlcpy strlcat])
+AC_CHECK_FUNCS([strlcpy strlcat strnstr])
 
 AC_SUBST(READLINE_LIB)
 

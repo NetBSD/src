@@ -57,6 +57,7 @@ def create_response(msg):
     qname = m.question[0].name.to_text()
     lqname = qname.lower()
     labels = lqname.split(".")
+    suffix = ""
 
     # get qtype
     rrtype = m.question[0].rdtype

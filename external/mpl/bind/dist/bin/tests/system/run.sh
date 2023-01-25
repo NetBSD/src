@@ -18,7 +18,7 @@
 SYSTEMTESTTOP="$(cd -P -- "$(dirname -- "$0")" && pwd -P)"
 . $SYSTEMTESTTOP/conf.sh
 
-if [ "$(id -u)" -eq "0" ] && ! ${NAMED} -V | grep -q -F -- "enable-developer"; then
+if [ "$CI_SERVER" != "yes" ] && [ "$(id -u)" -eq "0" ] && ! ${NAMED} -V | grep -q -F -- "enable-developer"; then
     echofail "Refusing to run test as root. Build with --enable-developer to override." >&2
     exit 1
 fi

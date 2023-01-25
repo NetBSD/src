@@ -37,3 +37,10 @@ Bug Fixes
 
 - Build errors were introduced in some DLZ modules due to an incomplete
   change in the previous release. This has been fixed. :gl:`#3111`
+
+Known Issues
+~~~~~~~~~~~~
+
+- There are no new known issues with this release. See :ref:`above
+  <relnotes_known_issues>` for a list of all known issues affecting this
+  BIND 9 branch.
