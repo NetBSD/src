@@ -1,4 +1,4 @@
-/*	$NetBSD: ncache.c,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: ncache.c,v 1.8 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -174,7 +174,8 @@ addoptout(dns_message_t *message, dns_db_t *cache, dns_dbnode_t *node,
 			     rdataset = ISC_LIST_NEXT(rdataset, link))
 			{
 				if ((rdataset->attributes &
-				     DNS_RDATASETATTR_NCACHE) == 0) {
+				     DNS_RDATASETATTR_NCACHE) == 0)
+				{
 					continue;
 				}
 				type = rdataset->type;
@@ -643,7 +644,8 @@ dns_ncache_getsigrdataset(dns_rdataset_t *ncacherdataset, dns_name_t *name,
 		isc_region_consume(&remaining, 2);
 
 		if (type != dns_rdatatype_rrsig ||
-		    !dns_name_equal(&tname, name)) {
+		    !dns_name_equal(&tname, name))
+		{
 			result = dns_rdataset_next(&rclone);
 			dns_rdata_reset(&rdata);
 			continue;

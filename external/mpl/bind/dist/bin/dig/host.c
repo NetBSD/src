@@ -1,4 +1,4 @@
-/*	$NetBSD: host.c,v 1.9 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: host.c,v 1.10 2023/01/25 21:43:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -532,7 +532,8 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 	}
 
 	if (!ISC_LIST_EMPTY(msg->sections[DNS_SECTION_AUTHORITY]) &&
-	    !short_form) {
+	    !short_form)
+	{
 		printf("\n");
 		result = printsection(msg, DNS_SECTION_AUTHORITY, "AUTHORITY",
 				      true, query);
@@ -541,7 +542,8 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 		}
 	}
 	if (!ISC_LIST_EMPTY(msg->sections[DNS_SECTION_ADDITIONAL]) &&
-	    !short_form) {
+	    !short_form)
+	{
 		printf("\n");
 		result = printsection(msg, DNS_SECTION_ADDITIONAL, "ADDITIONAL",
 				      true, query);
@@ -595,10 +597,12 @@ pre_parse_args(int argc, char **argv) {
 			{
 				isc_mem_debugging |= ISC_MEM_DEBUGTRACE;
 			} else if (strcasecmp("record",
-					      isc_commandline_argument) == 0) {
+					      isc_commandline_argument) == 0)
+			{
 				isc_mem_debugging |= ISC_MEM_DEBUGRECORD;
 			} else if (strcasecmp("usage",
-					      isc_commandline_argument) == 0) {
+					      isc_commandline_argument) == 0)
+			{
 				isc_mem_debugging |= ISC_MEM_DEBUGUSAGE;
 			}
 			break;
@@ -709,7 +713,8 @@ parse_args(bool is_batchfile, int argc, char **argv) {
 			break;
 		case 't':
 			if (strncasecmp(isc_commandline_argument, "ixfr=", 5) ==
-			    0) {
+			    0)
+			{
 				rdtype = dns_rdatatype_ixfr;
 				/* XXXMPA add error checking */
 				serial = strtoul(isc_commandline_argument + 5,
@@ -728,7 +733,8 @@ parse_args(bool is_batchfile, int argc, char **argv) {
 				      isc_commandline_argument);
 			}
 			if (!lookup->rdtypeset ||
-			    lookup->rdtype != dns_rdatatype_axfr) {
+			    lookup->rdtype != dns_rdatatype_axfr)
+			{
 				lookup->rdtype = rdtype;
 			}
 			lookup->rdtypeset = true;
@@ -772,7 +778,8 @@ parse_args(bool is_batchfile, int argc, char **argv) {
 			FALLTHROUGH;
 		case 'a':
 			if (!lookup->rdtypeset ||
-			    lookup->rdtype != dns_rdatatype_axfr) {
+			    lookup->rdtype != dns_rdatatype_axfr)
+			{
 				lookup->rdtype = dns_rdatatype_any;
 			}
 			list_type = dns_rdatatype_any;

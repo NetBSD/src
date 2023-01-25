@@ -1,4 +1,4 @@
-/*	$NetBSD: symtab.c,v 1.6 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: symtab.c,v 1.7 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -121,7 +121,8 @@ isccc_symtab_destroy(isccc_symtab_t **symtabp) {
 
 	for (i = 0; i < symtab->size; i++) {
 		for (elt = ISC_LIST_HEAD(symtab->table[i]); elt != NULL;
-		     elt = nelt) {
+		     elt = nelt)
+		{
 			nelt = ISC_LIST_NEXT(elt, link);
 			free_elt(symtab, i, elt);
 		}
@@ -171,14 +172,16 @@ hash(const char *key, bool case_sensitive) {
 	b = hash((k), (s)->case_sensitive) % (s)->size;           \
 	if ((s)->case_sensitive) {                                \
 		for (e = ISC_LIST_HEAD((s)->table[b]); e != NULL; \
-		     e = ISC_LIST_NEXT(e, link)) {                \
+		     e = ISC_LIST_NEXT(e, link))                  \
+		{                                                 \
 			if (((t) == 0 || e->type == (t)) &&       \
 			    strcmp(e->key, (k)) == 0)             \
 				break;                            \
 		}                                                 \
 	} else {                                                  \
 		for (e = ISC_LIST_HEAD((s)->table[b]); e != NULL; \
-		     e = ISC_LIST_NEXT(e, link)) {                \
+		     e = ISC_LIST_NEXT(e, link))                  \
+		{                                                 \
 			if (((t) == 0 || e->type == (t)) &&       \
 			    strcasecmp(e->key, (k)) == 0)         \
 				break;                            \
@@ -281,7 +284,8 @@ isccc_symtab_foreach(isccc_symtab_t *symtab, isccc_symtabforeachaction_t action,
 
 	for (i = 0; i < symtab->size; i++) {
 		for (elt = ISC_LIST_HEAD(symtab->table[i]); elt != NULL;
-		     elt = nelt) {
+		     elt = nelt)
+		{
 			nelt = ISC_LIST_NEXT(elt, link);
 			if ((action)(elt->key, elt->type, elt->value, arg)) {
 				free_elt(symtab, i, elt);

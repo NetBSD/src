@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.11 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.12 2023/01/25 21:43:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -460,7 +460,8 @@ printdata(dns_rdataset_t *rdataset, dns_name_t *owner,
 			     result = dns_rdataset_next(rdataset))
 			{
 				if ((rdataset->attributes &
-				     DNS_RDATASETATTR_NEGATIVE) != 0) {
+				     DNS_RDATASETATTR_NEGATIVE) != 0)
+				{
 					continue;
 				}
 
@@ -484,7 +485,8 @@ printdata(dns_rdataset_t *rdataset, dns_name_t *owner,
 		} else {
 			dns_indent_t indent = { "  ", 2 };
 			if (!yaml && (rdataset->attributes &
-				      DNS_RDATASETATTR_NEGATIVE) != 0) {
+				      DNS_RDATASETATTR_NEGATIVE) != 0)
+			{
 				isc_buffer_putstr(&target, "; ");
 			}
 			result = dns_master_rdatasettotext(
@@ -786,7 +788,8 @@ load_keys(const cfg_obj_t *keys, dns_client_t *client) {
 		keylist = cfg_listelt_value(elt);
 
 		for (elt2 = cfg_list_first(keylist); elt2 != NULL;
-		     elt2 = cfg_list_next(elt2)) {
+		     elt2 = cfg_list_next(elt2))
+		{
 			key = cfg_listelt_value(elt2);
 			CHECK(key_fromconfig(key, client));
 		}
@@ -952,7 +955,8 @@ addserver(dns_client_t *client) {
 		result = ISC_R_SUCCESS;
 		for (cur = res; cur != NULL; cur = cur->ai_next) {
 			if (cur->ai_family != AF_INET &&
-			    cur->ai_family != AF_INET6) {
+			    cur->ai_family != AF_INET6)
+			{
 				continue;
 			}
 			sa = isc_mem_get(mctx, sizeof(*sa));
@@ -1452,7 +1456,8 @@ dash_option(char *option, char *next, bool *open_type_class) {
 				warn("extra query type");
 			}
 			if (rdtype == dns_rdatatype_ixfr ||
-			    rdtype == dns_rdatatype_axfr) {
+			    rdtype == dns_rdatatype_axfr)
+			{
 				fatal("Transfer not supported");
 			}
 			qtype = rdtype;
@@ -1531,7 +1536,8 @@ preparse_args(int argc, char **argv) {
 
 		/* Look for dash value option. */
 		if (strpbrk(option, dash_opts) != &option[0] ||
-		    strlen(option) > 1U) {
+		    strlen(option) > 1U)
+		{
 			/* Error or value in option. */
 			continue;
 		}
@@ -1569,13 +1575,15 @@ parse_args(int argc, char **argv) {
 		} else if (argv[0][0] == '-') {
 			if (argc <= 1) {
 				if (dash_option(&argv[0][1], NULL,
-						&open_type_class)) {
+						&open_type_class))
+				{
 					argc--;
 					argv++;
 				}
 			} else {
 				if (dash_option(&argv[0][1], argv[1],
-						&open_type_class)) {
+						&open_type_class))
+				{
 					argc--;
 					argv++;
 				}
@@ -1594,7 +1602,8 @@ parse_args(int argc, char **argv) {
 						warn("extra query type");
 					}
 					if (rdtype == dns_rdatatype_ixfr ||
-					    rdtype == dns_rdatatype_axfr) {
+					    rdtype == dns_rdatatype_axfr)
+					{
 						fatal("Transfer not supported");
 					}
 					qtype = rdtype;

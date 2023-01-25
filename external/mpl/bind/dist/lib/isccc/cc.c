@@ -1,4 +1,4 @@
-/*	$NetBSD: cc.c,v 1.6 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: cc.c,v 1.7 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -210,7 +210,8 @@ table_towire(isccc_sexpr_t *alist, isc_buffer_t **buffer) {
 	unsigned int len;
 
 	for (elt = isccc_alist_first(alist); elt != NULL;
-	     elt = ISCCC_SEXPR_CDR(elt)) {
+	     elt = ISCCC_SEXPR_CDR(elt))
+	{
 		kv = ISCCC_SEXPR_CAR(elt);
 		k = ISCCC_SEXPR_CAR(kv);
 		ks = isccc_sexpr_tostring(k);
@@ -476,7 +477,8 @@ verify(isccc_sexpr_t *alist, unsigned char *data, unsigned int length,
 		value = region->rstart;
 		GET8(valalg, value);
 		if ((valalg != algorithm) ||
-		    !isc_safe_memequal(value, digestb64, HSHA_LENGTH)) {
+		    !isc_safe_memequal(value, digestb64, HSHA_LENGTH))
+		{
 			return (ISCCC_R_BADAUTH);
 		}
 	}

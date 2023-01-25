@@ -1,4 +1,4 @@
-/*	$NetBSD: keymgr.c,v 1.8 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: keymgr.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -332,7 +332,8 @@ keymgr_key_retire(dns_dnsseckey_t *key, dns_kasp_t *kasp, isc_stdtime_t now) {
 	ret = dst_key_getbool(key->key, DST_BOOL_KSK, &ksk);
 	if (ret == ISC_R_SUCCESS && ksk) {
 		if (dst_key_getstate(key->key, DST_KEY_KRRSIG, &s) !=
-		    ISC_R_SUCCESS) {
+		    ISC_R_SUCCESS)
+		{
 			dst_key_setstate(key->key, DST_KEY_KRRSIG, OMNIPRESENT);
 			dst_key_settime(key->key, DST_TIME_KRRSIG, now);
 		}
@@ -345,7 +346,8 @@ keymgr_key_retire(dns_dnsseckey_t *key, dns_kasp_t *kasp, isc_stdtime_t now) {
 	ret = dst_key_getbool(key->key, DST_BOOL_ZSK, &zsk);
 	if (ret == ISC_R_SUCCESS && zsk) {
 		if (dst_key_getstate(key->key, DST_KEY_ZRRSIG, &s) !=
-		    ISC_R_SUCCESS) {
+		    ISC_R_SUCCESS)
+		{
 			dst_key_setstate(key->key, DST_KEY_ZRRSIG, OMNIPRESENT);
 			dst_key_settime(key->key, DST_TIME_ZRRSIG, now);
 		}
@@ -553,7 +555,8 @@ keymgr_key_match_state(dst_key_t *key, dst_key_t *subject, int type,
 			continue;
 		}
 		if (next_state != NA && i == type &&
-		    dst_key_id(key) == dst_key_id(subject)) {
+		    dst_key_id(key) == dst_key_id(subject))
+		{
 			/* Check next state rather than current state. */
 			state = next_state;
 		} else if (dst_key_getstate(key, i, &state) != ISC_R_SUCCESS) {
@@ -711,12 +714,14 @@ keymgr_key_exists_with_state(dns_dnsseckeylist_t *keyring, dns_dnsseckey_t *key,
 	     dkey = ISC_LIST_NEXT(dkey, link))
 	{
 		if (match_algorithms &&
-		    (dst_key_alg(dkey->key) != dst_key_alg(key->key))) {
+		    (dst_key_alg(dkey->key) != dst_key_alg(key->key)))
+		{
 			continue;
 		}
 
 		if (!keymgr_key_match_state(dkey->key, key->key, type,
-					    next_state, states)) {
+					    next_state, states))
+		{
 			continue;
 		}
 
@@ -737,7 +742,8 @@ keymgr_key_exists_with_state(dns_dnsseckeylist_t *keyring, dns_dnsseckey_t *key,
 			}
 
 			if (!keymgr_key_match_state(skey->key, key->key, type,
-						    next_state, states2)) {
+						    next_state, states2))
+			{
 				continue;
 			}
 
@@ -796,12 +802,14 @@ keymgr_ds_hidden_or_chained(dns_dnsseckeylist_t *keyring, dns_dnsseckey_t *key,
 	     dkey = ISC_LIST_NEXT(dkey, link))
 	{
 		if (match_algorithms &&
-		    (dst_key_alg(dkey->key) != dst_key_alg(key->key))) {
+		    (dst_key_alg(dkey->key) != dst_key_alg(key->key)))
+		{
 			continue;
 		}
 
 		if (keymgr_key_match_state(dkey->key, key->key, type,
-					   next_state, ds_hidden)) {
+					   next_state, ds_hidden))
+		{
 			/* This key has its DS hidden. */
 			continue;
 		}
@@ -863,7 +871,8 @@ keymgr_dnskey_hidden_or_chained(dns_dnsseckeylist_t *keyring,
 	     dkey = ISC_LIST_NEXT(dkey, link))
 	{
 		if (match_algorithms &&
-		    (dst_key_alg(dkey->key) != dst_key_alg(key->key))) {
+		    (dst_key_alg(dkey->key) != dst_key_alg(key->key)))
+		{
 			continue;
 		}
 
@@ -1448,7 +1457,8 @@ transition:
 
 			/* Is the transition allowed according to policy? */
 			if (!keymgr_policy_approval(keyring, dkey, i,
-						    next_state)) {
+						    next_state))
+			{
 				/* No, please respect rollover methods. */
 				isc_log_write(
 					dns_lctx, DNS_LOGCATEGORY_DNSSEC,
@@ -1622,7 +1632,8 @@ keymgr_key_init(dns_dnsseckey_t *key, dns_kasp_t *kasp, isc_stdtime_t now,
 
 	/* Set goal if not already set. */
 	if (dst_key_getstate(key->key, DST_KEY_GOAL, &goal_state) !=
-	    ISC_R_SUCCESS) {
+	    ISC_R_SUCCESS)
+	{
 		dst_key_setstate(key->key, DST_KEY_GOAL, goal_state);
 	}
 
@@ -2042,7 +2053,8 @@ dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
 
 		/* Check purge-keys interval. */
 		if (keymgr_key_may_be_purged(dkey->key,
-					     dns_kasp_purgekeys(kasp), now)) {
+					     dns_kasp_purgekeys(kasp), now))
+		{
 			dst_key_format(dkey->key, keystr, sizeof(keystr));
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_DNSSEC,
 				      DNS_LOGMODULE_DNSSEC, ISC_LOG_INFO,
@@ -2089,7 +2101,8 @@ dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
 				/* Initialize lifetime if not set. */
 				uint32_t l;
 				if (dst_key_getnum(dkey->key, DST_NUM_LIFETIME,
-						   &l) != ISC_R_SUCCESS) {
+						   &l) != ISC_R_SUCCESS)
+				{
 					dst_key_setnum(dkey->key,
 						       DST_NUM_LIFETIME,
 						       lifetime);
@@ -2123,7 +2136,8 @@ dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
 				 * or desires to be active.
 				 */
 				if (dst_key_goal(dkey->key) == OMNIPRESENT ||
-				    dst_key_is_active(dkey->key, now)) {
+				    dst_key_is_active(dkey->key, now))
+				{
 					active_key = dkey;
 				}
 			}
@@ -2141,7 +2155,8 @@ dns_keymgr_run(const dns_name_t *origin, dns_rdataclass_t rdclass,
 			     dnskey = ISC_LIST_NEXT(dnskey, link))
 			{
 				if (keymgr_dnsseckey_kaspkey_match(dnskey,
-								   kkey)) {
+								   kkey))
+				{
 					/* Found a match. */
 					dst_key_format(dnskey->key, keystr,
 						       sizeof(keystr));

@@ -1,4 +1,4 @@
-/*	$NetBSD: hooks.c,v 1.8 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: hooks.c,v 1.9 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -478,7 +478,8 @@ ns_hooktable_free(isc_mem_t *mctx, void **tablep) {
 
 	for (i = 0; i < NS_HOOKPOINTS_COUNT; i++) {
 		for (hook = ISC_LIST_HEAD((*table)[i]); hook != NULL;
-		     hook = next) {
+		     hook = next)
+		{
 			next = ISC_LIST_NEXT(hook, link);
 			ISC_LIST_UNLINK((*table)[i], hook, link);
 			if (hook->mctx != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: sortlist.c,v 1.6 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: sortlist.c,v 1.7 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -68,10 +68,12 @@ ns_sortlist_setup(dns_acl_t *acl, dns_aclenv_t *env, isc_netaddr_t *clientaddr,
 		}
 
 		if (dns_aclelement_match(clientaddr, NULL, try_elt, env,
-					 &matched_elt)) {
+					 &matched_elt))
+		{
 			if (order_elt != NULL) {
 				if (order_elt->type ==
-				    dns_aclelementtype_nestedacl) {
+				    dns_aclelementtype_nestedacl)
+				{
 					*argp = order_elt->nestedacl;
 					return (NS_SORTLISTTYPE_2ELEMENT);
 				} else if (order_elt->type ==

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstest.c,v 1.11 2022/09/23 12:15:32 christos Exp $	*/
+/*	$NetBSD: dnstest.c,v 1.12 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -433,7 +433,8 @@ dns_test_getdata(const char *file, unsigned char *buf, size_t bufsiz,
 				break;
 			}
 			if (*rp != ' ' && *rp != '\t' && *rp != '\r' &&
-			    *rp != '\n') {
+			    *rp != '\n')
+			{
 				*wp++ = *rp;
 				len++;
 			}

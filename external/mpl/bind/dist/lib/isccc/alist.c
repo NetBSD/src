@@ -1,4 +1,4 @@
-/*	$NetBSD: alist.c,v 1.6 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: alist.c,v 1.7 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -286,7 +286,8 @@ isccc_alist_prettyprint(isccc_sexpr_t *sexpr, unsigned int indent,
 		fprintf(stream, "{\n");
 		indent += 4;
 		for (elt = isccc_alist_first(sexpr); elt != NULL;
-		     elt = CDR(elt)) {
+		     elt = CDR(elt))
+		{
 			kv = CAR(elt);
 			INSIST(isccc_sexpr_listp(kv));
 			k = CAR(kv);

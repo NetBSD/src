@@ -1,4 +1,4 @@
-/*	$NetBSD: controlconf.c,v 1.9 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.10 2023/01/25 21:43:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -224,7 +224,8 @@ shutdown_listener(controllistener_t *listener) {
 	}
 
 	for (conn = ISC_LIST_HEAD(listener->connections); conn != NULL;
-	     conn = next) {
+	     conn = next)
+	{
 		next = ISC_LIST_NEXT(conn, link);
 		maybe_free_connection(conn);
 	}
@@ -371,7 +372,8 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 
 	if (conn->ccmsg.result != ISC_R_SUCCESS) {
 		if (conn->ccmsg.result != ISC_R_CANCELED &&
-		    conn->ccmsg.result != ISC_R_EOF) {
+		    conn->ccmsg.result != ISC_R_EOF)
+		{
 			log_invalid(&conn->ccmsg, conn->ccmsg.result);
 		}
 		goto cleanup;
@@ -434,7 +436,8 @@ control_recvmessage(isc_task_t *task, isc_event_t *event) {
 	 * Expire messages that are too old.
 	 */
 	if (isccc_cc_lookupuint32(_ctrl, "_exp", &exp) == ISC_R_SUCCESS &&
-	    now > exp) {
+	    now > exp)
+	{
 		log_invalid(&conn->ccmsg, ISCCC_R_EXPIRED);
 		goto cleanup_request;
 	}
@@ -959,7 +962,8 @@ get_key_info(const cfg_obj_t *config, const cfg_obj_t *control,
 	control_keylist = cfg_tuple_get(control, "keys");
 
 	if (!cfg_obj_isvoid(control_keylist) &&
-	    cfg_list_first(control_keylist) != NULL) {
+	    cfg_list_first(control_keylist) != NULL)
+	{
 		result = cfg_map_get(config, "key", &global_keylist);
 
 		if (result == ISC_R_SUCCESS) {

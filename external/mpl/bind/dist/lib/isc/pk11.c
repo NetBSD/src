@@ -1,4 +1,4 @@
-/*	$NetBSD: pk11.c,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: pk11.c,v 1.8 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -534,7 +534,8 @@ scan_slots(void) {
 		rv = pkcs_C_GetMechanismInfo(slot, CKM_RSA_PKCS_KEY_PAIR_GEN,
 					     &mechInfo);
 		if ((rv != CKR_OK) ||
-		    ((mechInfo.flags & CKF_GENERATE_KEY_PAIR) == 0)) {
+		    ((mechInfo.flags & CKF_GENERATE_KEY_PAIR) == 0))
+		{
 			bad = true;
 			PK11_TRACEM(CKM_RSA_PKCS_KEY_PAIR_GEN);
 		}
@@ -588,7 +589,8 @@ scan_slots(void) {
 		rv = pkcs_C_GetMechanismInfo(slot, CKM_EC_KEY_PAIR_GEN,
 					     &mechInfo);
 		if ((rv != CKR_OK) ||
-		    ((mechInfo.flags & CKF_GENERATE_KEY_PAIR) == 0)) {
+		    ((mechInfo.flags & CKF_GENERATE_KEY_PAIR) == 0))
+		{
 			bad = true;
 			PK11_TRACEM(CKM_EC_KEY_PAIR_GEN);
 		}
@@ -611,7 +613,8 @@ scan_slots(void) {
 		rv = pkcs_C_GetMechanismInfo(slot, CKM_EC_EDWARDS_KEY_PAIR_GEN,
 					     &mechInfo);
 		if ((rv != CKR_OK) ||
-		    ((mechInfo.flags & CKF_GENERATE_KEY_PAIR) == 0)) {
+		    ((mechInfo.flags & CKF_GENERATE_KEY_PAIR) == 0))
+		{
 			bad = true;
 			PK11_TRACEM(CKM_EC_EDWARDS_KEY_PAIR_GEN);
 		}

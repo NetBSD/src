@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.11 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.12 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -170,6 +170,10 @@ serialize_nodes(FILE *file, dns_rbtnode_t *node, uintptr_t parent,
 		dns_rbtdatawriter_t datawriter, void *writer_arg,
 		uintptr_t *where, uint64_t *crc);
 
+#define ADJUST_ADDRESS(address, relative, header)        \
+	if (address != NULL && header != NULL) {         \
+		address += relative * (uintptr_t)header; \
+	}
 /*
  * The following functions allow you to get the actual address of a pointer
  * without having to use an if statement to check to see if that address is
@@ -178,7 +182,8 @@ serialize_nodes(FILE *file, dns_rbtnode_t *node, uintptr_t parent,
 static dns_rbtnode_t *
 getparent(dns_rbtnode_t *node, file_header_t *header) {
 	char *adjusted_address = (char *)(node->parent);
-	adjusted_address += node->parent_is_relative * (uintptr_t)header;
+
+	ADJUST_ADDRESS(adjusted_address, node->parent_is_relative, header);
 
 	return ((dns_rbtnode_t *)adjusted_address);
 }
@@ -186,7 +191,8 @@ getparent(dns_rbtnode_t *node, file_header_t *header) {
 static dns_rbtnode_t *
 getleft(dns_rbtnode_t *node, file_header_t *header) {
 	char *adjusted_address = (char *)(node->left);
-	adjusted_address += node->left_is_relative * (uintptr_t)header;
+
+	ADJUST_ADDRESS(adjusted_address, node->left_is_relative, header);
 
 	return ((dns_rbtnode_t *)adjusted_address);
 }
@@ -194,7 +200,8 @@ getleft(dns_rbtnode_t *node, file_header_t *header) {
 static dns_rbtnode_t *
 getright(dns_rbtnode_t *node, file_header_t *header) {
 	char *adjusted_address = (char *)(node->right);
-	adjusted_address += node->right_is_relative * (uintptr_t)header;
+
+	ADJUST_ADDRESS(adjusted_address, node->right_is_relative, header);
 
 	return ((dns_rbtnode_t *)adjusted_address);
 }
@@ -202,7 +209,8 @@ getright(dns_rbtnode_t *node, file_header_t *header) {
 static dns_rbtnode_t *
 getdown(dns_rbtnode_t *node, file_header_t *header) {
 	char *adjusted_address = (char *)(node->down);
-	adjusted_address += node->down_is_relative * (uintptr_t)header;
+
+	ADJUST_ADDRESS(adjusted_address, node->down_is_relative, header);
 
 	return ((dns_rbtnode_t *)adjusted_address);
 }
@@ -210,7 +218,8 @@ getdown(dns_rbtnode_t *node, file_header_t *header) {
 static dns_rbtnode_t *
 getdata(dns_rbtnode_t *node, file_header_t *header) {
 	char *adjusted_address = (char *)(node->data);
-	adjusted_address += node->data_is_relative * (uintptr_t)header;
+
+	ADJUST_ADDRESS(adjusted_address, node->data_is_relative, header);
 
 	return ((dns_rbtnode_t *)adjusted_address);
 }
@@ -1427,7 +1436,8 @@ dns_rbt_addnode(dns_rbt_t *rbt, const dns_name_t *name, dns_rbtnode_t **nodep) {
 				hash_node(rbt, new_current, new_name);
 
 				if (common_labels ==
-				    dns_name_countlabels(add_name)) {
+				    dns_name_countlabels(add_name))
+				{
 					/*
 					 * The name has been added by pushing
 					 * the not-in-common parts down to
@@ -1502,7 +1512,8 @@ dns_rbt_addname(dns_rbt_t *rbt, const dns_name_t *name, void *data) {
 	 * there is data associated with a node.
 	 */
 	if (result == ISC_R_SUCCESS ||
-	    (result == ISC_R_EXISTS && DATA(node) == NULL)) {
+	    (result == ISC_R_EXISTS && DATA(node) == NULL))
+	{
 		DATA(node) = data;
 		result = ISC_R_SUCCESS;
 	}
@@ -1669,14 +1680,16 @@ dns_rbt_findnode(dns_rbt_t *rbt, const dns_name_t *name, dns_name_t *foundname,
 				 * subdomain.
 				 */
 				if (ISC_LIKELY(get_upper_node(hnode) !=
-					       up_current)) {
+					       up_current))
+				{
 					continue;
 				}
 
 				dns_name_init(&hnode_name, NULL);
 				NODENAME(hnode, &hnode_name);
 				if (ISC_LIKELY(dns_name_equal(&hnode_name,
-							      &hash_name))) {
+							      &hash_name)))
+				{
 					break;
 				}
 			}
@@ -2007,7 +2020,8 @@ dns_rbt_findnode(dns_rbt_t *rbt, const dns_name_t *name, dns_name_t *foundname,
 					result2 = dns_rbtnodechain_prev(
 						chain, NULL, NULL);
 					if (result2 == ISC_R_SUCCESS ||
-					    result2 == DNS_R_NEWORIGIN) {
+					    result2 == DNS_R_NEWORIGIN)
+					{
 						/* Nothing. */
 					} else if (result2 == ISC_R_NOMORE) {
 						/*
@@ -2802,7 +2816,8 @@ deletefromlevel(dns_rbtnode_t *item, dns_rbtnode_t **rootp) {
 				/* cppcheck-suppress nullPointerRedundantCheck
 				 * symbolName=sibling */
 				if (IS_BLACK(LEFT(sibling)) &&
-				    IS_BLACK(RIGHT(sibling))) {
+				    IS_BLACK(RIGHT(sibling)))
+				{
 					MAKE_RED(sibling);
 					child = parent;
 				} else {
@@ -2840,7 +2855,8 @@ deletefromlevel(dns_rbtnode_t *item, dns_rbtnode_t **rootp) {
 				/* cppcheck-suppress nullPointerRedundantCheck
 				 * symbolName=sibling */
 				if (IS_BLACK(LEFT(sibling)) &&
-				    IS_BLACK(RIGHT(sibling))) {
+				    IS_BLACK(RIGHT(sibling)))
+				{
 					MAKE_RED(sibling);
 					child = parent;
 				} else {
@@ -2994,7 +3010,8 @@ check_properties_helper(dns_rbtnode_t *node) {
 	 * a subtree root and must have the flag set.
 	 */
 	if (((!PARENT(node)) || (DOWN(PARENT(node)) == node)) &&
-	    (!IS_ROOT(node))) {
+	    (!IS_ROOT(node)))
+	{
 		return (false);
 	}
 
@@ -3421,7 +3438,8 @@ dns_rbtnodechain_prev(dns_rbtnodechain_t *chain, dns_name_t *name,
 		 * for the second level tree.
 		 */
 		if (origin != NULL &&
-		    (chain->level_count > 0 || OFFSETLEN(predecessor) > 1)) {
+		    (chain->level_count > 0 || OFFSETLEN(predecessor) > 1))
+		{
 			new_origin = true;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: builtin.c,v 1.5 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: builtin.c,v 1.6 2023/01/25 21:43:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -493,7 +493,8 @@ builtin_create(const char *zone, int argc, char **argv, void *driverdata,
 	} else if (strcmp(argv[0], "id") == 0) {
 		*dbdata = &id_builtin;
 	} else if (strcmp(argv[0], "empty") == 0 ||
-		   strcmp(argv[0], "dns64") == 0) {
+		   strcmp(argv[0], "dns64") == 0)
+	{
 		builtin_t *empty;
 		char *server;
 		char *contact;

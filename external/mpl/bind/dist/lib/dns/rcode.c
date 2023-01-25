@@ -1,4 +1,4 @@
-/*	$NetBSD: rcode.c,v 1.11 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rcode.c,v 1.12 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -224,7 +224,8 @@ maybe_numeric(unsigned int *valuep, isc_textregion_t *source, unsigned int max,
 	int v;
 
 	if (!isdigit((unsigned char)source->base[0]) ||
-	    source->length > NUMBERSIZE - 1) {
+	    source->length > NUMBERSIZE - 1)
+	{
 		return (ISC_R_BADNUMBER);
 	}
 

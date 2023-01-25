@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr_test.c,v 1.7 2022/09/23 12:15:23 christos Exp $	*/
+/*	$NetBSD: byaddr_test.c,v 1.8 2023/01/25 21:43:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -202,10 +202,12 @@ main(int argc, char *argv[]) {
 	printf("address = %s\n", argv[isc_commandline_index]);
 	na.family = AF_INET;
 	if (inet_pton(AF_INET, argv[isc_commandline_index],
-		      (char *)&na.type.in) != 1) {
+		      (char *)&na.type.in) != 1)
+	{
 		na.family = AF_INET6;
 		if (inet_pton(AF_INET6, argv[isc_commandline_index],
-			      (char *)&na.type.in6) != 1) {
+			      (char *)&na.type.in6) != 1)
+		{
 			printf("unknown address format\n");
 			exit(1);
 		}

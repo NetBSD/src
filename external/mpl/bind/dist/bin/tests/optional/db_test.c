@@ -1,4 +1,4 @@
-/*	$NetBSD: db_test.c,v 1.6 2022/09/23 12:15:23 christos Exp $	*/
+/*	$NetBSD: db_test.c,v 1.7 2023/01/25 21:43:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -133,7 +133,8 @@ select_db(char *origintext) {
 	}
 
 	for (dbi = ISC_LIST_HEAD(dbs); dbi != NULL;
-	     dbi = ISC_LIST_NEXT(dbi, link)) {
+	     dbi = ISC_LIST_NEXT(dbi, link))
+	{
 		if (dns_name_compare(dns_db_origin(dbi->db), origin) == 0) {
 			break;
 		}
@@ -200,7 +201,7 @@ list(dbinfo *dbi, char *seektext) {
 		if (result != ISC_R_SUCCESS && result != DNS_R_NEWORIGIN) {
 			break;
 		}
-		result = dns_db_allrdatasets(dbi->db, node, dbi->iversion, 0,
+		result = dns_db_allrdatasets(dbi->db, node, dbi->iversion, 0, 0,
 					     &rdsiter);
 		if (result != ISC_R_SUCCESS) {
 			dns_db_detachnode(dbi->db, &node);
@@ -382,7 +383,8 @@ main(int argc, char *argv[]) {
 
 	snprintf(dbtype, sizeof(dbtype), "rbt");
 	while ((ch = isc_commandline_parse(argc, argv, "c:d:t:z:P:Q:glpqvT")) !=
-	       -1) {
+	       -1)
+	{
 		switch (ch) {
 		case 'c':
 			result = load(isc_commandline_argument, ".", true);
@@ -768,7 +770,8 @@ main(int argc, char *argv[]) {
 			result = dns_dbtable_find(dbtable, &name, zcoptions,
 						  &db);
 			if (result != ISC_R_SUCCESS &&
-			    result != DNS_R_PARTIALMATCH) {
+			    result != DNS_R_PARTIALMATCH)
+			{
 				if (!quiet) {
 					printf("\n");
 					print_result("", result);
@@ -890,7 +893,7 @@ main(int argc, char *argv[]) {
 
 		if (!found_as && type == dns_rdatatype_any) {
 			rdsiter = NULL;
-			result = dns_db_allrdatasets(db, node, version, 0,
+			result = dns_db_allrdatasets(db, node, version, 0, 0,
 						     &rdsiter);
 			if (result == ISC_R_SUCCESS) {
 				if (!quiet) {
