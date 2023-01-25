@@ -1,4 +1,4 @@
-.\"	$NetBSD: shar.1,v 1.13 2017/07/03 21:34:21 wiz Exp $
+.\"	$NetBSD: shar.1,v 1.14 2023/01/25 19:52:14 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)shar.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd January 25, 2023
 .Dt SHAR 1
 .Os
 .Sh NAME
@@ -93,9 +93,3 @@ files.
 It is strongly recommended that all shell archive files be examined
 before running them through
 .Xr sh 1 .
-Archives produced using this implementation of
-.Nm
-may be easily examined with the command:
-.Bd -literal -offset indent
-egrep -v '^[X#]' shar.file
-.Ed
