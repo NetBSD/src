@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.8 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -296,7 +296,8 @@ update_rdatasetstats(dns_stats_t *stats, dns_rdatastatstype_t rrsettype,
 		 * (active, stale, or ancient) value in the RRtype part.
 		 */
 		if ((DNS_RDATASTATSTYPE_ATTR(rrsettype) &
-		     DNS_RDATASTATSTYPE_ATTR_ANCIENT) != 0) {
+		     DNS_RDATASTATSTYPE_ATTR_ANCIENT) != 0)
+		{
 			counter |= RDTYPECOUNTER_NXDOMAIN_ANCIENT;
 		} else if ((DNS_RDATASTATSTYPE_ATTR(rrsettype) &
 			    DNS_RDATASTATSTYPE_ATTR_STALE) != 0)
@@ -307,12 +308,14 @@ update_rdatasetstats(dns_stats_t *stats, dns_rdatastatstype_t rrsettype,
 		counter = rdatatype2counter(DNS_RDATASTATSTYPE_BASE(rrsettype));
 
 		if ((DNS_RDATASTATSTYPE_ATTR(rrsettype) &
-		     DNS_RDATASTATSTYPE_ATTR_NXRRSET) != 0) {
+		     DNS_RDATASTATSTYPE_ATTR_NXRRSET) != 0)
+		{
 			counter |= RDTYPECOUNTER_NXRRSET;
 		}
 
 		if ((DNS_RDATASTATSTYPE_ATTR(rrsettype) &
-		     DNS_RDATASTATSTYPE_ATTR_ANCIENT) != 0) {
+		     DNS_RDATASTATSTYPE_ATTR_ANCIENT) != 0)
+		{
 			counter |= RDTYPECOUNTER_ANCIENT;
 		} else if ((DNS_RDATASTATSTYPE_ATTR(rrsettype) &
 			    DNS_RDATASTATSTYPE_ATTR_STALE) != 0)
@@ -496,10 +499,12 @@ rdataset_dumpcb(isc_statscounter_t counter, uint64_t value, void *arg) {
 		 * expiry value (active, stale, or ancient).
 		 */
 		if ((counter & RDTYPECOUNTER_MAXTYPE) ==
-		    RDTYPECOUNTER_NXDOMAIN_STALE) {
+		    RDTYPECOUNTER_NXDOMAIN_STALE)
+		{
 			attributes |= DNS_RDATASTATSTYPE_ATTR_STALE;
 		} else if ((counter & RDTYPECOUNTER_MAXTYPE) ==
-			   RDTYPECOUNTER_NXDOMAIN_ANCIENT) {
+			   RDTYPECOUNTER_NXDOMAIN_ANCIENT)
+		{
 			attributes |= DNS_RDATASTATSTYPE_ATTR_ANCIENT;
 		}
 	} else {

@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.10 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.11 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -155,7 +155,7 @@ static struct cc {
 	struct cc *next;
 	int rdclass;
 	char classbuf[TYPECLASSBUF];
-} * classes;
+} *classes;
 
 static struct tt {
 	struct tt *next;
@@ -164,7 +164,7 @@ static struct tt {
 	char classbuf[TYPECLASSBUF];
 	char typebuf[TYPECLASSBUF];
 	char dirbuf[PATH_MAX - 30];
-} * types;
+} *types;
 
 static struct ttnam {
 	char typebuf[TYPECLASSBUF];

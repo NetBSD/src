@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.11 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.12 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -427,7 +427,8 @@ fetch_callback_dnskey(isc_task_t *task, isc_event_t *event) {
 		 * Only extract the dst key if the keyset exists and is secure.
 		 */
 		if (eresult == ISC_R_SUCCESS &&
-		    rdataset->trust >= dns_trust_secure) {
+		    rdataset->trust >= dns_trust_secure)
+		{
 			result = select_signing_key(val, rdataset);
 			if (result == ISC_R_SUCCESS) {
 				val->keyset = &val->frdataset;
@@ -435,7 +436,8 @@ fetch_callback_dnskey(isc_task_t *task, isc_event_t *event) {
 		}
 		result = validate_answer(val, true);
 		if (result == DNS_R_NOVALIDSIG &&
-		    (val->attributes & VALATTR_TRIEDVERIFY) == 0) {
+		    (val->attributes & VALATTR_TRIEDVERIFY) == 0)
+		{
 			saved_result = result;
 			validator_log(val, ISC_LOG_DEBUG(3),
 				      "falling back to insecurity proof");
@@ -670,7 +672,8 @@ validator_callback_dnskey(isc_task_t *task, isc_event_t *event) {
 		}
 		result = validate_answer(val, true);
 		if (result == DNS_R_NOVALIDSIG &&
-		    (val->attributes & VALATTR_TRIEDVERIFY) == 0) {
+		    (val->attributes & VALATTR_TRIEDVERIFY) == 0)
+		{
 			saved_result = result;
 			validator_log(val, ISC_LOG_DEBUG(3),
 				      "falling back to insecurity proof");
@@ -908,7 +911,8 @@ validator_callback_nsec(isc_task_t *task, isc_event_t *event) {
 				 * the wildcard used to generate the response.
 				 */
 				if (clabels == 0 ||
-				    dns_name_countlabels(wild) == clabels + 1) {
+				    dns_name_countlabels(wild) == clabels + 1)
+				{
 					val->attributes |= VALATTR_FOUNDCLOSEST;
 				}
 				/*
@@ -1192,7 +1196,8 @@ seek_dnskey(dns_validator_t *val) {
 	namereln = dns_name_fullcompare(val->event->name, &siginfo->signer,
 					&order, &nlabels);
 	if (namereln != dns_namereln_subdomain &&
-	    namereln != dns_namereln_equal) {
+	    namereln != dns_namereln_equal)
+	{
 		return (DNS_R_CONTINUE);
 	}
 
@@ -1518,7 +1523,8 @@ validate_answer(dns_validator_t *val, bool resume) {
 	}
 
 	for (; result == ISC_R_SUCCESS;
-	     result = dns_rdataset_next(event->sigrdataset)) {
+	     result = dns_rdataset_next(event->sigrdataset))
+	{
 		dns_rdata_reset(&rdata);
 		dns_rdataset_current(event->sigrdataset, &rdata);
 		if (val->siginfo == NULL) {
@@ -2078,7 +2084,8 @@ checkwildcard(dns_validator_t *val, dns_rdatatype_t type,
 	     result = val_rdataset_next(val, &name, &rdataset))
 	{
 		if (rdataset->type != type ||
-		    rdataset->trust != dns_trust_secure) {
+		    rdataset->trust != dns_trust_secure)
+		{
 			continue;
 		}
 
@@ -2255,16 +2262,19 @@ findnsec3proofs(dns_validator_t *val) {
 			 * which proof.  Just populate them.
 			 */
 			if (NEEDNOQNAME(val) &&
-			    proofs[DNS_VALIDATOR_NOQNAMEPROOF] == NULL) {
+			    proofs[DNS_VALIDATOR_NOQNAMEPROOF] == NULL)
+			{
 				proofs[DNS_VALIDATOR_NOQNAMEPROOF] = name;
 			} else if (setclosest) {
 				proofs[DNS_VALIDATOR_CLOSESTENCLOSER] = name;
 			} else if (NEEDNODATA(val) &&
-				   proofs[DNS_VALIDATOR_NODATAPROOF] == NULL) {
+				   proofs[DNS_VALIDATOR_NODATAPROOF] == NULL)
+			{
 				proofs[DNS_VALIDATOR_NODATAPROOF] = name;
 			} else if (NEEDNOWILDCARD(val) &&
 				   proofs[DNS_VALIDATOR_NOWILDCARDPROOF] ==
-					   NULL) {
+					   NULL)
+			{
 				proofs[DNS_VALIDATOR_NOWILDCARDPROOF] = name;
 			}
 			return (result);
@@ -2409,7 +2419,8 @@ validate_authority(dns_validator_t *val, bool resume) {
 		}
 
 		for (; rdataset != NULL;
-		     rdataset = ISC_LIST_NEXT(rdataset, link)) {
+		     rdataset = ISC_LIST_NEXT(rdataset, link))
+		{
 			if (rdataset->type == dns_rdatatype_rrsig) {
 				continue;
 			}
@@ -3027,7 +3038,8 @@ validator_start(isc_task_t *task, isc_event_t *event) {
 			result = validate_answer(val, false);
 		}
 		if (result == DNS_R_NOVALIDSIG &&
-		    (val->attributes & VALATTR_TRIEDVERIFY) == 0) {
+		    (val->attributes & VALATTR_TRIEDVERIFY) == 0)
+		{
 			saved_result = result;
 			validator_log(val, ISC_LOG_DEBUG(3),
 				      "falling back to insecurity proof");
@@ -3037,7 +3049,8 @@ validator_start(isc_task_t *task, isc_event_t *event) {
 			}
 		}
 	} else if (val->event->rdataset != NULL &&
-		   val->event->rdataset->type != 0) {
+		   val->event->rdataset->type != 0)
+	{
 		/*
 		 * This is either an unsecure subdomain or a response
 		 * from a broken server.
@@ -3053,7 +3066,8 @@ validator_start(isc_task_t *task, isc_event_t *event) {
 				      "parent indicates it should be secure");
 		}
 	} else if ((val->event->rdataset == NULL &&
-		    val->event->sigrdataset == NULL)) {
+		    val->event->sigrdataset == NULL))
+	{
 		/*
 		 * This is a validation of a negative response.
 		 */
@@ -3070,7 +3084,8 @@ validator_start(isc_task_t *task, isc_event_t *event) {
 
 		result = validate_nx(val, false);
 	} else if ((val->event->rdataset != NULL &&
-		    NEGATIVE(val->event->rdataset))) {
+		    NEGATIVE(val->event->rdataset)))
+	{
 		/*
 		 * This is a delayed validation of a negative cache entry.
 		 */

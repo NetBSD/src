@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.11 2022/09/23 12:15:25 christos Exp $	*/
+/*	$NetBSD: driver.c,v 1.12 2023/01/25 21:43:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -505,7 +505,8 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
 	}
 
 	if (strcmp(name, "too-long") == 0 ||
-	    strcmp(zone, "bigcname.domain") == 0) {
+	    strcmp(zone, "bigcname.domain") == 0)
+	{
 		for (i = 0; i < 511; i++) {
 			buf[i] = 'x';
 		}
@@ -527,7 +528,8 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
 	}
 
 	if (strcmp(name, "long.name.is.not.there") == 0 &&
-	    strcmp(zone, ".") == 0) {
+	    strcmp(zone, ".") == 0)
+	{
 		result = state->putrr(lookup, "A", 0, "100.100.100.3");
 		found = true;
 		if (result != ISC_R_SUCCESS) {

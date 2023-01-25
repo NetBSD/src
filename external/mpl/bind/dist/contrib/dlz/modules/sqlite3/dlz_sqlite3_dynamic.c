@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_sqlite3_dynamic.c,v 1.5 2022/09/23 12:15:28 christos Exp $	*/
+/*	$NetBSD: dlz_sqlite3_dynamic.c,v 1.6 2023/01/25 21:43:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -81,11 +81,11 @@ typedef struct {
  * SQLite3 result set
  */
 typedef struct {
-	char **pazResult;      /* Result of the query */
-	unsigned int pnRow;    /* Number of result rows */
-	unsigned int pnColumn; /* Number of result columns */
-	unsigned int curRow;   /* Current row */
-	char *pzErrmsg;	       /* Error message */
+	char **pazResult; /* Result of the query */
+	int pnRow;	  /* Number of result rows */
+	int pnColumn;	  /* Number of result columns */
+	int curRow;	  /* Current row */
+	char *pzErrmsg;	  /* Error message */
 } sqlite3_res_t;
 
 /* forward references */
@@ -242,8 +242,6 @@ sqlite3_get_resultset(const char *zone, const char *record, const char *client,
 	sqlite3_instance_t *db = (sqlite3_instance_t *)dbdata;
 	char *querystring = NULL;
 	sqlite3_res_t *rs = NULL;
-	unsigned int i = 0;
-	unsigned int j = 0;
 	int qres = 0;
 
 	if ((query == COUNTZONE && rsp != NULL) ||
@@ -462,7 +460,7 @@ char **
 sqlite3_fetch_row(sqlite3_res_t *rs) {
 	char **retval = NULL;
 	if (rs != NULL) {
-		if (rs->pnRow > 0U && rs->curRow < rs->pnRow) {
+		if (rs->pnRow > 0 && rs->curRow < rs->pnRow) {
 			int index = (rs->curRow + 1) * rs->pnColumn;
 			retval = &rs->pazResult[index];
 			rs->curRow++;
@@ -503,7 +501,7 @@ sqlite3_process_rs(sqlite3_instance_t *db, dns_sdlzlookup_t *lookup,
 	isc_result_t result = ISC_R_NOTFOUND;
 	char **row;
 	unsigned int fields;
-	unsigned int i, j;
+	unsigned int j;
 	char *tmpString;
 	char *endp;
 	int ttl;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.6 2022/09/23 12:15:25 christos Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.7 2023/01/25 21:43:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -120,7 +120,8 @@ main(int argc, char **argv) {
 			rsp = NULL;
 			if (!librpz->rsp_create(&emsg, &rsp, NULL, client, true,
 						false) ||
-			    rsp == NULL) {
+			    rsp == NULL)
+			{
 				fprintf(stderr, "## %s\n", emsg.c);
 				librpz->client_detach(&client);
 				return (1);

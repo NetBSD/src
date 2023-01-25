@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.13 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.14 2023/01/25 21:43:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -356,10 +356,16 @@ ns_clientmgr_create(isc_mem_t *mctx, ns_server_t *sctx, isc_taskmgr_t *taskmgr,
  */
 
 void
+ns_clientmgr_shutdown(ns_clientmgr_t *manager);
+/*%<
+ * Shutdown a client manager and all ns_client_t objects
+ * managed by it.
+ */
+
+void
 ns_clientmgr_destroy(ns_clientmgr_t **managerp);
 /*%<
- * Destroy a client manager and all ns_client_t objects
- * managed by it.
+ * Destroy a client manager.
  */
 
 isc_sockaddr_t *

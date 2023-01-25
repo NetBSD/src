@@ -1,4 +1,4 @@
-/*	$NetBSD: grammar.h,v 1.7 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: grammar.h,v 1.8 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -88,7 +88,7 @@ typedef struct cfg_map	    cfg_map_t;
 typedef struct cfg_rep	    cfg_rep_t;
 typedef struct cfg_duration cfg_duration_t;
 
-#define CFG_DURATION_MAXLEN 64
+#define CFG_DURATION_MAXLEN 80
 
 /*
  * Function types for configuration object methods

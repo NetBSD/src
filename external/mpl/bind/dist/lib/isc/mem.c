@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.12 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.13 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1315,12 +1315,14 @@ isc___mem_allocate(isc_mem_t *ctx0, size_t size FLARG) {
 
 	ADD_TRACE(ctx, si, si[-1].u.size, file, line);
 	if (ctx->hi_water != 0U && ctx->inuse > ctx->hi_water &&
-	    !ctx->is_overmem) {
+	    !ctx->is_overmem)
+	{
 		ctx->is_overmem = true;
 	}
 
 	if (ctx->hi_water != 0U && !ctx->hi_called &&
-	    ctx->inuse > ctx->hi_water) {
+	    ctx->inuse > ctx->hi_water)
+	{
 		ctx->hi_called = true;
 		call_water = true;
 	}
@@ -1368,7 +1370,8 @@ isc___mem_reallocate(isc_mem_t *ctx0, void *ptr, size_t size FLARG) {
 			INSIST(oldsize >= ALIGNMENT_SIZE);
 			oldsize -= ALIGNMENT_SIZE;
 			if (ISC_UNLIKELY((isc_mem_debugging &
-					  ISC_MEM_DEBUGCTX) != 0)) {
+					  ISC_MEM_DEBUGCTX) != 0))
+			{
 				INSIST(oldsize >= ALIGNMENT_SIZE);
 				oldsize -= ALIGNMENT_SIZE;
 			}
@@ -1419,12 +1422,14 @@ isc___mem_free(isc_mem_t *ctx0, void *ptr FLARG) {
 	 * isc_mem_setwater() called with 0 for hi_water and lo_water.
 	 */
 	if (ctx->is_overmem &&
-	    (ctx->inuse < ctx->lo_water || ctx->lo_water == 0U)) {
+	    (ctx->inuse < ctx->lo_water || ctx->lo_water == 0U))
+	{
 		ctx->is_overmem = false;
 	}
 
 	if (ctx->hi_called &&
-	    (ctx->inuse < ctx->lo_water || ctx->lo_water == 0U)) {
+	    (ctx->inuse < ctx->lo_water || ctx->lo_water == 0U))
+	{
 		ctx->hi_called = false;
 
 		if (ctx->water != NULL) {
@@ -1843,7 +1848,8 @@ isc__mempool_get(isc_mempool_t *mpctx0 FLARG) {
 out:
 #if ISC_MEM_TRACKLINES
 	if (ISC_UNLIKELY(((isc_mem_debugging & TRACE_OR_RECORD) != 0) &&
-			 item != NULL)) {
+			 item != NULL))
+	{
 		MCTXLOCK(mctx);
 		ADD_TRACE(mctx, item, mpctx->size, file, line);
 		MCTXUNLOCK(mctx);
@@ -1982,7 +1988,8 @@ print_contexts(FILE *file) {
 	isc__mem_t *ctx;
 
 	for (ctx = ISC_LIST_HEAD(contexts); ctx != NULL;
-	     ctx = ISC_LIST_NEXT(ctx, link)) {
+	     ctx = ISC_LIST_NEXT(ctx, link))
+	{
 		fprintf(file, "context: %p (%s): %" PRIuFAST32 " references\n",
 			ctx, ctx->name[0] == 0 ? "<unknown>" : ctx->name,
 			isc_refcount_current(&ctx->references));
@@ -2156,7 +2163,8 @@ isc_mem_renderxml(void *writer0) {
 	LOCK(&contextslock);
 	lost = totallost;
 	for (ctx = ISC_LIST_HEAD(contexts); ctx != NULL;
-	     ctx = ISC_LIST_NEXT(ctx, link)) {
+	     ctx = ISC_LIST_NEXT(ctx, link))
+	{
 		xmlrc = xml_renderctx(ctx, &summary, writer);
 		if (xmlrc < 0) {
 			UNLOCK(&contextslock);
@@ -2321,7 +2329,8 @@ isc_mem_renderjson(void *memobj0) {
 	LOCK(&contextslock);
 	lost = totallost;
 	for (ctx = ISC_LIST_HEAD(contexts); ctx != NULL;
-	     ctx = ISC_LIST_NEXT(ctx, link)) {
+	     ctx = ISC_LIST_NEXT(ctx, link))
+	{
 		result = json_renderctx(ctx, &summary, ctxarray);
 		if (result != ISC_R_SUCCESS) {
 			UNLOCK(&contextslock);

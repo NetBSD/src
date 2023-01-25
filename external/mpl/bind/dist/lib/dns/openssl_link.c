@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl_link.c,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -135,7 +135,8 @@ toresult(isc_result_t fallback) {
 	default:
 #if defined(ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED)
 		if (lib == ERR_R_ECDSA_LIB &&
-		    reason == ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED) {
+		    reason == ECDSA_R_RANDOM_NUMBER_GENERATION_FAILED)
+		{
 			result = ISC_R_NOENTROPY;
 			break;
 		}

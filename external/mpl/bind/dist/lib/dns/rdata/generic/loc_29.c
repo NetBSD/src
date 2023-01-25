@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_29.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -182,13 +182,15 @@ get_direction(isc_lex_t *lexer, isc_token_t *token, const char *directions,
 	RETERR(isc_lex_getmastertoken(lexer, token, isc_tokentype_string,
 				      false));
 	if (DNS_AS_STR(*token)[0] == directions[1] &&
-	    DNS_AS_STR(*token)[1] == 0) {
+	    DNS_AS_STR(*token)[1] == 0)
+	{
 		*direction = DNS_AS_STR(*token)[0];
 		return (ISC_R_SUCCESS);
 	}
 
 	if (DNS_AS_STR(*token)[0] == directions[0] &&
-	    DNS_AS_STR(*token)[1] == 0) {
+	    DNS_AS_STR(*token)[1] == 0)
+	{
 		*direction = DNS_AS_STR(*token)[0];
 		return (ISC_R_SUCCESS);
 	}
@@ -587,7 +589,8 @@ fromwire_loc(ARGS_FROMWIRE) {
 	c = sr.base[1];
 	if (c != 0) {
 		if ((c & 0xf) > 9 || ((c >> 4) & 0xf) > 9 ||
-		    ((c >> 4) & 0xf) == 0) {
+		    ((c >> 4) & 0xf) == 0)
+		{
 			return (ISC_R_RANGE);
 
 			/*
@@ -602,7 +605,8 @@ fromwire_loc(ARGS_FROMWIRE) {
 	c = sr.base[2];
 	if (c != 0) {
 		if ((c & 0xf) > 9 || ((c >> 4) & 0xf) > 9 ||
-		    ((c >> 4) & 0xf) == 0) {
+		    ((c >> 4) & 0xf) == 0)
+		{
 			return (ISC_R_RANGE);
 
 			/*
@@ -617,7 +621,8 @@ fromwire_loc(ARGS_FROMWIRE) {
 	c = sr.base[3];
 	if (c != 0) {
 		if ((c & 0xf) > 9 || ((c >> 4) & 0xf) > 9 ||
-		    ((c >> 4) & 0xf) == 0) {
+		    ((c >> 4) & 0xf) == 0)
+		{
 			return (ISC_R_RANGE);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.13 2022/09/23 12:15:35 christos Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.14 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -151,7 +151,7 @@ static cfg_type_t cfg_type_tkey_dhkey = { "tkey-dhkey",	   cfg_parse_tuple,
 
 static cfg_tuplefielddef_t listenon_fields[] = {
 	{ "port", &cfg_type_optional_port, 0 },
-	{ "dscp", &cfg_type_optional_dscp, 0 },
+	{ "dscp", &cfg_type_optional_dscp, CFG_CLAUSEFLAG_DEPRECATED },
 	{ "acl", &cfg_type_bracketed_aml, 0 },
 	{ NULL, NULL, 0 }
 };
@@ -175,7 +175,7 @@ static cfg_type_t cfg_type_acl = { "acl",	    cfg_parse_tuple,
 static cfg_tuplefielddef_t remotes_fields[] = {
 	{ "name", &cfg_type_astring, 0 },
 	{ "port", &cfg_type_optional_port, 0 },
-	{ "dscp", &cfg_type_optional_dscp, 0 },
+	{ "dscp", &cfg_type_optional_dscp, CFG_CLAUSEFLAG_DEPRECATED },
 	{ "addresses", &cfg_type_bracketed_namesockaddrkeylist, 0 },
 	{ NULL, NULL, 0 }
 };
@@ -213,7 +213,7 @@ static cfg_type_t cfg_type_bracketed_namesockaddrkeylist = {
 
 static cfg_tuplefielddef_t namesockaddrkeylist_fields[] = {
 	{ "port", &cfg_type_optional_port, 0 },
-	{ "dscp", &cfg_type_optional_dscp, 0 },
+	{ "dscp", &cfg_type_optional_dscp, CFG_CLAUSEFLAG_DEPRECATED },
 	{ "addresses", &cfg_type_bracketed_namesockaddrkeylist, 0 },
 	{ NULL, NULL, 0 }
 };
@@ -228,7 +228,7 @@ static cfg_type_t cfg_type_namesockaddrkeylist = {
  */
 static cfg_tuplefielddef_t portiplist_fields[] = {
 	{ "port", &cfg_type_optional_port, 0 },
-	{ "dscp", &cfg_type_optional_dscp, 0 },
+	{ "dscp", &cfg_type_optional_dscp, CFG_CLAUSEFLAG_DEPRECATED },
 	{ "addresses", &cfg_type_bracketed_dscpsockaddrlist, 0 },
 	{ NULL, NULL, 0 }
 };
@@ -398,7 +398,7 @@ static void
 doc_updatepolicy(cfg_printer_t *pctx, const cfg_type_t *type) {
 	cfg_print_cstr(pctx, "( local | { ");
 	cfg_doc_obj(pctx, type->of);
-	cfg_print_cstr(pctx, "; ... }");
+	cfg_print_cstr(pctx, "; ... } )");
 }
 
 /*%
@@ -1022,7 +1022,8 @@ parse_portrange(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 		CHECK(parse_port(pctx, &obj->value.tuple[0]));
 		CHECK(parse_port(pctx, &obj->value.tuple[1]));
 		if (obj->value.tuple[0]->value.uint32 >
-		    obj->value.tuple[1]->value.uint32) {
+		    obj->value.tuple[1]->value.uint32)
+		{
 			cfg_parser_error(pctx, CFG_LOG_NOPREP,
 					 "low port '%u' must not be larger "
 					 "than high port",
@@ -1179,7 +1180,7 @@ static cfg_clausedef_t options_clauses[] = {
 	{ "dnstap-version", &cfg_type_qstringornone,
 	  CFG_CLAUSEFLAG_NOTCONFIGURED },
 #endif /* ifdef HAVE_DNSTAP */
-	{ "dscp", &cfg_type_uint32, 0 },
+	{ "dscp", &cfg_type_uint32, CFG_CLAUSEFLAG_DEPRECATED },
 	{ "dump-file", &cfg_type_qstring, 0 },
 	{ "fake-iquery", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
 	{ "files", &cfg_type_size, 0 },
@@ -1268,6 +1269,7 @@ static cfg_clausedef_t options_clauses[] = {
 	{ "transfers-out", &cfg_type_uint32, 0 },
 	{ "transfers-per-ns", &cfg_type_uint32, 0 },
 	{ "treat-cr-as-space", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
+	{ "update-quota", &cfg_type_uint32, 0 },
 	{ "use-id-pool", &cfg_type_boolean, CFG_CLAUSEFLAG_ANCIENT },
 	{ "use-ixfr", &cfg_type_boolean, CFG_CLAUSEFLAG_OBSOLETE },
 	{ "use-v4-udp-ports", &cfg_type_bracketed_portlist, 0 },
@@ -1457,7 +1459,8 @@ parse_dtout(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 		if (pctx->token.type == isc_tokentype_string) {
 			CHECK(cfg_gettoken(pctx, 0));
 			if (strcasecmp(TOKEN_STRING(pctx), "size") == 0 &&
-			    obj->value.tuple[2] == NULL) {
+			    obj->value.tuple[2] == NULL)
+			{
 				CHECK(cfg_parse_obj(pctx, fields[2].type,
 						    &obj->value.tuple[2]));
 			} else if (strcasecmp(TOKEN_STRING(pctx), "versions") ==
@@ -2197,7 +2200,7 @@ static cfg_clausedef_t zone_clauses[] = {
 	{ "alt-transfer-source-v6", &cfg_type_sockaddr6wild,
 	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_ZONE_MIRROR },
 	{ "auto-dnssec", &cfg_type_autodnssec,
-	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY },
+	  CFG_ZONE_PRIMARY | CFG_ZONE_SECONDARY | CFG_CLAUSEFLAG_DEPRECATED },
 	{ "check-dup-records", &cfg_type_checkmode, CFG_ZONE_PRIMARY },
 	{ "check-integrity", &cfg_type_boolean, CFG_ZONE_PRIMARY },
 	{ "check-mx", &cfg_type_checkmode, CFG_ZONE_PRIMARY },
@@ -3150,12 +3153,19 @@ parse_querysource(cfg_parser_t *pctx, const cfg_type_t *type, cfg_obj_t **ret) {
 				have_port++;
 			} else if (strcasecmp(TOKEN_STRING(pctx), "dscp") == 0)
 			{
+				if ((pctx->flags & CFG_PCTX_NODEPRECATED) == 0)
+				{
+					cfg_parser_warning(
+						pctx, 0,
+						"token 'dscp' is deprecated");
+				}
 				/* read "dscp" */
 				CHECK(cfg_gettoken(pctx, 0));
 				CHECK(cfg_parse_dscp(pctx, &dscp));
 				have_dscp++;
 			} else if (have_port == 0 && have_dscp == 0 &&
-				   have_address == 0) {
+				   have_address == 0)
+			{
 				return (cfg_parse_sockaddr(pctx, type, ret));
 			} else {
 				cfg_parser_error(pctx, CFG_LOG_NEAR,
@@ -3595,7 +3605,7 @@ LIBISCCFG_EXTERNAL_DATA cfg_type_t cfg_type_sessionkey = {
 static cfg_tuplefielddef_t nameport_fields[] = {
 	{ "name", &cfg_type_astring, 0 },
 	{ "port", &cfg_type_optional_port, 0 },
-	{ "dscp", &cfg_type_optional_dscp, 0 },
+	{ "dscp", &cfg_type_optional_dscp, CFG_CLAUSEFLAG_DEPRECATED },
 	{ NULL, NULL, 0 }
 };
 
@@ -3767,14 +3777,16 @@ cfg_clause_validforzone(const char *name, unsigned int ztype) {
 
 	for (clause = zone_clauses; clause->name != NULL; clause++) {
 		if ((clause->flags & ztype) == 0 ||
-		    strcmp(clause->name, name) != 0) {
+		    strcmp(clause->name, name) != 0)
+		{
 			continue;
 		}
 		valid = true;
 	}
 	for (clause = zone_only_clauses; clause->name != NULL; clause++) {
 		if ((clause->flags & ztype) == 0 ||
-		    strcmp(clause->name, name) != 0) {
+		    strcmp(clause->name, name) != 0)
+		{
 			continue;
 		}
 		valid = true;
@@ -3863,7 +3875,8 @@ cfg_print_zonegrammar(const unsigned int zonetype, unsigned int flags,
 			continue;
 		}
 		if ((clause->flags & zonetype) == 0 ||
-		    strcasecmp(clause->name, "type") == 0) {
+		    strcasecmp(clause->name, "type") == 0)
+		{
 			continue;
 		}
 		cfg_print_indent(&pctx);

@@ -1,5 +1,3 @@
-/*	$NetBSD: stdatomic.h,v 1.9 2022/09/23 12:15:37 christos Exp $	*/
-
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *

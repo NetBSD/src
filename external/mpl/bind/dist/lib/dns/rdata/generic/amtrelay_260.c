@@ -1,4 +1,4 @@
-/*	$NetBSD: amtrelay_260.c,v 1.5 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: amtrelay_260.c,v 1.6 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -453,7 +453,8 @@ casecompare_amtrelay(ARGS_COMPARE) {
 	dns_rdata_toregion(rdata2, &region2);
 
 	if (memcmp(region1.base, region2.base, 2) != 0 ||
-	    (region1.base[1] & 0x7f) != 3) {
+	    (region1.base[1] & 0x7f) != 3)
+	{
 		return (isc_region_compare(&region1, &region2));
 	}
 

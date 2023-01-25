@@ -1,4 +1,4 @@
-/*	$NetBSD: rrl.c,v 1.7 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rrl.c,v 1.8 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -236,7 +236,8 @@ expand_entries(dns_rrl_t *rrl, int newsize) {
 	int i;
 
 	if (rrl->num_entries + newsize >= rrl->max_entries &&
-	    rrl->max_entries != 0) {
+	    rrl->max_entries != 0)
+	{
 		newsize = rrl->max_entries - rrl->num_entries;
 		if (newsize <= 0) {
 			return (ISC_R_SUCCESS);
@@ -376,7 +377,8 @@ ref_entry(dns_rrl_t *rrl, dns_rrl_entry_t *e, int probes, isc_stdtime_t now) {
 	rrl->probes += probes;
 	++rrl->searches;
 	if (rrl->searches > 100 &&
-	    delta_rrl_time(rrl->hash->check_time, now) > 1) {
+	    delta_rrl_time(rrl->hash->check_time, now) > 1)
+	{
 		if (rrl->probes / rrl->searches > 2) {
 			expand_rrl_hash(rrl, now);
 		}
@@ -429,7 +431,8 @@ make_key(const dns_rrl_t *rrl, dns_rrl_key_t *key,
 		key->s.qtype = qtype;
 		key->s.qclass = qclass & 0xff;
 	} else if (rtype == DNS_RRL_RTYPE_REFERRAL ||
-		   rtype == DNS_RRL_RTYPE_NODATA) {
+		   rtype == DNS_RRL_RTYPE_NODATA)
+	{
 		/*
 		 * Because there is no qtype in the empty answer sections of
 		 * referral and NODATA responses, count them as the same.
@@ -929,7 +932,8 @@ make_log_buf(dns_rrl_t *rrl, dns_rrl_entry_t *e, const char *str1,
 	{
 		qbuf = get_qname(rrl, e);
 		if (save_qname && qbuf == NULL && qname != NULL &&
-		    dns_name_isabsolute(qname)) {
+		    dns_name_isabsolute(qname))
+		{
 			/*
 			 * Capture the qname for the "stop limiting" message.
 			 */
@@ -1015,7 +1019,8 @@ log_stops(dns_rrl_t *rrl, isc_stdtime_t now, int limit, char *log_buf,
 		if (now != 0) {
 			age = get_age(rrl, e, now);
 			if (age < DNS_RRL_STOP_LOG_SECS ||
-			    response_balance(rrl, e, age) < 0) {
+			    response_balance(rrl, e, age) < 0)
+			{
 				break;
 			}
 		}
@@ -1087,7 +1092,8 @@ dns_rrl(dns_view_t *view, dns_zone_t *zone, const isc_sockaddr_t *client_addr,
 			qps = (1.0 * rrl->qps_responses) / secs;
 			if (secs >= rrl->window) {
 				if (isc_log_wouldlog(dns_lctx,
-						     DNS_RRL_LOG_DEBUG3)) {
+						     DNS_RRL_LOG_DEBUG3))
+				{
 					isc_log_write(dns_lctx,
 						      DNS_LOGCATEGORY_RRL,
 						      DNS_LOGMODULE_REQUEST,

@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.11 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.12 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -835,7 +835,8 @@ dns_name_issubdomain(const dns_name_t *name1, const dns_name_t *name2) {
 
 	namereln = dns_name_fullcompare(name1, name2, &order, &nlabels);
 	if (namereln == dns_namereln_subdomain ||
-	    namereln == dns_namereln_equal) {
+	    namereln == dns_namereln_equal)
+	{
 		return (true);
 	}
 
@@ -1420,7 +1421,8 @@ dns_name_totext2(const dns_name_t *name, unsigned int options,
 				case 0x40: /* '@' */
 				case 0x24: /* '$' */
 					if ((options & DNS_NAME_MASTERFILE) ==
-					    0) {
+					    0)
+					{
 						goto no_escape;
 					}
 					FALLTHROUGH;
@@ -1855,7 +1857,8 @@ dns_name_fromwire(dns_name_t *name, isc_buffer_t *source,
 				 * Ordinary 14-bit pointer.
 				 */
 				if ((dctx->allowed & DNS_COMPRESS_GLOBAL14) ==
-				    0) {
+				    0)
+				{
 					return (DNS_R_DISALLOWED);
 				}
 				new_current = c & 0x3F;

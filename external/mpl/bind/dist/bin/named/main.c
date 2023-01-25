@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.13 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.14 2023/01/25 21:43:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -480,7 +480,8 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 		arglen = (int)(end - arg);
 		for (def = defs; def->name != NULL; def++) {
 			if (arglen == (int)strlen(def->name) &&
-			    memcmp(arg, def->name, arglen) == 0) {
+			    memcmp(arg, def->name, arglen) == 0)
+			{
 				if (def->value == 0) {
 					clear = true;
 				}
@@ -505,11 +506,133 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 	}
 }
 
+/*%
+ * Convert algorithm type to string.
+ */
+static const char *
+dst_hmac_algorithm_totext(dns_secalg_t alg) {
+	switch (alg) {
+	case DST_ALG_HMACMD5:
+		return ("hmac-md5");
+	case DST_ALG_HMACSHA1:
+		return ("hmac-sha1");
+	case DST_ALG_HMACSHA224:
+		return ("hmac-sha224");
+	case DST_ALG_HMACSHA256:
+		return ("hmac-sha256");
+	case DST_ALG_HMACSHA384:
+		return ("hmac-sha384");
+	case DST_ALG_HMACSHA512:
+		return ("hmac-sha512");
+	default:
+		return ("(unknown)");
+	}
+}
+
+#define DST_ALG_HMAC_FIRST DST_ALG_HMACMD5
+#define DST_ALG_HMAC_LAST  DST_ALG_HMACSHA512
+
+static void
+list_dnssec_algorithms(isc_buffer_t *b) {
+	for (size_t i = DST_ALG_UNKNOWN; i < DST_MAX_ALGS; i++) {
+		if (i == DST_ALG_DH || i == DST_ALG_GSSAPI ||
+		    (i >= DST_ALG_HMAC_FIRST && i <= DST_ALG_HMAC_LAST))
+		{
+			continue;
+		}
+		if (dst_algorithm_supported(i)) {
+			isc_buffer_putstr(b, " ");
+			(void)dns_secalg_totext(i, b);
+		}
+	}
+}
+
+static void
+list_ds_algorithms(isc_buffer_t *b) {
+	for (size_t i = 0; i < 256; i++) {
+		if (dst_ds_digest_supported(i)) {
+			isc_buffer_putstr(b, " ");
+			(void)dns_dsdigest_totext(i, b);
+		}
+	}
+}
+
+static void
+list_hmac_algorithms(isc_buffer_t *b) {
+	isc_buffer_t sb = *b;
+	for (size_t i = DST_ALG_HMAC_FIRST; i <= DST_ALG_HMAC_LAST; i++) {
+		if (i == DST_ALG_GSSAPI) {
+			continue;
+		}
+		if (dst_algorithm_supported(i)) {
+			isc_buffer_putstr(b, " ");
+			isc_buffer_putstr(b, dst_hmac_algorithm_totext(i));
+		}
+	}
+	for (unsigned char *s = isc_buffer_used(&sb); s != isc_buffer_used(b);
+	     s++)
+	{
+		*s = toupper(*s);
+	}
+}
+
+static void
+logit(isc_buffer_t *b) {
+	isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
+		      NAMED_LOGMODULE_MAIN, ISC_LOG_NOTICE, "%.*s",
+		      (int)isc_buffer_usedlength(b),
+		      (char *)isc_buffer_base(b));
+}
+
+static void
+printit(isc_buffer_t *b) {
+	printf("%.*s\n", (int)isc_buffer_usedlength(b),
+	       (char *)isc_buffer_base(b));
+}
+
+static void
+format_supported_algorithms(void (*emit)(isc_buffer_t *b)) {
+	isc_buffer_t b;
+	char buf[512];
+
+	isc_buffer_init(&b, buf, sizeof(buf));
+	isc_buffer_putstr(&b, "DNSSEC algorithms:");
+	list_dnssec_algorithms(&b);
+	(*emit)(&b);
+
+	isc_buffer_init(&b, buf, sizeof(buf));
+	isc_buffer_putstr(&b, "DS algorithms:");
+	list_ds_algorithms(&b);
+	(*emit)(&b);
+
+	isc_buffer_init(&b, buf, sizeof(buf));
+	isc_buffer_putstr(&b, "HMAC algorithms:");
+	list_hmac_algorithms(&b);
+	(*emit)(&b);
+
+	isc_buffer_init(&b, buf, sizeof(buf));
+	isc_buffer_printf(&b, "TKEY mode 2 support (Diffie-Hellman): %s",
+			  (dst_algorithm_supported(DST_ALG_DH) &&
+			   dst_algorithm_supported(DST_ALG_HMACMD5))
+				  ? "yes"
+				  : "non");
+	(*emit)(&b);
+
+	isc_buffer_init(&b, buf, sizeof(buf));
+	isc_buffer_printf(&b, "TKEY mode 3 support (GSS-API): %s",
+			  dst_algorithm_supported(DST_ALG_GSSAPI) ? "yes"
+								  : "no");
+	(*emit)(&b);
+}
+
 static void
 printversion(bool verbose) {
 	char rndcconf[PATH_MAX], *dot = NULL;
-#if defined(HAVE_GEOIP2)
 	isc_mem_t *mctx = NULL;
+	isc_result_t result;
+	isc_buffer_t b;
+	char buf[512];
+#if defined(HAVE_GEOIP2)
 	cfg_parser_t *parser = NULL;
 	cfg_obj_t *config = NULL;
 	const cfg_obj_t *defaults = NULL, *obj = NULL;
@@ -576,7 +699,18 @@ printversion(bool verbose) {
 	printf("compiled with protobuf-c version: %s\n", PROTOBUF_C_VERSION);
 	printf("linked to protobuf-c version: %s\n", protobuf_c_version());
 #endif /* if defined(HAVE_DNSTAP) */
-	printf("threads support is enabled\n\n");
+	printf("threads support is enabled\n");
+
+	isc_mem_create(&mctx);
+	result = dst_lib_init(mctx, named_g_engine);
+	if (result == ISC_R_SUCCESS) {
+		isc_buffer_init(&b, buf, sizeof(buf));
+		format_supported_algorithms(printit);
+		printf("\n");
+	} else {
+		printf("DST initialization failure: %s\n",
+		       isc_result_totext(result));
+	}
 
 	/*
 	 * The default rndc.conf and rndc.key paths are in the same
@@ -604,7 +738,6 @@ printversion(bool verbose) {
 	printf("  named lock file:      %s\n", named_g_defaultlockfile);
 #if defined(HAVE_GEOIP2)
 #define RTC(x) RUNTIME_CHECK((x) == ISC_R_SUCCESS)
-	isc_mem_create(&mctx);
 	RTC(cfg_parser_create(mctx, named_g_lctx, &parser));
 	RTC(named_config_parsedefaults(parser, &config));
 	RTC(cfg_map_get(config, "options", &defaults));
@@ -1297,6 +1430,12 @@ setup(void) {
 	sctx = named_g_server->sctx;
 
 	/*
+	 * Report supported algorithms now that dst_lib_init() has
+	 * been called via named_server_create().
+	 */
+	format_supported_algorithms(logit);
+
+	/*
 	 * Modify server context according to command line options
 	 */
 	if (disable4) {
@@ -1568,6 +1707,7 @@ main(int argc, char *argv[]) {
 	isc_mem_setname(named_g_mctx, "main", NULL);
 
 	setup();
+	INSIST(named_g_server != NULL);
 
 	/*
 	 * Start things running and then wait for a shutdown request

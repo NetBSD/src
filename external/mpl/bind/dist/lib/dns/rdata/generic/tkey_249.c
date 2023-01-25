@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey_249.c,v 1.7 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: tkey_249.c,v 1.8 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,7 +77,8 @@ fromtext_tkey(ARGS_FROMTEXT) {
 	RETERR(isc_lex_getmastertoken(lexer, &token, isc_tokentype_string,
 				      false));
 	if (dns_tsigrcode_fromtext(&rcode, &token.value.as_textregion) !=
-	    ISC_R_SUCCESS) {
+	    ISC_R_SUCCESS)
+	{
 		i = strtol(DNS_AS_STR(token), &e, 10);
 		if (*e != 0) {
 			RETTOK(DNS_R_UNKNOWN);

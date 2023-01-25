@@ -1,4 +1,4 @@
-/*	$NetBSD: task_test.c,v 1.10 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: task_test.c,v 1.11 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1086,7 +1086,8 @@ pg_event2(isc_task_t *task, isc_event_t *event) {
 
 	if (testrange) {
 		if ((purge_type_first <= event->ev_type) &&
-		    (event->ev_type <= purge_type_last)) {
+		    (event->ev_type <= purge_type_last))
+		{
 			type_match = true;
 		}
 	} else {
@@ -1193,7 +1194,8 @@ test_purge(int sender, int type, int tag, int exp_purged) {
 				 */
 				if (((sender_cnt % 2) != 0) &&
 				    ((type_cnt % 2) != 0) &&
-				    ((tag_cnt % 2) != 0)) {
+				    ((tag_cnt % 2) != 0))
+				{
 					eventtab[event_cnt]->ev_attributes |=
 						ISC_EVENTATTR_NOPURGE;
 				}

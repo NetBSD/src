@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.9 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.10 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -217,7 +217,8 @@ opensslrsa_createctx(dst_key_t *key, dst_context_t *dctx) {
 	case DST_ALG_RSASHA512:
 		/* From RFC 5702 */
 		if ((dctx->key->key_size < 1024) ||
-		    (dctx->key->key_size > 4096)) {
+		    (dctx->key->key_size > 4096))
+		{
 			return (ISC_R_FAILURE);
 		}
 		break;
@@ -335,6 +336,10 @@ opensslrsa_verify2(dst_context_t *dctx, int maxbits, const isc_region_t *sig) {
 		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
 	}
 	RSA_get0_key(rsa, NULL, &e, NULL);
+	if (e == NULL) {
+		RSA_free(rsa);
+		return (dst__openssl_toresult(DST_R_VERIFYFAILURE));
+	}
 	bits = BN_num_bits(e);
 	RSA_free(rsa);
 	if (bits > maxbits && maxbits != 0) {
@@ -583,12 +588,14 @@ opensslrsa_todns(const dst_key_t *key, isc_buffer_t *data) {
 	if (rsa == NULL) {
 		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
 	}
-
-	isc_buffer_availableregion(data, &r);
-
 	RSA_get0_key(rsa, &n, &e, NULL);
+	if (e == NULL || n == NULL) {
+		DST_RET(dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+	}
 	mod_bytes = BN_num_bytes(n);
 	e_bytes = BN_num_bytes(e);
+
+	isc_buffer_availableregion(data, &r);
 
 	if (e_bytes < 256) { /*%< key exponent is <= 2040 bits */
 		if (r.length < 1) {
@@ -667,6 +674,11 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	e = BN_bin2bn(r.base, e_bytes, NULL);
 	isc_region_consume(&r, e_bytes);
 	n = BN_bin2bn(r.base, r.length, NULL);
+	if (e == NULL || n == NULL) {
+		RSA_free(rsa);
+		return (ISC_R_NOMEMORY);
+	}
+
 	if (RSA_set0_key(rsa, n, e, NULL) == 0) {
 		if (n != NULL) {
 			BN_free(n);
@@ -840,13 +852,25 @@ rsa_check(RSA *rsa, RSA *pub) {
 			}
 		} else {
 			n = BN_dup(n2);
+			if (n == NULL) {
+				return (ISC_R_NOMEMORY);
+			}
 		}
 		if (e1 != NULL) {
 			if (BN_cmp(e1, e2) != 0) {
+				if (n != NULL) {
+					BN_free(n);
+				}
 				return (DST_R_INVALIDPRIVATEKEY);
 			}
 		} else {
 			e = BN_dup(e2);
+			if (e == NULL) {
+				if (n != NULL) {
+					BN_free(n);
+				}
+				return (ISC_R_NOMEMORY);
+			}
 		}
 		if (RSA_set0_key(rsa, n, e, NULL) == 0) {
 			if (n != NULL) {

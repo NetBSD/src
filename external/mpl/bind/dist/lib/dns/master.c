@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.9 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.10 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -375,7 +375,8 @@ gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *token, bool eol,
 	}
 	if (eol != true) {
 		if (token->type == isc_tokentype_eol ||
-		    token->type == isc_tokentype_eof) {
+		    token->type == isc_tokentype_eof)
+		{
 			{
 				unsigned long int line;
 				const char *what;
@@ -896,7 +897,8 @@ generate(dns_loadctx_t *lctx, char *range, char *lhs, char *gtype, char *rhs,
 		}
 
 		if (dns_master_isprimary(lctx) &&
-		    !dns_name_issubdomain(owner, lctx->top)) {
+		    !dns_name_issubdomain(owner, lctx->top))
+		{
 			char namebuf[DNS_NAME_FORMATSIZE];
 			dns_name_format(owner, namebuf, sizeof(namebuf));
 			/*
@@ -1212,7 +1214,8 @@ load_text(dns_loadctx_t *lctx) {
 				EXPECTEOL;
 				continue;
 			} else if (strcasecmp(DNS_AS_STR(token), "$INCLUDE") ==
-				   0) {
+				   0)
+			{
 				COMMITALL;
 				if ((lctx->options & DNS_MASTER_NOINCLUDE) != 0)
 				{
@@ -1246,7 +1249,8 @@ load_text(dns_loadctx_t *lctx) {
 				GETTOKEN(lctx->lex, 0, &token, true);
 
 				if (token.type == isc_tokentype_eol ||
-				    token.type == isc_tokentype_eof) {
+				    token.type == isc_tokentype_eof)
+				{
 					if (token.type == isc_tokentype_eof) {
 						WARNUNEXPECTEDEOF(lctx->lex);
 					}
@@ -1314,7 +1318,8 @@ load_text(dns_loadctx_t *lctx) {
 				EXPECTEOL;
 				continue;
 			} else if (strcasecmp(DNS_AS_STR(token), "$GENERATE") ==
-				   0) {
+				   0)
+			{
 				/*
 				 * Lazy cleanup.
 				 */
@@ -1351,7 +1356,8 @@ load_text(dns_loadctx_t *lctx) {
 				/* TTL? */
 				if (dns_ttl_fromtext(&token.value.as_textregion,
 						     &lctx->ttl) ==
-				    ISC_R_SUCCESS) {
+				    ISC_R_SUCCESS)
+				{
 					limit_ttl(callbacks, source, line,
 						  &lctx->ttl);
 					lctx->ttl_known = true;
@@ -1374,7 +1380,8 @@ load_text(dns_loadctx_t *lctx) {
 					 false);
 				rhs = isc_mem_strdup(mctx, DNS_AS_STR(token));
 				if (!lctx->ttl_known &&
-				    !lctx->default_ttl_known) {
+				    !lctx->default_ttl_known)
+				{
 					(*callbacks->error)(callbacks,
 							    "%s: %s:%lu: no "
 							    "TTL specified",
@@ -1388,7 +1395,8 @@ load_text(dns_loadctx_t *lctx) {
 						goto insist_and_cleanup;
 					}
 				} else if (!explicit_ttl &&
-					   lctx->default_ttl_known) {
+					   lctx->default_ttl_known)
+				{
 					lctx->ttl = lctx->default_ttl;
 				}
 				/*
@@ -1492,7 +1500,8 @@ load_text(dns_loadctx_t *lctx) {
 			 * state.  Linked lists are undone by commit().
 			 */
 			if (ictx->glue != NULL &&
-			    !dns_name_caseequal(ictx->glue, new_name)) {
+			    !dns_name_caseequal(ictx->glue, new_name))
+			{
 				result = commit(callbacks, lctx, &glue_list,
 						ictx->glue, source,
 						ictx->glue_line);
@@ -1523,7 +1532,8 @@ load_text(dns_loadctx_t *lctx) {
 			     !dns_name_caseequal(ictx->current, new_name)))
 			{
 				if (current_has_delegation &&
-				    is_glue(&current_list, new_name)) {
+				    is_glue(&current_list, new_name))
+				{
 					rdcount_save = rdcount;
 					rdlcount_save = rdlcount;
 					target_save = target;
@@ -1559,13 +1569,15 @@ load_text(dns_loadctx_t *lctx) {
 				 * Check for internal wildcards.
 				 */
 				if ((lctx->options &
-				     DNS_MASTER_CHECKWILDCARD) != 0) {
+				     DNS_MASTER_CHECKWILDCARD) != 0)
+				{
 					check_wildcard(ictx, source, line,
 						       callbacks);
 				}
 			}
 			if (dns_master_isprimary(lctx) &&
-			    !dns_name_issubdomain(new_name, lctx->top)) {
+			    !dns_name_issubdomain(new_name, lctx->top))
+			{
 				char namebuf[DNS_NAME_FORMATSIZE];
 				dns_name_format(new_name, namebuf,
 						sizeof(namebuf));
@@ -1851,7 +1863,8 @@ load_text(dns_loadctx_t *lctx) {
 				result = DNS_R_BADOWNERNAME;
 				desc = dns_result_totext(result);
 				if (CHECKNAMESFAIL(lctx->options) ||
-				    type == dns_rdatatype_nsec3) {
+				    type == dns_rdatatype_nsec3)
+				{
 					(*callbacks->error)(
 						callbacks, "%s:%lu: %s: %s",
 						source, line, namebuf, desc);
@@ -2081,7 +2094,8 @@ load_text(dns_loadctx_t *lctx) {
 		}
 
 		if ((lctx->options & DNS_MASTER_CHECKTTL) != 0 &&
-		    lctx->ttl > lctx->maxttl) {
+		    lctx->ttl > lctx->maxttl)
+		{
 			(callbacks->error)(callbacks,
 					   "dns_master_load: %s:%lu: "
 					   "TTL %d exceeds configured "
@@ -2556,7 +2570,8 @@ load_raw(dns_loadctx_t *lctx) {
 		}
 
 		if ((lctx->options & DNS_MASTER_CHECKTTL) != 0 &&
-		    rdatalist.ttl > lctx->maxttl) {
+		    rdatalist.ttl > lctx->maxttl)
+		{
 			(callbacks->error)(callbacks,
 					   "dns_master_load: "
 					   "TTL %d exceeds configured "
@@ -2587,7 +2602,8 @@ load_raw(dns_loadctx_t *lctx) {
 			dns_rdata_init(&rdata[i]);
 
 			if (sequential_read &&
-			    isc_buffer_availablelength(&target) < MINTSIZ) {
+			    isc_buffer_availablelength(&target) < MINTSIZ)
+			{
 				unsigned int j;
 
 				INSIST(i > 0); /* detect an infinite loop */

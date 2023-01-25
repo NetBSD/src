@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_bdbhpt_driver.c,v 1.5 2022/09/23 12:15:27 christos Exp $	*/
+/*	$NetBSD: dlz_bdbhpt_driver.c,v 1.6 2023/01/25 21:43:28 christos Exp $	*/
 
 /*
  * Copyright (C) 2002 Stichting NLnet, Netherlands, stichting@nlnet.nl.
@@ -562,7 +562,8 @@ bdbhpt_lookup(const char *zone, const char *name, void *driverarg, void *dbdata,
 
 	flags = DB_SET;
 	while ((bdbhptres = data_cursor->c_get(data_cursor, &key, &data,
-					       flags)) == 0) {
+					       flags)) == 0)
+	{
 		flags = DB_NEXT_DUP;
 		tmp = realloc(tmp, data.size + 1);
 		if (tmp == NULL) {
