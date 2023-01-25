@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2023/01/22 20:36:46 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2023/01/25 22:35:06 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -291,8 +291,11 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/freetype2 \
 		-I. \
 		-I${X11SRCDIR.${LIB}}
 
-CPPFLAGS.fccache.c+=	-Wno-error=discarded-qualifiers
-CPPFLAGS.fccfg.c+=	-Wno-error=discarded-qualifiers
+IGNORE_QUALIFIERS+= ${${ACTIVE_CC} == "gcc":? -Wno-error=discarded-qualifiers :}
+IGNORE_QUALIFIERS+= ${${ACTIVE_CC} == "clang":? -Wno-error=incompatible-pointer-types-discards-qualifiers :}
+
+CPPFLAGS.fccache.c+= 	${IGNORE_QUALIFIERS}
+CPPFLAGS.fccfg.c+=	${IGNORE_QUALIFIERS}
 
 .if ${MACHINE_ARCH:Mvax}
 COPTS.fccache.c+=	-O0
