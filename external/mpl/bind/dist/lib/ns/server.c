@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.7 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.8 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,6 +56,7 @@ ns_server_create(isc_mem_t *mctx, ns_matchview_t matchingview,
 	isc_quota_init(&sctx->xfroutquota, 10);
 	isc_quota_init(&sctx->tcpquota, 10);
 	isc_quota_init(&sctx->recursionquota, 100);
+	isc_quota_init(&sctx->updquota, 100);
 
 	CHECKFATAL(dns_tkeyctx_create(mctx, &sctx->tkeyctx));
 
@@ -135,6 +136,7 @@ ns_server_detach(ns_server_t **sctxp) {
 			isc_mem_put(sctx->mctx, altsecret, sizeof(*altsecret));
 		}
 
+		isc_quota_destroy(&sctx->updquota);
 		isc_quota_destroy(&sctx->recursionquota);
 		isc_quota_destroy(&sctx->tcpquota);
 		isc_quota_destroy(&sctx->xfroutquota);

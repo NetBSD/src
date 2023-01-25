@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.6 2022/09/23 12:15:28 christos Exp $	*/
+/*	$NetBSD: dlz_wildcard_dynamic.c,v 1.7 2023/01/25 21:43:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -226,7 +226,6 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
 	const char *p;
 	char *namebuf;
 	nrr_t *nrec;
-	bool origin = true;
 
 #if DLZ_DLOPEN_VERSION >= 2
 	UNUSED(methods);
@@ -251,9 +250,8 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
 		strncpy(namebuf, zone, len - 1);
 		namebuf[len - 1] = '\0';
 		cd->record = namebuf;
-		origin = false;
 	} else if (p == zone) {
-		cd->record = "@";
+		cd->record = (char *)"@";
 	}
 
 	/* Write info message to log */
@@ -269,7 +267,8 @@ dlz_lookup(const char *zone, const char *name, void *dbdata,
 		if (strcmp(cd->record, nrec->name) == 0) {
 			/* We handle authority data in dlz_authority() */
 			if (strcmp(nrec->type, "SOA") == 0 ||
-			    strcmp(nrec->type, "NS") == 0) {
+			    strcmp(nrec->type, "NS") == 0)
+			{
 				nrec = next;
 				continue;
 			}
@@ -311,7 +310,7 @@ dlz_authority(const char *zone, void *dbdata, dns_sdlzlookup_t *lookup) {
 	config_data_t *cd = (config_data_t *)dbdata;
 	char *querystring = NULL;
 	nrr_t *nrec;
-	const char *p, *name = "@";
+	const char *p;
 
 	p = shortest_match(cd->zone_pattern, zone);
 	if (p == NULL) {
@@ -327,7 +326,6 @@ dlz_authority(const char *zone, void *dbdata, dns_sdlzlookup_t *lookup) {
 	result = ISC_R_NOTFOUND;
 	nrec = DLZ_LIST_HEAD(cd->rrs_list);
 	while (nrec != NULL) {
-		bool origin;
 		if (strcmp("@", nrec->name) == 0) {
 			isc_result_t presult;
 
@@ -393,7 +391,8 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 	   ...) {
 	config_data_t *cd;
 	char *endp;
-	int i, def_ttl;
+	unsigned int i;
+	int def_ttl;
 	nrr_t *trec = NULL;
 	isc_result_t result;
 	const char *helper_name;
@@ -645,7 +644,8 @@ fnmatch(const char *pattern, const char *string, int flags) {
 			/* General case, use recursion. */
 			while ((test = *string) != EOS) {
 				if (!fnmatch(pattern, string,
-					     flags & ~FNM_PERIOD)) {
+					     flags & ~FNM_PERIOD))
+				{
 					return (0);
 				}
 				if (test == '/' && flags & FNM_PATHNAME) {
@@ -748,7 +748,8 @@ rangematch(const char *pattern, char test, int flags, char **newp) {
 		}
 
 		if (*pattern == '-' && (c2 = *(pattern + 1)) != EOS &&
-		    c2 != ']') {
+		    c2 != ']')
+		{
 			pattern += 2;
 			if (c2 == '\\' && !(flags & FNM_NOESCAPE)) {
 				c2 = *pattern++;

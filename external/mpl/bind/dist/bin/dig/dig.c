@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.8 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.9 2023/01/25 21:43:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -516,7 +516,7 @@ short_answer(dns_message_t *msg, dns_messagetextflag_t flags, isc_buffer_t *buf,
 static bool
 isdotlocal(dns_message_t *msg) {
 	isc_result_t result;
-	static unsigned char local_ndata[] = { "\005local\0" };
+	static unsigned char local_ndata[] = { "\005local" };
 	static unsigned char local_offsets[] = { 0, 6 };
 	static dns_name_t local = DNS_NAME_INITABSOLUTE(local_ndata,
 							local_offsets);
@@ -624,7 +624,8 @@ printmessage(dig_query_t *query, const isc_buffer_t *msgbuf, dns_message_t *msg,
 		flags |= DNS_MESSAGETEXTFLAG_NOCOMMENTS;
 	}
 	if (query->lookup->onesoa &&
-	    query->lookup->rdtype == dns_rdatatype_axfr) {
+	    query->lookup->rdtype == dns_rdatatype_axfr)
+	{
 		flags |= (query->msg_count == 0) ? DNS_MESSAGETEXTFLAG_ONESOA
 						 : DNS_MESSAGETEXTFLAG_OMITSOA;
 	}
@@ -1461,7 +1462,8 @@ plus_option(char *option, bool is_batchfile, dig_lookup_t *lookup) {
 			}
 			for (num = 0;
 			     num < sizeof(opcodetext) / sizeof(opcodetext[0]);
-			     num++) {
+			     num++)
+			{
 				if (strcasecmp(opcodetext[num], value) == 0) {
 					break;
 				}
@@ -2036,7 +2038,8 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 			result = dns_rdatatype_fromtext(
 				&rdtype, (isc_textregion_t *)&tr);
 			if (result == ISC_R_SUCCESS &&
-			    rdtype == dns_rdatatype_ixfr) {
+			    rdtype == dns_rdatatype_ixfr)
+			{
 				result = DNS_R_UNKNOWN;
 			}
 		}
@@ -2109,7 +2112,8 @@ dash_option(char *option, char *next, dig_lookup_t **lookup,
 		}
 		*need_clone = true;
 		if (get_reverse(textname, sizeof(textname), value, false) ==
-		    ISC_R_SUCCESS) {
+		    ISC_R_SUCCESS)
+		{
 			strlcpy((*lookup)->textname, textname,
 				sizeof((*lookup)->textname));
 			debug("looking up %s", (*lookup)->textname);
@@ -2291,7 +2295,8 @@ parse_args(bool is_batchfile, bool config_only, int argc, char **argv) {
 		}
 		if (batchfp != NULL) {
 			while (fgets(batchline, sizeof(batchline), batchfp) !=
-			       0) {
+			       0)
+			{
 				debug("config line %s", batchline);
 				bargc = split_batchline(batchline, bargv, 62,
 							".digrc argv");
@@ -2382,7 +2387,8 @@ parse_args(bool is_batchfile, bool config_only, int argc, char **argv) {
 						&rdtype,
 						(isc_textregion_t *)&tr);
 					if (result == ISC_R_SUCCESS &&
-					    rdtype == dns_rdatatype_ixfr) {
+					    rdtype == dns_rdatatype_ixfr)
+					{
 						fprintf(stderr, ";; Warning, "
 								"ixfr requires "
 								"a "
@@ -2422,7 +2428,8 @@ parse_args(bool is_batchfile, bool config_only, int argc, char **argv) {
 						lookup->rdtype = rdtype;
 						lookup->rdtypeset = true;
 						if (rdtype ==
-						    dns_rdatatype_axfr) {
+						    dns_rdatatype_axfr)
+						{
 							lookup->section_question =
 								plusquest;
 							lookup->comments =
@@ -2430,7 +2437,8 @@ parse_args(bool is_batchfile, bool config_only, int argc, char **argv) {
 						}
 						if (rdtype ==
 							    dns_rdatatype_any &&
-						    !lookup->tcp_mode_set) {
+						    !lookup->tcp_mode_set)
+						{
 							lookup->tcp_mode = true;
 						}
 						lookup->ixfr_serial = false;

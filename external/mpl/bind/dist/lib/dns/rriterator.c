@@ -1,4 +1,4 @@
-/*	$NetBSD: rriterator.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rriterator.c,v 1.7 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -86,7 +86,7 @@ dns_rriterator_first(dns_rriterator_t *it) {
 			return (it->result);
 		}
 
-		it->result = dns_db_allrdatasets(it->db, it->node, it->ver,
+		it->result = dns_db_allrdatasets(it->db, it->node, it->ver, 0,
 						 it->now, &it->rdatasetit);
 		if (it->result != ISC_R_SUCCESS) {
 			return (it->result);
@@ -140,7 +140,7 @@ dns_rriterator_nextrrset(dns_rriterator_t *it) {
 		if (it->result != ISC_R_SUCCESS) {
 			return (it->result);
 		}
-		it->result = dns_db_allrdatasets(it->db, it->node, it->ver,
+		it->result = dns_db_allrdatasets(it->db, it->node, it->ver, 0,
 						 it->now, &it->rdatasetit);
 		if (it->result != ISC_R_SUCCESS) {
 			return (it->result);

@@ -1,4 +1,4 @@
-/*	$NetBSD: interfaceiter.c,v 1.6 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: interfaceiter.c,v 1.7 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -179,7 +179,8 @@ isc_interfaceiter_create(isc_mem_t *mctx, isc_interfaceiter_t **iterp) {
 			 * case and retry.
 			 */
 			if (bytesReturned > 0 &&
-			    (bytesReturned < iter->buf4size)) {
+			    (bytesReturned < iter->buf4size))
+			{
 				break;
 			}
 		}

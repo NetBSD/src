@@ -1,4 +1,4 @@
-/*	$NetBSD: ecs.c,v 1.5 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: ecs.c,v 1.6 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -47,7 +47,8 @@ dns_ecs_equals(const dns_ecs_t *ecs1, const dns_ecs_t *ecs2) {
 	REQUIRE(ecs1 != NULL && ecs2 != NULL);
 
 	if (ecs1->source != ecs2->source ||
-	    ecs1->addr.family != ecs2->addr.family) {
+	    ecs1->addr.family != ecs2->addr.family)
+	{
 		return (false);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.c,v 1.10 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.11 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -594,7 +594,8 @@ getnodedata(dns_db_t *db, const dns_name_t *name, bool create,
 	 * for wildcards at each level.
 	 */
 	if (result == ISC_R_NOTFOUND && !create &&
-	    (options & DNS_DBFIND_NOWILD) == 0) {
+	    (options & DNS_DBFIND_NOWILD) == 0)
+	{
 		unsigned int i, dlabels, nlabels;
 
 		nlabels = dns_name_countlabels(name);
@@ -768,7 +769,8 @@ createiterator(dns_db_t *db, unsigned int options,
 	}
 
 	if ((options & DNS_DB_NSEC3ONLY) != 0 ||
-	    (options & DNS_DB_NONSEC3) != 0) {
+	    (options & DNS_DB_NONSEC3) != 0)
+	{
 		return (ISC_R_NOTIMPLEMENTED);
 	}
 
@@ -936,11 +938,13 @@ findext(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 					      rdataset, sigrdataset);
 
 			if (result == ISC_R_SUCCESS && i == nlabels &&
-			    type == dns_rdatatype_any) {
+			    type == dns_rdatatype_any)
+			{
 				result = DNS_R_ZONECUT;
 				dns_rdataset_disassociate(rdataset);
 				if (sigrdataset != NULL &&
-				    dns_rdataset_isassociated(sigrdataset)) {
+				    dns_rdataset_isassociated(sigrdataset))
+				{
 					dns_rdataset_disassociate(sigrdataset);
 				}
 				break;
@@ -1022,7 +1026,8 @@ find(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 
 static isc_result_t
 allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
-	     isc_stdtime_t now, dns_rdatasetiter_t **iteratorp) {
+	     unsigned int options, isc_stdtime_t now,
+	     dns_rdatasetiter_t **iteratorp) {
 	dns_sdlz_db_t *sdlz = (dns_sdlz_db_t *)db;
 	sdlz_rdatasetiter_t *iterator;
 
@@ -1042,6 +1047,7 @@ allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	iterator->common.node = NULL;
 	attachnode(db, node, &iterator->common.node);
 	iterator->common.version = version;
+	iterator->common.options = options;
 	iterator->common.now = now;
 
 	*iteratorp = (dns_rdatasetiter_t *)iterator;
@@ -1962,7 +1968,8 @@ dns_sdlz_putnamedrr(dns_sdlzallnodes_t *allnodes, const char *name,
 		dns_name_dup(newname, mctx, sdlznode->name);
 		ISC_LIST_PREPEND(allnodes->nodelist, sdlznode, link);
 		if (allnodes->origin == NULL &&
-		    dns_name_equal(newname, &sdlz->common.origin)) {
+		    dns_name_equal(newname, &sdlz->common.origin))
+		{
 			allnodes->origin = sdlznode;
 		}
 	}

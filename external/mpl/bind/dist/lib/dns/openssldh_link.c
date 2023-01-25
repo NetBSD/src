@@ -1,4 +1,4 @@
-/*	$NetBSD: openssldh_link.c,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -275,7 +275,8 @@ openssldh_generate(dst_key_t *key, int generator, void (*callback)(int)) {
 
 	if (generator == 0) {
 		if (key->key_size == 768 || key->key_size == 1024 ||
-		    key->key_size == 1536) {
+		    key->key_size == 1536)
+		{
 			BIGNUM *p, *g;
 			dh = DH_new();
 			if (key->key_size == 768) {
@@ -325,7 +326,8 @@ openssldh_generate(dst_key_t *key, int generator, void (*callback)(int)) {
 		}
 
 		if (!DH_generate_parameters_ex(dh, key->key_size, generator,
-					       cb)) {
+					       cb))
+		{
 			DH_free(dh);
 			BN_GENCB_free(cb);
 			return (dst__openssl_toresult2("DH_generate_parameters_"

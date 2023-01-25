@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.8 2022/09/23 12:15:32 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.9 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -262,12 +262,14 @@ found:
 		 */
 	} else if ((flags & NI_NUMERICHOST) != 0) {
 		if (inet_ntop(afd->a_af, addr, numaddr, sizeof(numaddr)) ==
-		    NULL) {
+		    NULL)
+		{
 			ERR(EAI_SYSTEM);
 		}
 #if defined(IRS_HAVE_SIN6_SCOPE_ID)
 		if (afd->a_af == AF_INET6 &&
-		    ((const struct sockaddr_in6 *)sa)->sin6_scope_id) {
+		    ((const struct sockaddr_in6 *)sa)->sin6_scope_id)
+		{
 			char *p = numaddr + strlen(numaddr);
 			const char *stringscope = NULL;
 #ifdef VENDOR_SPECIFIC
@@ -421,7 +423,8 @@ found:
 				ERR(EAI_NONAME);
 			}
 			if (inet_ntop(afd->a_af, addr, numaddr,
-				      sizeof(numaddr)) == NULL) {
+				      sizeof(numaddr)) == NULL)
+			{
 				ERR(EAI_SYSTEM);
 			}
 			if ((strlen(numaddr) + 1) > hostlen) {

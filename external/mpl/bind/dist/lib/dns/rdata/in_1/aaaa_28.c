@@ -1,4 +1,4 @@
-/*	$NetBSD: aaaa_28.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: aaaa_28.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -239,7 +239,8 @@ checkowner_in_aaaa(ARGS_CHECKOWNER) {
 		dns_name_split(name, dns_name_countlabels(name) - 2, &prefix,
 			       &suffix);
 		if (dns_name_equal(&gc_msdcs, &prefix) &&
-		    dns_name_ishostname(&suffix, false)) {
+		    dns_name_ishostname(&suffix, false))
+		{
 			return (true);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.17 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.18 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -244,10 +244,8 @@ ns_client_endrequest(ns_client_t *client) {
 	 */
 	if (client->recursionquota != NULL) {
 		isc_quota_detach(&client->recursionquota);
-		if (client->query.prefetch == NULL) {
-			ns_stats_decrement(client->sctx->nsstats,
-					   ns_statscounter_recursclients);
-		}
+		ns_stats_decrement(client->sctx->nsstats,
+				   ns_statscounter_recursclients);
 	}
 
 	/*
@@ -2520,6 +2518,19 @@ cleanup_reclock:
 	isc_mem_put(mctx, manager, sizeof(*manager));
 
 	return (result);
+}
+
+void
+ns_clientmgr_shutdown(ns_clientmgr_t *manager) {
+	REQUIRE(VALID_MANAGER(manager));
+
+	LOCK(&manager->reclock);
+	for (ns_client_t *client = ISC_LIST_HEAD(manager->recursing);
+	     client != NULL; client = ISC_LIST_NEXT(client, rlink))
+	{
+		ns_query_cancel(client);
+	}
+	UNLOCK(&manager->reclock);
 }
 
 void

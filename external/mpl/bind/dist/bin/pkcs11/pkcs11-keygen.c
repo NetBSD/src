@@ -1,4 +1,4 @@
-/*	$NetBSD: pkcs11-keygen.c,v 1.6 2022/09/23 12:15:22 christos Exp $	*/
+/*	$NetBSD: pkcs11-keygen.c,v 1.7 2023/01/25 21:43:23 christos Exp $	*/
 
 /*
  * Copyright (C) 2009, 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
@@ -157,14 +157,16 @@ keyclass_fromtext(const char *name) {
 	}
 
 	if (strncasecmp(name, "rsa", 3) == 0 ||
-	    strncasecmp(name, "nsec3rsa", 8) == 0) {
+	    strncasecmp(name, "nsec3rsa", 8) == 0)
+	{
 		return (key_rsa);
 	} else if (strncasecmp(name, "ecc", 3) == 0 ||
 		   strncasecmp(name, "ecdsa", 5) == 0)
 	{
 		return (key_ecc);
 	} else if (strncasecmp(name, "ecx", 3) == 0 ||
-		   strncasecmp(name, "ed", 2) == 0) {
+		   strncasecmp(name, "ed", 2) == 0)
+	{
 		return (key_ecx);
 	} else {
 		return (key_unknown);

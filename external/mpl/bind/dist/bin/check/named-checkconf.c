@@ -1,4 +1,4 @@
-/*	$NetBSD: named-checkconf.c,v 1.8 2022/09/23 12:15:20 christos Exp $	*/
+/*	$NetBSD: named-checkconf.c,v 1.9 2023/01/25 21:43:22 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -403,6 +403,17 @@ configure_zone(const char *vclass, const char *view, const cfg_obj_t *zconfig,
 		}
 	} else {
 		zone_options |= DNS_ZONEOPT_CHECKSPF;
+	}
+
+	obj = NULL;
+	if (get_maps(maps, "check-wildcard", &obj)) {
+		if (cfg_obj_asboolean(obj)) {
+			zone_options |= DNS_ZONEOPT_CHECKWILDCARD;
+		} else {
+			zone_options &= ~DNS_ZONEOPT_CHECKWILDCARD;
+		}
+	} else {
+		zone_options |= DNS_ZONEOPT_CHECKWILDCARD;
 	}
 
 	obj = NULL;

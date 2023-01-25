@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.11 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.12 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -368,7 +368,7 @@ foreach_rrset(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 	}
 
 	iter = NULL;
-	result = dns_db_allrdatasets(db, node, ver, (isc_stdtime_t)0, &iter);
+	result = dns_db_allrdatasets(db, node, ver, 0, (isc_stdtime_t)0, &iter);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup_node;
 	}
@@ -1226,7 +1226,8 @@ add_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 				continue;
 			} else if (zsk &&
 				   !dst_key_is_signing(keys[i], DST_BOOL_ZSK,
-						       inception, &when)) {
+						       inception, &when))
+			{
 				/*
 				 * This key is not active for zone-signing.
 				 */
@@ -1341,7 +1342,8 @@ del_keysigs(dns_db_t *db, dns_dbversion_t *ver, dns_name_t *name,
 			if (rrsig.keyid == dst_key_id(keys[i])) {
 				found = true;
 				if (!dst_key_isprivate(keys[i]) &&
-				    !dst_key_inactive(keys[i])) {
+				    !dst_key_inactive(keys[i]))
+				{
 					/*
 					 * The re-signing code in zone.c
 					 * will mark this as offline.
@@ -1398,7 +1400,7 @@ add_exposed_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 	}
 
 	iter = NULL;
-	result = dns_db_allrdatasets(db, node, ver, (isc_stdtime_t)0, &iter);
+	result = dns_db_allrdatasets(db, node, ver, 0, (isc_stdtime_t)0, &iter);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup_node;
 	}
@@ -1420,7 +1422,8 @@ add_exposed_sigs(dns_update_log_t *log, dns_zone_t *zone, dns_db_t *db,
 		 * as they are handled elsewhere.
 		 */
 		if ((type == dns_rdatatype_rrsig) ||
-		    (cut && type != dns_rdatatype_ds)) {
+		    (cut && type != dns_rdatatype_ds))
+		{
 			continue;
 		}
 		result = rrset_exists(db, ver, name, dns_rdatatype_rrsig, type,
@@ -1698,7 +1701,8 @@ next_state:
 				/* Skip any other updates to the same RRset. */
 				while (t != NULL &&
 				       dns_name_equal(&t->name, name) &&
-				       t->rdata.type == type) {
+				       t->rdata.type == type)
+				{
 					next = ISC_LIST_NEXT(t, link);
 					ISC_LIST_UNLINK(diff->tuples, t, link);
 					ISC_LIST_APPEND(state->work.tuples, t,
@@ -1820,7 +1824,8 @@ next_state:
 					   dns_rdatatype_dname, 0,
 					   &dname_exists));
 			if ((ns_exists || dname_exists) ==
-			    (ns_existed || dname_existed)) {
+			    (ns_existed || dname_existed))
+			{
 				continue;
 			}
 			/*
@@ -2030,7 +2035,8 @@ next_state:
 			bool exists, existed;
 
 			if (t->rdata.type == dns_rdatatype_nsec ||
-			    t->rdata.type == dns_rdatatype_rrsig) {
+			    t->rdata.type == dns_rdatatype_rrsig)
+			{
 				t = ISC_LIST_NEXT(t, link);
 				continue;
 			}

@@ -1,4 +1,4 @@
-/*	$NetBSD: byaddr.c,v 1.7 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: byaddr.c,v 1.8 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -178,7 +178,8 @@ bevent_destroy(isc_event_t *event) {
 	bevent = (dns_byaddrevent_t *)event;
 
 	for (name = ISC_LIST_HEAD(bevent->names); name != NULL;
-	     name = next_name) {
+	     name = next_name)
+	{
 		next_name = ISC_LIST_NEXT(name, link);
 		ISC_LIST_UNLINK(bevent->names, name, link);
 		dns_name_free(name, mctx);

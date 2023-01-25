@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_test.c,v 1.6 2022/09/23 12:15:23 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.7 2023/01/25 21:43:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -218,7 +218,8 @@ iterate(dns_rbt_t *rbt, bool forward) {
 			}
 
 			if (result == ISC_R_SUCCESS ||
-			    result == DNS_R_NEWORIGIN) {
+			    result == DNS_R_NEWORIGIN)
+			{
 				print_name(&foundname);
 				printf("\n");
 			} else {

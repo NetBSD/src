@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_list.h,v 1.5 2022/09/23 12:15:28 christos Exp $	*/
+/*	$NetBSD: dlz_list.h,v 1.6 2023/01/25 21:43:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -57,5 +57,19 @@
 
 #define DLZ_LIST_PREV(elt, link) ((elt)->link.prev)
 #define DLZ_LIST_NEXT(elt, link) ((elt)->link.next)
+
+#define DLZ_LIST_UNLINK(list, elt, link)                                \
+	do {                                                            \
+		if ((elt)->link.next != NULL)                           \
+			(elt)->link.next->link.prev = (elt)->link.prev; \
+		else                                                    \
+			(list).tail = (elt)->link.prev;                 \
+		if ((elt)->link.prev != NULL)                           \
+			(elt)->link.prev->link.next = (elt)->link.next; \
+		else                                                    \
+			(list).head = (elt)->link.next;                 \
+		(elt)->link.prev = (void *)(-1);                        \
+		(elt)->link.next = (void *)(-1);                        \
+	} while (0)
 
 #endif /* DLZ_LIST_H */

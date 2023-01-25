@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata_test.c,v 1.11 2022/09/23 12:15:32 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.12 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2543,7 +2543,7 @@ static void
 https_svcb(void **state) {
 	/*
 	 * Known keys: mandatory, apln, no-default-alpn, port,
-	 *             ipv4hint, port, ipv6hint.
+	 *             ipv4hint, port, ipv6hint, dohpath.
 	 */
 	text_ok_t text_ok[] = {
 		/* unknown key invalid */
@@ -2562,9 +2562,9 @@ https_svcb(void **state) {
 		TEXT_INVALID("2 svc.example.net. key=\"2222\""),
 		/* zero pad invalid */
 		TEXT_INVALID("2 svc.example.net. key07=\"2222\""),
-		TEXT_VALID_LOOP(1, "2 svc.example.net. key7=\"2222\""),
-		TEXT_VALID_LOOPCHG(1, "2 svc.example.net. key7=2222",
-				   "2 svc.example.net. key7=\"2222\""),
+		TEXT_VALID_LOOP(1, "2 svc.example.net. key8=\"2222\""),
+		TEXT_VALID_LOOPCHG(1, "2 svc.example.net. key8=2222",
+				   "2 svc.example.net. key8=\"2222\""),
 		TEXT_VALID_LOOPCHG(1, "2 svc.example.net. alpn=h2",
 				   "2 svc.example.net. alpn=\"h2\""),
 		TEXT_VALID_LOOPCHG(1, "2 svc.example.net. alpn=h3",
@@ -2592,12 +2592,12 @@ https_svcb(void **state) {
 		TEXT_VALID_LOOP(1, "2 svc.example.net. ech=abcdefghijkl"),
 		/* bad base64 */
 		TEXT_INVALID("2 svc.example.net. ech=abcdefghijklm"),
-		TEXT_VALID_LOOP(1, "2 svc.example.net. key7=\"2222\""),
+		TEXT_VALID_LOOP(1, "2 svc.example.net. key8=\"2222\""),
 		/* Out of key order on input (alpn == key1). */
 		TEXT_VALID_LOOPCHG(2,
-				   "2 svc.example.net. key7=\"2222\" alpn=h2",
+				   "2 svc.example.net. key8=\"2222\" alpn=h2",
 				   "2 svc.example.net. alpn=\"h2\" "
-				   "key7=\"2222\""),
+				   "key8=\"2222\""),
 		TEXT_VALID_LOOP(1, "2 svc.example.net. key65535=\"2222\""),
 		TEXT_INVALID("2 svc.example.net. key65536=\"2222\""),
 		TEXT_VALID_LOOP(1, "2 svc.example.net. key10"),
@@ -2628,18 +2628,18 @@ https_svcb(void **state) {
 		TEXT_INVALID("2 svc.example.net. "
 			     "mandatory=alpn,,port alpn=h2 port=433"),
 		/* mandatory w/ unknown key values */
-		TEXT_VALID_LOOP(2, "2 svc.example.net. mandatory=key7 key7"),
-		TEXT_VALID_LOOP(3, "2 svc.example.net. mandatory=key7,key8 "
-				   "key7 key8"),
+		TEXT_VALID_LOOP(2, "2 svc.example.net. mandatory=key8 key8"),
+		TEXT_VALID_LOOP(3, "2 svc.example.net. mandatory=key8,key9 "
+				   "key8 key9"),
 		TEXT_VALID_LOOPCHG(
-			3, "2 svc.example.net. mandatory=key8,key7 key7 key8",
-			"2 svc.example.net. mandatory=key7,key8 key7 key8"),
+			3, "2 svc.example.net. mandatory=key9,key8 key8 key9",
+			"2 svc.example.net. mandatory=key8,key9 key8 key9"),
 		TEXT_INVALID("2 svc.example.net. "
-			     "mandatory=key7,key7"),
-		TEXT_INVALID("2 svc.example.net. mandatory=,key7"),
-		TEXT_INVALID("2 svc.example.net. mandatory=key7,"),
+			     "mandatory=key8,key8"),
+		TEXT_INVALID("2 svc.example.net. mandatory=,key8"),
+		TEXT_INVALID("2 svc.example.net. mandatory=key8,"),
 		TEXT_INVALID("2 svc.example.net. "
-			     "mandatory=key7,,key7"),
+			     "mandatory=key8,,key8"),
 		/* Invalid test vectors */
 		TEXT_INVALID("1 foo.example.com. ( key123=abc key123=def )"),
 		TEXT_INVALID("1 foo.example.com. mandatory"),
@@ -2652,6 +2652,14 @@ https_svcb(void **state) {
 		TEXT_INVALID("1 foo.example.com. mandatory=mandatory"),
 		TEXT_INVALID("1 foo.example.com. ( mandatory=key123,key123 "
 			     "key123=abc)"),
+		/* dohpath tests */
+		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=/{?dns}",
+				   "1 example.net. key7=\"/{?dns}\""),
+		TEXT_VALID_LOOPCHG(1, "1 example.net. dohpath=/some/path{?dns}",
+				   "1 example.net. key7=\"/some/path{?dns}\""),
+		TEXT_INVALID("1 example.com. dohpath=no-slash"),
+		TEXT_INVALID("1 example.com. dohpath=/{?notdns}"),
+		TEXT_INVALID("1 example.com. dohpath=/notvariable"),
 		TEXT_SENTINEL()
 
 	};

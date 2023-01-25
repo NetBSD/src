@@ -1,4 +1,4 @@
-/*	$NetBSD: rootns.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rootns.c,v 1.7 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -178,7 +178,7 @@ check_hints(dns_db_t *db) {
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
-		result = dns_db_allrdatasets(db, node, NULL, now, &rdsiter);
+		result = dns_db_allrdatasets(db, node, NULL, 0, now, &rdsiter);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
@@ -295,7 +295,8 @@ report(dns_view_t *view, dns_name_t *name, bool missing, dns_rdata_t *rdata) {
 	isc_result_t result;
 
 	if (strcmp(view->name, "_bind") != 0 &&
-	    strcmp(view->name, "_default") != 0) {
+	    strcmp(view->name, "_default") != 0)
+	{
 		viewname = view->name;
 		sep = ": view ";
 	}
@@ -472,7 +473,8 @@ dns_root_checkhints(dns_view_t *view, dns_db_t *hints, dns_db_t *db) {
 	isc_stdtime_get(&now);
 
 	if (strcmp(view->name, "_bind") != 0 &&
-	    strcmp(view->name, "_default") != 0) {
+	    strcmp(view->name, "_default") != 0)
+	{
 		viewname = view->name;
 		sep = ": view ";
 	}

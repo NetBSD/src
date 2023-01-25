@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.7 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -955,7 +955,8 @@ dns_rdataslab_equal(unsigned char *slab1, unsigned char *slab2,
 #endif /* if DNS_RDATASET_FIXED */
 
 		if (length1 != length2 ||
-		    memcmp(current1, current2, length1) != 0) {
+		    memcmp(current1, current2, length1) != 0)
+		{
 			return (false);
 		}
 

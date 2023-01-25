@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.8 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -250,6 +250,8 @@ free_buffer(isc_mem_t *mctx, isc_buffer_t *buffer) {
 	if (r.length > 0) {
 		isc_mem_put(mctx, r.base, r.length);
 	}
+
+	isc_buffer_initnull(buffer);
 }
 
 static void
@@ -654,7 +656,8 @@ process_request(isc_httpd_t *httpd, int length) {
 	 * HTTP/1.0 or HTTP/1.1 for now.
 	 */
 	while (LENGTHOK(s) && BUFLENOK(s) &&
-	       (*s != '\n' && *s != '\r' && *s != '\0')) {
+	       (*s != '\n' && *s != '\r' && *s != '\0'))
+	{
 		s++;
 	}
 	if (!LENGTHOK(s)) {
@@ -671,7 +674,8 @@ process_request(isc_httpd_t *httpd, int length) {
 	}
 	*s = 0;
 	if ((strncmp(p, "HTTP/1.0", 8) != 0) &&
-	    (strncmp(p, "HTTP/1.1", 8) != 0)) {
+	    (strncmp(p, "HTTP/1.1", 8) != 0))
+	{
 		return (ISC_R_RANGE);
 	}
 	httpd->protocol = p;
@@ -914,6 +918,7 @@ isc_httpd_compress(isc_httpd_t *httpd) {
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
+	isc_buffer_clear(&httpd->compbuffer);
 	isc_buffer_region(&httpd->compbuffer, &r);
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.13 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.14 2023/01/25 21:43:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -132,6 +132,7 @@ options {\n\
 	transfers-out 10;\n\
 	transfers-per-ns 2;\n\
 	trust-anchor-telemetry yes;\n\
+	update-quota 100;\n\
 \n\
 	/* view */\n\
 	allow-new-zones no;\n\
@@ -365,7 +366,8 @@ named_checknames_get(const cfg_obj_t **maps, const char *const names[],
 	for (i = 0; maps[i] != NULL; i++) {
 		checknames = NULL;
 		if (cfg_map_get(maps[i], "check-names", &checknames) ==
-		    ISC_R_SUCCESS) {
+		    ISC_R_SUCCESS)
+		{
 			/*
 			 * Zone map entry is not a list.
 			 */
@@ -381,7 +383,8 @@ named_checknames_get(const cfg_obj_t **maps, const char *const names[],
 
 				for (size_t j = 0; names[j] != NULL; j++) {
 					if (strcasecmp(cfg_obj_asstring(type),
-						       names[j]) == 0) {
+						       names[j]) == 0)
+					{
 						*obj = cfg_tuple_get(value,
 								     "mode");
 						return (ISC_R_SUCCESS);
@@ -454,7 +457,8 @@ named_config_getzonetype(const cfg_obj_t *zonetypeobj) {
 	if (strcasecmp(str, "primary") == 0 || strcasecmp(str, "master") == 0) {
 		ztype = dns_zone_primary;
 	} else if (strcasecmp(str, "secondary") == 0 ||
-		   strcasecmp(str, "slave") == 0) {
+		   strcasecmp(str, "slave") == 0)
+	{
 		ztype = dns_zone_secondary;
 	} else if (strcasecmp(str, "mirror") == 0) {
 		ztype = dns_zone_mirror;
@@ -592,7 +596,8 @@ getremotesdef(const cfg_obj_t *cctx, const char *list, const char *name,
 	while (elt != NULL) {
 		obj = cfg_listelt_value(elt);
 		if (strcasecmp(cfg_obj_asstring(cfg_tuple_get(obj, "name")),
-			       name) == 0) {
+			       name) == 0)
+		{
 			*ret = obj;
 			return (ISC_R_SUCCESS);
 		}

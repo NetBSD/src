@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.12 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.13 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -508,7 +508,8 @@ typemap_totext(isc_region_t *sr, dns_rdata_textctx_t *tctx,
 
 	for (i = 0; i < sr->length; i += len) {
 		if (tctx != NULL &&
-		    (tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
+		    (tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+		{
 			RETERR(str_totext(tctx->linebreak, target));
 			first = true;
 		}
@@ -987,7 +988,8 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 
 	unknown = false;
 	if (token.type == isc_tokentype_string &&
-	    strcmp(DNS_AS_STR(token), "\\#") == 0) {
+	    strcmp(DNS_AS_STR(token), "\\#") == 0)
+	{
 		/*
 		 * If this is a TXT record '\#' could be a escaped '#'.
 		 * Look to see if the next token is a number and if so
@@ -1035,7 +1037,8 @@ dns_rdata_fromtext(dns_rdata_t *rdata, dns_rdataclass_t rdclass,
 			}
 			break;
 		} else if (token.type != isc_tokentype_eol &&
-			   token.type != isc_tokentype_eof) {
+			   token.type != isc_tokentype_eof)
+		{
 			if (result == ISC_R_SUCCESS) {
 				result = DNS_R_EXTRATOKEN;
 			}
@@ -1111,7 +1114,8 @@ unknown_totext(dns_rdata_t *rdata, dns_rdata_textctx_t *tctx,
 						tctx->linebreak, target);
 		}
 		if (result == ISC_R_SUCCESS &&
-		    (tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
+		    (tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0)
+		{
 			result = str_totext(" )", target);
 		}
 	}
@@ -2195,7 +2199,8 @@ dns_rdatatype_issingleton(dns_rdatatype_t type) {
 bool
 dns_rdatatype_notquestion(dns_rdatatype_t type) {
 	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_NOTQUESTION) !=
-	    0) {
+	    0)
+	{
 		return (true);
 	}
 	return (false);
@@ -2204,7 +2209,8 @@ dns_rdatatype_notquestion(dns_rdatatype_t type) {
 bool
 dns_rdatatype_questiononly(dns_rdatatype_t type) {
 	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_QUESTIONONLY) !=
-	    0) {
+	    0)
+	{
 		return (true);
 	}
 	return (false);
@@ -2230,7 +2236,8 @@ dns_rdatatype_atparent(dns_rdatatype_t type) {
 bool
 dns_rdatatype_followadditional(dns_rdatatype_t type) {
 	if ((dns_rdatatype_attributes(type) &
-	     DNS_RDATATYPEATTR_FOLLOWADDITIONAL) != 0) {
+	     DNS_RDATATYPEATTR_FOLLOWADDITIONAL) != 0)
+	{
 		return (true);
 	}
 	return (false);
@@ -2258,7 +2265,8 @@ dns_rdatatype_isdnssec(dns_rdatatype_t type) {
 bool
 dns_rdatatype_iszonecutauth(dns_rdatatype_t type) {
 	if ((dns_rdatatype_attributes(type) & DNS_RDATATYPEATTR_ZONECUTAUTH) !=
-	    0) {
+	    0)
+	{
 		return (true);
 	}
 	return (false);

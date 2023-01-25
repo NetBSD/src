@@ -1,4 +1,4 @@
-/*	$NetBSD: nstest.c,v 1.7 2022/09/23 12:15:36 christos Exp $	*/
+/*	$NetBSD: nstest.c,v 1.8 2023/01/25 21:43:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -985,7 +985,8 @@ ns_test_getdata(const char *file, unsigned char *buf, size_t bufsiz,
 				break;
 			}
 			if (*rp != ' ' && *rp != '\t' && *rp != '\r' &&
-			    *rp != '\n') {
+			    *rp != '\n')
+			{
 				*wp++ = *rp;
 				len++;
 			}

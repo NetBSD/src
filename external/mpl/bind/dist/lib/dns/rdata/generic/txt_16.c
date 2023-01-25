@@ -1,4 +1,4 @@
-/*	$NetBSD: txt_16.c,v 1.8 2022/09/23 12:15:31 christos Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,7 +41,8 @@ generic_fromtext_txt(ARGS_FROMTEXT) {
 		RETERR(isc_lex_getmastertoken(lexer, &token,
 					      isc_tokentype_qstring, true));
 		if (token.type != isc_tokentype_qstring &&
-		    token.type != isc_tokentype_string) {
+		    token.type != isc_tokentype_string)
+		{
 			break;
 		}
 		RETTOK(txt_fromtext(&token.value.as_textregion, target));

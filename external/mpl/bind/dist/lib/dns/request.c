@@ -1,4 +1,4 @@
-/*	$NetBSD: request.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.7 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -902,7 +902,8 @@ dns_request_createvia(dns_requestmgr_t *requestmgr, dns_message_t *message,
 	req_log(ISC_LOG_DEBUG(3), "dns_request_createvia");
 
 	if (srcaddr != NULL &&
-	    isc_sockaddr_pf(srcaddr) != isc_sockaddr_pf(destaddr)) {
+	    isc_sockaddr_pf(srcaddr) != isc_sockaddr_pf(destaddr))
+	{
 		return (ISC_R_FAMILYMISMATCH);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zt_test.c,v 1.9 2022/09/23 12:15:32 christos Exp $	*/
+/*	$NetBSD: zt_test.c,v 1.10 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -140,8 +140,8 @@ apply(void **state) {
 	assert_non_null(view->zonetable);
 
 	assert_int_equal(nzones, 0);
-	result = dns_zt_apply(view->zonetable, false, NULL, count_zone,
-			      &nzones);
+	result = dns_zt_apply(view->zonetable, isc_rwlocktype_read, false, NULL,
+			      count_zone, &nzones);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	assert_int_equal(nzones, 1);
 

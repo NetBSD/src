@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.8 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -686,7 +686,8 @@ dns_db_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 
 isc_result_t
 dns_db_allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
-		    isc_stdtime_t now, dns_rdatasetiter_t **iteratorp) {
+		    unsigned int options, isc_stdtime_t now,
+		    dns_rdatasetiter_t **iteratorp) {
 	/*
 	 * Make '*iteratorp' an rdataset iteratator for all rdatasets at
 	 * 'node' in version 'version' of 'db'.
@@ -695,7 +696,8 @@ dns_db_allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	REQUIRE(DNS_DB_VALID(db));
 	REQUIRE(iteratorp != NULL && *iteratorp == NULL);
 
-	return ((db->methods->allrdatasets)(db, node, version, now, iteratorp));
+	return ((db->methods->allrdatasets)(db, node, version, options, now,
+					    iteratorp));
 }
 
 isc_result_t
@@ -1015,7 +1017,7 @@ dns_db_rpz_ready(dns_db_t *db) {
 	return ((db->methods->rpz_ready)(db));
 }
 
-/**
+/*
  * Attach a notify-on-update function the database
  */
 isc_result_t
@@ -1025,6 +1027,16 @@ dns_db_updatenotify_register(dns_db_t *db, dns_dbupdate_callback_t fn,
 
 	REQUIRE(db != NULL);
 	REQUIRE(fn != NULL);
+
+	for (listener = ISC_LIST_HEAD(db->update_listeners); listener != NULL;
+	     listener = ISC_LIST_NEXT(listener, link))
+	{
+		if ((listener->onupdate == fn) &&
+		    (listener->onupdate_arg == fn_arg))
+		{
+			return (ISC_R_SUCCESS);
+		}
+	}
 
 	listener = isc_mem_get(db->mctx, sizeof(dns_dbonupdatelistener_t));
 
@@ -1048,7 +1060,8 @@ dns_db_updatenotify_unregister(dns_db_t *db, dns_dbupdate_callback_t fn,
 	     listener = ISC_LIST_NEXT(listener, link))
 	{
 		if ((listener->onupdate == fn) &&
-		    (listener->onupdate_arg == fn_arg)) {
+		    (listener->onupdate_arg == fn_arg))
+		{
 			ISC_LIST_UNLINK(db->update_listeners, listener, link);
 			isc_mem_put(db->mctx, listener,
 				    sizeof(dns_dbonupdatelistener_t));

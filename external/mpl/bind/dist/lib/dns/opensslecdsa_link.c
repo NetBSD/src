@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslecdsa_link.c,v 1.6 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: opensslecdsa_link.c,v 1.7 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -468,7 +468,8 @@ opensslecdsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	memmove(buf + 1, r.base, len);
 	cp = buf;
 	if (o2i_ECPublicKey(&eckey, (const unsigned char **)&cp,
-			    (long)len + 1) == NULL) {
+			    (long)len + 1) == NULL)
+	{
 		DST_RET(dst__openssl_toresult(DST_R_INVALIDPUBLICKEY));
 	}
 	if (EC_KEY_check_key(eckey) != 1) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.3 2022/09/23 12:15:23 christos Exp $	*/
+/*	$NetBSD: resolve.c,v 1.4 2023/01/25 21:43:24 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -260,7 +260,8 @@ main(int argc, char *argv[]) {
 	isc_sockaddr_t *addr4 = NULL, *addr6 = NULL;
 
 	while ((ch = isc_commandline_parse(argc, argv, "a:b:es:t:k:K:p:S:")) !=
-	       -1) {
+	       -1)
+	{
 		switch (ch) {
 		case 't':
 			tr.base = isc_commandline_argument;
@@ -277,7 +278,8 @@ main(int argc, char *argv[]) {
 			break;
 		case 'b':
 			if (inet_pton(AF_INET, isc_commandline_argument,
-				      &in4) == 1) {
+				      &in4) == 1)
+			{
 				if (addr4 != NULL) {
 					fprintf(stderr, "only one local "
 							"address per family "
@@ -287,7 +289,8 @@ main(int argc, char *argv[]) {
 				isc_sockaddr_fromin(&a4, &in4, 0);
 				addr4 = &a4;
 			} else if (inet_pton(AF_INET6, isc_commandline_argument,
-					     &in6) == 1) {
+					     &in6) == 1)
+			{
 				if (addr6 != NULL) {
 					fprintf(stderr, "only one local "
 							"address per family "

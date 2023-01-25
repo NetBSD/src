@@ -1,4 +1,4 @@
-/*	$NetBSD: dlz_ldap_dynamic.c,v 1.5 2022/09/23 12:15:28 christos Exp $	*/
+/*	$NetBSD: dlz_ldap_dynamic.c,v 1.6 2023/01/25 21:43:29 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1000,11 +1000,13 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
+		FALLTHROUGH;
 	case 11:
 		result = dlz_ldap_checkURL(ldap, argv[10], 3, "all nodes");
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup;
 		}
+		FALLTHROUGH;
 	case 10:
 		if (strlen(argv[9]) > 0) {
 			result = dlz_ldap_checkURL(ldap, argv[9], 3,
@@ -1013,6 +1015,7 @@ dlz_create(const char *dlzname, unsigned int argc, char *argv[], void **dbdata,
 				goto cleanup;
 			}
 		}
+		FALLTHROUGH;
 	case 9:
 		result = dlz_ldap_checkURL(ldap, argv[8], 3, "lookup");
 		if (result != ISC_R_SUCCESS) {

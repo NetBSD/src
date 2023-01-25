@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.13 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.14 2023/01/25 21:43:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -518,7 +518,8 @@ get_server_list(irs_resconf_t *resconf) {
 	debug("get_server_list()");
 	servers = irs_resconf_getnameservers(resconf);
 	for (sa = ISC_LIST_HEAD(*servers); sa != NULL;
-	     sa = ISC_LIST_NEXT(sa, link)) {
+	     sa = ISC_LIST_NEXT(sa, link))
+	{
 		int pf = isc_sockaddr_pf(sa);
 		isc_netaddr_t na;
 		isc_result_t result;
@@ -1563,7 +1564,8 @@ check_if_done(void) {
 	debug("check_if_done()");
 	debug("list %s", ISC_LIST_EMPTY(lookup_list) ? "empty" : "full");
 	if (ISC_LIST_EMPTY(lookup_list) && current_lookup == NULL &&
-	    sendcount == 0) {
+	    sendcount == 0)
+	{
 		INSIST(sockcount == 0);
 		INSIST(recvcount == 0);
 		debug("shutting down");
@@ -1846,7 +1848,8 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section) {
 			dns_rdata_ns_t ns;
 
 			if (query->lookup->trace_root &&
-			    query->lookup->nsfound >= MXSERV) {
+			    query->lookup->nsfound >= MXSERV)
+			{
 				break;
 			}
 
@@ -1867,7 +1870,8 @@ followup_lookup(dns_message_t *msg, dig_query_t *query, dns_section_t section) {
 				cancel_lookup(query->lookup);
 				lookup->doing_xfr = false;
 				if (!lookup->trace_root &&
-				    section == DNS_SECTION_ANSWER) {
+				    section == DNS_SECTION_ANSWER)
+				{
 					lookup->trace = false;
 				} else {
 					lookup->trace = query->lookup->trace;
@@ -2623,7 +2627,8 @@ send_done(isc_task_t *_task, isc_event_t *event) {
 	l = query->lookup;
 
 	if (l == current_lookup && l->ns_search_only && !l->trace_root &&
-	    !l->tcp_mode) {
+	    !l->tcp_mode)
+	{
 		debug("sending next, since searching");
 		next = query->pending_free ? query->saved_next
 					   : ISC_LIST_NEXT(query, link);
@@ -3329,7 +3334,8 @@ connect_done(isc_task_t *task, isc_event_t *event) {
 		isc_event_free(&event);
 		l = query->lookup;
 		if ((l->current_query != NULL) &&
-		    (ISC_LINK_LINKED(l->current_query, link))) {
+		    (ISC_LINK_LINKED(l->current_query, link)))
+		{
 			next = ISC_LIST_NEXT(l->current_query, link);
 		} else {
 			next = NULL;
@@ -3416,13 +3422,15 @@ check_for_more_data(dig_query_t *query, dns_message_t *msg,
 				 * it's an SOA
 				 */
 				if ((!query->first_soa_rcvd) &&
-				    (rdata.type != dns_rdatatype_soa)) {
+				    (rdata.type != dns_rdatatype_soa))
+				{
 					puts("; Transfer failed.  "
 					     "Didn't start with SOA answer.");
 					return (true);
 				}
 				if ((!query->second_rr_rcvd) &&
-				    (rdata.type != dns_rdatatype_soa)) {
+				    (rdata.type != dns_rdatatype_soa))
+				{
 					query->second_rr_rcvd = true;
 					query->second_rr_serial = 0;
 					debug("got the second rr as nonsoa");
@@ -3922,7 +3930,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		return;
 	}
 	if ((msg->flags & DNS_MESSAGEFLAG_TC) != 0 && !l->ignore &&
-	    !l->tcp_mode) {
+	    !l->tcp_mode)
+	{
 		if (l->cookie == NULL && l->sendcookie && msg->opt != NULL) {
 			process_opt(l, msg);
 		}
@@ -3987,7 +3996,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 		 * through to print the message.
 		 */
 		if ((ISC_LIST_HEAD(l->q) != query) ||
-		    (ISC_LIST_NEXT(query, link) != NULL)) {
+		    (ISC_LIST_NEXT(query, link) != NULL))
+		{
 			dighost_comments(l,
 					 "Got %s from %s, trying next "
 					 "server",
@@ -4070,7 +4080,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 	}
 	if (!l->doing_xfr || l->xfr_q == query) {
 		if (msg->rcode == dns_rcode_nxdomain &&
-		    (l->origin != NULL || l->need_search)) {
+		    (l->origin != NULL || l->need_search))
+		{
 			if (!next_origin(query->lookup) || showsearch) {
 				dighost_printmessage(query, &b, msg, true);
 				dighost_received(isc_buffer_usedlength(&b),
@@ -4155,7 +4166,8 @@ recv_done(isc_task_t *task, isc_event_t *event) {
 			query->lookup->pending = false;
 		}
 		if (!query->lookup->ns_search_only ||
-		    query->lookup->trace_root || docancel) {
+		    query->lookup->trace_root || docancel)
+		{
 			dns_message_detach(&msg);
 			cancel_lookup(l);
 		}
@@ -4307,7 +4319,8 @@ cancel_all(void) {
 			}
 		}
 		for (q = ISC_LIST_HEAD(current_lookup->connecting); q != NULL;
-		     q = nq) {
+		     q = nq)
+		{
 			nq = ISC_LIST_NEXT(q, clink);
 			debug("canceling connecting query %p, belonging to %p",
 			      q, current_lookup);

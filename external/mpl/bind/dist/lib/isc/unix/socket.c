@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.24 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.25 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1140,7 +1140,8 @@ process_cmsg(isc_socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 		socket_log(sock, NULL, TRACE, "processing cmsg %p", cmsgp);
 
 		if (cmsgp->cmsg_level == IPPROTO_IPV6 &&
-		    cmsgp->cmsg_type == IPV6_PKTINFO) {
+		    cmsgp->cmsg_type == IPV6_PKTINFO)
+		{
 			pktinfop = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
 			memmove(&dev->pktinfo, pktinfop,
 				sizeof(struct in6_pktinfo));
@@ -1156,7 +1157,8 @@ process_cmsg(isc_socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 
 #ifdef SO_TIMESTAMP
 		if (cmsgp->cmsg_level == SOL_SOCKET &&
-		    cmsgp->cmsg_type == SCM_TIMESTAMP) {
+		    cmsgp->cmsg_type == SCM_TIMESTAMP)
+		{
 			struct timeval tv;
 			timevalp = CMSG_DATA(cmsgp);
 			memmove(&tv, timevalp, sizeof(tv));
@@ -1169,7 +1171,8 @@ process_cmsg(isc_socket_t *sock, struct msghdr *msg, isc_socketevent_t *dev) {
 
 #ifdef IPV6_TCLASS
 		if (cmsgp->cmsg_level == IPPROTO_IPV6 &&
-		    cmsgp->cmsg_type == IPV6_TCLASS) {
+		    cmsgp->cmsg_type == IPV6_TCLASS)
+		{
 			dev->dscp = *(int *)CMSG_DATA(cmsgp);
 			dev->dscp >>= 2;
 			dev->attributes |= ISC_SOCKEVENTATTR_DSCP;
@@ -1306,7 +1309,8 @@ build_msghdr_send(isc_socket_t *sock, char *cmsgbuf, isc_socketevent_t *dev,
 			*(unsigned char *)CMSG_DATA(cmsgp) = dscp;
 		} else if (sock->pf == AF_INET && sock->dscp != dev->dscp) {
 			if (setsockopt(sock->fd, IPPROTO_IP, IP_TOS,
-				       (void *)&dscp, sizeof(int)) < 0) {
+				       (void *)&dscp, sizeof(int)) < 0)
+			{
 				char strbuf[ISC_STRERRORSIZE];
 				strerror_r(errno, strbuf, sizeof(strbuf));
 				UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -1346,7 +1350,8 @@ build_msghdr_send(isc_socket_t *sock, char *cmsgbuf, isc_socketevent_t *dev,
 		}
 #endif /* if defined(IPPROTO_IPV6) && defined(IPV6_TCLASS) */
 		if (msg->msg_controllen != 0 &&
-		    msg->msg_controllen < SENDCMSGBUFLEN) {
+		    msg->msg_controllen < SENDCMSGBUFLEN)
+		{
 			memset(cmsgbuf + msg->msg_controllen, 0,
 			       SENDCMSGBUFLEN - msg->msg_controllen);
 		}
@@ -1608,7 +1613,8 @@ doio_recv(isc_socket_t *sock, isc_socketevent_t *dev) {
 		 * 'maxudp' bytes.
 		 */
 		if (sock->manager->maxudp != 0 &&
-		    cc > (int)sock->manager->maxudp) {
+		    cc > (int)sock->manager->maxudp)
+		{
 			return (DOIO_SOFT);
 		}
 	}
@@ -2324,7 +2330,8 @@ again:
 
 #ifdef SO_NOSIGPIPE
 	if (setsockopt(sock->fd, SOL_SOCKET, SO_NOSIGPIPE, (void *)&on,
-		       sizeof(on)) < 0) {
+		       sizeof(on)) < 0)
+	{
 		strerror_r(errno, strbuf, sizeof(strbuf));
 		UNEXPECTED_ERROR(__FILE__, __LINE__,
 				 "setsockopt(%d, SO_NOSIGPIPE) failed: %s",
@@ -2922,7 +2929,8 @@ internal_accept(isc_socket_t *sock) {
 			(void)close(fd);
 			goto soft_error;
 		} else if (NEWCONNSOCK(dev)->peer_address.type.sa.sa_family !=
-			   sock->pf) {
+			   sock->pf)
+		{
 			UNEXPECTED_ERROR(
 				__FILE__, __LINE__,
 				"internal_accept(): "
@@ -3346,7 +3354,8 @@ process_fds(isc__socketthread_t *thread, struct epoll_event *events,
 			continue;
 		}
 		if ((events[i].events & EPOLLERR) != 0 ||
-		    (events[i].events & EPOLLHUP) != 0) {
+		    (events[i].events & EPOLLHUP) != 0)
+		{
 			/*
 			 * epoll does not set IN/OUT bits on an erroneous
 			 * condition, so we need to try both anyway.  This is a
@@ -4486,7 +4495,8 @@ isc_socket_bind(isc_socket_t *sock, const isc_sockaddr_t *sockaddr,
 	    isc_sockaddr_getport(sockaddr) != (in_port_t)0)
 	{
 		if (setsockopt(sock->fd, SOL_SOCKET, SO_REUSEADDR, (void *)&on,
-			       sizeof(on)) < 0) {
+			       sizeof(on)) < 0)
+		{
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
 					 "setsockopt(%d) failed", sock->fd);
 		}
@@ -4499,7 +4509,8 @@ isc_socket_bind(isc_socket_t *sock, const isc_sockaddr_t *sockaddr,
 		}
 #elif defined(__linux__) && defined(SO_REUSEPORT)
 		if (setsockopt(sock->fd, SOL_SOCKET, SO_REUSEPORT, (void *)&on,
-			       sizeof(on)) < 0) {
+			       sizeof(on)) < 0)
+		{
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
 					 "setsockopt(%d) failed", sock->fd);
 		}
@@ -4561,7 +4572,8 @@ isc_socket_filter(isc_socket_t *sock, const char *filter) {
 	bzero(&afa, sizeof(afa));
 	strlcpy(afa.af_name, filter, sizeof(afa.af_name));
 	if (setsockopt(sock->fd, SOL_SOCKET, SO_ACCEPTFILTER, &afa,
-		       sizeof(afa)) == -1) {
+		       sizeof(afa)) == -1)
+	{
 		strerror_r(errno, strbuf, sizeof(strbuf));
 		socket_log(sock, NULL, CREATION,
 			   "setsockopt(SO_ACCEPTFILTER): %s", strbuf);
@@ -5098,7 +5110,8 @@ isc_socket_cancel(isc_socket_t *sock, isc_task_t *task, unsigned int how) {
 	 *	o Reset any state needed.
 	 */
 	if (((how & ISC_SOCKCANCEL_RECV) != 0) &&
-	    !ISC_LIST_EMPTY(sock->recv_list)) {
+	    !ISC_LIST_EMPTY(sock->recv_list))
+	{
 		isc_socketevent_t *dev;
 		isc_socketevent_t *next;
 		isc_task_t *current_task;
@@ -5118,7 +5131,8 @@ isc_socket_cancel(isc_socket_t *sock, isc_task_t *task, unsigned int how) {
 	}
 
 	if (((how & ISC_SOCKCANCEL_SEND) != 0) &&
-	    !ISC_LIST_EMPTY(sock->send_list)) {
+	    !ISC_LIST_EMPTY(sock->send_list))
+	{
 		isc_socketevent_t *dev;
 		isc_socketevent_t *next;
 		isc_task_t *current_task;
@@ -5138,7 +5152,8 @@ isc_socket_cancel(isc_socket_t *sock, isc_task_t *task, unsigned int how) {
 	}
 
 	if (((how & ISC_SOCKCANCEL_ACCEPT) != 0) &&
-	    !ISC_LIST_EMPTY(sock->accept_list)) {
+	    !ISC_LIST_EMPTY(sock->accept_list))
+	{
 		isc_socket_newconnev_t *dev;
 		isc_socket_newconnev_t *next;
 		isc_task_t *current_task;
@@ -5240,7 +5255,8 @@ setdscp(isc_socket_t *sock, isc_dscp_t dscp) {
 #ifdef IP_TOS
 	if (sock->pf == AF_INET) {
 		if (setsockopt(sock->fd, IPPROTO_IP, IP_TOS, (void *)&value,
-			       sizeof(value)) < 0) {
+			       sizeof(value)) < 0)
+		{
 			char strbuf[ISC_STRERRORSIZE];
 			strerror_r(errno, strbuf, sizeof(strbuf));
 			UNEXPECTED_ERROR(__FILE__, __LINE__,
@@ -5347,7 +5363,8 @@ init_hasreuseport(void) {
 		}
 	}
 	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&yes,
-		       sizeof(yes)) < 0) {
+		       sizeof(yes)) < 0)
+	{
 		close(sock);
 		return;
 #if defined(__FreeBSD_kernel__)

@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.12 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.13 2023/01/25 21:43:30 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1275,7 +1275,8 @@ comparekeys(const dst_key_t *key1, const dst_key_t *key2,
 			return (false);
 		}
 		if (key1->key_id != key2->key_rid &&
-		    key1->key_rid != key2->key_id) {
+		    key1->key_rid != key2->key_id)
+		{
 			return (false);
 		}
 	}
@@ -2299,7 +2300,8 @@ buildfilename(dns_name_t *name, dns_keytag_t id, unsigned int alg,
 		}
 		isc_buffer_putstr(out, directory);
 		if (strlen(directory) > 0U &&
-		    directory[strlen(directory) - 1] != '/') {
+		    directory[strlen(directory) - 1] != '/')
+		{
 			isc_buffer_putstr(out, "/");
 		}
 	}

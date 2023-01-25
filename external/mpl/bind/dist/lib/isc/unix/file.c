@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.6 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.7 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -199,7 +199,8 @@ isc_file_settime(const char *file, isc_time_t *when) {
 	 * Here is the real check for the high bit being set.
 	 */
 	if ((times[0].tv_sec &
-	     (1ULL << (sizeof(times[0].tv_sec) * CHAR_BIT - 1))) != 0) {
+	     (1ULL << (sizeof(times[0].tv_sec) * CHAR_BIT - 1))) != 0)
+	{
 		return (ISC_R_RANGE);
 	}
 

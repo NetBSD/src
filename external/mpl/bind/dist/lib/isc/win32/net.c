@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.7 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.8 2023/01/25 21:43:32 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -138,7 +138,8 @@ try_ipv6only(void) {
 
 	on = 1;
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&on,
-		       sizeof(on)) < 0) {
+		       sizeof(on)) < 0)
+	{
 		ipv6only_result = ISC_R_NOTFOUND;
 		goto close;
 	}
@@ -157,7 +158,8 @@ try_ipv6only(void) {
 
 	on = 1;
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY, (const char *)&on,
-		       sizeof(on)) < 0) {
+		       sizeof(on)) < 0)
+	{
 		ipv6only_result = ISC_R_NOTFOUND;
 		goto close;
 	}
@@ -213,7 +215,8 @@ try_ipv6pktinfo(void) {
 #endif /* ifdef IPV6_RECVPKTINFO */
 	on = 1;
 	if (setsockopt(s, IPPROTO_IPV6, optname, (const char *)&on,
-		       sizeof(on)) < 0) {
+		       sizeof(on)) < 0)
+	{
 		ipv6pktinfo_result = ISC_R_NOTFOUND;
 		goto close;
 	}

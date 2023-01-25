@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.7 2022/09/23 12:15:34 christos Exp $	*/
+/*	$NetBSD: tcp.c,v 1.8 2023/01/25 21:43:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -668,7 +668,8 @@ isc__nm_tcp_stoplistening(isc_nmsocket_t *sock) {
 	REQUIRE(sock->type == isc_nm_tcplistener);
 
 	if (!atomic_compare_exchange_strong(&sock->closing, &(bool){ false },
-					    true)) {
+					    true))
+	{
 		UNREACHABLE();
 	}
 
@@ -803,7 +804,8 @@ isc__nm_tcp_pauseread(isc_nmhandle_t *handle) {
 	REQUIRE(VALID_NMSOCK(sock));
 
 	if (!atomic_compare_exchange_strong(&sock->readpaused, &(bool){ false },
-					    true)) {
+					    true))
+	{
 		return;
 	}
 
@@ -851,7 +853,8 @@ isc__nm_tcp_resumeread(isc_nmhandle_t *handle) {
 	}
 
 	if (!atomic_compare_exchange_strong(&sock->readpaused, &(bool){ true },
-					    false)) {
+					    false))
+	{
 		return;
 	}
 
@@ -1187,7 +1190,8 @@ tcp_stop_cb(uv_handle_t *handle) {
 	REQUIRE(atomic_load(&sock->closing));
 
 	if (!atomic_compare_exchange_strong(&sock->closed, &(bool){ false },
-					    true)) {
+					    true))
+	{
 		UNREACHABLE();
 	}
 
@@ -1205,7 +1209,8 @@ tcp_close_sock(isc_nmsocket_t *sock) {
 	REQUIRE(atomic_load(&sock->closing));
 
 	if (!atomic_compare_exchange_strong(&sock->closed, &(bool){ false },
-					    true)) {
+					    true))
+	{
 		UNREACHABLE();
 	}
 
@@ -1248,7 +1253,8 @@ stop_tcp_child(isc_nmsocket_t *sock) {
 	REQUIRE(sock->tid == isc_nm_tid());
 
 	if (!atomic_compare_exchange_strong(&sock->closing, &(bool){ false },
-					    true)) {
+					    true))
+	{
 		return;
 	}
 
@@ -1326,7 +1332,8 @@ isc__nm_tcp_close(isc_nmsocket_t *sock) {
 	REQUIRE(!isc__nmsocket_active(sock));
 
 	if (!atomic_compare_exchange_strong(&sock->closing, &(bool){ false },
-					    true)) {
+					    true))
+	{
 		return;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keyfromlabel.c,v 1.7 2022/09/23 12:15:21 christos Exp $	*/
+/*	$NetBSD: dnssec-keyfromlabel.c,v 1.8 2023/01/25 21:43:23 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -578,7 +578,8 @@ main(int argc, char **argv) {
 		flags |= DNS_KEYOWNER_ZONE;
 	} else if ((options & DST_TYPE_KEY) != 0) { /* KEY */
 		if (strcasecmp(nametype, "host") == 0 ||
-		    strcasecmp(nametype, "entity") == 0) {
+		    strcasecmp(nametype, "entity") == 0)
+		{
 			flags |= DNS_KEYOWNER_ENTITY;
 		} else if (strcasecmp(nametype, "user") == 0) {
 			flags |= DNS_KEYOWNER_USER;
@@ -605,7 +606,8 @@ main(int argc, char **argv) {
 	if (protocol == -1) {
 		protocol = DNS_KEYPROTO_DNSSEC;
 	} else if ((options & DST_TYPE_KEY) == 0 &&
-		   protocol != DNS_KEYPROTO_DNSSEC) {
+		   protocol != DNS_KEYPROTO_DNSSEC)
+	{
 		fatal("invalid DNSKEY protocol: %d", protocol);
 	}
 

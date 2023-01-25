@@ -1,4 +1,4 @@
-/*	$NetBSD: bigkey.c,v 1.7 2022/09/23 12:15:26 christos Exp $	*/
+/*	$NetBSD: bigkey.c,v 1.8 2023/01/25 21:43:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,7 +48,7 @@
 dst_key_t *key;
 dns_fixedname_t fname;
 dns_name_t *name;
-unsigned int bits = 1024U;
+unsigned int bits = 2048U;
 isc_mem_t *mctx;
 isc_log_t *log_;
 isc_logconfig_t *logconfig;
@@ -136,7 +136,7 @@ main(int argc, char **argv) {
 								    "\"example."
 								    "\")");
 
-	CHECK(dst_key_buildinternal(name, DNS_KEYALG_RSASHA1, bits,
+	CHECK(dst_key_buildinternal(name, DNS_KEYALG_RSASHA256, bits,
 				    DNS_KEYOWNER_ZONE, DNS_KEYPROTO_DNSSEC,
 				    dns_rdataclass_in, pkey, mctx, &key),
 	      "dst_key_buildinternal(...)");
