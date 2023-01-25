@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2948 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2949 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -46,3 +46,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	piixpm(4): Add support new AMD chipsets that do not have indirect
 		access I/O ports. [msaitoh 20230110]
 	aq(4): add support for AQC113-116 [ryo 20230114]
+	bind: Import version 9.16.37. [christos 20230125]
+
