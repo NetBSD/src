@@ -1,9 +1,10 @@
-$NetBSD: acronyms.comp,v 1.330 2022/12/08 23:41:22 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.331 2023/01/26 22:20:16 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
 AAA	authentication, authorization, [and] accounting
 AAT	average access time
+ABE	attribute-based encryption
 ABI	application binary interface
 ABNF	augmented backus-naur form
 ABR	available bit rate
@@ -1625,6 +1626,7 @@ TDOA	time difference of arrival
 TDP	thermal design {point,power}
 TDR	time-domain reflectometry
 TECO	Text Editor and Corrector
+TEE	Trusted Execution Environment
 TFT	thin film transistor
 TFTP	Trivial File Transfer Protocol
 TIAS	try it and see
