@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.43 2023/01/14 13:20:15 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.44 2023/01/26 01:24:19 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.43 2023/01/14 13:20:15 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.44 2023/01/26 01:24:19 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -5323,10 +5323,9 @@ aq_rxring_reset(struct aq_softc *sc, struct aq_rxring *rxring, bool start)
 	(((idx) >= (AQ_RXD_NUM - 1)) ? 0 : ((idx) + 1))
 
 static int
-aq_encap_txring(struct aq_softc *sc, struct aq_txring *txring, struct mbuf **mp)
+aq_encap_txring(struct aq_softc *sc, struct aq_txring *txring, struct mbuf *m)
 {
 	bus_dmamap_t map;
-	struct mbuf *m = *mp;
 	uint32_t ctl1, ctl1_ctx, ctl2;
 	int idx, i, error;
 
@@ -5353,11 +5352,8 @@ aq_encap_txring(struct aq_softc *sc, struct aq_txring *txring, struct mbuf **mp)
 	 * +1 is additional descriptor for context (vlan, etc,.)
 	 */
 	if ((map->dm_nsegs + 1) > txring->txr_nfree) {
-		device_printf(sc->sc_dev,
-		    "TX: not enough descriptors left %d for %d segs\n",
-		    txring->txr_nfree, map->dm_nsegs + 1);
 		bus_dmamap_unload(sc->sc_dmat, map);
-		return ENOBUFS;
+		return EAGAIN;
 	}
 
 	/* sync dma for mbuf */
@@ -5823,7 +5819,7 @@ static void
 aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
     struct aq_txring *txring, bool is_transmit)
 {
-	struct mbuf *m;
+	struct mbuf *m, *n;
 	int npkt, error;
 
 	if (txring->txr_nfree < AQ_TXD_MIN)
@@ -5834,18 +5830,22 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 			m = pcq_peek(txring->txr_pcq);
 		else
 			IFQ_POLL(&ifp->if_snd, m);
-
 		if (m == NULL)
 			break;
+
+		error = aq_encap_txring(sc, txring, m);
+		if (error == EAGAIN) {
+			/* Not enough descriptors available. try again later */
+			break;
+		}
 
 		if (is_transmit)
 			pcq_get(txring->txr_pcq);
 		else
-			IFQ_DEQUEUE(&ifp->if_snd, m);
+			IFQ_DEQUEUE(&ifp->if_snd, n);
 
-		error = aq_encap_txring(sc, txring, &m);
 		if (error != 0) {
-			/* too many mbuf chains? or not enough descriptors? */
+			/* too many mbuf chains? or other errors. */
 			m_freem(m);
 			if_statinc(ifp, if_oerrors);
 			break;
