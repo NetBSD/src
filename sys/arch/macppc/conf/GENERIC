@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.375 2022/08/07 02:52:27 simonb Exp $
+# $NetBSD: GENERIC,v 1.376 2023/01/26 00:15:47 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.375 $"
+#ident 		"GENERIC-$Revision: 1.376 $"
 
 maxusers	32
 
@@ -206,7 +206,6 @@ epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# gmac ethernet
-#gm*	at pci? dev ? function ?	# gmac ethernet (old)
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
@@ -242,12 +241,6 @@ siop*	at pci? dev ? function ?	# NCR 53c8xx SCSI
 trm*	at pci? dev ? function ?	# Tekram DC-395U/UW/F, DC-315/U SCSI
 
 # Display devices
-# ofb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
-#options 	OFB_FAKE_VGA_FB		# Allow X to mmap VGA regs
-# 
-# ofb is considered obsolete and machine-independent genfb should be used
-# instead.
-
 chipsfb*	at pci?	function ?	# C&T 65550
 gffb*		at pci?	function ?	# NVIDIA GeForce2 MX
 machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
@@ -258,7 +251,6 @@ voodoofb*	at pci? function ?	# 3Dfx Voodoo3
 
 # ATI Radeon. Still has problems on some hardware
 radeonfb*	at pci? function ?
-options 	RADEONFB_ALWAYS_ACCEL_PUTCHAR
 
 # generic PCI framebuffer, should work with everything supported by OF
 genfb*		at pci? function ?
@@ -332,18 +324,7 @@ nvram*	at obio?			# nvram
 options OBIO_SPEED_CONTROL		# CPU speed / voltage control via GPIOs
 					# and/or DFS, found on most *Book G4
 
-
-# the traditional ADB subsystem
-
-#adb*	at obio?			# Apple Desktop Bus
-#apm0	at adb?				# APM emulation
-#aed*	at adb?				# ADB Event Device
-#akbd*	at adb?				# ADB keyboard
-#ams*	at adb?				# ADB mouse
-#abtn*	at adb?
-
-# the new, improved ADB subsystem
-
+# ADB subsystem
 cuda*	at obio?		# CUDA, for Old World PowerMacs
 iic* 		at cuda?	# CUDA's IIC bus
 
