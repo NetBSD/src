@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1038 2023/01/24 00:19:14 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1039 2023/01/26 20:48:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1038 2023/01/24 00:19:14 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1039 2023/01/26 20:48:17 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1076,6 +1076,12 @@ void
 Global_Delete(const char *name)
 {
 	Var_Delete(SCOPE_GLOBAL, name);
+}
+
+void
+Global_Set_ReadOnly(const char *name, const char *value)
+{
+	Var_SetWithFlags(SCOPE_GLOBAL, name, value, VAR_SET_READONLY);
 }
 
 /*

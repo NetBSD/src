@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-newline.mk,v 1.5 2023/01/17 19:42:47 rillig Exp $
+# $NetBSD: varname-dot-newline.mk,v 1.6 2023/01/26 20:48:18 sjg Exp $
 #
 # Tests for the special .newline variable, which contains a single newline
 # character (U+000A).
@@ -16,22 +16,15 @@
 BACKSLASH_NEWLINE:=	\${.newline}
 
 
-# Contrary to the special variable named "" that is used in expressions like
-# ${:Usome-value}, the variable ".newline" is not protected against
-# modification.  Nobody exploits that though.
+# Check that .newline is read-only
 
 NEWLINE:=	${.newline}
 
 .newline=	overwritten
 
-.if ${.newline} == ${NEWLINE}
-.  info The .newline variable cannot be overwritten.  Good.
-.else
-.  info The .newline variable can be overwritten.  Just don't do that.
+.if ${.newline} != ${NEWLINE}
+.  error The .newline variable can be overwritten.  It should be read-only.
 .endif
-
-# Restore the original value.
-.newline=	${NEWLINE}
 
 all:
 	@echo 'first${.newline}second'

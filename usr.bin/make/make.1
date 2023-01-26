@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.359 2023/01/24 00:24:02 sjg Exp $
+.\"	$NetBSD: make.1,v 1.360 2023/01/26 20:48:17 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd January 23, 2023
+.Dd January 26, 2023
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -940,6 +940,7 @@ executes.
 .It Va .MAKE.GID
 The numeric group ID of the user running
 .Nm .
+It is read-only.
 .It Va .MAKE.JOB.PREFIX
 If
 .Nm
@@ -1130,6 +1131,7 @@ Used to create files in a separate directory, see
 .It Va .MAKE.OS
 The name of the operating system, see
 .Xr uname 1 .
+It is read-only.
 .It Va .MAKEOVERRIDES
 This variable is used to record the names of variables assigned to
 on the command line, so that they may be exported as part of
@@ -1154,9 +1156,11 @@ This allows makefiles to test for this support.
 .It Va .MAKE.PID
 The process ID of
 .Nm .
+It is read-only.
 .It Va .MAKE.PPID
 The parent process ID of
 .Nm .
+It is read-only.
 .It Va MAKE_PRINT_VAR_ON_ERROR
 When
 .Nm
@@ -1198,6 +1202,7 @@ treated as normal sources.
 .It Va .MAKE.UID
 The numeric ID of the user running
 .Nm .
+It is read-only.
 .\" 'MAKE_VERSION' is intentionally undocumented
 .\" since it is only defined in the bmake distribution,
 .\" but not in NetBSD's native make.
@@ -1209,6 +1214,7 @@ The numeric ID of the user running
 .\" since it is obsolete.
 .It Va .newline
 This variable is simply assigned a newline character as its value.
+It is read-only.
 This allows expansions using the
 .Cm \&:@
 modifier to put a newline between

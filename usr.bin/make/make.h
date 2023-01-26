@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.310 2023/01/23 23:01:52 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.311 2023/01/26 20:48:17 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1031,6 +1031,7 @@ void Var_ReadOnly(const char *, bool);
 void Global_Set(const char *, const char *);
 void Global_Append(const char *, const char *);
 void Global_Delete(const char *);
+void Global_Set_ReadOnly(const char *, const char *);
 
 /* util.c */
 typedef void (*SignalProc)(int);
