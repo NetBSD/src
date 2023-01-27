@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2019/09/23 16:17:55 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3 2023/01/27 20:05:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@ struct atari_bus_space {
 			    bus_size_t, uint32_t);
 	void		(*abs_ws_8)(bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, uint64_t);
-	
+
 	/* write multiple */
 	void		(*abs_wm_1)(bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, const uint8_t *, bus_size_t);
@@ -201,7 +201,7 @@ struct atari_bus_space {
 			    bus_size_t, const uint32_t *, bus_size_t);
 	void		(*abs_wm_8)(bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, const uint64_t *, bus_size_t);
-	
+
 	/* write multiple stream */
 	void		(*abs_wms_1)(bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, const uint8_t *, bus_size_t);
@@ -241,7 +241,7 @@ struct atari_bus_space {
 			    bus_size_t, uint32_t, bus_size_t);
 	void		(*abs_sm_8)(bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, uint64_t, bus_size_t);
-	
+
 	/* set region */
 	void		(*abs_sr_1)(bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, uint8_t, bus_size_t);
@@ -251,7 +251,7 @@ struct atari_bus_space {
 			    bus_size_t, uint32_t, bus_size_t);
 	void		(*abs_sr_8)(bus_space_tag_t, bus_space_handle_t,
 			    bus_size_t, uint64_t, bus_size_t);
-	
+
 #if 0 /* See comment on __abs_copy below */
 	/* copy */
 	void		(*abs_c_1)(bus_space_tag_t, bus_space_handle_t,
