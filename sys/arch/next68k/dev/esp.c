@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.64 2017/03/31 08:38:13 msaitoh Exp $	*/
+/*	$NetBSD: esp.c,v 1.65 2023/01/27 15:31:05 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.64 2017/03/31 08:38:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.65 2023/01/27 15:31:05 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -509,6 +509,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 			}
 #endif
 
+			mutex_exit(&sc->sc_lock);	/* for nextdma intr */
 			while (!nextdma_finished(nsc)) {
 			/* esp_dma_isactive(sc)) { */
 				NDTRACEIF (ndtrace_addc('w'));
@@ -602,7 +603,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 
 			}
 		out:
-			;
+			mutex_enter(&sc->sc_lock);	/* for nextdma intr */
 
 #ifdef ESP_DEBUG
 /* 			esp_dma_nest--; */
