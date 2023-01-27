@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.85 2022/04/10 09:50:46 andvar Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.86 2023/01/27 09:33:43 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.85 2022/04/10 09:50:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.86 2023/01/27 09:33:43 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -488,15 +488,13 @@ ipsec4_process_packet(struct mbuf *m, const struct ipsecrequest *isr,
 {
 	struct secasvar *sav = NULL;
 	struct ip *ip;
-	int s, error, i, off;
+	int error, i, off;
 	union sockaddr_union *dst;
 	int setdf;
 
 	KASSERT(m != NULL);
 	KASSERT(m->m_nextpkt == NULL);
 	KASSERT(isr != NULL);
-
-	s = splsoftnet();	/* insure SA contents don't change */
 
 	isr = ipsec_nextisr(m, isr, AF_INET, &error, &sav);
 	if (isr == NULL) {
@@ -506,7 +504,6 @@ ipsec4_process_packet(struct mbuf *m, const struct ipsecrequest *isr,
 			if (ipsec_register_done(m, &error) < 0)
 				goto bad;
 
-			splx(s);
 			return ipsec_reinject_ipstack(m, AF_INET, 0);
 		}
 	}
@@ -531,7 +528,6 @@ ipsec4_process_packet(struct mbuf *m, const struct ipsecrequest *isr,
 			goto noneed;
 		*mtu = sav->esp_frag;
 		KEY_SA_UNREF(&sav);
-		splx(s);
 		return 0;
 	}
 noneed:
@@ -633,13 +629,11 @@ noneed:
 		error = ipsec_process_done(m, isr, sav, 0);
 	}
 	KEY_SA_UNREF(&sav);
-	splx(s);
 	return error;
 
 unrefsav:
 	KEY_SA_UNREF(&sav);
 bad:
-	splx(s);
 	if (m)
 		m_freem(m);
 	return error;
@@ -738,14 +732,12 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr, int flags)
 {
 	struct secasvar *sav = NULL;
 	struct ip6_hdr *ip6;
-	int s, error, i, off;
+	int error, i, off;
 	union sockaddr_union *dst;
 
 	KASSERT(m != NULL);
 	KASSERT(m->m_nextpkt == NULL);
 	KASSERT(isr != NULL);
-
-	s = splsoftnet();   /* insure SA contents don't change */
 
 	isr = ipsec_nextisr(m, isr, AF_INET6, &error, &sav);
 	if (isr == NULL) {
@@ -756,7 +748,6 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr, int flags)
 			if (ipsec_register_done(m, &error) < 0)
 				goto bad;
 
-			splx(s);
 			return ipsec_reinject_ipstack(m, AF_INET6, flags);
 		}
 	}
@@ -823,13 +814,11 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr, int flags)
 	}
 	error = (*sav->tdb_xform->xf_output)(m, isr, sav, i, off, flags);
 	KEY_SA_UNREF(&sav);
-	splx(s);
 	return error;
 
 unrefsav:
 	KEY_SA_UNREF(&sav);
 bad:
-	splx(s);
 	if (m)
 		m_freem(m);
 	return error;

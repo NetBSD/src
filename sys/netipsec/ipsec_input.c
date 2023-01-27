@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_input.c,v 1.78 2022/08/23 09:25:10 knakahara Exp $	*/
+/*	$NetBSD: ipsec_input.c,v 1.79 2023/01/27 09:33:43 ozaki-r Exp $	*/
 /*	$FreeBSD: ipsec_input.c,v 1.2.4.2 2003/03/28 20:32:53 sam Exp $	*/
 /*	$OpenBSD: ipsec_input.c,v 1.63 2003/02/20 18:35:43 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.78 2022/08/23 09:25:10 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_input.c,v 1.79 2023/01/27 09:33:43 ozaki-r Exp $");
 
 /*
  * IPsec input processing.
@@ -220,7 +220,7 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	u_int32_t spi;
 	u_int16_t sport;
 	u_int16_t dport;
-	int s, error;
+	int error;
 
 	IPSEC_ISTAT(sproto, ESP_STAT_INPUT, AH_STAT_INPUT,
 		IPCOMP_STAT_INPUT);
@@ -296,8 +296,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		return EPFNOSUPPORT;
 	}
 
-	s = splsoftnet();
-
 	/* NB: only pass dst since key_lookup_sa follows RFC2401 */
 	sav = KEY_LOOKUP_SA(&dst_address, sproto, spi, sport, dport);
 	if (sav == NULL) {
@@ -332,7 +330,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 		}
 		IPSEC_ISTAT(sproto, ESP_STAT_NOTDB, AH_STAT_NOTDB,
 		    IPCOMP_STAT_NOTDB);
-		splx(s);
 		m_freem(m);
 		return ENOENT;
 	}
@@ -345,7 +342,6 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 	 */
 	error = (*sav->tdb_xform->xf_input)(m, sav, skip, protoff);
 	KEY_SA_UNREF(&sav);
-	splx(s);
 	return error;
 }
 

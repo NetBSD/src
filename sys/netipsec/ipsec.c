@@ -1,4 +1,4 @@
-/* $NetBSD: ipsec.c,v 1.177 2022/12/08 08:07:07 knakahara Exp $ */
+/* $NetBSD: ipsec.c,v 1.178 2023/01/27 09:33:43 ozaki-r Exp $ */
 /* $FreeBSD: ipsec.c,v 1.2.2.2 2003/07/01 01:38:13 sam Exp $ */
 /* $KAME: ipsec.c,v 1.103 2001/05/24 07:14:18 sakane Exp $ */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.177 2022/12/08 08:07:07 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.178 2023/01/27 09:33:43 ozaki-r Exp $");
 
 /*
  * IPsec controller part.
@@ -619,7 +619,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 {
 	struct secpolicy *sp = NULL;
 	u_long _mtu = 0;
-	int error, s;
+	int error;
 
 	/*
 	 * Check the security policy (SP) for the packet and, if required,
@@ -632,9 +632,7 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 	if (ipsec_outdone(m)) {
 		return 0;
 	}
-	s = splsoftnet();
 	if (inp && ipsec_pcb_skip_ipsec(inp->inp_sp, IPSEC_DIR_OUTBOUND)) {
-		splx(s);
 		return 0;
 	}
 	sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, inp);
@@ -647,7 +645,6 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 	 *	sp == NULL, error != 0        discard packet, report error
 	 */
 	if (sp == NULL) {
-		splx(s);
 		if (error) {
 			/*
 			 * Hack: -EINVAL is used to signal that a packet
@@ -684,7 +681,6 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 		*mtu = _mtu;
 		*natt_frag = true;
 		KEY_SP_UNREF(&sp);
-		splx(s);
 		return 0;
 	}
 
@@ -698,7 +694,6 @@ ipsec4_output(struct mbuf *m, struct inpcb *inp, int flags,
 	if (error == ENOENT)
 		error = 0;
 	KEY_SP_UNREF(&sp);
-	splx(s);
 	*done = true;
 	return error;
 }
@@ -707,11 +702,9 @@ int
 ipsec_ip_input_checkpolicy(struct mbuf *m, bool forward)
 {
 	struct secpolicy *sp;
-	int error, s;
+	int error;
 
-	s = splsoftnet();
 	error = ipsec_in_reject(m, NULL);
-	splx(s);
 	if (error) {
 		return EINVAL;
 	}
@@ -724,14 +717,12 @@ ipsec_ip_input_checkpolicy(struct mbuf *m, bool forward)
 	 * Peek at the outbound SP for this packet to determine if
 	 * it is a Fast Forward candidate.
 	 */
-	s = splsoftnet();
 	sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, IP_FORWARDING,
 	    &error, NULL);
 	if (sp != NULL) {
 		m->m_flags &= ~M_CANFASTFWD;
 		KEY_SP_UNREF(&sp);
 	}
-	splx(s);
 
 	return 0;
 }
@@ -1801,20 +1792,16 @@ ipsec6_check_policy(struct mbuf *m, struct inpcb *inp, int flags,
     int *needipsecp, int *errorp)
 {
 	struct secpolicy *sp = NULL;
-	int s;
 	int error = 0;
 	int needipsec = 0;
 
 	if (ipsec_outdone(m)) {
 		goto skippolicycheck;
 	}
-	s = splsoftnet();
 	if (inp && ipsec_pcb_skip_ipsec(inp->inp_sp, IPSEC_DIR_OUTBOUND)) {
-		splx(s);
 		goto skippolicycheck;
 	}
 	sp = ipsec_checkpolicy(m, IPSEC_DIR_OUTBOUND, flags, &error, inp);
-	splx(s);
 
 	/*
 	 * There are four return cases:
