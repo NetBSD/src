@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.231 2022/10/28 05:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.232 2023/01/27 09:33:43 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.231 2022/10/28 05:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.232 2023/01/27 09:33:43 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -484,9 +484,7 @@ ip6_output(
 
 #ifdef IPSEC
 	if (needipsec) {
-		int s = splsoftnet();
 		error = ipsec6_process_packet(m, sp->req, flags);
-		splx(s);
 
 		/*
 		 * Preserve KAME behaviour: ENOENT can be returned
