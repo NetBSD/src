@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.12 2021/01/23 19:38:08 christos Exp $	*/
+/*	$NetBSD: bus.h,v 1.13 2023/01/27 19:50:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -193,7 +193,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
@@ -207,7 +207,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
@@ -221,7 +221,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 /*
@@ -245,7 +245,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
@@ -259,7 +259,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
@@ -273,7 +273,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 /*
@@ -314,7 +314,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0");					\
 } while (0)
 
 #define	bus_space_write_multi_2(t, h, o, a, c) do {			\
@@ -328,7 +328,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0");					\
 } while (0)
 
 #define	bus_space_write_multi_4(t, h, o, a, c) do {			\
@@ -342,7 +342,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0");					\
 } while (0)
 
 /*
@@ -365,7 +365,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0");					\
 } while (0)
 
 #define	bus_space_write_region_2(t, h, o, a, c) do {			\
@@ -379,7 +379,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0");					\
 } while (0)
 
 #define	bus_space_write_region_4(t, h, o, a, c) do {			\
@@ -393,7 +393,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "%a0","%a1","%d0");					\
+		    "a0","a1","d0");					\
 } while (0)
 
 /*
@@ -416,7 +416,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
-		    "%a0","%d0","%d1");					\
+		    "a0","d0","d1");					\
 } while (0)
 
 #define	bus_space_set_multi_2(t, h, o, val, c) do {			\
@@ -430,7 +430,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
-		    "%a0","%d0","%d1");					\
+		    "a0","d0","d1");					\
 } while (0)
 
 #define	bus_space_set_multi_4(t, h, o, val, c) do {			\
@@ -444,7 +444,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
-		    "%a0","%d0","%d1");					\
+		    "a0","d0","d1");					\
 } while (0)
 
 /*
@@ -467,7 +467,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
-		    "%a0","%d0","%d1");					\
+		    "a0","d0","d1");					\
 } while (0)
 
 #define	bus_space_set_region_2(t, h, o, val, c) do {			\
@@ -481,7 +481,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
-		    "%a0","%d0","%d1");					\
+		    "a0","d0","d1");					\
 } while (0)
 
 #define	bus_space_set_region_4(t, h, o, val, c) do {			\
@@ -495,7 +495,7 @@ int	news68k_bus_space_probe(bus_space_tag_t t,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (val), "g" (c)		:	\
-		    "%a0","%d0","%d1");					\
+		    "a0","d0","d1");					\
 } while (0)
 
 /*
