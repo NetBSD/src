@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.17 2023/01/15 05:08:33 tsutsui Exp $	*/
+/*	$NetBSD: bus.h,v 1.18 2023/01/27 19:49:21 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)*4), "g" (a), "g" ((size_t)(c)) :	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
@@ -191,7 +191,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)*2), "g" (a), "g" ((size_t)(c)) :	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
@@ -205,7 +205,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 /*
@@ -230,7 +230,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)*4), "g" (a), "g" ((size_t)(c)) :	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
@@ -245,7 +245,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)*2), "g" (a), "g" ((size_t)(c)) :	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
@@ -259,7 +259,7 @@ void	bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh,
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" ((size_t)(c))	:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0)
 
 /*
