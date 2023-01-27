@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2019/11/23 19:40:36 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2023/01/27 15:21:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -119,9 +119,6 @@ void	loadustp(int);
 
 void	doboot(void) __attribute__((__noreturn__));
 int	nmihand(void *);
-
-/* clock.c functions */
-void	next68k_calibrate_delay(void);
 
 #endif /* _KERNEL */
 
