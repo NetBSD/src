@@ -410,7 +410,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 {
   char *to = tostart;
   char *toend = tostart + tolen;
-  char *from;
+  char *from, *savefrom;
   char *fromend;
   size_t fromlen;
   int ch, ch2 = 0;
@@ -1234,6 +1234,7 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 	     thought out.  On i386, we want '/' as line comment start
 	     AND we want C style comments.  hence this hack.  The
 	     whole lexical process should be reworked.  xoxorich.  */
+	  savefrom = from;
 	  if (ch == '/')
 	    {
 	      ch2 = GET ();
@@ -1294,6 +1295,11 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
 		out_string = "\tlinefile ";
 	      else
 		out_string = "\t.linefile ";
+	      if (toend - to < strlen(out_string) + strlen(from) + 1)
+		{
+		  from = savefrom - 1;
+		  goto tofull;
+		}
 	      PUT (*out_string++);
 	      break;
 	    }
