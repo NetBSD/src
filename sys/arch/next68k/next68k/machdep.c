@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.116 2021/10/09 20:00:42 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.117 2023/01/27 15:21:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.116 2021/10/09 20:00:42 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2023/01/27 15:21:52 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -168,6 +168,17 @@ phys_seg_list_t phys_seg_list[VM_PHYSSEG_MAX];
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
+/*
+ * On the 68020/68030, the value of delay_divisor is roughly
+ * 2048 / cpuspeed (where cpuspeed is in MHz).
+ *
+ * On the 68040/68060(?), the value of delay_divisor is roughly
+ * 759 / cpuspeed (where cpuspeed is in MHz).
+ * XXX -- is the above formula correct?
+ */
+int	cpuspeed = 33;		  /* relative cpu speed; XXX skewed on 68040 */
+int	delay_divisor = 759 / 33;  /* delay constant; assume fastest 33 MHz */
+
 /****************************************************************/
 
 /*
@@ -207,9 +218,6 @@ next68k_init(void)
 				BOOT_FLAG(*p, boothowto);
 		}
 	}
-
-	/* Calibrate the delay loop. */
-	next68k_calibrate_delay();
 
 	/*
 	 * Initialize error message buffer (at end of core).
@@ -256,8 +264,6 @@ consinit(void)
 		}
 
 		init = 1;
-	} else {
-		next68k_calibrate_delay();
 	}
 }
 
@@ -316,6 +322,7 @@ void
 identifycpu(void)
 {
 	const char *mc, *mmu_str, *fpu_str, *cache_str;
+	extern int turbo;
 
 	/*
 	 * ...and the CPU type.
@@ -323,9 +330,13 @@ identifycpu(void)
 	switch (cputype) {
 	case CPU_68040:
 		mc = "40";
+		cpuspeed = turbo ? 33 : 25;
+		delay_divisor = 759 / cpuspeed;
 		break;
 	case CPU_68030:
 		mc = "30";
+		cpuspeed = 25;
+		delay_divisor = 2048 / cpuspeed;
 		break;
 	case CPU_68020:
 		mc = "20";
