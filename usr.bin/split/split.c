@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.27 2017/01/10 21:14:13 christos Exp $	*/
+/*	$NetBSD: split.c,v 1.28 2023/01/27 19:39:04 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.27 2017/01/10 21:14:13 christos Exp $");
+__RCSID("$NetBSD: split.c,v 1.28 2023/01/27 19:39:04 jschauma Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,10 +56,10 @@ __RCSID("$NetBSD: split.c,v 1.27 2017/01/10 21:14:13 christos Exp $");
 
 #define DEFLINE	1000		/* Default num lines per file. */
 
-static int file_open;		/* If a file open. */
+static int file_open;		/* If a file is open. */
 static int ifd = STDIN_FILENO, ofd = -1; /* Input/output file descriptors. */
 static char *fname;		/* File name prefix. */
-static size_t sfxlen = 2;		/* suffix length. */
+static size_t sfxlen = 2;	/* Suffix length. */
 
 static void newfile(void);
 static void split1(off_t, int) __dead;
