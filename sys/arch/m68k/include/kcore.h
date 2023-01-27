@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.5 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: kcore.h,v 1.6 2023/01/27 23:29:14 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -57,24 +57,24 @@
 #define	M68K_NPHYS_RAM_SEGS	8	/* XXX */
 struct m68k_kcore_hdr {
 	int32_t		mmutype;	/* MMU type */
-	u_int32_t	sg_v;		/* STE bits */
-	u_int32_t	sg_frame;
-	u_int32_t	sg_ishift;
-	u_int32_t	sg_pmask;
-	u_int32_t	sg40_shift1;
-	u_int32_t	sg40_mask2;
-	u_int32_t	sg40_shift2;
-	u_int32_t	sg40_mask3;
-	u_int32_t	sg40_shift3;
-	u_int32_t	sg40_addr1;
-	u_int32_t	sg40_addr2;
-	u_int32_t	pg_v;		/* PTE bits */
-	u_int32_t	pg_frame;
-	u_int32_t	sysseg_pa;	/* PA of Sysseg[] */
-	u_int32_t	reloc;		/* value added to relocate a symbol
+	uint32_t	sg_v;		/* STE bits */
+	uint32_t	sg_frame;
+	uint32_t	sg_ishift;
+	uint32_t	sg_pmask;
+	uint32_t	sg40_shift1;
+	uint32_t	sg40_mask2;
+	uint32_t	sg40_shift2;
+	uint32_t	sg40_mask3;
+	uint32_t	sg40_shift3;
+	uint32_t	sg40_addr1;
+	uint32_t	sg40_addr2;
+	uint32_t	pg_v;		/* PTE bits */
+	uint32_t	pg_frame;
+	uint32_t	sysseg_pa;	/* PA of Sysseg[] */
+	uint32_t	reloc;		/* value added to relocate a symbol
 					   before address translation is
 					   enabled */
-	u_int32_t	relocend;	/* if kernbase < va < relocend, we
+	uint32_t	relocend;	/* if kernbase < va < relocend, we
 					   can do simple relocation to get
 					   the physical address */
 	phys_ram_seg_t	ram_segs[M68K_NPHYS_RAM_SEGS];
@@ -84,20 +84,20 @@ struct m68k_kcore_hdr {
  * kcore information for the sun2
  */
 struct sun2_kcore_hdr {
-	u_int32_t	segshift;
-	u_int32_t	pg_frame;	/* PTE bits */
-	u_int32_t	pg_valid;
-	u_int8_t	ksegmap[512];	/* kernel segment map */
+	uint32_t	segshift;
+	uint32_t	pg_frame;	/* PTE bits */
+	uint32_t	pg_valid;
+	uint8_t		ksegmap[512];	/* kernel segment map */
 };
 
 /*
  * kcore information for the sun3
  */
 struct sun3_kcore_hdr {
-	u_int32_t	segshift;
-	u_int32_t	pg_frame;	/* PTE bits */
-	u_int32_t	pg_valid;
-	u_int8_t	ksegmap[256];	/* kernel segment map */
+	uint32_t	segshift;
+	uint32_t	pg_frame;	/* PTE bits */
+	uint32_t	pg_valid;
+	uint8_t		ksegmap[256];	/* kernel segment map */
 };
 
 /*
@@ -106,11 +106,11 @@ struct sun3_kcore_hdr {
  */
 #define	SUN3X_NPHYS_RAM_SEGS	4
 struct sun3x_kcore_hdr {
-	u_int32_t	pg_frame;	/* PTE bits */
-	u_int32_t	pg_valid;
-	u_int32_t	contig_end;
-	u_int32_t	kernCbase;	/* VA of kernel level C page table */
-	phys_ram_seg_t	ram_segs[SUN3X_NPHYS_RAM_SEGS];
+	uint32_t	pg_frame;	/* PTE bits */
+	uint32_t	pg_valid;
+	uint32_t	contig_end;
+	uint32_t	kernCbase;	/* VA of kernel level C page table */
+	pys_ram_seg_t	ram_segs[SUN3X_NPHYS_RAM_SEGS];
 };
 
 /*
@@ -118,8 +118,8 @@ struct sun3x_kcore_hdr {
  */
 struct cpu_kcore_hdr {
 	char		name[16];	/* machine name */
-	u_int32_t	page_size;	/* hardware page size */
-	u_int32_t	kernbase;	/* start of KVA space */
+	uint32_t	page_size;	/* hardware page size */
+	uint32_t	kernbase;	/* start of KVA space */
 	union {
 		struct m68k_kcore_hdr _m68k;
 		struct sun2_kcore_hdr _sun2;
