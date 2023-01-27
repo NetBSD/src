@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.17 2021/01/23 19:38:08 christos Exp $ */
+/*	$NetBSD: bus_space.h,v 1.18 2023/01/27 20:03:02 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ struct mvme68k_bus_space_tag {
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0);
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
@@ -240,7 +240,7 @@ struct mvme68k_bus_space_tag {
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0);
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
@@ -254,7 +254,7 @@ struct mvme68k_bus_space_tag {
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0);
 
 /*
@@ -278,7 +278,7 @@ struct mvme68k_bus_space_tag {
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0);
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
@@ -292,7 +292,7 @@ struct mvme68k_bus_space_tag {
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0);
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
@@ -306,7 +306,7 @@ struct mvme68k_bus_space_tag {
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0);
 
 /*
