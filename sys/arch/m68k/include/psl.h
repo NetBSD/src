@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.15 2012/07/27 05:36:11 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.16 2023/01/27 23:29:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -93,7 +93,7 @@ _splraise(int level)
 
 	__asm volatile("movw %%sr,%0" : "=d" (sr));
 
-	if ((u_int16_t)level >= PSL_HIGHIPL || (u_int16_t)level > (u_int16_t)sr)
+	if ((uint16_t)level >= PSL_HIGHIPL || (uint16_t)level > (uint16_t)sr)
 		__asm volatile("movw %0,%%sr" :: "di" (level) : "memory");
 
 	return sr;
