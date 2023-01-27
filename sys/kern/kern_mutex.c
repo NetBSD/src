@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.101 2022/12/05 07:09:04 skrll Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.102 2023/01/27 09:28:41 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.101 2022/12/05 07:09:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.102 2023/01/27 09:28:41 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -516,7 +516,7 @@ mutex_vector_enter(kmutex_t *mtx)
 	MUTEX_ASSERT(mtx, !cpu_intr_p());
 	MUTEX_WANTLOCK(mtx);
 
-	if (panicstr == NULL) {
+	if (__predict_true(panicstr == NULL)) {
 		KDASSERT(pserialize_not_in_read_section());
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
 	}
