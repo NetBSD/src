@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.494 2023/01/22 16:05:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.495 2023/01/28 00:12:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.494 2023/01/22 16:05:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.495 2023/01/28 00:12:00 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2074,64 +2074,19 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 static tnode_t *
 new_tnode(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
 {
-	tnode_t	*ntn;
-	tspec_t	t;
-#if 0 /* not yet */
-	size_t l;
-	uint64_t rnum;
-#endif
 
-	ntn = expr_alloc_tnode();
-
+	tnode_t *ntn = expr_alloc_tnode();
 	ntn->tn_op = op;
 	ntn->tn_type = type;
 	ntn->tn_sys = sys;
 	ntn->tn_left = ln;
 	ntn->tn_right = rn;
 
-	switch (op) {
-#if 0 /* not yet */
-	case SHR:
-		if (rn->tn_op != CON)
-			break;
-		rnum = rn->tn_val->v_quad;
-		l = type_size_in_bits(ln->tn_type) / CHAR_SIZE;
-		t = ln->tn_type->t_tspec;
-		switch (l) {
-		case 8:
-			if (rnum >= 56)
-				t = UCHAR;
-			else if (rnum >= 48)
-				t = USHORT;
-			else if (rnum >= 32)
-				t = UINT;
-			break;
-		case 4:
-			if (rnum >= 24)
-				t = UCHAR;
-			else if (rnum >= 16)
-				t = USHORT;
-			break;
-		case 2:
-			if (rnum >= 8)
-				t = UCHAR;
-			break;
-		default:
-			break;
-		}
-		if (t != ln->tn_type->t_tspec)
-			ntn->tn_type->t_tspec = t;
-		break;
-#endif
-	case INDIR:
-	case FSEL:
+	if (op == INDIR || op == FSEL) {
 		lint_assert(ln->tn_type->t_tspec == PTR);
-		t = ln->tn_type->t_subt->t_tspec;
+		tspec_t t = ln->tn_type->t_subt->t_tspec;
 		if (t != FUNC && t != VOID)
 			ntn->tn_lvalue = true;
-		break;
-	default:
-		break;
 	}
 
 	return ntn;
