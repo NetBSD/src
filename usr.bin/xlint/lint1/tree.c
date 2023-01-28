@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.495 2023/01/28 00:12:00 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.496 2023/01/28 00:24:05 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.495 2023/01/28 00:12:00 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.496 2023/01/28 00:24:05 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2092,6 +2092,53 @@ new_tnode(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
 	return ntn;
 }
 
+/* In traditional C, keep unsigned and promote FLOAT to DOUBLE. */
+static tspec_t
+promote_trad(tspec_t t)
+{
+
+	if (t == UCHAR || t == USHORT)
+		return UINT;
+	if (t == CHAR || t == SCHAR || t == SHORT)
+		return INT;
+	if (t == FLOAT)
+		return DOUBLE;
+	if (t == ENUM)
+		return INT;
+	return t;
+}
+
+/*
+ * C99 6.3.1.1p2 requires for types with lower rank than int that "If an int
+ * can represent all the values of the original type, the value is converted
+ * to an int; otherwise it is converted to an unsigned int", and that "All
+ * other types are unchanged by the integer promotions".
+ */
+static tspec_t
+promote_c90(const tnode_t *tn, tspec_t t, bool farg)
+{
+	if (tn->tn_type->t_bitfield) {
+		unsigned int len = tn->tn_type->t_flen;
+		if (len < size_in_bits(INT))
+			return INT;
+		if (len == size_in_bits(INT))
+			return is_uinteger(t) ? UINT : INT;
+		return t;
+	}
+
+	if (t == CHAR || t == UCHAR || t == SCHAR)
+		return size_in_bits(CHAR) < size_in_bits(INT) || t != UCHAR
+		    ? INT : UINT;
+	if (t == SHORT || t == USHORT)
+		return size_in_bits(SHORT) < size_in_bits(INT) || t == SHORT
+		    ? INT : UINT;
+	if (t == ENUM)
+		return INT;
+	if (farg && t == FLOAT)
+		return DOUBLE;
+	return t;
+}
+
 /*
  * Performs the "integer promotions" (C99 6.3.1.1p2), which convert small
  * integer types to either int or unsigned int.
@@ -2102,69 +2149,23 @@ new_tnode(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
 tnode_t *
 promote(op_t op, bool farg, tnode_t *tn)
 {
-	tspec_t	t;
-	type_t	*ntp;
-	unsigned int len;
 
-	t = tn->tn_type->t_tspec;
-
-	if (!is_arithmetic(t))
+	tspec_t ot = tn->tn_type->t_tspec;
+	if (!is_arithmetic(ot))
 		return tn;
 
-	if (allow_c90) {
-		/*
-		 * C99 6.3.1.1p2 requires for types with lower rank than int
-		 * that "If an int can represent all the values of the
-		 * original type, the value is converted to an int; otherwise
-		 * it is converted to an unsigned int", and that "All other
-		 * types are unchanged by the integer promotions".
-		 */
-		if (tn->tn_type->t_bitfield) {
-			len = tn->tn_type->t_flen;
-			if (len < size_in_bits(INT)) {
-				t = INT;
-			} else if (len == size_in_bits(INT)) {
-				t = is_uinteger(t) ? UINT : INT;
-			}
-		} else if (t == CHAR || t == UCHAR || t == SCHAR) {
-			t = (size_in_bits(CHAR) < size_in_bits(INT)
-			     || t != UCHAR) ? INT : UINT;
-		} else if (t == SHORT || t == USHORT) {
-			t = (size_in_bits(SHORT) < size_in_bits(INT)
-			     || t == SHORT) ? INT : UINT;
-		} else if (t == ENUM) {
-			t = INT;
-		} else if (farg && t == FLOAT) {
-			t = DOUBLE;
-		}
-	} else {
-		/*
-		 * In traditional C, keep unsigned and promote FLOAT
-		 * to DOUBLE.
-		 */
-		if (t == UCHAR || t == USHORT) {
-			t = UINT;
-		} else if (t == CHAR || t == SCHAR || t == SHORT) {
-			t = INT;
-		} else if (t == FLOAT) {
-			t = DOUBLE;
-		} else if (t == ENUM) {
-			t = INT;
-		}
-	}
+	tspec_t nt = allow_c90 ? promote_c90(tn, ot, farg) : promote_trad(ot);
+	if (nt == ot)
+		return tn;
 
-	if (t != tn->tn_type->t_tspec) {
-		ntp = expr_dup_type(tn->tn_type);
-		ntp->t_tspec = t;
-		/*
-		 * Keep t_is_enum even though t_tspec gets converted from
-		 * ENUM to INT, so we are later able to check compatibility
-		 * of enum types.
-		 */
-		tn = convert(op, 0, ntp, tn);
-	}
-
-	return tn;
+	type_t *ntp = expr_dup_type(tn->tn_type);
+	ntp->t_tspec = nt;
+	/*
+	 * Keep t_is_enum even though t_tspec gets converted from
+	 * ENUM to INT, so we are later able to check compatibility
+	 * of enum types.
+	 */
+	return convert(op, 0, ntp, tn);
 }
 
 static tnode_t *
