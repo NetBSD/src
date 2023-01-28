@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.496 2023/01/28 00:24:05 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.497 2023/01/28 00:39:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.496 2023/01/28 00:24:05 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.497 2023/01/28 00:39:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2181,81 +2181,88 @@ apply_usual_arithmetic_conversions(op_t op, tnode_t *tn, tspec_t t)
 	return convert(op, 0, ntp, tn);
 }
 
+static const tspec_t arith_rank[] = {
+	LDOUBLE, DOUBLE, FLOAT,
+#ifdef INT128_SIZE
+	UINT128, INT128,
+#endif
+	UQUAD, QUAD,
+	ULONG, LONG,
+	UINT, INT,
+};
+
+/* Keep unsigned in traditional C */
+static tspec_t
+usual_arithmetic_conversion_trad(tspec_t lt, tspec_t rt)
+{
+
+	bool u = is_uinteger(lt) || is_uinteger(rt);
+	size_t i;
+	for (i = 0; arith_rank[i] != INT; i++)
+		if (lt == arith_rank[i] || rt == arith_rank[i])
+			break;
+
+	tspec_t t = arith_rank[i];
+	if (u && is_integer(t) && !is_uinteger(t))
+		return unsigned_type(t);
+	return t;
+}
+
+static tspec_t
+usual_arithmetic_conversion_c90(tspec_t lt, tspec_t rt)
+{
+
+	if (lt == rt)
+		return lt;
+
+	if (lt == LCOMPLEX || rt == LCOMPLEX)
+		return LCOMPLEX;
+	if (lt == DCOMPLEX || rt == DCOMPLEX)
+		return DCOMPLEX;
+	if (lt == FCOMPLEX || rt == FCOMPLEX)
+		return FCOMPLEX;
+	if (lt == LDOUBLE || rt == LDOUBLE)
+		return LDOUBLE;
+	if (lt == DOUBLE || rt == DOUBLE)
+		return DOUBLE;
+	if (lt == FLOAT || rt == FLOAT)
+		return FLOAT;
+
+	/*
+	 * If type A has more bits than type B, it should be able to hold all
+	 * possible values of type B.
+	 */
+	if (size_in_bits(lt) > size_in_bits(rt))
+		return lt;
+	if (size_in_bits(lt) < size_in_bits(rt))
+		return rt;
+
+	size_t i;
+	for (i = 3; arith_rank[i] != INT; i++)
+		if (arith_rank[i] == lt || arith_rank[i] == rt)
+			break;
+	if ((is_uinteger(lt) || is_uinteger(rt)) &&
+	    !is_uinteger(arith_rank[i]))
+		i--;
+	return arith_rank[i];
+}
+
 /*
- * Apply the "usual arithmetic conversions" (C99 6.3.1.8).
- *
- * This gives both operands the same type.
- * This is done in different ways for traditional C and C90.
+ * Apply the "usual arithmetic conversions" (C99 6.3.1.8), which gives both
+ * operands the same type.
  */
 static void
 balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 {
-	tspec_t	lt, rt, t;
-	int	i;
-	bool	u;
-	static const tspec_t tl[] = {
-		LDOUBLE, DOUBLE, FLOAT,
-#ifdef INT128_SIZE
-		UINT128, INT128,
-#endif
-		UQUAD, QUAD,
-		ULONG, LONG,
-		UINT, INT,
-	};
 
-	lt = (*lnp)->tn_type->t_tspec;
-	rt = (*rnp)->tn_type->t_tspec;
-
+	tspec_t lt = (*lnp)->tn_type->t_tspec;
+	tspec_t rt = (*rnp)->tn_type->t_tspec;
 	if (!is_arithmetic(lt) || !is_arithmetic(rt))
 		return;
 
-	if (allow_c90) {
-		if (lt == rt) {
-			t = lt;
-		} else if (lt == LCOMPLEX || rt == LCOMPLEX) {
-			t = LCOMPLEX;
-		} else if (lt == DCOMPLEX || rt == DCOMPLEX) {
-			t = DCOMPLEX;
-		} else if (lt == FCOMPLEX || rt == FCOMPLEX) {
-			t = FCOMPLEX;
-		} else if (lt == LDOUBLE || rt == LDOUBLE) {
-			t = LDOUBLE;
-		} else if (lt == DOUBLE || rt == DOUBLE) {
-			t = DOUBLE;
-		} else if (lt == FLOAT || rt == FLOAT) {
-			t = FLOAT;
-		} else {
-			/*
-			 * If type A has more bits than type B it should
-			 * be able to hold all possible values of type B.
-			 */
-			if (size_in_bits(lt) > size_in_bits(rt)) {
-				t = lt;
-			} else if (size_in_bits(lt) < size_in_bits(rt)) {
-				t = rt;
-			} else {
-				for (i = 3; tl[i] != INT; i++) {
-					if (tl[i] == lt || tl[i] == rt)
-						break;
-				}
-				if ((is_uinteger(lt) || is_uinteger(rt)) &&
-				    !is_uinteger(tl[i])) {
-					i--;
-				}
-				t = tl[i];
-			}
-		}
-	} else {
-		/* Keep unsigned in traditional C */
-		u = is_uinteger(lt) || is_uinteger(rt);
-		for (i = 0; tl[i] != INT; i++) {
-			if (lt == tl[i] || rt == tl[i])
-				break;
-		}
-		t = tl[i];
-		if (u && is_integer(t) && !is_uinteger(t))
-			t = unsigned_type(t);
-	}
+	tspec_t t = allow_c90
+	    ? usual_arithmetic_conversion_c90(lt, rt)
+	    : usual_arithmetic_conversion_trad(lt, rt);
 
 	if (t != lt)
 		*lnp = apply_usual_arithmetic_conversions(op, *lnp, t);
