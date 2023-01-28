@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.497 2023/01/28 00:39:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.498 2023/01/28 00:46:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.497 2023/01/28 00:39:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.498 2023/01/28 00:46:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3785,7 +3785,7 @@ build_sizeof(const type_t *tp)
 /*
  * Create a constant node for offsetof.
  */
-/* ARGSUSED */ /* See implementation comments. */
+/* ARGSUSED */ /* FIXME: See implementation comments. */
 tnode_t *
 build_offsetof(const type_t *tp, const sym_t *sym)
 {
@@ -3796,7 +3796,7 @@ build_offsetof(const type_t *tp, const sym_t *sym)
 		/* unacceptable operand of '%s' */
 		error(111, "offsetof");
 
-	/* XXX: wrong size, no checking for sym fixme */
+	/* FIXME: Don't wrongly use the size of the whole type, use sym. */
 	offset_in_bytes = type_size_in_bits(tp) / CHAR_SIZE;
 	tn = build_integer_constant(SIZEOF_TSPEC, offset_in_bytes);
 	tn->tn_system_dependent = true;
