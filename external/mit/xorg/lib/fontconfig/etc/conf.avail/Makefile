@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2023/01/21 04:04:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2023/01/28 05:25:17 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ CONFIGFILES= \
 	10-sub-pixel-vrgb.conf \
 	10-scale-bitmap-fonts.conf \
 	10-unhinted.conf \
+	10-yes-antialias.conf   \
 	11-lcdfilter-default.conf \
 	11-lcdfilter-legacy.conf \
 	11-lcdfilter-light.conf \
