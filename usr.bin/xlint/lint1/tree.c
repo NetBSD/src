@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.498 2023/01/28 00:46:14 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.499 2023/01/28 00:55:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.498 2023/01/28 00:46:14 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.499 2023/01/28 00:55:48 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3905,6 +3905,34 @@ build_alignof(const type_t *tp)
 	    (int64_t)alignment_in_bits(tp) / CHAR_SIZE);
 }
 
+static tnode_t *
+cast_to_union(const tnode_t *otn, type_t *ntp)
+{
+
+	if (!allow_gcc) {
+		/* union cast is a GCC extension */
+		error(328);
+		return NULL;
+	}
+
+	for (const sym_t *m = ntp->t_str->sou_first_member;
+	    m != NULL; m = m->s_next) {
+		if (types_compatible(m->s_type, otn->tn_type,
+		    false, false, NULL)) {
+			tnode_t *ntn = expr_alloc_tnode();
+			ntn->tn_op = CVT;
+			ntn->tn_type = ntp;
+			ntn->tn_cast = true;
+			ntn->tn_right = NULL;
+			return ntn;
+		}
+	}
+
+	/* type '%s' is not a member of '%s' */
+	error(329, type_name(otn->tn_type), type_name(ntp));
+	return NULL;
+}
+
 /*
  * Type casts.
  */
@@ -3929,27 +3957,7 @@ cast(tnode_t *tn, type_t *tp)
 		 * scalar type to a scalar type.
 		 */
 	} else if (nt == UNION) {
-		sym_t *m;
-		struct_or_union *str = tp->t_str;
-		if (!allow_gcc) {
-			/* union cast is a GCC extension */
-			error(328);
-			return NULL;
-		}
-		for (m = str->sou_first_member; m != NULL; m = m->s_next) {
-			if (types_compatible(m->s_type, tn->tn_type,
-			    false, false, NULL)) {
-				tn = expr_alloc_tnode();
-				tn->tn_op = CVT;
-				tn->tn_type = tp;
-				tn->tn_cast = true;
-				tn->tn_right = NULL;
-				return tn;
-			}
-		}
-		/* type '%s' is not a member of '%s' */
-		error(329, type_name(tn->tn_type), type_name(tp));
-		return NULL;
+		return cast_to_union(tn, tp);
 	} else if (nt == STRUCT || nt == ARRAY || nt == FUNC) {
 		/* Casting to a struct is an undocumented GCC extension. */
 		if (!(allow_gcc && nt == STRUCT))
