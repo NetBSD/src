@@ -1,4 +1,4 @@
-# $NetBSD: nanpa.sed,v 1.2 2006/12/25 18:39:48 wiz Exp $
+# $NetBSD: nanpa.sed,v 1.3 2023/01/28 13:12:16 jmcneill Exp $
 #
 # Parse HTML tables output by 
 #   http://docs.nanpa.com/cgi-bin/npa_reports/nanpa
@@ -34,7 +34,7 @@ s/\$$//
 #				Remove lines not starting with <TR>
 /<[Tt][Rr][^>]*>/!d
 #				Replace all <TD> with colon
-s/[ 	]*<TD[^>]*> */:/g
+s/[ 	]*<[Tt][Dd][^>]*> */:/g
 #				Strip all HTML tags
 s/<[^>]*>//g
 #				Handle HTML characters
@@ -42,7 +42,9 @@ s/&nbsp;/ /g
 #				Compress spaces/tabs
 s/[ 	][ 	]*/ /g
 #				Strip leading colons
-s/^://
+s/://
 #				Strip leading/trailing whitespace
-s/^ //
+s/ *//
 s/ $//
+#				Strip HTML comments
+s/^--.*$//
