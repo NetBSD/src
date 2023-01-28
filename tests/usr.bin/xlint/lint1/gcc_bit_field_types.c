@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_bit_field_types.c,v 1.7 2023/01/28 08:30:12 rillig Exp $	*/
+/*	$NetBSD: gcc_bit_field_types.c,v 1.8 2023/01/28 08:36:17 rillig Exp $	*/
 # 3 "gcc_bit_field_types.c"
 
 struct incompatible {
@@ -92,6 +92,15 @@ type_of_bit_field(void)
 	 * values from 'unsigned:3', see promote_c90.  Maybe that's wrong,
 	 * maybe not, the compilers disagree so lint can offer yet another
 	 * alternative interpretation.
+	 *
+	 * GCC 12 says: expected 'struct incompatible' but argument is of
+	 * type 'unsigned char:3'
+	 *
+	 * Clang 15 says: error: passing 'unsigned int' to parameter of
+	 * incompatible type 'struct incompatible'
+	 *
+	 * MSVC 19 says: error C2440: 'function': cannot convert from
+	 * 'unsigned int' to 'incompatible'
 	 */
 	/* expect+1: warning: passing 'unsigned int:3' to incompatible 'struct incompatible', arg #1 [155] */
 	reveal_type(s.bits);
