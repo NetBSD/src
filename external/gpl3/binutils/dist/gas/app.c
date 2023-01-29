@@ -1537,3 +1537,16 @@ do_scrub_chars (size_t (*get) (char *, size_t), char *tostart, size_t tolen)
     last_char = to[-1];
   return to - tostart;
 }
+
+/* Return amount of pending input.  */
+
+size_t
+do_scrub_pending (void)
+{
+  size_t len = 0;
+  if (saved_input)
+    len += saved_input_len;
+  if (state == -1)
+    len += strlen (out_string);
+  return len;
+}
