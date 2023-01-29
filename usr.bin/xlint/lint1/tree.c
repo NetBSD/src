@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.500 2023/01/29 13:47:16 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.501 2023/01/29 13:57:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.500 2023/01/29 13:47:16 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.501 2023/01/29 13:57:35 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2198,15 +2198,15 @@ static tspec_t
 usual_arithmetic_conversion_trad(tspec_t lt, tspec_t rt)
 {
 
-	bool u = is_uinteger(lt) || is_uinteger(rt);
 	size_t i;
 	for (i = 0; arith_rank[i] != INT; i++)
 		if (lt == arith_rank[i] || rt == arith_rank[i])
 			break;
 
 	tspec_t t = arith_rank[i];
-	if (u && is_integer(t) && !is_uinteger(t))
-		return unsigned_type(t);
+	if (is_uinteger(lt) || is_uinteger(rt))
+		if (is_integer(t) && !is_uinteger(t))
+			return unsigned_type(t);
 	return t;
 }
 
@@ -2430,8 +2430,6 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
  * When converting a large integer type to a small integer type, in some
  * cases the value of the actual expression is further restricted than the
  * type bounds, such as in (expr & 0xFF) or (expr % 100) or (expr >> 24).
- *
- * See new_tnode, the '#if 0' code for SHR.
  */
 static bool
 can_represent(const type_t *tp, const tnode_t *tn)
