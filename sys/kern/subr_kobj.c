@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.75 2022/10/26 23:26:45 riastradh Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.76 2023/01/29 17:20:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.75 2022/10/26 23:26:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.76 2023/01/29 17:20:48 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -823,7 +823,7 @@ kobj_find_section(kobj_t ko, const char *name, void **addr, size_t *size)
 	KASSERT(ko->ko_progtab != NULL);
 
 	for (i = 0; i < ko->ko_nprogtab; i++) {
-		if (strcmp(ko->ko_progtab[i].name, name) == 0) { 
+		if (strcmp(ko->ko_progtab[i].name, name) == 0) {
 			if (addr != NULL) {
 				*addr = ko->ko_progtab[i].addr;
 			}
@@ -838,7 +838,7 @@ kobj_find_section(kobj_t ko, const char *name, void **addr, size_t *size)
 }
 
 /*
- * kobj_jettison: 
+ * kobj_jettison:
  *
  *	Release object data not needed after performing relocations.
  */
