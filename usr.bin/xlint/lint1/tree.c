@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.499 2023/01/28 00:55:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.500 2023/01/29 13:47:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.499 2023/01/28 00:55:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.500 2023/01/29 13:47:16 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2126,12 +2126,14 @@ promote_c90(const tnode_t *tn, tspec_t t, bool farg)
 		return t;
 	}
 
-	if (t == CHAR || t == UCHAR || t == SCHAR)
-		return size_in_bits(CHAR) < size_in_bits(INT) || t != UCHAR
-		    ? INT : UINT;
-	if (t == SHORT || t == USHORT)
-		return size_in_bits(SHORT) < size_in_bits(INT) || t == SHORT
-		    ? INT : UINT;
+	if (t == CHAR || t == SCHAR)
+		return INT;
+	if (t == UCHAR)
+		return size_in_bits(CHAR) < size_in_bits(INT) ? INT : UINT;
+	if (t == SHORT)
+		return INT;
+	if (t == USHORT)
+		return size_in_bits(SHORT) < size_in_bits(INT) ? INT : UINT;
 	if (t == ENUM)
 		return INT;
 	if (farg && t == FLOAT)
