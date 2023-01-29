@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.145 2022/10/01 09:42:40 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.146 2023/01/29 18:13:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.145 2022/10/01 09:42:40 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.146 2023/01/29 18:13:56 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -224,7 +224,7 @@ check_statement_reachable(void)
  * redeclaration, etc.
  */
 void
-funcdef(sym_t *fsym)
+begin_function(sym_t *fsym)
 {
 	int	n;
 	bool	dowarn;
@@ -374,7 +374,7 @@ check_missing_return_value(void)
  * Called at the end of a function definition.
  */
 void
-funcend(void)
+end_function(void)
 {
 	sym_t	*arg;
 	int	n;
