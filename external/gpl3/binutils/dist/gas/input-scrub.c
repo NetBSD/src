@@ -278,9 +278,11 @@ input_scrub_include_sb (sb *from, char *position, enum expansion expansion)
 
   next_saved_file = input_scrub_push (position);
 
-  /* Allocate sufficient space: from->len + optional newline.  */
+  /* Allocate sufficient space: from->len plus optional newline
+     plus two ".linefile " directives, plus a little more for other
+     expansion.  */
   newline = from->len >= 1 && from->ptr[0] != '\n';
-  sb_build (&from_sb, from->len + newline);
+  sb_build (&from_sb, from->len + newline + 2 * sizeof (".linefile") + 30);
   if (expansion == expanding_repeat && from_sb_expansion >= expanding_macro)
     expansion = expanding_nested;
   from_sb_expansion = expansion;
