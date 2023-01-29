@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_117.c,v 1.11 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_117.c,v 1.12 2023/01/29 17:02:09 rillig Exp $	*/
 # 3 "msg_117.c"
 
 // Test for message: bitwise '%s' on signed value possibly nonportable [117]
@@ -86,7 +86,7 @@ shr_unsigned_char_promoted_unsigned(unsigned char bit)
  *
  * K&R provides more guarantees by saying: Right shifting a signed quantity
  * will fill with sign bits ("arithmetic shift") on some machines such as the
- * PDP-Il, and with 0-bits ("logical shift") on others.
+ * PDP-11, and with 0-bits ("logical shift") on others.
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Integers-implementation.html says:
  * Signed '>>' acts on negative numbers by sign extension.
@@ -137,5 +137,11 @@ shr_signed_ignoring_high_bits(int x)
 	 */
 	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
 	if (((x >> 31) & 2) != 0)
+		return;
+
+	/* The result of '&' is guaranteed to be positive. */
+	/* XXX: Don't warn here. */
+	/* expect+1: warning: bitwise '>>' on signed value possibly nonportable [117] */
+	if ((x & 0xf0) >> 4 != 0)
 		return;
 }

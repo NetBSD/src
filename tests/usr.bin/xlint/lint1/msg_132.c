@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.24 2022/07/07 18:11:29 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.25 2023/01/29 17:02:09 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -237,6 +237,23 @@ test_ic_shr(u64_t x)
 	if (x > 2)
 		/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
 		return x >> 31;
+
+	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
+	u32 = u64 >> 31;
+	u32 = u64 >> 32;
+	u16 = u64 >> 48;
+	u8 = u64 >> 56;
+	u16 = u32 >> 16;
+	u8 = u32 >> 24;
+	u8 = u16 >> 8;
+
+	/*
+	 * No matter whether the big integer is signed or unsigned, the
+	 * result of '&' is guaranteed to be an unsigned value.
+	 */
+	u8 = (s64 & 0xf0) >> 4;
+	u8 = (s8 & 0xf0) >> 4;
+
 	/* expect+1: warning: conversion from 'unsigned long long' to 'unsigned int' may lose accuracy [132] */
 	return x;
 }
