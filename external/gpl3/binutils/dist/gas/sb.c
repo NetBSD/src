@@ -119,11 +119,12 @@ sb_scrub_and_add_sb (sb *ptr, sb *s)
      So we loop until the input S is consumed.  */
   while (1)
     {
-      size_t copy = s->len - (scrub_position - s->ptr);
+      size_t copy = s->len - (scrub_position - s->ptr) + do_scrub_pending ();
       if (copy == 0)
 	break;
       sb_check (ptr, copy);
-      ptr->len += do_scrub_chars (scrub_from_sb, ptr->ptr + ptr->len, copy);
+      ptr->len += do_scrub_chars (scrub_from_sb, ptr->ptr + ptr->len,
+				  ptr->max - ptr->len);
     }
 
   sb_to_scrub = 0;

@@ -1056,6 +1056,8 @@ macro_expand_body (sb *in, sb *out, formal_entry *formals,
       loclist = f;
     }
 
+  if (!err && (out->len == 0 || out->ptr[out->len - 1] != '\n'))
+    sb_add_char (out, '\n');
   return err;
 }
 
