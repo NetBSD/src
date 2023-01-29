@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.6 2023/01/27 23:29:14 tsutsui Exp $	*/
+/*	$NetBSD: kcore.h,v 1.7 2023/01/29 09:24:33 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ struct sun3x_kcore_hdr {
 	uint32_t	pg_valid;
 	uint32_t	contig_end;
 	uint32_t	kernCbase;	/* VA of kernel level C page table */
-	pys_ram_seg_t	ram_segs[SUN3X_NPHYS_RAM_SEGS];
+	phys_ram_seg_t	ram_segs[SUN3X_NPHYS_RAM_SEGS];
 };
 
 /*
