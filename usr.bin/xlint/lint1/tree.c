@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.501 2023/01/29 13:57:35 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.502 2023/01/29 17:13:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.501 2023/01/29 13:57:35 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.502 2023/01/29 17:13:10 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1161,6 +1161,10 @@ typeok_shr(const mod_t *mp,
 
 	/* operands have integer types (checked in typeok) */
 	if (pflag && !is_uinteger(olt)) {
+		integer_constraints lc = ic_expr(ln);
+		if (!ic_maybe_signed(ln->tn_type, &lc))
+			return;
+
 		/*
 		 * The left operand is signed. This means that
 		 * the operation is (possibly) nonportable.
