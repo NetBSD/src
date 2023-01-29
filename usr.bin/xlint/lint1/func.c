@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.146 2023/01/29 18:13:56 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.147 2023/01/29 18:37:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.146 2023/01/29 18:13:56 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.147 2023/01/29 18:37:20 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -432,6 +432,8 @@ end_function(void)
 
 	/* must be set on level 0 */
 	set_reached(true);
+
+	funcsym = NULL;
 }
 
 void
