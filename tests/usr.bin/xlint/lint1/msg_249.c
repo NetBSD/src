@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_249.c,v 1.12 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.13 2023/01/29 18:37:20 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
@@ -66,12 +66,12 @@ struct cover_member_declaration {
  */
 
 int gcc_statement_expression_1 = ({
-/* expect+1: warning: label 'unused_label' unused in function 'access_declaration_after_syntax_error' [232] */
 unused_label:
 	1;
 	1;
 });
 /* expect-1: error: non-constant initializer [177] */
+/* expect-2: error: syntax error 'labels are only valid inside a function' [249] */
 
 /* Even another function definition does not help. */
 void
@@ -80,9 +80,9 @@ try_to_recover(void)
 }
 
 int gcc_statement_expression_2 = ({
-/* expect+1: warning: label 'unused_label' unused in function 'try_to_recover' [232] */
 unused_label:
 	1;
 	1;
 });
 /* expect-1: error: non-constant initializer [177] */
+/* expect-2: error: syntax error 'labels are only valid inside a function' [249] */
