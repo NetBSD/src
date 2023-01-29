@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.304 2023/01/21 13:07:22 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.305 2023/01/29 18:13:56 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.304 2023/01/21 13:07:22 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.305 2023/01/29 18:13:56 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -639,7 +639,7 @@ end_declaration_level(void)
 		check_usage(di);
 		/* FALLTHROUGH */
 	case DK_PROTO_ARG:
-		/* usage of arguments will be checked by funcend() */
+		/* usage of arguments will be checked by end_function() */
 		rmsyms(di->d_dlsyms);
 		break;
 	case DK_EXTERN:
@@ -948,7 +948,7 @@ check_type(sym_t *sym)
 		t = tp->t_tspec;
 		/*
 		 * If this is the type of an old-style function definition,
-		 * a better warning is printed in funcdef().
+		 * a better warning is printed in begin_function().
 		 */
 		if (t == FUNC && !tp->t_proto &&
 		    !(to == NOTSPEC && sym->s_osdef)) {
