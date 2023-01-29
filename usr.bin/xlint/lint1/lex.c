@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.146 2023/01/22 17:04:30 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.147 2023/01/29 13:57:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.146 2023/01/22 17:04:30 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.147 2023/01/29 13:57:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -99,8 +99,8 @@ static const struct keyword {
 	const	char *kw_name;
 	int	kw_token;	/* token returned by yylex() */
 	scl_t	kw_scl;		/* storage class if kw_token is T_SCLASS */
-	tspec_t	kw_tspec;	/* type spec if kw_token is
-				 * T_TYPE or T_STRUCT_OR_UNION */
+	tspec_t	kw_tspec;	/* type specifier if kw_token is T_TYPE or
+				 * T_STRUCT_OR_UNION */
 	tqual_t	kw_tqual;	/* type qualifier if kw_token is T_QUAL */
 	bool	kw_c90:1;	/* available in C90 mode */
 	bool	kw_c99_or_c11:1; /* available in C99 or C11 mode */
@@ -461,7 +461,6 @@ lex_name(const char *yytext, size_t yyleng)
 	(void)memcpy(name, yytext, yyleng + 1);
 	sb->sb_name = name;
 	return T_NAME;
-
 }
 
 int
