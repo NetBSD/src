@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.171 2023/01/13 19:41:50 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.172 2023/01/29 18:13:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -305,8 +305,8 @@ extern	bool	quadflg;
 extern	void	begin_control_statement(control_statement_kind);
 extern	void	end_control_statement(control_statement_kind);
 extern	void	check_statement_reachable(void);
-extern	void	funcdef(sym_t *);
-extern	void	funcend(void);
+extern	void	begin_function(sym_t *);
+extern	void	end_function(void);
 extern	void	named_label(sym_t *);
 extern	void	case_label(tnode_t *);
 extern	void	default_label(void);
