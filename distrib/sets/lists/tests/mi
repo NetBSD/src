@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1249 2023/01/29 17:02:09 rillig Exp $
+# $NetBSD: mi,v 1.1250 2023/01/30 19:51:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3146,6 +3146,7 @@
 ./usr/tests/lib/libc/string/t_popcount			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/string/t_strcat			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/string/t_strchr			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/string/t_strchrnul			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/string/t_strcmp			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/string/t_strcoll			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/string/t_strcpy			tests-lib-tests		compattestfile,atf
