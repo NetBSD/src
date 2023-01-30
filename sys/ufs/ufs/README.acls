@@ -45,7 +45,7 @@ will result in incorrect application of discretionary protections.  If
 the kernel is not configured for ACL support, a warning will be
 printed by the kernel at mount-time.  For reliability purposes, it
 is recommended that the superblock flag be used instead of the
-mount-time flag, as this will avoid re-mount isses with the root file
+mount-time flag, as this will avoid re-mount issues with the root file
 system.  For reliability and performance reasons, the use of ACLs on
 UFS1 is discouraged; UFS2 extended attributes provide a more reliable
 storage mechanism for ACLs.
