@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.28 2023/01/27 19:39:04 jschauma Exp $	*/
+/*	$NetBSD: split.c,v 1.29 2023/01/30 15:22:02 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.28 2023/01/27 19:39:04 jschauma Exp $");
+__RCSID("$NetBSD: split.c,v 1.29 2023/01/30 15:22:02 jschauma Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -60,6 +60,7 @@ static int file_open;		/* If a file is open. */
 static int ifd = STDIN_FILENO, ofd = -1; /* Input/output file descriptors. */
 static char *fname;		/* File name prefix. */
 static size_t sfxlen = 2;	/* Suffix length. */
+static int autosfx = 1;		/* Whether to auto-extend the suffix length. */
 
 static void newfile(void);
 static void split1(off_t, int) __dead;
@@ -120,6 +121,7 @@ main(int argc, char *argv[])
 			    (sfxlen = (size_t)strtoul(optarg, &ep, 10)) == 0 ||
 			    *ep != '\0')
 				errx(1, "%s: illegal suffix length.", optarg);
+			autosfx = 0;
 			break;
 		case 'n':		/* Chunks. */
 			if (!isdigit((unsigned char)optarg[0]) ||
@@ -323,6 +325,38 @@ newfile(void)
 		err(1, "%s", fname);
 
 	quot = fnum;
+
+	/* If '-a' is not specified, then we automatically expand the
+	 * suffix length to accomodate splitting all input.  We do this
+	 * by moving the suffix pointer (fpnt) forward and incrementing
+	 * sfxlen by one, thereby yielding an additional two characters
+	 * and allowing all output files to sort such that 'cat *' yields
+	 * the input in order.  I.e., the order is '... xyy xyz xzaaa
+	 * xzaab ... xzyzy, xzyzz, xzzaaaa, xzzaaab' and so on. */
+	if (autosfx && (fpnt[0] == 'y') && (strspn(fpnt+1, "z") == strlen(fpnt+1))) {
+		if ((fname = realloc(fname, strlen(fname) + sfxlen + 2 + 1)) == NULL)
+			err(EXIT_FAILURE, NULL);
+			/* NOTREACHED */
+
+		fpnt = fname + strlen(fname) - sfxlen;
+		fpnt[sfxlen + 2] = '\0';
+
+		fpnt[0] = 'z';
+		fpnt[1] = 'a';
+
+		/*  Basename | Suffix
+		 *  before:
+		 *  x        | yz
+		 *  after:
+		 *  xz       | a.. */
+		fpnt++;
+		sfxlen++;
+
+		/* Reset so we start back at all 'a's in our extended suffix. */
+		quot = 0;
+		fnum = 0;
+	}
+
 	for (i = sfxlen - 1; i >= 0; i--) {
 		fpnt[i] = quot % 26 + 'a';
 		quot = quot / 26;
