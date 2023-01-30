@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2019/12/19 19:19:28 macallan Exp $
+# $NetBSD: Makefile,v 1.13 2023/01/30 19:49:49 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -15,6 +15,7 @@ TESTS_C+=	t_memset
 TESTS_C+=	t_popcount
 TESTS_C+=	t_strcat
 TESTS_C+=	t_strchr
+TESTS_C+=	t_strchrnul
 TESTS_C+=	t_strcmp
 TESTS_C+=	t_strcoll
 TESTS_C+=	t_strcpy
