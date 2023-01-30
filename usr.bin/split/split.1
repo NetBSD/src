@@ -1,4 +1,4 @@
-.\"	$NetBSD: split.1,v 1.15 2007/05/31 01:35:35 jschauma Exp $
+.\"	$NetBSD: split.1,v 1.16 2023/01/30 15:22:02 jschauma Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)split.1	8.3 (Berkeley) 4/16/94
 .\"
-.Dd May 28, 2007
+.Dd January 28, 2023
 .Dt SPLIT 1
 .Os
 .Sh NAME
@@ -99,7 +99,12 @@ characters in the range
 .Dq Li a-z .
 If
 .Fl a
-is not specified, two letters are used as the suffix.
+is not specified, two letters are used as the initial
+suffix.
+If the output does not fit into the resulting number
+of files, then the suffix length is automatically
+extended as needed such that all output files continue
+to sort in lexical order.
 .Pp
 If the
 .Ar name
