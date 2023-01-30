@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.42 2023/01/23 14:12:08 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.43 2023/01/30 11:42:11 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -704,4 +704,13 @@ sys/dev/pci/ixgbe/ixv.c 			1.183
 	- Make three "Unsupported SFP+ module..." messages the same.
 	- KNF. Modify comment. Fix typo.
 	[msaitoh, ticket #1579]
+
+share/man/man4/puc.4				1.44
+sys/dev/pci/pcidevs				1.1477
+sys/dev/pci/pucdata.c				1.114
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	PR 57202: add support for the EXAR XR17V354 PCIe UART.
+	[thorpej, ticket #1580]
 
