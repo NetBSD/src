@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.18 2022/07/17 15:35:42 riastradh Exp $
+# $NetBSD: Makefile,v 1.19 2023/01/31 13:09:04 riastradh Exp $
 
 .include "../Makefile.inc"
 .include "Makefile.inc"
@@ -52,10 +52,7 @@ SRCS+=	drm_legacy_misc.c
 SRCS+=	drm_lock.c
 SRCS+=	drm_scatter.c
 
-# GPU scheduler
-SRCS+=	sched_entity.c
-SRCS+=	sched_fence.c
-SRCS+=	sched_main.c
+# GPU scheduler is separatd out into drmkms_sched.kmod
 
 # Upstream source files.
 #SRCS+=	drm_agpsupport.c
