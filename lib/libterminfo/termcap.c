@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.24 2020/04/05 14:53:39 martin Exp $ */
+/* $NetBSD: termcap.c,v 1.25 2023/01/31 21:11:24 andvar Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.24 2020/04/05 14:53:39 martin Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.25 2023/01/31 21:11:24 andvar Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -161,7 +161,7 @@ tgetstr(const char *id2, char **area)
 				str = ud->str;
 		}
 
-	/* XXX: FXIXME
+	/* XXX: FIXME
 	 * We should fix sgr0(me) as it has a slightly different meaning
 	 * for termcap. */
 
