@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strchr.3	8.2 (Berkeley) 4/19/94
-.\"	$NetBSD: strchr.3,v 1.14 2020/11/26 23:13:55 rillig Exp $
+.\"	$NetBSD: strchr.3,v 1.15 2023/01/31 01:42:32 simonb Exp $
 .\"
 .Dd November 27, 2020
 .Dt STRCHR 3
@@ -109,7 +109,10 @@ The
 function
 conforms to
 .St -ansiC .
-.The
+.Sh HISTORY
+The
 .Fn strchrnul
-function appeared in
+first appeared in glibc 2.1.1 and was added to
+.Fx 10
+and
 .Nx 8 .
