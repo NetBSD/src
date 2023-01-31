@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.133 2021/08/14 17:51:19 ryo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.134 2023/01/31 21:11:24 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -242,7 +242,7 @@ struct clockframe {
 };
 
 /*
- * A port must provde CLKF_USERMODE() for use in machine-independent code.
+ * A port must provide CLKF_USERMODE() for use in machine-independent code.
  * These differ on r4000 and r3000 systems; provide them in the
  * port-dependent file that includes this one, using the macros below.
  */
