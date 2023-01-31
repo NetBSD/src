@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer_disk.h,v 1.3 2021/12/05 07:25:11 msaitoh Exp $      */
+/*        $NetBSD: hammer_disk.h,v 1.4 2023/01/31 21:11:24 andvar Exp $      */
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -36,7 +36,7 @@
  * $DragonFly: src/sys/vfs/hammer/hammer_disk.h,v 1.55 2008/11/13 02:18:43 dillon Exp $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer_disk.h,v 1.3 2021/12/05 07:25:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer_disk.h,v 1.4 2023/01/31 21:11:24 andvar Exp $");
 
 #ifndef VFS_HAMMER_DISK_H_
 #define VFS_HAMMER_DISK_H_
@@ -913,7 +913,7 @@ typedef struct hammer_inode_data {
 } *hammer_inode_data_t;
 
 /*
- * Neither mtime nor atime upates are CRCd by the B-Tree element.
+ * Neither mtime nor atime updates are CRCd by the B-Tree element.
  * mtime updates have UNDO, atime updates do not.
  */
 #define HAMMER_INODE_CRCSIZE	\
