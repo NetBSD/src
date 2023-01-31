@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.160 2022/10/26 23:22:07 riastradh Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.161 2023/01/31 13:21:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.160 2022/10/26 23:22:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.161 2023/01/31 13:21:37 riastradh Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1632,8 +1632,16 @@ module_fetch_info(module_t *mod)
 		return error;
 	}
 	if (size != sizeof(modinfo_t **)) {
-		module_error("`link_set_modules' section wrong size "
-		    "(got %zu, wanted %zu)", size, sizeof(modinfo_t **));
+		if (size > sizeof(modinfo_t **) &&
+		    (size % sizeof(modinfo_t **)) == 0) {
+			module_error("`link_set_modules' section wrong size "
+			    "(%zu different MODULE declarations?)",
+			    size / sizeof(modinfo_t **));
+		} else {
+			module_error("`link_set_modules' section wrong size "
+			    "(got %zu, wanted %zu)",
+			    size, sizeof(modinfo_t **));
+		}
 		return ENOEXEC;
 	}
 	mod->mod_info = *(modinfo_t **)addr;
