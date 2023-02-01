@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.16 2012/02/12 16:34:10 matt Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.16.52.1 2023/02/01 18:56:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ typedef u_long	bus_space_handle_t;
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0);
 
 #define	bus_space_read_multi_2(t, h, o, a, c) do {			\
@@ -179,7 +179,7 @@ typedef u_long	bus_space_handle_t;
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0);
 
 #define	bus_space_read_multi_4(t, h, o, a, c) do {			\
@@ -193,7 +193,7 @@ typedef u_long	bus_space_handle_t;
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0);
 
 #if 0	/* Cause a link error for bus_space_read_multi_8 */
@@ -221,7 +221,7 @@ typedef u_long	bus_space_handle_t;
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");				\
 } while (0);
 
 #define	bus_space_read_region_2(t, h, o, a, c) do {			\
@@ -235,7 +235,7 @@ typedef u_long	bus_space_handle_t;
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");					\
 } while (0);
 
 #define	bus_space_read_region_4(t, h, o, a, c) do {			\
@@ -249,7 +249,7 @@ typedef u_long	bus_space_handle_t;
 		jne	1b"					:	\
 								:	\
 		    "r" ((h) + (o)), "g" (a), "g" (c)		:	\
-		    "a0","a1","d0");					\
+		    "a0","a1","d0","memory");					\
 } while (0);
 
 #if 0	/* Cause a link error for bus_space_read_region_8 */
