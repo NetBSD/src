@@ -1,4 +1,4 @@
-/*	$NetBSD: ddbping.c,v 1.2 2021/02/23 07:13:53 mrg Exp $ */
+/*	$NetBSD: ddbping.c,v 1.3 2023/02/01 10:22:20 uwe Exp $ */
 /*
  * Copyright (c) 2020 Valery Ushakov
  * All rights reserved.
@@ -28,18 +28,41 @@
  * Example of a kernel module that registers DDB commands.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddbping.c,v 1.2 2021/02/23 07:13:53 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddbping.c,v 1.3 2023/02/01 10:22:20 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
 
 #include <ddb/ddb.h>
 
+/* XXX: db_command.h should provide something like this */
+typedef void db_cmdfn_t(db_expr_t, bool, db_expr_t, const char *);
+
+
+static db_cmdfn_t db_ping;
+static db_cmdfn_t db_show_ping;
+
+
+static const struct db_command db_ping_base_tbl[] = {
+	{ DDB_ADD_CMD("ping", db_ping, 0,
+		      "Example command",
+		      NULL, NULL) },
+	{ DDB_END_CMD },
+};
+
+static const struct db_command db_ping_show_tbl[] = {
+	{ DDB_ADD_CMD("ping", db_show_ping, 0,
+		      "Example command stats",
+		      NULL, NULL) },
+	{ DDB_END_CMD },
+};
+
 
 static unsigned int ping_count;
 static unsigned int ping_count_modif;
 static unsigned int ping_count_addr;
 static unsigned int ping_count_count;
+
 
 static void
 db_ping(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
@@ -74,20 +97,6 @@ db_show_ping(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	db_printf("with address\t%u\n", ping_count_addr);
 	db_printf("with count\t%u\n", ping_count_count);
 }
-
-static const struct db_command db_ping_base_tbl[] = {
-	{ DDB_ADD_CMD("ping", db_ping, 0,
-		      "Example command",
-		      NULL, NULL) },
-	{ DDB_END_CMD },
-};
-
-static const struct db_command db_ping_show_tbl[] = {
-	{ DDB_ADD_CMD("ping", db_show_ping, 0,
-		      "Example command stats",
-		      NULL, NULL) },
-	{ DDB_END_CMD },
-};
 
 
 MODULE(MODULE_CLASS_MISC, ddbping, NULL);
