@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.43 2023/01/30 11:42:11 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.44 2023/02/01 19:01:48 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -713,4 +713,20 @@ sys/dev/pci/pcidevs_data.h			(regen)
 
 	PR 57202: add support for the EXAR XR17V354 PCIe UART.
 	[thorpej, ticket #1580]
+
+sys/arch/next68k/dev/esp.c			1.65
+sys/arch/next68k/include/bus_space.h		1.20
+sys/arch/next68k/include/cpu.h			1.51
+sys/arch/next68k/next68k/clock.c		1.13
+sys/arch/next68k/next68k/machdep.c		1.117
+
+	next68k: fix delay_divisor value for proper delay(9) on 68040.
+	Specify proper constraints for bus_space_read region and multi ops.
+	Fix silent stall of next68k esp(4) SCSI.
+	[tsutsui, ticket #1581]
+
+sys/arch/vax/boot/Makefile.inc			1.19
+
+	vax: make bootloader work on 8MB VAXen.
+	[tsutsui, ticket #1582]
 
