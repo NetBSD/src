@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.34 2021/12/15 13:28:29 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.35 2023/02/01 19:38:20 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -42,6 +42,11 @@ NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .endif
 
 CXXFLAGS+=	-std=gnu++98
+
+# Reduce debugging for these extremely large objects.
+.if ${MKDEBUG:Uno} != "no"
+CXXFLAGS+=      -g1
+.endif
 
 GNUHOSTDIST=	${DIST}
 BUILD_PREFIX=	${C_BUILD_PREFIX}
