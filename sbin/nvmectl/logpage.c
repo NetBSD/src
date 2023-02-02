@@ -1,4 +1,4 @@
-/*	$NetBSD: logpage.c,v 1.10 2022/07/31 13:49:23 mlelstv Exp $	*/
+/*	$NetBSD: logpage.c,v 1.11 2023/02/02 08:21:32 mlelstv Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: logpage.c,v 1.10 2022/07/31 13:49:23 mlelstv Exp $");
+__RCSID("$NetBSD: logpage.c,v 1.11 2023/02/02 08:21:32 mlelstv Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/logpage.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -263,9 +263,9 @@ print_log_health(const struct nvm_identify_controller *cdata __unused, void *buf
 	printf("Percentage used:                %u\n",
 	    health->percentage_used);
 
-	print_bignum("Data units (512 byte) read:", health->data_units_read, "");
-	print_bignum("Data units (512 byte) written:", health->data_units_written,
-	    "");
+	print_bignum1("Data units read:", health->data_units_read, "", "B", 512000);
+	print_bignum1("Data units written:", health->data_units_written,
+	    "", "B", 512000);
 	print_bignum("Host read commands:", health->host_read_commands, "");
 	print_bignum("Host write commands:", health->host_write_commands, "");
 	print_bignum("Controller busy time (minutes):", health->controller_busy_time,
