@@ -1,4 +1,4 @@
-.\"	$NetBSD: devsw_attach.9,v 1.5 2023/02/02 13:25:41 pgoyette Exp $
+.\"	$NetBSD: devsw_attach.9,v 1.6 2023/02/02 14:09:52 uwe Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,11 +73,11 @@
 .Sh DESCRIPTION
 If a device driver has character device interfaces accessed from
 userland, the driver must define a
-.Em cdevsw
+.Vt cdevsw
 structure.
 If the driver also has block device interfaces, the driver must
 additionally define a
-.Em bdevsw
+.Vt bdevsw
 structure.
 These structures are constant, and are defined within the
 .Xr driver 9 .
@@ -85,54 +85,57 @@ These structures are constant, and are defined within the
 For drivers which are included in the kernel via
 .Xr config 1 ,
 the
-.Em cdevsw
+.Vt cdevsw
 and
-.Em bdevsw
+.Vt bdevsw
 structures are automatically linked into the configuration database.
 For drivers which are separately loaded, the
 .Fn devsw_attach
 function creates the necessary linkage and associates the
-.Em cdev
+.Fa cdev
 and optional
-.Em bdev
+.Fa bdev
 with the
 .Xr driver 9 .
 If there is no block device interface needed,
-.Em bdev
+.Fa bdev
 should be set to
 .Dv NULL
 and
-.Em bmajor
+.Fa bmajor
 to
-.Dv \-1 .
+.Dv NODEVMAJOR .
 The
-.Em devname ,
+.Fa devname ,
 major number, and device type
 (character or block)
 must correspond to the device file which will be opened by user programs.
 By passing
-.Dv \-1
+.Dv NODEVMAJOR
 to the function for the
-.Em cmajor
+.Fa cmajor
 or
-.Em bmajor ,
+.Fa bmajor ,
 the major number can be automatically generated.
-It can then be returned to userspace (for example, using
-.Xr sysctl 8 )
+It can then be returned to userspace
+.Po
+for example, using
+.Xr sysctl 8
+.Pc
 for creation of the device node.
 .Pp
 The
 .Fn devsw_detach
 function is used to detach the
-.Em bdev
+.Fa bdev
 and
-.Em cdev
+.Fa cdev
 structures.
 .Fn devsw_detach
 should be called before a loaded device driver is unloaded.
 The caller must ensure that there are no open instances of the device,
 and that the device's
-.Fn d_open
+.Fa d_open
 function will fail, before calling
 .Fn devsw_detach .
 .Pp
@@ -141,22 +144,22 @@ The
 and
 .Fn cdevsw_lookup
 functions return
-.Em "const struct bdevsw *"
+.Vt "const struct bdevsw *"
 and
-.Em "const struct cdevsw *"
+.Vt "const struct cdevsw *"
 for the given
-.Em dev .
+.Fa dev .
 .Pp
 The
 .Fn bdevsw_lookup_major
 and
 .Fn cdevsw_lookup_major
 functions return
-.Em "devmajor_t"
+.Vt "devmajor_t"
 for the given
-.Em "const struct bdevsw *"
+.Vt "const struct bdevsw *"
 or
-.Em "const struct cdevsw *" .
+.Vt "const struct cdevsw *" .
 .Sh RETURN VALUES
 Upon successful completion,
 .Fn devsw_attach
