@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.2 2018/04/18 10:11:44 nonaka Exp $	*/
+/*	$NetBSD: util.c,v 1.3 2023/02/02 08:21:32 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2017 Netflix, Inc
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.2 2018/04/18 10:11:44 nonaka Exp $");
+__RCSID("$NetBSD: util.c,v 1.3 2023/02/02 08:21:32 mlelstv Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/util.c 320423 2017-06-27 20:24:25Z imp $");
 #endif
@@ -84,10 +84,47 @@ nvme_strvis(u_char *dst, int dlen, const u_char *src, int slen)
 #define	METRIX_PREFIX_BUFSIZ	17
 #define	NO_METRIX_PREFIX_BUFSIZ	42
 
+static void
+unit_string(BIGNUM *bn, const char *unit, long scale, char *out, size_t len)
+{
+	size_t ulen = strlen(unit);
+	uint8_t tmp[4];
+	BN_CTX *ctx;
+	BIGNUM *sn;
+
+	if (6 + ulen + 3 >= len)
+		return;
+
+	if (scale > 1) {
+		ctx = BN_CTX_new();
+		if (ctx == NULL)
+			return;
+
+		tmp[0] = (scale >> 24) & 0xff;
+		tmp[1] = (scale >> 16) & 0xff;
+		tmp[2] = (scale >>  8) & 0xff;
+		tmp[3] = scale & 0xff;
+
+		sn = BN_bin2bn(tmp, sizeof(tmp), NULL);
+		if (sn != NULL) {
+			BN_mul(bn, bn, sn, ctx);
+			BN_free(sn);
+		}	
+
+		BN_CTX_free(ctx);
+	}
+
+	strncpy(out, " (", len);
+	humanize_bignum(out+2, 6 + ulen, bn, unit, HN_AUTOSCALE, HN_DECIMAL);
+	strncat(out, ")", len);
+}
+
 void
-print_bignum(const char *title, uint64_t v[2], const char *suffix)
+print_bignum1(const char *title, uint64_t v[2], const char *suffix,
+    const char *unit, long scale)
 {
 	char buf[64];
+	char buf2[64];
 	uint8_t tmp[16];
 	uint64_t h, l;
 
@@ -119,15 +156,25 @@ print_bignum(const char *title, uint64_t v[2], const char *suffix)
 #endif
 
 	buf[0] = '\0';
+	buf2[0] = '\0';
+
 	BIGNUM *bn = BN_bin2bn(tmp, sizeof(tmp), NULL);
 	if (bn != NULL) {
 		humanize_bignum(buf, METRIX_PREFIX_BUFSIZ + strlen(suffix),
-		    bn, suffix, HN_AUTOSCALE, HN_DECIMAL);
+		    bn, suffix, HN_AUTOSCALE, HN_DECIMAL | HN_NOSPACE);
+		if (unit)
+			unit_string(bn, unit, scale, buf2, sizeof(buf2));
 		BN_free(bn);
 	}
 	if (buf[0] == '\0')
 		snprintf(buf, sizeof(buf), "0x%016" PRIx64 "%016" PRIx64, h, l);
-	printf("%-31s %s\n", title, buf);
+	printf("%-31s %s%s\n", title, buf, buf2);
+}
+
+void
+print_bignum(const char *title, uint64_t v[2], const char *suffix)
+{
+	print_bignum1(title, v, suffix, NULL, 1);
 }
 
 /* "Missing" from endian.h */
