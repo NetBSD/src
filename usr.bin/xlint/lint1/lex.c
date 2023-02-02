@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.147 2023/01/29 13:57:35 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.148 2023/02/02 22:23:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.147 2023/01/29 13:57:35 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.148 2023/02/02 22:23:30 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -225,11 +225,9 @@ symtab_search(const char *name)
 	for (sym_t *sym = symtab[h]; sym != NULL; sym = sym->s_symtab_next) {
 		if (strcmp(sym->s_name, name) != 0)
 			continue;
-
-		const struct keyword *kw = sym->s_keyword;
-		if (kw != NULL || in_gcc_attribute)
-			return sym;
-		if (kw == NULL && !in_gcc_attribute && sym->s_kind == symtyp)
+		if (sym->s_keyword != NULL ||
+		    sym->s_kind == symtyp ||
+		    in_gcc_attribute)
 			return sym;
 	}
 
@@ -411,7 +409,6 @@ read_byte(void)
 
 	if ((c = lex_input()) == EOF)
 		return c;
-	c &= CHAR_MASK;
 	if (c == '\0')
 		return EOF;	/* lex returns 0 on EOF. */
 	if (c == '\n')

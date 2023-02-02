@@ -1,4 +1,4 @@
-/* $NetBSD: emit2.c,v 1.29 2023/01/14 09:30:07 rillig Exp $ */
+/* $NetBSD: emit2.c,v 1.30 2023/02/02 22:23:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit2.c,v 1.29 2023/01/14 09:30:07 rillig Exp $");
+__RCSID("$NetBSD: emit2.c,v 1.30 2023/02/02 22:23:30 rillig Exp $");
 #endif
 
 #include "lint2.h"
@@ -57,12 +57,10 @@ outtype(type_t *tp)
 	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDDVTTTPAF?XXX";
 	static const char ss[NTSPEC] = "???  su u u u us l sue   ?s l";
 #endif
-	int	na;
-	tspec_t	ts;
-	type_t	**ap;
 
 	while (tp != NULL) {
-		if ((ts = tp->t_tspec) == INT && tp->t_is_enum)
+		tspec_t	ts = tp->t_tspec;
+		if (ts == INT && tp->t_is_enum)
 			ts = ENUM;
 		if (!ch_isupper(tt[ts]))
 			errx(1, "internal error: outtype(%d)", ts);
@@ -96,13 +94,13 @@ outtype(type_t *tp)
 			} else
 				errx(1, "internal error: outtype");
 		} else if (ts == FUNC && tp->t_args != NULL) {
-			na = 0;
-			for (ap = tp->t_args; *ap != NULL; ap++)
+			int na = 0;
+			for (type_t **ap = tp->t_args; *ap != NULL; ap++)
 				na++;
 			if (tp->t_vararg)
 				na++;
 			outint(na);
-			for (ap = tp->t_args; *ap != NULL; ap++)
+			for (type_t **ap = tp->t_args; *ap != NULL; ap++)
 				outtype(*ap);
 			if (tp->t_vararg)
 				outchar('E');
@@ -175,7 +173,7 @@ dumpname(hte_t *hte)
 		return;
 
 	/*
-	 * If there is a definition, write it. Otherwise write a tentative
+	 * If there is a definition, write it. Otherwise, write a tentative
 	 * definition. This is necessary because more than one tentative
 	 * definition is allowed (except with sflag).
 	 */

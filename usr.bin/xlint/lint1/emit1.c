@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.64 2022/10/01 09:42:40 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.65 2023/02/02 22:23:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.64 2022/10/01 09:42:40 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.65 2023/02/02 22:23:30 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -75,14 +75,14 @@ static	void	outfstrg(strg_t *);
  *	()			F
  *	(void)			F 0
  *	(n parameters)		F n arg1 arg2 ... argn
- *	(n parameters, ...)	F n arg1 arg2 ... argn-1 E
+ *	(n parameters, ...)	F n arg1 arg2 ... argn E
  *	enum tag		e T tag_or_typename
  *	struct tag		s T tag_or_typename
  *	union tag		u T tag_or_typename
  *
  *	tag_or_typename		0 (obsolete)		no tag or type name
  *				1 n tag			tagged type
- *				2 n typename		only type name
+ *				2 n typename		only typedef name
  *				3 line.file.uniq	anonymous types
  *
  * spaces are only for better readability
