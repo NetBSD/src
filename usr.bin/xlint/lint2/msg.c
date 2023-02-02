@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.17 2022/05/20 21:18:55 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.18 2023/02/02 22:23:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: msg.c,v 1.17 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.18 2023/02/02 22:23:30 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -67,8 +67,6 @@ static	const	char *msgs[] = {
 	"%s function value must be declared before use  \t%s  ::  %s",/* 17 */
 	"%s renamed multiple times  \t%s  ::  %s",		      /* 18 */
 };
-
-static	const	char *lbasename(const char *);
 
 void
 msg(int n, ...)
