@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmectl.h,v 1.9 2020/09/27 18:17:35 jdolecek Exp $	*/
+/*	$NetBSD: nvmectl.h,v 1.10 2023/02/02 08:21:32 mlelstv Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -109,6 +109,7 @@ __dead void dispatch(int argc, char *argv[], const struct nvme_function *f);
 /* Utility Routines */
 void nvme_strvis(uint8_t *, int, const uint8_t *, int);
 void print_bignum(const char *, uint64_t v[2], const char *);
+void print_bignum1(const char *, uint64_t v[2], const char *, const char *, long);
 uint64_t le48dec(const void *);
 
 #endif	/* __NVMECTL_H__ */
