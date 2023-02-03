@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.35 2021/12/05 07:28:20 msaitoh Exp $	*/
+/*	$NetBSD: fil.c,v 1.36 2023/02/03 19:01:08 christos Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.35 2021/12/05 07:28:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.36 2023/02/03 19:01:08 christos Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -1142,8 +1142,10 @@ ipf_pr_pullup(fr_info_t *fin, int plen)
 		if (M_LEN(fin->fin_m) < plen + fin->fin_ipoff) {
 #if defined(_KERNEL)
 			if (ipf_pullup(fin->fin_m, fin, plen) == NULL) {
-				DT(ipf_pullup_fail);
+				DT1(ipf_pullup_fail, fr_info_t *, fin);
 				LBUMP(ipf_stats[fin->fin_out].fr_pull[1]);
+				fin->fin_reason = FRB_PULLUP;
+				fin->fin_flx |= FI_BAD;
 				return -1;
 			}
 			LBUMP(ipf_stats[fin->fin_out].fr_pull[0]);
@@ -1156,6 +1158,7 @@ ipf_pr_pullup(fr_info_t *fin, int plen)
 			*fin->fin_mp = NULL;
 			fin->fin_m = NULL;
 			fin->fin_ip = NULL;
+			fin->fin_flx |= FI_BAD;
 			return -1;
 #endif
 		}
@@ -3213,6 +3216,13 @@ finished:
 	}
 
 	SPL_X(s);
+
+	if (fin->fin_m == NULL && fin->fin_flx & FI_BAD &&
+	    fin->fin_reason == FRB_PULLUP) {
+		/* m_pullup() has freed the mbuf */
+		LBUMP(ipf_stats[out].fr_blocked[fin->fin_reason]);
+		return (-1);
+	}
 
 #ifdef _KERNEL
 	if (FR_ISPASS(pass))
