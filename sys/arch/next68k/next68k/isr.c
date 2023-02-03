@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.32 2021/04/02 12:11:41 rin Exp $ */
+/*	$NetBSD: isr.c,v 1.33 2023/02/03 23:19:03 tsutsui Exp $ */
 
 /*
  * This file was taken from mvme68k/mvme68k/isr.c
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.32 2021/04/02 12:11:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.33 2023/02/03 23:19:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,7 +146,7 @@ isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority,
 	 * at the head of the list.
 	 */
 	list = &isr_autovec[ipl];
-	if (list->lh_first == NULL) {
+	if (LIST_FIRST(list) == NULL) {
 		LIST_INSERT_HEAD(list, newisr, isr_link);
 		return;
 	}
@@ -156,8 +156,8 @@ isrlink_autovec(int (*func)(void *), void *arg, int ipl, int priority,
 	 * and place ourselves after any ISRs with our current (or
 	 * higher) priority.
 	 */
-	for (curisr = list->lh_first; curisr->isr_link.le_next != NULL;
-	    curisr = curisr->isr_link.le_next) {
+	for (curisr = LIST_FIRST(list); LIST_NEXT(curisr, isr_link) != NULL;
+	    curisr = LIST_NEXT(curisr, isr_link)) {
 		if (newisr->isr_priority > curisr->isr_priority) {
 			LIST_INSERT_BEFORE(curisr, newisr, isr_link);
 			return;
@@ -281,7 +281,7 @@ isrdispatch_autovec(struct clockframe *frame)
 #endif
 
 	list = &isr_autovec[ipl];
-	if (list->lh_first == NULL) {
+	if (LIST_FIRST(list) == NULL) {
 		printf("isrdispatch_autovec: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("too many unexpected interrupts");
@@ -291,7 +291,8 @@ isrdispatch_autovec(struct clockframe *frame)
 
 	/* Give all the handlers a chance. */
 	handled = 0;
-	for (isr = list->lh_first ; isr != NULL; isr = isr->isr_link.le_next) {
+	for (isr = LIST_FIRST(list); isr != NULL;
+	    isr = LIST_NEXT(isr, isr_link)) {
 		arg = isr->isr_arg ? isr->isr_arg : frame;
 		if ((*isr->isr_func)(arg) != 0) {
 			if (isr->isr_evcnt)
