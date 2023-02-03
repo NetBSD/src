@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.68 2022/05/30 09:56:03 andvar Exp $	*/
+/*	$NetBSD: locore.s,v 1.69 2023/02/03 23:13:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -113,7 +113,7 @@ GLOBAL(kernel_text)
 
  /*
   * Leave page zero empty so it can be unmapped
-  */     
+  */
 	.space	PAGE_SIZE
 
 /*
@@ -460,7 +460,7 @@ Lpushpc:
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
 	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area 
+	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 
@@ -503,7 +503,7 @@ Lenab3:
 
 /*
  * Trap/interrupt vector routines
- */ 
+ */
 #include <m68k/m68k/trap_subr.s>
 
 /*
@@ -614,7 +614,7 @@ ENTRY_NOPROFILE(trap0)
 	movw	#SPL1,%sr
 	tstb	_C_LABEL(ssir)
 	jne	Lsir1
-Ltrap1:	
+Ltrap1:
 	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most registers
@@ -872,7 +872,7 @@ Lgotsir:
 	moveml	#0xFFFF,%sp@-		| save all registers
 	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
-Lsir1:	
+Lsir1:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_SSIR,%sp@-		| type == software interrupt
@@ -899,7 +899,7 @@ Ldorte:
 
 /*
  * Primitives
- */ 
+ */
 
 /*
  * Use common m68k support routines.
@@ -1119,7 +1119,7 @@ Ldoboot1:
 	movel %a0,%d0			| "-h" halts instead of reboot.
 	trap #13
 
-hloop:  
+hloop:
 	bra hloop			| This shouldn't be reached.
 /*
  * Misc. global variables.
