@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.20 2023/01/27 15:25:47 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.21 2023/02/03 23:13:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ typedef u_long	bus_space_handle_t;
        ((*(hp)=(bus_space_handle_t)((t)+((a)-COLORBASE))),0) : (-1))))
 
 #define	bus_space_unmap(t, h, s)
-	
+
 #define	bus_space_subregion(t, h, o, s, hp)				\
      (*(hp)=(h)+(o))
 

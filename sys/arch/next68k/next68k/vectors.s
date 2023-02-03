@@ -1,4 +1,4 @@
-| $NetBSD: vectors.s,v 1.12 2021/12/05 04:54:21 msaitoh Exp $
+| $NetBSD: vectors.s,v 1.13 2023/02/03 23:13:01 tsutsui Exp $
 
 | This file was taken from mvme68k/mvme68k/vectors.s
 | should probably be re-synced when needed.
@@ -37,7 +37,7 @@
 |
 
 	.data
-	
+
 GLOBAL(vectab)
 	VECTOR(badtrap)		/* 0: (unused reset SSP) */
 	VECTOR(badtrap)		/* 1: NOT USED (reset PC) */
@@ -83,13 +83,13 @@ GLOBAL(vectab)
 #ifdef COMPAT_13
 	VECTOR(trap1)		/* 33: compat_13_sigreturn */
 #else
-	VECTOR(illinst)	
+	VECTOR(illinst)
 #endif
 	VECTOR(trap2)		/* 34: trace */
 #ifdef COMPAT_16
 	VECTOR(trap3)		/* 35: compat_16_sigreturn */
 #else
-	VECTOR(illinst)	
+	VECTOR(illinst)
 #endif
 	VECTOR(illinst)		/* 36: TRAP instruction vector */
 	VECTOR(illinst)		/* 37: TRAP instruction vector */

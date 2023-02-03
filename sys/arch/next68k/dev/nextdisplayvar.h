@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplayvar.h,v 1.5 2012/10/27 17:18:05 chs Exp $ */
+/* $NetBSD: nextdisplayvar.h,v 1.6 2023/02/03 23:13:00 tsutsui Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <machine/bus.h>
 
-extern int nextdisplay_cnattach(void);
+int nextdisplay_cnattach(void);
 
 struct nextdisplay_config;
 struct fbcmap;
@@ -48,17 +48,17 @@ struct nextdisplay_config {
 	paddr_t dc_paddr;		/* memory space physical base address */
 	psize_t dc_size;		/* size of slot memory */
 
-	vaddr_t dc_videobase;	/* base of flat frame buffer */
+	vaddr_t dc_videobase;		/* base of flat frame buffer */
 
-	int dc_wid; /* width of frame buffer */
-	int dc_ht; /* height of frame buffer */
-	int dc_depth; /* depth of frame buffer */
-	int dc_rowbytes; /* bytes in fb scan line */
+	int dc_wid;			/* width of frame buffer */
+	int dc_ht;			/* height of frame buffer */
+	int dc_depth;			/* depth of frame buffer */
+	int dc_rowbytes;		/* bytes in fb scan line */
 
-	struct raster dc_raster; /* raster description */
-	struct rcons dc_rcons; /* raster blitter control info */
+	struct raster dc_raster;	/* raster description */
+	struct rcons dc_rcons;		/* raster blitter control info */
 
-	int dc_blanked; /* currently has video disabled */
+	int dc_blanked;			/* currently has video disabled */
 
 	int isconsole;
 };
@@ -67,6 +67,6 @@ struct nextdisplay_softc {
 	device_t sc_dev;
 
 	struct nextdisplay_config *sc_dc;
-				
+
 	int nscreens;
 };

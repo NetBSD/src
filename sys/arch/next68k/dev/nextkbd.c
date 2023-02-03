@@ -1,4 +1,4 @@
-/* $NetBSD: nextkbd.c,v 1.18 2021/08/07 16:19:01 thorpej Exp $ */
+/* $NetBSD: nextkbd.c,v 1.19 2023/02/03 23:13:00 tsutsui Exp $ */
 /*
  * Copyright (c) 1998 Matt DeBergalis
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.18 2021/08/07 16:19:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextkbd.c,v 1.19 2023/02/03 23:13:00 tsutsui Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -68,13 +68,13 @@ struct nextkbd_internal {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct nextkbd_softc *t_sc; /* back pointer */
-	u_int32_t mods;
+	uint32_t mods;
 };
 
 struct mon_regs {
-	u_int32_t mon_csr;
-	u_int32_t mon_1;
-	u_int32_t mon_data;
+	uint32_t mon_csr;
+	uint32_t mon_1;
+	uint32_t mon_data;
 };
 
 static int attached = 0;
@@ -121,6 +121,7 @@ int nextkbdhard(void *);
 static int
 nextkbd_is_console(bus_space_tag_t bst)
 {
+
 	return (nextkbd_consdata.isconsole && (bst == nextkbd_consdata.iot));
 }
 
@@ -130,18 +131,18 @@ nextkbd_match(device_t parent, cfdata_t match, void *aux)
 	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
 
 	if (attached)
-		return(0);
+		return 0;
 
 	ia->ia_addr = (void *)NEXT_P_MON;
 
-	return(1);
+	return 1;
 }
 
 void
 nextkbd_attach(device_t parent, device_t self, void *aux)
 {
 	struct nextkbd_softc *sc = device_private(self);
-	struct intio_attach_args *ia = (struct intio_attach_args *)aux;
+	struct intio_attach_args *ia = aux;
 	int isconsole;
 	struct wskbddev_attach_args a;
 
@@ -152,22 +153,21 @@ nextkbd_attach(device_t parent, device_t self, void *aux)
 	if (isconsole) {
 		sc->id = &nextkbd_consdata;
 	} else {
-		sc->id = kmem_zalloc(sizeof(struct nextkbd_internal), 
-				KM_SLEEP);
+		sc->id = kmem_zalloc(sizeof(struct nextkbd_internal), KM_SLEEP);
 
 		sc->id->iot = ia->ia_bst;
 		if (bus_space_map(sc->id->iot, NEXT_P_MON,
-				sizeof(struct mon_regs),
-				0, &sc->id->ioh)) {
+		    sizeof(struct mon_regs), 0, &sc->id->ioh)) {
 			printf("%s: can't map mon status control register\n",
-					device_xname(self));
+			    device_xname(self));
 			return;
 		}
 	}
 
 	sc->id->t_sc = sc; /* set back pointer */
 
-	isrlink_autovec(nextkbdhard, sc, NEXT_I_IPL(NEXT_I_KYBD_MOUSE), 0, NULL);
+	isrlink_autovec(nextkbdhard, sc, NEXT_I_IPL(NEXT_I_KYBD_MOUSE),
+	    0, NULL);
 
 	INTR_ENABLE(NEXT_I_KYBD_MOUSE);
 
@@ -188,6 +188,7 @@ nextkbd_attach(device_t parent, device_t self, void *aux)
 int
 nextkbd_enable(void *v, int on)
 {
+
 	/* XXX not sure if this should do anything */
 	/* printf("nextkbd_enable %d\n", on); */
 	return 0;
@@ -209,39 +210,39 @@ nextkbd_set_leds(void *v, int leds)
 
 	s = spltty();
 	bus_space_write_1(sc->id->iot, sc->id->ioh, 3, 0xc5);
-	/* @@@ need to add:
-	   if bit 7 of @ioh+0 set:
-	     repeat 2
-	       wait until bit 6 of @ioh+2 clears
-	*/
+	/*
+	 * @@@ need to add:
+	 * if bit 7 of @ioh+0 set:
+	 *   repeat 2
+	 *     wait until bit 6 of @ioh+2 clears
+	 */
 	bus_space_write_4(sc->id->iot, sc->id->ioh, 4, hw_leds);
-	/* @@@ need to add:
-	   wait until bit 4 of @ioh+0 (@ioh+2 if bit 7 was set above)
-	     clears
-	*/
+	/*
+	 * @@@ need to add:
+	 *   wait until bit 4 of @ioh+0 (@ioh+2 if bit 7 was set above)
+	 *    clears
+	 */
 	splx(s);
-
-	return;
 }
 
 int
 nextkbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct nextkbd_softc *sc = v;
-		 
+
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		/* XXX */
 		*(int *)data = WSKBD_TYPE_NEXT;
-		return (0);
+		return 0;
 	case WSKBDIO_SETLEDS:
 		nextkbd_set_leds (sc, *(int *)data);
-		return (0);
+		return 0;
 	case WSKBDIO_GETLEDS:
 		*(int *)data = sc->sc_leds & NEXT_WSKBD_LEDS;
-		return (0);
+		return 0;
 	case WSKBDIO_COMPLEXBELL:
-		return (0);
+		return 0;
 	}
 	return EPASSTHROUGH;
 }
@@ -252,28 +253,29 @@ nextkbdhard(void *arg)
 	struct nextkbd_softc *sc = arg;
 	int type, key, val;
 
-	if (!INTR_OCCURRED(NEXT_I_KYBD_MOUSE)) return 0;
+	if (!INTR_OCCURRED(NEXT_I_KYBD_MOUSE))
+		return 0;
 
-#define CSR_INT 0x00800000
-#define CSR_DATA 0x00400000
+#define CSR_INT		0x00800000
+#define CSR_DATA	0x00400000
 
-#define KD_KEYMASK			0x007f
-#define KD_DIRECTION		0x0080 /* pressed or released */
-#define KD_CNTL					0x0100
-#define KD_LSHIFT				0x0200
-#define KD_RSHIFT				0x0400
-#define KD_LCOMM				0x0800
-#define KD_RCOMM				0x1000
-#define KD_LALT					0x2000
-#define KD_RALT					0x4000
-#define KD_VALID				0x8000 /* only set for scancode keys ? */
-#define KD_MODS					0x4f00
+#define KD_KEYMASK	0x007f
+#define KD_DIRECTION	0x0080 /* pressed or released */
+#define KD_CNTL		0x0100
+#define KD_LSHIFT	0x0200
+#define KD_RSHIFT	0x0400
+#define KD_LCOMM	0x0800
+#define KD_RCOMM	0x1000
+#define KD_LALT		0x2000
+#define KD_RALT		0x4000
+#define KD_VALID	0x8000 /* only set for scancode keys ? */
+#define KD_MODS		0x4f00
 
 	val = nextkbd_read_data(sc->id);
 	if ((val != -1) && nextkbd_decode(sc->id, val, &type, &key)) {
 		wskbd_input(sc->sc_wskbddev, type, key);
 	}
-	return(1);
+	return 1;
 }
 
 int
@@ -281,9 +283,8 @@ nextkbd_cnattach(bus_space_tag_t bst)
 {
 	bus_space_handle_t bsh;
 
-	if (bus_space_map(bst, NEXT_P_MON, sizeof(struct mon_regs),
-			0, &bsh))
-		return (ENXIO);
+	if (bus_space_map(bst, NEXT_P_MON, sizeof(struct mon_regs), 0, &bsh))
+		return ENXIO;
 
 	memset(&nextkbd_consdata, 0, sizeof(nextkbd_consdata));
 
@@ -291,10 +292,10 @@ nextkbd_cnattach(bus_space_tag_t bst)
 	nextkbd_consdata.ioh = bsh;
 	nextkbd_consdata.isconsole = 1;
 
-	wskbd_cnattach(&nextkbd_consops, &nextkbd_consdata, 
-			&nextkbd_keymapdata);
+	wskbd_cnattach(&nextkbd_consops, &nextkbd_consdata,
+	    &nextkbd_keymapdata);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -306,7 +307,7 @@ nextkbd_cngetc(void *v, u_int *type, int *data)
 	for (;;) {
 		if (INTR_OCCURRED(NEXT_I_KYBD_MOUSE)) {
 			val = nextkbd_read_data(t);
-			if ((val != -1) && nextkbd_decode(t, val, type, data))
+			if (val != -1 && nextkbd_decode(t, val, type, data))
 				return;
 		}
 	}
@@ -331,80 +332,85 @@ nextkbd_read_data(struct nextkbd_internal *id)
 {
 	unsigned char device;
 	struct mon_regs stat = { 0 };
-				
+
 	bus_space_read_region_4(id->iot, id->ioh, 0, &stat, 3);
-	if ((stat.mon_csr & CSR_INT) && (stat.mon_csr & CSR_DATA)) {
+	if ((stat.mon_csr & CSR_INT) != 0 &&
+	    (stat.mon_csr & CSR_DATA) != 0) {
 		stat.mon_csr &= ~CSR_INT;
 		id->num_ints++;
 		bus_space_write_4(id->iot, id->ioh, 0, stat.mon_csr);
 		device = stat.mon_data >> 28;
-		if (device != 1) return (-1); /* XXX: mouse */
-		return (stat.mon_data & 0xffff);
+		if (device != 1)
+			return -1; /* XXX: mouse */
+		return stat.mon_data & 0xffff;
 	}
-	return (-1);
+	return -1;
 }
 
 static int
 nextkbd_decode(struct nextkbd_internal *id, int datain, u_int *type,
     int *dataout)
 {
-	/* printf("datain %08x mods %08x\n", datain, id->mods); */
 
-	if ((datain ^ id->mods) & KD_LSHIFT) {
+#if 0
+	printf("datain %08x mods %08x\n", datain, id->mods);
+#endif
+
+	if (((datain ^ id->mods) & KD_LSHIFT) != 0) {
 		id->mods ^= KD_LSHIFT;
 		*dataout = 90;
 		if (datain & KD_LSHIFT)
 			*type = WSCONS_EVENT_KEY_DOWN;
 		else
 			*type = WSCONS_EVENT_KEY_UP;
-	} else if ((datain ^ id->mods) & KD_RSHIFT) {
+	} else if (((datain ^ id->mods) & KD_RSHIFT) != 0) {
 		id->mods ^= KD_RSHIFT;
 		*dataout = 91;
-		if (datain & KD_RSHIFT)
+		if ((datain & KD_RSHIFT) != 0)
 			*type = WSCONS_EVENT_KEY_DOWN;
 		else
 			*type = WSCONS_EVENT_KEY_UP;
-	} else if ((datain ^ id->mods) & KD_LALT) {
+	} else if (((datain ^ id->mods) & KD_LALT) != 0) {
 		id->mods ^= KD_LALT;
 		*dataout = 92;
-		if (datain & KD_LALT)
+		if ((datain & KD_LALT) != 0)
 			*type = WSCONS_EVENT_KEY_DOWN;
 		else
 			*type = WSCONS_EVENT_KEY_UP;
-	} else if ((datain ^ id->mods) & KD_RALT) {
+	} else if (((datain ^ id->mods) & KD_RALT) != 0) {
 		id->mods ^= KD_RALT;
 		*dataout = 93;
-		if (datain & KD_RALT)
+		if ((datain & KD_RALT) != 0)
 			*type = WSCONS_EVENT_KEY_DOWN;
 		else
 			*type = WSCONS_EVENT_KEY_UP;
-	} else if ((datain ^ id->mods) & KD_CNTL) {
+	} else if (((datain ^ id->mods) & KD_CNTL) != 0) {
 		id->mods ^= KD_CNTL;
 		*dataout = 94;
-		if (datain & KD_CNTL)
+		if ((datain & KD_CNTL) != 0)
 			*type = WSCONS_EVENT_KEY_DOWN;
 		else
 			*type = WSCONS_EVENT_KEY_UP;
-	} else if ((datain ^ id->mods) & KD_LCOMM) {
+	} else if (((datain ^ id->mods) & KD_LCOMM) != 0) {
 		id->mods ^= KD_LCOMM;
 		*dataout = 95;
-		if (datain & KD_LCOMM)
+		if ((datain & KD_LCOMM) != 0)
 			*type = WSCONS_EVENT_KEY_DOWN;
 		else
 			*type = WSCONS_EVENT_KEY_UP;
-	} else if ((datain ^ id->mods) & KD_RCOMM) {
+	} else if (((datain ^ id->mods) & KD_RCOMM) != 0) {
 		id->mods ^= KD_RCOMM;
 		*dataout = 96;
-		if (datain & KD_RCOMM)
+		if ((datain & KD_RCOMM) != 0)
 			*type = WSCONS_EVENT_KEY_DOWN;
 		else
 			*type = WSCONS_EVENT_KEY_UP;
-	} else if (datain & KD_KEYMASK) {
-		if (datain & KD_DIRECTION)
+	} else if ((datain & KD_KEYMASK) != 0) {
+		if ((datain & KD_DIRECTION) != 0)
 			*type = WSCONS_EVENT_KEY_UP;
 		else
 			*type = WSCONS_EVENT_KEY_DOWN;
-								
+
 		*dataout = (datain & KD_KEYMASK);
 	} else {
 		*dataout = 0;
