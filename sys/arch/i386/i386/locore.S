@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.190 2022/09/07 00:40:18 knakahara Exp $	*/
+/*	$NetBSD: locore.S,v 1.191 2023/02/03 09:21:58 mlelstv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.190 2022/09/07 00:40:18 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.191 2023/02/03 09:21:58 mlelstv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -415,7 +415,7 @@ multiboot1_loader:
 	pushl	%ebx		/* Address of Multiboot information */
 	call	_C_LABEL(multiboot1_pre_reloc)
 	addl	$4,%esp
-	jmp	2f
+	jmp	.Lstart_common
 
 efi_multiboot2_loader:
 	/*
