@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.270 2022/06/06 10:56:27 nia Exp $
+# $NetBSD: mi,v 1.271 2023/02/03 13:53:40 mlelstv Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -83,6 +83,7 @@
 ./etc/inetd.conf				etc-netutil-etc
 ./etc/iscsi/auths				etc-iscsi-etc		iscsi
 ./etc/iscsi/targets				etc-iscsi-etc		iscsi
+./etc/iscsi/volumes				etc-iscsi-etc
 ./etc/kyua/kyua.conf				etc-kyua-etc		kyua
 ./etc/lkm.conf					etc-obsolete		obsolete
 ./etc/localtime					etc-sys-etc
@@ -238,6 +239,7 @@
 ./etc/rc.d/irdaattach				etc-sys-rc
 ./etc/rc.d/iscsi_target				etc-iscsi-rc
 ./etc/rc.d/iscsid				etc-iscsi-rc
+./etc/rc.d/iscsid_volumes			etc-iscsi-rc
 ./etc/rc.d/isdnd				etc-obsolete		obsolete
 ./etc/rc.d/isibootd				etc-bootserver-rc
 ./etc/rc.d/kdc					etc-krb5-rc

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.116 2022/06/06 10:56:28 nia Exp $
+# $NetBSD: Makefile,v 1.117 2023/02/03 13:53:40 mlelstv Exp $
 
 .include <bsd.own.mk>
 
@@ -25,7 +25,7 @@ CONFIGFILES=\
 		gpio \
 		hostapd httpd \
 		identd ifwatchd inetd ip6addrctl ipfilter ipfs ipmon ipnat \
-		ipsec irdaattach iscsi_target iscsid isibootd \
+		ipsec irdaattach iscsi_target iscsid iscsid_volumes isibootd \
 		kdc \
 		ldconfig ldpd lvmlockdir local lpd lvm \
 		makemandb mdnsd mixerctl modules mopd motd mountall \
