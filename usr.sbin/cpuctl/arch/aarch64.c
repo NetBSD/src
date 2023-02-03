@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.21 2022/04/30 14:06:10 ryo Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.22 2023/02/03 08:08:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.21 2022/04/30 14:06:10 ryo Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.22 2023/02/03 08:08:33 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -1073,7 +1073,7 @@ identify_revidr(const char *cpuname, uint32_t revidr)
 
 /* MPIDR_EL1 - Multiprocessor Affinity Register */
 static void
-identify_mpidr(const char *cpuname, uint32_t mpidr)
+identify_mpidr(const char *cpuname, uint64_t mpidr)
 {
 	const char *setname = "multiprocessor affinity";
 
