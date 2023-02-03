@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.61 2022/12/22 11:05:55 nat Exp $
+# $NetBSD: SLAB,v 1.62 2023/02/03 23:07:47 tsutsui Exp $
 #
 # deberg's development machine
 #
@@ -165,7 +165,7 @@ scsibus* at scsi?
 
 
 # Memory-disk drivers
-pseudo-device	md		
+pseudo-device	md
 
 # Misc.
 pseudo-device	loop			# network loopback
