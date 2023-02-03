@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.13 2021/08/07 16:19:01 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.14 2023/02/03 23:22:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.13 2021/08/07 16:19:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2023/02/03 23:22:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,9 +73,10 @@ static int mainbus_attached = 0;
 static int
 mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
+
 	/* Allow only one instance. */
 	if (mainbus_attached)
-		return (0);
+		return 0;
 
 	return 1;
 }
@@ -83,7 +84,7 @@ mainbus_match(device_t parent, cfdata_t cf, void *aux)
 static void
 mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct mainbus_attach_args	mba;
+	struct mainbus_attach_args mba;
 
 	printf("\n");
 
@@ -97,9 +98,9 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-mainbus_search(device_t parent, cfdata_t cf,
-	       const int *ldesc, void *aux)
+mainbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
+
 	if (config_probe(parent, cf, aux))
 		config_attach(parent, cf, aux, NULL, CFARGS_NONE);
 	return 0;
