@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.72 2022/12/22 06:58:47 ryo Exp $ */
+/* $NetBSD: cpu.c,v 1.73 2023/02/03 08:05:27 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.72 2022/12/22 06:58:47 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.73 2023/02/03 08:05:27 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -329,8 +329,8 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 {
 	struct aarch64_sysctl_cpu_id * const id = &ci->ci_id;
 
-	aprint_debug_dev(self, "midr=0x%" PRIx32 " mpidr=0x%" PRIx32 "\n",
-	    (uint32_t)id->ac_midr, (uint32_t)id->ac_mpidr);
+	aprint_debug_dev(self, "midr=0x%" PRIx64 " mpidr=0x%" PRIx64 "\n",
+	    id->ac_midr, id->ac_mpidr);
 	aprint_verbose_dev(self, "revID=0x%" PRIx64, id->ac_revidr);
 
 	/* ID_AA64DFR0_EL1 */
