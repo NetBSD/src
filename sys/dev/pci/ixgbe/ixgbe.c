@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.324 2022/10/28 01:10:41 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.325 2023/02/03 05:43:55 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.324 2022/10/28 01:10:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.325 2023/02/03 05:43:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3515,7 +3515,8 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	}
 
 	/* for X552/X557-AT devices */
-	if (hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T) {
+	if ((hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T) ||
+	    (hw->device_id == IXGBE_DEV_ID_X550EM_A_10G_T)) {
 		const struct sysctlnode *phy_node;
 
 		if (sysctl_createv(log, 0, &rnode, &phy_node, 0, CTLTYPE_NODE,
@@ -5954,7 +5955,8 @@ ixgbe_sysctl_phy_temp(SYSCTLFN_ARGS)
 	if (ixgbe_fw_recovery_mode_swflag(adapter))
 		return (EPERM);
 
-	if (hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) {
+	if ((hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) &&
+	    (hw->device_id != IXGBE_DEV_ID_X550EM_A_10G_T)) {
 		device_printf(adapter->dev,
 		    "Device has no supported external thermal sensor.\n");
 		return (ENODEV);
@@ -5997,7 +5999,8 @@ ixgbe_sysctl_phy_overtemp_occurred(SYSCTLFN_ARGS)
 	if (ixgbe_fw_recovery_mode_swflag(adapter))
 		return (EPERM);
 
-	if (hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) {
+	if ((hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) &&
+	    (hw->device_id != IXGBE_DEV_ID_X550EM_A_10G_T)){
 		device_printf(adapter->dev,
 		    "Device has no supported external thermal sensor.\n");
 		return (ENODEV);
