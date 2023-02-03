@@ -1,4 +1,4 @@
-/*	$NetBSD: espreg.h,v 1.4 2001/09/16 10:39:10 jdolecek Exp $ */
+/*	$NetBSD: espreg.h,v 1.5 2023/02/03 23:16:07 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1995 Rolf Grossmann. All rights reserved.
@@ -57,4 +57,4 @@
 #define	 ESPDSTAT_D1S1	0x80		/*	DMA rdy b. 0, SCSI b. 1 */
 
 
-#define ESP_DEVICE_SIZE (ESP_DSTAT+1)
+#define ESP_DEVICE_SIZE (ESP_DSTAT + 1)

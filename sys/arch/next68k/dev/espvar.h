@@ -1,4 +1,4 @@
-/*	$NetBSD: espvar.h,v 1.19 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: espvar.h,v 1.20 2023/02/03 23:16:07 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 struct esp_softc {
 	struct ncr53c9x_softc sc_ncr53c9x;	/* glue to MI code */
 	struct nextdma_softc *sc_dma;
-	bus_space_tag_t	sc_bst;				
+	bus_space_tag_t	sc_bst;
 	bus_space_handle_t sc_bsh;	/* the device registers */
 
 	uint8_t **sc_dmaaddr;		/* saved argument to esp_dma_setup */
