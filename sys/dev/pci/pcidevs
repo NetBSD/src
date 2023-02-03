@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1477 2023/01/29 15:07:32 thorpej Exp $
+$NetBSD: pcidevs,v 1.1478 2023/02/03 05:31:52 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -9023,6 +9023,7 @@ product SAMSUNGELEC3	SM961		0xa804	SM961 M.2 NVMe SSD
 product SAMSUNGELEC3	SM981		0xa808	SM981 M.2 NVMe SSD
 product SAMSUNGELEC3	SM980		0xa809	SM980 M.2 NVMe SSD
 product SAMSUNGELEC3	PM9A1		0xa80a	PM9A1 M.2 NVMe SSD
+product SAMSUNGELEC3	SM990		0xa80c	SM990 M.2 NVMe SSD
 product SAMSUNGELEC3	171X		0xa820	NVMe SSD Controller 171X
 product SAMSUNGELEC3	172X		0xa821	NVMe SSD Controller 172X
 product SAMSUNGELEC3	172XAB		0xa822	NVMe SSD Controller 172Xa/172Xb
