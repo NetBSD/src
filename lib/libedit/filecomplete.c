@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.71 2022/10/30 19:11:31 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.72 2023/02/03 22:01:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.71 2022/10/30 19:11:31 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.72 2023/02/03 22:01:42 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -850,4 +850,14 @@ _el_fn_complete(EditLine *el, int ch __attribute__((__unused__)))
 	return (unsigned char)fn_complete(el, NULL, NULL,
 	    break_chars, NULL, NULL, (size_t)100,
 	    NULL, NULL, NULL, NULL);
+}
+
+/*
+ * el-compatible wrapper around rl_complete; needed for key binding
+ */
+/* ARGSUSED */
+unsigned char
+_el_fn_sh_complete(EditLine *el, int ch)
+{
+	return _el_fn_complete(el, ch);
 }
