@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.155 2023/01/27 15:36:58 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.156 2023/02/03 23:07:47 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.155 $"
+#ident 		"GENERIC-$Revision: 1.156 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -213,7 +213,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 
 # Memory-disk drivers
-pseudo-device	md		
+pseudo-device	md
 
 #
 # accept filters
