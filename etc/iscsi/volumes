@@ -1,0 +1,17 @@
+# $NetBSD: volumes,v 1.1 2023/02/03 20:16:03 mlelstv Exp $
+#
+# Each line has 5 or 6 fields separated by white space
+# Comment lines start with #
+#
+# Host - the iSCSI server name, optionally followed by :port number
+# Target - the iSCSI IQN target name
+# Digest - '-' (none), 'd' (data CRC), 'h' (header CRC), 'dh' (both)
+# Auth - '-' (none), 'c' (CHAP), 'C' (mutual CHAP)
+# User - name of user from /etc/iscsi/auths
+# Alias - optional, another name for the target
+#
+# for mutual CHAP, the target name is used to lookup the secret from
+# /etc/iscsi/auths
+#
+#
+# Host   Target                     Digest Auth User   Alias
