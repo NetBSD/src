@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27 2012/10/27 17:18:07 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.28 2023/02/03 23:13:01 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -34,7 +34,7 @@
  * SUCH DAMAGE.
  *
  * from: Utah $Hdr: autoconf.c 1.36 92/12/20$
- * 
+ *
  *	@(#)autoconf.c  8.2 (Berkeley) 1/12/94
  */
 
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2012/10/27 17:18:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.28 2023/02/03 23:13:01 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,12 +135,12 @@ void
 cpu_rootconf(void)
 {
 	int count, lun, part;
-	
+
 	count = lun = part = 0;
 
 	devidentparse (rom_boot_info, &count, &lun, &part);
 	booted_device = getdevunit (rom_boot_dev, count);
-	
+
 	printf("boot device: %s\n",
 		(booted_device) ? device_xname(booted_device) : "<unknown>");
 
@@ -156,7 +156,8 @@ getdevunit(const char *name, int unit)
 	int i;
 
 	for (i = 0; i < ndevice_equivs; i++)
-		if (device_equiv->alias && strcmp (name, device_equiv->alias) == 0)
+		if (device_equiv->alias &&
+		    strcmp(name, device_equiv->alias) == 0)
 			name = device_equiv->real;
 
 	return device_find_by_driver_unit(name, unit);
@@ -177,35 +178,34 @@ devidentparse(const char *spec, int *count, int *lun, int *part)
 	if (*spec == '(') {
 		/* tokenize device ident */
 		args[0] = ++spec;
-		for (i = 1; *spec && *spec != ')' && i<3; spec++) {
+		for (i = 1; *spec && *spec != ')' && i < 3; spec++) {
 			if (*spec == ',')
 				args[i++] = ++spec;
 		}
 		if (*spec != ')')
 			goto baddev;
-	
+
 		switch(i) {
 		case 3:
-			*count  = atoi(args[0]);
-			*lun  = atoi(args[1]);
-			*part  = atoi(args[2]);
+			*count = atoi(args[0]);
+			*lun = atoi(args[1]);
+			*part = atoi(args[2]);
 			break;
 		case 2:
-			*lun  = atoi(args[0]);
-			*part  = atoi(args[1]);
+			*lun = atoi(args[0]);
+			*part = atoi(args[1]);
 			break;
 		case 1:
-			*part  = atoi(args[0]);
+			*part = atoi(args[0]);
 			break;
 		case 0:
 			break;
 		}
-	}
-	else
+	} else
 		goto baddev;
-    
+
 	return 0;
-    
+
  baddev:
 	return ENXIO;
 }
@@ -214,8 +214,8 @@ static int
 atoi(const char *s)
 {
 	int val = 0;
-	
-	while(isdigit(*s))
+
+	while (isdigit(*s))
 		val = val * 10 + (*s++ - '0');
 	return val;
 }

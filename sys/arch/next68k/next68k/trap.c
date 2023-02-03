@@ -1,10 +1,10 @@
-/*	$NetBSD: trap.c,v 1.92 2021/09/25 19:16:31 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.93 2023/02/03 23:13:01 tsutsui Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
  * should probably be re-synced when needed.
  * Darrin B. Jewell <jewell@mit.edu> Tue Aug  3 10:53:12 UTC 1999
- * original cvs id: NetBSD: trap.c,v 1.32 1999/08/03 10:52:06 dbj Exp 
+ * original cvs id: NetBSD: trap.c,v 1.32 1999/08/03 10:52:06 dbj Exp
  */
 
 /*
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.92 2021/09/25 19:16:31 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93 2023/02/03 23:13:01 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -561,7 +561,7 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 			goto dopanic;
 		}
 #endif
-		
+
 		pcb->pcb_onfault = NULL;
 		rv = uvm_fault(map, va, ftype);
 		pcb->pcb_onfault = onfault;
