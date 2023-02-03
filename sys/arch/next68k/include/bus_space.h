@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.21 2023/02/03 23:13:01 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.22 2023/02/03 23:21:18 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ typedef u_long	bus_space_handle_t;
 		m68k_btop((t)+((a)-COLORBASE)) : (-1))))
 
 /*
- *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
+ *	uintN_t bus_space_read_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset);
  *
  * Read a 1, 2, 4, or 8 byte quantity from bus space
@@ -139,18 +139,18 @@ typedef u_long	bus_space_handle_t;
  */
 
 #define	bus_space_read_1(t, h, o)					\
-    ((void) t, (*(volatile u_int8_t *)((h) + (o))))
+    ((void) t, (*(volatile uint8_t *)((h) + (o))))
 
 #define	bus_space_read_2(t, h, o)					\
-    ((void) t, (*(volatile u_int16_t *)((h) + (o))))
+    ((void) t, (*(volatile uint16_t *)((h) + (o))))
 
 #define	bus_space_read_4(t, h, o)					\
-    ((void) t, (*(volatile u_int32_t *)((h) + (o))))
+    ((void) t, (*(volatile uint32_t *)((h) + (o))))
 
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count);
+ *	    uintN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle/offset and copy into buffer provided.
@@ -201,7 +201,7 @@ typedef u_long	bus_space_handle_t;
 /*
  *	void bus_space_read_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count);
+ *	    uintN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle and starting at `offset' and copy into
@@ -253,25 +253,25 @@ typedef u_long	bus_space_handle_t;
 /*
  *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t value);
+ *	    uintN_t value);
  *
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
  */
 
 #define	bus_space_write_1(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int8_t *)((h) + (o)) = (v))))
+    ((void) t, ((void)(*(volatile uint8_t *)((h) + (o)) = (v))))
 
 #define	bus_space_write_2(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int16_t *)((h) + (o)) = (v))))
+    ((void) t, ((void)(*(volatile uint16_t *)((h) + (o)) = (v))))
 
 #define	bus_space_write_4(t, h, o, v)					\
-    ((void) t, ((void)(*(volatile u_int32_t *)((h) + (o)) = (v))))
+    ((void) t, ((void)(*(volatile uint32_t *)((h) + (o)) = (v))))
 
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count);
+ *	    const uintN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
@@ -322,7 +322,7 @@ typedef u_long	bus_space_handle_t;
 /*
  *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count);
+ *	    const uintN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
@@ -372,7 +372,7 @@ typedef u_long	bus_space_handle_t;
 
 /*
  *	void bus_space_set_multi_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
  *	    size_t count);
  *
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
@@ -423,7 +423,7 @@ typedef u_long	bus_space_handle_t;
 
 /*
  *	void bus_space_set_region_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
  *	    size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
