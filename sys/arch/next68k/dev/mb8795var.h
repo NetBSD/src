@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795var.h,v 1.15 2015/04/13 21:18:42 riastradh Exp $	*/
+/*	$NetBSD: mb8795var.h,v 1.16 2023/02/03 23:04:35 tsutsui Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -62,7 +62,7 @@ struct mb8795_softc {
 
 	bus_space_handle_t sc_bmap_bsh; /* bus space handle */
 
-	u_int8_t sc_enaddr[6];
+	uint8_t sc_enaddr[6];
 
 	struct ifaltq sc_tx_snd;
 
