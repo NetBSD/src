@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.26 2023/02/03 23:13:00 tsutsui Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.27 2023/02/03 23:21:17 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.26 2023/02/03 23:13:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.27 2023/02/03 23:21:17 tsutsui Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -197,7 +197,7 @@ nextdisplay_init(struct nextdisplay_config *dc, int color)
 #endif
 
 	/* clear the screen */
-	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(u_int32_t))
+	for (i = 0; i < dc->dc_ht * dc->dc_rowbytes; i += sizeof(uint32_t))
 		*(uint32_t *)(dc->dc_videobase + i) =
 		    color ? 0x0 : 0xffffffff;
 
@@ -205,7 +205,7 @@ nextdisplay_init(struct nextdisplay_config *dc, int color)
 	rap->width = dc->dc_wid;
 	rap->height = dc->dc_ht;
 	rap->depth = color ? 16 : 2;
-	rap->linelongs = dc->dc_rowbytes / sizeof(u_int32_t);
+	rap->linelongs = dc->dc_rowbytes / sizeof(uint32_t);
 	rap->pixels = (uint32_t *)dc->dc_videobase;
 
 	/* initialize the raster console blitter */
