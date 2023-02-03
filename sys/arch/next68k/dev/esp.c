@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.66 2023/02/03 23:16:07 tsutsui Exp $	*/
+/*	$NetBSD: esp.c,v 1.67 2023/02/03 23:17:49 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.66 2023/02/03 23:16:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.67 2023/02/03 23:17:49 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,13 +126,13 @@ int esp_debug = 0;
 #define PRINTF(x) printf x;
 
 
-int	espmatch_intio(device_t, cfdata_t, void *);
-void	espattach_intio(device_t, device_t, void *);
+static int espmatch_intio(device_t, cfdata_t, void *);
+static void espattach_intio(device_t, device_t, void *);
 
 /* DMA callbacks */
-bus_dmamap_t esp_dmacb_continue(void *);
-void esp_dmacb_completed(bus_dmamap_t, void *);
-void esp_dmacb_shutdown(void *);
+static bus_dmamap_t esp_dmacb_continue(void *);
+static void esp_dmacb_completed(bus_dmamap_t, void *);
+static void esp_dmacb_shutdown(void *);
 
 static void findchannel_defer(device_t);
 
@@ -155,18 +155,20 @@ static int attached = 0;
 /*
  * Functions and the switch for the MI code.
  */
-uint8_t	esp_read_reg(struct ncr53c9x_softc *, int);
-void	esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
-int	esp_dma_isintr(struct ncr53c9x_softc *);
-void	esp_dma_reset(struct ncr53c9x_softc *);
-int	esp_dma_intr(struct ncr53c9x_softc *);
-int	esp_dma_setup(struct ncr53c9x_softc *, uint8_t **, size_t *, int,
-	    size_t *);
-void	esp_dma_go(struct ncr53c9x_softc *);
-void	esp_dma_stop(struct ncr53c9x_softc *);
-int	esp_dma_isactive(struct ncr53c9x_softc *);
+static uint8_t esp_read_reg(struct ncr53c9x_softc *, int);
+static void esp_write_reg(struct ncr53c9x_softc *, int, uint8_t);
+static int esp_dma_isintr(struct ncr53c9x_softc *);
+static void esp_dma_reset(struct ncr53c9x_softc *);
+static int esp_dma_intr(struct ncr53c9x_softc *);
+static int esp_dma_setup(struct ncr53c9x_softc *, uint8_t **, size_t *, int,
+    size_t *);
+static void esp_dma_go(struct ncr53c9x_softc *);
+static void esp_dma_stop(struct ncr53c9x_softc *);
+static int esp_dma_isactive(struct ncr53c9x_softc *);
 
-struct ncr53c9x_glue esp_glue = {
+static int doze(volatile int);
+
+static struct ncr53c9x_glue esp_glue = {
 	.gl_read_reg = esp_read_reg,
 	.gl_write_reg = esp_write_reg,
 	.gl_dma_isintr = esp_dma_isintr,
@@ -215,7 +217,7 @@ esp_hex_dump(unsigned char *pkt, size_t len)
 }
 #endif
 
-int
+static int
 espmatch_intio(device_t parent, cfdata_t cf, void *aux)
 {
 	struct intio_attach_args *ia = aux;
@@ -286,7 +288,7 @@ findchannel_defer(device_t self)
 	    device_xname(esc->sc_dma->sc_dev));
 }
 
-void
+static void
 espattach_intio(device_t parent, device_t self, void *aux)
 {
 	struct esp_softc *esc = device_private(self);
@@ -417,7 +419,7 @@ espattach_intio(device_t parent, device_t self, void *aux)
  * Glue functions.
  */
 
-uint8_t
+static uint8_t
 esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -425,7 +427,7 @@ esp_read_reg(struct ncr53c9x_softc *sc, int reg)
 	return bus_space_read_1(esc->sc_bst, esc->sc_bsh, reg);
 }
 
-void
+static void
 esp_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -436,8 +438,7 @@ esp_write_reg(struct ncr53c9x_softc *sc, int reg, uint8_t val)
 volatile uint32_t save1;
 
 #define xADDR 0x0211a000
-int doze(volatile int);
-int
+static int
 doze(volatile int c)
 {
 #if 0
@@ -464,7 +465,7 @@ doze(volatile int c)
 	return 0;
 }
 
-int
+static int
 esp_dma_isintr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -480,7 +481,7 @@ esp_dma_isintr(struct ncr53c9x_softc *sc)
 	}
 }
 
-int
+static int
 esp_dma_intr(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -746,7 +747,7 @@ esp_dma_intr(struct ncr53c9x_softc *sc)
 	return r;
 }
 
-void
+static void
 esp_dma_reset(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -808,7 +809,7 @@ esp_dma_reset(struct ncr53c9x_softc *sc)
  * (len may be > maxxfer)
  */
 
-int
+static int
 esp_dma_setup(struct ncr53c9x_softc *sc, uint8_t **addr, size_t *len,
     int datain, size_t *dmasize)
 {
@@ -1277,7 +1278,7 @@ esp_dma_print(struct ncr53c9x_softc *sc)
 }
 #endif
 
-void
+static void
 esp_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -1418,7 +1419,7 @@ esp_dma_go(struct ncr53c9x_softc *sc)
 #endif
 }
 
-void
+static void
 esp_dma_stop(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -1432,7 +1433,7 @@ esp_dma_stop(struct ncr53c9x_softc *sc)
 #endif
 }
 
-int
+static int
 esp_dma_isactive(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
@@ -1702,7 +1703,7 @@ int esp_dma_int(void *arg)
 }
 
 /* Internal DMA callback routines */
-bus_dmamap_t
+static bus_dmamap_t
 esp_dmacb_continue(void *arg)
 {
 	struct ncr53c9x_softc *sc = arg;
@@ -1752,7 +1753,7 @@ esp_dmacb_continue(void *arg)
 }
 
 
-void
+static void
 esp_dmacb_completed(bus_dmamap_t map, void *arg)
 {
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
@@ -1862,7 +1863,7 @@ esp_dmacb_completed(bus_dmamap_t map, void *arg)
 
 }
 
-void
+static void
 esp_dmacb_shutdown(void *arg)
 {
 	struct ncr53c9x_softc *sc = (struct ncr53c9x_softc *)arg;
