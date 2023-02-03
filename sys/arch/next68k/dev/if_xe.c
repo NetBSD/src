@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.27 2020/11/21 17:49:20 thorpej Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.28 2023/02/03 23:02:56 tsutsui Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.27 2020/11/21 17:49:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.28 2023/02/03 23:02:56 tsutsui Exp $");
 
 #include "opt_inet.h"
 
@@ -202,16 +202,17 @@ findchannel_defer(device_t self)
 	xsc->sc_rx_completed_idx = 0;
 	xsc->sc_rx_handled_idx = 0;
 
-	/* @@@ more next hacks 
+	/*
+	 * @@@ more next hacks
 	 * the  2000 covers at least a 1500 mtu + headers
 	 * + DMA_BEGINALIGNMENT+ DMA_ENDALIGNMENT
 	 */
 	xsc->sc_txbuf = kmem_alloc(2000, KM_SLEEP);
 	xsc->sc_tx_mb_head = NULL;
 	xsc->sc_tx_loaded = 0;
-	
+
 	mb8795_config(sc, xe_dma_medias, nxe_dma_medias, xe_dma_medias[0]);
-	
+
 	isrlink_autovec(xe_tint, sc, NEXT_I_IPL(NEXT_I_ENETX), 1, NULL);
 	INTR_ENABLE(NEXT_I_ENETX);
 	isrlink_autovec(xe_rint, sc, NEXT_I_IPL(NEXT_I_ENETR), 1, NULL);
@@ -312,7 +313,7 @@ xe_dma_reset(struct mb8795_softc *sc)
 	int i;
 
 	DPRINTF(("xe DMA reset\n"));
-	
+
 	nextdma_reset(xsc->sc_rxdma);
 	nextdma_reset(xsc->sc_txdma);
 
@@ -346,7 +347,7 @@ xe_dma_rx_setup(struct mb8795_softc *sc)
 	DPRINTF(("xe DMA rx setup\n"));
 
 	for(i = 0; i < MB8795_NRXBUFS; i++)
-		xsc->sc_rx_mb_head[i] = 
+		xsc->sc_rx_mb_head[i] =
 			xe_dma_rxmap_load(sc, xsc->sc_rx_dmamap[i]);
 
 	xsc->sc_rx_loaded_idx = 0;
@@ -380,17 +381,17 @@ xe_dma_rx_mbuf(struct mb8795_softc *sc)
 
 		map = xsc->sc_rx_dmamap[xsc->sc_rx_handled_idx];
 		m = xsc->sc_rx_mb_head[xsc->sc_rx_handled_idx];
-		
+
 		m->m_len = map->dm_xfer_len;
 
 		bus_dmamap_sync(xsc->sc_rxdma->sc_dmat, map,
 				0, map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-		
+
 		bus_dmamap_unload(xsc->sc_rxdma->sc_dmat, map);
-		
+
 		/* Install a fresh mbuf for next packet */
-		
-		xsc->sc_rx_mb_head[xsc->sc_rx_handled_idx] = 
+
+		xsc->sc_rx_mb_head[xsc->sc_rx_handled_idx] =
 			xe_dma_rxmap_load(sc,map);
 
 		/* Punt runt packets
@@ -467,7 +468,7 @@ xe_dma_tx_mbuf(struct mb8795_softc *sc, struct mbuf *m)
 				buflen = ETHER_MIN_LEN - ETHER_CRC_LEN;
 			}
 		}
-		
+
 		error = bus_dmamap_load(xsc->sc_txdma->sc_dmat,
 		    xsc->sc_tx_dmamap, buf, buflen, NULL, BUS_DMA_NOWAIT);
 	}
@@ -503,7 +504,7 @@ xe_dma_tx_isactive(struct mb8795_softc *sc)
 
 /****************************************************************/
 
-void 
+void
 xe_dma_tx_completed(bus_dmamap_t map, void *arg)
 {
 #if defined (XE_DEBUG) || defined (DIAGNOSTIC)
@@ -527,7 +528,7 @@ xe_dma_tx_completed(bus_dmamap_t map, void *arg)
 #endif
 }
 
-void 
+void
 xe_dma_tx_shutdown(void *arg)
 {
 	struct mb8795_softc *sc = arg;
@@ -550,7 +551,7 @@ xe_dma_tx_shutdown(void *arg)
 		bus_dmamap_unload(xsc->sc_txdma->sc_dmat, xsc->sc_tx_dmamap);
 		m_freem(xsc->sc_tx_mb_head);
 		xsc->sc_tx_mb_head = NULL;
-		
+
 		xsc->sc_tx_loaded--;
 	}
 
@@ -571,14 +572,14 @@ xe_dma_tx_shutdown(void *arg)
 
 #if 0
 	/* Enable ready interrupt */
-	MB_WRITE_REG(sc, MB8795_TXMASK, 
+	MB_WRITE_REG(sc, MB8795_TXMASK,
 		     MB_READ_REG(sc, MB8795_TXMASK)
 		     | MB8795_TXMASK_TXRXIE/* READYIE */);
 #endif
 }
 
 
-void 
+void
 xe_dma_rx_completed(bus_dmamap_t map, void *arg)
 {
 	struct mb8795_softc *sc = arg;
@@ -588,11 +589,11 @@ xe_dma_rx_completed(bus_dmamap_t map, void *arg)
 	if (ifp->if_flags & IFF_RUNNING) {
 		xsc->sc_rx_completed_idx++;
 		xsc->sc_rx_completed_idx %= MB8795_NRXBUFS;
-		
+
 		DPRINTF(("%s: xe_dma_rx_completed(), "
 			"sc->sc_rx_completed_idx = %d\n",
 			 device_xname(sc->sc_dev), xsc->sc_rx_completed_idx));
-		
+
 #if (defined(DIAGNOSTIC))
 		if (map != xsc->sc_rx_dmamap[xsc->sc_rx_completed_idx])
 			panic("%s: Unexpected rx dmamap completed",
@@ -606,7 +607,7 @@ xe_dma_rx_completed(bus_dmamap_t map, void *arg)
 #endif
 }
 
-void 
+void
 xe_dma_rx_shutdown(void *arg)
 {
 	struct mb8795_softc *sc = arg;
@@ -616,7 +617,7 @@ xe_dma_rx_shutdown(void *arg)
 	if (ifp->if_flags & IFF_RUNNING) {
 		DPRINTF(("%s: xe_dma_rx_shutdown(), restarting.\n",
 			 device_xname(sc->sc_dev)));
-		
+
 		nextdma_start(xsc->sc_rxdma, DMACSR_SETREAD);
 		if (turbo)
 			MB_WRITE_REG(sc, MB8795_RXMODE,
@@ -659,7 +660,7 @@ xe_dma_rxmap_load(struct mb8795_softc *sc, bus_dmamap_t map)
 
 	/*
 	 * Align buffer, @@@ next specific.
-	 * perhaps should be using M_ALIGN here instead? 
+	 * perhaps should be using M_ALIGN here instead?
 	 * First we give us a little room to align with.
 	 */
 	{
@@ -679,7 +680,7 @@ xe_dma_rxmap_load(struct mb8795_softc *sc, bus_dmamap_t map)
 
 	bus_dmamap_sync(xsc->sc_rxdma->sc_dmat, map, 0,
 			map->dm_mapsize, BUS_DMASYNC_PREREAD);
-	
+
 	if (error) {
 		DPRINTF(("DEBUG: m->m_data = %p, m->m_len = %d\n",
 				m->m_data, m->m_len));
@@ -695,7 +696,7 @@ xe_dma_rxmap_load(struct mb8795_softc *sc, bus_dmamap_t map)
 	return m;
 }
 
-bus_dmamap_t 
+bus_dmamap_t
 xe_dma_rx_continue(void *arg)
 {
 	struct mb8795_softc *sc = arg;
@@ -719,7 +720,7 @@ xe_dma_rx_continue(void *arg)
 		xsc->sc_rx_loaded_idx++;
 		xsc->sc_rx_loaded_idx %= MB8795_NRXBUFS;
 		map = xsc->sc_rx_dmamap[xsc->sc_rx_loaded_idx];
-		
+
 		DPRINTF(("%s: xe_dma_rx_continue() xsc->sc_rx_loaded_idx "
 			"= %d\n", device_xname(sc->sc_dev),
 			xsc->sc_rx_loaded_idx));
@@ -729,11 +730,11 @@ xe_dma_rx_continue(void *arg)
 		panic("%s: Unexpected rx DMA continue while if not running",
 		      device_xname(sc->sc_dev));
 #endif
-	
+
 	return map;
 }
 
-bus_dmamap_t 
+bus_dmamap_t
 xe_dma_tx_continue(void *arg)
 {
 	struct mb8795_softc *sc = arg;
