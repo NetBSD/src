@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmavar.h,v 1.17 2014/03/25 19:41:32 christos Exp $	*/
+/*	$NetBSD: nextdmavar.h,v 1.18 2023/02/03 23:06:42 tsutsui Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -41,14 +41,14 @@ struct nextdma_config {
 	/* This is called when dma shuts down */
 	void			(*nd_shutdown_cb) (void *);
 	/* callback argument */
-	void			*nd_cb_arg;					
+	void			*nd_cb_arg;
 };
 
 struct nextdma_status {
-	bus_dmamap_t	nd_map;			/* map currently in dd_next */
-	int		nd_idx;			/* idx of segment currently in dd_next */
-	bus_dmamap_t	nd_map_cont;		/* map needed to continue DMA */
-	int		nd_idx_cont;		/* segment index to continue DMA */
+	bus_dmamap_t	nd_map;		/* map currently in dd_next */
+	int		nd_idx;       /* idx of segment currently in dd_next */
+	bus_dmamap_t	nd_map_cont;	/* map needed to continue DMA */
+	int		nd_idx_cont;	/* segment index to continue DMA */
 	int		nd_exception;
 };
 

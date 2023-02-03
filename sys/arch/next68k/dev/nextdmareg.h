@@ -1,4 +1,4 @@
-/*	$NetBSD: nextdmareg.h,v 1.9 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: nextdmareg.h,v 1.10 2023/02/03 23:06:42 tsutsui Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -33,23 +33,25 @@
 /* from nextdev/dma.h */
 
 #if 0
-#define	DMA_BEGINALIGNMENT	4		/* initial buffer must be on long */
+#define	DMA_BEGINALIGNMENT	4	/* initial buffer must be on long */
 #else
 /* But to make cache handling easier, we put it on a cache line anyway. */
 #define	DMA_BEGINALIGNMENT 16
 #endif
-#define	DMA_ENDALIGNMENT	16		/* DMA must end on quad longword */
+#define	DMA_ENDALIGNMENT	16	/* DMA must end on quad longword */
 
 #define	DMA_ALIGN(type, addr)	\
-	((type)(((unsigned)(addr)+DMA_BEGINALIGNMENT-1) \
-		&~(DMA_BEGINALIGNMENT-1)))
+	((type)(((unsigned int)(addr) + DMA_BEGINALIGNMENT - 1) \
+	    & ~(DMA_BEGINALIGNMENT - 1)))
 
 #define	DMA_ENDALIGN(type, addr)	\
-	((type)(((unsigned)(addr)+DMA_ENDALIGNMENT-1) \
-		&~(DMA_ENDALIGNMENT-1)))
+	((type)(((unsigned int)(addr) + DMA_ENDALIGNMENT - 1) \
+	    & ~(DMA_ENDALIGNMENT - 1)))
 
-#define	DMA_BEGINALIGNED(addr)	(((unsigned)(addr)&(DMA_BEGINALIGNMENT-1))==0)
-#define	DMA_ENDALIGNED(addr)	(((unsigned)(addr)&(DMA_ENDALIGNMENT-1))==0)
+#define	DMA_BEGINALIGNED(addr)	\
+	(((unsigned int)(addr) & (DMA_BEGINALIGNMENT - 1)) == 0)
+#define	DMA_ENDALIGNED(addr)	\
+	(((unsigned int)(addr) & (DMA_ENDALIGNMENT - 1))==0)
 
 #if 0
 struct dma_dev {		/* format of dma device registers */
@@ -69,17 +71,17 @@ struct dma_dev {		/* format of dma device registers */
 #endif
 
 #define DD_CSR          0
-#define DD_SAVED_NEXT   (DD_CSR         +sizeof(int) + 0x3fec)
-#define DD_SAVED_LIMIT  (DD_SAVED_NEXT  +sizeof(char *))
-#define DD_SAVED_START  (DD_SAVED_LIMIT +sizeof(char *))
-#define DD_SAVED_STOP   (DD_SAVED_START +sizeof(char *))
-#define DD_NEXT         (DD_SAVED_STOP  +sizeof(char *))
-#define DD_LIMIT        (DD_NEXT        +sizeof(char *))
-#define DD_START        (DD_LIMIT       +sizeof(char *))
-#define DD_STOP         (DD_START       +sizeof(char *))
-#define DD_NEXT_INITBUF (DD_STOP        +sizeof(char *) + 0x1f0)
+#define DD_SAVED_NEXT   (DD_CSR         + sizeof(int) + 0x3fec)
+#define DD_SAVED_LIMIT  (DD_SAVED_NEXT  + sizeof(char *))
+#define DD_SAVED_START  (DD_SAVED_LIMIT + sizeof(char *))
+#define DD_SAVED_STOP   (DD_SAVED_START + sizeof(char *))
+#define DD_NEXT         (DD_SAVED_STOP  + sizeof(char *))
+#define DD_LIMIT        (DD_NEXT        + sizeof(char *))
+#define DD_START        (DD_LIMIT       + sizeof(char *))
+#define DD_STOP         (DD_START       + sizeof(char *))
+#define DD_NEXT_INITBUF (DD_STOP        + sizeof(char *) + 0x1f0)
 
-#define DD_SIZE         (DD_NEXT_INITBUF+sizeof(char *))
+#define DD_SIZE         (DD_NEXT_INITBUF + sizeof(char *))
 /*
  * bits in dd_csr
  */
