@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1304 2023/01/29 06:55:44 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.1305 2023/02/04 16:34:36 wiz Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1632,7 +1632,7 @@ HAVE_XORG_GLAMOR?=	no
 	util-macros \
 	x11perf xauth xcalc xclipboard \
 	xclock xcmsdb xconsole xditview xdpyinfo xdriinfo xdm \
-	xfd xf86dga xfindproxy xfontsel xfwp xgamma xgc xhost xinit \
+	xfd xf86dga xfindproxy xfontsel xgamma xgc xhost xinit \
 	xkill xload xlogo xlsatoms xlsclients xlsfonts xmag xmessage \
 	xmh xmodmap xmore xman xprop xrandr xrdb xrefresh xset \
 	xsetmode xsetpointer xsetroot xsm xstdcmap xvidtune xvinfo \
