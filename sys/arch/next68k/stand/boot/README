@@ -1,9 +1,9 @@
-$NetBSD: README,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $
+$NetBSD: README,v 1.2 2023/02/04 14:38:09 tsutsui Exp $
 
 NeXT standalone bootblocks.
 Rolf Grossmann, Dec 1994
 
-Started work based on files from hp300/stand. boot.c was from post-1.0 
+Started work based on files from hp300/stand. boot.c was from post-1.0
 sparc/stand/boot.c, modified to work for the needs of the NeXT PROM,
 i.e. it wants to call the kernel, so the bootblock has to return the
 entry point.

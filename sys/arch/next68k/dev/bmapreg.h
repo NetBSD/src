@@ -1,6 +1,6 @@
-/*	$NetBSD: bmapreg.h,v 1.3 2009/10/23 02:32:33 snj Exp $	*/
+/*	$NetBSD: bmapreg.h,v 1.4 2023/02/04 14:38:09 tsutsui Exp $	*/
 
-/* 
+/*
  * Copyright (c) 2002 Christian Limpach
  * All rights reserved.
  *

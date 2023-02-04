@@ -1,10 +1,10 @@
-/*	$NetBSD: vmparam.h,v 1.29 2023/02/04 08:42:45 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.30 2023/02/04 14:38:09 tsutsui Exp $	*/
 
 /*
  * This file was taken from mvme68k/include/vmparam.h and
  * should probably be re-synced when needed.
  * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
- * original cvs id: NetBSD: vmparam.h,v 1.9 1998/08/22 10:55:34 scw Exp 
+ * original cvs id: NetBSD: vmparam.h,v 1.9 1998/08/22 10:55:34 scw Exp
  */
 
 /*

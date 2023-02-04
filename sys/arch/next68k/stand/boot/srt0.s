@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.2 2001/05/12 22:35:30 chs Exp $	*/
+/*	$NetBSD: srt0.s,v 1.3 2023/02/04 14:38:09 tsutsui Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -71,7 +71,7 @@ Lclr:
 	|| restore prom vectors
 	movel	save_vbr,%a0
 	movec	%a0,%vbr
-	
+
 	|| return kernel start address (still in d0)
 	rts
 
@@ -82,7 +82,7 @@ hloop:
 	movel	#halt,%d0
 	trap	#13			| halt the system
 	bra	hloop			| and do not allow continuation
-	
+
 ASENTRY_NOPROFILE(astrap)
 	moveml	%d0-%d7/%a0-%a7,%sp@-	| save all registers
 

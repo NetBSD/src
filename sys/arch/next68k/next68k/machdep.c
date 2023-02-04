@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2023/02/03 23:21:18 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.120 2023/02/04 14:38:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2023/02/03 23:21:18 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.120 2023/02/04 14:38:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -124,7 +124,7 @@ extern char *esym;
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
-/* Our exported CPU info; we can have only one. */  
+/* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
@@ -810,7 +810,7 @@ nmihand(void *frame)
 #endif /* DDB */
 
 	INTR_ENABLE(NEXT_I_NMI);
-  
+
 	innmihand = 0;
 
 	return 0;
@@ -820,7 +820,7 @@ nmihand(void *frame)
 /*
  * cpu_exec_aout_makecmds():
  *	CPU-dependent a.out format hook for execve().
- * 
+ *
  * Determine of the given exec package refers to something which we
  * understand and, if so, set up the vmcmds for it.
  */
