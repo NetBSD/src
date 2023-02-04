@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.29.2.1 2023/02/04 14:41:39 martin Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.29.2.2 2023/02/04 16:19:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.29.2.1 2023/02/04 14:41:39 martin Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.29.2.2 2023/02/04 16:19:20 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -394,12 +394,13 @@ __libc_thr_self_stub(void)
 	return ((thr_t) -1);
 }
 
+/* This is the strong symbol generated for sched_yield(2) via WSYSCALL() */
+int _sys_sched_yield(void);
+
 int
 __libc_thr_yield_stub(void)
 {
-
-	/* Nothing to do. */
-	return (0);
+	return _sys_sched_yield();
 }
 
 int
