@@ -1,4 +1,4 @@
-/*	$NetBSD: nextcons.c,v 1.12 2023/02/03 23:13:00 tsutsui Exp $	*/
+/*	$NetBSD: nextcons.c,v 1.13 2023/02/04 14:38:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1999 Darrin B. Jewell
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.12 2023/02/03 23:13:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.13 2023/02/04 14:38:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ nextcnprobe(struct consdev *cp)
 	    rom_machine_type == NeXT_TURBO_MONO ||
 	    rom_machine_type == NeXT_TURBO_COLOR)
 		cp->cn_pri = CN_INTERNAL;
-	else 
+	else
 		cp->cn_pri = CN_DEAD;
 
 	cp->cn_dev = NODEV;

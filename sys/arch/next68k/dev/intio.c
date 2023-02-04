@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.17 2023/02/03 23:13:00 tsutsui Exp $	*/
+/*	$NetBSD: intio.c,v 1.18 2023/02/04 14:38:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,11 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.17 2023/02/03 23:13:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.18 2023/02/04 14:38:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h> 
+#include <sys/device.h>
 #include <sys/reboot.h>
 
 #include <machine/autoconf.h>

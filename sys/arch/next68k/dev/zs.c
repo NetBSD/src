@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.37 2021/09/11 20:28:04 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.38 2023/02/04 14:38:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.37 2021/09/11 20:28:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.38 2023/02/04 14:38:09 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -631,7 +631,7 @@ zscninit(struct consdev *cn)
 
 	/*
 	 * can't use zs_set_speed as we haven't set up the
-	 * signal sources, and it's not worth it for now 
+	 * signal sources, and it's not worth it for now
 	 */
 
 	cs->cs_preg[9] &= ~ZSWR9_MASTER_IE;

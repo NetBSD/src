@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2023/02/03 23:22:34 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2023/02/04 14:38:09 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2023/02/03 23:22:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2023/02/04 14:38:09 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,7 +60,7 @@ struct m68k_bus_dma_tag next68k_bus_dma_tag = {
 	_bus_dmamap_load_raw_direct,		/* _dmamap_load_raw */
 	_bus_dmamap_unload,			/* _dmamap_unload */
 	_bus_dmamap_sync,			/* _dmamap_sync */
-  
+
 	_bus_dmamem_alloc,			/* _dmamem_alloc */
 	_bus_dmamem_free,			/* _dmamem_free */
 	_bus_dmamem_map,			/* _dmamem_map */

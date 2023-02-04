@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbdmap_next.c,v 1.5 2008/04/28 20:23:30 martin Exp $	*/
+/*	$NetBSD: wskbdmap_next.c,v 1.6 2023/02/04 14:38:09 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbdmap_next.c,v 1.5 2008/04/28 20:23:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbdmap_next.c,v 1.6 2023/02/04 14:38:09 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -237,7 +237,7 @@ static const keysym_t nextkbd_keydesc_fr[] = {
     KC(13),  KS_equal,		KS_plus,	KS_braceright,
     KC(16),  KS_a,
     KC(17),  KS_z,
-    KC(26),  KS_dead_circumflex, KS_dead_diaeresis, 
+    KC(26),  KS_dead_circumflex, KS_dead_diaeresis,
     KC(27),  KS_dollar,		KS_sterling,	KS_currency,
     KC(30),  KS_q,
     KC(39),  KS_m,
