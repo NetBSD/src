@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.44 2023/02/01 19:01:48 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.45 2023/02/04 14:42:43 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -729,4 +729,11 @@ sys/arch/vax/boot/Makefile.inc			1.19
 
 	vax: make bootloader work on 8MB VAXen.
 	[tsutsui, ticket #1582]
+
+lib/libc/thread-stub/thread-stub.c		1.30
+
+	PR 57214: adjust the error return value of pthread_sigmask for
+	non libpthread usage.
+	[uwe, ticket #1583]
+
 
