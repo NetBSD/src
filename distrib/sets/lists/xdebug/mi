@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.45 2022/09/11 05:54:00 mrg Exp $
+# $NetBSD: mi,v 1.46 2023/02/04 16:34:36 wiz Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						base-x11-root	xorg,debuglib,compatx11dir
 ./usr/X11R7/lib/libEGL_g.a				xdebug-libEGL-debuglib	xorg,debuglib,compatx11file,xorg_glamor
@@ -182,7 +182,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/xfontsel.debug	xdebug-xfontsel-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/xfs.debug		xdebug-xfs-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/xfsinfo.debug		xdebug-xfsinfo-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/bin/xfwp.debug		xdebug-xfwp-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/bin/xfwp.debug		xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/bin/xgamma.debug		xdebug-xgamma-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/xgc.debug		xdebug-xgc-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/xhost.debug		xdebug-xhost-debug	xorg,debug
