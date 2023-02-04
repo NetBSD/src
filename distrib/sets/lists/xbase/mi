@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.172 2022/10/17 07:40:22 mrg Exp $
+# $NetBSD: mi,v 1.173 2023/02/04 16:34:36 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -92,7 +92,7 @@
 ./usr/X11R7/bin/xfontsel				xbase-xfontsel-bin	xorg
 ./usr/X11R7/bin/xfs					xbase-xfs-bin	xorg
 ./usr/X11R7/bin/xfsinfo					xbase-xfsinfo-bin	xorg
-./usr/X11R7/bin/xfwp					xbase-xfwp-bin	xorg
+./usr/X11R7/bin/xfwp					xbase-obsolete	obsolete
 ./usr/X11R7/bin/xgamma					xbase-xgamma-bin	xorg
 ./usr/X11R7/bin/xgc					xbase-xgc-bin	xorg
 ./usr/X11R7/bin/xhost					xbase-xhost-bin	xorg
@@ -1355,7 +1355,7 @@
 ./usr/X11R7/man/cat1/xfontsel.0				xbase-xfontsel-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xfs.0				xbase-xfs-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xfsinfo.0				xbase-xfsinfo-catman	.cat,xorg
-./usr/X11R7/man/cat1/xfwp.0				xbase-xfwp-catman	.cat,xorg
+./usr/X11R7/man/cat1/xfwp.0				xbase-obsolet	obsolete
 ./usr/X11R7/man/cat1/xgamma.0				xbase-xgamma-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xgc.0				xbase-xgc-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xhost.0				xbase-xhost-catman	.cat,xorg
@@ -1507,7 +1507,7 @@
 ./usr/X11R7/man/html1/xfontsel.html			xbase-xfontsel-htmlman	html,xorg
 ./usr/X11R7/man/html1/xfs.html				xbase-xfs-htmlman	html,xorg
 ./usr/X11R7/man/html1/xfsinfo.html			xbase-xfsinfo-htmlman	html,xorg
-./usr/X11R7/man/html1/xfwp.html				xbase-xfwp-htmlman	html,xorg
+./usr/X11R7/man/html1/xfwp.html				xbase-obsolete	obsolete
 ./usr/X11R7/man/html1/xgamma.html			xbase-xgamma-htmlman	html,xorg
 ./usr/X11R7/man/html1/xgc.html				xbase-xgc-htmlman	html,xorg
 ./usr/X11R7/man/html1/xhost.html			xbase-xhost-htmlman	html,xorg
@@ -1660,7 +1660,7 @@
 ./usr/X11R7/man/man1/xfontsel.1				xbase-xfontsel-man	.man,xorg
 ./usr/X11R7/man/man1/xfs.1				xbase-xfs-man	.man,xorg
 ./usr/X11R7/man/man1/xfsinfo.1				xbase-xfsinfo-man	.man,xorg
-./usr/X11R7/man/man1/xfwp.1				xbase-xfwp-man	.man,xorg
+./usr/X11R7/man/man1/xfwp.1				xbase-obsolete	obsolete
 ./usr/X11R7/man/man1/xgamma.1				xbase-xgamma-man	.man,xorg
 ./usr/X11R7/man/man1/xgc.1				xbase-xgc-man	.man,xorg
 ./usr/X11R7/man/man1/xhost.1				xbase-xhost-man	.man,xorg
