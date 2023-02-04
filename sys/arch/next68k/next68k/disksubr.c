@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.31 2023/02/03 23:13:01 tsutsui Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32 2023/02/04 02:08:03 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.31 2023/02/03 23:13:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2023/02/04 02:08:03 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,23 +76,23 @@ parse_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp,
     struct cpu_disklabel *osdep)
 {
 	int i, t, nbp;
-	unsigned short *checksum;
+	uint16_t *checksum;
 
 	if (ondisk->cd_version == NEXT68K_LABEL_CD_V3) {
 		checksum = &ondisk->NEXT68K_LABEL_cd_v3_checksum;
 	} else {
 		checksum = &ondisk->NEXT68K_LABEL_cd_checksum;
 	}
-	if (nextstep_checksum ((unsigned char *)ondisk,
-			       (unsigned char *)checksum) != *checksum) {
-		return ("disk label corrupted");
+	if (nextstep_checksum((uint8_t *)ondisk, (uint8_t *)checksum) !=
+	    *checksum) {
+		return "disk label corrupted";
 	}
 
 	osdep->od_version = ondisk->cd_version;
 	lp->d_magic = lp->d_magic2 = DISKMAGIC;
 	lp->d_type = DKTYPE_SCSI;
 	lp->d_subtype = 0;
-	if (sizeof (lp->d_typename) > sizeof(ondisk->cd_name))
+	if (sizeof(lp->d_typename) > sizeof(ondisk->cd_name))
 		lp->d_typename[sizeof (ondisk->cd_name)] = '\0';
 	memcpy(lp->d_typename, ondisk->cd_name,
 	    uimin(sizeof (lp->d_typename), sizeof(ondisk->cd_name)));
@@ -171,7 +171,6 @@ build_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp)
 	int front_porch = NEXT68K_LABEL_DEFAULTFRONTPORCH;
 	uint16_t *checksum;
 
-
 	memset(ondisk, 0, sizeof(*ondisk));
 
 	ondisk->cd_version = NEXT68K_LABEL_CD_V3;
@@ -213,7 +212,7 @@ build_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp)
 
 	/*
 	 * figure out front porch
-	 * try to map partitions which were moved 
+	 * try to map partitions which were moved
 	 */
 	for (nbp = 0; nbp < lp->d_npartitions; nbp++) {
 		if (nbp != RAW_PART && lp->d_partitions[nbp].p_offset > 0 &&
@@ -230,12 +229,12 @@ build_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp)
 			     (ondisk->cd_secsize / lp->d_secsize)) &&
 			    ((lp->d_partitions[nbp].p_fstype == FS_OTHER) ||
 			     (!strncmp (ondisk->cd_partitions[t].cp_type,
-				 fstypenames[lp->d_partitions[nbp].p_fstype], 
+				 fstypenames[lp->d_partitions[nbp].p_fstype],
 				 NEXT68K_LABEL_MAXFSTLEN)))) {
 				struct next68k_partition tmp;
-				memcpy(&tmp, &ondisk->cd_partitions[t], 
+				memcpy(&tmp, &ondisk->cd_partitions[t],
 				    sizeof(tmp));
-				memcpy(&ondisk->cd_partitions[t], 
+				memcpy(&ondisk->cd_partitions[t],
 				    &ondisk->cd_partitions[nbp > RAW_PART ?
 				    nbp - 1 : nbp],
 				    sizeof (tmp));
@@ -247,7 +246,7 @@ build_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp)
 	}
 	front_porch /= (ondisk->cd_secsize / lp->d_secsize);
 
-	/* 
+	/*
 	 * update partitions
 	 */
 	nbp = 0;
@@ -279,7 +278,7 @@ build_nextstep_label(struct next68k_disklabel *ondisk, struct disklabel *lp)
 			p->cp_offset = -1;
 			p->cp_bsize = -1;
 			p->cp_fsize = -1;
-			p->cp_density = -1; 
+			p->cp_density = -1;
 			p->cp_minfree = -1;
 		}
 		nbp++;
@@ -422,7 +421,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	 * We always write a NeXT v3 disklabel, and a NetBSD disklabel in
 	 * the last sector of the NeXT label area.
 	 */
-  
+
 	bp = geteblk(NEXT68K_LABEL_SIZE);
 	bp->b_dev = MAKEDISKDEV(major(dev), DISKUNIT(dev), labelpart);
 	bp->b_blkno = NEXT68K_LABEL_SECTOR;
