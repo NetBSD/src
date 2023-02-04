@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.70 2023/02/04 07:07:41 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.71 2023/02/04 08:42:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -320,11 +320,11 @@ Lstart3:
  * Prepare to enable MMU.
  * Since the kernel is not mapped logical == physical we must insure
  * that when the MMU is turned on, all prefetched addresses (including
- * the PC) are valid.  In order guarantee that, we use the last physical
- * page (which is conveniently mapped == VA) and load it up with enough
- * code to defeat the prefetch, then we execute the jump back to here.
- *
- * Is this all really necessary, or am I paranoid??
+ * the PC) are valid.  In order guarantee that, we use the transparent
+ * translation registers (which provide PA == VA mappings) and just
+ * turns on the MMU, then jump from the VA == PA address (at 0x40XXXXXX)
+ * to the actual kernel virtual address (at 0x00XXXXXX) code via a far
+ * jump instruction so that we can defeat the prefetch.
  */
 	RELOC(Sysseg_pa, %a0)		| system segment table addr
 	movl	%a0@,%d1		| read value (a PA)
@@ -358,9 +358,9 @@ Lstploaddone:
 	cmpl	#MMU_68040,%a0@		| 68040?
 	jne	Lmotommu2		| no, skip
 
-	| This is a hack to get PA=KVA when turning on MMU
-	| it will only work on 68040's.  We should fix something
-	| to boot 68030's later.
+	| This is a hack to get PA=KVA when turning on MMU as mentioned above.
+	| Currintly this will only work on 68040's.  We should also provide
+	| %tt0 and %tt1 settings to boot 68030's later.
 	movel	#0x0200c040,%d0		| intio devices are at 0x02000000
 	.long	0x4e7b0004		| movc %d0,%itt0
 	.long	0x4e7b0006		| movc %d0,%dtt0
@@ -420,7 +420,7 @@ Lenab2:
 	movc	%d0,%cacr		| clear cache(s)
 	jra	Lenab3
 Ltbia040:
-	.word	0xf518
+	.word	0xf518			| pflusha
 Lenab3:
 
 	jbsr	_C_LABEL(next68k_init)

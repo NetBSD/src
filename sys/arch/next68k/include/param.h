@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.12 2012/02/10 17:35:48 para Exp $	*/
+/*	$NetBSD: param.h,v 1.13 2023/02/04 08:42:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 
-#define	UPAGES		3  		/* pages of u-area */
+#define	UPAGES		2  		/* pages of u-area */
 
 #include <m68k/param.h>
 
