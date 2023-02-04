@@ -1,15 +1,15 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.45 2023/02/04 08:42:45 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.46 2023/02/04 14:38:09 tsutsui Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
  * should probably be re-synced when needed.
  * cvs id of source for the most recent syncing:
- *	NetBSD: pmap_bootstrap.c,v 1.15 2000/11/20 19:35:30 scw Exp 
+ *	NetBSD: pmap_bootstrap.c,v 1.15 2000/11/20 19:35:30 scw Exp
  *	NetBSD: pmap_bootstrap.c,v 1.17 2001/11/08 21:53:44 scw Exp
  */
 
 
-/* 
+/*
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.45 2023/02/04 08:42:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.46 2023/02/04 14:38:09 tsutsui Exp $");
 
 #include "opt_m68k_arch.h"
 

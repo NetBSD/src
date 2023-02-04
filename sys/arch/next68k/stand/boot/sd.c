@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.12 2014/03/29 19:20:29 christos Exp $        */
+/*      $NetBSD: sd.c,v 1.13 2023/02/04 14:38:09 tsutsui Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -87,7 +87,7 @@ sdprobe(char target, char lun)
     do {
 	    count = 0;
 	error = scsiicmd(target, lun, (u_char *)&cdb1, sizeof(cdb1), NULL, &count);
-	if (error == -SCSI_BUSY) { 
+	if (error == -SCSI_BUSY) {
 		register int N = 10000000; while (--N > 0);
 	}
     } while ((error == -SCSI_CHECK || error == -SCSI_BUSY)
@@ -105,12 +105,12 @@ sdprobe(char target, char lun)
     if (error != 0)
       return error<0 ? EHER : error;
 
-    if ((inq.device & SID_TYPE) != T_DIRECT 
+    if ((inq.device & SID_TYPE) != T_DIRECT
 	&& (inq.device & SID_TYPE) != T_CDROM)
       return EUNIT;	/* not a disk */
 
     DPRINTF(("booting disk %s.\n", inq.vendor));
-    
+
     return 0;
 }
 
@@ -188,9 +188,9 @@ sdopen(struct open_file *f, char count, char lun, char part)
     register struct sd_softc *ss;
     char unit, cnt;
     int error;
-    
+
     DPRINTF(("open: sd(%d,%d,%d)\n", count, lun, part));
-    
+
     if (lun >= NSD)
 	return EUNIT;
 
@@ -211,7 +211,7 @@ sdopen(struct open_file *f, char count, char lun, char part)
 
     if (unit >= NSD)
 	return EUNIT;
-    
+
     ss = alloc(sizeof(struct sd_softc));
     ss->sc_unit = unit;
     ss->sc_lun = lun;
@@ -244,10 +244,10 @@ sdstrategy(struct sd_softc *ss, int rw, daddr_t dblk, size_t size,
     u_long blk = dblk + ss->sc_pinfo.offset[ss->sc_part];
     struct scsipi_rw_10 cdb;
     int error;
-    
+
     if (size == 0)
 	return 0;
-    
+
     if (rw != F_READ)
     {
 	printf("sdstrategy: write not implemented.\n");
@@ -291,4 +291,3 @@ sdstrategy(struct sd_softc *ss, int rw, daddr_t dblk, size_t size,
     DPRINTF(("sdstrategy: read %d bytes\n", *rsize));
     return 0;
 }
-    
