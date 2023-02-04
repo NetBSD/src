@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.45 2023/02/04 14:42:43 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.46 2023/02/04 16:21:31 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -736,4 +736,9 @@ lib/libc/thread-stub/thread-stub.c		1.30
 	non libpthread usage.
 	[uwe, ticket #1583]
 
+lib/libc/thread-stub/thread-stub.c		1.31
+
+	Change libc sched_yield() stub to actually still call the syscall
+	instead of doing nothing when app is not linked with pthread.
+	[uwe, ticket #1584]
 
