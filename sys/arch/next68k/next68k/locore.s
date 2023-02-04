@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.69 2023/02/03 23:13:01 tsutsui Exp $	*/
+/*	$NetBSD: locore.s,v 1.70 2023/02/04 07:07:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -229,10 +229,6 @@ Lnot68030:
 	movl	#CPU_68040,%a0@		| and a 68040 CPU
 	RELOC(fputype, %a0)
 	movl	#FPU_68040,%a0@		| ...and FPU
-#if defined(ENABLE_HP_CODE)
-	RELOC(ectype, %a0)
-	movl	#EC_NONE,%a0@		| and no cache (for now XXX)
-#endif
 	RELOC(machineid, %a0)
 	movl	#40,%a0@		| @@@ useless
 	jra	Lstart1
@@ -334,10 +330,6 @@ Lstart3:
 	movl	%a0@,%d1		| read value (a PA)
 
 	RELOC(mmutype, %a0)
-#if defined(ENABLE_HP_CODE)
-	tstl	%a0@			| HP MMU?
-	jeq	Lhpmmu2			| yes, skip
-#endif
 	cmpl	#MMU_68040,%a0@		| 68040?
 	jne	Lmotommu1		| no, skip
 	.long	0x4e7b1807		| movc %d1,%srp
@@ -349,31 +341,7 @@ Lmotommu1:
 	pmove	%a0@,%srp		| load the supervisor root pointer
 	movl	#0x80000002,%a0@	| reinit upper half for CRP loads
 
-#if defined(ENABLE_HP_CODE)
-	jra	Lstploaddone		| done
-Lhpmmu2:
-	moveq	#PGSHIFT,%d2
-	lsrl	%d2,%d1			| convert to page frame
-	movl	%d1,INTIOBASE+MMUBASE+MMUSSTP | load in sysseg table register
-#endif
 Lstploaddone:
-#if defined(ENABLE_MAXADDR_TRAMPOLINE)
-	lea	MAXADDR,%a2		| PA of last RAM page
-	ASRELOC(Lhighcode, %a1)		| addr of high code
-	ASRELOC(Lehighcode, %a3)	| end addr
-Lcodecopy:
-	movw	%a1@+,%a2@+		| copy a word
-	cmpl	%a3,%a1			| done yet?
-	jcs	Lcodecopy		| no, keep going
-	jmp	MAXADDR			| go for it!
-	/*
-	 * BEGIN MMU TRAMPOLINE.  This section of code is not
-	 * executed in-place.  It's copied to the last page
-	 * of RAM (mapped va == pa) and executed there.
-	 */
-
-Lhighcode:
-#endif /* ENABLE_MAXADDR_TRAMPOLINE */
 
 	/*
 	 * Set up the vector table, and race to get the MMU
@@ -387,17 +355,8 @@ Lhighcode:
 	movc	%d0,%vbr
 
 	RELOC(mmutype, %a0)
-#if defined(ENABLE_HP_CODE)
-	tstl	%a0@			| HP MMU?
-	jeq	Lhpmmu3			| yes, skip
-#endif
 	cmpl	#MMU_68040,%a0@		| 68040?
 	jne	Lmotommu2		| no, skip
-#if defined(ENABLE_HP_CODE)
-	movw	#0,INTIOBASE+MMUBASE+MMUCMD+2
-	movw	#MMU_IEN+MMU_CEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD+2
-					| enable FPU and caches
-#endif
 
 	| This is a hack to get PA=KVA when turning on MMU
 	| it will only work on 68040's.  We should fix something
@@ -425,28 +384,11 @@ Lturnoffttr:
 	.long	0x4e7b0007		| movc %d0,%dtt1
 	jmp	Lenab1
 Lmotommu2:
-#if defined(ENABLE_HP_CODE)
-	movl	#MMU_IEN+MMU_FPE,INTIOBASE+MMUBASE+MMUCMD
-					| enable 68881 and i-cache
-#endif
 	pflusha
 	RELOC(prototc, %a2)
 	movl	#0x82c0aa00,%a2@	| value to load TC with
 	pmove	%a2@,%tc		| load it
 	jmp	Lenab1:l		| force absolute (not pc-relative) jmp
-#if defined(ENABLE_HP_CODE)
-Lhpmmu3:
-	movl	#0,INTIOBASE+MMUBASE+MMUCMD	| clear external cache
-	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD | turn on MMU
-	jmp	Lenab1:l			| jmp to mapped code
-#endif
-#if defined(ENABLE_MAXADDR_TRAMPOLINE)
-Lehighcode:
-
-	/*
-	 * END MMU TRAMPOLINE.  Address register %a5 is now free.
-	 */
-#endif
 
 /*
  * Should be running mapped from this point on
@@ -941,24 +883,6 @@ Lsldone:
 	rts
 #endif
 
-#if defined(ENABLE_HP_CODE)
-ENTRY(ecacheon)
-	tstl	_C_LABEL(ectype)
-	jeq	Lnocache7
-	MMUADDR(%a0)
-	orl	#MMU_CEN,%a0@(MMUCMD)
-Lnocache7:
-	rts
-
-ENTRY(ecacheoff)
-	tstl	_C_LABEL(ectype)
-	jeq	Lnocache8
-	MMUADDR(%a0)
-	andl	#~MMU_CEN,%a0@(MMUCMD)
-Lnocache8:
-	rts
-#endif
-
 /*
  * Load a new user segment table pointer.
  */
@@ -1137,11 +1061,6 @@ GLOBAL(mmutype)
 GLOBAL(cputype)
 	.long	0xdeadbeef	| default to 68020 CPU
 
-#if defined(ENABLE_HP_CODE)
-GLOBAL(ectype)
-	.long	EC_NONE		| external cache type, default to none
-#endif
-
 GLOBAL(fputype)
 	.long	0xdeadbeef	| default to 68882 FPU
 
@@ -1174,20 +1093,6 @@ ASLOCAL(save_vbr)		| VBR from ROM
 
 GLOBAL(monbootflag)
 	.long 0
-
-#if defined(ENABLE_HP_CODE)
-GLOBAL(extiobase)
-	.long	0		| KVA of base of external IO space
-
-GLOBAL(CLKbase)
-	.long	0		| KVA of base of clock registers
-
-GLOBAL(MMUbase)
-	.long	0		| KVA of base of HP MMU registers
-
-GLOBAL(pagezero)
-	.long	0		| PA of first page of kernel text
-#endif
 
 #ifdef USELEDS
 ASLOCAL(heartbeat)
