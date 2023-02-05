@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_typeof_after_statement.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: gcc_typeof_after_statement.c,v 1.5 2023/02/05 10:57:48 rillig Exp $	*/
 # 3 "gcc_typeof_after_statement.c"
 
 /*
@@ -16,7 +16,3 @@ example(void **ptr)
 		ret;
 	});
 }
-
-/* Just to keep the .exp file. */
-/* expect+1: warning: static function 'unused' declared but not defined [290] */
-static void unused(void);

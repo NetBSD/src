@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_complex_split.c,v 1.11 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: d_c99_complex_split.c,v 1.12 2023/02/05 10:57:48 rillig Exp $	*/
 # 3 "d_c99_complex_split.c"
 
 /*
@@ -72,15 +72,6 @@ set_complex_only_imag(double im)
 	/* __real__ c is left uninitialized */
 	__imag__ c = im;
 	sink(c);		/* XXX: may be used before set */
-}
-
-/* Just to keep the .exp file alive. */
-void
-trigger_warning(double _Complex c)
-{
-	c += 1.0;
-	/* expect+1: error: operands of '|' have incompatible types 'double _Complex' and 'double _Complex' [107] */
-	return c | c;
 }
 
 void
