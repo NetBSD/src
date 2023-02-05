@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.10 2023/01/21 21:14:38 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.11 2023/02/05 13:06:36 rillig Exp $)
 
 # Introduction
 
@@ -224,7 +224,7 @@ They do this by placing `expect` comments near the location of the diagnostic.
 The comment `/* expect+1: ... */` expects a diagnostic to be generated for the
 code 1 line below, `/* expect-5: ... */` expects a diagnostic to be generated
 for the code 5 lines above.
-Each `expect` comment must be in a single line.
+An `expect` comment cannot span multiple lines.
 At the start and the end of the comment, the placeholder `...` stands for an
 arbitrary sequence of characters.
 There may be other code or comments in the same line of the `.c` file.
@@ -237,8 +237,7 @@ Most other tests focus on a single feature.
 
 1. Run `make add-test NAME=test_name`.
 2. Run `cd ../../../tests/usr.bin/xlint/lint1`.
-3. Sort the `FILES` lines in `Makefile`.
-4. Make the test generate the desired diagnostics.
-5. Run `./accept.sh test_name` until it no longer complains.
-6. Run `cd ../../..`.
-7. Run `cvs commit distrib/sets/lists/tests/mi tests/usr.bin/xlint`.
+3. Make the test generate the desired diagnostics.
+4. Run `./accept.sh test_name` until it no longer complains.
+5. Run `cd ../../..`.
+6. Run `cvs commit distrib/sets/lists/tests/mi tests/usr.bin/xlint`.
