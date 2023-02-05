@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.27 2023/02/01 19:00:10 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.28 2023/02/05 12:45:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -758,4 +758,11 @@ sys/arch/vax/boot/Makefile.inc			1.19
 
 	vax: make bootloader work on 8MB VAXen.
 	[tsutsui, ticket #64]
+
+external/gpl3/gcc/usr.bin/Makefile.inc		1.35
+
+	Reduce debug info build for GCC binaries for MKDEBUG builds,
+	this results in noticably faster builds and lower disk space
+	requirements.
+	[mrg, ticket #65]
 
