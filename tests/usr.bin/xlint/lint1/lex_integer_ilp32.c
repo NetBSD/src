@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer_ilp32.c,v 1.5 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: lex_integer_ilp32.c,v 1.6 2023/02/05 12:25:11 rillig Exp $	*/
 # 3 "lex_integer_ilp32.c"
 
 /*
@@ -37,6 +37,10 @@ test_unsigned_int(void)
 {
 	sinku(0);
 
+	sinku(2147483647);
+	sinku(2147483648);
+
+	sinku(2147483648U);
 	sinku(4294967295U);
 
 	/* expect+1: warning: integer constant out of range [252] */

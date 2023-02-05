@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1250 2023/01/30 19:51:33 christos Exp $
+# $NetBSD: mi,v 1.1251 2023/02/05 12:25:11 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6424,9 +6424,9 @@
 ./usr/tests/usr.bin/xlint/lint1/c99_atomic.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c99_bool_strict_suppressed.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c99_bool_strict_suppressed.exp	tests-obsolete		obsolete
-./usr/tests/usr.bin/xlint/lint1/c99_init_array.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/c99_init_array.c		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/c99_init_array.exp		tests-obsolete		obsolete,atf
-./usr/tests/usr.bin/xlint/lint1/c99_init_designator.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/c99_init_designator.c		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/c99_init_designator.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/check-expect.lua		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_alignof.c			tests-usr.bin-tests	compattestfile,atf
@@ -6463,10 +6463,10 @@
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_init4.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_init5.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c9x_array_init.c		tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/xlint/lint1/d_c9x_recursive_init.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_c9x_recursive_init.c		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/d_cast_fun_array_param.c	tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/xlint/lint1/d_cast_init.c			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/xlint/lint1/d_cast_init2.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_cast_init.c			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/d_cast_init2.c			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/d_cast_lhs.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_cast_lhs.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/d_cast_typeof.c			tests-usr.bin-tests	compattestfile,atf
