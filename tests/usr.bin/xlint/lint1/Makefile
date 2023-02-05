@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.135 2023/01/29 17:02:09 rillig Exp $
+# $NetBSD: Makefile,v 1.136 2023/02/05 12:25:11 rillig Exp $
 
 NOMAN=		# defined
 MAX_MESSAGE=	350		# see lint1/err.c
@@ -23,8 +23,6 @@ FILES+=		c11_generic_expression.c
 FILES+=		c90.c
 FILES+=		c99_atomic.c
 FILES+=		c99_bool_strict_suppressed.c
-FILES+=		c99_init_array.c
-FILES+=		c99_init_designator.c
 FILES+=		d_alignof.c
 FILES+=		d_bltinoffsetof.c
 FILES+=		d_c99_anon_struct.c
@@ -50,10 +48,7 @@ FILES+=		d_c99_union_init3.c
 FILES+=		d_c99_union_init4.c
 FILES+=		d_c99_union_init5.c
 FILES+=		d_c9x_array_init.c
-FILES+=		d_c9x_recursive_init.c
 FILES+=		d_cast_fun_array_param.c
-FILES+=		d_cast_init.c
-FILES+=		d_cast_init2.c
 FILES+=		d_cast_lhs.c
 FILES+=		d_cast_typeof.c
 FILES+=		d_compound_literals1.c
