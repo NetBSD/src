@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.42 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.43 2023/02/05 12:25:11 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -490,4 +490,45 @@ struct point subscript_designator_for_scalar_in_struct = {
 /* Seen in pcidevs_data.h, variable 'pci_words'. */
 const char string_initialized_with_braced_literal[] = {
 	"initializer",
+};
+
+/* nested struct/union initialization */
+struct outer {
+	int i;
+	char c;
+	union inner {
+		short us;
+		char uc;
+	} u;
+	char *s;
+} struct_containing_union[] = {
+	{
+		.s = "foo",
+		.c = 'b',
+		.u = {
+			.uc = 'c'
+		}
+	},
+	{
+		.i = 1,
+		.c = 'a',
+		.u = {
+			.us = 2
+		}
+	},
+};
+
+/*
+ * The expansion of the offsetof macro may dereference a null pointer.
+ * Such expressions are allowed in initializers for objects with
+ * static duration.
+ */
+struct offset_and_data {
+	unsigned long offset;
+	unsigned long data;
+};
+
+struct offset_and_data offset_and_data = {
+	(unsigned long)&(((struct offset_and_data *)0)->data),
+	0,
 };
