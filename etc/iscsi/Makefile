@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2023/02/05 13:39:42 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.7 2023/02/05 21:20:14 mlelstv Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ FILESMODE_volumes=	0644
 # userland iSCSI initiator and target
 .if ${MKISCSI} != "no"
 
-CONFIGFILES=    	auths targets
+CONFIGFILES+=    	auths targets
 FILESMODE_auths=	0600
 FILESMODE_targets=	0644
 
