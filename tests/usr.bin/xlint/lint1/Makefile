@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.139 2023/02/05 16:11:56 rillig Exp $
+# $NetBSD: Makefile,v 1.140 2023/02/05 17:23:01 rillig Exp $
 
 NOMAN=		# defined
 
@@ -17,7 +17,7 @@ archsubdir.sh:
 	@echo archsubdir=${ARCHSUBDIR} >${.TARGET}
 
 FILESDIR=	${TESTSDIR}
-FILES+=		${:!cd ${FILESDIR} && echo *.c *.exp-ln!}
+FILES+=		${:!cd ${.CURDIR} && echo *.c *.exp-ln!}
 FILES+=		check-expect.lua
 
 # Note: only works for adding tests.
