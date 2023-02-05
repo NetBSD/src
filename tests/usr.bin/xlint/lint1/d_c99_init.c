@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.43 2023/02/05 12:25:11 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.44 2023/02/05 13:01:28 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -143,6 +143,20 @@ struct point point_with_mixed_designators = {
 	5,
 	.x = 3,
 };
+
+/*
+ * Before cgram.y 1.230 from 2021-06-20, the grammar allowed either of the
+ * operators '.' or '->' to be used for the designators and had extra code
+ * to ensure that only '.' was actually used.
+ */
+struct point origin = {
+    .x = 0,
+    /* expect+1: error: syntax error '->' [249] */
+    ->y = 0,
+};
+
+/* Ensure that the parser can recover from the parse error. */
+struct point pythagoras = { 3, 4 };
 
 int array_with_designator[] = {
 	111,
@@ -492,6 +506,11 @@ const char string_initialized_with_braced_literal[] = {
 	"initializer",
 };
 
+// An array of unknown size containing strings.
+char weekday_names[][4] = {
+    "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+};
+
 /* nested struct/union initialization */
 struct outer {
 	int i;
@@ -532,3 +551,14 @@ struct offset_and_data offset_and_data = {
 	(unsigned long)&(((struct offset_and_data *)0)->data),
 	0,
 };
+
+// The size of the array is determined by the maximum index, not by the last
+// one mentioned.
+int arr_11[] = { [10] = 10, [0] = 0 };
+typedef int ctassert_11[-(int)(sizeof(arr_11) / sizeof(arr_11[0]))];
+/* expect-1: error: negative array dimension (-11) [20] */
+
+// Without an explicit subscript designator, the subscript counts up.
+int arr_3[] = { [1] = 1, [0] = 0, 1, 2 };
+typedef int ctassert_3[-(int)(sizeof(arr_3) / sizeof(arr_3[0]))];
+/* expect-1: error: negative array dimension (-3) [20] */
