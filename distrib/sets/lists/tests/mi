@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1251 2023/02/05 12:25:11 rillig Exp $
+# $NetBSD: mi,v 1.1252 2023/02/05 13:01:28 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6453,7 +6453,7 @@
 ./usr/tests/usr.bin/xlint/lint1/d_c99_init.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_init.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_nested_struct.c		tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/xlint/lint1/d_c99_recursive_init.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_c99_recursive_init.c		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_struct_init.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_cast.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_c99_union_cast.exp		tests-obsolete		obsolete,atf
@@ -6503,7 +6503,7 @@
 ./usr/tests/usr.bin/xlint/lint1/d_long_double_int.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_long_double_int.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/d_nested_structs.c		tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/xlint/lint1/d_nolimit_init.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/d_nolimit_init.c		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/d_packed_structs.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_pr_22119.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/d_pr_22119.exp			tests-obsolete		obsolete,atf
