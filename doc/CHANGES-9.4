@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.46 2023/02/04 16:21:31 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.47 2023/02/06 17:05:59 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -741,4 +741,20 @@ lib/libc/thread-stub/thread-stub.c		1.31
 	Change libc sched_yield() stub to actually still call the syscall
 	instead of doing nothing when app is not linked with pthread.
 	[uwe, ticket #1584]
+
+sys/arch/vax/vsa/smg.c				1.62
+
+	smg(4): make sure to call wsfont_init(9) as other framebuffer drivers.
+	[tsutsui, ticket #1585]
+
+etc/etc.next68k/MAKEDEV.conf			1.6
+
+	next68k: remove obsolete bpf(4) entries.
+	[tsutsui, ticket #1586]
+
+sys/fs/union/union_vfsops.c			1.86
+sys/miscfs/nullfs/null_vfsops.c			1.101 (via patch)
+
+	Set IMNT_MPSAFE only if all lower layers are MPSAFE.
+	[hannken, ticket #1587]
 
