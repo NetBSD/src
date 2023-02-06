@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: iscsid_volumes,v 1.1 2023/02/03 13:53:40 mlelstv Exp $
+# $NetBSD: iscsid_volumes,v 1.2 2023/02/06 11:53:03 martin Exp $
 #
 
 # PROVIDE: iscsid_volumes
@@ -16,7 +16,7 @@ stop_cmd="iscsid_volumes_stop"
 
 iscsid_volumes_start()
 {
-	test -f /etc/iscsi/volumes || return
+	test -f /etc/iscsi/volumes || return 0
 
 	while read host target digest auth user alias; do
 		case $host in
@@ -78,7 +78,7 @@ iscsid_volumes_start()
 
 iscsid_volumes_stop()
 {
-	test -f /etc/iscsi/volumes || return
+	test -f /etc/iscsi/volumes || return 0
 
 	while read host target digest auth user alias; do
 		case $host in
