@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.238 2023/01/13 19:41:50 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.239 2023/02/06 20:50:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.238 2023/01/13 19:41:50 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.239 2023/02/06 20:50:34 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -197,13 +197,12 @@ has_automatic_storage_duration(const sym_t *sym)
 static bool
 can_init_character_array(const type_t *ltp, const tnode_t *rn)
 {
-	tspec_t lst, rst;
 
 	if (!(ltp != NULL && ltp->t_tspec == ARRAY && rn->tn_op == STRING))
 		return false;
 
-	lst = ltp->t_subt->t_tspec;
-	rst = rn->tn_type->t_subt->t_tspec;
+	tspec_t lst = ltp->t_subt->t_tspec;
+	tspec_t rst = rn->tn_type->t_subt->t_tspec;
 
 	return rst == CHAR
 	    ? lst == CHAR || lst == UCHAR || lst == SCHAR
@@ -247,9 +246,8 @@ look_up_member(const type_t *tp, const char *name)
 static void
 update_type_of_array_of_unknown_size(sym_t *sym, size_t size)
 {
-	type_t *tp;
 
-	tp = block_dup_type(sym->s_type);
+	type_t *tp = block_dup_type(sym->s_type);
 	tp->t_dim = (int)size;
 	tp->t_incomplete_array = false;
 	sym->s_type = tp;
@@ -274,12 +272,12 @@ check_bit_field_init(const tnode_t *ln, tspec_t lt, tspec_t rt)
 static void
 check_non_constant_initializer(const tnode_t *tn, const sym_t *sym)
 {
-	const sym_t *unused_sym;
-	ptrdiff_t unused_offs;
 
 	if (tn == NULL || tn->tn_op == CON)
 		return;
 
+	const sym_t *unused_sym;
+	ptrdiff_t unused_offs;
 	if (constant_addr(tn, &unused_sym, &unused_offs))
 		return;
 
@@ -306,14 +304,11 @@ check_trad_no_auto_aggregate(const sym_t *sym)
 static void
 check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 {
-	tnode_t *ln;
-	type_t *lutp;
-	tspec_t lt, rt;
 
-	lutp = expr_unqualified_type(ltp);
+	type_t *lutp = expr_unqualified_type(ltp);
 
 	/* Create a temporary node for the left side. */
-	ln = expr_zero_alloc(sizeof(*ln));
+	tnode_t *ln = expr_zero_alloc(sizeof(*ln));
 	ln->tn_op = NAME;
 	ln->tn_type = lutp;
 	ln->tn_lvalue = true;
@@ -321,8 +316,8 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 
 	rn = cconv(rn);
 
-	lt = ln->tn_type->t_tspec;
-	rt = rn->tn_type->t_tspec;
+	tspec_t lt = ln->tn_type->t_tspec;
+	tspec_t rt = rn->tn_type->t_tspec;
 
 	debug_step("typeok '%s', '%s'",
 	    type_name(ln->tn_type), type_name(rn->tn_type));
@@ -352,6 +347,7 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 static const type_t *
 designator_type(const designator *dr, const type_t *tp)
 {
+
 	switch (tp->t_tspec) {
 	case STRUCT:
 	case UNION:
@@ -410,7 +406,6 @@ designator_debug(const designator *dr)
 static void
 designation_debug(const designation *dn)
 {
-	size_t i;
 
 	if (dn->dn_len == 0) {
 		debug_step("designation: (empty)");
@@ -419,7 +414,7 @@ designation_debug(const designation *dn)
 
 	debug_print_indent();
 	debug_printf("designation: ");
-	for (i = 0; i < dn->dn_len; i++)
+	for (size_t i = 0; i < dn->dn_len; i++)
 		designator_debug(dn->dn_items + i);
 	debug_printf("\n");
 }
@@ -439,7 +434,6 @@ static void
 designation_push(designation *dn, designator_kind kind,
 		 const sym_t *member, size_t subscript)
 {
-	designator *dr;
 
 	if (dn->dn_len == dn->dn_cap) {
 		dn->dn_cap += 4;
@@ -447,7 +441,7 @@ designation_push(designation *dn, designator_kind kind,
 		    dn->dn_cap * sizeof(dn->dn_items[0]));
 	}
 
-	dr = &dn->dn_items[dn->dn_len++];
+	designator *dr = &dn->dn_items[dn->dn_len++];
 	dr->dr_kind = kind;
 	dr->dr_member = member;
 	dr->dr_subscript = subscript;
@@ -486,9 +480,8 @@ designation_descend(designation *dn, const type_t *tp)
 static const type_t *
 designation_type(const designation *dn, const type_t *tp)
 {
-	size_t i;
 
-	for (i = 0; i < dn->dn_len && tp != NULL; i++)
+	for (size_t i = 0; i < dn->dn_len && tp != NULL; i++)
 		tp = designator_type(dn->dn_items + i, tp);
 	return tp;
 }
@@ -496,9 +489,8 @@ designation_type(const designation *dn, const type_t *tp)
 static const type_t *
 designation_parent_type(const designation *dn, const type_t *tp)
 {
-	size_t i;
 
-	for (i = 0; i + 1 < dn->dn_len && tp != NULL; i++)
+	for (size_t i = 0; i + 1 < dn->dn_len && tp != NULL; i++)
 		tp = designator_type(dn->dn_items + i, tp);
 	return tp;
 }
@@ -507,9 +499,8 @@ designation_parent_type(const designation *dn, const type_t *tp)
 static brace_level *
 brace_level_new(const type_t *tp, brace_level *enclosing)
 {
-	brace_level *bl;
 
-	bl = xcalloc(1, sizeof(*bl));
+	brace_level *bl = xcalloc(1, sizeof(*bl));
 	bl->bl_type = tp;
 	bl->bl_enclosing = enclosing;
 
@@ -558,17 +549,15 @@ brace_level_sub_type(const brace_level *bl)
 static void
 brace_level_advance(brace_level *bl, size_t *max_subscript)
 {
-	const type_t *tp;
-	designation *dn;
-	designator *dr;
 
 	debug_enter();
-	dn = &bl->bl_designation;
-	tp = designation_parent_type(dn, bl->bl_type);
+	designation *dn = &bl->bl_designation;
+	const type_t *tp = designation_parent_type(dn, bl->bl_type);
 
 	if (bl->bl_designation.dn_len == 0)
 		(void)designation_descend(dn, bl->bl_type);
-	dr = designation_last(dn);
+
+	designator *dr = designation_last(dn);
 	/* TODO: try to switch on dr->dr_kind instead */
 	switch (tp->t_tspec) {
 	case STRUCT:
@@ -659,10 +648,8 @@ brace_level_pop_final(brace_level *bl, size_t *max_subscript)
 static bool
 brace_level_goto(brace_level *bl, const tnode_t *rn, size_t *max_subscript)
 {
-	const type_t *ltp;
-	designation *dn;
 
-	dn = &bl->bl_designation;
+	designation *dn = &bl->bl_designation;
 	if (dn->dn_len == 0 && can_init_character_array(bl->bl_type, rn))
 		return true;
 	if (dn->dn_len == 0 && !designation_descend(dn, bl->bl_type))
@@ -672,7 +659,7 @@ again:
 	if (!brace_level_pop_done(bl, max_subscript))
 		return false;
 
-	ltp = brace_level_sub_type(bl);
+	const type_t *ltp = brace_level_sub_type(bl);
 	if (types_compatible(ltp, rn->tn_type, true, false, NULL))
 		return true;
 
@@ -691,9 +678,8 @@ again:
 static initialization *
 initialization_new(sym_t *sym, initialization *enclosing)
 {
-	initialization *in;
 
-	in = xcalloc(1, sizeof(*in));
+	initialization *in = xcalloc(1, sizeof(*in));
 	in->in_sym = sym;
 	in->in_enclosing = enclosing;
 
@@ -718,8 +704,6 @@ initialization_free(initialization *in)
 static void
 initialization_debug(const initialization *in)
 {
-	size_t i;
-	const brace_level *bl;
 
 	if (in->in_err)
 		debug_step("initialization error");
@@ -728,7 +712,8 @@ initialization_debug(const initialization *in)
 		return;
 	}
 
-	i = 0;
+	const brace_level *bl;
+	size_t i = 0;
 	for (bl = in->in_brace_level; bl != NULL; bl = bl->bl_enclosing) {
 		debug_print_indent();
 		debug_printf("brace level %zu: ", i);
@@ -747,12 +732,11 @@ initialization_debug(const initialization *in)
 static const type_t *
 initialization_sub_type(initialization *in)
 {
-	const type_t *tp;
 
 	if (in->in_brace_level == NULL)
 		return in->in_sym->s_type;
 
-	tp = brace_level_sub_type(in->in_brace_level);
+	const type_t *tp = brace_level_sub_type(in->in_brace_level);
 	if (tp == NULL)
 		in->in_err = true;
 	return tp;
@@ -761,19 +745,17 @@ initialization_sub_type(initialization *in)
 static void
 initialization_lbrace(initialization *in)
 {
-	const type_t *tp;
-	brace_level *outer_bl;
 
 	if (in->in_err)
 		return;
 
 	debug_enter();
 
-	tp = initialization_sub_type(in);
+	const type_t *tp = initialization_sub_type(in);
 	if (tp == NULL)
 		goto done;
 
-	outer_bl = in->in_brace_level;
+	brace_level *outer_bl = in->in_brace_level;
 	if (!allow_c90 && outer_bl == NULL)
 		check_trad_no_auto_aggregate(in->in_sym);
 
@@ -811,7 +793,6 @@ done:
 static void
 initialization_rbrace(initialization *in)
 {
-	brace_level *inner_bl, *outer_bl;
 
 	debug_enter();
 
@@ -834,8 +815,8 @@ initialization_rbrace(initialization *in)
 	if (in->in_err)
 		goto done;
 
-	inner_bl = in->in_brace_level;
-	outer_bl = inner_bl->bl_enclosing;
+	brace_level *inner_bl = in->in_brace_level;
+	brace_level *outer_bl = inner_bl->bl_enclosing;
 	in->in_brace_level = outer_bl;
 	brace_level_free(inner_bl);
 
@@ -850,17 +831,14 @@ done:
 static void
 initialization_add_designator_member(initialization *in, const char *name)
 {
-	brace_level *bl;
-	const type_t *tp;
-	const sym_t *member;
 
 	if (in->in_err)
 		return;
 
-	bl = in->in_brace_level;
+	brace_level *bl = in->in_brace_level;
 	lint_assert(bl != NULL);
 
-	tp = brace_level_sub_type(bl);
+	const type_t *tp = brace_level_sub_type(bl);
 	if (is_struct_or_union(tp->t_tspec))
 		goto proceed;
 	else if (tp->t_tspec == ARRAY) {
@@ -875,8 +853,8 @@ initialization_add_designator_member(initialization *in, const char *name)
 		return;
 	}
 
-proceed:
-	member = look_up_member(tp, name);
+proceed:;
+	const sym_t *member = look_up_member(tp, name);
 	if (member == NULL) {
 		/* type '%s' does not have member '%s' */
 		error(101, type_name(tp), name);
@@ -891,16 +869,14 @@ proceed:
 static void
 initialization_add_designator_subscript(initialization *in, size_t subscript)
 {
-	brace_level *bl;
-	const type_t *tp;
 
 	if (in->in_err)
 		return;
 
-	bl = in->in_brace_level;
+	brace_level *bl = in->in_brace_level;
 	lint_assert(bl != NULL);
 
-	tp = brace_level_sub_type(bl);
+	const type_t *tp = brace_level_sub_type(bl);
 	if (tp->t_tspec != ARRAY) {
 		/* syntax error '%s' */
 		error(249, "designator '[...]' is only for arrays");
@@ -927,7 +903,6 @@ initialization_add_designator_subscript(initialization *in, size_t subscript)
 static bool
 initialization_expr_using_op(initialization *in, tnode_t *rn)
 {
-	tnode_t *ln, *tn;
 
 	if (!has_automatic_storage_duration(in->in_sym))
 		return false;
@@ -938,10 +913,10 @@ initialization_expr_using_op(initialization *in, tnode_t *rn)
 
 	debug_step("handing over to INIT");
 
-	ln = build_name(in->in_sym, false);
+	tnode_t *ln = build_name(in->in_sym, false);
 	ln->tn_type = expr_unqualified_type(ln->tn_type);
 
-	tn = build_binary(ln, INIT, false /* XXX */, rn);
+	tnode_t *tn = build_binary(ln, INIT, false /* XXX */, rn);
 	expr(tn, false, false, false, false);
 
 	return true;
@@ -951,25 +926,22 @@ initialization_expr_using_op(initialization *in, tnode_t *rn)
 static bool
 initialization_init_array_from_string(initialization *in, tnode_t *tn)
 {
-	brace_level *bl;
-	const type_t *tp;
-	size_t len;
 
 	if (tn->tn_op != STRING)
 		return false;
 
-	tp = initialization_sub_type(in);
+	const type_t *tp = initialization_sub_type(in);
 
 	if (!can_init_character_array(tp, tn))
 		return false;
 
-	len = tn->tn_string->st_len;
+	size_t len = tn->tn_string->st_len;
 	if (!tp->t_incomplete_array && (size_t)tp->t_dim < len) {
 		/* string literal too long (%lu) for target array (%lu) */
 		warning(187, (unsigned long)len, (unsigned long)tp->t_dim);
 	}
 
-	bl = in->in_brace_level;
+	brace_level *bl = in->in_brace_level;
 	if (bl != NULL && bl->bl_designation.dn_len == 0)
 		(void)designation_descend(&bl->bl_designation, bl->bl_type);
 	if (bl != NULL)
@@ -988,15 +960,13 @@ initialization_init_array_from_string(initialization *in, tnode_t *tn)
 static void
 initialization_expr(initialization *in, tnode_t *tn)
 {
-	brace_level *bl;
-	const type_t *tp;
 
 	if (in->in_err || tn == NULL)
 		return;
 
 	debug_enter();
 
-	bl = in->in_brace_level;
+	brace_level *bl = in->in_brace_level;
 	if (bl != NULL && !brace_level_goto(bl, tn, &in->in_max_subscript)) {
 		in->in_err = true;
 		goto done;
@@ -1008,7 +978,7 @@ initialization_expr(initialization *in, tnode_t *tn)
 	if (in->in_err)
 		goto done;
 
-	tp = initialization_sub_type(in);
+	const type_t *tp = initialization_sub_type(in);
 	if (tp == NULL)
 		goto done;
 
@@ -1033,19 +1003,11 @@ done:
 static initialization *init;
 
 
-static initialization *
-current_init(void)
-{
-
-	lint_assert(init != NULL);
-	return init;
-}
-
 sym_t **
 current_initsym(void)
 {
 
-	return &current_init()->in_sym;
+	return &init->in_sym;
 }
 
 void
@@ -1061,9 +1023,8 @@ begin_initialization(sym_t *sym)
 void
 end_initialization(void)
 {
-	initialization *in;
 
-	in = init;
+	initialization *in = init;
 	init = in->in_enclosing;
 	initialization_free(in);
 
@@ -1074,14 +1035,12 @@ end_initialization(void)
 void
 begin_designation(void)
 {
-	initialization *in;
-	brace_level *bl;
 
-	in = current_init();
+	initialization *in = init;
 	if (in->in_err)
 		return;
 
-	bl = in->in_brace_level;
+	brace_level *bl = in->in_brace_level;
 	lint_assert(bl != NULL);
 	bl->bl_designation.dn_len = 0;
 	designation_debug(&bl->bl_designation);
@@ -1091,33 +1050,33 @@ void
 add_designator_member(sbuf_t *sb)
 {
 
-	initialization_add_designator_member(current_init(), sb->sb_name);
+	initialization_add_designator_member(init, sb->sb_name);
 }
 
 void
 add_designator_subscript(range_t range)
 {
 
-	initialization_add_designator_subscript(current_init(), range.hi);
+	initialization_add_designator_subscript(init, range.hi);
 }
 
 void
 init_lbrace(void)
 {
 
-	initialization_lbrace(current_init());
+	initialization_lbrace(init);
 }
 
 void
 init_expr(tnode_t *tn)
 {
 
-	initialization_expr(current_init(), tn);
+	initialization_expr(init, tn);
 }
 
 void
 init_rbrace(void)
 {
 
-	initialization_rbrace(current_init());
+	initialization_rbrace(init);
 }
