@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.76 2022/06/17 20:24:00 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.77 2023/02/06 21:01:55 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -131,8 +131,7 @@ check_lint1()
 	fi
 
 	# shellcheck disable=SC2086
-	# XXX: -s 'exit:any' would be better
-	atf_check -s 'ignore' -o "save:$exp" \
+	atf_check -s 'exit' -o "save:$exp" \
 	    "$lint1" $flags "$src" "$wrk_ln"
 	atf_check lua "$(atf_get_srcdir)/check-expect.lua" "$src"
 

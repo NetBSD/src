@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.239 2023/02/06 20:50:34 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.240 2023/02/06 21:01:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.239 2023/02/06 20:50:34 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.240 2023/02/06 21:01:55 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1003,11 +1003,11 @@ done:
 static initialization *init;
 
 
-sym_t **
+sym_t *
 current_initsym(void)
 {
 
-	return &init->in_sym;
+	return init->in_sym;
 }
 
 void
