@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.92 2022/07/05 22:50:41 rillig Exp $
+#	$NetBSD: Makefile,v 1.93 2023/02/06 20:26:05 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -76,7 +76,18 @@ LDADD+=		-ll
 DPADD+=		${LIBL}
 .endif
 
-.include "Makefile.err-msgs-h"
+err-msgs.h: err.c
+	${_MKTARGET_CREATE}
+	sp='[[:space:]]*'; \
+	from="^$$sp\(\".*\"\)\,$$sp/\*$$sp\(Q*[0-9][0-9]*\)$$sp\*/\$$"; \
+	${TOOL_SED} -n -e "s,$$from,#define MSG_\2 \1,p" < ${.ALLSRC:M*err.c} > ${.TARGET}.tmp
+	mv -f ${.TARGET}.tmp ${.TARGET}
+
+CLEANFILES+=	err-msgs.h
+DPSRCS+=	err-msgs.h
+CPPFLAGS+=	-I.
+
+externs1.h: err-msgs.h
 ${SRCS:Nerr.c}: err-msgs.h
 
 add-test: .PHONY
