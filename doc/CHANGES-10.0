@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.28 2023/02/05 12:45:22 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.29 2023/02/06 16:58:34 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -765,4 +765,20 @@ external/gpl3/gcc/usr.bin/Makefile.inc		1.35
 	this results in noticably faster builds and lower disk space
 	requirements.
 	[mrg, ticket #65]
+
+sys/arch/vax/vsa/smg.c				1.62
+
+	smg(4): make sure to call wsfont_init(9) as other framebuffer drivers.
+	[tsutsui, ticket #66]
+
+etc/etc.next68k/MAKEDEV.conf			1.6
+
+	next68k: remove obsolete bpf(4) entries.
+	[tsutsui, ticket #67]
+
+sys/fs/union/union_vfsops.c			1.86
+sys/miscfs/nullfs/null_vfsops.c			1.101
+
+	Set IMNT_MPSAFE only if all lower layers are MPSAFE.
+	[hannken, ticket #68]
 
