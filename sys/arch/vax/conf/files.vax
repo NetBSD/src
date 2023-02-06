@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.125 2018/12/29 11:30:12 maxv Exp $
+#	$NetBSD: files.vax,v 1.126 2023/02/06 13:13:05 tsutsui Exp $
 #
 # new style config file for vax architecture
 #
@@ -149,7 +149,7 @@ attach	cpu at xmi with cpu_xmi
 attach	mem at xmi with mem_xmi
 
 attach	dz at vsbus with dz_vsbus
-file	arch/vax/vsa/dz_vsbus.c		dz_vsbus | smg
+file	arch/vax/vsa/dz_vsbus.c		dz_vsbus | smg | gpx
 
 attach	lkkbd at dz with dzkbd
 file	dev/dec/dzkbd.c			dzkbd needs-flag
@@ -189,6 +189,11 @@ include "dev/ata/files.ata"
 device	smg: displaydev, wsemuldisplaydev
 attach	smg at vsbus
 file	arch/vax/vsa/smg.c		smg needs-flag
+
+# GPX framebuffer on VS3100.
+device	gpx: displaydev, wsemuldisplaydev, rasops8
+attach	gpx at vsbus
+file	arch/vax/vsa/gpx.c		gpx needs-flag
 
 # Monochrome QVSS framebuffer on qbus (VCB01)
 device	qv {}: displaydev, wsemuldisplaydev
