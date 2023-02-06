@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.61 2016/12/22 16:05:15 cherry Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.62 2023/02/06 13:30:02 tsutsui Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.61 2016/12/22 16:05:15 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.62 2023/02/06 13:30:02 tsutsui Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -229,7 +229,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		/* mark entries for map page tables */
 		for (i = 1; i <= nl1desc; i++)
 			stfree &= ~l2tobm(i);
-		/* mark an entry for kptmpa and lkptpa */
+		/* mark an entry for kptmpa */
 		stfree &= ~l2tobm(i);
 		/* mark entries not available */
 		for (i = MAXKL2SIZE; i < sizeof(stfree) * NBBY; i++)
