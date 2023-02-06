@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.432 2023/01/29 18:13:56 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.433 2023/02/06 21:01:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.432 2023/01/29 18:13:56 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.433 2023/02/06 21:01:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -470,7 +470,7 @@ postfix_expression:
 		if (!allow_c99)
 			 /* compound literals are a C99/GCC extension */
 			 gnuism(319);
-		$$ = build_name(*current_initsym(), false);
+		$$ = build_name(current_initsym(), false);
 		end_initialization();
 	  }
 	| T_LPAREN compound_statement_lbrace {
