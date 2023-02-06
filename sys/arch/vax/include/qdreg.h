@@ -1,4 +1,4 @@
-/*	$NetBSD: qdreg.h,v 1.6 2021/08/17 22:00:31 andvar Exp $	*/
+/*	$NetBSD: qdreg.h,v 1.7 2023/02/06 13:13:05 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -172,10 +172,12 @@
 /* VIPER logical function unit codes */
 
 #define LF_ZEROS		0x0000
+#define LF_NOT_D		0x0003
 #define LF_D_XOR_S		0x0006
-#define LF_SOURCE		0x000A
-#define LF_D_OR_S		0x000E
-#define LF_ONES 		0x000F
+#define LF_SOURCE		0x000a
+#define LF_D			0x000c
+#define LF_D_OR_S		0x000d
+#define LF_ONES 		0x000f
 #define INV_M1_M2		0x0030
 #define FULL_SRC_RESOLUTION	0X00C0 /* makes second pass like first pass */
 
