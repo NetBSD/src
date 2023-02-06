@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.77 2023/02/06 21:01:55 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.78 2023/02/06 21:20:58 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,7 +36,7 @@ configure_test_case()
 	# shellcheck disable=SC2016
 	awk='
 		BEGIN {
-			# see usr.bin/xlint/arch/*/targparam.h
+			# see ./gen-platforms.sh
 			platform["aarch64"]	= "uchar lp64  long ldbl-128"
 			platform["alpha"]	= "schar lp64  long ldbl-64"
 			platform["arm"]		= "uchar ilp32 long ldbl-64"
