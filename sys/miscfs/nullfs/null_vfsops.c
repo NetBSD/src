@@ -1,4 +1,4 @@
-/*	$NetBSD: null_vfsops.c,v 1.95.4.1 2019/12/24 17:45:53 martin Exp $	*/
+/*	$NetBSD: null_vfsops.c,v 1.95.4.2 2023/02/06 17:04:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.95.4.1 2019/12/24 17:45:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: null_vfsops.c,v 1.95.4.2 2023/02/06 17:04:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ nullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/* Create the mount point. */
 	nmp = kmem_zalloc(sizeof(struct null_mount), KM_SLEEP);
 	mp->mnt_data = nmp;
-	mp->mnt_iflag |= IMNT_MPSAFE;
+	mp->mnt_iflag |= lowerrootvp->v_mount->mnt_iflag & IMNT_MPSAFE;
 
 	/*
 	 * Make sure that the mount point is sufficiently initialized
