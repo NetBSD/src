@@ -1,4 +1,4 @@
-# $NetBSD: VAX780,v 1.33 2022/08/07 02:52:30 simonb Exp $
+# $NetBSD: VAX780,v 1.34 2023/02/06 13:13:05 tsutsui Exp $
 #
 # 11/780,750,730 machine description file
 # 
@@ -171,6 +171,7 @@ ubi0		at mainbus0		# 11/730 direct unibus
 #asc0		at vsbus0 csr 0x200c0080 # VS4000/60 (or VLC) SCSI-ctlr
 #asc0		at vsbus0 csr 0x26000080 # VS4000/90 and 4000/10x SCSI-ctlr
 #smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
+#gpx0		at vsbus0 csr 0x3c000000 # VS3100 GPX display option
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 #spx0		at vsbus0 csr 0x38000000 # Low Cost SPX on VS4000/90.
 #lcg0		at vsbus0 csr 0x21801000 # VS4000/60 (or VLC) graphics
@@ -251,6 +252,7 @@ mt*		at mscpbus? drive?	# MSCP tape
 
 # VAXstation graphics support
 #wsdisplay*	at smg0
+#wsdisplay*	at gpx0
 #wsdisplay*	at spx0
 #wsdisplay*	at lcg0
 #wsdisplay*	at clr0
