@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.85 2022/11/21 10:37:14 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.86 2023/02/06 10:33:32 hannken Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.85 2022/11/21 10:37:14 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.86 2023/02/06 10:33:32 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,7 +198,14 @@ union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		goto bad;
 	}
 
-	mp->mnt_iflag |= IMNT_MPSAFE;
+	/*
+	 * This mount is mp-safe if both lower mounts are mp-safe.
+	 */
+
+	if (((um->um_lowervp == NULLVP) ||
+	    (um->um_lowervp->v_mount->mnt_iflag & IMNT_MPSAFE)) &&
+	    (um->um_uppervp->v_mount->mnt_iflag & IMNT_MPSAFE))
+		mp->mnt_iflag |= IMNT_MPSAFE;
 
 	/*
 	 * Unless the mount is readonly, ensure that the top layer
