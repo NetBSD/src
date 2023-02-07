@@ -78,7 +78,7 @@ extern "C" {
 #define BFD_ARCH_SIZE 64
 
 /* The word size of the default bfd target.  */
-#define BFD_DEFAULT_TARGET_SIZE 32
+#define BFD_DEFAULT_TARGET_SIZE 64
 
 #include <inttypes.h>
 
@@ -124,7 +124,7 @@ typedef int64_t bfd_signed_vma;
 typedef uint64_t bfd_size_type;
 typedef uint64_t symvalue;
 
-#define BFD_VMA_FMT "ll"
+#define BFD_VMA_FMT "l"
 
 #define fprintf_vma(f,x) fprintf (f, "%016" BFD_VMA_FMT "x", x)
 #define sprintf_vma(s,x) sprintf (s, "%016" BFD_VMA_FMT "x", x)

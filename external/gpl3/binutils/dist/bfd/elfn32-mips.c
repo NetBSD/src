@@ -80,9 +80,8 @@ static bool elf32_mips_grok_prstatus
   (bfd *, Elf_Internal_Note *);
 static bool elf32_mips_grok_psinfo
   (bfd *, Elf_Internal_Note *);
-static bfd_boolean mips_elf_n32_is_local_label_name
+static bool mips_elf_n32_is_local_label_name
   (bfd *, const char *);
-static bfd_boolean elf_n32_mips_grok_freebsd_prstatus
 static bool elf_n32_mips_grok_freebsd_prstatus
   (bfd *, Elf_Internal_Note *);
 static irix_compat_t elf_n32_mips_irix_compat
@@ -3198,7 +3197,7 @@ static reloc_howto_type elf_mips_eh_howto =
 	 false);		/* pcrel_offset */
 
 
-/* Set the GP value for OUTPUT_BFD.  Returns FALSE if this is a
+/* Set the GP value for OUTPUT_BFD.  Returns false if this is a
    dangerous relocation.  */
 
 static bool
@@ -3848,7 +3847,7 @@ mips_elf_sym_is_global (bfd *abfd ATTRIBUTE_UNUSED, asymbol *sym)
 	    || bfd_is_com_section (bfd_asymbol_section (sym)));
 }
 
-/* Likewise, return TRUE if the symbol table split overall must be
+/* Likewise, return true if the symbol table split overall must be
    between section symbols and all other symbols.  */
 static bool
 mips_elf_n32_elfsym_local_is_section (bfd *abfd)
@@ -4030,11 +4029,11 @@ elf32_mips_write_core_note (bfd *abfd, char *buf, int *bufsiz, int note_type,
 }
 
 /* MIPS ELF local labels start with "$L".  */
-static bfd_boolean
+static bool
 mips_elf_n32_is_local_label_name (bfd *abfd, const char *name)
 {
   if (name[0] == '$' && name[1] == 'L')
-    return TRUE;
+    return true;
 
   /* We accept the generic ELF local label syntax as well.  */
   return _bfd_elf_is_local_label_name (abfd, name);
