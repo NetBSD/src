@@ -207,7 +207,7 @@
 #define STDC_HEADERS 1
 
 /* Configured target name. */
-#define TARGET "arm--netbsdelf-eabi"
+#define TARGET "armv7--netbsdelf-eabi"
 
 /* Define to 1 if user symbol names have a leading underscore, 0 if not. */
 #define TARGET_PREPENDS_UNDERSCORE 0
