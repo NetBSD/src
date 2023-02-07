@@ -1,4 +1,4 @@
-/*	$NetBSD: init_bcm43xx.c,v 1.5 2017/09/03 22:54:12 nat Exp $	*/
+/*	$NetBSD: init_bcm43xx.c,v 1.6 2023/02/07 20:45:44 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2017 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: init_bcm43xx.c,v 1.5 2017/09/03 22:54:12 nat Exp $");
+__RCSID("$NetBSD: init_bcm43xx.c,v 1.6 2023/02/07 20:45:44 mlelstv Exp $");
 
 #include <sys/param.h>
 
@@ -102,7 +102,8 @@ init_bcm43xx(int fd, unsigned int speed)
 	memset(rate, 0, sizeof(rate));
 	memset(local_name, 0, sizeof(local_name));
 
-	uart_send_cmd(fd, HCI_CMD_RESET, NULL, 0);
+	if (uart_send_cmd(fd, HCI_CMD_RESET, NULL, 0))
+		return;
 	uart_recv_cc(fd, HCI_CMD_RESET, &resp, sizeof(resp));
 	/* assume it succeeded? */
 
