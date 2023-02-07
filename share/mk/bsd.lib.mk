@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.389 2022/03/29 22:48:04 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.390 2023/02/07 04:53:54 mrg Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -169,8 +169,10 @@ MKSHLIBOBJS= yes
 MKSHLIBOBJS= no
 .endif
 
-.if (${MKDEBUG:Uno} != "no" && !defined(NODEBUG)) || \
-    (defined(CFLAGS) && !empty(CFLAGS:M*-g*))
+# Avoid adding "-g" if we already have a "-g*" option.
+.if (${MKDEBUG:Uno} != "no" && !defined(NODEBUG)) && \
+    (!defined(CFLAGS) || empty(CFLAGS:M-g*)) && \
+    (!defined(CXXFLAGS) || empty(CXXFLAGS:M-g*))
 # We only add -g to the shared library objects
 # because we don't currently split .a archives.
 CSHLIBFLAGS+=	-g
