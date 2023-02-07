@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.h,v 1.4 2017/08/10 13:34:29 nat Exp $	*/
+/*	$NetBSD: btattach.h,v 1.5 2023/02/07 20:45:44 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -50,6 +50,6 @@ devinit_t init_stlc2500;
 devinit_t init_swave;
 devinit_t init_unistone;
 
-void uart_send_cmd(int, uint16_t, void *, size_t);
+int uart_send_cmd(int, uint16_t, void *, size_t);
 size_t uart_recv_ev(int, uint8_t, void *, size_t);
 size_t uart_recv_cc(int, uint16_t, void *, size_t);

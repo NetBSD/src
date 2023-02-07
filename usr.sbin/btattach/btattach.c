@@ -1,4 +1,4 @@
-/*	$NetBSD: btattach.c,v 1.15 2017/08/11 11:54:08 jmcneill Exp $	*/
+/*	$NetBSD: btattach.c,v 1.16 2023/02/07 20:45:44 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 Iain Hibbert
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008 Iain Hibbert.  All rights reserved.");
-__RCSID("$NetBSD: btattach.c,v 1.15 2017/08/11 11:54:08 jmcneill Exp $");
+__RCSID("$NetBSD: btattach.c,v 1.16 2023/02/07 20:45:44 mlelstv Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: btattach.c,v 1.15 2017/08/11 11:54:08 jmcneill Exp $");
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include <termios.h>
 #include <unistd.h>
 #include <util.h>
@@ -275,9 +276,11 @@ main(int argc, char *argv[])
 	if (type->init != NULL)
 		(*type->init)(fd, speed);
 
-	if (cfsetspeed(&tio, speed) < 0
-	    || tcsetattr(fd, TCSADRAIN, &tio) < 0)
-		err(EXIT_FAILURE, "tty setup failed");
+	if (speed != init_speed) {
+		if (cfsetspeed(&tio, speed) < 0
+		    || tcsetattr(fd, TCSANOW, &tio) < 0)
+			err(EXIT_FAILURE, "tty setup failed");
+	}
 
 	/* start line discipline */
 	if (ioctl(fd, TIOCSLINED, type->line) < 0)
@@ -343,6 +346,12 @@ sighandler(int s)
 }
 
 static void
+timeout(int s)
+{
+
+}
+
+static void
 hexdump(uint8_t *ptr, size_t len)
 {
 
@@ -353,11 +362,13 @@ hexdump(uint8_t *ptr, size_t len)
 /*
  * send HCI comamnd
  */
-void
+int
 uart_send_cmd(int fd, uint16_t opcode, void *buf, size_t len)
 {
 	struct iovec iov[2];
 	hci_cmd_hdr_t hdr;
+	int r;
+	struct sigaction oaction, taction;
 
 	hdr.type = HCI_CMD_PKT;
 	hdr.opcode = htole16(opcode);
@@ -379,7 +390,17 @@ uart_send_cmd(int fd, uint16_t opcode, void *buf, size_t len)
 	if (writev(fd, iov, __arraycount(iov)) < 0)
 		err(EXIT_FAILURE, "writev");
 
-	tcdrain(fd);
+	taction.sa_handler = timeout,
+	sigemptyset(&taction.sa_mask);
+	taction.sa_flags = 0,
+
+	sigaction(SIGALRM, &taction, &oaction);
+	alarm(1);
+	r = tcdrain(fd);
+	alarm(0);
+	sigaction(SIGALRM, &oaction, NULL);
+
+	return r;
 }
 
 /*
