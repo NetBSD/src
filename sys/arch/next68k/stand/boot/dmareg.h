@@ -1,4 +1,4 @@
-/*	$NetBSD: dmareg.h,v 1.3 2002/09/11 01:46:36 mycroft Exp $	*/
+/*	$NetBSD: dmareg.h,v 1.4 2023/02/07 14:27:59 tsutsui Exp $	*/
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -55,7 +55,7 @@
 		 &~(DMA_ENDALIGNMENT-1))|0x80000000))
 
 struct dma_dev {		/* format of dma device registers */
-	int dd_csr;		/* control & status register */
+	volatile uint32_t dd_csr; /* control & status register */
 	char dd_pad[0x3fec];	/* csr not contiguous with next */
 	char *dd_saved_next;	/* saved pointers for HW restart */
 	char *dd_saved_limit;
