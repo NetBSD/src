@@ -266,7 +266,7 @@
 #define SIZEOF_INT 4
 
 /* The size of `long', as computed by sizeof. */
-#define SIZEOF_LONG 4
+#define SIZEOF_LONG 8
 
 /* The size of `long long', as computed by sizeof. */
 #define SIZEOF_LONG_LONG 8
@@ -275,7 +275,7 @@
 #define SIZEOF_OFF_T 8
 
 /* The size of `void *', as computed by sizeof. */
-#define SIZEOF_VOID_P 4
+#define SIZEOF_VOID_P 8
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
