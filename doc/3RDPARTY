@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1910 2023/02/02 13:27:16 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1911 2023/02/07 20:34:01 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -696,11 +696,11 @@ directory.
 
 Package:	less
 Version:	less-458
-Current Vers:	less-562
+Current Vers:	less-608
 Maintainer:	Mark Nudelman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
-Date:		2020-06-13
+Date:		2023-02-07
 Mailing List:	less-announce-request@greenwoodsoftware.com
 Responsible:	mrg
 License:	Less License (BSD 2-clause) or GPLv3 (v2 prior to less-418)
