@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.197 2023/02/05 21:18:05 mrg Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.198 2023/02/07 09:25:51 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.197 2023/02/05 21:18:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.198 2023/02/07 09:25:51 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -401,7 +401,7 @@ putone(int c, int flags, struct tty *tp)
 {
 	struct tty *ctp;
 	int s;
-	bool do_ps = cold;
+	bool do_ps = !cold;
 
 	ctp = NULL;	/* XXX gcc i386 -Os */
 
