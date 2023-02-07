@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.48 2021/07/11 20:52:06 mrg Exp $
+# $NetBSD: Makefile,v 1.49 2023/02/07 06:19:03 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -27,6 +27,12 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm \
 
 CFLAGS+=	-pthread
 LDFLAGS+=	-pthread
+
+# Reduce debugging for these extremely large objects.
+.if ${MKDEBUG:Uno} != "no"
+CXXFLAGS+=	-g1
+CFLAGS+=	-g1
+.endif
 
 GALLIUM_SUBDIRS= \
 	auxiliary \
