@@ -1,4 +1,4 @@
-/* $NetBSD: selection.c,v 1.11 2021/11/24 14:34:51 uwe Exp $ */
+/* $NetBSD: selection.c,v 1.12 2023/02/07 20:37:48 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2007 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: selection.c,v 1.11 2021/11/24 14:34:51 uwe Exp $");
+__RCSID("$NetBSD: selection.c,v 1.12 2023/02/07 20:37:48 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -144,6 +144,7 @@ static void selarea_copy_text(void);
 static void selarea_start(void);
 static void selarea_end(void);
 static void selarea_calculate(void);
+static void selarea_getrowcol(size_t, size_t *, size_t *);
 static void selarea_hide(void);
 static void selarea_show(void);
 static void selarea_paste(void);
@@ -648,14 +649,29 @@ selarea_calculate(void)
 
 /* ---------------------------------------------------------------------- */
 
+/* Turns selection absolute position in the screen buffer back into
+   row, col co-ordinates */
+static void
+selarea_getrowcol(size_t pos, size_t* row, size_t* col)
+{
+	size_t xres = Selmouse.sm_max_x + 1;
+
+	*row = pos / xres;
+	*col = pos - (*row * xres);
+}
+
+/* ---------------------------------------------------------------------- */
+
 /* Hides the highlighted region, returning it to normal colors. */
 static void
 selarea_hide(void)
 {
-	size_t i;
+	size_t i, row, col;
 
-	for (i = Selarea.sa_startoff; i <= Selarea.sa_endoff; i++)
-		char_invert(0, i);
+	for (i = Selarea.sa_startoff; i <= Selarea.sa_endoff; i++) {
+		selarea_getrowcol(i, &row, &col);
+		char_invert(row, col);
+	}
 }
 
 /* ---------------------------------------------------------------------- */
@@ -664,11 +680,13 @@ selarea_hide(void)
 static void
 selarea_show(void)
 {
-	size_t i;
+	size_t i, row, col;
 
 	selarea_calculate();
-	for (i = Selarea.sa_startoff; i <= Selarea.sa_endoff; i++)
-		char_invert(0, i);
+	for (i = Selarea.sa_startoff; i <= Selarea.sa_endoff; i++) {
+		selarea_getrowcol(i, &row, &col);
+		char_invert(row, col);
+	}
 }
 
 /* ---------------------------------------------------------------------- */
