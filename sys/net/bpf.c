@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.250 2023/02/07 01:46:37 gutteridge Exp $	*/
+/*	$NetBSD: bpf.c,v 1.251 2023/02/08 01:37:53 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.250 2023/02/07 01:46:37 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.251 2023/02/08 01:37:53 gutteridge Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -876,7 +876,12 @@ bpf_write(struct file *fp, off_t *offp, struct uio *uio,
 		goto out;
 	}
 
-	if (d->bd_hdrcmplt)
+	/*
+	 * If writing to a loopback interface, the address family has
+	 * already been specially computed in bpf_movein(), so don't
+	 * clobber it, or the loopback will reject it in looutput().
+	 */
+	if (d->bd_hdrcmplt && ifp->if_type != IFT_LOOP)
 		dst.ss_family = pseudo_AF_HDRCMPLT;
 
 	if (d->bd_feedback) {
