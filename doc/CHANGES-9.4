@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.47 2023/02/06 17:05:59 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.48 2023/02/08 16:43:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -757,4 +757,10 @@ sys/miscfs/nullfs/null_vfsops.c			1.101 (via patch)
 
 	Set IMNT_MPSAFE only if all lower layers are MPSAFE.
 	[hannken, ticket #1587]
+
+sys/arch/sparc64/include/vmparam.h		1.43
+
+	sparc64: PR 57219: avoid arithmetic overflow by making the
+	usable virtual address space end one page earlier.
+	[hgutch, ticket #1588]
 
