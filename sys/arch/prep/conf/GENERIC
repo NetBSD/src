@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.198 2022/09/29 10:10:09 riastradh Exp $
+# $NetBSD: GENERIC,v 1.199 2023/02/09 13:16:04 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.198 $"
+#ident		"GENERIC-$Revision: 1.199 $"
 
 maxusers	32
 
@@ -498,9 +498,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 # ISA joysticks. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
-# Pull in optional local configuration
-cinclude "arch/prep/conf/GENERIC.local"
-
 # Pseudo-Devices
 
 pseudo-device 	crypto		# /dev/crypto device
@@ -564,3 +561,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration
+cinclude "arch/prep/conf/GENERIC.local"

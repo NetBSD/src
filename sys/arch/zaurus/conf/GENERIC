@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.93 2022/09/29 10:10:10 riastradh Exp $
+#	$NetBSD: GENERIC,v 1.94 2023/02/09 13:16:05 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -360,10 +360,6 @@ sdmmc* at pxamci?
 
 ld* at sdmmc?				# MMC/SD/SDHC card
 
-# Pull in optional local configuration
-cinclude "arch/zaurus/conf/GENERIC.local"
-
-
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
@@ -394,3 +390,6 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# Pull in optional local configuration
+cinclude "arch/zaurus/conf/GENERIC.local"

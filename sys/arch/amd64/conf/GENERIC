@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.599 2022/09/29 10:10:05 riastradh Exp $
+# $NetBSD: GENERIC,v 1.600 2023/02/09 13:16:04 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.599 $"
+#ident		"GENERIC-$Revision: 1.600 $"
 
 maxusers	64		# estimated number of users
 
@@ -1136,10 +1136,6 @@ hvshutdown*	at vmbus?		# Hyper-V Guest Shutdown Service
 hvtimesync*	at vmbus?		# Hyper-V Time Synchronization Service
 #hvkvp*		at vmbus?		# Hyper-V Data Exchange Service
 
-# Pull in optional local configuration
-cinclude "arch/amd64/conf/GENERIC.local"
-
-
 # Pseudo-Devices
 
 pseudo-device	crypto			# /dev/crypto device
@@ -1237,3 +1233,6 @@ options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
 options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
 options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
+
+# Pull in optional local configuration
+cinclude "arch/amd64/conf/GENERIC.local"

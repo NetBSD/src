@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47 2022/09/29 10:10:09 riastradh Exp $
+# $NetBSD: GENERIC,v 1.48 2023/02/09 13:16:04 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.47 $"
+#ident		"GENERIC-$Revision: 1.48 $"
 
 maxusers	32
 
@@ -188,9 +188,6 @@ com* at ioplanar?
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
-# Pull in optional local configuration
-cinclude "arch/rs6000/conf/GENERIC.local"
-
 # Pseudo-Devices
 
 # Not yet ready -- prep lacks generic soft interrupts
@@ -254,3 +251,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration
+cinclude "arch/rs6000/conf/GENERIC.local"

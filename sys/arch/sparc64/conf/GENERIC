@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.237 2022/09/29 10:10:10 riastradh Exp $
+# $NetBSD: GENERIC,v 1.238 2023/02/09 13:16:05 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.237 $"
+#ident		"GENERIC-$Revision: 1.238 $"
 
 maxusers	64
 
@@ -420,9 +420,6 @@ vioscsi* at virtio?			# Virtio SCSI device
 fdc0	at sbus? slot ? offset ?		# SUNW,fdtwo
 #fdc0	at ebus?				# fdthree, EXPERIMENTAL
 fd*	at fdc0					# the drive itself
-
-# Pull in optional local configuration
-cinclude "arch/sparc64/conf/GENERIC.local"
 
 #
 # accept filters
@@ -869,3 +866,6 @@ options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 # options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 # options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
+
+# Pull in optional local configuration
+cinclude "arch/sparc64/conf/GENERIC.local"

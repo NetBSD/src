@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.74 2022/09/29 10:10:08 riastradh Exp $
+# $NetBSD: GENERIC,v 1.75 2023/02/09 13:16:04 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.74 $"
+#ident          "GENERIC-$Revision: 1.75 $"
 
 maxusers	16		# estimated number of users
 
@@ -389,10 +389,6 @@ pwrsw0	at obio?
 # Reset button, USL-5P misc button
 btn0	at obio?
 
-# Pull in optional local configuration
-cinclude "arch/landisk/conf/GENERIC.local"
-
-
 # Pseudo-Devices
 
 #
@@ -464,3 +460,6 @@ options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
 options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
+
+# Pull in optional local configuration
+cinclude "arch/landisk/conf/GENERIC.local"
