@@ -1,4 +1,4 @@
-/*      $NetBSD: scsi.c,v 1.11 2023/02/04 14:38:09 tsutsui Exp $        */
+/*      $NetBSD: scsi.c,v 1.12 2023/02/09 15:20:40 tsutsui Exp $        */
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -61,7 +61,7 @@ int scsiicmd(char target, char lun,
 #define NDPRINTF(x)
 #define PRINTF(x)
 /* printf x; */
-#ifdef xSCSI_DEBUG
+#ifdef SCSI_DEBUG
 #define DPRINTF(x) printf x;
 #else
 #define DPRINTF(x)
