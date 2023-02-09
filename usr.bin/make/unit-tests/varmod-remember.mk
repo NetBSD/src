@@ -1,4 +1,4 @@
-# $NetBSD: varmod-remember.mk,v 1.8 2023/02/09 08:22:10 rillig Exp $
+# $NetBSD: varmod-remember.mk,v 1.9 2023/02/09 22:21:57 rillig Exp $
 #
 # Tests for the :_ modifier, which saves the current expression value
 # in the _ variable or another, to be used later again.
@@ -32,8 +32,6 @@ GHI.global:=	${GHI}		# is evaluated in the global scope
 .if ${GHI.global} != "1=G 2=H 3=I"
 .  error
 .endif
-
-.MAKEFLAGS: -d0
 
 
 # In the parameterized form, having the variable name on the right side of
