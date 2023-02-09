@@ -1,7 +1,13 @@
-# $NetBSD: varmod-remember.mk,v 1.6 2021/03/14 17:27:27 rillig Exp $
+# $NetBSD: varmod-remember.mk,v 1.7 2023/02/09 07:34:15 sjg Exp $
 #
 # Tests for the :_ modifier, which saves the current variable value
 # in the _ variable or another, to be used later again.
+
+# this should result in "1=A 2=B 3=C"
+ABC= ${A B C:L:_:range:@i@$i=${_:[$i]}@}
+
+# we compare this with a repeat later
+x:= ${ABC}
 
 .if ${1 2 3:L:_:@var@${_}@} != "1 2 3 1 2 3 1 2 3"
 .  error
@@ -29,6 +35,12 @@ S=	INDIRECT_VARNAME
 .if ${value:L:@var@${var:_=$S}@} != "value"
 .  error
 .elif defined(INDIRECT_VARNAME)
+.  error
+.endif
+
+# we *should* get the same result as for $x above
+X:= ${ABC}
+.if $X != $x
 .  error
 .endif
 
