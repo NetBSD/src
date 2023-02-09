@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.14 2023/02/09 14:41:54 tsutsui Exp $        */
+/*      $NetBSD: sd.c,v 1.15 2023/02/09 15:00:56 tsutsui Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -98,8 +98,8 @@ sdprobe(char target, char lun)
 
     memset(&cdb2, 0, sizeof(cdb2));
     cdb2.opcode = INQUIRY;
-    cdb2.length = sizeof(inq);
-    count = sizeof (inq);
+    cdb2.length = SCSIPI_INQUIRY_LENGTH_SCSI2;
+    count = SCSIPI_INQUIRY_LENGTH_SCSI2;
     error = scsiicmd(target, lun, (u_char *)&cdb2, sizeof(cdb2),
 		     (char *)&inq, &count);
     if (error != 0)
