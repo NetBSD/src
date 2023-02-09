@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.13 2023/02/04 14:38:09 tsutsui Exp $        */
+/*      $NetBSD: sd.c,v 1.14 2023/02/09 14:41:54 tsutsui Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -135,6 +135,10 @@ sdgetinfo(struct sd_softc *ss)
 	return error<0 ? EHER : error;
     blklen = (cap.length[0]<<24) + (cap.length[1]<<16)
 	     + (cap.length[2]<<8) + cap.length[3];
+
+    /* avoid division by zero trap even on possible xfer errors */
+    if (blklen == 0)
+	blklen = DEV_BSIZE;
     ss->sc_dev_bsize = blklen;
 
     ss->sc_pinfo.offset[ss->sc_part] = 0; /* read absolute sector */
