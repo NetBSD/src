@@ -1,4 +1,4 @@
-/*      $NetBSD: sd.c,v 1.15 2023/02/09 15:00:56 tsutsui Exp $        */
+/*      $NetBSD: sd.c,v 1.16 2023/02/09 15:20:40 tsutsui Exp $        */
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -40,7 +40,7 @@
 #include <lib/libkern/libkern.h> /* for bzero() */
 #include "dmareg.h"
 
-#ifdef xSD_DEBUG
+#ifdef SD_DEBUG
 #define DPRINTF(x) printf x;
 #else
 #define DPRINTF(x)
