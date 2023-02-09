@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.49 2018/08/01 20:04:14 maxv Exp $
+#	$NetBSD: OFWGENCFG,v 1.50 2023/02/09 14:09:49 abs Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -114,9 +114,6 @@ ofcons*		at ofbus?
 ofrtc*		at ofbus?
 ofrom*		at ofbus?
 
-# Pull in optional local configuration
-cinclude "arch/shark/conf/GENERIC.local"
-
 pseudo-device	loop			# network loopback
 pseudo-device	bpfilter		# packet filter
 #pseudo-device	sl			# CSLIP
@@ -132,3 +129,6 @@ pseudo-device	vnd			# disk-like interface to files
 #pseudo-device	md			# Ramdisk driver
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	openfirm		# /dev/openfirm
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/shark/conf/GENERIC.local"

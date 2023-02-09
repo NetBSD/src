@@ -251,4 +251,5 @@ pseudo-device	bpfilter		# packet filter
 #options 	MEMORY_DISK_ROOT_SIZE=4096	# 2 Megabytes
 #options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
+# Pull in optional local configuration - always at end
 cinclude	"arch/macppc/conf/POWERMAC_G5.local"

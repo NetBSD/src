@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.238 2023/02/09 13:16:05 abs Exp $
+# $NetBSD: GENERIC,v 1.239 2023/02/09 14:09:49 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.238 $"
+#ident		"GENERIC-$Revision: 1.239 $"
 
 maxusers	64
 
@@ -867,5 +867,5 @@ options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 # options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
 
-# Pull in optional local configuration
-cinclude "arch/sparc64/conf/GENERIC.local"
+# Pull in optional local configuration - always at end
+cinclude	"arch/sparc64/conf/GENERIC.local"

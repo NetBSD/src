@@ -1,4 +1,4 @@
-#	$NetBSD: KOBO,v 1.13 2022/12/30 20:37:01 andvar Exp $
+#	$NetBSD: KOBO,v 1.14 2023/02/09 14:09:48 abs Exp $
 #
 #	KOBO -- http://kobo.com
 #
@@ -130,5 +130,5 @@ rgephy*		at mii? phy ?
 rlphy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
-# local configuration
-cinclude "arch/evbarm/conf/KOBO.local"
+# Pull in optional local configuration - always at end
+cinclude	"arch/evbarm/conf/KOBO.local"

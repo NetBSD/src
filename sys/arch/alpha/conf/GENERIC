@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.417 2022/12/22 11:05:54 nat Exp $
+# $NetBSD: GENERIC,v 1.418 2023/02/09 14:09:47 abs Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.417 $"
+ident		"GENERIC-$Revision: 1.418 $"
 
 maxusers 32
 
@@ -741,5 +741,5 @@ include "dev/veriexec.config"
 options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 options PAX_ASLR=0			# PaX Address Space Layout Randomization
 
-# Pull in optional local configuration
+# Pull in optional local configuration - always at end
 cinclude	"arch/alpha/conf/GENERIC.local"

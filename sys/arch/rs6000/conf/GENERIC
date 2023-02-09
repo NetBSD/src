@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.48 2023/02/09 13:16:04 abs Exp $
+# $NetBSD: GENERIC,v 1.49 2023/02/09 14:09:49 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.48 $"
+#ident		"GENERIC-$Revision: 1.49 $"
 
 maxusers	32
 
@@ -252,5 +252,5 @@ pseudo-device	wsfont
 
 include "dev/veriexec.config"
 
-# Pull in optional local configuration
-cinclude "arch/rs6000/conf/GENERIC.local"
+# Pull in optional local configuration - always at end
+cinclude	"arch/rs6000/conf/GENERIC.local"

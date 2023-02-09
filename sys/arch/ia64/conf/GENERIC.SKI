@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.SKI,v 1.20 2022/08/07 02:52:26 simonb Exp $
+# $NetBSD: GENERIC.SKI,v 1.21 2023/02/09 14:09:48 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.20 $"
+#ident 		"GENERIC-$Revision: 1.21 $"
 
 maxusers	32		# estimated number of users
 
@@ -114,10 +114,6 @@ cpu* at mainbus?
 
 acpi0 at mainbus?
 
-
-# Pull in optional local configuration
-cinclude "arch/ia64/conf/GENERIC.local"
-
 # Console Devices
 #ssccons*	at mainbus0		# Ski console interface driver
 #wsdisplay*	at ssccons0 console ?
@@ -169,3 +165,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty			# pseudo-terminals
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/ia64/conf/GENERIC.local"

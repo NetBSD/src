@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.116 2023/02/09 13:16:04 abs Exp $
+#	$NetBSD: GENERIC,v 1.117 2023/02/09 14:09:48 abs Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -627,5 +627,5 @@ bthub* at ubt?
 
 include "dev/bluetooth/bluetoothdevices.config"
 
-# Pull in optional local configuration
-cinclude "arch/evbarm/conf/GENERIC.local"
+# Pull in optional local configuration - always at end
+cinclude	"arch/evbarm/conf/GENERIC.local"

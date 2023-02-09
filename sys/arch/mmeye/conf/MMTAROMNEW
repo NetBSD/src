@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.55 2020/01/19 01:25:06 thorpej Exp $
+#	$NetBSD: MMTAROMNEW,v 1.56 2023/02/09 14:09:49 abs Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -192,11 +192,6 @@ sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 #tlphy*	at mii? phy ?			# ThunderLAN PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
-
-# Pull in optional local configuration
-cinclude "arch/mmeye/conf/GENERIC.local"
-
-
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
@@ -219,3 +214,6 @@ pseudo-device	clockctl		# user control of clock subsystem
 
 # rnd is EXPERIMENTAL at this point.
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/mmeye/conf/GENERIC.local"

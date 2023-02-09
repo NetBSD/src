@@ -1,9 +1,9 @@
-# $NetBSD: GENERIC.common,v 1.29 2021/01/20 13:22:08 nia Exp $
+# $NetBSD: GENERIC.common,v 1.30 2023/02/09 14:09:50 abs Exp $
 
 include "arch/usermode/conf/std.usermode"
 
 options 	INCLUDE_CONFIG_FILE
-#ident 		"GENERIC-$Revision: 1.29 $"
+#ident 		"GENERIC-$Revision: 1.30 $"
 maxusers 	32
 
 makeoptions	DEBUG="-O1 -g3"
@@ -94,5 +94,5 @@ pseudo-device	drvctl
 pseudo-device	ksyms
 pseudo-device	wsmux
 
-# Pull in optional local configuration
-cinclude "arch/usermode/conf/GENERIC.local"
+# Pull in optional local configuration - always at end
+cinclude	"arch/usermode/conf/GENERIC.local"

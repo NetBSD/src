@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.56 2021/01/21 06:51:55 nia Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.57 2023/02/09 14:09:48 abs Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -713,9 +713,6 @@ viomb*	at virtio?			# Virtio memory balloon device
 ld*	at virtio?			# Virtio disk device
 vioif*	at virtio?			# Virtio network device
 
-# Pull in optional local configuration
-cinclude "arch/i386/conf/INSTALL.local"
-
 
 # Pseudo-Devices
 
@@ -749,3 +746,5 @@ options NO_DEV_PTM
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
+# Pull in optional local configuration - always at end
+cinclude	"arch/i386/conf/INSTALL.local"
