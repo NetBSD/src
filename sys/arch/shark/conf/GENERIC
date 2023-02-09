@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.142 2022/09/29 10:10:10 riastradh Exp $
+#	$NetBSD: GENERIC,v 1.143 2023/02/09 13:16:05 abs Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.142 $"
+#ident		"GENERIC-$Revision: 1.143 $"
 
 # estimated number of users
 maxusers	32
@@ -270,9 +270,6 @@ joy*		at ofisa?
 #vlpci*		at ofbus?
 #pci*		at vlpci?
 
-# Pull in optional local configuration
-cinclude "arch/shark/conf/GENERIC.local"
-
 #
 # accept filters
 pseudo-device   accf_data		# "dataready" accept filter
@@ -312,3 +309,6 @@ include "dev/veriexec.config"
 
 options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
 options PAX_ASLR=0			# PaX Address Space Layout Randomization
+
+# Pull in optional local configuration
+cinclude "arch/shark/conf/GENERIC.local"
