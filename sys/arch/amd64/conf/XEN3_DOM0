@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.197 2022/08/07 02:52:23 simonb Exp $
+# $NetBSD: XEN3_DOM0,v 1.198 2023/02/09 14:09:48 abs Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.197 $"
+#ident		"XEN3_DOM0-$Revision: 1.198 $"
 
 maxusers	32		# estimated number of users
 
@@ -1127,10 +1127,6 @@ ld*	at sdmmc?
 # devices (watchdog timer, etc.)
 weasel* at pci?
 
-# Pull in optional local configuration
-cinclude "arch/amd64/conf/GENERIC.local"
-
-
 # Pseudo-Devices
 
 pseudo-device	crypto			# /dev/crypto device
@@ -1229,3 +1225,5 @@ pseudo-device  xenevt
 pseudo-device  xvif
 pseudo-device  xbdback
 
+# Pull in optional local configuration - always at end
+cinclude	"arch/amd64/conf/GENERIC.local"

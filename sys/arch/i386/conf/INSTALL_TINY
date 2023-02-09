@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.163 2021/01/21 06:51:55 nia Exp $
+#	$NetBSD: INSTALL_TINY,v 1.164 2023/02/09 14:09:48 abs Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -461,9 +461,6 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 # ISA joysticks. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
 
-# Pull in optional local configuration
-cinclude "arch/i386/conf/INSTALL.local"
-
 # Pseudo-Devices
 
 # disk/mass storage pseudo-devices
@@ -483,3 +480,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 options 	NO_DEV_PTM
 #options 	RND_COM			# use "com" randomness as well (BROKEN)
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/i386/conf/INSTALL.local"

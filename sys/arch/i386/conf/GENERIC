@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1245 2023/02/09 13:16:04 abs Exp $
+# $NetBSD: GENERIC,v 1.1246 2023/02/09 14:09:48 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1245 $"
+#ident		"GENERIC-$Revision: 1.1246 $"
 
 maxusers	64		# estimated number of users
 
@@ -1516,5 +1516,5 @@ options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
 options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
 
-# Pull in optional local configuration
-cinclude "arch/i386/conf/GENERIC.local"
+# Pull in optional local configuration - always at end
+cinclude	"arch/i386/conf/GENERIC.local"

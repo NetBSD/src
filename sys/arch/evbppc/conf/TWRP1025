@@ -1,4 +1,4 @@
-#	$NetBSD: TWRP1025,v 1.29 2022/09/29 10:10:07 riastradh Exp $
+#	$NetBSD: TWRP1025,v 1.30 2023/02/09 14:09:48 abs Exp $
 #
 #	TWRP1025 -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"TWRP1025-$Revision: 1.29 $"
+ident 		"TWRP1025-$Revision: 1.30 $"
 
 maxusers	32
 
@@ -226,4 +226,5 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 include "dev/veriexec.config"
 
+# Pull in optional local configuration - always at end
 cinclude 	"arch/evbppc/conf/TWRP1025.local"

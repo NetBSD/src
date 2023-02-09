@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.207 2022/12/24 15:46:50 nia Exp $
+#	$NetBSD: GENERIC64,v 1.208 2023/02/09 14:09:48 abs Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -561,4 +561,5 @@ mpt*		at pci? dev ? function ?
 scsibus*	at scsi?
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
 
-cinclude "arch/evbarm/conf/GENERIC64.local"
+# Pull in optional local configuration - always at end
+cinclude	"arch/evbarm/conf/GENERIC64.local"

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.94 2023/02/09 13:16:05 abs Exp $
+#	$NetBSD: GENERIC,v 1.95 2023/02/09 14:09:50 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -391,5 +391,5 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
 
-# Pull in optional local configuration
-cinclude "arch/zaurus/conf/GENERIC.local"
+# Pull in optional local configuration - always at end
+cinclude	"arch/zaurus/conf/GENERIC.local"
