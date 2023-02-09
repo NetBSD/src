@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.32 2022/08/07 02:52:25 simonb Exp $
+#	$NetBSD: CI20,v 1.33 2023/02/09 14:09:48 abs Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.32 $"
+#ident 		"CI20-$Revision: 1.33 $"
 
 maxusers	32
 
@@ -275,5 +275,5 @@ pseudo-device	ksyms				# /dev/ksyms
 
 include "dev/veriexec.config"
 
+# Pull in optional local configuration - always at end
 cinclude 	"arch/evbmips/conf/CI20.local"
-

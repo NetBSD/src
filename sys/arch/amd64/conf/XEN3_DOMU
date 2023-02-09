@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.99 2022/08/07 02:52:23 simonb Exp $
+# $NetBSD: XEN3_DOMU,v 1.100 2023/02/09 14:09:48 abs Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOMU-$Revision: 1.99 $"
+#ident		"XEN3_DOMU-$Revision: 1.100 $"
 
 maxusers	32		# estimated number of users
 
@@ -148,9 +148,6 @@ xencons*	at hypervisor?		# Xen virtual console
 #pci* at xpci ?
 # you then need to add your PCI devices drivers below.
 
-cinclude "arch/amd64/conf/GENERIC.local"
-cinclude "arch/amd64/conf/XEN3_DOMU.local"
-
 # Pseudo-Devices
 
 #
@@ -215,3 +212,7 @@ pseudo-device	ksyms			# /dev/ksyms
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/amd64/conf/GENERIC.local"
+cinclude	"arch/amd64/conf/XEN3_DOMU.local"

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.65 2021/12/12 22:20:52 andvar Exp $
+#	$NetBSD: INSTALL,v 1.66 2023/02/09 14:09:49 abs Exp $
 #
 #	INSTALL -- Installation kernel
 #
@@ -253,7 +253,7 @@ tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
-# Pull in optional local configuration
+# Pull in optional local configuration - always at end
 include "arch/prep/conf/INSTALL.local"
 
 # Pseudo-Devices

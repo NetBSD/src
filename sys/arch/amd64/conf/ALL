@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.176 2022/12/22 19:09:47 jakllsch Exp $
+# $NetBSD: ALL,v 1.177 2023/02/09 14:09:48 abs Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.176 $"
+#ident		"ALL-$Revision: 1.177 $"
 
 maxusers	64		# estimated number of users
 
@@ -1600,7 +1600,7 @@ flash* at flashbus?
 # NAND subsystem
 nand* at nandbus?
 
-# Pull in optional local configuration
+# Pull in optional local configuration - always at end
 #include 	"arch/amd64/conf/ALL.local"
 
 

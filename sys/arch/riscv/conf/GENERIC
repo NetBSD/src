@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.22 2023/02/09 13:16:04 abs Exp $
+# $NetBSD: GENERIC,v 1.23 2023/02/09 14:09:49 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include "arch/riscv/sifive/files.sifive"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.22 $"
+#ident 		"GENERIC-$Revision: 1.23 $"
 
 maxusers	64		# estimated number of users
 
@@ -188,5 +188,5 @@ pseudo-device	drvctl
 options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 
-# Pull in optional local configuration
+# Pull in optional local configuration - always at end
 cinclude 	"arch/riscv/conf/GENERIC.local"

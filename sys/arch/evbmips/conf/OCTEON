@@ -1,11 +1,11 @@
-#	$NetBSD: OCTEON,v 1.12 2022/09/29 10:10:06 riastradh Exp $
+#	$NetBSD: OCTEON,v 1.13 2023/02/09 14:09:48 abs Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OCTEON-$Revision: 1.12 $"
+#ident 		"OCTEON-$Revision: 1.13 $"
 
 maxusers	32
 
@@ -216,4 +216,5 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 include "dev/veriexec.config"
 
+# Pull in optional local configuration - always at end
 cinclude 	"arch/evbmips/conf/OCTEON.local"

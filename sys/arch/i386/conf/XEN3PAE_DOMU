@@ -1,4 +1,4 @@
-# $NetBSD: XEN3PAE_DOMU,v 1.18 2022/08/07 02:52:26 simonb Exp $
+# $NetBSD: XEN3PAE_DOMU,v 1.19 2023/02/09 14:09:48 abs Exp $
 
 include 	"arch/i386/conf/std.xen"
 
@@ -164,9 +164,6 @@ xennet* 	at xenbus?		# Xen virtual network interface
 xbd*		at xenbus?		# Xen virtual block device
 balloon*	at xenbus?		# Xen balloon device
 
-cinclude "arch/i386/conf/GENERIC.local"
-cinclude "arch/i386/conf/XEN3_DOMU.local"
-
 # Pseudo-Devices
 
 pseudo-device	crypto		# /dev/crypto device
@@ -232,3 +229,7 @@ options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
 #xpci* at xenbus ?			#Xen3 PCI front end driver
 #pci* at xpci ?
 # you then need to add your PCI devices drivers below.
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/i386/conf/GENERIC.local"
+cinclude	"arch/i386/conf/XEN3_DOMU.local"
