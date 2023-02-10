@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.14 2019/11/05 22:22:42 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.15 2023/02/10 08:12:48 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.14 2019/11/05 22:22:42 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.15 2023/02/10 08:12:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -53,8 +53,8 @@ static size_t _rtld_tls_static_offset;	/* Next offset for static TLS to use */
 size_t _rtld_tls_dtv_generation = 1;
 size_t _rtld_tls_max_index = 1;
 
-#define	DTV_GENERATION(dtv)	((size_t)((dtv)[0]))
-#define	DTV_MAX_INDEX(dtv)	((size_t)((dtv)[-1]))
+#define	DTV_GENERATION(dtv)		((size_t)((dtv)[0]))
+#define	DTV_MAX_INDEX(dtv)		((size_t)((dtv)[-1]))
 #define	SET_DTV_GENERATION(dtv, val)	(dtv)[0] = (void *)(size_t)(val)
 #define	SET_DTV_MAX_INDEX(dtv, val)	(dtv)[-1] = (void *)(size_t)(val)
 
