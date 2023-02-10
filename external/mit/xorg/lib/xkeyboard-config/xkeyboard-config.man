@@ -13,7 +13,7 @@ settings in the xorg.conf(5).
 .SH XKB DATA FILES LOAD PATHS
 
 xkeyboard-config provides the XKB data files installed in
-/usr/X11R7/share/X11/xkb. User-specific data files may be elsewhere but it depends on
+@xkb_base@. User-specific data files may be elsewhere but it depends on
 the tool whether those files are loaded. For example, the libxkbcommon
 library will by default load XKB data files from the user's home directory.
 See the libxkbcommon documentation for details.
@@ -22,7 +22,7 @@ See the libxkbcommon documentation for details.
 
 The "custom" layout is a layout that is listed as available to tools
 reading the data files but is not actually provided by xkeyboard-config.
-A user may save a layout specification in the /usr/X11R7/share/X11/xkb/symbols/custom file
+A user may save a layout specification in the @xkb_base@/symbols/custom file
 and that layout will be available to most tools interacting with the
 xkeyboard-config data files. This is primarily aimed at systems running X
 where additional lookup paths cannot easily be added.
@@ -1475,23 +1475,23 @@ terminate:ctrl_alt_bksp	Ctrl+Alt+Backspace
 
 
 .SH FILES
-/usr/X11R7/share/X11/xkb/compat
+@xkb_base@/compat
 
-/usr/X11R7/share/X11/xkb/compiled
+@xkb_base@/compiled
 
-/usr/X11R7/share/X11/xkb/geometry
+@xkb_base@/geometry
 
-/usr/X11R7/share/X11/xkb/keycodes
+@xkb_base@/keycodes
 
-/usr/X11R7/share/X11/xkb/keymap
+@xkb_base@/keymap
 
-/usr/X11R7/share/X11/xkb/rules
+@xkb_base@/rules
 
-/usr/X11R7/share/X11/xkb/semantics
+@xkb_base@/semantics
 
-/usr/X11R7/share/X11/xkb/symbols
+@xkb_base@/symbols
 
-/usr/X11R7/share/X11/xkb/types
+@xkb_base@/types
 
 .SH SEE ALSO
 setxkbmap(1)
