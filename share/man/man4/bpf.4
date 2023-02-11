@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.72 2023/02/11 12:44:49 uwe Exp $
+.\"	$NetBSD: bpf.4,v 1.73 2023/02/11 18:03:25 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -717,12 +717,13 @@ that copy the index register to the accumulator or vice versa.
 .It Sy BPF_MISC + BPF_TXA Ta A \[<-] X
 .El
 .Pp
-Also, two instructions to call a "coprocessor" if initialized by the kernel
-component.
+Also, two instructions to call a
+.Dq Em coprocessor
+if initialized by the kernel component.
 There is no coprocessor by default.
 .Bl -column "\*[max-insn]" -offset indent
-.It Sy BPF_MISC + BPF_COP Ta A \[<-] funcs[k](..)
-.It Sy BPF_MISC + BPF_COPX Ta A \[<-] funcs[X](..)
+.It Sy BPF_MISC + BPF_COP Ta A \[<-] funcs[k](...)
+.It Sy BPF_MISC + BPF_COPX Ta A \[<-] funcs[X](...)
 .El
 .Pp
 If the coprocessor is not set or the function index is out of range, these
