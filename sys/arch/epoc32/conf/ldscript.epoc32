@@ -1,16 +1,20 @@
-/*	$NetBSD: ldscript.epoc32,v 1.7 2015/08/23 08:57:25 uebayasi Exp $	*/
+/*	$NetBSD: ldscript.epoc32,v 1.8 2023/02/11 22:42:20 mlelstv Exp $	*/
 
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
 {
+  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
+  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
+
   /* Kernel start: */
-  .start :
+  .start (KERNEL_BASE_phys) :
   {
     *(.start)
   }
 
   /* Read-only sections, merged into text segment: */
-  .text :
+  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
+  AT (LOADADDR(.start) + SIZEOF(.start))
   {
     *(.text)
     *(.text.*)
@@ -69,20 +73,4 @@ SECTIONS
   {
     KEEP(*(.note.netbsd.ident));
   }
-}
-SECTIONS
-{
-  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
-  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
-
-  .start (KERNEL_BASE_phys) :
-  {
-    *(.start)
-  } =0
-
-  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
-  AT (LOADADDR(.start) + SIZEOF(.start))
-  {
-    *(.text)
-  } =0
 }
