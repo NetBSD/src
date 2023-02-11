@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157 2023/02/04 14:38:09 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.158 2023/02/11 07:12:34 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.157 $"
+#ident 		"GENERIC-$Revision: 1.158 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -87,7 +87,7 @@ file-system 	FFS		# UFS
 #file-system 	LFS		# log-structured file system
 file-system 	MFS		# memory file system
 file-system 	NFS		# Network File System client
-#file-system 	CD9660		# ISO 9660 + Rock Ridge file system
+file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 #file-system 	MSDOSFS		# MS-DOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
