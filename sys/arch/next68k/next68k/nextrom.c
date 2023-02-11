@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.27 2018/07/18 23:10:27 sevan Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.28 2023/02/11 02:31:34 tsutsui Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.27 2018/07/18 23:10:27 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.28 2023/02/11 02:31:34 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.27 2018/07/18 23:10:27 sevan Exp $");
 
 #include <next68k/next68k/seglist.h>
 #include <next68k/next68k/nextrom.h>
+#include <next68k/dev/intiovar.h>
 
 #ifdef DDB
 #include <sys/param.h>
@@ -130,6 +131,7 @@ u_int rom_intrstat;
 paddr_t rom_reboot_vect;
 
 int turbo;
+int iscolor;
 
 void
 next68k_bootargs(unsigned char **args)
@@ -230,6 +232,8 @@ next68k_bootargs(unsigned char **args)
 		int ix;
 		int j = 0;
 		char mach;
+		int turbo_l, iscolor_l;
+		paddr_t fbbasepa_l, fblimitpa_l;
 
 		if (MONRELOC(char, MG_machine_type) == NeXT_X15) {
 			msize16 = 0x1000000;
@@ -267,9 +271,32 @@ next68k_bootargs(unsigned char **args)
 		mach = MONRELOC(char, MG_machine_type);
 		RELOC(rom_machine_type, char) = mach;
 		if (mach == NeXT_TURBO_MONO || mach == NeXT_TURBO_COLOR)
-			RELOC(turbo, int) = 1;
+			turbo_l = 1;
 		else
-			RELOC(turbo, int) = 0;
+			turbo_l = 0;
+		RELOC(turbo, int) = turbo_l;
+
+		/* save framebuffer addresses for pmap_bootstrap() */
+		if (mach == NeXT_WARP9C || mach == NeXT_TURBO_COLOR)
+			iscolor_l = 1;
+		else
+			iscolor_l = 0;
+		if (turbo_l == 1) {
+			fbbasepa_l  = TURBOFBBASE;
+			fblimitpa_l = (iscolor_l == 1) ?
+			    TURBOCOLORTOP : TURBOMONOTOP;
+		} else {
+			if (iscolor_l == 1) {
+				fbbasepa_l  = COLORBASE;
+				fblimitpa_l = COLORTOP;
+			} else {
+				fbbasepa_l  = MONOBASE;
+				fblimitpa_l = MONOTOP;
+			}
+		}
+		RELOC(iscolor, int) = iscolor_l;
+		RELOC(fbbasepa, paddr_t) = fbbasepa_l;
+		RELOC(fblimitpa, paddr_t) = fblimitpa_l;
 
 		for (ix = 0; ix < N_SIMM; ix++) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2023/01/27 15:21:52 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 2023/02/11 02:31:34 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,6 +120,7 @@ void	loadustp(int);
 void	doboot(void) __attribute__((__noreturn__));
 int	nmihand(void *);
 
+extern int iscolor;
 #endif /* _KERNEL */
 
 #define NEXT_RAMBASE  (0x4000000) /* really depends on slot, but... */
@@ -315,7 +316,10 @@ int	nmihand(void *);
 #define MONOBASE	(0x0b000000)
 #define MONOTOP		(0x0b03a800)
 #define COLORBASE	(0x2c000000)
-#define COLORTOP	(0x2c1D4000)
+#define COLORTOP	(0x2c1d4000)
+#define TURBOFBBASE	(0x0c000000)
+#define TURBOMONOTOP	(0x0c03a800)
+#define TURBOCOLORTOP	(0x0c1d4000)
 
 #define NEXT_INTR_BITS \
 "\20\40NMI\37PFAIL\36TIMER\35ENETX_DMA\34ENETR_DMA\33SCSI_DMA\32DISK_DMA\31PRINTER_DMA\30SOUND_OUT_DMA\27SOUND_IN_DMA\26SCC_DMA\25DSP_DMA\24M2R_DMA\23R2M_DMA\22SCC\21REMOTE\20BUS\17DSP_4\16DISK|C16_VIDEO\15SCSI\14PRINTER\13ENETX\12ENETR\11SOUND_OVRUN\10PHONE\07DSP_3\06VIDEO\05MONITOR\04KYBD_MOUSE\03POWER\02SOFTINT1\01SOFTINT0"
@@ -332,11 +336,5 @@ int	nmihand(void *);
 #define	IIOV(pa)	((int)(pa)-INTIOBASE+intiobase)
 #define	IIOP(va)	((int)(va)-intiobase+INTIOBASE)
 #define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 2mb */
-
-/* mono fb space */
-#define	MONOMAPSIZE	btoc(MONOTOP-MONOBASE)	/* who cares */
-
-/* color fb space */
-#define	COLORMAPSIZE	btoc(COLORTOP-COLORBASE)	/* who cares */
 
 #endif	/* _MACHINE_CPU_H_ */
