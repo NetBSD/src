@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkg,v 1.25 2021/10/18 10:47:44 uki Exp $
+# $NetBSD: regpkg,v 1.26 2023/02/11 04:16:57 uki Exp $
 #
 # Copyright (c) 2003,2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -628,7 +628,7 @@ EOF
 	# "@name" line and a lot of "@comment MD5:" lines.
 	#
 	{
-		rcsid='$NetBSD: regpkg,v 1.25 2021/10/18 10:47:44 uki Exp $'
+		rcsid='$NetBSD: regpkg,v 1.26 2023/02/11 04:16:57 uki Exp $'
 		utcdate="$(${ENV_CMD} TZ=UTC LOCALE=C \
 			${DATE} '+%Y-%m-%d %H:%M')"
 		user="${USER:-root}"
@@ -665,16 +665,15 @@ EOF
 				;;
 			*)	
 				# This should be a file name.  Pass it
-				# through, and append "@comment MD5:".
-				# XXX why not SHA256 ?
+				# through, and append "@comment SHA256:".
 				echo "${line}"
-				file="${DESTDIR}${line}"
-				if [ -f "${file}" -a -r "${file}" ];
+				file="${DESTDIR}/${line}"
+				if [ -f "${file}" ] && [ -r "${file}" ];
 				then
-					md5sum="$(${CKSUM} -n -m "${file}" \
+					sha256sum="$(${CKSUM} -a sha256 -n "${file}" \
 						   | ${AWK} '{print $1}'
 						)"
-					echo "@comment MD5:${md5sum}"
+					echo "@comment SHA256:${sha256sum}"
 				fi
 				;;
 			esac
