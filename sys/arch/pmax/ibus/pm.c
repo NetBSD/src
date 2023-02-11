@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.18 2021/08/07 16:19:02 thorpej Exp $	*/
+/*	$NetBSD: pm.c,v 1.19 2023/02/11 18:30:45 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.18 2021/08/07 16:19:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.19 2023/02/11 18:30:45 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.18 2021/08/07 16:19:02 thorpej Exp $");
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #include <dev/wsfont/wsfont.h>
+
+#include <dev/ic/dc503reg.h>
 
 #include <pmax/pmax/kn01.h>
 
@@ -259,7 +261,7 @@ pm_common_init(void)
 {
 	struct rasops_info *ri;
 	int cookie, bior, i;
-	PCCRegs *pcc;
+	struct dc503reg *pcc;
 	VDACRegs *vdac;
 	uint16_t kn01csr;
 
@@ -370,7 +372,7 @@ pm_common_init(void)
 	/*
 	 * Turn off the hardware cursor sprite for text mode.
 	 */
-	pcc->cmdr = PCC_FOPB | PCC_VBHI;
+	pcc->cmdr = PCCCMD_FOPB | PCCCMD_VBHI;
 	wbflush();
 	pm_creg = 0;
 	pm_cursor_off();
@@ -379,21 +381,21 @@ pm_common_init(void)
 void
 pm_cursor_off(void)
 {
-	PCCRegs *pcc;
+	struct dc503reg *pcc;
 
 	pcc = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
-	pcc->cmdr = (pm_creg &= ~(PCC_ENPA | PCC_ENPB));
+	pcc->cmdr = (pm_creg &= ~(PCCCMD_ENPA | PCCCMD_ENPB));
 	wbflush();
 }
 
 void
 pm_cursor_on(struct pm_softc *sc)
 {
-	PCCRegs *pcc;
+	struct dc503reg *pcc;
 
 	if (sc->sc_curenb) {
 		pcc = (void *)MIPS_PHYS_TO_KSEG1(KN01_SYS_PCC);
-		pcc->cmdr = (pm_creg |= (PCC_ENPA | PCC_ENPB));
+		pcc->cmdr = (pm_creg |= (PCCCMD_ENPA | PCCCMD_ENPB));
 		wbflush();
 	}
 }
@@ -404,7 +406,7 @@ pm_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	struct pm_softc *sc;
 	struct rasops_info *ri;
 	int turnoff, rv, i;
-	PCCRegs *pcc;
+	struct dc503reg *pcc;
 	VDACRegs *vdac;
 
 	sc = v;
@@ -451,14 +453,14 @@ pm_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 			sc->sc_blanked = turnoff;
 			if (turnoff == 0) {
 				pcc->cmdr =
-				    (pm_creg &= ~(PCC_FOPA | PCC_FOPB));
+				    (pm_creg &= ~(PCCCMD_FOPA | PCCCMD_FOPB));
 				wbflush();
 				pm_cursor_on(sc);
 				sc->sc_changed |= WSDISPLAY_CURSOR_DOCMAP;
 			} else {
 				pm_cursor_off();
 				pcc->cmdr =
-				    (pm_creg |= (PCC_FOPA | PCC_FOPB));
+				    (pm_creg |= (PCCCMD_FOPA | PCCCMD_FOPB));
 				wbflush();
 				vdac->overWA = 0x0c;
 				wbflush();
@@ -575,7 +577,7 @@ int
 pm_flush(struct pm_softc *sc)
 {
 	VDACRegs *vdac;
-	PCCRegs *pcc;
+	struct dc503reg *pcc;
 	uint8_t *cp;
 	int v, i, x, y;
 	u_short *p, *pe;
@@ -629,17 +631,17 @@ pm_flush(struct pm_softc *sc)
 		}
 	}
 	if ((v & WSDISPLAY_CURSOR_DOSHAPE) != 0) {
-		pcc->cmdr = (pm_creg | PCC_LODSA);
+		pcc->cmdr = (pm_creg | PCCCMD_LODSA);
 		wbflush();
 
 		p = sc->sc_cursor.cc_image;
 		x = 0xffff >> (16 - sc->sc_cursor.cc_size.x);
 		for (pe = p + 64; p < pe; p += 2) {
-			pcc->memory = *p & x;
+			pcc->load = *p & x;
 			wbflush();
 		}
 
-		pcc->cmdr = (pm_creg &= ~PCC_LODSA);
+		pcc->cmdr = (pm_creg &= ~PCCCMD_LODSA);
 		wbflush();
 	}
 
