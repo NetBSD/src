@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.159 2023/02/11 07:32:44 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.160 2023/02/11 07:42:25 tsutsui Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.159 $"
+#ident 		"GENERIC-$Revision: 1.160 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -35,10 +35,6 @@ maxusers	16
 options 	KTRACE		# system call tracing
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
-#options 	SEMMNI=10	# number of semaphore identifiers
-#options 	SEMMNS=60	# number of semaphores in system
-#options 	SEMUME=10	# max number of undo entries per process
-#options 	SEMMNU=30	# number of undo structures in system
 options 	SYSVSHM		# System V shared memory
 
 options 	INSECURE	# disable kernel security level
@@ -170,8 +166,6 @@ config		netbsd root on ? type ?
 # The root node:
 mainbus0 at root
 
-#fpu0 at mainbus?
-
 # device space
 intio0	at mainbus?
 
@@ -185,7 +179,6 @@ wskbd*		at nextkbd? console ?
 nextdma*	at intio? ipl 6
 
 zsc0	at intio? ipl 5
-#zsc1	at intio? ipl 5
 
 xe*	at intio? ipl 3			# ethernet
 
