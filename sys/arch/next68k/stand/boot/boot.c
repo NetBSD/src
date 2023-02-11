@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2016/06/11 06:35:00 dholland Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2023/02/11 02:33:27 tsutsui Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -84,7 +84,9 @@ main(char *boot_arg)
 #endif
 
 	machine = MON(char, MG_machine_type);
-	if (machine == NeXT_TURBO_MONO || machine == NeXT_TURBO_COLOR)
+	if (machine == NeXT_TURBO_MONO ||
+	    machine == NeXT_TURBO_COLOR ||
+	    machine == NeXT_CUBE_TURBO)
 		turbo = 1;
 	else
 		turbo = 0;
