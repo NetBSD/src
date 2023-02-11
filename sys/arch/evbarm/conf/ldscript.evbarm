@@ -1,16 +1,20 @@
-/*	$NetBSD: ldscript.evbarm,v 1.14 2020/07/10 12:25:10 skrll Exp $	*/
+/*	$NetBSD: ldscript.evbarm,v 1.15 2023/02/11 19:09:57 mlelstv Exp $	*/
 
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
 {
+  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
+  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
+
   /* Kernel start: */
-  .start :
+  .start (KERNEL_BASE_phys) :
   {
     *(.start)
   }
 
   /* Read-only sections, merged into text segment: */
-  .text :
+  .text (KERNEL_BASE_virt + ALIGN(SIZEOF(.start), ALIGNOF(.text))) :
+  AT (LOADADDR(.start) + ALIGN(SIZEOF(.start), ALIGNOF(.text)))
   {
     *(.text)
     *(.text.*)
@@ -79,20 +83,4 @@ SECTIONS
   _end = .;
   _bss_end__ = . ; __bss_end__ = . ; __end__ = . ;
   PROVIDE (end = .);
-}
-SECTIONS
-{
-  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
-  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
-
-  .start (KERNEL_BASE_phys) :
-  {
-    *(.start)
-  } =0
-
-  .text (KERNEL_BASE_virt + ALIGN(SIZEOF(.start), ALIGNOF(.text))) :
-  AT (LOADADDR(.start) + ALIGN(SIZEOF(.start), ALIGNOF(.text)))
-  {
-    *(.text)
-  } =0
 }
