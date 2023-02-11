@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.62 2023/02/03 23:07:47 tsutsui Exp $
+# $NetBSD: SLAB,v 1.63 2023/02/11 07:32:44 tsutsui Exp $
 #
 # deberg's development machine
 #
@@ -40,7 +40,6 @@ makeoptions	DEBUG="-g"		# debugging symbols for gdb
 #options 	PMAP_DEBUG
 options 	SCSIDEBUG
 options 	SCSIVERBOSE		# Verbose SCSI errors
-options 	SWAPDEBUG
 
 # Compatibility options
 include 	"conf/compat_netbsd14.config"
