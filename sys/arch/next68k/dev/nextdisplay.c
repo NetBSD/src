@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.29 2023/02/11 02:33:27 tsutsui Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.30 2023/02/11 02:34:15 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.29 2023/02/11 02:33:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.30 2023/02/11 02:34:15 tsutsui Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -246,7 +246,7 @@ nextdisplay_attach(device_t parent, device_t self, void *aux)
 	printf(": %d x %d, %dbpp\n", sc->sc_dc->dc_wid, sc->sc_dc->dc_ht,
 	    sc->sc_dc->dc_depth);
 
-	if (iscolor) {
+	if (iscolor && !turbo) {
 #if 0
 		uint8_t x;
 
