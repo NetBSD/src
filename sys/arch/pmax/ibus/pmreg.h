@@ -1,4 +1,4 @@
-/*	$NetBSD: pmreg.h,v 1.3 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: pmreg.h,v 1.4 2023/02/11 18:30:45 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,55 +36,6 @@
 
 #ifndef _PMREG_H_
 #define	_PMREG_H_
-
-/*
- * Structure to describe the programmable cursor chip (DC503) from DEC.
- */
-typedef volatile struct PCCRegs {
-	u_short	cmdr;	/* cursor command register */
-	short	pad1;
-	u_short	xpos;	/* cursor X position */
-	short	pad2;
-	u_short	ypos;	/* cursor Y position */
-	short	pad3;
-	u_short	xmin1;	/* region 1 left edge */
-	short	pad4;
-	u_short	xmax1;	/* region 1 right edge */
-	short	pad5;
-	u_short	ymin1;	/* region 1 top edge */
-	short	pad6;
-	u_short	ymax1;	/* region 1 bottom edge */
-	short	pad7[9];
-	u_short	xmin2;	/* region 2 left edge */
-	short	pad8;
-	u_short	xmax2;	/* region 2 right edge */
-	short	pad9;
-	u_short	ymin2;	/* region 2 top edge */
-	short	pad10;
-	u_short	ymax2;	/* region 2 bottom edge */
-	short	pad11;
-	u_short	memory;	/* cursor sprite pattern load */
-} PCCRegs;
-
-/*
- * Bits in pcc_cmdr.
- */
-#define PCC_TEST	0x8000
-#define PCC_HSHI	0x4000
-#define PCC_VBHI	0x2000
-#define PCC_LODSA	0x1000
-#define PCC_FORG2	0x0800
-#define PCC_ENRG2	0x0400
-#define PCC_FORG1	0x0200
-#define PCC_ENRG1	0x0100
-#define PCC_XHWID	0x0080
-#define PCC_XHCL1	0x0040
-#define PCC_XHCLP	0x0020
-#define PCC_XHAIR	0x0010
-#define PCC_FOPB	0x0008
-#define PCC_ENPB	0x0004
-#define PCC_FOPA	0x0002
-#define PCC_ENPA	0x0001
 
 /*
  * Magic offset for cursor X & Y locations.
