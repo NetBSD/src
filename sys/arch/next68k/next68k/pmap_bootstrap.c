@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.46 2023/02/04 14:38:09 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.47 2023/02/11 02:31:34 tsutsui Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.46 2023/02/04 14:38:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.47 2023/02/11 02:31:34 tsutsui Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -108,6 +108,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 #if defined(M68040) || defined(M68060)
 	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
 #endif
+	u_int fbmapsize;
 
 	/*
 	 * Initialize the mem_clusters[] array for the crash dump
@@ -178,8 +179,9 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	kptmpa = nextpa;
 	nextpa += PAGE_SIZE;
 	kptpa = nextpa;
-	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem, int), NPTEPG) +
-		(IIOMAPSIZE + MONOMAPSIZE + COLORMAPSIZE + NPTEPG - 1) / NPTEPG;
+	fbmapsize = btoc(RELOC(fblimitpa, paddr_t) - RELOC(fbbasepa, paddr_t));
+	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem, int), NPTEPG)
+	    + (IIOMAPSIZE + fbmapsize + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * PAGE_SIZE;
 
 	/*
@@ -416,29 +418,20 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 	protopte = INTIOBASE | PG_RW | PG_CI | PG_U | PG_M | PG_V;
 	epte = &pte[IIOMAPSIZE];
-	RELOC(intiobase, uint8_t *) = (uint8_t *)PTE2VA(pte);
-	RELOC(intiolimit, uint8_t *) = (uint8_t *)PTE2VA(epte);
+	RELOC(intiobase, vaddr_t) = PTE2VA(pte);
+	RELOC(intiolimit, vaddr_t) = PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;
 	}
 
-	/* validate the mono fb space PTEs */
+	/* validate the framebuffer space PTEs */
 
-	protopte = MONOBASE | PG_RW | PG_CWT | PG_U | PG_M | PG_V;
-	epte = &pte[MONOMAPSIZE];
-	RELOC(monobase, uint8_t *) = (uint8_t *)PTE2VA(pte);
-	RELOC(monolimit, uint8_t *) = (uint8_t *)PTE2VA(epte);
-	while (pte < epte) {
-		*pte++ = protopte;
-		protopte += PAGE_SIZE;
-	}
-
-	/* validate the color fb space PTEs */
-	protopte = COLORBASE | PG_RW | PG_CWT | PG_U | PG_M | PG_V;
-	epte = &pte[COLORMAPSIZE];
-	RELOC(colorbase, uint8_t *) = (uint8_t *)PTE2VA(pte);
-	RELOC(colorlimit, uint8_t *) = (uint8_t *)PTE2VA(epte);
+	protopte = RELOC(fbbasepa, paddr_t) |
+	    PG_RW | PG_CWT | PG_U | PG_M | PG_V;
+	epte = &pte[fbmapsize];
+	RELOC(fbbase, vaddr_t) = PTE2VA(pte);
+	RELOC(fblimit, vaddr_t) = PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;

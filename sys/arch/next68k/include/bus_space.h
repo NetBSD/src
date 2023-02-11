@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.22 2023/02/03 23:21:18 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.h,v 1.23 2023/02/11 02:31:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -82,22 +82,11 @@ typedef u_long	bus_space_handle_t;
 #define NEXT68K_INTIO_BUS_SPACE		((bus_space_tag_t)intiobase)
 
 /*
- * Values for the next68k video bus space tags, not to be used directly
- * by MI code.
- */
-#define NEXT68K_MONO_VIDEO_BUS_SPACE	((bus_space_tag_t)monobase)
-#define NEXT68K_COLOR_VIDEO_BUS_SPACE	((bus_space_tag_t)colorbase)
-
-/*
  * Mapping and unmapping operations.
  */
-#define	bus_space_map(t, a, s, f, hp)					\
-    ((((a)>=INTIOBASE)&&((a)+(s)<INTIOTOP)) ?				\
-     ((*(hp)=(bus_space_handle_t)((t)+((a)-INTIOBASE))),0) :            \
-     ((((a)>=MONOBASE)&&((a)+(s)<MONOTOP)) ?                          \
-      ((*(hp)=(bus_space_handle_t)((t)+((a)-MONOBASE))),0) :           \
-      ((((a)>=COLORBASE)&&((a)+(s)<COLORTOP)) ?                         \
-       ((*(hp)=(bus_space_handle_t)((t)+((a)-COLORBASE))),0) : (-1))))
+
+int bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t, int,
+    bus_space_handle_t *);
 
 #define	bus_space_unmap(t, h, s)
 
@@ -122,13 +111,7 @@ typedef u_long	bus_space_handle_t;
  * Mmap an area of bus space.
  */
 
-#define bus_space_mmap(t, a, s, prot, flags)				\
-	((((a)>=INTIOBASE)&&((a)+(s)<INTIOTOP)) ?			\
-		m68k_btop((t)+((a)-INTIOBASE)) :			\
-	 ((((a)>=MONOBASE)&&((a)+(s)<MONOTOP)) ?			\
-		m68k_btop((t)+((a)-MONOBASE)) :				\
-	  ((((a)>=COLORBASE)&&((a)+(s)<COLORTOP)) ?			\
-		m68k_btop((t)+((a)-COLORBASE)) : (-1))))
+paddr_t bus_space_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 /*
  *	uintN_t bus_space_read_N(bus_space_tag_t tag,
