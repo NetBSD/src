@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2008/03/18 04:20:37 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2023/02/11 19:12:31 tsutsui Exp $
 #
 #	etc.next68k/Makefile.inc -- next68k-specific etc Makefile targets
 #
@@ -7,6 +7,7 @@
 # to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC
+BUILD_KERNELS=		RAMDISK
 
 snap_md_post:
 	# install boot image in installation directory
