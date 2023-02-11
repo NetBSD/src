@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.18 2023/02/04 14:38:09 tsutsui Exp $	*/
+/*	$NetBSD: intio.c,v 1.19 2023/02/11 02:31:34 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.18 2023/02/04 14:38:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.19 2023/02/11 02:31:34 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.18 2023/02/04 14:38:09 tsutsui Exp $");
 #include <sys/reboot.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 #include <next68k/dev/intiovar.h>
 
@@ -106,4 +107,28 @@ intiosearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	} while (cf->cf_fstate == FSTATE_STAR);
 
 	return 0;
+}
+
+int
+bus_space_map(bus_space_tag_t bst, bus_addr_t addr, bus_size_t size,
+    int flags, bus_space_handle_t *bsh)
+{
+
+	if (addr >= INTIOBASE && (addr + size) < INTIOTOP) {
+		*bsh = IIOV(addr);
+		return 0;
+	}
+
+	return EINVAL;
+}
+
+paddr_t
+bus_space_mmap(bus_space_tag_t bst, bus_addr_t addr, off_t offset, int prot,
+    int flags)
+{
+
+	if (addr >= INTIOBASE && (addr + offset) < INTIOTOP)
+		return m68k_btop(addr + offset);
+
+	return -1;
 }
