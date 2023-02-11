@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.28 2023/02/11 02:31:34 tsutsui Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.29 2023/02/11 02:33:27 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.28 2023/02/11 02:31:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.29 2023/02/11 02:33:27 tsutsui Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -147,7 +147,8 @@ nextdisplay_match(device_t parent, cfdata_t match, void *aux)
 	    rom_machine_type == NeXT_X15 ||
 	    rom_machine_type == NeXT_WARP9C ||
 	    rom_machine_type == NeXT_TURBO_MONO ||
-	    rom_machine_type == NeXT_TURBO_COLOR)
+	    rom_machine_type == NeXT_TURBO_COLOR ||
+	    rom_machine_type == NeXT_CUBE_TURBO)
 		return 1;
 	else
 		return 0;
