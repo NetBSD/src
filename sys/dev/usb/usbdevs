@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.806 2022/06/29 19:43:04 macallan Exp $
+$NetBSD: usbdevs,v 1.807 2023/02/11 22:41:15 nia Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -582,6 +582,7 @@ vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor COOLERMASTER	0x2516	Cooler Master Technology Inc.
 vendor HAILUCK		0x258a	HAILUCK Co., Ltd
 vendor HIROSE		0x2631	Hirose Electric
+vendor ONEPLUS		0x2717	ONEPLUS
 vendor NHJ		0x2770	NHJ
 vendor PLANEX		0x2c02	Planex Communications
 vendor VIDZMEDIA	0x3275	VidzMedia Pte Ltd
@@ -2578,6 +2579,9 @@ product OLYMPUS C700		0x0105	C-700 Ultra Zoom
 product OMNIVISION OV511	0x0511	OV511 Camera
 product OMNIVISION OV511PLUS	0xa511	OV511+ Camera
 product OMNIVISION2 PSEYE	0x2000	Sony PLAYSTATION(R) Eye
+
+/* OnePlus products */
+product ONEPLUS A5010		0xff80	OnePlus 5T
 
 /* OnSpec Electronic, Inc. */
 product ONSPEC MD2		0x0103	disk
