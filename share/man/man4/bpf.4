@@ -1,6 +1,6 @@
 .\" -*- nroff -*-
 .\"
-.\"	$NetBSD: bpf.4,v 1.69 2023/02/11 11:34:49 uwe Exp $
+.\"	$NetBSD: bpf.4,v 1.70 2023/02/11 11:49:02 uwe Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1992, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -648,22 +648,22 @@ or
 .Sy BPF_X ) .
 .Bl -column "\*[max-insn]" -offset indent
 .It Sy BPF_ALU+BPF_ADD+BPF_K Ta A \[<-] A + k
-.It Sy BPF_ALU+BPF_SUB+BPF_K Ta A \[<-] A - k
+.It Sy BPF_ALU+BPF_SUB+BPF_K Ta A \[<-] A \- k
 .It Sy BPF_ALU+BPF_MUL+BPF_K Ta A \[<-] A * k
 .It Sy BPF_ALU+BPF_DIV+BPF_K Ta A \[<-] A / k
 .It Sy BPF_ALU+BPF_AND+BPF_K Ta A \[<-] A & k
 .It Sy BPF_ALU+BPF_OR+BPF_K Ta A \[<-] A | k
-.It Sy BPF_ALU+BPF_LSH+BPF_K Ta A \[<-] A << k
-.It Sy BPF_ALU+BPF_RSH+BPF_K Ta A \[<-] A >> k
+.It Sy BPF_ALU+BPF_LSH+BPF_K Ta A \[<-] A \[<<] k
+.It Sy BPF_ALU+BPF_RSH+BPF_K Ta A \[<-] A \[>>] k
 .It Sy BPF_ALU+BPF_ADD+BPF_X Ta A \[<-] A + X
-.It Sy BPF_ALU+BPF_SUB+BPF_X Ta A \[<-] A - X
+.It Sy BPF_ALU+BPF_SUB+BPF_X Ta A \[<-] A \- X
 .It Sy BPF_ALU+BPF_MUL+BPF_X Ta A \[<-] A * X
 .It Sy BPF_ALU+BPF_DIV+BPF_X Ta A \[<-] A / X
 .It Sy BPF_ALU+BPF_AND+BPF_X Ta A \[<-] A & X
 .It Sy BPF_ALU+BPF_OR+BPF_X Ta A \[<-] A | X
-.It Sy BPF_ALU+BPF_LSH+BPF_X Ta A \[<-] A << X
-.It Sy BPF_ALU+BPF_RSH+BPF_X Ta A \[<-] A >> X
-.It Sy BPF_ALU+BPF_NEG Ta A \[<-] -A
+.It Sy BPF_ALU+BPF_LSH+BPF_X Ta A \[<-] A \[<<] X
+.It Sy BPF_ALU+BPF_RSH+BPF_X Ta A \[<-] A \[>>] X
+.It Sy BPF_ALU+BPF_NEG Ta A \[<-] \-A
 .El
 .It Sy BPF_JMP
 The jump instructions alter flow of control.
@@ -693,7 +693,8 @@ All conditionals use unsigned comparison conventions.
 .El
 .It Sy BPF_RET
 The return instructions terminate the filter program and specify the amount
-of packet to accept (i.e., they return the truncation amount).
+of packet to accept
+.Pq i.e., they return the truncation amount .
 A return value of zero indicates that the packet should be ignored.
 The return value is either a constant
 .Sy ( BPF_K )
