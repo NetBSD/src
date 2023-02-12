@@ -1,5 +1,5 @@
 #! /bin/sh -m
-# $NetBSD: install.sh,v 1.2 2015/05/28 09:51:31 martin Exp $
+# $NetBSD: install.sh,v 1.3 2023/02/12 19:27:20 abs Exp $
 #
 # -
 #  Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ do
 			tput clear
 			echo "You have stopped sysinst, return to it by" \
 				"typing 'exit' or ^D."
-			${SHELL} -i
+			${SHELL} -i -E
 			cmd="fg"
 		else
 			cmd=""
@@ -112,4 +112,4 @@ done
 echo "TERM=${TERM}" > ${termfile}
 echo
 echo "To return to the installer, quit this shell by typing 'exit' or ^D."
-exec ${SHELL}
+exec ${SHELL} -E
