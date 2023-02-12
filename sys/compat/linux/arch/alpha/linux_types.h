@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.7 2013/12/27 14:17:11 njoly Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.8 2023/02/12 14:59:22 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef _ALPHA_LINUX_TYPES_H
-#define _ALPAH_LINUX_TYPES_H
+#define _ALPHA_LINUX_TYPES_H
 
 typedef unsigned int linux_uid_t;
 typedef unsigned int linux_gid_t;
