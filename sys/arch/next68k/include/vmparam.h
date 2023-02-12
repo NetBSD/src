@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.26.2.1 2020/02/10 18:46:39 martin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.26.2.2 2023/02/12 11:47:10 martin Exp $	*/
 
 /*
  * This file was taken from from mvme68k/include/vmparam.h and
@@ -59,16 +59,8 @@
 
 /*
  * USRSTACK is the top (end) of the user stack.
- *
- * NOTE: the ONLY reason that HIGHPAGES is 0x100 instead of UPAGES (3)
- * is for HPUX compatibility.  Why??  Because HPUX's debuggers
- * have the user's stack hard-wired at FFF00000 for post-mortems,
- * and we must be compatible...
  */
-#define	USRSTACK	(-HIGHPAGES*PAGE_SIZE)	/* Start of user stack */
-#define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
-#define	P1PAGES		0x100000
-#define	HIGHPAGES	(0x100000/PAGE_SIZE)
+#define	USRSTACK	VM_MAXUSER_ADDRESS	/* Start of user stack */
 
 /*
  * Virtual memory related constants, all in bytes
@@ -106,7 +98,7 @@
 #define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
 #define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG*2))
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
@@ -131,4 +123,4 @@ struct pmap_physseg {
 	struct pv_header *pvheader;	/* pv table for this seg */
 };
 
-#endif /* _MVME68K_VMPARAM_H_ */
+#endif /* _NEXT68K_VMPARAM_H_ */
