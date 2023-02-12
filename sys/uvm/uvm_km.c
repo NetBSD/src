@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.162 2022/08/06 05:55:37 chs Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.163 2023/02/12 16:28:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.162 2022/08/06 05:55:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.163 2023/02/12 16:28:32 andvar Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -194,7 +194,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.162 2022/08/06 05:55:37 chs Exp $");
 struct vm_map *kernel_map = NULL;
 
 /*
- * local data structues
+ * local data structures
  */
 
 static struct vm_map		kernel_map_store;

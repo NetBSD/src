@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.6 2019/02/21 03:37:19 mrg Exp $	*/
+/*	$NetBSD: msg.h,v 1.7 2023/02/12 16:28:32 andvar Exp $	*/
 
 /*
  * SVID compatible msg.h file
@@ -45,7 +45,7 @@ struct msqid_ds14 {
 };
 
 struct msqid_ds13 {
-	struct ipc_perm	msg_perm;	/* operation permission strucure */
+	struct ipc_perm	msg_perm;	/* operation permission structure */
 	msgqnum_t	msg_qnum;	/* number of messages in the queue */
 	msglen_t	msg_qbytes;	/* max # of bytes in the queue */
 	pid_t		msg_lspid;	/* process ID of last msgsend() */

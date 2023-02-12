@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.28 2019/08/07 00:38:02 pgoyette Exp $	*/
+/*	$NetBSD: msg.h,v 1.29 2023/02/12 16:28:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ typedef unsigned long	msgqnum_t;
 typedef size_t		msglen_t;
 
 struct msqid_ds {
-	struct ipc_perm	msg_perm;	/* operation permission strucure */
+	struct ipc_perm	msg_perm;	/* operation permission structure */
 	msgqnum_t	msg_qnum;	/* number of messages in the queue */
 	msglen_t	msg_qbytes;	/* max # of bytes in the queue */
 	pid_t		msg_lspid;	/* process ID of last msgsend() */
