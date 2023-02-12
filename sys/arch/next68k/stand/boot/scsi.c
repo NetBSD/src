@@ -1,4 +1,4 @@
-/*      $NetBSD: scsi.c,v 1.13 2023/02/12 08:25:09 tsutsui Exp $        */
+/*      $NetBSD: scsi.c,v 1.14 2023/02/12 10:04:56 tsutsui Exp $        */
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -90,7 +90,8 @@ scsi_init(void)
 
     /* now reset the SCSI bus */
     sr[NCR_CMD]        = NCRCMD_RSTSCSI;
-    DELAY(4000000);	/* XXX should be about 2-3 seconds at least */
+    /* wait 2 seconds after SCSI bus reset */
+    DELAY(2 * 1000 * 1000);
 
     /* then reset the SCSI chip again and initialize it properly */
     sr[NCR_CMD]        = NCRCMD_RSTCHIP;
