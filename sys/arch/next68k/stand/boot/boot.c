@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14 2023/02/12 08:25:09 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.15 2023/02/12 10:04:56 tsutsui Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -59,6 +59,7 @@ int devparse(const char *, int *, char *, char *, char *, char **);
 #define KNAMEN 100
 char kernel[KNAMEN];
 int entry_point;		/* return value filled in by machdep_start */
+int cpuspeed = MHZ_33;		/* assume fastest 33 MHz for sanity */
 int turbo;
 
 volatile int qq;
@@ -79,10 +80,13 @@ main(char *boot_arg)
 	machine = MON(char, MG_machine_type);
 	if (machine == NeXT_TURBO_MONO ||
 	    machine == NeXT_TURBO_COLOR ||
-	    machine == NeXT_CUBE_TURBO)
+	    machine == NeXT_CUBE_TURBO) {
 		turbo = 1;
-	else
+		cpuspeed = MHZ_33;
+	} else {
 		turbo = 0;
+		cpuspeed = MHZ_25;
+	}
 
 	memset(marks, 0, sizeof(marks));
 	printf(">> %s BOOT [%s #%d]\n", bootprog_name, bootprog_rev, build);
