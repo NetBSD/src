@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2023/02/11 02:33:27 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.14 2023/02/12 08:25:09 tsutsui Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -34,17 +34,17 @@
 
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
+#include <lib/libsa/dev_net.h>
 #include <lib/libkern/libkern.h>
 
 #include <machine/cpu.h>        /* for NEXT_RAMBASE */
 
 #include <next68k/next68k/nextrom.h>
 
+#include "samachdep.h"
+
 #define KERN_LOADADDR NEXT_RAMBASE
 
-extern int errno;
-
-extern char *mg;
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))
 
 int devparse(const char *, int *, char *, char *, char *, char **);
@@ -56,17 +56,10 @@ int devparse(const char *, int *, char *, char *, char *, char **);
  * Boot device is derived from PROM provided information.
  */
 
-extern char bootprog_rev[];
-extern char bootprog_name[];
-extern int build;
 #define KNAMEN 100
 char kernel[KNAMEN];
 int entry_point;		/* return value filled in by machdep_start */
 int turbo;
-
-extern void rtc_init(void);
-
-extern int try_bootp;
 
 volatile int qq;
 

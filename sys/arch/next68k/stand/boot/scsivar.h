@@ -1,4 +1,4 @@
-/*	$NetBSD: scsivar.h,v 1.1.1.1 1998/06/09 07:53:06 dbj Exp $	*/
+/*	$NetBSD: scsivar.h,v 1.2 2023/02/12 08:25:09 tsutsui Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -69,4 +69,5 @@ struct	scsi_softc {
 
 extern	struct scsi_softc scsi_softc;
 
-#define DELAY(n)        { register int N = (n); while (--N > 0); }
+void scsi_init(void);
+int scsiicmd(char, char, u_char *, int, char *, int *);

@@ -1,4 +1,4 @@
-/*      $NetBSD: rtc.c,v 1.7 2023/02/04 14:38:09 tsutsui Exp $        */
+/*      $NetBSD: rtc.c,v 1.8 2023/02/12 08:25:09 tsutsui Exp $        */
 /*
  * Copyright (c) 1997 Rolf Grossmann
  * All rights reserved.
@@ -35,12 +35,9 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/net.h>
 
+#include "samachdep.h"
+
 u_char rtc_read(u_char);
-void rtc_init(void);
-
-
-/* ### where shall I put this definition? */
-#define	DELAY(n)	{ register int N = (n); while (--N > 0); }
 
 static volatile u_int *scr2 = (u_int *)NEXT_P_SCR2_CON;
 static u_char new_clock;
