@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.113 2022/09/29 10:10:10 riastradh Exp $
+# $NetBSD: GENERIC,v 1.114 2023/02/12 14:50:41 abs Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -207,3 +207,6 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 #pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/sbmips/conf/GENERIC.local"

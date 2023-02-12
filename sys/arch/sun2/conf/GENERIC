@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.109 2022/08/07 02:52:30 simonb Exp $
+# $NetBSD: GENERIC,v 1.110 2023/02/12 14:50:42 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -29,7 +29,7 @@ options 	INSECURE		# allow modload(8) in multiuser mode
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.109 $"
+#ident 		"GENERIC-$Revision: 1.110 $"
 
 # Bootloader has size limit (~2MB). Kernel should be smaller than this
 # hard limit. Otherwise, it freezes before adding swap even with 7MB
@@ -297,3 +297,6 @@ pseudo-device	ksyms			# /dev/ksyms
 
 # Veriexec
 # include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/sun2/conf/GENERIC.local"

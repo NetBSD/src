@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116 2022/09/29 10:10:07 riastradh Exp $
+# $NetBSD: GENERIC,v 1.117 2023/02/12 14:50:39 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -375,3 +375,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #wskbd* at hpf1275a? mux 1
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/hpcsh/conf/GENERIC.local"

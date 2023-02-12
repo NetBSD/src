@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.142 2022/09/29 10:10:09 riastradh Exp $
+# $NetBSD: GENERIC,v 1.143 2023/02/12 14:50:41 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.142 $"
+#ident 		"GENERIC-$Revision: 1.143 $"
 
 maxusers	16
 
@@ -227,3 +227,6 @@ pseudo-device	putter			# for puffs and pud
 pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/newsmips/conf/GENERIC.local"

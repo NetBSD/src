@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.105 2022/09/29 10:10:08 riastradh Exp $
+# $NetBSD: GENERIC,v 1.106 2023/02/12 14:50:40 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mvme68k/conf/std.mvme68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.105 $"
+#ident 		"GENERIC-$Revision: 1.106 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -193,3 +193,6 @@ cd*		at scsibus? target ? lun ?
 #ch*		at scsibus? target ? lun ?
 #ss*		at scsibus? target ? lun ?	# SCSI scanners
 #uk*		at scsibus? target ? lun ?	# SCSI unknown
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/mvme68k/conf/GENERIC.local"

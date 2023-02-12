@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.136 2022/09/29 10:10:05 riastradh Exp $
+# 	$NetBSD: GENERIC,v 1.137 2023/02/12 14:50:37 abs Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include 	"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.136 $"
+#ident		"GENERIC-$Revision: 1.137 $"
 
 # estimated number of users
 maxusers	32
@@ -336,3 +336,6 @@ include "dev/veriexec.config"
 #makeoptions	MONITOR="Taxan875+LR"
 #makeoptions	MONITOR="AKF60"
 #makeoptions	MODES="1024,768,60 1024,768,70 800,600,60 640,480,60 1280,1024 1152,900"
+
+# Pull in optional local configuration - always at end
+cinclude "arch/acorn32/conf/GENERIC.local"
