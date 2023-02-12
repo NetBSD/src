@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.24 2020/05/30 14:16:56 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.25 2023/02/12 13:38:37 kardel Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -297,14 +297,13 @@ nbuf_cksum_barrier(nbuf_t *nbuf, int di)
 }
 
 /*
- * nbuf_add_tag: associate a tag with the network buffer.
+ * npf_mbuf_add_tag: associate a tag with the network buffer.
  *
  * => Returns 0 on success or error number on failure.
  */
 int
-nbuf_add_tag(nbuf_t *nbuf, uint32_t val)
+npf_mbuf_add_tag(nbuf_t *nbuf, struct mbuf *m, uint32_t val)
 {
-	struct mbuf *m = nbuf->nb_mbuf0;
 #ifdef _KERNEL
 	struct m_tag *mt;
 	uint32_t *dat;
@@ -325,6 +324,18 @@ nbuf_add_tag(nbuf_t *nbuf, uint32_t val)
 	}
 	return nbuf->nb_mops->set_tag(m, val);
 #endif
+}
+
+/*
+ * nbuf_add_tag: associate a tag with the network buffer.
+ *
+ * => Returns 0 on success or error number on failure.
+ */
+int
+nbuf_add_tag(nbuf_t *nbuf, uint32_t val)
+{
+	struct mbuf *m = nbuf->nb_mbuf0;
+	return npf_mbuf_add_tag(nbuf, m, val);
 }
 
 /*
