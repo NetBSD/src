@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.6 2023/02/11 18:09:55 tsutsui Exp $
+$NetBSD: version,v 1.7 2023/02/12 10:18:23 tsutsui Exp $
 
 1.1:	initial import
 1.3:	Add ELF support
@@ -6,3 +6,4 @@ $NetBSD: version,v 1.6 2023/02/11 18:09:55 tsutsui Exp $
 1.5:	loadfile() update to avoid backwards seeks for ELF Program Headers.
 1.6:	Fix a bug on DMA reg accesses and a problem on detecting old drives
 1.7:	Add support of NeXT_CUBE_TURBO
+1.8:	Fix DELAY() to actually wait specified microsconds
