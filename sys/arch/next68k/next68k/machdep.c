@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.112.4.1 2023/02/01 18:56:44 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.112.4.2 2023/02/12 11:47:10 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.4.1 2023/02/01 18:56:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.4.2 2023/02/12 11:47:10 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -321,7 +321,7 @@ cpu_startup(void)
 void
 identifycpu(void)
 {
-	const char *mc, *mmu_str, *fpu_str, *cache_str;
+	const char *cpu_str, *mmu_str, *fpu_str, *cache_str;
 	extern int turbo;
 
 	/*
@@ -329,21 +329,23 @@ identifycpu(void)
 	 */
 	switch (cputype) {
 	case CPU_68040:
-		mc = "40";
+		cpu_str = "MC68040";
 		cpuspeed = turbo ? 33 : 25;
 		delay_divisor = 759 / cpuspeed;
 		break;
 	case CPU_68030:
-		mc = "30";
+		cpu_str = "MC68030";
 		cpuspeed = 25;
 		delay_divisor = 2048 / cpuspeed;
 		break;
+#if 0
 	case CPU_68020:
-		mc = "20";
+		cpu_str = "MC68020";
 		break;
+#endif
 	default:
 		printf("\nunknown cputype %d\n", cputype);
-		goto lose;
+		panic("startup");
 	}
 
 	/*
@@ -354,14 +356,13 @@ identifycpu(void)
 	case MMU_68030:
 		mmu_str = "+MMU";
 		break;
+#if 0
 	case MMU_68851:
 		mmu_str = ", MC68851 MMU";
 		break;
-	case MMU_HP:
-		mmu_str = ", HP MMU";
-		break;
+#endif
 	default:
-		printf("MC680%s: unknown MMU type %d\n", mc, mmutype);
+		printf("%s: unknown MMU type %d\n", cpu_str, mmutype);
 		panic("startup");
 	}
 
@@ -376,7 +377,7 @@ identifycpu(void)
 		fpu_str = ", MC68882 FPU";
 		break;
 	case FPU_68881:
-		fpu_str = ", MHz MC68881 FPU";
+		fpu_str = ", MC68881 FPU";
 		break;
 	default:
 		fpu_str = ", unknown FPU";
@@ -387,30 +388,11 @@ identifycpu(void)
 	 */
 	if (cputype == CPU_68040)
 		cache_str = ", 4k on-chip physical I/D caches";
-	else {
-#if defined(ENABLE_HP_CODE)
-		switch (ectype) {
-		case EC_VIRT:
-			cache_str = ", virtual-address cache";
-			break;
-		case EC_PHYS:
-			cache_str = ", physical-address cache";
-			break;
-		default:
-			cache_str = "";
-			break;
-		}
-#else
+	else
 		cache_str = "";
-#endif
-	}
 
-	cpu_setmodel("NeXT/MC680%s CPU%s%s%s", mc, mmu_str, fpu_str, cache_str);
+	cpu_setmodel("NeXT/%s CPU%s%s%s", cpu_str, mmu_str, fpu_str, cache_str);
 	printf("%s\n", cpu_getmodel());
-
-	return;
- lose:
-	panic("startup");
 }
 
 /*
