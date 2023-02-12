@@ -1,4 +1,4 @@
-/*      $NetBSD: scsi.c,v 1.10 2008/03/30 16:28:08 he Exp $        */
+/*      $NetBSD: scsi.c,v 1.10.96.1 2023/02/12 12:22:44 martin Exp $        */
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -61,7 +61,7 @@ int scsiicmd(char target, char lun,
 #define NDPRINTF(x)
 #define PRINTF(x)
 /* printf x; */
-#ifdef xSCSI_DEBUG
+#ifdef SCSI_DEBUG
 #define DPRINTF(x) printf x;
 #else
 #define DPRINTF(x)
@@ -77,7 +77,7 @@ scsi_init(void)
     dma = (struct dma_dev *)P_SCSI_CSR;
 
     dma_buffer = DMA_ALIGN(char *, the_dma_buffer);
-    
+
     P_FLOPPY[FLP_CTRL] &= ~FLC_82077_SEL;	/* select SCSI chip */
 
     /* first reset DMA */
@@ -96,7 +96,7 @@ scsi_init(void)
     /* now reset the SCSI bus */
     sr[NCR_CMD]        = NCRCMD_RSTSCSI;
     DELAY(4000000);	/* XXX should be about 2-3 seconds at least */
-    
+
     /* then reset the SCSI chip again and initialize it properly */
     sr[NCR_CMD]        = NCRCMD_RSTCHIP;
     sr[NCR_CMD]        = NCRCMD_NOP;
@@ -125,7 +125,7 @@ scsierror(char *error)
 short
 scsi_getbyte(volatile uint8_t *sr)
 {
-    if ((sr[NCR_FFLAG] & NCRFIFO_FF) == 0) 
+    if ((sr[NCR_FFLAG] & NCRFIFO_FF) == 0)
     {
 	printf("getbyte: no data!\n");
 	return -1;
@@ -187,7 +187,7 @@ scsiicmd(char target, char lun,
 	sr[NCR_FIFO] = cbuf[i];
     sr[NCR_CMD]   = NCRCMD_SELATN;
     sc->sc_state  = SCSI_SELECTING;
-    
+
     while(sc->sc_state != SCSI_DONE) {
 	if (scsi_wait_for_intr()) /* maybe we'd better use real intrs ? */
 	    return EIO;
@@ -207,12 +207,12 @@ scsiicmd(char target, char lun,
     redo:
 	DPRINTF(("scsiicmd: regs[intr=%x, stat=%x, step=%x]\n",
 		 sc->sc_intrstatus, sc->sc_status, sc->sc_seqstep));
-	
+
 	if (sc->sc_intrstatus & NCRINTR_SBR) {
 	    scsierror("scsi bus reset");
 	    return EIO;
 	}
-	
+
 	if ((sc->sc_status & NCRSTAT_GE)
 	    || (sc->sc_intrstatus & NCRINTR_ILL)) {
 	    scsierror("software error");
@@ -227,12 +227,12 @@ scsiicmd(char target, char lun,
 	switch(sc->sc_state)
 	{
 	  case SCSI_SELECTING:
-	      if (sc->sc_intrstatus & NCRINTR_DIS) 
+	      if (sc->sc_intrstatus & NCRINTR_DIS)
 	      {
 		  sc->sc_state = SCSI_IDLE;
 		  return EUNIT;	/* device not present */
 	      }
-	      
+
 #define NCRINTR_DONE (NCRINTR_BS | NCRINTR_FC)
 	      if ((sc->sc_intrstatus & NCRINTR_DONE) != NCRINTR_DONE)
 	      {
@@ -310,7 +310,7 @@ scsiicmd(char target, char lun,
     sc->sc_state = SCSI_IDLE;
     return -sc->sc_result;
 }
-    
+
 int
 scsi_msgin(void)
 {
@@ -340,11 +340,10 @@ dma_start(char *addr, int len)
 {
     volatile uint8_t *sr;
     struct dma_dev *dma;
-    
-    
+
     sr = P_SCSI;
     dma = (struct dma_dev *)P_SCSI_CSR;
-    
+
     if (len > MAX_DMASIZE)
     {
 	scsierror("DMA too long");
@@ -365,15 +364,15 @@ dma_start(char *addr, int len)
 	return -1;
 #endif
     }
-    
+
     PRINTF(("DMA start: %lx, %d byte.\n", (long)addr, len));
 
-    DPRINTF(("dma_bufffer: start: 0x%lx end: 0x%lx \n", 
+    DPRINTF(("dma_bufffer: start: 0x%lx end: 0x%lx \n",
 				(long)dma_buffer,(long)DMA_ENDALIGN(char *, dma_buffer+len)));
 
     sc->dma_addr = addr;
     sc->dma_len = len;
-    
+
     sr[NCR_TCL]  = len & 0xff;
     sr[NCR_TCM]  = len >> 8;
     sr[NCR_CMD]  = NCRCMD_DMA | NCRCMD_NOP;
@@ -405,7 +404,7 @@ dma_done(void)
     struct dma_dev *dma;
     int resid, state;
     int flushcount = 0;
-    
+
     sr = P_SCSI;
     dma = (struct dma_dev *)P_SCSI_CSR;
 
@@ -419,16 +418,16 @@ dma_done(void)
     if (!(sr[NCR_FFLAG] & NCRFIFO_FF)) {
 	    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
 		    | ESPDCTL_DMARD;
-	    while (!(state & DMACSR_COMPLETE) && (state & DMACSR_ENABLE) && flushcount < 16) 
+	    while (!(state & DMACSR_COMPLETE) && (state & DMACSR_ENABLE) && flushcount < 16)
 	    {
-		    
+
 		    DPRINTF(("DMA still enabled, flushing DCTL.\n"));
-		    
+
 		    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
 			    | ESPDCTL_DMARD | ESPDCTL_FLUSH;
 		    sr[ESP_DCTL] = ESPDCTL_20MHZ | ESPDCTL_INTENB | ESPDCTL_DMAMOD
 			    | ESPDCTL_DMARD;
-		    
+
 		    flushcount++;
 		    state = dma->dd_csr & (DMACSR_BUSEXC | DMACSR_COMPLETE
 					   | DMACSR_SUPDATE | DMACSR_ENABLE);
@@ -467,6 +466,6 @@ dma_done(void)
     return sc->dma_len;
 
     /* scsierror("DMA not completed\n"); */
-    
+
     return 0;
 }
