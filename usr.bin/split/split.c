@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.29 2023/01/30 15:22:02 jschauma Exp $	*/
+/*	$NetBSD: split.c,v 1.30 2023/02/12 20:43:21 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.29 2023/01/30 15:22:02 jschauma Exp $");
+__RCSID("$NetBSD: split.c,v 1.30 2023/02/12 20:43:21 jschauma Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -98,6 +98,13 @@ main(int argc, char *argv[])
 					errx(1, "%s: illegal line count.", p);
 			}
 			break;
+		case 'a':		/* Suffix length. */
+			if (!isdigit((unsigned char)optarg[0]) ||
+			    (sfxlen = (size_t)strtoul(optarg, &ep, 10)) == 0 ||
+			    *ep != '\0')
+				errx(1, "%s: illegal suffix length.", optarg);
+			autosfx = 0;
+			break;
 		case 'b':		/* Byte count. */
 			if (!isdigit((unsigned char)optarg[0]) ||
 			    (bytecnt = strtoull(optarg, &ep, 10)) == 0 ||
@@ -115,13 +122,6 @@ main(int argc, char *argv[])
 			    (numlines = strtoull(optarg, &ep, 10)) == 0 ||
 			    *ep != '\0')
 				errx(1, "%s: illegal line count.", optarg);
-			break;
-		case 'a':		/* Suffix length. */
-			if (!isdigit((unsigned char)optarg[0]) ||
-			    (sfxlen = (size_t)strtoul(optarg, &ep, 10)) == 0 ||
-			    *ep != '\0')
-				errx(1, "%s: illegal suffix length.", optarg);
-			autosfx = 0;
 			break;
 		case 'n':		/* Chunks. */
 			if (!isdigit((unsigned char)optarg[0]) ||
