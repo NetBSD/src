@@ -1,4 +1,4 @@
-.\"	$NetBSD: services.5,v 1.10 2009/05/13 12:58:34 wiz Exp $
+.\"	$NetBSD: services.5,v 1.11 2023/02/12 22:48:02 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)services.5	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 19, 2007
+.Dd February 12, 2023
 .Dt SERVICES 5
 .Os
 .Sh NAME
@@ -56,11 +56,11 @@ tab characters.
 The port number and protocol name are considered a single
 .Em item ;
 a slash
-.Pq Dq /
-is used to separate the port and protocol (e.g.
-.Dq 512/tcp ) .
+.Pq Ql /
+is used to separate the port and protocol
+.Pq e.g. Ql 512/tcp .
 A hash
-.Pq Dq \&#
+.Pq Ql #
 indicates the beginning of
 a comment; subsequent characters up to the end of the line are
 not interpreted by the routines which search the file.
@@ -69,17 +69,16 @@ Service names may contain any printable character other than a
 field delimiter, newline, or comment character.
 .Pp
 The database in
-.Pa /var/db/services.db
+.Pa /var/db/services.cdb
 needs to be updated with
 .Xr services_mkdb 8
 after changes to the services file have been applied.
 .Sh FILES
-.Bl -tag -width /etc/services -compact
+.Bl -tag -width Pa -compact
 .It Pa /etc/services
-The
-.Nm services
-file resides in
-.Pa /etc .
+The current services file.
+.It Pa /var/db/services.cdb
+The current services database.
 .El
 .Sh SEE ALSO
 .Xr getservent 3 ,
