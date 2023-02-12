@@ -1,4 +1,4 @@
-.\" $NetBSD: npf-params.7,v 1.8 2020/12/17 05:33:06 taca Exp $
+.\" $NetBSD: npf-params.7,v 1.9 2023/02/12 13:21:28 kardel Exp $
 .\"
 .\" Copyright (c) 2019 Mindaugas Rasiukevicius <rmind at netbsd org>
 .\" All rights reserved.
@@ -60,11 +60,11 @@ Default: 1.
 .It Li ip4.reassembly
 Perform IPv4 reassembly before inspecting the packet.
 Fragmentation is considered very harmful, so most networks are expected
-to prevent it; therefore, reassembly is disabled by default.
+to prevent it; reassembly is enabled by default.
 However, while the packet should generally be reassembled at the receiver,
-reassembly by the packet filter might be necessary in order to perform state
+reassembly by the packet filter may be necessary in order to perform state
 tracking.
-Default: 0.
+Default: 1.
 .It Li ip6.reassembly
 Perform IPv6 reassembly before inspecting the packet.
 Discouraged in general but not prohibited by RFC 8200.
