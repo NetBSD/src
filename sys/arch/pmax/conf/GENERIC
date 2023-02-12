@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.206 2022/09/29 10:10:09 riastradh Exp $
+# $NetBSD: GENERIC,v 1.207 2023/02/12 14:50:41 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.206 $"
+#ident		"GENERIC-$Revision: 1.207 $"
 
 maxusers	64
 
@@ -316,3 +316,6 @@ options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
 options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/pmax/conf/GENERIC.local"

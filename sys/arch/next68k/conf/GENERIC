@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.161 2023/02/11 08:27:21 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.162 2023/02/12 14:50:41 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.161 $"
+#ident 		"GENERIC-$Revision: 1.162 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -255,3 +255,6 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	putter			# for puffs and pud
 
 #include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/next68k/conf/GENERIC.local"

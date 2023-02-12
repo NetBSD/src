@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2022/09/29 10:10:09 riastradh Exp $
+# $NetBSD: GENERIC,v 1.111 2023/02/12 14:50:41 abs Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110 $"
+#ident 		"GENERIC-$Revision: 1.111 $"
 
 maxusers	32
 
@@ -334,3 +334,6 @@ include "dev/veriexec.config"
 
 #options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
 #options 	PAX_ASLR=0		# PaX Address Space Layout Randomization
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/sandpoint/conf/GENERIC.local"

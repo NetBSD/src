@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77 2022/09/29 10:10:05 riastradh Exp $
+# $NetBSD: GENERIC,v 1.78 2023/02/12 14:50:38 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -137,3 +137,6 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/cesfic/conf/GENERIC.local"

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.13 2019/04/26 22:46:03 sevan Exp $
+# $NetBSD: GENERIC,v 1.14 2023/02/12 14:50:41 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -43,3 +43,6 @@ config		netbsd		root on ? type ?
 
 # Veriexec
 # include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/playstation2/conf/GENERIC.local"

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.41 2022/09/29 10:10:07 riastradh Exp $
+# $NetBSD: GENERIC,v 1.42 2023/02/12 14:50:39 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.41 $"
+#ident 		"GENERIC-$Revision: 1.42 $"
 
 maxusers	32		# estimated number of users
 
@@ -756,3 +756,6 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	drvctl
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/hppa/conf/GENERIC.local"

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.144 2022/09/29 10:10:08 riastradh Exp $
+# $NetBSD: GENERIC,v 1.145 2023/02/12 14:50:40 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -296,3 +296,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/netwinder/conf/GENERIC.local"

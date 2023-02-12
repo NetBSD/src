@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.247 2022/09/29 10:10:07 riastradh Exp $
+# $NetBSD: GENERIC,v 1.248 2023/02/12 14:50:39 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include 	"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.247 $"
+#ident 		"GENERIC-$Revision: 1.248 $"
 
 maxusers	16
 
@@ -698,3 +698,6 @@ pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	ksyms			# /dev/ksyms
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/hpcmips/conf/GENERIC.local"

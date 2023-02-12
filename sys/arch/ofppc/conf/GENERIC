@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.178 2022/09/29 10:10:09 riastradh Exp $
+# $NetBSD: GENERIC,v 1.179 2023/02/12 14:50:41 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.178 $"
+#ident 		"GENERIC-$Revision: 1.179 $"
 
 maxusers	32
 
@@ -446,3 +446,6 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 pseudo-device	drvctl
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/ofppc/conf/GENERIC.local"
