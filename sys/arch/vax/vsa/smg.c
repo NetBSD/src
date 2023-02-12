@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.61.6.1 2023/02/06 16:48:44 martin Exp $ */
+/*	$NetBSD: smg.c,v 1.61.6.2 2023/02/12 12:27:26 martin Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.61.6.1 2023/02/06 16:48:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.61.6.2 2023/02/12 12:27:26 martin Exp $");
+
+#include "opt_wsfont.h"
+#include "dzkbd.h"
+#include "wsdisplay.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.61.6.1 2023/02/06 16:48:44 martin Exp $");
 #include <machine/vsbus.h>
 #include <machine/sid.h>
 #include <machine/ka420.h>
+#include <machine/scb.h>
 
 #include <dev/cons.h>
 
@@ -51,9 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.61.6.1 2023/02/06 16:48:44 martin Exp $");
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wscons_callbacks.h>
 #include <dev/wsfont/wsfont.h>
-
-#include "dzkbd.h"
-#include "opt_wsfont.h"
 
 /* Screen hardware defs */
 #define SM_COLS		128	/* char width of screen */
@@ -187,34 +189,67 @@ static	struct smg_screen *curscr;
 static	callout_t smg_cursor_ch;
 
 int
-smg_match(device_t parent, cfdata_t match, void *aux)
+smg_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct vsbus_attach_args * const va = aux;
 	volatile uint16_t *ccmd;
 	volatile uint16_t *cfgtst;
 	uint16_t tmp, tmp2;
 
-	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_53)
+	switch (vax_boardtype) {
+	default:
 		return 0;
 
-	ccmd = (uint16_t *)va->va_addr;
-	cfgtst = (uint16_t *)vax_map_physmem(VS_CFGTST, 1);
-	/*
-	 * Try to find the cursor chip by testing the flip-flop.
-	 * If nonexistent, no glass tty.
-	 */
-	ccmd[0] = CUR_CMD_HSHI|CUR_CMD_FOPB;
-	DELAY(300000);
-	tmp = cfgtst[0];
-	ccmd[0] = CUR_CMD_TEST|CUR_CMD_HSHI;
-	DELAY(300000);
-	tmp2 = cfgtst[0];
-	vax_unmap_physmem((vaddr_t)cfgtst, 1);
+	case VAX_BTYP_410:
+	case VAX_BTYP_420:
+	case VAX_BTYP_43:
+		if (va->va_paddr != KA420_CUR_BASE)
+			return 0;
 
-	if (tmp2 != tmp)
-		return 20; /* Using periodic interrupt */
-	else
-		return 0;
+		/* not present on microvaxes */
+		if ((vax_confdata & KA420_CFG_MULTU) != 0)
+			return 0;
+		/*
+		 * If the color option board is present, do not attach
+		 * unless we are explicitely asked to via device flags.
+		 */
+		if ((vax_confdata & KA420_CFG_VIDOPT) != 0 &&
+		    (cf->cf_flags & 1) == 0)
+			return 0;
+		break;
+	}
+
+	/* when already running as console, always fake things */
+	if ((vax_confdata & (KA420_CFG_L3CON | KA420_CFG_VIDOPT)) == 0
+#if NWSDISPLAY > 0
+	    && cn_tab->cn_putc == wsdisplay_cnputc
+#endif
+	) {
+		struct vsbus_softc *sc = device_private(parent);
+
+		sc->sc_mask = 0x08;
+		scb_fake(0x44, 0x15);
+		return 20;
+	} else {
+		/*
+		 * Try to find the cursor chip by testing the flip-flop.
+		 * If nonexistent, no glass tty.
+		 */
+		ccmd = (uint16_t *)va->va_addr;
+		cfgtst = (uint16_t *)vax_map_physmem(VS_CFGTST, 1);
+		ccmd[0] = CUR_CMD_HSHI|CUR_CMD_FOPB;
+		DELAY(300000);
+		tmp = cfgtst[0];
+		ccmd[0] = CUR_CMD_TEST|CUR_CMD_HSHI;
+		DELAY(300000);
+		tmp2 = cfgtst[0];
+		vax_unmap_physmem((vaddr_t)cfgtst, 1);
+
+		if (tmp2 != tmp)
+			return 20; /* Using periodic interrupt */
+		else
+			return 0;
+	}
 }
 
 void
@@ -234,7 +269,13 @@ smg_attach(device_t parent, device_t self, void *aux)
 	if (curscr == NULL)
 		callout_init(&smg_cursor_ch, 0);
 	curscr = &smg_conscreen;
-	aa.console = (vax_confdata & (KA420_CFG_L3CON|KA420_CFG_MULTU)) == 0;
+	aa.console =
+#if NWSDISPLAY > 0
+	    (vax_confdata & (KA420_CFG_L3CON | KA420_CFG_VIDOPT)) == 0 &&
+	    cn_tab->cn_putc == wsdisplay_cnputc;
+#else
+	    (vax_confdata & (KA420_CFG_L3CON | KA420_CFG_VIDOPT)) == 0;
+#endif
 
 	aa.scrdata = &smg_screenlist;
 	aa.accessops = &smg_accessops;
@@ -581,9 +622,15 @@ smgcninit(struct consdev *cndev)
 {
 	int fcookie;
 	struct wsdisplay_font *console_font;
-	extern void lkccninit(struct consdev *);
-	extern int lkccngetc(dev_t);
+	extern vaddr_t virtual_avail;
 	extern int dz_vsbus_lk201_cnattach(int);
+
+	sm_addr = (void *)virtual_avail;
+	ioaccess((vaddr_t)sm_addr, SMADDR, (SMSIZE / VAX_NBPG));
+	virtual_avail += SMSIZE;
+
+	virtual_avail = round_page(virtual_avail);
+
 	/* Clear screen */
 	memset(sm_addr, 0, 128*864);
 
@@ -618,7 +665,6 @@ smgcninit(struct consdev *cndev)
 void
 smgcnprobe(struct consdev *cndev)
 {
-	extern vaddr_t virtual_avail;
 	extern const struct cdevsw wsdisplay_cdevsw;
 
 	switch (vax_boardtype) {
@@ -628,12 +674,9 @@ smgcnprobe(struct consdev *cndev)
 		if ((vax_confdata & KA420_CFG_L3CON) ||
 		    (vax_confdata & KA420_CFG_MULTU))
 			break; /* doesn't use graphics console */
-		sm_addr = (void *)virtual_avail;
-		virtual_avail += SMSIZE;
-		ioaccess((vaddr_t)sm_addr, SMADDR, (SMSIZE/VAX_NBPG));
 		cndev->cn_pri = CN_INTERNAL;
-		cndev->cn_dev = makedev(cdevsw_lookup_major(&wsdisplay_cdevsw),
-					0);
+		cndev->cn_dev =
+		    makedev(cdevsw_lookup_major(&wsdisplay_cdevsw), 0);
 		break;
 
 	default:
