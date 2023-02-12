@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.56 2022/09/29 10:10:07 riastradh Exp $
+#	$NetBSD: GENERIC,v 1.57 2023/02/12 14:50:39 abs Exp $
 #
 #
 
@@ -302,3 +302,6 @@ pseudo-device	drvctl			# user control of drive subsystem
 pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/ibmnws/conf/GENERIC.local"

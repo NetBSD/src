@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.135 2022/09/29 10:10:08 riastradh Exp $
+# $NetBSD: GENERIC,v 1.136 2023/02/12 14:50:40 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.135 $"
+#ident 		"GENERIC-$Revision: 1.136 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -219,3 +219,6 @@ pseudo-device	wsmux			# mouse & keyboard multiplexsor
 
 # Veriexec
 # include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/luna68k/conf/GENERIC.local"

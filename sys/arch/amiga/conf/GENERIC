@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.337 2022/09/29 10:10:05 riastradh Exp $
+# $NetBSD: GENERIC,v 1.338 2023/02/12 14:50:38 abs Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.337 $"
+#ident 		"GENERIC-$Revision: 1.338 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -601,3 +601,6 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 include "dev/veriexec.config"
 
 config	netbsd root on ? type ?
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/amiga/conf/GENERIC.local"

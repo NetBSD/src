@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.17 2022/09/29 10:10:06 riastradh Exp $
+#	$NetBSD: GENERIC,v 1.18 2023/02/12 14:50:39 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/epoc32/conf/std.epoc32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.17 $"
+#ident 		"GENERIC-$Revision: 1.18 $"
 
 maxusers	32			# estimated number of users
 
@@ -193,3 +193,6 @@ pseudo-device 	swwdog			# software watchdog timer -- swwdog(4)
 # wscons pseudo-devices
 #pseudo-device	wsmux			# mouse & keyboard multiplexor
 #pseudo-device	wsfont
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/epoc32/conf/GENERIC.local"

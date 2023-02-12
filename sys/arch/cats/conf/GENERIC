@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.186 2022/09/29 10:10:05 riastradh Exp $
+# $NetBSD: GENERIC,v 1.187 2023/02/12 14:50:38 abs Exp $
 #
 # GENERIC machine description file
 #
@@ -563,3 +563,6 @@ pseudo-device	wsfont
 pseudo-device	ksyms			# /dev/ksyms
 
 include "dev/veriexec.config"
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/cats/conf/GENERIC.local"

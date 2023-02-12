@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.44 2022/09/29 10:10:05 riastradh Exp $
+# $NetBSD: GENERIC,v 1.45 2023/02/12 14:50:38 abs Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.44 $"
+#ident          "GENERIC-$Revision: 1.45 $"
 
 maxusers	8
 
@@ -435,3 +435,6 @@ include "dev/veriexec.config"
 
 # Kernel root file system and dump configuration
 config		netbsd	root on ? type ?
+
+# Pull in optional local configuration - always at end
+cinclude	"arch/amigappc/conf/GENERIC.local"
