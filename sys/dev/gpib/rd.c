@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.44 2021/07/31 20:29:37 andvar Exp $ */
+/*	$NetBSD: rd.c,v 1.45 2023/02/12 16:04:57 andvar Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.44 2021/07/31 20:29:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.45 2023/02/12 16:04:57 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,7 +361,7 @@ rdattach(device_t parent, device_t self, void *aux)
 #endif
 
 	/*
-	 * Take care of a couple of anomolies:
+	 * Take care of a couple of anomalies:
 	 * 1. 7945A and 7946A both return same HW id
 	 * 2. 9122S and 9134D both return same HW id
 	 * 3. 9122D and 9134L both return same HW id
@@ -854,7 +854,7 @@ rderror(struct rd_softc *sc)
 	}
 	/*
 	 * Unit requests release for internal maintenance.
-	 * We just delay awhile and try again later.  Use expontially
+	 * We just delay awhile and try again later.  Use exponentially
 	 * increasing backoff ala ethernet drivers since we don't really
 	 * know how long the maintenance will take.  With RDWAITC and
 	 * RDRETRY as defined, the range is 1 to 32 seconds.

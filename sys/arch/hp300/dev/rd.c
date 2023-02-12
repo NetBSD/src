@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.124 2022/12/03 16:56:40 tsutsui Exp $	*/
+/*	$NetBSD: rd.c,v 1.125 2023/02/12 16:04:57 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.124 2022/12/03 16:56:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.125 2023/02/12 16:04:57 andvar Exp $");
 
 #include "opt_useleds.h"
 
@@ -581,9 +581,9 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 		return 0;
 
 	/*
-	 * The supported dvice ID is probed.
+	 * The supported device ID is probed.
 	 * Check if the specified physical unit is actually supported
-	 * by brandnew HP-IB emulator devices like HPDisk and HPDrive etc.
+	 * by brand-new HP-IB emulator devices like HPDisk and HPDrive etc.
 	 */
 	/*
 	 * Reset device and collect description
@@ -646,7 +646,7 @@ rdident(device_t parent, struct rd_softc *sc, struct hpibbus_attach_args *ha)
 #endif
 
 	/*
-	 * Take care of a couple of anomolies:
+	 * Take care of a couple of anomalies:
 	 * 1. 7945A, 7946A, and 7941A all return same HW id
 	 * 2. 9122S and 9134D both return same HW id
 	 * 3. 9122D and 9134L both return same HW id
@@ -1218,7 +1218,7 @@ rderror(int unit)
 	}
 	/*
 	 * Unit requests release for internal maintenance.
-	 * We just delay awhile and try again later.  Use expontially
+	 * We just delay awhile and try again later.  Use exponentially
 	 * increasing backoff ala ethernet drivers since we don't really
 	 * know how long the maintenance will take.  With RDWAITC and
 	 * RDRETRY as defined, the range is 1 to 32 seconds.
