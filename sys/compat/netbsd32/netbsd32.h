@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.140 2022/04/23 17:46:23 reinoud Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.141 2023/02/12 16:28:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -511,7 +511,7 @@ typedef netbsd32_size_t netbsd32_msglen_t;
 
 typedef netbsd32_pointer_t netbsd32_msqid_dsp_t;
 struct netbsd32_msqid_ds {
-	struct netbsd32_ipc_perm msg_perm;	/* operation permission strucure */
+	struct netbsd32_ipc_perm msg_perm;	/* operation permission structure */
 	netbsd32_msgqnum_t	msg_qnum;	/* number of messages in the queue */
 	netbsd32_msglen_t	msg_qbytes;	/* max # of bytes in the queue */
 	pid_t		msg_lspid;	/* process ID of last msgsend() */
@@ -530,7 +530,7 @@ struct netbsd32_msqid_ds {
 };
 typedef netbsd32_pointer_t netbsd32_msqid_ds50p_t;
 struct netbsd32_msqid_ds50 {
-	struct netbsd32_ipc_perm msg_perm;	/* operation permission strucure */
+	struct netbsd32_ipc_perm msg_perm;	/* operation permission structure */
 	netbsd32_msgqnum_t	msg_qnum;	/* number of messages in the queue */
 	netbsd32_msglen_t	msg_qbytes;	/* max # of bytes in the queue */
 	pid_t		msg_lspid;	/* process ID of last msgsend() */

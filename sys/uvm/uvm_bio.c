@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.126 2021/04/01 06:26:26 simonb Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.127 2023/02/12 16:28:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.126 2021/04/01 06:26:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.127 2023/02/12 16:28:32 andvar Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -73,7 +73,7 @@ bool ubc_direct = false;
 #endif
 
 /*
- * local data structues
+ * local data structures
  */
 
 #define UBC_HASH(uobj, offset) 						\
