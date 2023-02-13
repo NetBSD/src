@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_base.c,v 1.22 2023/01/17 14:13:48 msaitoh Exp $ */
+/* $NetBSD: ppbus_base.c,v 1.23 2023/02/13 22:44:52 andvar Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 1999 Nicolas Souchu
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.22 2023/01/17 14:13:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppbus_base.c,v 1.23 2023/02/13 22:44:52 andvar Exp $");
 
 #include "opt_ppbus_1284.h"
 #include "opt_ppbus.h"
@@ -236,7 +236,7 @@ ppbus_write(device_t dev, char * buf, int len, int how, size_t * cnt)
 	return (bus->ppbus_write(device_parent(bus->sc_dev), buf, len, how, cnt));
 }
 
-/* Read charaters from the port */
+/* Read characters from the port */
 int
 ppbus_read(device_t dev, char * buf, int len, int how, size_t * cnt)
 {
