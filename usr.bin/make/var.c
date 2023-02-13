@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1040 2023/02/09 07:34:15 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1041 2023/02/13 19:25:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1040 2023/02/09 07:34:15 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1041 2023/02/13 19:25:15 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3735,6 +3735,18 @@ ApplyModifier_SunShell(const char **pp, ModChain *ch)
 }
 #endif
 
+/*
+ * In cases where the evaluation mode and the definedness are the "standard"
+ * ones, don't log them, to keep the logs readable.
+ */
+static bool
+ShouldLogInSimpleFormat(const Expr *expr)
+{
+	return (expr->emode == VARE_WANTRES ||
+		expr->emode == VARE_UNDEFERR) &&
+	       expr->defined == DEF_REGULAR;
+}
+
 static void
 LogBeforeApply(const ModChain *ch, const char *mod)
 {
@@ -3752,8 +3764,7 @@ LogBeforeApply(const ModChain *ch, const char *mod)
 		return;
 	}
 
-	if ((expr->emode == VARE_WANTRES || expr->emode == VARE_UNDEFERR) &&
-	    expr->defined == DEF_REGULAR) {
+	if (ShouldLogInSimpleFormat(expr)) {
 		debug_printf(
 		    "Evaluating modifier ${%s:%c%s} on value \"%s\"\n",
 		    expr->name, mod[0], is_single_char ? "" : "...",
@@ -3774,9 +3785,7 @@ LogAfterApply(const ModChain *ch, const char *p, const char *mod)
 	const char *value = Expr_Str(expr);
 	const char *quot = value == var_Error ? "" : "\"";
 
-	if ((expr->emode == VARE_WANTRES || expr->emode == VARE_UNDEFERR) &&
-	    expr->defined == DEF_REGULAR) {
-
+	if (ShouldLogInSimpleFormat(expr)) {
 		debug_printf("Result of ${%s:%.*s} is %s%s%s\n",
 		    expr->name, (int)(p - mod), mod,
 		    quot, value == var_Error ? "error" : value, quot);
