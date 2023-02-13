@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.49 2022/10/29 10:52:36 riastradh Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.50 2023/02/13 19:07:14 buhrow Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.49 2022/10/29 10:52:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.50 2023/02/13 19:07:14 buhrow Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -397,7 +397,7 @@ devsw_attach(const char *devname,
 		if (conv->d_name == NULL || strcmp(devname, conv->d_name) != 0)
 			continue;
 
-		if (*bmajor < 0)
+		if ((bdev != NULL) && (*bmajor < 0)) 
 			*bmajor = conv->d_bmajor;
 		if (*cmajor < 0)
 			*cmajor = conv->d_cmajor;
