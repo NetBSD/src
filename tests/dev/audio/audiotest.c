@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.27 2022/08/13 07:22:40 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.28 2023/02/13 22:24:06 andvar Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.27 2022/08/13 07:22:40 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.28 2023/02/13 22:24:06 andvar Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -4208,7 +4208,7 @@ DEF(FIOASYNC_reset)
 }
 
 /*
- * Whether SIGIO is emitted on plyaback.
+ * Whether SIGIO is emitted on playback.
  * XXX I don't understand conditions that NetBSD7 emits signal.
  */
 DEF(FIOASYNC_play_signal)
