@@ -1,4 +1,4 @@
-/*	$NetBSD: search.c,v 1.4 2017/11/22 16:17:30 rin Exp $ */
+/*	$NetBSD: search.c,v 1.5 2023/02/13 23:08:43 gutteridge Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: search.c,v 10.31 2001/06/25 15:19:12 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:12 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: search.c,v 1.4 2017/11/22 16:17:30 rin Exp $");
+__RCSID("$NetBSD: search.c,v 1.5 2023/02/13 23:08:43 gutteridge Exp $");
 #endif
 
 #include <sys/types.h>
@@ -110,9 +110,14 @@ prev:			if (sp->re == NULL) {
 					++p;
 				break;
 			}
-			if (plen > 1 && p[0] == '\\' && p[1] == delim) {
-				++p;
-				--plen;
+			if (plen > 1 && p[0] == '\\') {
+				if(p[1] == delim) {
+					++p;
+					--plen;
+				} else if(p[1] == '\\') {
+					*t++ = *p++;
+					--plen;
+				}
 			}
 		}
 		if (epp != NULL)
