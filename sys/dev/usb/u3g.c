@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.43 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: u3g.c,v 1.44 2023/02/13 14:05:26 manu Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.43 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.44 2023/02/13 14:05:26 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,6 +252,7 @@ static const struct usb_devno u3g_devs[] = {
 	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF626 },
 	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF628 },
 	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF820D },
+	{ USB_VENDOR_ZTE, USB_PRODUCT_ZTE_MF112 },
 
 	/* 4G Systems */
 	{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_XSSTICK_P14 },
@@ -260,6 +261,7 @@ static const struct usb_devno u3g_devs[] = {
 	/* DLink */
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157 },
 	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157E },
+	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM222 },
 };
 
 /*
