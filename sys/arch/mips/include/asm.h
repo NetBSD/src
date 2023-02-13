@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.71 2022/04/21 12:06:31 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.72 2023/02/13 12:00:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -582,7 +582,30 @@ _C_LABEL(x):
  * we need to apply a plunger to it _after_ releasing a lock or else
  * other CPUs may spin for hundreds of thousands of cycles before they
  * see the lock is released.  So we also have the quirky SYNC_PLUNGER
- * barrier as syncw.
+ * barrier as syncw.  See the note in the SYNCW instruction description
+ * on p. 2168 of Cavium OCTEON III CN78XX Hardware Reference Manual,
+ * CN78XX-HM-0.99E, September 2014:
+ *
+ *	Core A (writer)
+ *
+ *	SW R1, DATA#		change shared DATA value
+ *	LI R1, 1
+ *	SYNCW# (or SYNCWS)	Perform DATA store before performing FLAG store
+ *	SW R2, FLAG#		say that the shared DATA value is valid
+ *	SYNCW# (or SYNCWS)	Force the FLAG store soon (CN78XX-specific)
+ *
+ *	...
+ *
+ *	The second SYNCW instruction executed by core A is not
+ *	necessary for correctness, but has very important performance
+ *	effects on the CN78XX.  Without it, the store to FLAG may
+ *	linger in core A's write buffer before it becomes visible to
+ *	any other cores.  (If core A is not performing many stores,
+ *	this may add hundreds of thousands of cycles to the flag
+ *	release time since the CN78XX core nominally retains stores to
+ *	attempt to merge them before sending the store on the CMI.)
+ *	Applications should include this second SYNCW instruction after
+ *	flag or lock release.
  */
 #define	LLSCSYNC	/* nothing */
 #define	BDSYNC		sync
