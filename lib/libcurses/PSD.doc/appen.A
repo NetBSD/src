@@ -1,4 +1,4 @@
-.\"	$NetBSD: appen.A,v 1.7 2003/08/07 16:44:26 agc Exp $
+.\"	$NetBSD: appen.A,v 1.8 2023/02/13 23:02:27 andvar Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,7 +58,7 @@ the source code in the
 This program demonstrates how to set up a window and output characters to it.
 Also, it demonstrates how one might control the output to the window.
 If you run this program, you will get a demonstration of the character output
-chracteristics discussed in the above Character Output section.
+characteristics discussed in the above Character Output section.
 .(l I
 .so ex1.gr
 .)l
