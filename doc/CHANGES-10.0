@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.32 2023/02/14 16:18:19 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.33 2023/02/14 16:34:41 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1064,4 +1064,9 @@ sys/kern/subr_devsw.c				1.50
 	PR 57229: fix devsw_attach(9) to allow the combination of dynamically
 	assigned major numbers and character device only drivers.
 	[buhrow, ticket #84]
+
+sys/dev/usb/u3g.c				1.44
+
+	u3g: add support for ZTE MF112 and D-Link DWM222 3G USB modems.
+	[manu, ticket #85]
 
