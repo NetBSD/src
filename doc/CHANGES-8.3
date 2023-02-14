@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.164 2023/01/23 14:11:22 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.165 2023/02/14 16:05:01 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3152,4 +3152,12 @@ sys/dev/pci/ixgbe/ixv.c 			1.183
 	- Make three "Unsupported SFP+ module..." messages the same.
 	- KNF. Modify comment. Fix typo.
 	[msaitoh, ticket #1796]
+
+xsrc/external/mit/xorg-server.old/dist/Xi/exevents.c	1.2
+xsrc/external/mit/xorg-server/dist/Xi/exevents.c	(apply patch)
+
+	Pullover fix from xorg-server 21.1.7:
+	Xi: fix potential use-after-free in DeepCopyPointerClasses
+	CVE-2023-0494, ZDI-CAN-19596
+	[mrg, ticket #1797]
 
