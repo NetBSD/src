@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.312 2023/02/14 21:08:00 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.313 2023/02/14 21:38:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1018,7 +1018,7 @@ bool Var_ExistsExpand(GNode *, const char *) MAKE_ATTR_USE;
 FStr Var_Value(GNode *, const char *) MAKE_ATTR_USE;
 const char *GNode_ValueDirect(GNode *, const char *) MAKE_ATTR_USE;
 FStr Var_Parse(const char **, GNode *, VarEvalMode);
-VarParseResult Var_Subst(const char *, GNode *, VarEvalMode, char **);
+char *Var_Subst(const char *, GNode *, VarEvalMode);
 void Var_Expand(FStr *, GNode *, VarEvalMode);
 void Var_Stats(void);
 void Var_Dump(GNode *);

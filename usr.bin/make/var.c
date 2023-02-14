@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1042 2023/02/14 21:08:00 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1043 2023/02/14 21:38:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1042 2023/02/14 21:08:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1043 2023/02/14 21:38:31 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -537,7 +537,6 @@ Var_Delete(GNode *scope, const char *varname)
 void
 Var_Undef(const char *arg)
 {
-	VarParseResult vpr;
 	char *expanded;
 	Words varnames;
 	size_t i;
@@ -548,8 +547,9 @@ Var_Undef(const char *arg)
 		return;
 	}
 
-	vpr = Var_Subst(arg, SCOPE_GLOBAL, VARE_WANTRES, &expanded);
-	if (vpr != VPR_OK) {
+	expanded = Var_Subst(arg, SCOPE_GLOBAL, VARE_WANTRES);
+	if (expanded == var_Error) {
+		/* TODO: Make this part of the code reachable. */
 		Parse_Error(PARSE_FATAL,
 		    "Error in variable names to be undefined");
 		return;
@@ -619,7 +619,7 @@ ExportVarEnv(Var *v)
 
 	/* XXX: name is injected without escaping it */
 	expr = str_concat3("${", name, "}");
-	(void)Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES, &val);
+	val = Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES);
 	/* TODO: handle errors */
 	setenv(name, val, 1);
 	free(val);
@@ -719,8 +719,8 @@ Var_ReexportVars(void)
 		return;
 	}
 
-	(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", SCOPE_GLOBAL, VARE_WANTRES,
-	    &xvarnames);
+	xvarnames = Var_Subst("${" MAKE_EXPORTED ":O:u}", SCOPE_GLOBAL,
+	    VARE_WANTRES);
 	/* TODO: handle errors */
 	if (xvarnames[0] != '\0') {
 		Words varnames = Str_Words(xvarnames, false);
@@ -760,9 +760,7 @@ ExportVars(const char *varnames, bool isExport, VarExportMode mode)
 static void
 ExportVarsExpand(const char *uvarnames, bool isExport, VarExportMode mode)
 {
-	char *xvarnames;
-
-	(void)Var_Subst(uvarnames, SCOPE_GLOBAL, VARE_WANTRES, &xvarnames);
+	char *xvarnames = Var_Subst(uvarnames, SCOPE_GLOBAL, VARE_WANTRES);
 	/* TODO: handle errors */
 	ExportVars(xvarnames, isExport, mode);
 	free(xvarnames);
@@ -838,10 +836,9 @@ GetVarnamesToUnexport(bool isEnv, const char *arg,
 	}
 
 	if (what != UNEXPORT_NAMED) {
-		char *expanded;
 		/* Using .MAKE.EXPORTED */
-		(void)Var_Subst("${" MAKE_EXPORTED ":O:u}", SCOPE_GLOBAL,
-		    VARE_WANTRES, &expanded);
+		char *expanded = Var_Subst("${" MAKE_EXPORTED ":O:u}",
+		    SCOPE_GLOBAL, VARE_WANTRES);
 		/* TODO: handle errors */
 		varnames = FStr_InitOwn(expanded);
 	}
@@ -872,8 +869,7 @@ UnexportVar(Substring varname, UnexportWhat what)
 		/* XXX: v->name is injected without escaping it */
 		char *expr = str_concat3("${" MAKE_EXPORTED ":N",
 		    v->name.str, "}");
-		char *cp;
-		(void)Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES, &cp);
+		char *cp = Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES);
 		/* TODO: handle errors */
 		Global_Set(MAKE_EXPORTED, cp);
 		free(cp);
@@ -1698,7 +1694,7 @@ ModifyWord_Loop(Substring word, SepBuf *buf, void *data)
 	assert(word.end[0] == '\0');	/* assume null-terminated word */
 	Var_SetWithFlags(args->scope, args->var, word.start,
 	    VAR_SET_NO_EXPORT);
-	(void)Var_Subst(args->body, args->scope, args->emode, &s);
+	s = Var_Subst(args->body, args->scope, args->emode);
 	/* TODO: handle errors */
 
 	assert(word.end[0] == '\0');	/* assume null-terminated word */
@@ -2805,7 +2801,7 @@ ParseModifier_Match(const char **pp, const ModChain *ch)
 		 * XXX: Contrary to ParseModifierPart, a dollar in a ':M' or
 		 * ':N' modifier must be escaped as '$$', not as '\$'.
 		 */
-		(void)Var_Subst(pattern, expr->scope, expr->emode, &pattern);
+		pattern = Var_Subst(pattern, expr->scope, expr->emode);
 		/* TODO: handle errors */
 		free(old_pattern);
 	}
@@ -4572,8 +4568,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 		if (opts.strict)
 			nested_emode = VarEvalMode_UndefOk(nested_emode);
 		v->inUse = true;
-		(void)Var_Subst(Expr_Str(&expr), scope, nested_emode,
-		    &expanded);
+		expanded = Var_Subst(Expr_Str(&expr), scope, nested_emode);
 		v->inUse = false;
 		/* TODO: handle errors */
 		Expr_SetValueOwn(&expr, expanded);
@@ -4711,8 +4706,8 @@ VarSubstPlain(const char **pp, Buffer *res)
  *			variables.  The other scopes are searched as well.
  *	emode		The mode for parsing or evaluating subexpressions.
  */
-VarParseResult
-Var_Subst(const char *str, GNode *scope, VarEvalMode emode, char **out_res)
+char *
+Var_Subst(const char *str, GNode *scope, VarEvalMode emode)
 {
 	const char *p = str;
 	Buffer res;
@@ -4736,8 +4731,7 @@ Var_Subst(const char *str, GNode *scope, VarEvalMode emode, char **out_res)
 			VarSubstPlain(&p, &res);
 	}
 
-	*out_res = Buf_DoneDataCompact(&res);
-	return VPR_OK;
+	return Buf_DoneDataCompact(&res);
 }
 
 void
@@ -4747,7 +4741,7 @@ Var_Expand(FStr *str, GNode *scope, VarEvalMode emode)
 
 	if (strchr(str->str, '$') == NULL)
 		return;
-	(void)Var_Subst(str->str, scope, emode, &expanded);
+	expanded = Var_Subst(str->str, scope, emode);
 	/* TODO: handle errors */
 	FStr_Done(str);
 	*str = FStr_InitOwn(expanded);
