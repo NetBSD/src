@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.343 2023/02/14 20:49:09 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.344 2023/02/14 21:08:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.343 2023/02/14 20:49:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.344 2023/02/14 21:08:00 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -235,8 +235,7 @@ ParseWord(const char **pp, bool doEval)
 			VarEvalMode emode = doEval
 			    ? VARE_UNDEFERR
 			    : VARE_PARSE_ONLY;
-			FStr nestedVal;
-			(void)Var_Parse(&p, SCOPE_CMDLINE, emode, &nestedVal);
+			FStr nestedVal = Var_Parse(&p, SCOPE_CMDLINE, emode);
 			/* TODO: handle errors */
 			Buf_AddStr(&word, nestedVal.str);
 			FStr_Done(&nestedVal);
@@ -401,7 +400,7 @@ CondParser_StringExpr(CondParser *par, const char *start,
 
 	p = par->p;
 	atStart = p == start;
-	(void)Var_Parse(&p, SCOPE_CMDLINE, emode, inout_str);
+	*inout_str = Var_Parse(&p, SCOPE_CMDLINE, emode);
 	/* TODO: handle errors */
 	if (inout_str->str == var_Error) {
 		FStr_Done(inout_str);
@@ -675,8 +674,8 @@ CondParser_FuncCallEmpty(CondParser *par, bool doEval, Token *out_token)
 		return false;
 
 	cp--;			/* Make cp[1] point to the '('. */
-	(void)Var_Parse(&cp, SCOPE_CMDLINE,
-	    doEval ? VARE_WANTRES : VARE_PARSE_ONLY, &val);
+	val = Var_Parse(&cp, SCOPE_CMDLINE,
+	    doEval ? VARE_WANTRES : VARE_PARSE_ONLY);
 	/* TODO: handle errors */
 
 	if (val.str == var_Error)
