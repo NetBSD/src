@@ -1,4 +1,4 @@
-/* $NetBSD: next68k.c,v 1.9 2019/05/07 04:35:31 thorpej Exp $ */
+/* $NetBSD: next68k.c,v 1.10 2023/02/14 20:27:17 andvar Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: next68k.c,v 1.9 2019/05/07 04:35:31 thorpej Exp $");
+__RCSID("$NetBSD: next68k.c,v 1.10 2023/02/14 20:27:17 andvar Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -205,7 +205,7 @@ next68k_setboot(ib_params *params)
 		labelupdated = 1;
 	}
 	if (params->flags & IB_VERBOSE)
-		printf("Boot programm locations%s: %d %d\n",
+		printf("Boot program locations%s: %d %d\n",
 		    labelupdated ? " updated" : "", b0 * sec_netonb_mult,
 		    b1 * sec_netonb_mult);
 

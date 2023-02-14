@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cl.c,v 1.55 2022/03/28 12:38:57 riastradh Exp $ */
+/*	$NetBSD: grf_cl.c,v 1.56 2023/02/14 20:27:17 andvar Exp $ */
 
 /*
  * Copyright (c) 1997 Klaus Burkert
@@ -36,7 +36,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.55 2022/03/28 12:38:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.56 2023/02/14 20:27:17 andvar Exp $");
 
 #include "grfcl.h"
 #include "ite.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cl.c,v 1.55 2022/03/28 12:38:57 riastradh Exp $"
  *
  * PicassoIV support bz Klaus "crest" Burkert.
  * Fixed interlace and doublescan, added clockdoubling and
- * HiColor&TrueColor suuport by crest 01/97
+ * HiColor&TrueColor support by crest 01/97
  *
  * Thanks to Village Tronic Marketing Gmbh for providing me with
  * a Picasso-II board.
@@ -1153,7 +1153,7 @@ cl_getcmap(struct grf_softc *gfp, struct grf_colormap *cmap)
 
 /*
  * Some sort 'o Magic. Spectrum has some changes on the board to speed
- * up 15 and 16Bit modes. They can access these modes with easy-to-programm
+ * up 15 and 16Bit modes. They can access these modes with easy-to-program
  * rgbrgbrgb instead of rrrgggbbb. Side effect: when in 8Bit mode, rgb
  * is swapped to bgr. I wonder if we need to check for 8Bit though, ill
  */
