@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.11 2020/09/14 00:39:47 christos Exp $
+# $NetBSD: Makefile.inc,v 1.11.6.1 2023/02/14 15:47:01 martin Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
@@ -15,3 +15,8 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-conversion \
 			-Wno-string-plus-int
 
 DIST:=		${.PARSEDIR}/dist
+
+# Reduce debugging for these extremely large objects.
+.if ${MKDEBUG:Uno} != "no"
+CXXFLAGS+=      -g1
+.endif

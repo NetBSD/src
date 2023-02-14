@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2022/09/29 18:58:04 rjs Exp $
+# $NetBSD: Makefile,v 1.4.2.1 2023/02/14 15:47:01 martin Exp $
 
 # Transparent struct/union broken
 NOLINT=yes
@@ -30,6 +30,12 @@ CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm \
 
 CFLAGS+=	-pthread
 LDFLAGS+=	-pthread
+
+# Reduce debugging for these extremely large objects.
+.if ${MKDEBUG:Uno} != "no"
+CXXFLAGS+=	-g1
+CFLAGS+=	-g1
+.endif
 
 GALLIUM_SUBDIRS= \
 	auxiliary \
