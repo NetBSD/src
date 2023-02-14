@@ -1,4 +1,4 @@
-# $NetBSD: parse-var.mk,v 1.6 2022/09/25 21:26:23 rillig Exp $
+# $NetBSD: parse-var.mk,v 1.7 2023/02/14 21:56:48 rillig Exp $
 #
 # Tests for parsing variable expressions.
 #
@@ -68,8 +68,7 @@
 #
 # Effects:
 #	How much does the parsing position advance (pp)?
-#	What's the value of the expression (out_val)?
-#	What's the status after parsing the expression (VarParseResult)?
+#	What's the value of the expression (return value)?
 #	What error messages are printed (Parse_Error)?
 #	What no-effect error messages are printed (Error)?
 #	What error messages should be printed but aren't?
