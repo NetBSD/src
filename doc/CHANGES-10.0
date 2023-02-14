@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.31 2023/02/12 12:39:37 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.32 2023/02/14 16:18:19 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1039,4 +1039,29 @@ distrib/next68k/cdroms/installcd/Makefile	1.1
 
 	next68k: build iso image.
 	[tsutsui, ticket #80]
+
+external/gpl3/gdb.old/Makefile.inc		1.12
+external/gpl3/gdb/Makefile.inc			1.13
+external/mit/xorg/lib/gallium.old/Makefile	1.5
+external/mit/xorg/lib/gallium/Makefile		1.49
+share/mk/bsd.lib.mk				1.390
+
+	Use -g1 to reduce the amount of debug info build for c++ code.
+	[mrg, ticket #81]
+
+usr.bin/audio/play/audioplay.1			1.31
+
+	audioplay(1): PR 57228: fix typo.
+	[uwe, ticket #82]
+
+usr.bin/printf/printf.1				1.37
+
+	Fix typo.
+	[andvar, ticket #83]
+
+sys/kern/subr_devsw.c				1.50
+
+	PR 57229: fix devsw_attach(9) to allow the combination of dynamically
+	assigned major numbers and character device only drivers.
+	[buhrow, ticket #84]
 
