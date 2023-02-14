@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1041 2023/02/13 19:25:15 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1042 2023/02/14 21:08:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1041 2023/02/13 19:25:15 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1042 2023/02/14 21:08:00 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2145,10 +2145,8 @@ ParseModifierPartExpr(const char **pp, LazyBuf *part, const ModChain *ch,
 		      VarEvalMode emode)
 {
 	const char *p = *pp;
-	FStr nested_val;
-
-	(void)Var_Parse(&p, ch->expr->scope,
-	    VarEvalMode_WithoutKeepDollar(emode), &nested_val);
+	FStr nested_val = Var_Parse(&p, ch->expr->scope,
+	    VarEvalMode_WithoutKeepDollar(emode));
 	/* TODO: handle errors */
 	LazyBuf_AddStr(part, nested_val.str);
 	FStr_Done(&nested_val);
@@ -2500,11 +2498,8 @@ ParseModifier_Defined(const char **pp, ModChain *ch, bool shouldEval,
 
 		/* Nested variable expression */
 		if (*p == '$') {
-			FStr val;
-
-			(void)Var_Parse(&p, ch->expr->scope,
-			    shouldEval ? ch->expr->emode : VARE_PARSE_ONLY,
-			    &val);
+			FStr val = Var_Parse(&p, ch->expr->scope,
+			    shouldEval ? ch->expr->emode : VARE_PARSE_ONLY);
 			/* TODO: handle errors */
 			if (shouldEval)
 				LazyBuf_AddStr(buf, val.str);
@@ -3893,9 +3888,7 @@ ApplyModifiersIndirect(ModChain *ch, const char **pp)
 {
 	Expr *expr = ch->expr;
 	const char *p = *pp;
-	FStr mods;
-
-	(void)Var_Parse(&p, expr->scope, expr->emode, &mods);
+	FStr mods = Var_Parse(&p, expr->scope, expr->emode);
 	/* TODO: handle errors */
 
 	if (mods.str[0] != '\0' && !IsDelimiter(*p, ch)) {
@@ -4170,8 +4163,7 @@ ParseVarname(const char **pp, char startc, char endc,
 
 		/* A variable inside a variable, expand. */
 		if (*p == '$') {
-			FStr nested_val;
-			(void)Var_Parse(&p, scope, emode, &nested_val);
+			FStr nested_val = Var_Parse(&p, scope, emode);
 			/* TODO: handle errors */
 			LazyBuf_AddStr(buf, nested_val.str);
 			FStr_Done(&nested_val);
@@ -4212,7 +4204,7 @@ IsShortVarnameValid(char varname, const char *start)
 static bool
 ParseVarnameShort(char varname, const char **pp, GNode *scope,
 		  VarEvalMode emode,
-		  VarParseResult *out_false_res, const char **out_false_val,
+		  const char **out_false_val,
 		  Var **out_true_var)
 {
 	char name[2];
@@ -4221,7 +4213,6 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 
 	if (!IsShortVarnameValid(varname, *pp)) {
 		(*pp)++;	/* only skip the '$' */
-		*out_false_res = VPR_ERR;
 		*out_false_val = var_Error;
 		return false;
 	}
@@ -4244,22 +4235,8 @@ ParseVarnameShort(char varname, const char **pp, GNode *scope,
 	if (opts.strict && val == var_Error) {
 		Parse_Error(PARSE_FATAL,
 		    "Variable \"%s\" is undefined", name);
-		*out_false_res = VPR_ERR;
-		*out_false_val = val;
-		return false;
 	}
 
-	/*
-	 * XXX: This looks completely wrong.
-	 *
-	 * If undefined expressions are not allowed, this should
-	 * rather be VPR_ERR instead of VPR_UNDEF, together with an
-	 * error message.
-	 *
-	 * If undefined expressions are allowed, this should rather
-	 * be VPR_UNDEF instead of VPR_OK.
-	 */
-	*out_false_res = emode == VARE_UNDEFERR ? VPR_UNDEF : VPR_OK;
 	*out_false_val = val;
 	return false;
 }
@@ -4498,23 +4475,23 @@ Var_Parse_FastLane(const char **pp, VarEvalMode emode, FStr *out_value)
  *			point to some random character in the string, to the
  *			location of the parse error, or at the end of the
  *			string.
- *	*out_val	The value of the variable expression, never NULL.
- *	*out_val	var_Error if there was a parse error.
- *	*out_val	var_Error if the base variable of the expression was
+ *	return		The value of the variable expression, never NULL.
+ *	return		var_Error if there was a parse error.
+ *	return		var_Error if the base variable of the expression was
  *			undefined, emode is VARE_UNDEFERR, and none of
  *			the modifiers turned the undefined expression into a
  *			defined expression.
  *			XXX: It is not guaranteed that an error message has
  *			been printed.
- *	*out_val	varUndefined if the base variable of the expression
+ *	return		varUndefined if the base variable of the expression
  *			was undefined, emode was not VARE_UNDEFERR,
  *			and none of the modifiers turned the undefined
  *			expression into a defined expression.
  *			XXX: It is not guaranteed that an error message has
  *			been printed.
  */
-VarParseResult
-Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
+FStr
+Var_Parse(const char **pp, GNode *scope, VarEvalMode emode)
 {
 	const char *p = *pp;
 	const char *const start = p;
@@ -4532,15 +4509,16 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 	Var *v;
 	Expr expr = Expr_Literal(NULL, FStr_InitRefer(NULL), emode,
 	    scope, DEF_REGULAR);
+	FStr val;
 
-	if (Var_Parse_FastLane(pp, emode, out_val))
-		return VPR_OK;
+	if (Var_Parse_FastLane(pp, emode, &val))
+		return val;
 
 	/* TODO: Reduce computations in parse-only mode. */
 
 	DEBUG2(VAR, "Var_Parse: %s (%s)\n", start, VarEvalMode_Name[emode]);
 
-	*out_val = FStr_InitRefer(NULL);
+	val = FStr_InitRefer(NULL);
 	extramodifiers = NULL;	/* extra modifiers to apply first */
 	dynamic = false;
 
@@ -4548,19 +4526,17 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 
 	startc = p[1];
 	if (startc != '(' && startc != '{') {
-		VarParseResult res;
-		if (!ParseVarnameShort(startc, pp, scope, emode, &res,
-		    &out_val->str, &v))
-			return res;
+		if (!ParseVarnameShort(startc, pp, scope, emode, &val.str, &v))
+			return val;
 		haveModifier = false;
 		p++;
 	} else {
 		VarParseResult res;
 		if (!ParseVarnameLong(&p, startc, scope, emode,
-		    pp, &res, out_val,
+		    pp, &res, &val,
 		    &endc, &v, &haveModifier, &extramodifiers,
 		    &dynamic, &expr.defined))
-			return res;
+			return val;
 	}
 
 	expr.name = v->name.str;
@@ -4642,8 +4618,7 @@ Var_Parse(const char **pp, GNode *scope, VarEvalMode emode, FStr *out_val)
 		VarFreeShortLived(v);
 	}
 
-	*out_val = expr.value;
-	return VPR_OK;		/* XXX: Is not correct in all cases */
+	return expr.value;
 }
 
 static void
@@ -4662,9 +4637,7 @@ VarSubstExpr(const char **pp, Buffer *buf, GNode *scope,
 {
 	const char *p = *pp;
 	const char *nested_p = p;
-	FStr val;
-
-	(void)Var_Parse(&nested_p, scope, emode, &val);
+	FStr val = Var_Parse(&nested_p, scope, emode);
 	/* TODO: handle errors */
 
 	if (val.str == var_Error || val.str == varUndefined) {
