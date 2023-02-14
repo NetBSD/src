@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.693 2023/02/14 21:08:00 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.694 2023/02/14 21:38:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.693 2023/02/14 21:08:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.694 2023/02/14 21:38:31 rillig Exp $");
 
 /*
  * A file being read.
@@ -578,7 +578,7 @@ HandleMessage(ParseErrorLevel level, const char *levelName, const char *umsg)
 		return;
 	}
 
-	(void)Var_Subst(umsg, SCOPE_CMDLINE, VARE_WANTRES, &xmsg);
+	xmsg = Var_Subst(umsg, SCOPE_CMDLINE, VARE_WANTRES);
 	/* TODO: handle errors */
 
 	Parse_Error(level, "%s", xmsg);
@@ -1774,10 +1774,8 @@ VarCheckSyntax(VarAssignOp type, const char *uvalue, GNode *scope)
 {
 	if (opts.strict) {
 		if (type != VAR_SUBST && strchr(uvalue, '$') != NULL) {
-			char *expandedValue;
-
-			(void)Var_Subst(uvalue, scope, VARE_PARSE_ONLY,
-			    &expandedValue);
+			char *expandedValue = Var_Subst(uvalue,
+			    scope, VARE_PARSE_ONLY);
 			/* TODO: handle errors */
 			free(expandedValue);
 		}
@@ -1803,7 +1801,7 @@ VarAssign_EvalSubst(GNode *scope, const char *name, const char *uvalue,
 	if (!Var_ExistsExpand(scope, name))
 		Var_SetExpand(scope, name, "");
 
-	(void)Var_Subst(uvalue, scope, VARE_KEEP_DOLLAR_UNDEF, &evalue);
+	evalue = Var_Subst(uvalue, scope, VARE_KEEP_DOLLAR_UNDEF);
 	/* TODO: handle errors */
 
 	Var_SetExpand(scope, name, evalue);
@@ -2240,7 +2238,7 @@ ParseTraditionalInclude(char *line)
 
 	pp_skip_whitespace(&file);
 
-	(void)Var_Subst(file, SCOPE_CMDLINE, VARE_WANTRES, &all_files);
+	all_files = Var_Subst(file, SCOPE_CMDLINE, VARE_WANTRES);
 	/* TODO: handle errors */
 
 	for (file = all_files; !done; file = cp + 1) {
@@ -2285,7 +2283,7 @@ ParseGmakeExport(char *line)
 	/*
 	 * Expand the value before putting it in the environment.
 	 */
-	(void)Var_Subst(value, SCOPE_CMDLINE, VARE_WANTRES, &value);
+	value = Var_Subst(value, SCOPE_CMDLINE, VARE_WANTRES);
 	/* TODO: handle errors */
 
 	setenv(variable, value, 1);
@@ -2862,7 +2860,7 @@ ParseDependencyLine(char *line)
 	 * Var_Subst.
 	 */
 	emode = opts.strict ? VARE_WANTRES : VARE_UNDEFERR;
-	(void)Var_Subst(line, SCOPE_CMDLINE, emode, &expanded_line);
+	expanded_line = Var_Subst(line, SCOPE_CMDLINE, emode);
 	/* TODO: handle errors */
 
 	/* Need a fresh list for the target nodes */
