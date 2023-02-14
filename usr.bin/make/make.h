@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.313 2023/02/14 21:38:31 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.314 2023/02/14 21:56:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -972,30 +972,6 @@ typedef enum VarSetFlags {
 	 */
 	VAR_SET_READONLY	= 1 << 1
 } VarSetFlags;
-
-/* The state of error handling returned by Var_Parse. */
-typedef enum VarParseResult {
-
-	/* Both parsing and evaluation succeeded. */
-	VPR_OK,
-
-	/* Parsing or evaluating failed, with an error message. */
-	VPR_ERR,
-
-	/*
-	 * Parsing succeeded, undefined expressions are allowed and the
-	 * expression was still undefined after applying all modifiers.
-	 * No error message is printed in this case.
-	 *
-	 * Some callers handle this case differently, so return this
-	 * information to them, for now.
-	 *
-	 * TODO: Instead of having this special return value, rather ensure
-	 *  that VARE_EVAL_KEEP_UNDEF is processed properly.
-	 */
-	VPR_UNDEF
-
-} VarParseResult;
 
 typedef enum VarExportMode {
 	/* .export-env */
