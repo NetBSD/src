@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.31 2023/02/14 18:26:59 jschauma Exp $	*/
+/*	$NetBSD: split.c,v 1.32 2023/02/14 18:58:55 jschauma Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.31 2023/02/14 18:26:59 jschauma Exp $");
+__RCSID("$NetBSD: split.c,v 1.32 2023/02/14 18:58:55 jschauma Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -95,21 +95,21 @@ main(int argc, char *argv[])
 					p = argv[optind] + 1;
 				numlines = strtoull(p, &ep, 10);
 				if (numlines == 0 || *ep != '\0')
-					errx(1, "%s: illegal line count.", p);
+					errx(EXIT_FAILURE, "%s: illegal line count.", p);
 			}
 			break;
 		case 'a':		/* Suffix length. */
 			if (!isdigit((unsigned char)optarg[0]) ||
 			    (sfxlen = (size_t)strtoul(optarg, &ep, 10)) == 0 ||
 			    *ep != '\0')
-				errx(1, "%s: illegal suffix length.", optarg);
+				errx(EXIT_FAILURE, "%s: illegal suffix length.", optarg);
 			autosfx = 0;
 			break;
 		case 'b':		/* Byte count. */
 			if (!isdigit((unsigned char)optarg[0]) ||
 			    (bytecnt = strtoull(optarg, &ep, 10)) == 0 ||
 			    (*ep != '\0' && *ep != 'k' && *ep != 'm'))
-				errx(1, "%s: illegal byte count.", optarg);
+				errx(EXIT_FAILURE, "%s: illegal byte count.", optarg);
 			if (*ep == 'k')
 				bytecnt *= 1024;
 			else if (*ep == 'm')
@@ -121,13 +121,13 @@ main(int argc, char *argv[])
 			if (!isdigit((unsigned char)optarg[0]) ||
 			    (numlines = strtoull(optarg, &ep, 10)) == 0 ||
 			    *ep != '\0')
-				errx(1, "%s: illegal line count.", optarg);
+				errx(EXIT_FAILURE, "%s: illegal line count.", optarg);
 			break;
 		case 'n':		/* Chunks. */
 			if (!isdigit((unsigned char)optarg[0]) ||
 			    (chunks = (size_t)strtoul(optarg, &ep, 10)) == 0 ||
 			    *ep != '\0')
-				errx(1, "%s: illegal number of chunks.", optarg);
+				errx(EXIT_FAILURE, "%s: illegal number of chunks.", optarg);
 			break;
 		default:
 			usage();
@@ -138,7 +138,7 @@ main(int argc, char *argv[])
 	if (*argv != NULL) {
 		if (strcmp(*argv, "-") != 0 &&
 		    (ifd = open(*argv, O_RDONLY, 0)) < 0)
-			err(1, "%s", *argv);
+			err(EXIT_FAILURE, "%s", *argv);
 		++argv;
 	}
 
@@ -187,10 +187,10 @@ split1(off_t bytecnt, int maxcnt)
 	for (bcnt = 0;;)
 		switch (len = read(ifd, bfr, MAXBSIZE)) {
 		case 0:
-			exit(0);
+			exit(EXIT_SUCCESS);
 			/* NOTREACHED */
 		case -1:
-			err(1, "read");
+			err(EXIT_FAILURE, "read");
 			/* NOTREACHED */
 		default:
 			if (!file_open) {
@@ -204,7 +204,7 @@ split1(off_t bytecnt, int maxcnt)
 				/* LINTED: bytecnt - bcnt <= len */
 				dist = bytecnt - bcnt;
 				if (bigwrite(ofd, bfr, dist) != (size_t)dist)
-					err(1, "write");
+					err(EXIT_FAILURE, "write");
 				len -= dist;
 				for (C = bfr + dist; len >= bytecnt;
 				    /* LINTED: bytecnt <= len */
@@ -216,7 +216,7 @@ split1(off_t bytecnt, int maxcnt)
 					/* LINTED: as above */
 					if (bigwrite(ofd,
 					    C, bytecnt) != (size_t)bytecnt)
-						err(1, "write");
+						err(EXIT_FAILURE, "write");
 				}
 				if (len) {
 					if (!maxcnt || (nfiles < maxcnt)) {
@@ -225,7 +225,7 @@ split1(off_t bytecnt, int maxcnt)
 					}
 					/* LINTED: len >= 0 */
 					if (bigwrite(ofd, C, len) != (size_t)len)
-						err(1, "write");
+						err(EXIT_FAILURE, "write");
 				} else
 					file_open = 0;
 				bcnt = len;
@@ -233,7 +233,7 @@ split1(off_t bytecnt, int maxcnt)
 				bcnt += len;
 				/* LINTED: len >= 0 */
 				if (bigwrite(ofd, bfr, len) != (size_t)len)
-					err(1, "write");
+					err(EXIT_FAILURE, "write");
 			}
 		}
 }
@@ -254,10 +254,10 @@ split2(off_t numlines)
 	for (lcnt = 0;;)
 		switch (len = read(ifd, bfr, MAXBSIZE)) {
 		case 0:
-			exit(0);
+			exit(EXIT_SUCCESS);
 			/* NOTREACHED */
 		case -1:
-			err(1, "read");
+			err(EXIT_FAILURE, "read");
 			/* NOTREACHED */
 		default:
 			if (!file_open) {
@@ -268,7 +268,7 @@ split2(off_t numlines)
 				if (*Ce == '\n' && ++lcnt == numlines) {
 					bcnt = Ce - Cs + 1;
 					if (bigwrite(ofd, Cs, bcnt) != (size_t)bcnt)
-						err(1, "write");
+						err(EXIT_FAILURE, "write");
 					lcnt = 0;
 					Cs = Ce + 1;
 					if (len)
@@ -279,7 +279,7 @@ split2(off_t numlines)
 			if (Cs < Ce) {
 				bcnt = Ce - Cs;
 				if (bigwrite(ofd, Cs, bcnt) != (size_t)bcnt)
-					err(1, "write");
+					err(EXIT_FAILURE, "write");
 			}
 		}
 }
@@ -294,12 +294,12 @@ split3(off_t chunks)
 	struct stat sb;
 
 	if (fstat(ifd, &sb) == -1) {
-		err(1, "stat");
+		err(EXIT_FAILURE, "stat");
 		/* NOTREACHED */
 	}
 
 	if (chunks > sb.st_size) {
-		errx(1, "can't split into more than %d files",
+		errx(EXIT_FAILURE, "can't split into more than %d files",
 				(int)sb.st_size);
 		/* NOTREACHED */
 	}
@@ -322,7 +322,7 @@ newfile(void)
 		fpnt = fname + strlen(fname);
 		fpnt[sfxlen] = '\0';
 	} else if (close(ofd) != 0)
-		err(1, "%s", fname);
+		err(EXIT_FAILURE, "%s", fname);
 
 	quot = fnum;
 
@@ -362,10 +362,10 @@ newfile(void)
 		quot = quot / 26;
 	}
 	if (quot > 0)
-		errx(1, "too many files.");
+		errx(EXIT_FAILURE, "too many files.");
 	++fnum;
 	if ((ofd = open(fname, O_WRONLY | O_CREAT | O_TRUNC, DEFFILEMODE)) < 0)
-		err(1, "%s", fname);
+		err(EXIT_FAILURE, "%s", fname);
 }
 
 static size_t
@@ -392,5 +392,5 @@ usage(void)
 	(void)fprintf(stderr,
 "usage: %s [-b byte_count] [-l line_count] [-n chunk_count] [-a suffix_length] "
 "[file [prefix]]\n", getprogname());
-	exit(1);
+	exit(EXIT_FAILURE);
 }
