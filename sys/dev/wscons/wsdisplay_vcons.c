@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.65 2023/02/14 08:14:02 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.66 2023/02/14 08:22:02 macallan Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.65 2023/02/14 08:14:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.66 2023/02/14 08:22:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -478,7 +478,14 @@ vcons_load_font(void *v, void *cookie, struct wsdisplay_font *f)
 		flags |= WSFONT_FIND_ALPHA;
 	}
 
-	fcookie = wsfont_find(f->name, 0, 0, 0, 0, 0, flags);
+	fcookie = wsfont_find(f->name, 0, 0, 0,
+	    /* bitorder */
+	    scr->scr_flags & VCONS_FONT_BITS_R2L ?
+	      WSDISPLAY_FONTORDER_R2L : WSDISPLAY_FONTORDER_L2R,
+	    /* byteorder */
+	    scr->scr_flags & VCONS_FONT_BYTES_R2L ?
+	      WSDISPLAY_FONTORDER_R2L : WSDISPLAY_FONTORDER_L2R,
+	    flags);
 	if (fcookie == -1)
 		return EINVAL;
 
