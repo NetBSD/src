@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.h,v 1.11 2011/12/18 04:29:32 tsutsui Exp $	*/
+/*	$NetBSD: nextrom.h,v 1.11.52.1 2023/02/15 19:28:29 martin Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -233,6 +233,7 @@ void *mon_alloc();
 #define	NeXT_WARP9C	3
 #define NeXT_TURBO_MONO	4
 #define NeXT_TURBO_COLOR 5			/* probed witnessed */
+#define NeXT_CUBE_TURBO	8
 
 #define	ROM_STACK_SIZE	(8192 - 2048)
 
