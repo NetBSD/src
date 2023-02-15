@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.590 2023/02/14 21:38:31 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.591 2023/02/15 06:52:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.590 2023/02/14 21:38:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.591 2023/02/15 06:52:58 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -440,7 +440,7 @@ MainParseArg(char c, const char *argvalue)
 	case 'B':
 		opts.compatMake = true;
 		Global_Append(MAKEFLAGS, "-B");
-		Global_Set(MAKE_MODE, "compat");
+		Global_Set(".MAKE.MODE", "compat");
 		break;
 	case 'C':
 		MainParseArgChdir(argvalue);
@@ -788,7 +788,7 @@ siginfo(int signo MAKE_ATTR_UNUSED)
 static void
 MakeMode(void)
 {
-	char *mode = Var_Subst("${" MAKE_MODE ":tl}",
+	char *mode = Var_Subst("${.MAKE.MODE:tl}",
 	    SCOPE_GLOBAL, VARE_WANTRES);
 	/* TODO: handle errors */
 
@@ -1273,7 +1273,7 @@ ReadFirstDefaultMakefile(void)
 {
 	StringList makefiles = LST_INIT;
 	StringListNode *ln;
-	char *prefs = Var_Subst("${" MAKE_MAKEFILE_PREFERENCE "}",
+	char *prefs = Var_Subst("${.MAKE.MAKEFILE_PREFERENCE}",
 	    SCOPE_CMDLINE, VARE_WANTRES);
 	/* TODO: handle errors */
 
@@ -1352,7 +1352,7 @@ main_Init(int argc, char **argv)
 	/* This is the traditional preference for makefiles. */
 # define MAKEFILE_PREFERENCE_LIST "makefile Makefile"
 #endif
-	Global_Set(MAKE_MAKEFILE_PREFERENCE, MAKEFILE_PREFERENCE_LIST);
+	Global_Set(".MAKE.MAKEFILE_PREFERENCE", MAKEFILE_PREFERENCE_LIST);
 	Global_Set(".MAKE.DEPENDFILE", ".depend");
 
 	CmdOpts_Init();
@@ -1378,7 +1378,7 @@ main_Init(int argc, char **argv)
 	Parse_Init();
 	InitVarMake(argv[0]);
 	Global_Set(MAKEFLAGS, "");
-	Global_Set(MAKEOVERRIDES, "");
+	Global_Set(".MAKEOVERRIDES", "");
 	Global_Set("MFLAGS", "");
 	Global_Set(".ALLTARGETS", "");
 	Var_Set(SCOPE_CMDLINE, ".MAKE.LEVEL.ENV", MAKE_LEVEL_ENV);
@@ -1391,7 +1391,7 @@ main_Init(int argc, char **argv)
 		if (makelevel < 0)
 			makelevel = 0;
 		snprintf(buf, sizeof buf, "%d", makelevel);
-		Global_Set(MAKE_LEVEL, buf);
+		Global_Set(".MAKE.LEVEL", buf);
 		snprintf(buf, sizeof buf, "%u", myPid);
 		Global_Set_ReadOnly(".MAKE.PID", buf);
 		snprintf(buf, sizeof buf, "%u", getppid());
