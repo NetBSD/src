@@ -1,4 +1,4 @@
-/*	$NetBSD: cvslatest.c,v 1.9 2020/11/03 22:21:43 christos Exp $	*/
+/*	$NetBSD: cvslatest.c,v 1.10 2023/02/15 17:00:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cvslatest.c,v 1.9 2020/11/03 22:21:43 christos Exp $");
+__RCSID("$NetBSD: cvslatest.c,v 1.10 2023/02/15 17:00:24 martin Exp $");
 
 /*
  * Find the latest timestamp in a set of CVS trees, by examining the
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: cvslatest.c,v 1.9 2020/11/03 22:21:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -99,6 +100,7 @@ getlatest(const FTSENT *e, const char *repo, struct latest *lat)
 	char *fn, *dt, *p;
 	time_t t;
 	struct tm tm;
+	struct stat sb;
 	FILE *fp;
 
 	snprintf(name, sizeof(name), "%s/Entries", e->fts_accpath);
@@ -116,8 +118,31 @@ getlatest(const FTSENT *e, const char *repo, struct latest *lat)
 		if ((dt = strtok(NULL, "/")) == NULL)
 			goto mal;
 		if (strcmp(dt, "dummy timestamp") == 0) {
-			warnx("Can't get timestamp from uncommitted file `%s'",
-			    ename);
+			warnx("Can't get timestamp from uncommitted file %s in `%s'",
+			    fn, ename);
+			if (!ignore)
+				exit(EXIT_FAILURE);
+			continue;
+		}
+		/*
+		 * This may not be visible in real world, but the cvs code
+		 * has paths that would create this string (mabe server
+		 * side only?)
+		 */
+		if (strcmp(dt, "dummy timestamp from new-entry") == 0) {
+			warnx("Can't get timestamp from uncommitted file %s in `%s'",
+			    fn, ename);
+			if (!ignore)
+				exit(EXIT_FAILURE);
+			continue;
+		}
+		if (strcmp(dt, "Result of merge") == 0) {
+			warnx("Can't get cvs timestamp for localy modified file %s in `%s', using modification time.",
+			    fn, ename);
+			if (fstat(fileno(fp), &sb) == 0) {
+				t = sb.st_mtime;
+				goto compare;
+			}
 			if (!ignore)
 				exit(EXIT_FAILURE);
 			continue;
@@ -132,6 +157,7 @@ getlatest(const FTSENT *e, const char *repo, struct latest *lat)
 		if ((t = mktime(&tm)) == (time_t)-1)
 			errx(EXIT_FAILURE, "Time conversion `%s' in `%s'",
 			    dt, ename);
+compare:
 		if (lat->time == 0 || lat->time < t) {
 			lat->time = t;
 			snprintf(lat->path, sizeof(lat->path),
