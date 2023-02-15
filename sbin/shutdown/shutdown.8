@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.35 2022/07/01 16:58:02 wiz Exp $
+.\"	$NetBSD: shutdown.8,v 1.36 2023/02/15 01:55:16 jschauma Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)shutdown.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd July 1, 2022
+.Dd February 14, 2023
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -49,7 +49,7 @@ saving them from system administrators, hackers, and gurus, who
 would otherwise not bother with such niceties.
 .Pp
 Available friendlinesses:
-.Bl -tag -width bootstr
+.Bl -tag -width b_bootstr_
 .It Fl b Ar bootstr
 The given
 .Ar bootstr
