@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.68.4.1 2023/02/12 11:48:56 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.68.4.2 2023/02/15 19:35:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -113,7 +113,7 @@ GLOBAL(kernel_text)
 
  /*
   * Leave page zero empty so it can be unmapped
-  */     
+  */
 	.space	PAGE_SIZE
 
 /*
@@ -402,7 +402,7 @@ Lpushpc:
 	jbsr	_C_LABEL(pmap_bootstrap_finalize)
 /* set kernel stack, user SP */
 	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area 
+	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 
@@ -445,7 +445,7 @@ Lenab3:
 
 /*
  * Trap/interrupt vector routines
- */ 
+ */
 #include <m68k/m68k/trap_subr.s>
 
 /*
@@ -556,7 +556,7 @@ ENTRY_NOPROFILE(trap0)
 	movw	#SPL1,%sr
 	tstb	_C_LABEL(ssir)
 	jne	Lsir1
-Ltrap1:	
+Ltrap1:
 	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most registers
@@ -814,7 +814,7 @@ Lgotsir:
 	moveml	#0xFFFF,%sp@-		| save all registers
 	movl	%usp,%a1		| including
 	movl	%a1,%sp@(FR_SP)		|    the users SP
-Lsir1:	
+Lsir1:
 	clrl	%sp@-			| VA == none
 	clrl	%sp@-			| code == none
 	movl	#T_SSIR,%sp@-		| type == software interrupt
@@ -841,7 +841,7 @@ Ldorte:
 
 /*
  * Primitives
- */ 
+ */
 
 /*
  * Use common m68k support routines.
@@ -1043,7 +1043,7 @@ Ldoboot1:
 	movel %a0,%d0			| "-h" halts instead of reboot.
 	trap #13
 
-hloop:  
+hloop:
 	bra hloop			| This shouldn't be reached.
 /*
  * Misc. global variables.
@@ -1076,17 +1076,17 @@ GLOBAL(intiobase)
 GLOBAL(intiolimit)
 	.long	INTIOTOP	| KVA of end of internal IO space
 
-GLOBAL(monobase)
-	.long	MONOBASE	| KVA of base of mono FB
+GLOBAL(fbbase)
+	.long	0		| KVA of base of framebuffer
 
-GLOBAL(monolimit)
-	.long	MONOTOP		| KVA of end of mono FB
+GLOBAL(fblimit)
+	.long	0		| KVA of end of framebuffer
 
-GLOBAL(colorbase)
-	.long	COLORBASE	| KVA of base of color FB
+GLOBAL(fbbasepa)
+	.long	MONOBASE	| PA of base of framebuffer
 
-GLOBAL(colorlimit)
-	.long	COLORTOP	| KVA of end of color FB
+GLOBAL(fblimitpa)
+	.long	MONOTOP		| PA of end of framebuffer
 
 ASLOCAL(save_vbr)		| VBR from ROM
 	.long 0xdeadbeef
