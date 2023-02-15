@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.37 2023/02/15 10:31:52 uwe Exp $
+.\"	$NetBSD: shutdown.8,v 1.38 2023/02/15 13:05:21 uwe Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -40,7 +40,7 @@
 .Op Fl Ddfhknprvxz
 .Op Fl b Ar bootstr
 .Ar time
-.Op Ar message ... | Ar -
+.Op Ar message ... No | Fl
 .Sh DESCRIPTION
 .Nm
 provides an automated shutdown procedure for super-users
@@ -69,7 +69,7 @@ or
 to request a kernel core dump.
 If neither the
 .Fl h
-or
+nor
 .Fl r
 flags are specified, then
 .Fl d
@@ -80,8 +80,8 @@ also implies
 arranges, in the manner of
 .Xr fastboot 8 ,
 for the file systems
-.Em not to be
-checked on reboot.
+.Em not to be checked
+on reboot.
 .It Fl h
 The system is halted at the specified
 .Ar time ,
@@ -135,19 +135,19 @@ or
 Prevents
 .Nm
 from detaching from the tty with
-.Xr fork 2 Ns /
-.Xr exit 3 .
+.Xr fork 2 No / Xr exit 3 .
 .It Ar time
-.Ar Time
-is the time at which
+The time at which
 .Nm
 will bring the system down and
 may be the word
-.Ar now
+.Cm now
 or a future time in one of two formats:
-.Ar +number ,
+.Cm + Ns Ar number ,
 or
-.Ar [[[[[cc]yy]mm]dd]hh]mm ,
+.Sm off
+.Oo Oo Oo Oo Oo Ar cc Oc Ar yy Oc Ar mm Oc Ar dd Oc Ar hh Oc Ar mm ,
+.Sm on
 where the century, year, month, day, and hour are two digit decimal
 values, which may be defaulted
 to the current system values.
@@ -158,20 +158,24 @@ The first form brings the system down
 minutes from the current time; the second brings the system down at the
 absolute time specified.
 If the century is not specified, but the year is,
-the century defaults to 2000 (cc==20, the 21st century)
+the century defaults to 2000
+.Po
+.Ar cc No = 20 ,
+the 21st century
+.Pc
 for years between 20 and 99,
 or 2100 for years between 0 and 19.
 A leading zero in the
-.Dq yy
+.Ar yy
 value (as with all the others) is
 .Em not
 optional.
 .It Ar message ...
 Any other arguments comprise the warning message that is broadcast
 to users currently logged into the system.
-.It Ar -
+.It Fl
 If
-.Ar -
+.Fl
 is supplied as the only argument after the time, the warning message is read
 from the standard input.
 .El
@@ -214,13 +218,13 @@ and should be used to tell the users why the system is
 going down, when it will be back up, and to share any other pertinent
 information.
 .Sh FILES
-.Bl -tag -width /etc/rc.shutdown -compact
+.Bl -tag -width Pa -compact
 .It Pa /etc/nologin
-tells
+Tells
 .Xr login 1
 not to let anyone log in
 .It Pa /fastboot
-tells
+Tells
 .Xr rc 8
 not to run
 .Xr fsck 8
@@ -239,7 +243,9 @@ System shutdown commands
 .Xr rescue 8
 .Sh BACKWARD COMPATIBILITY
 The hours and minutes in the second time format may be separated by
-a colon (``:'') for backward compatibility.
+a colon
+.Pq Ql \&:
+for backward compatibility.
 .Sh HISTORY
 A
 .Nm
