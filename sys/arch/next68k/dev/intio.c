@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.16 2021/08/07 16:19:01 thorpej Exp $	*/
+/*	$NetBSD: intio.c,v 1.16.6.1 2023/02/15 19:35:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,14 +34,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.16 2021/08/07 16:19:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.16.6.1 2023/02/15 19:35:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/device.h> 
+#include <sys/device.h>
 #include <sys/reboot.h>
 
 #include <machine/autoconf.h>
+#include <machine/cpu.h>
 
 #include <next68k/dev/intiovar.h>
 
@@ -53,12 +54,6 @@ int	intiosearch(device_t, cfdata_t, const int *, void *);
 CFATTACH_DECL_NEW(intio, 0,
     intiomatch, intioattach, NULL, NULL);
 
-#if 0
-struct cfdriver intio_cd = {
-	NULL, "intio", DV_DULL
-};
-#endif
-
 static bool intio_attached;
 
 int
@@ -66,9 +61,9 @@ intiomatch(device_t parent, cfdata_t match, void *aux)
 {
 	/* Allow only one instance. */
 	if (intio_attached)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 void
@@ -92,24 +87,48 @@ intioprint(void *aux, const char *pnp)
 	if (ia->ia_addr)
 		aprint_normal(" addr %p", ia->ia_addr);
 
-	return (UNCONF);
+	return UNCONF;
 }
 
 int
 intiosearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct mainbus_attach_args *mba = (struct mainbus_attach_args *) aux;
+	struct mainbus_attach_args *mba = aux;
 	struct intio_attach_args ia;
 
 	do {
 		ia.ia_addr = NULL;
 		ia.ia_bst = NEXT68K_INTIO_BUS_SPACE;
 		ia.ia_dmat = mba->mba_dmat;
-		
+
 		if (!config_probe(parent, cf, &ia))
 			break;
 		config_attach(parent, cf, &ia, intioprint, CFARGS_NONE);
 	} while (cf->cf_fstate == FSTATE_STAR);
 
-	return (0);
+	return 0;
+}
+
+int
+bus_space_map(bus_space_tag_t bst, bus_addr_t addr, bus_size_t size,
+    int flags, bus_space_handle_t *bsh)
+{
+
+	if (addr >= INTIOBASE && (addr + size) < INTIOTOP) {
+		*bsh = IIOV(addr);
+		return 0;
+	}
+
+	return EINVAL;
+}
+
+paddr_t
+bus_space_mmap(bus_space_tag_t bst, bus_addr_t addr, off_t offset, int prot,
+    int flags)
+{
+
+	if (addr >= INTIOBASE && (addr + offset) < INTIOTOP)
+		return m68k_btop(addr + offset);
+
+	return -1;
 }

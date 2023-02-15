@@ -1,4 +1,4 @@
-/*	$NetBSD: nextcons.c,v 1.11 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: nextcons.c,v 1.11.90.1 2023/02/15 19:35:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Darrin B. Jewell
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.11 2010/04/24 19:58:13 dbj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.11.90.1 2023/02/15 19:35:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,13 +63,14 @@ void
 nextcnprobe(struct consdev *cp)
 {
 
-	if ((rom_machine_type == NeXT_WARP9)
-	    || (rom_machine_type == NeXT_X15)
-	    || (rom_machine_type == NeXT_WARP9C)
-	    || (rom_machine_type == NeXT_TURBO_MONO)
-	    || (rom_machine_type == NeXT_TURBO_COLOR))
+	if (rom_machine_type == NeXT_WARP9 ||
+	    rom_machine_type == NeXT_X15 ||
+	    rom_machine_type == NeXT_WARP9C ||
+	    rom_machine_type == NeXT_TURBO_MONO ||
+	    rom_machine_type == NeXT_TURBO_COLOR ||
+	    rom_machine_type == NeXT_CUBE_TURBO)
 		cp->cn_pri = CN_INTERNAL;
-	else 
+	else
 		cp->cn_pri = CN_DEAD;
 
 	cp->cn_dev = NODEV;
@@ -78,6 +79,7 @@ nextcnprobe(struct consdev *cp)
 void
 nextcninit(struct consdev *cp)
 {
+
 	nextkbd_cnattach(NEXT68K_INTIO_BUS_SPACE);
 	nextdisplay_cnattach();
 }
@@ -85,17 +87,20 @@ nextcninit(struct consdev *cp)
 int
 nextcngetc (dev_t dev)
 {
+
 	return wskbd_cngetc(dev);
 }
 
 void
 nextcnputc(dev_t dev, int c)
 {
-	wsdisplay_cnputc(dev,c);	
+
+	wsdisplay_cnputc(dev,c);
 }
 
 void
 nextcnpollc(dev_t dev, int on)
 {
+
 	wskbd_cnpollc(dev,on);
 }
