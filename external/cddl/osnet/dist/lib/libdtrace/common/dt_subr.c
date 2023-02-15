@@ -49,6 +49,11 @@
 #include <libgen.h>
 #include <limits.h>
 #include <stdint.h>
+#ifdef __NetBSD__
+#include <sys/cpuio.h>
+#include <stdbool.h>
+#include <paths.h>
+#endif
 
 #include <dt_impl.h>
 
@@ -501,6 +506,27 @@ dt_ioctl(dtrace_hdl_t *dtp, u_long val, void *arg)
 	return (-1);
 }
 
+#ifdef __NetBSD__
+static bool
+cpu_online(processorid_t cpu)
+{
+	cpustate_t cs;
+	int fd, online = false;
+
+	if ((fd = open(_PATH_CPUCTL, O_RDONLY)) < 0)
+		return false;
+
+	cs.cs_id = cpu;
+	if (ioctl(fd, IOC_CPU_GETSTATE, &cs) == 0) {
+		if (cs.cs_online)
+			online = true;
+	}
+
+	close(fd);
+	return online;
+}
+#endif
+
 int
 dt_status(dtrace_hdl_t *dtp, processorid_t cpu)
 {
@@ -509,13 +535,17 @@ dt_status(dtrace_hdl_t *dtp, processorid_t cpu)
 	if (v == NULL) {
 #ifdef illumos
 		return (p_online(cpu, P_STATUS));
-#else
+#endif
+#ifdef __FreeBSD__
 		int maxid = 0;
 		size_t len = sizeof(maxid);
 		if (sysctlbyname("kern.smp.maxid", &maxid, &len, NULL, 0) != 0)
 			return (cpu == 0 ? 1 : -1);
 		else
 			return (cpu <= maxid ? 1 : -1);
+#endif
+#ifdef __NetBSD__
+		return cpu_online(cpu) ? 1 : -1;
 #endif
 	}
 
