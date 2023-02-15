@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vcons.c,v 1.66 2023/02/14 08:22:02 macallan Exp $ */
+/*	$NetBSD: wsdisplay_vcons.c,v 1.67 2023/02/15 13:19:13 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.66 2023/02/14 08:22:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_vcons.c,v 1.67 2023/02/15 13:19:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -354,8 +354,10 @@ vcons_alloc_buffers(struct vcons_data *vd, struct vcons_screen *scr)
 #ifdef VCONS_DRAW_INTR
 	size = ri->ri_cols * ri->ri_rows;
 	if (size > vdp->cells) {
-		if (vdp->chars != NULL) free(vdp->chars, M_DEVBUF);
-		if (vdp->attrs != NULL) free(vdp->attrs, M_DEVBUF);
+		if (vdp->chars != NULL)
+			free(vdp->chars, M_DEVBUF);
+		if (vdp->attrs != NULL)
+			free(vdp->attrs, M_DEVBUF);
 		vdp->cells = size;
 		vdp->chars = malloc(size * sizeof(uint32_t), M_DEVBUF,
 		    M_WAITOK|M_ZERO);
@@ -1253,7 +1255,7 @@ vcons_putchar_buffer(void *cookie, int row, int col, u_int c, long attr)
 	int pos, ret = 0;
 
 	if ((row >= 0) && (row < ri->ri_rows) && (col >= 0) &&
-	     (col < ri->ri_cols)) {
+	    (col < ri->ri_cols)) {
 		pos = col + row * ri->ri_cols;
 		ret = (scr->scr_attrs[pos + offset] != attr) ||
 		      (scr->scr_chars[pos + offset] != c);
@@ -1261,7 +1263,8 @@ vcons_putchar_buffer(void *cookie, int row, int col, u_int c, long attr)
 		scr->scr_chars[pos + offset] = c;
 	}
 
-	if (ret) vcons_dirty(scr);
+	if (ret)
+		vcons_dirty(scr);
 	return ret;
 }
 
@@ -1293,7 +1296,7 @@ vcons_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct rasops_info *ri = cookie;
 	struct vcons_screen *scr = ri->ri_hw;
 	int need_draw;
-	
+
 	need_draw = vcons_putchar_buffer(cookie, row, col, c, attr);
 
 	if (vcons_use_intr(scr))
@@ -1302,7 +1305,8 @@ vcons_putchar(void *cookie, int row, int col, u_int c, long attr)
 	vcons_lock(scr);
 	if (SCREEN_IS_VISIBLE(scr) && SCREEN_CAN_DRAW(scr)) {
 #ifdef VCONS_DRAW_INTR
-		if (need_draw) vcons_putchar_cached(cookie, row, col, c, attr);
+		if (need_draw)
+			vcons_putchar_cached(cookie, row, col, c, attr);
 #else
 		if (row == ri->ri_crow && col == ri->ri_ccol) {
 			ri->ri_flg &= ~RI_CURSOR;
