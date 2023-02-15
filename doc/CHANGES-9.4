@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.50 2023/02/14 16:20:43 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.51 2023/02/15 19:29:45 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -815,4 +815,31 @@ sys/kern/subr_devsw.c				1.50
 	PR 57229: fix devsw_attach(9) to allow the combination of dynamically
 	assigned major numbers and character device only drivers.
 	[buhrow, ticket #1595]
+
+external/cddl/osnet/dist/lib/libdtrace/common/dt_subr.c 1.15
+
+	dtrace: re-fix aggregations to report from all online CPUs.
+	[riastradh, ticket #1596]
+
+sys/arch/next68k/conf/GENERIC			1.155 (patch)
+
+	next68k:  Specify -fno-unwind-tables to shrink kernel binary size.
+	[tsutsui, ticket #1597]
+
+sys/arch/next68k/dev/intio.c			1.17-1.19 (patch)
+sys/arch/next68k/dev/intiovar.h			1.8
+sys/arch/next68k/dev/nextcons.c			1.12-1.14
+sys/arch/next68k/dev/nextdisplay.c		1.26-1.30
+sys/arch/next68k/dev/nextdisplayvar.h		1.6
+sys/arch/next68k/include/bus_space.h		1.18-1.23
+sys/arch/next68k/include/cpu.h			1.52
+sys/arch/next68k/next68k/locore.s		1.69,1.72
+sys/arch/next68k/next68k/nextrom.c		1.28,1.29
+sys/arch/next68k/next68k/nextrom.h		1.13
+sys/arch/next68k/next68k/pmap_bootstrap.c	1.46,1.47
+sys/arch/next68k/stand/boot/boot.c		1.13
+sys/arch/next68k/stand/boot/version		1.6
+
+	next68k: various NeXT Turbo fixes.
+	[tsutsui, ticket #1598]
 
