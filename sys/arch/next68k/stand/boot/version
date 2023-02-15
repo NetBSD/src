@@ -1,7 +1,8 @@
-$NetBSD: version,v 1.4.212.1 2023/02/12 12:22:44 martin Exp $
+$NetBSD: version,v 1.4.212.2 2023/02/15 19:28:29 martin Exp $
 
 1.1:	initial import
 1.3:	Add ELF support
 1.4:	loadfile() update:  ELF symbols no longer need backward seeks.
 1.5:	loadfile() update to avoid backwards seeks for ELF Program Headers.
 1.6:	Fix a bug on DMA reg accesses and a problem on detecting old drives
+1.7:	Add support of NeXT_CUBE_TURBO
