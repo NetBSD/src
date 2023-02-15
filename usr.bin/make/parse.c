@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.694 2023/02/14 21:38:31 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.695 2023/02/15 06:31:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.694 2023/02/14 21:38:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.695 2023/02/15 06:31:51 rillig Exp $");
 
 /*
  * A file being read.
@@ -1882,7 +1882,7 @@ VarAssignSpecial(const char *name, const char *avalue)
 		Dir_SetPATH();
 	} else if (strcmp(name, MAKE_JOB_PREFIX) == 0)
 		Job_SetPrefix();
-	else if (strcmp(name, MAKE_EXPORTED) == 0)
+	else if (strcmp(name, ".MAKE.EXPORTED") == 0)
 		Var_ExportVars(avalue);
 }
 

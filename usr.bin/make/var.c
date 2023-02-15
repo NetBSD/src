@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1044 2023/02/14 21:56:47 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1045 2023/02/15 06:31:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1044 2023/02/14 21:56:47 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1045 2023/02/15 06:31:51 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -521,7 +521,7 @@ Var_Delete(GNode *scope, const char *varname)
 
 	if (v->exported)
 		unsetenv(v->name.str);
-	if (strcmp(v->name.str, MAKE_EXPORTED) == 0)
+	if (strcmp(v->name.str, ".MAKE.EXPORTED") == 0)
 		var_exportedVars = VAR_EXPORTED_NONE;
 
 	assert(v->name.freeIt == NULL);
@@ -719,7 +719,7 @@ Var_ReexportVars(void)
 		return;
 	}
 
-	xvarnames = Var_Subst("${" MAKE_EXPORTED ":O:u}", SCOPE_GLOBAL,
+	xvarnames = Var_Subst("${.MAKE.EXPORTED:O:u}", SCOPE_GLOBAL,
 	    VARE_WANTRES);
 	/* TODO: handle errors */
 	if (xvarnames[0] != '\0') {
@@ -752,7 +752,7 @@ ExportVars(const char *varnames, bool isExport, VarExportMode mode)
 			var_exportedVars = VAR_EXPORTED_SOME;
 
 		if (isExport && mode == VEM_PLAIN)
-			Global_Append(MAKE_EXPORTED, varname);
+			Global_Append(".MAKE.EXPORTED", varname);
 	}
 	Words_Free(words);
 }
@@ -836,8 +836,7 @@ GetVarnamesToUnexport(bool isEnv, const char *arg,
 	}
 
 	if (what != UNEXPORT_NAMED) {
-		/* Using .MAKE.EXPORTED */
-		char *expanded = Var_Subst("${" MAKE_EXPORTED ":O:u}",
+		char *expanded = Var_Subst("${.MAKE.EXPORTED:O:u}",
 		    SCOPE_GLOBAL, VARE_WANTRES);
 		/* TODO: handle errors */
 		varnames = FStr_InitOwn(expanded);
@@ -867,11 +866,11 @@ UnexportVar(Substring varname, UnexportWhat what)
 	if (what == UNEXPORT_NAMED) {
 		/* Remove the variable names from .MAKE.EXPORTED. */
 		/* XXX: v->name is injected without escaping it */
-		char *expr = str_concat3("${" MAKE_EXPORTED ":N",
+		char *expr = str_concat3("${.MAKE.EXPORTED:N",
 		    v->name.str, "}");
 		char *cp = Var_Subst(expr, SCOPE_GLOBAL, VARE_WANTRES);
 		/* TODO: handle errors */
-		Global_Set(MAKE_EXPORTED, cp);
+		Global_Set(".MAKE.EXPORTED", cp);
 		free(cp);
 		free(expr);
 	}
@@ -892,7 +891,7 @@ UnexportVars(FStr *varnames, UnexportWhat what)
 	SubstringWords_Free(words);
 
 	if (what != UNEXPORT_NAMED)
-		Global_Delete(MAKE_EXPORTED);
+		Global_Delete(".MAKE.EXPORTED");
 }
 
 /*
