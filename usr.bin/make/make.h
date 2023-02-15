@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.314 2023/02/14 21:56:47 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.315 2023/02/15 06:31:51 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -612,7 +612,6 @@ extern pid_t myPid;
 #define MAKEOVERRIDES	".MAKEOVERRIDES"
 /* prefix when printing the target of a job */
 #define MAKE_JOB_PREFIX	".MAKE.JOB.PREFIX"
-#define MAKE_EXPORTED	".MAKE.EXPORTED"	/* exported variables */
 #define MAKE_MAKEFILES	".MAKE.MAKEFILES"	/* all loaded makefiles */
 #define MAKE_LEVEL	".MAKE.LEVEL"		/* recursion level */
 #define MAKE_MAKEFILE_PREFERENCE ".MAKE.MAKEFILE_PREFERENCE"
