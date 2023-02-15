@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.148 2019/04/26 21:40:31 sevan Exp $
+# $NetBSD: GENERIC,v 1.148.2.1 2023/02/15 19:19:38 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,9 +22,9 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.148 $"
+#ident 		"GENERIC-$Revision: 1.148.2.1 $"
 
-makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
+makeoptions	COPTS="-O2 -fno-unwind-tables -fno-reorder-blocks"	# see share/mk/sys.mk
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
