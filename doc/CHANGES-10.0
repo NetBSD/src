@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.33 2023/02/14 16:34:41 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.34 2023/02/15 19:36:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1069,4 +1069,33 @@ sys/dev/usb/u3g.c				1.44
 
 	u3g: add support for ZTE MF112 and D-Link DWM222 3G USB modems.
 	[manu, ticket #85]
+
+sys/arch/vax/vsa/maskbits.h			1.1
+sys/arch/vax/vsa/smg.c				1.64
+sys/dev/ic/dc503reg.h				1.1
+
+	vax: smg(4) enhanced framebuffer driver for VS3100.
+	[tsutsui, ticket #86]
+
+sys/arch/next68k/conf/GENERIC			1.155
+
+	next68k:  Specify -fno-unwind-tables to shrink kernel binary size.
+	[tsutsui, ticket #87]
+
+sys/arch/next68k/dev/intio.c			1.17-1.19
+sys/arch/next68k/dev/intiovar.h			1.8
+sys/arch/next68k/dev/nextcons.c			1.12-1.14
+sys/arch/next68k/dev/nextdisplay.c		1.26-1.30
+sys/arch/next68k/dev/nextdisplayvar.h		1.6
+sys/arch/next68k/include/bus_space.h		1.21-1.23
+sys/arch/next68k/include/cpu.h			1.52
+sys/arch/next68k/next68k/locore.s		1.69,1.72
+sys/arch/next68k/next68k/nextrom.c		1.28,1.29
+sys/arch/next68k/next68k/nextrom.h		1.13
+sys/arch/next68k/next68k/pmap_bootstrap.c	1.46,1.47
+sys/arch/next68k/stand/boot/boot.c		1.13
+sys/arch/next68k/stand/boot/version		1.6
+
+	next68k: various NeXT Turbo fixes.
+	[tsutsui, ticket #88]
 
