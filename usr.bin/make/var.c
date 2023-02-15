@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1045 2023/02/15 06:31:51 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1046 2023/02/15 06:52:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1045 2023/02/15 06:31:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1046 2023/02/15 06:52:58 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1001,7 +1001,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 
 		/*
 		 * If requested, don't export these in the environment
-		 * individually.  We still put them in MAKEOVERRIDES so
+		 * individually.  We still put them in .MAKEOVERRIDES so
 		 * that the command-line settings continue to override
 		 * Makefile settings.
 		 */
@@ -1013,7 +1013,7 @@ Var_SetWithFlags(GNode *scope, const char *name, const char *val,
 		 * in ExportVarPlain?
 		 */
 
-		Global_Append(MAKEOVERRIDES, name);
+		Global_Append(".MAKEOVERRIDES", name);
 	}
 
 	if (name[0] == '.' && strcmp(name, MAKE_SAVE_DOLLARS) == 0)

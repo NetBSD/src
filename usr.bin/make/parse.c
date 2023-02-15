@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.695 2023/02/15 06:31:51 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.696 2023/02/15 06:52:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.695 2023/02/15 06:31:51 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.696 2023/02/15 06:52:58 rillig Exp $");
 
 /*
  * A file being read.
@@ -1870,7 +1870,7 @@ VarAssign_Eval(const char *name, VarAssignOp op, const char *uvalue,
 static void
 VarAssignSpecial(const char *name, const char *avalue)
 {
-	if (strcmp(name, MAKEOVERRIDES) == 0)
+	if (strcmp(name, ".MAKEOVERRIDES") == 0)
 		Main_ExportMAKEFLAGS(false);	/* re-export MAKEFLAGS */
 	else if (strcmp(name, ".CURDIR") == 0) {
 		/*
@@ -1880,7 +1880,7 @@ VarAssignSpecial(const char *name, const char *avalue)
 		 */
 		Dir_InitCur(avalue);
 		Dir_SetPATH();
-	} else if (strcmp(name, MAKE_JOB_PREFIX) == 0)
+	} else if (strcmp(name, ".MAKE.JOB.PREFIX") == 0)
 		Job_SetPrefix();
 	else if (strcmp(name, ".MAKE.EXPORTED") == 0)
 		Var_ExportVars(avalue);
@@ -2146,8 +2146,8 @@ VarContainsWord(const char *varname, const char *word)
 static void
 TrackInput(const char *name)
 {
-	if (!VarContainsWord(MAKE_MAKEFILES, name))
-		Global_Append(MAKE_MAKEFILES, name);
+	if (!VarContainsWord(".MAKE.MAKEFILES", name))
+		Global_Append(".MAKE.MAKEFILES", name);
 }
 
 

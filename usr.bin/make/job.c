@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.458 2023/02/14 21:38:31 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.459 2023/02/15 06:52:58 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -142,7 +142,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.458 2023/02/14 21:38:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.459 2023/02/15 06:52:58 rillig Exp $");
 
 /*
  * A shell defines how the commands are run.  All commands for a target are
@@ -2196,11 +2196,11 @@ Job_SetPrefix(void)
 {
 	if (targPrefix != NULL) {
 		free(targPrefix);
-	} else if (!Var_Exists(SCOPE_GLOBAL, MAKE_JOB_PREFIX)) {
-		Global_Set(MAKE_JOB_PREFIX, "---");
+	} else if (!Var_Exists(SCOPE_GLOBAL, ".MAKE.JOB.PREFIX")) {
+		Global_Set(".MAKE.JOB.PREFIX", "---");
 	}
 
-	targPrefix = Var_Subst("${" MAKE_JOB_PREFIX "}",
+	targPrefix = Var_Subst("${.MAKE.JOB.PREFIX}",
 	    SCOPE_GLOBAL, VARE_WANTRES);
 	/* TODO: handle errors */
 }
