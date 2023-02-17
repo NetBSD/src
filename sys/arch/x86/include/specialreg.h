@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.202 2023/02/14 15:46:06 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.203 2023/02/17 09:53:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -868,6 +868,7 @@
 #define CPUID_CAPEX_CLZERO	   __BIT(0)  /* CLZERO instruction */
 #define CPUID_CAPEX_IRPERF	   __BIT(1)  /* InstRetCntMsr */
 #define CPUID_CAPEX_XSAVEERPTR	   __BIT(2)  /* RstrFpErrPtrs by XRSTOR */
+#define CPUID_CAPEX_INVLPGB	   __BIT(3)  /* INVLPGB instruction */
 #define CPUID_CAPEX_RDPRU	   __BIT(4)  /* RDPRU instruction */
 #define CPUID_CAPEX_MBE		   __BIT(6)  /* Memory Bandwidth Enforcement */
 #define CPUID_CAPEX_MCOMMIT	   __BIT(8)  /* MCOMMIT instruction */
@@ -890,7 +891,7 @@
 #define CPUID_CAPEX_BTC_NO	   __BIT(29) /* Branch Type Confusion NO */
 
 #define CPUID_CAPEX_FLAGS	"\20"					   \
-	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"			   \
+	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"	"\4INVLPGB"	   \
 	"\5RDPRU"			"\7MBE"				   \
 	"\11MCOMMIT"	"\12WBNOINVD"	"\13B10"			   \
 	"\15IBPB"	"\16INT_WBINVD"	"\17IBRS"	"\20STIBP"	   \
