@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.89 2022/10/29 07:32:54 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.90 2023/02/17 06:24:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.89 2022/10/29 07:32:54 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.90 2023/02/17 06:24:26 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -564,7 +564,7 @@ mp_vstart:
 END(cpu_mpstart)
 
 toomanycpus:
-	CPU_DPRINT("too many cpus, or MPIDR not exists in cpu_mpidr[]\n")
+	CPU_DPRINT("too many cpus, or MPIDR does not exist in cpu_mpidr[]\n")
 1:	wfi
 	b	1b
 
