@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.21.4.2 2019/09/13 06:51:58 martin Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.21.4.3 2023/02/17 17:41:24 martin Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.21.4.2 2019/09/13 06:51:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.21.4.3 2023/02/17 17:41:24 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -104,6 +104,7 @@ static const struct usb_devno urndis_devs[] = {
 	{ USB_VENDOR_HTC,	USB_PRODUCT_HTC_ANDROID },
 	{ USB_VENDOR_SAMSUNG,	USB_PRODUCT_SAMSUNG_ANDROID2 },
 	{ USB_VENDOR_SAMSUNG,	USB_PRODUCT_SAMSUNG_ANDROID },
+	{ USB_VENDOR_ONEPLUS,	USB_PRODUCT_ONEPLUS_A5010 }
 };
 
 static usbd_status
