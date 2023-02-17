@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.266 2020/08/27 14:11:57 riastradh Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.267 2023/02/17 06:14:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #define __COMPAT_SYSCTL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.266 2020/08/27 14:11:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.267 2023/02/17 06:14:11 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -203,7 +203,7 @@ sysctl_copyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 	} else {
 		error = kcopy(kaddr, uaddr, len);
 	}
-	
+
 	return error;
 }
 
@@ -2147,7 +2147,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 				/*
 				 * allow first caller to *set* a
 				 * description actually to set it
-				 * 
+				 *
 				 * discard const here so we can attach
 				 * the description
 				 */
