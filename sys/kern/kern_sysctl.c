@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.267 2023/02/17 06:14:11 skrll Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.268 2023/02/17 06:20:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #define __COMPAT_SYSCTL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.267 2023/02/17 06:14:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.268 2023/02/17 06:20:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -1228,9 +1228,16 @@ int
 sysctl_create(SYSCTLFN_ARGS)
 {
 	const struct sysctlnode *node;
-	int k, rc, ni, nl = namelen + (name - oname);
+	int k, v, rc, ni, nl = namelen + (name - oname);
+	struct sysctlnode nnode;
 
-	node = newp;
+	if (newp == NULL)
+		return EINVAL;
+	int error = sysctl_cvt_in(l, &v, newp, newlen, &nnode);
+	if (error)
+		return error;
+
+	node = &nnode;
 
 	printf("namelen %d (", nl);
 	for (ni = 0; ni < nl - 1; ni++)
