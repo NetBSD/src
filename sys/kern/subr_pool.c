@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.285 2022/07/16 10:20:21 simonb Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.286 2023/02/17 06:34:46 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.285 2022/07/16 10:20:21 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.286 2023/02/17 06:34:46 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -3317,7 +3317,7 @@ pool_allocated(struct pool *pp, struct pool_item_header *ph, uintptr_t addr)
 		unsigned int idx = pr_item_bitmap_index(pp, ph, (void *)addr);
 		pool_item_bitmap_t *bitmap =
 		    ph->ph_bitmap + (idx / BITMAP_SIZE);
-		pool_item_bitmap_t mask = 1 << (idx & BITMAP_MASK);
+		pool_item_bitmap_t mask = 1U << (idx & BITMAP_MASK);
 
 		return (*bitmap & mask) == 0;
 	} else {
