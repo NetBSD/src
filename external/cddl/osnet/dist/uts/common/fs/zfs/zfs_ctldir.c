@@ -1842,6 +1842,7 @@ const struct vnodeopv_entry_desc zfs_sfsop_entries[] = {
 	{ &vop_putpages_desc,		genfs_null_putpages },
 	{ &vop_islocked_desc,		genfs_islocked },
 	{ &vop_print_desc,		sfs_print },
+	{ &vop_pathconf_desc,		genfs_pathconf },
 	{ NULL, NULL }
 };
 
