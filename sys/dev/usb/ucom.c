@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.134 2022/10/26 23:48:43 riastradh Exp $	*/
+/*	$NetBSD: ucom.c,v 1.135 2023/02/17 23:38:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.134 2022/10/26 23:48:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.135 2023/02/17 23:38:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1446,18 +1446,8 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 
 	if (status == USBD_CANCELLED || status == USBD_IOERROR ||
 	    sc->sc_closing) {
-
 		DPRINTF("... done (status %jd closing %jd)",
 		    status, sc->sc_closing, 0, 0);
-
-		if (status == USBD_IOERROR || sc->sc_closing) {
-			/* Send something to wake upper layer */
-			(tp->t_linesw->l_rint)('\n', tp);
-			ttylock(tp);	/* XXX */
-			ttwakeup(tp);
-			ttyunlock(tp);	/* XXX */
-		}
-
 		mutex_exit(&sc->sc_lock);
 		return;
 	}
