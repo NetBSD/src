@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.51 2023/02/15 19:29:45 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.52 2023/02/17 17:42:21 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -842,4 +842,13 @@ sys/arch/next68k/stand/boot/version		1.6
 
 	next68k: various NeXT Turbo fixes.
 	[tsutsui, ticket #1598]
+
+share/man/man4/urndis.4				1.11
+sys/dev/usb/if_urndis.c				1.48
+sys/dev/usb/usbdevs				1.807
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	urndis(4): Add OnePlus 5T to the quirky devices list.
+	[nia, ticket #1599]
 
