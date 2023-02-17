@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.135 2023/02/17 23:38:54 riastradh Exp $	*/
+/*	$NetBSD: ucom.c,v 1.136 2023/02/17 23:44:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.135 2023/02/17 23:38:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.136 2023/02/17 23:44:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1435,7 +1435,6 @@ static void
 ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 {
 	struct ucom_softc *sc = (struct ucom_softc *)p;
-	struct tty *tp = sc->sc_tty;
 	struct ucom_buffer *ub;
 	uint32_t cc;
 	u_char *cp;
