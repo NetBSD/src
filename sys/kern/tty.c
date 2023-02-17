@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.307 2022/10/26 23:41:49 riastradh Exp $	*/
+/*	$NetBSD: tty.c,v 1.308 2023/02/17 23:13:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.307 2022/10/26 23:41:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.308 2023/02/17 23:13:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2195,19 +2195,17 @@ ttread(struct tty *tp, struct uio *uio, int flag)
 static int
 ttycheckoutq_wlock(struct tty *tp, int wait)
 {
-	int	hiwat, error;
+	int	hiwat;
 
 	KASSERT(mutex_owned(&tty_lock));
 
+	KASSERT(wait == 0);
+
 	hiwat = tp->t_hiwat;
 	if (tp->t_outq.c_cc > hiwat + 200)
-		while (tp->t_outq.c_cc > hiwat) {
+		if (tp->t_outq.c_cc > hiwat) {
 			ttstart(tp);
-			if (wait == 0)
-				return (0);
-			error = ttysleep(tp, &tp->t_outcv, true, hz);
-			if (error == EINTR)
-				wait = 0;
+			return (0);
 		}
 
 	return (1);
