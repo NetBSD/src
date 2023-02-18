@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.218 2022/10/26 23:23:52 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.219 2023/02/18 14:04:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.218 2022/10/26 23:23:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.219 2023/02/18 14:04:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -809,6 +809,8 @@ static void itimer_callout(void *);
 static void
 itimer_arm_real(struct itimer * const it)
 {
+	KASSERT(!it->it_dying);
+
 	/*
 	 * Don't need to check tshzto() return value, here.
 	 * callout_reset() does it for us.
