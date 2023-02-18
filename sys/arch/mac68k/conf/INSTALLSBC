@@ -1,4 +1,4 @@
-# $NetBSD: INSTALLSBC,v 1.32 2008/03/27 20:00:24 hauke Exp $
+# $NetBSD: INSTALLSBC,v 1.33 2023/02/18 13:28:05 nat Exp $
 #
 # INSTALLSBC machine description file
 
@@ -12,7 +12,8 @@ include		"arch/mac68k/conf/INSTALL"
 
 no ncrscsi0				# SCSI NCR 5380
 
-# SBC_PDMA      0x01    Use PDMA for polled transfers
-# SBC_INTR      0x02    Allow SCSI IRQ/DRQ interrupts
-# SBC_RESELECT  0x04    Allow disconnect/reselect
+# SBC_PDMA		0x01    Use PDMA for polled transfers
+# SBC_INTR		0x02    Allow SCSI IRQ/DRQ interrupts
+# SBC_RESELECT		0x04    Allow disconnect/reselect
+# SBC_PDMA_NO_WRITE	0x08    Disallow PDMA for writing
 sbc0	at obio? addr 0 flags 0x1	# MI SCSI NCR 5380
