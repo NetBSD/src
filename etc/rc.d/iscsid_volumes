@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: iscsid_volumes,v 1.2 2023/02/06 11:53:03 martin Exp $
+# $NetBSD: iscsid_volumes,v 1.3 2023/02/18 07:51:52 mlelstv Exp $
 #
 
 # PROVIDE: iscsid_volumes
@@ -20,7 +20,7 @@ iscsid_volumes_start()
 
 	while read host target digest auth user alias; do
 		case $host in
-		\#*) ;;
+		\#*|"") ;;
 		*)
 			topts=''
 			case $digest in
@@ -33,13 +33,15 @@ iscsid_volumes_start()
 			pass="-"
 			mpass="-"
 
-			while read entry dummy; do
-				case $entry in
-				\#*) ;;
-				"$user":*) pass=${entry#*:} ;;
-				"$target":*) mpass=${entry#*:} ;;
-				esac
-			done < /etc/iscsi/auths
+			if [ -f /etc/iscsi/auths ]; then
+				while read entry dummy; do
+					case $entry in
+					\#*|"") ;;
+					"$user":*) pass=${entry#*:} ;;
+					"$target":*) mpass=${entry#*:} ;;
+					esac
+				done < /etc/iscsi/auths
+			fi
 
 			case $host in
 			*:*)
@@ -82,7 +84,7 @@ iscsid_volumes_stop()
 
 	while read host target digest auth user alias; do
 		case $host in
-		\#*) ;;
+		\#*|"") ;;
 		*)
 			echo "Remove target ${alias:-$target}"
 
