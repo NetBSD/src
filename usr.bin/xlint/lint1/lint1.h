@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.161 2023/01/21 13:07:22 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.162 2023/02/18 15:14:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -457,9 +457,6 @@ typedef struct {
 } range_t;
 
 #include "externs1.h"
-
-#define INTERNAL_ERROR(fmt, args...) \
-	internal_error(__FILE__, __LINE__, fmt, ##args)
 
 #define lint_assert(cond)						\
 	do {								\
