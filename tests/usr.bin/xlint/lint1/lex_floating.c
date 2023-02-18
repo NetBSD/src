@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_floating.c,v 1.2 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: lex_floating.c,v 1.3 2023/02/18 14:32:32 rillig Exp $	*/
 # 3 "lex_floating.c"
 
 /*
@@ -33,4 +33,10 @@ void
 test_long_double(void)
 {
 	sinkl(2.2250738585072012e-308L);
+}
+
+void
+test_hex(void)
+{
+	sinkd(0x1.cp4);
 }
