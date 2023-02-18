@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.150 2023/02/18 14:44:51 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.151 2023/02/18 15:05:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.150 2023/02/18 14:44:51 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.151 2023/02/18 15:05:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -463,23 +463,14 @@ lex_name(const char *yytext, size_t yyleng)
 int
 lex_integer_constant(const char *yytext, size_t yyleng, int base)
 {
-	int	l_suffix, u_suffix;
-	size_t	len;
-	const	char *cp;
-	char	c, *eptr;
-	tspec_t	typ;
-	bool	ansiu;
-	bool	warned = false;
-	uint64_t uq = 0;
-
 	/* C11 6.4.4.1p5 */
 	static const tspec_t suffix_type[2][3] = {
 		{ INT,  LONG,  QUAD, },
 		{ UINT, ULONG, UQUAD, }
 	};
 
-	cp = yytext;
-	len = yyleng;
+	const char *cp = yytext;
+	size_t len = yyleng;
 
 	/* skip 0[xX] or 0[bB] */
 	if (base == 16 || base == 2) {
@@ -488,9 +479,10 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	}
 
 	/* read suffixes */
-	l_suffix = u_suffix = 0;
+	unsigned l_suffix = 0, u_suffix = 0;
 	for (;; len--) {
-		if ((c = cp[len - 1]) == 'l' || c == 'L')
+		char c = cp[len - 1];
+		if (c == 'l' || c == 'L')
 			l_suffix++;
 		else if (c == 'u' || c == 'U')
 			u_suffix++;
@@ -505,14 +497,16 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		if (u_suffix > 1)
 			u_suffix = 1;
 	}
-	if (!allow_c90 && u_suffix != 0) {
+	if (!allow_c90 && u_suffix > 0) {
 		/* suffix U is illegal in traditional C */
 		warning(97);
 	}
-	typ = suffix_type[u_suffix][l_suffix];
+	tspec_t typ = suffix_type[u_suffix][l_suffix];
 
+	bool warned = false;
 	errno = 0;
-	uq = (uint64_t)strtoull(cp, &eptr, base);
+	char *eptr;
+	uint64_t uq = (uint64_t)strtoull(cp, &eptr, base);
 	lint_assert(eptr == cp + len);
 	if (errno != 0) {
 		/* integer constant out of range */
@@ -524,7 +518,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	 * If the value is too big for the current type, we must choose
 	 * another type.
 	 */
-	ansiu = false;
+	bool ansiu = false;
 	switch (typ) {
 	case INT:
 		if (uq <= TARG_INT_MAX) {
@@ -543,7 +537,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		if (typ == UINT || typ == ULONG) {
 			if (!allow_c90) {
 				typ = LONG;
-			} else if (allow_trad || allow_c99) {
+			} else if (allow_trad) {
 				/*
 				 * Remember that the constant is unsigned
 				 * only in ANSI C.
@@ -631,18 +625,15 @@ convert_integer(int64_t q, tspec_t t, unsigned int len)
 int
 lex_floating_constant(const char *yytext, size_t yyleng)
 {
-	const	char *cp;
-	size_t	len;
-	tspec_t typ;
-	char	c, *eptr;
-
-	cp = yytext;
-	len = yyleng;
+	const char *cp = yytext;
+	size_t len = yyleng;
 
 	if (cp[len - 1] == 'i')
 		len--;		/* imaginary, do nothing for now */
 
-	if ((c = cp[len - 1]) == 'f' || c == 'F') {
+	char c = cp[len - 1];
+	tspec_t typ;
+	if (c == 'f' || c == 'F') {
 		typ = FLOAT;
 		len--;
 	} else if (c == 'l' || c == 'L') {
@@ -660,6 +651,7 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 	}
 
 	errno = 0;
+	char *eptr;
 	long double ld = strtold(cp, &eptr);
 	lint_assert(eptr == cp + len);
 	if (errno != 0)
