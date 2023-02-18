@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1046 2023/02/15 06:52:58 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1047 2023/02/18 11:16:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1046 2023/02/15 06:52:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1047 2023/02/18 11:16:09 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -328,6 +328,7 @@ static VarExportedMode var_exportedVars = VAR_EXPORTED_NONE;
 
 static const char VarEvalMode_Name[][32] = {
 	"parse-only",
+	"parse-balanced",
 	"eval",
 	"eval-defined",
 	"eval-keep-dollar",
@@ -2143,31 +2144,23 @@ ParseModifierPartExpr(const char **pp, LazyBuf *part, const ModChain *ch,
 	FStr nested_val = Var_Parse(&p, ch->expr->scope,
 	    VarEvalMode_WithoutKeepDollar(emode));
 	/* TODO: handle errors */
-	LazyBuf_AddStr(part, nested_val.str);
+	if (VarEvalMode_ShouldEval(emode))
+		LazyBuf_AddStr(part, nested_val.str);
+	else
+		LazyBuf_AddSubstring(part, Substring_Init(*pp, p));
 	FStr_Done(&nested_val);
 	*pp = p;
 }
 
 /*
- * In a part of a modifier, parse a subexpression but don't evaluate it.
- *
- * XXX: This whole block is very similar to Var_Parse with VARE_PARSE_ONLY.
- * There may be subtle edge cases though that are not yet covered in the unit
- * tests and that are parsed differently, depending on whether they are
- * evaluated or not.
- *
- * This subtle difference is not documented in the manual page, neither is
- * the difference between parsing ':D' and ':M' documented.  No code should
- * ever depend on these details, but who knows.
- *
- * TODO: Before trying to replace this code with Var_Parse, there need to be
- * more unit tests in varmod-loop.mk.  The modifier ':@' uses Var_Subst
- * internally, in which a '$' is escaped as '$$', not as '\$' like in other
- * modifiers.  When parsing the body text '$${var}', skipping over the first
- * '$' would treat '${var}' as a make expression, not as a shell variable.
+ * In a part of a modifier, parse some text that looks like a subexpression.
+ * If the text starts with '$(', any '(' and ')' must be balanced.
+ * If the text starts with '${', any '{' and '}' must be balanced.
+ * If the text starts with '$', that '$' is copied, it is not parsed as a
+ * short-name variable expression.
  */
 static void
-ParseModifierPartDollar(const char **pp, LazyBuf *part)
+ParseModifierPartBalanced(const char **pp, LazyBuf *part)
 {
 	const char *p = *pp;
 	const char *start = *pp;
@@ -2234,10 +2227,10 @@ ParseModifierPartSubst(
 			else
 				LazyBuf_Add(part, *p);
 			p++;
-		} else if (VarEvalMode_ShouldEval(emode))
-			ParseModifierPartExpr(&p, part, ch, emode);
+		} else if (emode == VARE_PARSE_BALANCED)
+			ParseModifierPartBalanced(&p, part);
 		else
-			ParseModifierPartDollar(&p, part);
+			ParseModifierPartExpr(&p, part, ch, emode);
 	}
 
 	if (*p != delim) {
@@ -2437,7 +2430,7 @@ ApplyModifier_Loop(const char **pp, ModChain *ch)
 		return AMR_CLEANUP;
 	}
 
-	if (!ParseModifierPart(pp, '@', VARE_PARSE_ONLY, ch, &strBuf))
+	if (!ParseModifierPart(pp, '@', VARE_PARSE_BALANCED, ch, &strBuf))
 		return AMR_CLEANUP;
 	str = LazyBuf_DoneGet(&strBuf);
 	args.body = str.str;
