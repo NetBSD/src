@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.316 2023/02/15 06:52:58 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.317 2023/02/18 11:16:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -910,6 +910,14 @@ typedef enum VarEvalMode {
 	 *  As of 2021-03-15, they return unspecified, inconsistent results.
 	 */
 	VARE_PARSE_ONLY,
+
+	/*
+	 * Parse text in which '${...}' and '$(...)' are not parsed as
+	 * subexpressions (with all their individual escaping rules) but
+	 * instead simply as text with balanced '${}' or '$()'.  Other '$'
+	 * are copied verbatim.
+	 */
+	VARE_PARSE_BALANCED,
 
 	/* Parse and evaluate the expression. */
 	VARE_WANTRES,

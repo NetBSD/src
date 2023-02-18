@@ -1,4 +1,4 @@
-# $NetBSD: varmod-loop.mk,v 1.21 2022/08/23 21:13:46 rillig Exp $
+# $NetBSD: varmod-loop.mk,v 1.22 2023/02/18 11:16:09 rillig Exp $
 #
 # Tests for the :@var@...${var}...@ variable modifier.
 
@@ -192,15 +192,14 @@ CMDLINE=	global		# needed for deleting the environment
 # except for '$i', which is replaced with the then-current value '1' of the
 # iteration variable.
 #
-# XXX: was broken in var.c 1.1028 from 2022-08-08, reverted in var.c 1.1029
-# from 2022-08-23; see parse-var.mk, keyword 'BRACE_GROUP'.
+# See parse-var.mk, keyword 'BRACE_GROUP'.
 all: varmod-loop-literal-dollar
 varmod-loop-literal-dollar: .PHONY
 	: ${:U1:@i@ t=$$(( $${t:-0} + $i ))@}
 
 
 # When parsing the loop body, each '\$', '\@' and '\\' is unescaped to '$',
-# '@' and '\'; all other backslashes are retained.
+# '@' and '\', respectively; all other backslashes are retained.
 #
 # In practice, the '$' is not escaped as '\$', as there is a second round of
 # unescaping '$$' to '$' later when the loop body is expanded after setting the
