@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.147 2023/01/29 18:37:20 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.148 2023/02/18 15:18:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.147 2023/01/29 18:37:20 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.148 2023/02/18 15:18:49 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -150,9 +150,6 @@ bool	bitfieldtype_ok;
  */
 bool	quadflg;
 
-/*
- * Puts a new element at the top of the stack used for control statements.
- */
 void
 begin_control_statement(control_statement_kind kind)
 {
@@ -164,9 +161,6 @@ begin_control_statement(control_statement_kind kind)
 	cstmt = cs;
 }
 
-/*
- * Removes the top element of the stack used for control statements.
- */
 void
 end_control_statement(control_statement_kind kind)
 {
