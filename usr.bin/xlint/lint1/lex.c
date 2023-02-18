@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.149 2023/02/18 14:32:32 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.150 2023/02/18 14:44:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.149 2023/02/18 14:32:32 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.150 2023/02/18 14:44:51 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -635,7 +635,6 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 	size_t	len;
 	tspec_t typ;
 	char	c, *eptr;
-	double	d;
 
 	cp = yytext;
 	len = yyleng;
@@ -660,26 +659,32 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 		warning(98);
 	}
 
-	/* TODO: Handle precision and exponents of 'long double'. */
 	errno = 0;
-	d = strtod(cp, &eptr);
+	long double ld = strtold(cp, &eptr);
 	lint_assert(eptr == cp + len);
 	if (errno != 0)
 		/* floating-point constant out of range */
 		warning(248);
 
 	if (typ == FLOAT) {
-		d = (float)d;
-		if (isfinite(d) == 0) {
+		ld = (float)ld;
+		if (isfinite(ld) == 0) {
 			/* floating-point constant out of range */
 			warning(248);
-			d = d > 0 ? FLT_MAX : -FLT_MAX;
+			ld = ld > 0 ? FLT_MAX : -FLT_MAX;
+		}
+	} else if (typ == DOUBLE) {
+		ld = (double)ld;
+		if (isfinite(ld) == 0) {
+			/* floating-point constant out of range */
+			warning(248);
+			ld = ld > 0 ? DBL_MAX : -DBL_MAX;
 		}
 	}
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = typ;
-	yylval.y_val->v_ldbl = d;
+	yylval.y_val->v_ldbl = ld;
 
 	return T_CON;
 }
