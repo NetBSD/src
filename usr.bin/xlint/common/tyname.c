@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.53 2022/07/03 14:35:54 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.54 2023/02/18 15:14:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,26 +35,18 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.53 2022/07/03 14:35:54 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.54 2023/02/18 15:14:11 rillig Exp $");
 #endif
 
+#include <assert.h>
 #include <limits.h>
 #include <string.h>
 #include <stdlib.h>
-#include <err.h>
 
 #if defined(IS_LINT1)
 #include "lint1.h"
 #else
 #include "lint2.h"
-#endif
-
-#ifndef INTERNAL_ERROR
-#define INTERNAL_ERROR(fmt, args...) \
-	do { \
-		(void)warnx("%s, %d: " fmt, __FILE__, __LINE__, ##args); \
-		abort(); \
-	} while (false)
 #endif
 
 /* A tree of strings. */
@@ -151,8 +143,7 @@ const char *
 tspec_name(tspec_t t)
 {
 	const char *name = ttab[t].tt_name;
-	if (name == NULL)
-		INTERNAL_ERROR("tspec_name(%d)", t);
+	assert(name != NULL);
 	return name;
 }
 
