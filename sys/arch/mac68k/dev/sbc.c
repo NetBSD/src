@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.57 2018/09/03 16:29:25 riastradh Exp $	*/
+/*	$NetBSD: sbc.c,v 1.58 2023/02/18 13:17:45 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.57 2018/09/03 16:29:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.58 2023/02/18 13:17:45 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -249,7 +249,9 @@ sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 	int resid, s;
 
 	if (datalen < ncr_sc->sc_min_dma_len ||
-	    (sc->sc_options & SBC_PDMA) == 0)
+	    (sc->sc_options & SBC_PDMA) == 0 ||
+	    (ncr_sc->sc_current != NULL &&
+	    (ncr_sc->sc_current->sr_xs->xs_control & XS_CTL_POLL)))
 		return ncr5380_pio_in(ncr_sc, phase, datalen, data);
 
 	s = splbio();
@@ -315,7 +317,9 @@ sbc_pdma_out(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 #endif
 
 	if (datalen < ncr_sc->sc_min_dma_len ||
-	    (sc->sc_options & SBC_PDMA) == 0)
+	    (sc->sc_options & SBC_PDMA) == 0 ||
+	    (ncr_sc->sc_current != NULL &&
+	    (ncr_sc->sc_current->sr_xs->xs_control & XS_CTL_POLL)))
 		return ncr5380_pio_out(ncr_sc, phase, datalen, data);
 
 	s = splbio();
