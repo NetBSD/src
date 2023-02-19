@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.187 2023/02/18 15:21:34 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.188 2023/02/19 19:27:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.187 2023/02/18 15:21:34 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.188 2023/02/19 19:27:01 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -498,19 +498,15 @@ msglist(void)
 static const char *
 lbasename(const char *path)
 {
-	const char *p, *base, *dir;
 
 	if (Fflag)
 		return path;
 
-	p = base = dir = path;
-	while (*p != '\0') {
-		if (*p++ == '/') {
-			dir = base;
-			base = p;
-		}
-	}
-	return *base != '\0' ? base : dir;
+	const char *base = path;
+	for (const char *p = path; *p != '\0'; p++)
+		if (*p == '/')
+			base = p + 1;
+	return base;
 }
 
 static void
