@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.108 2023/01/22 15:20:01 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.109 2023/02/19 19:27:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.108 2023/01/22 15:20:01 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.109 2023/02/19 19:27:02 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -227,18 +227,17 @@ terminate(int signo)
 }
 
 /*
- * Returns a pointer to the last component of strg after delim.
- * Returns strg if the string does not contain delim.
+ * Returns a pointer to the last component of path after delim.
+ * Returns path if the string does not contain delim.
  */
 static const char *
-lbasename(const char *strg, int delim)
+lbasename(const char *path, int delim)
 {
 
-	const char *base = strg;
-	for (const char *p = strg; *p != '\0'; p++) {
-		if (p[0] == delim && p[1] != '\0')
+	const char *base = path;
+	for (const char *p = path; *p != '\0'; p++)
+		if (*p == delim)
 			base = p + 1;
-	}
 	return base;
 }
 
