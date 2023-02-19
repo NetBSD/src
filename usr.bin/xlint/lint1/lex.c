@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.152 2023/02/18 15:09:10 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.153 2023/02/19 11:50:29 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.152 2023/02/18 15:09:10 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.153 2023/02/19 11:50:29 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -541,8 +541,6 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 				/*
 				 * Remember that the constant is unsigned
 				 * only in ANSI C.
-				 *
-				 * TODO: C99 behaves like C90 here.
 				 */
 				ansiu = true;
 			}
