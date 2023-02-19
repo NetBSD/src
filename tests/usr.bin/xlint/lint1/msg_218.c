@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_218.c,v 1.5 2023/02/19 11:50:29 rillig Exp $	*/
+/*	$NetBSD: msg_218.c,v 1.6 2023/02/19 12:00:15 rillig Exp $	*/
 # 3 "msg_218.c"
 
 // Test for message: ANSI C treats constant as unsigned, op '%s' [218]
@@ -36,20 +36,12 @@ test_signed_int(void)
 void
 compare_large_constant(void)
 {
-	/* expect+1: warning: ANSI C treats constant as unsigned, op '<' [218] */
 	cond = s32 < 3000000000L;
-	/* expect+1: warning: ANSI C treats constant as unsigned, op '<' [218] */
 	cond = 3000000000L < s32;
-	/* expect+1: warning: ANSI C treats constant as unsigned, op '<' [218] */
 	cond = u32 < 3000000000L;
-	/* expect+1: warning: ANSI C treats constant as unsigned, op '<' [218] */
 	cond = 3000000000L < u32;
-	/* expect+1: warning: ANSI C treats constant as unsigned, op '<' [218] */
 	cond = s64 < 3000000000L;
-	/* expect+1: warning: ANSI C treats constant as unsigned, op '<' [218] */
 	cond = 3000000000L < s64;
-	/* expect+1: warning: ANSI C treats constant as unsigned, op '<' [218] */
 	cond = u64 < 3000000000L;
-	/* expect+1: warning: ANSI C treats constant as unsigned, op '<' [218] */
 	cond = 3000000000L < u64;
 }
