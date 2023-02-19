@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.55 2022/11/07 07:28:04 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.56 2023/02/19 07:20:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.55 2022/11/07 07:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.56 2023/02/19 07:20:44 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -1114,9 +1114,9 @@ pmap_db_tlb_print(struct pmap *pm,
 #if PMAP_TLB_MAX == 1
 	pr(" asid %5u\n", pm->pm_pai[0].pai_asid);
 #else
-        for (size_t i = 0; i < (PMAP_TLB_MAX > 1 ? pmap_ntlbs : 1); i++) {
-                pr(" tlb %zu  asid %5u\n", i, pm->pm_pai[i].pai_asid);
-        }
+	for (size_t i = 0; i < (PMAP_TLB_MAX > 1 ? pmap_ntlbs : 1); i++) {
+		pr(" tlb %zu  asid %5u\n", i, pm->pm_pai[i].pai_asid);
+	}
 #endif
 }
 #endif /* DDB */
