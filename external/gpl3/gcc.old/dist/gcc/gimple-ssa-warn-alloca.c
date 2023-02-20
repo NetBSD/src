@@ -1,5 +1,5 @@
 /* Warn on problematic uses of alloca and variable length arrays.
-   Copyright (C) 2016-2019 Free Software Foundation, Inc.
+   Copyright (C) 2016-2020 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez <aldyh@redhat.com>.
 
 This file is part of GCC.
@@ -31,7 +31,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "fold-const.h"
 #include "gimple-iterator.h"
 #include "tree-ssa.h"
-#include "params.h"
 #include "tree-cfg.h"
 #include "builtins.h"
 #include "calls.h"
@@ -118,7 +117,8 @@ enum alloca_type {
 };
 
 // Type of an alloca call with its corresponding limit, if applicable.
-struct alloca_type_and_limit {
+class alloca_type_and_limit {
+public:
   enum alloca_type type;
   // For ALLOCA_BOUND_MAYBE_LARGE and ALLOCA_BOUND_DEFINITELY_LARGE
   // types, this field indicates the assumed limit if known or
@@ -184,7 +184,7 @@ adjusted_warn_limit (bool idx)
 // MAX_SIZE is WARN_ALLOCA= adjusted for VLAs.  It is the maximum size
 // in bytes we allow for arg.
 
-static struct alloca_type_and_limit
+static class alloca_type_and_limit
 alloca_call_type_by_arg (tree arg, tree arg_casted, edge e,
 			 unsigned HOST_WIDE_INT max_size)
 {
@@ -325,7 +325,7 @@ is_max (tree x, wide_int max)
 // type to an unsigned type, set *INVALID_CASTED_TYPE to the
 // problematic signed type.
 
-static struct alloca_type_and_limit
+static class alloca_type_and_limit
 alloca_call_type (gimple *stmt, bool is_vla, tree *invalid_casted_type)
 {
   gcc_assert (gimple_alloca_call_p (stmt));
@@ -458,7 +458,7 @@ alloca_call_type (gimple *stmt, bool is_vla, tree *invalid_casted_type)
   // If we couldn't find anything, try a few heuristics for things we
   // can easily determine.  Check these misc cases but only accept
   // them if all predecessors have a known bound.
-  struct alloca_type_and_limit ret = alloca_type_and_limit (ALLOCA_OK);
+  class alloca_type_and_limit ret = alloca_type_and_limit (ALLOCA_OK);
   FOR_EACH_EDGE (e, ei, gimple_bb (stmt)->preds)
     {
       gcc_assert (!len_casted || TYPE_UNSIGNED (TREE_TYPE (len_casted)));
@@ -510,10 +510,11 @@ pass_walloca::execute (function *fun)
 	   gsi_next (&si))
 	{
 	  gimple *stmt = gsi_stmt (si);
-	  location_t loc = gimple_location (stmt);
-
 	  if (!gimple_alloca_call_p (stmt))
 	    continue;
+
+	  location_t loc = gimple_nonartificial_location (stmt);
+	  loc = expansion_point_location_if_in_system_header (loc);
 
 	  const bool is_vla
 	    = gimple_call_alloca_for_var_p (as_a <gcall *> (stmt));
@@ -528,14 +529,14 @@ pass_walloca::execute (function *fun)
 	    }
 	  else if (warn_alloca)
 	    {
-	      warning_at (loc, OPT_Walloca, "use of %<alloca%>");
+	      warning_at (loc, OPT_Walloca, "%Guse of %<alloca%>", stmt);
 	      continue;
 	    }
 	  else if (warn_alloca_limit < 0)
 	    continue;
 
 	  tree invalid_casted_type = NULL;
-	  struct alloca_type_and_limit t
+	  class alloca_type_and_limit t
 	    = alloca_call_type (stmt, is_vla, &invalid_casted_type);
 
 	  unsigned HOST_WIDE_INT adjusted_alloca_limit
@@ -564,10 +565,12 @@ pass_walloca::execute (function *fun)
 	      {
 		auto_diagnostic_group d;
 		if (warning_at (loc, wcode,
-				is_vla ? G_("argument to variable-length "
-					    "array may be too large")
-				: G_("argument to %<alloca%> may be too "
-				     "large"))
+				(is_vla
+				 ? G_("%Gargument to variable-length "
+				      "array may be too large")
+				 : G_("%Gargument to %<alloca%> may be too "
+				      "large")),
+				stmt)
 		    && t.limit != 0)
 		  {
 		    print_decu (t.limit, buff);
@@ -582,47 +585,57 @@ pass_walloca::execute (function *fun)
 	      {
 		auto_diagnostic_group d;
 		if (warning_at (loc, wcode,
-				is_vla ? G_("argument to variable-length"
-					    " array is too large")
-				: G_("argument to %<alloca%> is too large"))
+				(is_vla
+				 ? G_("%Gargument to variable-length"
+				      " array is too large")
+				 : G_("%Gargument to %<alloca%> is too large")),
+				stmt)
 		    && t.limit != 0)
 		  {
 		    print_decu (t.limit, buff);
 		    inform (loc, "limit is %wu bytes, but argument is %s",
-			      is_vla ? warn_vla_limit : adjusted_alloca_limit,
-			      buff);
+			    is_vla ? warn_vla_limit : adjusted_alloca_limit,
+			    buff);
 		  }
 	      }
 	      break;
 	    case ALLOCA_BOUND_UNKNOWN:
 	      warning_at (loc, wcode,
-			  is_vla ? G_("variable-length array bound is unknown")
-			  : G_("%<alloca%> bound is unknown"));
+			  (is_vla
+			   ? G_("%Gvariable-length array bound is unknown")
+			   : G_("%G%<alloca%> bound is unknown")),
+			  stmt);
 	      break;
 	    case ALLOCA_UNBOUNDED:
 	      warning_at (loc, wcode,
-			  is_vla ? G_("unbounded use of variable-length array")
-			  : G_("unbounded use of %<alloca%>"));
+			  (is_vla
+			   ? G_("%Gunbounded use of variable-length array")
+			   : G_("%Gunbounded use of %<alloca%>")),
+			  stmt);
 	      break;
 	    case ALLOCA_IN_LOOP:
 	      gcc_assert (!is_vla);
-	      warning_at (loc, wcode, "use of %<alloca%> within a loop");
+	      warning_at (loc, wcode,
+			  "%Guse of %<alloca%> within a loop", stmt);
 	      break;
 	    case ALLOCA_CAST_FROM_SIGNED:
 	      gcc_assert (invalid_casted_type != NULL_TREE);
 	      warning_at (loc, wcode,
-			  is_vla ? G_("argument to variable-length array "
-				      "may be too large due to "
-				      "conversion from %qT to %qT")
-			  : G_("argument to %<alloca%> may be too large "
-			       "due to conversion from %qT to %qT"),
-			  invalid_casted_type, size_type_node);
+			  (is_vla
+			   ? G_("%Gargument to variable-length array "
+				"may be too large due to "
+				"conversion from %qT to %qT")
+			   : G_("%Gargument to %<alloca%> may be too large "
+				"due to conversion from %qT to %qT")),
+			  stmt, invalid_casted_type, size_type_node);
 	      break;
 	    case ALLOCA_ARG_IS_ZERO:
 	      warning_at (loc, wcode,
-			  is_vla ? G_("argument to variable-length array "
-				      "is zero")
-			  : G_("argument to %<alloca%> is zero"));
+			  (is_vla
+			   ? G_("%Gargument to variable-length array "
+				"is zero")
+			   : G_("%Gargument to %<alloca%> is zero")),
+			  stmt);
 	      break;
 	    default:
 	      gcc_unreachable ();

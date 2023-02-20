@@ -1,7 +1,7 @@
 /* Functions to convert descriptors between CFI and gfortran
    and the CFI function declarations whose prototypes appear
    in ISO_Fortran_binding.h.
-   Copyright (C) 2018 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
    Contributed by Daniel Celis Garza  <celisdanieljr@gmail.com>
 	       and Paul Thomas  <pault@gcc.gnu.org>
 
@@ -781,20 +781,29 @@ int CFI_select_part (CFI_cdesc_t *result, const CFI_cdesc_t *source,
 int CFI_setpointer (CFI_cdesc_t *result, CFI_cdesc_t *source,
 		    const CFI_index_t lower_bounds[])
 {
-  /* Result must not be NULL. */
-  if (unlikely (compile_options.bounds_check) && result == NULL)
+  /* Result must not be NULL and must be a Fortran pointer. */
+  if (unlikely (compile_options.bounds_check))
     {
-      fprintf (stderr, "CFI_setpointer: Result is NULL.\n");
-      return CFI_INVALID_DESCRIPTOR;
+      if (result == NULL)
+	{
+	  fprintf (stderr, "CFI_setpointer: Result is NULL.\n");
+	  return CFI_INVALID_DESCRIPTOR;
+	}
+      
+      if (result->attribute != CFI_attribute_pointer)
+	{
+ 	  fprintf (stderr, "CFI_setpointer: Result shall be the address of a "
+		   "C descriptor for a Fortran pointer.\n");
+ 	  return CFI_INVALID_ATTRIBUTE;
+ 	}
     }
-
+      
   /* If source is NULL, the result is a C Descriptor that describes a
    * disassociated pointer. */
   if (source == NULL)
     {
       result->base_addr = NULL;
       result->version  = CFI_VERSION;
-      result->attribute = CFI_attribute_pointer;
     }
   else
     {
@@ -838,7 +847,6 @@ int CFI_setpointer (CFI_cdesc_t *result, CFI_cdesc_t *source,
 
       /* Assign components to result. */
       result->version = source->version;
-      result->attribute = source->attribute;
 
       /* Dimension information. */
       for (int i = 0; i < source->rank; i++)

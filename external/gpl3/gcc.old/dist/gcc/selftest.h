@@ -1,5 +1,5 @@
 /* A self-testing framework, for use by -fself-test.
-   Copyright (C) 2015-2019 Free Software Foundation, Inc.
+   Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -30,8 +30,9 @@ namespace selftest {
 /* A struct describing the source-location of a selftest, to make it
    easier to track down failing tests.  */
 
-struct location
+class location
 {
+public:
   location (const char *file, int line, const char *function)
     : m_file (file), m_line (line), m_function (function) {}
 
@@ -149,7 +150,7 @@ class auto_fix_quotes
    The following struct describes a particular case within our test
    matrix.  */
 
-struct line_table_case;
+class line_table_case;
 
 /* A class for overriding the global "line_table" within a selftest,
    restoring its value afterwards.  At most one instance of this
@@ -169,6 +170,13 @@ class line_table_test
   /* Destructor.  Restore the saved line_table.  */
   ~line_table_test ();
 };
+
+/* Helper function for selftests that need a function decl.  */
+
+extern tree make_fndecl (tree return_type,
+			 const char *name,
+			 vec <tree> &param_types,
+			 bool is_variadic = false);
 
 /* Run TESTCASE multiple times, once for each case in our test matrix.  */
 
@@ -218,7 +226,9 @@ extern void bitmap_c_tests ();
 extern void cgraph_c_tests ();
 extern void convert_c_tests ();
 extern void diagnostic_c_tests ();
+extern void diagnostic_format_json_cc_tests ();
 extern void diagnostic_show_locus_c_tests ();
+extern void digraph_cc_tests ();
 extern void dumpfile_c_tests ();
 extern void edit_context_c_tests ();
 extern void et_forest_c_tests ();
@@ -233,8 +243,11 @@ extern void input_c_tests ();
 extern void json_cc_tests ();
 extern void opt_problem_cc_tests ();
 extern void optinfo_emit_json_cc_tests ();
+extern void opts_c_tests ();
+extern void ordered_hash_map_tests_cc_tests ();
 extern void predict_c_tests ();
 extern void pretty_print_c_tests ();
+extern void range_tests ();
 extern void read_rtl_function_c_tests ();
 extern void rtl_tests_c_tests ();
 extern void sbitmap_c_tests ();
@@ -246,12 +259,15 @@ extern void sreal_c_tests ();
 extern void store_merging_c_tests ();
 extern void tree_c_tests ();
 extern void tree_cfg_c_tests ();
+extern void tree_diagnostic_path_cc_tests ();
+extern void tristate_cc_tests ();
 extern void typed_splay_tree_c_tests ();
 extern void unique_ptr_tests_cc_tests ();
 extern void vec_c_tests ();
 extern void vec_perm_indices_c_tests ();
 extern void wide_int_cc_tests ();
 extern void opt_proposer_c_tests ();
+extern void dbgcnt_c_tests ();
 
 extern int num_passes;
 

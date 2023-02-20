@@ -1,5 +1,5 @@
 /* read-rtl-function.c - Reader for RTL function dumps
-   Copyright (C) 2016-2019 Free Software Foundation, Inc.
+   Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -41,6 +41,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "read-rtl-function.h"
 #include "selftest.h"
 #include "selftest-rtl.h"
+#include "regs.h"
+#include "function-abi.h"
 
 /* Forward decls.  */
 class function_reader;
@@ -52,8 +54,9 @@ class fixup;
    at LOC, which will be turned into an actual CFG edge once
    the "insn-chain" is fully parsed.  */
 
-struct deferred_edge
+class deferred_edge
 {
+public:
   deferred_edge (file_location loc, int src_bb_idx, int dest_bb_idx, int flags)
   : m_loc (loc), m_src_bb_idx (src_bb_idx), m_dest_bb_idx (dest_bb_idx),
     m_flags (flags)
@@ -112,7 +115,7 @@ class function_reader : public rtx_reader
 					int operand_idx, int bb_idx);
 
   void add_fixup_source_location (file_location loc, rtx_insn *insn,
-				  const char *filename, int lineno);
+				  const char *filename, int lineno, int colno);
 
   void add_fixup_expr (file_location loc, rtx x,
 		       const char *desc);
@@ -529,7 +532,7 @@ function_reader::create_function ()
 
 }
 
-/* Look within the the params of FNDECL for a param named NAME.
+/* Look within the params of FNDECL for a param named NAME.
    Return NULL_TREE if one isn't found.  */
 
 static tree
@@ -707,7 +710,7 @@ parse_edge_flag_token (const char *tok)
   } while (0);
 #include "cfg-flags.def"
 #undef DEF_EDGE_FLAG
-  error ("unrecognized edge flag: '%s'", tok);
+  error ("unrecognized edge flag: %qs", tok);
   return 0;
 }
 
@@ -966,7 +969,7 @@ function_reader::read_rtx_operand_u (rtx x, int idx)
 
 /* Read a name, looking for a match against a string found in array
    STRINGS of size NUM_VALUES.
-   Return the index of the the matched string, or emit an error.  */
+   Return the index of the matched string, or emit an error.  */
 
 int
 function_reader::parse_enum_value (int num_values, const char *const *strings)
@@ -978,7 +981,7 @@ function_reader::parse_enum_value (int num_values, const char *const *strings)
       if (strcmp (name.string, strings[i]) == 0)
 	return i;
     }
-  error ("unrecognized enum value: '%s'", name.string);
+  error ("unrecognized enum value: %qs", name.string);
   return 0;
 }
 
@@ -1368,7 +1371,7 @@ function_reader::add_fixup_note_insn_basic_block (file_location loc, rtx insn,
 
 void
 function_reader::add_fixup_source_location (file_location, rtx_insn *,
-					    const char *, int)
+					    const char *, int, int)
 {
 }
 
@@ -1554,7 +1557,20 @@ function_reader::maybe_read_location (rtx_insn *insn)
       require_char (':');
       struct md_name line_num;
       read_name (&line_num);
-      add_fixup_source_location (loc, insn, filename, atoi (line_num.string));
+
+      int column = 0;
+      int ch = read_char ();
+      if (ch == ':')
+	{
+	  struct md_name column_num;
+	  read_name (&column_num);
+	  column = atoi (column_num.string);
+	}
+      else
+	unread_char (ch);
+      add_fixup_source_location (loc, insn, filename,
+				 atoi (line_num.string),
+				 column);
     }
   else
     unread_char (ch);
@@ -1595,7 +1611,7 @@ function_reader::apply_fixups ()
 }
 
 /* Given a UID value, try to locate a pointer to the corresponding
-   rtx_insn *, or NULL if if can't be found.  */
+   rtx_insn *, or NULL if it can't be found.  */
 
 rtx_insn **
 function_reader::get_insn_by_uid (int uid)
@@ -1610,6 +1626,7 @@ bool
 read_rtl_function_body (const char *path)
 {
   initialize_rtl ();
+  crtl->abi = &default_function_abi;
   init_emit ();
   init_varasm_status ();
 
@@ -1643,6 +1660,7 @@ read_rtl_function_body_from_file_range (location_t start_loc,
     }
 
   initialize_rtl ();
+  crtl->abi = &fndecl_abi (cfun->decl).base_abi ();
   init_emit ();
   init_varasm_status ();
 

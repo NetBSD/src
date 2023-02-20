@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -20,7 +20,6 @@
 /* Which processor to generate code or schedule for.  */
 enum processor_type
 {
-  PROCESSOR_CARRIZO,
   PROCESSOR_FIJI,
   PROCESSOR_VEGA
 };

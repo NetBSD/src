@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2020 Free Software Foundation, Inc.
    Contributed by Andy Vaught
    Write float code factoring to this file by Jerry DeLisle   
    F2003 I/O support contributed by Jerry DeLisle
@@ -113,7 +113,8 @@ determine_precision (st_parameter_dt * dtp, const fnode * f, int len)
 static void
 build_float_string (st_parameter_dt *dtp, const fnode *f, char *buffer,
 		    size_t size, int nprinted, int precision, int sign_bit,
-		    bool zero_flag, int npad, char *result, size_t *len)
+		    bool zero_flag, int npad, int default_width, char *result,
+		    size_t *len)
 {
   char *put;
   char *digits;
@@ -132,8 +133,17 @@ build_float_string (st_parameter_dt *dtp, const fnode *f, char *buffer,
   sign_t sign;
 
   ft = f->format;
-  w = f->u.real.w;
-  d = f->u.real.d;
+  if (f->u.real.w == DEFAULT_WIDTH)
+    /* This codepath can only be reached with -fdec-format-defaults. */
+    {
+      w = default_width;
+      d = precision;
+    }
+  else
+    {
+      w = f->u.real.w;
+      d = f->u.real.d;
+    }
   p = dtp->u.p.scale_factor;
   *len = 0;
 
@@ -256,7 +266,7 @@ build_float_string (st_parameter_dt *dtp, const fnode *f, char *buffer,
     case FMT_E:
     case FMT_D:
       i = dtp->u.p.scale_factor;
-      if (d <= 0 && p == 0)
+      if (d < 0 && p == 0)
 	{
 	  generate_error (&dtp->common, LIBERROR_FORMAT, "Precision not "
 			  "greater than zero in format specifier 'E' or 'D'");
@@ -389,7 +399,8 @@ build_float_string (st_parameter_dt *dtp, const fnode *f, char *buffer,
   updown:
 
   rchar = '0';
-  if (ft != FMT_F && w > 0 && d == 0 && p == 0)
+  /* Do not reset nbefore for FMT_F and FMT_EN.  */
+  if (ft != FMT_F && ft !=FMT_EN && w > 0 && d == 0 && p == 0)
     nbefore = 1;
   /* Scan for trailing zeros to see if we really need to round it.  */
   for(i = nbefore + nafter; i < ndigits; i++)
@@ -483,6 +494,18 @@ build_float_string (st_parameter_dt *dtp, const fnode *f, char *buffer,
 	      if (e > 99 || e < -99)
 		expchar = ' ';
 	    }
+	}
+      else if (f->u.real.e == 0)
+	{
+	  /* Zero width specified, no leading zeros in exponent  */
+	  if (e > 999 || e < -999)
+	    edigits = 6;
+	  else if (e > 99 || e < -99)
+	    edigits = 5;
+	  else if (e > 9 || e < -9)
+	    edigits = 4;
+	  else
+	    edigits = 3;
 	}
       else
 	{
@@ -960,16 +983,24 @@ determine_en_precision (st_parameter_dt *dtp, const fnode *f,
       int save_scale_factor;\
       volatile GFC_REAL_ ## x temp;\
       save_scale_factor = dtp->u.p.scale_factor;\
+      if (w == DEFAULT_WIDTH)\
+	{\
+	  w = default_width;\
+	  d = precision;\
+	}\
+      /* The switch between FMT_E and FMT_F is based on the absolute value.  \
+         Set r=0 for rounding toward zero and r = 1 otherwise.  \
+	 If (exp_d - m) == 1 there is no rounding needed.  */\
       switch (dtp->u.p.current_unit->round_status)\
 	{\
 	  case ROUND_ZERO:\
-	    r = sign_bit ? 1.0 : 0.0;\
+	    r = 0.0;\
 	    break;\
 	  case ROUND_UP:\
-	    r = 1.0;\
+	    r = sign_bit ? 0.0 : 1.0;\
 	    break;\
 	  case ROUND_DOWN:\
-	    r = 0.0;\
+	    r = sign_bit ? 1.0 : 0.0;\
 	    break;\
 	  default:\
 	    break;\
@@ -977,7 +1008,8 @@ determine_en_precision (st_parameter_dt *dtp, const fnode *f,
       exp_d = calculate_exp_ ## x (d);\
       r_sc = (1 - r / exp_d);\
       temp = 0.1 * r_sc;\
-      if ((m > 0.0 && ((m < temp) || (r >= (exp_d - m))))\
+      if ((m > 0.0 && ((m < temp) || (r < 1 && r >= (exp_d - m))\
+				  || (r == 1 && 1 > (exp_d - m))))\
 	  || ((m == 0.0) && !(compile_options.allow_std\
 			      & (GFC_STD_F2003 | GFC_STD_F2008)))\
 	  ||  d == 0)\
@@ -1035,7 +1067,8 @@ determine_en_precision (st_parameter_dt *dtp, const fnode *f,
 	  nprinted = FDTOA(y,precision,m);\
 	}\
       build_float_string (dtp, &newf, buffer, size, nprinted, precision,\
-				   sign_bit, zero_flag, npad, result, res_len);\
+				   sign_bit, zero_flag, npad, default_width,\
+				   result, res_len);\
       dtp->u.p.scale_factor = save_scale_factor;\
     }\
   else\
@@ -1045,7 +1078,8 @@ determine_en_precision (st_parameter_dt *dtp, const fnode *f,
       else\
 	nprinted = DTOA(y,precision,m);\
       build_float_string (dtp, f, buffer, size, nprinted, precision,\
-				   sign_bit, zero_flag, npad, result, res_len);\
+				   sign_bit, zero_flag, npad, default_width,\
+				   result, res_len);\
     }\
 }\
 
@@ -1059,6 +1093,16 @@ get_float_string (st_parameter_dt *dtp, const fnode *f, const char *source,
 {
   int sign_bit, nprinted;
   bool zero_flag;
+  int default_width = 0;
+
+  if (f->u.real.w == DEFAULT_WIDTH)
+    /* This codepath can only be reached with -fdec-format-defaults. The default
+     * values are based on those used in the Oracle Fortran compiler.
+     */
+    {
+      default_width = default_width_for_float (kind);
+      precision = default_precision_for_float (kind);
+    }
 
   switch (kind)
     {

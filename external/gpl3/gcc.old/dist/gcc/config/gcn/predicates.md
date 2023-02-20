@@ -1,5 +1,5 @@
 ;; Predicate definitions for GCN.
-;; Copyright (C) 2016-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2016-2020 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -165,7 +165,7 @@
   (match_code "eq,ne,gt,ge,lt,le,gtu,geu,ltu,leu"))
 
 (define_predicate "gcn_fp_compare_operator"
-  (match_code "eq,ne,gt,ge,lt,le,gtu,geu,ltu,leu,ordered,unordered"))
+  (match_code "eq,ne,gt,ge,lt,le,gtu,geu,ltu,leu,ordered,unordered,uneq,unge,ungt,unle,unlt,ltgt"))
 
 (define_predicate "unary_operator"
   (match_code "not,popcount"))

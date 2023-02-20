@@ -1,5 +1,5 @@
 /* A class for building vector rtx constants.
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -24,10 +24,11 @@ along with GCC; see the file COPYING3.  If not see
 
 /* This class is used to build VECTOR_CSTs from a sequence of elements.
    See vector_builder for more details.  */
-class rtx_vector_builder : public vector_builder<rtx, rtx_vector_builder>
+class rtx_vector_builder : public vector_builder<rtx, machine_mode,
+						 rtx_vector_builder>
 {
-  typedef vector_builder<rtx, rtx_vector_builder> parent;
-  friend class vector_builder<rtx, rtx_vector_builder>;
+  typedef vector_builder<rtx, machine_mode, rtx_vector_builder> parent;
+  friend class vector_builder<rtx, machine_mode, rtx_vector_builder>;
 
 public:
   rtx_vector_builder () : m_mode (VOIDmode) {}
@@ -43,10 +44,19 @@ private:
   bool equal_p (rtx, rtx) const;
   bool allow_steps_p () const;
   bool integral_p (rtx) const;
-  wide_int step (rtx, rtx) const;
-  rtx apply_step (rtx, unsigned int, const wide_int &) const;
+  poly_wide_int step (rtx, rtx) const;
+  rtx apply_step (rtx, unsigned int, const poly_wide_int &) const;
   bool can_elide_p (rtx) const { return true; }
   void note_representative (rtx *, rtx) {}
+
+  static poly_uint64 shape_nelts (machine_mode mode)
+    { return GET_MODE_NUNITS (mode); }
+  static poly_uint64 nelts_of (const_rtx x)
+    { return CONST_VECTOR_NUNITS (x); }
+  static unsigned int npatterns_of (const_rtx x)
+    { return CONST_VECTOR_NPATTERNS (x); }
+  static unsigned int nelts_per_pattern_of (const_rtx x)
+    { return CONST_VECTOR_NELTS_PER_PATTERN (x); }
 
   rtx find_cached_value ();
 
@@ -105,11 +115,11 @@ rtx_vector_builder::integral_p (rtx elt) const
 /* Return the value of element ELT2 minus the value of element ELT1.
    Both elements are known to be CONST_SCALAR_INT_Ps.  */
 
-inline wide_int
+inline poly_wide_int
 rtx_vector_builder::step (rtx elt1, rtx elt2) const
 {
-  return wi::sub (rtx_mode_t (elt2, GET_MODE_INNER (m_mode)),
-		  rtx_mode_t (elt1, GET_MODE_INNER (m_mode)));
+  return (wi::to_poly_wide (elt2, GET_MODE_INNER (m_mode))
+	  - wi::to_poly_wide (elt1, GET_MODE_INNER (m_mode)));
 }
 
 #endif

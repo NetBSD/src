@@ -1,5 +1,5 @@
 /* Header for code translation functions
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Paul Brook
 
 This file is part of GCC.
@@ -23,8 +23,8 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "predict.h"  /* For enum br_predictor and PRED_*.  */
 
-/* Mangled symbols take the form __module__name.  */
-#define GFC_MAX_MANGLED_SYMBOL_LEN  (GFC_MAX_SYMBOL_LEN*2+4)
+/* Mangled symbols take the form __module__name or __module.submodule__name.  */
+#define GFC_MAX_MANGLED_SYMBOL_LEN  (GFC_MAX_SYMBOL_LEN*3+5)
 
 /* Struct for holding a block of statements.  It should be treated as an
    opaque entity and not modified directly.  This allows us to change the
@@ -107,6 +107,14 @@ typedef struct gfc_se
 }
 gfc_se;
 
+typedef struct gfc_co_subroutines_args
+{
+  tree image_index;
+  tree stat;
+  tree errmsg;
+  tree errmsg_len;
+}
+gfc_co_subroutines_args;
 
 /* Denotes different types of coarray.
    Please keep in sync with libgfortran/caf/libcaf.h.  */
@@ -415,6 +423,7 @@ tree gfc_class_data_get (tree);
 tree gfc_class_vptr_get (tree);
 tree gfc_class_len_get (tree);
 tree gfc_class_len_or_zero_get (tree);
+tree gfc_resize_class_size_with_len (stmtblock_t *, tree, tree);
 gfc_expr * gfc_find_and_cut_at_last_class_ref (gfc_expr *, bool is_mold = false);
 /* Get an accessor to the class' vtab's * field, when a class handle is
    available.  */
@@ -434,6 +443,8 @@ tree gfc_vptr_final_get (tree);
 tree gfc_vptr_deallocate_get (tree);
 void gfc_reset_vptr (stmtblock_t *, gfc_expr *);
 void gfc_reset_len (stmtblock_t *, gfc_expr *);
+tree gfc_get_class_from_gfc_expr (gfc_expr *);
+tree gfc_get_class_from_expr (tree);
 tree gfc_get_vptr_from_expr (tree);
 tree gfc_get_class_array_ref (tree, tree, tree, bool);
 tree gfc_copy_class_to_class (tree, tree, tree, bool);
@@ -533,7 +544,13 @@ int gfc_is_intrinsic_libcall (gfc_expr *);
 int gfc_conv_procedure_call (gfc_se *, gfc_symbol *, gfc_actual_arglist *,
 			     gfc_expr *, vec<tree, va_gc> *);
 
-void gfc_conv_subref_array_arg (gfc_se *, gfc_expr *, int, sym_intent, bool);
+void gfc_conv_subref_array_arg (gfc_se *, gfc_expr *, int, sym_intent, bool,
+				const gfc_symbol *fsym = NULL,
+				const char *proc_name = NULL,
+				gfc_symbol *sym = NULL,
+				bool check_contiguous = false);
+
+void gfc_conv_is_contiguous_expr (gfc_se *, gfc_expr *);
 
 /* Generate code for a scalar assignment.  */
 tree gfc_trans_scalar_assign (gfc_se *, gfc_se *, gfc_typespec, bool, bool,
@@ -546,9 +563,17 @@ void gfc_trans_common (gfc_namespace *);
 void gfc_conv_structure (gfc_se *, gfc_expr *, int);
 
 /* Return an expression which determines if a dummy parameter is present.  */
-tree gfc_conv_expr_present (gfc_symbol *);
+tree gfc_conv_expr_present (gfc_symbol *, bool use_saved_decl = false);
 /* Convert a missing, dummy argument into a null or zero.  */
 void gfc_conv_missing_dummy (gfc_se *, gfc_expr *, gfc_typespec, int);
+
+/* Lowering of component references.  */
+void gfc_conv_component_ref (gfc_se * se, gfc_ref * ref);
+void conv_parent_component_references (gfc_se * se, gfc_ref * ref);
+
+/* Automatically dereference var.  */
+tree gfc_maybe_dereference_var (gfc_symbol *, tree, bool desc_only = false,
+				bool is_classarray = false);
 
 /* Generate code to allocate a string temporary.  */
 tree gfc_conv_string_tmp (gfc_se *, tree, tree);
@@ -642,6 +667,10 @@ void gfc_finish_decl_attrs (tree, symbol_attribute *);
 
 /* Allocate the lang-specific part of a decl node.  */
 void gfc_allocate_lang_decl (tree);
+
+/* Get the location suitable for the ME from a gfortran locus; required to get
+   the column number right.  */
+location_t gfc_get_location (locus *);
 
 /* Advance along a TREE_CHAIN.  */
 tree gfc_advance_chain (tree, int);
@@ -771,6 +800,9 @@ struct array_descr_info;
 bool gfc_get_array_descr_info (const_tree, struct array_descr_info *);
 
 /* In trans-openmp.c */
+bool gfc_omp_is_allocatable_or_ptr (const_tree);
+tree gfc_omp_check_optional_argument (tree, bool);
+tree gfc_omp_array_data (tree, bool);
 bool gfc_omp_privatize_by_reference (const_tree);
 enum omp_clause_default_kind gfc_omp_predetermined_sharing (tree);
 tree gfc_omp_report_decl (tree);
@@ -797,7 +829,7 @@ extern GTY(()) tree gfor_fndecl_error_stop_string;
 extern GTY(()) tree gfor_fndecl_runtime_error;
 extern GTY(()) tree gfor_fndecl_runtime_error_at;
 extern GTY(()) tree gfor_fndecl_runtime_warning_at;
-extern GTY(()) tree gfor_fndecl_os_error;
+extern GTY(()) tree gfor_fndecl_os_error_at;
 extern GTY(()) tree gfor_fndecl_generate_error;
 extern GTY(()) tree gfor_fndecl_set_fpe;
 extern GTY(()) tree gfor_fndecl_set_options;
@@ -982,6 +1014,7 @@ struct GTY(()) lang_decl {
   tree token, caf_offset;
   unsigned int scalar_allocatable : 1;
   unsigned int scalar_pointer : 1;
+  unsigned int optional_arg : 1;
 };
 
 
@@ -995,6 +1028,8 @@ struct GTY(()) lang_decl {
   (DECL_LANG_SPECIFIC (node)->scalar_allocatable)
 #define GFC_DECL_SCALAR_POINTER(node) \
   (DECL_LANG_SPECIFIC (node)->scalar_pointer)
+#define GFC_DECL_OPTIONAL_ARGUMENT(node) \
+  (DECL_LANG_SPECIFIC (node)->optional_arg)
 #define GFC_DECL_GET_SCALAR_ALLOCATABLE(node) \
   (DECL_LANG_SPECIFIC (node) ? GFC_DECL_SCALAR_ALLOCATABLE (node) : 0)
 #define GFC_DECL_GET_SCALAR_POINTER(node) \

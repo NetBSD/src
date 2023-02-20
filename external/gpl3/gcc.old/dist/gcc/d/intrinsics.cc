@@ -1,5 +1,5 @@
 /* intrinsics.cc -- D language compiler intrinsics.
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
 GCC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -134,10 +134,7 @@ maybe_set_intrinsic (FuncDeclaration *decl)
 	  /* If there is no function body, then the implementation is always
 	     provided by the compiler.  */
 	  if (!decl->fbody)
-	    {
-	      DECL_BUILT_IN_CLASS (decl->csym) = BUILT_IN_FRONTEND;
-	      DECL_FUNCTION_CODE (decl->csym) = (built_in_function) code;
-	    }
+	    set_decl_built_in_function (decl->csym, BUILT_IN_FRONTEND, code);
 
 	  /* Infer whether the intrinsic can be used for CTFE, let the
 	     front-end know that it can be evaluated at compile-time.  */
@@ -433,11 +430,14 @@ expand_intrinsic_copysign (tree callexp)
     from = fold_convert (type, from);
 
   /* Which variant of __builtin_copysign* should we call?  */
-  tree builtin = mathfn_built_in (type, BUILT_IN_COPYSIGN);
-  gcc_assert (builtin != NULL_TREE);
+  built_in_function code = (type == float_type_node) ? BUILT_IN_COPYSIGNF
+    : (type == double_type_node) ? BUILT_IN_COPYSIGN
+    : (type == long_double_type_node) ? BUILT_IN_COPYSIGNL
+    : END_BUILTINS;
 
-  return call_builtin_fn (callexp, DECL_FUNCTION_CODE (builtin), 2,
-			  to, from);
+  gcc_assert (code != END_BUILTINS);
+
+  return call_builtin_fn (callexp, code, 2, to, from);
 }
 
 /* Expand a front-end intrinsic call to pow().  This takes two arguments, the
@@ -470,6 +470,25 @@ expand_intrinsic_pow (tree callexp)
 			  base, exponent);
 }
 
+/* Expand a front-end intrinsic call to toPrec().  This takes one argument, the
+   signature to which can be either:
+
+	T toPrec(T)(float f);
+	T toPrec(T)(double f);
+	T toPrec(T)(real f);
+
+    This rounds the argument F to the precision of the specified floating
+    point type T.  The original call expression is held in CALLEXP.  */
+
+static tree
+expand_intrinsic_toprec (tree callexp)
+{
+  tree f = CALL_EXPR_ARG (callexp, 0);
+  tree type = TREE_TYPE (callexp);
+
+  return convert (type, f);
+}
+
 /* Expand a front-end intrinsic call to va_arg().  This takes either one or two
    arguments, the signature to which can be either:
 
@@ -495,8 +514,17 @@ expand_intrinsic_vaarg (tree callexp)
     {
       parmn = CALL_EXPR_ARG (callexp, 1);
       STRIP_NOPS (parmn);
-      gcc_assert (TREE_CODE (parmn) == ADDR_EXPR);
-      parmn = TREE_OPERAND (parmn, 0);
+
+      /* The `ref' argument to va_arg is either an address or reference,
+	 get the value of it.  */
+      if (TREE_CODE (parmn) == PARM_DECL && POINTER_TYPE_P (TREE_TYPE (parmn)))
+	parmn = build_deref (parmn);
+      else
+	{
+	  gcc_assert (TREE_CODE (parmn) == ADDR_EXPR);
+	  parmn = TREE_OPERAND (parmn, 0);
+	}
+
       type = TREE_TYPE (parmn);
     }
 
@@ -530,10 +558,16 @@ expand_intrinsic_vastart (tree callexp)
   /* The va_list argument should already have its address taken.  The second
      argument, however, is inout and that needs to be fixed to prevent a
      warning.  Could be casting, so need to check type too?  */
-  gcc_assert (TREE_CODE (ap) == ADDR_EXPR && TREE_CODE (parmn) == ADDR_EXPR);
+  gcc_assert (TREE_CODE (ap) == ADDR_EXPR
+	      || (TREE_CODE (ap) == PARM_DECL
+		  && POINTER_TYPE_P (TREE_TYPE (ap))));
 
   /* Assuming nobody tries to change the return type.  */
-  parmn = TREE_OPERAND (parmn, 0);
+  if (TREE_CODE (parmn) != PARM_DECL)
+    {
+      gcc_assert (TREE_CODE (parmn) == ADDR_EXPR);
+      parmn = TREE_OPERAND (parmn, 0);
+    }
 
   return call_builtin_fn (callexp, BUILT_IN_VA_START, 2, ap, parmn);
 }
@@ -820,6 +854,9 @@ maybe_expand_intrinsic (tree callexp)
 			      CALL_EXPR_ARG (callexp, 0),
 			      CALL_EXPR_ARG (callexp, 1),
 			      CALL_EXPR_ARG (callexp, 2));
+
+    case INTRINSIC_TOPREC:
+      return expand_intrinsic_toprec (callexp);
 
     case INTRINSIC_VA_ARG:
     case INTRINSIC_C_VA_ARG:

@@ -1,7 +1,7 @@
 \input texinfo  @c -*-texinfo-*-
 @c %**start of header
 @setfilename gfortran.info
-@set copyrights-gfortran 1999-2019
+@set copyrights-gfortran 1999-2020
 
 @include gcc-common.texi
 
@@ -485,9 +485,6 @@ include OpenMP, Cray-style pointers, some old vendor extensions, and several
 Fortran 2003 and Fortran 2008 features, including TR 15581.  However, it is
 still under development and has a few remaining rough edges.
 There also is initial support for OpenACC.
-Note that this is an experimental feature, incomplete, and subject to
-change in future versions of GCC.  See
-@uref{https://gcc.gnu.org/wiki/OpenACC} for more information.
 
 At present, the GNU Fortran compiler passes the
 @uref{http://www.fortran-2000.com/ArnaudRecipes/fcvs21_f95.html,
@@ -546,10 +543,8 @@ status} and @ref{Fortran 2018 status} sections of the documentation.
 Additionally, the GNU Fortran compilers supports the OpenMP specification
 (version 4.0 and most of the features of the 4.5 version,
 @url{http://openmp.org/@/wp/@/openmp-specifications/}).
-There also is initial support for the OpenACC specification (targeting
-version 2.0, @uref{http://www.openacc.org/}).
-Note that this is an experimental feature, incomplete, and subject to
-change in future versions of GCC.  See
+There also is support for the OpenACC specification (targeting
+version 2.6, @uref{http://www.openacc.org/}).  See
 @uref{https://gcc.gnu.org/wiki/OpenACC} for more information.
 
 @node Varying Length Character Strings
@@ -604,15 +599,15 @@ Malformed environment variables are silently ignored.
 * GFORTRAN_STDIN_UNIT:: Unit number for standard input
 * GFORTRAN_STDOUT_UNIT:: Unit number for standard output
 * GFORTRAN_STDERR_UNIT:: Unit number for standard error
-* GFORTRAN_UNBUFFERED_ALL:: Do not buffer I/O for all units.
+* GFORTRAN_UNBUFFERED_ALL:: Do not buffer I/O for all units
 * GFORTRAN_UNBUFFERED_PRECONNECTED:: Do not buffer I/O for preconnected units.
 * GFORTRAN_SHOW_LOCUS::  Show location for runtime errors
 * GFORTRAN_OPTIONAL_PLUS:: Print leading + where permitted
 * GFORTRAN_LIST_SEPARATOR::  Separator for list output
 * GFORTRAN_CONVERT_UNIT::  Set endianness for unformatted I/O
 * GFORTRAN_ERROR_BACKTRACE:: Show backtrace on run-time errors
-* GFORTRAN_FORMATTED_BUFFER_SIZE:: Buffer size for formatted files.
-* GFORTRAN_UNFORMATTED_BUFFER_SIZE:: Buffer size for unformatted files.
+* GFORTRAN_FORMATTED_BUFFER_SIZE:: Buffer size for formatted files
+* GFORTRAN_UNFORMATTED_BUFFER_SIZE:: Buffer size for unformatted files
 @end menu
 
 @node TMPDIR
@@ -1592,6 +1587,7 @@ additional compatibility extensions along with those enabled by
 * X format descriptor without count field::
 * Commas in FORMAT specifications::
 * Missing period in FORMAT specifications::
+* Default widths for F@comma{} G and I format descriptors::
 * I/O item lists::
 * @code{Q} exponent-letter::
 * BOZ literal constants::
@@ -1599,6 +1595,7 @@ additional compatibility extensions along with those enabled by
 * Unary operators::
 * Implicitly convert LOGICAL and INTEGER values::
 * Hollerith constants support::
+* Character conversion::
 * Cray pointers::
 * CONVERT specifier::
 * OpenMP::
@@ -1776,11 +1773,16 @@ When omitted, the count is implicitly assumed to be one.
 
 To support legacy codes, GNU Fortran allows the comma separator
 to be omitted immediately before and after character string edit
-descriptors in @code{FORMAT} statements.
+descriptors in @code{FORMAT} statements.  A comma with no following format
+decriptor is permited if the @option{-fdec-blank-format-item} is given on
+the command line. This is considered non-conforming code and is
+discouraged.
 
 @smallexample
        PRINT 10, 2, 3
 10     FORMAT ('FOO='I1' BAR='I2)
+       print 20, 5, 6
+20     FORMAT (I3, I3,)
 @end smallexample
 
 
@@ -1797,6 +1799,22 @@ discouraged.
        READ(*,10) value
 10     FORMAT ('F4')
 @end smallexample
+
+@node Default widths for F@comma{} G and I format descriptors
+@subsection Default widths for @code{F}, @code{G} and @code{I} format descriptors
+
+To support legacy codes, GNU Fortran allows width to be omitted from format
+specifications if and only if @option{-fdec-format-defaults} is given on the
+command line.  Default widths will be used. This is considered non-conforming
+code and is discouraged.
+
+@smallexample
+       REAL :: value1
+       INTEGER :: value2
+       WRITE(*,10) value1, value1, value2
+10     FORMAT ('F, G, I')
+@end smallexample
+
 
 @node I/O item lists
 @subsection I/O item lists
@@ -1826,46 +1844,26 @@ Besides decimal constants, Fortran also supports binary (@code{b}),
 octal (@code{o}) and hexadecimal (@code{z}) integer constants.  The
 syntax is: @samp{prefix quote digits quote}, were the prefix is
 either @code{b}, @code{o} or @code{z}, quote is either @code{'} or
-@code{"} and the digits are for binary @code{0} or @code{1}, for
-octal between @code{0} and @code{7}, and for hexadecimal between
-@code{0} and @code{F}.  (Example: @code{b'01011101'}.)
+@code{"} and the digits are @code{0} or @code{1} for binary,
+between @code{0} and @code{7} for octal, and between @code{0} and
+@code{F} for hexadecimal.  (Example: @code{b'01011101'}.)
 
-Up to Fortran 95, BOZ literals were only allowed to initialize
-integer variables in DATA statements.  Since Fortran 2003 BOZ literals
-are also allowed as argument of @code{REAL}, @code{DBLE}, @code{INT}
-and @code{CMPLX}; the result is the same as if the integer BOZ
-literal had been converted by @code{TRANSFER} to, respectively,
-@code{real}, @code{double precision}, @code{integer} or @code{complex}.
-As GNU Fortran extension the intrinsic procedures @code{FLOAT},
-@code{DFLOAT}, @code{COMPLEX} and @code{DCMPLX} are treated alike.
+Up to Fortran 95, BOZ literal constants were only allowed to initialize
+integer variables in DATA statements.  Since Fortran 2003 BOZ literal
+constants are also allowed as actual arguments to the @code{REAL},
+@code{DBLE}, @code{INT} and @code{CMPLX} intrinsic functions.
+The BOZ literal constant is simply a string of bits, which is padded
+or truncated as needed, during conversion to a numeric type.  The 
+Fortran standard states that the treatment of the sign bit is processor
+dependent.  Gfortran interprets the sign bit as a user would expect.
 
-As an extension, GNU Fortran allows hexadecimal BOZ literal constants to
-be specified using the @code{X} prefix, in addition to the standard
-@code{Z} prefix.  The BOZ literal can also be specified by adding a
-suffix to the string, for example, @code{Z'ABC'} and @code{'ABC'Z} are
-equivalent.
-
-Furthermore, GNU Fortran allows using BOZ literal constants outside
-DATA statements and the four intrinsic functions allowed by Fortran 2003.
-In DATA statements, in direct assignments, where the right-hand side
-only contains a BOZ literal constant, and for old-style initializers of
-the form @code{integer i /o'0173'/}, the constant is transferred
-as if @code{TRANSFER} had been used; for @code{COMPLEX} numbers, only
-the real part is initialized unless @code{CMPLX} is used.  In all other
-cases, the BOZ literal constant is converted to an @code{INTEGER} value with
-the largest decimal representation.  This value is then converted
-numerically to the type and kind of the variable in question.
-(For instance, @code{real :: r = b'0000001' + 1} initializes @code{r}
-with @code{2.0}.) As different compilers implement the extension
-differently, one should be careful when doing bitwise initialization
-of non-integer variables.
-
-Note that initializing an @code{INTEGER} variable with a statement such
-as @code{DATA i/Z'FFFFFFFF'/} will give an integer overflow error rather
-than the desired result of @math{-1} when @code{i} is a 32-bit integer
-on a system that supports 64-bit integers.  The @samp{-fno-range-check}
-option can be used as a workaround for legacy code that initializes
-integers in this manner.
+As a deprecated extension, GNU Fortran allows hexadecimal BOZ literal
+constants to be specified using the @code{X} prefix.  That the BOZ literal
+constant can also be specified by adding a suffix to the string, for
+example, @code{Z'ABC'} and @code{'ABC'X} are equivalent.  Additionally,
+as extension, BOZ literals are permitted in some contexts outside of
+@code{DATA} and the intrinsic functions listed in the Fortran standard.
+Use @option{-fallow-invalid-boz} to enable the extension.
 
 @node Real array indices
 @subsection Real array indices
@@ -1916,14 +1914,14 @@ in I/O operations.
 @subsection Hollerith constants support
 @cindex Hollerith constants
 
-GNU Fortran supports Hollerith constants in assignments, function
-arguments, and @code{DATA} and @code{ASSIGN} statements.  A Hollerith
-constant is written as a string of characters preceded by an integer
-constant indicating the character count, and the letter @code{H} or
+GNU Fortran supports Hollerith constants in assignments, @code{DATA}
+statements, function and subroutine arguments. A Hollerith constant is
+written as a string of characters preceded by an integer constant 
+indicating the character count, and the letter @code{H} or
 @code{h}, and stored in bytewise fashion in a numeric (@code{INTEGER},
-@code{REAL}, or @code{complex}) or @code{LOGICAL} variable.  The
-constant will be padded or truncated to fit the size of the variable in
-which it is stored.
+@code{REAL}, or @code{COMPLEX}), @code{LOGICAL} or @code{CHARACTER} variable.
+The constant will be padded with spaces or truncated to fit the size of
+the variable in which it is stored.
 
 Examples of valid uses of Hollerith constants:
 @smallexample
@@ -1933,11 +1931,13 @@ Examples of valid uses of Hollerith constants:
       call foo (4h abc)
 @end smallexample
 
-Invalid Hollerith constants examples:
+Examples of Hollerith constants:
 @smallexample
       integer*4 a
+      a = 0H         ! Invalid, at least one character is needed.
+      a = 4HAB12     ! Valid
       a = 8H12345678 ! Valid, but the Hollerith constant will be truncated.
-      a = 0H         ! At least one character is needed.
+      a = 3Hxyz      ! Valid, but the Hollerith constant will be padded.
 @end smallexample
 
 In general, Hollerith constants were used to provide a rudimentary
@@ -1949,8 +1949,44 @@ case where the intent is specifically to initialize a numeric variable
 with a given byte sequence.  In these cases, the same result can be
 obtained by using the @code{TRANSFER} statement, as in this example.
 @smallexample
-      INTEGER(KIND=4) :: a
-      a = TRANSFER ("abcd", a)     ! equivalent to: a = 4Habcd
+      integer(kind=4) :: a
+      a = transfer ("abcd", a)     ! equivalent to: a = 4Habcd
+@end smallexample
+
+The use of the @option{-fdec} option extends support of Hollerith constants
+to comparisons:
+@smallexample
+      integer*4 a
+      a = 4hABCD
+      if (a .ne. 4habcd) then
+        write(*,*) "no match"
+      end if
+@end smallexample
+
+Supported types are numeric (@code{INTEGER}, @code{REAL}, or @code{COMPLEX}),
+and @code{CHARACTER}.
+
+@node Character conversion
+@subsection Character conversion
+@cindex conversion, to character
+
+Allowing character literals to be used in a similar way to Hollerith constants
+is a non-standard extension.  This feature is enabled using
+-fdec-char-conversions and only applies to character literals of @code{kind=1}.
+
+Character literals can be used in @code{DATA} statements and assignments with
+numeric (@code{INTEGER}, @code{REAL}, or @code{COMPLEX}) or @code{LOGICAL}
+variables. Like Hollerith constants they are copied byte-wise fashion. The
+constant will be padded with spaces or truncated to fit the size of the
+variable in which it is stored.
+
+Examples:
+@smallexample
+      integer*4 x
+      data x / 'abcd' /
+
+      x = 'A'       ! Will be padded.
+      x = 'ab1234'  ! Will be truncated.
 @end smallexample
 
 
@@ -2204,7 +2240,7 @@ influence run-time behavior.
 
 GNU Fortran strives to be compatible to the
 @uref{http://www.openacc.org/, OpenACC Application Programming
-Interface v2.0}.
+Interface v2.6}.
 
 To enable the processing of the OpenACC directive @code{!$acc} in
 free-form source code; the @code{c$acc}, @code{*$acc} and @code{!$acc}
@@ -2219,10 +2255,6 @@ Library}.
 The OpenACC Fortran runtime library routines are provided both in a
 form of a Fortran 90 module named @code{openacc} and in a form of a
 Fortran @code{include} file named @file{openacc_lib.h}.
-
-Note that this is an experimental feature, incomplete, and subject to
-change in future versions of GCC.  See
-@uref{https://gcc.gnu.org/wiki/OpenACC} for more information.
 
 @node Argument list functions
 @subsection Argument list functions @code{%VAL}, @code{%REF} and @code{%LOC}
@@ -3831,7 +3863,8 @@ initialization using @code{_gfortran_set_args}.
 Default: enabled.
 @item @var{option}[6] @tab Enables run-time checking.  Possible values
 are (bitwise or-ed): GFC_RTCHECK_BOUNDS (1), GFC_RTCHECK_ARRAY_TEMPS (2),
-GFC_RTCHECK_RECURSION (4), GFC_RTCHECK_DO (16), GFC_RTCHECK_POINTER (32).
+GFC_RTCHECK_RECURSION (4), GFC_RTCHECK_DO (16), GFC_RTCHECK_POINTER (32),
+GFC_RTCHECK_BITS (64).
 Default: disabled.
 @item @var{option}[7] @tab Unused.
 @item @var{option}[8] @tab Show a warning when invoking @code{STOP} and

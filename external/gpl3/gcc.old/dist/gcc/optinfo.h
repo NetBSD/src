@@ -1,5 +1,5 @@
 /* Optimization information.
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -65,7 +65,7 @@ along with GCC; see the file COPYING3.  If not see
 
 
 /* Forward decls.  */
-struct opt_pass;
+class opt_pass;
 class optinfo_item;
 
 /* Return true if any of the active optinfo destinations make use

@@ -1,5 +1,5 @@
 /* Common hooks for GCN
-   Copyright (C) 2016-2019 Free Software Foundation, Inc.
+   Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -23,7 +23,6 @@
 #include "common/common-target-def.h"
 #include "opts.h"
 #include "flags.h"
-#include "params.h"
 
 /* Set default optimization options.  */
 static const struct default_options gcn_option_optimization_table[] =
@@ -34,5 +33,14 @@ static const struct default_options gcn_option_optimization_table[] =
 
 #undef  TARGET_OPTION_OPTIMIZATION_TABLE
 #define TARGET_OPTION_OPTIMIZATION_TABLE gcn_option_optimization_table
+
+static enum unwind_info_type
+gcn_except_unwind_info (struct gcc_options *opts ATTRIBUTE_UNUSED)
+{
+  return UI_NONE;
+}
+
+#undef  TARGET_EXCEPT_UNWIND_INFO
+#define TARGET_EXCEPT_UNWIND_INFO gcn_except_unwind_info
 
 struct gcc_targetm_common targetm_common = TARGETM_COMMON_INITIALIZER;

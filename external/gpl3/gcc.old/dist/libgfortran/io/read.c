@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Andy Vaught
    F2003 I/O support contributed by Jerry DeLisle
 
@@ -634,6 +634,12 @@ read_decimal (st_parameter_dt *dtp, const fnode *f, char *dest, int length)
   char c, *p;
 
   w = f->u.w;
+
+  /* This is a legacy extension, and the frontend will only allow such cases
+   * through when -fdec-format-defaults is passed.
+   */
+  if (w == (size_t) DEFAULT_WIDTH)
+    w = default_width_for_integer (length);
 
   p = read_block_form (dtp, &w);
 

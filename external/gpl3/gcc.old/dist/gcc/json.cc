@@ -1,5 +1,5 @@
 /* JSON trees
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -99,6 +99,22 @@ object::set (const char *key, value *v)
     m_map.put (xstrdup (key), v);
 }
 
+/* Get the json::value * for KEY.
+
+   The object retains ownership of the value.  */
+
+value *
+object::get (const char *key) const
+{
+  gcc_assert (key);
+
+  value **ptr = const_cast <map_t &> (m_map).get (key);
+  if (ptr)
+    return *ptr;
+  else
+    return NULL;
+}
+
 /* class json::array, a subclass of json::value, representing
    an ordered collection of values.  */
 
@@ -138,17 +154,30 @@ array::append (value *v)
   m_elements.safe_push (v);
 }
 
-/* class json::number, a subclass of json::value, wrapping a double.  */
+/* class json::float_number, a subclass of json::value, wrapping a double.  */
 
-/* Implementation of json::value::print for json::number.  */
+/* Implementation of json::value::print for json::float_number.  */
 
 void
-number::print (pretty_printer *pp) const
+float_number::print (pretty_printer *pp) const
 {
   char tmp[1024];
   snprintf (tmp, sizeof (tmp), "%g", m_value);
   pp_string (pp, tmp);
 }
+
+/* class json::integer_number, a subclass of json::value, wrapping a long.  */
+
+/* Implementation of json::value::print for json::integer_number.  */
+
+void
+integer_number::print (pretty_printer *pp) const
+{
+  char tmp[1024];
+  snprintf (tmp, sizeof (tmp), "%ld", m_value);
+  pp_string (pp, tmp);
+}
+
 
 /* class json::string, a subclass of json::value.  */
 
@@ -240,6 +269,18 @@ assert_print_eq (const json::value &jv, const char *expected_json)
   ASSERT_STREQ (expected_json, pp_formatted_text (&pp));
 }
 
+/* Verify that object::get works as expected.  */
+
+static void
+test_object_get ()
+{
+  object obj;
+  value *val = new json::string ("value");
+  obj.set ("foo", val);
+  ASSERT_EQ (obj.get ("foo"), val);
+  ASSERT_EQ (obj.get ("not-present"), NULL);
+}
+
 /* Verify that JSON objects are written correctly.  We can't test more than
    one key/value pair, as we don't impose a guaranteed ordering.  */
 
@@ -269,11 +310,22 @@ test_writing_arrays ()
 /* Verify that JSON numbers are written correctly.  */
 
 static void
-test_writing_numbers ()
+test_writing_float_numbers ()
 {
-  assert_print_eq (number (0), "0");
-  assert_print_eq (number (42), "42");
-  assert_print_eq (number (-100), "-100");
+  assert_print_eq (float_number (0), "0");
+  assert_print_eq (float_number (42), "42");
+  assert_print_eq (float_number (-100), "-100");
+  assert_print_eq (float_number (123456789), "1.23457e+08");
+}
+
+static void
+test_writing_integer_numbers ()
+{
+  assert_print_eq (integer_number (0), "0");
+  assert_print_eq (integer_number (42), "42");
+  assert_print_eq (integer_number (-100), "-100");
+  assert_print_eq (integer_number (123456789), "123456789");
+  assert_print_eq (integer_number (-123456789), "-123456789");
 }
 
 /* Verify that JSON strings are written correctly.  */
@@ -306,9 +358,11 @@ test_writing_literals ()
 void
 json_cc_tests ()
 {
+  test_object_get ();
   test_writing_objects ();
   test_writing_arrays ();
-  test_writing_numbers ();
+  test_writing_float_numbers ();
+  test_writing_integer_numbers ();
   test_writing_strings ();
   test_writing_literals ();
 }

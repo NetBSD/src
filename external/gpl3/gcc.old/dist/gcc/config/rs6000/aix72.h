@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for IBM RS/6000 POWER running AIX V7.2.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by David Edelsohn (edelsohn@gnu.org).
 
    This file is part of GCC.
@@ -49,8 +49,8 @@ do {									\
     }									\
   if (rs6000_current_cmodel != CMODEL_SMALL)				\
     {									\
-      TARGET_NO_FP_IN_TOC = 0;						\
-      TARGET_NO_SUM_IN_TOC = 0;						\
+      TARGET_NO_FP_IN_TOC = 1;						\
+      TARGET_NO_SUM_IN_TOC = 1;						\
     }									\
   if (rs6000_current_cmodel == CMODEL_MEDIUM)				\
     {									\
@@ -163,6 +163,7 @@ do {									\
    %{!maix64:%{!shared:%{g*:-lg}}}\
    %{fprofile-arcs|fprofile-generate*|coverage:-lpthreads}\
    %{mpe:-L%R/usr/lpp/ppe.poe/lib -lmpi -lvtd}\
+   %{mlong-double-128:-lc128}\
    %{pthread:-lpthreads} -lc"
 
 #undef LINK_SPEC

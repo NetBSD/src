@@ -240,12 +240,10 @@ ClassDeclaration::ClassDeclaration(Loc loc, Identifier *id, BaseClasses *basecla
     }
 
     com = false;
-    cpp = false;
     isscope = false;
     isabstract = ABSfwdref;
     inuse = 0;
     baseok = BASEOKnone;
-    isobjc = false;
     cpp_type_info_ptr_sym = NULL;
 }
 
@@ -389,13 +387,12 @@ void ClassDeclaration::semantic(Scope *sc)
         userAttribDecl = sc->userAttribDecl;
 
         if (sc->linkage == LINKcpp)
-            cpp = true;
+            classKind = ClassKind::cpp;
         if (sc->linkage == LINKobjc)
             objc()->setObjc(this);
     }
     else if (symtab && !scx)
     {
-        semanticRun = PASSsemanticdone;
         return;
     }
     semanticRun = PASSsemantic;
@@ -481,7 +478,7 @@ void ClassDeclaration::semantic(Scope *sc)
             baseClass = tc->sym;
             b->sym = baseClass;
 
-            if (tc->sym->_scope && tc->sym->baseok < BASEOKdone)
+            if (tc->sym->baseok < BASEOKdone)
                 resolveBase(this, sc, scx, tc->sym); // Try to resolve forward reference
             if (tc->sym->baseok < BASEOKdone)
             {
@@ -533,7 +530,7 @@ void ClassDeclaration::semantic(Scope *sc)
 
             b->sym = tc->sym;
 
-            if (tc->sym->_scope && tc->sym->baseok < BASEOKdone)
+            if (tc->sym->baseok < BASEOKdone)
                 resolveBase(this, sc, scx, tc->sym); // Try to resolve forward reference
             if (tc->sym->baseok < BASEOKdone)
             {
@@ -556,7 +553,7 @@ void ClassDeclaration::semantic(Scope *sc)
         baseok = BASEOKdone;
 
         // If no base class, and this is not an Object, use Object as base class
-        if (!baseClass && ident != Id::Object && !cpp)
+        if (!baseClass && ident != Id::Object && !isCPPclass())
         {
             if (!object || object->errors)
                 badObjectDotD(this);
@@ -584,7 +581,7 @@ void ClassDeclaration::semantic(Scope *sc)
             if (baseClass->isCOMclass())
                 com = true;
             if (baseClass->isCPPclass())
-                cpp = true;
+                classKind = ClassKind::cpp;
             if (baseClass->isscope)
                 isscope = true;
             enclosing = baseClass->enclosing;
@@ -601,7 +598,7 @@ void ClassDeclaration::semantic(Scope *sc)
             // then this is a COM interface too.
             if (b->sym->isCOMinterface())
                 com = true;
-            if (cpp && !b->sym->isCPPinterface())
+            if (isCPPclass() && !b->sym->isCPPinterface())
             {
                 ::error(loc, "C++ class '%s' cannot implement D interface '%s'",
                     toPrettyChars(), b->sym->toPrettyChars());
@@ -676,7 +673,7 @@ Lancestorsdone:
         // initialize vtbl
         if (baseClass)
         {
-            if (cpp && baseClass->vtbl.dim == 0)
+            if (isCPPclass() && baseClass->vtbl.dim == 0)
             {
                 error("C++ base class %s needs at least one virtual function", baseClass->toChars());
             }
@@ -918,10 +915,10 @@ bool ClassDeclaration::isBaseOf(ClassDeclaration *cd, int *poffset)
     {
         /* cd->baseClass might not be set if cd is forward referenced.
          */
-        if (!cd->baseClass && cd->_scope && !cd->isInterfaceDeclaration())
+        if (!cd->baseClass && cd->semanticRun < PASSsemanticdone && !cd->isInterfaceDeclaration())
         {
             cd->semantic(NULL);
-            if (!cd->baseClass && cd->_scope)
+            if (!cd->baseClass && cd->semanticRun < PASSsemanticdone)
                 cd->error("base class is forward referenced by %s", toChars());
         }
 
@@ -1088,7 +1085,7 @@ void ClassDeclaration::finalizeSize()
 
         alignsize = baseClass->alignsize;
         structsize = baseClass->structsize;
-        if (cpp && global.params.isWindows)
+        if (isCPPclass() && global.params.isWindows)
             structsize = (structsize + alignsize - 1) & ~(alignsize - 1);
     }
     else if (isInterfaceDeclaration())
@@ -1103,7 +1100,7 @@ void ClassDeclaration::finalizeSize()
     {
         alignsize = Target::ptrsize;
         structsize = Target::ptrsize;      // allow room for __vptr
-        if (!cpp)
+        if (!isCPPclass())
             structsize += Target::ptrsize; // allow room for __monitor
     }
 
@@ -1300,7 +1297,7 @@ bool ClassDeclaration::isCOMinterface() const
 
 bool ClassDeclaration::isCPPclass() const
 {
-    return cpp;
+    return classKind == ClassKind::cpp;
 }
 
 bool ClassDeclaration::isCPPinterface() const
@@ -1379,7 +1376,7 @@ bool ClassDeclaration::isAbstract()
 
 int ClassDeclaration::vtblOffset() const
 {
-    return cpp ? 0 : 1;
+    return classKind == ClassKind::cpp ? 0 : 1;
 }
 
 /****************************************
@@ -1406,7 +1403,7 @@ InterfaceDeclaration::InterfaceDeclaration(Loc loc, Identifier *id, BaseClasses 
     if (id == Id::IUnknown)     // IUnknown is the root of all COM interfaces
     {
         com = true;
-        cpp = true;             // IUnknown is also a C++ interface
+        classKind = ClassKind::cpp; // IUnknown is also a C++ interface
     }
 }
 
@@ -1423,9 +1420,9 @@ Scope *InterfaceDeclaration::newScope(Scope *sc)
     Scope *sc2 = ClassDeclaration::newScope(sc);
     if (com)
         sc2->linkage = LINKwindows;
-    else if (cpp)
+    else if (classKind == ClassKind::cpp)
         sc2->linkage = LINKcpp;
-    else if (isobjc)
+    else if (classKind == ClassKind::objc)
         sc2->linkage = LINKobjc;
     return sc2;
 }
@@ -1524,7 +1521,7 @@ void InterfaceDeclaration::semantic(Scope *sc)
         }
 
         if (!baseclasses->dim && sc->linkage == LINKcpp)
-            cpp = true;
+            classKind = ClassKind::cpp;
         if (sc->linkage == LINKobjc)
             objc()->setObjc(this);
 
@@ -1574,7 +1571,7 @@ void InterfaceDeclaration::semantic(Scope *sc)
 
             b->sym = tc->sym;
 
-            if (tc->sym->_scope && tc->sym->baseok < BASEOKdone)
+            if (tc->sym->baseok < BASEOKdone)
                 resolveBase(this, sc, scx, tc->sym); // Try to resolve forward reference
             if (tc->sym->baseok < BASEOKdone)
             {
@@ -1606,7 +1603,7 @@ void InterfaceDeclaration::semantic(Scope *sc)
             if (b->sym->isCOMinterface())
                 com = true;
             if (b->sym->isCPPinterface())
-                cpp = true;
+                classKind = ClassKind::cpp;
         }
 
         interfaceSemantic(sc);
@@ -1818,7 +1815,7 @@ bool InterfaceDeclaration::isCOMinterface() const
 
 bool InterfaceDeclaration::isCPPinterface() const
 {
-    return cpp;
+    return classKind == ClassKind::cpp;
 }
 
 /*******************************************

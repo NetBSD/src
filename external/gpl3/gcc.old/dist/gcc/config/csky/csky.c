@@ -1,5 +1,5 @@
 /* GCC backend functions for C-SKY targets.
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of GCC.
@@ -58,7 +58,6 @@
 #include "langhooks.h"
 #include "intl.h"
 #include "libfuncs.h"
-#include "params.h"
 #include "opts.h"
 #include "dumpfile.h"
 #include "target-globals.h"
@@ -1655,7 +1654,7 @@ get_csky_live_regs (int *count)
 	break;
 
       /* Caller-saved registers marked as used.  */
-      if (df_regs_ever_live_p (reg) && !call_really_used_regs[reg])
+      if (df_regs_ever_live_p (reg) && !call_used_regs[reg])
 	save = true;
 
       /* Frame pointer marked used.  */
@@ -1784,23 +1783,16 @@ csky_initial_elimination_offset (int from, int to)
    Value is zero to push the argument on the stack,
    or a hard register in which to store the argument.
 
-   MODE is the argument's machine mode.
-   TYPE is the data type of the argument (as a tree).
-    This is null for libcalls where that information may
-    not be available.
    CUM is a variable of type CUMULATIVE_ARGS which gives info about
     the preceding args and about the function being called.
-   NAMED is nonzero if this argument is a named parameter
-    (otherwise it is an extra parameter matching an ellipsis).  */
+   ARG is a description of the argument.  */
 static rtx
-csky_function_arg (cumulative_args_t pcum_v, machine_mode mode,
-		   const_tree type ATTRIBUTE_UNUSED,
-		   bool named ATTRIBUTE_UNUSED)
+csky_function_arg (cumulative_args_t pcum_v, const function_arg_info &arg)
 {
   CUMULATIVE_ARGS *pcum = get_cumulative_args (pcum_v);
 
   if (*pcum < CSKY_NPARM_REGS)
-    return gen_rtx_REG (mode, CSKY_FIRST_PARM_REGNUM + *pcum);
+    return gen_rtx_REG (arg.mode, CSKY_FIRST_PARM_REGNUM + *pcum);
 
   return NULL_RTX;
 }
@@ -1826,11 +1818,11 @@ csky_num_arg_regs (machine_mode mode, const_tree type)
 /* Implement TARGET_FUNCTION_ARG_ADVANCE.  */
 
 static void
-csky_function_arg_advance (cumulative_args_t pcum_v, machine_mode mode,
-			   const_tree type, bool named ATTRIBUTE_UNUSED)
+csky_function_arg_advance (cumulative_args_t pcum_v,
+			   const function_arg_info &arg)
 {
   CUMULATIVE_ARGS *pcum = get_cumulative_args (pcum_v);
-  int param_size = csky_num_arg_regs (mode, type);
+  int param_size = csky_num_arg_regs (arg.mode, arg.type);
 
   if (*pcum + param_size > CSKY_NPARM_REGS)
     *pcum = CSKY_NPARM_REGS;
@@ -1917,11 +1909,10 @@ csky_return_addr (int count, rtx frame ATTRIBUTE_UNUSED)
    that are passed entirely in registers or
    that are entirely pushed on the stack.  */
 static int
-csky_arg_partial_bytes (cumulative_args_t pcum_v, machine_mode mode,
-			tree type, bool named ATTRIBUTE_UNUSED)
+csky_arg_partial_bytes (cumulative_args_t pcum_v, const function_arg_info &arg)
 {
   CUMULATIVE_ARGS *pcum = get_cumulative_args (pcum_v);
-  int param_size = csky_num_arg_regs (mode, type);
+  int param_size = csky_num_arg_regs (arg.mode, arg.type);
 
   if (*pcum < CSKY_NPARM_REGS
       && *pcum + param_size > CSKY_NPARM_REGS)
@@ -1938,8 +1929,7 @@ csky_arg_partial_bytes (cumulative_args_t pcum_v, machine_mode mode,
 
 static void
 csky_setup_incoming_varargs (cumulative_args_t pcum_v,
-			     machine_mode mode,
-			     tree type,
+			     const function_arg_info &arg,
 			     int *pretend_size,
 			     int second_time ATTRIBUTE_UNUSED)
 {
@@ -1950,7 +1940,7 @@ csky_setup_incoming_varargs (cumulative_args_t pcum_v,
 
   cfun->machine->uses_anonymous_args = 1;
   local_cum = *pcum;
-  csky_function_arg_advance (local_cum_v, mode, type, true);
+  csky_function_arg_advance (local_cum_v, arg);
   regs_to_push = CSKY_NPARM_REGS - local_cum;
   if (regs_to_push)
     *pretend_size  = regs_to_push * UNITS_PER_WORD;
@@ -1967,11 +1957,13 @@ csky_output_mi_thunk (FILE *file, tree thunk ATTRIBUTE_UNUSED,
 		      HOST_WIDE_INT vcall_offset,
 		      tree function)
 {
+  const char *fnname = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (thunk));
   const char *thiz = "a0";
   const char *reg0 = "t0";
   const char *reg1 = "t1";
   int maxoff = 4096;		/* Constant range for addi/subi.  */
 
+  assemble_start_function (thunk, fnname);
   final_start_function (emit_barrier (), file, 1);
 
   rtx fnaddr = XEXP (DECL_RTL (function), 0);
@@ -2047,6 +2039,7 @@ csky_output_mi_thunk (FILE *file, tree thunk ATTRIBUTE_UNUSED,
   fprintf (file, "\n");
 
   final_end_function ();
+  assemble_end_function (thunk, fnname);
 }
 
 
@@ -2080,7 +2073,6 @@ csky_conditional_register_usage (void)
 	{
 	  fixed_regs[i] = 1;
 	  call_used_regs[i] = 1;
-	  call_really_used_regs[i] = 1;
 	}
     }
   /* For some targets, the high registers are not supported.
@@ -2096,7 +2088,6 @@ csky_conditional_register_usage (void)
 	{
 	  fixed_regs[i] = 1;
 	  call_used_regs[i] = 1;
-	  call_really_used_regs[i] = 1;
 	}
    }
 
@@ -2109,8 +2100,7 @@ csky_conditional_register_usage (void)
   if (CSKY_TARGET_ARCH (CK801) || CSKY_TARGET_ARCH (CK802))
     {
       fixed_regs[CSKY_LR_REGNUM] = 1;
-      call_used_regs[CSKY_LR_REGNUM] = 1;
-      call_really_used_regs[CSKY_LR_REGNUM] = 0;
+      call_used_regs[CSKY_LR_REGNUM] = 0;
     }
 
   /* The hi/lo registers are only supported in dsp mode.  */
@@ -2118,11 +2108,9 @@ csky_conditional_register_usage (void)
     {
       fixed_regs[CSKY_HI_REGNUM] = 1;
       call_used_regs[CSKY_HI_REGNUM] = 1;
-      call_really_used_regs[CSKY_HI_REGNUM] = 1;
 
       fixed_regs[CSKY_LO_REGNUM] = 1;
       call_used_regs[CSKY_LO_REGNUM] = 1;
-      call_really_used_regs[CSKY_LO_REGNUM] = 1;
     }
 
   /* The V_REGS are only supported in hard float mode.  */
@@ -2135,18 +2123,16 @@ csky_conditional_register_usage (void)
 	{
 	  fixed_regs[regno] = 1;
 	  call_used_regs[regno] = 1;
-	  call_really_used_regs[regno] = 1;
 	}
     }
 
   /* In pic mode, the gb register is not available for register
      allocation.  Since gb is not clobbered by function
-     calls, set its call_really_used_regs to 0.  */
+     calls, set its call_used_regs to 0.  */
   if (flag_pic)
     {
       fixed_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
-      call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 1;
-      call_really_used_regs[PIC_OFFSET_TABLE_REGNUM] = 0;
+      call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 0;
     }
 }
 

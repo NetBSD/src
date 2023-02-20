@@ -19,6 +19,7 @@
 #include "init.h"
 #include "enum.h"
 #include "ctfe.h"
+#include "errors.h"
 
 Expression *semantic(Expression *e, Scope *sc);
 
@@ -34,8 +35,8 @@ Expression *expandVar(int result, VarDeclaration *v)
     Expression *e = NULL;
     if (!v)
         return e;
-    if (!v->originalType && v->_scope)   // semantic() not yet run
-        v->semantic (v->_scope);
+    if (!v->originalType && v->semanticRun < PASSsemanticdone) // semantic() not yet run
+        v->semantic(NULL);
 
     if (v->isConst() || v->isImmutable() || v->storage_class & STCmanifest)
     {
@@ -1256,10 +1257,18 @@ Expression *Expression_optimize(Expression *e, int result, bool keepLvalue)
     v.ret = e;
 
     // Optimize the expression until it can no longer be simplified.
-    while (ex != v.ret)
+    size_t b = 0;
+    while (1)
     {
+        if (b++ == global.recursionLimit)
+        {
+            e->error("infinite loop while optimizing expression");
+            fatal();
+        }
         ex = v.ret;
         ex->accept(&v);
+        if (ex == v.ret)
+            break;
     }
     return ex;
 }

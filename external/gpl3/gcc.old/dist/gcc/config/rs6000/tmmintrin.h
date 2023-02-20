@@ -1,4 +1,4 @@
-/* Copyright (C) 2003-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -112,8 +112,8 @@ _mm_alignr_epi8 (__m128i __A, __m128i __B, const unsigned int __count)
     {
       if (__count >= 32)
 	{
-	  const __v16qu zero = { 0 };
-	  return (__m128i) zero;
+	  const __v16qu __zero = { 0 };
+	  return (__m128i) __zero;
 	}
       else
 	{

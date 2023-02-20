@@ -1,5 +1,5 @@
 /* Tag Collision Avoidance pass for Falkor.
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -38,6 +38,7 @@
 #include "optabs.h"
 #include "regs.h"
 #include "recog.h"
+#include "function-abi.h"
 #include "regrename.h"
 #include "print-rtl.h"
 
@@ -229,7 +230,7 @@ init_unavailable (tag_insn_info *insn_info, tag_map_t &tag_map, du_head_p head,
       if (DEBUG_INSN_P (tmp->insn))
 	continue;
 
-      IOR_COMPL_HARD_REG_SET (*unavailable, reg_class_contents[tmp->cl]);
+      *unavailable |= ~reg_class_contents[tmp->cl];
       super_class = reg_class_superunion[(int) super_class][(int) tmp->cl];
     }
 
@@ -537,6 +538,13 @@ valid_src_p (rtx src, rtx_insn *insn, struct loop *loop, bool *pre_post,
   if (!aarch64_classify_address (&addr, XEXP (x, 0), mode, true))
     return false;
 
+  if (addr.type != ADDRESS_REG_IMM
+      && addr.type != ADDRESS_REG_WB
+      && addr.type != ADDRESS_REG_REG
+      && addr.type != ADDRESS_REG_UXTW
+      && addr.type != ADDRESS_REG_SXTW)
+    return false;
+
   unsigned regno = REGNO (addr.base);
   if (global_regs[regno] || fixed_regs[regno])
     return false;
@@ -698,7 +706,7 @@ in_same_chain (rtx_insn *insn, rtx_insn *cand, unsigned regno)
 
 
 /* Callback function to traverse the tag map and drop loads that have the same
-   destination and and in the same chain of occurrence.  Routine always returns
+   destination and are in the same chain of occurrence.  Routine always returns
    true to allow traversal through all of TAG_MAP.  */
 bool
 single_dest_per_chain (const rtx &t ATTRIBUTE_UNUSED, insn_info_list_t *v,
