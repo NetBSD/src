@@ -1,5 +1,5 @@
 /* Target macros for mips*-mti-linux* targets.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -28,7 +28,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef SYSROOT_SUFFIX_SPEC
 #define SYSROOT_SUFFIX_SPEC						\
-    "/%{mmicromips:micro}mips%{mel|EL:el}-"MIPS_SYSVERSION_SPEC		\
+    "/%{mmicromips:micro}mips%{mel|EL:el}-" MIPS_SYSVERSION_SPEC	\
     "%{msoft-float:-soft;:-hard}"					\
     "%{!mips32r6:%{!mips64r6:%{mnan=2008:-nan2008}}}%{muclibc:-uclibc}"
 

@@ -1,6 +1,6 @@
 // Safe iterator implementation  -*- C++ -*-
 
-// Copyright (C) 2003-2019 Free Software Foundation, Inc.
+// Copyright (C) 2003-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -35,6 +35,9 @@
 #include <debug/safe_base.h>
 #include <bits/stl_pair.h>
 #include <ext/type_traits.h>
+#if __cplusplus > 201703L
+# include <compare>
+#endif
 
 #define _GLIBCXX_DEBUG_VERIFY_OPERANDS(_Lhs, _Rhs, _BadMsgId, _DiffMsgId) \
   _GLIBCXX_DEBUG_VERIFY(!_Lhs._M_singular() && !_Rhs._M_singular(),	\
@@ -139,6 +142,10 @@ namespace __gnu_debug
       typedef typename _Traits::difference_type		difference_type;
       typedef typename _Traits::reference		reference;
       typedef typename _Traits::pointer			pointer;
+
+#if __cplusplus > 201703L && __cpp_lib_concepts
+      using iterator_concept = std::__detail::__iter_concept<_Iterator>;
+#endif
 
       /// @post the iterator is singular and unattached
       _Safe_iterator() _GLIBCXX_NOEXCEPT : _Iter_base() { }
@@ -396,7 +403,13 @@ namespace __gnu_debug
 
       // Can we advance the iterator @p __n steps (@p __n may be negative)
       bool
-      _M_can_advance(difference_type __n) const;
+      _M_can_advance(difference_type __n, bool __strict = false) const;
+
+      // Can we advance the iterator using @p __dist in @p __way direction.
+      template<typename _Diff>
+	bool
+	_M_can_advance(const std::pair<_Diff, _Distance_precision>& __dist,
+		       int __way) const;
 
       // Is the iterator range [*this, __rhs) valid?
       bool
@@ -465,6 +478,7 @@ namespace __gnu_debug
 	  return __lhs.base() == __rhs.base();
 	}
 
+#if ! __cpp_lib_three_way_comparison
       friend bool
       operator!=(const _Self& __lhs, const _Self& __rhs) _GLIBCXX_NOEXCEPT
       {
@@ -481,6 +495,7 @@ namespace __gnu_debug
 	  _GLIBCXX_DEBUG_VERIFY_EQ_OPERANDS(__lhs, __rhs);
 	  return __lhs.base() != __rhs.base();
 	}
+#endif // three-way comparison
     };
 
   template<typename _Iterator, typename _Sequence>
@@ -801,6 +816,21 @@ namespace __gnu_debug
 	return *this;
       }
 
+#if __cpp_lib_three_way_comparison
+      friend auto
+      operator<=>(const _Self& __lhs, const _Self& __rhs) noexcept
+      {
+	_GLIBCXX_DEBUG_VERIFY_REL_OPERANDS(__lhs, __rhs);
+	return __lhs.base() <=> __rhs.base();
+      }
+
+      friend auto
+      operator<=>(const _Self& __lhs, const _OtherSelf& __rhs) noexcept
+      {
+	_GLIBCXX_DEBUG_VERIFY_REL_OPERANDS(__lhs, __rhs);
+	return __lhs.base() <=> __rhs.base();
+      }
+#else
       friend bool
       operator<(const _Self& __lhs, const _Self& __rhs) _GLIBCXX_NOEXCEPT
       {
@@ -856,6 +886,7 @@ namespace __gnu_debug
 	_GLIBCXX_DEBUG_VERIFY_REL_OPERANDS(__lhs, __rhs);
 	return __lhs.base() >= __rhs.base();
       }
+#endif // three-way comparison
 
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // According to the resolution of DR179 not only the various comparison
@@ -930,6 +961,14 @@ namespace __gnu_debug
     __can_advance(const _Safe_iterator<_Iterator, _Sequence, _Category>& __it,
 		  _Size __n)
     { return __it._M_can_advance(__n); }
+
+  template<typename _Iterator, typename _Sequence, typename _Category,
+	   typename _Diff>
+    inline bool
+    __can_advance(const _Safe_iterator<_Iterator, _Sequence, _Category>& __it,
+		  const std::pair<_Diff, _Distance_precision>& __dist,
+		  int __way)
+    { return __it._M_can_advance(__dist, __way); }
 
   template<typename _Iterator, typename _Sequence>
     _Iterator

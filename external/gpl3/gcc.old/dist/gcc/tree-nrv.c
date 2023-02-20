@@ -1,5 +1,5 @@
 /* Language independent return value optimizations
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -236,19 +236,6 @@ pass_nrv::execute (function *fun)
       fprintf (dump_file, "\n");
     }
 
-  /* At this point we know that all the return statements return the
-     same local which has suitable attributes for NRV.   Copy debugging
-     information from FOUND to RESULT if it will be useful.  But don't set
-     DECL_ABSTRACT_ORIGIN to point at another function.  */
-  if (!DECL_IGNORED_P (found)
-      && !(DECL_ABSTRACT_ORIGIN (found)
-	   && DECL_CONTEXT (DECL_ABSTRACT_ORIGIN (found)) != current_function_decl))
-    {
-      DECL_NAME (result) = DECL_NAME (found);
-      DECL_SOURCE_LOCATION (result) = DECL_SOURCE_LOCATION (found);
-      DECL_ABSTRACT_ORIGIN (result) = DECL_ABSTRACT_ORIGIN (found);
-    }
-
   TREE_ADDRESSABLE (result) |= TREE_ADDRESSABLE (found);
 
   /* Now walk through the function changing all references to VAR to be
@@ -378,12 +365,10 @@ pass_return_slot::execute (function *fun)
 	  if (stmt
 	      && gimple_call_lhs (stmt)
 	      && !gimple_call_return_slot_opt_p (stmt)
-	      /* Ignore internal functions without direct optabs,
-		 those are expanded specially and aggregate_value_p
-		 on their result might result in undesirable warnings
-		 with some backends.  */
-	      && (!gimple_call_internal_p (stmt)
-		  || direct_internal_fn_p (gimple_call_internal_fn (stmt)))
+	      /* Ignore internal functions, those are expanded specially
+		 and aggregate_value_p on their result might result in
+		 undesirable warnings with some backends.  */
+	      && !gimple_call_internal_p (stmt)
 	      && aggregate_value_p (TREE_TYPE (gimple_call_lhs (stmt)),
 				    gimple_call_fndecl (stmt)))
 	    {

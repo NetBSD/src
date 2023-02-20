@@ -1,6 +1,6 @@
 // List implementation -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -247,9 +247,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       operator==(const _Self& __x, const _Self& __y) _GLIBCXX_NOEXCEPT
       { return __x._M_node == __y._M_node; }
 
+#if __cpp_impl_three_way_comparison < 201907L
       friend bool
       operator!=(const _Self& __x, const _Self& __y) _GLIBCXX_NOEXCEPT
       { return __x._M_node != __y._M_node; }
+#endif
 
       // The only member points to the %list element.
       __detail::_List_node_base* _M_node;
@@ -331,9 +333,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       operator==(const _Self& __x, const _Self& __y) _GLIBCXX_NOEXCEPT
       { return __x._M_node == __y._M_node; }
 
+#if __cpp_impl_three_way_comparison < 201907L
       friend bool
       operator!=(const _Self& __x, const _Self& __y) _GLIBCXX_NOEXCEPT
       { return __x._M_node != __y._M_node; }
+#endif
 
       // The only member points to the %list element.
       const __detail::_List_node_base* _M_node;
@@ -563,7 +567,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 #if __cplusplus >= 201103L
       static_assert(is_same<typename remove_cv<_Tp>::type, _Tp>::value,
 	  "std::list must have a non-const, non-volatile value_type");
-# ifdef __STRICT_ANSI__
+# if __cplusplus > 201703L || defined __STRICT_ANSI__
       static_assert(is_same<typename _Alloc::value_type, _Tp>::value,
 	  "std::list must have the same value_type as its allocator");
 # endif
@@ -1957,8 +1961,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
 	else
 	  // The rvalue's allocator cannot be moved, or is not equal,
 	  // so we need to individually move each element.
-	  _M_assign_dispatch(std::__make_move_if_noexcept_iterator(__x.begin()),
-			     std::__make_move_if_noexcept_iterator(__x.end()),
+	  _M_assign_dispatch(std::make_move_iterator(__x.begin()),
+			     std::make_move_iterator(__x.end()),
 			     __false_type{});
       }
 #endif
@@ -2009,6 +2013,27 @@ _GLIBCXX_END_NAMESPACE_CXX11
       return __i1 == __end1 && __i2 == __end2;
     }
 
+#if __cpp_lib_three_way_comparison
+/**
+   *  @brief  List ordering relation.
+   *  @param  __x  A `list`.
+   *  @param  __y  A `list` of the same type as `__x`.
+   *  @return  A value indicating whether `__x` is less than, equal to,
+   *           greater than, or incomparable with `__y`.
+   *
+   *  See `std::lexicographical_compare_three_way()` for how the determination
+   *  is made. This operator is used to synthesize relational operators like
+   *  `<` and `>=` etc.
+  */
+  template<typename _Tp, typename _Alloc>
+    inline __detail::__synth3way_t<_Tp>
+    operator<=>(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
+    {
+      return std::lexicographical_compare_three_way(__x.begin(), __x.end(),
+						    __y.begin(), __y.end(),
+						    __detail::__synth3way);
+    }
+#else
   /**
    *  @brief  List ordering relation.
    *  @param  __x  A %list.
@@ -2049,6 +2074,7 @@ _GLIBCXX_END_NAMESPACE_CXX11
     inline bool
     operator>=(const list<_Tp, _Alloc>& __x, const list<_Tp, _Alloc>& __y)
     { return !(__x < __y); }
+#endif // three-way comparison
 
   /// See std::list::swap().
   template<typename _Tp, typename _Alloc>

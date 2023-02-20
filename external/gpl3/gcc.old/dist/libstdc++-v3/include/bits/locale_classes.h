@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 1997-2019 Free Software Foundation, Inc.
+// Copyright (C) 1997-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -85,7 +85,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     template<typename _Cache>
       friend struct __use_cache;
 
-    //@{
+    ///@{
     /**
      *  @brief  Category values.
      *
@@ -104,7 +104,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     static const category messages	= 1L << 5;
     static const category all		= (ctype | numeric | collate |
 					   time  | monetary | messages);
-    //@}
+    ///@}
 
     // Construct/copy/destroy:
 
@@ -254,6 +254,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     bool
     operator==(const locale& __other) const throw();
 
+#if __cpp_impl_three_way_comparison < 201907L
     /**
      *  @brief  Locale inequality.
      *
@@ -263,6 +264,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     bool
     operator!=(const locale& __other) const throw()
     { return !(this->operator==(__other)); }
+#endif
 
     /**
      *  @brief  Compare two strings according to collate.
@@ -643,11 +645,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     {
     public:
       // Types:
-      //@{
+      ///@{
       /// Public typedefs
       typedef _CharT			char_type;
       typedef basic_string<_CharT>	string_type;
-      //@}
+      ///@}
 
     protected:
       // Underlying "C" library locale information saved from
@@ -816,11 +818,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     class _GLIBCXX_NAMESPACE_CXX11 collate_byname : public collate<_CharT>
     {
     public:
-      //@{
+      ///@{
       /// Public typedefs
       typedef _CharT               char_type;
       typedef basic_string<_CharT> string_type;
-      //@}
+      ///@}
 
       explicit
       collate_byname(const char* __s, size_t __refs = 0)

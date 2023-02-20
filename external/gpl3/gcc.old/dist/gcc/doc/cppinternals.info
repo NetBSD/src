@@ -1,4 +1,4 @@
-This is cppinternals.info, produced by makeinfo version 6.7 from
+This is cppinternals.info, produced by makeinfo version 6.8 from
 cppinternals.texi.
 
 INFO-DIR-SECTION Software development
@@ -8,7 +8,7 @@ END-INFO-DIR-ENTRY
 
 This file documents the internals of the GNU C Preprocessor.
 
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are

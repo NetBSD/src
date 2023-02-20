@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.5 2019/09/26 05:45:54 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.6 2023/02/20 02:01:02 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -32,6 +32,7 @@ MKPICLIB:=	no
 
 # Force using C++ for this
 HOST_CC:=	${HOST_CXX}
+HOST_CFLAGS:=	${HOST_CXXFLAGS}
 CC:=		${CXX}
 CFLAGS:=	${CXXFLAGS}
 
