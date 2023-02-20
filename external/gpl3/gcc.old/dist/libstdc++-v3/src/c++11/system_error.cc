@@ -1,6 +1,6 @@
 // <system_error> implementation file
 
-// Copyright (C) 2007-2019 Free Software Foundation, Inc.
+// Copyright (C) 2007-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -70,6 +70,8 @@ namespace
     virtual std::error_condition
     default_error_condition(int ev) const noexcept
     {
+      // Use generic category for all known POSIX errno values (including zero)
+      // and system category otherwise.
       switch (ev)
       {
       // List of errno macros from [cerrno.syn].
@@ -251,7 +253,8 @@ namespace
 #ifdef ENOTSOCK
       case ENOTSOCK:
 #endif
-#ifdef ENOTSUP
+#if defined ENOTSUP && (!defined ENOSYS || ENOTSUP != ENOSYS)
+      // zTPF uses the same value for ENOSYS and ENOTSUP
       case ENOTSUP:
 #endif
 #ifdef ENOTTY
@@ -309,6 +312,7 @@ namespace
 #ifdef EXDEV
       case EXDEV:
 #endif
+      case 0:
         return std::error_condition(ev, std::generic_category());
 
       /* Additional system-dependent mappings from non-standard error codes

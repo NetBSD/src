@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.8 2021/04/09 23:15:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2023/02/20 02:12:25 mrg Exp $
 
 # install multilib c++config.h files
+.include <bsd.init.mk>
 
 .if ${MACHINE_ARCH} == "sparc64"
 SUBDIR=		sparc sparc64
@@ -12,7 +13,7 @@ SUBDIR=		i386 x86_64
 CXXCONFIGARGS=	x86_64 _LP64 i386
 .endif
 
-.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+.if ${MACHINE_MIPS64}
 SUBDIR=		mips64 mips32 mipso32
 CXXCONFIGARGS=	mips64 _ABI64 mipso32 _ABIO32 mips32
 .endif
@@ -25,11 +26,6 @@ CXXCONFIGARGS=	powerpc64 _LP64 powerpc
 .if ${MACHINE_ARCH} == "riscv64"
 SUBDIR=		riscv32 riscv64
 CXXCONFIGARGS=	riscv64 _LP64 riscv32
-.endif
-
-.if ${MACHINE_ARCH} == "aarch64"
-SUBDIR=		arm aarch64
-CXXCONFIGARGS=	aarch64 _LP64 arm
 .endif
 
 # now install the generated front end

@@ -1,5 +1,5 @@
 /* Tree-based target query functions relating to optabs
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,7 +23,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "target.h"
 #include "insn-codes.h"
+#include "rtl.h"
 #include "tree.h"
+#include "memmodel.h"
+#include "optabs.h"
 #include "optabs-tree.h"
 #include "stor-layout.h"
 
@@ -53,17 +56,32 @@ optab_for_tree_code (enum tree_code code, const_tree type,
     case MULT_HIGHPART_EXPR:
       return TYPE_UNSIGNED (type) ? umul_highpart_optab : smul_highpart_optab;
 
-    case TRUNC_MOD_EXPR:
     case CEIL_MOD_EXPR:
     case FLOOR_MOD_EXPR:
     case ROUND_MOD_EXPR:
+      /* {s,u}mod_optab implements TRUNC_MOD_EXPR.  For scalar modes,
+	 expansion has code to adjust TRUNC_MOD_EXPR into the desired other
+	 modes, but for vector modes it does not.  The adjustment code
+	 should be instead emitted in tree-vect-patterns.cc.  */
+      if (TREE_CODE (type) == VECTOR_TYPE)
+	return unknown_optab;
+      /* FALLTHRU */
+    case TRUNC_MOD_EXPR:
       return TYPE_UNSIGNED (type) ? umod_optab : smod_optab;
 
-    case RDIV_EXPR:
-    case TRUNC_DIV_EXPR:
     case CEIL_DIV_EXPR:
     case FLOOR_DIV_EXPR:
     case ROUND_DIV_EXPR:
+      /* {,u}{s,u}div_optab implements {TRUNC,EXACT}_DIV_EXPR or RDIV_EXPR.
+	 For scalar modes, expansion has code to adjust TRUNC_DIV_EXPR
+	 into the desired other modes, but for vector modes it does not.
+	 The adjustment code should be instead emitted in
+	 tree-vect-patterns.cc.  */
+      if (TREE_CODE (type) == VECTOR_TYPE)
+	return unknown_optab;
+      /* FALLTHRU */
+    case RDIV_EXPR:
+    case TRUNC_DIV_EXPR:
     case EXACT_DIV_EXPR:
       if (TYPE_SATURATING (type))
 	return TYPE_UNSIGNED (type) ? usdiv_optab : ssdiv_optab;
@@ -267,26 +285,27 @@ optab_for_tree_code (enum tree_code code, const_tree type,
 
    Convert operations we currently support directly are FIX_TRUNC and FLOAT.
    This function checks if these operations are supported
-   by the target platform either directly (via vector tree-codes), or via
-   target builtins.
+   by the target platform directly (via vector tree-codes).
 
    Output:
    - CODE1 is code of vector operation to be used when
-   vectorizing the operation, if available.
-   - DECL is decl of target builtin functions to be used
-   when vectorizing the operation, if available.  In this case,
-   CODE1 is CALL_EXPR.  */
+   vectorizing the operation, if available.  */
 
 bool
 supportable_convert_operation (enum tree_code code,
 			       tree vectype_out, tree vectype_in,
-			       tree *decl, enum tree_code *code1)
+			       enum tree_code *code1)
 {
   machine_mode m1,m2;
   bool truncp;
 
+  gcc_assert (VECTOR_TYPE_P (vectype_out) && VECTOR_TYPE_P (vectype_in));
+
   m1 = TYPE_MODE (vectype_out);
   m2 = TYPE_MODE (vectype_in);
+
+  if (!VECTOR_MODE_P (m1) || !VECTOR_MODE_P (m2))
+    return false;
 
   /* First check if we can done conversion directly.  */
   if ((code == FIX_TRUNC_EXPR
@@ -300,15 +319,20 @@ supportable_convert_operation (enum tree_code code,
       return true;
     }
 
-  /* Now check for builtin.  */
-  if (targetm.vectorize.builtin_conversion
-      && targetm.vectorize.builtin_conversion (code, vectype_out, vectype_in))
+  if (GET_MODE_UNIT_PRECISION (m1) > GET_MODE_UNIT_PRECISION (m2)
+      && can_extend_p (m1, m2, TYPE_UNSIGNED (vectype_in)))
     {
-      *code1 = CALL_EXPR;
-      *decl = targetm.vectorize.builtin_conversion (code, vectype_out,
-						    vectype_in);
+      *code1 = code;
       return true;
     }
+
+  if (GET_MODE_UNIT_PRECISION (m1) < GET_MODE_UNIT_PRECISION (m2)
+      && convert_optab_handler (trunc_optab, m1, m2) != CODE_FOR_nothing)
+    {
+      *code1 = code;
+      return true;
+    }
+
   return false;
 }
 
@@ -329,6 +353,31 @@ expand_vec_cmp_expr_p (tree value_type, tree mask_type, enum tree_code code)
   return false;
 }
 
+/* Return true iff vcond_optab/vcondu_optab can handle a vector
+   comparison for code CODE, comparing operands of type CMP_OP_TYPE and
+   producing a result of type VALUE_TYPE.  */
+
+static bool
+vcond_icode_p (tree value_type, tree cmp_op_type, enum tree_code code)
+{
+  return can_vcond_compare_p (get_rtx_code (code, TYPE_UNSIGNED (cmp_op_type)),
+			      TYPE_MODE (value_type), TYPE_MODE (cmp_op_type));
+}
+
+/* Return true iff vcondeq_optab can handle a vector comparison for code CODE,
+   comparing operands of type CMP_OP_TYPE and producing a result of type
+   VALUE_TYPE.  */
+
+static bool
+vcond_eq_icode_p (tree value_type, tree cmp_op_type, enum tree_code code)
+{
+  if (code != EQ_EXPR && code != NE_EXPR)
+    return false;
+
+  return get_vcond_eq_icode (TYPE_MODE (value_type), TYPE_MODE (cmp_op_type))
+	 != CODE_FOR_nothing;
+}
+
 /* Return TRUE iff, appropriate vector insns are available
    for vector cond expr with vector type VALUE_TYPE and a comparison
    with operand vector types in CMP_OP_TYPE.  */
@@ -347,14 +396,13 @@ expand_vec_cond_expr_p (tree value_type, tree cmp_op_type, enum tree_code code)
       || maybe_ne (GET_MODE_NUNITS (value_mode), GET_MODE_NUNITS (cmp_op_mode)))
     return false;
 
-  if (get_vcond_icode (TYPE_MODE (value_type), TYPE_MODE (cmp_op_type),
-		       TYPE_UNSIGNED (cmp_op_type)) == CODE_FOR_nothing
-      && ((code != EQ_EXPR && code != NE_EXPR)
-	  || get_vcond_eq_icode (TYPE_MODE (value_type),
-				 TYPE_MODE (cmp_op_type)) == CODE_FOR_nothing))
+  if (TREE_CODE_CLASS (code) != tcc_comparison)
+    /* This may happen, for example, if code == SSA_NAME, in which case we
+       cannot be certain whether a vector insn is available.  */
     return false;
 
-  return true;
+  return vcond_icode_p (value_type, cmp_op_type, code)
+	 || vcond_eq_icode_p (value_type, cmp_op_type, code);
 }
 
 /* Use the current target and options to initialize

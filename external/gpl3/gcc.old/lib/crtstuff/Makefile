@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2021/04/09 23:15:14 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2023/02/20 02:11:57 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -66,7 +66,7 @@ ${OBJS}: ${DPSRCS}
 	${CC} ${CPPFLAGS} ${CPPFLAGS.${.TARGET}} ${GCFLAGS} ${COPTS} ${COPTS.${.TARGET}} ${CPUFLAGS} -c ${.IMPSRC} -o ${.TARGET}.o
 	mv ${.TARGET}.o ${.TARGET}
 
-.if (${MACHINE_ARCH} == "mips64eb") || (${MACHINE_ARCH} == "mips64el")
+.if ${MACHINE_MIPS64}
 # Turn off as(1) warnings on MIPS, since warnings are fatal with WARNS>0
 # and GCC configury passes -finhibit-size-directive which causes mips-gas
 # to barf.  Don't know what the real fix for this is...

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.prog,v 1.1.1.2 2023/02/20 02:01:02 mrg Exp $
+#	$NetBSD: Makefile.prog,v 1.2 2023/02/20 02:12:29 mrg Exp $
 
 # common fragment for any thing linking with C++
 

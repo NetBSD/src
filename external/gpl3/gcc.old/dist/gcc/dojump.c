@@ -1,5 +1,5 @@
 /* Convert tree expression to rtl instructions, for GNU compiler.
-   Copyright (C) 1988-2019 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -668,8 +668,6 @@ do_jump_by_parts_greater_rtx (scalar_int_mode mode, int unsignedp, rtx op0,
       code = LE;
       if_true_label = if_false_label;
       if_false_label = drop_through_label;
-      drop_through_if_true = false;
-      drop_through_if_false = true;
       prob = prob.invert ();
     }
 
@@ -899,7 +897,7 @@ split_comparison (enum rtx_code code, machine_mode mode,
       return false;
     case LTGT:
       /* Do not turn a trapping comparison into a non-trapping one.  */
-      if (HONOR_SNANS (mode))
+      if (HONOR_NANS (mode))
 	{
           *code1 = LT;
           *code2 = GT;

@@ -1,5 +1,5 @@
 /* General-purpose hooks.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify it
    under the terms of the GNU General Public License as published by the
@@ -140,9 +140,8 @@ hook_bool_puint64_puint64_true (poly_uint64, poly_uint64)
   return true;
 }
 
-/* Generic hook that takes (unsigned int, machine_mode) and returns false.  */
 bool
-hook_bool_insn_uint_mode_false (rtx_insn *, unsigned int, machine_mode)
+hook_bool_uint_uint_mode_false (unsigned int, unsigned int, machine_mode)
 {
   return false;
 }
@@ -314,6 +313,12 @@ hook_bool_const_tree_false (const_tree)
 }
 
 bool
+hook_bool_const_tree_const_tree_true (const_tree, const_tree)
+{
+  return true;
+}
+
+bool
 hook_bool_tree_true (tree)
 {
   return true;
@@ -431,6 +436,12 @@ hook_tree_tree_int_treep_bool_null (tree, int, tree *, bool)
 }
 
 tree
+hook_tree_tree_bool_null (tree, bool)
+{
+  return NULL;
+}
+
+tree
 hook_tree_tree_tree_null (tree, tree)
 {
   return NULL;
@@ -438,6 +449,12 @@ hook_tree_tree_tree_null (tree, tree)
 
 tree
 hook_tree_tree_tree_tree_null (tree, tree, tree)
+{
+  return NULL;
+}
+
+tree
+hook_tree_treeptr_tree_tree_int_boolptr_null (tree *, tree, tree, int, bool *)
 {
   return NULL;
 }

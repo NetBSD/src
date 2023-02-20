@@ -1,5 +1,5 @@
 /* Generic SSA value propagation engine.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@redhat.com>
 
    This file is part of GCC.
@@ -421,14 +421,6 @@ ssa_prop_init (void)
 	e->flags &= ~EDGE_EXECUTABLE;
     }
   uid_to_stmt.safe_grow (gimple_stmt_max_uid (cfun));
-
-  /* Seed the algorithm by adding the successors of the entry block to the
-     edge worklist.  */
-  FOR_EACH_EDGE (e, ei, ENTRY_BLOCK_PTR_FOR_FN (cfun)->succs)
-    {
-      e->flags &= ~EDGE_EXECUTABLE;
-      add_control_edge (e);
-    }
 }
 
 
@@ -625,8 +617,7 @@ finish_update_gimple_call (gimple_stmt_iterator *si_p, gimple *new_stmt,
 {
   gimple_call_set_lhs (new_stmt, gimple_call_lhs (stmt));
   move_ssa_defining_stmt_for_defs (new_stmt, stmt);
-  gimple_set_vuse (new_stmt, gimple_vuse (stmt));
-  gimple_set_vdef (new_stmt, gimple_vdef (stmt));
+  gimple_move_vops (new_stmt, stmt);
   gimple_set_location (new_stmt, gimple_location (stmt));
   if (gimple_block (new_stmt) == NULL_TREE)
     gimple_set_block (new_stmt, gimple_block (stmt));
@@ -706,8 +697,7 @@ update_call_from_tree (gimple_stmt_iterator *si_p, tree expr)
           STRIP_USELESS_TYPE_CONVERSION (expr);
           new_stmt = gimple_build_assign (lhs, expr);
           move_ssa_defining_stmt_for_defs (new_stmt, stmt);
-	  gimple_set_vuse (new_stmt, gimple_vuse (stmt));
-	  gimple_set_vdef (new_stmt, gimple_vdef (stmt));
+	  gimple_move_vops (new_stmt, stmt);
         }
       else if (!TREE_SIDE_EFFECTS (expr))
         {
@@ -732,8 +722,7 @@ update_call_from_tree (gimple_stmt_iterator *si_p, tree expr)
 	  else
 	    lhs = create_tmp_var (TREE_TYPE (expr));
           new_stmt = gimple_build_assign (lhs, expr);
-	  gimple_set_vuse (new_stmt, gimple_vuse (stmt));
-	  gimple_set_vdef (new_stmt, gimple_vdef (stmt));
+	  gimple_move_vops (new_stmt, stmt);
           move_ssa_defining_stmt_for_defs (new_stmt, stmt);
         }
       gimple_set_location (new_stmt, gimple_location (stmt));
@@ -761,7 +750,16 @@ ssa_propagation_engine::ssa_propagate (void)
 
   /* Iterate until the worklists are empty.  We iterate both blocks
      and stmts in RPO order, using sets of two worklists to first
-     complete the current iteration before iterating over backedges.  */
+     complete the current iteration before iterating over backedges.
+     Seed the algorithm by adding the successors of the entry block to the
+     edge worklist.  */
+  edge e;
+  edge_iterator ei;
+  FOR_EACH_EDGE (e, ei, ENTRY_BLOCK_PTR_FOR_FN (cfun)->succs)
+    {
+      e->flags &= ~EDGE_EXECUTABLE;
+      add_control_edge (e);
+    }
   while (1)
     {
       int next_block_order = (bitmap_empty_p (cfg_blocks)
@@ -816,7 +814,6 @@ ssa_propagation_engine::ssa_propagate (void)
 
   ssa_prop_fini ();
 }
-
 
 /* Return true if STMT is of the form 'mem_ref = RHS', where 'mem_ref'
    is a non-volatile pointer dereference, a structure reference or a
@@ -1074,6 +1071,14 @@ substitute_and_fold_dom_walker::before_dom_children (basic_block bb)
 	  stmt = gsi_stmt (i);
 	  gimple_set_modified (stmt, true);
 	}
+      /* Also fold if we want to fold all statements.  */
+      else if (substitute_and_fold_engine->fold_all_stmts
+	  && fold_stmt (&i, follow_single_use_edges))
+	{
+	  did_replace = true;
+	  stmt = gsi_stmt (i);
+	  gimple_set_modified (stmt, true);
+	}
 
       /* Some statements may be simplified using propagator
 	 specific information.  Do this before propagating
@@ -1249,10 +1254,12 @@ substitute_and_fold_engine::substitute_and_fold (basic_block block)
 }
 
 
-/* Return true if we may propagate ORIG into DEST, false otherwise.  */
+/* Return true if we may propagate ORIG into DEST, false otherwise.
+   If DEST_NOT_PHI_ARG_P is true then assume the propagation does
+   not happen into a PHI argument which relaxes some constraints.  */
 
 bool
-may_propagate_copy (tree dest, tree orig)
+may_propagate_copy (tree dest, tree orig, bool dest_not_phi_arg_p)
 {
   tree type_d = TREE_TYPE (dest);
   tree type_o = TREE_TYPE (orig);
@@ -1272,8 +1279,10 @@ may_propagate_copy (tree dest, tree orig)
 	   && SSA_NAME_OCCURS_IN_ABNORMAL_PHI (orig))
     return false;
   /* Similarly if DEST flows in from an abnormal edge then the copy cannot be
-     propagated.  */
-  else if (TREE_CODE (dest) == SSA_NAME
+     propagated.  If we know we do not propagate into a PHI argument this
+     does not apply.  */
+  else if (!dest_not_phi_arg_p
+	   && TREE_CODE (dest) == SSA_NAME
 	   && SSA_NAME_OCCURS_IN_ABNORMAL_PHI (dest))
     return false;
 
@@ -1307,9 +1316,9 @@ may_propagate_copy_into_stmt (gimple *dest, tree orig)
      for the expression, so we delegate to may_propagate_copy.  */
 
   if (gimple_assign_single_p (dest))
-    return may_propagate_copy (gimple_assign_rhs1 (dest), orig);
+    return may_propagate_copy (gimple_assign_rhs1 (dest), orig, true);
   else if (gswitch *dest_swtch = dyn_cast <gswitch *> (dest))
-    return may_propagate_copy (gimple_switch_index (dest_swtch), orig);
+    return may_propagate_copy (gimple_switch_index (dest_swtch), orig, true);
 
   /* In other cases, the expression is not materialized, so there
      is no destination to pass to may_propagate_copy.  On the other
@@ -1347,25 +1356,19 @@ may_propagate_copy_into_asm (tree dest ATTRIBUTE_UNUSED)
 }
 
 
-/* Common code for propagate_value and replace_exp.
+/* Replace *OP_P with value VAL (assumed to be a constant or another SSA_NAME).
 
-   Replace use operand OP_P with VAL.  FOR_PROPAGATION indicates if the
-   replacement is done to propagate a value or not.  */
+   Use this version when not const/copy propagating values.  For example,
+   PRE uses this version when building expressions as they would appear
+   in specific blocks taking into account actions of PHI nodes.
 
-static void
-replace_exp_1 (use_operand_p op_p, tree val,
-    	       bool for_propagation ATTRIBUTE_UNUSED)
+   The statement in which an expression has been replaced should be
+   folded using fold_stmt_inplace.  */
+
+void
+replace_exp (use_operand_p op_p, tree val)
 {
-  if (flag_checking)
-    {
-      tree op = USE_FROM_PTR (op_p);
-      gcc_assert (!(for_propagation
-		  && TREE_CODE (op) == SSA_NAME
-		  && TREE_CODE (val) == SSA_NAME
-		  && !may_propagate_copy (op, val)));
-    }
-
-  if (TREE_CODE (val) == SSA_NAME)
+  if (TREE_CODE (val) == SSA_NAME || CONSTANT_CLASS_P (val))
     SET_USE (op_p, val);
   else
     SET_USE (op_p, unshare_expr (val));
@@ -1381,22 +1384,10 @@ replace_exp_1 (use_operand_p op_p, tree val,
 void
 propagate_value (use_operand_p op_p, tree val)
 {
-  replace_exp_1 (op_p, val, true);
-}
-
-/* Replace *OP_P with value VAL (assumed to be a constant or another SSA_NAME).
-
-   Use this version when not const/copy propagating values.  For example,
-   PRE uses this version when building expressions as they would appear
-   in specific blocks taking into account actions of PHI nodes.
-
-   The statement in which an expression has been replaced should be
-   folded using fold_stmt_inplace.  */
-
-void
-replace_exp (use_operand_p op_p, tree val)
-{
-  replace_exp_1 (op_p, val, false);
+  if (flag_checking)
+    gcc_assert (may_propagate_copy (USE_FROM_PTR (op_p), val,
+				    !is_a <gphi *> (USE_STMT (op_p))));
+  replace_exp (op_p, val);
 }
 
 

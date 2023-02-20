@@ -1,6 +1,6 @@
 // Base to std::allocator -*- C++ -*-
 
-// Copyright (C) 2004-2019 Free Software Foundation, Inc.
+// Copyright (C) 2004-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -37,11 +37,11 @@ namespace std
 {
   /**
    *  @brief  An alias to the base class for std::allocator.
-   *  @ingroup allocators
    *
    *  Used to set the std::allocator base class to
    *  __gnu_cxx::new_allocator.
    *
+   *  @ingroup allocators
    *  @tparam  _Tp  Type of allocated object.
     */
   template<typename _Tp>
@@ -52,8 +52,14 @@ namespace std
 # define __allocator_base  __gnu_cxx::new_allocator
 #endif
 
-#if defined(__SANITIZE_ADDRESS__) && !defined(_GLIBCXX_SANITIZE_STD_ALLOCATOR)
-# define _GLIBCXX_SANITIZE_STD_ALLOCATOR 1
+#ifndef _GLIBCXX_SANITIZE_STD_ALLOCATOR
+# if defined(__SANITIZE_ADDRESS__)
+#  define _GLIBCXX_SANITIZE_STD_ALLOCATOR 1
+# elif defined __has_feature
+#  if __has_feature(address_sanitizer)
+#   define _GLIBCXX_SANITIZE_STD_ALLOCATOR 1
+#  endif
+# endif
 #endif
 
 #endif
