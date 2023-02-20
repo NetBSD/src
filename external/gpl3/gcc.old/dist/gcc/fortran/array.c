@@ -1,5 +1,5 @@
 /* Array things
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Andy Vaught
 
 This file is part of GCC.
@@ -23,6 +23,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "options.h"
 #include "gfortran.h"
+#include "parse.h"
 #include "match.h"
 #include "constructor.h"
 
@@ -66,6 +67,7 @@ match_subscript (gfc_array_ref *ar, int init, bool match_star)
   match m = MATCH_ERROR;
   bool star = false;
   int i;
+  bool saw_boz = false;
 
   i = ar->dimen + ar->codimen;
 
@@ -90,6 +92,12 @@ match_subscript (gfc_array_ref *ar, int init, bool match_star)
     m = gfc_match_init_expr (&ar->start[i]);
   else if (!star)
     m = gfc_match_expr (&ar->start[i]);
+
+  if (ar->start[i] && ar->start[i]->ts.type == BT_BOZ)
+    {
+      gfc_error ("Invalid BOZ literal constant used in subscript at %C");
+      saw_boz = true;
+    }
 
   if (m == MATCH_NO)
     gfc_error ("Expected array subscript at %C");
@@ -117,6 +125,12 @@ end_element:
   else
     m = gfc_match_expr (&ar->end[i]);
 
+  if (ar->end[i] && ar->end[i]->ts.type == BT_BOZ)
+    {
+      gfc_error ("Invalid BOZ literal constant used in subscript at %C");
+      saw_boz = true;
+    }
+
   if (m == MATCH_ERROR)
     return MATCH_ERROR;
 
@@ -132,6 +146,12 @@ end_element:
       m = init ? gfc_match_init_expr (&ar->stride[i])
 	       : gfc_match_expr (&ar->stride[i]);
 
+      if (ar->stride[i] && ar->stride[i]->ts.type == BT_BOZ)
+	{
+	  gfc_error ("Invalid BOZ literal constant used in subscript at %C");
+	  saw_boz = true;
+	}
+
       if (m == MATCH_NO)
 	gfc_error ("Expected array subscript stride at %C");
       if (m != MATCH_YES)
@@ -142,7 +162,7 @@ matched:
   if (star)
     ar->dimen_type[i] = DIMEN_STAR;
 
-  return MATCH_YES;
+  return (saw_boz ? MATCH_ERROR : MATCH_YES);
 }
 
 
@@ -391,6 +411,9 @@ gfc_resolve_array_spec (gfc_array_spec *as, int check_constant)
 
   for (i = 0; i < as->rank + as->corank; i++)
     {
+      if (i == GFC_MAX_DIMENSIONS)
+	return false;
+
       e = as->lower[i];
       if (!resolve_array_bound (e, check_constant))
 	return false;
@@ -469,6 +492,8 @@ match_array_element_spec (gfc_array_spec *as)
   if (!gfc_expr_check_typed (*upper, gfc_current_ns, false))
     return AS_UNKNOWN;
 
+  gfc_try_simplify_expr (*upper, 0);
+
   if (((*upper)->expr_type == EXPR_CONSTANT
 	&& (*upper)->ts.type != BT_INTEGER) ||
       ((*upper)->expr_type == EXPR_FUNCTION
@@ -500,6 +525,8 @@ match_array_element_spec (gfc_array_spec *as)
     return AS_ASSUMED_SHAPE;
   if (!gfc_expr_check_typed (*upper, gfc_current_ns, false))
     return AS_UNKNOWN;
+
+  gfc_try_simplify_expr (*upper, 0);
 
   if (((*upper)->expr_type == EXPR_CONSTANT
 	&& (*upper)->ts.type != BT_INTEGER) ||
@@ -577,7 +604,7 @@ gfc_match_array_spec (gfc_array_spec **asp, bool match_dim, bool match_codim)
 	    goto cleanup;
 
 	  case AS_IMPLIED_SHAPE:
-	    if (current_type != AS_ASSUMED_SHAPE)
+	    if (current_type != AS_ASSUMED_SIZE)
 	      {
 		gfc_error ("Bad array specification for implied-shape"
 			   " array at %C");
@@ -800,7 +827,6 @@ cleanup:
   return MATCH_ERROR;
 }
 
-
 /* Given a symbol and an array specification, modify the symbol to
    have that array specification.  The error locus is needed in case
    something goes wrong.  On failure, the caller must free the spec.  */
@@ -809,10 +835,17 @@ bool
 gfc_set_array_spec (gfc_symbol *sym, gfc_array_spec *as, locus *error_loc)
 {
   int i;
-
+  symbol_attribute *attr;
+  
   if (as == NULL)
     return true;
 
+  /* If the symbol corresponds to a submodule module procedure the array spec is
+     already set, so do not attempt to set it again here. */
+  attr = &sym->attr;
+  if (gfc_submodule_procedure(attr))
+    return true;
+  
   if (as->rank
       && !gfc_add_dimension (&sym->attr, sym->name, error_loc))
     return false;
@@ -834,6 +867,10 @@ gfc_set_array_spec (gfc_symbol *sym, gfc_array_spec *as, locus *error_loc)
 		 "codimension", sym->name, error_loc);
       return false;
     }
+
+  /* Check F2018:C822.  */
+  if (sym->as->rank + sym->as->corank > GFC_MAX_DIMENSIONS)
+    goto too_many;
 
   if (as->corank)
     {
@@ -1120,17 +1157,27 @@ match_array_cons_element (gfc_constructor_base *result)
   if (m != MATCH_YES)
     return m;
 
+  if (expr->ts.type == BT_BOZ)
+    {
+      gfc_error ("BOZ literal constant at %L cannot appear in an "
+		 "array constructor", &expr->where);
+      goto done;
+    }
+
   if (expr->expr_type == EXPR_FUNCTION
       && expr->ts.type == BT_UNKNOWN
       && strcmp(expr->symtree->name, "null") == 0)
-   {
+    {
       gfc_error ("NULL() at %C cannot appear in an array constructor");
-      gfc_free_expr (expr);
-      return MATCH_ERROR;
-   }
+      goto done;
+    }
 
   gfc_constructor_append_expr (result, expr, &gfc_current_locus);
   return MATCH_YES;
+
+done:
+  gfc_free_expr (expr);
+  return MATCH_ERROR;
 }
 
 
@@ -1153,9 +1200,10 @@ walk_array_constructor (gfc_typespec *ts, gfc_constructor_base head)
 	  if (m == MATCH_ERROR)
 	    return m;
 	}
-      else if (!gfc_convert_type (e, ts, 1) && e->ts.type != BT_UNKNOWN)
+      else if (!gfc_convert_type_warn (e, ts, 1, 1, true)
+	       && e->ts.type != BT_UNKNOWN)
 	return MATCH_ERROR;
-  }
+    }
   return MATCH_YES;
 }
 
@@ -1354,11 +1402,11 @@ check_element_type (gfc_expr *expr, bool convert)
     return 0;
 
   if (convert)
-    return gfc_convert_type(expr, &constructor_ts, 1) ? 0 : 1;
+    return gfc_convert_type_warn (expr, &constructor_ts, 1, 1, true) ? 0 : 1;
 
   gfc_error ("Element in %s array constructor at %L is %s",
 	     gfc_typename (&constructor_ts), &expr->where,
-	     gfc_typename (&expr->ts));
+	     gfc_typename (expr));
 
   cons_state = CONS_BAD;
   return 1;
@@ -1435,7 +1483,7 @@ static cons_stack *base;
 static bool check_constructor (gfc_constructor_base, bool (*) (gfc_expr *));
 
 /* Check an EXPR_VARIABLE expression in a constructor to make sure
-   that that variable is an iteration variables.  */
+   that that variable is an iteration variable.  */
 
 bool
 gfc_check_iter_variable (gfc_expr *expr)
@@ -1726,6 +1774,11 @@ cleanup:
   return t;
 }
 
+/* Variables for noticing if all constructors are empty, and
+   if any of them had a type.  */
+
+static bool empty_constructor;
+static gfc_typespec empty_ts;
 
 /* Expand a constructor into constant constructors without any
    iterators, calling the work function for each of the expanded
@@ -1749,6 +1802,18 @@ expand_constructor (gfc_constructor_base base)
 
       e = c->expr;
 
+      if (e == NULL)
+	return false;
+
+      if (empty_constructor)
+	empty_ts = e->ts;
+
+      /* Simplify constant array expression/section within constructor.  */
+      if (e->expr_type == EXPR_VARIABLE && e->rank > 0 && e->ref
+	  && e->symtree && e->symtree->n.sym
+	  && e->symtree->n.sym->attr.flavor == FL_PARAMETER)
+	gfc_simplify_expr (e, 0);
+
       if (e->expr_type == EXPR_ARRAY)
 	{
 	  if (!expand_constructor (e->value.constructor))
@@ -1757,12 +1822,14 @@ expand_constructor (gfc_constructor_base base)
 	  continue;
 	}
 
+      empty_constructor = false;
       e = gfc_copy_expr (e);
       if (!gfc_simplify_expr (e, 1))
 	{
 	  gfc_free_expr (e);
 	  return false;
 	}
+      e->from_constructor = 1;
       current_expand.offset = &c->offset;
       current_expand.repeat = &c->repeat;
       current_expand.component = c->n.component;
@@ -1816,6 +1883,9 @@ gfc_expand_constructor (gfc_expr *e, bool fatal)
   gfc_expr *f;
   bool rc;
 
+  if (gfc_is_size_zero_array (e))
+    return true;
+
   /* If we can successfully get an array element at the max array size then
      the array is too big to expand, so we just return.  */
   f = gfc_get_array_element (e, flag_max_array_constructor);
@@ -1839,6 +1909,8 @@ gfc_expand_constructor (gfc_expr *e, bool fatal)
 
   iter_stack = NULL;
 
+  empty_constructor = true;
+  gfc_clear_ts (&empty_ts);
   current_expand.expand_work_function = expand;
 
   if (!expand_constructor (e->value.constructor))
@@ -1847,6 +1919,13 @@ gfc_expand_constructor (gfc_expr *e, bool fatal)
       rc = false;
       goto done;
     }
+
+  /* If we don't have an explicit constructor type, and there
+     were only empty constructors, then take the type from
+     them.  */
+
+  if (constructor_ts.type == BT_UNKNOWN && empty_constructor)
+    e->ts = empty_ts;
 
   gfc_constructor_free (e->value.constructor);
   e->value.constructor = current_expand.base;
@@ -2220,8 +2299,7 @@ gfc_copy_iterator (gfc_iterator *src)
 /********* Subroutines for determining the size of an array *********/
 
 /* These are needed just to accommodate RESHAPE().  There are no
-   diagnostics here, we just return a negative number if something
-   goes wrong.  */
+   diagnostics here, we just return false if something goes wrong.  */
 
 
 /* Get the size of single dimension of an array specification.  The
@@ -2237,7 +2315,11 @@ spec_dimen_size (gfc_array_spec *as, int dimen, mpz_t *result)
     gfc_internal_error ("spec_dimen_size(): Bad dimension");
 
   if (as->type != AS_EXPLICIT
-      || as->lower[dimen]->expr_type != EXPR_CONSTANT
+      || !as->lower[dimen]
+      || !as->upper[dimen])
+    return false;
+
+  if (as->lower[dimen]->expr_type != EXPR_CONSTANT
       || as->upper[dimen]->expr_type != EXPR_CONSTANT
       || as->lower[dimen]->ts.type != BT_INTEGER
       || as->upper[dimen]->ts.type != BT_INTEGER)
@@ -2249,6 +2331,9 @@ spec_dimen_size (gfc_array_spec *as, int dimen, mpz_t *result)
 	   as->lower[dimen]->value.integer);
 
   mpz_add_ui (*result, *result, 1);
+
+  if (mpz_cmp_si (*result, 0) < 0)
+    mpz_set_si (*result, 0);
 
   return true;
 }
@@ -2323,12 +2408,11 @@ gfc_ref_dimen_size (gfc_array_ref *ar, int dimen, mpz_t *result, mpz_t *end)
 	{
 	  stride_expr = gfc_copy_expr(ar->stride[dimen]); 
 
-	  if(!gfc_simplify_expr(stride_expr, 1))
-	    gfc_internal_error("Simplification error");
-
-	  if (stride_expr->expr_type != EXPR_CONSTANT
-	      || mpz_cmp_ui (stride_expr->value.integer, 0) == 0)
+	  if (!gfc_simplify_expr (stride_expr, 1)
+	     || stride_expr->expr_type != EXPR_CONSTANT
+	     || mpz_cmp_ui (stride_expr->value.integer, 0) == 0)
 	    {
+	      gfc_free_expr (stride_expr);
 	      mpz_clear (stride);
 	      return false;
 	    }

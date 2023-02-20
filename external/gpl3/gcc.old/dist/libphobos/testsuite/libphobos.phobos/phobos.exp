@@ -1,4 +1,4 @@
-# Copyright (C) 2019 Free Software Foundation, Inc.
+# Copyright (C) 2019-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,11 @@
 
 # Immediately exit if we can't run target executables.
 if { ![isnative] || ![is-effective-target static] } {
+    return
+}
+
+# Skip running test if phobos was not built on the target.
+if { ![is-effective-target d_runtime_has_std_library] } {
     return
 }
 
