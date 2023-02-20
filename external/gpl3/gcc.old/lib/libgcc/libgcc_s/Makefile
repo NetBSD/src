@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2021/04/09 23:15:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2023/02/20 02:12:06 mrg Exp $
 
 USE_SHLIBDIR=	yes
 REQUIRETOOLS=	yes
@@ -29,7 +29,7 @@ LIB2ADD_HACK+=	${GNUHOSTDIST}/gcc/config/floatunsidf.c \
 .endif
 
 # XXXGCC5 GCC 5.3 has all these in libgcc and we have them in libc.
-.if ${MACHINE_ARCH} == "mips64el" || ${MACHINE_ARCH} == "mips64eb"
+.if ${MACHINE_MIPS64}
 LIB2ADD_EDITED= ${G_LIB2ADD:T:Nfloatsisf.c:Nfloatunsisf.c:Nfloatsidf.c:Nfloatunsidf.c:Nfixsfsi.c:Nextendsfdf2.c:Naddsf3.c:Nmulsf3.c:Ndivsf3.c:Nadddf3.c:Nsubdf3.c:Nmuldf3.c:Ndivdf3.c:Nfixdfsi.c:S/.asm/.S/}
 .else
 LIB2ADD_EDITED=	${G_LIB2ADD:T:S/.asm/.S/}
@@ -40,7 +40,7 @@ SRCS+=		${LIB2FUNCS} ${LIB2DIVMOD} ${LIB2_EH} ${LIB2_EHASM} \
 		${LIB2ADD_HACK:T:S/.asm/.S/} \
 		${G_LIB2ADD_ST:T} ${LIB1ASMFUNCS}
 
-COPTS.unwind-dw2.c = -Wno-stack-protector
+COPTS.unwind-dw2.c += -Wno-stack-protector
 
 DPADD+=		libgcc.map
 CLEANFILES+=	libgcc.map

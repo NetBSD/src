@@ -1,6 +1,6 @@
 /* Command line option handling.  Code involving global state that
    should not be shared with the driver.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -99,13 +99,13 @@ complain_wrong_lang (const struct cl_decoded_option *decoded,
     bad_lang = write_langs (lang_mask);
 
   if (opt_flags == CL_DRIVER)
-    error ("command line option %qs is valid for the driver but not for %s",
+    error ("command-line option %qs is valid for the driver but not for %s",
 	   text, bad_lang);
   else if (lang_mask == CL_DRIVER)
     gcc_unreachable ();
   else if (ok_langs[0] != '\0')
     /* Eventually this should become a hard error IMO.  */
-    warning (0, "command line option %qs is valid for %s but not for %s",
+    warning (0, "command-line option %qs is valid for %s but not for %s",
 	     text, ok_langs, bad_lang);
   else
     /* Happens for -Werror=warning_name.  */
@@ -139,8 +139,10 @@ print_ignored_options (void)
       const char *opt;
 
       opt = ignored_options.pop ();
-      warning_at (UNKNOWN_LOCATION, 0,
-		  "unrecognized command line option %qs", opt);
+      /* Use inform, not warning_at, to avoid promoting these to errors.  */
+      inform (UNKNOWN_LOCATION,
+	      "unrecognized command-line option %qs may have been intended "
+	      "to silence earlier diagnostics", opt);
     }
 }
 
@@ -255,6 +257,7 @@ init_options_once (void)
      construct their pretty-printers means that all previous settings
      are overriden.  */
   diagnostic_color_init (global_dc);
+  diagnostic_urls_init (global_dc);
 }
 
 /* Decode command-line options to an array, like
@@ -319,6 +322,19 @@ decode_options (struct gcc_options *opts, struct gcc_options *opts_set,
 			&handlers, dc);
 
   finish_options (opts, opts_set, loc);
+
+  /* Print --help=* if used.  */
+  unsigned i;
+  const char *arg;
+
+  if (!help_option_arguments.is_empty ())
+    {
+      /* Make sure --help=* sees the overridden values.  */
+      target_option_override_hook ();
+
+      FOR_EACH_VEC_ELT (help_option_arguments, i, arg)
+	print_help (opts, lang_mask, arg);
+    }
 }
 
 /* Hold command-line options associated with stack limitation.  */
@@ -380,12 +396,12 @@ handle_common_deferred_options (void)
 
 	case OPT_fdump_:
 	  if (!g->get_dumps ()->dump_switch_p (opt->arg))
-	    error ("unrecognized command line option %<-fdump-%s%>", opt->arg);
+	    error ("unrecognized command-line option %<-fdump-%s%>", opt->arg);
 	  break;
 
         case OPT_fopt_info_:
 	  if (!opt_info_switch_p (opt->arg))
-	    error ("unrecognized command line option %<-fopt-info-%s%>",
+	    error ("unrecognized command-line option %<-fopt-info-%s%>",
                    opt->arg);
           break;
 

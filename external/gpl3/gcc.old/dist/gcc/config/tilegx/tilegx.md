@@ -1,5 +1,5 @@
 ;; Machine description for Tilera TILE-Gx chip for GCC.
-;; Copyright (C) 2011-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2020 Free Software Foundation, Inc.
 ;; Contributed by Walter Lee (walt@tilera.com)
 ;;
 ;; This file is part of GCC.
@@ -4110,7 +4110,7 @@
   operands[1] = simplify_gen_subreg (<I124MODE:MODE>mode, operands[1],
 				     DImode,
 				     BYTES_BIG_ENDIAN
-				     ? UNITS_PER_WORD - <n> : 0);
+				     ? UNITS_PER_WORD - <I124MODE:n> : 0);
 })
 
 (define_insn "*insn_stnt<I124MODE:n>_add<I48MODE:bitsuffix>"

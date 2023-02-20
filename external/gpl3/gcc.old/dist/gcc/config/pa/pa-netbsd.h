@@ -131,7 +131,7 @@ along with GCC; see the file COPYING3.  If not see
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "long int"
 
-/* NetBSD always uses 128 byte alignment.  */
+/* NetBSD always uses 128 bits / 16 byte alignment.  */
 #undef MALLOC_ABI_ALIGNMENT
 #define MALLOC_ABI_ALIGNMENT 128
 

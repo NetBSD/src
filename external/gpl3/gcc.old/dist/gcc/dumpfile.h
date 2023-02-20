@@ -1,5 +1,5 @@
 /* Definitions for the shared dumpfile.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -193,6 +193,9 @@ enum dump_flag
   /* Dumping for -fcompare-debug.  */
   TDF_COMPARE_DEBUG = (1 << 28),
 
+  /* For error.  */
+  TDF_ERROR = (1 << 26),
+
   /* All values.  */
   TDF_ALL_VALUES = (1 << 29) - 1
 };
@@ -364,8 +367,9 @@ class dump_user_location_t
 /* A class for identifying where in the compiler's own source
    (or a plugin) that a dump message is being emitted from.  */
 
-struct dump_impl_location_t
+class dump_impl_location_t
 {
+public:
   dump_impl_location_t (
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
 			const char *file = __builtin_FILE (),
@@ -501,6 +505,8 @@ extern void dump_end (int, FILE *);
 extern int opt_info_switch_p (const char *);
 extern const char *dump_flag_name (int);
 extern const kv_pair<optgroup_flags_t> optgroup_options[];
+extern dump_flags_t
+parse_dump_option (const char *, const char **);
 
 /* Global variables used to communicate with passes.  */
 extern FILE *dump_file;
@@ -642,7 +648,7 @@ extern void dump_combine_total_stats (FILE *);
 /* In cfghooks.c  */
 extern void dump_bb (FILE *, basic_block, int, dump_flags_t);
 
-struct opt_pass;
+class opt_pass;
 
 namespace gcc {
 

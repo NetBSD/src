@@ -186,7 +186,6 @@ GLIBCXX_ENABLE_VTABLE_VERIFY([no])
 # Checks for operating systems support that doesn't require linking.
 GLIBCXX_CHECK_STDIO_PROTO
 GLIBCXX_CHECK_MATH11_PROTO
-GLIBCXX_CHECK_SYSTEM_ERROR
 GLIBCXX_CHECK_UCHAR_H
 
 # For the streamoff typedef.
@@ -224,6 +223,15 @@ GLIBCXX_ENABLE_LIBSTDCXX_TIME
 
 # Check for tmpnam which is obsolescent in POSIX.1-2008
 GLIBCXX_CHECK_TMPNAM
+
+# For pthread_cond_clockwait
+GLIBCXX_CHECK_PTHREAD_COND_CLOCKWAIT
+
+# For pthread_mutex_clocklock
+GLIBCXX_CHECK_PTHREAD_MUTEX_CLOCKLOCK
+
+# For pthread_rwlock_clockrdlock and pthread_rwlock_clockwrlock
+GLIBCXX_CHECK_PTHREAD_RWLOCK_CLOCKLOCK
 
 AC_LC_MESSAGES
 
@@ -422,6 +430,8 @@ GCC_CHECK_ASSEMBLER_HWCAP
 
 # Check if assembler supports rdrand opcode.
 GLIBCXX_CHECK_X86_RDRAND
+# Check if assembler supports rdseed opcode.
+GLIBCXX_CHECK_X86_RDSEED
 
 # This depends on GLIBCXX_ENABLE_SYMVERS and GLIBCXX_IS_NATIVE.
 GLIBCXX_CONFIGURE_TESTSUITE
@@ -486,6 +496,10 @@ AM_CONDITIONAL(BUILD_MAN,
 AC_CHECK_PROG([DBLATEX], dblatex, yes, no)
 AC_CHECK_PROG([PDFLATEX], pdflatex, yes, no)
 AM_CONDITIONAL(BUILD_PDF,
+	       test $ac_cv_prog_DOXYGEN = "yes" &&
+	       test $ac_cv_prog_DOT = "yes" &&
+	       test $ac_cv_prog_XSLTPROC = "yes" &&
+	       test $ac_cv_prog_XMLLINT = "yes" &&
 	       test $ac_cv_prog_DBLATEX = "yes" &&
 	       test $ac_cv_prog_PDFLATEX = "yes")
 

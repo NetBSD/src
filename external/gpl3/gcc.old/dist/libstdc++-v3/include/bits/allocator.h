@@ -1,6 +1,6 @@
 // Allocators -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -50,9 +50,6 @@
 #endif
 
 #define __cpp_lib_incomplete_container_elements 201505
-#if __cplusplus >= 201103L
-# define __cpp_lib_allocator_is_always_equal 201411
-#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -63,20 +60,31 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
    *  @{
    */
 
+  // Since C++20 the primary template should be used for allocator<void>,
+  // but then it would have a non-trivial default ctor and dtor for C++20,
+  // but trivial for C++98-17, which would be an ABI incompatibiliy between
+  // different standard dialects. So C++20 still uses the allocator<void>
+  // explicit specialization, with the historical ABI properties, but with
+  // the same members that are present in the primary template.
+
   /// allocator<void> specialization.
   template<>
     class allocator<void>
     {
     public:
+      typedef void        value_type;
       typedef size_t      size_type;
       typedef ptrdiff_t   difference_type;
+
+#if __cplusplus <= 201703L
+      // These were removed for C++20, allocator_traits does the right thing.
       typedef void*       pointer;
       typedef const void* const_pointer;
-      typedef void        value_type;
 
       template<typename _Tp1>
 	struct rebind
 	{ typedef allocator<_Tp1> other; };
+#endif
 
 #if __cplusplus >= 201103L
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -85,23 +93,25 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       typedef true_type is_always_equal;
 
-      template<typename _Up, typename... _Args>
-	void
-	construct(_Up* __p, _Args&&... __args)
-	noexcept(noexcept(::new((void *)__p)
-			    _Up(std::forward<_Args>(__args)...)))
-	{ ::new((void *)__p) _Up(std::forward<_Args>(__args)...); }
+#if __cplusplus > 201703L
+      // As noted above, these members are present for C++20 to provide the
+      // same API as the primary template, but still trivial as in pre-C++20.
+      allocator() = default;
+      ~allocator() = default;
 
       template<typename _Up>
-	void
-	destroy(_Up* __p)
-	noexcept(noexcept(__p->~_Up()))
-	{ __p->~_Up(); }
-#endif
+	constexpr
+	allocator(const allocator<_Up>&) noexcept { }
+
+      // No allocate member because it's ill-formed by LWG 3307.
+      // No deallocate member because it would be undefined to call it
+      // with any pointer which wasn't obtained from allocate.
+#endif // C++20
+#endif // C++11
     };
 
   /**
-   * @brief  The @a standard allocator, as per [20.4].
+   * @brief  The @a standard allocator, as per C++03 [20.4.1].
    *
    *  See https://gcc.gnu.org/onlinedocs/libstdc++/manual/memory.html#std.util.memory.allocator
    *  for further details.
@@ -111,18 +121,22 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   template<typename _Tp>
     class allocator : public __allocator_base<_Tp>
     {
-   public:
+    public:
+      typedef _Tp        value_type;
       typedef size_t     size_type;
       typedef ptrdiff_t  difference_type;
+
+#if __cplusplus <= 201703L
+      // These were removed for C++20.
       typedef _Tp*       pointer;
       typedef const _Tp* const_pointer;
       typedef _Tp&       reference;
       typedef const _Tp& const_reference;
-      typedef _Tp        value_type;
 
       template<typename _Tp1>
 	struct rebind
 	{ typedef allocator<_Tp1> other; };
+#endif
 
 #if __cplusplus >= 201103L
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
@@ -150,30 +164,64 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	_GLIBCXX20_CONSTEXPR
 	allocator(const allocator<_Tp1>&) _GLIBCXX_NOTHROW { }
 
+#if __cpp_constexpr_dynamic_alloc
+      constexpr
+#endif
       ~allocator() _GLIBCXX_NOTHROW { }
 
-      friend bool
+#if __cplusplus > 201703L
+      [[nodiscard,__gnu__::__always_inline__]]
+      constexpr _Tp*
+      allocate(size_t __n)
+      {
+#ifdef __cpp_lib_is_constant_evaluated
+	if (std::is_constant_evaluated())
+	  return static_cast<_Tp*>(::operator new(__n * sizeof(_Tp)));
+#endif
+	return __allocator_base<_Tp>::allocate(__n, 0);
+      }
+
+      [[__gnu__::__always_inline__]]
+      constexpr void
+      deallocate(_Tp* __p, size_t __n)
+      {
+#ifdef __cpp_lib_is_constant_evaluated
+	if (std::is_constant_evaluated())
+	  {
+	    ::operator delete(__p);
+	    return;
+	  }
+#endif
+	__allocator_base<_Tp>::deallocate(__p, __n);
+      }
+#endif // C++20
+
+      friend _GLIBCXX20_CONSTEXPR bool
       operator==(const allocator&, const allocator&) _GLIBCXX_NOTHROW
       { return true; }
 
-      friend bool
+#if __cpp_impl_three_way_comparison < 201907L
+      friend _GLIBCXX20_CONSTEXPR bool
       operator!=(const allocator&, const allocator&) _GLIBCXX_NOTHROW
       { return false; }
+#endif
 
       // Inherit everything else.
     };
 
   template<typename _T1, typename _T2>
-    inline bool
+    inline _GLIBCXX20_CONSTEXPR bool
     operator==(const allocator<_T1>&, const allocator<_T2>&)
     _GLIBCXX_NOTHROW
     { return true; }
 
+#if __cpp_impl_three_way_comparison < 201907L
   template<typename _T1, typename _T2>
-    inline bool
+    inline _GLIBCXX20_CONSTEXPR bool
     operator!=(const allocator<_T1>&, const allocator<_T2>&)
     _GLIBCXX_NOTHROW
     { return false; }
+#endif
 
   // Invalid allocator<cv T> partial specializations.
   // allocator_traits::rebind_alloc can be used to form a valid allocator type.

@@ -1,5 +1,5 @@
 /* __builtin_object_size (ptr, object_size_type) computation
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>
 
 This file is part of GCC.
@@ -54,7 +54,8 @@ static const unsigned HOST_WIDE_INT unknown[4] = {
 
 static tree compute_object_offset (const_tree, const_tree);
 static bool addr_object_size (struct object_size_info *,
-			      const_tree, int, unsigned HOST_WIDE_INT *);
+			      const_tree, int, unsigned HOST_WIDE_INT *,
+			      tree * = NULL, tree * = NULL);
 static unsigned HOST_WIDE_INT alloc_object_size (const gcall *, int);
 static tree pass_through_call (const gcall *);
 static void collect_object_sizes_for (struct object_size_info *, tree);
@@ -172,9 +173,16 @@ compute_object_offset (const_tree expr, const_tree var)
 
 static bool
 addr_object_size (struct object_size_info *osi, const_tree ptr,
-		  int object_size_type, unsigned HOST_WIDE_INT *psize)
+		  int object_size_type, unsigned HOST_WIDE_INT *psize,
+		  tree *pdecl /* = NULL */, tree *poff /* = NULL */)
 {
   tree pt_var, pt_var_size = NULL_TREE, var_size, bytes;
+
+  tree dummy_decl, dummy_off = size_zero_node;
+  if (!pdecl)
+    pdecl = &dummy_decl;
+  if (!poff)
+    poff = &dummy_off;
 
   gcc_assert (TREE_CODE (ptr) == ADDR_EXPR);
 
@@ -195,7 +203,7 @@ addr_object_size (struct object_size_info *osi, const_tree ptr,
 	  || TREE_CODE (TREE_OPERAND (pt_var, 0)) != SSA_NAME)
 	{
 	  compute_builtin_object_size (TREE_OPERAND (pt_var, 0),
-				       object_size_type & ~1, &sz);
+				       object_size_type & ~1, &sz, pdecl, poff);
 	}
       else
 	{
@@ -232,7 +240,10 @@ addr_object_size (struct object_size_info *osi, const_tree ptr,
 	   && DECL_P (pt_var)
 	   && tree_fits_uhwi_p (DECL_SIZE_UNIT (pt_var))
 	   && tree_to_uhwi (DECL_SIZE_UNIT (pt_var)) < offset_limit)
-    pt_var_size = DECL_SIZE_UNIT (pt_var);
+    {
+      *pdecl = pt_var;
+      pt_var_size = DECL_SIZE_UNIT (pt_var);
+    }
   else if (pt_var
 	   && TREE_CODE (pt_var) == STRING_CST
 	   && TYPE_SIZE_UNIT (TREE_TYPE (pt_var))
@@ -367,6 +378,7 @@ addr_object_size (struct object_size_info *osi, const_tree ptr,
 	    bytes = size_zero_node;
 	  else
 	    bytes = size_binop (MINUS_EXPR, var_size, bytes);
+	  *poff = bytes;
 	}
       if (var != pt_var
 	  && pt_var_size
@@ -381,6 +393,7 @@ addr_object_size (struct object_size_info *osi, const_tree ptr,
 		bytes2 = size_zero_node;
 	      else
 		bytes2 = size_binop (MINUS_EXPR, pt_var_size, bytes2);
+	      *poff = size_binop (PLUS_EXPR, *poff, bytes2);
 	      bytes = size_binop (MIN_EXPR, bytes, bytes2);
 	    }
 	}
@@ -478,15 +491,24 @@ pass_through_call (const gcall *call)
 
 
 /* Compute __builtin_object_size value for PTR and set *PSIZE to
-   the resulting value.  OBJECT_SIZE_TYPE is the second argument
-   to __builtin_object_size.  Return true on success and false
-   when the object size could not be determined.  */
+   the resulting value.  If the declared object is known and PDECL
+   is nonnull, sets *PDECL to the object's DECL.  OBJECT_SIZE_TYPE
+   is the second argument   to __builtin_object_size.
+   Returns true on success and false when the object size could not
+   be determined.  */
 
 bool
 compute_builtin_object_size (tree ptr, int object_size_type,
-			     unsigned HOST_WIDE_INT *psize)
+			     unsigned HOST_WIDE_INT *psize,
+			     tree *pdecl /* = NULL */, tree *poff /* = NULL */)
 {
   gcc_assert (object_size_type >= 0 && object_size_type <= 3);
+
+  tree dummy_decl, dummy_off = size_zero_node;
+  if (!pdecl)
+    pdecl = &dummy_decl;
+  if (!poff)
+    poff = &dummy_off;
 
   /* Set to unknown and overwrite just before returning if the size
      could be determined.  */
@@ -496,7 +518,7 @@ compute_builtin_object_size (tree ptr, int object_size_type,
     init_offset_limit ();
 
   if (TREE_CODE (ptr) == ADDR_EXPR)
-    return addr_object_size (NULL, ptr, object_size_type, psize);
+    return addr_object_size (NULL, ptr, object_size_type, psize, pdecl, poff);
 
   if (TREE_CODE (ptr) != SSA_NAME
       || !POINTER_TYPE_P (TREE_TYPE (ptr)))
@@ -520,11 +542,13 @@ compute_builtin_object_size (tree ptr, int object_size_type,
 	      ptr = gimple_assign_rhs1 (def);
 
 	      if (tree_fits_shwi_p (offset)
-		  && compute_builtin_object_size (ptr, object_size_type, psize))
+		  && compute_builtin_object_size (ptr, object_size_type,
+						  psize, pdecl, poff))
 		{
 		  /* Return zero when the offset is out of bounds.  */
 		  unsigned HOST_WIDE_INT off = tree_to_shwi (offset);
 		  *psize = off < *psize ? *psize - off : 0;
+		  *poff = offset;
 		  return true;
 		}
 	    }
@@ -1369,7 +1393,10 @@ pass_object_sizes::execute (function *fun)
 	    }
 
 	  /* Propagate into all uses and fold those stmts.  */
-	  replace_uses_by (lhs, result);
+	  if (!SSA_NAME_OCCURS_IN_ABNORMAL_PHI (lhs))
+	    replace_uses_by (lhs, result);
+	  else
+	    replace_call_with_value (&i, result);
 	}
     }
 

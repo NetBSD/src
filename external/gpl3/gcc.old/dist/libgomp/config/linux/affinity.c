@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2020 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of the GNU Offloading and Multi Processing Library
@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifdef HAVE_PTHREAD_AFFINITY_NP
 
@@ -280,8 +281,13 @@ gomp_affinity_init_level_1 (int level, int this_level, unsigned long count,
 		      if (gomp_affinity_add_cpus (pl, first, 1, 0, true))
 			{
 			  CPU_CLR_S (first, gomp_cpuset_size, copy);
-			  if (level == 1)
-			    gomp_places_list_len++;
+			  if (level == 1
+			      && ++gomp_places_list_len >= count)
+			    {
+			      fclose (f);
+			      free (line);
+			      return;
+			    }
 			}
 		    }
 		if (*p == ',')

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.checksum,v 1.7 2021/04/09 23:15:51 mrg Exp $
+#	$NetBSD: Makefile.checksum,v 1.8 2023/02/20 02:12:29 mrg Exp $
 
 # Makefile fragment to build $PROG-checksum.  depends upon having
 # $PROG and $CHECKSUM_OBJS set before including.

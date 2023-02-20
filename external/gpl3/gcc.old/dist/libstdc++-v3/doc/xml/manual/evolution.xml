@@ -784,8 +784,8 @@ now defaults to zero.
 
 <para>
   Assertions to check function preconditions can be enabled by defining the
-  <xref linkend="manual.intro.using.macros"><symbol>_GLIBCXX_ASSERTIONS</symbol>
-  macro</xref>.
+  <link linkend="manual.intro.using.macros"><symbol>_GLIBCXX_ASSERTIONS</symbol>
+  macro</link>.
   The initial set of assertions are a subset of the checks enabled by
   the Debug Mode, but without the ABI changes and changes to algorithmic
   complexity that are caused by enabling the full Debug Mode.
@@ -943,6 +943,55 @@ now defaults to zero.
   <filename class="headerfile">&lt;experimental/socket&gt;</filename>,
   and
   <filename class="headerfile">&lt;experimental/timer&gt;</filename>.
+</para>
+
+</section>
+
+<section xml:id="api.rel_101"><info><title><constant>10</constant></title></info>
+<para> Deprecated features removed:
+<itemizedlist>
+<listitem> Profile Mode </listitem>
+<listitem> <classname>__gnu_cxx::array_allocator</classname> </listitem>
+</itemizedlist>
+</para>
+
+<para>
+  The non-standard <function>std::__is_nullptr_t</function> type trait
+  was deprecated.
+</para>
+
+<para>
+  The <classname>std::packaged_task</classname> constructors taking
+  an allocator argument are only defined for C++11 and C++14.
+</para>
+
+<para>
+  Several members of <classname>std::allocator</classname> were removed
+  for C++20 mode. The removed functionality has been provided by
+  <classname>std::allocator_traits</classname> since C++11 and that should
+  be used instead.
+</para>
+
+<para>
+  The type of the <classname>std::iterator</classname> base class of
+  <classname>std::istreambuf_iterator</classname> was changed to be
+  consistent for all <option>-std</option> modes.
+  Before GCC 10.1 the base class had one type in C++98 mode and a
+  different type in C++11 and later modes. The type in C++98 mode
+  was changed to be the same as for C++11 and later.
+</para>
+
+<para>
+  Experimental C++2a support improved, with new headers
+  <filename class="headerfile">&lt;concepts&gt;</filename>,
+  <filename class="headerfile">&lt;ranges&gt;</filename>,
+  <filename class="headerfile">&lt;compare&gt;</filename>,
+  <filename class="headerfile">&lt;coroutine&gt;</filename>,
+  <filename class="headerfile">&lt;numbers&gt;</filename>,
+  <filename class="headerfile">&lt;span&gt;</filename>,
+  and
+  <filename class="headerfile">&lt;stop_token&gt;</filename>
+  added.
 </para>
 
 </section>

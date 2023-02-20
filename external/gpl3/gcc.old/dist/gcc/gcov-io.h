@@ -1,5 +1,5 @@
 /* File format for coverage information
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Contributed by Bob Manson <manson@cygnus.com>.
    Completely remangled by Nathan Sidwell <nathan@codesourcery.com>.
 
@@ -266,11 +266,11 @@ GCOV_COUNTERS
 #define GCOV_N_VALUE_COUNTERS \
   (GCOV_LAST_VALUE_COUNTER - GCOV_FIRST_VALUE_COUNTER + 1)
 
-/* The number of hottest callees to be tracked.  */
-#define GCOV_ICALL_TOPN_VAL  2
+/* Number of top N value histogram.  */
+#define GCOV_TOPN_VALUES 4
 
-/* The number of counter entries per icall callsite.  */
-#define GCOV_ICALL_TOPN_NCOUNTS (1 + GCOV_ICALL_TOPN_VAL * 4)
+/* Total number of single value counters.  */
+#define GCOV_TOPN_VALUES_COUNTERS (2 * GCOV_TOPN_VALUES + 1)
 
 /* Convert a counter index to a tag.  */
 #define GCOV_TAG_FOR_COUNTER(COUNT)				\
@@ -326,6 +326,9 @@ struct gcov_summary
 
 #if !IN_LIBGCOV
 GCOV_LINKAGE int gcov_open (const char */*name*/, int /*direction*/);
+#endif
+
+#if !IN_LIBGCOV || defined (IN_GCOV_TOOL)
 GCOV_LINKAGE int gcov_magic (gcov_unsigned_t, gcov_unsigned_t);
 #endif
 

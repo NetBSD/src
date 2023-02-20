@@ -1,5 +1,5 @@
 /* Register to Stack convert for GNU compiler.
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -368,7 +368,7 @@ straighten_stack (rtx_insn *insn, stack_ptr regstack)
   if (regstack->top <= 0)
     return;
 
-  COPY_HARD_REG_SET (temp_stack.reg_set, regstack->reg_set);
+  temp_stack.reg_set = regstack->reg_set;
 
   for (top = temp_stack.top = regstack->top; top >= 0; top--)
     temp_stack.reg[top] = FIRST_STACK_REG + temp_stack.top - top;
@@ -484,7 +484,6 @@ check_asm_stack_operands (rtx_insn *insn)
 
   if (which_alternative < 0)
     {
-      malformed_asm = 1;
       /* Avoid further trouble with this insn.  */
       PATTERN (insn) = gen_rtx_USE (VOIDmode, const0_rtx);
       return 0;
@@ -545,7 +544,8 @@ check_asm_stack_operands (rtx_insn *insn)
 	    for (j = 0; j < n_clobbers; j++)
 	      if (REGNO (recog_data.operand[i]) == REGNO (clobber_reg[j]))
 		{
-		  error_for_asm (insn, "output constraint %d cannot be specified together with \"%s\" clobber",
+		  error_for_asm (insn, "output constraint %d cannot be "
+				 "specified together with %qs clobber",
 				 i, reg_names [REGNO (clobber_reg[j])]);
 		  malformed_asm = 1;
 		  break;
@@ -568,7 +568,7 @@ check_asm_stack_operands (rtx_insn *insn)
 
   if (i != LAST_STACK_REG + 1)
     {
-      error_for_asm (insn, "output regs must be grouped at top of stack");
+      error_for_asm (insn, "output registers must be grouped at top of stack");
       malformed_asm = 1;
     }
 
@@ -608,7 +608,8 @@ check_asm_stack_operands (rtx_insn *insn)
   if (i != LAST_STACK_REG + 1)
     {
       error_for_asm (insn,
-		     "implicitly popped regs must be grouped at top of stack");
+		     "implicitly popped registers must be grouped "
+		     "at top of stack");
       malformed_asm = 1;
     }
 
@@ -625,7 +626,8 @@ check_asm_stack_operands (rtx_insn *insn)
   if (i != LAST_STACK_REG + 1)
     {
       error_for_asm (insn,
-		     "explicitly used regs must be grouped at top of stack");
+		     "explicitly used registers must be grouped "
+		     "at top of stack");
       malformed_asm = 1;
     }
 
@@ -1815,6 +1817,7 @@ subst_stack_regs_pat (rtx_insn *insn, stack_ptr regstack, rtx pat)
 	      case UNSPEC_FRNDINT:
 	      case UNSPEC_F2XM1:
 
+	      case UNSPEC_FRNDINT_ROUNDEVEN:
 	      case UNSPEC_FRNDINT_FLOOR:
 	      case UNSPEC_FRNDINT_CEIL:
 	      case UNSPEC_FRNDINT_TRUNC:
@@ -2640,7 +2643,7 @@ change_stack (rtx_insn *insn, stack_ptr old, stack_ptr new_stack,
       /* By now, the only difference should be the order of the stack,
 	 not their depth or liveliness.  */
 
-      gcc_assert (hard_reg_set_equal_p (old->reg_set, new_stack->reg_set));
+      gcc_assert (old->reg_set == new_stack->reg_set);
       gcc_assert (old->top == new_stack->top);
 
       /* If the stack is not empty (new_stack->top != -1), loop here emitting
@@ -2927,6 +2930,7 @@ compensate_edge (edge e)
       seq = get_insns ();
       end_sequence ();
 
+      set_insn_locations (seq, e->goto_locus);
       insert_insn_on_edge (seq, e);
       return true;
     }
@@ -3154,8 +3158,7 @@ convert_regs_1 (basic_block block)
      asms, we zapped the instruction itself, but that didn't produce the
      same pattern of register kills as before.  */
 
-  gcc_assert (hard_reg_set_equal_p (regstack.reg_set, bi->out_reg_set)
-	      || any_malformed_asm);
+  gcc_assert (regstack.reg_set == bi->out_reg_set || any_malformed_asm);
   bi->stack_out = regstack;
   bi->done = true;
 

@@ -1,5 +1,5 @@
 /* Combine stack adjustments.
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -133,7 +133,6 @@ single_set_for_csa (rtx_insn *insn)
 	  && SET_SRC (this_rtx) == SET_DEST (this_rtx))
 	;
       else if (GET_CODE (this_rtx) != CLOBBER
-	       && GET_CODE (this_rtx) != CLOBBER_HIGH
 	       && GET_CODE (this_rtx) != USE)
 	return NULL_RTX;
     }

@@ -1,6 +1,6 @@
 // Vector implementation -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -61,6 +61,9 @@
 #include <bits/concept_check.h>
 #if __cplusplus >= 201103L
 #include <initializer_list>
+#endif
+#if __cplusplus > 201703L
+# include <compare>
 #endif
 
 #include <debug/assertions.h>
@@ -397,7 +400,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 #if __cplusplus >= 201103L
       static_assert(is_same<typename remove_cv<_Tp>::type, _Tp>::value,
 	  "std::vector must have a non-const, non-volatile value_type");
-# ifdef __STRICT_ANSI__
+# if __cplusplus > 201703L || defined __STRICT_ANSI__
       static_assert(is_same<typename _Alloc::value_type, _Tp>::value,
 	  "std::vector must have the same value_type as its allocator");
 # endif
@@ -1828,8 +1831,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	  {
 	    // The rvalue's allocator cannot be moved and is not equal,
 	    // so we need to individually move each element.
-	    this->assign(std::__make_move_if_noexcept_iterator(__x.begin()),
-			 std::__make_move_if_noexcept_iterator(__x.end()));
+	    this->_M_assign_aux(std::make_move_iterator(__x.begin()),
+			        std::make_move_iterator(__x.end()),
+				std::random_access_iterator_tag());
 	    __x.clear();
 	  }
       }
@@ -1889,6 +1893,27 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     { return (__x.size() == __y.size()
 	      && std::equal(__x.begin(), __x.end(), __y.begin())); }
 
+#if __cpp_lib_three_way_comparison
+  /**
+   *  @brief  Vector ordering relation.
+   *  @param  __x  A `vector`.
+   *  @param  __y  A `vector` of the same type as `__x`.
+   *  @return  A value indicating whether `__x` is less than, equal to,
+   *           greater than, or incomparable with `__y`.
+   *
+   *  See `std::lexicographical_compare_three_way()` for how the determination
+   *  is made. This operator is used to synthesize relational operators like
+   *  `<` and `>=` etc.
+  */
+  template<typename _Tp, typename _Alloc>
+    inline __detail::__synth3way_t<_Tp>
+    operator<=>(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
+    {
+      return std::lexicographical_compare_three_way(__x.begin(), __x.end(),
+						    __y.begin(), __y.end(),
+						    __detail::__synth3way);
+    }
+#else
   /**
    *  @brief  Vector ordering relation.
    *  @param  __x  A %vector.
@@ -1929,6 +1954,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     inline bool
     operator>=(const vector<_Tp, _Alloc>& __x, const vector<_Tp, _Alloc>& __y)
     { return !(__x < __y); }
+#endif // three-way comparison
 
   /// See std::vector::swap().
   template<typename _Tp, typename _Alloc>

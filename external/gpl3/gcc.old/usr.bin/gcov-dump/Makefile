@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2021/04/09 23:15:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2023/02/20 02:12:35 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -8,8 +8,6 @@ SRCS=		${G_GCOV_DUMP_OBJS:.o=.c}
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} ${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*}
 
 BINDIR=		/usr/bin
-
-MAN=		gcov-dump.1
 
 .include "../Makefile.common"
 .include "../Makefile.libcpp"

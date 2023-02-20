@@ -1,5 +1,5 @@
 /* Wrapper to call lto.  Used by collect2 and the linker plugin.
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    Factored out of collect2 by Rafael Espindola <espindola@google.com>
 
@@ -73,6 +73,7 @@ static char *offload_objects_file_name;
 static char *makefile;
 static unsigned int num_deb_objs;
 static const char **early_debug_object_names;
+static bool xassembler_options_error = false;
 
 const char tool_name[] = "lto-wrapper";
 
@@ -137,41 +138,14 @@ get_options_from_collect_gcc_options (const char *collect_gcc,
 				      unsigned int *decoded_options_count)
 {
   struct obstack argv_obstack;
-  char *argv_storage;
   const char **argv;
-  int j, k, argc;
+  int argc;
 
-  argv_storage = xstrdup (collect_gcc_options);
   obstack_init (&argv_obstack);
   obstack_ptr_grow (&argv_obstack, collect_gcc);
 
-  for (j = 0, k = 0; argv_storage[j] != '\0'; ++j)
-    {
-      if (argv_storage[j] == '\'')
-	{
-	  obstack_ptr_grow (&argv_obstack, &argv_storage[k]);
-	  ++j;
-	  do
-	    {
-	      if (argv_storage[j] == '\0')
-		fatal_error (input_location, "malformed COLLECT_GCC_OPTIONS");
-	      else if (strncmp (&argv_storage[j], "'\\''", 4) == 0)
-		{
-		  argv_storage[k++] = '\'';
-		  j += 4;
-		}
-	      else if (argv_storage[j] == '\'')
-		break;
-	      else
-		argv_storage[k++] = argv_storage[j++];
-	    }
-	  while (1);
-	  argv_storage[k++] = '\0';
-	}
-    }
-
-  obstack_ptr_grow (&argv_obstack, NULL);
-  argc = obstack_object_size (&argv_obstack) / sizeof (void *) - 1;
+  parse_options_from_collect_gcc_options (collect_gcc_options,
+					  &argv_obstack, &argc);
   argv = XOBFINISH (&argv_obstack, const char **);
 
   decode_cmdline_options_to_array (argc, (const char **)argv, CL_DRIVER,
@@ -218,11 +192,14 @@ static void
 merge_and_complain (struct cl_decoded_option **decoded_options,
 		    unsigned int *decoded_options_count,
 		    struct cl_decoded_option *fdecoded_options,
-		    unsigned int fdecoded_options_count)
+		    unsigned int fdecoded_options_count,
+		    struct cl_decoded_option *decoded_cl_options,
+		    unsigned int decoded_cl_options_count)
 {
   unsigned int i, j;
   struct cl_decoded_option *pic_option = NULL;
   struct cl_decoded_option *pie_option = NULL;
+  struct cl_decoded_option *cf_protection_option = NULL;
 
   /* ???  Merge options from files.  Most cases can be
      handled by either unioning or intersecting
@@ -237,6 +214,17 @@ merge_and_complain (struct cl_decoded_option **decoded_options,
      In absence of that it's unclear what a good default is.
      It's also difficult to get positional handling correct.  */
 
+  /* Look for a -fcf-protection option in the link-time options
+     which overrides any -fcf-protection from the lto sections.  */
+  for (i = 0; i < decoded_cl_options_count; ++i)
+    {
+      struct cl_decoded_option *foption = &decoded_cl_options[i];
+      if (foption->opt_index == OPT_fcf_protection_)
+	{
+	  cf_protection_option = foption;
+	}
+    }
+  
   /* The following does what the old LTO option code did,
      union all target and a selected set of common options.  */
   for (i = 0; i < fdecoded_options_count; ++i)
@@ -246,7 +234,7 @@ merge_and_complain (struct cl_decoded_option **decoded_options,
 	{
 	case OPT_SPECIAL_unknown:
 	case OPT_SPECIAL_ignore:
-	case OPT_SPECIAL_deprecated:
+	case OPT_SPECIAL_warn_removed:
 	case OPT_SPECIAL_program_name:
 	case OPT_SPECIAL_input_file:
 	  break;
@@ -264,6 +252,7 @@ merge_and_complain (struct cl_decoded_option **decoded_options,
 	case OPT_fshow_column:
 	case OPT_fcommon:
 	case OPT_fgnu_tm:
+	case OPT_g:
 	  /* Do what the old LTO code did - collect exactly one option
 	     setting per OPT code, we pick the first we encounter.
 	     ???  This doesn't make too much sense, but when it doesn't
@@ -308,8 +297,50 @@ merge_and_complain (struct cl_decoded_option **decoded_options,
 	    append_option (decoded_options, decoded_options_count, foption);
 	  else if (strcmp ((*decoded_options)[j].arg, foption->arg))
 	    fatal_error (input_location,
-			 "Option %s with different values",
+			 "option %s with different values",
 			 foption->orig_option_with_args_text);
+	  break;
+
+	case OPT_fcf_protection_:
+	  /* Default to link-time option, else append or check identical.  */
+	  if (!cf_protection_option
+	      || cf_protection_option->value == CF_CHECK)
+	    {
+	      for (j = 0; j < *decoded_options_count; ++j)
+		if ((*decoded_options)[j].opt_index == foption->opt_index)
+		  break;
+	      if (j == *decoded_options_count)
+		append_option (decoded_options, decoded_options_count, foption);
+	      else if ((*decoded_options)[j].value != foption->value)
+		{
+		  if (cf_protection_option
+		      && cf_protection_option->value == CF_CHECK)
+		    fatal_error (input_location,
+				 "option -fcf-protection with mismatching values"
+				 " (%s, %s)",
+				 (*decoded_options)[j].arg, foption->arg);
+		  else
+		    {
+		      /* Merge and update the -fcf-protection option.  */
+		      (*decoded_options)[j].value &= (foption->value
+						      & CF_FULL);
+		      switch ((*decoded_options)[j].value)
+			{
+			case CF_NONE:
+			  (*decoded_options)[j].arg = "none";
+			  break;
+			case CF_BRANCH:
+			  (*decoded_options)[j].arg = "branch";
+			  break;
+			case CF_RETURN:
+			  (*decoded_options)[j].arg = "return";
+			  break;
+			default:
+			  gcc_unreachable ();
+			}
+		    }
+		}
+	    }
 	  break;
 
 	case OPT_O:
@@ -392,7 +423,7 @@ merge_and_complain (struct cl_decoded_option **decoded_options,
 	    append_option (decoded_options, decoded_options_count, foption);
 	  else if (foption->value != (*decoded_options)[j].value)
 	    fatal_error (input_location,
-			 "Option %s not used consistently in all LTO input"
+			 "option %s not used consistently in all LTO input"
 			 " files", foption->orig_option_with_args_text);
 	  break;
 
@@ -406,7 +437,7 @@ merge_and_complain (struct cl_decoded_option **decoded_options,
   /* Merge PIC options:
       -fPIC + -fpic = -fpic
       -fPIC + -fno-pic = -fno-pic
-      -fpic/-fPIC + nothin = nothing.  
+      -fpic/-fPIC + nothing = nothing.
      It is a common mistake to mix few -fPIC compiled objects into otherwise
      non-PIC code.  We do not want to build everything with PIC then.
 
@@ -436,9 +467,10 @@ merge_and_complain (struct cl_decoded_option **decoded_options,
 			   && pie_option->opt_index == OPT_fPIE;
 	        (*decoded_options)[j].opt_index = big ? OPT_fPIE : OPT_fpie;
 		if (pie_option->value)
-	          (*decoded_options)[j].canonical_option[0] = big ? "-fPIE" : "-fpie";
+	          (*decoded_options)[j].canonical_option[0]
+		    = big ? "-fPIE" : "-fpie";
 		else
-	          (*decoded_options)[j].canonical_option[0] = big ? "-fno-pie" : "-fno-pie";
+	          (*decoded_options)[j].canonical_option[0] = "-fno-pie";
 		(*decoded_options)[j].value = pie_option->value;
 	        j++;
 	      }
@@ -480,7 +512,7 @@ merge_and_complain (struct cl_decoded_option **decoded_options,
 		  {
 	            (*decoded_options)[j].opt_index = OPT_fpie;
 	            (*decoded_options)[j].canonical_option[0]
-			 = pic_option->value ? "-fpie" : "-fno-pie";
+		      = pic_option->value ? "-fpie" : "-fno-pie";
 		  }
 		else if (!pic_option->value)
 		  (*decoded_options)[j].canonical_option[0] = "-fno-pie";
@@ -509,6 +541,45 @@ merge_and_complain (struct cl_decoded_option **decoded_options,
       }
    else
      j++;
+
+  if (!xassembler_options_error)
+    for (i = j = 0; ; i++, j++)
+      {
+	for (; i < *decoded_options_count; i++)
+	  if ((*decoded_options)[i].opt_index == OPT_Xassembler)
+	    break;
+
+	for (; j < fdecoded_options_count; j++)
+	  if (fdecoded_options[j].opt_index == OPT_Xassembler)
+	    break;
+
+	if (i == *decoded_options_count && j == fdecoded_options_count)
+	  break;
+	else if (i < *decoded_options_count && j == fdecoded_options_count)
+	  {
+	    warning (0, "Extra option to -Xassembler: %s,"
+		     " dropping all -Xassembler and -Wa options.",
+		     (*decoded_options)[i].arg);
+	    xassembler_options_error = true;
+	    break;
+	  }
+	else if (i == *decoded_options_count && j < fdecoded_options_count)
+	  {
+	    warning (0, "Extra option to -Xassembler: %s,"
+		     " dropping all -Xassembler and -Wa options.",
+		     fdecoded_options[j].arg);
+	    xassembler_options_error = true;
+	    break;
+	  }
+	else if (strcmp ((*decoded_options)[i].arg, fdecoded_options[j].arg))
+	  {
+	    warning (0, "Options to Xassembler do not match: %s, %s,"
+		     " dropping all -Xassembler and -Wa options.",
+		     (*decoded_options)[i].arg, fdecoded_options[j].arg);
+	    xassembler_options_error = true;
+	    break;
+	  }
+      }
 }
 
 /* Auxiliary function that frees elements of PTR and PTR itself.
@@ -616,10 +687,19 @@ append_compiler_options (obstack *argv_obstack, struct cl_decoded_option *opts,
 	case OPT_fopenacc:
 	case OPT_fopenacc_dim_:
 	case OPT_foffload_abi_:
+	case OPT_fcf_protection_:
+	case OPT_g:
 	case OPT_O:
 	case OPT_Ofast:
 	case OPT_Og:
 	case OPT_Os:
+	  break;
+
+	case OPT_Xassembler:
+	  /* When we detected a mismatch in assembler options between
+	     the input TU's fall back to previous behavior of ignoring them.  */
+	  if (xassembler_options_error)
+	    continue;
 	  break;
 
 	default:
@@ -820,7 +900,7 @@ compile_offload_image (const char *target, const char *compiler_path,
 
   if (!compiler)
     fatal_error (input_location,
-		 "could not find %s in %s (consider using %<-B%>)\n",
+		 "could not find %s in %s (consider using %<-B%>)",
 		 suffix + 1, compiler_path);
 
   /* Generate temporary output file name.  */
@@ -901,7 +981,7 @@ compile_images_for_offload_targets (unsigned in_argc, char *in_argv[],
 				 linker_opts, linker_opt_count);
       if (!offload_names[next_name_entry])
 	fatal_error (input_location,
-		     "problem with building target image for %s\n", names[i]);
+		     "problem with building target image for %s", names[i]);
       next_name_entry++;
     }
 
@@ -958,19 +1038,21 @@ find_crtoffloadtable (void)
       }
   if (i == n_paths)
     fatal_error (input_location,
-		 "installation error, can%'t find crtoffloadtable.o");
+		 "installation error, cannot find %<crtoffloadtable.o%>");
 
   free_array_of_ptrs ((void **) paths, n_paths);
 }
 
 /* A subroutine of run_gcc.  Examine the open file FD for lto sections with
    name prefix PREFIX, at FILE_OFFSET, and store any options we find in OPTS
-   and OPT_COUNT.  Return true if we found a matchingn section, false
+   and OPT_COUNT.  Return true if we found a matching section, false
    otherwise.  COLLECT_GCC holds the value of the environment variable with
    the same name.  */
 
 static bool
 find_and_merge_options (int fd, off_t file_offset, const char *prefix,
+			struct cl_decoded_option *decoded_cl_options,
+			unsigned int decoded_cl_options_count,
 			struct cl_decoded_option **opts,
 			unsigned int *opt_count, const char *collect_gcc)
 {
@@ -1017,7 +1099,9 @@ find_and_merge_options (int fd, off_t file_offset, const char *prefix,
       else
 	merge_and_complain (&fdecoded_options,
 			    &fdecoded_options_count,
-			    f2decoded_options, f2decoded_options_count);
+			    f2decoded_options, f2decoded_options_count,
+			    decoded_cl_options,
+			    decoded_cl_options_count);
 
       fopts += strlen (fopts) + 1;
     }
@@ -1069,7 +1153,7 @@ debug_objcopy (const char *infile, bool rename)
 				  &off, &len, &errmsg, &err) != 1)
     {
       if (errmsg)
-	fatal_error (0, "%s: %s\n", errmsg, xstrerror (err));
+	fatal_error (0, "%s: %s", errmsg, xstrerror (err));
 
       simple_object_release_read (inobj);
       close (infd);
@@ -1089,7 +1173,7 @@ debug_objcopy (const char *infile, bool rename)
   if (errmsg)
     {
       unlink_if_ordinary (outfile);
-      fatal_error (0, "%s: %s\n", errmsg, xstrerror (err));
+      fatal_error (0, "%s: %s", errmsg, xstrerror (err));
     }
 
   simple_object_release_read (inobj);
@@ -1106,6 +1190,136 @@ cmp_priority (const void *a, const void *b)
   return *((const int *)b)-*((const int *)a);
 }
 
+/* Number of CPUs that can be used for parallel LTRANS phase.  */
+
+static unsigned long nthreads_var = 0;
+
+#ifdef HAVE_PTHREAD_AFFINITY_NP
+unsigned long cpuset_size;
+static unsigned long get_cpuset_size;
+cpu_set_t *cpusetp;
+
+unsigned long
+static cpuset_popcount (unsigned long cpusetsize, cpu_set_t *cpusetp)
+{
+#ifdef CPU_COUNT_S
+  /* glibc 2.7 and above provide a macro for this.  */
+  return CPU_COUNT_S (cpusetsize, cpusetp);
+#else
+#ifdef CPU_COUNT
+  if (cpusetsize == sizeof (cpu_set_t))
+    /* glibc 2.6 and above provide a macro for this.  */
+    return CPU_COUNT (cpusetp);
+#endif
+  size_t i;
+  unsigned long ret = 0;
+  STATIC_ASSERT (sizeof (cpusetp->__bits[0]) == sizeof (unsigned long int));
+  for (i = 0; i < cpusetsize / sizeof (cpusetp->__bits[0]); i++)
+    {
+      unsigned long int mask = cpusetp->__bits[i];
+      if (mask == 0)
+	continue;
+      ret += __builtin_popcountl (mask);
+    }
+  return ret;
+#endif
+}
+#endif
+
+/* At startup, determine the default number of threads.  It would seem
+   this should be related to the number of cpus online.  */
+
+static void
+init_num_threads (void)
+{
+#ifdef HAVE_PTHREAD_AFFINITY_NP
+#if defined (_SC_NPROCESSORS_CONF) && defined (CPU_ALLOC_SIZE)
+  cpuset_size = sysconf (_SC_NPROCESSORS_CONF);
+  cpuset_size = CPU_ALLOC_SIZE (cpuset_size);
+#else
+  cpuset_size = sizeof (cpu_set_t);
+#endif
+
+  cpusetp = (cpu_set_t *) xmalloc (gomp_cpuset_size);
+  do
+    {
+      int ret = pthread_getaffinity_np (pthread_self (), gomp_cpuset_size,
+					cpusetp);
+      if (ret == 0)
+	{
+	  /* Count only the CPUs this process can use.  */
+	  nthreads_var = cpuset_popcount (cpuset_size, cpusetp);
+	  if (nthreads_var == 0)
+	    break;
+	  get_cpuset_size = cpuset_size;
+#ifdef CPU_ALLOC_SIZE
+	  unsigned long i;
+	  for (i = cpuset_size * 8; i; i--)
+	    if (CPU_ISSET_S (i - 1, cpuset_size, cpusetp))
+	      break;
+	  cpuset_size = CPU_ALLOC_SIZE (i);
+#endif
+	  return;
+	}
+      if (ret != EINVAL)
+	break;
+#ifdef CPU_ALLOC_SIZE
+      if (cpuset_size < sizeof (cpu_set_t))
+	cpuset_size = sizeof (cpu_set_t);
+      else
+	cpuset_size = cpuset_size * 2;
+      if (cpuset_size < 8 * sizeof (cpu_set_t))
+	cpusetp
+	  = (cpu_set_t *) realloc (cpusetp, cpuset_size);
+      else
+	{
+	  /* Avoid fatal if too large memory allocation would be
+	     requested, e.g. kernel returning EINVAL all the time.  */
+	  void *p = realloc (cpusetp, cpuset_size);
+	  if (p == NULL)
+	    break;
+	  cpusetp = (cpu_set_t *) p;
+	}
+#else
+      break;
+#endif
+    }
+  while (1);
+  cpuset_size = 0;
+  nthreads_var = 1;
+  free (cpusetp);
+  cpusetp = NULL;
+#endif
+#ifdef _SC_NPROCESSORS_ONLN
+  nthreads_var = sysconf (_SC_NPROCESSORS_ONLN);
+#endif
+}
+
+/* FIXME: once using -std=c++11, we can use std::thread::hardware_concurrency.  */
+
+/* Return true when a jobserver is running and can accept a job.  */
+
+static bool
+jobserver_active_p (void)
+{
+  const char *makeflags = getenv ("MAKEFLAGS");
+  if (makeflags == NULL)
+    return false;
+
+  const char *needle = "--jobserver-auth=";
+  const char *n = strstr (makeflags, needle);
+  if (n == NULL)
+    return false;
+
+  int rfd = -1;
+  int wfd = -1;
+
+  return (sscanf (n + strlen (needle), "%d,%d", &rfd, &wfd) == 2
+	  && rfd > 0
+	  && wfd > 0
+	  && is_valid_fd (rfd)
+	  && is_valid_fd (wfd));
+}
 
 /* Execute gcc. ARGC is the number of arguments. ARGV contains the arguments. */
 
@@ -1117,9 +1331,11 @@ run_gcc (unsigned argc, char *argv[])
   const char **argv_ptr;
   char *list_option_full = NULL;
   const char *linker_output = NULL;
-  const char *collect_gcc, *collect_gcc_options;
+  const char *collect_gcc;
+  char *collect_gcc_options;
   int parallel = 0;
   int jobserver = 0;
+  int auto_parallel = 0;
   bool no_partition = false;
   struct cl_decoded_option *fdecoded_options = NULL;
   struct cl_decoded_option *offload_fdecoded_options = NULL;
@@ -1141,11 +1357,31 @@ run_gcc (unsigned argc, char *argv[])
   collect_gcc = getenv ("COLLECT_GCC");
   if (!collect_gcc)
     fatal_error (input_location,
-		 "environment variable COLLECT_GCC must be set");
+		 "environment variable %<COLLECT_GCC%> must be set");
   collect_gcc_options = getenv ("COLLECT_GCC_OPTIONS");
   if (!collect_gcc_options)
     fatal_error (input_location,
-		 "environment variable COLLECT_GCC_OPTIONS must be set");
+		 "environment variable %<COLLECT_GCC_OPTIONS%> must be set");
+
+  char *collect_as_options = getenv ("COLLECT_AS_OPTIONS");
+
+  /* Prepend -Xassembler to each option, and append the string
+     to collect_gcc_options.  */
+  if (collect_as_options)
+    {
+      obstack temporary_obstack;
+      obstack_init (&temporary_obstack);
+
+      prepend_xassembler_to_collect_as_options (collect_as_options,
+						&temporary_obstack);
+      obstack_1grow (&temporary_obstack, '\0');
+
+      char *xassembler_opts_string
+	= XOBFINISH (&temporary_obstack, char *);
+      collect_gcc_options = concat (collect_gcc_options, xassembler_opts_string,
+				    NULL);
+    }
+
   get_options_from_collect_gcc_options (collect_gcc, collect_gcc_options,
 					&decoded_options,
 					&decoded_options_count);
@@ -1198,6 +1434,7 @@ run_gcc (unsigned argc, char *argv[])
 	}
 
       if (find_and_merge_options (fd, file_offset, LTO_SECTION_NAME_PREFIX,
+				  decoded_options, decoded_options_count,
 				  &fdecoded_options, &fdecoded_options_count,
 				  collect_gcc))
 	{
@@ -1243,8 +1480,13 @@ run_gcc (unsigned argc, char *argv[])
 	case OPT_flto_:
 	  if (strcmp (option->arg, "jobserver") == 0)
 	    {
-	      jobserver = 1;
 	      parallel = 1;
+	      jobserver = 1;
+	    }
+	  else if (strcmp (option->arg, "auto") == 0)
+	    {
+	      parallel = 1;
+	      auto_parallel = 1;
 	    }
 	  else
 	    {
@@ -1262,6 +1504,10 @@ run_gcc (unsigned argc, char *argv[])
 	  linker_output_rel = !strcmp (option->arg, "rel");
 	  break;
 
+	case OPT_g:
+	  /* Recognize -g0.  */
+	  skip_debug = option->arg && !strcmp (option->arg, "0");
+	  break;
 
 	default:
 	  break;
@@ -1286,7 +1532,13 @@ run_gcc (unsigned argc, char *argv[])
     {
       lto_mode = LTO_MODE_LTO;
       jobserver = 0;
+      auto_parallel = 0;
       parallel = 0;
+    }
+  else if (!jobserver && jobserver_active_p ())
+    {
+      parallel = 1;
+      jobserver = 1;
     }
 
   if (linker_output)
@@ -1386,6 +1638,7 @@ cont1:
 	    fatal_error (input_location, "cannot open %s: %m", filename);
 	  if (!find_and_merge_options (fd, file_offset,
 				       OFFLOAD_SECTION_NAME_PREFIX,
+				       decoded_options, decoded_options_count,
 				       &offload_fdecoded_options,
 				       &offload_fdecoded_options_count,
 				       collect_gcc))
@@ -1479,7 +1732,21 @@ cont1:
       strcpy (tmp, ltrans_output_file);
 
       if (jobserver)
-	obstack_ptr_grow (&argv_obstack, xstrdup ("-fwpa=jobserver"));
+	{
+	  if (verbose)
+	    fprintf (stderr, "Using make jobserver\n");
+	  obstack_ptr_grow (&argv_obstack, xstrdup ("-fwpa=jobserver"));
+	}
+      else if (auto_parallel)
+	{
+	  char buf[256];
+	  init_num_threads ();
+	  if (verbose)
+	    fprintf (stderr, "LTO parallelism level set to %ld\n",
+		     nthreads_var);
+	  sprintf (buf, "-fwpa=%ld", nthreads_var);
+	  obstack_ptr_grow (&argv_obstack, xstrdup (buf));
+	}
       else if (parallel > 1)
 	{
 	  char buf[256];
@@ -1544,7 +1811,7 @@ cont1:
       int priority;
 
       if (!stream)
-	fatal_error (input_location, "fopen: %s: %m", ltrans_output_file);
+	fatal_error (input_location, "%<fopen%>: %s: %m", ltrans_output_file);
 
       /* Parse the list of LTRANS inputs from the WPA stage.  */
       obstack_init (&env_obstack);
@@ -1561,7 +1828,7 @@ cont1:
 	    {
 	      if (!feof (stream))
 	        fatal_error (input_location,
-		             "Corrupted ltrans output file %s",
+		             "corrupted ltrans output file %s",
 			     ltrans_output_file);
 	      break;
 	    }
@@ -1687,7 +1954,8 @@ cont:
 	  i = 3;
 	  if (!jobserver)
 	    {
-	      snprintf (jobs, 31, "-j%d", parallel);
+	      snprintf (jobs, 31, "-j%ld",
+			auto_parallel ? nthreads_var : parallel);
 	      new_argv[i++] = jobs;
 	    }
 	  new_argv[i++] = "all";
@@ -1750,7 +2018,7 @@ main (int argc, char *argv[])
   diagnostic_initialize (global_dc, 0);
 
   if (atexit (lto_wrapper_cleanup) != 0)
-    fatal_error (input_location, "atexit failed");
+    fatal_error (input_location, "%<atexit%> failed");
 
   if (signal (SIGINT, SIG_IGN) != SIG_IGN)
     signal (SIGINT, fatal_signal);

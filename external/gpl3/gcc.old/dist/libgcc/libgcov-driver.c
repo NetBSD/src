@@ -1,6 +1,6 @@
 /* Routines required for instrumenting a program.  */
 /* Compile this one with gcc.  */
-/* Copyright (C) 1989-2019 Free Software Foundation, Inc.
+/* Copyright (C) 1989-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -213,6 +213,51 @@ static struct gcov_fn_buffer *fn_buffer;
 /* Including system dependent components. */
 #include "libgcov-driver-system.c"
 
+/* Prune TOP N value COUNTERS.  It's needed in order to preserve
+   reproducibility of builds.  */
+
+static void
+prune_topn_counter (gcov_type *counters, gcov_type all)
+{
+  for (unsigned i = 0; i < GCOV_TOPN_VALUES; i++)
+    if (counters[2 * i + 1] < all)
+      {
+	counters[2 * i] = 0;
+	counters[2 * i + 1] = 0;
+      }
+}
+
+/* Prune counters so that they are ready to store or merge.  */
+
+static void
+prune_counters (struct gcov_info *gi)
+{
+  for (unsigned i = 0; i < gi->n_functions; i++)
+    {
+      const struct gcov_fn_info *gfi = gi->functions[i];
+      const struct gcov_ctr_info *ci = gfi->ctrs;
+
+      for (unsigned j = 0; j < GCOV_COUNTERS; j++)
+	{
+	  if (gi->merge[j] == NULL)
+	    continue;
+
+	  if (j == GCOV_COUNTER_V_TOPN || j == GCOV_COUNTER_V_INDIR)
+	    {
+	      gcc_assert (!(ci->num % GCOV_TOPN_VALUES_COUNTERS));
+	      for (unsigned k = 0; k < (ci->num / GCOV_TOPN_VALUES_COUNTERS);
+		   k++)
+		{
+		  gcov_type *counters
+		    = ci->values + (k * GCOV_TOPN_VALUES_COUNTERS);
+		  prune_topn_counter (counters + 1, *counters);
+		}
+	    }
+	  ci++;
+	}
+    }
+}
+
 /* This function merges counters in GI_PTR to an existing gcda file.
    Return 0 on success.
    Return -1 on error. In this case, caller will goto read_fatal.  */
@@ -415,84 +460,6 @@ merge_summary (int run_counted, struct gcov_summary *summary,
     }
 }
 
-/* Sort N entries in VALUE_ARRAY in descending order.
-   Each entry in VALUE_ARRAY has two values. The sorting
-   is based on the second value.  */
-
-GCOV_LINKAGE  void
-gcov_sort_n_vals (gcov_type *value_array, int n)
-{
-  int j, k;
-
-  for (j = 2; j < n; j += 2)
-    {
-      gcov_type cur_ent[2];
-
-      cur_ent[0] = value_array[j];
-      cur_ent[1] = value_array[j + 1];
-      k = j - 2;
-      while (k >= 0 && value_array[k + 1] < cur_ent[1])
-        {
-          value_array[k + 2] = value_array[k];
-          value_array[k + 3] = value_array[k+1];
-          k -= 2;
-        }
-      value_array[k + 2] = cur_ent[0];
-      value_array[k + 3] = cur_ent[1];
-    }
-}
-
-/* Sort the profile counters for all indirect call sites. Counters
-   for each call site are allocated in array COUNTERS.  */
-
-static void
-gcov_sort_icall_topn_counter (const struct gcov_ctr_info *counters)
-{
-  int i;
-  gcov_type *values;
-  int n = counters->num;
-
-  gcc_assert (!(n % GCOV_ICALL_TOPN_NCOUNTS));
-  values = counters->values;
-
-  for (i = 0; i < n; i += GCOV_ICALL_TOPN_NCOUNTS)
-    {
-      gcov_type *value_array = &values[i + 1];
-      gcov_sort_n_vals (value_array, GCOV_ICALL_TOPN_NCOUNTS - 1);
-    }
-}
-
-/* Sort topn indirect_call profile counters in GI_PTR.  */
-
-static void
-gcov_sort_topn_counter_arrays (const struct gcov_info *gi_ptr)
-{
-  unsigned int i;
-  int f_ix;
-  const struct gcov_fn_info *gfi_ptr;
-  const struct gcov_ctr_info *ci_ptr;
-
-  if (!gi_ptr->merge[GCOV_COUNTER_ICALL_TOPNV]) 
-    return;
-
-  for (f_ix = 0; (unsigned)f_ix != gi_ptr->n_functions; f_ix++)
-    {
-      gfi_ptr = gi_ptr->functions[f_ix];
-      ci_ptr = gfi_ptr->ctrs;
-      for (i = 0; i < GCOV_COUNTERS; i++)
-        {
-          if (!gi_ptr->merge[i])
-            continue;
-          if (i == GCOV_COUNTER_ICALL_TOPNV)
-            {
-              gcov_sort_icall_topn_counter (ci_ptr);
-              break;
-            }
-          ci_ptr++;
-        }
-    }
-}
-
 /* Dump the coverage counts for one gcov_info object. We merge with existing
    counts when possible, to avoid growing the .da files ad infinitum. We use
    this program's checksum to make sure we only accumulate whole program
@@ -507,10 +474,10 @@ dump_one_gcov (struct gcov_info *gi_ptr, struct gcov_filename *gf,
   struct gcov_summary summary = {};
   int error;
   gcov_unsigned_t tag;
-
   fn_buffer = 0;
 
-  gcov_sort_topn_counter_arrays (gi_ptr);
+  /* Prune current counters before we merge them.  */
+  prune_counters (gi_ptr);
 
   error = gcov_exit_open_gcda_file (gi_ptr, gf);
   if (error == -1)

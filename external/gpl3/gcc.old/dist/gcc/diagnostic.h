@@ -1,5 +1,5 @@
 /* Various declarations for language-independent diagnostics subroutines.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@codesourcery.com>
 
 This file is part of GCC.
@@ -35,6 +35,23 @@ enum diagnostics_output_format
   DIAGNOSTICS_OUTPUT_FORMAT_JSON
 };
 
+/* An enum for controlling how diagnostic_paths should be printed.  */
+enum diagnostic_path_format
+{
+  /* Don't print diagnostic_paths.  */
+  DPF_NONE,
+
+  /* Print diagnostic_paths by emitting a separate "note" for every event
+     in the path.  */
+  DPF_SEPARATE_EVENTS,
+
+  /* Print diagnostic_paths by consolidating events together where they
+     are close enough, and printing such runs of events with multiple
+     calls to diagnostic_show_locus, showing the individual events in
+     each run via labels in the source.  */
+  DPF_INLINE_EVENTS
+};
+
 /* A diagnostic is described by the MESSAGE to send, the FILE and LINE of
    its context and its KIND (ice, error, warning, note, ...)  See complete
    list in diagnostic.def.  */
@@ -45,6 +62,10 @@ struct diagnostic_info
 
   /* The location at which the diagnostic is to be reported.  */
   rich_location *richloc;
+
+  /* An optional bundle of metadata associated with the diagnostic
+     (or NULL).  */
+  const diagnostic_metadata *metadata;
 
   /* Auxiliary data for client.  */
   void *x_data;
@@ -76,6 +97,7 @@ typedef void (*diagnostic_finalizer_fn) (diagnostic_context *,
 					 diagnostic_t);
 
 class edit_context;
+namespace json { class value; }
 
 /* This data structure bundles altogether any information relevant to
    the context of a diagnostic message.  */
@@ -125,6 +147,16 @@ struct diagnostic_context
 
   /* Character used for caret diagnostics.  */
   char caret_chars[rich_location::STATICALLY_ALLOCATED_RANGES];
+
+  /* True if we should print any CWE identifiers associated with
+     diagnostics.  */
+  bool show_cwe;
+
+  /* How should diagnostic_path objects be printed.  */
+  enum diagnostic_path_format path_format;
+
+  /* True if we should print stack depths when printing diagnostic paths.  */
+  bool show_path_depths;
 
   /* True if we should print the command line option which controls
      each diagnostic, if known.  */
@@ -180,7 +212,7 @@ struct diagnostic_context
 
   /* Client hook to say whether the option controlling a diagnostic is
      enabled.  Returns nonzero if enabled, zero if disabled.  */
-  int (*option_enabled) (int, void *);
+  int (*option_enabled) (int, unsigned, void *);
 
   /* Client information to pass as second argument to
      option_enabled.  */
@@ -194,6 +226,15 @@ struct diagnostic_context
      May be passed 0 as well as the index of a particular option.  */
   char *(*option_name) (diagnostic_context *, int, diagnostic_t, diagnostic_t);
 
+  /* Client hook to return a URL describing the option that controls
+     a diagnostic.  Returns malloced memory.  May return NULL if no URL
+     is available.  May be passed 0 as well as the index of a
+     particular option.  */
+  char *(*get_option_url) (diagnostic_context *, int);
+
+  void (*print_path) (diagnostic_context *, const diagnostic_path *);
+  json::value *(*make_json_for_path) (diagnostic_context *, const diagnostic_path *);
+
   /* Auxiliary data for client.  */
   void *x_data;
 
@@ -205,6 +246,9 @@ struct diagnostic_context
   const line_map_ordinary *last_module;
 
   int lock;
+
+  /* A copy of lang_hooks.option_lang_mask ().  */
+  unsigned lang_mask;
 
   bool inhibit_notes_p;
 
@@ -328,11 +372,13 @@ diagnostic_override_option_index (diagnostic_info *info, int optidx)
 /* Diagnostic related functions.  */
 extern void diagnostic_initialize (diagnostic_context *, int);
 extern void diagnostic_color_init (diagnostic_context *, int value = -1);
+extern void diagnostic_urls_init (diagnostic_context *, int value = -1);
 extern void diagnostic_finish (diagnostic_context *);
 extern void diagnostic_report_current_module (diagnostic_context *, location_t);
 extern void diagnostic_show_locus (diagnostic_context *,
 				   rich_location *richloc,
 				   diagnostic_t diagnostic_kind);
+extern void diagnostic_show_any_path (diagnostic_context *, diagnostic_info *);
 
 /* Force diagnostics controlled by OPTIDX to be kind KIND.  */
 extern diagnostic_t diagnostic_classify_diagnostic (diagnostic_context *,
@@ -423,5 +469,7 @@ extern void diagnostic_output_format_init (diagnostic_context *,
 
 /* Compute the number of digits in the decimal representation of an integer.  */
 extern int num_digits (int);
+
+extern json::value *json_from_expanded_location (location_t loc);
 
 #endif /* ! GCC_DIAGNOSTIC_H */

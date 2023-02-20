@@ -1,5 +1,5 @@
 /* Support routines shared by all runtimes.
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
    Contributed by Iain Sandoe (partially split from objc-act.c)
 
 This file is part of GCC.
@@ -44,16 +44,11 @@ along with GCC; see the file COPYING3.  If not see
 #include "objc-runtime-hooks.h"
 
 #include "objc-runtime-shared-support.h"
+#include "objc-next-metadata-tags.h"
 #include "objc-encoding.h"
 
-/* rt_trees identifiers - shared between NeXT implementations.  These allow
-   the FE to tag meta-data in a manner that survives LTO and can be used when
-   the  runtime requires that certain meta-data items appear in particular
-   named sections.  */
-#include "objc-next-metadata-tags.h"
-extern GTY(()) tree objc_rt_trees[OCTI_RT_META_MAX];
-
 /* Rather than repeatedly looking up the identifiers, we save them here.  */
+extern GTY(()) tree objc_rt_trees[OCTI_RT_META_MAX];
 tree objc_rt_trees[OCTI_RT_META_MAX];
 
 /* For building an objc struct.  These might not be used when this file
@@ -117,14 +112,17 @@ add_field_decl (tree type, const char *name, tree **chain)
 tree
 start_var_decl (tree type, const char *name)
 {
-  tree var = build_decl (input_location,
-			 VAR_DECL, get_identifier (name), type);
-  TREE_STATIC (var) = 1;
+  tree name_id = get_identifier (name);
+  tree var = build_decl (input_location, VAR_DECL, name_id, type);
   DECL_INITIAL (var) = error_mark_node;  /* A real initializer is coming... */
+  TREE_STATIC (var) = 1;
   DECL_IGNORED_P (var) = 1;
   DECL_ARTIFICIAL (var) = 1;
   DECL_CONTEXT (var) = NULL_TREE;
 #ifdef OBJCPLUS
+  /* Meta-data for the NeXT runtime is expected to be 'extern "C"'.  */
+  if (flag_next_runtime)
+    SET_DECL_ASSEMBLER_NAME (var, name_id);
   DECL_THIS_STATIC (var) = 1; /* squash redeclaration errors */
 #endif
   return var;

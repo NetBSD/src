@@ -1,5 +1,5 @@
 /* Definitions for MIPS running Linux-based GNU systems with ELF format.
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -50,3 +50,11 @@ along with GCC; see the file COPYING3.  If not see
 #define GNU_USER_DYNAMIC_LINKERN32 \
   CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKERN32, UCLIBC_DYNAMIC_LINKERN32, \
                          BIONIC_DYNAMIC_LINKERN32, MUSL_DYNAMIC_LINKERN32)
+
+#undef NEED_INDICATE_EXEC_STACK
+
+#ifdef TARGET_LIBC_GNUSTACK
+#define NEED_INDICATE_EXEC_STACK 1
+#else
+#define NEED_INDICATE_EXEC_STACK TARGET_SOFT_FLOAT
+#endif

@@ -1,5 +1,5 @@
 ;; Machine description for RISC-V for GNU compiler.
-;; Copyright (C) 2011-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2011-2020 Free Software Foundation, Inc.
 ;; Contributed by Andrew Waterman (andrew@sifive.com).
 ;; Based on MIPS target for GNU compiler.
 
@@ -70,11 +70,21 @@
 (define_constants
   [(RETURN_ADDR_REGNUM		1)
    (GP_REGNUM 			3)
+   (TP_REGNUM			4)
    (T0_REGNUM			5)
    (T1_REGNUM			6)
    (S0_REGNUM			8)
    (S1_REGNUM			9)
    (S2_REGNUM			18)
+   (S3_REGNUM			19)
+   (S4_REGNUM			20)
+   (S5_REGNUM			21)
+   (S6_REGNUM			22)
+   (S7_REGNUM			23)
+   (S8_REGNUM			24)
+   (S9_REGNUM			25)
+   (S10_REGNUM			26)
+   (S11_REGNUM			27)
 
    (NORMAL_RETURN		0)
    (SIBCALL_RETURN		1)
@@ -156,7 +166,7 @@
 (define_attr "type"
   "unknown,branch,jump,call,load,fpload,store,fpstore,
    mtc,mfc,const,arith,logical,shift,slt,imul,idiv,move,fmove,fadd,fmul,
-   fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,nop,ghost"
+   fmadd,fdiv,fcmp,fcvt,fsqrt,multi,auipc,sfb_alu,nop,ghost"
   (cond [(eq_attr "got" "load") (const_string "load")
 
 	 ;; If a doubleword move uses these expensive instructions,
@@ -1284,7 +1294,8 @@
   ""
   [(const_int 0)]
 {
-  riscv_move_integer (operands[2], operands[0], INTVAL (operands[1]), TRUE);
+  riscv_move_integer (operands[2], operands[0], INTVAL (operands[1]),
+		      <GPR:MODE>mode, TRUE);
   DONE;
 })
 
@@ -1503,7 +1514,7 @@
   DONE;
 })
 
-(define_expand "movmemsi"
+(define_expand "cpymemsi"
   [(parallel [(set (match_operand:BLK 0 "general_operand")
 		   (match_operand:BLK 1 "general_operand"))
 	      (use (match_operand:SI 2 ""))
@@ -1816,31 +1827,52 @@
 
 ;; Conditional branches
 
-(define_insn "*branch_order<mode>"
+(define_insn "*branch<mode>"
   [(set (pc)
 	(if_then_else
 	 (match_operator 1 "order_operator"
 			 [(match_operand:X 2 "register_operand" "r")
-			  (match_operand:X 3 "register_operand" "r")])
+			  (match_operand:X 3 "reg_or_0_operand" "rJ")])
 	 (label_ref (match_operand 0 "" ""))
 	 (pc)))]
   ""
-  "b%C1\t%2,%3,%0"
+  "b%C1\t%2,%z3,%0"
   [(set_attr "type" "branch")
    (set_attr "mode" "none")])
 
-(define_insn "*branch_zero<mode>"
-  [(set (pc)
-	(if_then_else
-	 (match_operator 1 "signed_order_operator"
-			 [(match_operand:X 2 "register_operand" "r")
-			  (const_int 0)])
-	 (label_ref (match_operand 0 "" ""))
-	 (pc)))]
-  ""
-  "b%C1z\t%2,%0"
-  [(set_attr "type" "branch")
-   (set_attr "mode" "none")])
+;; Patterns for implementations that optimize short forward branches.
+
+(define_expand "mov<mode>cc"
+  [(set (match_operand:GPR 0 "register_operand")
+	(if_then_else:GPR (match_operand 1 "comparison_operator")
+			  (match_operand:GPR 2 "register_operand")
+			  (match_operand:GPR 3 "sfb_alu_operand")))]
+  "TARGET_SFB_ALU"
+{
+  rtx cmp = operands[1];
+  /* We only handle word mode integer compares for now.  */
+  if (GET_MODE (XEXP (cmp, 0)) != word_mode)
+    FAIL;
+  riscv_expand_conditional_move (operands[0], operands[2], operands[3],
+				 GET_CODE (cmp), XEXP (cmp, 0), XEXP (cmp, 1));
+  DONE;
+})
+
+(define_insn "*mov<GPR:mode><X:mode>cc"
+  [(set (match_operand:GPR 0 "register_operand" "=r,r")
+	(if_then_else:GPR
+	 (match_operator 5 "order_operator"
+		[(match_operand:X 1 "register_operand" "r,r")
+		 (match_operand:X 2 "reg_or_0_operand" "rJ,rJ")])
+	 (match_operand:GPR 3 "register_operand" "0,0")
+	 (match_operand:GPR 4 "sfb_alu_operand" "rJ,IL")))]
+  "TARGET_SFB_ALU"
+  "@
+   b%C5 %1,%z2,1f; mv %0,%z4; 1: # movcc
+   b%C5 %1,%z2,1f; li %0,%4; 1: # movcc"
+  [(set_attr "length" "8")
+   (set_attr "type" "sfb_alu")
+   (set_attr "mode" "<GPR:MODE>")])
 
 ;; Used to implement built-in functions.
 (define_expand "condjump"
@@ -2045,7 +2077,7 @@
   ""
   "slt%i2<u>\t%0,zero,%1"
   [(set_attr "type" "slt")
-   (set_attr "mode" "<MODE>")])
+   (set_attr "mode" "<X:MODE>")])
 
 (define_insn "*slt<u>_<X:mode><GPR:mode>"
   [(set (match_operand:GPR           0 "register_operand" "= r")
@@ -2054,7 +2086,7 @@
   ""
   "slt%i2<u>\t%0,%1,%2"
   [(set_attr "type" "slt")
-   (set_attr "mode" "<MODE>")])
+   (set_attr "mode" "<X:MODE>")])
 
 (define_insn "*sle<u>_<X:mode><GPR:mode>"
   [(set (match_operand:GPR           0 "register_operand" "=r")
@@ -2066,7 +2098,7 @@
   return "slt%i2<u>\t%0,%1,%2";
 }
   [(set_attr "type" "slt")
-   (set_attr "mode" "<MODE>")])
+   (set_attr "mode" "<X:MODE>")])
 
 ;;
 ;;  ....................
@@ -2383,12 +2415,16 @@
   ""
   "ebreak")
 
+;; Must use the registers that we save to prevent the rename reg optimization
+;; pass from using them before the gpr_save pattern when shrink wrapping
+;; occurs.  See bug 95252 for instance.
+
 (define_insn "gpr_save"
-  [(unspec_volatile [(match_operand 0 "const_int_operand")] UNSPECV_GPR_SAVE)
-   (clobber (reg:SI T0_REGNUM))
-   (clobber (reg:SI T1_REGNUM))]
+  [(match_parallel 1 "gpr_save_operation"
+     [(unspec_volatile [(match_operand 0 "const_int_operand")]
+	               UNSPECV_GPR_SAVE)])]
   ""
-  { return riscv_output_gpr_save (INTVAL (operands[0])); })
+  "call\tt0,__riscv_save_%0")
 
 (define_insn "gpr_restore"
   [(unspec_volatile [(match_operand 0 "const_int_operand")] UNSPECV_GPR_RESTORE)]
@@ -2457,6 +2493,13 @@
   emit_clobber (gen_rtx_MEM (BLKmode, hard_frame_pointer_rtx));
   DONE;
 })
+
+;; Named pattern for expanding thread pointer reference.
+(define_expand "get_thread_pointer<mode>"
+  [(set (match_operand:P 0 "register_operand" "=r")
+	(reg:P TP_REGNUM))]
+  ""
+{})
 
 (include "sync.md")
 (include "peephole.md")

@@ -2,7 +2,7 @@
    Contributed by Axis Communications.
    Written by Hans-Peter Nilsson <hp@axis.se>, c:a 1992.
 
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -128,7 +128,8 @@ do_31div (unsigned long a, unsigned long b)
      i.e. "a - (b - 1) == (a - b) + 1".  */
   b--;
 
-#define DS __asm__ ("dstep %2,%0" : "=r" (a) : "0" (a), "r" (b))
+#define DS __asm__ ("dstep %2,%0" : "=r" (a) : "0" (a), "r" (b)); \
+ __attribute__ ((__fallthrough__))
 
   switch (quot_digits)
     {

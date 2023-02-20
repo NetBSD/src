@@ -1,6 +1,6 @@
 // Vector implementation (out of line) -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -944,7 +944,13 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	return false;
       __try
 	{
-	  _M_reallocate(size());
+	  if (size_type __n = size())
+	    _M_reallocate(__n);
+	  else
+	    {
+	      this->_M_deallocate();
+	      this->_M_impl._M_reset();
+	    }
 	  return true;
 	}
       __catch(...)

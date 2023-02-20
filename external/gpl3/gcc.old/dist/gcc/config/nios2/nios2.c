@@ -1,5 +1,5 @@
 /* Target machine subroutines for Altera Nios II.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Jonah Graham (jgraham@altera.com), 
    Will Reece (wreece@altera.com), and Jeff DaSilva (jdasilva@altera.com).
    Contributed by Mentor Graphics, Inc.
@@ -1080,7 +1080,7 @@ prologue_saved_reg_p (unsigned regno)
 {
   gcc_assert (GP_REG_P (regno));
   
-  if (df_regs_ever_live_p (regno) && !call_used_regs[regno])
+  if (df_regs_ever_live_p (regno) && !call_used_or_fixed_reg_p (regno))
     return true;
 
   if (regno == HARD_FRAME_POINTER_REGNUM && frame_pointer_needed)
@@ -3378,25 +3378,18 @@ nios2_fpu_insn_asm (enum n2fpu_code code)
    push the argument on the stack, or a hard register in which to
    store the argument.
 
-   MODE is the argument's machine mode.
-   TYPE is the data type of the argument (as a tree).
-   This is null for libcalls where that information may
-   not be available.
    CUM is a variable of type CUMULATIVE_ARGS which gives info about
    the preceding args and about the function being called.
-   NAMED is nonzero if this argument is a named parameter
-   (otherwise it is an extra parameter matching an ellipsis).  */
+   ARG is a description of the argument.  */
 
 static rtx
-nios2_function_arg (cumulative_args_t cum_v, machine_mode mode,
-		    const_tree type ATTRIBUTE_UNUSED,
-		    bool named ATTRIBUTE_UNUSED)
+nios2_function_arg (cumulative_args_t cum_v, const function_arg_info &arg)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v); 
   rtx return_rtx = NULL_RTX;
 
   if (cum->regs_used < NUM_ARG_REGS)
-    return_rtx = gen_rtx_REG (mode, FIRST_ARG_REGNO + cum->regs_used);
+    return_rtx = gen_rtx_REG (arg.mode, FIRST_ARG_REGNO + cum->regs_used);
 
   return return_rtx;
 }
@@ -3406,20 +3399,11 @@ nios2_function_arg (cumulative_args_t cum_v, machine_mode mode,
    in memory.  */
 
 static int
-nios2_arg_partial_bytes (cumulative_args_t cum_v,
-                         machine_mode mode, tree type ATTRIBUTE_UNUSED,
-                         bool named ATTRIBUTE_UNUSED)
+nios2_arg_partial_bytes (cumulative_args_t cum_v, const function_arg_info &arg)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v); 
-  HOST_WIDE_INT param_size;
-
-  if (mode == BLKmode)
-    {
-      param_size = int_size_in_bytes (type);
-      gcc_assert (param_size >= 0);
-    }
-  else
-    param_size = GET_MODE_SIZE (mode);
+  HOST_WIDE_INT param_size = arg.promoted_size_in_bytes ();
+  gcc_assert (param_size >= 0);
 
   /* Convert to words (round up).  */
   param_size = (UNITS_PER_WORD - 1 + param_size) / UNITS_PER_WORD;
@@ -3431,25 +3415,15 @@ nios2_arg_partial_bytes (cumulative_args_t cum_v,
   return 0;
 }
 
-/* Update the data in CUM to advance over an argument of mode MODE
-   and data type TYPE; TYPE is null for libcalls where that information
-   may not be available.  */
+/* Update the data in CUM to advance over argument ARG.  */
 
 static void
-nios2_function_arg_advance (cumulative_args_t cum_v, machine_mode mode,
-			    const_tree type ATTRIBUTE_UNUSED,
-			    bool named ATTRIBUTE_UNUSED)
+nios2_function_arg_advance (cumulative_args_t cum_v,
+			    const function_arg_info &arg)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v); 
-  HOST_WIDE_INT param_size;
-
-  if (mode == BLKmode)
-    {
-      param_size = int_size_in_bytes (type);
-      gcc_assert (param_size >= 0);
-    }
-  else
-    param_size = GET_MODE_SIZE (mode);
+  HOST_WIDE_INT param_size = arg.promoted_size_in_bytes ();
+  gcc_assert (param_size >= 0);
 
   /* Convert to words (round up).  */
   param_size = (UNITS_PER_WORD - 1 + param_size) / UNITS_PER_WORD;
@@ -3541,8 +3515,8 @@ nios2_return_in_memory (const_tree type, const_tree fntype ATTRIBUTE_UNUSED)
    own va_arg type.  */
 static void
 nios2_setup_incoming_varargs (cumulative_args_t cum_v,
-                              machine_mode mode, tree type,
-                              int *pretend_size, int second_time)
+			      const function_arg_info &arg,
+			      int *pretend_size, int second_time)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v); 
   CUMULATIVE_ARGS local_cum;
@@ -3552,7 +3526,7 @@ nios2_setup_incoming_varargs (cumulative_args_t cum_v,
 
   cfun->machine->uses_anonymous_args = 1;
   local_cum = *cum;
-  nios2_function_arg_advance (local_cum_v, mode, type, true);
+  nios2_function_arg_advance (local_cum_v, arg);
 
   regs_to_push = NUM_ARG_REGS - local_cum.regs_used;
 
@@ -4025,7 +3999,7 @@ nios2_expand_builtin (tree exp, rtx target, rtx subtarget ATTRIBUTE_UNUSED,
 		      int ignore ATTRIBUTE_UNUSED)
 {
   tree fndecl = TREE_OPERAND (CALL_EXPR_FN (exp), 0);
-  unsigned int fcode = DECL_FUNCTION_CODE (fndecl);
+  unsigned int fcode = DECL_MD_FUNCTION_CODE (fndecl);
 
   if (fcode < nios2_fpu_builtin_base)
     {
@@ -4485,6 +4459,7 @@ nios2_asm_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
 			   HOST_WIDE_INT delta, HOST_WIDE_INT vcall_offset,
 			   tree function)
 {
+  const char *fnname = IDENTIFIER_POINTER (DECL_ASSEMBLER_NAME (thunk_fndecl));
   rtx this_rtx, funexp;
   rtx_insn *insn;
 
@@ -4534,13 +4509,14 @@ nios2_asm_output_mi_thunk (FILE *file, tree thunk_fndecl ATTRIBUTE_UNUSED,
 
   /* Run just enough of rest_of_compilation to get the insns emitted.
      There's not really enough bulk here to make other passes such as
-     instruction scheduling worth while.  Note that use_thunk calls
-     assemble_start_function and assemble_end_function.  */
+     instruction scheduling worth while.  */
   insn = get_insns ();
   shorten_branches (insn);
+  assemble_start_function (thunk_fndecl, fnname);
   final_start_function (insn, file, 1);
   final (insn, file, 1);
   final_end_function ();
+  assemble_end_function (thunk_fndecl, fnname);
 
   /* Stop pretending to be a post-reload pass.  */
   reload_completed = 0;

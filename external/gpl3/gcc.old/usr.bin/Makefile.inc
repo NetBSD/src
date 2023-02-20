@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.13 2021/04/09 23:15:51 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.14 2023/02/20 02:12:29 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
 
+NOLINT=yes
 NOCTF=	# defined
 .include <bsd.init.mk>
 
@@ -41,6 +42,11 @@ NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .endif
 
 CXXFLAGS+=	-std=gnu++98
+
+# Reduce debugging for these extremely large objects.
+.if ${MKDEBUG:Uno} != "no"
+CXXFLAGS+=      -g1
+.endif
 
 GNUHOSTDIST=	${DIST}
 BUILD_PREFIX=	${C_BUILD_PREFIX}
@@ -113,5 +119,8 @@ NOCLANGERROR=	# defined
 
 WARNS=1
 COPTS+=-Wno-narrowing -Wno-unused
+
+# Lots trigger this.
+CFLAGS+=	-Wno-format-diag
 
 .endif

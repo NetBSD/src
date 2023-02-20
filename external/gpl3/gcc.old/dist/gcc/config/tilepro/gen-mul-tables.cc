@@ -1,5 +1,5 @@
 /* Multiply table generator for tile.
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
    Contributed by Walter Lee (walt@tilera.com)
 
    This file is part of GCC.
@@ -1190,11 +1190,11 @@ tilegx_emit (long long multiplier, int num_ops)
     long long next_pow10;
 
     while (((j * 10) < abs_multiplier)
-	   && (j < (INTMAX_MAX / 10)))
+	   && (j < (j * 10)))
       j = j * 10;
 
     prev_pow10 = j;
-    next_pow10 = (j > (INTMAX_MAX / 10)) ? 0 : j * 10;
+    next_pow10 = j * 10;
 
     if ((abs_multiplier - prev_pow10 <= 100)
 	|| (next_pow10
@@ -1230,7 +1230,7 @@ main ()
 #else
   printf ("/* Constant multiply table for TILE-Gx.\n");
 #endif
-  printf ("   Copyright (C) 2011-2019 Free Software Foundation, Inc.\n");
+  printf ("   Copyright (C) 2011-2020 Free Software Foundation, Inc.\n");
   printf ("   Contributed by Walter Lee (walt@tilera.com)\n");
   printf ("\n");
   printf ("   This file is part of GCC.\n");

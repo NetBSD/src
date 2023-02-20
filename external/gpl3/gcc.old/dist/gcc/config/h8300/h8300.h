@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler.
    Renesas H8/300 (generic)
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain (sac@cygnus.com),
    Jim Wilson (wilson@cygnus.com), and Doug Evans (dje@cygnus.com).
 
@@ -434,7 +434,7 @@ struct cum_arg
    for profiling a function entry.  */
 
 #define FUNCTION_PROFILER(FILE, LABELNO)  \
-  fprintf (FILE, "\t%s\t#LP%d,%s\n\tjsr @mcount\n", \
+  fprintf (FILE, "\t%s\t#.LP%d,%s\n\tjsr @mcount\n", \
 	   h8_mov_op, (LABELNO), h8_reg_names[0]);
 
 /* EXIT_IGNORE_STACK should be nonzero if, when returning from a function,

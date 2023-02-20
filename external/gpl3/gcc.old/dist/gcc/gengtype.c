@@ -1,5 +1,5 @@
 /* Process source files and output type information.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -1611,7 +1611,7 @@ static outf_p
 create_file (const char *name, const char *oname)
 {
   static const char *const hdr[] = {
-    "   Copyright (C) 2004-2019 Free Software Foundation, Inc.\n",
+    "   Copyright (C) 2004-2020 Free Software Foundation, Inc.\n",
     "\n",
     "This file is part of GCC.\n",
     "\n",
@@ -1717,6 +1717,7 @@ open_base_files (void)
       "explow.h", "calls.h", "memmodel.h", "emit-rtl.h", "varasm.h",
       "stmt.h", "expr.h", "alloc-pool.h", "cselib.h", "insn-addr.h",
       "optabs.h", "libfuncs.h", "debug.h", "internal-fn.h", "gimple-fold.h",
+      "value-range.h",
       "tree-eh.h", "gimple-iterator.h", "gimple-ssa.h", "tree-cfg.h",
       "tree-vrp.h", "tree-phinodes.h", "ssa-iterators.h", "stringpool.h",
       "tree-ssanames.h", "tree-ssa-loop.h", "tree-ssa-loop-ivopts.h",

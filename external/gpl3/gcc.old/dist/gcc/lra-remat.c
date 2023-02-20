@@ -1,5 +1,5 @@
 /* Rematerialize pseudos values.
-   Copyright (C) 2014-2019 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -65,15 +65,10 @@ along with GCC; see the file COPYING3.	If not see
 #include "recog.h"
 #include "lra.h"
 #include "lra-int.h"
+#include "function-abi.h"
 
 /* Number of candidates for rematerialization.  */
 static unsigned int cands_num;
-
-/* The following is used for representation of call_used_reg_set in
-   form array whose elements are hard register numbers with nonzero bit
-   in CALL_USED_REG_SET. */
-static int call_used_regs_arr_len;
-static int call_used_regs_arr[FIRST_PSEUDO_REGISTER];
 
 /* Bitmap used for different calculations.  */
 static bitmap_head temp_bitmap;
@@ -124,8 +119,9 @@ static cand_t *regno_cands;
 
 /* Data about basic blocks used for the rematerialization
    sub-pass.  */
-struct remat_bb_data
+class remat_bb_data
 {
+public:
   /* Basic block about which the below data are.  */
   basic_block bb;
   /* Registers changed in the basic block: */
@@ -144,7 +140,7 @@ struct remat_bb_data
 };
 
 /* Array for all BB data.  Indexed by the corresponding BB index.  */
-typedef struct remat_bb_data *remat_bb_data_t;
+typedef class remat_bb_data *remat_bb_data_t;
 
 /* Basic blocks for data flow problems -- all bocks except the special
    ones.  */
@@ -509,7 +505,7 @@ create_remat_bb_data (void)
   basic_block bb;
   remat_bb_data_t bb_info;
 
-  remat_bb_data = XNEWVEC (struct remat_bb_data,
+  remat_bb_data = XNEWVEC (class remat_bb_data,
 			   last_basic_block_for_fn (cfun));
   FOR_ALL_BB_FN (bb, cfun)
     {
@@ -632,9 +628,12 @@ set_bb_regs (basic_block bb, rtx_insn *insn)
 	bitmap_set_bit (&subreg_regs, regno);
     }
   if (CALL_P (insn))
-    for (int i = 0; i < call_used_regs_arr_len; i++)
-      bitmap_set_bit (&get_remat_bb_data (bb)->dead_regs,
-		      call_used_regs_arr[i]);
+    {
+      /* Partially-clobbered registers might still be live.  */
+      HARD_REG_SET clobbers = insn_callee_abi (insn).full_reg_clobbers ();
+      bitmap_ior_into (&get_remat_bb_data (bb)->dead_regs,
+		       bitmap_view<HARD_REG_SET> (clobbers));
+    }
 }
 
 /* Calculate changed_regs and dead_regs for each BB.  */
@@ -652,7 +651,11 @@ calculate_local_reg_remat_bb_data (void)
 
 
 
-/* Return true if REG overlaps an input operand of INSN.  */
+/* Return true if REG overlaps an input operand or non-input hard register of
+   INSN.  Basically the function returns false if we can move rematerialization
+   candidate INSN through another insn with output REG or dead input REG (we
+   consider it to avoid extending reg live range) with possible output pseudo
+   renaming in INSN.  */
 static bool
 reg_overlap_for_remat_p (lra_insn_reg *reg, rtx_insn *insn)
 {
@@ -676,10 +679,11 @@ reg_overlap_for_remat_p (lra_insn_reg *reg, rtx_insn *insn)
 	 reg2 != NULL;
 	 reg2 = reg2->next)
       {
-	if (reg2->type != OP_IN)
-	  continue;
-	unsigned regno2 = reg2->regno;
 	int nregs2;
+	unsigned regno2 = reg2->regno;
+
+	if (reg2->type != OP_IN && regno2 >= FIRST_PSEUDO_REGISTER)
+	  continue;
 
 	if (regno2 >= FIRST_PSEUDO_REGISTER && reg_renumber[regno2] >= 0)
 	  regno2 = reg_renumber[regno2];
@@ -697,7 +701,7 @@ reg_overlap_for_remat_p (lra_insn_reg *reg, rtx_insn *insn)
 
 /* Return true if a call used register is an input operand of INSN.  */
 static bool
-call_used_input_regno_present_p (rtx_insn *insn)
+call_used_input_regno_present_p (const function_abi &abi, rtx_insn *insn)
 {
   int iter;
   lra_insn_recog_data_t id = lra_get_insn_recog_data (insn);
@@ -708,8 +712,9 @@ call_used_input_regno_present_p (rtx_insn *insn)
     for (reg = (iter == 0 ? id->regs : static_id->hard_regs);
 	 reg != NULL;
 	 reg = reg->next)
-      if (reg->type == OP_IN && reg->regno < FIRST_PSEUDO_REGISTER
-	  && TEST_HARD_REG_BIT (call_used_reg_set, reg->regno))
+      if (reg->type == OP_IN
+	  && reg->regno < FIRST_PSEUDO_REGISTER
+	  && abi.clobbers_reg_p (reg->biggest_mode, reg->regno))
 	return true;
   return false;
 }
@@ -798,18 +803,21 @@ calculate_gen_cands (void)
 		    }
 	    
 	    if (CALL_P (insn))
-	      EXECUTE_IF_SET_IN_BITMAP (gen_insns, 0, uid, bi)
-		{
-		  rtx_insn *insn2 = lra_insn_recog_data[uid]->insn;
+	      {
+		function_abi callee_abi = insn_callee_abi (insn);
+		EXECUTE_IF_SET_IN_BITMAP (gen_insns, 0, uid, bi)
+		  {
+		    rtx_insn *insn2 = lra_insn_recog_data[uid]->insn;
 		  
-		  cand = insn_to_cand[INSN_UID (insn2)];
-		  gcc_assert (cand != NULL);
-		  if (call_used_input_regno_present_p (insn2))
-		    {
-		      bitmap_clear_bit (gen_cands, cand->index);
-		      bitmap_set_bit (&temp_bitmap, uid);
-		    }
-		}
+		    cand = insn_to_cand[INSN_UID (insn2)];
+		    gcc_assert (cand != NULL);
+		    if (call_used_input_regno_present_p (callee_abi, insn2))
+		      {
+			bitmap_clear_bit (gen_cands, cand->index);
+			bitmap_set_bit (&temp_bitmap, uid);
+		      }
+		  }
+	      }
 	    bitmap_and_compl_into (gen_insns, &temp_bitmap);
 
 	    cand = insn_to_cand[INSN_UID (insn)];
@@ -1204,13 +1212,16 @@ do_remat (void)
 		  }
 
 	  if (CALL_P (insn))
-	    EXECUTE_IF_SET_IN_BITMAP (avail_cands, 0, cid, bi)
-	      {
-		cand = all_cands[cid];
+	    {
+	      function_abi callee_abi = insn_callee_abi (insn);
+	      EXECUTE_IF_SET_IN_BITMAP (avail_cands, 0, cid, bi)
+		{
+		  cand = all_cands[cid];
 		
-		if (call_used_input_regno_present_p (cand->insn))
-		  bitmap_set_bit (&temp_bitmap, cand->index);
-	      }
+		  if (call_used_input_regno_present_p (callee_abi, cand->insn))
+		    bitmap_set_bit (&temp_bitmap, cand->index);
+		}
+	    }
 
 	  bitmap_and_compl_into (avail_cands, &temp_bitmap);
 
@@ -1306,10 +1317,6 @@ lra_remat (void)
   insn_to_cand_activation = XCNEWVEC (cand_t, get_max_uid ());
   regno_cands = XCNEWVEC (cand_t, max_regno);
   all_cands.create (8000);
-  call_used_regs_arr_len = 0;
-  for (int i = 0; i < FIRST_PSEUDO_REGISTER; i++)
-    if (call_used_regs[i])
-      call_used_regs_arr[call_used_regs_arr_len++] = i;
   initiate_cand_table ();
   create_remat_bb_data ();
   bitmap_initialize (&temp_bitmap, &reg_obstack);

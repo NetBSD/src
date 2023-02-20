@@ -1,6 +1,6 @@
 // Debugging mode support code -*- C++ -*-
 
-// Copyright (C) 2003-2019 Free Software Foundation, Inc.
+// Copyright (C) 2003-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -721,7 +721,7 @@ namespace
 	    static const char*
 	      constness_names[_Error_formatter::__last_constness] =
 	      {
-		"<unknown>",
+		"<unknown constness>",
 		"constant",
 		"mutable"
 	      };
@@ -732,7 +732,7 @@ namespace
 	    static const char*
 	      state_names[_Error_formatter::__last_state] =
 	      {
-		"<unknown>",
+		"<unknown state>",
 		"singular",
 		"dereferenceable (start-of-sequence)",
 		"dereferenceable",

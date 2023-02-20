@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2021/04/09 23:15:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2023/02/20 02:12:16 mrg Exp $
 
 .include <bsd.init.mk>
 .include <bsd.shlib.mk>
@@ -46,6 +46,7 @@ config.h: Makefile
 	(cd .ab && \
 		AWK=${TOOL_AWK:Q} \
 		CC=${HOST_CC:Q} CFLAGS=${HOST_CFLAGS:Q} \
+		CPPFLAGS=${HOST_CPPFLAGS:Q} \
 		MAKE=${MAKE:Q} \
 		CONFIG_SHELL=${HOST_SH:Q} \
 		${HOST_SH} ${DIST}/libiberty/configure \

@@ -48,7 +48,7 @@
 	  <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.ansi.org">ANSI</link>.
 	  (And if you've already registered with them you can <link
 	  xmlns:xlink="http://www.w3.org/1999/xlink"
-	  xlink:href="https://webstore.ansi.org/RecordDetail.aspx?sku=ISO%2fIEC+14882%3a2014">buy
+	  xlink:href="https://webstore.ansi.org/Standards/ISO/ISOIEC148822014">buy
 	  the standard on-line</link>.)
 	</para>
       </listitem>
@@ -126,7 +126,7 @@
   <section xml:id="list.getting"><info><title>Getting Sources</title></info>
     
     <para>
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/svnwrite.html">Getting write access
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gcc.gnu.org/gitwrite.html">Getting write access
 	(look for "Write after approval")</link>
     </para>
   </section>
@@ -290,11 +290,9 @@ It has subdirectories:
     <term>
       <filename class="directory">include/debug</filename>,
       <filename class="directory">include/parallel</filename>, and
-      <filename class="directory">include/profile</filename>
     </term>
     <listitem>
-      Headers that implement the Debug Mode, Parallel Mode, and Profile Mode
-      extensions.
+      Headers that implement the Debug Mode and Parallel Mode extensions.
     </listitem>
     </varlistentry>
     </variablelist>
@@ -414,8 +412,9 @@ indicate a place that may require attention for multi-thread safety.
   
   <para>
   </para>
-  <section xml:id="coding_style.bad_identifiers"><info><title>Bad Identifiers</title></info>
-    
+
+  <section xml:id="coding_style.bad_identifiers"><info><title>Bad Identifiers</title></info> <!-- BADNAMES -->
+
     <para>
       Identifiers that conflict and should be avoided.
     </para>
@@ -447,6 +446,7 @@ indicate a place that may require attention for multi-thread safety.
 
       MS adds:
       _T
+			__deref
 
       BSD adds:
       __used
@@ -463,8 +463,8 @@ indicate a place that may require attention for multi-thread safety.
       _res_ext
       __tg_*
 
-      SPU adds:
-      __ea
+      VxWorks adds:
+      _C2
 
       For GCC:
 

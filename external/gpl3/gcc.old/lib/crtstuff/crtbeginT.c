@@ -1,4 +1,4 @@
-/*	$NetBSD: crtbeginT.c,v 1.9 2021/04/09 23:15:14 mrg Exp $	*/
+/*	$NetBSD: crtbeginT.c,v 1.10 2023/02/20 02:11:57 mrg Exp $	*/
 
 /*
  * Written by Jason R. Thorpe, August 24, 2004.

@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by Anatoly Sokolov (aesok@post.ru)
 
    This file is part of GCC.
@@ -54,7 +54,7 @@ avr_resolve_overloaded_builtin (unsigned int iloc, tree fndecl, void *vargs)
   location_t loc = (location_t) iloc;
   vec<tree, va_gc> &args = * (vec<tree, va_gc>*) vargs;
 
-  switch (DECL_FUNCTION_CODE (fndecl))
+  switch (DECL_MD_FUNCTION_CODE (fndecl))
     {
     default:
       break;
@@ -389,6 +389,85 @@ avr_cpu_cpp_builtins (struct cpp_reader *pfile)
 #ifdef WITH_AVRLIBC
   cpp_define (pfile, "__WITH_AVRLIBC__");
 #endif /* WITH_AVRLIBC */
+
+  // From configure --with-libf7={|libgcc|math|math-symbols|yes|no}
+
+#ifdef WITH_LIBF7_LIBGCC
+  cpp_define (pfile, "__WITH_LIBF7_LIBGCC__");
+#endif /* WITH_LIBF7_LIBGCC */
+
+#ifdef WITH_LIBF7_MATH
+  cpp_define (pfile, "__WITH_LIBF7_MATH__");
+#endif /* WITH_LIBF7_MATH */
+
+#ifdef WITH_LIBF7_MATH_SYMBOLS
+  cpp_define (pfile, "__WITH_LIBF7_MATH_SYMBOLS__");
+#endif /* WITH_LIBF7_MATH_SYMBOLS */
+
+  // From configure --with-double={|32|32,64|64,32|64}
+
+#ifdef HAVE_DOUBLE_MULTILIB
+  cpp_define (pfile, "__HAVE_DOUBLE_MULTILIB__");
+#endif
+
+#ifdef HAVE_DOUBLE64
+  cpp_define (pfile, "__HAVE_DOUBLE64__");
+#endif
+
+#ifdef HAVE_DOUBLE32
+  cpp_define (pfile, "__HAVE_DOUBLE32__");
+#endif
+
+#if defined (WITH_DOUBLE64)
+  cpp_define (pfile, "__DEFAULT_DOUBLE__=64");
+#elif defined (WITH_DOUBLE32)
+  cpp_define (pfile, "__DEFAULT_DOUBLE__=32");
+#else
+#error "align this with config.gcc"
+#endif
+
+  // From configure --with-long-double={|32|32,64|64,32|64|double}
+
+#ifdef HAVE_LONG_DOUBLE_MULTILIB
+  cpp_define (pfile, "__HAVE_LONG_DOUBLE_MULTILIB__");
+#endif
+
+#ifdef HAVE_LONG_DOUBLE64
+  cpp_define (pfile, "__HAVE_LONG_DOUBLE64__");
+#endif
+
+#ifdef HAVE_LONG_DOUBLE32
+  cpp_define (pfile, "__HAVE_LONG_DOUBLE32__");
+#endif
+
+#ifdef HAVE_LONG_DOUBLE_IS_DOUBLE
+  cpp_define (pfile, "__HAVE_LONG_DOUBLE_IS_DOUBLE__");
+#endif
+
+#if defined (WITH_LONG_DOUBLE64)
+  cpp_define (pfile, "__DEFAULT_LONG_DOUBLE__=64");
+#elif defined (WITH_LONG_DOUBLE32)
+  cpp_define (pfile, "__DEFAULT_LONG_DOUBLE__=32");
+#else
+#error "align this with config.gcc"
+#endif
+
+  // From configure --with-double-comparison={2|3} --with-libf7.
+
+#if defined (WITH_DOUBLE_COMPARISON)
+#if WITH_DOUBLE_COMPARISON == 2 || WITH_DOUBLE_COMPARISON == 3
+  /* The number of states a DFmode comparison libcall might take and
+     reflects what avr.c:FLOAT_LIB_COMPARE_RETURNS_BOOL returns for
+     DFmode.  GCC's default is 3-state, but some libraries like LibF7
+     implement true / false (2-state).  */
+  cpp_define_formatted (pfile, "__WITH_DOUBLE_COMPARISON__=%d",
+			WITH_DOUBLE_COMPARISON);
+#else
+#error "align this with config.gcc"
+#endif
+#else
+#error "align this with config.gcc"
+#endif
 
   /* Define builtin macros so that the user can easily query whether
      non-generic address spaces (and which) are supported or not.

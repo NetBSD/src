@@ -1,6 +1,6 @@
 // RB tree implementation -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -315,9 +315,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator==(const _Self& __x, const _Self& __y) _GLIBCXX_NOEXCEPT
       { return __x._M_node == __y._M_node; }
 
+#if ! __cpp_lib_three_way_comparison
       friend bool
       operator!=(const _Self& __x, const _Self& __y) _GLIBCXX_NOEXCEPT
       { return __x._M_node != __y._M_node; }
+#endif
 
       _Base_ptr _M_node;
   };
@@ -394,9 +396,11 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator==(const _Self& __x, const _Self& __y) _GLIBCXX_NOEXCEPT
       { return __x._M_node == __y._M_node; }
 
+#if ! __cpp_lib_three_way_comparison
       friend bool
       operator!=(const _Self& __x, const _Self& __y) _GLIBCXX_NOEXCEPT
       { return __x._M_node != __y._M_node; }
+#endif
 
       _Base_ptr _M_node;
     };
@@ -694,7 +698,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  : _Node_allocator(__a), _Base_key_compare(__comp)
 	  { }
 #else
-	  _Rb_tree_impl(_Rb_tree_impl&&) = default;
+	  _Rb_tree_impl(_Rb_tree_impl&&)
+	    noexcept( is_nothrow_move_constructible<_Base_key_compare>::value )
+	  = default;
 
 	  explicit
 	  _Rb_tree_impl(_Node_allocator&& __a)
@@ -759,10 +765,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       _M_end() const _GLIBCXX_NOEXCEPT
       { return &this->_M_impl._M_header; }
 
-      static const_reference
-      _S_value(_Const_Link_type __x)
-      { return *__x->_M_valptr(); }
-
       static const _Key&
       _S_key(_Const_Link_type __x)
       {
@@ -800,10 +802,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       static _Const_Link_type
       _S_right(_Const_Base_ptr __x) _GLIBCXX_NOEXCEPT
       { return static_cast<_Const_Link_type>(__x->_M_right); }
-
-      static const_reference
-      _S_value(_Const_Base_ptr __x)
-      { return *static_cast<_Const_Link_type>(__x)->_M_valptr(); }
 
       static const _Key&
       _S_key(_Const_Base_ptr __x)
@@ -1235,6 +1233,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	_M_erase_aux(__position);
       }
 #endif
+
       size_type
       erase(const key_type& __x);
 
@@ -1257,8 +1256,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       erase(const_iterator __first, const_iterator __last)
       { _M_erase_aux(__first, __last); }
 #endif
-      void
-      erase(const key_type* __first, const key_type* __last);
 
       void
       clear() _GLIBCXX_NOEXCEPT
@@ -1619,6 +1616,16 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  && std::equal(__x.begin(), __x.end(), __y.begin());
       }
 
+#if __cpp_lib_three_way_comparison
+      friend auto
+      operator<=>(const _Rb_tree& __x, const _Rb_tree& __y)
+      {
+	if constexpr (requires { typename __detail::__synth3way_t<_Val>; })
+	  return std::lexicographical_compare_three_way(__x.begin(), __x.end(),
+							__y.begin(), __y.end(),
+							__detail::__synth3way);
+      }
+#else
       friend bool
       operator<(const _Rb_tree& __x, const _Rb_tree& __y)
       {
@@ -1641,6 +1648,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       friend bool _GLIBCXX_DEPRECATED
       operator>=(const _Rb_tree& __x, const _Rb_tree& __y)
       { return !(__x < __y); }
+#endif
     };
 
   template<typename _Key, typename _Val, typename _KeyOfValue,
@@ -1661,6 +1669,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	_M_move_data(__x, true_type());
       else
 	{
+	  constexpr bool __move = !__move_if_noexcept_cond<value_type>::value;
 	  _Alloc_node __an(*this);
 	  auto __lbd =
 	    [&__an](const value_type& __cval)
@@ -1669,6 +1678,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	      return __an(std::move_if_noexcept(__val));
 	    };
 	  _M_root() = _M_copy(__x, __lbd);
+	  if _GLIBCXX17_CONSTEXPR (__move)
+	    __x.clear();
 	}
     }
 
@@ -1704,7 +1715,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    [&__roan](const value_type& __cval)
 	    {
 	      auto& __val = const_cast<value_type&>(__cval);
-	      return __roan(std::move_if_noexcept(__val));
+	      return __roan(std::move(__val));
 	    };
 	  _M_root() = _M_copy(__x, __lbd);
 	  __x.clear();
@@ -2535,16 +2546,6 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       const size_type __old_size = size();
       _M_erase_aux(__p.first, __p.second);
       return __old_size - size();
-    }
-
-  template<typename _Key, typename _Val, typename _KeyOfValue,
-	   typename _Compare, typename _Alloc>
-    void
-    _Rb_tree<_Key, _Val, _KeyOfValue, _Compare, _Alloc>::
-    erase(const _Key* __first, const _Key* __last)
-    {
-      while (__first != __last)
-	erase(*__first++);
     }
 
   template<typename _Key, typename _Val, typename _KeyOfValue,

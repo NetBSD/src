@@ -1,6 +1,6 @@
 // Set implementation -*- C++ -*-
 
-// Copyright (C) 2001-2019 Free Software Foundation, Inc.
+// Copyright (C) 2001-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -107,7 +107,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 #if __cplusplus >= 201103L
       static_assert(is_same<typename remove_cv<_Key>::type, _Key>::value,
 	  "std::set must have a non-const, non-volatile value_type");
-# ifdef __STRICT_ANSI__
+# if __cplusplus > 201703L || defined __STRICT_ANSI__
       static_assert(is_same<typename _Alloc::value_type, _Key>::value,
 	  "std::set must have the same value_type as its allocator");
 # endif
@@ -115,14 +115,14 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
     public:
       // typedefs:
-      //@{
+      ///@{
       /// Public typedefs.
       typedef _Key     key_type;
       typedef _Key     value_type;
       typedef _Compare key_compare;
       typedef _Compare value_compare;
       typedef _Alloc   allocator_type;
-      //@}
+      ///@}
 
     private:
       typedef typename __gnu_cxx::__alloc_traits<_Alloc>::template
@@ -135,7 +135,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       typedef __gnu_cxx::__alloc_traits<_Key_alloc_type> _Alloc_traits;
 
     public:
-      //@{
+      ///@{
       ///  Iterator-related typedefs.
       typedef typename _Alloc_traits::pointer		 pointer;
       typedef typename _Alloc_traits::const_pointer	 const_pointer;
@@ -150,7 +150,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       typedef typename _Rep_type::const_reverse_iterator const_reverse_iterator;
       typedef typename _Rep_type::size_type		 size_type;
       typedef typename _Rep_type::difference_type	 difference_type;
-      //@}
+      ///@}
 
 #if __cplusplus > 201402L
       using node_type = typename _Rep_type::node_type;
@@ -735,7 +735,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 
       // set operations:
 
-      //@{
+      ///@{
       /**
        *  @brief  Finds the number of elements.
        *  @param  __x  Element to located.
@@ -755,10 +755,10 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	-> decltype(_M_t._M_count_tr(__x))
 	{ return _M_t._M_count_tr(__x); }
 #endif
-      //@}
+      ///@}
 
 #if __cplusplus > 201703L
-      //@{
+      ///@{
       /**
        *  @brief  Finds whether an element with the given key exists.
        *  @param  __x  Key of elements to be located.
@@ -773,12 +773,12 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	contains(const _Kt& __x) const
 	-> decltype(_M_t._M_find_tr(__x), void(), true)
 	{ return _M_t._M_find_tr(__x) != _M_t.end(); }
-      //@}
+      ///@}
 #endif
 
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // 214.  set::find() missing const overload
-      //@{
+      ///@{
       /**
        *  @brief Tries to locate an element in a %set.
        *  @param  __x  Element to be located.
@@ -811,9 +811,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	-> decltype(const_iterator{_M_t._M_find_tr(__x)})
 	{ return const_iterator{_M_t._M_find_tr(__x)}; }
 #endif
-      //@}
+      ///@}
 
-      //@{
+      ///@{
       /**
        *  @brief Finds the beginning of a subsequence matching given key.
        *  @param  __x  Key to be located.
@@ -846,9 +846,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	-> decltype(const_iterator(_M_t._M_lower_bound_tr(__x)))
 	{ return const_iterator(_M_t._M_lower_bound_tr(__x)); }
 #endif
-      //@}
+      ///@}
 
-      //@{
+      ///@{
       /**
        *  @brief Finds the end of a subsequence matching given key.
        *  @param  __x  Key to be located.
@@ -876,9 +876,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	-> decltype(iterator(_M_t._M_upper_bound_tr(__x)))
 	{ return const_iterator(_M_t._M_upper_bound_tr(__x)); }
 #endif
-      //@}
+      ///@}
 
-      //@{
+      ///@{
       /**
        *  @brief Finds a subsequence matching given key.
        *  @param  __x  Key to be located.
@@ -915,15 +915,21 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	-> decltype(pair<iterator, iterator>(_M_t._M_equal_range_tr(__x)))
 	{ return pair<iterator, iterator>(_M_t._M_equal_range_tr(__x)); }
 #endif
-      //@}
+      ///@}
 
       template<typename _K1, typename _C1, typename _A1>
 	friend bool
 	operator==(const set<_K1, _C1, _A1>&, const set<_K1, _C1, _A1>&);
 
+#if __cpp_lib_three_way_comparison
+      template<typename _K1, typename _C1, typename _A1>
+	friend __detail::__synth3way_t<_K1>
+	operator<=>(const set<_K1, _C1, _A1>&, const set<_K1, _C1, _A1>&);
+#else
       template<typename _K1, typename _C1, typename _A1>
 	friend bool
 	operator<(const set<_K1, _C1, _A1>&, const set<_K1, _C1, _A1>&);
+#endif
     };
 
 #if __cpp_deduction_guides >= 201606
@@ -962,7 +968,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     set(initializer_list<_Key>, _Allocator)
     -> set<_Key, less<_Key>, _Allocator>;
 
-#endif
+#endif // deduction guides
 
   /**
    *  @brief  Set equality comparison.
@@ -980,6 +986,27 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	       const set<_Key, _Compare, _Alloc>& __y)
     { return __x._M_t == __y._M_t; }
 
+#if __cpp_lib_three_way_comparison
+  /**
+   *  @brief  Set ordering relation.
+   *  @param  __x  A `set`.
+   *  @param  __y  A `set` of the same type as `x`.
+   *  @return  A value indicating whether `__x` is less than, equal to,
+   *           greater than, or incomparable with `__y`.
+   *
+   *  This is a total ordering relation.  It is linear in the size of the
+   *  maps.  The elements must be comparable with @c <.
+   *
+   *  See `std::lexicographical_compare_three_way()` for how the determination
+   *  is made. This operator is used to synthesize relational operators like
+   *  `<` and `>=` etc.
+  */
+  template<typename _Key, typename _Compare, typename _Alloc>
+    inline __detail::__synth3way_t<_Key>
+    operator<=>(const set<_Key, _Compare, _Alloc>& __x,
+		const set<_Key, _Compare, _Alloc>& __y)
+    { return __x._M_t <=> __y._M_t; }
+#else
   /**
    *  @brief  Set ordering relation.
    *  @param  __x  A %set.
@@ -1024,6 +1051,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     operator>=(const set<_Key, _Compare, _Alloc>& __x,
 	       const set<_Key, _Compare, _Alloc>& __y)
     { return !(__x < __y); }
+#endif // three-way comparison
 
   /// See std::set::swap().
   template<typename _Key, typename _Compare, typename _Alloc>

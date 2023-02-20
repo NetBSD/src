@@ -1,5 +1,5 @@
 /* Utilities for querying and manipulating type trees.
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -22,7 +22,7 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Returns the first tree within T that is directly matched by PRED.  T may be a
    type or PARM_DECL and is incrementally decomposed toward its type-specifier
-   until a match is found.  NULL_TREE is returned if PRED does not match any
+   until a match is found.  NULL is returned if PRED does not match any
    part of T.
 
    This is primarily intended for detecting whether T uses `auto' or a concept
@@ -33,11 +33,10 @@ along with GCC; see the file COPYING3.  If not see
 inline tree
 find_type_usage (tree t, bool (*pred) (const_tree))
 {
-  enum tree_code code;
   if (pred (t))
     return t;
 
-  code = TREE_CODE (t);
+  enum tree_code code = TREE_CODE (t);
 
   if (code == POINTER_TYPE || code == REFERENCE_TYPE
       || code == PARM_DECL || code == OFFSET_TYPE

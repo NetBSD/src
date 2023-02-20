@@ -1,6 +1,6 @@
 /* Routines for emitting trees to a file stream.
 
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
    Contributed by Diego Novillo <dnovillo@google.com>
 
 This file is part of GCC.
@@ -70,7 +70,8 @@ write_identifier (struct output_block *ob,
 static inline void
 pack_ts_base_value_fields (struct bitpack_d *bp, tree expr)
 {
-  bp_pack_value (bp, TREE_CODE (expr), 16);
+  if (streamer_debugging)
+    bp_pack_value (bp, TREE_CODE (expr), 16);
   if (!TYPE_P (expr))
     {
       bp_pack_value (bp, TREE_SIDE_EFFECTS (expr), 1);
@@ -217,6 +218,7 @@ pack_ts_decl_common_value_fields (struct bitpack_d *bp, tree expr)
       bp_pack_value (bp, DECL_PACKED (expr), 1);
       bp_pack_value (bp, DECL_NONADDRESSABLE_P (expr), 1);
       bp_pack_value (bp, DECL_PADDING_P (expr), 1);
+      bp_pack_value (bp, DECL_FIELD_ABI_IGNORED (expr), 1);
       bp_pack_value (bp, expr->decl_common.off_align, 8);
     }
 
@@ -295,7 +297,8 @@ pack_ts_function_decl_value_fields (struct bitpack_d *bp, tree expr)
   bp_pack_value (bp, DECL_IS_NOVOPS (expr), 1);
   bp_pack_value (bp, DECL_IS_RETURNS_TWICE (expr), 1);
   bp_pack_value (bp, DECL_IS_MALLOC (expr), 1);
-  bp_pack_value (bp, DECL_IS_OPERATOR_NEW (expr), 1);
+  bp_pack_value (bp, DECL_IS_OPERATOR_NEW_P (expr), 1);
+  bp_pack_value (bp, DECL_IS_OPERATOR_DELETE_P (expr), 1);
   bp_pack_value (bp, DECL_DECLARED_INLINE_P (expr), 1);
   bp_pack_value (bp, DECL_STATIC_CHAIN (expr), 1);
   bp_pack_value (bp, DECL_NO_INLINE_WARNING_P (expr), 1);
@@ -304,8 +307,9 @@ pack_ts_function_decl_value_fields (struct bitpack_d *bp, tree expr)
   bp_pack_value (bp, DECL_DISREGARD_INLINE_LIMITS (expr), 1);
   bp_pack_value (bp, DECL_PURE_P (expr), 1);
   bp_pack_value (bp, DECL_LOOPING_CONST_OR_PURE_P (expr), 1);
+  bp_pack_value (bp, DECL_IS_REPLACEABLE_OPERATOR (expr), 1);
   if (DECL_BUILT_IN_CLASS (expr) != NOT_BUILT_IN)
-    bp_pack_value (bp, DECL_FUNCTION_CODE (expr), 12);
+    bp_pack_value (bp, DECL_UNCHECKED_FUNCTION_CODE (expr), 32);
 }
 
 
@@ -319,13 +323,18 @@ pack_ts_type_common_value_fields (struct bitpack_d *bp, tree expr)
      not necessary valid in a global context.
      Use the raw value previously set by layout_type.  */
   bp_pack_machine_mode (bp, TYPE_MODE_RAW (expr));
-  bp_pack_value (bp, TYPE_STRING_FLAG (expr), 1);
   /* TYPE_NO_FORCE_BLK is private to stor-layout and need
      no streaming.  */
   bp_pack_value (bp, TYPE_PACKED (expr), 1);
   bp_pack_value (bp, TYPE_RESTRICT (expr), 1);
   bp_pack_value (bp, TYPE_USER_ALIGN (expr), 1);
   bp_pack_value (bp, TYPE_READONLY (expr), 1);
+  unsigned vla_p;
+  if (in_lto_p)
+    vla_p = TYPE_LANG_FLAG_0 (TYPE_MAIN_VARIANT (expr));
+  else
+    vla_p = variably_modified_type_p (expr, NULL_TREE);
+  bp_pack_value (bp, vla_p, 1);
   /* We used to stream TYPE_ALIAS_SET == 0 information to let frontends mark
      types that are opaque for TBAA.  This however did not work as intended,
      because TYPE_ALIAS_SET == 0 was regularly lost in type merging.  */
@@ -333,9 +342,12 @@ pack_ts_type_common_value_fields (struct bitpack_d *bp, tree expr)
     {
       bp_pack_value (bp, TYPE_TRANSPARENT_AGGR (expr), 1);
       bp_pack_value (bp, TYPE_FINAL_P (expr), 1);
+      bp_pack_value (bp, TYPE_CXX_ODR_P (expr), 1);
     }
   else if (TREE_CODE (expr) == ARRAY_TYPE)
     bp_pack_value (bp, TYPE_NONALIASED_COMPONENT (expr), 1);
+  if (TREE_CODE (expr) == ARRAY_TYPE || TREE_CODE (expr) == INTEGER_TYPE)
+    bp_pack_value (bp, TYPE_STRING_FLAG (expr), 1);
   if (AGGREGATE_TYPE_P (expr))
     bp_pack_value (bp, TYPE_TYPELESS_STORAGE (expr), 1);
   bp_pack_value (bp, TYPE_EMPTY_P (expr), 1);
@@ -579,7 +591,7 @@ write_ts_decl_minimal_tree_pointers (struct output_block *ob, tree expr,
   /* Drop names that were created for anonymous entities.  */
   if (DECL_NAME (expr)
       && TREE_CODE (DECL_NAME (expr)) == IDENTIFIER_NODE
-      && anon_aggrname_p (DECL_NAME (expr)))
+      && IDENTIFIER_ANON_P (DECL_NAME (expr)))
     stream_write_tree (ob, NULL_TREE, ref_p);
   else
     stream_write_tree (ob, DECL_NAME (expr), ref_p);
@@ -718,9 +730,7 @@ static void
 write_ts_type_non_common_tree_pointers (struct output_block *ob, tree expr,
 					bool ref_p)
 {
-  if (TREE_CODE (expr) == ENUMERAL_TYPE)
-    stream_write_tree (ob, TYPE_VALUES (expr), ref_p);
-  else if (TREE_CODE (expr) == ARRAY_TYPE)
+  if (TREE_CODE (expr) == ARRAY_TYPE)
     stream_write_tree (ob, TYPE_DOMAIN (expr), ref_p);
   else if (RECORD_OR_UNION_TYPE_P (expr))
     streamer_write_chain (ob, TYPE_FIELDS (expr), ref_p);

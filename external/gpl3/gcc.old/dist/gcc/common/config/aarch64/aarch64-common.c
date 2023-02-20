@@ -1,5 +1,5 @@
 /* Common hooks for AArch64.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -30,7 +30,6 @@
 #include "opts.h"
 #include "flags.h"
 #include "diagnostic.h"
-#include "params.h"
 
 #ifdef  TARGET_BIG_ENDIAN_DEFAULT
 #undef  TARGET_DEFAULT_TARGET_FLAGS
@@ -42,10 +41,6 @@
 
 #undef	TARGET_OPTION_OPTIMIZATION_TABLE
 #define TARGET_OPTION_OPTIMIZATION_TABLE aarch_option_optimization_table
-#undef TARGET_OPTION_DEFAULT_PARAMS
-#define TARGET_OPTION_DEFAULT_PARAMS aarch64_option_default_params
-#undef TARGET_OPTION_VALIDATE_PARAM
-#define TARGET_OPTION_VALIDATE_PARAM aarch64_option_validate_param
 #undef TARGET_OPTION_INIT_STRUCT
 #define TARGET_OPTION_INIT_STRUCT aarch64_option_init_struct
 
@@ -64,51 +59,11 @@ static const struct default_options aarch_option_optimization_table[] =
     { OPT_LEVELS_ALL, OPT_fasynchronous_unwind_tables, NULL, 1 },
     { OPT_LEVELS_ALL, OPT_funwind_tables, NULL, 1},
 #endif
+    { OPT_LEVELS_ALL, OPT__param_stack_clash_protection_guard_size_, NULL,
+      DEFAULT_STK_CLASH_GUARD_SIZE == 0 ? 16 : DEFAULT_STK_CLASH_GUARD_SIZE },
+
     { OPT_LEVELS_NONE, 0, NULL, 0 }
   };
-
-/* Implement target validation TARGET_OPTION_DEFAULT_PARAM.  */
-
-static bool
-aarch64_option_validate_param (const int value, const int param)
-{
-  /* Check that both parameters are the same.  */
-  if (param == (int) PARAM_STACK_CLASH_PROTECTION_GUARD_SIZE)
-    {
-      if (value != 12 && value != 16)
-	{
-	  error ("only values 12 (4 KB) and 16 (64 KB) are supported for guard "
-		 "size.  Given value %d (%llu KB) is out of range",
-		 value, (1ULL << value) / 1024ULL);
-	  return false;
-	}
-    }
-
-  return true;
-}
-
-/* Implement TARGET_OPTION_DEFAULT_PARAMS.  */
-
-static void
-aarch64_option_default_params (void)
-{
-  /* We assume the guard page is 64k.  */
-  int index = (int) PARAM_STACK_CLASH_PROTECTION_GUARD_SIZE;
-  set_default_param_value (PARAM_STACK_CLASH_PROTECTION_GUARD_SIZE,
-			   DEFAULT_STK_CLASH_GUARD_SIZE == 0
-			     ? 16 : DEFAULT_STK_CLASH_GUARD_SIZE);
-
-  int guard_size
-    = default_param_value (PARAM_STACK_CLASH_PROTECTION_GUARD_SIZE);
-
-  /* Set the interval parameter to be the same as the guard size.  This way the
-     mid-end code does the right thing for us.  */
-  set_default_param_value (PARAM_STACK_CLASH_PROTECTION_PROBE_INTERVAL,
-			   guard_size);
-
-  /* Validate the options.  */
-  aarch64_option_validate_param (guard_size, index);
-}
 
 /* Implement TARGET_HANDLE_OPTION.
    This function handles the target specific options for CPU/target selection.
@@ -161,6 +116,10 @@ aarch64_handle_option (struct gcc_options *opts,
       opts->x_flag_omit_leaf_frame_pointer = val;
       return true;
 
+    case OPT_moutline_atomics:
+      opts->x_aarch64_flag_outline_atomics = val;
+      return true;
+
     default:
       return true;
     }
@@ -170,9 +129,9 @@ aarch64_handle_option (struct gcc_options *opts,
 struct aarch64_option_extension
 {
   const char *const name;
-  const unsigned long flag_canonical;
-  const unsigned long flags_on;
-  const unsigned long flags_off;
+  const uint64_t flag_canonical;
+  const uint64_t flags_on;
+  const uint64_t flags_off;
   const bool is_synthetic;
 };
 
@@ -201,14 +160,14 @@ struct processor_name_to_arch
 {
   const std::string processor_name;
   const enum aarch64_arch arch;
-  const unsigned long flags;
+  const uint64_t flags;
 };
 
 struct arch_to_arch_name
 {
   const enum aarch64_arch arch;
   const std::string arch_name;
-  const unsigned long flags;
+  const uint64_t flags;
 };
 
 /* Map processor names to the architecture revision they implement and
@@ -238,7 +197,7 @@ static const struct arch_to_arch_name all_architectures[] =
    a copy of the string is created and stored to INVALID_EXTENSION.  */
 
 enum aarch64_parse_opt_result
-aarch64_parse_extension (const char *str, unsigned long *isa_flags,
+aarch64_parse_extension (const char *str, uint64_t *isa_flags,
 			 std::string *invalid_extension)
 {
   /* The extension string is parsed left to right.  */
@@ -326,18 +285,21 @@ int opt_ext_cmp (const void* a, const void* b)
      turns on as a dependency.  As an example +dotprod turns on FL_DOTPROD and
      FL_SIMD.  As such the set of bits represented by this option is
      {FL_DOTPROD, FL_SIMD}. */
-  unsigned long total_flags_a = opt_a->flag_canonical & opt_a->flags_on;
-  unsigned long total_flags_b = opt_b->flag_canonical & opt_b->flags_on;
+  uint64_t total_flags_a = opt_a->flag_canonical & opt_a->flags_on;
+  uint64_t total_flags_b = opt_b->flag_canonical & opt_b->flags_on;
   int popcnt_a = popcount_hwi ((HOST_WIDE_INT)total_flags_a);
   int popcnt_b = popcount_hwi ((HOST_WIDE_INT)total_flags_b);
   int order = popcnt_b - popcnt_a;
 
   /* If they have the same amount of bits set, give it a more
      deterministic ordering by using the value of the bits themselves.  */
-  if (order == 0)
-    return total_flags_b - total_flags_a;
+  if (order != 0)
+    return order;
 
-  return order;
+  if (total_flags_a != total_flags_b)
+    return total_flags_a < total_flags_b ? 1 : -1;
+
+  return 0;
 }
 
 /* Implement TARGET_OPTION_INIT_STRUCT.  */
@@ -373,9 +335,9 @@ aarch64_option_init_struct (struct gcc_options *opts ATTRIBUTE_UNUSED)
 */
 
 static bool
-aarch64_contains_opt (unsigned long isa_flag_bits, opt_ext *opt)
+aarch64_contains_opt (uint64_t isa_flag_bits, opt_ext *opt)
 {
-  unsigned long flags_check
+  uint64_t flags_check
     = opt->is_synthetic ? opt->flags_on : opt->flag_canonical;
 
   return (isa_flag_bits & flags_check) == flags_check;
@@ -388,13 +350,13 @@ aarch64_contains_opt (unsigned long isa_flag_bits, opt_ext *opt)
    that all the "+" flags come before the "+no" flags.  */
 
 std::string
-aarch64_get_extension_string_for_isa_flags (unsigned long isa_flags,
-					    unsigned long default_arch_flags)
+aarch64_get_extension_string_for_isa_flags (uint64_t isa_flags,
+					    uint64_t default_arch_flags)
 {
   const struct aarch64_option_extension *opt = NULL;
   std::string outstr = "";
 
-  unsigned long isa_flag_bits = isa_flags;
+  uint64_t isa_flag_bits = isa_flags;
 
   /* Pass one: Minimize the search space by reducing the set of options
      to the smallest set that still turns on the same features as before in
@@ -433,7 +395,22 @@ aarch64_get_extension_string_for_isa_flags (unsigned long isa_flags,
 	/* We remove all the dependent bits, to prevent them from being turned
 	   on twice.  This only works because we assume that all there are
 	   individual options to set all bits standalone.  */
-	isa_flag_bits &= ~opt->flags_on;
+
+	/* PR target/94396.
+
+	   For flags which would already imply a bit that's on by default (e.g
+	   fp16fml which implies +fp,+fp16) we must emit the flags that are not
+	   on by default.  i.e. in Armv8.4-a +fp16fml is default if +fp16.  So
+	   if a user passes armv8.4-a+fp16 (or +fp16fml) then we need to emit
+	   +fp16.  But if +fp16fml is used in an architecture where it is
+	   completely optional we only have to emit the canonical flag.  */
+	uint64_t toggle_bits = opt->flags_on & default_arch_flags;
+	/* Now check to see if the canonical flag is on by default.  If it
+	   is not then enabling it will enable all bits in flags_on.  */
+	if ((opt->flag_canonical & default_arch_flags) == 0)
+	  toggle_bits = opt->flags_on;
+
+	isa_flag_bits &= ~toggle_bits;
 	isa_flag_bits |= opt->flag_canonical;
       }
     }
@@ -538,7 +515,7 @@ aarch64_rewrite_selected_cpu (const char *name)
       || a_to_an->arch == aarch64_no_arch)
     fatal_error (input_location, "unknown value %qs for %<-mcpu%>", name);
 
-  unsigned long extensions = p_to_a->flags;
+  uint64_t extensions = p_to_a->flags;
   aarch64_parse_extension (extension_str.c_str (), &extensions, NULL);
 
   std::string outstr = a_to_an->arch_name

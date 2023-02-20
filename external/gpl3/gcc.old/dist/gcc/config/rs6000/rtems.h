@@ -1,5 +1,5 @@
 /* Definitions for rtems targeting a PowerPC using elf.
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
    Contributed by Joel Sherrill (joel@OARcorp.com).
 
    This file is part of GCC.
@@ -254,9 +254,6 @@
 %{mcpu=8540: %{!Dppc*: %{!Dmpc*: -Dppc8540}  } } \
 %{mcpu=e6500: -D__PPC_CPU_E6500__}"
 
-#undef	ASM_DEFAULT_SPEC
-#define	ASM_DEFAULT_SPEC "-mppc%{m64:64}"
-
 #undef	ASM_SPEC
 #define	ASM_SPEC "%{!m64:%(asm_spec32)}%{m64:%(asm_spec64)} %(asm_spec_common)"
 
@@ -295,3 +292,6 @@
   "%{mads|myellowknife|mmvme|msim:%G %L %G;" \
   "!mcall-*|mcall-linux:" GNU_USER_TARGET_LINK_GCC_C_SEQUENCE_SPEC ";" \
   ":%G %L %G}"
+
+#define RTEMS_STARTFILE_SPEC "ecrti%O%s rtems_crti%O%s crtbegin%O%s"
+#define RTEMS_ENDFILE_SPEC "crtend%O%s rtems_crtn%O%s ecrtn%O%s"

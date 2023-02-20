@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2013-2019 Free Software Foundation, Inc.
+// Copyright (C) 2013-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -586,9 +586,9 @@ namespace __detail
   template<typename _TraitsT>
     bool
     _Compiler<_TraitsT>::
-    _M_match_token(_TokenT token)
+    _M_match_token(_TokenT __token)
     {
-      if (token == _M_scanner._M_get_token())
+      if (__token == _M_scanner._M_get_token())
 	{
 	  _M_value = _M_scanner._M_get_value();
 	  _M_scanner._M_advance();

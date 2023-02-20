@@ -36,6 +36,7 @@ SRCDIR/gcc/function.h
 SRCDIR/gcc/insn-addr.h
 SRCDIR/gcc/hwint.h
 SRCDIR/gcc/fixed-value.h
+SRCDIR/gcc/function-abi.h
 SRCDIR/gcc/output.h
 SRCDIR/gcc/cfgloop.h
 SRCDIR/gcc/cfg.h
@@ -55,6 +56,8 @@ SRCDIR/gcc/cgraph.c
 SRCDIR/gcc/ipa-prop.c
 SRCDIR/gcc/ipa-cp.c
 SRCDIR/gcc/ipa-utils.h
+SRCDIR/gcc/ipa-param-manipulation.h
+SRCDIR/gcc/ipa-sra.c
 SRCDIR/gcc/dbxout.c
 SRCDIR/gcc/signop.h
 SRCDIR/gcc/dwarf2out.h
@@ -118,6 +121,7 @@ SRCDIR/gcc/lto-streamer.h
 SRCDIR/gcc/target-globals.h
 SRCDIR/gcc/ipa-predicate.h
 SRCDIR/gcc/ipa-fnsummary.h
+SRCDIR/gcc/value-range.h
 SRCDIR/gcc/vtable-verify.c
 SRCDIR/gcc/asan.c
 SRCDIR/gcc/ubsan.c
@@ -162,6 +166,8 @@ SRCDIR/gcc/c-family/c-pragma.c
 SRCDIR/gcc/cp/call.c
 SRCDIR/gcc/cp/class.c
 SRCDIR/gcc/cp/constexpr.c
+SRCDIR/gcc/cp/constraint.cc
+SRCDIR/gcc/cp/coroutines.cc
 SRCDIR/gcc/cp/cp-gimplify.c
 SRCDIR/gcc/cp/cp-lang.c
 SRCDIR/gcc/cp/cp-objcp-common.c
@@ -172,12 +178,12 @@ SRCDIR/gcc/cp/friend.c
 SRCDIR/gcc/cp/init.c
 SRCDIR/gcc/cp/lambda.c
 SRCDIR/gcc/cp/lex.c
+SRCDIR/gcc/cp/logic.cc
 SRCDIR/gcc/cp/mangle.c
 SRCDIR/gcc/cp/method.c
 SRCDIR/gcc/cp/name-lookup.c
 SRCDIR/gcc/cp/parser.c
 SRCDIR/gcc/cp/pt.c
-SRCDIR/gcc/cp/repo.c
 SRCDIR/gcc/cp/rtti.c
 SRCDIR/gcc/cp/semantics.c
 SRCDIR/gcc/cp/tree.c
@@ -207,6 +213,9 @@ SRCDIR/gcc/lto/lto-tree.h
 SRCDIR/gcc/lto/lto-lang.c
 SRCDIR/gcc/lto/lto.c
 SRCDIR/gcc/lto/lto.h
+SRCDIR/gcc/lto/lto-common.h
+SRCDIR/gcc/lto/lto-common.c
+SRCDIR/gcc/lto/lto-dump.c
 [objc]
 SRCDIR/gcc/objc/objc-map.h
 SRCDIR/gcc/c-family/c-objc.h
@@ -243,6 +252,8 @@ SRCDIR/gcc/c-family/c-pragma.c
 SRCDIR/gcc/cp/call.c
 SRCDIR/gcc/cp/class.c
 SRCDIR/gcc/cp/constexpr.c
+SRCDIR/gcc/cp/constraint.cc
+SRCDIR/gcc/cp/coroutines.cc
 SRCDIR/gcc/cp/cp-gimplify.c
 SRCDIR/gcc/objcp/objcp-lang.c
 SRCDIR/gcc/cp/cp-objcp-common.c
@@ -253,12 +264,12 @@ SRCDIR/gcc/cp/friend.c
 SRCDIR/gcc/cp/init.c
 SRCDIR/gcc/cp/lambda.c
 SRCDIR/gcc/cp/lex.c
+SRCDIR/gcc/cp/logic.cc
 SRCDIR/gcc/cp/mangle.c
 SRCDIR/gcc/cp/method.c
 SRCDIR/gcc/cp/name-lookup.c
 SRCDIR/gcc/cp/parser.c
 SRCDIR/gcc/cp/pt.c
-SRCDIR/gcc/cp/repo.c
 SRCDIR/gcc/cp/rtti.c
 SRCDIR/gcc/cp/semantics.c
 SRCDIR/gcc/cp/tree.c

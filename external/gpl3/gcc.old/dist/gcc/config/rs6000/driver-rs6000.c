@@ -1,5 +1,5 @@
 /* Subroutines for the gcc driver.
-   Copyright (C) 2007-2019 Free Software Foundation, Inc.
+   Copyright (C) 2007-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -263,12 +263,10 @@ elf_platform (void)
 	  for (i = 0; i < ARRAY_SIZE (rs6000_supported_cpu_names); i++)
 	    candidates.safe_push (rs6000_supported_cpu_names[i]);
 	  candidates_list_and_hint (cpu, s, candidates);
-	  fatal_error (
-	    input_location,
-	    "Unsupported cpu name returned from kernel for "
-	    "%<-mcpu=native%>: %s\n"
-	    "Please use an explicit cpu name.  Valid cpu names are: %s",
-	    cpu, s);
+	  error ("unsupported cpu name returned from kernel "
+		 "for %<-mcpu=native%>: %s", cpu);
+	  fatal_error (input_location, "please use an explicit cpu name; "
+		       "valid cpu names are: %s", s);
 	}
     }
   return NULL;
@@ -449,6 +447,7 @@ static const struct asm_name asm_names[] = {
   { "power7",	"-mpwr7" },
   { "power8",	"-mpwr8" },
   { "power9",	"-mpwr9" },
+  { "power10",	"-mpwr10" },
   { "powerpc",	"-mppc" },
   { "rs64",	"-mppc" },
   { "603",	"-m603" },
@@ -476,6 +475,7 @@ static const struct asm_name asm_names[] = {
   { "power7",	"-mpower7" },
   { "power8",	"%{mpower9-vector:-mpower9;:-mpower8}" },
   { "power9",	"-mpower9" },
+  { "power10",	"-mpower10" },
   { "a2",	"-ma2" },
   { "powerpc",	"-mppc" },
   { "powerpc64", "-mppc64" },

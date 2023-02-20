@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler.  VAX version.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -34,7 +34,6 @@ extern bool vax_decomposed_dimode_operand_p (rtx, rtx);
 extern const char * vax_output_int_move (rtx, rtx *, machine_mode);
 extern const char * vax_output_int_add (rtx_insn *, rtx *, machine_mode);
 extern const char * vax_output_int_subtract (rtx_insn *, rtx *, machine_mode);
-extern const char * vax_output_movmemsi (rtx, rtx *);
 #endif /* RTX_CODE */
 
 #ifdef REAL_VALUE_TYPE

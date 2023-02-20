@@ -1,5 +1,5 @@
 /* Common hooks for RISC-V.
-   Copyright (C) 2016-2019 Free Software Foundation, Inc.
+   Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -512,6 +512,13 @@ riscv_subset_list::parse (const char *arch, location_t loc)
 
   if (p == NULL)
     goto fail;
+
+  if (*p != '\0')
+    {
+      error_at (loc, "%<-march=%s%>: unexpected ISA string at end: %qs",
+               arch, p);
+      goto fail;
+    }
 
   return subset_list;
 

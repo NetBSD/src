@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2021/04/09 23:15:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2023/02/20 02:12:36 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -21,6 +21,7 @@ COPTS+=	-Wno-stack-protector
 
 # Force using C++ for this
 HOST_CC:=	${HOST_CXX}
+HOST_CFLAGS:=	${HOST_CXXFLAGS}
 CC:=		${CXX}
 CFLAGS:=	${CXXFLAGS}
 

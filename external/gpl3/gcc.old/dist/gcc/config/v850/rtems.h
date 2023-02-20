@@ -1,5 +1,5 @@
 /* Definitions for rtems targeting a v850 using ELF.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -39,3 +39,6 @@
 %{!mv850es:%{!mv850e1:%{mv*:-mv%*}} \
 %{m8byte-align:-m8byte-align} \
 %{mgcc-abi:-mgcc-abi}}"
+
+#define RTEMS_STARTFILE_SPEC ""
+#define RTEMS_ENDFILE_SPEC ""

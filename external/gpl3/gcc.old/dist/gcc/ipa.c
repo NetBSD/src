@@ -1,5 +1,5 @@
 /* Basic IPA optimizations and utilities.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -71,9 +71,9 @@ update_inlined_to_pointer (struct cgraph_node *node, struct cgraph_node *inlined
 {
   struct cgraph_edge *e;
   for (e = node->callees; e; e = e->next_callee)
-    if (e->callee->global.inlined_to)
+    if (e->callee->inlined_to)
       {
-        e->callee->global.inlined_to = inlined_to;
+	e->callee->inlined_to = inlined_to;
 	update_inlined_to_pointer (e->callee, inlined_to);
       }
 }
@@ -242,11 +242,12 @@ walk_polymorphic_call_targets (hash_set<void *> *reachable_call_targets,
 			       edge->caller->dump_name (),
 			       target->dump_name ());
 	    }
-	  edge = edge->make_direct (target);
+	  edge = cgraph_edge::make_direct (edge, target);
 	  if (ipa_fn_summaries)
-	    ipa_update_overall_fn_summary (node);
+	    ipa_update_overall_fn_summary (node->inlined_to
+					   ? node->inlined_to : node);
 	  else if (edge->call_stmt)
-	    edge->redirect_call_stmt_to_callee ();
+	    cgraph_edge::redirect_call_stmt_to_callee (edge);
 	}
     }
 }
@@ -335,11 +336,11 @@ symbol_table::remove_unreachable_nodes (FILE *file)
       node->used_as_abstract_origin = false;
       node->indirect_call_target = false;
       if (node->definition
-	  && !node->global.inlined_to
+	  && !node->inlined_to
 	  && !node->in_other_partition
 	  && !node->can_remove_if_no_direct_calls_and_refs_p ())
 	{
-	  gcc_assert (!node->global.inlined_to);
+	  gcc_assert (!node->inlined_to);
 	  reachable.add (node);
 	  enqueue_node (node, &first, &reachable);
 	}
@@ -390,17 +391,20 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		      n->used_as_abstract_origin = true;
 		}
 	    }
-	  /* If any symbol in a comdat group is reachable, force
-	     all externally visible symbols in the same comdat
+	  /* If any non-external and non-local symbol in a comdat group is
+ 	     reachable, force all externally visible symbols in the same comdat
 	     group to be reachable as well.  Comdat-local symbols
 	     can be discarded if all uses were inlined.  */
-	  if (node->same_comdat_group)
+	  if (node->same_comdat_group
+	      && node->externally_visible
+	      && !DECL_EXTERNAL (node->decl))
 	    {
 	      symtab_node *next;
 	      for (next = node->same_comdat_group;
 		   next != node;
 		   next = next->same_comdat_group)
 		if (!next->comdat_local_p ()
+		    && !DECL_EXTERNAL (next->decl)
 		    && !reachable.add (next))
 		  enqueue_node (next, &first, &reachable);
 	    }
@@ -451,7 +455,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 
 	      /* When inline clone exists, mark body to be preserved so when removing
 		 offline copy of the function we don't kill it.  */
-	      if (cnode->global.inlined_to)
+	      if (cnode->inlined_to)
 	        body_needed_for_clonning.add (cnode->decl);
 
 	      /* For non-inline clones, force their origins to the boundary and ensure
@@ -520,9 +524,14 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 	     reliably.  */
 	  if (node->alias || node->thunk.thunk_p)
 	    ;
-	  else if (!body_needed_for_clonning.contains (node->decl)
-	      && !node->alias && !node->thunk.thunk_p)
-	    node->release_body ();
+	  else if (!body_needed_for_clonning.contains (node->decl))
+	    {
+	      /* Make the node a non-clone so that we do not attempt to
+		 materialize it later.  */
+	      if (node->clone_of)
+		node->remove_from_clone_tree ();
+	      node->release_body ();
+	    }
 	  else if (!node->clone_of)
 	    gcc_assert (in_lto_p || DECL_RESULT (node->decl));
 	  if (node->definition && !node->alias && !node->thunk.thunk_p)
@@ -544,7 +553,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		= remove_attribute ("always_inline",
 				    DECL_ATTRIBUTES (node->decl));
 	      if (!node->in_other_partition)
-		node->local.local = false;
+		node->local = false;
 	      node->remove_callees ();
 	      node->remove_all_references ();
 	      changed = true;
@@ -560,11 +569,11 @@ symbol_table::remove_unreachable_nodes (FILE *file)
      to turn it into normal cone.  */
   FOR_EACH_FUNCTION (node)
     {
-      if (node->global.inlined_to
+      if (node->inlined_to
 	  && !node->callers)
 	{
 	  gcc_assert (node->clones);
-	  node->global.inlined_to = NULL;
+	  node->inlined_to = NULL;
 	  update_inlined_to_pointer (node, node);
 	}
       node->aux = NULL;
@@ -610,7 +619,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 	  if (vnode->definition)
 	    {
 	      if (file)
-		fprintf (file, " %s", vnode->name ());
+		fprintf (file, " %s", vnode->dump_name ());
 	      changed = true;
 	    }
 	  /* Keep body if it may be useful for constant folding.  */
@@ -643,7 +652,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 	    (has_addr_references_p, NULL, true))
 	  {
 	    if (file)
-	      fprintf (file, " %s", node->name ());
+	      fprintf (file, " %s", node->dump_name ());
 	    node->address_taken = false;
 	    changed = true;
 	    if (node->local_p ()
@@ -655,7 +664,7 @@ symbol_table::remove_unreachable_nodes (FILE *file)
 		    || !node->call_for_symbol_and_aliases
 		       (is_indirect_call_target_p, NULL, true)))
 	      {
-		node->local.local = true;
+		node->local = true;
 		if (file)
 		  fprintf (file, " (local)");
 	      }
@@ -788,7 +797,8 @@ ipa_discover_variable_flags (void)
 	if (!address_taken)
 	  {
 	    if (TREE_ADDRESSABLE (vnode->decl) && dump_file)
-	      fprintf (dump_file, " %s (non-addressable)", vnode->name ());
+	      fprintf (dump_file, " %s (non-addressable)",
+		       vnode->dump_name ());
 	    vnode->call_for_symbol_and_aliases (clear_addressable_bit, NULL,
 					        true);
 	  }
@@ -799,13 +809,13 @@ ipa_discover_variable_flags (void)
 	    && vnode->get_section () == NULL)
 	  {
 	    if (!TREE_READONLY (vnode->decl) && dump_file)
-	      fprintf (dump_file, " %s (read-only)", vnode->name ());
+	      fprintf (dump_file, " %s (read-only)", vnode->dump_name ());
 	    vnode->call_for_symbol_and_aliases (set_readonly_bit, NULL, true);
 	  }
 	if (!vnode->writeonly && !read && !address_taken && written)
 	  {
 	    if (dump_file)
-	      fprintf (dump_file, " %s (write-only)", vnode->name ());
+	      fprintf (dump_file, " %s (write-only)", vnode->dump_name ());
 	    vnode->call_for_symbol_and_aliases (set_writeonly_bit, &remove_p, 
 					        true);
 	  }
@@ -824,7 +834,7 @@ ipa_discover_variable_flags (void)
    FINAL specify whether the externally visible name for collect2 should
    be produced. */
 
-static void
+static tree
 cgraph_build_static_cdtor_1 (char which, tree body, int priority, bool final,
 			     tree optimization,
 			     tree target)
@@ -836,13 +846,18 @@ cgraph_build_static_cdtor_1 (char which, tree body, int priority, bool final,
   /* The priority is encoded in the constructor or destructor name.
      collect2 will sort the names and arrange that they are called at
      program startup.  */
-  if (final)
-    sprintf (which_buf, "%c_%.5d_%d", which, priority, counter++);
+  if (!targetm.have_ctors_dtors && final)
+    {
+      sprintf (which_buf, "%c_%.5d_%d", which, priority, counter++);
+      name = get_file_function_name (which_buf);
+    }
   else
-  /* Proudce sane name but one not recognizable by collect2, just for the
-     case we fail to inline the function.  */
-    sprintf (which_buf, "sub_%c_%.5d_%d", which, priority, counter++);
-  name = get_file_function_name (which_buf);
+    {
+      /* Proudce sane name but one not recognizable by collect2, just for the
+	 case we fail to inline the function.  */
+      sprintf (which_buf, "_sub_%c_%.5d_%d", which, priority, counter++);
+      name = get_identifier (which_buf);
+    }
 
   decl = build_decl (input_location, FUNCTION_DECL, name,
 		     build_function_type_list (void_type_node, NULL_TREE));
@@ -898,6 +913,7 @@ cgraph_build_static_cdtor_1 (char which, tree body, int priority, bool final,
 
   set_cfun (NULL);
   current_function_decl = NULL;
+  return decl;
 }
 
 /* Generate and emit a static constructor or destructor.  WHICH must
@@ -909,7 +925,14 @@ cgraph_build_static_cdtor_1 (char which, tree body, int priority, bool final,
 void
 cgraph_build_static_cdtor (char which, tree body, int priority)
 {
-  cgraph_build_static_cdtor_1 (which, body, priority, false, NULL, NULL);
+  /* FIXME: We should be able to
+     gcc_assert (!in_lto_p);
+     because at LTO time the global options are not safe to use.
+     Unfortunately ASAN finish_file will produce constructors late and they
+     may lead to surprises.  */
+  cgraph_build_static_cdtor_1 (which, body, priority, false,
+			       optimization_default_node,
+			       target_option_default_node);
 }
 
 /* When target does not have ctors and dtors, we call all constructor
@@ -997,6 +1020,124 @@ build_cdtor (bool ctor_p, const vec<tree> &cdtors)
     }
 }
 
+/* Helper functions for build_cxa_dtor_registrations ().
+   Build a decl for __cxa_atexit ().  */
+
+static tree
+build_cxa_atexit_decl ()
+{
+  /* The parameter to "__cxa_atexit" is "void (*)(void *)".  */
+  tree fn_type = build_function_type_list (void_type_node,
+					   ptr_type_node, NULL_TREE);
+  tree fn_ptr_type = build_pointer_type (fn_type);
+  /* The declaration for `__cxa_atexit' is:
+     int __cxa_atexit (void (*)(void *), void *, void *).  */
+  const char *name = "__cxa_atexit";
+  tree cxa_name = get_identifier (name);
+  fn_type = build_function_type_list (integer_type_node, fn_ptr_type,
+				      ptr_type_node, ptr_type_node, NULL_TREE);
+  tree atexit_fndecl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL,
+				   cxa_name, fn_type);
+  SET_DECL_ASSEMBLER_NAME (atexit_fndecl, cxa_name);
+  DECL_VISIBILITY (atexit_fndecl) = VISIBILITY_DEFAULT;
+  DECL_VISIBILITY_SPECIFIED (atexit_fndecl) = true;
+  set_call_expr_flags (atexit_fndecl, ECF_LEAF | ECF_NOTHROW);
+  TREE_PUBLIC (atexit_fndecl) = true;
+  DECL_EXTERNAL (atexit_fndecl) = true;
+  DECL_ARTIFICIAL (atexit_fndecl) = true;
+  return atexit_fndecl;
+}
+
+/* Build a decl for __dso_handle.  */
+
+static tree
+build_dso_handle_decl ()
+{
+  /* Declare the __dso_handle variable.  */
+  tree dso_handle_decl = build_decl (UNKNOWN_LOCATION, VAR_DECL,
+				     get_identifier ("__dso_handle"),
+				     ptr_type_node);
+  TREE_PUBLIC (dso_handle_decl) = true;
+  DECL_EXTERNAL (dso_handle_decl) = true;
+  DECL_ARTIFICIAL (dso_handle_decl) = true;
+#ifdef HAVE_GAS_HIDDEN
+  if (dso_handle_decl != error_mark_node)
+    {
+      DECL_VISIBILITY (dso_handle_decl) = VISIBILITY_HIDDEN;
+      DECL_VISIBILITY_SPECIFIED (dso_handle_decl) = true;
+    }
+#endif
+  return dso_handle_decl;
+}
+
+/*  This builds one or more constructor functions that register DTORs with
+    __cxa_atexit ().  Within a priority level, DTORs are registered in TU
+    order - which means that they will run in reverse TU order from cxa_atexit.
+    This is the same behavior as using a .fini / .mod_term_funcs section.
+    As the functions are built, they are appended to the CTORs vector.  */
+
+static void
+build_cxa_dtor_registrations (const vec<tree> &dtors, vec<tree> *ctors)
+{
+  size_t i,j;
+  size_t len = dtors.length ();
+
+  location_t sav_loc = input_location;
+  input_location = UNKNOWN_LOCATION;
+
+  tree atexit_fndecl = build_cxa_atexit_decl ();
+  tree dso_handle_decl = build_dso_handle_decl ();
+
+  /* We want &__dso_handle.  */
+  tree dso_ptr = build1_loc (UNKNOWN_LOCATION, ADDR_EXPR,
+			     ptr_type_node, dso_handle_decl);
+
+  i = 0;
+  while (i < len)
+    {
+      priority_type priority = 0;
+      tree body = NULL_TREE;
+      j = i;
+      do
+	{
+	  priority_type p;
+	  tree fn = dtors[j];
+	  p = DECL_FINI_PRIORITY (fn);
+	  if (j == i)
+	    priority = p;
+	  else if (p != priority)
+	    break;
+	  j++;
+	}
+      while (j < len);
+
+      /* Find the next batch of destructors with the same initialization
+	 priority.  */
+      for (;i < j; i++)
+	{
+	  tree fn = dtors[i];
+	  DECL_STATIC_DESTRUCTOR (fn) = 0;
+	  tree dtor_ptr = build1_loc (UNKNOWN_LOCATION, ADDR_EXPR,
+				      ptr_type_node, fn);
+	  tree call_cxa_atexit
+	    = build_call_expr_loc (UNKNOWN_LOCATION, atexit_fndecl, 3,
+				   dtor_ptr, null_pointer_node, dso_ptr);
+	  TREE_SIDE_EFFECTS (call_cxa_atexit) = 1;
+	  append_to_statement_list (call_cxa_atexit, &body);
+	}
+
+      gcc_assert (body != NULL_TREE);
+      /* Generate a function to register the DTORs at this priority.  */
+      tree new_ctor
+	= cgraph_build_static_cdtor_1 ('I', body, priority, true,
+				       DECL_FUNCTION_SPECIFIC_OPTIMIZATION (dtors[0]),
+				       DECL_FUNCTION_SPECIFIC_TARGET (dtors[0]));
+      /* Add this to the list of ctors.  */
+      ctors->safe_push (new_ctor);
+    }
+  input_location = sav_loc;
+}
+
 /* Comparison function for qsort.  P1 and P2 are actually of type
    "tree *" and point to static constructors.  DECL_INIT_PRIORITY is
    used to determine the sort order.  */
@@ -1046,7 +1187,46 @@ compare_dtor (const void *p1, const void *p2)
   else if (priority1 > priority2)
     return 1;
   else
-    /* Ensure a stable sort.  */
+    /* Ensure a stable sort - into TU order.  */
+    return DECL_UID (f1) - DECL_UID (f2);
+}
+
+/* Comparison function for qsort.  P1 and P2 are of type "tree *" and point to
+   a pair of static constructors or destructors.  We first sort on the basis of
+   priority and then into TU order (on the strict assumption that DECL_UIDs are
+   ordered in the same way as the original functions).  ???: this seems quite
+   fragile. */
+
+static int
+compare_cdtor_tu_order (const void *p1, const void *p2)
+{
+  tree f1;
+  tree f2;
+  int priority1;
+  int priority2;
+
+  f1 = *(const tree *)p1;
+  f2 = *(const tree *)p2;
+  /* We process the DTORs first, and then remove their flag, so this order
+     allows for functions that are declared as both CTOR and DTOR.  */
+  if (DECL_STATIC_DESTRUCTOR (f1))
+    {
+      gcc_checking_assert (DECL_STATIC_DESTRUCTOR (f2));
+      priority1 = DECL_FINI_PRIORITY (f1);
+      priority2 = DECL_FINI_PRIORITY (f2);
+    }
+  else
+    {
+      priority1 = DECL_INIT_PRIORITY (f1);
+      priority2 = DECL_INIT_PRIORITY (f2);
+    }
+
+  if (priority1 < priority2)
+    return -1;
+  else if (priority1 > priority2)
+    return 1;
+  else
+    /* For equal priority, sort into the order of definition in the TU.  */
     return DECL_UID (f1) - DECL_UID (f2);
 }
 
@@ -1072,6 +1252,37 @@ build_cdtor_fns (vec<tree> *ctors, vec<tree> *dtors)
     }
 }
 
+/* Generate new CTORs to register static destructors with __cxa_atexit and add
+   them to the existing list of CTORs; we then process the revised CTORs list.
+
+   We sort the DTORs into priority and then TU order, this means that they are
+   registered in that order with __cxa_atexit () and therefore will be run in
+   the reverse order.
+
+   Likewise, CTORs are sorted into priority and then TU order, which means that
+   they will run in that order.
+
+   This matches the behavior of using init/fini or mod_init_func/mod_term_func
+   sections.  */
+
+static void
+build_cxa_atexit_fns (vec<tree> *ctors, vec<tree> *dtors)
+{
+  if (!dtors->is_empty ())
+    {
+      gcc_assert (targetm.dtors_from_cxa_atexit);
+      dtors->qsort (compare_cdtor_tu_order);
+      build_cxa_dtor_registrations (*dtors, ctors);
+    }
+
+  if (!ctors->is_empty ())
+    {
+      gcc_assert (targetm.dtors_from_cxa_atexit);
+      ctors->qsort (compare_cdtor_tu_order);
+      build_cdtor (/*ctor_p=*/true, *ctors);
+    }
+}
+
 /* Look for constructors and destructors and produce function calling them.
    This is needed for targets not supporting ctors or dtors, but we perform the
    transformation also at linktime to merge possibly numerous
@@ -1090,7 +1301,10 @@ ipa_cdtor_merge (void)
     if (DECL_STATIC_CONSTRUCTOR (node->decl)
 	|| DECL_STATIC_DESTRUCTOR (node->decl))
        record_cdtor_fn (node, &ctors, &dtors);
-  build_cdtor_fns (&ctors, &dtors);
+  if (targetm.dtors_from_cxa_atexit)
+    build_cxa_atexit_fns (&ctors, &dtors);
+  else
+    build_cdtor_fns (&ctors, &dtors);
   return 0;
 }
 
@@ -1137,7 +1351,7 @@ pass_ipa_cdtor_merge::gate (function *)
   /* Perform the pass when we have no ctors/dtors support
      or at LTO time to merge multiple constructors into single
      function.  */
-  return !targetm.have_ctors_dtors || in_lto_p;
+  return !targetm.have_ctors_dtors || in_lto_p || targetm.dtors_from_cxa_atexit;
 }
 
 } // anon namespace
@@ -1207,8 +1421,8 @@ propagate_single_user (varpool_node *vnode, cgraph_node *function,
       struct cgraph_node *cnode = dyn_cast <cgraph_node *> (ref->referring);
       if (cnode)
 	{
-	  if (cnode->global.inlined_to)
-	    cnode = cnode->global.inlined_to;
+	  if (cnode->inlined_to)
+	    cnode = cnode->inlined_to;
 	  if (!function)
 	    function = cnode;
 	  else if (function != cnode)

@@ -1,5 +1,5 @@
 /* Top level of GCC compilers (cc1, cc1plus, etc.)
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -87,8 +87,8 @@ opt_pass::clone ()
 void
 opt_pass::set_pass_param (unsigned int, bool)
 {
-  internal_error ("pass %s needs a set_pass_param implementation to handle the"
-		  " extra argument in NEXT_PASS", name);
+  internal_error ("pass %s needs a %<set_pass_param%> implementation "
+		  "to handle the extra argument in %<NEXT_PASS%>", name);
 }
 
 bool
@@ -950,6 +950,7 @@ void
 pass_manager::dump_passes () const
 {
   push_dummy_function (true);
+  cgraph_node *node = cgraph_node::get_create (current_function_decl);
 
   create_pass_tab ();
 
@@ -959,6 +960,7 @@ pass_manager::dump_passes () const
   dump_pass_list (all_late_ipa_passes, 1);
   dump_pass_list (all_passes, 1);
 
+  node->remove ();
   pop_dummy_function ();
 }
 
@@ -1944,26 +1946,12 @@ execute_function_todo (function *fn, void *data)
 
   push_cfun (fn);
 
-  /* Always cleanup the CFG before trying to update SSA.  */
+  /* If we need to cleanup the CFG let it perform a needed SSA update.  */
   if (flags & TODO_cleanup_cfg)
-    {
-      cleanup_tree_cfg (flags & TODO_update_ssa_any);
-
-      /* When cleanup_tree_cfg merges consecutive blocks, it may
-	 perform some simplistic propagation when removing single
-	 valued PHI nodes.  This propagation may, in turn, cause the
-	 SSA form to become out-of-date (see PR 22037).  So, even
-	 if the parent pass had not scheduled an SSA update, we may
-	 still need to do one.  */
-      if (!(flags & TODO_update_ssa_any) && need_ssa_update_p (cfun))
-	flags |= TODO_update_ssa;
-    }
-
-  if (flags & TODO_update_ssa_any)
-    {
-      unsigned update_flags = flags & TODO_update_ssa_any;
-      update_ssa (update_flags);
-    }
+    cleanup_tree_cfg (flags & TODO_update_ssa_any);
+  else if (flags & TODO_update_ssa_any)
+    update_ssa (flags & TODO_update_ssa_any);
+  gcc_assert (!need_ssa_update_p (fn));
 
   if (flag_tree_pta && (flags & TODO_rebuild_alias))
     compute_may_aliases ();
@@ -2389,7 +2377,8 @@ should_skip_pass_p (opt_pass *pass)
     return false;
 
   /* Don't skip df init; later RTL passes need it.  */
-  if (strstr (pass->name, "dfinit") != NULL)
+  if (strstr (pass->name, "dfinit") != NULL
+      || strstr (pass->name, "dfinish") != NULL)
     return false;
 
   if (!quiet_flag)
@@ -2412,6 +2401,11 @@ skip_pass (opt_pass *pass)
      things depend on this (e.g. instructions in .md files).  */
   if (strcmp (pass->name, "reload") == 0)
     reload_completed = 1;
+
+  /* Similar for pass "pro_and_epilogue" and the "epilogue_completed" global
+     variable.  */
+  if (strcmp (pass->name, "pro_and_epilogue") == 0)
+    epilogue_completed = 1;
 
   /* The INSN_ADDRESSES vec is normally set up by
      shorten_branches; set it up for the benefit of passes that
@@ -2578,6 +2572,8 @@ execute_one_pass (opt_pass *pass)
   if (!((todo_after | pass->todo_flags_finish) & TODO_do_not_ggc_collect))
     ggc_collect ();
 
+  if (pass->type == SIMPLE_IPA_PASS || pass->type == IPA_PASS)
+    report_heap_memory_use ();
   return true;
 }
 
@@ -2832,6 +2828,8 @@ ipa_read_summaries_1 (opt_pass *pass)
 	      /* If a timevar is present, start it.  */
 	      if (pass->tv_id)
 		timevar_push (pass->tv_id);
+	      if (!quiet_flag)
+		fprintf (stderr, " <%s>", pass->name ? pass->name : "");
 
 	      pass_init_dump_file (pass);
 
@@ -2843,6 +2841,8 @@ ipa_read_summaries_1 (opt_pass *pass)
 	      /* Stop timevar.  */
 	      if (pass->tv_id)
 		timevar_pop (pass->tv_id);
+	      ggc_grow ();
+	      report_heap_memory_use ();
 	    }
 
 	  if (pass->sub && pass->sub->type != GIMPLE_PASS)
@@ -2883,6 +2883,8 @@ ipa_read_optimization_summaries_1 (opt_pass *pass)
 	      /* If a timevar is present, start it.  */
 	      if (pass->tv_id)
 		timevar_push (pass->tv_id);
+	      if (!quiet_flag)
+		fprintf (stderr, " <%s>", pass->name ? pass->name : "");
 
 	      pass_init_dump_file (pass);
 
@@ -2898,6 +2900,8 @@ ipa_read_optimization_summaries_1 (opt_pass *pass)
 
 	  if (pass->sub && pass->sub->type != GIMPLE_PASS)
 	    ipa_read_optimization_summaries_1 (pass->sub);
+	  ggc_grow ();
+	  report_heap_memory_use ();
 	}
       pass = pass->next;
     }
@@ -3047,7 +3051,7 @@ function_called_by_processed_nodes_p (void)
         continue;
       if (TREE_ASM_WRITTEN (e->caller->decl))
         continue;
-      if (!e->caller->process && !e->caller->global.inlined_to)
+      if (!e->caller->process && !e->caller->inlined_to)
       	break;
     }
   if (dump_file && e)

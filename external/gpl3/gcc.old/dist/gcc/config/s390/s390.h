@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, for IBM S/390
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Contributed by Hartmut Penner (hpenner@de.ibm.com) and
 		  Ulrich Weigand (uweigand@de.ibm.com).
 		  Andreas Krebbel (Andreas.Krebbel@de.ibm.com)
@@ -167,6 +167,18 @@ enum processor_flags
 	(TARGET_VX && TARGET_CPU_VXE2)
 #define TARGET_VXE2_P(opts)						\
 	(TARGET_VX_P (opts) && TARGET_CPU_VXE2_P (opts))
+#if defined(HAVE_AS_VECTOR_LOADSTORE_ALIGNMENT_HINTS_ON_Z13)
+#define TARGET_VECTOR_LOADSTORE_ALIGNMENT_HINTS TARGET_Z13
+#elif defined(HAVE_AS_VECTOR_LOADSTORE_ALIGNMENT_HINTS)
+#define TARGET_VECTOR_LOADSTORE_ALIGNMENT_HINTS TARGET_Z14
+#else
+#define TARGET_VECTOR_LOADSTORE_ALIGNMENT_HINTS 0
+#endif
+
+/* Evaluate to true if it is ok to emit a non-signaling vector
+   comparison.  */
+#define TARGET_NONSIGNALING_VECTOR_COMPARE_OK \
+  (TARGET_VX && !TARGET_VXE && (flag_finite_math_only || !flag_trapping_math))
 
 #ifdef HAVE_AS_MACHINE_MACHINEMODE
 #define S390_USE_TARGET_ATTRIBUTE 1
@@ -227,11 +239,13 @@ enum processor_flags
 #define TARGET_DEFAULT             0
 #endif
 
-/* Support for configure-time defaults.  */
+/* Support for configure-time defaults.
+   The order here is important so that -march doesn't squash the
+   tune values.  */
 #define OPTION_DEFAULT_SPECS					\
   { "mode", "%{!mesa:%{!mzarch:-m%(VALUE)}}" },			\
-  { "arch", "%{!march=*:-march=%(VALUE)}" },			\
-  { "tune", "%{!mtune=*:%{!march=*:-mtune=%(VALUE)}}" }
+  { "tune", "%{!mtune=*:%{!march=*:-mtune=%(VALUE)}}" },	\
+  { "arch", "%{!march=*:-march=%(VALUE)}" }
 
 #ifdef __s390__
 extern const char *s390_host_detect_local_cpu (int argc, const char **argv);
@@ -452,22 +466,6 @@ extern const char *s390_host_detect_local_cpu (int argc, const char **argv);
   0, 0, 0, 0,					\
   0, 0, 0, 0,					\
   0, 0, 0, 0 }
-
-#define CALL_USED_REGISTERS			\
-{ 1, 1, 1, 1,					\
-  1, 1, 0, 0,					\
-  0, 0, 0, 0,					\
-  0, 1, 1, 1,					\
-  1, 1, 1, 1,					\
-  1, 1, 1, 1,					\
-  1, 1, 1, 1,					\
-  1, 1, 1, 1,					\
-  1, 1, 1, 1,					\
-  1, 1,						\
-  1, 1, 1, 1,					\
-  1, 1, 1, 1,					\
-  1, 1, 1, 1,					\
-  1, 1, 1, 1 }
 
 #define CALL_REALLY_USED_REGISTERS		\
 { 1, 1, 1, 1,	/* r0 - r15 */			\

@@ -1,6 +1,6 @@
 ;; Instruction Classification for ARM for GNU compiler.
 
-;; Copyright (C) 1991-2019 Free Software Foundation, Inc.
+;; Copyright (C) 1991-2020 Free Software Foundation, Inc.
 ;; Contributed by ARM Ltd.
 
 ;; This file is part of GCC.
@@ -546,6 +546,15 @@
 ; The classification below is for coprocessor instructions
 ;
 ; coproc
+;
+; The classification below is for TME instructions
+;
+; tme
+; The classification below is for M-profile Vector Extension instructions
+;
+; mve_move
+; mve_store
+; mve_load
 
 (define_attr "type"
  "adc_imm,\
@@ -1091,7 +1100,12 @@
   crypto_sha3,\
   crypto_sm3,\
   crypto_sm4,\
-  coproc"
+  coproc,\
+  tme,\
+  memtag,\
+  mve_move,\
+  mve_store,\
+  mve_load"
    (const_string "untyped"))
 
 ; Is this an (integer side) multiply with a 32-bit (or smaller) result?
@@ -1215,3 +1229,15 @@
           crypto_sha256_fast, crypto_sha256_slow")
         (const_string "yes")
         (const_string "no")))
+
+;; YES if the "type" attribute assigned to the insn denotes an MVE instruction,
+;; No otherwise.
+(define_attr "is_mve_type" "yes,no"
+        (if_then_else (eq_attr "type"
+        "mve_move, mve_load, mve_store, mrs")
+        (const_string "yes")
+        (const_string "no")))
+
+(define_insn_reservation "no_reservation" 0
+  (eq_attr "type" "no_insn")
+  "nothing")

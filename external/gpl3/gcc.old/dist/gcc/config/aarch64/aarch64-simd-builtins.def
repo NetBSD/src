@@ -1,5 +1,5 @@
 /* Machine description for AArch64 architecture.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -155,7 +155,7 @@
   BUILTIN_VQN (TERNOP, raddhn2, 0)
   BUILTIN_VQN (TERNOP, rsubhn2, 0)
 
-  BUILTIN_VSQN_HSDI (UNOP, sqmovun, 0)
+  BUILTIN_VSQN_HSDI (UNOPUS, sqmovun, 0)
   /* Implemented by aarch64_<sur>qmovn<mode>.  */
   BUILTIN_VSQN_HSDI (UNOP, sqmovn, 0)
   BUILTIN_VSQN_HSDI (UNOP, uqmovn, 0)
@@ -185,6 +185,21 @@
   BUILTIN_VQ_HSI (TERNOP, sqdmlal2_n, 0)
   BUILTIN_VQ_HSI (TERNOP, sqdmlsl2_n, 0)
 
+  BUILTIN_VD_BHSI (BINOP, intrinsic_vec_smult_lo_, 0)
+  BUILTIN_VD_BHSI (BINOPU, intrinsic_vec_umult_lo_, 0)
+
+  BUILTIN_VQW (BINOP, vec_widen_smult_hi_, 10)
+  BUILTIN_VQW (BINOPU, vec_widen_umult_hi_, 10)
+
+  BUILTIN_VD_HSI (TERNOP_LANE, vec_smult_lane_, 0)
+  BUILTIN_VD_HSI (QUADOP_LANE, vec_smlal_lane_, 0)
+  BUILTIN_VD_HSI (TERNOP_LANE, vec_smult_laneq_, 0)
+  BUILTIN_VD_HSI (QUADOP_LANE, vec_smlal_laneq_, 0)
+  BUILTIN_VD_HSI (TERNOPU_LANE, vec_umult_lane_, 0)
+  BUILTIN_VD_HSI (QUADOPU_LANE, vec_umlal_lane_, 0)
+  BUILTIN_VD_HSI (TERNOPU_LANE, vec_umult_laneq_, 0)
+  BUILTIN_VD_HSI (QUADOPU_LANE, vec_umlal_laneq_, 0)
+
   BUILTIN_VSD_HSI (BINOP, sqdmull, 0)
   BUILTIN_VSD_HSI (TERNOP_LANE, sqdmull_lane, 0)
   BUILTIN_VSD_HSI (TERNOP_LANE, sqdmull_laneq, 0)
@@ -212,10 +227,15 @@
   /* Implemented by aarch64_<sur><dotprod>{_lane}{q}<dot_mode>.  */
   BUILTIN_VB (TERNOP, sdot, 0)
   BUILTIN_VB (TERNOPU, udot, 0)
+  BUILTIN_VB (TERNOP_SSUS, usdot, 0)
   BUILTIN_VB (QUADOP_LANE, sdot_lane, 0)
   BUILTIN_VB (QUADOPU_LANE, udot_lane, 0)
   BUILTIN_VB (QUADOP_LANE, sdot_laneq, 0)
   BUILTIN_VB (QUADOPU_LANE, udot_laneq, 0)
+  BUILTIN_VB (QUADOPSSUS_LANE_QUADTUP, usdot_lane, 0)
+  BUILTIN_VB (QUADOPSSUS_LANE_QUADTUP, usdot_laneq, 0)
+  BUILTIN_VB (QUADOPSSSU_LANE_QUADTUP, sudot_lane, 0)
+  BUILTIN_VB (QUADOPSSSU_LANE_QUADTUP, sudot_laneq, 0)
 
   /* Implemented by aarch64_fcadd<rot><mode>.   */
   BUILTIN_VHSDF (BINOP, fcadd90, 0)
@@ -314,12 +334,11 @@
   BUILTIN_VHSDF (UNOP, nearbyint, 2)
   BUILTIN_VHSDF (UNOP, rint, 2)
   BUILTIN_VHSDF (UNOP, round, 2)
-  BUILTIN_VHSDF_DF (UNOP, frintn, 2)
+  BUILTIN_VHSDF_HSDF (UNOP, frintn, 2)
 
   VAR1 (UNOP, btrunc, 2, hf)
   VAR1 (UNOP, ceil, 2, hf)
   VAR1 (UNOP, floor, 2, hf)
-  VAR1 (UNOP, frintn, 2, hf)
   VAR1 (UNOP, nearbyint, 2, hf)
   VAR1 (UNOP, rint, 2, hf)
   VAR1 (UNOP, round, 2, hf)
@@ -424,7 +443,7 @@
   BUILTIN_VB (UNOP, rbit, 0)
 
   /* Implemented by
-     aarch64_<PERMUTE:perm_insn><PERMUTE:perm_hilo><mode>.  */
+     aarch64_<PERMUTE:perm_insn><mode>.  */
   BUILTIN_VALL (BINOP, zip1, 0)
   BUILTIN_VALL (BINOP, zip2, 0)
   BUILTIN_VALL (BINOP, uzp1, 0)
@@ -465,11 +484,17 @@
   /* Implemented by aarch64_ld1x3<VALLDIF:mode>.  */
   BUILTIN_VALLDIF (LOADSTRUCT, ld1x3, 0)
 
+  /* Implemented by aarch64_ld1x4<VALLDIF:mode>.  */
+  BUILTIN_VALLDIF (LOADSTRUCT, ld1x4, 0)
+
   /* Implemented by aarch64_st1x2<VALLDIF:mode>.  */
   BUILTIN_VALLDIF (STORESTRUCT, st1x2, 0)
 
   /* Implemented by aarch64_st1x3<VALLDIF:mode>.  */
   BUILTIN_VALLDIF (STORESTRUCT, st1x3, 0)
+
+  /* Implemented by aarch64_st1x4<VALLDIF:mode>.  */
+  BUILTIN_VALLDIF (STORESTRUCT, st1x4, 0)
 
   /* Implemented by fma<mode>4.  */
   BUILTIN_VHSDF (TERNOP, fma, 4)
@@ -670,3 +695,45 @@
   /* Implemented by aarch64_fml<f16mac1>lq_laneq_highv4sf.  */
   VAR1 (QUADOP_LANE, fmlalq_laneq_high, 0, v4sf)
   VAR1 (QUADOP_LANE, fmlslq_laneq_high, 0, v4sf)
+
+  /* Implemented by aarch64_<frintnzs_op><mode>.  */
+  BUILTIN_VSFDF (UNOP, frint32z, 0)
+  BUILTIN_VSFDF (UNOP, frint32x, 0)
+  BUILTIN_VSFDF (UNOP, frint64z, 0)
+  BUILTIN_VSFDF (UNOP, frint64x, 0)
+
+  /* Implemented by aarch64_bfdot{_lane}{q}<mode>.  */
+  VAR2 (TERNOP, bfdot, 0, v2sf, v4sf)
+  VAR2 (QUADOP_LANE_PAIR, bfdot_lane, 0, v2sf, v4sf)
+  VAR2 (QUADOP_LANE_PAIR, bfdot_laneq, 0, v2sf, v4sf)
+
+  /* Implemented by aarch64_bfmmlaqv4sf  */
+  VAR1 (TERNOP, bfmmlaq, 0, v4sf)
+
+  /* Implemented by aarch64_bfmlal<bt>{_lane{q}}v4sf  */
+  VAR1 (TERNOP, bfmlalb, 0, v4sf)
+  VAR1 (TERNOP, bfmlalt, 0, v4sf)
+  VAR1 (QUADOP_LANE, bfmlalb_lane, 0, v4sf)
+  VAR1 (QUADOP_LANE, bfmlalt_lane, 0, v4sf)
+  VAR1 (QUADOP_LANE, bfmlalb_lane_q, 0, v4sf)
+  VAR1 (QUADOP_LANE, bfmlalt_lane_q, 0, v4sf)
+
+  /* Implemented by aarch64_vget_lo/hi_halfv8bf.  */
+  VAR1 (UNOP, vget_lo_half, 0, v8bf)
+  VAR1 (UNOP, vget_hi_half, 0, v8bf)
+
+  /* Implemented by aarch64_simd_<sur>mmlav16qi.  */
+  VAR1 (TERNOP, simd_smmla, 0, v16qi)
+  VAR1 (TERNOPU, simd_ummla, 0, v16qi)
+  VAR1 (TERNOP_SSUS, simd_usmmla, 0, v16qi)
+
+  /* Implemented by aarch64_bfcvtn{q}{2}<mode>  */
+  VAR1 (UNOP, bfcvtn, 0, v4bf)
+  VAR1 (UNOP, bfcvtn_q, 0, v8bf)
+  VAR1 (BINOP, bfcvtn2, 0, v8bf)
+  VAR1 (UNOP, bfcvt, 0, bf)
+
+  /* Implemented by aarch64_{v}bfcvt{_high}<mode>.  */
+  VAR2 (UNOP, vbfcvt, 0, v4bf, v8bf)
+  VAR1 (UNOP, vbfcvt_high, 0, v8bf)
+  VAR1 (UNOP, bfcvt, 0, sf)

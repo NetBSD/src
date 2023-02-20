@@ -1,5 +1,5 @@
 /* Lower complex number operations to scalar operations.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -318,7 +318,7 @@ complex_propagate::visit_stmt (gimple *stmt, edge *taken_edge_p ATTRIBUTE_UNUSED
 
   lhs = gimple_get_lhs (stmt);
   /* Skip anything but GIMPLE_ASSIGN and GIMPLE_CALL with a lhs.  */
-  if (!lhs)
+  if (!lhs || SSA_NAME_OCCURS_IN_ABNORMAL_PHI (lhs))
     return SSA_PROP_VARYING;
 
   /* These conditions should be satisfied due to the initial filter
@@ -416,6 +416,9 @@ complex_propagate::visit_phi (gphi *phi)
   /* This condition should be satisfied due to the initial filter
      set up in init_dont_simulate_again.  */
   gcc_assert (TREE_CODE (TREE_TYPE (lhs)) == COMPLEX_TYPE);
+
+  if (SSA_NAME_OCCURS_IN_ABNORMAL_PHI (lhs))
+    return SSA_PROP_VARYING;
 
   /* We've set up the lattice values such that IOR neatly models PHI meet.  */
   new_l = UNINITIALIZED;
@@ -569,7 +572,8 @@ set_component_ssa_name (tree ssa_name, bool imag_p, tree value)
     {
       /* Replace an anonymous base value with the variable from cvc_lookup.
 	 This should result in better debug info.  */
-      if (SSA_NAME_VAR (ssa_name)
+      if (!SSA_NAME_IS_DEFAULT_DEF (value)
+	  && SSA_NAME_VAR (ssa_name)
 	  && (!SSA_NAME_VAR (value) || DECL_IGNORED_P (SSA_NAME_VAR (value)))
 	  && !DECL_IGNORED_P (SSA_NAME_VAR (ssa_name)))
 	{
@@ -1144,6 +1148,16 @@ expand_complex_multiplication (gimple_stmt_iterator *gsi, tree type,
 	      return;
 	    }
 
+	  if (!HONOR_NANS (inner_type))
+	    {
+	      /* If we are not worrying about NaNs expand to
+		 (ar*br - ai*bi) + i(ar*bi + br*ai) directly.  */
+	      expand_complex_multiplication_components (gsi, inner_type,
+							ar, ai, br, bi,
+							&rr, &ri);
+	      break;
+	    }
+
 	  /* Else, expand x = a * b into
 	     x = (ar*br - ai*bi) + i(ar*bi + br*ai);
 	     if (isunordered (__real__ x, __imag__ x))
@@ -1151,7 +1165,7 @@ expand_complex_multiplication (gimple_stmt_iterator *gsi, tree type,
 
 	  tree tmpr, tmpi;
 	  expand_complex_multiplication_components (gsi, inner_type, ar, ai,
-						     br, bi, &tmpr, &tmpi);
+						    br, bi, &tmpr, &tmpi);
 
 	  gimple *check
 	    = gimple_build_cond (UNORDERED_EXPR, tmpr, tmpi,
@@ -1167,13 +1181,12 @@ expand_complex_multiplication (gimple_stmt_iterator *gsi, tree type,
 	    = insert_cond_bb (gsi_bb (*gsi), gsi_stmt (*gsi), check,
 			      profile_probability::very_unlikely ());
 
-
 	  gimple_stmt_iterator cond_bb_gsi = gsi_last_bb (cond_bb);
 	  gsi_insert_after (&cond_bb_gsi, gimple_build_nop (), GSI_NEW_STMT);
 
 	  tree libcall_res
 	    = expand_complex_libcall (&cond_bb_gsi, type, ar, ai, br,
-				       bi, MULT_EXPR, false);
+				      bi, MULT_EXPR, false);
 	  tree cond_real = gimplify_build1 (&cond_bb_gsi, REALPART_EXPR,
 					    inner_type, libcall_res);
 	  tree cond_imag = gimplify_build1 (&cond_bb_gsi, IMAGPART_EXPR,
@@ -1190,20 +1203,18 @@ expand_complex_multiplication (gimple_stmt_iterator *gsi, tree type,
 	  edge orig_to_join = find_edge (orig_bb, join_bb);
 
 	  gphi *real_phi = create_phi_node (rr, gsi_bb (*gsi));
-	  add_phi_arg (real_phi, cond_real, cond_to_join,
-			UNKNOWN_LOCATION);
+	  add_phi_arg (real_phi, cond_real, cond_to_join, UNKNOWN_LOCATION);
 	  add_phi_arg (real_phi, tmpr, orig_to_join, UNKNOWN_LOCATION);
 
 	  gphi *imag_phi = create_phi_node (ri, gsi_bb (*gsi));
-	  add_phi_arg (imag_phi, cond_imag, cond_to_join,
-			UNKNOWN_LOCATION);
+	  add_phi_arg (imag_phi, cond_imag, cond_to_join, UNKNOWN_LOCATION);
 	  add_phi_arg (imag_phi, tmpi, orig_to_join, UNKNOWN_LOCATION);
 	}
       else
 	/* If we are not worrying about NaNs expand to
 	  (ar*br - ai*bi) + i(ar*bi + br*ai) directly.  */
 	expand_complex_multiplication_components (gsi, inner_type, ar, ai,
-						      br, bi, &rr, &ri);
+						  br, bi, &rr, &ri);
       break;
 
     default:

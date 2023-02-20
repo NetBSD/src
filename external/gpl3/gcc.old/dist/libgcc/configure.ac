@@ -2,6 +2,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 sinclude(../config/enable.m4)
 sinclude(../config/tls.m4)
+sinclude(../config/toolexeclibdir.m4)
 sinclude(../config/acx.m4)
 sinclude(../config/no-executables.m4)
 sinclude(../config/lib-ld.m4)
@@ -113,16 +114,25 @@ AC_ARG_ENABLE(version-specific-runtime-libs,
 [version_specific_libs=no])
 AC_MSG_RESULT($version_specific_libs)
 
+GCC_WITH_TOOLEXECLIBDIR
+
 AC_ARG_WITH(slibdir,
 [  --with-slibdir=DIR      shared libraries in DIR [LIBDIR]],
 slibdir="$with_slibdir",
-if test "${version_specific_libs}" = yes; then
+[if test "${version_specific_libs}" = yes; then
   slibdir='$(libsubdir)'
 elif test -n "$with_cross_host" && test x"$with_cross_host" != x"no"; then
-  slibdir='$(exec_prefix)/$(host_noncanonical)/lib'
+  case ${with_toolexeclibdir} in
+    no)
+      slibdir='$(exec_prefix)/$(host_noncanonical)/lib'
+      ;;
+    *)
+      slibdir=${with_toolexeclibdir}
+      ;;
+  esac
 else
   slibdir='$(libdir)'
-fi)
+fi])
 AC_SUBST(slibdir)
 
 # Command-line options.
@@ -168,7 +178,14 @@ case ${version_specific_libs} in
        test x"$with_cross_host" != x"no"; then
       # Install a library built with a cross compiler in tooldir, not libdir.
       toolexecdir='$(exec_prefix)/$(target_noncanonical)'
-      toolexeclibdir='$(toolexecdir)/lib'
+      case ${with_toolexeclibdir} in
+	no)
+	  toolexeclibdir='$(toolexecdir)/lib'
+	  ;;
+	*)
+	  toolexeclibdir=${with_toolexeclibdir}
+	  ;;
+      esac
     else
       toolexecdir='$(libdir)/gcc-lib/$(target_noncanonical)'
       toolexeclibdir='$(libdir)'
@@ -207,7 +224,7 @@ AC_SUBST(long_double_type_size)
 
 AC_CHECK_HEADERS(inttypes.h stdint.h stdlib.h ftw.h \
 	unistd.h sys/stat.h sys/types.h \
-	string.h strings.h memory.h)
+	string.h strings.h memory.h sys/auxv.h)
 AC_HEADER_STDC
 
 # Check for decimal float support.
@@ -260,6 +277,24 @@ if test "$enable_explicit_exception_frame_registration" = yes; then
 fi
 ])
 AC_SUBST([force_explicit_eh_registry])
+
+AC_ARG_ENABLE([tm-clone-registry],
+[  --disable-tm-clone-registry    disable TM clone registry],
+[
+use_tm_clone_registry=
+if test "$enable_tm_clone_registry" = no; then
+  use_tm_clone_registry=-DUSE_TM_CLONE_REGISTRY=0
+fi
+],
+[
+use_tm_clone_registry=
+case $target in
+  msp430*elfbare)
+   use_tm_clone_registry=-DUSE_TM_CLONE_REGISTRY=0
+   ;;
+esac
+])
+AC_SUBST([use_tm_clone_registry])
 
 AC_LIB_PROG_LD_GNU
 
@@ -447,7 +482,7 @@ fi
 # Link with -nostartfiles -nodefaultlibs since neither are present while
 # building libgcc.
 case ${host} in
-i?86-*-solaris2* | x86_64-*-solaris2.1[[0-9]]*)
+i?86-*-solaris2* | x86_64-*-solaris2*)
   cat > conftest.s <<EOF
 	.section	.eh_frame,"a",@unwind
 	.zero	4
@@ -563,6 +598,25 @@ i[[34567]]86-*-* | x86_64-*-*)
   ;;
 esac])
 LIBGCC_CHECK_AS_AVX
+
+dnl Check if as supports LSE instructions.
+AC_DEFUN([LIBGCC_CHECK_AS_LSE], [
+case "${target}" in
+aarch64*-*-*)
+  AC_CACHE_CHECK([if the assembler supports LSE], libgcc_cv_as_lse, [
+    AC_TRY_COMPILE([],
+changequote(,)dnl
+			asm(".arch armv8-a+lse\n\tcas w0, w1, [x2]");
+changequote([,])dnl
+		       ,
+		   [libgcc_cv_as_lse=yes], [libgcc_cv_as_lse=no])
+  ])
+  if test x$libgcc_cv_as_lse = xyes; then
+    AC_DEFINE(HAVE_AS_LSE, 1, [Define to 1 if the assembler supports LSE.])
+  fi
+  ;;
+esac])
+LIBGCC_CHECK_AS_LSE
 
 dnl Check if as supports RTM instructions.
 AC_CACHE_CHECK(for init priority support, libgcc_cv_init_priority, [

@@ -1,5 +1,5 @@
 /* Back-propagation of usage information to definitions.
-   Copyright (C) 2015-2019 Free Software Foundation, Inc.
+   Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -107,8 +107,9 @@ along with GCC; see the file COPYING3.  If not see
 namespace {
 
 /* Information about a group of uses of an SSA name.  */
-struct usage_info
+class usage_info
 {
+public:
   usage_info () : flag_word (0) {}
   usage_info &operator &= (const usage_info &);
   usage_info operator & (const usage_info &) const;

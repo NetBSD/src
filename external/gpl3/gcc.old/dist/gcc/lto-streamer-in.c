@@ -1,6 +1,6 @@
 /* Read the GIMPLE representation from a file stream.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by Kenneth Zadeck <zadeck@naturalbridge.com>
    Re-implemented by Diego Novillo <dnovillo@google.com>
 
@@ -42,21 +42,66 @@ along with GCC; see the file COPYING3.  If not see
 #include "cgraph.h"
 #include "cfgloop.h"
 #include "debug.h"
+#include "alloc-pool.h"
+#include "toplev.h"
 
-
-struct freeing_string_slot_hasher : string_slot_hasher
-{
-  static inline void remove (value_type *);
-};
-
-inline void
-freeing_string_slot_hasher::remove (value_type *v)
-{
-  free (v);
-}
+/* Allocator used to hold string slot entries for line map streaming.  */
+static struct object_allocator<struct string_slot> *string_slot_allocator;
 
 /* The table to hold the file names.  */
-static hash_table<freeing_string_slot_hasher> *file_name_hash_table;
+static hash_table<string_slot_hasher> *file_name_hash_table;
+
+/* The table to hold the relative pathname prefixes.  */
+
+/* This obstack holds file names used in locators. Line map datastructures
+   points here and thus it needs to be kept allocated as long as linemaps
+   exists.  */
+static struct obstack file_name_obstack;
+
+/* Map a pair of nul terminated strings where the first one can be
+   pointer compared, but the second can't, to another string.  */
+struct string_pair_map
+{
+  const char *str1;
+  const char *str2;
+  const char *str3;
+  hashval_t hash;
+  bool prefix;
+};
+
+/* Allocator used to hold string pair map entries for line map streaming.  */
+static struct object_allocator<struct string_pair_map>
+  *string_pair_map_allocator;
+
+struct string_pair_map_hasher : nofree_ptr_hash <string_pair_map>
+{
+  static inline hashval_t hash (const string_pair_map *);
+  static inline bool equal (const string_pair_map *, const string_pair_map *);
+};
+
+inline hashval_t
+string_pair_map_hasher::hash (const string_pair_map *spm)
+{
+  return spm->hash;
+}
+
+inline bool
+string_pair_map_hasher::equal (const string_pair_map *spm1,
+			       const string_pair_map *spm2)
+{
+  return (spm1->hash == spm2->hash
+	  && spm1->str1 == spm2->str1
+	  && spm1->prefix == spm2->prefix
+	  && strcmp (spm1->str2, spm2->str2) == 0);
+}
+
+/* The table to hold the pairs of pathnames and corresponding
+   resulting pathname.  Used for both mapping of get_src_pwd ()
+   and recorded source working directory to relative path prefix
+   from current working directory to the recorded one, and for
+   mapping of that relative path prefix and some relative path
+   to those concatenated.  */
+static hash_table<string_pair_map_hasher> *path_name_pair_hash_table;
 
 
 /* Check that tag ACTUAL has one of the given values.  NUM_TAGS is the
@@ -84,7 +129,7 @@ lto_tag_check_set (enum LTO_tags actual, int ntags, ...)
 /* Read LENGTH bytes from STREAM to ADDR.  */
 
 void
-lto_input_data_block (struct lto_input_block *ib, void *addr, size_t length)
+lto_input_data_block (class lto_input_block *ib, void *addr, size_t length)
 {
   size_t i;
   unsigned char *const buffer = (unsigned char *) addr;
@@ -93,13 +138,216 @@ lto_input_data_block (struct lto_input_block *ib, void *addr, size_t length)
     buffer[i] = streamer_read_uchar (ib);
 }
 
+/* Compute the relative path to get to DATA_WD (absolute directory name)
+   from CWD (another absolute directory name).  E.g. for
+   DATA_WD of "/tmp/foo/bar" and CWD of "/tmp/baz/qux" return
+   "../../foo/bar".  Returned string should be freed by the caller.
+   Return NULL if absolute file name needs to be used.  */
 
-/* Lookup STRING in file_name_hash_table.  If found, return the existing
-   string, otherwise insert STRING as the canonical version.  */
+static char *
+relative_path_prefix (const char *data_wd, const char *cwd)
+{
+  const char *d = data_wd;
+  const char *c = cwd;
+#ifdef HAVE_DOS_BASED_FILE_SYSTEM
+  if (d[1] == ':')
+    {
+      if (!IS_DIR_SEPARATOR (d[2]))
+	return NULL;
+      if (c[0] == d[0] && c[1] == ':' && IS_DIR_SEPARATOR (c[2]))
+	{
+	  c += 3;
+	  d += 3;
+	}
+      else
+	return NULL;
+    }
+  else if (c[1] == ':')
+    return NULL;
+#endif
+  do
+    {
+      while (IS_DIR_SEPARATOR (*d))
+	d++;
+      while (IS_DIR_SEPARATOR (*c))
+	c++;
+      size_t i;
+      for (i = 0; c[i] && !IS_DIR_SEPARATOR (c[i]) && c[i] == d[i]; i++)
+	;
+      if ((c[i] == '\0' || IS_DIR_SEPARATOR (c[i]))
+	  && (d[i] == '\0' || IS_DIR_SEPARATOR (d[i])))
+	{
+	  c += i;
+	  d += i;
+	  if (*c == '\0' || *d == '\0')
+	    break;
+	}
+      else
+	break;
+    }
+  while (1);
+  size_t num_up = 0;
+  do
+    {
+      while (IS_DIR_SEPARATOR (*c))
+	c++;
+      if (*c == '\0')
+	break;
+      num_up++;
+      while (*c && !IS_DIR_SEPARATOR (*c))
+	c++;
+    }
+  while (1);
+  while (IS_DIR_SEPARATOR (*d))
+    d++;
+  size_t len = strlen (d);
+  if (len == 0 && num_up == 0)
+    return xstrdup (".");
+  char *ret = XNEWVEC (char, num_up * 3 + len + 1);
+  char *p = ret;
+  for (; num_up; num_up--)
+    {
+      const char dir_up[3] = { '.', '.', DIR_SEPARATOR };
+      memcpy (p, dir_up, 3);
+      p += 3;
+    }
+  memcpy (p, d, len + 1);
+  return ret;
+}
+
+/* Look up DATA_WD in hash table of relative prefixes.  If found,
+   return relative path from CWD to DATA_WD from the hash table,
+   otherwise create it.  */
 
 static const char *
-canon_file_name (const char *string)
+canon_relative_path_prefix (const char *data_wd, const char *cwd)
 {
+  if (!IS_ABSOLUTE_PATH (data_wd) || !IS_ABSOLUTE_PATH (cwd))
+    return NULL;
+
+  if (!path_name_pair_hash_table)
+    {
+      path_name_pair_hash_table
+	= new hash_table<string_pair_map_hasher> (37);
+      string_pair_map_allocator
+	= new object_allocator <struct string_pair_map>
+		("line map string pair map hash");
+    }
+
+  inchash::hash h;
+  h.add_ptr (cwd);
+  h.merge_hash (htab_hash_string (data_wd));
+  h.add_int (true);
+
+  string_pair_map s_slot;
+  s_slot.str1 = cwd;
+  s_slot.str2 = data_wd;
+  s_slot.str3 = NULL;
+  s_slot.hash = h.end ();
+  s_slot.prefix = true;
+
+  string_pair_map **slot
+    = path_name_pair_hash_table->find_slot (&s_slot, INSERT);
+  if (*slot == NULL)
+    {
+      /* Compute relative path from cwd directory to data_wd directory.
+	 E.g. if cwd is /tmp/foo/bar and data_wd is /tmp/baz/qux ,
+	 it will return ../../baz/qux .  */
+      char *relative_path = relative_path_prefix (data_wd, cwd);
+      const char *relative = relative_path ? relative_path : data_wd;
+      size_t relative_len = strlen (relative);
+      gcc_assert (relative_len);
+
+      size_t data_wd_len = strlen (data_wd);
+      bool add_separator = false;
+      if (!IS_DIR_SEPARATOR (relative[relative_len - 1]))
+	add_separator = true;
+
+      size_t len = relative_len + 1 + data_wd_len + 1 + add_separator;
+
+      char *saved_string = XOBNEWVEC (&file_name_obstack, char, len);
+      struct string_pair_map *new_slot
+	= string_pair_map_allocator->allocate ();
+      memcpy (saved_string, data_wd, data_wd_len + 1);
+      memcpy (saved_string + data_wd_len + 1, relative, relative_len);
+      if (add_separator)
+	saved_string[len - 2] = DIR_SEPARATOR;
+      saved_string[len - 1] = '\0';
+      new_slot->str1 = cwd;
+      new_slot->str2 = saved_string;
+      new_slot->str3 = saved_string + data_wd_len + 1;
+      if (relative_len == 1 && relative[0] == '.')
+	new_slot->str3 = NULL;
+      new_slot->hash = s_slot.hash;
+      new_slot->prefix = true;
+      *slot = new_slot;
+      free (relative_path);
+      return new_slot->str3;
+    }
+  else
+    {
+      string_pair_map *old_slot = *slot;
+      return old_slot->str3;
+    }
+}
+
+/* Look up the pair of RELATIVE_PREFIX and STRING strings in a hash table.
+   If found, return the concatenation of those from the hash table,
+   otherwise concatenate them.  */
+
+static const char *
+canon_relative_file_name (const char *relative_prefix, const char *string)
+{
+  inchash::hash h;
+  h.add_ptr (relative_prefix);
+  h.merge_hash (htab_hash_string (string));
+
+  string_pair_map s_slot;
+  s_slot.str1 = relative_prefix;
+  s_slot.str2 = string;
+  s_slot.str3 = NULL;
+  s_slot.hash = h.end ();
+  s_slot.prefix = false;
+
+  string_pair_map **slot
+    = path_name_pair_hash_table->find_slot (&s_slot, INSERT);
+  if (*slot == NULL)
+    {
+      size_t relative_prefix_len = strlen (relative_prefix);
+      size_t string_len = strlen (string);
+      size_t len = relative_prefix_len + string_len + 1;
+
+      char *saved_string = XOBNEWVEC (&file_name_obstack, char, len);
+      struct string_pair_map *new_slot
+	= string_pair_map_allocator->allocate ();
+      memcpy (saved_string, relative_prefix, relative_prefix_len);
+      memcpy (saved_string + relative_prefix_len, string, string_len + 1);
+      new_slot->str1 = relative_prefix;
+      new_slot->str2 = saved_string + relative_prefix_len;
+      new_slot->str3 = saved_string;
+      new_slot->hash = s_slot.hash;
+      new_slot->prefix = false;
+      *slot = new_slot;
+      return new_slot->str3;
+    }
+  else
+    {
+      string_pair_map *old_slot = *slot;
+      return old_slot->str3;
+    }
+}
+
+/* Lookup STRING in file_name_hash_table.  If found, return the existing
+   string, otherwise insert STRING as the canonical version.
+   If STRING is a relative pathname and RELATIVE_PREFIX is non-NULL, use
+   canon_relative_file_name instead.  */
+
+static const char *
+canon_file_name (const char *relative_prefix, const char *string)
+{
+  if (relative_prefix && !IS_ABSOLUTE_PATH (string))
+    return canon_relative_file_name (relative_prefix, string);
+
   string_slot **slot;
   struct string_slot s_slot;
   size_t len = strlen (string);
@@ -113,8 +361,8 @@ canon_file_name (const char *string)
       char *saved_string;
       struct string_slot *new_slot;
 
-      saved_string = (char *) xmalloc (len + 1);
-      new_slot = XCNEW (struct string_slot);
+      saved_string = XOBNEWVEC (&file_name_obstack, char, len + 1);
+      new_slot = string_slot_allocator->allocate ();
       memcpy (saved_string, string, len + 1);
       new_slot->s = saved_string;
       new_slot->len = len;
@@ -159,7 +407,18 @@ lto_location_cache::cmp_loc (const void *pa, const void *pb)
     return a->sysp ? 1 : -1;
   if (a->line != b->line)
     return a->line - b->line;
-  return a->col - b->col;
+  if (a->col != b->col)
+    return a->col - b->col;
+  if ((a->block == NULL_TREE) != (b->block == NULL_TREE))
+    return a->block ? 1 : -1;
+  if (a->block)
+    {
+      if (BLOCK_NUMBER (a->block) < BLOCK_NUMBER (b->block))
+	return -1;
+      if (BLOCK_NUMBER (a->block) > BLOCK_NUMBER (b->block))
+	return 1;
+    }
+  return 0;
 }
 
 /* Apply all changes in location cache.  Add locations into linemap and patch
@@ -194,22 +453,33 @@ lto_location_cache::apply_location_cache ()
 	  linemap_line_start (line_table, loc.line, max + 1);
 	}
       gcc_assert (*loc.loc == BUILTINS_LOCATION + 1);
-      if (current_file == loc.file && current_line == loc.line
-	  && current_col == loc.col)
-	*loc.loc = current_loc;
-      else
-        current_loc = *loc.loc = linemap_position_for_column (line_table,
-							      loc.col);
+      if (current_file != loc.file
+	  || current_line != loc.line
+	  || current_col != loc.col)
+	{
+	  current_loc = linemap_position_for_column (line_table, loc.col);
+	  if (loc.block)
+	    current_loc = set_block (current_loc, loc.block);
+	}
+      else if (current_block != loc.block)
+	{
+	  if (loc.block)
+	    current_loc = set_block (current_loc, loc.block);
+	  else
+	    current_loc = LOCATION_LOCUS (current_loc);
+	}
+      *loc.loc = current_loc;
       current_line = loc.line;
       prev_file = current_file = loc.file;
       current_col = loc.col;
+      current_block = loc.block;
     }
   loc_cache.truncate (0);
   accepted_length = 0;
   return true;
 }
 
-/* Tree merging did not suceed; mark all changes in the cache as accepted.  */
+/* Tree merging did not succeed; mark all changes in the cache as accepted.  */
 
 void
 lto_location_cache::accept_location_cache ()
@@ -218,7 +488,7 @@ lto_location_cache::accept_location_cache ()
   accepted_length = loc_cache.length ();
 }
 
-/* Tree merging did suceed; throw away recent changes.  */
+/* Tree merging did succeed; throw away recent changes.  */
 
 void
 lto_location_cache::revert_location_cache ()
@@ -226,37 +496,64 @@ lto_location_cache::revert_location_cache ()
   loc_cache.truncate (accepted_length);
 }
 
-/* Read a location bitpack from input block IB and either update *LOC directly
-   or add it to the location cache.
+/* Read a location bitpack from bit pack BP and either update *LOC directly
+   or add it to the location cache.  If IB is non-NULL, stream in a block
+   afterwards.
    It is neccesary to call apply_location_cache to get *LOC updated.  */
 
 void
-lto_location_cache::input_location (location_t *loc, struct bitpack_d *bp,
-				    struct data_in *data_in)
+lto_location_cache::input_location_and_block (location_t *loc,
+					      struct bitpack_d *bp,
+					      class lto_input_block *ib,
+					      class data_in *data_in)
 {
   static const char *stream_file;
   static int stream_line;
   static int stream_col;
   static bool stream_sysp;
-  bool file_change, line_change, column_change;
+  static tree stream_block;
+  static const char *stream_relative_path_prefix;
 
   gcc_assert (current_cache == this);
 
-  *loc = bp_unpack_int_in_range (bp, "location", 0, RESERVED_LOCATION_COUNT);
+  *loc = bp_unpack_int_in_range (bp, "location", 0,
+				 RESERVED_LOCATION_COUNT + 1);
 
   if (*loc < RESERVED_LOCATION_COUNT)
-    return;
+    {
+      if (ib)
+	{
+	  bool block_change = bp_unpack_value (bp, 1);
+	  if (block_change)
+	    stream_block = stream_read_tree (ib, data_in);
+	  if (stream_block)
+	    *loc = set_block (*loc, stream_block);
+	}
+      return;
+    }
 
+  bool file_change = (*loc == RESERVED_LOCATION_COUNT + 1);
   /* Keep value RESERVED_LOCATION_COUNT in *loc as linemap lookups will
      ICE on it.  */
-
-  file_change = bp_unpack_value (bp, 1);
-  line_change = bp_unpack_value (bp, 1);
-  column_change = bp_unpack_value (bp, 1);
+  *loc = RESERVED_LOCATION_COUNT;
+  bool line_change = bp_unpack_value (bp, 1);
+  bool column_change = bp_unpack_value (bp, 1);
 
   if (file_change)
     {
-      stream_file = canon_file_name (bp_unpack_string (data_in, bp));
+      bool pwd_change = bp_unpack_value (bp, 1);
+      if (pwd_change)
+	{
+	  const char *pwd = bp_unpack_string (data_in, bp);
+	  const char *src_pwd = get_src_pwd ();
+	  if (strcmp (pwd, src_pwd) == 0)
+	    stream_relative_path_prefix = NULL;
+	  else
+	    stream_relative_path_prefix
+	      = canon_relative_path_prefix (pwd, src_pwd);
+	}
+      stream_file = canon_file_name (stream_relative_path_prefix,
+				     bp_unpack_string (data_in, bp));
       stream_sysp = bp_unpack_value (bp, 1);
     }
 
@@ -266,19 +563,46 @@ lto_location_cache::input_location (location_t *loc, struct bitpack_d *bp,
   if (column_change)
     stream_col = bp_unpack_var_len_unsigned (bp);
 
-  /* This optimization saves location cache operations druing gimple
+  tree block = NULL_TREE;
+  if (ib)
+    {
+      bool block_change = bp_unpack_value (bp, 1);
+      if (block_change)
+	stream_block = stream_read_tree (ib, data_in);
+      block = stream_block;
+    }
+
+  /* This optimization saves location cache operations during gimple
      streaming.  */
      
-  if (current_file == stream_file && current_line == stream_line
-      && current_col == stream_col && current_sysp == stream_sysp)
+  if (current_file == stream_file
+      && current_line == stream_line
+      && current_col == stream_col
+      && current_sysp == stream_sysp)
     {
-      *loc = current_loc;
+      if (current_block == block)
+	*loc = current_loc;
+      else if (block)
+	*loc = set_block (current_loc, block);
+      else
+	*loc = LOCATION_LOCUS (current_loc);
       return;
     }
 
   struct cached_location entry
-    = {stream_file, loc, stream_line, stream_col, stream_sysp};
+    = {stream_file, loc, stream_line, stream_col, stream_sysp, block};
   loc_cache.safe_push (entry);
+}
+
+/* Read a location bitpack from bit pack BP and either update *LOC directly
+   or add it to the location cache.
+   It is neccesary to call apply_location_cache to get *LOC updated.  */
+
+void
+lto_location_cache::input_location (location_t *loc, struct bitpack_d *bp,
+				    class data_in *data_in)
+{
+  return input_location_and_block (loc, bp, NULL, data_in);
 }
 
 /* Read a location bitpack from input block IB and either update *LOC directly
@@ -287,22 +611,9 @@ lto_location_cache::input_location (location_t *loc, struct bitpack_d *bp,
 
 void
 lto_input_location (location_t *loc, struct bitpack_d *bp,
-		    struct data_in *data_in)
+		    class data_in *data_in)
 {
   data_in->location_cache.input_location (loc, bp, data_in);
-}
-
-/* Read location and return it instead of going through location caching.
-   This should be used only when the resulting location is not going to be
-   discarded.  */
-
-location_t
-stream_input_location_now (struct bitpack_d *bp, struct data_in *data_in)
-{
-  location_t loc;
-  stream_input_location (&loc, bp, data_in);
-  data_in->location_cache.apply_location_cache ();
-  return loc;
 }
 
 /* Read a reference to a tree node from DATA_IN using input block IB.
@@ -313,7 +624,7 @@ stream_input_location_now (struct bitpack_d *bp, struct data_in *data_in)
    function scope for the read tree.  */
 
 tree
-lto_input_tree_ref (struct lto_input_block *ib, struct data_in *data_in,
+lto_input_tree_ref (class lto_input_block *ib, class data_in *data_in,
 		    struct function *fn, enum LTO_tags tag)
 {
   unsigned HOST_WIDE_INT ix_u;
@@ -378,7 +689,7 @@ lto_input_tree_ref (struct lto_input_block *ib, struct data_in *data_in,
    block IB, using descriptors in DATA_IN.  */
 
 static struct eh_catch_d *
-lto_input_eh_catch_list (struct lto_input_block *ib, struct data_in *data_in,
+lto_input_eh_catch_list (class lto_input_block *ib, class data_in *data_in,
 			 eh_catch *last_p)
 {
   eh_catch first;
@@ -424,7 +735,7 @@ lto_input_eh_catch_list (struct lto_input_block *ib, struct data_in *data_in,
    in DATA_IN.  */
 
 static eh_region
-input_eh_region (struct lto_input_block *ib, struct data_in *data_in, int ix)
+input_eh_region (class lto_input_block *ib, class data_in *data_in, int ix)
 {
   enum LTO_tags tag;
   eh_region r;
@@ -480,8 +791,8 @@ input_eh_region (struct lto_input_block *ib, struct data_in *data_in, int ix)
 	  r->type = ERT_MUST_NOT_THROW;
 	  r->u.must_not_throw.failure_decl = stream_read_tree (ib, data_in);
 	  bitpack_d bp = streamer_read_bitpack (ib);
-	  r->u.must_not_throw.failure_loc
-	   = stream_input_location_now (&bp, data_in);
+	  stream_input_location (&r->u.must_not_throw.failure_loc,
+	  			 &bp, data_in);
 	}
 	break;
 
@@ -499,7 +810,7 @@ input_eh_region (struct lto_input_block *ib, struct data_in *data_in, int ix)
    in DATA_IN.  */
 
 static eh_landing_pad
-input_eh_lp (struct lto_input_block *ib, struct data_in *data_in, int ix)
+input_eh_lp (class lto_input_block *ib, class data_in *data_in, int ix)
 {
   enum LTO_tags tag;
   eh_landing_pad lp;
@@ -603,7 +914,7 @@ lto_init_eh (void)
    in DATA_IN.  */
 
 static void
-input_eh_regions (struct lto_input_block *ib, struct data_in *data_in,
+input_eh_regions (class lto_input_block *ib, class data_in *data_in,
 		  struct function *fn)
 {
   HOST_WIDE_INT i, root_region, len;
@@ -614,11 +925,6 @@ input_eh_regions (struct lto_input_block *ib, struct data_in *data_in,
     return;
 
   lto_tag_check_range (tag, LTO_eh_table, LTO_eh_table);
-
-  /* If the file contains EH regions, then it was compiled with
-     -fexceptions.  In that case, initialize the backend EH
-     machinery.  */
-  lto_init_eh ();
 
   gcc_assert (fn->eh);
 
@@ -714,7 +1020,7 @@ make_new_block (struct function *fn, unsigned int index)
 /* Read the CFG for function FN from input block IB.  */
 
 static void
-input_cfg (struct lto_input_block *ib, struct data_in *data_in,
+input_cfg (class lto_input_block *ib, class data_in *data_in,
 	   struct function *fn)
 {
   unsigned int bb_count;
@@ -751,23 +1057,19 @@ input_cfg (struct lto_input_block *ib, struct data_in *data_in,
       /* Connect up the CFG.  */
       for (i = 0; i < edge_count; i++)
 	{
-	  unsigned int dest_index;
-	  unsigned int edge_flags;
-	  basic_block dest;
-	  profile_probability probability;
-	  edge e;
-
-	  dest_index = streamer_read_uhwi (ib);
-	  probability = profile_probability::stream_in (ib);
-	  edge_flags = streamer_read_uhwi (ib);
-
-	  dest = BASIC_BLOCK_FOR_FN (fn, dest_index);
+	  bitpack_d bp = streamer_read_bitpack (ib);
+	  unsigned int dest_index = bp_unpack_var_len_unsigned (&bp);
+	  unsigned int edge_flags = bp_unpack_var_len_unsigned (&bp);
+	  basic_block dest = BASIC_BLOCK_FOR_FN (fn, dest_index);
 
 	  if (dest == NULL)
 	    dest = make_new_block (fn, dest_index);
 
-	  e = make_edge (bb, dest, edge_flags);
-	  e->probability = probability;
+	  edge e = make_edge (bb, dest, edge_flags);
+	  data_in->location_cache.input_location_and_block (&e->goto_locus,
+							    &bp, ib, data_in);
+	  e->probability = profile_probability::stream_in (ib);
+
 	}
 
       index = streamer_read_hwi (ib);
@@ -807,7 +1109,7 @@ input_cfg (struct lto_input_block *ib, struct data_in *data_in,
 	  continue;
 	}
 
-      struct loop *loop = alloc_loop ();
+      class loop *loop = alloc_loop ();
       loop->header = BASIC_BLOCK_FOR_FN (fn, header_index);
       loop->header->loop_father = loop;
 
@@ -829,6 +1131,7 @@ input_cfg (struct lto_input_block *ib, struct data_in *data_in,
       loop->owned_clique = streamer_read_hwi (ib);
       loop->dont_vectorize = streamer_read_hwi (ib);
       loop->force_vectorize = streamer_read_hwi (ib);
+      loop->finite_p = streamer_read_hwi (ib);
       loop->simduid = stream_read_tree (ib, data_in);
 
       place_new_loop (fn, loop);
@@ -847,7 +1150,7 @@ input_cfg (struct lto_input_block *ib, struct data_in *data_in,
    block IB.  */
 
 static void
-input_ssa_names (struct lto_input_block *ib, struct data_in *data_in,
+input_ssa_names (class lto_input_block *ib, class data_in *data_in,
 		 struct function *fn)
 {
   unsigned int i, size;
@@ -900,6 +1203,7 @@ fixup_call_stmt_edges_1 (struct cgraph_node *node, gimple **stmts,
         fatal_error (input_location,
 		     "Cgraph edge statement index out of range");
       cedge->call_stmt = as_a <gcall *> (stmts[cedge->lto_stmt_uid - 1]);
+      cedge->lto_stmt_uid = 0;
       if (!cedge->call_stmt)
         fatal_error (input_location,
 		     "Cgraph edge statement index not found");
@@ -910,6 +1214,7 @@ fixup_call_stmt_edges_1 (struct cgraph_node *node, gimple **stmts,
         fatal_error (input_location,
 		     "Cgraph edge statement index out of range");
       cedge->call_stmt = as_a <gcall *> (stmts[cedge->lto_stmt_uid - 1]);
+      cedge->lto_stmt_uid = 0;
       if (!cedge->call_stmt)
         fatal_error (input_location, "Cgraph edge statement index not found");
     }
@@ -920,6 +1225,7 @@ fixup_call_stmt_edges_1 (struct cgraph_node *node, gimple **stmts,
 	  fatal_error (input_location,
 		       "Reference statement index out of range");
 	ref->stmt = stmts[ref->lto_stmt_uid - 1];
+	ref->lto_stmt_uid = 0;
 	if (!ref->stmt)
 	  fatal_error (input_location, "Reference statement index not found");
       }
@@ -964,8 +1270,8 @@ fixup_call_stmt_edges (struct cgraph_node *orig, gimple **stmts)
    using input block IB.  */
 
 static void
-input_struct_function_base (struct function *fn, struct data_in *data_in,
-                            struct lto_input_block *ib)
+input_struct_function_base (struct function *fn, class data_in *data_in,
+	                    class lto_input_block *ib)
 {
   struct bitpack_d bp;
   int len;
@@ -1005,6 +1311,7 @@ input_struct_function_base (struct function *fn, struct data_in *data_in,
   fn->has_forced_label_in_static = bp_unpack_value (&bp, 1);
   fn->calls_alloca = bp_unpack_value (&bp, 1);
   fn->calls_setjmp = bp_unpack_value (&bp, 1);
+  fn->calls_eh_return = bp_unpack_value (&bp, 1);
   fn->has_force_vectorize_loops = bp_unpack_value (&bp, 1);
   fn->has_simduid_loops = bp_unpack_value (&bp, 1);
   fn->va_list_fpr_size = bp_unpack_value (&bp, 8);
@@ -1012,8 +1319,8 @@ input_struct_function_base (struct function *fn, struct data_in *data_in,
   fn->last_clique = bp_unpack_value (&bp, sizeof (short) * 8);
 
   /* Input the function start and end loci.  */
-  fn->function_start_locus = stream_input_location_now (&bp, data_in);
-  fn->function_end_locus = stream_input_location_now (&bp, data_in);
+  stream_input_location (&fn->function_start_locus, &bp, data_in);
+  stream_input_location (&fn->function_end_locus, &bp, data_in);
 
   /* Restore the instance discriminators if present.  */
   int instance_number = bp_unpack_value (&bp, 1);
@@ -1028,14 +1335,14 @@ input_struct_function_base (struct function *fn, struct data_in *data_in,
 /* Read the body of function FN_DECL from DATA_IN using input block IB.  */
 
 static void
-input_function (tree fn_decl, struct data_in *data_in,
-		struct lto_input_block *ib, struct lto_input_block *ib_cfg)
+input_function (tree fn_decl, class data_in *data_in,
+		class lto_input_block *ib, class lto_input_block *ib_cfg,
+		cgraph_node *node)
 {
   struct function *fn;
   enum LTO_tags tag;
   gimple **stmts;
   basic_block bb;
-  struct cgraph_node *node;
 
   tag = streamer_read_record_start (ib);
   lto_tag_check (tag, LTO_function);
@@ -1071,9 +1378,6 @@ input_function (tree fn_decl, struct data_in *data_in,
 
   gimple_register_cfg_hooks ();
 
-  node = cgraph_node::get (fn_decl);
-  if (!node)
-    node = cgraph_node::create (fn_decl);
   input_struct_function_base (fn, data_in, ib);
   input_cfg (ib_cfg, data_in, fn);
 
@@ -1094,6 +1398,9 @@ input_function (tree fn_decl, struct data_in *data_in,
 		node->count_materialization_scale);
       tag = streamer_read_record_start (ib);
     }
+
+  /* Finalize gimple_location/gimple_block of stmts and phis.  */
+  data_in->location_cache.apply_location_cache ();
 
   /* Fix up the call statements that are mentioned in the callgraph
      edges.  */
@@ -1145,8 +1452,9 @@ input_function (tree fn_decl, struct data_in *data_in,
 		 we'd later ICE on.  */
 	      tree block;
 	      if (gimple_debug_inline_entry_p (stmt)
-		  && (block = gimple_block (stmt))
-		  && !inlined_function_outer_scope_p (block))
+		  && (((block = gimple_block (stmt))
+		       && !inlined_function_outer_scope_p (block))
+		      || !debug_inline_points))
 		remove = true;
 	      if (is_gimple_call (stmt)
 		  && gimple_call_internal_p (stmt))
@@ -1230,7 +1538,6 @@ input_function (tree fn_decl, struct data_in *data_in,
   fixup_call_stmt_edges (node, stmts);
   execute_all_ipa_stmt_fixups (node, stmts);
 
-  update_ssa (TODO_update_ssa_only_virtuals);
   free_dominance_info (CDI_DOMINATORS);
   free_dominance_info (CDI_POST_DOMINATORS);
   free (stmts);
@@ -1240,8 +1547,8 @@ input_function (tree fn_decl, struct data_in *data_in,
 /* Read the body of function FN_DECL from DATA_IN using input block IB.  */
 
 static void
-input_constructor (tree var, struct data_in *data_in,
-		   struct lto_input_block *ib)
+input_constructor (tree var, class data_in *data_in,
+		   class lto_input_block *ib)
 {
   DECL_INITIAL (var) = stream_read_tree (ib, data_in);
 }
@@ -1258,7 +1565,7 @@ lto_read_body_or_constructor (struct lto_file_decl_data *file_data, struct symta
 			      const char *data, enum lto_section_type section_type)
 {
   const struct lto_function_header *header;
-  struct data_in *data_in;
+  class data_in *data_in;
   int cfg_offset;
   int main_offset;
   int string_offset;
@@ -1301,7 +1608,8 @@ lto_read_body_or_constructor (struct lto_file_decl_data *file_data, struct symta
 	{
 	  lto_input_block ib_cfg (data + cfg_offset, header->cfg_size,
 				  file_data->mode_table);
-	  input_function (fn_decl, data_in, &ib_main, &ib_cfg);
+	  input_function (fn_decl, data_in, &ib_main, &ib_cfg,
+			  dyn_cast <cgraph_node *>(node));
 	}
       else
         input_constructor (fn_decl, data_in, &ib_main);
@@ -1371,7 +1679,7 @@ vec<dref_entry> dref_queue;
    input block IB using the per-file context in DATA_IN.  */
 
 static void
-lto_read_tree_1 (struct lto_input_block *ib, struct data_in *data_in, tree expr)
+lto_read_tree_1 (class lto_input_block *ib, class data_in *data_in, tree expr)
 {
   /* Read all the bitfield values in EXPR.  Note that for LTO, we
      only write language-independent bitfields, so no more unpacking is
@@ -1409,7 +1717,7 @@ lto_read_tree_1 (struct lto_input_block *ib, struct data_in *data_in, tree expr)
    input block IB using the per-file context in DATA_IN.  */
 
 static tree
-lto_read_tree (struct lto_input_block *ib, struct data_in *data_in,
+lto_read_tree (class lto_input_block *ib, class data_in *data_in,
 	       enum LTO_tags tag, hashval_t hash)
 {
   /* Instantiate a new tree node.  */
@@ -1422,24 +1730,29 @@ lto_read_tree (struct lto_input_block *ib, struct data_in *data_in,
 
   lto_read_tree_1 (ib, data_in, result);
 
-  /* end_marker = */ streamer_read_uchar (ib);
-
   return result;
 }
 
 
 /* Populate the reader cache with trees materialized from the SCC
-   following in the IB, DATA_IN stream.  */
+   following in the IB, DATA_IN stream.
+   If SHARED_SCC is true we input LTO_tree_scc.  */
 
 hashval_t
-lto_input_scc (struct lto_input_block *ib, struct data_in *data_in,
-	       unsigned *len, unsigned *entry_len)
+lto_input_scc (class lto_input_block *ib, class data_in *data_in,
+	       unsigned *len, unsigned *entry_len, bool shared_scc)
 {
-  /* A blob of unnamed tree nodes, fill the cache from it and
-     recurse.  */
   unsigned size = streamer_read_uhwi (ib);
-  hashval_t scc_hash = streamer_read_uhwi (ib);
+  hashval_t scc_hash = 0;
   unsigned scc_entry_len = 1;
+
+  if (shared_scc)
+    {
+      if (size & 1)
+	scc_entry_len = streamer_read_uhwi (ib);
+      size /= 2;
+      scc_hash = streamer_read_uhwi (ib);
+    }
 
   if (size == 1)
     {
@@ -1451,8 +1764,6 @@ lto_input_scc (struct lto_input_block *ib, struct data_in *data_in,
       unsigned int first = data_in->reader_cache->nodes.length ();
       tree result;
 
-      scc_entry_len = streamer_read_uhwi (ib);
-
       /* Materialize size trees by reading their headers.  */
       for (unsigned i = 0; i < size; ++i)
 	{
@@ -1461,7 +1772,8 @@ lto_input_scc (struct lto_input_block *ib, struct data_in *data_in,
 	      || (tag >= LTO_field_decl_ref && tag <= LTO_global_decl_ref)
 	      || tag == LTO_tree_pickle_reference
 	      || tag == LTO_integer_cst
-	      || tag == LTO_tree_scc)
+	      || tag == LTO_tree_scc
+	      || tag == LTO_trees)
 	    gcc_unreachable ();
 
 	  result = streamer_alloc_tree (ib, data_in, tag);
@@ -1474,7 +1786,6 @@ lto_input_scc (struct lto_input_block *ib, struct data_in *data_in,
 	  result = streamer_tree_cache_get_tree (data_in->reader_cache,
 						 first + i);
 	  lto_read_tree_1 (ib, data_in, result);
-	  /* end_marker = */ streamer_read_uchar (ib);
 	}
     }
 
@@ -1489,7 +1800,7 @@ lto_input_scc (struct lto_input_block *ib, struct data_in *data_in,
    to previously read nodes.  */
 
 tree
-lto_input_tree_1 (struct lto_input_block *ib, struct data_in *data_in,
+lto_input_tree_1 (class lto_input_block *ib, class data_in *data_in,
 		  enum LTO_tags tag, hashval_t hash)
 {
   tree result;
@@ -1527,7 +1838,7 @@ lto_input_tree_1 (struct lto_input_block *ib, struct data_in *data_in,
 				 (a, len, TYPE_PRECISION (type)));
       streamer_tree_cache_append (data_in->reader_cache, result, hash);
     }
-  else if (tag == LTO_tree_scc)
+  else if (tag == LTO_tree_scc || tag == LTO_trees)
     gcc_unreachable ();
   else
     {
@@ -1539,15 +1850,15 @@ lto_input_tree_1 (struct lto_input_block *ib, struct data_in *data_in,
 }
 
 tree
-lto_input_tree (struct lto_input_block *ib, struct data_in *data_in)
+lto_input_tree (class lto_input_block *ib, class data_in *data_in)
 {
   enum LTO_tags tag;
 
-  /* Input and skip SCCs.  */
-  while ((tag = streamer_read_record_start (ib)) == LTO_tree_scc)
+  /* Input pickled trees needed to stream in the reference.  */
+  while ((tag = streamer_read_record_start (ib)) == LTO_trees)
     {
       unsigned len, entry_len;
-      lto_input_scc (ib, data_in, &len, &entry_len);
+      lto_input_scc (ib, data_in, &len, &entry_len, false);
 
       /* Register DECLs with the debuginfo machinery.  */
       while (!dref_queue.is_empty ())
@@ -1556,7 +1867,15 @@ lto_input_tree (struct lto_input_block *ib, struct data_in *data_in)
 	  debug_hooks->register_external_die (e.decl, e.sym, e.off);
 	}
     }
-  return lto_input_tree_1 (ib, data_in, tag, 0);
+  tree t = lto_input_tree_1 (ib, data_in, tag, 0);
+
+  if (!dref_queue.is_empty ())
+    {
+      dref_entry e = dref_queue.pop ();
+      debug_hooks->register_external_die (e.decl, e.sym, e.off);
+      gcc_checking_assert (dref_queue.is_empty ());
+    }
+  return t;
 }
 
 
@@ -1566,12 +1885,12 @@ void
 lto_input_toplevel_asms (struct lto_file_decl_data *file_data, int order_base)
 {
   size_t len;
-  const char *data = lto_get_section_data (file_data, LTO_section_asm,
-					   NULL, &len);
+  const char *data
+    = lto_get_summary_section_data (file_data, LTO_section_asm, &len);
   const struct lto_simple_header_with_strings *header
     = (const struct lto_simple_header_with_strings *) data;
   int string_offset;
-  struct data_in *data_in;
+  class data_in *data_in;
   tree str;
 
   if (! data)
@@ -1605,8 +1924,8 @@ void
 lto_input_mode_table (struct lto_file_decl_data *file_data)
 {
   size_t len;
-  const char *data = lto_get_section_data (file_data, LTO_section_mode_table,
-					   NULL, &len);
+  const char *data
+    = lto_get_summary_section_data (file_data, LTO_section_mode_table, &len);
   if (! data)
     {
       internal_error ("cannot read LTO mode table from %s",
@@ -1619,7 +1938,7 @@ lto_input_mode_table (struct lto_file_decl_data *file_data)
   const struct lto_simple_header_with_strings *header
     = (const struct lto_simple_header_with_strings *) data;
   int string_offset;
-  struct data_in *data_in;
+  class data_in *data_in;
   string_offset = sizeof (*header) + header->main_size;
 
   lto_input_block ib (data + sizeof (*header), header->main_size, NULL);
@@ -1708,7 +2027,31 @@ lto_input_mode_table (struct lto_file_decl_data *file_data)
 		}
 	      /* FALLTHRU */
 	    default:
-	      fatal_error (UNKNOWN_LOCATION, "unsupported mode %s\n", mname);
+	      /* This is only used for offloading-target compilations and
+		 is a user-facing error.  Give a better error message for
+		 the common modes; see also mode-classes.def.   */
+	      if (mclass == MODE_FLOAT)
+		fatal_error (UNKNOWN_LOCATION,
+			     "%s - %u-bit-precision floating-point numbers "
+			     "unsupported (mode %qs)", TARGET_MACHINE,
+			     prec.to_constant (), mname);
+	      else if (mclass == MODE_DECIMAL_FLOAT)
+		fatal_error (UNKNOWN_LOCATION,
+			     "%s - %u-bit-precision decimal floating-point "
+			     "numbers unsupported (mode %qs)", TARGET_MACHINE,
+			     prec.to_constant (), mname);
+	      else if (mclass == MODE_COMPLEX_FLOAT)
+		fatal_error (UNKNOWN_LOCATION,
+			     "%s - %u-bit-precision complex floating-point "
+			     "numbers unsupported (mode %qs)", TARGET_MACHINE,
+			     prec.to_constant (), mname);
+	      else if (mclass == MODE_INT)
+		fatal_error (UNKNOWN_LOCATION,
+			     "%s - %u-bit integer numbers unsupported (mode "
+			     "%qs)", TARGET_MACHINE, prec.to_constant (), mname);
+	      else
+		fatal_error (UNKNOWN_LOCATION, "%s - unsupported mode %qs",
+			     TARGET_MACHINE, mname);
 	      break;
 	    }
 	}
@@ -1726,7 +2069,27 @@ lto_reader_init (void)
 {
   lto_streamer_init ();
   file_name_hash_table
-    = new hash_table<freeing_string_slot_hasher> (37);
+    = new hash_table<string_slot_hasher> (37);
+  string_slot_allocator = new object_allocator <struct string_slot>
+				("line map file name hash");
+  gcc_obstack_init (&file_name_obstack);
+}
+
+/* Free hash table used to stream in location file names.  */
+
+void
+lto_free_file_name_hash (void)
+{
+  delete file_name_hash_table;
+  file_name_hash_table = NULL;
+  delete string_slot_allocator;
+  string_slot_allocator = NULL;
+  delete path_name_pair_hash_table;
+  path_name_pair_hash_table = NULL;
+  delete string_pair_map_allocator;
+  string_pair_map_allocator = NULL;
+  /* file_name_obstack must stay allocated since it is referred to by
+     line map table.  */
 }
 
 
@@ -1734,12 +2097,12 @@ lto_reader_init (void)
    table to use with LEN strings.  RESOLUTIONS is the vector of linker
    resolutions (NULL if not using a linker plugin).  */
 
-struct data_in *
+class data_in *
 lto_data_in_create (struct lto_file_decl_data *file_data, const char *strings,
 		    unsigned len,
 		    vec<ld_plugin_symbol_resolution_t> resolutions)
 {
-  struct data_in *data_in = new (struct data_in);
+  class data_in *data_in = new (class data_in);
   data_in->file_data = file_data;
   data_in->strings = strings;
   data_in->strings_len = len;
@@ -1752,7 +2115,7 @@ lto_data_in_create (struct lto_file_decl_data *file_data, const char *strings,
 /* Remove DATA_IN.  */
 
 void
-lto_data_in_delete (struct data_in *data_in)
+lto_data_in_delete (class data_in *data_in)
 {
   data_in->globals_resolution.release ();
   streamer_tree_cache_delete (data_in->reader_cache);

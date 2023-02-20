@@ -1,6 +1,6 @@
 ; Options for the language- and target-independent parts of the compiler.
 
-; Copyright (C) 2003-2019 Free Software Foundation, Inc.
+; Copyright (C) 2003-2020 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -62,9 +62,6 @@ int flag_complex_method = 1
 ; Language specific warning pass for unused results.
 Variable
 bool flag_warn_unused_result = false
-
-Variable
-int *param_values
 
 ; Nonzero if we should write GIMPLE bytecode for link-time optimization.
 Variable
@@ -437,13 +434,6 @@ Common Driver Alias(-target-help)
 fversion
 Common Driver Alias(-version)
 
--param
-Common Separate
---param <param>=<value>	Set parameter <param> to value.  See below for a complete list of parameters.
-
--param=
-Common Joined Alias(-param)
-
 -sysroot
 Driver Separate Alias(-sysroot=)
 
@@ -611,6 +601,10 @@ Wframe-larger-than=
 Common RejectNegative Joined Host_Wide_Int ByteSize Warning Var(warn_frame_larger_than_size) Init(HOST_WIDE_INT_MAX)
 -Wframe-larger-than=<byte-size>	Warn if a function's stack frame requires in excess of <byte-size>.
 
+Wno-frame-larger-than
+Common Alias(Wframe-larger-than=,18446744073709551615EiB,none) Warning
+Disable -Wframe-larger-than= warning.  Equivalent to -Wframe-larger-than=<SIZE_MAX> or larger.
+
 Wfree-nonheap-object
 Common Var(warn_free_nonheap_object) Init(1) Warning
 Warn when attempting to free a non-heap object.
@@ -627,7 +621,7 @@ Common Var(warn_implicit_fallthrough) RejectNegative Joined UInteger Warning Int
 Warn when a switch case falls through.
 
 Winline
-Common Var(warn_inline) Warning
+Common Var(warn_inline) Warning Optimization
 Warn when an inlined function cannot be inlined.
 
 Winvalid-memory-model
@@ -640,6 +634,10 @@ Common RejectNegative Joined Warning Undocumented Alias(Wlarger-than=)
 Wlarger-than=
 Common RejectNegative Joined Host_Wide_Int ByteSize Warning Var(warn_larger_than_size) Init(HOST_WIDE_INT_MAX)
 -Wlarger-than=<byte-size>	Warn if an object's size exceeds <byte-size>.
+
+Wno-larger-than
+Common Alias(Wlarger-than=,18446744073709551615EiB,none) Warning
+Disable -Wlarger-than= warning.  Equivalent to -Wlarger-than=<SIZE_MAX> or larger.
 
 Wnonnull-compare
 Var(warn_nonnull_compare) Warning
@@ -713,6 +711,10 @@ Warn when not issuing stack smashing protection for some reason.
 Wstack-usage=
 Common Joined RejectNegative Host_Wide_Int ByteSize Var(warn_stack_usage) Warning Init(HOST_WIDE_INT_MAX)
 -Wstack-usage=<byte-size>	Warn if stack usage might exceed <byte-size>.
+
+Wno-stack-usage
+Common Alias(Wstack-usage=,18446744073709551615EiB,none) Warning
+Disable Wstack-usage= warning.  Equivalent to Wstack-usage=<SIZE_MAX> or larger.
 
 Wstrict-aliasing
 Common Warning
@@ -951,11 +953,16 @@ Driver Undocumented
 ; 13: Fixes the accidental change in 12 to the calling convention for classes
 ;     with deleted copy constructor and trivial move constructor.
 ;     Default in G++ 8.2.
+; 14: Corrects the mangling of nullptr expression.
+;     Default in G++ 10.
+;
+; 15: Corrects G++ 10 ABI tag regression [PR98481].
+;     Available, but not default, in G++ 10.3.
 ;
 ; Additional positive integers will be assigned as new versions of
 ; the ABI become the default version of the ABI.
 fabi-version=
-Common Joined RejectNegative UInteger Var(flag_abi_version) Init(0)
+Common Joined RejectNegative UInteger Var(flag_abi_version) Init(14)
 The version of the C++ ABI in use.
 
 faggressive-loop-optimizations
@@ -992,6 +999,14 @@ Align the start of loops.
 
 falign-loops=
 Common RejectNegative Joined Var(str_align_loops) Optimization
+
+fallow-store-data-races
+Common Report Var(flag_store_data_races) Optimization
+Allow the compiler to introduce new data races on stores.
+
+fanalyzer
+Common Var(flag_analyzer)
+Enable static analysis pass.
 
 fargument-alias
 Common Ignore
@@ -1076,16 +1091,24 @@ Common Report Var(flag_branch_probabilities) Optimization
 Use profiling information for branch probabilities.
 
 fbranch-target-load-optimize
-Common Report Var(flag_branch_target_load_optimize) Optimization
-Perform branch target load optimization before prologue / epilogue threading.
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
 
 fbranch-target-load-optimize2
-Common Report Var(flag_branch_target_load_optimize2) Optimization
-Perform branch target load optimization after prologue / epilogue threading.
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
 
 fbtr-bb-exclusive
-Common Report Var(flag_btr_bb_exclusive) Optimization
-Restrict target load migration not to re-use registers in any basic block.
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+fcallgraph-info
+Common Report RejectNegative Var(flag_callgraph_info) Init(NO_CALLGRAPH_INFO);
+Output callgraph information on a per-file basis.
+
+fcallgraph-info=
+Common Report RejectNegative Joined
+Output callgraph information on a per-file basis with decorations.
 
 fcall-saved-
 Common Joined RejectNegative Var(common_deferred_options) Defer
@@ -1127,8 +1150,8 @@ Common Report Var(flag_combine_stack_adjustments) Optimization
 Looks for opportunities to reduce stack adjustments and stack references.
 
 fcommon
-Common Report Var(flag_no_common,0)
-Do not put uninitialized globals in the common section.
+Common Report Var(flag_no_common,0) Init(1)
+Put uninitialized globals in the common section.
 
 fcompare-debug
 Driver
@@ -1184,15 +1207,15 @@ List all available debugging counters with their limits and counts.
 
 fdbg-cnt=
 Common RejectNegative Joined Var(common_deferred_options) Defer
--fdbg-cnt=<counter>[:<lower_limit>]:<upper_limit>[,<counter>:...]	Set the debug counter limit.
+-fdbg-cnt=<counter>[:<lower_limit1>-]<upper_limit1>[:<lower_limit2>-<upper_limit2>:...][,<counter>:...]	Set the debug counter limit.
 
 fdebug-prefix-map=
 Common Joined RejectNegative Var(common_deferred_options) Defer
--fdebug-prefix-map=<old>=<new> Map one directory name to another in debug information.
+-fdebug-prefix-map=<old>=<new>	Map one directory name to another in debug information.
 
 ffile-prefix-map=
 Common Joined RejectNegative Var(common_deferred_options) Defer
--ffile-prefix-map=<old>=<new> Map one directory name to another in compilation result.
+-ffile-prefix-map=<old>=<new>	Map one directory name to another in compilation result.
 
 fdebug-regex-map=
 Common Joined RejectNegative Var(common_deferred_options) Defer
@@ -1287,9 +1310,29 @@ Enum(diagnostic_color_rule) String(always) Value(DIAGNOSTICS_COLOR_YES)
 EnumValue
 Enum(diagnostic_color_rule) String(auto) Value(DIAGNOSTICS_COLOR_AUTO)
 
+fdiagnostics-urls=
+Driver Common Joined RejectNegative Var(flag_diagnostics_show_urls) Enum(diagnostic_url_rule) Init(DIAGNOSTICS_URL_AUTO)
+-fdiagnostics-urls=[never|always|auto]	Embed URLs in diagnostics.
+
+; Required for these enum values.
+SourceInclude
+diagnostic-url.h
+
+Enum
+Name(diagnostic_url_rule) Type(int)
+
+EnumValue
+Enum(diagnostic_url_rule) String(never) Value(DIAGNOSTICS_URL_NO)
+
+EnumValue
+Enum(diagnostic_url_rule) String(always) Value(DIAGNOSTICS_URL_YES)
+
+EnumValue
+Enum(diagnostic_url_rule) String(auto) Value(DIAGNOSTICS_URL_AUTO)
+
 fdiagnostics-format=
 Common Joined RejectNegative Enum(diagnostics_output_format)
--fdiagnostics-format=[text|json] Select output format.
+-fdiagnostics-format=[text|json]	Select output format.
 
 ; Required for these enum values.
 SourceInclude
@@ -1316,17 +1359,41 @@ fdiagnostics-show-option
 Common Var(flag_diagnostics_show_option) Init(1)
 Amend appropriate diagnostic messages with the command line option that controls them.
 
+fdiagnostics-show-cwe
+Common Var(flag_diagnostics_show_cwe) Init(1)
+Print CWE identifiers for diagnostic messages, where available.
+
+fdiagnostics-path-format=
+Common Joined RejectNegative Var(flag_diagnostics_path_format) Enum(diagnostic_path_format) Init(DPF_INLINE_EVENTS)
+Specify how to print any control-flow path associated with a diagnostic.
+
+Enum
+Name(diagnostic_path_format) Type(int)
+
+EnumValue
+Enum(diagnostic_path_format) String(none) Value(DPF_NONE)
+
+EnumValue
+Enum(diagnostic_path_format) String(separate-events) Value(DPF_SEPARATE_EVENTS)
+
+EnumValue
+Enum(diagnostic_path_format) String(inline-events) Value(DPF_INLINE_EVENTS)
+
+fdiagnostics-show-path-depths
+Common Var(flag_diagnostics_show_path_depths) Init(0)
+Show stack depths of events in paths.
+
 fdiagnostics-minimum-margin-width=
 Common Joined UInteger Var(diagnostics_minimum_margin_width) Init(6)
 Set minimum width of left margin of source code when showing source.
 
 fdisable-
 Common Joined RejectNegative Var(common_deferred_options) Defer
--fdisable-[tree|rtl|ipa]-<pass>=range1+range2 disables an optimization pass.
+-fdisable-[tree|rtl|ipa]-<pass>=range1+range2	Disable an optimization pass.
 
 fenable-
 Common Joined RejectNegative Var(common_deferred_options) Defer
--fenable-[tree|rtl|ipa]-<pass>=range1+range2 enables an optimization pass.
+-fenable-[tree|rtl|ipa]-<pass>=range1+range2	Enable an optimization pass.
 
 fdump-
 Common Joined RejectNegative Var(common_deferred_options) Defer
@@ -1385,7 +1452,7 @@ Common Report Var(flag_ipa_sra) Init(0) Optimization
 Perform interprocedural reduction of aggregates.
 
 feliminate-unused-debug-symbols
-Common Report Var(flag_debug_only_used_symbols)
+Common Report Var(flag_debug_only_used_symbols) Init(1)
 Perform unused symbol elimination in debug info.
 
 feliminate-unused-debug-types
@@ -1405,7 +1472,7 @@ Common Report Var(flag_expensive_optimizations) Optimization
 Perform a number of minor, expensive optimizations.
 
 fexcess-precision=
-Common Joined RejectNegative Enum(excess_precision) Var(flag_excess_precision_cmdline) Init(EXCESS_PRECISION_DEFAULT) SetByCombined
+Common Joined RejectNegative Enum(excess_precision) Var(flag_excess_precision) Init(EXCESS_PRECISION_DEFAULT) Optimization SetByCombined
 -fexcess-precision=[fast|standard]	Specify handling of excess floating-point precision.
 
 Enum
@@ -1442,6 +1509,10 @@ Output lto objects containing both the intermediate language and binary output.
 ffinite-math-only
 Common Report Var(flag_finite_math_only) Optimization SetByCombined
 Assume no NaNs or infinities are generated.
+
+ffinite-loops
+Common Report Var(flag_finite_loops) Optimization Init(0)
+Assume that loops with an exit will terminate and not loop indefinitely.
 
 ffixed-
 Common Joined RejectNegative Var(common_deferred_options) Defer
@@ -1681,7 +1752,7 @@ Common RejectNegative Alias(fcf-protection=,full)
 
 fcf-protection=
 Common Report Joined RejectNegative Enum(cf_protection_level) Var(flag_cf_protection) Init(CF_NONE)
--fcf-protection=[full|branch|return|none]	Instrument functions with checks to verify jump/call/return control-flow transfer
+-fcf-protection=[full|branch|return|none|check]	Instrument functions with checks to verify jump/call/return control-flow transfer
 instructions have valid targets.
 
 Enum
@@ -1697,6 +1768,9 @@ EnumValue
 Enum(cf_protection_level) String(return) Value(CF_RETURN)
 
 EnumValue
+Enum(cf_protection_level) String(check) Value(CF_CHECK)
+
+EnumValue
 Enum(cf_protection_level) String(none) Value(CF_NONE)
 
 finstrument-functions
@@ -1705,11 +1779,11 @@ Instrument function entry and exit with profiling calls.
 
 finstrument-functions-exclude-function-list=
 Common RejectNegative Joined
--finstrument-functions-exclude-function-list=name,...  Do not instrument listed functions.
+-finstrument-functions-exclude-function-list=name,...	Do not instrument listed functions.
 
 finstrument-functions-exclude-file-list=
 Common RejectNegative Joined
--finstrument-functions-exclude-file-list=filename,...  Do not instrument functions listed in files.
+-finstrument-functions-exclude-file-list=filename,...	Do not instrument functions listed in files.
 
 fipa-cp
 Common Report Var(flag_ipa_cp) Optimization
@@ -1890,12 +1964,12 @@ Specify the algorithm to partition symbols and vars at linktime.
 
 ; The initial value of -1 comes from Z_DEFAULT_COMPRESSION in zlib.h.
 flto-compression-level=
-Common Joined RejectNegative UInteger Var(flag_lto_compression_level) Init(-1) IntegerRange(0, 9)
--flto-compression-level=<number>	Use zlib compression level <number> for IL.
+Common Joined RejectNegative UInteger Var(flag_lto_compression_level) Init(-1) IntegerRange(0, 19)
+-flto-compression-level=<number>	Use zlib/zstd compression level <number> for IL.
 
 flto-odr-type-merging
-Common Report Var(flag_lto_odr_type_mering) Init(1)
-Merge C++ types using One Definition Rule.
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
 
 flto-report
 Common Report Var(flag_lto_report) Init(0)
@@ -1957,7 +2031,7 @@ Common Var(flag_dce) Init(1) Optimization
 Use the RTL dead code elimination pass.
 
 fdse
-Common Var(flag_dse) Init(1) Optimization
+Common Var(flag_dse) Init(0) Optimization
 Use the RTL dead store elimination pass.
 
 freschedule-modulo-scheduled-loops
@@ -1970,11 +2044,11 @@ Support synchronous non-call exceptions.
 
 foffload=
 Common Driver Joined MissingArgError(options or targets missing after %qs)
--foffload=<targets>=<options>  Specify offloading targets and options for them.
+-foffload=<targets>=<options>	Specify offloading targets and options for them.
 
 foffload-abi=
 Common Joined RejectNegative Enum(offload_abi) Var(flag_offload_abi) Init(OFFLOAD_ABI_UNSET)
--foffload-abi=[lp64|ilp32]     Set the ABI to use in an offload compiler.
+-foffload-abi=[lp64|ilp32]	Set the ABI to use in an offload compiler.
 
 Enum
 Name(offload_abi) Type(enum offload_abi) UnknownError(unknown offload ABI %qs)
@@ -2098,6 +2172,10 @@ Common Joined RejectNegative Var(profile_data_prefix)
 Set the top-level directory for storing the profile data.
 The default is 'pwd'.
 
+fprofile-note=
+Common Joined RejectNegative Var(profile_note_location)
+Select the name for storing the profile note file.
+
 fprofile-correction
 Common Report Var(flag_profile_correction)
 Enable correction of flow inconsistent profile data input.
@@ -2115,6 +2193,22 @@ Common Joined RejectNegative Var(flag_profile_exclude_files)
 Instrument only functions from files where names do not match all the regular expressions (separated by a semi-colon).
 
 Enum
+Name(profile_reproducibility) Type(enum profile_reproducibility) UnknownError(unknown profile reproducibility method %qs)
+
+EnumValue
+Enum(profile_reproducibility) String(serial) Value(PROFILE_REPRODUCIBILITY_SERIAL)
+
+EnumValue
+Enum(profile_reproducibility) String(parallel-runs) Value(PROFILE_REPRODUCIBILITY_PARALLEL_RUNS)
+
+EnumValue
+Enum(profile_reproducibility) String(multithreaded) Value(PROFILE_REPRODUCIBILITY_MULTITHREADED)
+
+fprofile-reproducible=
+Common Joined RejectNegative Var(flag_profile_reproducible) Enum(profile_reproducibility) Init(PROFILE_REPRODUCIBILITY_SERIAL)
+-fprofile-reproducible=[serial|parallel-runs|multithreaded]	Control level of reproducibility of profile gathered by -fprofile-generate.
+
+Enum
 Name(profile_update) Type(enum profile_update) UnknownError(unknown profile update method %qs)
 
 EnumValue
@@ -2126,6 +2220,10 @@ Enum(profile_update) String(atomic) Value(PROFILE_UPDATE_ATOMIC)
 EnumValue
 Enum(profile_update) String(prefer-atomic) Value(PROFILE_UPDATE_PREFER_ATOMIC)
 
+fprofile-prefix-path=
+Common Joined RejectNegative Var(profile_prefix_path)
+Remove prefix from absolute path before mangling name for -fprofile-generate= and -fprofile-use=.
+
 fprofile-generate
 Common
 Enable common options for generating profile info for profile feedback directed optimizations.
@@ -2133,6 +2231,10 @@ Enable common options for generating profile info for profile feedback directed 
 fprofile-generate=
 Common Joined RejectNegative
 Enable common options for generating profile info for profile feedback directed optimizations, and set -fprofile-dir=.
+
+fprofile-partial-training
+Common Report Var(flag_profile_partial_training) Optimization
+Do not assume that functions never executed during the train run are cold.
 
 fprofile-use
 Common Var(flag_profile_use)
@@ -2151,7 +2253,7 @@ Common Report Var(profile_report)
 Report on consistency of profile.
 
 fprofile-reorder-functions
-Common Report Var(flag_profile_reorder_functions)
+Common Report Var(flag_profile_reorder_functions) Optimization
 Enable function reordering that improves code placement.
 
 fpatchable-function-entry=
@@ -2208,6 +2310,10 @@ Enum(live_patching_level) String(inline-only-static) Value(LIVE_PATCHING_INLINE_
 
 EnumValue
 Enum(live_patching_level) String(inline-clone) Value(LIVE_PATCHING_INLINE_CLONE)
+
+fallocation-dce
+Common Report Var(flag_allocation_dce) Init(1) Optimization
+Tell DCE to remove unused C++ allocations.
 
 flive-range-shrinkage
 Common Report Var(flag_live_range_shrinkage) Init(0) Optimization
@@ -2388,7 +2494,7 @@ Common Ignore
 Does nothing.  Preserved for backward compatibility.
 
 free
-Common Report Var(flag_ree) Init(0)
+Common Report Var(flag_ree) Init(0) Optimization
 Turn on Redundant Extensions Elimination pass.
 
 fshow-column
@@ -2427,6 +2533,10 @@ Generate discontiguous stack frames.
 fsplit-wide-types
 Common Report Var(flag_split_wide_types) Optimization
 Split wide types into independent registers.
+
+fsplit-wide-types-early
+Common Report Var(flag_split_wide_types_early) Optimization
+Split wide types into independent registers earlier.
 
 fssa-backprop
 Common Report Var(flag_ssa_backprop) Init(1) Optimization
@@ -2548,7 +2658,7 @@ EnumValue
 Enum(tls_model) String(local-exec) Value(TLS_MODEL_LOCAL_EXEC)
 
 ftoplevel-reorder
-Common Report Var(flag_toplevel_reorder) Init(2)
+Common Report Var(flag_toplevel_reorder) Init(2) Optimization
 Reorder top level functions, variables, and asms.
 
 ftracer
@@ -2752,6 +2862,10 @@ Perform loop unrolling when iteration count is known.
 funroll-all-loops
 Common Report Var(flag_unroll_all_loops) Optimization
 Perform loop unrolling for all loops.
+
+funroll-completely-grow-size
+Undocumented Var(flag_cunroll_grow_size) Optimization
+; Internal undocumented flag, allow size growth during complete unrolling
 
 ; Nonzero means that loop optimizer may assume that the induction variables
 ; that control loops do not overflow and that the loops with nontrivial
@@ -2982,19 +3096,19 @@ Common Driver Var(dwarf2out_as_locview_support) Init(2)
 Assume assembler support for view in (DWARF2+) .loc directives.
 
 gcoff
-Common Driver Deprecated
+Common Driver WarnRemoved
 Does nothing.  Preserved for backward compatibility.
 
 gcoff1
-Common Driver Deprecated
+Common Driver WarnRemoved
 Does nothing.  Preserved for backward compatibility.
 
 gcoff2
-Common Driver Deprecated
+Common Driver WarnRemoved
 Does nothing.  Preserved for backward compatibility.
 
 gcoff3
-Common Driver Deprecated
+Common Driver WarnRemoved
 Does nothing.  Preserved for backward compatibility.
 
 gcolumn-info

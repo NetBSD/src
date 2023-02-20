@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2023/02/20 02:01:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2023/02/20 02:12:36 mrg Exp $
 
 PROG=		lto-dump
 # XXX pullout from LTO_DUMP_OBJS

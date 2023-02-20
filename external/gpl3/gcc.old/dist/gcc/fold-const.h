@@ -1,5 +1,5 @@
 /* Fold a constant sub-tree into a single node for C-compiler
-   Copyright (C) 1987-2019 Free Software Foundation, Inc.
+   Copyright (C) 1987-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -26,7 +26,14 @@ extern int folding_initializer;
 
 /* Convert between trees and native memory representation.  */
 extern int native_encode_expr (const_tree, unsigned char *, int, int off = -1);
+extern int native_encode_initializer (tree, unsigned char *, int,
+				      int off = -1);
 extern tree native_interpret_expr (tree, const unsigned char *, int);
+extern bool can_native_interpret_type_p (tree);
+extern void shift_bytes_in_array_left (unsigned char *, unsigned int,
+				       unsigned int);
+extern void shift_bytes_in_array_right (unsigned char *, unsigned int,
+					unsigned int);
 
 /* Fold constants as much as possible in an expression.
    Returns the simplified expression.
@@ -67,7 +74,8 @@ extern tree fold_build_call_array_loc (location_t, tree, tree, int, tree *);
 #define fold_build_call_array_initializer(T1,T2,N,T4)\
    fold_build_call_array_initializer_loc (UNKNOWN_LOCATION, T1, T2, N, T4)
 extern tree fold_build_call_array_initializer_loc (location_t, tree, tree, int, tree *);
-extern tree get_array_ctor_element_at_index (tree, offset_int);
+extern tree get_array_ctor_element_at_index (tree, offset_int,
+					     unsigned * = NULL);
 extern bool fold_convertible_p (const_tree, const_tree);
 #define fold_convert(T1,T2)\
    fold_convert_loc (UNKNOWN_LOCATION, T1, T2)
@@ -83,7 +91,7 @@ extern bool fold_deferring_overflow_warnings_p (void);
 extern void fold_overflow_warning (const char*, enum warn_strict_overflow_code);
 extern enum tree_code fold_div_compare (enum tree_code, tree, tree,
 					tree *, tree *, bool *);
-extern int operand_equal_p (const_tree, const_tree, unsigned int);
+extern bool operand_equal_p (const_tree, const_tree, unsigned int flags = 0);
 extern int multiple_of_p (tree, const_tree, const_tree);
 #define omit_one_operand(T1,T2,T3)\
    omit_one_operand_loc (UNKNOWN_LOCATION, T1, T2, T3)
@@ -100,6 +108,10 @@ extern tree fold_bit_and_mask (tree, tree, enum tree_code,
 			       tree, enum tree_code, tree, tree,
 			       tree, enum tree_code, tree, tree, tree *);
 extern tree fold_read_from_constant_string (tree);
+extern tree fold_read_from_vector (tree, poly_uint64);
+#if GCC_VEC_PERN_INDICES_H
+extern tree fold_vec_perm (tree, tree, tree, const vec_perm_indices &);
+#endif
 extern bool wide_int_binop (wide_int &res, enum tree_code,
 			    const wide_int &arg1, const wide_int &arg2,
 			    signop, wi::overflow_type *);
@@ -207,4 +219,27 @@ extern tree fold_build_pointer_plus_hwi_loc (location_t loc, tree ptr, HOST_WIDE
 
 #define fold_build_pointer_plus_hwi(p,o) \
 	fold_build_pointer_plus_hwi_loc (UNKNOWN_LOCATION, p, o)
+
+
+/* Class used to compare gimple operands.  */
+
+class operand_compare
+{
+public:
+  /* Return true if two operands are equal.  The flags fields can be used
+     to specify OEP flags described above.  */
+  virtual bool operand_equal_p (const_tree, const_tree, unsigned int flags);
+
+  /* Generate a hash value for an expression.  This can be used iteratively
+     by passing a previous result as the HSTATE argument.  */
+  virtual void hash_operand (const_tree, inchash::hash &, unsigned flags);
+
+protected:
+  /* Verify that when arguments (ARG0 and ARG1) are equal, then they have
+     an equal hash value.  When the function knowns comparison return,
+     true is returned.  Then RET is set to corresponding comparsion result.  */
+  bool verify_hash_value (const_tree arg0, const_tree arg1, unsigned int flags,
+			  bool *ret);
+};
+
 #endif // GCC_FOLD_CONST_H

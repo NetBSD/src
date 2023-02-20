@@ -1,4 +1,4 @@
-.. Copyright (C) 2015-2019 Free Software Foundation, Inc.
+.. Copyright (C) 2015-2020 Free Software Foundation, Inc.
    Originally contributed by David Malcolm <dmalcolm@redhat.com>
 
    This is free software: you can redistribute it and/or modify it
@@ -60,6 +60,28 @@ You can see the symbol tags provided by libgccjit.so using ``objdump``:
    3 0x00 0x00824161 LIBGCCJIT_ABI_1
            LIBGCCJIT_ABI_0
    [...snip...]
+
+Programmatically checking version
+***************
+
+Client code can programmatically check libgccjit version using:
+
+.. function::  int gcc_jit_version_major (void)
+
+   Return libgccjit major version.  This is analogous to __GNUC__ in C code.
+
+.. function::  int gcc_jit_version_minor (void)
+
+   Return libgccjit minor version.  This is analogous to
+   __GNUC_MINOR__ in C code.
+
+.. function::  int gcc_jit_version_patchlevel (void)
+
+   Return libgccjit patchlevel version.  This is analogous to
+   __GNUC_PATCHLEVEL__ in C code.
+
+.. note:: These entry points has been added with ``LIBGCCJIT_ABI_13``
+          (see below).
 
 ABI symbol tags
 ***************
@@ -177,3 +199,19 @@ entrypoints:
 --------------------
 ``LIBGCCJIT_ABI_11`` covers the addition of
 :func:`gcc_jit_context_add_driver_option`
+
+``LIBGCCJIT_ABI_12``
+--------------------
+``LIBGCCJIT_ABI_12`` covers the addition of
+:func:`gcc_jit_context_new_bitfield`
+
+``LIBGCCJIT_ABI_13``
+--------------------
+``LIBGCCJIT_ABI_13`` covers the addition of version functions via API
+entrypoints:
+
+  * :func:`gcc_jit_version_major`
+
+  * :func:`gcc_jit_version_minor`
+
+  * :func:`gcc_jit_version_patchlevel`

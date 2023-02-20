@@ -1,5 +1,5 @@
 /* Iterator routines for GIMPLE statements.
-   Copyright (C) 2007-2019 Free Software Foundation, Inc.
+   Copyright (C) 2007-2020 Free Software Foundation, Inc.
    Contributed by Aldy Hernandez  <aldy@quesejoda.com>
 
 This file is part of GCC.
@@ -558,16 +558,18 @@ gsi_remove (gimple_stmt_iterator *i, bool remove_permanently)
   gimple *stmt = gsi_stmt (*i);
   bool require_eh_edge_purge = false;
 
+  /* ???  Do we want to do this for non-permanent operation?  */
   if (gimple_code (stmt) != GIMPLE_PHI)
     insert_debug_temps_for_defs (i);
 
-  /* Free all the data flow information for STMT.  */
   gimple_set_bb (stmt, NULL);
-  delink_stmt_imm_use (stmt);
-  gimple_set_modified (stmt, true);
 
   if (remove_permanently)
     {
+      /* Free all the data flow information for STMT.  */
+      delink_stmt_imm_use (stmt);
+      gimple_set_modified (stmt, true);
+
       if (gimple_debug_nonbind_marker_p (stmt))
 	/* We don't need this to be exact, but try to keep it at least
 	   close.  */

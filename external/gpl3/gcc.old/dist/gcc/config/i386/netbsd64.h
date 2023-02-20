@@ -1,6 +1,6 @@
 /* Definitions of target machine for GCC,
    for x86-64/ELF NetBSD systems.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
 This file is part of GCC.
@@ -73,3 +73,7 @@ along with GCC; see the file COPYING3.  If not see
   ((TARGET_64BIT || TARGET_SSE) ? 128 : 32)
 
 #define HAVE_ENABLE_EXECUTE_STACK
+
+/* NetBSD/x86 on 32-bit places the ASAN shadow map at 0x40000000.  */
+#undef X86_32_ASAN_BIT_OFFSET
+#define X86_32_ASAN_BIT_OFFSET 30

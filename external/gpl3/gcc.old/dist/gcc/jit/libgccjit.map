@@ -1,5 +1,5 @@
 # Linker script for libgccjit.so
-#   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 #   Contributed by David Malcolm <dmalcolm@redhat.com>.
 #
 # This file is part of GCC.
@@ -175,3 +175,15 @@ LIBGCCJIT_ABI_11 {
   global:
     gcc_jit_context_add_driver_option;
 } LIBGCCJIT_ABI_10;
+
+LIBGCCJIT_ABI_12 {
+  global:
+    gcc_jit_context_new_bitfield;
+} LIBGCCJIT_ABI_11;
+
+LIBGCCJIT_ABI_13 {
+  global:
+    gcc_jit_version_major;
+    gcc_jit_version_minor;
+    gcc_jit_version_patchlevel;
+} LIBGCCJIT_ABI_12;

@@ -1,5 +1,5 @@
 /* Data and functions related to line maps and input files.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -32,11 +32,13 @@ along with GCC; see the file COPYING3.  If not see
 
 /* This is a cache used by get_next_line to store the content of a
    file to be searched for file lines.  */
-struct fcache
+class fcache
 {
+public:
   /* These are information used to store a line boundary.  */
-  struct line_info
+  class line_info
   {
+  public:
     /* The line number.  It starts from 1.  */
     size_t line_num;
 
@@ -122,14 +124,14 @@ struct fcache
 
 location_t input_location = UNKNOWN_LOCATION;
 
-struct line_maps *line_table;
+class line_maps *line_table;
 
 /* A stashed copy of "line_table" for use by selftest::line_table_test.
    This needs to be a global so that it can be a GC root, and thus
    prevent the stashed copy from being garbage-collected if the GC runs
    during a line_table_test.  */
 
-struct line_maps *saved_line_table;
+class line_maps *saved_line_table;
 
 static fcache *fcache_tab;
 static const size_t fcache_tab_size = 16;
@@ -906,6 +908,22 @@ make_location (location_t caret, source_range src_range)
   return COMBINE_LOCATION_DATA (line_table, pure_loc, src_range, NULL);
 }
 
+/* An expanded_location stores the column in byte units.  This function
+   converts that column to display units.  That requires reading the associated
+   source line in order to calculate the display width.  If that cannot be done
+   for any reason, then returns the byte column as a fallback.  */
+int
+location_compute_display_column (expanded_location exploc)
+{
+  if (!(exploc.file && *exploc.file && exploc.line && exploc.column))
+    return exploc.column;
+  char_span line = location_get_source_line (exploc.file, exploc.line);
+  /* If line is NULL, this function returns exploc.column which is the
+     desired fallback.  */
+  return cpp_byte_column_to_display_column (line.get_buffer (), line.length (),
+					    exploc.column);
+}
+
 /* Dump statistics to stderr about the memory usage of the line_table
    set of line maps.  This also displays some statistics about macro
    expansion.  */
@@ -978,7 +996,7 @@ dump_line_table_statistics (void)
 /* Get location one beyond the final location in ordinary map IDX.  */
 
 static location_t
-get_end_location (struct line_maps *set, unsigned int idx)
+get_end_location (class line_maps *set, unsigned int idx)
 {
   if (idx == LINEMAPS_ORDINARY_USED (set) - 1)
     return set->highest_location;
@@ -1215,7 +1233,8 @@ dump_location_info (FILE *stream)
 	  if (x == y)
 	    {
 	      if (x < MAP_START_LOCATION (map))
-		inform (x, "token %u has x-location == y-location == %u", i, x);
+		inform (x, "token %u has %<x-location == y-location == %u%>",
+			i, x);
 	      else
 		fprintf (stream,
 			 "x-location == y-location == %u encodes token # %u\n",
@@ -1223,8 +1242,8 @@ dump_location_info (FILE *stream)
 		}
 	  else
 	    {
-	      inform (x, "token %u has x-location == %u", i, x);
-	      inform (x, "token %u has y-location == %u", i, y);
+	      inform (x, "token %u has %<x-location == %u%>", i, x);
+	      inform (x, "token %u has %<y-location == %u%>", i, y);
 	    }
 	}
       fprintf (stream, "\n");
@@ -1277,7 +1296,7 @@ string_concat_db::record_string_concatenation (int num, location_t *locs)
   m_table->put (key_loc, concat);
 }
 
-/* Determine if LOC was the location of the the initial token of a
+/* Determine if LOC was the location of the initial token of a
    concatenation of string literal tokens.
    If so, *OUT_NUM is written to with the number of tokens, and
    *OUT_LOCS with the location of an array of locations of the
@@ -1442,6 +1461,8 @@ get_substring_ranges_for_loc (cpp_reader *pfile,
       size_t literal_length = finish.column - start.column + 1;
 
       /* Ensure that we don't crash if we got the wrong location.  */
+      if (start.column < 1)
+	return "zero start column";
       if (line.length () < (start.column - 1 + literal_length))
 	return "line is not wide enough";
 
@@ -1690,8 +1711,9 @@ assert_loceq (const char *exp_filename, int exp_linenum, int exp_colnum,
    The following struct describes a particular case within our test
    matrix.  */
 
-struct line_table_case
+class line_table_case
 {
+public:
   line_table_case (int default_range_bits, int base_location)
   : m_default_range_bits (default_range_bits),
     m_base_location (base_location)
@@ -2047,7 +2069,7 @@ test_lexer (const line_table_case &case_)
 
 /* Forward decls.  */
 
-struct lexer_test;
+class lexer_test;
 class lexer_test_options;
 
 /* A class for specifying options of a lexer_test.
@@ -2084,8 +2106,9 @@ class cpp_reader_ptr
 
 /* A struct for writing lexer tests.  */
 
-struct lexer_test
+class lexer_test
 {
+public:
   lexer_test (const line_table_case &case_, const char *content,
 	      lexer_test_options *options);
   ~lexer_test ();
@@ -2680,7 +2703,7 @@ test_lexer_string_locations_ucn4 (const line_table_case &case_)
 
   /* Verify that cpp_interpret_string works.
      The string should be encoded in the execution character
-     set.  Assuming that that is UTF-8, we should have the following:
+     set.  Assuming that is UTF-8, we should have the following:
      -----------  ----  -----  -------  ----------------
      Byte offset  Byte  Octal  Unicode  Source Column(s)
      -----------  ----  -----  -------  ----------------
@@ -3585,6 +3608,93 @@ test_line_offset_overflow ()
   ASSERT_NE (ordmap_a, ordmap_b);
 }
 
+void test_cpp_utf8 ()
+{
+  /* Verify that wcwidth of invalid UTF-8 or control bytes is 1.  */
+  {
+    int w_bad = cpp_display_width ("\xf0!\x9f!\x98!\x82!", 8);
+    ASSERT_EQ (8, w_bad);
+    int w_ctrl = cpp_display_width ("\r\t\n\v\0\1", 6);
+    ASSERT_EQ (6, w_ctrl);
+  }
+
+  /* Verify that wcwidth of valid UTF-8 is as expected.  */
+  {
+    const int w_pi = cpp_display_width ("\xcf\x80", 2);
+    ASSERT_EQ (1, w_pi);
+    const int w_emoji = cpp_display_width ("\xf0\x9f\x98\x82", 4);
+    ASSERT_EQ (2, w_emoji);
+    const int w_umlaut_precomposed = cpp_display_width ("\xc3\xbf", 2);
+    ASSERT_EQ (1, w_umlaut_precomposed);
+    const int w_umlaut_combining = cpp_display_width ("y\xcc\x88", 3);
+    ASSERT_EQ (1, w_umlaut_combining);
+    const int w_han = cpp_display_width ("\xe4\xb8\xba", 3);
+    ASSERT_EQ (2, w_han);
+    const int w_ascii = cpp_display_width ("GCC", 3);
+    ASSERT_EQ (3, w_ascii);
+    const int w_mixed = cpp_display_width ("\xcf\x80 = 3.14 \xf0\x9f\x98\x82"
+					   "\x9f! \xe4\xb8\xba y\xcc\x88", 24);
+    ASSERT_EQ (18, w_mixed);
+  }
+
+  /* Verify that cpp_byte_column_to_display_column can go past the end,
+     and similar edge cases.  */
+  {
+    const char *str
+      /* Display columns.
+         111111112345  */
+      = "\xcf\x80 abc";
+      /* 111122223456
+	 Byte columns.  */
+
+    ASSERT_EQ (5, cpp_display_width (str, 6));
+    ASSERT_EQ (105, cpp_byte_column_to_display_column (str, 6, 106));
+    ASSERT_EQ (10000, cpp_byte_column_to_display_column (NULL, 0, 10000));
+    ASSERT_EQ (0, cpp_byte_column_to_display_column (NULL, 10000, 0));
+  }
+
+  /* Verify that cpp_display_column_to_byte_column can go past the end,
+     and similar edge cases, and check invertibility.  */
+  {
+    const char *str
+      /* Display columns.
+	 000000000000000000000000000000000000011
+	 111111112222222234444444455555555678901  */
+      = "\xf0\x9f\x98\x82 \xf0\x9f\x98\x82 hello";
+      /* 000000000000000000000000000000000111111
+	 111122223333444456666777788889999012345
+	 Byte columns.  */
+    ASSERT_EQ (4, cpp_display_column_to_byte_column (str, 15, 2));
+    ASSERT_EQ (15, cpp_display_column_to_byte_column (str, 15, 11));
+    ASSERT_EQ (115, cpp_display_column_to_byte_column (str, 15, 111));
+    ASSERT_EQ (10000, cpp_display_column_to_byte_column (NULL, 0, 10000));
+    ASSERT_EQ (0, cpp_display_column_to_byte_column (NULL, 10000, 0));
+
+    /* Verify that we do not interrupt a UTF-8 sequence.  */
+    ASSERT_EQ (4, cpp_display_column_to_byte_column (str, 15, 1));
+
+    for (int byte_col = 1; byte_col <= 15; ++byte_col)
+      {
+	const int disp_col = cpp_byte_column_to_display_column (str, 15,
+								byte_col);
+	const int byte_col2 = cpp_display_column_to_byte_column (str, 15,
+								 disp_col);
+
+	/* If we ask for the display column in the middle of a UTF-8
+	   sequence, it will return the length of the partial sequence,
+	   matching the behavior of GCC before display column support.
+	   Otherwise check the round trip was successful.  */
+	if (byte_col < 4)
+	  ASSERT_EQ (byte_col, disp_col);
+	else if (byte_col >= 6 && byte_col < 9)
+	  ASSERT_EQ (3 + (byte_col - 5), disp_col);
+	else
+	  ASSERT_EQ (byte_col2, byte_col);
+      }
+  }
+
+}
+
 /* Run all of the selftests within this file.  */
 
 void
@@ -3626,6 +3736,8 @@ input_c_tests ()
   test_reading_source_line ();
 
   test_line_offset_overflow ();
+
+  test_cpp_utf8 ();
 }
 
 } // namespace selftest

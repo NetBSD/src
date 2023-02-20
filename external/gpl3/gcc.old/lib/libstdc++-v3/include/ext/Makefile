@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2021/04/09 23:15:50 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2023/02/20 02:12:27 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
@@ -7,7 +7,7 @@
 
 .cc: # disable .cc->NULL transform
 
-INCS=		${G_ext_headers}
+INCS=		${G_ext_headers} ${G_ext_host_headers}
 
 INCSDIR=	/usr/include/g++/ext
 

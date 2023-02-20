@@ -164,6 +164,7 @@ while(<$inf>) {
 	    $ic = pop @icstack;
 	} elsif ($ended eq "multitable") {
 	    $_ = "\n=back\n";
+	    $ic = pop @icstack;
 	} else {
 	    die "unknown command \@end $ended at line $.\n";
 	}
@@ -209,6 +210,7 @@ while(<$inf>) {
     s/\@TeX\{\}/TeX/g;
     s/\@pounds\{\}/\#/g;
     s/\@minus(?:\{\})?/-/g;
+    s/\@tie\{\}/ /g;
     s/\\,/,/g;
 
     # Now the ones that have to be replaced by special escapes
@@ -288,7 +290,9 @@ while(<$inf>) {
 
     /^\@multitable\s.*/ and do {
 	push @endwstack, $endw;
+	push @icstack, $ic;
 	$endw = "multitable";
+	$ic = "";
 	$_ = "\n=over 4\n";
     };
 
@@ -312,11 +316,13 @@ while(<$inf>) {
 	$_ = "";	# need a paragraph break
     };
 
-    /^\@item\s+(.*\S)\s*$/ and $endw eq "multitable" and do {
+    /^\@(headitem|item)\s+(.*\S)\s*$/ and $endw eq "multitable" and do {
 	@columns = ();
-	for $column (split (/\s*\@tab\s*/, $1)) {
+	$item = $1;
+	for $column (split (/\s*\@tab\s*/, $2)) {
 	    # @strong{...} is used a @headitem work-alike
 	    $column =~ s/^\@strong\{(.*)\}$/$1/;
+	    $column = "I<$column>" if $item eq "headitem";
 	    push @columns, $column;
 	}
 	$_ = "\n=item ".join (" : ", @columns)."\n";

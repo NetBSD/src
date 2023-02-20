@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2021/04/09 23:16:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2023/02/20 02:12:36 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -23,6 +23,7 @@ HOSTPROG_CXX=	1
 
 # Force using C++ for this
 HOST_CC:=	${HOST_CXX}
+HOST_CFLAGS:=	${HOST_CXXFLAGS}
 CC:=		${CXX}
 CFLAGS:=	${CXXFLAGS}
 

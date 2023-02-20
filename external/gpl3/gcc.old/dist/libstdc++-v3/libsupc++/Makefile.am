@@ -1,6 +1,6 @@
 ## Makefile for the GNU C++ Support library.
 ##
-## Copyright (C) 2000-2019 Free Software Foundation, Inc.
+## Copyright (C) 2000-2020 Free Software Foundation, Inc.
 ##
 ## Process this file with automake to produce Makefile.in.
 ##
@@ -31,7 +31,7 @@ toolexeclib_LTLIBRARIES = libsupc++.la
 noinst_LTLIBRARIES = libsupc++convenience.la
 
 std_HEADERS = \
-	cxxabi.h exception initializer_list new typeinfo
+	compare cxxabi.h exception initializer_list new typeinfo
 
 bits_HEADERS = \
 	atomic_lockfree_defines.h cxxabi_forced.h \
@@ -48,6 +48,7 @@ sources = \
 	array_type_info.cc \
 	atexit_arm.cc \
 	atexit_thread.cc \
+	atomicity.cc \
 	bad_alloc.cc \
 	bad_array_length.cc \
 	bad_array_new.cc \
@@ -127,6 +128,9 @@ cp-demangle.lo: cp-demangle.c
 cp-demangle.o: cp-demangle.c
 	$(C_COMPILE) -DIN_GLIBCPP_V3 -Wno-error -c $<
 
+atomicity_file = ${glibcxx_srcdir}/$(ATOMICITY_SRCDIR)/atomicity.h
+atomicity.cc: ${atomicity_file}
+	$(LN_S) ${atomicity_file} ./atomicity.cc || true
 
 # Use special rules for the C++17 sources so that the proper flags are passed.
 new_opa.lo: new_opa.cc

@@ -1,5 +1,5 @@
 ;; Constraints definitions belonging to the gcc backend for IBM S/390.
-;; Copyright (C) 2006-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2020 Free Software Foundation, Inc.
 ;; Written by Wolfgang Gellerich, using code and information found in
 ;; files s390.md, s390.h, and s390.c.
 ;;
@@ -38,6 +38,8 @@
 ;;              matching K constraint
 ;;         jm6: An integer operand with the lowest order 6 bits all ones.
 ;;         jdd: A constant operand that fits into the data section.
+;;         j>f: An integer operand whose lower 32 bits are greater than or equal to 15
+;;         jb4: An unsigned constant 4 bit operand.
 ;;    t -- Access registers 36 and 37.
 ;;    v -- Vector registers v0-v31.
 ;;    C -- A signed 8-bit constant (-128..127)
@@ -202,6 +204,18 @@
 ;; care of making sure we have a proper base register.
 
   (match_test "s390_decompose_addrstyle_without_index (op, NULL, NULL)"  ))
+
+
+;; Shift count operands are not necessarily legitimate addresses
+;; but the predicate shift_count_operand will only allow
+;; proper operands.  If reload/lra need to change e.g. a spilled register
+;; they can still do so via the special handling of address constraints.
+;; To avoid further reloading (caused by a non-matching constraint) we
+;; always return true here as the predicate's checks are already sufficient.
+
+(define_address_constraint "jsc"
+  "Address style operand used as shift count."
+  (match_test "true" ))
 
 
 ;;    N -- Multiple letter constraint followed by 4 parameter letters.
@@ -413,7 +427,7 @@
 
 
 ;;
-;; Vector constraints follow.
+;; Vector and scalar constraints for constant values follow.
 ;;
 
 (define_constraint "j00"
@@ -449,6 +463,16 @@
 (define_constraint "jm6"
   "@internal An integer operand with the lowest order 6 bits all ones."
   (match_operand 0 "const_int_6bitset_operand"))
+
+(define_constraint "j>f"
+  "@internal An integer operand whose lower 32 bits are greater than or equal to 15."
+  (and (match_code "const_int")
+       (match_test "(unsigned int)(ival & 0xffffffff) >= 15")))
+
+(define_constraint "jb4"
+  "@internal Constant unsigned integer 4 bit value"
+  (and (match_code "const_int")
+       (match_test "ival >= 0 && ival <= 15")))
 
 ;;
 ;; Memory constraints follow.

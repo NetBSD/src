@@ -1,6 +1,6 @@
 /* This file contains the definitions for timing variables used to
    measure run-time performance of the compiler.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Alex Samuel <samuel@codesourcery.com>
 
    This file is part of GCC.
@@ -68,6 +68,9 @@ DEFTIMEVAR (TV_PCH_CPP_RESTORE       , "PCH preprocessor state restore")
 
 DEFTIMEVAR (TV_CGRAPH                , "callgraph construction")
 DEFTIMEVAR (TV_CGRAPHOPT             , "callgraph optimization")
+DEFTIMEVAR (TV_CGRAPH_FUNC_EXPANSION , "callgraph functions expansion")
+DEFTIMEVAR (TV_CGRAPH_IPA_PASSES     , "callgraph ipa passes")
+DEFTIMEVAR (TV_IPA_ODR		     , "ipa ODR types")
 DEFTIMEVAR (TV_IPA_FNSUMMARY         , "ipa function summary")
 DEFTIMEVAR (TV_IPA_UNREACHABLE       , "ipa dead code removal")
 DEFTIMEVAR (TV_IPA_INHERITANCE       , "ipa inheritance graph")
@@ -78,8 +81,8 @@ DEFTIMEVAR (TV_IPA_INLINING          , "ipa inlining heuristics")
 DEFTIMEVAR (TV_IPA_FNSPLIT           , "ipa function splitting")
 DEFTIMEVAR (TV_IPA_COMDATS	     , "ipa comdats")
 DEFTIMEVAR (TV_IPA_OPT		     , "ipa various optimizations")
-DEFTIMEVAR (TV_IPA_LTO_DECOMPRESS    , "lto stream inflate")
-DEFTIMEVAR (TV_IPA_LTO_COMPRESS      , "lto stream deflate")
+DEFTIMEVAR (TV_IPA_LTO_DECOMPRESS    , "lto stream decompression")
+DEFTIMEVAR (TV_IPA_LTO_COMPRESS      , "lto stream compression")
 DEFTIMEVAR (TV_IPA_LTO_OUTPUT        , "lto stream output")
 DEFTIMEVAR (TV_IPA_LTO_GIMPLE_IN     , "ipa lto gimple in")
 DEFTIMEVAR (TV_IPA_LTO_GIMPLE_OUT    , "ipa lto gimple out")
@@ -139,8 +142,9 @@ DEFTIMEVAR (TV_PARSE_INLINE          , "parser inl. func. body")
 DEFTIMEVAR (TV_PARSE_INMETH          , "parser inl. meth. body")
 DEFTIMEVAR (TV_TEMPLATE_INST         , "template instantiation")
 DEFTIMEVAR (TV_CONSTEXPR	     , "constant expression evaluation")
-DEFTIMEVAR (TV_CONSTRAINT_SAT        , "constraint satisfaction")
-DEFTIMEVAR (TV_CONSTRAINT_SUB        , "constraint subsumption")
+DEFTIMEVAR (TV_CONSTRAINT_NORM	     , "constraint normalization")
+DEFTIMEVAR (TV_CONSTRAINT_SAT	     , "constraint satisfaction")
+DEFTIMEVAR (TV_CONSTRAINT_SUB	     , "constraint subsumption")
 DEFTIMEVAR (TV_FLATTEN_INLINING      , "flatten inlining")
 DEFTIMEVAR (TV_EARLY_INLINING        , "early inlining heuristics")
 DEFTIMEVAR (TV_INLINE_PARAMETERS     , "inline parameters")
@@ -319,3 +323,14 @@ DEFTIMEVAR (TV_LINK		     , "link JIT code")
 DEFTIMEVAR (TV_LOAD		     , "load JIT result")
 DEFTIMEVAR (TV_JIT_ACQUIRING_MUTEX   , "acquiring JIT mutex")
 DEFTIMEVAR (TV_JIT_CLIENT_CODE   , "JIT client code")
+
+/* Analyzer timevars.  */
+DEFTIMEVAR (TV_ANALYZER              , "analyzer")
+DEFTIMEVAR (TV_ANALYZER_SUPERGRAPH   , "analyzer: supergraph")
+DEFTIMEVAR (TV_ANALYZER_STATE_PURGE  , "analyzer: state purge")
+DEFTIMEVAR (TV_ANALYZER_PLAN         , "analyzer: planning")
+DEFTIMEVAR (TV_ANALYZER_SCC          , "analyzer: scc")
+DEFTIMEVAR (TV_ANALYZER_WORKLIST     , "analyzer: processing worklist")
+DEFTIMEVAR (TV_ANALYZER_DUMP         , "analyzer: dump")
+DEFTIMEVAR (TV_ANALYZER_DIAGNOSTICS  , "analyzer: emitting diagnostics")
+DEFTIMEVAR (TV_ANALYZER_SHORTEST_PATHS, "analyzer: shortest paths")

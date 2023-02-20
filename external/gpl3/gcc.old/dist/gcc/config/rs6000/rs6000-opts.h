@@ -1,6 +1,6 @@
 /* Definitions of target machine needed for option handling for GNU compiler,
    for IBM RS/6000.
-   Copyright (C) 2010-2019 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Contributed by Michael Meissner (meissner@linux.vnet.ibm.com)
 
    This file is part of GCC.
@@ -61,6 +61,7 @@ enum processor_type
    PROCESSOR_POWER7,
    PROCESSOR_POWER8,
    PROCESSOR_POWER9,
+   PROCESSOR_POWER10,
 
    PROCESSOR_RS64A,
    PROCESSOR_MPCCORE,

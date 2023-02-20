@@ -34,7 +34,7 @@ Removal of <code class="filename">&lt;ext/tree&gt;</code>, moved to <code class=
    GCC 3.4 onwards the default allocator uses <code class="code">new</code> anyway,
    but for the optional pooling allocators the functionality is enabled by
    setting <code class="literal">GLIBCXX_FORCE_NEW</code> in the environment, see
-   <a class="link" href="mt_allocator.html" title="Chapter 20. The mt_allocator">the mt allocator chapter</a>
+   <a class="link" href="mt_allocator.html" title="Chapter 19. The mt_allocator">the mt allocator chapter</a>
    for details.
    </p><p>Error handling in iostreams cleaned up, made consistent. </p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="api.rel_330"></a><code class="constant">3.3</code></h3></div></div></div><p>
   </p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="api.rel_340"></a><code class="constant">3.4</code></h3></div></div></div><p>
@@ -298,7 +298,8 @@ now defaults to zero.
   Support for mathematical special functions (ISO/IEC 29124:2010) added.
 </p><p>
   Assertions to check function preconditions can be enabled by defining the
-  <a class="xref" href="using_macros.html" title="Macros">Macros</a>.
+  <a class="link" href="using_macros.html" title="Macros"><span class="symbol">_GLIBCXX_ASSERTIONS</span>
+  macro</a>.
   The initial set of assertions are a subset of the checks enabled by
   the Debug Mode, but without the ABI changes and changes to algorithmic
   complexity that are caused by enabling the full Debug Mode.
@@ -391,4 +392,35 @@ now defaults to zero.
   <code class="filename">&lt;experimental/socket&gt;</code>,
   and
   <code class="filename">&lt;experimental/timer&gt;</code>.
+</p></div><div class="section"><div class="titlepage"><div><div><h3 class="title"><a id="api.rel_101"></a><code class="constant">10</code></h3></div></div></div><p> Deprecated features removed:
+</p><div class="itemizedlist"><ul class="itemizedlist" style="list-style-type: disc; "><li class="listitem"> Profile Mode </li><li class="listitem"><code class="classname">__gnu_cxx::array_allocator</code></li></ul></div><p>
+</p><p>
+  The non-standard <code class="function">std::__is_nullptr_t</code> type trait
+  was deprecated.
+</p><p>
+  The <code class="classname">std::packaged_task</code> constructors taking
+  an allocator argument are only defined for C++11 and C++14.
+</p><p>
+  Several members of <code class="classname">std::allocator</code> were removed
+  for C++20 mode. The removed functionality has been provided by
+  <code class="classname">std::allocator_traits</code> since C++11 and that should
+  be used instead.
+</p><p>
+  The type of the <code class="classname">std::iterator</code> base class of
+  <code class="classname">std::istreambuf_iterator</code> was changed to be
+  consistent for all <code class="option">-std</code> modes.
+  Before GCC 10.1 the base class had one type in C++98 mode and a
+  different type in C++11 and later modes. The type in C++98 mode
+  was changed to be the same as for C++11 and later.
+</p><p>
+  Experimental C++2a support improved, with new headers
+  <code class="filename">&lt;concepts&gt;</code>,
+  <code class="filename">&lt;ranges&gt;</code>,
+  <code class="filename">&lt;compare&gt;</code>,
+  <code class="filename">&lt;coroutine&gt;</code>,
+  <code class="filename">&lt;numbers&gt;</code>,
+  <code class="filename">&lt;span&gt;</code>,
+  and
+  <code class="filename">&lt;stop_token&gt;</code>
+  added.
 </p></div></div><div class="navfooter"><hr /><table width="100%" summary="Navigation footer"><tr><td width="40%" align="left"><a accesskey="p" href="abi.html">Prev</a> </td><td width="20%" align="center"><a accesskey="u" href="appendix_porting.html">Up</a></td><td width="40%" align="right"> <a accesskey="n" href="backwards.html">Next</a></td></tr><tr><td width="40%" align="left" valign="top">ABI Policy and Guidelines </td><td width="20%" align="center"><a accesskey="h" href="../index.html">Home</a></td><td width="40%" align="right" valign="top"> Backwards Compatibility</td></tr></table></div></body></html>

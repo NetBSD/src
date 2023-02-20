@@ -1,5 +1,5 @@
 /* Next Runtime (ABI-0/1) private.
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
    Contributed by Iain Sandoe (split from objc-act.c)
 
 This file is part of GCC.
@@ -54,6 +54,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #include "objc-runtime-hooks.h"
 #include "objc-runtime-shared-support.h"
+#include "objc-next-metadata-tags.h"
 #include "objc-encoding.h"
 
 /* NeXT ABI 0 and 1 private definitions.  */
@@ -97,14 +98,6 @@ along with GCC; see the file COPYING3.  If not see
 #define UTAG_PROTOCOL_EXT		"_objc_protocol_extension"
 
 #define CLS_HAS_CXX_STRUCTORS		0x2000L
-
-/* rt_trees identifiers - shared between NeXT implementations.  These
-   allow the FE to tag meta-data in a manner that survives LTO and can
-   be used when the runtime requires that certain meta-data items
-   appear in particular named sections.  */
-
-#include "objc-next-metadata-tags.h"
-extern GTY(()) tree objc_rt_trees[OCTI_RT_META_MAX];
 
 static void next_runtime_01_initialize (void);
 
@@ -150,7 +143,8 @@ objc_next_runtime_abi_01_init (objc_runtime_hooks *rthooks)
     {
       warning_at (UNKNOWN_LOCATION, OPT_Wall,
 		"%<-fobjc-sjlj-exceptions%> is the only supported exceptions "
-		"system for %<-fnext-runtime%> with %<-fobjc-abi-version%> < 2");
+		"system for %<-fnext-runtime%> with %<-fobjc-abi-version%> "
+		"argument less than 2");
     }
 
   rthooks->initialize = next_runtime_01_initialize;
@@ -275,6 +269,13 @@ static void next_runtime_01_initialize (void)
   /* `struct objc_selector *' */
   objc_selector_type = build_pointer_type (xref_tag (RECORD_TYPE,
 					   get_identifier (TAG_SELECTOR)));
+
+  /* SEL typedef.  */
+  type = lang_hooks.decls.pushdecl (build_decl (input_location,
+						TYPE_DECL,
+						objc_selector_name,
+						objc_selector_type));
+  TREE_NO_WARNING (type) = 1;
 
   build_v1_class_template ();
   build_super_template ();
