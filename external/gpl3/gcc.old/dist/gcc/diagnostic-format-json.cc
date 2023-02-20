@@ -1,5 +1,5 @@
 /* JSON output for diagnostics
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -23,7 +23,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "diagnostic.h"
+#include "diagnostic-metadata.h"
 #include "json.h"
+#include "selftest.h"
 
 /* The top-level JSON array of pending diagnostics.  */
 
@@ -40,14 +42,15 @@ static json::array *cur_children_array;
 
 /* Generate a JSON object for LOC.  */
 
-static json::object *
+json::value *
 json_from_expanded_location (location_t loc)
 {
   expanded_location exploc = expand_location (loc);
   json::object *result = new json::object ();
-  result->set ("file", new json::string (exploc.file));
-  result->set ("line", new json::number (exploc.line));
-  result->set ("column", new json::number (exploc.column));
+  if (exploc.file)
+    result->set ("file", new json::string (exploc.file));
+  result->set ("line", new json::integer_number (exploc.line));
+  result->set ("column", new json::integer_number (exploc.column));
   return result;
 }
 
@@ -66,9 +69,11 @@ json_from_location_range (const location_range *loc_range, unsigned range_idx)
 
   json::object *result = new json::object ();
   result->set ("caret", json_from_expanded_location (caret_loc));
-  if (start_loc != caret_loc)
+  if (start_loc != caret_loc
+      && start_loc != UNKNOWN_LOCATION)
     result->set ("start", json_from_expanded_location (start_loc));
-  if (finish_loc != caret_loc)
+  if (finish_loc != caret_loc
+      && finish_loc != UNKNOWN_LOCATION)
     result->set ("finish", json_from_expanded_location (finish_loc));
 
   if (loc_range->m_label)
@@ -97,6 +102,20 @@ json_from_fixit_hint (const fixit_hint *hint)
   fixit_obj->set ("string", new json::string (hint->get_string ()));
 
   return fixit_obj;
+}
+
+/* Generate a JSON object for METADATA.  */
+
+static json::object *
+json_from_metadata (const diagnostic_metadata *metadata)
+{
+  json::object *metadata_obj = new json::object ();
+
+  if (metadata->get_cwe ())
+    metadata_obj->set ("cwe",
+		       new json::integer_number (metadata->get_cwe ()));
+
+  return metadata_obj;
 }
 
 /* No-op implementation of "begin_diagnostic" for JSON output.  */
@@ -150,6 +169,17 @@ json_end_diagnostic (diagnostic_context *context, diagnostic_info *diagnostic,
       free (option_text);
     }
 
+  if (context->get_option_url)
+    {
+      char *option_url = context->get_option_url (context,
+						  diagnostic->option_index);
+      if (option_url)
+	{
+	  diag_obj->set ("option_url", new json::string (option_url));
+	  free (option_url);
+	}
+    }
+
   /* If we've already emitted a diagnostic within this auto_diagnostic_group,
      then add diag_obj to its "children" array.  */
   if (cur_group)
@@ -196,6 +226,19 @@ json_end_diagnostic (diagnostic_context *context, diagnostic_info *diagnostic,
      TODO: functions
      TODO: inlining information
      TODO: macro expansion information.  */
+
+  if (diagnostic->metadata)
+    {
+      json::object *metadata_obj = json_from_metadata (diagnostic->metadata);
+      diag_obj->set ("metadata", metadata_obj);
+    }
+
+  const diagnostic_path *path = richloc->get_path ();
+  if (path && context->make_json_for_path)
+    {
+      json::value *path_value = context->make_json_for_path (context, path);
+      diag_obj->set ("path", path_value);
+    }
 }
 
 /* No-op implementation of "begin_group_cb" for JSON output.  */
@@ -252,6 +295,10 @@ diagnostic_output_format_init (diagnostic_context *context,
 	context->begin_group_cb = json_begin_group;
 	context->end_group_cb =  json_end_group;
 	context->final_cb =  json_final_cb;
+	context->print_path = NULL; /* handled in json_end_diagnostic.  */
+
+	/* The metadata is handled in JSON format, rather than as text.  */
+	context->show_cwe = false;
 
 	/* The option is handled in JSON format, rather than as text.  */
 	context->show_option_requested = false;
@@ -262,3 +309,53 @@ diagnostic_output_format_init (diagnostic_context *context,
       break;
     }
 }
+
+#if CHECKING_P
+
+namespace selftest {
+
+/* We shouldn't call json_from_expanded_location on UNKNOWN_LOCATION,
+   but verify that we handle this gracefully.  */
+
+static void
+test_unknown_location ()
+{
+  delete json_from_expanded_location (UNKNOWN_LOCATION);
+}
+
+/* Verify that we gracefully handle attempts to serialize bad
+   compound locations.  */
+
+static void
+test_bad_endpoints ()
+{
+  location_t bad_endpoints
+    = make_location (BUILTINS_LOCATION,
+		     UNKNOWN_LOCATION, UNKNOWN_LOCATION);
+
+  location_range loc_range;
+  loc_range.m_loc = bad_endpoints;
+  loc_range.m_range_display_kind = SHOW_RANGE_WITH_CARET;
+  loc_range.m_label = NULL;
+
+  json::object *obj = json_from_location_range (&loc_range, 0);
+  /* We should have a "caret" value, but no "start" or "finish" values.  */
+  ASSERT_TRUE (obj != NULL);
+  ASSERT_TRUE (obj->get ("caret") != NULL);
+  ASSERT_TRUE (obj->get ("start") == NULL);
+  ASSERT_TRUE (obj->get ("finish") == NULL);
+  delete obj;
+}
+
+/* Run all of the selftests within this file.  */
+
+void
+diagnostic_format_json_cc_tests ()
+{
+  test_unknown_location ();
+  test_bad_endpoints ();
+}
+
+} // namespace selftest
+
+#endif /* #if CHECKING_P */

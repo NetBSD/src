@@ -1,5 +1,5 @@
 /* Emit optimization information as JSON files.
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
    Contributed by David Malcolm <dmalcolm@redhat.com>.
 
 This file is part of GCC.
@@ -153,7 +153,7 @@ optrecord_json_writer::add_record (const optinfo *optinfo)
 
 /* Private methods of optrecord_json_writer.  */
 
-/* Add record OBJ to the the innermost scope.  */
+/* Add record OBJ to the innermost scope.  */
 
 void
 optrecord_json_writer::add_record (json::object *obj)
@@ -181,7 +181,7 @@ optrecord_json_writer::impl_location_to_json (dump_impl_location_t loc)
 {
   json::object *obj = new json::object ();
   obj->set ("file", new json::string (loc.m_file));
-  obj->set ("line", new json::number (loc.m_line));
+  obj->set ("line", new json::integer_number (loc.m_line));
   if (loc.m_function)
     obj->set ("function", new json::string (loc.m_function));
   return obj;
@@ -196,8 +196,8 @@ optrecord_json_writer::location_to_json (location_t loc)
   expanded_location exploc = expand_location (loc);
   json::object *obj = new json::object ();
   obj->set ("file", new json::string (exploc.file));
-  obj->set ("line", new json::number (exploc.line));
-  obj->set ("column", new json::number (exploc.column));
+  obj->set ("line", new json::integer_number (exploc.line));
+  obj->set ("column", new json::integer_number (exploc.column));
   return obj;
 }
 
@@ -207,7 +207,7 @@ json::object *
 optrecord_json_writer::profile_count_to_json (profile_count count)
 {
   json::object *obj = new json::object ();
-  obj->set ("value", new json::number (count.to_gcov_type ()));
+  obj->set ("value", new json::integer_number (count.to_gcov_type ()));
   obj->set ("quality",
 	    new json::string (profile_quality_as_string (count.quality ())));
   return obj;
@@ -262,7 +262,7 @@ optrecord_json_writer::pass_to_json (opt_pass *pass)
 	  && (pass->optinfo_flags & optgroup->value))
 	optgroups->append (new json::string (optgroup->name));
   }
-  obj->set ("num", new json::number (pass->static_pass_number));
+  obj->set ("num", new json::integer_number (pass->static_pass_number));
   return obj;
 }
 

@@ -1,6 +1,6 @@
 /* Gimple folding definitions.
 
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
    Contributed by Richard Guenther <rguenther@suse.de>
 
 This file is part of GCC.
@@ -31,9 +31,9 @@ extern void gimplify_and_update_call_from_tree (gimple_stmt_iterator *, tree);
 extern bool fold_stmt (gimple_stmt_iterator *);
 extern bool fold_stmt (gimple_stmt_iterator *, tree (*) (tree));
 extern bool fold_stmt_inplace (gimple_stmt_iterator *);
-extern tree maybe_fold_and_comparisons (enum tree_code, tree, tree, 
+extern tree maybe_fold_and_comparisons (tree, enum tree_code, tree, tree,
 					enum tree_code, tree, tree);
-extern tree maybe_fold_or_comparisons (enum tree_code, tree, tree,
+extern tree maybe_fold_or_comparisons (tree, enum tree_code, tree, tree,
 				       enum tree_code, tree, tree);
 extern bool optimize_atomic_compare_exchange_p (gimple *);
 extern void fold_builtin_atomic_compare_exchange (gimple_stmt_iterator *);

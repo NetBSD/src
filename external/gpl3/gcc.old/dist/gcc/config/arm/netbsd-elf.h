@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, NetBSD/arm ELF version.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GCC.
@@ -67,12 +67,19 @@
 
 #undef SUBTARGET_EXTRA_ASM_SPEC
 #define SUBTARGET_EXTRA_ASM_SPEC	\
-  "-matpcs %{mabi=aapcs*:-meabi=5} %{" FPIE_OR_FPIC_SPEC ":-k}"
+  "-matpcs %{mabi=aapcs*:-meabi=5} "	\
+  "%{" FPIE_OR_FPIC_SPEC ":-k}"
+
+#undef SUBTARGET_EXTRA_SPECS
+#define SUBTARGET_EXTRA_SPECS					\
+  { "subtarget_extra_asm_spec",	SUBTARGET_EXTRA_ASM_SPEC },	\
+  { "subtarget_asm_float_spec", SUBTARGET_ASM_FLOAT_SPEC },	\
+  NETBSD_SUBTARGET_EXTRA_SPECS
 
 /* Default to full VFP if -mfloat-abi=hard is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
-#define SUBTARGET_ASM_FLOAT_SPEC	\
-  "%{mhard-float:%{!mfpu=*:-mfpu=vfp}}   \
+#define SUBTARGET_ASM_FLOAT_SPEC		\
+  "%{mhard-float:%{!mfpu=*:-mfpu=vfp}}		\
    %{mfloat-abi=hard:%{!mfpu=*:-mfpu=vfp}}"
 
 #define NETBSD_ENTRY_POINT "__start"
@@ -101,13 +108,13 @@
 /* We don't have any limit on the length as out debugger is GDB.  */
 #undef DBX_CONTIN_LENGTH
 
-/* NetBSD does its profiling differently to the Acorn compiler. We      
+/* NetBSD does its profiling differently to the Acorn compiler. We
    don't need a word following the mcount call; and to skip it
-   requires either an assembly stub or use of fomit-frame-pointer when  
+   requires either an assembly stub or use of fomit-frame-pointer when
    compiling the profiling functions.  Since we break Acorn CC
    compatibility below a little more won't hurt.  */
-   
-#undef ARM_FUNCTION_PROFILER                                  
+
+#undef ARM_FUNCTION_PROFILER
 #define ARM_FUNCTION_PROFILER(STREAM,LABELNO)		\
 {							\
   asm_fprintf (STREAM, "\tmov\t%Rip, %Rlr\n");		\
@@ -124,22 +131,22 @@
    boundary.  However this causes problems with bugged NetBSD kernel
    code (possibly userland code as well - I have not checked every
    binary).  The nature of this bugged code is to rely on sizeof()
-   returning the correct size of various structures rounded to the  
+   returning the correct size of various structures rounded to the
    nearest byte (SCSI and ether code are two examples, the vm system
    is another).  This code breaks when the structure alignment is 32
-   as sizeof() will report a word=rounded size.  By changing the        
+   as sizeof() will report a word=rounded size.  By changing the
    structure alignment to 8. GCC will conform to what is expected by
    NetBSD.
-   
+
    This has several side effects that should be considered.
    1. Structures will only be aligned to the size of the largest member.
       i.e. structures containing only bytes will be byte aligned.
-           structures containing shorts will be half word aligned.          
-           structures containing ints will be word aligned.                 
-  
+	   structures containing shorts will be half word aligned.
+	   structures containing ints will be word aligned.
+
       This means structures should be padded to a word boundary if
       alignment of 32 is required for byte structures etc.
-       
+
    2. A potential performance penalty may exist if strings are no longer
       word aligned.  GCC will not be able to use word load/stores to copy
       short strings.
@@ -150,6 +157,8 @@
 
 #undef DEFAULT_STRUCTURE_SIZE_BOUNDARY
 #define DEFAULT_STRUCTURE_SIZE_BOUNDARY 8
+
+#define SYSARCH_ARM_SYNC_ICACHE	0
 
 /* Clear the instruction cache from `BEG' to `END'.  This makes a
    call to the ARM_SYNC_ICACHE architecture specific syscall.  */
@@ -164,8 +173,6 @@ do									\
       } s;								\
     s.addr = (unsigned int)(BEG);					\
     s.len = (END) - (BEG);						\
-    (void) sysarch (0, &s);						\
+    (void) sysarch (SYSARCH_ARM_SYNC_ICACHE, &s);			\
   }									\
 while (0)
-//#undef FPUTYPE_DEFAULT
-//#define FPUTYPE_DEFAULT "vfp"

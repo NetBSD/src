@@ -1,5 +1,5 @@
 /* Subroutines for insn-output.c for Renesas H8/300.
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
    Contributed by Steve Chamberlain (sac@cygnus.com),
    Jim Wilson (wilson@cygnus.com), and Doug Evans (dje@cygnus.com).
 
@@ -378,8 +378,8 @@ h8300_option_override (void)
 
  if ((!TARGET_H8300S  &&  TARGET_NEXR) && (!TARGET_H8300SX && TARGET_NEXR))
    {
-      warning (OPT_mno_exr, "%<-mno-exr%> valid only with %<-ms%> or "
-	       "%<-msx%> - Option ignored!");
+      warning (OPT_mno_exr, "%<-mno-exr%> is valid only with %<-ms%> or "
+	       "%<-msx%> - option ignored");
    }
 
 #ifdef H8300_LINUX 
@@ -485,7 +485,8 @@ byte_reg (rtx x, int b)
    && ! TREE_THIS_VOLATILE (current_function_decl)			\
    && (h8300_saveall_function_p (current_function_decl)			\
        /* Save any call saved register that was used.  */		\
-       || (df_regs_ever_live_p (regno) && !call_used_regs[regno])	\
+       || (df_regs_ever_live_p (regno)					\
+	   && !call_used_or_fixed_reg_p (regno))			\
        /* Save the frame pointer if it was used.  */			\
        || (regno == HARD_FRAME_POINTER_REGNUM && df_regs_ever_live_p (regno)) \
        /* Save any register used in an interrupt handler.  */		\
@@ -494,7 +495,7 @@ byte_reg (rtx x, int b)
        /* Save call clobbered registers in non-leaf interrupt		\
 	  handlers.  */							\
        || (h8300_current_function_interrupt_function_p ()		\
-	   && call_used_regs[regno]					\
+	   && call_used_or_fixed_reg_p (regno)				\
 	   && !crtl->is_leaf)))
 
 /* We use this to wrap all emitted insns in the prologue.  */
@@ -1081,17 +1082,16 @@ h8300_pr_saveall (struct cpp_reader *pfile ATTRIBUTE_UNUSED)
   pragma_saveall = 1;
 }
 
-/* If the next function argument with MODE and TYPE is to be passed in
-   a register, return a reg RTX for the hard register in which to pass
-   the argument.  CUM represents the state after the last argument.
-   If the argument is to be pushed, NULL_RTX is returned.
+/* If the next function argument ARG is to be passed in a register, return
+   a reg RTX for the hard register in which to pass the argument.  CUM
+   represents the state after the last argument.  If the argument is to
+   be pushed, NULL_RTX is returned.
 
    On the H8/300 all normal args are pushed, unless -mquickcall in which
    case the first 3 arguments are passed in registers.  */
 
 static rtx
-h8300_function_arg (cumulative_args_t cum_v, machine_mode mode,
-		    const_tree type, bool named)
+h8300_function_arg (cumulative_args_t cum_v, const function_arg_info &arg)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
 
@@ -1119,7 +1119,7 @@ h8300_function_arg (cumulative_args_t cum_v, machine_mode mode,
   int regpass = 0;
 
   /* Never pass unnamed arguments in registers.  */
-  if (!named)
+  if (!arg.named)
     return NULL_RTX;
 
   /* Pass 3 regs worth of data in regs when user asked on the command line.  */
@@ -1143,34 +1143,25 @@ h8300_function_arg (cumulative_args_t cum_v, machine_mode mode,
 
   if (regpass)
     {
-      int size;
-
-      if (mode == BLKmode)
-	size = int_size_in_bytes (type);
-      else
-	size = GET_MODE_SIZE (mode);
-
+      int size = arg.promoted_size_in_bytes ();
       if (size + cum->nbytes <= regpass * UNITS_PER_WORD
 	  && cum->nbytes / UNITS_PER_WORD <= 3)
-	result = gen_rtx_REG (mode, cum->nbytes / UNITS_PER_WORD);
+	result = gen_rtx_REG (arg.mode, cum->nbytes / UNITS_PER_WORD);
     }
 
   return result;
 }
 
-/* Update the data in CUM to advance over an argument
-   of mode MODE and data type TYPE.
-   (TYPE is null for libcalls where that information may not be available.)  */
+/* Update the data in CUM to advance over argument ARG.  */
 
 static void
-h8300_function_arg_advance (cumulative_args_t cum_v, machine_mode mode,
-			    const_tree type, bool named ATTRIBUTE_UNUSED)
+h8300_function_arg_advance (cumulative_args_t cum_v,
+			    const function_arg_info &arg)
 {
   CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
 
-  cum->nbytes += (mode != BLKmode
-		  ? (GET_MODE_SIZE (mode) + UNITS_PER_WORD - 1) & -UNITS_PER_WORD
-		  : (int_size_in_bytes (type) + UNITS_PER_WORD - 1) & -UNITS_PER_WORD);
+  cum->nbytes += ((arg.promoted_size_in_bytes () + UNITS_PER_WORD - 1)
+		  & -UNITS_PER_WORD);
 }
 
 
@@ -1656,40 +1647,52 @@ h8300_print_operand (FILE *file, rtx x, int code)
     case 's':
       if (GET_CODE (x) == CONST_INT)
 	fprintf (file, "#%ld", (INTVAL (x)) & 0xff);
-      else
+      else if (GET_CODE (x) == REG)
 	fprintf (file, "%s", byte_reg (x, 0));
+      else
+	output_operand_lossage ("Expected register or constant integer.");
       break;
     case 't':
       if (GET_CODE (x) == CONST_INT)
 	fprintf (file, "#%ld", (INTVAL (x) >> 8) & 0xff);
-      else
+      else if (GET_CODE (x) == REG)
 	fprintf (file, "%s", byte_reg (x, 1));
+      else
+	output_operand_lossage ("Expected register or constant integer.");
       break;
     case 'w':
       if (GET_CODE (x) == CONST_INT)
 	fprintf (file, "#%ld", INTVAL (x) & 0xff);
-      else
+      else if (GET_CODE (x) == REG)
 	fprintf (file, "%s",
 		 byte_reg (x, TARGET_H8300 ? 2 : 0));
+      else
+	output_operand_lossage ("Expected register or constant integer.");
       break;
     case 'x':
       if (GET_CODE (x) == CONST_INT)
 	fprintf (file, "#%ld", (INTVAL (x) >> 8) & 0xff);
-      else
+      else if (GET_CODE (x) == REG)
 	fprintf (file, "%s",
 		 byte_reg (x, TARGET_H8300 ? 3 : 1));
+      else
+	output_operand_lossage ("Expected register or constant integer.");
       break;
     case 'y':
       if (GET_CODE (x) == CONST_INT)
 	fprintf (file, "#%ld", (INTVAL (x) >> 16) & 0xff);
-      else
+      else if (GET_CODE (x) == REG)
 	fprintf (file, "%s", byte_reg (x, 0));
+      else
+	output_operand_lossage ("Expected register or constant integer.");
       break;
     case 'z':
       if (GET_CODE (x) == CONST_INT)
 	fprintf (file, "#%ld", (INTVAL (x) >> 24) & 0xff);
-      else
+      else if (GET_CODE (x) == REG)
 	fprintf (file, "%s", byte_reg (x, 1));
+      else
+	output_operand_lossage ("Expected register or constant integer.");
       break;
 
     default:
@@ -2642,145 +2645,6 @@ h8300_operands_match_p (rtx *operands)
     return true;
 
   return false;
-}
-
-/* Try using movmd to move LENGTH bytes from memory region SRC to memory
-   region DEST.  The two regions do not overlap and have the common
-   alignment given by ALIGNMENT.  Return true on success.
-
-   Using movmd for variable-length moves seems to involve some
-   complex trade-offs.  For instance:
-
-      - Preparing for a movmd instruction is similar to preparing
-	for a memcpy.  The main difference is that the arguments
-	are moved into er4, er5 and er6 rather than er0, er1 and er2.
-
-      - Since movmd clobbers the frame pointer, we need to save
-	and restore it somehow when frame_pointer_needed.  This can
-	sometimes make movmd sequences longer than calls to memcpy().
-
-      - The counter register is 16 bits, so the instruction is only
-	suitable for variable-length moves when sizeof (size_t) == 2.
-	That's only true in normal mode.
-
-      - We will often lack static alignment information.  Falling back
-	on movmd.b would likely be slower than calling memcpy(), at least
-	for big moves.
-
-   This function therefore only uses movmd when the length is a
-   known constant, and only then if -fomit-frame-pointer is in
-   effect or if we're not optimizing for size.
-
-   At the moment the function uses movmd for all in-range constants,
-   but it might be better to fall back on memcpy() for large moves
-   if ALIGNMENT == 1.  */
-
-bool
-h8sx_emit_movmd (rtx dest, rtx src, rtx length,
-		 HOST_WIDE_INT alignment)
-{
-  if (!flag_omit_frame_pointer && optimize_size)
-    return false;
-
-  if (GET_CODE (length) == CONST_INT)
-    {
-      rtx dest_reg, src_reg, first_dest, first_src;
-      HOST_WIDE_INT n;
-      int factor;
-
-      /* Use movmd.l if the alignment allows it, otherwise fall back
-	 on movmd.b.  */
-      factor = (alignment >= 2 ? 4 : 1);
-
-      /* Make sure the length is within range.  We can handle counter
-	 values up to 65536, although HImode truncation will make
-	 the count appear negative in rtl dumps.  */
-      n = INTVAL (length);
-      if (n <= 0 || n / factor > 65536)
-	return false;
-
-      /* Create temporary registers for the source and destination
-	 pointers.  Initialize them to the start of each region.  */
-      dest_reg = copy_addr_to_reg (XEXP (dest, 0));
-      src_reg = copy_addr_to_reg (XEXP (src, 0));
-
-      /* Create references to the movmd source and destination blocks.  */
-      first_dest = replace_equiv_address (dest, dest_reg);
-      first_src = replace_equiv_address (src, src_reg);
-
-      set_mem_size (first_dest, n & -factor);
-      set_mem_size (first_src, n & -factor);
-
-      length = copy_to_mode_reg (HImode, gen_int_mode (n / factor, HImode));
-      emit_insn (gen_movmd (first_dest, first_src, length, GEN_INT (factor)));
-
-      if ((n & -factor) != n)
-	{
-	  /* Move SRC and DEST past the region we just copied.
-	     This is done to update the memory attributes.  */
-	  dest = adjust_address (dest, BLKmode, n & -factor);
-	  src = adjust_address (src, BLKmode, n & -factor);
-
-	  /* Replace the addresses with the source and destination
-	     registers, which movmd has left with the right values.  */
-	  dest = replace_equiv_address (dest, dest_reg);
-	  src = replace_equiv_address (src, src_reg);
-
-	  /* Mop up the left-over bytes.  */
-	  if (n & 2)
-	    emit_move_insn (adjust_address (dest, HImode, 0),
-			    adjust_address (src, HImode, 0));
-	  if (n & 1)
-	    emit_move_insn (adjust_address (dest, QImode, n & 2),
-			    adjust_address (src, QImode, n & 2));
-	}
-      return true;
-    }
-  return false;
-}
-
-/* Move ADDR into er6 after pushing its old value onto the stack.  */
-
-void
-h8300_swap_into_er6 (rtx addr)
-{
-  rtx insn = push (HARD_FRAME_POINTER_REGNUM, false);
-  if (frame_pointer_needed)
-    add_reg_note (insn, REG_CFA_DEF_CFA,
-		  plus_constant (Pmode, gen_rtx_MEM (Pmode, stack_pointer_rtx),
-				 2 * UNITS_PER_WORD));
-  else
-    add_reg_note (insn, REG_CFA_ADJUST_CFA,
-		  gen_rtx_SET (stack_pointer_rtx,
-			       plus_constant (Pmode, stack_pointer_rtx, 4)));
-
-  emit_move_insn (hard_frame_pointer_rtx, addr);
-  if (REGNO (addr) == SP_REG)
-    emit_move_insn (hard_frame_pointer_rtx,
-		    plus_constant (Pmode, hard_frame_pointer_rtx,
-				   GET_MODE_SIZE (word_mode)));
-}
-
-/* Move the current value of er6 into ADDR and pop its old value
-   from the stack.  */
-
-void
-h8300_swap_out_of_er6 (rtx addr)
-{
-  rtx insn;
-
-  if (REGNO (addr) != SP_REG)
-    emit_move_insn (addr, hard_frame_pointer_rtx);
-
-  insn = pop (HARD_FRAME_POINTER_REGNUM);
-  if (frame_pointer_needed)
-    add_reg_note (insn, REG_CFA_DEF_CFA,
-		  plus_constant (Pmode, hard_frame_pointer_rtx,
-				 2 * UNITS_PER_WORD));
-  else
-    add_reg_note (insn, REG_CFA_ADJUST_CFA,
-		  gen_rtx_SET (stack_pointer_rtx,
-			       plus_constant (Pmode, stack_pointer_rtx, -4)));
 }
 
 /* Return the length of mov instruction.  */

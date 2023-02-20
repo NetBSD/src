@@ -1,5 +1,5 @@
 /* AddressSanitizer, a fast memory error detector.
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
    Contributed by Kostya Serebryany <kcc@google.com>
 
 This file is part of GCC.
@@ -128,6 +128,8 @@ asan_var_and_redzone_size (unsigned HOST_WIDE_INT size)
 }
 
 extern bool set_asan_shadow_offset (const char *);
+
+extern bool asan_shadow_offset_set_p ();
 
 extern void set_sanitized_sections (const char *);
 

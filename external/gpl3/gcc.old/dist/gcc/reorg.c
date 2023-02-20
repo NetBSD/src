@@ -1,5 +1,5 @@
 /* Perform instruction reorganizations for delay slot filling.
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu).
    Hacked by Michael Tiemann (tiemann@cygnus.com).
 
@@ -116,7 +116,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "recog.h"
 #include "insn-attr.h"
 #include "resource.h"
-#include "params.h"
 #include "tree-pass.h"
 
 
@@ -140,9 +139,9 @@ skip_consecutive_labels (rtx label_or_return)
   /* __builtin_unreachable can create a CODE_LABEL followed by a BARRIER.
 
      Since reaching the CODE_LABEL is undefined behavior, we can return
-     any code label and we're OK at runtime.
+     any code label and we're OK at run time.
 
-     However, if we return a CODE_LABEL which leads to a shrinked wrapped
+     However, if we return a CODE_LABEL which leads to a shrink-wrapped
      epilogue, but the path does not have a prologue, then we will trip
      a sanity check in the dwarf2 cfi code which wants to verify that
      the CFIs are all the same on the traces leading to the epilogue.
@@ -410,8 +409,7 @@ find_end_label (rtx kind)
   while (NOTE_P (insn)
 	 || (NONJUMP_INSN_P (insn)
 	     && (GET_CODE (PATTERN (insn)) == USE
-		 || GET_CODE (PATTERN (insn)) == CLOBBER
-		 || GET_CODE (PATTERN (insn)) == CLOBBER_HIGH)))
+		 || GET_CODE (PATTERN (insn)) == CLOBBER)))
     insn = PREV_INSN (insn);
 
   /* When a target threads its epilogue we might already have a
@@ -577,8 +575,9 @@ add_to_delay_list (rtx_insn *insn, vec<rtx_insn *> *delay_list)
 {
   /* If INSN has its block number recorded, clear it since we may
      be moving the insn to a new block.  */
-      clear_hashed_info_for_insn (insn);
-      delay_list->safe_push (insn);
+  clear_hashed_info_for_insn (insn);
+
+  delay_list->safe_push (insn);
 }
 
 /* Delete INSN from the delay slot of the insn that it is in, which may
@@ -1311,8 +1310,7 @@ try_merge_delay_insns (rtx_insn *insn, rtx_insn *thread)
 
       /* TRIAL must be a CALL_INSN or INSN.  Skip USE and CLOBBER.  */
       if (NONJUMP_INSN_P (trial)
-	  && (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER
-	      || GET_CODE (pat) == CLOBBER_HIGH))
+	  && (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER))
 	continue;
 
       if (GET_CODE (next_to_match) == GET_CODE (trial)
@@ -1491,7 +1489,7 @@ redundant_insn (rtx insn, rtx_insn *target, const vec<rtx_insn *> &delay_list)
 
   /* Scan backwards looking for a match.  */
   for (trial = PREV_INSN (target),
-	 insns_to_search = MAX_DELAY_SLOT_INSN_SEARCH;
+	 insns_to_search = param_max_delay_slot_insn_search;
        trial && insns_to_search > 0;
        trial = PREV_INSN (trial))
     {
@@ -1506,8 +1504,7 @@ redundant_insn (rtx insn, rtx_insn *target, const vec<rtx_insn *> &delay_list)
       --insns_to_search;
 
       pat = PATTERN (trial);
-      if (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER
-	  || GET_CODE (pat) == CLOBBER_HIGH)
+      if (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER)
 	continue;
 
       if (GET_CODE (trial) == DEBUG_INSN)
@@ -1575,7 +1572,7 @@ redundant_insn (rtx insn, rtx_insn *target, const vec<rtx_insn *> &delay_list)
   /* Insns we pass may not set either NEEDED or SET, so merge them for
      simpler tests.  */
   needed.memory |= set.memory;
-  IOR_HARD_REG_SET (needed.regs, set.regs);
+  needed.regs |= set.regs;
 
   /* This insn isn't redundant if it conflicts with an insn that either is
      or will be in a delay slot of TARGET.  */
@@ -1596,7 +1593,7 @@ redundant_insn (rtx insn, rtx_insn *target, const vec<rtx_insn *> &delay_list)
      INSN sets or sets something insn uses or sets.  */
 
   for (trial = PREV_INSN (target),
-	 insns_to_search = MAX_DELAY_SLOT_INSN_SEARCH;
+	 insns_to_search = param_max_delay_slot_insn_search;
        trial && !LABEL_P (trial) && insns_to_search > 0;
        trial = PREV_INSN (trial))
     {
@@ -1605,8 +1602,7 @@ redundant_insn (rtx insn, rtx_insn *target, const vec<rtx_insn *> &delay_list)
       --insns_to_search;
 
       pat = PATTERN (trial);
-      if (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER
-	  || GET_CODE (pat) == CLOBBER_HIGH)
+      if (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER)
 	continue;
 
       if (GET_CODE (trial) == DEBUG_INSN)
@@ -1718,8 +1714,7 @@ own_thread_p (rtx thread, rtx label, int allow_fallthrough)
 	|| LABEL_P (insn)
 	|| (NONJUMP_INSN_P (insn)
 	    && GET_CODE (PATTERN (insn)) != USE
-	    && GET_CODE (PATTERN (insn)) != CLOBBER
-	    && GET_CODE (PATTERN (insn)) != CLOBBER_HIGH))
+	    && GET_CODE (PATTERN (insn)) != CLOBBER))
       return 0;
 
   return 1;
@@ -2042,8 +2037,7 @@ fill_simple_delay_slots (int non_jumps_p)
 	      pat = PATTERN (trial);
 
 	      /* Stand-alone USE and CLOBBER are just for flow.  */
-	      if (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER
-		  || GET_CODE (pat) == CLOBBER_HIGH)
+	      if (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER)
 		continue;
 
 	      /* And DEBUG_INSNs never go into delay slots.  */
@@ -2169,8 +2163,7 @@ fill_simple_delay_slots (int non_jumps_p)
 	      pat = PATTERN (trial);
 
 	      /* Stand-alone USE and CLOBBER are just for flow.  */
-	      if (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER
-		  || GET_CODE (pat) == CLOBBER_HIGH)
+	      if (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER)
 		continue;
 
 	      /* And DEBUG_INSNs do not go in delay slots.  */
@@ -2438,8 +2431,7 @@ fill_slots_from_thread (rtx_jump_insn *insn, rtx condition,
 	}
 
       pat = PATTERN (trial);
-      if (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER
-	  || GET_CODE (pat) == CLOBBER_HIGH)
+      if (GET_CODE (pat) == USE || GET_CODE (pat) == CLOBBER)
 	continue;
 
       if (GET_CODE (trial) == DEBUG_INSN)
@@ -2708,14 +2700,13 @@ fill_slots_from_thread (rtx_jump_insn *insn, rtx condition,
       && GET_CODE (PATTERN (new_thread)) != ASM_INPUT
       && asm_noperands (PATTERN (new_thread)) < 0)
     {
-      rtx pat = PATTERN (new_thread);
       rtx dest;
       rtx src;
 
       /* We know "new_thread" is an insn due to NONJUMP_INSN_P (new_thread)
 	 above.  */
       trial = as_a <rtx_insn *> (new_thread);
-      pat = PATTERN (trial);
+      rtx pat = PATTERN (trial);
 
       if (!NONJUMP_INSN_P (trial)
 	  || GET_CODE (pat) != SET
@@ -3184,6 +3175,23 @@ relax_delay_slots (rtx_insn *first)
 	      && ! condjump_in_parallel_p (jump_insn)
 	      && ! (next && switch_text_sections_between_p (jump_insn, next)))
 	    {
+	      rtx_insn *direct_label = as_a<rtx_insn *> (JUMP_LABEL (insn));
+	      rtx_insn *prev = prev_nonnote_insn (direct_label);
+
+	      /* If the insn jumps over a BARRIER and is the only way to reach
+		 its target, then we need to delete the BARRIER before the jump
+		 because, otherwise, the target may end up being considered as
+		 unreachable and thus also deleted.  */
+	      if (BARRIER_P (prev) && LABEL_NUSES (direct_label) == 1)
+		{
+		  delete_related_insns (prev);
+
+		  /* We have just removed a BARRIER, which means that the block
+		     number of the next insns has effectively been changed (see
+		     find_basic_block in resource.c), so clear it.  */
+		  clear_hashed_info_until_next_barrier (direct_label);
+		}
+
 	      delete_jump (jump_insn);
 	      continue;
 	    }
@@ -3221,7 +3229,14 @@ relax_delay_slots (rtx_insn *first)
 
 	      if (invert_jump (jump_insn, label, 1))
 		{
-		  delete_related_insns (next);
+		  rtx_insn *from = delete_related_insns (next);
+
+		  /* We have just removed a BARRIER, which means that the block
+		     number of the next insns has effectively been changed (see
+		     find_basic_block in resource.c), so clear it.  */
+		  if (from)
+		    clear_hashed_info_until_next_barrier (from);
+
 		  next = jump_insn;
 		}
 
@@ -3494,18 +3509,22 @@ relax_delay_slots (rtx_insn *first)
 
 	      if (invert_jump (delay_jump_insn, label, 1))
 		{
-		  int i;
-
 		  /* Must update the INSN_FROM_TARGET_P bits now that
 		     the branch is reversed, so that mark_target_live_regs
 		     will handle the delay slot insn correctly.  */
-		  for (i = 1; i < XVECLEN (PATTERN (insn), 0); i++)
+		  for (int i = 1; i < XVECLEN (PATTERN (insn), 0); i++)
 		    {
 		      rtx slot = XVECEXP (PATTERN (insn), 0, i);
 		      INSN_FROM_TARGET_P (slot) = ! INSN_FROM_TARGET_P (slot);
 		    }
 
-		  delete_related_insns (next);
+		  /* We have just removed a BARRIER, which means that the block
+		     number of the next insns has effectively been changed (see
+		     find_basic_block in resource.c), so clear it.  */
+		  rtx_insn *from = delete_related_insns (next);
+		  if (from)
+		    clear_hashed_info_until_next_barrier (from);
+
 		  next = insn;
 		}
 
@@ -3834,8 +3853,7 @@ dbr_schedule (rtx_insn *first)
 	  if (! insn->deleted ()
 	      && NONJUMP_INSN_P (insn)
 	      && GET_CODE (PATTERN (insn)) != USE
-	      && GET_CODE (PATTERN (insn)) != CLOBBER
-	      && GET_CODE (PATTERN (insn)) != CLOBBER_HIGH)
+	      && GET_CODE (PATTERN (insn)) != CLOBBER)
 	    {
 	      if (GET_CODE (PATTERN (insn)) == SEQUENCE)
 		{

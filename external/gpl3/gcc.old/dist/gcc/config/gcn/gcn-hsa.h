@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
    This file is free software; you can redistribute it and/or modify it under
    the terms of the GNU General Public License as published by the Free
@@ -76,7 +76,7 @@ extern unsigned int gcn_local_sym_hash (const char *name);
 #define GOMP_SELF_SPECS ""
 
 /* Use LLVM assembler and linker options.  */
-#define ASM_SPEC  "-triple=amdgcn--amdhsa "	     \
+#define ASM_SPEC  "-triple=amdgcn--amdhsa -mattr=-code-object-v3 "  \
 		  "%:last_arg(%{march=*:-mcpu=%*}) " \
 		  "-filetype=obj"
 /* Add -mlocal-symbol-id=<source-file-basename> unless the user (or mkoffload)

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.1.6 2021/04/09 22:33:16 mrg Exp $
+# $NetBSD: Makefile,v 1.1.1.7 2023/02/20 02:01:02 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=     # defined
 NOSANITIZER=    # defined
@@ -52,7 +52,7 @@ TSAN_SRCS= \
 TSAN_SRCS+= tsan_rtl_amd64.S
 .elif ${MACHINE_ARCH} == "aarch64"
 TSAN_SRCS+= tsan_rtl_aarch64.S
-.elif ${MACHINE_ARCH} == "mips64el"
+.elif ${MACHINE_MIPS64}
 TSAN_SRCS+= tsan_rtl_mips64.S
 .elif ${MACHINE_ARCH} == "powerpc64"
 TSAN_SRCS+= tsan_rtl_ppc64.S

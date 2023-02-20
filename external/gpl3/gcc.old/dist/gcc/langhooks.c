@@ -1,5 +1,5 @@
 /* Default language-specific hooks.
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Contributed by Alexandre Oliva  <aoliva@redhat.com>
 
 This file is part of GCC.
@@ -35,6 +35,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-diagnostic.h"
 #include "output.h"
 #include "timevar.h"
+#include "stor-layout.h"
 
 /* Do nothing; in many cases the default hook.  */
 
@@ -97,7 +98,7 @@ lhd_post_options (const char ** ARG_UNUSED (pfilename))
 {
   /* Excess precision other than "fast" requires front-end
      support.  */
-  flag_excess_precision_cmdline = EXCESS_PRECISION_FAST;
+  flag_excess_precision = EXCESS_PRECISION_FAST;
   return false;
 }
 
@@ -159,16 +160,17 @@ lhd_set_decl_assembler_name (tree decl)
 
      Can't use just the variable's own name for a variable whose scope
      is less than the whole compilation.  Concatenate a distinguishing
-     number - we use the DECL_UID.  */
+     number.  */
 
   if (TREE_PUBLIC (decl) || DECL_FILE_SCOPE_P (decl))
     id = targetm.mangle_decl_assembler_name (decl, DECL_NAME (decl));
   else
     {
       const char *name = IDENTIFIER_POINTER (DECL_NAME (decl));
+      static unsigned long num;
       char *label;
 
-      ASM_FORMAT_PRIVATE_NAME (label, name, DECL_UID (decl));
+      ASM_FORMAT_PRIVATE_NAME (label, name, num++);
       id = get_identifier (label);
     }
 
@@ -473,6 +475,44 @@ lhd_make_node (enum tree_code code)
   return make_node (code);
 }
 
+/* Default implementation of LANG_HOOKS_SIMULATE_ENUM_DECL.  Assume a
+   simple int-based enumerator (which is all the hook can be used for
+   at present) and push each decl individually without any decoration.
+
+   This definition is suitable for LTO and is generic enough that it
+   might be reusable elsewhere.  */
+tree
+lhd_simulate_enum_decl (location_t loc, const char *name,
+			vec<string_int_pair> values)
+{
+  tree enumtype = lang_hooks.types.make_type (ENUMERAL_TYPE);
+  tree enumdecl = build_decl (loc, TYPE_DECL, get_identifier (name), enumtype);
+  TYPE_STUB_DECL (enumtype) = enumdecl;
+
+  tree value_chain = NULL_TREE;
+  string_int_pair *value;
+  unsigned int i;
+  FOR_EACH_VEC_ELT (values, i, value)
+    {
+      tree value_decl = build_decl (loc, CONST_DECL,
+				    get_identifier (value->first), enumtype);
+      DECL_INITIAL (value_decl) = build_int_cst (integer_type_node,
+						 value->second);
+      lang_hooks.decls.pushdecl (value_decl);
+      value_chain = tree_cons (value_decl, DECL_INITIAL (value_decl),
+			       value_chain);
+    }
+
+  TYPE_MIN_VALUE (enumtype) = TYPE_MIN_VALUE (integer_type_node);
+  TYPE_MAX_VALUE (enumtype) = TYPE_MAX_VALUE (integer_type_node);
+  SET_TYPE_ALIGN (enumtype, TYPE_ALIGN (integer_type_node));
+  TYPE_PRECISION (enumtype) = TYPE_PRECISION (integer_type_node);
+  layout_type (enumtype);
+  lang_hooks.decls.pushdecl (enumdecl);
+
+  return enumtype;
+}
+
 /* Default implementation of LANG_HOOKS_TYPE_FOR_SIZE.
    Return an integer type with PRECISION bits of precision,
    that is unsigned if UNSIGNEDP is nonzero, otherwise signed.  */
@@ -599,28 +639,21 @@ lhd_omp_mappable_type (tree type)
   return true;
 }
 
-/* Common function for add_builtin_function and
-   add_builtin_function_ext_scope.  */
+/* Common function for add_builtin_function, add_builtin_function_ext_scope
+   and simulate_builtin_function_decl.  */
+
 static tree
-add_builtin_function_common (const char *name,
-			     tree type,
-			     int function_code,
-			     enum built_in_class cl,
-			     const char *library_name,
-			     tree attrs,
-			     tree (*hook) (tree))
+build_builtin_function (location_t location, const char *name, tree type,
+			int function_code, enum built_in_class cl,
+			const char *library_name, tree attrs)
 {
   tree   id = get_identifier (name);
-  tree decl = build_decl (BUILTINS_LOCATION, FUNCTION_DECL, id, type);
+  tree decl = build_decl (location, FUNCTION_DECL, id, type);
 
   TREE_PUBLIC (decl)         = 1;
   DECL_EXTERNAL (decl)       = 1;
-  DECL_BUILT_IN_CLASS (decl) = cl;
 
-  DECL_FUNCTION_CODE (decl)  = (enum built_in_function) function_code;
-
-  /* DECL_FUNCTION_CODE is a bitfield; verify that the value fits.  */
-  gcc_assert (DECL_FUNCTION_CODE (decl) == function_code);
+  set_decl_built_in_function (decl, cl, function_code);
 
   if (library_name)
     {
@@ -636,8 +669,7 @@ add_builtin_function_common (const char *name,
   else
     decl_attributes (&decl, NULL_TREE, 0);
 
-  return hook (decl);
-
+  return decl;
 }
 
 /* Create a builtin function.  */
@@ -650,9 +682,9 @@ add_builtin_function (const char *name,
 		      const char *library_name,
 		      tree attrs)
 {
-  return add_builtin_function_common (name, type, function_code, cl,
-				      library_name, attrs,
-				      lang_hooks.builtin_function);
+  tree decl = build_builtin_function (BUILTINS_LOCATION, name, type,
+				      function_code, cl, library_name, attrs);
+  return lang_hooks.builtin_function (decl);
 }
 
 /* Like add_builtin_function, but make sure the scope is the external scope.
@@ -670,9 +702,40 @@ add_builtin_function_ext_scope (const char *name,
 				const char *library_name,
 				tree attrs)
 {
-  return add_builtin_function_common (name, type, function_code, cl,
-				      library_name, attrs,
-				      lang_hooks.builtin_function_ext_scope);
+  tree decl = build_builtin_function (BUILTINS_LOCATION, name, type,
+				      function_code, cl, library_name, attrs);
+  return lang_hooks.builtin_function_ext_scope (decl);
+}
+
+/* Simulate a declaration of a target-specific built-in function at
+   location LOCATION, as though it had been declared directly in the
+   source language.  NAME is the name of the function, TYPE is its function
+   type, FUNCTION_CODE is the target-specific function code, LIBRARY_NAME
+   is the name of the underlying library function (NULL if none) and
+   ATTRS is a list of function attributes.
+
+   Return the decl of the declared function.  */
+
+tree
+simulate_builtin_function_decl (location_t location, const char *name,
+				tree type, int function_code,
+				const char *library_name, tree attrs)
+{
+  tree decl = build_builtin_function (location, name, type,
+				      function_code, BUILT_IN_MD,
+				      library_name, attrs);
+  tree new_decl = lang_hooks.simulate_builtin_function_decl (decl);
+
+  /* Give the front end a chance to create a new decl if necessary,
+     but if the front end discards the decl in favour of a conflicting
+     (erroneous) previous definition, return the decl that we tried but
+     failed to add.  This allows the caller to process the returned decl
+     normally, even though the source code won't be able to use it.  */
+  if (TREE_CODE (new_decl) == FUNCTION_DECL
+      && fndecl_built_in_p (new_decl, function_code, BUILT_IN_MD))
+    return new_decl;
+
+  return decl;
 }
 
 tree
@@ -714,7 +777,7 @@ lhd_begin_section (const char *name)
     saved_section = text_section;
 
   /* Create a new section and switch to it.  */
-  section = get_section (name, SECTION_DEBUG | SECTION_EXCLUDE, NULL);
+  section = get_section (name, SECTION_DEBUG | SECTION_EXCLUDE, NULL, true);
   switch_to_section (section);
 }
 

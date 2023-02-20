@@ -1,5 +1,5 @@
 /* IRA hard register and memory cost calculation for allocnos or pseudos.
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -237,7 +237,7 @@ setup_cost_classes (cost_classes_t from)
    allocated.  */
 static cost_classes_t
 restrict_cost_classes (cost_classes_t full, machine_mode mode,
-		       const HARD_REG_SET &regs)
+		       const_hard_reg_set regs)
 {
   static struct cost_classes narrow;
   int map[N_REG_CLASSES];
@@ -254,12 +254,9 @@ restrict_cost_classes (cost_classes_t full, machine_mode mode,
 
       /* Calculate the set of registers in CL that belong to REGS and
 	 are valid for MODE.  */
-      HARD_REG_SET valid_for_cl;
-      COPY_HARD_REG_SET (valid_for_cl, reg_class_contents[cl]);
-      AND_HARD_REG_SET (valid_for_cl, regs);
-      AND_COMPL_HARD_REG_SET (valid_for_cl,
-			      ira_prohibited_class_mode_regs[cl][mode]);
-      AND_COMPL_HARD_REG_SET (valid_for_cl, ira_no_alloc_regs);
+      HARD_REG_SET valid_for_cl = reg_class_contents[cl] & regs;
+      valid_for_cl &= ~(ira_prohibited_class_mode_regs[cl][mode]
+			| ira_no_alloc_regs);
       if (hard_reg_set_empty_p (valid_for_cl))
 	continue;
 
@@ -343,8 +340,7 @@ setup_regno_cost_classes_by_aclass (int regno, enum reg_class aclass)
 
   if ((classes_ptr = cost_classes_aclass_cache[aclass]) == NULL)
     {
-      COPY_HARD_REG_SET (temp, reg_class_contents[aclass]);
-      AND_COMPL_HARD_REG_SET (temp, ira_no_alloc_regs);
+      temp = reg_class_contents[aclass] & ~ira_no_alloc_regs;
       /* We exclude classes from consideration which are subsets of
 	 ACLASS only if ACLASS is an uniform class.  */
       exclude_p = ira_uniform_class_p[aclass];
@@ -356,8 +352,7 @@ setup_regno_cost_classes_by_aclass (int regno, enum reg_class aclass)
 	    {
 	      /* Exclude non-uniform classes which are subsets of
 		 ACLASS.  */
-	      COPY_HARD_REG_SET (temp2, reg_class_contents[cl]);
-	      AND_COMPL_HARD_REG_SET (temp2, ira_no_alloc_regs);
+	      temp2 = reg_class_contents[cl] & ~ira_no_alloc_regs;
 	      if (hard_reg_set_subset_p (temp2, temp) && cl != aclass)
 		continue;
 	    }
@@ -1324,7 +1319,7 @@ record_operand_costs (rtx_insn *insn, enum reg_class *pref)
 	  hard_reg_class = REGNO_REG_CLASS (other_regno);
 	  bigger_hard_reg_class = ira_pressure_class_translate[hard_reg_class];
 	  /* Target code may return any cost for mode which does not
-	     fit the the hard reg class (e.g. DImode for AREG on
+	     fit the hard reg class (e.g. DImode for AREG on
 	     i386).  Check this and use a bigger class to get the
 	     right cost.  */
 	  if (bigger_hard_reg_class != NO_REGS
@@ -1479,13 +1474,6 @@ scan_one_insn (rtx_insn *insn)
 	  && REGNO (x) >= FIRST_PSEUDO_REGISTER
 	  && have_regs_of_mode[GET_MODE (x)])
         ira_init_register_move_cost_if_necessary (GET_MODE (x));
-      return insn;
-    }
-
-  if (pat_code == CLOBBER_HIGH)
-    {
-      gcc_assert (REG_P (XEXP (PATTERN (insn), 0))
-		  && HARD_REGISTER_P (XEXP (PATTERN (insn), 0)));
       return insn;
     }
 
@@ -2345,7 +2333,6 @@ ira_tune_allocno_costs (void)
   ira_allocno_object_iterator oi;
   ira_object_t obj;
   bool skip_p;
-  HARD_REG_SET *crossed_calls_clobber_regs;
 
   FOR_EACH_ALLOCNO (a, ai)
     {
@@ -2380,14 +2367,7 @@ ira_tune_allocno_costs (void)
 		continue;
 	      rclass = REGNO_REG_CLASS (regno);
 	      cost = 0;
-	      crossed_calls_clobber_regs
-		= &(ALLOCNO_CROSSED_CALLS_CLOBBERED_REGS (a));
-	      if (ira_hard_reg_set_intersection_p (regno, mode,
-						   *crossed_calls_clobber_regs)
-		  && (ira_hard_reg_set_intersection_p (regno, mode,
-						       call_used_reg_set)
-		      || targetm.hard_regno_call_part_clobbered (NULL, regno,
-								 mode)))
+	      if (ira_need_caller_save_p (a, regno))
 		cost += (ALLOCNO_CALL_FREQ (a)
 			 * (ira_memory_move_cost[mode][rclass][0]
 			    + ira_memory_move_cost[mode][rclass][1]));

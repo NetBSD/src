@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2015/09/23 03:03:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2023/02/20 02:01:02 mrg Exp $
 
 GCC_MACHINE_ARCH=riscv64
 .include "../Makefile.arch_bits"
 
-# mips64 files are in mips64e[lb] subdirs.
+# riscv64 files are in riscv64 subdirs.
 .PATH: ${.CURDIR}/../../../../arch/${MACHINE_ARCH}

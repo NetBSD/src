@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.7 2021/04/09 22:33:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.8 2023/02/20 02:01:02 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -16,6 +16,9 @@ BUILDINCS+=	${GTHRINCS}
 
 INCS=		${G_bits_headers} ${G_c_base_headers_extra} ${G_host_headers}
 INCS+=		${BUILDINCS}
+
+# These are handled with special rules
+#INCS+=		${G_bits_host_headers} ${G_host_headers_extra}
 
 # libsupc++
 # XXX use bits_sup_headers from libstdc++/include/Makefile.am

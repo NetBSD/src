@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.3 2015/09/23 03:03:38 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.4 2023/02/20 02:01:02 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -15,8 +15,8 @@ LIB=		gcc_eh
 .cc: # disable .cc->NULL transform
 
 SRCS+=		${LIB2_EH} ${LIB2_EHASM} empty.c
-COPTS.c-typeck.c=	-Wno-stack-protector
-COPTS.unwind-dw2.c=	-Wno-stack-protector
+COPTS.c-typeck.c+=	-Wno-stack-protector
+COPTS.unwind-dw2.c+=	-Wno-stack-protector
 
 MKPIC:=	no
 

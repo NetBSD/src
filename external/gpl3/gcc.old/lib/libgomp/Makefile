@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.8 2020/08/18 23:31:49 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.9 2023/02/20 02:01:02 mrg Exp $
 
 # build GCC's libgomp, so that -fopenmp works.
 
@@ -32,7 +32,7 @@ CPPFLAGS+= \
 CFLAGS+=-pthread
 
 SHLIB_MAJOR=	2
-SHLIB_MINOR=	0
+SHLIB_MINOR=	1
 
 LDFLAGS+=	-Wl,--version-script,${DIST}/libgomp/libgomp.map
 

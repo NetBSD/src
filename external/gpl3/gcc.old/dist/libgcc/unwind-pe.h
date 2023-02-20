@@ -1,5 +1,5 @@
 /* Exception handling and frame unwind runtime interface routines.
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -262,10 +262,27 @@ read_encoded_value_with_base (unsigned char encoding, _Unwind_Ptr base,
 
       if (result != 0)
 	{
+#if __FDPIC__
+	  /* FDPIC relative addresses imply taking the GOT address
+	     into account.  */
+	  if ((encoding & DW_EH_PE_pcrel) && (encoding & DW_EH_PE_indirect))
+	    {
+	      result += _Unwind_gnu_Find_got ((_Unwind_Ptr) u);
+	      result = *(_Unwind_Internal_Ptr *) result;
+	    }
+	  else
+	    {
+	      result += ((encoding & 0x70) == DW_EH_PE_pcrel
+			 ? (_Unwind_Internal_Ptr) u : base);
+	      if (encoding & DW_EH_PE_indirect)
+		result = *(_Unwind_Internal_Ptr *) result;
+	    }
+#else
 	  result += ((encoding & 0x70) == DW_EH_PE_pcrel
 		     ? (_Unwind_Internal_Ptr) u : base);
 	  if (encoding & DW_EH_PE_indirect)
 	    result = *(_Unwind_Internal_Ptr *) result;
+#endif
 	}
     }
 

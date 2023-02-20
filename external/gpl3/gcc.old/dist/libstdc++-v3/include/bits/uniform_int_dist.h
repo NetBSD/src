@@ -1,6 +1,6 @@
 // Class template uniform_int_distribution -*- C++ -*-
 
-// Copyright (C) 2009-2019 Free Software Foundation, Inc.
+// Copyright (C) 2009-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -33,10 +33,26 @@
 
 #include <type_traits>
 #include <limits>
+#if __cplusplus > 201703L
+# include <concepts>
+#endif
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
+
+#ifdef __cpp_lib_concepts
+  /// Requirements for a uniform random bit generator.
+  template<typename _Gen>
+    concept uniform_random_bit_generator
+      = invocable<_Gen&> && unsigned_integral<invoke_result_t<_Gen&>>
+      && requires
+      {
+	{ _Gen::min() } -> same_as<invoke_result_t<_Gen&>>;
+	{ _Gen::max() } -> same_as<invoke_result_t<_Gen&>>;
+	requires bool_constant<(_Gen::min() < _Gen::max())>::value;
+      };
+#endif
 
   namespace __detail
   {

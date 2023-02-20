@@ -1,6 +1,6 @@
 // Exception Handling support header (exception_ptr class) for -*- C++ -*-
 
-// Copyright (C) 2008-2019 Free Software Foundation, Inc.
+// Copyright (C) 2008-2020 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -39,6 +39,10 @@
 #include <typeinfo>
 #include <new>
 
+#if __cplusplus >= 201103L
+# include <bits/move.h>
+#endif
+
 extern "C++" {
 
 namespace std 
@@ -49,6 +53,7 @@ namespace std
    * @addtogroup exceptions
    * @{
    */
+
   namespace __exception_ptr
   {
     class exception_ptr;
@@ -154,6 +159,8 @@ namespace std
 	__attribute__ ((__pure__));
     };
 
+    /// @relates exception_ptr @{
+
     bool 
     operator==(const exception_ptr&, const exception_ptr&)
       _GLIBCXX_USE_NOEXCEPT __attribute__ ((__pure__));
@@ -166,10 +173,14 @@ namespace std
     swap(exception_ptr& __lhs, exception_ptr& __rhs)
     { __lhs.swap(__rhs); }
 
+    // @}
+
+    /// @cond undocumented
     template<typename _Ex>
       inline void
       __dest_thunk(void* __x)
       { static_cast<_Ex*>(__x)->~_Ex(); }
+    /// @endcond
 
   } // namespace __exception_ptr
 
@@ -178,14 +189,16 @@ namespace std
     exception_ptr 
     make_exception_ptr(_Ex __ex) _GLIBCXX_USE_NOEXCEPT
     {
-#if __cpp_exceptions && __cpp_rtti && !_GLIBCXX_HAVE_CDTOR_CALLABI
+#if __cpp_exceptions && __cpp_rtti && !_GLIBCXX_HAVE_CDTOR_CALLABI \
+      && __cplusplus >= 201103L
+      using _Ex2 = typename remove_reference<_Ex>::type;
       void* __e = __cxxabiv1::__cxa_allocate_exception(sizeof(_Ex));
       (void) __cxxabiv1::__cxa_init_primary_exception(
-	  __e, const_cast<std::type_info*>(&typeid(__ex)),
-	  __exception_ptr::__dest_thunk<_Ex>);
+	  __e, const_cast<std::type_info*>(&typeid(_Ex)),
+	  __exception_ptr::__dest_thunk<_Ex2>);
       try
 	{
-          ::new (__e) _Ex(__ex);
+	  ::new (__e) _Ex2(std::forward<_Ex>(__ex));
           return exception_ptr(__e);
 	}
       catch(...)
@@ -207,7 +220,7 @@ namespace std
 #endif
     }
 
-  // @} group exceptions
+  /// @} group exceptions
 } // namespace std
 
 } // extern "C++"

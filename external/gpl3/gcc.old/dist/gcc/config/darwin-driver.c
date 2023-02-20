@@ -1,5 +1,5 @@
 /* Additional functions for the GCC driver on Darwin native.
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
    Contributed by Apple Computer Inc.
 
 This file is part of GCC.
@@ -43,13 +43,13 @@ static const char *
 validate_macosx_version_min (const char *version_str)
 {
   size_t version_len;
-  unsigned long major, minor, tiny = 0;
+  unsigned long major, minor = 0, tiny = 0;
   char *end;
   const char *old_version = version_str;
   bool need_rewrite = false;
 
   version_len = strlen (version_str);
-  if (version_len < 4) /* The minimum would be 10.x  */
+  if (version_len < 2) /* The minimum would be 11  */
     return NULL;
 
   /* Version string must consist of digits and periods only.  */
@@ -63,18 +63,28 @@ validate_macosx_version_min (const char *version_str)
     need_rewrite = true;
 
   major = strtoul (version_str, &end, 10);
-  version_str = end + ((*end == '.') ? 1 : 0);
 
-  if (major != 10) /* So far .. all MacOS 10 ... */
+  /* macOS 10, 11, and 12 are known. clang accepts up to 99.  */
+  if (major < 10 || major > 99)
     return NULL;
 
-  /* Version string components must be present and numeric.  */
-  if (!ISDIGIT (version_str[0]))
+  /* Skip a separating period, if there's one.  */
+  version_str = end + ((*end == '.') ? 1 : 0);
+
+  if (major > 10 && *end != '\0' && !ISDIGIT (version_str[0]))
+     /* For macOS 11+, we allow just the major number, but if the minor is
+	there it must be numeric.  */
+    return NULL;
+  else if (major > 10 && *end == '\0')
+    /* We will rewrite 11 =>  11.0.0.  */
+    need_rewrite = true;
+  else if (major == 10 && (*end == '\0' || !ISDIGIT (version_str[0])))
+    /* Otherwise, minor version components must be present and numeric.  */
     return NULL;
 
   /* If we have one or more leading zeros on a component, then rewrite the
      version string.  */
-  if (version_str[0] == '0' && version_str[1] != '\0'
+  if (*end != '\0' && version_str[0] == '0' && version_str[1] != '\0'
       && version_str[1] != '.')
     need_rewrite = true;
 
@@ -104,7 +114,7 @@ validate_macosx_version_min (const char *version_str)
   if (need_rewrite)
     {
       char *new_version;
-      asprintf (&new_version, "10.%lu.%lu", minor, tiny);
+      asprintf (&new_version, "%2lu.%lu.%lu", major, minor, tiny);
       return new_version;
     }
 
@@ -114,6 +124,12 @@ validate_macosx_version_min (const char *version_str)
 #ifndef CROSS_DIRECTORY_STRUCTURE
 #include <sys/sysctl.h>
 #include "xregex.h"
+
+/* Determine the version of the running OS.
+   We only look at the first two components (ignoring the patch one) and
+   report NN.MM.0 where NN is currently either 10 or 11 and MM is the OS
+   minor release number.
+   If we can't parse what the kernel gives us, warn the user, and do nothing.  */
 
 static char *
 darwin_find_version_from_kernel (void)
@@ -125,8 +141,6 @@ darwin_find_version_from_kernel (void)
   char * version_p;
   char * new_flag;
 
-  /* Determine the version of the running OS.  If we can't, warn user,
-     and do nothing.  */
   if (sysctl (osversion_name, ARRAY_SIZE (osversion_name), osversion,
 	      &osversion_len, NULL, 0) == -1)
     {
@@ -144,10 +158,17 @@ darwin_find_version_from_kernel (void)
     major_vers = major_vers * 10 + (*version_p++ - '0');
   if (*version_p++ != '.')
     goto parse_failed;
-  
-  /* The major kernel version number is 4 plus the second OS version
-     component.  */
-  if (major_vers - 4 <= 4)
+
+  /* Darwin20 sees a transition to macOS 11.  In this, it seems that the
+     mapping to macOS minor version and patch level is now always 0, 0
+     (at least for macOS 11 and 12).  */
+  if (major_vers >= 20)
+    {
+      /* Apple clang doesn't include the minor version or the patch level
+	 in the object file, nor does it pass it to ld  */
+      asprintf (&new_flag, "%d.00.00", major_vers - 9);
+    }
+  else if (major_vers - 4 <= 4)
     /* On 10.4 and earlier, the old linker is used which does not
        support three-component system versions.
        FIXME: we should not assume this - a newer linker could be used.  */
@@ -202,7 +223,7 @@ darwin_default_min_version (void)
       const char *checked = validate_macosx_version_min (new_flag);
       if (checked == NULL)
 	{
-	  warning (0, "couldn%'t understand version %s\n", new_flag);
+	  warning (0, "could not understand version %s", new_flag);
 	  return NULL;
 	}
       new_flag = xstrndup (checked, strlen (checked));
@@ -232,14 +253,11 @@ maybe_get_sysroot_from_sdkroot ()
   return xstrndup (maybe_sysroot, strlen (maybe_sysroot));
 }
 
-/* Translate -filelist and -framework options in *DECODED_OPTIONS
-   (size *DECODED_OPTIONS_COUNT) to use -Xlinker so that they are
-   considered to be linker inputs in the case that no other inputs are
-   specified.  Handling these options in DRIVER_SELF_SPECS does not
-   suffice because specs are too late to add linker inputs, and
-   handling them in LINK_SPEC does not suffice because the linker will
-   not be called if there are no other inputs.  When native, also
-   default the -mmacosx-version-min flag.  */
+/* Handle the deduction of m32/m64 from -arch flags and the interactions
+   between them (i.e. try to warn a user who thinks that they have a driver
+   that can produce multi-slice "FAT" outputs with more than one arch).
+   Default the -mmacosx-version-min flag, which requires a system call on
+   native hosts.  */
 
 void
 darwin_driver_init (unsigned int *decoded_options_count,
@@ -257,6 +275,7 @@ darwin_driver_init (unsigned int *decoded_options_count,
   const char *vers_string = NULL;
   bool seen_version_min = false;
   bool seen_sysroot_p = false;
+  bool noexport_p = true;
 
   for (i = 1; i < *decoded_options_count; i++)
     {
@@ -299,29 +318,12 @@ darwin_driver_init (unsigned int *decoded_options_count,
 	  seenM64 = true;
 	  break;
 
-	case OPT_filelist:
-	case OPT_framework:
-	  ++*decoded_options_count;
-	  *decoded_options = XRESIZEVEC (struct cl_decoded_option,
-					 *decoded_options,
-					 *decoded_options_count);
-	  memmove (*decoded_options + i + 2,
-		   *decoded_options + i + 1,
-		   ((*decoded_options_count - i - 2)
-		    * sizeof (struct cl_decoded_option)));
-	  generate_option (OPT_Xlinker, (*decoded_options)[i].arg, 1,
-			   CL_DRIVER, &(*decoded_options)[i + 1]);
-	  generate_option (OPT_Xlinker,
-			   (*decoded_options)[i].canonical_option[0], 1,
-			   CL_DRIVER, &(*decoded_options)[i]);
-	  break;
-
 	case OPT_mmacosx_version_min_:
 	  seen_version_min = true;
 	  vers_string =
 	    validate_macosx_version_min ((*decoded_options)[i].arg);
 	  if (vers_string == NULL)
-	    warning (0, "%qs is not valid for %<mmacosx-version-min%>\n",
+	    warning (0, "%qs is not valid for %<mmacosx-version-min%>",
 		     (*decoded_options)[i].arg);
 	  else if (vers_string == (*decoded_options)[i].arg)
 	    vers_string = xstrndup ((*decoded_options)[i].arg, 32);
@@ -340,6 +342,13 @@ darwin_driver_init (unsigned int *decoded_options_count,
 	case OPT__sysroot_:
 	case OPT_isysroot:
 	  seen_sysroot_p = true;
+	  break;
+
+	case OPT_Xlinker:
+	case OPT_Wl_:
+	  gcc_checking_assert ((*decoded_options)[i].arg);
+	  if (strncmp ((*decoded_options)[i].arg, "-exported_symbol", 16) == 0)
+	    noexport_p = false;
 	  break;
 
 	default:
@@ -393,6 +402,10 @@ darwin_driver_init (unsigned int *decoded_options_count,
     }
 #endif
 
+  /* If there is nothing else on the command line, do not add sysroot etc.  */
+  if (*decoded_options_count <= 1)
+    return;
+
   if (appendM32 || appendM64)
     {
       ++*decoded_options_count;
@@ -403,7 +416,7 @@ darwin_driver_init (unsigned int *decoded_options_count,
 		       &(*decoded_options)[*decoded_options_count - 1]);
     }
 
-  if (! seen_sysroot_p)
+  if (!seen_sysroot_p)
     {
       /* We will pick up an SDKROOT if we didn't specify a sysroot and treat
 	 it as overriding any configure-time --with-sysroot.  */
@@ -422,7 +435,7 @@ darwin_driver_init (unsigned int *decoded_options_count,
   /* We will need to know the OS X version we're trying to build for here
      so that we can figure out the mechanism and source for the sysroot to
      be used.  */
-  if (! seen_version_min && *decoded_options_count > 1)
+  if (!seen_version_min)
     /* Not set by the User, try to figure it out.  */
     vers_string = darwin_default_min_version ();
 
@@ -458,5 +471,15 @@ darwin_driver_init (unsigned int *decoded_options_count,
 	  generate_option (OPT_asm_macosx_version_min_, asm_major, 1, CL_DRIVER,
 			  &(*decoded_options)[*decoded_options_count - 1]);
         }
+    }
+
+  if (noexport_p)
+    {
+      ++*decoded_options_count;
+      *decoded_options = XRESIZEVEC (struct cl_decoded_option,
+				     *decoded_options,
+				     *decoded_options_count);
+      generate_option (OPT_nodefaultexport, NULL, 1, CL_DRIVER,
+		       &(*decoded_options)[*decoded_options_count - 1]);
     }
 }

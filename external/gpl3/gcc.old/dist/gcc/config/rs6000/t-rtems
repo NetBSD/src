@@ -1,6 +1,6 @@
 # Multilibs for powerpc RTEMS targets.
 #
-# Copyright (C) 2004-2019 Free Software Foundation, Inc.
+# Copyright (C) 2004-2020 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -67,7 +67,6 @@ MULTILIB_REQUIRED += mcpu=604
 MULTILIB_REQUIRED += mcpu=604/msoft-float
 MULTILIB_REQUIRED += mcpu=7400
 MULTILIB_REQUIRED += mcpu=7400/msoft-float
-MULTILIB_REQUIRED += mcpu=8540
 MULTILIB_REQUIRED += mcpu=8540/msoft-float
 MULTILIB_REQUIRED += mcpu=860
 MULTILIB_REQUIRED += mcpu=e6500/m32
