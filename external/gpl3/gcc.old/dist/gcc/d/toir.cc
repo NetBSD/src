@@ -1,5 +1,5 @@
 /* toir.cc -- Lower D frontend statements to GCC trees.
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
 GCC is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -382,9 +382,11 @@ public:
       }
 
     if (ent->in_try_scope)
-      error_at (make_location_t (from->loc), "cannot goto into try block");
+      error_at (make_location_t (from->loc),
+		"cannot %<goto%> into %<try%> block");
     else if (ent->in_catch_scope)
-      error_at (make_location_t (from->loc), "cannot goto into catch block");
+      error_at (make_location_t (from->loc),
+		"cannot %<goto%> into %<catch%> block");
   }
 
   /* Check that a previously seen jump to a newly defined label is valid.
@@ -406,21 +408,21 @@ public:
 	      {
 		location = make_location_t (fwdref->statement->loc);
 		if (b->kind == level_try)
-		  error_at (location, "cannot goto into try block");
+		  error_at (location, "cannot %<goto%> into %<try%> block");
 		else
-		  error_at (location, "cannot goto into catch block");
+		  error_at (location, "cannot %<goto%> into %<catch%> block");
 	      }
 	    else if (s->isCaseStatement ())
 	      {
 		location = make_location_t (s->loc);
 		error_at (location, "case cannot be in different "
-			  "try block level from switch");
+			  "%<try%> block level from %<switch%>");
 	      }
 	    else if (s->isDefaultStatement ())
 	      {
 		location = make_location_t (s->loc);
 		error_at (location, "default cannot be in different "
-			  "try block level from switch");
+			  "%<try%> block level from %<switch%>");
 	      }
 	    else
 	      gcc_unreachable ();
@@ -1140,8 +1142,8 @@ public:
 	static int warned = 0;
 	if (!warned)
 	  {
-	    error_at (make_location_t (s->loc), "exception handling disabled, "
-		      "use -fexceptions to enable");
+	    error_at (make_location_t (s->loc), "exception handling disabled; "
+		      "use %<-fexceptions%> to enable");
 	    warned = 1;
 	  }
       }
@@ -1421,12 +1423,19 @@ public:
 		       outputs, inputs, clobbers, labels);
     SET_EXPR_LOCATION (exp, make_location_t (s->loc));
 
-    /* If the extended syntax was not used, mark the ASM_EXPR.  */
+    /* If the extended syntax was not used, mark the ASM_EXPR as being an
+       ASM_INPUT expression instead of an ASM_OPERAND with no operands.  */
     if (s->args == NULL && s->clobbers == NULL)
       ASM_INPUT_P (exp) = 1;
 
-    /* Asm statements are treated as volatile unless 'pure'.  */
-    ASM_VOLATILE_P (exp) = !(s->stc & STCpure);
+    /* All asm statements are assumed to have a side effect.  As a future
+       optimization, this could be unset when building in release mode.  */
+    ASM_VOLATILE_P (exp) = 1;
+
+    /* If the function has been annotated with 'pragma(inline)', then mark
+       the asm expression as being inline as well.  */
+    if (this->func_->inlining == PINLINEalways)
+      ASM_INLINE_P (exp) = 1;
 
     add_stmt (exp);
   }

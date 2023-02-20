@@ -1,6 +1,6 @@
 ; newlib tls glue code for Synopsys DesignWare ARC cpu.
 
-/* Copyright (C) 2016-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2016-2020 Free Software Foundation, Inc.
    Contributor: Joern Rennecke <joern.rennecke@embecosm.com>
 		on behalf of Synopsys Inc.
 
@@ -32,6 +32,12 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    This exception does not however invalidate any other reasons why
    the executable file might be covered by the GNU General Public License.  */
 
+
+#ifdef __ARC_RF16__
+	/* Use object attributes to inform other tools this file is
+	safe for RF16 configuration.  */
+	.arc_attribute Tag_ARC_ABI_rf16, 1
+#endif
 
 #if (__ARC_TLS_REGNO__ != -1)
  /* ANSI concatenation macros.  */
