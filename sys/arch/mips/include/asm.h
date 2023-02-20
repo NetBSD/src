@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.72 2023/02/13 12:00:18 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.73 2023/02/20 13:30:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,6 +59,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_gprof.h"
+#include "opt_multiprocessor.h"
 #endif
 
 #ifdef __ASSEMBLER__
@@ -573,7 +574,7 @@ _C_LABEL(x):
 #endif
 
 /* compiler define */
-#if defined(__OCTEON__)
+#if defined(MULTIPROCESSOR) && defined(__OCTEON__)
 /*
  * See common/lib/libc/arch/mips/atomic/membar_ops.S for notes on
  * Octeon memory ordering guarantees and barriers.
@@ -614,7 +615,7 @@ _C_LABEL(x):
 #define	SYNC_REL	sync 4
 #define	BDSYNC_PLUNGER	sync 4
 #define	SYNC_PLUNGER	sync 4
-#elif __mips >= 3 || !defined(__mips_o32)
+#elif defined(MULTIPROCESSOR) && (__mips >= 3 || !defined(__mips_o32))
 #define	LLSCSYNC	/* nothing */
 #define	BDSYNC		sync
 #define	BDSYNC_ACQ	sync
