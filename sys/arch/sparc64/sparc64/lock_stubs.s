@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.12 2023/02/20 13:30:22 riastradh Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.13 2023/02/20 13:30:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -41,11 +41,11 @@
 #define	CURLWP	(CPUINFO_VA+CI_CURLWP)
 
 #if defined(MULTIPROCESSOR)
-#define	MB_READ	membar #LoadLoad | #LoadStore
-#define	MB_MEM	membar #LoadStore | #StoreStore
+#define	MB_ACQ	membar #LoadLoad | #LoadStore
+#define	MB_REL	membar #LoadStore | #StoreStore
 #else
-#define	MB_READ	/* nothing */
-#define	MB_MEM	/* nothing */
+#define	MB_ACQ	/* nothing */
+#define	MB_REL	/* nothing */
 #endif
 
 #if !defined(LOCKDEBUG)
@@ -58,7 +58,7 @@ ENTRY(mutex_enter)
 	sethi	%hi(CURLWP), %o1
 	LDPTR	[%o1 + %lo(CURLWP)], %o1	! current thread
 	CASPTR	[%o0], %g0, %o1			! compare-and-swap
-	MB_READ
+	MB_ACQ
 	brnz,pn	%o1, 1f				! lock was unowned?
 	 nop
 	retl					! - yes, done
@@ -76,7 +76,7 @@ ENTRY(mutex_exit)
 	sethi	%hi(CURLWP), %o1
 	LDPTR	[%o1 + %lo(CURLWP)], %o1	! current thread
 	clr	%o2				! new value (0)
-	MB_MEM
+	MB_REL
 	CASPTR	[%o0], %o1, %o2			! compare-and-swap
 	cmp	%o1, %o2
 	bne,pn	CCCR, 1f			! nope, hard case
