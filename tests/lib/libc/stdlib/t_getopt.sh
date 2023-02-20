@@ -1,4 +1,4 @@
-# $NetBSD: t_getopt.sh,v 1.1 2011/01/01 23:56:49 pgoyette Exp $
+# $NetBSD: t_getopt.sh,v 1.2 2023/02/20 15:47:56 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -65,6 +65,18 @@ getopt_body()
 	h_getopt "${load}" "foo -d - 1" "d|2"
 }
 
+atf_test_case getopt_optval
+getopt_optval()
+{
+	atf_set "descr" "Checks getopt(3) with optional value"
+}
+getopt_optval_body()
+{
+	h_getopt "o::" "foo -o" "o=(null)|0"
+	h_getopt "o::" "foo -o1 2" "o=1|1"
+	h_getopt "o::" "foo -o 1 2" "o=(null)|2"
+}
+
 atf_test_case getopt_long
 getopt_long_head()
 {
@@ -119,5 +131,6 @@ longopt:	list, no_argument, lopt, 'l'"
 atf_init_test_cases()
 {
 	atf_add_test_case getopt
+	atf_add_test_case getopt_optval
 	atf_add_test_case getopt_long
 }
