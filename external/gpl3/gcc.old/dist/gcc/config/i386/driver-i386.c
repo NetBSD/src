@@ -1,5 +1,5 @@
 /* Subroutines for the gcc driver.
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -420,12 +420,16 @@ const char *host_detect_local_cpu (int argc, const char **argv)
   unsigned int has_avx5124fmaps = 0, has_avx5124vnniw = 0;
   unsigned int has_gfni = 0, has_avx512vbmi2 = 0;
   unsigned int has_avx512bitalg = 0;
+  unsigned int has_avx512vpopcntdq = 0;
   unsigned int has_shstk = 0;
   unsigned int has_avx512vnni = 0, has_vaes = 0;
   unsigned int has_vpclmulqdq = 0;
+  unsigned int has_avx512vp2intersect = 0;
   unsigned int has_movdiri = 0, has_movdir64b = 0;
+  unsigned int has_enqcmd = 0;
   unsigned int has_waitpkg = 0;
   unsigned int has_cldemote = 0;
+  unsigned int has_avx512bf16 = 0;
 
   unsigned int has_ptwrite = 0;
 
@@ -523,16 +527,22 @@ const char *host_detect_local_cpu (int argc, const char **argv)
       has_vaes = ecx & bit_VAES;
       has_vpclmulqdq = ecx & bit_VPCLMULQDQ;
       has_avx512bitalg = ecx & bit_AVX512BITALG;
+      has_avx512vpopcntdq = ecx & bit_AVX512VPOPCNTDQ;
       has_movdiri = ecx & bit_MOVDIRI;
       has_movdir64b = ecx & bit_MOVDIR64B;
+      has_enqcmd = ecx & bit_ENQCMD;
       has_cldemote = ecx & bit_CLDEMOTE;
 
       has_avx5124vnniw = edx & bit_AVX5124VNNIW;
       has_avx5124fmaps = edx & bit_AVX5124FMAPS;
+      has_avx512vp2intersect = edx & bit_AVX512VP2INTERSECT;
 
       has_shstk = ecx & bit_SHSTK;
       has_pconfig = edx & bit_PCONFIG;
       has_waitpkg = ecx & bit_WAITPKG;
+
+      __cpuid_count (7, 1, eax, ebx, ecx, edx);
+      has_avx512bf16 = eax & bit_AVX512BF16;
     }
 
   if (max_level >= 13)
@@ -658,6 +668,8 @@ const char *host_detect_local_cpu (int argc, const char **argv)
 	processor = PROCESSOR_GEODE;
       else if (has_movbe && family == 22)
 	processor = PROCESSOR_BTVER2;
+      else if (has_vaes)
+	processor = PROCESSOR_ZNVER3;
       else if (has_clwb)
 	processor = PROCESSOR_ZNVER2;
       else if (has_clzero)
@@ -765,9 +777,12 @@ const char *host_detect_local_cpu (int argc, const char **argv)
 	case 0x37:
 	case 0x4a:
 	case 0x4d:
-	case 0x5a:
 	case 0x5d:
 	  /* Silvermont.  */
+	case 0x4c:
+	case 0x5a:
+	case 0x75:
+	  /* Airmont.  */
 	  cpu = "silvermont";
 	  break;
 	case 0x5c:
@@ -778,6 +793,12 @@ const char *host_detect_local_cpu (int argc, const char **argv)
 	case 0x7a:
 	  /* Goldmont Plus.  */
 	  cpu = "goldmont-plus";
+	  break;
+	case 0x86:
+	case 0x96:
+	case 0x9c:
+	  /* Tremont.  */
+	  cpu = "tremont";
 	  break;
 	case 0x0f:
 	  /* Merom.  */
@@ -829,6 +850,9 @@ const char *host_detect_local_cpu (int argc, const char **argv)
 	case 0x8e:
 	case 0x9e:
 	  /* Kaby Lake.  */
+	case 0xa5:
+	case 0xa6:
+	  /* Comet Lake.  */
 	  cpu = "skylake";
 	  break;
 	case 0x55:
@@ -838,6 +862,22 @@ const char *host_detect_local_cpu (int argc, const char **argv)
 	  else
 	    /* Skylake with AVX-512.  */
 	    cpu = "skylake-avx512";
+	  break;
+	case 0x6a:
+	case 0x6c:
+	  /* Ice Lake server.  */
+	  cpu = "icelake-server";
+	  break;
+	case 0x7e:
+	case 0x7d:
+	case 0x9d:
+	  /* Ice Lake client.  */
+	  cpu = "icelake-client";
+	  break;
+	case 0x8c:
+	case 0x8d:
+	  /* Tiger Lake.  */
+	  cpu = "tigerlake";
 	  break;
 	case 0x57:
 	  /* Knights Landing.  */
@@ -855,36 +895,45 @@ const char *host_detect_local_cpu (int argc, const char **argv)
 	  if (arch)
 	    {
 	      /* This is unknown family 0x6 CPU.  */
-	      /* Assume Ice Lake Server.  */
-	      if (has_wbnoinvd)
-		cpu = "icelake-server";
-	      /* Assume Ice Lake.  */
-	      else if (has_gfni)
-		cpu = "icelake-client";
-	      /* Assume Cannon Lake.  */
-	      else if (has_avx512vbmi)
-		cpu = "cannonlake";
-	      /* Assume Knights Mill.  */
-	      else if (has_avx5124vnniw)
-		cpu = "knm";
-	      /* Assume Knights Landing.  */
-	      else if (has_avx512er)
-		cpu = "knl";
-	      /* Assume Skylake with AVX-512.  */
-	      else if (has_avx512f)
-		cpu = "skylake-avx512";
-	      /* Assume Skylake.  */
-	      else if (has_clflushopt)
-		cpu = "skylake";
-	      /* Assume Broadwell.  */
-	      else if (has_adx)
-		cpu = "broadwell";
-	      else if (has_avx2)
+	      if (has_avx)
+	      {
+		/* Assume Tiger Lake */
+		if (has_avx512vp2intersect)
+		  cpu = "tigerlake";
+		/* Assume Cooper Lake */
+		else if (has_avx512bf16)
+		  cpu = "cooperlake";
+		/* Assume Ice Lake Server.  */
+		else if (has_wbnoinvd)
+		  cpu = "icelake-server";
+		/* Assume Ice Lake.  */
+		else if (has_avx512bitalg)
+		  cpu = "icelake-client";
+		/* Assume Cannon Lake.  */
+		else if (has_avx512vbmi)
+		  cpu = "cannonlake";
+		/* Assume Knights Mill.  */
+		else if (has_avx5124vnniw)
+		  cpu = "knm";
+		/* Assume Knights Landing.  */
+		else if (has_avx512er)
+		  cpu = "knl";
+		/* Assume Skylake with AVX-512.  */
+		else if (has_avx512f)
+		  cpu = "skylake-avx512";
+		/* Assume Skylake.  */
+		else if (has_clflushopt)
+		  cpu = "skylake";
+		/* Assume Broadwell.  */
+		else if (has_adx)
+		  cpu = "broadwell";
+		else if (has_avx2)
 		/* Assume Haswell.  */
-		cpu = "haswell";
-	      else if (has_avx)
+		  cpu = "haswell";
+		else
 		/* Assume Sandy Bridge.  */
-		cpu = "sandybridge";
+		  cpu = "sandybridge";	      
+	      }
 	      else if (has_sse4_2)
 		{
 		  if (has_gfni)
@@ -1030,6 +1079,9 @@ const char *host_detect_local_cpu (int argc, const char **argv)
     case PROCESSOR_ZNVER2:
       cpu = "znver2";
       break;
+    case PROCESSOR_ZNVER3:
+      cpu = "znver3";
+      break;
     case PROCESSOR_BTVER1:
       cpu = "btver1";
       break;
@@ -1137,12 +1189,16 @@ const char *host_detect_local_cpu (int argc, const char **argv)
       const char *shstk = has_shstk ? " -mshstk" : " -mno-shstk";
       const char *vaes = has_vaes ? " -mvaes" : " -mno-vaes";
       const char *vpclmulqdq = has_vpclmulqdq ? " -mvpclmulqdq" : " -mno-vpclmulqdq";
+      const char *avx512vp2intersect = has_avx512vp2intersect ? " -mavx512vp2intersect" : " -mno-avx512vp2intersect";
       const char *avx512bitalg = has_avx512bitalg ? " -mavx512bitalg" : " -mno-avx512bitalg";
+      const char *avx512vpopcntdq = has_avx512vpopcntdq ? " -mavx512vpopcntdq" : " -mno-avx512vpopcntdq";
       const char *movdiri = has_movdiri ? " -mmovdiri" : " -mno-movdiri";
       const char *movdir64b = has_movdir64b ? " -mmovdir64b" : " -mno-movdir64b";
+      const char *enqcmd = has_enqcmd ? " -menqcmd" : " -mno-enqcmd";
       const char *waitpkg = has_waitpkg ? " -mwaitpkg" : " -mno-waitpkg";
       const char *cldemote = has_cldemote ? " -mcldemote" : " -mno-cldemote";
       const char *ptwrite = has_ptwrite ? " -mptwrite" : " -mno-ptwrite";
+      const char *avx512bf16 = has_avx512bf16 ? " -mavx512bf16" : " -mno-avx512bf16";
 
       options = concat (options, mmx, mmx3dnow, sse, sse2, sse3, ssse3,
 			sse4a, cx16, sahf, movbe, aes, sha, pclmul,
@@ -1156,9 +1212,9 @@ const char *host_detect_local_cpu (int argc, const char **argv)
 			avx512ifma, avx512vbmi, avx5124fmaps, avx5124vnniw,
 			clwb, mwaitx, clzero, pku, rdpid, gfni, shstk,
 			avx512vbmi2, avx512vnni, vaes, vpclmulqdq,
-			avx512bitalg, movdiri, movdir64b, waitpkg, cldemote,
-			ptwrite,
-			NULL);
+			avx512bitalg, avx512vpopcntdq, movdiri, movdir64b,
+			waitpkg, cldemote, ptwrite, avx512bf16, enqcmd,
+			avx512vp2intersect, NULL);
     }
 
 done:

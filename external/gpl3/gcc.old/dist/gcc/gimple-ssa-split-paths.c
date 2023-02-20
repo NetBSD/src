@@ -1,5 +1,5 @@
 /* Support routines for Splitting Paths to loop backedges
-   Copyright (C) 2015-2019 Free Software Foundation, Inc.
+   Copyright (C) 2015-2020 Free Software Foundation, Inc.
    Contributed by Ajit Kumar Agarwal <ajitkum@xilinx.com>.
 
  This file is part of GCC.
@@ -31,7 +31,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "gimple-iterator.h"
 #include "tracer.h"
 #include "predict.h"
-#include "params.h"
 #include "gimple-ssa.h"
 #include "tree-phinodes.h"
 #include "ssa-iterators.h"
@@ -68,8 +67,14 @@ find_block_to_duplicate_for_splitting_paths (basic_block latch)
 	 region.  Verify that it is.
 
 	 First, verify that BB has two predecessors (each arm of the
-	 IF-THEN-ELSE) and two successors (the latch and exit).  */
-      if (EDGE_COUNT (bb->preds) == 2 && EDGE_COUNT (bb->succs) == 2)
+	 IF-THEN-ELSE) and two successors (the latch and exit) and that
+	 all edges are normal.  */
+      if (EDGE_COUNT (bb->preds) == 2
+	  && !(EDGE_PRED (bb, 0)->flags & EDGE_COMPLEX)
+	  && !(EDGE_PRED (bb, 1)->flags & EDGE_COMPLEX)
+	  && EDGE_COUNT (bb->succs) == 2
+	  && !(EDGE_SUCC (bb, 0)->flags & EDGE_COMPLEX)
+	  && !(EDGE_SUCC (bb, 1)->flags & EDGE_COMPLEX))
 	{
 	  /* Now verify that BB's immediate dominator ends in a
 	     conditional as well.  */
@@ -264,8 +269,12 @@ is_feasible_trace (basic_block bb)
 	  if (is_gimple_debug (stmt))
 	    continue;
 	  /* If there's a use in the joiner this might be a CSE/DCE
-	     opportunity.  */
-	  if (gimple_bb (stmt) == bb)
+	     opportunity, but not if the use is in a conditional
+	     which makes this a likely if-conversion candidate.  */
+	  if (gimple_bb (stmt) == bb
+	      && (!is_gimple_assign (stmt)
+		  || (TREE_CODE_CLASS (gimple_assign_rhs_code (stmt))
+		      != tcc_comparison)))
 	    {
 	      found_useful_phi = true;
 	      break;
@@ -362,7 +371,7 @@ is_feasible_trace (basic_block bb)
 
   /* Upper Hard limit on the number statements to copy.  */
   if (num_stmts_in_join
-      >= PARAM_VALUE (PARAM_MAX_JUMP_THREAD_DUPLICATION_STMTS))
+      >= param_max_jump_thread_duplication_stmts)
     return false;
 
   return true;

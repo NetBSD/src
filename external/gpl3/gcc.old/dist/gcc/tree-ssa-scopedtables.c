@@ -1,5 +1,5 @@
 /* Header file for SSA dominator optimizations.
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -34,7 +34,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "internal-fn.h"
 #include "tree-dfa.h"
 #include "options.h"
-#include "params.h"
 
 static bool hashable_expr_equal_p (const struct hashable_expr *,
 				   const struct hashable_expr *);
@@ -224,7 +223,8 @@ avail_exprs_stack::simplify_binary_operation (gimple *stmt,
    we finish processing this block and its children.  */
 
 tree
-avail_exprs_stack::lookup_avail_expr (gimple *stmt, bool insert, bool tbaa_p)
+avail_exprs_stack::lookup_avail_expr (gimple *stmt, bool insert, bool tbaa_p,
+				      expr_hash_elt **elt)
 {
   expr_hash_elt **slot;
   tree lhs;
@@ -292,7 +292,7 @@ avail_exprs_stack::lookup_avail_expr (gimple *stmt, bool insert, bool tbaa_p)
 	 up the virtual use-def chain using walk_non_aliased_vuses.
 	 But don't do this when removing expressions from the hash.  */
       ao_ref ref;
-      unsigned limit = PARAM_VALUE (PARAM_SCCVN_MAX_ALIAS_QUERIES_PER_ACCESS);
+      unsigned limit = param_sccvn_max_alias_queries_per_access;
       if (!(vuse1 && vuse2
 	    && gimple_assign_single_p (stmt)
 	    && TREE_CODE (gimple_assign_lhs (stmt)) == SSA_NAME
@@ -318,6 +318,8 @@ avail_exprs_stack::lookup_avail_expr (gimple *stmt, bool insert, bool tbaa_p)
   /* Extract the LHS of the assignment so that it can be used as the current
      definition of another variable.  */
   lhs = (*slot)->lhs ();
+  if (elt)
+    *elt = *slot;
 
   /* Valueize the result.  */
   if (TREE_CODE (lhs) == SSA_NAME)
@@ -494,7 +496,9 @@ avail_expr_hash (class expr_hash_elt *p)
 	    {
 	      enum tree_code code = MEM_REF;
 	      hstate.add_object (code);
-	      inchash::add_expr (base, hstate);
+	      inchash::add_expr (base, hstate,
+				 TREE_CODE (base) == MEM_REF 
+				 ? OEP_ADDRESS_OF : 0);
 	      hstate.add_object (offset);
 	      hstate.add_object (size);
 	      return hstate.end ();
@@ -540,7 +544,12 @@ equal_mem_array_ref_p (tree t0, tree t1)
   if (rev0 != rev1 || maybe_ne (sz0, sz1) || maybe_ne (off0, off1))
     return false;
 
-  return operand_equal_p (base0, base1, 0);
+  return operand_equal_p (base0, base1,
+			  (TREE_CODE (base0) == MEM_REF
+			   || TREE_CODE (base0) == TARGET_MEM_REF)
+			  && (TREE_CODE (base1) == MEM_REF
+			      || TREE_CODE (base1) == TARGET_MEM_REF)
+			  ? OEP_ADDRESS_OF : 0);
 }
 
 /* Compare two hashable_expr structures for equivalence.  They are
@@ -1021,9 +1030,9 @@ bool
 expr_elt_hasher::equal (const value_type &p1, const compare_type &p2)
 {
   const struct hashable_expr *expr1 = p1->expr ();
-  const struct expr_hash_elt *stamp1 = p1->stamp ();
+  const class expr_hash_elt *stamp1 = p1->stamp ();
   const struct hashable_expr *expr2 = p2->expr ();
-  const struct expr_hash_elt *stamp2 = p2->stamp ();
+  const class expr_hash_elt *stamp2 = p2->stamp ();
 
   /* This case should apply only when removing entries from the table.  */
   if (stamp1 == stamp2)

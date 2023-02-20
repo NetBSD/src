@@ -1,5 +1,5 @@
 /* Simple bitmaps.
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -295,6 +295,7 @@ public:
 
   /* Allow calling sbitmap functions on our bitmap.  */
   operator sbitmap () { return m_bitmap; }
+  operator const_sbitmap () const { return m_bitmap; }
 
 private:
   /* Prevent making a copy that refers to our sbitmap.  */

@@ -1,6 +1,6 @@
 // Components for manipulating sequences of characters -*- C++ -*-
 
-// Copyright (C) 1997-2019 Free Software Foundation, Inc.
+// Copyright (C) 1997-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -118,7 +118,7 @@ namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
-#define __cpp_lib_erase_if 201900L
+#define __cpp_lib_erase_if 202002L
 
   template<typename _CharT, typename _Traits, typename _Alloc,
 	   typename _Predicate>

@@ -2,7 +2,7 @@
 
    Contributed by Evgeny Stupachenko <evstupac@gmail.com>
 
-   Copyright (C) 2015-2019 Free Software Foundation, Inc.
+   Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -126,7 +126,7 @@ create_dispatcher_calls (struct cgraph_node *node)
       FOR_EACH_VEC_ELT (edges_to_redirect, i, e)
 	{
 	  e->redirect_callee (inode);
-	  e->redirect_call_stmt_to_callee ();
+	  cgraph_edge::redirect_call_stmt_to_callee (e);
 	}
 
       /* Redirect references.  */
@@ -178,10 +178,6 @@ create_dispatcher_calls (struct cgraph_node *node)
   node->externally_visible = false;
   node->forced_by_abi = false;
   node->set_section (NULL);
-  node->unique_name = ((node->resolution == LDPR_PREVAILING_DEF_IRONLY
-			|| node->resolution == LDPR_PREVAILING_DEF_IRONLY_EXP)
-		       && !flag_incremental_link);
-  node->resolution = LDPR_PREVAILING_DEF_IRONLY;
 
   DECL_ARTIFICIAL (node->decl) = 1;
   node->force_output = true;
@@ -311,9 +307,8 @@ create_target_clone (cgraph_node *node, bool definition, char *name,
   if (definition)
     {
       new_node = node->create_version_clone_with_body (vNULL, NULL,
-    						       NULL, false,
-						       NULL, NULL,
-						       name, attributes);
+    						       NULL, NULL,
+						       NULL, name, attributes);
       if (new_node == NULL)
 	return NULL;
       new_node->force_output = true;
@@ -357,7 +352,7 @@ expand_target_clones (struct cgraph_node *node, bool definition)
     }
 
   if (node->definition
-      && !tree_versionable_function_p (node->decl))
+      && (node->alias || !tree_versionable_function_p (node->decl)))
     {
       auto_diagnostic_group d;
       error_at (DECL_SOURCE_LOCATION (node->decl),
@@ -366,6 +361,9 @@ expand_target_clones (struct cgraph_node *node, bool definition)
       if (lookup_attribute ("noclone", DECL_ATTRIBUTES (node->decl)))
 	reason = G_("function %q+F can never be copied "
 		    "because it has %<noclone%> attribute");
+      else if (node->alias)
+	reason
+	  = "%<target_clones%> cannot be combined with %<alias%> attribute";
       else
 	reason = copy_forbidden (DECL_STRUCT_FUNCTION (node->decl));
       if (reason)
@@ -427,7 +425,7 @@ expand_target_clones (struct cgraph_node *node, bool definition)
 						   attributes);
       if (new_node == NULL)
 	return false;
-      new_node->local.local = false;
+      new_node->local = false;
       XDELETEVEC (suffix);
 
       decl2_v = new_node->function_version ();
@@ -455,7 +453,7 @@ expand_target_clones (struct cgraph_node *node, bool definition)
   tree attributes = make_attribute ("target", "default",
 				    DECL_ATTRIBUTES (node->decl));
   DECL_ATTRIBUTES (node->decl) = attributes;
-  node->local.local = false;
+  node->local = false;
   return true;
 }
 
@@ -499,7 +497,7 @@ redirect_to_specific_clone (cgraph_node *node)
 	      if (attribute_list_equal (attr_target, attr_target2))
 		{
 		  e->redirect_callee (callee);
-		  e->redirect_call_stmt_to_callee ();
+		  cgraph_edge::redirect_call_stmt_to_callee (e);
 		  break;
 		}
 	    }

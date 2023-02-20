@@ -1,5 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -63,7 +63,7 @@ along with GCC; see the file COPYING3.  If not see
  * XXX figure out a better way to do this
  */
 #undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include/gcc-9"
+#define GCC_INCLUDE_DIR "/usr/include/gcc-10"
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
@@ -203,3 +203,9 @@ along with GCC; see the file COPYING3.  If not see
   do {									\
     netbsd_patch_builtins ();						\
   } while(0)
+
+#if defined(HAVE_LD_STATIC_DYNAMIC)
+#undef LIBTSAN_EARLY_SPEC
+#define LIBTSAN_EARLY_SPEC "%{static-libtsan:" LD_STATIC_OPTION "}"	\
+  " -ltsan %{static-libtsan:" LD_DYNAMIC_OPTION "} -lpthread"
+#endif

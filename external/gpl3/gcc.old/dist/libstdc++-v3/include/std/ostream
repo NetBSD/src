@@ -1,6 +1,6 @@
 // Output streams -*- C++ -*-
 
-// Copyright (C) 1997-2019 Free Software Foundation, Inc.
+// Copyright (C) 1997-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -96,7 +96,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       class sentry;
       friend class sentry;
 
-      //@{
+      ///@{
       /**
        *  @brief  Interface for manipulators.
        *
@@ -132,9 +132,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	__pf(*this);
 	return *this;
       }
-      //@}
+      ///@}
 
-      //@{
+      ///@{
       /**
        *  @name Inserters
        *
@@ -153,7 +153,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
        *  be rethrown.
       */
 
-      //@{
+      ///@{
       /**
        *  @brief Integer arithmetic inserters
        *  @param  __n A variable of builtin integral type.
@@ -205,9 +205,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator<<(unsigned long long __n)
       { return _M_insert(__n); }
 #endif
-      //@}
+      ///@}
 
-      //@{
+      ///@{
       /**
        *  @brief  Floating point arithmetic inserters
        *  @param  __f A variable of builtin floating point type.
@@ -231,7 +231,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       __ostream_type&
       operator<<(long double __f)
       { return _M_insert(__f); }
-      //@}
+      ///@}
 
       /**
        *  @brief  Pointer arithmetic inserters
@@ -274,9 +274,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       */
       __ostream_type&
       operator<<(__streambuf_type* __sb);
-      //@}
+      ///@}
 
-      //@{
+      ///@{
       /**
        *  @name Unformatted Output Functions
        *
@@ -339,7 +339,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       */
       __ostream_type&
       write(const char_type* __s, streamsize __n);
-      //@}
+      ///@}
 
       /**
        *  @brief  Synchronizing the stream buffer.
@@ -485,7 +485,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       { return _M_ok; }
     };
 
-  //@{
+  ///@{
   /**
    *  @brief  Character inserters
    *  @param  __out  An output stream.
@@ -512,24 +512,65 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     { return (__out << __out.widen(__c)); }
 
   // Specialization
-  template <class _Traits>
+  template<typename _Traits>
     inline basic_ostream<char, _Traits>&
     operator<<(basic_ostream<char, _Traits>& __out, char __c)
     { return __ostream_insert(__out, &__c, 1); }
 
   // Signed and unsigned
-  template<class _Traits>
+  template<typename _Traits>
     inline basic_ostream<char, _Traits>&
     operator<<(basic_ostream<char, _Traits>& __out, signed char __c)
     { return (__out << static_cast<char>(__c)); }
 
-  template<class _Traits>
+  template<typename _Traits>
     inline basic_ostream<char, _Traits>&
     operator<<(basic_ostream<char, _Traits>& __out, unsigned char __c)
     { return (__out << static_cast<char>(__c)); }
-  //@}
 
-  //@{
+#if __cplusplus > 201703L
+  // The following deleted overloads prevent formatting character values as
+  // numeric values.
+
+#ifdef _GLIBCXX_USE_WCHAR_T
+  template<typename _Traits>
+    basic_ostream<char, _Traits>&
+    operator<<(basic_ostream<char, _Traits>&, wchar_t) = delete;
+#endif // _GLIBCXX_USE_WCHAR_T
+
+#ifdef _GLIBCXX_USE_CHAR8_T
+  template<typename _Traits>
+    basic_ostream<char, _Traits>&
+    operator<<(basic_ostream<char, _Traits>&, char8_t) = delete;
+#endif
+
+  template<typename _Traits>
+    basic_ostream<char, _Traits>&
+    operator<<(basic_ostream<char, _Traits>&, char16_t) = delete;
+
+  template<typename _Traits>
+    basic_ostream<char, _Traits>&
+    operator<<(basic_ostream<char, _Traits>&, char32_t) = delete;
+
+#ifdef _GLIBCXX_USE_WCHAR_T
+#ifdef _GLIBCXX_USE_CHAR8_T
+  template<typename _Traits>
+    basic_ostream<wchar_t, _Traits>&
+    operator<<(basic_ostream<wchar_t, _Traits>&, char8_t) = delete;
+#endif // _GLIBCXX_USE_CHAR8_T
+
+  template<typename _Traits>
+    basic_ostream<wchar_t, _Traits>&
+    operator<<(basic_ostream<wchar_t, _Traits>&, char16_t) = delete;
+
+  template<typename _Traits>
+    basic_ostream<wchar_t, _Traits>&
+    operator<<(basic_ostream<wchar_t, _Traits>&, char32_t) = delete;
+#endif // _GLIBCXX_USE_WCHAR_T
+#endif // C++20
+  ///@}
+
+  ///@{
   /**
    *  @brief  String inserters
    *  @param  __out  An output stream.
@@ -560,7 +601,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     operator<<(basic_ostream<_CharT, _Traits>& __out, const char* __s);
 
   // Partial specializations
-  template<class _Traits>
+  template<typename _Traits>
     inline basic_ostream<char, _Traits>&
     operator<<(basic_ostream<char, _Traits>& __out, const char* __s)
     {
@@ -573,16 +614,57 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 
   // Signed and unsigned
-  template<class _Traits>
+  template<typename _Traits>
     inline basic_ostream<char, _Traits>&
     operator<<(basic_ostream<char, _Traits>& __out, const signed char* __s)
     { return (__out << reinterpret_cast<const char*>(__s)); }
 
-  template<class _Traits>
+  template<typename _Traits>
     inline basic_ostream<char, _Traits> &
     operator<<(basic_ostream<char, _Traits>& __out, const unsigned char* __s)
     { return (__out << reinterpret_cast<const char*>(__s)); }
-  //@}
+
+#if __cplusplus > 201703L
+   // The following deleted overloads prevent formatting strings as
+   // pointer values.
+
+#ifdef _GLIBCXX_USE_WCHAR_T
+  template<typename _Traits>
+    basic_ostream<char, _Traits>&
+    operator<<(basic_ostream<char, _Traits>&, const wchar_t*) = delete;
+#endif // _GLIBCXX_USE_WCHAR_T
+
+#ifdef _GLIBCXX_USE_CHAR8_T
+  template<typename _Traits>
+    basic_ostream<char, _Traits>&
+    operator<<(basic_ostream<char, _Traits>&, const char8_t*) = delete;
+#endif // _GLIBCXX_USE_CHAR8_T
+
+  template<typename _Traits>
+    basic_ostream<char, _Traits>&
+    operator<<(basic_ostream<char, _Traits>&, const char16_t*) = delete;
+
+  template<typename _Traits>
+    basic_ostream<char, _Traits>&
+    operator<<(basic_ostream<char, _Traits>&, const char32_t*) = delete;
+
+#ifdef _GLIBCXX_USE_WCHAR_T
+#ifdef _GLIBCXX_USE_CHAR8_T
+  template<typename _Traits>
+    basic_ostream<wchar_t, _Traits>&
+    operator<<(basic_ostream<wchar_t, _Traits>&, const char8_t*) = delete;
+#endif
+
+  template<typename _Traits>
+    basic_ostream<wchar_t, _Traits>&
+    operator<<(basic_ostream<wchar_t, _Traits>&, const char16_t*) = delete;
+
+  template<typename _Traits>
+    basic_ostream<wchar_t, _Traits>&
+    operator<<(basic_ostream<wchar_t, _Traits>&, const char32_t*) = delete;
+#endif // _GLIBCXX_USE_WCHAR_T
+#endif // C++20
+  ///@}
 
   // Standard basic_ostream manipulators
 

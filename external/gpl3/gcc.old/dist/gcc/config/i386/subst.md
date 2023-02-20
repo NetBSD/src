@@ -1,5 +1,5 @@
 ;; GCC machine description for AVX512F instructions
-;; Copyright (C) 2013-2019 Free Software Foundation, Inc.
+;; Copyright (C) 2013-2020 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -271,7 +271,7 @@
 (define_subst_attr "round_scalar_mask_op3" "round_scalar" "" "<round_scalar_mask_operand3>")
 (define_subst_attr "round_scalar_constraint" "round_scalar" "vm" "v")
 (define_subst_attr "round_scalar_prefix" "round_scalar" "vex" "evex")
-(define_subst_attr "round_scalar_nimm_predicate" "round_scalar" "vector_operand" "register_operand")
+(define_subst_attr "round_scalar_nimm_predicate" "round_scalar" "nonimmediate_operand" "register_operand")
 
 (define_subst "round_scalar"
   [(set (match_operand:SUBST_V 0)
@@ -296,7 +296,7 @@
 (define_subst_attr "round_saeonly_scalar_mask_op4" "round_saeonly_scalar" "" "<round_saeonly_scalar_mask_operand4>")
 (define_subst_attr "round_saeonly_scalar_constraint" "round_saeonly_scalar" "vm" "v")
 (define_subst_attr "round_saeonly_scalar_prefix" "round_saeonly_scalar" "vex" "evex")
-(define_subst_attr "round_saeonly_scalar_nimm_predicate" "round_saeonly_scalar" "vector_operand" "register_operand")
+(define_subst_attr "round_saeonly_scalar_nimm_predicate" "round_saeonly_scalar" "nonimmediate_operand" "register_operand")
 
 (define_subst "round_saeonly_scalar"
   [(set (match_operand:SUBST_V 0)
@@ -313,3 +313,16 @@
 		(const_int 1))
 	     (match_operand:SI 3 "const48_operand")]
 		UNSPEC_EMBEDDED_ROUNDING))])
+
+(define_subst_attr "maskz_half_name" "maskz_half" "" "_maskz_1")
+(define_subst_attr "maskz_half_operand4" "maskz_half" "" "%{%5%}%N4")
+
+(define_subst "maskz_half"
+  [(set (match_operand:SUBST_V 0)
+        (match_operand:SUBST_V 1))]
+  ""
+  [(set (match_dup 0)
+        (vec_merge:SUBST_V
+	  (match_dup 1)
+	  (match_operand:SUBST_V 2 "const0_operand" "C")
+	  (match_operand:<avx512fmaskhalfmode> 3 "register_operand" "Yk")))])

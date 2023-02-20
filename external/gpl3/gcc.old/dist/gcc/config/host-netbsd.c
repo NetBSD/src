@@ -1,5 +1,5 @@
 /* NetBSD host-specific hook definitions.
-   Copyright (C) 2004-2013 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -81,5 +81,5 @@ netbsd_gt_pch_use_address (void *base, size_t size, int fd, size_t offset)
   return addr == base ? 1 : -1;
 }
 
-
+
 const struct host_hooks host_hooks = HOST_HOOKS_INITIALIZER;

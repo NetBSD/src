@@ -1,5 +1,5 @@
 /* Interface for the GNU C++ pretty-printer.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
    Contributed by Gabriel Dos Reis <gdr@integrable-solutions.net>
 
 This file is part of GCC.
@@ -29,9 +29,12 @@ enum cxx_pretty_printer_flags
   pp_cxx_flag_default_argument = 1 << pp_c_flag_last_bit
 };
 
-struct cxx_pretty_printer : c_pretty_printer
+class cxx_pretty_printer : public c_pretty_printer
 {
+public:
   cxx_pretty_printer ();
+
+  pretty_printer *clone () const OVERRIDE;
 
   void constant (tree);
   void id_expression (tree);
@@ -109,5 +112,6 @@ void pp_cxx_conjunction (cxx_pretty_printer *, tree);
 void pp_cxx_disjunction (cxx_pretty_printer *, tree);
 void pp_cxx_constraint (cxx_pretty_printer *, tree);
 void pp_cxx_constrained_type_spec (cxx_pretty_printer *, tree);
+void pp_cxx_parameter_mapping (cxx_pretty_printer *, tree);
 
 #endif /* GCC_CXX_PRETTY_PRINT_H */

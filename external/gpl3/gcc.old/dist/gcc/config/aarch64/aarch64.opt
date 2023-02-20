@@ -1,5 +1,5 @@
 ; Machine description for AArch64 architecture.
-; Copyright (C) 2009-2019 Free Software Foundation, Inc.
+; Copyright (C) 2009-2020 Free Software Foundation, Inc.
 ; Contributed by ARM Ltd.
 ;
 ; This file is part of GCC.
@@ -31,7 +31,7 @@ TargetSave
 const char *x_aarch64_override_tune_string
 
 TargetVariable
-unsigned long aarch64_isa_flags = 0
+uint64_t aarch64_isa_flags = 0
 
 TargetVariable
 unsigned aarch64_enable_bti = 2
@@ -70,6 +70,10 @@ Assume target CPU is configured as big endian.
 mgeneral-regs-only
 Target Report RejectNegative Mask(GENERAL_REGS_ONLY) Save
 Generate code which uses only the general registers.
+
+mharden-sls=
+Target RejectNegative Joined Var(aarch64_harden_sls_string)
+Generate code to mitigate against straight line speculation.
 
 mfix-cortex-a53-835769
 Target Report Var(aarch64_fix_a53_err835769) Init(2) Save
@@ -157,7 +161,7 @@ Target RejectNegative Joined Var(aarch64_branch_protection_string) Save
 Use branch-protection features.
 
 msign-return-address=
-Target Deprecated RejectNegative Joined Enum(aarch64_ra_sign_scope_t) Var(aarch64_ra_sign_scope) Init(AARCH64_FUNCTION_NONE) Save
+Target WarnRemoved RejectNegative Joined Enum(aarch64_ra_sign_scope_t) Var(aarch64_ra_sign_scope) Init(AARCH64_FUNCTION_NONE) Save
 Select return address signing scope.
 
 Enum
@@ -255,3 +259,21 @@ user-land code.
 TargetVariable
 long aarch64_stack_protector_guard_offset = 0
 
+moutline-atomics
+Target Report Var(aarch64_flag_outline_atomics) Init(2) Save
+Generate local calls to out-of-line atomic operations.
+
+-param=aarch64-sve-compare-costs=
+Target Joined UInteger Var(aarch64_sve_compare_costs) Init(1) IntegerRange(0, 1) Param
+When vectorizing for SVE, consider using unpacked vectors for smaller elements and use the cost model to pick the cheapest approach.  Also use the cost model to choose between SVE and Advanced SIMD vectorization.
+
+-param=aarch64-float-recp-precision=
+Target Joined UInteger Var(aarch64_float_recp_precision) Init(1) IntegerRange(1, 5) Param
+The number of Newton iterations for calculating the reciprocal for float type.  The precision of division is proportional to this param when division approximation is enabled.  The default value is 1.
+
+-param=aarch64-double-recp-precision=
+Target Joined UInteger Var(aarch64_double_recp_precision) Init(2) IntegerRange(1, 5) Param
+The number of Newton iterations for calculating the reciprocal for double type.  The precision of division is proportional to this param when division approximation is enabled.  The default value is 2.
+
+-param=aarch64-autovec-preference=
+Target Joined UInteger Var(aarch64_autovec_preference) Init(0) IntegerRange(0, 4) Param

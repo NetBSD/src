@@ -1,5 +1,5 @@
 /* IPA reference lists.
-   Copyright (C) 2010-2019 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -22,8 +22,8 @@ along with GCC; see the file COPYING3.  If not see
 #define GCC_IPA_REF_H
 
 struct cgraph_node;
-class varpool_node;
-class symtab_node;
+struct varpool_node;
+struct symtab_node;
 
 
 /* How the reference is done.  */
@@ -46,7 +46,7 @@ public:
      function.  */
   bool cannot_lead_to_return ();
 
-  /* Return true if refernece may be used in address compare.  */
+  /* Return true if reference may be used in address compare.  */
   bool address_matters_p ();
 
   /* Return reference list this reference is in.  */
@@ -59,6 +59,9 @@ public:
   symtab_node *referred;
   gimple *stmt;
   unsigned int lto_stmt_uid;
+  /* speculative id is used to link direct calls with their corresponding
+     IPA_REF_ADDR references when representing speculative calls.  */
+  unsigned int speculative_id : 16;
   unsigned int referred_index;
   ENUM_BITFIELD (ipa_ref_use) use:3;
   unsigned int speculative:1;

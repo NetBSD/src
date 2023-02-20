@@ -104,6 +104,7 @@ am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
 	$(top_srcdir)/../config/no-executables.m4 \
 	$(top_srcdir)/../config/override.m4 \
 	$(top_srcdir)/../config/stdint.m4 \
+	$(top_srcdir)/../config/toolexeclibdir.m4 \
 	$(top_srcdir)/../config/unwind_ipinfo.m4 \
 	$(top_srcdir)/../libtool.m4 $(top_srcdir)/../ltoptions.m4 \
 	$(top_srcdir)/../ltsugar.m4 $(top_srcdir)/../ltversion.m4 \
@@ -477,12 +478,13 @@ xml_sources_manual = \
 	${xml_dir}/manual/policy_data_structures.xml \
 	${xml_dir}/manual/policy_data_structures_biblio.xml \
 	${xml_dir}/manual/prerequisites.xml \
-	${xml_dir}/manual/profile_mode.xml \
 	${xml_dir}/manual/shared_ptr.xml \
 	${xml_dir}/manual/spine.xml \
 	${xml_dir}/manual/status_cxx1998.xml \
 	${xml_dir}/manual/status_cxx2011.xml \
 	${xml_dir}/manual/status_cxx2014.xml \
+	${xml_dir}/manual/status_cxx2017.xml \
+	${xml_dir}/manual/status_cxx2020.xml \
 	${xml_dir}/manual/status_cxxtr1.xml \
 	${xml_dir}/manual/status_cxxtr24733.xml \
 	${xml_dir}/manual/strings.xml \

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2021/04/09 23:15:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2023/02/20 02:12:06 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -32,7 +32,8 @@ LIB2ADD_EDITED=	${G_LIB2ADD:T:S/.asm/.S/}
 SRCS+=		${LIB2FUNCS} ${LIB2FUNCS_ST} ${LIB2DIVMOD} \
 		${LIB2ADD_EDITED} \
 		${LIB2ADD_HACK:T:S/.asm/.S/} \
-		${G_LIB2ADD_ST:T} ${LIB1ASMFUNCS}
+		${G_LIB2ADD_ST:T} ${LIB1ASMFUNCS} \
+		${LSE_NAMES:=.o}
 .if ${MKPIC} == "no"
 .if empty(LIBGCC_MACHINE_ARCH:Mearm*)
 SRCS+=		${LIB2_EH} ${LIB2_EHASM}
@@ -46,7 +47,7 @@ CPPFLAGS+=	-DPIC
 # the -fpic/-FPIC present in ${G_LIBGCC2_CFLAGS}.
 MKPIC:= no
 
-COPTS.unwind-dw2.c = -Wno-stack-protector
+COPTS.unwind-dw2.c += -Wno-stack-protector
 
 .include <bsd.lib.mk>
 

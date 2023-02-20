@@ -1,5 +1,5 @@
 ;;- Machine description for HP PA-RISC architecture for GCC compiler
-;;   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+;;   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 ;;   Contributed by the Center for Software Science at the University
 ;;   of Utah.
 
@@ -1383,7 +1383,7 @@
                         (match_operand:SF 2 "reg_or_0_operand" "")])
 		      (label_ref (match_operand 3 "" ""))
 		      (pc)))]
-  ""
+  "! TARGET_SOFT_FLOAT"
   "
 {
   pa_emit_bcond_fp (operands);
@@ -1398,7 +1398,7 @@
                         (match_operand:DF 2 "reg_or_0_operand" "")])
 		      (label_ref (match_operand 3 "" ""))
 		      (pc)))]
-  ""
+  "! TARGET_SOFT_FLOAT"
   "
 {
   pa_emit_bcond_fp (operands);
@@ -2235,6 +2235,29 @@
   [(set_attr "type" "load,move,move,move,shift,load,store,move,move,fpalu,fpload,fpstore")
    (set_attr "pa_combine_type" "addmove")
    (set_attr "length" "4,4,4,4,4,4,4,4,4,4,4,4")])
+
+(define_insn ""
+  [(set (match_operand:SI 0 "move_dest_operand"
+			  "=r,r,r,r,r,r,Q,!*q,!r")
+	(match_operand:SI 1 "move_src_operand"
+			  "A,r,J,N,K,RQ,rM,!rM,!*q"))]
+  "(register_operand (operands[0], SImode)
+    || reg_or_0_operand (operands[1], SImode))
+   && TARGET_SOFT_FLOAT
+   && TARGET_64BIT"
+  "@
+   ldw RT'%A1,%0
+   copy %1,%0
+   ldi %1,%0
+   ldil L'%1,%0
+   {zdepi|depwi,z} %Z1,%0
+   ldw%M1 %1,%0
+   stw%M0 %r1,%0
+   mtsar %r1
+   {mfctl|mfctl,w} %%sar,%0"
+  [(set_attr "type" "load,move,move,move,shift,load,store,move,move")
+   (set_attr "pa_combine_type" "addmove")
+   (set_attr "length" "4,4,4,4,4,4,4,4,4")])
 
 (define_insn ""
   [(set (match_operand:SI 0 "indexed_memory_operand" "=R")
@@ -3162,9 +3185,9 @@
 
 ;; The definition of this insn does not really explain what it does,
 ;; but it should suffice that anything generated as this insn will be
-;; recognized as a movmemsi operation, and that it will not successfully
+;; recognized as a cpymemsi operation, and that it will not successfully
 ;; combine with anything.
-(define_expand "movmemsi"
+(define_expand "cpymemsi"
   [(parallel [(set (match_operand:BLK 0 "" "")
 		   (match_operand:BLK 1 "" ""))
 	      (clobber (match_dup 4))
@@ -3244,7 +3267,7 @@
 ;; operands 0 and 1 are both equivalent to symbolic MEMs.  Thus, we are
 ;; forced to internally copy operands 0 and 1 to operands 7 and 8,
 ;; respectively.  We then split or peephole optimize after reload.
-(define_insn "movmemsi_prereload"
+(define_insn "cpymemsi_prereload"
   [(set (mem:BLK (match_operand:SI 0 "register_operand" "r,r"))
 	(mem:BLK (match_operand:SI 1 "register_operand" "r,r")))
    (clobber (match_operand:SI 2 "register_operand" "=&r,&r"))	;loop cnt/tmp
@@ -3337,7 +3360,7 @@
     }
 }")
 
-(define_insn "movmemsi_postreload"
+(define_insn "cpymemsi_postreload"
   [(set (mem:BLK (match_operand:SI 0 "register_operand" "+r,r"))
 	(mem:BLK (match_operand:SI 1 "register_operand" "+r,r")))
    (clobber (match_operand:SI 2 "register_operand" "=&r,&r"))	;loop cnt/tmp
@@ -3352,7 +3375,7 @@
   "* return pa_output_block_move (operands, !which_alternative);"
   [(set_attr "type" "multi,multi")])
 
-(define_expand "movmemdi"
+(define_expand "cpymemdi"
   [(parallel [(set (match_operand:BLK 0 "" "")
 		   (match_operand:BLK 1 "" ""))
 	      (clobber (match_dup 4))
@@ -3432,7 +3455,7 @@
 ;; operands 0 and 1 are both equivalent to symbolic MEMs.  Thus, we are
 ;; forced to internally copy operands 0 and 1 to operands 7 and 8,
 ;; respectively.  We then split or peephole optimize after reload.
-(define_insn "movmemdi_prereload"
+(define_insn "cpymemdi_prereload"
   [(set (mem:BLK (match_operand:DI 0 "register_operand" "r,r"))
 	(mem:BLK (match_operand:DI 1 "register_operand" "r,r")))
    (clobber (match_operand:DI 2 "register_operand" "=&r,&r"))	;loop cnt/tmp
@@ -3525,7 +3548,7 @@
     }
 }")
 
-(define_insn "movmemdi_postreload"
+(define_insn "cpymemdi_postreload"
   [(set (mem:BLK (match_operand:DI 0 "register_operand" "+r,r"))
 	(mem:BLK (match_operand:DI 1 "register_operand" "+r,r")))
    (clobber (match_operand:DI 2 "register_operand" "=&r,&r"))	;loop cnt/tmp
@@ -4024,12 +4047,12 @@
   [(set (match_operand:DF 0 "move_dest_operand"
 			  "=!*r,*r,*r,*r,*r,Q,f,f,T")
 	(match_operand:DF 1 "move_src_operand"
-			  "!*r,J,N,K,RQ,*rG,fG,RT,f"))]
+			  "!*rG,J,N,K,RQ,*rG,fG,RT,f"))]
   "(register_operand (operands[0], DFmode)
     || reg_or_0_operand (operands[1], DFmode))
    && !TARGET_SOFT_FLOAT && TARGET_64BIT"
   "@
-   copy %1,%0
+   copy %r1,%0
    ldi %1,%0
    ldil L'%1,%0
    depdi,z %z1,%0
@@ -4041,6 +4064,25 @@
   [(set_attr "type" "move,move,move,shift,load,store,fpalu,fpload,fpstore")
    (set_attr "pa_combine_type" "addmove")
    (set_attr "length" "4,4,4,4,4,4,4,4,4")])
+
+(define_insn ""
+  [(set (match_operand:DF 0 "move_dest_operand"
+			  "=!*r,*r,*r,*r,*r,Q")
+	(match_operand:DF 1 "move_src_operand"
+			  "!*rG,J,N,K,RQ,*rG"))]
+  "(register_operand (operands[0], DFmode)
+    || reg_or_0_operand (operands[1], DFmode))
+   && TARGET_SOFT_FLOAT && TARGET_64BIT"
+  "@
+   copy %r1,%0
+   ldi %1,%0
+   ldil L'%1,%0
+   depdi,z %z1,%0
+   ldd%M1 %1,%0
+   std%M0 %r1,%0"
+  [(set_attr "type" "move,move,move,shift,load,store")
+   (set_attr "pa_combine_type" "addmove")
+   (set_attr "length" "4,4,4,4,4,4")])
 
 
 (define_expand "movdi"
@@ -4199,6 +4241,28 @@
   [(set_attr "type" "load,move,move,move,shift,load,store,move,move,fpalu,fpload,fpstore")
    (set_attr "pa_combine_type" "addmove")
    (set_attr "length" "4,4,4,4,4,4,4,4,4,4,4,4")])
+
+(define_insn ""
+  [(set (match_operand:DI 0 "move_dest_operand"
+			  "=r,r,r,r,r,r,Q,!*q,!r")
+	(match_operand:DI 1 "move_src_operand"
+			  "A,r,J,N,K,RQ,rM,!rM,!*q"))]
+  "(register_operand (operands[0], DImode)
+    || reg_or_0_operand (operands[1], DImode))
+   && TARGET_SOFT_FLOAT && TARGET_64BIT"
+  "@
+   ldd RT'%A1,%0
+   copy %1,%0
+   ldi %1,%0
+   ldil L'%1,%0
+   depdi,z %z1,%0
+   ldd%M1 %1,%0
+   std%M0 %r1,%0
+   mtsar %r1
+   {mfctl|mfctl,w} %%sar,%0"
+  [(set_attr "type" "load,move,move,move,shift,load,store,move,move")
+   (set_attr "pa_combine_type" "addmove")
+   (set_attr "length" "4,4,4,4,4,4,4,4,4")])
 
 (define_insn ""
   [(set (match_operand:DI 0 "indexed_memory_operand" "=R")
@@ -4404,6 +4468,23 @@
   [(set_attr "type" "fpalu,move,fpload,load,fpstore,store")
    (set_attr "pa_combine_type" "addmove")
    (set_attr "length" "4,4,4,4,4,4")])
+
+(define_insn ""
+  [(set (match_operand:SF 0 "move_dest_operand"
+			  "=!*r,*r,Q")
+	(match_operand:SF 1 "reg_or_0_or_nonsymb_mem_operand"
+			  "!*rG,RQ,*rG"))]
+  "(register_operand (operands[0], SFmode)
+    || reg_or_0_operand (operands[1], SFmode))
+   && TARGET_SOFT_FLOAT
+   && TARGET_64BIT"
+  "@
+   copy %r1,%0
+   ldw%M1 %1,%0
+   stw%M0 %r1,%0"
+  [(set_attr "type" "move,load,store")
+   (set_attr "pa_combine_type" "addmove")
+   (set_attr "length" "4,4,4")])
 
 (define_insn ""
   [(set (match_operand:SF 0 "indexed_memory_operand" "=R")
@@ -5374,32 +5455,38 @@
   [(set (match_operand:DI 0 "register_operand" "")
         (mult:DI (match_operand:DI 1 "register_operand" "")
 		 (match_operand:DI 2 "register_operand" "")))]
-  "TARGET_64BIT && ! TARGET_DISABLE_FPREGS && ! TARGET_SOFT_FLOAT"
+  "! optimize_size
+   && TARGET_PA_11
+   && ! TARGET_DISABLE_FPREGS
+   && ! TARGET_SOFT_FLOAT"
   "
 {
   rtx low_product = gen_reg_rtx (DImode);
   rtx cross_product1 = gen_reg_rtx (DImode);
   rtx cross_product2 = gen_reg_rtx (DImode);
-  rtx cross_scratch = gen_reg_rtx (DImode);
-  rtx cross_product = gen_reg_rtx (DImode);
   rtx op1l, op1r, op2l, op2r;
-  rtx op1shifted, op2shifted;
 
-  op1shifted = gen_reg_rtx (DImode);
-  op2shifted = gen_reg_rtx (DImode);
-  op1l = gen_reg_rtx (SImode);
-  op1r = gen_reg_rtx (SImode);
-  op2l = gen_reg_rtx (SImode);
-  op2r = gen_reg_rtx (SImode);
+  if (TARGET_64BIT)
+    {
+      rtx op1shifted = gen_reg_rtx (DImode);
+      rtx op2shifted = gen_reg_rtx (DImode);
 
-  emit_move_insn (op1shifted, gen_rtx_LSHIFTRT (DImode, operands[1],
-						GEN_INT (32)));
-  emit_move_insn (op2shifted, gen_rtx_LSHIFTRT (DImode, operands[2],
-						GEN_INT (32)));
-  op1r = force_reg (SImode, gen_rtx_SUBREG (SImode, operands[1], 4));
-  op2r = force_reg (SImode, gen_rtx_SUBREG (SImode, operands[2], 4));
-  op1l = force_reg (SImode, gen_rtx_SUBREG (SImode, op1shifted, 4));
-  op2l = force_reg (SImode, gen_rtx_SUBREG (SImode, op2shifted, 4));
+      emit_move_insn (op1shifted, gen_rtx_LSHIFTRT (DImode, operands[1],
+						    GEN_INT (32)));
+      emit_move_insn (op2shifted, gen_rtx_LSHIFTRT (DImode, operands[2],
+						    GEN_INT (32)));
+      op1r = force_reg (SImode, gen_rtx_SUBREG (SImode, operands[1], 4));
+      op2r = force_reg (SImode, gen_rtx_SUBREG (SImode, operands[2], 4));
+      op1l = force_reg (SImode, gen_rtx_SUBREG (SImode, op1shifted, 4));
+      op2l = force_reg (SImode, gen_rtx_SUBREG (SImode, op2shifted, 4));
+    }
+  else
+    {
+      op1r = force_reg (SImode, gen_lowpart (SImode, operands[1]));
+      op2r = force_reg (SImode, gen_lowpart (SImode, operands[2]));
+      op1l = force_reg (SImode, gen_highpart (SImode, operands[1]));
+      op2l = force_reg (SImode, gen_highpart (SImode, operands[2]));
+    }
 
   /* Emit multiplies for the cross products.  */
   emit_insn (gen_umulsidi3 (cross_product1, op2r, op1l));
@@ -5408,13 +5495,35 @@
   /* Emit a multiply for the low sub-word.  */
   emit_insn (gen_umulsidi3 (low_product, copy_rtx (op2r), copy_rtx (op1r)));
 
-  /* Sum the cross products and shift them into proper position.  */
-  emit_insn (gen_adddi3 (cross_scratch, cross_product1, cross_product2));
-  emit_insn (gen_ashldi3 (cross_product, cross_scratch, GEN_INT (32)));
+  if (TARGET_64BIT)
+    {
+      rtx cross_scratch = gen_reg_rtx (DImode);
+      rtx cross_product = gen_reg_rtx (DImode);
 
-  /* Add the cross product to the low product and store the result
-     into the output operand .  */
-  emit_insn (gen_adddi3 (operands[0], cross_product, low_product));
+      /* Sum the cross products and shift them into proper position.  */
+      emit_insn (gen_adddi3 (cross_scratch, cross_product1, cross_product2));
+      emit_insn (gen_ashldi3 (cross_product, cross_scratch, GEN_INT (32)));
+
+      /* Add the cross product to the low product and store the result
+	 into the output operand .  */
+      emit_insn (gen_adddi3 (operands[0], cross_product, low_product));
+    }
+  else
+    {
+      rtx cross_scratch = gen_reg_rtx (SImode);
+
+      /* Sum cross products.  */
+      emit_move_insn (cross_scratch,
+		      gen_rtx_PLUS (SImode,
+				    gen_lowpart (SImode, cross_product1),
+				    gen_lowpart (SImode, cross_product2)));
+      emit_move_insn (gen_lowpart (SImode, operands[0]),
+		      gen_lowpart (SImode, low_product));
+      emit_move_insn (gen_highpart (SImode, operands[0]),
+		      gen_rtx_PLUS (SImode,
+				    gen_highpart (SImode, low_product),
+				    cross_scratch));
+    }
   DONE;
 }")
 
@@ -6416,9 +6525,32 @@
   [(set (match_operand:DI 0 "register_operand" "")
 	(ashift:DI (match_operand:DI 1 "lhs_lshift_operand" "")
 		   (match_operand:DI 2 "arith32_operand" "")))]
-  "TARGET_64BIT"
+  ""
   "
 {
+  if (!TARGET_64BIT)
+    {
+      if (REG_P (operands[0]) && GET_CODE (operands[2]) == CONST_INT)
+	{
+	  unsigned HOST_WIDE_INT shift = UINTVAL (operands[2]);
+	  if (shift >= 1 && shift <= 31)
+	    {
+	      rtx dst = operands[0];
+	      rtx src = force_reg (DImode, operands[1]);
+	      emit_insn (gen_shd_internal (gen_highpart (SImode, dst),
+					   gen_lowpart (SImode, src),
+					   GEN_INT (32-shift),
+					   gen_highpart (SImode, src),
+					   GEN_INT (shift)));
+	      emit_insn (gen_ashlsi3 (gen_lowpart (SImode, dst),
+				      gen_lowpart (SImode, src),
+				      GEN_INT (shift)));
+	      DONE;
+	    }
+	}
+      /* Fallback to using optabs.c's expand_doubleword_shift.  */
+      FAIL;
+    }
   if (GET_CODE (operands[2]) != CONST_INT)
     {
       rtx temp = gen_reg_rtx (DImode);
@@ -6604,32 +6736,82 @@
    (set_attr "length" "4")])
 
 ; Shift right pair word 0 to 31 bits.
-(define_insn "shrpsi4"
-  [(set (match_operand:SI 0 "register_operand" "=r,r")
-	(ior:SI (ashift:SI (match_operand:SI 1 "register_operand" "r,r")
-			   (minus:SI (const_int 32)
-			     (match_operand:SI 3 "shift5_operand" "q,n")))
-		(lshiftrt:SI (match_operand:SI 2 "register_operand" "r,r")
-			     (match_dup 3))))]
+(define_insn "*shrpsi4_1"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(match_operator:SI 4 "plus_xor_ior_operator"
+	  [(ashift:SI (match_operand:SI 1 "register_operand" "r")
+		      (minus:SI (const_int 32)
+				(match_operand:SI 3 "register_operand" "q")))
+	   (lshiftrt:SI (match_operand:SI 2 "register_operand" "r")
+			(match_dup 3))]))]
   ""
-  "@
-   {vshd %1,%2,%0|shrpw %1,%2,%%sar,%0}
-   {shd|shrpw} %1,%2,%3,%0"
+  "{vshd %1,%2,%0|shrpw %1,%2,%%sar,%0}"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_insn "*shrpsi4_2"
+  [(set (match_operand:SI 0 "register_operand" "=r")
+	(match_operator:SI 4 "plus_xor_ior_operator"
+	  [(lshiftrt:SI (match_operand:SI 2 "register_operand" "r")
+			(match_operand:SI 3 "register_operand" "q"))
+	   (ashift:SI (match_operand:SI 1 "register_operand" "r")
+		      (minus:SI (const_int 32)
+				(match_dup 3)))]))]
+  ""
+  "{vshd %1,%2,%0|shrpw %1,%2,%%sar,%0}"
   [(set_attr "type" "shift")
    (set_attr "length" "4")])
 
 ; Shift right pair doubleword 0 to 63 bits.
-(define_insn "shrpdi4"
-  [(set (match_operand:DI 0 "register_operand" "=r,r")
-	(ior:DI (ashift:DI (match_operand:SI 1 "register_operand" "r,r")
-			   (minus:DI (const_int 64)
-			     (match_operand:DI 3 "shift6_operand" "q,n")))
-		(lshiftrt:DI (match_operand:DI 2 "register_operand" "r,r")
-			     (match_dup 3))))]
+(define_insn "*shrpdi4_1"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(match_operator:DI 4 "plus_xor_ior_operator"
+	  [(ashift:DI (match_operand:DI 1 "register_operand" "r")
+		      (minus:DI (const_int 64)
+				(match_operand:DI 3 "register_operand" "q")))
+	   (lshiftrt:DI (match_operand:DI 2 "register_operand" "r")
+			(match_dup 3))]))]
   "TARGET_64BIT"
-  "@
-   shrpd %1,%2,%%sar,%0
-   shrpd %1,%2,%3,%0"
+  "shrpd %1,%2,%%sar,%0"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_insn "*shrpdi4_2"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(match_operator:DI 4 "plus_xor_ior_operator"
+	  [(lshiftrt:DI (match_operand:DI 2 "register_operand" "r")
+			(match_operand:DI 3 "shift6_operand" "q"))
+	   (ashift:DI (match_operand:SI 1 "register_operand" "r")
+		      (minus:DI (const_int 64)
+				(match_dup 3)))]))]
+  "TARGET_64BIT"
+  "shrpd %1,%2,%%sar,%0"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_insn "*shrpdi4_3"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(match_operator:DI 5 "plus_xor_ior_operator"
+	  [(ashift:DI (match_operand:DI 1 "register_operand" "r")
+		      (match_operand:DI 3 "const_int_operand" "n"))
+	   (lshiftrt:DI (match_operand:DI 2 "register_operand" "r")
+			(match_operand:DI 4 "const_int_operand" "n"))]))]
+  "TARGET_64BIT
+   && INTVAL (operands[3]) + INTVAL (operands[4]) == 64"
+  "shrpd %1,%2,%4,%0"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_insn "*shrpdi4_4"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+	(match_operator:DI 5 "plus_xor_ior_operator"
+	  [(lshiftrt:DI (match_operand:DI 2 "register_operand" "r")
+			(match_operand:DI 4 "const_int_operand" "n"))
+	   (ashift:DI (match_operand:DI 1 "register_operand" "r")
+		      (match_operand:DI 3 "const_int_operand" "n"))]))]
+  "TARGET_64BIT
+   && INTVAL (operands[3]) + INTVAL (operands[4]) == 64"
+  "shrpd %1,%2,%4,%0"
   [(set_attr "type" "shift")
    (set_attr "length" "4")])
 
@@ -6668,7 +6850,7 @@
   /* Else expand normally.  */
 }")
 
-(define_insn ""
+(define_insn "*rotlsi3_internal"
   [(set (match_operand:SI 0 "register_operand" "=r")
         (rotate:SI (match_operand:SI 1 "register_operand" "r")
                    (match_operand:SI 2 "const_int_operand" "n")))]
@@ -6677,6 +6859,54 @@
 {
   operands[2] = GEN_INT ((32 - INTVAL (operands[2])) & 31);
   return \"{shd|shrpw} %1,%1,%2,%0\";
+}"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_insn "rotrdi3"
+  [(set (match_operand:DI 0 "register_operand" "=r,r")
+	(rotatert:DI (match_operand:DI 1 "register_operand" "r,r")
+		     (match_operand:DI 2 "shift6_operand" "q,n")))]
+  "TARGET_64BIT"
+  "*
+{
+  if (GET_CODE (operands[2]) == CONST_INT)
+    {
+      operands[2] = GEN_INT (INTVAL (operands[2]) & 63);
+      return \"shrpd %1,%1,%2,%0\";
+    }
+  else
+    return \"shrpd %1,%1,%%sar,%0\";
+}"
+  [(set_attr "type" "shift")
+   (set_attr "length" "4")])
+
+(define_expand "rotldi3"
+  [(set (match_operand:DI 0 "register_operand" "")
+        (rotate:DI (match_operand:DI 1 "register_operand" "")
+                   (match_operand:DI 2 "arith32_operand" "")))]
+  "TARGET_64BIT"
+  "
+{
+  if (GET_CODE (operands[2]) != CONST_INT)
+    {
+      rtx temp = gen_reg_rtx (DImode);
+      emit_insn (gen_subdi3 (temp, GEN_INT (64), operands[2]));
+      emit_insn (gen_rotrdi3 (operands[0], operands[1], temp));
+      DONE;
+    }
+  /* Else expand normally.  */
+}")
+
+(define_insn "*rotldi3_internal"
+  [(set (match_operand:DI 0 "register_operand" "=r")
+        (rotate:DI (match_operand:DI 1 "register_operand" "r")
+                   (match_operand:DI 2 "const_int_operand" "n")))]
+  "TARGET_64BIT"
+  "*
+{
+  operands[2] = GEN_INT ((64 - INTVAL (operands[2])) & 63);
+  return \"shrpd %1,%1,%2,%0\";
 }"
   [(set_attr "type" "shift")
    (set_attr "length" "4")])
@@ -6704,6 +6934,15 @@
   "{shd|shrpw} %1,%2,%4,%0"
   [(set_attr "type" "shift")
    (set_attr "length" "4")])
+
+(define_expand "shd_internal"
+  [(set (match_operand:SI 0 "register_operand")
+	(ior:SI
+	  (lshiftrt:SI (match_operand:SI 1 "register_operand")
+		       (match_operand:SI 2 "const_int_operand"))
+	  (ashift:SI (match_operand:SI 3 "register_operand")
+		     (match_operand:SI 4 "const_int_operand"))))]
+  "")
 
 (define_insn ""
   [(set (match_operand:SI 0 "register_operand" "=r")
@@ -6909,10 +7148,7 @@
 
   lab = copy_to_reg (lab);
 
-  /* Restore the stack and frame pointers.  The virtual_stack_vars_rtx
-     is saved instead of the hard_frame_pointer_rtx in the save area.
-     As a result, an extra instruction is needed to adjust for the offset
-     of the virtual stack variables and the hard frame pointer.  */
+  /* Restore the stack and frame pointers.  */
   fp = copy_to_reg (fp);
   emit_stack_restore (SAVE_NONLOCAL, stack);
 
@@ -6920,7 +7156,7 @@
   emit_insn (gen_blockage ());
   emit_clobber (hard_frame_pointer_rtx);
   emit_clobber (frame_pointer_rtx);
-  emit_move_insn (hard_frame_pointer_rtx, plus_constant (Pmode, fp, -8));
+  emit_move_insn (hard_frame_pointer_rtx, fp);
 
   emit_use (hard_frame_pointer_rtx);
   emit_use (stack_pointer_rtx);
@@ -8703,9 +8939,7 @@ add,l %2,%3,%3\;bv,n %%r0(%3)"
      restoring the gp.  */
   emit_move_insn (pv, lab);
 
-  /* Restore the stack and frame pointers.  The virtual_stack_vars_rtx
-     is saved instead of the hard_frame_pointer_rtx in the save area.
-     We need to adjust for the offset between these two values.  */
+  /* Restore the stack and frame pointers.  */
   fp = copy_to_reg (fp);
   emit_stack_restore (SAVE_NONLOCAL, stack);
 
@@ -8713,7 +8947,7 @@ add,l %2,%3,%3\;bv,n %%r0(%3)"
   emit_insn (gen_blockage ());
   emit_clobber (hard_frame_pointer_rtx);
   emit_clobber (frame_pointer_rtx);
-  emit_move_insn (hard_frame_pointer_rtx, plus_constant (Pmode, fp, -8));
+  emit_move_insn (hard_frame_pointer_rtx, fp);
 
   emit_use (hard_frame_pointer_rtx);
   emit_use (stack_pointer_rtx);

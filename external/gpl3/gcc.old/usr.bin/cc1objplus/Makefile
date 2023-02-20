@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2023/02/20 02:01:03 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2023/02/20 02:12:29 mrg Exp $
 
 # XXX: Pull this (G_OBJCXX_OBJS) out with mknative-gcc.  Needs some
 # minor re-org of cc1plus and perhaps cc1obj.  G_CXX_AND_OBJCXX_OBJS

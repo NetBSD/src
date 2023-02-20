@@ -1,5 +1,5 @@
 /* IEEE floating point support routines, for GDB, the GNU Debugger.
-   Copyright (C) 1991-2019 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -53,7 +53,12 @@ Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA. 
 #ifdef DBL_QNAN
 #define NAN DBL_QNAN
 #else
+#ifdef __lint__
+static double zero = 0.0;
+#define NAN (0.0 / zero)
+#else
 #define NAN (0.0 / 0.0)
+#endif
 #endif
 #endif
 

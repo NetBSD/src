@@ -1,5 +1,5 @@
 /* UndefinedBehaviorSanitizer, undefined behavior detector.
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
    Contributed by Marek Polacek <polacek@redhat.com>
 
 This file is part of GCC.
@@ -229,6 +229,7 @@ ubsan_get_type_descriptor_type (void)
   TYPE_FIELDS (ret) = fields[0];
   TYPE_NAME (ret) = type_decl;
   TYPE_STUB_DECL (ret) = type_decl;
+  TYPE_ARTIFICIAL (ret) = 1;
   layout_type (ret);
   ubsan_type_descriptor_type = ret;
   return ret;
@@ -277,6 +278,7 @@ ubsan_get_source_location_type (void)
   TYPE_FIELDS (ret) = fields[0];
   TYPE_NAME (ret) = type_decl;
   TYPE_STUB_DECL (ret) = type_decl;
+  TYPE_ARTIFICIAL (ret) = 1;
   layout_type (ret);
   ubsan_source_location_type = ret;
   return ret;
@@ -593,6 +595,7 @@ ubsan_create_data (const char *name, int loccnt, const location_t *ploc, ...)
   TYPE_FIELDS (ret) = fields[0];
   TYPE_NAME (ret) = type_decl;
   TYPE_STUB_DECL (ret) = type_decl;
+  TYPE_ARTIFICIAL (ret) = 1;
   layout_type (ret);
 
   /* Now, fill in the type.  */
@@ -1437,7 +1440,10 @@ maybe_instrument_pointer_overflow (gimple_stmt_iterator *gsi, tree t)
   tree base;
   if (decl_p)
     {
-      if (DECL_REGISTER (inner))
+      if ((VAR_P (inner)
+	   || TREE_CODE (inner) == PARM_DECL
+	   || TREE_CODE (inner) == RESULT_DECL)
+	  && DECL_REGISTER (inner))
 	return;
       base = inner;
       /* If BASE is a fixed size automatic variable or
@@ -1860,7 +1866,7 @@ ubsan_instrument_float_cast (location_t loc, tree type, tree expr)
 	 representable decimal number greater or equal than
 	 1 << (prec - !uns_p).  */
       mpfr_init2 (m, prec + 2);
-      mpfr_set_ui_2exp (m, 1, prec - !uns_p, GMP_RNDN);
+      mpfr_set_ui_2exp (m, 1, prec - !uns_p, MPFR_RNDN);
       mpfr_snprintf (buf, sizeof buf, "%.*RUe", p - 1, m);
       decimal_real_from_string (&maxval, buf);
       max = build_real (expr_type, maxval);
@@ -1873,8 +1879,8 @@ ubsan_instrument_float_cast (location_t loc, tree type, tree expr)
 	  /* Use mpfr_snprintf rounding to compute the largest
 	     representable decimal number less or equal than
 	     (-1 << (prec - 1)) - 1.  */
-	  mpfr_set_si_2exp (m, -1, prec - 1, GMP_RNDN);
-	  mpfr_sub_ui (m, m, 1, GMP_RNDN);
+	  mpfr_set_si_2exp (m, -1, prec - 1, MPFR_RNDN);
+	  mpfr_sub_ui (m, m, 1, MPFR_RNDN);
 	  mpfr_snprintf (buf, sizeof buf, "%.*RDe", p - 1, m);
 	  decimal_real_from_string (&minval, buf);
 	  min = build_real (expr_type, minval);
@@ -2101,7 +2107,12 @@ instrument_object_size (gimple_stmt_iterator *gsi, tree t, bool is_lhs)
   tree base;
   if (decl_p)
     {
-      if (DECL_REGISTER (inner))
+      if ((VAR_P (inner)
+	   || TREE_CODE (inner) == PARM_DECL
+	   || TREE_CODE (inner) == RESULT_DECL)
+	  && DECL_REGISTER (inner))
+	return;
+      if (t == inner && !is_global_var (t))
 	return;
       base = inner;
     }
@@ -2199,6 +2210,11 @@ instrument_object_size (gimple_stmt_iterator *gsi, tree t, bool is_lhs)
 	    return;
 	}
     }
+
+  if (DECL_P (base)
+      && decl_function_context (base) == current_function_decl
+      && !TREE_ADDRESSABLE (base))
+    mark_addressable (base);
 
   if (bos_stmt && gimple_call_builtin_p (bos_stmt, BUILT_IN_OBJECT_SIZE))
     ubsan_create_edge (bos_stmt);
