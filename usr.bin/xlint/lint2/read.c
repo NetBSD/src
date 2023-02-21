@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.78 2023/01/14 09:30:07 rillig Exp $ */
+/* $NetBSD: read.c,v 1.79 2023/02/21 19:30:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.78 2023/01/14 09:30:07 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.79 2023/02/21 19:30:51 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -93,7 +93,7 @@ static	int	csrcfile;
 static	const char *readfile_line;
 
 static	void	inperr(const char *, ...)
-    __attribute__((format(printf, 1, 2), noreturn));
+    __printflike(1, 2) __attribute__((noreturn));
 static	void	setsrc(const char *);
 static	void	setfnid(int, const char *);
 static	void	funccall(pos_t, const char *);
