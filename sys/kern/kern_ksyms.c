@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.107 2022/07/15 06:40:24 mrg Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.108 2023/02/21 11:40:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.107 2022/07/15 06:40:24 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.108 2023/02/21 11:40:00 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -1417,6 +1417,7 @@ ksymsmmap(struct file *fp, off_t *offp, size_t nbytes, int prot, int *flagsp,
 static int
 ksymsseek(struct file *fp, off_t delta, int whence, off_t *newoffp, int flags)
 {
+	const off_t OFF_MAX = __type_max(off_t);
 	struct ksyms_snapshot *ks = fp->f_data;
 	off_t base, newoff;
 	int error;
@@ -1438,12 +1439,14 @@ ksymsseek(struct file *fp, off_t delta, int whence, off_t *newoffp, int flags)
 		goto out;
 	}
 
-	/* Compute the new offset and validate it.  */
-	newoff = base + delta;	/* XXX arithmetic overflow */
-	if (newoff < 0) {
+	/* Check for arithmetic overflow and reject negative offsets.  */
+	if (base < 0 || delta > OFF_MAX - base || base + delta < 0) {
 		error = EINVAL;
 		goto out;
 	}
+
+	/* Compute the new offset.  */
+	newoff = base + delta;
 
 	/* Success!  */
 	if (newoffp)
