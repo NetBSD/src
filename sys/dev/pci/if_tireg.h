@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.31 2021/06/05 14:28:28 thorpej Exp $ */
+/* $NetBSD: if_tireg.h,v 1.32 2023/02/21 22:13:02 andvar Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1119,7 +1119,7 @@ struct ti_softc {
 	uint16_t		ti_cmd_saved_prodidx;
 	uint16_t		ti_std;		/* current std ring head */
 	uint16_t		ti_mini;	/* current mini ring head */
-	uint16_t		ti_jumbo;	/* current jumo ring head */
+	uint16_t		ti_jumbo;	/* current jumbo ring head */
 	SIMPLEQ_HEAD(, ti_mc_entry)	ti_mc_listhead;
 	SIMPLEQ_HEAD(, ti_jpool_entry)	ti_jfree_listhead;
 	SIMPLEQ_HEAD(, ti_jpool_entry)	ti_jinuse_listhead;
