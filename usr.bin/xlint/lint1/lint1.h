@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.162 2023/02/18 15:14:11 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.163 2023/02/21 19:30:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -468,7 +468,7 @@ typedef struct {
 #  include "err-msgs.h"
 
 /* ARGSUSED */
-static inline void __attribute__((format(printf, 1, 2)))
+static inline void __printflike(1, 2)
 check_printf(const char *fmt, ...)
 {
 }
