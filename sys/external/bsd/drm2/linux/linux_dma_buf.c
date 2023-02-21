@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_dma_buf.c,v 1.15 2022/04/09 23:44:44 riastradh Exp $	*/
+/*	$NetBSD: linux_dma_buf.c,v 1.16 2023/02/21 11:40:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.15 2022/04/09 23:44:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_dma_buf.c,v 1.16 2023/02/21 11:40:13 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -48,6 +48,8 @@ static int	dmabuf_fop_close(struct file *);
 static int	dmabuf_fop_kqfilter(struct file *, struct knote *);
 static int	dmabuf_fop_mmap(struct file *, off_t *, size_t, int, int *,
 		    int *, struct uvm_object **, int *);
+static int	dmabuf_fop_seek(struct file *fp, off_t delta, int whence,
+		    off_t *newoffp, int flags);
 
 static const struct fileops dmabuf_fileops = {
 	.fo_name = "dmabuf",
@@ -61,6 +63,7 @@ static const struct fileops dmabuf_fileops = {
 	.fo_kqfilter = dmabuf_fop_kqfilter,
 	.fo_restart = fnullop_restart,
 	.fo_mmap = dmabuf_fop_mmap,
+	.fo_seek = dmabuf_fop_seek,
 };
 
 struct dma_buf *
@@ -287,4 +290,55 @@ dmabuf_fop_mmap(struct file *file, off_t *offp, size_t size, int prot,
 
 	return dmabuf->ops->mmap(dmabuf, offp, size, prot, flagsp, advicep,
 	    uobjp, maxprotp);
+}
+
+/*
+ * We don't actually do anything with the file offset; this is just how
+ * libdrm_amdgpu expects to find the size of the DMA buf.  (Why it
+ * doesn't use fstat is unclear, but it doesn't really matter.)
+ */
+static int
+dmabuf_fop_seek(struct file *fp, off_t delta, int whence, off_t *newoffp,
+    int flags)
+{
+	const off_t OFF_MAX = __type_max(off_t);
+	struct dma_buf *dmabuf = fp->f_data;
+	off_t base, newoff;
+	int error;
+
+	mutex_enter(&fp->f_lock);
+
+	switch (whence) {
+	case SEEK_CUR:
+		base = fp->f_offset;
+		break;
+	case SEEK_END:
+		base = dmabuf->size;
+		break;
+	case SEEK_SET:
+		base = 0;
+		break;
+	default:
+		error = EINVAL;
+		goto out;
+	}
+
+	/* Check for arithmetic overflow and reject negative offsets.  */
+	if (base < 0 || delta > OFF_MAX - base || base + delta < 0) {
+		error = EINVAL;
+		goto out;
+	}
+
+	/* Compute the new offset.  */
+	newoff = base + delta;
+
+	/* Success!  */
+	if (newoffp)
+		*newoffp = newoff;
+	if (flags & FOF_UPDATE_OFFSET)
+		fp->f_offset = newoff;
+	error = 0;
+
+out:	mutex_exit(&fp->f_lock);
+	return error;
 }
