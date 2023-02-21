@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.148 2023/02/18 15:18:49 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.149 2023/02/21 19:47:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.148 2023/02/18 15:18:49 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.149 2023/02/21 19:47:21 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -441,6 +441,7 @@ named_label(sym_t *sym)
 		mark_as_set(sym);
 	}
 
+	/* XXX: Assuming that each label is reachable is wrong. */
 	set_reached(true);
 }
 
@@ -495,13 +496,16 @@ check_case_label(tnode_t *tn, control_statement *cs)
 		return;
 	}
 
-	if (tn != NULL && tn->tn_op != CON) {
+	if (tn == NULL)
+		return;
+
+	if (tn->tn_op != CON) {
 		/* non-constant case expression */
 		error(197);
 		return;
 	}
 
-	if (tn != NULL && !is_integer(tn->tn_type->t_tspec)) {
+	if (!is_integer(tn->tn_type->t_tspec)) {
 		/* non-integral case expression */
 		error(198);
 		return;

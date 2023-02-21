@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_193.c,v 1.19 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.20 2023/02/21 19:47:21 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
@@ -703,4 +703,18 @@ test_null_statement(void)
 
 	/* expect+1: warning: statement not reached [193] */
 	return 0;;
+}
+
+/*
+ * Before func.c 1.149 from 2023-02-21, lint crashed due to a null pointer
+ * dereference.
+ */
+void
+invalid_case_expression(void)
+{
+	switch (4) {
+	/* expect+1: error: operand of '~' has invalid type 'double' [108] */
+	case ~0.0:
+		;
+	}
 }
