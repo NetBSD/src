@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.17 2022/09/20 23:01:42 mrg Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.18 2023/02/21 11:39:39 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.17 2022/09/20 23:01:42 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.18 2023/02/21 11:39:39 riastradh Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -483,19 +483,19 @@ u64 amdgpu_mm_rdoorbell64(struct amdgpu_device *adev, u32 index)
 #ifdef __NetBSD__
 #ifdef _LP64
 		return bus_space_read_8(adev->doorbell.bst, adev->doorbell.bsh,
-		    8*index);
+		    4*index);
 #else
 		uint64_t lo, hi;
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 		lo = bus_space_read_4(adev->doorbell.bst, adev->doorbell.bsh,
-		    8*index);
+		    4*index);
 		hi = bus_space_read_4(adev->doorbell.bst, adev->doorbell.bsh,
-		    8*index + 4);
+		    4*index + 4);
 #else
 		hi = bus_space_read_4(adev->doorbell.bst, adev->doorbell.bsh,
-		    8*index);
+		    4*index);
 		lo = bus_space_read_4(adev->doorbell.bst, adev->doorbell.bsh,
-		    8*index + 4);
+		    4*index + 4);
 #endif
 		return lo | (hi << 32);
 #endif
@@ -524,21 +524,21 @@ void amdgpu_mm_wdoorbell64(struct amdgpu_device *adev, u32 index, u64 v)
 #ifdef __NetBSD__
 #ifdef _LP64
 		bus_space_write_8(adev->doorbell.bst, adev->doorbell.bsh,
-		    8*index, v);
+		    4*index, v);
 #else
 		/*
 		 * XXX This might not be as atomic as one might hope...
 		 */
 #if _BYTE_ORDER == _LITTLE_ENDIAN
 		bus_space_write_4(adev->doorbell.bst, adev->doorbell.bsh,
-		    8*index, v & 0xffffffffU);
+		    4*index, v & 0xffffffffU);
 		bus_space_write_4(adev->doorbell.bst, adev->doorbell.bsh,
-		    8*index + 4, v >> 32);
+		    4*index + 4, v >> 32);
 #else
 		bus_space_write_4(adev->doorbell.bst, adev->doorbell.bsh,
-		    8*index, v >> 32);
+		    4*index, v >> 32);
 		bus_space_write_4(adev->doorbell.bst, adev->doorbell.bsh,
-		    8*index + 4, v & 0xffffffffU);
+		    4*index + 4, v & 0xffffffffU);
 #endif
 #endif
 #else
