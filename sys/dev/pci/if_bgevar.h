@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.40 2022/09/04 08:50:25 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.41 2023/02/21 22:13:02 andvar Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -307,7 +307,7 @@ struct bge_softc {
 	uint16_t		bge_rx_saved_considx;
 	uint16_t		bge_std;	/* current std ring head */
 	uint16_t		bge_std_cnt;
-	uint16_t		bge_jumbo;	/* current jumo ring head */
+	uint16_t		bge_jumbo;	/* current jumbo ring head */
 	SLIST_HEAD(__bge_jfreehead, bge_jpool_entry)	bge_jfree_listhead;
 	SLIST_HEAD(__bge_jinusehead, bge_jpool_entry)	bge_jinuse_listhead;
 	uint32_t		bge_stat_ticks;
