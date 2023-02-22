@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_schar.c,v 1.3 2023/02/22 22:12:35 rillig Exp $	*/
+/*	$NetBSD: platform_schar.c,v 1.4 2023/02/22 22:30:40 rillig Exp $	*/
 # 3 "platform_schar.c"
 
 /*
@@ -10,6 +10,5 @@
 /* lint1-only-if: schar */
 
 /* CONSTCOND */
-/* FIXME: Wrong order in the diagnostic, should be '-128 <' instead. */
-/* expect+1: warning: nonportable character comparison '< -128' [230] */
+/* expect+1: warning: nonportable character comparison '-128 < ?' [230] */
 typedef int is_signed[(char)'\200' < (char)'\177' ? 1 : -1];
