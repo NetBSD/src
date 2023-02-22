@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.60 2020/05/01 08:43:37 hannken Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.61 2023/02/22 21:49:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.60 2020/05/01 08:43:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.61 2023/02/22 21:49:45 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -146,7 +146,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 	return (error);
 #endif
 }
-	
+
 #if 0
 	switch (cmd) {
 	case Q_SYNC:
@@ -323,7 +323,7 @@ static int
 ufs_modcmd(modcmd_t cmd, void *arg)
 {
         int error;
- 
+
         switch (cmd) {
         case MODULE_CMD_INIT:
 		ufs_init();

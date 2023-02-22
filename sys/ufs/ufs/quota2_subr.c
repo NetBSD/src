@@ -1,4 +1,4 @@
-/* $NetBSD: quota2_subr.c,v 1.5 2012/02/05 14:19:04 dholland Exp $ */
+/* $NetBSD: quota2_subr.c,v 1.6 2023/02/22 21:49:45 riastradh Exp $ */
 /*-
   * Copyright (c) 2010, 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.5 2012/02/05 14:19:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.6 2023/02/22 21:49:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -87,7 +87,8 @@ quota2_create_blk0(uint64_t bsize, void *bp, int q2h_hash_shift, int type,
 }
 
 void
-quota2_ufs_rwq2v(const struct quota2_val *s, struct quota2_val *d, int needswap)
+quota2_ufs_rwq2v(const struct quota2_val *s, struct quota2_val *d,
+    int needswap)
 {
 	d->q2v_hardlimit = ufs_rw64(s->q2v_hardlimit, needswap);
 	d->q2v_softlimit = ufs_rw64(s->q2v_softlimit, needswap);
@@ -98,7 +99,7 @@ quota2_ufs_rwq2v(const struct quota2_val *s, struct quota2_val *d, int needswap)
 
 void
 quota2_ufs_rwq2e(const struct quota2_entry *s, struct quota2_entry *d,
-int needswap)
+    int needswap)
 {
 	quota2_ufs_rwq2v(&s->q2e_val[QL_BLOCK], &d->q2e_val[QL_BLOCK],
 	    needswap);
@@ -110,7 +111,7 @@ int needswap)
 int
 quota_check_limit(uint64_t cur, uint64_t change, uint64_t soft, uint64_t hard,
     time_t expire, time_t now)
-{ 
+{
 	if (cur + change > hard) {
 		if (cur <= soft)
 			return (QL_F_CROSS | QL_S_DENY_HARD);
@@ -124,4 +125,4 @@ quota_check_limit(uint64_t cur, uint64_t change, uint64_t soft, uint64_t hard,
 		return QL_S_ALLOW_SOFT;
 	}
 	return QL_S_ALLOW_OK;
-} 
+}
