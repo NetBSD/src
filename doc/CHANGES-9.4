@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.52 2023/02/17 17:42:21 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.53 2023/02/22 19:57:11 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -851,4 +851,52 @@ sys/dev/usb/usbdevs_data.h			(regen)
 
 	urndis(4): Add OnePlus 5T to the quirky devices list.
 	[nia, ticket #1599]
+
+sys/arch/next68k/stand/boot/boot.c		1.14,1.15
+sys/arch/next68k/stand/boot/conf.c		1.8
+sys/arch/next68k/stand/boot/devopen.c		1.8
+sys/arch/next68k/stand/boot/en.c		1.20
+sys/arch/next68k/stand/boot/machdep.c		1.9
+sys/arch/next68k/stand/boot/rtc.c		1.8
+sys/arch/next68k/stand/boot/samachdep.h		1.1,1.2
+sys/arch/next68k/stand/boot/scsi.c		1.13,1.14
+sys/arch/next68k/stand/boot/scsivar.h		1.2
+sys/arch/next68k/stand/boot/sd.c		1.17
+sys/arch/next68k/stand/boot/version		1.7
+
+	next68k: various fixes for sdboot.
+	[tsutsui, ticket #1600]
+
+lib/libc/string/swab.c				1.20
+tests/lib/libc/string/t_swab.c			1.3
+
+	swab(3): PR 57141: fix swab(3) and ensure it is properly tested.
+	[riastradh, ticket #1601]
+
+sys/net/route.c					1.236
+
+	route(4): PR 56844: work around deadlock in rt_free wait path.
+	[riastradh, ticket #1602]
+
+sys/arch/x86/x86/efi_machdep.c			1.3
+	(applied to sys/arch/x86/x86/efi.c)
+
+	x86/efi: Print uuids in slightly more standard notation.
+	[riastradh, ticket #1603]
+
+crypto/external/bsd/openssh/bin/Makefile	1.5
+etc/bluetooth/Makefile				1.6
+etc/iscsi/Makefile				1.4
+etc/root/Makefile				1.5
+etc/ssh/Makefile				1.4
+external/ibm-public/postfix/etc/Makefile	1.2
+usr.bin/mail/Makefile				1.41
+
+	Fix modes of editable config files.
+	[riastradh, ticket #1604]
+
+sys/net/bpf.c					1.247 (merged)
+
+	bpf(4): Reject bogus timeout values before arithmetic overflows.
+	[riastradh, ticket #1605]
 
