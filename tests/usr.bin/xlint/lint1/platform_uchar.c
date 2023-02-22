@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_uchar.c,v 1.2 2021/09/26 14:28:22 rillig Exp $	*/
+/*	$NetBSD: platform_uchar.c,v 1.3 2023/02/22 22:12:35 rillig Exp $	*/
 # 3 "platform_uchar.c"
 
 /*
@@ -9,7 +9,6 @@
 /* lint1-extra-flags: -c -h -a -p -b -r -z */
 /* lint1-only-if: uchar */
 
-// TODO: Add some code that passes.
-// TODO: Add some code that fails.
-
-/* expect+1: warning: empty translation unit [272] */
+/* CONSTCOND */
+/* expect+1: warning: nonportable character comparison '< 128' [230] */
+typedef int is_unsigned[(char)'\177' < (char)'\200' ? 1 : -1];

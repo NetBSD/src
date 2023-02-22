@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32.c,v 1.2 2021/09/26 14:28:22 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32.c,v 1.3 2023/02/22 22:12:35 rillig Exp $	*/
 # 3 "platform_ilp32.c"
 
 /*
@@ -9,7 +9,20 @@
 /* lint1-extra-flags: -c -h -a -p -b -r -z */
 /* lint1-only-if: ilp32 */
 
-// TODO: Add some code that passes.
-// TODO: Add some code that fails.
+int s32;
+unsigned int u32;
+long sl32;
+unsigned long ul32;
 
-/* expect+1: warning: empty translation unit [272] */
+void
+convert_between_int_and_long(void)
+{
+	/*
+	 * No warning about possible loss of accuracy, as the types have the
+	 * same size.
+	 */
+	s32 = sl32;
+	sl32 = s32;
+	u32 = ul32;
+	ul32 = u32;
+}
