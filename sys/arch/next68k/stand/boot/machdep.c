@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7.128.1 2023/02/12 12:18:24 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.7.128.2 2023/02/22 12:07:08 martin Exp $	*/
 /*
  * Copyright (c) 1998 Darrin Jewell
  * Copyright (c) 1994 Rolf Grossmann
@@ -35,11 +35,11 @@
 #include <stand.h>
 #include <next68k/next68k/nextrom.h>
 
+#include "samachdep.h"
+
 char *mg;
 
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))
-
-extern int entry_point;
 
 #ifdef DEBUG
 int debug = 1;
@@ -86,7 +86,6 @@ putchar(int c)
 __dead void
 _rtt(void)
 {
-	extern __dead void _halt(void);
 
 	printf("Press any key to halt.\n");
 	getchar();
