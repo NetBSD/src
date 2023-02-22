@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2009/06/25 18:21:51 tron Exp $
+#	$NetBSD: Makefile,v 1.1.42.1 2023/02/22 19:32:22 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -14,5 +14,7 @@ FILESDIR=	${PFIX_ETCDIR}
 # needed by default.
 #
 CONFIGFILES=	main.cf master.cf README
+FILESMODE=	644
+FILESMODE_README=444
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2014/07/05 19:22:04 dholland Exp $
+#	$NetBSD: Makefile,v 1.36.16.1 2023/02/22 19:32:22 martin Exp $
 #	@(#)Makefile	8.3 (Berkeley) 4/20/95
 
 .include <bsd.own.mk>
@@ -75,6 +75,7 @@ SUBDIR+= USD.doc
 
 CONFIGFILES=		mail.rc
 FILESDIR_mail.rc=	/etc
+FILESMODE_mail.rc=	644
 
 COPTS.format.c += -Wno-format-nonliteral
 
