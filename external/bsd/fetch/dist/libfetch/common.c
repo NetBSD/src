@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.2 2011/06/25 20:27:01 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.2.54.1 2023/02/22 13:24:05 martin Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -452,6 +452,10 @@ fetch_ssl(conn_t *conn, int verbose)
 		return (-1);
 	}
 	SSL_set_fd(conn->ssl, conn->sd);
+	if (!SSL_set_tlsext_host_name(conn->ssl, conn->cache_url->host)) {
+		fprintf(stderr, "SSL hostname setting failed\n"); 
+		return (-1);
+	}
 	if (SSL_connect(conn->ssl) == -1){
 		ERR_print_errors_fp(stderr);
 		return (-1);
@@ -709,6 +713,22 @@ fetch_close(conn_t *conn)
 {
 	int ret;
 
+#ifdef WITH_SSL
+	if (conn->ssl) {
+		SSL_shutdown(conn->ssl);
+		SSL_set_connect_state(conn->ssl);
+		SSL_free(conn->ssl);
+		conn->ssl = NULL;
+	}
+	if (conn->ssl_ctx) {
+		SSL_CTX_free(conn->ssl_ctx);
+		conn->ssl_ctx = NULL;
+	}
+	if (conn->ssl_cert) {
+		X509_free(conn->ssl_cert);
+		conn->ssl_cert = NULL;
+	}
+#endif
 	ret = close(conn->sd);
 	if (conn->cache_url)
 		fetchFreeURL(conn->cache_url);
