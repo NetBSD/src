@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ldbl96.c,v 1.2 2021/09/26 14:28:22 rillig Exp $	*/
+/*	$NetBSD: platform_ldbl96.c,v 1.3 2023/02/22 22:12:35 rillig Exp $	*/
 # 3 "platform_ldbl96.c"
 
 /*
@@ -8,7 +8,6 @@
 /* lint1-extra-flags: -c -h -a -p -b -r -z */
 /* lint1-only-if: ldbl-96 */
 
-// TODO: Add some code that passes.
-// TODO: Add some code that fails.
-
-/* expect+1: warning: empty translation unit [272] */
+/* CONSTCOND */
+typedef int bits_per_byte[((unsigned char)-1) == 255 ? 1 : -1];
+typedef int bytes_per_long_double[sizeof(long double) == 12 ? 1 : -1];
