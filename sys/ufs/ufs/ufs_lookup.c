@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.156 2022/08/06 18:26:42 andvar Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.157 2023/02/22 21:49:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.156 2022/08/06 18:26:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.157 2023/02/22 21:49:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -250,7 +250,7 @@ ufs_can_delete(struct vnode *tdp, struct vnode *vdp, struct inode *ip,
 	if (error)
 		goto out;
 
-	if (!(ip->i_mode & ISVTX)) 
+	if (!(ip->i_mode & ISVTX))
 		return 0;
 
 	/*
@@ -820,7 +820,7 @@ ufs_dirbadentry(const struct vnode *dp, const struct direct *ep,
 	if (name[namlen]) {
 		str = "missing NUL in name";
 #ifdef DIAGNOSTIC
-		snprintf(buf, sizeof(buf), "%s [%*.*s] namlen=%d", str, 
+		snprintf(buf, sizeof(buf), "%s [%*.*s] namlen=%d", str,
 		    namlen, namlen, name, namlen);
 		str = buf;
 #endif
