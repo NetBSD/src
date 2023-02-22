@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.306 2022/09/13 09:43:33 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.307 2023/02/22 17:00:16 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.306 2022/09/13 09:43:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.307 2023/02/22 17:00:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1143,10 +1143,20 @@ config_search_internal(device_t parent, void *aux,
 	struct matchinfo m;
 
 	KASSERT(config_initialized);
-	KASSERT(!args->iattr ||
-		cfdriver_get_iattr(parent->dv_cfdriver, args->iattr));
-	KASSERT(args->iattr ||
-		cfdriver_iattr_count(parent->dv_cfdriver) < 2);
+	KASSERTMSG((!args->iattr ||
+		cfdriver_get_iattr(parent->dv_cfdriver, args->iattr)),
+	    "%s searched for child at interface attribute %s,"
+	    " but device %s(4) has no such interface attribute in config(5)",
+	    device_xname(parent), args->iattr,
+	    parent->dv_cfdriver->cd_name);
+	KASSERTMSG((args->iattr ||
+		cfdriver_iattr_count(parent->dv_cfdriver) < 2),
+	    "%s searched for child without interface attribute,"
+	    " needed to disambiguate among the %d declared for in %s(4)"
+	    " in config(5)",
+	    device_xname(parent),
+	    cfdriver_iattr_count(parent->dv_cfdriver),
+	    parent->dv_cfdriver->cd_name);
 
 	m.fn = args->submatch;		/* N.B. union */
 	m.parent = parent;
