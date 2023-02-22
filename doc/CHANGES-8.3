@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.165 2023/02/14 16:05:01 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.166 2023/02/22 19:57:50 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3160,4 +3160,37 @@ xsrc/external/mit/xorg-server/dist/Xi/exevents.c	(apply patch)
 	Xi: fix potential use-after-free in DeepCopyPointerClasses
 	CVE-2023-0494, ZDI-CAN-19596
 	[mrg, ticket #1797]
+
+lib/libc/string/swab.c				1.20
+tests/lib/libc/string/t_swab.c			1.3
+
+	swab(3): PR 57141: fix swab(3) and ensure it is properly tested.
+	[riastradh, ticket #1798]
+
+sys/net/route.c					1.236
+
+	route(4): PR 56844: work around deadlock in rt_free wait path.
+	[riastradh, ticket #1801]
+
+sys/arch/x86/x86/efi_machdep.c			1.3
+	(applied to sys/arch/x86/x86/efi.c)
+
+	x86/efi: Print uuids in slightly more standard notation.
+	[riastradh, ticket #1799]
+
+crypto/external/bsd/openssh/bin/Makefile	1.5
+etc/bluetooth/Makefile				1.6
+etc/iscsi/Makefile				1.4
+etc/root/Makefile				1.5
+etc/ssh/Makefile				1.4
+external/ibm-public/postfix/etc/Makefile	1.2
+usr.bin/mail/Makefile				1.41
+
+	Fix modes of editable config files.
+	[riastradh, ticket #1800]
+
+sys/net/bpf.c					1.247 (merged)
+
+	bpf(4): Reject bogus timeout values before arithmetic overflows.
+	[riastradh, ticket #1802]
 
