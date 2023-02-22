@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.194.6.15 2019/10/04 11:26:35 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.194.6.16 2023/02/22 18:55:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.15 2019/10/04 11:26:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.194.6.16 2023/02/22 18:55:06 martin Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -644,8 +644,17 @@ static bool
 rt_wait_ok(void)
 {
 
+	/*
+	 * This originally returned !cpu_softintr_p(), but that doesn't
+	 * work: the caller may hold a lock (probably softnet lock)
+	 * that a softint is waiting for, in which case waiting here
+	 * would cause a deadlock.  See https://gnats.netbsd.org/56844
+	 * for details.  For now, until the locking paths are sorted
+	 * out, we just disable the waiting option altogether and
+	 * always defer to workqueue.
+	 */
 	KASSERT(!cpu_intr_p());
-	return !cpu_softintr_p();
+	return false;
 }
 
 void
