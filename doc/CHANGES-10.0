@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.35 2023/02/17 17:37:39 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.36 2023/02/22 19:56:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1107,4 +1107,88 @@ sys/dev/usb/usbdevs_data.h			(regen)
 
 	urndis(4): Add OnePlus 5T to the quirky devices list.
 	[nia, ticket #89]
+
+sys/arch/next68k/stand/boot/boot.c		1.14,1.15
+sys/arch/next68k/stand/boot/conf.c		1.8
+sys/arch/next68k/stand/boot/devopen.c		1.8
+sys/arch/next68k/stand/boot/en.c		1.20
+sys/arch/next68k/stand/boot/machdep.c		1.9
+sys/arch/next68k/stand/boot/rtc.c		1.8
+sys/arch/next68k/stand/boot/samachdep.h		1.1,1.2
+sys/arch/next68k/stand/boot/scsi.c		1.13,1.14
+sys/arch/next68k/stand/boot/scsivar.h		1.2
+sys/arch/next68k/stand/boot/sd.c		1.17
+sys/arch/next68k/stand/boot/version		1.7
+
+	next68k: various fixes for sdboot.
+	[tsutsui, ticket #90]
+
+distrib/next68k/Makefile			1.2
+distrib/next68k/instkernel/Makefile		1.1
+distrib/next68k/ramdisk/Makefile		1.1
+distrib/next68k/ramdisk/dot.profile		1.1
+distrib/next68k/ramdisk/list			1.1
+etc/etc.next68k/MAKEDEV.conf			1.7
+etc/etc.next68k/Makefile.inc			1.8
+sys/arch/next68k/conf/GENERIC			1.156-1.161
+sys/arch/next68k/conf/RAMDISK			1.5
+sys/arch/next68k/conf/SLAB			1.62,1.63
+sys/arch/next68k/conf/majors.next68k		1.26
+
+	next68k: add a RAMDISK kernel.
+	[tsutsui, ticket #91]
+
+sys/dev/usb/ucom.c				1.135,1.136
+
+	ucom(4): fix hang.
+	[riastradh, ticket #92]
+
+sbin/fsck/fsck.c				1.53
+
+	fsck(8): fix detection of filesystem type.
+	[mlelstv, ticket #93]
+
+sbin/scan_ffs/Makefile				1.11
+sbin/scan_ffs/scan_ffs.c			1.37
+
+	scan_ffs(8): support swapped-endian FFS.
+	[mlelstv, ticket #94]
+
+external/bsd/fetch/dist/libfetch/common.c	1.3,1.4
+
+	libfetch: enable SNI (server name indication) for TLS connections.
+	[mlelstv, ticket #95]
+
+
+sys/kern/kern_subr.c				1.231
+
+	Delay root device detection for hot-plug devices like USB.
+	[mlelstv, ticket #96]
+
+sys/modules/drmkms/Makefile			1.19
+sys/modules/drmkms_pci/Makefile			1.11
+
+	Fix drmkms module builds.
+	[riastradh, ticket #97]
+
+lib/libc/string/swab.c				1.20
+tests/lib/libc/string/t_swab.c			1.3
+
+	swab(3): PR 57141: fix swab(3) and ensure it is properly tested.
+	[riastradh, ticket #98]
+
+sys/net/route.c					1.236
+
+	route(4): PR 56844: work around deadlock in rt_free wait path.
+	[riastradh, ticket #99]
+
+sys/kern/kern_module.c				1.161
+
+	module(9): Make error message for multiple MODULE decls more obvious.
+	[riastradh, ticket #100]
+
+sys/kern/kern_time.c				1.219
+
+	In itimer_arm_real(), KASSERT that it->it_dying is false.
+	[thorpej, ticket #101]
 
