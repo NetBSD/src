@@ -1,4 +1,4 @@
-[//]: # ($NetBSD: README.md,v 1.11 2023/02/05 13:06:36 rillig Exp $)
+[//]: # ($NetBSD: README.md,v 1.12 2023/02/22 23:55:05 rillig Exp $)
 
 # Introduction
 
@@ -63,6 +63,19 @@ or just informational depends on several things:
 * The option `-X` suppresses arbitrary messages by their message ID.
 * The option `-q` enables additional queries that are not suitable as regular
   warnings but may be interesting to look at on a case-by-case basis.
+
+# Limitations
+
+Lint operates on the level of individual expressions.
+
+* It does not build an AST of the statements of a function, therefore it
+  cannot reliably analyze the control flow in a single function.
+* It does not store the control flow properties of functions, therefore it
+  cannot relate argument nullability with the return value.
+* It does not have information about functions, except for their prototypes,
+  therefore it cannot relate them across translation units.
+* It does not store detailed information about complex data types, therefore
+  it cannot cross-check them across translation units.
 
 # Fundamental types
 
