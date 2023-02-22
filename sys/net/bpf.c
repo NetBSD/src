@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.229.2.1 2019/10/16 09:46:55 martin Exp $	*/
+/*	$NetBSD: bpf.c,v 1.229.2.2 2023/02/22 19:50:33 martin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.229.2.1 2019/10/16 09:46:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.229.2.2 2023/02/22 19:50:33 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1092,7 +1092,16 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 			struct timeval *tv = addr;
 
 			/* Compute number of ticks. */
-			d->bd_rtout = tv->tv_sec * hz + tv->tv_usec / tick;
+			if (tv->tv_sec < 0 ||
+			    tv->tv_usec < 0 || tv->tv_usec >= 1000000) {
+				error = EINVAL;
+				break;
+			} else if (tv->tv_sec > INT_MAX/hz - 1) {
+ 				d->bd_rtout = INT_MAX;
+ 			} else {
+				d->bd_rtout = tv->tv_sec * hz
+				    + tv->tv_usec / tick;
+			}
 			if ((d->bd_rtout == 0) && (tv->tv_usec != 0))
 				d->bd_rtout = 1;
 			break;
@@ -1121,7 +1130,16 @@ bpf_ioctl(struct file *fp, u_long cmd, void *addr)
 			struct timeval50 *tv = addr;
 
 			/* Compute number of ticks. */
-			d->bd_rtout = tv->tv_sec * hz + tv->tv_usec / tick;
+			if (tv->tv_sec < 0 ||
+			    tv->tv_usec < 0 || tv->tv_usec >= 1000000) {
+				error = EINVAL;
+				break;
+			} else if (tv->tv_sec > INT_MAX/hz - 1) {
+ 				d->bd_rtout = INT_MAX;
+ 			} else {
+ 				d->bd_rtout = tv->tv_sec * hz
+				    + tv->tv_usec / tick;
+			}
 			if ((d->bd_rtout == 0) && (tv->tv_usec != 0))
 				d->bd_rtout = 1;
 			break;
