@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2010/11/21 19:19:21 adam Exp $
+#	$NetBSD: Makefile,v 1.3.40.1 2023/02/22 19:32:23 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -11,7 +11,9 @@ SUBDIR=	ssh sshd ssh-add ssh-keygen ssh-agent scp sftp-server \
 .MADE: moduli
 CONFIGFILES=	ssh_config sshd_config moduli
 FILESDIR=	/etc/ssh
+FILESMODE=	644
 FILESDIR_moduli=/etc
+FILESMODE_moduli=444
 
 .include <bsd.files.mk>
 .include <bsd.subdir.mk>
