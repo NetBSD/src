@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.504 2023/01/29 18:16:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.505 2023/02/22 22:30:40 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.504 2023/01/29 18:16:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.505 2023/02/22 22:30:40 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4634,13 +4634,19 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 
 	if (hflag || pflag) {
 		if (lt == CHAR && is_out_of_char_range(rn)) {
-			/* nonportable character comparison '%s %d' */
-			warning(230, op_name(op), (int)rn->tn_val->v_quad);
+			char buf[128];
+			(void)snprintf(buf, sizeof(buf), "%s %d",
+			    op_name(op), (int)rn->tn_val->v_quad);
+			/* nonportable character comparison '%s' */
+			warning(230, buf);
 			return;
 		}
 		if (rt == CHAR && is_out_of_char_range(ln)) {
-			/* nonportable character comparison '%s %d' */
-			warning(230, op_name(op), (int)ln->tn_val->v_quad);
+			char buf[128];
+			(void)snprintf(buf, sizeof(buf), "%d %s ?",
+			    (int)ln->tn_val->v_quad, op_name(op));
+			/* nonportable character comparison '%s' */
+			warning(230, buf);
 			return;
 		}
 	}
