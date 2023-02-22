@@ -36,9 +36,9 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/ufs/ufs/ufs_acl.c 356669 2020-01-13 02:31:51Z mjg $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.4 2021/11/26 17:35:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_acl.c,v 1.5 2023/02/22 21:49:45 riastradh Exp $");
 
-#if defined(_KERNEL_OPT) 
+#if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
 #include "opt_quota.h"
 #include "opt_wapbl.h"
@@ -94,7 +94,7 @@ ufs_sync_acl_from_inode(struct inode *ip, struct acl *acl)
 			    ACL_USER_OBJ, ip->i_mode);
 			acl->acl_entry[i].ae_id = ACL_UNDEFINED_ID;
 			break;
-	
+
 		case ACL_GROUP_OBJ:
 			acl_group_obj = &acl->acl_entry[i];
 			acl->acl_entry[i].ae_id = ACL_UNDEFINED_ID;
@@ -114,7 +114,7 @@ ufs_sync_acl_from_inode(struct inode *ip, struct acl *acl)
 		case ACL_USER:
 		case ACL_GROUP:
 			break;
-	
+
 		default:
 			panic("ufs_sync_acl_from_inode(): bad ae_tag");
 		}

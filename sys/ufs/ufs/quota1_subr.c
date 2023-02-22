@@ -1,4 +1,4 @@
-/* $NetBSD: quota1_subr.c,v 1.7 2012/01/29 06:23:20 dholland Exp $ */
+/* $NetBSD: quota1_subr.c,v 1.8 2023/02/22 21:49:45 riastradh Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.7 2012/01/29 06:23:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.8 2023/02/22 21:49:45 riastradh Exp $");
 
 #include <sys/types.h>
 #include <machine/limits.h>
@@ -54,7 +54,7 @@ q2e2dqblk_limit(uint64_t lim)
 
 void
 dqblk_to_quotavals(const struct dqblk *dqblk,
-		   struct quotaval *blocks, struct quotaval *files)
+    struct quotaval *blocks, struct quotaval *files)
 {
 	/* XXX is qv_grace getting handled correctly? */
 
@@ -71,7 +71,7 @@ dqblk_to_quotavals(const struct dqblk *dqblk,
 
 void
 quotavals_to_dqblk(const struct quotaval *blocks, const struct quotaval *files,
-		   struct dqblk *dqblk)
+    struct dqblk *dqblk)
 {
 	/* XXX is qv_grace getting handled correctly? */
 
@@ -85,4 +85,3 @@ quotavals_to_dqblk(const struct quotaval *blocks, const struct quotaval *files,
 	dqblk->dqb_curinodes  = files->qv_usage;
 	dqblk->dqb_itime      = files->qv_expiretime;
 }
-

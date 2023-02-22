@@ -1,4 +1,4 @@
-/* $NetBSD: quota2.h,v 1.10 2017/10/25 18:06:01 jdolecek Exp $ */
+/* $NetBSD: quota2.h,v 1.11 2023/02/22 21:49:45 riastradh Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -115,7 +115,7 @@ void quota2_ufs_rwq2e(const struct quota2_entry *, struct quota2_entry *, int);
 #define QL_S_ALLOW_SOFT	0x01 /* over soft limit */
 #define QL_S_DENY_GRACE	0x02 /* over soft limit, grace time expired */
 #define QL_S_DENY_HARD	0x03 /* over hard limit */
- 
+
 #define QL_F_CROSS	0x80 /* crossing soft limit */
 
 #define QL_STATUS(x)	((x) & 0x0f)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.117 2014/06/28 22:27:51 dholland Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.118 2023/02/22 21:49:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,11 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.117 2014/06/28 22:27:51 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.118 2023/02/22 21:49:45 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
-#endif 
+#endif
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
@@ -85,9 +85,9 @@ static int quota_handle_cmd_cursorget(struct mount *, struct lwp *,
     struct quotactl_args *args);
 static int quota_handle_cmd_del(struct mount *, struct lwp *,
     struct quotactl_args *args);
-static int quota_handle_cmd_quotaon(struct mount *, struct lwp *, 
+static int quota_handle_cmd_quotaon(struct mount *, struct lwp *,
     struct quotactl_args *args);
-static int quota_handle_cmd_quotaoff(struct mount *, struct lwp *, 
+static int quota_handle_cmd_quotaoff(struct mount *, struct lwp *,
     struct quotactl_args *args);
 static int quota_handle_cmd_cursoropen(struct mount *, struct lwp *,
     struct quotactl_args *args);
@@ -174,57 +174,57 @@ quota_handle_cmd(struct mount *mp, struct lwp *l,
 	int error = 0;
 
 	switch (args->qc_op) {
-	    case QUOTACTL_STAT:
+	case QUOTACTL_STAT:
 		error = quota_handle_cmd_stat(mp, l, args);
 		break;
-	    case QUOTACTL_IDTYPESTAT:
+	case QUOTACTL_IDTYPESTAT:
 		error = quota_handle_cmd_idtypestat(mp, l, args);
 		break;
-	    case QUOTACTL_OBJTYPESTAT:
+	case QUOTACTL_OBJTYPESTAT:
 		error = quota_handle_cmd_objtypestat(mp, l, args);
 		break;
-	    case QUOTACTL_QUOTAON:
+	case QUOTACTL_QUOTAON:
 		error = quota_handle_cmd_quotaon(mp, l, args);
 		break;
-	    case QUOTACTL_QUOTAOFF:
+	case QUOTACTL_QUOTAOFF:
 		error = quota_handle_cmd_quotaoff(mp, l, args);
 		break;
-	    case QUOTACTL_GET:
+	case QUOTACTL_GET:
 		error = quota_handle_cmd_get(mp, l, args);
 		break;
-	    case QUOTACTL_PUT:
+	case QUOTACTL_PUT:
 		error = quota_handle_cmd_put(mp, l, args);
 		break;
-	    case QUOTACTL_CURSORGET:
+	case QUOTACTL_CURSORGET:
 		error = quota_handle_cmd_cursorget(mp, l, args);
 		break;
-	    case QUOTACTL_DEL:
+	case QUOTACTL_DEL:
 		error = quota_handle_cmd_del(mp, l, args);
 		break;
-	    case QUOTACTL_CURSOROPEN:
+	case QUOTACTL_CURSOROPEN:
 		error = quota_handle_cmd_cursoropen(mp, l, args);
 		break;
-	    case QUOTACTL_CURSORCLOSE:
+	case QUOTACTL_CURSORCLOSE:
 		error = quota_handle_cmd_cursorclose(mp, l, args);
 		break;
-	    case QUOTACTL_CURSORSKIPIDTYPE:
+	case QUOTACTL_CURSORSKIPIDTYPE:
 		error = quota_handle_cmd_cursorskipidtype(mp, l, args);
 		break;
-	    case QUOTACTL_CURSORATEND:
+	case QUOTACTL_CURSORATEND:
 		error = quota_handle_cmd_cursoratend(mp, l, args);
 		break;
-	    case QUOTACTL_CURSORREWIND:
+	case QUOTACTL_CURSORREWIND:
 		error = quota_handle_cmd_cursorrewind(mp, l, args);
 		break;
-	    default:
+	default:
 		panic("Invalid quotactl operation %d\n", args->qc_op);
 	}
 
 	return error;
 }
 
-static int 
-quota_handle_cmd_stat(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_stat(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -261,8 +261,8 @@ quota_handle_cmd_stat(struct mount *mp, struct lwp *l,
 	return 0;
 }
 
-static int 
-quota_handle_cmd_idtypestat(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_idtypestat(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -281,21 +281,21 @@ quota_handle_cmd_idtypestat(struct mount *mp, struct lwp *l,
 	 * These are the same for both QUOTA and QUOTA2.
 	 */
 	switch (idtype) {
-	    case QUOTA_IDTYPE_USER:
+	case QUOTA_IDTYPE_USER:
 		name = "user";
 		break;
-	    case QUOTA_IDTYPE_GROUP:
+	case QUOTA_IDTYPE_GROUP:
 		name = "group";
 		break;
-	    default:
+	default:
 		return EINVAL;
 	}
 	strlcpy(info->qis_name, name, sizeof(info->qis_name));
 	return 0;
 }
 
-static int 
-quota_handle_cmd_objtypestat(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_objtypestat(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -315,15 +315,15 @@ quota_handle_cmd_objtypestat(struct mount *mp, struct lwp *l,
 	 * These are the same for both QUOTA and QUOTA2.
 	 */
 	switch (objtype) {
-	    case QUOTA_OBJTYPE_BLOCKS:
+	case QUOTA_OBJTYPE_BLOCKS:
 		name = "block";
 		isbytes = 1;
 		break;
-	    case QUOTA_OBJTYPE_FILES:
+	case QUOTA_OBJTYPE_FILES:
 		name = "file";
 		isbytes = 0;
 		break;
-	    default:
+	default:
 		return EINVAL;
 	}
 	strlcpy(info->qos_name, name, sizeof(info->qos_name));
@@ -341,8 +341,8 @@ quota_get_auth(struct mount *mp, struct lwp *l, uid_t id) {
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, KAUTH_ARG(id), NULL);
 }
 
-static int 
-quota_handle_cmd_get(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_get(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -356,9 +356,9 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 
 	if ((ump->um_flags & (UFS_QUOTA|UFS_QUOTA2)) == 0)
 		return EOPNOTSUPP;
-	
+
 	error = quota_get_auth(mp, l, qk->qk_id);
-	if (error != 0) 
+	if (error != 0)
 		return error;
 #ifdef QUOTA
 	if (ump->um_flags & UFS_QUOTA) {
@@ -371,15 +371,15 @@ quota_handle_cmd_get(struct mount *mp, struct lwp *l,
 	} else
 #endif
 		panic("quota_handle_cmd_get: no support ?");
-		
+
 	if (error != 0)
 		return error;
 
 	return error;
 }
 
-static int 
-quota_handle_cmd_put(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_put(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -418,7 +418,7 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 	} else
 #endif
 		panic("quota_handle_cmd_get: no support ?");
-		
+
 	if (error == ENOENT) {
 		error = 0;
 	}
@@ -426,8 +426,8 @@ quota_handle_cmd_put(struct mount *mp, struct lwp *l,
 	return error;
 }
 
-static int 
-quota_handle_cmd_del(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_del(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -459,7 +459,7 @@ quota_handle_cmd_del(struct mount *mp, struct lwp *l,
 		} else
 #endif
 			panic("quota_handle_cmd_get: no support ?");
-		
+
 		if (error && error != ENOENT)
 			goto err;
 	}
@@ -469,8 +469,8 @@ quota_handle_cmd_del(struct mount *mp, struct lwp *l,
 	return error;
 }
 
-static int 
-quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -480,12 +480,12 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
 
 	if ((ump->um_flags & UFS_QUOTA2) == 0)
 		return EOPNOTSUPP;
-	
+
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_GET, mp, NULL, NULL);
 	if (error)
 		return error;
-		
+
 #ifdef QUOTA2
 	if (ump->um_flags & UFS_QUOTA2) {
 		struct quotakcursor *cursor = args->u.cursorget.qc_cursor;
@@ -503,8 +503,8 @@ quota_handle_cmd_cursorget(struct mount *mp, struct lwp *l,
 	return error;
 }
 
-static int 
-quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 #ifdef QUOTA2
@@ -530,8 +530,8 @@ quota_handle_cmd_cursoropen(struct mount *mp, struct lwp *l,
 	return error;
 }
 
-static int 
-quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 #ifdef QUOTA2
@@ -557,8 +557,8 @@ quota_handle_cmd_cursorclose(struct mount *mp, struct lwp *l,
 	return error;
 }
 
-static int 
-quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 #ifdef QUOTA2
@@ -580,8 +580,8 @@ quota_handle_cmd_cursorskipidtype(struct mount *mp, struct lwp *l,
 	return error;
 }
 
-static int 
-quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 #ifdef QUOTA2
@@ -603,8 +603,8 @@ quota_handle_cmd_cursoratend(struct mount *mp, struct lwp *l,
 	return error;
 }
 
-static int 
-quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 #ifdef QUOTA2
@@ -625,8 +625,8 @@ quota_handle_cmd_cursorrewind(struct mount *mp, struct lwp *l,
 	return error;
 }
 
-static int 
-quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -636,7 +636,7 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
 
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
 		return EBUSY;
-	
+
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
 	if (error != 0) {
@@ -649,12 +649,12 @@ quota_handle_cmd_quotaon(struct mount *mp, struct lwp *l,
 #else
 	error = EOPNOTSUPP;
 #endif
-	
+
 	return error;
 }
 
-static int 
-quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l, 
+static int
+quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
     struct quotactl_args *args)
 {
 	struct ufsmount *ump = VFSTOUFS(mp);
@@ -664,7 +664,7 @@ quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
 
 	if ((ump->um_flags & UFS_QUOTA2) != 0)
 		return EOPNOTSUPP;
-	
+
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_FS_QUOTA,
 	    KAUTH_REQ_SYSTEM_FS_QUOTA_ONOFF, mp, NULL, NULL);
 	if (error != 0) {
@@ -676,7 +676,7 @@ quota_handle_cmd_quotaoff(struct mount *mp, struct lwp *l,
 #else
 	error = EOPNOTSUPP;
 #endif
-	
+
 	return error;
 }
 
