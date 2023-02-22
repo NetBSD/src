@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_230.c,v 1.11 2022/02/26 11:13:01 rillig Exp $	*/
+/*	$NetBSD: msg_230.c,v 1.12 2023/02/22 22:30:40 rillig Exp $	*/
 # 3 "msg_230.c"
 
-// Test for message: nonportable character comparison '%s %d' [230]
+// Test for message: nonportable character comparison '%s' [230]
 
 /* lint1-flags: -S -g -p -w */
 /* lint1-only-if: schar */
@@ -46,26 +46,26 @@ compare_plain_char(char c)
 void
 compare_plain_char_yoda(char c)
 {
-	/* expect+1: warning: nonportable character comparison '== -129' [230] */
+	/* expect+1: warning: nonportable character comparison '-129 == ?' [230] */
 	if (-129 == c)
 		return;
-	/* expect+1: warning: nonportable character comparison '== -128' [230] */
+	/* expect+1: warning: nonportable character comparison '-128 == ?' [230] */
 	if (-128 == c)
 		return;
-	/* expect+1: warning: nonportable character comparison '== -1' [230] */
+	/* expect+1: warning: nonportable character comparison '-1 == ?' [230] */
 	if (-1 == c)
 		return;
 	if (0 == c)
 		return;
 	if (127 == c)
 		return;
-	/* expect+1: warning: nonportable character comparison '== 128' [230] */
+	/* expect+1: warning: nonportable character comparison '128 == ?' [230] */
 	if (128 == c)
 		return;
-	/* expect+1: warning: nonportable character comparison '== 255' [230] */
+	/* expect+1: warning: nonportable character comparison '255 == ?' [230] */
 	if (255 == c)
 		return;
-	/* expect+1: warning: nonportable character comparison '== 256' [230] */
+	/* expect+1: warning: nonportable character comparison '256 == ?' [230] */
 	if (256 == c)
 		return;
 }
