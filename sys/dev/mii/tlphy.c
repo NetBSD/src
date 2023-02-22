@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.71 2020/07/07 08:44:12 msaitoh Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.72 2023/02/22 08:09:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.71 2020/07/07 08:44:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.72 2023/02/22 08:09:09 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,7 +290,7 @@ tlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		/* Only retry autonegotiation every mii_anegticks seconds. */
 		KASSERT(sc->mii_anegticks != 0);
-		if (sc->mii_ticks <= sc->mii_anegticks)
+		if (sc->mii_ticks < sc->mii_anegticks)
 			break;
 
 		tlphy_auto(tsc);
