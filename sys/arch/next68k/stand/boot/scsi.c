@@ -1,4 +1,4 @@
-/*      $NetBSD: scsi.c,v 1.10.122.1 2023/02/12 12:18:24 martin Exp $        */
+/*      $NetBSD: scsi.c,v 1.10.122.2 2023/02/22 12:07:08 martin Exp $        */
 /*
  * Copyright (c) 1994, 1997 Rolf Grossmann
  * All rights reserved.
@@ -33,16 +33,14 @@
 #include <next68k/dev/espreg.h>
 #include <dev/ic/ncr53c9xreg.h>
 #include <dev/scsipi/scsi_message.h>
-#if 0
-#include <next/next/prominfo.h>
-#else
 #include <next68k/next68k/nextrom.h>
-#endif
 #include "scsireg.h"
 #include "dmareg.h"
 #include "scsivar.h"
 
 #include <lib/libsa/stand.h>
+
+#include "samachdep.h"
 
 struct  scsi_softc scsi_softc, *sc = &scsi_softc;
 char the_dma_buffer[MAX_DMASIZE+DMA_ENDALIGNMENT], *dma_buffer;
@@ -51,12 +49,9 @@ int scsi_msgin(void);
 int dma_start(char *addr, int len);
 int dma_done(void);
 
-void scsi_init(void);
 void scsierror(char *error);
 short scsi_getbyte(volatile uint8_t *sr);
 int scsi_wait_for_intr(void);
-int scsiicmd(char target, char lun,
-	 u_char *cbuf, int clen, char *addr, int *len);
 
 #define NDPRINTF(x)
 #define PRINTF(x)
@@ -95,7 +90,8 @@ scsi_init(void)
 
     /* now reset the SCSI bus */
     sr[NCR_CMD]        = NCRCMD_RSTSCSI;
-    DELAY(4000000);	/* XXX should be about 2-3 seconds at least */
+    /* wait 2 seconds after SCSI bus reset */
+    DELAY(2 * 1000 * 1000);
 
     /* then reset the SCSI chip again and initialize it properly */
     sr[NCR_CMD]        = NCRCMD_RSTCHIP;
@@ -136,16 +132,10 @@ scsi_getbyte(volatile uint8_t *sr)
 int
 scsi_wait_for_intr(void)
 {
-#if 0
-  extern struct prominfo *pi;
-  volitle int = pi->pi_intrstat; /* ### use constant? */
-#else
-  extern char *mg;
 #define	MON(type, off) (*(type *)((u_int) (mg) + off))
   volatile int *intrstat = MON(volatile int *,MG_intrstat);
 #ifdef SCSI_DEBUG
 /*   volatile int *intrmask = MON(volatile int *,MG_intrmask); */
-#endif
 #endif
     int count;
 

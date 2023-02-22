@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.6.58.1 2023/02/12 12:18:24 martin Exp $	*/
+/*	$NetBSD: devopen.c,v 1.6.58.2 2023/02/22 12:07:08 martin Exp $	*/
 /*
  * Copyright (c) 1994 Rolf Grossmann
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include <lib/libkern/libkern.h>
 
 int devlookup(const char *, int);
-int devparse(const char *, int *, char *, char *, char *, char **);
+int devparse(const char *, int *, int *, int *, int *, char **);
 
 int
 devlookup(const char *d, int len)
@@ -64,7 +64,7 @@ devlookup(const char *d, int len)
  */
 int
 devparse(const char *fname, int *dev,
-	 char *count, char *lun, char *part, char **file)
+	 int *count, int *lun, int *part, char **file)
 {
     int i;
     const char *s, *args[3];
@@ -120,7 +120,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 {
     int error;
     int dev;
-    char count, lun, part;
+    int count, lun, part;
     struct devsw *dp;
 
     dev   = 0;	/* default device is first in table (usually scsi disk) */
