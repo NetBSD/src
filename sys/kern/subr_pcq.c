@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.15 2023/02/23 03:01:22 riastradh Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.16 2023/02/23 03:01:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.15 2023/02/23 03:01:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.16 2023/02/23 03:01:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -168,6 +168,10 @@ pcq_get(pcq_t *pcq)
 		 */
 		return NULL;
 	}
+	/*
+	 * We have exclusive access to this slot, so no need for
+	 * atomic_store_*.
+	 */
 	pcq->pcq_items[c] = NULL;
 	c = pcq_advance(pcq, c);
 	nv = pcq_combine(p, c);
