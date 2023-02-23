@@ -1,4 +1,4 @@
-/*	$NetBSD: wsemul_vt100.c,v 1.49 2022/01/02 23:46:21 uwe Exp $	*/
+/*	$NetBSD: wsemul_vt100.c,v 1.50 2023/02/23 02:48:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.49 2022/01/02 23:46:21 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.50 2023/02/23 02:48:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -293,8 +293,14 @@ wsemul_vt100_resize(void * cookie, const struct wsscreen_descr *type)
 {
 	struct wsemul_vt100_emuldata *edp = cookie;
 
-	edp->bd.nrows = type->nrows;
-	edp->bd.ncols = type->ncols;
+	/* XXX match malloc size in wsemul_vt100_attach */
+	KASSERT(type->nrows >= 0);
+	KASSERT(type->ncols >= 0);
+	KASSERT(type->nrows <= 1024);
+	KASSERT(type->ncols <= 1024);
+
+	edp->bd.nrows = MAX(0, MIN(type->nrows, 1024));
+	edp->bd.ncols = MAX(0, MIN(type->ncols, 1024));
 	wsemul_vt100_reset(edp);
 	wsemul_vt100_resetop(cookie, WSEMUL_CLEARSCREEN);
 }
