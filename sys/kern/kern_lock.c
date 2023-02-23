@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.182 2023/01/27 09:28:41 ozaki-r Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.183 2023/02/23 14:57:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.182 2023/01/27 09:28:41 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.183 2023/02/23 14:57:29 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -235,10 +235,18 @@ _kernel_lock(int nlocks)
 	 * is required to ensure that the result of any mutex_exit()
 	 * by the current LWP becomes visible on the bus before the set
 	 * of ci->ci_biglock_wanted becomes visible.
+	 *
+	 * This membar_producer matches the membar_consumer in
+	 * mutex_vector_enter.
+	 *
+	 * That way, if l has just released a mutex, mutex_vector_enter
+	 * can't see this store ci->ci_biglock_wanted := l until it
+	 * will also see the mutex_exit store mtx->mtx_owner := 0 which
+	 * clears the has-waiters bit.
 	 */
 	membar_producer();
 	owant = ci->ci_biglock_wanted;
-	ci->ci_biglock_wanted = l;
+	atomic_store_relaxed(&ci->ci_biglock_wanted, l);
 #if defined(DIAGNOSTIC) && !defined(LOCKDEBUG)
 	l->l_ld_wanted = __builtin_return_address(0);
 #endif
@@ -286,22 +294,20 @@ _kernel_lock(int nlocks)
 
 	/*
 	 * Now that we have kernel_lock, reset ci_biglock_wanted.  This
-	 * store must be unbuffered (immediately visible on the bus) in
-	 * order for non-interlocked mutex release to work correctly.
-	 * It must be visible before a mutex_exit() can execute on this
-	 * processor.
+	 * store must be visible on other CPUs before a mutex_exit() on
+	 * this CPU can test the has-waiters bit.
 	 *
-	 * Note: only where CAS is available in hardware will this be
-	 * an unbuffered write, but non-interlocked release cannot be
-	 * done on CPUs without CAS in hardware.
+	 * This membar_enter matches the membar_enter in
+	 * mutex_vector_enter.  (Yes, not membar_exit -- the legacy
+	 * naming is confusing, but store-before-load usually pairs
+	 * with store-before-load, in the extremely rare cases where it
+	 * is used at all.)
+	 *
+	 * That way, mutex_vector_enter can't see this store
+	 * ci->ci_biglock_wanted := owant until it has set the
+	 * has-waiters bit.
 	 */
 	(void)atomic_swap_ptr(&ci->ci_biglock_wanted, owant);
-
-	/*
-	 * Issue a memory barrier as we have acquired a lock.  This also
-	 * prevents stores from a following mutex_exit() being reordered
-	 * to occur before our store to ci_biglock_wanted above.
-	 */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_enter();
 #endif
