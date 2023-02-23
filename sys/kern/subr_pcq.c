@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.18 2023/02/23 03:03:45 riastradh Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.19 2023/02/23 03:03:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2019 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.18 2023/02/23 03:03:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.19 2023/02/23 03:03:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -290,7 +290,8 @@ pcq_create(size_t nitems, km_flag_t kmflags)
 {
 	pcq_t *pcq;
 
-	KASSERT(nitems > 0 && nitems <= PCQ_MAXLEN);
+	KASSERT(nitems > 0);
+	KASSERT(nitems <= PCQ_MAXLEN);
 
 	pcq = kmem_zalloc(offsetof(pcq_t, pcq_items[nitems]), kmflags);
 	if (pcq != NULL) {
