@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.17 2023/02/23 03:01:49 riastradh Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.18 2023/02/23 03:03:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2019 The NetBSD Foundation, Inc.
@@ -31,10 +31,94 @@
 
 /*
  * Lockless producer/consumer queue.
+ *
+ * Summary of the producer algorithm in pcq_put (may run many in
+ * parallel with each other and with a consumer):
+ *
+ *	P1. initialize an item
+ *
+ *	P2. atomic_cas(&pcq->pcq_pc) loop to advance the producer
+ *	    pointer, reserving a space at c (fails if not enough space)
+ *
+ *	P3. atomic_store_release(&pcq->pcq_items[c], item) to publish
+ *	    the item in the space it reserved
+ *
+ * Summary of the consumer algorithm in pcq_get (must be serialized by
+ * caller with other consumers, may run in parallel with any number of
+ * producers):
+ *
+ *	C1. atomic_load_relaxed(&pcq->pcq_pc) to get the consumer
+ *	    pointer and a snapshot of the producer pointer, which may
+ *	    point to null items or point to initialized items (fails if
+ *	    no space reserved for published items yet)
+ *
+ *	C2. atomic_load_consume(&pcq->pcq_items[c]) to get the next
+ *	    unconsumed but potentially published item (fails if item
+ *	    not published yet)
+ *
+ *	C3. pcq->pcq_items[c] = NULL to consume the next unconsumed but
+ *	    published item
+ *
+ *	C4. membar_producer
+ *
+ *	C5. atomic_cas(&pcq->pcq_pc) loop to advance the consumer
+ *	    pointer
+ *
+ *	C6. use the item
+ *
+ * Note that there is a weird bare membar_producer which is not matched
+ * by membar_consumer.  This is one of the rare cases of a memory
+ * barrier on one side that is not matched by a memory barrier on
+ * another side, but the ordering works out, with a somewhat more
+ * involved proof.
+ *
+ * Some properties that need to be proved:
+ *
+ *	Theorem 1.  For pcq_put call that leads into pcq_get:
+ *	Initializing item at P1 is dependency-ordered before usage of
+ *	item at C6, so items placed by pcq_put can be safely used by
+ *	the caller of pcq_get.
+ *
+ *	Proof sketch.
+ *
+ *		Assume load/store P2 synchronizes with load/store C1
+ *		(if not, pcq_get fails in `if (p == c) return NULL').
+ *
+ *		Assume store-release P3 synchronizes with load-consume
+ *		C2 (if not, pcq_get fails in `if (item == NULL) return
+ *		NULL').
+ *
+ *		Then:
+ *
+ *		- P1 is sequenced before store-release P3
+ *		- store-release P3 synchronizes with load-consume C2
+ *		- load-consume C2 is dependency-ordered before C6
+ *
+ *		Hence transitively, P1 is dependency-ordered before C6,
+ *		QED.
+ *
+ *	Theorem 2.  For pcq_get call followed by pcq_put: Nulling out
+ *	location at store C3 happens before placing a new item in the
+ *	same location at store P3, so items are not lost.
+ *
+ *	Proof sketch.
+ *
+ *		Assume load/store C5 synchronizes with load/store P2
+ *		(otherwise pcq_peek starts over the CAS loop or fails).
+ *
+ *		Then:
+ *
+ *		- store C3 is sequenced before membar_producer C4
+ *		- membar_producer C4 is sequenced before load/store C5
+ *		- load/store C5 synchronizes with load/store P2 at &pcq->pcq_pc
+ *		- P2 is sequenced before store-release P3
+ *
+ *		Hence transitively, store C3 happens before
+ *		store-release P3, QED.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.17 2023/02/23 03:01:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.18 2023/02/23 03:03:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -186,7 +270,8 @@ pcq_get(pcq_t *pcq)
 	 * because the only load we need to ensure happens first is the
 	 * load of pcq->pcq_items[c], but that necessarily happens
 	 * before the store to pcq->pcq_items[c] to null it out because
-	 * it is at the same memory location.
+	 * it is at the same memory location.  Yes, this is a bare
+	 * membar_producer with no matching membar_consumer.
 	 */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_producer();
