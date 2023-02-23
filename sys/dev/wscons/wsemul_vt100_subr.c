@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.26 2023/01/18 17:02:17 christos Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.27 2023/02/23 02:47:52 riastradh Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.26 2023/01/18 17:02:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.27 2023/02/23 02:47:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -773,12 +773,22 @@ wsemul_vt100_handle_dcs(struct vt100base_data *edp)
 			char c = edp->dcsarg[i];
 			switch (c) {
 			    case '0': case '1': case '2': case '3': case '4':
-			    case '5': case '6': case '7': case '8': case '9':
-				pos = pos * 10 + (edp->dcsarg[i] - '0');
+			    case '5': case '6': case '7': case '8': case '9': {
+				const int c0 = c - '0';
+				if (pos < 0 ||
+				    pos > INT_MAX/10 ||
+				    pos * 10 > edp->ncols - c0) {
+					pos = -1;
+					break;
+				}
+				pos = pos * 10 + c0;
 				break;
+			    }
 			    case '/':
-				if (pos > 0)
+				if (pos > 0) {
+					KASSERT(pos <= edp->ncols);
 					edp->tabs[pos - 1] = 1;
+				}
 				pos = 0;
 				break;
 			    default:
@@ -788,8 +798,10 @@ wsemul_vt100_handle_dcs(struct vt100base_data *edp)
 				break;
 			}
 		}
-		if (pos > 0)
+		if (pos > 0) {
+			KASSERT(pos <= edp->ncols);
 			edp->tabs[pos - 1] = 1;
+		}
 		break;
 	    default:
 		panic("wsemul_vt100_handle_dcs: bad type %d", edp->dcstype);
