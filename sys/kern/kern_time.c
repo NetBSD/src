@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.219 2023/02/18 14:04:17 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.220 2023/02/23 02:56:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.219 2023/02/18 14:04:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.220 2023/02/23 02:56:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.219 2023/02/18 14:04:17 thorpej Exp 
 kmutex_t	itimer_mutex __cacheline_aligned;	/* XXX static */
 static struct itlist itimer_realtime_changed_notify;
 
+static void	itimer_callout(void *);
 static void	ptimer_intr(void *);
 static void	*ptimer_sih __read_mostly;
 static TAILQ_HEAD(, ptimer) ptimer_queue;
@@ -685,6 +686,7 @@ itimer_init(struct itimer * const it, const struct itimer_ops * const ops,
 	if (!CLOCK_VIRTUAL_P(id)) {
 		KASSERT(itl == NULL);
 		callout_init(&it->it_ch, CALLOUT_MPSAFE);
+		callout_setfunc(&it->it_ch, itimer_callout, it);
 		if (id == CLOCK_REALTIME && ops->ito_realtime_changed != NULL) {
 			LIST_INSERT_HEAD(&itimer_realtime_changed_notify,
 			    it, it_rtchgq);
@@ -799,8 +801,6 @@ itimer_decr(struct itimer *it, int nsec)
 	return true;
 }
 
-static void itimer_callout(void *);
-
 /*
  * itimer_arm_real:
  *
@@ -813,13 +813,12 @@ itimer_arm_real(struct itimer * const it)
 
 	/*
 	 * Don't need to check tshzto() return value, here.
-	 * callout_reset() does it for us.
+	 * callout_schedule() does it for us.
 	 */
-	callout_reset(&it->it_ch,
+	callout_schedule(&it->it_ch,
 	    (it->it_clockid == CLOCK_MONOTONIC
 		? tshztoup(&it->it_time.it_value)
-		: tshzto(&it->it_time.it_value)),
-	    itimer_callout, it);
+		: tshzto(&it->it_time.it_value)));
 }
 
 /*
