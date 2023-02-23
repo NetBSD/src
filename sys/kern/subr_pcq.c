@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.16 2023/02/23 03:01:35 riastradh Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.17 2023/02/23 03:01:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.16 2023/02/23 03:01:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.17 2023/02/23 03:01:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -177,10 +177,16 @@ pcq_get(pcq_t *pcq)
 	nv = pcq_combine(p, c);
 
 	/*
-	 * Ensure that update to pcq_items[] becomes globally visible
+	 * Ensure that update to pcq_items[c] becomes globally visible
 	 * before the update to pcq_pc.  If it were reordered to occur
 	 * after it, we could in theory wipe out a modification made
-	 * to pcq_items[] by pcq_put().
+	 * to pcq_items[c] by pcq_put().
+	 *
+	 * No need for load-before-store ordering of membar_release
+	 * because the only load we need to ensure happens first is the
+	 * load of pcq->pcq_items[c], but that necessarily happens
+	 * before the store to pcq->pcq_items[c] to null it out because
+	 * it is at the same memory location.
 	 */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_producer();
