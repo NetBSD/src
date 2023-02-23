@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.73 2023/02/20 13:30:47 riastradh Exp $	*/
+/*	$NetBSD: asm.h,v 1.74 2023/02/23 14:56:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -632,6 +632,28 @@ _C_LABEL(x):
 #define	BDSYNC_PLUNGER	nop
 #define	SYNC_PLUNGER	/* nothing */
 #endif
+
+/*
+ * Store-before-load barrier.  Do not use this unless you know what
+ * you're doing.
+ */
+#ifdef MULTIPROCESSOR
+#define	SYNC_DEKKER	sync
+#else
+#define	SYNC_DEKKER	/* nothing */
+#endif
+
+/*
+ * Store-before-store and load-before-load barriers.  These could be
+ * made weaker than release (load/store-before-store) and acquire
+ * (load-before-load/store) barriers, and newer MIPS does have
+ * instruction encodings for finer-grained barriers like this, but I
+ * dunno how to appropriately conditionalize their use or get the
+ * assembler to be happy with them, so we'll use these definitions for
+ * now.
+ */
+#define	SYNC_PRODUCER	SYNC_REL
+#define	SYNC_CONSUMER	SYNC_ACQ
 
 /* CPU dependent hook for cp0 load delays */
 #if defined(MIPS1) || defined(MIPS2) || defined(MIPS3)
