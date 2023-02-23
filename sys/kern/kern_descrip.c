@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.251 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.252 2023/02/23 02:58:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.251 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.252 2023/02/23 02:58:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -451,7 +451,7 @@ fd_putfile(unsigned fd)
 	 * CPU.
 	 */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 
 	/*
@@ -602,6 +602,9 @@ fd_close(unsigned fd)
 		 * waiting for other users of the file to drain.  Release
 		 * our reference, and wake up the closer.
 		 */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+		membar_release();
+#endif
 		atomic_dec_uint(&ff->ff_refcnt);
 		cv_broadcast(&ff->ff_closing);
 		mutex_exit(&fdp->fd_lock);
@@ -637,9 +640,12 @@ fd_close(unsigned fd)
 	} else {
 		/* Multi threaded. */
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-		membar_producer();
+		membar_release();
 #endif
 		refcnt = atomic_dec_uint_nv(&ff->ff_refcnt);
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+		membar_acquire();
+#endif
 	}
 	if (__predict_false(refcnt != 0)) {
 		/*
@@ -1532,10 +1538,13 @@ fd_free(void)
 	KASSERT(fdp->fd_dtbuiltin.dt_link == NULL);
 
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_exit();
+	membar_release();
 #endif
 	if (atomic_dec_uint_nv(&fdp->fd_refcnt) > 0)
 		return;
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
+	membar_acquire();
+#endif
 
 	/*
 	 * Close any files that the process holds open.
