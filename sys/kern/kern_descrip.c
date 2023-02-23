@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.252 2023/02/23 02:58:28 riastradh Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.253 2023/02/23 02:58:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.252 2023/02/23 02:58:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.253 2023/02/23 02:58:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -624,7 +624,7 @@ fd_close(unsigned fd)
 	 * will prevent them from adding additional uses to this file
 	 * while we are closing it.
 	 */
-	ff->ff_file = NULL;
+	atomic_store_relaxed(&ff->ff_file, NULL);
 	ff->ff_exclose = false;
 
 	/*
@@ -1152,12 +1152,6 @@ fd_affix(proc_t *p, file_t *fp, unsigned fd)
 
 	/*
 	 * Insert the new file into the descriptor slot.
-	 *
-	 * The memory barriers provided by lock activity in this routine
-	 * ensure that any updates to the file structure become globally
-	 * visible before the file becomes visible to other LWPs in the
-	 * current process; otherwise we would set ff->ff_file with
-	 * atomic_store_release(&ff->ff_file, fp) at the bottom.
 	 */
 	fdp = p->p_fd;
 	dt = atomic_load_consume(&fdp->fd_dt);
@@ -1170,7 +1164,7 @@ fd_affix(proc_t *p, file_t *fp, unsigned fd)
 	KASSERT(fd >= NDFDFILE || ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
 
 	/* No need to lock in order to make file initially visible. */
-	ff->ff_file = fp;
+	atomic_store_release(&ff->ff_file, fp);
 }
 
 /*
