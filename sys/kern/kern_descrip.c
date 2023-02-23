@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.253 2023/02/23 02:58:40 riastradh Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.254 2023/02/23 03:00:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.253 2023/02/23 02:58:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.254 2023/02/23 03:00:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,10 +392,45 @@ fd_getfile(unsigned fd)
 		 * Multi threaded: issue a memory barrier to ensure that we
 		 * acquire the file pointer _after_ adding a reference.  If
 		 * no memory barrier, we could fetch a stale pointer.
+		 *
+		 * In particular, we must coordinate the following four
+		 * memory operations:
+		 *
+		 *	A. fd_close store ff->ff_file = NULL
+		 *	B. fd_close refcnt = atomic_dec_uint_nv(&ff->ff_refcnt)
+		 *	C. fd_getfile atomic_inc_uint(&ff->ff_refcnt)
+		 *	D. fd_getfile load fp = ff->ff_file
+		 *
+		 * If the order is D;A;B;C:
+		 *
+		 *	1. D: fp = ff->ff_file
+		 *	2. A: ff->ff_file = NULL
+		 *	3. B: refcnt = atomic_dec_uint_nv(&ff->ff_refcnt)
+		 *	4. C: atomic_inc_uint(&ff->ff_refcnt)
+		 *
+		 * then fd_close determines that there are no more
+		 * references and decides to free fp immediately, at
+		 * the same that fd_getfile ends up with an fp that's
+		 * about to be freed.  *boom*
+		 *
+		 * By making B a release operation in fd_close, and by
+		 * making C an acquire operation in fd_getfile, since
+		 * they are atomic operations on the same object, which
+		 * has a total modification order, we guarantee either:
+		 *
+		 *	- B happens before C.  Then since A is
+		 *	  sequenced before B in fd_close, and C is
+		 *	  sequenced before D in fd_getfile, we
+		 *	  guarantee A happens before D, so fd_getfile
+		 *	  reads a null fp and safely fails.
+		 *
+		 *	- C happens before B.  Then fd_getfile may read
+		 *	  null or nonnull, but either way, fd_close
+		 *	  will safely wait for references to drain.
 		 */
 		atomic_inc_uint(&ff->ff_refcnt);
 #ifndef __HAVE_ATOMIC_AS_MEMBAR
-		membar_enter();
+		membar_acquire();
 #endif
 	}
 
