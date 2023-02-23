@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.4.96.1 2023/02/22 12:59:17 martin Exp $
+#	$NetBSD: RAMDISK,v 1.4.96.2 2023/02/23 11:48:58 martin Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -190,7 +190,6 @@ sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
 cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 #ch*	at scsibus? target ? lun ?	# SCSI autochangers
-dse*	at scsibus? target ? lun ?	# SCSI ethernet (Dayna)
 se*	at scsibus? target ? lun ?	# SCSI ethernet
 #ss*	at scsibus? target ? lun ?	# SCSI scanners
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
