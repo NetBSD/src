@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.13 2021/02/08 09:31:05 wiz Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.14 2023/02/23 03:00:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.13 2021/02/08 09:31:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.14 2023/02/23 03:00:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -116,10 +116,7 @@ pcq_put(pcq_t *pcq, void *item)
 	 * that the caller made to the data item are globally visible
 	 * before we put it onto the list.
 	 */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
-	membar_producer();
-#endif
-	pcq->pcq_items[op] = item;
+	atomic_store_release(&pcq->pcq_items[op], item);
 
 	/*
 	 * Synchronization activity to wake up the consumer will ensure
