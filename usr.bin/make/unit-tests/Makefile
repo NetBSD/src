@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.331 2023/01/24 00:24:02 sjg Exp $
+# $NetBSD: Makefile,v 1.332 2023/02/23 05:20:45 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -405,12 +405,14 @@ TESTS+=		varname-dot-make-makefiles
 TESTS+=		varname-dot-make-meta-bailiwick
 TESTS+=		varname-dot-make-meta-created
 TESTS+=		varname-dot-make-meta-files
+.if ${.MAKE.PATH_FILEMON:Uno:Nktrace:N/dev*} == ""
 TESTS+=		varname-dot-make-meta-ignore_filter
 TESTS+=		varname-dot-make-meta-ignore_paths
 TESTS+=		varname-dot-make-meta-ignore_patterns
+TESTS+=		varname-dot-make-path_filemon
+.endif
 TESTS+=		varname-dot-make-meta-prefix
 TESTS+=		varname-dot-make-mode
-TESTS+=		varname-dot-make-path_filemon
 TESTS+=		varname-dot-make-pid
 TESTS+=		varname-dot-make-ppid
 TESTS+=		varname-dot-make-save_dollars
@@ -501,6 +503,10 @@ SED_CMDS.job-output-long-lines= \
 	${:D marker should always be at the beginning of the line. } \
 	-e '/^aa*--- job-b ---$$/d' \
 	-e '/^bb*--- job-a ---$$/d'
+
+# meta line numbers can vary based on filemon implementation
+SED_CMDS.meta-ignore= -e 's,\(\.meta:\) [1-9][0-9]*:,\1 <line>:,'
+
 SED_CMDS.opt-chdir=		-e 's,\(nonexistent\).[1-9][0-9]*,\1,'
 SED_CMDS.opt-debug-graph1=	${STD_SED_CMDS.dg1}
 SED_CMDS.opt-debug-graph2=	${STD_SED_CMDS.dg2}
@@ -533,6 +539,9 @@ SED_CMDS.var-op-shell+=		-e '/command/s,No such.*,not found,'
 SED_CMDS.vardebug+=		-e 's,${.SHELL},</path/to/shell>,'
 SED_CMDS.varmod-subst-regex+=	${STD_SED_CMDS.regex}
 SED_CMDS.varparse-errors+=	${STD_SED_CMDS.timestamp}
+SED_CMDS.varname-dot-make-meta-ignore_filter+= ${SED_CMDS.meta-ignore}
+SED_CMDS.varname-dot-make-meta-ignore_paths+= ${SED_CMDS.meta-ignore}
+SED_CMDS.varname-dot-make-meta-ignore_patterns+= ${SED_CMDS.meta-ignore}
 SED_CMDS.varname-dot-parsedir=	-e '/in some cases/ s,^make: "[^"]*,make: "<normalized>,'
 SED_CMDS.varname-dot-parsefile=	-e '/in some cases/ s,^make: "[^"]*,make: "<normalized>,'
 SED_CMDS.varname-dot-shell=	-e 's, = /[^ ]*, = (details omitted),g'
@@ -713,23 +722,23 @@ LIMIT_RESOURCES?=	:
 
 # Postprocess the test output to make the output platform-independent.
 #
-# always pretend .MAKE was called 'make'
-_SED_CMDS+=	-e 's,^${TEST_MAKE:T:S,.,\\.,g}[][0-9]*:,make:,'
-_SED_CMDS+=	-e 's,${TEST_MAKE:S,.,\\.,g},make,'
-_SED_CMDS+=	-e 's,^usage: ${TEST_MAKE:T:S,.,\\.,g} ,usage: make ,'
-# replace anything after 'stopped in' with unit-tests
+# Replace anything after 'stopped in' with unit-tests
 _SED_CMDS+=	-e '/stopped/s, /.*, unit-tests,'
 # Allow the test files to be placed anywhere.
 _SED_CMDS+=	-e 's,\(\.PARSEDIR}\) = `'"/[^']*'"',\1 = <some-dir>,'
 _SED_CMDS+=	-e 's,\(\.INCLUDEDFROMDIR}\) = `'"/[^']*'"',\1 = <some-dir>,'
-_SED_CMDS+=	-e 's,${TMPDIR},<tmpdir>,g'
+_SED_CMDS+=	-e 's,${TMPDIR},<tmpdir>,g' -e 's,${TMPDIR:tA},<tmpdir>,g'
 # canonicalize ${.OBJDIR} and ${.CURDIR}
+_SED_CMDS+=	-e 's,${.CURDIR},<curdir>,g'
 .if ${.OBJDIR} != ${.CURDIR}
 # yes this is inaccurate but none of the tests expect <objdir> anywhere
 # which we get depending on how MAKEOBJDIR is set.
-_SED_CMDS+=	-e 's,${.OBJDIR},<curdir>,g'
+_SED_CMDS+=	-e 's,${.OBJDIR},<curdir>,g' -e 's,${.OBJDIR:tA},<curdir>,g'
 .endif
-_SED_CMDS+=	-e 's,${.CURDIR},<curdir>,g'
+# always pretend .MAKE was called 'make'
+_SED_CMDS+=	-e 's,^${TEST_MAKE:T:S,.,\\.,g}[][0-9]*:,make:,'
+_SED_CMDS+=	-e 's,${TEST_MAKE:S,.,\\.,g},make,'
+_SED_CMDS+=	-e 's,^usage: ${TEST_MAKE:T:S,.,\\.,g} ,usage: make ,'
 _SED_CMDS+=	-e 's,<curdir>/,,g'
 _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
 _SED_CMDS+=	-e '/MAKE_VERSION/d'
