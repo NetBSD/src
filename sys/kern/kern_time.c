@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.220 2023/02/23 02:56:25 riastradh Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.221 2023/02/23 02:57:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.220 2023/02/23 02:56:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.221 2023/02/23 02:57:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -809,7 +809,10 @@ itimer_decr(struct itimer *it, int nsec)
 static void
 itimer_arm_real(struct itimer * const it)
 {
+
 	KASSERT(!it->it_dying);
+	KASSERT(!CLOCK_VIRTUAL_P(it->it_clockid));
+	KASSERT(!callout_pending(&it->it_ch));
 
 	/*
 	 * Don't need to check tshzto() return value, here.
@@ -907,6 +910,7 @@ itimer_settime(struct itimer *it)
 	struct itlist *itl;
 
 	KASSERT(itimer_lock_held());
+	KASSERT(!it->it_dying);
 
 	if (!CLOCK_VIRTUAL_P(it->it_clockid)) {
 		/*
@@ -918,6 +922,7 @@ itimer_settime(struct itimer *it)
 		 */
 		if (callout_halt(&it->it_ch, &itimer_mutex))
 			return ERESTART;
+		KASSERT(!it->it_dying);
 
 		/* Now we can touch it and start it up again. */
 		if (timespecisset(&it->it_time.it_value))
@@ -973,6 +978,7 @@ itimer_gettime(const struct itimer *it, struct itimerspec *aits)
 	struct itimer *itn;
 
 	KASSERT(itimer_lock_held());
+	KASSERT(!it->it_dying);
 
 	*aits = it->it_time;
 	if (!CLOCK_VIRTUAL_P(it->it_clockid)) {
