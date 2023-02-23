@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcq.c,v 1.14 2023/02/23 03:00:53 riastradh Exp $	*/
+/*	$NetBSD: subr_pcq.c,v 1.15 2023/02/23 03:01:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.14 2023/02/23 03:00:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcq.c,v 1.15 2023/02/23 03:01:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -100,7 +100,7 @@ pcq_put(pcq_t *pcq, void *item)
 	KASSERT(item != NULL);
 
 	do {
-		v = pcq->pcq_pc;
+		v = atomic_load_relaxed(&pcq->pcq_pc);
 		pcq_split(v, &op, &c);
 		p = pcq_advance(pcq, op);
 		if (p == c) {
@@ -132,14 +132,13 @@ pcq_put(pcq_t *pcq, void *item)
 void *
 pcq_peek(pcq_t *pcq)
 {
-	const uint32_t v = pcq->pcq_pc;
+	const uint32_t v = atomic_load_relaxed(&pcq->pcq_pc);
 	u_int p, c;
 
 	pcq_split(v, &p, &c);
 
 	/* See comment on race below in pcq_get(). */
-	return (p == c) ? NULL :
-	    (membar_datadep_consumer(), pcq->pcq_items[c]);
+	return (p == c) ? NULL : atomic_load_consume(&pcq->pcq_items[c]);
 }
 
 /*
@@ -154,15 +153,13 @@ pcq_get(pcq_t *pcq)
 	u_int p, c;
 	void *item;
 
-	v = pcq->pcq_pc;
+	v = atomic_load_relaxed(&pcq->pcq_pc);
 	pcq_split(v, &p, &c);
 	if (p == c) {
 		/* Queue is empty: nothing to return. */
 		return NULL;
 	}
-	/* Make sure we read pcq->pcq_pc before pcq->pcq_items[c].  */
-	membar_datadep_consumer();
-	item = pcq->pcq_items[c];
+	item = atomic_load_consume(&pcq->pcq_items[c]);
 	if (item == NULL) {
 		/*
 		 * Raced with sender: we rely on a notification (e.g. softint
@@ -185,7 +182,7 @@ pcq_get(pcq_t *pcq)
 	membar_producer();
 #endif
 	while (__predict_false(atomic_cas_32(&pcq->pcq_pc, v, nv) != v)) {
-		v = pcq->pcq_pc;
+		v = atomic_load_relaxed(&pcq->pcq_pc);
 		pcq_split(v, &p, &c);
 		c = pcq_advance(pcq, c);
 		nv = pcq_combine(p, c);
