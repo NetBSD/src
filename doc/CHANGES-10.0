@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.36 2023/02/22 19:56:27 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.37 2023/02/23 11:49:18 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1131,7 +1131,7 @@ distrib/next68k/ramdisk/list			1.1
 etc/etc.next68k/MAKEDEV.conf			1.7
 etc/etc.next68k/Makefile.inc			1.8
 sys/arch/next68k/conf/GENERIC			1.156-1.161
-sys/arch/next68k/conf/RAMDISK			1.5
+sys/arch/next68k/conf/RAMDISK			1.5 (manually adapted)
 sys/arch/next68k/conf/SLAB			1.62,1.63
 sys/arch/next68k/conf/majors.next68k		1.26
 
