@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.69 2023/02/24 11:02:27 riastradh Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.70 2023/02/24 11:11:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.69 2023/02/24 11:02:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.70 2023/02/24 11:11:10 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -96,12 +96,6 @@ do { \
 #else
 #define	RW_ASSERT(rw, cond)	/* nothing */
 #endif	/* DIAGNOSTIC */
-
-/*
- * Memory barriers.
- */
-#define	RW_MEMBAR_ACQUIRE()		membar_acquire()
-#define	RW_MEMBAR_RELEASE()		membar_release()
 
 /*
  * For platforms that do not provide stubs, or for the LOCKDEBUG case.
@@ -337,7 +331,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			    ~RW_WRITE_WANTED);
 			if (__predict_true(next == owner)) {
 				/* Got it! */
-				RW_MEMBAR_ACQUIRE();
+				membar_acquire();
 				break;
 			}
 
@@ -465,7 +459,7 @@ rw_vector_exit(krwlock_t *rw)
 	 * proceed to do direct handoff if there are waiters, and if the
 	 * lock would become unowned.
 	 */
-	RW_MEMBAR_RELEASE();
+	membar_release();
 	for (;;) {
 		newown = (owner - decr);
 		if ((newown & (RW_THREAD | RW_HAS_WAITERS)) == RW_HAS_WAITERS)
@@ -579,7 +573,7 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 	RW_ASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
 
-	RW_MEMBAR_ACQUIRE();
+	membar_acquire();
 	return 1;
 }
 
@@ -606,8 +600,7 @@ rw_downgrade(krwlock_t *rw)
 	__USE(curthread);
 #endif
 
-	RW_MEMBAR_RELEASE();
-
+	membar_release();
 	for (owner = rw->rw_owner;; owner = next) {
 		/*
 		 * If there are no waiters we can do this the easy way.  Try
@@ -705,7 +698,7 @@ rw_tryupgrade(krwlock_t *rw)
 		newown = curthread | RW_WRITE_LOCKED | (owner & ~RW_THREAD);
 		next = rw_cas(rw, owner, newown);
 		if (__predict_true(next == owner)) {
-			RW_MEMBAR_ACQUIRE();
+			membar_acquire();
 			break;
 		}
 		RW_ASSERT(rw, (next & RW_WRITE_LOCKED) == 0);
