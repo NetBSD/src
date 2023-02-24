@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_futex.c,v 1.18 2022/04/21 12:05:13 riastradh Exp $	*/
+/*	$NetBSD: sys_futex.c,v 1.19 2023/02/24 11:02:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.18 2022/04/21 12:05:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_futex.c,v 1.19 2023/02/24 11:02:27 riastradh Exp $");
 
 /*
  * Futexes
@@ -537,18 +537,14 @@ futex_rele(struct futex *f)
 		refcnt = atomic_load_relaxed(&f->fx_refcnt);
 		if (refcnt == 1)
 			goto trylast;
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 		membar_release();
-#endif
 	} while (atomic_cas_ulong(&f->fx_refcnt, refcnt, refcnt - 1) != refcnt);
 	return;
 
 trylast:
 	mutex_enter(&futex_tab.lock);
 	if (atomic_dec_ulong_nv(&f->fx_refcnt) == 0) {
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 		membar_acquire();
-#endif
 		if (f->fx_on_tree) {
 			if (__predict_false(f->fx_shared))
 				rb_tree_remove_node(&futex_tab.oa, f);

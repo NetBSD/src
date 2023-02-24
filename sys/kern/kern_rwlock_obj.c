@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock_obj.c,v 1.8 2022/10/26 23:22:22 riastradh Exp $	*/
+/*	$NetBSD: kern_rwlock_obj.c,v 1.9 2023/02/24 11:02:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock_obj.c,v 1.8 2022/10/26 23:22:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock_obj.c,v 1.9 2023/02/24 11:02:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -145,15 +145,11 @@ rw_obj_free(krwlock_t *lock)
 	KASSERT(ro->ro_magic == RW_OBJ_MAGIC);
 	KASSERT(ro->ro_refcnt > 0);
 
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_release();
-#endif
 	if (atomic_dec_uint_nv(&ro->ro_refcnt) > 0) {
 		return false;
 	}
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_acquire();
-#endif
 	rw_destroy(&ro->ro_lock);
 	pool_cache_put(rw_obj_cache, ro);
 	return true;

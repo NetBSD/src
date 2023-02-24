@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.286 2023/02/17 06:34:46 skrll Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.287 2023/02/24 11:02:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.286 2023/02/17 06:34:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.287 2023/02/24 11:02:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2558,9 +2558,7 @@ pool_pcg_get(pcg_t *volatile *head, pcg_t **pcgp)
 		n = atomic_cas_ptr(head, o, __UNCONST(&pcg_dummy));
 		if (o == n) {
 			/* Fetch pointer to next item and then unlock. */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 			membar_datadep_consumer(); /* alpha */
-#endif
 			n = atomic_load_relaxed(&o->pcg_next);
 			atomic_store_release(head, n);
 			break;
@@ -2592,9 +2590,7 @@ pool_pcg_trunc(pcg_t *volatile *head)
 		n = atomic_cas_ptr(head, o, NULL);
 		if (o == n) {
 			splx(s);
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 			membar_datadep_consumer(); /* alpha */
-#endif
 			return o;
 		}
 	}
@@ -2621,9 +2617,7 @@ pool_pcg_put(pcg_t *volatile *head, pcg_t *pcg)
 			continue;
 		}
 		pcg->pcg_next = o;
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 		membar_release();
-#endif
 		n = atomic_cas_ptr(head, o, pcg);
 		if (o == n) {
 			return count != SPINLOCK_BACKOFF_MIN;
