@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.103 2023/02/23 14:57:29 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.104 2023/02/24 11:21:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.103 2023/02/23 14:57:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.104 2023/02/24 11:21:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -167,12 +167,8 @@ do {									\
  */
 #ifdef __HAVE_ATOMIC_AS_MEMBAR
 #define	MUTEX_MEMBAR_ENTER()
-#define	MUTEX_MEMBAR_ACQUIRE()
-#define	MUTEX_MEMBAR_RELEASE()
 #else
 #define	MUTEX_MEMBAR_ENTER()		membar_enter()
-#define	MUTEX_MEMBAR_ACQUIRE()		membar_acquire()
-#define	MUTEX_MEMBAR_RELEASE()		membar_release()
 #endif
 
 /*
@@ -238,7 +234,7 @@ MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 	MUTEX_INHERITDEBUG(oldown, mtx->mtx_owner);
 	MUTEX_INHERITDEBUG(newown, oldown);
 	rv = MUTEX_CAS(&mtx->mtx_owner, oldown, newown);
-	MUTEX_MEMBAR_ACQUIRE();
+	membar_acquire();
 	return rv;
 }
 
@@ -256,10 +252,9 @@ MUTEX_RELEASE(kmutex_t *mtx)
 {
 	uintptr_t newown;
 
-	MUTEX_MEMBAR_RELEASE();
 	newown = 0;
 	MUTEX_INHERITDEBUG(newown, mtx->mtx_owner);
-	mtx->mtx_owner = newown;
+	atomic_store_release(&mtx->mtx_owner, newown);
 }
 #endif	/* __HAVE_SIMPLE_MUTEXES */
 
