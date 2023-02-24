@@ -1,5 +1,5 @@
 #! /bin/sh -m
-# $NetBSD: install.sh,v 1.2 2012/06/03 21:42:45 joerg Exp $
+# $NetBSD: install.sh,v 1.2.44.1 2023/02/24 13:48:28 martin Exp $
 #
 # -
 #  Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -87,7 +87,7 @@ fi
 
 # run the installation or upgrade script.
 cd /
-cmd=./sysinst
+cmd=/usr/sbin/sysinst
 
 while [ -n "${cmd}" ]
 do
@@ -100,7 +100,7 @@ do
 			tput clear
 			echo "You have stopped sysinst, return to it by" \
 				"typing 'exit' or ^D."
-			${SHELL} -i
+			${SHELL} -i -E
 			cmd="fg"
 		else
 			cmd=""
@@ -112,4 +112,4 @@ done
 echo "TERM=${TERM}" > ${termfile}
 echo
 echo "To return to the installer, quit this shell by typing 'exit' or ^D."
-exec ${SHELL}
+exec ${SHELL} -E
