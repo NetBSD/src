@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.37 2023/02/23 11:49:18 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.38 2023/02/24 14:16:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1191,4 +1191,222 @@ sys/kern/kern_time.c				1.219
 
 	In itimer_arm_real(), KASSERT that it->it_dying is false.
 	[thorpej, ticket #101]
+
+external/bsd/nvi/dist/common/search.c		1.5
+
+	vi(1): PR 57106: correctly handle escaped backslashes.
+	[gutteridge, ticket #102]
+
+sys/net/bpf.c					1.251
+
+	bpf(4): support writes on loopback interfaces when BIOCSHDRCMPLT
+	is set.
+	[gutteridge, ticket #103]
+
+crypto/external/bsd/openssl/dist/crypto/bn/rsa_sup_mul.c up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/certs/embeddedSCTs1_issuer-key.pem up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/smime-certs/badrsa.pem up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/ssl-tests/30-supported-groups.conf up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/ssl-tests/30-supported-groups.conf.in up to 1.1.1.1
+crypto/external/bsd/openssl/dist/util/perl/OpenSSL/copyright.pm up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/ssl-tests/16-certstatus.conf delete
+crypto/external/bsd/openssl/dist/CHANGES        up to 1.30
+crypto/external/bsd/openssl/dist/Configure      up to 1.31
+crypto/external/bsd/openssl/dist/NEWS           up to 1.30
+crypto/external/bsd/openssl/dist/README         up to 1.30
+crypto/external/bsd/openssl/dist/config         up to 1.1.1.14
+crypto/external/bsd/openssl/dist/Configurations/10-main.conf up to 1.1.1.12
+crypto/external/bsd/openssl/dist/apps/apps.c    up to 1.1.1.23
+crypto/external/bsd/openssl/dist/apps/apps.h    up to 1.1.1.16
+crypto/external/bsd/openssl/dist/apps/ca.c      up to 1.22
+crypto/external/bsd/openssl/dist/apps/ocsp.c    up to 1.23
+crypto/external/bsd/openssl/dist/apps/s_cb.c    up to 1.1.1.21
+crypto/external/bsd/openssl/dist/apps/s_server.c up to 1.25
+crypto/external/bsd/openssl/dist/apps/x509.c    up to 1.1.1.17
+crypto/external/bsd/openssl/dist/crypto/init.c  up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/s390x_arch.h up to 1.1.1.3
+crypto/external/bsd/openssl/dist/crypto/s390xcap.c up to 1.1.1.8
+crypto/external/bsd/openssl/dist/crypto/aes/asm/aesni-x86.pl up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/aes/asm/aesv8-armx.pl up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/asn1/asn_mime.c up to 1.13
+crypto/external/bsd/openssl/dist/crypto/asn1/bio_asn1.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/asn1/bio_ndef.c up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/asn1/charmap.pl up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/bio/b_print.c up to 1.1.1.11
+crypto/external/bsd/openssl/dist/crypto/bn/bn_blind.c up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/bn/bn_div.c up to 1.1.1.15
+crypto/external/bsd/openssl/dist/crypto/bn/bn_err.c up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/bn/bn_exp.c up to 1.21
+crypto/external/bsd/openssl/dist/crypto/bn/bn_gcd.c up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/bn/bn_local.h up to 1.1.1.3
+crypto/external/bsd/openssl/dist/crypto/bn/bn_mont.c up to 1.13
+crypto/external/bsd/openssl/dist/crypto/bn/bn_nist.c up to 1.7
+crypto/external/bsd/openssl/dist/crypto/bn/bn_prime.pl up to 1.1.1.5
+crypto/external/bsd/openssl/dist/crypto/bn/build.info up to 1.1.1.4
+crypto/external/bsd/openssl/dist/crypto/bn/rsaz_exp.c up to 1.1.1.4
+crypto/external/bsd/openssl/dist/crypto/bn/rsaz_exp.h up to 1.1.1.5
+crypto/external/bsd/openssl/dist/crypto/bn/asm/x86_64-mont5.pl up to 1.1.1.14
+crypto/external/bsd/openssl/dist/crypto/cms/cms_enc.c up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/cms/cms_err.c up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/conf/keysets.pl up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/ec/ec_asn1.c up to 1.13
+crypto/external/bsd/openssl/dist/crypto/ec/ec_key.c up to 1.7
+crypto/external/bsd/openssl/dist/crypto/ec/ecp_nistz256.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/ec/curve448/curve448.c up to 1.1.1.4
+crypto/external/bsd/openssl/dist/crypto/engine/eng_dyn.c up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/err/err.c up to 1.1.1.14
+crypto/external/bsd/openssl/dist/crypto/err/openssl.txt up to 1.1.1.10
+crypto/external/bsd/openssl/dist/crypto/evp/bio_enc.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/evp/evp_enc.c up to 1.15
+crypto/external/bsd/openssl/dist/crypto/evp/evp_local.h up to 1.1.1.2
+crypto/external/bsd/openssl/dist/crypto/objects/obj_dat.pl up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/objects/objects.pl up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/objects/objxref.pl up to 1.1.1.8
+crypto/external/bsd/openssl/dist/crypto/pem/pem_lib.c up to 1.1.1.16
+crypto/external/bsd/openssl/dist/crypto/rand/drbg_lib.c up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/rand/rand_lib.c up to 1.1.1.16
+crypto/external/bsd/openssl/dist/crypto/rand/rand_vms.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/crypto/rand/rand_win.c up to 1.1.1.14
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_ameth.c up to 1.1.1.16
+crypto/external/bsd/openssl/dist/crypto/rsa/rsa_ossl.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/txt_db/txt_db.c up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/x509/by_dir.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/crypto/x509/x509_cmp.c up to 1.1.1.17
+crypto/external/bsd/openssl/dist/crypto/x509/x509_req.c up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/x509/x509_vfy.c up to 1.26
+crypto/external/bsd/openssl/dist/crypto/x509/x_all.c up to 1.1.1.13
+crypto/external/bsd/openssl/dist/crypto/x509/x_crl.c up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/x509/x_name.c up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/x509v3/v3_addr.c up to 1.9
+crypto/external/bsd/openssl/dist/crypto/x509v3/v3_asid.c up to 1.1.1.8
+crypto/external/bsd/openssl/dist/crypto/x509v3/v3_genn.c up to 1.1.1.6
+crypto/external/bsd/openssl/dist/crypto/x509v3/v3_lib.c up to 1.1.1.7
+crypto/external/bsd/openssl/dist/crypto/x509v3/v3_sxnet.c up to 1.1.1.4
+crypto/external/bsd/openssl/dist/crypto/x509v3/v3_utl.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/doc/fingerprints.txt up to 1.1.1.7
+crypto/external/bsd/openssl/dist/doc/man1/x509.pod up to 1.1.1.7
+crypto/external/bsd/openssl/dist/doc/man3/BIO_f_base64.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/CMS_add0_cert.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/CMS_verify.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/EC_KEY_new.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/EVP_EncryptInit.pod up to 1.1.1.7
+crypto/external/bsd/openssl/dist/doc/man3/OPENSSL_LH_COMPFUNC.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/OPENSSL_init_crypto.pod up to 1.1.1.4
+crypto/external/bsd/openssl/dist/doc/man3/PKCS7_sign.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/PKCS7_sign_add_signer.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/PKCS7_verify.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/SSL_CTX_set1_verify_cert_store.pod up to 1.1.1.3
+crypto/external/bsd/openssl/dist/doc/man3/SSL_CTX_set_timeout.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/SSL_get_current_cipher.pod up to 1.1.1.2
+crypto/external/bsd/openssl/dist/doc/man3/X509_STORE_CTX_new.pod up to 1.1.1.6
+crypto/external/bsd/openssl/dist/engines/asm/e_padlock-x86.pl up to 1.1.1.3
+crypto/external/bsd/openssl/dist/engines/asm/e_padlock-x86_64.pl up to 1.1.1.3
+crypto/external/bsd/openssl/dist/include/crypto/bn.h up to 1.1.1.2
+crypto/external/bsd/openssl/dist/include/openssl/bnerr.h up to 1.1.1.3
+crypto/external/bsd/openssl/dist/include/openssl/cmserr.h up to 1.1.1.3
+crypto/external/bsd/openssl/dist/include/openssl/opensslv.h up to 1.1.1.17
+crypto/external/bsd/openssl/dist/include/openssl/ssl.h up to 1.1.1.10
+crypto/external/bsd/openssl/dist/include/openssl/x509v3.h up to 1.1.1.7
+crypto/external/bsd/openssl/dist/ssl/packet.c   up to 1.1.1.3
+crypto/external/bsd/openssl/dist/ssl/packet_local.h up to 1.1.1.2
+crypto/external/bsd/openssl/dist/ssl/s3_enc.c   up to 1.17
+crypto/external/bsd/openssl/dist/ssl/s3_lib.c   up to 1.30
+crypto/external/bsd/openssl/dist/ssl/ssl_cert.c up to 1.1.1.17
+crypto/external/bsd/openssl/dist/ssl/ssl_ciph.c up to 1.23
+crypto/external/bsd/openssl/dist/ssl/ssl_init.c up to 1.1.1.7
+crypto/external/bsd/openssl/dist/ssl/ssl_lib.c  up to 1.22
+crypto/external/bsd/openssl/dist/ssl/ssl_local.h up to 1.1.1.4
+crypto/external/bsd/openssl/dist/ssl/ssl_rsa.c  up to 1.1.1.11
+crypto/external/bsd/openssl/dist/ssl/ssl_txt.c  up to 1.1.1.10
+crypto/external/bsd/openssl/dist/ssl/t1_enc.c   up to 1.22
+crypto/external/bsd/openssl/dist/ssl/t1_lib.c   up to 1.35
+crypto/external/bsd/openssl/dist/ssl/tls13_enc.c up to 1.1.1.7
+crypto/external/bsd/openssl/dist/ssl/record/rec_layer_s3.c up to 1.1.1.9
+crypto/external/bsd/openssl/dist/ssl/record/ssl3_buffer.c up to 1.1.1.6
+crypto/external/bsd/openssl/dist/ssl/record/ssl3_record.c up to 1.1.1.8
+crypto/external/bsd/openssl/dist/ssl/statem/extensions_clnt.c up to 1.1.1.8
+crypto/external/bsd/openssl/dist/ssl/statem/extensions_srvr.c up to 1.1.1.7
+crypto/external/bsd/openssl/dist/ssl/statem/statem_clnt.c up to 1.1.1.14
+crypto/external/bsd/openssl/dist/ssl/statem/statem_dtls.c up to 1.1.1.6
+crypto/external/bsd/openssl/dist/ssl/statem/statem_srvr.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/test/ct_test.c up to 1.1.1.6
+crypto/external/bsd/openssl/dist/test/dtls_mtu_test.c up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/dtlstest.c up to 1.1.1.8
+crypto/external/bsd/openssl/dist/test/ec_internal_test.c up to 1.1.1.5
+crypto/external/bsd/openssl/dist/test/exptest.c up to 1.5
+crypto/external/bsd/openssl/dist/test/pemtest.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/sslapitest.c up to 1.1.1.12
+crypto/external/bsd/openssl/dist/test/ssltestlib.c up to 1.1.1.8
+crypto/external/bsd/openssl/dist/test/ssltestlib.h up to 1.1.1.9
+crypto/external/bsd/openssl/dist/test/test_test.c up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/v3ext.c   up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/v3nametest.c up to 1.1.1.5
+crypto/external/bsd/openssl/dist/test/x509_internal_test.c up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/certs/ee-ed25519.pem up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/certs/embeddedSCTs1-key.pem up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/certs/embeddedSCTs1.pem up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/certs/embeddedSCTs1.sct up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/certs/embeddedSCTs1_issuer.pem up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/certs/root-ed25519.pem up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/certs/rootCA.pem up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/recipes/25-test_x509.t up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/recipes/70-test_tls13hrr.t up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/recipes/80-test_cms.t up to 1.1.1.4
+crypto/external/bsd/openssl/dist/test/recipes/80-test_ssl_new.t up to 1.1.1.6
+crypto/external/bsd/openssl/dist/test/recipes/10-test_bn_data/bnmod.txt up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/recipes/30-test_evp_data/evpciph.txt up to 1.1.1.5
+crypto/external/bsd/openssl/dist/test/recipes/95-test_external_pyca_data/cryptography.sh up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/smime-certs/mksmime-certs.sh up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/smime-certs/smdh.pem up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/smime-certs/smdsa1.pem up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/smime-certs/smdsa2.pem up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/smime-certs/smdsa3.pem up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/smime-certs/smec1.pem up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/smime-certs/smec2.pem up to 1.1.1.2
+crypto/external/bsd/openssl/dist/test/smime-certs/smroot.pem up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/smime-certs/smrsa1.pem up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/smime-certs/smrsa2.pem up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/smime-certs/smrsa3.pem up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/ssl-tests/10-resumption.conf up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/ssl-tests/11-dtls_resumption.conf up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/ssl-tests/protocol_version.pm up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/testutil/driver.c up to 1.4
+crypto/external/bsd/openssl/dist/tools/c_rehash.in up to 1.1.1.7
+crypto/external/bsd/openssl/dist/util/private.num up to 1.1.1.4
+crypto/external/bsd/openssl/lib/libcrypto/bn.inc up to 1.8
+crypto/external/bsd/openssl/lib/libcrypto/shlib_version up to 1.15
+distrib/sets/lists/base/shl.mi				1.944
+distrib/sets/lists/debug/shl.mi				1.302
+doc/3RDPARTY						1.1912
+
+	Import OpenSSL 1.1.1t.
+	[kim, ticket #104]
+
+distrib/amd64/cdroms/install.sh			1.5
+distrib/amd64/installimage-bios/install.sh	1.3
+distrib/amd64/installimage/install.sh		1.4
+distrib/evbarm/installimage/install.sh		1.2
+distrib/i386/cdroms/install.sh			1.5
+distrib/i386/installimage/install.sh		1.3,1.4
+distrib/sparc64/cdroms/installcd/install.sh	1.5
+distrib/vax/cdroms/installcd/install.sh		1.3
+usr.sbin/sysinst/menus.mi			1.28
+
+	Enable basic command line editing in shells started by the installer.
+	[abs, ticket #105]
+
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_device.c 1.18
+
+	amdgpu: Fix scale factor for 64-bit doorbell indexing.
+	[riastradh, ticket #106]
+
+sys/kern/kern_ksyms.c				1.108
+
+	ksyms(4): Reject negative offsets earlier in lseek.
+	[riastradh, ticket #107]
+
+sys/external/bsd/drm2/linux/linux_dma_buf.c	1.16
+
+	drm: Teach dmabuf to handle lseek.
+	[riastradh, ticket #108]
 
