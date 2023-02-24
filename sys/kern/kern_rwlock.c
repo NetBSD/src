@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.68 2023/02/24 11:01:43 riastradh Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.69 2023/02/24 11:02:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.68 2023/02/24 11:01:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.69 2023/02/24 11:02:27 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -100,13 +100,8 @@ do { \
 /*
  * Memory barriers.
  */
-#ifdef __HAVE_ATOMIC_AS_MEMBAR
-#define	RW_MEMBAR_ACQUIRE()
-#define	RW_MEMBAR_RELEASE()
-#else
 #define	RW_MEMBAR_ACQUIRE()		membar_acquire()
 #define	RW_MEMBAR_RELEASE()		membar_release()
-#endif
 
 /*
  * For platforms that do not provide stubs, or for the LOCKDEBUG case.

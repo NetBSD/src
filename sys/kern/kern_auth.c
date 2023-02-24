@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.81 2022/04/09 23:38:33 riastradh Exp $ */
+/* $NetBSD: kern_auth.c,v 1.82 2023/02/24 11:02:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.81 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.82 2023/02/24 11:02:27 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -144,14 +144,10 @@ kauth_cred_free(kauth_cred_t cred)
 	KASSERT(cred->cr_refcnt > 0);
 	ASSERT_SLEEPABLE();
 
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_release();
-#endif
 	if (atomic_dec_uint_nv(&cred->cr_refcnt) > 0)
 		return;
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_acquire();
-#endif
 
 	kauth_cred_hook(cred, KAUTH_CRED_FREE, NULL, NULL);
 	specificdata_fini(kauth_domain, &cred->cr_sd);
