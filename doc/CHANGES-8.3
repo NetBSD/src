@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.166 2023/02/22 19:57:50 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.167 2023/02/24 14:21:22 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3193,4 +3193,24 @@ sys/net/bpf.c					1.247 (merged)
 
 	bpf(4): Reject bogus timeout values before arithmetic overflows.
 	[riastradh, ticket #1802]
+
+distrib/amiga/stand/loadbsd.uue			1.3
+sys/arch/amiga/stand/loadbsd/Makefile		1.4
+sys/arch/amiga/stand/loadbsd/README		1.5
+sys/arch/amiga/stand/loadbsd/loadbsd.c		1.37
+
+	Update loadbsd source and distribution binary to version 3.2.
+	[abs, ticket #1803]
+
+sys/kern/subr_prf.c				1.171
+
+	Make identification of accounted aprint_error()s possible by putting a
+	big ugly "autoconfiguration error: " in the log when they occur.
+	[msaitoh, ticket #1804]
+
+sys/dev/ata/sata_subr.c				1.24
+sys/dev/ata/satavar.h				1.10
+
+	sata: do not consider "PHY offline" conditions an error.
+	[msaitoh, ticket #1805]
 
