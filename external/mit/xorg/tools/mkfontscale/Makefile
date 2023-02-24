@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2022/09/09 19:15:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2023/02/24 17:08:31 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -93,6 +93,8 @@ HOST_CPPFLAGS+=	-DFC_NO_MT=1
 HOST_CPPFLAGS+=	-I${FREETYPE}/include -I${FREETYPE}/include/freetype \
 		-I${DESTDIR}${X11INCDIR} \
 		-I${DESTDIR}${X11INCDIR}/freetype2
+
+HOST_CPPFLAGS+=	-DTOOL_FCCACHE
 
 .include <bsd.x11.mk>
 .include <bsd.hostprog.mk>

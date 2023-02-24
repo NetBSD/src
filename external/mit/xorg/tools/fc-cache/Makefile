@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2023/01/19 17:07:38 martin Exp $
+#	$NetBSD: Makefile,v 1.22 2023/02/24 17:08:31 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -122,7 +122,6 @@ HOST_CPPFLAGS+=	-I${FONTCONFIG} -I${FREETYPE} \
 		-I${FONTCONFIG}/../include
 
 HOST_CPPFLAGS+=	-DXML_POOR_ENTROPY
-
 HOST_CPPFLAGS+=	-DTOOL_FCCACHE
 
 LDADD=	-lz
