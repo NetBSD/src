@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.225.2.2 2019/09/27 09:24:30 martin Exp $
+# $NetBSD: shl.mi,v 1.225.2.3 2023/02/24 14:07:45 martin Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -6,7 +6,7 @@
 ./usr/libdata/debug/lib/libc.so.12.213.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypto.so.12.0.debug			comp-sys-debug	debug,dynamicroot,openssl=10
-./usr/libdata/debug/lib/libcrypto.so.14.0.debug			comp-sys-debug	debug,dynamicroot,openssl=11
+./usr/libdata/debug/lib/libcrypto.so.14.1.debug			comp-sys-debug	debug,dynamicroot,openssl=11
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug		comp-sys-debug	debug,dynamicroot,lvm
 ./usr/libdata/debug/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libedit.so.3.1.debug			comp-sys-debug	debug,dynamicroot
@@ -83,7 +83,7 @@
 ./usr/libdata/debug/usr/lib/libcom_err.so.8.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libcrypto.so.12.0.debug		comp-crypto-debug	debug,compatfile,openssl=10
-./usr/libdata/debug/usr/lib/libcrypto.so.14.0.debug		comp-crypto-debug	debug,compatfile,openssl=11
+./usr/libdata/debug/usr/lib/libcrypto.so.14.1.debug		comp-crypto-debug	debug,compatfile,openssl=11
 ./usr/libdata/debug/usr/lib/libcrypto_idea.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_mdc2.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_rc5.so.12.0.debug		comp-obsolete	debug,compatfile,obsolete
