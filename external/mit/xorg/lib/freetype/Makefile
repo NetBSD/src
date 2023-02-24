@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2021/11/16 09:25:51 nia Exp $
+#	$NetBSD: Makefile,v 1.24 2023/02/24 17:08:31 mrg Exp $
 
 USE_FORT?=	yes # data-driven bugs?
 
@@ -102,6 +102,9 @@ CPPFLAGS+=	-DFT_CONFIG_OPTION_SUBPIXEL_RENDERING
 LIBDPLIBS= \
 	z ${.CURDIR}/../../../../../lib/libz \
 	bz2 ${.CURDIR}/../../../../../lib/libbz2
+
+.include "../brotli/brotli.mk"
+CPPFLAGS+=     -I${X11SRCDIR.brotli}/c/include
 
 PKGCONFIG=	freetype2
 PKGDIST.freetype2=	${.CURDIR}
