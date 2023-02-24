@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.247 2022/12/16 08:42:55 msaitoh Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.248 2023/02/24 11:02:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.247 2022/12/16 08:42:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.248 2023/02/24 11:02:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -1923,9 +1923,7 @@ m_ext_free(struct mbuf *m)
 	if (__predict_true(m->m_ext.ext_refcnt == 1)) {
 		refcnt = m->m_ext.ext_refcnt = 0;
 	} else {
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 		membar_release();
-#endif
 		refcnt = atomic_dec_uint_nv(&m->m_ext.ext_refcnt);
 	}
 
@@ -1942,9 +1940,7 @@ m_ext_free(struct mbuf *m)
 		/*
 		 * dropping the last reference
 		 */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 		membar_acquire();
-#endif
 		if (!embedded) {
 			m->m_ext.ext_refcnt++; /* XXX */
 			m_ext_free(m->m_ext_ref);

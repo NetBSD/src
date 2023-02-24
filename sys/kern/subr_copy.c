@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.16 2022/04/09 23:51:09 riastradh Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.17 2023/02/24 11:02:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008, 2019
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.16 2022/04/09 23:51:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.17 2023/02/24 11:02:27 riastradh Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
@@ -411,9 +411,7 @@ ucas_critical_cpu_gate(void *arg __unused)
 	 * Matches atomic_load_acquire in ucas_critical_wait -- turns
 	 * the following atomic_dec_uint into a store-release.
 	 */
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_release();
-#endif
 	atomic_dec_uint(&ucas_critical_pausing_cpus);
 
 	/*
