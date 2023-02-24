@@ -1,4 +1,4 @@
-#	$NetBSD: bn.inc,v 1.5 2018/02/09 13:35:45 christos Exp $
+#	$NetBSD: bn.inc,v 1.5.6.1 2023/02/24 14:07:57 martin Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -40,6 +40,7 @@ bn_sqrt.c \
 bn_srp.c \
 bn_word.c \
 bn_x931p.c \
+rsa_sup_mul.c \
 rsaz_exp.c
 
 SRCS += ${BN_SRCS}

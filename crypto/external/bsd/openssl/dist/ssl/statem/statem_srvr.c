@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2022 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -3753,6 +3753,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
 
     sk_X509_pop_free(s->session->peer_chain, X509_free);
     s->session->peer_chain = sk;
+    sk = NULL;
 
     /*
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
@@ -3767,7 +3768,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
      * Inconsistency alert: cert_chain does *not* include the peer's own
      * certificate, while we do include it in statem_clnt.c
      */
-    sk = NULL;
 
     /* Save the current hash state for when we receive the CertificateVerify */
     if (SSL_IS_TLS13(s)) {
@@ -3820,15 +3820,24 @@ int tls_construct_server_certificate(SSL *s, WPACKET *pkt)
 static int create_ticket_prequel(SSL *s, WPACKET *pkt, uint32_t age_add,
                                  unsigned char *tick_nonce)
 {
+    uint32_t timeout = (uint32_t)s->session->timeout;
+
     /*
-     * Ticket lifetime hint: For TLSv1.2 this is advisory only and we leave this
-     * unspecified for resumed session (for simplicity).
+     * Ticket lifetime hint:
      * In TLSv1.3 we reset the "time" field above, and always specify the
-     * timeout.
+     * timeout, limited to a 1 week period per RFC8446.
+     * For TLSv1.2 this is advisory only and we leave this unspecified for
+     * resumed session (for simplicity).
      */
-    if (!WPACKET_put_bytes_u32(pkt,
-                               (s->hit && !SSL_IS_TLS13(s))
-                               ? 0 : s->session->timeout)) {
+#define ONE_WEEK_SEC (7 * 24 * 60 * 60)
+
+    if (SSL_IS_TLS13(s)) {
+        if (s->session->timeout > ONE_WEEK_SEC)
+            timeout = ONE_WEEK_SEC;
+    } else if (s->hit)
+        timeout = 0;
+
+    if (!WPACKET_put_bytes_u32(pkt, timeout)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_CREATE_TICKET_PREQUEL,
                  ERR_R_INTERNAL_ERROR);
         return 0;
@@ -4139,9 +4148,12 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
     }
 
     if (tctx->generate_ticket_cb != NULL &&
-        tctx->generate_ticket_cb(s, tctx->ticket_cb_data) == 0)
+        tctx->generate_ticket_cb(s, tctx->ticket_cb_data) == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                 SSL_F_TLS_CONSTRUCT_NEW_SESSION_TICKET,
+                 ERR_R_INTERNAL_ERROR);
         goto err;
-
+    }
     /*
      * If we are using anti-replay protection then we behave as if
      * SSL_OP_NO_TICKET is set - we are caching tickets anyway so there
