@@ -1,4 +1,4 @@
-/* $NetBSD: apple_dart.c,v 1.4 2022/04/27 07:53:24 skrll Exp $ */
+/* $NetBSD: apple_dart.c,v 1.5 2023/02/24 11:19:15 jmcneill Exp $ */
 /*	$OpenBSD: apldart.c,v 1.10 2022/02/27 17:36:52 kettenis Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 //#define APPLE_DART_DEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.4 2022/04/27 07:53:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.5 2023/02/24 11:19:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: apple_dart.c,v 1.4 2022/04/27 07:53:24 skrll Exp $")
  * access.  To make sure this doesn't fault, round the subpage limits
  * down and up accordingly.
  */
-#define DART_OFFSET_MASK	7
+#define	DART_OFFSET_MASK	7
 
 #define	DART_L1_TABLE		0x3
 #define	DART_L2_INVAL		0x0
