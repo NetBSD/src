@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.41 2023/01/23 13:40:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_tableset.c,v 1.42 2023/02/24 11:03:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -160,14 +160,10 @@ npf_tableset_destroy(npf_tableset_t *ts)
 
 		if (t == NULL)
 			continue;
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 		membar_release();
-#endif
 		if (atomic_dec_uint_nv(&t->t_refcnt) > 0)
 			continue;
-#ifndef __HAVE_ATOMIC_AS_MEMBAR
 		membar_acquire();
-#endif
 		npf_table_destroy(t);
 	}
 	kmem_free(ts, NPF_TABLESET_SIZE(ts->ts_nitems));
