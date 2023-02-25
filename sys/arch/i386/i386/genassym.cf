@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.131 2022/12/27 08:40:40 msaitoh Exp $
+#	$NetBSD: genassym.cf,v 1.132 2023/02/25 18:35:54 riastradh Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -175,6 +175,7 @@ define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 
 define	LW_SYSTEM		LW_SYSTEM
+define	LW_SYSTEM_FPU		LW_SYSTEM_FPU
 define	MDL_FPU_IN_CPU		MDL_FPU_IN_CPU
 
 define	P_FLAG			offsetof(struct proc, p_flag)
