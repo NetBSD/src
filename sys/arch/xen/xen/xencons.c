@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.50 2020/05/07 19:25:57 maxv Exp $	*/
+/*	$NetBSD: xencons.c,v 1.51 2023/02/25 00:33:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.50 2020/05/07 19:25:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.51 2023/02/25 00:33:27 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -583,7 +583,7 @@ xenconscn_getc(dev_t dev)
 	xen_rmb();
 	c = xencons_interface->in[MASK_XENCONS_IDX(xencons_interface->in_cons,
 	    xencons_interface->in)];
-	xen_rmb();
+	xen_wmb();
 	xencons_interface->in_cons = cons + 1;
 	cn_check_magic(dev, c, xencons_cnm_state);
 	splx(s);
@@ -614,9 +614,9 @@ xenconscn_putc(dev_t dev, int c)
 		}
 		xencons_interface->out[MASK_XENCONS_IDX(xencons_interface->out_prod,
 		    xencons_interface->out)] = c;
-		xen_rmb();
+		xen_wmb();
 		xencons_interface->out_prod++;
-		xen_rmb();
+		xen_wmb();
 		hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 		splx(s);
 	}
