@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.143 2023/02/25 00:31:40 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.144 2023/02/25 00:32:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.143 2023/02/25 00:31:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.144 2023/02/25 00:32:38 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -848,7 +848,7 @@ xen_init_amd64_vcpuctxt(struct cpu_info *ci, struct vcpu_guest_context *initctx,
 	/* resume with interrupts off */
 	vci = ci->ci_vcpu;
 	vci->evtchn_upcall_mask = 1;
-	xen_mb();
+	__insn_barrier();
 
 	/* resume in kernel-mode */
 	initctx->flags = VGCF_in_kernel | VGCF_online;
@@ -945,7 +945,7 @@ xen_init_i386_vcpuctxt(struct cpu_info *ci, struct vcpu_guest_context *initctx,
 	/* resume with interrupts off */
 	vci = ci->ci_vcpu;
 	vci->evtchn_upcall_mask = 1;
-	xen_mb();
+	__insn_barrier();
 
 	/* resume in kernel-mode */
 	initctx->flags = VGCF_in_kernel | VGCF_online;
