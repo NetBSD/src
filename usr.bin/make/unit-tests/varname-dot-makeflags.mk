@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-makeflags.mk,v 1.2 2023/02/25 06:54:08 rillig Exp $
+# $NetBSD: varname-dot-makeflags.mk,v 1.3 2023/02/25 09:02:45 rillig Exp $
 #
 # Tests for the special .MAKEFLAGS variable, which collects almost all
 # command line arguments and passes them on to any child processes via
@@ -7,7 +7,7 @@
 # See also:
 #	varname-dot-makeoverrides.mk
 
-all: dollars_stage_0 #spaces_stage_0 dollars_stage_0 append_stage_0
+all: spaces_stage_0 dollars_stage_0 append_stage_0
 
 
 # When options are parsed, the option and its argument are appended as
@@ -25,6 +25,7 @@ spaces_stage_0:
 spaces_stage_1:
 	@echo '$@: MAKEFLAGS=<'${MAKEFLAGS:Q}'>'
 	@echo "$@: env MAKEFLAGS=<$$MAKEFLAGS>"
+
 
 # Demonstrate that '$' characters are altered when they are passed on to child
 # make processes via MAKEFLAGS.
