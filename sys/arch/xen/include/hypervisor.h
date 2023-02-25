@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor.h,v 1.55 2022/09/07 00:40:19 knakahara Exp $	*/
+/*	$NetBSD: hypervisor.h,v 1.56 2023/02/25 00:32:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -111,8 +111,8 @@ struct xen_npx_attach_args {
 #undef xen_wmb
 
 #define xen_mb()  membar_sync()
-#define xen_rmb() membar_producer()
-#define xen_wmb() membar_consumer()
+#define xen_rmb() membar_acquire()
+#define xen_wmb() membar_release()
 #endif /* __XEN_INTERFACE_VERSION */
 
 #include <machine/xen/hypercalls.h>

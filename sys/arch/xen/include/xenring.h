@@ -1,4 +1,4 @@
-/* $NetBSD: xenring.h,v 1.6 2020/04/25 15:26:17 bouyer Exp $ */
+/* $NetBSD: xenring.h,v 1.7 2023/02/25 00:32:26 riastradh Exp $ */
 
 /*
  * Glue goop for xbd ring request/response protocol structures.
@@ -25,8 +25,8 @@
 #undef xen_wmb
 
 #define xen_mb()  membar_sync()
-#define xen_rmb() membar_producer()
-#define xen_wmb() membar_consumer()
+#define xen_rmb() membar_acquire()
+#define xen_wmb() membar_release()
 
 /*
  * Define ring types. These were previously part of the public API.
