@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.215 2022/12/26 17:46:00 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.216 2023/02/25 18:04:42 riastradh Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1247,7 +1247,7 @@ ENTRY(cpu_switchto)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
-	jnz	.Lswitch_return
+	jnz	.Lswitch_system
 
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movq	L_PROC(%r12),%rdi
@@ -1336,6 +1336,21 @@ ENTRY(cpu_switchto)
 	popq	%r12
 	popq	%rbx
 	ret
+
+.Lswitch_system:
+	/*
+	 * If it has LWP_SYSTEM_FPU set, meaning it's running in
+	 * kthread_fpu_enter/exit, we need to restore the FPU state
+	 * and enable FPU instructions with fpu_handle_deferred.
+	 *
+	 * No need to test MDL_FPU_IN_CPU via HANDLE_DEFERRED_FPU --
+	 * fpu_switch guarantees it is clear, so we can just call
+	 * fpu_handle_deferred unconditionally.
+	 */
+	testl	$LW_SYSTEM_FPU,L_FLAG(%r12)
+	jz	.Lswitch_return
+	callq	_C_LABEL(fpu_handle_deferred)
+	jmp	.Lswitch_return
 END(cpu_switchto)
 
 /*
