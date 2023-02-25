@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.51 2023/02/25 00:33:27 riastradh Exp $	*/
+/*	$NetBSD: xencons.c,v 1.52 2023/02/25 00:33:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.51 2023/02/25 00:33:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.52 2023/02/25 00:33:38 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -479,9 +479,9 @@ xencons_handler(void *arg)
 			cons += len;
 			xen_wmb();
 			xencons_interface->in_cons = cons;
-			xen_wmb();
 		}
 	}
+	xen_wmb();
 	hypervisor_notify_via_evtchn(xen_start_info.console.domU.evtchn);
 	splx(s);
 	return 1;
@@ -575,7 +575,6 @@ xenconscn_getc(dev_t dev)
 
 	cons = xencons_interface->in_cons;
 	prod = xencons_interface->in_prod;
-	xen_rmb();
 	while (cons == prod) {
 		HYPERVISOR_yield();
 		prod = xencons_interface->in_prod;
