@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.48 2022/11/03 09:04:56 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.49 2023/02/25 00:40:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -242,6 +242,7 @@ static inline void
 cpu_dosoftints(void)
 {
 #if defined(__HAVE_FAST_SOFTINTS) && !defined(__HAVE_PIC_FAST_SOFTINTS)
+	KDASSERT(kpreempt_disabled());
 	cpu_dosoftints_ci(curcpu());
 #endif
 }
