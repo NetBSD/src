@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.39 2022/06/03 10:42:17 bouyer Exp $      */
+/*      $NetBSD: xengnt.c,v 1.40 2023/02/25 00:33:50 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.39 2022/06/03 10:42:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.40 2023/02/25 00:33:50 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -453,7 +453,7 @@ xengnt_grant_access(domid_t dom, paddr_t ma, int ro, grant_ref_t *entryp)
 		 * ensure that the above values reach global visibility 
 		 * before permitting frame's access (done when we set flags)
 		 */
-		xen_rmb();
+		xen_wmb();
 		grant_table.gntt_v2[*entryp].hdr.flags =
 		    GTF_permit_access | (ro ? GTF_readonly : 0);
 	} else {
@@ -463,8 +463,8 @@ xengnt_grant_access(domid_t dom, paddr_t ma, int ro, grant_ref_t *entryp)
 		* ensure that the above values reach global visibility
 		* before permitting frame's access (done when we set flags)    
 		*/
-		xen_rmb();
-		grant_table.gntt_v1[*entryp].flags =  
+		xen_wmb();
+		grant_table.gntt_v1[*entryp].flags =
 		   GTF_permit_access | (ro ? GTF_readonly : 0);
 	}
 	mutex_exit(&grant_lock);
