@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.117 2023/02/09 14:09:48 abs Exp $
+#	$NetBSD: GENERIC,v 1.118 2023/02/25 08:19:35 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -78,9 +78,11 @@ options 	MSGBUFSIZE=32768
 #options 	EARLYCONS=tegra, CONSADDR=0x70006300
 
 #options 	EARLYCONS=vexpress, CONSADDR=0x1c090000
-#options 	EARLYCONS=virt, CONSADDR=0x09000000
 #options 	EARLYCONS=zynq, CONSADDR=0xe0001000
 #options 	EARLYCONS=rk3288, CONSADDR=0xff690000
+
+# The QEMU virt machine
+#options 	EARLYCONS=plcom, CONSADDR=0x09000000
 
 # Kernel Undefined Behavior Sanitizer (kUBSan). Use UBSAN_ALWAYS_FATAL
 # if you want panics instead of warnings.
