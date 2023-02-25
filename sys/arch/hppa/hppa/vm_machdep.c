@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.57 2022/09/29 06:39:59 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.58 2023/02/25 08:30:31 skrll Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.64 2008/09/30 18:54:26 miod Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.57 2022/09/29 06:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.58 2023/02/25 08:30:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,8 +96,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb1 = lwp_getpcb(l1);
 	pcb2 = lwp_getpcb(l2);
 
-	l2->l_md.md_astpending = 0;
-	l2->l_md.md_flags = 0;
+	KASSERT(l2->l_md.md_astpending == 0);
+	KASSERT(l2->l_md.md_flags == 0);
 
 	/* Flush the parent LWP out of the FPU. */
 	hppa_fpu_flush(l1);
