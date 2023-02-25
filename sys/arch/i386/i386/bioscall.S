@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.S,v 1.10 2018/07/14 14:29:40 maxv Exp $ */
+/*	$NetBSD: bioscall.S,v 1.11 2023/02/25 13:52:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: bioscall.S,v 1.10 2018/07/14 14:29:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bioscall.S,v 1.11 2023/02/25 13:52:09 riastradh Exp $");
 
 #include <machine/bioscall.h>
 
@@ -67,6 +67,8 @@ ENTRY(bioscall)
 	pushl	%ebp
 	movl	%esp,%ebp		/* set up frame ptr */
 
+	call	_C_LABEL(kpreempt_disable)
+
 	/* install lwp0 pmap */
 	movl	_C_LABEL(kernel_pmap_ptr),%eax
 	pushl	%eax
@@ -84,6 +86,8 @@ ENTRY(bioscall)
 	pushl	%eax
 	call	_C_LABEL(cpu_load_pmap)
 	addl	$4,%esp
+
+	call	_C_LABEL(kpreempt_enable)
 
 	leave
 	ret
