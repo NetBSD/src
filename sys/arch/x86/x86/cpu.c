@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.206 2022/09/24 11:05:18 riastradh Exp $	*/
+/*	$NetBSD: cpu.c,v 1.207 2023/02/25 00:31:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000-2020 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.206 2022/09/24 11:05:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.207 2023/02/25 00:31:40 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1433,6 +1433,9 @@ x86_cpu_idle_halt(void)
 void
 cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
+
+	KASSERT(kpreempt_disabled());
+
 #ifdef SVS
 	if (svs_enabled && pmap_is_user(pmap)) {
 		svs_pdir_switch(pmap);
