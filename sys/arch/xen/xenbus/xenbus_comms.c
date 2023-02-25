@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_comms.c,v 1.24 2020/05/13 13:19:38 jdolecek Exp $ */
+/* $NetBSD: xenbus_comms.c,v 1.25 2023/02/25 00:34:01 riastradh Exp $ */
 /******************************************************************************
  * xenbus_comms.c
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.24 2020/05/13 13:19:38 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_comms.c,v 1.25 2023/02/25 00:34:01 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/null.h> 
@@ -153,9 +153,9 @@ xb_write(const void *data, unsigned len)
 		len -= avail;
 
 		/* Other side must not see new header until data is there. */
-		xen_rmb();
+		xen_wmb();
 		intf->req_prod += avail;
-		xen_rmb();
+		xen_wmb();
 
 		hypervisor_notify_via_evtchn(xen_start_info.store_evtchn);
 	}
@@ -202,9 +202,9 @@ xb_read(void *data, unsigned len)
 		len -= avail;
 
 		/* Other side must not see free space until we've copied out */
-		xen_rmb();
+		xen_wmb();
 		intf->rsp_cons += avail;
-		xen_rmb();
+		xen_wmb();
 
 		XENPRINTF(("Finished read of %i bytes (%i to go)\n",
 		    avail, len));
