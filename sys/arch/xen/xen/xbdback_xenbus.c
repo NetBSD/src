@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.101 2022/09/01 15:33:23 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.102 2023/02/25 00:33:15 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.101 2022/09/01 15:33:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.102 2023/02/25 00:33:15 riastradh Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -1065,6 +1065,7 @@ xbdback_co_main_done2(struct xbdback_instance *xbdi, void *obj)
 {
 	int work_to_do;
 
+	xen_wmb();
 	RING_FINAL_CHECK_FOR_REQUESTS(&xbdi->xbdi_ring.ring_n, work_to_do);
 	if (work_to_do)
 		xbdi->xbdi_cont = xbdback_co_main;
