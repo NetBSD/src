@@ -1,4 +1,4 @@
-/* $NetBSD: vm_machdep.c,v 1.13 2022/05/29 16:13:41 ryo Exp $ */
+/* $NetBSD: vm_machdep.c,v 1.14 2023/02/25 08:00:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.13 2022/05/29 16:13:41 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.14 2023/02/25 08:00:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * FP state is valid.
 	 */
 	l2->l_md.md_cpacr = CPACR_FPEN_NONE;
+	KASSERT(l2->l_md.md_astpending == 0);
 
 #ifdef ARMV83_PAC
 	/*
