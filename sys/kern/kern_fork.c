@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.229 2022/07/01 09:54:36 prlw1 Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.230 2023/02/25 08:22:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.229 2022/07/01 09:54:36 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.230 2023/02/25 08:22:00 skrll Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -644,7 +644,7 @@ child_return(void *arg)
 
 	if ((p->p_slflag & (PSL_TRACED|PSL_TRACEDCHILD)) ==
 	    (PSL_TRACED|PSL_TRACEDCHILD)) {
-		eventswitchchild(p, TRAP_CHLD, 
+		eventswitchchild(p, TRAP_CHLD,
 		    ISSET(p->p_lflag, PL_PPWAIT) ? PTRACE_VFORK : PTRACE_FORK);
 	}
 
