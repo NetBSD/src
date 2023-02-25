@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-makeflags.mk,v 1.3 2023/02/25 09:02:45 rillig Exp $
+# $NetBSD: varname-dot-makeflags.mk,v 1.4 2023/02/25 10:41:14 rillig Exp $
 #
 # Tests for the special .MAKEFLAGS variable, which collects almost all
 # command line arguments and passes them on to any child processes via
@@ -31,52 +31,65 @@ spaces_stage_1:
 # make processes via MAKEFLAGS.
 dollars_stage_0:
 	@echo '$@: MAKEFLAGS=<'${MAKEFLAGS:Q}'>'
-	# The '$$$$' gets parsed as a literal '$$', making the actual variable
-	# value '$${varname}'.
-	#
-	# When Main_ExportMAKEFLAGS adds the variable DOLLARS to MAKEFLAGS, it
-	# first evaluates the variable value, resulting in '${varname}'.
-	#
-	# This value is then escaped as '\$\{varname\}', to ensure that the
-	# variable is later interpreted as a single shell word.
+
+	# The '$$$$' becomes a literal '$$' when building the '${MAKE}'
+	# command line, making the actual argument 'DOLLARS=$${varname}'.
+	# At this stage, MAKEFLAGS is not yet involved.
 	@${MAKE} -f ${MAKEFILE} dollars_stage_1 DOLLARS='$$$${varname}'
 
-# The environment variable 'MAKEFLAGS' now contains the variable assignment
-# 'DOLLARS=\$\{varname\}', including the backslashes.
-#
-# expect: dollars_stage_1: env MAKEFLAGS=< -r -k DOLLARS=\$\{varname\}>
-#
-# When Main_ParseArgLine calls Str_Words to parse the flags from MAKEFLAGS, it
-# removes the backslashes, resulting in the plain variable assignment
-# 'DOLLARS=${varname}'.
+.if make(dollars_stage_1)
+# At this point, the variable 'DOLLARS' contains '$${varname}', which
+# evaluates to a literal '$' followed by '{varname}'.
+.  if ${DOLLARS} != "\${varname}"
+.    error
+.  endif
+.endif
 dollars_stage_1:
+	# At this point, the stage 1 make provides the environment variable
+	# 'MAKEFLAGS' to its child processes, even if the child process is not
+	# another make.
+	#
+	# expect: dollars_stage_1: env MAKEFLAGS=< -r -k DOLLARS=\$\{varname\}>
+	#
+	# The 'DOLLARS=\$\{varname\}' assignment is escaped so that the stage
+	# 2 make will see it as a single word.
 	@echo "$@: env MAKEFLAGS=<$$MAKEFLAGS>"
 
-	# At this point, evaluating the environment variable 'MAKEFLAGS' has
-	# strange side effects, as the string '\$\{varname\}' is interpreted
+	# At this point, evaluating the environment variable 'MAKEFLAGS' leads
+	# to strange side effects as the string '\$\{varname\}' is interpreted
 	# as:
 	#
-	#	\		a single backslash
+	#	\		a literal string of a single backslash
 	#	$\		the value of the variable named '\'
 	#	{varname\}	a literal string
 	#
 	# Since the variable name '\' is not defined, the resulting value is
-	# '\{varname\}'.
+	# '\{varname\}'.  Make doesn't handle isolated '$' characters in
+	# strings well, instead each '$' has to be part of a '$$' or be part
+	# of a subexpression like '${VAR}'.
 	@echo '$@: MAKEFLAGS=<'${MAKEFLAGS:Q}'>'
 
-	# The modifier ':q' escapes a '$' in the variable value to '$$', but
-	# it's too late, as that modifier applies after the expression has
-	# been evaluated.
+	# The modifier ':q' preserves a '$$' in an expression value instead of
+	# expanding it to a single '$', but it's already too late, as that
+	# modifier applies after the expression has been evaluated.  Except
+	# for debug logging, there is no way to process strings that contain
+	# isolated '$'.
 	@echo '$@: MAKEFLAGS:q=<'${MAKEFLAGS:q}'>'
 
-	# The value of the variable DOLLARS is now '${varname}'.  Since there
-	# is no variable named 'varname', this expression evaluates to ''.
 	@${MAKE} -f ${MAKEFILE} dollars_stage_2
 
-# Uncomment these lines to see the above variable expansions in action.
-#${:U\\}=backslash
-#varname=varvalue
-
+.if make(dollars_stage_2)
+# At this point, the variable 'DOLLARS' contains '${varname}', and since
+# 'varname' is undefined, that expression evaluates to an empty string.
+.  if ${DOLLARS} != ""
+.    error
+.  endif
+varname=	varvalue
+.  if ${DOLLARS} != "varvalue"
+.    error
+.  endif
+.  undef varname
+.endif
 dollars_stage_2:
 	@echo "$@: env MAKEFLAGS=<$$MAKEFLAGS>"
 	@echo '$@: dollars=<'${DOLLARS:Q}'>'
