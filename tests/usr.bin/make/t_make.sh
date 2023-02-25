@@ -1,4 +1,4 @@
-# $NetBSD: t_make.sh,v 1.16 2023/01/19 23:26:15 rillig Exp $
+# $NetBSD: t_make.sh,v 1.17 2023/02/25 19:37:33 sjg Exp $
 #
 # Copyright (c) 2008, 2010, 2014, 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -70,6 +70,10 @@ atf_init_test_cases()
 	for filename in "$(atf_get_srcdir)"/unit-tests/*.mk; do
 		basename="${filename##*/}"
 		basename="${basename%.mk}"
+
+		case "${basename}" in
+		varname-dot-make-meta-ignore*) continue;; # won't work
+		esac
 
 		atfname=${basename}
 		while :; do
