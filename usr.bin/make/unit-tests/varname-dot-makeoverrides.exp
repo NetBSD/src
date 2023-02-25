@@ -1,1 +1,5 @@
+make -r -f varname-dot-makeoverrides.mk dollars_stage_2 DOLLARS='$${varname}'
+stage 2: dollars=<${varname}>
+make -r -f varname-dot-makeoverrides.mk dollars_stage_3
+stage 3: dollars=<>
 exit status 0
