@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch32_syscall.c,v 1.6 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: aarch32_syscall.c,v 1.7 2023/02/25 00:40:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.6 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aarch32_syscall.c,v 1.7 2023/02/25 00:40:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ktrace.h>
@@ -69,7 +69,7 @@ EMULNAME(syscall)(struct trapframe *tf)
 
 	LWP_CACHE_CREDS(l, p);
 
-	curcpu()->ci_data.cpu_nsyscall++;
+	curcpu()->ci_data.cpu_nsyscall++; /* XXX unsafe curcpu() */
 
 	thumbmode = (tf->tf_spsr & SPSR_A32_T) ? true : false;
 #ifdef SYSCALL_CODE_REG

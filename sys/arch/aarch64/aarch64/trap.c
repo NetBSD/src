@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.47 2021/08/30 23:20:00 jmcneill Exp $ */
+/* $NetBSD: trap.c,v 1.48 2023/02/25 00:40:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.47 2021/08/30 23:20:00 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.48 2023/02/25 00:40:22 riastradh Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -525,14 +525,29 @@ cpu_irq(struct trapframe *tf)
 	/* disable trace */
 	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
 #endif
+
+	/*
+	 * Prevent preemption once we enable traps, until we have
+	 * finished running hard and soft interrupt handlers.  This
+	 * guarantees ci = curcpu() remains stable and we don't
+	 * accidentally try to run its pending soft interrupts on
+	 * another CPU.
+	 */
+	kpreempt_disable();
+
 	/* enable traps */
 	daif_enable(DAIF_D|DAIF_A);
 
+	/* run hard interrupt handlers */
 	ci->ci_intr_depth++;
 	ARM_IRQ_HANDLER(tf);
 	ci->ci_intr_depth--;
 
+	/* run soft interrupt handlers */
 	cpu_dosoftints();
+
+	/* all done, preempt as you please */
+	kpreempt_enable();
 }
 
 void
@@ -552,14 +567,28 @@ cpu_fiq(struct trapframe *tf)
 	/* disable trace */
 	reg_mdscr_el1_write(reg_mdscr_el1_read() & ~MDSCR_SS);
 
+	/*
+	 * Prevent preemption once we enable traps, until we have
+	 * finished running hard and soft interrupt handlers.  This
+	 * guarantees ci = curcpu() remains stable and we don't
+	 * accidentally try to run its pending soft interrupts on
+	 * another CPU.
+	 */
+	kpreempt_disable();
+
 	/* enable traps */
 	daif_enable(DAIF_D|DAIF_A);
 
+	/* run hard interrupt handlers */
 	ci->ci_intr_depth++;
 	ARM_FIQ_HANDLER(tf);
 	ci->ci_intr_depth--;
 
+	/* run soft interrupt handlers */
 	cpu_dosoftints();
+
+	/* all done, preempt as you please */
+	kpreempt_enable();
 }
 
 #ifdef COMPAT_NETBSD32

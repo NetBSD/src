@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.13 2022/07/28 09:14:12 riastradh Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.14 2023/02/25 00:40:22 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.13 2022/07/28 09:14:12 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.14 2023/02/25 00:40:22 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -115,6 +115,8 @@ dosoftints(void)
 	const int opl = ci->ci_cpl;
 	const uint32_t softiplmask = SOFTIPLMASK(opl);
 	int s;
+
+	KDASSERT(kpreempt_disabled());
 
 	s = splhigh();
 	KASSERT(s == opl);

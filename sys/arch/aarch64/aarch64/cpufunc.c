@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.33 2022/01/31 09:16:09 ryo Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.34 2023/02/25 00:40:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.33 2022/01/31 09:16:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.34 2023/02/25 00:40:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -369,6 +369,8 @@ aarch64_dcache_wbinv_all(void)
 	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
 	int level;
 
+	KASSERT(kpreempt_disabled());
+
 	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
@@ -386,6 +388,8 @@ aarch64_dcache_inv_all(void)
 	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
 	int level;
 
+	KASSERT(kpreempt_disabled());
+
 	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
@@ -402,6 +406,8 @@ aarch64_dcache_wb_all(void)
 	struct cpu_info * const ci = curcpu();
 	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
 	int level;
+
+	KASSERT(kpreempt_disabled());
 
 	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)

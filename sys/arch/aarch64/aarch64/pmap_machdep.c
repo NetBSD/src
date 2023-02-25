@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.2 2022/12/21 11:39:45 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.3 2023/02/25 00:40:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.2 2022/12/21 11:39:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.3 2023/02/25 00:40:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -138,14 +138,14 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 
 	KASSERT(!user || (pm != pmap_kernel()));
 
+	kpreempt_disable();
+
 	UVMHIST_LOG(pmaphist, " pm=%#jx, va=%#jx, ftype=%#jx, user=%jd",
 	    (uintptr_t)pm, va, ftype, user);
 	UVMHIST_LOG(pmaphist, " ti=%#jx pai=%#jx asid=%#jx",
 	    (uintptr_t)cpu_tlb_info(curcpu()),
 	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu())),
 	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu()))->pai_asid, 0);
-
-	kpreempt_disable();
 
 	bool fixed = false;
 	pt_entry_t * const ptep = pmap_pte_lookup(pm, va);
@@ -525,6 +525,8 @@ pmap_md_xtab_activate(pmap_t pm, struct lwp *l)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, " (pm=%#jx l=%#jx)", (uintptr_t)pm, (uintptr_t)l, 0, 0);
 
+	KASSERT(kpreempt_disabled());
+
 	/*
 	 * Assume that TTBR1 has only global mappings and TTBR0 only
 	 * has non-global mappings.  To prevent speculation from doing
@@ -564,6 +566,8 @@ void
 pmap_md_xtab_deactivate(pmap_t pm)
 {
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
+	KASSERT(kpreempt_disabled());
 
 	struct cpu_info * const ci = curcpu();
 	/*
