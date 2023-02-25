@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.138 2022/10/11 22:03:37 andvar Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.139 2023/02/25 08:05:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.138 2022/10/11 22:03:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.139 2023/02/25 08:05:46 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1327,9 +1327,6 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
  * by bus-specific DMA memory allocation functions.
  */
 
-extern paddr_t physical_start;
-extern paddr_t physical_end;
-
 int
 _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
@@ -1359,8 +1356,7 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 		}
 	} else {
 		error = _bus_dmamem_alloc_range(t, size, alignment, boundary,
-		    segs, nsegs, rsegs, flags, trunc_page(physical_start),
-		    trunc_page(physical_end));
+		    segs, nsegs, rsegs, flags, 0UL, ~0UL);
 	}
 
 #ifdef DEBUG_DMA
