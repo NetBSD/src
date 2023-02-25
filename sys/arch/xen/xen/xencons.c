@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.52 2023/02/25 00:33:38 riastradh Exp $	*/
+/*	$NetBSD: xencons.c,v 1.53 2023/02/25 00:35:40 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.52 2023/02/25 00:33:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.53 2023/02/25 00:35:40 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -82,10 +82,10 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.52 2023/02/25 00:33:38 riastradh Exp $
 #endif
 
 #undef XENDEBUG
- 
+
 #ifdef XENDEBUG
 #define XENPRINTK(x) printk x
-#else 
+#else
 #define XENPRINTK(x)
 #endif
 
@@ -127,7 +127,7 @@ const struct cdevsw xencons_cdevsw = {
 	.d_close = xencons_close,
 	.d_read = xencons_read,
 	.d_write = xencons_write,
-	.d_ioctl = xencons_ioctl, 
+	.d_ioctl = xencons_ioctl,
 	.d_stop = xencons_stop,
 	.d_tty = xencons_tty,
 	.d_poll = xencons_poll,
@@ -328,7 +328,7 @@ xencons_poll(dev_t dev, int events, struct lwp *l)
 	struct xencons_softc *sc = device_lookup_private(&xencons_cd,
 	    XENCONS_UNIT(dev));
 	struct tty *tp = sc->sc_tty;
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
@@ -442,7 +442,7 @@ xencons_stop(struct tty *tp, int flag)
 }
 
 /* Non-privileged console interrupt routine */
-static int 
+static int
 xencons_handler(void *arg)
 {
 	struct xencons_softc *sc = arg;
@@ -453,7 +453,7 @@ xencons_handler(void *arg)
 		splx(s);
 		return 1;
 	}
-		
+
 
 #define XNC_IN (xencons_interface->in)
 
