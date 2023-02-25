@@ -1,9 +1,11 @@
-# $NetBSD: varname-makeflags.mk,v 1.6 2023/02/25 11:59:12 rillig Exp $
+# $NetBSD: varname-makeflags.mk,v 1.7 2023/02/25 19:24:07 rillig Exp $
 #
-# Tests for the special MAKEFLAGS variable, which is basically just a normal
-# environment variable.  It is closely related to .MAKEFLAGS but captures the
-# state of .MAKEFLAGS at the very beginning of make, before any makefiles are
-# read.
+# Tests for the environment variable 'MAKEFLAGS', from which additional
+# command line arguments are read before the actual command line arguments.
+#
+# After reading the makefiles and before making the targets, the arguments
+# that were collected in '.MAKEFLAGS' and '.MAKEOVERRIDES' are written back to
+# the environment variable 'MAKEFLAGS'.
 
 all: spaces_stage_0 dollars_stage_0 append_stage_0 override_stage_0
 
@@ -11,9 +13,7 @@ all: spaces_stage_0 dollars_stage_0 append_stage_0 override_stage_0
 .if !make(*stage*)
 
 # The unit tests are run with an almost empty environment.  In particular,
-# the variable MAKEFLAGS is not set.  The '.MAKEFLAGS:' above also doesn't
-# influence the environment variable MAKEFLAGS, therefore it is still
-# undefined at this point.
+# the variable MAKEFLAGS is not set.
 .  if ${MAKEFLAGS:Uundefined} != "undefined"
 .    error
 .  endif
