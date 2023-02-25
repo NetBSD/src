@@ -1,9 +1,11 @@
-# $NetBSD: meta-ignore.inc,v 1.1 2023/02/23 05:21:27 sjg Exp $
+# $NetBSD: meta-ignore.inc,v 1.2 2023/02/25 19:30:32 sjg Exp $
 
 # common logic for testing .MAKE.META.IGNORE_*
 
 # we want a directory outside of .OBJDIR to drop a file
 # that our meta file refers to.
+# Note: these tests will not work if TMPDIR is /tmp or /var/tmp
+# or a subdir thereof
 IGNORE:= ${TMPDIR}/ignore
 OBJ:=	${TMPDIR}/obj
 
@@ -18,11 +20,11 @@ setup:
 	@rm -f ${OBJ}/check-ignore
 
 makefile:= ${.INCLUDEDFROMDIR}/${.INCLUDEDFROMFILE}
-TEST:= ${.INCLUDEDFROMFILE:R}
+TEST:= ${.INCLUDEDFROMFILE:R:C,.*meta-,,:S,-,_,g:tu}
 
 DESC.one= Initialize check-ignore.meta
-DESC.two= Use .MAKE.META.IGNORE_* - check-ignore is up to date
-DESC.three= Skip .MAKE.META.IGNORE_* - check-ignore is out of date
+DESC.two= Use .MAKE.META.${TEST} - check-ignore is up to date
+DESC.three= Skip .MAKE.META.${TEST} - check-ignore is out of date
 
 # just in case someone runs us with -jN
 .ORDER: one two three
@@ -35,16 +37,16 @@ one two three: .MAKE setup
 .MAKE.MODE = meta verbose silent=yes
 .OBJDIR: ${OBJ}
 .if ${parent} == "two"
-.if ${TEST:M*ignore_paths} != ""
+.if ${TEST} == "IGNORE_PATHS"
 # this is a prefix list - any path that matches
 # one of these prefixes will be ignored
 .MAKE.META.IGNORE_PATHS = ${IGNORE}
-.elif ${TEST:M*ignore_patterns} != ""
+.elif ${TEST} == "IGNORE_PATTERNS"
 # more flexible but more expensive
 # this example is equivalent to M*/ignore/*
 # a match means ignore
 .MAKE.META.IGNORE_PATTERNS = */ignore/*
-.elif ${TEST:M*ignore_filter} != ""
+.elif ${TEST} == "IGNORE_FILTER"
 # this is the most flexible, but also most expensive
 # if this expands to nothing - ignore the path
 .MAKE.META.IGNORE_FILTER = N${IGNORE}/*
