@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.24 2022/05/11 14:58:00 andvar Exp $	*/
+/*	$NetBSD: fault.c,v 1.25 2023/02/25 00:40:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.24 2022/05/11 14:58:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.25 2023/02/25 00:40:22 riastradh Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_cpuoptions.h"
@@ -226,7 +226,10 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 
  do_fault:
 	/* faultbail path? */
-	if (curcpu()->ci_intr_depth == 0) {
+	kpreempt_disable();
+	const bool intrdepthzero = (curcpu()->ci_intr_depth == 0);
+	kpreempt_enable();
+	if (intrdepthzero) {
 		fb = cpu_disable_onfault();
 		if (fb != NULL) {
 			cpu_jump_onfault(tf, fb, error);
