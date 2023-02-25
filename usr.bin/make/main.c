@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.591 2023/02/15 06:52:58 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.592 2023/02/25 00:07:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.591 2023/02/15 06:52:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.592 2023/02/25 00:07:08 rillig Exp $");
 #if defined(MAKE_NATIVE) && !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -432,7 +432,7 @@ MainParseArgSysInc(const char *argvalue)
 }
 
 static bool
-MainParseArg(char c, const char *argvalue)
+MainParseOption(char c, const char *argvalue)
 {
 	switch (c) {
 	case '\0':
@@ -624,7 +624,7 @@ rearg:
 			dashDash = true;
 			break;
 		default:
-			if (!MainParseArg(c, argvalue))
+			if (!MainParseOption(c, argvalue))
 				goto noarg;
 		}
 		argv += arginc;
