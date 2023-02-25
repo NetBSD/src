@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.80 2023/02/25 13:57:37 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.81 2023/02/25 18:04:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.80 2023/02/25 13:57:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.81 2023/02/25 18:04:25 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -416,7 +416,7 @@ fpu_kern_enter(void)
 	/*
 	 * Zero the FPU registers and install safe control words.
 	 */
-	fpu_area_restore(&safe_fpu, x86_xsave_features, false);
+	fpu_area_restore(&safe_fpu, x86_xsave_features, /*is_64bit*/false);
 }
 
 /*
@@ -446,7 +446,7 @@ fpu_kern_leave(void)
 	 * through Spectre-class attacks to userland, even if there are
 	 * no bugs in fpu state management.
 	 */
-	fpu_area_restore(&zero_fpu, x86_xsave_features, false);
+	fpu_area_restore(&zero_fpu, x86_xsave_features, /*is_64bit*/false);
 
 	/*
 	 * Set CR0_TS again so that the kernel can't accidentally use
