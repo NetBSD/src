@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.202 2023/02/14 21:38:31 rillig Exp $ */
+/*      $NetBSD: meta.c,v 1.203 2023/02/25 22:52:21 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -98,6 +98,8 @@ extern char    **environ;
 #if !defined(HAVE_STRSEP)
 # define strsep(s, d) stresep((s), (d), '\0')
 #endif
+
+#define BM(job) (job != NULL) ? &job->bm : &Mybm
 
 /*
  * Filemon is a kernel module which snoops certain syscalls.
@@ -642,11 +644,7 @@ meta_job_start(Job *job, GNode *gn)
 {
     BuildMon *pbm;
 
-    if (job != NULL) {
-	pbm = &job->bm;
-    } else {
-	pbm = &Mybm;
-    }
+    pbm = BM(job);
     pbm->mfp = meta_create(pbm, gn);
 #ifdef USE_FILEMON_ONCE
     /* compat mode we open the filemon dev once per command */
@@ -673,11 +671,7 @@ meta_job_child(Job *job MAKE_ATTR_UNUSED)
 #ifdef USE_FILEMON
     BuildMon *pbm;
 
-    if (job != NULL) {
-	pbm = &job->bm;
-    } else {
-	pbm = &Mybm;
-    }
+    pbm = BM(job);
     if (pbm->mfp != NULL) {
 	close(fileno(pbm->mfp));
 	if (useFilemon && pbm->filemon != NULL) {
@@ -698,11 +692,7 @@ meta_job_parent(Job *job MAKE_ATTR_UNUSED, pid_t pid MAKE_ATTR_UNUSED)
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     BuildMon *pbm;
 
-    if (job != NULL) {
-	pbm = &job->bm;
-    } else {
-	pbm = &Mybm;
-    }
+    pbm = BM(job);
     if (useFilemon && pbm->filemon != NULL) {
 	filemon_setpid_parent(pbm->filemon, pid);
     }
@@ -715,11 +705,7 @@ meta_job_fd(Job *job MAKE_ATTR_UNUSED)
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     BuildMon *pbm;
 
-    if (job != NULL) {
-	pbm = &job->bm;
-    } else {
-	pbm = &Mybm;
-    }
+    pbm = BM(job);
     if (useFilemon && pbm->filemon != NULL) {
 	return filemon_readfd(pbm->filemon);
     }
@@ -733,11 +719,7 @@ meta_job_event(Job *job MAKE_ATTR_UNUSED)
 #if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     BuildMon *pbm;
 
-    if (job != NULL) {
-	pbm = &job->bm;
-    } else {
-	pbm = &Mybm;
-    }
+    pbm = BM(job);
     if (useFilemon && pbm->filemon != NULL) {
 	return filemon_process(pbm->filemon);
     }
@@ -751,13 +733,9 @@ meta_job_error(Job *job, GNode *gn, bool ignerr, int status)
     char cwd[MAXPATHLEN];
     BuildMon *pbm;
 
-    if (job != NULL) {
-	pbm = &job->bm;
-	if (gn == NULL)
+    pbm = BM(job);
+    if (job != NULL && gn == NULL)
 	    gn = job->node;
-    } else {
-	pbm = &Mybm;
-    }
     if (pbm->mfp != NULL) {
 	fprintf(pbm->mfp, "\n*** Error code %d%s\n",
 		status, ignerr ? "(ignored)" : "");
@@ -779,11 +757,7 @@ meta_job_output(Job *job, char *cp, const char *nl)
 {
     BuildMon *pbm;
 
-    if (job != NULL) {
-	pbm = &job->bm;
-    } else {
-	pbm = &Mybm;
-    }
+    pbm = BM(job);
     if (pbm->mfp != NULL) {
 	if (metaVerbose) {
 	    static char *meta_prefix = NULL;
@@ -851,11 +825,7 @@ meta_job_finish(Job *job)
     int error = 0;
     int x;
 
-    if (job != NULL) {
-	pbm = &job->bm;
-    } else {
-	pbm = &Mybm;
-    }
+    pbm = BM(job);
     if (pbm->mfp != NULL) {
 	error = meta_cmd_finish(pbm);
 	x = fclose(pbm->mfp);
