@@ -1,4 +1,4 @@
-/*	$NetBSD: barrier.h,v 1.20 2023/02/24 11:02:05 riastradh Exp $	*/
+/*	$NetBSD: barrier.h,v 1.21 2023/02/25 12:23:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -106,8 +106,8 @@
 #  define	smp_mb()			__insn_barrier()
 #  define	smp_wmb()			__insn_barrier()
 #  define	smp_rmb()			__insn_barrier()
-#  define	smp_mb__before_atomic		__nothing
-#  define	smp_mb__after_atomic		__nothing
+#  define	smp_mb__before_atomic()		__nothing
+#  define	smp_mb__after_atomic()		__nothing
 #endif
 
 #endif  /* _ASM_BARRIER_H_ */
