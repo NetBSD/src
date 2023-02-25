@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.332 2023/02/23 05:20:45 sjg Exp $
+# $NetBSD: Makefile,v 1.333 2023/02/25 19:30:32 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -32,6 +32,21 @@
 # we use these below but we might be an older make
 .MAKE.OS?= ${uname -s:L:sh}
 .MAKE.UID?= ${id -u:L:sh}
+
+# for many tests we need a TMPDIR that will not collide
+# with other users.
+.if ${.OBJDIR} != ${.CURDIR}
+# easy
+TMPDIR:=	${.OBJDIR}/tmp
+.elif defined(TMPDIR)
+TMPDIR:=	${TMPDIR}/uid${.MAKE.UID}
+.else
+TMPDIR:=	/tmp/uid${.MAKE.UID}
+.endif
+# make sure it exists
+.if !exist(${TMPDIR})
+_!= mkdir -p ${TMPDIR}
+.endif
 
 # Each test is in a sub-makefile.
 # Keep the list sorted.
@@ -405,7 +420,9 @@ TESTS+=		varname-dot-make-makefiles
 TESTS+=		varname-dot-make-meta-bailiwick
 TESTS+=		varname-dot-make-meta-created
 TESTS+=		varname-dot-make-meta-files
-.if ${.MAKE.PATH_FILEMON:Uno:Nktrace:N/dev*} == ""
+.if ${.MAKE.PATH_FILEMON:Uno:Nktrace:N/dev*} == "" && ${TMPDIR:N/tmp*:N/var/tmp*} != ""
+# these tests will not work if TMPDIR is or is a subdir of
+# /tmp or /var/tmp
 TESTS+=		varname-dot-make-meta-ignore_filter
 TESTS+=		varname-dot-make-meta-ignore_paths
 TESTS+=		varname-dot-make-meta-ignore_patterns
@@ -666,22 +683,6 @@ TOOL_SED?=	sed
 LC_ALL=		C
 LANG=		C
 .export LANG LC_ALL
-
-
-# for many tests we need a TMPDIR that will not collide
-# with other users.
-.if ${.OBJDIR} != ${.CURDIR}
-# easy
-TMPDIR:=	${.OBJDIR}/tmp
-.elif defined(TMPDIR)
-TMPDIR:=	${TMPDIR}/uid${.MAKE.UID}
-.else
-TMPDIR:=	/tmp/uid${.MAKE.UID}
-.endif
-# make sure it exists
-.if !exist(${TMPDIR})
-_!= mkdir -p ${TMPDIR}
-.endif
 
 # Some Linux systems such as Fedora have deprecated egrep in favor of grep -E.
 .if ${.MAKE.OS:NLinux} == ""
