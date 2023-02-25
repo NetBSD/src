@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.111 2023/02/25 00:34:36 riastradh Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.112 2023/02/25 00:37:47 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.111 2023/02/25 00:34:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.112 2023/02/25 00:37:47 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -117,7 +117,7 @@ struct xnetback_instance {
 	grant_handle_t xni_tx_ring_handle; /* to unmap the ring */
 	grant_handle_t xni_rx_ring_handle;
 	vaddr_t xni_tx_ring_va; /* to unmap the ring */
-	vaddr_t xni_rx_ring_va; 
+	vaddr_t xni_rx_ring_va;
 
 	/* arrays used in xennetback_ifstart(), used for both Rx and Tx */
 	gnttab_copy_t     	xni_gop_copy[NB_XMIT_PAGES_BATCH];
@@ -782,7 +782,7 @@ xennetback_tx_m0len_fragment(struct xnetback_instance *xneti,
 {
 	netif_tx_request_t *txreq;
 
-	/* This assumes all the requests are already pushed into the ring */ 
+	/* This assumes all the requests are already pushed into the ring */
 	*cntp = 1;
 	do {
 		txreq = RING_GET_REQUEST(&xneti->xni_txring, req_cons);
@@ -1269,7 +1269,7 @@ again:
 		 * here, as the frontend doesn't notify when adding
 		 * requests anyway
 		 */
-		if (__predict_false(abort || 
+		if (__predict_false(abort ||
 		    !RING_HAS_UNCONSUMED_REQUESTS(&xneti->xni_rxring))) {
 			/* ring full */
 			ifp->if_timer = 1;
