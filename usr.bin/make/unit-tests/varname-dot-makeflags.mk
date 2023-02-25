@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-makeflags.mk,v 1.4 2023/02/25 10:41:14 rillig Exp $
+# $NetBSD: varname-dot-makeflags.mk,v 1.5 2023/02/25 11:11:16 rillig Exp $
 #
 # Tests for the special .MAKEFLAGS variable, which collects almost all
 # command line arguments and passes them on to any child processes via
@@ -7,7 +7,7 @@
 # See also:
 #	varname-dot-makeoverrides.mk
 
-all: spaces_stage_0 dollars_stage_0 append_stage_0
+all: spaces_stage_0 dollars_stage_0 append_stage_0 override_stage_0
 
 
 # When options are parsed, the option and its argument are appended as
@@ -119,3 +119,31 @@ append_stage_2:
 
 append_stage_3:
 	@echo '$@: MAKEFLAGS=<'${MAKEFLAGS:Q}'>'
+
+
+# Demonstrates the implementation details of 'MAKEFLAGS', in particular that
+# it is an environment variable rather than a global variable.
+override_stage_0:
+	@${MAKE} -f ${MAKEFILE} STAGE=1 VAR=value override_stage_1
+
+.if make(override_stage_1)
+# While parsing the makefiles, 'MAKEFLAGS' is the value of the environment
+# variable, in this case provided by stage 0.
+.  if ${MAKEFLAGS:M*} != "-r -k"
+.    error
+.  endif
+MAKEFLAGS=	overridden	# temporarily override it
+.  if ${MAKEFLAGS} != "overridden"
+.    error
+.  endif
+.undef MAKEFLAGS		# make the environment variable visible again
+.  if ${MAKEFLAGS:M*} != "-r -k"
+.    error
+.  endif
+.endif
+override_stage_1:
+	@echo '$@: run MAKEFLAGS=<'${MAKEFLAGS:Q}'>'
+	@${MAKE} -f ${MAKEFILE} STAGE=2 override_stage_2
+
+override_stage_2:
+	@echo '$@: STAGE=<${STAGE}> VAR=<${VAR}>'
