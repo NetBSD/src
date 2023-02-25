@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.191 2023/02/03 09:21:58 mlelstv Exp $	*/
+/*	$NetBSD: locore.S,v 1.192 2023/02/25 18:35:54 riastradh Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.191 2023/02/03 09:21:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.192 2023/02/25 18:35:54 riastradh Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1447,7 +1447,7 @@ ENTRY(cpu_switchto)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
-	jnz	switch_return
+	jnz	.Lswitch_system
 
 #ifndef XENPV
 	/* Restore thread-private %fs/%gs descriptors. */
@@ -1500,6 +1500,21 @@ switch_return:
 	popl	%esi
 	popl	%ebx
 	ret
+
+.Lswitch_system:
+	/*
+	 * If it has LWP_SYSTEM_FPU set, meaning it's running in
+	 * kthread_fpu_enter/exit, we need to restore the FPU state
+	 * and enable FPU instructions with fpu_handle_deferred.
+	 *
+	 * No need to test MDL_FPU_IN_CPU via HANDLE_DEFERRED_FPU --
+	 * fpu_switch guarantees it is clear, so we can just call
+	 * fpu_handle_deferred unconditionally.
+	 */
+	testl	$LW_SYSTEM_FPU,L_FLAG(%edi)
+	jz	switch_return
+	call	_C_LABEL(fpu_handle_deferred)
+	jmp	switch_return
 
 .Lcopy_iobitmap:
 	/* Copy I/O bitmap. */
