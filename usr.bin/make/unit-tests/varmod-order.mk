@@ -1,4 +1,4 @@
-# $NetBSD: varmod-order.mk,v 1.8 2022/01/15 12:35:18 rillig Exp $
+# $NetBSD: varmod-order.mk,v 1.9 2023/02/26 06:08:06 rillig Exp $
 #
 # Tests for the :O variable modifier and its variants, which either sort the
 # words of the value or shuffle them.
@@ -84,6 +84,16 @@ _:=	${NUMBERS:Onr
 #
 # expect: make: Bad modifier ":Orrn" for variable "NUMBERS"
 .if ${NUMBERS:Orrn}
+.  error
+.else
+.  error
+.endif
+
+
+# Any modifier that starts with 'O' either sorts or shuffles the words.  Other
+# than for many other modifiers, there is no fallback to the SysV modifier
+# ':from=to'.
+.if ${SWITCH:UOn:On=Off} != "Off"
 .  error
 .else
 .  error
