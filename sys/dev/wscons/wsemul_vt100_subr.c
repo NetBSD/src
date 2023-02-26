@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.29 2023/02/26 13:57:56 uwe Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.30 2023/02/26 14:00:42 uwe Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.29 2023/02/26 13:57:56 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.30 2023/02/26 14:00:42 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 			{
 			int i, j, ps = 0;
 			char buf[20];
-			KASSERT(edp->tabs != 0);
+			KASSERT(edp->tabs != NULL);
 			wsdisplay_emulinput(edp->cbcookie, "\033P2$u", 5);
 			for (i = 0; i < edp->ncols; i++)
 				if (edp->tabs[i]) {
@@ -483,7 +483,7 @@ wsemul_vt100_handle_csi(struct vt100base_data *edp, u_char c)
 		edp->crow = uimin(DEF1_ARG(edp, 0) - 1, edp->nrows - 1);
  		break;
 	    case 'g': /* TBC */
-		KASSERT(edp->tabs != 0);
+		KASSERT(edp->tabs != NULL);
 		switch (ARG(edp, 0)) {
 		    case 0:
 			edp->tabs[edp->ccol] = 0;
@@ -766,7 +766,7 @@ wsemul_vt100_handle_dcs(struct vt100base_data *edp)
 	    case 0: /* not handled */
 		return;
 	    case DCSTYPE_TABRESTORE:
-		KASSERT(edp->tabs != 0);
+		KASSERT(edp->tabs != NULL);
 		KASSERT(edp->ncols <= 1024);
 		memset(edp->tabs, 0, edp->ncols);
 		pos = 0;
