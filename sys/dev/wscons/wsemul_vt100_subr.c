@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_vt100_subr.c,v 1.28 2023/02/23 02:48:06 riastradh Exp $ */
+/* $NetBSD: wsemul_vt100_subr.c,v 1.29 2023/02/26 13:57:56 uwe Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.28 2023/02/23 02:48:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100_subr.c,v 1.29 2023/02/26 13:57:56 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,7 +767,6 @@ wsemul_vt100_handle_dcs(struct vt100base_data *edp)
 		return;
 	    case DCSTYPE_TABRESTORE:
 		KASSERT(edp->tabs != 0);
-		KASSERT(edp->ncols >= 0);
 		KASSERT(edp->ncols <= 1024);
 		memset(edp->tabs, 0, edp->ncols);
 		pos = 0;
