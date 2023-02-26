@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.163 2023/02/12 16:28:32 andvar Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.164 2023/02/26 07:27:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.163 2023/02/12 16:28:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.164 2023/02/26 07:27:14 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -201,7 +201,7 @@ static struct vm_map		kernel_map_store;
 static struct vm_map_entry	kernel_image_mapent_store;
 static struct vm_map_entry	kernel_kmem_mapent_store;
 
-int nkmempages = 0;
+size_t nkmempages = 0;
 vaddr_t kmembase;
 vsize_t kmemsize;
 
@@ -216,7 +216,7 @@ vmem_t *kmem_va_arena;
 void
 kmeminit_nkmempages(void)
 {
-	int npages;
+	size_t npages;
 
 	if (nkmempages != 0) {
 		/*
