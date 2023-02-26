@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.61 2022/07/15 11:34:59 mrg Exp $
+# $NetBSD: md.amd64,v 1.62 2023/02/26 20:16:13 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				xdebug-libI810XvMC-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libIntelXvMC_g.a			xdebug-libIntelXvMC-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			xdebug-libchromeXvMCPro-debuglib	xorg,debuglib,compatx11file
@@ -74,7 +74,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/trident_dri.so.0.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/unichrome_dri.so.0.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/amdgpu_drv.so.19.debug	xdebug-obsolete		xorg,obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/amdgpu_drv.so.21.debug	xdebug-xf86-video-amdgpu-debug		xorg,debug,xorg_server_ver=120
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/amdgpu_drv.so.21.debug	xdebug-obsolete		xorg,obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/amdgpu_drv.so.23.debug	xdebug-xf86-video-amdgpu-debug		xorg,debug,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/apm_drv.so.1.debug	xdebug-xf86-video-apm-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
