@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.196 2020/04/30 03:28:19 riastradh Exp $	*/
+/*	$NetBSD: emul.c,v 1.197 2023/02/26 07:27:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.196 2020/04/30 03:28:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.197 2023/02/26 07:27:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -57,7 +57,7 @@ void (*rump_vfs_fini)(void) = (void *)nullop;
  */
 #define PHYSMEM 512*256
 psize_t physmem = PHYSMEM;
-int nkmempages = PHYSMEM/2; /* from le chapeau */
+size_t nkmempages = PHYSMEM/2; /* from le chapeau */
 #undef PHYSMEM
 
 struct vnode *rootvp;
