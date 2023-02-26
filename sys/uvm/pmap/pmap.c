@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.74 2022/11/03 09:04:57 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.75 2023/02/26 07:13:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.74 2022/11/03 09:04:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.75 2023/02/26 07:13:55 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -471,7 +471,7 @@ pmap_page_syncicache(struct vm_page *pg)
 			}
 #else
 			if (pv->pv_pmap == curpmap) {
-				onproc = curcpu()->ci_data.cpu_kcpuset;
+				onproc = curcpu()->ci_kcpuset;
 				break;
 			}
 #endif

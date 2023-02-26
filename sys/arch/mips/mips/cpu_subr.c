@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.62 2022/07/20 10:07:49 riastradh Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.63 2023/02/26 07:13:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.62 2022/07/20 10:07:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.63 2023/02/26 07:13:54 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -656,11 +656,11 @@ cpu_multicast_ipi(const kcpuset_t *kcp, int tag)
 	struct cpu_info * const ci = curcpu();
 	kcpuset_t *kcp2 = ci->ci_multicastcpus;
 
-	if (kcpuset_match(cpus_running, ci->ci_data.cpu_kcpuset))
+	if (kcpuset_match(cpus_running, ci->ci_kcpuset))
 		return;
 
 	kcpuset_copy(kcp2, kcp);
-	kcpuset_remove(kcp2, ci->ci_data.cpu_kcpuset);
+	kcpuset_remove(kcp2, ci->ci_kcpuset);
 	for (cpuid_t cii; (cii = kcpuset_ffs(kcp2)) != 0; ) {
 		kcpuset_clear(kcp2, --cii);
 		(void)cpu_send_ipi(cpu_lookup(cii), tag);
@@ -729,13 +729,13 @@ cpu_halt_others(void)
 	kcpuset_t *kcp;
 
 	// If we are the only CPU running, there's nothing to do.
-	if (kcpuset_match(cpus_running, curcpu()->ci_data.cpu_kcpuset))
+	if (kcpuset_match(cpus_running, curcpu()->ci_kcpuset))
 		return;
 
 	// Get all running CPUs
 	kcpuset_clone(&kcp, cpus_running);
 	// Remove ourself
-	kcpuset_remove(kcp, curcpu()->ci_data.cpu_kcpuset);
+	kcpuset_remove(kcp, curcpu()->ci_kcpuset);
 	// Remove any halted CPUs
 	kcpuset_remove(kcp, cpus_halted);
 	// If there are CPUs left, send the IPIs
@@ -792,13 +792,13 @@ cpu_pause_others(void)
 {
 	struct cpu_info * const ci = curcpu();
 
-	if (cold || kcpuset_match(cpus_running, ci->ci_data.cpu_kcpuset))
+	if (cold || kcpuset_match(cpus_running, ci->ci_kcpuset))
 		return;
 
 	kcpuset_t *kcp = ci->ci_ddbcpus;
 
 	kcpuset_copy(kcp, cpus_running);
-	kcpuset_remove(kcp, ci->ci_data.cpu_kcpuset);
+	kcpuset_remove(kcp, ci->ci_kcpuset);
 	kcpuset_remove(kcp, cpus_paused);
 
 	cpu_broadcast_ipi(IPI_SUSPEND);
