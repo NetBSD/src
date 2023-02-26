@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.25 2022/11/17 06:40:38 chs Exp $	*/
+/*	$NetBSD: clri.c,v 1.26 2023/02/26 22:55:02 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.25 2022/11/17 06:40:38 chs Exp $");
+__RCSID("$NetBSD: clri.c,v 1.26 2023/02/26 22:55:02 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ main(int argc, char *argv[])
 		if (atoi(argv[i]) <= 0 || atoi(argv[i]) >= imax) 
 			errx(1, "%s is not a valid inode number", argv[i]);
 
-	/* delete clean flag in the superblok */
+	/* delete clean flag in the superblock */
 	sbp->fs_clean = ufs_rw32(ufs_rw32(sbp->fs_clean, needswap) << 1,
 				needswap);
 	if (lseek(fd, sblockloc, SEEK_SET) < 0)
