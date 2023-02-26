@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.93 2020/10/08 09:16:13 rin Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.94 2023/02/26 07:13:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.93 2020/10/08 09:16:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.94 2023/02/26 07:13:55 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -137,8 +137,8 @@ mi_cpu_attach(struct cpu_info *ci)
 	/*
 	 * Create a convenience cpuset of just ourselves.
 	 */
-	kcpuset_create(&ci->ci_data.cpu_kcpuset, true);
-	kcpuset_set(ci->ci_data.cpu_kcpuset, cpu_index(ci));
+	kcpuset_create(&ci->ci_kcpuset, true);
+	kcpuset_set(ci->ci_kcpuset, cpu_index(ci));
 
 	TAILQ_INIT(&ci->ci_data.cpu_ld_locks);
 	__cpu_simple_lock_init(&ci->ci_data.cpu_ld_lock);

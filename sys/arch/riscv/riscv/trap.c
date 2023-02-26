@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.19 2022/10/15 06:41:43 simonb Exp $	*/
+/*	$NetBSD: trap.c,v 1.20 2023/02/26 07:13:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.19 2022/10/15 06:41:43 simonb Exp $");
+__RCSID("$NetBSD: trap.c,v 1.20 2023/02/26 07:13:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 
 	if (attr & VM_PAGEMD_EXECPAGE)
 		pmap_md_page_syncicache(VM_PAGE_TO_MD(pg),
-		    curcpu()->ci_data.cpu_kcpuset);
+		    curcpu()->ci_kcpuset);
 
 	return true;
 }
