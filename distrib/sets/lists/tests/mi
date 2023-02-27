@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1253 2023/02/24 12:47:23 martin Exp $
+# $NetBSD: mi,v 1.1254 2023/02/27 23:07:53 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7355,6 +7355,8 @@
 ./usr/tests/usr.bin/xlint/lint1/parse_type_name.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_ilp32.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_ilp32.exp		tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/platform_ilp32_int.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/platform_ilp32_long.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_int.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_int.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/platform_ldbl128.c		tests-usr.bin-tests	compattestfile,atf
