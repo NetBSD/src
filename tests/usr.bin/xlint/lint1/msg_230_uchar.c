@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_230_uchar.c,v 1.10 2023/02/22 22:30:40 rillig Exp $	*/
+/*	$NetBSD: msg_230_uchar.c,v 1.11 2023/02/27 21:59:14 rillig Exp $	*/
 # 3 "msg_230_uchar.c"
 
 // Test for message: nonportable character comparison '%s' [230]
@@ -46,26 +46,26 @@ compare_plain_char(char c)
 void
 compare_plain_char_yoda(char c)
 {
-	/* expect+1: warning: nonportable character comparison '? == -129' [230] */
+	/* expect+1: warning: nonportable character comparison '-129 == ?' [230] */
 	if (-129 == c)
 		return;
-	/* expect+1: warning: nonportable character comparison '? == -128' [230] */
+	/* expect+1: warning: nonportable character comparison '-128 == ?' [230] */
 	if (-128 == c)
 		return;
-	/* expect+1: warning: nonportable character comparison '? == -1' [230] */
+	/* expect+1: warning: nonportable character comparison '-1 == ?' [230] */
 	if (-1 == c)
 		return;
 	if (0 == c)
 		return;
 	if (127 == c)
 		return;
-	/* expect+1: warning: nonportable character comparison '? == 128' [230] */
+	/* expect+1: warning: nonportable character comparison '128 == ?' [230] */
 	if (128 == c)
 		return;
-	/* expect+1: warning: nonportable character comparison '? == 255' [230] */
+	/* expect+1: warning: nonportable character comparison '255 == ?' [230] */
 	if (255 == c)
 		return;
-	/* expect+1: warning: nonportable character comparison '? == 256' [230] */
+	/* expect+1: warning: nonportable character comparison '256 == ?' [230] */
 	if (256 == c)
 		return;
 }
@@ -121,9 +121,9 @@ void
 compare_with_character_literal(char ch)
 {
 	/*
-	 * These comparisons are portable since the character constant is
-	 * interpreted using the type 'char' on the exact same platform as
-	 * where the comparison takes place.
+	 * FIXME: These comparisons are portable since the character constant
+	 *  is interpreted using the type 'char' on the exact same platform
+	 *  as where the comparison takes place.
 	 */
 	/* expect+1: warning: nonportable character comparison '== 128' [230] */
 	if (ch == '\200')
