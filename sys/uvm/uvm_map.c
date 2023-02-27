@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.403 2022/11/23 23:53:53 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.404 2023/02/27 16:24:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.403 2022/11/23 23:53:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.404 2023/02/27 16:24:45 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2123,7 +2123,10 @@ nextgap:
 	else
 		tmp = RIGHT_ENTRY(prev);
 	for (;;) {
-		KASSERT(tmp && tmp->maxgap >= length);
+		KASSERT(tmp);
+		KASSERTMSG(tmp->maxgap >= length,
+		    "tmp->maxgap=0x%"PRIxVSIZE" length=0x%"PRIxVSIZE,
+		    tmp->maxgap, length);
 		if (topdown)
 			child = RIGHT_ENTRY(tmp);
 		else
@@ -2685,7 +2688,8 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 	 * REMOVE.
 	 */
 
-	KASSERT((start & PAGE_MASK) == 0 && (len & PAGE_MASK) == 0);
+	KASSERTMSG((start & PAGE_MASK) == 0, "start=0x%"PRIxVADDR, start);
+	KASSERTMSG((len & PAGE_MASK) == 0, "len=0x%"PRIxVADDR, len);
 	KASSERT((flags & UVM_EXTRACT_REMOVE) == 0 ||
 		(flags & (UVM_EXTRACT_CONTIG|UVM_EXTRACT_QREF)) == 0);
 
