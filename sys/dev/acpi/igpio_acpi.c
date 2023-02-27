@@ -1,4 +1,4 @@
-/* $NetBSD: igpio_acpi.c,v 1.1 2022/03/24 02:24:25 manu Exp $ */
+/* $NetBSD: igpio_acpi.c,v 1.2 2023/02/27 15:41:41 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2021,2022 Emmanuel Dreyfus
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igpio_acpi.c,v 1.1 2022/03/24 02:24:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igpio_acpi.c,v 1.2 2023/02/27 15:41:41 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -62,10 +62,6 @@ static int	igpio_acpi_intr(void *);
 CFATTACH_DECL_NEW(igpio_acpi, sizeof(struct igpio_acpi_softc), igpio_acpi_match, igpio_acpi_attach, igpio_acpi_detach, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "INT33B2" },	/* baytrail */
-	{ .compat = "INT33C7" },	/* lynxpoint */
-	{ .compat = "INT33FC" },	/* baytrail */
-	{ .compat = "INT3437" },	/* lynxpoint */
 	{ .compat = "INT344B" },	/* sunrisepoint */
 	{ .compat = "INT3450" },	/* cannonlake */
 	{ .compat = "INT3451" },	/* sunrisepoint */
@@ -89,6 +85,10 @@ static const struct device_compatible_entry compat_data[] = {
 	 * Complete bank setup in src/sys/dev/ic/igpioreg.h
 	 * before enabling
 	 */
+	{ .compat = "INT33B2" },	/* baytrail */
+	{ .compat = "INT33C7" },	/* lynxpoint */
+	{ .compat = "INT33FC" },	/* baytrail */
+	{ .compat = "INT3437" },	/* lynxpoint */
 	{ .compat = "INT3452" },	/* broxton */
 	{ .compat = "INT34D1" },	/* broxton */
 	{ .compat = "apollolake-pinctrl" },	/* broxton */
