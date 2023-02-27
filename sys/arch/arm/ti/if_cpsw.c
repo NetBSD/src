@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.16 2022/09/18 15:47:09 thorpej Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.17 2023/02/27 21:15:09 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.16 2022/09/18 15:47:09 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.17 2023/02/27 21:15:09 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,6 +94,8 @@ __KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.16 2022/09/18 15:47:09 thorpej Exp $")
 
 CTASSERT(powerof2(CPSW_NTXDESCS));
 CTASSERT(powerof2(CPSW_NRXDESCS));
+
+#undef CPSW_DEBUG_DMA	/* define this for DMA debugging */
 
 #define CPSW_PAD_LEN (ETHER_MIN_LEN - ETHER_CRC_LEN)
 
@@ -1181,10 +1183,12 @@ cpsw_rxintr(void *arg)
 			return 1;
 		}
 
+#if defined(CPSW_DEBUG_DMA)
 		if ((dw[3] & (CPDMA_BD_SOP | CPDMA_BD_EOP)) !=
 		    (CPDMA_BD_SOP | CPDMA_BD_EOP)) {
-			//Debugger();
+			Debugger();
 		}
+#endif
 
 		bus_dmamap_sync(sc->sc_bdt, dm, 0, dm->dm_mapsize,
 		    BUS_DMASYNC_POSTREAD);
@@ -1219,10 +1223,12 @@ next:
 		    cpsw_rxdesc_paddr(sc, i));
 	}
 
+#if defined(CPSW_DEBUG_DMA)
 	if (sc->sc_rxeoq) {
 		device_printf(sc->sc_dev, "rxeoq\n");
-		//Debugger();
+		Debugger();
 	}
+#endif
 
 	cpsw_write_4(sc, CPSW_CPDMA_CPDMA_EOI_VECTOR, CPSW_INTROFF_RX);
 
@@ -1269,9 +1275,11 @@ cpsw_txintr(void *arg)
 
 		cpsw_get_txdesc(sc, sc->sc_txhead, &bd);
 
+#if defined(CPSW_DEBUG_DMA)
 		if (dw[2] == 0) {
 			//Debugger();
 		}
+#endif
 
 		if (ISSET(dw[3], CPDMA_BD_SOP) == 0)
 			goto next;
