@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.331 2023/01/26 22:20:16 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.332 2023/02/27 21:04:43 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1205,6 +1205,7 @@ PER	packed encoding rules
 PFS	perfect forward secrecy
 PGAS	partitioned global address space
 PGE	page global enable
+PGO	profile guided optimization
 PGP	Pretty Good Privacy
 PHB	PCI host bridge
 PHP	PHP: Hypertext Preprocessor
