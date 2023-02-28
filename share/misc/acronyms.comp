@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.337 2023/02/28 16:48:00 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.338 2023/02/28 19:08:37 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1201,6 +1201,7 @@ PDS	product data sheet
 PDU	protocol data unit
 PE	protection enable
 PE	provider edge
+PE	portable executable
 PEAP	Protected EAP
 PECI	platform environment control interface
 PEP	protocol extension protocol
