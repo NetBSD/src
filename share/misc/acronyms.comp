@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.333 2023/02/28 08:36:03 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.334 2023/02/28 12:50:49 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -627,6 +627,7 @@ GAL	generic array logic
 GARP	generic attribute registration protocol
 GAS	generic address structure
 GC	garbage collector
+GCC	GNU Compiler Collection
 GCM	Galois counter mode
 GCR	group-coded recording
 GDI	Graphics Device Interface
