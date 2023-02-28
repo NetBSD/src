@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.338 2023/02/28 19:08:37 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.339 2023/02/28 20:42:55 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -486,6 +486,7 @@ DVFS	dynamic voltage and frequency scaling
 DVI	device independent
 DVI	Digital Visual Interface
 DVR	digital video recorder
+DWARF	Debugging With Attributed Record Formats
 E-XER	extended XML encoding rules
 EABI	embedded-application binary interface
 EAI	Email Address Internationalization
