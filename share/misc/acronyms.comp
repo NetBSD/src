@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.336 2023/02/28 15:01:53 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.337 2023/02/28 16:48:00 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -826,6 +826,7 @@ JPEG	Joint Photographic Experts Group
 JRE	Java Runtime Environment
 JSON	JavaScript Object Notation
 JTAG	joint test action group
+KASAN	Kernel Address Sanitizer
 KASLR	kernel address space layout randomization
 KB	keyboard
 KB	kilobyte
