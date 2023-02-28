@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.332 2023/02/27 21:04:43 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.333 2023/02/28 08:36:03 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -238,7 +238,7 @@ CF	compact flash
 CFB	cipher feedback
 CFG	context-free grammar
 CFG	control-flow graph
-CFI	control-flow integrity sanitizer
+CFI	control-flow integrity
 CG	control gate
 CGA	Color Graphics Adapter
 CGI	common gateway interface
