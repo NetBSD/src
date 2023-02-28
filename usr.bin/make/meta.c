@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.203 2023/02/25 22:52:21 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.204 2023/02/28 06:04:28 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -98,8 +98,6 @@ extern char    **environ;
 #if !defined(HAVE_STRSEP)
 # define strsep(s, d) stresep((s), (d), '\0')
 #endif
-
-#define BM(job) (job != NULL) ? &job->bm : &Mybm
 
 /*
  * Filemon is a kernel module which snoops certain syscalls.
@@ -634,6 +632,13 @@ meta_mode_init(const char *make_mode)
     metaIgnorePatterns = Var_Exists(SCOPE_GLOBAL, MAKE_META_IGNORE_PATTERNS);
     metaIgnoreFilter = Var_Exists(SCOPE_GLOBAL, MAKE_META_IGNORE_FILTER);
     metaCmpFilter = Var_Exists(SCOPE_GLOBAL, MAKE_META_CMP_FILTER);
+}
+
+MAKE_INLINE BuildMon *
+BM(Job *job)
+{
+
+	return ((job != NULL) ? &job->bm : &Mybm);
 }
 
 /*
