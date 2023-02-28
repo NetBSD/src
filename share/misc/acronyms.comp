@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.334 2023/02/28 12:50:49 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.335 2023/02/28 14:32:59 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1334,7 +1334,6 @@ RC	release candidate
 RC	remote control
 RC	run commands
 RCS	Revision Control System
-RCS	revision control system
 RCU	read, copy, update
 RDB	Rigid Disk Block
 RDBMS	relational database management system
