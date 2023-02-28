@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.335 2023/02/28 14:32:59 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.336 2023/02/28 15:01:53 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -662,6 +662,7 @@ GSI	global system interrupt
 GSO	generic send offload
 GUI	graphical user interface
 GUID	globally unique identifier
+GUS	Gravis UltraSound
 GVFS    git virtual file system
 HA	high availability
 HAL	hardware abstraction layer
