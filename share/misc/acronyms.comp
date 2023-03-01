@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.340 2023/03/01 04:04:54 thorpej Exp $
+$NetBSD: acronyms.comp,v 1.341 2023/03/01 11:08:03 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -790,6 +790,7 @@ IPSEC	Internet Protocol Security
 IRC	Internet Relay Chat
 IRDA	infrared data association
 IRDP	ICMP Router Discovery Protocol
+IR	intermediate representation
 IRQ	interrupt request
 IRQL	interrupt request level
 IRR	interrupt request register
@@ -993,6 +994,7 @@ MLAG	multi-chassis link aggregation group
 MLC	multi-level cell
 MLD	multicast listener discovery
 MLHP	micro loop heat pipe
+MLIR	multi-level intermediate representation
 MMF	multi-mode fiber
 MMIC	monolithic microwave integrated circuit
 MMIO	memory mapped input/output
