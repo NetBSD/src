@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.339 2023/02/28 20:42:55 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.340 2023/03/01 04:04:54 thorpej Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1070,6 +1070,7 @@ NFC	near-field communication
 NFCI	no functional change intended
 NFS	network file system
 NFV	network function virtualization
+NHACP	NABU HCCA Application Communication Protocol
 NIA	next instruction address
 NIC	network information center
 NIC	network interface card
