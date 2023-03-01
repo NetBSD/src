@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.57 2022/08/05 23:43:46 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.58 2023/03/01 08:13:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.57 2022/08/05 23:43:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.58 2023/03/01 08:13:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1554,7 +1554,7 @@ filt_entropy_read_event(struct knote *kn, long hint)
 		ret = 0;
 	} else {
 		if (atomic_load_relaxed(&entropy_depletion))
-			kn->kn_data = ENTROPY_CAPACITY*NBBY;
+			kn->kn_data = ENTROPY_CAPACITY; /* bytes */
 		else
 			kn->kn_data = MIN(INT64_MAX, SSIZE_MAX);
 		ret = 1;
