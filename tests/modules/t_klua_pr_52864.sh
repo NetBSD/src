@@ -1,11 +1,8 @@
 #! /usr/bin/atf-sh
-# $NetBSD: t_klua_pr_52864.sh,v 1.2 2018/01/09 15:16:02 martin Exp $
+# $NetBSD: t_klua_pr_52864.sh,v 1.3 2023/03/01 21:08:38 nia Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
-#
-# This code is derived from software contributed to The NetBSD Foundation
-# by Sevan Janiyan
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
