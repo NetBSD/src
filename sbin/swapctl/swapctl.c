@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.41 2022/04/04 19:33:44 andvar Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.42 2023/03/01 15:15:56 kre Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2015 Matthew R. Green
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.41 2022/04/04 19:33:44 andvar Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.42 2023/03/01 15:15:56 kre Exp $");
 #endif
 
 
@@ -733,6 +733,13 @@ do_fstab(int add)
 		char buf[MAXPATHLEN];
 		char *spec, *fsspec;
 
+		/*
+		 * Ignore any ewtries which are not related to swapping
+		 */
+		if (strcmp(fp->fs_type, "sw") != 0 &&
+		    strcmp(fp->fs_type, "dp") != 0)
+			continue;
+
 		if (getfsspecname(buf, sizeof(buf), fp->fs_spec) == NULL) {
 			warn("%s", buf);
 			continue;
@@ -744,9 +751,6 @@ do_fstab(int add)
 			set_dumpdev1(spec);
 			continue;
 		}
-
-		if (strcmp(fp->fs_type, "sw") != 0)
-			continue;
 
 		/* handle dp as mnt option */
 		if (strstr(fp->fs_mntops, "dp") && add)
