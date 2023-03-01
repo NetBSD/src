@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_switch.S,v 1.3 2023/02/23 14:56:23 riastradh Exp $ */
+/* $NetBSD: cpu_switch.S,v 1.4 2023/03/01 08:18:24 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -177,7 +177,13 @@ ENTRY_NP(cpu_fast_switchto)
 	mv	tp, a0			// set thread pointer to newlwp
 	fence	w,w			// for mutex_enter; see cpu_switchto
 	PTR_S	tp, CI_CURLWP(t1)	// update curlwp
-	fence	w,r			// for mutex_enter; see cpu_switchto
+	/*
+	 * No need for barrier after ci->ci_curlwp = softlwp -- when we
+	 * enter a softint lwp, it can't be holding any mutexes, so it
+	 * can't release any until after it has acquired them, so we
+	 * need not participate in the protocol with mutex_vector_enter
+	 * barriers here.
+	 */
 	PTR_L	sp, L_MD_KTF(tp)	// switch to its stack
 	csrw	sstatus, t0		// reenable interrupts
 	call	_C_LABEL(softint_dispatch)
