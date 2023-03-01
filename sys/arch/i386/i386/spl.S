@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.57 2022/09/08 06:57:44 knakahara Exp $	*/
+/*	$NetBSD: spl.S,v 1.58 2023/03/01 08:38:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.57 2022/09/08 06:57:44 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.58 2023/03/01 08:38:50 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -384,6 +384,20 @@ IDTVEC(softintr)
 	STI(%esi)
 	movl	CPUVAR(CURLWP),%esi
 	movl	IS_LWP(%eax),%edi	/* switch to handler LWP */
+	/*
+	 * Simple MOV to set curlwp to softlwp.  See below on ordering
+	 * required to restore softlwp like cpu_switchto.
+	 *
+	 * 1. Don't need store-before-store barrier because x86 is TSO.
+	 *
+	 * 2. Don't need store-before-load barrier because when we
+	 *    enter a softint lwp, it can't be holding any mutexes, so
+	 *    it can't release any until after it has acquired them, so
+	 *    we need not participate in the protocol with
+	 *    mutex_vector_enter barriers here.
+	 *
+	 * Hence no need for XCHG or barriers around MOV.
+	 */
 	movl	%edi,CPUVAR(CURLWP)
 	movl	L_PCB(%edi),%edx
 	movl	L_PCB(%esi),%ecx
@@ -399,9 +413,31 @@ IDTVEC(softintr)
 	movl	PCB_ESP(%ecx),%esp
 
 	/*
-	 * for non-interlocked mutex release to work safely the change
-	 * to ci_curlwp must not languish in the store buffer. therefore
-	 * we use XCHG and not MOV here.  see kern_mutex.c.
+	 * Use XCHG, not MOV, to coordinate mutex_exit on this CPU with
+	 * mutex_vector_enter on another CPU.
+	 *
+	 * 1. Any prior mutex_exit by the softint must be visible to
+	 *    other CPUs before we restore curlwp on this one,
+	 *    requiring store-before-store ordering.
+	 *
+	 *    (This is always guaranteed by the x86 memory model, TSO,
+	 *    but other architectures require a explicit barrier before
+	 *    the store to ci->ci_curlwp.)
+	 *
+	 * 2. Restoring curlwp must be visible on all other CPUs before
+	 *    any subsequent mutex_exit on this one can even test
+	 *    whether there might be waiters, requiring
+	 *    store-before-load ordering.
+	 *
+	 *    (This is the only ordering x86 TSO ever requires any kind
+	 *    of barrier for -- in this case, we take advantage of the
+	 *    sequential consistency implied by XCHG to obviate the
+	 *    need for MFENCE or something.)
+	 *
+	 * See kern_mutex.c for details -- this is necessary for
+	 * adaptive mutexes to detect whether the lwp is on the CPU in
+	 * order to safely block without requiring atomic r/m/w in
+	 * mutex_exit.  See also cpu_switchto.
 	 */
 	xchgl	%esi,CPUVAR(CURLWP)	/* restore ci_curlwp */
 	popl	%edi			/* unwind switchframe */
