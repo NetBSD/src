@@ -1,4 +1,4 @@
-.\"	$NetBSD: mmap.2,v 1.55 2019/09/08 17:24:49 sevan Exp $
+.\"	$NetBSD: mmap.2,v 1.56 2023/03/01 15:11:28 uwe Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -61,8 +61,10 @@ Any such extension beyond the end of the mapped object will be zero-filled.
 If
 .Fa addr
 is non-zero, it is used as a hint to the system.
-(As a convenience to the system, the actual address of the region may differ
-from the address supplied.)
+.Po
+As a convenience to the system, the actual address of the region may differ
+from the address supplied.
+.Pc
 If
 .Fa addr
 is zero, an address will be selected by the system.
@@ -74,7 +76,7 @@ deletes any previous mapping in the allocated address range.
 The protections (region accessibility) are specified in the
 .Fa prot
 argument by
-.Em OR Ns 'ing
+.Em or\^ Ap ing
 the following values:
 .Bl -tag -width PROT_WRITEXX -offset indent
 .It Dv PROT_EXEC
@@ -94,7 +96,7 @@ extension, the
 macro can be used to request additional permissions for later use with
 .Fn mprotect 2 .
 For example
-.Dv PROT_MPROTECT(PROT_READ)
+.Li PROT_MPROTECT(PROT_READ)
 requests that future
 .Dv PROT_READ
 mappings are allowed and can be enabled using
@@ -132,15 +134,18 @@ must be specified.
 Sharing, mapping type and options are specified in the
 .Fa flags
 argument by
-.Em OR Ns 'ing
+.Em or\^ Ap ing
 the following values:
-.Bl -tag -width MAP_HASSEMAPHOREXX -offset indent
-.It Dv MAP_ALIGNED(n)
+.Bl -tag -width ".Dv MAP_HASSEMAPHORE" -offset indent
+.It Dv MAP_ALIGNED Ns Li \&( Ns Ar n Ns Li \&)
 Request that the allocation be aligned to the given boundary.
 The parameter
 .Ar n
-should be the base 2 logarithm of the desired alignment (e.g., to
-request alignment to 16K, use 14 as the value for n).
+should be the base\~2 logarithm of the desired alignment
+.Po
+e.g., to request alignment to 16K, use 14 as the value for
+.Ar n
+.Pc .
 The alignment must be equal to or greater than the platform's page
 size as returned by
 .Xr sysconf 3
@@ -205,7 +210,7 @@ Only reserve address space, but do not reserve swap space or any other
 resources for this mapping.
 Access to the address space is not guaranteed and may result in a segmentation
 violation.
-Unimplemented.
+.Em Unimplemented .
 .It Dv MAP_PRIVATE
 Modifications made by this process are private, however modifications made by
 other processes using
@@ -216,14 +221,14 @@ Only valid for
 .Xr mremap 2 .
 .It Dv MAP_RENAME
 Assign the referenced private pages to the file descriptor provided.
-Unimplemented.
+.Em Unimplemented .
 .It Dv MAP_SHARED
 Modifications are shared.
 .It Dv MAP_STACK
 Allocate a memory segment that can be used either for a process or thread stack.
 This currently has no effect, but its use is reserved for architectures
 that might require special treatment of that address space.
-Unimplemented.
+.Em Unimplemented .
 .It Dv MAP_TRYFIXED
 Attempt to use the address
 .Fa addr
