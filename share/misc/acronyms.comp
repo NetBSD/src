@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.343 2023/03/01 14:45:26 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.344 2023/03/01 15:45:00 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1412,6 +1412,7 @@ RTOS	real time operating system
 RTP	Real-time Transport Protocol
 RTS	request to send
 RTT	round trip time
+RTTI	run-time type information
 RUP	rational unified process
 RW	Rabin-Williams
 RWM	read-write memory
