@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.341 2023/03/01 11:08:03 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.342 2023/03/01 11:12:56 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1329,6 +1329,7 @@ RA	router advertisement
 RAD	rapid application development
 RADIUS	remote authentication dial-in user service
 RAID	redundant array of {independent,inexpensive} disks
+RAII	resource acquisition is initialization
 RAM	random access memory
 RAS	reliability, availability and serviceability
 RAS	remote access service
