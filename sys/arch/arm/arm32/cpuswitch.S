@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.106 2023/02/23 14:55:25 riastradh Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.107 2023/03/01 08:17:53 riastradh Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.106 2023/02/23 14:55:25 riastradh Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.107 2023/03/01 08:17:53 riastradh Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -417,9 +417,13 @@ ENTRY_NP(softint_switch)
 	dmb				/* for mutex_enter; see cpu_switchto */
 #endif
 	str	r5, [r7, #(CI_CURLWP)]	/* save new lwp */
-#ifdef _ARM_ARCH_7
-	dmb				/* for mutex_enter; see cpu_switchto */
-#endif
+	/*
+	 * No need for barrier after ci->ci_curlwp = softlwp -- when we
+	 * enter a softint lwp, it can't be holding any mutexes, so it
+	 * can't release any until after it has acquired them, so we
+	 * need not participate in the protocol with mutex_vector_enter
+	 * barriers here.
+	 */
 
 #ifdef KASAN
 	mov	r0, r5
