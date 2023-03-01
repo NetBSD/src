@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.342 2023/03/01 11:12:56 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.343 2023/03/01 14:45:26 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1695,6 +1695,7 @@ TTL	time to live
 TTL	transistor-transistor logic
 TTM	translation table maps
 TTY	teletype
+TU	translation unit
 TUI	{terminal,text-based,textual} user interface
 TX	{transmit out,transmitter}
 TXG	transaction group
