@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.36 2022/07/18 23:34:02 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.37 2023/03/01 08:42:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.36 2022/07/18 23:34:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.37 2023/03/01 08:42:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
+#include "genfb.h"
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
 #endif
@@ -47,6 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.36 2022/07/18 23:34:02 riastradh E
 
 #ifdef FDT
 #include <dev/fdt/fdtvar.h>
+#endif
+
+#if NGENFB > 0
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/wsfb/genfbvar.h>
 #endif
 
 #include <drm/drm_pci.h>
@@ -219,6 +225,24 @@ nouveau_pci_attach_real(device_t self)
 		goto out;
 	}
 	sc->sc_pci_attached = true;
+
+#if NGENFB > 0
+	/*
+	 * If MD initialization has selected this as the console device
+	 * with a firmware-provided framebuffer address, we may have to
+	 * turn it off early, before we are ready to switch the console
+	 * over -- something goes wrong if we're still writing to the
+	 * firmware-provided framebuffer during nouveau initialization.
+	 */
+    {
+	bool is_console;
+	if (prop_dictionary_get_bool(device_properties(self), "is_console",
+		&is_console) &&
+	    is_console &&
+	    genfb_is_console())
+		wsdisplay_predetach();
+    }
+#endif
 
 	/* XXX errno Linux->NetBSD */
 	error = -nouveau_drm_device_init(sc->sc_drm_dev);
