@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.432 2023/02/23 14:56:56 riastradh Exp $	*/
+/*	$NetBSD: locore.s,v 1.433 2023/03/01 08:18:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -6847,7 +6847,13 @@ ENTRY(softint_fastintr)
 	or	%o3, %lo(USPACE - TF_SIZE - CC64FSZ - STKB), %o3
 	membar	#StoreStore		/* for mutex_enter; see cpu_switchto */
 	STPTR	%i0, [%l7 + %lo(CURLWP)]
-	membar	#StoreLoad		/* for mutex_enter; see cpu_switchto */
+	/*
+	 * No need for barrier after ci->ci_curlwp = softlwp -- when we
+	 * enter a softint lwp, it can't be holding any mutexes, so it
+	 * can't release any until after it has acquired them, so we
+	 * need not participate in the protocol with mutex_vector_enter
+	 * barriers here.
+	 */
 	add	%l1, %o3, %i6
 	STPTR	%l1, [%l6 + %lo(CPCB)]
 	stx	%i6, [%l1 + PCB_SP]
