@@ -1,4 +1,4 @@
-/*	$NetBSD: swapctl.c,v 1.42 2023/03/01 15:15:56 kre Exp $	*/
+/*	$NetBSD: swapctl.c,v 1.43 2023/03/01 15:18:18 kre Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2015 Matthew R. Green
@@ -64,7 +64,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swapctl.c,v 1.42 2023/03/01 15:15:56 kre Exp $");
+__RCSID("$NetBSD: swapctl.c,v 1.43 2023/03/01 15:18:18 kre Exp $");
 #endif
 
 
@@ -734,7 +734,7 @@ do_fstab(int add)
 		char *spec, *fsspec;
 
 		/*
-		 * Ignore any ewtries which are not related to swapping
+		 * Ignore any entries which are not related to swapping
 		 */
 		if (strcmp(fp->fs_type, "sw") != 0 &&
 		    strcmp(fp->fs_type, "dp") != 0)
