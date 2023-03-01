@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gart.c,v 1.10 2022/07/30 17:12:39 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gart.c,v 1.11 2023/03/01 08:14:13 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.10 2022/07/30 17:12:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gart.c,v 1.11 2023/03/01 08:14:13 riastradh Exp $");
 
 #include <linux/pci.h>
 #include <linux/vmalloc.h>
@@ -440,8 +440,9 @@ int amdgpu_gart_map(struct amdgpu_device *adev, uint64_t gpu_start,
 	t = gpu_start / AMDGPU_GPU_PAGE_SIZE;
 
 	for (i = 0; npages --> 0;) {
-		KASSERT(i < dmamap->dm_nsegs);
 		for (j = 0; j < AMDGPU_GPU_PAGES_IN_CPU_PAGE; j++) {
+			KASSERT(i < dmamap->dm_nsegs);
+			KASSERT(seg_off < dmamap->dm_segs[i].ds_len);
 			amdgpu_gmc_set_pte_pde(adev, dst, t,
 			    dmamap->dm_segs[i].ds_addr + seg_off, flags);
 			seg_off += AMDGPU_GPU_PAGE_SIZE;
@@ -449,7 +450,6 @@ int amdgpu_gart_map(struct amdgpu_device *adev, uint64_t gpu_start,
 				i++;
 				seg_off = 0;
 			}
-			KASSERT(seg_off < dmamap->dm_segs[i].ds_len);
 		}
 	}
 
