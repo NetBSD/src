@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.67 2023/02/23 14:56:11 riastradh Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.68 2023/03/01 08:18:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -418,9 +418,13 @@ _ENTRY(softint_fast_dispatch)
 	sync	/* XXX eieio */		/* for mutex_enter; see cpu_switchto */
 #endif
 	stptr	%r3, CI_CURLWP(%r7)
-#ifdef MULTIPROCESSOR
-	sync				/* for mutex_enter; see cpu_switchto */
-#endif
+	/*
+	 * No need for barrier after ci->ci_curlwp = softlwp -- when we
+	 * enter a softint lwp, it can't be holding any mutexes, so it
+	 * can't release any until after it has acquired them, so we
+	 * need not participate in the protocol with mutex_vector_enter
+	 * barriers here.
+	 */
 	mr	%r13, %r3
 #ifdef PPC_BOOKE
 	mtsprg2	%r3
