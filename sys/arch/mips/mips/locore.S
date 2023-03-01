@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.229 2023/02/23 14:56:00 riastradh Exp $	*/
+/*	$NetBSD: locore.S,v 1.230 2023/03/01 08:18:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.229 2023/02/23 14:56:00 riastradh Exp $")
+RCSID("$NetBSD: locore.S,v 1.230 2023/03/01 08:18:03 riastradh Exp $")
 
 #include "assym.h"
 
@@ -429,7 +429,13 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	nop					# patchable load delay slot
 	SYNC_PRODUCER /* XXX fixup */	/* for mutex_enter; see cpu_switchto */
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ...
-	SYNC_DEKKER /* XXX fixup */	/* for mutex_enter; see cpu_switchto */
+	/*
+	 * No need for barrier after ci->ci_curlwp = softlwp -- when we
+	 * enter a softint lwp, it can't be holding any mutexes, so it
+	 * can't release any until after it has acquired them, so we
+	 * need not participate in the protocol with mutex_vector_enter
+	 * barriers here.
+	 */
 	move	s2, sp					# remember sp
 	move	s3, t0					# remember curpcb
 
