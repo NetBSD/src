@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.16 2023/03/01 16:21:14 riastradh Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.17 2023/03/01 16:21:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.16 2023/03/01 16:21:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.17 2023/03/01 16:21:26 riastradh Exp $");
 
 #include "libhfs.h"
 
@@ -1582,13 +1582,11 @@ hfslib_reada_node_offsets(void* in_bytes, uint16_t* out_offset_array,
 	 * offset=14, we know this is the last offset. In this way, we don't need
 	 * to know the number of records beforehand.
 	 */
-	out_offset_array--;
 	do {
 		if (numrecords-- == 0)
 			return 0;
-		out_offset_array++;
 		*out_offset_array = be16tohp(&ptr);
-	} while (*out_offset_array != (uint16_t)14);
+	} while (*out_offset_array++ != (uint16_t)14);
 
 	return ((uint8_t*)ptr - (uint8_t*)in_bytes);
 }
