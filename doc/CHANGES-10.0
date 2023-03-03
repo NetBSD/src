@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.38 2023/02/24 14:16:10 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.39 2023/03/03 17:03:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1409,4 +1409,10 @@ sys/external/bsd/drm2/linux/linux_dma_buf.c	1.16
 
 	drm: Teach dmabuf to handle lseek.
 	[riastradh, ticket #108]
+
+sys/arch/arm/ti/if_cpsw.c			1.17
+
+	cpsw(4): disable a debug message unless explicit driver
+	debugging is requested.
+	[sekiya, ticket #109]
 
