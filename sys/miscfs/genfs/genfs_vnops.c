@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.219 2022/03/27 17:10:55 christos Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.220 2023/03/03 10:02:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.219 2022/03/27 17:10:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.220 2023/03/03 10:02:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1315,23 +1315,14 @@ genfs_can_chtimes(vnode_t *vp, kauth_cred_t cred, uid_t owner_uid,
 	 * will be allowed to set the times [..] to the current 
 	 * server time.
 	 */
-	if ((error = VOP_ACCESSX(vp, VWRITE_ATTRIBUTES, cred)) != 0)
+	error = VOP_ACCESSX(vp, VWRITE_ATTRIBUTES, cred);
+	if (error != 0 && (vaflags & VA_UTIMES_NULL) != 0)
+		error = VOP_ACCESS(vp, VWRITE, cred);
+
+	if (error)
 		return (vaflags & VA_UTIMES_NULL) == 0 ? EPERM : EACCES;
 
-	/* Must be owner, or... */
-	if (kauth_cred_geteuid(cred) == owner_uid)
-		return (0);
-
-	/* set the times to the current time, and... */
-	if ((vaflags & VA_UTIMES_NULL) == 0)
-		return (EPERM);
-
-	/* have write access. */
-	error = VOP_ACCESS(vp, VWRITE, cred);
-	if (error)
-		return (error);
-
-	return (0);
+	return 0;
 }
 
 /*
