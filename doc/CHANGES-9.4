@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.54 2023/02/24 14:10:25 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.55 2023/03/03 17:05:04 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1259,4 +1259,10 @@ doc/3RDPARTY						1.1912 (manual edit)
 
 	Import OpenSSL 1.1.1t.
 	[kim, ticket #1608]
+
+sys/arch/arm/ti/if_cpsw.c			1.17
+
+	cpsw(4): disable a debug message unless explicit driver
+	debugging is requested.
+	[sekiya, ticket #1609]
 
