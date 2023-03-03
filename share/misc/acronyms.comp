@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.344 2023/03/01 15:45:00 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.345 2023/03/03 15:29:48 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -269,7 +269,9 @@ CM	configuration management
 CMA	concert multithread architecture
 CMC	chassis management controller
 CMC	corrected machine check
+CMC	certificate management over CMS
 CMS	{configuration,content,course} management system
+CMS	cryptographic message syntax
 CMI	control {management,method} interface
 CMOS	complementary metal-oxide-semiconductor
 CMP	chip multi-processing
