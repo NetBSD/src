@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.85 2023/03/03 14:32:48 riastradh Exp $	*/
+/*	$NetBSD: fpu.c,v 1.86 2023/03/03 14:40:16 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.85 2023/03/03 14:32:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.86 2023/03/03 14:40:16 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -188,7 +188,7 @@ void
 fpuinit_mxcsr_mask(void)
 {
 #ifndef XENPV
-	union savefpu fpusave __aligned(16);
+	union savefpu fpusave __aligned(64);
 	u_long psl;
 
 	memset(&fpusave, 0, sizeof(fpusave));
