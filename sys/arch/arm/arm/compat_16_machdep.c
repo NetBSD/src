@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.20 2021/10/27 04:14:59 thorpej Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.21 2023/03/04 08:52:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.20 2021/10/27 04:14:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.21 2023/03/04 08:52:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -172,7 +172,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 		tf->tf_spsr &= ~PSR_T_bit;
 #endif
 	tf->tf_usr_sp = (int)fp;
-	
+
 	switch (ps->sa_sigdesc[sig].sd_vers) {
 	case __SIGTRAMP_SIGCODE_VERSION:	/* legacy on-stack sigtramp */
 		tf->tf_usr_lr = (int)p->p_sigctx.ps_sigcode;
@@ -219,7 +219,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	 */
 	if (uap == NULL)
 		return (EFAULT);
-	
+
 	/*
 	 * The trampoline code hands us the context.
 	 * It is unsafe to keep track of it ourselves, in the event that a
