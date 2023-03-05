@@ -1,6 +1,6 @@
 /* Test file for mpfr_pow.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -59,7 +59,7 @@ main (int argc, char *argv[])
         {
           mpfr_urandomb (x, RANDS);
           mpfr_urandomb (s, RANDS);
-          if (randlimb () % 2)
+          if (RAND_BOOL ())
             mpfr_neg (s, s, MPFR_RNDN);
           rnd = RND_RAND_NO_RNDF ();
           mpfr_set_prec (y, yprec);

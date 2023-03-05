@@ -1,6 +1,6 @@
 /* tzeta -- test file for the Riemann Zeta function
 
-Copyright 2003-2020 Free Software Foundation, Inc.
+Copyright 2003-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -179,7 +179,7 @@ test2 (void)
     {
       mpfr_set_str1 (x, val[i]);
       mpfr_zeta(y, x, MPFR_RNDZ);
-      if (mpfr_cmp_str (y, val[i+1] , 2, MPFR_RNDZ))
+      if (mpfr_cmp_str (y, val[i+1], 2, MPFR_RNDZ))
         {
           printf("Wrong result for zeta(%s=", val[i]);
           mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);

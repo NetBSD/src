@@ -1,6 +1,6 @@
 /* mpz_t pool
 
-Copyright 2014-2020 Free Software Foundation, Inc.
+Copyright 2014-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -35,7 +35,7 @@ static MPFR_THREAD_ATTR int n_alloc = 0;
 static MPFR_THREAD_ATTR __mpz_struct mpz_tab[MPFR_POOL_NENTRIES];
 
 MPFR_HOT_FUNCTION_ATTR void
-mpfr_mpz_init (mpz_t z)
+mpfr_mpz_init (mpz_ptr z)
 {
   if (MPFR_LIKELY (n_alloc > 0))
     {
@@ -54,7 +54,7 @@ mpfr_mpz_init (mpz_t z)
 }
 
 MPFR_HOT_FUNCTION_ATTR void
-mpfr_mpz_init2 (mpz_t z, mp_bitcnt_t n)
+mpfr_mpz_init2 (mpz_ptr z, mp_bitcnt_t n)
 {
   /* The condition on n is used below as the argument n will be ignored if
      the mpz_t is obtained from the MPFR stack of previously used mpz_t.
@@ -82,7 +82,7 @@ mpfr_mpz_init2 (mpz_t z, mp_bitcnt_t n)
 
 
 MPFR_HOT_FUNCTION_ATTR void
-mpfr_mpz_clear (mpz_t z)
+mpfr_mpz_clear (mpz_ptr z)
 {
   /* We only put objects with at most MPFR_POOL_MAX_SIZE in the mpz_t pool,
      to avoid it takes too much memory (and anyway the speedup is mainly

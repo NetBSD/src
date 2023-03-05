@@ -1,6 +1,6 @@
 /* mpfr_sin_cos -- sine and cosine of a floating-point number
 
-Copyright 2002-2020 Free Software Foundation, Inc.
+Copyright 2002-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -131,8 +131,8 @@ mpfr_sin_cos (mpfr_ptr y, mpfr_ptr z, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       return mpfr_sincos_fast (y, z, x, rnd_mode);
     }
 
-  mpfr_init (c);
-  mpfr_init (xr);
+  mpfr_init2 (c, m);
+  mpfr_init2 (xr, m);
 
   MPFR_ZIV_INIT (loop, m);
   for (;;)
@@ -141,6 +141,7 @@ mpfr_sin_cos (mpfr_ptr y, mpfr_ptr z, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       if (expx >= 2) /* reduce the argument */
         {
           reduce = 1;
+          MPFR_ASSERTN (expx + m - 1 <= MPFR_PREC_MAX);
           mpfr_set_prec (c, expx + m - 1);
           mpfr_set_prec (xr, m);
           mpfr_const_pi (c, MPFR_RNDN);
@@ -177,9 +178,10 @@ mpfr_sin_cos (mpfr_ptr y, mpfr_ptr z, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       if (!MPFR_CAN_ROUND (c, err, MPFR_PREC (z), rnd_mode))
         goto next_step;
 
-      /* we can't set z now, because in case z = x, and the MPFR_CAN_ROUND()
-         call below fails, we will have clobbered the input */
-      mpfr_set_prec (xr, MPFR_PREC(c));
+      /* We can't set z now, because in case z = x, and the MPFR_CAN_ROUND()
+         call below fails, we will have clobbered the input.
+         Note: m below is the precision of c; see above. */
+      mpfr_set_prec (xr, m);
       mpfr_swap (xr, c); /* save the approximation of the cosine in xr */
       mpfr_sqr (c, xr, MPFR_RNDU); /* the absolute error is bounded by
                                       2^(5-m) if reduce=1, and by 2^(2-m)
@@ -463,7 +465,7 @@ sin_bs_aux (mpz_t Q0, mpz_t S0, mpz_t C0, mpz_srcptr p, mpfr_prec_t r,
    Return err such that the relative error is bounded by 2^err ulps.
 */
 static int
-sincos_aux (mpfr_t s, mpfr_t c, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
+sincos_aux (mpfr_ptr s, mpfr_ptr c, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 {
   mpfr_prec_t prec_s, sh;
   mpz_t Q, S, C, Q2, S2, C2, y;
@@ -577,7 +579,7 @@ sincos_aux (mpfr_t s, mpfr_t c, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
    Assumes s differs from c.
  */
 int
-mpfr_sincos_fast (mpfr_t s, mpfr_t c, mpfr_srcptr x, mpfr_rnd_t rnd)
+mpfr_sincos_fast (mpfr_ptr s, mpfr_ptr c, mpfr_srcptr x, mpfr_rnd_t rnd)
 {
   int inexs, inexc;
   mpfr_t x_red, ts, tc;

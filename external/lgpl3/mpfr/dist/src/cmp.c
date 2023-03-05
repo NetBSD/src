@@ -1,6 +1,6 @@
 /* mpfr_cmp -- compare two floating-point numbers
 
-Copyright 1999, 2001, 2003-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001, 2003-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -35,7 +35,7 @@ mpfr_cmp3 (mpfr_srcptr b, mpfr_srcptr c, int s)
   mp_size_t bn, cn;
   mp_limb_t *bp, *cp;
 
-  s = MPFR_MULT_SIGN( s , MPFR_SIGN(c) );
+  s = MPFR_MULT_SIGN(s, MPFR_SIGN(c));
 
   if (MPFR_ARE_SINGULAR(b, c))
     {

@@ -1,6 +1,6 @@
 /* Test file for mpfr_erf and mpfr_erfc.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -593,7 +593,7 @@ test_erfc (void)
       mpfr_set_si (x, 27282, MPFR_RNDN);
       mpfr_erfc (y, x, MPFR_RNDN);
       MPFR_ASSERTN(mpfr_cmp_ui (y, 0) != 0);
-      mpfr_set_emin (emin);
+      set_emin (emin);
     }
 
   mpfr_clears (x, y, z, (mpfr_ptr) 0);
@@ -609,7 +609,7 @@ reduced_expo_range (void)
   unsigned int flags, ex_flags;
 
   emax = mpfr_get_emax ();
-  mpfr_set_emax (3);
+  set_emax (3);
   mpfr_init2 (x, 33);
   mpfr_inits2 (110, y, ex_y, (mpfr_ptr) 0);
   mpfr_set_str_binary (x, "-0.111100110111111111011101010101110E3");
@@ -633,7 +633,7 @@ reduced_expo_range (void)
       exit (1);
     }
   mpfr_clears (x, y, ex_y, (mpfr_ptr) 0);
-  mpfr_set_emax (emax);
+  set_emax (emax);
 }
 
 /* Similar to a bug reported by Naoki Shibata:

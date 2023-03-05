@@ -3,9 +3,9 @@
 
 See https://gcc.gnu.org/legacy-ml/gcc/2006-06/msg00691.html,
 https://gcc.gnu.org/onlinedocs/gcc/Decimal-Float.html,
-and TR 24732 <http://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
+and TR 24732 <https://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
 
-Copyright 2006-2020 Free Software Foundation, Inc.
+Copyright 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -25,6 +25,23 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
+/* Warning! Do not use any conversion between binary and decimal types,
+ * otherwise GCC will generate from 2 to 3 MB of code (depending on the
+ * GCC version) in the MPFR shared library when the _Decimal128 format
+ * is BID (e.g. on x86).
+ *   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96173
+ *   https://gforge.inria.fr/tracker/index.php?func=detail&aid=21849&group_id=136&atid=619
+ *
+ * FIXME: Try to save even more space in the MPFR library by avoiding
+ * _Decimal128 operations entirely. These operations now appear only in
+ * string_to_Decimal128(). In the case where the _Decimal128 format is
+ * recognized as BID, this function should be reimplemented directly by
+ * using the specification of the encoding of this format, as already
+ * done for _Decimal64 (see string_to_Decimal64 in get_d64.c).
+ * Or use strtod128 when available, making sure that the string is
+ * locale-independent? (Should one optionally use libdfp for that?)
+ */
+
 #include "mpfr-impl.h"
 #include "ieee_floats.h"
 
@@ -40,22 +57,21 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 static _Decimal128
 get_decimal128_nan (void)
 {
-  return (_Decimal128) MPFR_DBL_NAN;
+  return 0.dl / 0.dl;
 }
 
 /* construct the decimal128 Inf with given sign */
 static _Decimal128
 get_decimal128_inf (int negative)
 {
-  return (_Decimal128) (negative ? MPFR_DBL_INFM : MPFR_DBL_INFP);
+  return negative ? - 1.dl / 0.dl : 1.dl / 0.dl;
 }
 
 /* construct the decimal128 zero with given sign */
 static _Decimal128
 get_decimal128_zero (int negative)
 {
-  _Decimal128 zero = 0;
-  return (_Decimal128) (negative ? -zero : zero);
+  return negative ? - 0.dl : 0.dl;
 }
 
 /* construct the decimal128 smallest non-zero with given sign:
@@ -341,7 +357,10 @@ mpfr_get_decimal128 (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (src)))
     {
       if (MPFR_IS_NAN (src))
-        return get_decimal128_nan ();
+        {
+          /* we don't propagate the sign bit */
+          return get_decimal128_nan ();
+        }
 
       negative = MPFR_IS_NEG (src);
 

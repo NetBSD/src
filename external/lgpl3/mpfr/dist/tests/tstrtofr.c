@@ -1,6 +1,6 @@
 /* Test file for mpfr_set_str.
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -32,7 +32,7 @@ static void
 check_special (void)
 {
   mpfr_t x, y;
-  int res;
+  int i, res;
   char *s;
 
   mpfr_init (x);
@@ -116,13 +116,58 @@ check_special (void)
       exit (1);
     }
 
-  /* Check INF */
-  res = mpfr_strtofr (x, "INFINITY", &s, 8, MPFR_RNDN);
-  if (res != 0 || !mpfr_inf_p (x) || *s != 0)
+  /* Check infinity */
+  for (i = 0; i <= 0xff; i++)
     {
-      printf ("Error for setting INFINITY (1)\n s=%s\n x=", s);
-      mpfr_dump (x);
-      exit (1);
+      char t[11] = "+@INFINITY";  /* not char *: this will be modified. */
+      char *p;
+      int base, j;
+
+      /* Test all the case variants, assuming ASCII or similar.
+         The first letters are changed first, so that at i = 8,
+         the 2^3 = 8 "INF" case variants have been tested, and
+         they don't need to be tested again for i > 8. */
+      for (j = 0; j < 8; j++)
+        if ((i >> j) % 2 != 0)
+          t[j+2] += 'a' - 'A';
+
+      /* Test "INFINITY", "+INFINITY", "-INFINITY",
+              "INF", "+INF", "-INF",
+              "@INF@", "+@INF@", "-@INF@",
+         up to case changes. */
+      for (j = 0; j < 9; j++)
+        {
+          if (j == 3)
+            {
+              /* At i = 8, we have tested all the "INF" case variants. */
+              if (i >= 8)
+                break;
+              t[5] = '\0';
+            }
+          if (j == 6)
+            {
+              t[1] = '@';
+              t[5] = '@';
+              t[6] = '\0';
+            }
+          if (j % 3 == 1)
+            t[j != 7] = '+';
+          if (j % 3 == 2)
+            t[j != 8] = '-';
+          p = t + (j % 3 == 0) + (j < 6);
+          base = randlimb () % (j < 6 ? 17 : 63);
+          if (base == 1)
+            base = 0;
+          res = mpfr_strtofr (x, p, &s, base, MPFR_RNDN);
+          if (res != 0 || !mpfr_inf_p (x) || *s != 0 ||
+              (j % 3 != 2 ? MPFR_IS_NEG (x) : MPFR_IS_POS (x)))
+            {
+              printf ("Error for setting \"%s\" in base %d\n s=\"%s\"\n x=",
+                      p, base, s);
+              mpfr_dump (x);
+              exit (1);
+            }
+        }
     }
   res = mpfr_strtofr (x, "INFANITY", &s, 8, MPFR_RNDN);
   if (res != 0 || !mpfr_inf_p (x) || strcmp(s, "ANITY"))
@@ -1280,17 +1325,17 @@ bug20170308 (void)
 
   emin = mpfr_get_emin ();
   mpfr_init2 (z, 53);
-  mpfr_set_emin (-1073);
+  set_emin (-1073);
   /* with emin = -1073, the smallest positive number is 0.5*2^emin = 2^(-1074),
      thus str should be rounded to 2^(-1074) with inex > 0 */
   inex = mpfr_strtofr (z, str, NULL, 10, MPFR_RNDN);
   MPFR_ASSERTN(inex > 0 && mpfr_cmp_ui_2exp (z, 1, -1074) == 0);
-  mpfr_set_emin (-1074);
+  set_emin (-1074);
   /* with emin = -1074, str should be rounded to 2^(-1075) with inex < 0 */
   inex = mpfr_strtofr (z, str, NULL, 10, MPFR_RNDN);
   MPFR_ASSERTN(inex < 0 && mpfr_cmp_ui_2exp (z, 1, -1075) == 0);
   mpfr_clear (z);
-  mpfr_set_emin (emin);
+  set_emin (emin);
 }
 
 /* r13299 fails with 8-bit limbs (micro-gmp/8). */
@@ -1330,7 +1375,7 @@ coverage (void)
 
   /* exercise assertion cy == 0 around line 698 of strtofr.c */
   emin = mpfr_get_emin ();
-  mpfr_set_emin (mpfr_get_emin_min ());
+  set_emin (mpfr_get_emin_min ());
   /* emin = -4611686018427387903 on a 64-bit machine */
   mpfr_init2 (x, 1);
   inex = mpfr_strtofr (x, str3, NULL, 3, MPFR_RNDN);
@@ -1344,7 +1389,7 @@ coverage (void)
   MPFR_ASSERTN(inex > 0);
   MPFR_ASSERTN(mpfr_cmp_ui_2exp (x, 1, -39569396093273623 * 64) == 0);
   mpfr_clear (x);
-  mpfr_set_emin (emin);
+  set_emin (emin);
 #endif
 }
 
@@ -1413,7 +1458,7 @@ random_tests (void)
              we should cover all cases, with s2 very close to s0, s2 very
              close to s1, or not too close to either. */
 
-          neg = randlimb () & 1;
+          neg = RAND_BOOL ();
           s2[0] = neg ? '-' : '+';
           s2[1] = '.';
 

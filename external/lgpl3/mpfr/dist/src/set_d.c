@@ -1,7 +1,7 @@
 /* mpfr_set_d -- convert a machine double precision float to
                  a multiple precision floating-point number
 
-Copyright 1999-2004, 2006-2020 Free Software Foundation, Inc.
+Copyright 1999-2004, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -191,8 +191,9 @@ extract_double (mpfr_limb_ptr rp, double d)
 #ifndef __clang__
     man[0] = d;
 #else
-    /* clang produces an invalid exception when d >= 2^63,
-       see <https://bugs.llvm.org/show_bug.cgi?id=17686>.
+    /* clang up to version 11 produces an invalid exception when d >= 2^63,
+       see <https://github.com/llvm/llvm-project/issues/18060>
+       (old URL: <https://bugs.llvm.org/show_bug.cgi?id=17686>).
        Since this is always the case, here, we use the following patch. */
     MPFR_STAT_STATIC_ASSERT (GMP_NUMB_BITS == 64);
     man[0] = 0x8000000000000000 + (mp_limb_t) (d - 0x8000000000000000);
@@ -248,6 +249,7 @@ mpfr_set_d (mpfr_ptr r, double d, mpfr_rnd_t rnd_mode)
 
   if (MPFR_UNLIKELY(DOUBLE_ISNAN(d)))
     {
+      /* we don't propagate the sign bit */
       MPFR_SET_NAN(r);
       MPFR_RET_NAN;
     }
@@ -271,7 +273,7 @@ mpfr_set_d (mpfr_ptr r, double d, mpfr_rnd_t rnd_mode)
            Some other systems may just have an unsigned zero.
            We can't use d == +0.0 since it should be always true,
            so we check that the memory representation of d is the
-           same than +0.0, etc.
+           same as +0.0, etc.
            Note: r is set to -0 only if d is detected as a negative zero
            *and*, for the double type, -0 has a different representation
            from +0. If -0.0 has several representations, the code below

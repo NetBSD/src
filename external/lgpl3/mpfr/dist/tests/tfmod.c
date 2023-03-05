@@ -1,6 +1,6 @@
 /* tfmod -- test file for mpfr_fmod
 
-Copyright 2007-2020 Free Software Foundation, Inc.
+Copyright 2007-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -62,8 +62,8 @@ slow_fmod (mpfr_ptr r, mpfr_srcptr x, mpfr_srcptr y, mpfr_rnd_t rnd)
 }
 
 static void
-test_failed (mpfr_t erem, mpfr_t grem, int eret, int gret, mpfr_t x, mpfr_t y,
-             mpfr_rnd_t rnd)
+test_failed (mpfr_ptr erem, mpfr_ptr grem, int eret, int gret,
+             mpfr_ptr x, mpfr_ptr y, mpfr_rnd_t rnd)
 {
   printf ("error: mpfr_fmod (r, x, y, rnd)\n  x = ");
   mpfr_out_str (stdout, 10, 0, x, MPFR_RNDD);
@@ -83,7 +83,7 @@ test_failed (mpfr_t erem, mpfr_t grem, int eret, int gret, mpfr_t x, mpfr_t y,
 }
 
 static void
-check (mpfr_t r0, mpfr_t x, mpfr_t y, mpfr_rnd_t rnd)
+check (mpfr_ptr r0, mpfr_ptr x, mpfr_ptr y, mpfr_rnd_t rnd)
 {
   int inex0, inex1;
   mpfr_t r1;

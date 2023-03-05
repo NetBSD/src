@@ -1,7 +1,7 @@
 /* Test file for
    mpfr_set_sj, mpfr_set_uj, mpfr_set_sj_2exp and mpfr_set_uj_2exp.
 
-Copyright 2004, 2006-2020 Free Software Foundation, Inc.
+Copyright 2004, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -225,27 +225,29 @@ test_2exp_extreme_aux (void)
                  power of 2 is exact, unless underflow/overflow occurs.
                  The tests on the exponent below avoid integer overflows
                  (ep[i] may take extreme values). */
-              e = mpfr_get_exp (x1);
               mpfr_clear_flags ();
-              if (j != 0 && ep[i] < __gmpfr_emin - e)  /* underflow */
+              if (j == 0)
+                goto zero;
+              e = MPFR_GET_EXP (x1);
+              if (ep[i] < __gmpfr_emin - e)  /* underflow */
                 {
                   mpfr_rnd_t r =
                     (rnd == MPFR_RNDN &&
-                     (ep[i] < __gmpfr_emin - mpfr_get_exp (y) - 1 ||
+                     (ep[i] < __gmpfr_emin - MPFR_GET_EXP (y) - 1 ||
                       IS_POW2 (sign * j))) ?
                     MPFR_RNDZ : (mpfr_rnd_t) rnd;
                   inex1 = mpfr_underflow (x1, r, sign);
                   flags1 = __gmpfr_flags;
                 }
-              else if (j != 0 && ep[i] > __gmpfr_emax - e)  /* overflow */
+              else if (ep[i] > __gmpfr_emax - e)  /* overflow */
                 {
                   inex1 = mpfr_overflow (x1, (mpfr_rnd_t) rnd, sign);
                   flags1 = __gmpfr_flags;
                 }
               else
                 {
-                  if (j != 0)
-                    mpfr_set_exp (x1, ep[i] + e);
+                  mpfr_set_exp (x1, ep[i] + e);
+                zero:
                   flags1 = inex1 != 0 ? MPFR_FLAGS_INEXACT : 0;
                 }
             }

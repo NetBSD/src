@@ -1,6 +1,6 @@
 /* MPFR internal constant FP numbers
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -30,7 +30,7 @@ const mpfr_t __gmpfr_mone ={{2, MPFR_SIGN_NEG, 1, (mp_limb_t*)__gmpfr_limb1}};
 
 #if 0
 #elif GMP_NUMB_BITS == 8
-static const mp_limb_t mpfr_l2_dd__tab[] = { 0xab, 0x79, 0xcf, 0xd1, 0xf7, 0x17, 0x72 , 0xb1 };
+static const mp_limb_t mpfr_l2_dd__tab[] = { 0xab, 0x79, 0xcf, 0xd1, 0xf7, 0x17, 0x72, 0xb1 };
 #elif GMP_NUMB_BITS == 16
 static const mp_limb_t mpfr_l2_dd__tab[] = { 0x79ab, 0xd1cf, 0x17f7, 0xb172 };
 #elif GMP_NUMB_BITS == 32
@@ -50,7 +50,7 @@ const mpfr_t __gmpfr_const_log2_RNDD =
 
 #if 0
 #elif GMP_NUMB_BITS == 8
-static const mp_limb_t mpfr_l2_du__tab[] = { 0xac, 0x79, 0xcf, 0xd1, 0xf7, 0x17, 0x72 , 0xb1 };
+static const mp_limb_t mpfr_l2_du__tab[] = { 0xac, 0x79, 0xcf, 0xd1, 0xf7, 0x17, 0x72, 0xb1 };
 #elif GMP_NUMB_BITS == 16
 static const mp_limb_t mpfr_l2_du__tab[] = { 0x79ac, 0xd1cf, 0x17f7, 0xb172 };
 #elif GMP_NUMB_BITS == 32

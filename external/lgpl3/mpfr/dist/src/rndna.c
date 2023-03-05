@@ -1,6 +1,6 @@
 /* mpfr_round_nearest_away -- round to nearest away
 
-Copyright 2012-2020 Free Software Foundation, Inc.
+Copyright 2012-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -61,7 +61,7 @@ typedef enum {
    and prepares rop to give it one more bit of precision
    and to save its old value within it. */
 void
-mpfr_round_nearest_away_begin (mpfr_t rop)
+mpfr_round_nearest_away_begin (mpfr_ptr rop)
 {
   mpfr_t tmp;
   mp_size_t xsize;
@@ -129,7 +129,7 @@ mpfr_round_nearest_away_begin (mpfr_t rop)
    copying it back the result of the applied function
    and performing additional roundings. */
 int
-mpfr_round_nearest_away_end (mpfr_t rop, int inex)
+mpfr_round_nearest_away_end (mpfr_ptr rop, int inex)
 {
   mpfr_t    tmp;
   mp_size_t xsize;

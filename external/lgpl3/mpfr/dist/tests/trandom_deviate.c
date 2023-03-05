@@ -1,6 +1,6 @@
 /* Test file for mpfr_random_deviate
 
-Copyright 2011-2020 Free Software Foundation, Inc.
+Copyright 2011-2023 Free Software Foundation, Inc.
 Contributed by Charles Karney <charles@karney.com>, SRI International.
 
 This file is part of the GNU MPFR Library.

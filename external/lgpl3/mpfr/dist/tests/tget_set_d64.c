@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_decimal64 and mpfr_set_decimal64.
 
-Copyright 2006-2020 Free Software Foundation, Inc.
+Copyright 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -327,14 +327,20 @@ check_native (void)
   /* check important constants are correctly converted */
   mpfr_set_ui (x, 17, MPFR_RNDN);
   d = mpfr_get_decimal64 (x, MPFR_RNDN);
-  MPFR_ASSERTN(d == 17.0dd);
+  MPFR_ASSERTN(d == 17.dd);
 
   mpfr_set_ui (x, 42, MPFR_RNDN);
   d = mpfr_get_decimal64 (x, MPFR_RNDN);
-  MPFR_ASSERTN(d == 42.0dd);
+  MPFR_ASSERTN(d == 42.dd);
+
+  mpfr_set_decimal64 (x, 17.dd, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_ui (x, 17) == 0);
 
   mpfr_set_decimal64 (x, 17.0dd, MPFR_RNDN);
   MPFR_ASSERTN(mpfr_cmp_ui (x, 17) == 0);
+
+  mpfr_set_decimal64 (x, 42.dd, MPFR_RNDN);
+  MPFR_ASSERTN(mpfr_cmp_ui (x, 42) == 0);
 
   mpfr_set_decimal64 (x, 42.0dd, MPFR_RNDN);
   MPFR_ASSERTN(mpfr_cmp_ui (x, 42) == 0);
@@ -493,7 +499,7 @@ noncanonical (void)
      on the simple testcase at:
      https://gcc.gnu.org/bugzilla/show_bug.cgi?id=91226
   */
-  volatile _Decimal64 d = 9999999999999999.0dd;
+  volatile _Decimal64 d = 9999999999999999.dd;
   union mpfr_ieee_double_extract x;
   union ieee_double_decimal64 y;
 

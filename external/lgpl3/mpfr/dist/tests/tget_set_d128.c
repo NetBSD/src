@@ -1,6 +1,6 @@
 /* Test file for mpfr_set_decimal128 and mpfr_get_decimal128.
 
-Copyright 2018-2020 Free Software Foundation, Inc.
+Copyright 2018-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -49,15 +49,15 @@ print_decimal128 (_Decimal128 d)
   else /* regular number */
     {
       long e = 0;
-      while (d < 1.0dl)
+      while (d < 1.dl)
         {
-          d *= 10.0dl;
+          d *= 10.dl;
           e --;
         }
       /* now d >= 1 */
-      while (d > 10.0dl)
+      while (d > 10.dl)
         {
-          d /= 10.0dl;
+          d /= 10.dl;
           e ++;
         }
       /* now 1 <= d < 10 */
@@ -312,7 +312,6 @@ check_misc (void)
 
   /* subnormal number with exponent change when we round back
      from 34 digits to 1 digit */
-  // mpfr_set_str (x, "9.9E-6176", 10, MPFR_RNDN);
   mpfr_set_str (x, "9.9E-6176", 10, MPFR_RNDN);
   d = mpfr_get_decimal128 (x, MPFR_RNDU); /* should be 1E-6175 */
   mpfr_set_ui (x, 0, MPFR_RNDZ);
@@ -472,7 +471,7 @@ noncanonical (void)
          in tget_set_d64.c). More information at:
          https://gcc.gnu.org/bugzilla/show_bug.cgi?id=91226
       */
-      volatile _Decimal128 d = 9999999999999999999999999999999999.0dl;
+      volatile _Decimal128 d = 9999999999999999999999999999999999.dl;
       mpfr_t y;
 
       x.s.comb = 98560; /* force Gh >= 24 thus a non-canonical number

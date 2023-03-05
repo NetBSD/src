@@ -1,6 +1,6 @@
 /* Test file for mpfr_urandom
 
-Copyright 1999-2004, 2006-2020 Free Software Foundation, Inc.
+Copyright 1999-2004, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -226,12 +226,12 @@ underflow_tests (void)
 #endif
             }
 
-          mpfr_set_emin (i);
+          set_emin (i);
           mpfr_clear_flags ();
           inex = mpfr_urandom (x, mpfr_rands, (mpfr_rnd_t) rnd);
           flags = __gmpfr_flags;
           MPFR_ASSERTN (mpfr_inexflag_p ());
-          mpfr_set_emin (emin);
+          set_emin (emin);
 
           if (MPFR_IS_NEG (x))
             {
@@ -284,7 +284,7 @@ test_underflow (int verbose)
   long i, exp[6] = {0, 0, 0, 0, 0, 0};
 
   mpfr_init2 (x, 2);
-  mpfr_set_emin (-3);
+  set_emin (-3);
 #define N 1000000
   for (i = 0; i < N; i++)
     {
@@ -305,7 +305,7 @@ test_underflow (int verbose)
             100.0 * (double) exp[4] / (double) N, 7.8125,
             100.0 * (double) exp[5] / (double) N, 3.125);
   mpfr_clear (x);
-  mpfr_set_emin (emin);
+  set_emin (emin);
 #undef N
 }
 
@@ -324,7 +324,7 @@ overflow_tests (void)
   ex_flags = MPFR_FLAGS_OVERFLOW | MPFR_FLAGS_INEXACT; /* if overflow */
   for (i = -4; i <= 0; i++)
     {
-      mpfr_set_emax (i);
+      set_emax (i);
       RND_LOOP (rnd)
         for (k = 0; k < 100; k++)
           {
@@ -370,7 +370,7 @@ overflow_tests (void)
           }
     }
   mpfr_clear (x);
-  mpfr_set_emax (emax);
+  set_emax (emax);
 }
 
 #ifndef MPFR_USE_MINI_GMP
@@ -426,7 +426,7 @@ bug20170123 (void)
   gmp_randstate_t s;
 
   emin = mpfr_get_emin ();
-  mpfr_set_emin (-7);
+  set_emin (-7);
   mpfr_init2 (x, 53);
   gmp_randinit_default (s);
   gmp_randseed_ui (s, 398);
@@ -434,7 +434,7 @@ bug20170123 (void)
   MPFR_ASSERTN(mpfr_cmp_ui_2exp (x, 1, -8) == 0);
   mpfr_clear (x);
   gmp_randclear (s);
-  mpfr_set_emin (emin);
+  set_emin (emin);
 #endif
 }
 

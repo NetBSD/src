@@ -1,6 +1,6 @@
 /* Utilities for MPFR developers, not exported.
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -200,8 +200,10 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 # define MPFR_COLD_FUNCTION_ATTR
 #endif
 
-/* add MPFR_MAYBE_UNUSED after a variable declaration to avoid compiler
-   warnings if it is not used */
+/* Add MPFR_MAYBE_UNUSED after a variable declaration to avoid compiler
+   warnings if it is not used.
+   TODO: To be replaced by the future maybe_unused attribute (C2x) once
+   supported. */
 #if __MPFR_GNUC(3,4)
 #define MPFR_MAYBE_UNUSED __attribute__ ((unused))
 #else
@@ -480,7 +482,7 @@ __MPFR_DECLSPEC extern const mpfr_t __gmpfr_const_log2_RNDU;
      with GCC's -Wunused-but-set-variable, in non-debug mode).
      Note: WG14/N2270 proposed a maybe_unused attribute, which could
      be useful to avoid MPFR_DBGRES. See:
-       http://www.open-std.org/jtc1/sc22/wg14/www/docs/n2270.pdf
+       https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2270.pdf
    Note: Evaluating expr might yield side effects, but such side effects
    must not change the results (except by yielding an assertion failure).
 */
@@ -988,7 +990,7 @@ union ieee_decimal128
 #endif
 
 /* Before doing a cast to mpfr_uexp_t, make sure that the value is
-   nonnegative. */
+   non-negative. */
 #define MPFR_UEXP(X) (MPFR_ASSERTD ((X) >= 0), (mpfr_uexp_t) (X))
 
 /* Define mpfr_eexp_t, mpfr_ueexp_t and MPFR_EXP_FSPEC.
@@ -1198,15 +1200,16 @@ typedef uintmax_t mpfr_ueexp_t;
 
 /* We want to test this :
  *  (rnd == MPFR_RNDU && test) || (rnd == RNDD && !test)
- * ie it transforms RNDU or RNDD to Away or Zero according to the sign */
+ * i.e. it transforms RNDU or RNDD to away or zero according to the sign.
+ * The argument test must be 0 or 1. */
 #define MPFR_IS_RNDUTEST_OR_RNDDNOTTEST(rnd, test) \
-  (((rnd) + (test)) == MPFR_RNDD)
+  (MPFR_ASSERTD ((test) == 0 || (test) == 1),      \
+   ((rnd) + (test)) == MPFR_RNDD)
 
-/* We want to test if rnd = Zero, or Away.
+/* We want to test if rnd rounds toward zero or away from zero.
    'neg' is 1 if negative, and 0 if positive. */
 #define MPFR_IS_LIKE_RNDZ(rnd, neg) \
   ((rnd) == MPFR_RNDZ || MPFR_IS_RNDUTEST_OR_RNDDNOTTEST (rnd, neg))
-
 #define MPFR_IS_LIKE_RNDA(rnd, neg) \
   ((rnd) == MPFR_RNDA || MPFR_IS_RNDUTEST_OR_RNDDNOTTEST (rnd, (neg) == 0))
 
@@ -1220,7 +1223,7 @@ typedef uintmax_t mpfr_ueexp_t;
    ((rnd) == MPFR_RNDZ && MPFR_IS_POS_SIGN (sign)) ||   \
    ((rnd) == MPFR_RNDA && MPFR_IS_NEG_SIGN (sign)))
 
-/* Invert a rounding mode, RNDN, RNDZ and RNDA are unchanged */
+/* Invert RNDU and RNDD; the other rounding modes are unchanged. */
 #define MPFR_INVERT_RND(rnd) ((rnd) == MPFR_RNDU ? MPFR_RNDD :          \
                               (rnd) == MPFR_RNDD ? MPFR_RNDU : (rnd))
 
@@ -1231,7 +1234,7 @@ typedef uintmax_t mpfr_ueexp_t;
       rnd = MPFR_RNDZ;                                              \
   } while (0)
 
-/* Transform RNDU and RNDD to RNDZ or RNDA according to sign,
+/* Transform RNDU and RNDD to RNDZ or RNDA according to sign;
    leave the other modes unchanged.
    Usage: MPFR_UPDATE2_RND_MODE (rnd_mode, MPFR_SIGN (x)) */
 #define MPFR_UPDATE2_RND_MODE(rnd, sign)                       \
@@ -1445,7 +1448,7 @@ typedef union { mp_size_t s; mp_limb_t l; } mpfr_size_limb_t;
 
 /* Code to debug branch prediction, based on Ulrich Drepper's paper
  * "What Every Programmer Should Know About Memory":
- *   http://people.freebsd.org/~lstewart/articles/cpumemory.pdf
+ *   https://people.freebsd.org/~lstewart/articles/cpumemory.pdf
  */
 asm (".section predict_data, \"aw\"; .previous\n"
      ".section predict_line, \"a\"; .previous\n"
@@ -1496,19 +1499,8 @@ asm (".section predict_data, \"aw\"; .previous\n"
    VAR = VAR trick (see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=36296#c3)
    only with gcc as this is undefined behavior, and we don't know what other
    compilers do (they may also be smarter). This self-initialization trick
-   could be disabled with future gcc versions.
-   However, for clang (which defines __GNUC__), this trick must not be used
-   as it currently generates a warning, at least with:
-     Debian clang version 3.0-6.2 (tags/RELEASE_30/final) (based on LLVM 3.0)
-     __VERSION__ "4.2.1 Compatible Debian Clang 3.0 (tags/RELEASE_30/final)"
-     __clang__ 1
-     __clang_major__ 3
-     __clang_minor__ 0
-     __clang_patchlevel__ 0
-     __clang_version__ "3.0 (tags/RELEASE_30/final)"
-   (see https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=705583 for this
-   problem with clang). */
-#if defined(__GNUC__) && !defined(__clang__)
+   could be disabled with future gcc versions. */
+#if defined(__GNUC__)
 # define INITIALIZED(VAR) VAR = VAR
 #else
 # define INITIALIZED(VAR) VAR
@@ -1624,9 +1616,13 @@ do {                                                                  \
 #define SAFE_ABS(type,x) ((x) >= 0 ? (type)(x) : -(type)(x))
 #define SAFE_DIFF(type,x,y) (MPFR_ASSERTD((x) >= (y)), (type)(x) - (type)(y))
 
+#define ULONG2LONG(U) ((U) > LONG_MAX ? -1 - (long) ~(U) : (long) (U))
+
 /* Check whether an integer type (after integer promotion) is signed.
-   This can be determined at compilation time, but unfortunately this
-   is not a constant expression, so that this cannot be used for a
+   This can be determined at compilation time, but unfortunately,
+   when used in practice, this is not a constant expression (because
+   the argument X is not a constant expression, even though the result
+   does not depend on its value), so that this cannot be used for a
    static assertion. */
 #define IS_SIGNED(X) ((X) * 0 - 1 < 0)
 
@@ -1689,6 +1685,14 @@ do {                                                                  \
    in practice since the sizes come from the MPFR source), so that
    the value can be used in arbitrary expressions without the risk
    of silently switching to unsigned arithmetic. */
+/* TODO: Make numberof() a constant expression and always use it in
+   the MPFR code instead of numberof_const(). See the tricks at
+     https://gcc.gnu.org/pipermail/gcc/2020-September/233763.html
+     "[PATCH v2] <sys/param.h>: Add nitems() and snitems() macros"
+     by Alejandro Colomar
+   but this needs to be fully tested on various platforms and with
+   various compilers and compilation options.
+   Moreover, change "long" to "ptrdiff_t", as used at the above URL? */
 #undef numberof
 #if 0
 /* The following should work with GCC as documented in its manual,
@@ -1710,6 +1714,15 @@ do {                                                                  \
 
 /* Addition with carry (detected by GCC and other good compilers). */
 #define ADD_LIMB(u,v,c) ((u) += (v), (c) = (u) < (v))
+
+/* umul_hi(h, x, y) puts in h the high part of x*y */
+/* MPFR_NEED_LONGLONG_H needs to be defined to use it. */
+#define umul_hi(h, x, y)                        \
+  do {                                          \
+    mp_limb_t _l;                               \
+    umul_ppmm (h, _l, x, y);                    \
+    (void) _l;  /* unused variable */           \
+  } while (0)
 
 
 /******************************************************
@@ -1964,8 +1977,8 @@ typedef struct {
    v=1 or v=x.
 
    y is the destination (a mpfr_t), v the value to set (a mpfr_t),
-   err1+err2 with err2 <= 3 the error term (mpfr_exp_t's), dir (an int) is
-   the direction of the committed error (if dir = 0, it rounds toward 0,
+   err1+err2 with 0 <= err2 <= 3 the error term (mpfr_exp_t's), dir (an int)
+   is the direction of the committed error (if dir = 0, it rounds toward 0,
    if dir=1, it rounds away from 0), rnd the rounding mode.
 
    It returns from the function a ternary value in case of success.
@@ -2033,7 +2046,7 @@ typedef struct {
 /* To safely increase some precision, detecting integer overflows.
    This macro is particularly useful when determining the initial
    working precision before Ziv's loop. P is a precision, X is an
-   arbitrary nonnegative integer.
+   arbitrary non-negative integer.
    Note: On 2012-02-23, the MPFR_PREC_MAX value has been decreased
    by 256 from the maximum value representable in the mpfr_prec_t
    type, in order to avoid some integer overflows when this macro
@@ -2180,15 +2193,17 @@ __MPFR_DECLSPEC extern mpfr_prec_t mpfr_log_prec;
 
 #define MPFR_LOG_VAR(x)                                                 \
   LOG_PRINT (MPFR_LOG_INTERNAL_F, "%s.%d:%s[%#Pu]=%.*Rg\n", __func__,   \
-             __LINE__, #x, mpfr_get_prec (x), mpfr_log_prec, x)
+             (int) __LINE__, #x, mpfr_get_prec (x), mpfr_log_prec, x)
 
 #define MPFR_LOG_MSG2(format, ...)                                      \
-  LOG_PRINT (MPFR_LOG_MSG_F, "%s.%d: "format, __func__, __LINE__, __VA_ARGS__)
+  LOG_PRINT (MPFR_LOG_MSG_F, "%s.%d: "format, __func__, (int) __LINE__, \
+             __VA_ARGS__)
 #define MPFR_LOG_MSG(x) MPFR_LOG_MSG2 x
 
 #define MPFR_LOG_BEGIN2(format, ...)                                    \
   mpfr_log_current ++;                                                  \
-  LOG_PRINT (MPFR_LOG_INPUT_F, "%s:IN  "format"\n", __func__, __VA_ARGS__); \
+  LOG_PRINT (MPFR_LOG_INPUT_F, "%s:IN  flags=%x "format"\n", __func__,  \
+             (unsigned int) __gmpfr_flags, __VA_ARGS__);                \
   if ((MPFR_LOG_TIME_F & mpfr_log_type) &&                              \
       (mpfr_log_current <= mpfr_log_level))                             \
     __gmpfr_log_time = mpfr_get_cputime ();
@@ -2199,7 +2214,8 @@ __MPFR_DECLSPEC extern mpfr_prec_t mpfr_log_prec;
 #define MPFR_LOG_END2(format, ...)                                      \
   LOG_PRINT (MPFR_LOG_TIME_F, "%s:TIM %dms\n", __mpfr_log_fname,        \
              mpfr_get_cputime () - __gmpfr_log_time);                   \
-  LOG_PRINT (MPFR_LOG_OUTPUT_F, "%s:OUT "format"\n", __mpfr_log_fname,  \
+  LOG_PRINT (MPFR_LOG_OUTPUT_F, "%s:OUT flags=%x "format"\n",           \
+             __mpfr_log_fname, (unsigned int) __gmpfr_flags,            \
              __VA_ARGS__);                                              \
   mpfr_log_current --;
 #define MPFR_LOG_END(x)                                                 \
@@ -2474,7 +2490,8 @@ __MPFR_DECLSPEC void mpfr_rand_raw (mpfr_limb_ptr, gmp_randstate_t,
 __MPFR_DECLSPEC mpz_srcptr mpfr_bernoulli_cache (unsigned long);
 __MPFR_DECLSPEC void mpfr_bernoulli_freecache (void);
 
-__MPFR_DECLSPEC int mpfr_sincos_fast (mpfr_t, mpfr_t, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_sincos_fast (mpfr_ptr, mpfr_ptr, mpfr_srcptr,
+                                      mpfr_rnd_t);
 
 __MPFR_DECLSPEC double mpfr_scale2 (double, int);
 
@@ -2485,12 +2502,15 @@ __MPFR_DECLSPEC void mpfr_gamma_one_and_two_third (mpfr_ptr, mpfr_ptr,
                                                    mpfr_prec_t);
 
 __MPFR_DECLSPEC void mpfr_mpz_init (mpz_ptr);
-__MPFR_DECLSPEC void mpfr_mpz_init2 (mpz_t, mp_bitcnt_t);
+__MPFR_DECLSPEC void mpfr_mpz_init2 (mpz_ptr, mp_bitcnt_t);
 __MPFR_DECLSPEC void mpfr_mpz_clear (mpz_ptr);
 
 __MPFR_DECLSPEC int mpfr_odd_p (mpfr_srcptr);
 
 __MPFR_DECLSPEC int mpfr_nbits_ulong (unsigned long);
+#ifdef _MPFR_H_HAVE_INTMAX_T
+__MPFR_DECLSPEC int mpfr_nbits_uj (uintmax_t);
+#endif
 
 #ifdef _MPFR_H_HAVE_VA_LIST
 /* Declared only if <stdarg.h> has been included. */
@@ -2677,6 +2697,21 @@ extern "C" {
 
    (see changeset r13820 in the ubf2 branch). So, for the time being,
    as long as the code does not break, do not change anything.
+
+   Note: The condition "use mpfr_ptr to access the usual mpfr_t members and
+   mpfr_ubf_ptr to access the additional member _mpfr_zexp" may be ignored
+   if the union type is visible within the function (see ISO C99 6.5.2.3#5
+   and 6.5.2.3#8 for the example, this implementation being very similar to
+   the valid fragment of this example), which must be the case as the union
+   is declared globally. However, this seems to be buggy in GCC:
+
+     https://gcc.gnu.org/bugzilla/show_bug.cgi?id=14319
+     https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65892
+
+   Alternatively, GCC's may_alias attribute could conditionally be used
+   on the __mpfr_ubf_struct and __mpfr_struct types (though it would be
+   much stronger than needed since only these two types may alias each
+   other).
 */
 
 typedef struct {

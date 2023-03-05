@@ -1,6 +1,6 @@
 /* mpfr_ai -- Airy function Ai
 
-Copyright 2010-2020 Free Software Foundation, Inc.
+Copyright 2010-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -188,12 +188,12 @@ mpfr_ai1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
     wprec = MPFR_ADD_PREC (prec, t);
   }
 
-  mpfr_init (ti);
-  mpfr_init (tip1);
-  mpfr_init (temp1);
-  mpfr_init (temp2);
-  mpfr_init (x3);
-  mpfr_init (s);
+  mpfr_init2 (ti, wprec);
+  mpfr_init2 (tip1, wprec);
+  mpfr_init2 (temp1, wprec);
+  mpfr_init2 (temp2, wprec);
+  mpfr_init2 (x3, wprec);
+  mpfr_init2 (s, wprec);
 
   /* ZIV loop */
   for (;;)
@@ -216,7 +216,7 @@ mpfr_ai1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
       mpfr_set_ui (ti, 9, MPFR_RNDN);
       mpfr_cbrt (ti, ti, MPFR_RNDN);
       mpfr_mul (ti, ti, temp2, MPFR_RNDN);
-      mpfr_ui_div (ti, 1, ti , MPFR_RNDN); /* ti = 1/( Gamma (2/3)*9^(1/3) ) */
+      mpfr_ui_div (ti, 1, ti, MPFR_RNDN); /* ti = 1/( Gamma (2/3)*9^(1/3) ) */
 
       mpfr_set_ui (tip1, 3, MPFR_RNDN);
       mpfr_cbrt (tip1, tip1, MPFR_RNDN);
@@ -420,13 +420,13 @@ mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
   z = (mpfr_t *) mpfr_allocate_func ( (L + 1) * sizeof (mpfr_t) );
   MPFR_ASSERTN (z != NULL);
   for (j=0; j<=L; j++)
-    mpfr_init (z[j]);
+    mpfr_init2 (z[j], wprec);
 
-  mpfr_init (s);
-  mpfr_init (u0); mpfr_init (u1);
-  mpfr_init (result);
-  mpfr_init (temp1);
-  mpfr_init (temp2);
+  mpfr_init2 (s, wprec);
+  mpfr_init2 (u0, wprec); mpfr_init2 (u1, wprec);
+  mpfr_init2 (result, wprec);
+  mpfr_init2 (temp1, wprec);
+  mpfr_init2 (temp2, wprec);
 
   /* ZIV loop */
   for (;;)
@@ -464,7 +464,7 @@ mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
       mpfr_set_ui (u0, 9, MPFR_RNDN);
       mpfr_cbrt (u0, u0, MPFR_RNDN);
       mpfr_mul (u0, u0, temp2, MPFR_RNDN);
-      mpfr_ui_div (u0, 1, u0 , MPFR_RNDN); /* u0 = 1/( Gamma (2/3)*9^(1/3) ) */
+      mpfr_ui_div (u0, 1, u0, MPFR_RNDN); /* u0 = 1/( Gamma (2/3)*9^(1/3) ) */
 
       mpfr_set_ui (u1, 3, MPFR_RNDN);
       mpfr_cbrt (u1, u1, MPFR_RNDN);
@@ -573,7 +573,7 @@ mpfr_ai2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
       z = (mpfr_t *) mpfr_allocate_func ( (L + 1) * sizeof (mpfr_t));
       MPFR_ASSERTN (z != NULL);
       for (j=0; j<=L; j++)
-        mpfr_init (z[j]);
+        mpfr_init2 (z[j], wprec);
 
       if (correctBits == 0)
         {

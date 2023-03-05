@@ -2,7 +2,7 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 <!--
-Copyright 2000-2020 Free Software Foundation, Inc.
+Copyright 2000-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -188,8 +188,8 @@ infinities, not-a-number (NaN).</p></li>
 <dd><p>You need to add <q><code>r</code></q> to the function names, and to
 specify the rounding mode (<code>MPFR_RNDN</code> for rounding to nearest,
 <code>MPFR_RNDZ</code> for rounding toward zero, <code>MPFR_RNDU</code>
-for rounding toward plus infinity, <code>MPFR_RNDD</code> for rounding
-toward minus infinity). You can also define macros as follows:
+for rounding toward positive infinity, <code>MPFR_RNDD</code> for rounding
+toward negative infinity). You can also define macros as follows:
 <code class="block-code">#define mpf_add(a, b, c) mpfr_add(a, b, c, MPFR_RNDN)</code></p>
 <p>The header file <samp>mpf2mpfr.h</samp> from the
 <cite><acronym>MPFR</acronym></cite> distribution automatically
@@ -289,8 +289,11 @@ that your program is <samp>foo.c</samp>, you should link it using:
 <cite><acronym>MPFR</acronym></cite> library reference (<samp>-lmpfr</samp>)
 should be before <cite><acronym>GMP</acronym></cite>'s one
 (<samp>-lgmp</samp>). Another solution is, with <acronym>GNU</acronym>
-<samp>ld</samp>, to give all the libraries inside a group:
+<samp>ld</samp>, to give all the libraries in any order inside a group:
 <samp class="block-code">gcc link.c -Wl,--start-group libgmp.a libmpfr.a -Wl,--end-group</samp>
+with the full path to the libraries, or
+<samp class="block-code">gcc link.c -Wl,--start-group -l:libgmp.a -l:libmpfr.a -Wl,--end-group</samp>
+to use the library path.
 See <samp>INSTALL</samp> file and <samp>ld</samp> manual for more
 details.</p>
 <p>If you used correct link options, but still get an error, this may mean

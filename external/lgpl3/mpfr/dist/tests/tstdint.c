@@ -1,6 +1,6 @@
 /* Test file for multiple mpfr.h inclusion and intmax_t related functions
 
-Copyright 2010-2020 Free Software Foundation, Inc.
+Copyright 2010-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,6 +19,10 @@ You should have received a copy of the GNU Lesser General Public License
 along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
+
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
 
 #if HAVE_STDINT_H
 
@@ -52,6 +56,18 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
  * Note: If _MPFR_EXP_FORMAT == 4 (which is never the case by default),
  * a part of the above check is not done because <stdint.h> is included
  * before the first mpfr.h inclusion (see above).
+ *
+ * Moreover, assuming that this test is run on a platform that has
+ * <stdint.h> (most platforms do nowadays), without mini-gmp, this
+ * test also allows one to detect that mpfr.h can be included without
+ * any other inclusion before[*] (such as <stdio.h>). For instance,
+ * it can detect any unprotected use of FILE in the mpfr.h header
+ * file.
+ * [*] possibly except config.h when used, which is normally not the
+ *     case with a normal build. Anyway, if we decided to change that,
+ *     this inclusion would not change anything as config.h would only
+ *     have defines (such as HAVE_STDINT_H) currently provided as "-D"
+ *     compiler arguments.
  */
 #include <mpfr.h>
 

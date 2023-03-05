@@ -1,6 +1,6 @@
 /* auxiliary functions for MPFR tests.
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -92,6 +92,38 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define STRINGIZE(S) #S
 #define MAKE_STR(S) STRINGIZE(S)
 
+/* In C (but not C++), mpfr_ptr and mpfr_srcptr arguments can be provided
+   in a different pointer type, such as void *. For functions implemented
+   as macros, the type conversion for the function parameters will not be
+   done by the compiler, which means potential bugs in these implementations
+   if we forget to take these unusual cases into account. So we need to test
+   such arguments, in order to make sure that the arguments are converted to
+   the expected type when needed.
+
+   However, at least when the function is not implemented as a macro (which
+   is the case when MPFR_USE_NO_MACRO is defined), such tests with void *
+   arguments are not valid in C++; therefore, we will not do the cast to
+   void * if the __cplusplus macro is defined. And with GCC 4.6+ compilers
+   (and compatible), we will ignore the -Wc++-compat option around these
+   tests.
+
+   Note: in the future, inline functions could be used instead of macros,
+   and such tests would become useless (except to detect compiler bugs).
+*/
+#if defined (__cplusplus)
+#define VOIDP_CAST(X) (X)
+#else
+#define VOIDP_CAST(X) ((void *) (X))
+/* Define IGNORE_CPP_COMPAT only for the GCC and Clang versions that
+   support it.
+   Note: GCC versions < 4.6 do not allow "#pragma GCC diagnostic" inside
+   functions, and Clang on Windows (clang-cl) does not define __GNUC__.
+   See https://sympa.inria.fr/sympa/arc/mpfr/2022-12/msg00007.html */
+#if __MPFR_GNUC(4,6) || defined (__clang__)
+#define IGNORE_CPP_COMPAT
+#endif
+#endif
+
 #if defined (__cplusplus)
 extern "C" {
 #endif
@@ -109,8 +141,13 @@ extern "C" {
 /* Ditto, excluding RNDF, assumed to be the last rounding mode */
 #define RND_RAND_NO_RNDF() ((mpfr_rnd_t) (randlimb() % MPFR_RNDF))
 
+/* Generates a random boolean (with type int, thanks to the "!= 0" test).
+   Note: "& 1" is better than "% 2" for compilers with limited optimization,
+   such as tcc 0.9.27. */
+#define RAND_BOOL() ((randlimb() & 1) != 0)
+
 /* Generates a random sign */
-#define RAND_SIGN() (randlimb() % 2 ? MPFR_SIGN_POS : MPFR_SIGN_NEG)
+#define RAND_SIGN() (RAND_BOOL() ? MPFR_SIGN_POS : MPFR_SIGN_NEG)
 
 /* Loop for all rounding modes */
 #define RND_LOOP(_r) for((_r) = 0 ; (_r) < MPFR_RND_MAX ; (_r)++)
@@ -162,8 +199,12 @@ void tests_expect_abort (void);
 int tests_run_within_valgrind (void);
 
 int mpfr_set_machine_rnd_mode (mpfr_rnd_t);
+int have_subnorm_dbl (void);
+int have_subnorm_flt (void);
 void mpfr_test_init (void);
 mp_limb_t randlimb (void);
+unsigned long randulong (void);
+long randlong (void);
 void randseed (unsigned int);
 void mpfr_random2 (mpfr_ptr, mp_size_t, mpfr_exp_t, gmp_randstate_t);
 int ulp (double, double);
@@ -191,6 +232,9 @@ int mpfr_cmp_str (mpfr_srcptr x, const char *, int, mpfr_rnd_t);
 
 #define mpfr_cmp0(x,y) (MPFR_ASSERTN (!MPFR_IS_NAN (x) && !MPFR_IS_NAN (y)), mpfr_cmp (x,y))
 #define mpfr_cmp_ui0(x,i) (MPFR_ASSERTN (!MPFR_IS_NAN (x)), mpfr_cmp_ui (x,i))
+#define mpfr_cmp_si0(x,i) (MPFR_ASSERTN (!MPFR_IS_NAN (x)), mpfr_cmp_si (x,i))
+#define mpfr_cmp_si_2exp0(x,i,e) (MPFR_ASSERTN (!MPFR_IS_NAN (x)), \
+                                  mpfr_cmp_si_2exp (x,i,e))
 
 /* define CHECK_EXTERNAL if you want to check mpfr against another library
    with correct rounding. You'll probably have to modify mpfr_print_raw()

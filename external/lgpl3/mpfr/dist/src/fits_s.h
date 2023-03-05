@@ -1,6 +1,6 @@
 /* mpfr_fits_*_p -- test whether an mpfr fits a C signed type.
 
-Copyright 2003-2020 Free Software Foundation, Inc.
+Copyright 2003-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -58,7 +58,7 @@ FUNCTION (mpfr_srcptr f, mpfr_rnd_t rnd)
   if (neg)
     {
       unsigned TYPE s;
-      /* In C89, the division on negative integers isn't well-defined. */
+      /* In C90, the division on negative integers isn't well-defined. */
       s = SAFE_ABS (unsigned TYPE, MINIMUM);
       for (prec = 0; s != 0; s /= 2, prec ++);
     }

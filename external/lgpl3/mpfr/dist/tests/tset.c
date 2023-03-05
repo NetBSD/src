@@ -1,6 +1,6 @@
 /* Test file for mpfr_set.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -207,7 +207,7 @@ check_special (void)
 static void
 check_ternary_value (void)
 {
-  int p, q, rnd;
+  int k, p, q, rnd;
   int inexact, cmp;
   mpfr_t x, y;
 
@@ -217,37 +217,54 @@ check_ternary_value (void)
     {
       mpfr_set_prec (x, p);
       mpfr_urandomb (x, RANDS);
-      if (randlimb () % 2)
+      if (RAND_BOOL ())
         mpfr_neg (x, x, MPFR_RNDN);
       for (q=2; q<2*p; q++)
         {
           mpfr_set_prec (y, q);
-          for (rnd = 0; rnd < MPFR_RND_MAX; rnd++)
+          RND_LOOP (rnd)
             {
               if (rnd == MPFR_RNDF) /* the test below makes no sense */
                 continue;
-              inexact = mpfr_set (y, x, (mpfr_rnd_t) rnd);
-              cmp = mpfr_cmp (y, x);
-              if (((inexact == 0) && (cmp != 0)) ||
-                  ((inexact > 0) && (cmp <= 0)) ||
-                  ((inexact < 0) && (cmp >= 0)))
+              for (k = 0; k < 3; k++)
                 {
-                  printf ("Wrong ternary value in mpfr_set for %s: expected"
-                          " %d, got %d\n",
-                          mpfr_print_rnd_mode ((mpfr_rnd_t) rnd), cmp,
-                          inexact);
-                  exit (1);
-                }
-              /* Test mpfr_set function too */
-              inexact = (mpfr_set) (y, x, (mpfr_rnd_t) rnd);
-              cmp = mpfr_cmp (y, x);
-              if (((inexact == 0) && (cmp != 0)) ||
-                  ((inexact > 0) && (cmp <= 0)) ||
-                  ((inexact < 0) && (cmp >= 0)))
-                {
-                  printf ("Wrong ternary value in mpfr_set(2): expected %d,"
-                          " got %d\n", cmp, inexact);
-                  exit (1);
+                  int a = 0, b = 0, c = 0;
+
+                  switch (k)
+                    {
+                    case 0:
+                      inexact = mpfr_set (y, x, (mpfr_rnd_t) rnd);
+                      break;
+                    case 1:
+                      inexact = (mpfr_set) (y, x, (mpfr_rnd_t) rnd);
+                      break;
+                    case 2:
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+                      inexact = mpfr_set ((a++, VOIDP_CAST(y)),
+                                          (b++, VOIDP_CAST(x)),
+                                          (c++, (mpfr_rnd_t) rnd));
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+                      MPFR_ASSERTN (a == 1);
+                      MPFR_ASSERTN (b == 1);
+                      MPFR_ASSERTN (c == 1);
+                      break;
+                    }
+                  cmp = mpfr_cmp (y, x);
+                  if (((inexact == 0) && (cmp != 0)) ||
+                      ((inexact > 0) && (cmp <= 0)) ||
+                      ((inexact < 0) && (cmp >= 0)))
+                    {
+                      printf ("Wrong ternary value in mpfr_set for %s (%d):"
+                              " expected %d, got %d\n",
+                              mpfr_print_rnd_mode ((mpfr_rnd_t) rnd),
+                              k, cmp, inexact);
+                      exit (1);
+                    }
                 }
             }
         }

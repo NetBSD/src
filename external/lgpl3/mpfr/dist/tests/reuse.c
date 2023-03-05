@@ -1,6 +1,6 @@
 /* Test file for in-place operations.
 
-Copyright 2000-2020 Free Software Foundation, Inc.
+Copyright 2000-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -80,12 +80,13 @@ set_special (mpfr_ptr x, unsigned int select)
       break;
     default:
       mpfr_urandomb (x, RANDS);
-      if (randlimb () & 1)
+      if (RAND_BOOL ())
         mpfr_neg (x, x, MPFR_RNDN);
       break;
     }
 }
-/* same than mpfr_cmp, but returns 0 for both NaN's */
+
+/* same as mpfr_cmp, but returns 0 for both NaN's */
 static int
 mpfr_compare (mpfr_srcptr a, mpfr_srcptr b)
 {
@@ -272,7 +273,7 @@ test4 (int (*testfunc)(mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_srcptr,
                 }
 
               /* foo (a, a, a, a) */
-              testfunc (ref, op1, op1, op1 ,rnd);
+              testfunc (ref, op1, op1, op1, rnd);
               mpfr_set (res, op1, rnd);
               testfunc (res, res, res, res, rnd);
               if (mpfr_compare (res, ref))
@@ -664,6 +665,8 @@ main (void)
 
           test3 (mpfr_add, "mpfr_add", p, (mpfr_rnd_t) rnd);
           test3 (mpfr_sub, "mpfr_sub", p, (mpfr_rnd_t) rnd);
+          /* the following will generate a call to mpn_mul_n with
+             identical arguments */
           test3 (mpfr_mul, "mpfr_mul", p, (mpfr_rnd_t) rnd);
           test3 (mpfr_div, "mpfr_div", p, (mpfr_rnd_t) rnd);
 
