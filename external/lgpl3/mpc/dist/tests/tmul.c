@@ -218,6 +218,36 @@ timemul (void)
 #include "data_check.tpl"
 #include "tgeneric.tpl"
 
+static void
+bug20221130 (void)
+{
+  mpc_t b, c_conj, res, ref;
+  mpfr_prec_t prec;
+  mpc_init2 (b, 20);
+  mpc_init2 (c_conj, 20);
+  mpc_init2 (res, 2);
+  mpc_init2 (ref, 5);
+  mpc_set_str (b, "(0x1p+0 0x2p+0)", 16, MPC_RNDNN);
+  mpc_set_str (c_conj, "(-0xap+0 0x1.4p+4)", 16, MPC_RNDNN);
+  mpc_set_str (ref, "(-0x3.2p+4 0x0p+0)", 16, MPC_RNDNN);
+  for (prec = 5; prec <= 2000; prec++)
+  {
+    mpc_set_prec (res, prec);
+    mpc_mul (res, b, c_conj, MPC_RNDZZ);
+    if (mpc_cmp (res, ref) != 0 || mpfr_signbit (mpc_imagref (res)))
+    {
+      printf ("Error in bug20221130 for prec=%lu\n", prec);
+      mpfr_printf ("expected (%Ra %Ra)\n", mpc_realref (ref), mpc_imagref (ref));
+      mpfr_printf ("got      (%Ra %Ra)\n", mpc_realref (res), mpc_imagref (res));
+      exit (1);
+    }
+  }
+  mpc_clear (b);
+  mpc_clear (c_conj);
+  mpc_clear (res);
+  mpc_clear (ref);
+}
+
 int
 main (void)
 {
@@ -228,6 +258,7 @@ main (void)
 #endif
 
   bug20200206 ();
+  bug20221130 ();
   check_regular ();
 
   data_check_template ("mul.dsc", "mul.dat");

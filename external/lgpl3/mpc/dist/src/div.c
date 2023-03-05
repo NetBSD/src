@@ -212,7 +212,7 @@ mpc_div_imag (mpc_ptr rop, mpc_srcptr z, mpc_srcptr w, mpc_rnd_t rnd)
       /* Note: we could use mpc_swap here, but this might cause problems
          if rop and tmprop have been allocated using different methods, since
          it will swap the significands of rop and tmprop. See
-         http://lists.gforge.inria.fr/pipermail/mpc-discuss/2009-August/000504.html */
+         https://sympa.inria.fr/sympa/arc/mpc-discuss/2009-08/msg00004.html */
       mpc_set (rop, tmprop, MPC_RNDNN); /* exact */
       mpc_clear (tmprop);
    }

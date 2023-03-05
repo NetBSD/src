@@ -28,7 +28,7 @@ compare_mpc_pow (mpfr_prec_t pmax, int iter, unsigned long nbits)
   mpc_t x, y, z, t;
   unsigned long n;
   int i, inex_pow, inex_pow_ui;
-  mpc_rnd_t rnd;
+  mpc_rnd_t rnd1, rnd2, rnd;
 
   mpc_init3 (y, sizeof (unsigned long) * CHAR_BIT, MPFR_PREC_MIN);
   for (p = MPFR_PREC_MIN; p <= pmax; p++)
@@ -40,27 +40,29 @@ compare_mpc_pow (mpfr_prec_t pmax, int iter, unsigned long nbits)
         mpc_urandom (x, rands);
         n = gmp_urandomb_ui (rands, nbits); /* 0 <= n < 2^nbits */
         mpc_set_ui (y, n, MPC_RNDNN);
-        for (rnd = 0; rnd < 16; rnd ++)
+        for (rnd1 = 0; rnd1 < 4; rnd1 ++)
+          for (rnd2 = 0; rnd2 < 4; rnd2 ++)
           {
+            rnd = MPC_RND (rnd1, rnd2);
             inex_pow = mpc_pow (z, x, y, rnd);
             inex_pow_ui = mpc_pow_ui (t, x, n, rnd);
             if (mpc_cmp (z, t) != 0)
               {
                 printf ("mpc_pow and mpc_pow_ui differ for x=");
-                mpc_out_str (stdout, 10, 0, x, MPC_RNDNN);
-                printf (" n=%lu\n", n);
+                mpc_out_str (stdout, 16, 0, x, MPC_RNDNN);
+                printf (" n=%li p=%lu rnd=%d\n", n, p, rnd);
                 printf ("mpc_pow gives ");
-                mpc_out_str (stdout, 10, 0, z, MPC_RNDNN);
+                mpc_out_str (stdout, 16, 0, z, MPC_RNDNN);
                 printf ("\nmpc_pow_ui gives ");
-                mpc_out_str (stdout, 10, 0, t, MPC_RNDNN);
+                mpc_out_str (stdout, 16, 0, t, MPC_RNDNN);
                 printf ("\n");
                 exit (1);
               }
             if (inex_pow != inex_pow_ui)
               {
                 printf ("mpc_pow and mpc_pow_ui give different flags for x=");
-                mpc_out_str (stdout, 10, 0, x, MPC_RNDNN);
-                printf (" n=%lu\n", n);
+                mpc_out_str (stdout, 16, 0, x, MPC_RNDNN);
+                printf (" n=%li p=%lu rnd=%d\n", n, p, rnd);
                 printf ("mpc_pow gives %d\n", inex_pow);
                 printf ("mpc_pow_ui gives %d\n", inex_pow_ui);
                 exit (1);

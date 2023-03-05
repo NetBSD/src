@@ -1,6 +1,6 @@
-/* mpc_get_version -- MPC version
+/* tdummy -- test file when stdio.h is not included
 
-Copyright (C) 2008, 2009, 2010, 2011, 2012, 2017, 2018, 2020, 2022 INRIA
+Copyright (C) 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -18,10 +18,11 @@ You should have received a copy of the GNU Lesser General Public License
 along with this program. If not, see http://www.gnu.org/licenses/ .
 */
 
-#include "mpc-impl.h"
+#include "mpc.h"
 
-const char *
-mpc_get_version (void)
+int
+main (void)
 {
-  return "1.3.1";
+  return 0;
 }
+

@@ -1,6 +1,6 @@
 /* check_data.c -- Check computed data against reference result.
 
-Copyright (C) 2012, 2013, 2014 INRIA
+Copyright (C) 2012, 2013, 2014, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -108,10 +108,10 @@ check_data (mpc_datafile_context_t* dc, mpc_fun_param_t* params, int reused_op)
                 continue; /* don't print inexact flag if it is correct */
 
               printf ("     got%c",
-                      (total + i > params->nbout ? '\0' : i + '0'));
+                      (total + i > params->nbout ? ' ' : i + '0'));
               print_parameter (params, i);
               printf ("expected%c",
-                      (total + i > params->nbout ? '\0' : i + '0'));
+                      (total + i > params->nbout ? ' ' : i + '0'));
               print_parameter (params, total + i);
             }
           printf ("\n");

@@ -1,6 +1,6 @@
 # Data file for mpc_pow_fr.
 #
-# Copyright (C) 2011 INRIA
+# Copyright (C) 2011, 2022 INRIA
 #
 # This file is part of GNU MPC.
 #
@@ -72,3 +72,11 @@
 # (+0 0.75)^7 = (-0 -0.13348388671875) is rounded to (-0 -0.125)
 0 + 2 -0 2 -0x1p-3   2 +0 2 0x3p-2   3 7 N N
 0 - 8 -0 8 -0x89p-10 2 +0 2 0x3p-2   3 7 N N
+
+# issue revealed by random tests (with GMP_CHECK_RANDOMIZE=1669437260)
+- 0 2 -0x3p-29 2 +0   2 0x1.8p-8 2  0x1.8p-8 2 4 N N
+- 0 2 -0x3p-29 2 +0   2 0x1.8p-8 2 -0x1.8p-8 2 4 N N
+0 - 2 +0 2  0x1p-14   2 0x1.8p-8 2  0x1.8p-8 2 2 N N
+0 + 2 +0 2 -0x1p-14   2 0x1.8p-8 2 -0x1.8p-8 2 2 N N
+# issue revealed by random tests (with GMP_CHECK_RANDOMIZE=1670627686)
+0 + 2 +0 2 -0x3p-18   2 -0x3p6   2 -0x3p6    2 -2 N Z

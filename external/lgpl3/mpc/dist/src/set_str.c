@@ -1,6 +1,6 @@
 /* mpc_set_str -- Convert a string into a complex number.
 
-Copyright (C) 2009, 2010, 2011 INRIA
+Copyright (C) 2009, 2010, 2011, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -22,7 +22,7 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 #include "mpc-impl.h"
 
 int
-mpc_set_str (mpc_t z, const char *str, int base, mpc_rnd_t rnd)
+mpc_set_str (mpc_ptr z, const char *str, int base, mpc_rnd_t rnd)
 {
   char *p;
   int inex;

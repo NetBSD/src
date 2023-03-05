@@ -1,6 +1,6 @@
 /* mpc_set_prec -- reset the precision of a complex variable.
 
-Copyright (C) 2002, 2009, 2011 INRIA
+Copyright (C) 2002, 2009, 2011, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -21,7 +21,7 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 #include "mpc-impl.h"
 
 void
-mpc_set_prec (mpc_t x, mpfr_prec_t prec)
+mpc_set_prec (mpc_ptr x, mpfr_prec_t prec)
 {
   mpfr_set_prec (mpc_realref(x), prec);
   mpfr_set_prec (mpc_imagref(x), prec);

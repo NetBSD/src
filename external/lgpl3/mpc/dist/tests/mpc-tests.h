@@ -1,6 +1,6 @@
 /* mpc-tests.h -- Tests helper functions.
 
-Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2020 INRIA
+Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2020, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -25,7 +25,8 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include "mpc.h"
+#include <inttypes.h> /* for the PRIi64 format modifier */
+#include "mpc-impl.h"
 
 /* pieces copied from mpc-impl.h */
 #define MPC_PREC_RE(x) (mpfr_get_prec(mpc_realref(x)))
@@ -46,6 +47,7 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 #if defined (__cplusplus)
 extern "C" {
 #endif
+__MPC_DECLSPEC int64_t sqrt_int64 (int64_t n);
 __MPC_DECLSPEC int  mpc_mul_naive (mpc_ptr, mpc_srcptr, mpc_srcptr, mpc_rnd_t);
 __MPC_DECLSPEC int  mpc_mul_karatsuba (mpc_ptr, mpc_srcptr, mpc_srcptr, mpc_rnd_t);
 __MPC_DECLSPEC int  mpc_fma_naive (mpc_ptr, mpc_srcptr, mpc_srcptr, mpc_srcptr, mpc_rnd_t);

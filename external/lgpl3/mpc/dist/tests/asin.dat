@@ -1,6 +1,6 @@
 # Data file for mpc_asin.
 #
-# Copyright (C) 2009, 2011, 2013, 2014 INRIA
+# Copyright (C) 2009, 2011, 2013, 2014, 2022 INRIA
 #
 # This file is part of GNU MPC.
 #
@@ -132,3 +132,10 @@
 - + 53 0x3243f6a8885a3p-49 53 0x16a09e667f3bcdp-552 53 1 53 0x1p-999 N N
 - + 2 1.5 2 0x1p-40 2 1 20 0xff802p-100 N N
 - - 24 -0x1p-148 24 -0xc.75cp-20 24 -0x1p-148 24 -0xc.75cp-20 N N
+
+# this test failed before the 1.3.0 release
+? ? 9 -0x1.72p+0 9 -0x1.e4p-5 9 -0x1.fdp-1 9 -0x1.dcp-8 Z N
+
+# test case for asin_taylor1
++ - 7 0b1.000001p-2 4 0b1p-9  2 0b1p-2 2 0b1p-9 N N
+- + 26 -0b1.0000001010111110100111010p-2 15 -0b1.00001000011001p-20  2 -0b1p-2 2 -0b1p-20 N N

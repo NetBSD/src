@@ -1,6 +1,6 @@
 /* mpc_mul -- Multiply two complex numbers
 
-Copyright (C) 2002, 2004, 2005, 2008, 2009, 2010, 2011, 2012, 2016, 2020 INRIA
+Copyright (C) 2002, 2004, 2005, 2008, 2009, 2010, 2011, 2012, 2016, 2020, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -219,6 +219,7 @@ mpc_mul_karatsuba (mpc_ptr rop, mpc_srcptr op1, mpc_srcptr op2, mpc_rnd_t rnd)
         imaginary part is used). If this fails, we have to start again and
         need the correct values of op1 and op2.
         So we just create a new variable for the result in this case. */
+  mpfr_ptr ref;
   int loop;
   const int MAX_MUL_LOOP = 1;
 
@@ -422,6 +423,18 @@ mpc_mul_karatsuba (mpc_ptr rop, mpc_srcptr op1, mpc_srcptr op2, mpc_rnd_t rnd)
                                  INV_RND(MPC_RND_IM(rnd)));
             mpfr_neg (mpc_imagref(result), mpc_imagref(result), MPC_RND_IM(rnd));
             }
+      }
+
+      /* Clear potential signs of 0. */
+      if (!inex_re) {
+         ref = mpc_realref (result);
+         if (mpfr_zero_p (ref) && mpfr_signbit (ref))
+            MPFR_CHANGE_SIGN (ref);
+      }
+      if (!inex_im) {
+         ref = mpc_imagref (result);
+         if (mpfr_zero_p (ref) && mpfr_signbit (ref))
+            MPFR_CHANGE_SIGN (ref);
       }
 
       mpc_set (rop, result, MPC_RNDNN);

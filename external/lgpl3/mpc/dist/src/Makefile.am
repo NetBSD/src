@@ -1,6 +1,6 @@
 ## src/Makefile.am -- Process this file with automake to produce Makefile.in
 ##
-## Copyright (C) 2008, 2009, 2010, 2011, 2012, 2016, 2018, 2020 INRIA
+## Copyright (C) 2008, 2009, 2010, 2011, 2012, 2016, 2018, 2020, 2022 INRIA
 ##
 ## This file is part of GNU MPC.
 ##
@@ -18,12 +18,12 @@
 ## along with this program. If not, see http://www.gnu.org/licenses/ .
 
 lib_LTLIBRARIES = libmpc.la
-libmpc_la_LDFLAGS = $(MPC_LDFLAGS) -version-info 5:1:2
+libmpc_la_LDFLAGS = $(MPC_LDFLAGS) -version-info 6:1:3
 libmpc_la_SOURCES = mpc-impl.h abs.c acos.c acosh.c add.c add_fr.c         \
-  add_si.c add_ui.c arg.c asin.c asinh.c atan.c atanh.c clear.c            \
+  add_si.c add_ui.c agm.c arg.c asin.c asinh.c atan.c atanh.c clear.c      \
   cmp.c cmp_abs.c cmp_si_si.c conj.c cos.c cosh.c                          \
   div_2si.c div_2ui.c div.c div_fr.c div_ui.c				   \
-  dot.c exp.c fma.c fr_div.c fr_sub.c get_prec2.c get_prec.c		   \
+  dot.c eta.c exp.c fma.c fr_div.c fr_sub.c get_prec2.c get_prec.c	   \
   get_version.c get_x.c imag.c init2.c init3.c inp_str.c log.c log10.c     \
   mem.c mul_2si.c mul_2ui.c mul.c mul_fr.c mul_i.c mul_si.c mul_ui.c       \
   neg.c norm.c out_str.c pow.c pow_fr.c                                    \
@@ -31,6 +31,7 @@ libmpc_la_SOURCES = mpc-impl.h abs.c acos.c acosh.c add.c add_fr.c         \
   urandom.c set.c 							   \
   set_prec.c set_str.c set_x.c set_x_x.c sin.c sin_cos.c sinh.c sqr.c      \
   sqrt.c strtoc.c sub.c sub_fr.c sub_ui.c sum.c swap.c tan.c tanh.c        \
-  uceil_log2.c ui_div.c ui_ui_sub.c
+  uceil_log2.c ui_div.c ui_ui_sub.c \
+  radius.c balls.c
 
 libmpc_la_LIBADD = @LTLIBOBJS@

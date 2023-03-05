@@ -1,6 +1,6 @@
 /* mpc-impl.h -- Internal include file for mpc.
 
-Copyright (C) 2002, 2004, 2005, 2008, 2009, 2010, 2011, 2012, 2020 INRIA
+Copyright (C) 2002, 2004, 2005, 2008, 2009, 2010, 2011, 2012, 2020, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -135,8 +135,26 @@ do {                                                            \
 #define MPFR_OUT(x)                                             \
 do {                                                            \
   printf (#x "[%lu]=", (unsigned long int) mpfr_get_prec (x));  \
-  mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);                     \
+  mpfr_out_str (stdout, 2, 0, x, MPFR_RNDN);                    \
   printf ("\n");                                                \
+} while (0)
+
+#define MPFR_OUT_Q(x)                                           \
+do {                                                            \
+  mpq_t q;                                                      \
+  mpq_init (q);                                                 \
+  mpfr_get_q (q, x);                                            \
+  mpq_out_str (stdout, 10, q);                                  \
+  mpq_clear (q);                                                \
+} while (0)
+
+#define MPC_OUT_PARI(x)                                         \
+do {                                                            \
+  printf (#x "=");                                              \
+  MPFR_OUT_Q (mpc_realref (x));                                 \
+  printf ("+I*(");                                              \
+  MPFR_OUT_Q (mpc_imagref (x));                                 \
+  printf (");\n");                                              \
 } while (0)
 
 
@@ -157,7 +175,11 @@ do {                                                            \
 extern "C" {
 #endif
 
+/* Function for mpcb. */
+__MPC_DECLSPEC void mpcb_eta_err (mpcb_ptr eta, mpc_srcptr z,
+   unsigned long int err_re, unsigned long int err_im);
 
+/* Functions for mpc. */
 __MPC_DECLSPEC int  mpc_mul_naive (mpc_ptr, mpc_srcptr, mpc_srcptr, mpc_rnd_t);
 __MPC_DECLSPEC int  mpc_mul_karatsuba (mpc_ptr, mpc_srcptr, mpc_srcptr, mpc_rnd_t);
 __MPC_DECLSPEC int  mpc_fma_naive (mpc_ptr, mpc_srcptr, mpc_srcptr, mpc_srcptr, mpc_rnd_t);

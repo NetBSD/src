@@ -1,6 +1,6 @@
 /* mpc_tan -- tangent of a complex number.
 
-Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2015, 2020 INRIA
+Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2015, 2020, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -253,15 +253,7 @@ mpc_tan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
       mpc_set_prec (x, prec);
       mpc_set_prec (y, prec);
 
-      /* rounding away from zero: except in the cases x=0 or y=0 (processed
-         above), sin x and cos y are never exact, so rounding away from 0 is
-         rounding towards 0 and adding one ulp to the absolute value */
-      mpc_sin_cos (x, y, op, MPC_RNDZZ, MPC_RNDZZ);
-      MPFR_ADD_ONE_ULP (mpc_realref (x));
-      MPFR_ADD_ONE_ULP (mpc_imagref (x));
-      MPFR_ADD_ONE_ULP (mpc_realref (y));
-      MPFR_ADD_ONE_ULP (mpc_imagref (y));
-
+      mpc_sin_cos (x, y, op, MPC_RNDAA, MPC_RNDAA);
 
       if (   mpfr_inf_p (mpc_realref (x)) || mpfr_inf_p (mpc_imagref (x))
           || mpfr_inf_p (mpc_realref (y)) || mpfr_inf_p (mpc_imagref (y))) {

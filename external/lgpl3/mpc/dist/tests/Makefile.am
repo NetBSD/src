@@ -1,6 +1,6 @@
 ## tests/Makefile.am -- Process this file with automake to produce Makefile.in
 ##
-## Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2020 INRIA
+## Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2018, 2020, 2021, 2022 INRIA
 ##
 ## This file is part of GNU MPC.
 ##
@@ -35,7 +35,8 @@ LOADLIBES=$(DEFS) $(AM_CPPFLAGS) $(CPPFLAGS) $(CFLAGS)	\
   $(top_builddir)/tests/.libs/libmpc-tests.a		\
   $(top_builddir)/src/.libs/libmpc.a $(LIBS)
 
-check_PROGRAMS = tabs tacos tacosh tadd tadd_fr tadd_si tadd_ui targ	\
+check_PROGRAMS = tradius tballs teta                                    \
+  tabs tacos tacosh tadd tadd_fr tadd_si tadd_ui tagm targ              \
   tasin tasinh tatan tatanh tcmp_abs tconj tcos tcosh                   \
   tdiv tdiv_2si tdiv_2ui tdiv_fr tdiv_ui tdot texp tfma tfr_div tfr_sub \
   timag tio_str tlog tlog10						\
@@ -43,7 +44,8 @@ check_PROGRAMS = tabs tacos tacosh tadd tadd_fr tadd_si tadd_ui targ	\
   tpow_d tpow_fr tpow_ld tpow_si tpow_ui tpow_z tprec tproj treal	\
   treimref trootofunity                                                 \
   tset tsin tsin_cos tsinh tsqr tsqrt tstrtoc tsub tsub_fr	        \
-  tsub_ui tsum tswap ttan ttanh tui_div tui_ui_sub tget_version exceptions
+  tsub_ui tsum tswap ttan ttanh tui_div tui_ui_sub                      \
+  tget_version texceptions tdummy
 
 check_LTLIBRARIES=libmpc-tests.la
 libmpc_tests_la_SOURCES = mpc-tests.h check_data.c clear_parameters.c	\
@@ -53,8 +55,8 @@ libmpc_tests_la_SOURCES = mpc-tests.h check_data.c clear_parameters.c	\
   setprec_parameters.c tpl_gmp.c tpl_mpc.c tpl_mpfr.c tpl_native.c
 
 DESCRIPTIONS = abs.dsc acos.dsc acosh.dsc add.dsc add_fr.dsc add_si.dsc	\
-  add_ui.dsc arg.dsc asin.dsc asinh.dsc atan.dsc atanh.dsc              \
-  cmp_abs.dsc conj.dsc	\
+  add_ui.dsc agm.dsc arg.dsc asin.dsc asinh.dsc atan.dsc atanh.dsc      \
+  cmp_abs.dsc conj.dsc	                                                \
   cos.dsc cosh.dsc div.dsc div_2si.dsc div_2ui.dsc div_fr.dsc           \
   div_ui.dsc exp.dsc fma.dsc fr_div.dsc fr_sub.dsc imag.dsc log.dsc	\
   log10.dsc mul.dsc mul_2si.dsc mul_2ui.dsc mul_fr.dsc mul_i.dsc	\
@@ -63,8 +65,8 @@ DESCRIPTIONS = abs.dsc acos.dsc acosh.dsc add.dsc add_fr.dsc add_si.dsc	\
   sin.dsc sin_cos.dsc	                                                \
   sinh.dsc sqr.dsc sqrt.dsc sub.dsc sub_fr.dsc sub_ui.dsc tan.dsc	\
   tanh.dsc ui_div.dsc ui_ui_sub.dsc
-DATA_SETS = abs.dat acos.dat acosh.dat add.dat add_fr.dat arg.dat	\
-  asin.dat asinh.dat atan.dat atanh.dat                                 \
+DATA_SETS = abs.dat acos.dat acosh.dat add.dat add_fr.dat agm.dat       \
+  arg.dat asin.dat asinh.dat atan.dat atanh.dat                         \
   cmp_abs.dat conj.dat cos.dat cosh.dat	                                \
   div.dat div_fr.dat exp.dat fma.dat fr_div.dat fr_sub.dat inp_str.dat	\
   log.dat log10.dat mul.dat mul_fr.dat neg.dat norm.dat pow.dat		\
