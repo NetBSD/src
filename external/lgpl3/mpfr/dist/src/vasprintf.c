@@ -1,7 +1,7 @@
 /* mpfr_vasnprintf_aux -- helper function for the formatted output functions
    (printf functions family).
 
-Copyright 2007-2020 Free Software Foundation, Inc.
+Copyright 2007-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,7 +26,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
    function to return a negative value and set errno to EOVERFLOW.
    [*] The Open Group Base Specifications Issue 7, 2018 edition
        IEEE Std 1003.1-2017 (Revision of IEEE Std 1003.1-2008)
-   http://pubs.opengroup.org/onlinepubs/9699919799/functions/fprintf.html
+   https://pubs.opengroup.org/onlinepubs/9699919799/functions/fprintf.html
    This follows a defect report submitted in 2007 to austin-review-l.
    Even in case of such a failure (just because of the limitation on int),
    we try to support %n, %ln, %jn when possible. That's why the sizes (or
@@ -121,12 +121,22 @@ static const char num_to_text[] = "0123456789abcdef";
 
 /* Read an integer var of type mpfr_intmax_t. In case of overflow, set
    overflow to 1.
+   The variable var must be 0 on input. If there are no digits, it is
+   left to 0.
+   This macro will be used to read the field width and the precision.
+   The behavior will be similar to ISO C99. Note that unless "*" is
+   used, the result will be non-negative (ISO C99 and C11 just specify
+   "optional decimal integer" for the precision, but the behavior with
+   a hardcoded negative integer is not explicitly defined, thus it is
+   undefined, so that it is fine to reject such integers; the C2x draft
+   now clarifies this: "an optional non-negative decimal integer").
    Note: Since mpfr_intmax_t = int is theoretically possible, all values
    of var are potentially valid values (via '*'). Hence the need of an
    overflow flag instead of a special value that would indicate overflow.
-   Saturating would not be OK either as the maximum value could be
+   Just saturating would not be OK either as the maximum value could be
    meaningful with %jn and/or in the case mpfr_intmax_t = int, for
-   MPFR_PREC_ARG.
+   MPFR_PREC_ARG, i.e. one must be able to distinguish the maximum value
+   from an overflow.
 */
 #define READ_INT(ap, format, var)                                       \
   do {                                                                  \
@@ -218,8 +228,11 @@ specinfo_init (struct printf_spec *specinfo)
   specinfo->pad = ' ';
 }
 
+/* Note: LONG_ARG is unusual, but is accepted (ISO C99 says "as no effect
+   on a following a, A, e, E, f, F, g, or G conversion specifier"). */
 #define FLOATING_POINT_ARG_TYPE(at) \
-  ((at) == MPFR_ARG || (at) == MPF_ARG || (at) == LONG_DOUBLE_ARG)
+  ((at) == MPFR_ARG || (at) == MPF_ARG \
+   || (at) == LONG_ARG || (at) == LONG_DOUBLE_ARG)
 
 #define INTEGER_LIKE_ARG_TYPE(at)                                       \
   ((at) == SHORT_ARG || (at) == LONG_ARG || (at) == LONG_LONG_ARG       \
@@ -237,16 +250,18 @@ specinfo_is_valid (struct printf_spec spec)
 
     case 'a':    case 'A':
     case 'e':    case 'E':
-    case 'f':    case 'F':
+    case 'f':    /* 'F': see below */
     case 'g':    case 'G':
       return (spec.arg_type == NONE
               || FLOATING_POINT_ARG_TYPE (spec.arg_type));
 
+    case 'F':  /* only MPFR_ARG is supported since GMP doesn't support it
+                  due to its use as the mpf_t type specifier */
     case 'b':
       return spec.arg_type == MPFR_ARG;
 
     case 'd':    case 'i':
-    case 'u':    case 'o':
+    case 'o':    case 'u':
     case 'x':    case 'X':
       return (spec.arg_type == NONE
               || INTEGER_LIKE_ARG_TYPE (spec.arg_type));
@@ -402,7 +417,6 @@ parse_arg_type (const char *format, struct printf_spec *specinfo)
    to int (because wchar_t <= int).
    For wint_t, we assume that the case WINT_MAX < INT_MAX yields an
    integer promotion. */
-#ifdef HAVE_WCHAR_H
 #if defined(WINT_MAX) && WINT_MAX < INT_MAX
 typedef int    mpfr_va_wint;  /* integer promotion */
 #else
@@ -418,13 +432,14 @@ typedef wint_t mpfr_va_wint;
     (void) va_arg ((ap), mpfr_va_wint);                                 \
   else if ((specinfo).spec == 's')                                      \
     (void) va_arg ((ap), int); /* we assume integer promotion */        \
+  else if ((specinfo).spec == 'a' || (specinfo).spec == 'A'             \
+           || (specinfo).spec == 'e' || (specinfo).spec == 'E'          \
+           || (specinfo).spec == 'f' /* 'F' impossible */               \
+           || (specinfo).spec == 'g' || (specinfo).spec == 'G')         \
+    (void) va_arg ((ap), double);                                       \
+  else                                                                  \
+    MPFR_RET_NEVER_GO_HERE();                                           \
   break;
-#else
-#define CASE_LONG_ARG(specinfo, ap)             \
-  case LONG_ARG:                                \
-  (void) va_arg ((ap), long);                   \
-  break;
-#endif
 
 #if defined(_MPFR_H_HAVE_INTMAX_T)
 #define CASE_INTMAX_ARG(specinfo, ap)           \
@@ -494,14 +509,14 @@ typedef wint_t mpfr_va_wint;
           case 'c':                             \
             (void) va_arg ((ap), int);          \
             break;                              \
-          case 'f':                             \
-          case 'F':                             \
-          case 'e':                             \
-          case 'E':                             \
-          case 'g':                             \
-          case 'G':                             \
           case 'a':                             \
           case 'A':                             \
+          case 'e':                             \
+          case 'E':                             \
+          case 'f':                             \
+          /* 'F' impossible */                  \
+          case 'g':                             \
+          case 'G':                             \
             (void) va_arg ((ap), double);       \
             break;                              \
           case 's':                             \
@@ -635,7 +650,13 @@ buffer_widen (struct string_buffer *b, size_t len)
 static int
 buffer_cat (struct string_buffer *b, const char *s, size_t len)
 {
-  MPFR_ASSERTD (len > 0);
+  /* If len == 0, which is possible when outputting an integer 0
+     (either a native one or mpfr_prec_t) with precision field = 0,
+     do nothing. This test is not necessary since the code below is
+     valid for len == 0, but this is safer, just in case. */
+  if (len == 0)
+    return 0;
+
   MPFR_ASSERTD (len <= strlen (s));
 
   if (buffer_incr_len (b, len))
@@ -891,6 +912,8 @@ struct number_parts
 /* For a real non zero number x, what is the base exponent f when rounding x
    with rounding mode r to r(x) = m*b^f, where m is a digit and 1 <= m < b ?
    Return non zero value if x is rounded up to b^f, return zero otherwise */
+/* FIXME: It seems that the base-2 exponent is taken into account, which is
+   what is expected. In this case, the description is incorrect. */
 static int
 next_base_power_p (mpfr_srcptr x, int base, mpfr_rnd_t rnd)
 {
@@ -963,7 +986,7 @@ floor_log10 (mpfr_srcptr x)
 #define NDIGITS 8
 
 MPFR_RETURNS_NONNULL static char *
-mpfr_get_str_wrapper (mpfr_exp_t *exp, int base, size_t n, const mpfr_t op,
+mpfr_get_str_wrapper (mpfr_exp_t *exp, int base, size_t n, mpfr_srcptr op,
                       const struct printf_spec spec)
 {
   size_t ndigits;
@@ -1010,7 +1033,29 @@ mpfr_get_str_wrapper (mpfr_exp_t *exp, int base, size_t n, const mpfr_t op,
 /* Determine the different parts of the string representation of the regular
    number P when spec.spec is 'a', 'A', or 'b'.
 
-   Return -1 in case of overflow on the sizes. */
+   Return -1 in case of overflow on the sizes.
+
+   Note for 'a'/'A': If the precision field is non-zero, the output is the
+   one with a binary exponent that is a multiple of 4 (thus this is similar
+   to base 16, where base-16 exponent = binary exponent / 4). But if the
+   precision field is 0, the exponent is no longer restricted to a multiple
+   of 4; the precision is maximized, but the displayed digit may be 1; this
+   is completely unintuitive.
+   The obtained output for 4 values with precision fields 0 and 1:
+               0         1
+      30     0xfp+1   0x1.ep+4
+      31     0x1p+5   0x1.fp+4
+      32     0x8p+2   0x2.0p+4
+      33     0x8p+2   0x2.1p+4
+   First, the output for numbers that round up to the next power of 16
+   with a precision field 0, like 31 here, has an unexpected form: here
+   with 31, "0x1p+5" instead of "0x8p+2".
+   Moreover, if one increases the output precision, the output form
+   changes (even if no rounding is involved). For instance, for 32,
+   "0x8p+2" changes to "0x2.0p+4" instead of "0x8.0p+2".
+   FIXME: choose first digit = always 1. Discussion:
+     https://sympa.inria.fr/sympa/arc/mpfr/2021-05/msg00002.html
+*/
 static int
 regular_ab (struct number_parts *np, mpfr_srcptr p,
             const struct printf_spec spec)
@@ -1636,7 +1681,7 @@ regular_fg (struct number_parts *np, mpfr_srcptr p,
         }
 
       if (str_len > 0)
-        /* some nonzero digits in fractional part */
+        /* some non-zero digits in fractional part */
         {
           np->point = MPFR_DECIMAL_POINT;
           np->fp_ptr = str;
@@ -2133,13 +2178,16 @@ mpfr_vasnprintf_aux (char **ptr, char *Buf, size_t size, const char *fmt,
 
       if (*fmt == '.')
         {
-          const char *f = ++fmt;
+          ++fmt;
           READ_INT (ap, fmt, spec.prec);
-          if (f == fmt || spec.prec < 0)
+          /* A negative value is possible with ".*" and it will be regarded
+             as a missing precision (ISO C). We need to make sure that such
+             a value is representable in an int (see its use below). */
+          if (spec.prec < 0)
             spec.prec = -1;
         }
       else
-        spec.prec = -1;
+        spec.prec = -1;  /* missing precision */
       MPFR_ASSERTD (spec.prec >= -1);
 
       fmt = parse_arg_type (fmt, &spec);
