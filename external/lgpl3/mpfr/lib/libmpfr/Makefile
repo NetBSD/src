@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2021/04/25 23:55:55 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2023/03/05 22:12:02 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -23,6 +23,7 @@ SRCS=	\
 	abort_prec_max.c \
 	acos.c \
 	acosh.c \
+	acosu.c \
 	add.c \
 	add1.c \
 	add1sp.c \
@@ -32,9 +33,12 @@ SRCS=	\
 	ai.c \
 	asin.c \
 	asinh.c \
+	asinu.c \
 	atan.c \
 	atan2.c \
+	atan2u.c \
 	atanh.c \
+	atanu.c \
 	bernoulli.c \
 	beta.c \
 	buildopt.c \
@@ -45,13 +49,14 @@ SRCS=	\
 	clears.c \
 	cmp.c \
 	cmp2.c \
-	cmpabs.c \
-	cmpabs_ui.c \
 	cmp_d.c \
 	cmp_ld.c \
 	cmp_si.c \
 	cmp_ui.c \
+	cmpabs.c \
+	cmpabs_ui.c \
 	comparisons.c \
+	compound.c \
 	const_catalan.c \
 	const_euler.c \
 	const_log2.c \
@@ -60,6 +65,7 @@ SRCS=	\
 	copysign.c \
 	cos.c \
 	cosh.c \
+	cosu.c \
 	cot.c \
 	coth.c \
 	csc.c \
@@ -83,7 +89,9 @@ SRCS=	\
 	exceptions.c \
 	exp.c \
 	exp10.c \
+	exp10m1.c \
 	exp2.c \
+	exp2m1.c \
 	exp3.c \
 	exp_2.c \
 	expm1.c \
@@ -99,6 +107,7 @@ SRCS=	\
 	fits_ushort.c \
 	fma.c \
 	fmma.c \
+	fmod_ui.c \
 	fms.c \
 	fpif.c \
 	frac.c \
@@ -122,7 +131,7 @@ SRCS=	\
 	get_ui.c \
 	get_uj.c \
 	get_z.c \
-	get_z_exp.c \
+	get_z_2exp.c \
 	gmp_op.c \
 	grandom.c \
 	hypot.c \
@@ -144,8 +153,10 @@ SRCS=	\
 	lngamma.c \
 	log.c \
 	log10.c \
+	log10p1.c \
 	log1p.c \
 	log2.c \
+	log2p1.c \
 	log_ui.c \
 	logging.c \
 	min_prec.c \
@@ -170,9 +181,12 @@ SRCS=	\
 	pool.c \
 	pow.c \
 	pow_si.c \
+	pow_sj.c \
 	pow_ui.c \
+	pow_uj.c \
 	pow_z.c \
 	powerof2.c \
+	powr.c \
 	print_raw.c \
 	print_rnd_mode.c \
 	printf.c \
@@ -214,7 +228,7 @@ SRCS=	\
 	set_ui_2exp.c \
 	set_uj.c \
 	set_z.c \
-	set_z_exp.c \
+	set_z_2exp.c \
 	set_zero.c \
 	setmax.c \
 	setmin.c \
@@ -226,6 +240,7 @@ SRCS=	\
 	sin_cos.c \
 	sinh.c \
 	sinh_cosh.c \
+	sinu.c \
 	sqr.c \
 	sqrt.c \
 	sqrt_ui.c \
@@ -241,6 +256,7 @@ SRCS=	\
 	swap.c \
 	tan.c \
 	tanh.c \
+	tanu.c \
 	total_order.c \
 	ubf.c \
 	uceil_exp2.c \
