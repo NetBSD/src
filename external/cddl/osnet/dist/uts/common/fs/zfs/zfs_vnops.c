@@ -5169,33 +5169,47 @@ zfs_netbsd_access(void *v)
 		accmode_t a_accmode;
 		kauth_cred_t a_cred;
 	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
-	accmode_t accmode = ap->a_accmode;
-	mode_t zfs_mode = 0;
+	vnode_t *vp = ap->a_vp;
+	znode_t *zp = VTOZ(vp);
+	accmode_t accmode;
 	kauth_cred_t cred = ap->a_cred;
-	int error;
+	int error = 0;
 
 	/*
-	 * XXX This is really random, especially the left shift by six,
-	 * and it exists only because of randomness in zfs_unix_to_v4
-	 * and zfs_zaccess_rwx in zfs_acl.c.
+	 * ZFS itself only knowns about VREAD, VWRITE, VEXEC and VAPPEND,
 	 */
-	if (accmode & VREAD)
-		zfs_mode |= S_IROTH;
-	if (accmode & VWRITE)
-		zfs_mode |= S_IWOTH;
-	if (accmode & VEXEC)
-		zfs_mode |= S_IXOTH;
-	zfs_mode <<= 6;
+	accmode = ap->a_accmode & (VREAD|VWRITE|VEXEC|VAPPEND);
+	if (accmode != 0)
+		error = zfs_access(vp, accmode, 0, cred, NULL);
 
-	KASSERT(VOP_ISLOCKED(vp));
-	error = zfs_access(vp, zfs_mode, 0, cred, NULL);
+	/*
+	 * VADMIN has to be handled by kauth_authorize_vnode().
+	 */
+	if (error == 0) {
+		accmode = ap->a_accmode & ~(VREAD|VWRITE|VEXEC|VAPPEND);
+		if (accmode != 0) {
+			error = kauth_authorize_vnode(cred,
+			    KAUTH_ACCESS_ACTION(accmode, vp->v_type,
+			    zp->z_mode & ALLPERMS), vp, NULL,
+			    genfs_can_access(vp, cred, zp->z_uid,
+			    zp->z_gid, zp->z_mode & ALLPERMS, NULL, accmode));
+		}
+	}
+
+	/*
+	 * For VEXEC, ensure that at least one execute bit is set for
+	 * non-directories.
+	 */
+	if (error == 0 && (ap->a_accmode & VEXEC) != 0 && vp->v_type != VDIR &&
+	    (zp->z_mode & (S_IXUSR | S_IXGRP | S_IXOTH)) == 0) {
+		error = EACCES;
+	}
 
 	/* We expect EACCES as common error. */
 	if (error == EPERM)
 		error = EACCES;
 
-	return (error);
+	return error;
 }
 
 static int
