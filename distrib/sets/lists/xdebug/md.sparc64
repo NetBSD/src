@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.19 2022/07/15 04:47:56 mrg Exp $
+# $NetBSD: md.sparc64,v 1.20 2023/03/05 18:03:35 andvar Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -72,7 +72,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/r128_drv.so.6.debug	xdebug-xf86-video-r128-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.6.debug	xdebug-xf86-video-radeon-kms-debug		xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/suncg6_drv.so.1.debug	xdebug-xf86-video-suncg6-degub		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/suncg6_drv.so.1.debug	xdebug-xf86-video-suncg6-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/sunffb_drv.so.1.debug	xdebug-xf86-video-sunffb-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/sunleo_drv.so.1.debug	-unknown-		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/sunleo_drv.so.1.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
