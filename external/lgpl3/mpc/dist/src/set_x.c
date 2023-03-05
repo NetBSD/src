@@ -1,7 +1,7 @@
 /* mpc_set_x -- Set the real part of a complex number
    (imaginary part equals +0 regardless of rounding mode).
 
-Copyright (C) 2008, 2009, 2010, 2011 INRIA
+Copyright (C) 2008, 2009, 2010, 2011, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -20,14 +20,6 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 */
 
 #include "config.h"
-
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h> /* for intmax_t */
-#else
-# ifdef HAVE_STDINT_H
-#  include <stdint.h>
-# endif
-#endif
 
 #ifdef HAVE_COMPLEX_H
 # include <complex.h>

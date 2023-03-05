@@ -1,6 +1,6 @@
 /* read_data.c -- Read data file and check function.
 
-Copyright (C) 2008, 2009, 2010, 2011, 2012 INRIA
+Copyright (C) 2008, 2009, 2010, 2011, 2012, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -225,6 +225,9 @@ read_mpfr_rounding_mode (FILE *fp, mpfr_rnd_t* rnd)
       break;
     case 'd': case 'D':
       *rnd = MPFR_RNDD;
+      break;
+    case 'a': case 'A':
+      *rnd = MPFR_RNDA;
       break;
     default:
       printf ("Error: Unexpected rounding mode '%c' in file '%s' line %lu\n",
