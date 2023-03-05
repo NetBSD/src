@@ -1,6 +1,6 @@
 /* Test file for mpfr_custom_*
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,6 +21,53 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #include "mpfr-test.h"
+
+/*************************************************************************/
+
+/* Bug found on 2022-05-05 in the mpfr_custom_get_size macro.
+   With the buggy macro, this test will fail if mpfr_prec_t > int,
+   typically on LP64 platforms (usual 64-bit machines).
+   This bug could occur only for precisions close to INT_MAX or higher. */
+static void
+test_get_size (void)
+{
+  unsigned int u = UINT_MAX;
+  int i = INT_MAX;
+
+  if (u <= MPFR_PREC_MAX)
+    {
+      mpfr_prec_t p = u;
+      size_t s1, s2;
+
+      s1 = mpfr_custom_get_size (p);
+      s2 = mpfr_custom_get_size (u);
+      if (s1 != s2)
+        {
+          printf ("Error 1 in test_get_size (mpfr_custom_get_size macro).\n");
+          printf ("Expected %lu\n", (unsigned long) s1);
+          printf ("Got      %lu\n", (unsigned long) s2);
+          exit (1);
+        }
+    }
+
+  if (i <= MPFR_PREC_MAX)
+    {
+      mpfr_prec_t p = i;
+      size_t s1, s2;
+
+      s1 = mpfr_custom_get_size (p);
+      s2 = mpfr_custom_get_size (i);
+      if (s1 != s2)
+        {
+          printf ("Error 2 in test_get_size (mpfr_custom_get_size macro).\n");
+          printf ("Expected %lu\n", (unsigned long) s1);
+          printf ("Got      %lu\n", (unsigned long) s2);
+          exit (1);
+        }
+    }
+}
+
+/*************************************************************************/
 
 #define BUFFER_SIZE 250
 #define PREC_TESTED 200
@@ -70,40 +117,81 @@ reset_stack (void)
 
 /*************************************************************************/
 
- /* Alloc a new mpfr_t on the main stack */
+/* Alloc a new mpfr_t on the main stack */
 static mpfr_ptr
 new_mpfr (mpfr_prec_t p)
 {
   mpfr_ptr x = (mpfr_ptr) new_st (sizeof (mpfr_t));
   void *mantissa = new_st (mpfr_custom_get_size (p));
+
   mpfr_custom_init (mantissa, p);
   mpfr_custom_init_set (x, 0, 0, p, mantissa);
   return x;
 }
 
- /* Alloc a new mpfr_t on the main stack */
+/* Alloc a new mpfr_t on the main stack */
 static mpfr_ptr
-new_nan (mpfr_prec_t p)
+new_nan1 (mpfr_prec_t p)
 {
   mpfr_ptr x = (mpfr_ptr) new_st (sizeof (mpfr_t));
   void *mantissa = new_st ((mpfr_custom_get_size) (p));
+
   (mpfr_custom_init) (mantissa, p);
   (mpfr_custom_init_set) (x, MPFR_NAN_KIND, 0, p, mantissa);
   return x;
 }
 
- /* Alloc a new mpfr_t on the main stack */
+/* Alloc a new mpfr_t on the main stack */
+static mpfr_ptr
+new_nan2 (mpfr_prec_t p)
+{
+  mpfr_ptr x = (mpfr_ptr) new_st (sizeof (mpfr_t));
+  void *mantissa = new_st ((mpfr_custom_get_size) (p));
+  int i1, i2, i3, i4, i5;
+
+  /* Check side effects. */
+  i1 = i2 = 0;
+  mpfr_custom_init ((i1++, mantissa), (i2++, p));
+  MPFR_ASSERTN (i1 == 1);
+  MPFR_ASSERTN (i2 == 1);
+
+  /* Check that the type "void *" can be used in C, like with the function
+     (forbidden in C++). Also check side effects. */
+  i1 = i2 = i3 = i4 = i5 = 0;
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+  mpfr_custom_init_set ((i1++, VOIDP_CAST(x)),
+                        (i2++, MPFR_NAN_KIND),
+                        (i3++, 0),
+                        (i4++, p),
+                        (i5++, mantissa));
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+  MPFR_ASSERTN (i1 == 1);
+  MPFR_ASSERTN (i2 == 1);
+  MPFR_ASSERTN (i3 == 1);
+  MPFR_ASSERTN (i4 == 1);
+  MPFR_ASSERTN (i5 == 1);
+
+  return x;
+}
+
+/* Alloc a new mpfr_t on the main stack */
 static mpfr_ptr
 new_inf (mpfr_prec_t p)
 {
   mpfr_ptr x = (mpfr_ptr) new_st (sizeof (mpfr_t));
   void *mantissa = new_st ((mpfr_custom_get_size) (p));
+
   (mpfr_custom_init) (mantissa, p);
   (mpfr_custom_init_set) (x, -MPFR_INF_KIND, 0, p, mantissa);
   return x;
 }
 
- /* Garbage the stack by keeping only x and save it in old_stack */
+/* Garbage the stack by keeping only x and save it in old_stack */
 static mpfr_ptr
 return_mpfr (mpfr_ptr x, char *old_stack)
 {
@@ -111,17 +199,46 @@ return_mpfr (mpfr_ptr x, char *old_stack)
   size_t size_mantissa = mpfr_custom_get_size (mpfr_get_prec (x));
   mpfr_ptr newx;
   long *newx2;
+  int i1, i2;
+
+  /* Check that the type "void *" can be used in C, like with the function
+     (forbidden in C++). Also check side effects. */
+  i1 = 0;
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+  MPFR_ASSERTN (mpfr_custom_get_significand ((i1++, VOIDP_CAST(x)))
+                == mantissa);
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+  MPFR_ASSERTN (i1 == 1);
 
   memmove (old_stack, x, sizeof (mpfr_t));
   memmove (old_stack + ALIGNED (sizeof (mpfr_t)), mantissa, size_mantissa);
   newx = (mpfr_ptr) (long *) (void *) old_stack;
   newx2 = (long *) (void *) (old_stack + ALIGNED (sizeof (mpfr_t)));
-  mpfr_custom_move (newx, newx2);
+
+  /* Check that the type "void *" can be used in C, like with the function
+     (forbidden in C++). Also check side effects. */
+  i1 = i2 = 0;
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+  mpfr_custom_move ((i1++, VOIDP_CAST(newx)), (i2++, newx2));
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+  MPFR_ASSERTN (i1 == 1);
+  MPFR_ASSERTN (i2 == 1);
+
   stack = (char *) newx2 + ALIGNED (size_mantissa);
   return newx;
 }
 
- /* Garbage the stack by keeping only x and save it in old_stack */
+/* Garbage the stack by keeping only x and save it in old_stack */
 static mpfr_ptr
 return_mpfr_func (mpfr_ptr x, char *old_stack)
 {
@@ -178,14 +295,16 @@ static void
 test_nan_inf_zero (void)
 {
   mpfr_ptr val;
+  mpfr_srcptr sval;  /* for compilation error checking */
   int sign;
   int kind;
 
   reset_stack ();
 
   val = new_mpfr (MPFR_PREC_MIN);
+  sval = val;
   mpfr_set_nan (val);
-  kind = (mpfr_custom_get_kind) (val);
+  kind = (mpfr_custom_get_kind) (sval);
   if (kind != MPFR_NAN_KIND)
     {
       printf ("mpfr_custom_get_kind error: ");
@@ -194,10 +313,17 @@ test_nan_inf_zero (void)
       exit (1);
     }
 
-  val = new_nan (MPFR_PREC_MIN);
+  val = new_nan1 (MPFR_PREC_MIN);
   if (!mpfr_nan_p(val))
     {
-      printf ("Error: mpfr_custom_init_set doesn't set NAN mpfr.\n");
+      printf ("Error: mpfr_custom_init_set doesn't set NAN mpfr (1).\n");
+      exit (1);
+    }
+
+  val = new_nan2 (MPFR_PREC_MIN);
+  if (!mpfr_nan_p(val))
+    {
+      printf ("Error: mpfr_custom_init_set doesn't set NAN mpfr (2).\n");
       exit (1);
     }
 
@@ -256,11 +382,63 @@ static long *
 dummy_set_si (long si)
 {
   mpfr_t x;
-  long * r = dummy_new ();
-  (mpfr_custom_init_set) (x, MPFR_REGULAR_KIND, 0, p, &r[2]);
+  mpfr_srcptr px;  /* for compilation error checking */
+  long *r = dummy_new ();
+  int i1, i2, i3, i4, i5;
+
+  /* Check that the type "void *" can be used, like with the function.
+     Also check side effects. */
+  i1 = i2 = i3 = i4 = i5 = 0;
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+  mpfr_custom_init_set ((i1++, VOIDP_CAST(x)),
+                        (i2++, MPFR_REGULAR_KIND),
+                        (i3++, 0),
+                        (i4++, p),
+                        (i5++, &r[2]));
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+  MPFR_ASSERTN (i1 == 1);
+  MPFR_ASSERTN (i2 == 1);
+  MPFR_ASSERTN (i3 == 1);
+  MPFR_ASSERTN (i4 == 1);
+  MPFR_ASSERTN (i5 == 1);
+
   mpfr_set_si (x, si, MPFR_RNDN);
-  r[0] = mpfr_custom_get_kind (x);
+  px = x;
+  r[0] = mpfr_custom_get_kind (px);
+
+  /* Check that the type "void *" can be used in C, like with the function
+     (forbidden in C++). Also check side effects. */
+  i1 = 0;
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+  MPFR_ASSERTN (mpfr_custom_get_kind ((i1++, VOIDP_CAST(x))) == r[0]);
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+  MPFR_ASSERTN (i1 == 1);
+
   r[1] = mpfr_custom_get_exp (x);
+
+  /* Check that the type "void *" can be used in C, like with the function
+     (forbidden in C++). Also check side effects. */
+  i1 = 0;
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+  MPFR_ASSERTN (mpfr_custom_get_exp ((i1++, VOIDP_CAST(x))) == r[1]);
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+  MPFR_ASSERTN (i1 == 1);
+
   return r;
 }
 
@@ -269,6 +447,7 @@ dummy_add (long *a, long *b)
 {
   mpfr_t x, y, z;
   long *r = dummy_new ();
+
   mpfr_custom_init_set (x, 0 + MPFR_REGULAR_KIND, 0, p, &r[2]);
   (mpfr_custom_init_set) (y, a[0], a[1], p, &a[2]);
   mpfr_custom_init_set (z, 0 + b[0], b[1], p, &b[2]);
@@ -329,6 +508,7 @@ int
 main (void)
 {
   tests_start_mpfr ();
+  test_get_size ();
   /* We test iff long = mp_limb_t */
   if (sizeof (long) == sizeof (mp_limb_t))
     {

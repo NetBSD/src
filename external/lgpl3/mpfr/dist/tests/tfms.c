@@ -1,6 +1,6 @@
 /* Test file for mpfr_fms.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -570,11 +570,11 @@ main (int argc, char *argv[])
             mpfr_urandomb (y, RANDS);
             mpfr_urandomb (z, RANDS);
 
-            if (randlimb () % 2)
+            if (RAND_BOOL ())
               mpfr_neg (x, x, MPFR_RNDN);
-            if (randlimb () % 2)
+            if (RAND_BOOL ())
               mpfr_neg (y, y, MPFR_RNDN);
-            if (randlimb () % 2)
+            if (RAND_BOOL ())
               mpfr_neg (z, z, MPFR_RNDN);
 
             rnd = RND_RAND_NO_RNDF ();

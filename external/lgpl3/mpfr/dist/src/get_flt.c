@@ -1,6 +1,6 @@
 /* mpfr_get_flt -- convert a mpfr_t to a machine single precision float
 
-Copyright 2009-2020 Free Software Foundation, Inc.
+Copyright 2009-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -41,7 +41,10 @@ mpfr_get_flt (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   /* in case of NaN, +Inf, -Inf, +0, -0, the conversion from double to float
      is exact */
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (src)))
-    return (float) mpfr_get_d (src, rnd_mode);
+    {
+      /* for NaN, we don't propagate the sign bit */
+      return (float) mpfr_get_d (src, rnd_mode);
+    }
 
   e = MPFR_GET_EXP (src);
   negative = MPFR_IS_NEG (src);

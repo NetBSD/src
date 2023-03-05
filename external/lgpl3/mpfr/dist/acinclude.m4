@@ -1,6 +1,6 @@
 dnl  MPFR specific autoconf macros
 
-dnl  Copyright 2000, 2002-2020 Free Software Foundation, Inc.
+dnl  Copyright 2000, 2002-2023 Free Software Foundation, Inc.
 dnl  Contributed by the AriC and Caramba projects, INRIA.
 dnl
 dnl  This file is part of the GNU MPFR Library.
@@ -40,7 +40,6 @@ AC_DEFUN([MPFR_CONFIGS],
 AC_REQUIRE([AC_OBJEXT])
 AC_REQUIRE([MPFR_CHECK_LIBM])
 AC_REQUIRE([MPFR_CHECK_LIBQUADMATH])
-AC_REQUIRE([AC_HEADER_TIME])
 AC_REQUIRE([AC_CANONICAL_HOST])
 
 dnl Features for the MPFR shared cache. This needs to be done
@@ -62,6 +61,10 @@ dnl (such as with Debian's autoconf-archive 20160320-1), which contains
 dnl AX_PTHREAD_ZOS_MISSING, etc. It is not documented, but see:
 dnl   https://lists.gnu.org/archive/html/autoconf/2015-03/msg00011.html
 dnl
+dnl AX_PTHREAD is now in the MPFR repository (m4/ax_pthread.m4), but we
+dnl should leave this test, just in case there is some issue loading it
+dnl (or any other reason).
+dnl
 dnl Note: each time a change is done in m4_pattern_forbid, autogen.sh
 dnl should be tested with and without ax_pthread.m4 availability (in
 dnl the latter case, there should be an error).
@@ -69,7 +72,9 @@ dnl the latter case, there should be an error).
     AX_PTHREAD([])
     if test "$ax_pthread_ok" = yes; then
       CC="$PTHREAD_CC"
+      CXX="$PTHREAD_CXX"
       CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+      CXXFLAGS="$CXXFLAGS $PTHREAD_CFLAGS"
       LIBS="$LIBS $PTHREAD_LIBS"
 dnl Do a compilation test, as this is currently not done by AX_PTHREAD.
 dnl Moreover, MPFR needs pthread_rwlock_t, which is conditionally defined
@@ -119,7 +124,7 @@ AC_CHECK_HEADER([stdarg.h],[AC_DEFINE([HAVE_STDARG],1,[Define if stdarg])],
     AC_MSG_ERROR([stdarg.h or varargs.h not found]))])
 
 dnl sys/fpu.h - MIPS specific
-AC_CHECK_HEADERS([sys/time.h sys/fpu.h])
+AC_CHECK_HEADERS([sys/fpu.h])
 
 dnl Android has a <locale.h>, but not the following members.
 AC_CHECK_MEMBERS([struct lconv.decimal_point, struct lconv.thousands_sep],,,
@@ -297,22 +302,23 @@ static double get_max (void) { static volatile double d = DBL_MAX; return d; }
 fi
 
 dnl Check if subnormal numbers are supported.
-dnl for the binary64 format, the smallest normal number is 2^(-1022)
-dnl for the binary32 format, the smallest normal number is 2^(-126)
-dnl Note: One could double-check with the value of the macros
-dnl DBL_HAS_SUBNORM and FLT_HAS_SUBNORM, when defined (C2x), but
-dnl neither tests would be reliable on implementations with partial
-dnl subnormal support. Anyway, this check is useful only for the
-dnl tests. Thus in doubt, assume that subnormals are not supported,
-dnl in order to disable the corresponding tests (which could fail).
+dnl For the binary64 format, the smallest normal number is 2^(-1022).
+dnl For the binary32 format, the smallest normal number is 2^(-126).
+dnl Do not use the corresponding HAVE_SUBNORM_* macros as they
+dnl are not available when cross-compiling. For the tests, use
+dnl the have_subnorm_* functions if need be.
+dnl Note: "volatile" is needed to avoid -ffast-math optimizations
+dnl (default in icx 2021.2.0, which also sets the FZ and DAZ bits
+dnl of the x86-64 MXCSR register to disregard subnormals).
 AC_CACHE_CHECK([for subnormal double-precision numbers],
 mpfr_cv_have_subnorm_dbl, [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 int main (void) {
-  double x = 2.22507385850720138309e-308;
-  fprintf (stderr, "%e\n", x / 2.0);
-  return 2.0 * (double) (x / 2.0) != x;
+  volatile double x = 2.22507385850720138309e-308, y;
+  y = x / 2.0;
+  fprintf (stderr, "%e\n", y);
+  return 2.0 * y != x;
 }
 ]])],
    [mpfr_cv_have_subnorm_dbl="yes"],
@@ -328,9 +334,10 @@ mpfr_cv_have_subnorm_flt, [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
 int main (void) {
-  float x = 1.17549435082229e-38;
-  fprintf (stderr, "%e\n", x / 2.0);
-  return 2.0 * (float) (x / 2.0) != x;
+  volatile float x = 1.17549435082229e-38, y;
+  y = x / 2.0f;
+  fprintf (stderr, "%e\n", (double) y);
+  return 2.0f * y != x;
 }
 ]])],
    [mpfr_cv_have_subnorm_flt="yes"],
@@ -387,6 +394,12 @@ fi
 dnl Check whether NAN != NAN (as required by the IEEE-754 standard,
 dnl but not by the ISO C standard). For instance, this is false with
 dnl MIPSpro 7.3.1.3m under IRIX64. By default, assume this is true.
+dnl Note that this test may not detect all issues. For instance, with
+dnl icx 2021.2.0 (and default fast-math), the result depends on whether
+dnl the identifier has internal or external linkage:
+dnl   https://community.intel.com/t5/Intel-oneAPI-Base-Toolkit/icx-2021-2-0-bug-incorrect-NaN-comparison-using-an-identifier/m-p/1286869
+dnl TODO: change "NAN == NAN" to "NaN is supported" and rename
+dnl the MPFR_NANISNAN macro?
 AC_CACHE_CHECK([if NAN == NAN], mpfr_cv_nanisnan, [
 AC_RUN_IFELSE([AC_LANG_SOURCE([[
 #include <stdio.h>
@@ -501,27 +514,6 @@ static int f (double (*func)(double)) { return 0; }
    AC_MSG_RESULT(yes)
    AC_DEFINE(HAVE_NEARBYINT, 1,[Have ISO C99 nearbyint function])
 ],[AC_MSG_RESULT(no)])
-
-dnl Check if _mulx_u64 is provided
-dnl Note: This intrinsic is not standard. We need a run because
-dnl it may be provided but not working as expected (with ICC 15,
-dnl one gets an "Illegal instruction").
-AC_MSG_CHECKING([for _mulx_u64])
-AC_RUN_IFELSE([AC_LANG_PROGRAM([[
-#include <immintrin.h>
-]], [[
- unsigned long long h1, h2;
- _mulx_u64(17, 42, &h1);
- _mulx_u64(-1, -1, &h2);
- return h1 == 0 && h2 == -2 ? 0 : 1;
-]])],
-  [AC_MSG_RESULT(yes)
-   AC_DEFINE(HAVE_MULX_U64, 1,[Have a working _mulx_u64 function])
-  ],
-  [AC_MSG_RESULT(no)
-  ],
-  [AC_MSG_RESULT([cannot test, assume no])
-  ])
 
 LIBS="$saved_LIBS"
 
@@ -1465,46 +1457,81 @@ EOF
  rm -f conftest*
 ])])
 
+
+dnl  MPFR_HAVE_LIB
+dnl  -------------
+dnl
+dnl  Similar to AC_CHECK_LIB, but without checking any function.
+dnl  This is useful, because AC_CHECK_LIB has compatibility issues
+dnl  with GCC's -Werror, such has
+dnl    error: infinite recursion detected [-Werror=infinite-recursion]
+dnl  if "main" is checked, or
+dnl    error: conflicting types for built-in function 'floor'; expected
+dnl    'double(double)' [-Werror=builtin-declaration-mismatch]
+dnl  if "floor" is checked (since "char floor ();" is used by autoconf).
+dnl
+dnl  In the future, use AC_SEARCH_LIBS instead?
+
+AC_DEFUN([MPFR_HAVE_LIB], [
+saved_LIBS="$LIBS"
+LIBS="-l$1 $LIBS"
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[]], [[]])], $2)
+LIBS="$saved_LIBS"
+])
+
+
 dnl  MPFR_CHECK_LIBM
 dnl  ---------------
-dnl  Determine a math library -lm to use.
+dnl  Determine math libraries to use.
+dnl  The actual functions will individually be checked later.
 
 AC_DEFUN([MPFR_CHECK_LIBM],
 [AC_REQUIRE([AC_CANONICAL_HOST])
 AC_SUBST(MPFR_LIBM,'')
 case $host in
-  *-*-beos* | *-*-cygwin* | *-*-pw32*)
-    # According to libtool AC CHECK LIBM, these systems don't have libm
+  *-*-beos* | *-*-cegcc* | *-*-cygwin* | *-*-haiku* | *-*-pw32* | *-*-darwin*)
+    # According to libtool.m4:
+    #   These systems don't have libm, or don't need it.
     ;;
   *-*-solaris*)
-    # On Solaris the math functions new in C99 are in -lm9x.
-    # FIXME: Do we need -lm9x as well as -lm, or just instead of?
-    AC_CHECK_LIB(m9x, main, MPFR_LIBM="-lm9x")
-    AC_CHECK_LIB(m,   main, MPFR_LIBM="$MPFR_LIBM -lm")
+    # On Solaris, some additional math functions are in -lm9x.
+    # For MPFR, https://docs.oracle.com/cd/E19957-01/806-3568/ncg_lib.html
+    # says that ceil, floor and rint are provided by libm. We would also
+    # like nearbyint when available, but there is no mention of it in this
+    # doc. Just in case, let's check for it in m9x, e.g. if it is added in
+    # the future.
+    MPFR_HAVE_LIB(m9x, MPFR_LIBM="-lm9x")
+    MPFR_HAVE_LIB(m, MPFR_LIBM="$MPFR_LIBM -lm")
     ;;
   *-ncr-sysv4.3*)
-    # FIXME: What does -lmw mean?  Libtool AC CHECK LIBM does it this way.
+    # The following AC_CHECK_LIB line about -lmw is copied from libtool.m4,
+    # but do we need it? This has never been tested in MPFR. See commits
+    #   6d34bd85f038abeaeeb77aa8f65b562623cc38bc (1999-02-13)
+    #   e65f46d3fc4eb98d25ee94ad8e6f51c5846c8fe3 (1999-03-20)
+    # in the libtool repository.
     AC_CHECK_LIB(mw, _mwvalidcheckl, MPFR_LIBM="-lmw")
-    AC_CHECK_LIB(m, main, MPFR_LIBM="$MPFR_LIBM -lm")
+    MPFR_HAVE_LIB(m, MPFR_LIBM="$MPFR_LIBM -lm")
     ;;
   *)
-    AC_CHECK_LIB(m, main, MPFR_LIBM="-lm")
+    MPFR_HAVE_LIB(m, MPFR_LIBM="-lm")
     ;;
 esac
 ])
 
 dnl  MPFR_CHECK_LIBQUADMATH
-dnl  ---------------
+dnl  ----------------------
 dnl  Determine a math library -lquadmath to use.
+
 AC_DEFUN([MPFR_CHECK_LIBQUADMATH],
 [AC_REQUIRE([AC_CANONICAL_HOST])
 AC_SUBST(MPFR_LIBQUADMATH,'')
 case $host in
   *)
-    AC_CHECK_LIB(quadmath, main, MPFR_LIBQUADMATH="-lquadmath")
+    MPFR_HAVE_LIB(quadmath, MPFR_LIBQUADMATH="-lquadmath")
     ;;
 esac
 ])
+
 
 dnl  MPFR_LD_SEARCH_PATHS_FIRST
 dnl  --------------------------

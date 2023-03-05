@@ -1,7 +1,7 @@
 /* mpfr_get_d, mpfr_get_d_2exp -- convert a multiple precision floating-point
                                   number to a machine double precision float
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -42,7 +42,10 @@ mpfr_get_d (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (src)))
     {
       if (MPFR_IS_NAN (src))
-        return MPFR_DBL_NAN;
+        {
+          /* we don't propagate the sign bit */
+          return MPFR_DBL_NAN;
+        }
 
       negative = MPFR_IS_NEG (src);
 
@@ -148,7 +151,10 @@ mpfr_get_d_2exp (long *expptr, mpfr_srcptr src, mpfr_rnd_t rnd_mode)
       int negative;
       *expptr = 0;
       if (MPFR_IS_NAN (src))
-        return MPFR_DBL_NAN;
+        {
+          /* we don't propagate the sign bit */
+          return MPFR_DBL_NAN;
+        }
       negative = MPFR_IS_NEG (src);
       if (MPFR_IS_INF (src))
         return negative ? MPFR_DBL_INFM : MPFR_DBL_INFP;

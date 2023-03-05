@@ -1,6 +1,6 @@
 /* mpfr_mul -- multiply two floating-point numbers
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -51,7 +51,7 @@ mpfr_mul3 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
           MPFR_SET_NAN(a);
           MPFR_RET_NAN;
         }
-      sign_product = MPFR_MULT_SIGN( MPFR_SIGN(b) , MPFR_SIGN(c) );
+      sign_product = MPFR_MULT_SIGN(MPFR_SIGN(b), MPFR_SIGN(c));
       if (MPFR_IS_INF(b))
         {
           if (MPFR_IS_INF(c) || MPFR_NOTZERO(c))
@@ -88,7 +88,7 @@ mpfr_mul3 (mpfr_ptr a, mpfr_srcptr b, mpfr_srcptr c, mpfr_rnd_t rnd_mode)
           MPFR_RET(0); /* 0 * 0 is exact */
         }
     }
-  sign_product = MPFR_MULT_SIGN( MPFR_SIGN(b) , MPFR_SIGN(c) );
+  sign_product = MPFR_MULT_SIGN(MPFR_SIGN(b), MPFR_SIGN(c));
 
   ax = MPFR_GET_EXP (b) + MPFR_GET_EXP (c);
 

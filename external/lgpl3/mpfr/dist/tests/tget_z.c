@@ -1,6 +1,6 @@
-/* Test file for mpz_set_fr / mpfr_get_z.
+/* Test file for mpz_set_fr / mpfr_get_z / mpfr_get_z_2exp.
 
-Copyright 2004, 2006-2020 Free Software Foundation, Inc.
+Copyright 2004, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -53,7 +53,7 @@ check_diff (void)
   /* save default emin */
   emin = mpfr_get_emin ();;
 
-  mpfr_set_emin (17);
+  set_emin (17);
   mpfr_set_ui (x, 0, MPFR_RNDN);
   inex = mpfr_get_z (z, x, MPFR_RNDN);
   if (inex != 0 || mpz_cmp_ui (z, 0) != 0)
@@ -63,7 +63,7 @@ check_diff (void)
     }
 
   /* restore default emin */
-  mpfr_set_emin (emin);
+  set_emin (emin);
 
   mpfr_clear (x);
   mpz_clear  (z);

@@ -1,6 +1,6 @@
 /* mpfr_log_ui -- compute natural logarithm of an unsigned long
 
-Copyright 2014-2020 Free Software Foundation, Inc.
+Copyright 2014-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -33,7 +33,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
    truncate the rationals inside the algorithm, but then the error analysis
    should be redone. */
 
-/* Cf http://www.ginac.de/CLN/binsplit.pdf: the Taylor series of log(1+x)
+/* Cf https://www.ginac.de/CLN/binsplit.pdf - the Taylor series of log(1+x)
    up to order N for x=p/2^k is T/(B*Q).
    P[0] <- (-p)^(n2-n1) [with opposite sign when n1=1]
    q <- k*(n2-n1) [corresponding to Q[0] = 2^q]
@@ -120,8 +120,8 @@ mpfr_log_ui (mpfr_ptr x, unsigned long n, mpfr_rnd_t rnd_mode)
 
   /* here n >= 3 */
 
-  /* Argument reduction: compute k such that 2/3 <= n/2^k < 4/3,
-     i.e., 2^(k+1) <= 3n < 2^(k+2).
+  /* Argument reduction: compute k such that 2/3 < n/2^k < 4/3,
+     i.e., 2^(k+1) < 3n < 2^(k+2).
 
      FIXME: we could do better by considering n/(2^k*3^i*5^j),
      which reduces the maximal distance to 1 from 1/3 to 1/8,
@@ -140,10 +140,13 @@ mpfr_log_ui (mpfr_ptr x, unsigned long n, mpfr_rnd_t rnd_mode)
   /* The reduced argument is n/2^k - 1 = (n-2^k)/2^k.
      Compute p = n-2^k. One has: |p| = |n-2^k| < 2^k/3 < n/2 <= LONG_MAX,
      so that p and -p both fit in a long. */
-  if (k < sizeof (unsigned long) * CHAR_BIT)
+  if (k < sizeof (unsigned long) * CHAR_BIT)  /* assume no padding bits */
     n -= 1UL << k;
-  /* n is now the value of p mod ULONG_MAX+1 */
-  p = n > LONG_MAX ? - (long) - n : (long) n;
+  /* n is now the value of p mod ULONG_MAX+1.
+     Since |p| <= LONG_MAX, if n > LONG_MAX, this means that p < 0 and
+     -n as an unsigned long value is at most LONG_MAX, thus fits in a
+     long. */
+  p = ULONG2LONG (n);
 
   MPFR_TMP_MARK(marker);
   w = MPFR_PREC(x) + MPFR_INT_CEIL_LOG2 (MPFR_PREC(x)) + 10;

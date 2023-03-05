@@ -1,7 +1,7 @@
 /* mpfr_nextabove, mpfr_nextbelow, mpfr_nexttoward -- next representable
 floating-point number
 
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -23,8 +23,22 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* Note concerning the exceptions: In case of NaN result, the NaN flag is
  * set as usual. No underflow or overflow is generated (this contradicts
- * the obsolete IEEE 754-1985 standard for Nextafter, but conforms to the
- * current standard IEEE 754-2008 for nextUp and nextDown).
+ * the obsolete IEEE 754-1985 standard for nextafter, but conforms to the
+ * IEEE 754-2008/2019 standards, where the nextUp and nextDown operations
+ * replaced nextafter).
+ *
+ * For mpfr_nexttoward where x and y are zeros of different signs, the
+ * behavior is the same as the nextafter function from IEEE 754-1985
+ * (x is returned), but differs from the ISO C99 nextafter and nexttoward
+ * functions (where y is returned).
+ *
+ * In short:
+ *   - mpfr_nextabove and mpfr_nextbelow are similar to nextUp and nextDown
+ *     respectively (IEEE 2008+, ISO C2x), but with the usual MPFR rule for
+ *     the NaN flag (because MPFR has a single kind of NaN);
+ *   - mpfr_nexttoward is also similar to these functions concerning the
+ *     exceptions and the sign of 0, and for the particular case x = y, it
+ *     follows the old nextafter function from IEEE 754-1985.
  */
 
 #include "mpfr-impl.h"

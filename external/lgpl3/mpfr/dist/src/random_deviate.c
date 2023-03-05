@@ -1,6 +1,6 @@
 /* random_deviate routines for mpfr_erandom and mpfr_nrandom.
 
-Copyright 2013-2020 Free Software Foundation, Inc.
+Copyright 2013-2023 Free Software Foundation, Inc.
 Contributed by Charles Karney <charles@karney.com>, SRI International.
 
 This file is part of the GNU MPFR Library.
@@ -64,7 +64,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* allocate and set to (0,1) */
 void
-mpfr_random_deviate_init (mpfr_random_deviate_t x)
+mpfr_random_deviate_init (mpfr_random_deviate_ptr x)
 {
   mpz_init (x->f);
   x->e = 0;
@@ -72,21 +72,22 @@ mpfr_random_deviate_init (mpfr_random_deviate_t x)
 
 /* reset to (0,1) */
 void
-mpfr_random_deviate_reset (mpfr_random_deviate_t x)
+mpfr_random_deviate_reset (mpfr_random_deviate_ptr x)
 {
   x->e = 0;
 }
 
 /* deallocate */
 void
-mpfr_random_deviate_clear (mpfr_random_deviate_t x)
+mpfr_random_deviate_clear (mpfr_random_deviate_ptr x)
 {
   mpz_clear (x->f);
 }
 
 /* swap two random deviates */
 void
-mpfr_random_deviate_swap (mpfr_random_deviate_t x, mpfr_random_deviate_t y)
+mpfr_random_deviate_swap (mpfr_random_deviate_ptr x,
+                          mpfr_random_deviate_ptr y)
 {
   mpfr_random_size_t s;
   unsigned long t;
@@ -107,7 +108,7 @@ mpfr_random_deviate_swap (mpfr_random_deviate_t x, mpfr_random_deviate_t y)
 
 /* ensure x has at least k bits */
 static void
-random_deviate_generate (mpfr_random_deviate_t x, mpfr_random_size_t k,
+random_deviate_generate (mpfr_random_deviate_ptr x, mpfr_random_size_t k,
                          gmp_randstate_t r, mpz_t t)
 {
   /* Various compile time checks on mpfr_random_deviate_t */
@@ -223,7 +224,7 @@ highest_bit_idx (unsigned long x)
 
 /* return position of leading bit, counting from 1 */
 static mpfr_random_size_t
-random_deviate_leading_bit (mpfr_random_deviate_t x, gmp_randstate_t r)
+random_deviate_leading_bit (mpfr_random_deviate_ptr x, gmp_randstate_t r)
 {
   mpfr_random_size_t l;
   random_deviate_generate (x, W, r, 0);
@@ -243,7 +244,7 @@ random_deviate_leading_bit (mpfr_random_deviate_t x, gmp_randstate_t r)
 
 /* return kth bit of fraction, representing 2^-k */
 int
-mpfr_random_deviate_tstbit (mpfr_random_deviate_t x, mpfr_random_size_t k,
+mpfr_random_deviate_tstbit (mpfr_random_deviate_ptr x, mpfr_random_size_t k,
                             gmp_randstate_t r)
 {
   if (k == 0)
@@ -256,7 +257,8 @@ mpfr_random_deviate_tstbit (mpfr_random_deviate_t x, mpfr_random_size_t k,
 
 /* compare two random deviates, x < y */
 int
-mpfr_random_deviate_less (mpfr_random_deviate_t x, mpfr_random_deviate_t y,
+mpfr_random_deviate_less (mpfr_random_deviate_ptr x,
+                          mpfr_random_deviate_ptr y,
                           gmp_randstate_t r)
 {
   mpfr_random_size_t k = 1;
@@ -280,7 +282,7 @@ mpfr_random_deviate_less (mpfr_random_deviate_t x, mpfr_random_deviate_t y,
 /* set mpfr_t z = (neg ? -1 : 1) * (n + x) */
 int
 mpfr_random_deviate_value (int neg, unsigned long n,
-                           mpfr_random_deviate_t x, mpfr_t z,
+                           mpfr_random_deviate_ptr x, mpfr_ptr z,
                            gmp_randstate_t r, mpfr_rnd_t rnd)
 {
   /* r is used to add as many bits as necessary to match the precision of z */
@@ -289,6 +291,7 @@ mpfr_random_deviate_value (int neg, unsigned long n,
   mpfr_random_size_t p = mpfr_get_prec (z); /* Number of bits in result */
   mpz_t t;
   int inex;
+  mpfr_exp_t negxe;
 
   if (n == 0)
     {
@@ -370,14 +373,22 @@ mpfr_random_deviate_value (int neg, unsigned long n,
   mpz_setbit (t, 0);     /* Set the trailing bit so result is always inexact */
   if (neg)
     mpz_neg (t, t);
-  /* Is -x->e representable as a mpfr_exp_t? */
-  MPFR_ASSERTN (x->e <= (mpfr_uexp_t)(-1) >> 1);
+  /* Portable version of the negation of x->e, with a check of overflow. */
+  if (MPFR_UNLIKELY (x->e > MPFR_EXP_MAX))
+    {
+      /* Overflow, except when x->e = MPFR_EXP_MAX + 1 = - MPFR_EXP_MIN. */
+      MPFR_ASSERTN (MPFR_EXP_MIN + MPFR_EXP_MAX == -1 &&
+                    x->e == (mpfr_random_size_t) MPFR_EXP_MAX + 1);
+      negxe = MPFR_EXP_MIN;
+    }
+  else
+    negxe = - (mpfr_exp_t) x->e;
   /*
    * Let mpfr_set_z_2exp do all the work of rounding to the requested
    * precision, setting overflow/underflow flags, and returning the right
    * inexact value.
    */
-  inex = mpfr_set_z_2exp (z, t, -x->e, rnd);
+  inex = mpfr_set_z_2exp (z, t, negxe, rnd);
   mpz_clear (t);
   return inex;
 }

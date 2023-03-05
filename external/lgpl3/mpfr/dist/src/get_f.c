@@ -1,6 +1,6 @@
 /* mpfr_get_f -- convert a MPFR number to a GNU MPF number
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -49,8 +49,8 @@ mpfr_get_f (mpf_ptr x, mpfr_srcptr y, mpfr_rnd_t rnd_mode)
           MPFR_SET_ERANGEFLAG ();
           return 0;
         }
-      else /* y is plus infinity (resp. minus infinity), set x to the maximum
-              value (resp. the minimum value) in precision PREC(x) */
+      else /* y is +inf (resp. -inf); set x to the maximum value
+              (resp. the minimum value) in precision PREC(x) */
         {
           int i;
           mp_limb_t *xp;

@@ -12,7 +12,7 @@ patches=`cat "$1"`
 cat <<EOF
 /* mpfr_get_patches -- Patches that have been applied
 
-Copyright 2007-2020 Free Software Foundation, Inc.
+Copyright 2007-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

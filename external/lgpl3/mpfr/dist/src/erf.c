@@ -1,6 +1,6 @@
 /* mpfr_erf -- error function of a floating-point number
 
-Copyright 2001, 2003-2020 Free Software Foundation, Inc.
+Copyright 2001, 2003-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -97,7 +97,7 @@ mpfr_erf (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       inex = mpfr_prec_round (l, MPFR_PREC(y), rnd_mode);
       inex2 = mpfr_prec_round (h, MPFR_PREC(y), rnd_mode);
       /* Caution: we also need inex=inex2 (inex might be 0). */
-      ok = SAME_SIGN (inex, inex2) && mpfr_cmp (l, h) == 0;
+      ok = SAME_SIGN (inex, inex2) && mpfr_equal_p (l, h);
       if (ok)
         mpfr_set (y, h, rnd_mode);
       mpfr_clear (l);

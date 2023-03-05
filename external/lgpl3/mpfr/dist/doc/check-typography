@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright 2016-2020 Free Software Foundation, Inc.
+# Copyright 2016-2023 Free Software Foundation, Inc.
 # This script is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -10,7 +10,7 @@
 # even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 # PARTICULAR PURPOSE.
 
-o=$(grep -E '[A-Z]\)?[.!?]( |$)' mpfr.texi | grep -Ev '^(\* .*::|@c )')
+o=$(grep -E '([A-Z]|resp)\)?[.!?]( |$)' mpfr.texi | grep -Ev '^(\* .*::|@c )')
 [ -z "$o" ] && exit
 
 # Note: The default Texinfo rules are heuristics allowing one to get

@@ -1,7 +1,7 @@
 /* mpfr_set_ld -- convert a machine long double to
                   a multiple precision floating-point number
 
-Copyright 2002-2020 Free Software Foundation, Inc.
+Copyright 2002-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -29,7 +29,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 /* To check for +inf, one can use the test x > LDBL_MAX, as LDBL_MAX is
    the maximum finite number representable in a long double, according
    to DR 467; see
-     http://www.open-std.org/jtc1/sc22/wg14/www/docs/n2092.htm
+     https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2092.htm
    If this fails on some platform, a test x - x != 0 might be used. */
 
 #if defined(HAVE_LDOUBLE_IS_DOUBLE)
@@ -72,6 +72,7 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
   /* Check for NAN */
   if (MPFR_UNLIKELY (DOUBLE_ISNAN (d)))
     {
+      /* we don't propagate the sign bit */
       MPFR_SET_NAN (r);
       MPFR_RET_NAN;
     }
@@ -176,7 +177,8 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
 
 #elif defined(HAVE_LDOUBLE_MAYBE_DOUBLE_DOUBLE)
 
-/* double-double code */
+/* double-double code, see
+   https://gcc.gnu.org/git/?p=gcc.git;a=blob;f=libgcc/config/rs6000/ibm-ldouble-format;h=e8ada17f7696cd942e710d5b67d4149f5fcccf45;hb=HEAD */
 int
 mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
 {
@@ -185,8 +187,9 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
   double h, l;
   MPFR_SAVE_EXPO_DECL (expo);
 
-  /* Check for NAN */
-  LONGDOUBLE_NAN_ACTION (d, goto nan);
+  /* Check for NAN. Since we can't use isnan(), we rely on the
+     LONGDOUBLE_NAN_ACTION macro. The sign bit is not propagated. */
+  LONGDOUBLE_NAN_ACTION (d, { MPFR_SET_NAN(r); MPFR_RET_NAN; });
 
   /* Check for INF */
   if (d > LDBL_MAX)
@@ -226,10 +229,6 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
   MPFR_SAVE_EXPO_FREE (expo);
   inexact = mpfr_check_range (r, inexact, rnd_mode);
   return inexact;
-
- nan:
-  MPFR_SET_NAN(r);
-  MPFR_RET_NAN;
 }
 
 #else
@@ -243,8 +242,9 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
   long double x;
   MPFR_SAVE_EXPO_DECL (expo);
 
-  /* Check for NAN */
-  LONGDOUBLE_NAN_ACTION (d, goto nan);
+  /* Check for NAN. Since we can't use isnan(), we rely on the
+     LONGDOUBLE_NAN_ACTION macro. The sign bit is not propagated. */
+  LONGDOUBLE_NAN_ACTION (d, { MPFR_SET_NAN(r); MPFR_RET_NAN; });
 
   /* Check for INF */
   if (d > LDBL_MAX)
@@ -415,10 +415,6 @@ mpfr_set_ld (mpfr_ptr r, long double d, mpfr_rnd_t rnd_mode)
 
   MPFR_SAVE_EXPO_FREE (expo);
   return mpfr_check_range (r, inexact, rnd_mode);
-
- nan:
-  MPFR_SET_NAN(r);
-  MPFR_RET_NAN;
 }
 
 #endif

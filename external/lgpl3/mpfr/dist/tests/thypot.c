@@ -1,6 +1,6 @@
 /* Test file for mpfr_hypot.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -325,14 +325,42 @@ bug20171221 (void)
   mpfr_set_str_binary (x, "0.111111111110E0");
   mpfr_set_str_binary (u, "0.111011110100E-177");
   emax = mpfr_get_emax ();
-  mpfr_set_emax (0);
+  set_emax (0);
   mpfr_clear_flags ();
   inex = mpfr_hypot (y, x, u, MPFR_RNDU);
   MPFR_ASSERTN(mpfr_inf_p (y) && mpfr_sgn (y) > 0);
   MPFR_ASSERTN(inex > 0);
   MPFR_ASSERTN(mpfr_inexflag_p ());
   MPFR_ASSERTN(mpfr_overflow_p ());
-  mpfr_set_emax (emax);
+  set_emax (emax);
+  mpfr_clear (x);
+  mpfr_clear (u);
+  mpfr_clear (y);
+}
+
+/* check overflow for x=0xf.ffffffffffff8p+1020 and u=0xf.fffffp+124
+   with rounding upwards and emax=1024 (as in binary64) */
+static void
+test_overflow (void)
+{
+  mpfr_t x, u, y;
+  int inex;
+  mpfr_exp_t emax;
+
+  mpfr_init2 (x, 53);
+  mpfr_init2 (u, 53);
+  mpfr_init2 (y, 53);
+  mpfr_set_str (x, "0xf.ffffffffffff8p+1020", 16, MPFR_RNDN);
+  mpfr_set_str (u, "0xf.fffffp+124", 16, MPFR_RNDN);
+  emax = mpfr_get_emax ();
+  set_emax (1024);
+  mpfr_clear_flags ();
+  inex = mpfr_hypot (y, x, u, MPFR_RNDU);
+  MPFR_ASSERTN(mpfr_inf_p (y) && mpfr_sgn (y) > 0);
+  MPFR_ASSERTN(inex > 0);
+  MPFR_ASSERTN(mpfr_inexflag_p ());
+  MPFR_ASSERTN(mpfr_overflow_p ());
+  set_emax (emax);
   mpfr_clear (x);
   mpfr_clear (u);
   mpfr_clear (y);
@@ -348,6 +376,7 @@ main (int argc, char *argv[])
 
   test_large ();
   alltst ();
+  test_overflow ();
 
   test_generic (MPFR_PREC_MIN, 100, 10);
 

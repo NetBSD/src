@@ -1,6 +1,6 @@
 /* mpfr_eint, mpfr_eint1 -- the exponential integral
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -36,7 +36,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
    Return PREC(y) when the truncated series does not converge.
 */
 static mpfr_exp_t
-mpfr_eint_aux (mpfr_t y, mpfr_srcptr x)
+mpfr_eint_aux (mpfr_ptr y, mpfr_srcptr x)
 {
   mpfr_t eps; /* dynamic (absolute) error bound on t */
   mpfr_t erru, errs;
@@ -220,7 +220,7 @@ mpfr_eint_asympt (mpfr_ptr y, mpfr_srcptr x)
 }
 
 /* mpfr_eint returns Ei(x) for x >= 0,
-   and -E1(-x) for x < 0, following http://dlmf.nist.gov/6.2 */
+   and -E1(-x) for x < 0, following https://dlmf.nist.gov/6.2 */
 int
 mpfr_eint (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
 {

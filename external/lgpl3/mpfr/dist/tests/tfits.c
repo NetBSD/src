@@ -2,7 +2,7 @@
  mpfr_fits_sint_p, mpfr_fits_slong_p, mpfr_fits_sshort_p,
  mpfr_fits_uint_p, mpfr_fits_ulong_p, mpfr_fits_ushort_p
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

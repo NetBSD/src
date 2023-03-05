@@ -1,6 +1,6 @@
 /* mpfr_div -- divide two floating-point numbers
 
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -76,7 +76,7 @@ mpfr_div2_approx (mpfr_limb_ptr Q1, mpfr_limb_ptr Q0,
   r0 = u0 - r0;
   r1 = u1 - r1 - (r0 > u0);
 
-  /* r1:r0 should be nonnegative */
+  /* r1:r0 should be non-negative */
   MPFR_ASSERTD((r1 & MPFR_LIMB_HIGHBIT) == 0);
 
   /* the second quotient limb is approximated by (r1*B^2+r0*B) / v1,
@@ -788,7 +788,7 @@ mpfr_div (mpfr_ptr q, mpfr_srcptr u, mpfr_srcptr v, mpfr_rnd_t rnd_mode)
           MPFR_SET_NAN(q);
           MPFR_RET_NAN;
         }
-      sign_quotient = MPFR_MULT_SIGN( MPFR_SIGN(u) , MPFR_SIGN(v) );
+      sign_quotient = MPFR_MULT_SIGN(MPFR_SIGN(u), MPFR_SIGN(v));
       MPFR_SET_SIGN(q, sign_quotient);
       if (MPFR_IS_INF(u))
         {
@@ -899,7 +899,7 @@ mpfr_div (mpfr_ptr q, mpfr_srcptr u, mpfr_srcptr v, mpfr_rnd_t rnd_mode)
   MPFR_TMP_MARK(marker);
 
   /* set sign */
-  sign_quotient = MPFR_MULT_SIGN( MPFR_SIGN(u) , MPFR_SIGN(v) );
+  sign_quotient = MPFR_MULT_SIGN(MPFR_SIGN(u), MPFR_SIGN(v));
   MPFR_SET_SIGN(q, sign_quotient);
 
   /* determine if an extra bit comes from the division, i.e. if the

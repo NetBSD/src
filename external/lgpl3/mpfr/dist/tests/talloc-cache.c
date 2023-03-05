@@ -1,6 +1,6 @@
 /* talloc-cache  -- test file concerning memory allocation and cache
 
-Copyright 2016-2020 Free Software Foundation, Inc.
+Copyright 2016-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -36,6 +36,8 @@ static void *
 my_alloc1 (size_t s)
 {
   void *p = malloc (s + A);
+  if (p == NULL)
+    abort ();
   MPFR_ASSERTN (v == 1);
   *(int *) p = 1;
   return (void *) ((char *) p + A);
@@ -63,6 +65,8 @@ static void *
 my_alloc2 (size_t s)
 {
   void *p = malloc (s + A);
+  if (p == NULL)
+    abort ();
   MPFR_ASSERTN (v == 2);
   *(int *) p = 2;
   return (void *) ((char *) p + A);

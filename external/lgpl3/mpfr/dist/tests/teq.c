@@ -1,6 +1,6 @@
 /* Test file for mpfr_eq.
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -23,7 +23,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "mpfr-test.h"
 
 static void
-teq (mpfr_t x)
+teq (mpfr_ptr x)
 {
   mpfr_t y;
   unsigned long k, px, mx;

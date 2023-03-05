@@ -1,6 +1,6 @@
 /* Various Thresholds of MPFR, not exported.  -*- mode: C -*-
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 
 This file is part of the GNU MPFR Library.
 

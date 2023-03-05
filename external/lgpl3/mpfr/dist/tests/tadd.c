@@ -1,6 +1,6 @@
 /* Test file for mpfr_add and mpfr_sub.
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -748,7 +748,7 @@ check_1111 (void)
         mpfr_set (b, one, MPFR_RNDN);
       tc = 1 + (randlimb () % (prec_c - 1));
       mpfr_div_2ui (c, one, tc, MPFR_RNDN);
-      sc = randlimb () % 2;
+      sc = RAND_BOOL ();
       if (sc)
         mpfr_neg (c, c, MPFR_RNDN);
       test_add (c, c, one, MPFR_RNDN);
@@ -821,7 +821,7 @@ check_1minuseps (void)
         mpfr_sub (b, c, b, MPFR_RNDN);  /* b = 1 - 2^(-prec_a) */
 
         for (ic = 0; ic < numberof (supp_b); ic++)
-          for (rnd_mode = 0; rnd_mode < MPFR_RND_MAX; rnd_mode++)
+          RND_LOOP (rnd_mode)
             {
               mpfr_t s;
               int inex_a, inex_s;

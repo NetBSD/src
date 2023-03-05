@@ -1,7 +1,7 @@
 /* Test file for internal debugging-out functions:
    mpfr_print_rnd_mode, mpfr_dump, mpfr_print_mant_binary.
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -107,13 +107,13 @@ main (void)
   MPFR_MANT(x)[MPFR_LAST_LIMB(x)] >>= 1;
   MPFR_MANT(x)[0] |= 1;
   e = mpfr_get_emin ();
-  mpfr_set_emin (33);
+  set_emin (33);
   mpfr_dump (x);
-  mpfr_set_emin (e);
+  set_emin (e);
   e = mpfr_get_emax ();
-  mpfr_set_emax (31);
+  set_emax (31);
   mpfr_dump (x);
-  mpfr_set_emax (e);
+  set_emax (e);
   mpfr_clear (x);
   fclose (stdout);
 

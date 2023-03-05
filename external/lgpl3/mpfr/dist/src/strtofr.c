@@ -1,6 +1,6 @@
 /* mpfr_strtofr -- set a floating-point number from a string
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -226,7 +226,7 @@ fast_casecmp (const char *s1, const char *s2)
    BUT if it returns 0 (NAN or INF), the ternary value is also '0'
    (ie NAN and INF are exact) */
 static int
-parse_string (mpfr_t x, struct parsed_string *pstr,
+parse_string (mpfr_ptr x, struct parsed_string *pstr,
               const char **string, int base)
 {
   const char *str = *string;
@@ -451,7 +451,7 @@ parse_string (mpfr_t x, struct parsed_string *pstr,
    and the precision of x.
    Returns the ternary value. */
 static int
-parsed_string_to_mpfr (mpfr_t x, struct parsed_string *pstr, mpfr_rnd_t rnd)
+parsed_string_to_mpfr (mpfr_ptr x, struct parsed_string *pstr, mpfr_rnd_t rnd)
 {
   mpfr_prec_t precx, prec, ysize_bits, pstr_size;
   mpfr_exp_t exp;
@@ -645,7 +645,8 @@ parsed_string_to_mpfr (mpfr_t x, struct parsed_string *pstr, mpfr_rnd_t rnd)
           /* On some FreeBsd/Alpha, LONG_MIN/1 produced an exception
              so we used to check for this before doing the division.
              Since this bug is closed now (Nov 26, 2009), we remove
-             that check (http://www.freebsd.org/cgi/query-pr.cgi?pr=72024) */
+             that check
+             <https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=72024> */
           if (tmp > 0 && MPFR_EXP_MAX / pow2 <= tmp)
             goto overflow;
           else if (tmp < 0 && MPFR_EXP_MIN / pow2 >= tmp)
@@ -934,7 +935,7 @@ free_parsed_string (struct parsed_string *pstr)
 }
 
 int
-mpfr_strtofr (mpfr_t x, const char *string, char **end, int base,
+mpfr_strtofr (mpfr_ptr x, const char *string, char **end, int base,
               mpfr_rnd_t rnd)
 {
   int res;

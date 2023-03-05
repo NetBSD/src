@@ -1,6 +1,6 @@
 /* mpfr_round_raw_generic -- Generic rounding function
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

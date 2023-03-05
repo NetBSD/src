@@ -2,7 +2,7 @@
    mpfr_lessequal_p, mpfr_lessgreater_p, mpfr_equal_p, mpfr_unordered_p
    functions.
 
-Copyright 2003, 2006-2020 Free Software Foundation, Inc.
+Copyright 2003, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -43,7 +43,7 @@ cmp_tests (void)
       mpfr_set_prec (y, precy);
       mpfr_urandomb (x, RANDS);
       mpfr_urandomb (y, RANDS);
-      signx = randlimb () & 1;
+      signx = RAND_BOOL ();
       signy = randlimb () % 256 ? signx : 1 - signx;
       /* signy = signx most of the time (most interesting case) */
       if (signx)
@@ -100,7 +100,7 @@ eq_tests (void)
       mpfr_set_prec (x, precx);
       mpfr_set_prec (y, precx + (randlimb () % 64));
       mpfr_urandomb (x, RANDS);
-      if (randlimb () & 1)
+      if (RAND_BOOL ())
         mpfr_neg (x, x, MPFR_RNDN);
       mpfr_set (y, x, MPFR_RNDN);  /* exact -> x = y */
       if (mpfr_greater_p (x, y) || !mpfr_greaterequal_p (x, y) ||

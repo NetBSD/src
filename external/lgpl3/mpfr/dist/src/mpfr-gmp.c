@@ -1,7 +1,7 @@
 /* mpfr_gmp -- Limited gmp-impl emulator
    Modified version of the GMP files.
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

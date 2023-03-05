@@ -1,7 +1,7 @@
 /* mpfr_round_raw_generic, mpfr_round_raw2, mpfr_round_raw, mpfr_prec_round,
    mpfr_can_round, mpfr_can_round_raw -- various rounding functions
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -233,7 +233,7 @@ mpfr_can_round_raw (const mp_limb_t *bp, mp_size_t bn, int neg, mpfr_exp_t err,
 
   /* For err < prec (+1 for rnd1=RNDN), we can never round correctly, since
      the error is at least 2*ulp(b) >= ulp(round(b)).
-     However for err = prec (+1 for rnd1=RNDN), we can round correctly in some
+     However, for err = prec (+1 for rnd1=RNDN), we can round correctly in some
      rare cases where ulp(b) = 1/2*ulp(U) [see below for the definition of U],
      which implies rnd1 = RNDZ or RNDN, and rnd2 = RNDA or RNDN. */
 

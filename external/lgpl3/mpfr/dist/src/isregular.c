@@ -1,6 +1,6 @@
 /* mpfr_regular_p -- check for regular number (neither NaN, Inf or zero)
 
-Copyright 2009-2020 Free Software Foundation, Inc.
+Copyright 2009-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

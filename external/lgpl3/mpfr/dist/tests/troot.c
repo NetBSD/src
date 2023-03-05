@@ -1,6 +1,6 @@
 /* Test file for mpfr_root (also used for mpfr_rootn_ui).
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,6 +20,7 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
+/* Note: troot.c is included by trootn_ui.c with TF = mpfr_rootn_ui */
 #ifdef TF
 # define TF_IS_MPFR_ROOT 0
 #else
@@ -345,7 +346,7 @@ bigint (void)
 #define TEST_FUNCTION TF
 #define INTEGER_TYPE unsigned long
 #define INT_RAND_FUNCTION() \
-  (INTEGER_TYPE) (randlimb () & 1 ? randlimb () : randlimb () % 3 + 2)
+  (INTEGER_TYPE) (RAND_BOOL () ? randlimb () : randlimb () % 3 + 2)
 #include "tgeneric_ui.c"
 
 static void
@@ -538,7 +539,7 @@ main (int argc, char *argv[])
   for (p = MPFR_PREC_MIN; p < 100; p++)
     {
       mpfr_set_prec (x, p);
-      for (r = 0; r < MPFR_RND_MAX; r++)
+      RND_LOOP (r)
         {
           mpfr_set_ui (x, 1, MPFR_RNDN);
           k = 2 + randlimb () % 4; /* 2 <= k <= 5 */
@@ -590,6 +591,11 @@ main (int argc, char *argv[])
 
   test_generic_ui (MPFR_PREC_MIN, 200, 30);
 
+  /* The sign of the random value y (used to generate a potential bad case)
+     is negative with a probability 256/512 = 1/2 for odd n, and never
+     negative (probability 0/512) for even n (if y is negative, then
+     (y^(2k))^(1/(2k)) is different from y, so that this would yield
+     an error). */
   bad_cases (root2, pow2, "rootn[2]", 0, -256, 255, 4, 128, 80, 40);
   bad_cases (root3, pow3, "rootn[3]", 256, -256, 255, 4, 128, 200, 40);
   bad_cases (root4, pow4, "rootn[4]", 0, -256, 255, 4, 128, 320, 40);

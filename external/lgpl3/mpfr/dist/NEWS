@@ -1,4 +1,4 @@
-Copyright 2000-2020 Free Software Foundation, Inc.
+Copyright 2000-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,6 +19,28 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 ##############################################################################
+
+Changes from versions 4.1.* to version 4.2.0:
+- The "fondue savoyarde" release.
+- Binary compatible with MPFR 4.0.* and 4.1.*, though some minor changes in
+  the behavior of the formatted output functions may be visible, regarded
+  as underspecified behavior or bug fixes (see below).
+- New functions mpfr_cosu, mpfr_sinu, mpfr_tanu, mpfr_acosu, mpfr_asinu,
+  mpfr_atanu and mpfr_atan2u.
+- New functions mpfr_cospi, mpfr_sinpi, mpfr_tanpi, mpfr_acospi, mpfr_asinpi,
+  mpfr_atanpi and mpfr_atan2pi.
+- New functions mpfr_log2p1, mpfr_log10p1, mpfr_exp2m1, mpfr_exp10m1 and
+  mpfr_compound_si.
+- New functions mpfr_fmod_ui, mpfr_powr, mpfr_pown, mpfr_pow_uj, mpfr_pow_sj
+  and mpfr_rootn_si (mpfr_pown is actually a macro defined as an alias for
+  mpfr_pow_sj).
+- Bug fixes.
+  In particular, for the formatted output functions (mpfr_printf, etc.),
+  the case where the precision consists only of a period has been fixed
+  to be like ".0" as specified in the ISO C standard, and the manual has
+  been corrected and clarified.
+  The macros of the custom interface have also been fixed: they now behave
+  like functions (except a minor limitation for mpfr_custom_init_set).
 
 Changes from versions 4.0.* to version 4.1.0:
 - The "épinards à la crème" release.
