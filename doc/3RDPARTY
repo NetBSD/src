@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1914 2023/03/05 22:13:48 mrg Exp $
+#	$NetBSD: 3RDPARTY,v 1.1915 2023/03/05 22:37:17 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1530,7 +1530,7 @@ Notes:
 3. Carefully check for non-autoconf GPL components leaked into the dist area.
 
 Package:	mpc
-Version:	1.2.1
+Version:	1.3.1
 Current Vers:	1.3.1
 Maintainer:
 Archive Site:	http://www.multiprecision.org/mpc/download/
