@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.39 2023/03/03 17:03:36 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.40 2023/03/05 14:38:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1415,4 +1415,23 @@ sys/arch/arm/ti/if_cpsw.c			1.17
 	cpsw(4): disable a debug message unless explicit driver
 	debugging is requested.
 	[sekiya, ticket #109]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.81
+
+	Adapt zfs_netbsd_access() to ACL support.
+	[hannken, ticket #110]
+
+sys/miscfs/genfs/genfs_vnops.c			1.220
+
+	PR 57246: fix genfs_can_chtimes() to allow setting the current
+	time with only write permission on the file.
+	[hannken, ticket #111]
+
+sbin/nvmectl/logpage.c				1.11
+sbin/nvmectl/nvmectl.h				1.10
+sbin/nvmectl/util.c				1.3
+
+	nvmectl(8): data units read/written are counted in 1000s of 512 bytes.
+	Convert to human-readable value.
+	[mlelstv, ticket #112]
 
