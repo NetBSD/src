@@ -1,7 +1,7 @@
 /* mpc_get_dc, mpc_get_ldc -- Transform mpc number into C complex number
    mpc_get_str -- Convert a complex number into a string.
 
-Copyright (C) 2009, 2010, 2011, 2020 INRIA
+Copyright (C) 2009, 2010, 2011, 2020, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -25,10 +25,7 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 #include <complex.h>
 #endif
 
-#ifdef HAVE_LOCALE_H
 #include <locale.h>
-#endif
-
 #include <stdio.h> /* for sprintf, fprintf */
 #include <ctype.h>
 #include <string.h>
@@ -181,7 +178,7 @@ prettify (const char *str, const mpfr_exp_t expo, int base, int special)
 
   *p = '\0';
 
-  sprintf (p, "%+"MPC_EXP_FORMAT_SPEC, x);
+  sprintf (p, "%+" MPC_EXP_FORMAT_SPEC, x);
 
   return pretty;
 }

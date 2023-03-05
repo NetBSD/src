@@ -1,6 +1,6 @@
 /* mpc_clear -- Clear a complex variable.
 
-Copyright (C) 2002, 2009, 2011 INRIA
+Copyright (C) 2002, 2009, 2011, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -21,7 +21,7 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 #include "mpc-impl.h"
 
 void
-mpc_clear (mpc_t x)
+mpc_clear (mpc_ptr x)
 {
   mpfr_clear (mpc_realref(x));
   mpfr_clear (mpc_imagref(x));

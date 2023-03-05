@@ -1,6 +1,6 @@
 /* mpc_atan -- arctangent of a complex number.
 
-Copyright (C) 2009, 2010, 2011, 2012, 2013, 2017, 2020 INRIA
+Copyright (C) 2009, 2010, 2011, 2012, 2013, 2017, 2020, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -140,7 +140,7 @@ mpc_atan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
         {
           /* atan(+0+iy) = +pi/2 +i*atanh(1/y), if |y| > 1
              atan(-0+iy) = -pi/2 +i*atanh(1/y), if |y| > 1 */
-          mpfr_rnd_t rnd_im, rnd_away;
+          mpfr_rnd_t rnd_im;
           mpfr_t y, z;
           mpfr_prec_t p, p_im;
           int ok = 0;
@@ -167,8 +167,7 @@ mpc_atan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
               p += mpc_ceil_log2 (p) + 2;
               mpfr_set_prec (y, p);
               mpfr_set_prec (z, p);
-              rnd_away = s_im == 0 ? MPFR_RNDU : MPFR_RNDD;
-              inex_im = mpfr_ui_div (y, 1, mpc_imagref (op), rnd_away);
+              inex_im = mpfr_ui_div (y, 1, mpc_imagref (op), MPFR_RNDA);
               exp_a = mpfr_get_exp (y);
               /* FIXME: should we consider the case with unreasonably huge
                  precision prec(y)>3*exp_min, where atanh(1/Im(op)) could be
@@ -189,7 +188,7 @@ mpc_atan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
               mpfr_ui_sub (z, 1, z, MPFR_RNDZ);
 
               /* atanh cannot underflow: |atanh(x)| > |x| for |x| < 1 */
-              inex_im |= mpfr_atanh (y, y, rnd_away);
+              inex_im |= mpfr_atanh (y, y, MPFR_RNDA);
 
               /* the error is now bounded by ulp(b) + 1/z*ulp(a), thus
                  ulp(b) + 2^(exp(a) - exp(b) + 1 - exp(z)) * ulp(b) */
@@ -202,7 +201,7 @@ mpc_atan (mpc_ptr rop, mpc_srcptr op, mpc_rnd_t rnd)
               /* the error is bounded by 2^err ulps */
 
               ok = inex_im == 0
-                || mpfr_can_round (y, p - err, rnd_away, MPFR_RNDZ,
+                || mpfr_can_round (y, p - err, MPFR_RNDA, MPFR_RNDZ,
                                    p_im + (rnd_im == MPFR_RNDN));
             } while (ok == 0);
 

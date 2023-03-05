@@ -21,24 +21,28 @@ along with this program. If not, see http://www.gnu.org/licenses/ .
 #include "mpc-tests.h"
 
 static const char *mpfr_rnd_mode [] =
-  { "MPFR_RNDN", "MPFR_RNDZ", "MPFR_RNDU", "MPFR_RNDD" };
+  { "MPFR_RNDN", "MPFR_RNDZ", "MPFR_RNDU", "MPFR_RNDD", "MPFR_RNDA" };
 const char *mpc_rnd_mode[] =
-  { "MPC_RNDNN", "MPC_RNDZN", "MPC_RNDUN", "MPC_RNDDN",
+  { "MPC_RNDNN", "MPC_RNDZN", "MPC_RNDUN", "MPC_RNDDN", "MPC_RNDAN",
     "undefined", "undefined", "undefined", "undefined", "undefined",
     "undefined", "undefined", "undefined", "undefined", "undefined",
-    "undefined", "undefined",
-    "MPC_RNDNZ", "MPC_RNDZZ", "MPC_RNDUZ", "MPC_RNDDZ",
+    "undefined",
+    "MPC_RNDNZ", "MPC_RNDZZ", "MPC_RNDUZ", "MPC_RNDDZ", "MPC_RNDAZ",
     "undefined", "undefined", "undefined", "undefined", "undefined",
     "undefined", "undefined", "undefined", "undefined", "undefined",
-    "undefined", "undefined",
-    "MPC_RNDNU", "MPC_RNDZU", "MPC_RNDUU", "MPC_RNDDU",
+    "undefined",
+    "MPC_RNDNU", "MPC_RNDZU", "MPC_RNDUU", "MPC_RNDDU", "MPC_RNDAU",
     "undefined", "undefined", "undefined", "undefined", "undefined",
     "undefined", "undefined", "undefined", "undefined", "undefined",
-    "undefined", "undefined",
-    "MPC_RNDND", "MPC_RNDZD", "MPC_RNDUD", "MPC_RNDDD",
+    "undefined",
+    "MPC_RNDND", "MPC_RNDZD", "MPC_RNDUD", "MPC_RNDDD", "MPC_RNDAD",
     "undefined", "undefined", "undefined", "undefined", "undefined",
     "undefined", "undefined", "undefined", "undefined", "undefined",
-    "undefined", "undefined",
+    "undefined",
+    "MPC_RNDNA", "MPC_RNDZA", "MPC_RNDUA", "MPC_RNDDA", "MPC_RNDAA",
+    "undefined", "undefined", "undefined", "undefined", "undefined",
+    "undefined", "undefined", "undefined", "undefined", "undefined",
+    "undefined"
   };
   /* needed in tio_str.c and tstrtoc.c, so not static */
 

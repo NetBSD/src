@@ -117,4 +117,5 @@
 # regular arguments
 + + 53 0x1E20C7792ECE6Bp-52 53 0x3526776219EEBp-52 53 0x3243F6A8885A3p-48 53 0x162E42FEFA39EFp-53 N N
 
-
+# this test failed before the 1.3.0 release
+? ? 9 0x1.0dp-5 9 0x1.59p+0 9 0x1.d4p-8 9 0x1.f4p-1 N Z

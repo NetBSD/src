@@ -2,7 +2,6 @@
 @setfilename mpc.info
 @include version.texi
 @settitle GNU MPC @value{VERSION}
-@synindex tp fn
 
 @set MINGMP 5.0.0
 @set MINMPFR 4.1.0
@@ -13,7 +12,7 @@
 This manual is for GNU MPC, a library for multiple precision complex arithmetic,
 version @value{VERSION} of @value{UPDATED-MONTH}.
 
-Copyright @copyright{} 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2018, 2020 INRIA
+Copyright @copyright{} 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2016, 2018, 2020, 2022 INRIA
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -61,14 +60,16 @@ Complex Library, version @value{VERSION}
 
 @menu
 * Copying::                     GNU MPC Copying Conditions (LGPL).
-* Introduction to GNU MPC::         Brief introduction to GNU MPC.
-* Installing GNU MPC::              How to configure and compile the GNU MPC library.
+* Introduction to GNU MPC::     Brief introduction to GNU MPC.
+* Installing GNU MPC::          How to configure and compile the GNU MPC library.
 * Reporting Bugs::              How to usefully report bugs.
-* GNU MPC Basics::                  What every GNU MPC user should know.
+* GNU MPC Basics::              What every GNU MPC user should know.
 * Complex Functions::           Functions for arithmetic on complex numbers.
+* Ball Arithmetic::             Types and functions for complex balls.
 * References::
 * Concept Index::
 * Function Index::
+* Type Index::
 * GNU Free Documentation License::
 @end menu
 
@@ -138,7 +139,7 @@ To build GNU MPC, you first have to install GNU MP (version @value{MINGMP} or hi
 GNU MPFR (version @value{MINMPFR} or higher) on your computer.  You need a C compiler;
 GCC version 4.4 or higher is recommended, since GNU MPC may trigger a bug in previous
 versions, see the thread at
-@uref{http://lists.gforge.inria.fr/pipermail/mpc-discuss/2011-February/000823.html}.
+@uref{https://sympa.inria.fr/sympa/arc/mpc-discuss/2011-02/msg00024.html}.
 And you need a
 standard Unix @samp{make} program, plus some other standard Unix utility
 programs.
@@ -210,7 +211,7 @@ This compiles GNU MPC in the working directory.
 This will make sure GNU MPC was built correctly.
 
 If you get error messages, please report them to
-@samp{mpc-discuss@@lists.gforge.inria.fr} (@xref{Reporting Bugs}, for
+@samp{mpc-discuss@@inria.fr} (@xref{Reporting Bugs}, for
 information on what to include in useful bug reports).
 
 @item
@@ -289,7 +290,7 @@ This has been tested with the C compiler IBM XL C/C++ Enterprise Edition
 V8.0 for AIX, version: 08.00.0000.0021, GMP 4.2.4 and GNU MPFR 2.4.1.
 
 Please report any other problems you encounter to
-@samp{mpc-discuss@@lists.gforge.inria.fr}.
+@samp{mpc-discuss@@inria.fr}.
 @xref{Reporting Bugs}.
 
 @node Reporting Bugs
@@ -319,7 +320,7 @@ If your bug report is good, we will do our best to help you to get a corrected
 version of the library; if the bug report is poor, we will not do anything about
 it (aside of chiding you to send better bug reports).
 
-Send your bug report to: @samp{mpc-discuss@@lists.gforge.inria.fr}.
+Send your bug report to: @samp{mpc-discuss@@inria.fr}.
 
 If you think something in this manual is unclear, or downright incorrect, or if
 the language needs to be improved, please send a note to the same address.
@@ -340,14 +341,16 @@ by adding the line
 @section Nomenclature and Types
 
 @cindex Complex number
-@tindex @code{mpc_t}
+@tindex mpc_t
+@tindex mpc_ptr
+@tindex mpc_srcptr
 @noindent
 @dfn{Complex number} or @dfn{Complex} for short, is a pair of two
 arbitrary precision floating-point numbers (for the real and imaginary parts).
 The C data type for such objects is @code{mpc_t}.
 
 @cindex Precision
-@tindex @code{mpfr_prec_t}
+@tindex mpfr_prec_t
 @noindent
 The @dfn{Precision} is the number of bits used to represent the mantissa
 of the real and imaginary parts;
@@ -361,7 +364,7 @@ see Section ``Nomenclature and Types'' in @cite{GNU MPFR}.
 @end ifnotinfo
 
 @cindex Rounding Mode
-@tindex @code{mpc_rnd_t}
+@tindex mpc_rnd_t
 @noindent
 The @dfn{rounding mode} specifies the way to round the result of a
 complex operation, in case the exact result can not be represented
@@ -414,7 +417,9 @@ life.
 
 A complex rounding mode is of the form @code{MPC_RNDxy} where
 @code{x} and @code{y} are one of @code{N} (to nearest), @code{Z} (towards
-zero), @code{U} (towards plus infinity), @code{D} (towards minus infinity).
+zero), @code{U} (towards plus infinity), @code{D} (towards minus infinity),
+@code{A} (away from zero, that is, towards plus or minus infinity depending
+on the sign of the number to be rounded).
 The first letter refers to the rounding mode for the real part,
 and the second one for the imaginary part.
 For example @code{MPC_RNDZU} indicates to round the real part towards zero,
@@ -492,6 +497,7 @@ different word size.
 * Basic Arithmetic::
 * Power Functions and Logarithm::
 * Trigonometric Functions::
+* Modular Functions::
 * Miscellaneous Complex Functions::
 * Advanced Functions::
 * Internals::
@@ -867,6 +873,15 @@ with real numbers instead of complex numbers, their complexity should
 essentially be the same as with the GNU MPFR library, with only a marginal
 overhead due to the GNU MPC layer.
 
+For functions taking as input an integer argument
+(for example @code{mpc_add_ui}), when this argument is zero,
+it is considered as an unsigned (that is, exact in this context)
+zero, and we follow the MPFR conventions:
+(0) + (+0) = +0, (0) - (+0) = -0, (0) - (+0) = -0, (0) - (-0) = +0.
+The same applies for functions taking an argument of type @code{mpfr_t},
+such as @code{mpc_add_fr}, of which the imaginary part is considered
+to be an exact, unsigned zero.
+
 @deftypefun int mpc_add (mpc_t @var{rop}, const mpc_t @var{op1}, const mpc_t @var{op2}, mpc_rnd_t @var{rnd})
 @deftypefunx int mpc_add_ui (mpc_t @var{rop}, const mpc_t @var{op1}, unsigned long int @var{op2}, mpc_rnd_t @var{rnd})
 @deftypefunx int mpc_add_fr (mpc_t @var{rop}, const mpc_t @var{op1}, const mpfr_t @var{op2}, mpc_rnd_t @var{rnd})
@@ -1024,6 +1039,16 @@ Set @var{rop} to the standard primitive @var{n}-th root of unity raised to the p
 rounded according to @var{rnd} with the precision of @var{rop}.
 @end deftypefun
 
+@deftypefun int mpc_agm (mpc_t @var{rop}, const mpc_t @var{a}, const mpc_t @var{b}, mpc_rnd_t @var{rnd})
+Set @var{rop} to the arithmetic-geometric mean (AGM) of @var{a} and
+@var{b}, rounded according to @var{rnd} with the precision of @var{rop}.
+Concerning the branch cut, the function is computed by homogeneity either
+as @var{a} AGM(1,b0) with b0=@var{b}/@var{a} if |@var{a}|>=|@var{b}|,
+or as @var{b} AGM(1,b0) with b0=@var{a}/@var{b} otherwise;
+then when b0 is real and negative, AGM(1,b0) is chosen to have positive
+imaginary part.
+@end deftypefun
+
 
 @node Trigonometric Functions
 @section Trigonometric Functions
@@ -1071,6 +1096,26 @@ The branch cut of @code{mpc_acosh} is
 (-Inf, 1)
 @end ifnottex
 @end deftypefun
+
+
+@node Modular Functions
+@section Modular Functions
+@cindex Modular functions
+
+The following function is experimental, not least because it depends on
+the equally experimental ball arithmetic, see @ref {Ball Arithmetic}.
+So its prototype may change in future releases, and it may be removed
+altogether.
+
+@deftypefun int mpc_eta_fund (mpc_t @var{rop}, const mpc_t @var{op}, mpc_rnd_t @var{rnd})
+Assuming that the argument @var{op} lies in the fundamental domain for
+@math{Sl_2(Z)}, that is, it has real part not below @math{-1/2} and
+not above @math{+1/2} and absolute value at least 1,
+return the value of the Dedekind eta-function in @var{rop}.
+For arguments outside the fundamental domain the function is expected to
+loop indefinitely.
+@end deftypefun
+
 
 @node Miscellaneous Complex Functions
 @section Miscellaneous Functions
@@ -1160,6 +1205,376 @@ The macro @code{MPC_MAX_PREC(z)} gives the maximum of the precisions
 of the real and imaginary parts of a complex number.
 
 
+@node Ball Arithmetic
+@chapter Ball Arithmetic
+@cindex Ball arithmetic
+
+Since release 1.3.0, GNU MPC contains a simple and very limited
+implementation of complex balls (or rather, circles). This part is
+experimental, its interface may vary and it may be removed completely
+in future releases.
+
+@tindex mpcb_t
+A complex ball of the new type @code{mpcb_t} is defined by a non-zero centre
+@math{c} of the type @code{mpc_t} and a relative radius @math{r} of
+the new type @code{mpcr_t}, and it represents all complex numbers
+@math{z = c (1 + ϑ)} with @math{|ϑ| ≤ r}, or equivalently
+the closed circle with centre @math{c} and radius @math{r |c|}.
+The approach of using a relative error (or radius) instead of an absolute
+one simplifies error analyses for multiplicative operations (multiplication,
+division, square roots, and the AGM), at the expense of making them more
+complicated for additive operations. It has the major drawback of not being
+able to represent balls centred at 0; in floating point arithmetic, however,
+0 is never reached by rounding, but only through operations with exact
+result, which could be handled at a higher, application level. For more
+discussion on these issues, see the file @code{algorithms.tex}.
+
+
+@section Radius type and functions
+@tindex mpcr_t
+@tindex mpcr_ptr
+@tindex mpcr_srcptr
+
+The radius type is defined by
+@verbatim
+struct {
+   int64_t mant;
+   int64_t exp;
+}
+@end verbatim
+with the usual trick in the GNU multiprecision libraries of defining the
+main type @code{mpcr_t} as a 1-dimensional array of this struct, and
+variable and constant pointers @code{mpcr_ptr} and @code{mpcr_srcptr}.
+It can contain the special values infinity or zero, or floating point
+numbers encoded as @math{m⋅2@sup{e}} for a positive mantissa
+@math{m} and an arbitrary (usually negative) exponent @math{e}.
+Normalised finite radii use 31 bits for the mantissa, that is,
+@math{2@sup{30}≤m≤2@sup{31} - 1}.
+The special values infinity and 0 are encoded through the sign of
+@math{m}, but should be tested for and set using dedicated functions.
+
+Unless indicated otherwise, the following functions
+assume radius arguments to be normalised,
+they return normalised results, and they round their results up, not
+necessarily to the smallest representable number, although reasonable
+effort is made to get a tight upper bound: They only guarantee that
+their outputs are an upper bound on the true results.
+(There may be a trade-off between tightness of the result and speed of
+computation. For instance, when a 32-bit mantissa is normalised, an even
+mantissa should be divided by 2, an odd mantissa should be divided by 2
+and 1 should be added, and then in both cases the exponent must be
+increased by 1. It might be more efficient to add 1 all the time instead
+of testing the last bit of the mantissa.)
+
+@deftypefun int mpcr_inf_p (mpcr_srcptr @var{r})
+@deftypefunx int mpcr_zero_p (mpcr_srcptr @var{r})
+Test whether @var{r} is infinity or zero, respectively, and return a
+boolean.
+@end deftypefun
+
+
+@deftypefun int mpcr_lt_half_p (mpcr_srcptr @var{r})
+Return @code{true} if @var{r}<1/2, and @code{false} otherwise.
+(Everywhere in this document,
+@code{true} means any non-zero value, and @code{false} means zero.)
+@end deftypefun
+
+
+@deftypefun int mpcr_cmp (mpcr_srcptr @var{r}, mpcr_srcptr @var{s})
+Return +1, 0 or -1 depending on whether @var{r} is larger than, equal to
+or less than @var{s}, with the natural total order on the compactified
+non-negative real axis letting 0 be smaller and letting infinity be larger
+than any finite real number.
+@end deftypefun
+
+
+@deftypefun void mpcr_set_inf (mpcr_ptr @var{r})
+@deftypefunx void mpcr_set_zero (mpcr_ptr @var{r})
+@deftypefunx void mpcr_set_one (mpcr_ptr @var{r})
+@deftypefunx void mpcr_set (mpcr_ptr @var{r}, mpcr_srcptr @var{s})
+@deftypefunx void mpcr_set_ui64_2si64 (mpcr_ptr @var{r}, uint64_t @var{mant}, int64_t @var{exp})
+Set @var{r} to infinity, zero, 1, @var{s} or
+@var{mant}⋅2@sup{@var{exp}}, respectively.
+@end deftypefun
+
+
+@deftypefun void mpcr_max (mpcr_ptr @var{r}, mpcr_srcptr @var{s}, mpcr_srcptr @var{t})
+Set @var{r} to the maximum of @var{s} and @var{t}.
+@end deftypefun
+
+
+@deftypefun int64_t mpcr_get_exp (mpcr_srcptr @var{r})
+Assuming that @var{r} is neither infinity nor 0, return its exponent
+@math{e} when writing @math{r = m⋅2@sup{e}} with
+@math {1/2 ≤ m < 1}. (Notice that this is @emph{not} the same as the
+field @code{exp} in the struct representing a radius, but that instead it
+is independent of the implementation.)
+Otherwise the behaviour is undefined.
+@end deftypefun
+
+
+@deftypefun void mpcr_out_str (FILE *@var{f}, mpcr_srcptr @var{r})
+Output @var{r} on @var{f}, which may be @code{stdout}.
+Caveat: This function so far serves mainly for debugging purposes, its
+behaviour will probably change in the future.
+@end deftypefun
+
+
+@deftypefun void mpcr_add (mpcr_ptr @var{r}, mpcr_srcptr @var{s}, mpcr_srcptr @var{t})
+@deftypefunx void mpcr_sub (mpcr_ptr @var{r}, mpcr_srcptr @var{s}, mpcr_srcptr @var{t})
+@deftypefunx void mpcr_mul (mpcr_ptr @var{r}, mpcr_srcptr @var{s}, mpcr_srcptr @var{t})
+@deftypefunx void mpcr_div (mpcr_ptr @var{r}, mpcr_srcptr @var{s}, mpcr_srcptr @var{t})
+@deftypefunx void mpcr_mul_2ui (mpcr_ptr @var{r}, mpcr_srcptr @var{s}, unsigned long int @var{t})
+@deftypefunx void mpcr_div_2ui (mpcr_ptr @var{r}, mpcr_srcptr @var{s}, unsigned long int @var{t})
+@deftypefunx void mpcr_sqr (mpcr_ptr @var{r}, mpcr_srcptr @var{s})
+@deftypefunx void mpcr_sqrt (mpcr_ptr @var{r}, mpcr_srcptr @var{s})
+Set @var{r} to the sum, difference, product or quotient of @var{s} and
+@var{t}, or to the product of @var{s} by 2@sup{@var{t}} or to the
+quotient of @var{s} by 2@sup{@var{t}},
+or to the square or the square root of @var{s}.
+If any of the arguments is infinity, or if a difference is negative,
+the result is infinity.
+@end deftypefun
+
+
+@deftypefun void mpcr_sub_rnd (mpcr_ptr @var{r}, mpcr_srcptr @var{s}, mpcr_srcptr @var{t}, mpfr_rnd_t @var{rnd})
+Set @var{r} to the difference of @var{s} and @var{t}, rounded into
+direction @var{rnd}, which can be one of @code{MPFR_RNDU} or
+@code{MPFR_RNDD}. If one of the arguments is infinity or the difference is
+negative, the result is infinity. Calling the function with @code{MPFR_RNDU}
+is equivalent to calling @code{mpcr_sub}.
+
+This is one out of several functions taking a rounding parameter. Rounding
+down may be useful to obtain an upper bound when dividing by the result.
+@end deftypefun
+
+
+@deftypefun void mpcr_c_abs_rnd (mpcr_ptr @var{r}, mpc_srcptr @var{z}, mpfr_rnd_t @var{rnd})
+Set @var{r} to the absolute value of the complex number @var{z}, rounded
+in direction @var{rnd}, which may be one of @code{MPFR_RNDU} or
+@code{MPFR_RNDD}.
+@end deftypefun
+
+
+@deftypefun void mpcr_add_rounding_error (mpcr_ptr @var{r}, mpfr_prec_t @var{p}, mpfr_rnd_t @var{rnd})
+Set @var{r} to @math{r + (1 + r) 2@sup{-p}} if @var{rnd} equals
+@code{MPFR_RNDN}, and to @math{r + (1 + r) 2@sup{1-p}} otherwise.
+The idea is that if a (potentially not representable) centre of an ideal
+complex ball of radius @var{r} is rounded to a representable complex
+number at precision @var{p}, this shifts the centre by up to 1/2 ulp
+(for rounding to nearest) or 1 ulp (for directed rounding of at least one
+of the real or imaginary parts), which increases the radius accordingly.
+So this function is typically called internally at the end of each
+operation with complex balls to account for the error made by rounding
+the centre.
+@end deftypefun
+
+
+@section Ball type and functions
+@tindex mpcb_t
+@tindex mpcb_ptr
+@tindex mpcb_srcptr
+
+The ball type is defined by
+@verbatim
+typedef struct {
+  mpc_t  c;
+  mpcr_t r;
+}
+@end verbatim
+or, more precisely, @code{mpcb_t} is again a 1-dimensional array of such
+a struct, and variable and constant pointer types are defined as
+@code{mpcb_ptr} and @code{mpcb_srcptr}, respectively.
+As usual, the components should only be accessed through corresponding
+functions.
+
+To understand functions on balls, one needs to consider the balls passed
+as arguments as sets of complex values, to which a mathematical function
+is applied; the C function ``rounds up'' in the sense that it returns a
+ball containing all possible values of the function in all the possible
+input values. Reasonable effort is made to return small balls, but again
+there is no guarantee that the result is the smallest possible one.
+In the current implementation, the centre of a ball returned as a value
+is obtained by applying the function to the centres of the balls passed
+as arguments, and rounding. While this is a natural approach, it is not
+the only possible one; however, it also simplifies the error analysis
+as already carried out for functions with regular complex arguments.
+Whenever the centre of a complex ball has a non-finite real or imaginary
+part (positive or negative infinity or NaN) the radius is set to infinity;
+this can be interpreted as the ``useless ball'', representing the whole
+complex plane, whatever the value of the centre is.
+
+Unlike for variables of @code{mpc_t} type, where the precision needs to
+be set explicitly at initialisation, variables of type @code{mpcb_t}
+handle their precision dynamically. Ball centres always have the same
+precision for their real and their imaginary parts (again this is a
+choice of the implementation; if they are of very different sizes, one
+could theoretically reduce the precision of the part that is smaller
+in absolute value, which is more strongly affected by the common error
+coded in the radius).
+When setting a complex ball from a value of a different type, an
+additional precision parameter is passed, which determines the precision
+of the centre. Functions on complex balls set the precision of their
+result depending on the input. In the current implementation, this is the
+minimum of the argument precisions, so if all balls are initially set to
+the same precision, this is preserved throughout the computations.
+(Notice that the exponent of the radius encodes roughly the number of
+correct binary digits of the ball centre; so it would also make sense
+to reduce the precision if the radius becomes larger.)
+
+The following functions on complex balls are currently available; the
+eclectic collection is motivated by the desire to provide an implementation
+of the arithmetic-geometric mean of complex numbers through the use of
+ball arithmetic. As for functions taking complex arguments, there may
+be arbitrary overlaps between variables representing arguments and
+results; for instance
+@code{mpcb_mul (z, z, z)} is an allowed way of replacing the ball @var{z}
+by its square.
+
+
+@deftypefun void mpcb_init (mpcb_ptr @var{z})
+@deftypefunx void mpcb_clear (mpcb_ptr @var{z})
+Initialise or free memory for @var{z}; @code{mpcb_init} must be called once
+before using a variable, and @code{mpcb_clear} must be called once before
+stopping to use a variable. Unlike its @code{mpc_t} counterpart,
+@code{mpcb_init} does not fix the precision of @var{z}, but it sets its
+radius to infinity, so that @var{z} represents the whole complex plane.
+@end deftypefun
+
+
+@deftypefun mpfr_prec_t mpcb_get_prec (mpcb_srcptr @var{z})
+Return the (common) precision of the real and the complex parts of the
+centre of @var{z}.
+@end deftypefun
+
+
+@deftypefun void mpcb_set (mpcb_ptr @var{z}, mpcb_srcptr @var{z1})
+Set @var{z} to @var{z1}, preserving the precision of the centre.
+@end deftypefun
+
+
+@deftypefun void mpcb_set_inf (mpcb_ptr @var{z})
+Set @var{z} to the whole complex plane. This is intended to be used much
+in the spirit of an assertion: When a precondition is not satisfied inside
+a function, it can set its result to this value, which will propagate
+through further computations.
+@end deftypefun
+
+
+@deftypefun void mpcb_set_c (mpcb_ptr @var{z}, mpc_srcptr @var{c}, mpfr_prec_t @var{prec}, unsigned long int @var{err_re}, unsigned long int @var {err_im})
+Set @var{z} to a ball with centre @var{c} at precision @var{prec}.
+If @var{prec} is at least the maximum of the precisions of the real and the
+imaginary parts of @var{c} and @var{err_re} and @var{err_im} are 0, then
+the resulting ball is exact with radius zero. Using a larger value for
+@var{prec} makes sense if @var{c} is considered exact and a larger target
+precision for the result is desired, or some leeway for the working
+precision is to be taken into account.
+If @var{prec} is less than the precision of @var{c}, then usually some
+rounding error occurs when setting the centre, which is taken into account
+in the radius.
+
+If @var{err_re} and @var{err_im} are non-zero, the argument @var{c} is
+considered as an inexact complex number, with a bound on the absolute error
+of its real part given in @var{err_re} as a multiple of 1/2 ulp of the real
+part of @var{c}, and a bound on the absolute error of its imaginary part
+given in @var{err_im} as a multiple of 1/2 ulp of the imaginary part of
+@var{c}. (Notice that if the parts of @var{c} have different precisions or
+exponents, the absolute values of their ulp differ.)
+Then @var{z} is created as a ball with centre @var{c} and a radius taking
+these errors on @var{c} as well as the potential additional rounding error
+for the centre into account.
+If the real part of @var{c} is 0, then @var{err_re} must be 0, since
+ulp of 0 makes no sense; otherwise the radius is set to infinity. The same
+remark holds for the imaginary part.
+
+Using @var{err_re} and @var{err_im} different from 0 is particularly
+useful in two settings: If @var{c} is itself the result of a call to an
+@code{mpc_} function with exact input and rounding mode @code{MPC_RNDNN}
+of both parts to nearest, then its parts are known with errors of at most
+1/2 ulp, and setting @var{err_re} and @var{err_im} to 1 yields a ball
+which is known to contain the exact result (this motivates the strange
+unit of 1/2 ulp); if directed rounding was used, @var{err_re} and
+@var{err_im} can be set to 2 instead.
+
+And if @var{c} is the result of a sequence of calls to @code{mpc_}
+functions for which some error analysis has been carried out (as is
+frequently the case internally when implementing complex functions),
+again the resulting ball @var{z} is known to contain the exact result
+when using appropriate values for @var{err_re} and @var{err_im}.
+@end deftypefun
+
+
+@deftypefun void mpcb_set_ui_ui (mpcb_ptr @var{z}, unsigned long int @var{re}, unsigned long int @var {im}, mpfr_prec_t @var{prec})
+Set @var{z} to a ball with centre @var{re}+I*@var{im} at precision
+@var{prec} or the size of an @code{unsigned long int}, whatever is larger.
+@end deftypefun
+
+
+@deftypefun void mpcb_neg (mpcb_ptr @var{z}, mpcb_srcptr @var{z1})
+@deftypefunx void mpcb_add (mpcb_ptr @var{z}, mpcb_srcptr @var{z1}, mpcb_srcptr @var{z2})
+@deftypefunx void mpcb_mul (mpcb_ptr @var{z}, mpcb_srcptr @var{z1}, mpcb_srcptr @var{z2})
+@deftypefunx void mpcb_sqr (mpcb_ptr @var{z}, mpcb_srcptr @var{z1})
+@deftypefunx void mpcb_pow_ui (mpcb_ptr @var{z}, mpcb_srcptr @var{z1}, unsigned long int @var{e})
+@deftypefunx void mpcb_sqrt (mpcb_ptr @var{z}, mpcb_srcptr @var{z1})
+@deftypefunx void mpcb_div (mpcb_ptr @var{z}, mpcb_srcptr @var{z1}, mpcb_srcptr @var{z2})
+@deftypefunx void mpcb_div_2ui (mpcb_ptr @var{z}, mpcb_srcptr @var{z1}, unsigned long int @var{e})
+These are the exact counterparts of the corresponding functions
+@code{mpc_neg}, @code{mpc_add} and so on, but on complex balls instead of
+complex numbers.
+@end deftypefun
+
+
+@deftypefun int mpcb_can_round (mpcb_srcptr @var{z}, mpfr_prec_t @var{prec_re}, mpfr_prec_t @var{prec_im}, mpc_rnd_t @var{rnd})
+If the function returns @code{true} (a non-zero number), then rounding
+any of the complex numbers in the ball to a complex number with precision
+@var{prec_re} of its real and precision @var{prec_im} of its imaginary
+part and rounding mode @var{rnd} yields the same result and rounding
+direction value, cf. @ref{return-value}.
+If the function returns @code{false} (that is, 0), then it could not
+conclude, or there are two numbers in the ball which would be rounded to
+a different complex number or in a different direction. Notice that the
+function works in a best effort mode and errs on the side of caution by
+potentially returning @code{false} on a roundable ball; this is consistent
+with computational functions not necessarily returning the smallest
+enclosing ball.
+
+If @var{z} contains the result of evaluating some mathematical function
+through a sequence of calls to @code{mpcb} functions, starting with exact
+complex numbers, that is, balls of radius 0, then a return value of
+@code{true} indicates that rounding any value in the ball (its centre is
+readily available) in direction @var{rnd} yields the correct result of
+the function and the correct rounding direction value with the usual
+MPC semantics.
+
+Notice that when the precision of @var{z} is larger than @var{prec_re}
+or @var{prec_im}, the centre need not be representable at the desired
+precision, and in fact the ball need not contain a representable number
+at all to be ``roundable''. Even worse, when @var{rnd} is a directed
+rounding mode for the real or the imaginary part and the ball of
+non-zero radius contains
+a representable number, the return value is necessarily @code{false}.
+Even worse, when the rounding mode for one part is to nearest, the
+corresponding part of the centre of the ball is representable and the ball
+has a non-zero radius, then the return value is also necessarily
+@code{false}, since even if rounding may be possible, the rounding
+direction value cannot be determined.
+@end deftypefun
+
+
+@deftypefun int mpcb_round (mpc_ptr @var{c}, mpcb_srcptr @var{z}, mpc_rnd_t @var{rnd})
+Set @var{c} to the centre of @var{z}, rounded in direction @var{rnd},
+and return the corresponding rounding direction value.
+If @code{mpcb_can_round}, called with @var {z}, the precisions of @var{c}
+and the rounding mode @var{rnd} returns @code{true}, then this function
+does what is expected, it ``correctly rounds the ball'' and returns a
+rounding direction value that is valid for all of the ball.
+As explained above, the result is then not necessarily (in the presence of
+directed rounding with radius different from 0, it is rather
+necessarily not) an element of the ball.
+@end deftypefun
+
+
+
 @node References
 @unnumbered References
 
@@ -1196,6 +1611,10 @@ ISO/IEC 9899:1999, Programming languages — C.
 @node Function Index
 @unnumbered Function Index
 @printindex fn
+
+@node Type Index
+@unnumbered Type Index
+@printindex tp
 
 @node GNU Free Documentation License
 @appendix GNU Free Documentation License

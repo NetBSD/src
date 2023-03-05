@@ -1,6 +1,6 @@
 /* rounding.c -- file for functions iterating over rounding modes.
 
-Copyright (C) 2013, 2014 INRIA
+Copyright (C) 2013, 2014, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -35,13 +35,11 @@ next_mpfr_rnd_mode (mpfr_rnd_t curr)
       return MPFR_RNDU;
     case MPFR_RNDU:
       return MPFR_RNDD;
+    case MPFR_RNDD:
+      return MPFR_RNDA;
     default:
       /* return invalid guard value in mpfr_rnd_t */
-#if MPFR_VERSION_MAJOR < 3
       return MPFR_RNDNA;
-#else
-      return MPFR_RNDA; /* valid rounding type, but not used in mpc */
-#endif
     }
 }
 
@@ -50,7 +48,8 @@ is_valid_mpfr_rnd_mode (mpfr_rnd_t curr)
 /* returns 1 if curr is a valid rounding mode, and 0 otherwise */
 {
    if (   curr == MPFR_RNDN || curr == MPFR_RNDZ
-       || curr == MPFR_RNDU || curr == MPFR_RNDD)
+       || curr == MPFR_RNDU || curr == MPFR_RNDD
+       || curr == MPFR_RNDA)
       return 1;
    else
       return 0;
