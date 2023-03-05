@@ -1,6 +1,6 @@
 /* mpfr_tlgamma -- test file for lgamma function
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -142,7 +142,7 @@ special (void)
   mpfr_set_str (x, CHECK_Y1, 10, MPFR_RNDN);
   if (mpfr_equal_p (y, x) == 0 || sign != 1)
     {
-      printf ("mpfr_lgamma("CHECK_X1") is wrong:\n"
+      printf ("mpfr_lgamma(" CHECK_X1 ") is wrong:\n"
               "expected ");
       mpfr_dump (x);
       printf ("got      ");
@@ -158,7 +158,7 @@ special (void)
   mpfr_set_str (x, CHECK_Y2, 10, MPFR_RNDN);
   if (mpfr_equal_p (y, x) == 0 || sign != 1)
     {
-      printf ("mpfr_lgamma("CHECK_X2") is wrong:\n"
+      printf ("mpfr_lgamma(" CHECK_X2 ") is wrong:\n"
               "expected ");
       mpfr_dump (x);
       printf ("got      ");
@@ -348,14 +348,14 @@ special (void)
   /* bug found by Kevin Rauch on 26 Oct 2007 */
   emin = mpfr_get_emin ();
   emax = mpfr_get_emax ();
-  mpfr_set_emin (-1000000000);
-  mpfr_set_emax (1000000000);
+  set_emin (-1000000000);
+  set_emax (1000000000);
   mpfr_set_ui (x, 1, MPFR_RNDN);
   mpfr_lgamma (x, &sign, x, MPFR_RNDN);
   MPFR_ASSERTN(mpfr_get_emin () == -1000000000);
   MPFR_ASSERTN(mpfr_get_emax () == 1000000000);
-  mpfr_set_emin (emin);
-  mpfr_set_emax (emax);
+  set_emin (emin);
+  set_emax (emax);
 
   /* two other bugs reported by Kevin Rauch on 27 Oct 2007 */
   mpfr_set_prec (x, 128);
@@ -389,7 +389,7 @@ mpfr_lgamma1 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t r)
    when MPFR is built with Debian's tcc 0.9.27~git20151227.933c223-1
    on x86_64. The problem came from __gmpfr_ceil_log2, now fixed in
    r10443 (according to the integer promotion rules, this appeared to
-   be a bug in tcc, not in MPFR; however relying on such an obscure
+   be a bug in tcc, not in MPFR; however, relying on such an obscure
    rule was not a good idea). */
 static void
 tcc_bug20160606 (void)
@@ -427,13 +427,13 @@ bug20180110 (void)
       mpfr_set_si_2exp (x, -1, -(1L << i), MPFR_RNDN);  /* -2^(-2^i) */
       mpfr_lgamma (y, &sign, x, MPFR_RNDZ);
       e = mpfr_get_exp (y);
-      mpfr_set_emax (e - 1);
+      set_emax (e - 1);
       mpfr_clear_flags ();
       inex = mpfr_lgamma (y, &sign, x, MPFR_RNDZ);
       flags = __gmpfr_flags;
       mpfr_set_inf (z, 1);
       mpfr_nextbelow (z);
-      mpfr_set_emax (emax);
+      set_emax (emax);
       if (! (mpfr_equal_p (y, z) && SAME_SIGN (inex, -1) && flags == eflags))
         {
           printf ("Error in bug20180110 for i = %d:\n", i);

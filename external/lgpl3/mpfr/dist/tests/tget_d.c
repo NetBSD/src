@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_d
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -107,7 +107,12 @@ check_inf_nan (void)
 
   mpfr_set_nan (x);
   d = mpfr_get_d (x, MPFR_RNDZ);
-  MPFR_ASSERTN (DOUBLE_ISNAN (d));
+  if (!DOUBLE_ISNAN (d))
+    {
+      printf ("Error in check_inf_nan() for NaN, got %.17g\n", d);
+      printf ("MPFR_DBL_NAN is %.17g (should be NaN)\n", MPFR_DBL_NAN);
+      exit (1);
+    }
 
   mpfr_clear (x);
 #endif
@@ -197,27 +202,31 @@ check_get_d_2exp_inf_nan (void)
   var_d = mpfr_get_d_2exp (&exp, var, MPFR_RNDN);
   if (!DOUBLE_ISNAN (var_d))
     {
-      printf ("mpfr_get_d_2exp with a NAN mpfr value returned a wrong value :\n"
-              " waiting for %g got %g\n", MPFR_DBL_NAN, var_d);
+      printf ("mpfr_get_d_2exp on NaN returned a wrong value: %.17g\n",
+              var_d);
+      printf ("MPFR_DBL_NAN is %.17g (should be NaN)\n", MPFR_DBL_NAN);
       exit (1);
     }
 
   mpfr_set_zero (var, 1);
   var_d = mpfr_get_d_2exp (&exp, var, MPFR_RNDN);
-  if ((exp != 0) || (var_d != 0.0))
+  if (exp != 0 || var_d != 0.0)
     {
-      printf ("mpfr_get_d_2exp with a +0.0 mpfr value returned a wrong value :\n"
-              " double waiting for 0.0 got %g\n exp waiting for 0 got %ld\n",
+      printf ("mpfr_get_d_2exp on +0.0 returned a wrong value:\n"
+              " expected 0.0, got %.17g\n"
+              " exp: expected 0, got %ld\n",
               var_d, exp);
       exit (1);
     }
 
   mpfr_set_zero (var, -1);
   var_d = mpfr_get_d_2exp (&exp, var, MPFR_RNDN);
-  if ((exp != 0) || (var_d != DBL_NEG_ZERO))
+  /* Note: the sign of the negative zero (when supported) is not checked. */
+  if (exp != 0 || var_d != DBL_NEG_ZERO)
     {
-      printf ("mpfr_get_d_2exp with a +0.0 mpfr value returned a wrong value :\n"
-              " double waiting for %g got %g\n exp waiting for 0 got %ld\n",
+      printf ("mpfr_get_d_2exp on -0.0 returned a wrong value:\n"
+              " expected %.17g, got %.17g\n"
+              " exp: expected 0, got %ld\n",
               DBL_NEG_ZERO, var_d, exp);
       exit (1);
     }
@@ -226,8 +235,8 @@ check_get_d_2exp_inf_nan (void)
   var_d = mpfr_get_d_2exp (&exp, var, MPFR_RNDN);
   if (var_d != MPFR_DBL_INFP)
     {
-      printf ("mpfr_get_d_2exp with a +Inf mpfr value returned a wrong value :\n"
-              " waiting for %g got %g\n", MPFR_DBL_INFP, var_d);
+      printf ("mpfr_get_d_2exp on +Inf returned a wrong value:\n"
+              " expected %g, got %g\n", MPFR_DBL_INFP, var_d);
       exit (1);
     }
 
@@ -235,8 +244,8 @@ check_get_d_2exp_inf_nan (void)
   var_d = mpfr_get_d_2exp (&exp, var, MPFR_RNDN);
   if (var_d != MPFR_DBL_INFM)
     {
-      printf ("mpfr_get_d_2exp with a -Inf mpfr value returned a wrong value :\n"
-              " waiting for %g got %g\n", MPFR_DBL_INFM, var_d);
+      printf ("mpfr_get_d_2exp on -Inf returned a wrong value:\n"
+              " expected %g, got %g\n", MPFR_DBL_INFM, var_d);
       exit (1);
     }
 

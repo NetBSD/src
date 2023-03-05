@@ -1,7 +1,7 @@
 /* Test file for mpfr_add_[q,z], mpfr_sub_[q,z], mpfr_div_[q,z],
    mpfr_mul_[q,z], mpfr_cmp_[f,q,z]
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -108,7 +108,7 @@ special (void)
   res = mpfr_sub_q (y, x, q, MPFR_RNDU);
   CHECK_FOR ("0.5-3/2", mpfr_cmp_si(y, -1)==0 && res==0);
 
-  /* Inf Rationnal */
+  /* Inf rational */
   mpq_set_ui (q, 1, 0);
   mpfr_set_str1 (x, "0.5");
   res = mpfr_add_q (y, x, q, MPFR_RNDN);
@@ -1301,7 +1301,7 @@ coverage (void)
 
   /* coverage for mpfr_cmp_z in case of overflow */
   emax = mpfr_get_emax ();
-  mpfr_set_emax (63);
+  set_emax (63);
   mpz_set_str (z, "9223372036854775808", 10); /* 2^63 */
   mpfr_set_ui_2exp (x, 1, mpfr_get_emax (), MPFR_RNDZ);
   /* x = (1-2^(-p))*2^emax */
@@ -1309,18 +1309,18 @@ coverage (void)
   cmp = mpfr_cmp_z (x, z);
   MPFR_ASSERTN(cmp < 0);
   MPFR_ASSERTN(!mpfr_overflow_p ());
-  mpfr_set_emax (emax);
+  set_emax (emax);
 
   /* coverage for mpfr_cmp_z in case of underflow */
   mpz_set_str (z, "18446744073709551615", 10); /* 2^64-1 */
   emin = mpfr_get_emin ();
-  mpfr_set_emin (65); /* xmin = 2^64 */
+  set_emin (65); /* xmin = 2^64 */
   mpfr_set_ui_2exp (x, 1, 64, MPFR_RNDN);
   mpfr_clear_flags ();
   cmp = mpfr_cmp_z (x, z);
   MPFR_ASSERTN(cmp > 0);
   MPFR_ASSERTN(!mpfr_underflow_p ());
-  mpfr_set_emin (emin);
+  set_emin (emin);
 
   mpfr_clear (x);
   mpz_clear (z);

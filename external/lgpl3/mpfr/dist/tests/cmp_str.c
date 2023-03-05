@@ -1,6 +1,6 @@
 /* mpfr_cmp_str -- compare a floating-point number with a string.
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -31,7 +31,8 @@ mpfr_cmp_str (mpfr_srcptr x, const char *s, int base, mpfr_rnd_t rnd)
   MPFR_ASSERTN (!MPFR_IS_NAN (x));
   mpfr_init2 (y, MPFR_PREC(x));
   mpfr_set_str (y, s, base, rnd);
-  res = mpfr_cmp (x,y);
+  MPFR_ASSERTN (!MPFR_IS_NAN (y));
+  res = mpfr_cmp (x, y);
   mpfr_clear (y);
   return res;
 }

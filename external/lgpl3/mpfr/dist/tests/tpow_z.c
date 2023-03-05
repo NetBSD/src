@@ -1,6 +1,6 @@
 /* Test file for mpfr_pow_z -- power function x^z with z a MPZ
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -331,7 +331,7 @@ bug20080904 (void)
   mpfr_init2 (answer, 70);
 
   emin_default = mpfr_get_emin ();
-  mpfr_set_emin (MPFR_EMIN_MIN);
+  set_emin (MPFR_EMIN_MIN);
 
   mpz_set_str (exp, "-4eb92f8c7b7bf81e", 16);
   mpfr_set_str_binary (a, "1.110000101110100110100011111000011110111101000011111001111001010011100");
@@ -352,7 +352,7 @@ bug20080904 (void)
       exit (1);
     }
 
-  mpfr_set_emin (emin_default);
+  set_emin (emin_default);
 
   mpz_clear (exp);
   mpfr_clear (a);

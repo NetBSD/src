@@ -1,6 +1,6 @@
 /* Test file for mpfr_div (and some mpfr_div_ui, etc. tests).
 
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -369,7 +369,7 @@ check_convergence (void)
 /* given y = o(x/u), x, u, find the inexact flag by
    multiplying y by u */
 static int
-get_inexact (mpfr_t y, mpfr_t x, mpfr_t u)
+get_inexact (mpfr_ptr y, mpfr_ptr x, mpfr_ptr u)
 {
   mpfr_t xx;
   int inex;
@@ -1082,12 +1082,7 @@ test_20070628 (void)
   int inex, err = 0;
 
   old_emax = mpfr_get_emax ();
-
-  if (mpfr_set_emax (256))
-    {
-      printf ("Can't change exponent range\n");
-      exit (1);
-    }
+  set_emax (256);
 
   mpfr_inits2 (53, x, y, (mpfr_ptr) 0);
   mpfr_set_si (x, -1, MPFR_RNDN);
@@ -1111,7 +1106,7 @@ test_20070628 (void)
       err++;
     }
   mpfr_clears (x, y, (mpfr_ptr) 0);
-  mpfr_set_emax (old_emax);
+  set_emax (old_emax);
 }
 
 /* Bug in mpfr_divhigh_n_basecase when all limbs of q (except the most
@@ -1257,8 +1252,8 @@ test_extreme (void)
   emin = mpfr_get_emin ();
   emax = mpfr_get_emax ();
 
-  mpfr_set_emin (MPFR_EMIN_MIN);
-  mpfr_set_emax (MPFR_EMAX_MAX);
+  set_emin (MPFR_EMIN_MIN);
+  set_emax (MPFR_EMAX_MAX);
 
   for (xi = 0; xi < 4; xi++)
     {

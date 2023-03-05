@@ -1,6 +1,6 @@
 /* mpfr_set_str -- set a floating-point number from a string
 
-Copyright 2000-2020 Free Software Foundation, Inc.
+Copyright 2000-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -23,7 +23,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "mpfr-impl.h"
 
 int
-mpfr_set_str (mpfr_t x, const char *str, int base, mpfr_rnd_t rnd)
+mpfr_set_str (mpfr_ptr x, const char *str, int base, mpfr_rnd_t rnd)
 {
   char *p;
 

@@ -1,6 +1,6 @@
 /* Test file for mpfr_exp2.
 
-Copyright 2001-2004, 2006-2020 Free Software Foundation, Inc.
+Copyright 2001-2004, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -229,7 +229,7 @@ bug20171218 (void)
   mpfr_init2 (y, 11);
   mpfr_init2 (z, 11);
   mpfr_set_str_binary (x, "-0.110111010100001100000000000000111001100101011011101110101011000011011011001101111111110100110001110100111000111101010010100010001101100001010111101110100010000101011111001101011000011101000000001010001011110011110101010111000000E17");
-  mpfr_set_emin (-113285);
+  set_emin (-113285);
   mpfr_clear_flags ();
   inex = mpfr_exp2 (y, x, MPFR_RNDA);
   /* exact result is 0.11111111111110110000001011...E-113286, which rounded away
@@ -249,7 +249,7 @@ bug20171218 (void)
 
   for (i = 0; i < 3; i++)
     {
-      mpfr_set_emin (i == 0 ? -17 : i == 1 ? emin : MPFR_EMIN_MIN);
+      set_emin (i == 0 ? -17 : i == 1 ? emin : MPFR_EMIN_MIN);
       mpfr_set_exp_t (x, __gmpfr_emin - 2, MPFR_RNDN);
       mpfr_nextabove (x);
       mpfr_set_ui_2exp (z, 1, __gmpfr_emin - 1, MPFR_RNDN);
@@ -276,7 +276,7 @@ bug20171218 (void)
   mpfr_clear (y);
   mpfr_clear (z);
 
-  mpfr_set_emin (emin);
+  set_emin (emin);
 }
 
 int

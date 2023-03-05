@@ -1,4 +1,4 @@
-Copyright 2002-2020 Free Software Foundation, Inc.
+Copyright 2002-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -19,21 +19,22 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA.
 
 
-Notes for the MPFR developers and Subversion users
-==================================================
+Notes for the MPFR developers and Git users
+===========================================
 
-To compile source code obtained from the Subversion repository, you
-need some GNU development utilities: aclocal, autoheader, automake,
-autoconf 2.60 (at least), libtoolize, and the AX_PTHREAD macro from
-<https://www.gnu.org/software/autoconf-archive/ax_pthread.html>
-(for the latter, under Debian/Ubuntu it suffices to install the
-autoconf-archive package).
-As some files like "configure" are not part of the Subversion
-repository, you first need to run "autoreconf -i" (or ./autogen.sh,
-which could be used later to update the config files). Then you can
-run ./configure in the usual way (see the INSTALL file, but note that
-there are no patches to apply, and the URLs are not valid since the
-corresponding version has not been released yet).
+To compile the source code obtained from the repository or after applying
+some special patches, you need some additional GNU development utilities:
+aclocal, autoheader, automake, autoconf 2.60 (at least), and libtoolize.
+The AX_PTHREAD macro from autoconf-archive[*] is now included in the MPFR
+repository (m4/ax_pthread.m4).
+[*] https://www.gnu.org/software/autoconf-archive/ax_pthread.html
+
+As some files like "configure" are not part of the Git repository, you
+first need to run "autoreconf -i" (or ./autogen.sh, which could be used
+later to update the config files). Then you can run ./configure in the
+usual way (see the INSTALL file, but note that there are no patches to
+apply, and the URLs are not valid since the corresponding version has
+not been released yet).
 
 To generate mpfr.info, you need texinfo version 4.2 (or higher).
 
@@ -54,9 +55,8 @@ directory are required; such files are not included in tarballs as
 they can be large.
 
 If nightly snapshots are built, the date in the yyyymmdd format and/or
-the Subversion revision number (giving more accurate information) must
-be added to the version as a suffix, for instance: "2.3.0-20070621" or
-"2.3.0-r4553".
+some Git information (for more accurate information) must be added to
+the version as a suffix, for instance: "2.3.0-20070621".
 
 Patches can be tracked by adding a chunk of the form
 
@@ -82,7 +82,7 @@ For patches from MPFR developers, e.g. for MPFR 3.1.0:
 4. Reset the PATCHES file with "true >| PATCHES".
 5. Rename mpfr-3.1.0 as mpfr-3.1.0-a and duplicate it as mpfr-3.1.0-b
    without changing the timestamps (e.g. with cp -a).
-6. In mpfr-3.1.0-b, apply the patch obtained with "svn diff", e.g.
+6. In mpfr-3.1.0-b, apply the patch obtained with "git diff", e.g.
      patch --no-backup-if-mismatch -p0 < /path/to/new_patch
    If an autotools file has been modified, run "autoreconf" and remove
    the autom4te.cache directory.
@@ -101,8 +101,8 @@ not change when the patch is applied with the -Z option. Otherwise the
 autotools would be needed to build MPFR (unless maintainer mode is
 disabled).
 
-Patches are put under the misc/www directory of the Subversion repository.
-The web server is updated and patches are also copied as InriaForge files.
+Patches are put under the www directory of the misc.git repository for
+the MPFR website.
 
 ===========================================================================
 
@@ -127,8 +127,11 @@ To make a release (for the MPFR team):
 
   *** Please read this section entirely before making any release. ***
 
-  0) For a non-patchlevel release, before creating a branch from the trunk
-     (or more often), some operations should be done:
+  0) For a non-patchlevel release, before creating a branch from master
+     (or more often), some operations should be done in master:
+       * update the doc/texinfo.tex file from a recent version, and check
+         whether this yields unwanted changes in the MPFR manual generated
+         in the main formats (HTML, info, PDF);
        * make sure that the src/mpfr-longlong.h file (from GMP's longlong.h)
          is up-to-date (updates could also be done in patchlevel releases,
          but with care);
@@ -139,17 +142,28 @@ To make a release (for the MPFR team):
          the NEWS file are consistent;
        * update the libtool version (see src/Makefile.am) and the DLL version
          (see configure.ac) if need be, though this should have been done as
-         soon as the ABI changed in the trunk;
-       * update the ChangeLog (see below) in the trunk, in order to minimize
-         the future diffs.
-     If everything is OK, create the branch. Then:
+         soon as the ABI changed in the master branch;
+       * update the ChangeLog (see below) in the master branch, in order to
+         minimize the future diffs.
+     If everything is OK, create the branch (below designated <branch>).
+     Switch to the branch and create an annotated tag <branch>-root on HEAD:
+     "New <branch> branch from master."
+     This tag should be placed on the parent of the first commit specific to
+     the branch; it could also be added later; its id should be the same as
+     the one output by "git merge-base master <branch>".
+     In the master branch, update the version with the update-version
+     script to indicate the next version (use the "dev" suffix).
+     Note: Not everything can be done in master before creating the branch,
+     as this step may be done much time before the release candidate, with
+     the goal of a feature freeze.
 
   1) Check the version and change the suffix to "rc1", "rc2", etc. with
      tools/update-version for the release candidates; remove the suffix
      for the final release.
-     Update the libtool version (see src/Makefile.am), needed at least for
-     patchlevel releases.
-     Update the DLL version (see configure.ac) if not done yet.
+     If not done yet, update the libtool version (see src/Makefile.am)
+     and the DLL version (see configure.ac).
+     Update the README file if need be: the list of the distributed files
+     and the URL of the README.dev file (use the right branch).
      Check these versions with tools/ck-version-info (this check will also
      be done automatically by "make dist" / "make distcheck").
      Update the date in doc/mpfr.texi.
@@ -158,12 +172,13 @@ To make a release (for the MPFR team):
      put them in src/mparam_h.in. For each architecture:
 
      a) download the latest release of GMP on gmplib.org
-     b) build GMP with --disable-shared in say /tmp/gmp-x.y.z
+     b) build GMP with --disable-shared in, say, "/path/to/gmp-x.y.z".
         There is no need in tuning GMP, since most users will build MPFR
         with a vanilla GMP installation, i.e., with the default GMP tuning;
-        however you need to go into /tmp/gmp-x.y.z/tune and type "make speed"
-        (the MPFR tuning is using the resulting speed library)
-     c) configure MPFR with --disable-shared --with-gmp-build=/tmp/gmp-x.y.z
+        however, you need to go into /path/to/gmp-x.y.z/tune and type
+        "make speed" (the MPFR tuning is using the resulting speed library)
+     c) configure MPFR with
+          --disable-shared --with-gmp-build=/path/to/gmp-x.y.z
      d) go into the "tune" directory and run "make tune"
      e) put the resulting mparam.h file into mparam_h.in (please include
         the version of GMP and the compiler used)
@@ -200,33 +215,55 @@ To make a release (for the MPFR team):
   3) Update the NEWS file, in particular say if the release is binary
      and/or API compatible (or not) with previous releases.
      Also update the "API Compatibility" section in the manual (mpfr.texi).
-     Check with abi-compliance-checker (ABI Compliance Checker)[*], on the
-     latest MPFR releases built with no configure options (except --prefix),
-     that no changes have been missed. The ^/misc/build-multi script in the
-     repository may be useful to prepare data for abi-compliance-checker.
-     Note that abi-compliance-checker can only check the symbols, types
+     Cherry-pick these changes in the master branch.
+     Check with abi-compliance-checker (ABI Compliance Checker)[a] against
+     the previous MPFR release (built with no configure options, except
+     --prefix) that no changes have been missed. The build-multi script
+     in the misc.git repository[b] may be useful to prepare data for
+     abi-compliance-checker (for the version to be released, a temporary
+     tarball thus needs to be generated, e.g. with "make dist").
+     Example of use for the 4.1.1 release candidate:
+        $ make distcheck
+        $ mkdir ~/tmp/abicc
+        $ /path/to/build-multi ~/tmp/abicc \
+            /path/to/mpfr-4.1.0.tar.xz mpfr-4.1.1-rc1.tar.xz
+        $ cd ~/tmp/abicc
+        $ abi-compliance-checker -lib mpfr -old 4.1.0.xml -new 4.1.1-rc1.xml
+     Note that abi-compliance-checker can check only the symbols, types
      and constants; it cannot detect just a change in the behavior, thus
      may miss some incompatibilities.
      Update the FAQ.html file with update-faq (and check it) in the doc
      directory.
-     [*] https://lvc.github.io/abi-compliance-checker/
+     [a] https://lvc.github.io/abi-compliance-checker/
+     [b] https://gitlab.inria.fr/mpfr/misc/-/blob/master/build-multi
 
-  4) Update the ChangeLog file with "TZ=UTC0 svn log -rHEAD:0 -v" in
-     UTF-8 locales, e.g. "LC_ALL=en_US.UTF8 TZ=UTC0 svn log -rHEAD:0 -v".
+  4) Update the ChangeLog file with "make update-changelog" in UTF-8 locales.
      This should at least be done last, in order to be complete before the
      generation of the tarball.
      Note: First, make sure that all the pending commits have been done.
 
-  5) Do a "svn export" of the branch to make sure to start from a clean
-     source tree; this also has the advantage (over a checkout) to set
-     the timestamps to the commit time, ensuring the right ordering of
-     the files by date.
-     Generate the tarballs with:
+  5) Create an annotated tag whose name corresponds to the content of
+     the VERSION file:
+       $ tag=$(cat VERSION)
+       $ git tag -m "GNU MPFR $tag tag." $tag
+     and push it:
+       $ git push origin $tag
+     Note: in case of error, see the git-tag(1) man page.
+
+  6) Export the tree identified by this tag in order to get a tarball:
+       $ ./tools/export-release $(cat VERSION) /path/to/some/dir
+     A mpfr-$tag subdirectory will be created there; each file or directory
+     has a timestamp corresponding to its last change.
+     From this directory, generate the tarballs with:
        $ ./autogen.sh
        $ ./configure
        $ make distcheck
+     If need be, after "./autogen.sh", replace config.guess and config.sub
+     by their latest version (see URLs in these files), e.g. if they are
+     known to solve issues. But note that they may not have been fully
+     tested.
 
-  6) Test the release version on different machines, with --enable-assert
+  7) Test the release version on different machines, with --enable-assert
      set to "yes", "no" (default), "none" and "full" respectively, with
      and without -DMPFR_DISABLE_IEEE_FLOATS in $CFLAGS, with and without gmp
      internal files (--enable-gmp-internals), with and without GMP built as
@@ -299,7 +336,7 @@ To make a release (for the MPFR team):
      Test with "clang -fsanitize=undefined" (available as of Clang 3.3),
      e.g.: ./configure CC=clang CFLAGS='-fsanitize=undefined'
      The -fno-sanitize-recover option can give more visibility by making
-     the corresponding tests fail (useful for automated tests). However
+     the corresponding tests fail (useful for automated tests). However,
      clang unconditionally regards the floating-point division by zero
      as an error with "-fsanitize=undefined"; this is detected by a
      configure test, which sets MPFR_ERRDIVZERO to disable the tests
@@ -328,18 +365,18 @@ To make a release (for the MPFR team):
      -Wmissing-parameter-type -Wmissing-prototypes -Wmissing-declarations
      -Wmissing-field-initializers". The -Wint-in-bool-context option
      could be added once available. These warnings can easily be checked
-     in automatic tests by adding "-Werror -Wno-error=unused-function",
-     but this needs:
-       * GCC 4.9+
-       * a patched autoconf:
-     https://lists.gnu.org/archive/html/autoconf-patches/2014-01/msg00003.html
+     in automatic tests by adding "-Werror". Add -Wno-error=... options
+     when needed (but except in some cases, it may be better to improve
+     the MPFR code; in particular, the -Wno-error=unused-function option
+     should no longer be necessary, thanks to conditional compilation or
+     MPFR_MAYBE_UNUSED).
 
      Check whether some functions could be declared as pure, const, etc.
      with GCC, using -Wsuggest-attribute=... options.
 
      Check that there are no abnormal regressions in the timings (both for
      100, 1000, 10000 digits, https://www.mpfr.org/mpfr-current/timings.html,
-     and for small precision, using the mbench program, see mpfr/mbench).
+     and for small precision, using the mbench program, see tools/mbench).
 
      Test the library interface compatibility by running the test suite
      compiled against an old library version and dynamically linked with
@@ -354,6 +391,8 @@ To make a release (for the MPFR team):
      (GMP_CHECK_RANDOMIZE, MPFR_CHECK_LIBC_PRINTF, MPFR_CHECK_LARGEMEM,
      MPFR_CHECK_EXPENSIVE, MPFR_SUSPICIOUS_OVERFLOW, MPFR_CHECK_LOCALES,
      MPFR_CHECK_BADCASES).
+     Note: a non-default GMP_CHECK_RANDOMIZE value allows one to make sure
+     that a test against a hard-coded result does not depend on it.
 
      Check there is no branch misprediction due to wrong MPFR_LIKELY or
      MPFR_UNLIKELY statements. For that test, configure with
@@ -369,13 +408,11 @@ To make a release (for the MPFR team):
      But note that these rules are not really portable: they may do
      nothing or might even incorrectly fail on some platforms.
 
-  7) For the release itself (not the release candidates), if no problems
-     have been found, create a tag with:
-       svn cp .../mpfr/branches/x.y .../mpfr/tags/x.y.z
-
-  8) For the release itself (not the release candidates), update
-     the version with the update-version script to indicate the
-     next version (use the "dev" suffix).
+  8) For the release itself (not the release candidates), update the
+     version with the update-version script in the Git repository to
+     indicate the next patchlevel version (use the "dev" suffix).
+     Increase the 2nd number of the libtool version (see src/Makefile.am)
+     for the next patchlevel version.
 
   9) * For the release itself (not the release candidates):
      Create a web page for the MPFR release and add the documentation
@@ -384,9 +421,9 @@ To make a release (for the MPFR team):
      have an a4 papersize (see technical information later about the
      MPFR manual).
      Upload the tarballs and the signatures to the MPFR web server
-     (via a svn working copy) and to InriaForge.
+     (via the misc.git repository).
      Prepare the files for the GNU FTP site with the gnu-sigdir script
-     in the /misc directory and upload them.
+     of the misc.git repository and upload them.
      Update the mpfr-current symbolic link and the history page.
      Update the old current page to point to the new release; see
      examples for 3.0.1 (latest version of the branch) and 3.1.0
@@ -394,29 +431,27 @@ To make a release (for the MPFR team):
      Run the tools/announce-text script to do some checking and get
      the announce text. Edit this text if need be.
      Announce the release in the mpfr-announce, mpfr, gmp-discuss, gcc
-     and info-gnu[1] mailing-lists, and on InriaForge (MPFR News, and
-     contact the InriaForge administrators[2] to have the announce
-     published on the main page).
+     and info-gnu[1] mailing-lists.
      In case of a new patchlevel release, add a link from the web page
      of the previous release.
 
      * For the release candidates: Announce the RC in the mpfr-announce,
-     mpfr, gmp-discuss, gcc and platform-testers[3] mailing-lists.
+     mpfr, gmp-discuss, gcc and platform-testers[2] mailing-lists.
      A minimal web page for the MPFR release can be created right now
-     (see svn history such as [4] for examples), as the manual already
-     contains the new URL's.
+     (see Git history such as [3] for examples), as the manual already
+     contains the new URLs.
 
      [1] https://www.gnu.org/prep/maintain/html_node/Announcements.html
-     [2] http://siteadmin.gforge.inria.fr/FAQ.html
-     [3] See https://lists.gnu.org/mailman/listinfo/platform-testers and
+     [2] See https://lists.gnu.org/mailman/listinfo/platform-testers and
      https://lists.gnu.org/archive/html/platform-testers/2011-09/msg00000.html
-     [4] https://gforge.inria.fr/scm/viewvc.php/misc/www/mpfr-3.1.2/index.html?view=markup&revision=8472&root=mpfr
+     [3] commit a04e43bb98b916c354f15d7e88b2934f84d0a6ab of misc.git
+         i.e. https://gitlab.inria.fr/mpfr/misc/-/commit/a04e43bb
 
 Note: Mail sent to the mpfr-announce list should also be sent to
 the mpfr list, and the Reply-To should be set to the mpfr list.
 
-For major or minor releases (but not patchlevels), a branch may be
-created first to allow new features to be committed to the trunk.
+For major or minor releases (but not patchlevels), a new branch may be
+created first to allow new features to be committed to master.
 
 To add tcc support with libtool 2.4.2 or below, do the following before
 running "make distcheck":
@@ -487,7 +522,9 @@ Format of long double.
                         LDBL_MANT_DIG). Note: be careful with formats such
                         as double-double (a.k.a. IBM long double).
 
-+ MPFR_USE_LOGGING:     Define to enable logging.
++ MPFR_USE_LOGGING:     Define to enable logging (this needs GCC, and this
+                        is not available with mini-gmp, since mpfr_fprintf
+                        cannot be defined with mini-gmp).
 
 + MPFR_WANT_DECIMAL_FLOATS:
                         Define to build conversion functions from/to
@@ -531,7 +568,8 @@ Format of long double.
                         the generic code would not sufficiently be tested.
 
 + MPFR_WANT_PROVEN_CODE:
-                        Define to enable formally proven code.
+                        Define to enable formally proven code (used only
+                        under some conditions, see below).
 
 List of macros used for checking MPFR:
 
@@ -625,9 +663,12 @@ Environment variables that affect the tests:
 + MPFR_TESTS_TIMEOUT:   When timeout in the tests is enabled, this
                         overrides the value of the macro.
 
++ MPFR_TGENERIC_STAT:   For the generic tests, output the number of normal
+                        cases and the total.
+
 ===========================================================================
 
-Before testing any macro in a .c file, one needs:
+Before testing any macro (such as HAVE_STDINT_H) in a .c file, one needs:
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -645,9 +686,10 @@ ISO C Names and corresponding headers:
   http://www.schweikhardt.net/identifiers.html
 
 The C language:
-  http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf (C99)
-  http://www.open-std.org/jtc1/sc22/wg14/www/C99RationaleV5.10.pdf
-  http://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf (C11 draft)
+  https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1256.pdf (C99)
+  https://www.open-std.org/jtc1/sc22/wg14/www/C99RationaleV5.10.pdf
+  https://www.open-std.org/jtc1/sc22/wg14/www/docs/n1570.pdf (C11 draft)
+  https://www.open-std.org/jtc1/sc22/wg14/www/docs/n3054.pdf (C2x draft)
   http://home.datacomm.ch/t_wolf/tw/c/c9x_changes.html
 
 About undefined behavior:
@@ -655,7 +697,7 @@ About undefined behavior:
   https://blog.regehr.org/archives/226
   https://blog.regehr.org/archives/232
   https://blog.regehr.org/archives/1520
-  http://blog.llvm.org/2011/05/what-every-c-programmer-should-know.html
+  https://blog.llvm.org/posts/2011-05-13-what-every-c-programmer-should-know/
 
 Type punning, strict aliasing, and optimization:
   https://blog.regehr.org/archives/959
@@ -760,6 +802,15 @@ Adding a level of indirection is OK, as suggested there, and on:
 
   https://stackoverflow.com/questions/36645660/why-cant-i-cast-a-function-pointer-to-void
 
+To convert an unsigned integer u to the corresponding signed integer with
+the two's complement rule (i.e. modular arithmetic) but in a portable way,
+write e.g. for long:
+
+  u > LONG_MAX ? -1 - (long) ~u : (long) u
+
+(at least GCC and Clang optimize this expression to identity). This is
+provided by the ULONG2LONG() macro (defined in mpfr-impl.h).
+
    =====================================================================
 
 For floating-point constants, do not use the non-standard and useless
@@ -776,6 +827,31 @@ does not conform to the C standard by default. References:
   https://gcc.gnu.org/bugzilla/show_bug.cgi?id=85957
 
 [*] https://stackoverflow.com/questions/4331200/what-do-f-and-d-mean-at-the-end-of-numeric-literals
+
+   =====================================================================
+
+In MPFR, _Float128 may be defined as __float128 if the latter is provided
+by the compiler, but not the former. In such a case, do not assume that
+_Float128 and long double are necessarily different types (as required by
+the WG14 N2579 draft "IEC 60559 interchange and extended types").
+
+   =====================================================================
+
+For string suffix selection, do not write expressions of the form
+string + integer, such as
+
+  "foo" + i
+
+because Clang emits a warning
+
+  adding 'int' to a string does not append to the string [-Wstring-plus-int]
+
+Instead, one may write
+
+  &"foo"[i]    or    (char *) "foo" + i
+
+(the first form is the one suggested by Clang, the second one is more
+immediate to understand).
 
 ===========================================================================
 
@@ -833,10 +909,16 @@ Conversely, do not use locale-dependent functions when the result must
 not depend on the locales. In particular, the alphanumeric characters
 used in number strings (as created by mpfr_get_str) must be those of
 the required characters from the basic character set (see ISO C99
-standard Section 5.2.1 "Character sets"). And tolower(letter) does
-not necessarily return the corresponding lowercase letter from these
-required characters. For instance, tolower('I') returns a dotless 'i'
-in Turkish tr_TR.iso88599 locales.
+standard Section 5.2.1 "Character sets").
+
+Note that in Turkish locales on some systems:
+  * the uppercase version of "i" is "İ" (an "I" with a dot above);
+  * the lowercase version of "I" is "ı" (a dotless "i").
+These characters are available in ISO-8859-9, thus as "char" in the
+tr_TR.iso88599 locale. However, in UTF-8, they are not available as
+(8-bit) "char"; thus toupper('i') gives 'i' and tolower('I') gives 'I'.
+So, when writing code and testing, these two encodings need to be
+considered, as they can give different behaviors.
 
 ===========================================================================
 
@@ -887,6 +969,9 @@ If you want to use the logging of MPFR, you need to enable it:
   ./configure --enable-logging
   make
 Then link your program with this new build of MPFR.
+
+The logging feature needs GCC to build MPFR, and it is not available
+with mini-gmp, since mpfr_fprintf cannot be defined with mini-gmp.
 
 Warning! The logging code for functions sometimes output an "inexact"
 value, but in case of exception, this value may be meaningless. In
@@ -1143,9 +1228,10 @@ MPFR manual (mpfr.texi):
   * Use "decimal-point character" (as in ISO C) when the meaning is
     the corresponding character ("." or ",", depending on the locale),
     not "decimal point", "decimal separator", "fractional point", or
-    "radix point" (the latter is fine in certain contexts). This is
-    just the name of this character (as initially defined for base 10)
-    and does not imply a number written in decimal.
+    "radix point" (the latter is fine with a mathematical meaning).
+    This is just the name of this character (as originally defined
+    for base 10) and does not imply a number written in decimal.
+    Note: POSIX uses the term "radix character".
   * Use "@minus{}" for the minus character, not "-".
   * Warning! Texinfo is not like TeX. Whitespace is preserved in the
     info file. So, do not use additional space for .texi indentation.
@@ -1240,7 +1326,7 @@ An example that will fail with 32-bit int and long:
       return a - b;
     }
 
-When creating a new variable that will always contain nonnegative values,
+When creating a new variable that will always contain non-negative values,
 it is generally better to define it as a signed type if it may be used in
 an arithmetic expression. The exceptions are when the value is seen as an
 array of bits (e.g. for limbs) and to temporarily avoid integer overflow.
@@ -1302,8 +1388,8 @@ More on exponent handling:
   ± a ± b ± 1 fits in a mpfr_exp_t.
 
 * The unsigned type corresponding to mpfr_exp_t is mpfr_uexp_t. It may be
-  useful if the considered values are nonnegative and don't necessarily
-  fit in mpfr_exp_t. To convert a nonnegative mpfr_exp_t to mpfr_uexp_t,
+  useful if the considered values are non-negative and don't necessarily
+  fit in mpfr_exp_t. To convert a non-negative mpfr_exp_t to mpfr_uexp_t,
   you should use the MPFR_UEXP macro, which is defined as:
     #define MPFR_UEXP(X) (MPFR_ASSERTD ((X) >= 0), (mpfr_uexp_t) (X))
 
@@ -1350,6 +1436,16 @@ Use assertions (MPFR_ASSERTN) instead.
 
 ===========================================================================
 
+The only compiler known to support _Decimal64 and _Decimal128 is GCC.
+In code related to these types, when the decimal encoding can be BID,
+do not use any conversion between binary and decimal types, otherwise
+GCC will generate from 2 to 3 MB of code (depending on the GCC version)
+in the MPFR shared library when the encoding is BID:
+  https://gcc.gnu.org/bugzilla/show_bug.cgi?id=96173
+  https://gforge.inria.fr/tracker/index.php?func=detail&aid=21849&group_id=136&atid=619
+
+===========================================================================
+
 When using GNU extensions (based on the value of the __GNUC_* macros), check
 whether they work with ICC. The following paper can give useful information:
 "Intel® Compilers for Linux*: Compatibility with GNU Compilers" at
@@ -1358,6 +1454,36 @@ whether they work with ICC. The following paper can give useful information:
 To detect compilers, see
 
   https://sourceforge.net/p/predef/wiki/Compilers/
+
+===========================================================================
+
+Note about the formally proven code (src/*_extracted.c):
+
+The code has been proven with types of fixed width (due to a limitation
+of the F*/KreMLin proof system). Thus this code may be used only under
+some conditions, so that MPFR enables it only under such conditions via
+a #if, e.g. in add1sp.c:
+
+#if defined(MPFR_WANT_PROVEN_CODE) && GMP_NUMB_BITS == 64 && \
+  UINT_MAX == 0xffffffff && MPFR_PREC_BITS == 64 && \
+  _MPFR_PREC_FORMAT == 3 && _MPFR_EXP_FORMAT == _MPFR_PREC_FORMAT
+
+which implies that the #define's in add1sp1_extracted.c
+
+#define int64_t long
+#define uint32_t unsigned int
+#define uint64_t mp_limb_t
+
+are correct.
+
+Be careful with any attempt to reuse the code in a more general context,
+e.g. by removing these #define's and just assuming that the prototypes
+match the ABI. There is another implicit requirement: uint64_t must be
+at least as large as unsigned int. Otherwise the code may become incorrect
+due to integer promotions. The issue of integer promotions about intN_t vs
+int has been mentioned in
+
+  https://gcc.gnu.org/pipermail/gcc/2021-November/237726.html
 
 ===========================================================================
 
@@ -1394,21 +1520,6 @@ In particular:
 
 ===========================================================================
 
-For developers - Use of the svn:eol-style Subversion property
-
-The svn:eol-style Subversion property is traditionally set to "native" on
-text files, but this has drawbacks:
-  * On systems where the end-of-line (EOL) sequence is not LF, the obtained
-    files are different from those from the tarballs. This makes maintenance
-    harder.
-  * Some tools under Windows (such as makeinfo of MinGW/MSYS) don't support
-    the MS-Windows EOL sequence CRLF, and the MPFR build fails.
-
-For these reasons, the svn:eol-style Subversion property should never be set
-to "native".
-
-===========================================================================
-
 About the test suite
 --------------------
 
@@ -1429,7 +1540,7 @@ of the tests/Makefile.am file.
 
 /* Test file for mpfr_func.
 
-Copyright 2020 Free Software Foundation, Inc.
+Copyright 2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -1486,7 +1597,7 @@ of mismatch between a header and a library, an error message is output
 
 2. An error in the GMP version check is a non-fatal error: if there are
    no errors in MPFR version check, test_version() returns with value 1.
-   However the tversion test program will regard this as a fatal error
+   However, the tversion test program will regard this as a fatal error
    (thus "make check" will fail). The probable reason of the mismatch is
    that the GMP library has been upgraded while the MPFR test suite has
    not been rebuilt; otherwise there is probably something wrong in the
@@ -1535,24 +1646,68 @@ filename should start with the name of the test program (for instance,
 "tfprintf_out.txt" for tfprintf.c). Add the filename to CLEANFILES in
 the tests/Makefile.am file.
 
-Also, make sure that the tests run against previous MPFR versions,
+In case of failure of a test, freeing the memory explicitly before exiting
+is not necessary. We do this in case of success just to be able to detect
+memory leaks in MPFR.
+
+Also, try to make sure that the tests run against previous MPFR versions,
 possibly by disabling some tests with code like
 
   #if MPFR_VERSION >= MPFR_VERSION_NUM(2,3,0)
 
-Indeed one can now easily run the trunk tests in a branch by executing
+It is possible to check out the tests from a branch, e.g. master, with
 
-  svn switch .../svn/mpfr/trunk/tests tests
+  git checkout master -- tests/
 
-from the working copy. One can know when the tests directory has been
-switched, thanks to
+But to avoid the update of tests/Makefile.am with new tests, which
+would probably fail as these new tests are typically written for new
+MPFR functions, the following may be better:
 
-  $ svn status
-      S  tests
+  git checkout master -- 'tests/*.c' 'tests/*.h'
 
-In case of failure, freeing the memory explicitly is not necessary.
-We do this in case of success just to be able to detect memory leaks
-in MPFR.
+Note that (as seen with "git status") since the corresponding changes are
+put in the index and there is no intent to commit, you should also do
+
+  git restore --staged tests
+
+   ---------------------------------------------------------------------
+
+Test function-like macros associated with functions
+  * for side effects in argument evaluation (arguments must always be
+    evaluated once);
+  * for support of types that would be eligible to implicit type conversion
+    with the function. Be careful: C and C++ have different rules.
+
+Support "gcc -Werror=c++-compat" and g++, possibly with -DMPFR_USE_NO_MACRO
+in CFLAGS. The following was added to mpfr-test.h:
+
+#if defined (__cplusplus)
+#define VOIDP_CAST(X) (X)
+#else
+#define VOIDP_CAST(X) ((void *) (X))
+#if defined (__GNUC__)
+#define IGNORE_CPP_COMPAT
+#endif
+#endif
+
+For instance, in tcopysign.c, since mpfr_copysign is implemented both as
+a function and as a function-like macro:
+
+  int a = 0, b = 0, c = 0;
+[...]
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+      mpfr_copysign ((a++, VOIDP_CAST(z)),
+                     (b++, VOIDP_CAST(p)),
+                     (c++, VOIDP_CAST(y)), rnd_mode);
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+      MPFR_ASSERTN (a == 1);
+      MPFR_ASSERTN (b == 1);
+      MPFR_ASSERTN (c == 1);
 
    ---------------------------------------------------------------------
 
@@ -1612,7 +1767,7 @@ But you can filter the output with:
 For readability, you should redirect the valgrind output to a file.
 You can use --log-file, but due to --trace-children=yes, you need
 the %p format specifier in the filename argument to generate a file
-for each child; however many files will be generated, and it may be
+for each child; however, many files will be generated, and it may be
 better to use the following method to get a single file:
 
   valgrind --trace-children=yes --log-fd=3 make check 3> vg.out
@@ -1689,14 +1844,9 @@ $ make
 $ make check LOG_COMPILER=wine
 $ make install
 
-Note: The -D__USE_MINGW_ANSI_STDIO option may be necessary in order to get
-an ISO-compliant printf as mentioned in MPFR's INSTALL file. In this case,
-add CC="i686-w64-mingw32-gcc -D__USE_MINGW_ANSI_STDIO" at the end of the
-configure line. Otherwise MPFR needs to be configured with
-  "CPPFLAGS=-DNPRINTF_J -DNPRINTF_L -DNPRINTF_T"
-But with recent versions of the tools, printf now seems to be ISO-compliant
-by default. The __USE_MINGW_ANSI_STDIO macro is now internal to MinGW and
-should no longer be used.
+Note: With MinGW earlier than v8.0.0, the -D__USE_MINGW_ANSI_STDIO option
+may be necessary in order to get an ISO-conforming printf as mentioned in
+MPFR's INSTALL file.
 
 2. Build and check MPFR.
 
@@ -1709,8 +1859,7 @@ Note: Due to bugs in autoconf[1] and dash[2], the configure script
 may create files with a binary filename or have any other arbitrary
 behavior if /bin/sh is dash. The cause is that it tries to execute
 a MS Windows executable, which is interpreted as a shell script by
-dash (thus with random, meaningless commands). This will confuse
-Subversion, and these files need to be removed manually.
+dash (thus with random, meaningless commands).
 
 [1] https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=850329
 [2] https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=816313
@@ -1757,7 +1906,7 @@ Modify the faq.xhtml file and run
 
   xsltproc --nodtdattr faq-web.xsl faq.xhtml > www/faq.html
 
-Check with "svn diff" that this change has been done correctly (in case
+Check with "git diff" that this change has been done correctly (in case
 of incorrect installation of XML tools), validate the files with
 
   xmllint --noout --loaddtd --valid faq.xhtml www/faq.html
@@ -1765,10 +1914,20 @@ of incorrect installation of XML tools), validate the files with
 and if everything is OK (no error messages), commit both files.
 
 Update the FAQ.html file with update-faq in the doc directory of the
-MPFR trunk and supported branches.
+MPFR master and supported release branches.
 
 ===========================================================================
 
 Spelling:
   * Some suggestions: https://gcc.gnu.org/codingconventions.html#Spelling
   * Check with "codespell" (done by mpfrlint).
+
+===========================================================================
+
+Git:
+  * When creating a branch, add an associated <branch>-root tag on the
+    root commit (i.e. just before the first commit in the new branch).
+    This can be useful for commands like "git diff <branch>-root" to get
+    the commits done in the branch since its creation, and such tags are
+    used in tests/Makefile.am for output_info (Git information output by
+    "make check").

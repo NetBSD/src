@@ -1,6 +1,6 @@
 /* tabort_defalloc2 -- Test for abort due to reaching out of memory
 
-Copyright 2012-2020 Free Software Foundation, Inc.
+Copyright 2012-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

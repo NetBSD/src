@@ -1,6 +1,6 @@
 /* Test file for mpfr_version.
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -70,8 +70,8 @@ main (void)
   /************************* Compiler information **************************/
 
   /* TODO: We may want to output info for non-GNUC-compat compilers too. See:
-   * http://sourceforge.net/p/predef/wiki/Compilers/
-   * http://nadeausoftware.com/articles/2012/10/c_c_tip_how_detect_compiler_name_and_version_using_compiler_predefined_macros
+   * https://sourceforge.net/p/predef/wiki/Compilers/
+   * https://web.archive.org/web/20191011050717/http://nadeausoftware.com/articles/2012/10/c_c_tip_how_detect_compiler_name_and_version_using_compiler_predefined_macros
    *
    * For ICC, do not check the __ICC macro as it is obsolete and not always
    * defined (in particular, on MS Windows).
@@ -85,6 +85,13 @@ main (void)
 # endif
   printf (COMP "ICC %d.%d.%d" ICCV "\n", __INTEL_COMPILER / 100,
           __INTEL_COMPILER % 100, __INTEL_COMPILER_UPDATE);
+#elif defined(__TINYC__)
+  /* The format of __TINYC__ is not described, but libtcc.c defines it with
+   *   sprintf(buffer, "%d", a*10000 + b*100 + c);
+   *   tcc_define_symbol(s, "__TINYC__", buffer);
+   */
+  printf (COMP "TCC %d.%d.%d\n", (int) (__TINYC__ / 10000),
+          (int) ((__TINYC__ / 100) % 100), (int) (__TINYC__ % 100));
 #elif (defined(__GNUC__) || defined(__clang__)) && defined(__VERSION__)
 # ifdef __clang__
 #  define COMP2 COMP
@@ -380,14 +387,6 @@ main (void)
 #endif
           );
 
-  (puts) ("[tversion] _mulx_u64 = "
-#if defined(HAVE_MULX_U64)
-          "yes"
-#else
-          "no"
-#endif
-          );
-
   if (strcmp (mpfr_buildopt_tune_case (), MPFR_TUNE_CASE) != 0)
     {
       printf ("ERROR! mpfr_buildopt_tune_case() and MPFR_TUNE_CASE"
@@ -471,7 +470,8 @@ main (void)
   e = mpfr_get_emin_min ();
   if (e != MPFR_EMIN_MIN)
     {
-      printf ("ERROR! mpfr_get_emin_min != MPFR_EMIN_MIN (%ld vs %ld)\n",
+      printf ("ERROR! mpfr_get_emin_min != MPFR_EMIN_MIN (%"
+              MPFR_EXP_FSPEC "d vs %" MPFR_EXP_FSPEC "d)\n",
               (mpfr_eexp_t) e, (mpfr_eexp_t) MPFR_EMIN_MIN);
       err = 1;
     }
@@ -479,7 +479,8 @@ main (void)
   e = mpfr_get_emax_max ();
   if (e != MPFR_EMAX_MAX)
     {
-      printf ("ERROR! mpfr_get_emax_max != MPFR_EMAX_MAX (%ld vs %ld)\n",
+      printf ("ERROR! mpfr_get_emax_max != MPFR_EMAX_MAX (%"
+              MPFR_EXP_FSPEC "d vs %" MPFR_EXP_FSPEC "d)\n",
               (mpfr_eexp_t) e, (mpfr_eexp_t) MPFR_EMAX_MAX);
       err = 1;
     }

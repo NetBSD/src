@@ -1,6 +1,6 @@
 /* Test file for mpfr_cmp2.
 
-Copyright 1999-2003, 2006-2020 Free Software Foundation, Inc.
+Copyright 1999-2003, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -24,7 +24,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* set bit n of x to b, where bit 0 is the most significant one */
 static void
-set_bit (mpfr_t x, unsigned int n, int b)
+set_bit (mpfr_ptr x, unsigned int n, int b)
 {
   unsigned l;
   mp_size_t xn;
@@ -91,7 +91,7 @@ worst_cases (void)
       set_bit (y, i + 1, 0);
       for (j = 0; j < 64; j++) /* |v| = j */
         {
-          b = randlimb () % 2;
+          b = RAND_BOOL ();
           set_bit (x, i + j + 2, b);
           set_bit (y, i + j + 2, b);
           for (k = 0; k < 64; k++)
@@ -322,9 +322,9 @@ test_equal (void)
             inex = mpfr_set (y, w, MPFR_RNDN);
             MPFR_ASSERTN (inex == 0);
             MPFR_ASSERTN (mpfr_equal_p (x, y));
-            if (randlimb () & 1)
+            if (RAND_BOOL ())
               mpfr_neg (x, x, MPFR_RNDN);
-            if (randlimb () & 1)
+            if (RAND_BOOL ())
               mpfr_neg (y, y, MPFR_RNDN);
             if (mpfr_cmp2 (x, y, &j) != 0)
               {

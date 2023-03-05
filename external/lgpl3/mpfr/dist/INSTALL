@@ -1,4 +1,4 @@
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -30,6 +30,11 @@ MPFR).
 
 0. You first need to install GMP. See <https://gmplib.org/>.
    MPFR requires GMP version 5.0.0 or later.
+   You need a C compiler, preferably GCC, but any reasonable compiler should
+   work (C++ compilers should work too, under the condition that they do not
+   break type punning via union).
+   And you need the standard Unix "make" command, plus some other standard
+   Unix utility commands.
 
 1. Extract the files from the archive.
 
@@ -37,17 +42,17 @@ MPFR).
    not been done yet and if patches are available. You can check
    on the release page:
 
-     https://www.mpfr.org/mpfr-4.1.0/
+     https://www.mpfr.org/mpfr-4.2.0/
 
    which may have additional information. The patches can be applied
    with commands like:
 
-     wget https://www.mpfr.org/mpfr-4.1.0/allpatches
+     wget --no-config https://www.mpfr.org/mpfr-4.2.0/allpatches
      patch -N -Z -p1 < allpatches
 
    or
 
-     curl https://www.mpfr.org/mpfr-4.1.0/allpatches | patch -N -Z -p1
+     curl https://www.mpfr.org/mpfr-4.2.0/allpatches | patch -N -Z -p1
 
    (Those instructions are for the GNU patch command, for example
    /usr/bin/gpatch on Solaris.)
@@ -133,7 +138,7 @@ install recent versions of some utilities such as texinfo.
 
 * Type "make dvi" to produce the documentation in the DVI format.
 
-* Type "make ps" to produce the documentation in the Postscript format.
+* Type "make ps" to produce the documentation in the PostScript format.
 
 * Type "make html" to produce the documentation in the HTML format
   (in several pages); if you want only one output HTML file, then
@@ -218,7 +223,7 @@ specific architecture.
 
 --disable-thread-safe   build MPFR without TLS. By default, TLS support
                         is detected automatically, and MPFR is built as
-                        thread safe if supported. However this detection
+                        thread safe if supported. However, this detection
                         is only a heuristic: TLS can be detected as
                         supported while its support is incomplete or
                         buggy (MPFR tests may fail). In such a case,
@@ -387,7 +392,7 @@ Several documents may help you to solve the problem:
   * the FAQ (either the FAQ.html file distributed with MPFR, or the
     on-line version <https://www.mpfr.org/faq.html>, which may be more
     up-to-date);
-  * the MPFR web page for this version <https://www.mpfr.org/mpfr-4.1.0/>,
+  * the MPFR web page for this version <https://www.mpfr.org/mpfr-4.2.0/>,
     which lists bugs found in this version and provides some patches.
 
 If the "configure" fails, please check that the C compiler and its
@@ -593,13 +598,12 @@ approach depending on how you intend to use the resulting libraries.
 a. Using MinGW
 ==============
 
-1 - We advise to use MinGW (http://www.mingw.org/ for 32-bit, and
-    https://sourceforge.net/projects/mingw-w64/ for 32- and 64-bit),
-    which is simpler and less demanding than Cygwin. Contrary to Cygwin,
-    it also provides native Windows code.
+1 - We advise to use Mingw-w64 (https://www.mingw-w64.org/), which is
+    simpler and less demanding than Cygwin. Contrary to Cygwin, it also
+    provides native Windows code.
 
     If you also use MSYS, you should use "make" for MSYS instead of
-    the "make" utility from MinGW-W64 or from GCC, which causes the
+    the "make" utility from Mingw-w64 or from GCC, which causes the
     following error:
 
       libtool: warning: libobj name 'extract.Tpo -c -o extract.lo extract.lo'
@@ -618,16 +622,22 @@ a. Using MinGW
 3 - To avoid using the Microsoft runtime (which might not be conform to ISO C),
     you can use the MinGW runtime package (which is an integral part of MinGW).
 
-    With old MinGW versions, you can get an ISO-compliant printf()
-    if you compile your application with either '-ansi', '-posix' or
-    '-D__USE_MINGW_ANSI_STDIO'. But note that this latter option,
-    which was useful in the past (see below) should no longer be used.
+    With MinGW version v8.0.0 and later, the formatted output functions
+    (printf, etc.) are ISO/POSIX-conforming by default; however, this is
+    no longer true if -std=c89 is used at build time. Conversely, with
+    earlier MinGW versions, it is possible to get conforming functions
+    with either '-ansi', '-posix' or '-D__USE_MINGW_ANSI_STDIO'. Note
+    that if there is a conformity mismatch between the options used for
+    the GMP build (from which the MPFR build gets the output) and those
+    used for the MPFR tests, the tsprintf test may fail with one of the
+    errors below. Be careful that a non-conforming output may yield a
+    buffer overflow.
 
     The following applies to old MinGW versions, and may be discouraged
     with recent MinGW versions.
 
     In order to have the MPFR formatted output functions based on an
-    ISO-compliant printf(), you need to compile GMP (not MPFR) with
+    ISO-conforming printf(), you need to compile GMP (not MPFR) with
     CC="gcc -D__USE_MINGW_ANSI_STDIO" (since the standard printf modifiers
     %e, %Ld and %td are passed to GMP).
 
@@ -704,16 +714,23 @@ The relevant build projects are available here:
 d. Using the CompCert compiler
 ==============================
 
-[this was tested with CompCert 3.7 and MPFR revision 13851 on x86_64-linux]
+[Tested with CompCert 3.10 and MPFR master-11992-f75b0c388 on x86_64-linux]
 
-CompCert (http://compcert.inria.fr/) is a formally verified compiler.
+CompCert (https://compcert.org/) is a formally verified compiler.
 To compile MPFR with CompCert:
 
-$ ./configure CC=ccomp CFLAGS="-fbitfields -flongdouble -fstruct-passing" --disable-shared
+$ ./configure --disable-shared CC=ccomp CFLAGS="-flongdouble -fstruct-passing"
 
 You also need to unset LD_LIBRARY_PATH, and/or you might need to change
-wl="" into wl="-Wl," in the libtool file.
+wl="" into wl="-Wl," in the libtool file (after running configure).
 
 All tests (make check) should pass (tget_set_d64, tget_set_d128 and
 tset_float128 are skipped, since CompCert does not support _Decimal64,
 _Decimal128 nor _Float128).
+
+e. Using the Intel OneApi compiler
+==================================
+
+When using the Intel OneApi compiler (icx), one should add -fp-model=strict
+to CFLAGS so that the conversion routines from/to native floating-point
+types (float, double, ...) work properly. Otherwise some tests will fail.

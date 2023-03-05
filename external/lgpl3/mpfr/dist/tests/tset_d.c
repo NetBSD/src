@@ -1,6 +1,6 @@
 /* Test file for mpfr_set_d and mpfr_get_d.
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -193,18 +193,14 @@ main (int argc, char *argv[])
       exit (1);
     }
 
-  n = (argc==1) ? 500000 : atoi(argv[1]);
+  n = argc == 1 ? 500000 : atoi (argv[1]);
   for (k = 1; k <= n; k++)
     {
       do
         {
           d = DBL_RAND ();
         }
-#ifdef HAVE_SUBNORM_DBL
-      while (0);
-#else
       while (ABS(d) < DBL_MIN);
-#endif
       mpfr_set_d (x, d, (mpfr_rnd_t) 0);
       dd = mpfr_get_d1 (x);
       if (d != dd && !(Isnan(d) && Isnan(dd)))

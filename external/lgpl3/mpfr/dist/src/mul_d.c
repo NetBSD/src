@@ -1,7 +1,7 @@
 /* mpfr_mul_d -- multiply a multiple precision floating-point number
                  by a machine double precision float
 
-Copyright 2007-2020 Free Software Foundation, Inc.
+Copyright 2007-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

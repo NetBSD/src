@@ -1,4 +1,4 @@
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -56,7 +56,7 @@ Potential bugs:
 
 * Possible infinite loop in some functions for particular cases: when
   the exact result is an exactly representable number or the middle of
-  consecutive two such numbers. However for non-algebraic functions, it is
+  consecutive two such numbers. However, for non-algebraic functions, it is
   believed that no such case exists, except the well-known cases like cos(0)=1,
   exp(0)=1, and so on, and the x^y function when y is an integer or y=1/2^k.
 

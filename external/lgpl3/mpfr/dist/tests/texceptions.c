@@ -1,6 +1,6 @@
 /* Test file for features related to exceptions.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -44,7 +44,7 @@ check_default_rnd (void)
 {
   int r;
   mpfr_rnd_t t;
-  for(r = 0 ; r < MPFR_RND_MAX ; r++)
+  RND_LOOP (r)
     {
       mpfr_set_default_rounding_mode ((mpfr_rnd_t) r);
       t = (mpfr_get_default_rounding_mode) ();
@@ -103,10 +103,26 @@ static void
 check_get_prec (void)
 {
   mpfr_t x;
+  int i = 0;
 
   mpfr_init2 (x, 17);
-  if (mpfr_get_prec (x) != 17 || (mpfr_get_prec)(x) != 17)
+
+  if (mpfr_get_prec (x) != 17 || (mpfr_get_prec) (x) != 17)
     PRINT_ERROR ("mpfr_get_prec");
+
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+
+  if (mpfr_get_prec ((i++, VOIDP_CAST(x))) != 17)
+    PRINT_ERROR ("mpfr_get_prec (2)");
+
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+
+  MPFR_ASSERTN (i == 1);
   mpfr_clear (x);
 }
 
@@ -203,7 +219,7 @@ test_set_underflow (void)
   r[1] = r[3] = zero;       /* RNDZ, RNDD */
   for (s = 1; s > 0; s = -1)
     {
-      for (i = 0; i < MPFR_RND_MAX ; i++)
+      RND_LOOP (i)
         {
           int j;
           int inex;
@@ -263,7 +279,7 @@ test_set_overflow (void)
   r[1] = r[3] = max;        /* RNDZ, RNDD */
   for (s = 1; s > 0; s = -1)
     {
-      for (i = 0; i < MPFR_RND_MAX ; i++)
+      RND_LOOP (i)
         {
           int j;
           int inex;
@@ -388,7 +404,7 @@ check_groups (void)
       MPFR_ASSERTN ((mpfr_flags_save) () == f1);
       MPFR_ASSERTN (__gmpfr_flags == f1);
       mask = randlimb () & MPFR_FLAGS_ALL;
-      if (randlimb () & 1)
+      if (RAND_BOOL ())
         mpfr_flags_set (mask);
       else
         (mpfr_flags_set) (mask);
@@ -404,7 +420,7 @@ check_groups (void)
 
       f2 = __gmpfr_flags;
       mask = randlimb () & MPFR_FLAGS_ALL;
-      if (randlimb () & 1)
+      if (RAND_BOOL ())
         mpfr_flags_clear (mask);
       else
         (mpfr_flags_clear) (mask);
@@ -419,8 +435,7 @@ check_groups (void)
           }
 
       mask = randlimb () & MPFR_FLAGS_ALL;
-      f2 = (randlimb () & 1) ?
-        mpfr_flags_test (mask) : (mpfr_flags_test) (mask);
+      f2 = RAND_BOOL () ? mpfr_flags_test (mask) : (mpfr_flags_test) (mask);
       for (j = 1; j <= MPFR_FLAGS_ALL; j <<= 1)
         if ((f2 & j) != ((mask & j) != 0 ? (__gmpfr_flags & j) : 0))
           {
@@ -432,7 +447,7 @@ check_groups (void)
           }
 
       f2 = __gmpfr_flags;
-      if (randlimb () & 1)
+      if (RAND_BOOL ())
         mpfr_flags_restore (f1, mask);
       else
         (mpfr_flags_restore) (f1, mask);

@@ -1,6 +1,6 @@
 /* Test file for mpfr_copysign, mpfr_setsign and mpfr_signbit.
 
-Copyright 2004, 2006-2020 Free Software Foundation, Inc.
+Copyright 2004, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,26 +26,72 @@ static void
 copysign_variant (mpfr_ptr z, mpfr_srcptr x, mpfr_srcptr y,
                   mpfr_rnd_t rnd_mode, int k)
 {
+  mpfr_srcptr p;
+  int a = 0, b = 0, c = 0;
+
+  /* invalid sign, to test that the sign is always correctly set */
+  MPFR_SIGN (z) = 0;
+
+  if (k >= 8)
+    {
+      MPFR_ASSERTN (MPFR_PREC (z) >= MPFR_PREC (x));
+      mpfr_set (z, x, MPFR_RNDN);
+      p = z;
+      k -= 8;
+    }
+  else
+    p = x;
+
   mpfr_clear_flags ();
   switch (k)
     {
     case 0:
-      mpfr_copysign (z, x, y, MPFR_RNDN);
+      mpfr_copysign (z, p, y, rnd_mode);
       return;
     case 1:
-      (mpfr_copysign) (z, x, y, MPFR_RNDN);
+      (mpfr_copysign) (z, p, y, rnd_mode);
       return;
     case 2:
-      mpfr_setsign (z, x, mpfr_signbit (y), MPFR_RNDN);
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+      mpfr_copysign ((a++, VOIDP_CAST(z)),
+                     (b++, VOIDP_CAST(p)),
+                     (c++, VOIDP_CAST(y)), rnd_mode);
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+      MPFR_ASSERTN (a == 1);
+      MPFR_ASSERTN (b == 1);
+      MPFR_ASSERTN (c == 1);
       return;
     case 3:
-      mpfr_setsign (z, x, (mpfr_signbit) (y), MPFR_RNDN);
+      mpfr_setsign (z, p, mpfr_signbit (y), rnd_mode);
       return;
     case 4:
-      (mpfr_setsign) (z, x, mpfr_signbit (y), MPFR_RNDN);
+      mpfr_setsign (z, p, (mpfr_signbit) (y), rnd_mode);
       return;
     case 5:
-      (mpfr_setsign) (z, x, (mpfr_signbit) (y), MPFR_RNDN);
+      (mpfr_setsign) (z, p, mpfr_signbit (y), rnd_mode);
+      return;
+    case 6:
+      (mpfr_setsign) (z, p, (mpfr_signbit) (y), rnd_mode);
+      return;
+    case 7:
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+      mpfr_setsign ((a++, VOIDP_CAST(z)),
+                    (b++, VOIDP_CAST(p)),
+                    mpfr_signbit ((c++, VOIDP_CAST(y))), rnd_mode);
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+      MPFR_ASSERTN (a == 1);
+      MPFR_ASSERTN (b == 1);
+      MPFR_ASSERTN (c == 1);
       return;
     }
 }
@@ -64,7 +110,7 @@ main (void)
 
   for (i = 0; i <= 1; i++)
     for (j = 0; j <= 1; j++)
-      for (k = 0; k <= 5; k++)
+      for (k = 0; k < 16; k++)
         {
           mpfr_set_nan (x);
           i ? MPFR_SET_NEG (x) : MPFR_SET_POS (x);

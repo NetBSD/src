@@ -1,6 +1,6 @@
 /* mpfr.h -- Include file for mpfr.
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -25,9 +25,9 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 
 /* Define MPFR version number */
 #define MPFR_VERSION_MAJOR 4
-#define MPFR_VERSION_MINOR 1
+#define MPFR_VERSION_MINOR 2
 #define MPFR_VERSION_PATCHLEVEL 0
-#define MPFR_VERSION_STRING "4.1.0"
+#define MPFR_VERSION_STRING "4.2.0"
 
 /* User macros:
    MPFR_USE_FILE:        Define it to make MPFR define functions dealing
@@ -162,9 +162,6 @@ typedef unsigned short mpfr_uprec_t;
 typedef int   mpfr_prec_t;
 typedef unsigned int   mpfr_uprec_t;
 #elif _MPFR_PREC_FORMAT == 3
-/* we could use "long long" under Windows 64 here, which can be tested
-   with the macro _WIN64 according to
-   https://sourceforge.net/p/predef/wiki/OperatingSystems/ */
 typedef long  mpfr_prec_t;
 typedef unsigned long  mpfr_uprec_t;
 #else
@@ -196,8 +193,19 @@ typedef long mpfr_exp_t;
 typedef unsigned long mpfr_uexp_t;
 #elif _MPFR_EXP_FORMAT == 4
 /* Note: in this case, intmax_t and uintmax_t must be defined before
-   the inclusion of mpfr.h (we do not include <stdint.h> here because
-   of some non-ISO C99 implementations that support these types). */
+   the inclusion of mpfr.h (we do not include <stdint.h> here due to
+   potential issues with non-ISO implementations, on which there are
+   alternative ways to define these types).
+   In all known implementations, intmax_t has exactly 64 bits and is
+   equivalent to long long when defined, but when long has 64 bits,
+   it may be defined as long by <stdint.h> for better portability
+   with old compilers, thus offers more flexibility than long long.
+   This may change in the future.
+   This _MPFR_EXP_FORMAT value is currently not supported since the
+   MPFR code assumes that mpfr_exp_t fits in a long. Some examples
+   of problematic code can be obtained with:
+     grep -E 'mpfr_cmp_[su]i *\(.*__gmpfr_em' *.c
+*/
 typedef intmax_t mpfr_exp_t;
 typedef uintmax_t mpfr_uexp_t;
 #else
@@ -252,14 +260,14 @@ typedef __mpfr_struct *mpfr_ptr;
 typedef const __mpfr_struct *mpfr_srcptr;
 
 /* For those who need a direct and fast access to the sign field.
-   However it is not in the API, thus use it at your own risk: it might
-   not be supported, or change name, in further versions!
+   However, it is not in the API, thus use it at your own risk: it
+   might not be supported, or change name, in further versions!
    Unfortunately, it must be defined here (instead of MPFR's internal
    header file mpfr-impl.h) because it is used by some macros below.
 */
 #define MPFR_SIGN(x) ((x)->_mpfr_sign)
 
-/* Stack interface */
+/* Custom interface */
 typedef enum {
   MPFR_NAN_KIND     = 0,
   MPFR_INF_KIND     = 1,
@@ -356,6 +364,10 @@ typedef enum {
    not __llvm__, and __declspec(deprecated("...")) can be used with
    MSC as above. */
 
+/* ICC up to 19.1.3.304 at least declares itself as interoperable with
+   GCC 4.9, but does not support the returns_nonnull attribute, thus
+   outputs warning #1292. This minor issue has been reported in 2019-04:
+   https://community.intel.com/t5/Intel-C-Compiler/Missing-support-for-returns-nonnull-attribute/td-p/1183013 */
 #if defined(__GNUC__) && \
   (__GNUC__ >= 5 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 9))
 # define MPFR_RETURNS_NONNULL __attribute__ ((__returns_nonnull__))
@@ -550,7 +562,9 @@ __MPFR_DECLSPEC int mpfr_snprintf (char*, size_t, const char*, ...);
 #endif
 
 __MPFR_DECLSPEC int mpfr_pow (mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_powr (mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_pow_si (mpfr_ptr, mpfr_srcptr, long, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_compound_si (mpfr_ptr, mpfr_srcptr, long, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_pow_ui (mpfr_ptr, mpfr_srcptr, unsigned long,
                                  mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_ui_pow_ui (mpfr_ptr, unsigned long, unsigned long,
@@ -608,12 +622,16 @@ __MPFR_DECLSPEC int mpfr_log (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_log2 (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_log10 (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_log1p (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_log2p1 (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_log10p1 (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_log_ui (mpfr_ptr, unsigned long, mpfr_rnd_t);
 
 __MPFR_DECLSPEC int mpfr_exp (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_exp2 (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_exp10 (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_expm1 (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_exp2m1 (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_exp10m1 (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_eint (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_li2 (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 
@@ -661,6 +679,8 @@ __MPFR_DECLSPEC int mpfr_remquo (mpfr_ptr, long*, mpfr_srcptr, mpfr_srcptr,
 __MPFR_DECLSPEC int mpfr_remainder (mpfr_ptr, mpfr_srcptr, mpfr_srcptr,
                                     mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_fmod (mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_fmod_ui (mpfr_ptr, mpfr_srcptr, unsigned long,
+                                  mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_fmodquo (mpfr_ptr, long*, mpfr_srcptr, mpfr_srcptr,
                                   mpfr_rnd_t);
 
@@ -717,6 +737,22 @@ __MPFR_DECLSPEC int mpfr_sec (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_csc (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_cot (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 
+__MPFR_DECLSPEC int mpfr_sinu (mpfr_ptr, mpfr_srcptr, unsigned long, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_cosu (mpfr_ptr, mpfr_srcptr, unsigned long, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_tanu (mpfr_ptr, mpfr_srcptr, unsigned long, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_acosu (mpfr_ptr, mpfr_srcptr, unsigned long, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_asinu (mpfr_ptr, mpfr_srcptr, unsigned long, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_atanu (mpfr_ptr, mpfr_srcptr, unsigned long, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_atan2u (mpfr_ptr, mpfr_srcptr, mpfr_srcptr, unsigned long, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_acospi (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_asinpi (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_atanpi (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_atan2pi (mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
+
+__MPFR_DECLSPEC int mpfr_sinpi (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_cospi (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_tanpi (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
+
 __MPFR_DECLSPEC int mpfr_hypot (mpfr_ptr, mpfr_srcptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_erf (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_erfc (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
@@ -728,6 +764,7 @@ __MPFR_DECLSPEC int mpfr_root (mpfr_ptr, mpfr_srcptr, unsigned long,
                                mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_rootn_ui (mpfr_ptr, mpfr_srcptr, unsigned long,
                                    mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_rootn_si (mpfr_ptr, mpfr_srcptr, long, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_gamma (mpfr_ptr, mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_gamma_inc (mpfr_ptr, mpfr_srcptr, mpfr_srcptr,
                                     mpfr_rnd_t);
@@ -781,8 +818,8 @@ __MPFR_DECLSPEC int mpfr_subnormalize (mpfr_ptr, int, mpfr_rnd_t);
 __MPFR_DECLSPEC int mpfr_strtofr (mpfr_ptr, const char *, char **, int,
                                   mpfr_rnd_t);
 
-__MPFR_DECLSPEC void mpfr_round_nearest_away_begin (mpfr_t);
-__MPFR_DECLSPEC int mpfr_round_nearest_away_end (mpfr_t, int);
+__MPFR_DECLSPEC void mpfr_round_nearest_away_begin (mpfr_ptr);
+__MPFR_DECLSPEC int mpfr_round_nearest_away_end (mpfr_ptr, int);
 
 __MPFR_DECLSPEC size_t mpfr_custom_get_size (mpfr_prec_t);
 __MPFR_DECLSPEC void mpfr_custom_init (void *, mpfr_prec_t);
@@ -822,34 +859,48 @@ __MPFR_DECLSPEC int mpfr_total_order_p (mpfr_srcptr, mpfr_srcptr);
   (mpfr_round_nearest_away_begin(rop),                                  \
    mpfr_round_nearest_away_end((rop), func((rop), __VA_ARGS__, MPFR_RNDN)))
 #else
-/* C89 version: function with one input supported */
+/* C90 version: function with one input supported */
 #define mpfr_round_nearest_away(func, rop, op)                          \
   (mpfr_round_nearest_away_begin(rop),                                  \
    mpfr_round_nearest_away_end((rop), func((rop), (op), MPFR_RNDN)))
 #endif
 
 /* Fast access macros to replace function interface.
-   If the USER don't want to use the macro interface, let him make happy
+   If the user doesn't want to use the macro interface, let him make happy
    even if it produces faster and smaller code. */
 #ifndef MPFR_USE_NO_MACRO
 
-/* Inlining these functions is both faster and smaller */
-#define mpfr_nan_p(_x)      ((_x)->_mpfr_exp == __MPFR_EXP_NAN)
-#define mpfr_inf_p(_x)      ((_x)->_mpfr_exp == __MPFR_EXP_INF)
-#define mpfr_zero_p(_x)     ((_x)->_mpfr_exp == __MPFR_EXP_ZERO)
-#define mpfr_regular_p(_x)  ((_x)->_mpfr_exp >  __MPFR_EXP_INF)
+/* In the implementation of these macros, we need to make sure that the
+   arguments are evaluated one time exactly and that type conversion is
+   done as it would be with a function. Tests should be added to ensure
+   that. */
+
+/* Prevent x from being used as an lvalue.
+   Thanks to Wojtek Lerch and Tim Rentsch for the idea. */
+#define MPFR_VALUE_OF(x)  (0 ? (x) : (x))
+
+/* The following macro converts the argument to mpfr_srcptr, as in type
+   conversion for function parameters. But it will detect disallowed
+   implicit conversions, e.g. when the argument has an integer type. */
+#define MPFR_SRCPTR(x) ((mpfr_srcptr) (0 ? (x) : (mpfr_srcptr) (x)))
+#define MPFR_GET_SIGN(_x) MPFR_VALUE_OF(MPFR_SIGN(MPFR_SRCPTR(_x)))
+
+#define mpfr_nan_p(_x)      (MPFR_SRCPTR(_x)->_mpfr_exp == __MPFR_EXP_NAN)
+#define mpfr_inf_p(_x)      (MPFR_SRCPTR(_x)->_mpfr_exp == __MPFR_EXP_INF)
+#define mpfr_zero_p(_x)     (MPFR_SRCPTR(_x)->_mpfr_exp == __MPFR_EXP_ZERO)
+#define mpfr_regular_p(_x)  (MPFR_SRCPTR(_x)->_mpfr_exp >  __MPFR_EXP_INF)
+
+/* mpfr_sgn is documented as a macro, thus the following code is fine.
+   But it would be safer to regard it as a function in some future
+   MPFR version. */
 #define mpfr_sgn(_x)                                               \
   ((_x)->_mpfr_exp < __MPFR_EXP_INF ?                              \
    (mpfr_nan_p (_x) ? mpfr_set_erangeflag () : (mpfr_void) 0), 0 : \
    MPFR_SIGN (_x))
 
-/* Prevent them from using as lvalues */
-#define MPFR_VALUE_OF(x)  (0 ? (x) : (x))
-#define mpfr_get_prec(_x) MPFR_VALUE_OF((_x)->_mpfr_prec)
-#define mpfr_get_exp(_x)  MPFR_VALUE_OF((_x)->_mpfr_exp)
-/* Note 1: If need be, the MPFR_VALUE_OF can be used for other expressions
-   (of any type). Thanks to Wojtek Lerch and Tim Rentsch for the idea.
-   Note 2: Defining mpfr_get_exp() as a macro has the effect to disable
+#define mpfr_get_prec(_x) MPFR_VALUE_OF(MPFR_SRCPTR(_x)->_mpfr_prec)
+#define mpfr_get_exp(_x)  MPFR_VALUE_OF(MPFR_SRCPTR(_x)->_mpfr_exp)
+/* Note: Defining mpfr_get_exp() as a macro has the effect to disable
    the check that the argument is a pure FP number (done in the function);
    this increases the risk of undetected error and makes debugging more
    complex. Is it really worth in practice? (Potential FIXME) */
@@ -861,11 +912,17 @@ __MPFR_DECLSPEC int mpfr_total_order_p (mpfr_srcptr, mpfr_srcptr);
 
 #define mpfr_cmp_ui(b,i) mpfr_cmp_ui_2exp((b),(i),0)
 #define mpfr_cmp_si(b,i) mpfr_cmp_si_2exp((b),(i),0)
-#define mpfr_set(a,b,r)  mpfr_set4(a,b,r,MPFR_SIGN(b))
+#if __GNUC__ > 2 || __GNUC_MINOR__ >= 95
+#define mpfr_set(a,b,r)                         \
+  __extension__ ({                              \
+      mpfr_srcptr _p = (b);                     \
+      mpfr_set4(a,_p,r,MPFR_SIGN(_p));          \
+    })
+#endif
 #define mpfr_abs(a,b,r)  mpfr_set4(a,b,r,1)
-#define mpfr_copysign(a,b,c,r) mpfr_set4(a,b,r,MPFR_SIGN(c))
+#define mpfr_copysign(a,b,c,r) mpfr_set4(a,b,r,MPFR_GET_SIGN(c))
 #define mpfr_setsign(a,b,s,r) mpfr_set4(a,b,r,(s) ? -1 : 1)
-#define mpfr_signbit(x)  (MPFR_SIGN(x) < 0)
+#define mpfr_signbit(x)  (MPFR_GET_SIGN(x) < 0)
 #define mpfr_cmp(b, c)   mpfr_cmp3(b, c, 1)
 #define mpfr_mul_2exp(y,x,n,r) mpfr_mul_2ui((y),(x),(n),(r))
 #define mpfr_div_2exp(y,x,n,r) mpfr_div_2ui((y),(x),(n),(r))
@@ -889,9 +946,9 @@ __MPFR_DECLSPEC int mpfr_total_order_p (mpfr_srcptr, mpfr_srcptr);
    implicit conversion in the macro allows the compiler to emit diagnostics
    when normally expected, for instance in the following call:
      mpfr_set_ui (x, "foo", MPFR_RNDN);
-   If this is not possible (for future macros), one of the tricks described
-   on http://groups.google.com/group/comp.std.c/msg/e92abd24bf9eaf7b could
-   be used. */
+   If this is not possible (for future macros), one of the tricks described on
+   https://groups.google.com/g/comp.std.c/c/9Jl0giNILfg/m/e6-evyS9KukJ?pli=1
+   could be used. */
 #if defined (__GNUC__) && !defined(__cplusplus)
 #if (__GNUC__ >= 2)
 
@@ -961,16 +1018,30 @@ __MPFR_DECLSPEC int mpfr_total_order_p (mpfr_srcptr, mpfr_srcptr);
 #endif
 #endif
 
-/* Macro version of mpfr_stack interface for fast access */
-#define mpfr_custom_get_size(p) ((mpfr_size_t)                          \
-       (((p)+GMP_NUMB_BITS-1)/GMP_NUMB_BITS*sizeof (mp_limb_t)))
-#define mpfr_custom_init(m,p) do {} while (0)
-#define mpfr_custom_get_significand(x) ((mpfr_void*)((x)->_mpfr_d))
-#define mpfr_custom_get_exp(x) ((x)->_mpfr_exp)
-#define mpfr_custom_move(x,m) do { ((x)->_mpfr_d = (mp_limb_t*)(m)); } while (0)
+/* Macro versions of the custom interface for fast access. */
+
+/* The internal cast to mpfr_size_t will silent a warning with
+   GCC's -Wsign-conversion that could occur with user code, as
+   sizeof is of type size_t, which is unsigned. */
+#define mpfr_custom_get_size(p)                                             \
+  ((mpfr_size_t)                                                            \
+   ((mpfr_size_t) (((mpfr_prec_t)(p) + GMP_NUMB_BITS - 1) / GMP_NUMB_BITS)  \
+    * sizeof (mp_limb_t)))
+
+#define mpfr_custom_init(m,p) ((void) (m), (void) (p))
+
+#define mpfr_custom_get_significand(x) \
+  ((mpfr_void *) MPFR_VALUE_OF(MPFR_SRCPTR(x)->_mpfr_d))
+
+#define mpfr_custom_get_exp(x) MPFR_VALUE_OF(MPFR_SRCPTR(x)->_mpfr_exp)
+
+#define mpfr_custom_move(x,m) (((mpfr_ptr) (x))->_mpfr_d = (mp_limb_t *) (m))
+
+/* Note: the following macro is not usable in contexts where an expression
+   is expected. */
 #define mpfr_custom_init_set(x,k,e,p,m) do {                   \
   mpfr_ptr _x = (x);                                           \
-  mpfr_exp_t _e;                                               \
+  mpfr_exp_t _e = (e);                                         \
   mpfr_kind_t _t;                                              \
   mpfr_int _s, _k;                                             \
   _k = (k);                                                    \
@@ -981,7 +1052,7 @@ __MPFR_DECLSPEC int mpfr_total_order_p (mpfr_srcptr, mpfr_srcptr);
     _t = (mpfr_kind_t) - _k;                                   \
     _s = -1;                                                   \
   }                                                            \
-  _e = _t == MPFR_REGULAR_KIND ? (e) :                         \
+  _e = _t == MPFR_REGULAR_KIND ? _e :                          \
     _t == MPFR_NAN_KIND ? __MPFR_EXP_NAN :                     \
     _t == MPFR_INF_KIND ? __MPFR_EXP_INF : __MPFR_EXP_ZERO;    \
   _x->_mpfr_prec = (p);                                        \
@@ -989,14 +1060,23 @@ __MPFR_DECLSPEC int mpfr_total_order_p (mpfr_srcptr, mpfr_srcptr);
   _x->_mpfr_exp  = _e;                                         \
   _x->_mpfr_d    = (mp_limb_t*) (m);                           \
  } while (0)
-#define mpfr_custom_get_kind(x)                                         \
-  ( (x)->_mpfr_exp >  __MPFR_EXP_INF ?                                  \
-    (mpfr_int) MPFR_REGULAR_KIND * MPFR_SIGN (x)                        \
-  : (x)->_mpfr_exp == __MPFR_EXP_INF ?                                  \
-    (mpfr_int) MPFR_INF_KIND * MPFR_SIGN (x)                            \
-  : (x)->_mpfr_exp == __MPFR_EXP_NAN ? (mpfr_int) MPFR_NAN_KIND         \
-  : (mpfr_int) MPFR_ZERO_KIND * MPFR_SIGN (x) )
 
+#if __GNUC__ > 2 || __GNUC_MINOR__ >= 95
+#define mpfr_custom_get_kind(x)                                         \
+  __extension__ ({                                                      \
+    mpfr_srcptr _x = (x);                                               \
+    _x->_mpfr_exp >  __MPFR_EXP_INF ?                                   \
+      (mpfr_int) MPFR_REGULAR_KIND * MPFR_SIGN (_x)                     \
+      : _x->_mpfr_exp == __MPFR_EXP_INF ?                               \
+      (mpfr_int) MPFR_INF_KIND * MPFR_SIGN (_x)                         \
+      : _x->_mpfr_exp == __MPFR_EXP_NAN ? (mpfr_int) MPFR_NAN_KIND      \
+      : (mpfr_int) MPFR_ZERO_KIND * MPFR_SIGN (_x);                     \
+  })
+#else
+#define mpfr_custom_get_kind(x) ((mpfr_custom_get_kind)(x))
+#endif
+
+/* End of the macro versions of the custom interface. */
 
 #endif /* MPFR_USE_NO_MACRO */
 
@@ -1080,12 +1160,23 @@ extern "C" {
 #define mpfr_set_uj_2exp __gmpfr_set_uj_2exp
 #define mpfr_get_sj __gmpfr_mpfr_get_sj
 #define mpfr_get_uj __gmpfr_mpfr_get_uj
-__MPFR_DECLSPEC int mpfr_set_sj (mpfr_t, intmax_t, mpfr_rnd_t);
-__MPFR_DECLSPEC int mpfr_set_sj_2exp (mpfr_t, intmax_t, intmax_t, mpfr_rnd_t);
-__MPFR_DECLSPEC int mpfr_set_uj (mpfr_t, uintmax_t, mpfr_rnd_t);
-__MPFR_DECLSPEC int mpfr_set_uj_2exp (mpfr_t, uintmax_t, intmax_t, mpfr_rnd_t);
+#define mpfr_pow_uj __gmpfr_mpfr_pow_uj
+#define mpfr_pow_sj __gmpfr_mpfr_pow_sj
+__MPFR_DECLSPEC int mpfr_set_sj (mpfr_ptr, intmax_t, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_set_sj_2exp (mpfr_ptr, intmax_t, intmax_t,
+                                      mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_set_uj (mpfr_ptr, uintmax_t, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_set_uj_2exp (mpfr_ptr, uintmax_t, intmax_t,
+                                      mpfr_rnd_t);
 __MPFR_DECLSPEC intmax_t mpfr_get_sj (mpfr_srcptr, mpfr_rnd_t);
 __MPFR_DECLSPEC uintmax_t mpfr_get_uj (mpfr_srcptr, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_pow_uj (mpfr_ptr, mpfr_srcptr, uintmax_t, mpfr_rnd_t);
+__MPFR_DECLSPEC int mpfr_pow_sj (mpfr_ptr, mpfr_srcptr, intmax_t, mpfr_rnd_t);
+/* define mpfr_pown (defined in IEEE 754-2019) as an alias for mpfr_pow_sj.
+   It is currently implemented as a macro, but this may change in the future
+   (it could be implemented as an inline function); in case of change, update
+   the manual. */
+#define mpfr_pown mpfr_pow_sj
 
 #if defined (__cplusplus)
 }

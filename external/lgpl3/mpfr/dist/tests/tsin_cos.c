@@ -1,6 +1,6 @@
 /* Test file for mpfr_sin_cos.
 
-Copyright 2000-2004, 2006-2020 Free Software Foundation, Inc.
+Copyright 2000-2004, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -576,7 +576,7 @@ consistency (void)
         {
           int j = i / MPFR_RND_MAX;
           if (j & 1)
-            mpfr_set_emin (MPFR_EMIN_MIN);
+            set_emin (MPFR_EMIN_MIN);
           mpfr_set_si (x, (j & 2) ? 1 : -1, MPFR_RNDN);
           mpfr_set_exp (x, mpfr_get_emin ());
           rnd = (mpfr_rnd_t) (i % MPFR_RND_MAX);
@@ -584,13 +584,13 @@ consistency (void)
             goto end;
           flags_before = 0;
           if (j & 4)
-            mpfr_set_emax (-17);
+            set_emax (-17);
         }
       else
         {
           tests_default_random (x, 256, -5, 50, 0);
           rnd = RND_RAND_NO_RNDF ();
-          flags_before = (randlimb () & 1) ?
+          flags_before = RAND_BOOL () ?
             (unsigned int) (MPFR_FLAGS_ALL ^ MPFR_FLAGS_ERANGE) :
             (unsigned int) 0;
         }
@@ -631,8 +631,8 @@ consistency (void)
         }
     end:
       mpfr_clears (x, s1, s2, c1, c2, (mpfr_ptr) 0);
-      mpfr_set_emin (emin);
-      mpfr_set_emax (emax);
+      set_emin (emin);
+      set_emax (emax);
     }
 }
 

@@ -1,7 +1,7 @@
 /* mpfr_fpif -- Binary export & import of MPFR numbers
    (floating-point interchange format)
 
-Copyright 2012-2020 Free Software Foundation, Inc.
+Copyright 2012-2023 Free Software Foundation, Inc.
 Contributed by Olivier Demengeon.
 
 This file is part of the GNU MPFR Library.
@@ -291,7 +291,8 @@ mpfr_fpif_read_precision_from_file (FILE *fh)
  *   until one has integer types larger than 128 bits).
  */
 static unsigned char*
-mpfr_fpif_store_exponent (unsigned char *buffer, size_t *buffer_size, mpfr_t x)
+mpfr_fpif_store_exponent (unsigned char *buffer, size_t *buffer_size,
+                          mpfr_ptr x)
 {
   unsigned char *result;
   mpfr_uexp_t uexp;
@@ -372,7 +373,7 @@ mpfr_fpif_store_exponent (unsigned char *buffer, size_t *buffer_size, mpfr_t x)
  *   than 128 bits).
  */
 static int
-mpfr_fpif_read_exponent_from_file (mpfr_t x, FILE * fh)
+mpfr_fpif_read_exponent_from_file (mpfr_ptr x, FILE * fh)
 {
   mpfr_exp_t exponent;
   mpfr_uexp_t uexp;
@@ -456,7 +457,7 @@ mpfr_fpif_read_exponent_from_file (mpfr_t x, FILE * fh)
  *        format
  */
 static unsigned char*
-mpfr_fpif_store_limbs (unsigned char *buffer, size_t *buffer_size, mpfr_t x)
+mpfr_fpif_store_limbs (unsigned char *buffer, size_t *buffer_size, mpfr_ptr x)
 {
   unsigned char *result;
   mpfr_prec_t precision;
@@ -492,7 +493,7 @@ mpfr_fpif_store_limbs (unsigned char *buffer, size_t *buffer_size, mpfr_t x)
  * Assume buffer is not NULL.
  */
 static void
-mpfr_fpif_read_limbs (mpfr_t x, unsigned char *buffer, size_t nb_byte)
+mpfr_fpif_read_limbs (mpfr_ptr x, unsigned char *buffer, size_t nb_byte)
 {
   size_t mp_bytes_per_limb;
   size_t nb_partial_byte;
@@ -522,7 +523,7 @@ mpfr_fpif_read_limbs (mpfr_t x, unsigned char *buffer, size_t nb_byte)
  * return 0 if successful
  */
 int
-mpfr_fpif_export (FILE *fh, mpfr_t x)
+mpfr_fpif_export (FILE *fh, mpfr_ptr x)
 {
   int status;
   unsigned char *buf;
@@ -582,7 +583,7 @@ mpfr_fpif_export (FILE *fh, mpfr_t x)
  * Return 0 if the import was successful.
  */
 int
-mpfr_fpif_import (mpfr_t x, FILE *fh)
+mpfr_fpif_import (mpfr_ptr x, FILE *fh)
 {
   int status;
   mpfr_prec_t precision;

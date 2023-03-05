@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_exp and mpfr_set_exp.
 
-Copyright 2004, 2006-2020 Free Software Foundation, Inc.
+Copyright 2004, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -28,6 +28,7 @@ main (int argc, char *argv[])
   mpfr_t x;
   int ret;
   mpfr_exp_t emin, emax, e;
+  int i = 0;
 
   tests_start_mpfr ();
 
@@ -62,6 +63,17 @@ main (int argc, char *argv[])
   MPFR_ASSERTN (e == emin);
   e = (mpfr_get_exp) (x);
   MPFR_ASSERTN (e == emin);
+
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wc++-compat"
+#endif
+  e = mpfr_get_exp ((i++, VOIDP_CAST(x)));
+#ifdef IGNORE_CPP_COMPAT
+#pragma GCC diagnostic pop
+#endif
+  MPFR_ASSERTN (e == emin);
+  MPFR_ASSERTN (i == 1);
 
   ret = mpfr_set_exp (x, -1);
   MPFR_ASSERTN (ret == 0 && mpfr_cmp_ui_2exp (x, 1, -2) == 0);

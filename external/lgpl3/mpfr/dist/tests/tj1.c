@@ -1,6 +1,6 @@
 /* tj1 -- test file for the Bessel function of first kind (order 1)
 
-Copyright 2007-2020 Free Software Foundation, Inc.
+Copyright 2007-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -43,7 +43,7 @@ test_small (void)
       if (e == -30)
         {
           e = mpfr_get_emin_min () - 1;
-          mpfr_set_emin (e + 1);
+          set_emin (e + 1);
         }
       for (sign = -1; sign <= 1; sign += 2)
         {
@@ -55,19 +55,39 @@ test_small (void)
               /* since |x| is just above 2^e, |j1(x)| is just above 2^(e-1),
                  thus y should be 2^(e-1) and the inexact flag should be
                  of opposite sign of x */
-              MPFR_ASSERTN(mpfr_cmp_si_2exp (y, sign, e - 1) == 0);
+              MPFR_ASSERTN(mpfr_cmp_si_2exp0 (y, sign, e - 1) == 0);
               MPFR_ASSERTN(VSIGN (inex) * sign < 0);
             }
           else
             {
               /* here |y| should be 0.5*2^emin and the inexact flag should
                  have the sign of x */
-              MPFR_ASSERTN(mpfr_cmp_si_2exp (y, sign, e) == 0);
+              MPFR_ASSERTN(mpfr_cmp_si_2exp0 (y, sign, e) == 0);
               MPFR_ASSERTN(VSIGN (inex) * sign > 0);
             }
         }
     }
-  mpfr_set_emin (emin);
+  set_emin (emin);
+  mpfr_clear (x);
+  mpfr_clear (y);
+}
+
+/* a test that fails with GMP_CHECK_RANDOMIZE=1613146232984428
+   on revision 14429 */
+static void
+bug20210215 (void)
+{
+  mpfr_t x, y;
+  int inex;
+
+  mpfr_init2 (x, 221);
+  mpfr_init2 (y, 1);
+  mpfr_set_str (x, "1.6484611511696130037307738844228498447763863563070374544054791168614e+01", 10, MPFR_RNDN);
+  mpfr_clear_flags ();
+  inex = mpfr_j1 (y, x, MPFR_RNDZ);
+  MPFR_ASSERTN (mpfr_cmp_si_2exp0 (y, -1, -9) == 0);
+  MPFR_ASSERTN (inex > 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_INEXACT);
   mpfr_clear (x);
   mpfr_clear (y);
 }
@@ -78,6 +98,8 @@ main (int argc, char *argv[])
   mpfr_t x, y;
 
   tests_start_mpfr ();
+
+  bug20210215 ();
 
   test_small ();
 

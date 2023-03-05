@@ -1,6 +1,6 @@
 /* mpfr-mini-gmp.c -- Interface functions for mini-gmp.
 
-Copyright 2014-2020 Free Software Foundation, Inc.
+Copyright 2014-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -40,9 +40,9 @@ gmp_randinit_default (gmp_randstate_t state)
 void
 gmp_randseed_ui (gmp_randstate_t state, unsigned long int seed)
 {
-  /* With a portable version of the conversion from unsigned long to long
-     (at least GCC and Clang optimize this expression to identity). */
-  srand48 (seed > LONG_MAX ? -1 - (long) ~seed : (long) seed);
+  /* Note: We possibly ignore the high-order bits of seed. One should take
+     that into account when setting GMP_CHECK_RANDOMIZE for the tests. */
+  srand ((unsigned int) seed);
 }
 #endif
 
@@ -60,26 +60,28 @@ gmp_randinit_set (gmp_randstate_t s1, gmp_randstate_t s2)
 }
 #endif
 
+static unsigned int
+rand15 (void)
+{
+  /* With a good PRNG, we could use "rand () % 32768", but let's choose
+     the following from <https://c-faq.com/lib/randrange.html>. Note that
+     on most platforms, the compiler should generate a shift. */
+  return rand () / (RAND_MAX / 32768 + 1);
+}
+
 static mp_limb_t
 random_limb (void)
 {
-  /* lrand48() returns a random number in [0, 2^31-1],
-     but the low 15 bits do not depend on the random seed,
-     thus it is safer to use the upper bits */
-#if GMP_NUMB_BITS < 32
-  /* use the upper GMP_NUMB_BITS bits from lrand48 () */
-  return (mp_limb_t) (lrand48 () >> (31 - GMP_NUMB_BITS));
-#elif GMP_NUMB_BITS == 32
-  /* use the upper 16 bits from two lrand48 calls */
-  return (lrand48 () >> 15) + ((lrand48 () >> 15) << 16);
-#elif GMP_NUMB_BITS == 64
-  /* use the upper 16 bits from four lrand48 calls */
-  return (lrand48 () >> 15) + ((((mp_limb_t) lrand48 ()) >> 15) << 16)
-    + ((((mp_limb_t) lrand48 ()) >> 15) << 32)
-    + ((((mp_limb_t) lrand48 ()) >> 15) << 48);
-#else
-#error "GMP_NUMB_BITS should be 8, 16, 32 or >= 64"
-#endif
+  mp_limb_t r = 0;
+  int i = GMP_NUMB_BITS;
+
+  while (i > 0)
+    {
+      r = (r << 15) | rand15 ();
+      i -= 15;
+    }
+
+  return r;
 }
 
 #ifdef WANT_mpz_urandomb
@@ -151,7 +153,9 @@ unsigned long
 gmp_urandomb_ui (gmp_randstate_t state, unsigned long n)
 {
 #ifdef MPFR_LONG_WITHIN_LIMB
-  return random_limb () % (1UL << n);
+  /* Since n may be equal to the width of unsigned long,
+     we must not shift 1UL by n as this may be UB. */
+  return n == 0 ? 0 : random_limb () & (((1UL << (n - 1)) << 1) - 1);
 #else
   unsigned long res = 0;
   int m = n; /* remaining bits to generate */
@@ -161,8 +165,8 @@ gmp_urandomb_ui (gmp_randstate_t state, unsigned long n)
       res = (res << GMP_NUMB_BITS) | (unsigned long) random_limb ();
       m -= GMP_NUMB_BITS;
     }
-  /* now m < GMP_NUMB_BITS */
-  if (m) /* generate m extra bits */
+  MPFR_ASSERTD (m < GMP_NUMB_BITS);  /* thus m < width(unsigned long) */
+  if (m != 0) /* generate m extra bits */
     res = (res << m) | (unsigned long) (random_limb () % (1UL << m));
   return res;
 #endif
