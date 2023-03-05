@@ -1,6 +1,6 @@
 /* tpl_mpfr.c --  Helper functions for mpfr data.
 
-Copyright (C) 2012, 2013 INRIA
+Copyright (C) 2012, 2013, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -56,7 +56,7 @@ tpl_read_mpfr_mantissa (mpc_datafile_context_t* datafile_context, mpfr_ptr x)
       exit (1);
    }
    ungetc (datafile_context->nextchar, datafile_context->fd);
-   if (mpfr_inp_str (x, datafile_context->fd, 0, GMP_RNDN) == 0) {
+   if (mpfr_inp_str (x, datafile_context->fd, 0, MPFR_RNDN) == 0) {
       printf ("Error: Impossible to read mpfr mantissa "
               "in file '%s' line %lu\n",
               datafile_context->pathname, datafile_context->line_number);
@@ -89,16 +89,19 @@ tpl_read_mpfr_rnd (mpc_datafile_context_t* datafile_context, mpfr_rnd_t* rnd)
   switch (datafile_context->nextchar)
     {
     case 'n': case 'N':
-      *rnd = GMP_RNDN;
+      *rnd = MPFR_RNDN;
       break;
     case 'z': case 'Z':
-      *rnd = GMP_RNDZ;
+      *rnd = MPFR_RNDZ;
       break;
     case 'u': case 'U':
-      *rnd = GMP_RNDU;
+      *rnd = MPFR_RNDU;
       break;
     case 'd': case 'D':
-      *rnd = GMP_RNDD;
+      *rnd = MPFR_RNDD;
+      break;
+    case 'a': case 'A':
+      *rnd = MPFR_RNDA;
       break;
     default:
       printf ("Error: Unexpected rounding mode '%c' in file '%s' line %lu\n",
@@ -154,5 +157,5 @@ tpl_copy_mpfr (mpfr_ptr dest, mpfr_srcptr src)
   /* source and destination are assumed to be of the same precision , so the
      copy is exact (no rounding) */
   MPC_ASSERT(mpfr_get_prec (dest) == mpfr_get_prec (src));
-  mpfr_set (dest, src, GMP_RNDN);
+  mpfr_set (dest, src, MPFR_RNDN);
 }

@@ -1,7 +1,7 @@
 /* mpc_set_x_x -- Set complex number real and imaginary parts from parameters
    whose type is known by mpfr.
 
-Copyright (C) 2009, 2011 INRIA
+Copyright (C) 2009, 2011, 2022 INRIA
 
 This file is part of GNU MPC.
 
@@ -18,16 +18,6 @@ more details.
 You should have received a copy of the GNU Lesser General Public License
 along with this program. If not, see http://www.gnu.org/licenses/ .
 */
-
-#include "config.h"
-
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h> /* for intmax_t */
-#else
-# ifdef HAVE_STDINT_H
-#  include <stdint.h>
-# endif
-#endif
 
 #include "mpc-impl.h"
 

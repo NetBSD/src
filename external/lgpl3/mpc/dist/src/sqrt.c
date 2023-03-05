@@ -177,6 +177,8 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
       if (rnd_t == MPFR_RNDZ)
          /* force MPFR_RNDD or MPFR_RNDUP, using sign(t) = sign(y) */
          rnd_t = (im_cmp > 0 ? MPFR_RNDD : MPFR_RNDU);
+      else if (rnd_t == MPFR_RNDA)
+         rnd_t = (im_cmp > 0 ? MPFR_RNDU : MPFR_RNDD);
       prec_t = MPC_PREC_IM (a);
    }
    else {
@@ -187,12 +189,16 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
          rnd_t = MPC_RND_RE(rnd);
          if (rnd_t == MPFR_RNDZ)
             rnd_t = MPFR_RNDD;
+         else if (rnd_t == MPFR_RNDA)
+            rnd_t = MPFR_RNDU;
       }
       else {
          rnd_w = INV_RND(MPC_RND_IM (rnd));
          rnd_t = INV_RND(MPC_RND_RE (rnd));
          if (rnd_t == MPFR_RNDZ)
             rnd_t = MPFR_RNDU;
+         else if (rnd_t == MPFR_RNDA)
+            rnd_t = MPFR_RNDD;
       }
    }
 
@@ -291,7 +297,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
          /* determine ternary value, but also potentially add 1 ulp; can only
             be done now when we are in the target precision */
          if (re_cmp > 0) {
-            if (rnd_w == MPFR_RNDU) {
+            if (rnd_w == MPFR_RNDU || rnd_w == MPFR_RNDA) {
                MPFR_ADD_ONE_ULP (mpc_realref (a));
                inex_re = +1;
             }
@@ -299,7 +305,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
                inex_re = -1;
          }
          else if (im_cmp > 0) {
-            if (rnd_w == MPFR_RNDU) {
+            if (rnd_w == MPFR_RNDU || rnd_w == MPFR_RNDA) {
                MPFR_ADD_ONE_ULP (mpc_imagref (a));
                inex_im = +1;
             }
@@ -307,7 +313,7 @@ mpc_sqrt (mpc_ptr a, mpc_srcptr b, mpc_rnd_t rnd)
                inex_im = -1;
          }
          else {
-            if (rnd_w == MPFR_RNDU) {
+            if (rnd_w == MPFR_RNDU || rnd_w == MPFR_RNDA) {
                MPFR_ADD_ONE_ULP (mpc_imagref (a));
                inex_im = -1;
             }
