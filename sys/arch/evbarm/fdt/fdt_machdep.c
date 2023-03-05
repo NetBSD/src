@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.100 2023/02/05 22:42:39 mrg Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.101 2023/03/05 22:04:54 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.100 2023/02/05 22:42:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.101 2023/03/05 22:04:54 mlelstv Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -743,9 +743,6 @@ fdt_detect_root_device(device_t dev)
 {
 	int error, len;
 
-	if (booted_device)
-		return;
-
 	const int chosen = OF_finddevice("/chosen");
 	if (chosen < 0)
 		return;
@@ -801,8 +798,15 @@ fdt_detect_root_device(device_t dev)
 		const struct uuid *guid =
 		    fdtbus_get_prop(chosen, "netbsd,gpt-guid", &len);
 
-		if (guid != NULL && len == 16)
-			booted_device = dev;
+		if (guid == NULL || len != 16)
+			return;
+
+		char guidstr[UUID_STR_LEN];
+		uuid_snprintf(guidstr, sizeof(guidstr), guid);
+
+		device_t dv = dkwedge_find_by_wname(guidstr);
+		if (dv != NULL)
+			booted_device = dv;
 
 		return;
 	}
@@ -895,8 +899,7 @@ fdt_cpu_rootconf(void)
 		if (device_class(dev) != DV_DISK)
 			continue;
 
-		if (device_is_a(dev, "ld") || device_is_a(dev, "sd") || device_is_a(dev, "wd"))
-			fdt_detect_root_device(dev);
+		fdt_detect_root_device(dev);
 
 		if (booted_device != NULL)
 			break;
