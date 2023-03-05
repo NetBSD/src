@@ -1,6 +1,6 @@
 /* Chi-squared test for mpfr_erandom
 
-Copyright 2011-2020 Free Software Foundation, Inc.
+Copyright 2011-2023 Free Software Foundation, Inc.
 Contributed by Charles Karney <charles@karney.com>, SRI International.
 
 This file is part of the GNU MPFR Library.
@@ -26,7 +26,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
  * exponential distribution.  We only take differences of this function so the
  * offset doesn't matter; here Phi(0) = 0. */
 static void
-exponential_cumulative (mpfr_t z, mpfr_t x, mpfr_rnd_t rnd)
+exponential_cumulative (mpfr_ptr z, mpfr_ptr x, mpfr_rnd_t rnd)
 {
   mpfr_neg (z, x, rnd);
   mpfr_expm1 (z, z, rnd);
@@ -43,7 +43,7 @@ exponential_cumulative (mpfr_t z, mpfr_t x, mpfr_rnd_t rnd)
  * TAOCP, Vol 2, 3.3.1, Table 1.  It more accurate than the similar formula,
  * DLMF 8.11.10. */
 static void
-chisq_prob (mpfr_t q, long nu, mpfr_t chisqp)
+chisq_prob (mpfr_ptr q, long nu, mpfr_ptr chisqp)
 {
   mpfr_t t;
   mpfr_rnd_t rnd;
@@ -170,7 +170,7 @@ test_erandom_chisq_cont (long num, mpfr_prec_t prec, int nu,
  * this function.  low precision means prec = 2, 3, or 4.  High values of
  * precision will result in integer overflow. */
 static long
-sequential (mpfr_t x)
+sequential (mpfr_ptr x)
 {
   long expt, prec;
 

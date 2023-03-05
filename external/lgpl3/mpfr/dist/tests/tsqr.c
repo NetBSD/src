@@ -1,6 +1,6 @@
 /* Test file for mpfr_sqr.
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -33,7 +33,7 @@ inexact_sign (int x)
 
 static void
 error1 (mpfr_rnd_t rnd, mpfr_prec_t prec,
-        mpfr_t in, mpfr_t outmul, mpfr_t outsqr)
+        mpfr_t in, mpfr_ptr outmul, mpfr_ptr outsqr)
 {
   printf("ERROR: for %s and prec=%lu\nINPUT=", mpfr_print_rnd_mode(rnd),
          (unsigned long) prec);
@@ -44,7 +44,7 @@ error1 (mpfr_rnd_t rnd, mpfr_prec_t prec,
 }
 
 static void
-error2 (mpfr_rnd_t rnd, mpfr_prec_t prec, mpfr_t in, mpfr_t out,
+error2 (mpfr_rnd_t rnd, mpfr_prec_t prec, mpfr_ptr in, mpfr_ptr out,
         int inexactmul, int inexactsqr)
 {
   printf("ERROR: for %s and prec=%lu\nINPUT=", mpfr_print_rnd_mode(rnd),
@@ -69,6 +69,8 @@ check_random (mpfr_prec_t p)
       if (MPFR_IS_PURE_FP(x))
         RND_LOOP_NO_RNDF (r)
           {
+            /* the following call to mpfr_mul with identical arguments is
+               intentional (to compare with mpfr_sqr) */
             inexact1 = mpfr_mul (y, x, x, (mpfr_rnd_t) r);
             inexact2 = mpfr_sqr (z, x, (mpfr_rnd_t) r);
             if (mpfr_cmp (y, z))
@@ -106,13 +108,13 @@ check_special (void)
   MPFR_ASSERTN (mpfr_zero_p (y));
 
   emin = mpfr_get_emin ();
-  mpfr_set_emin (0);
+  set_emin (0);
   mpfr_set_ui (x, 1, MPFR_RNDN);
   mpfr_div_2ui (x, x, 1, MPFR_RNDN);
   MPFR_ASSERTN (!mpfr_zero_p (x));
   mpfr_sqr (y, x, MPFR_RNDN);
   MPFR_ASSERTN (mpfr_zero_p (y));
-  mpfr_set_emin (emin);
+  set_emin (emin);
 
   mpfr_clear (y);
   mpfr_clear (x);
@@ -126,7 +128,7 @@ test_underflow (void)
   mpfr_exp_t emin;
 
   emin = mpfr_get_emin ();
-  mpfr_set_emin (0);
+  set_emin (0);
 
   mpfr_init2 (x, 24);
   mpfr_init2 (y, 24);
@@ -150,7 +152,7 @@ test_underflow (void)
   mpfr_clear (y);
   mpfr_clear (x);
 
-  mpfr_set_emin (emin);
+  set_emin (emin);
 }
 
 /* Test of a bug seen with GCC 4.5.2 and GMP 5.0.1 on m68k (m68000 target).
@@ -271,7 +273,7 @@ coverage (mpfr_prec_t pmax)
 
       /* exercise square between 0.5*2^emin and its predecessor (emin even) */
       emin = mpfr_get_emin ();
-      mpfr_set_emin (emin + (emin & 1)); /* now emin is even */
+      set_emin (emin + (emin & 1)); /* now emin is even */
       mpfr_set_ui_2exp (b, 1, mpfr_get_emin () - 1, MPFR_RNDN);
       inex = mpfr_sqrt (b, b, MPFR_RNDZ);
       MPFR_ASSERTN(inex != 0); /* sqrt(2) is not exact */
@@ -301,21 +303,21 @@ coverage (mpfr_prec_t pmax)
           MPFR_ASSERTN(mpfr_cmp_ui_2exp (a, 1, mpfr_get_emin () - 1) == 0);
           MPFR_ASSERTN(!mpfr_underflow_p ());
         }
-      mpfr_set_emin (emin);
+      set_emin (emin);
 
       /* exercise exact square root 2^(emin-2) for emin even */
       emin = mpfr_get_emin ();
-      mpfr_set_emin (emin + (emin & 1)); /* now emin is even */
+      set_emin (emin + (emin & 1)); /* now emin is even */
       mpfr_set_ui_2exp (b, 1, (mpfr_get_emin () - 2) / 2, MPFR_RNDN);
       inex = mpfr_sqr (a, b, MPFR_RNDN);
       MPFR_ASSERTN(inex < 0);
       MPFR_ASSERTN(mpfr_zero_p (a) && mpfr_signbit (a) == 0);
       MPFR_ASSERTN(mpfr_underflow_p ());
-      mpfr_set_emin (emin);
+      set_emin (emin);
 
       /* same as above, for RNDU */
       emin = mpfr_get_emin ();
-      mpfr_set_emin (emin + (emin & 1)); /* now emin is even */
+      set_emin (emin + (emin & 1)); /* now emin is even */
       mpfr_set_ui_2exp (b, 1, mpfr_get_emin () - 1, MPFR_RNDN);
       inex = mpfr_sqrt (b, b, MPFR_RNDZ);
       MPFR_ASSERTN(inex != 0); /* sqrt(2) is not exact */
@@ -330,7 +332,7 @@ coverage (mpfr_prec_t pmax)
         MPFR_ASSERTN(mpfr_underflow_p ());
       else
         MPFR_ASSERTN(!mpfr_underflow_p ());
-      mpfr_set_emin (emin);
+      set_emin (emin);
 
       mpfr_clear (a);
       mpfr_clear (b);

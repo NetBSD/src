@@ -1,6 +1,6 @@
 /* mpfr_tlngamma -- test file for lngamma function
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -141,7 +141,7 @@ special (void)
   mpfr_set_str (x, CHECK_Y1, 10, MPFR_RNDN);
   if (MPFR_IS_NAN (y) || mpfr_cmp (y, x))
     {
-      printf ("mpfr_lngamma("CHECK_X1") is wrong:\n"
+      printf ("mpfr_lngamma(" CHECK_X1 ") is wrong:\n"
               "expected ");
       mpfr_dump (x);
       printf ("got      ");
@@ -156,7 +156,7 @@ special (void)
   mpfr_set_str (x, CHECK_Y2, 10, MPFR_RNDN);
   if (mpfr_cmp0 (y, x))
     {
-      printf ("mpfr_lngamma("CHECK_X2") is wrong:\n"
+      printf ("mpfr_lngamma(" CHECK_X2 ") is wrong:\n"
               "expected ");
       mpfr_dump (x);
       printf ("got      ");

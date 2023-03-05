@@ -1,6 +1,6 @@
 /* Uniform Interface to GMP.
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -61,7 +61,7 @@ extern "C" {
 #endif
 
 #if GMP_NAIL_BITS != 0
-# error "MPFR doesn't support nonzero values of GMP_NAIL_BITS"
+# error "MPFR doesn't support non-zero values of GMP_NAIL_BITS"
 #endif
 
 #if (GMP_NUMB_BITS<8) || (GMP_NUMB_BITS & (GMP_NUMB_BITS - 1))
@@ -697,7 +697,7 @@ typedef const mp_limb_t *mpfr_limb_srcptr;
    having 16-bit int's, but such implementations are not required to
    support bit-fields of size > 16 anyway; if ever an implementation with
    16-bit int's is found, the appropriate minimal changes could still be
-   done in the future.
+   done in the future. See WG14/N2921 (5.16).
 */
 
 #ifndef _MPFR_IEEE_FLOATS

@@ -1,6 +1,6 @@
 /* Test file for round away.
 
-Copyright 2000-2020 Free Software Foundation, Inc.
+Copyright 2000-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -83,7 +83,8 @@ set_special (mpfr_ptr x, unsigned int select)
       break;
     }
 }
-/* same than mpfr_cmp, but returns 0 for both NaN's */
+
+/* same as mpfr_cmp, but returns 0 for both NaN's */
 static int
 mpfr_compare (mpfr_srcptr a, mpfr_srcptr b)
 {

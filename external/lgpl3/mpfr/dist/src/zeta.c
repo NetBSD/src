@@ -1,6 +1,6 @@
 /* mpfr_zeta -- compute the Riemann Zeta function
 
-Copyright 2003-2020 Free Software Foundation, Inc.
+Copyright 2003-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -35,7 +35,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
    sum(tc[i]*product((s+2j)*(s+2j-1)/n^2,j=1..i-1), i=1..p)*s*n^(-s-1)
 */
 static void
-mpfr_zeta_part_b (mpfr_t b, mpfr_srcptr s, int n, int p, mpfr_t *tc)
+mpfr_zeta_part_b (mpfr_ptr b, mpfr_srcptr s, int n, int p, mpfr_t *tc)
 {
   mpfr_t s1, d, u;
   unsigned long n2;
@@ -130,7 +130,7 @@ mpfr_zeta_c (int p, mpfr_t *tc)
           n - an integer
    Output: sum - a floating-point number approximating sum(1/i^s, i=1..n-1) */
 static void
-mpfr_zeta_part_a (mpfr_t sum, mpfr_srcptr s, int n)
+mpfr_zeta_part_a (mpfr_ptr sum, mpfr_srcptr s, int n)
 {
   mpfr_t u, s1;
   int i;
@@ -158,7 +158,7 @@ mpfr_zeta_part_a (mpfr_t sum, mpfr_srcptr s, int n)
    Output: z - Zeta(s) rounded to the precision of z with direction rnd_mode
 */
 static int
-mpfr_zeta_pos (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
+mpfr_zeta_pos (mpfr_ptr z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
 {
   mpfr_t b, c, z_pre, f, s1;
   double beta, sd, dnep;
@@ -300,12 +300,16 @@ mpfr_zeta_pos (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
   return inex;
 }
 
+/* TODO: Check the error analysis. The following (undocumented?) one
+   does not take into account the replacement of sin(Pi*s/2) by sinpi(s/2)
+   in commit fd5d811d81f6d1839d4099cc1bb2cde705981648, which could have
+   reduced the error bound since the multiplication by Pi is now exact. */
 /* return add = 1 + floor(log(c^3*(13+m1))/log(2))
    where c = (1+eps)*(1+eps*max(8,m1)),
    m1 = 1 + max(1/eps,2*sd)*(1+eps),
    eps = 2^(-precz-14)
    sd = abs(s-1)
- */
+*/
 static long
 compute_add (mpfr_srcptr s, mpfr_prec_t precz)
 {
@@ -356,8 +360,8 @@ compute_add (mpfr_srcptr s, mpfr_prec_t precz)
    At input, p is Pi rounded down.
    The comments in the code are for rnd = RNDD. */
 static void
-mpfr_reflection_overflow (mpfr_t z, mpfr_t s1, const mpfr_t s, mpfr_t y,
-                          mpfr_t p, mpfr_rnd_t rnd)
+mpfr_reflection_overflow (mpfr_ptr z, mpfr_ptr s1, mpfr_srcptr s, mpfr_ptr y,
+                          mpfr_ptr p, mpfr_rnd_t rnd)
 {
   mpz_t sint;
 
@@ -432,7 +436,7 @@ mpfr_reflection_overflow (mpfr_t z, mpfr_t s1, const mpfr_t s, mpfr_t y,
 }
 
 int
-mpfr_zeta (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
+mpfr_zeta (mpfr_ptr z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
 {
   mpfr_t z_pre, s1, y, p;
   long add;
@@ -520,7 +524,7 @@ mpfr_zeta (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
     }
 
   /* Check for case s=1 before changing the exponent range */
-  if (mpfr_cmp (s, __gmpfr_one) == 0)
+  if (mpfr_equal_p (s, __gmpfr_one))
     {
       MPFR_SET_INF (z);
       MPFR_SET_POS (z);
@@ -562,7 +566,6 @@ mpfr_zeta (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
       MPFR_ZIV_INIT (loop, prec1);
       for (;;)
         {
-          mpfr_exp_t ey;
           mpfr_t z_up;
 
           mpfr_const_pi (p, MPFR_RNDD); /* p is Pi */
@@ -614,7 +617,7 @@ mpfr_zeta (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
                   /* Note: it might be that EXP(z_down) = emax here, in that
                      case we will have overflow below when we multiply by 2 */
                   mpfr_prec_round (z_up, precz, rnd_mode);
-                  ok = mpfr_cmp (z_down, z_up) == 0;
+                  ok = mpfr_equal_p (z_down, z_up);
                   mpfr_clear (z_up);
                   mpfr_clear (z_down);
                   if (ok)
@@ -642,27 +645,23 @@ mpfr_zeta (mpfr_t z, mpfr_srcptr s, mpfr_rnd_t rnd_mode)
           mpfr_mul_2ui (z_pre, z_pre, 1, MPFR_RNDN);
 
           /* multiply z_pre by sin(Pi*s/2) */
-          mpfr_mul (y, s, p, MPFR_RNDN);
-          mpfr_div_2ui (p, y, 1, MPFR_RNDN);      /* p = s*Pi/2 */
-          /* FIXME: sinpi will be available, we should replace the mpfr_sin
-             call below by mpfr_sinpi(s/2), where s/2 will be exact.
-             Can mpfr_sin underflow? Moreover, the code below should be
-             improved so that the "if" condition becomes unlikely, e.g.
-             by taking a slightly larger working precision. */
-          mpfr_sin (y, p, MPFR_RNDN);             /* y = sin(Pi*s/2) */
-          ey = MPFR_GET_EXP (y);
-          if (ey < 0) /* take account of cancellation in sin(p) */
-            {
-              mpfr_t t;
-
-              MPFR_ASSERTN (- ey < MPFR_PREC_MAX - prec1);
-              mpfr_init2 (t, prec1 - ey);
-              mpfr_const_pi (t, MPFR_RNDD);
-              mpfr_mul (t, s, t, MPFR_RNDN);
-              mpfr_div_2ui (t, t, 1, MPFR_RNDN);
-              mpfr_sin (y, t, MPFR_RNDN);
-              mpfr_clear (t);
-            }
+          mpfr_div_2ui (p, s, 1, MPFR_RNDN);      /* p = s/2 */
+          /* Can mpfr_sinpi underflow? While with mpfr_sin, we could not
+             answer in any precision without a theoretical study (though
+             an underflow would have been very unlikely as we have a
+             huge exponent range), with mpfr_sinpi, an underflow could
+             occur only in a huge, unsupported precision. Indeed, if
+             mpfr_sinpi underflows, this means that 0 < |sinpi(s/2)| < m,
+             where m is the minimum representable positive number, and in
+             this case, r being the reduced argument such that |r| <= 1/2,
+             one has |sinpi(r)| > |2r|, so that |2r| < m; this can be
+             possible only if |s/2| > 1/2 (otherwise |s| = |2r| < m and
+             s would not be representable as an MPFR number) and s has
+             non-zero bits of exponent less than the minimum exponent
+             (s/2 - r being an integer), i.e. the precision is at least
+             MPFR_EMAX_MAX + 2. With such a huge precision, there would
+             probably be failures before reaching this point. */
+          mpfr_sinpi (y, p, MPFR_RNDN);           /* y = sin(Pi*s/2) */
           mpfr_mul (z_pre, z_pre, y, MPFR_RNDN);
 
           if (MPFR_LIKELY (MPFR_CAN_ROUND (z_pre, prec1 - add, precz,

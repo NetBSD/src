@@ -1,6 +1,6 @@
 /* Test file for mpfr_factorial.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -88,7 +88,7 @@ test_int (void)
         {
           mpfr_set_prec (x, p);
           mpfr_set_prec (y, p);
-          for (r = 0; r < MPFR_RND_MAX; r++)
+          RND_LOOP (r)
             {
               if ((mpfr_rnd_t) r == MPFR_RNDF)
                 continue;
@@ -228,7 +228,7 @@ main (int argc, char *argv[])
       mpfr_set_prec (y, yprec);
 
       for (n = 0; n < 50; n++)
-        for (rnd = 0; rnd < MPFR_RND_MAX; rnd++)
+        RND_LOOP (rnd)
           {
             if ((mpfr_rnd_t) rnd == MPFR_RNDF)
               continue;

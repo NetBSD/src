@@ -1,6 +1,6 @@
 /* Test file for mpfr_set_float128 and mpfr_get_float128.
 
-Copyright 2012-2020 Free Software Foundation, Inc.
+Copyright 2012-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -292,10 +292,10 @@ check_small (void)
                       mpfr_set_float128 (x, e, MPFR_RNDN); /* exact */
                       inex = mpfr_set (w, z, MPFR_RNDN);
                       MPFR_ASSERTN (inex == 0);
-                      mpfr_set_emin (-16493);
+                      set_emin (-16493);
                       inex = mpfr_check_range (w, 0, (mpfr_rnd_t) r);
                       mpfr_subnormalize (w, inex, (mpfr_rnd_t) r);
-                      mpfr_set_emin (emin);
+                      set_emin (emin);
                       if (! mpfr_equal_p (x, w))
                         {
                           printf ("mpfr_get_float128 failed for "

@@ -1,6 +1,6 @@
 /* mpfr_set_uj -- set a MPFR number from a huge machine unsigned integer
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -29,13 +29,13 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define uintmaxpml (sizeof(uintmax_t) / sizeof(mp_limb_t))
 
 int
-mpfr_set_uj (mpfr_t x, uintmax_t j, mpfr_rnd_t rnd)
+mpfr_set_uj (mpfr_ptr x, uintmax_t j, mpfr_rnd_t rnd)
 {
   return mpfr_set_uj_2exp (x, j, 0, rnd);
 }
 
 int
-mpfr_set_uj_2exp (mpfr_t x, uintmax_t j, intmax_t e, mpfr_rnd_t rnd)
+mpfr_set_uj_2exp (mpfr_ptr x, uintmax_t j, intmax_t e, mpfr_rnd_t rnd)
 {
   int cnt, inex;
   mp_size_t i, k;

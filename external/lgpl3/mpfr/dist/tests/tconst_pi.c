@@ -1,6 +1,6 @@
 /* Test file for mpfr_const_pi.
 
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -170,7 +170,7 @@ bug20091030 (void)
       mpfr_const_pi (x, MPFR_RNDN);
       mpfr_set_prec (x, p);
       mpfr_set_prec (x_ref, p);
-      for (r = 0; r < MPFR_RND_MAX; r++)
+      RND_LOOP (r)
         {
           if (r == MPFR_RNDF)
             continue; /* the test below makes no sense */

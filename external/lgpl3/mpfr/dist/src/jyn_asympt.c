@@ -1,6 +1,6 @@
 /* mpfr_jn_asympt, mpfr_yn_asympt -- shared code for mpfr_jn and mpfr_yn
 
-Copyright 2007-2020 Free Software Foundation, Inc.
+Copyright 2007-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -69,6 +69,8 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
   MPFR_ZIV_INIT (loop, w);
   for (;;)
     {
+      int ok = 0;
+
       mpfr_set_prec (c, w);
       mpfr_init2 (s, w);
       mpfr_init2 (P, w);
@@ -91,6 +93,10 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
       mpfr_swap (s, t);
       /* now s approximates sin(z)+cos(z), and c approximates sin(z)-cos(z),
          with total absolute error bounded by 2^(1-w). */
+
+      /* if s or c is zero, MPFR_GET_EXP will fail below */
+      if (MPFR_IS_ZERO(s) || MPFR_IS_ZERO(c))
+        goto clear; /* with ok=0 */
 
       /* precompute 1/(8|z|) */
       mpfr_si_div (iz, MPFR_IS_POS(z) ? 1 : -1, z, MPFR_RNDN);   /* err <= 1 */
@@ -218,6 +224,9 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
           mpfr_sub (s, c, s, MPFR_RNDN);
 #endif
         }
+      if (MPFR_IS_ZERO(s))
+        goto clear; /* with ok=0 */
+      ok = 1;
       if ((n & 2) != 0)
         mpfr_neg (s, s, MPFR_RNDN);
       if (MPFR_GET_EXP (s) > err)
@@ -257,6 +266,9 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
       err = (err >= err2) ? err + 1 : err2 + 1;
       /* the absolute error on c is bounded by 2^(err - w) */
 
+      err -= MPFR_GET_EXP (c);
+
+    clear:
       mpfr_clear (s);
       mpfr_clear (P);
       mpfr_clear (Q);
@@ -266,8 +278,7 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
       mpfr_clear (err_s);
       mpfr_clear (err_u);
 
-      err -= MPFR_GET_EXP (c);
-      if (MPFR_LIKELY (MPFR_CAN_ROUND (c, w - err, MPFR_PREC(res), r)))
+      if (ok && MPFR_LIKELY (MPFR_CAN_ROUND (c, w - err, MPFR_PREC(res), r)))
         break;
       if (diverge != 0)
         {
@@ -279,8 +290,8 @@ FUNCTION (mpfr_ptr res, long n, mpfr_srcptr z, mpfr_rnd_t r)
     }
   MPFR_ZIV_FREE (loop);
 
-  inex = (MPFR_IS_POS(z) || ((n & 1) == 0)) ? mpfr_set (res, c, r)
-    : mpfr_neg (res, c, r);
+  inex = mpfr_set4 (res, c, r, MPFR_IS_POS (z) || (n & 1) == 0 ?
+                    MPFR_SIGN (c) : - MPFR_SIGN (c));
   mpfr_clear (c);
 
   /* for RNDF, mpfr_set or mpfr_neg may return 0, but if we return 0, it

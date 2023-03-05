@@ -3,7 +3,7 @@
  */
 
 /*
-Copyright 2010-2020 Free Software Foundation, Inc.
+Copyright 2010-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -81,6 +81,13 @@ int main (void)
 # endif
   printf (COMP "ICC %d.%d.%d" ICCV "\n", __INTEL_COMPILER / 100,
           __INTEL_COMPILER % 100, __INTEL_COMPILER_UPDATE);
+#elif defined(__TINYC__)
+  /* The format of __TINYC__ is not described, but libtcc.c defines it with
+   *   sprintf(buffer, "%d", a*10000 + b*100 + c);
+   *   tcc_define_symbol(s, "__TINYC__", buffer);
+   */
+  printf (COMP "TCC %d.%d.%d\n", (int) (__TINYC__ / 10000),
+          (int) ((__TINYC__ / 100) % 100), (int) (__TINYC__ % 100));
 #elif (defined(__GNUC__) || defined(__clang__)) && defined(__VERSION__)
 # ifdef __clang__
 #  define COMP2 COMP

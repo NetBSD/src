@@ -1,6 +1,6 @@
 /* mpfr_init2 -- initialize a floating-point number with given precision
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -38,7 +38,9 @@ mpfr_init2 (mpfr_ptr x, mpfr_prec_t p)
   /* Check for mp_bits_per_limb (a global variable inside GMP library) */
   MPFR_ASSERTN (mp_bits_per_limb == GMP_NUMB_BITS);
 
-  /* Check for correct EXP NAN, ZERO & INF in both mpfr.h and mpfr-impl.h */
+  /* Check for consistent EXP MAX, NAN, ZERO & INF in
+     both mpfr.h and mpfr-impl.h */
+  MPFR_STAT_STATIC_ASSERT( __MPFR_EXP_MAX  == MPFR_EXP_MAX  );
   MPFR_STAT_STATIC_ASSERT( __MPFR_EXP_NAN  == MPFR_EXP_NAN  );
   MPFR_STAT_STATIC_ASSERT( __MPFR_EXP_ZERO == MPFR_EXP_ZERO );
   MPFR_STAT_STATIC_ASSERT( __MPFR_EXP_INF  == MPFR_EXP_INF  );

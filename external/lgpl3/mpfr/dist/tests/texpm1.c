@@ -1,6 +1,6 @@
 /* Test file for mpfr_expm1.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -54,7 +54,7 @@ static void
 special (void)
 {
   mpfr_t x, y;
-  int i;
+  int inex;
 
   mpfr_init (x);
   mpfr_init (y);
@@ -102,51 +102,57 @@ special (void)
   /* Check overflow of expm1(x) */
   mpfr_clear_flags ();
   mpfr_set_str_binary (x, "1.1E1000000000");
-  i = test_expm1 (x, x, MPFR_RNDN);
+  inex = test_expm1 (x, x, MPFR_RNDN);
   MPFR_ASSERTN (MPFR_IS_INF (x) && MPFR_IS_POS (x));
-  MPFR_ASSERTN (mpfr_overflow_p ());
-  MPFR_ASSERTN (i == 1);
+  MPFR_ASSERTN (__gmpfr_flags == (MPFR_FLAGS_OVERFLOW | MPFR_FLAGS_INEXACT));
+  MPFR_ASSERTN (inex > 0);
 
   mpfr_clear_flags ();
   mpfr_set_str_binary (x, "1.1E1000000000");
-  i = test_expm1 (x, x, MPFR_RNDU);
+  inex = test_expm1 (x, x, MPFR_RNDU);
   MPFR_ASSERTN (MPFR_IS_INF (x) && MPFR_IS_POS (x));
-  MPFR_ASSERTN (mpfr_overflow_p ());
-  MPFR_ASSERTN (i == 1);
+  MPFR_ASSERTN (__gmpfr_flags == (MPFR_FLAGS_OVERFLOW | MPFR_FLAGS_INEXACT));
+  MPFR_ASSERTN (inex > 0);
 
   mpfr_clear_flags ();
   mpfr_set_str_binary (x, "1.1E1000000000");
-  i = test_expm1 (x, x, MPFR_RNDD);
+  inex = test_expm1 (x, x, MPFR_RNDD);
   MPFR_ASSERTN (!MPFR_IS_INF (x) && MPFR_IS_POS (x));
-  MPFR_ASSERTN (mpfr_overflow_p ());
-  MPFR_ASSERTN (i == -1);
+  MPFR_ASSERTN (__gmpfr_flags == (MPFR_FLAGS_OVERFLOW | MPFR_FLAGS_INEXACT));
+  MPFR_ASSERTN (inex < 0);
 
   /* Check internal underflow of expm1 (x) */
   mpfr_set_prec (x, 2);
   mpfr_clear_flags ();
   mpfr_set_str_binary (x, "-1.1E1000000000");
-  i = test_expm1 (x, x, MPFR_RNDN);
-  MPFR_ASSERTN (mpfr_cmp_si (x, -1) == 0);
-  MPFR_ASSERTN (!mpfr_overflow_p () && !mpfr_underflow_p ());
-  MPFR_ASSERTN (i == -1);
+  inex = test_expm1 (x, x, MPFR_RNDN);
+  MPFR_ASSERTN (mpfr_cmp_si0 (x, -1) == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_INEXACT);
+  MPFR_ASSERTN (inex < 0);
 
   mpfr_set_str_binary (x, "-1.1E1000000000");
-  i = test_expm1 (x, x, MPFR_RNDD);
-  MPFR_ASSERTN (mpfr_cmp_si (x, -1) == 0);
-  MPFR_ASSERTN (!mpfr_overflow_p () && !mpfr_underflow_p ());
-  MPFR_ASSERTN (i == -1);
+  inex = test_expm1 (x, x, MPFR_RNDD);
+  MPFR_ASSERTN (mpfr_cmp_si0 (x, -1) == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_INEXACT);
+  MPFR_ASSERTN (inex < 0);
 
   mpfr_set_str_binary (x, "-1.1E1000000000");
-  i = test_expm1 (x, x, MPFR_RNDZ);
+  inex = test_expm1 (x, x, MPFR_RNDZ);
   MPFR_ASSERTN (mpfr_cmp_str (x, "-0.11", 2, MPFR_RNDN) == 0);
-  MPFR_ASSERTN (!mpfr_overflow_p () && !mpfr_underflow_p ());
-  MPFR_ASSERTN (i == 1);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_INEXACT);
+  MPFR_ASSERTN (inex > 0);
 
   mpfr_set_str_binary (x, "-1.1E1000000000");
-  i = test_expm1 (x, x, MPFR_RNDU);
+  inex = test_expm1 (x, x, MPFR_RNDU);
   MPFR_ASSERTN (mpfr_cmp_str (x, "-0.11", 2, MPFR_RNDN) == 0);
-  MPFR_ASSERTN (!mpfr_overflow_p () && !mpfr_underflow_p ());
-  MPFR_ASSERTN (i == 1);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_INEXACT);
+  MPFR_ASSERTN (inex > 0);
+
+  mpfr_set_str_binary (x, "-1.1E1000000000");
+  inex = test_expm1 (x, x, MPFR_RNDA);
+  MPFR_ASSERTN (mpfr_cmp_si0 (x, -1) == 0);
+  MPFR_ASSERTN (__gmpfr_flags == MPFR_FLAGS_INEXACT);
+  MPFR_ASSERTN (inex < 0);
 
   mpfr_clear (x);
   mpfr_clear (y);

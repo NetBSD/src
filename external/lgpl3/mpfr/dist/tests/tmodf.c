@@ -1,6 +1,6 @@
 /* Test file for mpfr_modf.
 
-Copyright 2007-2020 Free Software Foundation, Inc.
+Copyright 2007-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -87,7 +87,7 @@ check_nans (void)
 
   /* -inf */
   mpfr_set_inf (x, -1);
-  mpfr_modf (xi ,xf, x, MPFR_RNDN);
+  mpfr_modf (xi, xf, x, MPFR_RNDN);
   MPFR_ASSERTN (mpfr_inf_p (xi));
   MPFR_ASSERTN (mpfr_sgn (xi) < 0);
   MPFR_ASSERTN (mpfr_zero_p (xf));
@@ -148,7 +148,7 @@ check_special_exprange (void)
     }
 
   /* Test if an overflow occurs in mpfr_set for ope >= opq. */
-  mpfr_set_emax (MPFR_EMAX_MAX);
+  set_emax (MPFR_EMAX_MAX);
   mpfr_set_inf (x, 1);
   mpfr_nextbelow (x);
   mpfr_clear_flags ();

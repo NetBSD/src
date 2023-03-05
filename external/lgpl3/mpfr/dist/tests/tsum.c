@@ -1,6 +1,6 @@
 /* tsum -- test file for the list summation function
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -59,7 +59,7 @@ get_prec_max (mpfr_t *t, int n)
 }
 
 static void
-get_exact_sum (mpfr_t sum, mpfr_t *tab, int n)
+get_exact_sum (mpfr_ptr sum, mpfr_t *tab, int n)
 {
   int i;
 
@@ -108,7 +108,7 @@ generic_tests (void)
           mpfr_set_prec (t[i], MPFR_PREC_MIN +
                          (randlimb () % (precmax - MPFR_PREC_MIN + 1)));
           mpfr_urandomb (t[i], RANDS);
-          if (m % 8 != 0 && (m % 8 == 1 || (randlimb () & 1)))
+          if (m % 8 != 0 && (m % 8 == 1 || RAND_BOOL ()))
             mpfr_neg (t[i], t[i], MPFR_RNDN);
           if (non_uniform && MPFR_NOTZERO (t[i]))
             mpfr_set_exp (t[i], randlimb () % 1000);
@@ -1092,7 +1092,7 @@ check_underflow (void)
       n = 3 + (randlimb () % (NUNFL - 2));
       MPFR_ASSERTN (n <= NUNFL);
 
-      mpfr_set_prec (sum2, (randlimb () & 1) ? MPFR_PREC_MIN : precmax);
+      mpfr_set_prec (sum2, RAND_BOOL () ? MPFR_PREC_MIN : precmax);
       mpfr_set_prec (t[0], fprec + 64);
       mpfr_set_zero (t[0], 1);
 
@@ -1110,7 +1110,7 @@ check_underflow (void)
           MPFR_ASSERTN (inex == 0);
         }
 
-      neg = randlimb () & 1;
+      neg = RAND_BOOL ();
       if (neg)
         mpfr_nextbelow (t[0]);
       else
@@ -1198,7 +1198,7 @@ check_coverage (void)
 }
 
 static int
-mpfr_sum_naive (mpfr_t s, mpfr_t *x, int n, mpfr_rnd_t rnd)
+mpfr_sum_naive (mpfr_ptr s, mpfr_t *x, int n, mpfr_rnd_t rnd)
 {
   int ret, i;
   switch (n)

@@ -1,6 +1,6 @@
-/* mpfr_fac_ui -- factorial of a nonnegative integer
+/* mpfr_fac_ui -- factorial of a non-negative integer
 
-Copyright 2001, 2004-2020 Free Software Foundation, Inc.
+Copyright 2001, 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.

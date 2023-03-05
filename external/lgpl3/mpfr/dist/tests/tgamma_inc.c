@@ -1,6 +1,6 @@
 /* Test file for mpfr_gamma_inc
 
-Copyright 2016-2020 Free Software Foundation, Inc.
+Copyright 2016-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -43,7 +43,7 @@ test_random (mpfr_prec_t p, int k)
   while (k--)
     {
       do mpfr_urandomb (a, RANDS); while (mpfr_zero_p (a));
-      if (randlimb () & 1)
+      if (RAND_BOOL ())
         mpfr_neg (a, a, MPFR_RNDN);
       do mpfr_urandomb (x, RANDS); while (mpfr_zero_p (x));
       mpfr_gamma_inc (y, a, x, MPFR_RNDN);

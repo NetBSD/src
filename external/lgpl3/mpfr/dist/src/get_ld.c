@@ -1,7 +1,7 @@
 /* mpfr_get_ld, mpfr_get_ld_2exp -- convert a multiple precision floating-point
                                     number to a machine long double
 
-Copyright 2002-2020 Free Software Foundation, Inc.
+Copyright 2002-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -154,7 +154,7 @@ mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
         unsigned long long mant = 0;
         int i;
         for (i = 0; i < 8; i++)
-          mant |= ((unsigned long) tmpmant[i] << (8*i));
+          mant |= (unsigned long long) tmpmant[i] << (8*i);
         mant >>= denorm;
         ld.s.manl = mant;
         ld.s.manh = mant >> 32;
@@ -207,7 +207,10 @@ mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
              to get the correct sign (assuming mpfr_get_d supports signed
              zeros on the implementation). */
           if (s == 0 || DOUBLE_ISNAN (s) || DOUBLE_ISINF (s))
-            r = (long double) s;
+            {
+              /* we don't propagate the sign bit of NaN */
+              r = (long double) s;
+            }
           else
             {
               mpfr_t y, z;
@@ -232,8 +235,8 @@ mpfr_get_ld (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 
           /* First round x to the target long double precision, so that
              all subsequent operations are exact (this avoids double rounding
-             problems). However if the format contains numbers that have more
-             precision, MPFR won't be able to generate such numbers. */
+             problems). However, if the format contains numbers that have
+             more precision, MPFR won't be able to generate such numbers. */
           mpfr_init2 (y, MPFR_LDBL_MANT_DIG);
           mpfr_init2 (z, MPFR_LDBL_MANT_DIG);
           /* Note about the precision of z: even though IEEE_DBL_MANT_DIG is

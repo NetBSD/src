@@ -1,6 +1,6 @@
 /* mpfr_fits_intmax_p -- test whether an mpfr fits an intmax_t.
 
-Copyright 2004, 2006-2020 Free Software Foundation, Inc.
+Copyright 2004, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -58,7 +58,7 @@ mpfr_fits_intmax_p (mpfr_srcptr f, mpfr_rnd_t rnd)
   if (neg)
     {
       uintmax_t s;
-      /* In C89, the division on negative integers isn't well-defined. */
+      /* In C90, the division on negative integers isn't well-defined. */
       s = SAFE_ABS (uintmax_t, INTMAX_MIN);
       for (prec = 0; s != 0; s /= 2, prec ++);
     }

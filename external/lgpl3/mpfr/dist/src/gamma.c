@@ -1,6 +1,6 @@
 /* mpfr_gamma -- gamma function
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -189,7 +189,7 @@ mpfr_gamma (mpfr_ptr gamma, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
           Now, assuming |gamma(x)-1/x| < 1, which is true for 0 < x <= 1,
           if 2^(-2n) ufp(y) >= 1, then gamma(x) and 1/x round in the same
           way, so that rounding 1/x gives the correct result and correct
-          (nonzero) ternary value.
+          (non-zero) ternary value.
           If x < 2^E, then y >= 2^(-E), thus ufp(y) >= 2^(-E).
           A sufficient condition is thus EXP(x) <= -2n, where
           n = MAX(MPFR_PREC(x), MPFR_PREC(gamma)).

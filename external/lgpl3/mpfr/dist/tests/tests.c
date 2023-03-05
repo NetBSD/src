@@ -1,6 +1,6 @@
 /* Miscellaneous support for test programs.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -20,6 +20,13 @@ along with the GNU MPFR Library; see the file COPYING.LESSER.  If not, see
 https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
+/* NOTE. Some tests on macro definitions are already done in src/init2.c
+ * as static assertions (in general). This allows one to get a failure at
+ * build time in case of inconsistency (probably due to search path issues
+ * in header file inclusion). This does not need to be done again in the
+ * test suite.
+ */
+
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -37,13 +44,10 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 # include <fenv.h>
 #endif
 
-#ifdef TIME_WITH_SYS_TIME
-# include <sys/time.h>  /* for struct timeval */
-# include <time.h>
-#elif defined HAVE_SYS_TIME_H
-#  include <sys/time.h>
+#ifdef HAVE_GETTIMEOFDAY
+# include <sys/time.h>
 #else
-#  include <time.h>
+# include <time.h>
 #endif
 
 /* <sys/fpu.h> is needed to have union fpc_csr defined under IRIX64
@@ -437,6 +441,26 @@ tests_rand_end (void)
   RANDS_CLEAR ();
 }
 
+/* true if subnormals are supported for double */
+int
+have_subnorm_dbl (void)
+{
+  volatile double x = DBL_MIN, y;
+
+  y = x / 2.0;
+  return 2.0 * y == x;
+}
+
+/* true if subnormals are supported for float */
+int
+have_subnorm_flt (void)
+{
+  volatile float x = FLT_MIN, y;
+
+  y = x / 2.0f;
+  return 2.0f * y == x;
+}
+
 /* initialization function for tests using the hardware floats
    Not very useful now. */
 void
@@ -449,17 +473,6 @@ mpfr_test_init (void)
   exp.fc_word = get_fpc_csr();
   exp.fc_struct.flush = 0;
   set_fpc_csr(exp.fc_word);
-#endif
-
-#ifdef HAVE_SUBNORM_DBL
-  {
-    double d = DBL_MIN;
-    if (2.0 * (d / 2.0) != d)
-      {
-        printf ("Error: HAVE_SUBNORM_DBL defined, but no subnormals.\n");
-        exit (1);
-      }
-  }
 #endif
 
   /* generate DBL_EPSILON with a loop to avoid that the compiler
@@ -488,6 +501,36 @@ randlimb (void)
 
   mpfr_rand_raw (&limb, RANDS, GMP_NUMB_BITS);
   return limb;
+}
+
+unsigned long
+randulong (void)
+{
+#ifdef MPFR_LONG_WITHIN_LIMB
+
+  return randlimb ();
+
+#else
+
+  unsigned long u = 0, v = 0;
+
+  while (u |= randlimb (), v |= MPFR_LIMB_MAX, v != ULONG_MAX)
+    {
+      u <<= GMP_NUMB_BITS;
+      v <<= GMP_NUMB_BITS;
+    }
+
+  return u;
+
+#endif
+}
+
+long
+randlong (void)
+{
+  unsigned long u = randulong ();
+
+  return ULONG2LONG (u);
 }
 
 /* returns ulp(x) for x a 'normal' double-precision number */
@@ -550,22 +593,19 @@ Isnan (double d)
 void
 d_trace (const char *name, double d)
 {
-  union {
-    double         d;
-    unsigned char  b[sizeof(double)];
-  } u;
+  double x = d;
+  unsigned char *p = (unsigned char *) &x;
   int  i;
 
   if (name != NULL && name[0] != '\0')
-    printf ("%s=", name);
+    printf ("%s = ", name);
 
-  u.d = d;
   printf ("[");
-  for (i = 0; i < (int) sizeof (u.b); i++)
+  for (i = 0; i < (int) sizeof (double); i++)
     {
       if (i != 0)
         printf (" ");
-      printf ("%02X", (int) u.b[i]);
+      printf ("%02X", (unsigned int) p[i]);
     }
   printf ("] %.20g\n", d);
 }
@@ -573,22 +613,19 @@ d_trace (const char *name, double d)
 void
 ld_trace (const char *name, long double ld)
 {
-  union {
-    long double    ld;
-    unsigned char  b[sizeof(long double)];
-  } u;
+  long double x = ld;
+  unsigned char *p = (unsigned char *) &x;
   int  i;
 
   if (name != NULL && name[0] != '\0')
-    printf ("%s=", name);
+    printf ("%s = ", name);
 
-  u.ld = ld;
   printf ("[");
-  for (i = 0; i < (int) sizeof (u.b); i++)
+  for (i = 0; i < (int) sizeof (long double); i++)
     {
       if (i != 0)
         printf (" ");
-      printf ("%02X", (int) u.b[i]);
+      printf ("%02X", (unsigned int) p[i]);
     }
   printf ("] %.20Lg\n", ld);
 }
@@ -651,7 +688,8 @@ set_emin (mpfr_exp_t exponent)
 {
   if (mpfr_set_emin (exponent))
     {
-      printf ("set_emin: setting emin to %ld failed\n", (long int) exponent);
+      printf ("set_emin: setting emin to %" MPFR_EXP_FSPEC "d failed\n",
+              (mpfr_eexp_t) exponent);
       exit (1);
     }
 }
@@ -661,7 +699,8 @@ set_emax (mpfr_exp_t exponent)
 {
   if (mpfr_set_emax (exponent))
     {
-      printf ("set_emax: setting emax to %ld failed\n", (long int) exponent);
+      printf ("set_emax: setting emax to %" MPFR_EXP_FSPEC "d failed\n",
+              (mpfr_eexp_t) exponent);
       exit (1);
     }
 }
@@ -683,7 +722,7 @@ tests_default_random (mpfr_ptr x, int pos, mpfr_exp_t emin, mpfr_exp_t emax,
      exponent range (well, this is a bit ugly...). */
 
   mpfr_urandomb (x, RANDS);
-  if (MPFR_IS_PURE_FP (x) && (emin >= 1 || always_scale || (randlimb () & 1)))
+  if (MPFR_IS_PURE_FP (x) && (emin >= 1 || always_scale || RAND_BOOL ()))
     {
       mpfr_exp_t e;
       e = emin + (mpfr_exp_t) (randlimb () % (emax - emin + 1));
@@ -695,8 +734,8 @@ tests_default_random (mpfr_ptr x, int pos, mpfr_exp_t emin, mpfr_exp_t emax,
           /* The random number doesn't fit in the current exponent range.
              In this case, test the function in the extended exponent range,
              which should be restored by the caller. */
-          mpfr_set_emin (MPFR_EMIN_MIN);
-          mpfr_set_emax (MPFR_EMAX_MAX);
+          set_emin (MPFR_EMIN_MIN);
+          set_emax (MPFR_EMAX_MAX);
           mpfr_set_exp (x, e);
         }
     }
@@ -746,9 +785,10 @@ test5rm (int (*fct) (FLIST), mpfr_srcptr x, mpfr_ptr y, mpfr_ptr z,
         expected_inex =
           sb == 0 ? 0 : MPFR_IS_LIKE_RNDD (rnd, MPFR_SIGN (y)) ? -1 : 1;
       MPFR_ASSERTN (expected_inex != INT_MIN);
-      if (!(SAME_VAL (y, z) || SAME_SIGN (inex, expected_inex)))
+      if (!(SAME_VAL (y, z) && SAME_SIGN (inex, expected_inex)))
         {
-          printf ("Error for %s with xprec=%lu, yprec=%lu, rnd=%s\nx = ",
+          printf ("test5rm: error for %s with xprec=%lu, yprec=%lu, rnd=%s\n"
+                  "x = ",
                   name, (unsigned long) MPFR_PREC (x), (unsigned long) yprec,
                   mpfr_print_rnd_mode (rnd));
           mpfr_out_str (stdout, 16, 0, x, MPFR_RNDN);
@@ -1039,7 +1079,11 @@ bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), const char *name,
           if (!sb)
             {
               if (dbg)
-                printf ("bad_cases: exact case\n");
+                {
+                  printf ("bad_cases: exact case z = ");
+                  mpfr_out_str (stdout, 16, 0, z, MPFR_RNDN);
+                  printf ("\n");
+                }
               if (inex_inv)
                 {
                   printf ("bad_cases: f exact while f^(-1) inexact,\n"
@@ -1081,11 +1125,29 @@ bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), const char *name,
             }
         }
       while (inex == 0);
-      /* We really have a bad case. */
-      do
-        py--;
-      while (py >= MPFR_PREC_MIN && mpfr_prec_round (z, py, MPFR_RNDZ) == 0);
-      py++;
+      /* We really have a bad case (or some special case). */
+      if (mpfr_zero_p (z))
+        {
+          /* This can occur on tlog (GMP_CHECK_RANDOMIZE=1630879377004032
+             in r14570, 2021-09-07):
+             y = -0, giving x = 1 and z = 0. We have y = z, but here,
+             y and z have different signs. Since test5rm will test f(x)
+             and its sign (in particular for 0), we need to take the
+             sign of f(x), i.e. of z.
+             Note: To avoid this special case, one might want to detect and
+             ignore y = 0 (of any sign) when taking the random number above,
+             as this case should be redundant with some other tests. */
+          mpfr_set (y, z, MPFR_RNDN);
+          py = MPFR_PREC_MIN;
+        }
+      else
+        {
+          do
+            py--;
+          while (py >= MPFR_PREC_MIN &&
+                 mpfr_prec_round (z, py, MPFR_RNDZ) == 0);
+          py++;
+        }
       /* py is now the smallest output precision such that we have
          a bad case in the directed rounding modes. */
       if (mpfr_prec_round (y, py, MPFR_RNDZ) != 0)
@@ -1112,18 +1174,19 @@ bad_cases (int (*fct)(FLIST), int (*inv)(FLIST), const char *name,
     next_i:
       /* In case the exponent range has been changed by
          tests_default_random()... */
-      mpfr_set_emin (old_emin);
-      mpfr_set_emax (old_emax);
+      set_emin (old_emin);
+      set_emax (old_emax);
     }
   mpfr_clears (x, y, z, (mpfr_ptr) 0);
 
   if (dbg)
-    printf ("bad_cases: %d bad cases over %d generated values\n", cnt, n);
+    printf ("bad_cases: %d bad cases over %d generated values for %s\n",
+            cnt, n, name);
 
   if (getenv ("MPFR_CHECK_BADCASES") && n - cnt > n/10)
     {
-      printf ("bad_cases: too few bad cases (%d over %d generated values)\n",
-              cnt, n);
+      printf ("bad_cases: too few bad cases (%d over %d generated values)"
+              " for %s\n", cnt, n, name);
       exit (1);
     }
 }
@@ -1180,7 +1243,13 @@ tests_expect_abort (void)
 #endif
 }
 
-/* Guess whether the test runs within Valgrind. */
+/* Guess whether the test runs within Valgrind.
+   Note: This should work at least under Linux and Solaris.
+   If need be, support for macOS (with DYLD_INSERT_LIBRARIES) and
+   i386 FreeBSD on amd64 (with LD_32_PRELOAD) could be added; thanks
+   to Paul Floyd for the information.
+   Up-to-date information should be found at
+   <https://stackoverflow.com/a/62364698/3782797>. */
 int
 tests_run_within_valgrind (void)
 {

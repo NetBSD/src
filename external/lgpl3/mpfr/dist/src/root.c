@@ -1,6 +1,6 @@
-/* mpfr_root -- kth root.
+/* mpfr_root, mpfr_rootn_ui, mpfr_rootn_si -- kth root.
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -93,7 +93,8 @@ mpfr_rootn_ui (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
           MPFR_SET_SAME_SIGN (y, x);
         }
       else /* x is necessarily 0: (+0)^(1/k) = +0
-                                  (-0)^(1/k) = -0 */
+                                  (-0)^(1/k) = +0 if k even
+                                  (-0)^(1/k) = -0 if k odd */
         {
           MPFR_ASSERTD (MPFR_IS_ZERO (x));
           MPFR_SET_ZERO (y);
@@ -295,6 +296,145 @@ mpfr_root_aux (mpfr_ptr y, mpfr_srcptr x, unsigned long k, mpfr_rnd_t rnd_mode)
   MPFR_SAVE_EXPO_FREE (expo);
 
   return mpfr_check_range (y, inexact, rnd_mode);
+}
+
+int
+mpfr_rootn_si (mpfr_ptr y, mpfr_srcptr x, long k, mpfr_rnd_t rnd_mode)
+{
+  int inexact;
+  MPFR_ZIV_DECL(loop);
+  MPFR_SAVE_EXPO_DECL (expo);
+
+  MPFR_LOG_FUNC
+    (("x[%Pu]=%.*Rg k=%lu rnd=%d",
+      mpfr_get_prec (x), mpfr_log_prec, x, k, rnd_mode),
+     ("y[%Pu]=%.*Rg inexact=%d",
+      mpfr_get_prec (y), mpfr_log_prec, y, inexact));
+
+  if (k >= 0)
+    return mpfr_rootn_ui (y, x, k, rnd_mode);
+
+  /* Singular values for k < 0 */
+  if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (x)))
+    {
+      if (MPFR_IS_NAN (x))
+        {
+          MPFR_SET_NAN (y); /* NaN^(1/k) = NaN */
+          MPFR_RET_NAN;
+        }
+
+      if (MPFR_IS_INF (x)) /* (+Inf)^(1/k) = +0
+                              (-Inf)^(1/k) = -0 if k odd
+                              (-Inf)^(1/k) = NaN if k even */
+        {
+          /* Cast k to an unsigned type so that this is well-defined. */
+          if (MPFR_IS_NEG (x) && ((unsigned long) k & 1) == 0)
+            {
+              MPFR_SET_NAN (y);
+              MPFR_RET_NAN;
+            }
+          MPFR_SET_ZERO (y);
+          MPFR_SET_SAME_SIGN (y, x);
+        }
+      else /* x is necessarily 0: (+0)^(1/k) = +Inf
+                                  (-0)^(1/k) = +Inf if k even
+                                  (-0)^(1/k) = -Inf if k odd */
+        {
+          MPFR_ASSERTD (MPFR_IS_ZERO (x));
+          MPFR_SET_INF (y);
+          /* Cast k to an unsigned type so that this is well-defined. */
+          if (MPFR_IS_POS (x) || ((unsigned long) k & 1) == 0)
+            MPFR_SET_POS (y);
+          else
+            MPFR_SET_NEG (y);
+          MPFR_SET_DIVBY0 ();
+        }
+      MPFR_RET (0);
+    }
+
+  /* Returns NAN for x < 0 and k even */
+  /* Cast k to an unsigned type so that this is well-defined. */
+  if (MPFR_UNLIKELY (MPFR_IS_NEG (x) && ((unsigned long) k & 1) == 0))
+    {
+      MPFR_SET_NAN (y);
+      MPFR_RET_NAN;
+    }
+
+  /* Special case |x| = 1. Note that if x = -1, then k is odd
+     (NaN results have already been filtered), so that y = -1. */
+  if (mpfr_cmpabs (x, __gmpfr_one) == 0)
+    return mpfr_set (y, x, rnd_mode);
+
+  /* The case k = -1 is probably rare in practice (the user would directly
+     do a division if k is a constant, and even mpfr_pow_si is more natural).
+     But let's take it into account here, so that in the general case below,
+     overflows and underflows will be impossible, and we won't need to test
+     and handle the corresponding flags. And let's take the opportunity to
+     handle k = -2 as well since mpfr_rec_sqrt is faster than the generic
+     mpfr_rootn_si (this is visible when running the trec_sqrt tests with
+     mpfr_rootn_si + generic code for k = -2 instead of mpfr_rec_sqrt). */
+  /* TODO: If MPFR_WANT_ASSERT >= 2, define a new mpfr_rootn_si function
+     so that for k = -2, compute the result with both mpfr_rec_sqrt and
+     the generic code, and compare (ditto for mpfr_rec_sqrt), like what
+     is done in add1sp.c (mpfr_add1sp and mpfr_add1 results compared). */
+  if (k >= -2)
+    {
+      if (k == -1)
+        return mpfr_ui_div (y, 1, x, rnd_mode);
+      else
+        return mpfr_rec_sqrt (y, x, rnd_mode);
+    }
+
+  /* TODO: Should we expand mpfr_root_aux to negative values of k
+     and call it if k < -100, a bit like in mpfr_rootn_ui? */
+
+  /* General case */
+  {
+    mpfr_t t;
+    mpfr_prec_t Ny;  /* target precision */
+    mpfr_prec_t Nt;  /* working precision */
+
+    /* initial working precision */
+    Ny = MPFR_PREC (y);
+    Nt = Ny + 10;
+
+    MPFR_SAVE_EXPO_MARK (expo);
+
+    mpfr_init2 (t, Nt);
+
+    MPFR_ZIV_INIT (loop, Nt);
+    for (;;)
+      {
+        /* Compute the root before the division, in particular to avoid
+           overflows and underflows.
+           Moreover, midpoints are impossible. And an exact case implies
+           that |x| is a power of 2; such a case is not the most common
+           one, so that we detect it only after MPFR_CAN_ROUND. */
+
+        /* Let's use MPFR_RNDF to avoid the potentially costly detection
+           of exact cases in mpfr_rootn_ui (we just lose one bit in the
+           final approximation). */
+        mpfr_rootn_ui (t, x, - (unsigned long) k, MPFR_RNDF);
+        inexact = mpfr_ui_div (t, 1, t, rnd_mode);
+
+        /* The final error is bounded by 5 ulp (see algorithms.tex,
+           "Generic error of inverse"), which is <= 2^3 ulp. */
+        MPFR_ASSERTD (! MPFR_IS_SINGULAR (t));
+        if (MPFR_LIKELY (MPFR_CAN_ROUND (t, Nt - 3, Ny, rnd_mode) ||
+                         (inexact == 0 && mpfr_powerof2_raw (x))))
+          break;
+
+        MPFR_ZIV_NEXT (loop, Nt);
+        mpfr_set_prec (t, Nt);
+      }
+    MPFR_ZIV_FREE (loop);
+
+    inexact = mpfr_set (y, t, rnd_mode);
+    mpfr_clear (t);
+
+    MPFR_SAVE_EXPO_FREE (expo);
+    return mpfr_check_range (y, inexact, rnd_mode);
+  }
 }
 
 int

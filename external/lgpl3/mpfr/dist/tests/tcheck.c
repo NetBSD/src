@@ -1,6 +1,6 @@
 /* Test file for mpfr_check.
 
-Copyright 2003-2004, 2006-2020 Free Software Foundation, Inc.
+Copyright 2003-2004, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -63,6 +63,8 @@ main (void)
       max = 1000; /* Allows max 2^1000 bits for the exponent */
       while (!mpfr_overflow_p () && max > 0)
         {
+          /* this call to mpfr_mul with identical arguments is intentional,
+             and should not be replaced by mpfr_sqr */
           mpfr_mul (a, a, a, MPFR_RNDN);
           if (!mpfr_check (a))
             PRINT_ERROR ("for mul");

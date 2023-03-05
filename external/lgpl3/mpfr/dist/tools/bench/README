@@ -8,7 +8,7 @@ $ ./mpfrbench
 
 On a typical computer, it should take around 12 minutes. The final output
 looks like (here on a Intel(R) Core(TM)2 Quad CPU Q9550 @ 2.83GHz with
-GCC 4.9.3, and --with-gmp-build=gmp-6.0.0), svn revision 9669:
+GCC 4.9.3, and --with-gmp-build=gmp-6.0.0), revision ef5f2c0:
 
 GMP : 6.0.0  MPFR : 3.2.0-dev 
 GMP compiler : gcc -std=gnu99

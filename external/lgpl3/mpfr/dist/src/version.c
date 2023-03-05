@@ -1,6 +1,6 @@
 /* mpfr_get_version -- MPFR version
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -25,5 +25,5 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 const char *
 mpfr_get_version (void)
 {
-  return "4.1.0";
+  return "4.2.0";
 }

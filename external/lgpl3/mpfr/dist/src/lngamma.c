@@ -1,6 +1,6 @@
 /* mpfr_lngamma -- lngamma function
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -31,7 +31,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
    precision should be >= 4.
 */
 static void
-mpfr_gamma_alpha (mpfr_t s, mpfr_prec_t p)
+mpfr_gamma_alpha (mpfr_ptr s, mpfr_prec_t p)
 {
   MPFR_LOG_FUNC
     (("p=%Pu", p),
@@ -284,7 +284,7 @@ GAMMA_FUNC (mpfr_ptr y, mpfr_srcptr z0, mpfr_rnd_t rnd)
              case if we assume lngamma(z0) cannot be exact, the other flag
              should be correct. We are conservative here and request that both
              inexact flags agree. */
-          ok = SAME_SIGN (inex1, inex2) && mpfr_cmp (l, h) == 0;
+          ok = SAME_SIGN (inex1, inex2) && mpfr_equal_p (l, h);
           if (ok)
             mpfr_set (y, h, rnd); /* exact */
           mpfr_clear (l);
@@ -736,7 +736,7 @@ mpfr_lngamma (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd)
           MPFR_SET_NAN (y);
           MPFR_RET_NAN;
         }
-      else /* lngamma(+/-Inf) = lngamma(nonpositive integer) = +Inf */
+      else /* lngamma(+/-Inf) = lngamma(non-positive integer) = +Inf */
         {
           if (!MPFR_IS_INF (x))
             MPFR_SET_DIVBY0 ();

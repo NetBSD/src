@@ -1,6 +1,6 @@
 /* mpfr_log1p -- Compute log(1+x)
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -24,8 +24,8 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "mpfr-impl.h"
 
 /* Put in y an approximation of log(1+x) for x small.
-   We assume |x| < 1, in which case:
-   |x/2| <= |log(1+x)| = |x - x^2/2 + x^3/3 - x^4/4 + ...| <= |x|.
+   We assume |x| < 1/2, in which case:
+   |x/2| <= |log(1+x)| <= |2x|.
    Return k such that the error is bounded by 2^k*ulp(y).
 */
 static int
@@ -36,7 +36,7 @@ mpfr_log1p_small (mpfr_ptr y, mpfr_srcptr x)
   unsigned long i;
   int k;
 
-  MPFR_ASSERTD(MPFR_GET_EXP (x) <= 0); /* ensures |x| < 1 */
+  MPFR_ASSERTD(MPFR_GET_EXP (x) <= -1); /* ensures |x| < 1/2 */
 
   /* in the following, theta represents a value with |theta| <= 2^(1-p)
      (might be a different value each time) */
@@ -202,8 +202,8 @@ mpfr_log1p (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
            variant whenever EXP(x) <= -p/log2(p). */
         k = 1 + __gmpfr_int_ceil_log2 (Ny); /* the +1 avoids a division by 0
                                                when Ny=1 */
-        if (MPFR_GET_EXP (x) <= - (mpfr_exp_t) (Ny / k))
-          /* this implies EXP(x) <= 0 thus x < 1 */
+        if (MPFR_GET_EXP (x) + 1 <= - (mpfr_exp_t) (Ny / k))
+          /* this implies EXP(x) <= -1 thus x < 1/2 */
           err = Nt - mpfr_log1p_small (t, x);
         else
           {

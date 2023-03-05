@@ -1,6 +1,6 @@
 /* Test file for mpfr_add1sp.
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -224,7 +224,7 @@ coverage (void)
 
   /* coverage test in mpfr_add1sp3: case bx > emax */
   emax = mpfr_get_emax ();
-  mpfr_set_emax (1);
+  set_emax (1);
   mpfr_set_prec (a, 2 * GMP_NUMB_BITS + 1);
   mpfr_set_prec (b, 2 * GMP_NUMB_BITS + 1);
   mpfr_set_prec (c, 2 * GMP_NUMB_BITS + 1);
@@ -237,7 +237,7 @@ coverage (void)
   inex = mpfr_add_cf (a, b, b, MPFR_RNDU);
   MPFR_ASSERTN(inex > 0);
   MPFR_ASSERTN(mpfr_inf_p (a) && mpfr_sgn (a) > 0);
-  mpfr_set_emax (emax);
+  set_emax (emax);
 
   /* coverage test in mpfr_add1sp3: case round away, where add_one_ulp gives
      a carry, no overflow */
@@ -255,7 +255,7 @@ coverage (void)
   /* coverage test in mpfr_add1sp3: case round away, where add_one_ulp gives
      a carry, with overflow */
   emax = mpfr_get_emax ();
-  mpfr_set_emax (1);
+  set_emax (1);
   mpfr_set_prec (a, 2 * GMP_NUMB_BITS + 1);
   mpfr_set_prec (b, 2 * GMP_NUMB_BITS + 1);
   mpfr_set_prec (c, 2 * GMP_NUMB_BITS + 1);
@@ -267,7 +267,7 @@ coverage (void)
   inex = mpfr_add_cf (a, b, c, MPFR_RNDU);
   MPFR_ASSERTN(inex > 0);
   MPFR_ASSERTN(mpfr_inf_p (a) && mpfr_sgn (a) > 0);
-  mpfr_set_emax (emax);
+  set_emax (emax);
 
   mpfr_clear (a);
   mpfr_clear (b);
@@ -351,9 +351,9 @@ check_random (mpfr_prec_t p)
       mpfr_urandom (c, RANDS, MPFR_RNDA);
       if (MPFR_IS_PURE_FP(b) && MPFR_IS_PURE_FP(c))
         {
-          if (randlimb () & 1)
+          if (RAND_BOOL ())
             mpfr_neg (b, b, MPFR_RNDN);
-          if (randlimb () & 1)
+          if (RAND_BOOL ())
             mpfr_neg (c, c, MPFR_RNDN);
           if (MPFR_GET_EXP(b) < MPFR_GET_EXP(c))
             {
@@ -367,7 +367,7 @@ check_random (mpfr_prec_t p)
               MPFR_ALIAS (bs, b, MPFR_SIGN (b), MPFR_EXP (b));
               MPFR_ALIAS (cs, c, MPFR_SIGN (c), MPFR_EXP (c));
             }
-          for (r = 0 ; r < MPFR_RND_MAX ; r++)
+          RND_LOOP (r)
             {
               mpfr_flags_t flags1, flags2;
 
@@ -404,7 +404,7 @@ check_special (void)
 
   mpfr_inits (a1, a2, b, c, (mpfr_ptr) 0);
 
-  for (r = 0 ; r < MPFR_RND_MAX ; r++)
+  RND_LOOP (r)
     {
       if (r == MPFR_RNDF)
         continue; /* inexact makes no sense, mpfr_add1 and mpfr_add1sp

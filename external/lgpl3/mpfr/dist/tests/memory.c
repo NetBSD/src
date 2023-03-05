@@ -1,6 +1,6 @@
 /* Memory allocation used during tests.
 
-Copyright 2001-2003, 2006-2020 Free Software Foundation, Inc.
+Copyright 2001-2003, 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -72,6 +72,7 @@ mpfr_default_allocate (size_t size)
       fprintf (stderr, "[MPFR] mpfr_default_allocate(): "
                "can't allocate memory (size=%" MPFR_INTMAX_FSPEC "u)\n",
                (mpfr_uintmax_t) size);
+      fflush (NULL);
       abort ();
     }
   return ret;
@@ -88,6 +89,7 @@ mpfr_default_reallocate (void *oldptr, size_t old_size, size_t new_size)
                "can't reallocate memory (old_size=%" MPFR_INTMAX_FSPEC
                "u new_size=%" MPFR_INTMAX_FSPEC "u)\n",
                (mpfr_uintmax_t) old_size, (mpfr_uintmax_t) new_size);
+      fflush (NULL);
       abort ();
     }
   return ret;
@@ -134,6 +136,7 @@ tests_addsize (size_t size)
       fprintf (stderr, "[MPFR] tests_addsize(): "
                "too much memory (%" MPFR_INTMAX_FSPEC "u bytes)\n",
               (mpfr_uintmax_t) tests_total_size);
+      fflush (NULL);
       abort ();
     }
 }
@@ -149,6 +152,7 @@ tests_allocate (size_t size)
     {
       fprintf (stderr, "[MPFR] tests_allocate(): "
                "attempt to allocate 0 bytes\n");
+      fflush (NULL);
       abort ();
     }
 
@@ -168,8 +172,12 @@ tests_allocate (size_t size)
 
 /* Note: the double cast (mpfr_uintmax_t) (uintptr_t) below allows to avoid a
    pointer-to-int-cast warning with GCC. The AC_TYPE_UINTPTR_T Autoconf macro
-   must be used to define uintptr_t if not available. */
-
+   must be used to define uintptr_t if not available.
+   Note that pointers may be larger than uintmax_t, even in practice[*];
+   however, since this is just used in error messages, the loss of
+   information may be acceptable (but we should probably use %p).
+   [*] https://www.open-std.org/jtc1/sc22/wg14/www/docs/n2889.htm
+*/
 void *
 tests_reallocate (void *ptr, size_t old_size, size_t new_size)
 {
@@ -182,6 +190,7 @@ tests_reallocate (void *ptr, size_t old_size, size_t new_size)
       fprintf (stderr, "[MPFR] tests_reallocate(): "
                "attempt to reallocate 0x%" MPFR_INTMAX_FSPEC "X to 0 bytes\n",
                (mpfr_uintmax_t) (uintptr_t) ptr);
+      fflush (NULL);
       abort ();
     }
 
@@ -191,6 +200,7 @@ tests_reallocate (void *ptr, size_t old_size, size_t new_size)
       fprintf (stderr, "[MPFR] tests_reallocate(): "
                "attempt to reallocate bad pointer 0x%" MPFR_INTMAX_FSPEC "X\n",
               (mpfr_uintmax_t) (uintptr_t) ptr);
+      fflush (NULL);
       abort ();
     }
   h = *hp;
@@ -203,6 +213,7 @@ tests_reallocate (void *ptr, size_t old_size, size_t new_size)
                "bad old size %" MPFR_INTMAX_FSPEC
                "u, should be %" MPFR_INTMAX_FSPEC "u\n",
               (mpfr_uintmax_t) old_size, (mpfr_uintmax_t) h->size);
+      fflush (NULL);
       abort ();
     }
 
@@ -226,6 +237,7 @@ tests_free_find (void *ptr)
       fprintf (stderr, "[MPFR] tests_free(): "
                "attempt to free bad pointer 0x%" MPFR_INTMAX_FSPEC "X\n",
               (mpfr_uintmax_t) (uintptr_t) ptr);
+      fflush (NULL);
       abort ();
     }
   return hp;
@@ -261,6 +273,7 @@ tests_free (void *ptr, size_t size)
       fprintf (stderr, "[MPFR] tests_free(): bad size %"
                MPFR_INTMAX_FSPEC "u, should be %" MPFR_INTMAX_FSPEC "u\n",
               (mpfr_uintmax_t) size, (mpfr_uintmax_t) h->size);
+      fflush (NULL);
       abort ();
     }
 
@@ -302,6 +315,7 @@ tests_memory_end (void)
         count++;
 
       fprintf (stderr, "[MPFR]    %u blocks remaining\n", count);
+      fflush (NULL);
       abort ();
     }
 }

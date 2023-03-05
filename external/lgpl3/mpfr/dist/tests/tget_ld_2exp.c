@@ -1,6 +1,6 @@
 /* Test mpfr_get_ld_2exp.
 
-Copyright 2006-2020 Free Software Foundation, Inc.
+Copyright 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -37,7 +37,7 @@ check_round (void)
 
   mpfr_init2 (f, 1024L);
 
-  for (rnd_mode = 0; rnd_mode < MPFR_RND_MAX ; rnd_mode++)
+  RND_LOOP (rnd_mode)
     {
       for (i = 0; i < (int) numberof (data); i++)
         {
@@ -60,7 +60,7 @@ check_round (void)
                   printf  ("   f    ");
                   mpfr_out_str (stdout, 2, 0, f, MPFR_RNDN);
                   printf  ("\n");
-                  d_trace ("   got  ", got);
+                  ld_trace ("   got  ", got);
                   printf  ("   got exp  %ld\n", got_exp);
                   exit(1);
                 }

@@ -1,6 +1,6 @@
 /* Test file for mpfr_frac.
 
-Copyright 2002-2020 Free Software Foundation, Inc.
+Copyright 2002-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -113,7 +113,7 @@ check1 (mpfr_ptr ip, mpfr_ptr fp)
 {
   int rnd;
 
-  for (rnd = 0; rnd < MPFR_RND_MAX ; rnd++)
+  RND_LOOP (rnd)
     {
       check0 (ip, fp, PMAX, (mpfr_rnd_t) rnd);
       check0 (ip, fp, 70, (mpfr_rnd_t) rnd);

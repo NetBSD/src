@@ -1,6 +1,6 @@
 /* Test file for mpfr_fpif.
 
-Copyright 2012-2020 Free Software Foundation, Inc.
+Copyright 2012-2023 Free Software Foundation, Inc.
 Contributed by Olivier Demengeon.
 
 This file is part of the GNU MPFR Library.
@@ -286,7 +286,7 @@ check_bad (void)
       if (i == 9)
         {
           emax = mpfr_get_emax ();
-          mpfr_set_emax (46);
+          set_emax (46);
         }
       rewind (fh);
       status = fwrite (&badData[i][0], badDataSize[i], 1, fh);
@@ -352,7 +352,7 @@ check_bad (void)
           exit (1);
         }
       if (i == 9)
-        mpfr_set_emax (emax);
+        set_emax (emax);
     }
 
   if (fclose (fh) != 0)

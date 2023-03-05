@@ -1,6 +1,6 @@
 /* mpfr_digamma -- digamma function of a floating-point number
 
-Copyright 2009-2020 Free Software Foundation, Inc.
+Copyright 2009-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -173,16 +173,19 @@ mpfr_digamma_reflection (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       mpfr_digamma (v, u, MPFR_RNDN);   /* error <= 1/2 ulp */
       expv = MPFR_GET_EXP (v);
       mpfr_sub (v, v, t, MPFR_RNDN);
-      if (MPFR_GET_EXP (v) < MPFR_GET_EXP (t))
-        e1 += MPFR_EXP(t) - MPFR_EXP(v); /* scale error for t wrt new v */
-      /* now take into account the 1/2 ulp error for v */
-      if (expv - MPFR_EXP(v) - 1 > e1)
-        e1 = expv - MPFR_EXP(v) - 1;
-      else
-        e1 ++;
-      e1 ++; /* rounding error for mpfr_sub */
-      if (MPFR_CAN_ROUND (v, p - e1, MPFR_PREC(y), rnd_mode))
-        break;
+      if (MPFR_NOTZERO(v))
+        {
+          if (MPFR_GET_EXP (v) < MPFR_GET_EXP (t))
+            e1 += MPFR_EXP(t) - MPFR_EXP(v); /* scale error for t wrt new v */
+          /* now take into account the 1/2 ulp error for v */
+          if (expv - MPFR_EXP(v) - 1 > e1)
+            e1 = expv - MPFR_EXP(v) - 1;
+          else
+            e1 ++;
+          e1 ++; /* rounding error for mpfr_sub */
+          if (MPFR_CAN_ROUND (v, p - e1, MPFR_PREC(y), rnd_mode))
+            break;
+        }
       MPFR_ZIV_NEXT (loop, p);
       mpfr_set_prec (t, p);
       mpfr_set_prec (v, p);
@@ -214,19 +217,27 @@ mpfr_digamma_positive (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
     (("x[%Pu]=%.*Rg rnd=%d", mpfr_get_prec(x), mpfr_log_prec, x, rnd_mode),
      ("y[%Pu]=%.*Rg inexact=%d", mpfr_get_prec(y), mpfr_log_prec, y, inex));
 
-  /* compute a precision q such that x+1 is exact */
-  if (MPFR_PREC(x) < MPFR_GET_EXP(x))
-    q = MPFR_EXP(x);
-  else
-    q = MPFR_PREC(x) + 1;
-
-  /* for very large x, use |digamma(x) - log(x)| < 1/x < 2^(1-EXP(x)) */
-  if (MPFR_PREC(y) + 10 < MPFR_EXP(x))
+  /* For very large x, use |digamma(x) - log(x)| < 1/x < 2^(1-EXP(x)).
+     However, for a fixed value of GUARD, MPFR_CAN_ROUND() might fail
+     with probability 1/2^GUARD, in which case the default code will
+     fail since it requires x+1 to be exact, thus a huge precision if
+     x is huge. There are two workarounds:
+     * either perform a Ziv's loop, by increasing GUARD at each step.
+       However, this might fail if x is moderately large, in which case
+       more terms of the asymptotic expansion would be needed.
+     * implement a full asymptotic expansion (with Ziv's loop). */
+#define GUARD 30
+  if (MPFR_PREC(y) + GUARD < MPFR_EXP(x))
     {
       /* this ensures EXP(x) >= 3, thus x >= 4, thus log(x) > 1 */
-      mpfr_init2 (t, MPFR_PREC(y) + 10);
-      mpfr_log (t, x, MPFR_RNDZ);
-      if (MPFR_CAN_ROUND (t, MPFR_PREC(y) + 10, MPFR_PREC(y), rnd_mode))
+      mpfr_init2 (t, MPFR_PREC(y) + GUARD);
+      mpfr_log (t, x, MPFR_RNDN);
+      /* |t - digamma(x)| <= 1/2*ulp(t) + |digamma(x) - log(x)|
+                          <= 1/2*ulp(t) + 2^(1-EXP(x))
+                          <= 1/2*ulp(t) + 2^(-PREC(y)-GUARD)
+                          <= ulp(t)
+         since |t| >= 1 thus ulp(t) >= 2^(1-PREC(y)-GUARD) */
+      if (MPFR_CAN_ROUND (t, MPFR_PREC(y) + GUARD, MPFR_PREC(y), rnd_mode))
         {
           inex = mpfr_set (y, t, rnd_mode);
           mpfr_clear (t);
@@ -234,6 +245,21 @@ mpfr_digamma_positive (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
         }
       mpfr_clear (t);
     }
+
+  /* compute a precision q such that x+1 is exact */
+  if (MPFR_PREC(x) < MPFR_GET_EXP(x))
+    {
+      /* The goal of the first assertion is to let the compiler ignore
+         the second one when MPFR_EMAX_MAX <= MPFR_PREC_MAX. */
+      MPFR_ASSERTD (MPFR_EXP(x) <= MPFR_EMAX_MAX);
+      MPFR_ASSERTN (MPFR_EXP(x) <= MPFR_PREC_MAX);
+      q = MPFR_EXP(x);
+    }
+  else
+    q = MPFR_PREC(x) + 1;
+
+  /* FIXME: q can be much too large, e.g. equal to the maximum exponent! */
+  MPFR_LOG_MSG (("q=%Pu\n", q));
 
   mpfr_init2 (x_plus_j, q);
 
@@ -273,21 +299,26 @@ mpfr_digamma_positive (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
       errt = mpfr_digamma_approx (t, x_plus_j);
       expt = MPFR_GET_EXP (t);
       mpfr_sub (t, t, u, MPFR_RNDN);
-      if (MPFR_GET_EXP (t) < expt)
-        errt += expt - MPFR_EXP(t);
-      /* Warning: if u is zero (which happens when x_plus_j >= min at the
-         beginning of the while loop above), EXP(u) is not defined.
-         In this case we have no error from u. */
-      if (MPFR_NOTZERO(u) && MPFR_GET_EXP (t) < MPFR_GET_EXP (u))
-        erru += MPFR_EXP(u) - MPFR_EXP(t);
-      if (errt > erru)
-        errt = errt + 1;
-      else if (errt == erru)
-        errt = errt + 2;
-      else
-        errt = erru + 1;
-      if (MPFR_CAN_ROUND (t, p - errt, MPFR_PREC(y), rnd_mode))
-        break;
+      /* Warning! t may be zero (more likely in small precision). Note
+         that in this case, this is an exact zero, not an underflow. */
+      if (MPFR_NOTZERO(t))
+        {
+          if (MPFR_GET_EXP (t) < expt)
+            errt += expt - MPFR_EXP(t);
+          /* Warning: if u is zero (which happens when x_plus_j >= min at the
+             beginning of the while loop above), EXP(u) is not defined.
+             In this case we have no error from u. */
+          if (MPFR_NOTZERO(u) && MPFR_GET_EXP (t) < MPFR_GET_EXP (u))
+            erru += MPFR_EXP(u) - MPFR_EXP(t);
+          if (errt > erru)
+            errt = errt + 1;
+          else if (errt == erru)
+            errt = errt + 2;
+          else
+            errt = erru + 1;
+          if (MPFR_CAN_ROUND (t, p - errt, MPFR_PREC(y), rnd_mode))
+            break;
+        }
       MPFR_ZIV_NEXT (loop, p);
       mpfr_set_prec (t, p);
       mpfr_set_prec (u, p);
@@ -388,10 +419,8 @@ mpfr_digamma (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
         }
     }
 
-  if (MPFR_IS_NEG(x))
-    inex = mpfr_digamma_reflection (y, x, rnd_mode);
   /* if x < 1/2 we use the reflection formula */
-  else if (MPFR_EXP(x) < 0)
+  if (MPFR_IS_NEG(x) || MPFR_EXP(x) < 0)
     inex = mpfr_digamma_reflection (y, x, rnd_mode);
   else
     inex = mpfr_digamma_positive (y, x, rnd_mode);

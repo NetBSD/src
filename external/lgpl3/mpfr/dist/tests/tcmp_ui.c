@@ -1,6 +1,6 @@
 /* Test file for mpfr_cmp_ui and mpfr_cmp_si.
 
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -112,7 +112,9 @@ check_macros (void)
     {
       /* Failure in r13626 on x86_64 with the clang-9 1:9-1 Debian package,
          with any optimization level: c = 2 instead of 1
-         Bug report: https://bugs.llvm.org/show_bug.cgi?id=43557 */
+         Bug report: https://bugs.llvm.org/show_bug.cgi?id=43557
+         New URL: https://github.com/llvm/llvm-project/issues/42902
+         Apparently fixed in the clang-9 1:9.0.1-12 Debian package. */
       /* [2020-06-17]
          If one adds tcc support for macros using __builtin_constant_p
          in mpfr.h by testing __TINYC__, one also gets a failure.

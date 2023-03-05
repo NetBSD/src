@@ -1,6 +1,6 @@
 /* Test file for mpfr_ai.
 
-Copyright 2010-2020 Free Software Foundation, Inc.
+Copyright 2010-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -103,7 +103,7 @@ bug20180107 (void)
   mpfr_init2 (z, 11);
   mpfr_set_str_binary (x, "0.11010101100111000111001001010110101001100001011110101111000010100111011101011110000100111011101100100100001010000110100011001000111010010001110000011100E5");
   emin = mpfr_get_emin ();
-  mpfr_set_emin (-134);
+  set_emin (-134);
   mpfr_clear_flags ();
   inex = mpfr_ai (y, x, MPFR_RNDA);
   flags = __gmpfr_flags;
@@ -127,7 +127,7 @@ bug20180107 (void)
   MPFR_ASSERTN (inex > 0);
   MPFR_ASSERTN (flags == (MPFR_FLAGS_UNDERFLOW | MPFR_FLAGS_INEXACT));
 
-  mpfr_set_emin (emin);
+  set_emin (emin);
   mpfr_clear (x);
   mpfr_clear (y);
   mpfr_clear (z);

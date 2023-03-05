@@ -4,7 +4,7 @@ dnl WARNING! C code starting with # (preprocessor directives) must not
 dnl be indented!
 
 AC_COPYRIGHT([
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,7 +26,24 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 ])
 
 dnl Add check-news when it checks for more than 15 lines
-AC_INIT([MPFR],[4.1.0])
+AC_INIT([MPFR],[4.2.0])
+
+dnl AC_CANONICAL_HOST is needed by this configure.ac file.
+dnl AC_CANONICAL_TARGET is not explicitly needed, but may be required by
+dnl some other macros (e.g. AX_PTHREAD 29, committed on 2021-02-19) and
+dnl must be called quite early in order to avoid the following warning:
+dnl   warning: AC_ARG_PROGRAM was called before AC_CANONICAL_TARGET
+dnl (we don't use AC_ARG_PROGRAM explicitly, but again, it is invoked by
+dnl another macro, apparently AM_INIT_AUTOMAKE). This has eventually been
+dnl fixed in AX_PTHREAD 31.
+dnl Due to this bug in AX_PTHREAD 29, AC_CANONICAL_HOST was moved here and
+dnl AC_CANONICAL_TARGET was added in r14481. However, it is unlikely that
+dnl we need AC_CANONICAL_TARGET in the future; see the comments at
+dnl   https://github.com/autoconf-archive/autoconf-archive/commit/2567e0ce0f3a11b535c6b527386197fb49ff172b
+dnl (introducing AX_PTHREAD 29). Thus it is probably better to avoid it,
+dnl as it could cause confusion. But let's keep AC_CANONICAL_HOST here,
+dnl since this may be a better place than later.
+AC_CANONICAL_HOST
 
 dnl Older Automake versions than 1.13 may still be supported, but no longer
 dnl tested, and many things have changed in 1.13. Moreover the INSTALL file
@@ -68,8 +85,6 @@ fi
 
 dnl Basic Autoconf macros. At this point, they must not make Autoconf
 dnl choose a compiler because of the CC and CFLAGS setup from gmp.h!
-
-AC_CANONICAL_HOST
 
 AC_PROG_EGREP
 AC_PROG_SED
@@ -415,6 +430,15 @@ AC_LANG(C)
 dnl AM_PROG_AR is needed so that ar-lib (wrapper for Microsoft lib.exe)
 dnl gets installed by "automake -i" (if absent, "automake --warnings=all"
 dnl gives a warning).
+dnl However, if GMP chooses a non-default mode (a.k.a. ABI), this test may
+dnl fail. The reason is that GMP provides GMP_CC and GMP_CFLAGS to get the
+dnl right commands to compile (and link?) in the chosen non-default mode,
+dnl but does not provide a macro for the archiver (if such a special command
+dnl is needed). In case of failure, the user needs to either force GMP to
+dnl use the default mode or provide an AR variable for MPFR's configure.
+dnl Example: on power-aix, "gcc -c -O2 -maix64 -mpowerpc64 -mtune=power7"
+dnl is used, but "ar cru" fails. Solution: use AR="ar -X64" NM="nm -B -X64"
+dnl as said in the INSTALL file ("Notes on AIX/PowerPC").
 AM_PROG_AR
 
 dnl This must done before MPFR_CONFIGS.
@@ -439,7 +463,7 @@ dnl     to "icc -help", both options are equivalent; it also suggests
 dnl     to use -fp-model <arg> instead of -mp, but what is <arg>? Anyway
 dnl     -mieee-fp solves the tset_d failure due to a negative zero. This
 dnl     option has been introduced in ICC 9.0 for Linux (2005-06):
-dnl     http://www.ncsa.illinois.edu/UserInfo/Resources/Software/Intel/Compilers/9.0/C_ReleaseNotes.htm
+dnl     https://climserv.ipsl.polytechnique.fr/documentation/intel-icc/ReleaseNotes.htm
 AC_MSG_CHECKING(for non-MS-Windows ICC)
 AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #if (!defined(__ICC) && !defined(__INTEL_COMPILER)) || defined(_WIN32)
@@ -458,8 +482,6 @@ dnl (__GMP_CFLAGS macro in gmp.h) above. The consequence is that this
 dnl might yield a compilation failure if the -Werror option appears in
 dnl __GMP_CFLAGS. But in this case, since -Werror is not used by default,
 dnl one may expect that the user would also set CFLAGS for MPFR.
-dnl Note: When the compiler is GCC not in C++ mode, -Wc++-compat may be
-dnl interesting, but it has been introduced in GCC 4.1 only.
 if test "$test_CFLAGS" != set && test -n "$GCC"; then
   CFLAGS="-Wpointer-arith $CFLAGS"
   AC_MSG_CHECKING(whether the selected language is C++)
@@ -470,12 +492,20 @@ error
 #endif
   ]], [[]])],[
     AC_MSG_RESULT(no)
+    dnl The option -Wc++-compat is available in GCC 4.1.0 and newer.
+    [
+    case `$CC --version | $SED -e 's/^[^ ]* //' -e 's/([^)]*) //' -e 1q` in
+      2.*|3.*|4.0*) ;;
+      *) CFLAGS="-Wc++-compat $CFLAGS" ;;
+    esac
     CFLAGS="-Wmissing-prototypes $CFLAGS"
+    ]
   ],[
     AC_MSG_RESULT(yes)
     CFLAGS="-Wmissing-declarations -Wno-sign-compare $CFLAGS"
   ])
   CFLAGS="-Wall $CFLAGS"
+  AC_MSG_NOTICE([using CFLAGS="$CFLAGS"])
 fi
 
 AM_PROG_CC_C_O
@@ -523,7 +553,7 @@ dnl build tree. Other OS with the same issue might be added later.
 dnl
 dnl References:
 dnl   https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=859732
-dnl   http://lists.gnu.org/archive/html/libtool/2017-05/msg00000.html
+dnl   https://lists.gnu.org/archive/html/libtool/2017-05/msg00000.html
 dnl
 dnl We need to check whether --disable-new-dtags is supported as alternate
 dnl linkers may be used (e.g., with tcc: CC=tcc LD=tcc).
@@ -705,6 +735,7 @@ dnl incorrect and even have security implications.
 dnl WARNING! LD_RUN_PATH is not taken into account by the GNU gold ld,
 dnl e.g. from binutils-gold 2.22-5 under Debian; see
 dnl   https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=660813
+dnl   https://sourceware.org/bugzilla/show_bug.cgi?id=13764
 saved_LD_RUN_PATH="$LD_RUN_PATH"
 LD_RUN_PATH="${LD_RUN_PATH:+$LD_RUN_PATH$PATH_SEPARATOR}$gmp_lib_path"
 export LD_RUN_PATH
@@ -741,8 +772,8 @@ AC_RUN_IFELSE([AC_LANG_PROGRAM([[
     AC_MSG_WARN([or --with-gmp-include with a system include directory])
     AC_MSG_WARN([(such as /usr/include or /usr/local/include). Another])
     AC_MSG_WARN([cause may be that LD_RUN_PATH is not honored (problem])
-    AC_MSG_WARN([seen under OpenBSD 6.6).])
-    AC_MSG_WARN([However since we can't use 'libtool' inside the configure,])
+    AC_MSG_WARN([seen under OpenBSD 6.6 and with the GNU gold linker).])
+    AC_MSG_WARN([However, since we can't use 'libtool' inside the configure,])
     AC_MSG_WARN([we can't be sure. See 'config.log' for details.])
     AC_MSG_WARN([CC="$CC"])
     AC_MSG_WARN([CFLAGS="$CFLAGS"])
@@ -806,12 +837,6 @@ AC_COMPUTE_INT(mini_gmp_numb_bits, [(GMP_NUMB_BITS)],
   ])
 CPPFLAGS="$saved_CPPFLAGS"
 AC_MSG_RESULT([$mini_gmp_numb_bits bits ($how)])
-
-dnl We need to check the availability of lrand48 (used by random_limb)
-dnl and srand48 (used by gmp_randseed_ui), in particular because these
-dnl functions are not part of the ISO C standard.
-AC_CHECK_FUNC(lrand48,,AC_MSG_FAILURE([MPFR + mini-gmp requires lrand48]))
-AC_CHECK_FUNC(srand48,,AC_MSG_FAILURE([MPFR + mini-gmp requires srand48]))
 
 fi
 

@@ -1,6 +1,7 @@
 /* mpfr_nbits_ulong -- number of significant bits in an unsigned long
+   mpfr_nbits_uj    -- number of significant bits in an uintmax_t
 
-Copyright 2018-2020 Free Software Foundation, Inc.
+Copyright 2018-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -21,6 +22,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA. */
 
 #define MPFR_NEED_LONGLONG_H  /* for count_leading_zeros */
+#define MPFR_NEED_INTMAX_H
 #include "mpfr-impl.h"
 
 /* count the number of significant bits of n, i.e.,
@@ -81,3 +83,55 @@ mpfr_nbits_ulong (unsigned long n)
   MPFR_ASSERTD (cnt >= 0);
   return cnt;
 }
+
+#ifdef _MPFR_H_HAVE_INTMAX_T
+/* count the number of significant bits of n, i.e.,
+   nbits(uintmax_t) - count_leading_zeros (n) */
+int
+mpfr_nbits_uj (uintmax_t n)
+{
+  int cnt;
+
+  MPFR_ASSERTD (n > 0);
+
+  cnt = 0;
+
+  while (n >= 0x10000)
+    {
+      n >>= 16;
+      cnt += 16;
+    }
+
+  MPFR_ASSERTD (n <= 0xffff);
+
+  if (n >= 0x100)
+    {
+      n >>= 8;
+      cnt += 8;
+    }
+
+  MPFR_ASSERTD (n <= 0xff);
+
+  if (n >= 0x10)
+    {
+      n >>= 4;
+      cnt += 4;
+    }
+
+  MPFR_ASSERTD (n <= 0xf);
+
+  if (n >= 4)
+    {
+      n >>= 2;
+      cnt += 2;
+    }
+
+  MPFR_ASSERTD (n <= 3);
+
+  /* now n = 1, 2, or 3 */
+  cnt += 1 + (n >= 2);
+
+  MPFR_ASSERTD (cnt >= 0);
+  return cnt;
+}
+#endif

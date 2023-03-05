@@ -2,7 +2,7 @@
    mpfr_fmod -- compute the floating-point remainder of x/y
    mpfr_remquo and mpfr_remainder -- argument reduction functions
 
-Copyright 2007-2020 Free Software Foundation, Inc.
+Copyright 2007-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -40,10 +40,10 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
   If rem is zero, then it has the sign of x.
   The returned 'int' is the inexact flag giving the place of rem wrt x - q*y.
 
-  If x or y is NaN: *quo is undefined, rem is NaN.
-  If x is Inf, whatever y: *quo is undefined, rem is NaN.
+  If x or y is NaN: *quo is unspecified, rem is NaN.
+  If x is Inf, whatever y: *quo is unspecified, rem is NaN.
   If y is Inf, x not NaN nor Inf: *quo is 0, rem is x.
-  If y is 0, whatever x: *quo is undefined, rem is NaN.
+  If y is 0, whatever x: *quo is unspecified, rem is NaN.
   If x is 0, whatever y (not NaN nor 0): *quo is 0, rem is x.
 
   Otherwise if x and y are neither NaN, Inf nor 0, q is always defined,
@@ -68,7 +68,7 @@ mpfr_rem1 (mpfr_ptr rem, long *quo, mpfr_rnd_t rnd_q,
       if (MPFR_IS_NAN (x) || MPFR_IS_NAN (y) || MPFR_IS_INF (x)
           || MPFR_IS_ZERO (y))
         {
-          /* for remquo, quo is undefined */
+          /* for remquo, *quo is unspecified */
           MPFR_SET_NAN (rem);
           MPFR_RET_NAN;
         }

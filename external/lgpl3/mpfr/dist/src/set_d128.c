@@ -3,9 +3,9 @@
 
 See https://gcc.gnu.org/legacy-ml/gcc/2006-06/msg00691.html,
 https://gcc.gnu.org/onlinedocs/gcc/Decimal-Float.html,
-and TR 24732 <http://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
+and TR 24732 <https://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
 
-Copyright 2006-2020 Free Software Foundation, Inc.
+Copyright 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramel projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -278,6 +278,7 @@ decimal128_to_string (char *s, _Decimal128 d)
 
   if (MPFR_UNLIKELY (DOUBLE_ISNAN (d))) /* NaN */
     {
+      /* we don't propagate the sign bit */
       sprintf (s, "NaN"); /* sprintf puts a final '\0' */
       return;
     }

@@ -1,4 +1,8 @@
-# Copyright 2000-2020 Free Software Foundation, Inc.
+# Copyright 2000-2023 Free Software Foundation, Inc.
+# Contributed by the AriC and Caramba projects, INRIA.
+
+# This file is part of the GNU MPFR Library.
+
 # This Makefile.am is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
 # with or without modifications, as long as this notice is preserved.
@@ -9,14 +13,27 @@
 # PARTICULAR PURPOSE.
 
 
-# Since we do not require GNU "make", let's select the POSIX behavior to
-# uniformize the behavior a bit more with various "make" implementations
-# and ease maintenance. This target should be removed only if one day,
-# we need to require GNU "make".
+# The ".POSIX" line is needed in particular for GNU "make", so that
+# recipes are invoked as if the shell had been passed the -e flag.
+# But note that since GNU Automake adds non-comment lines before it
+# in its generated Makefile, this does not ensure POSIX behavior with
+# other "make" implementations.
 .POSIX:
 
 AUTOMAKE_OPTIONS = 1.6 gnu
 
+# For Git:
+#   * To avoid escaping the MPFR source tree, we check whether
+#     $(top_srcdir)/.git is readable (note that this is not
+#     necessarily a directory: in case of a "linked worktree",
+#     this is a file; see the git-worktree(1) man page).
+#     In particular, if one extracts an MPFR tarball within a
+#     Git working tree (e.g. after "make dist"), then running
+#     "make check" in this extracted source tree will work as
+#     expected, giving correct version information.
+#   * Additional test with "git rev-parse ...", which should
+#     silently fail if git is not installed.
+#   * See version-ext.sh for information on its output.
 output_info = { \
   if [ -d $(top_srcdir)/.svn ]; then \
     output=`svnversion $(top_srcdir) 2> /dev/null`; \
@@ -24,34 +41,41 @@ output_info = { \
       echo "[svnversion] $$output"; \
     fi; \
   fi; \
-  grep -v '^\(PASS\|FAIL\) ' tversion.log 2> /dev/null || true; \
+  if [ -r $(top_srcdir)/.git ] && \
+     [ "x`git rev-parse --is-inside-work-tree 2> /dev/null`" = xtrue ]; then \
+    gitv=`GREP=$(GREP) SED=$(SED) $(top_srcdir)/version-ext.sh`; \
+    echo "[git] $$gitv"; \
+  fi; \
+  $(GREP) -v '^\(PASS\|FAIL\) ' tversion.log 2> /dev/null || true; \
 }
 
-TESTS_NO_TVERSION = tabort_prec_max tassert tabort_defalloc1		\
-     tabort_defalloc2 talloc tinternals tinits tisqrt tsgn tcheck	\
-     tisnan texceptions tset_exp tset mpf_compat mpfr_compat reuse	\
-     tabs tacos tacosh tadd tadd1sp tadd_d tadd_ui tagm tai		\
-     talloc-cache tasin tasinh tatan tatanh taway tbeta tbuildopt	\
-     tcan_round tcbrt tcmp tcmp2 tcmp_d tcmp_ld tcmp_ui tcmpabs		\
-     tcomparisons tconst_catalan tconst_euler tconst_log2 tconst_pi	\
-     tcopysign tcos tcosh tcot tcoth tcsc tcsch td_div td_sub tdigamma	\
-     tdim tdiv tdiv_d tdiv_ui tdot teint teq terandom terandom_chisq    \
-     terf texp texp10 texp2 texpm1 tfactorial tfits tfma tfmma tfmod    \
-     tfms tfpif tfprintf tfrac tfrexp tgamma tgamma_inc tget_d          \
-     tget_d_2exp tget_f tget_flt tget_ld_2exp tget_q tget_set_d64       \
-     tget_set_d128 tget_sj tget_str tget_z tgmpop tgrandom thyperbolic  \
-     thypot tinp_str							\
-     tj0 tj1 tjn tl2b tlgamma tli2 tlngamma tlog tlog10 tlog1p tlog2	\
-     tlog_ui tmin_prec tminmax tmodf tmul tmul_2exp tmul_d tmul_ui	\
-     tnext tnrandom tnrandom_chisq tout_str toutimpl tpow tpow3		\
-     tpow_all tpow_z tprec_round tprintf trandom trandom_deviate	\
-     trec_sqrt tremquo trint trndna troot trootn_ui tsec tsech		\
-     tset_d tset_f tset_float128 tset_ld tset_q tset_si tset_sj		\
-     tset_str tset_z tset_z_exp tsi_op tsin tsin_cos tsinh tsinh_cosh	\
-     tsprintf tsqr tsqrt tsqrt_ui tstckintc tstdint tstrtofr		\
-     tsub tsub1sp tsub_d tsub_ui tsubnormal tsum tswap ttan ttanh	\
-     ttotal_order ttrunc tui_div tui_pow tui_sub turandom tvalist	\
-     ty0 ty1 tyn tzeta tzeta_ui
+TESTS_NO_TVERSION = tabort_prec_max tassert tabort_defalloc1            \
+     tabort_defalloc2 talloc tinternals tinits tisqrt tsgn tcheck       \
+     tisnan texceptions tset_exp tset mpf_compat mpfr_compat reuse      \
+     tabs tacos tacosh tacosu tadd tadd1sp tadd_d tadd_ui tagm tai      \
+     talloc-cache tasin tasinh tasinu tatan tatanh tatanu tatan2u taway \
+     tbeta tbuildopt tcan_round tcbrt tcmp tcmp2 tcmp_d tcmp_ld tcmp_ui \
+     tcmpabs tcomparisons tcompound tconst_catalan tconst_euler         \
+     tconst_log2 tconst_pi                                              \
+     tcopysign tcos tcosh tcosu tcot tcoth tcsc tcsch td_div td_sub     \
+     tdigamma tdim tdiv tdiv_d tdiv_ui tdot teint teq terandom          \
+     terandom_chisq terf texp texp10 texp2 texpm1 texp10m1 texp2m1      \
+     tfactorial tfits tfma tfmma tfmod tfms tfpif tfprintf tfrac tfrexp \
+     tgamma tgamma_inc tget_d tget_d_2exp tget_f tget_flt tget_ld_2exp  \
+     tget_q tget_set_d64 tget_set_d128 tget_sj tget_str tget_z tgmpop   \
+     tgrandom thyperbolic thypot tinp_str                               \
+     tj0 tj1 tjn tl2b tlgamma tli2 tlngamma tlog tlog10 tlog10p1 tlog1p \
+     tlog2 tlog2p1                                                      \
+     tlog_ui tmin_prec tminmax tmodf tmul tmul_2exp tmul_d tmul_ui      \
+     tnext tnrandom tnrandom_chisq tout_str toutimpl tpow tpow3 tpowr   \
+     tpow_all tpow_z tprec_round tprintf trandom trandom_deviate        \
+     trec_sqrt tremquo trint trndna troot trootn_si trootn_ui           \
+     tsec tsech tset_d tset_f tset_float128 tset_ld tset_q              \
+     tset_si tset_sj tset_str tset_z tset_z_2exp tsi_op tsin tsin_cos   \
+     tsinh tsinh_cosh tsinu tsprintf tsqr tsqrt tsqrt_ui tstckintc      \
+     tstdint tstrtofr tsub tsub1sp tsub_d tsub_ui tsubnormal tsum tswap \
+     ttan ttanh ttanu ttotal_order ttrunc tui_div tui_pow tui_sub       \
+     turandom tvalist ty0 ty1 tyn tzeta tzeta_ui
 
 check_PROGRAMS = tversion $(TESTS_NO_TVERSION)
 
@@ -136,8 +160,8 @@ TESTS_ENVIRONMENT = env DISPLAY='' MPFR_QUIET=1 $(VALGRIND)
 #   https://sympa.inria.fr/sympa/arc/mpfr/2011-10/msg00066.html
 #   https://sympa.inria.fr/sympa/arc/mpfr/2011-10/msg00065.html
 # and
-#   http://debbugs.gnu.org/cgi/bugreport.cgi?bug=9728
-#   http://debbugs.gnu.org/cgi/bugreport.cgi?bug=18662
+#   https://debbugs.gnu.org/cgi/bugreport.cgi?bug=9728
+#   https://debbugs.gnu.org/cgi/bugreport.cgi?bug=18662
 #
 AM_LDFLAGS = -no-install -L$(top_builddir)/src/.libs
 

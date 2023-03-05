@@ -1,6 +1,6 @@
 /* Test file for mpfr_get_str.
 
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -1107,7 +1107,7 @@ check_special (int b, mpfr_prec_t p)
   for (i = 1; i < MAX_DIGITS && mpfr_mul_ui (x, x, b, MPFR_RNDN) == 0; i++)
     {
       /* x = b^i (exact) */
-      for (r = 0; r < MPFR_RND_MAX; r++)
+      RND_LOOP (r)
         for (m = i < 3 ? 2 : i-1 ; (int) m <= i+1 ; m++)
           {
             mpfr_get_str (s, &e, b, m, x, (mpfr_rnd_t) r);
@@ -1121,7 +1121,7 @@ check_special (int b, mpfr_prec_t p)
       if (mpfr_sub_ui (x, x, 1, MPFR_RNDN) != 0)
         break;
       /* now x = b^i-1 (exact) */
-      for (r = 0; r < MPFR_RND_MAX; r++)
+      RND_LOOP (r)
         if (i >= 2)
           {
             mpfr_get_str (s, &e, b, i, x, (mpfr_rnd_t) r);
@@ -1311,6 +1311,33 @@ coverage (void)
   mpfr_clear (x);
 }
 
+static void
+test_ndigits_aux (int b, mpfr_prec_t p, size_t expected_m)
+{
+  size_t m;
+  mpfr_exp_t old_emin, old_emax, e[] = { MPFR_EMIN_MIN, 0, MPFR_EMAX_MAX };
+  mpfr_flags_t flags;
+  int i;
+
+  old_emin = mpfr_get_emin ();
+  old_emax = mpfr_get_emax ();
+
+  i = randlimb () % (numberof (e) + 1);
+  if (i < numberof (e))
+    {
+      set_emin (e[i]);
+      set_emax (e[i]);
+    }
+
+  __gmpfr_flags = flags = randlimb () & MPFR_FLAGS_ALL;
+  m = mpfr_get_str_ndigits (b, p);
+  MPFR_ASSERTN (m == expected_m);
+  MPFR_ASSERTN (__gmpfr_flags == flags);
+
+  set_emin (old_emin);
+  set_emax (old_emax);
+}
+
 /* test of mpfr_get_str_ndigits */
 static void
 test_ndigits (void)
@@ -1319,61 +1346,61 @@ test_ndigits (void)
 
   /* for b=2, we have 1 + ceil((p-1)*log(2)/log(b)) = p */
   for (p = MPFR_PREC_MIN; p <= 1024; p++)
-    MPFR_ASSERTN(mpfr_get_str_ndigits (2, p) == p);
+    test_ndigits_aux (2, p, p);
 
   /* for b=4, we have 1 + ceil((p-1)*log(2)/log(b)) = 1 + ceil((p-1)/2)
      = 1 + floor(p/2) */
   for (p = MPFR_PREC_MIN; p <= 1024; p++)
-    MPFR_ASSERTN(mpfr_get_str_ndigits (4, p) == 1 + (p / 2));
+    test_ndigits_aux (4, p, 1 + (p / 2));
 
   /* for b=8, we have 1 + ceil((p-1)*log(2)/log(b)) = 1 + ceil((p-1)/3)
      = 1 + floor((p+1)/3) */
   for (p = MPFR_PREC_MIN; p <= 1024; p++)
-    MPFR_ASSERTN(mpfr_get_str_ndigits (8, p) == 1 + ((p + 1) / 3));
+    test_ndigits_aux (8, p, 1 + ((p + 1) / 3));
 
   /* for b=16, we have 1 + ceil((p-1)*log(2)/log(b)) = 1 + ceil((p-1)/4)
      = 1 + floor((p+2)/4) */
   for (p = MPFR_PREC_MIN; p <= 1024; p++)
-    MPFR_ASSERTN(mpfr_get_str_ndigits (16, p) == 1 + ((p + 2) / 4));
+    test_ndigits_aux (16, p, 1 + ((p + 2) / 4));
 
   /* for b=32, we have 1 + ceil((p-1)*log(2)/log(b)) = 1 + ceil((p-1)/5)
      = 1 + floor((p+3)/5) */
   for (p = MPFR_PREC_MIN; p <= 1024; p++)
-    MPFR_ASSERTN(mpfr_get_str_ndigits (32, p) == 1 + ((p + 3) / 5));
+    test_ndigits_aux (32, p, 1 + ((p + 3) / 5));
 
   /* error < 1e-3 */
-  MPFR_ASSERTN(mpfr_get_str_ndigits (57, 35) == 8);
+  test_ndigits_aux (57, 35, 8);
 
   /* error < 1e-4 */
-  MPFR_ASSERTN(mpfr_get_str_ndigits (31, 649) == 133);
+  test_ndigits_aux (31, 649, 133);
 
   /* error < 1e-5 */
-  MPFR_ASSERTN(mpfr_get_str_ndigits (43, 5041) == 931);
+  test_ndigits_aux (43, 5041, 931);
 
   /* error < 1e-6 */
-  MPFR_ASSERTN(mpfr_get_str_ndigits (41, 17771) == 3319);
+  test_ndigits_aux (41, 17771, 3319);
 
   /* 20th convergent of log(2)/log(3) */
-  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 630138897) == 397573381);
+  test_ndigits_aux (3, 630138897, 397573381);
 
 #if MPFR_PREC_BITS >= 64
   /* 21st convergent of log(2)/log(3) */
-  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 9809721694) == 6189245292);
+  test_ndigits_aux (3, 9809721694, 6189245292);
 
   /* 22nd convergent of log(2)/log(3) */
-  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 10439860591) == 6586818672);
+  test_ndigits_aux (3, 10439860591, 6586818672);
 
   /* 23rd convergent of log(2)/log(3) */
-  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 103768467013) == 65470613322);
+  test_ndigits_aux (3, 103768467013, 65470613322);
 
   /* 24th convergent of log(2)/log(3) */
-  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 217976794617) == 137528045314);
+  test_ndigits_aux (3, 217976794617, 137528045314);
 
-  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 1193652440098) == 753110839882);
+  test_ndigits_aux (3, 1193652440098, 753110839882);
 
-  MPFR_ASSERTN(mpfr_get_str_ndigits (3, 683381996816440) == 431166034846569);
+  test_ndigits_aux (3, 683381996816440, 431166034846569);
 
-  MPFR_ASSERTN(mpfr_get_str_ndigits (7, 186564318007) == 66455550933);
+  test_ndigits_aux (7, 186564318007, 66455550933);
 #endif
 }
 

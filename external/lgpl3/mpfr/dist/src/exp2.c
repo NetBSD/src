@@ -1,6 +1,6 @@
 /* mpfr_exp2 -- power of 2 function 2^y
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -23,14 +23,31 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #define MPFR_NEED_LONGLONG_H
 #include "mpfr-impl.h"
 
+/* TODO: mpfr_get_exp_t is called 3 times, with 3 different directed
+   rounding modes. One could reduce it to only one call thanks to the
+   inexact flag, but is it worth? */
+
+/* Convert x to an mpfr_eexp_t integer, with saturation at the minimum
+   and maximum values. Flags are unchanged. */
+static mpfr_eexp_t
+round_to_eexp_t (mpfr_srcptr x, mpfr_rnd_t rnd_mode)
+{
+  mpfr_flags_t flags = __gmpfr_flags;
+  mpfr_eexp_t e;
+
+  e = mpfr_get_exp_t (x, rnd_mode);
+  __gmpfr_flags = flags;
+  return e;
+}
+
 /* The computation of y = 2^z is done by                           *
  *     y = exp(z*log(2)). The result is exact iff z is an integer. */
 
 int
 mpfr_exp2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
 {
-  int inexact, inex2;
-  long xint;
+  int inexact;
+  mpfr_eexp_t xint;  /* note: will fit in mpfr_exp_t */
   mpfr_t xfrac;
   MPFR_SAVE_EXPO_DECL (expo);
 
@@ -68,12 +85,10 @@ mpfr_exp2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
      might round to 2^(emin - 1) for rounding away or to nearest, and there
      might be no underflow, since we consider underflow "after rounding". */
 
-  MPFR_STAT_STATIC_ASSERT (MPFR_EMIN_MIN >= LONG_MIN + 2);
-  if (MPFR_UNLIKELY (mpfr_cmp_si (x, __gmpfr_emin - 2) <= 0))
+  if (MPFR_UNLIKELY (round_to_eexp_t (x, MPFR_RNDU) <= __gmpfr_emin - 2))
     return mpfr_underflow (y, rnd_mode == MPFR_RNDN ? MPFR_RNDZ : rnd_mode, 1);
 
-  MPFR_STAT_STATIC_ASSERT (MPFR_EMAX_MAX <= LONG_MAX);
-  if (MPFR_UNLIKELY (mpfr_cmp_si (x, __gmpfr_emax) >= 0))
+  if (MPFR_UNLIKELY (round_to_eexp_t (x, MPFR_RNDD) >= __gmpfr_emax))
     return mpfr_overflow (y, rnd_mode, 1);
 
   /* We now know that emin - 2 < x < emax. Note that an underflow or
@@ -87,9 +102,11 @@ mpfr_exp2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
   MPFR_SMALL_INPUT_AFTER_SAVE_EXPO (y, __gmpfr_one, - MPFR_GET_EXP (x), 0,
                                     MPFR_IS_POS (x), rnd_mode, expo, {});
 
-  xint = mpfr_get_si (x, MPFR_RNDZ);
+  xint = mpfr_get_exp_t (x, MPFR_RNDZ);
+  MPFR_ASSERTD (__gmpfr_emin - 2 < xint && xint < __gmpfr_emax);
+
   mpfr_init2 (xfrac, MPFR_PREC (x));
-  MPFR_DBGRES (inexact = mpfr_sub_si (xfrac, x, xint, MPFR_RNDN));
+  MPFR_DBGRES (inexact = mpfr_frac (xfrac, x, MPFR_RNDN));
   MPFR_ASSERTD (inexact == 0);
 
   if (MPFR_IS_ZERO (xfrac))
@@ -156,11 +173,10 @@ mpfr_exp2 (mpfr_ptr y, mpfr_srcptr x, mpfr_rnd_t rnd_mode)
     }
   else
     {
-      MPFR_CLEAR_FLAGS ();
-      inex2 = mpfr_mul_2si (y, y, xint, rnd_mode);
-      if (inex2 != 0)  /* underflow or overflow */
-        inexact = inex2;
-      MPFR_SAVE_EXPO_UPDATE_FLAGS (expo, __gmpfr_flags);
+      /* The following is OK due to early overflow/underflow checking.
+         the exponent may be slightly out-of-range, but this will be
+         handled by mpfr_check_range. */
+      MPFR_EXP (y) += xint;
     }
 
   MPFR_SAVE_EXPO_FREE (expo);

@@ -1,6 +1,6 @@
 /* Test file for mpfr_mul.
 
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -582,6 +582,7 @@ check_regression (void)
   mpfr_set_str (y, "-1.921fb54442d18469898cc51701b839a252049c1114cf98e804177d"
                 "4c76273644a29410f31c6809bbdf2a33679a748636600",
                 16, MPFR_RNDN);
+  /* the following call to mpfr_mul with identical arguments is intentional */
   i = mpfr_mul (x, y, y, MPFR_RNDU);
   if (mpfr_cmp_str (x, "2.77a79937c8bbcb495b89b36602306b1c2159a8ff834288a19a08"
     "84094f1cda3dc426da61174c4544a173de83c2500f8bfea2e0569e3698",
@@ -1071,7 +1072,7 @@ test_underflow2 (void)
   mpfr_exp_t emin;
 
   emin = mpfr_get_emin ();
-  mpfr_set_emin (0);
+  set_emin (0);
 
   mpfr_init2 (x, 24);
   mpfr_init2 (y, 24);
@@ -1100,7 +1101,7 @@ test_underflow2 (void)
   mpfr_clear (x);
   mpfr_clear (z);
 
-  mpfr_set_emin (emin);
+  set_emin (emin);
 }
 
 static void
@@ -1275,7 +1276,7 @@ coverage2 (void)
   mpfr_exp_t emin;
 
   emin = mpfr_get_emin (); /* save emin */
-  mpfr_set_emin (0);
+  set_emin (0);
 
   mpfr_init2 (a, 64);
   mpfr_init2 (b, 64);
@@ -1292,7 +1293,7 @@ coverage2 (void)
   mpfr_clear (b);
   mpfr_clear (c);
 
-  mpfr_set_emin (emin); /* restore emin */
+  set_emin (emin); /* restore emin */
 }
 
 int

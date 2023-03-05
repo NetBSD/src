@@ -1,7 +1,7 @@
 /* Test file for mpfr_rint, mpfr_trunc, mpfr_floor, mpfr_ceil, mpfr_round,
    mpfr_rint_trunc, mpfr_rint_floor, mpfr_rint_ceil, mpfr_rint_round.
 
-Copyright 2002-2020 Free Software Foundation, Inc.
+Copyright 2002-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -358,7 +358,7 @@ test_against_libc (void)
   TEST_FCT (ceil);
 #endif
 #if HAVE_NEARBYINT
-  for (r = 0; r < MPFR_RND_MAX ; r++)
+  RND_LOOP (r)
     if (mpfr_set_machine_rnd_mode ((mpfr_rnd_t) r) == 0)
       test_fct (&nearbyint, &mpfr_rint, "rint", (mpfr_rnd_t) r);
 #endif
@@ -367,7 +367,7 @@ test_against_libc (void)
 #endif
 
 static void
-err (const char *str, mp_size_t s, mpfr_t x, mpfr_t y, mpfr_prec_t p,
+err (const char *str, mp_size_t s, mpfr_ptr x, mpfr_ptr y, mpfr_prec_t p,
      mpfr_rnd_t r, int trint, int inexact)
 {
   printf ("Error: %s\ns = %u, p = %u, r = %s, trint = %d, inexact = %d\nx = ",
@@ -500,7 +500,7 @@ main (int argc, char *argv[])
       if (s > 1)
         {
           mpz_mul_2exp (z, z, 1);
-          if (randlimb () % 2)
+          if (RAND_BOOL ())
             mpz_add_ui (z, z, 1);
         }
       /* now 2^(s-1) <= z < 2^s */
@@ -517,16 +517,16 @@ main (int argc, char *argv[])
 #endif
           exit (1);
         }
-      if (randlimb () % 2)
+      if (RAND_BOOL ())
         mpfr_neg (x, x, MPFR_RNDN);
-      if (randlimb () % 2)
+      if (RAND_BOOL ())
         mpfr_div_2ui (x, x, randlimb () % s, MPFR_RNDN);
       for (p = MPFR_PREC_MIN; p < 100; p++)
         {
           int trint;
           mpfr_set_prec (y, p);
           mpfr_set_prec (v, p);
-          for (r = 0; r < MPFR_RND_MAX ; r++)
+          RND_LOOP (r)
             for (trint = 0; trint < 4; trint++)
               {
                 if (trint == 2)

@@ -3,9 +3,9 @@
 
 See https://gcc.gnu.org/legacy-ml/gcc/2006-06/msg00691.html,
 https://gcc.gnu.org/onlinedocs/gcc/Decimal-Float.html,
-and TR 24732 <http://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
+and TR 24732 <https://www.open-std.org/jtc1/sc22/wg14/www/projects#24732>.
 
-Copyright 2006-2020 Free Software Foundation, Inc.
+Copyright 2006-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -152,7 +152,7 @@ get_decimal64_inf (int negative)
 static _Decimal64
 get_decimal64_zero (int negative)
 {
-  return negative ? -0.0dd : 0.0dd;
+  return negative ? -0.dd : 0.dd;
 }
 
 /* construct the decimal64 smallest non-zero with given sign:
@@ -513,7 +513,10 @@ mpfr_get_decimal64 (mpfr_srcptr src, mpfr_rnd_t rnd_mode)
   if (MPFR_UNLIKELY (MPFR_IS_SINGULAR (src)))
     {
       if (MPFR_IS_NAN (src))
-        return get_decimal64_nan ();
+        {
+          /* we don't propagate the sign bit */
+          return get_decimal64_nan ();
+        }
 
       negative = MPFR_IS_NEG (src);
 

@@ -1,6 +1,6 @@
 /* Test file for mpfr_mul_ui.
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -43,7 +43,7 @@ check_inexact (mpfr_prec_t p)
     }
 
   for (q = MPFR_PREC_MIN; q <= p; q++)
-    for (rnd = 0; rnd < MPFR_RND_MAX; rnd++)
+    RND_LOOP (rnd)
       {
         if (rnd == MPFR_RNDF)
           continue; /* inexact is undefined */

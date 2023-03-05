@@ -1,6 +1,6 @@
 /* mpfr_agm -- arithmetic-geometric mean of two floating-point numbers
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -136,7 +136,7 @@ mpfr_agm (mpfr_ptr r, mpfr_srcptr op2, mpfr_srcptr op1, mpfr_rnd_t rnd_mode)
                   /* mpfr_add with !=prec is still good */);
       if (MPFR_UNLIKELY (MPFR_OVERFLOW (flags) || MPFR_UNDERFLOW (flags)))
         {
-          mpfr_exp_t e1 , e2;
+          mpfr_exp_t e1, e2;
 
           MPFR_ASSERTN (scaleop == 0);
           e1 = MPFR_GET_EXP (op1);

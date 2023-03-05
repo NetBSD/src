@@ -1,6 +1,6 @@
 /* Test file for mpfr_sqrt.
 
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -175,7 +175,7 @@ check_float (void)
   check24("281474876047360.0", MPFR_RNDD, "1.6777212e7");
   check24("91214552498176.0", MPFR_RNDD, "9.550631e6");
 
-  /* check that rounding away is just rounding toward plus infinity */
+  /* check that rounding away is just rounding toward positive infinity */
   check24("91214552498176.0", MPFR_RNDA, "9.550632e6");
 }
 
@@ -350,7 +350,7 @@ special (void)
       mpfr_set_exp (x, GMP_NUMB_BITS);
       mpfr_add_ui (x, x, 1, MPFR_RNDN);
       /* now x = 2^(GMP_NUMB_BITS - 1) + 1 (GMP_NUMB_BITS bits) */
-      inexact = mpfr_mul (x, x, x, MPFR_RNDN);
+      inexact = mpfr_sqr (x, x, MPFR_RNDN);
       MPFR_ASSERTN (inexact == 0); /* exact */
       inexact = test_sqrt (z, x, MPFR_RNDN);
       /* even rule: z should be 2^(GMP_NUMB_BITS - 1) */
@@ -429,7 +429,7 @@ check_inexact (mpfr_prec_t p)
   mpfr_urandomb (x, RANDS);
   rnd = RND_RAND_NO_RNDF ();
   inexact = test_sqrt (y, x, rnd);
-  if (mpfr_mul (z, y, y, rnd)) /* exact since prec(z) = 2*prec(y) */
+  if (mpfr_sqr (z, y, rnd)) /* exact since prec(z) = 2*prec(y) */
     {
       printf ("Error: multiplication should be exact\n");
       exit (1);
@@ -711,7 +711,7 @@ check_overflow (void)
       mpfr_init2 (r, p);
       mpfr_init2 (u, p);
 
-      mpfr_set_emax (-1);
+      set_emax (-1);
       mpfr_set_ui_2exp (u, 1, mpfr_get_emax () - 1, MPFR_RNDN);
       mpfr_nextbelow (u);
       mpfr_mul_2ui (u, u, 1, MPFR_RNDN);
@@ -730,7 +730,7 @@ check_overflow (void)
       MPFR_ASSERTN(inex < 0);
       MPFR_ASSERTN(mpfr_equal_p (r, u));
 
-      mpfr_set_emax (0);
+      set_emax (0);
       mpfr_set_ui_2exp (u, 1, mpfr_get_emax () - 1, MPFR_RNDN);
       mpfr_nextbelow (u);
       mpfr_mul_2ui (u, u, 1, MPFR_RNDN);
@@ -743,7 +743,7 @@ check_overflow (void)
       mpfr_clear (r);
       mpfr_clear (u);
     }
-  mpfr_set_emax (emax);
+  set_emax (emax);
 }
 
 static void
@@ -760,7 +760,7 @@ check_underflow (void)
       mpfr_init2 (r, p);
       mpfr_init2 (u, p);
 
-      mpfr_set_emin (2);
+      set_emin (2);
       mpfr_set_ui_2exp (u, 1, mpfr_get_emin () - 1, MPFR_RNDN); /* u = 2 */
       /* for RNDN, since sqrt(2) is closer from 2 than 0, the result is 2 */
       mpfr_clear_flags ();
@@ -846,7 +846,7 @@ check_underflow (void)
       MPFR_ASSERTN(mpfr_cmp_ui_2exp (r, 1, mpfr_get_emin () - 1) == 0);
       MPFR_ASSERTN(mpfr_underflow_p ());
 
-      mpfr_set_emin (3);
+      set_emin (3);
       mpfr_set_ui_2exp (u, 1, mpfr_get_emin () - 1, MPFR_RNDN); /* u = 4 */
       /* sqrt(u) = 2 = 0.5^2^(emin-1) should be rounded to +0 */
       mpfr_clear_flags ();
@@ -865,7 +865,7 @@ check_underflow (void)
       MPFR_ASSERTN(mpfr_cmp_ui (r, 4) == 0);
       MPFR_ASSERTN(mpfr_underflow_p ());
 
-      mpfr_set_emin (4);
+      set_emin (4);
       mpfr_set_ui_2exp (u, 1, mpfr_get_emin () - 1, MPFR_RNDN); /* u = 8 */
       /* sqrt(u) should be rounded to +0 */
       mpfr_clear_flags ();
@@ -877,7 +877,7 @@ check_underflow (void)
       mpfr_clear (r);
       mpfr_clear (u);
     }
-  mpfr_set_emin (emin);
+  set_emin (emin);
 }
 
 static void
@@ -902,7 +902,7 @@ coverage (void)
       mpfr_nextabove (w); /* w = nextabove(v) */
       mpfr_set (t, v, MPFR_RNDN);
       mpfr_nextabove (t);
-      mpfr_mul (u, t, t, MPFR_RNDN);
+      mpfr_sqr (u, t, MPFR_RNDN);
       inex = mpfr_sqrt (r, u, MPFR_RNDN);
       if (mpfr_min_prec (v) < p) /* v is even */
         {
@@ -1053,7 +1053,7 @@ main (void)
   check4 ("72154663483843080704304789585920.0", MPFR_RNDD,
           "1.e2d9a51977e6d@13");
 
-  /* check that rounding away is just rounding toward plus infinity */
+  /* check that rounding away is just rounding toward positive infinity */
   check4 ("72154663483843080704304789585920.0", MPFR_RNDA,
           "1.e2d9a51977e6e@13");
 

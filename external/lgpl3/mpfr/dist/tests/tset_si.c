@@ -1,6 +1,6 @@
 /* Test file for mpfr_set_si, mpfr_set_ui, mpfr_get_si and mpfr_get_ui.
 
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -127,27 +127,29 @@ test_2exp_extreme_aux (void)
              power of 2 is exact, unless underflow/overflow occurs.
              The tests on the exponent below avoid integer overflows
              (ep[i] may take extreme values). */
-          e = mpfr_get_exp (x1);
           mpfr_clear_flags ();
-          if (j != 0 && ep[i] < __gmpfr_emin - e)  /* underflow */
+          if (j == 0)
+            goto zero;
+          e = MPFR_GET_EXP (x1);
+          if (ep[i] < __gmpfr_emin - e)  /* underflow */
             {
               mpfr_rnd_t r =
                 (rnd == MPFR_RNDN &&
-                 (ep[i] < __gmpfr_emin - mpfr_get_exp (y) - 1 ||
+                 (ep[i] < __gmpfr_emin - MPFR_GET_EXP (y) - 1 ||
                   IS_POW2 (sign * j))) ?
                 MPFR_RNDZ : (mpfr_rnd_t) rnd;
               inex1 = mpfr_underflow (x1, r, sign);
               flags1 = __gmpfr_flags;
             }
-          else if (j != 0 && ep[i] > __gmpfr_emax - e)  /* overflow */
+          else if (ep[i] > __gmpfr_emax - e)  /* overflow */
             {
               inex1 = mpfr_overflow (x1, (mpfr_rnd_t) rnd, sign);
               flags1 = __gmpfr_flags;
             }
           else
             {
-              if (j != 0)
-                mpfr_set_exp (x1, ep[i] + e);
+              mpfr_set_exp (x1, ep[i] + e);
+            zero:
               flags1 = inex1 != 0 ? MPFR_FLAGS_INEXACT : 0;
             }
 
@@ -568,7 +570,7 @@ main (int argc, char *argv[])
       exit (1);
     }
 
-  for (r = 0 ; r < MPFR_RND_MAX ; r++)
+  RND_LOOP (r)
     {
       mpfr_set_si (x, -1, (mpfr_rnd_t) r);
       mpfr_set_ui (x, 0, (mpfr_rnd_t) r);
@@ -731,11 +733,11 @@ main (int argc, char *argv[])
   emin = mpfr_get_emin ();
   mpfr_set_prec (x, 2);
 
-  mpfr_set_emin (4);
+  set_emin (4);
   mpfr_clear_flags ();
   mpfr_set_ui (x, 7, MPFR_RNDU);
   flag = mpfr_underflow_p ();
-  mpfr_set_emin (emin);
+  set_emin (emin);
   if (mpfr_cmp_ui (x, 8) != 0)
     {
       printf ("Error for mpfr_set_ui (x, 7, MPFR_RNDU), prec = 2, emin = 4\n");
@@ -748,11 +750,11 @@ main (int argc, char *argv[])
       exit (1);
     }
 
-  mpfr_set_emin (4);
+  set_emin (4);
   mpfr_clear_flags ();
   mpfr_set_si (x, -7, MPFR_RNDD);
   flag = mpfr_underflow_p ();
-  mpfr_set_emin (emin);
+  set_emin (emin);
   if (mpfr_cmp_si (x, -8) != 0)
     {
       printf ("Error for mpfr_set_si (x, -7, MPFR_RNDD), prec = 2, emin = 4\n");

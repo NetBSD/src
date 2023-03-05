@@ -1,6 +1,6 @@
 /* Utilities for MPFR developers, not exported.
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -44,6 +44,12 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #endif
 
 #define __MPFR_MAJMIN(a,i) (((a) << 8) | (i))
+
+/* Instead of __MPFR_MAJMIN below, we could use code like
+     (__MAJ__ + (__MIN__ >= (i)) > (a))
+   as in the patch at
+   https://sympa.inria.fr/sympa/arc/mpfr/2022-12/msg00007.html
+*/
 
 #if defined(__GNUC__) && defined(__GNUC_MINOR__) && ! __MPFR_ICC(0,0,0)
 # define __MPFR_GNUC(a,i) \

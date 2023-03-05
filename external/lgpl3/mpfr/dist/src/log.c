@@ -1,6 +1,6 @@
 /* mpfr_log -- natural logarithm of a floating-point number
 
-Copyright 1999-2020 Free Software Foundation, Inc.
+Copyright 1999-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -121,6 +121,7 @@ mpfr_log (mpfr_ptr r, mpfr_srcptr a, mpfr_rnd_t rnd_mode)
   MPFR_ZIV_INIT (loop, p);
   for (;;)
     {
+      mpfr_t scaled_a;
       mpfr_exp_t m;
       mpfr_exp_t cancel;
 
@@ -131,19 +132,18 @@ mpfr_log (mpfr_ptr r, mpfr_srcptr a, mpfr_rnd_t rnd_mode)
 
       /* In standard configuration (_MPFR_EXP_FORMAT <= 3), one has
          mpfr_exp_t <= long, so that the following assertion is always
-         true. */
+         true. This assertion is needed for the mpfr_mul_si below. */
       MPFR_ASSERTN (m >= LONG_MIN && m <= LONG_MAX);
 
-      /* FIXME: Why 1 ulp and not 1/2 ulp? Ditto with some other ones
-         below. The error concerning the AGM should be explained since
-         4/s is inexact (one needs a bound on its derivative). */
-      mpfr_mul_2si (tmp2, a, m, MPFR_RNDN);    /* s=a*2^m,        err<=1 ulp  */
-      MPFR_ASSERTD (MPFR_EXP (tmp2) >= (p + 3) / 2);
+      /* FIXME: Redo the error analysis. The error concerning the AGM
+         should be explained since 4/s is inexact (one needs a bound
+         on its derivative). */
+      MPFR_ALIAS (scaled_a, a, MPFR_SIGN_POS, (p + 3) / 2); /* s=a*2^m */
       /* [FIXME] and one can have the equality, even if p is even.
          This means that if a is a power of 2 and p is even, then
          s = (1/2) * 2^((p+2)/2) = 2^(p/2), so that the condition
          s > 2^(p/2) from algorithms.tex is not satisfied. */
-      mpfr_div (tmp1, __gmpfr_four, tmp2, MPFR_RNDN);/* 4/s,      err<=2 ulps */
+      mpfr_div (tmp1, __gmpfr_four, scaled_a, MPFR_RNDF); /* 4/s, err<=2 ulps */
       mpfr_agm (tmp2, __gmpfr_one, tmp1, MPFR_RNDN); /* AG(1,4/s),err<=3 ulps */
       mpfr_mul_2ui (tmp2, tmp2, 1, MPFR_RNDN); /* 2*AG(1,4/s),    err<=3 ulps */
       mpfr_const_pi (tmp1, MPFR_RNDN);         /* compute pi,     err<=1ulp   */

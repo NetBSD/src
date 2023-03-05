@@ -1,6 +1,6 @@
 /* Test file for mpfr_subnormalize.
 
-Copyright 2005-2020 Free Software Foundation, Inc.
+Copyright 2005-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -59,8 +59,8 @@ check1 (void)
   emax = mpfr_get_emax ();
 
   mpfr_set_default_prec (9);
-  mpfr_set_emin (-10);
-  mpfr_set_emax (10);
+  set_emin (-10);
+  set_emax (10);
 
   mpfr_init (x);
   for (i = 0; i < numberof (tab); i++)
@@ -130,7 +130,7 @@ check2 (void)
   mpfr_set_ui (y, 0xFFFFFFFEU, MPFR_RNDN);
   mpfr_set_exp (x, 0);
   mpfr_set_exp (y, 0);
-  mpfr_set_emin (-29);
+  set_emin (-29);
 
   tern = mpfr_mul (z, x, y, MPFR_RNDN);
   /* z = -0.BFFFFFFE, tern > 0 */
@@ -166,7 +166,7 @@ check3 (void)
   mpfr_set_ui (y, 0x80000001U, MPFR_RNDN); /* 2147483649/2^32 */
   mpfr_set_exp (x, 0);
   mpfr_set_exp (y, 0);
-  mpfr_set_emin (-1);
+  set_emin (-1);
 
   /* the exact product is 6917529028714823679/2^64, which is rounded to
      3/8 = 0.375, which is smaller, thus tern < 0 */
@@ -218,7 +218,7 @@ check_rndna (void)
   mpfr_set_str_binary (x, "0.1111111010E-14");
   inex = mpfr_set (y, x, MPFR_RNDN);
   MPFR_ASSERTN(inex == 0);
-  mpfr_set_emin (-21);
+  set_emin (-21);
   inex = mpfr_subnormalize (y, inex, MPFR_RNDNA);
   /* mpfr_subnormalize rounds to precision EXP(y)-emin+1 = 8,
      thus should round to 0.111111110E-14 */
@@ -246,7 +246,7 @@ check_rndna (void)
 
   mpfr_clear (x);
   mpfr_clear (y);
-  mpfr_set_emin (emin);
+  set_emin (emin);
 }
 
 /* exercise a corner case of mpfr_subnormalize:
@@ -264,7 +264,6 @@ coverage (void)
   inex = mpfr_subnormalize (y, -1, MPFR_RNDN);
   MPFR_ASSERTN(mpfr_cmp_ui_2exp (y, 65537, mpfr_get_emin () - 1) == 0);
   MPFR_ASSERTN(inex > 0);
-
   mpfr_clear (y);
 }
 

@@ -1,6 +1,6 @@
 /* mpfr_set_sj -- set a MPFR number from a huge machine signed integer
 
-Copyright 2004-2020 Free Software Foundation, Inc.
+Copyright 2004-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -26,13 +26,13 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #ifdef _MPFR_H_HAVE_INTMAX_T
 
 int
-mpfr_set_sj (mpfr_t x, intmax_t j, mpfr_rnd_t rnd)
+mpfr_set_sj (mpfr_ptr x, intmax_t j, mpfr_rnd_t rnd)
 {
   return mpfr_set_sj_2exp (x, j, 0, rnd);
 }
 
 int
-mpfr_set_sj_2exp (mpfr_t x, intmax_t j, intmax_t e, mpfr_rnd_t rnd)
+mpfr_set_sj_2exp (mpfr_ptr x, intmax_t j, intmax_t e, mpfr_rnd_t rnd)
 {
   if (j >= 0)
     return mpfr_set_uj_2exp (x, j, e, rnd);

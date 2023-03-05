@@ -1,6 +1,6 @@
 /* Test file for mpfr_set_z.
 
-Copyright 1999, 2001-2020 Free Software Foundation, Inc.
+Copyright 1999, 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -32,7 +32,7 @@ static void check0(void)
   mpfr_init (x);
   mpz_init (y);
   mpz_set_si (y, 0);
-  for(r = 0; r < MPFR_RND_MAX; r++)
+  RND_LOOP (r)
     {
       inexact = mpfr_set_z (x, y, (mpfr_rnd_t) r);
       if (!MPFR_IS_ZERO(x) || !MPFR_IS_POS(x) || inexact)

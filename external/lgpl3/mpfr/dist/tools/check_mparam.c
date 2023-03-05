@@ -1,6 +1,6 @@
 /* check_mparam - check a mparam.h file
 
-Copyright 2018-2020 Free Software Foundation, Inc.
+Copyright 2018-2023 Free Software Foundation, Inc.
 Contributed by the Arenaire and Caramel projects, INRIA.
 
 This program is free software; you can redistribute it and/or modify

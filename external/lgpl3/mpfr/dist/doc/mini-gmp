@@ -27,12 +27,13 @@ with
 before including mpfr.h (or you may want to modify mini-gmp.h).
 
 Remark: The random functions provided by MPFR configured with mini-gmp
-use the POSIX lrand48() and srand48() functions (the platform needs to
-provide them), thus one should avoid mini-gmp if one needs some really
-serious random functions. Another consequence is that these functions
-are not thread-safe.
+use the standard rand() function, thus one should avoid mini-gmp if one
+needs some really serious random functions. Another consequence is that
+these functions may not be thread-safe.
 
-This was tested with MPFR svn r13974 and GMP 6.2.0 on x86_64 GNU/Linux:
+The build with mini-gmp may require ISO C99+ features, such as "long long".
+
+This was tested with revision 39ac9e4 and GMP 6.2.0 on x86_64 GNU/Linux:
 ============================================================================
 Testsuite summary for MPFR 4.1.0-dev
 ============================================================================
@@ -61,7 +62,7 @@ For example:
 
   ./configure --with-mini-gmp=DIR CFLAGS="-DMINI_GMP_LIMB_TYPE=int"
 
-This was tested with MPFR svn r13974 and GMP 6.2.0 on x86_64 GNU/Linux:
+This was tested with revision 39ac9e4 and GMP 6.2.0 on x86_64 GNU/Linux:
 ============================================================================
 Testsuite summary for MPFR 4.1.0-dev
 ============================================================================

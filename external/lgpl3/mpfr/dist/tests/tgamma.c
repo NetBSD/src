@@ -1,6 +1,6 @@
 /* Test file for gamma function
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -106,7 +106,7 @@ special (void)
   mpfr_set_str (x, CHECK_Y1, 10, MPFR_RNDN);
   if (mpfr_cmp (y, x))
     {
-      printf ("mpfr_lngamma("CHECK_X1") is wrong:\n"
+      printf ("mpfr_lngamma(" CHECK_X1 ") is wrong:\n"
               "expected ");
       mpfr_dump (x);
       printf ("got      ");
@@ -121,7 +121,7 @@ special (void)
   mpfr_set_str (x, CHECK_Y2, 10, MPFR_RNDN);
   if (mpfr_cmp (y, x))
     {
-      printf ("mpfr_lngamma("CHECK_X2") is wrong:\n"
+      printf ("mpfr_lngamma(" CHECK_X2 ") is wrong:\n"
               "expected ");
       mpfr_dump (x);
       printf ("got      ");
@@ -390,7 +390,7 @@ special_overflow (void)
       exit (1);
     }
 
-  mpfr_set_emax (1024);
+  set_emax (1024);
   mpfr_set_prec (x, 53);
   mpfr_set_prec (y, 53);
   mpfr_set_str_binary (x, "101010110100110011111010000110001000111100000110101E-43");
@@ -456,7 +456,7 @@ test20071231 (void)
   mpfr_exp_t emin;
 
   emin = mpfr_get_emin ();
-  mpfr_set_emin (-1000000);
+  set_emin (-1000000);
 
   mpfr_init2 (x, 21);
   mpfr_set_str (x, "-1000001.5", 10, MPFR_RNDN);
@@ -464,7 +464,7 @@ test20071231 (void)
   MPFR_ASSERTN(MPFR_IS_ZERO(x) && MPFR_IS_POS(x) && inex < 0);
   mpfr_clear (x);
 
-  mpfr_set_emin (emin);
+  set_emin (emin);
 
   mpfr_init2 (x, 53);
   mpfr_set_str (x, "-1000000001.5", 10, MPFR_RNDN);
@@ -505,7 +505,7 @@ test20100709 (void)
   /* Similar test for 64-bit machines (also valid with a 32-bit exponent,
      but will not trigger the bug). */
   emin = mpfr_get_emin ();
-  mpfr_set_emin (MPFR_EMIN_MIN);
+  set_emin (MPFR_EMIN_MIN);
   mpfr_init2 (x, 100);
   mpfr_init2 (y, 32);
   mpfr_init2 (z, 32);
@@ -523,7 +523,7 @@ test20100709 (void)
   mpfr_clear (x);
   mpfr_clear (y);
   mpfr_clear (z);
-  mpfr_set_emin (emin);
+  set_emin (emin);
 }
 
 /* bug found by Giridhar Tammana */
@@ -538,7 +538,7 @@ test20120426 (void)
   mpfr_init2 (xb, 53);
   mpfr_set_si_2exp (xb, -337, -1, MPFR_RNDN);
   emin = mpfr_get_emin ();
-  mpfr_set_emin (-1073);
+  set_emin (-1073);
   i = mpfr_gamma (xa, xb, MPFR_RNDN);
   i = mpfr_subnormalize (xa, i, MPFR_RNDN); /* new ternary value */
   mpfr_set_str (xb, "-9.5737343987585366746184749943e-304", 10, MPFR_RNDN);
@@ -551,7 +551,7 @@ test20120426 (void)
       mpfr_dump (xa);
       exit (1);
     }
-  mpfr_set_emin (emin);
+  set_emin (emin);
   mpfr_clear (xa);
   mpfr_clear (xb);
 }
@@ -575,12 +575,12 @@ exprange (void)
   inex1 = mpfr_gamma (y, x, MPFR_RNDN);
   flags1 = __gmpfr_flags;
   MPFR_ASSERTN (mpfr_inexflag_p ());
-  mpfr_set_emin (0);
+  set_emin (0);
   mpfr_clear_flags ();
   inex2 = mpfr_gamma (z, x, MPFR_RNDN);
   flags2 = __gmpfr_flags;
   MPFR_ASSERTN (mpfr_inexflag_p ());
-  mpfr_set_emin (emin);
+  set_emin (emin);
   if (inex1 != inex2 || flags1 != flags2 || ! mpfr_equal_p (y, z))
     {
       printf ("Error in exprange (test1)\n");
@@ -598,12 +598,12 @@ exprange (void)
   inex1 = mpfr_gamma (y, x, MPFR_RNDD);
   flags1 = __gmpfr_flags;
   MPFR_ASSERTN (mpfr_inexflag_p ());
-  mpfr_set_emax (45);
+  set_emax (45);
   mpfr_clear_flags ();
   inex2 = mpfr_gamma (z, x, MPFR_RNDD);
   flags2 = __gmpfr_flags;
   MPFR_ASSERTN (mpfr_inexflag_p ());
-  mpfr_set_emax (emax);
+  set_emax (emax);
   if (inex1 != inex2 || flags1 != flags2 || ! mpfr_equal_p (y, z))
     {
       printf ("Error in exprange (test2)\n");
@@ -616,7 +616,7 @@ exprange (void)
       exit (1);
     }
 
-  mpfr_set_emax (44);
+  set_emax (44);
   mpfr_clear_flags ();
   inex1 = mpfr_check_range (y, inex1, MPFR_RNDD);
   flags1 = __gmpfr_flags;
@@ -625,7 +625,7 @@ exprange (void)
   inex2 = mpfr_gamma (z, x, MPFR_RNDD);
   flags2 = __gmpfr_flags;
   MPFR_ASSERTN (mpfr_inexflag_p ());
-  mpfr_set_emax (emax);
+  set_emax (emax);
   if (inex1 != inex2 || flags1 != flags2 || ! mpfr_equal_p (y, z))
     {
       printf ("Error in exprange (test3)\n");
@@ -643,12 +643,12 @@ exprange (void)
   inex1 = mpfr_gamma (y, x, MPFR_RNDD);
   flags1 = __gmpfr_flags;
   MPFR_ASSERTN (mpfr_inexflag_p ());
-  mpfr_set_emax (60);
+  set_emax (60);
   mpfr_clear_flags ();
   inex2 = mpfr_gamma (z, x, MPFR_RNDD);
   flags2 = __gmpfr_flags;
   MPFR_ASSERTN (mpfr_inexflag_p ());
-  mpfr_set_emax (emax);
+  set_emax (emax);
   if (inex1 != inex2 || flags1 != flags2 || ! mpfr_equal_p (y, z))
     {
       printf ("Error in exprange (test4)\n");
@@ -662,8 +662,8 @@ exprange (void)
     }
 
   MPFR_ASSERTN (MPFR_EMIN_MIN == - MPFR_EMAX_MAX);
-  mpfr_set_emin (MPFR_EMIN_MIN);
-  mpfr_set_emax (MPFR_EMAX_MAX);
+  set_emin (MPFR_EMIN_MIN);
+  set_emax (MPFR_EMAX_MAX);
   mpfr_set_ui (x, 0, MPFR_RNDN);
   mpfr_nextabove (x);  /* x = 2^(emin - 1) */
   mpfr_set_inf (y, 1);
@@ -774,8 +774,8 @@ exprange (void)
       mpfr_dump (z);
       exit (1);
     }
-  mpfr_set_emin (emin);
-  mpfr_set_emax (emax);
+  set_emin (emin);
+  set_emax (emax);
 
   mpfr_clears (x, y, z, (mpfr_ptr) 0);
 }
@@ -812,7 +812,7 @@ tiny_aux (int stop, mpfr_exp_t e)
 
               if (emax > MPFR_EMAX_MAX)
                 break;
-              mpfr_set_emax (emax);
+              set_emax (emax);
 
               mpfr_clear_flags ();
               inex = mpfr_gamma (y, x, rr);
@@ -856,7 +856,7 @@ tiny_aux (int stop, mpfr_exp_t e)
     }
 
   mpfr_clears (x, y, z, (mpfr_ptr) 0);
-  mpfr_set_emax (saved_emax);
+  set_emax (saved_emax);
   return err;
 }
 
@@ -877,9 +877,9 @@ tiny (int stop)
 
   if (emin != MPFR_EMIN_MIN)
     {
-      mpfr_set_emin (MPFR_EMIN_MIN);
+      set_emin (MPFR_EMIN_MIN);
       err |= tiny_aux (stop, MPFR_EMIN_MIN);
-      mpfr_set_emin (emin);
+      set_emin (emin);
     }
 
   if (err)
@@ -890,7 +890,7 @@ tiny (int stop)
    computing with a working precision p2. Assume that x is not an
    integer <= 2. */
 static void
-exp_lgamma (mpfr_t x, mpfr_prec_t p1, mpfr_prec_t p2)
+exp_lgamma (mpfr_ptr x, mpfr_prec_t p1, mpfr_prec_t p2)
 {
   mpfr_t yd, yu, zd, zu;
   int inexd, inexu, sign;

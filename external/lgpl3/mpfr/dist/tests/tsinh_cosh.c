@@ -1,6 +1,6 @@
 /* Test file for mpfr_sinh_cosh.
 
-Copyright 2007-2020 Free Software Foundation, Inc.
+Copyright 2007-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -23,7 +23,7 @@ https://www.gnu.org/licenses/ or write to the Free Software Foundation, Inc.,
 #include "mpfr-test.h"
 
 static void
-failed (mpfr_t x, mpfr_t esh, mpfr_t gsh, mpfr_t ech, mpfr_t gch)
+failed (mpfr_ptr x, mpfr_ptr esh, mpfr_ptr gsh, mpfr_ptr ech, mpfr_ptr gch)
 {
   printf ("error : mpfr_sinh_cosh (x) x = ");
   mpfr_out_str (stdout, 10, 0, x, MPFR_RNDD);
@@ -43,7 +43,7 @@ failed (mpfr_t x, mpfr_t esh, mpfr_t gsh, mpfr_t ech, mpfr_t gch)
 
 /* check against sinh, cosh */
 static void
-check (mpfr_t x, mpfr_rnd_t rnd)
+check (mpfr_ptr x, mpfr_rnd_t rnd)
 {
   mpfr_t s, c, sx, cx;
   int isc, is, ic;

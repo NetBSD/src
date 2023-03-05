@@ -1,7 +1,7 @@
 /* buildopt.c -- functions giving information about options used during the
    mpfr library compilation
 
-Copyright 2009-2020 Free Software Foundation, Inc.
+Copyright 2009-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
