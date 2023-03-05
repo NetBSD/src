@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2022/05/14 11:12:31 rillig Exp $
+#	$NetBSD: Makefile,v 1.7 2023/03/05 22:36:58 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -23,11 +23,13 @@ SRCS=	\
 	add_fr.c \
 	add_si.c \
 	add_ui.c \
+	agm.c \
 	arg.c \
 	asin.c \
 	asinh.c \
 	atan.c \
 	atanh.c \
+	balls.c \
 	clear.c \
 	cmp.c \
 	cmp_abs.c \
@@ -41,6 +43,7 @@ SRCS=	\
 	div_fr.c \
 	div_ui.c \
 	dot.c \
+	eta.c \
 	exp.c \
 	fma.c \
 	fr_div.c \
@@ -74,6 +77,7 @@ SRCS=	\
 	pow_ui.c \
 	pow_z.c \
 	proj.c \
+	radius.c \
 	real.c \
 	rootofunity.c \
 	urandom.c \
