@@ -1,4 +1,4 @@
-.\"	$NetBSD: open.2,v 1.65 2021/03/17 08:13:29 wiz Exp $
+.\"	$NetBSD: open.2,v 1.66 2023/03/05 16:24:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)open.2	8.2 (Berkeley) 11/16/93
 .\"
-.Dd March 17, 2021
+.Dd March 5, 2023
 .Dt OPEN 2
 .Os
 .Sh NAME
@@ -365,6 +365,9 @@ was specified, but the last path component is a symlink.
 specifies returning
 .Bq Er ELOOP
 for this case.
+.It Bq Er EFTYPE
+.Dv O_REGULAR
+is specified and the last path component is not a regular file.
 .It Bq Er EINTR
 The
 .Fn open
