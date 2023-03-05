@@ -1,6 +1,6 @@
-/* Test file for mpfr_atan.
+/* Test file for mpfr_atan and mpfr_atan2.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -50,7 +50,7 @@ special (void)
     }
 
   /* atan(+Inf) = Pi/2 */
-  for (r = 0; r < MPFR_RND_MAX ; r++)
+  RND_LOOP (r)
     {
       mpfr_set_inf (x, 1);
       mpfr_atan (y, x, (mpfr_rnd_t) r);
@@ -65,7 +65,7 @@ special (void)
     }
 
   /* atan(-Inf) = - Pi/2 */
-  for (r = 0; r < MPFR_RND_MAX ; r++)
+  RND_LOOP (r)
     {
       mpfr_set_inf (x, -1);
       mpfr_atan (y, x, (mpfr_rnd_t) r);
@@ -443,7 +443,7 @@ smallvals_atan2 (void)
   mpfr_set_prec (y, 8);
   mpfr_set_prec (a, 8);
   old_emin = mpfr_get_emin ();
-  mpfr_set_emin (MPFR_EMIN_MIN);
+  set_emin (MPFR_EMIN_MIN);
 
   mpfr_set_si (y, 3, MPFR_RNDN);
   mpfr_set_exp (y, mpfr_get_emin ());
@@ -473,7 +473,7 @@ smallvals_atan2 (void)
   mpfr_atan2 (a, y, x, MPFR_RNDN);
   MPFR_ASSERTN (mpfr_zero_p (a));
 
-  mpfr_set_emin (old_emin);
+  set_emin (old_emin);
 
   mpfr_clears (a, x, y, (mpfr_ptr) 0);
 }

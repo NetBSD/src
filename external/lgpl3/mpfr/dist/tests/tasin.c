@@ -1,6 +1,6 @@
 /* Test file for mpfr_asin.
 
-Copyright 2001-2020 Free Software Foundation, Inc.
+Copyright 2001-2023 Free Software Foundation, Inc.
 Contributed by the AriC and Caramba projects, INRIA.
 
 This file is part of the GNU MPFR Library.
@@ -93,7 +93,7 @@ special (void)
     }
 
   /* asin(1) = Pi/2 */
-  for (r = 0; r < MPFR_RND_MAX; r++)
+  RND_LOOP (r)
     {
       mpfr_set_ui (x, 1, MPFR_RNDN); /* exact */
       mpfr_asin (y, x, (mpfr_rnd_t) r);
@@ -108,7 +108,7 @@ special (void)
     }
 
   /* asin(-1) = -Pi/2 */
-  for (r = 0; r < MPFR_RND_MAX; r++)
+  RND_LOOP (r)
     {
       mpfr_set_si (x, -1, MPFR_RNDN); /* exact */
       mpfr_asin (y, x, (mpfr_rnd_t) r);
@@ -230,13 +230,13 @@ reduced_expo_range (void)
   mpfr_inits2 (4, x, y, ex_y, (mpfr_ptr) 0);
   mpfr_set_str (x, "-0.1e1", 2, MPFR_RNDN);
 
-  mpfr_set_emin (1);
-  mpfr_set_emax (1);
+  set_emin (1);
+  set_emax (1);
   mpfr_clear_flags ();
   inex = mpfr_asin (y, x, MPFR_RNDA);
   flags = __gmpfr_flags;
-  mpfr_set_emin (emin);
-  mpfr_set_emax (emax);
+  set_emin (emin);
+  set_emax (emax);
 
   mpfr_set_str (ex_y, "-0.1101e1", 2, MPFR_RNDN);
   ex_inex = -1;
