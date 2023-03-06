@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.22 2019/05/04 02:52:22 kre Exp $
+# $NetBSD: t_expand.sh,v 1.23 2023/03/06 05:54:54 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -432,7 +432,7 @@ tilde_head() {
 	atf_set descr "Checks that the ~ expansions work"
 }
 tilde_body() {
-	for HOME in '' / /home/foo \
+	for HOME in '' / /home/foo /home/foo/ \
 /a/very/long/home/directory/path/that/might/push/the/tilde/expansion/code/beyond/what/it/would/normally/ever/see/on/any/sane/system/and/perhaps/expose/some/bugs
 	do
 		export HOME
@@ -440,22 +440,22 @@ tilde_body() {
 		atf_check -s exit:0 -e empty \
 			-o inline:'HOME\t'"${HOME}"'
 ~\t'"${HOME}"'
-~/foobar\t'"${HOME}"'/foobar
+~/foobar\t'"${HOME%/}"'/foobar
 "$V"\t'"${HOME}"'
 "$X"\t~
 "$Y"\t'"${HOME}"':'"${HOME}"'
-"$YY"\t'"${HOME}"'/foo:'"${HOME}"'/bar
-"$Z"\t'"${HOME}"'/~
+"$YY"\t'"${HOME%/}"'/foo:'"${HOME%/}"'/bar
+"$Z"\t'"${HOME%/}"'/~
 ${U:-~}\t'"${HOME}"'
 $V\t'"${HOME}"'
 $X\t~
 $Y\t'"${HOME}"':'"${HOME}"'
-$YY\t'"${HOME}"'/foo:'"${HOME}"'/bar
-$Z\t'"${HOME}"'/~
+$YY\t'"${HOME%/}"'/foo:'"${HOME%/}"'/bar
+$Z\t'"${HOME%/}"'/~
 ${U:=~}\t'"${HOME}"'
 ${UU:=~:~}\t'"${HOME}"':'"${HOME}"'
-${UUU:=~/:~}\t'"${HOME}"'/:'"${HOME}"'
-${U4:=~/:~/}\t'"${HOME}"'/:'"${HOME}"'/\n' \
+${UUU:=~/:~}\t'"${HOME%/}"'/:'"${HOME}"'
+${U4:=~/:~/}\t'"${HOME%/}"'/:'"${HOME%/}"'/\n' \
 			${TEST_SH} -s <<- \EOF
 				unset -v U UU UUU U4
 				V=~
@@ -483,6 +483,15 @@ ${U4:=~/:~/}\t'"${HOME}"'/:'"${HOME}"'/\n' \
 					'${U4:=~/:~/}' ''${U4:=~/:~/}
 			EOF
 	done
+
+	# Verify that when HOME is "" expanding a bare ~
+	# makes an empty word, not nothing (or anything else)
+	HOME=""
+	export HOME
+	atf_check -s exit:0 -e empty -o inline:'1:<>\n' ${TEST_SH} -c \
+		'set -- ~ ; IFS=, ; printf '"'%d:<%s>\\n'"' "$#" "$*"'
+	atf_check -s exit:0 -e empty -o inline:'4:<,X,,/>\n' ${TEST_SH} -c \
+		'set -- ~ X ~ ~/ ; IFS=, ; printf '"'%d:<%s>\\n'"' "$#" "$*"'
 
 	# Testing ~user is harder, so, perhaps later...
 }
