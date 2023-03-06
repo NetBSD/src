@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.141 2021/11/22 05:17:43 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.142 2023/03/06 05:54:34 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.141 2021/11/22 05:17:43 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.142 2023/03/06 05:54:34 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -388,7 +388,7 @@ argstr(const char *p, int flag)
 STATIC const char *
 exptilde(const char *p, int flag)
 {
-	char c;
+	char c, last;
 	const char *startp = p;
 	struct passwd *pw;
 	const char *home;
@@ -457,15 +457,35 @@ exptilde(const char *p, int flag)
 	 * Posix XCU 2.6.1: The value of $HOME (for ~) or the initial
 	 *		working directory from getpwnam() for ~user
 	 * Nothing there about "except if a null string".  So do what it wants.
+	 * In later drafts (to become Issue 8), it is even required that in
+	 * this case, (where HOME='') a bare ~ expands to "" (which must not
+	 * be reduced to nothing).
 	 */
-	if (home == NULL /* || *home == '\0' */) {
+	last = '\0';		/* just in case *home == '\0' (already) */
+	if (home == NULL) {
 		CTRACE(DBG_EXPAND, (": returning unused \"%s\"\n", startp));
 		return startp;
 	} while ((c = *home++) != '\0') {
 		if ((quotes && NEEDESC(c)) || ISCTL(c))
 			STPUTC(CTLESC, expdest);
 		STPUTC(c, expdest);
+		last = c;
 	}
+
+	/*
+	 * If HOME (or whatver) ended in a '/' (last == '/'), and
+	 * the ~prefix was terminated by a '/', then only keep one
+	 * of them - since we already took the one from HOME, just
+	 * skip over the one that ended the tilde prefix.
+	 *
+	 * Current (Issue 8) drafts say this is permitted, and recommend
+	 * it - a later version of the standard will probably require it.
+	 * This is to prevent ~/foo generating //foo when HOME=/ (and
+	 * other cases like it, but that's the important one).
+	 */
+	if (last == '/' && *p == '/')
+		p++;
+
 	CTRACE(DBG_EXPAND, (": added %d \"%.*s\" returning \"%s\"\n",
 	      expdest - stackblock() - offs, expdest - stackblock() - offs,
 	      stackblock() + offs, p));
