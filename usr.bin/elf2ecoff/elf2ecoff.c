@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.33 2017/02/24 17:19:14 christos Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.34 2023/03/06 21:39:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -246,7 +246,7 @@ usage:
 			nbss.len = ph[i].p_memsz - ph[i].p_filesz;
 
 			if (debug) {
-				fprintf(stderr, "  combinining PH %zu type %d "
+				fprintf(stderr, "  combining PH %zu type %d "
 				    "flags %#x with data, ndata = %d, "
 				    "nbss =%d\n", i, ph[i].p_type,
 				    ph[i].p_flags, ndata.len, nbss.len);
@@ -259,7 +259,7 @@ usage:
 			ntxt.vaddr = ph[i].p_vaddr;
 			ntxt.len = ph[i].p_filesz;
 			if (debug) {
-				fprintf(stderr, "  combinining PH %zu type %d "
+				fprintf(stderr, "  combining PH %zu type %d "
 				    "flags %#x with text, len = %d\n",
 				    i, ph[i].p_type, ph[i].p_flags, ntxt.len);
 			}
@@ -717,7 +717,7 @@ elf_symbol_table_to_ecoff(int out, int in, struct ecoff32_exechdr *ep,
 
 
 /*
- * In-memory translation of ELF symbosl to ECOFF.
+ * In-memory translation of ELF symbols to ECOFF.
  */
 static void
 translate_syms(struct elf_syms *elfp, struct ecoff_syms *ecoffp)
