@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.28 2022/05/24 20:50:17 andvar Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.29 2023/03/06 21:39:06 andvar Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -104,7 +104,7 @@
  * intermediate nodes and quickly skips uninterested parts of a tree.
  *
  * A tree has RADIX_TREE_TAG_ID_MAX independent tag spaces, each of which are
- * identified by an zero-origin numbers, tagid.  For the current implementation,
+ * identified by a zero-origin numbers, tagid.  For the current implementation,
  * RADIX_TREE_TAG_ID_MAX is 2.  A set of tags is described as a bitmask tagmask,
  * which is a bitwise OR of (1 << tagid).
  */
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.28 2022/05/24 20:50:17 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.29 2023/03/06 21:39:06 andvar Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.28 2022/05/24 20:50:17 andvar Exp $"
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.28 2022/05/24 20:50:17 andvar Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.29 2023/03/06 21:39:06 andvar Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -912,7 +912,7 @@ descend:
 		/*
 		 * following the left-most (or right-most in the case of
 		 * reverse scan) child node, descend until reaching the leaf or
-		 * an non-matching entry.
+		 * a non-matching entry.
 		 */
 		while (entry_match_p(*vpp, tagmask) && lastidx < t->t_height) {
 			/*
@@ -952,7 +952,7 @@ descend:
  * Note that this function doesn't return index values of found nodes.
  * Thus, in the case of dense == false, if index values are important for
  * a caller, it's the caller's responsibility to check them, typically
- * by examinining the returned nodes using some caller-specific knowledge
+ * by examining the returned nodes using some caller-specific knowledge
  * about them.
  * In the case of dense == true, a node returned via results[N] is always for
  * the index (idx + N).
