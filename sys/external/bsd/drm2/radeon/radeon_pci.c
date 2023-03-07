@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_pci.c,v 1.21 2022/07/18 23:34:03 riastradh Exp $	*/
+/*	$NetBSD: radeon_pci.c,v 1.22 2023/03/07 09:47:48 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.21 2022/07/18 23:34:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.22 2023/03/07 09:47:48 mrg Exp $");
 
 #ifdef _KERNEL_OPT
+#include "genfb.h"
 #include "vga.h"
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -72,6 +73,11 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_pci.c,v 1.21 2022/07/18 23:34:03 riastradh Ex
 #include <drm/drm_drv.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_pci.h>
+
+#if NGENFB > 0
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/wsfb/genfbvar.h>
+#endif
 
 #include <radeon.h>
 #include "radeon_drv.h"
@@ -272,6 +278,24 @@ radeon_attach_real(device_t self)
 		goto out;
 	}
 	sc->sc_pci_attached = true;
+
+#if NGENFB > 0
+	/*
+	 * If MD initialization has selected this as the console device
+	 * with a firmware-provided framebuffer address, we may have to
+	 * turn it off early, before we are ready to switch the console
+	 * over -- something goes wrong if we're still writing to the
+	 * firmware-provided framebuffer during nouveau initialization.
+	 */
+    {
+	bool is_console;
+	if (prop_dictionary_get_bool(device_properties(self), "is_console",
+		&is_console) &&
+	    is_console &&
+	    genfb_is_console())
+		wsdisplay_predetach();
+    }
+#endif
 
 	/* XXX errno Linux->NetBSD */
 	error = -drm_dev_register(sc->sc_drm_dev, flags);
