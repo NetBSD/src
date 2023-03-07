@@ -1,4 +1,7 @@
-# $NetBSD: Makefile.inst,v 1.2 2022/10/14 19:42:13 ryo Exp $
+# $NetBSD: Makefile.inst,v 1.3 2023/03/07 10:43:53 martin Exp $
+
+NOPIE=		# defined
+NOCTF=		# defined
 
 .include <bsd.own.mk>
 
@@ -7,7 +10,6 @@ PROG=		hello
 MAN=		# empty
 LDFLAGS=	-nostdlib
 SRCS=		${MACHINE_CPU}.s
-MKPIE=		no
 .endif
 
 .include <bsd.prog.mk>
