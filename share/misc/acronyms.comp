@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.345 2023/03/03 15:29:48 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.346 2023/03/07 01:29:21 thorpej Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -672,6 +672,8 @@ HAL	hardware abstraction layer
 HAT	hashed array tree
 HATEOAS	hypermedia as the engine of application state
 HBA	host bus adapter
+HCC	Home Cable Computer
+HCCA	Home Cable Computer Adaptor
 HCF	halt and catch fire
 HCI	host controller interface
 HCI	human-computer interaction
