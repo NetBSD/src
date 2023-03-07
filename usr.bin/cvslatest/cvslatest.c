@@ -1,4 +1,4 @@
-/*	$NetBSD: cvslatest.c,v 1.10 2023/02/15 17:00:24 martin Exp $	*/
+/*	$NetBSD: cvslatest.c,v 1.11 2023/03/07 21:24:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cvslatest.c,v 1.10 2023/02/15 17:00:24 martin Exp $");
+__RCSID("$NetBSD: cvslatest.c,v 1.11 2023/03/07 21:24:19 christos Exp $");
 
 /*
  * Find the latest timestamp in a set of CVS trees, by examining the
@@ -92,6 +92,13 @@ getrepo(const FTSENT *e, char *repo, size_t maxrepo)
 }
 
 static void
+notimestamp(const char *fn, const char *ename, int uncommitted)
+{
+	warnx("Can't get timestamp from %s file `%s' in `%s'",
+	    uncommitted ? "uncommitted" : "locally modified", fn, ename);
+}
+
+static void
 getlatest(const FTSENT *e, const char *repo, struct latest *lat)
 {
 	static const char fmt[] = "%a %b %d %H:%M:%S %Y";
@@ -117,28 +124,14 @@ getlatest(const FTSENT *e, const char *repo, struct latest *lat)
 			goto mal;
 		if ((dt = strtok(NULL, "/")) == NULL)
 			goto mal;
-		if (strcmp(dt, "dummy timestamp") == 0) {
-			warnx("Can't get timestamp from uncommitted file %s in `%s'",
-			    fn, ename);
-			if (!ignore)
-				exit(EXIT_FAILURE);
-			continue;
-		}
-		/*
-		 * This may not be visible in real world, but the cvs code
-		 * has paths that would create this string (mabe server
-		 * side only?)
-		 */
-		if (strcmp(dt, "dummy timestamp from new-entry") == 0) {
-			warnx("Can't get timestamp from uncommitted file %s in `%s'",
-			    fn, ename);
+		if (strncmp(dt, "dummy timestamp", 14) == 0) {
+			notimestamp(fn, ename, 1);
 			if (!ignore)
 				exit(EXIT_FAILURE);
 			continue;
 		}
 		if (strcmp(dt, "Result of merge") == 0) {
-			warnx("Can't get cvs timestamp for localy modified file %s in `%s', using modification time.",
-			    fn, ename);
+			notimestamp(fn, ename, 0);
 			if (fstat(fileno(fp), &sb) == 0) {
 				t = sb.st_mtime;
 				goto compare;
