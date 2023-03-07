@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.40 2023/03/05 14:38:29 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.41 2023/03/07 19:57:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1434,4 +1434,20 @@ sbin/nvmectl/util.c				1.3
 	nvmectl(8): data units read/written are counted in 1000s of 512 bytes.
 	Convert to human-readable value.
 	[mlelstv, ticket #112]
+
+sys/dev/usb/ucom.c				1.137
+
+	PR 57259: fix the HUP-wait path in ucomopen()
+	[thorpej, ticket #113]
+
+lib/libc/sys/open.2				1.66
+
+	open(2): document the error code when O_REGULAR is specified
+	and the last path component is not a regular file.
+	[thorpej, ticket #114]
+
+sys/kern/vfs_syscalls.c				1.557
+
+	open(2): PR 57260: don't map ERESTART to EINTR.
+	[riastradh, ticket #115]
 
