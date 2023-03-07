@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.55 2023/03/03 17:05:04 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.56 2023/03/07 20:02:04 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1265,4 +1265,9 @@ sys/arch/arm/ti/if_cpsw.c			1.17
 	cpsw(4): disable a debug message unless explicit driver
 	debugging is requested.
 	[sekiya, ticket #1609]
+
+sys/kern/vfs_syscalls.c				1.557
+
+	open(2): PR 57260: don't map ERESTART to EINTR.
+	[riastradh, ticket #1610]
 
