@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.533.2.1 2020/04/22 18:07:37 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.533.2.2 2023/03/07 20:01:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.533.2.1 2020/04/22 18:07:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.533.2.2 2023/03/07 20:01:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1596,8 +1596,6 @@ do_open(lwp_t *l, struct vnode *dvp, struct pathbuf *pb, int open_flags,
 			*fd = indx;
 			return 0;
 		}
-		if (error == ERESTART)
-			error = EINTR;
 		return error;
 	}
 
