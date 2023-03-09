@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.317 2023/02/18 11:16:09 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.318 2023/03/09 07:06:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -968,7 +968,8 @@ typedef enum VarSetFlags {
 
 	/*
 	 * Make the variable read-only. No further modification is possible,
-	 * except for another call to Var_Set with the same flag.
+	 * except for another call to Var_Set with the same flag. See the
+	 * special targets '.NOREADONLY' and '.READONLY'.
 	 */
 	VAR_SET_READONLY	= 1 << 1
 } VarSetFlags;
