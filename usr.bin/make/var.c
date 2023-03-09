@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1047 2023/02/18 11:16:09 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1048 2023/03/09 06:49:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1047 2023/02/18 11:16:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1048 2023/03/09 06:49:37 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -3668,6 +3668,7 @@ ApplyModifier_SysV(const char **pp, ModChain *ch)
 
 done:
 	LazyBuf_Done(&lhsBuf);
+	FStr_Done(&rhs);
 	return AMR_OK;
 }
 #endif
