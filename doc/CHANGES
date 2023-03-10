@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2953 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2954 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -31,8 +31,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	ppp(4): Remove several non-functioning ioctls. [chs 20221221]
 	libc: Update Unicode tables to Unicode 15.0.0. [wiz 20221221]
 	dse(4): Added Dayna SCSI/Link ethernet driver. [nat 20221222]
-	wg(4): Allow non-root to retrieve information other than the
-		private key and the peer preshared key. [jakllsch 20230105]
 	sdhc(4): Add quirk for some Intel eMMC devices (like
 		GIGABYTE MA10-ST0) to allow the driver to attach
 		successfully. [msaitoh 20230105]
@@ -44,17 +42,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	aq(4): add support for AQC113-116 [ryo 20230114]
 	bind: Import version 9.16.37. [christos 20230125]
 	xfwp(1): remove. [wiz 20230204]
-	vax: Port gpx(4) color framebuffer driver (found on VAXstation 3100)
-		from OpenBSD/vax. [tsutsui 20230206]
-	OpenSSL: Imported 1.1.1t. [christos 20230207]
-	next68k: Handle NeXT Turbo VRAM regions. [tsutsui 20230211]
-	vax: Port rasops(9)-ified smg(4) framebuffer driver for
-		VS3100 from OpenBSD/vax.  This allows using more fonts.
-		[tsutsui 20230211]
-	urndis(4): Add support for OnePlus 5T device quirks
-		[nia 20230211]
-	u3g(4): Add support for ZTE MF112 and D-Link DWM222 3G USB
-		modems [manu 20230213]
 	wscons(4): Ignore nonsense tab stops in vt100 emulation.
 		[riastradh 20230223]
 	nvmm(4): Filter CR4 bits on x86 SVM (AMD). In particular,
