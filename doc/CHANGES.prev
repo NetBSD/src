@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.166 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.167 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -13393,4 +13393,16 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tzdata: updated to 2022g (using the 2022ggtz fork) [kre 20221211]
 	tzcode: Updated to 2022g. [christos 20221211]
 	wbsio(4),lm(4): Add Nuvoton NCT6797D support. [msaitoh 20221215]
-
+	wg(4): Allow non-root to retrieve information other than the
+		private key and the peer preshared key. [jakllsch 20230105]
+	vax: Port gpx(4) color framebuffer driver (found on VAXstation 3100)
+		from OpenBSD/vax. [tsutsui 20230206]
+	OpenSSL: Imported 1.1.1t. [christos 20230207]
+	next68k: Handle NeXT Turbo VRAM regions. [tsutsui 20230211]
+	vax: Port rasops(9)-ified smg(4) framebuffer driver for
+		VS3100 from OpenBSD/vax.  This allows using more fonts.
+		[tsutsui 20230211]
+	urndis(4): Add support for OnePlus 5T device quirks
+		[nia 20230211]
+	u3g(4): Add support for ZTE MF112 and D-Link DWM222 3G USB
+		modems [manu 20230213]
