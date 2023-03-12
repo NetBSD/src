@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.41 2023/03/07 19:57:47 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.42 2023/03/12 17:53:01 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1450,4 +1450,10 @@ sys/kern/vfs_syscalls.c				1.557
 
 	open(2): PR 57260: don't map ERESTART to EINTR.
 	[riastradh, ticket #115]
+
+share/man/man4/igpio.4				1.4
+sys/dev/acpi/igpio_acpi.c			1.2
+
+	igpio(4): PR 57225: disable Baytrail and Lynxpoint support.
+	[msaitoh, ticket #116]
 
