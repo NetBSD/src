@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.365 2022/08/21 07:57:50 lukem Exp $
+#	$NetBSD: build.sh,v 1.366 2023/03/13 11:52:29 martin Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2010,7 +2010,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.365 2022/08/21 07:57:50 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.366 2023/03/13 11:52:29 martin Exp $
 # with these arguments: ${_args}
 #
 
@@ -2353,22 +2353,22 @@ setup_mkrepro()
 		dirs="$dirs ${X11SRCDIR-/usr/xsrc}/"
 	fi
 
-	local cvslatest=$(print_tooldir_program cvslatest)
-	if [ ! -x "${cvslatest}" ]; then
-		buildtools
-	fi
-
-	local cvslatestflags=
-	if ${do_expertmode}; then
-		cvslatestflags=-i
-	fi
-
 	MKREPRO_TIMESTAMP=0
 	local d
 	local t
 	local vcs
 	for d in ${dirs}; do
 		if [ -d "${d}CVS" ]; then
+			local cvslatest=$(print_tooldir_program cvslatest)
+			if [ ! -x "${cvslatest}" ]; then
+				buildtools
+			fi
+
+			local cvslatestflags=
+			if ${do_expertmode}; then
+				cvslatestflags=-i
+			fi
+
 			t=$("${cvslatest}" ${cvslatestflags} "${d}")
 			vcs=cvs
 		elif [ -d "${d}.git" ]; then
@@ -2379,6 +2379,10 @@ setup_mkrepro()
 			vcs=hg
 		elif [ -f "${d}.hg_archival.txt" ]; then
 			local stat=$(print_tooldir_program stat)
+			if [ ! -x "${stat}" ]; then
+				buildtools
+			fi
+
 			t=$("${stat}" -t '%s' -f '%m' "${d}.hg_archival.txt")
 			vcs=hg
 		else
