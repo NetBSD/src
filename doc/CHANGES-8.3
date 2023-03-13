@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.167 2023/02/24 14:21:22 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.168 2023/03/13 21:06:01 jdc Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3213,4 +3213,9 @@ sys/dev/ata/satavar.h				1.10
 
 	sata: do not consider "PHY offline" conditions an error.
 	[msaitoh, ticket #1805]
+
+sys/kern/vfs_syscalls.c				1.557
+
+	open(2): PR 57260: don't map ERESTART to EINTR.
+	[riastradh, ticket #1806]
 
