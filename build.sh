@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.316.4.3 2021/09/15 05:07:42 msaitoh Exp $
+#	$NetBSD: build.sh,v 1.316.4.4 2023/03/13 21:36:29 jdc Exp $
 #
 # Copyright (c) 2001-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1914,7 +1914,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.316.4.3 2021/09/15 05:07:42 msaitoh Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.316.4.4 2023/03/13 21:36:29 jdc Exp $
 # with these arguments: ${_args}
 #
 
@@ -2231,22 +2231,22 @@ setup_mkrepro()
 		dirs="$dirs ${X11SRCDIR-/usr/xsrc}/"
 	fi
 
-	local cvslatest=$(print_tooldir_program cvslatest)
-	if [ ! -x "${cvslatest}" ]; then
-		buildtools
-	fi
-
-	local cvslatestflags=
-	if ${do_expertmode}; then
-		cvslatestflags=-i
-	fi
-
 	MKREPRO_TIMESTAMP=0
 	local d
 	local t
 	local vcs
 	for d in ${dirs}; do
 		if [ -d "${d}CVS" ]; then
+			local cvslatest=$(print_tooldir_program cvslatest)
+			if [ ! -x "${cvslatest}" ]; then
+				buildtools
+			fi
+
+			local cvslatestflags=
+			if ${do_expertmode}; then
+				cvslatestflags=-i
+			fi
+
 			t=$("${cvslatest}" ${cvslatestflags} "${d}")
 			vcs=cvs
 		elif [ -d "${d}.git" ]; then
