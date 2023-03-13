@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.42 2023/03/12 17:53:01 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.43 2023/03/13 21:40:40 jdc Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1456,4 +1456,10 @@ sys/dev/acpi/igpio_acpi.c			1.2
 
 	igpio(4): PR 57225: disable Baytrail and Lynxpoint support.
 	[msaitoh, ticket #116]
+
+build.sh					1.366
+	Avoid the dependency on a populated tooldir (or building the tools)
+	when simply doing mkrepro-timestamp and the current repository setups
+	does not actually require it.
+	[martin, ticket #1807]
 
