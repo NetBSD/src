@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.31 2023/01/07 19:41:30 chs Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.32 2023/03/13 22:17:24 christos Exp $	*/
 /* From: NetBSD: ffs_alloc.c,v 1.50 2001/09/06 02:16:01 lukem Exp */
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs_alloc.c,v 1.31 2023/01/07 19:41:30 chs Exp $");
+__RCSID("$NetBSD: ffs_alloc.c,v 1.32 2023/03/13 22:17:24 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -453,7 +453,6 @@ ffs_blkfree(struct inode *ip, daddr_t bno, long size)
 	error = bread(ip->i_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
 	    (int)fs->fs_cgsize, 0, &bp);
 	if (error) {
-		brelse(bp, 0);
 		return;
 	}
 	cgp = (struct cg *)bp->b_data;
