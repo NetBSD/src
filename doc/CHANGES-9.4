@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.56 2023/03/07 20:02:04 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.57 2023/03/13 21:38:46 jdc Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1270,4 +1270,11 @@ sys/kern/vfs_syscalls.c				1.557
 
 	open(2): PR 57260: don't map ERESTART to EINTR.
 	[riastradh, ticket #1610]
+
+build.sh					1.366 via patch
+
+	Avoid the dependency on a populated tooldir (or building the tools)
+	when simply doing mkrepro-timestamp and the current repository setups
+	does not actually require it.
+	[martin, ticket #1611]
 
