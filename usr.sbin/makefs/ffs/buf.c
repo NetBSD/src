@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.26 2023/03/13 22:10:30 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.27 2023/03/14 09:25:13 kre Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.26 2023/03/13 22:10:30 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.27 2023/03/14 09:25:13 kre Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -91,7 +91,7 @@ bread(struct vnode *vp, daddr_t blkno, int size, int u2 __unused,
 		printf("%s: read %ld (%jd) returned %zd\n", __func__,
 		    (*bpp)->b_bcount, (intmax_t)offset, rv);
 	if (rv == -1) {				/* read error */
-		warn("%s: read %ld (%jd) returned %jd", __func__,
+		warn("%s: read %ld (%jd) returned %zd", __func__,
 		    (*bpp)->b_bcount, (intmax_t)offset, rv);
 		goto out;
 	}
