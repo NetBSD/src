@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.43 2023/03/13 21:40:40 jdc Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.44 2023/03/14 17:15:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1461,5 +1461,25 @@ build.sh					1.366
 	Avoid the dependency on a populated tooldir (or building the tools)
 	when simply doing mkrepro-timestamp and the current repository setups
 	does not actually require it.
-	[martin, ticket #1807]
+	[martin, ticket #117]
+
+sys/net/npf/npf_params.c			1.6
+usr.sbin/npf/npf-params.7			1.9
+
+	PR 55654: Switch default for parameter npf ip4.reassembly to 1.
+	[kardel, ticket #118]
+
+sys/net/npf/npf.h				1.64
+sys/net/npf/npf_mbuf.c				1.25
+sys/net/npf/npf_sendpkt.c			1.23
+
+	PR kern/56052: allow block-return packets passed through
+	without rule matching.
+	[kardel, ticket #119]
+
+external/mit/xorg/lib/xkeyboard-config/xkeyboard-config.man 1.12
+external/mit/xorg/lib/xkeyboard-config/xkeyboard-config.pc.in 1.2
+
+	Fix xkb_base in the pkg-config file and mapage for xkeyboard-config.
+	[nros, ticket #120]
 
