@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.57 2023/03/13 21:38:46 jdc Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.58 2023/03/14 17:12:37 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1277,4 +1277,18 @@ build.sh					1.366 via patch
 	when simply doing mkrepro-timestamp and the current repository setups
 	does not actually require it.
 	[martin, ticket #1611]
+
+sys/net/npf/npf_params.c			1.6
+usr.sbin/npf/npf-params.7			1.9
+
+	PR 55654: Switch default for parameter npf ip4.reassembly to 1.
+	[kardel, ticket #1612]
+
+sys/net/npf/npf.h				1.64
+sys/net/npf/npf_mbuf.c				1.25
+sys/net/npf/npf_sendpkt.c			1.23
+
+	PR kern/56052: allow block-return packets passed through
+	without rule matching.
+	[kardel, ticket #1613]
 
