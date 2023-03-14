@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.27 2023/03/14 09:25:13 kre Exp $	*/
+/*	$NetBSD: buf.c,v 1.28 2023/03/14 10:36:06 kre Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: buf.c,v 1.27 2023/03/14 09:25:13 kre Exp $");
+__RCSID("$NetBSD: buf.c,v 1.28 2023/03/14 10:36:06 kre Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -149,6 +149,7 @@ bwrite(struct buf *bp)
 	off_t	offset;
 	ssize_t	rv;
 	size_t	bytes;
+	int	e;
 	fsinfo_t *fs = bp->b_fs;
 
 	assert (bp != NULL);
@@ -160,6 +161,7 @@ bwrite(struct buf *bp)
 	if (lseek(bp->b_fs->fd, offset, SEEK_SET) == -1)
 		return errno;
 	rv = write(bp->b_fs->fd, bp->b_data, bytes);
+	e = errno;
 	if (debug & DEBUG_BUF_BWRITE)
 		printf("%s: write %ld (offset %jd) returned %jd\n", __func__,
 		    bp->b_bcount, (intmax_t)offset, (intmax_t)rv);
@@ -167,7 +169,7 @@ bwrite(struct buf *bp)
 	if (rv == (ssize_t)bytes)
 		return 0;
 	if (rv == -1)		/* write error */
-		return errno;
+		return e;
 	return EAGAIN;
 }
 
