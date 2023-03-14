@@ -26,7 +26,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_params.c,v 1.1.2.2 2020/06/20 15:46:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_params.c,v 1.1.2.3 2023/03/14 17:04:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -56,7 +56,7 @@ npf_param_general_register(npf_t *npf)
 		{
 			"ip4.reassembly",
 			&npf->ip4_reassembly,
-			.default_val = 0, // false
+			.default_val = 1, // true - host requirements
 			.min = 0, .max = 1
 		},
 		{
