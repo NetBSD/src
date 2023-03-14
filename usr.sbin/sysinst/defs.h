@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.88 2022/12/15 15:32:04 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.89 2023/03/14 09:54:40 kre Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -398,7 +398,7 @@ struct install_partition_desc {
 						 * updating, even if no
 						 * active partition remains. */
 	size_t num_write_back;			/* number of write_back */
-	bool cur_system;			/* target is the life system */
+	bool cur_system;			/* target is the live system */
 };
 
 /* variables */
