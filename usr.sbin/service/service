@@ -1,5 +1,5 @@
 #!/bin/sh
-#    $NetBSD: service,v 1.8 2017/06/05 09:20:05 sborrill Exp $
+#    $NetBSD: service,v 1.9 2023/03/14 06:19:35 kre Exp $
 #    service -- run or list system services
 #
 #  Taken from FreeBSD: releng/10.1/usr.sbin/service/service.sh 268098
@@ -34,93 +34,184 @@ export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 usage ()
 {
     local me="${0##*/}"
-    echo "usage: ${me} [-elv]"
-    echo "       ${me} [-ev] rc_script_name [rc_script_name2 [...]]"
-    echo "       ${me} [-v] rc_script_name action"
-    echo "       -e: List enabled scripts; check if given scripts are enabled"
-    echo "       -l: List all scripts in rcorder"
-    echo "       -v: Verbose (mention in which directory script is found)"
-    echo "rc_directories is currently set to ${rc_directories}"
-    exit 1
+
+    exec >&2
+
+    printf 'Usage:\t%s -l [-v]\n' "${me}"
+    printf '\t%s\n'							   \
+	"       List all scripts in rc order"				   \
+	"   -v: Prepend the value of rc_directories to the output"	   \
+	"${me} -e [-v]"							   \
+	"       Print names of all enabled scripts"			   \
+	"   -v: Include the value of rc_directories (to stderr)"	   \
+	"${me} -e [-v] rc_script_name [rc_script_name...]"		   \
+	"       Print path names of any given scripts which are enabled"   \
+	"   -v: Include the value of rc_directories (to stderr)"	   \
+	"${me} [-v] rc_script_name action"				   \
+	"       Run rc_script_name to perform the action specified"	   \
+	"   -v: Verbose (mention in which directory script was found)"
+    printf 'rc_directories is currently set to: %s\n' "${rc_directories}"
+    exit 2
 }
 
 # list all files in rc_directories with absolute pathnames
-# written to be compatible with ls(1) from pre netbsd-7
+# (don't use ls(1) so we get the pathnames, without using non-std options)
 _rc_files()
 {
-    local _d _f
-    for _d in ${rc_directories}; do
-         if [ -d "$_d" ]; then
-             for _f in "$_d"/*; do
-                 [ -f "$_f" -a -x "$_f" ] && echo "$_f"
-             done
-         fi
-    done | xargs rcorder -s nostart ${rc_rcorder_flags} 2>/dev/null
+    local _d _f IFS
+
+    IFS=$'\n'
+    rcorder -s nostart ${rc_rcorder_flags} $(
+	for _d in ${rc_directories}
+	do
+	    if [ -d "$_d" ]
+	    then
+		for _f in "$_d"/*
+		do
+		    if [ -f "$_f" ] && [ -x "$_f" ]
+		    then
+			printf '%s\n' "$_f"
+		    fi
+		done
+	    fi
+	done
+    )
     return 0
 }
 
-while getopts elv o; do
+_rc_dirs()
+{
+    if "${VERBOSE}"
+    then
+	printf 'rc_directories is %s\n' "${rc_directories}"
+    fi
+}
+
+ENABLED=false
+LIST=false
+VERBOSE=false
+
+while getopts elv o
+do
     case "$o" in
-        e) ENABLED=1 ;;
-        l) LIST=1 ;;
-        v) VERBOSE=1 ;;
-        *) usage ;;
+	e) ENABLED=true	;;
+	l) LIST=true	;;
+	v) VERBOSE=true	;;
+	*) usage	;;
     esac
 done
-shift $( expr $OPTIND - 1 )
+shift $(( OPTIND - 1 ))
 
-[ -n "${ENABLED}" -a -n "${LIST}" ] && usage
-
-. /etc/rc.subr
-load_rc_config :
-
-if [ -n "${ENABLED}" ]; then
-    [ -n "${VERBOSE}" ] && echo "rc_directories is ${rc_directories}" >&2
-    flt=cat
-    if [ $# -gt 0 ]
-    then
-        flt=$( echo $* | sed -e 's; ;|;g' -e 's;^;egrep /(;' -e 's;$;)$;' )
-    fi
-    _rc_files | $flt | while read file
-    do
-        if grep -q ^rcvar "$file"; then
-            eval $( grep -m 1 ^name= "$file" )
-            eval $( grep -m 1 ^rcvar "$file" )
-            if [ -n "${rcvar}" ]; then
-                load_rc_config ${rcvar}
-                checkyesno ${rcvar} 2>/dev/null && echo ${file}
-            fi
-        fi
-    done
-    exit 0
+if "${ENABLED}" && "${LIST}"
+then
+    usage
 fi
 
-if [ -n "${LIST}" ]; then
-    [ -n "${VERBOSE}" ] && echo "rc_directories is ${rc_directories}" >&2
+if ! [ -f /etc/rc.subr ]
+then
+	printf >&2 '%s: The rc system seems to be missing /etc/rc.subr\n' \
+	    "${0##*/}"
+	exit 3
+fi
+
+if command . /etc/rc.subr
+then
+	load_rc_config :
+else
+	printf >&2 '%s: Problems running /etc/rc.subr.   Aborting\n'  "${0##*/}"
+	exit 3
+fi
+
+if "${ENABLED}"
+then
+    _rc_dirs >&2
+    case $# in
+    0)	flt=cat;;
+    *)
+	IFS='|'
+	flt="egrep '/(${*})\$'"
+	;;
+    esac
+    if ( set +o pipefail ) 2>/dev/null
+    then
+	# If this option exists, disable it.
+	set +o pipefail
+    fi
+    IFS=
+    _rc_files | eval "$flt" |
+    {
+	found=false
+	while read file
+	do
+	    if grep -q '^rcvar=' "$file"
+	    then
+		unset name rcvar
+		eval "$( sed -n < "$file" -e '/^name=/p' -e '/^rcvar=/p' )"
+		if [ -n "${rcvar}" ]
+		then
+		    load_rc_config "${rcvar}"
+		    if checkyesno "${rcvar}" 2>/dev/null
+		    then		
+			printf '%s\n' "${file}"
+			found=true
+		    fi
+		fi
+	    else
+		# pseudo scripts like LOGIN DAEMON ... have no rcvar,
+		# but aren't intended to be run either, those contain
+		# no lower case letters in their names.
+		#
+		# Other scripts without an rcvar are always enabled
+		#
+		# So require at least one lower case letter in the name
+		# in order to run a script without an rcvar, and include
+		# them in the list of enabled scripts.
+
+		case "${file##*/}" in
+		*[:lower:]*) printf '%s\n' "${file}"; found=true;;
+		esac
+	    fi
+	done
+	"$found"
+    }
+    exit "$?"
+fi
+
+if "${LIST}"
+then
+    _rc_dirs
     _rc_files
     exit 0
 fi
 
-if [ $# -eq 2 ]; then
-    script=$1
-    arg=$2
-else
+if [ "$#" -ne 2 ]
+then
     usage
 fi
 
-for dir in ${rc_directories}; do
-    if [ -x "${dir}/${script}" ]; then
-        [ -n "${VERBOSE}" ] && echo "${script} is located in ${dir}" >&2
-        # run as in /etc/rc
-        cd /
-        umask 022
-        exec env -i \
-            HOME=/ PATH=/sbin:/bin:/usr/sbin:/usr/bin \
-                "${dir}/${script}" "${arg}"
-        echo "Failed to exec ${dir}/${script} ${arg}" >&2
-        exit 255
+script=$1
+arg=$2
+
+for dir in ${rc_directories}
+do
+    if [ -x "${dir}/${script}" ]
+    then
+	if "${VERBOSE}"
+	then
+	    printf >&2 '%s script is located in %s\n' "${script}" "${dir}"
+	fi
+
+	# run as in /etc/rc
+	cd /
+	umask 022
+	exec env -i \
+	    HOME=/ PATH=/sbin:/bin:/usr/sbin:/usr/bin \
+		"${dir}/${script}" "${arg}"
+	printf >&2 'Failed to exec %s (status %d)\n' \
+		"${dir}/${script} ${arg}" "$?"
+	exit 126
     fi
 done
 
-echo "${script} does not exist in ${rc_directories}" >&2
+printf >&2 '%s does not exist in%s\n' "${script}" "${rc_directories}"
 exit 1
