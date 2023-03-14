@@ -122,6 +122,7 @@ void *		nbuf_ensure_writable(nbuf_t *, size_t);
 
 bool		nbuf_cksum_barrier(nbuf_t *, int);
 int		nbuf_add_tag(nbuf_t *, uint32_t);
+int		npf_mbuf_add_tag(nbuf_t *, struct mbuf *, uint32_t);
 int		nbuf_find_tag(nbuf_t *, uint32_t *);
 
 /*
