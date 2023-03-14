@@ -1,6 +1,7 @@
-
-datadir=/usr/X11R7/share
-xkb_base=/usr/X11R7/share/X11/xkb
+prefix=@prefix@
+datarootdir=@datarootdir@
+datadir=@datadir@
+xkb_base=@xkb_base@
 
 Name: XKeyboardConfig
 Description: X Keyboard configuration data
