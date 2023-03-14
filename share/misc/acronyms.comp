@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.346 2023/03/07 01:29:21 thorpej Exp $
+$NetBSD: acronyms.comp,v 1.347 2023/03/14 19:04:17 fcambus Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1566,6 +1566,7 @@ SPD	serial presence detect
 SPDIF	Sony/Philips digital interface format
 SPI	serial peripheral interface
 SPI	stateful packet inspection
+SPIR	standard portable intermediate representation
 SPL	system interrupt priority level
 SPL	spinlock
 SPMD	single process, multiple data
