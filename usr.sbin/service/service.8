@@ -1,4 +1,4 @@
-.\"	$NetBSD: service.8,v 1.4 2015/04/02 18:41:22 ast Exp $
+.\"	$NetBSD: service.8,v 1.5 2023/03/14 06:19:35 kre Exp $
 .\"
 .\" Copyright (c) 2009 Douglas Barton
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd March 20, 2015
+.Dd March 12, 2023
 .Dt SERVICE 8
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Op Fl elv
 .Nm
 .Op Fl ev
-.Ar rc_script_name1 Op Ar rc_script_name2 Op Ar ...
+.Ar rc_script_name Op Ar rc_script_name Ar ...
 .Nm
 .Op Fl v
 .Ar rc_script_name action
@@ -81,6 +81,9 @@ List all files in
 A script will be listed unless it has the
 .Qq nostart
 keyword enabled.
+Scripts are listed in the order the
+.EV rc.d
+system runs them at system boot time.
 .It Fl v
 Report what
 .Ev rc_directories
@@ -90,6 +93,13 @@ was found when an
 .Ar action
 is invoked.
 .El
+.Pp
+The
+.Fl e
+and
+.Fl l
+options are mutually exclusive.
+Only one of those may be used.
 .Sh ENVIRONMENT
 When used to invoke
 .Ev rc.d scripts, the
@@ -113,11 +123,23 @@ The
 is typically one of
 .Ar start ,
 .Ar restart ,
+or
 .Ar status ,
-or any other argument supported by the
+but can be any other argument supported by the
 .Fa rc_script_name .
 .Sh EXIT STATUS
-.Ex -std
+.Nm
+exits with status 0 when successful,
+status 1 when
+.Fl e
+was given and no enabled script was found,
+or when an
+.Ar action
+is to be performed, but the
+.Ar rc_script_name
+given does not exist,
+or
+status >1 if another error occurs.
 .Sh EXAMPLES
 These are typical usages of the
 .Nm
@@ -131,6 +153,13 @@ Starting sshd.
 $ service -v inetd status
 inetd is located in /etc/rc.d
 inetd is running as pid 1713.
+.Ed
+.Bd -literal
+$ if service -e inetd >/dev/null; then echo inetd is enabled; fi
+inetd is enabled
+.Ed
+.Bd -literal
+$ if service -e foobar >/dev/null; then echo foobar is enabled; fi
 .Ed
 .Bd -literal
 $ service -ve ccd motd hostapd my_pkg
