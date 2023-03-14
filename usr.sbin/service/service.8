@@ -1,4 +1,4 @@
-.\"	$NetBSD: service.8,v 1.5 2023/03/14 06:19:35 kre Exp $
+.\"	$NetBSD: service.8,v 1.6 2023/03/14 21:50:25 uwe Exp $
 .\"
 .\" Copyright (c) 2009 Douglas Barton
 .\" All rights reserved.
@@ -46,16 +46,16 @@ command is a simple interface to the services startup system.
 .Pp
 Its purpose is to list the services or invoke actions on them
 as provided by the
-.Ev rc.d
+.Xr rc.d 8
 scripts.
 When used to invoke
-.Ev rc.d
+.Pa rc.d
 scripts,
 .Nm
 will set the same environment that is used at boot time.
 .Pp
 The options are as follows:
-.Bl -tag -width F1
+.Bl -tag -width Fl
 .It Fl e
 List services that are enabled.
 The list of scripts is compiled using
@@ -63,7 +63,7 @@ The list of scripts is compiled using
 the same way as is done in
 .Xr rc 8 ;
 each script is first checked for an
-.Qq rcvar
+.Dv rcvar
 assignment and if present,
 checked to see if it is enabled.
 If one or more
@@ -75,21 +75,24 @@ arguments are always specified without a path prefix.
 .It Fl l
 List all files in
 .Pa /etc/rc.d
-(the default of
-.Ev rc_directories as defined in
-.Xr rc.conf 5 ) .
+.Po
+the default of
+.Ev rc_directories
+as defined in
+.Xr rc.conf 5
+.Pc .
 A script will be listed unless it has the
-.Qq nostart
+.Dv nostart
 keyword enabled.
 Scripts are listed in the order the
-.EV rc.d
+.Pa rc.d
 system runs them at system boot time.
 .It Fl v
 Report what
-.Ev rc_directories
+.Dv rc_directories
 are defined or in which directory the
-.Ev rc.d script
-was found when an
+.Pa rc.d
+script was found when an
 .Ar action
 is invoked.
 .El
@@ -102,29 +105,30 @@ options are mutually exclusive.
 Only one of those may be used.
 .Sh ENVIRONMENT
 When used to invoke
-.Ev rc.d scripts, the
+.Pa rc.d
+scripts, the
 .Nm
 command sets
-.Ev umask
+.Xr umask 2
 to
-.Fa 022 ,
+.Li 022 ,
 .Ev HOME
 to
 .Pa / ,
 and
 .Ev PATH
 to
-.Pa /sbin:/bin:/usr/sbin:/usr/bin
+.Li /sbin:/bin:/usr/sbin:/usr/bin
 which is how they are set in
 .Pa /etc/rc
 at boot time.
 The
 .Ar action
 is typically one of
-.Ar start ,
-.Ar restart ,
+.Cm start ,
+.Cm restart ,
 or
-.Ar status ,
+.Cm status ,
 but can be any other argument supported by the
 .Fa rc_script_name .
 .Sh EXIT STATUS
@@ -174,11 +178,11 @@ In the last example,
 was apparently left disabled and the additional directory
 .Pa /usr/pkg/etc/rc.d
 was configured by redefining the variable
-.Ev rc_directories
+.Dv rc_directories
 in
 .Pa rc.conf ;
 further,
-.Sy my_pkg=yes
+.Li my_pkg=yes
 must have also been set.
 .Sh SEE ALSO
 .Xr rc.conf 5 ,
