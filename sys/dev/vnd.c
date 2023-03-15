@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.272 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.272.4.1 2023/03/15 18:43:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272.4.1 2023/03/15 18:43:28 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -552,11 +552,18 @@ vndstrategy(struct buf *bp)
 		printf("vndstrategy(%p): unit %d\n", bp, unit);
 #endif
 	if ((vnd->sc_flags & VNF_USE_VN_RDWR)) {
-		KASSERT(vnd->sc_pending >= 0 &&
-		    vnd->sc_pending <= VND_MAXPENDING(vnd));
-		while (vnd->sc_pending == VND_MAXPENDING(vnd))
-			tsleep(&vnd->sc_pending, PRIBIO, "vndpc", 0);
+		/*
+		 * Limit the number of pending requests to not exhaust
+		 * resources needed for I/O but always allow the worker
+		 * thread to add requests, as a wedge on vnd queues
+		 * requests with biodone() -> dkstart() -> vndstrategy().
+		 */
+		if (curlwp != vnd->sc_kthread) {
+			while (vnd->sc_pending >= VND_MAXPENDING(vnd))
+				tsleep(&vnd->sc_pending, PRIBIO, "vndpc", 0);
+		}
 		vnd->sc_pending++;
+		KASSERT(vnd->sc_pending > 0);
 	}
 	bufq_put(vnd->sc_tab, bp);
 	wakeup(&vnd->sc_tab);
@@ -673,8 +680,7 @@ vndthread(void *arg)
 			continue;
 		};
 		if ((vnd->sc_flags & VNF_USE_VN_RDWR)) {
-			KASSERT(vnd->sc_pending > 0 &&
-			    vnd->sc_pending <= VND_MAXPENDING(vnd));
+			KASSERT(vnd->sc_pending > 0);
 			if (vnd->sc_pending-- == VND_MAXPENDING(vnd))
 				wakeup(&vnd->sc_pending);
 		}
