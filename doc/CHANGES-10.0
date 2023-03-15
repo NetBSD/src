@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.44 2023/03/14 17:15:36 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.45 2023/03/15 18:42:44 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1482,4 +1482,9 @@ external/mit/xorg/lib/xkeyboard-config/xkeyboard-config.pc.in 1.2
 
 	Fix xkb_base in the pkg-config file and mapage for xkeyboard-config.
 	[nros, ticket #120]
+
+sys/dev/vnd.c					1.288
+
+	vnd(4): PR 57263: avoid deadlock.
+	[hannken, ticket #121]
 
