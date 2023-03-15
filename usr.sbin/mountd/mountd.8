@@ -1,4 +1,4 @@
-.\"	$NetBSD: mountd.8,v 1.40 2021/02/16 10:01:55 wiz Exp $
+.\"	$NetBSD: mountd.8,v 1.41 2023/03/15 20:33:04 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,7 +59,7 @@ Appendix I.
 .Pp
 Options and operands available for
 .Nm mountd :
-.Bl -tag -width Ds
+.Bl -tag -width Fl
 .It Fl d
 Enable debugging mode.
 .Nm
@@ -68,7 +68,7 @@ debugging messages to stderr.
 .It Fl N
 Do not require privileged ports for mount or NFS RPC calls.
 This option is equivalent to specifying
-.Dq -noresvport -noresvmnt
+.Ql -noresvport -noresvmnt
 on every export.
 See
 .Xr exports 5
@@ -94,13 +94,15 @@ to bind to the given port.
 If this option is not given,
 .Nm
 may bind to every anonymous port
-(in the range 600-1023) which causes trouble when trying to use
+(in the range 600\^\(en1023) which causes trouble when trying to use
 NFS through a firewall.
 .It Ar exportsfile
 The
 .Ar exportsfile
 argument specifies an alternative location
-for the exports file.
+for the
+.Xr exports 5
+file.
 Multiple exports files can be defined.
 .El
 .Pp
@@ -115,19 +117,23 @@ After changing the exports file,
 a hangup signal should be sent to the
 .Nm
 daemon to get it to reload the export information.
-After sending the SIGHUP
-(kill \-s HUP `cat /var/run/mountd.pid`),
+After sending the
+.Dv SIGHUP
+.Pp
+.Dl kill \-s HUP $(cat /var/run/mountd.pid)
+.Pp
 check the syslog output to see if
 .Nm
 logged any parsing errors in the exports file.
 .Pp
-After receiving SIGTERM,
+After receiving
+.Dv SIGTERM ,
 .Nm
 sends a broadcast request to remove the mount list from all the clients.
 This can take a long time, since the broadcast request waits for each
 client to respond.
 .Sh FILES
-.Bl -tag -width /var/run/mountd.pid -compact
+.Bl -tag -width ".Pa /var/run/mountd.pid" -compact
 .It Pa /etc/exports
 the list of exported filesystems
 .It Pa /var/run/mountd.pid
