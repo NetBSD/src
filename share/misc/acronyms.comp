@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.347 2023/03/14 19:04:17 fcambus Exp $
+$NetBSD: acronyms.comp,v 1.348 2023/03/15 01:25:02 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -176,6 +176,7 @@ BPI	bits per inch
 BPM	business process modelling
 BPS	bits per second
 BPSK	binary phase shift keying
+BQP	bounded-error quantum polynomial time
 BQS	Berkeley quality software
 BRE	basic regular expression
 BS	backspace
@@ -839,6 +840,7 @@ KB	kilobyte
 KBD	keyboard
 KBD	kilobaud
 KCS	keyboard controller style
+KEM	key encapsulation mechanism
 KLOC	thousand lines of code
 KMS	kernel-mode setting
 KPI	kernel programming interface
@@ -1281,6 +1283,7 @@ PPR	processor programming reference
 PPT	powerpoint
 PPT	punched paper tape
 PPU	physics processing unit
+PQC	post-quantum cryptography
 PRAM	Parameter RAM
 PRBS	pseudorandom bit sequence
 PRG	pseudorandom generator
