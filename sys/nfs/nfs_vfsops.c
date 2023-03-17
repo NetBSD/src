@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.243 2021/06/13 10:25:11 mlelstv Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.244 2023/03/17 00:46:35 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.243 2021/06/13 10:25:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.244 2023/03/17 00:46:35 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -1135,6 +1135,7 @@ nfs_start(struct mount *mp, int flags)
 void
 nfs_vfs_init(void)
 {
+	unsigned scale;
 
 	/* Initialize NFS server / client shared data. */
 	nfs_init();
@@ -1145,7 +1146,8 @@ nfs_vfs_init(void)
 	/* Initialize the iod structures */
 	nfs_iodinit();
 
-	nfs_commitsize = uvmexp.npages << (PAGE_SHIFT - 4);
+	scale = PAGE_SHIFT - 4;
+	nfs_commitsize = uimin(uvmexp.npages, INT_MAX >> scale) << scale;
 }
 
 void
