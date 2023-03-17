@@ -1,4 +1,4 @@
-/* $NetBSD: parse.y,v 1.3 2020/04/23 00:29:00 joerg Exp $ */
+/* $NetBSD: parse.y,v 1.4 2023/03/17 17:12:54 andvar Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: parse.y,v 1.3 2020/04/23 00:29:00 joerg Exp $");
+__RCSID("$NetBSD: parse.y,v 1.4 2023/03/17 17:12:54 andvar Exp $");
 #endif
 
 #include <stdio.h>
@@ -490,7 +490,7 @@ add_state(void)
 		allocated = 5;
 		states->ps_buf = malloc(allocated * sizeof(struct pfsync_state));
 		if (states->ps_buf == NULL)
-			yyfatal("Not enougth memory");
+			yyfatal("Not enough memory");
 	}
 
 	if (allocated == (states->ps_len / sizeof(struct pfsync_state))) {
@@ -499,7 +499,7 @@ add_state(void)
 		buf = realloc(states->ps_buf, allocated * sizeof(struct pfsync_state));
 		if (buf == NULL) {
 			free(states->ps_buf);
-			yyfatal("Not enougth memory");
+			yyfatal("Not enough memory");
 		}
 		states->ps_buf = buf;
 	}
