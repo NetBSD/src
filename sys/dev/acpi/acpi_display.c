@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_display.c,v 1.22 2022/02/27 21:21:51 riastradh Exp $	*/
+/*	$NetBSD: acpi_display.c,v 1.23 2023/03/17 17:16:06 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.22 2022/02/27 21:21:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_display.c,v 1.23 2023/03/17 17:16:06 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -848,7 +848,7 @@ acpidisp_out_capabilities(const struct acpi_devnode *ad)
 
 	cap = 0;
 
-	/* List of Brigthness levels */
+	/* List of Brightness levels */
 	if (acpidisp_has_method(ad->ad_handle, "_BCL", ACPI_TYPE_PACKAGE))
 		cap |= ACPI_DISP_OUT_CAP__BCL;
 
