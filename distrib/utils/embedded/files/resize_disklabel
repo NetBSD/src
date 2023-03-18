@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: resize_disklabel,v 1.4 2023/02/18 07:58:34 mlelstv Exp $
+# $NetBSD: resize_disklabel,v 1.5 2023/03/18 11:36:23 mlelstv Exp $
 #
 
 # PROVIDE: resize_disklabel
@@ -27,8 +27,7 @@ get_total_sectors()
 	local disk
 
 	disk=$1
-	/sbin/disklabel -t "$disk" \
-	| sed -ne 's/.*:su#\([0-9]*\):.*/\1/p'
+	/sbin/drvctl -p "$disk" disk-info/geometry/sectors-per-unit
 }
 
 get_rawpart_sectors()
