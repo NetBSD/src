@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.22 2019/02/04 11:16:41 kre Exp $	*/
+/*	$NetBSD: error.h,v 1.23 2023/03/19 17:45:29 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,9 +40,9 @@
  * Types of operations (passed to the errmsg routine).
  */
 
-#define E_OPEN 01	/* opening a file */
-#define E_CREAT 02	/* creating a file */
-#define E_EXEC 04	/* executing a program */
+#define E_OPEN		0x1	/* opening a file */
+#define E_CREAT		0x2	/* creating a file */
+#define E_EXEC		0x4	/* executing a program */
 
 
 /*
