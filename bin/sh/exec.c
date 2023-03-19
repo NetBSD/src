@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.57 2021/11/16 11:28:29 kre Exp $	*/
+/*	$NetBSD: exec.c,v 1.58 2023/03/19 17:55:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.57 2021/11/16 11:28:29 kre Exp $");
+__RCSID("$NetBSD: exec.c,v 1.58 2023/03/19 17:55:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -125,18 +125,56 @@ void
 shellexec(char **argv, char **envp, const char *path, int idx, int vforked)
 {
 	char *cmdname;
-	int e;
+	int e, action;
+	struct stat statb;
+
+	action = E_EXEC;
 
 	if (strchr(argv[0], '/') != NULL) {
 		tryexec(argv[0], argv, envp, vforked);
 		e = errno;
+		if (e == EACCES && stat(argv[0], &statb) == -1)
+			action = E_OPEN;
 	} else {
 		e = ENOENT;
 		while ((cmdname = padvance(&path, argv[0], 1)) != NULL) {
 			if (--idx < 0 && pathopt == NULL) {
+				/*
+				 * tryexec() does not return if it works.
+				 */
 				tryexec(cmdname, argv, envp, vforked);
-				if (errno != ENOENT && errno != ENOTDIR)
-					e = errno;
+				/*
+				 * If do not already have a meaningful error
+				 * from earlier in the PATH, examine this one
+				 * if it is a simple "not found", just keep
+				 * searching.
+				 */
+				if (e == ENOENT &&
+				    errno != ENOENT && errno != ENOTDIR) {
+					/*
+					 * If the error is from permission
+					 * denied on the path search (a call
+					 * to stat() also fails) ignore it
+					 * (just continue with the search)
+					 * If it is EACCESS and the file exists
+					 * (the stat succeeds) that means no
+					 * 'x' perm on the file itself, which
+					 * is a meaningful error, this will be
+					 * the one reported if no later PATH
+					 * element actually succeeds.
+					 */
+					if (errno == EACCES) {
+						if (stat(cmdname, &statb) != -1)
+							e = EACCES;
+					} else {
+						/*
+						 * any other error we will
+						 * remember as the significant
+						 * error
+						 */
+						e = errno;
+					}
+				}
 			}
 			stunalloc(cmdname);
 		}
@@ -145,11 +183,17 @@ shellexec(char **argv, char **envp, const char *path, int idx, int vforked)
 	/* Map to POSIX errors */
 	switch (e) {
 	case EACCES:	/* particularly this (unless no search perm) */
-		/*
-		 * should perhaps check if this EACCES is an exec()
-		 * EACESS or a namei() EACESS - the latter should be 127
-		 * - but not today
-		 */
+		if (action == E_OPEN) {
+			/*
+			 * this is an EACCES from namei
+			 * ie: no permission to search the path given
+			 * rather than an EACCESS from exec
+			 * ie: no 'x' bit on the file to be executed
+			 */
+			exerrno = 127;
+			break;
+		}
+		/* FALLTHROUGH */
 	case EINVAL:	/* also explicitly these */
 	case ENOEXEC:
 	default:	/* and anything else */
@@ -166,7 +210,7 @@ shellexec(char **argv, char **envp, const char *path, int idx, int vforked)
 	CTRACE(DBG_ERRS|DBG_CMDS|DBG_EVAL,
 	    ("shellexec failed for %s, errno %d, vforked %d, suppressint %d\n",
 		argv[0], e, vforked, suppressint));
-	exerror(EXEXEC, "%s: %s", argv[0], errmsg(e, E_EXEC));
+	exerror(EXEXEC, "%s: %s", argv[0], errmsg(e, action));
 	/* NOTREACHED */
 }
 

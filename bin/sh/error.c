@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.44 2021/11/10 15:26:34 kre Exp $	*/
+/*	$NetBSD: error.c,v 1.45 2023/03/19 17:55:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.44 2021/11/10 15:26:34 kre Exp $");
+__RCSID("$NetBSD: error.c,v 1.45 2023/03/19 17:55:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,6 +310,7 @@ struct errname {
 
 STATIC const struct errname errormsg[] = {
 	{ EINTR,	ALL,	"interrupted" },
+	{ EACCES,	E_EXEC,	"no execute permission" },
 	{ EACCES,	ALL,	"permission denied" },
 	{ EIO,		ALL,	"I/O error" },
 	{ EEXIST,	ALL,	"file exists" },
