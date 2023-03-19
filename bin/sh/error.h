@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.23 2023/03/19 17:45:29 kre Exp $	*/
+/*	$NetBSD: error.h,v 1.24 2023/03/19 17:47:48 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -114,10 +114,9 @@ void sh_exit(int) __dead;
 
 /*
  * BSD setjmp saves the signal mask, which violates ANSI C and takes time,
- * so we use _setjmp instead.
+ * so we use sigsetjmp instead, and explicitly do not save it.
+ * sh does a lot of setjmp() calls (fewer longjmp though).
  */
 
-#if defined(BSD) && !defined(__SVR4)
-#define setjmp(jmploc)	_setjmp(jmploc)
-#define longjmp(jmploc, val)	_longjmp(jmploc, val)
-#endif
+#define setjmp(jmploc)		sigsetjmp((jmploc), 0)
+#define longjmp(jmploc, val)	siglongjmp((jmploc), (val))
