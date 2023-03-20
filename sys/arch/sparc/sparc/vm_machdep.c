@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.107 2012/02/19 21:06:30 rmind Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.108 2023/03/20 11:19:29 hannken Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.107 2012/02/19 21:06:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.108 2023/03/20 11:19:29 hannken Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -268,8 +268,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2,
 	 * to user mode.
 	 */
 	/*tf2->tf_psr &= ~PSR_C;   -* success */
-	tf2->tf_pc = tf2->tf_npc;
-	tf2->tf_npc = tf2->tf_pc + 4;
 
 	/* Set return values in child mode */
 	tf2->tf_out[0] = 0;
