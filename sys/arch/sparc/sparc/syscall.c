@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.31 2019/04/06 11:54:20 kamil Exp $ */
+/*	$NetBSD: syscall.c,v 1.32 2023/03/20 11:19:29 hannken Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.31 2019/04/06 11:54:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.32 2023/03/20 11:19:29 hannken Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -106,6 +106,17 @@ handle_new(struct trapframe *tf, register_t *code)
 {
 	int new = *code & (SYSCALL_G7RFLAG|SYSCALL_G2RFLAG|SYSCALL_G5RFLAG);
 	*code &= ~(SYSCALL_G7RFLAG|SYSCALL_G2RFLAG|SYSCALL_G5RFLAG);
+	if (new) {
+		/* jmp %g5, (or %g2 or %g7, deprecated) on success */
+		if (__predict_true((new & SYSCALL_G5RFLAG) == SYSCALL_G5RFLAG))
+			tf->tf_pc = tf->tf_global[5];
+		else if (new & SYSCALL_G2RFLAG)
+			tf->tf_pc = tf->tf_global[2];
+		else
+			tf->tf_pc = tf->tf_global[7];
+	} else {
+		tf->tf_pc = tf->tf_npc;
+	}
 	return new;
 }
 
@@ -207,7 +218,7 @@ syscall(register_t code, struct trapframe *tf, register_t pc)
 	int error, new;
 	union args args;
 	union rval rval;
-	register_t i;
+	int opc, onpc;
 	u_quad_t sticks;
 
 	curcpu()->ci_data.cpu_nsyscall++;	/* XXXSMP */
@@ -221,7 +232,17 @@ syscall(register_t code, struct trapframe *tf, register_t pc)
 #ifdef FPU_DEBUG
 	save_fpu(tf);
 #endif
+
+	/*
+	 * save pc/npc in case of ERESTART
+	 * adjust pc/npc to new values
+	 */
+	opc = tf->tf_pc;
+	onpc = tf->tf_npc;
+
 	new = handle_new(tf, &code);
+
+	tf->tf_npc = tf->tf_pc + 4;
 
 	if ((error = getargs(p, tf, &code, &callp, &args)) != 0)
 		goto bad;
@@ -236,29 +257,17 @@ syscall(register_t code, struct trapframe *tf, register_t pc)
 		/* Note: fork() does not return here in the child */
 		tf->tf_out[0] = rval.o[0];
 		tf->tf_out[1] = rval.o[1];
-		if (new) {
-			/* jmp %g5, (or %g2 or %g7, deprecated) on success */
-			if (__predict_true((new & SYSCALL_G5RFLAG) ==
-					SYSCALL_G5RFLAG))
-				i = tf->tf_global[5];
-			else if (new & SYSCALL_G2RFLAG)
-				i = tf->tf_global[2];
-			else
-				i = tf->tf_global[7];
-			if (i & 3) {
-				error = EINVAL;
-				goto bad;
-			}
-		} else {
+		if (!new) {
 			/* old system call convention: clear C on success */
 			tf->tf_psr &= ~PSR_C;	/* success */
-			i = tf->tf_npc;
 		}
-		tf->tf_pc = i;
-		tf->tf_npc = i + 4;
 		break;
 
 	case ERESTART:
+		tf->tf_pc = opc;
+		tf->tf_npc = onpc;
+		break;
+
 	case EJUSTRETURN:
 		/* nothing to do */
 		break;
@@ -269,9 +278,8 @@ syscall(register_t code, struct trapframe *tf, register_t pc)
 			error = p->p_emul->e_errno[error];
 		tf->tf_out[0] = error;
 		tf->tf_psr |= PSR_C;	/* fail */
-		i = tf->tf_npc;
-		tf->tf_pc = i;
-		tf->tf_npc = i + 4;
+		tf->tf_pc = onpc;
+		tf->tf_npc = tf->tf_pc + 4;
 		break;
 	}
 
