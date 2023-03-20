@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_syscall_wait.h,v 1.2 2021/10/21 17:02:37 gson Exp $	*/
+/*	$NetBSD: t_ptrace_syscall_wait.h,v 1.3 2023/03/20 11:19:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -204,11 +204,6 @@ ATF_TC_BODY(syscallemu1, tc)
 	pid_t child, wpid;
 #if defined(TWAIT_HAVE_STATUS)
 	int status;
-#endif
-
-#if defined(__sparc__) && !defined(__sparc64__)
-	/* syscallemu does not work on sparc (32-bit) */
-	atf_tc_expect_fail("PR kern/52166");
 #endif
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
