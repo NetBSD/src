@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.232 2023/01/27 09:33:43 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.233 2023/03/20 09:15:52 ozaki-r Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.232 2023/01/27 09:33:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.233 2023/03/20 09:15:52 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1984,8 +1984,12 @@ ip6_raw_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			error = sockopt_getint(sopt, &optval);
 			if (error)
 				break;
-			if ((optval % 2) != 0) {
-				/* the API assumes even offset values */
+			if (optval < -1 ||
+			    (optval > 0 && (optval % 2) != 0)) {
+				/*
+				 * The API assumes non-negative even offset
+				 * values or -1 as a special value.
+				 */
 				error = EINVAL;
 			} else if (so->so_proto->pr_protocol ==
 			    IPPROTO_ICMPV6) {
