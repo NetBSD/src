@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.72 2022/07/30 14:13:27 riastradh Exp $ */
+/*	$NetBSD: types.h,v 1.73 2023/03/20 11:07:33 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,7 +136,7 @@ typedef unsigned long int	__register_t;
 #define	__HAVE_FAST_SOFTINTS
 #else
 #define	__HAVE_MM_MD_READWRITE
-#ifdef MULTIPROCESSOR
+#if !defined(_KERNEL) || defined(MULTIPROCESSOR)
 #define	__HAVE_HASHLOCKED_ATOMICS
 #endif
 #endif
