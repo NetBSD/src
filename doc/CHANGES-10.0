@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.45 2023/03/15 18:42:44 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.46 2023/03/20 17:25:14 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1487,4 +1487,14 @@ sys/dev/vnd.c					1.288
 
 	vnd(4): PR 57263: avoid deadlock.
 	[hannken, ticket #121]
+
+sys/dev/wscons/wsdisplay.c			1.166
+sys/dev/wscons/wsdisplayvar.h			1.57
+sys/external/bsd/drm2/dist/drm/amd/amdgpu/amdgpu_gart.c 1.11
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.37
+sys/external/bsd/drm2/radeon/radeon_pci.c	1.22
+
+	PRs 53126, 56714: fix nouveau and amdgpu booting via UEFI bootloader.
+	Fix bogus loop invariant assertions.
+	[mrg, ticket #122]
 
