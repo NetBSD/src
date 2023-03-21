@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -30,13 +30,12 @@
 #include "trad-frame.h"
 #include "tramp-frame.h"
 
-#include "common/gdb_assert.h"
-
 #include "solib-svr4.h"
 
 #include "sh-tdep.h"
-#include "sh-nbsd-tdep.h"
 #include "nbsd-tdep.h"
+#include "solib-svr4.h"
+#include "gdbarch.h"
 
 /* Convert a register number into an offset into a ptrace
    register structure.  */
@@ -171,7 +170,7 @@ shnbsd_sigtramp_cache_init (const struct tramp_frame *self,
 			    CORE_ADDR func)
 {
   struct gdbarch *gdbarch = get_frame_arch (next_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  // struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int sp_regnum = gdbarch_sp_regnum (gdbarch);
   CORE_ADDR sp = get_frame_register_unsigned (next_frame, sp_regnum);
   CORE_ADDR base;
@@ -199,6 +198,7 @@ shnbsd_init_abi (struct gdbarch_info info,
                   struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  nbsd_init_abi (info, gdbarch);
 
   tdep->core_gregmap = (struct sh_corefile_regmap *)gregs_table;
   tdep->sizeof_gregset = 88;
@@ -212,8 +212,9 @@ shnbsd_init_abi (struct gdbarch_info info,
   tramp_frame_prepend_unwinder (gdbarch, &shnbsd_sigtramp_si2);
 }
 
+void _initialize_shnbsd_tdep ();
 void
-_initialize_shnbsd_tdep (void)
+_initialize_shnbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_sh, 0, GDB_OSABI_NETBSD,
 			  shnbsd_init_abi);

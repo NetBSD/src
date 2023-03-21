@@ -1,6 +1,6 @@
 /* Unit tests for the cli-utils.c file.
 
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 
 #include "defs.h"
 #include "cli/cli-utils.h"
-#include "common/selftest.h"
+#include "gdbsupport/selftest.h"
 
 namespace selftests {
 namespace cli_utils {
@@ -78,19 +78,18 @@ test_number_or_range_parser ()
     number_or_range_parser minus_one ("-1");
 
     SELF_CHECK (!minus_one.finished ());
-    TRY
+    try
       {
 	minus_one.get_number ();
 	SELF_CHECK (false);
       }
-    CATCH (ex, RETURN_MASK_ERROR)
+    catch (const gdb_exception_error &ex)
       {
 	SELF_CHECK (ex.reason == RETURN_ERROR);
 	SELF_CHECK (ex.error == GENERIC_ERROR);
-	SELF_CHECK (strcmp (ex.message, "negative value") == 0);
+	SELF_CHECK (strcmp (ex.what (), "negative value") == 0);
 	SELF_CHECK (strcmp (minus_one.cur_tok (), "-1") == 0);
       }
-    END_CATCH;
   }
 
   /* Test that a - followed by not a number does not give an error.  */
@@ -103,148 +102,15 @@ test_number_or_range_parser ()
 }
 
 static void
-test_parse_flags ()
-{
-  const char *flags = "abc";
-  const char *non_flags_args = "non flags args";
-
-  /* Extract twice the same flag, separated by one space.  */
-  {
-    const char *t1 = "-a -a non flags args";
-
-    SELF_CHECK (parse_flags (&t1, flags) == 1);
-    SELF_CHECK (parse_flags (&t1, flags) == 1);
-    SELF_CHECK (strcmp (t1, non_flags_args) == 0);
-  }
-
-  /* Extract some flags, separated by one or more spaces.  */
-  {
-    const char *t2 = "-c     -b -c  -b -c    non flags args";
-
-    SELF_CHECK (parse_flags (&t2, flags) == 3);
-    SELF_CHECK (parse_flags (&t2, flags) == 2);
-    SELF_CHECK (parse_flags (&t2, flags) == 3);
-    SELF_CHECK (parse_flags (&t2, flags) == 2);
-    SELF_CHECK (parse_flags (&t2, flags) == 3);
-    SELF_CHECK (strcmp (t2, non_flags_args) == 0);
-  }
-
-  /* Check behaviour where there is no flag to extract.  */
-  {
-    const char *t3 = non_flags_args;
-
-    SELF_CHECK (parse_flags (&t3, flags) == 0);
-    SELF_CHECK (strcmp (t3, non_flags_args) == 0);
-  }
-
-  /* Extract 2 known flags in front of unknown flags.  */
-  {
-    const char *t4 = "-c -b -x -y -z -c";
-
-    SELF_CHECK (parse_flags (&t4, flags) == 3);
-    SELF_CHECK (parse_flags (&t4, flags) == 2);
-    SELF_CHECK (strcmp (t4, "-x -y -z -c") == 0);
-    SELF_CHECK (parse_flags (&t4, flags) == 0);
-    SELF_CHECK (strcmp (t4, "-x -y -z -c") == 0);
-  }
-
-  /* Check combined flags are not recognised.  */
-  {
-    const char *t5 = "-c -cb -c";
-
-    SELF_CHECK (parse_flags (&t5, flags) == 3);
-    SELF_CHECK (parse_flags (&t5, flags) == 0);
-    SELF_CHECK (strcmp (t5, "-cb -c") == 0);
-  }
-}
-
-static void
-test_parse_flags_qcs ()
-{
-  const char *non_flags_args = "non flags args";
-
-  /* Test parsing of 2 flags out of the known 3.  */
-  {
-    const char *t1 = "-q -s    non flags args";
-    qcs_flags flags;
-
-    SELF_CHECK (parse_flags_qcs ("test_parse_flags_qcs.t1.q",
-				 &t1,
-				 &flags) == 1);
-    SELF_CHECK (flags.quiet && !flags.cont && !flags.silent);
-    SELF_CHECK (parse_flags_qcs ("test_parse_flags_qcs.t1.s",
-				 &t1,
-				 &flags) == 1);
-    SELF_CHECK (flags.quiet && !flags.cont && flags.silent);
-    SELF_CHECK (strcmp (t1, non_flags_args) == 0);
-  }
-
-  /* Test parsing when there is no flag.  */
-  {
-    const char *t2 = "non flags args";
-    qcs_flags flags;
-
-    SELF_CHECK (parse_flags_qcs ("test_parse_flags_qcs.t2",
-				 &t2,
-				 &flags) == 0);
-    SELF_CHECK (!flags.quiet && !flags.cont && !flags.silent);
-    SELF_CHECK (strcmp (t2, non_flags_args) == 0);
-  }
-
-  /* Test parsing stops at a negative integer.  */
-  {
-    const char *t3 = "-123 non flags args";
-    const char *orig_t3 = t3;
-    qcs_flags flags;
-
-    SELF_CHECK (parse_flags_qcs ("test_parse_flags_qcs.t3",
-				 &t3,
-				 &flags) == 0);
-    SELF_CHECK (!flags.quiet && !flags.cont && !flags.silent);
-    SELF_CHECK (strcmp (t3, orig_t3) == 0);
-  }
-
-  /* Test mutual exclusion between -c and -s.  */
-  {
-    const char *t4 = "-c -s non flags args";
-    qcs_flags flags;
-
-    TRY
-      {
-	SELF_CHECK (parse_flags_qcs ("test_parse_flags_qcs.t4.cs",
-				     &t4,
-				     &flags) == 1);
-
-	(void) parse_flags_qcs ("test_parse_flags_qcs.t4.cs",
-				&t4,
-				&flags);
-	SELF_CHECK (false);
-      }
-    CATCH (ex, RETURN_MASK_ERROR)
-      {
-	SELF_CHECK (ex.reason == RETURN_ERROR);
-	SELF_CHECK (ex.error == GENERIC_ERROR);
-	SELF_CHECK
-	  (strcmp (ex.message,
-		   "test_parse_flags_qcs.t4.cs: "
-		   "-c and -s are mutually exclusive") == 0);
-      }
-    END_CATCH;
-  }
-
-}
-
-static void
 test_cli_utils ()
 {
   selftests::cli_utils::test_number_or_range_parser ();
-  selftests::cli_utils::test_parse_flags ();
-  selftests::cli_utils::test_parse_flags_qcs ();
 }
 
 }
 }
 
+void _initialize_cli_utils_selftests ();
 void
 _initialize_cli_utils_selftests ()
 {

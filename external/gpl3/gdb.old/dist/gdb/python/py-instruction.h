@@ -1,6 +1,6 @@
 /* Python interface to instruction objects.
 
-   Copyright 2017-2019 Free Software Foundation, Inc.
+   Copyright 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 
 /* Python type object for the abstract gdb.Instruction class.  This class
    contains getters for four elements: "pc" (int), "data" (buffer), "decode"
-   (str) and "size" (int) that must be overriden by sub classes.  */
+   (str) and "size" (int) that must be overridden by sub classes.  */
 extern PyTypeObject py_insn_type;
 
 #endif /* PYTHON_PY_INSTRUCTION_H */

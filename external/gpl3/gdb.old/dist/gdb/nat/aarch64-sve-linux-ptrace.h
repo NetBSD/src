@@ -1,6 +1,6 @@
 /* Common target dependent for AArch64 systems.
 
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -39,17 +39,25 @@
 
 uint64_t aarch64_sve_get_vq (int tid);
 
+/* Set VQ in the kernel for the given tid, using either the value VQ or
+   reading from the register VG in the register buffer.  */
+
+bool aarch64_sve_set_vq (int tid, uint64_t vq);
+bool aarch64_sve_set_vq (int tid, struct reg_buffer_common *reg_buf);
+
 /* Read the current SVE register set using ptrace, allocating space as
    required.  */
 
 extern std::unique_ptr<gdb_byte[]> aarch64_sve_get_sveregs (int tid);
 
-/* Put the registers from linux structure buf into register buffer.  */
+/* Put the registers from linux structure buf into register buffer.  Assumes the
+   vector lengths in the register buffer match the size in the kernel.  */
 
 extern void aarch64_sve_regs_copy_to_reg_buf (struct reg_buffer_common *reg_buf,
 					      const void *buf);
 
-/* Put the registers from register buffer into linux structure buf.  */
+/* Put the registers from register buffer into linux structure buf.  Assumes the
+   vector lengths in the register buffer match the size in the kernel.  */
 
 extern void
 aarch64_sve_regs_copy_from_reg_buf (const struct reg_buffer_common *reg_buf,

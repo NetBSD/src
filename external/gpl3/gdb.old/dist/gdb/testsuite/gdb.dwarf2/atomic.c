@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2004-2019 Free Software Foundation, Inc.
+   Copyright 2004-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,15 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* Dummy main function.  */
-
-int
-main (void)
-{
-  asm ("main_label: .globl main_label");
-  return 0;
-}
-
 /* dummy f function, DWARF will describe arguments and type differently.  */
 int
 f (char *x)
@@ -32,3 +23,13 @@ f (char *x)
   return 0;
 }
 
+/* Dummy main function.  */
+
+int
+main (void)
+{
+  asm ("main_label: .globl main_label");
+
+  f (0);
+  return 0;
+}

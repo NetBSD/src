@@ -1,6 +1,6 @@
 /* Target-dependent code for Motorola 68000 BSD's.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -152,8 +152,9 @@ m68kbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 }
 
+void _initialize_m68kbsd_tdep ();
 void
-_initialize_m68kbsd_tdep (void)
+_initialize_m68kbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_m68k, 0, GDB_OSABI_NETBSD,
 			  m68kbsd_init_abi);

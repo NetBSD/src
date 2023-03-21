@@ -1,6 +1,6 @@
 // { dg-options "-std=gnu++17" }
 
-// Copyright (C) 2013-2019 Free Software Foundation, Inc.
+// Copyright (C) 2013-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -21,8 +21,8 @@
 
 namespace operations_data_1 {
 
-int
-test01()
+static int
+test01 ()
 {
   gdb::string_view empty;
 
@@ -33,8 +33,8 @@ test01()
   return 0;
 }
 
-int
-main()
+static int
+main ()
 { 
   test01();
 

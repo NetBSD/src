@@ -1,6 +1,6 @@
 /* Self tests for gdbarch for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,15 +18,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#if GDB_SELF_TEST
-#include "common/selftest.h"
+#include "gdbsupport/selftest.h"
 #include "selftest-arch.h"
-#include "inferior.h"
-#include "gdbthread.h"
 #include "target.h"
 #include "test-target.h"
 #include "target-float.h"
-#include "common/def-vector.h"
+#include "gdbsupport/def-vector.h"
+#include "gdbarch.h"
+#include "scoped-mock-context.h"
 
 namespace selftests {
 
@@ -70,45 +69,7 @@ register_to_value_test (struct gdbarch *gdbarch)
       builtin->builtin_char32,
     };
 
-  /* Error out if debugging something, because we're going to push the
-     test target, which would pop any existing target.  */
-  if (current_top_target ()->stratum () >= process_stratum)
-   error (_("target already pushed"));
-
-  /* Create a mock environment.  An inferior with a thread, with a
-     process_stratum target pushed.  */
-
-  test_target_ops mock_target;
-  ptid_t mock_ptid (1, 1);
-  inferior mock_inferior (mock_ptid.pid ());
-  address_space mock_aspace {};
-  mock_inferior.gdbarch = gdbarch;
-  mock_inferior.aspace = &mock_aspace;
-  thread_info mock_thread (&mock_inferior, mock_ptid);
-
-  scoped_restore restore_thread_list
-    = make_scoped_restore (&mock_inferior.thread_list, &mock_thread);
-
-  /* Add the mock inferior to the inferior list so that look ups by
-     target+ptid can find it.  */
-  scoped_restore restore_inferior_list
-    = make_scoped_restore (&inferior_list);
-  inferior_list = &mock_inferior;
-
-  /* Switch to the mock inferior.  */
-  scoped_restore_current_inferior restore_current_inferior;
-  set_current_inferior (&mock_inferior);
-
-  /* Push the process_stratum target so we can mock accessing
-     registers.  */
-  push_target (&mock_target);
-
-  /* Pop it again on exit (return/exception).  */
-  SCOPE_EXIT { pop_all_targets_at_and_above (process_stratum); };
-
-  /* Switch to the mock thread.  */
-  scoped_restore restore_inferior_ptid
-    = make_scoped_restore (&inferior_ptid, mock_ptid);
+  scoped_mock_context<test_target_ops> mockctx (gdbarch);
 
   struct frame_info *frame = get_current_frame ();
   const int num_regs = gdbarch_num_cooked_regs (gdbarch);
@@ -123,7 +84,7 @@ register_to_value_test (struct gdbarch *gdbarch)
 	    {
 	      std::vector<gdb_byte> expected (TYPE_LENGTH (type), 0);
 
-	      if (TYPE_CODE (type) == TYPE_CODE_FLT)
+	      if (type->code () == TYPE_CODE_FLT)
 		{
 		  /* Generate valid float format.  */
 		  target_float_from_string (expected.data (), type, "1.25");
@@ -162,13 +123,11 @@ register_to_value_test (struct gdbarch *gdbarch)
 }
 
 } // namespace selftests
-#endif /* GDB_SELF_TEST */
 
+void _initialize_gdbarch_selftests ();
 void
-_initialize_gdbarch_selftests (void)
+_initialize_gdbarch_selftests ()
 {
-#if GDB_SELF_TEST
   selftests::register_test_foreach_arch ("register_to_value",
 					 selftests::register_to_value_test);
-#endif
 }

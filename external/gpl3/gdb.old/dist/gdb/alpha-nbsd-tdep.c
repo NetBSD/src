@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/alpha.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -22,6 +22,7 @@
 #include "defs.h"
 #include "frame.h"
 #include "gdbcore.h"
+#include "gdbarch.h"
 #include "osabi.h"
 #include "regcache.h"
 #include "regset.h"
@@ -160,6 +161,12 @@ static const struct regset alphanbsd_fpregset =
 
 /* Iterate over supported core file register note sections. */
 
+
+void
+alphanbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					iterate_over_regset_sections_cb *cb,
+					void *cb_data,
+					const struct regcache *regcache);
 void
 alphanbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 					iterate_over_regset_sections_cb *cb,
@@ -238,8 +245,8 @@ alphanbsd_sigtramp_cache_init (const struct tramp_frame *self,
 			       struct trad_frame_cache *this_cache,
 			       CORE_ADDR func)
 {
-  struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+  /* struct gdbarch *gdbarch = get_frame_arch (this_frame); */
+  /* struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch); */
   CORE_ADDR addr, sp;
   int i;
 
@@ -328,13 +335,14 @@ alphanbsd_init_abi (struct gdbarch_info info,
   /* Hook into the MDEBUG frame unwinder.  */
   alpha_mdebug_init_abi (info, gdbarch);
 
+  nbsd_init_abi (info, gdbarch);
+
   /* NetBSD/alpha does not provide single step support via ptrace(2); we
      must use software single-stepping.  */
   set_gdbarch_software_single_step (gdbarch, alpha_software_single_step);
   /* NetBSD/alpha has SVR4-style shared libraries.  */
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
-  set_gdbarch_skip_solib_resolver (gdbarch, nbsd_skip_solib_resolver);
 
 #ifdef notyet
   tdep->dynamic_sigtramp_offset = alphanbsd_sigtramp_offset;
@@ -354,8 +362,9 @@ alphanbsd_init_abi (struct gdbarch_info info,
 }
 
 
+void _initialize_alphanbsd_tdep ();
 void
-_initialize_alphanbsd_tdep (void)
+_initialize_alphanbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_alpha, 0, GDB_OSABI_NETBSD,
                           alphanbsd_init_abi);

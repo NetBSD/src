@@ -1,6 +1,6 @@
 /* Native-dependent code for MIPS systems running NetBSD.
 
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,9 +16,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
-#ifndef _KERNTYPES
-#define _KERNTYPES
-#endif
+
+/* We define this to get types like register_t.  */
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -158,8 +157,9 @@ mipsnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   return 0;
 }
 
+void _initialize_mipsnbsd_nat ();
 void
-_initialize_mipsnbsd_nat (void)
+_initialize_mipsnbsd_nat ()
 {
   add_inf_child_target (&the_mips_nbsd_nat_target);
   bsd_kvm_add_target (mipsnbsd_supply_pcb);

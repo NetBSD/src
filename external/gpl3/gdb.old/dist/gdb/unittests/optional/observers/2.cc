@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Free Software Foundation, Inc.
+// Copyright (C) 2013-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -24,7 +24,8 @@ struct value_type
 
 void* operator&(const value_type&) = delete;
 
-void test()
+static void
+test ()
 {
   gdb::optional<value_type> o { value_type { 51 } };
   VERIFY( o->i == 51 );

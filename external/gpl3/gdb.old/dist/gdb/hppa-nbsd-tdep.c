@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/hppa
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,9 @@
 
 #include "hppa-bsd-tdep.h"
 #include "hppa-tdep.h"
+#include "hppa-bsd-tdep.h"
+#include "nbsd-tdep.h"
+#include "gdbarch.h"
 
 /* From <machine/mcontext.h>.  */
 static int hppanbsd_mc_reg_offset[] =
@@ -232,6 +235,8 @@ hppanbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Obviously NetBSD is BSD-based.  */
   hppabsd_init_abi (info, gdbarch);
 
+  nbsd_init_abi (info, gdbarch);
+
   /* Core file support.  */
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, hppanbsd_iterate_over_regset_sections);
@@ -239,8 +244,9 @@ hppanbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tramp_frame_prepend_unwinder (gdbarch, &hppanbsd_sigtramp_si4);
 }
 
+void _initialize_hppanbsd_tdep ();
 void
-_initialize_hppanbsd_tdep (void)
+_initialize_hppanbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_hppa, 0, GDB_OSABI_NETBSD,
 			  hppanbsd_init_abi);

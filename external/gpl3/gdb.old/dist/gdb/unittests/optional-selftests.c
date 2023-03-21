@@ -1,6 +1,6 @@
 /* Self tests for optional for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "common/selftest.h"
-#include "common/gdb_optional.h"
+#include "gdbsupport/selftest.h"
+#include "gdbsupport/gdb_optional.h"
 
 /* Used by the included .cc files below.  Included here because the
    included test files are wrapped in a namespace.  */
@@ -87,6 +87,7 @@ run_tests ()
 } /* namespace optional */
 } /* namespace selftests */
 
+void _initialize_optional_selftests ();
 void
 _initialize_optional_selftests ()
 {

@@ -1,4 +1,4 @@
-# Copyright (C) 2017-2019 Free Software Foundation, Inc.
+# Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug rust}]} {
 set readelf_program [gdb_find_readelf]
 set result [catch "exec $readelf_program --debug-dump=info $binfile" output]
 if {$result != 0} {
-    untested "could not read ${binfile} with readelf"
+    untested "could not read [file tail ${binfile}] with readelf"
     return
 }
 

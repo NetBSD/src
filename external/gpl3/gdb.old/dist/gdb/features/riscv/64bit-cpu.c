@@ -1,7 +1,7 @@
 /* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
   Original: 64bit-cpu.xml */
 
-#include "common/tdesc.h"
+#include "gdbsupport/tdesc.h"
 
 static int
 create_feature_riscv_64bit_cpu (struct target_desc *result, long regnum)

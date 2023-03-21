@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/i386.
 
-   Copyright (C) 1988-2019 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -532,6 +532,8 @@ i386nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Obviously NetBSD is BSD-based.  */
   i386bsd_init_abi (info, gdbarch);
 
+  nbsd_init_abi (info, gdbarch);
+
   /* NetBSD has a different `struct reg'.  */
   tdep->gregset_reg_offset = i386nbsd_r_reg_offset;
   tdep->gregset_num_regs = ARRAY_SIZE (i386nbsd_r_reg_offset);
@@ -579,8 +581,9 @@ i386nbsdelf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->struct_return = pcc_struct_return;
 }
 
+void _initialize_i386nbsd_tdep ();
 void
-_initialize_i386nbsd_tdep (void)
+_initialize_i386nbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_NETBSD,
 			  i386nbsdelf_init_abi);

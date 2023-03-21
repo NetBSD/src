@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on ARM systems.
 
-   Copyright (C) 1988-2019 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,9 +17,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common/common-defs.h"
-#include "common/common-regcache.h"
+#include "gdbsupport/common-defs.h"
+#include "gdbsupport/common-regcache.h"
 #include "arm.h"
+
+#include "../features/arm/arm-core.c"
+#include "../features/arm/arm-vfpv2.c"
+#include "../features/arm/arm-vfpv3.c"
+#include "../features/arm/xscale-iwmmxt.c"
+#include "../features/arm/arm-m-profile.c"
+#include "../features/arm/arm-m-profile-with-fpa.c"
 
 /* See arm.h.  */
 
@@ -30,17 +37,6 @@ thumb_insn_size (unsigned short inst1)
     return 4;
   else
     return 2;
-}
-
-/* See arm.h.  */
-
-int
-bitcount (unsigned long val)
-{
-  int nbits;
-  for (nbits = 0; val != 0; nbits++)
-    val &= val - 1;		/* Delete rightmost 1-bit in val.  */
-  return nbits;
 }
 
 /* See arm.h.  */
@@ -371,4 +367,81 @@ shifted_reg_val (struct regcache *regcache, unsigned long inst,
     }
 
   return res & 0xffffffff;
+}
+
+/* See arch/arm.h.  */
+
+target_desc *
+arm_create_target_description (arm_fp_type fp_type)
+{
+  target_desc *tdesc = allocate_target_description ();
+
+#ifndef IN_PROCESS_AGENT
+  if (fp_type == ARM_FP_TYPE_IWMMXT)
+    set_tdesc_architecture (tdesc, "iwmmxt");
+  else
+    set_tdesc_architecture (tdesc, "arm");
+#endif
+
+  long regnum = 0;
+
+  regnum = create_feature_arm_arm_core (tdesc, regnum);
+
+  switch (fp_type)
+    {
+    case ARM_FP_TYPE_NONE:
+      break;
+
+    case ARM_FP_TYPE_VFPV2:
+      regnum = create_feature_arm_arm_vfpv2 (tdesc, regnum);
+      break;
+
+    case ARM_FP_TYPE_VFPV3:
+      regnum = create_feature_arm_arm_vfpv3 (tdesc, regnum);
+      break;
+
+    case ARM_FP_TYPE_IWMMXT:
+      regnum = create_feature_arm_xscale_iwmmxt (tdesc, regnum);
+      break;
+
+    default:
+      error (_("Invalid Arm FP type: %d"), fp_type);
+    }
+
+  return tdesc;
+}
+
+/* See arch/arm.h.  */
+
+target_desc *
+arm_create_mprofile_target_description (arm_m_profile_type m_type)
+{
+  target_desc *tdesc = allocate_target_description ();
+
+#ifndef IN_PROCESS_AGENT
+  set_tdesc_architecture (tdesc, "arm");
+#endif
+
+  long regnum = 0;
+
+  switch (m_type)
+    {
+    case ARM_M_TYPE_M_PROFILE:
+      regnum = create_feature_arm_arm_m_profile (tdesc, regnum);
+      break;
+
+    case ARM_M_TYPE_VFP_D16:
+      regnum = create_feature_arm_arm_m_profile (tdesc, regnum);
+      regnum = create_feature_arm_arm_vfpv2 (tdesc, regnum);
+      break;
+
+    case ARM_M_TYPE_WITH_FPA:
+      regnum = create_feature_arm_arm_m_profile_with_fpa (tdesc, regnum);
+      break;
+
+    default:
+      error (_("Invalid Arm M type: %d"), m_type);
+    }
+
+  return tdesc;
 }

@@ -1,4 +1,4 @@
-#   Copyright 2018-2019 Free Software Foundation, Inc.
+#   Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,9 @@ proc test_proc { name } {
 
     set resultlist [list]
 
-    set first [$real_name]
+    with_test_prefix initial {
+	set first [gdb_do_cache_wrap $real_name]
+    }
     lappend resultlist $first
 
     # Ten repetitions was enough to trigger target_supports_scheduler_locking,
@@ -37,7 +39,9 @@ proc test_proc { name } {
 
     set racy 0
     for {set i 0} {$i < $repeat} {incr i} {
-	set rerun [$real_name]
+	with_test_prefix $i {
+	    set rerun [gdb_do_cache_wrap $real_name]
+	}
 	lappend resultlist $rerun
 	if { $rerun != $first } {
 	    set racy 1
@@ -45,9 +49,9 @@ proc test_proc { name } {
     }
 
     if { $racy  == 0 } {
-	pass "$name consistency"
+	pass "consistency"
     } else {
-	fail "$name consistency"
+	fail "consistency"
 	verbose -log "$name: $resultlist"
     }
 }
@@ -77,20 +81,22 @@ proc test_file { file } {
     }
 
     foreach procname $procnames {
-	switch $procname {
-	    "is_address_zero_readable" { set setup_gdb 1 }
-	    "target_is_gdbserver" { set setup_gdb 1 }
-	    default {set setup_gdb 0 }
-	}
+	with_test_prefix $procname {
+	    switch $procname {
+		"is_address_zero_readable" { set setup_gdb 1 }
+		"target_is_gdbserver" { set setup_gdb 1 }
+		default {set setup_gdb 0 }
+	    }
 
-	if { $setup_gdb } {
-	    clean_restart $obj
-	}
+	    if { $setup_gdb } {
+		clean_restart $obj
+	    }
 
-	test_proc $procname
+	    test_proc $procname
 
-	if { $setup_gdb } {
-	    gdb_exit
+	    if { $setup_gdb } {
+		gdb_exit
+	    }
 	}
     }
 }
@@ -104,6 +110,7 @@ if { ![gdb_simple_compile $me $src executable] } {
 
 # Test gdb_caching_procs in gdb/testsuite/lib/*.exp
 set files [eval glob -types f $srcdir/lib/*.exp]
+set files [lsort $files]
 foreach file $files {
     test_file $file
 }

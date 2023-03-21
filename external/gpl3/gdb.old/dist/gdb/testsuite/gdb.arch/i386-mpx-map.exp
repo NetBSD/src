@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <walfred.tedeschi@intel.com>,
 #                            <mircea.gherzan@intel.com>
@@ -22,6 +22,10 @@ if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
 }
 
 standard_testfile
+
+if { ![supports_mpx_check_pointer_bounds] } {
+    return -1
+}
 
 set comp_flags "-mmpx -fcheck-pointer-bounds -I${srcdir}/../nat/"
 

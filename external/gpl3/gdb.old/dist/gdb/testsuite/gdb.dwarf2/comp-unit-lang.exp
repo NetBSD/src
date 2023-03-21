@@ -1,4 +1,4 @@
-# Copyright 2014-2019 Free Software Foundation, Inc.
+# Copyright 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,19 +42,14 @@ proc do_test {cu_lang gdb_lang} {
 	# Creating a CU with 4-byte addresses lets this test link on
 	# both 32- and 64-bit machines.
 	cu { addr_size 4 } {
-	    extern func_start func_end
-
 	    compile_unit {
 		{name file1.txt}
 		{language @$cu_lang}
-		{low_pc func_start addr}
-		{high_pc func_end addr}
+		{MACRO_AT_range {func}}
 	    } {
 		subprogram {
 		    {external 1 flag}
-		    {name func}
-		    {low_pc func_start addr}
-		    {high_pc func_end addr}
+		    {MACRO_AT_func {func}}
 		} {
 		}
 	    }
@@ -73,8 +68,14 @@ proc do_test {cu_lang gdb_lang} {
     gdb_test "show language" "\"auto; currently $gdb_lang\".*"
 }
 
+proc do_test_with_prefix {cu_lang gdb_lang} {
+    with_test_prefix $gdb_lang {
+	do_test $cu_lang $gdb_lang
+    }
+}
+
 # Some paths in the debugger fall back to C.  Check C++ as well to
 # make sure the test doesn't happen to work because of such a
 # fallback.
-do_test DW_LANG_C "c"
-do_test DW_LANG_C_plus_plus "c\\+\\+"
+do_test_with_prefix DW_LANG_C "c"
+do_test_with_prefix DW_LANG_C_plus_plus "c\\+\\+"
