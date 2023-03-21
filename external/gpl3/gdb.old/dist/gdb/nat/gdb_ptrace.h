@@ -1,6 +1,6 @@
 /* Portable <sys/ptrace.h>
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -119,14 +119,6 @@
 #else
 #  define PT_SYSCALL PT_CONTINUE
 # endif
-#endif
-
-/* Some systems, in particular DEC OSF/1, Digital Unix, Compaq Tru64
-   or whatever it's called these days, don't provide a prototype for
-   ptrace.  Provide one to silence compiler warnings.  */
-
-#ifndef HAVE_DECL_PTRACE
-extern PTRACE_TYPE_RET ptrace();
 #endif
 
 /* Some systems, at least AIX and HP-UX have a ptrace with five

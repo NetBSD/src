@@ -182,6 +182,8 @@ aarch64_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
+  nbsd_init_abi (info, gdbarch);
+
   set_solib_svr4_fetch_link_map_offsets (gdbarch,
 					 svr4_lp64_fetch_link_map_offsets);
 
@@ -194,6 +196,7 @@ aarch64_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, aarch64_nbsd_iterate_over_regset_sections);
 }
 
+void _initialize_aarch64_nbsd_tdep (void);
 void
 _initialize_aarch64_nbsd_tdep (void)
 {

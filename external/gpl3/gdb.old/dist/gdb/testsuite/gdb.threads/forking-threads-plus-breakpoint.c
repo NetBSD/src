@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2019 Free Software Foundation, Inc.
+   Copyright 2015-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -90,6 +90,8 @@ thread_forks (void *arg)
 	  exit (1);
 	}
     }
+
+  return NULL;
 }
 
 /* Set this to tell the thread_breakpoint thread to exit.  */

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2016-2019 Free Software Foundation, Inc.
+   Copyright 2016-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,29 +19,7 @@
 #include <stdint.h>
 #include <pthread.h>
 
-struct jit_code_entry
-{
-  struct jit_code_entry *next_entry;
-  struct jit_code_entry *prev_entry;
-  const char *symfile_addr;
-  uint64_t symfile_size;
-};
-
-struct jit_descriptor
-{
-  uint32_t version;
-  /* This type should be jit_actions_t, but we use uint32_t
-     to be explicit about the bitwidth.  */
-  uint32_t action_flag;
-  struct jit_code_entry *relevant_entry;
-  struct jit_code_entry *first_entry;
-};
-
-struct jit_descriptor __jit_debug_descriptor = { 1, 0, 0, 0 };
-
-void __jit_debug_register_code()
-{
-}
+#include "jit-protocol.h"
 
 static void *
 thread_proc (void *arg)

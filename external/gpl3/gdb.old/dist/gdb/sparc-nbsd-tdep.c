@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -29,6 +29,7 @@
 #include "solib-svr4.h"
 #include "symtab.h"
 #include "trad-frame.h"
+#include "gdbarch.h"
 
 #include "sparc-tdep.h"
 #include "sparc-nbsd-tdep.h"
@@ -296,6 +297,8 @@ sparc32nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
+  nbsd_init_abi (info, gdbarch);
+
   /* NetBSD doesn't support the 128-bit `long double' from the psABI.  */
   set_gdbarch_long_double_bit (gdbarch, 64);
   set_gdbarch_long_double_format (gdbarch, floatformats_ieee_double);
@@ -312,7 +315,7 @@ sparc32nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   frame_unwind_append_unwinder (gdbarch, &sparc32nbsd_sigcontext_frame_unwind);
 }
 
-void
+static void
 sparc32nbsd_elf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   sparc32nbsd_init_abi (info, gdbarch);
@@ -321,8 +324,9 @@ sparc32nbsd_elf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
 }
 
+void _initialize_sparcnbsd_tdep ();
 void
-_initialize_sparcnbsd_tdep (void)
+_initialize_sparcnbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_sparc, 0, GDB_OSABI_NETBSD,
 			  sparc32nbsd_elf_init_abi);

@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -19,7 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#define _KMEMUSER
+/* We define this to get types like register_t.  */
 #include "defs.h"
 
 #include <sys/types.h>
@@ -32,13 +32,12 @@
 #include "inferior.h"
 #include "regcache.h"
 
-#include "common/gdb_assert.h"
-
 #include "nbsd-nat.h"
 #include "ppc-tdep.h"
 #include "ppc-nbsd-tdep.h"
 #include "bsd-kvm.h"
 #include "inf-ptrace.h"
+#include "nbsd-nat.h"
 
 struct ppc_nbsd_nat_target final : public nbsd_nat_target
 {
@@ -92,9 +91,8 @@ void
 ppc_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  ptid_t ptid = regcache->ptid ();
-  pid_t pid = ptid.pid ();
-  int lwp = ptid.lwp ();
+  pid_t pid = regcache->ptid ().pid ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (regnum == -1 || getregs_supplies (gdbarch, regnum))
     {
@@ -123,9 +121,8 @@ void
 ppc_nbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
   struct gdbarch *gdbarch = regcache->arch ();
-  ptid_t ptid = regcache->ptid ();
-  pid_t pid = ptid.pid ();
-  int lwp = ptid.lwp ();
+  pid_t pid = regcache->ptid ().pid ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (regnum == -1 || getregs_supplies (gdbarch, regnum))
     {
@@ -187,8 +184,9 @@ ppcnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   return 1;
 }
 
+void _initialize_ppcnbsd_nat ();
 void
-_initialize_ppcnbsd_nat (void)
+_initialize_ppcnbsd_nat ()
 {
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (ppcnbsd_supply_pcb);

@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/aarch64.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "regcache.h"
 #include "target.h"
 
 #include <sys/types.h>
@@ -40,7 +41,7 @@ static aarch64_fbsd_nat_target the_aarch64_fbsd_nat_target;
 /* Determine if PT_GETREGS fetches REGNUM.  */
 
 static bool
-getregs_supplies (struct gdbarch *gdbarch, int regnum)
+getregs_supplies (int regnum)
 {
   return (regnum >= AARCH64_X0_REGNUM && regnum <= AARCH64_CPSR_REGNUM);
 }
@@ -48,7 +49,7 @@ getregs_supplies (struct gdbarch *gdbarch, int regnum)
 /* Determine if PT_GETFPREGS fetches REGNUM.  */
 
 static bool
-getfpregs_supplies (struct gdbarch *gdbarch, int regnum)
+getfpregs_supplies (int regnum)
 {
   return (regnum >= AARCH64_V0_REGNUM && regnum <= AARCH64_FPCR_REGNUM);
 }
@@ -62,8 +63,7 @@ aarch64_fbsd_nat_target::fetch_registers (struct regcache *regcache,
 {
   pid_t pid = get_ptrace_pid (regcache->ptid ());
 
-  struct gdbarch *gdbarch = regcache->arch ();
-  if (regnum == -1 || getregs_supplies (gdbarch, regnum))
+  if (regnum == -1 || getregs_supplies (regnum))
     {
       struct reg regs;
 
@@ -74,7 +74,7 @@ aarch64_fbsd_nat_target::fetch_registers (struct regcache *regcache,
 			       sizeof (regs));
     }
 
-  if (regnum == -1 || getfpregs_supplies (gdbarch, regnum))
+  if (regnum == -1 || getfpregs_supplies (regnum))
     {
       struct fpreg fpregs;
 
@@ -95,8 +95,7 @@ aarch64_fbsd_nat_target::store_registers (struct regcache *regcache,
 {
   pid_t pid = get_ptrace_pid (regcache->ptid ());
 
-  struct gdbarch *gdbarch = regcache->arch ();
-  if (regnum == -1 || getregs_supplies (gdbarch, regnum))
+  if (regnum == -1 || getregs_supplies (regnum))
     {
       struct reg regs;
 
@@ -110,7 +109,7 @@ aarch64_fbsd_nat_target::store_registers (struct regcache *regcache,
 	perror_with_name (_("Couldn't write registers"));
     }
 
-  if (regnum == -1 || getfpregs_supplies (gdbarch, regnum))
+  if (regnum == -1 || getfpregs_supplies (regnum))
     {
       struct fpreg fpregs;
 
@@ -125,8 +124,9 @@ aarch64_fbsd_nat_target::store_registers (struct regcache *regcache,
     }
 }
 
+void _initialize_aarch64_fbsd_nat ();
 void
-_initialize_aarch64_fbsd_nat (void)
+_initialize_aarch64_fbsd_nat ()
 {
   add_inf_child_target (&the_aarch64_fbsd_nat_target);
 }

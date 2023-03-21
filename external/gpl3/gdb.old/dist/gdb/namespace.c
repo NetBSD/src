@@ -1,5 +1,5 @@
 /* Code dealing with "using" directives for GDB.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,12 +26,12 @@
    into the scope DEST.  ALIAS is the name of the imported namespace
    in the current scope.  If ALIAS is NULL then the namespace is known
    by its original name.  DECLARATION is the name if the imported
-   varable if this is a declaration import (Eg. using A::x), otherwise
+   variable if this is a declaration import (Eg. using A::x), otherwise
    it is NULL.  EXCLUDES is a list of names not to import from an
    imported module or NULL.  If COPY_NAMES is non-zero, then the
    arguments are copied into newly allocated memory so they can be
-   temporaries.  For EXCLUDES the VEC pointers are copied but the
-   pointed to characters are not copied.  */
+   temporaries.  For EXCLUDES the contents of the vector are copied,
+   but the pointed to characters are not copied.  */
 
 void
 add_using_directive (struct using_direct **using_directives,
@@ -87,10 +87,8 @@ add_using_directive (struct using_direct **using_directives,
 
   if (copy_names)
     {
-      newobj->import_src
-	= (const char *) obstack_copy0 (obstack, src, strlen (src));
-      newobj->import_dest
-	= (const char *) obstack_copy0 (obstack, dest, strlen (dest));
+      newobj->import_src = obstack_strdup (obstack, src);
+      newobj->import_dest = obstack_strdup (obstack, dest);
     }
   else
     {
@@ -99,15 +97,12 @@ add_using_directive (struct using_direct **using_directives,
     }
 
   if (alias != NULL && copy_names)
-    newobj->alias
-      = (const char *) obstack_copy0 (obstack, alias, strlen (alias));
+    newobj->alias = obstack_strdup (obstack, alias);
   else
     newobj->alias = alias;
 
   if (declaration != NULL && copy_names)
-    newobj->declaration
-      = (const char *) obstack_copy0 (obstack, declaration,
-				      strlen (declaration));
+    newobj->declaration = obstack_strdup (obstack, declaration);
   else
     newobj->declaration = declaration;
 

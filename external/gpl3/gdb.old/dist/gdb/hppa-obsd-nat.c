@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/hppa.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -252,8 +252,9 @@ hppa_obsd_nat_target::store_registers (struct regcache *regcache, int regnum)
     }
 }
 
+void _initialize_hppaobsd_nat ();
 void
-_initialize_hppaobsd_nat (void)
+_initialize_hppaobsd_nat ()
 {
   add_inf_child_target (&the_hppa_obsd_nat_target);
 }

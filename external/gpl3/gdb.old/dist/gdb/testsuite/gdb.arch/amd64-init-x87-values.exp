@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -116,7 +116,7 @@ proc_with_prefix check_x87_regs_around_init {} {
 # nop that does not enable any FP features).  Finally check that the
 # mxcsr register still has the value we set.
 proc_with_prefix check_setting_mxcsr_before_enable {} {
-    global binfile
+    global binfile gdb_prompt
 
     clean_restart ${binfile}
 
@@ -127,7 +127,22 @@ proc_with_prefix check_setting_mxcsr_before_enable {} {
 
     gdb_test_no_output "set \$mxcsr=0x9f80" "set a new value for MXCSR"
     gdb_test "stepi" "fwait" "step forward one instruction for mxcsr test"
-    gdb_test "p/x \$mxcsr" " = 0x9f80" "check new value of MXCSR is still in place"
+
+    set test "check new value of MXCSR is still in place"
+    set pass_pattern " = 0x9f80"
+    # Pre-4.14 kernels have a bug (fixed by commit 0852b374173b "x86/fpu:
+    # Add FPU state copying quirk to handle XRSTOR failure on Intel Skylake
+    # CPUs") that causes mxcsr not to be copied, in which case we get 0 instead of
+    # the just saved value.
+    set xfail_pattern " = 0x0"
+    gdb_test_multiple "p/x \$mxcsr" $test {
+	-re "\[\r\n\]*(?:$pass_pattern)\[\r\n\]+$gdb_prompt $" {
+	    pass $test
+	}
+	-re "\[\r\n\]*(?:$xfail_pattern)\[\r\n\]+$gdb_prompt $" {
+	    xfail $test
+	}
+    }
 }
 
 # Start the test file, all FP features will be disabled.  Set new

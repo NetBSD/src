@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,11 +55,13 @@ gdb_test "reverse-continue" ".*$srcfile:$decimal.*" "reverse to marker1"
 gdb_test "print rdata" ".* = \"xxxx\"" "check recvmsg record - rdata"
 
 # rmsg.msg_flags should be zeros, not MSG_TRUNC | MSG_CTRUNC
-gdb_test "print rmsg.msg_flags" ".* = 0" "check recvmsg record - rmsg"
+gdb_test "print rmsg.msg_flags" ".* = 0" \
+    "check recvmsg record - rmsg.msg_flags"
 
 # rmsg.msg_controllen should be sizeof rc, not actual size of control data
 # (7 bytes less)
-gdb_test "print rmsg.msg_controllen - sizeof rc" ".* = 0" "check recvmsg record - rmsg"
+gdb_test "print rmsg.msg_controllen - sizeof rc" ".* = 0" \
+    "check recvmsg record - rmsg.msg_controllen"
 
 # rc should be zeros, not received cmsg
 gdb_test "print ((struct cmsghdr *)rc)->cmsg_len" ".* = 0" "check recvmsg record - cmsg"

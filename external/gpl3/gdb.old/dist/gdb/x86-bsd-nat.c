@@ -1,6 +1,6 @@
 /* Native-dependent code for X86 BSD's.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,6 +33,19 @@
 #include "inf-ptrace.h"
 
 
+static PTRACE_TYPE_RET
+gdb_ptrace (PTRACE_TYPE_ARG1 request, ptid_t ptid, PTRACE_TYPE_ARG3 addr)
+{
+#ifdef __NetBSD__
+  /* Support for NetBSD threads: unlike other ptrace implementations in this
+     file, NetBSD requires that we pass both the pid and lwp.  */
+  return ptrace (request, ptid.pid (), addr, ptid.lwp ());
+#else
+  pid_t pid = get_ptrace_pid (ptid);
+  return ptrace (request, pid, addr, 0);
+#endif
+}
+
 #ifdef PT_GETXSTATE_INFO
 size_t x86bsd_xsave_len;
 #endif
@@ -57,20 +70,18 @@ x86bsd_dr_get (ptid_t ptid, int regnum)
 {
   struct dbreg dbregs;
 
-  if (ptrace (PT_GETDBREGS, get_ptrace_pid (inferior_ptid),
-	      (PTRACE_TYPE_ARG3) &dbregs, inferior_ptid.lwp ()) == -1)
+  if (gdb_ptrace (PT_GETDBREGS, ptid, (PTRACE_TYPE_ARG3) &dbregs) == -1)
     perror_with_name (_("Couldn't read debug registers"));
 
   return DBREG_DRX ((&dbregs), regnum);
 }
 
 static void
-x86bsd_dr_set (int regnum, unsigned long value)
+x86bsd_dr_set (ptid_t ptid, int regnum, unsigned long value)
 {
   struct dbreg dbregs;
 
-  if (ptrace (PT_GETDBREGS, get_ptrace_pid (inferior_ptid),
-              (PTRACE_TYPE_ARG3) &dbregs, inferior_ptid.lwp ()) == -1)
+  if (gdb_ptrace (PT_GETDBREGS, ptid, (PTRACE_TYPE_ARG3) &dbregs) == -1)
     perror_with_name (_("Couldn't get debug registers"));
 
   /* For some mysterious reason, some of the reserved bits in the
@@ -82,8 +93,8 @@ x86bsd_dr_set (int regnum, unsigned long value)
 
   for (thread_info *thread : current_inferior ()->non_exited_threads ())
     {
-      if (ptrace (PT_SETDBREGS, get_ptrace_pid (thread->ptid),
-		  (PTRACE_TYPE_ARG3) &dbregs, thread->ptid.lwp ()) == -1)
+      if (gdb_ptrace (PT_SETDBREGS, thread->ptid,
+		      (PTRACE_TYPE_ARG3) &dbregs) == -1)
 	perror_with_name (_("Couldn't write debug registers"));
     }
 }
@@ -91,7 +102,7 @@ x86bsd_dr_set (int regnum, unsigned long value)
 static void
 x86bsd_dr_set_control (unsigned long control)
 {
-  x86bsd_dr_set (7, control);
+  x86bsd_dr_set (inferior_ptid, 7, control);
 }
 
 static void
@@ -99,7 +110,7 @@ x86bsd_dr_set_addr (int regnum, CORE_ADDR addr)
 {
   gdb_assert (regnum >= 0 && regnum <= 4);
 
-  x86bsd_dr_set (regnum, addr);
+  x86bsd_dr_set (inferior_ptid, regnum, addr);
 }
 
 static CORE_ADDR
@@ -122,6 +133,7 @@ x86bsd_dr_get_control (void)
 
 #endif /* PT_GETDBREGS */
 
+void _initialize_x86_bsd_nat ();
 void
 _initialize_x86_bsd_nat ()
 {

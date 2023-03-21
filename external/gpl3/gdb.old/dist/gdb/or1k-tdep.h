@@ -1,5 +1,5 @@
 /* Definitions to target GDB to OpenRISC 1000 32-bit targets.
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,8 +23,8 @@
 #define TARGET_OR1K
 #endif
 
-#include "../opcodes/or1k-desc.h"
-#include "../opcodes/or1k-opc.h"
+#include "opcodes/or1k-desc.h"
+#include "opcodes/or1k-opc.h"
 
 /* General Purpose Registers */
 #define OR1K_ZERO_REGNUM          0

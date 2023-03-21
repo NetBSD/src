@@ -1,6 +1,6 @@
 /* Motorola m68k target-dependent support for GNU/Linux.
 
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -423,8 +423,9 @@ m68k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
                                              svr4_fetch_objfile_link_map);
 }
 
+void _initialize_m68k_linux_tdep ();
 void
-_initialize_m68k_linux_tdep (void)
+_initialize_m68k_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_m68k, 0, GDB_OSABI_LINUX,
 			  m68k_linux_init_abi);
