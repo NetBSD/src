@@ -1,6 +1,6 @@
 /* Memory ranges
 
-   Copyright (C) 2010-2019 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,10 +44,6 @@ address_in_mem_range (CORE_ADDR address, const struct mem_range *r)
 void
 normalize_mem_ranges (std::vector<mem_range> *memory)
 {
-  /* This function must not use any VEC operation on RANGES that
-     reallocates the memory block as that invalidates the RANGES
-     pointer, which callers expect to remain valid.  */
-
   if (!memory->empty ())
     {
       std::vector<mem_range> &m = *memory;

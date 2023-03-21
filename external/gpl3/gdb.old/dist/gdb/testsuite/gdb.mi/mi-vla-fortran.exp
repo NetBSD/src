@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,10 +51,10 @@ mi_expect_stop "breakpoint-hit" "vla" "" ".*vla.f90" "$bp_lineno" \
 mi_gdb_test "500-data-evaluate-expression vla1" \
   "500\\^done,value=\"<not allocated>\"" "evaluate not allocated vla, before allocation"
 
-mi_create_varobj_checked vla1_not_allocated vla1 "<not allocated>" \
+mi_create_varobj_checked vla1_not_allocated vla1 "$real, allocatable \\(:\\)" \
   "create local variable vla1_not_allocated"
 mi_gdb_test "501-var-info-type vla1_not_allocated" \
-  "501\\^done,type=\"<not allocated>\"" \
+  "501\\^done,type=\"$real, allocatable \\(:\\)\"" \
   "info type variable vla1_not_allocated"
 mi_gdb_test "502-var-show-format vla1_not_allocated" \
   "502\\^done,format=\"natural\"" \
@@ -77,10 +77,10 @@ mi_expect_stop "breakpoint-hit" "vla" "" ".*vla.f90" "$bp_lineno" \
 mi_gdb_test "510-data-evaluate-expression vla1" \
   "510\\^done,value=\"\\(.*\\)\"" "evaluate allocated vla"
 
-mi_create_varobj_checked vla1_allocated vla1 "$real \\\(5\\\)" \
+mi_create_varobj_checked vla1_allocated vla1 "$real, allocatable \\\(5\\\)" \
   "create local variable vla1_allocated"
 mi_gdb_test "511-var-info-type vla1_allocated" \
-  "511\\^done,type=\"$real \\\(5\\\)\"" \
+  "511\\^done,type=\"$real, allocatable \\\(5\\\)\"" \
   "info type variable vla1_allocated"
 mi_gdb_test "512-var-show-format vla1_allocated" \
   "512\\^done,format=\"natural\"" \
@@ -146,10 +146,10 @@ gdb_expect {
     -re "580\\^done,value=\"<not associated>\".*${mi_gdb_prompt}$" {
 	pass $test
 
-	mi_create_varobj_checked pvla2_not_associated pvla2 "<not associated>" \
+	mi_create_varobj_checked pvla2_not_associated pvla2 "$real \\(:,:\\)" \
 	    "create local variable pvla2_not_associated"
 	mi_gdb_test "581-var-info-type pvla2_not_associated" \
-	    "581\\^done,type=\"<not associated>\"" \
+	    "581\\^done,type=\"$real \\(:,:\\)\"" \
 	    "info type variable pvla2_not_associated"
 	mi_gdb_test "582-var-show-format pvla2_not_associated" \
 	    "582\\^done,format=\"natural\"" \

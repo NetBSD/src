@@ -1,5 +1,5 @@
 /* Code dealing with "using" directives for GDB.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,8 +19,7 @@
 #ifndef NAMESPACE_H
 #define NAMESPACE_H
 
-#include "common/vec.h"
-#include "common/gdb_vecs.h"
+#include "gdbsupport/gdb_vecs.h"
 #include "gdb_obstack.h"
 
 /* This struct is designed to store data from using directives.  It

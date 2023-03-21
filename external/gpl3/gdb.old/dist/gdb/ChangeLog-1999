@@ -55,8 +55,6 @@ Wed Dec 29 17:41:11 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 	* config/powerpc/solaris.mh: ditto.
 	* config/alpha/alpha-osf2.mh: ditto.
 	* config/alpha/alpha-osf3.mh: ditto.
-	* testsuite/gdb.base/callfuncs.exp: make "next" test match the
-	next source line, in case the "next" runs away.
 	* acconfig.h: remove obsolete def HAVE_MULTIPLE_PROC_FDS, 
 	add new def NEW_PROC_API
 	* config.in; ditto.
@@ -118,13 +116,11 @@ Fri Dec 17 20:45:21 1999  Andrew Cagney  <cagney@b1.cygnus.com>
 	varobjs was not decremented if the first one in the list was deleted.
 
 1999-12-16  Michael Snyder  <msnyder@cleaver.cygnus.com>
-	
+
 	* linux-thread.c: Remove printf-debugging code.
 	* lin-thread.c: ditto.
 	* config/alpha/nm-linux.h: protect with NM_LINUX_H.
-	* testsuite/gdb.threads/linux-dp.exp: Make test for "New Thread"
-	message more forgiving.  Ditto test for "info threads".
-	
+
 1999-12-16  Michael Snyder  <msnyder@cleaver.cygnus.com>
 
 	* lin-thread.c: new file.  Implements multi-thread debugging on
@@ -2102,7 +2098,6 @@ Thu Oct  7 17:20:01 1999  Andrew Cagney  <cagney@amy.cygnus.com>
 	identifiers beginning with `$' unless
 	SYMBOLS_CAN_START_WITH_DOLLAR is non-zero.
 	* config/pa/tm-hppa.h (SYMBOLS_CAN_START_WITH_DOLLAR): Define.
-	* doc/gdbint.texinfo (SYMBOLS_CAN_START_WITH_DOLLAR): Document.
 
 	Remove all traces of the BINOP_SCOPE operator.  It's never
  	generated, and not implemented.
@@ -4832,7 +4827,6 @@ Sun Aug  8 12:06:47 1999  Fred Fish  <fnf@cygnus.com>
 	* dwarf2read.c (dwarf2_build_psymtabs_hard): Minor format tweak.
 	* symfile.c (syms_from_objfile): Ditto, and fix typo.
 	* top.c (init_main): Fix typo in comment (DEFULAT_PROMPT).
-	* doc/gdbint.texinfo (find_sym_fns): This replaces symfile_init.
 
 1999-08-08  James Ingham  <jingham@leda.cygnus.com>
 
@@ -8371,9 +8365,8 @@ Mon Feb 22 12:32:19 1999  Per Bothner  <bothner@cygnus.com>
 	config/i386/nm-i386sco5.h, config/i386/tm-fbsd.h, config/i386/tm-i386.h
 	config/powerpc/nm-aix.h, config/powerpc/tm-macos.h
 	config/powerpc/tm-ppc-aix.h, config/powerpc/xm-aix.h
-	config/rs6000/tm-rs6000-aix4.h, testsuite/gdb.chill/tests1.ch
-	testsuite/gdb.chill/tests2.ch, testsuite/gdb.chill/tests2.exp:
-	Update FSF address in copyright notices.
+	config/rs6000/tm-rs6000-aix4.h: Update FSF address in copyright
+	notices.
 
 1999-02-18  Jason Molenda  (jsm@bugshack.cygnus.com)
 

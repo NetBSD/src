@@ -1,6 +1,6 @@
 /* Common target dependent code for GNU/Linux on ARM systems.
 
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common/common-defs.h"
-#include "common/common-regcache.h"
+#include "gdbsupport/common-defs.h"
+#include "gdbsupport/common-regcache.h"
 #include "arch/arm.h"
 #include "arm-linux.h"
 #include "arch/arm-get-next-pcs.h"
@@ -53,7 +53,7 @@ arm_linux_sigreturn_next_pc_offset (unsigned long sp,
       r0_offset += ARM_UCONTEXT_SIGCONTEXT + ARM_SIGCONTEXT_R0;
     }
 
-  pc_offset = r0_offset + INT_REGISTER_SIZE * ARM_PC_REGNUM;
+  pc_offset = r0_offset + ARM_INT_REGISTER_SIZE * ARM_PC_REGNUM;
 
   return pc_offset;
 }

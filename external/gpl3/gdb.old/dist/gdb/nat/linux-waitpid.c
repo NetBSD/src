@@ -1,6 +1,6 @@
 /* Wrapper implementation for waitpid for GNU/Linux (LWP layer).
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,36 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common/common-defs.h"
-
-#ifdef GDBSERVER
-/* FIXME: server.h is required for the definition of debug_threads
-   which is used in the gdbserver-specific debug printing in
-   linux_debug.  This code should be made available to GDB also,
-   but the lack of a suitable flag to enable it prevents this.  */
-#include "server.h"
-#endif
+#include "gdbsupport/common-defs.h"
 
 #include "linux-nat.h"
 #include "linux-waitpid.h"
-#include "common/gdb_wait.h"
-
-/* Print debugging output based on the format string FORMAT and
-   its parameters.  */
-
-static inline void ATTRIBUTE_PRINTF (1,2)
-linux_debug (const char *format, ...)
-{
-#ifdef GDBSERVER
-  if (debug_threads)
-    {
-      va_list args;
-      va_start (args, format);
-      vfprintf (stderr, format, args);
-      va_end (args);
-    }
-#endif
-}
+#include "gdbsupport/gdb_wait.h"
 
 /* Convert wait status STATUS to a string.  Used for printing debug
    messages only.  */
@@ -79,20 +54,13 @@ status_to_str (int status)
 int
 my_waitpid (int pid, int *status, int flags)
 {
-  int ret, out_errno;
-
-  linux_debug ("my_waitpid (%d, 0x%x)\n", pid, flags);
+  int ret;
 
   do
     {
       ret = waitpid (pid, status, flags);
     }
   while (ret == -1 && errno == EINTR);
-  out_errno = errno;
 
-  linux_debug ("my_waitpid (%d, 0x%x): status(%x), %d\n",
-	       pid, flags, (ret > 0 && status != NULL) ? *status : -1, ret);
-
-  errno = out_errno;
   return ret;
 }

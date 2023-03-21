@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2019 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -91,8 +91,9 @@
 
 #define ET_NONE		0	/* No file type */
 #define ET_REL		1	/* Relocatable file */
-#define ET_EXEC		2	/* Executable file */
-#define ET_DYN		3	/* Shared object file */
+#define ET_EXEC		2	/* Position-dependent executable file */
+#define ET_DYN		3	/* Position-independent executable or
+				   shared object file */
 #define ET_CORE		4	/* Core file */
 #define ET_LOOS		0xFE00	/* Operating system-specific */
 #define ET_HIOS		0xFEFF	/* Operating system-specific */
@@ -471,6 +472,11 @@
 #define PT_GNU_RELRO	(PT_LOOS + 0x474e552) /* Read-only after relocation */
 #define PT_GNU_PROPERTY	(PT_LOOS + 0x474e553) /* GNU property */
 
+/* OpenBSD segment types.  */
+#define PT_OPENBSD_RANDOMIZE (PT_LOOS + 0x5a3dbe6)  /* Fill with random data.  */
+#define PT_OPENBSD_WXNEEDED  (PT_LOOS + 0x5a3dbe7)  /* Program does W^X violations.  */
+#define PT_OPENBSD_BOOTDATA  (PT_LOOS + 0x5a41be6)  /* Section for boot arguments.  */
+
 /* Mbind segments */
 #define PT_GNU_MBIND_NUM 4096
 #define PT_GNU_MBIND_LO (PT_LOOS + 0x474e555)
@@ -613,6 +619,8 @@
 					/*   note name must be "LINUX".  */
 #define NT_X86_XSTATE	0x202		/* x86 XSAVE extended state */
 					/*   note name must be "LINUX".  */
+#define NT_X86_CET	0x203		/* x86 CET state.  */
+					/*   note name must be "LINUX".  */
 #define NT_S390_HIGH_GPRS 0x300		/* S/390 upper halves of GPRs  */
 					/*   note name must be "LINUX".  */
 #define NT_S390_TIMER	0x301		/* S390 timer */
@@ -652,6 +660,8 @@
 					/*   note name must be "LINUX".  */
 #define NT_ARM_PAC_MASK	0x406		/* AArch pointer authentication code masks */
 					/*   note name must be "LINUX".  */
+#define NT_ARC_V2	0x600		/* ARC HS accumulator/extra registers.  */
+					/*   note name must be "LINUX".  */
 #define NT_SIGINFO	0x53494749	/* Fields of siginfo_t.  */
 #define NT_FILE		0x46494c45	/* Description of mapped files.  */
 
@@ -686,7 +696,8 @@
    must start with "NetBSD-CORE".  */
 
 #define NT_NETBSDCORE_PROCINFO	1	/* Has a struct procinfo */
-#define NT_NETBSDCORE_AUXV	2	/* Has a copy of Elfxx_auxv_t */
+#define NT_NETBSDCORE_AUXV	2	/* Has auxv data */
+#define NT_NETBSDCORE_LWPSTATUS	24	/* Has LWPSTATUS data */
 #define NT_NETBSDCORE_FIRSTMACH	32	/* start of machdep note types */
 
 
@@ -830,6 +841,7 @@
 #define GNU_PROPERTY_X86_ISA_1_AVX512_VBMI	(1U << 21)
 #define GNU_PROPERTY_X86_ISA_1_AVX512_VBMI2	(1U << 22)
 #define GNU_PROPERTY_X86_ISA_1_AVX512_VNNI	(1U << 23)
+#define GNU_PROPERTY_X86_ISA_1_AVX512_BF16	(1U << 24)
 
 #define GNU_PROPERTY_X86_FEATURE_2_X86		(1U << 0)
 #define GNU_PROPERTY_X86_FEATURE_2_X87		(1U << 1)
@@ -841,6 +853,13 @@
 #define GNU_PROPERTY_X86_FEATURE_2_XSAVE	(1U << 7)
 #define GNU_PROPERTY_X86_FEATURE_2_XSAVEOPT	(1U << 8)
 #define GNU_PROPERTY_X86_FEATURE_2_XSAVEC	(1U << 9)
+#define GNU_PROPERTY_X86_FEATURE_2_TMM		(1U << 10)
+
+/* AArch64 specific GNU PROPERTY.  */
+#define GNU_PROPERTY_AARCH64_FEATURE_1_AND	0xc0000000
+
+#define GNU_PROPERTY_AARCH64_FEATURE_1_BTI	(1U << 0)
+#define GNU_PROPERTY_AARCH64_FEATURE_1_PAC	(1U << 1)
 
 /* Values used in GNU .note.ABI-tag notes (NT_GNU_ABI_TAG).  */
 #define GNU_ABI_TAG_LINUX	0
@@ -930,7 +949,7 @@
 
 #define ELF32_R_SYM(i)		((i) >> 8)
 #define ELF32_R_TYPE(i)		((i) & 0xff)
-#define ELF32_R_INFO(s,t)	(((s) << 8) + ((t) & 0xff))
+#define ELF32_R_INFO(s,t)	(((unsigned) (s) << 8) + ((t) & 0xff))
 
 #define ELF64_R_SYM(i)		((i) >> 32)
 #define ELF64_R_TYPE(i)		((i) & 0xffffffff)
@@ -1216,6 +1235,21 @@
 #define AT_L2_CACHESHAPE  36
 #define AT_L3_CACHESHAPE  37
 
+/* Shapes of the caches, with more room to describe them.
+   *GEOMETRY are comprised of cache line size in bytes in the bottom 16 bits
+   and the cache associativity in the next 16 bits.  */
+#define AT_L1I_CACHESIZE	40
+#define AT_L1I_CACHEGEOMETRY	41
+#define AT_L1D_CACHESIZE	42
+#define AT_L1D_CACHEGEOMETRY	43
+#define AT_L2_CACHESIZE		44
+#define AT_L2_CACHEGEOMETRY	45
+#define AT_L3_CACHESIZE		46
+#define AT_L3_CACHEGEOMETRY	47
+
+#define AT_MINSIGSTKSZ		51 /* Stack needed for signal delivery
+				      (AArch64).  */
+
 #define AT_FREEBSD_EXECPATH     15      /* Path to the executable. */
 #define AT_FREEBSD_CANARY       16      /* Canary for SSP. */
 #define AT_FREEBSD_CANARYLEN    17      /* Length of the canary. */
@@ -1228,6 +1262,12 @@
 #define AT_FREEBSD_EHDRFLAGS    24      /* e_flags field from ELF header. */
 #define AT_FREEBSD_HWCAP        25      /* CPU feature flags. */
 #define AT_FREEBSD_HWCAP2       26      /* CPU feature flags 2. */
+#define AT_FREEBSD_BSDFLAGS     27      /* ELF BSD Flags. */
+#define AT_FREEBSD_ARGC         28      /* Argument count. */
+#define AT_FREEBSD_ARGV         29      /* Argument vector. */
+#define AT_FREEBSD_ENVC         30      /* Environment count. */
+#define AT_FREEBSD_ENVV         31      /* Environment vvector. */
+#define AT_FREEBSD_PS_STRINGS   32      /* struct ps_strings. */
 
 #define AT_SUN_UID      2000    /* Effective user ID.  */
 #define AT_SUN_RUID     2001    /* Real user ID.  */

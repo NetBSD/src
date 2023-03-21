@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2019 Free Software Foundation, Inc.
+# Copyright 1997-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,19 +67,23 @@ proc pat2 { n pats } {
     return [lindex $pats $i]
 }
 
-proc gdb_test_xxx { test pat name } {
+proc gdb_test_xxx { test pat args } {
     if { $pat == "" } {
 	setup_kfail gdb/1672 *-*-*
-	gdb_test $test "xxx" $name
-    } else {
+	set pat "xxx"
+    }
+    if { [llength $args] == 1 } {
+	set name [lindex $args 0]
 	gdb_test $test $pat $name
     }
+
+    gdb_test $test $pat
 }
 
 proc gdb_test_ptr { test args } {
     global sizeof_data_ptr
 
-    gdb_test_xxx $test [pat2 $sizeof_data_ptr $args] $test
+    gdb_test_xxx $test [pat2 $sizeof_data_ptr $args]
 }
 
 proc gdb_test_xptr { examine args } {
@@ -91,27 +95,27 @@ proc gdb_test_xptr { examine args } {
 
 proc gdb_test_char { test args } {
     global sizeof_char
-    gdb_test_xxx $test [pat2 $sizeof_char $args] $test
+    gdb_test_xxx $test [pat2 $sizeof_char $args]
 }
 
 proc gdb_test_short { test args } {
     global sizeof_short
-    gdb_test_xxx $test [pat2 $sizeof_short $args] $test
+    gdb_test_xxx $test [pat2 $sizeof_short $args]
 }
 
 proc gdb_test_int { test args } {
     global sizeof_int
-    gdb_test_xxx $test [pat2 $sizeof_int $args] $test
+    gdb_test_xxx $test [pat2 $sizeof_int $args]
 }
 
 proc gdb_test_long { test args } {
     global sizeof_long
-    gdb_test_xxx $test [pat2 $sizeof_long $args] $test
+    gdb_test_xxx $test [pat2 $sizeof_long $args]
 }
 
 proc gdb_test_long_long { test args } {
     global sizeof_long_long
-    gdb_test_xxx $test [pat2 $sizeof_long_long $args] $test
+    gdb_test_xxx $test [pat2 $sizeof_long_long $args]
 }
 
 gdb_breakpoint [gdb_get_line_number "Stop here and look"]

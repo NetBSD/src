@@ -411,9 +411,9 @@ Mon Nov 22 23:42:59 1993  Steve Chamberlain  (sac@jonny.cygnus.com)
 Mon Nov 22 11:03:45 1993  Fred Fish  (fnf@cygnus.com)
 
 	Merged changes from kev@spuds.geg.mot.com (Kevin A. Buettner):
-	* gdb/config/m88k/delta88.mh (NATDEPFILES): Added corelow.o and
+	* config/m88k/delta88.mh (NATDEPFILES): Added corelow.o and
 	coredep.o to this list.
-	* gdb/m88k-nat.c (m88k_register_u_addr):  Avoid error when passed
+	* m88k-nat.c (m88k_register_u_addr):  Avoid error when passed
 	the number for an M88110 extended register by just returning the
 	address of r0.
 
@@ -5222,7 +5222,7 @@ Mon May 10 19:38:34 1993  John Gilmore  (gnu@cygnus.com)
 Mon May 10 16:03:03 1993  Jim Kingdon  (kingdon@cygnus.com)
 
         Patch from Jeffrey Law:
-        * gdb/config/pa/nm-hppab.h (PTRACE_ARG3_TYPE): Define as caddr_t.
+        * config/pa/nm-hppab.h (PTRACE_ARG3_TYPE): Define as caddr_t.
 
 Mon May 10 15:28:27 1993  Ian Lance Taylor  (ian@cygnus.com)
 
@@ -5274,8 +5274,8 @@ Thu May  6 20:55:35 1993  Fred Fish  (fnf@cygnus.com)
 Thu May  6 15:47:45 1993  Stu Grossman  (grossman@cygnus.com)
 
 	* More patches from Jeffrey Law (law@cs.utah.edu).
-	* gdb/config/nm-hppab.h (PTRACE_ARG3_TYPE): Define as caddr_t.
-	* gdb/config/pa/tm-hppah.h (millicode_start, millicode_end):
+	* config/nm-hppab.h (PTRACE_ARG3_TYPE): Define as caddr_t.
+	* config/pa/tm-hppah.h (millicode_start, millicode_end):
 	Delete unnecessary declarations.
 
 Thu May  6 15:15:46 1993  Stu Grossman  (grossman@cygnus.com)
@@ -5290,25 +5290,25 @@ Thu May  6 10:03:41 1993  Jim Kingdon  (kingdon@cygnus.com)
 Wed May  5 15:16:33 1993  Stu Grossman  (grossman@cygnus.com)
 
         * Patches from Jeffrey Law <law@cs.utah.edu>.
-	* gdb/hppa-tdep.c: Declare frame_saved_pc.
+	* hppa-tdep.c: Declare frame_saved_pc.
 	(frameless_function_invocation): New function.
 	(frame_saved_pc, init_extra_frame_info): Use 
 	frameless_function_invocation.
-	* gdb/config/pa/tm-hppa.h (SAVED_PC_AFTER_CALL): Use saved_pc_after
+	* config/pa/tm-hppa.h (SAVED_PC_AFTER_CALL): Use saved_pc_after
 	call instead of just grabbing the value currently in %r2.
 	(FRAMELESS_FUNCTION_INVOCATION): Use frameless_function_invocation.
-	* gdb/config/pa/tm-hppah.h (SAVED_PC_AFTER_CALL): Delete private
+	* config/pa/tm-hppah.h (SAVED_PC_AFTER_CALL): Delete private
 	definition and use the common one in tm-hppa.h.
-	* gdb/hppa-tdep.c (frame_chain_valid): If "use_unwind" is true, then
+	* hppa-tdep.c (frame_chain_valid): If "use_unwind" is true, then
 	use unwind descriptors to determine if the frame chain is valid.
-	* gdb/hppa-tdep.c (find_dummy_frame_regs):  Rework so that
+	* hppa-tdep.c (find_dummy_frame_regs):  Rework so that
 	it does not assume %r4 is the frame pointer.
-	* gdb/hppa-pinsn.c (print_insn): Handle 'r' and 'R' for break, rsm,
+	* hppa-pinsn.c (print_insn): Handle 'r' and 'R' for break, rsm,
 	and ssm instructions.
-	* gdb/hppa-tdep.c (extract_5r_store, extract_5R_store): New
+	* hppa-tdep.c (extract_5r_store, extract_5R_store): New
 	helper functions for print_insn.
-	* gdb/hppa-tdep.c (gcc_p, hpux_cc_p): Delete unused functions.
-	* gdb/config/pa/tm-hppa.h (ABOUT_TO_RETURN): Handle a return
+	* hppa-tdep.c (gcc_p, hpux_cc_p): Delete unused functions.
+	* config/pa/tm-hppa.h (ABOUT_TO_RETURN): Handle a return
 	which nullifies the following instruction.
 
 Tue May  4 12:11:38 1993  Jim Kingdon  (kingdon@cygnus.com)
@@ -5490,8 +5490,6 @@ Thu Apr 29 00:03:59 1993  Fred Fish  (fnf@cygnus.com)
 	to access the field.
 	* config/convex/xm-convex.h (LONG_LONG):  Replace with
 	CC_HAS_LONG_LONG.  Add define for PRINTF_HAS_LONG_LONG.
-	* doc/gdbint.texinfo (LONG_LONG):  Replace with CC_HAS_LONG_LONG.
-	Add PRINTF_HAS_LONG_LONG references.
 
 Wed Apr 28 06:11:38 1993  Jim Kingdon  (kingdon@cygnus.com)
 
@@ -5519,12 +5517,6 @@ Wed Apr 28 13:27:54 1993  Peter Schauer  (pes@regent.e-technik.tu-muenchen.de)
 Wed Apr 28 06:11:38 1993  Jim Kingdon  (kingdon@cygnus.com)
 
 	* config/sparc/xm-sun4os4.h [__STDC__]: Don't use MALLOC_INCOMPATIBLE.
-
-Wed Apr 28 11:39:18 1993  Roland H. Pesch  (pesch@fowanton.cygnus.com)
-
-	* doc/gdb.texinfo: make node "Shell Commands" unconditional;
-	describe `set demangle-style arm' (not cfront); 
-	mention can type `q' to discard output, when gdb pages
 
 Wed Apr 28 11:32:39 1993  Peter Schauer  (pes@regent.e-technik.tu-muenchen.de)
 
@@ -5637,10 +5629,6 @@ Fri Apr 23 10:34:02 1993  Stu Grossman  (grossman@cygnus.com)
 	* config/pa/tm-hppa.h (POP_FRAME, PUSH_ARGUMENTS):  Use new hppa_
 	prefix for func	name.  (FIX_CALL_DUMMY):  Move code into
 	hppah-tdep.c.
-
-	* testsuite/gdb.t16/gdbme.c, testsuite/gdb.t17/gdbme.c:  Add calls
-	to malloc() so that we can test GDB eval of dynamically created
-	arrays (like char strings in `print "foo"').
 
 Fri Apr 23 01:28:14 1993  Peter Schauer  (pes@regent.e-technik.tu-muenchen.de)
 
@@ -6202,7 +6190,6 @@ Mon Mar 29 15:03:25 1993  Fred Fish  (fnf@cygnus.com)
 	tm-a29k.h.
 	* config/a29k/a29k-udi.mt (MT_CFLAGS):  Remove TARGET_AM29K
 	define that does not appear anywhere else in the gdb source tree.
-	* doc/gdbinit.texinfo:  Document renaming of tm-29k.h to tm-a29k.h.
 
 Mon Mar 29 13:55:29 1993  Jim Kingdon  (kingdon@cygnus.com)
 
@@ -6753,11 +6740,6 @@ Tue Feb 23 18:58:11 1993  Mike Werner  (mtw@poseidon.cygnus.com)
 
 	* configure.in: added testsuite to configdirs.
 
-Tue Feb 23 11:46:11 1993  Mike Stump  (mrs@cygnus.com)
-
-	* doc/stabs.texi: The `this' pointer is now known by the name
-	`this' instead of `$t'.
-
 Tue Feb 23 11:21:33 1993  Fred Fish  (fnf@cygnus.com)
 
 	* dwarfread.c (read_tag_string_type):  Rewrite to allow forward
@@ -6788,13 +6770,13 @@ Mon Feb 22 15:21:54 1993  Ian Lance Taylor  (ian@cygnus.com)
 
 Mon Feb 22 07:54:03 1993  Mike Werner  (mtw@poseidon.cygnus.com)
 
-        * gdb/testsuite: made modifications to testcases, etc., to allow
+        * testsuite: made modifications to testcases, etc., to allow
         them to work properly  given the reorganization of deja-gnu and the
         relocation of the testcases from deja-gnu to a "tool" subdirectory.
 
 Sun Feb 21 10:55:55 1993  Mike Werner  (mtw@poseidon.cygnus.com)
 
-	* gdb/testsuite: Initial creation of gdb/testsuite.
+	* testsuite: Initial creation of gdb/testsuite.
 	Migrated dejagnu testcases and support files for testing nm to
 	gdb/testsuite from deja-gnu.  These files were moved "as is"
 	with no modifications.	This migration is part of a major overhaul
@@ -6961,8 +6943,6 @@ Wed Feb 10 23:42:37 1993  John Gilmore  (gnu@cygnus.com)
 	* Makefile.in:  xcoffread.o is not built by default.
 	* xm-rs6000.h (IBM6000_HOST):  Remove.
 	* config/rs6000.mh (NATDEPFILES): xcoffread.o is native only.
-	* doc/gdbint.texinfo:  Eliminate IBM6000_HOST, document
-	IBM6000_TARGET.
 
 Wed Feb 10 18:31:20 1993  Stu Grossman  (grossman at cygnus.com)
 

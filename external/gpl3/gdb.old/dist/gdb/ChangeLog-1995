@@ -1358,7 +1358,6 @@ Wed Sep 20 08:16:03 1995  steve chamberlain  <sac@slash.cygnus.com>
 
 	* defs.h (xmalloc, xrealloc): Delete, they're declared in libiberty.h.
 	(GETENV_PROVIDED, FCLOSE_PROVIDED): New.
-	* doc/gdbint.texinfo (GETENV_PROVIDED, FCLOSE_PROVIDED): Document.
 	* remote-sim.[ch] (sim_callback_write_stdout): New.
 
 Tue Sep 19 15:28:58 1995  Per Bothner  <bothner@kalessin.cygnus.com>
@@ -3531,8 +3530,6 @@ Fri Mar 24 15:45:42 1995  Stu Grossman  (grossman@cygnus.com)
 	* remote-est.c:  Rewrite to use new monitor conventions.
 	* config/m68k/est.mt (TDEPFILES):  Add monitor.o.
 	* config/m68k/tm-est.h:  Set NUM_REGS to 18.
-	* testsuite/gdb.base/break.exp:  Lots of cleanups.  Use gdb_test
-	more thoroughly.
 
 Thu Mar 23 23:20:00 1995  Jeff Law  (law@snake.cs.utah.edu)
 

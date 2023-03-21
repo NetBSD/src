@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ if [prepare_for_testing "failed to prepare" $executable] {
 runto_main
 
 # Add another forked inferior process.
-gdb_test "add-inferior" "Added inferior 2" "add inferior 2"
+gdb_test "add-inferior" "Added inferior 2 on connection .*" "add inferior 2"
 gdb_test "inferior 2" "Switching to inferior 2.*"
 gdb_test "file $binfile" "Reading symbols from .*" "load binary"
 gdb_test "start" "Temporary breakpoint.*Starting program.*"
@@ -40,7 +40,7 @@ gdb_test "start" "Temporary breakpoint.*Starting program.*"
 # Add an attached inferior process.
 set test_spawn_id [spawn_wait_for_attach $binfile]
 set test_pid [spawn_id_get_pid $test_spawn_id]
-gdb_test "add-inferior" "Added inferior 3" "add inferior 3"
+gdb_test "add-inferior" "Added inferior 3 on connection .*" "add inferior 3"
 gdb_test "inferior 3" "Switching to inferior 3.*"
 gdb_test "attach $test_pid" "Attaching to process.*" "attach to pid"
 

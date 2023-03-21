@@ -1,6 +1,6 @@
 /* GNU/Linux on ARM target support.
 
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,6 +33,7 @@
 #include "auxv.h"
 #include "xml-syscall.h"
 
+#include "aarch32-tdep.h"
 #include "arch/arm.h"
 #include "arch/arm-get-next-pcs.h"
 #include "arch/arm-linux.h"
@@ -55,7 +56,6 @@
 #include "user-regs.h"
 #include <ctype.h>
 #include "elf/common.h"
-extern int arm_apcs_32;
 
 /* Under ARM GNU/Linux the traditional way of performing a breakpoint
    is to execute a particular software interrupt, rather than use a
@@ -103,7 +103,7 @@ static const gdb_byte arm_linux_thumb2_le_breakpoint[] = { 0xf0, 0xf7, 0x00, 0xa
    SoftVFP or VFP (which implies EABI) then the PC is at offset 9 in the 
    buffer.  This is also true for the SoftFPA model.  However, for the FPA 
    model the PC is at offset 21 in the buffer.  */
-#define ARM_LINUX_JB_ELEMENT_SIZE	INT_REGISTER_SIZE
+#define ARM_LINUX_JB_ELEMENT_SIZE	ARM_INT_REGISTER_SIZE
 #define ARM_LINUX_JB_PC_FPA		21
 #define ARM_LINUX_JB_PC_EABI		9
 
@@ -471,7 +471,7 @@ static struct tramp_frame arm_kernel_linux_restart_syscall_tramp_frame = {
 
 /* Core file and register set support.  */
 
-#define ARM_LINUX_SIZEOF_GREGSET (18 * INT_REGISTER_SIZE)
+#define ARM_LINUX_SIZEOF_GREGSET (18 * ARM_INT_REGISTER_SIZE)
 
 void
 arm_linux_supply_gregset (const struct regset *regset,
@@ -483,29 +483,30 @@ arm_linux_supply_gregset (const struct regset *regset,
   const gdb_byte *gregs = (const gdb_byte *) gregs_buf;
   int regno;
   CORE_ADDR reg_pc;
-  gdb_byte pc_buf[INT_REGISTER_SIZE];
+  gdb_byte pc_buf[ARM_INT_REGISTER_SIZE];
 
   for (regno = ARM_A1_REGNUM; regno < ARM_PC_REGNUM; regno++)
     if (regnum == -1 || regnum == regno)
-      regcache->raw_supply (regno, gregs + INT_REGISTER_SIZE * regno);
+      regcache->raw_supply (regno, gregs + ARM_INT_REGISTER_SIZE * regno);
 
   if (regnum == ARM_PS_REGNUM || regnum == -1)
     {
       if (arm_apcs_32)
 	regcache->raw_supply (ARM_PS_REGNUM,
-			      gregs + INT_REGISTER_SIZE * ARM_CPSR_GREGNUM);
+			      gregs + ARM_INT_REGISTER_SIZE * ARM_CPSR_GREGNUM);
       else
 	regcache->raw_supply (ARM_PS_REGNUM,
-			     gregs + INT_REGISTER_SIZE * ARM_PC_REGNUM);
+			     gregs + ARM_INT_REGISTER_SIZE * ARM_PC_REGNUM);
     }
 
   if (regnum == ARM_PC_REGNUM || regnum == -1)
     {
-      reg_pc = extract_unsigned_integer (gregs
-					 + INT_REGISTER_SIZE * ARM_PC_REGNUM,
-					 INT_REGISTER_SIZE, byte_order);
+      reg_pc = extract_unsigned_integer (
+		 gregs + ARM_INT_REGISTER_SIZE * ARM_PC_REGNUM,
+		 ARM_INT_REGISTER_SIZE, byte_order);
       reg_pc = gdbarch_addr_bits_remove (gdbarch, reg_pc);
-      store_unsigned_integer (pc_buf, INT_REGISTER_SIZE, byte_order, reg_pc);
+      store_unsigned_integer (pc_buf, ARM_INT_REGISTER_SIZE, byte_order,
+			      reg_pc);
       regcache->raw_supply (ARM_PC_REGNUM, pc_buf);
     }
 }
@@ -521,21 +522,21 @@ arm_linux_collect_gregset (const struct regset *regset,
   for (regno = ARM_A1_REGNUM; regno < ARM_PC_REGNUM; regno++)
     if (regnum == -1 || regnum == regno)
       regcache->raw_collect (regno,
-			    gregs + INT_REGISTER_SIZE * regno);
+			    gregs + ARM_INT_REGISTER_SIZE * regno);
 
   if (regnum == ARM_PS_REGNUM || regnum == -1)
     {
       if (arm_apcs_32)
 	regcache->raw_collect (ARM_PS_REGNUM,
-			      gregs + INT_REGISTER_SIZE * ARM_CPSR_GREGNUM);
+			      gregs + ARM_INT_REGISTER_SIZE * ARM_CPSR_GREGNUM);
       else
 	regcache->raw_collect (ARM_PS_REGNUM,
-			      gregs + INT_REGISTER_SIZE * ARM_PC_REGNUM);
+			      gregs + ARM_INT_REGISTER_SIZE * ARM_PC_REGNUM);
     }
 
   if (regnum == ARM_PC_REGNUM || regnum == -1)
     regcache->raw_collect (ARM_PC_REGNUM,
-			   gregs + INT_REGISTER_SIZE * ARM_PC_REGNUM);
+			   gregs + ARM_INT_REGISTER_SIZE * ARM_PC_REGNUM);
 }
 
 /* Support for register format used by the NWFPE FPA emulator.  */
@@ -551,11 +552,11 @@ supply_nwfpe_register (struct regcache *regcache, int regno,
 {
   const gdb_byte *reg_data;
   gdb_byte reg_tag;
-  gdb_byte buf[FP_REGISTER_SIZE];
+  gdb_byte buf[ARM_FP_REGISTER_SIZE];
 
-  reg_data = regs + (regno - ARM_F0_REGNUM) * FP_REGISTER_SIZE;
+  reg_data = regs + (regno - ARM_F0_REGNUM) * ARM_FP_REGISTER_SIZE;
   reg_tag = regs[(regno - ARM_F0_REGNUM) + NWFPE_TAGS_OFFSET];
-  memset (buf, 0, FP_REGISTER_SIZE);
+  memset (buf, 0, ARM_FP_REGISTER_SIZE);
 
   switch (reg_tag)
     {
@@ -586,7 +587,7 @@ collect_nwfpe_register (const struct regcache *regcache, int regno,
 {
   gdb_byte *reg_data;
   gdb_byte reg_tag;
-  gdb_byte buf[FP_REGISTER_SIZE];
+  gdb_byte buf[ARM_FP_REGISTER_SIZE];
 
   regcache->raw_collect (regno, buf);
 
@@ -595,7 +596,7 @@ collect_nwfpe_register (const struct regcache *regcache, int regno,
      from the native file to the target file.  But this doesn't
      always make sense.  */
 
-  reg_data = regs + (regno - ARM_F0_REGNUM) * FP_REGISTER_SIZE;
+  reg_data = regs + (regno - ARM_F0_REGNUM) * ARM_FP_REGISTER_SIZE;
   reg_tag = regs[(regno - ARM_F0_REGNUM) + NWFPE_TAGS_OFFSET];
 
   switch (reg_tag)
@@ -648,7 +649,7 @@ arm_linux_collect_nwfpe (const struct regset *regset,
 
   if (regnum == ARM_FPS_REGNUM || regnum == -1)
     regcache->raw_collect (ARM_FPS_REGNUM,
-			   regs + INT_REGISTER_SIZE * ARM_FPS_REGNUM);
+			   regs + ARM_INT_REGISTER_SIZE * ARM_FPS_REGNUM);
 }
 
 /* Support VFP register format.  */
@@ -730,24 +731,21 @@ arm_linux_core_read_description (struct gdbarch *gdbarch,
                                  struct target_ops *target,
                                  bfd *abfd)
 {
-  CORE_ADDR arm_hwcap = 0;
-
-  if (target_auxv_search (target, AT_HWCAP, &arm_hwcap) != 1)
-    return NULL;
+  CORE_ADDR arm_hwcap = linux_get_hwcap (target);
 
   if (arm_hwcap & HWCAP_VFP)
     {
       /* NEON implies VFPv3-D32 or no-VFP unit.  Say that we only support
          Neon with VFPv3-D32.  */
       if (arm_hwcap & HWCAP_NEON)
-	return tdesc_arm_with_neon;
+	return aarch32_read_description ();
       else if ((arm_hwcap & (HWCAP_VFPv3 | HWCAP_VFPv3D16)) == HWCAP_VFPv3)
-	return tdesc_arm_with_vfpv3;
-      else
-	return tdesc_arm_with_vfpv2;
+	return arm_read_description (ARM_FP_TYPE_VFPV3);
+
+      return arm_read_description (ARM_FP_TYPE_VFPV2);
     }
 
-  return NULL;
+  return nullptr;
 }
 
 
@@ -957,7 +955,7 @@ arm_linux_cleanup_svc (struct gdbarch *gdbarch,
 
   within_scratch = (apparent_pc >= dsc->scratch_base
 		    && apparent_pc < (dsc->scratch_base
-				      + DISPLACED_MODIFIED_INSNS * 4 + 4));
+				      + ARM_DISPLACED_MODIFIED_INSNS * 4 + 4));
 
   if (debug_displaced)
     {
@@ -1105,12 +1103,13 @@ arm_catch_kernel_helper_return (struct gdbarch *gdbarch, CORE_ADDR from,
    the program has stepped into a Linux kernel helper routine (which must be
    handled as a special case).  */
 
-static struct displaced_step_closure *
+static displaced_step_closure_up
 arm_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
 				    CORE_ADDR from, CORE_ADDR to,
 				    struct regcache *regs)
 {
-  arm_displaced_step_closure *dsc = new arm_displaced_step_closure;
+  std::unique_ptr<arm_displaced_step_closure> dsc
+    (new arm_displaced_step_closure);
 
   /* Detect when we enter an (inaccessible by GDB) Linux kernel helper, and
      stop at the return location.  */
@@ -1120,19 +1119,20 @@ arm_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
         fprintf_unfiltered (gdb_stdlog, "displaced: detected kernel helper "
 			    "at %.8lx\n", (unsigned long) from);
 
-      arm_catch_kernel_helper_return (gdbarch, from, to, regs, dsc);
+      arm_catch_kernel_helper_return (gdbarch, from, to, regs, dsc.get ());
     }
   else
     {
       /* Override the default handling of SVC instructions.  */
       dsc->u.svc.copy_svc_os = arm_linux_copy_svc;
 
-      arm_process_displaced_insn (gdbarch, from, to, regs, dsc);
+      arm_process_displaced_insn (gdbarch, from, to, regs, dsc.get ());
     }
 
-  arm_displaced_init_closure (gdbarch, from, to, dsc);
+  arm_displaced_init_closure (gdbarch, from, to, dsc.get ());
 
-  return dsc;
+  /* This is a work around for a problem with g++ 4.8.  */
+  return displaced_step_closure_up (dsc.release ());
 }
 
 /* Implementation of `gdbarch_stap_is_single_operand', as defined in
@@ -1712,11 +1712,11 @@ arm_linux_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 
 /* Implement the gcc_target_options gdbarch method.  */
 
-static char *
+static std::string
 arm_linux_gcc_target_options (struct gdbarch *gdbarch)
 {
   /* GCC doesn't know "-m32".  */
-  return NULL;
+  return {};
 }
 
 static void
@@ -2003,8 +2003,9 @@ arm_linux_init_abi (struct gdbarch_info info,
   set_gdbarch_gcc_target_options (gdbarch, arm_linux_gcc_target_options);
 }
 
+void _initialize_arm_linux_tdep ();
 void
-_initialize_arm_linux_tdep (void)
+_initialize_arm_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_arm, 0, GDB_OSABI_LINUX,
 			  arm_linux_init_abi);

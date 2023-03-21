@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2019 Free Software Foundation, Inc.
+// Copyright (C) 2016-2020 Free Software Foundation, Inc.
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -60,7 +60,8 @@ pub mod mod1 {
 
                 let f2 = || println!("lambda f2");
 
-                let copy = ::TWENTY_THREE;
+                // Prevent linker from discarding symbol
+                let ptr: *const u16 = &::TWENTY_THREE;
 
                 f2();           // set breakpoint here
                 f3();

@@ -855,8 +855,7 @@ mep_cgen_expand_macros_and_parse_operand (CGEN_CPU_DESC cd, int opindex,
 	*strp_in += (str - hold); 
     }
 
-  if (hold)
-    free (hold);
+  free (hold);
 
   return errmsg;
 }
@@ -1272,7 +1271,7 @@ print_slot_insn (CGEN_CPU_DESC cd,
   CGEN_INSN_INT insn_value;
   CGEN_EXTRACT_INFO ex_info;
 
-  insn_value = cgen_get_insn_value (cd, buf, 32);
+  insn_value = cgen_get_insn_value (cd, buf, 32, cd->insn_endian);
 
   /* Fill in ex_info fields like read_insn would.  Don't actually call
      read_insn, since the incoming buffer is already read (and possibly

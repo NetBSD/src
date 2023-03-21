@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux Super-H.
 
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,7 @@
 #include "glibc-tdep.h"
 #include "sh-tdep.h"
 #include "linux-tdep.h"
+#include "gdbarch.h"
 
 #define REGSx16(base) \
   {(base),      0}, \
@@ -207,8 +208,9 @@ sh_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tramp_frame_prepend_unwinder (gdbarch, &sh_linux_rt_sigreturn_tramp_frame);
 }
 
+void _initialize_sh_linux_tdep ();
 void
-_initialize_sh_linux_tdep (void)
+_initialize_sh_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_sh, 0, GDB_OSABI_LINUX, sh_linux_init_abi);
 }

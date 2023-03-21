@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2019 Free Software Foundation, Inc.
+# Copyright 2017-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,217 +34,217 @@ if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
 
 # Test general offset printing, ctor/dtor printing, union, formatting.
 gdb_test "ptype /o struct abc" \
-    [multi_line \
-{/\* offset    |  size \*/  type = struct abc \{} \
-{                         public:} \
-{/\*    8      |     8 \*/    void \*field1;} \
-{/\*   16:31   |     4 \*/    unsigned int field2 : 1;} \
-{/\* XXX  7-bit hole   \*/} \
-{/\* XXX  3-byte hole  \*/} \
-{/\*   20      |     4 \*/    int field3;} \
-{/\*   24      |     1 \*/    signed char field4;} \
-{/\* XXX  7-byte hole  \*/} \
-{/\*   32      |     8 \*/    uint64_t field5;} \
-{/\*   40      |     8 \*/    union \{} \
-{/\*                 8 \*/        void \*field6;} \
-{/\*                 4 \*/        int field7;} \
-{} \
-{                               /\* total size \(bytes\):    8 \*/} \
-{                           \} field8;} \
-{/\*   48      |     4 \*/    my_int_type field9;} \
-{/\* XXX  4-byte padding \*/} \
-{} \
-{                           /\* total size \(bytes\):   56 \*/} \
-{                         \}}]
+    [string_to_regexp [multi_line \
+"/* offset    |  size */  type = struct abc \{" \
+"                         public:" \
+"/*    8      |     8 */    void *field1;" \
+"/*   16: 0   |     4 */    unsigned int field2 : 1;" \
+"/* XXX  7-bit hole   */" \
+"/* XXX  3-byte hole  */" \
+"/*   20      |     4 */    int field3;" \
+"/*   24      |     1 */    signed char field4;" \
+"/* XXX  7-byte hole  */" \
+"/*   32      |     8 */    uint64_t field5;" \
+"/*   40      |     8 */    union \{" \
+"/*                 8 */        void *field6;" \
+"/*                 4 */        int field7;" \
+"" \
+"                               /* total size (bytes):    8 */" \
+"                           \} field8;" \
+"/*   48      |     2 */    my_int_type field9;" \
+"/* XXX  6-byte padding  */" \
+"" \
+"                           /* total size (bytes):   56 */" \
+"                         \}"]]
 
 # Test "ptype /oTM".
 gdb_test "ptype /oTM struct abc" \
-    [multi_line \
-{/\* offset    |  size \*/  type = struct abc \{} \
-{                         public:} \
-{/\*    8      |     8 \*/    void \*field1;} \
-{/\*   16:31   |     4 \*/    unsigned int field2 : 1;} \
-{/\* XXX  7-bit hole   \*/} \
-{/\* XXX  3-byte hole  \*/} \
-{/\*   20      |     4 \*/    int field3;} \
-{/\*   24      |     1 \*/    signed char field4;} \
-{/\* XXX  7-byte hole  \*/} \
-{/\*   32      |     8 \*/    uint64_t field5;} \
-{/\*   40      |     8 \*/    union \{} \
-{/\*                 8 \*/        void \*field6;} \
-{/\*                 4 \*/        int field7;} \
-{} \
-{                               /\* total size \(bytes\):    8 \*/} \
-{                           \} field8;} \
-{/\*   48      |     4 \*/    my_int_type field9;} \
-{} \
-{                           abc\(void\);} \
-{                           ~abc\(\);} \
-{} \
-{                           typedef int my_int_type;} \
-{/\* XXX  4-byte padding \*/} \
-{} \
-{                           /\* total size \(bytes\):   56 \*/} \
-{                         \}}]
+    [string_to_regexp [multi_line \
+"/* offset    |  size */  type = struct abc \{" \
+"                         public:" \
+"/*    8      |     8 */    void *field1;" \
+"/*   16: 0   |     4 */    unsigned int field2 : 1;" \
+"/* XXX  7-bit hole   */" \
+"/* XXX  3-byte hole  */" \
+"/*   20      |     4 */    int field3;" \
+"/*   24      |     1 */    signed char field4;" \
+"/* XXX  7-byte hole  */" \
+"/*   32      |     8 */    uint64_t field5;" \
+"/*   40      |     8 */    union \{" \
+"/*                 8 */        void *field6;" \
+"/*                 4 */        int field7;" \
+"" \
+"                               /* total size (bytes):    8 */" \
+"                           \} field8;" \
+"/*   48      |     2 */    my_int_type field9;" \
+"" \
+"                           abc(void);" \
+"                           ~abc();" \
+"" \
+"                           typedef short my_int_type;" \
+"/* XXX  6-byte padding  */" \
+"" \
+"                           /* total size (bytes):   56 */" \
+"                         \}"]]
 
 # Test "ptype /TMo".  This should be the same as "ptype /o".
 gdb_test "ptype /TMo struct abc" \
-    [multi_line \
-{/\* offset    |  size \*/  type = struct abc \{} \
-{                         public:} \
-{/\*    8      |     8 \*/    void \*field1;} \
-{/\*   16:31   |     4 \*/    unsigned int field2 : 1;} \
-{/\* XXX  7-bit hole   \*/} \
-{/\* XXX  3-byte hole  \*/} \
-{/\*   20      |     4 \*/    int field3;} \
-{/\*   24      |     1 \*/    signed char field4;} \
-{/\* XXX  7-byte hole  \*/} \
-{/\*   32      |     8 \*/    uint64_t field5;} \
-{/\*   40      |     8 \*/    union \{} \
-{/\*                 8 \*/        void \*field6;} \
-{/\*                 4 \*/        int field7;} \
-{} \
-{                               /\* total size \(bytes\):    8 \*/} \
-{                           \} field8;} \
-{/\*   48      |     4 \*/    my_int_type field9;} \
-{/\* XXX  4-byte padding \*/} \
-{} \
-{                           /\* total size \(bytes\):   56 \*/} \
-{                         \}}]
+    [string_to_regexp [multi_line \
+"/* offset    |  size */  type = struct abc \{" \
+"                         public:" \
+"/*    8      |     8 */    void *field1;" \
+"/*   16: 0   |     4 */    unsigned int field2 : 1;" \
+"/* XXX  7-bit hole   */" \
+"/* XXX  3-byte hole  */" \
+"/*   20      |     4 */    int field3;" \
+"/*   24      |     1 */    signed char field4;" \
+"/* XXX  7-byte hole  */" \
+"/*   32      |     8 */    uint64_t field5;" \
+"/*   40      |     8 */    union \{" \
+"/*                 8 */        void *field6;" \
+"/*                 4 */        int field7;" \
+"" \
+"                               /* total size (bytes):    8 */" \
+"                           \} field8;" \
+"/*   48      |     2 */    my_int_type field9;" \
+"/* XXX  6-byte padding  */" \
+"" \
+"                           /* total size (bytes):   56 */" \
+"                         \}"]]
 
 # Test nested structs.
 gdb_test "ptype /o struct pqr" \
-    [multi_line \
-{/\* offset    |  size \*/  type = struct pqr \{} \
-{/\*    0      |     4 \*/    int ff1;} \
-{/\* XXX  4-byte hole  \*/} \
-{/\*    8      |    40 \*/    struct xyz \{} \
-{/\*    8      |     4 \*/        int f1;} \
-{/\*   12      |     1 \*/        signed char f2;} \
-{/\* XXX  3-byte hole  \*/} \
-{/\*   16      |     8 \*/        void \*f3;} \
-{/\*   24      |    24 \*/        struct tuv \{} \
-{/\*   24      |     4 \*/            int a1;} \
-{/\* XXX  4-byte hole  \*/} \
-{/\*   32      |     8 \*/            signed char \*a2;} \
-{/\*   40      |     4 \*/            int a3;} \
-{} \
-{                                   /\* total size \(bytes\):   24 \*/} \
-{                               \} f4;} \
-{} \
-{                               /\* total size \(bytes\):   40 \*/} \
-{                           \} ff2;} \
-{/\* XXX 28-byte hole  \*/} \
-{/\*   72      |     1 \*/    signed char ff3;} \
-{/\* XXX  7-byte padding \*/} \
-{} \
-{                           /\* total size \(bytes\):   56 \*/} \
-{                         \}}]
+    [string_to_regexp [multi_line \
+"/* offset    |  size */  type = struct pqr \{" \
+"/*    0      |     4 */    int ff1;" \
+"/* XXX  4-byte hole  */" \
+"/*    8      |    40 */    struct xyz \{" \
+"/*    8      |     4 */        int f1;" \
+"/*   12      |     1 */        signed char f2;" \
+"/* XXX  3-byte hole  */" \
+"/*   16      |     8 */        void *f3;" \
+"/*   24      |    24 */        struct tuv \{" \
+"/*   24      |     4 */            int a1;" \
+"/* XXX  4-byte hole  */" \
+"/*   32      |     8 */            signed char *a2;" \
+"/*   40      |     4 */            int a3;" \
+"/* XXX  4-byte padding  */" \
+"" \
+"                                   /* total size (bytes):   24 */" \
+"                               \} f4;" \
+"" \
+"                               /* total size (bytes):   40 */" \
+"                           \} ff2;" \
+"/*   48      |     1 */    signed char ff3;" \
+"/* XXX  7-byte padding  */" \
+"" \
+"                           /* total size (bytes):   56 */" \
+"                         \}"]]
 
 # Test that the offset is properly reset when we are printing a union
 # and go inside two inner structs.
 # This also tests a struct inside a struct inside a union.
 gdb_test "ptype /o union qwe" \
-    [multi_line \
-{/\* offset    |  size \*/  type = union qwe \{} \
-{/\*                24 \*/    struct tuv \{} \
-{/\*    0      |     4 \*/        int a1;} \
-{/\* XXX  4-byte hole  \*/} \
-{/\*    8      |     8 \*/        signed char \*a2;} \
-{/\*   16      |     4 \*/        int a3;} \
-{/\* XXX  4-byte padding \*/} \
-{} \
-{                               /\* total size \(bytes\):   24 \*/} \
-{                           \} fff1;} \
-{/\*                40 \*/    struct xyz \{} \
-{/\*    0      |     4 \*/        int f1;} \
-{/\*    4      |     1 \*/        signed char f2;} \
-{/\* XXX  3-byte hole  \*/} \
-{/\*    8      |     8 \*/        void \*f3;} \
-{/\*   16      |    24 \*/        struct tuv \{} \
-{/\*   16      |     4 \*/            int a1;} \
-{/\* XXX  4-byte hole  \*/} \
-{/\*   24      |     8 \*/            signed char \*a2;} \
-{/\*   32      |     4 \*/            int a3;} \
-{/\* XXX  4-byte padding \*/} \
-{} \
-{                                   /\* total size \(bytes\):   24 \*/} \
-{                               \} f4;} \
-{} \
-{                               /\* total size \(bytes\):   40 \*/} \
-{                           \} fff2;} \
-{} \
-{                           /\* total size \(bytes\):   40 \*/} \
-{                         \}}]
+    [string_to_regexp [multi_line \
+"/* offset    |  size */  type = union qwe \{" \
+"/*                24 */    struct tuv \{" \
+"/*    0      |     4 */        int a1;" \
+"/* XXX  4-byte hole  */" \
+"/*    8      |     8 */        signed char *a2;" \
+"/*   16      |     4 */        int a3;" \
+"/* XXX  4-byte padding  */" \
+"" \
+"                               /* total size (bytes):   24 */" \
+"                           \} fff1;" \
+"/*                40 */    struct xyz \{" \
+"/*    0      |     4 */        int f1;" \
+"/*    4      |     1 */        signed char f2;" \
+"/* XXX  3-byte hole  */" \
+"/*    8      |     8 */        void *f3;" \
+"/*   16      |    24 */        struct tuv \{" \
+"/*   16      |     4 */            int a1;" \
+"/* XXX  4-byte hole  */" \
+"/*   24      |     8 */            signed char *a2;" \
+"/*   32      |     4 */            int a3;" \
+"/* XXX  4-byte padding  */" \
+"" \
+"                                   /* total size (bytes):   24 */" \
+"                               \} f4;" \
+"" \
+"                               /* total size (bytes):   40 */" \
+"                           \} fff2;" \
+"" \
+"                           /* total size (bytes):   40 */" \
+"                         \}"]]
 
 # Test printing a struct that contains a union, and that also
 # contains a struct.
 gdb_test "ptype /o struct poi" \
-    [multi_line \
-{/\* offset    |  size \*/  type = struct poi \{} \
-{/\*    0      |     4 \*/    int f1;} \
-{/\* XXX  4-byte hole  \*/} \
-{/\*    8      |    40 \*/    union qwe \{} \
-{/\*                24 \*/        struct tuv \{} \
-{/\*    8      |     4 \*/            int a1;} \
-{/\* XXX  4-byte hole  \*/} \
-{/\*   16      |     8 \*/            signed char \*a2;} \
-{/\*   24      |     4 \*/            int a3;} \
-{/\* XXX  4-byte padding \*/} \
-{} \
-{                                   /\* total size \(bytes\):   24 \*/} \
-{                               \} fff1;} \
-{/\*                40 \*/        struct xyz \{} \
-{/\*    8      |     4 \*/            int f1;} \
-{/\*   12      |     1 \*/            signed char f2;} \
-{/\* XXX  3-byte hole  \*/} \
-{/\*   16      |     8 \*/            void \*f3;} \
-{/\*   24      |    24 \*/            struct tuv \{} \
-{/\*   24      |     4 \*/                int a1;} \
-{/\* XXX  4-byte hole  \*/} \
-{/\*   32      |     8 \*/                signed char \*a2;} \
-{/\*   40      |     4 \*/                int a3;} \
-{/\* XXX  4-byte padding \*/} \
-{} \
-{                                       /\* total size \(bytes\):   24 \*/} \
-{                                   \} f4;} \
-{/\* XXX  32-byte padding \*/} \
-{} \
-{                                   /\* total size \(bytes\):   40 \*/} \
-{                               \} fff2;} \
-{} \
-{                               /\* total size \(bytes\):   40 \*/} \
-{                           \} f2;} \
-{/\*   72      |     2 \*/    uint16_t f3;} \
-{/\* XXX  6-byte hole  \*/} \
-{/\*   80      |    56 \*/    struct pqr \{} \
-{/\*   80      |     4 \*/        int ff1;} \
-{/\* XXX  4-byte hole  \*/} \
-{/\*   88      |    40 \*/        struct xyz \{} \
-{/\*   88      |     4 \*/            int f1;} \
-{/\*   92      |     1 \*/            signed char f2;} \
-{/\* XXX  3-byte hole  \*/} \
-{/\*   96      |     8 \*/            void \*f3;} \
-{/\*  104      |    24 \*/            struct tuv \{} \
-{/\*  104      |     4 \*/                int a1;} \
-{/\* XXX  4-byte hole  \*/} \
-{/\*  112      |     8 \*/                signed char \*a2;} \
-{/\*  120      |     4 \*/                int a3;} \
-{/\* XXX  4-byte padding \*/} \
-{} \
-{                                       /\* total size \(bytes\):   24 \*/} \
-{                                   \} f4;} \
-{} \
-{                                   /\* total size \(bytes\):   40 \*/} \
-{                               \} ff2;} \
-{/\*  152      |     1 \*/        signed char ff3;} \
-{/\* XXX  7-byte padding \*/} \
-{} \
-{                               /\* total size \(bytes\):   56 \*/} \
-{                           \} f4;} \
-{} \
-{                           /\* total size \(bytes\):  112 \*/} \
-{                         \}}]
+    [string_to_regexp [multi_line \
+"/* offset    |  size */  type = struct poi \{" \
+"/*    0      |     4 */    int f1;" \
+"/* XXX  4-byte hole  */" \
+"/*    8      |    40 */    union qwe \{" \
+"/*                24 */        struct tuv \{" \
+"/*    8      |     4 */            int a1;" \
+"/* XXX  4-byte hole  */" \
+"/*   16      |     8 */            signed char *a2;" \
+"/*   24      |     4 */            int a3;" \
+"/* XXX  4-byte padding  */" \
+"" \
+"                                   /* total size (bytes):   24 */" \
+"                               \} fff1;" \
+"/*                40 */        struct xyz \{" \
+"/*    8      |     4 */            int f1;" \
+"/*   12      |     1 */            signed char f2;" \
+"/* XXX  3-byte hole  */" \
+"/*   16      |     8 */            void *f3;" \
+"/*   24      |    24 */            struct tuv \{" \
+"/*   24      |     4 */                int a1;" \
+"/* XXX  4-byte hole  */" \
+"/*   32      |     8 */                signed char *a2;" \
+"/*   40      |     4 */                int a3;" \
+"/* XXX  4-byte padding  */" \
+"" \
+"                                       /* total size (bytes):   24 */" \
+"                                   \} f4;" \
+"" \
+"                                   /* total size (bytes):   40 */" \
+"                               \} fff2;" \
+"/* XXX 32-byte padding  */" \
+"" \
+"                               /* total size (bytes):   40 */" \
+"                           \} f2;" \
+"/*   48      |     2 */    uint16_t f3;" \
+"/* XXX  6-byte hole  */" \
+"/*   56      |    56 */    struct pqr \{" \
+"/*   56      |     4 */        int ff1;" \
+"/* XXX  4-byte hole  */" \
+"/*   64      |    40 */        struct xyz \{" \
+"/*   64      |     4 */            int f1;" \
+"/*   68      |     1 */            signed char f2;" \
+"/* XXX  3-byte hole  */" \
+"/*   72      |     8 */            void *f3;" \
+"/*   80      |    24 */            struct tuv \{" \
+"/*   80      |     4 */                int a1;" \
+"/* XXX  4-byte hole  */" \
+"/*   88      |     8 */                signed char *a2;" \
+"/*   96      |     4 */                int a3;" \
+"/* XXX  4-byte padding  */" \
+"" \
+"                                       /* total size (bytes):   24 */" \
+"                                   \} f4;" \
+"" \
+"                                   /* total size (bytes):   40 */" \
+"                               \} ff2;" \
+"/*  104      |     1 */        signed char ff3;" \
+"/* XXX  7-byte padding  */" \
+"" \
+"                               /* total size (bytes):   56 */" \
+"                           \} f4;" \
+"" \
+"                           /* total size (bytes):  112 */" \
+"                         \}"]]
 
 # Test printing a struct with several bitfields, laid out in various
 # ways.
@@ -262,58 +262,59 @@ gdb_test "ptype /o struct poi" \
 #   0x7fffffffd548: 0xff    0xff    0xff    0xff    0xff    0xff    0xff    0xff
 #   0x7fffffffd550: 0xff    0x00    0x00    0x00    0x00    0x00    0x00    0x00
 gdb_test "ptype /o struct tyu" \
-    [multi_line \
-{/\* offset    |  size \*/  type = struct tyu \{} \
-{/\*    0:31   |     4 \*/    int a1 : 1;} \
-{/\*    0:28   |     4 \*/    int a2 : 3;} \
-{/\*    0: 5   |     4 \*/    int a3 : 23;} \
-{/\*    3: 3   |     1 \*/    signed char a4 : 2;} \
-{/\* XXX  3-bit hole   \*/} \
-{/\* XXX  4-byte hole  \*/} \
-{/\*    8      |     8 \*/    int64_t a5;} \
-{/\*   16:27   |     4 \*/    int a6 : 5;} \
-{/\*   16:56   |     8 \*/    int64_t a7 : 3;} \
-{/\* XXX  7-byte padding \*/} \
-{} \
-{                           /\* total size \(bytes\):   24 \*/} \
-{                         \}}]
+    [string_to_regexp [multi_line \
+"/* offset    |  size */  type = struct tyu \{" \
+"/*    0: 0   |     4 */    int a1 : 1;" \
+"/*    0: 1   |     4 */    int a2 : 3;" \
+"/*    0: 4   |     4 */    int a3 : 23;" \
+"/*    3: 3   |     1 */    signed char a4 : 2;" \
+"/* XXX  3-bit hole   */" \
+"/* XXX  4-byte hole  */" \
+"/*    8      |     8 */    int64_t a5;" \
+"/*   16: 0   |     4 */    int a6 : 5;" \
+"/*   16: 5   |     8 */    int64_t a7 : 3;" \
+"/* XXX  7-byte padding  */" \
+"" \
+"                           /* total size (bytes):   24 */" \
+"                         \}"]]
 
 gdb_test "ptype /o struct asd" \
-    [multi_line \
-{/\* offset    |  size \*/  type = struct asd \{} \
-{/\*    0      |    32 \*/    struct asd::jkl \{} \
-{/\*    0      |     8 \*/        signed char \*f1;} \
-{/\*    8      |     8 \*/        union \{} \
-{/\*                 8 \*/            void \*ff1;} \
-{} \
-{                                   /\* total size \(bytes\):    8 \*/} \
-{                               \} f2;} \
-{/\*   16      |     8 \*/        union \{} \
-{/\*                 8 \*/            signed char \*ff2;} \
-{} \
-{                                   /\* total size \(bytes\):    8 \*/} \
-{                               \} f3;} \
-{/\*   24:27   |     4 \*/        int f4 : 5;} \
-{/\*   24:26   |     4 \*/        unsigned int f5 : 1;} \
-{/\* XXX  2-bit hole   \*/} \
-{/\* XXX  1-byte hole  \*/} \
-{/\*   26      |     2 \*/        short f6;} \
-{} \
-{                               /\* total size \(bytes\):   32 \*/} \
-{                           \} f7;} \
-{/\*   32      |     8 \*/    unsigned long f8;} \
-{/\*   40      |     8 \*/    signed char \*f9;} \
-{/\*   48:28   |     4 \*/    int f10 : 4;} \
-{/\*   48:27   |     4 \*/    unsigned int f11 : 1;} \
-{/\*   48:26   |     4 \*/    unsigned int f12 : 1;} \
-{/\*   48:25   |     4 \*/    unsigned int f13 : 1;} \
-{/\*   48:24   |     4 \*/    unsigned int f14 : 1;} \
-{/\* XXX  7-byte hole  \*/} \
-{/\*   56      |     8 \*/    void \*f15;} \
-{/\*   64      |     8 \*/    void \*f16;} \
-{} \
-{                           /\* total size \(bytes\):   72 \*/} \
-{                         \}}]
+    [string_to_regexp [multi_line \
+"/* offset    |  size */  type = struct asd \{" \
+"/*    0      |    32 */    struct asd::jkl \{" \
+"/*    0      |     8 */        signed char *f1;" \
+"/*    8      |     8 */        union \{" \
+"/*                 8 */            void *ff1;" \
+"" \
+"                                   /* total size (bytes):    8 */" \
+"                               \} f2;" \
+"/*   16      |     8 */        union \{" \
+"/*                 8 */            signed char *ff2;" \
+"" \
+"                                   /* total size (bytes):    8 */" \
+"                               \} f3;" \
+"/*   24: 0   |     4 */        int f4 : 5;" \
+"/*   24: 5   |     4 */        unsigned int f5 : 1;" \
+"/* XXX  2-bit hole   */" \
+"/* XXX  1-byte hole  */" \
+"/*   26      |     2 */        short f6;" \
+"/* XXX  4-byte padding  */" \
+"" \
+"                               /* total size (bytes):   32 */" \
+"                           \} f7;" \
+"/*   32      |     8 */    unsigned long f8;" \
+"/*   40      |     8 */    signed char *f9;" \
+"/*   48: 0   |     4 */    int f10 : 4;" \
+"/*   48: 4   |     4 */    unsigned int f11 : 1;" \
+"/*   48: 5   |     4 */    unsigned int f12 : 1;" \
+"/*   48: 6   |     4 */    unsigned int f13 : 1;" \
+"/*   48: 7   |     4 */    unsigned int f14 : 1;" \
+"/* XXX  7-byte hole  */" \
+"/*   56      |     8 */    void *f15;" \
+"/*   64      |     8 */    void *f16;" \
+"" \
+"                           /* total size (bytes):   72 */" \
+"                         \}"]]
 
 # Test that we don't print any header when issuing a "ptype /o" on a
 # non-struct, non-union, non-class type.
@@ -332,10 +333,10 @@ gdb_test_multiple "$test" "$test" {
 # Test that printing a struct with a static member of itself doesn't
 # get us into an infinite loop.
 gdb_test "ptype/o static_member" \
-    [multi_line \
-{/\* offset    |  size \*/  type = struct static_member \{} \
-{                           static static_member Empty;} \
-{\/*    0      |     4 \*/    int abc;} \
-{} \
-{                           /\* total size \(bytes\):    4 \*/} \
-{                         \}}]
+    [string_to_regexp [multi_line \
+"/* offset    |  size */  type = struct static_member \{" \
+"                           static static_member Empty;" \
+"\/*    0      |     4 */    int abc;" \
+"" \
+"                           /* total size (bytes):    4 */" \
+"                         \}"]]

@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux, architecture independent.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -60,5 +60,13 @@ extern CORE_ADDR linux_displaced_step_location (struct gdbarch *gdbarch);
 extern void linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch);
 
 extern int linux_is_uclinux (void);
+
+/* Fetch the AT_HWCAP entry from the auxv vector for the given TARGET.  On
+   error, 0 is returned.  */
+extern CORE_ADDR linux_get_hwcap (struct target_ops *target);
+
+/* Fetch the AT_HWCAP2 entry from the auxv vector for the given TARGET.  On
+   error, 0 is returned.  */
+extern CORE_ADDR linux_get_hwcap2 (struct target_ops *target);
 
 #endif /* linux-tdep.h */

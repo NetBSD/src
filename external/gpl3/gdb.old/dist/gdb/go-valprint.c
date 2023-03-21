@@ -1,6 +1,6 @@
 /* Support for printing Go values for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,7 @@
 #include "go-lang.h"
 #include "c-lang.h"
 #include "valprint.h"
+#include "cli/cli-style.h"
 
 /* Print a Go string.
 
@@ -43,7 +44,7 @@ print_go_string (struct type *type,
 		 const struct value_print_options *options)
 {
   struct gdbarch *gdbarch = get_type_arch (type);
-  struct type *elt_ptr_type = TYPE_FIELD_TYPE (type, 0);
+  struct type *elt_ptr_type = type->field (0).type ();
   struct type *elt_type = TYPE_TARGET_TYPE (elt_ptr_type);
   LONGEST length;
   /* TODO(dje): The encapsulation of what a pointer is belongs in value.c.
@@ -71,9 +72,9 @@ print_go_string (struct type *type,
 
   if (length < 0)
     {
-      fputs_filtered (_("<invalid length: "), stream);
-      fputs_filtered (plongest (addr), stream);
-      fputs_filtered (">", stream);
+      printf_filtered (_("<invalid length: %ps>"),
+		       styled_string (metadata_style.style (),
+				      plongest (addr)));
       return;
     }
 
@@ -83,17 +84,15 @@ print_go_string (struct type *type,
   val_print_string (elt_type, NULL, addr, length, stream, options);
 }
 
-/* Implements the la_val_print routine for language Go.  */
+/* See go-lang.h.  */
 
 void
-go_val_print (struct type *type, int embedded_offset,
-	      CORE_ADDR address, struct ui_file *stream, int recurse,
-	      struct value *val,
-	      const struct value_print_options *options)
+go_value_print_inner (struct value *val, struct ui_file *stream,
+		      int recurse, const struct value_print_options *options)
 {
-  type = check_typedef (type);
+  struct type *type = check_typedef (value_type (val));
 
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
       case TYPE_CODE_STRUCT:
 	{
@@ -104,7 +103,8 @@ go_val_print (struct type *type, int embedded_offset,
 	    case GO_TYPE_STRING:
 	      if (! options->raw)
 		{
-		  print_go_string (type, embedded_offset, address,
+		  print_go_string (type, value_embedded_offset (val),
+				   value_address (val),
 				   stream, recurse, val, options);
 		  return;
 		}
@@ -116,8 +116,7 @@ go_val_print (struct type *type, int embedded_offset,
 	/* Fall through.  */
 
       default:
-	c_val_print (type, embedded_offset, address, stream,
-		     recurse, val, options);
+	c_value_print_inner (val, stream, recurse, options);
 	break;
     }
 }

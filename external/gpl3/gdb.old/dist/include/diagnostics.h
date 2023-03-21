@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -53,8 +53,6 @@
   DIAGNOSTIC_IGNORE ("-Wdeprecated-declarations")
 # define DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER \
   DIAGNOSTIC_IGNORE ("-Wdeprecated-register")
-# define DIAGNOSTIC_IGNORE_UNUSED_FUNCTION \
-  DIAGNOSTIC_IGNORE ("-Wunused-function")
 # if __has_warning ("-Wenum-compare-switch")
 #  define DIAGNOSTIC_IGNORE_SWITCH_DIFFERENT_ENUM_TYPES \
    DIAGNOSTIC_IGNORE ("-Wenum-compare-switch")
@@ -65,8 +63,10 @@
 
 #elif defined (__GNUC__) /* GCC */
 
-# define DIAGNOSTIC_IGNORE_UNUSED_FUNCTION \
-  DIAGNOSTIC_IGNORE ("-Wunused-function")
+# if __GNUC__ >= 7
+#  define DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER \
+   DIAGNOSTIC_IGNORE ("-Wregister")
+# endif
 
 # define DIAGNOSTIC_IGNORE_STRINGOP_TRUNCATION \
   DIAGNOSTIC_IGNORE ("-Wstringop-truncation")
@@ -86,10 +86,6 @@
 
 #ifndef DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER
 # define DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER
-#endif
-
-#ifndef DIAGNOSTIC_IGNORE_UNUSED_FUNCTION
-# define DIAGNOSTIC_IGNORE_UNUSED_FUNCTION
 #endif
 
 #ifndef DIAGNOSTIC_IGNORE_SWITCH_DIFFERENT_ENUM_TYPES

@@ -1,5 +1,5 @@
 /* 32-bit ELF support for Nios II.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -1737,9 +1737,6 @@ struct elf32_nios2_link_hash_entry
      symbol.  */
   struct elf32_nios2_stub_hash_entry *hsh_cache;
 
-  /* Track dynamic relocs copied for this symbol.  */
-  struct elf_dyn_relocs *dyn_relocs;
-
 #define GOT_UNKNOWN	0
 #define GOT_NORMAL	1
 #define GOT_TLS_GD	2
@@ -1810,9 +1807,6 @@ struct elf32_nios2_link_hash_table
       bfd_signed_vma refcount;
       bfd_vma offset;
     } tls_ldm_got;
-
-    /* Small local sym cache.  */
-    struct sym_cache sym_cache;
 
     bfd_vma res_n_size;
   };
@@ -2039,7 +2033,6 @@ link_hash_newfunc (struct bfd_hash_entry *entry,
 
       eh = (struct elf32_nios2_link_hash_entry *) entry;
       eh->hsh_cache = NULL;
-      eh->dyn_relocs = NULL;
       eh->tls_type = GOT_UNKNOWN;
       eh->got_types_used = 0;
     }
@@ -2228,7 +2221,7 @@ nios2_elf32_setup_section_lists (bfd *output_bfd, struct bfd_link_info *info)
   unsigned int top_id, top_index;
   asection *section;
   asection **input_list, **list;
-  bfd_size_type amt;
+  size_t amt;
   struct elf32_nios2_link_hash_table *htab = elf32_nios2_hash_table (info);
 
   /* Count the number of input BFDs and find the top input section id.  */
@@ -2490,6 +2483,17 @@ nios2_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg ATTRIBUTE_U
     = (struct elf32_nios2_stub_hash_entry *) gen_entry;
   asection *stub_sec = hsh->stub_sec;
   bfd_vma sym_value;
+  struct bfd_link_info *info;
+
+  info = (struct bfd_link_info *) in_arg;
+
+  /* Fail if the target section could not be assigned to an output
+     section.  The user should fix his linker script.  */
+  if (hsh->target_section->output_section == NULL
+      && info->non_contiguous_regions)
+    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+			      "Retry without --enable-non-contiguous-regions.\n"),
+			    hsh->target_section);
 
   /* Make a note of the offset within the stubs for this entry.  */
   hsh->stub_offset = stub_sec->size;
@@ -2560,7 +2564,7 @@ get_local_syms (bfd *output_bfd ATTRIBUTE_UNUSED, bfd *input_bfd,
   /* We want to read in symbol extension records only once.  To do this
      we need to read in the local symbols in parallel and save them for
      later use; so hold pointers to the local symbols in an array.  */
-  bfd_size_type amt = sizeof (Elf_Internal_Sym *) * htab->bfd_count;
+  size_t amt = sizeof (Elf_Internal_Sym *) * htab->bfd_count;
   all_local_syms = bfd_zmalloc (amt);
   htab->all_local_syms = all_local_syms;
   if (all_local_syms == NULL)
@@ -3062,7 +3066,7 @@ nios2_elf_assign_gp (bfd *output_bfd, bfd_vma *pgp, struct bfd_link_info *info)
 
   h = bfd_hash_lookup (&info->hash->table, "_gp", FALSE, FALSE);
   lh = (struct bfd_link_hash_entry *) h;
-lookup:
+ lookup:
   if (lh)
     {
       switch (lh->type)
@@ -3846,7 +3850,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 				  (input_bfd, symtab_hdr->sh_link,
 				   sym->st_name));
 			  if (name == NULL || *name == '\0')
-			    name = bfd_section_name (input_bfd, sec);
+			    name = bfd_section_name (sec);
 			}
 		      /* xgettext:c-format */
 		      format = _("unable to reach %s (at %#" PRIx64 ") from "
@@ -4484,7 +4488,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 						      symtab_hdr->sh_link,
 						      sym->st_name);
 	      if (name == NULL || *name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  switch (r)
@@ -4527,8 +4531,7 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 	    {
 	      (*info->callbacks->warning) (info, msg, name, input_bfd,
 					   input_section, rel->r_offset);
-	      if (msgbuf)
-		free (msgbuf);
+	      free (msgbuf);
 	      return FALSE;
 	    }
 	}
@@ -4539,10 +4542,10 @@ nios2_elf32_relocate_section (bfd *output_bfd,
 /* Implement elf-backend_section_flags:
    Convert NIOS2 specific section flags to bfd internal section flags.  */
 static bfd_boolean
-nios2_elf32_section_flags (flagword *flags, const Elf_Internal_Shdr *hdr)
+nios2_elf32_section_flags (const Elf_Internal_Shdr *hdr)
 {
   if (hdr->sh_flags & SHF_NIOS2_GPREL)
-    *flags |= SEC_SMALL_DATA;
+    hdr->bfd_section->flags |= SEC_SMALL_DATA;
 
   return TRUE;
 }
@@ -4554,7 +4557,7 @@ static bfd_boolean
 nios2_elf32_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
 			   Elf_Internal_Shdr *hdr, asection *sec)
 {
-  register const char *name = bfd_get_section_name (abfd, sec);
+  const char *name = bfd_section_name (sec);
 
   if ((sec->flags & SEC_SMALL_DATA)
       || strcmp (name, ".sdata") == 0
@@ -4580,7 +4583,7 @@ create_got_section (bfd *dynobj, struct bfd_link_info *info)
 
   /* In order for the two loads in .PLTresolve to share the same %hiadj,
      _GLOBAL_OFFSET_TABLE_ must be aligned to a 16-byte boundary.  */
-  if (!bfd_set_section_alignment (dynobj, htab->root.sgotplt, 4))
+  if (!bfd_set_section_alignment (htab->root.sgotplt, 4))
     return FALSE;
 
   /* The Nios II ABI specifies that GOT-relative relocations are relative
@@ -4616,7 +4619,7 @@ nios2_elf32_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info)
      same %hiadj, the start of the PLT (as well as the GOT) must be aligned
      to a 16-byte boundary.  This is because the addresses for these loads
      include the -(.plt+4) PIC correction.  */
-  return bfd_set_section_alignment (dynobj, htab->root.splt, 4);
+  return bfd_set_section_alignment (htab->root.splt, 4);
 }
 
 /* Implement elf_backend_copy_indirect_symbol:
@@ -4630,37 +4633,6 @@ nios2_elf32_copy_indirect_symbol (struct bfd_link_info *info,
 
   edir = (struct elf32_nios2_link_hash_entry *) dir;
   eind = (struct elf32_nios2_link_hash_entry *) ind;
-
-  if (eind->dyn_relocs != NULL)
-    {
-      if (edir->dyn_relocs != NULL)
-	{
-	  struct elf_dyn_relocs **pp;
-	  struct elf_dyn_relocs *p;
-
-	  /* Add reloc counts against the indirect sym to the direct sym
-	     list.  Merge any entries against the same section.  */
-	  for (pp = &eind->dyn_relocs; (p = *pp) != NULL; )
-	    {
-	      struct elf_dyn_relocs *q;
-
-	      for (q = edir->dyn_relocs; q != NULL; q = q->next)
-		if (q->sec == p->sec)
-		  {
-		    q->pc_count += p->pc_count;
-		    q->count += p->count;
-		    *pp = p->next;
-		    break;
-		  }
-	      if (q == NULL)
-		pp = &p->next;
-	    }
-	  *pp = edir->dyn_relocs;
-	}
-
-      edir->dyn_relocs = eind->dyn_relocs;
-      eind->dyn_relocs = NULL;
-    }
 
   if (ind->root.type == bfd_link_hash_indirect
       && dir->got.refcount <= 0)
@@ -4916,7 +4888,7 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      /* If this is a global symbol, we count the number of
 		 relocations we need for this symbol.  */
 	      if (h != NULL)
-		head = &((struct elf32_nios2_link_hash_entry *) h)->dyn_relocs;
+		head = &h->dyn_relocs;
 	      else
 		{
 		  /* Track dynamic relocs needed for local syms too.
@@ -4927,7 +4899,7 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  void *vpp;
 		  Elf_Internal_Sym *isym;
 
-		  isym = bfd_sym_from_r_symndx (&htab->sym_cache,
+		  isym = bfd_sym_from_r_symndx (&htab->root.sym_cache,
 						abfd, r_symndx);
 		  if (isym == NULL)
 		    return FALSE;
@@ -4943,7 +4915,7 @@ nios2_elf32_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      p = *head;
 	      if (p == NULL || p->sec != sec)
 		{
-		  bfd_size_type amt = sizeof *p;
+		  size_t amt = sizeof *p;
 		  p = ((struct elf_dyn_relocs *)
 		       bfd_alloc (htab->root.dynobj, amt));
 		  if (p == NULL)
@@ -5429,8 +5401,8 @@ nios2_elf32_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   /* Align dynbss.  */
   s->size = BFD_ALIGN (s->size, (bfd_size_type)1 << align2);
-  if (align2 > bfd_get_section_alignment (dynobj, s)
-      && !bfd_set_section_alignment (dynobj, s, align2))
+  if (align2 > bfd_section_alignment (s)
+      && !bfd_set_section_alignment (s, align2))
     return FALSE;
 
   /* Define the symbol as being at this point in the section.  */
@@ -5621,7 +5593,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
   else
     h->got.offset = (bfd_vma) -1;
 
-  if (eh->dyn_relocs == NULL)
+  if (h->dyn_relocs == NULL)
     return TRUE;
 
   /* In the shared -Bsymbolic case, discard space allocated for
@@ -5637,7 +5609,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 	{
 	  struct elf_dyn_relocs **pp;
 
-	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
+	  for (pp = &h->dyn_relocs; (p = *pp) != NULL; )
 	    {
 	      p->count -= p->pc_count;
 	      p->pc_count = 0;
@@ -5650,12 +5622,12 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility.  */
-      if (eh->dyn_relocs != NULL
+      if (h->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
 	{
 	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
 	      || UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
-	    eh->dyn_relocs = NULL;
+	    h->dyn_relocs = NULL;
 
 	  /* Make sure undefined weak symbols are output as a dynamic
 	     symbol in PIEs.  */
@@ -5690,13 +5662,13 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, PTR inf)
 	    goto keep;
 	}
 
-      eh->dyn_relocs = NULL;
+      h->dyn_relocs = NULL;
 
     keep: ;
     }
 
   /* Finally, allocate space.  */
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  for (p = h->dyn_relocs; p != NULL; p = p->next)
     {
       asection *sreloc = elf_section_data (p->sec)->sreloc;
       sreloc->size += p->count * sizeof (Elf32_External_Rela);
@@ -5777,8 +5749,6 @@ nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 		{
 		  srel = elf_section_data (p->sec)->sreloc;
 		  srel->size += p->count * sizeof (Elf32_External_Rela);
-		  if ((p->sec->output_section->flags & SEC_READONLY) != 0)
-		    info->flags |= DF_TEXTREL;
 		}
 	    }
 	}
@@ -5853,7 +5823,7 @@ nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       /* It's OK to base decisions on the section name, because none
 	 of the dynobj section names depend upon the input files.  */
-      name = bfd_get_section_name (dynobj, s);
+      name = bfd_section_name (s);
 
       if (CONST_STRNEQ (name, ".rela"))
 	{
@@ -5904,45 +5874,7 @@ nios2_elf32_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (htab->res_n_size)
     elf_link_hash_traverse (& htab->root, adjust_dynrelocs, info);
 
-  if (htab->root.dynamic_sections_created)
-    {
-      /* Add some entries to the .dynamic section.  We fill in the
-	 values later, in elf_nios2_finish_dynamic_sections, but we
-	 must add the entries now so that we get the correct size for
-	 the .dynamic section.  The DT_DEBUG entry is filled in by the
-	 dynamic linker and used by the debugger.  */
-#define add_dynamic_entry(TAG, VAL) \
-  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
-
-      if (!bfd_link_pic (info) && !add_dynamic_entry (DT_DEBUG, 0))
-	return FALSE;
-
-      if (htab->root.sgotplt->size != 0
-	  && !add_dynamic_entry (DT_PLTGOT, 0))
-	return FALSE;
-
-      if (htab->root.splt->size != 0
-	  && (!add_dynamic_entry (DT_PLTRELSZ, 0)
-	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
-	      || !add_dynamic_entry (DT_JMPREL, 0)))
-	return FALSE;
-
-      if (relocs
-	  && (!add_dynamic_entry (DT_RELA, 0)
-	      || !add_dynamic_entry (DT_RELASZ, 0)
-	      || !add_dynamic_entry (DT_RELAENT, sizeof (Elf32_External_Rela))))
-	return FALSE;
-
-      if (!bfd_link_pic (info) && !add_dynamic_entry (DT_NIOS2_GP, 0))
-	return FALSE;
-
-      if ((info->flags & DF_TEXTREL) != 0
-	  && !add_dynamic_entry (DT_TEXTREL, 0))
-	return FALSE;
-    }
-#undef add_dynamic_entry
-
-  return TRUE;
+  return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
 }
 
 /* Free the derived linker hash table.  */
@@ -5961,7 +5893,7 @@ static struct bfd_link_hash_table *
 nios2_elf32_link_hash_table_create (bfd *abfd)
 {
   struct elf32_nios2_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct elf32_nios2_link_hash_table);
+  size_t amt = sizeof (struct elf32_nios2_link_hash_table);
 
   ret = bfd_zmalloc (amt);
   if (ret == NULL)
@@ -6040,7 +5972,7 @@ nios2_elf_add_symbol_hook (bfd *abfd,
       htab = elf32_nios2_hash_table (info);
       if (htab->sbss == NULL)
 	{
-	  flagword flags = SEC_IS_COMMON | SEC_LINKER_CREATED;
+	  flagword flags = SEC_IS_COMMON | SEC_SMALL_DATA | SEC_LINKER_CREATED;
 
 	  if (htab->root.dynobj == NULL)
 	    htab->root.dynobj = abfd;

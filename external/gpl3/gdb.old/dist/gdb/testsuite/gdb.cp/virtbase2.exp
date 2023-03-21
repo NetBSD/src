@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,23 +63,29 @@ proc make_scope_list { scopes } {
 }
 
 proc test_variables_in_base { scopes } {
-    foreach scope [make_scope_list $scopes] {
-        gdb_test "print ${scope}i" " = 55"
-        gdb_test "print ${scope}d" " = 6.25"
-        gdb_test "print ${scope}x" " = 22"
-    }
+  with_test_prefix "$scopes" {
+      foreach scope [make_scope_list $scopes] {
+	  gdb_test "print ${scope}i" " = 55"
+	  gdb_test "print ${scope}d" " = 6.25"
+	  gdb_test "print ${scope}x" " = 22"
+      }
+  }
 }
 
 proc test_variables_in_superbase { scopes } {
-    foreach scope [make_scope_list $scopes] {
-        gdb_test "print ${scope}x" " = 22"
-    }
+  with_test_prefix "$scopes" {
+      foreach scope [make_scope_list $scopes] {
+	  gdb_test "print ${scope}x" " = 22"
+      }
+  }
 }
 
 proc test_variables_in_super { scopes } {
-    foreach scope [make_scope_list $scopes] {
-        gdb_test "print ${scope}w" " = 17"
-    }
+  with_test_prefix "$scopes" {
+      foreach scope [make_scope_list $scopes] {
+	  gdb_test "print ${scope}w" " = 17"
+      }
+  }
 }
 
 with_test_prefix "derived::func_d" {

@@ -1,5 +1,5 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
    Written by Metin G. Ozisik, Mimi Phuong-Thao Vo, and John Gilmore.
    Archive support from Damon A. Permezel.
    Contributed by IBM Corporation and Cygnus Support.
@@ -277,7 +277,7 @@ typedef union
 /* Define prototypes for certain functions, to avoid a compiler warning
    saying that they are missing.  */
 
-const bfd_target * rs6000coff_core_p (bfd *abfd);
+const bfd_cleanup rs6000coff_core_p (bfd *abfd);
 bfd_boolean rs6000coff_core_file_matches_executable_p (bfd *core_bfd,
 						       bfd *exec_bfd);
 char * rs6000coff_core_file_failing_command (bfd *abfd);
@@ -332,7 +332,7 @@ make_bfd_asection (bfd *abfd, const char *name, flagword flags,
 /* Decide if a given bfd represents a `core' file or not. There really is no
    magic number or anything like, in rs6000coff.  */
 
-const bfd_target *
+bfd_cleanup
 rs6000coff_core_p (bfd *abfd)
 {
   CoreHdr core;
@@ -686,7 +686,7 @@ rs6000coff_core_p (bfd *abfd)
   }
 #endif
 
-  return abfd->xvec;		/* This is garbage for now.  */
+  return _bfd_no_cleanup;
 
  fail:
   bfd_release (abfd, abfd->tdata.any);
@@ -759,11 +759,11 @@ rs6000coff_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
     }
 
   str1 = strrchr (path, '/');
-  str2 = strrchr (exec_bfd->filename, '/');
+  str2 = strrchr (bfd_get_filename (exec_bfd), '/');
 
   /* step over character '/' */
   str1 = str1 != NULL ? str1 + 1 : path;
-  str2 = str2 != NULL ? str2 + 1 : exec_bfd->filename;
+  str2 = str2 != NULL ? str2 + 1 : bfd_get_filename (exec_bfd);
 
   if (strcmp (str1, str2) == 0)
     ret = TRUE;

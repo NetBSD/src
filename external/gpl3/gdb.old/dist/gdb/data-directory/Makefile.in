@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 Free Software Foundation, Inc.
+# Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
 # Makefile for building a staged copy of the data-directory.
 # This file is part of GDB.
@@ -63,7 +63,7 @@ GEN_SYSCALLS_FILES = \
 	sparc-linux.xml \
 	sparc64-linux.xml
 
-SYSCALLS_FILES = gdb-syscalls.dtd freebsd.xml $(GEN_SYSCALLS_FILES)
+SYSCALLS_FILES = gdb-syscalls.dtd freebsd.xml netbsd.xml $(GEN_SYSCALLS_FILES)
 
 PYTHON_DIR = python
 PYTHON_INSTALL_DIR = $(DESTDIR)$(GDB_DATADIR)/$(PYTHON_DIR)

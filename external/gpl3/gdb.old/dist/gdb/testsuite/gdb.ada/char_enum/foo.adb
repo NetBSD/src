@@ -1,4 +1,4 @@
---  Copyright 2011-2019 Free Software Foundation, Inc.
+--  Copyright 2011-2020 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -16,8 +16,9 @@
 with Pck; use Pck;
 
 procedure Foo is
-   type Char_Enum_Type is ('A', 'B', 'C', 'D', 'E');
-   Char : Char_Enum_Type := 'D';
+   type Char_Enum_Type is ('A', 'B', 'C', '_', '0');
+   Char : Char_Enum_Type := '_';
+   Gchar : Global_Enum_Type := '+';
 begin
    Do_Nothing (Char'Address);  -- STOP
 end Foo;
