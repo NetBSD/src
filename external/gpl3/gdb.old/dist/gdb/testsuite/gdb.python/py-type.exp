@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2019 Free Software Foundation, Inc.
+# Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -98,6 +98,8 @@ proc test_fields {lang} {
     gdb_py_test_silent_cmd "print (st)" "print value (st)" 1
     gdb_py_test_silent_cmd "python st = gdb.history (0)" "get value (st) from history" 1
     gdb_py_test_silent_cmd "python fields = st.type.fields()" "get fields from st.type" 1
+    gdb_test "python print (st.type.objfile.filename == gdb.current_progspace ().filename)" "True" \
+      "check type.objfile"
     gdb_test "python print (len(fields))" "2" "check number of fields (st)"
     gdb_test "python print (fields\[0\].name)" "a" "check structure field a name"
     gdb_test "python print (fields\[1\].name)" "b" "check structure field b name"
@@ -268,6 +270,8 @@ if { [build_inferior "${binfile}" "c"] == 0 } {
 
   # Skip all tests if Python scripting is not enabled.
   if { [skip_python_tests] } { continue }
+
+  gdb_test "python print (gdb.lookup_type ('char').objfile)" "None"
 
   gdb_test "python print(gdb.lookup_type('char').array(1, 0))" \
       "char \\\[0\\\]"

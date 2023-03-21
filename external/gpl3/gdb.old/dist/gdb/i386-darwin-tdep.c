@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -34,7 +34,7 @@
 #include "i386-darwin-tdep.h"
 #include "solib.h"
 #include "solib-darwin.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include <algorithm>
 
 /* Offsets into the struct i386_thread_state where we'll find the saved regs.
@@ -104,12 +104,12 @@ darwin_dwarf_signal_frame_p (struct gdbarch *gdbarch,
   return i386_sigtramp_p (this_frame);
 }
 
-/* Check wether TYPE is a 128-bit vector (__m128, __m128d or __m128i).  */
+/* Check whether TYPE is a 128-bit vector (__m128, __m128d or __m128i).  */
 
 static int
 i386_m128_p (struct type *type)
 {
-  return (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type)
+  return (type->code () == TYPE_CODE_ARRAY && TYPE_VECTOR (type)
           && TYPE_LENGTH (type) == 16);
 }
 
@@ -124,22 +124,22 @@ i386_darwin_arg_type_alignment (struct type *type)
          aligned to 8-byte boundaries.
      7.  [...]  The caller aligns 128-bit vectors in the parameter area to
          16-byte boundaries.  */
-  if (TYPE_CODE (type) == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
+  if (type->code () == TYPE_CODE_ARRAY && TYPE_VECTOR (type))
     return TYPE_LENGTH (type);
   /* 4.  The caller places all the fields of structures (or unions) with no
          vector elements in the parameter area.  These structures are 4-byte
          aligned.
      5.  The caller places structures with vector elements on the stack,
          16-byte aligned.  */
-  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (type) == TYPE_CODE_UNION)
+  if (type->code () == TYPE_CODE_STRUCT
+      || type->code () == TYPE_CODE_UNION)
     {
       int i;
       int res = 4;
-      for (i = 0; i < TYPE_NFIELDS (type); i++)
+      for (i = 0; i < type->num_fields (); i++)
 	{
 	  int align
-	    = i386_darwin_arg_type_alignment (TYPE_FIELD_TYPE (type, i));
+	    = i386_darwin_arg_type_alignment (type->field (i).type ());
 
 	  res = std::max (res, align);
 	}
@@ -286,8 +286,9 @@ i386_mach_o_osabi_sniffer (bfd *abfd)
   return GDB_OSABI_UNKNOWN;
 }
 
+void _initialize_i386_darwin_tdep ();
 void
-_initialize_i386_darwin_tdep (void)
+_initialize_i386_darwin_tdep ()
 {
   gdbarch_register_osabi_sniffer (bfd_arch_unknown, bfd_target_mach_o_flavour,
                                   i386_mach_o_osabi_sniffer);

@@ -1,6 +1,6 @@
 /* Register groupings for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -202,8 +202,8 @@ default_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
   if (group == all_reggroup)
     return 1;
   vector_p = TYPE_VECTOR (register_type (gdbarch, regnum));
-  float_p = (TYPE_CODE (register_type (gdbarch, regnum)) == TYPE_CODE_FLT
-	     || (TYPE_CODE (register_type (gdbarch, regnum))
+  float_p = (register_type (gdbarch, regnum)->code () == TYPE_CODE_FLT
+	     || (register_type (gdbarch, regnum)->code ()
 		 == TYPE_CODE_DECFLOAT));
   raw_p = regnum < gdbarch_num_regs (gdbarch);
   if (group == float_reggroup)
@@ -321,8 +321,9 @@ struct reggroup *const all_reggroup = &all_group;
 struct reggroup *const save_reggroup = &save_group;
 struct reggroup *const restore_reggroup = &restore_group;
 
+void _initialize_reggroup ();
 void
-_initialize_reggroup (void)
+_initialize_reggroup ()
 {
   reggroups_data = gdbarch_data_register_pre_init (reggroups_init);
 

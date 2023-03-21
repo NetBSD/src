@@ -1,4 +1,4 @@
-# Copyright 1998-2019 Free Software Foundation, Inc.
+# Copyright 1998-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,15 +69,15 @@ set saw_registers 0
 set saw_headers 0
 set test "maint print registers"
 gdb_test_multiple $test $test {
-    -re "\[^\r\n\]+Name\[^\r\n\]+Nr\[^\r\n\]+Rel\[^\r\n\]+Offset\[^\r\n\]+Size\[^\r\n\]+Type\[^\r\n\]+\[\r\n\]+" {
+    -re "\[^\r\n\]+Name\[^\r\n\]+Nr\[^\r\n\]+Rel\[^\r\n\]+Offset\[^\r\n\]+Size\[^\r\n\]+Type\[^\r\n\]+\r\n" {
 	set saw_headers 1
 	exp_continue
     }
-    -re "^\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[\r\n\]+" {
+    -re "^\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\r\n" {
         set saw_registers 1
         exp_continue
     }
-    -re "^\\*\[0-9\]+\[^\r\n\]+\[\r\n\]+" {
+    -re "^\\*\[0-9\]+\[^\r\n\]+\r\n" {
         exp_continue
     }
     -re "$gdb_prompt $" {
@@ -109,19 +109,25 @@ if ![runto_main] then {
         perror "tests suppressed"
 }
 
-# If we're using .gdb_index or .debug_names there will be no psymtabs.
-set have_gdb_index 0
-gdb_test_multiple "maint info sections .gdb_index .debug_names" "check for .gdb_index" {
-    -re ": \\.gdb_index .*\r\n$gdb_prompt $" {
-	set have_gdb_index 1
+# Check that 'maint info sections' output looks correct.  When
+# checking the lines for each section we reject section names starting
+# with a '*' character, the internal *COM*, *UND*, *ABS*, and *IND*
+# sections should not be displayed in this output.
+set test "check maint info sections output"
+gdb_test_multiple "maint info sections" $test {
+    -re "Exec file:\r\n\[\t ]+`\[^'\]+', file type \[^.\]+\.\r\n" {
+	exp_continue
     }
-    -re ": \\.debug_names .*\r\n$gdb_prompt $" {
-	set have_gdb_index 1
+    -re "^ \\\[\[0-9\]+\\\]\[\t \]+$hex->$hex at $hex: \[^*\r\]+\r\n" {
+	exp_continue
     }
-    -re ".*$gdb_prompt $" {
-	;# Nothing to do, present to avoid a FAIL.
+    -re "^$gdb_prompt $" {
+	pass $test
     }
 }
+
+# If we're using .gdb_index or .debug_names there will be no psymtabs.
+set have_gdb_index [ exec_has_index_section ${binfile} ]
 
 # There also won't be any psymtabs if we read the index from the index cache.
 # We can detect this by looking if the index-cache is enabled and if the number
@@ -177,9 +183,12 @@ gdb_test_no_output "maint check-symtabs"
 
 # Test per-command stats.
 gdb_test_no_output "maint set per-command on"
+set decimal "\[0-9\]+"
+set time_fmt "${decimal}-${decimal}-${decimal} ${decimal}:${decimal}:${decimal}\\.${decimal}"
 gdb_test "pwd" \
-    "Command execution time: \[0-9.\]+ \\(cpu\\), \[0-9.\]+ \\(wall\\)\[\r\n\]+Space used: $decimal \\(\\+$decimal for this command\\)\[\r\n\]+#symtabs: $decimal \\(\\+$decimal\\), #compunits: $decimal \\(\\+$decimal\\), #blocks: $decimal \\(\\+$decimal\\)"
-gdb_test_no_output "maint set per-command off"
+    "${time_fmt} - command started\r\n.*\r\n${time_fmt} - command finished\r\nCommand execution time: \[0-9.\]+ \\(cpu\\), \[0-9.\]+ \\(wall\\)\[\r\n\]+Space used: $decimal \\(\\+$decimal for this command\\)\[\r\n\]+#symtabs: $decimal \\(\\+$decimal\\), #compunits: $decimal \\(\\+$decimal\\), #blocks: $decimal \\(\\+$decimal\\)"
+gdb_test "maint set per-command off" \
+    "${time_fmt} - command started"
 
 # The timeout value is raised, because printing all the symbols and
 # statistical information about Cygwin and Windows libraries takes a lot
@@ -191,7 +200,7 @@ if [istarget "*-*-cygwin*"] {
 
 send_gdb "maint print statistics\n"
 gdb_expect  {
-    -re "Statistics for\[^\n\r\]*maint\[^\n\r\]*:\r\n  Number of \"minimal\" symbols read: $decimal\r\n(  Number of \"partial\" symbols read: $decimal\r\n)?  Number of \"full\" symbols read: $decimal\r\n  Number of \"types\" defined: $decimal\r\n(  Number of psym tables \\(not yet expanded\\): $decimal\r\n)?(  Number of read CUs: $decimal\r\n  Number of unread CUs: $decimal\r\n)?  Number of symbol tables: $decimal\r\n  Number of symbol tables with line tables: $decimal\r\n  Number of symbol tables with blockvectors: $decimal\r\n  Total memory used for objfile obstack: $decimal\r\n  Total memory used for BFD obstack: $decimal\r\n  Total memory used for psymbol cache: $decimal\r\n  Total memory used for macro cache: $decimal\r\n  Total memory used for file name cache: $decimal\r\n" {
+    -re "Statistics for\[^\n\r\]*maint\[^\n\r\]*:\r\n  Number of \"minimal\" symbols read: $decimal\r\n(  Number of \"partial\" symbols read: $decimal\r\n)?  Number of \"full\" symbols read: $decimal\r\n  Number of \"types\" defined: $decimal\r\n(  Number of psym tables \\(not yet expanded\\): $decimal\r\n)?(  Number of read CUs: $decimal\r\n  Number of unread CUs: $decimal\r\n)?  Number of symbol tables: $decimal\r\n  Number of symbol tables with line tables: $decimal\r\n  Number of symbol tables with blockvectors: $decimal\r\n  Total memory used for objfile obstack: $decimal\r\n  Total memory used for BFD obstack: $decimal\r\n  Total memory used for psymbol cache: $decimal\r\n  Total memory used for string cache: $decimal\r\n" {
 	gdb_expect {
 	    -re "$gdb_prompt $" {
 		pass "maint print statistics"
@@ -206,7 +215,7 @@ gdb_expect  {
 # There aren't any ...
 gdb_test_no_output "maint print dummy-frames"
 
-send_gdb "maint print objfiles\n"
+
 
 # To avoid timeouts, we avoid expects with many .* patterns that match
 # many lines.  Instead, we keep track of which milestones we've seen
@@ -215,31 +224,24 @@ send_gdb "maint print objfiles\n"
 set header 0
 set psymtabs 0
 set symtabs 0
-set keep_looking 1
-
-while {$keep_looking} {
-    gdb_expect  {
-
-	-re "\r\n" {
-	    set output $expect_out(buffer)
-	    if {[regexp ".*Object file.*maint($EXEEXT)?:  Objfile at ${hex}" $output]} {
-		set header 1
-	    }
-	    if {[regexp ".*Psymtabs:\[\r\t \]+\n" $output]} {
-		set psymtabs 1
-	    }
-	    if {[regexp ".*Symtabs:\[\r\t \]+\n" $output]} {
-		set symtabs 1
-	    }
-	}
-
-	-re ".*$gdb_prompt $" { 
-	    set keep_looking 0
-	}
-	timeout { 
-	    fail "(timeout) maint print objfiles" 
-	    set keep_looking 0
-	}
+gdb_test_multiple "maint print objfiles" "" -lbl {
+    -re "\r\nObject file.*maint($EXEEXT)?:  Objfile at ${hex}" {
+	set header 1
+	exp_continue
+    }
+    -re "\r\nPsymtabs:\[\r\t \]+" {
+	set psymtabs 1
+	exp_continue
+    }
+    -re "\r\nSymtabs:\[\r\t \]+\n" {
+	set symtabs 1
+	exp_continue
+    }
+    -re " at $hex," {
+	exp_continue
+    }
+    -re -wrap "" {
+	pass $gdb_test_name
     }
 }
 
@@ -485,22 +487,22 @@ gdb_test_multiple "maint info breakpoints" "maint info breakpoints" {
 }
 
 gdb_test "maint print" \
-    "\"maintenance print\" must be followed by the name of a print command\\.\r\nList.*unambiguous\\..*" \
+    "List.*unambiguous\\..*" \
     "maint print w/o args" 
 
 gdb_test "maint info" \
-    "\"maintenance info\" must be followed by the name of an info command\\.\r\nList.*unambiguous\\..*" \
+    "List.*unambiguous\\..*" \
     "maint info w/o args"
 
 gdb_test "maint" \
-    "\"maintenance\" must be followed by the name of a maintenance command\\.\r\nList.*unambiguous\\..*" \
+    "List.*unambiguous\\..*" \
     "maint w/o args"
 
 # Test that "main info line-table" w/o a file name shows the symtab for
 # $srcfile.
 set saw_srcfile 0
-set test "maint info line-table w/o a file name"
-gdb_test_multiple "maint info line-table" $test {
+gdb_test_multiple "maint info line-table" \
+    "maint info line-table w/o a file name" {
     -re "symtab: \[^\n\r\]+${srcfile} \\(\\(struct symtab \\*\\) $hex\\)\r\nlinetable: \\(\\(struct linetable \\*\\) $hex\\):\r\nINDEX\[ \t\]+LINE\[ \t\]+ADDRESS" {
 	set saw_srcfile 1
 	exp_continue
@@ -509,7 +511,11 @@ gdb_test_multiple "maint info line-table" $test {
 	# Match each symtab to avoid overflowing expect's buffer.
 	exp_continue
     }
-    -re "$decimal\[ \t\]+$decimal\[ \t\]+$hex\r\n" {
+    -re "symtab: \[^\n\r\]+ \\(\\(struct symtab \\*\\) $hex\\)\r\nlinetable: \\(\\(struct linetable \\*\\) 0x0\\):\r\nNo line table.\r\n" {
+	# For symtabs with no linetable.
+	exp_continue
+    }
+    -re "^$decimal\[ \t\]+$decimal\[ \t\]+$hex\r\n" {
 	# Line table entries can be long too:
 	#
 	#  INDEX    LINE ADDRESS
@@ -522,13 +528,17 @@ gdb_test_multiple "maint info line-table" $test {
 	#  6          45 0x0000000000400740
 	#  (...)
 	#  454       129 0x00007ffff7df1d28
-	#  455         0 0x00007ffff7df1d3f
+	#  455       END 0x00007ffff7df1d3f
 	#
 	# Match each line to avoid overflowing expect's buffer.
 	exp_continue
     }
-    -re "$gdb_prompt $" {
-	gdb_assert $saw_srcfile $test
+    -re "^$decimal\[ \t\]+END\[ \t\]+$hex\r\n" {
+	# Matches an end marker in the above.
+	exp_continue
+    }
+    -re "^$gdb_prompt $" {
+	gdb_assert $saw_srcfile $gdb_test_name
     }
 }
 

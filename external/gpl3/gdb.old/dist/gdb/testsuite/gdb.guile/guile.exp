@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2019 Free Software Foundation, Inc.
+# Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,7 +68,7 @@ gdb_test_multiline "show guile command" \
 
 gdb_test "source $srcdir/$subdir/source2.scm" "yes" "source source2.scm"
 
-gdb_test "source -s source2.scm" "yes" "source -s source2.scm"
+gdb_test "source -s source2.scm" "yes"
 
 gdb_test "guile (print (current-objfile))" "= #f"
 gdb_test "guile (print (objfiles))" "= \\(\\)"
@@ -80,5 +80,5 @@ gdb_test "guile (print x)" "= 23"
 gdb_test_no_output "guile (define a (execute \"help\" #:to-string #t))" \
     "collect help from uiout"
 
-gdb_test "guile (print a)" "= .*aliases -- Aliases of other commands.*" \
+gdb_test "guile (print a)" "= .*aliases -- User-defined aliases of other commands.*" \
     "verify help to uiout"

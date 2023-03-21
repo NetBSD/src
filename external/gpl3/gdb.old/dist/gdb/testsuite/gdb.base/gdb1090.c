@@ -1,5 +1,5 @@
 /* Test program for multi-register variable.
-   Copyright 2003-2019 Free Software Foundation, Inc.
+   Copyright 2003-2020 Free Software Foundation, Inc.
 
    This file is part of the gdb testsuite.
 
@@ -43,4 +43,6 @@ void foo ()
 int main ()
 {
   foo ();
+
+  return 0;
 }

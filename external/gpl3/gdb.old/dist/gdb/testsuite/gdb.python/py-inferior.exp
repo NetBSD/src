@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2019 Free Software Foundation, Inc.
+# Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -218,7 +218,7 @@ with_test_prefix "is_valid" {
     gdb_test "python print (inf_list\[0\].is_valid())" "True" \
 	"check inferior validity 1"
 
-    gdb_py_test_multiple "install new inferior event handler" \
+    gdb_test_multiline "install new inferior event handler" \
 	"python" "" \
 	"my_inferior_count = 1" "" \
 	"def new_inf_handler(evt):" "" \
@@ -227,7 +227,7 @@ with_test_prefix "is_valid" {
 	"    my_inferior_count = my_inferior_count + 1" "" \
 	"gdb.events.new_inferior.connect(new_inf_handler)" "" \
 	"end" ""
-    gdb_py_test_multiple "install inferior deleted event handler" \
+    gdb_test_multiline "install inferior deleted event handler" \
 	"python" "" \
 	"def del_inf_handler(evt):" "" \
 	"  global my_inferior_count" "" \
@@ -279,7 +279,7 @@ with_test_prefix "selected_inferior" {
     gdb_test "inferior 1" ".*" "switch to first inferior"
     gdb_test "py print (gdb.selected_inferior().num)" "1" "first inferior selected"
 
-    gdb_test "add-inferior" "Added inferior 3" "create new inferior"
+    gdb_test "add-inferior" "Added inferior 3 on connection .*" "create new inferior"
     gdb_test "inferior 3" ".*" "switch to third inferior"
     gdb_test "py print (gdb.selected_inferior().num)" "3" "third inferior selected"
     gdb_test "inferior 1" ".*" "switch back to first inferior"
@@ -288,7 +288,7 @@ with_test_prefix "selected_inferior" {
 
 # Test repr()/str()
 with_test_prefix "__repr__" {
-    gdb_test "add-inferior" "Added inferior 4" "add inferior 4"
+    gdb_test "add-inferior" "Added inferior 4 on connection .*" "add inferior 4"
     gdb_py_test_silent_cmd "python infs = gdb.inferiors()" "get inferior list" 1
     gdb_test "python print (infs\[0\])" "<gdb.Inferior num=1, pid=$decimal>"
     gdb_test "python print (infs)" \

@@ -2,11 +2,11 @@
    of the possible command languages.  If necessary, a hook (that may be
    present or not) must be used and set to the appropriate routine by any
    command language that cares about it.  If you are having to include this
-   file you are possibly doing things the old way.  This file will disapear.
+   file you are possibly doing things the old way.  This file will dissapear.
    fnasser@redhat.com    */
 
 /* Header file for GDB-specific command-line stuff.
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -133,7 +133,14 @@ extern struct cmd_list_element *showchecklist;
 extern struct cmd_list_element *save_cmdlist;
 
 extern void execute_command (const char *, int);
-extern std::string execute_command_to_string (const char *p, int from_tty);
+
+/* Execute command P and returns its output.  If TERM_OUT,
+   the output is built using terminal output behaviour such
+   as cli_styling.  */
+extern std::string execute_command_to_string (const char *p, int from_tty,
+					      bool term_out);
+extern void execute_command_to_ui_file (struct ui_file *file,
+					const char *p, int from_tty);
 
 extern void print_command_line (struct command_line *, unsigned int,
 				struct ui_file *);

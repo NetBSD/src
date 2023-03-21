@@ -1,6 +1,6 @@
 /* Parse expressions for GDB.
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    Modified from expread.y by the Department of Computer Science at the
    State University of New York at Buffalo, 1991.
@@ -50,7 +50,7 @@
 #include "objfiles.h"
 #include "user-regs.h"
 #include <algorithm>
-#include "common/gdb_optional.h"
+#include "gdbsupport/gdb_optional.h"
 
 /* Standard set of definitions for printing, dumping, prefixifying,
  * and evaluating expressions.  */
@@ -65,32 +65,6 @@ const struct exp_descriptor exp_descriptor_standard =
     evaluate_subexp_standard
   };
 
-/* Global variables declared in parser-defs.h (and commented there).  */
-const struct block *expression_context_block;
-CORE_ADDR expression_context_pc;
-innermost_block_tracker innermost_block;
-int arglist_len;
-static struct type_stack type_stack;
-const char *lexptr;
-const char *prev_lexptr;
-int paren_depth;
-int comma_terminates;
-
-/* True if parsing an expression to attempt completion.  */
-int parse_completion;
-
-/* The index of the last struct expression directly before a '.' or
-   '->'.  This is set when parsing and is only used when completing a
-   field name.  It is -1 if no dereference operation was found.  */
-static int expout_last_struct = -1;
-
-/* If we are completing a tagged type name, this will be nonzero.  */
-static enum type_code expout_tag_completion_type = TYPE_CODE_UNDEF;
-
-/* The token for tagged type name completion.  */
-static gdb::unique_xmalloc_ptr<char> expout_completion_name;
-
-
 static unsigned int expressiondebug = 0;
 static void
 show_expressiondebug (struct ui_file *file, int from_tty,
@@ -100,8 +74,8 @@ show_expressiondebug (struct ui_file *file, int from_tty,
 }
 
 
-/* Non-zero if an expression parser should set yydebug.  */
-int parser_debug;
+/* True if an expression parser should set yydebug.  */
+bool parser_debug;
 
 static void
 show_parserdebug (struct ui_file *file, int from_tty,
@@ -112,14 +86,16 @@ show_parserdebug (struct ui_file *file, int from_tty,
 
 
 static int prefixify_subexp (struct expression *, struct expression *, int,
-			     int);
+			     int, int);
 
 static expression_up parse_exp_in_context (const char **, CORE_ADDR,
 					   const struct block *, int,
-					   int, int *);
-static expression_up parse_exp_in_context_1 (const char **, CORE_ADDR,
-					     const struct block *, int,
-					     int, int *);
+					   int, int *,
+					   innermost_block_tracker *,
+					   expr_completion_state *);
+
+static void increase_expout_size (struct expr_builder *ps, size_t lenelt);
+
 
 /* Documented at it's declaration.  */
 
@@ -133,41 +109,13 @@ innermost_block_tracker::update (const struct block *b,
     m_innermost_block = b;
 }
 
-/* Data structure for saving values of arglist_len for function calls whose
-   arguments contain other function calls.  */
-
-static std::vector<int> *funcall_chain;
-
-/* Begin counting arguments for a function call,
-   saving the data about any containing call.  */
-
-void
-start_arglist (void)
-{
-  funcall_chain->push_back (arglist_len);
-  arglist_len = 0;
-}
-
-/* Return the number of arguments in a function call just terminated,
-   and restore the data for the containing function call.  */
-
-int
-end_arglist (void)
-{
-  int val = arglist_len;
-  arglist_len = funcall_chain->back ();
-  funcall_chain->pop_back ();
-  return val;
-}
-
 
 
 /* See definition in parser-defs.h.  */
 
-parser_state::parser_state (size_t initial_size,
-			    const struct language_defn *lang,
+expr_builder::expr_builder (const struct language_defn *lang,
 			    struct gdbarch *gdbarch)
-  : expout_size (initial_size),
+  : expout_size (10),
     expout (XNEWVAR (expression,
 		     (sizeof (expression)
 		      + EXP_ELEM_TO_BYTES (expout_size)))),
@@ -178,7 +126,7 @@ parser_state::parser_state (size_t initial_size,
 }
 
 expression_up
-parser_state::release ()
+expr_builder::release ()
 {
   /* Record the actual number of expression elements, and then
      reallocate the expression memory so that we free up any
@@ -201,7 +149,7 @@ parser_state::release ()
    a register through here.  */
 
 static void
-write_exp_elt (struct parser_state *ps, const union exp_element *expelt)
+write_exp_elt (struct expr_builder *ps, const union exp_element *expelt)
 {
   if (ps->expout_ptr >= ps->expout_size)
     {
@@ -214,7 +162,7 @@ write_exp_elt (struct parser_state *ps, const union exp_element *expelt)
 }
 
 void
-write_exp_elt_opcode (struct parser_state *ps, enum exp_opcode expelt)
+write_exp_elt_opcode (struct expr_builder *ps, enum exp_opcode expelt)
 {
   union exp_element tmp;
 
@@ -224,7 +172,7 @@ write_exp_elt_opcode (struct parser_state *ps, enum exp_opcode expelt)
 }
 
 void
-write_exp_elt_sym (struct parser_state *ps, struct symbol *expelt)
+write_exp_elt_sym (struct expr_builder *ps, struct symbol *expelt)
 {
   union exp_element tmp;
 
@@ -233,8 +181,8 @@ write_exp_elt_sym (struct parser_state *ps, struct symbol *expelt)
   write_exp_elt (ps, &tmp);
 }
 
-void
-write_exp_elt_msym (struct parser_state *ps, minimal_symbol *expelt)
+static void
+write_exp_elt_msym (struct expr_builder *ps, minimal_symbol *expelt)
 {
   union exp_element tmp;
 
@@ -244,7 +192,7 @@ write_exp_elt_msym (struct parser_state *ps, minimal_symbol *expelt)
 }
 
 void
-write_exp_elt_block (struct parser_state *ps, const struct block *b)
+write_exp_elt_block (struct expr_builder *ps, const struct block *b)
 {
   union exp_element tmp;
 
@@ -254,7 +202,7 @@ write_exp_elt_block (struct parser_state *ps, const struct block *b)
 }
 
 void
-write_exp_elt_objfile (struct parser_state *ps, struct objfile *objfile)
+write_exp_elt_objfile (struct expr_builder *ps, struct objfile *objfile)
 {
   union exp_element tmp;
 
@@ -264,7 +212,7 @@ write_exp_elt_objfile (struct parser_state *ps, struct objfile *objfile)
 }
 
 void
-write_exp_elt_longcst (struct parser_state *ps, LONGEST expelt)
+write_exp_elt_longcst (struct expr_builder *ps, LONGEST expelt)
 {
   union exp_element tmp;
 
@@ -274,7 +222,7 @@ write_exp_elt_longcst (struct parser_state *ps, LONGEST expelt)
 }
 
 void
-write_exp_elt_floatcst (struct parser_state *ps, const gdb_byte expelt[16])
+write_exp_elt_floatcst (struct expr_builder *ps, const gdb_byte expelt[16])
 {
   union exp_element tmp;
   int index;
@@ -286,7 +234,7 @@ write_exp_elt_floatcst (struct parser_state *ps, const gdb_byte expelt[16])
 }
 
 void
-write_exp_elt_type (struct parser_state *ps, struct type *expelt)
+write_exp_elt_type (struct expr_builder *ps, struct type *expelt)
 {
   union exp_element tmp;
 
@@ -296,7 +244,7 @@ write_exp_elt_type (struct parser_state *ps, struct type *expelt)
 }
 
 void
-write_exp_elt_intern (struct parser_state *ps, struct internalvar *expelt)
+write_exp_elt_intern (struct expr_builder *ps, struct internalvar *expelt)
 {
   union exp_element tmp;
 
@@ -327,7 +275,7 @@ write_exp_elt_intern (struct parser_state *ps, struct internalvar *expelt)
 
 
 void
-write_exp_string (struct parser_state *ps, struct stoken str)
+write_exp_string (struct expr_builder *ps, struct stoken str)
 {
   int len = str.length;
   size_t lenelt;
@@ -369,7 +317,7 @@ write_exp_string (struct parser_state *ps, struct stoken str)
    long constant, followed by the contents of the string.  */
 
 void
-write_exp_string_vector (struct parser_state *ps, int type,
+write_exp_string_vector (struct expr_builder *ps, int type,
 			 struct stoken_vector *vec)
 {
   int i, len;
@@ -422,7 +370,7 @@ write_exp_string_vector (struct parser_state *ps, int type,
    either end of the bitstring.  */
 
 void
-write_exp_bitstring (struct parser_state *ps, struct stoken str)
+write_exp_bitstring (struct expr_builder *ps, struct stoken str)
 {
   int bits = str.length;	/* length in bits */
   int len = (bits + HOST_CHAR_BIT - 1) / HOST_CHAR_BIT;
@@ -532,7 +480,7 @@ find_minsym_type_and_address (minimal_symbol *msymbol,
    the expression.  */
 
 void
-write_exp_msymbol (struct parser_state *ps,
+write_exp_msymbol (struct expr_builder *ps,
 		   struct bound_minimal_symbol bound_msym)
 {
   write_exp_elt_opcode (ps, OP_VAR_MSYM_VALUE);
@@ -541,15 +489,15 @@ write_exp_msymbol (struct parser_state *ps,
   write_exp_elt_opcode (ps, OP_VAR_MSYM_VALUE);
 }
 
-/* Mark the current index as the starting location of a structure
-   expression.  This is used when completing on field names.  */
+/* See parser-defs.h.  */
 
 void
-mark_struct_expression (struct parser_state *ps)
+parser_state::mark_struct_expression ()
 {
   gdb_assert (parse_completion
-	      && expout_tag_completion_type == TYPE_CODE_UNDEF);
-  expout_last_struct = ps->expout_ptr;
+	      && (m_completion_state.expout_tag_completion_type
+		  == TYPE_CODE_UNDEF));
+  m_completion_state.expout_last_struct = expout_ptr;
 }
 
 /* Indicate that the current parser invocation is completing a tag.
@@ -557,17 +505,19 @@ mark_struct_expression (struct parser_state *ps)
    start of the tag name.  */
 
 void
-mark_completion_tag (enum type_code tag, const char *ptr, int length)
+parser_state::mark_completion_tag (enum type_code tag, const char *ptr,
+				   int length)
 {
   gdb_assert (parse_completion
-	      && expout_tag_completion_type == TYPE_CODE_UNDEF
-	      && expout_completion_name == NULL
-	      && expout_last_struct == -1);
+	      && (m_completion_state.expout_tag_completion_type
+		  == TYPE_CODE_UNDEF)
+	      && m_completion_state.expout_completion_name == NULL
+	      && m_completion_state.expout_last_struct == -1);
   gdb_assert (tag == TYPE_CODE_UNION
 	      || tag == TYPE_CODE_STRUCT
 	      || tag == TYPE_CODE_ENUM);
-  expout_tag_completion_type = tag;
-  expout_completion_name.reset (xstrndup (ptr, length));
+  m_completion_state.expout_tag_completion_type = tag;
+  m_completion_state.expout_completion_name.reset (xstrndup (ptr, length));
 }
 
 
@@ -598,6 +548,7 @@ write_dollar_variable (struct parser_state *ps, struct stoken str)
   struct block_symbol sym;
   struct bound_minimal_symbol msym;
   struct internalvar *isym = NULL;
+  std::string copy;
 
   /* Handle the tokens $digits; also $ (short for $0) and $$ (short for $$1)
      and $$digits (equivalent to $<-digits> if you could type that).  */
@@ -631,14 +582,15 @@ write_dollar_variable (struct parser_state *ps, struct stoken str)
 
   /* Handle tokens that refer to machine registers:
      $ followed by a register name.  */
-  i = user_reg_map_name_to_regnum (parse_gdbarch (ps),
+  i = user_reg_map_name_to_regnum (ps->gdbarch (),
 				   str.ptr + 1, str.length - 1);
   if (i >= 0)
     goto handle_register;
 
   /* Any names starting with $ are probably debugger internal variables.  */
 
-  isym = lookup_only_internalvar (copy_name (str) + 1);
+  copy = copy_name (str);
+  isym = lookup_only_internalvar (copy.c_str () + 1);
   if (isym)
     {
       write_exp_elt_opcode (ps, OP_INTERNALVAR);
@@ -650,8 +602,7 @@ write_dollar_variable (struct parser_state *ps, struct stoken str)
   /* On some systems, such as HP-UX and hppa-linux, certain system routines 
      have names beginning with $ or $$.  Check for those, first.  */
 
-  sym = lookup_symbol (copy_name (str), (struct block *) NULL,
-		       VAR_DOMAIN, NULL);
+  sym = lookup_symbol (copy.c_str (), NULL, VAR_DOMAIN, NULL);
   if (sym.symbol)
     {
       write_exp_elt_opcode (ps, OP_VAR_VALUE);
@@ -660,7 +611,7 @@ write_dollar_variable (struct parser_state *ps, struct stoken str)
       write_exp_elt_opcode (ps, OP_VAR_VALUE);
       return;
     }
-  msym = lookup_bound_minimal_symbol (copy_name (str));
+  msym = lookup_bound_minimal_symbol (copy.c_str ());
   if (msym.minsym)
     {
       write_exp_msymbol (ps, msym);
@@ -670,7 +621,7 @@ write_dollar_variable (struct parser_state *ps, struct stoken str)
   /* Any other names are assumed to be debugger internal variables.  */
 
   write_exp_elt_opcode (ps, OP_INTERNALVAR);
-  write_exp_elt_intern (ps, create_internalvar (copy_name (str) + 1));
+  write_exp_elt_intern (ps, create_internalvar (copy.c_str () + 1));
   write_exp_elt_opcode (ps, OP_INTERNALVAR);
   return;
 handle_last:
@@ -684,8 +635,8 @@ handle_register:
   str.ptr++;
   write_exp_string (ps, str);
   write_exp_elt_opcode (ps, OP_REGISTER);
-  innermost_block.update (expression_context_block,
-			  INNERMOST_BLOCK_FOR_REGISTERS);
+  ps->block_tracker->update (ps->expression_context_block,
+			     INNERMOST_BLOCK_FOR_REGISTERS);
   return;
 }
 
@@ -757,40 +708,19 @@ find_template_name_end (const char *p)
    so they can share the storage that lexptr is parsing.
    When it is necessary to pass a name to a function that expects
    a null-terminated string, the substring is copied out
-   into a separate block of storage.
+   into a separate block of storage.  */
 
-   N.B. A single buffer is reused on each call.  */
-
-char *
+std::string
 copy_name (struct stoken token)
 {
-  /* A temporary buffer for identifiers, so we can null-terminate them.
-     We allocate this with xrealloc.  parse_exp_1 used to allocate with
-     alloca, using the size of the whole expression as a conservative
-     estimate of the space needed.  However, macro expansion can
-     introduce names longer than the original expression; there's no
-     practical way to know beforehand how large that might be.  */
-  static char *namecopy;
-  static size_t namecopy_size;
-
-  /* Make sure there's enough space for the token.  */
-  if (namecopy_size < token.length + 1)
-    {
-      namecopy_size = token.length + 1;
-      namecopy = (char *) xrealloc (namecopy, token.length + 1);
-    }
-      
-  memcpy (namecopy, token.ptr, token.length);
-  namecopy[token.length] = 0;
-
-  return namecopy;
+  return std::string (token.ptr, token.length);
 }
 
 
 /* See comments on parser-defs.h.  */
 
 int
-prefixify_expression (struct expression *expr)
+prefixify_expression (struct expression *expr, int last_struct)
 {
   gdb_assert (expr->nelts > 0);
   int len = sizeof (struct expression) + EXP_ELEM_TO_BYTES (expr->nelts);
@@ -802,7 +732,7 @@ prefixify_expression (struct expression *expr)
   /* Copy the original expression into temp.  */
   memcpy (temp, expr, len);
 
-  return prefixify_subexp (temp, expr, inpos, outpos);
+  return prefixify_subexp (temp, expr, inpos, outpos, last_struct);
 }
 
 /* Return the number of exp_elements in the postfix subexpression 
@@ -1021,13 +951,14 @@ operator_length_standard (const struct expression *expr, int endpos,
 /* Copy the subexpression ending just before index INEND in INEXPR
    into OUTEXPR, starting at index OUTBEG.
    In the process, convert it from suffix to prefix form.
-   If EXPOUT_LAST_STRUCT is -1, then this function always returns -1.
+   If LAST_STRUCT is -1, then this function always returns -1.
    Otherwise, it returns the index of the subexpression which is the
-   left-hand-side of the expression at EXPOUT_LAST_STRUCT.  */
+   left-hand-side of the expression at LAST_STRUCT.  */
 
 static int
 prefixify_subexp (struct expression *inexpr,
-		  struct expression *outexpr, int inend, int outbeg)
+		  struct expression *outexpr, int inend, int outbeg,
+		  int last_struct)
 {
   int oplen;
   int args;
@@ -1044,7 +975,7 @@ prefixify_subexp (struct expression *inexpr,
 	  EXP_ELEM_TO_BYTES (oplen));
   outbeg += oplen;
 
-  if (expout_last_struct == inend)
+  if (last_struct == inend)
     result = outbeg - oplen;
 
   /* Find the lengths of the arg subexpressions.  */
@@ -1068,7 +999,7 @@ prefixify_subexp (struct expression *inexpr,
 
       oplen = arglens[i];
       inend += oplen;
-      r = prefixify_subexp (inexpr, outexpr, inend, outbeg);
+      r = prefixify_subexp (inexpr, outexpr, inend, outbeg, last_struct);
       if (r != -1)
 	{
 	  /* Return immediately.  We probably have only parsed a
@@ -1094,18 +1025,10 @@ prefixify_subexp (struct expression *inexpr,
 
 expression_up
 parse_exp_1 (const char **stringptr, CORE_ADDR pc, const struct block *block,
-	     int comma)
+	     int comma, innermost_block_tracker *tracker)
 {
-  return parse_exp_in_context (stringptr, pc, block, comma, 0, NULL);
-}
-
-static expression_up
-parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
-		      const struct block *block,
-		      int comma, int void_context_p, int *out_subexp)
-{
-  return parse_exp_in_context_1 (stringptr, pc, block, comma,
-				 void_context_p, out_subexp);
+  return parse_exp_in_context (stringptr, pc, block, comma, 0, NULL,
+			       tracker, nullptr);
 }
 
 /* As for parse_exp_1, except that if VOID_CONTEXT_P, then
@@ -1116,32 +1039,24 @@ parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
    is left untouched.  */
 
 static expression_up
-parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
-			const struct block *block,
-			int comma, int void_context_p, int *out_subexp)
+parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
+		      const struct block *block,
+		      int comma, int void_context_p, int *out_subexp,
+		      innermost_block_tracker *tracker,
+		      expr_completion_state *cstate)
 {
   const struct language_defn *lang = NULL;
   int subexp;
 
-  lexptr = *stringptr;
-  prev_lexptr = NULL;
-
-  paren_depth = 0;
-  type_stack.elements.clear ();
-  expout_last_struct = -1;
-  expout_tag_completion_type = TYPE_CODE_UNDEF;
-  expout_completion_name.reset ();
-
-  comma_terminates = comma;
-
-  if (lexptr == 0 || *lexptr == 0)
+  if (*stringptr == 0 || **stringptr == 0)
     error_no_arg (_("expression to compute"));
 
-  std::vector<int> funcalls;
-  scoped_restore save_funcall_chain = make_scoped_restore (&funcall_chain,
-							   &funcalls);
+  const struct block *expression_context_block = block;
+  CORE_ADDR expression_context_pc = 0;
 
-  expression_context_block = block;
+  innermost_block_tracker local_tracker;
+  if (tracker == nullptr)
+    tracker = &local_tracker;
 
   /* If no context specified, try using the current frame, if any.  */
   if (!expression_context_block)
@@ -1183,7 +1098,7 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
       struct symbol *func = block_linkage_function (block);
 
       if (func != NULL)
-        lang = language_def (SYMBOL_LANGUAGE (func));
+        lang = language_def (func->language ());
       if (lang == NULL || lang->la_language == language_unknown)
         lang = current_language;
     }
@@ -1195,24 +1110,25 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
      and others called from *.y) ensure CURRENT_LANGUAGE gets restored
      to the value matching SELECTED_FRAME as set by get_current_arch.  */
 
-  parser_state ps (10, lang, get_current_arch ());
+  parser_state ps (lang, get_current_arch (), expression_context_block,
+		   expression_context_pc, comma, *stringptr,
+		   cstate != nullptr, tracker);
 
   scoped_restore_current_language lang_saver;
   set_language (lang->la_language);
 
-  TRY
+  try
     {
-      lang->la_parser (&ps);
+      lang->parser (&ps);
     }
-  CATCH (except, RETURN_MASK_ALL)
+  catch (const gdb_exception &except)
     {
       /* If parsing for completion, allow this to succeed; but if no
 	 expression elements have been written, then there's nothing
 	 to do, so fail.  */
-      if (! parse_completion || ps.expout_ptr == 0)
-	throw_exception (except);
+      if (! ps.parse_completion || ps.expout_ptr == 0)
+	throw;
     }
-  END_CATCH
 
   /* We have to operate on an "expression *", due to la_post_parser,
      which explains this funny-looking double release.  */
@@ -1225,16 +1141,19 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
     dump_raw_expression (result.get (), gdb_stdlog,
 			 "before conversion to prefix form");
 
-  subexp = prefixify_expression (result.get ());
+  subexp = prefixify_expression (result.get (),
+				 ps.m_completion_state.expout_last_struct);
   if (out_subexp)
     *out_subexp = subexp;
 
-  lang->la_post_parser (&result, void_context_p);
+  lang->post_parser (&result, void_context_p, ps.parse_completion, tracker);
 
   if (expressiondebug)
     dump_prefix_expression (result.get (), gdb_stdlog);
 
-  *stringptr = lexptr;
+  if (cstate != nullptr)
+    *cstate = std::move (ps.m_completion_state);
+  *stringptr = ps.lexptr;
   return result;
 }
 
@@ -1242,9 +1161,9 @@ parse_exp_in_context_1 (const char **stringptr, CORE_ADDR pc,
    to use up all of the contents of STRING.  */
 
 expression_up
-parse_expression (const char *string)
+parse_expression (const char *string, innermost_block_tracker *tracker)
 {
-  expression_up exp = parse_exp_1 (&string, 0, 0, 0);
+  expression_up exp = parse_exp_1 (&string, 0, 0, 0, tracker);
   if (*string)
     error (_("Junk after end of expression."));
   return exp;
@@ -1281,30 +1200,29 @@ parse_expression_for_completion (const char *string,
   expression_up exp;
   struct value *val;
   int subexp;
+  expr_completion_state cstate;
 
-  TRY
+  try
     {
-      parse_completion = 1;
-      exp = parse_exp_in_context (&string, 0, 0, 0, 0, &subexp);
+      exp = parse_exp_in_context (&string, 0, 0, 0, 0, &subexp,
+				  nullptr, &cstate);
     }
-  CATCH (except, RETURN_MASK_ERROR)
+  catch (const gdb_exception_error &except)
     {
       /* Nothing, EXP remains NULL.  */
     }
-  END_CATCH
 
-  parse_completion = 0;
   if (exp == NULL)
     return NULL;
 
-  if (expout_tag_completion_type != TYPE_CODE_UNDEF)
+  if (cstate.expout_tag_completion_type != TYPE_CODE_UNDEF)
     {
-      *code = expout_tag_completion_type;
-      *name = std::move (expout_completion_name);
+      *code = cstate.expout_tag_completion_type;
+      *name = std::move (cstate.expout_completion_name);
       return NULL;
     }
 
-  if (expout_last_struct == -1)
+  if (cstate.expout_last_struct == -1)
     return NULL;
 
   const char *fieldname = extract_field_op (exp.get (), &subexp);
@@ -1322,13 +1240,6 @@ parse_expression_for_completion (const char *string,
   return value_type (val);
 }
 
-/* A post-parser that does nothing.  */
-
-void
-null_post_parser (expression_up *exp, int void_context_p)
-{
-}
-
 /* Parse floating point value P of length LEN.
    Return false if invalid, true if valid.
    The successfully parsed number is stored in DATA in
@@ -1341,337 +1252,6 @@ parse_float (const char *p, int len,
 	     const struct type *type, gdb_byte *data)
 {
   return target_float_from_string (data, type, std::string (p, len));
-}
-
-/* Stuff for maintaining a stack of types.  Currently just used by C, but
-   probably useful for any language which declares its types "backwards".  */
-
-/* A helper function for insert_type and insert_type_address_space.
-   This does work of expanding the type stack and inserting the new
-   element, ELEMENT, into the stack at location SLOT.  */
-
-static void
-insert_into_type_stack (int slot, union type_stack_elt element)
-{
-  gdb_assert (slot <= type_stack.elements.size ());
-  type_stack.elements.insert (type_stack.elements.begin () + slot, element);
-}
-
-/* Insert a new type, TP, at the bottom of the type stack.  If TP is
-   tp_pointer, tp_reference or tp_rvalue_reference, it is inserted at the
-   bottom.  If TP is a qualifier, it is inserted at slot 1 (just above a
-   previous tp_pointer) if there is anything on the stack, or simply pushed
-   if the stack is empty.  Other values for TP are invalid.  */
-
-void
-insert_type (enum type_pieces tp)
-{
-  union type_stack_elt element;
-  int slot;
-
-  gdb_assert (tp == tp_pointer || tp == tp_reference
-	      || tp == tp_rvalue_reference || tp == tp_const
-	      || tp == tp_volatile);
-
-  /* If there is anything on the stack (we know it will be a
-     tp_pointer), insert the qualifier above it.  Otherwise, simply
-     push this on the top of the stack.  */
-  if (!type_stack.elements.empty () && (tp == tp_const || tp == tp_volatile))
-    slot = 1;
-  else
-    slot = 0;
-
-  element.piece = tp;
-  insert_into_type_stack (slot, element);
-}
-
-void
-push_type (enum type_pieces tp)
-{
-  type_stack_elt elt;
-  elt.piece = tp;
-  type_stack.elements.push_back (elt);
-}
-
-void
-push_type_int (int n)
-{
-  type_stack_elt elt;
-  elt.int_val = n;
-  type_stack.elements.push_back (elt);
-}
-
-/* Insert a tp_space_identifier and the corresponding address space
-   value into the stack.  STRING is the name of an address space, as
-   recognized by address_space_name_to_int.  If the stack is empty,
-   the new elements are simply pushed.  If the stack is not empty,
-   this function assumes that the first item on the stack is a
-   tp_pointer, and the new values are inserted above the first
-   item.  */
-
-void
-insert_type_address_space (struct parser_state *pstate, char *string)
-{
-  union type_stack_elt element;
-  int slot;
-
-  /* If there is anything on the stack (we know it will be a
-     tp_pointer), insert the address space qualifier above it.
-     Otherwise, simply push this on the top of the stack.  */
-  if (!type_stack.elements.empty ())
-    slot = 1;
-  else
-    slot = 0;
-
-  element.piece = tp_space_identifier;
-  insert_into_type_stack (slot, element);
-  element.int_val = address_space_name_to_int (parse_gdbarch (pstate),
-					       string);
-  insert_into_type_stack (slot, element);
-}
-
-enum type_pieces
-pop_type (void)
-{
-  if (!type_stack.elements.empty ())
-    {
-      type_stack_elt elt = type_stack.elements.back ();
-      type_stack.elements.pop_back ();
-      return elt.piece;
-    }
-  return tp_end;
-}
-
-int
-pop_type_int (void)
-{
-  if (!type_stack.elements.empty ())
-    {
-      type_stack_elt elt = type_stack.elements.back ();
-      type_stack.elements.pop_back ();
-      return elt.int_val;
-    }
-  /* "Can't happen".  */
-  return 0;
-}
-
-/* Pop a type list element from the global type stack.  */
-
-static std::vector<struct type *> *
-pop_typelist (void)
-{
-  gdb_assert (!type_stack.elements.empty ());
-  type_stack_elt elt = type_stack.elements.back ();
-  type_stack.elements.pop_back ();
-  return elt.typelist_val;
-}
-
-/* Pop a type_stack element from the global type stack.  */
-
-static struct type_stack *
-pop_type_stack (void)
-{
-  gdb_assert (!type_stack.elements.empty ());
-  type_stack_elt elt = type_stack.elements.back ();
-  type_stack.elements.pop_back ();
-  return elt.stack_val;
-}
-
-/* Append the elements of the type stack FROM to the type stack TO.
-   Always returns TO.  */
-
-struct type_stack *
-append_type_stack (struct type_stack *to, struct type_stack *from)
-{
-  to->elements.insert (to->elements.end (), from->elements.begin (),
-		       from->elements.end ());
-  return to;
-}
-
-/* Push the type stack STACK as an element on the global type stack.  */
-
-void
-push_type_stack (struct type_stack *stack)
-{
-  type_stack_elt elt;
-  elt.stack_val = stack;
-  type_stack.elements.push_back (elt);
-  push_type (tp_type_stack);
-}
-
-/* Copy the global type stack into a newly allocated type stack and
-   return it.  The global stack is cleared.  The returned type stack
-   must be freed with delete.  */
-
-struct type_stack *
-get_type_stack (void)
-{
-  struct type_stack *result = new struct type_stack (std::move (type_stack));
-  type_stack.elements.clear ();
-  return result;
-}
-
-/* Push a function type with arguments onto the global type stack.
-   LIST holds the argument types.  If the final item in LIST is NULL,
-   then the function will be varargs.  */
-
-void
-push_typelist (std::vector<struct type *> *list)
-{
-  type_stack_elt elt;
-  elt.typelist_val = list;
-  type_stack.elements.push_back (elt);
-  push_type (tp_function_with_arguments);
-}
-
-/* Pop the type stack and return a type_instance_flags that
-   corresponds the const/volatile qualifiers on the stack.  This is
-   called by the C++ parser when parsing methods types, and as such no
-   other kind of type in the type stack is expected.  */
-
-type_instance_flags
-follow_type_instance_flags ()
-{
-  type_instance_flags flags = 0;
-
-  for (;;)
-    switch (pop_type ())
-      {
-      case tp_end:
-	return flags;
-      case tp_const:
-	flags |= TYPE_INSTANCE_FLAG_CONST;
-	break;
-      case tp_volatile:
-	flags |= TYPE_INSTANCE_FLAG_VOLATILE;
-	break;
-      default:
-	gdb_assert_not_reached ("unrecognized tp_ value in follow_types");
-      }
-}
-
-
-/* Pop the type stack and return the type which corresponds to FOLLOW_TYPE
-   as modified by all the stuff on the stack.  */
-struct type *
-follow_types (struct type *follow_type)
-{
-  int done = 0;
-  int make_const = 0;
-  int make_volatile = 0;
-  int make_addr_space = 0;
-  int array_size;
-
-  while (!done)
-    switch (pop_type ())
-      {
-      case tp_end:
-	done = 1;
-	if (make_const)
-	  follow_type = make_cv_type (make_const, 
-				      TYPE_VOLATILE (follow_type), 
-				      follow_type, 0);
-	if (make_volatile)
-	  follow_type = make_cv_type (TYPE_CONST (follow_type), 
-				      make_volatile, 
-				      follow_type, 0);
-	if (make_addr_space)
-	  follow_type = make_type_with_address_space (follow_type, 
-						      make_addr_space);
-	make_const = make_volatile = 0;
-	make_addr_space = 0;
-	break;
-      case tp_const:
-	make_const = 1;
-	break;
-      case tp_volatile:
-	make_volatile = 1;
-	break;
-      case tp_space_identifier:
-	make_addr_space = pop_type_int ();
-	break;
-      case tp_pointer:
-	follow_type = lookup_pointer_type (follow_type);
-	if (make_const)
-	  follow_type = make_cv_type (make_const, 
-				      TYPE_VOLATILE (follow_type), 
-				      follow_type, 0);
-	if (make_volatile)
-	  follow_type = make_cv_type (TYPE_CONST (follow_type), 
-				      make_volatile, 
-				      follow_type, 0);
-	if (make_addr_space)
-	  follow_type = make_type_with_address_space (follow_type, 
-						      make_addr_space);
-	make_const = make_volatile = 0;
-	make_addr_space = 0;
-	break;
-      case tp_reference:
-	 follow_type = lookup_lvalue_reference_type (follow_type);
-	 goto process_reference;
-	case tp_rvalue_reference:
-	 follow_type = lookup_rvalue_reference_type (follow_type);
-	process_reference:
-	 if (make_const)
-	   follow_type = make_cv_type (make_const,
-				       TYPE_VOLATILE (follow_type),
-				       follow_type, 0);
-	 if (make_volatile)
-	   follow_type = make_cv_type (TYPE_CONST (follow_type),
-				       make_volatile,
-				       follow_type, 0);
-	 if (make_addr_space)
-	   follow_type = make_type_with_address_space (follow_type,
-						       make_addr_space);
-	make_const = make_volatile = 0;
-	make_addr_space = 0;
-	break;
-      case tp_array:
-	array_size = pop_type_int ();
-	/* FIXME-type-allocation: need a way to free this type when we are
-	   done with it.  */
-	follow_type =
-	  lookup_array_range_type (follow_type,
-				   0, array_size >= 0 ? array_size - 1 : 0);
-	if (array_size < 0)
-	  TYPE_HIGH_BOUND_KIND (TYPE_INDEX_TYPE (follow_type))
-	    = PROP_UNDEFINED;
-	break;
-      case tp_function:
-	/* FIXME-type-allocation: need a way to free this type when we are
-	   done with it.  */
-	follow_type = lookup_function_type (follow_type);
-	break;
-
-      case tp_function_with_arguments:
-	{
-	  std::vector<struct type *> *args = pop_typelist ();
-
-	  follow_type
-	    = lookup_function_type_with_arguments (follow_type,
-						   args->size (),
-						   args->data ());
-	}
-	break;
-
-      case tp_type_stack:
-	{
-	  struct type_stack *stack = pop_type_stack ();
-	  /* Sort of ugly, but not really much worse than the
-	     alternatives.  */
-	  struct type_stack save = type_stack;
-
-	  type_stack = *stack;
-	  follow_type = follow_types (follow_type);
-	  gdb_assert (type_stack.elements.empty ());
-
-	  type_stack = save;
-	}
-	break;
-      default:
-	gdb_assert_not_reached ("unrecognized tp_ value in follow_types");
-      }
-  return follow_type;
 }
 
 /* This function avoids direct calls to fprintf 
@@ -1751,7 +1331,7 @@ operator_check_standard (struct expression *exp, int pos,
 	  return 1;
 
 	/* Check objfile where is placed the code touching the variable.  */
-	objfile = lookup_objfile_from_block (block);
+	objfile = block_objfile (block);
 
 	type = SYMBOL_TYPE (symbol);
       }
@@ -1829,10 +1409,12 @@ exp_uses_objfile (struct expression *exp, struct objfile *objfile)
   return exp_iterate (exp, exp_uses_objfile_iter, objfile);
 }
 
-/* See definition in parser-defs.h.  */
+/* Reallocate the `expout' pointer inside PS so that it can accommodate
+   at least LENELT expression elements.  This function does nothing if
+   there is enough room for the elements.  */
 
-void
-increase_expout_size (struct parser_state *ps, size_t lenelt)
+static void
+increase_expout_size (struct expr_builder *ps, size_t lenelt)
 {
   if ((ps->expout_ptr + lenelt) >= ps->expout_size)
     {
@@ -1845,8 +1427,9 @@ increase_expout_size (struct parser_state *ps, size_t lenelt)
     }
 }
 
+void _initialize_parse ();
 void
-_initialize_parse (void)
+_initialize_parse ()
 {
   add_setshow_zuinteger_cmd ("expression", class_maintenance,
 			     &expressiondebug,

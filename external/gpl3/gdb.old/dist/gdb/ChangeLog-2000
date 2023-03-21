@@ -4521,7 +4521,7 @@ Mon May 22 11:46:01 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 
 2000-05-17  Eli Zaretskii  <eliz@is.elta.co.il>
 
-	* gdb/config/djgpp/README: Fine-tune installation instructions
+	* config/djgpp/README: Fine-tune installation instructions
         based on user reports.
 
 Wed May 17 18:27:45 2000  Andrew Cagney  <cagney@b1.cygnus.com>
@@ -5787,8 +5787,6 @@ Fri Apr  7 13:33:43 2000  Andrew Cagney  <cagney@b1.cygnus.com>
 	1 bit for the flag.
 	* config/sparc/tm-sun4sol2.h: ditto.
 	(SOFTWARE_SINGLE_STEP, SOFTWARE_SINGLE_STEP_P): undefine.
-	* testsuite/gdb.threads/pthreads.exp (all_threads_running): Allow
-	for more than 15 thread increments.
 
 2000-04-06  Eli Zaretskii  <eliz@is.elta.co.il>
 
@@ -8121,14 +8119,12 @@ Thu Jan 13 23:34:17 EST 2000  Nicholas Duffek <nsd@cygnus.com>
 	* config/i386/tm-i386sol2.h: ditto.
 	* config/sparc/tm-sun4sol2.h: ditto.
 	* config/i386/i386v42mp.mh: add uw-thread.o to NATDEPFILES.
-	* testsuite/gdb.threads/pthreads.exp: Try to link with -lthread
-	if -lpthread and -lpthreads fail.
 
 	* procfs.c: (PIDGET, TIDGET, MERGEPID): change default to no-op.
 	(proc_flags): combine flags that UnixWare splits into two locations.
 	(proc_modify_flag): add support for PR_KLC (kill on last close).
 	(proc_[un]set_kill_on_last_close): new functions.
-	
+
 2000-01-07  Elena Zannoni  <ezannoni@kwikemart.cygnus.com>
 
 	* infrun.c (normal_stop): Print out thread id when we stop.
