@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.244 2023/03/17 00:46:35 mlelstv Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.245 2023/03/21 15:47:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.244 2023/03/17 00:46:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.245 2023/03/21 15:47:46 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -323,7 +323,7 @@ nfs_mountroot(void)
 	struct mount *mp;
 	struct vnode *vp;
 	struct lwp *l;
-	long n;
+	time_t n;
 	int error;
 
 	l = curlwp; /* XXX */
@@ -378,7 +378,7 @@ nfs_mountroot(void)
 		panic("nfs_mountroot: getattr for root");
 	n = attr.va_atime.tv_sec;
 #ifdef	DEBUG
-	printf("root time: 0x%lx\n", n);
+	printf("root time: 0x%jx\n", (intmax_t)n);
 #endif
 	setrootfstime(n);
 

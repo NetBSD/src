@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsubs.c,v 1.6 2022/02/28 08:45:36 hannken Exp $	*/
+/*	$NetBSD: nfs_clntsubs.c,v 1.7 2023/03/21 15:47:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.6 2022/02/28 08:45:36 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.7 2023/03/21 15:47:46 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -390,7 +390,7 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 	if (docheck) {
 		struct vnode *vp = NFSTOV(np);
 		struct nfsmount *nmp;
-		long now = time_second;
+		time_t now = time_second;
 		const struct timespec *omtime = &np->n_vattr->va_mtime;
 		const struct timespec *octime = &np->n_vattr->va_ctime;
 		const char *reason = NULL; /* XXX: gcc */
