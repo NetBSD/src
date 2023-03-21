@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 Free Software Foundation, Inc.
+# Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ set remote_guile_file_2 [gdb_remote_download host \
 			     ${srcdir}/${subdir}/${testfile}-2.scm]
 
 gdb_test "source $remote_guile_file_1" \
-    "(ERROR: )?In procedure \[+\]: Wrong type: #f.*" \
+    "(ERROR: )?In procedure \[+\]: Wrong type.*: #f.*" \
     "error loading scm file caught"
 
 gdb_test "p 1" " = 1" "no delayed error"

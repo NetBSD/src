@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2002-2019 Free Software Foundation, Inc.
+# Copyright 2002-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,18 +55,40 @@ proc check_set { t l r new add } {
 	}
     }
 
-    gdb_test "print l" " = ${l}" \
-	"${prefix}; print old l, expecting ${l}"
-    gdb_test "print r" " = ${r}" \
-	"${prefix}; print old r, expecting ${r}"
-    gdb_test_no_output "set variable l = 4" \
-	"${prefix}; setting l to 4"
-    gdb_test "print l" " = ${new}" \
-	"${prefix}; print new l, expecting ${new}"
+    set supported_l 1
+    set test "${prefix}; print old l, expecting ${l}"
+    gdb_test_multiple "print l" "$test"  {
+	-re -wrap " = <optimized out>" {
+	    unsupported $test
+	    set supported_l 0
+	}
+	-re -wrap " = ${l}" {
+	    pass $test
+	}
+    }
+
+    set test "${prefix}; print old r, expecting ${r}"
+    gdb_test_multiple "print r" "$test"  {
+	-re -wrap " = <optimized out>" {
+	    unsupported $test
+	}
+	-re -wrap " = ${r}" {
+	    pass $test
+	}
+    }
+
+    if { $supported_l } {
+	gdb_test_no_output "set variable l = 4" \
+	    "${prefix}; setting l to 4"
+	gdb_test "print l" " = ${new}" \
+	    "${prefix}; print new l, expecting ${new}"
+    }
     gdb_test "next" "return l \\+ r;" \
 	"${prefix}; next over add call"
-    gdb_test "print l" " = ${add}" \
-	"${prefix}; print incremented l, expecting ${add}"
+    if { $supported_l } {
+	gdb_test "print l" " = ${add}" \
+	    "${prefix}; print incremented l, expecting ${add}"
+    }
 }
 
 check_set "charest" "-1 .*" "-2 .*" "4 ..004." "2 ..002."
@@ -81,20 +103,43 @@ check_set "doublest" "-1" "-2" "4" "2"
 #
 
 proc up_set { t l r new } {
+    global gdb_prompt
+
     set prefix "upvar ${t} l"
     gdb_test "tbreak add_${t}"
     gdb_test "continue" "return u . v;" \
 	"continue to add_${t}"
     gdb_test "up" "l = add_${t} .l, r.;" \
 	"${prefix}; up"
-    gdb_test "print l" " = ${l}" \
-	"${prefix}; print old l, expecting ${l}"
-    gdb_test "print r" " = ${r}" \
-	"${prefix}; print old r, expecting ${r}"
-    gdb_test_no_output "set variable l = 4" \
-	"${prefix}; set l to 4"
-    gdb_test "print l" " = ${new}" \
-	"${prefix}; print new l, expecting ${new}"
+
+    set supported_l 1
+    set test "${prefix}; print old l, expecting ${l}"
+    gdb_test_multiple "print l" "$test"  {
+	-re -wrap " = <optimized out>" {
+	    unsupported $test
+	    set supported_l 0
+	}
+	-re -wrap " = ${l}" {
+	    pass $test
+	}
+    }
+
+    set test "${prefix}; print old r, expecting ${r}"
+    gdb_test_multiple "print r" "$test"  {
+	-re -wrap " = <optimized out>" {
+	    unsupported $test
+	}
+	-re -wrap " = ${r}" {
+	    pass $test
+	}
+    }
+
+    if { $supported_l } {
+	gdb_test_no_output "set variable l = 4" \
+	    "${prefix}; set l to 4"
+	gdb_test "print l" " = ${new}" \
+	    "${prefix}; print new l, expecting ${new}"
+    }
 }
 
 up_set "charest" "-1 .*" "-2 .*" "4 ..004."

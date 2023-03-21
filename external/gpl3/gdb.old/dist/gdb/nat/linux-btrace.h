@@ -1,6 +1,6 @@
 /* Linux-dependent part of branch trace support for GDB, and GDBserver.
 
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -22,8 +22,7 @@
 #ifndef NAT_LINUX_BTRACE_H
 #define NAT_LINUX_BTRACE_H
 
-#include "common/btrace-common.h"
-#include "common/vec.h"
+#include "gdbsupport/btrace-common.h"
 #if HAVE_LINUX_PERF_EVENT_H
 #  include <linux/perf_event.h>
 #endif

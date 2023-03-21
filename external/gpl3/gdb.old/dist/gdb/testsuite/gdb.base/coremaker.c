@@ -1,4 +1,4 @@
-/* Copyright 1992-2019 Free Software Foundation, Inc.
+/* Copyright 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,10 +38,18 @@
 
 char *buf1;
 char *buf2;
+char *buf2ro;
+char *buf3;
 
 int coremaker_data = 1;	/* In Data section */
 int coremaker_bss;	/* In BSS section */
 
+/* Place a chunk of memory before coremaker_ro to improve the chances
+   that coremaker_ro will end up on it's own page.  See:
+
+   https://sourceware.org/pipermail/gdb-patches/2020-May/168168.html
+   https://sourceware.org/pipermail/gdb-patches/2020-May/168170.html  */
+const unsigned char filler_ro[MAPSIZE] = {1, 2, 3, 4, 5, 6, 7, 8};
 const int coremaker_ro = 201;	/* In Read-Only Data section */
 
 /* Note that if the mapping fails for any reason, we set buf2
@@ -77,7 +85,16 @@ mmapdata ()
   /* Now map the file into our address space as buf2 */
 
   buf2 = (char *) mmap (0, MAPSIZE, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
-  if (buf2 == (char *) -1)
+  if (buf2 == (char *) MAP_FAILED)
+    {
+      perror ("mmap failed");
+      return;
+    }
+
+  /* Map in another copy, read-only.  We won't write to this copy so it
+     will likely not end up in the core file.  */
+  buf2ro = (char *) mmap (0, MAPSIZE, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (buf2ro == (char *) -1)
     {
       perror ("mmap failed");
       return;
@@ -89,15 +106,24 @@ mmapdata ()
 
   for (j = 0; j < MAPSIZE; ++j)
     {
-      if (buf1[j] != buf2[j])
+      if (buf1[j] != buf2[j] || buf1[j] != buf2ro[j])
 	{
 	  fprintf (stderr, "mapped data is incorrect");
-	  buf2 = (char *) -1;
+	  buf2 = buf2ro = (char *) -1;
 	  return;
 	}
     }
   /* Touch buf2 so kernel writes it out into 'core'. */
   buf2[0] = buf1[0];
+
+  /* Create yet another region which is allocated, but not written to.  */
+  buf3 = mmap (NULL, MAPSIZE, PROT_READ | PROT_WRITE,
+               MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
+  if (buf3 == (char *) -1)
+    {
+      perror ("mmap failed");
+      return;
+    }
 }
 
 void

@@ -1,5 +1,5 @@
 /* Common things used by the various *gnu-nat.c files
-   Copyright (C) 1995-2019 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
 
    Written by Miles Bader <miles@gnu.ai.mit.edu>
 
@@ -96,12 +96,6 @@ struct proc
 
 extern int __proc_pid (struct proc *proc);
 
-/* Make sure that the state field in PROC is up to date, and return a
-   pointer to it, or 0 if something is wrong.  If WILL_MODIFY is true,
-   makes sure that the thread is stopped and aborted first, and sets
-   the state_changed field in PROC to true.  */
-extern thread_state_t proc_get_state (struct proc *proc, int will_modify);
-
 /* Return printable description of proc.  */
 extern char *proc_string (struct proc *proc);
 
@@ -111,7 +105,7 @@ extern char *proc_string (struct proc *proc);
 	      __proc_pid (__proc), __proc->tid, \
 	      host_address_to_string (__proc) , ##args); } while (0)
 
-extern int gnu_debug_flag;
+extern bool gnu_debug_flag;
 
 #define debug(msg, args...) \
  do { if (gnu_debug_flag) \
@@ -146,8 +140,54 @@ struct gnu_nat_target : public inf_child_target
 			char **, int) override;
   void mourn_inferior () override;
   bool thread_alive (ptid_t ptid) override;
-  const char *pid_to_str (ptid_t) override;
+  std::string pid_to_str (ptid_t) override;
   void stop (ptid_t) override;
+
+  void inf_validate_procs (struct inf *inf);
+  void inf_suspend (struct inf *inf);
+  void inf_set_traced (struct inf *inf, int on);
+  void steal_exc_port (struct proc *proc, mach_port_t name);
+
+  /* Make sure that the state field in PROC is up to date, and return a
+     pointer to it, or 0 if something is wrong.  If WILL_MODIFY is true,
+     makes sure that the thread is stopped and aborted first, and sets
+     the state_changed field in PROC to true.  */
+  thread_state_t proc_get_state (struct proc *proc, int will_modify);
+
+private:
+  void inf_clear_wait (struct inf *inf);
+  void inf_cleanup (struct inf *inf);
+  void inf_startup (struct inf *inf, int pid);
+  int inf_update_suspends (struct inf *inf);
+  void inf_set_pid (struct inf *inf, pid_t pid);
+  void inf_steal_exc_ports (struct inf *inf);
+  void inf_validate_procinfo (struct inf *inf);
+  void inf_validate_task_sc (struct inf *inf);
+  void inf_restore_exc_ports (struct inf *inf);
+  void inf_set_threads_resume_sc (struct inf *inf,
+  				struct proc *run_thread,
+  				int run_others);
+  int inf_set_threads_resume_sc_for_signal_thread (struct inf *inf);
+  void inf_resume (struct inf *inf);
+  void inf_set_step_thread (struct inf *inf, struct proc *proc);
+  void inf_detach (struct inf *inf);
+  void inf_attach (struct inf *inf, int pid);
+  void inf_signal (struct inf *inf, enum gdb_signal sig);
+  void inf_continue (struct inf *inf);
+
+  struct proc *make_proc (struct inf *inf, mach_port_t port, int tid);
+  void proc_abort (struct proc *proc, int force);
+  struct proc *_proc_free (struct proc *proc);
+  int proc_update_sc (struct proc *proc);
+  kern_return_t proc_get_exception_port (struct proc *proc, mach_port_t * port);
+  kern_return_t proc_set_exception_port (struct proc *proc, mach_port_t port);
+  mach_port_t _proc_get_exc_port (struct proc *proc);
+  void proc_steal_exc_port (struct proc *proc, mach_port_t exc_port);
+  void proc_restore_exc_port (struct proc *proc);
+  int proc_trace (struct proc *proc, int set);
 };
+
+/* The final/concrete instance.  */
+extern gnu_nat_target *gnu_target;
 
 #endif /* GNU_NAT_H */

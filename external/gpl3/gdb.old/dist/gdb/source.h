@@ -1,5 +1,5 @@
 /* List lines of source files for GDB, the GNU debugger.
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 #ifndef SOURCE_H
 #define SOURCE_H
 
-#include "common/scoped_fd.h"
+#include "gdbsupport/scoped_fd.h"
 
 struct symtab;
 
@@ -84,12 +84,6 @@ extern const char *symtab_to_fullname (struct symtab *s);
    filename.  It depends on 'set filename-display' value.  */
 extern const char *symtab_to_filename_for_display (struct symtab *symtab);
 
-/* Create and initialize the table S->line_charpos that records the
-   positions of the lines in the source file, which is assumed to be
-   open on descriptor DESC.  All set S->nlines to the number of such
-   lines.  */
-extern void find_source_lines (struct symtab *s, int desc);
-
 /* Return the first line listed by print_source_lines.  Used by
    command interpreters to request listing from a previous point.  If
    0, then no source lines have yet been listed since the last time
@@ -127,17 +121,6 @@ extern void clear_current_source_symtab_and_line (void);
 
 /* Add a source path substitution rule.  */
 extern void add_substitute_path_rule (char *, char *);
-
-/* Print text describing the full name of the source file S
-   and the line number LINE and its corresponding character position.
-   The text starts with two Ctrl-z so that the Emacs-GDB interface
-   can easily find it.
-
-   MID_STATEMENT is nonzero if the PC is not at the beginning of that line.
-
-   Return 1 if successful, 0 if could not find the file.  */
-extern int identify_source_line (struct symtab *s, int line,
-				 int mid_statement, CORE_ADDR pc);
 
 /* Flags passed as 4th argument to print_source_lines.  */
 enum print_source_lines_flag

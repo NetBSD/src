@@ -1,4 +1,4 @@
-#   Copyright 1998-2019 Free Software Foundation, Inc.
+#   Copyright 1998-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,7 +55,7 @@ set testline2 [expr $baseline + 3]
 set helpcnt 0
 test_class_help "tracepoints" {
     "Tracing of program execution without stopping the program\.[\r\n\]+" 
-} "1.0: help tracepoints"
+} {} "1.0: help tracepoints"
 
 #
 # test trace command:

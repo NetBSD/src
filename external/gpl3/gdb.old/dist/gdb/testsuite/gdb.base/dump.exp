@@ -1,4 +1,4 @@
-# Copyright 2002-2019 Free Software Foundation, Inc.
+# Copyright 2002-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,11 +30,20 @@ if [istarget "alpha*-*-*"] then {
     lappend options "additional_flags=-Wl,-taso"
 }
 
-if {[istarget "spu*-*-*"]} then {
-    # The internal address format used for the combined Cell/B.E.
-    # debugger requires 64-bit.
-    set is64bitonly "yes"
+# Runs the command 'print zero_all ()'.  Uses the PRINT_ZERO_ALL_COUNT
+# global to ensure the test names are unique.
+set print_zero_all_count 0
+proc print_zero_all { } {
+    global print_zero_all_count
+
+    incr print_zero_all_count
+    gdb_test "print zero_all ()" " = void" \
+	"call ${print_zero_all_count} to zero_all function"
 }
+
+# Debian9/Ubuntu16.10 onwards default to PIE enabled. Ensure it is disabled as
+# this causes addresses to be out of range for IHEX.
+lappend options {nopie}
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable ${options}] != "" } {
      untested "failed to compile"
@@ -274,7 +283,6 @@ proc test_restore_saved_value { restore_args msg oldval newval } {
 
 if ![string compare $is64bitonly "no"] then {
 
-  gdb_test "print zero_all ()" ".*"
 
   test_restore_saved_value "[set intarr1.srec]" "array as value, srec" \
 	$array_val "intarray"
@@ -282,7 +290,7 @@ if ![string compare $is64bitonly "no"] then {
   test_restore_saved_value "[set intstr1.srec]" "struct as value, srec" \
 	$struct_val "intstruct"
 
-  gdb_test "print zero_all ()" "void" "zero all"
+  print_zero_all
 
   test_restore_saved_value "[set intarr2.srec]" "array as memory, srec" \
 	$array_val "intarray"
@@ -290,7 +298,7 @@ if ![string compare $is64bitonly "no"] then {
   test_restore_saved_value "[set intstr2.srec]" "struct as memory, srec" \
 	$struct_val "intstruct"
 
-  gdb_test "print zero_all ()" ".*"
+  print_zero_all
 
   test_restore_saved_value "[set intarr1.ihex]" "array as value, ihex" \
 	$array_val "intarray"
@@ -298,7 +306,7 @@ if ![string compare $is64bitonly "no"] then {
   test_restore_saved_value "[set intstr1.ihex]" "struct as value, ihex" \
 	$struct_val "intstruct"
 
-  gdb_test "print zero_all ()" ".*"
+  print_zero_all
 
   test_restore_saved_value "[set intarr2.ihex]" "array as memory, ihex" \
 	$array_val "intarray"
@@ -306,7 +314,7 @@ if ![string compare $is64bitonly "no"] then {
   test_restore_saved_value "[set intstr2.ihex]" "struct as memory, ihex" \
 	$struct_val "intstruct"
 
-  gdb_test "print zero_all ()" ".*"
+  print_zero_all
 
   test_restore_saved_value "[set intarr1.tekhex]" "array as value, tekhex" \
 	$array_val "intarray"
@@ -314,7 +322,7 @@ if ![string compare $is64bitonly "no"] then {
   test_restore_saved_value "[set intstr1.tekhex]" "struct as value, tekhex" \
 	$struct_val "intstruct"
 
-  gdb_test "print zero_all ()" ".*"
+  print_zero_all
 
   test_restore_saved_value "[set intarr2.tekhex]" "array as memory, tekhex" \
 	$array_val "intarray"
@@ -323,7 +331,7 @@ if ![string compare $is64bitonly "no"] then {
 	$struct_val "intstruct"
 }
 
-gdb_test "print zero_all ()" ".*"
+print_zero_all
 
 test_restore_saved_value "[set intarr1.bin] binary $array_start" \
 	"array as value, binary" \
@@ -333,7 +341,7 @@ test_restore_saved_value "[set intstr1.bin] binary $struct_start" \
 	"struct as value, binary" \
 	$struct_val "intstruct"
 
-gdb_test "print zero_all ()" ".*"
+print_zero_all
 
 test_restore_saved_value "[set intarr2.bin] binary $array_start" \
 	"array as memory, binary" \
@@ -352,7 +360,7 @@ set array2_offset  \
 set struct2_offset \
 	[capture_value "(char *) &intstruct2 - (char *) &intstruct"]
 
-gdb_test "print zero_all ()" ".*"
+print_zero_all
 
 
 if ![string compare $is64bitonly "no"] then {
@@ -364,7 +372,7 @@ if ![string compare $is64bitonly "no"] then {
 	"struct copy, srec" \
 	$struct_val "intstruct2"
 
-  gdb_test "print zero_all ()" ".*"
+  print_zero_all
 
   test_restore_saved_value "[set intarr1.ihex] $array2_offset" \
 	"array copy, ihex" \
@@ -374,7 +382,7 @@ if ![string compare $is64bitonly "no"] then {
 	"struct copy, ihex" \
 	$struct_val "intstruct2"
 
-  gdb_test "print zero_all ()" ".*"
+  print_zero_all
 
   test_restore_saved_value "[set intarr1.tekhex] $array2_offset" \
 	"array copy, tekhex" \
@@ -385,7 +393,7 @@ if ![string compare $is64bitonly "no"] then {
 	$struct_val "intstruct2"
 }
 
-gdb_test "print zero_all ()" ".*"
+print_zero_all
 
 test_restore_saved_value "[set intarr1.bin] binary $array2_start" \
 	"array copy, binary" \
@@ -412,7 +420,7 @@ set element4_offset \
 	[capture_value "/x (char *) &intarray\[4\] - (char *) &intarray\[0\]"]
 
 if ![string compare $is64bitonly "no"] then {
-  gdb_test "print zero_all ()" ".*"
+  print_zero_all
 
   test_restore_saved_value "[set intarr1.srec] 0 $element3_start $element4_start" \
 	"array partial, srec" 4 "intarray\[3\]"
@@ -420,7 +428,7 @@ if ![string compare $is64bitonly "no"] then {
   gdb_test "print intarray\[2\] == 0" " = 1" "element 2 not changed - 1"
   gdb_test "print intarray\[4\] == 0" " = 1" "element 4 not changed - 1"
 
-  gdb_test "print zero_all ()" ".*"
+  print_zero_all
 
   test_restore_saved_value "[set intarr1.ihex] 0 $element3_start $element4_start" \
 	"array partial, ihex" 4 "intarray\[3\]"
@@ -428,7 +436,7 @@ if ![string compare $is64bitonly "no"] then {
   gdb_test "print intarray\[2\] == 0" " = 1" "element 2 not changed - 2"
   gdb_test "print intarray\[4\] == 0" " = 1" "element 4 not changed - 2"
 
-  gdb_test "print zero_all ()" ".*"
+  print_zero_all
 
   test_restore_saved_value "[set intarr1.tekhex] 0 $element3_start $element4_start" \
 	"array partial, tekhex" 4 "intarray\[3\]"
@@ -437,7 +445,7 @@ if ![string compare $is64bitonly "no"] then {
   gdb_test "print intarray\[4\] == 0" " = 1" "element 4 not changed - 3"
 }
 
-gdb_test "print zero_all ()" ".*"
+print_zero_all
 
 test_restore_saved_value \
     "[set intarr1.bin] binary $array_start $element3_offset $element4_offset" \
@@ -447,7 +455,7 @@ gdb_test "print intarray\[2\] == 0" " = 1" "element 2 not changed - 4"
 gdb_test "print intarray\[4\] == 0" " = 1" "element 4 not changed - 4"
 
 if ![string compare $is64bitonly "no"] then {
-  gdb_test "print zero_all ()" ".*" ""
+  print_zero_all
 
   # restore with expressions 
   test_restore_saved_value \

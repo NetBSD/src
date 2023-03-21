@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <objc/Object.h>
 
 @interface NonDebug: Object

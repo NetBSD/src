@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RX for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -32,11 +32,15 @@
 #include "frame-base.h"
 #include "value.h"
 #include "gdbcore.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
+#include "remote.h"
+#include "target-descriptions.h"
 
 #include "elf/rx.h"
 #include "elf-bfd.h"
 #include <algorithm>
+
+#include "features/rx.c"
 
 /* Certain important register numbers.  */
 enum
@@ -114,117 +118,13 @@ struct rx_prologue
   int reg_offset[RX_NUM_REGS];
 };
 
-/* Implement the "register_name" gdbarch method.  */
-static const char *
-rx_register_name (struct gdbarch *gdbarch, int regnr)
-{
-  static const char *const reg_names[] = {
-    "r0",
-    "r1",
-    "r2",
-    "r3",
-    "r4",
-    "r5",
-    "r6",
-    "r7",
-    "r8",
-    "r9",
-    "r10",
-    "r11",
-    "r12",
-    "r13",
-    "r14",
-    "r15",
-    "usp",
-    "isp",
-    "psw",
-    "pc",
-    "intb",
-    "bpsw",
-    "bpc",
-    "fintv",
-    "fpsw",
-    "acc"
-  };
-
-  return reg_names[regnr];
-}
-
-/* Construct the flags type for PSW and BPSW.  */
-
-static struct type *
-rx_psw_type (struct gdbarch *gdbarch)
-{
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-
-  if (tdep->rx_psw_type == NULL)
-    {
-      tdep->rx_psw_type = arch_flags_type (gdbarch, "rx_psw_type", 32);
-      append_flags_type_flag (tdep->rx_psw_type, 0, "C");
-      append_flags_type_flag (tdep->rx_psw_type, 1, "Z");
-      append_flags_type_flag (tdep->rx_psw_type, 2, "S");
-      append_flags_type_flag (tdep->rx_psw_type, 3, "O");
-      append_flags_type_flag (tdep->rx_psw_type, 16, "I");
-      append_flags_type_flag (tdep->rx_psw_type, 17, "U");
-      append_flags_type_flag (tdep->rx_psw_type, 20, "PM");
-      append_flags_type_flag (tdep->rx_psw_type, 24, "IPL0");
-      append_flags_type_flag (tdep->rx_psw_type, 25, "IPL1");
-      append_flags_type_flag (tdep->rx_psw_type, 26, "IPL2");
-      append_flags_type_flag (tdep->rx_psw_type, 27, "IPL3");
-    }
-  return tdep->rx_psw_type;
-}
-
-/* Construct flags type for FPSW.  */
-
-static struct type *
-rx_fpsw_type (struct gdbarch *gdbarch)
-{
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-
-  if (tdep->rx_fpsw_type == NULL)
-    {
-      tdep->rx_fpsw_type = arch_flags_type (gdbarch, "rx_fpsw_type", 32);
-      append_flags_type_flag (tdep->rx_fpsw_type, 0, "RM0");
-      append_flags_type_flag (tdep->rx_fpsw_type, 1, "RM1");
-      append_flags_type_flag (tdep->rx_fpsw_type, 2, "CV");
-      append_flags_type_flag (tdep->rx_fpsw_type, 3, "CO");
-      append_flags_type_flag (tdep->rx_fpsw_type, 4, "CZ");
-      append_flags_type_flag (tdep->rx_fpsw_type, 5, "CU");
-      append_flags_type_flag (tdep->rx_fpsw_type, 6, "CX");
-      append_flags_type_flag (tdep->rx_fpsw_type, 7, "CE");
-      append_flags_type_flag (tdep->rx_fpsw_type, 8, "DN");
-      append_flags_type_flag (tdep->rx_fpsw_type, 10, "EV");
-      append_flags_type_flag (tdep->rx_fpsw_type, 11, "EO");
-      append_flags_type_flag (tdep->rx_fpsw_type, 12, "EZ");
-      append_flags_type_flag (tdep->rx_fpsw_type, 13, "EU");
-      append_flags_type_flag (tdep->rx_fpsw_type, 14, "EX");
-      append_flags_type_flag (tdep->rx_fpsw_type, 26, "FV");
-      append_flags_type_flag (tdep->rx_fpsw_type, 27, "FO");
-      append_flags_type_flag (tdep->rx_fpsw_type, 28, "FZ");
-      append_flags_type_flag (tdep->rx_fpsw_type, 29, "FU");
-      append_flags_type_flag (tdep->rx_fpsw_type, 30, "FX");
-      append_flags_type_flag (tdep->rx_fpsw_type, 31, "FS");
-    }
-
-  return tdep->rx_fpsw_type;
-}
-
-/* Implement the "register_type" gdbarch method.  */
-static struct type *
-rx_register_type (struct gdbarch *gdbarch, int reg_nr)
-{
-  if (reg_nr == RX_PC_REGNUM)
-    return builtin_type (gdbarch)->builtin_func_ptr;
-  else if (reg_nr == RX_PSW_REGNUM || reg_nr == RX_BPSW_REGNUM)
-    return rx_psw_type (gdbarch);
-  else if (reg_nr == RX_FPSW_REGNUM)
-    return rx_fpsw_type (gdbarch);
-  else if (reg_nr == RX_ACC_REGNUM)
-    return builtin_type (gdbarch)->builtin_unsigned_long_long;
-  else
-    return builtin_type (gdbarch)->builtin_unsigned_long;
-}
+/* RX register names */
+static const char *const rx_register_names[] = {
+  "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
+  "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15",
+  "usp", "isp", "psw", "pc",  "intb", "bpsw","bpc","fintv",
+  "fpsw", "acc",
+};
 
 
 /* Function for finding saved registers in a 'struct pv_area'; this
@@ -751,35 +651,6 @@ static const struct frame_unwind rx_exception_unwind = {
   rx_exception_sniffer
 };
 
-/* Implement the "unwind_pc" gdbarch method.  */
-static CORE_ADDR
-rx_unwind_pc (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  ULONGEST pc;
-
-  pc = frame_unwind_register_unsigned (this_frame, RX_PC_REGNUM);
-  return pc;
-}
-
-/* Implement the "unwind_sp" gdbarch method.  */
-static CORE_ADDR
-rx_unwind_sp (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  ULONGEST sp;
-
-  sp = frame_unwind_register_unsigned (this_frame, RX_SP_REGNUM);
-  return sp;
-}
-
-/* Implement the "dummy_id" gdbarch method.  */
-static struct frame_id
-rx_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  return
-    frame_id_build (get_frame_register_unsigned (this_frame, RX_SP_REGNUM),
-		    get_frame_pc (this_frame));
-}
-
 /* Implement the "push_dummy_call" gdbarch method.  */
 static CORE_ADDR
 rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
@@ -797,12 +668,12 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   struct type *func_type = value_type (function);
 
   /* Dereference function pointer types.  */
-  while (TYPE_CODE (func_type) == TYPE_CODE_PTR)
+  while (func_type->code () == TYPE_CODE_PTR)
     func_type = TYPE_TARGET_TYPE (func_type);
 
   /* The end result had better be a function or a method.  */
-  gdb_assert (TYPE_CODE (func_type) == TYPE_CODE_FUNC
-	      || TYPE_CODE (func_type) == TYPE_CODE_METHOD);
+  gdb_assert (func_type->code () == TYPE_CODE_FUNC
+	      || func_type->code () == TYPE_CODE_METHOD);
 
   /* Functions with a variable number of arguments have all of their
      variable arguments and the last non-variable argument passed
@@ -816,7 +687,7 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
      of the ``arg_reg'' variable to get these other details correct.  */
 
   if (TYPE_VARARGS (func_type))
-    num_register_candidate_args = TYPE_NFIELDS (func_type) - 1;
+    num_register_candidate_args = func_type->num_fields () - 1;
   else
     num_register_candidate_args = 4;
 
@@ -835,8 +706,8 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 	{
 	  struct type *return_type = TYPE_TARGET_TYPE (func_type);
 
-	  gdb_assert (TYPE_CODE (return_type) == TYPE_CODE_STRUCT
-		      || TYPE_CODE (func_type) == TYPE_CODE_UNION);
+	  gdb_assert (return_type->code () == TYPE_CODE_STRUCT
+		      || func_type->code () == TYPE_CODE_UNION);
 
 	  if (TYPE_LENGTH (return_type) > 16
 	      || TYPE_LENGTH (return_type) % 4 != 0)
@@ -857,7 +728,7 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
 	  if (i == 0 && struct_addr != 0
 	      && return_method != return_method_struct
-	      && TYPE_CODE (arg_type) == TYPE_CODE_PTR
+	      && arg_type->code () == TYPE_CODE_PTR
 	      && extract_unsigned_integer (arg_bits, 4,
 					   byte_order) == struct_addr)
 	    {
@@ -868,8 +739,8 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		regcache_cooked_write_unsigned (regcache, RX_R15_REGNUM,
 						struct_addr);
 	    }
-	  else if (TYPE_CODE (arg_type) != TYPE_CODE_STRUCT
-		   && TYPE_CODE (arg_type) != TYPE_CODE_UNION
+	  else if (arg_type->code () != TYPE_CODE_STRUCT
+		   && arg_type->code () != TYPE_CODE_UNION
 		   && arg_size <= 8)
 	    {
 	      /* Argument is a scalar.  */
@@ -925,10 +796,10 @@ rx_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 		      int p_arg_size = 4;
 
 		      if (TYPE_PROTOTYPED (func_type)
-			  && i < TYPE_NFIELDS (func_type))
+			  && i < func_type->num_fields ())
 			{
 			  struct type *p_arg_type =
-			    TYPE_FIELD_TYPE (func_type, i);
+			    func_type->field (i).type ();
 			  p_arg_size = TYPE_LENGTH (p_arg_type);
 			}
 
@@ -1003,8 +874,8 @@ rx_return_value (struct gdbarch *gdbarch,
   ULONGEST valtype_len = TYPE_LENGTH (valtype);
 
   if (TYPE_LENGTH (valtype) > 16
-      || ((TYPE_CODE (valtype) == TYPE_CODE_STRUCT
-	   || TYPE_CODE (valtype) == TYPE_CODE_UNION)
+      || ((valtype->code () == TYPE_CODE_STRUCT
+	   || valtype->code () == TYPE_CODE_UNION)
 	  && TYPE_LENGTH (valtype) % 4 != 0))
     return RETURN_VALUE_STRUCT_CONVENTION;
 
@@ -1073,6 +944,8 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   struct gdbarch *gdbarch;
   struct gdbarch_tdep *tdep;
   int elf_flags;
+  struct tdesc_arch_data *tdesc_data = NULL;
+  const struct target_desc *tdesc = info.target_desc;
 
   /* Extract the elf_flags if available.  */
   if (info.abfd != NULL
@@ -1094,16 +967,42 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       return arches->gdbarch;
     }
 
-  /* None found, create a new architecture from the information
-     provided.  */
+  if (tdesc == NULL)
+      tdesc = tdesc_rx;
+
+  /* Check any target description for validity.  */
+  if (tdesc_has_registers (tdesc))
+    {
+      const struct tdesc_feature *feature;
+      bool valid_p = true;
+
+      feature = tdesc_find_feature (tdesc, "org.gnu.gdb.rx.core");
+
+      if (feature != NULL)
+	{
+	  tdesc_data = tdesc_data_alloc ();
+	  for (int i = 0; i < RX_NUM_REGS; i++)
+	    valid_p &= tdesc_numbered_register (feature, tdesc_data, i,
+                                            rx_register_names[i]);
+	}
+
+      if (!valid_p)
+	{
+	  tdesc_data_cleanup (tdesc_data);
+	  return NULL;
+	}
+    }
+
+  gdb_assert(tdesc_data != NULL);
+
   tdep = XCNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
   tdep->elf_flags = elf_flags;
 
   set_gdbarch_num_regs (gdbarch, RX_NUM_REGS);
+  tdesc_use_registers (gdbarch, tdesc, tdesc_data);
+
   set_gdbarch_num_pseudo_regs (gdbarch, 0);
-  set_gdbarch_register_name (gdbarch, rx_register_name);
-  set_gdbarch_register_type (gdbarch, rx_register_type);
   set_gdbarch_pc_regnum (gdbarch, RX_PC_REGNUM);
   set_gdbarch_sp_regnum (gdbarch, RX_SP_REGNUM);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
@@ -1111,9 +1010,6 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_breakpoint_kind_from_pc (gdbarch, rx_breakpoint::kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch, rx_breakpoint::bp_from_kind);
   set_gdbarch_skip_prologue (gdbarch, rx_skip_prologue);
-
-  set_gdbarch_unwind_pc (gdbarch, rx_unwind_pc);
-  set_gdbarch_unwind_sp (gdbarch, rx_unwind_sp);
 
   /* Target builtin data types.  */
   set_gdbarch_char_signed (gdbarch, 0);
@@ -1124,6 +1020,7 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_ptr_bit (gdbarch, 32);
   set_gdbarch_float_bit (gdbarch, 32);
   set_gdbarch_float_format (gdbarch, floatformats_ieee_single);
+
   if (elf_flags & E_FLAG_RX_64BIT_DOUBLES)
     {
       set_gdbarch_double_bit (gdbarch, 64);
@@ -1147,10 +1044,8 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   dwarf2_append_unwinders (gdbarch);
   frame_unwind_append_unwinder (gdbarch, &rx_frame_unwind);
 
-  /* Methods for saving / extracting a dummy frame's ID.
-     The ID's stack address must match the SP value returned by
-     PUSH_DUMMY_CALL, and saved by generic_save_dummy_frame_tos.  */
-  set_gdbarch_dummy_id (gdbarch, rx_dummy_id);
+  /* Methods setting up a dummy call, and extracting the return value from
+     a call.  */
   set_gdbarch_push_dummy_call (gdbarch, rx_push_dummy_call);
   set_gdbarch_return_value (gdbarch, rx_return_value);
 
@@ -1162,8 +1057,10 @@ rx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
 /* Register the above initialization routine.  */
 
+void _initialize_rx_tdep ();
 void
-_initialize_rx_tdep (void)
+_initialize_rx_tdep ()
 {
   register_gdbarch_init (bfd_arch_rx, rx_gdbarch_init);
+  initialize_tdesc_rx ();
 }

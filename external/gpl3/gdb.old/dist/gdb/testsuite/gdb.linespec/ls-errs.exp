@@ -1,4 +1,4 @@
-# Copyright 2012-2019 Free Software Foundation, Inc.
+# Copyright 2012-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -92,7 +92,8 @@ proc do_test {lang} {
 
 	gdb_test "break $linespec" [string_to_regexp \
 				    [eval format \$error_messages($msg_id) \
-				     $args]]
+				     $args]] \
+	    "'break $linespec'"
     }
 
     # Some commonly used whitespace tests around ':'.
@@ -231,13 +232,10 @@ proc do_test {lang} {
 
     foreach x $spaces {
 	test_break "main${x}there" invalid_label "there" "main"
-	if {[test_compiler_info {clang-*-*}]} {
-	    setup_xfail clang/14500 *-*-*
-	}
 	test_break "main:here${x}" unexpected "end of input"
     }
 
-    foreach x {"3" "+100" "-100" "foo"} {
+    foreach_with_prefix x {"3" "+100" "-100" "foo"} {
 	test_break "main 3" invalid_function "main 3"
 	test_break "-function \"main $x\"" invalid_function "main $x"
 	if {$x == "foo"} {

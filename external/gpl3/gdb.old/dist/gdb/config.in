@@ -17,6 +17,9 @@
    */
 #undef CRAY_STACKSEG_END
 
+/* Define to 1 if std::thread works. */
+#undef CXX_STD_THREAD
+
 /* Define to 1 if using `alloca.c'. */
 #undef C_ALLOCA
 
@@ -32,6 +35,9 @@
 
 /* Define to BFD's default target vector. */
 #undef DEFAULT_BFD_VEC
+
+/* Handle .ctf type-info sections */
+#undef ENABLE_LIBCTF
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -106,17 +112,9 @@
    don't. */
 #undef HAVE_DECL_GETTHRDS
 
-/* Define to 1 if you have the declaration of `ptrace', and to 0 if you don't.
-   */
-#undef HAVE_DECL_PTRACE
-
 /* Define to 1 if you have the declaration of `snprintf', and to 0 if you
    don't. */
 #undef HAVE_DECL_SNPRINTF
-
-/* Define to 1 if you have the declaration of `strerror', and to 0 if you
-   don't. */
-#undef HAVE_DECL_STRERROR
 
 /* Define to 1 if you have the declaration of `strstr', and to 0 if you don't.
    */
@@ -228,6 +226,9 @@
 /* Define if you have the babeltrace library. */
 #undef HAVE_LIBBABELTRACE
 
+/* Define to 1 if debuginfod is enabled. */
+#undef HAVE_LIBDEBUGINFOD
+
 /* Define if you have the expat library. */
 #undef HAVE_LIBEXPAT
 
@@ -243,26 +244,14 @@
 /* Define to 1 if you have the `m' library (-lm). */
 #undef HAVE_LIBM
 
-/* Define to 1 if you have the `mcheck' library (-lmcheck). */
-#undef HAVE_LIBMCHECK
-
 /* Define if you have the mpfr library. */
 #undef HAVE_LIBMPFR
 
-/* Define if Python 2.4 is being used. */
-#undef HAVE_LIBPYTHON2_4
-
-/* Define if Python 2.5 is being used. */
-#undef HAVE_LIBPYTHON2_5
-
-/* Define if Python 2.6 is being used. */
-#undef HAVE_LIBPYTHON2_6
-
-/* Define if Python 2.7 is being used. */
-#undef HAVE_LIBPYTHON2_7
-
 /* Define to 1 if you have the <libunwind-ia64.h> header file. */
 #undef HAVE_LIBUNWIND_IA64_H
+
+/* Define if you have the xxhash library. */
+#undef HAVE_LIBXXHASH
 
 /* Define to 1 if you have the <linux/elf.h> header file. */
 #undef HAVE_LINUX_ELF_H
@@ -347,6 +336,15 @@
 
 /* Define if <sys/procfs.h> has psaddr_t. */
 #undef HAVE_PSADDR_T
+
+/* Have PTHREAD_PRIO_INHERIT. */
+#undef HAVE_PTHREAD_PRIO_INHERIT
+
+/* Define to 1 if you have the `pthread_setname_np' function. */
+#undef HAVE_PTHREAD_SETNAME_NP
+
+/* Define to 1 if you have the `pthread_sigmask' function. */
+#undef HAVE_PTHREAD_SIGMASK
 
 /* Define to 1 if you have the `ptrace64' function. */
 #undef HAVE_PTRACE64
@@ -474,12 +472,6 @@
 /* Define to 1 if `td_pcb' is a member of `struct thread'. */
 #undef HAVE_STRUCT_THREAD_TD_PCB
 
-/* Define to 1 if `fs_base' is a member of `struct user_regs_struct'. */
-#undef HAVE_STRUCT_USER_REGS_STRUCT_FS_BASE
-
-/* Define to 1 if `gs_base' is a member of `struct user_regs_struct'. */
-#undef HAVE_STRUCT_USER_REGS_STRUCT_GS_BASE
-
 /* Define to 1 if you have the <sys/debugreg.h> header file. */
 #undef HAVE_SYS_DEBUGREG_H
 
@@ -576,6 +568,9 @@
 /* Define to 1 if you have the `wresize' function. */
 #undef HAVE_WRESIZE
 
+/* Define to 1 if you have the <ws2tcpip.h> header file. */
+#undef HAVE_WS2TCPIP_H
+
 /* Define to 1 if you have the `XML_StopParser' function. */
 #undef HAVE_XML_STOPPARSER
 
@@ -634,6 +629,10 @@
 /* Define to 1 if the "%ll" format works to print long longs. */
 #undef PRINTF_HAS_LONG_LONG
 
+/* Define to necessary symbol if this constant uses a non-standard name on
+   your system. */
+#undef PTHREAD_CREATE_JOINABLE
+
 /* Define to the type of arg 1 for ptrace. */
 #undef PTRACE_TYPE_ARG1
 
@@ -648,6 +647,10 @@
 
 /* Define as the return type of ptrace. */
 #undef PTRACE_TYPE_RET
+
+/* Define if the python lib directory should be relocated when GDB is moved.
+   */
+#undef PYTHON_LIBDIR_RELOCATABLE
 
 /* Define if the python directory should be relocated when GDB is moved. */
 #undef PYTHON_PATH_RELOCATABLE
@@ -692,6 +695,13 @@
 
 /* automatically load a system-wide gdbinit file */
 #undef SYSTEM_GDBINIT
+
+/* automatically load system-wide gdbinit files from this directory */
+#undef SYSTEM_GDBINIT_DIR
+
+/* Define if the system-gdbinit-dir directory should be relocated when GDB is
+   moved. */
+#undef SYSTEM_GDBINIT_DIR_RELOCATABLE
 
 /* Define if the system-gdbinit directory should be relocated when GDB is
    moved. */
@@ -745,6 +755,10 @@
 /* Define if the PPC simulator is being linked in. */
 #undef WITH_PPC_SIM
 
+/* Directory containing Python's standard libraries from --with-python-libdir.
+   */
+#undef WITH_PYTHON_LIBDIR
+
 /* Define if --with-python provides a path, either directly or via
    python-config.py --exec-prefix. */
 #undef WITH_PYTHON_PATH
@@ -784,6 +798,9 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+/* Use structured /proc on Solaris. */
+#undef _STRUCTURED_PROC
 
 /* Define to empty if `const' does not conform to ANSI C. */
 #undef const

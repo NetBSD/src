@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1993-2019 Free Software Foundation, Inc.
+   Copyright 1993-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -532,19 +532,6 @@ typedef struct {
 } tagless_struct;
 tagless_struct v_tagless;
 
-/* Try to get the compiler to allocate a class in a register.  */
-class small {
- public:
-  int x;
-  int method ();
-};
-
-int
-small::method ()
-{
-  return x + 5;
-}
-
 class class_with_typedefs
 {
 public:
@@ -621,29 +608,6 @@ private:
   INT b;
 };
 
-void marker_reg1 () {}
-
-int
-register_class ()
-{
-  /* We don't call any methods for v, so gcc version cygnus-2.3.3-930220
-     might put this variable in a register.  This is a lose, though, because
-     it means that GDB can't call any methods for that variable.  */
-  register small v;
-
-  int i;
-
-  /* Perform a computation sufficiently complicated that optimizing compilers
-     won't optimized out the variable.  If some compiler constant-folds this
-     whole loop, maybe using a parameter to this function here would help.  */
-  v.x = 0;
-  for (i = 0; i < 13; ++i)
-    v.x += i;
-  --v.x; /* v.x is now 77 */
-  marker_reg1 ();
-  return v.x + 5;
-}
-
 void dummy()
 {
   v_bool = true;
@@ -686,7 +650,6 @@ main()
   inheritance1 ();
   inheritance3 ();
   enums1 ();
-  register_class ();
 
   /* FIXME: pmi gets optimized out.  Need to do some more computation with
      it or something.  (No one notices, because the test is xfail'd anyway,

@@ -1,6 +1,6 @@
 /* Visium-specific support for 32-bit ELF.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -599,7 +599,7 @@ visium_elf_relocate_section (bfd *output_bfd,
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (name == NULL) ? bfd_section_name (input_bfd, sec) : name;
+	  name = name == NULL ? bfd_section_name (sec) : name;
 	}
       else
 	{
@@ -722,13 +722,17 @@ visium_elf_gc_mark_hook (asection *sec, struct bfd_link_info *info,
   return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
 }
 
-static void
-visium_elf_post_process_headers (bfd *abfd,
-				 struct bfd_link_info *info ATTRIBUTE_UNUSED)
+static bfd_boolean
+visium_elf_init_file_header (bfd *abfd, struct bfd_link_info *info)
 {
-  Elf_Internal_Ehdr *i_ehdrp = elf_elfheader (abfd);
-  i_ehdrp->e_ident[EI_OSABI] = ELFOSABI_STANDALONE;
+  Elf_Internal_Ehdr *i_ehdrp;
+
+  if (!_bfd_elf_init_file_header (abfd, info))
+    return FALSE;
+
+  i_ehdrp = elf_elfheader (abfd);
   i_ehdrp->e_ident[EI_ABIVERSION] = 1;
+  return TRUE;
 }
 
 /* Function to set the ELF flag bits.  */
@@ -852,6 +856,7 @@ visium_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 
 #define ELF_ARCH		bfd_arch_visium
 #define ELF_MACHINE_CODE	EM_VISIUM
+#define ELF_OSABI		ELFOSABI_STANDALONE
 #define ELF_MAXPAGESIZE		1
 
 #define TARGET_BIG_SYM		visium_elf32_vec
@@ -873,6 +878,6 @@ visium_elf_print_private_bfd_data (bfd *abfd, void *ptr)
 #define bfd_elf32_bfd_copy_private_bfd_data	visium_elf_copy_private_bfd_data
 #define bfd_elf32_bfd_merge_private_bfd_data	visium_elf_merge_private_bfd_data
 #define bfd_elf32_bfd_print_private_bfd_data	visium_elf_print_private_bfd_data
-#define elf_backend_post_process_headers	visium_elf_post_process_headers
+#define elf_backend_init_file_header		visium_elf_init_file_header
 
 #include "elf32-target.h"

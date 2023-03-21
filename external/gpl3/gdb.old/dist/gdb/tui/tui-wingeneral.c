@@ -1,6 +1,6 @@
 /* General window behavior.
 
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -22,87 +22,108 @@
 #include "defs.h"
 #include "tui/tui.h"
 #include "tui/tui-data.h"
+#include "tui/tui-io.h"
 #include "tui/tui-wingeneral.h"
 #include "tui/tui-win.h"
+#include "tui/tui-stack.h"
+#include "cli/cli-style.h"
 
 #include "gdb_curses.h"
 
-/***********************
-** PUBLIC FUNCTIONS
-***********************/
+/* This is true if we're currently suppressing output, via
+   wnoutrefresh.  This is needed in case we create a new window while
+   in this mode.  */
 
-/* Refresh the window.  */
-void
-tui_refresh_win (struct tui_gen_win_info *win_info)
+static bool suppress_output;
+
+/* See tui-data.h.  */
+
+tui_suppress_output::tui_suppress_output ()
+  : m_saved_suppress (suppress_output)
 {
-  if (win_info->type == DATA_WIN && win_info->content_size > 0)
-    {
-      int i;
+  suppress_output = true;
 
-      for (i = 0; (i < win_info->content_size); i++)
-	{
-	  struct tui_gen_win_info *data_item_win_ptr;
-
-	  data_item_win_ptr = &win_info->content[i]->which_element.data_window;
-	  if (data_item_win_ptr != NULL
-	      && data_item_win_ptr->handle != (WINDOW *) NULL)
-	    wrefresh (data_item_win_ptr->handle);
-	}
-    }
-  else if (win_info->type == CMD_WIN)
-    {
-      /* Do nothing.  */
-    }
-  else
-    {
-      if (win_info->handle != (WINDOW *) NULL)
-	wrefresh (win_info->handle);
-    }
-
-  return;
+  for (const auto &win : all_tui_windows ())
+    win->no_refresh ();
 }
 
+/* See tui-data.h.  */
 
-/* Function to delete the curses window, checking for NULL.  */
-void
-tui_delete_win (WINDOW *window)
+tui_suppress_output::~tui_suppress_output ()
 {
-  if (window != (WINDOW *) NULL)
-    delwin (window);
+  suppress_output = m_saved_suppress;
+  if (!suppress_output)
+    doupdate ();
 
-  return;
+  for (const auto &win : all_tui_windows ())
+    win->refresh_window ();
 }
 
+/* See tui-data.h.  */
+
+void
+tui_wrefresh (WINDOW *win)
+{
+  if (!suppress_output)
+    wrefresh (win);
+}
+
+/* See tui-data.h.  */
+
+void
+tui_win_info::refresh_window ()
+{
+  if (handle != NULL)
+    tui_wrefresh (handle.get ());
+}
 
 /* Draw a border arround the window.  */
 static void
-box_win (struct tui_gen_win_info *win_info, 
-	 int highlight_flag)
+box_win (struct tui_win_info *win_info, 
+	 bool highlight_flag)
 {
-  if (win_info && win_info->handle)
-    {
-      WINDOW *win;
-      int attrs;
+  WINDOW *win;
+  int attrs;
 
-      win = win_info->handle;
-      if (highlight_flag == HILITE)
-        attrs = tui_active_border_attrs;
-      else
-        attrs = tui_border_attrs;
+  win = win_info->handle.get ();
+  if (highlight_flag)
+    attrs = tui_active_border_attrs;
+  else
+    attrs = tui_border_attrs;
 
-      wattron (win, attrs);
+  /* tui_apply_style resets the style entirely, so be sure to call it
+     before applying ATTRS.  */
+  if (cli_styling)
+    tui_apply_style (win, (highlight_flag
+			   ? tui_active_border_style.style ()
+			   : tui_border_style.style ()));
+  wattron (win, attrs);
 #ifdef HAVE_WBORDER
-      wborder (win, tui_border_vline, tui_border_vline,
-               tui_border_hline, tui_border_hline,
-               tui_border_ulcorner, tui_border_urcorner,
-               tui_border_llcorner, tui_border_lrcorner);
+  wborder (win, tui_border_vline, tui_border_vline,
+	   tui_border_hline, tui_border_hline,
+	   tui_border_ulcorner, tui_border_urcorner,
+	   tui_border_llcorner, tui_border_lrcorner);
 #else
-      box (win, tui_border_vline, tui_border_hline);
+  box (win, tui_border_vline, tui_border_hline);
 #endif
-      if (win_info->title)
-        mvwaddstr (win, 0, 3, win_info->title);
-      wattroff (win, attrs);
+  if (!win_info->title.empty ())
+    {
+      /* Emit "+-TITLE-+" -- so 2 characters on the right and 2 on
+	 the left.  */
+      int max_len = win_info->width - 2 - 2;
+
+      if (win_info->title.size () <= max_len)
+	mvwaddstr (win, 0, 2, win_info->title.c_str ());
+      else
+	{
+	  std::string truncated
+	    = "..." + win_info->title.substr (win_info->title.size ()
+					      - max_len + 3);
+	  mvwaddstr (win, 0, 2, truncated.c_str ());
+	}
     }
+  wattroff (win, attrs);
+  tui_apply_style (win, ui_file_style ());
 }
 
 
@@ -110,11 +131,12 @@ void
 tui_unhighlight_win (struct tui_win_info *win_info)
 {
   if (win_info != NULL 
-      && win_info->generic.handle != (WINDOW *) NULL)
+      && win_info->can_box ()
+      && win_info->handle != NULL)
     {
-      box_win ((struct tui_gen_win_info *) win_info, NO_HILITE);
-      wrefresh (win_info->generic.handle);
-      tui_set_win_highlight (win_info, 0);
+      box_win (win_info, false);
+      win_info->refresh_window ();
+      win_info->set_highlight (false);
     }
 }
 
@@ -123,161 +145,68 @@ void
 tui_highlight_win (struct tui_win_info *win_info)
 {
   if (win_info != NULL
-      && win_info->can_highlight
-      && win_info->generic.handle != (WINDOW *) NULL)
+      && win_info->can_box ()
+      && win_info->handle != NULL)
     {
-      box_win ((struct tui_gen_win_info *) win_info, HILITE);
-      wrefresh (win_info->generic.handle);
-      tui_set_win_highlight (win_info, 1);
+      box_win (win_info, true);
+      win_info->refresh_window ();
+      win_info->set_highlight (true);
     }
 }
 
 void
-tui_check_and_display_highlight_if_needed (struct tui_win_info *win_info)
+tui_win_info::check_and_display_highlight_if_needed ()
 {
-  if (win_info != NULL && win_info->generic.type != CMD_WIN)
+  if (can_box ())
     {
-      if (win_info->is_highlighted)
-	tui_highlight_win (win_info);
+      if (is_highlighted)
+	tui_highlight_win (this);
       else
-	tui_unhighlight_win (win_info);
-
+	tui_unhighlight_win (this);
     }
-  return;
 }
-
 
 void
-tui_make_window (struct tui_gen_win_info *win_info, int box_it)
+tui_win_info::make_window ()
 {
-  WINDOW *handle;
-
-  handle = newwin (win_info->height,
-		   win_info->width,
-		   win_info->origin.y,
-		   win_info->origin.x);
-  win_info->handle = handle;
-  if (handle != (WINDOW *) NULL)
+  handle.reset (newwin (height, width, y, x));
+  if (handle != NULL)
     {
-      if (box_it == BOX_WINDOW)
-	box_win (win_info, NO_HILITE);
-      win_info->is_visible = TRUE;
-      scrollok (handle, TRUE);
+      if (suppress_output)
+	wnoutrefresh (handle.get ());
+      scrollok (handle.get (), TRUE);
+      if (can_box ())
+	box_win (this, false);
     }
 }
-
 
 /* We can't really make windows visible, or invisible.  So we have to
    delete the entire window when making it visible, and create it
    again when making it visible.  */
-static void
-make_visible (struct tui_gen_win_info *win_info, int visible)
+void
+tui_win_info::make_visible (bool visible)
 {
-  /* Don't tear down/recreate command window.  */
-  if (win_info->type == CMD_WIN)
+  if (is_visible () == visible)
     return;
 
   if (visible)
-    {
-      if (!win_info->is_visible)
-	{
-	  tui_make_window (win_info,
-			   (win_info->type != CMD_WIN
-			    && !tui_win_is_auxillary (win_info->type)));
-	  win_info->is_visible = TRUE;
-	}
-    }
-  else if (!visible
-	   && win_info->is_visible
-	   && win_info->handle != (WINDOW *) NULL)
-    {
-      win_info->is_visible = FALSE;
-      tui_delete_win (win_info->handle);
-      win_info->handle = NULL;
-    }
-
-  return;
-}
-
-void
-tui_make_visible (struct tui_gen_win_info *win_info)
-{
-  make_visible (win_info, 1);
-}
-
-void
-tui_make_invisible (struct tui_gen_win_info *win_info)
-{
-  make_visible (win_info, 0);
-}
-
-
-/* Makes all windows invisible (except the command and locator
-   windows).  */
-static void
-make_all_visible (int visible)
-{
-  int i;
-
-  for (i = 0; i < MAX_MAJOR_WINDOWS; i++)
-    {
-      if (tui_win_list[i] != NULL
-	  && ((tui_win_list[i])->generic.type) != CMD_WIN)
-	{
-	  if (tui_win_is_source_type ((tui_win_list[i])->generic.type))
-	    make_visible ((tui_win_list[i])->detail.source_info.execution_info,
-			  visible);
-	  make_visible ((struct tui_gen_win_info *) tui_win_list[i], visible);
-	}
-    }
-
-  return;
-}
-
-void
-tui_make_all_visible (void)
-{
-  make_all_visible (1);
-}
-
-void
-tui_make_all_invisible (void)
-{
-  make_all_visible (0);
-}
-
-static void
-tui_refresh_wi(struct tui_gen_win_info *wi)
-{
-  if (wi == NULL || wi->handle == NULL || !wi->is_visible)
-    return;
-
-  touchwin (wi->handle);
-  tui_refresh_win (wi);
+    make_window ();
+  else
+    handle.reset (nullptr);
 }
 
 /* Function to refresh all the windows currently displayed.  */
 
 void
-tui_refresh_all (struct tui_win_info **list)
+tui_refresh_all ()
 {
-  int type;
+  struct tui_locator_window *locator = tui_locator_win_info_ptr ();
 
-  for (type = SRC_WIN; (type < MAX_MAJOR_WINDOWS); type++)
+  for (tui_win_info *win_info : all_tui_windows ())
     {
-      if (!list[type] || !list[type]->generic.is_visible)
-	continue;
-      if (type == SRC_WIN || type == DISASSEM_WIN)
-	{
-	  tui_refresh_wi (list[type]->detail.source_info.execution_info);
-	}
-      tui_refresh_wi (&list[type]->generic);
+      if (win_info->is_visible ())
+	win_info->refresh_window ();
     }
-
-  tui_refresh_wi (tui_locator_win_info_ptr ());
+  if (locator->is_visible ())
+    locator->refresh_window ();
 }
-
-
-/*********************************
-** Local Static Functions
-*********************************/

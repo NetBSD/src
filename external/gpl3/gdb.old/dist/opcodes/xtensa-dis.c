@@ -1,5 +1,5 @@
 /* xtensa-dis.c.  Disassembly functions for Xtensa.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
    Contributed by Bob Wilson at Tensilica, Inc. (bwilson@tensilica.com)
 
    This file is part of the GNU opcodes library.
@@ -306,8 +306,7 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
 	    {
 	      /* Reset insn_table_entries.  */
 	      priv.insn_table_entry_count = 0;
-	      if (priv.insn_table_entries)
-		free (priv.insn_table_entries);
+	      free (priv.insn_table_entries);
 	      priv.insn_table_entries = NULL;
 	    }
 	  priv.last_section = section;
@@ -319,8 +318,7 @@ print_insn_xtensa (bfd_vma memaddr, struct disassemble_info *info)
 				       XTENSA_PROP_SEC_NAME, FALSE);
 	  if (priv.insn_table_entry_count == 0)
 	    {
-	      if (priv.insn_table_entries)
-		free (priv.insn_table_entries);
+	      free (priv.insn_table_entries);
 	      priv.insn_table_entries = NULL;
 	      /* Backwards compatibility support.  */
 	      priv.insn_table_entry_count =

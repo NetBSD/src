@@ -1,4 +1,4 @@
-# Copyright 2014-2019 Free Software Foundation, Inc.
+# Copyright 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,23 +36,6 @@
 
 standard_testfile
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
-    return -1
-}
-
-if ![runto_main] then {
-    fail "can't run to main"
-    return 0
-}
-
-if [is_remote host] {
-    set arg [remote_download host $binfile]
-    if { $arg == "" } {
-	perror "download failed"
-	return -1
-    }
-}
-
 # Force a breakpoint re-set in GDB.  Currently this is done by
 # reloading symbols with the "file" command.
 
@@ -62,11 +45,11 @@ proc force_breakpoint_re_set {} {
     set test "file \$binfile"
     gdb_test_multiple "file $binfile" $test {
 	-re "Are you sure you want to change the file. .*y or n. $" {
-	    send_gdb "y\n"
+	    send_gdb "y\n" optional
 	    exp_continue
 	}
 	-re "Load new symbol table from \".*\".*y or n. $" {
-	    send_gdb "y\n"
+	    send_gdb "y\n" optional
 	    exp_continue
 	}
 	-re "Reading symbols from.*$gdb_prompt $" {
@@ -123,7 +106,7 @@ proc set_breakpoint { break_command } {
 proc test_break { always_inserted break_command } {
     set cmd [lindex [split "$break_command"] 0]
 
-    with_test_prefix "always-inserted $always_inserted: $cmd" {
+    with_test_prefix "$cmd" {
 	delete_breakpoints
 
 	if ![runto_main] then {
@@ -163,20 +146,43 @@ proc test_break { always_inserted break_command } {
     }
 }
 
-foreach always_inserted { "off" "on" } {
-    test_break $always_inserted "break"
+# The testcase uses the "file" command to force breakpoint re-set in
+# GDB.  Test both with and without PIE, as GDB used to mishandle
+# breakpoint re-set when reloading PIEs.
+foreach_with_prefix pie { "nopie" "pie" } {
 
-    if {![skip_hw_breakpoint_tests]} {
-	test_break $always_inserted "hbreak"
+    set opts {debug}
+    lappend opts $pie
+
+    set binfile [standard_output_file $testfile-$pie]
+
+    if {[prepare_for_testing "failed to prepare" $binfile $srcfile $opts]} {
+	continue
     }
 
-    if {![skip_hw_watchpoint_tests]} {
-	test_break $always_inserted "watch"
+    if [is_remote host] {
+	set arg [remote_download host $binfile]
+	if { $arg == "" } {
+	    untested "download failed"
+	    continue
+	}
     }
 
-    if {![skip_hw_watchpoint_access_tests]
-	&& ![skip_hw_watchpoint_multi_tests]} {
-	test_break $always_inserted "rwatch"
-	test_break $always_inserted "awatch"
+    foreach_with_prefix always_inserted { "off" "on" } {
+	test_break $always_inserted "break"
+
+	if {![skip_hw_breakpoint_tests]} {
+	    test_break $always_inserted "hbreak"
+	}
+
+	if {![skip_hw_watchpoint_tests]} {
+	    test_break $always_inserted "watch"
+	}
+
+	if {![skip_hw_watchpoint_access_tests]
+	    && ![skip_hw_watchpoint_multi_tests]} {
+	    test_break $always_inserted "rwatch"
+	    test_break $always_inserted "awatch"
+	}
     }
 }
