@@ -1,6 +1,6 @@
 /* Modula 2 language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,61 +27,9 @@
 #include "m2-lang.h"
 #include "c-lang.h"
 #include "valprint.h"
+#include "gdbarch.h"
 
 static void m2_printchar (int, struct type *, struct ui_file *);
-static void m2_emit_char (int, struct type *, struct ui_file *, int);
-
-/* Print the character C on STREAM as part of the contents of a literal
-   string whose delimiter is QUOTER.  Note that that format for printing
-   characters and strings is language specific.
-   FIXME:  This is a copy of the same function from c-exp.y.  It should
-   be replaced with a true Modula version.  */
-
-static void
-m2_emit_char (int c, struct type *type, struct ui_file *stream, int quoter)
-{
-
-  c &= 0xFF;			/* Avoid sign bit follies.  */
-
-  if (PRINT_LITERAL_FORM (c))
-    {
-      if (c == '\\' || c == quoter)
-	{
-	  fputs_filtered ("\\", stream);
-	}
-      fprintf_filtered (stream, "%c", c);
-    }
-  else
-    {
-      switch (c)
-	{
-	case '\n':
-	  fputs_filtered ("\\n", stream);
-	  break;
-	case '\b':
-	  fputs_filtered ("\\b", stream);
-	  break;
-	case '\t':
-	  fputs_filtered ("\\t", stream);
-	  break;
-	case '\f':
-	  fputs_filtered ("\\f", stream);
-	  break;
-	case '\r':
-	  fputs_filtered ("\\r", stream);
-	  break;
-	case '\033':
-	  fputs_filtered ("\\e", stream);
-	  break;
-	case '\007':
-	  fputs_filtered ("\\a", stream);
-	  break;
-	default:
-	  fprintf_filtered (stream, "\\%.3o", (unsigned int) c);
-	  break;
-	}
-    }
-}
 
 /* FIXME:  This is a copy of the same function from c-exp.y.  It should
    be replaced with a true Modula version.  */
@@ -92,86 +40,6 @@ m2_printchar (int c, struct type *type, struct ui_file *stream)
   fputs_filtered ("'", stream);
   LA_EMIT_CHAR (c, type, stream, '\'');
   fputs_filtered ("'", stream);
-}
-
-/* Print the character string STRING, printing at most LENGTH characters.
-   Printing stops early if the number hits print_max; repeat counts
-   are printed as appropriate.  Print ellipses at the end if we
-   had to stop before printing LENGTH characters, or if FORCE_ELLIPSES.
-   FIXME:  This is a copy of the same function from c-exp.y.  It should
-   be replaced with a true Modula version.  */
-
-static void
-m2_printstr (struct ui_file *stream, struct type *type, const gdb_byte *string,
-	     unsigned int length, const char *encoding, int force_ellipses,
-	     const struct value_print_options *options)
-{
-  unsigned int i;
-  unsigned int things_printed = 0;
-  int in_quotes = 0;
-  int need_comma = 0;
-
-  if (length == 0)
-    {
-      fputs_filtered ("\"\"", gdb_stdout);
-      return;
-    }
-
-  for (i = 0; i < length && things_printed < options->print_max; ++i)
-    {
-      /* Position of the character we are examining
-         to see whether it is repeated.  */
-      unsigned int rep1;
-      /* Number of repetitions we have detected so far.  */
-      unsigned int reps;
-
-      QUIT;
-
-      if (need_comma)
-	{
-	  fputs_filtered (", ", stream);
-	  need_comma = 0;
-	}
-
-      rep1 = i + 1;
-      reps = 1;
-      while (rep1 < length && string[rep1] == string[i])
-	{
-	  ++rep1;
-	  ++reps;
-	}
-
-      if (reps > options->repeat_count_threshold)
-	{
-	  if (in_quotes)
-	    {
-	      fputs_filtered ("\", ", stream);
-	      in_quotes = 0;
-	    }
-	  m2_printchar (string[i], type, stream);
-	  fprintf_filtered (stream, " <repeats %u times>", reps);
-	  i = rep1 - 1;
-	  things_printed += options->repeat_count_threshold;
-	  need_comma = 1;
-	}
-      else
-	{
-	  if (!in_quotes)
-	    {
-	      fputs_filtered ("\"", stream);
-	      in_quotes = 1;
-	    }
-	  LA_EMIT_CHAR (string[i], type, stream, '"');
-	  ++things_printed;
-	}
-    }
-
-  /* Terminate the quotes if necessary.  */
-  if (in_quotes)
-    fputs_filtered ("\"", stream);
-
-  if (force_ellipses || i < length)
-    fputs_filtered ("...", stream);
 }
 
 static struct value *
@@ -200,7 +68,7 @@ evaluate_subexp_modula2 (struct type *expect_type, struct expression *exp,
 	    {
 	      struct value *temp = arg1;
 
-	      type = TYPE_FIELD_TYPE (type, 1);
+	      type = type->field (1).type ();
 	      /* i18n: Do not translate the "_m2_high" part!  */
 	      arg1 = value_struct_elt (&temp, NULL, "_m2_high", NULL,
 				       _("unbounded structure "
@@ -228,8 +96,8 @@ evaluate_subexp_modula2 (struct type *expect_type, struct expression *exp,
       if (m2_is_unbounded_array (type))
 	{
 	  struct value *temp = arg1;
-	  type = TYPE_FIELD_TYPE (type, 0);
-	  if (type == NULL || (TYPE_CODE (type) != TYPE_CODE_PTR))
+	  type = type->field (0).type ();
+	  if (type == NULL || (type->code () != TYPE_CODE_PTR))
 	    {
 	      warning (_("internal error: unbounded "
 			 "array structure is unknown"));
@@ -247,11 +115,11 @@ evaluate_subexp_modula2 (struct type *expect_type, struct expression *exp,
 	  return value_ind (value_ptradd (arg1, value_as_long (arg2)));
 	}
       else
-	if (TYPE_CODE (type) != TYPE_CODE_ARRAY)
+	if (type->code () != TYPE_CODE_ARRAY)
 	  {
-	    if (TYPE_NAME (type))
+	    if (type->name ())
 	      error (_("cannot subscript something of type `%s'"),
-		     TYPE_NAME (type));
+		     type->name ());
 	    else
 	      error (_("cannot subscript requested type"));
 	  }
@@ -317,32 +185,6 @@ enum m2_primitive_types {
   nr_m2_primitive_types
 };
 
-static void
-m2_language_arch_info (struct gdbarch *gdbarch,
-		       struct language_arch_info *lai)
-{
-  const struct builtin_m2_type *builtin = builtin_m2_type (gdbarch);
-
-  lai->string_char_type = builtin->builtin_char;
-  lai->primitive_type_vector
-    = GDBARCH_OBSTACK_CALLOC (gdbarch, nr_m2_primitive_types + 1,
-                              struct type *);
-
-  lai->primitive_type_vector [m2_primitive_type_char]
-    = builtin->builtin_char;
-  lai->primitive_type_vector [m2_primitive_type_int]
-    = builtin->builtin_int;
-  lai->primitive_type_vector [m2_primitive_type_card]
-    = builtin->builtin_card;
-  lai->primitive_type_vector [m2_primitive_type_real]
-    = builtin->builtin_real;
-  lai->primitive_type_vector [m2_primitive_type_bool]
-    = builtin->builtin_bool;
-
-  lai->bool_type_symbol = "BOOLEAN";
-  lai->bool_type_default = builtin->builtin_bool;
-}
-
 const struct exp_descriptor exp_descriptor_modula2 = 
 {
   print_subexp_standard,
@@ -353,7 +195,9 @@ const struct exp_descriptor exp_descriptor_modula2 =
   evaluate_subexp_modula2
 };
 
-extern const struct language_defn m2_language_defn =
+/* Constant data describing the M2 language.  */
+
+extern const struct language_data m2_language_data =
 {
   "modula-2",
   "Modula-2",
@@ -364,43 +208,235 @@ extern const struct language_defn m2_language_defn =
   macro_expansion_no,
   NULL,
   &exp_descriptor_modula2,
-  m2_parse,			/* parser */
-  null_post_parser,
-  m2_printchar,			/* Print character constant */
-  m2_printstr,			/* function to print string constant */
-  m2_emit_char,			/* Function to print a single character */
-  m2_print_type,		/* Print a type using appropriate syntax */
-  m2_print_typedef,		/* Print a typedef using appropriate syntax */
-  m2_val_print,			/* Print a value using appropriate syntax */
-  c_value_print,		/* Print a top-level value */
-  default_read_var_value,	/* la_read_var_value */
-  NULL,				/* Language specific skip_trampoline */
   NULL,		                /* name_of_this */
   false,			/* la_store_sym_names_in_linkage_form_p */
-  basic_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
-  basic_lookup_transparent_type,/* lookup_transparent_type */
-  NULL,				/* Language specific symbol demangler */
-  NULL,
-  NULL,				/* Language specific
-				   class_name_from_physname */
   m2_op_print_tab,		/* expression operators for printing */
   0,				/* arrays are first-class (not c-style) */
   0,				/* String lower bound */
-  default_word_break_characters,
-  default_collect_symbol_completion_matches,
-  m2_language_arch_info,
-  default_print_array_index,
-  default_pass_by_reference,
-  default_get_string,
-  c_watch_location_expression,
-  NULL,				/* la_get_symbol_name_matcher */
-  iterate_over_symbols,
-  default_search_name_hash,
   &default_varobj_ops,
-  NULL,
-  NULL,
-  LANG_MAGIC
+  "{...}"			/* la_struct_too_deep_ellipsis */
 };
+
+/* Class representing the M2 language.  */
+
+class m2_language : public language_defn
+{
+public:
+  m2_language ()
+    : language_defn (language_m2, m2_language_data)
+  { /* Nothing.  */ }
+
+  /* See language.h.  */
+  void language_arch_info (struct gdbarch *gdbarch,
+			   struct language_arch_info *lai) const override
+  {
+    const struct builtin_m2_type *builtin = builtin_m2_type (gdbarch);
+
+    lai->string_char_type = builtin->builtin_char;
+    lai->primitive_type_vector
+      = GDBARCH_OBSTACK_CALLOC (gdbarch, nr_m2_primitive_types + 1,
+				struct type *);
+
+    lai->primitive_type_vector [m2_primitive_type_char]
+      = builtin->builtin_char;
+    lai->primitive_type_vector [m2_primitive_type_int]
+      = builtin->builtin_int;
+    lai->primitive_type_vector [m2_primitive_type_card]
+      = builtin->builtin_card;
+    lai->primitive_type_vector [m2_primitive_type_real]
+      = builtin->builtin_real;
+    lai->primitive_type_vector [m2_primitive_type_bool]
+      = builtin->builtin_bool;
+
+    lai->bool_type_symbol = "BOOLEAN";
+    lai->bool_type_default = builtin->builtin_bool;
+  }
+
+  /* See language.h.  */
+
+  void print_type (struct type *type, const char *varstring,
+		   struct ui_file *stream, int show, int level,
+		   const struct type_print_options *flags) const override
+  {
+    m2_print_type (type, varstring, stream, show, level, flags);
+  }
+
+  /* See language.h.  */
+
+  void value_print_inner
+	(struct value *val, struct ui_file *stream, int recurse,
+	 const struct value_print_options *options) const override
+  {
+    return m2_value_print_inner (val, stream, recurse, options);
+  }
+
+  /* See language.h.  */
+
+  int parser (struct parser_state *ps) const override
+  {
+    return m2_parse (ps);
+  }
+
+  /* See language.h.  */
+
+  void emitchar (int ch, struct type *chtype,
+		 struct ui_file *stream, int quoter) const override
+  {
+    ch &= 0xFF;			/* Avoid sign bit follies.  */
+
+    if (PRINT_LITERAL_FORM (ch))
+      {
+	if (ch == '\\' || ch == quoter)
+	  fputs_filtered ("\\", stream);
+	fprintf_filtered (stream, "%c", ch);
+      }
+    else
+      {
+	switch (ch)
+	  {
+	  case '\n':
+	    fputs_filtered ("\\n", stream);
+	    break;
+	  case '\b':
+	    fputs_filtered ("\\b", stream);
+	    break;
+	  case '\t':
+	    fputs_filtered ("\\t", stream);
+	    break;
+	  case '\f':
+	    fputs_filtered ("\\f", stream);
+	    break;
+	  case '\r':
+	    fputs_filtered ("\\r", stream);
+	    break;
+	  case '\033':
+	    fputs_filtered ("\\e", stream);
+	    break;
+	  case '\007':
+	    fputs_filtered ("\\a", stream);
+	    break;
+	  default:
+	    fprintf_filtered (stream, "\\%.3o", (unsigned int) ch);
+	    break;
+	  }
+      }
+  }
+
+  /* See language.h.  */
+
+  void printchar (int ch, struct type *chtype,
+		  struct ui_file *stream) const override
+  {
+    m2_printchar (ch, chtype, stream);
+  }
+
+  /* See language.h.  */
+
+  void printstr (struct ui_file *stream, struct type *elttype,
+		 const gdb_byte *string, unsigned int length,
+		 const char *encoding, int force_ellipses,
+		 const struct value_print_options *options) const override
+  {
+    unsigned int i;
+    unsigned int things_printed = 0;
+    int in_quotes = 0;
+    int need_comma = 0;
+
+    if (length == 0)
+      {
+	fputs_filtered ("\"\"", gdb_stdout);
+	return;
+      }
+
+    for (i = 0; i < length && things_printed < options->print_max; ++i)
+      {
+	/* Position of the character we are examining
+	   to see whether it is repeated.  */
+	unsigned int rep1;
+	/* Number of repetitions we have detected so far.  */
+	unsigned int reps;
+
+	QUIT;
+
+	if (need_comma)
+	  {
+	    fputs_filtered (", ", stream);
+	    need_comma = 0;
+	  }
+
+	rep1 = i + 1;
+	reps = 1;
+	while (rep1 < length && string[rep1] == string[i])
+	  {
+	    ++rep1;
+	    ++reps;
+	  }
+
+	if (reps > options->repeat_count_threshold)
+	  {
+	    if (in_quotes)
+	      {
+		fputs_filtered ("\", ", stream);
+		in_quotes = 0;
+	      }
+	    m2_printchar (string[i], elttype, stream);
+	    fprintf_filtered (stream, " <repeats %u times>", reps);
+	    i = rep1 - 1;
+	    things_printed += options->repeat_count_threshold;
+	    need_comma = 1;
+	  }
+	else
+	  {
+	    if (!in_quotes)
+	      {
+		fputs_filtered ("\"", stream);
+		in_quotes = 1;
+	      }
+	    LA_EMIT_CHAR (string[i], elttype, stream, '"');
+	    ++things_printed;
+	  }
+      }
+
+    /* Terminate the quotes if necessary.  */
+    if (in_quotes)
+      fputs_filtered ("\"", stream);
+
+    if (force_ellipses || i < length)
+      fputs_filtered ("...", stream);
+  }
+
+  /* See language.h.  */
+
+  void print_typedef (struct type *type, struct symbol *new_symbol,
+		      struct ui_file *stream) const override
+  {
+    m2_print_typedef (type, new_symbol, stream);
+  }
+
+  /* See language.h.  */
+
+  bool is_string_type_p (struct type *type) const override
+  {
+    type = check_typedef (type);
+    if (type->code () == TYPE_CODE_ARRAY
+	&& TYPE_LENGTH (type) > 0
+	&& TYPE_LENGTH (TYPE_TARGET_TYPE (type)) > 0)
+      {
+	struct type *elttype = check_typedef (TYPE_TARGET_TYPE (type));
+
+	if (TYPE_LENGTH (elttype) == 1
+	    && (elttype->code () == TYPE_CODE_INT
+		|| elttype->code () == TYPE_CODE_CHAR))
+	  return true;
+      }
+
+    return false;
+  }
+};
+
+/* Single instance of the M2 language.  */
+
+static m2_language m2_language_defn;
 
 static void *
 build_m2_types (struct gdbarch *gdbarch)
@@ -435,8 +471,9 @@ builtin_m2_type (struct gdbarch *gdbarch)
 
 /* Initialization for Modula-2 */
 
+void _initialize_m2_language ();
 void
-_initialize_m2_language (void)
+_initialize_m2_language ()
 {
   m2_type_data = gdbarch_data_register_post_init (build_m2_types);
 }

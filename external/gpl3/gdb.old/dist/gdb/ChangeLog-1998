@@ -3710,9 +3710,9 @@ Tue Dec  8 15:09:44 1998  Edith Epstein  <eepstein@sophia.cygnus.com>
         * config/m68k/nm-linux.h: New file.
         * config/m68k/tm-linux.h: New file.
         * config/m68k/xm-linux.h: New file.
-        * gdb/m68klinux-nat.c: New file.
+        * m68klinux-nat.c: New file.
         * gdbserver/low-linux.c: Add support for m68k-linux.
-        * gdb/config/m68k/tm-m68k.h (NUM_FREGS): New macro.
+        * config/m68k/tm-m68k.h (NUM_FREGS): New macro.
 
 1998-12-07  Jason Molenda  (jsm@bugshack.cygnus.com)
 
@@ -6002,7 +6002,7 @@ Mon Apr 20 15:35:03 1998  Philippe De Muyter  <phdm@macqel.be>
 
 Mon Apr 20 15:32:21 1998   Mark Kettenis  <kettenis@phys.uva.nl>
 
-        * gdb/gdb_string.h (strdup): Declare only if not defined as a
+        * gdb_string.h (strdup): Declare only if not defined as a
         macro.
 
 Mon Apr 20 14:18:45 1998  J. Kean Johnston  <jkj@sco.com>

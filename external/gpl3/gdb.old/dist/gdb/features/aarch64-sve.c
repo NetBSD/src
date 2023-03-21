@@ -1,4 +1,4 @@
-/* Copyright (C) 2018-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common/tdesc.h"
+#include "gdbsupport/tdesc.h"
 
 /* This function is NOT auto generated from xml.  Create the aarch64 with SVE
    feature into RESULT, where SCALE is the number of 128 bit chunks in a Z
@@ -30,6 +30,12 @@ create_feature_aarch64_sve (struct target_desc *result, long regnum,
   tdesc_type_with_fields *type_with_fields;
 
   feature = tdesc_create_feature (result, "org.gnu.gdb.aarch64.sve");
+
+  element_type = tdesc_named_type (feature, "uint128");
+  tdesc_create_vector (feature, "svevqu", element_type, scale);
+
+  element_type = tdesc_named_type (feature, "int128");
+  tdesc_create_vector (feature, "svevqs", element_type, scale);
 
   element_type = tdesc_named_type (feature, "ieee_double");
   tdesc_create_vector (feature, "svevdf", element_type, 2 * scale);
@@ -49,6 +55,9 @@ create_feature_aarch64_sve (struct target_desc *result, long regnum,
   element_type = tdesc_named_type (feature, "int32");
   tdesc_create_vector (feature, "svevss", element_type, 4 * scale);
 
+  element_type = tdesc_named_type (feature, "ieee_half");
+  tdesc_create_vector (feature, "svevhf", element_type, 8 * scale);
+
   element_type = tdesc_named_type (feature, "uint16");
   tdesc_create_vector (feature, "svevhu", element_type, 8 * scale);
 
@@ -60,6 +69,12 @@ create_feature_aarch64_sve (struct target_desc *result, long regnum,
 
   element_type = tdesc_named_type (feature, "int8");
   tdesc_create_vector (feature, "svevbs", element_type, 16 * scale);
+
+  type_with_fields = tdesc_create_union (feature, "svevnq");
+  field_type = tdesc_named_type (feature, "svevqu");
+  tdesc_add_field (type_with_fields, "u", field_type);
+  field_type = tdesc_named_type (feature, "svevqs");
+  tdesc_add_field (type_with_fields, "s", field_type);
 
   type_with_fields = tdesc_create_union (feature, "svevnd");
   field_type = tdesc_named_type (feature, "svevdf");
@@ -78,6 +93,8 @@ create_feature_aarch64_sve (struct target_desc *result, long regnum,
   tdesc_add_field (type_with_fields, "s", field_type);
 
   type_with_fields = tdesc_create_union (feature, "svevnh");
+  field_type = tdesc_named_type (feature, "svevhf");
+  tdesc_add_field (type_with_fields, "f", field_type);
   field_type = tdesc_named_type (feature, "svevhu");
   tdesc_add_field (type_with_fields, "u", field_type);
   field_type = tdesc_named_type (feature, "svevhs");
@@ -90,6 +107,8 @@ create_feature_aarch64_sve (struct target_desc *result, long regnum,
   tdesc_add_field (type_with_fields, "s", field_type);
 
   type_with_fields = tdesc_create_union (feature, "svev");
+  field_type = tdesc_named_type (feature, "svevnq");
+  tdesc_add_field (type_with_fields, "q", field_type);
   field_type = tdesc_named_type (feature, "svevnd");
   tdesc_add_field (type_with_fields, "d", field_type);
   field_type = tdesc_named_type (feature, "svevns");

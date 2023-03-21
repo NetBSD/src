@@ -7,7 +7,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
-int  should_exit = 0;
+int  bidule = 0;
+volatile int  should_exit = 0;
 
 int main ()
 {

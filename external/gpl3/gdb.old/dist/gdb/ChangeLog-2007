@@ -2342,8 +2342,6 @@
 
 2007-10-16  Gaius Mulley  <gaius@glam.ac.uk>
 
-        * doc/gdb.texinfo:  Add TSIZE definition, removed
-	statement about unbounded arrays being unimplemented.
 	* m2-valprint.c (m2_print_array_contents):  New function.
 	(m2_print_unbounded_array):  New function.
 	(m2_print_array_contents):  New function.
@@ -8382,12 +8380,11 @@
 	varobj_update_one.
 	* mi/mi-cmds.c (mi_cmds): Register '-var-set-frozen'.
 	* mi/mi-cmds.h (mi_cmd_var_set_frozen): Declare.
-	
+
 2007-04-13  Paul Brook  <paul@codesourcery.com>
 
 	* target-descriptions.c (tdesc_named_type): Add ieee_single and
 	ieee_double.
-	* doc/gdb.texinfo: Document ieee_single and ieee_double target types.
 
 2007-04-13  Daniel Jacobowitz  <dan@codesourcery.com>
 
@@ -8486,7 +8483,6 @@
 
 	* configure.ac (build_warnings): Add -Wno-char-subscripts.
 	* configure: Regenerate.
-	* doc/gdbint.texinfo (warning flags): Add -Wno-char-subscripts.
 
 2007-04-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
@@ -9511,9 +9507,9 @@
 2007-02-08  Daniel Jacobowitz  <dan@codesourcery.com>
 
 	Reported by timeless@gmail.com:
-	* gdb/target.c (target_flash_erase): Do not return void value.
+	* target.c (target_flash_erase): Do not return void value.
 	(target_flash_done): Likewise.
-	* gdb/cli/cli-cmds.c (source_command): Likewise.
+	* cli/cli-cmds.c (source_command): Likewise.
 
 2007-02-08  Fred Fish  <fnf@specifix.com>
 
@@ -9665,7 +9661,7 @@
 
 2007-02-01  Kazuhiro Inaoka <inaoka.kazuhiro@renesas.com>
 
-	* gdb/remote-m32r.sdi.c (m32r_fetch_register): Change PWD mask.
+	* remote-m32r.sdi.c (m32r_fetch_register): Change PWD mask.
         (m32r_store_register): Ditto.
 
 2007-01-30  Vladimir Prus  <vladimir@codesourcery.com>

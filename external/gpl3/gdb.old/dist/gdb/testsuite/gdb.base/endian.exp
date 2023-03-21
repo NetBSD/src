@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2019 Free Software Foundation, Inc.
+# Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,26 +18,26 @@
 standard_testfile
 
 set en_auto "The target endianness is set automatically"
-set en_set "The target is assumed to be"
+set en_set "The target is set to"
 
 clean_restart
 
 # First check that the automatic endianness is updated
 # with the `set endian' command.
 gdb_test "set endian auto" \
-    "$en_auto \\\(currently \(\?:big\|little\) endian\\\)" \
+    "$en_auto \\\(currently \(\?:big\|little\) endian\\\)\\." \
     "default target endianness"
-gdb_test "set endian big" "$en_set big endian" \
+gdb_test "set endian big" "$en_set big endian\\." \
     "set target endianness"
-gdb_test "set endian auto" "$en_auto \\\(currently big endian\\\)" \
+gdb_test "set endian auto" "$en_auto \\\(currently big endian\\\)\\." \
     "auto target endianness"
-gdb_test "set endian little" "$en_set little endian" \
+gdb_test "set endian little" "$en_set little endian\\." \
     "set target endianness little"
-gdb_test "set endian auto" "$en_auto \\\(currently little endian\\\)" \
+gdb_test "set endian auto" "$en_auto \\\(currently little endian\\\)\\." \
     "auto target endianness little"
-gdb_test "set endian big" "$en_set big endian" \
+gdb_test "set endian big" "$en_set big endian\\." \
     "set target endianness big"
-gdb_test "set endian auto" "$en_auto \\\(currently big endian\\\)" \
+gdb_test "set endian auto" "$en_auto \\\(currently big endian\\\)\\." \
     "auto target endianness big"
 
 if { [build_executable ${testfile}.exp $testfile] } {
@@ -49,7 +49,7 @@ if { [gdb_file_cmd $binfile] } {
 }
 set test "get target endianness"
 if { [gdb_test_multiple "show endian" "$test" {
-    -re "$en_auto \\\(currently \(big\|little\) endian\\\).*$gdb_prompt" {
+    -re "$en_auto \\\(currently \(big\|little\) endian\\\)\\..*$gdb_prompt" {
 	set endian $expect_out(1,string)
 	pass "$test"
     }
@@ -64,31 +64,31 @@ if { [gdb_test_multiple "show endian" "$test" {
 if { [gdb_unload] } {
     gdb_suppress_entire_file "$pf_prefix cannot unselect executable"
 }
-gdb_test "set endian big" "$en_set big endian" \
+gdb_test "set endian big" "$en_set big endian\\." \
     "override target endianness big"
-gdb_test "set endian auto" "$en_auto \\\(currently big endian\\\)" \
+gdb_test "set endian auto" "$en_auto \\\(currently big endian\\\)\\." \
     "override auto target endianness big"
 if { [gdb_file_cmd $binfile] } {
     gdb_suppress_entire_file "$pf_prefix cannot select executable"
 }
-gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)" \
+gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)\\." \
     "previously big default executable endianness"
 if { [gdb_unload] } {
     gdb_suppress_entire_file "$pf_prefix cannot unselect executable"
 }
-gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)" \
+gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)\\." \
     "previously big default no executable endianness"
-gdb_test "set endian little" "$en_set little endian" \
+gdb_test "set endian little" "$en_set little endian\\." \
     "override target endianness little"
-gdb_test "set endian auto" "$en_auto \\\(currently little endian\\\)" \
+gdb_test "set endian auto" "$en_auto \\\(currently little endian\\\)\\." \
     "override auto target endianness little"
 if { [gdb_file_cmd $binfile] } {
     gdb_suppress_entire_file "$pf_prefix cannot select executable"
 }
-gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)" \
+gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)\\." \
     "previously little default executable endianness"
 if { [gdb_unload] } {
     gdb_suppress_entire_file "$pf_prefix cannot unselect executable"
 }
-gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)" \
+gdb_test "show endian" "$en_auto \\\(currently $endian endian\\\)\\." \
     "previously little default no executable endianness"

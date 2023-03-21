@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2019 Free Software Foundation, Inc.
+# Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ gdb_reinitialize_dir $srcdir/$subdir
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-gdb_py_test_multiple "input convenience function" \
+gdb_test_multiline "input convenience function" \
   "python" "" \
   "class test_func (gdb.Function):" "" \
   "  def __init__ (self):" "" \
@@ -41,7 +41,7 @@ gdb_test "print \$test_func (\"ugh\")" "= \"test_func output, arg = ugh\"" "call
 
 # Test returning a gdb.Value from the function. This segfaulted GDB at one point.
 
-gdb_py_test_multiple "input value-returning convenience function" \
+gdb_test_multiline "input value-returning convenience function" \
   "python" "" \
   "class Double (gdb.Function):" "" \
   "  def __init__ (self):" "" \
@@ -51,9 +51,15 @@ gdb_py_test_multiple "input value-returning convenience function" \
   "Double ()" "" \
   "end" ""
 
-gdb_test "print \$double (1)" "= 2" "call value-returning function"
+# Different languages can have different parsers, so lets check that
+# internal functions are understood by every language.  Place auto
+# last in the list so we end up back in 'auto' language mode.
+foreach lang [concat [gdb_supported_languages] auto] {
+    gdb_test_no_output "set language $lang"
+    gdb_test "print \$double (1)" "= 2" "call value-returning function, language = $lang"
+}
 
-gdb_py_test_multiple "input int-returning function" \
+gdb_test_multiline "input int-returning function" \
   "python" "" \
   "class Yes(gdb.Function):" "" \
   "    def __init__(self):" "" \
@@ -66,7 +72,7 @@ gdb_py_test_multiple "input int-returning function" \
 gdb_test "print \$yes() && \$yes()" " = 1" "call yes with &&"
 gdb_test "print \$yes() || \$yes()" " = 1" "call yes with ||"
 
-gdb_py_test_multiple "Test GDBError" \
+gdb_test_multiline "Test GDBError" \
   "python" "" \
   "class GDBError(gdb.Function):" "" \
   "    def __init__(self):" "" \
@@ -79,7 +85,7 @@ gdb_py_test_multiple "Test GDBError" \
 gdb_test "print \$gdberror()" "This is a GdbError.*" \
     "Test GdbError.  There should not be a stack trace"
 
-gdb_py_test_multiple "Test Normal Error" \
+gdb_test_multiline "Test Normal Error" \
   "python" "" \
   "class NormalError(gdb.Function):" "" \
   "    def __init__(self):" "" \
@@ -93,7 +99,7 @@ gdb_test_no_output "set python print-stack full"
 gdb_test "print \$normalerror()" "Traceback.*File.*line 5.*in invoke.*RuntimeError.*This is a Normal Error.*" \
     "Test a Runtime error.  There should be a stack trace."
 
-gdb_py_test_multiple "input command-calling function" \
+gdb_test_multiline "input command-calling function" \
   "python" "" \
   "class CallCommand(gdb.Function):" "" \
   "    def __init__(self):" "" \

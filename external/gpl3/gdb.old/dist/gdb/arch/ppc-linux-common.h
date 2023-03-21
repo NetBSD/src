@@ -1,6 +1,6 @@
 /* Common target dependent code for GNU/Linux on PPC systems.
 
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -58,13 +58,11 @@ struct ppc_linux_features
   bool ppr_dscr;
   bool isa207;
   bool htm;
-  bool cell;
 };
 
 /* Base value for ppc_linux_features variables.  */
 const struct ppc_linux_features ppc_linux_no_features = {
   0,
-  false,
   false,
   false,
   false,

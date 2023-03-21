@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -131,8 +131,9 @@ microblaze_linux_init_abi (struct gdbarch_info info,
 				&microblaze_linux_sighandler_tramp_frame);
 }
 
+void _initialize_microblaze_linux_tdep ();
 void
-_initialize_microblaze_linux_tdep (void)
+_initialize_microblaze_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_microblaze, 0, GDB_OSABI_LINUX, 
 			  microblaze_linux_init_abi);

@@ -1,4 +1,4 @@
-# Copyright 2013-2019 Free Software Foundation, Inc.
+# Copyright 2013-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,8 +34,13 @@ if { [prepare_for_testing "failed to prepare" "${testfile}" \
 
 proc add_gdb_index { program } {
     set index_file ${program}.gdb-index
+    set dir [file dirname ${program}]
+    set filename [file tail ${program}]
+    set dwz $dir/.tmp/${filename}.dwz
+    set dwz_index_file $program.dwz.gdb-index
     verbose -log "index_file: ${index_file}"
     remote_file host delete ${index_file}
+    remote_file host delete ${dwz_index_file}
     gdb_test_no_output "save gdb-index [file dirname ${index_file}]" \
 	"save gdb-index for file [file tail ${program}]"
 
@@ -55,6 +60,20 @@ proc add_gdb_index { program } {
     if {[run_on_host "objcopy" [gdb_find_objcopy] "--remove-section .gdb_index --add-section .gdb_index=$index_file --set-section-flags .gdb_index=readonly ${program} ${program_with_index}"]} {
 	return ""
     }
+
+    with_test_prefix "modify dwz file" {
+	if { [remote_file host exists ${dwz_index_file}] } {
+	    # We're modifying $dwz in place, otherwise we'd have to update
+	    # .gnu_debugaltlink in $program.
+	    set args [join [list "--remove-section .gdb_index" \
+				" --add-section .gdb_index=$dwz_index_file" \
+				" --set-section-flags .gdb_index=readonly $dwz"]]
+	    if {[run_on_host "objcopy" [gdb_find_objcopy] "$args"]} {
+		return ""
+	    }
+	}
+    }
+
     return ${program_with_index}
 }
 

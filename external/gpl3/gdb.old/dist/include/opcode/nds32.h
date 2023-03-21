@@ -1,5 +1,5 @@
 /* nds32.h -- Header file for nds32 opcode table
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This program is free software; you can redistribute it and/or modify
@@ -51,11 +51,12 @@ static const int nds32_r54map[] ATTRIBUTE_UNUSED =
   -1, -1, -1, -1, -1, -1, -1, -1
 };
 
-#define N32_BIT(n)		(1 << (n))
+#define N32_BIT(n)		(1u << (n))
 #define __MASK(n)		(N32_BIT (n) - 1)
 #define __MF(v, off, bs)	(((v) & __MASK (bs)) << (off))
 #define __GF(v, off, bs)	(((v) >> off) & __MASK (bs))
-#define __SEXT(v, bs)		((((v) & ((1 << (bs)) - 1)) ^ (1 << ((bs) - 1))) - (1 << ((bs) - 1)))
+#define __SEXT(v, bs)		\
+  ((((v) & __MASK ((bs))) ^ N32_BIT ((bs) - 1)) - N32_BIT ((bs) - 1))
 
 /* Make nds32 instructions.  */
 
@@ -150,7 +151,7 @@ static const int nds32_r54map[] ATTRIBUTE_UNUSED =
 #define N32_SUB6(insn)		(((insn) >> 0) & 0x3f)
 #define N32_SWID(insn)		(((insn) >> 5) & 0x3ff)
 #define N32_IMMU(insn, bs)	((insn) & __MASK (bs))
-#define N32_IMMS(insn, bs)	((signed) __SEXT (((insn) & __MASK (bs)), bs))
+#define N32_IMMS(insn, bs)	((signed) __SEXT ((insn), (bs)))
 #define N32_IMM5U(insn)		N32_IMMU (insn, 5)
 #define N32_IMM12S(insn)	N32_IMMS (insn, 12)
 #define N32_IMM14S(insn)	N32_IMMS (insn, 14)

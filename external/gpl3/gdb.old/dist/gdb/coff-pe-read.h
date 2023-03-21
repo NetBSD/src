@@ -1,6 +1,6 @@
 /* Interface to coff-pe-read.c (portable-executable-specific symbol reader).
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 #if !defined (COFF_PE_READ_H)
 #define COFF_PE_READ_H
 
+class minimal_symbol_reader;
 struct objfile;
 struct bfd;
 

@@ -127,7 +127,7 @@ public:
   bool has_memory () override;
   bool has_stack () override;
   bool has_registers () override;
-  bool has_execution (ptid_t) override { return false; }
+  bool has_execution (inferior *inf) override { return false; }
   bool thread_alive (ptid_t ptid) override;
 };
 

@@ -1,5 +1,5 @@
 /* Disassemble Imagination Technologies Meta instructions.
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This library is free software; you can redistribute it and/or modify
@@ -3364,9 +3364,15 @@ print_insn_metag (bfd_vma pc, disassemble_info *outf)
   bfd_byte buf[4];
   unsigned int insn_word;
   size_t i;
-  outf->bytes_per_chunk = 4;
+  int status;
 
-  (*outf->read_memory_func) (pc & ~0x03, buf, 4, outf);
+  outf->bytes_per_chunk = 4;
+  status = (*outf->read_memory_func) (pc & ~0x03, buf, 4, outf);
+  if (status)
+    {
+      (*outf->memory_error_func) (status, pc, outf);
+      return -1;
+    }
   insn_word = bfd_getl32 (buf);
 
   for (i = 0; i < sizeof(metag_optab)/sizeof(metag_optab[0]); i++)

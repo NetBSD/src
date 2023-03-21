@@ -1,5 +1,5 @@
 /* Target-dependent code for the S12Z, for the GDB.
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,8 +21,8 @@
 #include "defs.h"
 
 #include "arch-utils.h"
-#include "dwarf2-frame.h"
-#include "common/errors.h"
+#include "dwarf2/frame.h"
+#include "gdbsupport/errors.h"
 #include "frame-unwind.h"
 #include "gdbcore.h"
 #include "gdbcmd.h"
@@ -30,6 +30,7 @@
 #include "opcode/s12z.h"
 #include "trad-frame.h"
 #include "remote.h"
+#include "opcodes/s12z-opc.h"
 
 /* Two of the registers included in S12Z_N_REGISTERS are
    the CCH and CCL "registers" which are just views into
@@ -89,24 +90,10 @@ s12z_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
         return prologue_end;
     }
 
-  warning (_("%s Failed to find end of prologue PC = %08x\n"),
-                      __FUNCTION__, (unsigned int) pc);
+  warning (_("%s Failed to find end of prologue PC = %08x"),
+	   __FUNCTION__, (unsigned int) pc);
 
   return pc;
-}
-
-/* Implement the unwind_pc gdbarch method.  */
-static CORE_ADDR
-s12z_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, REG_P);
-}
-
-/* Implement the unwind_sp gdbarch method.  */
-static CORE_ADDR
-s12z_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, REG_S);
 }
 
 static struct type *
@@ -160,7 +147,7 @@ s12z_fprintf_disasm (void *stream, const char *format, ...)
   return 0;
 }
 
-struct disassemble_info
+static struct disassemble_info
 s12z_disassemble_info (struct gdbarch *gdbarch)
 {
   struct disassemble_info di;
@@ -174,6 +161,104 @@ s12z_disassemble_info (struct gdbarch *gdbarch)
       return target_read_code (memaddr, myaddr, len);
     };
   return di;
+}
+
+
+/* A struct (based on mem_read_abstraction_base) to read memory
+   through the disassemble_info API.  */
+struct mem_read_abstraction
+{
+  struct mem_read_abstraction_base base; /* The parent struct.  */
+  bfd_vma memaddr;                  /* Where to read from.  */
+  struct disassemble_info* info;  /* The disassembler  to use for reading.  */
+};
+
+/* Advance the reader by one byte.  */
+static void
+advance (struct mem_read_abstraction_base *b)
+{
+  struct mem_read_abstraction *mra = (struct mem_read_abstraction *) b;
+  mra->memaddr++;
+}
+
+/* Return the current position of the reader.  */
+static bfd_vma
+posn (struct mem_read_abstraction_base *b)
+{
+  struct mem_read_abstraction *mra = (struct mem_read_abstraction *) b;
+  return mra->memaddr;
+}
+
+/* Read the N bytes at OFFSET  using B.  The bytes read are stored in BYTES.
+   It is the caller's responsibility to ensure that this is of at least N
+   in size.  */
+static int
+abstract_read_memory (struct mem_read_abstraction_base *b,
+		      int offset,
+		      size_t n, bfd_byte *bytes)
+{
+  struct mem_read_abstraction *mra = (struct mem_read_abstraction *) b;
+
+  int status =
+    (*mra->info->read_memory_func) (mra->memaddr + offset,
+				    bytes, n, mra->info);
+
+  if (status != 0)
+    {
+      (*mra->info->memory_error_func) (status, mra->memaddr, mra->info);
+      return -1;
+    }
+
+  return 0;
+}
+
+
+/* Return the stack adjustment caused by a push or pull instruction.  */
+static int
+push_pull_get_stack_adjustment (int n_operands,
+				struct operand *const *operands)
+{
+  int stack_adjustment = 0;
+  gdb_assert (n_operands > 0);
+  if (operands[0]->cl == OPND_CL_REGISTER_ALL)
+    stack_adjustment = 26;  /* All the regs are involved.  */
+  else if (operands[0]->cl == OPND_CL_REGISTER_ALL16)
+    stack_adjustment = 4 * 2; /* All four 16 bit regs are involved.  */
+  else
+    for (int i = 0; i < n_operands; ++i)
+      {
+	if (operands[i]->cl != OPND_CL_REGISTER)
+	  continue; /* I don't think this can ever happen.  */
+	const struct register_operand *op
+	  = (const struct register_operand *) operands[i];
+	switch (op->reg)
+	  {
+	  case REG_X:
+	  case REG_Y:
+	    stack_adjustment += 3;
+	    break;
+	  case REG_D7:
+	  case REG_D6:
+	    stack_adjustment += 4;
+	    break;
+	  case REG_D2:
+	  case REG_D3:
+	  case REG_D4:
+	  case REG_D5:
+	    stack_adjustment += 2;
+	    break;
+	  case REG_D0:
+	  case REG_D1:
+	  case REG_CCL:
+	  case REG_CCH:
+	    stack_adjustment += 1;
+	    break;
+	  default:
+	    gdb_assert_not_reached ("Invalid register in push/pull operation.");
+	    break;
+	  }
+      }
+  return stack_adjustment;
 }
 
 /* Initialize a prologue cache.  */
@@ -211,7 +296,7 @@ s12z_frame_cache (struct frame_info *this_frame, void **prologue_cache)
   /* Return early if GDB couldn't find the function.  */
   if (start_addr == 0)
     {
-      warning (_("Couldn't find function including address %s SP is %s\n"),
+      warning (_("Couldn't find function including address %s SP is %s"),
                paddress (gdbarch, this_pc),
                paddress (gdbarch, this_sp));
 
@@ -248,73 +333,82 @@ s12z_frame_cache (struct frame_info *this_frame, void **prologue_cache)
   CORE_ADDR addr = start_addr; /* Where we have got to?  */
   int frame_size = 0;
   int saved_frame_size = 0;
+
+  struct disassemble_info di = s12z_disassemble_info (gdbarch);
+
+
+  struct mem_read_abstraction mra;
+  mra.base.read = (int (*)(mem_read_abstraction_base*,
+			   int, size_t, bfd_byte*)) abstract_read_memory;
+  mra.base.advance = advance ;
+  mra.base.posn = posn;
+  mra.info = &di;
+
   while (this_pc > addr)
     {
-      struct disassemble_info di = s12z_disassemble_info (gdbarch);
+      enum optr optr = OP_INVALID;
+      short osize;
+      int n_operands = 0;
+      struct operand *operands[6];
+      mra.memaddr = addr;
+      int n_bytes =
+	decode_s12z (&optr, &osize, &n_operands, operands,
+		     (mem_read_abstraction_base *) &mra);
 
-      /* No instruction can be more than 11 bytes long, I think.  */
-      gdb_byte buf[11];
-
-      int nb = print_insn_s12z (addr, &di);
-      gdb_assert (nb <= 11);
-
-      if (0 != target_read_code (addr, buf, nb))
-        memory_error (TARGET_XFER_E_IO, addr);
-
-      if (buf[0] == 0x05)        /* RTS */
-        {
-          frame_size = saved_frame_size;
-        }
-      /* Conditional Branches.   If any of these are encountered, then
-         it is likely that a RTS will terminate it.  So we need to save
-         the frame size so it can be restored.  */
-      else if ( (buf[0] == 0x02)      /* BRSET */
-                || (buf[0] == 0x0B)   /* DBcc / TBcc */
-                || (buf[0] == 0x03))  /* BRCLR */
-        {
-          saved_frame_size = frame_size;
-        }
-      else if (buf[0] == 0x04)        /* PUL/ PSH .. */
-        {
-          bool pull = buf[1] & 0x80;
-          int stack_adjustment = 0;
-          if (buf[1] & 0x40)
-            {
-              if (buf[1] & 0x01) stack_adjustment += 3;  /* Y */
-              if (buf[1] & 0x02) stack_adjustment += 3;  /* X */
-              if (buf[1] & 0x04) stack_adjustment += 4;  /* D7 */
-              if (buf[1] & 0x08) stack_adjustment += 4;  /* D6 */
-              if (buf[1] & 0x10) stack_adjustment += 2;  /* D5 */
-              if (buf[1] & 0x20) stack_adjustment += 2;  /* D4 */
-            }
-          else
-            {
-              if (buf[1] & 0x01) stack_adjustment += 2;  /* D3 */
-              if (buf[1] & 0x02) stack_adjustment += 2;  /* D2 */
-              if (buf[1] & 0x04) stack_adjustment += 1;  /* D1 */
-              if (buf[1] & 0x08) stack_adjustment += 1;  /* D0 */
-              if (buf[1] & 0x10) stack_adjustment += 1;  /* CCL */
-              if (buf[1] & 0x20) stack_adjustment += 1;  /* CCH */
-            }
-
-          if (!pull)
-            stack_adjustment = -stack_adjustment;
-          frame_size -= stack_adjustment;
-        }
-      else if (buf[0] == 0x0a)   /* LEA S, (xxx, S) */
-        {
-          if (0x06 == (buf[1] >> 4))
-            {
-              int simm = (signed char) (buf[1] & 0x0F);
-              frame_size -= simm;
-            }
-        }
-      else if (buf[0] == 0x1a)   /* LEA S, (S, xxxx) */
-        {
-	  int simm = (signed char) buf[1];
-	  frame_size -= simm;
-        }
-      addr += nb;
+      switch (optr)
+	{
+	case OP_tbNE:
+	case OP_tbPL:
+	case OP_tbMI:
+	case OP_tbGT:
+	case OP_tbLE:
+	case OP_dbNE:
+	case OP_dbEQ:
+	case OP_dbPL:
+	case OP_dbMI:
+	case OP_dbGT:
+	case OP_dbLE:
+	  /* Conditional Branches.   If any of these are encountered, then
+	     it is likely that a RTS will terminate it.  So we need to save
+	     the frame size so it can be restored.  */
+	  saved_frame_size = frame_size;
+	  break;
+	case OP_rts:
+	  /* Restore the frame size from a previously saved value.  */
+	  frame_size = saved_frame_size;
+	  break;
+	case OP_push:
+	  frame_size += push_pull_get_stack_adjustment (n_operands, operands);
+	  break;
+	case OP_pull:
+	  frame_size -= push_pull_get_stack_adjustment (n_operands, operands);
+	  break;
+	case OP_lea:
+	  if (operands[0]->cl == OPND_CL_REGISTER)
+	    {
+	      int reg = ((struct register_operand *) (operands[0]))->reg;
+	      if ((reg == REG_S) && (operands[1]->cl == OPND_CL_MEMORY))
+		{
+		  const struct memory_operand *mo
+		    = (const struct memory_operand * ) operands[1];
+		  if (mo->n_regs == 1 && !mo->indirect
+		      && mo->regs[0] == REG_S
+		      && mo->mutation == OPND_RM_NONE)
+		    {
+		      /* LEA S, (xxx, S) -- Decrement the stack.   This is
+			 almost certainly the start of a frame.  */
+		      int simm = (signed char)  mo->base_offset;
+		      frame_size -= simm;
+		    }
+		}
+	    }
+	  break;
+	default:
+	  break;
+	}
+      addr += n_bytes;
+      for (int o = 0; o < n_operands; ++o)
+	free (operands[o]);
     }
 
   /* If the PC has not actually got to this point, then the frame
@@ -520,9 +614,9 @@ s12z_return_value (struct gdbarch *gdbarch, struct value *function,
                    struct type *type, struct regcache *regcache,
                    gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (type) == TYPE_CODE_UNION
-      || TYPE_CODE (type) == TYPE_CODE_ARRAY
+  if (type->code () == TYPE_CODE_STRUCT
+      || type->code () == TYPE_CODE_UNION
+      || type->code () == TYPE_CODE_ARRAY
       || TYPE_LENGTH (type) > 4)
     return RETURN_VALUE_STRUCT_CONVENTION;
 
@@ -581,12 +675,8 @@ s12z_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_register_type (gdbarch, s12z_register_type);
 
-  /* Functions to access frame data.  */
-  set_gdbarch_unwind_pc (gdbarch, s12z_unwind_pc);
-  set_gdbarch_unwind_sp (gdbarch, s12z_unwind_sp);
-
   frame_unwind_append_unwinder (gdbarch, &s12z_frame_unwind);
-  /* Currently, the only known producer for this archtecture, produces buggy
+  /* Currently, the only known producer for this architecture, produces buggy
      dwarf CFI.   So don't append a dwarf unwinder until the situation is
      better understood.  */
 
@@ -595,8 +685,9 @@ s12z_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
+void _initialize_s12z_tdep ();
 void
-_initialize_s12z_tdep (void)
+_initialize_s12z_tdep ()
 {
   gdbarch_register (bfd_arch_s12z, s12z_gdbarch_init, NULL);
 }

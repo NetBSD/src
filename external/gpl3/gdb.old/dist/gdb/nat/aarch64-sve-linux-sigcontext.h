@@ -1,4 +1,4 @@
-/* Copyright (C) 2018-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2018-2020 Free Software Foundation, Inc.
    Contributed by Arm Ltd.
 
    This file is part of GDB.
@@ -133,7 +133,7 @@ struct sve_context {
 
 struct user_sve_header {
 	__u32 size; /* total meaningful regset content in bytes */
-	__u32 max_size; /* maxmium possible size for this thread */
+	__u32 max_size; /* maximum possible size for this thread */
 	__u16 vl; /* current vector length */
 	__u16 max_vl; /* maximum possible vector length */
 	__u16 flags;
@@ -166,7 +166,7 @@ struct user_sve_header {
 
 /* Offset from the start of struct user_sve_header to the register data */
 #define SVE_PT_REGS_OFFSET					\
-	((sizeof(struct sve_context) + (SVE_VQ_BYTES - 1))	\
+	((sizeof(struct user_sve_header) + (SVE_VQ_BYTES - 1))	\
 		/ SVE_VQ_BYTES * SVE_VQ_BYTES)
 
 /*

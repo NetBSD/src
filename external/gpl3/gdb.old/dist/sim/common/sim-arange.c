@@ -1,5 +1,5 @@
 /* Address ranges.
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU Simulators.
@@ -17,12 +17,12 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-/* Tell sim-arange.h it's us.  */
-#define SIM_ARANGE_C
+#ifndef _SIM_ARANGE_C_
+#define _SIM_ARANGE_C_
 
 #include "libiberty.h"
 #include "sim-basics.h"
-#include "sim-assert.h"
+#include "sim-arange.h"
 
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
@@ -31,8 +31,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
-
-#ifdef SIM_ARANGE_C_INCLUDED
 
 /* Insert a range.  */
 
@@ -251,7 +249,8 @@ build_search_tree (ADDR_RANGE *ar)
   free (asrtab);
 }
 
-void
+INLINE_SIM_ARANGE\
+(void)
 sim_addr_range_add (ADDR_RANGE *ar, address_word start, address_word end)
 {
   frob_range (ar, start, end, 0);
@@ -264,7 +263,8 @@ sim_addr_range_add (ADDR_RANGE *ar, address_word start, address_word end)
   build_search_tree (ar);
 }
 
-void
+INLINE_SIM_ARANGE\
+(void)
 sim_addr_range_delete (ADDR_RANGE *ar, address_word start, address_word end)
 {
   frob_range (ar, start, end, 1);
@@ -277,9 +277,8 @@ sim_addr_range_delete (ADDR_RANGE *ar, address_word start, address_word end)
   build_search_tree (ar);
 }
 
-#else /* SIM_ARANGE_C_INCLUDED */
-
-SIM_ARANGE_INLINE int
+INLINE_SIM_ARANGE\
+(int)
 sim_addr_range_hit_p (ADDR_RANGE *ar, address_word addr)
 {
   ADDR_RANGE_TREE *t = ar->range_tree;
@@ -296,4 +295,4 @@ sim_addr_range_hit_p (ADDR_RANGE *ar, address_word addr)
   return 0;
 }
 
-#endif /* SIM_ARANGE_C_INCLUDED */
+#endif /* _SIM_ARANGE_C_ */

@@ -1,4 +1,4 @@
-# Copyright 2004-2019 Free Software Foundation, Inc.
+# Copyright 2004-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -162,7 +162,19 @@ proc gdb_find_readelf {} {
     return $readelf
 }
 
-proc gdb_default_target_compile {source destfile type options} {
+proc gdb_find_eu-unstrip {} {
+    global EU_UNSTRIP_FOR_TARGET
+    if [info exists EU_UNSTRIP_FOR_TARGET] {
+	set eu_unstrip $EU_UNSTRIP_FOR_TARGET
+    } else {
+	set eu_unstrip [transform eu-unstrip]
+    }
+    return $eu_unstrip
+}
+
+# Local version of default_target_compile, to be used for languages that
+# dejagnu's default_target_compile doesn't support.
+proc gdb_default_target_compile_1 {source destfile type options} {
     global target_triplet
     global tool_root_dir
     global CFLAGS_FOR_TARGET
@@ -617,40 +629,83 @@ proc gdb_default_target_compile {source destfile type options} {
     return ${comp_output}
 }
 
-# See if the version of dejaGNU being used to run the testsuite is
-# recent enough to contain support for building Ada programs or not.
-# If not, then use the functions above in place of the ones provided
-# by dejaGNU. This is only temporary (brobecker/2004-03-31).
+# If dejagnu's default_target_compile supports the language specified in
+# OPTIONS, use it.  Otherwise, use gdb_default_target_compile_1.
+proc gdb_default_target_compile {source destfile type options} {
+    global use_gdb_compile
 
-set use_gdb_compile 0
+    set need_local_lang 0
+    set need_local_early_flags 0
+    foreach i $options {
+
+	if { $i == "ada" || $i == "d" || $i == "go" || $i == "rust" } {
+	    set need_local_lang [info exists use_gdb_compile($i)]
+	}
+
+	if { $i == "c++" } {
+	    set need_local_lang 0
+	}
+
+	if { $i == "f77" || $i == "f90" } {
+	    set need_local_lang [info exists use_gdb_compile(fortran)]
+	}
+
+	if { [regexp "^early_flags=" $i] } {
+	    set need_local_early_flags 1
+	}
+    }
+
+    if { $need_local_lang || $need_local_early_flags } {
+	return [gdb_default_target_compile_1 $source $destfile $type $options]
+    }
+
+    return [dejagnu_default_target_compile $source $destfile $type $options]
+}
+
+# Array of languages for which dejagnu's default_target_compile is missing
+# support.
+array set use_gdb_compile [list]
+
+# Note missing support in dejagnu's default_target_compile.  This
+# needs to be fixed by porting the missing support to Dejagnu.
+set note_prefix "Dejagnu's default_target_compile is missing support for "
+set note_suffix ", using local override"
+
 if {[info procs find_gnatmake] == ""} {
     rename gdb_find_gnatmake find_gnatmake
-    set use_gdb_compile 1
+    set use_gdb_compile(ada) 1
+    gdb_note [join [list $note_prefix "Ada" $note_suffix] ""]
 }
 
 if {[info procs find_gfortran] == ""} {
     rename gdb_find_gfortran find_gfortran
-    set use_gdb_compile 1
+    set use_gdb_compile(fortran) 1
+    gdb_note [join [list $note_prefix "Fortran" $note_suffix] ""]
 }
 
 if {[info procs find_go_linker] == ""} {
     rename gdb_find_go find_go
     rename gdb_find_go_linker find_go_linker
-    set use_gdb_compile 1
+    set use_gdb_compile(go) 1
+    gdb_note [join [list $note_prefix "Go" $note_suffix] ""]
 }
 
 if {[info procs find_gdc] == ""} {
     rename gdb_find_gdc find_gdc
-    set use_gdb_compile 1
+    set use_gdb_compile(d) 1
+    gdb_note [join [list $note_prefix "D" $note_suffix] ""]
 }
 
 if {[info procs find_rustc] == ""} {
     rename gdb_find_rustc find_rustc
-    set use_gdb_compile 1
+    set use_gdb_compile(rust) 1
+    gdb_note [join [list $note_prefix "Rust" $note_suffix] ""]
 }
 
-if {$use_gdb_compile} {
-    catch {rename default_target_compile {}}
+# If dejagnu's default_target_compile is missing support for any language,
+# override it.
+if { [array size use_gdb_compile] != 0 } {
+    catch {rename default_target_compile dejagnu_default_target_compile}
     rename gdb_default_target_compile default_target_compile
 }
 

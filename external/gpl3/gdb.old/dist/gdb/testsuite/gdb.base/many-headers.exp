@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,17 +51,26 @@ if { "$msg" != "" } {
     return -1
 }
 
+set cmd \
+    [concat \
+	 "(" \
+	 "ulimit -s $stack_limit;" \
+	 "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS -batch -core=$corefile" \
+	 ")"]
+verbose -log $cmd
+
 # Run gdb with stack limit
+set output [standard_output_file OUTPUT]
 catch {
-    system [concat \
-		"(" \
-		"ulimit -s $stack_limit;" \
-		"$GDB $INTERNAL_GDBFLAGS $GDBFLAGS -batch -core=$corefile" \
-		")"]
+    system "$cmd > $output 2>&1"
 } msg
+verbose -log [exec cat $output]
+file delete $output
+
 set test "read core file"
 if { "$msg" == "" } {
     pass "$test"
 } else {
+    verbose -log $msg
     fail "$test"
 }

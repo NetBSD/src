@@ -1,6 +1,6 @@
 /* Functions and data responsible for forking the inferior process.
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,9 @@
 #define NAT_FORK_INFERIOR_H
 
 #include <string>
+#include "gdbsupport/function-view.h"
+
+struct process_stratum_target;
 
 /* Number of traps that happen between exec'ing the shell to run an
    inferior and when we finally get to the inferior code, not counting
@@ -40,7 +43,7 @@
 extern pid_t fork_inferior (const char *exec_file_arg,
 			    const std::string &allargs,
 			    char **env, void (*traceme_fun) (),
-			    void (*init_trace_fun) (int),
+			    gdb::function_view<void (int)> init_trace_fun,
 			    void (*pre_trace_fun) (),
 			    const char *shell_file_arg,
 			    void (*exec_fun) (const char *file,
@@ -50,29 +53,10 @@ extern pid_t fork_inferior (const char *exec_file_arg,
 /* Accept NTRAPS traps from the inferior.
 
    Return the ptid of the inferior being started.  */
-extern ptid_t startup_inferior (pid_t pid, int ntraps,
+extern ptid_t startup_inferior (process_stratum_target *proc_target,
+				pid_t pid, int ntraps,
 				struct target_waitstatus *mystatus,
 				ptid_t *myptid);
-
-/* Whether to start up the debuggee under a shell.
-
-   If startup-with-shell is set, GDB's "run" will attempt to start up
-   the debuggee under a shell.  This also happens when using GDBserver
-   under extended remote mode.
-
-   This is in order for argument-expansion to occur.  E.g.,
-
-   (gdb) run *
-
-   The "*" gets expanded by the shell into a list of files.
-
-   While this is a nice feature, it may be handy to bypass the shell
-   in some cases.  To disable this feature, do "set startup-with-shell
-   false".
-
-   The catch-exec traps expected during start-up will be one more if
-   the target is started up with a shell.  */
-extern int startup_with_shell;
 
 /* Perform any necessary tasks before a fork/vfork takes place.  ARGS
    is a string containing all the arguments received by the inferior.

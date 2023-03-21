@@ -1,6 +1,6 @@
 /* Target-dependent code for the Sanyo Xstormy16a (LC590000) processor.
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "gdbcmd.h"
@@ -33,7 +33,7 @@
 #include "regcache.h"
 #include "osabi.h"
 #include "objfiles.h"
-#include "common/byte-vector.h"
+#include "gdbsupport/byte-vector.h"
 
 enum gdb_regnum
 {
@@ -43,7 +43,7 @@ enum gdb_regnum
      to the function in r2.  Further arguments are beginning in r3 then.
      R13 is used as frame pointer when GCC compiles w/o optimization
      R14 is used as "PSW", displaying the CPU status.
-     R15 is used implicitely as stack pointer.  */
+     R15 is used implicitly as stack pointer.  */
   E_R0_REGNUM,
   E_R1_REGNUM,
   E_R2_REGNUM, E_1ST_ARG_REGNUM = E_R2_REGNUM, E_PTR_RET_REGNUM = E_R2_REGNUM,
@@ -133,9 +133,9 @@ xstormy16_register_type (struct gdbarch *gdbarch, int regnum)
 static int
 xstormy16_type_is_scalar (struct type *t)
 {
-  return (TYPE_CODE(t) != TYPE_CODE_STRUCT
-	  && TYPE_CODE(t) != TYPE_CODE_UNION
-	  && TYPE_CODE(t) != TYPE_CODE_ARRAY);
+  return (t->code () != TYPE_CODE_STRUCT
+	  && t->code () != TYPE_CODE_UNION
+	  && t->code () != TYPE_CODE_ARRAY);
 }
 
 /* Function: xstormy16_use_struct_convention 
@@ -430,7 +430,7 @@ xstormy16_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       /* Found a function.  */
       sym = lookup_symbol (func_name, NULL, VAR_DOMAIN, NULL).symbol;
       /* Don't use line number debug info for assembly source files.  */
-      if (sym && SYMBOL_LANGUAGE (sym) != language_asm)
+      if (sym && sym->language () != language_asm)
 	{
 	  sal = find_pc_line (func_addr, 0);
 	  if (sal.end && sal.end < func_end)
@@ -610,7 +610,7 @@ xstormy16_pointer_to_address (struct gdbarch *gdbarch,
 			      struct type *type, const gdb_byte *buf)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  enum type_code target = TYPE_CODE (TYPE_TARGET_TYPE (type));
+  enum type_code target = TYPE_TARGET_TYPE (type)->code ();
   CORE_ADDR addr
     = extract_unsigned_integer (buf, TYPE_LENGTH (type), byte_order);
 
@@ -629,7 +629,7 @@ xstormy16_address_to_pointer (struct gdbarch *gdbarch,
 			      struct type *type, gdb_byte *buf, CORE_ADDR addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  enum type_code target = TYPE_CODE (TYPE_TARGET_TYPE (type));
+  enum type_code target = TYPE_TARGET_TYPE (type)->code ();
 
   if (target == TYPE_CODE_FUNC || target == TYPE_CODE_METHOD)
     {
@@ -751,26 +751,6 @@ static const struct frame_base xstormy16_frame_base = {
   xstormy16_frame_base_address
 };
 
-static CORE_ADDR
-xstormy16_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, E_SP_REGNUM);
-}
-
-static CORE_ADDR
-xstormy16_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, E_PC_REGNUM);
-}
-
-static struct frame_id
-xstormy16_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  CORE_ADDR sp = get_frame_register_unsigned (this_frame, E_SP_REGNUM);
-  return frame_id_build (sp, get_frame_pc (this_frame));
-}
-
-
 /* Function: xstormy16_gdbarch_init
    Initializer function for the xstormy16 gdbarch vector.
    Called by gdbarch.  Sets up the gdbarch vector(s) for this target.  */
@@ -824,9 +804,6 @@ xstormy16_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /*
    * Frame Info
    */
-  set_gdbarch_unwind_sp (gdbarch, xstormy16_unwind_sp);
-  set_gdbarch_unwind_pc (gdbarch, xstormy16_unwind_pc);
-  set_gdbarch_dummy_id (gdbarch, xstormy16_dummy_id);
   set_gdbarch_frame_align (gdbarch, xstormy16_frame_align);
   frame_base_set_default (gdbarch, &xstormy16_frame_base);
 
@@ -856,8 +833,9 @@ xstormy16_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
    Initializer function for the Sanyo Xstormy16a module.
    Called by gdb at start-up.  */
 
+void _initialize_xstormy16_tdep ();
 void
-_initialize_xstormy16_tdep (void)
+_initialize_xstormy16_tdep ()
 {
   register_gdbarch_init (bfd_arch_xstormy16, xstormy16_gdbarch_init);
 }

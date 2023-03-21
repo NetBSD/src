@@ -1,4 +1,4 @@
-# Copyright 2013-2019 Free Software Foundation, Inc.
+# Copyright 2013-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,9 +32,6 @@ Dwarf::assemble $asm_file {
     declare_labels struct_a_label struct_b_label
     declare_labels opaque_struct_a_label opaque_struct_b_label
     declare_labels char_type1_label char_type2_label
-    global srcdir subdir srcfile
-
-    extern main
 
     # The partial units are laid out so we're not dependent on the order that
     # they appear in compunit_symtab.includes.  We need the one with the
@@ -182,7 +179,7 @@ Dwarf::assemble $asm_file {
 	    {name main}
 	} {
 	    subprogram {
- 		{MACRO_AT_func { main ${srcdir}/${subdir}/${srcfile} }}
+		{MACRO_AT_func { main }}
 	    }
 	}
     }

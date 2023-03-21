@@ -1,6 +1,6 @@
 /* MI Command Set.
 
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -33,7 +33,7 @@
 #include "ui-out.h"
 #include "mi-out.h"
 #include "interps.h"
-#include "event-loop.h"
+#include "gdbsupport/event-loop.h"
 #include "event-top.h"
 #include "gdbcore.h"		/* For write_memory().  */
 #include "value.h"
@@ -44,22 +44,21 @@
 #include "language.h"
 #include "valprint.h"
 #include "osdata.h"
-#include "common/gdb_splay_tree.h"
+#include "gdbsupport/gdb_splay_tree.h"
 #include "tracepoint.h"
-#include "ctf.h"
 #include "ada-lang.h"
 #include "linespec.h"
 #include "extension.h"
 #include "gdbcmd.h"
 #include "observable.h"
-#include "common/gdb_optional.h"
-#include "common/byte-vector.h"
+#include "gdbsupport/gdb_optional.h"
+#include "gdbsupport/byte-vector.h"
 
 #include <ctype.h>
-#include "common/run-time-clock.h"
+#include "gdbsupport/run-time-clock.h"
 #include <chrono>
 #include "progspace-and-thread.h"
-#include "common/rsp-low.h"
+#include "gdbsupport/rsp-low.h"
 #include <algorithm>
 #include <set>
 #include <map>
@@ -101,11 +100,11 @@ static void output_register (struct frame_info *, int regnum, int format,
 			     int skip_unavailable);
 
 /* Controls whether the frontend wants MI in async mode.  */
-static int mi_async = 0;
+static bool mi_async = false;
 
 /* The set command writes to this variable.  If the inferior is
    executing, mi_async is *not* updated.  */
-static int mi_async_1 = 0;
+static bool mi_async_1 = false;
 
 static void
 set_mi_async_command (const char *args, int from_tty,
@@ -391,17 +390,14 @@ mi_cmd_exec_interrupt (const char *command, char **argv, int argc)
     }
 }
 
-/* Callback for iterate_over_inferiors which starts the execution
-   of the given inferior.
+/* Start the execution of the given inferior.
 
-   ARG is a pointer to an integer whose value, if non-zero, indicates
-   that the program should be stopped when reaching the main subprogram
-   (similar to what the CLI "start" command does).  */
+   START_P indicates whether the program should be stopped when reaching the
+   main subprogram (similar to what the CLI "start" command does).  */
 
-static int
-run_one_inferior (struct inferior *inf, void *arg)
+static void
+run_one_inferior (inferior *inf, bool start_p)
 {
-  int start_p = *(int *) arg;
   const char *run_cmd = start_p ? "start" : "run";
   struct target_ops *run_target = find_run_target ();
   int async_p = mi_async && run_target->can_async_p ();
@@ -415,14 +411,9 @@ run_one_inferior (struct inferior *inf, void *arg)
       switch_to_thread (tp);
     }
   else
-    {
-      set_current_inferior (inf);
-      switch_to_no_thread ();
-      set_current_program_space (inf->pspace);
-    }
+    switch_to_inferior_no_thread (inf);
   mi_execute_cli_command (run_cmd, async_p,
 			  async_p ? "&" : NULL);
-  return 0;
 }
 
 void
@@ -467,7 +458,8 @@ mi_cmd_exec_run (const char *command, char **argv, int argc)
     {
       scoped_restore_current_pspace_and_thread restore_pspace_thread;
 
-      iterate_over_inferiors (run_one_inferior, &start_p);
+      for (inferior *inf : all_inferiors ())
+	run_one_inferior (inf, start_p);
     }
   else
     {
@@ -592,13 +584,13 @@ mi_cmd_thread_list_ids (const char *command, char **argv, int argc)
 	  current_thread = tp->global_num;
 
 	num++;
-	current_uiout->field_int ("thread-id", tp->global_num);
+	current_uiout->field_signed ("thread-id", tp->global_num);
       }
   }
 
   if (current_thread != -1)
-    current_uiout->field_int ("current-thread-id", current_thread);
-  current_uiout->field_int ("number-of-threads", num);
+    current_uiout->field_signed ("current-thread-id", current_thread);
+  current_uiout->field_signed ("number-of-threads", num);
 }
 
 void
@@ -638,16 +630,13 @@ struct print_one_inferior_data
   const std::set<int> *inferiors;
 };
 
-static int
-print_one_inferior (struct inferior *inferior, void *xdata)
+static void
+print_one_inferior (struct inferior *inferior, bool recurse,
+		    const std::set<int> &ids)
 {
-  struct print_one_inferior_data *top_data
-    = (struct print_one_inferior_data *) xdata;
   struct ui_out *uiout = current_uiout;
 
-  if (top_data->inferiors->empty ()
-      || (top_data->inferiors->find (inferior->pid)
-	  != top_data->inferiors->end ()))
+  if (ids.empty () || (ids.find (inferior->pid) != ids.end ()))
     {
       struct collect_cores_data data;
       ui_out_emit_tuple tuple_emitter (uiout, NULL);
@@ -658,7 +647,7 @@ print_one_inferior (struct inferior *inferior, void *xdata)
 	uiout->field_string ("exit-code",
 			     int_string (inferior->exit_code, 8, 0, 0, 1));
       if (inferior->pid != 0)
-	uiout->field_int ("pid", inferior->pid);
+	uiout->field_signed ("pid", inferior->pid);
 
       if (inferior->pspace->pspace_exec_filename != NULL)
 	{
@@ -677,14 +666,12 @@ print_one_inferior (struct inferior *inferior, void *xdata)
 	  ui_out_emit_list list_emitter (uiout, "cores");
 
 	  for (int b : data.cores)
-	    uiout->field_int (NULL, b);
+	    uiout->field_signed (NULL, b);
 	}
 
-      if (top_data->recurse)
+      if (recurse)
 	print_thread_info (uiout, NULL, inferior->pid);
     }
-
-  return 0;
 }
 
 /* Output a field named 'cores' with a list as the value.  The
@@ -695,10 +682,11 @@ static void
 output_cores (struct ui_out *uiout, const char *field_name, const char *xcores)
 {
   ui_out_emit_list list_emitter (uiout, field_name);
-  gdb::unique_xmalloc_ptr<char> cores (xstrdup (xcores));
+  auto cores = make_unique_xstrdup (xcores);
   char *p = cores.get ();
+  char *saveptr;
 
-  for (p = strtok (p, ","); p;  p = strtok (NULL, ","))
+  for (p = strtok_r (p, ",", &saveptr); p;  p = strtok_r (NULL, ",", &saveptr))
     uiout->field_string (NULL, p);
 }
 
@@ -746,7 +734,7 @@ list_available_thread_groups (const std::set<int> &ids, int recurse)
 
       ui_out_emit_tuple tuple_emitter (uiout, NULL);
 
-      uiout->field_fmt ("id", "%s", pid->c_str ());
+      uiout->field_string ("id", pid->c_str ());
       uiout->field_string ("type", "process");
       if (cmd)
 	uiout->field_string ("description", cmd->c_str ());
@@ -857,18 +845,14 @@ mi_cmd_list_thread_groups (const char *command, char **argv, int argc)
     }
   else
     {
-      struct print_one_inferior_data data;
-
-      data.recurse = recurse;
-      data.inferiors = &ids;
-
       /* Local thread groups.  Either no explicit ids -- and we
 	 print everything, or several explicit ids.  In both cases,
 	 we print more than one group, and have to use 'groups'
 	 as the top-level element.  */
       ui_out_emit_list list_emitter (uiout, "groups");
       update_thread_list ();
-      iterate_over_inferiors (print_one_inferior, &data);
+      for (inferior *inf : all_inferiors ())
+	print_one_inferior (inf, recurse, ids);
     }
 }
 
@@ -964,7 +948,7 @@ mi_cmd_data_list_changed_registers (const char *command, char **argv, int argc)
 
 	  if (register_changed_p (regnum, prev_regs.get (),
 				  this_regs.get ()))
-	    uiout->field_int (NULL, regnum);
+	    uiout->field_signed (NULL, regnum);
 	}
     }
 
@@ -980,7 +964,7 @@ mi_cmd_data_list_changed_registers (const char *command, char **argv, int argc)
 	{
 	  if (register_changed_p (regnum, prev_regs.get (),
 				  this_regs.get ()))
-	    uiout->field_int (NULL, regnum);
+	    uiout->field_signed (NULL, regnum);
 	}
       else
 	error (_("bad register number"));
@@ -1124,7 +1108,7 @@ output_register (struct frame_info *frame, int regnum, int format,
     return;
 
   ui_out_emit_tuple tuple_emitter (uiout, NULL);
-  uiout->field_int ("number", regnum);
+  uiout->field_signed ("number", regnum);
 
   if (format == 'N')
     format = 0;
@@ -1136,9 +1120,7 @@ output_register (struct frame_info *frame, int regnum, int format,
 
   get_formatted_print_options (&opts, format);
   opts.deref_ref = 1;
-  val_print (value_type (val),
-	     value_embedded_offset (val), 0,
-	     &stb, 0, val, &opts, current_language);
+  common_val_print (val, &stb, 0, &opts, current_language);
   uiout->field_stream ("value", stb);
 }
 
@@ -1235,12 +1217,12 @@ mi_cmd_data_evaluate_expression (const char *command, char **argv, int argc)
    the ``x'' command.
    WORD-SIZE: size of each ``word''; 1,2,4, or 8 bytes.
    NR_ROW: Number of rows.
-   NR_COL: The number of colums (words per row).
+   NR_COL: The number of columns (words per row).
    ASCHAR: (OPTIONAL) Append an ascii character dump to each row.  Use
    ASCHAR for unprintable characters.
 
    Reads SIZE*NR_ROW*NR_COL bytes starting at ADDR from memory and
-   displayes them.  Returns:
+   displays them.  Returns:
 
    {addr="...",rowN={wordN="..." ,... [,ascii="..."]}, ...}
 
@@ -1353,14 +1335,14 @@ mi_cmd_data_read_memory (const char *command, char **argv, int argc)
 
   /* Output the header information.  */
   uiout->field_core_addr ("addr", gdbarch, addr);
-  uiout->field_int ("nr-bytes", nr_bytes);
-  uiout->field_int ("total-bytes", total_bytes);
+  uiout->field_signed ("nr-bytes", nr_bytes);
+  uiout->field_signed ("total-bytes", total_bytes);
   uiout->field_core_addr ("next-row", gdbarch, addr + word_size * nr_cols);
   uiout->field_core_addr ("prev-row", gdbarch, addr - word_size * nr_cols);
   uiout->field_core_addr ("next-page", gdbarch, addr + total_bytes);
   uiout->field_core_addr ("prev-page", gdbarch, addr - total_bytes);
 
-  /* Build the result as a two dimentional table.  */
+  /* Build the result as a two dimensional table.  */
   {
     int row;
     int row_byte;
@@ -1723,23 +1705,11 @@ mi_cmd_add_inferior (const char *command, char **argv, int argc)
   current_uiout->field_fmt ("inferior", "i%d", inf->num);
 }
 
-/* Callback used to find the first inferior other than the current
-   one.  */
-
-static int
-get_other_inferior (struct inferior *inf, void *arg)
-{
-  if (inf == current_inferior ())
-    return 0;
-
-  return 1;
-}
-
 void
 mi_cmd_remove_inferior (const char *command, char **argv, int argc)
 {
   int id;
-  struct inferior *inf;
+  struct inferior *inf_to_remove;
 
   if (argc != 1)
     error (_("-remove-inferior should be passed a single argument"));
@@ -1747,18 +1717,23 @@ mi_cmd_remove_inferior (const char *command, char **argv, int argc)
   if (sscanf (argv[0], "i%d", &id) != 1)
     error (_("the thread group id is syntactically invalid"));
 
-  inf = find_inferior_id (id);
-  if (!inf)
+  inf_to_remove = find_inferior_id (id);
+  if (inf_to_remove == NULL)
     error (_("the specified thread group does not exist"));
 
-  if (inf->pid != 0)
+  if (inf_to_remove->pid != 0)
     error (_("cannot remove an active inferior"));
 
-  if (inf == current_inferior ())
+  if (inf_to_remove == current_inferior ())
     {
       struct thread_info *tp = 0;
-      struct inferior *new_inferior
-	= iterate_over_inferiors (get_other_inferior, NULL);
+      struct inferior *new_inferior = NULL;
+
+      for (inferior *inf : all_inferiors ())
+	{
+	  if (inf != inf_to_remove)
+	    new_inferior = inf;
+	}
 
       if (new_inferior == NULL)
 	error (_("Cannot remove last inferior"));
@@ -1773,7 +1748,7 @@ mi_cmd_remove_inferior (const char *command, char **argv, int argc)
       set_current_program_space (new_inferior->pspace);
     }
 
-  delete_inferior (inf);
+  delete_inferior (inf_to_remove);
 }
 
 
@@ -1875,7 +1850,7 @@ captured_mi_execute_command (struct ui_out *uiout, struct mi_parse *context)
 /* Print a gdb exception to the MI output stream.  */
 
 static void
-mi_print_exception (const char *token, struct gdb_exception exception)
+mi_print_exception (const char *token, const struct gdb_exception &exception)
 {
   struct mi_interp *mi = (struct mi_interp *) current_interpreter ();
 
@@ -1884,7 +1859,7 @@ mi_print_exception (const char *token, struct gdb_exception exception)
   if (exception.message == NULL)
     fputs_unfiltered ("unknown error", mi->raw_stdout);
   else
-    fputstr_unfiltered (exception.message, '"', mi->raw_stdout);
+    fputstr_unfiltered (exception.what (), '"', mi->raw_stdout);
   fputs_unfiltered ("\"", mi->raw_stdout);
 
   switch (exception.error)
@@ -1938,16 +1913,15 @@ mi_execute_command (const char *cmd, int from_tty)
 
   target_log_command (cmd);
 
-  TRY
+  try
     {
       command = mi_parse (cmd, &token);
     }
-  CATCH (exception, RETURN_MASK_ALL)
+  catch (const gdb_exception &exception)
     {
       mi_print_exception (token, exception);
       xfree (token);
     }
-  END_CATCH
 
   if (command != NULL)
     {
@@ -1966,11 +1940,11 @@ mi_execute_command (const char *cmd, int from_tty)
 	  timestamp (command->cmd_start);
 	}
 
-      TRY
+      try
 	{
 	  captured_mi_execute_command (current_uiout, command.get ());
 	}
-      CATCH (result, RETURN_MASK_ALL)
+      catch (const gdb_exception &result)
 	{
 	  /* Like in start_event_loop, enable input and force display
 	     of the prompt.  Otherwise, any command that calls
@@ -1984,7 +1958,6 @@ mi_execute_command (const char *cmd, int from_tty)
 	  mi_print_exception (command->token, result);
 	  mi_out_rewind (current_uiout);
 	}
-      END_CATCH
 
       bpstat_do_actions ();
 
@@ -2173,16 +2146,8 @@ mi_load_progress (const char *section_name,
      which means uiout may not be correct.  Fix it for the duration
      of this function.  */
 
-  std::unique_ptr<ui_out> uiout;
-
-  if (current_interp_named_p (INTERP_MI)
-      || current_interp_named_p (INTERP_MI2))
-    uiout.reset (mi_out_new (2));
-  else if (current_interp_named_p (INTERP_MI1))
-    uiout.reset (mi_out_new (1));
-  else if (current_interp_named_p (INTERP_MI3))
-    uiout.reset (mi_out_new (3));
-  else
+  std::unique_ptr<ui_out> uiout (mi_out_new (current_interpreter ()->name ()));
+  if (uiout == nullptr)
     return;
 
   scoped_restore save_uiout
@@ -2201,8 +2166,8 @@ mi_load_progress (const char *section_name,
       {
 	ui_out_emit_tuple tuple_emitter (uiout.get (), NULL);
 	uiout->field_string ("section", section_name);
-	uiout->field_int ("section-size", total_section);
-	uiout->field_int ("total-size", grand_total);
+	uiout->field_signed ("section-size", total_section);
+	uiout->field_signed ("total-size", grand_total);
       }
       mi_out_put (uiout.get (), mi->raw_stdout);
       fputs_unfiltered ("\n", mi->raw_stdout);
@@ -2219,10 +2184,10 @@ mi_load_progress (const char *section_name,
       {
 	ui_out_emit_tuple tuple_emitter (uiout.get (), NULL);
 	uiout->field_string ("section", section_name);
-	uiout->field_int ("section-sent", sent_so_far);
-	uiout->field_int ("section-size", total_section);
-	uiout->field_int ("total-sent", total_sent);
-	uiout->field_int ("total-size", grand_total);
+	uiout->field_signed ("section-sent", sent_so_far);
+	uiout->field_signed ("section-size", total_section);
+	uiout->field_signed ("total-sent", total_sent);
+	uiout->field_signed ("total-size", grand_total);
       }
       mi_out_put (uiout.get (), mi->raw_stdout);
       fputs_unfiltered ("\n", mi->raw_stdout);
@@ -2493,9 +2458,9 @@ print_variable_or_computed (const char *expression, enum print_values values)
       type = check_typedef (value_type (val));
       type_print (value_type (val), "", &stb, -1);
       uiout->field_stream ("type", stb);
-      if (TYPE_CODE (type) != TYPE_CODE_ARRAY
-	  && TYPE_CODE (type) != TYPE_CODE_STRUCT
-	  && TYPE_CODE (type) != TYPE_CODE_UNION)
+      if (type->code () != TYPE_CODE_ARRAY
+	  && type->code () != TYPE_CODE_STRUCT
+	  && type->code () != TYPE_CODE_UNION)
 	{
 	  struct value_print_options opts;
 
@@ -2666,7 +2631,7 @@ mi_cmd_trace_frame_collected (const char *command, char **argv, int argc)
 
 	    tsv->value_known = target_get_trace_state_variable_value (tsv->number,
 								      &tsv->value);
-	    uiout->field_int ("current", tsv->value);
+	    uiout->field_signed ("current", tsv->value);
 	  }
 	else
 	  {
@@ -2691,7 +2656,7 @@ mi_cmd_trace_frame_collected (const char *command, char **argv, int argc)
 	ui_out_emit_tuple tuple_emitter (uiout, NULL);
 
 	uiout->field_core_addr ("address", gdbarch, r.start);
-	uiout->field_int ("length", r.length);
+	uiout->field_signed ("length", r.length);
 
 	gdb::byte_vector data (r.length);
 
@@ -2709,8 +2674,63 @@ mi_cmd_trace_frame_collected (const char *command, char **argv, int argc)
   }
 }
 
+/* See mi/mi-main.h.  */
+
 void
-_initialize_mi_main (void)
+mi_cmd_fix_multi_location_breakpoint_output (const char *command, char **argv,
+					     int argc)
+{
+  fix_multi_location_breakpoint_output_globally = true;
+}
+
+/* Implement the "-complete" command.  */
+
+void
+mi_cmd_complete (const char *command, char **argv, int argc)
+{
+  if (argc != 1)
+    error (_("Usage: -complete COMMAND"));
+
+  if (max_completions == 0)
+    error (_("max-completions is zero, completion is disabled."));
+
+  int quote_char = '\0';
+  const char *word;
+
+  completion_result result = complete (argv[0], &word, &quote_char);
+
+  std::string arg_prefix (argv[0], word - argv[0]);
+
+  struct ui_out *uiout = current_uiout;
+
+  if (result.number_matches > 0)
+    uiout->field_fmt ("completion", "%s%s",
+                      arg_prefix.c_str (),result.match_list[0]);
+
+  {
+    ui_out_emit_list completions_emitter (uiout, "matches");
+
+    if (result.number_matches == 1)
+      uiout->field_fmt (NULL, "%s%s",
+                        arg_prefix.c_str (), result.match_list[0]);
+    else
+      {
+        result.sort_match_list ();
+        for (size_t i = 0; i < result.number_matches; i++)
+          {
+            uiout->field_fmt (NULL, "%s%s",
+                              arg_prefix.c_str (), result.match_list[i + 1]);
+          }
+      }
+  }
+  uiout->field_string ("max_completions_reached",
+                       result.number_matches == max_completions ? "1" : "0");
+}
+
+
+void _initialize_mi_main ();
+void
+_initialize_mi_main ()
 {
   struct cmd_list_element *c;
 

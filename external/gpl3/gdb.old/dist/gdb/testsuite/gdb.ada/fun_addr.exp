@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 load_lib "ada.exp"
 
+if { [skip_ada_tests] } { return -1 }
+
 standard_ada_testfile foo
 
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" } {
@@ -27,7 +29,4 @@ clean_restart ${testfile}
 # the inferior is *not* running (no frame).
 
 gdb_test "print foo'address" \
-         "= .* 0x\[0-9a-zA-Z\]+ <foo>" \
-         "print foo'address"
-
-
+         "= .* 0x\[0-9a-zA-Z\]+ <foo>"

@@ -1,6 +1,6 @@
 /* Trace file support in GDB.
 
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,10 +19,11 @@
 
 #include "defs.h"
 #include "tracefile.h"
-#include "ctf.h"
+#include "tracectf.h"
 #include "exec.h"
 #include "regcache.h"
-#include "common/byte-vector.h"
+#include "gdbsupport/byte-vector.h"
+#include "gdbarch.h"
 
 /* Helper macros.  */
 
@@ -470,8 +471,9 @@ tracefile_target::get_trace_status (struct trace_status *ts)
   return -1;
 }
 
+void _initialize_tracefile ();
 void
-_initialize_tracefile (void)
+_initialize_tracefile ()
 {
   add_com ("tsave", class_trace, tsave_command, _("\
 Save the trace data to a file.\n\

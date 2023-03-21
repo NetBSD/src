@@ -1,6 +1,6 @@
 /* Functions specific to running GDB native on HPPA running GNU/Linux.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "target.h"
 #include "linux-nat.h"
 #include "inf-ptrace.h"
+#include "gdbarch.h"
 
 #include <sys/procfs.h>
 #include "nat/gdb_ptrace.h"
@@ -383,8 +384,9 @@ fill_fpregset (const struct regcache *regcache,
    }
 }
 
+void _initialize_hppa_linux_nat ();
 void
-_initialize_hppa_linux_nat (void)
+_initialize_hppa_linux_nat ()
 {
   /* Register the target.  */
   linux_target = &the_hppa_linux_nat_target;

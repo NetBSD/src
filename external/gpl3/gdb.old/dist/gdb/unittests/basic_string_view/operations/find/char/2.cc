@@ -1,6 +1,6 @@
 // { dg-options "-std=gnu++17" }
 
-// Copyright (C) 2013-2019 Free Software Foundation, Inc.
+// Copyright (C) 2013-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -21,8 +21,8 @@
 
 namespace operations_find_2 {
 
-void
-test02()
+static void
+test02 ()
 {
   typedef gdb::string_view::size_type csize_type;
   csize_type npos = gdb::string_view::npos;
@@ -152,8 +152,8 @@ test03()
 }
 #endif
 
-int
-main()
+static int
+main ()
 {
   test02();
 #ifndef GDB_STRING_VIEW

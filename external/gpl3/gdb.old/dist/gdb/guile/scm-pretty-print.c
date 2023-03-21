@@ -1,6 +1,6 @@
 /* GDB/Scheme pretty-printing.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -524,7 +524,7 @@ ppscm_pretty_print_one_value (SCM printer, struct value **out_value,
   SCM result = SCM_BOOL_F;
 
   *out_value = NULL;
-  TRY
+  try
     {
       pretty_printer_worker_smob *w_smob
 	= (pretty_printer_worker_smob *) SCM_SMOB_DATA (printer);
@@ -558,10 +558,9 @@ ppscm_pretty_print_one_value (SCM printer, struct value **out_value,
 	    (_("invalid result from pretty-printer to-string"), result);
 	}
     }
-  CATCH (except, RETURN_MASK_ALL)
+  catch (const gdb_exception &except)
     {
     }
-  END_CATCH
 
   return result;
 }
@@ -898,7 +897,18 @@ ppscm_print_children (SCM printer, enum display_hint hint,
 	      ppscm_print_exception_unless_memory_error (except_scm, stream);
 	      break;
 	    }
-	  common_val_print (value, stream, recurse + 1, options, language);
+	  else
+	    {
+	      /* When printing the key of a map we allow one additional
+		 level of depth.  This means the key will print before the
+		 value does.  */
+	      struct value_print_options opt = *options;
+	      if (is_map && i % 2 == 0
+		  && opt.max_depth != -1
+		  && opt.max_depth < INT_MAX)
+		++opt.max_depth;
+	      common_val_print (value, stream, recurse + 1, &opt, language);
+	    }
 	}
 
       if (is_map && i % 2 == 0)
@@ -933,36 +943,32 @@ ppscm_print_children (SCM printer, enum display_hint hint,
 
 enum ext_lang_rc
 gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
-				 struct type *type,
-				 LONGEST embedded_offset, CORE_ADDR address,
+				 struct value *value,
 				 struct ui_file *stream, int recurse,
-				 struct value *val,
 				 const struct value_print_options *options,
 				 const struct language_defn *language)
 {
+  struct type *type = value_type (value);
   struct gdbarch *gdbarch = get_type_arch (type);
   SCM exception = SCM_BOOL_F;
   SCM printer = SCM_BOOL_F;
   SCM val_obj = SCM_BOOL_F;
-  struct value *value;
   enum display_hint hint;
   enum ext_lang_rc result = EXT_LANG_RC_NOP;
   enum string_repr_result print_result;
 
-  if (value_lazy (val))
-    value_fetch_lazy (val);
+  if (value_lazy (value))
+    value_fetch_lazy (value);
 
   /* No pretty-printer support for unavailable values.  */
-  if (!value_bytes_available (val, embedded_offset, TYPE_LENGTH (type)))
+  if (!value_bytes_available (value, 0, TYPE_LENGTH (type)))
     return EXT_LANG_RC_NOP;
 
   if (!gdb_scheme_initialized)
     return EXT_LANG_RC_NOP;
 
   /* Instantiate the printer.  */
-  value = value_from_component (val, type, embedded_offset);
-
-  val_obj = vlscm_scm_from_value (value);
+  val_obj = vlscm_scm_from_value_no_release (value);
   if (gdbscm_is_exception (val_obj))
     {
       exception = val_obj;
@@ -984,6 +990,12 @@ gdbscm_apply_val_pretty_printer (const struct extension_language_defn *extlang,
       goto done;
     }
   gdb_assert (ppscm_is_pretty_printer_worker (printer));
+
+  if (val_print_check_max_depth (stream, recurse, options, language))
+    {
+      result = EXT_LANG_RC_OK;
+      goto done;
+    }
 
   /* If we are printing a map, we want some special formatting.  */
   hint = ppscm_get_display_hint_enum (printer);

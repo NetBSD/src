@@ -5,7 +5,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-dis.in isn't
 
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -451,7 +451,7 @@ print_insn (CGEN_CPU_DESC cd,
   /* Extract base part of instruction, just in case CGEN_DIS_* uses it. */
   basesize = cd->base_insn_bitsize < buflen * 8 ?
                                      cd->base_insn_bitsize : buflen * 8;
-  insn_value = cgen_get_insn_value (cd, buf, basesize);
+  insn_value = cgen_get_insn_value (cd, buf, basesize, cd->insn_endian);
 
 
   /* Fill in ex_info fields like read_insn would.  Don't actually call
@@ -582,6 +582,7 @@ typedef struct cpu_desc_list
   CGEN_BITSET *isa;
   int mach;
   int endian;
+  int insn_endian;
   CGEN_CPU_DESC cd;
 } cpu_desc_list;
 
@@ -594,12 +595,16 @@ print_insn_epiphany (bfd_vma pc, disassemble_info *info)
   static CGEN_BITSET *prev_isa;
   static int prev_mach;
   static int prev_endian;
+  static int prev_insn_endian;
   int length;
   CGEN_BITSET *isa;
   int mach;
   int endian = (info->endian == BFD_ENDIAN_BIG
 		? CGEN_ENDIAN_BIG
 		: CGEN_ENDIAN_LITTLE);
+  int insn_endian = (info->endian_code == BFD_ENDIAN_BIG
+                     ? CGEN_ENDIAN_BIG
+                     : CGEN_ENDIAN_LITTLE);
   enum bfd_architecture arch;
 
   /* ??? gdb will set mach but leave the architecture as "unknown" */
@@ -629,7 +634,7 @@ print_insn_epiphany (bfd_vma pc, disassemble_info *info)
     cgen_bitset_add (isa, CGEN_COMPUTE_ISA (info));
   }
 #else
-  isa = info->insn_sets;
+  isa = info->private_data;
 #endif
 
   /* If we've switched cpu's, try to find a handle we've used before */
@@ -665,9 +670,11 @@ print_insn_epiphany (bfd_vma pc, disassemble_info *info)
       prev_isa = cgen_bitset_copy (isa);
       prev_mach = mach;
       prev_endian = endian;
+      prev_insn_endian = insn_endian;
       cd = epiphany_cgen_cpu_open (CGEN_CPU_OPEN_ISAS, prev_isa,
 				 CGEN_CPU_OPEN_BFDMACH, mach_name,
 				 CGEN_CPU_OPEN_ENDIAN, prev_endian,
+                                 CGEN_CPU_OPEN_INSN_ENDIAN, prev_insn_endian,
 				 CGEN_CPU_OPEN_END);
       if (!cd)
 	abort ();

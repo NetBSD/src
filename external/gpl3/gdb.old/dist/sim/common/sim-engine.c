@@ -1,5 +1,5 @@
 /* Generic simulator halt/restart.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -17,10 +17,11 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include <stdio.h>
-
 #include "sim-main.h"
 #include "sim-assert.h"
+
+#include <stdio.h>
+#include <stdlib.h>
 
 /* Get the run state.
    REASON/SIGRC are the values returned by sim_stop_reason.
