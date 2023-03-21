@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/mips.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -354,6 +354,8 @@ static void
 mipsnbsd_init_abi (struct gdbarch_info info,
                    struct gdbarch *gdbarch)
 {
+  nbsd_init_abi (info, gdbarch);
+
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, mipsnbsd_iterate_over_regset_sections);
 
@@ -371,8 +373,9 @@ mipsnbsd_init_abi (struct gdbarch_info info,
 	       mipsnbsd_lp64_fetch_link_map_offsets));
 }
 
+void _initialize_mipsnbsd_tdep ();
 void
-_initialize_mipsnbsd_tdep (void)
+_initialize_mipsnbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_mips, 0, GDB_OSABI_NETBSD,
 			  mipsnbsd_init_abi);

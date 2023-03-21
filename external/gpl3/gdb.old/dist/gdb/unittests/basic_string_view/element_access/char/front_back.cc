@@ -1,7 +1,7 @@
 // { dg-options "-std=gnu++17" }
 // { dg-require-string-conversions "" }
 
-// Copyright (C) 2013-2019 Free Software Foundation, Inc.
+// Copyright (C) 2013-2020 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -20,8 +20,8 @@
 
 namespace element_access_front_back {
 
-void
-test01()
+static void
+test01 ()
 {
   gdb::string_view str("ramifications");
   const gdb::string_view cstr("melodien");
@@ -32,8 +32,8 @@ test01()
   VERIFY( cstr.back() == 'n' );
 }
 
-int
-main()
+static int
+main ()
 {
   test01();
 

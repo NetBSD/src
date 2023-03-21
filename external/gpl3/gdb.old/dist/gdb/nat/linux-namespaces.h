@@ -1,6 +1,6 @@
 /* Linux namespaces(7) support.
 
-   Copyright (C) 2015-2019 Free Software Foundation, Inc.
+   Copyright (C) 2015-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,9 @@
 #ifndef NAT_LINUX_NAMESPACES_H
 #define NAT_LINUX_NAMESPACES_H
 
-/* Set to nonzero to enable debugging of Linux namespaces code.  */
+/* Set to true to enable debugging of Linux namespaces code.  */
 
-extern int debug_linux_namespaces;
+extern bool debug_linux_namespaces;
 
 /* Enumeration of Linux namespace types.  */
 

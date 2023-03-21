@@ -1,6 +1,6 @@
 /* GDB Notifications to Observers.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -75,6 +75,7 @@ DEFINE_OBSERVABLE (inferior_call_post);
 DEFINE_OBSERVABLE (register_changed);
 DEFINE_OBSERVABLE (user_selected_context_changed);
 DEFINE_OBSERVABLE (source_styling_changed);
+DEFINE_OBSERVABLE (current_source_symtab_and_line_changed);
 
 } /* namespace observers */
 } /* namespace gdb */
@@ -86,8 +87,9 @@ show_observer_debug (struct ui_file *file, int from_tty,
   fprintf_filtered (file, _("Observer debugging is %s.\n"), value);
 }
 
+void _initialize_observer ();
 void
-_initialize_observer (void)
+_initialize_observer ()
 {
   add_setshow_zuinteger_cmd ("observer", class_maintenance,
 			     &gdb::observers::observer_debug, _("\

@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/powerpc.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -261,8 +261,9 @@ ppcobsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   frame_unwind_append_unwinder (gdbarch, &ppcobsd_sigtramp_frame_unwind);
 }
 
+void _initialize_ppcobsd_tdep ();
 void
-_initialize_ppcobsd_tdep (void)
+_initialize_ppcobsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_rs6000, 0, GDB_OSABI_OPENBSD,
 			  ppcobsd_init_abi);

@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc64.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
+#include "gdbarch.h"
 #include "gdbcore.h"
 #include "regcache.h"
 #include "inferior.h"
@@ -172,8 +173,9 @@ sparc64nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 /* We've got nothing to add to the generic SPARC target.  */
 static sparc_target<nbsd_nat_target> the_sparc64_nbsd_nat_target;
 
+void _initialize_sparc64nbsd_nat ();
 void
-_initialize_sparc64nbsd_nat (void)
+_initialize_sparc64nbsd_nat ()
 {
   sparc_supply_gregset = sparc64nbsd_supply_gregset;
   sparc_collect_gregset = sparc64nbsd_collect_gregset;

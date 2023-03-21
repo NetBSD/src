@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2018-2019 Free Software Foundation, Inc.
+   Copyright 2018-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,30 +15,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-struct wrapper
-{
-  int a;
-};
-
-/* Create a global variable whose name in the assembly code
-   (aka the "linkage name") is different from the name in
-   the source code.  The goal is to create a symbol described
-   in DWARF using a DW_AT_linkage_name attribute, with a name
-   which follows the C++ mangling.
-
-   In this particular case, we chose "symada__cS" which, if it were
-   demangled, would translate to "symada (char, signed)".  */
-struct wrapper mundane asm ("symada__cS") = {0x060287af};
-
-void
-do_something (struct wrapper *w)
-{
-  w->a++;
-}
+extern void do_something_other_cu (void);
 
 int
 main (void)
 {
-  do_something (&mundane);
+  do_something_other_cu ();
   return 0;
 }

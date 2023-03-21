@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -21,6 +21,7 @@
 
 #include "defs.h"
 #include "inferior.h"
+#include "gdbarch.h"
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
@@ -28,6 +29,7 @@
 
 #include "sh-tdep.h"
 #include "inf-ptrace.h"
+#include "nbsd-nat.h"
 #include "regcache.h"
 #include "inf-ptrace.h"
 #include "nbsd-nat.h"
@@ -53,15 +55,15 @@ static sh_nbsd_nat_target the_sh_nbsd_nat_target;
 void
 sh_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
 {
-  ptid_t ptid = regcache->ptid ();
-  pid_t pid = ptid.pid ();
-  int lwp = ptid.lwp ();
+  pid_t pid = regcache->ptid ().pid ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (regno == -1 || GETREGS_SUPPLIES (regcache->arch (), regno))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
+      if (ptrace (PT_GETREGS, pid,
+		  (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sh_corefile_supply_regset (&sh_corefile_gregset, regcache, regno,
@@ -76,22 +78,23 @@ sh_nbsd_nat_target::fetch_registers (struct regcache *regcache, int regno)
 void
 sh_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
 {
-  ptid_t ptid = regcache->ptid ();
-  pid_t pid = ptid.pid ();
-  int lwp = ptid.lwp ();
+  pid_t pid = regcache->ptid ().pid ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (regno == -1 || GETREGS_SUPPLIES (regcache->arch (), regno))
     {
       struct reg regs;
 
-      if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
+      if (ptrace (PT_GETREGS, pid,
+		  (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       sh_corefile_collect_regset (&sh_corefile_gregset, regcache, regno,
 				  (char *) &regs,
 				  SHNBSD_SIZEOF_GREGS);
 
-      if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
+      if (ptrace (PT_SETREGS, pid,
+		  (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
 	perror_with_name (_("Couldn't set registers"));
 
       if (regno != -1)
@@ -99,8 +102,9 @@ sh_nbsd_nat_target::store_registers (struct regcache *regcache, int regno)
     }
 }
 
+void _initialize_shnbsd_nat ();
 void
-_initialize_shnbsd_nat (void)
+_initialize_shnbsd_nat ()
 {
   add_inf_child_target (&the_sh_nbsd_nat_target);
 }

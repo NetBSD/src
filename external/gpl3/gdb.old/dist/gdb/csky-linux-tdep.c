@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on CSKY.
 
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
@@ -106,7 +106,7 @@ csky_collect_gregset (const struct regset *regset,
 
 /* Implement the supply_regset hook for FP registers in core files.  */
 
-void
+static void
 csky_supply_fregset (const struct regset *regset,
 		     struct regcache *regcache, int regnum,
 		     const void *regs, size_t len)
@@ -255,8 +255,9 @@ csky_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 				&csky_linux_rt_sigreturn_tramp_frame);
 }
 
+void _initialize_csky_linux_tdep ();
 void
-_initialize_csky_linux_tdep (void)
+_initialize_csky_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_csky, 0, GDB_OSABI_LINUX,
 			  csky_linux_init_abi);
