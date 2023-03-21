@@ -1,6 +1,6 @@
 /* Code for native debugging support for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #ifndef NAT_LINUX_NAT_H
 #define NAT_LINUX_NAT_H
 
+#include "gdbsupport/function-view.h"
 #include "target/waitstatus.h"
 
 struct lwp_info;
@@ -43,7 +44,7 @@ struct arch_lwp_info;
 extern ptid_t current_lwp_ptid (void);
 
 /* Function type for the CALLBACK argument of iterate_over_lwps.  */
-typedef int (iterate_over_lwps_ftype) (struct lwp_info *lwp, void *arg);
+typedef int (iterate_over_lwps_ftype) (struct lwp_info *lwp);
 
 /* Iterate over all LWPs.  Calls CALLBACK with its second argument set
    to DATA for every LWP in the list.  If CALLBACK returns nonzero for
@@ -51,9 +52,9 @@ typedef int (iterate_over_lwps_ftype) (struct lwp_info *lwp, void *arg);
    LWP immediately.  Otherwise return NULL.  This function must be
    provided by the client.  */
 
-extern struct lwp_info *iterate_over_lwps (ptid_t filter,
-					   iterate_over_lwps_ftype callback,
-					   void *data);
+extern struct lwp_info *iterate_over_lwps
+    (ptid_t filter,
+     gdb::function_view<iterate_over_lwps_ftype> callback);
 
 /* Return the ptid of LWP.  */
 

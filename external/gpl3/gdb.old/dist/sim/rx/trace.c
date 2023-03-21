@@ -1,6 +1,6 @@
 /* trace.c --- tracing output for the RX simulator.
 
-Copyright (C) 2005-2019 Free Software Foundation, Inc.
+Copyright (C) 2005-2020 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -228,7 +228,7 @@ sim_get_current_source_location (const char **  pfilename,
 	  if (s->flags & SEC_CODE || code_section == 0)
 	    {
 	      code_section = s;
-	      code_base = bfd_section_lma (current_bfd, s);
+	      code_base = bfd_section_lma (s);
 	      break;
 	    }
 	}

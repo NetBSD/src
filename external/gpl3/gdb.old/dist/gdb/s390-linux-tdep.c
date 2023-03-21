@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on s390.
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    Contributed by D.J. Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
    for IBM Deutschland Entwicklung GmbH, IBM Corporation.
@@ -332,10 +332,9 @@ s390_core_read_description (struct gdbarch *gdbarch,
 			    struct target_ops *target, bfd *abfd)
 {
   asection *section = bfd_get_section_by_name (abfd, ".reg");
-  CORE_ADDR hwcap = 0;
+  CORE_ADDR hwcap = linux_get_hwcap (target);
   bool high_gprs, v1, v2, te, vx, gs;
 
-  target_auxv_search (target, AT_HWCAP, &hwcap);
   if (!section)
     return NULL;
 
@@ -347,7 +346,7 @@ s390_core_read_description (struct gdbarch *gdbarch,
   te = (hwcap & HWCAP_S390_TE);
   gs = (hwcap & HWCAP_S390_GS);
 
-  switch (bfd_section_size (abfd, section))
+  switch (bfd_section_size (section))
     {
     case s390_sizeof_gregset:
       if (high_gprs)
@@ -1178,8 +1177,9 @@ s390_linux_init_abi_64 (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_S390X);
 }
 
+void _initialize_s390_linux_tdep ();
 void
-_initialize_s390_linux_tdep (void)
+_initialize_s390_linux_tdep ()
 {
   /* Hook us into the OSABI mechanism.  */
   gdbarch_register_osabi (bfd_arch_s390, bfd_mach_s390_31, GDB_OSABI_LINUX,

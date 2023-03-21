@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2019 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ gdb_test "guile (print (type-has-field-deep? d \"base_member\"))" \
     "= #t" "type-has-field-deep? member in baseclass"
 
 gdb_test "guile (print (type-has-field-deep? (lookup-type \"int\") \"base_member\"))" \
-    "ERROR: .*Wrong type argument in position 1 \\(expecting struct or union\\): #<gdb:type int>.*" \
+    "Wrong type argument in position 1 \\(expecting struct or union\\): #<gdb:type int>.*" \
     "type-has-field-deep? from int"
 
 gdb_scm_test_silent_cmd "guile (define enum-htab (make-enum-hashtable (lookup-type \"enum_type\")))" \
@@ -54,9 +54,9 @@ gdb_test "guile (print (hash-ref enum-htab \"B\"))" \
     "= 1" "verify make-enum-hashtable"
 
 gdb_test "guile (define bad-enum-htab (make-enum-hashtable #f))" \
-    "ERROR: .*Wrong type argument in position 1 \\(expecting gdb:type\\): #f.*" \
+    "Wrong type argument in position 1 \\(expecting gdb:type\\): #f.*" \
     "make-enum-hashtable from #f"
 
 gdb_test "guile (define bad-enum-htab (make-enum-hashtable (lookup-type \"int\")))" \
-    "ERROR: .*Wrong type argument in position 1 \\(expecting enum\\): #<gdb:type int>.*" \
+    "Wrong type argument in position 1 \\(expecting enum\\): #<gdb:type int>.*" \
     "make-enum-hashtable from int"

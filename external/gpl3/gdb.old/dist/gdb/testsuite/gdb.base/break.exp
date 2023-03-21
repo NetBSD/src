@@ -1,4 +1,4 @@
-#   Copyright 1988-2019 Free Software Foundation, Inc.
+#   Copyright 1988-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -469,10 +469,6 @@ gdb_test "info break" "Num     Type.*Disp Enb Address.*What.*\[\r\n\]
 #
 if ![runto_main] then { fail "break tests suppressed" }
 
-gdb_test "catch" \
-    "Catch requires an event name." \
-    "catch requires an event name"
-
 gdb_test "catch fork" "Catchpoint \[0-9\]+ \\(fork\\)" \
     "set catch fork, never expected to trigger"
 
@@ -583,22 +579,25 @@ gdb_test "clear marker3" {Deleted breakpoints [0-9]+ [0-9]+.*}
 
 # Verify that a breakpoint can be set via a convenience variable.
 #
-gdb_test_no_output "set \$foo=$bp_location11" \
-    "set convenience variable \$foo to bp_location11"
 
-gdb_test "break \$foo" \
-    "Breakpoint (\[0-9\]*) at .*, line $bp_location11.*" \
-    "set breakpoint via convenience variable"
+with_test_prefix "set line breakpoint via convenience variable" {
+    gdb_test_no_output "set \$foo=$bp_location11" \
+	"set convenience variable \$foo to bp_location11"
 
-# Verify that GDB responds gracefully to an attempt to set a
-# breakpoint via a convenience variable whose type is not integer.
-#
-gdb_test_no_output "set \$foo=81.5" \
-    "set convenience variable \$foo to 81.5"
+    gdb_test "break \$foo" \
+	"Breakpoint (\[0-9\]*) at .*, line $bp_location11.*"
 
-gdb_test "break \$foo" \
-    "Convenience variables used in line specs must have integer values.*" \
-    "set breakpoint via non-integer convenience variable disallowed"
+    # Verify that GDB responds gracefully to an attempt to set a
+    # breakpoint via a convenience variable whose type is not integer.
+    #
+
+    gdb_test_no_output "set \$foo=81.5" \
+	"set convenience variable \$foo to 81.5"
+
+    gdb_test "break \$foo" \
+	"Convenience variables used in line specs must have integer values.*" \
+	"non-integer convenience variable disallowed"
+}
 
 # Verify that we can set and trigger a breakpoint in a user-called function.
 #
@@ -845,29 +844,31 @@ gdb_test_multiple "" $test {
 #
 # Test break via convenience variable with file name
 #
-set line [gdb_get_line_number "set breakpoint 1 here"]
-gdb_test_no_output "set \$l = $line"
 
-set line_actual "-1"
-set test "break ${srcfile}:\$l"
-gdb_test_multiple "$test" $test {
-    -re "Breakpoint $decimal at $hex: file .*break\\.c, line ($decimal)\\.\r\n$gdb_prompt $" {
-        # Save the actual line number on which the breakpoint was
-        # actually set. On some systems (Eg: Ubuntu 16.04 with GCC
-        # version 5.4.0), that line gets completely inlined, including
-        # the call to printf, and so we end up inserting the breakpoint
-        # on one of the following lines instead.
-        set line_actual $expect_out(1,string)
-        pass $test
+with_test_prefix "set line:file breakpoint via convenience variable" {
+    set line [gdb_get_line_number "set breakpoint 1 here"]
+    gdb_test_no_output "set \$l = $line"
+
+    set line_actual "-1"
+    set test "break ${srcfile}:\$l"
+    gdb_test_multiple "$test" $test {
+	-re "Breakpoint $decimal at $hex: file .*break\\.c, line ($decimal)\\.\r\n$gdb_prompt $" {
+	    # Save the actual line number on which the breakpoint was
+	    # actually set. On some systems (Eg: Ubuntu 16.04 with GCC
+	    # version 5.4.0), that line gets completely inlined, including
+	    # the call to printf, and so we end up inserting the breakpoint
+	    # on one of the following lines instead.
+	    set line_actual $expect_out(1,string)
+	    pass $test
+	}
     }
+
+    gdb_test_no_output "set \$foo=81.5" \
+	"set convenience variable \$foo to 81.5"
+    gdb_test "break $srcfile:\$foo" \
+	"Convenience variables used in line specs must have integer values.*" \
+	"non-integer convenience variable disallowed"
 }
-
-gdb_test_no_output "set \$foo=81.5" \
-    "set convenience variable \$foo to 81.5"
-gdb_test "break $srcfile:\$foo" \
-    "Convenience variables used in line specs must have integer values.*" \
-    "set breakpoint via non-integer convenience variable disallowed"
-
 
 #
 # Test that commands can be cleared without error.

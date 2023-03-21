@@ -1,5 +1,5 @@
 /* MeP-specific support for 32-bit ELF.
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -43,26 +43,26 @@ static reloc_howto_type mep_elf_howto_table [] =
   MEPREL (R_RELC,	  0,  0, 0, 0, 0, N, 0),
   /* MEPRELOC:HOWTO */
     /* This section generated from bfd/mep-relocs.pl from include/elf/mep.h.  */
-  MEPREL (R_MEP_8,	  0,  8, 0, 0, 0, U, 0xff),
-  MEPREL (R_MEP_16,	  1, 16, 0, 0, 0, U, 0xffff),
-  MEPREL (R_MEP_32,	  2, 32, 0, 0, 0, U, 0xffffffff),
+  MEPREL (R_MEP_8,        0,  8, 0, 0, 0, U, 0xff),
+  MEPREL (R_MEP_16,       1, 16, 0, 0, 0, U, 0xffff),
+  MEPREL (R_MEP_32,       2, 32, 0, 0, 0, U, 0xffffffff),
   MEPREL (R_MEP_PCREL8A2, 1,  8, 1, 1, 1, S, 0x00fe),
   MEPREL (R_MEP_PCREL12A2,1, 12, 1, 1, 1, S, 0x0ffe),
   MEPREL (R_MEP_PCREL17A2,2, 17, 0, 1, 1, S, 0x0000ffff),
   MEPREL (R_MEP_PCREL24A2,2, 24, 0, 1, 1, S, 0x07f0ffff),
   MEPREL (R_MEP_PCABS24A2,2, 24, 0, 1, 0, U, 0x07f0ffff),
-  MEPREL (R_MEP_LOW16,	  2, 16, 0, 0, 0, N, 0x0000ffff),
-  MEPREL (R_MEP_HI16U,	  2, 32, 0,16, 0, N, 0x0000ffff),
-  MEPREL (R_MEP_HI16S,	  2, 32, 0,16, 0, N, 0x0000ffff),
-  MEPREL (R_MEP_GPREL,	  2, 16, 0, 0, 0, S, 0x0000ffff),
-  MEPREL (R_MEP_TPREL,	  2, 16, 0, 0, 0, S, 0x0000ffff),
-  MEPREL (R_MEP_TPREL7,	  1,  7, 0, 0, 0, U, 0x007f),
+  MEPREL (R_MEP_LOW16,    2, 16, 0, 0, 0, N, 0x0000ffff),
+  MEPREL (R_MEP_HI16U,    2, 32, 0,16, 0, N, 0x0000ffff),
+  MEPREL (R_MEP_HI16S,    2, 32, 0,16, 0, N, 0x0000ffff),
+  MEPREL (R_MEP_GPREL,    2, 16, 0, 0, 0, S, 0x0000ffff),
+  MEPREL (R_MEP_TPREL,    2, 16, 0, 0, 0, S, 0x0000ffff),
+  MEPREL (R_MEP_TPREL7,   1,  7, 0, 0, 0, U, 0x007f),
   MEPREL (R_MEP_TPREL7A2, 1,  7, 1, 1, 0, U, 0x007e),
   MEPREL (R_MEP_TPREL7A4, 1,  7, 2, 2, 0, U, 0x007c),
-  MEPREL (R_MEP_UIMM24,	  2, 24, 0, 0, 0, U, 0x00ffffff),
+  MEPREL (R_MEP_UIMM24,   2, 24, 0, 0, 0, U, 0x00ffffff),
   MEPREL (R_MEP_ADDR24A4, 2, 24, 0, 2, 0, U, 0x00fcffff),
   MEPREL (R_MEP_GNU_VTINHERIT,1,  0,16,32, 0, N, 0x0000),
-  MEPREL (R_MEP_GNU_VTENTRY,1,	0,16,32, 0, N, 0x0000),
+  MEPREL (R_MEP_GNU_VTENTRY,1,  0,16,32, 0, N, 0x0000),
   /* MEPRELOC:END */
 };
 
@@ -221,7 +221,6 @@ mep_final_link_relocate
      bfd_vma		 relocation)
 {
   unsigned long u;
-  long s;
   unsigned char *byte;
   bfd_vma pc;
   bfd_reloc_status_type r = bfd_reloc_ok;
@@ -242,12 +241,12 @@ mep_final_link_relocate
 	+ input_section->output_offset
 	+ rel->r_offset);
 
-  s = relocation + rel->r_addend;
+  u = relocation + rel->r_addend;
 
   byte = (unsigned char *)contents + rel->r_offset;
 
   if (howto->type == R_MEP_PCREL24A2
-      && s == 0
+      && u == 0
       && pc >= 0x800000)
     {
       /* This is an unreachable branch to an undefined weak function.
@@ -257,9 +256,7 @@ mep_final_link_relocate
     }
 
   if (howto->pc_relative)
-    s -= pc;
-
-  u = (unsigned long) s;
+    u -= pc;
 
   switch (howto->type)
     {
@@ -281,25 +278,25 @@ mep_final_link_relocate
       byte[3^e4] = (u & 0xff);
       break;
     case R_MEP_PCREL8A2: /* --------7654321- */
-      if (-128 > s || s > 127) r = bfd_reloc_overflow;
-      byte[1^e2] = (byte[1^e2] & 0x01) | (s & 0xfe);
+      if (u + 128 > 255) r = bfd_reloc_overflow;
+      byte[1^e2] = (byte[1^e2] & 0x01) | (u & 0xfe);
       break;
     case R_MEP_PCREL12A2: /* ----ba987654321- */
-      if (-2048 > s || s > 2047) r = bfd_reloc_overflow;
-      byte[0^e2] = (byte[0^e2] & 0xf0) | ((s >> 8) & 0x0f);
-      byte[1^e2] = (byte[1^e2] & 0x01) | (s & 0xfe);
+      if (u + 2048 > 4095) r = bfd_reloc_overflow;
+      byte[0^e2] = (byte[0^e2] & 0xf0) | ((u >> 8) & 0x0f);
+      byte[1^e2] = (byte[1^e2] & 0x01) | (u & 0xfe);
       break;
     case R_MEP_PCREL17A2: /* ----------------gfedcba987654321 */
-      if (-65536 > s || s > 65535) r = bfd_reloc_overflow;
-      byte[2^e2] = ((s >> 9) & 0xff);
-      byte[3^e2] = ((s >> 1) & 0xff);
+      if (u + 65536 > 131071) r = bfd_reloc_overflow;
+      byte[2^e2] = ((u >> 9) & 0xff);
+      byte[3^e2] = ((u >> 1) & 0xff);
       break;
     case R_MEP_PCREL24A2: /* -----7654321----nmlkjihgfedcba98 */
-      if (-8388608 > s || s > 8388607) r = bfd_reloc_overflow;
-      byte[0^e2] = (byte[0^e2] & 0xf8) | ((s >> 5) & 0x07);
-      byte[1^e2] = (byte[1^e2] & 0x0f) | ((s << 3) & 0xf0);
-      byte[2^e2] = ((s >> 16) & 0xff);
-      byte[3^e2] = ((s >> 8) & 0xff);
+      if (u + 8388608 > 16777215) r = bfd_reloc_overflow;
+      byte[0^e2] = (byte[0^e2] & 0xf8) | ((u >> 5) & 0x07);
+      byte[1^e2] = (byte[1^e2] & 0x0f) | ((u << 3) & 0xf0);
+      byte[2^e2] = ((u >> 16) & 0xff);
+      byte[3^e2] = ((u >> 8) & 0xff);
       break;
     case R_MEP_PCABS24A2: /* -----7654321----nmlkjihgfedcba98 */
       if (u > 16777215) r = bfd_reloc_overflow;
@@ -317,22 +314,21 @@ mep_final_link_relocate
       byte[3^e2] = ((u >> 16) & 0xff);
       break;
     case R_MEP_HI16S: /* ----------------vutsrqponmlkjihg */
-      if (s & 0x8000)
-	s += 0x10000;
-      byte[2^e2] = ((s >> 24) & 0xff);
-      byte[3^e2] = ((s >> 16) & 0xff);
+      u += 0x8000;
+      byte[2^e2] = ((u >> 24) & 0xff);
+      byte[3^e2] = ((u >> 16) & 0xff);
       break;
     case R_MEP_GPREL: /* ----------------fedcba9876543210 */
-      s -= mep_sdaoff_base(rel->r_offset);
-      if (-32768 > s || s > 32767) r = bfd_reloc_overflow;
-      byte[2^e2] = ((s >> 8) & 0xff);
-      byte[3^e2] = (s & 0xff);
+      u -= mep_sdaoff_base(rel->r_offset);
+      if (u + 32768 > 65535) r = bfd_reloc_overflow;
+      byte[2^e2] = ((u >> 8) & 0xff);
+      byte[3^e2] = (u & 0xff);
       break;
     case R_MEP_TPREL: /* ----------------fedcba9876543210 */
-      s -= mep_tpoff_base(rel->r_offset);
-      if (-32768 > s || s > 32767) r = bfd_reloc_overflow;
-      byte[2^e2] = ((s >> 8) & 0xff);
-      byte[3^e2] = (s & 0xff);
+      u -= mep_tpoff_base(rel->r_offset);
+      if (u + 32768 > 65535) r = bfd_reloc_overflow;
+      byte[2^e2] = ((u >> 8) & 0xff);
+      byte[3^e2] = (u & 0xff);
       break;
     case R_MEP_TPREL7: /* ---------6543210 */
       u -= mep_tpoff_base(rel->r_offset);
@@ -477,7 +473,7 @@ mep_elf_relocate_section
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (name == NULL) ? bfd_section_name (input_bfd, sec) : name;
+	  name = name == NULL ? bfd_section_name (sec) : name;
 	}
       else
 	{
@@ -717,10 +713,10 @@ mep_elf_object_p (bfd * abfd)
 }
 
 static bfd_boolean
-mep_elf_section_flags (flagword * flags, const Elf_Internal_Shdr * hdr)
+mep_elf_section_flags (const Elf_Internal_Shdr *hdr)
 {
   if (hdr->sh_flags & SHF_MEP_VLIW)
-    * flags |= SEC_MEP_VLIW;
+    hdr->bfd_section->flags |= SEC_MEP_VLIW;
   return TRUE;
 }
 

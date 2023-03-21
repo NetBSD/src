@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,26 +20,21 @@
 #define ARM_TDEP_H
 
 /* Forward declarations.  */
-struct gdbarch;
 struct regset;
 struct address_space;
 struct get_next_pcs;
 struct arm_get_next_pcs;
 struct gdb_get_next_pcs;
 
+/* Set to true if the 32-bit mode is in use.  */
+
+extern bool arm_apcs_32;
+
+#include "gdbarch.h"
 #include "arch/arm.h"
 #include "infrun.h"
 
 #include <vector>
-
-/* Say how long FP registers are.  Used for documentation purposes and
-   code readability in this header.  IEEE extended doubles are 80
-   bits.  DWORD aligned they use 96 bits.  */
-#define FP_REGISTER_SIZE	12
-
-/* Say how long VFP double precision registers are.  Used for documentation
-   purposes and code readability.  These are fixed at 64 bits.  */
-#define VFP_REGISTER_SIZE	8
 
 /* Number of machine registers.  The only define actually required 
    is gdbarch_num_regs.  The other definitions are used for documentation
@@ -100,19 +95,19 @@ struct gdbarch_tdep
 
   enum arm_float_model fp_model; /* Floating point calling conventions.  */
 
-  int have_fpa_registers;	/* Does the target report the FPA registers?  */
-  int have_wmmx_registers;	/* Does the target report the WMMX registers?  */
+  bool have_fpa_registers;	/* Does the target report the FPA registers?  */
+  bool have_wmmx_registers;	/* Does the target report the WMMX registers?  */
   /* The number of VFP registers reported by the target.  It is zero
      if VFP registers are not supported.  */
   int vfp_register_count;
-  int have_vfp_pseudos;		/* Are we synthesizing the single precision
+  bool have_vfp_pseudos;	/* Are we synthesizing the single precision
 				   VFP registers?  */
-  int have_neon_pseudos;	/* Are we synthesizing the quad precision
+  bool have_neon_pseudos;	/* Are we synthesizing the quad precision
 				   NEON registers?  Requires
 				   have_vfp_pseudos.  */
-  int have_neon;		/* Do we have a NEON unit?  */
+  bool have_neon;		/* Do we have a NEON unit?  */
 
-  int is_m;			/* Does the target follow the "M" profile.  */
+  bool is_m;			/* Does the target follow the "M" profile.  */
   CORE_ADDR lowest_pc;		/* Lowest address at which instructions 
 				   will appear.  */
 
@@ -152,7 +147,7 @@ struct gdbarch_tdep
 /* The maximum number of modified instructions generated for one single-stepped
    instruction, including the breakpoint (usually at the end of the instruction
    sequence) and any scratch words, etc.  */
-#define DISPLACED_MODIFIED_INSNS	8
+#define ARM_DISPLACED_MODIFIED_INSNS	8
 
 struct arm_displaced_step_closure : public displaced_step_closure
 {
@@ -215,7 +210,7 @@ struct arm_displaced_step_closure : public displaced_step_closure
      - ARM instruction occupies one slot,
      - Thumb 16 bit instruction occupies one slot,
      - Thumb 32-bit instruction occupies *two* slots, one part for each.  */
-  unsigned long modinsn[DISPLACED_MODIFIED_INSNS];
+  unsigned long modinsn[ARM_DISPLACED_MODIFIED_INSNS];
   int numinsns;
   CORE_ADDR insn_addr;
   CORE_ADDR scratch_base;
@@ -290,11 +285,11 @@ extern void
 				       void *cb_data,
 				       const struct regcache *regcache);
 
-/* Target descriptions.  */
-extern struct target_desc *tdesc_arm_with_m;
-extern struct target_desc *tdesc_arm_with_iwmmxt;
-extern struct target_desc *tdesc_arm_with_vfpv2;
-extern struct target_desc *tdesc_arm_with_vfpv3;
-extern struct target_desc *tdesc_arm_with_neon;
+/* Get the correct Arm target description with given FP hardware type.  */
+const target_desc *arm_read_description (arm_fp_type fp_type);
+
+/* Get the correct Arm M-Profile target description with given hardware
+   type.  */
+const target_desc *arm_read_mprofile_description (arm_m_profile_type m_type);
 
 #endif /* arm-tdep.h */

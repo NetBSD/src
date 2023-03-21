@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux running on PA-RISC, for GDB.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,7 @@
 #include "glibc-tdep.h"
 #include "frame-unwind.h"
 #include "trad-frame.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "value.h"
 #include "regset.h"
 #include "regcache.h"
@@ -526,8 +526,9 @@ hppa_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
                                              svr4_fetch_objfile_link_map);
 }
 
+void _initialize_hppa_linux_tdep ();
 void
-_initialize_hppa_linux_tdep (void)
+_initialize_hppa_linux_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_hppa, 0, GDB_OSABI_LINUX,
 			  hppa_linux_init_abi);

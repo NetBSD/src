@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,15 +18,23 @@
 #ifndef WINDOWS_NAT_H
 #define WINDOWS_NAT_H
 
-extern void windows_set_context_register_offsets (const int *offsets);
-
 /* A pointer to a function that should return non-zero iff REGNUM
    corresponds to one of the segment registers.  */
 typedef int (segment_register_p_ftype) (int regnum);
 
-/* Set the function that should be used by this module to determine
-   whether a given register is a segment register or not.  */
-extern void windows_set_segment_register_p (segment_register_p_ftype *fun);
+/* segment_register_p_ftype implementation for x86.  */
+int i386_windows_segment_register_p (int regnum);
+
+/* context register offests for x86.  */
+extern const int i386_mappings[];
+
+#ifdef __x86_64__
+/* segment_register_p_ftype implementation for amd64.  */
+int amd64_windows_segment_register_p (int regnum);
+
+/* context register offests for amd64.  */
+extern const int amd64_mappings[];
+#endif
 
 #endif
 

@@ -1,5 +1,5 @@
 /* Definitions for expressions designed to be executed on the agent
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,6 @@
 
 #ifndef AX_H
 #define AX_H
-
-#include "common/vec.h"
 
 /* It's sometimes useful to be able to debug programs that you can't
    really stop for more than a fraction of a second.  To this end, the
@@ -164,7 +162,7 @@ enum agent_op
   {
 #define DEFOP(NAME, SIZE, DATA_SIZE, CONSUMED, PRODUCED, VALUE)  \
     aop_ ## NAME = VALUE,
-#include "common/ax.def"
+#include "gdbsupport/ax.def"
 #undef DEFOP
     aop_last
   };

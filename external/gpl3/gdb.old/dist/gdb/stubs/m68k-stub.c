@@ -45,7 +45,7 @@
  *  program counter and status register onto the supervisor stack and then
  *  transfers execution to a location specified in it's vector table.
  *  The handlers for the exception vectors are hardwired to jmp to an address
- *  given by the relation:  (exception - 256) * 6.  These are decending 
+ *  given by the relation:  (exception - 256) * 6.  These are descending
  *  addresses starting from -6, -12, -18, ...  By allowing 6 bytes for
  *  each entry, a jsr, jmp, bsr, ... can be used to enter the exception 
  *  handler.  Using a jsr to handle an exception has an added benefit of

@@ -1,5 +1,5 @@
 # Pretty-printers for bounds registers.
-# Copyright (C) 2013-2019 Free Software Foundation, Inc.
+# Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,5 +39,5 @@ class MpxBound128Printer:
         return result
 
 gdb.printing.add_builtin_pretty_printer ('mpx_bound128',
-                                         '^__gdb_builtin_type_bound128',
+                                         '^builtin_type_bound128',
                                          MpxBound128Printer)

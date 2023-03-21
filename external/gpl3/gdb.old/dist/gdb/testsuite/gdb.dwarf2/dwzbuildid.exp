@@ -1,4 +1,4 @@
-# Copyright 2013-2019 Free Software Foundation, Inc.
+# Copyright 2013-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -138,7 +138,7 @@ if {[gdb_compile [list ${binfile}1.o ${binfile}2.o] ${binfile}-ok \
 }
 
 if {[gdb_compile [list ${binfile}1.o ${binfile}4.o] ${binfile}-mismatch \
-	 executable {}] != ""} {
+	 executable {quiet}] != ""} {
     return -1
 }
 

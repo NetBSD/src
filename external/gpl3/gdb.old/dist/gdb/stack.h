@@ -1,6 +1,6 @@
 /* Stack manipulation commands, for GDB the GNU Debugger.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,14 +42,55 @@ void iterate_over_block_local_vars (const struct block *block,
 				    iterate_over_block_arg_local_vars_cb cb,
 				    void *cb_data);
 
-/* Get or set the last displayed symtab and line, which is, e.g. where we set a
- * breakpoint when `break' is supplied with no arguments.  */
+/* Initialize *WHAT to be a copy of the user desired print what frame info.
+   If !WHAT.has_value (), the printing function chooses a default set of
+   information to print, otherwise the printing function should print
+   the relevant information.  */
+
+void get_user_print_what_frame_info (gdb::optional<enum print_what> *what);
+
+/* Return true if we should display the address in addition to the location,
+   because we are in the middle of a statement.  */
+
+bool frame_show_address (struct frame_info *frame, struct symtab_and_line sal);
+
+/* Forget the last sal we displayed.  */
+
 void clear_last_displayed_sal (void);
-int last_displayed_sal_is_valid (void);
+
+/* Is our record of the last sal we displayed valid?  If not, the
+   get_last_displayed_* functions will return NULL or 0, as appropriate.  */
+
+bool last_displayed_sal_is_valid (void);
+
+/* Get the pspace of the last sal we displayed, if it's valid, otherwise
+   return nullptr.  */
+
 struct program_space* get_last_displayed_pspace (void);
+
+/* Get the address of the last sal we displayed, if it's valid, otherwise
+   return an address of 0.  */
+
 CORE_ADDR get_last_displayed_addr (void);
+
+/* Get the symtab of the last sal we displayed, if it's valid, otherwise
+   return nullptr.  */
+
 struct symtab* get_last_displayed_symtab (void);
+
+/* Get the line of the last sal we displayed, if it's valid, otherwise
+   return 0.  */
+
 int get_last_displayed_line (void);
+
+/* Get the last sal we displayed, if it's valid, otherwise return a
+   symtab_and_line constructed in its default state.  */
+
 symtab_and_line get_last_displayed_sal ();
+
+/* Completer for the "frame apply all" command.  */
+void frame_apply_all_cmd_completer (struct cmd_list_element *ignore,
+				    completion_tracker &tracker,
+				    const char *text, const char */*word*/);
 
 #endif /* #ifndef STACK_H */

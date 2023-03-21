@@ -1,6 +1,6 @@
 /* Gdb/Python header for private use by Python module.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -51,8 +51,6 @@
 #define CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 #endif
 
-/* Python 2.4 doesn't include stdint.h soon enough to get {u,}intptr_t
-   needed by pyport.h.  */
 /* /usr/include/features.h on linux systems will define _POSIX_C_SOURCE
    if it sees _GNU_SOURCE (which config.h will define).
    pyconfig.h defines _POSIX_C_SOURCE to a different value than
@@ -109,26 +107,6 @@
 #define PyString_Check PyUnicode_Check
 #endif
 
-#if HAVE_LIBPYTHON2_4
-/* Py_ssize_t is not defined until 2.5.
-   Logical type for Py_ssize_t is Py_intptr_t, but that fails in 64-bit
-   compilation due to several apparent mistakes in python2.4 API, so we
-   use 'int' instead.  */
-typedef int Py_ssize_t;
-#endif
-
-#ifndef PyVarObject_HEAD_INIT
-/* Python 2.4 does not define PyVarObject_HEAD_INIT.  */
-#define PyVarObject_HEAD_INIT(type, size)       \
-    PyObject_HEAD_INIT(type) size,
-
-#endif
-
-#ifndef Py_TYPE
-/* Python 2.4 does not define Py_TYPE.  */
-#define Py_TYPE(ob)             (((PyObject*)(ob))->ob_type)
-#endif
-
 /* If Python.h does not define WITH_THREAD, then the various
    GIL-related functions will not be defined.  However,
    PyGILState_STATE will be.  */
@@ -183,40 +161,11 @@ typedef long Py_hash_t;
 static inline void
 gdb_Py_DECREF (void *op) /* ARI: editCase function */
 {
-  /* ... and Python 2.4 didn't cast OP to PyObject pointer on the
-     '(op)->ob_refcnt' references within the macro.  Cast it ourselves
-     too.  */
-  Py_DECREF ((PyObject *) op);
+  Py_DECREF (op);
 }
 
 #undef Py_DECREF
 #define Py_DECREF(op) gdb_Py_DECREF (op)
-
-/* The second argument to PyObject_GetAttrString was missing the 'const'
-   qualifier in Python-2.4.  Hence, we wrap it in a function to avoid errors
-   when compiled with -Werror.  */
-
-static inline PyObject *
-gdb_PyObject_GetAttrString (PyObject *obj,
-			    const char *attr) /* ARI: editCase function */
-{
-  return PyObject_GetAttrString (obj, (char *) attr);
-}
-
-#define PyObject_GetAttrString(obj, attr) gdb_PyObject_GetAttrString (obj, attr)
-
-/* The second argument to PyObject_HasAttrString was also missing the 'const'
-   qualifier in Python-2.4.  Hence, we wrap it also in a function to avoid
-   errors when compiled with -Werror.  */
-
-static inline int
-gdb_PyObject_HasAttrString (PyObject *obj,
-			    const char *attr)  /* ARI: editCase function */
-{
-  return PyObject_HasAttrString (obj, (char *) attr);
-}
-
-#define PyObject_HasAttrString(obj, attr) gdb_PyObject_HasAttrString (obj, attr)
 
 /* PyObject_CallMethod's 'method' and 'format' parameters were missing
    the 'const' qualifier before Python 3.4.  Hence, we wrap the
@@ -442,10 +391,8 @@ extern int gdbpy_auto_load_enabled (const struct extension_language_defn *);
 
 extern enum ext_lang_rc gdbpy_apply_val_pretty_printer
   (const struct extension_language_defn *,
-   struct type *type,
-   LONGEST embedded_offset, CORE_ADDR address,
+   struct value *value,
    struct ui_file *stream, int recurse,
-   struct value *val,
    const struct value_print_options *options,
    const struct language_defn *language);
 extern enum ext_lang_bt_status gdbpy_apply_frame_filter
@@ -475,6 +422,10 @@ PyObject *gdbpy_frame_stop_reason_string (PyObject *, PyObject *);
 PyObject *gdbpy_lookup_symbol (PyObject *self, PyObject *args, PyObject *kw);
 PyObject *gdbpy_lookup_global_symbol (PyObject *self, PyObject *args,
 				      PyObject *kw);
+PyObject *gdbpy_lookup_static_symbol (PyObject *self, PyObject *args,
+				      PyObject *kw);
+PyObject *gdbpy_lookup_static_symbols (PyObject *self, PyObject *args,
+					   PyObject *kw);
 PyObject *gdbpy_start_recording (PyObject *self, PyObject *args);
 PyObject *gdbpy_current_recording (PyObject *self, PyObject *args);
 PyObject *gdbpy_stop_recording (PyObject *self, PyObject *args);
@@ -494,6 +445,8 @@ PyObject *gdbpy_parameter_value (enum var_types type, void *var);
 char *gdbpy_parse_command_name (const char *name,
 				struct cmd_list_element ***base_list,
 				struct cmd_list_element **start_list);
+PyObject *gdbpy_register_tui_window (PyObject *self, PyObject *args,
+				     PyObject *kw);
 
 PyObject *symtab_and_line_to_sal_object (struct symtab_and_line sal);
 PyObject *symtab_to_symtab_object (struct symtab *symtab);
@@ -501,6 +454,7 @@ PyObject *symbol_to_symbol_object (struct symbol *sym);
 PyObject *block_to_block_object (const struct block *block,
 				 struct objfile *objfile);
 PyObject *value_to_value_object (struct value *v);
+PyObject *value_to_value_object_no_release (struct value *v);
 PyObject *type_to_type_object (struct type *);
 PyObject *frame_info_to_frame_object (struct frame_info *frame);
 PyObject *symtab_to_linetable_object (PyObject *symtab);
@@ -519,7 +473,11 @@ PyObject *gdbpy_lookup_objfile (PyObject *self, PyObject *args, PyObject *kw);
 
 PyObject *gdbarch_to_arch_object (struct gdbarch *gdbarch);
 
-thread_object *create_thread_object (struct thread_info *tp);
+PyObject *gdbpy_new_register_descriptor_iterator (struct gdbarch *gdbarch,
+						  const char *group_name);
+PyObject *gdbpy_new_reggroup_iterator (struct gdbarch *gdbarch);
+
+gdbpy_ref<thread_object> create_thread_object (struct thread_info *tp);
 gdbpy_ref<> thread_to_thread_object (thread_info *thr);;
 gdbpy_ref<inferior_object> inferior_to_inferior_object (inferior *inf);
 
@@ -586,9 +544,13 @@ int gdbpy_initialize_py_events (void)
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
 int gdbpy_initialize_arch (void)
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
+int gdbpy_initialize_registers ()
+  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
 int gdbpy_initialize_xmethods (void)
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
 int gdbpy_initialize_unwind (void)
+  CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
+int gdbpy_initialize_tui ()
   CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION;
 
 /* A wrapper for PyErr_Fetch that handles reference counting for the
@@ -780,7 +742,7 @@ extern PyObject *gdbpy_gdb_error;
 extern PyObject *gdbpy_gdb_memory_error;
 extern PyObject *gdbpy_gdberror_exc;
 
-extern void gdbpy_convert_exception (struct gdb_exception)
+extern void gdbpy_convert_exception (const struct gdb_exception &)
     CPYCHECKER_SETS_EXCEPTION;
 
 int get_addr_from_python (PyObject *obj, CORE_ADDR *addr)
@@ -813,5 +775,24 @@ struct Py_buffer_deleter
 
 /* A unique_ptr specialization for Py_buffer.  */
 typedef std::unique_ptr<Py_buffer, Py_buffer_deleter> Py_buffer_up;
+
+/* Parse a register number from PYO_REG_ID and place the register number
+   into *REG_NUM.  The register is a register for GDBARCH.
+
+   If a register is parsed successfully then *REG_NUM will have been
+   updated, and true is returned.  Otherwise the contents of *REG_NUM are
+   undefined, and false is returned.
+
+   The PYO_REG_ID object can be a string, the name of the register.  This
+   is the slowest approach as GDB has to map the name to a number for each
+   call.  Alternatively PYO_REG_ID can be an internal GDB register
+   number.  This is quick but should not be encouraged as this means
+   Python scripts are now dependent on GDB's internal register numbering.
+   Final PYO_REG_ID can be a gdb.RegisterDescriptor object, these objects
+   can be looked up by name once, and then cache the register number so
+   should be as quick as using a register number.  */
+
+extern bool gdbpy_parse_register_id (struct gdbarch *gdbarch,
+				     PyObject *pyo_reg_id, int *reg_num);
 
 #endif /* PYTHON_PYTHON_INTERNAL_H */

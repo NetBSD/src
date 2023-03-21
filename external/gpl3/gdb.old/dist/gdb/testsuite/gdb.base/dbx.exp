@@ -1,4 +1,4 @@
-# Copyright 1998-2019 Free Software Foundation, Inc.
+# Copyright 1998-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,32 +26,33 @@ if {[build_executable $testfile.exp $testfile \
 # start gdb -- start gdb running, default procedure
 #
 proc dbx_gdb_start { } {
-    global verbose
-    global GDB
-    global INTERNAL_GDBFLAGS GDBFLAGS
     global prompt
-    global spawn_id
     global timeout
-    verbose "Spawning $GDB -dbx $INTERNAL_GDBFLAGS $GDBFLAGS"
+    global gdb_spawn_id
 
-    if { [which $GDB] == 0 } then {
-        perror "$GDB does not exist."
-        exit 1
+    save_vars { GDBFLAGS } {
+	append GDBFLAGS " -dbx"
+
+	set res [gdb_spawn]
+	if { $res != 0} {
+	    return $res
+	}
     }
 
     set oldtimeout $timeout
     set timeout [expr "$timeout + 60"]
-    eval "spawn $GDB -dbx $INTERNAL_GDBFLAGS $GDBFLAGS"
     gdb_expect {
         -re ".*\r\n$gdb_prompt $" {
             verbose "GDB initialized."
         }
         -re "$prompt $" {
             perror "GDB never initialized."
+	    unset gdb_spawn_id
             return -1
         }
         timeout         {
             perror "(timeout) GDB never initialized."
+	    unset gdb_spawn_id
             return -1
         }
     }
@@ -148,12 +149,8 @@ proc dbx_reinitialize_dir { subdir } {
 # right sequence of events, allowing gdb_load to do its normal thing? This way
 # remotes and simulators will work, too.
 #
-# [drow 2002-03-30]: We can restore the old gdb_file_cmd afterwards, though.
-set old_gdb_file_cmd_args [info args gdb_file_cmd]
-set old_gdb_file_cmd_body [info body gdb_file_cmd]
 
-proc gdb_file_cmd {arg} {
-    global verbose
+proc local_gdb_file_cmd {arg} {
     global loadpath
     global loadfile
     global GDB
@@ -288,24 +285,24 @@ proc test_func { } {
 # Start with a fresh gdb.
 
 gdb_exit
-global GDBFLAGS
-set saved_gdbflags $GDBFLAGS
 
-set GDBFLAGS "$GDBFLAGS --dbx"
-gdb_start
-dbx_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+with_override gdb_file_cmd local_gdb_file_cmd {
+    save_vars GDBFLAGS {
+	set GDBFLAGS "$GDBFLAGS --dbx"
 
-test_breakpoints
-test_assign
-test_whereis
-gdb_test "file average.c:1" "1\[ \t\]+/. This is a sample program.*"
-test_func
+	gdb_start
+	dbx_reinitialize_dir $srcdir/$subdir
+	gdb_load ${binfile}
 
-#exit and cleanup
-gdb_exit
+	test_breakpoints
+	test_assign
+	test_whereis
+	gdb_test "file average.c:1" "1\[ \t\]+/. This is a sample program.*"
+	test_func
 
-set GDBFLAGS $saved_gdbflags
-eval proc gdb_file_cmd {$old_gdb_file_cmd_args} {$old_gdb_file_cmd_body}
+	#exit and cleanup
+	gdb_exit
+    }
+}
 
 return 0

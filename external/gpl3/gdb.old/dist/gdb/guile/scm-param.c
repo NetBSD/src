@@ -1,6 +1,6 @@
 /* GDB parameters implemented in Guile.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,10 @@
 
 union pascm_variable
 {
-  /* Hold an integer value, for boolean and integer types.  */
+  /* Hold an boolean value.  */
+  bool boolval;
+
+  /* Hold an integer value.  */
   int intval;
 
   /* Hold an auto_boolean.  */
@@ -365,7 +368,7 @@ add_setshow_generic (enum var_types param_type, enum command_class cmd_class,
     {
     case var_boolean:
       add_setshow_boolean_cmd (cmd_name, cmd_class,
-			       &self->value.intval,
+			       &self->value.boolval,
 			       set_doc, show_doc, help_doc,
 			       set_func, show_func,
 			       set_list, show_list);
@@ -463,13 +466,13 @@ add_setshow_generic (enum var_types param_type, enum command_class cmd_class,
   /* Lookup created parameter, and register Scheme object against the
      parameter context.  Perform this task against both lists.  */
   tmp_name = cmd_name;
-  param = lookup_cmd (&tmp_name, *show_list, "", 0, 1);
+  param = lookup_cmd (&tmp_name, *show_list, "", NULL, 0, 1);
   gdb_assert (param != NULL);
   set_cmd_context (param, self);
   *set_cmd = param;
 
   tmp_name = cmd_name;
-  param = lookup_cmd (&tmp_name, *set_list, "", 0, 1);
+  param = lookup_cmd (&tmp_name, *set_list, "", NULL, 0, 1);
   gdb_assert (param != NULL);
   set_cmd_context (param, self);
   *show_cmd = param;
@@ -606,7 +609,7 @@ pascm_param_value (enum var_types type, void *var,
 
     case var_boolean:
       {
-	if (* (int *) var)
+	if (* (bool *) var)
 	  return SCM_BOOL_T;
 	else
 	  return SCM_BOOL_F;
@@ -717,7 +720,7 @@ pascm_set_param_value_x (enum var_types type, union pascm_variable *var,
     case var_boolean:
       SCM_ASSERT_TYPE (gdbscm_is_bool (value), value, arg_pos, func_name,
 		       _("boolean"));
-      var->intval = gdbscm_is_true (value);
+      var->boolval = gdbscm_is_true (value);
       break;
 
     case var_auto_boolean:
@@ -966,7 +969,7 @@ pascm_parameter_defined_p (const char *name, struct cmd_list_element *list)
 {
   struct cmd_list_element *c;
 
-  c = lookup_cmd_1 (&name, list, NULL, 1);
+  c = lookup_cmd_1 (&name, list, NULL, NULL, 1);
 
   /* If the name is ambiguous that's ok, it's a new parameter still.  */
   return c != NULL && c != CMD_LIST_AMBIGUOUS;
@@ -1006,7 +1009,8 @@ gdbscm_register_parameter_x (SCM self)
 		_("parameter exists, \"show\" command is already defined"));
     }
 
-  TRY
+  gdbscm_gdb_exception exc {};
+  try
     {
       add_setshow_generic (p_smob->type, p_smob->cmd_class,
 			   p_smob->cmd_name, p_smob,
@@ -1018,12 +1022,12 @@ gdbscm_register_parameter_x (SCM self)
 			   set_list, show_list,
 			   &p_smob->set_command, &p_smob->show_command);
     }
-  CATCH (except, RETURN_MASK_ALL)
+  catch (const gdb_exception &except)
     {
-      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+      exc = unpack (except);
     }
-  END_CATCH
 
+  GDBSCM_HANDLE_GDB_EXCEPTION (exc);
   /* Note: At this point the parameter exists in gdb.
      So no more errors after this point.  */
 
@@ -1057,22 +1061,21 @@ gdbscm_parameter_value (SCM self)
       struct cmd_list_element *alias, *prefix, *cmd;
       char *newarg;
       int found = -1;
-      struct gdb_exception except = exception_none;
+      gdbscm_gdb_exception except {};
 
       gdb::unique_xmalloc_ptr<char> name
 	= gdbscm_scm_to_host_string (self, NULL, &except_scm);
       if (name == NULL)
 	gdbscm_throw (except_scm);
       newarg = concat ("show ", name.get (), (char *) NULL);
-      TRY
+      try
 	{
 	  found = lookup_cmd_composition (newarg, &alias, &prefix, &cmd);
 	}
-      CATCH (ex, RETURN_MASK_ALL)
+      catch (const gdb_exception &ex)
 	{
-	  except = ex;
+	  except = unpack (ex);
 	}
-      END_CATCH
 
       xfree (newarg);
       GDBSCM_HANDLE_GDB_EXCEPTION (except);

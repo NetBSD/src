@@ -1,5 +1,5 @@
 /* Utility to load a file into the simulator.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -101,7 +101,7 @@ sim_load_file (SIM_DESC sd, const char *myname, host_callback *callback,
 	{
 	  bfd_size_type size;
 
-	  size = bfd_get_section_size (s);
+	  size = bfd_section_size (s);
 	  if (size > 0)
 	    {
 	      unsigned char *buffer;
@@ -119,13 +119,13 @@ sim_load_file (SIM_DESC sd, const char *myname, host_callback *callback,
 		  return NULL;
 		}
 	      if (lma_p)
-		lma = bfd_section_lma (result_bfd, s);
+		lma = bfd_section_lma (s);
 	      else
-		lma = bfd_section_vma (result_bfd, s);
+		lma = bfd_section_vma (s);
 	      if (verbose_p)
 		{
 		  xprintf (callback, "Loading section %s, size 0x%lx %s ",
-			   bfd_get_section_name (result_bfd, s),
+			   bfd_section_name (s),
 			   (unsigned long) size,
 			   (lma_p ? "lma" : "vma"));
 		  xprintf_bfd_vma (callback, lma);

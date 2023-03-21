@@ -1,3 +1,20 @@
+2020-08-07  Jozef Lawrynowicz  <jozef.l@mittosystems.com>
+
+	* msp430-sim.c (sim_open): Increase the size of the main memory region
+	to 0xFAC0.
+
+2020-08-05  Jozef Lawrynowicz  <jozef.l@mittosystems.com>
+
+	* msp430-sim.c (put_op): For unsigned multiplication, explicitly cast
+	operands to the unsigned type before multiplying.
+	* msp430-sim.h (struct msp430_cpu_state): Fix types used to store hwmult
+	operands.
+
+2020-01-22  Jozef Lawrynowicz  <jozef.l@mittosystems.com>
+
+	* msp430-sim.c (msp430_step_once): Ignore the carry flag when executing
+	an RRC instruction, if the ZC bit of the extension word is set.
+
 2017-09-06  John Baldwin  <jhb@FreeBSD.org>
 
 	* configure: Regenerate.

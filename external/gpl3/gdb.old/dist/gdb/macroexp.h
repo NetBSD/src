@@ -1,5 +1,5 @@
 /* Interface to C preprocessor macro expansion for GDB.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -21,38 +21,26 @@
 #ifndef MACROEXP_H
 #define MACROEXP_H
 
-/* A function for looking up preprocessor macro definitions.  Return
-   the preprocessor definition of NAME in scope according to BATON, or
-   zero if NAME is not defined as a preprocessor macro.
+struct macro_scope;
 
-   The caller must not free or modify the definition returned.  It is
-   probably unwise for the caller to hold pointers to it for very
-   long; it probably lives in some objfile's obstacks.  */
-typedef struct macro_definition *(macro_lookup_ftype) (const char *name,
-                                                       void *baton);
+/* Expand any preprocessor macros in SOURCE (a null-terminated string), and
+   return the expanded text.
 
+   Use SCOPE to find identifiers' preprocessor definitions.
 
-/* Expand any preprocessor macros in SOURCE, and return the expanded
-   text.  Use LOOKUP_FUNC and LOOKUP_FUNC_BATON to find identifiers'
-   preprocessor definitions.  SOURCE is a null-terminated string.  The
-   result is a null-terminated string, allocated using xmalloc; it is
-   the caller's responsibility to free it.  */
+   The result is a null-terminated string.  */
 gdb::unique_xmalloc_ptr<char> macro_expand (const char *source,
-					    macro_lookup_ftype *lookup_func,
-					    void *lookup_func_baton);
+					    const macro_scope &scope);
 
+/* Expand all preprocessor macro references that appear explicitly in SOURCE
+   (a null-terminated string), but do not expand any new macro references
+   introduced by that first level of expansion.
 
-/* Expand all preprocessor macro references that appear explicitly in
-   SOURCE, but do not expand any new macro references introduced by
-   that first level of expansion.  Use LOOKUP_FUNC and
-   LOOKUP_FUNC_BATON to find identifiers' preprocessor definitions.
-   SOURCE is a null-terminated string.  The result is a
-   null-terminated string, allocated using xmalloc; it is the caller's
-   responsibility to free it.  */
+   Use SCOPE to find identifiers' preprocessor definitions.
+
+   The result is a null-terminated string.  */
 gdb::unique_xmalloc_ptr<char> macro_expand_once (const char *source,
-						 macro_lookup_ftype *lookup_func,
-						 void *lookup_func_baton);
-
+						 const macro_scope &scope);
 
 /* If the null-terminated string pointed to by *LEXPTR begins with a
    macro invocation, return the result of expanding that invocation as
@@ -61,9 +49,9 @@ gdb::unique_xmalloc_ptr<char> macro_expand_once (const char *source,
    contains no further macro invocations.
 
    Otherwise, if *LEXPTR does not start with a macro invocation,
-   return zero, and leave *LEXPTR unchanged.
+   return nullptr, and leave *LEXPTR unchanged.
 
-   Use LOOKUP_FUNC and LOOKUP_BATON to find macro definitions.
+   Use SCOPE to find macro definitions.
 
    If this function returns a string, the caller is responsible for
    freeing it, using xfree.
@@ -80,9 +68,8 @@ gdb::unique_xmalloc_ptr<char> macro_expand_once (const char *source,
    much have to do tokenization to find the end of the string that
    needs to be macro-expanded.  Our C/C++ tokenizer isn't really
    designed to be called by anything but the yacc parser engine.  */
-char *macro_expand_next (const char **lexptr,
-                         macro_lookup_ftype *lookup_func,
-                         void *lookup_baton);
+gdb::unique_xmalloc_ptr<char> macro_expand_next (const char **lexptr,
+						 const macro_scope &scope);
 
 /* Functions to classify characters according to cpp rules.  */
 
@@ -91,9 +78,7 @@ int macro_is_identifier_nondigit (int c);
 int macro_is_digit (int c);
 
 
-/* Stringify STR according to C rules and return an xmalloc'd pointer
-   to the result.  */
-
-char *macro_stringify (const char *str);
+/* Stringify STR according to C rules and return a null-terminated string.  */
+gdb::unique_xmalloc_ptr<char> macro_stringify (const char *str);
 
 #endif /* MACROEXP_H */

@@ -1,4 +1,4 @@
-# Copyright 1999-2019 Free Software Foundation, Inc.
+# Copyright 1999-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,7 +55,6 @@ proc mi_gdb_exit {} {
 proc mi_uncatched_gdb_exit {} {
     global GDB
     global INTERNAL_GDBFLAGS GDBFLAGS
-    global verbose
     global gdb_spawn_id gdb_main_spawn_id
     global mi_spawn_id inferior_spawn_id
     global gdb_prompt
@@ -185,7 +184,7 @@ proc mi_gdb_start_separate_mi_tty { args } {
 # get really slow.  Give gdb at least 3 minutes to start up.
 #
 proc default_mi_gdb_start { args } {
-    global verbose use_gdb_stub
+    global use_gdb_stub
     global GDB
     global INTERNAL_GDBFLAGS GDBFLAGS
     global gdb_prompt
@@ -227,24 +226,19 @@ proc default_mi_gdb_start { args } {
 	sid_start
     }
 
-    verbose "Spawning $GDB $INTERNAL_GDBFLAGS $GDBFLAGS $MIFLAGS"
-
     if [info exists gdb_spawn_id] {
 	return 0
     }
 
-    if ![is_remote host] {
-	if { [which $GDB] == 0 } then {
-	    perror "$GDB does not exist."
-	    exit 1
+    save_vars { GDBFLAGS } {
+	append GDBFLAGS " $MIFLAGS"
+
+	set res [gdb_spawn]
+	if { $res != 0} {
+	    return $res
 	}
     }
 
-    set res [remote_spawn host "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS $MIFLAGS [host_info gdb_opts]"]
-    if { $res < 0 || $res == "" } {
-	perror "Spawning $GDB failed."
-	return 1
-    }
     gdb_expect {
 	-re "~\"GNU.*\r\n~\".*$mi_gdb_prompt$" {
 	    # We have a new format mi startup prompt.  If we are
@@ -253,6 +247,7 @@ proc default_mi_gdb_start { args } {
 	    if { $MIFLAGS == "-i=mi1" } {
 		perror "(mi startup) Got unexpected new mi prompt."
 		remote_close host
+		unset gdb_spawn_id
 		return -1
 	    }
 	    verbose "GDB initialized."
@@ -264,6 +259,7 @@ proc default_mi_gdb_start { args } {
 	    if { $MIFLAGS != "-i=mi1" } {
 		perror "(mi startup) Got unexpected old mi prompt."
 		remote_close host
+		unset gdb_spawn_id
 		return -1
 	    }
 	    verbose "GDB initialized."
@@ -271,22 +267,24 @@ proc default_mi_gdb_start { args } {
 	-re ".*unrecognized option.*for a complete list of options." {
 	    untested "skip mi tests (not compiled with mi support)."
 	    remote_close host
+	    unset gdb_spawn_id
 	    return -1
 	}
 	-re ".*Interpreter `mi' unrecognized." {
 	    untested "skip mi tests (not compiled with mi support)."
 	    remote_close host
+	    unset gdb_spawn_id
 	    return -1
 	}
 	timeout {
 	    perror "(timeout) GDB never initialized after 10 seconds."
 	    remote_close host
+	    unset gdb_spawn_id
 	    return -1
 	}
     }
-    set gdb_spawn_id $res
-    set gdb_main_spawn_id $res
-    set mi_spawn_id $res
+    set gdb_main_spawn_id $gdb_spawn_id
+    set mi_spawn_id $gdb_spawn_id
 
     # FIXME: mi output does not go through pagers, so these can be removed.
     # force the height to "unlimited", so no pagers get used
@@ -482,7 +480,6 @@ proc mi_gdb_target_cmd { targetname serialport } {
 # return a -1 if anything goes wrong.
 #
 proc mi_gdb_file_cmd { arg } {
-    global verbose
     global loadpath
     global loadfile
     global GDB
@@ -553,7 +550,6 @@ proc mi_gdb_file_cmd { arg } {
 # return a -1 if anything goes wrong.
 #
 proc mi_gdb_target_load { } {
-    global verbose
     global loadpath
     global loadfile
     global GDB
@@ -1221,10 +1217,15 @@ proc mi_expect_stop { reason func args file line extra test } {
     set args "\\\[$args\\\]"
 
     set bn ""
+    set ebn ""
     if { $reason == "breakpoint-hit" } {
 	set bn {bkptno="[0-9]+",}
     } elseif { $reason == "solib-event" } {
 	set bn ".*"
+    } elseif { $reason == "exception-caught" } {
+	set ebn {bkptno="[0-9]+",}
+	set bn ".*"
+	set reason "breakpoint-hit"
     }
 
     set r ""
@@ -1235,9 +1236,9 @@ proc mi_expect_stop { reason func args file line extra test } {
 
     set a $after_reason
 
-    verbose -log "mi_expect_stop: expecting: \\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,(?:file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"$line\",arch=\"$any\"|from=\"$file\")\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re"
+    verbose -log "mi_expect_stop: expecting: \\*stopped,${ebn}${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,(?:file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"$line\",arch=\"$any\"|from=\"$file\")\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re"
     gdb_expect {
-	-re "\\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,(?:file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"($line)\",arch=\"$any\"|from=\"$file\")\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re" {
+	-re "\\*stopped,${ebn}${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$func\",args=$args,(?:file=\"$any$file\",fullname=\"${fullname_syntax}$file\",line=\"($line)\",arch=\"$any\"|from=\"$file\")\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re" {
 	    pass "$test"
 	    if {[array names expect_out "2,string"] != ""} {
 		return $expect_out(2,string)
@@ -1245,7 +1246,7 @@ proc mi_expect_stop { reason func args file line extra test } {
 	    # No debug info available but $file does match.
 	    return 0
 	}
-	-re "\\*stopped,${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$any\",args=\[\\\[\{\]$any\[\\\]\}\],file=\"$any\",fullname=\"${fullname_syntax}$any\",line=\"\[0-9\]*\",arch=\"$any\"\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re" {
+	-re "\\*stopped,${ebn}${r}${a}${bn}frame=\{addr=\"$hex\",func=\"$any\",args=\[\\\[\{\]$any\[\\\]\}\],file=\"$any\",fullname=\"${fullname_syntax}$any\",line=\"\[0-9\]*\",arch=\"$any\"\}$after_stopped,thread-id=\"$decimal\",stopped-threads=$any\r\n($thread_selected_re|$breakpoint_re)*$prompt_re" {
 	    verbose -log "got $expect_out(buffer)"
 	    fail "$test (stopped at wrong place)"
 	    return -1
@@ -1370,6 +1371,15 @@ proc mi0_continue_to { bkptno func args file line test } {
 
 proc mi_create_breakpoint {location test args} {
     set bp [eval mi_make_breakpoint $args]
+    mi_gdb_test "222-break-insert $location" "222\\^done,$bp" $test
+    return $bp
+}
+
+# Like mi_create_breakpoint, but creates a breakpoint with multiple
+# locations using mi_make_breakpoint_multi instead.
+
+proc mi_create_breakpoint_multi {location test args} {
+    set bp [eval mi_make_breakpoint_multi $args]
     mi_gdb_test "222-break-insert $location" "222\\^done,$bp" $test
     return $bp
 }
@@ -2475,36 +2485,39 @@ proc mi_build_kv_pairs {attr_list {joiner ,}} {
     return "[join $l $joiner]"
 }
 
-# Construct a breakpoint regexp.  This may be used to test the output of
-# -break-insert, -dprintf-insert, or -break-info.
+# Construct a breakpoint location regexp.  This may be used along with
+# mi_make_breakpoint_multi to test the output of -break-insert,
+# -dprintf-insert, or -break-info with breapoints with multiple
+# locations.
 #
-# All arguments for the breakpoint may be specified using the options
-# number, type, disp, enabled, addr, func, file, fullanme, line,
-# thread-groups, cond, evaluated-by, times, ignore, script,
-# and original-location.
+# All arguments for the breakpoint location may be specified using the
+# options number, enabled, addr, func, file, fullname, line and
+# thread-groups.
 #
-# Only if -script and -ignore are given will they appear in the output.
-# Otherwise, this procedure will skip them using ".*".
-#
-# Example: mi_make_breakpoint -number 2 -file ".*/myfile.c" -line 3
-# will return the breakpoint:
-# bkpt={number="2",type=".*",disp=".*",enabled=".*",addr=".*",func=".*",
-#       file=".*/myfile.c",fullname=".*",line="3",thread-groups=\[.*\],
-#       times="0".*original-location=".*"}
+# Example: mi_make_breakpoint_loc -number 2.1 -file ".*/myfile.c" -line 3
+# will return the breakpoint location:
+# {number="2.1",enabled=".*",addr=".*",func=".*",
+#       file=".*/myfile.c",fullname=".*",line="3",thread-groups=\[.*\]}
 
-proc mi_make_breakpoint {args} {
-    parse_args {{number .*} {type .*} {disp .*} {enabled .*} {addr .*}
+proc mi_make_breakpoint_loc {args} {
+    parse_args {{number .*} {enabled .*} {addr .*}
 	{func .*} {file .*} {fullname .*} {line .*}
-	{thread-groups \\\[.*\\\]} {times .*} {ignore 0}
-	{script ""} {original-location .*} {cond ""} {evaluated-by ""}}
+	{thread-groups \\\[.*\\\]}}
 
     set attr_list {}
-    foreach attr [list number type disp enabled addr func file \
+    foreach attr [list number enabled addr func file \
 		      fullname line thread-groups] {
 	lappend attr_list $attr [set $attr]
     }
 
-    set result "bkpt={[mi_build_kv_pairs $attr_list]"
+    return "{[mi_build_kv_pairs $attr_list]}"
+}
+
+# Bits shared between mi_make_breakpoint and mi_make_breakpoint_multi.
+
+proc mi_make_breakpoint_1 {attr_list cond evaluated-by times \
+			   ignore script original-location} {
+    set result "bkpt=\\\{[mi_build_kv_pairs $attr_list]"
 
     # There are always exceptions.
 
@@ -2544,7 +2557,88 @@ proc mi_make_breakpoint {args} {
     }
     append result [mi_build_kv_pairs \
 		       [list "original-location" ${original-location}]]
-    append result "}"
+
+    return $result
+}
+
+
+# Construct a breakpoint regexp, for a breakpoint with multiple
+# locations.  This may be used to test the output of -break-insert,
+# -dprintf-insert, or -break-info with breakpoints with multiple
+# locations.
+#
+# All arguments for the breakpoint may be specified using the options
+# number, type, disp, enabled, func, cond, evaluated-by, times,
+# ignore, script and locations.
+#
+# Only if -script and -ignore are given will they appear in the output.
+# Otherwise, this procedure will skip them using ".*".
+#
+# Example: mi_make_breakpoint_multi -number 2 -locations "$loc"
+# will return the breakpoint:
+# bkpt={number="2",type=".*",disp=".*",enabled=".*",addr="<MULTIPLE>",
+#       times="0".*original-location=".*",locations=$loc}
+#
+# You can construct the list of locations with mi_make_breakpoint_loc.
+
+proc mi_make_breakpoint_multi {args} {
+    parse_args {{number .*} {type .*} {disp .*} {enabled .*}
+	{times .*} {ignore 0}
+	{script ""} {original-location .*} {cond ""} {evaluated-by ""}
+	{locations .*}}
+
+    set attr_list {}
+    foreach attr [list number type disp enabled] {
+	lappend attr_list $attr [set $attr]
+    }
+
+    lappend attr_list "addr" "<MULTIPLE>"
+
+    set result [mi_make_breakpoint_1 \
+		    $attr_list $cond ${evaluated-by} $times \
+		    $ignore $script ${original-location}]
+
+    append result ","
+    append result [mi_build_kv_pairs [list "locations" $locations]]
+
+    append result "\\\}"
+    return $result
+}
+
+# Construct a breakpoint regexp.  This may be used to test the output of
+# -break-insert, -dprintf-insert, or -break-info.
+#
+# All arguments for the breakpoint may be specified using the options
+# number, type, disp, enabled, addr, func, file, fullanme, line,
+# thread-groups, cond, evaluated-by, times, ignore, script,
+# and original-location.
+#
+# Only if -script and -ignore are given will they appear in the output.
+# Otherwise, this procedure will skip them using ".*".
+#
+# Example: mi_make_breakpoint -number 2 -file ".*/myfile.c" -line 3
+# will return the breakpoint:
+# bkpt={number="2",type=".*",disp=".*",enabled=".*",addr=".*",func=".*",
+#       file=".*/myfile.c",fullname=".*",line="3",thread-groups=\[.*\],
+#       times="0".*original-location=".*"}
+
+proc mi_make_breakpoint {args} {
+    parse_args {{number .*} {type .*} {disp .*} {enabled .*} {addr .*}
+	{func .*} {file .*} {fullname .*} {line .*}
+	{thread-groups \\\[.*\\\]} {times .*} {ignore 0}
+	{script ""} {original-location .*} {cond ""} {evaluated-by ""}}
+
+    set attr_list {}
+    foreach attr [list number type disp enabled addr func file \
+		      fullname line thread-groups] {
+	lappend attr_list $attr [set $attr]
+    }
+
+    set result [mi_make_breakpoint_1 \
+		    $attr_list $cond ${evaluated-by} $times \
+		    $ignore $script ${original-location}]
+
+    append result "\\\}"
     return $result
 }
 
@@ -2594,6 +2688,13 @@ proc mi_make_breakpoint_table {bp_list} {
 proc mi_skip_python_tests {} {
     global mi_gdb_prompt
     return [skip_python_tests_prompt "$mi_gdb_prompt$"]
+}
+
+# As skip_libstdcxx_probe_tests_prompt, with mi_gdb_prompt.
+
+proc mi_skip_libstdcxx_probe_tests {} {
+    global mi_gdb_prompt
+    return [skip_libstdcxx_probe_tests_prompt "$mi_gdb_prompt$"]
 }
 
 # Check whether we're testing with the remote or extended-remote

@@ -1,6 +1,6 @@
 /* Find a variable's value in memory, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,8 +31,8 @@
 #include "block.h"
 #include "objfiles.h"
 #include "language.h"
-#include "dwarf2loc.h"
-#include "common/selftest.h"
+#include "dwarf2/loc.h"
+#include "gdbsupport/selftest.h"
 
 /* Basic byte-swapping routines.  All 'extract' functions return a
    host-format integer from a target-format integer at ADDR which is
@@ -153,7 +153,7 @@ extract_long_unsigned_integer (const gdb_byte *addr, int orig_len,
 CORE_ADDR
 extract_typed_address (const gdb_byte *buf, struct type *type)
 {
-  if (TYPE_CODE (type) != TYPE_CODE_PTR && !TYPE_IS_REFERENCE (type))
+  if (type->code () != TYPE_CODE_PTR && !TYPE_IS_REFERENCE (type))
     internal_error (__FILE__, __LINE__,
 		    _("extract_typed_address: "
 		    "type is not a pointer or reference"));
@@ -206,7 +206,7 @@ template void store_integer (gdb_byte *addr, int len,
 void
 store_typed_address (gdb_byte *buf, struct type *type, CORE_ADDR addr)
 {
-  if (TYPE_CODE (type) != TYPE_CODE_PTR && !TYPE_IS_REFERENCE (type))
+  if (type->code () != TYPE_CODE_PTR && !TYPE_IS_REFERENCE (type))
     internal_error (__FILE__, __LINE__,
 		    _("store_typed_address: "
 		    "type is not a pointer or reference"));
@@ -218,7 +218,7 @@ store_typed_address (gdb_byte *buf, struct type *type, CORE_ADDR addr)
    bytes.  If SOURCE_SIZE is greater than DEST_SIZE, then truncate the most
    significant bytes.  If SOURCE_SIZE is less than DEST_SIZE then either sign
    or zero extended according to IS_SIGNED.  Values are stored in memory with
-   endianess BYTE_ORDER.  */
+   endianness BYTE_ORDER.  */
 
 void
 copy_integer_to_size (gdb_byte *dest, int dest_size, const gdb_byte *source,
@@ -257,7 +257,7 @@ copy_integer_to_size (gdb_byte *dest, int dest_size, const gdb_byte *source,
 
 /* Return a `value' with the contents of (virtual or cooked) register
    REGNUM as found in the specified FRAME.  The register's type is
-   determined by register_type().  */
+   determined by register_type ().  */
 
 struct value *
 value_of_register (int regnum, struct frame_info *frame)
@@ -277,7 +277,7 @@ value_of_register (int regnum, struct frame_info *frame)
 
 /* Return a `value' with the contents of (virtual or cooked) register
    REGNUM as found in the specified FRAME.  The register's type is
-   determined by register_type().  The value is not fetched.  */
+   determined by register_type ().  The value is not fetched.  */
 
 struct value *
 value_of_register_lazy (struct frame_info *frame, int regnum)
@@ -291,6 +291,14 @@ value_of_register_lazy (struct frame_info *frame, int regnum)
   gdb_assert (frame != NULL);
 
   next_frame = get_next_frame_sentinel_okay (frame);
+
+  /* In some cases NEXT_FRAME may not have a valid frame-id yet.  This can
+     happen if we end up trying to unwind a register as part of the frame
+     sniffer.  The only time that we get here without a valid frame-id is
+     if NEXT_FRAME is an inline frame.  If this is the case then we can
+     avoid getting into trouble here by skipping past the inline frames.  */
+  while (get_frame_type (next_frame) == INLINE_FRAME)
+    next_frame = get_next_frame_sentinel_okay (next_frame);
 
   /* We should have a valid next frame.  */
   gdb_assert (frame_id_p (get_frame_id (next_frame)));
@@ -309,7 +317,7 @@ CORE_ADDR
 unsigned_pointer_to_address (struct gdbarch *gdbarch,
 			     struct type *type, const gdb_byte *buf)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  enum bfd_endian byte_order = type_byte_order (type);
 
   return extract_unsigned_integer (buf, TYPE_LENGTH (type), byte_order);
 }
@@ -318,7 +326,7 @@ CORE_ADDR
 signed_pointer_to_address (struct gdbarch *gdbarch,
 			   struct type *type, const gdb_byte *buf)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  enum bfd_endian byte_order = type_byte_order (type);
 
   return extract_signed_integer (buf, TYPE_LENGTH (type), byte_order);
 }
@@ -329,7 +337,7 @@ void
 unsigned_address_to_pointer (struct gdbarch *gdbarch, struct type *type,
 			     gdb_byte *buf, CORE_ADDR addr)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  enum bfd_endian byte_order = type_byte_order (type);
 
   store_unsigned_integer (buf, TYPE_LENGTH (type), byte_order, addr);
 }
@@ -338,7 +346,7 @@ void
 address_to_signed_pointer (struct gdbarch *gdbarch, struct type *type,
 			   gdb_byte *buf, CORE_ADDR addr)
 {
-  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  enum bfd_endian byte_order = type_byte_order (type);
 
   store_signed_integer (buf, TYPE_LENGTH (type), byte_order, addr);
 }
@@ -446,7 +454,7 @@ follow_static_link (struct frame_info *frame,
       QUIT;
 
       /* If we don't know how to compute FRAME's base address, don't give up:
-	 maybe the frame we are looking for is upper in the stace frame.  */
+	 maybe the frame we are looking for is upper in the stack frame.  */
       if (framefunc != NULL
 	  && SYMBOL_BLOCK_OPS (framefunc) != NULL
 	  && SYMBOL_BLOCK_OPS (framefunc)->get_frame_base != NULL
@@ -566,9 +574,9 @@ get_hosting_frame (struct symbol *var, const struct block *var_block,
 	{
 	  if (BLOCK_FUNCTION (var_block)
 	      && !block_inlined_p (var_block)
-	      && SYMBOL_PRINT_NAME (BLOCK_FUNCTION (var_block)))
+	      && BLOCK_FUNCTION (var_block)->print_name ())
 	    error (_("No frame is currently executing in block %s."),
-		   SYMBOL_PRINT_NAME (BLOCK_FUNCTION (var_block)));
+		   BLOCK_FUNCTION (var_block)->print_name ());
 	  else
 	    error (_("No frame is currently executing in specified"
 		     " block"));
@@ -578,12 +586,12 @@ get_hosting_frame (struct symbol *var, const struct block *var_block,
   return frame;
 }
 
-/* A default implementation for the "la_read_var_value" hook in
-   the language vector which should work in most situations.  */
+/* See language.h.  */
 
 struct value *
-default_read_var_value (struct symbol *var, const struct block *var_block,
-			struct frame_info *frame)
+language_defn::read_var_value (struct symbol *var,
+			       const struct block *var_block,
+			       struct frame_info *frame) const
 {
   struct value *v;
   struct type *type = SYMBOL_TYPE (var);
@@ -601,7 +609,7 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
   if (sym_need == SYMBOL_NEEDS_FRAME)
     gdb_assert (frame != NULL);
   else if (sym_need == SYMBOL_NEEDS_REGISTERS && !target_has_registers)
-    error (_("Cannot read `%s' without registers"), SYMBOL_PRINT_NAME (var));
+    error (_("Cannot read `%s' without registers"), var->print_name ());
 
   if (frame != NULL)
     frame = get_hosting_frame (var, var_block, frame);
@@ -615,12 +623,12 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
       if (is_dynamic_type (type))
 	{
 	  /* Value is a constant byte-sequence and needs no memory access.  */
-	  type = resolve_dynamic_type (type, NULL, /* Unused address.  */ 0);
+	  type = resolve_dynamic_type (type, {}, /* Unused address.  */ 0);
 	}
       /* Put the constant back in target format. */
       v = allocate_value (type);
       store_signed_integer (value_contents_raw (v), TYPE_LENGTH (type),
-			    gdbarch_byte_order (get_type_arch (type)),
+			    type_byte_order (type),
 			    (LONGEST) SYMBOL_VALUE (var));
       VALUE_LVAL (v) = not_lval;
       return v;
@@ -647,7 +655,7 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
       if (is_dynamic_type (type))
 	{
 	  /* Value is a constant byte-sequence and needs no memory access.  */
-	  type = resolve_dynamic_type (type, NULL, /* Unused address.  */ 0);
+	  type = resolve_dynamic_type (type, {}, /* Unused address.  */ 0);
 	}
       v = allocate_value (type);
       memcpy (value_contents_raw (v), SYMBOL_VALUE_BYTES (var),
@@ -668,7 +676,7 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
       addr = get_frame_args_address (frame);
       if (!addr)
 	error (_("Unknown argument list address for `%s'."),
-	       SYMBOL_PRINT_NAME (var));
+	       var->print_name ());
       addr += SYMBOL_VALUE (var);
       break;
 
@@ -680,7 +688,7 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
 	argref = get_frame_args_address (frame);
 	if (!argref)
 	  error (_("Unknown argument list address for `%s'."),
-		 SYMBOL_PRINT_NAME (var));
+		 var->print_name ());
 	argref += SYMBOL_VALUE (var);
 	ref = value_at (lookup_pointer_type (type), argref);
 	addr = value_as_address (ref);
@@ -694,7 +702,7 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
 
     case LOC_TYPEDEF:
       error (_("Cannot look up value of a typedef `%s'."),
-	     SYMBOL_PRINT_NAME (var));
+	     var->print_name ());
       break;
 
     case LOC_BLOCK:
@@ -721,7 +729,7 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
 
 	    if (regval == NULL)
 	      error (_("Value of register variable not available for `%s'."),
-	             SYMBOL_PRINT_NAME (var));
+	             var->print_name ());
 
 	    addr = value_as_address (regval);
 	  }
@@ -731,7 +739,7 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
 
 	    if (regval == NULL)
 	      error (_("Value of register variable not available for `%s'."),
-	             SYMBOL_PRINT_NAME (var));
+	             var->print_name ());
 	    return regval;
 	  }
       }
@@ -747,7 +755,7 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
 	struct obj_section *obj_section;
 
 	memset (&lookup_data, 0, sizeof (lookup_data));
-	lookup_data.name = SYMBOL_LINKAGE_NAME (var);
+	lookup_data.name = var->linkage_name ();
 
 	gdbarch_iterate_over_objfiles_in_search_order
 	  (symbol_arch (var),
@@ -767,7 +775,7 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
 	       can't be NULL.  */
 	    gdb_assert (flavour_name != NULL);
 	    error (_("Missing %s symbol \"%s\"."),
-		   flavour_name, SYMBOL_LINKAGE_NAME (var));
+		   flavour_name, var->linkage_name ());
 	  }
 	obj_section = MSYMBOL_OBJ_SECTION (lookup_data.result.objfile, msym);
 	/* Relocate address, unless there is no section or the variable is
@@ -788,12 +796,12 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
 
     case LOC_OPTIMIZED_OUT:
       if (is_dynamic_type (type))
-	type = resolve_dynamic_type (type, NULL, /* Unused address.  */ 0);
+	type = resolve_dynamic_type (type, {}, /* Unused address.  */ 0);
       return allocate_optimized_out_value (type);
 
     default:
       error (_("Cannot look up value of a botched symbol `%s'."),
-	     SYMBOL_PRINT_NAME (var));
+	     var->print_name ());
       break;
     }
 
@@ -801,18 +809,17 @@ default_read_var_value (struct symbol *var, const struct block *var_block,
   return v;
 }
 
-/* Calls VAR's language la_read_var_value hook with the given arguments.  */
+/* Calls VAR's language read_var_value hook with the given arguments.  */
 
 struct value *
 read_var_value (struct symbol *var, const struct block *var_block,
 		struct frame_info *frame)
 {
-  const struct language_defn *lang = language_def (SYMBOL_LANGUAGE (var));
+  const struct language_defn *lang = language_def (var->language ());
 
   gdb_assert (lang != NULL);
-  gdb_assert (lang->la_read_var_value != NULL);
 
-  return lang->la_read_var_value (var, var_block, frame);
+  return lang->read_var_value (var, var_block, frame);
 }
 
 /* Install default attributes for register values.  */
@@ -840,7 +847,7 @@ default_value_from_register (struct gdbarch *gdbarch, struct type *type,
      an integral number of registers.  Otherwise, you need to do
      some fiddling with the last register copied here for little
      endian machines.  */
-  if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG
+  if (type_byte_order (type) == BFD_ENDIAN_BIG
       && len < register_size (gdbarch, regnum))
     /* Big-endian, and we want less than full size.  */
     set_value_offset (value, register_size (gdbarch, regnum) - len);
@@ -1088,8 +1095,9 @@ copy_integer_to_size_test ()
 
 #endif
 
+void _initialize_findvar ();
 void
-_initialize_findvar (void)
+_initialize_findvar ()
 {
 #if GDB_SELF_TEST
   selftests::register_test

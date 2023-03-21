@@ -1,6 +1,6 @@
 /* Disassemble support for GDB.
 
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,8 +29,9 @@
 #include "source.h"
 #include "safe-ctype.h"
 #include <algorithm>
-#include "common/gdb_optional.h"
+#include "gdbsupport/gdb_optional.h"
 #include "valprint.h"
+#include "cli/cli-style.h"
 
 /* Disassemble functions.
    FIXME: We should get rid of all the duplicate code in gdb that does
@@ -162,28 +163,27 @@ gdb_disassembler::dis_asm_print_address (bfd_vma addr,
   print_address (self->arch (), addr, self->stream ());
 }
 
-static int
-compare_lines (const void *mle1p, const void *mle2p)
+static bool
+line_is_less_than (const deprecated_dis_line_entry &mle1,
+		   const deprecated_dis_line_entry &mle2)
 {
-  struct deprecated_dis_line_entry *mle1, *mle2;
-  int val;
-
-  mle1 = (struct deprecated_dis_line_entry *) mle1p;
-  mle2 = (struct deprecated_dis_line_entry *) mle2p;
+  bool val;
 
   /* End of sequence markers have a line number of 0 but don't want to
      be sorted to the head of the list, instead sort by PC.  */
-  if (mle1->line == 0 || mle2->line == 0)
+  if (mle1.line == 0 || mle2.line == 0)
     {
-      val = mle1->start_pc - mle2->start_pc;
-      if (val == 0)
-        val = mle1->line - mle2->line;
+      if (mle1.start_pc != mle2.start_pc)
+	val = mle1.start_pc < mle2.start_pc;
+    else
+        val = mle1.line < mle2.line;
     }
   else
     {
-      val = mle1->line - mle2->line;
-      if (val == 0)
-        val = mle1->start_pc - mle2->start_pc;
+      if (mle1.line != mle2.line)
+	val = mle1.line < mle2.line;
+      else
+        val = mle1.start_pc < mle2.start_pc;
     }
   return val;
 }
@@ -191,8 +191,7 @@ compare_lines (const void *mle1p, const void *mle2p)
 /* See disasm.h.  */
 
 int
-gdb_pretty_print_disassembler::pretty_print_insn (struct ui_out *uiout,
-						  const struct disasm_insn *insn,
+gdb_pretty_print_disassembler::pretty_print_insn (const struct disasm_insn *insn,
 						  gdb_disassembly_flags flags)
 {
   /* parts of the symbolic representation of the address */
@@ -204,54 +203,58 @@ gdb_pretty_print_disassembler::pretty_print_insn (struct ui_out *uiout,
   struct gdbarch *gdbarch = arch ();
 
   {
-    ui_out_emit_tuple tuple_emitter (uiout, NULL);
+    ui_out_emit_tuple tuple_emitter (m_uiout, NULL);
     pc = insn->addr;
 
     if (insn->number != 0)
       {
-	uiout->field_fmt ("insn-number", "%u", insn->number);
-	uiout->text ("\t");
+	m_uiout->field_unsigned ("insn-number", insn->number);
+	m_uiout->text ("\t");
       }
 
     if ((flags & DISASSEMBLY_SPECULATIVE) != 0)
       {
 	if (insn->is_speculative)
 	  {
-	    uiout->field_string ("is-speculative", "?");
+	    m_uiout->field_string ("is-speculative", "?");
 
 	    /* The speculative execution indication overwrites the first
 	       character of the PC prefix.
 	       We assume a PC prefix length of 3 characters.  */
 	    if ((flags & DISASSEMBLY_OMIT_PC) == 0)
-	      uiout->text (pc_prefix (pc) + 1);
+	      m_uiout->text (pc_prefix (pc) + 1);
 	    else
-	      uiout->text ("  ");
+	      m_uiout->text ("  ");
 	  }
 	else if ((flags & DISASSEMBLY_OMIT_PC) == 0)
-	  uiout->text (pc_prefix (pc));
+	  m_uiout->text (pc_prefix (pc));
 	else
-	  uiout->text ("   ");
+	  m_uiout->text ("   ");
       }
     else if ((flags & DISASSEMBLY_OMIT_PC) == 0)
-      uiout->text (pc_prefix (pc));
-    uiout->field_core_addr ("address", gdbarch, pc);
+      m_uiout->text (pc_prefix (pc));
+    m_uiout->field_core_addr ("address", gdbarch, pc);
 
     std::string name, filename;
-    if (!build_address_symbolic (gdbarch, pc, 0, &name, &offset, &filename,
-				 &line, &unmapped))
+    bool omit_fname = ((flags & DISASSEMBLY_OMIT_FNAME) != 0);
+    if (!build_address_symbolic (gdbarch, pc, false, omit_fname, &name,
+                                 &offset, &filename, &line, &unmapped))
       {
 	/* We don't care now about line, filename and unmapped.  But we might in
 	   the future.  */
-	uiout->text (" <");
-	if ((flags & DISASSEMBLY_OMIT_FNAME) == 0)
-	  uiout->field_string ("func-name", name.c_str (),
-			       ui_out_style_kind::FUNCTION);
-	uiout->text ("+");
-	uiout->field_int ("offset", offset);
-	uiout->text (">:\t");
+	m_uiout->text (" <");
+	if (!omit_fname)
+	  m_uiout->field_string ("func-name", name.c_str (),
+				 function_name_style.style ());
+	/* For negative offsets, avoid displaying them as +-N; the sign of
+	   the offset takes the place of the "+" here.  */
+	if (offset >= 0)
+	  m_uiout->text ("+");
+	m_uiout->field_signed ("offset", offset);
+	m_uiout->text (">:\t");
       }
     else
-      uiout->text (":\t");
+      m_uiout->text (":\t");
 
     m_insn_stb.clear ();
 
@@ -275,15 +278,15 @@ gdb_pretty_print_disassembler::pretty_print_insn (struct ui_out *uiout,
 	    spacer = " ";
 	  }
 
-	uiout->field_stream ("opcodes", m_opcode_stb);
-	uiout->text ("\t");
+	m_uiout->field_stream ("opcodes", m_opcode_stb);
+	m_uiout->text ("\t");
       }
     else
       size = m_di.print_insn (pc);
 
-    uiout->field_stream ("inst", m_insn_stb);
+    m_uiout->field_stream ("inst", m_insn_stb);
   }
-  uiout->text ("\n");
+  m_uiout->text ("\n");
 
   return size;
 }
@@ -299,13 +302,13 @@ dump_insns (struct gdbarch *gdbarch,
   memset (&insn, 0, sizeof (insn));
   insn.addr = low;
 
-  gdb_pretty_print_disassembler disasm (gdbarch);
+  gdb_pretty_print_disassembler disasm (gdbarch, uiout);
 
   while (insn.addr < high && (how_many < 0 || num_displayed < how_many))
     {
       int size;
 
-      size = disasm.pretty_print_insn (uiout, &insn, flags);
+      size = disasm.pretty_print_insn (&insn, flags);
       if (size <= 0)
 	break;
 
@@ -400,8 +403,7 @@ do_mixed_source_and_assembly_deprecated
   /* Now, sort mle by line #s (and, then by addresses within lines).  */
 
   if (out_of_order)
-    qsort (mle, newlines, sizeof (struct deprecated_dis_line_entry),
-	   compare_lines);
+    std::sort (mle, mle + newlines, line_is_less_than);
 
   /* Now, for each line entry, emit the specified lines (unless
      they have been emitted before), followed by the assembly code
@@ -760,12 +762,12 @@ gdb_disassembler::gdb_disassembler (struct gdbarch *gdbarch,
   m_di.memory_error_func = dis_asm_memory_error;
   m_di.print_address_func = dis_asm_print_address;
   /* NOTE: cagney/2003-04-28: The original code, from the old Insight
-     disassembler had a local optomization here.  By default it would
+     disassembler had a local optimization here.  By default it would
      access the executable file, instead of the target memory (there
      was a growing list of exceptions though).  Unfortunately, the
      heuristic was flawed.  Commands like "disassemble &variable"
      didn't work as they relied on the access going to the target.
-     Further, it has been supperseeded by trust-read-only-sections
+     Further, it has been superseeded by trust-read-only-sections
      (although that should be superseeded by target_trust..._p()).  */
   m_di.read_memory_func = read_memory_func;
   m_di.arch = gdbarch_bfd_arch_info (gdbarch)->arch;
@@ -777,6 +779,11 @@ gdb_disassembler::gdb_disassembler (struct gdbarch *gdbarch,
   if (!m_disassembler_options_holder.empty ())
     m_di.disassembler_options = m_disassembler_options_holder.c_str ();
   disassemble_init_for_target (&m_di);
+}
+
+gdb_disassembler::~gdb_disassembler ()
+{
+  disassemble_free_target (&m_di);
 }
 
 int
@@ -906,7 +913,9 @@ gdb_buffered_insn_length (struct gdbarch *gdbarch,
   gdb_buffered_insn_length_init_dis (gdbarch, &di, insn, max_len, addr,
 				     &disassembler_options_holder);
 
-  return gdbarch_print_insn (gdbarch, addr, &di);
+  int result = gdbarch_print_insn (gdbarch, addr, &di);
+  disassemble_free_target (&di);
+  return result;
 }
 
 char *
@@ -943,7 +952,7 @@ set_disassembler_options (char *prospective_options)
   valid_options_and_args = gdbarch_valid_disassembler_options (gdbarch);
   if (valid_options_and_args == NULL)
     {
-      fprintf_filtered (gdb_stdlog, _("\
+      fprintf_filtered (gdb_stderr, _("\
 'set disassembler-options ...' is not supported on this architecture.\n"));
       return;
     }
@@ -979,7 +988,7 @@ set_disassembler_options (char *prospective_options)
 	  break;
       if (valid_options->name[i] == NULL)
 	{
-	  fprintf_filtered (gdb_stdlog,
+	  fprintf_filtered (gdb_stderr,
 			    _("Invalid disassembler option value: '%s'.\n"),
 			    opt);
 	  return;
@@ -1126,8 +1135,9 @@ disassembler_options_completer (struct cmd_list_element *ignore,
 
 /* Initialization code.  */
 
+void _initialize_disasm ();
 void
-_initialize_disasm (void)
+_initialize_disasm ()
 {
   struct cmd_list_element *cmd;
 
@@ -1136,7 +1146,7 @@ _initialize_disasm (void)
 					 &prospective_options, _("\
 Set the disassembler options.\n\
 Usage: set disassembler-options OPTION [,OPTION]...\n\n\
-See: 'show disassembler-options' for valid option values.\n"), _("\
+See: 'show disassembler-options' for valid option values."), _("\
 Show the disassembler options."), NULL,
 					 set_disassembler_options_sfunc,
 					 show_disassembler_options_sfunc,

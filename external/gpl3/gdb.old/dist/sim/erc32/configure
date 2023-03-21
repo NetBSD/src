@@ -13548,7 +13548,6 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_cv_os_cygwin" >&5
 $as_echo "$sim_cv_os_cygwin" >&6; }
 
-
 # Keep in sync with gdb's configure.ac list.
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for library containing tgetent" >&5
 $as_echo_n "checking for library containing tgetent... " >&6; }

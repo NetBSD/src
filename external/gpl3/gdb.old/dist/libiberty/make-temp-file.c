@@ -1,5 +1,5 @@
 /* Utility to pick a temporary filename prefix.
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
 This file is part of the libiberty library.
 Libiberty is free software; you can redistribute it and/or
@@ -129,10 +129,10 @@ choose_tmpdir (void)
 	base = try_dir (P_tmpdir, base);
 #endif
 
-      /* Try /tmp, /var/tmp, then /usr/tmp.  */
-      base = try_dir (tmp, base);
+      /* Try /var/tmp, /usr/tmp, then /tmp.  */
       base = try_dir (vartmp, base);
       base = try_dir (usrtmp, base);
+      base = try_dir (tmp, base);
       
       /* If all else fails, use the current directory!  */
       if (base == 0)

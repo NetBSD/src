@@ -8,12 +8,15 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-int  should_exit = 0;
+float  bidule = 0.0;
+volatile int  should_exit = 0;
 
 int main ()
 {
   int  local_i = 0;
 
+  /* Cannot sleep a very long time, as attach.exp assumes the
+     process will exit before the standard GDB timeout.  */
   sleep( 10 ); /* System call causes register fetch to fail */
                /* This is a known HPUX "feature"            */
   while (! should_exit)

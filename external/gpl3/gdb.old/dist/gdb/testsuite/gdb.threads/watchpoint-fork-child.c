@@ -1,6 +1,6 @@
 /* Test case for forgotten hw-watchpoints after fork()-off of a process.
 
-   Copyright 2012-2019 Free Software Foundation, Inc.
+   Copyright 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -59,7 +59,9 @@ forkoff (int nr)
     case -1:
       assert (0);
     default:
+#if DEBUG
       printf ("parent%d: %d\n", nr, (int) child);
+#endif
 
       /* Sleep for a while to possibly get incorrectly ATTACH_THREADed by GDB
 	 tracing the child fork with no longer valid thread/lwp entries of the
@@ -95,7 +97,9 @@ forkoff (int nr)
 
       _exit (0);
     case 0:
+#if DEBUG
       printf ("child%d: %d\n", nr, (int) getpid ());
+#endif
 
       /* Let the parent signal us about its success.  Be careful of races.  */
 

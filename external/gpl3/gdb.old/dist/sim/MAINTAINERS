@@ -10,7 +10,6 @@ gdb-patches@sources.redhat.com
         Global Maintainers
 
 Andrew Burgess			andrew.burgess@embecosm.com
-Mike Frysinger			vapier@gentoo.org
 
 	Maintainers for particular sims:
 
@@ -18,6 +17,7 @@ aarch64	        Nick Clifton <nickc@redhat.com>
 aarch64	        Jim Wilson <wilson@tuliptree.org>
 arm	        Nick Clifton <nickc@redhat.com>
 bfin		Mike Frysinger <vapier@gentoo.org>
+bpf		Jose E. Marchesi <jose.marchesi@oracle.com>
 cr16	        M R Swami Reddy <MR.Swami.Reddy@nsc.com>
 frv		Dave Brolley <brolley@redhat.com>
 ft32		James Bowman <james.bowman@ftdichip.com>
@@ -30,6 +30,7 @@ mips I-IV	Maciej W. Rozycki <macro@linux-mips.org>
 moxie		Anthony Green <green@moxielogic.com>
 msp430		Nick Clifton <nickc@redhat.com>
 or1k		Stafford Horne <shorne@gmail.com>
+pru		Dimitar Dimitrov <dimitar@dinux.eu>
 sh		(global maintainers)
 sh64		Dave Brolley <brolley@redhat.com>
 common		Frank Ch. Eigler <fche@redhat.com>
@@ -50,3 +51,4 @@ ppc		Andrew Cagney <cagney@gnu.org>
 rl78		DJ Delorie <dj@redhat.com>
 rx		DJ Delorie <dj@redhat.com>
 v850		DJ Delorie <dj@redhat.com>
+*		Mike Frysinger <vapier@gentoo.org>

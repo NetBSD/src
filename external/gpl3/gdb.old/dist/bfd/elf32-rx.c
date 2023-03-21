@@ -1,5 +1,5 @@
 /* Renesas RX specific support for 32-bit ELF.
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -543,7 +543,7 @@ rx_elf_relocate_section
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (sym->st_name == 0) ? bfd_section_name (input_bfd, sec) : name;
+	  name = sym->st_name == 0 ? bfd_section_name (sec) : name;
 	}
       else
 	{
@@ -576,7 +576,9 @@ rx_elf_relocate_section
 
 	      /* We have already done error checking in rx_table_find().  */
 
-	      buf = (char *) malloc (13 + strlen (name + 20));
+	      buf = (char *) bfd_malloc (13 + strlen (name + 20));
+	      if (buf == NULL)
+		return FALSE;
 
 	      sprintf (buf, "$tablestart$%s", name + 20);
 	      table_start_cache = get_symbol_value (buf,
@@ -618,7 +620,10 @@ rx_elf_relocate_section
 	      idx = (int) (entry_vma - table_start_cache) / 4;
 
 	      /* This will look like $tableentry$<N>$<name> */
-	      buf = (char *) malloc (12 + 20 + strlen (name + 20));
+	      buf = (char *) bfd_malloc (12 + 20 + strlen (name + 20));
+	      if (buf == NULL)
+		return FALSE;
+
 	      sprintf (buf, "$tableentry$%d$%s", idx, name + 20);
 
 	      h = (struct elf_link_hash_entry *) bfd_link_hash_lookup (info->hash, buf, FALSE, FALSE, TRUE);
@@ -1738,7 +1743,7 @@ static bfd_vma
 rx_offset_for_reloc (bfd *		      abfd,
 		     Elf_Internal_Rela *      rel,
 		     Elf_Internal_Shdr *      symtab_hdr,
-		     Elf_External_Sym_Shndx * shndx_buf ATTRIBUTE_UNUSED,
+		     bfd_byte *		      shndx_buf ATTRIBUTE_UNUSED,
 		     Elf_Internal_Sym *	      intsyms,
 		     Elf_Internal_Rela **     lrel,
 		     bfd *		      input_bfd,
@@ -2005,7 +2010,7 @@ elf32_rx_relax_section (bfd *		       abfd,
   bfd_byte *	      free_contents = NULL;
   Elf_Internal_Sym *  intsyms = NULL;
   Elf_Internal_Sym *  free_intsyms = NULL;
-  Elf_External_Sym_Shndx * shndx_buf = NULL;
+  bfd_byte *	      shndx_buf = NULL;
   bfd_vma pc;
   bfd_vma sec_start;
   bfd_vma symval = 0;
@@ -2058,17 +2063,20 @@ elf32_rx_relax_section (bfd *		       abfd,
 
   if (shndx_hdr && shndx_hdr->sh_size != 0)
     {
-      bfd_size_type amt;
+      size_t amt;
 
-      amt = symtab_hdr->sh_info;
-      amt *= sizeof (Elf_External_Sym_Shndx);
-      shndx_buf = (Elf_External_Sym_Shndx *) bfd_malloc (amt);
+      if (_bfd_mul_overflow (symtab_hdr->sh_info,
+			     sizeof (Elf_External_Sym_Shndx), &amt))
+	{
+	  bfd_set_error (bfd_error_file_too_big);
+	  goto error_return;
+	}
+      if (bfd_seek (abfd, shndx_hdr->sh_offset, SEEK_SET) != 0)
+	goto error_return;
+      shndx_buf = _bfd_malloc_and_read (abfd, amt, amt);
       if (shndx_buf == NULL)
 	goto error_return;
-      if (bfd_seek (abfd, shndx_hdr->sh_offset, SEEK_SET) != 0
-	  || bfd_bread (shndx_buf, amt, abfd) != amt)
-	goto error_return;
-      shndx_hdr->contents = (bfd_byte *) shndx_buf;
+      shndx_hdr->contents = shndx_buf;
     }
 
   /* Get a copy of the native relocations.  */
@@ -2932,9 +2940,9 @@ elf32_rx_relax_section (bfd *		       abfd,
 		  break;
 		case 0:
 #if RX_OPCODE_BIG_ENDIAN
-		  imm_val = (ip[0] << 24) | (ip[1] << 16) | (ip[2] << 8) | ip[3];
+		  imm_val = ((unsigned) ip[0] << 24) | (ip[1] << 16) | (ip[2] << 8) | ip[3];
 #else
-		  imm_val = (ip[3] << 24) | (ip[2] << 16) | (ip[1] << 8) | ip[0];
+		  imm_val = ((unsigned) ip[3] << 24) | (ip[2] << 16) | (ip[1] << 8) | ip[0];
 #endif
 		  break;
 		}
@@ -3029,8 +3037,7 @@ elf32_rx_relax_section (bfd *		       abfd,
   return TRUE;
 
  error_return:
-  if (free_contents != NULL)
-    free (free_contents);
+  free (free_contents);
 
   if (shndx_buf != NULL)
     {
@@ -3038,8 +3045,7 @@ elf32_rx_relax_section (bfd *		       abfd,
       free (shndx_buf);
     }
 
-  if (free_intsyms != NULL)
-    free (free_intsyms);
+  free (free_intsyms);
 
   return FALSE;
 }
@@ -3318,8 +3324,7 @@ rx_elf_object_p (bfd * abfd)
 static bfd_boolean
 rx_linux_object_p (bfd * abfd)
 {
-  bfd_default_set_arch_mach (abfd, bfd_arch_rx,
-           elf32_rx_machine (abfd));
+  bfd_default_set_arch_mach (abfd, bfd_arch_rx, elf32_rx_machine (abfd));
   return TRUE;
 }
  
@@ -3333,26 +3338,14 @@ rx_dump_symtab (bfd * abfd, void * internal_syms, void * external_syms)
   Elf_Internal_Sym * isymend;
   Elf_Internal_Sym * isym;
   Elf_Internal_Shdr * symtab_hdr;
-  bfd_boolean free_internal = FALSE, free_external = FALSE;
   char * st_info_str;
   char * st_info_stb_str;
   char * st_other_str;
   char * st_shndx_str;
 
-  if (! internal_syms)
-    {
-      internal_syms = bfd_malloc (1000);
-      free_internal = 1;
-    }
-  if (! external_syms)
-    {
-      external_syms = bfd_malloc (1000);
-      free_external = 1;
-    }
-
   symtab_hdr = &elf_tdata (abfd)->symtab_hdr;
   locsymcount = symtab_hdr->sh_size / get_elf_backend_data (abfd)->s->sizeof_sym;
-  if (free_internal)
+  if (!internal_syms)
     isymbuf = bfd_elf_get_elf_syms (abfd, symtab_hdr,
 				    symtab_hdr->sh_info, 0,
 				    internal_syms, external_syms, NULL);
@@ -3404,10 +3397,6 @@ rx_dump_symtab (bfd * abfd, void * internal_syms, void * external_syms)
 	      isym->st_other, st_other_str,
 	      isym->st_shndx, st_shndx_str);
     }
-  if (free_internal)
-    free (internal_syms);
-  if (free_external)
-    free (external_syms);
 }
 
 char *
@@ -3616,6 +3605,8 @@ rx_set_section_contents (bfd *	       abfd,
       char * cloc = (char *) location;
 
       swapped_data = (char *) bfd_alloc (abfd, count);
+      if (swapped_data == NULL)
+	return FALSE;
 
       for (i = 0; i < count; i += 4)
 	{
@@ -3685,8 +3676,7 @@ rx_final_link (bfd * abfd, struct bfd_link_info * info)
 }
 
 static bfd_boolean
-elf32_rx_modify_program_headers (bfd * abfd ATTRIBUTE_UNUSED,
-				 struct bfd_link_info * info ATTRIBUTE_UNUSED)
+elf32_rx_modify_headers (bfd *abfd, struct bfd_link_info *info)
 {
   const struct elf_backend_data * bed;
   struct elf_obj_tdata * tdata;
@@ -3718,7 +3708,7 @@ elf32_rx_modify_program_headers (bfd * abfd ATTRIBUTE_UNUSED,
 #endif
 	}
 
-  return TRUE;
+  return _bfd_elf_modify_headers (abfd, info);
 }
 
 /* The default literal sections should always be marked as "code" (i.e.,
@@ -3781,7 +3771,9 @@ rx_table_find (struct bfd_hash_entry *vent, void *vinfo)
      find all the related symbols and mark their sections as SEC_KEEP
      so we don't garbage collect them.  */
 
-  buf = (char *) malloc (12 + 10 + strlen (tname));
+  buf = (char *) bfd_malloc (12 + 10 + strlen (tname));
+  if (buf == NULL)
+    return FALSE;
 
   sprintf (buf, "$tableend$%s", tname);
   h = bfd_link_hash_lookup (info->info->hash, buf, FALSE, FALSE, TRUE);
@@ -3910,7 +3902,9 @@ rx_table_map (struct bfd_hash_entry *vent, void *vinfo)
 		+ ent->u.def.section->output_section->vma
 		+ ent->u.def.section->output_offset);
 
-  buf = (char *) malloc (12 + 10 + strlen (tname));
+  buf = (char *) bfd_malloc (12 + 10 + strlen (tname));
+  if (buf == NULL)
+    return FALSE;
 
   sprintf (buf, "$tableend$%s", tname);
   end_addr = get_symbol_value_maybe (buf, info->info);
@@ -3930,8 +3924,21 @@ rx_table_map (struct bfd_hash_entry *vent, void *vinfo)
 
   info->table_start = start_addr;
   info->table_size = (int) (end_addr - start_addr) / 4;
-  info->table_handlers = (bfd_vma *) malloc (info->table_size * sizeof (bfd_vma));
-  info->table_entries = (struct bfd_link_hash_entry **) malloc (info->table_size * sizeof (struct bfd_link_hash_entry));
+  info->table_handlers = (bfd_vma *)
+    bfd_malloc (info->table_size * sizeof (bfd_vma));
+  if (info->table_handlers == NULL)
+    {
+      free (buf);
+      return FALSE;
+    }
+  info->table_entries = (struct bfd_link_hash_entry **)
+    bfd_malloc (info->table_size * sizeof (struct bfd_link_hash_entry));
+  if (info->table_entries == NULL)
+    {
+      free (info->table_handlers);
+      free (buf);
+      return FALSE;
+    }
 
   for (idx = 0; idx < (int) (end_addr - start_addr) / 4; idx ++)
     {
@@ -4038,7 +4045,7 @@ rx_additional_link_map_text (bfd *obfd, struct bfd_link_info *info, FILE *mapfil
 #define elf_backend_relocate_section		rx_elf_relocate_section
 #define elf_symbol_leading_char			('_')
 #define elf_backend_can_gc_sections		1
-#define elf_backend_modify_program_headers	elf32_rx_modify_program_headers
+#define elf_backend_modify_headers		elf32_rx_modify_headers
 
 #define bfd_elf32_bfd_reloc_type_lookup		rx_reloc_type_lookup
 #define bfd_elf32_bfd_reloc_name_lookup		rx_reloc_name_lookup
@@ -4083,6 +4090,6 @@ rx_additional_link_map_text (bfd *obfd, struct bfd_link_info *info, FILE *mapfil
 #define elf_backend_object_p			rx_linux_object_p
 #undef  elf_symbol_leading_char
 #undef	elf32_bed
-#define	elf32_bed 				elf32_rx_le_linux_bed
+#define	elf32_bed				elf32_rx_le_linux_bed
 
 #include "elf32-target.h"

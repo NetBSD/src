@@ -1,4 +1,4 @@
-# Copyright 1997-2019 Free Software Foundation, Inc.
+# Copyright 1997-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,12 +17,13 @@ if {![can_spawn_for_attach]} {
     return 0
 }
 
-standard_testfile attach.c attach2.c
+standard_testfile attach.c attach2.c attach3.c
 set binfile2 ${binfile}2
+set binfile3 ${binfile}3
 set escapedbinfile  [string_to_regexp $binfile]
 
 #execute_anywhere "rm -f ${binfile} ${binfile2}"
-remote_exec build "rm -f ${binfile} ${binfile2}"
+remote_exec build "rm -f ${binfile} ${binfile2} ${binfile3}"
 # For debugging this test
 #
 #log_user 1
@@ -41,6 +42,13 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {d
     return -1
 }
 
+# Build the third file, used to check attach when the exec-file has changed.
+
+if  { [gdb_compile "${srcdir}/${subdir}/${srcfile3}" "${binfile3}" executable {debug}] != "" } {
+    untested "failed to compile attach exec-file changed test"
+    return -1
+}
+
 if [get_compiler_info] {
     return -1
 }
@@ -53,10 +61,6 @@ proc_with_prefix do_attach_failure_tests {} {
     global binfile
     global escapedbinfile
     global srcfile
-    global testfile
-    global subdir
-    global timeout
-    global decimal
 
     clean_restart $binfile
 
@@ -205,8 +209,6 @@ proc_with_prefix do_attach_tests {} {
     global binfile
     global escapedbinfile
     global srcfile
-    global testfile
-    global subdir
     global timeout
     global decimal
 
@@ -439,10 +441,6 @@ proc_with_prefix do_call_attach_tests {} {
 proc_with_prefix do_command_attach_tests {} {
     global gdb_prompt
     global binfile
-    global verbose
-    global GDB
-    global INTERNAL_GDBFLAGS
-    global GDBFLAGS
 
     if ![isnative] then {
 	unsupported "command attach test"
@@ -474,7 +472,12 @@ proc test_command_line_attach_run {} {
     global gdb_prompt
     global binfile
 
-    if ![isnative] then {
+    # Skip test if we cannot attach on the command line and use the run command.
+    # ??? Unclear what condition to use to return here when using gdbserver.
+    # ??? None of the below works.
+    #    ![isnative] || [target_is_gdbserver]
+    #    ![isnative] || [use_gdb_stub]
+    if { ![isnative] || [is_remote target] } then {
 	unsupported "commandline attach run test"
 	return 0
     }
@@ -513,13 +516,132 @@ proc test_command_line_attach_run {} {
     }
 }
 
+
+# This is a test of 'set exec-file-mismatch' handling.
+
+proc_with_prefix do_attach_exec_mismatch_handling_tests {} {
+    global gdb_prompt
+    global binfile
+    global binfile2
+    global binfile3
+
+    clean_restart $binfile
+
+    # Start two programs that can be attached to.
+    # The first program contains a 'int bidule' variable, the second a 'float bidule'.
+
+    set test_spawn_id [spawn_wait_for_attach $binfile]
+    set testpid [spawn_id_get_pid $test_spawn_id]
+    set test_spawn_id2 [spawn_wait_for_attach $binfile2]
+    set testpid2 [spawn_id_get_pid $test_spawn_id2]
+
+
+    # Test with the default value of 'set exec-file-mismatch load".
+    set test "mismatch load"
+    gdb_test "attach $testpid" "Attaching to program.*" "$test attach1"
+    # Verify that we can "see" the variable "bidule" in the
+    # program, and that it is an integer.
+    gdb_test "ptype bidule" " = int" "$test after attach1, bidule is int"
+    # Detach the process.
+    gdb_test "detach" "Detaching from program: .* detached\\\]" "$test detach1"
+    gdb_test_multiple "attach $testpid2" "$test attach2" {
+	-re "Attaching to program.*exec-file-mismatch handling is currently \"ask\".*Load new symbol table from .*attach2\".*\(y or n\)" {
+	    pass "$test attach2"
+	}
+    }
+    gdb_test "y" "Reading symbols from .*attach2.*" "$test load attach2"
+    # Verify that we can "see" the variable "bidule" in the
+    # program, and that it is a float.
+    gdb_test "ptype bidule" " = float" "$test after attach2 and load, bidule is float"
+    # Detach the process.
+    gdb_test "detach" "Detaching from program: .* detached\\\]" "$test detach attach2"
+
+
+    # Test with 'set exec-file-mismatch warn".
+    set test "mismatch warn"
+    gdb_test_no_output "set exec-file-mismatch warn"
+    gdb_test_multiple "attach $testpid" "$test attach" {
+	-re "Attaching to program.*exec-file-mismatch handling is currently \"warn\".*$gdb_prompt" {
+	    pass "$test attach"
+	}
+    }
+    # Verify that we still (wrongly) "see" the variable "bidule" as a float,
+    # as we have not loaded the correct exec-file.
+    gdb_test "ptype bidule" " = float" "$test after attach and warn, bidule is float"
+    # Detach the process.
+    gdb_test "detach" "Detaching from program: .* detached\\\]" "$test detach attach"
+
+
+    # Same test but with 'set exec-file-mismatch off".
+    set test "mismatch off"
+    gdb_test_no_output "set exec-file-mismatch off"
+    gdb_test_multiple "attach $testpid" "$test attach" {
+	-re "Attaching to program.*$gdb_prompt" {
+	    pass "$test attach"
+	}
+    }
+    # Verify that we still (wrongly) "see" the variable "bidule" as a float,
+    # as we have not warned the user and not loaded the correct exec-file
+    gdb_test "ptype bidule" " = float" "$test after attach and warn, bidule is float"
+    # Detach the process.
+    gdb_test "detach" "Detaching from program: .* detached\\\]" "$test detach attach"
+
+    # Test that the 'exec-file' changed is checked before exec-file-mismatch.
+    set test "mismatch exec-file changed has priority"
+    gdb_test_no_output "set exec-file-mismatch ask"
+    gdb_test_multiple "attach $testpid" "$test attach1 again, initial exec-file" {
+	-re "Attaching to program.*exec-file-mismatch handling is currently \"ask\".*Load new symbol table from .*attach\".*\(y or n\)" {
+	    gdb_test "y" "Reading symbols from .*attach.*" $gdb_test_name
+	}
+    }
+    
+
+    gdb_test "detach" "Detaching from program: .* detached\\\]" "$test detach attach initial exec-file"
+
+    # Change the exec-file and attach to a new process using the changed file.
+    remote_exec build "mv ${binfile} ${binfile}.initial"
+    remote_exec build "mv ${binfile3} ${binfile}"
+    # Ensure GDB detects ${binfile} has changed when checking timestamp.
+    sleep 1
+    remote_exec build "touch ${binfile}"
+    set test_spawn_id3 [spawn_wait_for_attach $binfile]
+    set testpid3 [spawn_id_get_pid $test_spawn_id3]
+
+    gdb_test "attach $testpid3" "Attaching to program.*attach' has changed; re-reading symbols.*" \
+	"$test attach1 again, after changing exec-file"
+    gdb_test "detach" "Detaching from program: .* detached\\\]" "$test detach after attach changed exec-file"
+
+    # Now, test the situation when current exec-file has changed
+    # and we attach to a pid using another file.
+    # Ensure GDB detects ${binfile} has changed when checking timestamp.
+    sleep 1
+    remote_exec build "touch ${binfile}"
+
+    gdb_test_multiple "attach $testpid2" "$test attach2" {
+	-re "Attaching to program.*exec-file-mismatch handling is currently \"ask\".*Load new symbol table from .*attach2\".*\(y or n\)" {
+	    gdb_test "y" "Reading symbols from .*attach2.*" $gdb_test_name
+	}
+    }
+
+    # Restore initial build situation.
+    remote_exec build "mv ${binfile} ${binfile3}"
+    remote_exec build "mv ${binfile}.initial ${binfile}"
+
+    # Don't leave a process around
+    kill_wait_spawned_process $test_spawn_id
+    kill_wait_spawned_process $test_spawn_id2
+    kill_wait_spawned_process $test_spawn_id3
+}
+
 do_attach_tests
 do_attach_failure_tests
 do_call_attach_tests
+do_attach_exec_mismatch_handling_tests
 
 # Test "gdb --pid"
 
 do_command_attach_tests
+
 
 test_command_line_attach_run
 

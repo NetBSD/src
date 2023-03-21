@@ -1,3 +1,29 @@
+2020-07-03  Sebastian Huber  <sebastian.huber@embedded-brains.de>
+
+	* ld-insn.h (last_model, last_model_data, last_model_function,
+	last_model_internal, last_model_macro, last_model_static):
+	Delete.
+	(max_model_fields_len, model_data, model_functions,
+	model_internal, model_macros, model_static, models): Declare, but do not
+	define.
+	* ld-insn.c (last_model, last_model_data, last_model_function,
+	last_model_internal, last_model_macro, last_model_static,
+	max_model_fields_len, model_data, model_functions,
+	model_internal, model_macros, model_static, models): Define.
+
+2020-03-12  Kamil Rytarowski  <n54@gmx.com>
+
+	* emul_netbsd.c (netbsd_signal_names): Sync with NetBSD 9.99.49.
+
+2020-03-12  Kamil Rytarowski  <n54@gmx.com>
+
+	* emul_netbsd.c (netbsd_error_names): Sync with NetBSD 9.99.49.
+
+2019-12-19  Tom Tromey  <tromey@adacore.com>
+
+	PR build/24572:
+	* Makefile.in (install-strip): New target.
+
 2019-01-26  Tom Tromey  <tom@tromey.com>
 
 	* Makefile.in (version.c): Use sim's create-version.sh.

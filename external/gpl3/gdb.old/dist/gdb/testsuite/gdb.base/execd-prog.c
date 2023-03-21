@@ -25,4 +25,6 @@ int main (int argc, char **argv)
     }
   s = argv[1];
   printf ("argument received: %s\n", s);
+
+  return 0;
 }

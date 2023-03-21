@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -245,11 +245,17 @@ extern int sparc_is_annulled_branch_insn (CORE_ADDR pc);
 extern const struct sparc_gregmap sparc32_sol2_gregmap;
 extern const struct sparc_fpregmap sparc32_sol2_fpregmap;
 
-extern int sparc_sol2_pc_in_sigtramp (CORE_ADDR pc, const char *name);
+/* Functions and variables exported from sparcnbsd-tdep.c.  */
 
-extern const char *sparc_sol2_static_transform_name (const char *name);
+/* Register offsets for NetBSD.  */
+extern const struct sparc_gregmap sparc32nbsd_gregmap;
 
-extern void sparc32_sol2_init_abi (struct gdbarch_info info,
-				   struct gdbarch *gdbarch);
+/* Return the address of a system call's alternative return
+   address.  */
+extern CORE_ADDR sparcnbsd_step_trap (struct frame_info *frame,
+				      unsigned long insn);
+
+extern struct trad_frame_saved_reg *
+  sparc32nbsd_sigcontext_saved_regs (struct frame_info *next_frame);
 
 #endif /* sparc-tdep.h */

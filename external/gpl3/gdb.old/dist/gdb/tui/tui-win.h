@@ -1,6 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -24,14 +24,6 @@
 
 #include "tui/tui-data.h"
 
-struct tui_win_info;
-
-extern void tui_scroll_forward (struct tui_win_info *, int);
-extern void tui_scroll_backward (struct tui_win_info *, int);
-extern void tui_scroll_left (struct tui_win_info *, int);
-extern void tui_scroll_right (struct tui_win_info *, int);
-extern void tui_scroll (enum tui_scroll_direction, 
-			struct tui_win_info *, int);
 extern void tui_set_win_focus_to (struct tui_win_info *);
 extern void tui_resize_all (void);
 extern void tui_refresh_all_win (void);
@@ -46,7 +38,7 @@ extern chtype tui_border_hline;
 extern int tui_border_attrs;
 extern int tui_active_border_attrs;
 
-extern int tui_update_variables (void);
+extern bool tui_update_variables ();
 
 extern void tui_initialize_win (void);
 
@@ -56,7 +48,7 @@ extern void tui_update_gdb_sizes (void);
 /* Create or get the TUI command list.  */
 struct cmd_list_element **tui_get_cmd_list (void);
 
-/* Set a TUI variable.  */
-void tui_set_var_cmd (char *, int, struct cmd_list_element *);
+/* Whether compact source display should be used.  */
+extern bool compact_source;
 
 #endif /* TUI_TUI_WIN_H */

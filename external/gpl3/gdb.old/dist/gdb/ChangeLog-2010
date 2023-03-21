@@ -1663,7 +1663,7 @@
 
 2010-10-03  Paul Hilfinger  <hilfinger@adacore.com>
 
-        * gdb/ada-typeprint.c (print_selected_record_field_types): New function,
+        * ada-typeprint.c (print_selected_record_field_types): New function,
         incorporating and generalizing print_record_field_types.
         (print_record_field_types): Change return value and update comment.
         Re-implement using print_selected_record_field_types.
@@ -2917,13 +2917,13 @@
 
 2010-08-11  Ken Werner  <ken.werner@de.ibm.com>
 
-	* gdb/valarith.c (vector_binop): New function.
+	* valarith.c (vector_binop): New function.
 	(scalar_binop): Likewise.
 	(value_binop): Call scalar_binop or vector_binop depending on the types.
-	* gdb/eval.c (ptrmath_type_p): Return 0 in case of TYPE_VECTOR.
+	* eval.c (ptrmath_type_p): Return 0 in case of TYPE_VECTOR.
 	(evaluate_subexp_with_coercion): Add vector check to not convert vectors
 	to pointers.
-	* gdb/value.c (coerce_array): Add vector check to not coerce vectors.
+	* value.c (coerce_array): Add vector check to not coerce vectors.
 
 2010-08-11  Brad Roberts  <braddr@puremagic.com>
 
@@ -6915,7 +6915,7 @@
 
 2010-04-21  Mike Frysinger  <vapier@gentoo.org>
 
-	* gdb/sparc-tdep.c (sparc32_store_return_value): Add gdb_assert ()
+	* sparc-tdep.c (sparc32_store_return_value): Add gdb_assert ()
 	for len <= 8.
 
 2010-04-21  Chris Moller  <cmoller@redhat.com>

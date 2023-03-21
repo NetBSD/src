@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2019 Free Software Foundation, Inc.
+   Copyright 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -83,6 +83,13 @@ lf_open (char *name,
 	}
     }
   return new_lf;
+}
+
+
+lf_file_type
+lf_get_file_type (const lf *file)
+{
+  return file->type;
 }
 
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -96,7 +96,7 @@ rs6000_lynx178_push_dummy_call (struct gdbarch *gdbarch,
       type = check_typedef (value_type (arg));
       len = TYPE_LENGTH (type);
 
-      if (TYPE_CODE (type) == TYPE_CODE_FLT)
+      if (type->code () == TYPE_CODE_FLT)
 	{
 
 	  /* Floating point arguments are passed in fpr's, as well as gpr's.
@@ -222,7 +222,7 @@ ran_out_of_registers_for_arguments:
 
 	  /* Float types should be passed in fpr's, as well as in the
              stack.  */
-	  if (TYPE_CODE (type) == TYPE_CODE_FLT && f_argno < 13)
+	  if (type->code () == TYPE_CODE_FLT && f_argno < 13)
 	    {
 
 	      gdb_assert (len <= 8);
@@ -274,7 +274,7 @@ rs6000_lynx178_return_value (struct gdbarch *gdbarch, struct value *function,
 
   /* AltiVec extension: Functions that declare a vector data type as a
      return value place that return value in VR2.  */
-  if (TYPE_CODE (valtype) == TYPE_CODE_ARRAY && TYPE_VECTOR (valtype)
+  if (valtype->code () == TYPE_CODE_ARRAY && TYPE_VECTOR (valtype)
       && TYPE_LENGTH (valtype) == 16)
     {
       if (readbuf)
@@ -290,16 +290,16 @@ rs6000_lynx178_return_value (struct gdbarch *gdbarch, struct value *function,
      allocated buffer into which the callee is assumed to store its
      return value.  All explicit parameters are appropriately
      relabeled.  */
-  if (TYPE_CODE (valtype) == TYPE_CODE_STRUCT
-      || TYPE_CODE (valtype) == TYPE_CODE_UNION
-      || TYPE_CODE (valtype) == TYPE_CODE_ARRAY)
+  if (valtype->code () == TYPE_CODE_STRUCT
+      || valtype->code () == TYPE_CODE_UNION
+      || valtype->code () == TYPE_CODE_ARRAY)
     return RETURN_VALUE_STRUCT_CONVENTION;
 
   /* Scalar floating-point values are returned in FPR1 for float or
      double, and in FPR1:FPR2 for quadword precision.  Fortran
      complex*8 and complex*16 are returned in FPR1:FPR2, and
      complex*32 is returned in FPR1:FPR4.  */
-  if (TYPE_CODE (valtype) == TYPE_CODE_FLT
+  if (valtype->code () == TYPE_CODE_FLT
       && (TYPE_LENGTH (valtype) == 4 || TYPE_LENGTH (valtype) == 8))
     {
       struct type *regtype = register_type (gdbarch, tdep->ppc_fp0_regnum);
@@ -355,7 +355,7 @@ rs6000_lynx178_return_value (struct gdbarch *gdbarch, struct value *function,
 
   if (TYPE_LENGTH (valtype) == 8)
     {
-      gdb_assert (TYPE_CODE (valtype) != TYPE_CODE_FLT);
+      gdb_assert (valtype->code () != TYPE_CODE_FLT);
       gdb_assert (tdep->wordsize == 4);
 
       if (readbuf)
@@ -406,8 +406,9 @@ rs6000_lynx178_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_long_double_bit (gdbarch, 8 * TARGET_CHAR_BIT);
 }
 
+void _initialize_rs6000_lynx178_tdep ();
 void
-_initialize_rs6000_lynx178_tdep (void)
+_initialize_rs6000_lynx178_tdep ()
 {
   gdbarch_register_osabi_sniffer (bfd_arch_rs6000,
                                   bfd_target_xcoff_flavour,

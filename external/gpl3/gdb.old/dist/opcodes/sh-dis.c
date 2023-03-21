@@ -1,5 +1,5 @@
 /* Disassemble SH instructions.
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -102,8 +102,7 @@ print_movxy (const sh_opcode_info *op,
 
 /* Print a double data transfer insn.  INSN is just the lower three
    nibbles of the insn, i.e. field a and the bit that indicates if
-   a parallel processing insn follows.
-   Return nonzero if a field b of a parallel processing insns follows.  */
+   a parallel processing insn follows.  */
 
 static void
 print_insn_ddt (int insn, struct disassemble_info *info)
@@ -113,7 +112,10 @@ print_insn_ddt (int insn, struct disassemble_info *info)
 
   /* If this is just a nop, make sure to emit something.  */
   if (insn == 0x000)
-    fprintf_fn (stream, "nopx\tnopy");
+    {
+      fprintf_fn (stream, "nopx\tnopy");
+      return;
+    }
 
   /* If a parallel processing insn was printed before,
      and we got a non-nop, emit a tab.  */
@@ -121,8 +123,8 @@ print_insn_ddt (int insn, struct disassemble_info *info)
     fprintf_fn (stream, "\t");
 
   /* Check if either the x or y part is invalid.  */
-  if (((insn & 0xc) == 0 && (insn & 0x2a0))
-      || ((insn & 3) == 0 && (insn & 0x150)))
+  if (((insn & 3) != 0 && (insn & 0xc) == 0 && (insn & 0x2a0))
+      || ((insn & 3) == 0 && (insn & 0xc) != 0 && (insn & 0x150)))
     if (info->mach != bfd_mach_sh_dsp
         && info->mach != bfd_mach_sh3_dsp)
       {
@@ -157,7 +159,7 @@ print_insn_ddt (int insn, struct disassemble_info *info)
 		     fprintf_fn, stream);
       }
     else
-      fprintf_fn (stream, ".word 0x%x", insn);
+      fprintf_fn (stream, ".word 0x%x", insn | 0xf000);
   else
     {
       static const sh_opcode_info *first_movx, *first_movy;
@@ -189,6 +191,8 @@ print_insn_ddt (int insn, struct disassemble_info *info)
 	  print_movxy (opy, ((insn >> 8) & 1) + 6, (insn >> 6) & 1,
 		       fprintf_fn, stream);
 	}
+      if (!insn_x && !insn_y && ((insn & 0x3ff) != 0 || (insn & 0x800) == 0))
+	fprintf_fn (stream, ".word 0x%x", insn | 0xf000);
     }
 }
 
@@ -593,13 +597,17 @@ print_insn_sh (bfd_vma memaddr, struct disassemble_info *info)
 	    case IMM1_4BY4:
 	      imm = nibs[3] << 2;
 	      goto ok;
-	    case IMM0_8:
+	    case IMM0_8S:
 	    case IMM1_8:
 	      imm = (nibs[2] << 4) | nibs[3];
 	      disp = imm;
 	      has_disp = 1;
 	      if (imm & 0x80)
 		imm -= 0x100;
+	      goto ok;
+	    case IMM0_8U:
+	      disp = imm = (nibs[2] << 4) | nibs[3];
+	      has_disp = 1;
 	      goto ok;
 	    case PCRELIMM_8BY2:
 	      imm = ((nibs[2] << 4) | nibs[3]) << 1;

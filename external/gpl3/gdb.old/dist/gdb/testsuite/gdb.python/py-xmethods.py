@@ -1,4 +1,4 @@
-# Copyright 2014-2019 Free Software Foundation, Inc.
+# Copyright 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -199,34 +199,34 @@ class G_methods_matcher(XMethodMatcher):
 
 
 global_dm_list = [
-    SimpleXMethodMatcher('A_plus_A',
-                         '^dop::A$',
-                         'operator\+',
+    SimpleXMethodMatcher(r'A_plus_A',
+                         r'^dop::A$',
+                         r'operator\+',
                          A_plus_A,
                          # This is a replacement, hence match the arg type
                          # exactly!
                          type_A.const().reference()),
-    SimpleXMethodMatcher('plus_plus_A',
-                         '^dop::A$',
-                         'operator\+\+',
+    SimpleXMethodMatcher(r'plus_plus_A',
+                         r'^dop::A$',
+                         r'operator\+\+',
                          plus_plus_A),
-    SimpleXMethodMatcher('A_geta',
-                         '^dop::A$',
-                         '^geta$',
+    SimpleXMethodMatcher(r'A_geta',
+                         r'^dop::A$',
+                         r'^geta$',
                          A_geta),
-    SimpleXMethodMatcher('A_getarrayind',
-                         '^dop::A$',
-                         '^getarrayind$',
+    SimpleXMethodMatcher(r'A_getarrayind',
+                         r'^dop::A$',
+                         r'^getarrayind$',
                          A_getarrayind,
                          type_int),
-    SimpleXMethodMatcher('A_indexoper',
-                         '^dop::A$',
-                         'operator\\[\\]',
+    SimpleXMethodMatcher(r'A_indexoper',
+                         r'^dop::A$',
+                         r'operator\[\]',
                          A_indexoper,
                          type_int),
-    SimpleXMethodMatcher('B_indexoper',
-                         '^dop::B$',
-                         'operator\\[\\]',
+    SimpleXMethodMatcher(r'B_indexoper',
+                         r'^dop::B$',
+                         r'operator\[\]',
                          B_indexoper,
                          type_int)
 ]

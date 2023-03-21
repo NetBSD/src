@@ -1,6 +1,6 @@
 /* Print in infix form a struct expression.
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,7 @@
 #include "block.h"
 #include "objfiles.h"
 #include "valprint.h"
+#include "cli/cli-style.h"
 
 #include <ctype.h>
 
@@ -86,7 +87,7 @@ print_subexp_standard (struct expression *exp, int *pos,
     case OP_SCOPE:
       myprec = PREC_PREFIX;
       assoc = 0;
-      fputs_filtered (TYPE_NAME (exp->elts[pc + 1].type), stream);
+      fputs_filtered (exp->elts[pc + 1].type->name (), stream);
       fputs_filtered ("::", stream);
       nargs = longest_to_int (exp->elts[pc + 2].longconst);
       (*pos) += 4 + BYTES_TO_EXP_ELEM (nargs + 1);
@@ -125,19 +126,19 @@ print_subexp_standard (struct expression *exp, int *pos,
 	b = exp->elts[pc + 1].block;
 	if (b != NULL
 	    && BLOCK_FUNCTION (b) != NULL
-	    && SYMBOL_PRINT_NAME (BLOCK_FUNCTION (b)) != NULL)
+	    && BLOCK_FUNCTION (b)->print_name () != NULL)
 	  {
-	    fputs_filtered (SYMBOL_PRINT_NAME (BLOCK_FUNCTION (b)), stream);
+	    fputs_filtered (BLOCK_FUNCTION (b)->print_name (), stream);
 	    fputs_filtered ("::", stream);
 	  }
-	fputs_filtered (SYMBOL_PRINT_NAME (exp->elts[pc + 2].symbol), stream);
+	fputs_filtered (exp->elts[pc + 2].symbol->print_name (), stream);
       }
       return;
 
     case OP_VAR_MSYM_VALUE:
       {
 	(*pos) += 3;
-	fputs_filtered (MSYMBOL_PRINT_NAME (exp->elts[pc + 2].msymbol), stream);
+	fputs_filtered (exp->elts[pc + 2].msymbol->print_name (), stream);
       }
       return;
 
@@ -153,7 +154,7 @@ print_subexp_standard (struct expression *exp, int *pos,
       {
 	(*pos) += 2;
 	fprintf_filtered (stream, "%s@entry",
-			  SYMBOL_PRINT_NAME (exp->elts[pc + 1].symbol));
+			  exp->elts[pc + 1].symbol->print_name ());
       }
       return;
 
@@ -240,18 +241,14 @@ print_subexp_standard (struct expression *exp, int *pos,
 
     case OP_OBJC_MSGCALL:
       {			/* Objective C message (method) call.  */
-	gdb::unique_xmalloc_ptr<char> selector;
-
 	(*pos) += 3;
 	nargs = longest_to_int (exp->elts[pc + 2].longconst);
 	fprintf_unfiltered (stream, "[");
 	print_subexp (exp, pos, stream, PREC_SUFFIX);
-	if (0 == target_read_string (exp->elts[pc + 1].longconst,
-				     &selector, 1024, NULL))
-	  {
-	    error (_("bad selector"));
-	    return;
-	  }
+	gdb::unique_xmalloc_ptr<char> selector
+	  = target_read_string (exp->elts[pc + 1].longconst, 1024);
+	if (selector == nullptr)
+	  error (_("bad selector"));
 	if (nargs)
 	  {
 	    char *s, *nextS;
@@ -447,7 +444,7 @@ print_subexp_standard (struct expression *exp, int *pos,
       (*pos) += 2;
       if ((int) prec > (int) PREC_PREFIX)
 	fputs_filtered ("(", stream);
-      if (TYPE_CODE (exp->elts[pc + 1].type) == TYPE_CODE_FUNC
+      if (exp->elts[pc + 1].type->code () == TYPE_CODE_FUNC
 	  && exp->elts[pc + 3].opcode == OP_LONG)
 	{
 	  struct value_print_options opts;
@@ -510,8 +507,9 @@ print_subexp_standard (struct expression *exp, int *pos,
       if (exp->language_defn->la_name_of_this)
 	fputs_filtered (exp->language_defn->la_name_of_this, stream);
       else
-	fprintf_filtered (stream, _("<language %s has no 'this'>"),
-			  exp->language_defn->la_name);
+	fprintf_styled (stream, metadata_style.style (),
+			_("<language %s has no 'this'>"),
+			exp->language_defn->la_name);
       return;
 
       /* Modula-2 ops */
@@ -897,7 +895,7 @@ dump_subexp_body_standard (struct expression *exp,
       fprintf_filtered (stream, ", symbol @");
       gdb_print_host_address (exp->elts[elt + 1].symbol, stream);
       fprintf_filtered (stream, " (%s)",
-			SYMBOL_PRINT_NAME (exp->elts[elt + 1].symbol));
+			exp->elts[elt + 1].symbol->print_name ());
       elt += 3;
       break;
     case OP_VAR_MSYM_VALUE:
@@ -906,14 +904,14 @@ dump_subexp_body_standard (struct expression *exp,
       fprintf_filtered (stream, ", msymbol @");
       gdb_print_host_address (exp->elts[elt + 1].msymbol, stream);
       fprintf_filtered (stream, " (%s)",
-			MSYMBOL_PRINT_NAME (exp->elts[elt + 1].msymbol));
+			exp->elts[elt + 1].msymbol->print_name ());
       elt += 3;
       break;
     case OP_VAR_ENTRY_VALUE:
       fprintf_filtered (stream, "Entry value of symbol @");
       gdb_print_host_address (exp->elts[elt].symbol, stream);
       fprintf_filtered (stream, " (%s)",
-			SYMBOL_PRINT_NAME (exp->elts[elt].symbol));
+			exp->elts[elt].symbol->print_name ());
       elt += 2;
       break;
     case OP_LAST:

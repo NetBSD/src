@@ -1,6 +1,6 @@
 /* Test case for forgotten hw-watchpoints after fork()-off of a process.
 
-   Copyright 2012-2019 Free Software Foundation, Inc.
+   Copyright 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,8 +40,10 @@ mark_exit (void)
 int
 main (void)
 {
+#if DEBUG
   setbuf (stdout, NULL);
   printf ("main: %d\n", (int) getpid ());
+#endif
 
   /* General hardware breakpoints and watchpoints validity.  */
   marker ();

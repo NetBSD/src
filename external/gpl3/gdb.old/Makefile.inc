@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.12 2023/02/10 18:51:32 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.13 2023/03/21 16:54:43 christos Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
@@ -13,6 +13,8 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-conversion \
 			-Wno-format-security \
 			-Wno-tautological-compare -Wno-format-extra-args \
 			-Wno-string-plus-int
+
+COPTS+=			-fcommon
 
 DIST:=		${.PARSEDIR}/dist
 

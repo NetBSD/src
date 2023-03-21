@@ -1,4 +1,4 @@
-#   Copyright 1988-2019 Free Software Foundation, Inc.
+#   Copyright 1988-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -135,7 +135,7 @@ gdb_run_cmd 5
 gdb_test_stdio "" "120" "" "run \"$testfile\" with arg"
 
 # Run again with same arguments.
-gdb_run_cmd
+gdb_run_cmd 5
 
 setup_xfail "arm-*-coff"
 gdb_test_stdio "" "120" "" "run \"$testfile\" again with same args"
@@ -146,6 +146,15 @@ gdb_test_no_output "set args"
 gdb_run_cmd
 
 gdb_test_stdio "" "usage:  factorial <number>" "" "run after setting args to nil"
+
+# The remaining tests pass inferior arguments through GDB, so doesn't
+# work with stub targets, where GDB connects to debug an already started
+# process.
+
+if [use_gdb_stub] {
+    verbose "Skipping rest of a2-run.exp because target is a stub."
+    return
+}
 
 # Use "set args" command to specify an argument and run again.
 gdb_test_no_output "set args 6"

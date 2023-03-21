@@ -1,6 +1,6 @@
 /* Specific command window processing.
 
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -25,68 +25,42 @@
 #include "tui/tui-win.h"
 #include "tui/tui-io.h"
 #include "tui/tui-command.h"
+#include "tui/tui-wingeneral.h"
 
 #include "gdb_curses.h"
-/*****************************************
-** STATIC LOCAL FUNCTIONS FORWARD DECLS    **
-******************************************/
 
+/* See tui-command.h.  */
 
-
-/*****************************************
-** PUBLIC FUNCTIONS                        **
-******************************************/
-
-/* Dispatch the correct tui function based upon the control
-   character.  */
-unsigned int
-tui_dispatch_ctrl_char (unsigned int ch)
+int
+tui_cmd_window::max_height () const
 {
-  struct tui_win_info *win_info = tui_win_with_focus ();
+  return tui_term_height () - 4;
+}
 
-  /* Handle the CTRL-L refresh for each window.  */
-  if (ch == '\f')
-    tui_refresh_all_win ();
+void
+tui_cmd_window::resize (int height_, int width_, int origin_x, int origin_y)
+{
+  width = width_;
+  height = height_;
+  x = origin_x;
+  y = origin_y;
 
-  /* If the command window has the logical focus, or no-one does
-     assume it is the command window; in this case, pass the character
-     on through and do nothing here.  */
-  if (win_info == NULL || win_info == TUI_CMD_WIN)
-    return ch;
-
-  switch (ch)
+  if (handle == nullptr)
+    make_window ();
+  else
     {
-    case KEY_NPAGE:
-      tui_scroll_forward (win_info, 0);
-      break;
-    case KEY_PPAGE:
-      tui_scroll_backward (win_info, 0);
-      break;
-    case KEY_DOWN:
-    case KEY_SF:
-      tui_scroll_forward (win_info, 1);
-      break;
-    case KEY_UP:
-    case KEY_SR:
-      tui_scroll_backward (win_info, 1);
-      break;
-    case KEY_RIGHT:
-      tui_scroll_left (win_info, 1);
-      break;
-    case KEY_LEFT:
-      tui_scroll_right (win_info, 1);
-      break;
-    case '\f':
-      break;
-    default:
-      /* We didn't recognize the character as a control character, so pass it
-         through.  */
-      return ch;
+      /* Another reason we don't call the base class method here is
+	 that for the command window in particular, we want to avoid
+	 destroying the underlying handle.  We don't currently track
+	 the contents of this window, and so have no way to re-render
+	 it.  However we can at least move it and keep the old size if
+	 wresize isn't available.  */
+#ifdef HAVE_WRESIZE
+      wresize (handle.get (), height, width);
+#endif
+      mvwin (handle.get (), y, x);
+      wmove (handle.get (), 0, 0);
     }
-
-  /* We intercepted the control character, so return 0 (which readline
-     will interpret as a no-op).  */
-  return 0;
 }
 
 /* See tui-command.h.  */
@@ -94,9 +68,9 @@ tui_dispatch_ctrl_char (unsigned int ch)
 void
 tui_refresh_cmd_win (void)
 {
-  WINDOW *w = TUI_CMD_WIN->generic.handle;
+  WINDOW *w = TUI_CMD_WIN->handle.get ();
 
-  wrefresh (w);
+  tui_wrefresh (w);
 
   /* FIXME: It's not clear why this is here.
      It was present in the original tui_puts code and is kept in order to

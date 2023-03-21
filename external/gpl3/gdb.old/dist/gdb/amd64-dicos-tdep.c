@@ -1,6 +1,6 @@
 /* Target-dependent code for DICOS running on x86-64's, for GDB.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #include "defs.h"
 #include "osabi.h"
 #include "amd64-tdep.h"
-#include "common/x86-xstate.h"
+#include "gdbsupport/x86-xstate.h"
 #include "dicos-tdep.h"
 
 static void
@@ -35,7 +35,7 @@ amd64_dicos_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 static enum gdb_osabi
 amd64_dicos_osabi_sniffer (bfd *abfd)
 {
-  char *target_name = bfd_get_target (abfd);
+  const char *target_name = bfd_get_target (abfd);
 
   /* On amd64-DICOS, the Load Module's "header" section is 72
      bytes.  */
@@ -46,8 +46,9 @@ amd64_dicos_osabi_sniffer (bfd *abfd)
   return GDB_OSABI_UNKNOWN;
 }
 
+void _initialize_amd64_dicos_tdep ();
 void
-_initialize_amd64_dicos_tdep (void)
+_initialize_amd64_dicos_tdep ()
 {
   gdbarch_register_osabi_sniffer (bfd_arch_i386, bfd_target_elf_flavour,
 				  amd64_dicos_osabi_sniffer);

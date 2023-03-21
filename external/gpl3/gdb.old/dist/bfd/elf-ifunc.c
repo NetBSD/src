@@ -1,5 +1,5 @@
 /* ELF STT_GNU_IFUNC support.
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -62,8 +62,7 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
       s = bfd_make_section_with_flags (abfd, rel_sec,
 				       flags | SEC_READONLY);
       if (s == NULL
-	  || ! bfd_set_section_alignment (abfd, s,
-					  bed->s->log_file_align))
+	  || !bfd_set_section_alignment (s, bed->s->log_file_align))
 	return FALSE;
       htab->irelifunc = s;
     }
@@ -73,7 +72,7 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 	 for static executables.   */
       s = bfd_make_section_with_flags (abfd, ".iplt", pltflags);
       if (s == NULL
-	  || ! bfd_set_section_alignment (abfd, s, bed->plt_alignment))
+	  || !bfd_set_section_alignment (s, bed->plt_alignment))
 	return FALSE;
       htab->iplt = s;
 
@@ -82,8 +81,7 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 					? ".rela.iplt" : ".rel.iplt"),
 				       flags | SEC_READONLY);
       if (s == NULL
-	  || ! bfd_set_section_alignment (abfd, s,
-					  bed->s->log_file_align))
+	  || !bfd_set_section_alignment (s, bed->s->log_file_align))
 	return FALSE;
       htab->irelplt = s;
 
@@ -94,8 +92,7 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
       else
 	s = bfd_make_section_with_flags (abfd, ".igot", flags);
       if (s == NULL
-	  || !bfd_set_section_alignment (abfd, s,
-					 bed->s->log_file_align))
+	  || !bfd_set_section_alignment (s, bed->s->log_file_align))
 	return FALSE;
       htab->igotplt = s;
     }
@@ -110,7 +107,6 @@ bfd_boolean
 _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
 				    struct elf_link_hash_entry *h,
 				    struct elf_dyn_relocs **head,
-				    bfd_boolean *readonly_dynrelocs_against_ifunc_p,
 				    unsigned int plt_entry_size,
 				    unsigned int plt_header_size,
 				    unsigned int got_entry_size,
@@ -121,7 +117,6 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
   unsigned int sizeof_reloc;
   const struct elf_backend_data *bed;
   struct elf_link_hash_table *htab;
-  bfd_boolean readonly_dynrelocs_against_ifunc;
   /* If AVOID_PLT is TRUE, don't use PLT if possible.  */
   bfd_boolean use_plt = !avoid_plt || h->plt.refcount > 0;
   bfd_boolean need_dynreloc = !use_plt || bfd_link_pic (info);
@@ -204,7 +199,7 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
       return TRUE;
     }
 
-keep:
+ keep:
   bed = get_elf_backend_data (info->output_bfd);
   if (bed->rela_plts_and_copies_p)
     sizeof_reloc = bed->s->sizeof_rela;
@@ -258,8 +253,6 @@ keep:
   if (!need_dynreloc || !h->non_got_ref)
     *head = NULL;
 
-  readonly_dynrelocs_against_ifunc = FALSE;
-
   /* Finally, allocate space.  */
   p = *head;
   if (p != NULL)
@@ -267,16 +260,12 @@ keep:
       bfd_size_type count = 0;
       do
 	{
-	  if (!readonly_dynrelocs_against_ifunc)
-	    {
-	      asection *s = p->sec->output_section;
-	      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-		readonly_dynrelocs_against_ifunc = TRUE;
-	    }
 	  count += p->count;
 	  p = p->next;
 	}
       while (p != NULL);
+
+      htab->ifunc_resolvers = count != 0;
 
       /* Dynamic relocations are stored in
 	 1. .rel[a].ifunc section in PIC object.
@@ -292,9 +281,6 @@ keep:
 	  relplt->reloc_count += count;
 	}
     }
-
-  if (readonly_dynrelocs_against_ifunc_p)
-    *readonly_dynrelocs_against_ifunc_p = readonly_dynrelocs_against_ifunc;
 
   /* For STT_GNU_IFUNC symbol, .got.plt has the real function address
      and .got has the PLT entry adddress.  We will load the GOT entry

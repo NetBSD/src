@@ -1,5 +1,5 @@
 /* BFD backend for core files which use the ptrace_user structure
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    The structure of this file is based on trad-core.c written by John Gilmore
    of Cygnus Support.
    Modified to work with the ptrace_user structure by Kevin A. Buettner.
@@ -55,13 +55,13 @@ int ptrace_unix_core_file_failing_signal (bfd *abfd);
 #define ptrace_unix_core_file_pid _bfd_nocore_core_file_pid
 static void swap_abort (void);
 
-const bfd_target *
+bfd_cleanup
 ptrace_unix_core_file_p (bfd *abfd)
 {
   int val;
   struct ptrace_user u;
   struct trad_core_struct *rawptr;
-  bfd_size_type amt;
+  size_t amt;
   flagword flags;
 
   val = bfd_bread ((void *)&u, (bfd_size_type) sizeof u, abfd);
@@ -124,7 +124,7 @@ ptrace_unix_core_file_p (bfd *abfd)
   core_datasec (abfd)->alignment_power = 2;
   core_regsec (abfd)->alignment_power = 2;
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 
  fail:
   bfd_release (abfd, abfd->tdata.any);

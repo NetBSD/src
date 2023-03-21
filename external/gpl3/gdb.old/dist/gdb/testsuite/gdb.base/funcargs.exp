@@ -1,4 +1,4 @@
-# Copyright 1992-2019 Free Software Foundation, Inc.
+# Copyright 1992-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -248,13 +248,13 @@ proc complex_args {} {
 
     # Run; should stop at call1a and print actual arguments.
     gdb_run_cmd
-    gdb_test "" " callca \\(f1=1 \\+ 2 \\* I, f2=1 \\+ 2 \\* I, f3=1 \\+ 2 \\* I\\) .*" "run to call2a"
+    gdb_test "" " callca \\(f1=1 \\+ 2i, f2=1 \\+ 2i, f3=1 \\+ 2i\\) .*" "run to call2a"
 
-    gdb_test "cont" ".* callcb \\(d1=3 \\+ 4 \\* I, d2=3 \\+ 4 \\* I, d3=3 \\+ 4 \\* I\\) .*" "continue to callcb"
-    gdb_test "cont" ".* callcc \\(ld1=5 \\+ 6 \\* I, ld2=5 \\+ 6 \\* I, ld3=5 \\+ 6 \\* I\\) .*" "continue to callcc"
-    gdb_test "cont" ".* callcd \\(fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*" "continue to callcd"
-    gdb_test "cont" ".* callce \\(dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I, fc1=1 \\+ 2 \\* I\\) .*" "continue to callce"
-    gdb_test "cont" ".* callcf \\(ldc1=5 \\+ 6 \\* I, fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I\\) .*" "continue to callcf"
+    gdb_test "cont" ".* callcb \\(d1=3 \\+ 4i, d2=3 \\+ 4i, d3=3 \\+ 4i\\) .*" "continue to callcb"
+    gdb_test "cont" ".* callcc \\(ld1=5 \\+ 6i, ld2=5 \\+ 6i, ld3=5 \\+ 6i\\) .*" "continue to callcc"
+    gdb_test "cont" ".* callcd \\(fc1=1 \\+ 2i, dc1=3 \\+ 4i, ldc1=5 \\+ 6i\\) .*" "continue to callcd"
+    gdb_test "cont" ".* callce \\(dc1=3 \\+ 4i, ldc1=5 \\+ 6i, fc1=1 \\+ 2i\\) .*" "continue to callce"
+    gdb_test "cont" ".* callcf \\(ldc1=5 \\+ 6i, fc1=1 \\+ 2i, dc1=3 \\+ 4i\\) .*" "continue to callcf"
 }
 
 
@@ -271,9 +271,9 @@ proc complex_integral_args {} {
 
     # Run; should stop at call1a and print actual arguments.
     gdb_run_cmd
-    gdb_test "" " callc1a \\(c=97 'a', s=1, i=2, ui=7, l=3, fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*" "run to callc1a"
+    gdb_test "" " callc1a \\(c=97 'a', s=1, i=2, ui=7, l=3, fc1=1 \\+ 2i, dc1=3 \\+ 4i, ldc1=5 \\+ 6i\\) .*" "run to callc1a"
 
-    gdb_test "cont" ".* callc1b \\(ldc1=5 \\+ 6 \\* I\\, c=97 'a', s=1, i=2, fc1=1 \\+ 2 \\* I, ui=7, l=3, dc1=3 \\+ 4 \\* I\\) .*" "continue to callc1b"
+    gdb_test "cont" ".* callc1b \\(ldc1=5 \\+ 6i\\, c=97 'a', s=1, i=2, fc1=1 \\+ 2i, ui=7, l=3, dc1=3 \\+ 4i\\) .*" "continue to callc1b"
 }
 
 #
@@ -289,9 +289,9 @@ proc complex_float_integral_args {} {
 
     # Run; should stop at call1a and print actual arguments.
     gdb_run_cmd
-    gdb_test "" " callc2a \\(c=97 'a', s=1, i=2, ui=7, l=3, f=4, d=5, fc1=1 \\+ 2 \\* I, dc1=3 \\+ 4 \\* I, ldc1=5 \\+ 6 \\* I\\) .*" "run to callc2a"
+    gdb_test "" " callc2a \\(c=97 'a', s=1, i=2, ui=7, l=3, f=4, d=5, fc1=1 \\+ 2i, dc1=3 \\+ 4i, ldc1=5 \\+ 6i\\) .*" "run to callc2a"
 
-    gdb_test "cont" ".* callc2b \\(fc1=1 \\+ 2 \\* I, c=97 'a', s=1, i=2, ui=7, ldc1=5 \\+ 6 \\* I\\, l=3, f=4, d=5, dc1=3 \\+ 4 \\* I\\) .*" "continue to callc2b"
+    gdb_test "cont" ".* callc2b \\(fc1=1 \\+ 2i, c=97 'a', s=1, i=2, ui=7, ldc1=5 \\+ 6i\\, l=3, f=4, d=5, dc1=3 \\+ 4i\\) .*" "continue to callc2b"
 }
 
 #

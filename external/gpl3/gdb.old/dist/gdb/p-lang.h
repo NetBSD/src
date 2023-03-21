@@ -1,6 +1,6 @@
 /* Pascal language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -37,10 +37,10 @@ extern void pascal_print_type (struct type *, const char *, struct ui_file *,
 extern void pascal_print_typedef (struct type *, struct symbol *,
 				  struct ui_file *);
 
-extern void pascal_val_print (struct type *, int,
-			      CORE_ADDR, struct ui_file *, int,
-			      struct value *,
-			      const struct value_print_options *);
+/* Implement la_value_print_inner for Pascal.  */
+
+extern void pascal_value_print_inner (struct value *, struct ui_file *, int,
+				      const struct value_print_options *);
 
 extern void pascal_value_print (struct value *, struct ui_file *,
 				const struct value_print_options *);
@@ -56,10 +56,6 @@ extern int
 
 extern void pascal_printchar (int, struct type *, struct ui_file *);
 
-extern void pascal_printstr (struct ui_file *, struct type *, const gdb_byte *,
-			     unsigned int, const char *, int,
-			     const struct value_print_options *);
-
 extern struct type **const pascal_builtin_types[];
 
 /* These are in p-typeprint.c: */
@@ -71,14 +67,6 @@ extern void
 extern void
   pascal_type_print_varspec_prefix (struct type *, struct ui_file *, int, int,
 				    const struct type_print_options *);
-
-extern void pascal_object_print_value_fields (struct type *, const gdb_byte *,
-					      LONGEST,
-					      CORE_ADDR, struct ui_file *,
-					      int,
-					      struct value *,
-					      const struct value_print_options *,
-					      struct type **, int);
 
 extern int pascal_object_is_vtbl_ptr_type (struct type *);
 

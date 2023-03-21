@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 load_lib "ada.exp"
 
+if { [skip_ada_tests] } { return -1 }
+
 standard_ada_testfile foo
 
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" } {
@@ -30,18 +32,17 @@ if ![runto "foo.adb:$bp_location" ] then {
 } 
 
 gdb_test "print string_p" \
-         "= \\(foo\\.string_access\\) 0x\[0-9a-zA-Z\]+" \
-         "print string_p"
+         "= \\(foo\\.string_access\\) 0x\[0-9a-zA-Z\]+"
 
-gdb_test "print string_p (3..4)" "= \"ll\""
+gdb_test "print string_p(3..4)" "= \"ll\""
 
 gdb_test "print null_string" "= \\(foo\\.string_access\\) 0x0"
 
 gdb_test "print arr_ptr" "= \\(access foo\\.little_array\\) 0x\[0-9a-zA-Z\]+"
 
-gdb_test "print arr_ptr (2)" "= 22"
+gdb_test "print arr_ptr(2)" "= 22"
 
-gdb_test "print arr_ptr (3..4)" "= \\(3 => 23, 24\\)"
+gdb_test "print arr_ptr(3..4)" "= \\(3 => 23, 24\\)"
 
 gdb_test "ptype string_access" "= access array \\(<>\\) of character"
 

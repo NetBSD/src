@@ -1,6 +1,6 @@
 /* Xtensa GNU/Linux native support.
 
-   Copyright (C) 2007-2019 Free Software Foundation, Inc.
+   Copyright (C) 2007-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,7 @@
 #include <signal.h>
 #include <sys/user.h>
 #include <sys/ioctl.h>
-#include "common/gdb_wait.h"
+#include "gdbsupport/gdb_wait.h"
 #include <fcntl.h>
 #include <sys/procfs.h>
 #include "nat/gdb_ptrace.h"
@@ -328,8 +328,9 @@ ps_get_thread_area (struct ps_prochandle *ph,
   return PS_OK;
 }
 
+void _initialize_xtensa_linux_nat ();
 void
-_initialize_xtensa_linux_nat (void)
+_initialize_xtensa_linux_nat ()
 {
   const xtensa_regtable_t *ptr;
 

@@ -1,5 +1,5 @@
 /* BFD back-end for Irix core files.
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus Support
 
@@ -166,13 +166,13 @@ make_bfd_asection (bfd *abfd,
   return asect;
 }
 
-static const bfd_target *
+static bfd_cleanup
 irix_core_core_file_p (bfd *abfd)
 {
   int val;
   struct coreout coreout;
   struct idesc *idg, *idf, *ids;
-  bfd_size_type amt;
+  size_t amt;
 
   val = bfd_bread (&coreout, (bfd_size_type) sizeof coreout, abfd);
   if (val != sizeof coreout)
@@ -244,7 +244,7 @@ irix_core_core_file_p (bfd *abfd)
   /* OK, we believe you.  You're a core file (sure, sure).  */
   bfd_default_set_arch_mach (abfd, bfd_arch_mips, 0);
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 
  fail:
   bfd_release (abfd, core_hdr (abfd));

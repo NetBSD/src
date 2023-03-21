@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,8 +20,9 @@
 #ifndef TOP_H
 #define TOP_H
 
-#include "common/buffer.h"
-#include "event-loop.h"
+#include "gdbsupport/buffer.h"
+#include "gdbsupport/event-loop.h"
+#include "gdbsupport/next-iterator.h"
 #include "value.h"
 
 struct tl_interp_info;
@@ -206,9 +207,12 @@ public:
 #define SWITCH_THRU_ALL_UIS()		\
   for (switch_thru_all_uis stau_state; !stau_state.done (); stau_state.next ())
 
-/* Traverse over all UIs.  */
-#define ALL_UIS(UI)				\
-  for (UI = ui_list; UI; UI = UI->next)		\
+/* An adapter that can be used to traverse over all UIs.  */
+static inline
+next_adapter<ui> all_uis ()
+{
+  return next_adapter<ui> (ui_list);
+}
 
 /* Register the UI's input file descriptor in the event loop.  */
 extern void ui_register_input_event_handler (struct ui *ui);
@@ -217,10 +221,8 @@ extern void ui_register_input_event_handler (struct ui *ui);
 extern void ui_unregister_input_event_handler (struct ui *ui);
 
 /* From top.c.  */
-extern char *saved_command_line;
-extern int confirm;
+extern bool confirm;
 extern int inhibit_gdbinit;
-extern const char gdbinit[];
 
 /* Print the GDB version banner to STREAM.  If INTERACTIVE is false,
    then information referring to commands (e.g., "show configuration")
@@ -282,17 +284,13 @@ extern void gdb_init (char *);
 /* Variables from top.c.  */
 extern int source_line_number;
 extern std::string source_file_name;
-extern int history_expansion_p;
-extern int server_command;
+extern bool history_expansion_p;
+extern bool server_command;
 extern char *lim_at_start;
 
 extern void gdb_add_history (const char *);
 
 extern void show_commands (const char *args, int from_tty);
-
-extern void set_history (const char *, int);
-
-extern void show_history (const char *, int);
 
 extern void set_verbose (const char *, int, struct cmd_list_element *);
 

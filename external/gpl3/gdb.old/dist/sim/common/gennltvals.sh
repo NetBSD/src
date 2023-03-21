@@ -95,3 +95,7 @@ $shell ${srccom}/gentvals.sh $target sys ${newlibroot}/$dir \
 dir=libgloss target=lm32
 $shell ${srccom}/gentvals.sh $target sys ${newlibroot}/$dir \
 	"syscall.h" 'SYS_[_[:alnum:]]*' "${cpp}"
+
+dir=libgloss target=pru
+$shell ${srccom}/gentvals.sh $target sys ${newlibroot}/$dir \
+	"syscall.h" 'SYS_[_[:alnum:]]*' "${cpp}"

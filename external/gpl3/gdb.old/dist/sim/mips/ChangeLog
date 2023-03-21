@@ -1,3 +1,7 @@
+2020-07-29  Simon Marchi  <simon.marchi@efficios.com>
+
+	* configure: Re-generate.
+
 2017-09-06  John Baldwin  <jhb@FreeBSD.org>
 
 	* configure: Regenerate.

@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD, architecture independent.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -59,5 +59,21 @@ extern void fbsd_info_proc_mappings_entry (int addr_bit, ULONGEST kve_start,
 					   ULONGEST kve_offset,
 					   int kve_flags, int kve_protection,
 					   const void *kve_path);
+
+/* Helper function to fetch the address of a thread-local variable.
+   DTV_ADDR is the base address of the thread's dtv array.  LM_ADDR is
+   the address of the link_map structure for the associated object
+   file.  OFFSET is the offset of the variable in the object file's
+   thread-local variable block.  */
+
+extern CORE_ADDR fbsd_get_thread_local_address (struct gdbarch *gdbarch,
+						CORE_ADDR dtv_addr,
+						CORE_ADDR lm_addr,
+						CORE_ADDR offset);
+
+/* Implement the "skip_solib_resolver" gdbarch method.  */
+
+extern CORE_ADDR fbsd_skip_solib_resolver (struct gdbarch *gdbarch,
+					   CORE_ADDR pc);
 
 #endif /* fbsd-tdep.h */

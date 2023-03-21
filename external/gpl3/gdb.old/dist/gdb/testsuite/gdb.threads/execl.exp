@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2019 Free Software Foundation, Inc.
+# Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,6 +41,13 @@ gdb_test "b [gdb_get_line_number "breakpoint here"]" \
 gdb_test "continue" ".*breakpoint here.*" "continue to exec"
 
 gdb_test "info threads" "1 *Thread.*2 *Thread.*3 *Thread.*" "info threads before exec"
+
+# Work around PR25656, where the breakpoint above sets 2 breakpoint locations:
+# - one on gdb.threads/execl.c:$linenumber, and
+# - one in GLIBC's execl.c:$linenumber, in __GI_execl
+# Delete the breakpoint to make sure we hit main upon continue, rather than
+# __GI_execl.
+gdb_test_no_output "delete 2"
 
 # When continuing from this point we'll hit the breakpoint in main()
 # again, this time in the exec'd process.

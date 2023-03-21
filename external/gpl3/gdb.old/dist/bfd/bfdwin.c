@@ -1,5 +1,5 @@
 /* Support for memory-mapped windows into a BFD.
-   Copyright (C) 1995-2019 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -150,6 +150,7 @@ bfd_get_file_window (bfd *abfd,
 	  offset += abfd->origin;
 	  abfd = abfd->my_archive;
 	}
+      offset += abfd->origin;
 
       /* Seek into the file, to ensure it is open if cacheable.  */
       if (abfd->iostream == NULL

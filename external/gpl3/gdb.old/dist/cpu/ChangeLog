@@ -1,3 +1,269 @@
+2020-09-08  David Faust  <david.faust@oracle.com>
+
+	* bpf.cpu (define-alu-instructions): Correct semantic operators
+	for div, mod to unsigned versions.
+
+2020-09-01  Alan Modra  <amodra@gmail.com>
+
+	* mep-core.cpu (f-8s8a2, f-12s4a2, f-17s16a2): Multiply signed
+	value by two rather than shifting left.
+	(f-24s5a2n): Similarly multiply signed f-24s5a2n-hi to extract.
+
+2020-08-26  David Faust  <david.faust@oracle.com>
+
+	* bpf.cpu (arch bpf): Add xbpf mach and isas.
+	(define-xbpf-isa) New pmacro.
+	(all-isas) Add xbpfle,xbpfbe.
+	(endian-isas): New pmacro.
+	(mach xbpf): New.
+	(model xbpf-def): Likewise.
+	(h-gpr): Add xbpf mach.
+	(f-dstle, f-srcle, dstle, srcle): Add xbpfle isa.
+	(f-dstbe, f-srcbe, dstbe, srcbe): Add xbpfbe isa.
+	(define-alu-insn-un): Use new endian-isas pmacro.
+	(define-alu-insn-bin, define-alu-insn-mov): Likewise.
+	(define-endian-insn, define-lddw): Likewise.
+	(dlind, dxli, dxsi, dsti): Likewise.
+	(define-cond-jump-insn, define-call-insn): Likewise.
+	(define-atomic-insns): Likewise.
+
+2020-07-04  Nick Clifton  <nickc@redhat.com>
+
+	Binutils 2.35 branch created.
+
+2020-06-25 David Faust  <david.faust@oracle.com>
+
+	* bpf.cpu (f-offset16): Change type from INT to HI.
+	(dxli): Simplify memory access.
+	(dxsi): Likewise.
+	(define-endian-insn): Update c-call in semantics.
+	(dlabs) Likewise.
+	(dlind) Likewise.
+
+2020-06-02  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu (define-bpf-isa): Set base-insn-bitsize to 64.
+	* bpf.opc (bpf_print_insn): Do not set endian_code here.
+
+2020-06-02  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* mep.opc (print_slot_insn): Pass the insn endianness to
+	cgen_get_insn_value.
+
+2020-05-28  Jose E. Marchesi  <jose.marchesi@oracle.com>
+	    David Faust <david.faust@oracle.com>
+
+	* bpf.cpu (define-alu-insn-un): Add definitions of semantics.
+	(define-alu-insn-mov): Likewise.
+	(daib): Likewise.
+	(define-alu-instructions): Likewise.
+	(define-endian-insn): Likewise.
+	(define-lddw): Likewise.
+	(dlabs): Likewise.
+	(dlind): Likewise.
+	(dxli): Likewise.
+	(dxsi): Likewise.
+	(dsti): Likewise.
+	(define-ldstx-insns): Likewise.
+	(define-st-insns): Likewise.
+	(define-cond-jump-insn): Likewise.
+	(dcji): Likewise.
+	(define-condjump-insns): Likewise.
+	(define-call-insn): Likewise.
+	(ja): Likewise.
+	("exit"): Likewise.
+	(define-atomic-insns): Likewise.
+	(sem-exchange-and-add): New macro.
+	* bpf.cpu ("brkpt"): New instruction.
+	(bpfbf): Set word-bitsize to 32 and insn-endian big.
+	(h-gpr): Prefer r0 to `a' and r6 to `ctx'.
+	(h-pc): Expand definition.
+	* bpf.opc (bpf_print_insn): Set endian_code to BIG.
+
+2020-05-21  Alan Modra  <amodra@gmail.com>
+
+	* mep.opc (mep_cgen_expand_macros_and_parse_operand): Replace
+	"if (x) free (x)" with "free (x)".
+
+2020-05-19  Stafford Horne  <shorne@gmail.com>
+
+	PR 25184
+	* or1k.cpu (arch or1k): Remove or64 and or64nd machs.
+	(ORBIS-MACHS, ORFPX32-MACHS): Remove pmacros.
+	(cpu or1k64bf, mach or64, mach or64nd): Remove definitions.
+	* or1kcommon.cpu (h-fdr): Remove hardware.
+	* or1korfpx.cpu (rDDF, rADF, rBDF): Remove operand definitions.
+	(float-regreg-insn): Remove lf- mnemonic -d instruction pattern.
+	(float-setflag-insn-base): Remove lf-sf mnemonic -d pattern.
+	(float-cust-insn): Remove "lf-cust" cust-num "-d" pattern.
+	(lf-rem-d, lf-itof-d, lf-ftoi-d, lf-madd-d): Remove.
+
+2020-02-16  David Faust  <david.faust@oracle.com>
+
+	* bpf.cpu (define-cond-jump-insn): Renamed from djci.
+	(dcji) New version with support for JMP32
+
+2020-02-03  Alan Modra  <amodra@gmail.com>
+
+	* m32c.cpu (f-dsp-64-s16): Mask before shifting signed value.
+
+2020-02-01  Alan Modra  <amodra@gmail.com>
+
+	* frv.cpu (f-u12): Multiply rather than left shift signed values.
+	(f-label16, f-label24): Likewise.
+
+2020-01-30  Alan Modra  <amodra@gmail.com>
+
+	* m32c.cpu (f-src32-rn-unprefixed-QI): Shift before inverting.
+	(f-src32-rn-prefixed-QI, f-dst32-rn-unprefixed-QI): Likewise.
+	(f-dst32-rn-prefixed-QI): Likewise.
+	(f-dsp-32-s32): Mask before shifting left.
+	(f-dsp-48-u32, f-dsp-48-s32): Likewise.
+	(f-bitbase32-16-s11-unprefixed): Multiply signed field rather than
+	shifting left.
+	(f-bitbase32-24-s11-prefixed, f-bitbase32-24-s19-prefixed): Likewise.
+	(h-gr-SI): Mask before shifting.
+
+2020-01-30  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu (define-alu-insn-un): The unary BPF instructions
+	(neg and neg32) use OP_SRC_K even if they operate only in
+	registers.
+
+2020-01-18  Nick Clifton  <nickc@redhat.com>
+
+	Binutils 2.34 branch created.
+
+2020-01-13  Alan Modra  <amodra@gmail.com>
+
+	* fr30.cpu (f-disp9, f-disp10, f-s10, f-rel9, f-rel12): Don't
+	left shift signed values.
+
+2020-01-06  Alan Modra  <amodra@gmail.com>
+
+	* m32c.cpu (f-dsp-8-u16, f-dsp-8-s16): Rearrange to mask any sign
+	bits before shifting rather than masking after shifting.
+	(f-dsp-16-u16, f-dsp-16-s16, f-dsp-32-u16, f-dsp-32-s16): Likewise.
+	(f-dsp-40-u16, f-dsp-40-s16, f-dsp-48-u16, f-dsp-48-s16): Likewise.
+	(f-dsp-64-u16, f-dsp-8-s24): Likewise.
+	(f-bitbase32-16-s19-unprefixed): Avoid signed left shift.
+
+2020-01-04  Alan Modra  <amodra@gmail.com>
+
+	* m32r.cpu (f-disp8): Avoid left shift of negative values.
+	(f-disp16, f-disp24): Likewise.
+
+2019-12-23  Alan Modra  <amodra@gmail.com>
+
+	* iq2000.cpu (f-offset): Avoid left shift of negative values.
+
+2019-12-20  Alan Modra  <amodra@gmail.com>
+
+	* or1korbis.cpu (f-disp26, f-disp21): Don't left shift negative values.
+
+2019-12-17  Alan Modra  <amodra@gmail.com>
+
+	* bpf.cpu (f-imm64): Avoid signed overflow.
+
+2019-12-16  Alan Modra  <amodra@gmail.com>
+
+	* xstormy16.cpu (f-rel12a): Avoid signed overflow.
+
+2019-12-11  Alan Modra  <amodra@gmail.com>
+
+	* epiphany.cpu (f-sdisp11): Don't sign extend with shifts.
+	* lm32.cpu (f-branch, f-vall): Likewise.
+	* m32.cpu (f-lab-8-16): Likewise.
+
+2019-12-11  Alan Modra  <amodra@gmail.com>
+
+	* epiphany.cpu (f-simm8, f-simm24): Use multiply rather than
+	shift left to avoid UB on left shift of negative values.
+
+2019-11-20  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu: Fix comment describing the 128-bit instruction format.
+
+2019-09-09  Phil Blundell  <pb@pbcl.net>
+
+	binutils 2.33 branch created.
+
+2019-07-19  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu (h-gpr): when disassembling, use %r0 and %r6 instead of
+	%a and %ctx.
+
+2019-07-15  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu (dlabs): New pmacro.
+	(dlind): Likewise.
+
+2019-07-14  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu (dlsi): ldabs and ldind instructions do not take an
+	explicit 'dst' argument.
+
+2019-06-13  Stafford Horne  <shorne@gmail.com>
+
+	* or1korfpx.cpu (float-setflag-insn-base): Add 'sf' to symbol.
+
+2019-06-13  Stafford Horne  <shorne@gmail.com>
+
+	* or1k.cpu (or64nd, or32nd, or1200nd): Update comment.a
+	(l-adrp): Improve comment.
+
+2019-06-13  Stafford Horne  <shorne@gmail.com>
+
+	* or1korfpx.cpu (insn-opcode-float-regreg): Add SFUEQ_S, SFUNE_S,
+	SFUGT_S, SFUGE_S, SFULT_S, SFULE_S, SFUN_S, SFUEQ_D, SFUNE_D, SFUGT_D,
+	SFUGE_D, SFULT_D, SFULE_D, SFUN_D opcodes.
+	(float-setflag-insn-base): New pmacro based on float-setflag-insn.
+	(float-setflag-symantics, float-setflag-unordered-cmp-symantics,
+	float-setflag-unordered-symantics): New pmacro for instruction
+	symantics.
+	(float-setflag-insn): Update to use float-setflag-insn-base.
+	(float-setflag-unordered-insn): New pmacro for generating instructions.
+
+2019-06-13  Andrey Bacherov  <avbacherov@opencores.org>
+	    Stafford Horne  <shorne@gmail.com>
+
+	* or1k.cpu (ORFPX64A32-MACHS): New pmacro.
+	(ORFPX-MACHS): Removed pmacro.
+	* or1k.opc (or1k_cgen_insn_supported): New function.
+	(CGEN_VALIDATE_INSN_SUPPORTED): Define macro.
+	(parse_regpair, print_regpair): New functions.
+	* or1kcommon.cpu (h-spr, spr-shift, spr-address, h-gpr): Reorder
+	and add comments.
+	(h-fdr): Update comment to indicate or64.
+	(reg-pair-reg-lo, reg-pair-reg-hi): New pmacros for register pairs.
+	(h-fd32r): New hardware for 64-bit fpu registers.
+	(h-i64r): New hardware for 64-bit int registers.
+	* or1korbis.cpu (f-resv-8-1): New field.
+	* or1korfpx.cpu (rDSF, rASF, rBSF): Update attribute to ORFPX32-MACHS.
+	(rDDF, rADF, rBDF): Update operand comment to indicate or64.
+	(f-rdoff-10-1, f-raoff-9-1, f-rboff-8-1): New fields.
+	(h-roff1): New hardware.
+	(double-field-and-ops mnemonic): New pmacro to generate operations
+	rDD32F, rAD32F, rBD32F, rDDI and rADI.
+	(float-regreg-insn): Update single precision generator to MACH
+	ORFPX32-MACHS.  Add generator for or32 64-bit instructions.
+	(float-setflag-insn): Update single precision generator to MACH
+	ORFPX32-MACHS.  Fix double instructions from single to double
+	precision.  Add generator for or32 64-bit instructions.
+	(float-cust-insn cust-num): Update single precision generator to MACH
+	ORFPX32-MACHS.  Add generator for or32 64-bit instructions.
+	(lf-rem-s, lf-itof-s, lf-ftoi-s, lf-madd-s): Update MACH to
+	ORFPX32-MACHS.
+	(lf-rem-d): Fix operation from mod to rem.
+	(lf-rem-d32, lf-itof-d32, lf-ftoi-d32, lf-madd-d32): New instruction.
+	(lf-itof-d): Fix operands from single to double.
+	(lf-ftoi-d): Update operand mode from DI to WI.
+
+2019-05-23  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* bpf.cpu: New file.
+	* bpf.opc: Likewise.
+
 2018-06-24  Nick Clifton  <nickc@redhat.com>
 
 	2.32 branch created.

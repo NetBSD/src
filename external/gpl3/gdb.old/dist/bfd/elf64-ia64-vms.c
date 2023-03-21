@@ -1,5 +1,5 @@
 /* IA-64 support for OpenVMS
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -170,8 +170,9 @@ struct elf64_ia64_allocate_data
 };
 
 #define elf64_ia64_hash_table(p) \
-  (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
-  == IA64_ELF_DATA ? ((struct elf64_ia64_link_hash_table *) ((p)->hash)) : NULL)
+  ((is_elf_hash_table ((p)->hash)					\
+    && elf_hash_table_id (elf_hash_table (p)) == IA64_ELF_DATA)		\
+   ? (struct elf64_ia64_link_hash_table *) (p)->hash : NULL)
 
 struct elf64_ia64_vms_obj_tdata
 {
@@ -792,13 +793,11 @@ elf64_ia64_relax_section (bfd *abfd, asection *sec,
   return TRUE;
 
  error_return:
-  if (isymbuf != NULL && (unsigned char *) isymbuf != symtab_hdr->contents)
+  if ((unsigned char *) isymbuf != symtab_hdr->contents)
     free (isymbuf);
-  if (contents != NULL
-      && elf_section_data (sec)->this_hdr.contents != contents)
+  if (elf_section_data (sec)->this_hdr.contents != contents)
     free (contents);
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
   return FALSE;
 }
@@ -822,11 +821,10 @@ is_unwind_section_name (bfd *abfd ATTRIBUTE_UNUSED, const char *name)
    flag.  */
 
 static bfd_boolean
-elf64_ia64_section_flags (flagword *flags,
-			  const Elf_Internal_Shdr *hdr)
+elf64_ia64_section_flags (const Elf_Internal_Shdr *hdr)
 {
   if (hdr->sh_flags & SHF_IA_64_SHORT)
-    *flags |= SEC_SMALL_DATA;
+    hdr->bfd_section->flags |= SEC_SMALL_DATA;
 
   return TRUE;
 }
@@ -840,7 +838,7 @@ elf64_ia64_fake_sections (bfd *abfd, Elf_Internal_Shdr *hdr,
 {
   const char *name;
 
-  name = bfd_get_section_name (abfd, sec);
+  name = bfd_section_name (sec);
 
   if (is_unwind_section_name (abfd, name))
     {
@@ -884,6 +882,7 @@ elf64_ia64_add_symbol_hook (bfd *abfd,
 	  scomm = bfd_make_section_with_flags (abfd, ".scommon",
 					       (SEC_ALLOC
 						| SEC_IS_COMMON
+						| SEC_SMALL_DATA
 						| SEC_LINKER_CREATED));
 	  if (scomm == NULL)
 	    return FALSE;
@@ -1000,14 +999,11 @@ elf64_ia64_global_dyn_info_free (void **xentry,
   if (entry->root.root.type == bfd_link_hash_warning)
     entry = (struct elf64_ia64_link_hash_entry *) entry->root.root.u.i.link;
 
-  if (entry->info)
-    {
-      free (entry->info);
-      entry->info = NULL;
-      entry->count = 0;
-      entry->sorted_count = 0;
-      entry->size = 0;
-    }
+  free (entry->info);
+  entry->info = NULL;
+  entry->count = 0;
+  entry->sorted_count = 0;
+  entry->size = 0;
 
   return TRUE;
 }
@@ -1021,14 +1017,11 @@ elf64_ia64_local_dyn_info_free (void **slot,
   struct elf64_ia64_local_hash_entry *entry
     = (struct elf64_ia64_local_hash_entry *) *slot;
 
-  if (entry->info)
-    {
-      free (entry->info);
-      entry->info = NULL;
-      entry->count = 0;
-      entry->sorted_count = 0;
-      entry->size = 0;
-    }
+  free (entry->info);
+  entry->info = NULL;
+  entry->count = 0;
+  entry->sorted_count = 0;
+  entry->size = 0;
 
   return TRUE;
 }
@@ -1286,12 +1279,12 @@ elf64_ia64_create_dynamic_sections (bfd *abfd,
   s = bfd_make_section_anyway_with_flags (abfd, ".dynamic",
 					  flags | SEC_READONLY);
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, bed->s->log_file_align))
+      || !bfd_set_section_alignment (s, bed->s->log_file_align))
     return FALSE;
 
   s = bfd_make_section_anyway_with_flags (abfd, ".plt", flags | SEC_READONLY);
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, bed->plt_alignment))
+      || !bfd_set_section_alignment (s, bed->plt_alignment))
     return FALSE;
   ia64_info->root.splt = s;
 
@@ -1307,7 +1300,7 @@ elf64_ia64_create_dynamic_sections (bfd *abfd,
 					   | SEC_IN_MEMORY
 					   | SEC_LINKER_CREATED));
   if (s == NULL
-      || !bfd_set_section_alignment (abfd, s, 0))
+      || !bfd_set_section_alignment (s, 0))
     return FALSE;
 
   /* Create a fixup section.  */
@@ -1317,7 +1310,7 @@ elf64_ia64_create_dynamic_sections (bfd *abfd,
 					   | SEC_IN_MEMORY
 					   | SEC_LINKER_CREATED));
   if (s == NULL
-      || !bfd_set_section_alignment (abfd, s, 3))
+      || !bfd_set_section_alignment (s, 3))
     return FALSE;
   ia64_info->fixups_sec = s;
 
@@ -1328,7 +1321,7 @@ elf64_ia64_create_dynamic_sections (bfd *abfd,
 					   | SEC_IN_MEMORY
 					   | SEC_LINKER_CREATED));
   if (s == NULL
-      || !bfd_set_section_alignment (abfd, s, 3))
+      || !bfd_set_section_alignment (s, 3))
     return FALSE;
   s->size = sizeof (struct elf64_vms_transfer);
   ia64_info->transfer_sec = s;
@@ -1340,7 +1333,7 @@ elf64_ia64_create_dynamic_sections (bfd *abfd,
 					   | SEC_IN_MEMORY
 					   | SEC_READONLY));
   if (s == NULL
-      || !bfd_set_section_alignment (abfd, s, 3))
+      || !bfd_set_section_alignment (s, 3))
     return FALSE;
   ia64_info->note_sec = s;
 
@@ -1674,7 +1667,7 @@ get_dyn_sym_info (struct elf64_ia64_link_hash_table *ia64_info,
       *size_p = size;
       *info_p = info;
 
-has_space:
+    has_space:
       /* Append the new one to the array.  */
       dyn_i = info + count;
       memset (dyn_i, 0, sizeof (*dyn_i));
@@ -1738,7 +1731,7 @@ get_got (bfd *abfd, struct elf64_ia64_link_hash_table *ia64_info)
       got = bfd_make_section_anyway_with_flags (dynobj, ".got",
 						flags | SEC_SMALL_DATA);
       if (got == NULL
-	  || !bfd_set_section_alignment (dynobj, got, 3))
+	  || !bfd_set_section_alignment (got, 3))
 	return NULL;
       ia64_info->root.sgot = got;
     }
@@ -1774,7 +1767,7 @@ get_fptr (bfd *abfd, struct bfd_link_info *info,
 						     : SEC_READONLY)
 						  | SEC_LINKER_CREATED));
       if (!fptr
-	  || !bfd_set_section_alignment (dynobj, fptr, 4))
+	  || !bfd_set_section_alignment (fptr, 4))
 	{
 	  BFD_ASSERT (0);
 	  return NULL;
@@ -1792,7 +1785,7 @@ get_fptr (bfd *abfd, struct bfd_link_info *info,
 							  | SEC_LINKER_CREATED
 							  | SEC_READONLY));
 	  if (fptr_rel == NULL
-	      || !bfd_set_section_alignment (dynobj, fptr_rel, 3))
+	      || !bfd_set_section_alignment (fptr_rel, 3))
 	    {
 	      BFD_ASSERT (0);
 	      return NULL;
@@ -1827,7 +1820,7 @@ get_pltoff (bfd *abfd, struct elf64_ia64_link_hash_table *ia64_info)
 						    | SEC_SMALL_DATA
 						    | SEC_LINKER_CREATED));
       if (!pltoff
-	  || !bfd_set_section_alignment (dynobj, pltoff, 4))
+	  || !bfd_set_section_alignment (pltoff, 4))
 	{
 	  BFD_ASSERT (0);
 	  return NULL;
@@ -1855,11 +1848,9 @@ get_reloc_section (bfd *abfd,
     return NULL;
 
   BFD_ASSERT ((CONST_STRNEQ (srel_name, ".rela")
-	       && strcmp (bfd_get_section_name (abfd, sec),
-			  srel_name+5) == 0)
+	       && strcmp (bfd_section_name (sec), srel_name+5) == 0)
 	      || (CONST_STRNEQ (srel_name, ".rel")
-		  && strcmp (bfd_get_section_name (abfd, sec),
-			     srel_name+4) == 0));
+		  && strcmp (bfd_section_name (sec), srel_name+4) == 0));
 
   dynobj = ia64_info->root.dynobj;
   if (!dynobj)
@@ -1875,7 +1866,7 @@ get_reloc_section (bfd *abfd,
 						  | SEC_LINKER_CREATED
 						  | SEC_READONLY));
       if (srel == NULL
-	  || !bfd_set_section_alignment (dynobj, srel, 3))
+	  || !bfd_set_section_alignment (srel, 3))
 	return NULL;
     }
 
@@ -2750,7 +2741,7 @@ elf64_ia64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 	  /* It's OK to base decisions on the section name, because none
 	     of the dynobj section names depend upon the input files.  */
-	  name = bfd_get_section_name (dynobj, sec);
+	  name = bfd_section_name (sec);
 
 	  if (strcmp (name, ".got.plt") == 0)
 	    strip = FALSE;
@@ -2847,7 +2838,7 @@ elf64_ia64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 					   elf_ia64_vms_ident (abfd)))
 	    return FALSE;
 
-	  soname = vms_get_module_name (abfd->filename, TRUE);
+	  soname = vms_get_module_name (bfd_get_filename (abfd), TRUE);
 	  if (soname == NULL)
 	    return FALSE;
 	  strindex = dynstrsec->size;
@@ -3286,7 +3277,7 @@ elf64_ia64_choose_gp (bfd *abfd, struct bfd_link_info *info, bfd_boolean final)
     {
       if (max_short_vma - min_short_vma >= 0x400000)
 	{
-overflow:
+	overflow:
 	  _bfd_error_handler
 	    /* xgettext:c-format */
 	    (_("%pB: short data segment overflowed (%#" PRIx64 " >= 0x400000)"),
@@ -4236,6 +4227,10 @@ elf64_ia64_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   flagword in_flags;
   bfd_boolean ok = TRUE;
 
+  /* FIXME: What should be checked when linking shared libraries?  */
+  if ((ibfd->flags & DYNAMIC) != 0)
+    return TRUE;
+
   /* Don't even pretend to support mixed-format linking.  */
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
@@ -4376,7 +4371,7 @@ elf64_ia64_object_p (bfd *abfd)
   flagword flags;
   const char *name;
   char *unwi_name, *unw_name;
-  bfd_size_type amt;
+  size_t amt;
 
   if (abfd->flags & DYNAMIC)
     return TRUE;
@@ -4501,8 +4496,8 @@ elf64_vms_section_from_shdr (bfd *abfd,
     {
       asection *newsect = hdr->bfd_section;
 
-      if (! bfd_set_section_flags
-	  (abfd, newsect, bfd_get_section_flags (abfd, newsect) | secflags))
+      if (!bfd_set_section_flags (newsect,
+				  bfd_section_flags (newsect) | secflags))
 	return FALSE;
     }
 
@@ -4613,14 +4608,18 @@ elf64_vms_object_p (bfd *abfd)
   return TRUE;
 }
 
-static void
-elf64_vms_post_process_headers (bfd *abfd,
-				struct bfd_link_info *info ATTRIBUTE_UNUSED)
+static bfd_boolean
+elf64_vms_init_file_header (bfd *abfd, struct bfd_link_info *info)
 {
-  Elf_Internal_Ehdr *i_ehdrp = elf_elfheader (abfd);
+  Elf_Internal_Ehdr *i_ehdrp;
 
+  if (!_bfd_elf_init_file_header (abfd, info))
+    return FALSE;
+
+  i_ehdrp = elf_elfheader (abfd);
   i_ehdrp->e_ident[EI_OSABI] = ELFOSABI_OPENVMS;
   i_ehdrp->e_ident[EI_ABIVERSION] = 2;
+  return TRUE;
 }
 
 static bfd_boolean
@@ -4629,7 +4628,7 @@ elf64_vms_section_processing (bfd *abfd ATTRIBUTE_UNUSED,
 {
   if (hdr->bfd_section != NULL)
     {
-      const char *name = bfd_get_section_name (abfd, hdr->bfd_section);
+      const char *name = bfd_section_name (hdr->bfd_section);
 
       if (strcmp (name, ".text") == 0)
 	hdr->sh_flags |= SHF_IA_64_VMS_SHARED;
@@ -4659,9 +4658,8 @@ elf64_vms_section_processing (bfd *abfd ATTRIBUTE_UNUSED,
 /* The final processing done just before writing out a VMS IA-64 ELF
    object file.  */
 
-static void
-elf64_vms_final_write_processing (bfd *abfd,
-				  bfd_boolean linker ATTRIBUTE_UNUSED)
+static bfd_boolean
+elf64_vms_final_write_processing (bfd *abfd)
 {
   Elf_Internal_Shdr *hdr;
   asection *s;
@@ -4671,7 +4669,7 @@ elf64_vms_final_write_processing (bfd *abfd,
     {
       hdr = &elf_section_data (s)->this_hdr;
 
-      if (strcmp (bfd_get_section_name (abfd, hdr->bfd_section),
+      if (strcmp (bfd_section_name (hdr->bfd_section),
 		  ".IA_64.unwind_info") == 0)
 	unwind_info_sect_idx = elf_section_data (s)->this_idx;
 
@@ -4696,6 +4694,7 @@ elf64_vms_final_write_processing (bfd *abfd,
       elf_elfheader (abfd)->e_flags = flags;
       elf_flags_init (abfd) = TRUE;
     }
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 static bfd_boolean
@@ -4846,7 +4845,7 @@ elf64_vms_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
       /* Extract IDENT.  */
       if (!bfd_malloc_and_get_section (abfd, s, &dynbuf))
 	{
-error_free_dyn:
+	error_free_dyn:
 	  free (dynbuf);
 	  goto error_return;
 	}
@@ -5237,11 +5236,8 @@ error_free_dyn:
 	}
     }
 
-  if (isymbuf != NULL)
-    {
-      free (isymbuf);
-      isymbuf = NULL;
-    }
+  free (isymbuf);
+  isymbuf = NULL;
 
   /* If this object is the same format as the output object, and it is
      not a shared library, then let the backend look through the
@@ -5298,8 +5294,7 @@ error_free_dyn:
 
  error_free_vers:
  error_free_sym:
-  if (isymbuf != NULL)
-    free (isymbuf);
+  free (isymbuf);
  error_return:
   return FALSE;
 }
@@ -5555,8 +5550,8 @@ static const struct elf_size_info elf64_ia64_vms_size_info = {
 #undef  elf_backend_section_from_shdr
 #define elf_backend_section_from_shdr elf64_vms_section_from_shdr
 
-#undef  elf_backend_post_process_headers
-#define elf_backend_post_process_headers elf64_vms_post_process_headers
+#undef  elf_backend_init_file_header
+#define elf_backend_init_file_header elf64_vms_init_file_header
 
 #undef  elf_backend_section_processing
 #define elf_backend_section_processing elf64_vms_section_processing

@@ -1,5 +1,5 @@
 /* Interface for common GDB/MI data
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -66,7 +66,8 @@ public:
   void suspend () override;
   gdb_exception exec (const char *command_str) override;
   ui_out *interp_ui_out () override;
-  void set_logging (ui_file_up logfile, bool logging_redirect) override;
+  void set_logging (ui_file_up logfile, bool logging_redirect,
+		    bool debug_redirect) override;
   void pre_command_loop () override;
 
   /* MI's output channels */
@@ -79,9 +80,16 @@ public:
   /* Raw console output.  */
   struct ui_file *raw_stdout;
 
-  /* Save the original value of raw_stdout here when logging, so we
-     can restore correctly when done.  */
+  /* Raw logfile output.  */
+  struct ui_file *raw_stdlog;
+
+  /* Save the original value of raw_stdout and raw_stdlog here when logging, and
+     the file which we need to delete, so we can restore correctly when
+     done.  */
   struct ui_file *saved_raw_stdout;
+  struct ui_file *saved_raw_stdlog;
+  struct ui_file *saved_raw_file_to_delete;
+
 
   /* MI's builder.  */
   struct ui_out *mi_uiout;

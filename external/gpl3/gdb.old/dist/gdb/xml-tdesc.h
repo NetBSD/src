@@ -1,6 +1,6 @@
 /* XML target description support for GDB.
 
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -22,7 +22,7 @@
 #ifndef XML_TDESC_H
 #define XML_TDESC_H
 
-#include "common/gdb_optional.h"
+#include "gdbsupport/gdb_optional.h"
 #include <string>
 
 struct target_ops;

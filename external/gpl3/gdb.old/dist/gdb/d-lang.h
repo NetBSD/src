@@ -1,6 +1,6 @@
 /* D language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -76,12 +76,10 @@ extern struct block_symbol d_lookup_symbol_nonlocal (const struct language_defn 
 extern struct block_symbol d_lookup_nested_symbol (struct type *, const char *,
 						   const struct block *);
 
-/* Defined in d-valprint.c  */
+/* Implement la_value_print_inner for D.  */
 
-extern void d_val_print (struct type *type,
-			 int embedded_offset, CORE_ADDR address,
-			 struct ui_file *stream, int recurse,
-			 struct value *val,
-			 const struct value_print_options *options);
+extern void d_value_print_inner (struct value *val,
+				 struct ui_file *stream, int recurse,
+				 const struct value_print_options *options);
 
 #endif /* !defined (D_LANG_H) */

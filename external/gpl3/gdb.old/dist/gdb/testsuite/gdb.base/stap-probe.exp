@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2019 Free Software Foundation, Inc.
+# Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,12 +18,18 @@ standard_testfile
 # Run the tests.  We run the tests two different ways: once with a
 # plain probe, and once with a probe that has an associated semaphore.
 # This returns -1 on failure to compile or start, 0 otherwise.
-proc stap_test {exec_name {arg ""}} {
+proc stap_test {exec_name {args ""}} {
     global testfile hex srcfile
 
     if {[prepare_for_testing "failed to prepare" ${exec_name} $srcfile \
-	   [concat $arg debug]]} {
+	   [concat $args debug]]} {
 	return -1
+    }
+
+    set semaphore_addr_var ""
+    if {[string first "-DUSE_SEMAPHORES" $args] == -1} {
+	gdb_test_no_output "set breakpoint always-inserted on"
+	set semaphore_addr_var [get_hexadecimal_valueof "&relocation_marker" "0"]
     }
 
     if ![runto_main] {
@@ -33,14 +39,32 @@ proc stap_test {exec_name {arg ""}} {
     gdb_test "print \$_probe_argc" "No probe at PC $hex" \
 	"check argument not at probe point"
 
-    gdb_test "info probes stap" \
-	"test *user *$hex .*" \
-	"info probes stap"
-    
+    if {[string first "-DUSE_SEMAPHORES" $args] != -1} {
+	gdb_test "info probes stap" \
+	    "test *user *$hex *$hex .*"
+    } else {
+	gdb_test "info probes stap" \
+	    "test *user *$hex .*"
+    }
+
     if {[runto "-pstap test:user"]} {
 	pass "run to -pstap test:user"
     } else {
 	fail "run to -pstap test:user"
+    }
+
+    if {[string first "-DUSE_SEMAPHORES" $args] == -1} {
+	set relocation_base \
+	   [expr [get_hexadecimal_valueof "&relocation_marker" "0"] - $semaphore_addr_var]
+	if {$relocation_base != 0} {
+	   # Checks that GDB doesn't mistakenly relocate and write to null
+	   # semaphore addresses.  If it were to relocate a zero-valued
+	   # semaphore address and increment the value at that address, we
+	   # would expect to see "\200ELF" here instead.
+	   gdb_test "p (*(char*) $relocation_base)@4" \
+		" = \"\\\\177ELF\"" \
+		"null semaphore relocation"
+	}
     }
 
     # Test probe arguments.
@@ -93,11 +117,11 @@ proc stap_test {exec_name {arg ""}} {
     return 0
 }
 
-proc stap_test_no_debuginfo {exec_name {arg ""}} {
+proc stap_test_no_debuginfo {exec_name {args ""}} {
     global testfile hex
 
     if {[prepare_for_testing "failed to prepare" ${exec_name} ${testfile}.c \
-	   {$arg nodebug optimize=-O2}]} {
+	   [concat $args nodebug optimize=-O2]]} {
 	return -1
     }
 
@@ -164,10 +188,14 @@ with_test_prefix "without semaphore, not optimized" {
 	untested "stap probe test failed"
 	  return -1
     }
+
+    foreach_with_prefix pie { "nopie" "pie" } {
+	stap_test "stap-probe-nosem-noopt-$pie" $pie
+    }
 }
 
 with_test_prefix "with semaphore, not optimized" {
-    stap_test "stap-probe-sem-noopt" "-DUSE_PROBES"
+    stap_test "stap-probe-sem-noopt" additional_flags=-DUSE_SEMAPHORES
 }
 
 with_test_prefix "without semaphore, optimized" {
@@ -175,5 +203,5 @@ with_test_prefix "without semaphore, optimized" {
 }
 
 with_test_prefix "with semaphore, optimized" {
-    stap_test_no_debuginfo "stap-probe-sem-opt" "-DUSE_PROBES"
+    stap_test_no_debuginfo "stap-probe-sem-opt" additional_flags=-DUSE_SEMAPHORES
 }

@@ -1,6 +1,6 @@
 /* GDB target debugging macros
 
-   Copyright (C) 2014-2019 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -184,6 +184,10 @@
   target_debug_do_print (host_address_to_string (X))
 #define target_debug_print_thread_info_pp(X)		\
   target_debug_do_print (host_address_to_string (X))
+#define target_debug_print_std_string(X) \
+  target_debug_do_print ((X).c_str ())
+#define target_debug_print_gdb_byte_vector(X)	\
+  target_debug_do_print (host_address_to_string (X.data ()))
 
 static void
 target_debug_print_struct_target_waitstatus_p (struct target_waitstatus *status)
