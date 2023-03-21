@@ -1,6 +1,6 @@
 /* Builtin frame register, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -24,6 +24,8 @@
 #include "frame.h"
 #include "gdbtypes.h"
 #include "value.h"
+#include "gdbarch.h"
+
 static struct value *
 value_of_builtin_frame_fp_reg (struct frame_info *frame, const void *baton)
 {
@@ -89,8 +91,9 @@ value_of_builtin_frame_ps_reg (struct frame_info *frame, const void *baton)
   error (_("Standard register ``$ps'' is not available for this target"));
 }
 
+void _initialize_frame_reg ();
 void
-_initialize_frame_reg (void)
+_initialize_frame_reg ()
 {
   /* Frame based $fp, $pc, $sp and $ps.  These only come into play
      when the target does not define its own version of these

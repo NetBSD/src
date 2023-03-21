@@ -1,6 +1,6 @@
 /* Abstract base class inherited by all process_stratum targets
 
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #define PROCESS_STRATUM_TARGET_H
 
 #include "target.h"
+#include <set>
 
 /* Abstract base class inherited by all process_stratum targets.  */
 
@@ -29,7 +30,17 @@ class process_stratum_target : public target_ops
 public:
   ~process_stratum_target () override = 0;
 
-  strata stratum () const override { return process_stratum; }
+  strata stratum () const final override { return process_stratum; }
+
+  /* Return a string representation of this target's open connection.
+     This string is used to distinguish different instances of a given
+     target type.  For example, when remote debugging, the target is
+     called "remote", but since we may have more than one remote
+     target open, connection_string() returns the connection serial
+     connection name, e.g., "localhost:10001", "192.168.0.1:20000",
+     etc.  This string is shown in several places, e.g., in "info
+     connections" and "info inferiors".  */
+  virtual const char *connection_string () { return nullptr; }
 
   /* We must default these because they must be implemented by any
      target that can run.  */
@@ -50,7 +61,35 @@ public:
   bool has_memory () override;
   bool has_stack () override;
   bool has_registers () override;
-  bool has_execution (ptid_t the_ptid) override;
+  bool has_execution (inferior *inf) override;
+
+  /* True if any thread is, or may be executing.  We need to track
+     this separately because until we fully sync the thread list, we
+     won't know whether the target is fully stopped, even if we see
+     stop events for all known threads, because any of those threads
+     may have spawned new threads we haven't heard of yet.  */
+  bool threads_executing = false;
+
+  /* The connection number.  Visible in "info connections".  */
+  int connection_number = 0;
 };
+
+/* Downcast TARGET to process_stratum_target.  */
+
+static inline process_stratum_target *
+as_process_stratum_target (target_ops *target)
+{
+  gdb_assert (target->stratum () == process_stratum);
+  return static_cast<process_stratum_target *> (target);
+}
+
+/* Return a collection of targets that have non-exited inferiors.  */
+
+extern std::set<process_stratum_target *> all_non_exited_process_targets ();
+
+/* Switch to the first inferior (and program space) of TARGET, and
+   switch to no thread selected.  */
+
+extern void switch_to_target_no_thread (process_stratum_target *target);
 
 #endif /* !defined (PROCESS_STRATUM_TARGET_H) */

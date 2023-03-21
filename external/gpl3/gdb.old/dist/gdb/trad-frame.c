@@ -1,6 +1,6 @@
 /* Traditional frame unwind support, for GDB the GNU Debugger.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,6 +24,7 @@
 #include "frame-unwind.h"
 #include "target.h"
 #include "value.h"
+#include "gdbarch.h"
 
 struct trad_frame_cache
 {
@@ -44,19 +45,28 @@ trad_frame_cache_zalloc (struct frame_info *this_frame)
   return this_trad_cache;
 }
 
+/* See trad-frame.h.  */
+
+void
+trad_frame_reset_saved_regs (struct gdbarch *gdbarch,
+			     struct trad_frame_saved_reg *regs)
+{
+  int numregs = gdbarch_num_cooked_regs (gdbarch);
+  for (int regnum = 0; regnum < numregs; regnum++)
+    {
+      regs[regnum].realreg = regnum;
+      regs[regnum].addr = -1;
+    }
+}
+
 struct trad_frame_saved_reg *
 trad_frame_alloc_saved_regs (struct gdbarch *gdbarch)
 {
-  int regnum;
   int numregs = gdbarch_num_cooked_regs (gdbarch);
   struct trad_frame_saved_reg *this_saved_regs
     = FRAME_OBSTACK_CALLOC (numregs, struct trad_frame_saved_reg);
 
-  for (regnum = 0; regnum < numregs; regnum++)
-    {
-      this_saved_regs[regnum].realreg = regnum;
-      this_saved_regs[regnum].addr = -1;
-    }      
+  trad_frame_reset_saved_regs (gdbarch, this_saved_regs);
   return this_saved_regs;
 }
 

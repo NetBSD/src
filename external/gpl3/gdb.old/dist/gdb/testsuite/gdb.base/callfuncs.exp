@@ -1,4 +1,4 @@
-# Copyright 1992-2019 Free Software Foundation, Inc.
+# Copyright 1992-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -224,13 +224,13 @@ proc do_function_calls {prototypes} {
 
     if [support_complex_tests] {
 
-	gdb_test "p t_structs_fc(struct_val1)" ".*= 3 \\+ 3 \\* I" \
+	gdb_test "p t_structs_fc(struct_val1)" ".*= 3 \\+ 3i" \
 	    "call inferior func with struct - returns float _Complex"
 
-	gdb_test "p t_structs_dc(struct_val1)" ".*= 4 \\+ 4 \\* I" \
+	gdb_test "p t_structs_dc(struct_val1)" ".*= 4 \\+ 4i" \
 	    "call inferior func with struct - returns double _Complex"
 
-	gdb_test "p t_structs_ldc(struct_val1)" "= 5 \\+ 5 \\* I" \
+	gdb_test "p t_structs_ldc(struct_val1)" "= 5 \\+ 5i" \
 	    "call inferior func with struct - returns long double _Complex"
     }
 
@@ -322,21 +322,31 @@ proc fetch_all_registers {test} {
     return $all_registers_lines
 }
 
+# Global used by RERUN_AND_PREPARE to make test names unique.
+set rerun_count 0
+
 proc rerun_and_prepare {} {
-    if { ![runto_main] } {
-	gdb_suppress_tests
+    global rerun_count
+
+    incr rerun_count
+    with_test_prefix "rerun number ${rerun_count}" {
+
+	if { ![runto_main] } {
+	    gdb_suppress_tests
+	}
+
+	gdb_test_no_output "set language c"
+
+	get_debug_format
+
+	# Make sure that malloc gets called and that the floating
+	# point unit is initialized via a call to t_double_values.
+	gdb_test "next" \
+	    "t_double_values\\(double_val1, double_val2\\);.*" \
+	    "next to t_double_values"
+	gdb_test "next" "t_structs_c\\(struct_val1\\);.*" \
+	    "next to t_structs_c"
     }
-
-    gdb_test_no_output "set language c"
-
-    get_debug_format
-
-    # Make sure that malloc gets called and that the floating point unit
-    # is initialized via a call to t_double_values.
-    gdb_test "next" "t_double_values\\(double_val1, double_val2\\);.*" \
-	"next to t_double_values"
-    gdb_test "next" "t_structs_c\\(struct_val1\\);.*" \
-	"next to t_structs_c"
 }
 
 proc perform_all_tests {prototypes} {
@@ -347,7 +357,8 @@ proc perform_all_tests {prototypes} {
     rerun_and_prepare
 
     # Save all register contents.
-    set old_reg_content [fetch_all_registers "retrieve original register contents"]
+    set old_reg_content \
+	[fetch_all_registers "retrieve original register contents 1"]
 
     # Perform function calls.
     do_function_calls $prototypes
@@ -364,7 +375,8 @@ proc perform_all_tests {prototypes} {
 
     rerun_and_prepare
     # Save all register contents.
-    set old_reg_content [fetch_all_registers "retrieve original register contents"]
+    set old_reg_content \
+	[fetch_all_registers "retrieve original register contents 2"]
 
     # Set breakpoint at a function we will call from gdb.
     gdb_breakpoint add
@@ -391,7 +403,8 @@ proc perform_all_tests {prototypes} {
     # Set breakpoint at a function we will call from gdb.
     gdb_breakpoint add
     # Save all register contents.
-    set old_reg_content [fetch_all_registers "retrieve original register contents"]
+    set old_reg_content \
+	[fetch_all_registers "retrieve original register contents 3"]
 
     # Call function (causing a breakpoint hit in the call dummy) and do a finish,
     # make sure we are back at main and still have the same register contents.
@@ -416,7 +429,8 @@ proc perform_all_tests {prototypes} {
     # Set breakpoint at a function we will call from gdb.
     gdb_breakpoint add
     # Save all register contents.
-    set old_reg_content [fetch_all_registers "retrieve original register contents"]
+    set old_reg_content \
+	[fetch_all_registers "retrieve original register contents 4"]
 
     # Call function (causing a breakpoint hit in the call dummy) and do a return
     # with a value, make sure we are back at main with the same register contents.
@@ -439,7 +453,8 @@ proc perform_all_tests {prototypes} {
     rerun_and_prepare
     # Set breakpoint at a function we will call from gdb.
     gdb_breakpoint add
-    set old_reg_content [fetch_all_registers "retrieve original register contents"]
+    set old_reg_content \
+	[fetch_all_registers "retrieve original register contents 5"]
 
     # Call function (causing a breakpoint hit in the call dummy), and
     # call another function from the call dummy frame (thereby setting up

@@ -1,4 +1,4 @@
-# Copyright 2011-2019 Free Software Foundation, Inc.
+# Copyright 2011-2020 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -242,7 +242,7 @@ proc strace_trace_on_same_addr { type } {
 	    "ust/bar\[\t \]+y\[\t \]+$hex .*ust/bar2\[\t \]+y\[\t \]+$hex.*" \
 	    "info static-tracepoint-markers 2"
 
-	# Set breapoints or tracepoints.
+	# Set breakpoints or tracepoints.
 	set test "${type} on marker bar"
 	gdb_test_multiple "${type} *${marker_bar_addr}" $test {
 	    -re "\(Fast trace|Trace|Break\)point \[0-9\]+ at ${hex}: file.*\r\n$gdb_prompt $" {

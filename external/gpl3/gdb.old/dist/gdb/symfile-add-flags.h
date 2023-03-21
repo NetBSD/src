@@ -1,6 +1,6 @@
 /* Definition of symfile add flags.
 
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #if !defined (SYMFILE_ADD_FLAGS_H)
 #define SYMFILE_ADD_FLAGS_H
 
-#include "common/enum-flags.h"
+#include "gdbsupport/enum-flags.h"
 
 /* This enum encodes bit-flags passed as ADD_FLAGS parameter to
    symbol_file_add, etc.  Defined in a separate file to break circular
@@ -44,6 +44,12 @@ enum symfile_add_flag : unsigned
 
     /* The new objfile should be marked OBJF_NOT_FILENAME.  */
     SYMFILE_NOT_FILENAME = 1 << 5,
+
+    /* If SYMFILE_VERBOSE (interpreted as from_tty) and SYMFILE_ALWAYS_CONFIRM,
+       always ask user to confirm loading the symbol file.
+       Without this flag, symbol_file_add_with_addrs asks a confirmation only
+       for a main symbol file replacing a file having symbols.  */
+    SYMFILE_ALWAYS_CONFIRM = 1 << 6,
  };
 
 DEF_ENUM_FLAGS_TYPE (enum symfile_add_flag, symfile_add_flags);

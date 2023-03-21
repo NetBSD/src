@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1992-2019 Free Software Foundation, Inc.
+   Copyright 1992-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -59,6 +59,8 @@ void StringTest <T>::testFunction() {
 int main() {
    StringTest<wchar_t> ts;
    ts.runTest();
+
+   return 0;
 }
 
 /* output:

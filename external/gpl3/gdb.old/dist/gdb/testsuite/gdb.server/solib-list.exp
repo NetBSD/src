@@ -1,4 +1,4 @@
-# Copyright 2010-2019 Free Software Foundation, Inc.
+# Copyright 2010-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -92,12 +92,28 @@ foreach nonstop { 0 1 } { with_test_prefix "non-stop $nonstop" {
 	     {(Are you sure you want to change the file|Load new symbol table from ".*")\? \(y or n\) } "y"
 
     set test "target $gdbserver_protocol"
+    set ok 0
+    set new_symbol_table 0
     gdb_test_multiple "target $gdbserver_protocol $gdbserver_gdbport" $test {
-	-re "Remote debugging using .*\r\n$gdb_prompt " {
+	-re "Remote debugging using" {
+	    set ok 1
+	    exp_continue
+	}
+	-re {.*Load new symbol table from ".*"\? \(y or n\) } {
+	    set new_symbol_table 1
+	    send_gdb "y\n" answer
+	    exp_continue
+	}
+	-re ".*\r\n$gdb_prompt " {
 	    # Do not anchor end, there may be more output in non-stop mode.
-	    pass $test
+	    if ($ok) {
+		pass $test
+	    } else {
+		fail $test
+	    }
 	}
     }
+    gdb_assert {$new_symbol_table == 1}
 
     gdb_test "continue" "Program received signal SIGUSR1, .*"
     gdb_test "sharedlibrary" ".*"

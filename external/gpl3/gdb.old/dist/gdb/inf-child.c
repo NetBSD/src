@@ -1,6 +1,6 @@
 /* Base/prototype target for default child (native) targets.
 
-   Copyright (C) 1988-2019 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,10 +30,10 @@
 #include "inferior.h"
 #include <sys/stat.h>
 #include "inf-child.h"
-#include "common/fileio.h"
-#include "common/agent.h"
-#include "common/gdb_wait.h"
-#include "common/filestuff.h"
+#include "gdbsupport/fileio.h"
+#include "gdbsupport/agent.h"
+#include "gdbsupport/gdb_wait.h"
+#include "gdbsupport/filestuff.h"
 
 #include <sys/types.h>
 #include <fcntl.h>
@@ -206,7 +206,7 @@ inf_child_target::mourn_inferior ()
 void
 inf_child_target::maybe_unpush_target ()
 {
-  if (!inf_child_explicitly_opened && !have_inferiors ())
+  if (!inf_child_explicitly_opened)
     unpush_target (this);
 }
 

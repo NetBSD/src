@@ -1,6 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Windows systems
 
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1338,8 +1338,9 @@ static const struct serial_ops tcp_ops =
   net_windows_done_wait_handle
 };
 
+void _initialize_ser_windows ();
 void
-_initialize_ser_windows (void)
+_initialize_ser_windows ()
 {
   WSADATA wsa_data;
 

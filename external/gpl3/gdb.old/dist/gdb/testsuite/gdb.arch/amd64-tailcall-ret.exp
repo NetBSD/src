@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2019 Free Software Foundation, Inc.
+# Copyright (C) 2012-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,11 +34,11 @@ if ![runto_main] {
 }
 
 gdb_breakpoint "g"
-gdb_continue_to_breakpoint "g" ".* v = 2;"
+gdb_continue_to_breakpoint "first time in g" ".* v = 2;"
 
 gdb_test "return" { f \(\); /\* second \*/} "return" \
          {Make g return now\? \(y or n\) } "y"
 
-gdb_continue_to_breakpoint "g" ".* v = 2;"
+gdb_continue_to_breakpoint "second time in g" ".* v = 2;"
 
 gdb_test "finish" " v = 3;"

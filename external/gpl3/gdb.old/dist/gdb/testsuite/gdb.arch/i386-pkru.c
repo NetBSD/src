@@ -1,6 +1,6 @@
 /* Test program for PKEYS registers.
 
-   Copyright 2015-2019 Free Software Foundation, Inc.
+   Copyright 2015-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

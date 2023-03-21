@@ -1,4 +1,4 @@
-# Copyright 2012-2019 Free Software Foundation, Inc.
+# Copyright 2012-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,7 +53,7 @@ if [support_displaced_stepping] {
 gdb_breakpoint main {temporary}
 gdb_test "run" "Temporary breakpoint.* main .*" "start to main inferior 1"
 
-gdb_test "add-inferior" "Added inferior 2" "add inferior 2"
+gdb_test "add-inferior" "Added inferior 2 on connection .*" "add inferior 2"
 gdb_test "inferior 2" "witching to inferior 2 .*" "switch to inferior 2, first time"
 gdb_load $binfile
 

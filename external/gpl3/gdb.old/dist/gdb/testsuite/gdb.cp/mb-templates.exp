@@ -1,4 +1,4 @@
-# Copyright 2007-2019 Free Software Foundation, Inc.
+# Copyright 2007-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,11 +17,6 @@
 # function will fire in all instantiations of that template.
 
 if { [skip_stl_tests] } { continue }
-
-# On SPU this test fails because the executable exceeds local storage size.
-if { [istarget "spu*-*-*"] } {
-        return 0
-}
 
 
 standard_testfile .cc

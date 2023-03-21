@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,8 +22,11 @@
 
 #include <windows.h>
 
-#define context_offset(x) ((int)&(((CONTEXT *)NULL)->x))
-static const int mappings[] =
+#ifdef __x86_64__
+#define CONTEXT WOW64_CONTEXT
+#endif
+#define context_offset(x) ((int)(size_t)&(((CONTEXT *)NULL)->x))
+const int i386_mappings[] =
 {
   context_offset (Eax),
   context_offset (Ecx),
@@ -70,19 +73,21 @@ static const int mappings[] =
   context_offset (ExtendedRegisters[24])
 };
 #undef context_offset
+#undef CONTEXT
 
 /* segment_register_p_ftype implementation for x86.  */
 
-static int
+int
 i386_windows_segment_register_p (int regnum)
 {
   return regnum >= I386_CS_REGNUM && regnum <= I386_GS_REGNUM;
 }
 
+void _initialize_i386_windows_nat ();
 void
-_initialize_i386_windows_nat (void)
+_initialize_i386_windows_nat ()
 {
-  windows_set_context_register_offsets (mappings);
-  windows_set_segment_register_p (i386_windows_segment_register_p);
+#ifndef __x86_64__
   x86_set_debug_register_length (4);
+#endif
 }

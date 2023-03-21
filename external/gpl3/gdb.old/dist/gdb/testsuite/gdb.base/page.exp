@@ -1,4 +1,4 @@
-# Copyright 1992-2019 Free Software Foundation, Inc.
+# Copyright 1992-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ gdb_test "show pagination" "State of pagination is off.*" "pagination is off"
 gdb_test_sequence "help" "unpaged help" {
     "List of classes of commands:"
     ""
-    "aliases -- Aliases of other commands"
+    "aliases -- User-defined aliases of other commands"
     "breakpoints -- Making program stop at certain points"
     "data -- Examining data"
     "files -- Specifying and examining files"
@@ -50,7 +50,7 @@ gdb_expect_list "paged help" \
 	".*$pagination_prompt" {
     "List of classes of commands:"
     ""
-    "aliases -- Aliases of other commands"
+    "aliases -- User-defined aliases of other commands"
     "breakpoints -- Making program stop at certain points"
     "data -- Examining data"
     "files -- Specifying and examining files"
@@ -93,6 +93,33 @@ gdb_expect_list "paged count for interrupt" \
     [list 1\r\n 2\r\n 3\r\n 444444444444444444444444444444]
 
 gdb_test "q" "Quit" "quit while paging"
+
+# Check that width/height of sqrt(INT_MAX) is treated as unlimited, as
+# well as "0" and explicit "unlimited".
+foreach_with_prefix size {"0" "0x80000000" "unlimited"} {
+
+    # Alternate between "non-unlimited" values and "unlimited" values,
+    # to make sure we're not seeing stale internal state.
+
+    gdb_test "set width 200"
+    gdb_test "show width" \
+	"Number of characters gdb thinks are in a line is 200\\."
+
+    gdb_test "set height 200"
+    gdb_test "show height" \
+	"Number of lines gdb thinks are in a page is 200\\."
+
+    gdb_test "set width $size"
+    gdb_test "show width unlimited" \
+	"Number of characters gdb thinks are in a line is unlimited\\."
+
+    gdb_test "set height $size"
+    gdb_test "show height unlimited" \
+	"Number of lines gdb thinks are in a page is unlimited\\."
+}
+
+gdb_test "set width -1" "integer -1 out of range"
+gdb_test "set height -1" "integer -1 out of range"
 
 gdb_exit
 return 0

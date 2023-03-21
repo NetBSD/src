@@ -1,4 +1,4 @@
-@c Copyright (C) 2008-2019 Free Software Foundation, Inc.
+@c Copyright (C) 2008--2020 Free Software Foundation, Inc.
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
 @c any later version published by the Free Software Foundation; with the
@@ -90,8 +90,6 @@ containing @code{end}.  For example:
 
 @smallexample
 (@value{GDBP}) python
-Type python script
-End with a line saying just "end".
 >print 23
 >end
 23
@@ -165,6 +163,8 @@ optional arguments while skipping others.  Example:
                                 using Python.
 * Lazy Strings In Python::      Python representation of lazy strings.
 * Architectures In Python::     Python representation of architectures.
+* Registers In Python::         Python representation of registers.
+* TUI Windows In Python::       Implementing new TUI windows.
 @end menu
 
 @node Basic Python
@@ -735,7 +735,7 @@ its result is used.
 @end table
 @end defun
 
-@defun Value.__init__ (@var{val}, @r{[}, type @r{]})
+@defun Value.__init__ (@var{val}, @var{type})
 This second form of the @code{gdb.Value} constructor returns a
 @code{gdb.Value} of type @var{type} where the value contents are taken
 from the Python buffer object specified by @var{val}.  The number of
@@ -771,7 +771,7 @@ The result @code{bar} will be a @code{gdb.Value} object holding the
 value pointed to by @code{foo}.
 
 A similar function @code{Value.referenced_value} exists which also
-returns @code{gdb.Value} objects corresonding to the values pointed to
+returns @code{gdb.Value} objects corresponding to the values pointed to
 by pointer values (and additionally, values referenced by reference
 values).  However, the behavior of @code{Value.dereference}
 differs from @code{Value.referenced_value} by the fact that the
@@ -862,6 +862,91 @@ operator were used.  Consult a C@t{++} reference for details.
 @defun Value.reinterpret_cast (type)
 Like @code{Value.cast}, but works as if the C@t{++} @code{reinterpret_cast}
 operator were used.  Consult a C@t{++} reference for details.
+@end defun
+
+@defun Value.format_string (...)
+Convert a @code{gdb.Value} to a string, similarly to what the @code{print}
+command does.  Invoked with no arguments, this is equivalent to calling
+the @code{str} function on the @code{gdb.Value}.  The representation of
+the same value may change across different versions of @value{GDBN}, so
+you shouldn't, for instance, parse the strings returned by this method.
+
+All the arguments are keyword only.  If an argument is not specified, the
+current global default setting is used.
+
+@table @code
+@item raw
+@code{True} if pretty-printers (@pxref{Pretty Printing}) should not be
+used to format the value.  @code{False} if enabled pretty-printers
+matching the type represented by the @code{gdb.Value} should be used to
+format it.
+
+@item pretty_arrays
+@code{True} if arrays should be pretty printed to be more convenient to
+read, @code{False} if they shouldn't (see @code{set print array} in
+@ref{Print Settings}).
+
+@item pretty_structs
+@code{True} if structs should be pretty printed to be more convenient to
+read, @code{False} if they shouldn't (see @code{set print pretty} in
+@ref{Print Settings}).
+
+@item array_indexes
+@code{True} if array indexes should be included in the string
+representation of arrays, @code{False} if they shouldn't (see @code{set
+print array-indexes} in @ref{Print Settings}).
+
+@item symbols
+@code{True} if the string representation of a pointer should include the
+corresponding symbol name (if one exists), @code{False} if it shouldn't
+(see @code{set print symbol} in @ref{Print Settings}).
+
+@item unions
+@code{True} if unions which are contained in other structures or unions
+should be expanded, @code{False} if they shouldn't (see @code{set print
+union} in @ref{Print Settings}).
+
+@item deref_refs
+@code{True} if C@t{++} references should be resolved to the value they
+refer to, @code{False} (the default) if they shouldn't.  Note that, unlike
+for the @code{print} command, references are not automatically expanded
+when using the @code{format_string} method or the @code{str}
+function.  There is no global @code{print} setting to change the default
+behaviour.
+
+@item actual_objects
+@code{True} if the representation of a pointer to an object should
+identify the @emph{actual} (derived) type of the object rather than the
+@emph{declared} type, using the virtual function table.  @code{False} if
+the @emph{declared} type should be used.  (See @code{set print object} in
+@ref{Print Settings}).
+
+@item static_fields
+@code{True} if static members should be included in the string
+representation of a C@t{++} object, @code{False} if they shouldn't (see
+@code{set print static-members} in @ref{Print Settings}).
+
+@item max_elements
+Number of array elements to print, or @code{0} to print an unlimited
+number of elements (see @code{set print elements} in @ref{Print
+Settings}).
+
+@item max_depth
+The maximum depth to print for nested structs and unions, or @code{-1}
+to print an unlimited number of elements (see @code{set print
+max-depth} in @ref{Print Settings}).
+
+@item repeat_threshold
+Set the threshold for suppressing display of repeated array elements, or
+@code{0} to represent all elements, even if repeated.  (See @code{set
+print repeats} in @ref{Print Settings}).
+
+@item format
+A string containing a single character representing the format to use for
+the returned string.  For instance, @code{'x'} is equivalent to using the
+@value{GDBN} command @code{print} with the @code{/x} option and formats
+the value as a hexadecimal number.
+@end table
 @end defun
 
 @defun Value.string (@r{[}encoding@r{[}, errors@r{[}, length@r{]]]})
@@ -984,6 +1069,29 @@ The type code for this type.  The type code will be one of the
 @code{TYPE_CODE_} constants defined below.
 @end defvar
 
+@defvar Type.dynamic
+A boolean indicating whether this type is dynamic.  In some
+situations, such as Rust @code{enum} types or Ada variant records, the
+concrete type of a value may vary depending on its contents.  That is,
+the declared type of a variable, or the type returned by
+@code{gdb.lookup_type} may be dynamic; while the type of the
+variable's value will be a concrete instance of that dynamic type.
+
+For example, consider this code:
+@smallexample
+int n;
+int array[n];
+@end smallexample
+
+Here, at least conceptually (whether your compiler actually does this
+is a separate issue), examining @w{@code{gdb.lookup_symbol("array", ...).type}}
+could yield a @code{gdb.Type} which reports a size of @code{None}.
+This is the dynamic type.
+
+However, examining @code{gdb.parse_and_eval("array").type} would yield
+a concrete type, whose length would be known.
+@end defvar
+
 @defvar Type.name
 The name of this type.  If this type has no name, then @code{None}
 is returned.
@@ -992,7 +1100,9 @@ is returned.
 @defvar Type.sizeof
 The size of this type, in target @code{char} units.  Usually, a
 target's @code{char} type will be an 8-bit byte.  However, on some
-unusual platforms, this type may have a different size.
+unusual platforms, this type may have a different size.  A dynamic
+type may not have a fixed size; in this case, this attribute's value
+will be @code{None}.
 @end defvar
 
 @defvar Type.tag
@@ -1000,6 +1110,11 @@ The tag name for this type.  The tag name is the name after
 @code{struct}, @code{union}, or @code{enum} in C and C@t{++}; not all
 languages have this concept.  If this type has no tag name, then
 @code{None} is returned.
+@end defvar
+
+@defvar Type.objfile
+The @code{gdb.Objfile} that this type was defined in, or @code{None} if
+there is no associated objfile.
 @end defvar
 
 The following methods are provided:
@@ -1017,7 +1132,10 @@ Each field is a @code{gdb.Field} object, with some pre-defined attributes:
 @item bitpos
 This attribute is not available for @code{enum} or @code{static}
 (as in C@t{++}) fields.  The value is the position, counting
-in bits, from the start of the containing type.
+in bits, from the start of the containing type.  Note that, in a
+dynamic type, the position of a field may not be constant.  In this
+case, the value will be @code{None}.  Also, a dynamic type may have
+fields that do not appear in a corresponding concrete type.
 
 @item enumval
 This attribute is only available for @code{enum} fields, and its value
@@ -1285,6 +1403,15 @@ object which is convertible to a @value{GDBN} value.
 
 This method is optional.  If it does not exist, @value{GDBN} will act
 as though the value has no children.
+
+For efficiency, the @code{children} method should lazily compute its
+results.  This will let @value{GDBN} read as few elements as
+necessary, for example when various print settings (@pxref{Print
+Settings}) or @code{-var-list-children} (@pxref{GDB/MI Variable
+Objects}) limit the number of elements to be displayed.
+
+Children may be hidden from display based on the value of @samp{set
+print max-depth} (@pxref{Print Settings}).
 @end defun
 
 @defun pretty_printer.display_hint (self)
@@ -1294,7 +1421,7 @@ consumer as a @samp{displayhint} attribute of the variable being
 printed.
 
 This method is optional.  If it does exist, this method must return a
-string.
+string or the special value @code{None}.
 
 Some display hints are predefined by @value{GDBN}:
 
@@ -1317,6 +1444,9 @@ string-printing function to format the string.  For the CLI this means
 adding quotation marks, possibly escaping some characters, respecting
 @code{set print elements}, and the like.
 @end table
+
+The special value @code{None} causes @value{GDBN} to apply the default
+display rules.
 @end defun
 
 @defun pretty_printer.to_string (self)
@@ -1363,10 +1493,21 @@ printer exists, then this returns @code{None}.
 @subsubsection Selecting Pretty-Printers
 @cindex selecting python pretty-printers
 
+@value{GDBN} provides several ways to register a pretty-printer:
+globally, per program space, and per objfile.  When choosing how to
+register your pretty-printer, a good rule is to register it with the
+smallest scope possible: that is prefer a specific objfile first, then
+a program space, and only register a printer globally as a last
+resort.
+
+@findex gdb.pretty_printers
+@defvar gdb.pretty_printers
 The Python list @code{gdb.pretty_printers} contains an array of
 functions or callable objects that have been registered via addition
 as a pretty-printer.  Printers in this list are called @code{global}
 printers, they're available when debugging all inferiors.
+@end defvar
+
 Each @code{gdb.Progspace} contains a @code{pretty_printers} attribute.
 Each @code{gdb.Objfile} also contains a @code{pretty_printers}
 attribute.
@@ -2317,12 +2458,11 @@ provides a method to read frame's registers:
 
 @defun PendingFrame.read_register (reg)
 This method returns the contents of the register @var{reg} in the
-frame as a @code{gdb.Value} object.  @var{reg} can be either a
-register number or a register name; the values are platform-specific.
-They are usually found in the corresponding
-@file{@var{platform}-tdep.h} file in the @value{GDBN} source tree.  If
-@var{reg} does not name a register for the current architecture, this
-method will throw an exception.
+frame as a @code{gdb.Value} object.  For a description of the
+acceptable values of @var{reg} see
+@ref{gdbpy_frame_read_register,,Frame.read_register}.  If @var{reg}
+does not name a register for the current architecture, this method
+will throw an exception.
 
 Note that this method will always return a @code{gdb.Value} for a
 valid register name.  This does not mean that the value will be valid.
@@ -2378,6 +2518,12 @@ Each attribute value should be an instance of @code{gdb.Value}.
 
 @end defun
 
+@defun PendingFrame.architecture ()
+Return the @code{gdb.Architecture} (@pxref{Architectures In Python})
+for this @code{gdb.PendingFrame}.  This represents the architecture of
+the particular frame being unwound.
+@end defun
+
 @subheading Unwinder Output: UnwindInfo
 
 Use @code{PendingFrame.create_unwind_info} method described above to
@@ -2385,8 +2531,8 @@ create a @code{gdb.UnwindInfo} instance.  Use the following method to
 specify caller registers that have been saved in this frame:
 
 @defun gdb.UnwindInfo.add_saved_register (reg, value)
-@var{reg} identifies the register.  It can be a number or a name, just
-as for the @code{PendingFrame.read_register} method above.
+@var{reg} identifies the register, for a description of the acceptable
+values see @ref{gdbpy_frame_read_register,,Frame.read_register}.
 @var{value} is a register value (a @code{gdb.Value} object).
 @end defun
 
@@ -2407,7 +2553,7 @@ class FrameId(object):
 
 class MyUnwinder(Unwinder):
     def __init__(....):
-        supe(MyUnwinder, self).__init___(<expects unwinder name argument>)
+        super(MyUnwinder, self).__init___(<expects unwinder name argument>)
 
     def __call__(pending_frame):
         if not <we recognize frame>:
@@ -2817,7 +2963,7 @@ itself.
 
 @findex gdb.Inferior
 Programs which are being run under @value{GDBN} are called inferiors
-(@pxref{Inferiors and Programs}).  Python scripts can access
+(@pxref{Inferiors Connections and Programs}).  Python scripts can access
 information about and manipulate inferiors controlled by @value{GDBN}
 via objects of the @code{gdb.Inferior} class.
 
@@ -2906,11 +3052,16 @@ containing the address where the pattern was found, or @code{None} if
 the pattern could not be found.
 @end defun
 
+@findex Inferior.thread_from_handle
 @findex Inferior.thread_from_thread_handle
-@defun Inferior.thread_from_thread_handle (thread_handle)
-Return the thread object corresponding to @var{thread_handle}, a thread
+@defun Inferior.thread_from_handle (handle)
+Return the thread object corresponding to @var{handle}, a thread
 library specific data structure such as @code{pthread_t} for pthreads
 library implementations.
+
+The function @code{Inferior.thread_from_thread_handle} provides
+the same functionality, but use of @code{Inferior.thread_from_thread_handle}
+is deprecated.
 @end defun
 
 @node Events In Python
@@ -3177,6 +3328,9 @@ This function returns the thread object for the selected thread.  If there
 is no selected thread, this will return @code{None}.
 @end defun
 
+To get the list of threads for an inferior, use the @code{Inferior.threads()}
+method.  @xref{Inferiors In Python}.
+
 A @code{gdb.InferiorThread} object has the following attributes:
 
 @defvar InferiorThread.name
@@ -3238,6 +3392,14 @@ Return a Boolean indicating whether the thread is running.
 
 @defun InferiorThread.is_exited ()
 Return a Boolean indicating whether the thread is exited.
+@end defun
+
+@defun InferiorThread.handle ()
+Return the thread object's handle, represented as a Python @code{bytes}
+object.  A @code{gdb.Value} representation of the handle may be
+constructed via @code{gdb.Value(bufobj, type)} where @var{bufobj} is
+the Python @code{bytes} representation of the handle and @var{type} is
+a @code{gdb.Type} for the handle type.
 @end defun
 
 @node Recordings In Python
@@ -3673,6 +3835,13 @@ The command has to do with tracepoints.  For example, @code{trace},
 @kbd{help tracepoints} at the @value{GDBN} prompt to see a list of
 commands in this category.
 
+@findex COMMAND_TUI
+@findex gdb.COMMAND_TUI
+@item gdb.COMMAND_TUI
+The command has to do with the text user interface (@pxref{TUI}).
+Type @kbd{help tui} at the @value{GDBN} prompt to see a list of
+commands in this category.
+
 @findex COMMAND_USER
 @findex gdb.COMMAND_USER
 @item gdb.COMMAND_USER
@@ -4034,7 +4203,7 @@ A program space, or @dfn{progspace}, represents a symbolic view
 of an address space.
 It consists of all of the objfiles of the program.
 @xref{Objfiles In Python}.
-@xref{Inferiors and Programs, program spaces}, for more details
+@xref{Inferiors Connections and Programs, program spaces}, for more details
 about program spaces.
 
 The following progspace-related functions are available in the
@@ -4043,7 +4212,7 @@ The following progspace-related functions are available in the
 @findex gdb.current_progspace
 @defun gdb.current_progspace ()
 This function returns the program space of the currently selected inferior.
-@xref{Inferiors and Programs}.  This is identical to
+@xref{Inferiors Connections and Programs}.  This is identical to
 @code{gdb.selected_inferior().progspace} (@pxref{Inferiors In Python}) and is
 included for historical compatibility.
 @end defun
@@ -4152,7 +4321,7 @@ gdb.events.clear_objfiles.connect(clear_objfiles_handler)
 gdb.events.new_objfile.connect(new_objfile_handler)
 end
 (gdb) file /tmp/hello
-Reading symbols from /tmp/hello...done.
+Reading symbols from /tmp/hello...
 Computing the answer to the ultimate question ...
 (gdb) python print gdb.current_progspace().expensive_computation
 42
@@ -4291,7 +4460,7 @@ def new_objfile_handler(event):
 gdb.events.new_objfile.connect(new_objfile_handler)
 end
 (gdb) file ./hello
-Reading symbols from ./hello...done.
+Reading symbols from ./hello...
 (gdb) python print gdb.objfiles()[0].time_loaded
 2014-10-09 11:41:36.770345
 @end smallexample
@@ -4315,6 +4484,23 @@ finding separate debug info files (@pxref{Separate Debug Files}), but if
 the file doesn't live in one of the standard places that @value{GDBN}
 searches then this function can be used to add a debug info file
 from a different place.
+@end defun
+
+@defun Objfile.lookup_global_symbol (name @r{[}, domain@r{]})
+Search for a global symbol named @var{name} in this objfile.  Optionally, the
+search scope can be restricted with the @var{domain} argument.
+The @var{domain} argument must be a domain constant defined in the @code{gdb}
+module and described in @ref{Symbols In Python}.  This function is similar to
+@code{gdb.lookup_global_symbol}, except that the search is limited to this
+objfile.
+
+The result is a @code{gdb.Symbol} object or @code{None} if the symbol
+is not found.
+@end defun
+
+@defun Objfile.lookup_static_symbol (name @r{[}, domain@r{]})
+Like @code{Objfile.lookup_global_symbol}, but searches for a global
+symbol with static linkage named @var{name} in this objfile.
 @end defun
 
 @node Frames In Python
@@ -4498,11 +4684,31 @@ Return the frame's symtab and line object.
 @xref{Symbol Tables In Python}.
 @end defun
 
+@anchor{gdbpy_frame_read_register}
 @defun Frame.read_register (register)
-Return the value of @var{register} in this frame.  The @var{register}
-argument must be a string (e.g., @code{'sp'} or @code{'rax'}).
-Returns a @code{Gdb.Value} object.  Throws an exception if @var{register}
-does not exist.
+Return the value of @var{register} in this frame.  Returns a
+@code{Gdb.Value} object.  Throws an exception if @var{register} does
+not exist.  The @var{register} argument must be one of the following:
+@enumerate
+@item
+A string that is the name of a valid register (e.g., @code{'sp'} or
+@code{'rax'}).
+@item
+A @code{gdb.RegisterDescriptor} object (@pxref{Registers In Python}).
+@item
+A @value{GDBN} internal, platform specific number.  Using these
+numbers is supported for historic reasons, but is not recommended as
+future changes to @value{GDBN} could change the mapping between
+numbers and the registers they represent, breaking any Python code
+that uses the platform-specific numbers.  The numbers are usually
+found in the corresponding @file{@var{platform}-tdep.h} file in the
+@value{GDBN} source tree.
+@end enumerate
+Using a string to access registers will be slightly slower than the
+other two methods as @value{GDBN} must look up the mapping between
+name and internal register number.  If performance is critical
+consider looking up and caching a @code{gdb.RegisterDescriptor}
+object.
 @end defun
 
 @defun Frame.read_var (variable @r{[}, block@r{]})
@@ -4581,7 +4787,12 @@ A @code{gdb.Block} is iterable.  The iterator returns the symbols
 should not assume that a specific block object will always contain a
 given symbol, since changes in @value{GDBN} features and
 infrastructure may cause symbols move across blocks in a symbol
-table.
+table.  You can also use Python's @dfn{dictionary syntax} to access
+variables in this block, e.g.:
+
+@smallexample
+symbol = some_block['variable']  # symbol is of type gdb.Symbol
+@end smallexample
 
 The following block-related functions are available in the @code{gdb}
 module:
@@ -4704,6 +4915,55 @@ module and described later in this chapter.
 
 The result is a @code{gdb.Symbol} object or @code{None} if the symbol
 is not found.
+@end defun
+
+@findex gdb.lookup_static_symbol
+@defun gdb.lookup_static_symbol (name @r{[}, domain@r{]})
+This function searches for a global symbol with static linkage by name.
+The search scope can be restricted to by the domain argument.
+
+@var{name} is the name of the symbol.  It must be a string.
+The optional @var{domain} argument restricts the search to the domain type.
+The @var{domain} argument must be a domain constant defined in the @code{gdb}
+module and described later in this chapter.
+
+The result is a @code{gdb.Symbol} object or @code{None} if the symbol
+is not found.
+
+Note that this function will not find function-scoped static variables. To look
+up such variables, iterate over the variables of the function's
+@code{gdb.Block} and check that @code{block.addr_class} is
+@code{gdb.SYMBOL_LOC_STATIC}.
+
+There can be multiple global symbols with static linkage with the same
+name.  This function will only return the first matching symbol that
+it finds.  Which symbol is found depends on where @value{GDBN} is
+currently stopped, as @value{GDBN} will first search for matching
+symbols in the current object file, and then search all other object
+files.  If the application is not yet running then @value{GDBN} will
+search all object files in the order they appear in the debug
+information.
+@end defun
+
+@findex gdb.lookup_static_symbols
+@defun gdb.lookup_static_symbols (name @r{[}, domain@r{]})
+Similar to @code{gdb.lookup_static_symbol}, this function searches for
+global symbols with static linkage by name, and optionally restricted
+by the domain argument.  However, this function returns a list of all
+matching symbols found, not just the first one.
+
+@var{name} is the name of the symbol.  It must be a string.
+The optional @var{domain} argument restricts the search to the domain type.
+The @var{domain} argument must be a domain constant defined in the @code{gdb}
+module and described later in this chapter.
+
+The result is a list of @code{gdb.Symbol} objects which could be empty
+if no matching symbols were found.
+
+Note that this function will not find function-scoped static variables. To look
+up such variables, iterate over the variables of the function's
+@code{gdb.Block} and check that @code{block.addr_class} is
+@code{gdb.SYMBOL_LOC_STATIC}.
 @end defun
 
 A @code{gdb.Symbol} object has the following attributes:
@@ -5475,6 +5735,182 @@ instruction in bytes.
 @end table
 @end defun
 
+@anchor{gdbpy_architecture_registers}
+@defun Architecture.registers (@r{[} @var{reggroup} @r{]})
+Return a @code{gdb.RegisterDescriptorIterator} (@pxref{Registers In
+Python}) for all of the registers in @var{reggroup}, a string that is
+the name of a register group.  If @var{reggroup} is omitted, or is the
+empty string, then the register group @samp{all} is assumed.
+@end defun
+
+@anchor{gdbpy_architecture_reggroups}
+@defun Architecture.register_groups ()
+Return a @code{gdb.RegisterGroupsIterator} (@pxref{Registers In
+Python}) for all of the register groups available for the
+@code{gdb.Architecture}.
+@end defun
+
+@node Registers In Python
+@subsubsection Registers In Python
+@cindex Registers In Python
+
+Python code can request from a @code{gdb.Architecture} information
+about the set of registers available
+(@pxref{gdbpy_architecture_registers,,@code{Architecture.registers}}).
+The register information is returned as a
+@code{gdb.RegisterDescriptorIterator}, which is an iterator that in
+turn returns @code{gdb.RegisterDescriptor} objects.
+
+A @code{gdb.RegisterDescriptor} does not provide the value of a
+register (@pxref{gdbpy_frame_read_register,,@code{Frame.read_register}}
+for reading a register's value), instead the @code{RegisterDescriptor}
+is a way to discover which registers are available for a particular
+architecture.
+
+A @code{gdb.RegisterDescriptor} has the following read-only properties:
+
+@defvar RegisterDescriptor.name
+The name of this register.
+@end defvar
+
+It is also possible to lookup a register descriptor based on its name
+using the following @code{gdb.RegisterDescriptorIterator} function:
+
+@defun RegisterDescriptorIterator.find (@var{name})
+Takes @var{name} as an argument, which must be a string, and returns a
+@code{gdb.RegisterDescriptor} for the register with that name, or
+@code{None} if there is no register with that name.
+@end defun
+
+Python code can also request from a @code{gdb.Architecture}
+information about the set of register groups available on a given
+architecture
+(@pxref{gdbpy_architecture_reggroups,,@code{Architecture.register_groups}}).
+
+Every register can be a member of zero or more register groups.  Some
+register groups are used internally within @value{GDBN} to control
+things like which registers must be saved when calling into the
+program being debugged (@pxref{Calling,,Calling Program Functions}).
+Other register groups exist to allow users to easily see related sets
+of registers in commands like @code{info registers}
+(@pxref{info_registers_reggroup,,@code{info registers
+@var{reggroup}}}).
+
+The register groups information is returned as a
+@code{gdb.RegisterGroupsIterator}, which is an iterator that in turn
+returns @code{gdb.RegisterGroup} objects.
+
+A @code{gdb.RegisterGroup} object has the following read-only
+properties:
+
+@defvar RegisterGroup.name
+A string that is the name of this register group.
+@end defvar
+
+@node TUI Windows In Python
+@subsubsection Implementing new TUI windows
+@cindex Python TUI Windows
+
+New TUI (@pxref{TUI}) windows can be implemented in Python.
+
+@findex gdb.register_window_type
+@defun gdb.register_window_type (@var{name}, @var{factory})
+Because TUI windows are created and destroyed depending on the layout
+the user chooses, new window types are implemented by registering a
+factory function with @value{GDBN}.
+
+@var{name} is the name of the new window.  It's an error to try to
+replace one of the built-in windows, but other window types can be
+replaced.
+
+@var{function} is a factory function that is called to create the TUI
+window.  This is called with a single argument of type
+@code{gdb.TuiWindow}, described below.  It should return an object
+that implements the TUI window protocol, also described below.
+@end defun
+
+As mentioned above, when a factory function is called, it is passed a
+an object of type @code{gdb.TuiWindow}.  This object has these
+methods and attributes:
+
+@defun TuiWindow.is_valid ()
+This method returns @code{True} when this window is valid.  When the
+user changes the TUI layout, windows no longer visible in the new
+layout will be destroyed.  At this point, the @code{gdb.TuiWindow}
+will no longer be valid, and methods (and attributes) other than
+@code{is_valid} will throw an exception.
+@end defun
+
+@defvar TuiWindow.width
+This attribute holds the width of the window.  It is not writable.
+@end defvar
+
+@defvar TuiWindow.height
+This attribute holds the height of the window.  It is not writable.
+@end defvar
+
+@defvar TuiWindow.title
+This attribute holds the window's title, a string.  This is normally
+displayed above the window.  This attribute can be modified.
+@end defvar
+
+@defun TuiWindow.erase ()
+Remove all the contents of the window.
+@end defun
+
+@defun TuiWindow.write (@var{string})
+Write @var{string} to the window.  @var{string} can contain ANSI
+terminal escape styling sequences; @value{GDBN} will translate these
+as appropriate for the terminal.
+@end defun
+
+The factory function that you supply should return an object
+conforming to the TUI window protocol.  These are the method that can
+be called on this object, which is referred to below as the ``window
+object''.  The methods documented below are optional; if the object
+does not implement one of these methods, @value{GDBN} will not attempt
+to call it.  Additional new methods may be added to the window
+protocol in the future.  @value{GDBN} guarantees that they will begin
+with a lower-case letter, so you can start implementation methods with
+upper-case letters or underscore to avoid any future conflicts.
+
+@defun Window.close ()
+When the TUI window is closed, the @code{gdb.TuiWindow} object will be
+put into an invalid state.  At this time, @value{GDBN} will call
+@code{close} method on the window object.
+
+After this method is called, @value{GDBN} will discard any references
+it holds on this window object, and will no longer call methods on
+this object.
+@end defun
+
+@defun Window.render ()
+In some situations, a TUI window can change size.  For example, this
+can happen if the user resizes the terminal, or changes the layout.
+When this happens, @value{GDBN} will call the @code{render} method on
+the window object.
+
+If your window is intended to update in response to changes in the
+inferior, you will probably also want to register event listeners and
+send output to the @code{gdb.TuiWindow}.
+@end defun
+
+@defun Window.hscroll (@var{num})
+This is a request to scroll the window horizontally.  @var{num} is the
+amount by which to scroll, with negative numbers meaning to scroll
+right.  In the TUI model, it is the viewport that moves, not the
+contents.  A positive argument should cause the viewport to move
+right, and so the content should appear to move to the left.
+@end defun
+
+@defun Window.vscroll (@var{num})
+This is a request to scroll the window vertically.  @var{num} is the
+amount by which to scroll, with negative numbers meaning to scroll
+backward.  In the TUI model, it is the viewport that moves, not the
+contents.  A positive argument should cause the viewport to move down,
+and so the content should appear to move up.
+@end defun
+
 @node Python Auto-loading
 @subsection Python Auto-loading
 @cindex Python auto-loading
@@ -5725,13 +6161,12 @@ End a sequence of non-printing characters.
 For example:
 
 @smallexample
-substitute_prompt (``frame: \f,
-                   print arguments: \p@{print frame-arguments@}'')
+substitute_prompt ("frame: \f, args: \p@{print frame-arguments@}")
 @end smallexample
 
 @exdent will return the string:
 
 @smallexample
-"frame: main, print arguments: scalars"
+"frame: main, args: scalars"
 @end smallexample
 @end table

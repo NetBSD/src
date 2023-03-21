@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,10 +52,12 @@ proc thread_apply {tid_list exp_tid_list {message ""}} {
     }
 
     set cmd "thread apply $tid_list"
-    if {$message == ""} {
-	set message $cmd
+    if {$message != ""} {
+	gdb_test "$cmd p 1234" $r $message
+	return
     }
-    gdb_test "$cmd p 1234" $r $message
+
+    gdb_test "$cmd p 1234" $r
 }
 
 # Issue "info threads TID_LIST" and expect EXP_TID_LIST (a list of
@@ -66,10 +68,11 @@ proc info_threads {tid_list exp_tid_list {message ""}} {
     set r [join $expected " ${any}\r\n${any} "]
     set r "${any} $r ${any}"
     set cmd "info threads $tid_list"
-    if {$message == ""} {
-	set message $cmd
+    if {$message != ""} {
+	gdb_test $cmd $r $message
+	return
     }
-    gdb_test $cmd $r $message
+    gdb_test $cmd $r
 }
 
 # Issue "info threads TID_LIST" and expect INFO_THR output.  Then
@@ -84,15 +87,19 @@ proc thr_apply_info_thr {tid_list info_thr {thr_apply ""}} {
     thread_apply $tid_list $thr_apply
 }
 
-# Issue both "info threads TID_LIST" and "thread apply TID_LIST" and
-# expect both commands to error out with EXP_ERROR.
-proc thr_apply_info_thr_error {tid_list exp_error}  {
+# Issue both "thread apply TID_LIST" and "info threads TID_LIST" and
+# expect commands to error out with EXP_ERROR_APPLY and EXP_ERROR_INFO.
+# If EXP_ERROR_INFO is missing, default to EXP_ERROR_APPLY.
+proc thr_apply_info_thr_error {tid_list exp_error_apply {exp_error_info ""}} {
+    if { "$exp_error_info" == "" } {
+	set exp_error_info "$exp_error_apply"
+    }
+
     gdb_test "info threads $tid_list" \
-	$exp_error
+	$exp_error_info
 
     gdb_test "thread apply $tid_list" \
-	$exp_error \
-	"thread apply $tid_list"
+	$exp_error_apply
 }
 
 # Issue both "info threads TID_LIST" and "thread apply TID_LIST" and
@@ -350,8 +357,15 @@ with_test_prefix "two inferiors" {
 	thr_apply_info_thr_error "${prefix}1-" "inverted range"
 	thr_apply_info_thr_error "${prefix}2-1" "inverted range"
 	thr_apply_info_thr_error "${prefix}2-\$one" "inverted range"
-	thr_apply_info_thr_error "${prefix}-1" "negative value"
-	thr_apply_info_thr_error "${prefix}-\$one" "negative value"
+	if {$prefix == ""} {
+	    thr_apply_info_thr_error "${prefix}-1" "Invalid thread ID: -1" \
+		"Unrecognized option at: -1"
+	    thr_apply_info_thr_error "${prefix}-\$one" \
+		"Invalid thread ID: -\\\$one" "Unrecognized option at: -\\\$one"
+	} else {
+	    thr_apply_info_thr_error "${prefix}-1" "negative value"
+	    thr_apply_info_thr_error "${prefix}-\$one" "negative value"
+	}
 	thr_apply_info_thr_error "${prefix}\$minus_one" \
 	    "negative value: ${prefix_re}\\\$minus_one"
 
@@ -373,6 +387,13 @@ with_test_prefix "two inferiors" {
 	gdb_test "thread apply $thr" $output
 	gdb_test "thread apply 1.*" $output
     }
+
+    # Check that thread ID list parsing stops at the non-number token
+    # "foo" in a corner case where the "foo" is followed by hyphens.
+    # In this corner case, GDB used to skip past "foo", and then parse
+    # "--1" as a tid range for the current inferior.
+    gdb_test "thread apply 1 foo --1" \
+	"Undefined command: \"foo\".  Try \"help\"\\."
 
     # Check that we do parse the inferior number and don't confuse it.
     gdb_test "info threads 3.1" \

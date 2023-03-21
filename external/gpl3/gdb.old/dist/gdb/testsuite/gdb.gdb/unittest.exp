@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Free Software Foundation, Inc.
+# Copyright 2016-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Do not run if gdb debug is enabled as maintenance output will be
+# redirected to the log files.
+if [gdb_debug_enabled] {
+    untested "debug is enabled"
+    return 0
+}
 
 set do_xml_test [expr ![gdb_skip_xml_test]]
 

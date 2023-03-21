@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on Nios II.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Mentor Graphics, Inc.
 
    This file is part of GDB.
@@ -29,6 +29,7 @@
 #include "linux-tdep.h"
 #include "glibc-tdep.h"
 #include "nios2-tdep.h"
+#include "gdbarch.h"
 
 /* Core file and register set support.  */
 
@@ -200,6 +201,17 @@ nios2_linux_syscall_next_pc (struct frame_info *frame,
   return pc + op->size;
 }
 
+/* Return true if PC is a kernel helper, a function mapped by the kernel
+   into user space on an unwritable page.  Currently the only such function
+   is __kuser_cmpxchg at 0x1004.  See arch/nios2/kernel/entry.S in the Linux
+   kernel sources and sysdeps/unix/sysv/linux/nios2/atomic-machine.h in
+   GLIBC.  */
+static bool
+nios2_linux_is_kernel_helper (CORE_ADDR pc)
+{
+  return pc == 0x1004;
+}
+
 /* Hook function for gdbarch_register_osabi.  */
 
 static void
@@ -230,13 +242,15 @@ nios2_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 				  &nios2_r1_linux_rt_sigreturn_tramp_frame);
 
   tdep->syscall_next_pc = nios2_linux_syscall_next_pc;
+  tdep->is_kernel_helper = nios2_linux_is_kernel_helper;
 
   /* Index of target address word in glibc jmp_buf.  */
   tdep->jb_pc = 10;
 }
 
+void _initialize_nios2_linux_tdep ();
 void
-_initialize_nios2_linux_tdep (void)
+_initialize_nios2_linux_tdep ()
 {
 
   const struct bfd_arch_info *arch_info;
