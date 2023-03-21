@@ -1,4 +1,4 @@
-# Copyright 2011-2019 Free Software Foundation, Inc.
+# Copyright 2011-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,9 +26,6 @@ load_board_description "local-board"
 
 # This gdbserver can only run a process once per session.
 set_board_info gdb,do_reload_on_run 1
-
-# There's no support for argument-passing (yet).
-set_board_info noargs 1
 
 set_board_info use_gdb_stub 1
 set_board_info exit_is_reliable 1

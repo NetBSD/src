@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2019 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -84,14 +84,15 @@ typedef struct elf_internal_ehdr {
 /* Program header */
 
 struct elf_internal_phdr {
-  unsigned long	p_type;			/* Identifies program segment type */
-  unsigned long	p_flags;		/* Segment flags */
-  bfd_vma	p_offset;		/* Segment file offset */
-  bfd_vma	p_vaddr;		/* Segment virtual address */
-  bfd_vma	p_paddr;		/* Segment physical address */
-  bfd_vma	p_filesz;		/* Segment size in file */
-  bfd_vma	p_memsz;		/* Segment size in memory */
-  bfd_vma	p_align;		/* Segment alignment, file & memory */
+  unsigned long	p_type;		     /* Identifies program segment type.  */
+  unsigned long	p_flags;	     /* Segment flags.  */
+  bfd_vma	p_offset;	     /* Segment file offset in octets.  */
+  bfd_vma	p_vaddr;	     /* Segment virtual address in octets.  */
+  bfd_vma	p_paddr;	     /* Segment physical address in octets.  */
+  bfd_vma	p_filesz;	     /* Segment size in file in octets.  */
+  bfd_vma	p_memsz;	     /* Segment size in memory in octets.  */
+  bfd_vma	p_align;	     /* Segment alignment in bytes, file
+					& memory */
 };
 
 typedef struct elf_internal_phdr Elf_Internal_Phdr;
@@ -102,9 +103,10 @@ typedef struct elf_internal_shdr {
   unsigned int	sh_name;		/* Section name, index in string tbl */
   unsigned int	sh_type;		/* Type of section */
   bfd_vma	sh_flags;		/* Miscellaneous section attributes */
-  bfd_vma	sh_addr;		/* Section virtual addr at execution */
-  file_ptr	sh_offset;		/* Section file offset */
-  bfd_size_type	sh_size;		/* Size of section in bytes */
+  bfd_vma	sh_addr;		/* Section virtual addr at execution in
+					   octets.  */
+  file_ptr	sh_offset;		/* Section file offset in octets.  */
+  bfd_size_type	sh_size;		/* Size of section in octets.  */
   unsigned int	sh_link;		/* Index of another section */
   unsigned int	sh_info;		/* Additional section information */
   bfd_vma	sh_addralign;		/* Section alignment */
@@ -265,16 +267,14 @@ struct elf_segment_map
   unsigned long p_type;
   /* Program segment flags.  */
   unsigned long p_flags;
-  /* Program segment physical address.  */
+  /* Program segment physical address in octets.  */
   bfd_vma p_paddr;
-  /* Program segment virtual address offset from section vma.  */
+  /* Program segment virtual address offset from section vma in bytes.  */
   bfd_vma p_vaddr_offset;
   /* Program segment alignment.  */
   bfd_vma p_align;
-  /* Segment size in file and memory */
+  /* Segment size in file and memory in octets.  */
   bfd_vma p_size;
-  /* Required size of filehdr + phdrs, if non-zero */
-  bfd_vma header_size;
   /* Whether the p_flags field is valid; if not, the flags are based
      on the section flags.  */
   unsigned int p_flags_valid : 1;
@@ -291,6 +291,13 @@ struct elf_segment_map
   unsigned int includes_filehdr : 1;
   /* Whether this segment includes the program headers.  */
   unsigned int includes_phdrs : 1;
+  /* Assume this PT_LOAD header has an lma of zero when sorting
+     headers before assigning file offsets.  PT_LOAD headers with this
+     flag set are placed after one with includes_filehdr set, and
+     before PT_LOAD headers without this flag set.  */
+  unsigned int no_sort_lma : 1;
+  /* Index holding original order before sorting segments.  */
+  unsigned int idx;
   /* Number of sections (may be 0).  */
   unsigned int count;
   /* Sections.  Actual number of elements is in count field.  */
@@ -330,8 +337,10 @@ struct elf_segment_map
 	&& ((segment)->p_type == PT_LOAD				\
 	    || (segment)->p_type == PT_DYNAMIC				\
 	    || (segment)->p_type == PT_GNU_EH_FRAME			\
+	    || (segment)->p_type == PT_GNU_STACK			\
 	    || (segment)->p_type == PT_GNU_RELRO			\
-	    || (segment)->p_type == PT_GNU_STACK))			\
+	    || ((segment)->p_type >= PT_GNU_MBIND_LO			\
+		&& (segment)->p_type <= PT_GNU_MBIND_HI)))		\
    /* Any section besides one of type SHT_NOBITS must have file		\
       offsets within the segment.  */					\
    && ((sec_hdr)->sh_type == SHT_NOBITS					\

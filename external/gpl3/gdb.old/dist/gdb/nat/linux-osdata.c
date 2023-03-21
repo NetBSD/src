@@ -1,6 +1,6 @@
 /* Linux-specific functions to retrieve OS data.
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common/common-defs.h"
+#include "gdbsupport/common-defs.h"
 #include "linux-osdata.h"
 
 #include <sys/types.h>
@@ -32,11 +32,11 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "common/xml-utils.h"
-#include "common/buffer.h"
+#include "gdbsupport/xml-utils.h"
+#include "gdbsupport/buffer.h"
 #include <dirent.h>
 #include <sys/stat.h>
-#include "common/filestuff.h"
+#include "gdbsupport/filestuff.h"
 #include <algorithm>
 
 #define NAMELEN(dirent) strlen ((dirent)->d_name)
@@ -205,7 +205,10 @@ commandline_from_pid (PID_T pid)
 static void
 user_from_uid (char *user, int maxlen, uid_t uid)
 {
-  struct passwd *pwentry = getpwuid (uid);
+  struct passwd *pwentry;
+  char buf[1024];
+  struct passwd pwd;
+  getpwuid_r (uid, &pwd, buf, sizeof (buf), &pwentry);
 
   if (pwentry)
     {
@@ -566,11 +569,12 @@ linux_xfer_osdata_cpus (struct buffer *buffer)
 	      char *key, *value;
 	      int i = 0;
 
-	      key = strtok (buf, ":");
+	      char *saveptr;
+	      key = strtok_r (buf, ":", &saveptr);
 	      if (key == NULL)
 		continue;
 
-	      value = strtok (NULL, ":");
+	      value = strtok_r (NULL, ":", &saveptr);
 	      if (value == NULL)
 		continue;
 
@@ -912,7 +916,11 @@ time_from_time_t (char *time, int maxlen, TIME_T seconds)
     {
       time_t t = (time_t) seconds;
 
-      strncpy (time, ctime (&t), maxlen);
+      /* Per the ctime_r manpage, this buffer needs to be at least 26
+         characters long.  */
+      char buf[30];
+      const char *time_str = ctime_r (&t, buf);
+      strncpy (time, time_str, maxlen);
       time[maxlen - 1] = '\0';
     }
 }
@@ -1216,36 +1224,36 @@ linux_xfer_osdata_modules (struct buffer *buffer)
 	{
 	  if (fgets (buf, sizeof (buf), fp.get ()))
 	    {
-	      char *name, *dependencies, *status, *tmp;
+	      char *name, *dependencies, *status, *tmp, *saveptr;
 	      unsigned int size;
 	      unsigned long long address;
 	      int uses;
 
-	      name = strtok (buf, " ");
+	      name = strtok_r (buf, " ", &saveptr);
 	      if (name == NULL)
 		continue;
 
-	      tmp = strtok (NULL, " ");
+	      tmp = strtok_r (NULL, " ", &saveptr);
 	      if (tmp == NULL)
 		continue;
 	      if (sscanf (tmp, "%u", &size) != 1)
 		continue;
 
-	      tmp = strtok (NULL, " ");
+	      tmp = strtok_r (NULL, " ", &saveptr);
 	      if (tmp == NULL)
 		continue;
 	      if (sscanf (tmp, "%d", &uses) != 1)
 		continue;
 
-	      dependencies = strtok (NULL, " ");
+	      dependencies = strtok_r (NULL, " ", &saveptr);
 	      if (dependencies == NULL)
 		continue;
 
-	      status = strtok (NULL, " ");
+	      status = strtok_r (NULL, " ", &saveptr);
 	      if (status == NULL)
 		continue;
 
-	      tmp = strtok (NULL, "\n");
+	      tmp = strtok_r (NULL, "\n", &saveptr);
 	      if (tmp == NULL)
 		continue;
 	      if (sscanf (tmp, "%llx", &address) != 1)

@@ -1,6 +1,6 @@
 /* Self tests for gdb::observers, GDB notifications to observers.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "common/selftest.h"
-#include "common/observable.h"
+#include "gdbsupport/selftest.h"
+#include "gdbsupport/observable.h"
 
 namespace selftests {
 namespace observers {
@@ -127,6 +127,7 @@ run_tests ()
 } /* namespace observers */
 } /* namespace selftests */
 
+void _initialize_observer_selftest ();
 void
 _initialize_observer_selftest ()
 {

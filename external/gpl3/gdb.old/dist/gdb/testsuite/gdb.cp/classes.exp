@@ -1,4 +1,4 @@
-# Copyright 1992-2019 Free Software Foundation, Inc.
+# Copyright 1992-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -648,39 +648,6 @@ proc do_tests {} {
     test_static_members
 
     # Now some random tests that were just thrown in here.
-
-    gdb_breakpoint marker_reg1
-    gdb_test "continue" ".*Breakpoint .* marker_reg1.*" ""
-    gdb_test "finish" "Run till exit from.*" "finish from marker_reg1"
-
-    # This class is so small that an instance of it can fit in a register.
-    # When gdb tries to call a method, it gets embarrassed about taking
-    # the address of a register.
-    #
-    # TODO: I think that message should be a PASS, not an XFAIL.
-    # gdb prints an informative message and declines to do something
-    # impossible.
-    #
-    # The method call actually succeeds if the compiler allocates very
-    # small classes in memory instead of registers.  So this test does
-    # not tell us anything interesting if the call succeeds.
-    #
-    # -- chastain 2003-12-31
-    gdb_test_multiple "print v.method ()" "calling method for small class" {
-	-re "\\$\[0-9\]+ = 82$nl$gdb_prompt $" {
-	    # gcc 3.3.2 -gdwarf-2
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gdwarf-2
-	    # gcc 3.3.2 -gstabs+
-	    # gcc HEAD 2003-12-28 21:08:30 UTC -gstabs+
-	    pass "calling method for small class"
-	}
-	-re "Address requested for identifier \"v\" which is in register .*$nl$gdb_prompt $" {
-	    # gcc 2.95.3 -gdwarf-2
-	    # gcc 2.95.3 -gstabs+
-	    setup_xfail "*-*-*" 2972
-	    fail "calling method for small class"
-	}
-    }
 
     gdb_test "print base1::Base1" "<.*Base1.*>" "print ctor of typedef class"
     gdb_test "print base1::~Base1" "<.*~Base1(\\(\\))?>" \

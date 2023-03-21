@@ -1,5 +1,5 @@
 /* 32-bit ELF support for S+core.
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -497,8 +497,8 @@ score_elf_got15_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
 		       bfd *output_bfd, char **error_message)
 {
   if ((symbol->flags & (BSF_GLOBAL | BSF_WEAK)) != 0
-      || bfd_is_und_section (bfd_get_section (symbol))
-      || bfd_is_com_section (bfd_get_section (symbol)))
+      || bfd_is_und_section (bfd_asymbol_section (symbol))
+      || bfd_is_com_section (bfd_asymbol_section (symbol)))
     /* The relocation is against a global symbol.  */
     return bfd_elf_generic_reloc (abfd, reloc_entry, symbol, data,
 				  input_section, output_bfd,
@@ -1114,8 +1114,8 @@ score_elf_rel_dyn_section (bfd *dynobj, bfd_boolean create_p)
 						    | SEC_LINKER_CREATED
 						    | SEC_READONLY));
       if (sreloc == NULL
-	  || ! bfd_set_section_alignment (dynobj, sreloc,
-					  SCORE_ELF_LOG_FILE_ALIGN (dynobj)))
+	  || !bfd_set_section_alignment (sreloc,
+					 SCORE_ELF_LOG_FILE_ALIGN (dynobj)))
 	return NULL;
     }
   return sreloc;
@@ -1268,7 +1268,7 @@ score_elf_create_got_section (bfd *abfd,
   struct elf_link_hash_entry *h;
   struct bfd_link_hash_entry *bh;
   struct score_got_info *g;
-  bfd_size_type amt;
+  size_t amt;
 
   /* This function may be called more than once.  */
   s = score_elf_got_section (abfd, TRUE);
@@ -1289,7 +1289,7 @@ score_elf_create_got_section (bfd *abfd,
   s = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
   elf_hash_table (info)->sgot = s;
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, 4))
+      || !bfd_set_section_alignment (s, 4))
     return FALSE;
 
   /* Define the symbol _GLOBAL_OFFSET_TABLE_.  We don't do this in the
@@ -2443,12 +2443,13 @@ s7_bfd_score_elf_relocate_section (bfd *output_bfd,
 	    }
 	  else if (!bfd_link_relocatable (info))
 	    {
-	      (*info->callbacks->undefined_symbol)
-		(info, h->root.root.root.string, input_bfd,
-		 input_section, rel->r_offset,
-		 (info->unresolved_syms_in_objects == RM_GENERATE_ERROR)
+              info->callbacks->undefined_symbol
+		(info, h->root.root.root.string, input_bfd, input_section,
+		 rel->r_offset,
+		 (info->unresolved_syms_in_objects == RM_DIAGNOSE
+		  && !info->warn_unresolved_syms)
 		 || ELF_ST_VISIBILITY (h->root.other));
-	      relocation = 0;
+              relocation = 0;
 	    }
 	}
 
@@ -2814,7 +2815,7 @@ s7_bfd_score_elf_add_symbol_hook (bfd *abfd,
       /* Fall through.  */
     case SHN_SCORE_SCOMMON:
       *secp = bfd_make_section_old_way (abfd, ".scommon");
-      (*secp)->flags |= SEC_IS_COMMON;
+      (*secp)->flags |= SEC_IS_COMMON | SEC_SMALL_DATA;
       *valp = sym->st_size;
       break;
     }
@@ -2839,7 +2840,7 @@ s7_bfd_score_elf_symbol_processing (bfd *abfd, asymbol *asym)
 	{
 	  /* Initialize the small common section.  */
 	  score_elf_scom_section.name = ".scommon";
-	  score_elf_scom_section.flags = SEC_IS_COMMON;
+	  score_elf_scom_section.flags = SEC_IS_COMMON | SEC_SMALL_DATA;
 	  score_elf_scom_section.output_section = &score_elf_scom_section;
 	  score_elf_scom_section.symbol = &score_elf_scom_symbol;
 	  score_elf_scom_section.symbol_ptr_ptr = &score_elf_scom_symbol_ptr;
@@ -2875,7 +2876,7 @@ s7_bfd_score_elf_section_from_bfd_section (bfd *abfd ATTRIBUTE_UNUSED,
 					 asection *sec,
 					 int *retval)
 {
-  if (strcmp (bfd_get_section_name (abfd, sec), ".scommon") == 0)
+  if (strcmp (bfd_section_name (sec), ".scommon") == 0)
     {
       *retval = SHN_SCORE_SCOMMON;
       return TRUE;
@@ -3091,7 +3092,7 @@ s7_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 
       /* It's OK to base decisions on the section name, because none
 	 of the dynobj section names depend upon the input files.  */
-      name = bfd_get_section_name (dynobj, s);
+      name = bfd_section_name (s);
 
       if (CONST_STRNEQ (name, ".rel"))
 	{
@@ -3104,8 +3105,7 @@ s7_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 		 the linker now does not create empty output sections.  */
 	      if (s->output_section != NULL
 		  && strcmp (name,
-			     bfd_get_section_name (s->output_section->owner,
-						   s->output_section)) == 0)
+			     bfd_section_name (s->output_section)) == 0)
 		s->flags |= SEC_EXCLUDE;
 	    }
 	  else
@@ -3119,7 +3119,7 @@ s7_bfd_score_elf_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *i
 		 assert a DT_TEXTREL entry rather than testing whether
 		 there exists a relocation to a read only section or
 		 not.  */
-	      outname = bfd_get_section_name (output_bfd, s->output_section);
+	      outname = bfd_section_name (s->output_section);
 	      target = bfd_get_section_by_name (output_bfd, outname + 4);
 	      if ((target != NULL
 		   && (target->flags & SEC_READONLY) != 0
@@ -3232,7 +3232,7 @@ s7_bfd_score_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   s = bfd_get_linker_section (abfd, ".dynamic");
   if (s != NULL)
     {
-      if (!bfd_set_section_flags (abfd, s, flags))
+      if (!bfd_set_section_flags (s, flags))
 	return FALSE;
     }
 
@@ -3249,7 +3249,7 @@ s7_bfd_score_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
       s = bfd_make_section_anyway_with_flags (abfd, SCORE_ELF_STUB_SECTION_NAME,
 					      flags | SEC_CODE);
       if (s == NULL
-	  || !bfd_set_section_alignment (abfd, s, 2))
+	  || !bfd_set_section_alignment (s, 2))
 
 	return FALSE;
     }
@@ -3520,7 +3520,7 @@ s7_bfd_score_elf_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
 {
   const char *name;
 
-  name = bfd_get_section_name (abfd, sec);
+  name = bfd_section_name (sec);
 
   if (strcmp (name, ".got") == 0
       || strcmp (name, ".srdata") == 0
@@ -3544,7 +3544,7 @@ s7_bfd_score_elf_section_processing (bfd *abfd ATTRIBUTE_UNUSED, Elf_Internal_Sh
 {
   if (hdr->bfd_section != NULL)
     {
-      const char *name = bfd_get_section_name (abfd, hdr->bfd_section);
+      const char *name = bfd_section_name (hdr->bfd_section);
 
       if (strcmp (name, ".sdata") == 0)
 	{
@@ -3826,6 +3826,10 @@ s7_elf32_score_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if (!_bfd_generic_verify_endian_match (ibfd, info))
     return FALSE;
 
+  /* FIXME: What should be checked when linking shared libraries?  */
+  if ((ibfd->flags & DYNAMIC) != 0)
+    return TRUE;
+
   in_flags  = elf_elfheader (ibfd)->e_flags;
   out_flags = elf_elfheader (obfd)->e_flags;
 
@@ -3863,7 +3867,7 @@ bfd_boolean
 s7_elf32_score_new_section_hook (bfd *abfd, asection *sec)
 {
   struct _score_elf_section_data *sdata;
-  bfd_size_type amt = sizeof (*sdata);
+  size_t amt = sizeof (*sdata);
 
   sdata = bfd_zalloc (abfd, amt);
   if (sdata == NULL)

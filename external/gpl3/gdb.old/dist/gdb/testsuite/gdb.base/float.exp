@@ -1,4 +1,4 @@
-# Copyright 2003-2019 Free Software Foundation, Inc.
+# Copyright 2003-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,9 +37,9 @@ if ![runto_main] then {
 # Test "info float".
 
 if { [is_aarch64_target] } then {
-    gdb_test "info float" "d0.*d1.*d31.*s0.*s1.*s31.*" "info float"
+    gdb_test "info float" "d0.*d1.*d31.*s0.*s1.*s31.*"
 } elseif { [istarget "alpha*-*-*"] } then {
-    gdb_test "info float" "f0.*" "info float"
+    gdb_test "info float" "f0.*"
 } elseif { [is_aarch32_target] } then {
     gdb_test_multiple "info float" "info float" {
 	-re "Software FPU type.*mask:.*flags:.*$gdb_prompt $" {
@@ -55,9 +55,9 @@ if { [is_aarch64_target] } then {
 	}
     }
 } elseif { [istarget "i?86-*-*"] || [istarget "x86_64-*-*"] } then {
-    gdb_test "info float" "R7:.*Status Word:.*Opcode:.*" "info float"
+    gdb_test "info float" "R7:.*Status Word:.*Opcode:.*"
 } elseif [istarget "ia64-*-*"] then {
-    gdb_test "info float" "f0.*f1.*f127.*" "info float"
+    gdb_test "info float" "f0.*f1.*f127.*"
 } elseif [istarget "m68k-*-*"] then {
     gdb_test_multiple "info float" "info_float" {
         -re "fp0.*fp1.*fp7.*$gdb_prompt $" {

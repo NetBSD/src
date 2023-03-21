@@ -1,6 +1,6 @@
 /* DTrace probe support for GDB.
 
-   Copyright (C) 2014-2019 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    Contributed by Oracle, Inc.
 
@@ -21,7 +21,6 @@
 
 #include "defs.h"
 #include "probe.h"
-#include "common/vec.h"
 #include "elf-bfd.h"
 #include "gdbtypes.h"
 #include "obstack.h"
@@ -81,7 +80,7 @@ public:
   bool is_linespec (const char **linespecp) const override;
 
   /* See probe.h.  */
-  void get_probes (std::vector<probe *> *probesp,
+  void get_probes (std::vector<std::unique_ptr<probe>> *probesp,
 		   struct objfile *objfile) const override;
 
   /* See probe.h.  */
@@ -122,7 +121,7 @@ public:
   CORE_ADDR get_relocated_address (struct objfile *objfile) override;
 
   /* See probe.h.  */
-  unsigned get_argument_count (struct frame_info *frame) override;
+  unsigned get_argument_count (struct gdbarch *gdbarch) override;
 
   /* See probe.h.  */
   bool can_evaluate_arguments () const override;
@@ -152,7 +151,7 @@ public:
   struct dtrace_probe_arg *get_arg_by_number (unsigned n,
 					      struct gdbarch *gdbarch);
 
-  /* Build the GDB internal expressiosn that, once evaluated, will
+  /* Build the GDB internal expression that, once evaluated, will
      calculate the values of the arguments of the probe.  */
   void build_arg_exprs (struct gdbarch *gdbarch);
 
@@ -380,7 +379,7 @@ struct dtrace_dof_probe
 static void
 dtrace_process_dof_probe (struct objfile *objfile,
 			  struct gdbarch *gdbarch,
-			  std::vector<probe *> *probesp,
+			  std::vector<std::unique_ptr<probe>> *probesp,
 			  struct dtrace_dof_hdr *dof,
 			  struct dtrace_dof_probe *probe,
 			  struct dtrace_dof_provider *provider,
@@ -484,15 +483,14 @@ dtrace_process_dof_probe (struct objfile *objfile,
 	     int'.  */
           struct type *type = builtin_type (gdbarch)->builtin_long;
 
-	  TRY
+	  try
 	    {
 	      expr = parse_expression_with_language (type_str.c_str (),
 						     language_c);
 	    }
-	  CATCH (ex, RETURN_MASK_ERROR)
+	  catch (const gdb_exception_error &ex)
 	    {
 	    }
-	  END_CATCH
 
 	  if (expr != NULL && expr.get ()->elts[0].opcode == OP_TYPE)
 	    type = expr.get ()->elts[1].type;
@@ -508,7 +506,7 @@ dtrace_process_dof_probe (struct objfile *objfile,
 					    std::move (enablers_copy));
 
       /* Successfully created probe.  */
-      probesp->push_back (ret);
+      probesp->emplace_back (ret);
     }
 }
 
@@ -519,9 +517,10 @@ dtrace_process_dof_probe (struct objfile *objfile,
 
 static void
 dtrace_process_dof (asection *sect, struct objfile *objfile,
-		    std::vector<probe *> *probesp, struct dtrace_dof_hdr *dof)
+		    std::vector<std::unique_ptr<probe>> *probesp,
+		    struct dtrace_dof_hdr *dof)
 {
-  struct gdbarch *gdbarch = get_objfile_arch (objfile);
+  struct gdbarch *gdbarch = objfile->arch ();
   struct dtrace_dof_sect *section;
   int i;
 
@@ -624,26 +623,25 @@ dtrace_probe::build_arg_exprs (struct gdbarch *gdbarch)
      value of the argument when executed at the PC of the probe.  */
   for (dtrace_probe_arg &arg : m_args)
     {
-      /* Initialize the expression buffer in the parser state.  The
-	 language does not matter, since we are using our own
-	 parser.  */
-      parser_state pstate (10, current_language, gdbarch);
+      /* Initialize the expression builder.  The language does not
+	 matter, since we are using our own parser.  */
+      expr_builder builder (current_language, gdbarch);
 
       /* The argument value, which is ABI dependent and casted to
 	 `long int'.  */
-      gdbarch_dtrace_parse_probe_argument (gdbarch, &pstate, argc);
+      gdbarch_dtrace_parse_probe_argument (gdbarch, &builder, argc);
 
       /* Casting to the expected type, but only if the type was
 	 recognized at probe load time.  Otherwise the argument will
 	 be evaluated as the long integer passed to the probe.  */
       if (arg.type != NULL)
 	{
-	  write_exp_elt_opcode (&pstate, UNOP_CAST);
-	  write_exp_elt_type (&pstate, arg.type);
-	  write_exp_elt_opcode (&pstate, UNOP_CAST);
+	  write_exp_elt_opcode (&builder, UNOP_CAST);
+	  write_exp_elt_type (&builder, arg.type);
+	  write_exp_elt_opcode (&builder, UNOP_CAST);
 	}
 
-      arg.expr = pstate.release ();
+      arg.expr = builder.release ();
       prefixify_expression (arg.expr.get ());
       ++argc;
     }
@@ -687,14 +685,13 @@ dtrace_probe::is_enabled () const
 CORE_ADDR
 dtrace_probe::get_relocated_address (struct objfile *objfile)
 {
-  return this->get_address () + ANOFFSET (objfile->section_offsets,
-					  SECT_OFF_DATA (objfile));
+  return this->get_address () + objfile->data_section_offset ();
 }
 
 /* Implementation of the get_argument_count method.  */
 
 unsigned
-dtrace_probe::get_argument_count (struct frame_info *frame)
+dtrace_probe::get_argument_count (struct gdbarch *gdbarch)
 {
   return m_args.size ();
 }
@@ -835,8 +832,9 @@ dtrace_static_probe_ops::is_linespec (const char **linespecp) const
 /* Implementation of the get_probes method.  */
 
 void
-dtrace_static_probe_ops::get_probes (std::vector<probe *> *probesp,
-				     struct objfile *objfile) const
+dtrace_static_probe_ops::get_probes
+  (std::vector<std::unique_ptr<probe>> *probesp,
+   struct objfile *objfile) const
 {
   bfd *abfd = objfile->obfd;
   asection *sect = NULL;
@@ -856,13 +854,14 @@ dtrace_static_probe_ops::get_probes (std::vector<probe *> *probesp,
 
 	  /* Read the contents of the DOF section and then process it to
 	     extract the information of any probe defined into it.  */
-	  if (!bfd_malloc_and_get_section (abfd, sect, &dof))
+	  if (bfd_malloc_and_get_section (abfd, sect, &dof) && dof != NULL)
+	    dtrace_process_dof (sect, objfile, probesp,
+			        (struct dtrace_dof_hdr *) dof);
+         else
 	    complaint (_("could not obtain the contents of"
 			 "section '%s' in objfile `%s'."),
-		       sect->name, abfd->filename);
-      
-	  dtrace_process_dof (sect, objfile, probesp,
-			      (struct dtrace_dof_hdr *) dof);
+		       bfd_section_name (sect), bfd_get_filename (abfd));
+
 	  xfree (dof);
 	}
     }
@@ -897,8 +896,9 @@ info_probes_dtrace_command (const char *arg, int from_tty)
   info_probes_for_spops (arg, from_tty, &dtrace_static_probe_ops);
 }
 
+void _initialize_dtrace_probe ();
 void
-_initialize_dtrace_probe (void)
+_initialize_dtrace_probe ()
 {
   all_static_probe_ops.push_back (&dtrace_static_probe_ops);
 

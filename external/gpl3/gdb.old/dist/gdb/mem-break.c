@@ -1,6 +1,6 @@
 /* Simulate breakpoints by patching locations in the target system, for GDB.
 
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 
@@ -24,6 +24,8 @@
 #include "breakpoint.h"
 #include "inferior.h"
 #include "target.h"
+#include "gdbarch.h"
+
 /* Insert a breakpoint on targets that don't have any better
    breakpoint support.  We read the contents of the target location
    and stash it, then overwrite it with a breakpoint instruction.

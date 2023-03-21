@@ -60,6 +60,8 @@ public:
 
 int main () {
    int z=3;
+
+   return 0;
 }
 
 foo::foo  (int i)                  { ifoo = i;}

@@ -1,5 +1,5 @@
 /* xSYM symbol-file support for BFD.
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -686,7 +686,7 @@ extern void bfd_sym_display_type_information_table
   (bfd *, FILE *);
 extern int bfd_sym_scan
   (bfd *, bfd_sym_version, bfd_sym_data_struct *);
-extern const bfd_target * bfd_sym_object_p
+extern bfd_cleanup bfd_sym_object_p
   (bfd *);
 extern void bfd_sym_get_symbol_info
   (bfd *, asymbol *, symbol_info *);

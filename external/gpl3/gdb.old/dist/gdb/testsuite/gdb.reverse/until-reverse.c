@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2019 Free Software Foundation, Inc.
+   Copyright 2008-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -37,7 +37,8 @@ main (int argc, char **argv, char **envp)
     {
       /* We're used by a test that requires malloc, so make sure it is
 	 in the executable.  */
-      (void) malloc (1);
+      void *p = malloc (1);
+      free (p);
       return 1;
     }
 

@@ -3,7 +3,7 @@
 
    Contributed by Daniel Berlin <dberlin@redhat.com>
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -207,9 +207,11 @@ extern std::string cplus_typename_from_type_info (struct value *value);
 CORE_ADDR cplus_skip_trampoline (struct frame_info *frame,
 				 CORE_ADDR stop_pc);
 
-/* Return non-zero if an argument of type TYPE should be passed by
-   reference instead of value.  */
-extern int cp_pass_by_reference (struct type *type);
+/* Return a struct that provides pass-by-reference information
+   about the given TYPE.  */
+
+extern struct language_pass_by_ref_info cp_pass_by_reference
+  (struct type *type);
 
 struct cp_abi_ops
 {
@@ -246,7 +248,7 @@ struct cp_abi_ops
   struct type *(*get_type_from_type_info) (struct value *value);
   std::string (*get_typename_from_type_info) (struct value *value);
   CORE_ADDR (*skip_trampoline) (struct frame_info *, CORE_ADDR);
-  int (*pass_by_reference) (struct type *type);
+  struct language_pass_by_ref_info (*pass_by_reference) (struct type *type);
 };
 
 

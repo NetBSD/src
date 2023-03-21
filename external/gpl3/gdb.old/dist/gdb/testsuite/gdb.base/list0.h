@@ -2,7 +2,7 @@
 
 extern void bar(int);
 static void foo (int x)
-/* !
+/* ! the next line has a control character, see PR symtab/24423.
 
    ! */
 {

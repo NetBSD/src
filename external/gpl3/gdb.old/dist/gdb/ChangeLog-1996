@@ -1133,11 +1133,9 @@ Wed Oct  2 22:07:16 1996  Fred Fish  <fnf@cygnus.com>
 
 	* inferior.h (IN_SIGTRAMP): Pass pc to SIGTRAMP_START and
 	SIGTRAMP_END.
-	* config/i386/tm-i386os9k.h (SIGTRAMP_START, SIGTRAMP_END): 
+	* config/i386/tm-i386os9k.h (SIGTRAMP_START, SIGTRAMP_END):
 	Define with dummy pc arg.
 	* config/m68k/tm-nbsd.h: Ditto.
-	* doc/gdbint.texinfo: Document that SIGTRAMP_START and
-	SIGTRAMP_END are macros that take an single argument.
 
 Mon Sep 30 20:02:45 1996  Fred Fish  <fnf@cygnus.com>
 
@@ -2746,7 +2744,7 @@ Tue Jun 25 17:41:06 1996  Martin M. Hunt  <hunt@pizza.cygnus.com>
 
 Tue Jun 25 23:14:07 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
 
-	* gdb/gdbserver/Makefile.in (docdir): Removed.
+	* gdbserver/Makefile.in (docdir): Removed.
 
 Tue Jun 25 22:05:38 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
 
@@ -2759,7 +2757,7 @@ Tue Jun 25 22:05:38 1996  Jason Molenda  (crash@godzilla.cygnus.co.jp)
 	(docdir): Removed.
 	* nlm/configure.in (AC_PREREQ): autoconf 2.5 or higher.
 	* nlm/configure: Rebuilt.
-        * gdb/gdbserver/Makefile.in (datadir): Set to $(prefix)/share.
+        * gdbserver/Makefile.in (datadir): Set to $(prefix)/share.
 
 Mon Jun 24 09:56:14 1996  Angela Marie Thomas (angela@cygnus.com)
 

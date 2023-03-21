@@ -1,4 +1,4 @@
-# Copyright 2011-2019 Free Software Foundation, Inc.
+# Copyright 2011-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 load_lib "ada.exp"
+
+if { [skip_ada_tests] } { return -1 }
 
 standard_ada_testfile task_switch
 
@@ -44,7 +46,13 @@ if ![mi_runto "task_switch.break_me"] then {
 # Verify that "-stack-list-arguments" does not cause the debugger to
 # crash when printing the arguments of frame 1 (due to the internally-
 # generated argument "_task").
+# Frame for task_switch.break_me
+set frame0 "frame=\{level=\"0\",args=\\\[\\\]\}"
+# Frame for task_switch.caller
+set frame1 "frame=\{level=\"1\",args=\\\[\{name=\"<_task>\",value=\"$hex\"\}\\\]\}"
+# Frame for system.tasking.stages.task_wrapper
+set frame2 "frame=\{level=\"2\",args=\\\[(\{name=\"self_id\",value=\"$hex\"\})?\\\]\}"
 mi_gdb_test "-stack-list-arguments 1" \
-            "\\^done,stack-args=\\\[frame=\{level=\"0\",args=\\\[\\\]\},frame=\{level=\"1\",args=\\\[\{name=\"<_task>\",value=\"$hex\"\}\\\]\},frame=\{level=\"2\",args=\\\[\\\]\}.*" \
+            "\\^done,stack-args=\\\[$frame0,$frame1,$frame2,.*" \
             "-stack-list-arguments 1"
 

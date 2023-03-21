@@ -61,6 +61,7 @@
 (dnf f-resv-10-7   "resv-10-7"                 ((MACH ORBIS-MACHS) RESERVED) 10 7)
 (dnf f-resv-10-3   "resv-10-3"                 ((MACH ORBIS-MACHS) RESERVED) 10 3)
 (dnf f-resv-10-1   "resv-10-1"                 ((MACH ORBIS-MACHS) RESERVED) 10 1)
+(dnf f-resv-8-1    "resv-8-1"                  ((MACH ORBIS-MACHS) RESERVED) 8 1)
 (dnf f-resv-7-4    "resv-7-4"                  ((MACH ORBIS-MACHS) RESERVED) 7 4)
 (dnf f-resv-5-2    "resv-5-2"                  ((MACH ORBIS-MACHS) RESERVED) 5 2)
 
@@ -75,7 +76,7 @@
     26
     INT
     ((value pc) (sra IAI (sub IAI value pc) (const 2)))
-    ((value pc) (add IAI (sll IAI value (const 2)) pc))
+    ((value pc) (add IAI (mul IAI value (const 4)) pc))
     )
 
 ; PC relative, 21-bit, 13 shifted to right, aligned.
@@ -90,7 +91,7 @@
     ((value pc)
      (sub IAI (sra IAI value (const 13)) (sra IAI pc (const 13))))
     ((value pc)
-     (sll IAI (add IAI value (sra IAI pc (const 13))) (const 13)))
+     (mul IAI (add IAI value (sra IAI pc (const 13))) (const 8192)))
     )
 
 ; Immediates.
@@ -432,7 +433,7 @@
            )
   )
 
-(dni l-adrp "adrp reg/disp21"
+(dni l-adrp "load pc-relative page address"
     ((MACH ORBIS-MACHS))
     "l.adrp $rD,${disp21}"
     (+ OPC_ADRP rD disp21)

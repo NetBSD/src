@@ -1,6 +1,6 @@
 /* Common target dependent code for Alpha BSD's.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 
 #ifndef ALPHA_BSD_TDEP_H
 #define ALPHA_BSD_TDEP_H
+
+#include "gdbarch.h"
 
 struct regcache;
 

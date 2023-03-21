@@ -1,6 +1,6 @@
 /* TUI display source window.
 
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -23,20 +23,54 @@
 #define TUI_TUI_SOURCE_H
 
 #include "tui/tui-data.h"
+#include "tui-winsource.h"
 
 struct symtab;
-struct tui_win_info;
 
-extern void tui_set_source_content_nil (struct tui_win_info *, 
-					const char *);
+/* A TUI source window.  */
 
-extern enum tui_status tui_set_source_content (struct symtab *, 
-					       int, int);
-extern void tui_show_symtab_source (struct gdbarch *, struct symtab *,
-				    struct tui_line_or_address,
-				    int);
-extern int tui_source_is_displayed (const char *);
-extern void tui_vertical_source_scroll (enum tui_scroll_direction,
-					int);
+struct tui_source_window : public tui_source_window_base
+{
+  tui_source_window () = default;
+
+  DISABLE_COPY_AND_ASSIGN (tui_source_window);
+
+  const char *name () const override
+  {
+    return SRC_NAME;
+  }
+
+  /* Return true if the location LOC corresponds to the line number
+     LINE_NO in this source window; false otherwise.  */
+  bool location_matches_p (struct bp_location *loc, int line_no) override;
+
+  bool showing_source_p (const char *filename) const;
+
+  void maybe_update (struct frame_info *fi, symtab_and_line sal) override;
+
+  void erase_source_content () override
+  {
+    do_erase_source_content (_("[ No Source Available ]"));
+  }
+
+  void display_start_addr (struct gdbarch **gdbarch_p,
+			   CORE_ADDR *addr_p) override;
+
+protected:
+
+  void do_scroll_vertical (int num_to_scroll) override;
+
+  bool set_contents (struct gdbarch *gdbarch,
+		     const struct symtab_and_line &sal) override;
+
+private:
+
+  /* Answer whether a particular line number or address is displayed
+     in the current source window.  */
+  bool line_is_displayed (int line) const;
+
+  /* It is the resolved form as returned by symtab_to_fullname.  */
+  gdb::unique_xmalloc_ptr<char> m_fullname;
+};
 
 #endif /* TUI_TUI_SOURCE_H */

@@ -1,6 +1,6 @@
 /* This test script is part of GDB, the GNU debugger.
 
-   Copyright 1999-2019 Free Software Foundation, Inc.
+   Copyright 1999-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -131,12 +131,12 @@ int main(){
   sp3->foo(1);
   sp3->foo('a');
 
-  sp4->a;
-  sp4->b;
+  (void) sp4->a;
+  (void) sp4->b;
 
   Type4 *mt4p = &mt4;
-  mt4p->a;
-  mt4p->b;
+  (void) mt4p->a;
+  (void) mt4p->b;
 
   A a;
   B b;

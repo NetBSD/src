@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2019 Free Software Foundation, Inc.
+   Copyright (C) 1995-2020 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -1051,14 +1051,14 @@ bfd_load (const char *fname)
     if (sis_verbose)
 	printf("loading %s:", fname);
     for (section = pbfd->sections; section; section = section->next) {
-	if (bfd_get_section_flags(pbfd, section) & SEC_ALLOC) {
+	if (bfd_section_flags (section) & SEC_ALLOC) {
 	    bfd_vma         section_address;
 	    unsigned long   section_size;
 	    const char     *section_name;
 
-	    section_name = bfd_get_section_name(pbfd, section);
+	    section_name = bfd_section_name (section);
 
-	    section_address = bfd_get_section_vma(pbfd, section);
+	    section_address = bfd_section_vma (section);
 	    /*
 	     * Adjust sections from a.out files, since they don't carry their
 	     * addresses with.
@@ -1084,14 +1084,14 @@ bfd_load (const char *fname)
 		}
 	    }
 
-	    section_size = bfd_section_size(pbfd, section);
+	    section_size = bfd_section_size (section);
 
 	    if (sis_verbose)
 		printf("\nsection %s at 0x%08lx (0x%lx bytes)",
 		       section_name, section_address, section_size);
 
 	    /* Text, data or lit */
-	    if (bfd_get_section_flags(pbfd, section) & SEC_LOAD) {
+	    if (bfd_section_flags (section) & SEC_LOAD) {
 		file_ptr        fptr;
 
 		fptr = 0;

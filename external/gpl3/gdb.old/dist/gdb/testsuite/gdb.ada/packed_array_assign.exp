@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 load_lib "ada.exp"
 
+if { [skip_ada_tests] } { return -1 }
+
 standard_ada_testfile tester
 
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } {
@@ -27,4 +29,14 @@ runto "aggregates.run_test"
 
 gdb_test \
     "print pra := ((packed_array_assign_x => 2, packed_array_assign_y => 0, packed_array_assign_w => 17), pr, (packed_array_assign_x => 7, packed_array_assign_y => 1, packed_array_assign_w => 23))" \
-    " = \\(\\(packed_array_assign_w => 17, packed_array_assign_x => 2, packed_array_assign_y => 0\\), \\(packed_array_assign_w => 104, packed_array_assign_x => 2, packed_array_assign_y => 3\\), \\(packed_array_assign_w => 23, packed_array_assign_x => 7, packed_array_assign_y => 1\\)\\)"
+    " = \\(\\(packed_array_assign_w => 17, packed_array_assign_x => 2, packed_array_assign_y => 0\\), \\(packed_array_assign_w => 104, packed_array_assign_x => 2, packed_array_assign_y => 3\\), \\(packed_array_assign_w => 23, packed_array_assign_x => 7, packed_array_assign_y => 1\\)\\)" \
+    "value of pra"
+
+gdb_test "print pra(1) := pr" \
+    " = \\(packed_array_assign_w => 104, packed_array_assign_x => 2, packed_array_assign_y => 3\\)"
+gdb_test "print pra(1)" \
+    " = \\(packed_array_assign_w => 104, packed_array_assign_x => 2, packed_array_assign_y => 3\\)"
+
+gdb_test "print npr := (q000 => 3, r000 => (packed_array_assign_x => 6, packed_array_assign_y => 1, packed_array_assign_w => 117))" \
+    " = \\(q000 => 3, r000 => \\(packed_array_assign_w => 117, packed_array_assign_x => 6, packed_array_assign_y => 1\\)\\)" \
+    "value of npr"

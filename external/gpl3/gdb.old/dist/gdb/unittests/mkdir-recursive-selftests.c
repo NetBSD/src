@@ -1,6 +1,6 @@
 /* Self tests for scoped_fd for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2019 Free Software Foundation, Inc.
+   Copyright (C) 2018-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,10 +19,10 @@
 
 #include "defs.h"
 
-#include "common/filestuff.h"
-#include "common/selftest.h"
-#include "common/byte-vector.h"
-#include "common/pathstuff.h"
+#include "gdbsupport/filestuff.h"
+#include "gdbsupport/selftest.h"
+#include "gdbsupport/byte-vector.h"
+#include "gdbsupport/pathstuff.h"
 
 namespace selftests {
 namespace mkdir_recursive {
@@ -81,6 +81,7 @@ test ()
 }
 }
 
+void _initialize_mkdir_recursive_selftests ();
 void
 _initialize_mkdir_recursive_selftests ()
 {

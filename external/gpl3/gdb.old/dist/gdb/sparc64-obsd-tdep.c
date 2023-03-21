@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc64.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -440,8 +440,9 @@ sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   bsd_uthread_set_collect_uthread (gdbarch, sparc64obsd_collect_uthread);
 }
 
+void _initialize_sparc64obsd_tdep ();
 void
-_initialize_sparc64obsd_tdep (void)
+_initialize_sparc64obsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_sparc, bfd_mach_sparc_v9,
 			  GDB_OSABI_OPENBSD, sparc64obsd_init_abi);

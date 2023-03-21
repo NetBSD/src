@@ -1,6 +1,6 @@
 /* External/Public TUI Header File.
 
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -24,8 +24,6 @@
 
 struct ui_file;
 
-extern void strcat_to_buf (char *, int, const char *);
-
 /* Types of error returns.  */
 enum tui_status
 {
@@ -42,27 +40,18 @@ enum tui_win_type
   CMD_WIN,
   /* This must ALWAYS be AFTER the major windows last.  */
   MAX_MAJOR_WINDOWS,
-  /* Auxillary windows.  */
-  LOCATOR_WIN,
-  EXEC_INFO_WIN,
-  DATA_ITEM_WIN,
-  /* This must ALWAYS be next to last.  */
-  MAX_WINDOWS,
-  UNDEFINED_WIN		/* LAST */
 };
 
-/* GENERAL TUI FUNCTIONS */
-/* tui.c */
 extern CORE_ADDR tui_get_low_disassembly_address (struct gdbarch *,
 						  CORE_ADDR, CORE_ADDR);
 extern void tui_show_assembly (struct gdbarch *gdbarch, CORE_ADDR addr);
-extern int tui_is_window_visible (enum tui_win_type type);
-extern int tui_get_command_dimension (unsigned int *width,
-				      unsigned int *height);
+extern bool tui_is_window_visible (enum tui_win_type type);
+extern bool tui_get_command_dimension (unsigned int *width,
+				       unsigned int *height);
 
-/* Initialize readline and configure the keymap for the switching
-   key shortcut.  */
-extern void tui_initialize_readline (void);
+/* Initialize readline and configure the keymap for the switching key
+   shortcut.  May be called more than once without issue.  */
+extern void tui_ensure_readline_initialized ();
 
 /* Enter in the tui mode (curses).  */
 extern void tui_enable (void);
@@ -89,11 +78,6 @@ extern enum tui_key_mode tui_current_key_mode;
    keymap.  */
 extern void tui_set_key_mode (enum tui_key_mode mode);
 
-extern int tui_active;
-
-extern void tui_show_source (const char *fullname, int line);
-
-/* tui-layout.c */
-extern enum tui_status tui_set_layout_by_name (const char *);
+extern bool tui_active;
 
 #endif /* TUI_TUI_H */

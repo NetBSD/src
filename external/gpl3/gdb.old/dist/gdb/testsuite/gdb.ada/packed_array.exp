@@ -1,4 +1,4 @@
-# Copyright 2005-2019 Free Software Foundation, Inc.
+# Copyright 2005-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,19 +29,16 @@ set bp_location [gdb_get_line_number "STOP" ${testdir}/pa.adb]
 runto "pa.adb:$bp_location"
 
 gdb_test "print var" \
-         "= \\(4 => true, false, true, false, true\\)" \
-         "print var"
+         "= \\(4 => true, false, true, false, true\\)"
 
 # Try printing the value and the type definition of a reference
 # to variable "Var".
 
 gdb_test "ptype &var" \
-         "type = access array \\(4 \\.\\. 8\\) of boolean <packed: 1-bit elements>" \
-         "ptype &var"
+         "type = access array \\(4 \\.\\. 8\\) of boolean <packed: 1-bit elements>"
 
 gdb_test "print &var" \
-         "= \\(access pa.packed_array\\) 0x.*" \
-         "print &var"
+         "= \\(access pa.packed_array\\) 0x.*"
 
 # Print the value of U_Var, an unconstrainted packed array.
 

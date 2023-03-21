@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/arm.
 
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -115,8 +115,9 @@ armobsd_init_abi (struct gdbarch_info info,
     }
 }
 
+void _initialize_armobsd_tdep ();
 void
-_initialize_armobsd_tdep (void)
+_initialize_armobsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_arm, 0, GDB_OSABI_OPENBSD,
 			  armobsd_init_abi);

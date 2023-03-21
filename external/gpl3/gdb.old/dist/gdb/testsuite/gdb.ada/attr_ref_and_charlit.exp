@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 load_lib "ada.exp"
 
+if { [skip_ada_tests] } { return -1 }
+
 standard_ada_testfile "foo"
 
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } {
@@ -29,14 +31,19 @@ set bp_location [gdb_get_line_number "BREAK" "${testdir}/foo.adb"]
 # work as expected. They used to yield syntax error.
 
 runto "foo.adb:$bp_location"
-gdb_test "print s'first" " = 2"
-gdb_test "print s'last"  " = 3"
-gdb_test "print s(s'first) = 'a'" " = true"
-gdb_test "print s(s'last) /= 'b'" " = false"
+with_test_prefix "run" {
+    gdb_test "print s'first" " = 2"
+    gdb_test "print s'last"  " = 3"
+    gdb_test "print s(s'first) = 'a'" " = true"
+    gdb_test "print s(s'last) /= 'b'" " = false"
+}
 
 gdb_test "continue" \
-         ".*Breakpoint \[0-9\]+, foo\\.p \\(s=.*\\) at .*foo.adb:\[0-9\]+.*" \
-gdb_test "print s'first" " = 4"
-gdb_test "print s'last"  " = 5"
-gdb_test "print s(s'first) = 'c'" " = true"
-gdb_test "print s(s'last) /= 'd'" " = false"
+         ".*Breakpoint \[0-9\]+, foo\\.p \\(s=.*\\) at .*foo.adb:\[0-9\]+.*"
+
+with_test_prefix "cont" {
+    gdb_test "print s'first" " = 4"
+    gdb_test "print s'last"  " = 5"
+    gdb_test "print s(s'first) = 'c'" " = true"
+    gdb_test "print s(s'last) /= 'd'" " = false"
+}

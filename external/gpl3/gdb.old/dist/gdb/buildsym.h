@@ -1,5 +1,5 @@
 /* Build symbol tables in GDB's internal format.
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
 
 #if !defined (BUILDSYM_H)
 #define BUILDSYM_H 1
+
+#include "gdb_obstack.h"
 
 struct objfile;
 struct symbol;
@@ -185,7 +187,8 @@ struct buildsym_compunit
 
   const char *pop_subfile ();
 
-  void record_line (struct subfile *subfile, int line, CORE_ADDR pc);
+  void record_line (struct subfile *subfile, int line, CORE_ADDR pc,
+		    bool is_stmt);
 
   struct compunit_symtab *get_compunit_symtab ()
   {

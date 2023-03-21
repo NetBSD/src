@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 Free Software Foundation, Inc.
+# Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -169,10 +169,8 @@ gdb_test "guile (print (symbol-name cplusfunc))" \
     "= SimpleClass::valueofi().*" "test method.name"
 gdb_test "guile (print (symbol-print-name cplusfunc))" \
     "= SimpleClass::valueofi().*" "test method.print_name"
-# FIXME: GDB is broken here and we're verifying broken behaviour.
-# (linkage-name should be the mangled name)
 gdb_test "guile (print (symbol-linkage-name cplusfunc))" \
-    "SimpleClass::valueofi().*" "test method.linkage_name"
+    "_ZN11SimpleClass8valueofiEv.*" "test method.linkage_name"
 gdb_test "guile (print (= (symbol-addr-class cplusfunc) SYMBOL_LOC_BLOCK))" "= #t"
 
 # Test is_valid when the objfile is unloaded.  This must be the last

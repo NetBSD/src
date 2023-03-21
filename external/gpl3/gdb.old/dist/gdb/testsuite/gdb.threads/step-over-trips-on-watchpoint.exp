@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2019 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -57,7 +57,10 @@ proc do_test { displaced with_bp } {
 
 		gdb_test_no_output "set displaced-stepping $displaced"
 
-		gdb_breakpoint [gdb_get_line_number "set wait-thread breakpoint here"]
+		set line [gdb_get_line_number "set wait-thread breakpoint here"]
+		if { ![gdb_breakpoint $line] } {
+		    return
+		}
 		gdb_continue_to_breakpoint "run to wait-thread breakpoint"
 		gdb_test "info threads" "\\\* 1 .*  2 .*" "info threads shows all threads"
 

@@ -427,11 +427,6 @@ Thu Dec 17 00:44:57 1992  John Gilmore  (gnu@cygnus.com)
 	* symfile.c (syms_from_objfile):  Insert debugging check to test
 	NAMES_HAVE_UNDERSCORE setting against the BFD support.
 
-	* doc/gdbint.texinfo (Host Conditionals):  Remove
-	NAMES_HAVE_UNDERSCORE, SOME_NAMES_HAVE_DOT, document
-	MEM_FNS_DECLARED.
-	(Target Conditionals):  Remove all of the above.
-
 	* xm-rs6000.h (MEM_FNS_DECLARED):  Update comments.
 
 	* coffread.c (read_coff_symtab, C_BLOCK):  Use complain() rather
@@ -486,9 +481,6 @@ Tue Dec 15 02:01:00 1992  John Gilmore  (gnu@cygnus.com)
 
 	* main.c (main):  Accept --silent as well as --quiet.  Change +help
 	to --help.  Suggested by Karl Berry, <karl@cs.umb.edu>.
-
-	* doc/gdbint.texinfo:  SWAP_HOST_AND_TARGET => SWAP_TARGET_AND_HOST.
-	Noticed by Andy Jackson, <arj@cam-orl.co.uk>.
 
 Mon Dec 14 23:28:15 1992  John Gilmore  (gnu@cygnus.com)
 
@@ -1134,7 +1126,6 @@ Tue Oct 27 17:08:45 1992  K. Richard Pixley  (rich@cygnus.com)
 	* defs.h: include nm.h.
 	* coredep.c, infptrace.c, procfs.c, rs6000-nat.c, sparc-nat.c,
 	  sparc-tdep.c, : do not include nm.h.
-	* doc/gdbint.texinfo: nm.h now included in defs.h.
 
 Fri Oct 23 04:47:17 1992  Stu Grossman  (grossman at cygnus.com)
 
@@ -1202,7 +1193,6 @@ Wed Oct 21 17:46:07 1992  K. Richard Pixley  (rich@sendai.cygnus.com)
 Wed Oct 21 03:51:01 1992  John Gilmore  (gnu@cygnus.com)
 
 	* coredep.c:  Include "nm.h" to get REGISTER_U_ADDR.
-	* doc/gdbint.texinfo:  Improve REGISTER_U_ADDR and USE_PROC_FS doc.
 
 	* Makefile.in (VERSION):  Tick to 4.6.9.
 
@@ -1216,9 +1206,6 @@ Tue Oct 20 23:27:56 1992  John Gilmore  (gnu@cygnus.com)
 	(initialize_symmisc):  Remove empty function.
 	* tm-spc-noun.h, tm-sun4os4.h, tm-sun4sol2.h (STACK_END_ADDRESS):
 	Remove obsolete, misspelled macro.
-	* doc/gdbint.texinfo:  Document obsolete STACK_END_ADDR.
-	(all @node commands):  Use new form to avoid nitpicking errors.
-	* doc/gdbint.texinfo:  Document host/native/target split.
 	                                                                   
 Wed Oct 21 00:14:34 1992  Stu Grossman  (grossman at cygnus.com)
 
@@ -1250,8 +1237,6 @@ Tue Oct 20 21:32:18 1992  K. Richard Pixley  (rich@sendai.cygnus.com)
 	* hppa[bh]-xdep.c: removed.
 	* hppa[bh]h-tdep.c: do not include ptrace.h.
 	* Makefile.in (HFILES): added nm-hppa[bh].h.
-
-	* doc/gdbint.texinfo: add PUSH_DUMMY_FRAME, POP_FRAME.
 
 Tue Oct 20 00:01:46 1992  Stu Grossman  (grossman at cygnus.com)
 
@@ -1402,7 +1387,6 @@ Fri Oct 16 03:34:01 1992  John Gilmore  (gnu@cygnus.com)
 
 	Avoid longjmp()-catching compilation errors in cross-ports.
 
-	* doc/gdbint.texinfo:  Update GET_LONGJMP_TARGET, L_SET doc.
 	* irix4-nat.c, mips-nat.c (JB_ELEMENT_SIZE, get_longjmp_target):
 	Move from mips-tdep.c and tm-{irix3,mips}.h.
 	* mips-nat.c:  Remove a bunch of code that was ifdef'd out of
@@ -1617,9 +1601,6 @@ Thu Oct  8 16:27:45 1992  K. Richard Pixley  (rich@sendai.cygnus.com)
 	* config/sun4os4.mh (XDEPFILES): fork-child.o removed.
 	(NATDEPFILES): added fork-child.o.
 
-	* doc/gdbint.texinfo: document a few more macros, create new
-	  section for native macros.
-
 Thu Oct  8 13:52:46 1992  Stu Grossman  (grossman at cygnus.com)
 
 	* Makefile.in alldeps.mak depend:  Rip out 29k/udi pending
@@ -1832,7 +1813,6 @@ Thu Oct  1 01:57:56 1992  John Gilmore  (gnu@cygnus.com)
 	(define_command):  If defining a new hook, check the command it
 	is hooking, and warn if none.  Install the hook.
 	* source.c (_initialize_source):  "l" is an abbrev for "list".
-	* doc/gdb.texinfo:  Document command hooks.
 
 	* Makefile.in (VERSION):  Roll to 4.6.7.
 	* config/sun4os4.mh:  Remove dup inftarg.o from NATDEPFILES.
@@ -2287,19 +2267,6 @@ Mon Sep 14 19:20:43 1992  Stu Grossman  (grossman at cygnus.com)
 	(energize_call_command):  Call send_location() after doing up,
 	down, and frame commands.
 
-Fri Sep 11 18:28:28 1992  Roland H. Pesch  (pesch@fowanton.cygnus.com)
-
-	* doc/gdb.texinfo, doc/gdbinv-m.m4.in, doc/gdbinv-s.m4.in: first
-	pass at doc for two new remote targets---29K using UDI, and Tandem
-	ST2000 using STDBUG.
-
-	* doc/all.m4, doc/none.m4: new m4 switch, _ST2000__
-
-	* doc/all.m4: turn on H8/300 stuff for generic manual
-
-	* doc/gdbinv-s.m4.in: remove text on special procedures to continue 
-	after explicit call to breakpoint() in serial stubs.
-
 Fri Sep 11 01:34:25 1992  John Gilmore  (gnu@sphagnum.cygnus.com)
 
 	* mipsread.c:  Clean up some white space.
@@ -2365,15 +2332,6 @@ Tue Sep  8 15:22:06 1992  Stu Grossman  (grossman at cygnus.com)
 	* ser-bsd.c:  New module, serial stuff for BSD systems.
 	* serial.h:  Define struct ttystate properly using HAVE_TERMIO.
 	* xm-apollo68b.h:  #define PTRACE_IN_WRONG_PLACE...
-
-Fri Sep  4 18:53:57 1992  Roland H. Pesch  (pesch@fowanton.cygnus.com)
-
-	* doc/gdb.texinfo: fix shameful error of agreement reported by
-	jimb@occs.cs.oberlin.edu (Jim Blandy)
-	* doc/gdb.texinfo: remove old partial discussion of remote serial
-	protocol (via serial debug stubs)
-	* doc/gdbinv-m.m4.in, doc/gdbinv-s.m4.in: new section discussing
-	use of serial debug stubs
 
 Fri Sep  4 00:34:30 1992  Per Bothner  (bothner@rtl.cygnus.com)
 
@@ -3605,7 +3563,6 @@ Fri Jun 19 10:28:05 1992  John Gilmore  (gnu at cygnus.com)
 	* am29k-tdep.c (read_register_stack, write_register_stack):
 	Change RSTACK_HIGH_ADDR to rstack_high_address, a user-settable
 	variable.  Add `set' and `show' commands for it.
-	* doc/gdb.texinfo:  Document it.
 
 Thu Jun 18 19:35:22 1992  Fred Fish  (fnf@cygnus.com)
 

@@ -1,5 +1,5 @@
 /* ARC-specific support for 32-bit ELF
-   Copyright (C) 1994-2019 Free Software Foundation, Inc.
+   Copyright (C) 1994-2020 Free Software Foundation, Inc.
    Contributed by Cupertino Miranda (cmiranda@synopsys.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -296,7 +296,7 @@ relocate_fix_got_relocs_for_got_info (struct got_entry **	   list_p,
 
       if (h != NULL)
 	{
-	  // TODO: This should not be here.
+	  /* TODO: This should not be here.  */
 	  reloc_data->sym_value = h->root.u.def.value;
 	  reloc_data->sym_section = h->root.u.def.section;
 

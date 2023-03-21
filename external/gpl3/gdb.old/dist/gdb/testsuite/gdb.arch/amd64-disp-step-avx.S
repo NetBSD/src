@@ -1,4 +1,4 @@
-/* Copyright 2009-2019 Free Software Foundation, Inc.
+/* Copyright 2009-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,7 +22,12 @@
 
 	.global _start,main
 _start:
+	# The area at _start is used as the displaced stepping buffer.  Put
+	# more than enough nop instructions so that the instructions under test
+	# below don't conflict with it.
+	.rept 200
 	nop
+	.endr
 main:
         nop
 

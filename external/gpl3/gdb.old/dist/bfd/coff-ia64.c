@@ -1,5 +1,5 @@
 /* BFD back-end for HP/Intel IA-64 COFF files.
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
    Contributed by David Mosberger <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -67,7 +67,7 @@ in_reloc_p (bfd * abfd ATTRIBUTE_UNUSED,
 
 #include "coffcode.h"
 
-static const bfd_target *
+static bfd_cleanup
 ia64coff_object_p (bfd *abfd)
 {
 #ifdef COFF_IMAGE_WITH_PE

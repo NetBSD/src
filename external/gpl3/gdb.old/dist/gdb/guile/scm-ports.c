@@ -1,7 +1,7 @@
 /* Support for connecting Guile's stdio to GDB's.
    as well as r/w memory via ports.
 
-   Copyright (C) 2014-2019 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,11 +22,11 @@
    conventions, et.al.  */
 
 #include "defs.h"
-#include "gdb_select.h"
+#include "gdbsupport/gdb_select.h"
 #include "top.h"
 #include "target.h"
 #include "guile-internal.h"
-#include "common/gdb_optional.h"
+#include "gdbsupport/gdb_optional.h"
 
 #ifdef HAVE_POLL
 #if defined (HAVE_POLL_H)
@@ -35,6 +35,12 @@
 #include <sys/poll.h>
 #endif
 #endif
+
+/* Whether we're using Guile < 2.2 and its clumsy port API.  */
+
+#define USING_GUILE_BEFORE_2_2				\
+  (SCM_MAJOR_VERSION == 2 && SCM_MINOR_VERSION == 0)
+
 
 /* A ui-file for sending output to Guile.  */
 
@@ -66,12 +72,14 @@ typedef struct
      This value is always in the range [0, size].  */
   ULONGEST current;
 
+#if USING_GUILE_BEFORE_2_2
   /* The size of the internal r/w buffers.
      Scheme ports aren't a straightforward mapping to memory r/w.
      Generally the user specifies how much to r/w and all access is
      unbuffered.  We don't try to provide equivalent access, but we allow
      the user to specify these values to help get something similar.  */
   unsigned read_buf_size, write_buf_size;
+#endif
 } ioscm_memory_port;
 
 /* Copies of the original system input/output/error ports.
@@ -81,7 +89,11 @@ static SCM orig_output_port_scm;
 static SCM orig_error_port_scm;
 
 /* This is the stdio port descriptor, scm_ptob_descriptor.  */
+#if USING_GUILE_BEFORE_2_2
 static scm_t_bits stdio_port_desc;
+#else
+static scm_t_port_type *stdio_port_desc;
+#endif
 
 /* Note: scm_make_port_type takes a char * instead of a const char *.  */
 static /*const*/ char stdio_port_desc_name[] = "gdb:stdio-port";
@@ -102,10 +114,16 @@ static SCM error_port_scm;
 enum oport { GDB_STDOUT, GDB_STDERR };
 
 /* This is the memory port descriptor, scm_ptob_descriptor.  */
+#if USING_GUILE_BEFORE_2_2
 static scm_t_bits memory_port_desc;
+#else
+static scm_t_port_type *memory_port_desc;
+#endif
 
 /* Note: scm_make_port_type takes a char * instead of a const char *.  */
 static /*const*/ char memory_port_desc_name[] = "gdb:memory-port";
+
+#if USING_GUILE_BEFORE_2_2
 
 /* The default amount of memory to fetch for each read/write request.
    Scheme ports don't provide a way to specify the size of a read,
@@ -123,16 +141,24 @@ static const unsigned max_memory_port_buf_size = 4096;
 /* "out of range" error message for buf sizes.  */
 static char *out_of_range_buf_size;
 
+#else
+
+/* The maximum values to use for get_natural_buffer_sizes.  */
+static const unsigned natural_buf_size = 16;
+
+#endif
+
 /* Keywords used by open-memory.  */
 static SCM mode_keyword;
 static SCM start_keyword;
 static SCM size_keyword;
 
-/* Helper to do the low level work of opening a port.
-   Newer versions of Guile (2.1.x) have scm_c_make_port.  */
+/* Helper to do the low level work of opening a port.  */
+
+#if USING_GUILE_BEFORE_2_2
 
 static SCM
-ioscm_open_port (scm_t_bits port_type, long mode_bits)
+ioscm_open_port (scm_t_bits port_type, long mode_bits, scm_t_bits stream)
 {
   SCM port;
 
@@ -143,6 +169,7 @@ ioscm_open_port (scm_t_bits port_type, long mode_bits)
   port = scm_new_port_table_entry (port_type);
 
   SCM_SET_CELL_TYPE (port, port_type | mode_bits);
+  SCM_SETSTREAM (port, stream);
 
 #if 0 /* TODO: Guile doesn't export this.  What to do?  */
   scm_i_pthread_mutex_unlock (&scm_i_port_table_mutex);
@@ -150,8 +177,38 @@ ioscm_open_port (scm_t_bits port_type, long mode_bits)
 
   return port;
 }
+
+#else
+
+static SCM
+ioscm_open_port (scm_t_port_type *port_type, long mode_bits, scm_t_bits stream)
+{
+  return scm_c_make_port (port_type, mode_bits, stream);
+}
+
+#endif
+
 
 /* Support for connecting Guile's stdio ports to GDB's stdio ports.  */
+
+/* Like fputstrn_filtered, but don't escape characters, except nul.
+   Also like fputs_filtered, but a length is specified.  */
+
+static void
+fputsn_filtered (const char *s, size_t size, struct ui_file *stream)
+{
+  size_t i;
+
+  for (i = 0; i < size; ++i)
+    {
+      if (s[i] == '\0')
+	fputs_filtered ("\\000", stream);
+      else
+	fputc_filtered (s[i], stream);
+    }
+}
+
+#if USING_GUILE_BEFORE_2_2
 
 /* The scm_t_ptob_descriptor.input_waiting "method".
    Return a lower bound on the number of bytes available for input.  */
@@ -234,7 +291,7 @@ ioscm_fill_input (SCM port)
   gdb_flush (gdb_stdout);
   gdb_flush (gdb_stderr);
 
-  count = ui_file_read (gdb_stdin, (char *) pt->read_buf, pt->read_buf_size);
+  count = gdb_stdin->read ((char *) pt->read_buf, pt->read_buf_size);
   if (count == -1)
     scm_syserror (FUNC_NAME);
   if (count == 0)
@@ -243,23 +300,6 @@ ioscm_fill_input (SCM port)
   pt->read_pos = pt->read_buf;
   pt->read_end = pt->read_buf + count;
   return *pt->read_buf;
-}
-
-/* Like fputstrn_filtered, but don't escape characters, except nul.
-   Also like fputs_filtered, but a length is specified.  */
-
-static void
-fputsn_filtered (const char *s, size_t size, struct ui_file *stream)
-{
-  size_t i;
-
-  for (i = 0; i < size; ++i)
-    {
-      if (s[i] == '\0')
-	fputs_filtered ("\\000", stream);
-      else
-	fputc_filtered (s[i], stream);
-    }
 }
 
 /* Write to gdb's stdout or stderr.  */
@@ -272,18 +312,19 @@ ioscm_write (SCM port, const void *data, size_t size)
   if (scm_is_eq (port, input_port_scm))
     return;
 
-  TRY
+  gdbscm_gdb_exception exc {};
+  try
     {
       if (scm_is_eq (port, error_port_scm))
 	fputsn_filtered ((const char *) data, size, gdb_stderr);
       else
 	fputsn_filtered ((const char *) data, size, gdb_stdout);
     }
-  CATCH (except, RETURN_MASK_ALL)
+  catch (const gdb_exception &except)
     {
-      GDBSCM_HANDLE_GDB_EXCEPTION (except);
+      exc = unpack (except);
     }
-  END_CATCH
+  GDBSCM_HANDLE_GDB_EXCEPTION (exc);
 }
 
 /* Flush gdb's stdout or stderr.  */
@@ -301,6 +342,62 @@ ioscm_flush (SCM port)
     gdb_flush (gdb_stdout);
 }
 
+#else /* !USING_GUILE_BEFORE_2_2 */
+
+/* Read up to COUNT bytes into bytevector DST at offset START.  Return the
+   number of bytes read, zero for the end of file.  */
+
+static size_t
+ioscm_read_from_port (SCM port, SCM dst, size_t start, size_t count)
+{
+  long read;
+  char *read_buf;
+
+  /* If we're called on stdout,stderr, punt.  */
+  if (! scm_is_eq (port, input_port_scm))
+    return 0;
+
+  gdb_flush (gdb_stdout);
+  gdb_flush (gdb_stderr);
+
+  read_buf = (char *) SCM_BYTEVECTOR_CONTENTS (dst) + start;
+  read = gdb_stdin->read (read_buf, count);
+  if (read == -1)
+    scm_syserror (FUNC_NAME);
+
+  return (size_t) read;
+}
+
+/* Write to gdb's stdout or stderr.  */
+
+static size_t
+ioscm_write (SCM port, SCM src, size_t start, size_t count)
+{
+  const char *data = (char *) SCM_BYTEVECTOR_CONTENTS (src) + start;
+
+  /* If we're called on stdin, punt.  */
+  if (scm_is_eq (port, input_port_scm))
+    return 0;
+
+  gdbscm_gdb_exception exc {};
+  try
+    {
+      if (scm_is_eq (port, error_port_scm))
+	fputsn_filtered ((const char *) data, count, gdb_stderr);
+      else
+	fputsn_filtered ((const char *) data, count, gdb_stdout);
+    }
+  catch (const gdb_exception &except)
+    {
+      exc = unpack (except);
+    }
+  GDBSCM_HANDLE_GDB_EXCEPTION (exc);
+
+  return count;
+}
+
+#endif /* !USING_GUILE_BEFORE_2_2 */
+
 /* Initialize the gdb stdio port type.
 
    N.B. isatty? will fail on these ports, it is only supported for file
@@ -310,11 +407,24 @@ static void
 ioscm_init_gdb_stdio_port (void)
 {
   stdio_port_desc = scm_make_port_type (stdio_port_desc_name,
-					ioscm_fill_input, ioscm_write);
+#if USING_GUILE_BEFORE_2_2
+					ioscm_fill_input,
+#else
+					ioscm_read_from_port,
+#endif
+					ioscm_write);
 
+#if USING_GUILE_BEFORE_2_2
   scm_set_port_input_waiting (stdio_port_desc, ioscm_input_waiting);
   scm_set_port_flush (stdio_port_desc, ioscm_flush);
+#else
+  scm_set_port_read_wait_fd (stdio_port_desc, STDIN_FILENO);
+#endif
 }
+
+#define GDB_STDIO_BUFFER_DEFAULT_SIZE 1024
+
+#if USING_GUILE_BEFORE_2_2
 
 /* Subroutine of ioscm_make_gdb_stdio_port to simplify it.
    Set up the buffers of port PORT.
@@ -324,7 +434,6 @@ static void
 ioscm_init_stdio_buffers (SCM port, long mode_bits)
 {
   scm_t_port *pt = SCM_PTAB_ENTRY (port);
-#define GDB_STDIO_BUFFER_DEFAULT_SIZE 1024
   int size = mode_bits & SCM_BUF0 ? 0 : GDB_STDIO_BUFFER_DEFAULT_SIZE;
   int writing = (mode_bits & SCM_WRTNG) != 0;
 
@@ -358,6 +467,20 @@ ioscm_init_stdio_buffers (SCM port, long mode_bits)
   pt->write_end = pt->write_buf + pt->write_buf_size;
 }
 
+#else
+
+static void
+ioscm_init_stdio_buffers (SCM port, long mode_bits)
+{
+  if (mode_bits & SCM_BUF0)
+    scm_setvbuf (port, scm_from_utf8_symbol ("none"), scm_from_size_t (0));
+  else
+    scm_setvbuf (port, scm_from_utf8_symbol ("block"),
+		 scm_from_size_t (GDB_STDIO_BUFFER_DEFAULT_SIZE));
+}
+
+#endif
+
 /* Create a gdb stdio port.  */
 
 static SCM
@@ -388,7 +511,7 @@ ioscm_make_gdb_stdio_port (int fd)
     }
 
   mode_bits = scm_mode_bits ((char *) mode_str);
-  port = ioscm_open_port (stdio_port_desc, mode_bits);
+  port = ioscm_open_port (stdio_port_desc, mode_bits, 0);
 
   scm_set_port_filename_x (port, gdbscm_scm_from_c_string (name));
 
@@ -402,9 +525,14 @@ ioscm_make_gdb_stdio_port (int fd)
 static SCM
 gdbscm_stdio_port_p (SCM scm)
 {
+#if USING_GUILE_BEFORE_2_2
   /* This is copied from SCM_FPORTP.  */
   return scm_from_bool (!SCM_IMP (scm)
 			&& (SCM_TYP16 (scm) == stdio_port_desc));
+#else
+  return scm_from_bool (SCM_PORTP (scm)
+			&& (SCM_PORT_TYPE (scm) == stdio_port_desc));
+#endif
 }
 
 /* GDB's ports are accessed via functions to keep them read-only.  */
@@ -567,6 +695,8 @@ ioscm_lseek_address (ioscm_memory_port *iomem, LONGEST offset, int whence)
   return 1;
 }
 
+#if USING_GUILE_BEFORE_2_2
+
 /* "fill_input" method for memory ports.  */
 
 static int
@@ -658,73 +788,6 @@ gdbscm_memory_port_flush (SCM port)
   iomem->current += to_write;
   pt->write_pos = pt->write_buf;
   pt->rw_active = SCM_PORT_NEITHER;
-}
-
-/* "write" method for memory ports.  */
-
-static void
-gdbscm_memory_port_write (SCM port, const void *void_data, size_t size)
-{
-  scm_t_port *pt = SCM_PTAB_ENTRY (port);
-  ioscm_memory_port *iomem = (ioscm_memory_port *) SCM_STREAM (port);
-  const gdb_byte *data = (const gdb_byte *) void_data;
-
-  /* There's no way to indicate a short write, so if the request goes past
-     the end of the port's memory range, flag an error.  */
-  if (size > iomem->size - iomem->current)
-    {
-      gdbscm_out_of_range_error (FUNC_NAME, 0, gdbscm_scm_from_ulongest (size),
-				 _("writing beyond end of memory range"));
-    }
-
-  if (pt->write_buf == &pt->shortbuf)
-    {
-      /* Unbuffered port.  */
-      if (target_write_memory (iomem->start + iomem->current, data, size) != 0)
-	gdbscm_memory_error (FUNC_NAME, _("error writing memory"), SCM_EOL);
-      iomem->current += size;
-      return;
-    }
-
-  /* Note: The edge case of what to do when the buffer exactly fills is
-     debatable.  Guile flushes when the buffer exactly fills up, so we
-     do too.  It's counter-intuitive to my mind, but in case there's a
-     subtlety somewhere that depends on this, we do the same.  */
-
-  {
-    size_t space = pt->write_end - pt->write_pos;
-
-    if (size < space)
-      {
-	/* Data fits in buffer, and does not fill it.  */
-	memcpy (pt->write_pos, data, size);
-	pt->write_pos += size;
-      }
-    else
-      {
-	memcpy (pt->write_pos, data, space);
-	pt->write_pos = pt->write_end;
-	gdbscm_memory_port_flush (port);
-	{
-	  const gdb_byte *ptr = data + space;
-	  size_t remaining = size - space;
-
-	  if (remaining >= pt->write_buf_size)
-	    {
-	      if (target_write_memory (iomem->start + iomem->current, ptr,
-				       remaining) != 0)
-		gdbscm_memory_error (FUNC_NAME, _("error writing memory"),
-				     SCM_EOL);
-	      iomem->current += remaining;
-	    }
-	  else
-	    {
-	      memcpy (pt->write_pos, ptr, remaining);
-	      pt->write_pos += remaining;
-	    }
-	}
-      }
-  }
 }
 
 /* "seek" method for memory ports.  */
@@ -819,6 +882,73 @@ gdbscm_memory_port_seek (SCM port, scm_t_off offset, int whence)
   return result;
 }
 
+/* "write" method for memory ports.  */
+
+static void
+gdbscm_memory_port_write (SCM port, const void *void_data, size_t size)
+{
+  scm_t_port *pt = SCM_PTAB_ENTRY (port);
+  ioscm_memory_port *iomem = (ioscm_memory_port *) SCM_STREAM (port);
+  const gdb_byte *data = (const gdb_byte *) void_data;
+
+  /* There's no way to indicate a short write, so if the request goes past
+     the end of the port's memory range, flag an error.  */
+  if (size > iomem->size - iomem->current)
+    {
+      gdbscm_out_of_range_error (FUNC_NAME, 0, gdbscm_scm_from_ulongest (size),
+				 _("writing beyond end of memory range"));
+    }
+
+  if (pt->write_buf == &pt->shortbuf)
+    {
+      /* Unbuffered port.  */
+      if (target_write_memory (iomem->start + iomem->current, data, size) != 0)
+	gdbscm_memory_error (FUNC_NAME, _("error writing memory"), SCM_EOL);
+      iomem->current += size;
+      return;
+    }
+
+  /* Note: The edge case of what to do when the buffer exactly fills is
+     debatable.  Guile flushes when the buffer exactly fills up, so we
+     do too.  It's counter-intuitive to my mind, but in case there's a
+     subtlety somewhere that depends on this, we do the same.  */
+
+  {
+    size_t space = pt->write_end - pt->write_pos;
+
+    if (size < space)
+      {
+	/* Data fits in buffer, and does not fill it.  */
+	memcpy (pt->write_pos, data, size);
+	pt->write_pos += size;
+      }
+    else
+      {
+	memcpy (pt->write_pos, data, space);
+	pt->write_pos = pt->write_end;
+	gdbscm_memory_port_flush (port);
+	{
+	  const gdb_byte *ptr = data + space;
+	  size_t remaining = size - space;
+
+	  if (remaining >= pt->write_buf_size)
+	    {
+	      if (target_write_memory (iomem->start + iomem->current, ptr,
+				       remaining) != 0)
+		gdbscm_memory_error (FUNC_NAME, _("error writing memory"),
+				     SCM_EOL);
+	      iomem->current += remaining;
+	    }
+	  else
+	    {
+	      memcpy (pt->write_pos, ptr, remaining);
+	      pt->write_pos += remaining;
+	    }
+	}
+      }
+  }
+}
+
 /* "close" method for memory ports.  */
 
 static int
@@ -848,132 +978,6 @@ gdbscm_memory_port_free (SCM port)
   gdbscm_memory_port_close (port);
 
   return 0;
-}
-
-/* "print" method for memory ports.  */
-
-static int
-gdbscm_memory_port_print (SCM exp, SCM port, scm_print_state *pstate)
-{
-  ioscm_memory_port *iomem = (ioscm_memory_port *) SCM_STREAM (exp);
-  char *type = SCM_PTOBNAME (SCM_PTOBNUM (exp));
-
-  scm_puts ("#<", port);
-  scm_print_port_mode (exp, port);
-  /* scm_print_port_mode includes a trailing space.  */
-  gdbscm_printf (port, "%s %s-%s", type,
-		 hex_string (iomem->start), hex_string (iomem->end));
-  scm_putc ('>', port);
-  return 1;
-}
-
-/* Create the port type used for memory.  */
-
-static void
-ioscm_init_memory_port_type (void)
-{
-  memory_port_desc = scm_make_port_type (memory_port_desc_name,
-					 gdbscm_memory_port_fill_input,
-					 gdbscm_memory_port_write);
-
-  scm_set_port_end_input (memory_port_desc, gdbscm_memory_port_end_input);
-  scm_set_port_flush (memory_port_desc, gdbscm_memory_port_flush);
-  scm_set_port_seek (memory_port_desc, gdbscm_memory_port_seek);
-  scm_set_port_close (memory_port_desc, gdbscm_memory_port_close);
-  scm_set_port_free (memory_port_desc, gdbscm_memory_port_free);
-  scm_set_port_print (memory_port_desc, gdbscm_memory_port_print);
-}
-
-/* Helper for gdbscm_open_memory to parse the mode bits.
-   An exception is thrown if MODE is invalid.  */
-
-static long
-ioscm_parse_mode_bits (const char *func_name, const char *mode)
-{
-  const char *p;
-  long mode_bits;
-
-  if (*mode != 'r' && *mode != 'w')
-    {
-      gdbscm_out_of_range_error (func_name, 0,
-				 gdbscm_scm_from_c_string (mode),
-				 _("bad mode string"));
-    }
-  for (p = mode + 1; *p != '\0'; ++p)
-    {
-      switch (*p)
-	{
-	case '0':
-	case 'b':
-	case '+':
-	  break;
-	default:
-	  gdbscm_out_of_range_error (func_name, 0,
-				     gdbscm_scm_from_c_string (mode),
-				     _("bad mode string"));
-	}
-    }
-
-  /* Kinda awkward to convert the mode from SCM -> string only to have Guile
-     convert it back to SCM, but that's the API we have to work with.  */
-  mode_bits = scm_mode_bits ((char *) mode);
-
-  return mode_bits;
-}
-
-/* Helper for gdbscm_open_memory to finish initializing the port.
-   The port has address range [start,end).
-   This means that address of 0xff..ff is not accessible.
-   I can live with that.  */
-
-static void
-ioscm_init_memory_port (SCM port, CORE_ADDR start, CORE_ADDR end)
-{
-  scm_t_port *pt;
-  ioscm_memory_port *iomem;
-  int buffered = (SCM_CELL_WORD_0 (port) & SCM_BUF0) == 0;
-
-  gdb_assert (start <= end);
-
-  iomem = (ioscm_memory_port *) scm_gc_malloc_pointerless (sizeof (*iomem),
-							   "memory port");
-
-  iomem->start = start;
-  iomem->end = end;
-  iomem->size = end - start;
-  iomem->current = 0;
-  if (buffered)
-    {
-      iomem->read_buf_size = default_read_buf_size;
-      iomem->write_buf_size = default_write_buf_size;
-    }
-  else
-    {
-      iomem->read_buf_size = 1;
-      iomem->write_buf_size = 1;
-    }
-
-  pt = SCM_PTAB_ENTRY (port);
-  /* Match the expectation of `binary-port?'.  */
-  pt->encoding = NULL;
-  pt->rw_random = 1;
-  pt->read_buf_size = iomem->read_buf_size;
-  pt->write_buf_size = iomem->write_buf_size;
-  if (buffered)
-    {
-      pt->read_buf = (unsigned char *) xmalloc (pt->read_buf_size);
-      pt->write_buf = (unsigned char *) xmalloc (pt->write_buf_size);
-    }
-  else
-    {
-      pt->read_buf = &pt->shortbuf;
-      pt->write_buf = &pt->shortbuf;
-    }
-  pt->read_pos = pt->read_end = pt->read_buf;
-  pt->write_pos = pt->write_buf;
-  pt->write_end = pt->write_buf + pt->write_buf_size;
-
-  SCM_SETSTREAM (port, iomem);
 }
 
 /* Re-initialize a memory port, updating its read/write buffer sizes.
@@ -1040,6 +1044,249 @@ ioscm_reinit_memory_port (SCM port, size_t read_buf_size,
       pt->write_end = pt->write_buf + pt->write_buf_size;
     }
 }
+
+#else /* !USING_GUILE_BEFORE_2_2 */
+
+/* The semantics get weird if the buffer size is larger than the port range,
+   so provide a better default buffer size.  */
+
+static void
+gdbscm_get_natural_buffer_sizes (SCM port, size_t *read_size,
+				 size_t *write_size)
+{
+  ioscm_memory_port *iomem = (ioscm_memory_port *) SCM_STREAM (port);
+
+  size_t size = natural_buf_size;
+  if (iomem != NULL && iomem->size < size)
+    size = iomem->size;
+  *read_size = *write_size = size;
+}
+
+/* Read up to COUNT bytes into bytevector DST at offset START.  Return the
+   number of bytes read, zero for the end of file.  */
+
+static size_t
+gdbscm_memory_port_read (SCM port, SCM dst, size_t start, size_t count)
+{
+  gdb_byte *read_buf;
+  ioscm_memory_port *iomem = (ioscm_memory_port *) SCM_STREAM (port);
+
+  /* "current" is the offset of the first byte we want to read.  */
+  gdb_assert (iomem->current <= iomem->size);
+  if (iomem->current == iomem->size)
+    return 0;
+
+  /* Don't read outside the allowed memory range.  */
+  if (count > iomem->size - iomem->current)
+    count = iomem->size - iomem->current;
+
+  read_buf = (gdb_byte *) SCM_BYTEVECTOR_CONTENTS (dst) + start;
+  if (target_read_memory (iomem->start + iomem->current, read_buf,
+			  count) != 0)
+    gdbscm_memory_error (FUNC_NAME, _("error reading memory"), SCM_EOL);
+
+  iomem->current += count;
+  return count;
+}
+
+static size_t
+gdbscm_memory_port_write (SCM port, SCM src, size_t start, size_t count)
+{
+  ioscm_memory_port *iomem = (ioscm_memory_port *) SCM_STREAM (port);
+  const gdb_byte *data =
+    (const gdb_byte *) SCM_BYTEVECTOR_CONTENTS (src) + start;
+
+  /* If the request goes past the end of the port's memory range, flag an
+     error.  */
+  if (count > iomem->size - iomem->current)
+    gdbscm_out_of_range_error (FUNC_NAME, 0, scm_from_size_t (count),
+			       _("writing beyond end of memory range"));
+
+  if (target_write_memory (iomem->start + iomem->current, data,
+			   count) != 0)
+    gdbscm_memory_error (FUNC_NAME, _("error writing memory"),
+			 SCM_EOL);
+
+  iomem->current += count;
+
+  return count;
+}
+
+static scm_t_off
+gdbscm_memory_port_seek (SCM port, scm_t_off offset, int whence)
+{
+  ioscm_memory_port *iomem = (ioscm_memory_port *) SCM_STREAM (port);
+  int rc;
+
+  rc = ioscm_lseek_address (iomem, offset, whence);
+  if (rc == 0)
+    gdbscm_out_of_range_error (FUNC_NAME, 0,
+			       gdbscm_scm_from_longest (offset),
+			       _("bad seek"));
+
+  /* TODO: The Guile API doesn't support 32x64.  We can't fix that here,
+     and there's no need to throw an error if the new address can't be
+     represented in a scm_t_off.  But we could return something less
+     clumsy.  */
+  return iomem->current;
+}
+
+static void
+gdbscm_memory_port_close (SCM port)
+{
+  ioscm_memory_port *iomem = (ioscm_memory_port *) SCM_STREAM (port);
+  scm_gc_free (iomem, sizeof (*iomem), "memory port");
+  SCM_SETSTREAM (port, NULL);
+}
+
+#endif /* !USING_GUILE_BEFORE_2_2 */
+
+/* "print" method for memory ports.  */
+
+static int
+gdbscm_memory_port_print (SCM exp, SCM port, scm_print_state *pstate)
+{
+  ioscm_memory_port *iomem = (ioscm_memory_port *) SCM_STREAM (exp);
+
+  scm_puts ("#<", port);
+  scm_print_port_mode (exp, port);
+  /* scm_print_port_mode includes a trailing space.  */
+  gdbscm_printf (port, "%s %s-%s", memory_port_desc_name,
+		 hex_string (iomem->start), hex_string (iomem->end));
+  scm_putc ('>', port);
+  return 1;
+}
+
+/* Create the port type used for memory.  */
+
+static void
+ioscm_init_memory_port_type (void)
+{
+  memory_port_desc = scm_make_port_type (memory_port_desc_name,
+#if USING_GUILE_BEFORE_2_2
+					 gdbscm_memory_port_fill_input,
+#else
+					 gdbscm_memory_port_read,
+#endif
+					 gdbscm_memory_port_write);
+
+#if USING_GUILE_BEFORE_2_2
+  scm_set_port_end_input (memory_port_desc, gdbscm_memory_port_end_input);
+  scm_set_port_flush (memory_port_desc, gdbscm_memory_port_flush);
+  scm_set_port_free (memory_port_desc, gdbscm_memory_port_free);
+#else
+  scm_set_port_get_natural_buffer_sizes (memory_port_desc,
+					 gdbscm_get_natural_buffer_sizes);
+#endif
+  scm_set_port_seek (memory_port_desc, gdbscm_memory_port_seek);
+  scm_set_port_close (memory_port_desc, gdbscm_memory_port_close);
+  scm_set_port_print (memory_port_desc, gdbscm_memory_port_print);
+}
+
+/* Helper for gdbscm_open_memory to parse the mode bits.
+   An exception is thrown if MODE is invalid.  */
+
+static long
+ioscm_parse_mode_bits (const char *func_name, const char *mode)
+{
+  const char *p;
+  long mode_bits;
+
+  if (*mode != 'r' && *mode != 'w')
+    {
+      gdbscm_out_of_range_error (func_name, 0,
+				 gdbscm_scm_from_c_string (mode),
+				 _("bad mode string"));
+    }
+  for (p = mode + 1; *p != '\0'; ++p)
+    {
+      switch (*p)
+	{
+	case '0':
+	case 'b':
+	case '+':
+	  break;
+	default:
+	  gdbscm_out_of_range_error (func_name, 0,
+				     gdbscm_scm_from_c_string (mode),
+				     _("bad mode string"));
+	}
+    }
+
+  /* Kinda awkward to convert the mode from SCM -> string only to have Guile
+     convert it back to SCM, but that's the API we have to work with.  */
+  mode_bits = scm_mode_bits ((char *) mode);
+
+  return mode_bits;
+}
+
+/* Return the memory object to be used as a "stream" associated with a memory
+   port for the START--END range.  */
+
+static ioscm_memory_port *
+ioscm_init_memory_port_stream (CORE_ADDR start, CORE_ADDR end)
+{
+  ioscm_memory_port *iomem;
+
+  gdb_assert (start <= end);
+
+  iomem = (ioscm_memory_port *) scm_gc_malloc_pointerless (sizeof (*iomem),
+							   "memory port");
+
+  iomem->start = start;
+  iomem->end = end;
+  iomem->size = end - start;
+  iomem->current = 0;
+
+  return iomem;
+}
+
+#if USING_GUILE_BEFORE_2_2
+
+/* Helper for gdbscm_open_memory to finish initializing the port.
+   The port has address range [start,end).
+   This means that address of 0xff..ff is not accessible.
+   I can live with that.  */
+
+static void
+ioscm_init_memory_port_buffers (SCM port)
+{
+  ioscm_memory_port *iomem = (ioscm_memory_port *) SCM_STREAM (port);
+
+  int buffered = (SCM_CELL_WORD_0 (port) & SCM_BUF0) == 0;
+  if (buffered)
+    {
+      iomem->read_buf_size = default_read_buf_size;
+      iomem->write_buf_size = default_write_buf_size;
+    }
+  else
+    {
+      iomem->read_buf_size = 1;
+      iomem->write_buf_size = 1;
+    }
+
+  scm_t_port *pt = SCM_PTAB_ENTRY (port);
+  /* Match the expectation of `binary-port?'.  */
+  pt->encoding = NULL;
+  pt->rw_random = 1;
+  pt->read_buf_size = iomem->read_buf_size;
+  pt->write_buf_size = iomem->write_buf_size;
+  if (buffered)
+    {
+      pt->read_buf = (unsigned char *) xmalloc (pt->read_buf_size);
+      pt->write_buf = (unsigned char *) xmalloc (pt->write_buf_size);
+    }
+  else
+    {
+      pt->read_buf = &pt->shortbuf;
+      pt->write_buf = &pt->shortbuf;
+    }
+  pt->read_pos = pt->read_end = pt->read_buf;
+  pt->write_pos = pt->write_buf;
+  pt->write_end = pt->write_buf + pt->write_buf_size;
+}
+
+#endif
 
 /* (open-memory [#:mode string] [#:start address] [#:size integer]) -> port
    Return a port that can be used for reading and writing memory.
@@ -1108,9 +1355,19 @@ gdbscm_open_memory (SCM rest)
 
   mode_bits = ioscm_parse_mode_bits (FUNC_NAME, mode);
 
-  port = ioscm_open_port (memory_port_desc, mode_bits);
+  /* Edge case: empty range -> unbuffered.
+     There's no need to disallow empty ranges, but we need an unbuffered port
+     to get the semantics right.  */
+  if (size == 0)
+    mode_bits |= SCM_BUF0;
 
-  ioscm_init_memory_port (port, start, end);
+  auto stream = ioscm_init_memory_port_stream (start, end);
+  port = ioscm_open_port (memory_port_desc, mode_bits,
+			  (scm_t_bits) stream);
+
+#if USING_GUILE_BEFORE_2_2
+  ioscm_init_memory_port_buffers (port);
+#endif
 
   scm_dynwind_end ();
 
@@ -1123,7 +1380,11 @@ gdbscm_open_memory (SCM rest)
 static int
 gdbscm_is_memory_port (SCM obj)
 {
+#if USING_GUILE_BEFORE_2_2
   return !SCM_IMP (obj) && (SCM_TYP16 (obj) == memory_port_desc);
+#else
+  return SCM_PORTP (obj) && (SCM_PORT_TYPE (obj) == memory_port_desc);
+#endif
 }
 
 /* (memory-port? obj) -> boolean */
@@ -1154,6 +1415,7 @@ gdbscm_memory_port_range (SCM port)
 static SCM
 gdbscm_memory_port_read_buffer_size (SCM port)
 {
+#if USING_GUILE_BEFORE_2_2
   ioscm_memory_port *iomem;
 
   SCM_ASSERT_TYPE (gdbscm_is_memory_port (port), port, SCM_ARG1, FUNC_NAME,
@@ -1161,6 +1423,9 @@ gdbscm_memory_port_read_buffer_size (SCM port)
 
   iomem = (ioscm_memory_port *) SCM_STREAM (port);
   return scm_from_uint (iomem->read_buf_size);
+#else
+  return scm_from_uint (0);
+#endif
 }
 
 /* (set-memory-port-read-buffer-size! port size) -> unspecified
@@ -1170,6 +1435,7 @@ gdbscm_memory_port_read_buffer_size (SCM port)
 static SCM
 gdbscm_set_memory_port_read_buffer_size_x (SCM port, SCM size)
 {
+#if USING_GUILE_BEFORE_2_2
   ioscm_memory_port *iomem;
 
   SCM_ASSERT_TYPE (gdbscm_is_memory_port (port), port, SCM_ARG1, FUNC_NAME,
@@ -1189,6 +1455,9 @@ gdbscm_set_memory_port_read_buffer_size_x (SCM port, SCM size)
 			    FUNC_NAME);
 
   return SCM_UNSPECIFIED;
+#else
+  return scm_setvbuf (port, scm_from_utf8_symbol ("block"), size);
+#endif
 }
 
 /* (memory-port-write-buffer-size port) -> integer */
@@ -1196,6 +1465,7 @@ gdbscm_set_memory_port_read_buffer_size_x (SCM port, SCM size)
 static SCM
 gdbscm_memory_port_write_buffer_size (SCM port)
 {
+#if USING_GUILE_BEFORE_2_2
   ioscm_memory_port *iomem;
 
   SCM_ASSERT_TYPE (gdbscm_is_memory_port (port), port, SCM_ARG1, FUNC_NAME,
@@ -1203,6 +1473,9 @@ gdbscm_memory_port_write_buffer_size (SCM port)
 
   iomem = (ioscm_memory_port *) SCM_STREAM (port);
   return scm_from_uint (iomem->write_buf_size);
+#else
+  return scm_from_uint (0);
+#endif
 }
 
 /* (set-memory-port-write-buffer-size! port size) -> unspecified
@@ -1212,6 +1485,7 @@ gdbscm_memory_port_write_buffer_size (SCM port)
 static SCM
 gdbscm_set_memory_port_write_buffer_size_x (SCM port, SCM size)
 {
+#if USING_GUILE_BEFORE_2_2
   ioscm_memory_port *iomem;
 
   SCM_ASSERT_TYPE (gdbscm_is_memory_port (port), port, SCM_ARG1, FUNC_NAME,
@@ -1231,6 +1505,9 @@ gdbscm_set_memory_port_write_buffer_size_x (SCM port, SCM size)
 			    FUNC_NAME);
 
   return SCM_UNSPECIFIED;
+#else
+  return scm_setvbuf (port, scm_from_utf8_symbol ("block"), size);
+#endif
 }
 
 /* Initialize gdb ports.  */
@@ -1365,9 +1642,11 @@ gdbscm_initialize_ports (void)
   start_keyword = scm_from_latin1_keyword ("start");
   size_keyword = scm_from_latin1_keyword ("size");
 
+#if USING_GUILE_BEFORE_2_2
   /* Error message text for "out of range" memory port buffer sizes.  */
 
   out_of_range_buf_size = xstrprintf ("size not between %u - %u",
 				      min_memory_port_buf_size,
 				      max_memory_port_buf_size);
+#endif
 }

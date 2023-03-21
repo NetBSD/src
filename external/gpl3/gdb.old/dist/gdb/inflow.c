@@ -1,5 +1,5 @@
 /* Low level interface to ptrace, for GDB when running under Unix.
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,14 +27,14 @@
 #include "observable.h"
 #include <signal.h>
 #include <fcntl.h>
-#include "gdb_select.h"
+#include "gdbsupport/gdb_select.h"
 
 #include "inflow.h"
 #include "gdbcmd.h"
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
 #endif
-#include "common/job-control.h"
+#include "gdbsupport/job-control.h"
 
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
@@ -58,13 +58,18 @@ static struct serial *stdin_serial;
    the inferior is resumed in the foreground.  */
 struct terminal_info
 {
+  terminal_info () = default;
+  ~terminal_info ();
+
+  terminal_info &operator= (const terminal_info &) = default;
+
   /* The name of the tty (from the `tty' command) that we gave to the
      inferior when it was started.  */
-  char *run_terminal;
+  char *run_terminal = nullptr;
 
   /* TTY state.  We save it whenever the inferior stops, and restore
      it when it resumes in the foreground.  */
-  serial_ttystate ttystate;
+  serial_ttystate ttystate {};
 
 #ifdef HAVE_TERMIOS_H
   /* The terminal's foreground process group.  Saved whenever the
@@ -80,11 +85,11 @@ struct terminal_info
      inf2's pgrp in the foreground instead of inf1's (which would be
      problematic since it would be left stopped: Ctrl-C wouldn't work,
      for example).  */
-  pid_t process_group;
+  pid_t process_group = 0;
 #endif
 
   /* fcntl flags.  Saved and restored just like ttystate.  */
-  int tflags;
+  int tflags = 0;
 };
 
 /* Our own tty state, which we restore every time we need to deal with
@@ -594,16 +599,12 @@ child_pass_ctrlc (struct target_ops *self)
 }
 
 /* Per-inferior data key.  */
-static const struct inferior_data *inflow_inferior_data;
+static const struct inferior_key<terminal_info> inflow_inferior_data;
 
-static void
-inflow_inferior_data_cleanup (struct inferior *inf, void *arg)
+terminal_info::~terminal_info ()
 {
-  struct terminal_info *info = (struct terminal_info *) arg;
-
-  xfree (info->run_terminal);
-  xfree (info->ttystate);
-  xfree (info);
+  xfree (run_terminal);
+  xfree (ttystate);
 }
 
 /* Get the current svr4 data.  If none is found yet, add it now.  This
@@ -614,12 +615,9 @@ get_inflow_inferior_data (struct inferior *inf)
 {
   struct terminal_info *info;
 
-  info = (struct terminal_info *) inferior_data (inf, inflow_inferior_data);
+  info = inflow_inferior_data.get (inf);
   if (info == NULL)
-    {
-      info = XCNEW (struct terminal_info);
-      set_inferior_data (inf, inflow_inferior_data, info);
-    }
+    info = inflow_inferior_data.emplace (inf);
 
   return info;
 }
@@ -633,18 +631,8 @@ get_inflow_inferior_data (struct inferior *inf)
 static void
 inflow_inferior_exit (struct inferior *inf)
 {
-  struct terminal_info *info;
-
   inf->terminal_state = target_terminal_state::is_ours;
-
-  info = (struct terminal_info *) inferior_data (inf, inflow_inferior_data);
-  if (info != NULL)
-    {
-      xfree (info->run_terminal);
-      xfree (info->ttystate);
-      xfree (info);
-      set_inferior_data (inf, inflow_inferior_data, NULL);
-    }
+  inflow_inferior_data.clear (inf);
 }
 
 void
@@ -676,18 +664,16 @@ copy_terminal_info (struct inferior *to, struct inferior *from)
 void
 swap_terminal_info (inferior *a, inferior *b)
 {
-  terminal_info *info_a
-    = (terminal_info *) inferior_data (a, inflow_inferior_data);
-  terminal_info *info_b
-    = (terminal_info *) inferior_data (a, inflow_inferior_data);
+  terminal_info *info_a = inflow_inferior_data.get (a);
+  terminal_info *info_b = inflow_inferior_data.get (b);
 
-  set_inferior_data (a, inflow_inferior_data, info_b);
-  set_inferior_data (b, inflow_inferior_data, info_a);
+  inflow_inferior_data.set (a, info_b);
+  inflow_inferior_data.set (b, info_a);
 
   std::swap (a->terminal_state, b->terminal_state);
 }
 
-void
+static void
 info_terminal_command (const char *arg, int from_tty)
 {
   target_terminal::info (arg, from_tty);
@@ -967,8 +953,9 @@ initialize_stdin_serial (void)
   stdin_serial = serial_fdopen (0);
 }
 
+void _initialize_inflow ();
 void
-_initialize_inflow (void)
+_initialize_inflow ()
 {
   add_info ("terminal", info_terminal_command,
 	    _("Print inferior's saved terminal status."));
@@ -977,7 +964,4 @@ _initialize_inflow (void)
   have_job_control ();
 
   gdb::observers::inferior_exit.attach (inflow_inferior_exit);
-
-  inflow_inferior_data
-    = register_inferior_data_with_cleanup (NULL, inflow_inferior_data_cleanup);
 }

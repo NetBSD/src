@@ -1,5 +1,5 @@
 /* TILE-Gx-specific support for ELF.
-   Copyright (C) 2011-2019 Free Software Foundation, Inc.
+   Copyright (C) 2011-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -785,9 +785,6 @@ struct tilegx_elf_link_hash_entry
 {
   struct elf_link_hash_entry elf;
 
-  /* Track dynamic relocs copied for this symbol.  */
-  struct elf_dyn_relocs *dyn_relocs;
-
 #define GOT_UNKNOWN     0
 #define GOT_NORMAL      1
 #define GOT_TLS_GD      2
@@ -838,16 +835,14 @@ struct tilegx_elf_link_hash_table
   /* Whether LE transition has been disabled for some of the
      sections.  */
   bfd_boolean disable_le_transition;
-
-  /* Small local sym to section mapping cache.  */
-  struct sym_cache sym_cache;
 };
 
 
 /* Get the Tile ELF linker hash table from a link_info structure.  */
 #define tilegx_elf_hash_table(p) \
-  (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
-  == TILEGX_ELF_DATA ? ((struct tilegx_elf_link_hash_table *) ((p)->hash)) : NULL)
+  ((is_elf_hash_table ((p)->hash)					\
+    && elf_hash_table_id (elf_hash_table (p)) == TILEGX_ELF_DATA)	\
+   ? (struct tilegx_elf_link_hash_table *) (p)->hash : NULL)
 
 #ifdef BFD64
 static bfd_vma
@@ -1356,7 +1351,6 @@ link_hash_newfunc (struct bfd_hash_entry *entry,
       struct tilegx_elf_link_hash_entry *eh;
 
       eh = (struct tilegx_elf_link_hash_entry *) entry;
-      eh->dyn_relocs = NULL;
       eh->tls_type = GOT_UNKNOWN;
     }
 
@@ -1369,7 +1363,7 @@ struct bfd_link_hash_table *
 tilegx_elf_link_hash_table_create (bfd *abfd)
 {
   struct tilegx_elf_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct tilegx_elf_link_hash_table);
+  size_t amt = sizeof (struct tilegx_elf_link_hash_table);
 
   ret = (struct tilegx_elf_link_hash_table *) bfd_zmalloc (amt);
   if (ret == NULL)
@@ -1438,13 +1432,13 @@ tilegx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 					  (bed->dynamic_sec_flags
 					   | SEC_READONLY));
   if (s == NULL
-      || ! bfd_set_section_alignment (abfd, s, bed->s->log_file_align))
+      || !bfd_set_section_alignment (s, bed->s->log_file_align))
     return FALSE;
   htab->srelgot = s;
 
   s = s_got = bfd_make_section_anyway_with_flags (abfd, ".got", flags);
   if (s == NULL
-      || !bfd_set_section_alignment (abfd, s, bed->s->log_file_align))
+      || !bfd_set_section_alignment (s, bed->s->log_file_align))
     return FALSE;
   htab->sgot = s;
 
@@ -1455,8 +1449,7 @@ tilegx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
     {
       s = bfd_make_section_anyway_with_flags (abfd, ".got.plt", flags);
       if (s == NULL
-	  || !bfd_set_section_alignment (abfd, s,
-					 bed->s->log_file_align))
+	  || !bfd_set_section_alignment (s, bed->s->log_file_align))
 	return FALSE;
       htab->sgotplt = s;
 
@@ -1505,37 +1498,6 @@ tilegx_elf_copy_indirect_symbol (struct bfd_link_info *info,
 
   edir = (struct tilegx_elf_link_hash_entry *) dir;
   eind = (struct tilegx_elf_link_hash_entry *) ind;
-
-  if (eind->dyn_relocs != NULL)
-    {
-      if (edir->dyn_relocs != NULL)
-	{
-	  struct elf_dyn_relocs **pp;
-	  struct elf_dyn_relocs *p;
-
-	  /* Add reloc counts against the indirect sym to the direct sym
-	     list.  Merge any entries against the same section.  */
-	  for (pp = &eind->dyn_relocs; (p = *pp) != NULL; )
-	    {
-	      struct elf_dyn_relocs *q;
-
-	      for (q = edir->dyn_relocs; q != NULL; q = q->next)
-		if (q->sec == p->sec)
-		  {
-		    q->pc_count += p->pc_count;
-		    q->count += p->count;
-		    *pp = p->next;
-		    break;
-		  }
-	      if (q == NULL)
-		pp = &p->next;
-	    }
-	  *pp = edir->dyn_relocs;
-	}
-
-      edir->dyn_relocs = eind->dyn_relocs;
-      eind->dyn_relocs = NULL;
-    }
 
   if (ind->root.type == bfd_link_hash_indirect
       && dir->got.refcount <= 0)
@@ -2004,8 +1966,7 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      /* If this is a global symbol, we count the number of
 		 relocations we need for this symbol.  */
 	      if (h != NULL)
-		head =
-		  &((struct tilegx_elf_link_hash_entry *) h)->dyn_relocs;
+		head = &h->dyn_relocs;
 	      else
 		{
 		  /* Track dynamic relocs needed for local syms too.
@@ -2016,7 +1977,7 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 		  void *vpp;
 		  Elf_Internal_Sym *isym;
 
-		  isym = bfd_sym_from_r_symndx (&htab->sym_cache,
+		  isym = bfd_sym_from_r_symndx (&htab->elf.sym_cache,
 						abfd, r_symndx);
 		  if (isym == NULL)
 		    return FALSE;
@@ -2032,7 +1993,7 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 	      p = *head;
 	      if (p == NULL || p->sec != sec)
 		{
-		  bfd_size_type amt = sizeof *p;
+		  size_t amt = sizeof *p;
 		  p = ((struct elf_dyn_relocs *)
 		       bfd_alloc (htab->elf.dynobj, amt));
 		  if (p == NULL)
@@ -2118,23 +2079,6 @@ tilegx_elf_gc_mark_hook (asection *sec,
     }
 
   return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
-}
-
-/* Find dynamic relocs for H that apply to read-only sections.  */
-
-static asection *
-readonly_dynrelocs (struct elf_link_hash_entry *h)
-{
-  struct elf_dyn_relocs *p;
-
-  for (p = tilegx_elf_hash_entry (h)->dyn_relocs; p != NULL; p = p->next)
-    {
-      asection *s = p->sec->output_section;
-
-      if (s != NULL && (s->flags & SEC_READONLY) != 0)
-	return p->sec;
-    }
-  return NULL;
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -2225,7 +2169,7 @@ tilegx_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   /* If we don't find any dynamic relocs in read-only sections, then
      we'll be keeping the dynamic relocs and avoiding the copy reloc.  */
-  if (!readonly_dynrelocs (h))
+  if (!_bfd_elf_readonly_dynrelocs (h))
     {
       h->non_got_ref = 0;
       return TRUE;
@@ -2272,7 +2216,6 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 {
   struct bfd_link_info *info;
   struct tilegx_elf_link_hash_table *htab;
-  struct tilegx_elf_link_hash_entry *eh;
   struct elf_dyn_relocs *p;
 
   if (h->root.type == bfd_link_hash_indirect)
@@ -2381,8 +2324,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
   else
     h->got.offset = (bfd_vma) -1;
 
-  eh = (struct tilegx_elf_link_hash_entry *) h;
-  if (eh->dyn_relocs == NULL)
+  if (h->dyn_relocs == NULL)
     return TRUE;
 
   /* In the shared -Bsymbolic case, discard space allocated for
@@ -2397,7 +2339,7 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	{
 	  struct elf_dyn_relocs **pp;
 
-	  for (pp = &eh->dyn_relocs; (p = *pp) != NULL; )
+	  for (pp = &h->dyn_relocs; (p = *pp) != NULL; )
 	    {
 	      p->count -= p->pc_count;
 	      p->pc_count = 0;
@@ -2410,12 +2352,12 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 
       /* Also discard relocs on undefined weak syms with non-default
 	 visibility.  */
-      if (eh->dyn_relocs != NULL
+      if (h->dyn_relocs != NULL
 	  && h->root.type == bfd_link_hash_undefweak)
 	{
 	  if (ELF_ST_VISIBILITY (h->other) != STV_DEFAULT
 	      || UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
-	    eh->dyn_relocs = NULL;
+	    h->dyn_relocs = NULL;
 
 	  /* Make sure undefined weak symbols are output as a dynamic
 	     symbol in PIEs.  */
@@ -2455,45 +2397,18 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	    goto keep;
 	}
 
-      eh->dyn_relocs = NULL;
+      h->dyn_relocs = NULL;
 
     keep: ;
     }
 
   /* Finally, allocate space.  */
-  for (p = eh->dyn_relocs; p != NULL; p = p->next)
+  for (p = h->dyn_relocs; p != NULL; p = p->next)
     {
       asection *sreloc = elf_section_data (p->sec)->sreloc;
       sreloc->size += p->count * TILEGX_ELF_RELA_BYTES (htab);
     }
 
-  return TRUE;
-}
-
-/* Set DF_TEXTREL if we find any dynamic relocs that apply to
-   read-only sections.  */
-
-static bfd_boolean
-maybe_set_textrel (struct elf_link_hash_entry *h, void *info_p)
-{
-  asection *sec;
-
-  if (h->root.type == bfd_link_hash_indirect)
-    return TRUE;
-
-  sec = readonly_dynrelocs (h);
-  if (sec != NULL)
-    {
-      struct bfd_link_info *info = (struct bfd_link_info *) info_p;
-
-      info->flags |= DF_TEXTREL;
-      info->callbacks->minfo
-	(_("%pB: dynamic relocation against `%pT' in read-only section `%pA'\n"),
-	 sec->owner, h->root.root.string, sec);
-
-      /* Not an error, just cut short the traversal.  */
-      return FALSE;
-    }
   return TRUE;
 }
 
@@ -2704,50 +2619,7 @@ tilegx_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	return FALSE;
     }
 
-  if (elf_hash_table (info)->dynamic_sections_created)
-    {
-      /* Add some entries to the .dynamic section.  We fill in the
-	 values later, in tilegx_elf_finish_dynamic_sections, but we
-	 must add the entries now so that we get the correct size for
-	 the .dynamic section.  The DT_DEBUG entry is filled in by the
-	 dynamic linker and used by the debugger.  */
-#define add_dynamic_entry(TAG, VAL) \
-  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
-
-      if (bfd_link_executable (info))
-	{
-	  if (!add_dynamic_entry (DT_DEBUG, 0))
-	    return FALSE;
-	}
-
-      if (htab->elf.srelplt->size != 0)
-	{
-	  if (!add_dynamic_entry (DT_PLTGOT, 0)
-	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
-	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
-	      || !add_dynamic_entry (DT_JMPREL, 0))
-	    return FALSE;
-	}
-
-      if (!add_dynamic_entry (DT_RELA, 0)
-	  || !add_dynamic_entry (DT_RELASZ, 0)
-	  || !add_dynamic_entry (DT_RELAENT, TILEGX_ELF_RELA_BYTES (htab)))
-	return FALSE;
-
-      /* If any dynamic relocs apply to a read-only section,
-	 then we need a DT_TEXTREL entry.  */
-      if ((info->flags & DF_TEXTREL) == 0)
-	elf_link_hash_traverse (&htab->elf, maybe_set_textrel, info);
-
-      if (info->flags & DF_TEXTREL)
-	{
-	  if (!add_dynamic_entry (DT_TEXTREL, 0))
-	    return FALSE;
-	}
-    }
-#undef add_dynamic_entry
-
-  return TRUE;
+  return _bfd_elf_add_dynamic_tags (output_bfd, info, TRUE);
 }
 
 /* Return the base VMA address which should be subtracted from real addresses
@@ -3032,7 +2904,7 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  name = (bfd_elf_string_from_elf_section
 		  (input_bfd, symtab_hdr->sh_link, sym->st_name));
 	  if (name == NULL || *name == '\0')
-	    name = bfd_section_name (input_bfd, sec);
+	    name = bfd_section_name (sec);
 	}
 
       switch (r_type)

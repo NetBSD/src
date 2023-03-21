@@ -1,6 +1,6 @@
 /* Target-dependent definitions for AMD64.
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -26,6 +26,7 @@ struct frame_info;
 struct regcache;
 
 #include "i386-tdep.h"
+#include "infrun.h"
 
 /* Register numbers of various important registers.  */
 
@@ -87,7 +88,7 @@ enum amd64_regnum
 
 #define AMD64_NUM_REGS		(AMD64_GSBASE_REGNUM + 1)
 
-extern struct displaced_step_closure *amd64_displaced_step_copy_insn
+extern displaced_step_closure_up amd64_displaced_step_copy_insn
   (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
    struct regcache *regs);
 extern void amd64_displaced_step_fixup (struct gdbarch *gdbarch,

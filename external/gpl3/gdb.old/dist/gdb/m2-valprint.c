@@ -1,6 +1,6 @@
 /* Support for printing Modula 2 values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,16 +28,15 @@
 #include "c-lang.h"
 #include "m2-lang.h"
 #include "target.h"
+#include "cli/cli-style.h"
 
 static int print_unpacked_pointer (struct type *type,
 				   CORE_ADDR address, CORE_ADDR addr,
 				   const struct value_print_options *options,
 				   struct ui_file *stream);
 static void
-m2_print_array_contents (struct type *type, const gdb_byte *valaddr,
-			 int embedded_offset, CORE_ADDR address,
+m2_print_array_contents (struct value *val,
 			 struct ui_file *stream, int recurse,
-			 struct value *val,
 			 const struct value_print_options *options,
 			 int len);
 
@@ -50,15 +49,14 @@ get_long_set_bounds (struct type *type, LONGEST *low, LONGEST *high)
 {
   int len, i;
 
-  if (TYPE_CODE (type) == TYPE_CODE_STRUCT)
+  if (type->code () == TYPE_CODE_STRUCT)
     {
-      len = TYPE_NFIELDS (type);
+      len = type->num_fields ();
       i = TYPE_N_BASECLASSES (type);
       if (len == 0)
 	return 0;
-      *low = TYPE_LOW_BOUND (TYPE_INDEX_TYPE (TYPE_FIELD_TYPE (type, i)));
-      *high = TYPE_HIGH_BOUND (TYPE_INDEX_TYPE (TYPE_FIELD_TYPE (type,
-								 len-1)));
+      *low = type->field (i).type ()->bounds ()->low.const_val ();
+      *high = type->field (len - 1).type ()->bounds ()->high.const_val ();
       return 1;
     }
   error (_("expecting long_set"));
@@ -84,15 +82,16 @@ m2_print_long_set (struct type *type, const gdb_byte *valaddr,
   type = check_typedef (type);
 
   fprintf_filtered (stream, "{");
-  len = TYPE_NFIELDS (type);
+  len = type->num_fields ();
   if (get_long_set_bounds (type, &low_bound, &high_bound))
     {
       field = TYPE_N_BASECLASSES (type);
-      range = TYPE_INDEX_TYPE (TYPE_FIELD_TYPE (type, field));
+      range = type->field (field).type ()->index_type ();
     }
   else
     {
-      fprintf_filtered (stream, " %s }", _("<unknown bounds of set>"));
+      fprintf_styled (stream, metadata_style.style (),
+		      " %s }", _("<unknown bounds of set>"));
       return;
     }
 
@@ -102,7 +101,7 @@ m2_print_long_set (struct type *type, const gdb_byte *valaddr,
     {
       for (i = low_bound; i <= high_bound; i++)
 	{
-	  bitval = value_bit_index (TYPE_FIELD_TYPE (type, field),
+	  bitval = value_bit_index (type->field (field).type (),
 				    (TYPE_FIELD_BITPOS (type, field) / 8) +
 				    valaddr + embedded_offset, i);
 	  if (bitval < 0)
@@ -137,7 +136,7 @@ m2_print_long_set (struct type *type, const gdb_byte *valaddr,
 	      field++;
 	      if (field == len)
 		break;
-	      range = TYPE_INDEX_TYPE (TYPE_FIELD_TYPE (type, field));
+	      range = type->field (field).type ()->index_type ();
 	      if (get_discrete_bounds (range, &field_low, &field_high) < 0)
 		break;
 	      target = TYPE_TARGET_TYPE (range);
@@ -157,8 +156,7 @@ m2_print_long_set (struct type *type, const gdb_byte *valaddr,
 }
 
 static void
-m2_print_unbounded_array (struct type *type, const gdb_byte *valaddr,
-			  int embedded_offset, CORE_ADDR address,
+m2_print_unbounded_array (struct value *value,
 			  struct ui_file *stream, int recurse,
 			  const struct value_print_options *options)
 {
@@ -166,21 +164,19 @@ m2_print_unbounded_array (struct type *type, const gdb_byte *valaddr,
   LONGEST len;
   struct value *val;
 
-  type = check_typedef (type);
+  struct type *type = check_typedef (value_type (value));
+  const gdb_byte *valaddr = value_contents_for_printing (value);
 
-  addr = unpack_pointer (TYPE_FIELD_TYPE (type, 0),
+  addr = unpack_pointer (type->field (0).type (),
 			 (TYPE_FIELD_BITPOS (type, 0) / 8) +
-			 valaddr + embedded_offset);
+			 valaddr);
 
-  val = value_at_lazy (TYPE_TARGET_TYPE (TYPE_FIELD_TYPE (type, 0)),
+  val = value_at_lazy (TYPE_TARGET_TYPE (type->field (0).type ()),
 		       addr);
-  len = unpack_field_as_long (type, valaddr + embedded_offset, 1);
+  len = unpack_field_as_long (type, valaddr, 1);
 
   fprintf_filtered (stream, "{");  
-  m2_print_array_contents (value_type (val),
-			   value_contents_for_printing (val),
-			   value_embedded_offset (val), addr, stream,
-			   recurse, val, options, len);
+  m2_print_array_contents (val, stream, recurse, options, len);
   fprintf_filtered (stream, ", HIGH = %d}", (int) len);
 }
 
@@ -194,7 +190,7 @@ print_unpacked_pointer (struct type *type,
   struct type *elttype = check_typedef (TYPE_TARGET_TYPE (type));
   int want_space = 0;
 
-  if (TYPE_CODE (elttype) == TYPE_CODE_FUNC)
+  if (elttype->code () == TYPE_CODE_FUNC)
     {
       /* Try to print what function it points to.  */
       print_function_pointer_address (options, gdbarch, addr, stream);
@@ -212,7 +208,7 @@ print_unpacked_pointer (struct type *type,
      pointed to, unless pointer is null.  */
 
   if (TYPE_LENGTH (elttype) == 1
-      && TYPE_CODE (elttype) == TYPE_CODE_INT
+      && elttype->code () == TYPE_CODE_INT
       && (options->format == 0 || options->format == 's')
       && addr != 0)
     {
@@ -240,7 +236,7 @@ print_variable_at_address (struct type *type,
   fputs_filtered (paddress (gdbarch, addr), stream);
   fprintf_filtered (stream, "] : ");
   
-  if (TYPE_CODE (elttype) != TYPE_CODE_UNDEF)
+  if (elttype->code () != TYPE_CODE_UNDEF)
     {
       struct value *deref_val =
 	value_at (TYPE_TARGET_TYPE (type), unpack_pointer (type, valaddr));
@@ -259,32 +255,27 @@ print_variable_at_address (struct type *type,
                              separated values.  */
 
 static void
-m2_print_array_contents (struct type *type, const gdb_byte *valaddr,
-			 int embedded_offset, CORE_ADDR address,
+m2_print_array_contents (struct value *val,
 			 struct ui_file *stream, int recurse,
-			 struct value *val,
 			 const struct value_print_options *options,
 			 int len)
 {
-  type = check_typedef (type);
+  struct type *type = check_typedef (value_type (val));
 
   if (TYPE_LENGTH (type) > 0)
     {
-      if (options->prettyformat_arrays)
-	print_spaces_filtered (2 + 2 * recurse, stream);
       /* For an array of chars, print with string syntax.  */
       if (TYPE_LENGTH (type) == 1 &&
-	  ((TYPE_CODE (type) == TYPE_CODE_INT)
+	  ((type->code () == TYPE_CODE_INT)
 	   || ((current_language->la_language == language_m2)
-	       && (TYPE_CODE (type) == TYPE_CODE_CHAR)))
+	       && (type->code () == TYPE_CODE_CHAR)))
 	  && (options->format == 0 || options->format == 's'))
-	val_print_string (type, NULL, address, len+1, stream, options);
+	val_print_string (type, NULL, value_address (val), len+1, stream,
+			  options);
       else
 	{
 	  fprintf_filtered (stream, "{");
-	  val_print_array_elements (type, embedded_offset,
-				    address, stream, recurse, val,
-				    options, 0);
+	  value_print_array_elements (val, stream, recurse, options, 0);
 	  fprintf_filtered (stream, "}");
 	}
     }
@@ -304,35 +295,31 @@ static const struct generic_val_print_decorations m2_decorations =
   "}"
 };
 
-/* See val_print for a description of the various parameters of this
-   function; they are identical.  */
+/* See m2-lang.h.  */
 
 void
-m2_val_print (struct type *type, int embedded_offset,
-	      CORE_ADDR address, struct ui_file *stream, int recurse,
-	      struct value *original_value,
-	      const struct value_print_options *options)
+m2_value_print_inner (struct value *val, struct ui_file *stream, int recurse,
+		      const struct value_print_options *options)
 {
   unsigned len;
   struct type *elttype;
   CORE_ADDR addr;
-  const gdb_byte *valaddr = value_contents_for_printing (original_value);
+  const gdb_byte *valaddr = value_contents_for_printing (val);
+  const CORE_ADDR address = value_address (val);
 
-  type = check_typedef (type);
-  switch (TYPE_CODE (type))
+  struct type *type = check_typedef (value_type (val));
+  switch (type->code ())
     {
     case TYPE_CODE_ARRAY:
       if (TYPE_LENGTH (type) > 0 && TYPE_LENGTH (TYPE_TARGET_TYPE (type)) > 0)
 	{
 	  elttype = check_typedef (TYPE_TARGET_TYPE (type));
 	  len = TYPE_LENGTH (type) / TYPE_LENGTH (elttype);
-	  if (options->prettyformat_arrays)
-	    print_spaces_filtered (2 + 2 * recurse, stream);
 	  /* For an array of chars, print with string syntax.  */
 	  if (TYPE_LENGTH (elttype) == 1 &&
-	      ((TYPE_CODE (elttype) == TYPE_CODE_INT)
+	      ((elttype->code () == TYPE_CODE_INT)
 	       || ((current_language->la_language == language_m2)
-		   && (TYPE_CODE (elttype) == TYPE_CODE_CHAR)))
+		   && (elttype->code () == TYPE_CODE_CHAR)))
 	      && (options->format == 0 || options->format == 's'))
 	    {
 	      /* If requested, look for the first null char and only print
@@ -343,23 +330,20 @@ m2_val_print (struct type *type, int embedded_offset,
 
 		  /* Look for a NULL char.  */
 		  for (temp_len = 0;
-		       (valaddr + embedded_offset)[temp_len]
-			 && temp_len < len && temp_len < options->print_max;
+		       (valaddr[temp_len]
+			&& temp_len < len && temp_len < options->print_max);
 		       temp_len++);
 		  len = temp_len;
 		}
 
 	      LA_PRINT_STRING (stream, TYPE_TARGET_TYPE (type),
-			       valaddr + embedded_offset, len, NULL,
-			       0, options);
+			       valaddr, len, NULL, 0, options);
 	    }
 	  else
 	    {
 	      fprintf_filtered (stream, "{");
-	      val_print_array_elements (type, embedded_offset,
-					address, stream,
-					recurse, original_value,
-					options, 0);
+	      value_print_array_elements (val, stream, recurse,
+					  options, 0);
 	      fprintf_filtered (stream, "}");
 	    }
 	  break;
@@ -370,14 +354,12 @@ m2_val_print (struct type *type, int embedded_offset,
 
     case TYPE_CODE_PTR:
       if (TYPE_CONST (type))
-	print_variable_at_address (type, valaddr + embedded_offset,
-				   stream, recurse, options);
+	print_variable_at_address (type, valaddr, stream, recurse, options);
       else if (options->format && options->format != 's')
-	val_print_scalar_formatted (type, embedded_offset,
-				    original_value, options, 0, stream);
+	value_print_scalar_formatted (val, options, 0, stream);
       else
 	{
-	  addr = unpack_pointer (type, valaddr + embedded_offset);
+	  addr = unpack_pointer (type, valaddr);
 	  print_unpacked_pointer (type, addr, address, options, stream);
 	}
       break;
@@ -391,24 +373,20 @@ m2_val_print (struct type *type, int embedded_offset,
       /* Fall through.  */
     case TYPE_CODE_STRUCT:
       if (m2_is_long_set (type))
-	m2_print_long_set (type, valaddr, embedded_offset, address,
-			   stream);
+	m2_print_long_set (type, valaddr, 0, address, stream);
       else if (m2_is_unbounded_array (type))
-	m2_print_unbounded_array (type, valaddr, embedded_offset,
-				  address, stream, recurse, options);
+	m2_print_unbounded_array (val, stream, recurse, options);
       else
-	cp_print_value_fields (type, type, embedded_offset,
-			       address, stream, recurse, original_value,
-			       options, NULL, 0);
+	cp_print_value_fields (val, stream, recurse, options, NULL, 0);
       break;
 
     case TYPE_CODE_SET:
-      elttype = TYPE_INDEX_TYPE (type);
+      elttype = type->index_type ();
       elttype = check_typedef (elttype);
       if (TYPE_STUB (elttype))
 	{
-	  fprintf_filtered (stream, _("<incomplete type>"));
-	  gdb_flush (stream);
+	  fprintf_styled (stream, metadata_style.style (),
+			  _("<incomplete type>"));
 	  break;
 	}
       else
@@ -424,14 +402,14 @@ m2_val_print (struct type *type, int embedded_offset,
 	maybe_bad_bstring:
 	  if (i < 0)
 	    {
-	      fputs_filtered (_("<error value>"), stream);
+	      fputs_styled (_("<error value>"), metadata_style.style (),
+			    stream);
 	      goto done;
 	    }
 
 	  for (i = low_bound; i <= high_bound; i++)
 	    {
-	      int element = value_bit_index (type, valaddr + embedded_offset,
-					     i);
+	      int element = value_bit_index (type, valaddr, i);
 
 	      if (element < 0)
 		{
@@ -446,16 +424,13 @@ m2_val_print (struct type *type, int embedded_offset,
 		  need_comma = 1;
 
 		  if (i + 1 <= high_bound
-		      && value_bit_index (type, valaddr + embedded_offset,
-					  ++i))
+		      && value_bit_index (type, valaddr, ++i))
 		    {
 		      int j = i;
 
 		      fputs_filtered ("..", stream);
 		      while (i + 1 <= high_bound
-			     && value_bit_index (type,
-						 valaddr + embedded_offset,
-						 ++i))
+			     && value_bit_index (type, valaddr, ++i))
 			j = i;
 		      print_type_scalar (range, j, stream);
 		    }
@@ -469,8 +444,8 @@ m2_val_print (struct type *type, int embedded_offset,
     case TYPE_CODE_RANGE:
       if (TYPE_LENGTH (type) == TYPE_LENGTH (TYPE_TARGET_TYPE (type)))
 	{
-	  m2_val_print (TYPE_TARGET_TYPE (type), embedded_offset,
-			address, stream, recurse, original_value, options);
+	  struct value *v = value_cast (TYPE_TARGET_TYPE (type), val);
+	  m2_value_print_inner (v, stream, recurse, options);
 	  break;
 	}
       /* FIXME: create_static_range_type does not set the unsigned bit in a
@@ -494,10 +469,7 @@ m2_val_print (struct type *type, int embedded_offset,
     case TYPE_CODE_BOOL:
     case TYPE_CODE_CHAR:
     default:
-      generic_val_print (type, embedded_offset, address,
-			 stream, recurse, original_value, options,
-			 &m2_decorations);
+      generic_value_print (val, stream, recurse, options, &m2_decorations);
       break;
     }
-  gdb_flush (stream);
 }

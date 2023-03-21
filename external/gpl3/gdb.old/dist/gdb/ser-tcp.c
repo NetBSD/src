@@ -1,6 +1,6 @@
 /* Serial interface for raw TCP connections on Un*x like systems.
 
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,8 +24,8 @@
 #include "gdbcmd.h"
 #include "cli/cli-decode.h"
 #include "cli/cli-setshow.h"
-#include "common/filestuff.h"
-#include "common/netstuff.h"
+#include "gdbsupport/filestuff.h"
+#include "gdbsupport/netstuff.h"
 
 #include <sys/types.h>
 
@@ -36,13 +36,9 @@
 #include <sys/ioctl.h>  /* For FIONBIO.  */
 #endif
 
-#include "common/gdb_sys_time.h"
+#include "gdbsupport/gdb_sys_time.h"
 
 #ifdef USE_WIN32API
-#if _WIN32_WINNT < 0x0501
-# undef _WIN32_WINNT
-# define _WIN32_WINNT 0x0501
-#endif
 #include <ws2tcpip.h>
 #ifndef ETIMEDOUT
 #define ETIMEDOUT WSAETIMEDOUT
@@ -62,7 +58,7 @@
 #endif
 
 #include <signal.h>
-#include "gdb_select.h"
+#include "gdbsupport/gdb_select.h"
 #include <algorithm>
 
 #ifndef HAVE_SOCKLEN_T
@@ -76,7 +72,7 @@ static struct cmd_list_element *tcp_show_cmdlist;
 
 /* Whether to auto-retry refused connections.  */
 
-static int tcp_auto_retry = 1;
+static bool tcp_auto_retry = true;
 
 /* Timeout period for connections, in seconds.  */
 
@@ -311,7 +307,7 @@ net_open (struct serial *scb, const char *name)
   /* Flag to indicate whether we've got a connection refused.  It will
      be true if any of the connections tried was refused.  */
   bool got_connrefused;
-  /* If a connection succeeeds, SUCCESS_AINFO will point to the
+  /* If a connection succeeds, SUCCESS_AINFO will point to the
      'struct addrinfo' that succeed.  */
   struct addrinfo *success_ainfo = NULL;
   unsigned int polls = 0;
@@ -323,7 +319,7 @@ net_open (struct serial *scb, const char *name)
     {
       got_connrefused = false;
 
-      for (struct addrinfo *iter = ainfo; iter != NULL; iter = iter->ai_next)
+      for (addrinfo *iter = ainfo; iter != NULL; iter = iter->ai_next)
 	{
 	  /* Iterate over the list of possible addresses to connect
 	     to.  For each, we'll try to connect and see if it
@@ -428,20 +424,6 @@ ser_tcp_send_break (struct serial *scb)
   return (serial_write (scb, "\377\363", 2));
 }
 
-/* Support for "set tcp" and "show tcp" commands.  */
-
-static void
-set_tcp_cmd (const char *args, int from_tty)
-{
-  help_list (tcp_set_cmdlist, "set tcp ", all_commands, gdb_stdout);
-}
-
-static void
-show_tcp_cmd (const char *args, int from_tty)
-{
-  help_list (tcp_show_cmdlist, "show tcp ", all_commands, gdb_stdout);
-}
-
 #ifndef USE_WIN32API
 
 /* The TCP ops.  */
@@ -473,8 +455,9 @@ static const struct serial_ops tcp_ops =
 
 #endif /* USE_WIN32API */
 
+void _initialize_ser_tcp ();
 void
-_initialize_ser_tcp (void)
+_initialize_ser_tcp ()
 {
 #ifdef USE_WIN32API
   /* Do nothing; the TCP serial operations will be initialized in
@@ -483,28 +466,28 @@ _initialize_ser_tcp (void)
   serial_add_interface (&tcp_ops);
 #endif /* USE_WIN32API */
 
-  add_prefix_cmd ("tcp", class_maintenance, set_tcp_cmd, _("\
-TCP protocol specific variables\n\
-Configure variables specific to remote TCP connections"),
-		  &tcp_set_cmdlist, "set tcp ",
-		  0 /* allow-unknown */, &setlist);
-  add_prefix_cmd ("tcp", class_maintenance, show_tcp_cmd, _("\
-TCP protocol specific variables\n\
-Configure variables specific to remote TCP connections"),
-		  &tcp_show_cmdlist, "show tcp ",
-		  0 /* allow-unknown */, &showlist);
+  add_basic_prefix_cmd ("tcp", class_maintenance, _("\
+TCP protocol specific variables.\n\
+Configure variables specific to remote TCP connections."),
+			&tcp_set_cmdlist, "set tcp ",
+			0 /* allow-unknown */, &setlist);
+  add_show_prefix_cmd ("tcp", class_maintenance, _("\
+TCP protocol specific variables.\n\
+Configure variables specific to remote TCP connections."),
+		       &tcp_show_cmdlist, "show tcp ",
+		       0 /* allow-unknown */, &showlist);
 
   add_setshow_boolean_cmd ("auto-retry", class_obscure,
 			   &tcp_auto_retry, _("\
-Set auto-retry on socket connect"), _("\
-Show auto-retry on socket connect"), 
+Set auto-retry on socket connect."), _("\
+Show auto-retry on socket connect."),
 			   NULL, NULL, NULL,
 			   &tcp_set_cmdlist, &tcp_show_cmdlist);
 
   add_setshow_uinteger_cmd ("connect-timeout", class_obscure,
 			    &tcp_retry_limit, _("\
-Set timeout limit in seconds for socket connection"), _("\
-Show timeout limit in seconds for socket connection"), _("\
+Set timeout limit in seconds for socket connection."), _("\
+Show timeout limit in seconds for socket connection."), _("\
 If set to \"unlimited\", GDB will keep attempting to establish a\n\
 connection forever, unless interrupted with Ctrl-c.\n\
 The default is 15 seconds."),

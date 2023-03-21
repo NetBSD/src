@@ -1,4 +1,4 @@
-# Copyright 2014-2019 Free Software Foundation, Inc.
+# Copyright 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@ standard_testfile
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug}]} {
     return -1
 }
+
+set is_pie [exec_is_pie $binfile]
 
 # Run the compare-sections command along with any options as specified
 # by OPTIONS, and check that no mismatch is found.
@@ -87,8 +89,13 @@ with_test_prefix "after run to main" {
     gdb_test "compare-sections" \
 	"MIS-MATCHED.*warning.*One or more sections.*does not match.*loaded file"
 
-    # Assume startup code doesn't change read-only sections.
-    compare_sections "-r"
+    if { $is_pie == 1 } {
+	gdb_test "compare-sections -r" \
+	    "MIS-MATCHED.*warning.*One or more sections.*does not match.*loaded file"
+    } else {
+	# Assume startup code doesn't change read-only sections.
+	compare_sections "-r"
+    }
 }
 
 # Now test that "compare-sections -r" works as expected.  Look for an

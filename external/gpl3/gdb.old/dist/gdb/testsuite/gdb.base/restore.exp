@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1998-2019 Free Software Foundation, Inc.
+# Copyright 1998-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,8 +45,7 @@ proc restore_tests { } {
     for {set c 1} {$c <= $limit} {incr c} {
 
         # Set a breakpoint at the next caller function.
-        gdb_test "tbreak caller$c" "Temporary breakpoint.*\[0-9\]*\\." \
-	    "tbreak caller$c"
+        gdb_test "tbreak caller$c" "Temporary breakpoint.*\[0-9\]*\\."
 
 	# Continue to the next caller function.
 	gdb_test "continue" " caller$c prologue .*" "run to caller$c"
@@ -73,8 +72,17 @@ proc restore_tests { } {
 	    # they should be.
             for {set var 1} {$var <= $c} {incr var} {
                 set expected [expr 0x7eeb + $var]
-	        gdb_test "print l$var" " = $expected" \
-		    "caller$c calls callee$e; return restored l$var to $expected"
+		set test "caller$c calls callee$e; return restored l$var to $expected"
+		set pass_pattern " = $expected"
+		set unsupported_pattern " = <optimized out>"
+	        gdb_test_multiple "print l$var" $test {
+		    -re "\[\r\n\]*(?:$pass_pattern)\[\r\n\]+$gdb_prompt $" {
+			pass $test
+		    }
+		    -re "\[\r\n\]*(?:$unsupported_pattern)\[\r\n\]+$gdb_prompt $" {
+			unsupported $test
+		    }
+		}
             }
         }
     }

@@ -1,6 +1,6 @@
 /* Target-dependent code for Analog Devices Blackfin processor, for GDB.
 
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    Contributed by Analog Devices, Inc.
 

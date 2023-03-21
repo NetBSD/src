@@ -1,6 +1,6 @@
 /* Inline frame unwinder for GDB.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,6 @@
 #include "gdbthread.h"
 #include "regcache.h"
 #include "symtab.h"
-#include "common/vec.h"
 #include "frame.h"
 #include <algorithm>
 
@@ -38,9 +37,9 @@
 struct inline_state
 {
   inline_state (thread_info *thread_, int skipped_frames_, CORE_ADDR saved_pc_,
-		symbol *skipped_symbol_)
+		std::vector<symbol *> &&skipped_symbols_)
     : thread (thread_), skipped_frames (skipped_frames_), saved_pc (saved_pc_),
-      skipped_symbol (skipped_symbol_)
+      skipped_symbols (std::move (skipped_symbols_))
   {}
 
   /* The thread this data relates to.  It should be a currently
@@ -57,10 +56,10 @@ struct inline_state
      any skipped frames.  */
   CORE_ADDR saved_pc;
 
-  /* Only valid if SKIPPED_FRAMES is non-zero.  This is the symbol
-     of the outermost skipped inline function.  It's used to find the
-     call site of the current frame.  */
-  struct symbol *skipped_symbol;
+  /* Only valid if SKIPPED_FRAMES is non-zero.  This is the list of all
+     function symbols that have been skipped, from inner most to outer
+     most.  It is used to find the call site of the current frame.  */
+  std::vector<struct symbol *> skipped_symbols;
 };
 
 static std::vector<inline_state> inline_states;
@@ -96,37 +95,54 @@ find_inline_frame_state (thread_info *thread)
   return &state;
 }
 
-/* Forget about any hidden inlined functions in PTID, which is new or
-   about to be resumed.  PTID may be minus_one_ptid (all processes)
-   or a PID (all threads in this process).  */
+/* See inline-frame.h.  */
 
 void
-clear_inline_frame_state (ptid_t ptid)
+clear_inline_frame_state (process_stratum_target *target, ptid_t filter_ptid)
 {
-  if (ptid == minus_one_ptid)
-    {
-      inline_states.clear ();
-      return;
-    }
+  gdb_assert (target != NULL);
 
-  if (ptid.is_pid ())
+  if (filter_ptid == minus_one_ptid || filter_ptid.is_pid ())
     {
-      int pid = ptid.pid ();
+      auto matcher = [target, &filter_ptid] (const inline_state &state)
+	{
+	  thread_info *t = state.thread;
+	  return (t->inf->process_target () == target
+		  && t->ptid.matches (filter_ptid));
+	};
+
       auto it = std::remove_if (inline_states.begin (), inline_states.end (),
-				[pid] (const inline_state &state)
-				  {
-				    return pid == state.thread->inf->pid;
-				  });
+				matcher);
 
       inline_states.erase (it, inline_states.end ());
 
       return;
     }
 
+
+  auto matcher = [target, &filter_ptid] (const inline_state &state)
+    {
+      thread_info *t = state.thread;
+      return (t->inf->process_target () == target
+	      && filter_ptid == t->ptid);
+    };
+
   auto it = std::find_if (inline_states.begin (), inline_states.end (),
-			  [&ptid] (const inline_state &state)
+			  matcher);
+
+  if (it != inline_states.end ())
+    unordered_remove (inline_states, it);
+}
+
+/* See inline-frame.h.  */
+
+void
+clear_inline_frame_state (thread_info *thread)
+{
+  auto it = std::find_if (inline_states.begin (), inline_states.end (),
+			  [thread] (const inline_state &state)
 			    {
-			      return ptid == state.thread->ptid;
+			      return thread == state.thread;
 			    });
 
   if (it != inline_states.end ())
@@ -154,10 +170,6 @@ inline_frame_this_id (struct frame_info *this_frame,
      of null_frame_id (between "no/any frame" and "the outermost
      frame").  This will take work.  */
   gdb_assert (frame_id_p (*this_id));
-
-  /* For now, require we don't match outer_frame_id either (see
-     comment above).  */
-  gdb_assert (!frame_id_eq (*this_id, outer_frame_id));
 
   /* Future work NOTE: Alexandre Oliva applied a patch to GCC 4.3
      which generates DW_AT_entry_pc for inlined functions when
@@ -266,13 +278,14 @@ static int
 block_starting_point_at (CORE_ADDR pc, const struct block *block)
 {
   const struct blockvector *bv;
-  struct block *new_block;
+  const struct block *new_block;
 
   bv = blockvector_for_pc (pc, NULL);
   if (BLOCKVECTOR_MAP (bv) == NULL)
     return 0;
 
-  new_block = (struct block *) addrmap_find (BLOCKVECTOR_MAP (bv), pc - 1);
+  new_block = (const struct block *) addrmap_find (BLOCKVECTOR_MAP (bv),
+						   pc - 1);
   if (new_block == NULL)
     return 1;
 
@@ -286,7 +299,8 @@ block_starting_point_at (CORE_ADDR pc, const struct block *block)
 }
 
 /* Loop over the stop chain and determine if execution stopped in an
-   inlined frame because of a user breakpoint set at FRAME_BLOCK.  */
+   inlined frame because of a breakpoint with a user-specified location
+   set at FRAME_BLOCK.  */
 
 static bool
 stopped_by_user_bp_inline_frame (const block *frame_block, bpstat stop_chain)
@@ -295,7 +309,8 @@ stopped_by_user_bp_inline_frame (const block *frame_block, bpstat stop_chain)
     {
       struct breakpoint *bpt = s->breakpoint_at;
 
-      if (bpt != NULL && user_breakpoint_p (bpt))
+      if (bpt != NULL
+	  && (user_breakpoint_p (bpt) || bpt->type == bp_until))
 	{
 	  bp_location *loc = s->bp_location_at;
 	  enum bp_loc_type t = loc->loc_type;
@@ -324,7 +339,7 @@ void
 skip_inline_frames (thread_info *thread, bpstat stop_chain)
 {
   const struct block *frame_block, *cur_block;
-  struct symbol *last_sym = NULL;
+  std::vector<struct symbol *> skipped_syms;
   int skip_count = 0;
 
   /* This function is called right after reinitializing the frame
@@ -352,7 +367,7 @@ skip_inline_frames (thread_info *thread, bpstat stop_chain)
 		    break;
 
 		  skip_count++;
-		  last_sym = BLOCK_FUNCTION (cur_block);
+		  skipped_syms.push_back (BLOCK_FUNCTION (cur_block));
 		}
 	      else
 		break;
@@ -365,7 +380,8 @@ skip_inline_frames (thread_info *thread, bpstat stop_chain)
     }
 
   gdb_assert (find_inline_frame_state (thread) == NULL);
-  inline_states.emplace_back (thread, skip_count, this_pc, last_sym);
+  inline_states.emplace_back (thread, skip_count, this_pc,
+			      std::move (skipped_syms));
 
   if (skip_count != 0)
     reinit_frame_cache ();
@@ -404,9 +420,16 @@ struct symbol *
 inline_skipped_symbol (thread_info *thread)
 {
   inline_state *state = find_inline_frame_state (thread);
-
   gdb_assert (state != NULL);
-  return state->skipped_symbol;
+
+  /* This should only be called when we are skipping at least one frame,
+     hence SKIPPED_FRAMES will be greater than zero when we get here.
+     We initialise SKIPPED_FRAMES at the same time as we build
+     SKIPPED_SYMBOLS, hence it should be true that SKIPPED_FRAMES never
+     indexes outside of the SKIPPED_SYMBOLS vector.  */
+  gdb_assert (state->skipped_frames > 0);
+  gdb_assert (state->skipped_frames <= state->skipped_symbols.size ());
+  return state->skipped_symbols[state->skipped_frames - 1];
 }
 
 /* Return the number of functions inlined into THIS_FRAME.  Some of

@@ -1,5 +1,5 @@
 /* Header file to load module for 'compile' command.
-   Copyright (C) 2014-2019 Free Software Foundation, Inc.
+   Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -80,6 +80,5 @@ struct compile_module
 extern struct compile_module *compile_object_load
   (const compile_file_names &fnames,
    enum compile_i_scope_types scope, void *scope_data);
-extern void munmap_list_free (struct munmap_list *head);
 
 #endif /* COMPILE_COMPILE_OBJECT_LOAD_H */

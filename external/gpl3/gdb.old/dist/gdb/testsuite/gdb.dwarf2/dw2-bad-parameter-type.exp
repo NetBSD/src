@@ -1,4 +1,4 @@
-# Copyright 2010-2019 Free Software Foundation, Inc.
+# Copyright 2010-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,10 @@ clean_restart $executable
 
 # The first access (as we do not use -readnow) prints some:
 # Dwarf Error: Cannot find DIE at 0x0 referenced from DIE at 0x29 [in module ...]
-gdb_test "ptype f"
-
-gdb_test "ptype f"
+with_test_prefix "first" {
+    gdb_test "ptype f"
+}
+with_test_prefix "second" {
+    gdb_test "ptype f"
+}
 gdb_test "p 5" " = 5" "is alive"

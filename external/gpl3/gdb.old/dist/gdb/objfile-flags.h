@@ -1,6 +1,6 @@
 /* Definition of objfile flags.
 
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 #if !defined (OBJFILE_FLAGS_H)
 #define OBJFILE_FLAGS_H
 
-#include "common/enum-flags.h"
+#include "gdbsupport/enum-flags.h"
 
 /* Defines for the objfile flags field.  Defined in a separate file to
    break circular header dependencies.  */

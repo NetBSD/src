@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2019 Free Software Foundation, Inc.
+   Copyright 2014-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -46,27 +46,6 @@ vla_factory (int n)
   BAR             bar_vla[n];
   int i;
 
-  struct vla_struct
-  {
-    int something;
-    int vla_field[n];
-  } vla_struct_object;
-
-  struct inner_vla_struct
-  {
-    int something;
-    int vla_field[n];
-    int after;
-  } inner_vla_struct_object;
-
-  union vla_union
-  {
-    int vla_field[n];
-  } vla_union_object;
-
-  vla_struct_object.something = n;
-  inner_vla_struct_object.something = n;
-  inner_vla_struct_object.after = n;
   for (i = 0; i < n; i++)
     {
       int_vla[i] = i*2;
@@ -82,9 +61,6 @@ vla_factory (int n)
       foo_vla[i].a = i*2;
       bar_vla[i].x = i*2;
       bar_vla[i].y.a = i*2;
-      vla_struct_object.vla_field[i] = i*2;
-      vla_union_object.vla_field[i] = i*2;
-      inner_vla_struct_object.vla_field[i] = i*2;
     }
 
   size_t int_size        = sizeof(int_vla);     /* vlas_filled */
@@ -98,9 +74,6 @@ vla_factory (int n)
   size_t uchar_size      = sizeof(unsigned_char_vla);
   size_t foo_size        = sizeof(foo_vla);
   size_t bar_size        = sizeof(bar_vla);
-  size_t vla_struct_object_size = sizeof(vla_struct_object);
-  size_t vla_union_object_size = sizeof(vla_union_object);
-  size_t inner_vla_struct_object_size = sizeof(inner_vla_struct_object);
 
   return;                                 /* break_end_of_vla_factory */
 }

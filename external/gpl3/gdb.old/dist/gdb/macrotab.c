@@ -1,5 +1,5 @@
 /* C preprocessor macro tables for GDB.
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -40,7 +40,7 @@ struct macro_table
 
   /* The bcache we should use to hold macro names, argument names, and
      definitions, or zero if we should use xmalloc.  */
-  struct bcache *bcache;
+  gdb::bcache *bcache;
 
   /* The main source file for this compilation unit --- the one whose
      name was given to the compiler.  This is the root of the
@@ -113,7 +113,7 @@ static const void *
 macro_bcache (struct macro_table *t, const void *addr, int len)
 {
   if (t->bcache)
-    return bcache (addr, len, t->bcache);
+    return t->bcache->insert (addr, len);
   else
     {
       void *copy = xmalloc (len);
@@ -882,25 +882,19 @@ macro_undef (struct macro_source_file *source, int line,
 static struct macro_definition *
 fixup_definition (const char *filename, int line, struct macro_definition *def)
 {
-  static char *saved_expansion;
-
-  if (saved_expansion)
-    {
-      xfree (saved_expansion);
-      saved_expansion = NULL;
-    }
+  static gdb::unique_xmalloc_ptr<char> saved_expansion;
 
   if (def->kind == macro_object_like)
     {
       if (def->argc == macro_FILE)
 	{
 	  saved_expansion = macro_stringify (filename);
-	  def->replacement = saved_expansion;
+	  def->replacement = saved_expansion.get ();
 	}
       else if (def->argc == macro_LINE)
 	{
-	  saved_expansion = xstrprintf ("%d", line);
-	  def->replacement = saved_expansion;
+	  saved_expansion.reset (xstrprintf ("%d", line));
+	  def->replacement = saved_expansion.get ();
 	}
     }
 
@@ -1025,7 +1019,7 @@ macro_for_each_in_scope (struct macro_source_file *file, int line,
 
 
 struct macro_table *
-new_macro_table (struct obstack *obstack, struct bcache *b,
+new_macro_table (struct obstack *obstack, gdb::bcache *b,
 		 struct compunit_symtab *cust)
 {
   struct macro_table *t;

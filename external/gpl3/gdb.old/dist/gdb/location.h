@@ -1,5 +1,5 @@
 /* Data structures and API for event locations in GDB.
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
 
 #ifndef LOCATION_H
 #define LOCATION_H
+
+#include "symtab.h"
 
 struct language_defn;
 struct event_location;
@@ -226,7 +228,7 @@ extern event_location_up
    in the input string, it will take precedence over this parameter.  */
 
 extern event_location_up string_to_event_location
-  (const char **argp, const struct language_defn *langauge,
+  (const char **argp, const struct language_defn *language,
    symbol_name_match_type match_type = symbol_name_match_type::WILD);
 
 /* Like string_to_event_location, but does not attempt to parse

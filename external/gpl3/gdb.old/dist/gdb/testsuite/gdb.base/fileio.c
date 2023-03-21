@@ -1,13 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/errno.h>
 #include <sys/types.h>
-#include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <time.h>
 /* TESTS :

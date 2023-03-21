@@ -1,4 +1,4 @@
-# Copyright 2007-2019 Free Software Foundation, Inc.
+# Copyright 2007-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 load_lib "ada.exp"
 
+if { [skip_ada_tests] } { return -1 }
+
 gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
@@ -28,10 +30,7 @@ gdb_test_no_output "set lang ada" \
          "changing the language to ada"
 
 gdb_test "print 1 = 2" \
-         "= false" \
-         "print 1 = 2"
+         "= false"
 
 gdb_test "print 3 = 3" \
-         "= true" \
-         "print 3 = 3"
-
+         "= true"

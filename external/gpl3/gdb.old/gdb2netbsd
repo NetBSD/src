@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: gdb2netbsd,v 1.1.1.1 2015/08/15 09:27:49 christos Exp $
+#	$NetBSD: gdb2netbsd,v 1.1.1.2 2023/03/21 16:37:18 christos Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,6 +43,7 @@ FILE="$1"
 
 ### Remove the $'s around RCS tags
 cleantags "$FILE"
+find "$1" -name .git\* -exec rm -fr {} +
 
 echo You can import now.  Use the following command:
 echo cvs import src/external/gpl3/gdb/dist FSF gdb-X-Y-Z

@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,6 +30,20 @@ if {![runto [gdb_get_line_number "post_truth_table_init"]]} then {
     continue
 }
 
+# Non-zero value to use as the function call count base. Using zero is avoided
+# as this is a common value in memory.
+set prime 17
+
+# Reset all call counts to the initial value ($prime).
+proc reset_called_flags { } {
+    global prime
+    foreach counter {no_arg no_arg_false one_arg two_arg array} {
+	gdb_test_no_output "set var calls%function_${counter}_called=$prime"
+    }
+}
+
+reset_called_flags
+
 # Vary conditional and input over the standard truth table.
 # Test that the debugger can evaluate expressions of the form
 # a(x,y) .OR./.AND. a(a,b) correctly.
@@ -49,31 +63,42 @@ foreach_with_prefix arg {"No" "One" "Two"} {
     set trimmed_args [string trimright $argument_list ,]
     set arg_lower [string tolower $arg]
     gdb_test "p function_no_arg_false() .OR. function_${arg_lower}_arg($trimmed_args)" \
-	     " $arg, return true.\r\n\\\$$decimal = .TRUE."
-    # Check the skipped function has not printed anything by asserting the
-    # absence of the full stop from its message.
+	     " = .TRUE."
+    reset_called_flags
     gdb_test "p .TRUE. .OR. function_${arg_lower}_arg($trimmed_args)" \
-	     "\[^.\]\r\n\\\$$decimal = .TRUE."
+	     " = .TRUE."
+    # Check that none of the short-circuited functions have been called.
+    gdb_test "p calls" \
+	     " = \\\( function_no_arg_called = $prime, function_no_arg_false_called = $prime, function_one_arg_called = $prime, function_two_arg_called = $prime, function_array_called = $prime \\\)"
     append argument_list " .TRUE.,"
 }
 
-# Check nested calls
-gdb_test "p function_one_arg(.FALSE. .OR. function_no_arg())" \
-	 " No, return true.\r\n One, return true.\r\n\\\$$decimal = .TRUE."
+with_test_prefix "nested call not skipped" {
+    reset_called_flags
+    # Check nested calls
+    gdb_test "p function_one_arg(.FALSE. .OR. function_no_arg())" \
+	     " = .TRUE."
+    gdb_test "p calls" \
+	     " = \\\( function_no_arg_called = [expr $prime + 1], function_no_arg_false_called = $prime, function_one_arg_called = [expr $prime + 1], function_two_arg_called = $prime, function_array_called = $prime \\\)"
+}
 
-gdb_test "p function_one_arg(.TRUE. .OR. function_no_arg())" \
-	 "\[^.\]\r\n One, return true.\r\n\\\$$decimal = .TRUE."
+with_test_prefix "nested call skipped" {
+    gdb_test "p function_one_arg(.TRUE. .OR. function_no_arg())" \
+	     " = .TRUE."
+    gdb_test "p calls" \
+	     " = \\\( function_no_arg_called = [expr $prime + 1], function_no_arg_false_called = $prime, function_one_arg_called = [expr $prime + 2], function_two_arg_called = $prime, function_array_called = $prime \\\)"
+}
 
 # Vary number of components in the expression to skip.
 set expression "p .TRUE."
 foreach_with_prefix expression_components {1 2 3 4} {
     set expression "$expression .OR. function_one_arg(.TRUE.)"
     gdb_test "$expression" \
-	     "\\\$$decimal = .TRUE."
+	     " = .TRUE."
 }
 
 # Check parsing skipped substring operations.
-gdb_test "p .TRUE. .OR. binary_string(1)" "\\\$$decimal = .TRUE."
+gdb_test "p .TRUE. .OR. binary_string(1)" " = .TRUE."
 
 # Check parsing skipped substring operations with ranges. These should all
 # return true as the result is > 0.
@@ -82,7 +107,7 @@ gdb_test "p .TRUE. .OR. binary_string(1)" "\\\$$decimal = .TRUE."
 foreach_with_prefix range1 {"1:2" ":" ":2" "1:"} {
     foreach_with_prefix range2 {"1:2" ":" ":2" "1:"} {
 	gdb_test "p .TRUE. .OR. binary_string($range1) .OR. binary_string($range2)" \
-		 "\\\$$decimal = .TRUE."
+		 " = .TRUE."
     }
 }
 
@@ -90,17 +115,25 @@ foreach_with_prefix range1 {"1:2" ":" ":2" "1:"} {
 foreach_with_prefix range1 {"1:2" ":" ":2" "1:"} {
     foreach_with_prefix range2 {"1:2" ":" ":2" "1:"} {
 	gdb_test "p .TRUE. .OR. binary_string($range1) .OR. truth_table($range2, 1)" \
-		 "\\\$$decimal = .TRUE."
+		 " = .TRUE."
     }
 }
 
 # Check evaluation of substring operations in logical expressions.
-gdb_test "p .FALSE. .OR. binary_string(1)" "\\\$$decimal = .FALSE."
+gdb_test "p .FALSE. .OR. binary_string(1)" " = .FALSE."
 
-# Function call and substring skip.
-gdb_test "p .TRUE. .OR. function_one_arg(binary_string(1))" \
-	 "\\\$$decimal = .TRUE."
+with_test_prefix "binary string skip" {
+    reset_called_flags
+    # Function call and substring skip.
+    gdb_test "p .TRUE. .OR. function_one_arg(binary_string(1))" \
+	     " = .TRUE."
+    gdb_test "p calls%function_one_arg_called" " = $prime"
+}
 
-# Function call and array skip.
-gdb_test "p .TRUE. .OR. function_array(binary_string)" \
-	 "\\\$$decimal = .TRUE."
+with_test_prefix "array skip" {
+    # Function call and array skip.
+    reset_called_flags
+    gdb_test "p .TRUE. .OR. function_array(binary_string)" \
+	     " = .TRUE."
+    gdb_test "p calls%function_array_called" " = $prime"
+}

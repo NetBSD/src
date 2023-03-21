@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 
 #include "defs.h"
 #include "arch-utils.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
@@ -33,8 +33,8 @@
 #include "target-descriptions.h"
 #include "target.h"
 #include "value.h"
-
 #include "sparc64-tdep.h"
+#include <forward_list>
 
 /* This file implements the SPARC 64-bit ABI as defined by the
    section "Low-Level System Information" of the SPARC Compliance
@@ -112,7 +112,7 @@ struct adi_stat_t
 
 /* Per-process ADI stat info.  */
 
-typedef struct sparc64_adi_info
+struct sparc64_adi_info
 {
   sparc64_adi_info (pid_t pid_)
     : pid (pid_)
@@ -124,7 +124,7 @@ typedef struct sparc64_adi_info
   /* The ADI stat.  */
   adi_stat_t stat = {};
 
-} sparc64_adi_info;
+};
 
 static std::forward_list<sparc64_adi_info> adi_proc_list;
 
@@ -184,14 +184,6 @@ sparc64_forget_process (pid_t pid)
 	pit = it++;
     }
 
-}
-
-static void
-info_adi_command (const char *args, int from_tty)
-{
-  printf_unfiltered ("\"adi\" must be followed by \"examine\" "
-                     "or \"assign\".\n");
-  help_list (sparc64adilist, "adi ", all_commands, gdb_stdout);
 }
 
 /* Read attributes of a maps entry in /proc/[pid]/adi/maps.  */
@@ -295,7 +287,7 @@ adi_tag_fd (void)
   snprintf (cl_name, sizeof(cl_name), "/proc/%ld/adi/tags", (long) pid);
   int target_errno;
   proc->stat.tag_fd = target_fileio_open (NULL, cl_name, O_RDWR|O_EXCL, 
-                                          0, &target_errno);
+                                          false, 0, &target_errno);
   return proc->stat.tag_fd;
 }
 
@@ -316,8 +308,10 @@ adi_is_addr_mapped (CORE_ADDR vaddr, size_t cnt)
   if (data)
     {
       adi_stat_t adi_stat = get_adi_info (pid);
-      char *line;
-      for (line = strtok (data.get (), "\n"); line; line = strtok (NULL, "\n"))
+      char *saveptr;
+      for (char *line = strtok_r (data.get (), "\n", &saveptr);
+	   line;
+	   line = strtok_r (NULL, "\n", &saveptr))
         {
           ULONGEST addr, endaddr;
 
@@ -406,7 +400,6 @@ adi_print_versions (CORE_ADDR vaddr, size_t cnt, gdb_byte *tags)
           ++v_idx;
         }
       printf_filtered ("\n");
-      gdb_flush (gdb_stdout);
       vaddr += maxelts;
     }
 }
@@ -533,13 +526,13 @@ adi_assign_command (const char *args, int from_tty)
   do_assign (next_address, cnt, version);
 }
 
+void _initialize_sparc64_adi_tdep ();
 void
-_initialize_sparc64_adi_tdep (void)
+_initialize_sparc64_adi_tdep ()
 {
-
-  add_prefix_cmd ("adi", class_support, info_adi_command,
-                  _("ADI version related commands."),
-                  &sparc64adilist, "adi ", 0, &cmdlist);
+  add_basic_prefix_cmd ("adi", class_support,
+			_("ADI version related commands."),
+			&sparc64adilist, "adi ", 0, &cmdlist);
   add_cmd ("examine", class_support, adi_examine_command,
            _("Examine ADI versions."), &sparc64adilist);
   add_alias_cmd ("x", "examine", no_class, 1, &sparc64adilist);
@@ -557,7 +550,7 @@ _initialize_sparc64_adi_tdep (void)
 static int
 sparc64_integral_or_pointer_p (const struct type *type)
 {
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_INT:
     case TYPE_CODE_BOOL:
@@ -589,7 +582,7 @@ sparc64_integral_or_pointer_p (const struct type *type)
 static int
 sparc64_floating_p (const struct type *type)
 {
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_FLT:
       {
@@ -609,7 +602,7 @@ sparc64_floating_p (const struct type *type)
 static int
 sparc64_complex_floating_p (const struct type *type)
 {
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_COMPLEX:
       {
@@ -633,7 +626,7 @@ sparc64_complex_floating_p (const struct type *type)
 static int
 sparc64_structure_or_union_p (const struct type *type)
 {
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
     case TYPE_CODE_STRUCT:
     case TYPE_CODE_UNION:
@@ -1172,7 +1165,7 @@ static const struct frame_base sparc64_frame_base =
 static int
 sparc64_16_byte_align_p (struct type *type)
 {
-  if (TYPE_CODE (type) == TYPE_CODE_ARRAY)
+  if (type->code () == TYPE_CODE_ARRAY)
     {
       struct type *t = check_typedef (TYPE_TARGET_TYPE (type));
 
@@ -1186,9 +1179,9 @@ sparc64_16_byte_align_p (struct type *type)
     {
       int i;
 
-      for (i = 0; i < TYPE_NFIELDS (type); i++)
+      for (i = 0; i < type->num_fields (); i++)
 	{
-	  struct type *subtype = check_typedef (TYPE_FIELD_TYPE (type, i));
+	  struct type *subtype = check_typedef (type->field (i).type ());
 
 	  if (sparc64_16_byte_align_p (subtype))
 	    return 1;
@@ -1200,7 +1193,7 @@ sparc64_16_byte_align_p (struct type *type)
 
 /* Store floating fields of element ELEMENT of an "parameter array"
    that has type TYPE and is stored at BITPOS in VALBUF in the
-   apropriate registers of REGCACHE.  This function can be called
+   appropriate registers of REGCACHE.  This function can be called
    recursively and therefore handles floating types in addition to
    structures.  */
 
@@ -1213,7 +1206,7 @@ sparc64_store_floating_fields (struct regcache *regcache, struct type *type,
 
   gdb_assert (element < 16);
 
-  if (TYPE_CODE (type) == TYPE_CODE_ARRAY)
+  if (type->code () == TYPE_CODE_ARRAY)
     {
       gdb_byte buf[8];
       int regnum = SPARC_F0_REGNUM + element * 2 + bitpos / 32;
@@ -1263,9 +1256,9 @@ sparc64_store_floating_fields (struct regcache *regcache, struct type *type,
     {
       int i;
 
-      for (i = 0; i < TYPE_NFIELDS (type); i++)
+      for (i = 0; i < type->num_fields (); i++)
 	{
-	  struct type *subtype = check_typedef (TYPE_FIELD_TYPE (type, i));
+	  struct type *subtype = check_typedef (type->field (i).type ());
 	  int subpos = bitpos + TYPE_FIELD_BITPOS (type, i);
 
 	  sparc64_store_floating_fields (regcache, subtype, valbuf,
@@ -1281,9 +1274,9 @@ sparc64_store_floating_fields (struct regcache *regcache, struct type *type,
          probably in older releases to.  To appease GCC, if a
          structure has only a single `float' member, we store its
          value in %f1 too (we already have stored in %f0).  */
-      if (TYPE_NFIELDS (type) == 1)
+      if (type->num_fields () == 1)
 	{
-	  struct type *subtype = check_typedef (TYPE_FIELD_TYPE (type, 0));
+	  struct type *subtype = check_typedef (type->field (0).type ());
 
 	  if (sparc64_floating_p (subtype) && TYPE_LENGTH (subtype) == 4)
 	    regcache->cooked_write (SPARC_F1_REGNUM, valbuf);
@@ -1302,7 +1295,7 @@ sparc64_extract_floating_fields (struct regcache *regcache, struct type *type,
 {
   struct gdbarch *gdbarch = regcache->arch ();
 
-  if (TYPE_CODE (type) == TYPE_CODE_ARRAY)
+  if (type->code () == TYPE_CODE_ARRAY)
     {
       int len = TYPE_LENGTH (type);
       int regnum =  SPARC_F0_REGNUM + bitpos / 32;
@@ -1351,9 +1344,9 @@ sparc64_extract_floating_fields (struct regcache *regcache, struct type *type,
     {
       int i;
 
-      for (i = 0; i < TYPE_NFIELDS (type); i++)
+      for (i = 0; i < type->num_fields (); i++)
 	{
-	  struct type *subtype = check_typedef (TYPE_FIELD_TYPE (type, i));
+	  struct type *subtype = check_typedef (type->field (i).type ());
 	  int subpos = bitpos + TYPE_FIELD_BITPOS (type, i);
 
 	  sparc64_extract_floating_fields (regcache, subtype, valbuf, subpos);
@@ -1464,7 +1457,7 @@ sparc64_store_arguments (struct regcache *regcache, int nargs,
   /* The psABI says that "Every stack frame must be 16-byte aligned."  */
   sp &= ~0xf;
 
-  /* Now we store the arguments in to the "paramater array".  Some
+  /* Now we store the arguments in to the "parameter array".  Some
      Integer or Pointer arguments and Structure or Union arguments
      will be passed in %o registers.  Some Floating arguments and
      floating members of structures are passed in floating-point
@@ -1663,7 +1656,7 @@ sparc64_extract_return_value (struct type *type, struct regcache *regcache,
 
       for (i = 0; i < ((len + 7) / 8); i++)
 	regcache->cooked_read (SPARC_O0_REGNUM + i, buf + i * 8);
-      if (TYPE_CODE (type) != TYPE_CODE_UNION)
+      if (type->code () != TYPE_CODE_UNION)
 	sparc64_extract_floating_fields (regcache, type, buf, 0);
       memcpy (valbuf, buf, len);
     }
@@ -1674,7 +1667,7 @@ sparc64_extract_return_value (struct type *type, struct regcache *regcache,
 	regcache->cooked_read (SPARC_F0_REGNUM + i, buf + i * 4);
       memcpy (valbuf, buf, len);
     }
-  else if (TYPE_CODE (type) == TYPE_CODE_ARRAY)
+  else if (type->code () == TYPE_CODE_ARRAY)
     {
       /* Small arrays are returned the same way as small structures.  */
       gdb_assert (len <= 32);
@@ -1718,7 +1711,7 @@ sparc64_store_return_value (struct type *type, struct regcache *regcache,
       memcpy (buf, valbuf, len);
       for (i = 0; i < ((len + 7) / 8); i++)
 	regcache->cooked_write (SPARC_O0_REGNUM + i, buf + i * 8);
-      if (TYPE_CODE (type) != TYPE_CODE_UNION)
+      if (type->code () != TYPE_CODE_UNION)
 	sparc64_store_floating_fields (regcache, type, buf, 0, 0);
     }
   else if (sparc64_floating_p (type) || sparc64_complex_floating_p (type))
@@ -1728,7 +1721,7 @@ sparc64_store_return_value (struct type *type, struct regcache *regcache,
       for (i = 0; i < len / 4; i++)
 	regcache->cooked_write (SPARC_F0_REGNUM + i, buf + i * 4);
     }
-  else if (TYPE_CODE (type) == TYPE_CODE_ARRAY)
+  else if (type->code () == TYPE_CODE_ARRAY)
     {
       /* Small arrays are returned the same way as small structures.  */
       gdb_assert (len <= 32);

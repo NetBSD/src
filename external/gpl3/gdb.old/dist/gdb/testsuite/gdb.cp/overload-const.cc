@@ -1,6 +1,6 @@
 /* This test case is part of GDB, the GNU debugger.
 
-   Copyright 2011-2019 Free Software Foundation, Inc.
+   Copyright 2011-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,4 +25,6 @@ int
 main ()
 {
   myclass::func (42);
+
+  return 0;
 }

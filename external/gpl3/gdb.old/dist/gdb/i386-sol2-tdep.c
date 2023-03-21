@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris x86.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -46,21 +46,6 @@ static int i386_sol2_gregset_reg_offset[] =
   0 * 4				/* %gs */
 };
 
-/* Return whether THIS_FRAME corresponds to a Solaris sigtramp
-   routine.  */
-
-static int
-i386_sol2_sigtramp_p (struct frame_info *this_frame)
-{
-  CORE_ADDR pc = get_frame_pc (this_frame);
-  const char *name;
-
-  find_pc_partial_function (pc, &name, NULL, NULL);
-  return (name && (strcmp ("sigacthandler", name) == 0
-		   || strcmp (name, "ucbsigvechandler") == 0
-		   || strcmp (name, "__sighndlr") == 0));
-}
-
 /* Solaris doesn't have a `struct sigcontext', but it does have a
    `mcontext_t' that contains the saved set of machine registers.  */
 
@@ -75,30 +60,6 @@ i386_sol2_mcontext_addr (struct frame_info *this_frame)
   return ucontext_addr + 36;
 }
 
-/* SunPRO encodes the static variables.  This is not related to C++
-   mangling, it is done for C too.  */
-
-static const char *
-i386_sol2_static_transform_name (const char *name)
-{
-  if (name[0] == '.')
-    {
-      const char *p;
-
-      /* For file-local statics there will be a period, a bunch of
-         junk (the contents of which match a string given in the
-         N_OPT), a period and the name.  For function-local statics
-         there will be a bunch of junk (which seems to change the
-         second character from 'A' to 'B'), a period, the name of the
-         function, and the name.  So just skip everything before the
-         last period.  */
-      p = strrchr (name, '.');
-      if (p != NULL)
-        name = p + 1;
-    }
-  return name;
-}
-
 /* Solaris 2.  */
 
 static void
@@ -109,12 +70,7 @@ i386_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Solaris is SVR4-based.  */
   i386_svr4_init_abi (info, gdbarch);
 
-  /* The SunPRO compiler puts out 0 instead of the address in N_SO symbols,
-     and for SunPRO 3.0, N_FUN symbols too.  */
-  set_gdbarch_sofun_address_maybe_missing (gdbarch, 1);
-
-  /* Handle SunPRO encoding of static symbols.  */
-  set_gdbarch_static_transform_name (gdbarch, i386_sol2_static_transform_name);
+  sol2_init_abi (info, gdbarch);
 
   /* Solaris reserves space for its FPU emulator in `fpregset_t'.
      There is also some space reserved for the registers of a Weitek
@@ -125,18 +81,14 @@ i386_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->sizeof_fpregset = 380;
 
   /* Signal trampolines are slightly different from SVR4.  */
-  tdep->sigtramp_p = i386_sol2_sigtramp_p;
+  tdep->sigtramp_p = sol2_sigtramp_p;
   tdep->sigcontext_addr = i386_sol2_mcontext_addr;
   tdep->sc_reg_offset = tdep->gregset_reg_offset;
   tdep->sc_num_regs = tdep->gregset_num_regs;
 
   /* Solaris has SVR4-style shared libraries.  */
-  set_gdbarch_skip_solib_resolver (gdbarch, sol2_skip_solib_resolver);
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
-
-  /* How to print LWP PTIDs from core files.  */
-  set_gdbarch_core_pid_to_str (gdbarch, sol2_core_pid_to_str);
 }
 
 
@@ -151,8 +103,9 @@ i386_sol2_osabi_sniffer (bfd *abfd)
   return GDB_OSABI_UNKNOWN;
 }
 
+void _initialize_i386_sol2_tdep ();
 void
-_initialize_i386_sol2_tdep (void)
+_initialize_i386_sol2_tdep ()
 {
   /* Register an ELF OS ABI sniffer for Solaris 2 binaries.  */
   gdbarch_register_osabi_sniffer (bfd_arch_i386, bfd_target_elf_flavour,

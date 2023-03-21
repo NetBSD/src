@@ -1,4 +1,4 @@
-#   Copyright 1997-2019 Free Software Foundation, Inc.
+#   Copyright 1997-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,13 @@
 #
 if { ![istarget "*-*-linux*"] && ![istarget "*-*-openbsd*"] } then {
     continue
+}
+
+# Test relies on checking follow-fork output. Do not run if gdb debug is
+# enabled as it will be redirected to the log.
+if [gdb_debug_enabled] {
+    untested "debug is enabled"
+    return 0
 }
 
 standard_testfile
@@ -84,8 +91,7 @@ proc test_follow_fork { who detach cmd } {
 	}
 
 	gdb_test "show follow-fork" \
-	"Debugger response to a program call of fork or vfork is \"$who\"." \
-	"show follow-fork"
+	"Debugger response to a program call of fork or vfork is \"$who\"."
 
 	# Set detach-on-fork mode if we aren't using the default.
 	if {$detach == "default"} {
@@ -95,8 +101,7 @@ proc test_follow_fork { who detach cmd } {
 	}
 
 	gdb_test "show detach-on-fork" \
-		 "Whether gdb will detach.* fork is $detach." \
-		 "show detach-on-fork"
+		 "Whether gdb will detach.* fork is $detach."
 
 	# Set a breakpoint after the fork if we aren't single-stepping
 	# past the fork.
@@ -131,15 +136,13 @@ proc test_follow_fork { who detach cmd } {
 	if {$who == "parent" && $detach == "on"} {
 
 	    # Follow parent / detach child: the only inferior is the parent.
-	    gdb_test "info inferiors" "\\* 1 .* process.*" \
-		     "info inferiors"
+	    gdb_test "info inferiors" "\\* 1 .* process.*"
 
 	} elseif {$who == "parent" && $detach == "off"} {
 
 	    # Follow parent / keep child: two inferiors under debug, the
 	    # parent is the current inferior.
-	    gdb_test "info inferiors" "\\* 1 .*process.* 2 .*process.*" \
-		     "info inferiors"
+	    gdb_test "info inferiors" "\\* 1 .*process.* 2 .*process.*"
 
 	    gdb_test "inferior 2" "Switching to inferior 2 .*"
 	    set resume_unfollowed 1
@@ -149,15 +152,13 @@ proc test_follow_fork { who detach cmd } {
 	    # Follow child / detach parent: the child is under debug and is
 	    # the current inferior.  The parent is listed but is not under
 	    # debug.
-	    gdb_test "info inferiors" " 1 .*<null>.*\\* 2 .*process.*" \
-		     "info inferiors"
+	    gdb_test "info inferiors" " 1 .*<null>.*\\* 2 .*process.*"
 
 	} elseif {$who == "child" && $detach == "off"} {
 
 	    # Follow child / keep parent: two inferiors under debug, the
 	    # child is the current inferior.
-	    gdb_test "info inferiors" " 1 .*process.*\\* 2 .*process.*" \
-		     "info inferiors"
+	    gdb_test "info inferiors" " 1 .*process.*\\* 2 .*process.*"
 
 	    gdb_test "inferior 1" "Switching to inferior 1 .*"
 	    set resume_unfollowed 1
@@ -178,13 +179,17 @@ proc test_follow_fork { who detach cmd } {
     }
 }
 
+set reading_in_symbols_re {(?:\r\nReading in symbols for [^\r\n]*)?}
+
 proc catch_fork_child_follow {} {
     global gdb_prompt
     global srcfile
+    global reading_in_symbols_re
 
     set bp_after_fork [gdb_get_line_number "set breakpoint here"]
 
-    gdb_test "catch fork" "Catchpoint \[0-9\]* \\(fork\\)" \
+    gdb_test "catch fork" \
+	"Catchpoint \[0-9\]* \\(fork\\)$reading_in_symbols_re" \
 	"explicit child follow, set catch fork"
 
     # Verify that the catchpoint is mentioned in an "info breakpoints",
@@ -284,10 +289,12 @@ proc catch_fork_unpatch_child {} {
 proc tcatch_fork_parent_follow {} {
     global gdb_prompt
     global srcfile
+    global reading_in_symbols_re
 
     set bp_after_fork [gdb_get_line_number "set breakpoint here"]
 
-    gdb_test "catch fork" "Catchpoint \[0-9\]* \\(fork\\)" \
+    gdb_test "catch fork" \
+	"Catchpoint \[0-9\]* \\(fork\\)$reading_in_symbols_re" \
 	"explicit parent follow, set tcatch fork"
 
 # ??rehrauer: I don't yet know how to get the id of the tcatch
@@ -333,8 +340,7 @@ A fork or vfork creates a new process.  follow-fork-mode can be:.*
 .*parent  - the original process is debugged after a fork.*
 .*child   - the new process is debugged after a fork.*
 The unfollowed process will continue to run..*
-By default, the debugger will follow the parent process..*" \
-	"help set follow-fork"
+By default, the debugger will follow the parent process..*"
 
     # Verify that we can set follow-fork-mode, using an abbreviation
     # for both the flag and its value.

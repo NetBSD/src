@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Free Software Foundation, Inc.
+# Copyright 2016-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,6 +28,12 @@
 # - Thread 2 of each inferior is stopped at /* thread loop line */.
 # - Thread 3 of each inferior is either stopped at /* thread loop line */, if we
 #   are using all-stop, or running, if we are using non-stop.
+
+# Do not run if gdb debug is enabled as it doesn't work for separate-mi-tty.
+if [gdb_debug_enabled] {
+    untested "debug is enabled"
+    return 0
+}
 
 load_lib mi-support.exp
 
@@ -409,7 +415,7 @@ proc_with_prefix test_setup { mode } {
 	# Add the second inferior now.  While this is not mandatory, it allows
 	# us to assume that per-inferior thread numbering will be used,
 	# simplifying test_continue_to_start a bit (Thread 1.2 and not Thread 2).
-	gdb_test "add-inferior" "Added inferior 2" "add inferior 2"
+	gdb_test "add-inferior" "Added inferior 2 on connection .*" "add inferior 2"
 
 	# Prepare the first inferior for the test.
 	test_continue_to_start $mode 1

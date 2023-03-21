@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux TILE-Gx.
 
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -164,8 +164,9 @@ tilegx_linux_nat_target::store_registers (struct regcache *regcache,
     perror_with_name (_("Couldn't write registers"));
 }
 
+void _initialize_tile_linux_nat ();
 void
-_initialize_tile_linux_nat (void)
+_initialize_tile_linux_nat ()
 {
   linux_target = &the_tilegx_linux_nat_target;
   add_inf_child_target (&the_tilegx_linux_nat_target);

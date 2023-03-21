@@ -368,18 +368,18 @@
 
 2018-12-19  Andrew Burgess  <andrew.burgess@embecosm.com>
 
-	* gdb/dummy-frame.c (default_dummy_id): Defined new function.
-	* gdb/dummy-frame.h (default_dummy_id): Declare new function.
-	* gdb/frame-unwind.c (default_unwind_pc): Define new function.
+	* dummy-frame.c (default_dummy_id): Defined new function.
+	* dummy-frame.h (default_dummy_id): Declare new function.
+	* frame-unwind.c (default_unwind_pc): Define new function.
 	(default_unwind_sp): Define new function.
-	* gdb/frame-unwind.h (default_unwind_pc): Declare new function.
+	* frame-unwind.h (default_unwind_pc): Declare new function.
 	(default_unwind_sp): Declare new function.
-	* gdb/frame.c (frame_unwind_pc): Assume gdbarch_unwind_pc is
+	* frame.c (frame_unwind_pc): Assume gdbarch_unwind_pc is
 	available.
 	(get_frame_sp): Assume that gdbarch_unwind_sp is available.
-	* gdb/gdbarch.c: Regenerate.
-	* gdb/gdbarch.h: Regenerate.
-	* gdb/gdbarch.sh: Update definition of dummy_id, unwind_pc, and
+	* gdbarch.c: Regenerate.
+	* gdbarch.h: Regenerate.
+	* gdbarch.sh: Update definition of dummy_id, unwind_pc, and
 	unwind_sp.  Add additional header files to be included in
 	generated file.
 
@@ -839,7 +839,7 @@
 2018-11-29  Rajendra SY  <rajendra.sy@gmail.com>
 
 	PR gdb/23093
-	* gdb/fbsd-tdep.c (fbsd_gdb_signal_from_target)
+	* fbsd-tdep.c (fbsd_gdb_signal_from_target)
 	(fbsd_gdb_signal_to_target): New.
 	(fbsd_init_abi): Install gdbarch "signal_from_target" and
 	"signal_to_target" methods.
@@ -1069,7 +1069,7 @@
 2018-11-21  Benno Fünfstück  <benno.fuenfstueck@gmail.com>
 
 	PR python/23714
-	* gdb/python/python.c (execute_gdb_command): Call
+	* python/python.c (execute_gdb_command): Call
 	prevent_dont_repeat earlier to avoid affecting dont_repeat.
 
 2018-11-21  Andrew Burgess  <andrew.burgess@embecosm.com>
@@ -5038,7 +5038,7 @@
 2018-08-16  Gary Benson <gbenson@redhat.com>
 
 	PR gdb/13000:
-	* gdb/main.c (captured_main_1): Exit with nonzero status
+	* main.c (captured_main_1): Exit with nonzero status
 	in batch mode if the last command to be executed failed.
 	* NEWS: Mention the above.
 
@@ -7745,22 +7745,22 @@
 
 2018-06-29  Pedro Alves  <palves@redhat.com>
 
-	* gdb/amd64-tdep.h (amd64_create_target_description): Add
+	* amd64-tdep.h (amd64_create_target_description): Add
 	"segments" parameter.
-	* gdb/amd64-tdep.c (amd64_none_init_abi, amd64_x32_none_init_abi)
+	* amd64-tdep.c (amd64_none_init_abi, amd64_x32_none_init_abi)
 	(_initialize_amd64_tdep): Update call to
 	amd64_create_target_description.
 	(amd64_target_description): Add "segments" parameter.  Adjust
 	the implementation to use it.
-	* gdb/amd64-linux-tdep.c (amd64_linux_read_description): Update
+	* amd64-linux-tdep.c (amd64_linux_read_description): Update
 	call to amd64_create_target_description.
-	* gdb/amd64-windows-tdep.c (amd64_windows_init_abi): Likewise.
-	* gdb/arch/amd64.h (amd64_create_target_description): Add
+	* amd64-windows-tdep.c (amd64_windows_init_abi): Likewise.
+	* arch/amd64.h (amd64_create_target_description): Add
 	"segments" register.
-	* gdb/arch/amd64.c (amd64_create_target_description): Add
+	* arch/amd64.c (amd64_create_target_description): Add
 	"segments" parameter.  Call create_feature_i386_64bit_segments
 	only if SEGMENTS is true.
-	* gdb/gdbserver/win32-i386-low.c (i386_arch_setup): Update
+	* gdbserver/win32-i386-low.c (i386_arch_setup): Update
 	call to amd64_create_target_description.
 
 2018-06-29  Pedro Alves  <palves@redhat.com>
@@ -9239,7 +9239,7 @@
 2018-05-31  Alan Hayward  <alan.hayward@arm.com>
 
 	* Makefile.in: Add new header.
-	* gdb/arch/aarch64.h (sve_vg_from_vl): New macro.
+	* arch/aarch64.h (sve_vg_from_vl): New macro.
 	(sve_vl_from_vg): Likewise.
 	(sve_vq_from_vl): Likewise.
 	(sve_vl_from_vq): Likewise.
@@ -9262,7 +9262,6 @@
 	* arch/aarch64.c (aarch64_create_target_description): Check VQ.
 	* arch/aarch64.h (aarch64_create_target_description): Add VQ.
 	parmeter.
-	* doc/gdb.texinfo: Describe SVE feature
 	* features/aarch64-sve.c: New file.
 
 2018-05-31  Omair Javaid  <omair.javaid@linaro.org>
@@ -12316,7 +12315,7 @@
 2018-04-28  Dan Robertson  <danlrobertson89@gmail.com>
 
 	PR rust/23124
-	* gdb/rust-exp.y (convert_params_to_types): Ensure that the params
+	* rust-exp.y (convert_params_to_types): Ensure that the params
 	pointer is not null before dereferencing it.
 
 2018-04-30  Tom Tromey  <tom@tromey.com>
@@ -12455,7 +12454,7 @@
 2018-04-29  John Reiser  <jreiser@BitWagon.com>
 
 	PR build/22873
-	* gdb/Makefile.in: (.c:.l, .c:.y): Write the target only in the
+	* Makefile.in: (.c:.l, .c:.y): Write the target only in the
 	last step, and do it atomically.
 
 2018-04-27  Alexandre Oliva  <aoliva@redhat.com>
@@ -12690,13 +12689,6 @@
 
 	* configure: Rebuild.
 
-2018-04-22  Rajendra SY  <rajendra.sy@gmail.com>
-
-	PR gdb/23095
-	* gdb/testsuite/gdb.base/break-probes.exp: Pass shlib_load to
-	prepare_for_testing.  Set normal_bp to r_debug_state if target
-	is bsd.
-
 2018-04-21  Pedro Alves  <palves@redhat.com>
 	    Rajendra SY  <rajendra.sy@gmail.com>
 
@@ -12845,7 +12837,7 @@
 	(tdesc_add_bitfield): Likewise.
 	(tdesc_add_flag): Likewise.
 	(tdesc_add_enum_value): Likewise.
-	* gdb/target-descriptions.h (tdesc_create_enum): Likewise.
+	* target-descriptions.h (tdesc_create_enum): Likewise.
 	(tdesc_add_typed_bitfield): Likewise.
 	(tdesc_add_enum_value): Likewise.
 
@@ -14798,7 +14790,7 @@
 
 2018-02-26  Maciej W. Rozycki  <macro@mips.com>
 
-	* gdb/mips-tdep.c (mips_gdbarch_init): Reorder ABI determination
+	* mips-tdep.c (mips_gdbarch_init): Reorder ABI determination
 	ahead of target description loading.
 
 2018-02-26  Tom Tromey  <tom@tromey.com>
@@ -16416,7 +16408,7 @@
 
 2018-01-08  Samuel Thibault  <samuel.thibault@ens-lyon.org>
 
-	* gdb/gnu-nat.c: Include <elf.h> and <link.h>.
+	* gnu-nat.c: Include <elf.h> and <link.h>.
 	(gnu_xfer_auxv): New function.
 	(gnu_xfer_partial): Call gnu_xfer_auxv when `object' is
 	TARGET_OBJECT_AUXV.

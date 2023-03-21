@@ -1,5 +1,5 @@
 /* MI Command Set - MI Command Parser.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -20,7 +20,7 @@
 #ifndef MI_MI_PARSE_H
 #define MI_MI_PARSE_H
 
-#include "common/run-time-clock.h"
+#include "gdbsupport/run-time-clock.h"
 #include <chrono>
 #include "mi-cmds.h"  /* For enum print_values.  */
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for the Fujitsu FR-V, for GDB, the GNU Debugger.
 
-   Copyright (C) 2002-2019 Free Software Foundation, Inc.
+   Copyright (C) 2002-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,7 @@
 #include "dis-asm.h"
 #include "sim-regno.h"
 #include "gdb/sim-frv.h"
-#include "../opcodes/frv-desc.h"	/* for the H_SPR_... enums */
+#include "opcodes/frv-desc.h"	/* for the H_SPR_... enums */
 #include "symtab.h"
 #include "elf-bfd.h"
 #include "elf/frv.h"
@@ -524,7 +524,7 @@ frv_analyze_prologue (struct gdbarch *gdbarch, CORE_ADDR pc,
      J - The register number of GRj in the instruction description.
      K - The register number of GRk in the instruction description.
      I - The register number of GRi.
-     S - a signed imediate offset.
+     S - a signed immediate offset.
      U - an unsigned immediate offset.
 
      The dots below the numbers indicate where hex digit boundaries
@@ -1074,8 +1074,8 @@ frv_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
       s = lookup_minimal_symbol_by_pc (call_dest);
 
       if (s.minsym != NULL
-          && MSYMBOL_LINKAGE_NAME (s.minsym) != NULL
-	  && strcmp (MSYMBOL_LINKAGE_NAME (s.minsym), "__main") == 0)
+          && s.minsym->linkage_name () != NULL
+	  && strcmp (s.minsym->linkage_name (), "__main") == 0)
 	{
 	  pc += 4;
 	  return pc;
@@ -1240,7 +1240,7 @@ frv_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       arg = args[argnum];
       arg_type = check_typedef (value_type (arg));
       len = TYPE_LENGTH (arg_type);
-      typecode = TYPE_CODE (arg_type);
+      typecode = arg_type->code ();
 
       if (typecode == TYPE_CODE_STRUCT || typecode == TYPE_CODE_UNION)
 	{
@@ -1253,7 +1253,7 @@ frv_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       else if (abi == FRV_ABI_FDPIC
 	       && len == 4
                && typecode == TYPE_CODE_PTR
-               && TYPE_CODE (TYPE_TARGET_TYPE (arg_type)) == TYPE_CODE_FUNC)
+               && TYPE_TARGET_TYPE (arg_type)->code () == TYPE_CODE_FUNC)
 	{
 	  /* The FDPIC ABI requires function descriptors to be passed instead
 	     of entry points.  */
@@ -1345,9 +1345,9 @@ frv_return_value (struct gdbarch *gdbarch, struct value *function,
 		  struct type *valtype, struct regcache *regcache,
 		  gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  int struct_return = TYPE_CODE (valtype) == TYPE_CODE_STRUCT
-		      || TYPE_CODE (valtype) == TYPE_CODE_UNION
-		      || TYPE_CODE (valtype) == TYPE_CODE_ARRAY;
+  int struct_return = valtype->code () == TYPE_CODE_STRUCT
+		      || valtype->code () == TYPE_CODE_UNION
+		      || valtype->code () == TYPE_CODE_ARRAY;
 
   if (writebuf != NULL)
     {
@@ -1365,12 +1365,6 @@ frv_return_value (struct gdbarch *gdbarch, struct value *function,
     return RETURN_VALUE_STRUCT_CONVENTION;
   else
     return RETURN_VALUE_REGISTER_CONVENTION;
-}
-
-static CORE_ADDR
-frv_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, pc_regnum);
 }
 
 /* Given a GDB frame, determine the address of the calling function's
@@ -1438,24 +1432,6 @@ static const struct frame_base frv_frame_base = {
   frv_frame_base_address,
   frv_frame_base_address
 };
-
-static CORE_ADDR
-frv_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, sp_regnum);
-}
-
-
-/* Assuming THIS_FRAME is a dummy, return the frame ID of that dummy
-   frame.  The frame ID's base needs to match the TOS value saved by
-   save_dummy_frame_tos(), and the PC match the dummy frame's breakpoint.  */
-
-static struct frame_id
-frv_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  CORE_ADDR sp = get_frame_register_unsigned (this_frame, sp_regnum);
-  return frame_id_build (sp, get_frame_pc (this_frame));
-}
 
 static struct gdbarch *
 frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
@@ -1540,8 +1516,6 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_return_value (gdbarch, frv_return_value);
 
   /* Frame stuff.  */
-  set_gdbarch_unwind_pc (gdbarch, frv_unwind_pc);
-  set_gdbarch_unwind_sp (gdbarch, frv_unwind_sp);
   set_gdbarch_frame_align (gdbarch, frv_frame_align);
   frame_base_set_default (gdbarch, &frv_frame_base);
   /* We set the sniffer lower down after the OSABI hooks have been
@@ -1549,7 +1523,6 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Settings for calling functions in the inferior.  */
   set_gdbarch_push_dummy_call (gdbarch, frv_push_dummy_call);
-  set_gdbarch_dummy_id (gdbarch, frv_dummy_id);
 
   /* Settings that should be unnecessary.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
@@ -1600,8 +1573,9 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
+void _initialize_frv_tdep ();
 void
-_initialize_frv_tdep (void)
+_initialize_frv_tdep ()
 {
   register_gdbarch_init (bfd_arch_frv, frv_gdbarch_init);
 }

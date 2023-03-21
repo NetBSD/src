@@ -1,6 +1,6 @@
 /* Producer string parsers for GDB.
 
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,7 @@
 
 #include "defs.h"
 #include "producer.h"
-#include "common/selftest.h"
+#include "gdbsupport/selftest.h"
 
 /* See producer.h.  */
 
@@ -125,6 +125,15 @@ producer_is_icc (const char *producer, int *major, int *minor)
   return false;
 }
 
+/* See producer.h.  */
+
+bool
+producer_is_llvm (const char *producer)
+{
+  return ((producer != NULL) && (startswith (producer, "clang ")
+                                 || startswith (producer, " F90 Flang ")));
+}
+
 #if defined GDB_SELF_TEST
 namespace selftests {
 namespace producer {
@@ -203,11 +212,28 @@ Version 18.0 Beta";
     SELF_CHECK (producer_is_gcc (gnu_exp, &major, &minor)
 		&& major == 5 && minor == 0);
   }
+
+  {
+    static const char clang_llvm_exp[] = "clang version 12.0.0 (CLANG: bld#8)";
+    int major = 0, minor = 0;
+    SELF_CHECK (!producer_is_icc (clang_llvm_exp, NULL, NULL));
+    SELF_CHECK (!producer_is_gcc (clang_llvm_exp, &major, &minor));
+    SELF_CHECK (producer_is_llvm (clang_llvm_exp));
+  }
+
+  {
+    static const char flang_llvm_exp[] = " F90 Flang - 1.5 2017-05-01";
+    int major = 0, minor = 0;
+    SELF_CHECK (!producer_is_icc (flang_llvm_exp, NULL, NULL));
+    SELF_CHECK (!producer_is_gcc (flang_llvm_exp, &major, &minor));
+    SELF_CHECK (producer_is_llvm (flang_llvm_exp));
+  }
 }
 }
 }
 #endif
 
+void _initialize_producer ();
 void
 _initialize_producer ()
 {

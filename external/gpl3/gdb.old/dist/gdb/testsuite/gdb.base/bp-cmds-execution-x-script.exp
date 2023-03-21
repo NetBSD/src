@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,11 +12,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
-
-# Test that GDB isn't silent if it fails to remove a breakpoint from
-# the main program, independently of whether the program was loaded
-# with "file PROGRAM" or directly from the command line with "gdb
-# PROGRAM".
 
 # Test that execution commands in a GDB script file run through -x
 # work as expected.  Specifically, the scripts creates a breakpoint

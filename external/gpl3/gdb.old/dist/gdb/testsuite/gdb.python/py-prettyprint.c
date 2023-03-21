@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2019 Free Software Foundation, Inc.
+   Copyright 2008-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -175,6 +175,7 @@ struct container
   string name;
   int len;
   int *elements;
+  int is_map_p;
 };
 
 typedef struct container zzz_type;
@@ -195,6 +196,7 @@ make_container (const char *s)
   result.name = make_string (s);
   result.len = 0;
   result.elements = 0;
+  result.is_map_p = 0;
 
   return result;
 }
