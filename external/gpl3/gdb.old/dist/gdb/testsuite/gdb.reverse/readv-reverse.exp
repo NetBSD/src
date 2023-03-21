@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ gdb_test "reverse-continue" ".*$srcfile:$decimal.*" "reverse to marker1"
 # will be remembered.  If not, new contents ("NUXI") will be
 # used, and the test will fail.
 
-gdb_test "print (int)buf\[0]" ".* = 0" "check readv record"
-gdb_test "print (int)buf\[1]" ".* = 0" "check readv record"
-gdb_test "print (int)buf\[2]" ".* = 0" "check readv record"
-gdb_test "print (int)buf\[3]" ".* = 0" "check readv record"
+for { set i 0 } { $i < 4 } { incr i } {
+    gdb_test "print (int)buf\[$i]" ".* = 0" \
+	"check readv record for buf\[$i\]"
+}

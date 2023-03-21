@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1992-2019 Free Software Foundation, Inc.
+# Copyright 1992-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -127,15 +127,15 @@ proc test_float_accepted {} {
     gdb_test "p 1.5l" " = 1.5"
 
     # Test hexadecimal floating point.
-    set test "p 0x1.1"
-    gdb_test_multiple $test $test {
-	-re " = 1\\.0625\r\n$gdb_prompt $" {
-	    pass $test
-	}
-	-re "Invalid number \"0x1\\.1\"\\.\r\n$gdb_prompt $" {
-	    # Older glibc does not support hex float, newer does.
-	    xfail $test
-	}
+    foreach {num result} {
+	0x1.1 1.0625
+	0x1.8480000000000p+6 97.125
+	0x1.8480000000000p6 97.125
+	0x00.1p0 0.0625
+	0x00.1p1 0.125
+	0x00.1p-1 0.03125
+    } {
+	gdb_test "p $num" " = [string_to_regexp $result]"
     }
 }
 
@@ -438,7 +438,7 @@ proc test_print_repeats_10 {} {
     global gdb_prompt decimal
 
     for { set x 1 } { $x <= 16 } { incr x } {
-	gdb_test_no_output "set print elements $x"
+	gdb_test_no_output "set print elements $x" "elements $x repeats"
 	for { set e 1 } { $e <= 16 } {incr e } {
 	    set v [expr $e - 1]
 	    set command "p &ctable2\[${v}*16\]"
@@ -519,6 +519,9 @@ proc test_print_strings {} {
     gdb_test "p teststring" \
 	" = (.unsigned char .. )?\"teststring contents\"" "p teststring with elements set to 20"
 
+    gdb_test "print teststring2" \
+	" = \\(charptr\\) \"more contents\""
+
     gdb_test_no_output "set print elements 8"
 
     # Set the target-charset to ASCII, because the output varies from
@@ -596,7 +599,7 @@ proc test_print_strings {} {
 proc test_print_int_arrays {} {
     global gdb_prompt
 
-    gdb_test_no_output "set print elements 24"
+    gdb_test_no_output "set print elements 24" "elements 24 int arrays"
 
     gdb_test_escape_braces "p int1dim" \
 	" = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}"
@@ -621,7 +624,7 @@ proc test_print_int_arrays {} {
 proc test_print_typedef_arrays {} {
     global gdb_prompt
 
-    gdb_test_no_output "set print elements 24"
+    gdb_test_no_output "set print elements 24" "elements 24 typedef_arrays"
 
     gdb_test_escape_braces "p a1" \
 	" = {2, 4, 6, 8, 10, 12, 14, 16, 18, 20}"
@@ -653,9 +656,9 @@ proc test_artificial_arrays {} {
     gdb_test_escape_braces "p int1dim\[0\]${ctrlv}@2${ctrlv}@3" \
 	"({{0, 1}, {2, 3}, {4, 5}}|\[Cc\]annot.*)" \
 	{p int1dim[0]@2@3}
-    gdb_test_escape_braces "p int1dim\[0\]${ctrlv}@TWO" " = {0, 1}" \
+    gdb_test_escape_braces "p int1dim\[0\]${ctrlv}@FE_TWO" " = {0, 1}" \
         {p int1dim[0]@TWO}
-    gdb_test_escape_braces "p int1dim\[0\]${ctrlv}@TWO${ctrlv}@three" \
+    gdb_test_escape_braces "p int1dim\[0\]${ctrlv}@FE_TWO${ctrlv}@three" \
 	"({{0, 1}, {2, 3}, {4, 5}}|\[Cc\]annot.*)" \
 	{p int1dim[0]@TWO@three}
     gdb_test_escape_braces {p/x (short [])0x12345678} \
@@ -666,7 +669,7 @@ proc test_print_char_arrays {} {
     global gdb_prompt
     global hex decimal
 
-    gdb_test_no_output "set print elements 24"
+    gdb_test_no_output "set print elements 24" "elements 24 char_arrays"
     gdb_test_no_output "set print address on"
 
     gdb_test "p arrays" \
@@ -684,7 +687,7 @@ proc test_print_char_arrays {} {
     gdb_test "p parrays->array5"	" = \"hij\""
     gdb_test "p &parrays->array5"	" = \\(unsigned char \\(\\*\\)\\\[4\\\]\\) $hex <arrays\\+$decimal>"
 
-    gdb_test_no_output "set print address off"
+    gdb_test_no_output "set print address off" "address off char arrays"
 }
 
 proc test_print_string_constants {} {
@@ -736,7 +739,21 @@ proc test_print_enums {} {
     # Regression test for PR11827.
     gdb_test "print some_volatile_enum" "enumvolval1"
 
-    gdb_test "print three" " = \\\(ONE \\| TWO\\\)"
+    # Print a flag enum.
+    gdb_test "print three" [string_to_regexp " = (FE_ONE | FE_TWO)"]
+
+    # Print a flag enum with value 0, where an enumerator has value 0.
+    gdb_test "print (enum flag_enum) 0x0" [string_to_regexp " = FE_NONE"]
+
+    # Print a flag enum with value 0, where no enumerator has value 0.
+    gdb_test "print flag_enum_without_zero" [string_to_regexp " = 0"]
+
+    # Print a flag enum with unknown bits set.
+    gdb_test "print (enum flag_enum) 0xf1" [string_to_regexp " = (FE_ONE | unknown: 0xf0)"]
+
+    # Test printing an enum not considered a "flag enum" (because one of its
+    # enumerators has multiple bits set).
+    gdb_test "print three_not_flag" [string_to_regexp " = 3"]
 }
 
 proc test_printf {} {
@@ -932,6 +949,43 @@ proc test_repeat_bytes {} {
     }
 }
 
+# Test printf of convenience variables.
+# These tests can be done with or without a running inferior.
+# PREFIX ensures uniqueness of test names.
+
+proc test_printf_convenience_var {prefix} {
+
+    with_test_prefix "conv var: $prefix" {
+	gdb_test_no_output "set var \$cstr = \"abcde\"" "set \$cstr"
+	gdb_test "printf \"cstr val = %s\\n\", \$cstr" "cstr val = abcde" \
+	    "printf \$cstr"
+	gdb_test_no_output "set var \$abcde = \"ABCDE\"" "set \$abcde"
+	gdb_test "eval \"print \$%s\\n\", \$cstr" "= \"ABCDE\"" \
+	    "indirect print abcde"
+	# Without a target, the below produces no output
+	# but with a target, it gives a warning.
+	# So, use gdb_test expecting ".*" instead of gdb_test_no_output.
+	gdb_test "set language ada" ".*"
+	gdb_test_no_output "set var \$astr := \"fghij\"" "set \$astr"
+	gdb_test "printf \"astr val = %s\\n\", \$astr" "astr val = fghij" \
+	    "printf \$astr"
+	gdb_test_no_output "set language auto" "set language auto"
+	gdb_test "printf \"astr val = %s\\n\", \$astr" "astr val = fghij" \
+	    "printf \$astr, auto language"
+	# Wide strings can only be created when wchar_t type is known.
+	# Switch to c++ for the wide strings tests, as wchar_t is predefined
+	# when current language is c++.
+	# See above "set language ada" about why we use gdb_test.
+	gdb_test "set language c++" ".*"
+	gdb_test_no_output "set var \$wstr = L\"facile\"" \
+	    "set \$wstr"
+	gdb_test "printf \"wstr val = %ls\\n\", \$wstr" \
+	    "wstr val = facile" "printf \$wstr"
+	gdb_test_no_output "set language auto" "set language auto, wstring"
+    }
+}
+
+
 # Start with a fresh gdb.
 
 gdb_exit
@@ -947,6 +1001,9 @@ gdb_test "print sizeof (\"abc\")" " = 4"
 gdb_test "ptype \"abc\"" " = char \\\[4\\\]"
 gdb_test "print \$cvar = \"abc\"" " = \"abc\""
 gdb_test "print sizeof (\$cvar)" " = 4"
+
+# Similarly, printf of a string convenience var should work without a target.
+test_printf_convenience_var "no target"
 
 # GDB used to complete the explicit location options even when
 # printing expressions.
@@ -976,6 +1033,22 @@ if ![runto_main] then {
     fail "can't run to main"
     return 0
 }
+
+# With a running target, printf convenience vars should of course work.
+test_printf_convenience_var "with target"
+
+# It should also work when inferior function calls are forbidden.
+gdb_test_no_output "set may-call-functions off"
+test_printf_convenience_var "with target, may-call-functions off"
+gdb_test_no_output "set may-call-functions on"
+
+# Test printf of a variable that holds the address to a substring in
+# the inferior.  This test will not work without a target.
+gdb_test_no_output "set var \$test_substr = \(char \*\) \(&teststring\[0\] + 4\)" \
+    "set \$test_substr var"
+gdb_test "printf \"test_substr val = %s\\n\", \$test_substr" \
+    "test_substr val = string contents" \
+    "print \$test_substr"
 
 test_integer_literals_accepted
 test_integer_literals_rejected

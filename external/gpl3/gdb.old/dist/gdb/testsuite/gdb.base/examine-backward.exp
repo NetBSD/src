@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -132,7 +132,7 @@ with_test_prefix "address zero boundary" {
 
     set test "examine 3 bytes backward from ${address_zero}"
     gdb_test_multiple "x/-3x ${address_zero}" "$test" {
-	-re "0x\[0-9a-f\]+fd.*:${byte}${byte}${byte}${byte}${byte}${byte}.*\[\r\n\]*$gdb_prompt $" {
+	-re "0x\[0-9a-f\]+fd.*:${byte}${byte}${byte}.*\[\r\n\]*$gdb_prompt $" {
 	    pass $test
 	}
 	-re "0x\[0-9a-f\]+fd.*:\tCannot access memory at address 0x\[0-9a-f\]+fd.*\[\r\n\]*$gdb_prompt $" {

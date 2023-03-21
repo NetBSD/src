@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2019 Free Software Foundation, Inc.
+   Copyright 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -144,9 +144,10 @@ typedef enum {
 #include "sim-bits.h"
 #include "sim-endian.h"
 #include "sim-signal.h"
-#include "sim-arange.h"
 
 #include "sim-utils.h"
+
+#include "libiberty.h"
 
 /* Note: Only the simpler interfaces are defined here.  More heavy
    weight objects, such as core and events, are defined in the more

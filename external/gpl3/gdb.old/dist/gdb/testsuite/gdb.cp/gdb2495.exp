@@ -1,4 +1,4 @@
-# Copyright 2009-2019 Free Software Foundation, Inc.
+# Copyright 2009-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,11 +36,6 @@ if { [skip_cplus_tests] } { continue }
 if [target_info exists gdb,nosignals] {
     verbose "Skipping gdb2495.exp because of nosignals."
     continue
-}
-
-# On SPU this test fails because the executable exceeds local storage size.
-if { [istarget "spu*-*-*"] } {
-        return 0
 }
 
 standard_testfile .cc

@@ -1,6 +1,6 @@
 /* Simulator system call support.
 
-   Copyright 2002-2019 Free Software Foundation, Inc.
+   Copyright 2002-2020 Free Software Foundation, Inc.
 
    This file is part of simulators.
 

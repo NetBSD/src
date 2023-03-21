@@ -1,5 +1,5 @@
 /* MI Command Set - catch commands.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    Contributed by Intel Corporation.
 
@@ -286,5 +286,76 @@ void
 mi_cmd_catch_unload (const char *cmd, char *argv[], int argc)
 {
   mi_catch_load_unload (0, argv, argc);
+}
+
+/* Core handler for -catch-throw, -catch-rethrow, and -catch-catch
+   commands.  The argument handling for all of these is identical, we just
+   pass KIND through to GDB's core to select the correct event type.  */
+
+static void
+mi_cmd_catch_exception_event (enum exception_event_kind kind,
+			      const char *cmd, char *argv[], int argc)
+{
+  char *regex = NULL;
+  bool temp = false;
+  int oind = 0;
+  char *oarg;
+  enum opt
+    {
+      OPT_TEMP,
+      OPT_REGEX,
+    };
+  static const struct mi_opt opts[] =
+    {
+      { "t", OPT_TEMP, 0 },
+      { "r", OPT_REGEX, 1 },
+      { 0, 0, 0 }
+    };
+
+  for (;;)
+    {
+      int opt = mi_getopt (cmd, argc, argv, opts,
+                           &oind, &oarg);
+
+      if (opt < 0)
+        break;
+
+      switch ((enum opt) opt)
+        {
+        case OPT_TEMP:
+          temp = true;
+          break;
+        case OPT_REGEX:
+	  regex = oarg;
+          break;
+        }
+    }
+
+  scoped_restore restore_breakpoint_reporting = setup_breakpoint_reporting ();
+  catch_exception_event (kind, regex, temp, 0 /* from_tty */);
+}
+
+/* Handler for -catch-throw.  */
+
+void
+mi_cmd_catch_throw (const char *cmd, char *argv[], int argc)
+{
+  mi_cmd_catch_exception_event (EX_EVENT_THROW, cmd, argv, argc);
+}
+
+/* Handler for -catch-rethrow.  */
+
+void
+mi_cmd_catch_rethrow (const char *cmd, char *argv[], int argc)
+{
+  mi_cmd_catch_exception_event (EX_EVENT_RETHROW, cmd, argv, argc);
+}
+
+/* Handler for -catch-catch.  */
+
+void
+mi_cmd_catch_catch (const char *cmd, char *argv[], int argc)
+{
+  mi_cmd_catch_exception_event (EX_EVENT_CATCH, cmd, argv, argc);
 }
 

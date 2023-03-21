@@ -1,5 +1,5 @@
 /* V850-specific support for 32-bit ELF
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,6 +29,7 @@
 #include "elf-bfd.h"
 #include "elf/v850.h"
 #include "libiberty.h"
+#include "elf32-v850.h"
 
 /* Sign-extend a 17-bit number.  */
 #define SEXT17(x)	((((x) & 0x1ffff) ^ 0x10000) - 0x10000)
@@ -101,9 +102,7 @@ v850_elf_check_relocs (bfd *abfd,
 	/* This relocation describes which C++ vtable entries
 	   are actually used.  Record for later use during GC.  */
 	case R_V850_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 
@@ -179,12 +178,12 @@ v850_elf_check_relocs (bfd *abfd,
 
 	  if (h && h->root.type == bfd_link_hash_common
 	      && h->root.u.c.p
-	      && !strcmp (bfd_get_section_name (abfd, h->root.u.c.p->section), "COMMON"))
+	      && !strcmp (bfd_section_name (h->root.u.c.p->section), "COMMON"))
 	    {
 	      asection * section;
 
 	      section = h->root.u.c.p->section = bfd_make_section_old_way (abfd, common);
-	      section->flags |= SEC_IS_COMMON;
+	      section->flags |= SEC_IS_COMMON | SEC_SMALL_DATA;
 	    }
 
 #ifdef DEBUG
@@ -231,7 +230,7 @@ static void
 remember_hi16s_reloc (bfd *abfd, bfd_vma addend, bfd_byte *address)
 {
   hi16s_location * entry = NULL;
-  bfd_size_type amt = sizeof (* free_hi16s);
+  size_t amt = sizeof (* free_hi16s);
 
   /* Find a free structure.  */
   if (free_hi16s == NULL)
@@ -2271,7 +2270,7 @@ v850_elf_relocate_section (bfd *output_bfd,
 	      name = (bfd_elf_string_from_elf_section
 		      (input_bfd, symtab_hdr->sh_link, sym->st_name));
 	      if (name == NULL || *name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  switch ((int) r)
@@ -2374,11 +2373,11 @@ v850_elf_make_note_section (bfd * abfd)
   if (s == NULL)
     return NULL;
 
-  if (!bfd_set_section_alignment (abfd, s, 2))
+  if (!bfd_set_section_alignment (s, 2))
     return NULL;
 
   /* Allocate space for all known notes.  */
-  if (!bfd_set_section_size (abfd, s, NUM_V850_NOTES * SIZEOF_V850_NOTE))
+  if (!bfd_set_section_size (s, NUM_V850_NOTES * SIZEOF_V850_NOTE))
     return NULL;
 
   data = bfd_zalloc (abfd, NUM_V850_NOTES * SIZEOF_V850_NOTE);
@@ -2445,7 +2444,7 @@ v850_elf_copy_notes (bfd *ibfd, bfd *obfd)
   if ((inotes = bfd_get_section_by_name (ibfd, V850_NOTE_SECNAME)) == NULL)
     return;
 
-  if (bfd_section_size (ibfd, inotes) == bfd_section_size (obfd, onotes))
+  if (bfd_section_size (inotes) == bfd_section_size (onotes))
     {
       bfd_byte * icont;
       bfd_byte * ocont;
@@ -2459,7 +2458,7 @@ v850_elf_copy_notes (bfd *ibfd, bfd *obfd)
 	return;
 
       /* Copy/overwrite notes from the input to the output.  */
-      memcpy (ocont, icont, bfd_section_size (obfd, onotes));
+      memcpy (ocont, icont, bfd_section_size (onotes));
     }
 }
 
@@ -2492,7 +2491,7 @@ v850_elf_merge_notes (bfd * ibfd, bfd *obfd)
       bfd_byte * icont;
       bfd_byte * ocont;
 
-      BFD_ASSERT (bfd_section_size (ibfd, inotes) == bfd_section_size (obfd, onotes));
+      BFD_ASSERT (bfd_section_size (inotes) == bfd_section_size (onotes));
 
       if ((icont = elf_section_data (inotes)->this_hdr.contents) == NULL)
 	BFD_ASSERT (bfd_malloc_and_get_section (ibfd, inotes, & icont));
@@ -2674,7 +2673,7 @@ v850_elf_print_notes (bfd * abfd, FILE * file)
   if (notes == NULL || notes->contents == NULL)
     return;
 
-  BFD_ASSERT (bfd_section_size (abfd, notes) == NUM_V850_NOTES * SIZEOF_V850_NOTE);
+  BFD_ASSERT (bfd_section_size (notes) == NUM_V850_NOTES * SIZEOF_V850_NOTE);
 
   for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)
     print_v850_note (abfd, file, notes->contents, id);
@@ -2720,9 +2719,8 @@ v850_elf_object_p (bfd *abfd)
 
 /* Store the machine number in the flags field.  */
 
-static void
-v850_elf_final_write_processing (bfd *abfd,
-				 bfd_boolean linker ATTRIBUTE_UNUSED)
+static bfd_boolean
+v850_elf_final_write_processing (bfd *abfd)
 {
   unsigned long val;
 
@@ -2752,6 +2750,7 @@ v850_elf_final_write_processing (bfd *abfd,
     default:
       break;
     }
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 /* Function to keep V850 specific file flags.  */
@@ -2948,11 +2947,11 @@ v850_elf_section_from_bfd_section (bfd *abfd ATTRIBUTE_UNUSED,
 				   asection *sec,
 				   int *retval)
 {
-  if (strcmp (bfd_get_section_name (abfd, sec), ".scommon") == 0)
+  if (strcmp (bfd_section_name (sec), ".scommon") == 0)
     *retval = SHN_V850_SCOMMON;
-  else if (strcmp (bfd_get_section_name (abfd, sec), ".tcommon") == 0)
+  else if (strcmp (bfd_section_name (sec), ".tcommon") == 0)
     *retval = SHN_V850_TCOMMON;
-  else if (strcmp (bfd_get_section_name (abfd, sec), ".zcommon") == 0)
+  else if (strcmp (bfd_section_name (sec), ".zcommon") == 0)
     *retval = SHN_V850_ZCOMMON;
   else
     return FALSE;
@@ -3002,7 +3001,8 @@ v850_elf_symbol_processing (bfd *abfd, asymbol *asym)
 	{
 	  /* Initialize the small common section.  */
 	  v850_elf_scom_section.name	       = ".scommon";
-	  v850_elf_scom_section.flags	       = SEC_IS_COMMON | SEC_ALLOC | SEC_DATA;
+	  v850_elf_scom_section.flags
+	    = SEC_IS_COMMON | SEC_SMALL_DATA | SEC_ALLOC | SEC_DATA;
 	  v850_elf_scom_section.output_section = & v850_elf_scom_section;
 	  v850_elf_scom_section.symbol	       = & v850_elf_scom_symbol;
 	  v850_elf_scom_section.symbol_ptr_ptr = & v850_elf_scom_symbol_ptr;
@@ -3020,7 +3020,7 @@ v850_elf_symbol_processing (bfd *abfd, asymbol *asym)
 	{
 	  /* Initialize the tcommon section.  */
 	  v850_elf_tcom_section.name	       = ".tcommon";
-	  v850_elf_tcom_section.flags	       = SEC_IS_COMMON;
+	  v850_elf_tcom_section.flags	       = SEC_IS_COMMON | SEC_SMALL_DATA;
 	  v850_elf_tcom_section.output_section = & v850_elf_tcom_section;
 	  v850_elf_tcom_section.symbol	       = & v850_elf_tcom_symbol;
 	  v850_elf_tcom_section.symbol_ptr_ptr = & v850_elf_tcom_symbol_ptr;
@@ -3038,7 +3038,7 @@ v850_elf_symbol_processing (bfd *abfd, asymbol *asym)
 	{
 	  /* Initialize the zcommon section.  */
 	  v850_elf_zcom_section.name	       = ".zcommon";
-	  v850_elf_zcom_section.flags	       = SEC_IS_COMMON;
+	  v850_elf_zcom_section.flags	       = SEC_IS_COMMON | SEC_SMALL_DATA;
 	  v850_elf_zcom_section.output_section = & v850_elf_zcom_section;
 	  v850_elf_zcom_section.symbol	       = & v850_elf_zcom_symbol;
 	  v850_elf_zcom_section.symbol_ptr_ptr = & v850_elf_zcom_symbol_ptr;
@@ -3096,19 +3096,19 @@ v850_elf_add_symbol_hook (bfd *abfd,
     {
     case SHN_V850_SCOMMON:
       *secp = bfd_make_section_old_way (abfd, ".scommon");
-      (*secp)->flags |= SEC_IS_COMMON;
+      (*secp)->flags |= SEC_IS_COMMON | SEC_SMALL_DATA;
       *valp = sym->st_size;
       break;
 
     case SHN_V850_TCOMMON:
       *secp = bfd_make_section_old_way (abfd, ".tcommon");
-      (*secp)->flags |= SEC_IS_COMMON;
+      (*secp)->flags |= SEC_IS_COMMON | SEC_SMALL_DATA;
       *valp = sym->st_size;
       break;
 
     case SHN_V850_ZCOMMON:
       *secp = bfd_make_section_old_way (abfd, ".zcommon");
-      (*secp)->flags |= SEC_IS_COMMON;
+      (*secp)->flags |= SEC_IS_COMMON | SEC_SMALL_DATA;
       *valp = sym->st_size;
       break;
     }
@@ -3152,6 +3152,8 @@ v850_elf_section_from_shdr (bfd *abfd,
 			    const char *name,
 			    int shindex)
 {
+  flagword flags;
+
   /* There ought to be a place to keep ELF backend specific flags, but
      at the moment there isn't one.  We just keep track of the
      sections by their name, instead.  */
@@ -3159,19 +3161,21 @@ v850_elf_section_from_shdr (bfd *abfd,
   if (! _bfd_elf_make_section_from_shdr (abfd, hdr, name, shindex))
     return FALSE;
 
+  flags = 0;
   switch (hdr->sh_type)
     {
     case SHT_V850_SCOMMON:
     case SHT_V850_TCOMMON:
     case SHT_V850_ZCOMMON:
-      if (! bfd_set_section_flags (abfd, hdr->bfd_section,
-				   (bfd_get_section_flags (abfd,
-							   hdr->bfd_section)
-				    | SEC_IS_COMMON)))
-	return FALSE;
+      flags = SEC_IS_COMMON;
     }
 
-  return TRUE;
+  if ((hdr->sh_flags & SHF_V850_GPREL) != 0)
+    flags |= SEC_SMALL_DATA;
+
+  return (flags == 0
+	  || bfd_set_section_flags (hdr->bfd_section,
+				    hdr->bfd_section->flags | flags));
 }
 
 /* Set the correct type for a V850 ELF section.  We do this
@@ -3184,7 +3188,7 @@ v850_elf_fake_sections (bfd *abfd ATTRIBUTE_UNUSED,
 {
   const char * name;
 
-  name = bfd_get_section_name (abfd, sec);
+  name = bfd_section_name (sec);
 
   if (strcmp (name, ".scommon") == 0)
     hdr->sh_type = SHT_V850_SCOMMON;
@@ -3839,7 +3843,7 @@ v850_elf_relax_section (bfd *abfd,
 		  if (no_match < 0
 		      && ((insn[2] & JMP_R_MASK) != JMP_R
 			   || MOVEA_R2 (insn[1]) != JMP_R1 (insn[2])))
-		    no_match = 4;
+		    no_match = 2;
 		}
 	      else
 		{
@@ -4090,16 +4094,13 @@ v850_elf_relax_section (bfd *abfd,
     }
 
  finish:
-  if (internal_relocs != NULL
-      && elf_section_data (sec)->relocs != internal_relocs)
+  if (elf_section_data (sec)->relocs != internal_relocs)
     free (internal_relocs);
 
-  if (contents != NULL
-      && elf_section_data (sec)->this_hdr.contents != (unsigned char *) contents)
+  if (elf_section_data (sec)->this_hdr.contents != (unsigned char *) contents)
     free (contents);
 
-  if (isymbuf != NULL
-      && symtab_hdr->contents != (bfd_byte *) isymbuf)
+  if (symtab_hdr->contents != (bfd_byte *) isymbuf)
     free (isymbuf);
 
   return result;

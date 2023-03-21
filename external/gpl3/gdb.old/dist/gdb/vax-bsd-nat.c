@@ -1,6 +1,6 @@
 /* Native-dependent code for modern VAX BSD's.
 
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,9 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef _KERNTYPES
-#define _KERNTYPES
-#endif
+/* We define this to get types like register_t.  */
 #include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
@@ -31,14 +29,9 @@
 
 #include "vax-tdep.h"
 #include "inf-ptrace.h"
-
-#ifdef __NetBSD__
 #include "nbsd-nat.h"
-struct vax_bsd_nat_target final : public nbsd_nat_target
-#else
-struct vax_bsd_nat_target final : public inf_ptrace_target
-#endif
 
+struct vax_bsd_nat_target final : public nbsd_nat_target
 {
   void fetch_registers (struct regcache *, int) override;
   void store_registers (struct regcache *, int) override;
@@ -83,11 +76,10 @@ void
 vax_bsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 {
   struct reg regs;
-  ptid_t ptid = regcache->ptid ();
-  pid_t pid = ptid.pid ();
-  int lwp = ptid.lwp ();
+  pid_t pid = regcache->ptid ().pid ();
+  int lwp = regcache->ptid ().lwp ();
 
-  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  lwp) == -1)
+  if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   vaxbsd_supply_gregset (regcache, &regs);
@@ -100,16 +92,15 @@ void
 vax_bsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 {
   struct reg regs;
-  ptid_t ptid = regcache->ptid ();
-  pid_t pid = ptid.pid ();
-  int lwp = ptid.lwp ();
+  pid_t pid = regcache->ptid ().pid ();
+  int lwp = regcache->ptid ().lwp ();
 
   if (ptrace (PT_GETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
     perror_with_name (_("Couldn't get registers"));
 
   vaxbsd_collect_gregset (regcache, &regs, regnum);
 
-  if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs,  lwp) == -1)
+  if (ptrace (PT_SETREGS, pid, (PTRACE_TYPE_ARG3) &regs, lwp) == -1)
     perror_with_name (_("Couldn't write registers"));
 }
 
@@ -145,8 +136,9 @@ vaxbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   return 1;
 }
 
+void _initialize_vaxbsd_nat ();
 void
-_initialize_vaxbsd_nat (void)
+_initialize_vaxbsd_nat ()
 {
   add_inf_child_target (&the_vax_bsd_nat_target);
 

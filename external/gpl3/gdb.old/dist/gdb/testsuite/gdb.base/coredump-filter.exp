@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,14 +80,25 @@ proc do_load_and_test_core { core var working_var working_value dump_excluded } 
 # disassemble of a function (i.e., the binary's .text section).  GDB
 # should fail in this case.  However, it must succeed if the binary is
 # provided along with the corefile.  This is what we test here.
+#
+# A further complication is that Linux NT_FILE notes are now read from
+# the corefile.  This note allows GDB to find the binary for file
+# backed mappings even though the binary wasn't loaded by GDB in the
+# conventional manner.  In order to see the expected failure for this
+# case, we rename the binary in order to perform this test.
 
 proc test_disasm { core address should_fail } {
-    global testfile hex
+    global testfile hex binfile
 
     # Restart GDB without loading the binary.
     with_test_prefix "no binary" {
 	gdb_exit
 	gdb_start
+
+	set hide_binfile [standard_output_file "${testfile}.hide"]
+	if { $should_fail == 1 } {
+	    remote_exec host "mv -f $binfile $hide_binfile"
+	}
 
 	set core_loaded [gdb_core_cmd "$core" "load core"]
 	if { $core_loaded == -1 } {
@@ -96,6 +107,7 @@ proc test_disasm { core address should_fail } {
 	}
 
 	if { $should_fail == 1 } {
+	    remote_exec host "mv -f $hide_binfile $binfile"
 	    gdb_test "x/i \$pc" "=> $hex:\tCannot access memory at address $hex" \
 		"disassemble function with corefile and without a binary"
 	} else {
@@ -225,5 +237,9 @@ foreach item $all_anon_corefiles {
 }
 
 with_test_prefix "loading and testing corefile for non-Private-Shared-Anon-File" {
+    test_disasm $non_private_shared_anon_file_core $main_addr 0
+}
+
+with_test_prefix "loading and testing corefile for non-Private-Shared-Anon-File with renamed binary" {
     test_disasm $non_private_shared_anon_file_core $main_addr 1
 }

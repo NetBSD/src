@@ -1,4 +1,4 @@
-# Copyright (c) 2016-2019 Free Software Foundation, Inc.
+# Copyright (c) 2016-2020 Free Software Foundation, Inc.
 #
 # Originally based on the AX_CXX_COMPILE_STDCXX macro found at the url
 # below.

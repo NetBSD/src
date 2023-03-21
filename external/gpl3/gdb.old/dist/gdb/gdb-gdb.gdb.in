@@ -7,9 +7,12 @@ if !$gdb_init_done
 
   b internal_error
 
+  # This provides an easy way to break into the top-level GDB by
+  # typing "info".
   b info_command
   commands
     silent
+    # This avoids the voluminous output of "info".
     return
   end
 

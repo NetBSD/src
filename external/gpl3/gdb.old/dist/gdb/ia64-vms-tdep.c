@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenVMS IA-64.
 
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include "osabi.h"
 #include "gdbtypes.h"
 #include "gdbcore.h"
+#include "gdbarch.h"
 
 #ifdef HAVE_LIBUNWIND_IA64_H
 
@@ -152,8 +153,9 @@ ia64_openvms_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 #endif
 }
 
+void _initialize_ia64_vms_tdep ();
 void
-_initialize_ia64_vms_tdep (void)
+_initialize_ia64_vms_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_ia64, 0, GDB_OSABI_OPENVMS,
 			  ia64_openvms_init_abi);

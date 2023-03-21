@@ -2231,9 +2231,9 @@
 
 2003-10-17  Shrinivas Atre  <shrinivasa@KPITCummins.com>
 
-	* gdb/config/h8300/tm-h8300.h (h8300_normal_mode): Add external
+	* config/h8300/tm-h8300.h (h8300_normal_mode): Add external
 	declaration.
-	* gdb/h8300-tdep.c (BINWORD): Update BINWORD for h8300_normal_mode
+	* h8300-tdep.c (BINWORD): Update BINWORD for h8300_normal_mode
         (h8300_examine_prologue): Use h8300_normal_mode flag
         (h8300_gdbarch_init): Set architecture info for normal mode
 
@@ -7899,7 +7899,7 @@ Fri Aug  8 00:28:38 UTC 2003  Brendan Conoboy  <blc@redhat.com>
 
 2003-06-07  Adam Fedor  <fedor@gnu.org>
 
-	* gdb/objc-lang.c (FETCH_ARGUMENT): Remove macro.
+	* objc-lang.c (FETCH_ARGUMENT): Remove macro.
 	(OBJC_FETCH_POINTER_ARGUMENT): Shorthand macro for
 	using FETCH_POINTER_ARGUMENT with Objective-C method arguments.
 	(find_implementation, resolve_msgsend, resolve_msgsend_stret,
@@ -11239,7 +11239,7 @@ Fri Aug  8 00:28:38 UTC 2003  Brendan Conoboy  <blc@redhat.com>
 
 2003-04-01  Adam Fedor  <fedor@gnu.org>
 
-	* gdb/objc-lang.c (selectors_info): Replace calls to
+	* objc-lang.c (selectors_info): Replace calls to
 	SYMBOL_DEMANGLED_NAME and DEPRECATED_SYMBOL_NAME with
 	SYMBOL_NATURAL_NAME.
 	(classes_info, find_methods): Likewise.
@@ -14236,7 +14236,7 @@ Fri Aug  8 00:28:38 UTC 2003  Brendan Conoboy  <blc@redhat.com>
 
 	2002-04-02  Elena Zannoni  <ezannoni@redhat.com>
 
-		* gdb/sh-tdep.c (sh_sh2e_register_name): New.
+		* sh-tdep.c (sh_sh2e_register_name): New.
 		(sh2e_show_regs): New.
 		(sh_gdbarch_init): Handle bfd_mach_sh2e.
 		* config/sh/tm-sh.h: Added sh2e to comments.

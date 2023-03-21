@@ -1,6 +1,6 @@
 /*  Run function for the micromips simulator
 
-    Copyright (C) 2005-2019 Free Software Foundation, Inc.
+    Copyright (C) 2005-2020 Free Software Foundation, Inc.
     Contributed by Imagination Technologies, Ltd.
     Written by Andrew Bennett <andrew.bennett@imgtec.com>.
 

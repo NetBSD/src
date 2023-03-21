@@ -1,6 +1,6 @@
 /* Guile interface to program spaces.
 
-   Copyright (C) 2010-2019 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -353,17 +353,16 @@ gdbscm_current_progspace (void)
 static SCM
 gdbscm_progspaces (void)
 {
-  struct program_space *ps;
   SCM result;
 
   result = SCM_EOL;
 
-  ALL_PSPACES (ps)
-  {
-    SCM item = psscm_scm_from_pspace (ps);
+  for (struct program_space *ps : program_spaces)
+    {
+      SCM item = psscm_scm_from_pspace (ps);
 
-    result = scm_cons (item, result);
-  }
+      result = scm_cons (item, result);
+    }
 
   return scm_reverse_x (result, SCM_EOL);
 }

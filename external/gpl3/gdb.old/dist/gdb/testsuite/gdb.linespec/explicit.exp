@@ -1,4 +1,4 @@
-# Copyright 2012-2019 Free Software Foundation, Inc.
+# Copyright 2012-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -104,8 +104,10 @@ namespace eval $testfile {
 
 	# Test abbreviations
 	set short [string range $arg 0 3]
-	gdb_test "break -$short" \
-	    [string_to_regexp "missing argument for \"-$short\""]
+	if { $arg != $short } {
+	    gdb_test "break -$short" \
+		[string_to_regexp "missing argument for \"-$short\""]
+	}
     }
 
     # Test invalid arguments
@@ -237,24 +239,29 @@ namespace eval $testfile {
 
 	set tst "complete non-unique file name"
 	send_gdb "break -source exp\t"
+	# We're matching two cases here:
+	# - without GLIBC debuginfo
+	#   (gdb) break -source exp^Glicit^G^M
+	#   explicit.c  explicit2.c  ^M
+	#   (gdb) break -source explicit^M
+	#   Source filename requires function, label, or line offset.^M
+	#   (gdb) PASS: gdb.linespec/explicit.exp: complete non-unique file name
+	# - with GLIBC debuginfo:
+	#   (gdb) break -source exp^Gl^G^M
+	#   explicit.c  explicit2.c  explicit_bzero.c  explicit_bzero_chk.c \
+	#     explodename.c  ^M
+	#   (gdb) break -source expl^M
+	#   Source filename requires function, label, or line offset.^M
+	#   (gdb) PASS: gdb.linespec/explicit.exp: complete non-unique file name
 	gdb_test_multiple "" $tst {
-	    -re "break -source exp\\\x07licit" {
-		send_gdb "\t\t"
-		gdb_test_multiple "" $tst {
-		    -re "\\\x07\r\nexplicit.c\[ \t\]+explicit2.c\[ \t\]+\r\n$gdb_prompt" {
-			send_gdb "\n"
-			gdb_test "" \
-			    {Source filename requires function, label, or line offset.} \
-			    $tst
-		    }
-		}
-	    }
-
 	    -re "break -source exp\\\x07l" {
-		# This pattern may occur when glibc debuginfo is installed.
+		# At this point, either output is done (first case), or a
+		# further "icit" is emitted (second case).  We have no reliable
+		# way to decide one way or another, so just send the tabs, even
+		# though that may be a little early in the second case.
 		send_gdb "\t\t"
 		gdb_test_multiple "" $tst {
-		    -re "\\\x07\r\nexplicit.c\[ \t\]+explicit2.c\[ \t\]+expl.*\r\n$gdb_prompt" {
+		    -re "\\\x07\r\nexplicit.c\[ \t\]+explicit2.c\[ \t\]+\(expl.*\)?\r\n$gdb_prompt" {
 			send_gdb "\n"
 			gdb_test "" \
 			    {Source filename requires function, label, or line offset.} \
@@ -486,7 +493,7 @@ namespace eval $testfile {
 	send_gdb "break \t"
 	gdb_test_multiple "" $tst {
 	    "break \\\x07" {
-		send_gdb "\t\t"
+		send_gdb "\t"
 		gdb_test_multiple "" $tst {
 		    "Display all" {
 			send_gdb "y"

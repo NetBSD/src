@@ -1,6 +1,6 @@
 /* load.c --- loading object files into the M32C simulator.
 
-Copyright (C) 2005-2019 Free Software Foundation, Inc.
+Copyright (C) 2005-2020 Free Software Foundation, Inc.
 Contributed by Red Hat, Inc.
 
 This file is part of the GNU simulators.
@@ -74,11 +74,11 @@ m32c_load (bfd * prog)
          remains as a reminder.  */
       if ((s->flags & SEC_ALLOC) && !(s->flags & SEC_READONLY))
 	{
-	  if (strcmp (bfd_get_section_name (prog, s), ".stack"))
+	  if (strcmp (bfd_section_name (s), ".stack"))
 	    {
 	      int secend =
-		bfd_get_section_size (s) + bfd_section_lma (prog, s);
-	      if (heaptop < secend && bfd_section_lma (prog, s) < 0x10000)
+		bfd_section_size (s) + bfd_section_lma (s);
+	      if (heaptop < secend && bfd_section_lma (s) < 0x10000)
 		{
 		  heaptop = heapbottom = secend;
 		}
@@ -91,14 +91,14 @@ m32c_load (bfd * prog)
 	  bfd_size_type size;
 	  bfd_vma base;
 
-	  size = bfd_get_section_size (s);
+	  size = bfd_section_size (s);
 	  if (size <= 0)
 	    continue;
 
-	  base = bfd_section_lma (prog, s);
+	  base = bfd_section_lma (s);
 	  if (verbose)
 	    fprintf (stderr, "[load a=%08x s=%08x %s]\n",
-		     (int) base, (int) size, bfd_get_section_name (prog, s));
+		     (int) base, (int) size, bfd_section_name (s));
 	  buf = (char *) malloc (size);
 	  bfd_get_section_contents (prog, s, buf, 0, size);
 	  mem_put_blk (base, buf, size);

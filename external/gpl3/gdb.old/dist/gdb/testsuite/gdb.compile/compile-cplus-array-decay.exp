@@ -1,4 +1,4 @@
-# Copyright 2017-2019 Free Software Foundation, Inc.
+# Copyright 2017-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ if {[skip_cplus_tests]} {
 }
 
 if {[prepare_for_testing $testfile $testfile $srcfile \
-	 {debug nowarnings c++}]} {
+	 {debug nowarnings c++ additional_flags=-std=c++11}]} {
     return -1
 }
 

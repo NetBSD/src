@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2019 Free Software Foundation, Inc.
+   Copyright 2010-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -176,7 +176,7 @@ write_basic_trace_file (void)
 
   /* Make up a simulated trace buffer.  */
   /* (Encapsulate better if we're going to do lots of this; note that
-     buffer endianness is the target program's enddianness.) */
+     buffer endianness is the target program's endianness.) */
   trptr = trbuf;
   tfile_write_16 (1);
 

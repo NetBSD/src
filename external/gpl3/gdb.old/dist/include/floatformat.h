@@ -1,5 +1,5 @@
 /* IEEE floating point support declarations, for GDB, the GNU Debugger.
-   Copyright (C) 1991-2019 Free Software Foundation, Inc.
+   Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
 This file is part of GDB.
 
@@ -133,6 +133,9 @@ extern const struct floatformat floatformat_ia64_quad_little;
 /* IBM long double (double+double).  */
 extern const struct floatformat floatformat_ibm_long_double_big;
 extern const struct floatformat floatformat_ibm_long_double_little;
+/* bfloat16.  */
+extern const struct floatformat floatformat_bfloat16_big;
+extern const struct floatformat floatformat_bfloat16_little;
 
 /* Convert from FMT to a double.
    FROM is the address of the extended float.

@@ -1,5 +1,5 @@
 /* BFD backend for Extended Tektronix Hex Format  objects.
-   Copyright (C) 1992-2019 Free Software Foundation, Inc.
+   Copyright (C) 1992-2020 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -428,7 +428,7 @@ first_phase (bfd *abfd, int type, char *src, char * src_end)
 	    case '8':
 	      /* Symbols, add to section.  */
 	      {
-		bfd_size_type amt = sizeof (tekhex_symbol_type);
+		size_t amt = sizeof (tekhex_symbol_type);
 		tekhex_symbol_type *new_symbol = (tekhex_symbol_type *)
 		    bfd_alloc (abfd, amt);
 		char stype = (*src);
@@ -525,7 +525,7 @@ pass_over (bfd *abfd, bfd_boolean (*func) (bfd *, int, char *, char *))
 
       /* Find first '%'.  */
       is_eof = (bfd_boolean) (bfd_bread (src, (bfd_size_type) 1, abfd) != 1);
-      while (*src != '%' && !is_eof)
+      while (!is_eof && *src != '%')
 	is_eof = (bfd_boolean) (bfd_bread (src, (bfd_size_type) 1, abfd) != 1);
 
       if (is_eof)
@@ -600,7 +600,7 @@ tekhex_mkobject (bfd *abfd)
 /* Return TRUE if the file looks like it's in TekHex format. Just look
    for a percent sign and some hex digits.  */
 
-static const bfd_target *
+static bfd_cleanup
 tekhex_object_p (bfd *abfd)
 {
   char b[4];
@@ -619,7 +619,7 @@ tekhex_object_p (bfd *abfd)
   if (!pass_over (abfd, first_phase))
     return NULL;
 
-  return abfd->xvec;
+  return _bfd_no_cleanup;
 }
 
 static void
@@ -912,7 +912,7 @@ tekhex_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 static asymbol *
 tekhex_make_empty_symbol (bfd *abfd)
 {
-  bfd_size_type amt = sizeof (struct tekhex_symbol_struct);
+  size_t amt = sizeof (struct tekhex_symbol_struct);
   tekhex_symbol_type *new_symbol = (tekhex_symbol_type *) bfd_zalloc (abfd,
 								      amt);
 
@@ -978,6 +978,7 @@ tekhex_print_symbol (bfd *abfd,
 #define tekhex_bfd_lookup_section_flags		    bfd_generic_lookup_section_flags
 #define tekhex_bfd_merge_sections		    bfd_generic_merge_sections
 #define tekhex_bfd_is_group_section		    bfd_generic_is_group_section
+#define tekhex_bfd_group_name			    bfd_generic_group_name
 #define tekhex_bfd_discard_group		    bfd_generic_discard_group
 #define tekhex_section_already_linked		    _bfd_generic_section_already_linked
 #define tekhex_bfd_define_common_symbol		    bfd_generic_define_common_symbol

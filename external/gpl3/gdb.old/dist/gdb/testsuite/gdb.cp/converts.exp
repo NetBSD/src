@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,8 +36,10 @@ gdb_test "p foo0_3 (bppp)" "Cannot resolve.*" \
 
 gdb_test "p foo1_1 (a)"  "= 11"             "pointer to pointer"
 gdb_test "p foo1_2 (a)"  "= 12"             "pointer to array"
-gdb_test "p foo1_3 (a)"  "Cannot resolve.*" "pointer to pointer of wrong type"
-gdb_test "p foo1_3 (bp)" "Cannot resolve.*" "pointer to pointer of wrong type"
+gdb_test "p foo1_3 (a)"  "Cannot resolve.*" \
+	 "pointer to pointer of wrong type, a"
+gdb_test "p foo1_3 (bp)" "Cannot resolve.*" \
+	 "pointer to pointer of wrong type, bp"
 gdb_test "p foo1_4 (bp)" "= 14"             "pointer to ancestor pointer"
 gdb_test "p foo1_5 (bp)" "= 15"             "pointer to void pointer"
 gdb_test "p foo1_6 (bp)" "Cannot resolve.*"     "pointer to void pointer pointer"
@@ -94,28 +96,36 @@ gdb_test "p foo1_7(ta)" \
 
 # Test for strict type checking
 set error_str "Cannot resolve function %s to any overloaded instance"
-gdb_test "show check type" "Strict type checking is on\."
-gdb_test "p foo1_type_check (123)" [format $error_str "foo1_type_check"]
-gdb_test "p foo2_type_check (0, 1)" [format $error_str "foo2_type_check"]
-gdb_test "p foo2_type_check (1, 0)" [format $error_str "foo2_type_check"]
-gdb_test "p foo2_type_check (1, 1)" [format $error_str "foo2_type_check"]
-gdb_test "p foo3_type_check (0, 0, 1)" [format $error_str "foo3_type_check"]
-gdb_test "p foo3_type_check (0, 1, 0)" [format $error_str "foo3_type_check"]
-gdb_test "p foo3_type_check (1, 0, 0)" [format $error_str "foo3_type_check"]
-gdb_test "p foo3_type_check (0, 1, 1)" [format $error_str "foo3_type_check"]
-gdb_test "p foo3_type_check (1, 1, 0)" [format $error_str "foo3_type_check"]
-gdb_test "p foo3_type_check (1, 1, 1)" [format $error_str "foo3_type_check"]
+gdb_test "show check type" "Strict type checking is on\." \
+	 "confirm check type on"
+
+with_test_prefix "strict type checking on" {
+    gdb_test "p foo1_type_check (123)" [format $error_str "foo1_type_check"]
+    gdb_test "p foo2_type_check (0, 1)" [format $error_str "foo2_type_check"]
+    gdb_test "p foo2_type_check (1, 0)" [format $error_str "foo2_type_check"]
+    gdb_test "p foo2_type_check (1, 1)" [format $error_str "foo2_type_check"]
+    gdb_test "p foo3_type_check (0, 0, 1)" [format $error_str "foo3_type_check"]
+    gdb_test "p foo3_type_check (0, 1, 0)" [format $error_str "foo3_type_check"]
+    gdb_test "p foo3_type_check (1, 0, 0)" [format $error_str "foo3_type_check"]
+    gdb_test "p foo3_type_check (0, 1, 1)" [format $error_str "foo3_type_check"]
+    gdb_test "p foo3_type_check (1, 1, 0)" [format $error_str "foo3_type_check"]
+    gdb_test "p foo3_type_check (1, 1, 1)" [format $error_str "foo3_type_check"]
+}
 
 gdb_test_no_output "set check type off"
-gdb_test "show check type" "Strict type checking is off\."
-gdb_test "p foo1_type_check (123)" " = 1000"
-gdb_test "p foo2_type_check (0, 1)" " = 1001"
-gdb_test "p foo2_type_check (1, 0)" " = 1001"
-gdb_test "p foo2_type_check (1, 1)" " = 1001"
-gdb_test "p foo3_type_check (0, 0, 1)" " = 1002"
-gdb_test "p foo3_type_check (0, 1, 0)" " = 1002"
-gdb_test "p foo3_type_check (1, 0, 0)" " = 1002"
-gdb_test "p foo3_type_check (0, 1, 1)" " = 1002"
-gdb_test "p foo3_type_check (1, 1, 0)" " = 1002"
-gdb_test "p foo3_type_check (1, 1, 1)" " = 1002"
-gdb_test "p foo3_2 (1,1)" " = 32"
+gdb_test "show check type" "Strict type checking is off\." \
+	 "confirm check type off"
+
+with_test_prefix "strict type checking off" {
+    gdb_test "p foo1_type_check (123)" " = 1000"
+    gdb_test "p foo2_type_check (0, 1)" " = 1001"
+    gdb_test "p foo2_type_check (1, 0)" " = 1001"
+    gdb_test "p foo2_type_check (1, 1)" " = 1001"
+    gdb_test "p foo3_type_check (0, 0, 1)" " = 1002"
+    gdb_test "p foo3_type_check (0, 1, 0)" " = 1002"
+    gdb_test "p foo3_type_check (1, 0, 0)" " = 1002"
+    gdb_test "p foo3_type_check (0, 1, 1)" " = 1002"
+    gdb_test "p foo3_type_check (1, 1, 0)" " = 1002"
+    gdb_test "p foo3_type_check (1, 1, 1)" " = 1002"
+    gdb_test "p foo3_2 (1,1)" " = 32"
+}

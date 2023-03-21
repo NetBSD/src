@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas Super-H, for GDB.
 
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "gdbcmd.h"
@@ -92,10 +92,10 @@ sh_is_renesas_calling_convention (struct type *func_type)
     {
       func_type = check_typedef (func_type);
 
-      if (TYPE_CODE (func_type) == TYPE_CODE_PTR)
+      if (func_type->code () == TYPE_CODE_PTR)
         func_type = check_typedef (TYPE_TARGET_TYPE (func_type));
 
-      if (TYPE_CODE (func_type) == TYPE_CODE_FUNC
+      if (func_type->code () == TYPE_CODE_FUNC
           && TYPE_CALLING_CONVENTION (func_type) == DW_CC_GNU_renesas_sh)
         val = 1;
     }
@@ -813,11 +813,11 @@ static int
 sh_use_struct_convention (int renesas_abi, struct type *type)
 {
   int len = TYPE_LENGTH (type);
-  int nelem = TYPE_NFIELDS (type);
+  int nelem = type->num_fields ();
 
   /* The Renesas ABI returns aggregate types always on stack.  */
-  if (renesas_abi && (TYPE_CODE (type) == TYPE_CODE_STRUCT
-		      || TYPE_CODE (type) == TYPE_CODE_UNION))
+  if (renesas_abi && (type->code () == TYPE_CODE_STRUCT
+		      || type->code () == TYPE_CODE_UNION))
     return 1;
 
   /* Non-power of 2 length types and types bigger than 8 bytes (which don't
@@ -832,13 +832,13 @@ sh_use_struct_convention (int renesas_abi, struct type *type)
 
   /* If the first field in the aggregate has the same length as the entire
      aggregate type, the type is returned in registers.  */
-  if (TYPE_LENGTH (TYPE_FIELD_TYPE (type, 0)) == len)
+  if (TYPE_LENGTH (type->field (0).type ()) == len)
     return 0;
 
   /* If the size of the aggregate is 8 bytes and the first field is
      of size 4 bytes its alignment is equal to long long's alignment,
      so it's returned in registers.  */
-  if (len == 8 && TYPE_LENGTH (TYPE_FIELD_TYPE (type, 0)) == 4)
+  if (len == 8 && TYPE_LENGTH (type->field (0).type ()) == 4)
     return 0;
 
   /* Otherwise use struct convention.  */
@@ -849,7 +849,7 @@ static int
 sh_use_struct_convention_nofpu (int renesas_abi, struct type *type)
 {
   /* The Renesas ABI returns long longs/doubles etc. always on stack.  */
-  if (renesas_abi && TYPE_NFIELDS (type) == 0 && TYPE_LENGTH (type) >= 8)
+  if (renesas_abi && type->num_fields () == 0 && TYPE_LENGTH (type) >= 8)
     return 1;
   return sh_use_struct_convention (renesas_abi, type);
 }
@@ -912,7 +912,7 @@ sh_frame_align (struct gdbarch *ignore, CORE_ADDR sp)
    not displace any of the other arguments passed in via registers R4
    to R7.  */
 
-/* Helper function to justify value in register according to endianess.  */
+/* Helper function to justify value in register according to endianness.  */
 static const gdb_byte *
 sh_justify_value_in_reg (struct gdbarch *gdbarch, struct value *val, int len)
 {
@@ -942,7 +942,7 @@ sh_stack_allocsize (int nargs, struct value **args)
 }
 
 /* Helper functions for getting the float arguments right.  Registers usage
-   depends on the ABI and the endianess.  The comments should enlighten how
+   depends on the ABI and the endianness.  The comments should enlighten how
    it's intended to work.  */
 
 /* This array stores which of the float arg registers are already in use.  */
@@ -1040,17 +1040,17 @@ static int
 sh_treat_as_flt_p (struct type *type)
 {
   /* Ordinary float types are obviously treated as float.  */
-  if (TYPE_CODE (type) == TYPE_CODE_FLT)
+  if (type->code () == TYPE_CODE_FLT)
     return 1;
   /* Otherwise non-struct types are not treated as float.  */
-  if (TYPE_CODE (type) != TYPE_CODE_STRUCT)
+  if (type->code () != TYPE_CODE_STRUCT)
     return 0;
-  /* Otherwise structs with more than one memeber are not treated as float.  */
-  if (TYPE_NFIELDS (type) != 1)
+  /* Otherwise structs with more than one member are not treated as float.  */
+  if (type->num_fields () != 1)
     return 0;
   /* Otherwise if the type of that member is float, the whole type is
      treated as float.  */
-  if (TYPE_CODE (TYPE_FIELD_TYPE (type, 0)) == TYPE_CODE_FLT)
+  if (type->field (0).type ()->code () == TYPE_CODE_FLT)
     return 1;
   /* Otherwise it's not treated as float.  */
   return 0;
@@ -1084,7 +1084,7 @@ sh_push_dummy_call_fpu (struct gdbarch *gdbarch,
      registers have been used so far.  */
   if (sh_is_renesas_calling_convention (func_type)
       && TYPE_VARARGS (func_type))
-    last_reg_arg = TYPE_NFIELDS (func_type) - 2;
+    last_reg_arg = func_type->num_fields () - 2;
 
   /* First force sp to a 4-byte alignment.  */
   sp = sh_frame_align (gdbarch, sp);
@@ -1115,9 +1115,9 @@ sh_push_dummy_call_fpu (struct gdbarch *gdbarch,
       /* In Renesas ABI, long longs and aggregate types are always passed
 	 on stack.  */
       else if (sh_is_renesas_calling_convention (func_type)
-	       && ((TYPE_CODE (type) == TYPE_CODE_INT && len == 8)
-		   || TYPE_CODE (type) == TYPE_CODE_STRUCT
-		   || TYPE_CODE (type) == TYPE_CODE_UNION))
+	       && ((type->code () == TYPE_CODE_INT && len == 8)
+		   || type->code () == TYPE_CODE_STRUCT
+		   || type->code () == TYPE_CODE_UNION))
 	pass_on_stack = 1;
       /* In contrast to non-FPU CPUs, arguments are never split between
 	 registers and stack.  If an argument doesn't fit in the remaining
@@ -1225,7 +1225,7 @@ sh_push_dummy_call_nofpu (struct gdbarch *gdbarch,
      registers have been used so far.  */
   if (sh_is_renesas_calling_convention (func_type)
       && TYPE_VARARGS (func_type))
-    last_reg_arg = TYPE_NFIELDS (func_type) - 2;
+    last_reg_arg = func_type->num_fields () - 2;
 
   /* First force sp to a 4-byte alignment.  */
   sp = sh_frame_align (gdbarch, sp);
@@ -1248,10 +1248,10 @@ sh_push_dummy_call_nofpu (struct gdbarch *gdbarch,
       /* Renesas ABI pushes doubles and long longs entirely on stack.
 	 Same goes for aggregate types.  */
       if (sh_is_renesas_calling_convention (func_type)
-	  && ((TYPE_CODE (type) == TYPE_CODE_INT && len >= 8)
-	      || (TYPE_CODE (type) == TYPE_CODE_FLT && len >= 8)
-	      || TYPE_CODE (type) == TYPE_CODE_STRUCT
-	      || TYPE_CODE (type) == TYPE_CODE_UNION))
+	  && ((type->code () == TYPE_CODE_INT && len >= 8)
+	      || (type->code () == TYPE_CODE_FLT && len >= 8)
+	      || type->code () == TYPE_CODE_STRUCT
+	      || type->code () == TYPE_CODE_UNION))
 	pass_on_stack = 1;
       while (len > 0)
 	{
@@ -1669,7 +1669,7 @@ sh_pseudo_register_read (struct gdbarch *gdbarch, readable_regcache *regcache,
 					      2, base_regnum, temp_buffer);
       if (status == REG_VALID)
 	{
-	  /* We must pay attention to the endiannes. */
+	  /* We must pay attention to the endianness. */
 	  sh_register_convert_to_virtual (gdbarch, reg_nr,
 					  register_type (gdbarch, reg_nr),
 					  temp_buffer, buffer);
@@ -1712,7 +1712,7 @@ sh_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
       gdb_byte temp_buffer[4 * 2];
       base_regnum = dr_reg_base_num (gdbarch, reg_nr);
 
-      /* We must pay attention to the endiannes.  */
+      /* We must pay attention to the endianness.  */
       sh_register_convert_to_raw (gdbarch, register_type (gdbarch, reg_nr),
 				  reg_nr, buffer, temp_buffer);
 
@@ -1975,28 +1975,6 @@ static const struct frame_unwind sh_frame_unwind = {
   NULL,
   default_frame_sniffer
 };
-
-static CORE_ADDR
-sh_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame,
-					 gdbarch_sp_regnum (gdbarch));
-}
-
-static CORE_ADDR
-sh_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame,
-					 gdbarch_pc_regnum (gdbarch));
-}
-
-static struct frame_id
-sh_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  CORE_ADDR sp = get_frame_register_unsigned (this_frame,
-					      gdbarch_sp_regnum (gdbarch));
-  return frame_id_build (sp, get_frame_pc (this_frame));
-}
 
 static CORE_ADDR
 sh_frame_base_address (struct frame_info *this_frame, void **this_cache)
@@ -2308,9 +2286,6 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_believe_pcc_promotion (gdbarch, 1);
 
   set_gdbarch_frame_align (gdbarch, sh_frame_align);
-  set_gdbarch_unwind_sp (gdbarch, sh_unwind_sp);
-  set_gdbarch_unwind_pc (gdbarch, sh_unwind_pc);
-  set_gdbarch_dummy_id (gdbarch, sh_dummy_id);
   frame_base_set_default (gdbarch, &sh_frame_base);
 
   set_gdbarch_stack_frame_destroyed_p (gdbarch, sh_stack_frame_destroyed_p);
@@ -2433,29 +2408,16 @@ sh_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-static void
-show_sh_command (const char *args, int from_tty)
-{
-  help_list (showshcmdlist, "show sh ", all_commands, gdb_stdout);
-}
-
-static void
-set_sh_command (const char *args, int from_tty)
-{
-  printf_unfiltered
-    ("\"set sh\" must be followed by an appropriate subcommand.\n");
-  help_list (setshcmdlist, "set sh ", all_commands, gdb_stdout);
-}
-
+void _initialize_sh_tdep ();
 void
-_initialize_sh_tdep (void)
+_initialize_sh_tdep ()
 {
   gdbarch_register (bfd_arch_sh, sh_gdbarch_init, NULL);
 
-  add_prefix_cmd ("sh", no_class, set_sh_command, "SH specific commands.",
-                  &setshcmdlist, "set sh ", 0, &setlist);
-  add_prefix_cmd ("sh", no_class, show_sh_command, "SH specific commands.",
-                  &showshcmdlist, "show sh ", 0, &showlist);
+  add_basic_prefix_cmd ("sh", no_class, "SH specific commands.",
+			&setshcmdlist, "set sh ", 0, &setlist);
+  add_show_prefix_cmd ("sh", no_class, "SH specific commands.",
+		       &showshcmdlist, "show sh ", 0, &showlist);
   
   add_setshow_enum_cmd ("calling-convention", class_vars, sh_cc_enum,
 			&sh_active_calling_convention,

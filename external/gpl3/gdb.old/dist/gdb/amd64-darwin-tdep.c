@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -28,7 +28,7 @@
 #include "objfiles.h"
 
 #include "i387-tdep.h"
-#include "common/x86-xstate.h"
+#include "gdbsupport/x86-xstate.h"
 #include "amd64-tdep.h"
 #include "osabi.h"
 #include "ui-out.h"
@@ -36,7 +36,7 @@
 #include "i386-darwin-tdep.h"
 #include "solib.h"
 #include "solib-darwin.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 
 /* Offsets into the struct x86_thread_state64 where we'll find the saved regs.
    From <mach/i386/thread_status.h> and amd64-tdep.h.  */
@@ -116,8 +116,9 @@ x86_darwin_init_abi_64 (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_solib_ops (gdbarch, &darwin_so_ops);
 }
 
+void _initialize_amd64_darwin_tdep ();
 void
-_initialize_amd64_darwin_tdep (void)
+_initialize_amd64_darwin_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64,
                           GDB_OSABI_DARWIN, x86_darwin_init_abi_64);

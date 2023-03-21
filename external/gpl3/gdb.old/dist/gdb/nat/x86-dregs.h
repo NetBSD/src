@@ -1,6 +1,6 @@
 /* Debug register code for x86 (i386 and x86-64).
 
-   Copyright (C) 2009-2019 Free Software Foundation, Inc.
+   Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,7 +33,7 @@
    (32 bytes on 64 bit hosts).  */
 
 
-#include "common/break-common.h" /* target_hw_bp_type */
+#include "gdbsupport/break-common.h" /* target_hw_bp_type */
 
 /* Low-level function vector.  */
 

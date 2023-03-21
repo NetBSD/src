@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1996-2019 Free Software Foundation, Inc.
+# Copyright 1996-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,26 +66,17 @@ proc start_structs_test { types } {
     }
 
     set binfile [standard_output_file ${testfile}]
-    if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "${flags}"] != "" } {
-	# built the second test case since we can't use prototypes
-	warning "Prototypes not supported, rebuilding with -DNO_PROTOTYPES"
-	if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "${flags} additional_flags=-DNO_PROTOTYPES"] != "" } {
-	    untested "failed to compile"
-	    return -1
-	}
+    if { [prepare_for_testing "failed to prepare" $binfile $srcfile $flags] } {
+	return -1
     }
 
-    # Start with a fresh gdb.
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
-    gdb_load ${binfile}
-
     # Make certain that the output is consistent
-    gdb_test_no_output "set print sevenbit-strings"
-    gdb_test_no_output "set print address off"
-    gdb_test_no_output "set width 0"
-    gdb_test_no_output "set print elements 300"
+    with_test_prefix "types=$types" {
+	gdb_test_no_output "set print sevenbit-strings"
+	gdb_test_no_output "set print address off"
+	gdb_test_no_output "set width 0"
+	gdb_test_no_output "set print elements 300"
+    }
 
     # Advance to main
     if { ![runto_main] } then {
@@ -102,7 +93,11 @@ proc start_structs_test { types } {
 	# Verify $anychar_re can match all the values of `char' type.
 	gdb_breakpoint [gdb_get_line_number "chartest-done"]
 	gdb_continue_to_breakpoint "chartest-done" ".*chartest-done.*"
-	gdb_test "p chartest" "= {({c = ${anychar_re}}, ){255}{c = ${anychar_re}}}"
+	gdb_test_sequence "p chartest" "" \
+	    [concat \
+		 [list "= \{"] \
+		 [lrepeat 255 "^\{c = ${anychar_re}\}, "] \
+		 [list "^\{c = ${anychar_re}\}\}"]]
     }
 
     # check that at the struct containing all the relevant types is correct

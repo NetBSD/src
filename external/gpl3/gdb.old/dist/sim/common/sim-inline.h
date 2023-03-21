@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2019 Free Software Foundation, Inc.
+   Copyright 2002-2020 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -348,6 +348,38 @@
 
 
 
+
+/* sim_arange */
+
+#if !defined (SIM_ARANGE_INLINE) && (DEFAULT_INLINE)
+# define SIM_ARANGE_INLINE (ALL_H_INLINE)
+#endif
+
+#if ((H_REVEALS_MODULE_P (SIM_ARANGE_INLINE) || defined (SIM_INLINE_C)) \
+     && !defined (SIM_ARANGE_C) \
+     && (REVEAL_MODULE_P (SIM_ARANGE_INLINE)))
+# if (SIM_ARANGE_INLINE & INLINE_GLOBALS)
+#  define INLINE_SIM_ARANGE(TYPE) static INLINE TYPE UNUSED
+#  define EXTERN_SIM_ARANGE_P 0
+# else
+#  define INLINE_SIM_ARANGE(TYPE) static TYPE UNUSED
+#  define EXTERN_SIM_ARANGE_P 0
+# endif
+#else
+# define INLINE_SIM_ARANGE(TYPE) TYPE
+# define EXTERN_SIM_ARANGE_P 1
+#endif
+
+#if (SIM_ARANGE_INLINE & INLINE_LOCALS)
+# define STATIC_INLINE_SIM_ARANGE(TYPE) static INLINE TYPE
+#else
+# define STATIC_INLINE_SIM_ARANGE(TYPE) static TYPE
+#endif
+
+#define STATIC_SIM_ARANGE(TYPE) static TYPE
+
+
+
 /* *****
    sim-bits and sim-endian are treated differently from the rest
    of the modules below.  Their default value is ALL_H_INLINE.

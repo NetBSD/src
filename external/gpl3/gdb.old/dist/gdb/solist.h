@@ -1,5 +1,5 @@
 /* Shared library declarations for GDB, the GNU Debugger.
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,11 +23,6 @@
 /* For domain_enum domain.  */
 #include "symtab.h"
 #include "gdb_bfd.h"
-
-#define ALL_SO_LIBS(so) \
-    for (so = so_list_head; \
-	 so != NULL; \
-	 so = so->next)
 
 /* Base class for target-specific link map information.  */
 
@@ -139,12 +134,6 @@ struct target_so_ops
 			      unsigned o_flags,
 			      gdb::unique_xmalloc_ptr<char> *temp_pathname);
 
-  /* Hook for looking up global symbols in a library-specific way.  */
-  struct block_symbol (*lookup_lib_global_symbol)
-    (struct objfile *objfile,
-     const char *name,
-     const domain_enum domain);
-
   /* Given two so_list objects, one from the GDB thread list
      and another from the list returned by current_sos, return 1
      if they represent the same library.
@@ -189,9 +178,6 @@ struct so_deleter
 /* A unique pointer to a so_list.  */
 typedef std::unique_ptr<so_list, so_deleter> so_list_up;
 
-/* Return address of first so_list entry in master shared object list.  */
-struct so_list *master_so_list (void);
-
 /* Find main executable binary file.  */
 extern gdb::unique_xmalloc_ptr<char> exec_file_find (const char *in_pathname,
 						     int *fd);
@@ -208,10 +194,5 @@ extern gdb_bfd_ref_ptr solib_bfd_open (const char *in_pathname);
 
 /* FIXME: gdbarch needs to control this variable.  */
 extern struct target_so_ops *current_target_so_ops;
-
-/* Handler for library-specific global symbol lookup in solib.c.  */
-struct block_symbol solib_global_lookup (struct objfile *objfile,
-					    const char *name,
-					    const domain_enum domain);
 
 #endif

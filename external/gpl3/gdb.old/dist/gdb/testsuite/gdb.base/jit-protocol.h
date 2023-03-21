@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,7 +38,7 @@ struct jit_code_entry
 {
   struct jit_code_entry *next_entry;
   struct jit_code_entry *prev_entry;
-  void *symfile_addr;
+  const void *symfile_addr;
   uint64_t symfile_size;
 };
 
@@ -50,5 +50,11 @@ struct jit_descriptor
   struct jit_code_entry *relevant_entry;
   struct jit_code_entry *first_entry;
 };
+
+struct jit_descriptor __jit_debug_descriptor = { 1, 0, 0, 0 };
+
+void __attribute__((noinline)) __jit_debug_register_code()
+{
+}
 
 #endif /* JIT_PROTOCOL_H */

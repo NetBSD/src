@@ -1,6 +1,6 @@
 /* MI Internal Functions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,5 +53,10 @@ struct mi_suppress_notification
   int user_selected_context;
 };
 extern struct mi_suppress_notification mi_suppress_notification;
+
+/* Implementation of -fix-multi-location-breakpoint-output.  */
+
+extern void mi_cmd_fix_multi_location_breakpoint_output (const char *command,
+							 char **argv, int argc);
 
 #endif /* MI_MI_MAIN_H */

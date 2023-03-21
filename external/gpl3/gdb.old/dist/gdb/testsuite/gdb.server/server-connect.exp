@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -101,10 +101,13 @@ save_vars { GDB_TEST_SOCKETHOST } {
 	    set gdbserver_gdbport [lindex $res 1]
 	    set test "connect to gdbserver using $sockhost"
 
-	    if { [gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport] == 0 } {
+	    set res [gdb_target_cmd_ext $gdbserver_protocol $gdbserver_gdbport]
+	    if { $res == 0 } {
 		pass $test
-	    } else {
+	    } elseif { $res == 1 }  {
 		fail $test
+	    } else {
+		unsupported $test
 	    }
 	}
     }

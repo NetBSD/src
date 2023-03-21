@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2019 Free Software Foundation, Inc.
+# Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,16 +41,15 @@ gdb_test "info frame-filter" \
 # Care is taken to put it in the same directory as the binary so that
 # gdb will find it.
 set remote_obj_python_file \
-    [remote_download \
-	 host ${srcdir}/${subdir}/${testfile}-gdb.py.in \
-	 [standard_output_file ${testfile}-gdb.py]]
+    [gdb_remote_download host ${srcdir}/${subdir}/${testfile}-gdb.py.in \
+	 ${testfile}-gdb.py]
 
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_test_no_output "set auto-load safe-path ${remote_obj_python_file}" \
     "set auto-load safe-path"
 gdb_load ${binfile}
 # Verify gdb loaded the script.
-gdb_test "info auto-load python-scripts" "Yes.*/${testfile}-gdb.py.*" \
+gdb_test "info auto-load python-scripts" "Yes.*${testfile}-gdb.py.*" \
     "Test auto-load had loaded python scripts"
 
 if ![runto_main] then {
@@ -60,10 +59,25 @@ if ![runto_main] then {
 gdb_test_no_output "set python print-stack full" \
     "set python print-stack to full"
 
+# Verify that 'bt', 'bt -no-filters' print the same info
+# when there are no filters, no matching filters, or matching filters.
+# In particular, no address should be printed, as the default for
+# backtrace -frame-info is 'location', and the breakpoint we just hit
+# is at the beginning of a line.
+# Same tests done again after having loaded the filters.
+gdb_test "bt 1" "#0  main .*" "bt 1, no filter loaded"
+gdb_test "bt -no-filters 1" "#0  main .*" "bt -no-filters 1, no filter loaded"
+
+
 # Load global frame-filters
 set remote_python_file [gdb_remote_download host \
 			    ${srcdir}/${subdir}/${testfile}.py]
 gdb_test_no_output "source ${remote_python_file}" "load python file"
+
+# Re-verify the frame-info printed once filters are loaded.
+# For the first check, the Reverse filter is matching.
+gdb_test "bt 1" "#0  niam .*" "bt 1, filters loaded"
+gdb_test "bt -no-filters 1" "#0  main .*" "bt -no-filters 1, filters loaded"
 
 gdb_breakpoint [gdb_get_line_number "Backtrace end breakpoint"]
 gdb_breakpoint [gdb_get_line_number "Inner test breakpoint"]
@@ -71,8 +85,7 @@ gdb_continue_to_breakpoint "Inner test breakpoint"
 
 # Test multiple local blocks.
 gdb_test "bt full no-filters" \
-    ".*#0.*end_func.*h = 9.*f = 42.*g = 19.*bar = $hex \"Inside block x2\".*d = 15.*e = 14.*foo = $hex \"Inside block\".*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*" \
-    "bt full no-filters"
+    ".*#0.*end_func.*h = 9.*f = 42.*g = 19.*bar = $hex \"Inside block x2\".*d = 15.*e = 14.*foo = $hex \"Inside block\".*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*"
 gdb_test "bt full" \
     ".*#0.*cnuf_dne.*h = 9.*f = 42.*g = 19.*bar = $hex \"Inside block x2\".*d = 15.*e = 14.*foo = $hex \"Inside block\".*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*" \
     "bt full with filters"
@@ -131,8 +144,7 @@ gdb_test "disable frame-filter global NoSuchFilter" \
 
 # Test no-filters
 gdb_test "bt no-filters" \
-    ".*#0.*end_func.*#22.*in func1.*#27.*in main \\(\\).*" \
-    "bt no-filters"
+    ".*#0.*end_func.*#22.*in func1.*#27.*in main \\(\\).*"
 
 # Test reverse
 gdb_test "bt" \
@@ -161,6 +173,10 @@ gdb_test "bt full hide" \
     ".*#0.*end_func.*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*bar = \{a = 42, b = 84\}.*#22.*in func1 \\(\\)\[^#\]*#24.*in func3 \\(i=3\\).*" \
     "bt full hide with Reverse disabled"
 
+# Re-enable Reverse
+gdb_test_no_output "enable frame-filter global Reverse" \
+    "re-enable frame-filter global Reverse"
+
 # Test set print frame-arguments
 # none
 gdb_test_no_output "set print frame-arguments none" \
@@ -169,7 +185,7 @@ gdb_test "bt no-filter 1" \
     "#0.*end_func \\(foo=\.\.\., bar=\.\.\., fb=\.\.\., bf=\.\.\.\\) at .*py-framefilter.c.*" \
     "bt no-filter 1 no args"
 gdb_test "bt 1" \
-    "#0.*end_func \\(foo=\.\.\., bar=\.\.\., fb=\.\.\., bf=\.\.\.\\) at .*py-framefilter.c.*" \
+    "#0.*cnuf_dneThe End \\(foo=\.\.\., bar=\.\.\., fb=\.\.\., bf=\.\.\.\\) at .*py-framefilter.c.*" \
     "bt 1 no args"
 
 # scalars
@@ -179,8 +195,53 @@ gdb_test "bt no-filter 1" \
     "#0.*end_func \\(foo=21, bar=$hex \"Param\", fb=$hex, bf=\.\.\.\\) at .*py-framefilter.c.*" \
     "bt no-filter 1 scalars"
 gdb_test "bt 1" \
-    "#0.*end_func \\(foo=21, bar=$hex \"Param\", fb=$hex, bf=\.\.\.\\) at .*py-framefilter.c.*" \
+    "#0.*cnuf_dneThe End \\(foo=21, bar=$hex \"Param\", fb=$hex, bf=\.\.\.\\) at .*py-framefilter.c.*" \
     "bt 1 scalars"
+
+# presence
+gdb_test_no_output "set print frame-arguments presence" \
+    "turn frame arguments to presence only"
+gdb_test "bt no-filter 1" \
+    "#0.*end_func \\(\.\.\.\\) at .*py-framefilter.c.*" \
+    "bt no-filter 1 presence"
+gdb_test "bt 1" \
+    "#0.*cnuf_dneThe End \\(\.\.\.\\) at .*py-framefilter.c.*" \
+    "bt 1 presence"
+
+# Test set print frame-info, with only presence for args.
+# short-location
+gdb_test_no_output "set print frame-info short-location" \
+    "frame-info short-location"
+gdb_test "bt no-filter 1" \
+     "#0.*end_func \\(\.\.\.\\)\r\n.*" \
+    "bt no-filter 1 short-location"
+gdb_test "bt 1" \
+    "#0.*cnuf_dneThe End \\(\.\.\.\\)\r\n.*" \
+    "bt 1 short-location"
+
+# source-and-location
+gdb_test_no_output "set print frame-info source-and-location" \
+    "frame-info source-and-location"
+gdb_test "bt no-filter 1" \
+    "#0.*end_func \\(\.\.\.\\) at .*py-framefilter.c.*\r\n.*\[1-9\]\[0-9\]*.*" \
+    "bt no-filter 1 source-and-location"
+gdb_test "bt 1" \
+    "#0.*cnuf_dneThe End \\(\.\.\.\\) at .*py-framefilter.c.*\r\n.*\[1-9\]\[0-9\]*.*" \
+    "bt 1 source-and-location"
+
+# source-line
+gdb_test_no_output "set print frame-info source-line" \
+    "frame-info source-line"
+gdb_test "bt no-filter 1" \
+    "\[1-9\]\[0-9\]*\[ \t\]*return; /\\* Backtrace end breakpoint \\*/.*" \
+    "bt no-filter 1 source-line"
+gdb_test "bt 1" \
+    "\[1-9\]\[0-9\]*\[ \t\]*return; /\\* Backtrace end breakpoint \\*/.*" \
+    "bt 1 source-line"
+
+# set print frame-info back to auto.
+gdb_test_no_output "set print frame-info auto" \
+    "frame-info auto"
 
 # all
 gdb_test_no_output "set print frame-arguments all" \
@@ -189,7 +250,7 @@ gdb_test "bt no-filter 1" \
     "#0.*end_func \\(foo=21, bar=$hex \"Param\", fb=$hex, bf=\{nothing = $hex \"Foo Bar\", f = 42, s = 19\}\\) at .*py-framefilter.c.*" \
     "bt no-filter 1 all args"
 gdb_test "bt 1" \
-    "#0.*end_func \\(foo=21, bar=$hex \"Param\", fb=$hex, bf=\{nothing = $hex \"Foo Bar\", f = 42, s = 19\}\\) at .*py-framefilter.c.*" \
+    "#0.*cnuf_dneThe End \\(foo=21, bar=$hex \"Param\", fb=$hex, bf=\{nothing = $hex \"Foo Bar\", f = 42, s = 19\}\\) at .*py-framefilter.c.*" \
     "bt 1 all args"
 
 # set print address off
@@ -199,7 +260,7 @@ gdb_test "bt no-filter 1" \
     "#0  end_func \\(foo=21, bar=\"Param\", fb=, bf=\{nothing = \"Foo Bar\", f = 42, s = 19\}\\) at .*py-framefilter.c.*" \
     "bt no-filter 1 no address"
 gdb_test "bt 1" \
-    "#0  end_func \\(foo=21, bar=\"Param\", fb=, bf=\{nothing = \"Foo Bar\", f = 42, s = 19\}\\) at .*py-framefilter.c.*" \
+    "#0  cnuf_dneThe End \\(foo=21, bar=\"Param\", fb=, bf=\{nothing = \"Foo Bar\", f = 42, s = 19\}\\) at .*py-framefilter.c.*" \
     "bt 1 no addresss"
 
 gdb_test_no_output "set python print-stack message" \
@@ -238,9 +299,8 @@ if { [skip_python_tests] } { continue }
 # Care is taken to put it in the same directory as the binary so that
 # gdb will find it.
 set remote_obj_python_file \
-    [remote_download \
-	 host ${srcdir}/${subdir}/${testfile}-gdb.py.in \
-	 [standard_output_file ${testfile}-gdb.py]]
+    [gdb_remote_download host ${srcdir}/${subdir}/${testfile}-gdb.py.in \
+	 ${testfile}-gdb.py]
 
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_test_no_output "set auto-load safe-path ${remote_obj_python_file}" \
@@ -248,7 +308,7 @@ gdb_test_no_output "set auto-load safe-path ${remote_obj_python_file}" \
 gdb_load ${binfile}
 
 # Verify gdb loaded the script.
-gdb_test "info auto-load python-scripts" "Yes.*/${testfile}-gdb.py.*" \
+gdb_test "info auto-load python-scripts" "Yes.*${testfile}-gdb.py.*" \
     "Set autoload path for no debug info tests"
 if ![runto_main] then {
     perror "couldn't run to breakpoint"

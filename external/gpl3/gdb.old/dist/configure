@@ -802,6 +802,7 @@ with_gmp
 with_gmp_include
 with_gmp_lib
 with_stage1_libs
+with_static_standard_libraries
 with_stage1_ldflags
 with_boot_libs
 with_boot_ldflags
@@ -1572,6 +1573,9 @@ Optional Packages:
   --with-gmp-include=PATH specify directory for installed GMP include files
   --with-gmp-lib=PATH     specify directory for the installed GMP library
   --with-stage1-libs=LIBS libraries for stage1
+  --with-static-standard-libraries
+                          use -static-libstdc++ and -static-libgcc
+                          (default=auto)
   --with-stage1-ldflags=FLAGS
                           linker flags for stage1
   --with-boot-libs=LIBS   libraries for stage2 and later
@@ -2769,7 +2773,7 @@ build_tools="build-texinfo build-flex build-bison build-m4 build-fixincludes"
 
 # these libraries are used by various programs built for the host environment
 #f
-host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktrace libcpp libdecnumber gmp mpfr mpc isl libelf libiconv"
+host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktrace libcpp libdecnumber gmp mpfr mpc isl libelf libiconv libctf"
 
 # these tools are built for the host environment
 # Note, the powerpc-eabi build depends on sim occurring before gdb in order to
@@ -2777,7 +2781,7 @@ host_libs="intl libiberty opcodes bfd readline tcl tk itcl libgui zlib libbacktr
 # binutils, gas and ld appear in that order because it makes sense to run
 # "make check" in that particular order.
 # If --enable-gold is used, "gold" may replace "ld".
-host_tools="texinfo flex bison binutils gas ld fixincludes gcc cgen sid sim gdb gprof etc expect dejagnu m4 utils guile fastjar gnattools libcc1 gotools"
+host_tools="texinfo flex bison binutils gas ld fixincludes gcc cgen sid sim gdb gdbserver gprof etc expect dejagnu m4 utils guile fastjar gnattools libcc1 gotools"
 
 # these libraries are built for the target environment, and are built after
 # the host libraries and the host tools (which may be a cross compiler)
@@ -3484,6 +3488,25 @@ case "${target}" in
     ;;
 esac
 
+# Only allow gdbserver on some systems.
+if test -d ${srcdir}/gdbserver; then
+    if test x$enable_gdbserver = x; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gdbserver support" >&5
+$as_echo_n "checking for gdbserver support... " >&6; }
+	if (srcdir=${srcdir}/gdbserver; \
+		. ${srcdir}/configure.srv; \
+		test -n "$UNSUPPORTED")
+	then
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	    noconfigdirs="$noconfigdirs gdbserver"
+	else
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	fi
+    fi
+fi
+
 # Disable libgo for some systems where it is known to not work.
 # For testing, you can easily override this with --enable-libgo.
 if test x$enable_libgo = x; then
@@ -3802,6 +3825,9 @@ case "${target}" in
   nfp-*-*)
     noconfigdirs="$noconfigdirs ld gas gdb gprof sim"
     noconfigdirs="$noconfigdirs $target_libraries"
+    ;;
+  pdp11-*-*)
+    noconfigdirs="$noconfigdirs gdb gprof"
     ;;
   powerpc-*-aix*)
     # copied from rs6000-*-* entry
@@ -5824,6 +5850,23 @@ fi
 
 
 
+# Whether or not to use -static-libstdc++ and -static-libgcc.  The
+# default is yes if gcc is being built; no otherwise.  The reason for
+# this default is that gdb is sometimes linked against GNU Source
+# Highlight, which is a shared library that uses C++ exceptions.  In
+# this case, -static-libstdc++ will cause crashes.
+
+# Check whether --with-static-standard-libraries was given.
+if test "${with_static_standard_libraries+set}" = set; then :
+  withval=$with_static_standard_libraries;
+else
+  with_static_standard_libraries=auto
+fi
+
+if test "$with_static_standard_libraries" = auto; then
+  with_static_standard_libraries=$have_compiler
+fi
+
 # Linker flags to use for stage1 or when not bootstrapping.
 
 # Check whether --with-stage1-ldflags was given.
@@ -5838,7 +5881,8 @@ else
  # In stage 1, default to linking libstdc++ and libgcc statically with GCC
  # if supported.  But if the user explicitly specified the libraries to use,
  # trust that they are doing what they want.
- if test "$stage1_libs" = "" -a "$have_static_libs" = yes; then
+ if test "$with_static_standard_libraries" = yes -a "$stage1_libs" = "" \
+     -a "$have_static_libs" = yes; then
    stage1_ldflags="-static-libstdc++ -static-libgcc"
  fi
 fi
@@ -7183,6 +7227,18 @@ case "$enable_gdbtk" in
 esac
 CONFIGURE_GDB_TK=`echo ${GDB_TK} | sed s/-all-/-configure-/g`
 INSTALL_GDB_TK=`echo ${GDB_TK} | sed s/-all-/-install-/g`
+
+# gdb and gdbserver depend on gnulib and gdbsupport, but as nothing
+# else does, only include them if one of these is built.  The Makefile
+# provides the ordering, so it's enough here to add to the list.
+case " ${configdirs} " in
+  *\ gdb\ *)
+    configdirs="${configdirs} gnulib gdbsupport"
+    ;;
+  *\ gdbserver\ *)
+    configdirs="${configdirs} gnulib gdbsupport"
+    ;;
+esac
 
 # Strip out unwanted targets.
 

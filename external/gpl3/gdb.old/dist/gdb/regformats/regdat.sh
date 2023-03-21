@@ -1,7 +1,7 @@
 #!/bin/sh -u
 
 # Register protocol definitions for GDB, the GNU debugger.
-# Copyright (C) 2001-2019 Free Software Foundation, Inc.
+# Copyright (C) 2001-2020 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -127,6 +127,10 @@ do
 
     echo "const struct target_desc *tdesc_${name};"
     echo ""
+
+    # This is necessary for -Wmissing-declarations.
+    echo "void init_registers_${name} (void);"
+
     echo "void"
     echo "init_registers_${name} (void)"
     echo "{"

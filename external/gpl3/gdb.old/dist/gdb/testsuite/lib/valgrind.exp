@@ -1,4 +1,4 @@
-# Copyright 2009-2019 Free Software Foundation, Inc.
+# Copyright 2009-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,12 +19,19 @@
 # Start a vgdb server, and connect gdb to it.  Return 0 on success, and -1 on
 # error.
 #
-proc vgdb_start { } {
+proc vgdb_start { {active_at_startup 1} } {
     global binfile use_gdb_stub board testfile
     global valgrind_spawn_id gdb_spawn_id
+    global decimal
 
     set test "spawn valgrind"
-    set cmd "valgrind --vgdb-error=0 $binfile"
+    set cmd_list [list]
+    lappend cmd_list "valgrind"
+    if { $active_at_startup } {
+	lappend cmd_list "--vgdb-error=0"
+    }
+    lappend cmd_list $binfile
+    set cmd [join $cmd_list]
     set res [remote_spawn host $cmd]
     if { $res < 0 || $res == "" } {
 	verbose -log "Spawning $cmd failed."
@@ -42,7 +49,8 @@ proc vgdb_start { } {
     set test "valgrind started"
     # The trailing '.' differs for different memcheck versions.
     gdb_test_multiple "" $test {
-	-re "Memcheck, a memory error detector\\.?\r\n" {
+	-re "==($decimal)== Memcheck, a memory error detector\\.?\r\n" {
+	    set vgdbpid $expect_out(1,string)
 	    pass $test
 	}
 	-re "valgrind: failed to start tool 'memcheck' for platform '.*': No such file or directory" {
@@ -66,14 +74,6 @@ proc vgdb_start { } {
 	}
     }
 
-    set test "vgdb prompt"
-    gdb_test_multiple "" $test {
-	-re "  (target remote | \[^\r\n\]*/vgdb \[^\r\n\]*)\r\n" {
-	    set vgdbcmd $expect_out(1,string)
-	    pass $test
-	}
-    }
-
     # Do not kill valgrind.
     set valgrind_spawn_id [board_info host fileid]
     unset gdb_spawn_id
@@ -87,10 +87,22 @@ proc vgdb_start { } {
     # gdbserver and connect to it.
     gdb_test "disconnect" ".*"
 
-    gdb_test "$vgdbcmd" " in \\.?_start .*" "target remote for vgdb"
+    set vgdbcmd "target remote | vgdb --pid=$vgdbpid"
+    if { $active_at_startup } {
+	gdb_test "$vgdbcmd" " in \\.?_start .*" "target remote for vgdb"
+    } else {
+	# Let $binfile run a bit before attaching.  This is a bit of a hack,
+	# in that it lets test-case valgrind-infcall-2.exp run to the point of
+	# nanosleep, which seems to be required to trigger the error condition.
+	# So, without this, we hit
+	# "UNSUPPORTED: gdb.base/valgrind-infcall-2.exp: do printf".
+	exec sleep 1
+
+	# Connect to vgdb.  Don't expect to be anywhere in particular.
+	gdb_test "$vgdbcmd" "" "target remote for vgdb"
+    }
 
     gdb_test "monitor v.set gdb_output" "valgrind output will go to gdb.*"
-
     return 0
 }
 

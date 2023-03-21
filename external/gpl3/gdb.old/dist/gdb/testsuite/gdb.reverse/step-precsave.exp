@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,17 @@ gdb_test "break $end_of_main" \
 
 # This can take awhile.
 with_timeout_factor 20 {
-    gdb_test "continue" "Breakpoint .* end of main .*" "run to end of main"
+    gdb_test_multiple "continue" "run to end of main" {
+	-re -wrap "Breakpoint .* end of main .*" {
+	    pass $gdb_test_name
+	}
+	-re -wrap "Process record does not support instruction 0xc5 at.*" {
+	    kfail "record/23188" $gdb_test_name
+	}
+	-re -wrap "Process record does not support instruction 0xfae64 at.*" {
+	    kfail "record/25038" $gdb_test_name
+	}
+    }
 }
 
 # So can this, against gdbserver, for example.

@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,9 +49,15 @@ gdb_test "until $bp_location1" \
 
 # Advance up to factorial, outer invocation
 #
-gdb_test "advance factorial" \
-    "factorial .value=6..*$srcfile:$bp_location7.*" \
-    "advance to factorial"
+gdb_test_multiple "advance factorial" "" {
+    -wrap -re "factorial .value=6..*$srcfile:$bp_location7.*" {
+	pass $gdb_test_name
+    }
+    -wrap -re "Process record does not support instruction 0xfae64 at.*" {
+	kfail "gdb/25038" $gdb_test_name
+	return -1
+    }
+}
 
 # At this point, 'until' should continue the inferior up to when all the
 # inner invocations of factorial() are completed and we are back at this

@@ -1,5 +1,5 @@
 /* ARM assembler/disassembler support.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
 
    This file is part of GDB and GAS.
 
@@ -72,6 +72,23 @@
 #define ARM_EXT2_V8_5A	     0x00001000	/* ARM V8.5A.			     */
 #define ARM_EXT2_SB	     0x00002000	/* Speculation Barrier instruction.  */
 #define ARM_EXT2_PREDRES     0x00004000	/* Prediction Restriction insns.     */
+#define ARM_EXT2_V8_1M_MAIN  0x00008000 /* ARMv8.1-M Mainline.		     */
+#define ARM_EXT2_V8_6A	     0x00010000	/* ARM V8.6A.			     */
+#define ARM_EXT2_BF16	     0x00020000 /* ARMv8 bfloat16.		     */
+#define ARM_EXT2_I8MM	     0x00040000 /* ARMv8.6A i8mm.		     */
+#define ARM_EXT2_CRC	     0x00080000	/* ARMv8 CRC32 */
+#define ARM_EXT2_MVE	     0x00100000	/* MVE Integer extension.	   */
+#define ARM_EXT2_MVE_FP	     0x00200000	/* MVE Floating Point extension.   */
+#define ARM_EXT2_CDE	     0x00400000 /* Custom Datapath Extension.	   */
+#define ARM_EXT2_CDE0	     0x00800000 /* Using CDE coproc 0.	   */
+#define ARM_EXT2_CDE1	     0x01000000 /* Using CDE coproc 1.	   */
+#define ARM_EXT2_CDE2	     0x02000000 /* Using CDE coproc 2.	   */
+#define ARM_EXT2_CDE3	     0x04000000 /* Using CDE coproc 3.	   */
+#define ARM_EXT2_CDE4	     0x08000000 /* Using CDE coproc 4.	   */
+#define ARM_EXT2_CDE5	     0x10000000 /* Using CDE coproc 5.	   */
+#define ARM_EXT2_CDE6	     0x20000000 /* Using CDE coproc 6.	   */
+#define ARM_EXT2_CDE7	     0x40000000 /* Using CDE coproc 7.	   */
+#define ARM_EXT2_V8R	     0x80000000	/* Arm V8R.	               */
 
 /* Co-processor space extensions.  */
 #define ARM_CEXT_XSCALE	     0x00000001	/* Allow MIA etc.	 	   */
@@ -98,7 +115,7 @@
 #define FPU_VFP_EXT_ARMV8    0x00020000	/* Double-precision FP for ARMv8.  */
 #define FPU_NEON_EXT_ARMV8   0x00010000	/* Neon for ARMv8.		   */
 #define FPU_CRYPTO_EXT_ARMV8 0x00008000	/* Crypto for ARMv8.		   */
-#define CRC_EXT_ARMV8	     0x00004000	/* CRC32 for ARMv8.		   */
+/* Unused                    0x00004000	*/
 #define FPU_VFP_EXT_ARMV8xD  0x00002000	/* Single-precision FP for ARMv8.  */
 #define FPU_NEON_EXT_RDMA    0x00001000	/* v8.1 Adv.SIMD extensions.	   */
 #define FPU_NEON_EXT_DOTPROD 0x00000800	/* Dot Product extension.	   */
@@ -166,6 +183,7 @@
 					   | ARM_EXT2_V8_4A)
 #define ARM_AEXT2_V8_5A	(ARM_AEXT2_V8_4A   | ARM_EXT2_V8_5A | ARM_EXT2_SB     \
 					   | ARM_EXT2_PREDRES)
+#define ARM_AEXT2_V8_6A	(ARM_AEXT2_V8_5A   | ARM_EXT2_V8_6A | ARM_EXT2_BF16)
 #define ARM_AEXT_V8M_BASE	(ARM_AEXT_V6SM	    | ARM_EXT_DIV)
 #define ARM_AEXT_V8M_MAIN	 ARM_AEXT_V7M
 #define ARM_AEXT_V8M_MAIN_DSP	 ARM_AEXT_V7EM
@@ -174,7 +192,10 @@
 #define ARM_AEXT2_V8M_MAIN	(ARM_AEXT2_V8M_BASE | ARM_EXT2_V8M_MAIN)
 #define ARM_AEXT2_V8M_MAIN_DSP	 ARM_AEXT2_V8M_MAIN
 #define ARM_AEXT_V8R		 ARM_AEXT_V8A
-#define ARM_AEXT2_V8R		 ARM_AEXT2_V8AR
+#define ARM_AEXT2_V8R		 (ARM_EXT2_V8R | ARM_AEXT2_V8AR)
+#define ARM_AEXT_V8_1M_MAIN	 ARM_AEXT_V8M_MAIN
+#define ARM_AEXT2_V8_1M_MAIN	(ARM_AEXT2_V8M_MAIN | ARM_EXT2_V8_1M_MAIN     \
+						    | ARM_EXT2_FP16_INST)
 
 /* Processors with specific extensions in the co-processor space.  */
 #define ARM_ARCH_XSCALE	ARM_FEATURE_LOW (ARM_AEXT_V5TE, ARM_CEXT_XSCALE)
@@ -205,6 +226,7 @@
 					     | FPU_VFP_EXT_ARMV8xD)
 #define FPU_NEON_ARMV8	  (FPU_NEON_EXT_V1   | FPU_NEON_EXT_FMA	   \
 					     | FPU_NEON_EXT_ARMV8)
+#define FPU_NEON_ARMV8_1  (FPU_NEON_ARMV8    | FPU_NEON_EXT_RDMA)
 #define FPU_CRYPTO_ARMV8  (FPU_CRYPTO_EXT_ARMV8)
 #define FPU_VFP_HARD	  (FPU_VFP_EXT_V1xD  | FPU_VFP_EXT_V1	   \
 					     | FPU_VFP_EXT_V2	   \
@@ -262,21 +284,36 @@
 						    | FPU_NEON_ARMV8	 \
 						    | FPU_VFP_ARMV8	 \
 						    | FPU_NEON_EXT_DOTPROD)
-#define ARCH_CRC_ARMV8		ARM_FEATURE_COPROC (CRC_EXT_ARMV8)
 #define FPU_ARCH_NEON_VFP_ARMV8_1					 \
-				ARM_FEATURE_COPROC (FPU_NEON_ARMV8	 \
-						    | FPU_VFP_ARMV8	 \
-						    | FPU_NEON_EXT_RDMA)
+				ARM_FEATURE_COPROC (FPU_NEON_ARMV8_1	 \
+						    | FPU_VFP_ARMV8)
 #define FPU_ARCH_CRYPTO_NEON_VFP_ARMV8_1				 \
 				ARM_FEATURE_COPROC (FPU_CRYPTO_ARMV8	 \
-						    | FPU_NEON_ARMV8	 \
-						    | FPU_VFP_ARMV8	 \
-						    | FPU_NEON_EXT_RDMA)
-#define FPU_ARCH_DOTPROD_NEON_VFP_ARMV8					 \
-				ARM_FEATURE_COPROC (FPU_NEON_EXT_DOTPROD \
-						    | FPU_NEON_ARMV8	 \
+						    | FPU_NEON_ARMV8_1	 \
 						    | FPU_VFP_ARMV8)
 
+#define FPU_ARCH_DOTPROD_NEON_VFP_ARMV8					 \
+				ARM_FEATURE_COPROC (FPU_NEON_EXT_DOTPROD \
+						    | FPU_NEON_ARMV8_1	 \
+						    | FPU_VFP_ARMV8)
+
+#define FPU_ARCH_NEON_VFP_ARMV8_2_FP16					 \
+      ARM_FEATURE (0, ARM_EXT2_FP16_INST,				 \
+		   FPU_NEON_ARMV8_1 | FPU_VFP_ARMV8)
+
+#define FPU_ARCH_NEON_VFP_ARMV8_2_FP16FML				 \
+      ARM_FEATURE (0, ARM_EXT2_FP16_INST | ARM_EXT2_FP16_FML,		 \
+		   FPU_NEON_ARMV8_1 | FPU_VFP_ARMV8)
+
+#define FPU_ARCH_NEON_VFP_ARMV8_4_FP16FML				 \
+      ARM_FEATURE (0, ARM_EXT2_FP16_INST | ARM_EXT2_FP16_FML,		 \
+		   FPU_NEON_ARMV8_1 | FPU_VFP_ARMV8 | FPU_NEON_EXT_DOTPROD)
+
+#define FPU_ARCH_CRYPTO_NEON_VFP_ARMV8_4				 \
+			      ARM_FEATURE_COPROC (FPU_CRYPTO_ARMV8	 \
+						  | FPU_NEON_ARMV8_1	 \
+						  | FPU_VFP_ARMV8	 \
+						  | FPU_NEON_EXT_DOTPROD)
 
 #define FPU_ARCH_ENDIAN_PURE ARM_FEATURE_COPROC (FPU_ENDIAN_PURE)
 
@@ -315,19 +352,22 @@
 #define ARM_ARCH_V7M	 ARM_FEATURE_CORE (ARM_AEXT_V7M, ARM_EXT2_V6T2_V8M)
 #define ARM_ARCH_V7EM	 ARM_FEATURE_CORE (ARM_AEXT_V7EM, ARM_EXT2_V6T2_V8M)
 #define ARM_ARCH_V8A	 ARM_FEATURE_CORE (ARM_AEXT_V8A, ARM_AEXT2_V8A)
-#define ARM_ARCH_V8A_CRC ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8A,	   \
-				      CRC_EXT_ARMV8)
-#define ARM_ARCH_V8_1A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_1A,	   \
-				      CRC_EXT_ARMV8 | FPU_NEON_EXT_RDMA)
-#define ARM_ARCH_V8_2A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_2A,	   \
-				      CRC_EXT_ARMV8 | FPU_NEON_EXT_RDMA)
-#define ARM_ARCH_V8_3A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_3A,	   \
-				      CRC_EXT_ARMV8 | FPU_NEON_EXT_RDMA)
-#define ARM_ARCH_V8_4A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_4A,	   \
-				      CRC_EXT_ARMV8 | FPU_NEON_EXT_RDMA	   \
+#define ARM_ARCH_V8A_CRC ARM_FEATURE (ARM_AEXT_V8A,	   \
+				      ARM_AEXT2_V8A | ARM_EXT2_CRC)
+#define ARM_ARCH_V8_1A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_1A	   \
+				      | ARM_EXT2_CRC,  FPU_NEON_EXT_RDMA)
+#define ARM_ARCH_V8_2A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_2A	   \
+				      | ARM_EXT2_CRC,  FPU_NEON_EXT_RDMA)
+#define ARM_ARCH_V8_3A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_3A	   \
+				      | ARM_EXT2_CRC, FPU_NEON_EXT_RDMA)
+#define ARM_ARCH_V8_4A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_4A	   \
+				      | ARM_EXT2_CRC, FPU_NEON_EXT_RDMA	   \
 						    | FPU_NEON_EXT_DOTPROD)
-#define ARM_ARCH_V8_5A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_5A,	   \
-				      CRC_EXT_ARMV8 | FPU_NEON_EXT_RDMA	   \
+#define ARM_ARCH_V8_5A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_5A	   \
+				      | ARM_EXT2_CRC, FPU_NEON_EXT_RDMA	   \
+						    | FPU_NEON_EXT_DOTPROD)
+#define ARM_ARCH_V8_6A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_6A	   \
+				      | ARM_EXT2_CRC, FPU_NEON_EXT_RDMA	   \
 						    | FPU_NEON_EXT_DOTPROD)
 #define ARM_ARCH_V8M_BASE      ARM_FEATURE_CORE (ARM_AEXT_V8M_BASE,	   \
 						 ARM_AEXT2_V8M_BASE)
@@ -336,13 +376,14 @@
 #define ARM_ARCH_V8M_MAIN_DSP  ARM_FEATURE_CORE (ARM_AEXT_V8M_MAIN_DSP,	   \
 						 ARM_AEXT2_V8M_MAIN_DSP)
 #define ARM_ARCH_V8R	       ARM_FEATURE_CORE (ARM_AEXT_V8R, ARM_AEXT2_V8R)
+#define ARM_ARCH_V8_1M_MAIN    ARM_FEATURE_CORE (ARM_AEXT_V8_1M_MAIN,	   \
+						 ARM_AEXT2_V8_1M_MAIN)
 
 /* Some useful combinations:  */
 #define ARM_ARCH_NONE	ARM_FEATURE_LOW (0, 0)
 #define FPU_NONE	ARM_FEATURE_LOW (0, 0)
-#define ARM_ANY		ARM_FEATURE (-1, -1, 0)	/* Any basic core.  */
+#define ARM_ANY		ARM_FEATURE (-1, -1 & ~ (ARM_EXT2_MVE | ARM_EXT2_MVE_FP), 0)	/* Any basic core.  */
 #define FPU_ANY		ARM_FEATURE_COPROC (-1) /* Any FPU.  */
-#define ARM_FEATURE_ALL	ARM_FEATURE (-1, -1, -1)/* All CPU and FPU features.  */
 #define FPU_ANY_HARD	ARM_FEATURE_COPROC (FPU_FPA | FPU_VFP_HARD | FPU_MAVERICK)
 /* Extensions containing some Thumb-2 instructions.  If any is present, Thumb
    ISA is Thumb-2.  */

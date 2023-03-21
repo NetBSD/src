@@ -87,6 +87,7 @@ struct cgen_fp_ops {
   int (*lesf) (CGEN_FPU*, SF, SF);
   int (*gtsf) (CGEN_FPU*, SF, SF);
   int (*gesf) (CGEN_FPU*, SF, SF);
+  int (*unorderedsf) (CGEN_FPU*, SF, SF);
 
   /* basic DF ops */
 
@@ -112,6 +113,7 @@ struct cgen_fp_ops {
   int (*ledf) (CGEN_FPU*, DF, DF);
   int (*gtdf) (CGEN_FPU*, DF, DF);
   int (*gedf) (CGEN_FPU*, DF, DF);
+  int (*unordereddf) (CGEN_FPU*, DF, DF);
 
   /* SF/DF conversion ops */
 

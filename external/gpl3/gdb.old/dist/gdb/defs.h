@@ -1,7 +1,7 @@
 /* *INDENT-OFF* */ /* ATTRIBUTE_PRINTF confuses indent, avoid running it
 		      for now.  */
 /* Basic, host-specific, and target-specific definitions for GDB.
-   Copyright (C) 1986-2019 Free Software Foundation, Inc.
+   Copyright (C) 1986-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,16 @@
 #  error gdbserver should not include gdb/defs.h
 #endif
 
-#include "common/common-defs.h"
+#include "gdbsupport/common-defs.h"
+
+#undef PACKAGE
+#undef PACKAGE_NAME
+#undef PACKAGE_VERSION
+#undef PACKAGE_STRING
+#undef PACKAGE_TARNAME
+
+#include <config.h>
+#include "bfd.h"
 
 #include <sys/types.h>
 #include <limits.h>
@@ -52,8 +61,8 @@
 
 #include "ui-file.h"
 
-#include "common/host-defs.h"
-#include "common/enum-flags.h"
+#include "gdbsupport/host-defs.h"
+#include "gdbsupport/enum-flags.h"
 
 /* Scope types enumerator.  List the types of scopes the compiler will
    accept.  */
@@ -115,11 +124,11 @@ extern int dbx_commands;
 extern char *gdb_sysroot;
 
 /* * GDB datadir, used to store data files.  */
-extern char *gdb_datadir;
+extern std::string gdb_datadir;
 
-/* * If non-NULL, the possibly relocated path to python's "lib" directory
+/* * If not empty, the possibly relocated path to python's "lib" directory
    specified with --with-python.  */
-extern char *python_libdir;
+extern std::string python_libdir;
 
 /* * Search path for separate debug files.  */
 extern char *debug_file_directory;
@@ -282,7 +291,7 @@ struct value;
 
 /* This really belong in utils.c (path-utils.c?), but it references some
    globals that are currently only available to main.c.  */
-extern char *relocate_gdb_directory (const char *initial, int flag);
+extern std::string relocate_gdb_directory (const char *initial, bool relocatable);
 
 
 /* Annotation stuff.  */
@@ -300,16 +309,13 @@ EXTERN_C char *re_comp (const char *);
 
 extern void symbol_file_command (const char *, int);
 
-/* * Remote targets may wish to use this as their load function.  */
-extern void generic_load (const char *name, int from_tty);
-
 /* From top.c */
 
 typedef void initialize_file_ftype (void);
 
 extern char *gdb_readline_wrapper (const char *);
 
-extern char *command_line_input (const char *, const char *);
+extern const char *command_line_input (const char *, const char *);
 
 extern void print_prompt (void);
 
@@ -317,7 +323,7 @@ struct ui;
 
 extern int input_interactive_p (struct ui *);
 
-extern int info_verbose;
+extern bool info_verbose;
 
 /* From printcmd.c */
 
@@ -472,37 +478,6 @@ enum val_prettyformat
 
 extern int longest_to_int (LONGEST);
 
-/* * List of known OS ABIs.  If you change this, make sure to update the
-   table in osabi.c.  */
-enum gdb_osabi
-{
-  GDB_OSABI_UNKNOWN = 0,	/* keep this zero */
-  GDB_OSABI_NONE,
-
-  GDB_OSABI_SVR4,
-  GDB_OSABI_HURD,
-  GDB_OSABI_SOLARIS,
-  GDB_OSABI_LINUX,
-  GDB_OSABI_FREEBSD,
-  GDB_OSABI_NETBSD,
-  GDB_OSABI_OPENBSD,
-  GDB_OSABI_WINCE,
-  GDB_OSABI_GO32,
-  GDB_OSABI_QNXNTO,
-  GDB_OSABI_CYGWIN,
-  GDB_OSABI_AIX,
-  GDB_OSABI_DICOS,
-  GDB_OSABI_DARWIN,
-  GDB_OSABI_SYMBIAN,
-  GDB_OSABI_OPENVMS,
-  GDB_OSABI_LYNXOS178,
-  GDB_OSABI_NEWLIB,
-  GDB_OSABI_SDE,
-  GDB_OSABI_PIKEOS,
-
-  GDB_OSABI_INVALID		/* keep this last */
-};
-
 /* Enumerate the requirements a symbol has in order to be evaluated.
    These are listed in order of "strength" -- a later entry subsumes
    earlier ones.  This fine-grained distinction is important because
@@ -521,9 +496,6 @@ enum symbol_needs_kind
   /* The symbol needs a frame.  */
   SYMBOL_NEEDS_FRAME
 };
-
-/* Dynamic target-system-dependent parameters for GDB.  */
-#include "gdbarch.h"
 
 /* In findvar.c.  */
 
@@ -578,18 +550,7 @@ extern void copy_integer_to_size (gdb_byte *dest, int dest_size,
 				  const gdb_byte *source, int source_size,
 				  bool is_signed, enum bfd_endian byte_order);
 
-/* From valops.c */
-
-extern int watchdog;
-
-/* From dwarf2read.c */
-
-ULONGEST read_unsigned_leb128 (bfd *, const gdb_byte *, unsigned int *);
-
 /* Hooks for alternate command interfaces.  */
-
-/* * The name of the interpreter if specified on the command line.  */
-extern char *interpreter_p;
 
 struct target_waitstatus;
 struct cmd_list_element;
@@ -611,7 +572,6 @@ extern int (*deprecated_query_hook) (const char *, va_list)
      ATTRIBUTE_FPTR_PRINTF(1,0);
 extern void (*deprecated_warning_hook) (const char *, va_list)
      ATTRIBUTE_FPTR_PRINTF(1,0);
-extern void (*deprecated_interactive_hook) (void);
 extern void (*deprecated_readline_begin_hook) (const char *, ...)
      ATTRIBUTE_FPTR_PRINTF_1;
 extern char *(*deprecated_readline_hook) (const char *);

@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -2405,7 +2405,7 @@ parse_operand (nds32_asm_desc_t *pdesc, nds32_asm_insn_t *pinsn,
       abort ();
     }
 
-done:
+ done:
   /* Don't silently discarding bits.  */
   if (value & __MASK (fld->shift))
     {
@@ -2533,7 +2533,7 @@ parse_insn (nds32_asm_desc_t *pdesc, nds32_asm_insn_t *pinsn,
       if (*plex == 0 && (*p == '\0' || *p == '!' || *p == '#'))
 	return 1;
 
-reject:
+    reject:
       /* If not accepted, try another combination.  */
       variant++;
     }
@@ -2564,7 +2564,7 @@ nds32_assemble (nds32_asm_desc_t *pdesc, nds32_asm_insn_t *pinsn,
     *s++ = '\0';
   dot = strchr (mnemoic, '.');
 
-retry_dot:
+ retry_dot:
   /* Lookup the opcode syntax.  */
   hash = htab_hash_string (mnemoic);
   opc = (struct nds32_opcode *)
@@ -2615,6 +2615,6 @@ retry_dot:
   /* A matched opcode is found.  Write the result to instruction buffer.  */
   pdesc->result = NASM_OK;
 
-out:
+ out:
   free (str);
 }

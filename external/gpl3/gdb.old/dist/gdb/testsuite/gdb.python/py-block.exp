@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 Free Software Foundation, Inc.
+# Copyright (C) 2010-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,6 +43,11 @@ gdb_test "python print (block)" "<gdb.Block object at $hex>" "check block not No
 gdb_test "python print (block.function)" "None" "first anonymous block"
 gdb_test "python print (block.start)" "${decimal}" "check start not None"
 gdb_test "python print (block.end)" "${decimal}" "check end not None"
+gdb_test "python print (block\['f'\].name == 'f')" "True" "check variable access"
+gdb_test "python print (block\['nonexistent'\])" ".*KeyError: 'nonexistent'.*" \
+         "check nonexistent variable"
+gdb_test "python print (block\[42\])" ".*TypeError: Expected a string.*" \
+         "check non-string key"
 
 # Test global/static blocks
 gdb_py_test_silent_cmd "python frame = gdb.selected_frame()" "Get Frame" 0

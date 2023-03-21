@@ -1,7 +1,7 @@
 /* THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi:set ro:
   Original: tic6x-gp.xml */
 
-#include "common/tdesc.h"
+#include "gdbsupport/tdesc.h"
 
 static int
 create_feature_tic6x_gp (struct target_desc *result, long regnum)

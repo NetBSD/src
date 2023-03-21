@@ -1,4 +1,4 @@
-# Copyright 2000-2019 Free Software Foundation, Inc.
+# Copyright 2000-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,12 +36,8 @@
 #	Unles you have a gdbserver that can handle multiple sessions.
 #
 #   set_board_info noargs 1
-#	At present there is no provision in the remote protocol
-#	for passing arguments.  This test framework does not
-#	address the issue, so it's best to set this variable
-#	in your baseboard configuration file.  
-#	FIXME: there's no reason why the test harness couldn't
-#	pass commandline args when it spawns gdbserver.
+#	Set this if the board does not support passing arguments to the
+#	inferior process.
 #
 #   set_board_info gdb,noinferiorio 1
 #	Neither the traditional gdbserver nor the one in libremote
@@ -77,8 +73,8 @@ proc gdbserver_gdb_load { } {
     return [gdbserver_spawn ""]
 }
 
-proc gdb_reload { } {
-    return [gdbserver_run ""]
+proc gdb_reload { {inferior_args {}} } {
+    return [gdbserver_run $inferior_args]
 }
 
 proc gdb_reconnect { } {

@@ -1,6 +1,6 @@
 /* Definitions for targets which report shared library events.
 
-   Copyright (C) 2007-2019 Free Software Foundation, Inc.
+   Copyright (C) 2007-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,6 @@
 #include "symtab.h"
 #include "symfile.h"
 #include "target.h"
-#include "common/vec.h"
 #include "solib-target.h"
 #include <vector>
 
@@ -47,7 +46,7 @@ struct lm_info_target : public lm_info_base
 
   /* The cached offsets for each section of this shared library,
      determined from SEGMENT_BASES, or SECTION_BASES.  */
-  section_offsets *offsets = NULL;
+  section_offsets offsets;
 };
 
 typedef std::vector<std::unique_ptr<lm_info_target>> lm_info_vector;
@@ -306,13 +305,11 @@ solib_target_relocate_section_addresses (struct so_list *so,
 
   /* Build the offset table only once per object file.  We can not do
      it any earlier, since we need to open the file first.  */
-  if (li->offsets == NULL)
+  if (li->offsets.empty ())
     {
       int num_sections = gdb_bfd_count_sections (so->abfd);
 
-      li->offsets
-	= ((struct section_offsets *)
-	   xzalloc (SIZEOF_N_SECTION_OFFSETS (num_sections)));
+      li->offsets.assign (num_sections, 0);
 
       if (!li->section_bases.empty ())
 	{
@@ -323,7 +320,7 @@ solib_target_relocate_section_addresses (struct so_list *so,
 	  for (i = 0, sect = so->abfd->sections;
 	       sect != NULL;
 	       i++, sect = sect->next)
-	    if ((bfd_get_section_flags (so->abfd, sect) & SEC_ALLOC))
+	    if ((bfd_section_flags (sect) & SEC_ALLOC))
 	      num_alloc_sections++;
 
 	  if (num_alloc_sections != li->section_bases.size ())
@@ -341,14 +338,14 @@ Could not relocate shared library \"%s\": wrong number of ALLOC sections"),
 		   sect != NULL;
 		   i++, sect = sect->next)
 		{
-		  if (!(bfd_get_section_flags (so->abfd, sect) & SEC_ALLOC))
+		  if (!(bfd_section_flags (sect) & SEC_ALLOC))
 		    continue;
-		  if (bfd_section_size (so->abfd, sect) > 0)
+		  if (bfd_section_size (sect) > 0)
 		    {
 		      CORE_ADDR low, high;
 
 		      low = li->section_bases[i];
-		      high = low + bfd_section_size (so->abfd, sect) - 1;
+		      high = low + bfd_section_size (sect) - 1;
 
 		      if (low < so->addr_low)
 			so->addr_low = low;
@@ -357,7 +354,7 @@ Could not relocate shared library \"%s\": wrong number of ALLOC sections"),
 		      gdb_assert (so->addr_low <= so->addr_high);
 		      found_range = 1;
 		    }
-		  li->offsets->offsets[i] = li->section_bases[bases_index];
+		  li->offsets[i] = li->section_bases[bases_index];
 		  bases_index++;
 		}
 	      if (!found_range)
@@ -367,9 +364,9 @@ Could not relocate shared library \"%s\": wrong number of ALLOC sections"),
 	}
       else if (!li->segment_bases.empty ())
 	{
-	  struct symfile_segment_data *data;
+	  symfile_segment_data_up data
+	    = get_symfile_segment_data (so->abfd);
 
-	  data = get_symfile_segment_data (so->abfd);
 	  if (data == NULL)
 	    warning (_("\
 Could not relocate shared library \"%s\": no segments"), so->so_name);
@@ -378,7 +375,8 @@ Could not relocate shared library \"%s\": no segments"), so->so_name);
 	      ULONGEST orig_delta;
 	      int i;
 
-	      if (!symfile_map_offsets_to_segments (so->abfd, data, li->offsets,
+	      if (!symfile_map_offsets_to_segments (so->abfd, data.get (),
+						    li->offsets,
 						    li->segment_bases.size (),
 						    li->segment_bases.data ()))
 		warning (_("\
@@ -388,9 +386,9 @@ Could not relocate shared library \"%s\": bad offsets"), so->so_name);
 		 "info sharedlibrary".  Report any consecutive segments
 		 which were relocated as a single unit.  */
 	      gdb_assert (li->segment_bases.size () > 0);
-	      orig_delta = li->segment_bases[0] - data->segment_bases[0];
+	      orig_delta = li->segment_bases[0] - data->segments[0].base;
 
-	      for (i = 1; i < data->num_segments; i++)
+	      for (i = 1; i < data->segments.size (); i++)
 		{
 		  /* If we have run out of offsets, assume all
 		     remaining segments have the same offset.  */
@@ -399,25 +397,22 @@ Could not relocate shared library \"%s\": bad offsets"), so->so_name);
 
 		  /* If this segment does not have the same offset, do
 		     not include it in the library's range.  */
-		  if (li->segment_bases[i] - data->segment_bases[i]
+		  if (li->segment_bases[i] - data->segments[i].base
 		      != orig_delta)
 		    break;
 		}
 
 	      so->addr_low = li->segment_bases[0];
-	      so->addr_high = (data->segment_bases[i - 1]
-			       + data->segment_sizes[i - 1]
+	      so->addr_high = (data->segments[i - 1].base
+			       + data->segments[i - 1].size
 			       + orig_delta);
 	      gdb_assert (so->addr_low <= so->addr_high);
-
-	      free_symfile_segment_data (data);
 	    }
 	}
     }
 
-  offset = li->offsets->offsets[gdb_bfd_section_index
-			        (sec->the_bfd_section->owner,
-				 sec->the_bfd_section)];
+  offset = li->offsets[gdb_bfd_section_index (sec->the_bfd_section->owner,
+					      sec->the_bfd_section)];
   sec->addr += offset;
   sec->endaddr += offset;
 }
@@ -441,8 +436,9 @@ solib_target_in_dynsym_resolve_code (CORE_ADDR pc)
 
 struct target_so_ops solib_target_so_ops;
 
+void _initialize_solib_target ();
 void
-_initialize_solib_target (void)
+_initialize_solib_target ()
 {
   solib_target_so_ops.relocate_section_addresses
     = solib_target_relocate_section_addresses;

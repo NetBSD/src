@@ -1,4 +1,4 @@
-# Copyright 1992-2019 Free Software Foundation, Inc.
+# Copyright 1992-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -646,12 +646,12 @@ proc test_wide_location_1 {} {
     gdb_continue_to_breakpoint "func6 breakpoint here"
 
     if { $hw_expected } {
-	gdb_test "watch foo2" "Hardware watchpoint .*: .*" "watch foo2"
+	gdb_test "watch foo2" "Hardware watchpoint .*: .*"
 	gdb_test "continue" \
 	    "Continuing.*Hardware watchpoint .*: .*New value = \\\{val = \\\{0, 11\\\}\\\}.*" \
 	    "continue with watch foo2"
     } else {
-	gdb_test "watch foo2" "atchpoint .*: .*" "watch foo2"
+	gdb_test "watch foo2" "atchpoint .*: .*"
 	set test "continue with watch foo2"
 	gdb_test_multiple "cont" $test {
 	    -re "Continuing.*\[Ww\]atchpoint .*: .*New value = \\\{val = \\\{0, 11\\\}\\\}.*$gdb_prompt $" {
@@ -693,12 +693,12 @@ proc test_wide_location_2 {} {
     gdb_continue_to_breakpoint "func7 breakpoint here"
 
     if { $hw_expected } {
-	gdb_test "watch foo4" "Hardware watchpoint .*: .*" "watch foo4"
+	gdb_test "watch foo4" "Hardware watchpoint .*: .*"
 	gdb_test "continue" \
 	    "Continuing.*Hardware watchpoint .*: .*New value = \\\{val = \\\{0, 0, 0, 33\\\}\\\}.*" \
 	    "continue with watch foo4"
     } else {
-	gdb_test "watch foo4" "atchpoint .*: .*" "watch foo4"
+	gdb_test "watch foo4" "atchpoint .*: .*"
 	set test "continue with watch foo4"
 	gdb_test_multiple "cont" $test {
 	    -re "Continuing.*\[Ww\]atchpoint .*: .*New value = \\\{val = \\\{0, 0, 0, 33\\\}\\\}.*$gdb_prompt $" {

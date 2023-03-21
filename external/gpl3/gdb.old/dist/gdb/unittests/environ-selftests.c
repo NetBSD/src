@@ -1,6 +1,6 @@
 /* Self tests for gdb_environ for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "common/selftest.h"
-#include "common/environ.h"
+#include "gdbsupport/selftest.h"
+#include "gdbsupport/environ.h"
 #include "diagnostics.h"
 
 static const char gdb_selftest_env_var[] = "GDB_SELFTEST_ENVIRON";
@@ -298,6 +298,7 @@ run_tests ()
 } /* namespace gdb_environ */
 } /* namespace selftests */
 
+void _initialize_environ_selftests ();
 void
 _initialize_environ_selftests ()
 {

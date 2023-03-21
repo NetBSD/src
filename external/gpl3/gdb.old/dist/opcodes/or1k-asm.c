@@ -5,7 +5,7 @@
    THIS FILE IS MACHINE GENERATED WITH CGEN.
    - the resultant file is machine generated, cgen-asm.in isn't
 
-   Copyright (C) 1996-2019 Free Software Foundation, Inc.
+   Copyright (C) 1996-2020 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -419,6 +419,56 @@ parse_uimm16_split (CGEN_CPU_DESC cd, const char **strp, int opindex,
   return errmsg;
 }
 
+/* Parse register pairs with syntax rA,rB to a flag + rA value.  */
+
+static const char *
+parse_regpair (CGEN_CPU_DESC cd, const char **strp,
+	       int opindex ATTRIBUTE_UNUSED, unsigned long *valuep)
+{
+  long reg1_index;
+  long reg2_index;
+  const char *errmsg;
+
+  /* The first part should just be a register.  */
+  errmsg = cgen_parse_keyword (cd, strp, &or1k_cgen_opval_h_gpr,
+			       &reg1_index);
+
+  /* If that worked skip the comma separator.  */
+  if (errmsg == NULL)
+    {
+      if (**strp == ',')
+	++*strp;
+      else
+	errmsg = "Unexpected character, expected ','";
+    }
+
+  /* If that worked the next part is just another register.  */
+  if (errmsg == NULL)
+    errmsg = cgen_parse_keyword (cd, strp, &or1k_cgen_opval_h_gpr,
+				 &reg2_index);
+
+  /* Validate the register pair is valid and create the output value.  */
+  if (errmsg == NULL)
+    {
+      int regoffset = reg2_index - reg1_index;
+
+      if (regoffset == 1 || regoffset == 2)
+	{
+	  unsigned short offsetmask;
+	  unsigned short value;
+
+	  offsetmask = ((regoffset == 2 ? 1 : 0) << 5);
+	  value = offsetmask | reg1_index;
+
+	  *valuep = value;
+	}
+      else
+	errmsg = "Invalid register pair, offset not 1 or 2.";
+    }
+
+  return errmsg;
+}
+
 /* -- */
 
 const char * or1k_cgen_parse_operand
@@ -466,8 +516,11 @@ or1k_cgen_parse_operand (CGEN_CPU_DESC cd,
     case OR1K_OPERAND_RA :
       errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_gpr, & fields->f_r2);
       break;
-    case OR1K_OPERAND_RADF :
-      errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_fdr, & fields->f_r1);
+    case OR1K_OPERAND_RAD32F :
+      errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RAD32F, (unsigned long *) (& fields->f_rad32));
+      break;
+    case OR1K_OPERAND_RADI :
+      errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RADI, (unsigned long *) (& fields->f_rad32));
       break;
     case OR1K_OPERAND_RASF :
       errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_fsr, & fields->f_r2);
@@ -475,8 +528,11 @@ or1k_cgen_parse_operand (CGEN_CPU_DESC cd,
     case OR1K_OPERAND_RB :
       errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_gpr, & fields->f_r3);
       break;
-    case OR1K_OPERAND_RBDF :
-      errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_fdr, & fields->f_r1);
+    case OR1K_OPERAND_RBD32F :
+      errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RBD32F, (unsigned long *) (& fields->f_rbd32));
+      break;
+    case OR1K_OPERAND_RBDI :
+      errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RBDI, (unsigned long *) (& fields->f_rbd32));
       break;
     case OR1K_OPERAND_RBSF :
       errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_fsr, & fields->f_r3);
@@ -484,8 +540,11 @@ or1k_cgen_parse_operand (CGEN_CPU_DESC cd,
     case OR1K_OPERAND_RD :
       errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_gpr, & fields->f_r1);
       break;
-    case OR1K_OPERAND_RDDF :
-      errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_fdr, & fields->f_r1);
+    case OR1K_OPERAND_RDD32F :
+      errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RDD32F, (unsigned long *) (& fields->f_rdd32));
+      break;
+    case OR1K_OPERAND_RDDI :
+      errmsg = parse_regpair (cd, strp, OR1K_OPERAND_RDDI, (unsigned long *) (& fields->f_rdd32));
       break;
     case OR1K_OPERAND_RDSF :
       errmsg = cgen_parse_keyword (cd, strp, & or1k_cgen_opval_h_fsr, & fields->f_r1);

@@ -1,6 +1,6 @@
 /* OS ABI variant handling for GDB.
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -72,6 +72,7 @@ static const struct osabi_names gdb_osabi_names[] =
   { "DJGPP", NULL },
   { "QNX-Neutrino", NULL },
   { "Cygwin", NULL },
+  { "Windows", NULL },
   { "AIX", NULL },
   { "DICOS", NULL },
   { "Darwin", NULL },
@@ -346,7 +347,7 @@ gdbarch_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
 	continue;
 
       /* If the architecture described by ARCH_INFO can run code for
-	 the architcture we registered the handler for, then the
+	 the architecture we registered the handler for, then the
 	 handler is applicable.  Note, though, that if the handler is
 	 for an architecture that is a superset of ARCH_INFO, we can't
 	 use that --- it would be perfectly correct for it to install
@@ -415,8 +416,8 @@ check_note (bfd *abfd, asection *sect, char *note, unsigned int *sectsize,
   /* If this assertion triggers, increase MAX_NOTESZ.  */
   gdb_assert (notesz <= MAX_NOTESZ);
 
-  /* Check whether SECT is big enough to comtain the complete note.  */
-  if (notesz > bfd_section_size (abfd, sect))
+  /* Check whether SECT is big enough to contain the complete note.  */
+  if (notesz > bfd_section_size (sect))
     return 0;
 
   /* Check the note name.  */
@@ -445,8 +446,8 @@ generic_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect, void *obj)
   unsigned int sectsize;
   char *note;
 
-  name = bfd_get_section_name (abfd, sect);
-  sectsize = bfd_section_size (abfd, sect);
+  name = bfd_section_name (sect);
+  sectsize = bfd_section_size (sect);
 
   /* Limit the amount of data to read.  */
   if (sectsize > MAX_NOTESZ)
@@ -653,8 +654,9 @@ show_osabi (struct ui_file *file, int from_tty, struct cmd_list_element *c,
 		      gdbarch_osabi_name (GDB_OSABI_DEFAULT));
 }
 
+void _initialize_gdb_osabi ();
 void
-_initialize_gdb_osabi (void)
+_initialize_gdb_osabi ()
 {
   if (strcmp (gdb_osabi_names[GDB_OSABI_INVALID].pretty, "<invalid>") != 0)
     internal_error

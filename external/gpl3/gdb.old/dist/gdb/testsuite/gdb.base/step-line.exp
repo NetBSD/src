@@ -1,4 +1,4 @@
-# Copyright 2001-2019 Free Software Foundation, Inc.
+# Copyright 2001-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ if ![runto_main] then {
 
 set remote_linefile [gdb_remote_download host ${srcdir}/${subdir}/${linefile}]
 
-gdb_test "break f1" ".*Breakpoint 2 at .* file .*step-line.c.*" "break f1"
+gdb_test "break f1" ".*Breakpoint 2 at .* file .*step-line.c.*"
 gdb_test "continue" \
          "Continuing.*Breakpoint 2, f1 \\(i=4\\).*dummy \\(1, i\\);" \
 	 "continue to f1"

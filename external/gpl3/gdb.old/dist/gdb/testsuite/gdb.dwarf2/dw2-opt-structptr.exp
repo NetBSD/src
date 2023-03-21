@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Free Software Foundation, Inc.
+# Copyright 2016-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,6 @@ proc build_test_program {} {
     # Make some DWARF for the test.
     set asm_file [standard_output_file $srcfile2]
     Dwarf::assemble $asm_file {
-        global srcdir subdir srcfile
 
 	# Creating a CU with 4-byte addresses lets this test link on
 	# both 32- and 64-bit machines.
@@ -102,7 +101,7 @@ proc build_test_program {} {
 		    {DW_AT_name func01}
 		    {DW_AT_type :$int_label}
 		    {external   1 flag}
-		    {MACRO_AT_func {func01 ${srcdir}/${subdir}/${srcfile}}}
+		    {MACRO_AT_func {func01}}
 		} {
 		    DW_TAG_variable {
 			{DW_AT_name ptr}
@@ -115,7 +114,7 @@ proc build_test_program {} {
 		    {DW_AT_name main}
 		    {DW_AT_type :$int_label}
 		    {external   1 flag}
-		    {MACRO_AT_func {main ${srcdir}/${subdir}/${srcfile}}}
+		    {MACRO_AT_func {main}}
 		} {
 		}
 	    }

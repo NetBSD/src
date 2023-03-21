@@ -1,4 +1,4 @@
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 load_lib "ada.exp"
+
+if { [skip_ada_tests] } { return -1 }
 
 standard_ada_testfile bla
 
@@ -70,7 +72,7 @@ gdb_test "catch assert if Global_Var = 2" \
 
 # Check that condition is stored and properly displayed.
 
-set exp_bp ".*$decimal${sp}breakpoint${sp}keep${sp}y${sp}$hex failed Ada assertions$eol${sp}stop only if Global_Var = 2.*"
+set exp_bp ".*$decimal${sp}catchpoint${sp}keep${sp}y${sp}failed Ada assertions$eol${sp}stop only if Global_Var = 2.*"
 gdb_test "info breakpoint" $exp_bp "Check catch assertions with condition"
 
 set bp_location [gdb_get_line_number "STOP" ${testdir}/bla.adb]

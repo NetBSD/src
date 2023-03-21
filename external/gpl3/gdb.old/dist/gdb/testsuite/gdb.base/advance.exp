@@ -1,4 +1,4 @@
-# Copyright 2003-2019 Free Software Foundation, Inc.
+# Copyright 2003-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,8 +42,7 @@ gdb_test "advance [gdb_get_line_number "advance malformed"] then stop" \
 # Verify that "advance <funcname>" works.
 #
 gdb_test "advance func" \
-	"func.*at.*x = x \\+ 5." \
-	"advance func"
+	"func.*at.*x = x \\+ 5."
 
 # Verify that "advance <funcname>" when funcname is NOT called by the current
 # frame, stops at the end of the current frame.

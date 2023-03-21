@@ -1,4 +1,4 @@
-#   Copyright 1997-2019 Free Software Foundation, Inc.
+#   Copyright 1997-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,10 +78,13 @@ proc do_exec_tests {} {
      fail "couldn't run ${testfile}"
      return
    }
-   # Execute the code setting up variable PROG.
-   set tbreak_line [gdb_get_line_number " tbreak-execlp " $srcfile]
-   gdb_test "tbreak ${tbreak_line}"
-   gdb_continue_to_breakpoint "line tbreak-execlp" ".*execlp \\(.*"
+
+   with_test_prefix "1st run" {
+       # Execute the code setting up variable PROG.
+       set tbreak_line [gdb_get_line_number " tbreak-execlp " $srcfile]
+       gdb_test "tbreak ${tbreak_line}" "" "insert breakpoint"
+       gdb_continue_to_breakpoint "line tbreak-execlp" ".*execlp \\(.*"
+   }
 
    # Verify that we can see various global and local variables
    # in this program, and that they have expected values.  Some
@@ -234,10 +237,13 @@ proc do_exec_tests {} {
      fail "couldn't run ${testfile} (3rd try)"
      return
    }
-   # Execute the code setting up variable PROG.
-   set tbreak_line [gdb_get_line_number " tbreak-execlp " $srcfile]
-   gdb_test "tbreak ${tbreak_line}"
-   gdb_continue_to_breakpoint "line tbreak-execlp" ".*execlp \\(.*"
+
+   with_test_prefix "2nd run" {
+       # Execute the code setting up variable PROG.
+       set tbreak_line [gdb_get_line_number " tbreak-execlp " $srcfile]
+       gdb_test "tbreak ${tbreak_line}" "" "insert breakpoint"
+       gdb_continue_to_breakpoint "line tbreak-execlp" ".*execlp \\(.*"
+   }
 
    # Verify that we can follow through follow an execl()
    # call.  (We must jump around earlier exec* calls.)
@@ -299,10 +305,13 @@ proc do_exec_tests {} {
      fail "couldn't run ${testfile} (4th try)"
      return
    }
-   # Execute the code setting up variable PROG.
-   set tbreak_line [gdb_get_line_number " tbreak-execlp " $srcfile]
-   gdb_test "tbreak ${tbreak_line}"
-   gdb_continue_to_breakpoint "line tbreak-execlp" ".*execlp \\(.*"
+
+   with_test_prefix "3rd run" {
+       # Execute the code setting up variable PROG.
+       set tbreak_line [gdb_get_line_number " tbreak-execlp " $srcfile]
+       gdb_test "tbreak ${tbreak_line}" "" "insert breakpoint"
+       gdb_continue_to_breakpoint "line tbreak-execlp" ".*execlp \\(.*"
+   }
 
    # Verify that we can follow through follow an execv()
    # call.  (We must jump around earlier exec* calls.)

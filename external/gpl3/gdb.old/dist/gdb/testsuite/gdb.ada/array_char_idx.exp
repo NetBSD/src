@@ -1,4 +1,4 @@
-# Copyright 2014-2019 Free Software Foundation, Inc.
+# Copyright 2014-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,5 +31,7 @@ gdb_test "ptype char_table" \
 gdb_test "ptype global_char_table" \
          "= array \\(character\\) of natural"
 
-gdb_test "print my_table" "= \\(0 <repeats 256 times>\\)" \
+# Some more recent versions of gcc can statically initialize this
+# array, so we allow either 0 or 4874.
+gdb_test "print my_table" "= \\((0|4874) <repeats 256 times>\\)" \
          "Display my_table"

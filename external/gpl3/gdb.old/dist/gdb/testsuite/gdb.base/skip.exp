@@ -1,4 +1,4 @@
-#   Copyright 2011-2019 Free Software Foundation, Inc.
+#   Copyright 2011-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@ load_lib completion-support.exp
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" "skip" \
-                          {skip.c skip1.c } \
-                          {debug nowarnings}] } {
+			  {skip.c skip1.c } \
+			  {debug nowarnings}] } {
     return -1
 }
 
@@ -141,9 +141,12 @@ with_test_prefix "step after disabling 3" {
     }
 
     gdb_test "step" "bar \\(\\) at.*" "step 1"
-    gdb_test "step" ".*" "step 2"; # Return from foo()
-    gdb_test "step" "foo \\(\\) at.*" "step 3"
-    gdb_test "step" ".*" "step 4"; # Return from bar()
+    gdb_test "step" ".*" "step 2"; # Return from bar()
+    # With gcc 9.2.0 we jump once back to main before entering foo here.
+    # If that happens try to step a second time.
+    gdb_test "step" "foo \\(\\) at.*" "step 3" \
+	"main \\(\\) at .*\r\n$gdb_prompt " "step"
+    gdb_test "step" ".*" "step 4"; # Return from foo()
     gdb_test "step" "main \\(\\) at.*" "step 5"
 }
 
@@ -204,8 +207,7 @@ with_test_prefix "admin" {
     gdb_test "info skip 2-3" \
 	"Num\\s+Enb\\s+Glob\\s+File\\s+RE\\s+Function\\s*
 2\\s+y\\s+n\\s+<none>\\s+n\\s+main\\s*
-3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>\\s*" \
-	"info skip 2-3"
+3\\s+y\\s+n\\s+$srcfile1\\s+n\\s+<none>\\s*"
 
     gdb_test "skip delete 2 3"
     gdb_test "info skip" \
@@ -262,7 +264,10 @@ with_test_prefix "step using -fu for baz" {
     gdb_test_no_output "skip enable 7"
     gdb_test "step" "bar \\(\\) at.*" "step 1"
     gdb_test "step" ".*" "step 2"; # Return from bar()
-    gdb_test "step" "foo \\(\\) at.*" "step 3"
+    # With gcc 9.2.0 we jump once back to main before entering foo here.
+    # If that happens try to step a second time.
+    gdb_test "step" "foo \\(\\) at.*" "step 3" \
+	"main \\(\\) at .*\r\n$gdb_prompt " "step"
     gdb_test "step" ".*" "step 4"; # Return from foo()
     gdb_test "step" "main \\(\\) at.*" "step 5"
 }
@@ -277,7 +282,10 @@ with_test_prefix "step using -rfu for baz" {
     gdb_test_no_output "skip enable 8"
     gdb_test "step" "bar \\(\\) at.*" "step 1"
     gdb_test "step" ".*" "step 2"; # Return from bar()
-    gdb_test "step" "foo \\(\\) at.*" "step 3"
+    # With gcc 9.2.0 we jump once back to main before entering foo here.
+    # If that happens try to step a second time.
+    gdb_test "step" "foo \\(\\) at.*" "step 3" \
+	"main \\(\\) at .*\r\n$gdb_prompt " "step"
     gdb_test "step" ".*" "step 4"; # Return from foo()
     gdb_test "step" "main \\(\\) at.*" "step 5"
 }

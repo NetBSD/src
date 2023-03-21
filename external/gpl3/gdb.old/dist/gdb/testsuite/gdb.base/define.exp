@@ -1,4 +1,4 @@
-# Copyright 1998-2019 Free Software Foundation, Inc.
+# Copyright 1998-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -129,6 +129,31 @@ gdb_test_multiple "document nextwhere" "set up whitespace in help string" {
 gdb_test "help nextwhere" \
     "   A next command that first shows you where you're stepping from.*" \
     "preserve whitespace in help string"
+
+# Verify that GDB allows a user to use . in a command name.
+#
+gdb_test_multiple "define dot.command" "define user command: dot.command" {
+    -re "Type commands for definition of \"dot.command\".\r\nEnd with a line saying just \"end\".\r\n>$" {
+	gdb_test "echo dot command\\n\nend" "" \
+	    "define user command: dot.command"
+    }
+}
+
+# Verify that dot.command works.
+#
+gdb_test "dot.command" \
+    "dot command" \
+    "full name dot.command"
+gdb_test "dot" \
+    "dot command" \
+    "partial name dot"
+gdb_test "dot." \
+    "dot command" \
+    "partial name dot."
+gdb_test "dot.c" \
+    "dot command" \
+    "partial name dot.c"
+
 
 # Verify that the command parser doesn't require a space after an 'if'
 # command in a user defined function.
@@ -283,6 +308,15 @@ gdb_test_multiple "define target hookpost-testsuite" "" {
 
 gdb_test "target testsuite" "one\r\nhello\r\ntwo" "target testsuite with hooks"
 
+# Save the GDB prompt so it can be restored to the original value later.
+set prior_prompt ""
+gdb_test_multiple "show prompt" "save gdb_prompt" {
+    -re "Gdb's prompt is \"($gdb_prompt) \"\.\[\r\n\]*$gdb_prompt $" {
+	set prior_prompt $expect_out(1,string)
+	pass "save gdb_prompt"
+    }
+}
+
 # This is a quasi-define command: Verify that the user can redefine
 # GDB's gdb_prompt.
 #
@@ -292,8 +326,8 @@ gdb_test_multiple "set prompt \\(blah\\) " "set gdb_prompt" {
     }
 }
 
-gdb_test_multiple "set prompt \\(gdb\\) " "reset gdb_prompt" {
-    -re "$gdb_prompt $" {
+gdb_test_multiple "set prompt $prior_prompt " "reset gdb_prompt" {
+    -re "\r\n$gdb_prompt $" {
 	pass "reset gdb_prompt"
     }
 }

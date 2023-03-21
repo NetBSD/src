@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/aarch64.
 
-   Copyright (C) 2017-2019 Free Software Foundation, Inc.
+   Copyright (C) 2017-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -134,7 +134,7 @@ const struct regset aarch64_fbsd_fpregset =
     regcache_supply_regset, regcache_collect_regset
   };
 
-/* Implement the "regset_from_core_section" gdbarch method.  */
+/* Implement the "iterate_over_regset_sections" gdbarch method.  */
 
 static void
 aarch64_fbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
@@ -170,8 +170,9 @@ aarch64_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, aarch64_fbsd_iterate_over_regset_sections);
 }
 
+void _initialize_aarch64_fbsd_tdep ();
 void
-_initialize_aarch64_fbsd_tdep (void)
+_initialize_aarch64_fbsd_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_FREEBSD,
 			  aarch64_fbsd_init_abi);

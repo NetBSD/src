@@ -1,5 +1,5 @@
 /* hash.c -- hash table routines for BFD
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Written by Steve Chamberlain <sac@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -664,19 +664,18 @@ bfd_hash_traverse (struct bfd_hash_table *table,
 unsigned long
 bfd_hash_set_default_size (unsigned long hash_size)
 {
-  /* Extend this prime list if you want more granularity of hash table size.  */
-  static const unsigned long hash_size_primes[] =
-    {
-      31, 61, 127, 251, 509, 1021, 2039, 4091, 8191, 16381, 32749, 65537
-    };
-  unsigned int _index;
-
-  /* Work out best prime number near the hash_size.  */
-  for (_index = 0; _index < ARRAY_SIZE (hash_size_primes) - 1; ++_index)
-    if (hash_size <= hash_size_primes[_index])
-      break;
-
-  bfd_default_hash_table_size = hash_size_primes[_index];
+  /* These silly_size values result in around 1G and 32M of memory
+     being allocated for the table of pointers.  Note that the number
+     of elements allocated will be almost twice the size of any power
+     of two chosen here.  */
+  unsigned long silly_size = sizeof (size_t) > 4 ? 0x4000000 : 0x400000;
+  if (hash_size > silly_size)
+    hash_size = silly_size;
+  else if (hash_size != 0)
+    hash_size--;
+  hash_size = higher_prime_number (hash_size);
+  BFD_ASSERT (hash_size != 0);
+  bfd_default_hash_table_size = hash_size;
   return bfd_default_hash_table_size;
 }
 
@@ -762,7 +761,7 @@ struct bfd_strtab_hash *
 _bfd_stringtab_init (void)
 {
   struct bfd_strtab_hash *table;
-  bfd_size_type amt = sizeof (* table);
+  size_t amt = sizeof (* table);
 
   table = (struct bfd_strtab_hash *) bfd_malloc (amt);
   if (table == NULL)

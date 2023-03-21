@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2019 Free Software Foundation, Inc.
+# Copyright (C) 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,65 +17,69 @@ set testfile "py-completion"
 
 load_lib gdb-python.exp
 
+set pyfile [gdb_remote_download host ${srcdir}/${subdir}/${testfile}.py]
+set discard 0
 gdb_exit
 gdb_start
 
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
-gdb_test_no_output "source ${srcdir}/${subdir}/${testfile}.py" \
-    "load python file"
+# Tab completion tests require readline support, and this set of tests
+# doesn't work on a remote host either.
+if { [readline_is_used] && ![is_remote host] } {
+    gdb_test_no_output "source ${pyfile}" "load python file"
 
-# Create a temporary directory
-set testdir "[standard_output_file "py-completion-testdir"]/"
-set testdir_regex [string_to_regexp $testdir]
-set testdir_complete [standard_output_file "py-completion-test"]
-file mkdir $testdir
+    # Create a temporary directory
+    set testdir "[standard_output_file "py-completion-testdir"]/"
+    set testdir_regex [string_to_regexp $testdir]
+    set testdir_complete [standard_output_file "py-completion-test"]
+    file mkdir $testdir
 
-# This one should always pass.
-send_gdb "completefileinit ${testdir_complete}\t"
-gdb_test_multiple "" "completefileinit completion" {
-    -re "^completefileinit ${testdir_regex}$" {
-        pass "completefileinit completion"
+    # This one should always pass.
+    send_gdb "completefileinit ${testdir_complete}\t"
+    gdb_test_multiple "" "completefileinit completion" {
+	-re "^completefileinit ${testdir_regex}$" {
+	    pass "completefileinit completion"
+	}
     }
-}
 
-# Just discarding whatever we typed.
-set discard 0
-gdb_test " " ".*" "discard #[incr discard]"
+    # Just discarding whatever we typed.
+    gdb_test " " ".*" "discard #[incr discard]"
 
-# This is the problematic one.
-send_gdb "completefilemethod ${testdir_complete}\t"
-gdb_test_multiple "" "completefilemethod completion" {
-    -re "^completefilemethod ${testdir_regex} $" {
-        fail "completefilemethod completion (completed filename as wrong command arg)"
+    # This is the problematic one.
+    send_gdb "completefilemethod ${testdir_complete}\t"
+    gdb_test_multiple "" "completefilemethod completion" {
+	-re "^completefilemethod ${testdir_regex} $" {
+	    fail "completefilemethod completion (completed filename as wrong command arg)"
+	}
+	-re "^completefilemethod ${testdir_regex}$" {
+	    pass "completefilemethod completion"
+	}
     }
-    -re "^completefilemethod ${testdir_regex}$" {
-        pass "completefilemethod completion"
-    }
-}
 
-# Discarding again
-gdb_test " " ".*" "discard #[incr discard]"
+    # Discarding again
+    gdb_test " " ".*" "discard #[incr discard]"
 
-# Another problematic
-set completion_regex "[string_to_regexp [standard_output_file "py-completion-t"]]"
-send_gdb "completefilecommandcond [standard_output_file "py-completion-t\t"]"
-gdb_test_multiple "" "completefilecommandcond completion" {
-    -re "^completefilecommandcond ${testdir}$" {
-	fail "completefilecommandcond completion (completed filename instead of command)"
+    # Another problematic
+    set completion_regex "[string_to_regexp [standard_output_file "py-completion-t"]]"
+    send_gdb "completefilecommandcond [standard_output_file "py-completion-t\t"]"
+    gdb_test_multiple "" "completefilecommandcond completion" {
+	-re "^completefilecommandcond ${testdir}$" {
+	    fail "completefilecommandcond completion (completed filename instead of command)"
+	}
+	-re "^completefilecommandcond ${completion_regex}\007$" {
+	    pass "completefilecommandcond completion"
+	}
     }
-    -re "^completefilecommandcond ${completion_regex}\007$" {
-	pass "completefilecommandcond completion"
-    }
+
 }
 
 # Start gdb over again to clear out current state.  This can interfere
 # with the expected output of the below tests in a buggy gdb.
 gdb_exit
 gdb_start
-gdb_test_no_output "source ${srcdir}/${subdir}/${testfile}.py" \
-    "load python file again"
+gdb_test_no_output "source ${pyfile}" "load python file again"
 
 gdb_test_sequence "complete completel" \
     "list all completions of 'complete completel'" {

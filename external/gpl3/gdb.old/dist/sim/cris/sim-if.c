@@ -1,5 +1,5 @@
 /* Main simulator entry points specific to the CRIS.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Contributed by Axis Communications.
 
 This file is part of the GNU simulators.
@@ -315,17 +315,17 @@ cris_set_section_offset_iterator (bfd *abfd, asection *s, void *vp)
   SIM_DESC sd = p->sd;
   int offset = p->offset;
 
-  if ((bfd_get_section_flags (abfd, s) & SEC_ALLOC))
+  if ((bfd_section_flags (s) & SEC_ALLOC))
     {
-      bfd_vma vma = bfd_get_section_vma (abfd, s);
+      bfd_vma vma = bfd_section_vma (s);
       
-      bfd_set_section_vma (abfd, s, vma + offset);
+      bfd_set_section_vma (s, vma + offset);
     }
 
   /* This seems clumsy and inaccurate, but let's stick to doing it the
      same way as sim_analyze_program for consistency.  */
-  if (strcmp (bfd_get_section_name (abfd, s), ".text") == 0)
-    STATE_TEXT_START (sd) = bfd_get_section_vma (abfd, s);
+  if (strcmp (bfd_section_name (s), ".text") == 0)
+    STATE_TEXT_START (sd) = bfd_section_vma (s);
 }
 
 /* Adjust the start-address, LMA and VMA of a SD.  Must be called
@@ -360,10 +360,10 @@ get_progbounds_iterator (bfd *abfd ATTRIBUTE_UNUSED, asection *s, void *vp)
 {
   struct progbounds *pbp = (struct progbounds *) vp;
 
-  if ((bfd_get_section_flags (abfd, s) & SEC_ALLOC))
+  if ((bfd_section_flags (s) & SEC_ALLOC))
     {
-      bfd_size_type sec_size = bfd_get_section_size (s);
-      bfd_size_type sec_start = bfd_get_section_vma (abfd, s);
+      bfd_size_type sec_size = bfd_section_size (s);
+      bfd_size_type sec_start = bfd_section_vma (s);
       bfd_size_type sec_end = sec_start + sec_size;
 
       if (sec_end > pbp->endmem)
@@ -372,7 +372,7 @@ get_progbounds_iterator (bfd *abfd ATTRIBUTE_UNUSED, asection *s, void *vp)
       if (sec_start < pbp->startmem)
 	pbp->startmem = sec_start;
 
-      if ((bfd_get_section_flags (abfd, s) & SEC_LOAD))
+      if ((bfd_section_flags (s) & SEC_LOAD))
 	{
 	  if (sec_end > pbp->end_loadmem)
 	    pbp->end_loadmem = sec_end;
@@ -746,7 +746,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *callback, struct bfd *abfd,
      specified.  */
   if (abfd != NULL && !cris_bare_iron)
     {
-      char *name = bfd_get_filename (abfd);
+      const char *name = bfd_get_filename (abfd);
       char **my_environ = GET_ENVIRON ();
       /* We use these maps to give the same behavior as the old xsim
 	 simulator.  */

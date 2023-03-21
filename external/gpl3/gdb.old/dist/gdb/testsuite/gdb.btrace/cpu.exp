@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2018-2019 Free Software Foundation, Inc.
+# Copyright 2018-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,11 +42,9 @@ proc test_junk { arg junk current } {
 gdb_test "show record btrace cpu" "btrace cpu is 'auto'\." "default cpu"
 
 gdb_test "set record" \
-    "\"set record\" must be followed by an appropriate subcommand.*" \
-    "set record"
+    "List of set record subcommands.*"
 gdb_test "set record btrace" \
-    "\"set record btrace\" must be followed by an appropriate subcommand.*" \
-    "set record btrace"
+    "List of set record btrace subcommands.*"
 test_bad "" "auto"
 
 test_good "intel: 0/0"

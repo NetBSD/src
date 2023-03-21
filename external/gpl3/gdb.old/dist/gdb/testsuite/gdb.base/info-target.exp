@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,6 +27,4 @@ set eol "\[\r\n\]+"
 # it is formatted properly.  For instance, make sure that no '\n' is
 # missing at the end some lines.
 gdb_test "info target" \
-         "Symbols from \".*${testfile}.*\"\\..*${eol}Local exec file:${eol}.*Entry point: 0x\[0-9a-zA-Z\]+${eol}.*" \
-         "info target"
-
+         "Symbols from \".*${testfile}.*\"\\..*${eol}Local exec file:${eol}.*Entry point: 0x\[0-9a-zA-Z\]+${eol}.*"

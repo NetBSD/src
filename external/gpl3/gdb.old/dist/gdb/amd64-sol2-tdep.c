@@ -1,6 +1,6 @@
 /* Target-dependent code for AMD64 Solaris.
 
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    Contributed by Joseph Myers, CodeSourcery, LLC.
 
@@ -28,7 +28,7 @@
 
 #include "sol2-tdep.h"
 #include "amd64-tdep.h"
-#include "common/x86-xstate.h"
+#include "gdbsupport/x86-xstate.h"
 #include "solib-svr4.h"
 
 /* Mapping between the general-purpose registers in gregset_t format
@@ -63,21 +63,6 @@ static int amd64_sol2_gregset_reg_offset[] = {
 };
 
 
-/* Return whether THIS_FRAME corresponds to a Solaris sigtramp
-   routine.  */
-
-static int
-amd64_sol2_sigtramp_p (struct frame_info *this_frame)
-{
-  CORE_ADDR pc = get_frame_pc (this_frame);
-  const char *name;
-
-  find_pc_partial_function (pc, &name, NULL, NULL);
-  return (name && (strcmp ("sigacthandler", name) == 0
-		   || strcmp (name, "ucbsigvechandler") == 0
-		   || strcmp (name, "__sighndlr") == 0));
-}
-
 /* Solaris doesn't have a 'struct sigcontext', but it does have a
    'mcontext_t' that contains the saved set of machine registers.  */
 
@@ -104,22 +89,21 @@ amd64_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   amd64_init_abi (info, gdbarch,
 		  amd64_target_description (X86_XSTATE_SSE_MASK, true));
 
-  tdep->sigtramp_p = amd64_sol2_sigtramp_p;
+  sol2_init_abi (info, gdbarch);
+
+  tdep->sigtramp_p = sol2_sigtramp_p;
   tdep->sigcontext_addr = amd64_sol2_mcontext_addr;
   tdep->sc_reg_offset = tdep->gregset_reg_offset;
   tdep->sc_num_regs = tdep->gregset_num_regs;
 
   /* Solaris uses SVR4-style shared libraries.  */
-  set_gdbarch_skip_solib_resolver (gdbarch, sol2_skip_solib_resolver);
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_lp64_fetch_link_map_offsets);
-
-  /* How to print LWP PTIDs from core files.  */
-  set_gdbarch_core_pid_to_str (gdbarch, sol2_core_pid_to_str);
 }
 
+void _initialize_amd64_sol2_tdep ();
 void
-_initialize_amd64_sol2_tdep (void)
+_initialize_amd64_sol2_tdep ()
 {
   gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64,
 			  GDB_OSABI_SOLARIS, amd64_sol2_init_abi);

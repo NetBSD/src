@@ -324,39 +324,39 @@ update_for_binary_section(bfd *abfd,
   device *me = (device*)obj;
 
   /* skip the section if no memory to allocate */
-  if (! (bfd_get_section_flags(abfd, the_section) & SEC_ALLOC))
+  if (! (bfd_section_flags (the_section) & SEC_ALLOC))
     return;
 
   /* check/ignore any sections of size zero */
-  section_size = bfd_get_section_size (the_section);
+  section_size = bfd_section_size (the_section);
   if (section_size == 0)
     return;
 
   /* find where it is to go */
-  section_vma = bfd_get_section_vma(abfd, the_section);
+  section_vma = bfd_section_vma (the_section);
 
   DTRACE(binary,
 	 ("name=%-7s, vma=0x%.8lx, size=%6ld, flags=%3lx(%s%s%s%s%s )\n",
-	  bfd_get_section_name(abfd, the_section),
+	  bfd_section_name (the_section),
 	  (long)section_vma,
 	  (long)section_size,
-	  (long)bfd_get_section_flags(abfd, the_section),
-	  bfd_get_section_flags(abfd, the_section) & SEC_LOAD ? " LOAD" : "",
-	  bfd_get_section_flags(abfd, the_section) & SEC_CODE ? " CODE" : "",
-	  bfd_get_section_flags(abfd, the_section) & SEC_DATA ? " DATA" : "",
-	  bfd_get_section_flags(abfd, the_section) & SEC_ALLOC ? " ALLOC" : "",
-	  bfd_get_section_flags(abfd, the_section) & SEC_READONLY ? " READONLY" : ""
+	  (long)bfd_section_flags (the_section),
+	  bfd_section_flags (the_section) & SEC_LOAD ? " LOAD" : "",
+	  bfd_section_flags (the_section) & SEC_CODE ? " CODE" : "",
+	  bfd_section_flags (the_section) & SEC_DATA ? " DATA" : "",
+	  bfd_section_flags (the_section) & SEC_ALLOC ? " ALLOC" : "",
+	  bfd_section_flags (the_section) & SEC_READONLY ? " READONLY" : ""
 	  ));
 
   /* If there is an .interp section, it means it needs a shared library interpreter.  */
-  if (strcmp(".interp", bfd_get_section_name(abfd, the_section)) == 0)
+  if (strcmp(".interp", bfd_section_name (the_section)) == 0)
     error("Shared libraries are not yet supported.\n");
 
   /* determine the devices access */
   access = access_read;
-  if (bfd_get_section_flags(abfd, the_section) & SEC_CODE)
+  if (bfd_section_flags (the_section) & SEC_CODE)
     access |= access_exec;
-  if (!(bfd_get_section_flags(abfd, the_section) & SEC_READONLY))
+  if (!(bfd_section_flags (the_section) & SEC_READONLY))
     access |= access_write;
 
   /* if claim specified, allocate region from the memory device */
@@ -386,7 +386,7 @@ update_for_binary_section(bfd *abfd,
 			  me);
 
   /* if a load dma in the required data */
-  if (bfd_get_section_flags(abfd, the_section) & SEC_LOAD) {
+  if (bfd_section_flags (the_section) & SEC_LOAD) {
     void *section_init = zalloc(section_size);
     if (!bfd_get_section_contents(abfd,
 				  the_section,

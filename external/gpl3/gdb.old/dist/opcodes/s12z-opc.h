@@ -1,5 +1,5 @@
 /* s12z-dis.h -- Header file for s12z-dis.c and s12z-decode.c
-   Copyright (C) 2019 Free Software Foundation, Inc.
+   Copyright (C) 2019-2020 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -22,6 +22,11 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /* An abstraction used to read machine code from a source.  */
 struct mem_read_abstraction_base
 {
@@ -34,7 +39,7 @@ struct mem_read_abstraction_base
 /* Machine code operators.
    These *roughly* correspond to opcodes.
    But describe their purpose rather than their form.  */
-enum operator
+enum optr
   {
     OP_INVALID = 0,
 
@@ -259,9 +264,11 @@ struct memory_operand
    It is the responsibility of the caller to free all operands
    when they are no longer needed.
    Returns the number of bytes read.  */
-int decode_s12z (enum operator *myoperator, short *osize,
+int decode_s12z (enum optr *myoperator, short *osize,
 		 int *n_operands, struct operand **operands,
 		 struct mem_read_abstraction_base *);
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* S12Z_OPC_H  */

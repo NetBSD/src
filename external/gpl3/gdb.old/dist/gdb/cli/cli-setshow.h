@@ -1,5 +1,5 @@
 /* Header file for GDB CLI set and show commands implementation.
-   Copyright (C) 2000-2019 Free Software Foundation, Inc.
+   Copyright (C) 2000-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,18 +17,49 @@
 #ifndef CLI_CLI_SETSHOW_H
 #define CLI_CLI_SETSHOW_H
 
+#include <string>
+
 struct cmd_list_element;
 
 /* Parse ARG, an option to a boolean variable.
    Returns 1 for true, 0 for false, and -1 if invalid.  */
 extern int parse_cli_boolean_value (const char *arg);
 
+/* Same as above, but work with a pointer to pointer.  ARG is advanced
+   past a successfully parsed value.  */
+extern int parse_cli_boolean_value (const char **arg);
+
+/* Parse ARG, an option to a var_uinteger or var_zuinteger variable.
+   Either returns the parsed value on success or throws an error.  If
+   EXPRESSION is true, *ARG is parsed as an expression; otherwise, it
+   is parsed with get_ulongest.  It's not possible to parse the
+   integer as an expression when there may be valid input after the
+   integer, such as when parsing command options.  E.g., "print
+   -elements NUMBER -obj --".  In such case, parsing as an expression
+   would parse "-obj --" as part of the expression as well.  */
+extern unsigned int parse_cli_var_uinteger (var_types var_type,
+					    const char **arg,
+					    bool expression);
+
+/* Like parse_cli_var_uinteger, for var_zuinteger_unlimited.  */
+extern int parse_cli_var_zuinteger_unlimited (const char **arg,
+					      bool expression);
+
+/* Parse ARG, an option to a var_enum variable.  ENUM is a
+   null-terminated array of possible values. Either returns the parsed
+   value on success or throws an error.  ARG is advanced past the
+   parsed value.  */
+const char *parse_cli_var_enum (const char **args,
+				const char *const *enums);
+
 extern void do_set_command (const char *arg, int from_tty,
 			    struct cmd_list_element *c);
 extern void do_show_command (const char *arg, int from_tty,
 			     struct cmd_list_element *c);
 
-extern void cmd_show_list (struct cmd_list_element *list, int from_tty,
-			   const char *prefix);
+/* Get a string version of C's current value.  */
+extern std::string get_setshow_command_value_string (const cmd_list_element *c);
+
+extern void cmd_show_list (struct cmd_list_element *list, int from_tty);
 
 #endif /* CLI_CLI_SETSHOW_H */

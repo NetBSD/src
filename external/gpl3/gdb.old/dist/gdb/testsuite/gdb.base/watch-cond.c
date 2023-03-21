@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2019 Free Software Foundation, Inc.
+   Copyright 2010-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@ int func(int *foo)
   (*foo)++;
   global++;
   global2++;
+  return 0;
 }
 
 void func2(int *foo)

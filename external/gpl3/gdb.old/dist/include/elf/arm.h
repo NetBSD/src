@@ -1,5 +1,5 @@
 /* ARM ELF support for BFD.
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -111,7 +111,8 @@
 #define TAG_CPU_ARCH_V8R	15
 #define TAG_CPU_ARCH_V8M_BASE	16
 #define TAG_CPU_ARCH_V8M_MAIN	17
-#define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V8M_MAIN
+#define TAG_CPU_ARCH_V8_1M_MAIN 21
+#define MAX_TAG_CPU_ARCH	TAG_CPU_ARCH_V8_1M_MAIN
 /* Pseudo-architecture to allow objects to be compatible with the subset of
    armv4t and armv6-m.  This value should never be stored in object files.  */
 #define TAG_CPU_ARCH_V4T_PLUS_V6_M (MAX_TAG_CPU_ARCH + 1)
@@ -240,6 +241,9 @@ START_RELOC_NUMBERS (elf_arm_reloc_type)
   RELOC_NUMBER (R_ARM_THM_ALU_ABS_G1_NC,133)
   RELOC_NUMBER (R_ARM_THM_ALU_ABS_G2_NC,134)
   RELOC_NUMBER (R_ARM_THM_ALU_ABS_G3_NC,135)
+  RELOC_NUMBER (R_ARM_THM_BF16,		136)
+  RELOC_NUMBER (R_ARM_THM_BF12,		137)
+  RELOC_NUMBER (R_ARM_THM_BF18,		138)
 
   RELOC_NUMBER (R_ARM_IRELATIVE,      	160)
   RELOC_NUMBER (R_ARM_GOTFUNCDESC,    	161)
@@ -322,6 +326,7 @@ enum
   Tag_undefined_43,
   Tag_DIV_use,
   Tag_DSP_extension = 46,
+  Tag_MVE_arch = 48,
   Tag_nodefaults = 64,
   Tag_also_compatible_with,
   Tag_T2EE_use,
@@ -393,12 +398,5 @@ enum arm_st_branch_type {
   (STI) = (((STI) & ~ENUM_ARM_ST_BRANCH_TYPE_BITMASK)		\
 	   | ((TYPE) & ENUM_ARM_ST_BRANCH_TYPE_BITMASK))
 #endif
-
-/* Get or set whether a symbol is a special symbol of an entry function of CMSE
-   secure code.  */
-#define ARM_GET_SYM_CMSE_SPCL(SYM_TARGET_INTERNAL) \
-  (((SYM_TARGET_INTERNAL) >> 2) & 1)
-#define ARM_SET_SYM_CMSE_SPCL(SYM_TARGET_INTERNAL) \
-  (SYM_TARGET_INTERNAL) |= 4
 
 #endif /* _ELF_ARM_H */
