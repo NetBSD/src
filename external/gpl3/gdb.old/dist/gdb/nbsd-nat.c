@@ -1,6 +1,6 @@
-/* Native-dependent code for NetBSD
+/* Native-dependent code for NetBSD.
 
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,22 +18,21 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "gdbcore.h"
-#include "inferior.h"
-#include "regcache.h"
-#include "regset.h"
-#include "gdbcmd.h"
+
+#include "nbsd-nat.h"
+#include "nat/netbsd-nat.h"
 #include "gdbthread.h"
-#include "common/gdb_wait.h"
+#include "nbsd-tdep.h"
+#include "inferior.h"
+#include "gdbarch.h"
+
 #include <sys/types.h>
+/* Use <sys/ptrace.h> directly, instead of "nat/gdb_ptrace.h".  Otherwise,
+   PT_STEP will be defined unintentionally, which breaks platforms without
+   PT_STEP support.  */
 #include <sys/ptrace.h>
 #include <sys/sysctl.h>
-#ifdef HAVE_KINFO_GETVMMAP
-#include <util.h>
-#endif
-
-#include "elf-bfd.h"
-#include "nbsd-nat.h"
+#include <sys/wait.h>
 
 /* Return the name of a file that can be opened to get the symbols for
    the child process identified by PID.  */
@@ -41,30 +40,174 @@
 char *
 nbsd_nat_target::pid_to_exec_file (int pid)
 {
-  ssize_t len;
-  static char buf[PATH_MAX];
-  char name[PATH_MAX];
+  return const_cast<char *> (netbsd_nat::pid_to_exec_file (pid));
+}
 
+/* Return the current directory for the process identified by PID.  */
+
+static std::string
+nbsd_pid_to_cwd (int pid)
+{
+  char buf[PATH_MAX];
   size_t buflen;
-  int mib[4];
+  int mib[4] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_CWD};
+  buflen = sizeof (buf);
+  if (sysctl (mib, ARRAY_SIZE (mib), buf, &buflen, NULL, 0))
+    return "";
+  return buf;
+}
 
-  mib[0] = CTL_KERN;
-  mib[1] = KERN_PROC_ARGS;
-  mib[2] = pid;
-  mib[3] = KERN_PROC_PATHNAME;
-  buflen = sizeof buf;
-  if (sysctl (mib, 4, buf, &buflen, NULL, 0) == 0)
-    return buf;
+/* Return the kinfo_proc2 structure for the process identified by PID.  */
 
-  xsnprintf (name, PATH_MAX, "/proc/%d/exe", pid);
-  len = readlink (name, buf, PATH_MAX - 1);
-  if (len != -1)
+static bool
+nbsd_pid_to_kinfo_proc2 (pid_t pid, struct kinfo_proc2 *kp)
+{
+  gdb_assert (kp != nullptr);
+
+  size_t size = sizeof (*kp);
+  int mib[6] = {CTL_KERN, KERN_PROC2, KERN_PROC_PID, pid,
+		static_cast<int> (size), 1};
+  return !sysctl (mib, ARRAY_SIZE (mib), kp, &size, NULL, 0);
+}
+
+/* Return the command line for the process identified by PID.  */
+
+static gdb::unique_xmalloc_ptr<char[]>
+nbsd_pid_to_cmdline (int pid)
+{
+  int mib[4] = {CTL_KERN, KERN_PROC_ARGS, pid, KERN_PROC_ARGV};
+
+  size_t size = 0;
+  if (::sysctl (mib, ARRAY_SIZE (mib), NULL, &size, NULL, 0) == -1 || size == 0)
+    return nullptr;
+
+  gdb::unique_xmalloc_ptr<char[]> args (XNEWVAR (char, size));
+
+  if (::sysctl (mib, ARRAY_SIZE (mib), args.get (), &size, NULL, 0) == -1
+      || size == 0)
+    return nullptr;
+
+  /* Arguments are returned as a flattened string with NUL separators.
+     Join the arguments with spaces to form a single string.  */
+  for (size_t i = 0; i < size - 1; i++)
+    if (args[i] == '\0')
+      args[i] = ' ';
+  args[size - 1] = '\0';
+
+  return args;
+}
+
+/* Return true if PTID is still active in the inferior.  */
+
+bool
+nbsd_nat_target::thread_alive (ptid_t ptid)
+{
+  return netbsd_nat::thread_alive (ptid);
+}
+
+/* Return the name assigned to a thread by an application.  Returns
+   the string in a static buffer.  */
+
+const char *
+nbsd_nat_target::thread_name (struct thread_info *thr)
+{
+  ptid_t ptid = thr->ptid;
+  return netbsd_nat::thread_name (ptid);
+}
+
+/* Implement the "post_attach" target_ops method.  */
+
+static void
+nbsd_add_threads (nbsd_nat_target *target, pid_t pid)
+{
+  auto fn
+    = [&target] (ptid_t ptid)
+      {
+	if (!in_thread_list (target, ptid))
+	  {
+	    if (inferior_ptid.lwp () == 0)
+	      thread_change_ptid (target, inferior_ptid, ptid);
+	    else
+	      add_thread (target, ptid);
+	  }
+      };
+
+  netbsd_nat::for_each_thread (pid, fn);
+}
+
+/* Implement the "post_startup_inferior" target_ops method.  */
+
+void
+nbsd_nat_target::post_startup_inferior (ptid_t ptid)
+{
+  netbsd_nat::enable_proc_events (ptid.pid ());
+}
+
+/* Implement the "post_attach" target_ops method.  */
+
+void
+nbsd_nat_target::post_attach (int pid)
+{
+  netbsd_nat::enable_proc_events (pid);
+  nbsd_add_threads (this, pid);
+}
+
+/* Implement the "update_thread_list" target_ops method.  */
+
+void
+nbsd_nat_target::update_thread_list ()
+{
+  delete_exited_threads ();
+}
+
+/* Convert PTID to a string.  */
+
+std::string
+nbsd_nat_target::pid_to_str (ptid_t ptid)
+{
+  int lwp = ptid.lwp ();
+
+  if (lwp != 0)
     {
-      buf[len] = '\0';
-      return buf;
+      pid_t pid = ptid.pid ();
+
+      return string_printf ("LWP %d of process %d", lwp, pid);
     }
 
-  return NULL;
+  return normal_pid_to_str (ptid);
+}
+
+/* Retrieve all the memory regions in the specified process.  */
+
+static gdb::unique_xmalloc_ptr<struct kinfo_vmentry[]>
+nbsd_kinfo_get_vmmap (pid_t pid, size_t *size)
+{
+  int mib[5] = {CTL_VM, VM_PROC, VM_PROC_MAP, pid,
+		sizeof (struct kinfo_vmentry)};
+
+  size_t length = 0;
+  if (sysctl (mib, ARRAY_SIZE (mib), NULL, &length, NULL, 0))
+    {
+      *size = 0;
+      return NULL;
+    }
+
+  /* Prereserve more space.  The length argument is volatile and can change
+     between the sysctl(3) calls as this function can be called against a
+     running process.  */
+  length = length * 5 / 3;
+
+  gdb::unique_xmalloc_ptr<struct kinfo_vmentry[]> kiv
+    (XNEWVAR (kinfo_vmentry, length));
+
+  if (sysctl (mib, ARRAY_SIZE (mib), kiv.get (), &length, NULL, 0))
+    {
+      *size = 0;
+      return NULL;
+    }
+
+  *size = length / sizeof (struct kinfo_vmentry);
+  return kiv;
 }
 
 /* Iterate over all the memory regions in the current inferior,
@@ -73,23 +216,19 @@ nbsd_nat_target::pid_to_exec_file (int pid)
 
 int
 nbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
-					   void *obfd)
+				      void *data)
 {
   pid_t pid = inferior_ptid.pid ();
-  struct kinfo_vmentry *vmentl, *kve;
-  uint64_t size;
-  struct cleanup *cleanup;
-  int i;
-  size_t nitems;
 
-  vmentl = kinfo_getvmmap (pid, &nitems);
+  size_t nitems;
+  gdb::unique_xmalloc_ptr<struct kinfo_vmentry[]> vmentl
+    = nbsd_kinfo_get_vmmap (pid, &nitems);
   if (vmentl == NULL)
     perror_with_name (_("Couldn't fetch VM map entries."));
-  cleanup = make_cleanup (free, vmentl);
 
-  for (i = 0; i < nitems; i++)
+  for (size_t i = 0; i < nitems; i++)
     {
-      kve = &vmentl[i];
+      struct kinfo_vmentry *kve = &vmentl[i];
 
       /* Skip unreadable segments and those where MAP_NOCORE has been set.  */
       if (!(kve->kve_protection & KVME_PROT_READ)
@@ -97,7 +236,8 @@ nbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
 	continue;
 
       /* Skip segments with an invalid type.  */
-      switch (kve->kve_type) {
+      switch (kve->kve_type)
+	{
 	case KVME_TYPE_VNODE:
 	case KVME_TYPE_ANON:
 	case KVME_TYPE_SUBMAP:
@@ -105,12 +245,12 @@ nbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
 	  break;
 	default:
 	  continue;
-      }
+	}
 
-      size = kve->kve_end - kve->kve_start;
+      size_t size = kve->kve_end - kve->kve_start;
       if (info_verbose)
 	{
-	  fprintf_filtered (gdb_stdout, 
+	  fprintf_filtered (gdb_stdout,
 			    "Save segment, %ld bytes at %s (%c%c%c)\n",
 			    (long) size,
 			    paddress (target_gdbarch (), kve->kve_start),
@@ -123,182 +263,316 @@ nbsd_nat_target::find_memory_regions (find_memory_region_ftype func,
 	 Pass MODIFIED as true, we do not know the real modification state.  */
       func (kve->kve_start, size, kve->kve_protection & KVME_PROT_READ,
 	    kve->kve_protection & KVME_PROT_WRITE,
-	    kve->kve_protection & KVME_PROT_EXEC, 1, obfd);
+	    kve->kve_protection & KVME_PROT_EXEC, 1, data);
     }
-  do_cleanups (cleanup);
   return 0;
 }
 
-static int debug_nbsd_lwp;
-
-static void
-show_nbsd_lwp_debug (struct ui_file *file, int from_tty,
-		     struct cmd_list_element *c, const char *value)
-{
-  fprintf_filtered (file, _("Debugging of NetBSD lwp module is %s.\n"), value);
-}
-
-/* Return true if PTID is still active in the inferior.  */
+/* Implement the "info_proc" target_ops method.  */
 
 bool
-nbsd_nat_target::thread_alive (ptid_t ptid)
+nbsd_nat_target::info_proc (const char *args, enum info_proc_what what)
 {
-  if (ptid.lwp_p ())
+  pid_t pid;
+  bool do_cmdline = false;
+  bool do_cwd = false;
+  bool do_exe = false;
+  bool do_mappings = false;
+  bool do_status = false;
+
+  switch (what)
     {
-      struct ptrace_lwpstatus pl;
-
-      pl.pl_lwpid = ptid.lwp ();
-      if (ptrace (PT_LWPSTATUS, ptid.pid (), (caddr_t) &pl, sizeof pl)
-	  == -1)
-	return 0;
-    }
-
-  return 1;
-}
-
-/* Convert PTID to a string.  Returns the string in a static
-   buffer.  */
-
-const char *
-nbsd_nat_target::pid_to_str (ptid_t ptid)
-{
-  lwpid_t lwp;
-
-  lwp = ptid.lwp ();
-  if (lwp != 0)
-    {
-      static char buf[64];
-      int pid = ptid.pid ();
-
-      xsnprintf (buf, sizeof buf, "LWP %d of process %d", lwp, pid);
-      return buf;
-    }
-
-  return normal_pid_to_str (ptid);
-}
-
-/* Return the name assigned to a thread by an application.  Returns
-   the string in a static buffer.  */
-
-const char *
-nbsd_nat_target::thread_name (struct thread_info *thr)
-{
-  struct kinfo_lwp *kl;
-  pid_t pid = thr->ptid.pid ();
-  lwpid_t lwp = thr->ptid.lwp ();
-  static char buf[KI_LNAMELEN];
-  int mib[5];
-  size_t i, nlwps;
-  size_t size;
-
-  mib[0] = CTL_KERN;
-  mib[1] = KERN_LWP;
-  mib[2] = pid;
-  mib[3] = sizeof(struct kinfo_lwp);
-  mib[4] = 0;
-
-  if (sysctl(mib, 5, NULL, &size, NULL, 0) == -1 || size == 0)
-    perror_with_name (("sysctl"));
-
-  mib[4] = size / sizeof(size_t);
-
-  kl = (struct kinfo_lwp *) xmalloc (size);
-  if (kl == NULL)
-    perror_with_name (("malloc"));
-
-  if (sysctl(mib, 5, kl, &size, NULL, 0) == -1 || size == 0)
-    perror_with_name (("sysctl"));
-
-  nlwps = size / sizeof(struct kinfo_lwp);
-  buf[0] = '\0';
-  for (i = 0; i < nlwps; i++) {
-    if (kl[i].l_lid == lwp) {
-      xsnprintf (buf, sizeof buf, "%s", kl[i].l_name);
+    case IP_MINIMAL:
+      do_cmdline = true;
+      do_cwd = true;
+      do_exe = true;
       break;
+    case IP_STAT:
+    case IP_STATUS:
+      do_status = true;
+      break;
+    case IP_MAPPINGS:
+      do_mappings = true;
+      break;
+    case IP_CMDLINE:
+      do_cmdline = true;
+      break;
+    case IP_EXE:
+      do_exe = true;
+      break;
+    case IP_CWD:
+      do_cwd = true;
+      break;
+    case IP_ALL:
+      do_cmdline = true;
+      do_cwd = true;
+      do_exe = true;
+      do_mappings = true;
+      do_status = true;
+      break;
+    default:
+      error (_("Not supported on this target."));
     }
-  }
-  xfree(kl);
 
-  return buf;
-}
-
-/* Enable additional event reporting on new processes. */
-
-static void
-nbsd_enable_proc_events (pid_t pid)
-{
-  int events;
-
-  if (ptrace (PT_GET_EVENT_MASK, pid, (PTRACE_TYPE_ARG3)&events,
-	      sizeof (events)) == -1)
-    perror_with_name (("ptrace"));
-  events |= PTRACE_FORK;
-  events |= PTRACE_VFORK;
-  events |= PTRACE_VFORK_DONE;
-  events |= PTRACE_LWP_CREATE;
-  events |= PTRACE_LWP_EXIT;
-#if notyet
-  events |= PTRACE_POSIX_SPAWN;
-#endif
-  if (ptrace (PT_SET_EVENT_MASK, pid, (PTRACE_TYPE_ARG3)&events,
-	      sizeof (events)) == -1)
-    perror_with_name (("ptrace"));
-}
-
-/* Add threads for any new LWPs in a process.
-
-   When LWP events are used, this function is only used to detect existing
-   threads when attaching to a process.  On older systems, this function is
-   called to discover new threads each time the thread list is updated.  */
-
-static void
-nbsd_add_threads (pid_t pid)
-{
-  int val;
-  struct ptrace_lwpstatus pl;
-
-  pl.pl_lwpid = 0;
-  while ((val = ptrace (PT_LWPNEXT, pid, (void *)&pl, sizeof(pl))) != -1
-    && pl.pl_lwpid != 0)
+  gdb_argv built_argv (args);
+  if (built_argv.count () == 0)
     {
-      ptid_t ptid = ptid_t (pid, pl.pl_lwpid, 0);
-      if (!in_thread_list (ptid))
+      pid = inferior_ptid.pid ();
+      if (pid == 0)
+        error (_("No current process: you must name one."));
+    }
+  else if (built_argv.count () == 1 && isdigit (built_argv[0][0]))
+    pid = strtol (built_argv[0], NULL, 10);
+  else
+    error (_("Invalid arguments."));
+
+  printf_filtered (_("process %d\n"), pid);
+
+  if (do_cmdline)
+    {
+      gdb::unique_xmalloc_ptr<char[]> cmdline = nbsd_pid_to_cmdline (pid);
+      if (cmdline != nullptr)
+	printf_filtered ("cmdline = '%s'\n", cmdline.get ());
+      else
+	warning (_("unable to fetch command line"));
+    }
+  if (do_cwd)
+    {
+      std::string cwd = nbsd_pid_to_cwd (pid);
+      if (cwd != "")
+	printf_filtered ("cwd = '%s'\n", cwd.c_str ());
+      else
+	warning (_("unable to fetch current working directory"));
+    }
+  if (do_exe)
+    {
+      const char *exe = pid_to_exec_file (pid);
+      if (exe != nullptr)
+	printf_filtered ("exe = '%s'\n", exe);
+      else
+	warning (_("unable to fetch executable path name"));
+    }
+  if (do_mappings)
+    {
+      size_t nvment;
+      gdb::unique_xmalloc_ptr<struct kinfo_vmentry[]> vmentl
+	= nbsd_kinfo_get_vmmap (pid, &nvment);
+
+      if (vmentl != nullptr)
 	{
-	  if (inferior_ptid.lwp () == 0)
-	    thread_change_ptid (inferior_ptid, ptid);
-	  else
-	    add_thread (ptid);
+	  int addr_bit = TARGET_CHAR_BIT * sizeof (void *);
+	  nbsd_info_proc_mappings_header (addr_bit);
+
+	  struct kinfo_vmentry *kve = vmentl.get ();
+	  for (int i = 0; i < nvment; i++, kve++)
+	    nbsd_info_proc_mappings_entry (addr_bit, kve->kve_start,
+					   kve->kve_end, kve->kve_offset,
+					   kve->kve_flags, kve->kve_protection,
+					   kve->kve_path);
+	}
+      else
+	warning (_("unable to fetch virtual memory map"));
+    }
+  if (do_status)
+    {
+      struct kinfo_proc2 kp;
+      if (!nbsd_pid_to_kinfo_proc2 (pid, &kp))
+	warning (_("Failed to fetch process information"));
+      else
+	{
+	  auto process_status
+	    = [] (int8_t stat)
+	      {
+		switch (stat)
+		  {
+		  case SIDL:
+		    return "IDL";
+		  case SACTIVE:
+		    return "ACTIVE";
+		  case SDYING:
+		    return "DYING";
+		  case SSTOP:
+		    return "STOP";
+		  case SZOMB:
+		    return "ZOMB";
+		  case SDEAD:
+		    return "DEAD";
+		  default:
+		    return "? (unknown)";
+		  }
+	      };
+
+	  printf_filtered ("Name: %s\n", kp.p_comm);
+	  printf_filtered ("State: %s\n", process_status(kp.p_realstat));
+	  printf_filtered ("Parent process: %" PRId32 "\n", kp.p_ppid);
+	  printf_filtered ("Process group: %" PRId32 "\n", kp.p__pgid);
+	  printf_filtered ("Session id: %" PRId32 "\n", kp.p_sid);
+	  printf_filtered ("TTY: %" PRId32 "\n", kp.p_tdev);
+	  printf_filtered ("TTY owner process group: %" PRId32 "\n", kp.p_tpgid);
+	  printf_filtered ("User IDs (real, effective, saved): "
+			   "%" PRIu32 " %" PRIu32 " %" PRIu32 "\n",
+			   kp.p_ruid, kp.p_uid, kp.p_svuid);
+	  printf_filtered ("Group IDs (real, effective, saved): "
+			   "%" PRIu32 " %" PRIu32 " %" PRIu32 "\n",
+			   kp.p_rgid, kp.p_gid, kp.p_svgid);
+
+	  printf_filtered ("Groups:");
+	  for (int i = 0; i < kp.p_ngroups; i++)
+	    printf_filtered (" %" PRIu32, kp.p_groups[i]);
+	  printf_filtered ("\n");
+	  printf_filtered ("Minor faults (no memory page): %" PRIu64 "\n",
+			   kp.p_uru_minflt);
+	  printf_filtered ("Major faults (memory page faults): %" PRIu64 "\n",
+			   kp.p_uru_majflt);
+	  printf_filtered ("utime: %" PRIu32 ".%06" PRIu32 "\n",
+			   kp.p_uutime_sec, kp.p_uutime_usec);
+	  printf_filtered ("stime: %" PRIu32 ".%06" PRIu32 "\n",
+			   kp.p_ustime_sec, kp.p_ustime_usec);
+	  printf_filtered ("utime+stime, children: %" PRIu32 ".%06" PRIu32 "\n",
+			   kp.p_uctime_sec, kp.p_uctime_usec);
+	  printf_filtered ("'nice' value: %" PRIu8 "\n", kp.p_nice);
+	  printf_filtered ("Start time: %" PRIu32 ".%06" PRIu32 "\n",
+			   kp.p_ustart_sec, kp.p_ustart_usec);
+	  int pgtok = getpagesize () / 1024;
+	  printf_filtered ("Data size: %" PRIuMAX " kB\n",
+			   (uintmax_t) kp.p_vm_dsize * pgtok);
+	  printf_filtered ("Stack size: %" PRIuMAX " kB\n",
+			   (uintmax_t) kp.p_vm_ssize * pgtok);
+	  printf_filtered ("Text size: %" PRIuMAX " kB\n",
+			   (uintmax_t) kp.p_vm_tsize * pgtok);
+	  printf_filtered ("Resident set size: %" PRIuMAX " kB\n",
+			   (uintmax_t) kp.p_vm_rssize * pgtok);
+	  printf_filtered ("Maximum RSS: %" PRIu64 " kB\n", kp.p_uru_maxrss);
+	  printf_filtered ("Pending Signals:");
+	  for (size_t i = 0; i < ARRAY_SIZE (kp.p_siglist.__bits); i++)
+	    printf_filtered (" %08" PRIx32, kp.p_siglist.__bits[i]);
+	  printf_filtered ("\n");
+	  printf_filtered ("Ignored Signals:");
+	  for (size_t i = 0; i < ARRAY_SIZE (kp.p_sigignore.__bits); i++)
+	    printf_filtered (" %08" PRIx32, kp.p_sigignore.__bits[i]);
+	  printf_filtered ("\n");
+	  printf_filtered ("Caught Signals:");
+	  for (size_t i = 0; i < ARRAY_SIZE (kp.p_sigcatch.__bits); i++)
+	    printf_filtered (" %08" PRIx32, kp.p_sigcatch.__bits[i]);
+	  printf_filtered ("\n");
 	}
     }
+
+  return true;
 }
 
-/* Implement the "to_update_thread_list" target_ops method.  */
+#ifdef PT_STEP
+/* Resume execution of a specified PTID, that points to a process or a thread
+   within a process.  If one thread is specified, all other threads are
+   suspended.  If STEP is nonzero, single-step it.  If SIGNAL is nonzero,
+   give it that signal.  */
+
+static void
+nbsd_resume(nbsd_nat_target *target, ptid_t ptid, int step,
+	    enum gdb_signal signal)
+{
+  int request;
+
+  gdb_assert (minus_one_ptid != ptid);
+
+  if (ptid.lwp_p ())
+    {
+      /* If ptid is a specific LWP, suspend all other LWPs in the process.  */
+      inferior *inf = find_inferior_ptid (target, ptid);
+
+      for (thread_info *tp : inf->non_exited_threads ())
+        {
+          if (tp->ptid.lwp () == ptid.lwp ())
+            request = PT_RESUME;
+          else
+            request = PT_SUSPEND;
+
+          if (ptrace (request, tp->ptid.pid (), NULL, tp->ptid.lwp ()) == -1)
+            perror_with_name (("ptrace"));
+        }
+    }
+  else
+    {
+      /* If ptid is a wildcard, resume all matching threads (they won't run
+         until the process is continued however).  */
+      for (thread_info *tp : all_non_exited_threads (target, ptid))
+        if (ptrace (PT_RESUME, tp->ptid.pid (), NULL, tp->ptid.lwp ()) == -1)
+          perror_with_name (("ptrace"));
+    }
+
+  if (step)
+    {
+      for (thread_info *tp : all_non_exited_threads (target, ptid))
+	if (ptrace (PT_SETSTEP, tp->ptid.pid (), NULL, tp->ptid.lwp ()) == -1)
+	  perror_with_name (("ptrace"));
+    }
+  else
+    {
+      for (thread_info *tp : all_non_exited_threads (target, ptid))
+	if (ptrace (PT_CLEARSTEP, tp->ptid.pid (), NULL, tp->ptid.lwp ()) == -1)
+	  perror_with_name (("ptrace"));
+    }
+
+  if (catch_syscall_enabled () > 0)
+    request = PT_SYSCALL;
+  else
+    request = PT_CONTINUE;
+
+  /* An address of (void *)1 tells ptrace to continue from
+     where it was.  If GDB wanted it to start some other way, we have
+     already written a new program counter value to the child.  */
+  if (ptrace (request, ptid.pid (), (void *)1, gdb_signal_to_host (signal)) == -1)
+    perror_with_name (("ptrace"));
+}
+#endif
+
+/* Resume execution of thread PTID, or all threads of all inferiors
+   if PTID is -1.  If STEP is nonzero, single-step it.  If SIGNAL is nonzero,
+   give it that signal.  */
 
 void
-nbsd_nat_target::update_thread_list ()
+nbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
 {
-  prune_threads ();
-
-  nbsd_add_threads (inferior_ptid.pid ());
+#ifdef PT_STEP
+  if (minus_one_ptid != ptid)
+    nbsd_resume (this, ptid, step, signal);
+  else
+    {
+      for (inferior *inf : all_non_exited_inferiors (this))
+	nbsd_resume (this, ptid_t (inf->pid, 0, 0), step, signal);
+    }
+#else
+    gdb_assert(step == 0);
+    if (ptid.pid () == -1)
+      ptid = inferior_ptid;
+    inf_ptrace_target::resume (ptid, step, signal); 
+#endif
 }
 
+/* Implement a safe wrapper around waitpid().  */
 
-struct nbsd_fork_info
+static pid_t
+nbsd_wait (ptid_t ptid, struct target_waitstatus *ourstatus, int options)
 {
-  struct nbsd_fork_info *next;
-  ptid_t ptid;
-};
+  pid_t pid;
+  int status;
 
-void
-nbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signo)
-{
-  if (debug_nbsd_lwp)
-    fprintf_unfiltered (gdb_stdlog,
-			"NLWP: nbsd_resume for ptid (%d, %ld, %ld)\n",
-			ptid.pid (), ptid.lwp (), ptid.tid ());
-  if (ptid.pid () == -1)
-    ptid = inferior_ptid;
-  inf_ptrace_target::resume (ptid, step, signo);
+  set_sigint_trap ();
+
+  do
+    {
+      /* The common code passes WNOHANG that leads to crashes, overwrite it.  */
+      pid = waitpid (ptid.pid (), &status, 0);
+    }
+  while (pid == -1 && errno == EINTR);
+
+  clear_sigint_trap ();
+
+  if (pid == -1)
+    perror_with_name (_("Child process unexpectedly missing"));
+
+  store_waitstatus (ourstatus, status);
+  return pid;
 }
 
 /* Wait for the child specified by PTID to do something.  Return the
@@ -309,241 +583,221 @@ ptid_t
 nbsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 		       int target_options)
 {
-  ptid_t wptid;
+  pid_t pid = nbsd_wait (ptid, ourstatus, target_options);
+  ptid_t wptid = ptid_t (pid);
 
-  /*
-   * Always perform polling on exact PID, overwrite the default polling on
-   * WAIT_ANY.
-   *
-   * This avoids events reported in random order reported for FORK / VFORK.
-   *
-   * Polling on traced parent always simplifies the code.
-   */
-  ptid = inferior_ptid;
-
-  if (debug_nbsd_lwp)
-    fprintf_unfiltered (gdb_stdlog, "NLWP: calling super_wait (%d, %ld, %ld) target_options=%#x\n",
-                        ptid.pid (), ptid.lwp (), ptid.tid (), target_options);
-
-  wptid = inf_ptrace_target::wait (ptid, ourstatus, target_options);
-
-  if (debug_nbsd_lwp)
-    fprintf_unfiltered (gdb_stdlog, "NLWP: returned from super_wait (%d, %ld, %ld) target_options=%#x with ourstatus->kind=%d\n",
-                        ptid.pid (), ptid.lwp (), ptid.tid (),
-			target_options, ourstatus->kind);
-
-  if (ourstatus->kind == TARGET_WAITKIND_STOPPED)
-    {
-      ptrace_state_t pst;
-      ptrace_siginfo_t psi, child_psi;
-      int status;
-      pid_t pid, child, wchild;
-      ptid_t child_ptid;
-      lwpid_t lwp;
-
-      pid = wptid.pid ();
-      // Find the lwp that caused the wait status change
-      if (ptrace(PT_GET_SIGINFO, pid, &psi, sizeof(psi)) == -1)
-        perror_with_name (("ptrace"));
-
-      /* For whole-process signals pick random thread */
-      if (psi.psi_lwpid == 0) {
-        // XXX: Is this always valid?
-        lwp = inferior_ptid.lwp ();
-      } else {
-        lwp = psi.psi_lwpid;
-      }
-
-      wptid = ptid_t (pid, lwp, 0);
-
-      /* Set LWP in the process */
-      if (in_thread_list (ptid_t (pid))) {
-          if (debug_nbsd_lwp)
-            fprintf_unfiltered (gdb_stdlog,
-                                "NLWP: using LWP %d for first thread\n",
-                                lwp);
-          thread_change_ptid (ptid_t (pid), wptid);                                                                                                 
-      }
-
-      if (debug_nbsd_lwp)
-         fprintf_unfiltered (gdb_stdlog,
-                             "NLWP: received signal=%d si_code=%d in process=%d lwp=%d\n",
-                             psi.psi_siginfo.si_signo, psi.psi_siginfo.si_code, pid, lwp);
-
-      switch (psi.psi_siginfo.si_signo) {
-      case SIGTRAP:
-        switch (psi.psi_siginfo.si_code) {
-        case TRAP_BRKPT:
-//          lp->stop_reason = TARGET_STOPPED_BY_SW_BREAKPOINT;
-          break;
-        case TRAP_DBREG:
-//          if (hardware_breakpoint_inserted_here_p (get_regcache_aspace (regcache), pc))
-//            lp->stop_reason = TARGET_STOPPED_BY_HW_BREAKPOINT;
-//          else
-//            lp->stop_reason = TARGET_STOPPED_BY_WATCHPOINT;
-          break;
-        case TRAP_TRACE:
-//          lp->stop_reason = TARGET_STOPPED_BY_SINGLE_STEP;
-          break;
-        case TRAP_SCE:
-          ourstatus->kind = TARGET_WAITKIND_SYSCALL_ENTRY;
-          ourstatus->value.syscall_number = psi.psi_siginfo.si_sysnum;
-          break;
-        case TRAP_SCX:
-          ourstatus->kind = TARGET_WAITKIND_SYSCALL_RETURN;
-          ourstatus->value.syscall_number = psi.psi_siginfo.si_sysnum;
-          break;
-        case TRAP_EXEC:
-          ourstatus->kind = TARGET_WAITKIND_EXECD;
-          ourstatus->value.execd_pathname = xstrdup(pid_to_exec_file (pid));
-          break;
-        case TRAP_LWP:
-        case TRAP_CHLD:
-          if (ptrace(PT_GET_PROCESS_STATE, pid, &pst, sizeof(pst)) == -1)
-            perror_with_name (("ptrace"));
-          switch (pst.pe_report_event) {
-          case PTRACE_FORK:
-          case PTRACE_VFORK:
-            if (pst.pe_report_event == PTRACE_FORK)
-              ourstatus->kind = TARGET_WAITKIND_FORKED;
-            else
-              ourstatus->kind = TARGET_WAITKIND_VFORKED;
-            child = pst.pe_other_pid;
-
-            if (debug_nbsd_lwp)
-              fprintf_unfiltered (gdb_stdlog,
-                                  "NLWP: registered %s event for PID %d\n",
-                                  (pst.pe_report_event == PTRACE_FORK) ? "FORK" : "VFORK", child);
-
-            wchild = waitpid (child, &status, 0);
-
-            if (wchild == -1)
-              perror_with_name (("waitpid"));
-
-            gdb_assert (wchild == child);
-
-            if (!WIFSTOPPED(status)) {
-              /* Abnormal situation (SIGKILLed?).. bail out */
-              ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
-              return wptid;
-            }
-
-            if (ptrace(PT_GET_SIGINFO, child, &child_psi, sizeof(child_psi)) == -1)
-              perror_with_name (("ptrace"));
-
-            if (child_psi.psi_siginfo.si_signo != SIGTRAP) {
-              /* Abnormal situation.. bail out */
-              ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
-              return wptid;
-            }
-
-            if (child_psi.psi_siginfo.si_code != TRAP_CHLD) {
-              /* Abnormal situation.. bail out */
-              ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
-              return wptid;
-            }
-
-            child_ptid = ptid_t (child, child_psi.psi_lwpid, 0);
-            nbsd_enable_proc_events (child_ptid.pid ());
-            ourstatus->value.related_pid = child_ptid;
-            break;
-          case PTRACE_VFORK_DONE:
-            ourstatus->kind = TARGET_WAITKIND_VFORK_DONE;
-            if (debug_nbsd_lwp)
-              fprintf_unfiltered (gdb_stdlog, "NLWP: reported VFORK_DONE parent=%d child=%d\n", pid, pst.pe_other_pid);
-            break;
-          case PTRACE_LWP_CREATE:
-            wptid = ptid_t (pid, pst.pe_lwp, 0);
-            if (in_thread_list (wptid)) {
-              /* Newborn reported after attach? */
-              ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
-              return wptid;
-            }
-	    if (inferior_ptid.lwp () == 0)
-	      thread_change_ptid (inferior_ptid, wptid);
-	    else
-	      add_thread (wptid);
-            ourstatus->kind = TARGET_WAITKIND_THREAD_CREATED;
-            if (debug_nbsd_lwp)
-              fprintf_unfiltered (gdb_stdlog, "NLWP: created LWP %d\n", pst.pe_lwp);
-            break;
-          case PTRACE_LWP_EXIT:
-            wptid = ptid_t (pid, pst.pe_lwp, 0);
-            if (!in_thread_list (wptid)) {
-              /* Dead child reported after attach? */
-              ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
-              return wptid;
-            }
-            delete_thread (find_thread_ptid (wptid));
-            ourstatus->kind = TARGET_WAITKIND_THREAD_EXITED;
-            if (debug_nbsd_lwp)
-              fprintf_unfiltered (gdb_stdlog, "NLWP: exited LWP %d\n", pst.pe_lwp);
-            if (ptrace (PT_CONTINUE, pid, (void *)1, 0) == -1)
-              perror_with_name (("ptrace"));
-            break;
-          }
-          break;
-        }
-        break;
-      }
-
-      if (debug_nbsd_lwp)
-	fprintf_unfiltered (gdb_stdlog,
-		"NLWP: nbsd_wait returned (%d, %ld, %ld)\n",
-		wptid.pid (), wptid.lwp (),
-		wptid.tid ());
-      inferior_ptid = wptid;
-
-    }
+  /* If the child stopped, keep investigating its status.  */
+  if (ourstatus->kind != TARGET_WAITKIND_STOPPED)
     return wptid;
-}
 
-/* Target hook for follow_fork.  On entry and at return inferior_ptid is
-   the ptid of the followed inferior.  */
+  /* Extract the event and thread that received a signal.  */
+  ptrace_siginfo_t psi;
+  if (ptrace (PT_GET_SIGINFO, pid, &psi, sizeof (psi)) == -1)
+    perror_with_name (("ptrace"));
 
-int
-nbsd_nat_target::follow_fork (int follow_child, int detach_fork)
-{
-  if (!follow_child && detach_fork)
+  /* Pick child's siginfo_t.  */
+  siginfo_t *si = &psi.psi_siginfo;
+
+  int lwp = psi.psi_lwpid;
+
+  int signo = si->si_signo;
+  const int code = si->si_code;
+
+  /* Construct PTID with a specified thread that received the event.
+     If a signal was targeted to the whole process, lwp is 0.  */
+  wptid = ptid_t (pid, lwp, 0);
+
+  /* Bail out on non-debugger oriented signals..  */
+  if (signo != SIGTRAP)
+    return wptid;
+
+  /* Stop examining non-debugger oriented SIGTRAP codes.  */
+  if (code <= SI_USER || code == SI_NOINFO)
+    return wptid;
+
+  /* Process state for threading events */
+  ptrace_state_t pst = {};
+  if (code == TRAP_LWP)
     {
-      struct thread_info *tp = inferior_thread ();
-      pid_t child_pid = tp->pending_follow.value.related_pid.pid ();
-
-      /* Breakpoints have already been detached from the child by
-	 infrun.c.  */
-
-      if (ptrace (PT_DETACH, child_pid, (PTRACE_TYPE_ARG3)1, 0) == -1)
+      if (ptrace (PT_GET_PROCESS_STATE, pid, &pst, sizeof (pst)) == -1)
 	perror_with_name (("ptrace"));
     }
 
+  if (code == TRAP_LWP && pst.pe_report_event == PTRACE_LWP_EXIT)
+    {
+      /* If GDB attaches to a multi-threaded process, exiting
+	 threads might be skipped during post_attach that
+	 have not yet reported their PTRACE_LWP_EXIT event.
+	 Ignore exited events for an unknown LWP.  */
+      thread_info *thr = find_thread_ptid (this, wptid);
+      if (thr == nullptr)
+	  ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
+      else
+	{
+	  ourstatus->kind = TARGET_WAITKIND_THREAD_EXITED;
+	  /* NetBSD does not store an LWP exit status.  */
+	  ourstatus->value.integer = 0;
+
+	  if (print_thread_events)
+	    printf_unfiltered (_("[%s exited]\n"),
+			       target_pid_to_str (wptid).c_str ());
+	  delete_thread (thr);
+	}
+
+      /* The GDB core expects that the rest of the threads are running.  */
+      if (ptrace (PT_CONTINUE, pid, (void *) 1, 0) == -1)
+	perror_with_name (("ptrace"));
+
+      return wptid;
+    }
+
+  if (in_thread_list (this, ptid_t (pid)))
+      thread_change_ptid (this, ptid_t (pid), wptid);
+
+  if (code == TRAP_LWP && pst.pe_report_event == PTRACE_LWP_CREATE)
+    {
+      /* If GDB attaches to a multi-threaded process, newborn
+	 threads might be added by nbsd_add_threads that have
+	 not yet reported their PTRACE_LWP_CREATE event.  Ignore
+	 born events for an already-known LWP.  */
+      if (in_thread_list (this, wptid))
+	  ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
+      else
+	{
+	  add_thread (this, wptid);
+	  ourstatus->kind = TARGET_WAITKIND_THREAD_CREATED;
+	}
+      return wptid;
+    }
+
+  if (code == TRAP_EXEC)
+    {
+      ourstatus->kind = TARGET_WAITKIND_EXECD;
+      ourstatus->value.execd_pathname = xstrdup (pid_to_exec_file (pid));
+      return wptid;
+    }
+
+  if (code == TRAP_TRACE)
+    {
+      /* Unhandled at this level.  */
+      return wptid;
+    }
+
+  if (code == TRAP_SCE || code == TRAP_SCX)
+    {
+      int sysnum = si->si_sysnum;
+
+      if (!catch_syscall_enabled () || !catching_syscall_number (sysnum))
+	{
+	  /* If the core isn't interested in this event, ignore it.  */
+	  ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
+	  return wptid;
+	}
+
+      ourstatus->kind =
+	(code == TRAP_SCE) ? TARGET_WAITKIND_SYSCALL_ENTRY :
+	TARGET_WAITKIND_SYSCALL_RETURN;
+      ourstatus->value.syscall_number = sysnum;
+      return wptid;
+    }
+
+  if (code == TRAP_BRKPT)
+    {
+      /* Unhandled at this level.  */
+      return wptid;
+    }
+
+  /* Unclassified SIGTRAP event.  */
+  ourstatus->kind = TARGET_WAITKIND_SPURIOUS;
+  return wptid;
+}
+
+/* Implement the "insert_exec_catchpoint" target_ops method.  */
+
+int
+nbsd_nat_target::insert_exec_catchpoint (int pid)
+{
+  /* Nothing to do.  */
   return 0;
 }
 
-void
-nbsd_nat_target::post_startup_inferior (ptid_t pid)
+/* Implement the "remove_exec_catchpoint" target_ops method.  */
+
+int
+nbsd_nat_target::remove_exec_catchpoint (int pid)
 {
-  nbsd_enable_proc_events (pid.pid ());
+  /* Nothing to do.  */
+  return 0;
 }
 
-void
-nbsd_nat_target::post_attach (int pid)
+/* Implement the "set_syscall_catchpoint" target_ops method.  */
+
+int
+nbsd_nat_target::set_syscall_catchpoint (int pid, bool needed,
+                                         int any_count,
+                                         gdb::array_view<const int> syscall_counts)
 {
-  nbsd_enable_proc_events (pid);
-  nbsd_add_threads (pid);
+  /* Ignore the arguments.  inf-ptrace.c will use PT_SYSCALL which
+     will catch all system call entries and exits.  The system calls
+     are filtered by GDB rather than the kernel.  */
+  return 0;
 }
 
-/* Provide a prototype to silence -Wmissing-prototypes.  */
-extern initialize_file_ftype _initialize_nbsd_nat;
+/* Implement the "supports_multi_process" target_ops method. */
+
+bool
+nbsd_nat_target::supports_multi_process ()
+{
+  return true;
+}
+
+/* Implement the "xfer_partial" target_ops method.  */
+
+enum target_xfer_status
+nbsd_nat_target::xfer_partial (enum target_object object,
+			       const char *annex, gdb_byte *readbuf,
+			       const gdb_byte *writebuf,
+			       ULONGEST offset, ULONGEST len,
+			       ULONGEST *xfered_len)
+{
+  pid_t pid = inferior_ptid.pid ();
+
+  switch (object)
+    {
+    case TARGET_OBJECT_SIGNAL_INFO:
+      {
+	len = netbsd_nat::qxfer_siginfo(pid, annex, readbuf, writebuf, offset,
+					len);
+
+	if (len == -1)
+	  return TARGET_XFER_E_IO;
+
+	*xfered_len = len;
+	return TARGET_XFER_OK;
+      }
+    default:
+      return inf_ptrace_target::xfer_partial (object, annex,
+					      readbuf, writebuf, offset,
+					      len, xfered_len);
+    }
+}
+
+/* Implement the "supports_dumpcore" target_ops method.  */
+
+bool
+nbsd_nat_target::supports_dumpcore ()
+{
+  return true;
+}
+
+/* Implement the "dumpcore" target_ops method.  */
 
 void
-_initialize_nbsd_nat (void)
+nbsd_nat_target::dumpcore (const char *filename)
 {
-  add_setshow_boolean_cmd ("nbsd-lwp", class_maintenance,
-			   &debug_nbsd_lwp, _("\
-Set debugging of NetBSD lwp module."), _("\
-Show debugging of NetBSD lwp module."), _("\
-Enables printf debugging output."),
-			   NULL,
-			   &show_nbsd_lwp_debug,
-			   &setdebuglist, &showdebuglist);
+  pid_t pid = inferior_ptid.pid ();
+
+  if (ptrace (PT_DUMPCORE, pid, const_cast<char *>(filename),
+	      strlen (filename)) == -1)
+    perror_with_name (("ptrace"));
 }

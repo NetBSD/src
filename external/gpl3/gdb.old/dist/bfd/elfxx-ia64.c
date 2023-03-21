@@ -1,5 +1,5 @@
 /* IA-64 support for 64-bit ELF
-   Copyright (C) 1998-2019 Free Software Foundation, Inc.
+   Copyright (C) 1998-2020 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -685,7 +685,7 @@ ia64_elf_install_value (bfd_byte *hit_addr, bfd_vma v, unsigned int r_type)
 	 slot 2: bits 23..63 in t1 */
 
       /* First, clear the bits that form the 64 bit constant.  */
-      t0 &= ~(0x3ffffLL << 46);
+      t0 &= ~(0x3ffffULL << 46);
       t1 &= ~(0x7fffffLL
 	      | ((  (0x07fLL << 13) | (0x1ffLL << 27)
 		    | (0x01fLL << 22) | (0x001LL << 21)
@@ -714,7 +714,7 @@ ia64_elf_install_value (bfd_byte *hit_addr, bfd_vma v, unsigned int r_type)
 	 slot 2: bits 23..63 in t1 */
 
       /* First, clear the bits that form the 64 bit constant.  */
-      t0 &= ~(0x3ffffLL << 46);
+      t0 &= ~(0x3ffffULL << 46);
       t1 &= ~(0x7fffffLL
 	      | ((1LL << 36 | 0xfffffLL << 13) << 23));
 
@@ -744,7 +744,7 @@ ia64_elf_install_value (bfd_byte *hit_addr, bfd_vma v, unsigned int r_type)
       if (err)
 	return bfd_reloc_overflow;
 
-      dword &= ~(0x1ffffffffffLL << shift);
+      dword &= ~(0x1ffffffffffULL << shift);
       dword |= (insn << shift);
       bfd_putl64 (dword, hit_addr);
       break;

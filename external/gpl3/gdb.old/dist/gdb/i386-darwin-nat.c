@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 1997-2019 Free Software Foundation, Inc.
+   Copyright (C) 1997-2020 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -633,8 +633,9 @@ darwin_set_sstep (thread_t thread, int enable)
     }
 }
 
+void _initialize_i386_darwin_nat ();
 void
-_initialize_i386_darwin_nat (void)
+_initialize_i386_darwin_nat ()
 {
 #ifdef BFD64
   amd64_native_gregset64_reg_offset = amd64_darwin_thread_state_reg_offset;

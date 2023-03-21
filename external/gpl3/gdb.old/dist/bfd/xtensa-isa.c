@@ -1,5 +1,5 @@
 /* Configurable Xtensa ISA support.
-   Copyright (C) 2003-2019 Free Software Foundation, Inc.
+   Copyright (C) 2003-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -223,7 +223,7 @@ xtensa_insnbuf_from_chars (xtensa_isa isa,
       int word_inx = byte_to_word_index (i);
       int bit_inx = byte_to_bit_index (i);
 
-      insn[word_inx] |= (*cp & 0xff) << bit_inx;
+      insn[word_inx] |= (unsigned) (*cp & 0xff) << bit_inx;
     }
 }
 
@@ -340,43 +340,26 @@ xtensa_isa_free (xtensa_isa isa)
      the memory allocated by xtensa_isa_init and restore the xtensa_isa
      structure to its initial state.  */
 
-  if (intisa->opname_lookup_table)
-    {
-      free (intisa->opname_lookup_table);
-      intisa->opname_lookup_table = 0;
-    }
+  free (intisa->opname_lookup_table);
+  intisa->opname_lookup_table = 0;
 
-  if (intisa->state_lookup_table)
-    {
-      free (intisa->state_lookup_table);
-      intisa->state_lookup_table = 0;
-    }
+  free (intisa->state_lookup_table);
+  intisa->state_lookup_table = 0;
 
-  if (intisa->sysreg_lookup_table)
-    {
-      free (intisa->sysreg_lookup_table);
-      intisa->sysreg_lookup_table = 0;
-    }
+  free (intisa->sysreg_lookup_table);
+  intisa->sysreg_lookup_table = 0;
+
   for (n = 0; n < 2; n++)
     {
-      if (intisa->sysreg_table[n])
-	{
-	  free (intisa->sysreg_table[n]);
-	  intisa->sysreg_table[n] = 0;
-	}
+      free (intisa->sysreg_table[n]);
+      intisa->sysreg_table[n] = 0;
     }
 
-  if (intisa->interface_lookup_table)
-    {
-      free (intisa->interface_lookup_table);
-      intisa->interface_lookup_table = 0;
-    }
+  free (intisa->interface_lookup_table);
+  intisa->interface_lookup_table = 0;
 
-  if (intisa->funcUnit_lookup_table)
-    {
-      free (intisa->funcUnit_lookup_table);
-      intisa->funcUnit_lookup_table = 0;
-    }
+  free (intisa->funcUnit_lookup_table);
+  intisa->funcUnit_lookup_table = 0;
 }
 
 

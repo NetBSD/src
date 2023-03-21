@@ -2,7 +2,7 @@
 
 # GDB script to list of problems using awk.
 #
-# Copyright (C) 2002-2019 Free Software Foundation, Inc.
+# Copyright (C) 2002-2020 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -27,7 +27,7 @@ LC_ALL=C ; export LC_ALL
 
 # Permanent checks take the form:
 
-#     Do not use XXXX, ISO C 90 implies YYYY
+#     Do not use XXXX, C++11 implies YYYY
 #     Do not use XXXX, instead use YYYY''.
 
 # and should never be removed.
@@ -52,7 +52,7 @@ usage ()
 Error: $1
 
 Usage:
-    $0 --print-doc --print-idx -Wall -Werror -W<category> <file> ...
+    $0 --print-doc --print-idx -Wall -Werror -WCATEGORY FILE ...
 Options:
   --print-doc    Print a list of all potential problems, then exit.
   --print-idx    Include the problems IDX (index or key) in every message.
@@ -60,7 +60,8 @@ Options:
   -Werror        Treat all problems as errors.
   -Wall          Report all problems.
   -Wari          Report problems that should be fixed in new code.
-  -W<category>   Report problems in the specifed category.  Valid categories
+  -WCATEGORY     Report problems in the specifed category.  The category
+                 can be prefixed with "no-".  Valid categories
                  are: ${all}
 EOF
     exit 1
@@ -102,6 +103,10 @@ fi
 # Validate all errors and warnings.
 for w in ${warning} ${error}
 do
+    case "$w" in
+	no-*) w=`echo x$w | sed -e 's/xno-//'`;;
+    esac
+
     case " ${all} " in
     *" ${w} "* ) ;;
     * ) usage "Unknown option -W${w}" ;;
@@ -123,11 +128,19 @@ do
 done
 for w in ${warning}
 do
-    warnings="${warnings} warning[ari_${w}] = 1;"
+    val=1
+    case "$w" in
+	no-*) w=`echo x$w | sed -e 's/xno-//'`; val=0 ;;
+    esac
+    warnings="${warnings} warning[ari_${w}] = $val;"
 done
 for e in ${error}
 do
-    errors="${errors} error[ari_${e}]  = 1;"
+    val=1
+    case "$e" in
+	no-*) e=`echo x$e | sed -e 's/xno-//'`; val=0 ;;
+    esac
+    errors="${errors} error[ari_${e}]  = $val;"
 done
 
 if [ "$AWK" = "" ] ; then
@@ -255,17 +268,6 @@ BEGIN {
 }
 
 
-# Things in comments
-
-BEGIN { doc["ARGSUSED"] = "\
-Do not use ARGSUSED, unnecessary"
-    category["ARGSUSED"] = ari_regression
-}
-/(^|[^_[:alnum:]])ARGSUSED([^_[:alnum:]]|$)/ {
-    fail("ARGSUSED")
-}
-
-
 # SNIP - Strip out comments - SNIP
 
 FNR == 1 {
@@ -334,7 +336,7 @@ Do not include gnu-regex.h, instead include gdb_regex.h"
 
 BEGIN { doc["wait.h"] = "\
 Do not include wait.h or sys/wait.h, instead include gdb_wait.h"
-    fix("wait.h", "common/gdb_wait.h", 2);
+    fix("wait.h", "gdbsupport/gdb_wait.h", 2);
     category["wait.h"] = ari_regression
 }
 /^#[[:space:]]*include[[:space:]]*.wait\.h./ \
@@ -364,7 +366,8 @@ Do not use printf(\"%p\"), instead use printf(\"%s\",paddr()) to dump a \
 target address, or host_address_to_string() for a host address"
     category["%p"] = ari_code
 }
-/%p/ && !/%prec/ {
+# Allow gdb %p extensions, but not other uses of %p.
+/%p[^[\]sF]/ && !/%prec/ {
     fail("%p")
 }
 
@@ -433,27 +436,8 @@ FNR == 1 {
 cont_p { $0 = full_line $0; cont_p = 0; full_line = ""; }
 
 
-# GDB uses ISO C 90.  Check for any non pure ISO C 90 code
-
-BEGIN { doc["PARAMS"] = "\
-Do not use PARAMS(), ISO C 90 implies prototypes"
-    category["PARAMS"] = ari_regression
-}
-/(^|[^_[:alnum:]])PARAMS([^_[:alnum:]]|$)/ {
-    fail("PARAMS")
-}
-
-BEGIN { doc["__func__"] = "\
-Do not use __func__, ISO C 90 does not support this macro"
-    category["__func__"] = ari_regression
-    fix("__func__", "common/gdb_assert.h", 1)
-}
-/(^|[^_[:alnum:]])__func__([^_[:alnum:]]|$)/ {
-    fail("__func__")
-}
-
 BEGIN { doc["__FUNCTION__"] = "\
-Do not use __FUNCTION__, ISO C 90 does not support this macro"
+Do not use __FUNCTION__, C++11 does not support this macro"
     category["__FUNCTION__"] = ari_regression
 }
 /(^|[^_[:alnum:]])__FUNCTION__([^_[:alnum:]]|$)/ {
@@ -470,7 +454,7 @@ autoconf tests"
 }
 
 BEGIN { doc["PTR"] = "\
-Do not use PTR, ISO C 90 implies `void *'\''"
+Do not use PTR, C++11 implies `void *'\''"
     category["PTR"] = ari_regression
     #fix("PTR", "gdb/utils.c", 6)
 }
@@ -593,8 +577,8 @@ BEGIN { doc["strerror"] = "\
 Do not use strerror(), instead use safe_strerror()"
     category["strerror"] = ari_regression
     fix("strerror", "gdb/gdb_string.h", 1)
-    fix("strerror", "gdb/common/mingw-strerror.c", 1)
-    fix("strerror", "gdb/common/posix-strerror.c", 1)
+    fix("strerror", "gdb/gdbsupport/mingw-strerror.c", 1)
+    fix("strerror", "gdb/gdbsupport/posix-strerror.c", 1)
 }
 /(^|[^_[:alnum:]])strerror[[:space:]]*\(/ {
     fail("strerror")
@@ -603,22 +587,9 @@ Do not use strerror(), instead use safe_strerror()"
 BEGIN { doc["long long"] = "\
 Do not use `long long'\'', instead use LONGEST"
     category["long long"] = ari_code
-    # defs.h needs two such patterns for LONGEST and ULONGEST definitions
-    fix("long long", "gdb/defs.h", 2)
 }
 /(^|[^_[:alnum:]])long[[:space:]]+long([^_[:alnum:]]|$)/ {
     fail("long long")
-}
-
-BEGIN { doc["ATTRIBUTE_UNUSED"] = "\
-Do not use ATTRIBUTE_UNUSED, do not bother (GDB is compiled with -Werror and, \
-consequently, is not able to tolerate false warnings.  Since -Wunused-param \
-produces such warnings, neither that warning flag nor ATTRIBUTE_UNUSED \
-are used by GDB"
-    category["ATTRIBUTE_UNUSED"] = ari_regression
-}
-/(^|[^_[:alnum:]])ATTRIBUTE_UNUSED([^_[:alnum:]]|$)/ {
-    fail("ATTRIBUTE_UNUSED")
 }
 
 BEGIN { doc["ATTR_FORMAT"] = "\
@@ -648,21 +619,6 @@ Do not use NORETURN, use ATTRIBUTE_NORETURN instead"
 
 # General problems
 
-BEGIN { doc["multiple messages"] = "\
-Do not use multiple calls to warning or error, instead use a single call"
-    category["multiple messages"] = ari_gettext
-}
-FNR == 1 {
-    warning_fnr = -1
-}
-/(^|[^_[:alnum:]])(warning|error)[[:space:]]*\(/ {
-    if (FNR == warning_fnr + 1) {
-	fail("multiple messages")
-    } else {
-	warning_fnr = FNR
-    }
-}
-
 # Commented out, but left inside sources, just in case.
 # BEGIN { doc["inline"] = "\
 # Do not use the inline attribute; \
@@ -687,7 +643,6 @@ FNR == 1 {
 BEGIN { doc["abort"] = "\
 Do not use abort, instead use internal_error; GDB should never abort"
     category["abort"] = ari_regression
-    fix("abort", "gdb/utils.c", 3)
 }
 /(^|[^_[:alnum:]])abort[[:space:]]*\(/ {
     fail("abort")
@@ -816,7 +771,7 @@ unconditionally"
 }
 
 BEGIN { doc["bcmp"] = "\
-Do not use bcmp(), ISO C 90 implies memcmp()"
+Do not use bcmp(), C++11 implies memcmp()"
     category["bcmp"] = ari_regression
 }
 /(^|[^_[:alnum:]])bcmp[[:space:]]*\(/ {
@@ -824,7 +779,7 @@ Do not use bcmp(), ISO C 90 implies memcmp()"
 }
 
 BEGIN { doc["setlinebuf"] = "\
-Do not use setlinebuf(), ISO C 90 implies setvbuf()"
+Do not use setlinebuf(), C++11 implies setvbuf()"
     category["setlinebuf"] = ari_regression
 }
 /(^|[^_[:alnum:]])setlinebuf[[:space:]]*\(/ {
@@ -832,7 +787,7 @@ Do not use setlinebuf(), ISO C 90 implies setvbuf()"
 }
 
 BEGIN { doc["bcopy"] = "\
-Do not use bcopy(), ISO C 90 implies memcpy() and memmove()"
+Do not use bcopy(), C++11 implies memcpy() and memmove()"
     category["bcopy"] = ari_regression
 }
 /(^|[^_[:alnum:]])bcopy[[:space:]]*\(/ {
@@ -851,7 +806,6 @@ get_frame_locals_address, or get_frame_args_address."
 BEGIN { doc["floatformat_to_double"] = "\
 Do not use floatformat_to_double() from libierty, \
 instead use floatformat_to_doublest()"
-    fix("floatformat_to_double", "gdb/doublest.c", 1)
     category["floatformat_to_double"] = ari_regression
 }
 /(^|[^_[:alnum:]])floatformat_to_double[[:space:]]*\(/ {
@@ -860,7 +814,7 @@ instead use floatformat_to_doublest()"
 
 BEGIN { doc["floatformat_from_double"] = "\
 Do not use floatformat_from_double() from libierty, \
-instead use floatformat_from_doublest()"
+instead use host_float_ops<T>::from_target()"
     category["floatformat_from_double"] = ari_regression
 }
 /(^|[^_[:alnum:]])floatformat_from_double[[:space:]]*\(/ {
@@ -1080,7 +1034,7 @@ Do not use asprintf(), instead use xstrprintf()"
 
 BEGIN { doc["vasprintf"] = "\
 Do not use vasprintf(), instead use xstrvprintf"
-    fix("vasprintf", "common/common-utils.c", 1)
+    fix("vasprintf", "gdbsupport/common-utils.c", 1)
     category["vasprintf"] = ari_regression
 }
 /(^|[^_[:alnum:]])vasprintf[[:space:]]*\(/ {
@@ -1139,18 +1093,6 @@ Do not use strnicmp(), instead use strncasecmp()"
     fail("strnicmp")
 }
 
-# Boolean expressions and conditionals
-
-BEGIN { doc["boolean"] = "\
-Do not use `boolean'\'',  use `bool'\'' instead"
-    category["boolean"] = ari_regression
-}
-/(^|[^_[:alnum:]])boolean([^_[:alnum:]]|$)/ {
-    if (is_yacc_or_lex == 0) {
-       fail("boolean")
-    }
-}
-
 # Typedefs that are either redundant or can be reduced to `struct
 # type *''.
 # Must be placed before if assignment otherwise ARI exceptions
@@ -1170,20 +1112,6 @@ Do not use strlen dirent.d_name, instead use NAMELEN"
 }
 /(^|[^_[:alnum:]])strlen[[:space:]]*\(.*[^_[:alnum:]]d_name([^_[:alnum:]]|$)/ {
     fail("strlen d_name")
-}
-
-BEGIN { doc["var_boolean"] = "\
-Replace var_boolean with add_setshow_boolean_cmd"
-    category["var_boolean"] = ari_regression
-    fix("var_boolean", "gdb/command.h", 1)
-    # fix only uses the last directory level
-    fix("var_boolean", "cli/cli-decode.c", 2)
-}
-/(^|[^_[:alnum:]])var_boolean([^_[:alnum:]]|$)/ {
-    if (($0 !~ /(^|[^_[:alnum:]])case *var_boolean:/) \
-        && ($0 !~ /(^|[^_[:alnum:]])[=!]= *var_boolean/)) {
-	fail("var_boolean")
-    }
 }
 
 BEGIN { doc["generic_use_struct_convention"] = "\

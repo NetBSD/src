@@ -1,5 +1,5 @@
 /* Motorola 68k series support for 32-bit ELF
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,6 +25,8 @@
 #include "elf-bfd.h"
 #include "elf/m68k.h"
 #include "opcode/m68k.h"
+#include "cpu-m68k.h"
+#include "elf32-m68k.h"
 
 static bfd_boolean
 elf_m68k_discard_copies (struct elf_link_hash_entry *, void *);
@@ -887,9 +889,6 @@ struct elf_m68k_link_hash_table
 {
   struct elf_link_hash_table root;
 
-  /* Small local sym cache.  */
-  struct sym_cache sym_cache;
-
   /* The PLT format used by this link, or NULL if the format has not
      yet been chosen.  */
   const struct elf_m68k_plt_info *plt_info;
@@ -911,8 +910,9 @@ struct elf_m68k_link_hash_table
 /* Get the m68k ELF linker hash table from a link_info structure.  */
 
 #define elf_m68k_hash_table(p) \
-  (elf_hash_table_id ((struct elf_link_hash_table *) ((p)->hash)) \
-  == M68K_ELF_DATA ? ((struct elf_m68k_link_hash_table *) ((p)->hash)) : NULL)
+  ((is_elf_hash_table ((p)->hash)					\
+    && elf_hash_table_id (elf_hash_table (p)) == M68K_ELF_DATA)		\
+   ? (struct elf_m68k_link_hash_table *) (p)->hash : NULL)
 
 /* Shortcut to multi-GOT data.  */
 #define elf_m68k_multi_got(INFO) (&elf_m68k_hash_table (INFO)->multi_got_)
@@ -969,7 +969,7 @@ static struct bfd_link_hash_table *
 elf_m68k_link_hash_table_create (bfd *abfd)
 {
   struct elf_m68k_link_hash_table *ret;
-  bfd_size_type amt = sizeof (struct elf_m68k_link_hash_table);
+  size_t amt = sizeof (struct elf_m68k_link_hash_table);
 
   ret = (struct elf_m68k_link_hash_table *) bfd_zmalloc (amt);
   if (ret == (struct elf_m68k_link_hash_table *) NULL)
@@ -1053,9 +1053,8 @@ elf32_m68k_object_p (bfd *abfd)
 /* Somewhat reverse of elf32_m68k_object_p, this sets the e_flag
    field based on the machine number.  */
 
-static void
-elf_m68k_final_write_processing (bfd *abfd,
-				 bfd_boolean linker ATTRIBUTE_UNUSED)
+static bfd_boolean
+elf_m68k_final_write_processing (bfd *abfd)
 {
   int mach = bfd_get_mach (abfd);
   unsigned long e_flags = elf_elfheader (abfd)->e_flags;
@@ -1108,6 +1107,7 @@ elf_m68k_final_write_processing (bfd *abfd,
 	}
       elf_elfheader (abfd)->e_flags = e_flags;
     }
+  return _bfd_elf_final_write_processing (abfd);
 }
 
 /* Keep m68k-specific flags in the ELF header.  */
@@ -1118,6 +1118,65 @@ elf32_m68k_set_private_flags (bfd *abfd, flagword flags)
   elf_elfheader (abfd)->e_flags = flags;
   elf_flags_init (abfd) = TRUE;
   return TRUE;
+}
+
+/* Merge object attributes from IBFD into OBFD.  Warn if
+   there are conflicting attributes. */
+static bfd_boolean
+m68k_elf_merge_obj_attributes (bfd *ibfd, struct bfd_link_info *info)
+{
+  bfd *obfd = info->output_bfd;
+  obj_attribute *in_attr, *in_attrs;
+  obj_attribute *out_attr, *out_attrs;
+  bfd_boolean ret = TRUE;
+
+  in_attrs = elf_known_obj_attributes (ibfd)[OBJ_ATTR_GNU];
+  out_attrs = elf_known_obj_attributes (obfd)[OBJ_ATTR_GNU];
+
+  in_attr = &in_attrs[Tag_GNU_M68K_ABI_FP];
+  out_attr = &out_attrs[Tag_GNU_M68K_ABI_FP];
+
+  if (in_attr->i != out_attr->i)
+    {
+      int in_fp = in_attr->i & 3;
+      int out_fp = out_attr->i & 3;
+      static bfd *last_fp;
+
+      if (in_fp == 0)
+	;
+      else if (out_fp == 0)
+	{
+	  out_attr->type = ATTR_TYPE_FLAG_INT_VAL;
+	  out_attr->i ^= in_fp;
+	  last_fp = ibfd;
+	}
+      else if (out_fp == 1 && in_fp == 2)
+	{
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%pB uses hard float, %pB uses soft float"),
+	     last_fp, ibfd);
+	  ret = FALSE;
+	}
+      else if (out_fp == 2 && in_fp == 1)
+	{
+	  _bfd_error_handler
+	    /* xgettext:c-format */
+	    (_("%pB uses hard float, %pB uses soft float"),
+	     ibfd, last_fp);
+	  ret = FALSE;
+	}
+    }
+
+  if (!ret)
+    {
+      out_attr->type = ATTR_TYPE_FLAG_INT_VAL | ATTR_TYPE_FLAG_ERROR;
+      bfd_set_error (bfd_error_bad_value);
+      return FALSE;
+    }
+
+  /* Merge Tag_compatibility attributes and any common GNU ones.  */
+  return _bfd_elf_merge_object_attributes (ibfd, info);
 }
 
 /* Merge backend specific data from an object file to the output
@@ -1132,9 +1191,11 @@ elf32_m68k_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   flagword in_isa;
   const bfd_arch_info_type *arch_info;
 
-  if (   bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
-    return FALSE;
+    /* PR 24523: For non-ELF files do not try to merge any private
+       data, but also do not prevent the link from succeeding.  */
+    return TRUE;
 
   /* Get the merged machine.  This checks for incompatibility between
      Coldfire & non-Coldfire flags, incompability between different
@@ -1144,6 +1205,9 @@ elf32_m68k_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
     return FALSE;
 
   bfd_set_arch_mach (obfd, bfd_arch_m68k, arch_info->mach);
+
+  if (!m68k_elf_merge_obj_attributes (ibfd, info))
+    return FALSE;
 
   in_flags = elf_elfheader (ibfd)->e_flags;
   if (!elf_flags_init (obfd))
@@ -1517,13 +1581,17 @@ elf_m68k_get_got_entry (struct elf_m68k_got *got,
     }
 
   entry_.key_ = *key;
-  ptr = htab_find_slot (got->entries, &entry_, (howto != SEARCH
-						? INSERT : NO_INSERT));
+  ptr = htab_find_slot (got->entries, &entry_,
+			(howto == SEARCH || howto == MUST_FIND ? NO_INSERT
+			 : INSERT));
   if (ptr == NULL)
     {
       if (howto == SEARCH)
 	/* Entry not found.  */
 	return NULL;
+
+      if (howto == MUST_FIND)
+	abort ();
 
       /* We're out of memory.  */
       bfd_set_error (bfd_error_no_memory);
@@ -1533,7 +1601,10 @@ elf_m68k_get_got_entry (struct elf_m68k_got *got,
   if (*ptr == NULL)
     /* We didn't find the entry and we're asked to create a new one.  */
     {
-      BFD_ASSERT (howto != MUST_FIND && howto != SEARCH);
+      if (howto == MUST_FIND)
+	abort ();
+
+      BFD_ASSERT (howto != SEARCH);
 
       entry = bfd_alloc (elf_hash_table (info)->dynobj, sizeof (*entry));
       if (entry == NULL)
@@ -1748,13 +1819,17 @@ elf_m68k_get_bfd2got_entry (struct elf_m68k_multi_got *multi_got,
     }
 
   entry_.bfd = abfd;
-  ptr = htab_find_slot (multi_got->bfd2got, &entry_, (howto != SEARCH
-						      ? INSERT : NO_INSERT));
+  ptr = htab_find_slot (multi_got->bfd2got, &entry_,
+			(howto == SEARCH || howto == MUST_FIND ? NO_INSERT
+			 : INSERT));
   if (ptr == NULL)
     {
       if (howto == SEARCH)
 	/* Entry not found.  */
 	return NULL;
+
+      if (howto == MUST_FIND)
+	abort ();
 
       /* We're out of memory.  */
       bfd_set_error (bfd_error_no_memory);
@@ -1764,7 +1839,10 @@ elf_m68k_get_bfd2got_entry (struct elf_m68k_multi_got *multi_got,
   if (*ptr == NULL)
     /* Entry was not found.  Create new one.  */
     {
-      BFD_ASSERT (howto != MUST_FIND && howto != SEARCH);
+      if (howto == MUST_FIND)
+	abort ();
+
+      BFD_ASSERT (howto != SEARCH);
 
       entry = ((struct elf_m68k_bfd2got_entry *)
 	       bfd_alloc (elf_hash_table (info)->dynobj, sizeof (*entry)));
@@ -2756,7 +2834,7 @@ elf_m68k_check_relocs (bfd *abfd,
 		      void *vpp;
 		      Elf_Internal_Sym *isym;
 
-		      isym = bfd_sym_from_r_symndx (&elf_m68k_hash_table (info)->sym_cache,
+		      isym = bfd_sym_from_r_symndx (&elf_m68k_hash_table (info)->root.sym_cache,
 						    abfd, r_symndx);
 		      if (isym == NULL)
 			return FALSE;
@@ -2801,9 +2879,7 @@ elf_m68k_check_relocs (bfd *abfd,
 	  /* This relocation describes which C++ vtable entries are actually
 	     used.  Record for later use during GC.  */
 	case R_68K_GNU_VTENTRY:
-	  BFD_ASSERT (h != NULL);
-	  if (h != NULL
-	      && !bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
+	  if (!bfd_elf_gc_record_vtentry (abfd, sec, h, rel->r_addend))
 	    return FALSE;
 	  break;
 
@@ -3036,7 +3112,6 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 {
   bfd *dynobj;
   asection *s;
-  bfd_boolean plt;
   bfd_boolean relocs;
 
   dynobj = elf_hash_table (info)->dynobj;
@@ -3079,7 +3154,6 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   /* The check_relocs and adjust_dynamic_symbol entry points have
      determined the sizes of the various dynamic sections.  Allocate
      memory for them.  */
-  plt = FALSE;
   relocs = FALSE;
   for (s = dynobj->sections; s != NULL; s = s->next)
     {
@@ -3090,12 +3164,12 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       /* It's OK to base decisions on the section name, because none
 	 of the dynobj section names depend upon the input files.  */
-      name = bfd_get_section_name (dynobj, s);
+      name = bfd_section_name (s);
 
       if (strcmp (name, ".plt") == 0)
 	{
 	  /* Remember whether there is a PLT.  */
-	  plt = s->size != 0;
+	  ;
 	}
       else if (CONST_STRNEQ (name, ".rela"))
 	{
@@ -3144,48 +3218,7 @@ elf_m68k_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	return FALSE;
     }
 
-  if (elf_hash_table (info)->dynamic_sections_created)
-    {
-      /* Add some entries to the .dynamic section.  We fill in the
-	 values later, in elf_m68k_finish_dynamic_sections, but we
-	 must add the entries now so that we get the correct size for
-	 the .dynamic section.  The DT_DEBUG entry is filled in by the
-	 dynamic linker and used by the debugger.  */
-#define add_dynamic_entry(TAG, VAL) \
-  _bfd_elf_add_dynamic_entry (info, TAG, VAL)
-
-      if (bfd_link_executable (info))
-	{
-	  if (!add_dynamic_entry (DT_DEBUG, 0))
-	    return FALSE;
-	}
-
-      if (plt)
-	{
-	  if (!add_dynamic_entry (DT_PLTGOT, 0)
-	      || !add_dynamic_entry (DT_PLTRELSZ, 0)
-	      || !add_dynamic_entry (DT_PLTREL, DT_RELA)
-	      || !add_dynamic_entry (DT_JMPREL, 0))
-	    return FALSE;
-	}
-
-      if (relocs)
-	{
-	  if (!add_dynamic_entry (DT_RELA, 0)
-	      || !add_dynamic_entry (DT_RELASZ, 0)
-	      || !add_dynamic_entry (DT_RELAENT, sizeof (Elf32_External_Rela)))
-	    return FALSE;
-	}
-
-      if ((info->flags & DF_TEXTREL) != 0)
-	{
-	  if (!add_dynamic_entry (DT_TEXTREL, 0))
-	    return FALSE;
-	}
-    }
-#undef add_dynamic_entry
-
-  return TRUE;
+  return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
 }
 
 /* This function is called via elf_link_hash_traverse if we are
@@ -3562,12 +3595,9 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	    BFD_ASSERT (sgot != NULL);
 
 	    if (got == NULL)
-	      {
-		got = elf_m68k_get_bfd2got_entry (elf_m68k_multi_got (info),
-						  input_bfd, MUST_FIND,
-						  NULL)->got;
-		BFD_ASSERT (got != NULL);
-	      }
+	      got = elf_m68k_get_bfd2got_entry (elf_m68k_multi_got (info),
+						input_bfd, MUST_FIND,
+						NULL)->got;
 
 	    /* Get GOT offset for this symbol.  */
 	    elf_m68k_init_got_entry_key (&key_, h, input_bfd, r_symndx,
@@ -3927,7 +3957,7 @@ elf_m68k_relocate_section (bfd *output_bfd,
 		  name = (bfd_elf_string_from_elf_section
 			  (input_bfd, symtab_hdr->sh_link, sym->st_name));
 		  if (name == NULL || *name == '\0')
-		    name = bfd_section_name (input_bfd, sec);
+		    name = bfd_section_name (sec);
 		}
 
 	      _bfd_error_handler
@@ -3962,7 +3992,7 @@ elf_m68k_relocate_section (bfd *output_bfd,
 	      if (name == NULL)
 		return FALSE;
 	      if (*name == '\0')
-		name = bfd_section_name (input_bfd, sec);
+		name = bfd_section_name (sec);
 	    }
 
 	  if (r == bfd_reloc_overflow)
@@ -4435,18 +4465,16 @@ bfd_m68k_elf32_create_embedded_relocs (bfd *abfd, struct bfd_link_info *info,
 	strncpy ((char *) p + 4, targetsec->output_section->name, 8);
     }
 
-  if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && elf_section_data (datasec)->relocs != internal_relocs)
+  if (elf_section_data (datasec)->relocs != internal_relocs)
     free (internal_relocs);
   return TRUE;
 
-error_return:
-  if (isymbuf != NULL && symtab_hdr->contents != (unsigned char *) isymbuf)
+ error_return:
+  if (symtab_hdr->contents != (unsigned char *) isymbuf)
     free (isymbuf);
-  if (internal_relocs != NULL
-      && elf_section_data (datasec)->relocs != internal_relocs)
+  if (elf_section_data (datasec)->relocs != internal_relocs)
     free (internal_relocs);
   return FALSE;
 }

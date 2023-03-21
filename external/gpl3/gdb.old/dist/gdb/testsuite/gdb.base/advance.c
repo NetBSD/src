@@ -16,9 +16,10 @@ int bar (int y)
 int func2 ()
 {
   x = 6;
+  return x;
 }
 
-void func()
+void func(int c)
 {
   x = x + 5;
   func2 ();
@@ -27,6 +28,7 @@ void func()
 int func3 ()
 {
   x = 4;
+  return x;
 }
 
 void marker1 ()

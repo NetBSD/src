@@ -1,6 +1,6 @@
 # Reply server mig-output massager
 #
-#   Copyright (C) 1995-2019 Free Software Foundation, Inc.
+#   Copyright (C) 1995-2020 Free Software Foundation, Inc.
 #
 #   Written by Miles Bader <miles@gnu.ai.mit.edu>
 #
@@ -130,7 +130,8 @@ parse_phase == 5 && /^#if[ \t]TypeCheck/ {
   # two arguments.
   # This is possibly bogus, but easier than supplying bogus values for all
   # the other args (we can't just pass 0 for them, as they might not be scalar).
-  print "\t    OutP->RetCode = (*(kern_return_t (*)(mach_port_t, kern_return_t)) " user_function_name ") (In0P->Head.msgh_request_port, In0P->" arg_name[0] ");";
+  print "\t    void * __error_call = " user_function_name ";";
+  print "\t    OutP->RetCode = (*(kern_return_t (*)(mach_port_t, kern_return_t)) __error_call) (In0P->Head.msgh_request_port, In0P->" arg_name[0] ");";
   print "\t    return;";
   print "\t  }";
   print "";

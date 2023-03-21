@@ -1,3 +1,8 @@
+2019-12-14  Anthony Green  <green@moxielogic.com>
+
+	* interp.c (sim_engine_run): Make use of sim_io_* functions for
+	read/write/open system calls.  Implement the unlink system call.
+
 2017-09-06  John Baldwin  <jhb@FreeBSD.org>
 
 	* configure: Regenerate.

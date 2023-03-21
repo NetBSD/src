@@ -1388,7 +1388,7 @@
 
 2004-11-03  Andrew Cagney  <cagney@gnu.org>
 
-	* gdb/NEWS: Mention internationalization, m32r-*-linux-gnu, 'p'
+	* NEWS: Mention internationalization, m32r-*-linux-gnu, 'p'
 	packet, obsolete configurations, end-of-life deprecated_registers.
 
 2004-11-02  Mark Kettenis  <kettenis@gnu.org>
@@ -4209,8 +4209,6 @@
 
 2004-08-11  Joel Brobecker  <brobecker@gnat.com>
 
-	* doc/gdbint.texinfo (Host Definition): Remove documentation
-	for USE_O_NOCTTY, no longer used.
 	* config/xm-aix4.h (USE_O_NOCTTY): Remove, no longer used.
 	* config/rs6000/xm-rs6000.h (USE_O_NOCTTY): Likewise.
 
@@ -6693,7 +6691,7 @@
 
 2004-06-06  Paul Brook  <paul@codesourcery.com>
 
-	* gdb/dwarf2-frame.c (decode_frame_entry_1): Decode version 3 CIE
+	* dwarf2-frame.c (decode_frame_entry_1): Decode version 3 CIE
 	records.
 
 2004-06-08  Paul N. Hilfinger  <Hilfinger@gnat.com>
@@ -6880,7 +6878,7 @@
 2004-06-02  Albert Chin-A-Young  <china@thewrittenword.com>
 
 	Committed by Andrew Cagney.
-	* gdb/dictionary.c, gdb/gdbtypes.h: Remove trailing comma
+	* dictionary.c, gdbtypes.h: Remove trailing comma
 	after last enum constant to avoid error from IBM C
 	compiler.
 

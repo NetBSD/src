@@ -1,6 +1,6 @@
 /* Multi-process control for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2019 Free Software Foundation, Inc.
+   Copyright (C) 2008-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,7 @@
 #include "observable.h"
 #include "gdbcore.h"
 #include "symfile.h"
-#include "common/environ.h"
+#include "gdbsupport/environ.h"
 #include "cli/cli-utils.h"
 #include "continuations.h"
 #include "arch-utils.h"
@@ -46,7 +46,7 @@ struct inferior *inferior_list = NULL;
 static int highest_inferior_num;
 
 /* See inferior.h.  */
-int print_inferior_events = 1;
+bool print_inferior_events = true;
 
 /* The Current Inferior.  This is a strong reference.  I.e., whenever
    an inferior is the current inferior, its refcount is
@@ -79,7 +79,6 @@ inferior::~inferior ()
   discard_all_inferior_continuations (inf);
   inferior_free_data (inf);
   xfree (inf->args);
-  xfree (inf->terminal);
   target_desc_info_free (inf->tdesc_info);
 }
 
@@ -90,6 +89,23 @@ inferior::inferior (int pid_)
     registry_data ()
 {
   inferior_alloc_data (this);
+
+  m_target_stack.push (get_dummy_target ());
+}
+
+void
+inferior::set_tty (const char *terminal_name)
+{
+  if (terminal_name != nullptr && *terminal_name != '\0')
+    m_terminal = make_unique_xstrdup (terminal_name);
+  else
+    m_terminal = NULL;
+}
+
+const char *
+inferior::tty ()
+{
+  return m_terminal.get ();
 }
 
 struct inferior *
@@ -126,7 +142,7 @@ add_inferior (int pid)
       if (pid != 0)
 	printf_unfiltered (_("[New inferior %d (%s)]\n"),
 			   inf->num,
-			   target_pid_to_str (ptid_t (pid)));
+			   target_pid_to_str (ptid_t (pid)).c_str ());
       else
 	printf_unfiltered (_("[New inferior %d]\n"), inf->num);
     }
@@ -160,7 +176,7 @@ delete_inferior (struct inferior *todel)
 
   /* If this program space is rendered useless, remove it. */
   if (program_space_empty_p (inf->pspace))
-    delete_program_space (inf->pspace);
+    delete inf->pspace;
 
   delete inf;
 }
@@ -191,7 +207,7 @@ exit_inferior_1 (struct inferior *inftoex, int silent)
   gdb::observers::inferior_exit.notify (inf);
 
   inf->pid = 0;
-  inf->fake_pid_p = 0;
+  inf->fake_pid_p = false;
   inf->priv = NULL;
 
   if (inf->vfork_parent != NULL)
@@ -208,20 +224,16 @@ exit_inferior_1 (struct inferior *inftoex, int silent)
   inf->pending_detach = 0;
   /* Reset it.  */
   inf->control = inferior_control_state (NO_STOP_QUIETLY);
+
+  /* Clear the register cache and the frame cache.  */
+  registers_changed ();
+  reinit_frame_cache ();
 }
 
 void
 exit_inferior (inferior *inf)
 {
   exit_inferior_1 (inf, 0);
-}
-
-void
-exit_inferior_silent (int pid)
-{
-  struct inferior *inf = find_inferior_pid (pid);
-
-  exit_inferior_1 (inf, 1);
 }
 
 void
@@ -243,7 +255,7 @@ detach_inferior (inferior *inf)
   if (print_inferior_events)
     printf_unfiltered (_("[Inferior %d (%s) detached]\n"),
 		       inf->num,
-		       target_pid_to_str (ptid_t (pid)));
+		       target_pid_to_str (ptid_t (pid)).c_str ());
 }
 
 void
@@ -251,6 +263,7 @@ inferior_appeared (struct inferior *inf, int pid)
 {
   /* If this is the first inferior with threads, reset the global
      thread id.  */
+  delete_exited_threads ();
   if (!any_thread_p ())
     init_thread_list ();
 
@@ -259,13 +272,6 @@ inferior_appeared (struct inferior *inf, int pid)
   inf->exit_code = 0;
 
   gdb::observers::inferior_appeared.notify (inf);
-}
-
-void
-discard_all_inferiors (void)
-{
-  for (inferior *inf : all_non_exited_inferiors ())
-    exit_inferior_silent (inf);
 }
 
 struct inferior *
@@ -279,14 +285,14 @@ find_inferior_id (int num)
 }
 
 struct inferior *
-find_inferior_pid (int pid)
+find_inferior_pid (process_stratum_target *targ, int pid)
 {
   /* Looking for inferior pid == 0 is always wrong, and indicative of
      a bug somewhere else.  There may be more than one with pid == 0,
      for instance.  */
   gdb_assert (pid != 0);
 
-  for (inferior *inf : all_inferiors ())
+  for (inferior *inf : all_inferiors (targ))
     if (inf->pid == pid)
       return inf;
 
@@ -296,9 +302,9 @@ find_inferior_pid (int pid)
 /* See inferior.h */
 
 struct inferior *
-find_inferior_ptid (ptid_t ptid)
+find_inferior_ptid (process_stratum_target *targ, ptid_t ptid)
 {
-  return find_inferior_pid (ptid.pid ());
+  return find_inferior_pid (targ, ptid.pid ());
 }
 
 /* See inferior.h.  */
@@ -318,17 +324,6 @@ find_inferior_for_program_space (struct program_space *pspace)
   return NULL;
 }
 
-struct inferior *
-iterate_over_inferiors (int (*callback) (struct inferior *, void *),
-			void *data)
-{
-  for (inferior *inf : all_inferiors_safe ())
-    if ((*callback) (inf, data))
-      return inf;
-
-  return NULL;
-}
-
 int
 have_inferiors (void)
 {
@@ -343,12 +338,12 @@ have_inferiors (void)
    in the middle of a 'mourn' operation.  */
 
 int
-number_of_live_inferiors (void)
+number_of_live_inferiors (process_stratum_target *proc_target)
 {
   int num_inf = 0;
 
-  for (inferior *inf : all_non_exited_inferiors ())
-    if (target_has_execution_1 (ptid_t (inf->pid)))
+  for (inferior *inf : all_non_exited_inferiors (proc_target))
+    if (inf->has_execution ())
       for (thread_info *tp ATTRIBUTE_UNUSED : inf->non_exited_threads ())
 	{
 	  /* Found a live thread in this inferior, go to the next
@@ -365,7 +360,7 @@ number_of_live_inferiors (void)
 int
 have_live_inferiors (void)
 {
-  return number_of_live_inferiors () > 0;
+  return number_of_live_inferiors (NULL) > 0;
 }
 
 /* Prune away any unused inferiors, and then prune away no longer used
@@ -374,24 +369,22 @@ have_live_inferiors (void)
 void
 prune_inferiors (void)
 {
-  struct inferior *ss, **ss_link;
+  inferior *ss;
 
   ss = inferior_list;
-  ss_link = &inferior_list;
   while (ss)
     {
       if (!ss->deletable ()
 	  || !ss->removable
 	  || ss->pid != 0)
 	{
-	  ss_link = &ss->next;
-	  ss = *ss_link;
+	  ss = ss->next;
 	  continue;
 	}
 
-      *ss_link = ss->next;
+      inferior *ss_next = ss->next;
       delete_inferior (ss);
-      ss = *ss_link;
+      ss = ss_next;
     }
 }
 
@@ -407,7 +400,7 @@ number_of_inferiors (void)
 /* Converts an inferior process id to a string.  Like
    target_pid_to_str, but special cases the null process.  */
 
-static const char *
+static std::string
 inferior_pid_to_str (int pid)
 {
   if (pid != 0)
@@ -428,7 +421,32 @@ print_selected_inferior (struct ui_out *uiout)
     filename = _("<noexec>");
 
   uiout->message (_("[Switching to inferior %d [%s] (%s)]\n"),
-		  inf->num, inferior_pid_to_str (inf->pid), filename);
+		  inf->num, inferior_pid_to_str (inf->pid).c_str (), filename);
+}
+
+/* Helper for print_inferior.  Returns the 'connection-id' string for
+   PROC_TARGET.  */
+
+static std::string
+uiout_field_connection (process_stratum_target *proc_target)
+{
+  if (proc_target == NULL)
+    {
+      return {};
+    }
+  else if (proc_target->connection_string () != NULL)
+    {
+      return string_printf ("%d (%s %s)",
+			    proc_target->connection_number,
+			    proc_target->shortname (),
+			    proc_target->connection_string ());
+    }
+  else
+    {
+      return string_printf ("%d (%s)",
+			    proc_target->connection_number,
+			    proc_target->shortname ());
+    }
 }
 
 /* Prints the list of inferiors and their details on UIOUT.  This is a
@@ -442,12 +460,17 @@ static void
 print_inferior (struct ui_out *uiout, const char *requested_inferiors)
 {
   int inf_count = 0;
+  size_t connection_id_len = 20;
 
   /* Compute number of inferiors we will print.  */
   for (inferior *inf : all_inferiors ())
     {
       if (!number_is_in_list (requested_inferiors, inf->num))
 	continue;
+
+      std::string conn = uiout_field_connection (inf->process_target ());
+      if (connection_id_len < conn.size ())
+	connection_id_len = conn.size ();
 
       ++inf_count;
     }
@@ -458,13 +481,20 @@ print_inferior (struct ui_out *uiout, const char *requested_inferiors)
       return;
     }
 
-  ui_out_emit_table table_emitter (uiout, 4, inf_count, "inferiors");
+  ui_out_emit_table table_emitter (uiout, 5, inf_count, "inferiors");
   uiout->table_header (1, ui_left, "current", "");
   uiout->table_header (4, ui_left, "number", "Num");
   uiout->table_header (17, ui_left, "target-id", "Description");
+  uiout->table_header (connection_id_len, ui_left,
+		       "connection-id", "Connection");
   uiout->table_header (17, ui_left, "exec", "Executable");
 
   uiout->table_body ();
+
+  /* Restore the current thread after the loop because we switch the
+     inferior in the loop.  */
+  scoped_restore_current_pspace_and_thread restore_pspace_thread;
+  inferior *current_inf = current_inferior ();
   for (inferior *inf : all_inferiors ())
     {
       if (!number_is_in_list (requested_inferiors, inf->num))
@@ -472,14 +502,21 @@ print_inferior (struct ui_out *uiout, const char *requested_inferiors)
 
       ui_out_emit_tuple tuple_emitter (uiout, NULL);
 
-      if (inf == current_inferior ())
+      if (inf == current_inf)
 	uiout->field_string ("current", "*");
       else
 	uiout->field_skip ("current");
 
-      uiout->field_int ("number", inf->num);
+      uiout->field_signed ("number", inf->num);
+
+      /* Because target_pid_to_str uses current_top_target,
+	 switch the inferior.  */
+      switch_to_inferior_no_thread (inf);
 
       uiout->field_string ("target-id", inferior_pid_to_str (inf->pid));
+
+      std::string conn = uiout_field_connection (inf->process_target ());
+      uiout->field_string ("connection-id", conn.c_str ());
 
       if (inf->pspace->pspace_exec_filename != NULL)
 	uiout->field_string ("exec", inf->pspace->pspace_exec_filename);
@@ -492,12 +529,12 @@ print_inferior (struct ui_out *uiout, const char *requested_inferiors)
       if (inf->vfork_parent)
 	{
 	  uiout->text (_("\n\tis vfork child of inferior "));
-	  uiout->field_int ("vfork-parent", inf->vfork_parent->num);
+	  uiout->field_signed ("vfork-parent", inf->vfork_parent->num);
 	}
       if (inf->vfork_child)
 	{
 	  uiout->text (_("\n\tis vfork parent of inferior "));
-	  uiout->field_int ("vfork-child", inf->vfork_child->num);
+	  uiout->field_signed ("vfork-child", inf->vfork_child->num);
 	}
 
       uiout->text ("\n");
@@ -580,6 +617,16 @@ kill_inferior_command (const char *args, int from_tty)
   bfd_cache_close_all ();
 }
 
+/* See inferior.h.  */
+
+void
+switch_to_inferior_no_thread (inferior *inf)
+{
+  set_current_inferior (inf);
+  switch_to_no_thread ();
+  set_current_program_space (inf->pspace);
+}
+
 static void
 inferior_command (const char *args, int from_tty)
 {
@@ -610,9 +657,7 @@ inferior_command (const char *args, int from_tty)
     }
   else
     {
-      set_current_inferior (inf);
-      switch_to_no_thread ();
-      set_current_program_space (inf->pspace);
+      switch_to_inferior_no_thread (inf);
 
       gdb::observers::user_selected_context_changed.notify
 	(USER_SELECTED_INFERIOR);
@@ -691,7 +736,41 @@ add_inferior_with_spaces (void)
   return inf;
 }
 
-/* add-inferior [-copies N] [-exec FILENAME]  */
+/* Switch to inferior NEW_INF, a new inferior, and unless
+   NO_CONNECTION is true, push the process_stratum_target of ORG_INF
+   to NEW_INF.  */
+
+static void
+switch_to_inferior_and_push_target (inferior *new_inf,
+				    bool no_connection, inferior *org_inf)
+{
+  process_stratum_target *proc_target = org_inf->process_target ();
+
+  /* Switch over temporarily, while reading executable and
+     symbols.  */
+  switch_to_inferior_no_thread (new_inf);
+
+  /* Reuse the target for new inferior.  */
+  if (!no_connection && proc_target != NULL)
+    {
+      push_target (proc_target);
+      if (proc_target->connection_string () != NULL)
+	printf_filtered (_("Added inferior %d on connection %d (%s %s)\n"),
+			 new_inf->num,
+			 proc_target->connection_number,
+			 proc_target->shortname (),
+			 proc_target->connection_string ());
+      else
+	printf_filtered (_("Added inferior %d on connection %d (%s)\n"),
+			 new_inf->num,
+			 proc_target->connection_number,
+			 proc_target->shortname ());
+    }
+  else
+    printf_filtered (_("Added inferior %d\n"), new_inf->num);
+}
+
+/* add-inferior [-copies N] [-exec FILENAME] [-no-connection] */
 
 static void
 add_inferior_command (const char *args, int from_tty)
@@ -699,6 +778,7 @@ add_inferior_command (const char *args, int from_tty)
   int i, copies = 1;
   gdb::unique_xmalloc_ptr<char> exec;
   symfile_add_flags add_flags = 0;
+  bool no_connection = false;
 
   if (from_tty)
     add_flags |= SYMFILE_VERBOSE;
@@ -718,6 +798,8 @@ add_inferior_command (const char *args, int from_tty)
 		    error (_("No argument to -copies"));
 		  copies = parse_and_eval_long (*argv);
 		}
+	      else if (strcmp (*argv, "-no-connection") == 0)
+		no_connection = true;
 	      else if (strcmp (*argv, "-exec") == 0)
 		{
 		  ++argv;
@@ -731,35 +813,32 @@ add_inferior_command (const char *args, int from_tty)
 	}
     }
 
+  inferior *orginf = current_inferior ();
+
   scoped_restore_current_pspace_and_thread restore_pspace_thread;
 
   for (i = 0; i < copies; ++i)
     {
-      struct inferior *inf = add_inferior_with_spaces ();
+      inferior *inf = add_inferior_with_spaces ();
 
-      printf_filtered (_("Added inferior %d\n"), inf->num);
+      switch_to_inferior_and_push_target (inf, no_connection, orginf);
 
       if (exec != NULL)
 	{
-	  /* Switch over temporarily, while reading executable and
-	     symbols.q.  */
-	  set_current_program_space (inf->pspace);
-	  set_current_inferior (inf);
-	  switch_to_no_thread ();
-
 	  exec_file_attach (exec.get (), from_tty);
 	  symbol_file_add_main (exec.get (), add_flags);
 	}
     }
 }
 
-/* clone-inferior [-copies N] [ID] */
+/* clone-inferior [-copies N] [ID] [-no-connection] */
 
 static void
 clone_inferior_command (const char *args, int from_tty)
 {
   int i, copies = 1;
   struct inferior *orginf = NULL;
+  bool no_connection = false;
 
   if (args)
     {
@@ -780,6 +859,8 @@ clone_inferior_command (const char *args, int from_tty)
 		  if (copies < 0)
 		    error (_("Invalid copies number"));
 		}
+	      else if (strcmp (*argv, "-no-connection") == 0)
+		no_connection = true;
 	    }
 	  else
 	    {
@@ -825,15 +906,13 @@ clone_inferior_command (const char *args, int from_tty)
       inf->aspace = pspace->aspace;
       inf->gdbarch = orginf->gdbarch;
 
+      switch_to_inferior_and_push_target (inf, no_connection, orginf);
+
       /* If the original inferior had a user specified target
 	 description, make the clone use it too.  */
       if (target_desc_info_from_user_p (inf->tdesc_info))
 	copy_inferior_target_desc_info (inf, orginf);
 
-      printf_filtered (_("Added inferior %d.\n"), inf->num);
-
-      set_current_inferior (inf);
-      switch_to_no_thread ();
       clone_program_space (pspace, orginf->pspace);
     }
 }
@@ -894,10 +973,13 @@ By default all inferiors are displayed."));
 
   c = add_com ("add-inferior", no_class, add_inferior_command, _("\
 Add a new inferior.\n\
-Usage: add-inferior [-copies N] [-exec FILENAME]\n\
+Usage: add-inferior [-copies N] [-exec FILENAME] [-no-connection]\n\
 N is the optional number of inferiors to add, default is 1.\n\
 FILENAME is the file name of the executable to use\n\
-as main program."));
+as main program.\n\
+By default, the new inferior inherits the current inferior's connection.\n\
+If -no-connection is specified, the new inferior begins with\n\
+no target connection yet."));
   set_cmd_completer (c, filename_completer);
 
   add_com ("remove-inferiors", no_class, remove_inferior_command, _("\
@@ -906,11 +988,14 @@ Usage: remove-inferiors ID..."));
 
   add_com ("clone-inferior", no_class, clone_inferior_command, _("\
 Clone inferior ID.\n\
-Usage: clone-inferior [-copies N] [ID]\n\
-Add N copies of inferior ID.  The new inferior has the same\n\
+Usage: clone-inferior [-copies N] [-no-connection] [ID]\n\
+Add N copies of inferior ID.  The new inferiors have the same\n\
 executable loaded as the copied inferior.  If -copies is not specified,\n\
 adds 1 copy.  If ID is not specified, it is the current inferior\n\
-that is cloned."));
+that is cloned.\n\
+By default, the new inferiors inherit the copied inferior's connection.\n\
+If -no-connection is specified, the new inferiors begin with\n\
+no target connection yet."));
 
   add_cmd ("inferiors", class_run, detach_inferior_command, _("\
 Detach from inferior ID (or list of IDS).\n\
@@ -930,8 +1015,8 @@ The new inferior ID must be currently known."),
 
   add_setshow_boolean_cmd ("inferior-events", no_class,
          &print_inferior_events, _("\
-Set printing of inferior events (e.g., inferior start and exit)."), _("\
-Show printing of inferior events (e.g., inferior start and exit)."), NULL,
+Set printing of inferior events (such as inferior start and exit)."), _("\
+Show printing of inferior events (such as inferior start and exit)."), NULL,
          NULL,
          show_print_inferior_events,
          &setprintlist, &showprintlist);

@@ -1,6 +1,6 @@
 /* Target-machine dependent code for Renesas H8/300, for GDB.
 
-   Copyright (C) 1988-2019 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,7 @@
 #include "gdbcore.h"
 #include "objfiles.h"
 #include "dis-asm.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
 
@@ -91,25 +91,6 @@ static int is_h8300_normal_mode (struct gdbarch *gdbarch);
 #define BINWORD(gdbarch) ((is_h8300hmode (gdbarch) \
 		  && !is_h8300_normal_mode (gdbarch)) \
 		 ? h8300h_reg_size : h8300_reg_size)
-
-static CORE_ADDR
-h8300_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, E_PC_REGNUM);
-}
-
-static CORE_ADDR
-h8300_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, E_SP_REGNUM);
-}
-
-static struct frame_id
-h8300_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  CORE_ADDR sp = get_frame_register_unsigned (this_frame, E_SP_REGNUM);
-  return frame_id_build (sp, get_frame_pc (this_frame));
-}
 
 /* Normal frames.  */
 
@@ -197,10 +178,10 @@ h8300_is_argument_spill (struct gdbarch *gdbarch, CORE_ADDR pc)
       if (IS_MOVB_Rn24_SP (read_memory_unsigned_integer (pc + 2,
 							 2, byte_order)))
 	{
-	  LONGEST disp = read_memory_integer (pc + 4, 4, byte_order);
+	  ULONGEST disp = read_memory_unsigned_integer (pc + 4, 4, byte_order);
 
 	  /* ... and d:24 is negative.  */
-	  if (disp < 0 && disp > 0xffffff)
+	  if ((disp & 0x00800000) != 0)
 	    return 8;
 	}
     }
@@ -216,10 +197,10 @@ h8300_is_argument_spill (struct gdbarch *gdbarch, CORE_ADDR pc)
       if (IS_MOVW_Rn24_SP (read_memory_unsigned_integer (pc + 2,
 							 2, byte_order)))
 	{
-	  LONGEST disp = read_memory_integer (pc + 4, 4, byte_order);
+	  ULONGEST disp = read_memory_unsigned_integer (pc + 4, 4, byte_order);
 
 	  /* ... and d:24 is negative.  */
-	  if (disp < 0 && disp > 0xffffff)
+	  if ((disp & 0x00800000) != 0)
 	    return 8;
 	}
     }
@@ -238,10 +219,11 @@ h8300_is_argument_spill (struct gdbarch *gdbarch, CORE_ADDR pc)
 	{
 	  if (IS_MOVL_Rn24_SP (read_memory_integer (pc + 4, 2, byte_order)))
 	    {
-	      LONGEST disp = read_memory_integer (pc + 6, 4, byte_order);
+	      ULONGEST disp = read_memory_unsigned_integer (pc + 6, 4,
+							    byte_order);
 
 	      /* ... and d:24 is negative.  */
-	      if (disp < 0 && disp > 0xffffff)
+	      if ((disp & 0x00800000) != 0)
 		return 10;
 	    }
 	}
@@ -759,7 +741,7 @@ h8300_extract_return_value (struct type *type, struct regcache *regcache,
       store_unsigned_integer (valbuf + 2, 2, byte_order, c);
       break;
     case 8:			/* long long is now 8 bytes.  */
-      if (TYPE_CODE (type) == TYPE_CODE_INT)
+      if (type->code () == TYPE_CODE_INT)
 	{
 	  regcache_cooked_read_unsigned (regcache, E_RET0_REGNUM, &addr);
 	  c = read_memory_unsigned_integer ((CORE_ADDR) addr, len, byte_order);
@@ -790,7 +772,7 @@ h8300h_extract_return_value (struct type *type, struct regcache *regcache,
       store_unsigned_integer (valbuf, TYPE_LENGTH (type), byte_order, c);
       break;
     case 8:			/* long long is now 8 bytes.  */
-      if (TYPE_CODE (type) == TYPE_CODE_INT)
+      if (type->code () == TYPE_CODE_INT)
 	{
 	  regcache_cooked_read_unsigned (regcache, E_RET0_REGNUM, &c);
 	  store_unsigned_integer (valbuf, 4, byte_order, c);
@@ -811,8 +793,8 @@ h8300_use_struct_convention (struct type *value_type)
   /* Types of 1, 2 or 4 bytes are returned in R0/R1, everything else on the
      stack.  */
 
-  if (TYPE_CODE (value_type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (value_type) == TYPE_CODE_UNION)
+  if (value_type->code () == TYPE_CODE_STRUCT
+      || value_type->code () == TYPE_CODE_UNION)
     return 1;
   return !(TYPE_LENGTH (value_type) == 1
 	   || TYPE_LENGTH (value_type) == 2
@@ -824,14 +806,14 @@ h8300h_use_struct_convention (struct type *value_type)
 {
   /* Types of 1, 2 or 4 bytes are returned in R0, INT types of 8 bytes are
      returned in R0/R1, everything else on the stack.  */
-  if (TYPE_CODE (value_type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (value_type) == TYPE_CODE_UNION)
+  if (value_type->code () == TYPE_CODE_STRUCT
+      || value_type->code () == TYPE_CODE_UNION)
     return 1;
   return !(TYPE_LENGTH (value_type) == 1
 	   || TYPE_LENGTH (value_type) == 2
 	   || TYPE_LENGTH (value_type) == 4
 	   || (TYPE_LENGTH (value_type) == 8
-	       && TYPE_CODE (value_type) == TYPE_CODE_INT));
+	       && value_type->code () == TYPE_CODE_INT));
 }
 
 /* Function: store_return_value
@@ -948,6 +930,19 @@ h8300_register_sim_regno (struct gdbarch *gdbarch, int regnum)
 }
 
 static const char *
+h8300_register_name_common (const char *regnames[], int numregs,
+			    struct gdbarch *gdbarch, int regno)
+{
+  if (regno < 0
+      || regno >= numregs)
+    internal_error (__FILE__, __LINE__,
+		    _("h8300_register_name_common: illegal register number %d"),
+		    regno);
+  else
+    return regnames[regno];
+}
+
+static const char *
 h8300_register_name (struct gdbarch *gdbarch, int regno)
 {
   /* The register names change depending on which h8300 processor
@@ -957,13 +952,20 @@ h8300_register_name (struct gdbarch *gdbarch, int regno)
     "sp", "", "pc", "cycles", "tick", "inst",
     "ccr",			/* pseudo register */
   };
-  if (regno < 0
-      || regno >= (sizeof (register_names) / sizeof (*register_names)))
-    internal_error (__FILE__, __LINE__,
-		    _("h8300_register_name: illegal register number %d"),
-		    regno);
-  else
-    return register_names[regno];
+  return h8300_register_name_common(register_names, ARRAY_SIZE(register_names),
+				    gdbarch, regno);
+}
+
+static const char *
+h8300h_register_name (struct gdbarch *gdbarch, int regno)
+{
+  static const char *register_names[] = {
+    "er0", "er1", "er2", "er3", "er4", "er5", "er6",
+    "sp", "", "pc", "cycles", "tick", "inst",
+    "ccr",			/* pseudo register */
+  };
+  return h8300_register_name_common(register_names, ARRAY_SIZE(register_names),
+				    gdbarch, regno);
 }
 
 static const char *
@@ -975,13 +977,8 @@ h8300s_register_name (struct gdbarch *gdbarch, int regno)
     "mach", "macl",
     "ccr", "exr"		/* pseudo registers */
   };
-  if (regno < 0
-      || regno >= (sizeof (register_names) / sizeof (*register_names)))
-    internal_error (__FILE__, __LINE__,
-		    _("h8300s_register_name: illegal register number %d"),
-		    regno);
-  else
-    return register_names[regno];
+  return h8300_register_name_common(register_names, ARRAY_SIZE(register_names),
+				    gdbarch, regno);
 }
 
 static const char *
@@ -993,13 +990,8 @@ h8300sx_register_name (struct gdbarch *gdbarch, int regno)
     "mach", "macl", "sbr", "vbr",
     "ccr", "exr"		/* pseudo registers */
   };
-  if (regno < 0
-      || regno >= (sizeof (register_names) / sizeof (*register_names)))
-    internal_error (__FILE__, __LINE__,
-		    _("h8300sx_register_name: illegal register number %d"),
-		    regno);
-  else
-    return register_names[regno];
+  return h8300_register_name_common(register_names, ARRAY_SIZE(register_names),
+				    gdbarch, regno);
 }
 
 static void
@@ -1278,7 +1270,7 @@ h8300_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_num_pseudo_regs (gdbarch, 1);
       set_gdbarch_dwarf2_reg_to_regnum (gdbarch, h8300_dbg_reg_to_regnum);
       set_gdbarch_stab_reg_to_regnum (gdbarch, h8300_dbg_reg_to_regnum);
-      set_gdbarch_register_name (gdbarch, h8300_register_name);
+      set_gdbarch_register_name (gdbarch, h8300h_register_name);
       if (info.bfd_arch_info->mach != bfd_mach_h8300hn)
 	{
 	  set_gdbarch_ptr_bit (gdbarch, 4 * TARGET_CHAR_BIT);
@@ -1349,13 +1341,10 @@ h8300_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_skip_prologue (gdbarch, h8300_skip_prologue);
 
   /* Frame unwinder.  */
-  set_gdbarch_unwind_pc (gdbarch, h8300_unwind_pc);
-  set_gdbarch_unwind_sp (gdbarch, h8300_unwind_sp);
-  set_gdbarch_dummy_id (gdbarch, h8300_dummy_id);
   frame_base_set_default (gdbarch, &h8300_frame_base);
 
   /* 
-   * Miscelany
+   * Miscellany
    */
   /* Stack grows up.  */
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
@@ -1389,8 +1378,9 @@ h8300_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
 }
 
+void _initialize_h8300_tdep ();
 void
-_initialize_h8300_tdep (void)
+_initialize_h8300_tdep ()
 {
   register_gdbarch_init (bfd_arch_h8300, h8300_gdbarch_init);
 }

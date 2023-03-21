@@ -1,3 +1,11 @@
+2020-08-21  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* configure.ac: Include config/pkg.m4.
+
+2020-07-29  Simon Marchi  <simon.marchi@efficios.com>
+
+	* aclocal.m4, configure: Re-generate.
+
 2017-09-06  John Baldwin  <jhb@FreeBSD.org>
 
 	* configure: Regenerate.
