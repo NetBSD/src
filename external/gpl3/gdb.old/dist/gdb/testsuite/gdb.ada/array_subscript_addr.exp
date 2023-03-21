@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 load_lib "ada.exp"
 
+if { [skip_ada_tests] } { return -1 }
+
 standard_ada_testfile p
 
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } {
@@ -29,6 +31,4 @@ runto "p.adb:$bp_location"
 # Verify that we can compare a string slice with another string.
 
 gdb_test "print a(2)'Address" \
-         "= \\(system\\.address\\) 0x\[0-9a-fA-F\]+" \
-         "print a(2)'Address"
-
+         "= \\(system\\.address\\) 0x\[0-9a-fA-F\]+"

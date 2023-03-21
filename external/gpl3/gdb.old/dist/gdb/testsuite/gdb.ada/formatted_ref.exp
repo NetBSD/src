@@ -1,4 +1,4 @@
-# Copyright 2007-2019 Free Software Foundation, Inc.
+# Copyright 2007-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,6 +25,8 @@
 # operand.
 
 load_lib "ada.exp"
+
+if { [skip_ada_tests] } { return -1 }
 
 standard_ada_testfile formatted_ref
 
@@ -67,14 +69,16 @@ proc test_p_x { var val addr } {
 proc test_p_x_addr { var addr } {
     global gdb_prompt
 
-    set test "print/x $var'access"
-    gdb_test_multiple $test $test {
-        -re "\\$\[0-9\]+ = $addr.*$gdb_prompt $" {
-	    pass $test
-	} 
-	-re "\\$\[0-9\]+ = 0x\[a-f0-9+\]+.*$gdb_prompt $" {
-            fail "$test (prints unexpected address)"
-        }
+    foreach attr {access unchecked_access unrestricted_access} {
+	set test "print/x $var'$attr"
+	gdb_test_multiple $test $test {
+	    -re "\\$\[0-9\]+ = $addr.*$gdb_prompt $" {
+		pass $test
+	    }
+	    -re "\\$\[0-9\]+ = 0x\[a-f0-9+\]+.*$gdb_prompt $" {
+		fail "$test (prints unexpected address)"
+	    }
+	}
     }
     return 0
 }

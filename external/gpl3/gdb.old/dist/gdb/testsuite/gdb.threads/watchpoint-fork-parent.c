@@ -1,6 +1,6 @@
 /* Test case for forgotten hw-watchpoints after fork()-off of a process.
 
-   Copyright 2012-2019 Free Software Foundation, Inc.
+   Copyright 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,6 +40,7 @@ forkoff (int nr)
     case -1:
       assert (0);
     case 0:
+#if DEBUG
       printf ("child%d: %d\n", nr, (int) getpid ());
       /* Delay to get both the "child%d" and "parent%d" message printed without
 	 a race breaking expect by its endless wait on `$gdb_prompt$':
@@ -48,6 +49,7 @@ forkoff (int nr)
 	 (gdb) parent2: 14223  */
       i = sleep (1);
       assert (i == 0);
+#endif
 
       /* We must not get caught here (against a forgotten breakpoint).  */
       var++;
@@ -55,11 +57,13 @@ forkoff (int nr)
 
       _exit (exit_code);
     default:
+#if DEBUG
       printf ("parent%d: %d\n", nr, (int) child);
       /* Delay to get both the "child%d" and "parent%d" message printed, see
 	 above.  */
       i = sleep (1);
       assert (i == 0);
+#endif
 
       pid_got = wait (&status);
       assert (pid_got == child);

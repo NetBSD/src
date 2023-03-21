@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2011-2019 Free Software Foundation, Inc.
+# Copyright 2011-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,27 +16,50 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 set syscall_insn ""
+set syscall_register ""
+array set syscall_number {}
 
-# Define the syscall instruction for each target.
+# Define the syscall instructions, registers and numbers for each target.
 
 if { [istarget "i\[34567\]86-*-linux*"] || [istarget "x86_64-*-linux*"] } {
     set syscall_insn "\[ \t\](int|syscall|sysenter)\[ \t\]"
+    set syscall_register "eax"
+    array set syscall_number {fork "(56|120)" vfork "(58|190)" \
+      clone "(56|120)"}
 } elseif { [istarget "aarch64*-*-linux*"] || [istarget "arm*-*-linux*"] } {
     set syscall_insn "\[ \t\](swi|svc)\[ \t\]"
+
+    if { [istarget "aarch64*-*-linux*"] } {
+	set syscall_register "x8"
+    } else {
+	set syscall_register "r7"
+    }
+
+    array set syscall_number {fork "(120|220)" vfork "(190|220)" \
+      clone "(120|220)"}
 } else {
     return -1
 }
 
-proc check_pc_after_cross_syscall { syscall syscall_insn_next_addr } {
+proc_with_prefix check_pc_after_cross_syscall { syscall syscall_insn_next_addr } {
     set syscall_insn_next_addr_found [get_hexadecimal_valueof "\$pc" "0"]
 
-    set test "single step over $syscall final pc"
-    if {$syscall_insn_next_addr != 0
-	&& $syscall_insn_next_addr == $syscall_insn_next_addr_found} {
-	pass $test
-    } else {
-	fail $test
-    }
+    gdb_assert {$syscall_insn_next_addr != 0 \
+      && $syscall_insn_next_addr == $syscall_insn_next_addr_found} \
+	"single step over $syscall final pc"
+}
+
+# Verify the syscall number is the correct one.
+
+proc syscall_number_matches { syscall } {
+  global syscall_register syscall_number
+
+  if {[gdb_test "p \$$syscall_register" ".*= $syscall_number($syscall)" \
+    "syscall number matches"] != 0} {
+      return 0
+  }
+
+  return 1
 }
 
 # Restart GDB and set up the test.  Return a list in which the first one
@@ -47,6 +70,8 @@ proc check_pc_after_cross_syscall { syscall syscall_insn_next_addr } {
 proc setup { syscall } {
     global gdb_prompt syscall_insn
 
+    global hex
+    set next_insn_addr -1
     set testfile "step-over-$syscall"
 
     clean_restart $testfile
@@ -59,9 +84,10 @@ proc setup { syscall } {
     # Delete the breakpoint on main.
     gdb_test_no_output "delete break 1"
 
-    gdb_test_no_output "set displaced-stepping off"
+    gdb_test_no_output "set displaced-stepping off" \
+	"set displaced-stepping off during test setup"
 
-    gdb_test "break $syscall" "Breakpoint \[0-9\]* at .*"
+    gdb_test "break \*$syscall" "Breakpoint \[0-9\]* at .*"
 
     gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, (.* in |__libc_|)$syscall \\(\\).*" \
 	"continue to $syscall (1st time)"
@@ -74,37 +100,77 @@ proc setup { syscall } {
     # Hit the breakpoint on $syscall for the second time.  In this time,
     # the address of syscall insn and next insn of syscall are recorded.
 
-    gdb_test "display/i \$pc" ".*"
+    # Check if the first instruction we stopped at is the syscall one.
+    set syscall_insn_addr -1
+    gdb_test_multiple "display/i \$pc" "fetch first stop pc" {
+	-re "display/i .*: x/i .*=> ($hex) .*:.*$syscall_insn.*$gdb_prompt $" {
+	    set insn_addr $expect_out(1,string)
 
-    # Single step until we see a syscall insn or we reach the
-    # upper bound of loop iterations.
-    set msg "find syscall insn in $syscall"
-    set steps 0
-    set max_steps 1000
-    gdb_test_multiple "stepi" $msg {
-	-re ".*$syscall_insn.*$gdb_prompt $" {
-	    pass $msg
+	    # Is the syscall number the correct one?
+	    if {[syscall_number_matches $syscall]} {
+		set syscall_insn_addr $insn_addr
+	    }
+	    pass $gdb_test_name
 	}
-	-re "x/i .*=>.*\r\n$gdb_prompt $" {
-	    incr steps
-	    if {$steps == $max_steps} {
-		fail $msg
-	    } else {
-		send_gdb "stepi\n"
-		exp_continue
+	-re ".*$gdb_prompt $" {
+	    pass $gdb_test_name
+	}
+    }
+
+    # If we are not at the syscall instruction yet, keep looking for it with
+    # stepi commands.
+    if {$syscall_insn_addr == -1} {
+	# Single step until we see a syscall insn or we reach the
+	# upper bound of loop iterations.
+	set steps 0
+	set max_steps 1000
+	gdb_test_multiple "stepi" "find syscall insn in $syscall" {
+	    -re ".*$syscall_insn.*$gdb_prompt $" {
+		# Is the syscall number the correct one?
+		if {[syscall_number_matches $syscall]} {
+		    pass $gdb_test_name
+		} else {
+		    exp_continue
+		}
+	    }
+	    -re "x/i .*=>.*\r\n$gdb_prompt $" {
+		incr steps
+		if {$steps == $max_steps} {
+		    fail $gdb_test_name
+		} else {
+		    send_gdb "stepi\n"
+		    exp_continue
+		}
 	    }
 	}
+
+	if {$steps == $max_steps} {
+	    return { -1, -1 }
+	}
     }
 
-    if {$steps == $max_steps} {
-	return { -1, -1 }
+    # We have found the syscall instruction.  Now record the next instruction.
+    # Use the X command instead of stepi since we can't guarantee
+    # stepi is working properly.
+    gdb_test_multiple "x/2i \$pc" "pc before/after syscall instruction" {
+	-re "x/2i .*=> ($hex) .*:.*$syscall_insn.* ($hex) .*:.*$gdb_prompt $" {
+	    set syscall_insn_addr $expect_out(1,string)
+	    set next_insn_addr $expect_out(3,string)
+	    pass $gdb_test_name
+	}
     }
 
-    set syscall_insn_addr [get_hexadecimal_valueof "\$pc" "0"]
     if {[gdb_test "stepi" "x/i .*=>.*" "stepi $syscall insn"] != 0} {
 	return { -1, -1 }
     }
-    return [list $syscall_insn_addr [get_hexadecimal_valueof "\$pc" "0"]]
+
+    set pc_after_stepi [get_hexadecimal_valueof "\$pc" "0" \
+			    "pc after stepi"]
+
+    gdb_assert {$next_insn_addr == $pc_after_stepi} \
+	"pc after stepi matches insn addr after syscall"
+
+    return [list $syscall_insn_addr $pc_after_stepi]
 }
 
 proc step_over_syscall { syscall } {
@@ -153,8 +219,13 @@ proc step_over_syscall { syscall } {
 		}
 	    }
 
-	    gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, .*" \
-		"continue to syscall insn $syscall"
+	    # Check if the syscall breakpoint is at the syscall instruction
+	    # address.  If so, no need to continue, otherwise we will run the
+	    # inferior to completion.
+	    if {$syscall_insn_addr != [get_hexadecimal_valueof "\$pc" "0"]} {
+		gdb_test "continue" "Continuing\\..*Breakpoint \[0-9\]+, .*" \
+		    "continue to syscall insn $syscall"
+	    }
 
 	    gdb_test_no_output "set displaced-stepping $displaced"
 

@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,6 +51,7 @@ proc register_tests_no_exec { } {
 proc register_tests { } {
     global hex
     global decimal
+    global mi_gdb_prompt
     set octal "\[0-7\]+"
     set binary "\[0-1\]+"
     set float "\\-?((\[0-9\]+(\\.\[0-9\]+)?(e\[-+\]\[0-9\]+)?)|(nan\\($hex\\)))"
@@ -71,9 +72,35 @@ proc register_tests { } {
 	    "555\\^done,register-values=\\\[\{number=\"$decimal\",value=\"$octal\"\}.*\\\]" \
 	    "register values o"
 
-    mi_gdb_test "666-data-list-register-values t" \
-	    "666\\^done,register-values=\\\[\{number=\"$decimal\",value=\"$binary\"\}.*\\\]" \
-	    "register values t"
+    set cmd "666-data-list-register-values t"
+    set test "register values t"
+    set state 0
+    gdb_test_multiple $cmd $test -prompt "$mi_gdb_prompt$" {
+	-re "666\\^done,register-values=\\\[" {
+	    if { $state == 0 } {
+		set state 1
+		exp_continue
+	    }
+	    fail $gdb_test_name
+	}
+	-re "\{number=\"$decimal\",value=\"$binary\"\}" {
+	    if { $state != 0 } {
+		set state 2
+		exp_continue
+	    }
+	    fail $gdb_test_name
+	}
+	-re "\{number=\"$decimal\",value=\"\[^\"\]*\"\}" {
+	    exp_continue
+	}
+	-re "\]\r\n$mi_gdb_prompt$" {
+	    if { $state == 2 } {
+		pass $gdb_test_name
+	    } else {
+		fail $gdb_test_name
+	    }
+	}
+    }
 }
 
 register_tests_no_exec

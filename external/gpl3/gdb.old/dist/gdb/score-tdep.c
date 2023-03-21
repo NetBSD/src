@@ -1,7 +1,7 @@
 /* Target-dependent code for the S+core architecture, for GDB,
    the GNU Debugger.
 
-   Copyright (C) 2006-2019 Free Software Foundation, Inc.
+   Copyright (C) 2006-2020 Free Software Foundation, Inc.
 
    Contributed by Qinwei (qinwei@sunnorth.com.cn)
    Contributed by Ching-Peng Lin (cplin@sunplus.com)
@@ -34,7 +34,7 @@
 #include "frame-unwind.h"
 #include "frame-base.h"
 #include "trad-frame.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "score-tdep.h"
 
 #define G_FLD(_i,_ms,_ls) \
@@ -62,18 +62,6 @@ score_register_type (struct gdbarch *gdbarch, int regnum)
               && regnum < ((target_mach == bfd_mach_score7)
 			   ? SCORE7_NUM_REGS : SCORE3_NUM_REGS));
   return builtin_type (gdbarch)->builtin_uint32;
-}
-
-static CORE_ADDR
-score_unwind_sp (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, SCORE_SP_REGNUM);
-}
-
-static CORE_ADDR
-score_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
-{
-  return frame_unwind_register_unsigned (next_frame, SCORE_PC_REGNUM);
 }
 
 static const char *
@@ -454,9 +442,9 @@ score_return_value (struct gdbarch *gdbarch, struct value *function,
                     struct type *type, struct regcache *regcache,
                     gdb_byte * readbuf, const gdb_byte * writebuf)
 {
-  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (type) == TYPE_CODE_UNION
-      || TYPE_CODE (type) == TYPE_CODE_ARRAY)
+  if (type->code () == TYPE_CODE_STRUCT
+      || type->code () == TYPE_CODE_UNION
+      || type->code () == TYPE_CODE_ARRAY)
     return RETURN_VALUE_STRUCT_CONVENTION;
   else
     {
@@ -478,18 +466,10 @@ score_return_value (struct gdbarch *gdbarch, struct value *function,
     }
 }
 
-static struct frame_id
-score_dummy_id (struct gdbarch *gdbarch, struct frame_info *this_frame)
-{
-  return frame_id_build (get_frame_register_unsigned (this_frame,
-						      SCORE_SP_REGNUM),
-			 get_frame_pc (this_frame));
-}
-
 static int
 score_type_needs_double_align (struct type *type)
 {
-  enum type_code typecode = TYPE_CODE (type);
+  enum type_code typecode = type->code ();
 
   if ((typecode == TYPE_CODE_INT && TYPE_LENGTH (type) == 8)
       || (typecode == TYPE_CODE_FLT && TYPE_LENGTH (type) == 8))
@@ -498,9 +478,9 @@ score_type_needs_double_align (struct type *type)
     {
       int i, n;
 
-      n = TYPE_NFIELDS (type);
+      n = type->num_fields ();
       for (i = 0; i < n; i++)
-        if (score_type_needs_double_align (TYPE_FIELD_TYPE (type, i)))
+        if (score_type_needs_double_align (type->field (i).type ()))
           return 1;
       return 0;
     }
@@ -549,7 +529,7 @@ score_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
     {
       struct value *arg = args[argnum];
       struct type *arg_type = check_typedef (value_type (arg));
-      enum type_code typecode = TYPE_CODE (arg_type);
+      enum type_code typecode = arg_type->code ();
       const gdb_byte *val = value_contents (arg);
       int downward_offset = 0;
       int arg_last_part_p = 0;
@@ -890,7 +870,7 @@ score7_analyze_prologue (CORE_ADDR startaddr, CORE_ADDR pc,
       inst_t *inst = NULL;
       if (memblock != NULL)
         {
-          /* Reading memory block from target succefully and got all
+          /* Reading memory block from target successfully and got all
              the instructions(from STARTADDR to PC) needed.  */
           score7_adjust_memblock_ptr (&memblock, prev_pc, cur_pc);
           inst = score7_fetch_inst (gdbarch, cur_pc, memblock);
@@ -938,13 +918,15 @@ score7_analyze_prologue (CORE_ADDR startaddr, CORE_ADDR pc,
                    && G_FLD (inst->v, 2, 0) == 0x0)
             {
               /* subei! r0, n */
-              sp_offset += (int) pow (2, G_FLD (inst->v, 6, 3));
+              sp_offset += (int) pow (2.0, G_FLD (inst->v, 6, 3));
             }
           else if (G_FLD (inst->v, 14, 7) == 0xc0
                    && G_FLD (inst->v, 2, 0) == 0x0)
             {
               /* addei! r0, n */
-              sp_offset -= (int) pow (2, G_FLD (inst->v, 6, 3));
+	      /* Solaris 11+gcc 5.5 has ambiguous overloads of pow, so we
+		 pass 2.0 instead of 2 to get the right one.  */
+              sp_offset -= (int) pow (2.0, G_FLD (inst->v, 6, 3));
             }
         }
       else
@@ -1480,8 +1462,6 @@ score_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_register_type (gdbarch, score_register_type);
   set_gdbarch_frame_align (gdbarch, score_frame_align);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan);
-  set_gdbarch_unwind_sp (gdbarch, score_unwind_sp);
-  set_gdbarch_unwind_pc (gdbarch, score_unwind_pc);
 
   switch (target_mach)
     {
@@ -1519,7 +1499,6 @@ score_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   /* Dummy frame hooks.  */
   set_gdbarch_return_value (gdbarch, score_return_value);
   set_gdbarch_call_dummy_location (gdbarch, AT_ENTRY_POINT);
-  set_gdbarch_dummy_id (gdbarch, score_dummy_id);
   set_gdbarch_push_dummy_call (gdbarch, score_push_dummy_call);
 
   /* Normal frame hooks.  */
@@ -1531,8 +1510,9 @@ score_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
+void _initialize_score_tdep ();
 void
-_initialize_score_tdep (void)
+_initialize_score_tdep ()
 {
   gdbarch_register (bfd_arch_score, score_gdbarch_init, NULL);
 }

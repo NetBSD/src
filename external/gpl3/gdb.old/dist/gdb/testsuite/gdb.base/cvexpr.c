@@ -1,4 +1,4 @@
-/* Copyright (C) 2001-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2001-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -427,4 +427,6 @@ int main ()
 
   use (&v_float_func);
   use (&v_double_func);
+
+  return 0;
 }

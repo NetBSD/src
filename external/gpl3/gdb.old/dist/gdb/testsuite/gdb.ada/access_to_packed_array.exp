@@ -1,4 +1,4 @@
-# Copyright 2015-2019 Free Software Foundation, Inc.
+# Copyright 2015-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 load_lib "ada.exp"
 
+if { [skip_ada_tests] } { return -1 }
+
 standard_ada_testfile foo
 
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } {
@@ -22,6 +24,16 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } 
 }
 
 clean_restart ${testfile}
+
+# Test that printing symbols does not cause segv.
+gdb_test_no_output "maint expand-symtabs"
+set file [standard_output_file gdb.txt]
+gdb_test_no_output "set logging file $file" "set logging file"
+gdb_test_no_output "set logging redirect on"
+gdb_test "set logging on"
+gdb_test_no_output "maint print symbols"
+gdb_test "set logging off"
+file delete $file
 
 set bp_location [gdb_get_line_number "BREAK" ${testdir}/foo.adb]
 runto "foo.adb:$bp_location"

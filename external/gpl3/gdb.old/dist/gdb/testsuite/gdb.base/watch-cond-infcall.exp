@@ -1,4 +1,4 @@
-# Copyright 2010-2019 Free Software Foundation, Inc.
+# Copyright 2010-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,8 +47,7 @@ proc test_watchpoint { hw } {
     gdb_breakpoint [gdb_get_line_number "break-at-exit"]
 
     gdb_test "continue" \
-	"atchpoint \[0-9\]+: var\r\n\r\nOld value = 0\r\nNew value = 1\r\n.*watchpoint-stop.*" \
-	"continue"
+	"atchpoint \[0-9\]+: var\r\n\r\nOld value = 0\r\nNew value = 1\r\n.*watchpoint-stop.*"
 }
 
 if { ![target_info exists gdb,no_hardware_watchpoints] } {

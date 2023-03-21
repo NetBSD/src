@@ -1,6 +1,6 @@
 /* Target-dependent code for the Motorola 68000 series.
 
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
@@ -191,7 +191,7 @@ m68k_convert_register_p (struct gdbarch *gdbarch,
     return 0;
   return (regnum >= M68K_FP0_REGNUM && regnum <= M68K_FP0_REGNUM + 7
 	  /* We only support floating-point values.  */
-	  && TYPE_CODE (type) == TYPE_CODE_FLT
+	  && type->code () == TYPE_CODE_FLT
 	  && type != register_type (gdbarch, M68K_FP0_REGNUM));
 }
 
@@ -207,7 +207,7 @@ m68k_register_to_value (struct frame_info *frame, int regnum,
   gdb_byte from[M68K_MAX_REGISTER_SIZE];
   struct type *fpreg_type = register_type (gdbarch, M68K_FP0_REGNUM);
 
-  gdb_assert (TYPE_CODE (type) == TYPE_CODE_FLT);
+  gdb_assert (type->code () == TYPE_CODE_FLT);
 
   /* Convert to TYPE.  */
   if (!get_frame_register_bytes (frame, regnum, 0,
@@ -232,7 +232,7 @@ m68k_value_to_register (struct frame_info *frame, int regnum,
 					   M68K_FP0_REGNUM);
 
   /* We only support floating-point values.  */
-  if (TYPE_CODE (type) != TYPE_CODE_FLT)
+  if (type->code () != TYPE_CODE_FLT)
     {
       warning (_("Cannot convert non-floating-point type "
 	       "to floating-point register value."));
@@ -257,7 +257,7 @@ m68k_value_to_register (struct frame_info *frame, int regnum,
 
    The 68020/030/040/060 do support an FPU, either as a coprocessor
    (68881/2) or built-in (68040/68060).  That's why System V release 4
-   (SVR4) instroduces a new calling convention specified by the SVR4
+   (SVR4) introduces a new calling convention specified by the SVR4
    psABI.  Integer values are returned in %d0/%d1, pointer return
    values in %a0 and floating values in %fp0.  When calling functions
    returning a structure the caller should pass a pointer to a buffer
@@ -308,13 +308,13 @@ m68k_svr4_extract_return_value (struct type *type, struct regcache *regcache,
   struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  if (tdep->float_return && TYPE_CODE (type) == TYPE_CODE_FLT)
+  if (tdep->float_return && type->code () == TYPE_CODE_FLT)
     {
       struct type *fpreg_type = register_type (gdbarch, M68K_FP0_REGNUM);
       regcache->raw_read (M68K_FP0_REGNUM, buf);
       target_float_convert (buf, fpreg_type, valbuf, type);
     }
-  else if (TYPE_CODE (type) == TYPE_CODE_PTR && TYPE_LENGTH (type) == 4)
+  else if (type->code () == TYPE_CODE_PTR && TYPE_LENGTH (type) == 4)
     regcache->raw_read (M68K_A0_REGNUM, valbuf);
   else
     m68k_extract_return_value (type, regcache, valbuf);
@@ -347,14 +347,14 @@ m68k_svr4_store_return_value (struct type *type, struct regcache *regcache,
   struct gdbarch *gdbarch = regcache->arch ();
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  if (tdep->float_return && TYPE_CODE (type) == TYPE_CODE_FLT)
+  if (tdep->float_return && type->code () == TYPE_CODE_FLT)
     {
       struct type *fpreg_type = register_type (gdbarch, M68K_FP0_REGNUM);
       gdb_byte buf[M68K_MAX_REGISTER_SIZE];
       target_float_convert (valbuf, type, buf, fpreg_type);
       regcache->raw_write (M68K_FP0_REGNUM, buf);
     }
-  else if (TYPE_CODE (type) == TYPE_CODE_PTR && TYPE_LENGTH (type) == 4)
+  else if (type->code () == TYPE_CODE_PTR && TYPE_LENGTH (type) == 4)
     {
       regcache->raw_write (M68K_A0_REGNUM, valbuf);
       regcache->raw_write (M68K_D0_REGNUM, valbuf);
@@ -371,7 +371,7 @@ static int
 m68k_reg_struct_return_p (struct gdbarch *gdbarch, struct type *type)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-  enum type_code code = TYPE_CODE (type);
+  enum type_code code = type->code ();
   int len = TYPE_LENGTH (type);
 
   gdb_assert (code == TYPE_CODE_STRUCT || code == TYPE_CODE_UNION
@@ -394,7 +394,7 @@ m68k_return_value (struct gdbarch *gdbarch, struct value *function,
 		   struct type *type, struct regcache *regcache,
 		   gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  enum type_code code = TYPE_CODE (type);
+  enum type_code code = type->code ();
 
   /* GCC returns a `long double' in memory too.  */
   if (((code == TYPE_CODE_STRUCT || code == TYPE_CODE_UNION
@@ -430,7 +430,7 @@ m68k_svr4_return_value (struct gdbarch *gdbarch, struct value *function,
 			struct type *type, struct regcache *regcache,
 			gdb_byte *readbuf, const gdb_byte *writebuf)
 {
-  enum type_code code = TYPE_CODE (type);
+  enum type_code code = type->code ();
 
   if ((code == TYPE_CODE_STRUCT || code == TYPE_CODE_UNION
        || code == TYPE_CODE_COMPLEX)
@@ -463,9 +463,9 @@ m68k_svr4_return_value (struct gdbarch *gdbarch, struct value *function,
      changing TYPE into the type of the first member of the structure.
      Since that should work for all structures that have only one
      member, we don't bother to check the member's type here.  */
-  if (code == TYPE_CODE_STRUCT && TYPE_NFIELDS (type) == 1)
+  if (code == TYPE_CODE_STRUCT && type->num_fields () == 1)
     {
-      type = check_typedef (TYPE_FIELD_TYPE (type, 0));
+      type = check_typedef (type->field (0).type ());
       return m68k_svr4_return_value (gdbarch, function, type, regcache,
 				     readbuf, writebuf);
     }
@@ -511,9 +511,9 @@ m68k_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
 
       /* Non-scalars bigger than 4 bytes are left aligned, others are
 	 right aligned.  */
-      if ((TYPE_CODE (value_type) == TYPE_CODE_STRUCT
-	   || TYPE_CODE (value_type) == TYPE_CODE_UNION
-	   || TYPE_CODE (value_type) == TYPE_CODE_ARRAY)
+      if ((value_type->code () == TYPE_CODE_STRUCT
+	   || value_type->code () == TYPE_CODE_UNION
+	   || value_type->code () == TYPE_CODE_ARRAY)
 	  && len > 4)
 	offset = 0;
       else
@@ -1281,8 +1281,9 @@ m68k_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
     return;
 }
 
+void _initialize_m68k_tdep ();
 void
-_initialize_m68k_tdep (void)
+_initialize_m68k_tdep ()
 {
   gdbarch_register (bfd_arch_m68k, m68k_gdbarch_init, m68k_dump_tdep);
 }

@@ -1,5 +1,5 @@
 /* Intel x86-64 Mach-O support for BFD.
-   Copyright (C) 2010-2019 Free Software Foundation, Inc.
+   Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -29,13 +29,13 @@
 #define bfd_mach_o_core_p bfd_mach_o_x86_64_core_p
 #define bfd_mach_o_mkobject bfd_mach_o_x86_64_mkobject
 
-static const bfd_target *
+static bfd_cleanup
 bfd_mach_o_x86_64_object_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, 0, 0, BFD_MACH_O_CPU_TYPE_X86_64);
 }
 
-static const bfd_target *
+static bfd_cleanup
 bfd_mach_o_x86_64_core_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, 0,

@@ -1,5 +1,5 @@
 /* Disassembler code for CRX.
-   Copyright (C) 2004-2019 Free Software Foundation, Inc.
+   Copyright (C) 2004-2020 Free Software Foundation, Inc.
    Contributed by Tomer Levi, NSC, Israel.
    Written by Tomer Levi.
 
@@ -31,11 +31,10 @@
 
 /* Extract 'n_bits' from 'a' starting from offset 'offs'.  */
 #define EXTRACT(a, offs, n_bits)	    \
-  (n_bits == 32 ? (((a) >> (offs)) & 0xffffffffL)   \
-  : (((a) >> (offs)) & ((1 << (n_bits)) -1)))
+  (((a) >> (offs)) & ((2ull << (n_bits - 1)) - 1))
 
 /* Set Bit Mask - a mask to set all bits starting from offset 'offs'.  */
-#define SBM(offs)  ((((1 << (32 - offs)) -1) << (offs)))
+#define SBM(offs)  ((-1u << (offs)) & 0xffffffff)
 
 typedef unsigned long dwordU;
 typedef unsigned short wordU;
@@ -98,23 +97,6 @@ static int cst4flag;
    incremented (escape sequence is used).  */
 static int size_changed;
 
-static int get_number_of_operands (void);
-static argtype getargtype     (operand_type);
-static int getbits	      (operand_type);
-static char *getregname	      (reg);
-static char *getcopregname    (copreg, reg_type);
-static char * getprocregname  (int);
-static char *gettrapstring    (unsigned);
-static char *getcinvstring    (unsigned);
-static void getregliststring  (int, char *, enum REG_ARG_TYPE);
-static wordU get_word_at_PC   (bfd_vma, struct disassemble_info *);
-static void get_words_at_PC   (bfd_vma, struct disassemble_info *);
-static unsigned long build_mask (void);
-static int powerof2	      (int);
-static int match_opcode	      (void);
-static void make_instruction  (void);
-static void print_arguments   (ins *, bfd_vma, struct disassemble_info *);
-static void print_arg	      (argument *, bfd_vma, struct disassemble_info *);
 
 /* Retrieve the number of operands for the current assembled instruction.  */
 
@@ -123,7 +105,7 @@ get_number_of_operands (void)
 {
   int i;
 
-  for (i = 0; instruction->operands[i].op_type && i < MAX_OPERANDS; i++)
+  for (i = 0; i < MAX_OPERANDS && instruction->operands[i].op_type; i++)
     ;
 
   return i;
@@ -183,7 +165,7 @@ getcinvstring (unsigned int num)
 
 /* Given a register enum value, retrieve its name.  */
 
-char *
+static char *
 getregname (reg r)
 {
   const reg_entry * regentry = &crx_regtab[r];
@@ -196,7 +178,7 @@ getregname (reg r)
 
 /* Given a coprocessor register enum value, retrieve its name.  */
 
-char *
+static char *
 getcopregname (copreg r, reg_type type)
 {
   const reg_entry * regentry;
@@ -241,7 +223,7 @@ powerof2 (int x)
 
 /* Transform a register bit mask to a register list.  */
 
-void
+static void
 getregliststring (int mask, char *string, enum REG_ARG_TYPE core_cop)
 {
   char temp_string[16];
@@ -315,11 +297,11 @@ makelongparameter (ULONGLONG val, int start, int end)
 /* Build a mask of the instruction's 'constant' opcode,
    based on the instruction's printing flags.  */
 
-static unsigned long
+static unsigned int
 build_mask (void)
 {
   unsigned int print_flags;
-  unsigned long mask;
+  unsigned int mask;
 
   print_flags = instruction->flags & FMT_CRX;
   switch (print_flags)
@@ -352,10 +334,10 @@ build_mask (void)
 static int
 match_opcode (void)
 {
-  unsigned long mask;
+  unsigned int mask;
 
   /* The instruction 'constant' opcode doewsn't exceed 32 bits.  */
-  unsigned long doubleWord = (words[1] + (words[0] << 16)) & 0xffffffff;
+  unsigned int doubleWord = words[1] + ((unsigned) words[0] << 16);
 
   /* Start searching from end of instruction table.  */
   instruction = &crx_instruction[NUMOPCODES - 2];
@@ -405,7 +387,7 @@ make_argument (argument * a, int start_bits)
 			     inst_bit_size - start_bits);
 
       if ((p.nbits == 4) && cst4flag)
-        {
+	{
 	  if (IS_INSN_TYPE (CMPBR_INS) && (p.val == ESCAPE_16_BIT))
 	    {
 	      /* A special case, where the value is actually stored
@@ -415,19 +397,19 @@ make_argument (argument * a, int start_bits)
 	      size_changed = 1;
 	    }
 
-          if (p.val == 6)
-            p.val = -1;
-          else if (p.val == 13)
-            p.val = 48;
-          else if (p.val == 5)
-            p.val = -4;
-          else if (p.val == 10)
-            p.val = 32;
-          else if (p.val == 11)
-            p.val = 20;
-          else if (p.val == 9)
-            p.val = 16;
-        }
+	  if (p.val == 6)
+	    p.val = -1;
+	  else if (p.val == 13)
+	    p.val = 48;
+	  else if (p.val == 5)
+	    p.val = -4;
+	  else if (p.val == 10)
+	    p.val = 32;
+	  else if (p.val == 11)
+	    p.val = 20;
+	  else if (p.val == 9)
+	    p.val = 16;
+	}
 
       a->constant = p.val;
       break;
@@ -457,30 +439,30 @@ make_argument (argument * a, int start_bits)
 
     case arg_cr:
       if (a->size <= 8)
-        {
-          p = makelongparameter (allWords, inst_bit_size - (start_bits + 4),
+	{
+	  p = makelongparameter (allWords, inst_bit_size - (start_bits + 4),
 				 inst_bit_size - start_bits);
-          a->r = p.val;
-          /* Case for opc4 r dispu rbase.  */
-          p = makelongparameter (allWords, inst_bit_size - (start_bits + 8),
+	  a->r = p.val;
+	  /* Case for opc4 r dispu rbase.  */
+	  p = makelongparameter (allWords, inst_bit_size - (start_bits + 8),
 				 inst_bit_size - (start_bits + 4));
-        }
+	}
       else
-        {
+	{
 	  /* The 'rbase' start_bits is always relative to a 32-bit data type.  */
-          p = makelongparameter (allWords, 32 - (start_bits + 4),
+	  p = makelongparameter (allWords, 32 - (start_bits + 4),
 				 32 - start_bits);
-          a->r = p.val;
-          p = makelongparameter (allWords, 32 - start_bits,
+	  a->r = p.val;
+	  p = makelongparameter (allWords, 32 - start_bits,
 				 inst_bit_size);
-        }
+	}
       if ((p.nbits == 4) && cst4flag)
-        {
-          if (instruction->flags & DISPUW4)
+	{
+	  if (instruction->flags & DISPUW4)
 	    p.val *= 2;
-          else if (instruction->flags & DISPUD4)
+	  else if (instruction->flags & DISPUD4)
 	    p.val *= 4;
-        }
+	}
       a->constant = p.val;
       break;
 
@@ -499,7 +481,7 @@ make_argument (argument * a, int start_bits)
 static void
 print_arg (argument *a, bfd_vma memaddr, struct disassemble_info *info)
 {
-  LONGLONG longdisp, mask;
+  ULONGLONG longdisp, mask;
   int sign_flag = 0;
   int relative = 0;
   bfd_vma number;
@@ -533,29 +515,29 @@ print_arg (argument *a, bfd_vma memaddr, struct disassemble_info *info)
 	func (stream, "%s", getcinvstring (a->constant));
 
       else if (INST_HAS_REG_LIST)
-        {
+	{
 	  REG_ARG_TYPE reg_arg_type = IS_INSN_TYPE (COP_REG_INS) ?
-				 COP_ARG : IS_INSN_TYPE (COPS_REG_INS) ?
-				 COPS_ARG : (instruction->flags & USER_REG) ?
-				 USER_REG_ARG : REG_ARG;
+	    COP_ARG : IS_INSN_TYPE (COPS_REG_INS) ?
+	    COPS_ARG : (instruction->flags & USER_REG) ?
+	    USER_REG_ARG : REG_ARG;
 
-          if ((reg_arg_type == COP_ARG) || (reg_arg_type == COPS_ARG))
+	  if ((reg_arg_type == COP_ARG) || (reg_arg_type == COPS_ARG))
 	    {
-		/*  Check for proper argument number.  */
-		if (processing_argument_number == 2)
-		  {
-		    getregliststring (a->constant, string, reg_arg_type);
-		    func (stream, "%s", string);
-		  }
-		else
-		  func (stream, "$0x%lx", a->constant & 0xffffffff);
+	      /*  Check for proper argument number.  */
+	      if (processing_argument_number == 2)
+		{
+		  getregliststring (a->constant, string, reg_arg_type);
+		  func (stream, "%s", string);
+		}
+	      else
+		func (stream, "$0x%lx", a->constant & 0xffffffff);
 	    }
 	  else
-            {
-              getregliststring (a->constant, string, reg_arg_type);
-              func (stream, "%s", string);
-            }
-        }
+	    {
+	      getregliststring (a->constant, string, reg_arg_type);
+	      func (stream, "%s", string);
+	    }
+	}
       else
 	func (stream, "$0x%lx", a->constant & 0xffffffff);
       break;
@@ -583,47 +565,47 @@ print_arg (argument *a, bfd_vma memaddr, struct disassemble_info *info)
       if (IS_INSN_TYPE (BRANCH_INS) || IS_INSN_MNEMONIC ("bal")
 	  || IS_INSN_TYPE (CMPBR_INS) || IS_INSN_TYPE (DCR_BRANCH_INS)
 	  || IS_INSN_TYPE (COP_BRANCH_INS))
-        {
+	{
 	  relative = 1;
-          longdisp = a->constant;
-          longdisp <<= 1;
+	  longdisp = a->constant;
+	  longdisp <<= 1;
 
-          switch (a->size)
-            {
-            case 8:
+	  switch (a->size)
+	    {
+	    case 8:
 	    case 16:
 	    case 24:
 	    case 32:
-	      mask = ((LONGLONG)1 << a->size) - 1;
-              if (longdisp & ((LONGLONG)1 << a->size))
-                {
-                  sign_flag = 1;
-                  longdisp = ~(longdisp) + 1;
-                }
-              a->constant = (unsigned long int) (longdisp & mask);
-              break;
-            default:
+	      mask = ((LONGLONG) 1 << a->size) - 1;
+	      if (longdisp & ((ULONGLONG) 1 << a->size))
+		{
+		  sign_flag = 1;
+		  longdisp = ~(longdisp) + 1;
+		}
+	      a->constant = (unsigned long int) (longdisp & mask);
+	      break;
+	    default:
 	      func (stream,
 		    "Wrong offset used in branch/bal instruction");
-              break;
-            }
+	      break;
+	    }
 
-        }
+	}
       /* For branch Neq instruction it is 2*offset + 2.  */
       else if (IS_INSN_TYPE (BRANCH_NEQ_INS))
 	a->constant = 2 * a->constant + 2;
       else if (IS_INSN_TYPE (LD_STOR_INS_INC)
-	  || IS_INSN_TYPE (LD_STOR_INS)
-	  || IS_INSN_TYPE (STOR_IMM_INS)
-	  || IS_INSN_TYPE (CSTBIT_INS))
-        {
-          op_index = instruction->flags & REVERSE_MATCH ? 0 : 1;
-          if (instruction->operands[op_index].op_type == abs16)
+	       || IS_INSN_TYPE (LD_STOR_INS)
+	       || IS_INSN_TYPE (STOR_IMM_INS)
+	       || IS_INSN_TYPE (CSTBIT_INS))
+	{
+	  op_index = instruction->flags & REVERSE_MATCH ? 0 : 1;
+	  if (instruction->operands[op_index].op_type == abs16)
 	    a->constant |= 0xFFFF0000;
-        }
+	}
       func (stream, "%s", "0x");
       number = (relative ? memaddr : 0)
-	       + (sign_flag ? -a->constant : a->constant);
+	+ (sign_flag ? -a->constant : a->constant);
       (*info->print_address_func) (number, info);
       break;
     default:

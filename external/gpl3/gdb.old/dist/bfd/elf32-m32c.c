@@ -1,5 +1,5 @@
 /* M16C/M32C specific support for 32-bit ELF.
-   Copyright (C) 2005-2019 Free Software Foundation, Inc.
+   Copyright (C) 2005-2020 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -450,7 +450,7 @@ m32c_elf_relocate_section
 
 	  name = bfd_elf_string_from_elf_section
 	    (input_bfd, symtab_hdr->sh_link, sym->st_name);
-	  name = (sym->st_name == 0) ? bfd_section_name (input_bfd, sec) : name;
+	  name = sym->st_name == 0 ? bfd_section_name (sec) : name;
 	}
       else
 	{
@@ -709,7 +709,7 @@ m32c_elf_check_relocs
 							 flags);
 	      elf_hash_table (info)->splt = splt;
 	      if (splt == NULL
-		  || ! bfd_set_section_alignment (dynobj, splt, 1))
+		  || !bfd_set_section_alignment (splt, 1))
 		return FALSE;
 	    }
 
@@ -1284,7 +1284,7 @@ static bfd_vma
 m32c_offset_for_reloc (bfd *abfd,
 		       Elf_Internal_Rela *rel,
 		       Elf_Internal_Shdr *symtab_hdr,
-		       Elf_External_Sym_Shndx *shndx_buf ATTRIBUTE_UNUSED,
+		       bfd_byte *shndx_buf ATTRIBUTE_UNUSED,
 		       Elf_Internal_Sym *intsyms)
 {
   bfd_vma symval;
@@ -1442,10 +1442,11 @@ m32c_elf_relax_section
   bfd_byte * free_contents = NULL;
   Elf_Internal_Sym *intsyms = NULL;
   Elf_Internal_Sym *free_intsyms = NULL;
-  Elf_External_Sym_Shndx *shndx_buf = NULL;
+  bfd_byte *shndx_buf = NULL;
   int machine;
 
-  if (abfd == elf_hash_table (link_info)->dynobj
+  if (is_elf_hash_table (link_info->hash)
+      && abfd == elf_hash_table (link_info)->dynobj
       && (sec->flags & SEC_LINKER_CREATED) != 0
       && strcmp (sec->name, ".plt") == 0)
     return m32c_elf_relax_plt_section (sec, link_info, again);
@@ -1491,17 +1492,20 @@ m32c_elf_relax_section
 
   if (shndx_hdr && shndx_hdr->sh_size != 0)
     {
-      bfd_size_type amt;
+      size_t amt;
 
-      amt = symtab_hdr->sh_info;
-      amt *= sizeof (Elf_External_Sym_Shndx);
-      shndx_buf = (Elf_External_Sym_Shndx *) bfd_malloc (amt);
+      if (_bfd_mul_overflow (symtab_hdr->sh_info,
+			     sizeof (Elf_External_Sym_Shndx), &amt))
+	{
+	  bfd_set_error (bfd_error_file_too_big);
+	  goto error_return;
+	}
+      if (bfd_seek (abfd, shndx_hdr->sh_offset, SEEK_SET) != 0)
+	goto error_return;
+      shndx_buf = _bfd_malloc_and_read (abfd, amt, amt);
       if (shndx_buf == NULL)
 	goto error_return;
-      if (bfd_seek (abfd, shndx_hdr->sh_offset, SEEK_SET) != 0
-	  || bfd_bread (shndx_buf, amt, abfd) != amt)
-	goto error_return;
-      shndx_hdr->contents = (bfd_byte *) shndx_buf;
+      shndx_hdr->contents = shndx_buf;
     }
 
   /* Get a copy of the native relocations.  */
@@ -1898,11 +1902,8 @@ m32c_elf_relax_section
 
     } /* next relocation */
 
-  if (free_relocs != NULL)
-    {
-      free (free_relocs);
-      free_relocs = NULL;
-    }
+  free (free_relocs);
+  free_relocs = NULL;
 
   if (free_contents != NULL)
     {
@@ -1928,7 +1929,7 @@ m32c_elf_relax_section
       /* Cache the symbols for elf_link_input_bfd.  */
       else
 	{
-	symtab_hdr->contents = NULL /* (unsigned char *) intsyms*/;
+	  symtab_hdr->contents = NULL /* (unsigned char *) intsyms*/;
 	}
 
       free_intsyms = NULL;
@@ -1937,17 +1938,14 @@ m32c_elf_relax_section
   return TRUE;
 
  error_return:
-  if (free_relocs != NULL)
-    free (free_relocs);
-  if (free_contents != NULL)
-    free (free_contents);
+  free (free_relocs);
+  free (free_contents);
   if (shndx_buf != NULL)
     {
       shndx_hdr->contents = NULL;
       free (shndx_buf);
     }
-  if (free_intsyms != NULL)
-    free (free_intsyms);
+  free (free_intsyms);
   return FALSE;
 }
 
@@ -2075,7 +2073,6 @@ m32c_elf_relax_delete_bytes
   symcount = (symtab_hdr->sh_size / sizeof (Elf32_External_Sym)
 	      - symtab_hdr->sh_info);
   sym_hashes = elf_sym_hashes (abfd);
-  //  sym_hashes += symtab_hdr->sh_info;
   end_hashes = sym_hashes + symcount;
 
   for (; sym_hashes < end_hashes; sym_hashes ++)

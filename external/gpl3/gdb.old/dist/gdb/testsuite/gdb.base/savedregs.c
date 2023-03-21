@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2004-2019 Free Software Foundation, Inc.
+   Copyright 2004-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ callee (int param)
 extern int
 caller (int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8)
 {
-  return callee (a1 << a2 * a3 / a4 + a6 & a6 % a7 - a8) + done;
+  return callee ((a1 << a2 * a3 / a4) + a6 & a6 % a7 - a8) + done;
 }
 
 static void
@@ -46,7 +46,7 @@ static void
 thrower (void)
 {
   /* Trigger a SIGSEGV.  */
-  *(char *)0 = 0;
+  *(volatile char *)0 = 0;
 
   /* On MMU-less system, previous memory access to address zero doesn't
      trigger a SIGSEGV.  Trigger a SIGILL.  Each arch should define its

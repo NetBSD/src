@@ -1,4 +1,4 @@
-# Copyright 2008-2019 Free Software Foundation, Inc.
+# Copyright 2008-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ set objmainfile [standard_output_file ${testfile}-main.o]
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" $objsfile object {}] != ""
      || [gdb_compile "${srcdir}/${subdir}/${srcfile2}" $objfuncfile object {}] != ""
      || [gdb_compile "${srcdir}/${subdir}/${srcfile3}" $objmainfile object {debug}] != ""
-     || [gdb_compile "$objsfile $objfuncfile $objmainfile" $binfile executable {}] != "" } {
+     || [gdb_compile "$objfuncfile $objsfile $objmainfile" $binfile executable {}] != "" } {
     return -1
 }
 

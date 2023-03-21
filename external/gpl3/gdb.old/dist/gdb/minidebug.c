@@ -1,6 +1,6 @@
 /* Read MiniDebugInfo data from an objfile.
 
-   Copyright (C) 2012-2019 Free Software Foundation, Inc.
+   Copyright (C) 2012-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,10 @@
 #include <algorithm>
 
 #ifdef HAVE_LIBLZMA
+
+/* We stash a reference to the .gnu_debugdata BFD on the enclosing
+   BFD.  */
+static const bfd_key<gdb_bfd_ref_ptr> gnu_debug_key;
 
 #include <lzma.h>
 
@@ -87,7 +91,7 @@ lzma_open (struct bfd *nbfd, void *open_closure)
   struct gdb_lzma_stream *lstream;
   size_t pos;
 
-  size = bfd_get_section_size (section);
+  size = bfd_section_size (section);
   offset = section->filepos + size - LZMA_STREAM_HEADER_SIZE;
   if (size < LZMA_STREAM_HEADER_SIZE
       || bfd_seek (section->owner, offset, SEEK_SET) != 0
@@ -269,6 +273,10 @@ find_separate_debug_file_in_section (struct objfile *objfile)
     return NULL;
 
 #ifdef HAVE_LIBLZMA
+  gdb_bfd_ref_ptr *shared = gnu_debug_key.get (objfile->obfd);
+  if (shared != nullptr)
+    return *shared;
+
   std::string filename = string_printf (_(".gnu_debugdata for %s"),
 					objfile_name (objfile));
 
@@ -282,6 +290,9 @@ find_separate_debug_file_in_section (struct objfile *objfile)
       warning (_("Cannot parse .gnu_debugdata section; not a BFD object"));
       return NULL;
     }
+
+  gnu_debug_key.emplace (objfile->obfd, abfd);
+
 #else
   warning (_("Cannot parse .gnu_debugdata section; LZMA support was "
 	     "disabled at compile time"));

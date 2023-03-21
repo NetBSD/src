@@ -1,4 +1,4 @@
-#   Copyright 2010-2019 Free Software Foundation, Inc.
+#   Copyright 2010-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,99 +40,99 @@ gdb_load $binfile
 runto_main
 gdb_reinitialize_dir $srcdir/$subdir
 
-gdb_test "maint agent 12" ".*const8 12.*pop.*end.*" "maint agent 12"
+gdb_test "maint agent 12" ".*const8 12.*pop.*end.*"
 
-gdb_test "maint agent gdb_char_test" "" "maint agent gdb_char_test"
+gdb_test "maint agent gdb_char_test" ""
 
-gdb_test "maint agent gdb_arr_test\[12\]" "" "maint agent gdb_arr_test\[12\]"
+gdb_test "maint agent gdb_arr_test\[12\]" ""
 
-gdb_test "maint agent gdb_arr_test\[gdb_short_test\]" "" "maint agent gdb_arr_test\[gdb_short_test\]"
+gdb_test "maint agent gdb_arr_test\[gdb_short_test\]" ""
 
-gdb_test "maint agent gdb_struct1_test" "" "maint agent gdb_struct1_test"
+gdb_test "maint agent gdb_struct1_test" ""
 
-gdb_test "maint agent gdb_struct1_test.s" "" "maint agent gdb_struct1_test.s"
+gdb_test "maint agent gdb_struct1_test.s" ""
 
-gdb_test "maint agent gdb_struct1_test.arr\[gdb_struct1_test.c\]" "" "maint agent gdb_struct1_test.arr\[gdb_struct1_test.c\]"
+gdb_test "maint agent gdb_struct1_test.arr\[gdb_struct1_test.c\]" ""
 
-gdb_test "maint agent gdb_structp_test" "" "maint agent gdb_structp_test"
+gdb_test "maint agent gdb_structp_test" ""
 
-gdb_test "maint agent gdb_structp_test->l" "" "maint agent gdb_structp_test->l"
+gdb_test "maint agent gdb_structp_test->l" ""
 
-gdb_test "maint agent gdb_structp_test->bfield" "" "maint agent gdb_structp_test->bfield"
+gdb_test "maint agent gdb_structp_test->bfield" ""
 
-gdb_test "maint agent gdb_long_test + gdb_short_test" "" "maint agent gdb_long_test + gdb_short_test"
+gdb_test "maint agent gdb_long_test + gdb_short_test" ""
 
-gdb_test "maint agent gdb_long_test - gdb_short_test" "" "maint agent gdb_long_test - gdb_short_test"
+gdb_test "maint agent gdb_long_test - gdb_short_test" ""
 
-gdb_test "maint agent gdb_long_test * gdb_short_test" "" "maint agent gdb_long_test * gdb_short_test"
+gdb_test "maint agent gdb_long_test * gdb_short_test" ""
 
-gdb_test "maint agent gdb_long_test / gdb_short_test" "" "maint agent gdb_long_test / gdb_short_test"
+gdb_test "maint agent gdb_long_test / gdb_short_test" ""
 
-gdb_test "maint agent gdb_structp_test + 1" "" "maint agent gdb_structp_test + 1"
+gdb_test "maint agent gdb_structp_test + 1" ""
 
-gdb_test "maint agent gdb_long_test == gdb_short_test" "" "maint agent gdb_long_test == gdb_short_test"
+gdb_test "maint agent gdb_long_test == gdb_short_test" ""
 
-gdb_test "maint agent gdb_long_test != gdb_short_test" "" "maint agent gdb_long_test != gdb_short_test"
+gdb_test "maint agent gdb_long_test != gdb_short_test" ""
 
-gdb_test "maint agent gdb_long_test < gdb_short_test" "" "maint agent gdb_long_test < gdb_short_test"
+gdb_test "maint agent gdb_long_test < gdb_short_test" ""
 
-gdb_test "maint agent gdb_long_test <= gdb_short_test" "" "maint agent gdb_long_test <= gdb_short_test"
+gdb_test "maint agent gdb_long_test <= gdb_short_test" ""
 
-gdb_test "maint agent gdb_long_test > gdb_short_test" "" "maint agent gdb_long_test > gdb_short_test"
+gdb_test "maint agent gdb_long_test > gdb_short_test" ""
 
-gdb_test "maint agent gdb_long_test >= gdb_short_test" "" "maint agent gdb_long_test >= gdb_short_test"
+gdb_test "maint agent gdb_long_test >= gdb_short_test" ""
 
-gdb_test "maint agent &gdb_long_test == &gdb_short_test" "" "maint agent &gdb_long_test == &gdb_short_test"
+gdb_test "maint agent &gdb_long_test == &gdb_short_test" ""
 
-gdb_test "maint agent &gdb_long_test < &gdb_short_test" "" "maint agent &gdb_long_test < &gdb_short_test"
+gdb_test "maint agent &gdb_long_test < &gdb_short_test" ""
 
-gdb_test "maint agent (unsigned char)1L" ".*ext 8.*" "maint agent (unsigned char)1L"
+gdb_test "maint agent (unsigned char)1L" ".*ext 8.*"
 
 # Now test eval version of agent expressions.
 
-gdb_test "maint agent-eval 12" ".*const8 12.*end.*" "maint agent-eval 12"
+gdb_test "maint agent-eval 12" ".*const8 12.*end.*"
 
-gdb_test "maint agent-eval gdb_char_test" "" "maint agent-eval gdb_char_test"
+gdb_test "maint agent-eval gdb_char_test" ""
 
-gdb_test "maint agent-eval gdb_arr_test\[12\]" "" "maint agent-eval gdb_arr_test\[12\]"
+gdb_test "maint agent-eval gdb_arr_test\[12\]" ""
 
-gdb_test "maint agent-eval gdb_arr_test\[gdb_short_test\]" "" "maint agent-eval gdb_arr_test\[gdb_short_test\]"
+gdb_test "maint agent-eval gdb_arr_test\[gdb_short_test\]" ""
 
-gdb_test "maint agent-eval gdb_struct1_test" "" "maint agent-eval gdb_struct1_test"
+gdb_test "maint agent-eval gdb_struct1_test" ""
 
-gdb_test "maint agent-eval gdb_struct1_test.s" "" "maint agent-eval gdb_struct1_test.s"
+gdb_test "maint agent-eval gdb_struct1_test.s" ""
 
-gdb_test "maint agent-eval gdb_struct1_test.arr\[gdb_struct1_test.c\]" "" "maint agent-eval gdb_struct1_test.arr\[gdb_struct1_test.c\]"
+gdb_test "maint agent-eval gdb_struct1_test.arr\[gdb_struct1_test.c\]" ""
 
-gdb_test "maint agent-eval gdb_structp_test" "" "maint agent-eval gdb_structp_test"
+gdb_test "maint agent-eval gdb_structp_test" ""
 
-gdb_test "maint agent-eval gdb_structp_test->l" "" "maint agent-eval gdb_structp_test->l"
+gdb_test "maint agent-eval gdb_structp_test->l" ""
 
-gdb_test "maint agent-eval gdb_structp_test->bfield" "" "maint agent-eval gdb_structp_test->bfield"
+gdb_test "maint agent-eval gdb_structp_test->bfield" ""
 
-gdb_test "maint agent-eval gdb_long_test + gdb_short_test" "" "maint agent-eval gdb_long_test + gdb_short_test"
+gdb_test "maint agent-eval gdb_long_test + gdb_short_test" ""
 
-gdb_test "maint agent-eval gdb_long_test - gdb_short_test" "" "maint agent-eval gdb_long_test - gdb_short_test"
+gdb_test "maint agent-eval gdb_long_test - gdb_short_test" ""
 
-gdb_test "maint agent-eval gdb_long_test * gdb_short_test" "" "maint agent-eval gdb_long_test * gdb_short_test"
+gdb_test "maint agent-eval gdb_long_test * gdb_short_test" ""
 
-gdb_test "maint agent-eval gdb_long_test / gdb_short_test" "" "maint agent-eval gdb_long_test / gdb_short_test"
+gdb_test "maint agent-eval gdb_long_test / gdb_short_test" ""
 
-gdb_test "maint agent-eval gdb_structp_test + 1" "" "maint agent-eval gdb_structp_test + 1"
+gdb_test "maint agent-eval gdb_structp_test + 1" ""
 
-gdb_test "maint agent-eval gdb_long_test == gdb_short_test" "" "maint agent-eval gdb_long_test == gdb_short_test"
+gdb_test "maint agent-eval gdb_long_test == gdb_short_test" ""
 
-gdb_test "maint agent-eval gdb_long_test != gdb_short_test" "" "maint agent-eval gdb_long_test != gdb_short_test"
+gdb_test "maint agent-eval gdb_long_test != gdb_short_test" ""
 
-gdb_test "maint agent-eval gdb_long_test < gdb_short_test" "" "maint agent-eval gdb_long_test < gdb_short_test"
+gdb_test "maint agent-eval gdb_long_test < gdb_short_test" ""
 
-gdb_test "maint agent-eval gdb_long_test <= gdb_short_test" "" "maint agent-eval gdb_long_test <= gdb_short_test"
+gdb_test "maint agent-eval gdb_long_test <= gdb_short_test" ""
 
-gdb_test "maint agent-eval gdb_long_test > gdb_short_test" "" "maint agent-eval gdb_long_test > gdb_short_test"
+gdb_test "maint agent-eval gdb_long_test > gdb_short_test" ""
 
-gdb_test "maint agent-eval gdb_long_test >= gdb_short_test" "" "maint agent-eval gdb_long_test >= gdb_short_test"
+gdb_test "maint agent-eval gdb_long_test >= gdb_short_test" ""
 
-gdb_test "maint agent-eval &gdb_long_test == &gdb_short_test" ".*equal.*end.*" "maint agent-eval &gdb_long_test == &gdb_short_test"
+gdb_test "maint agent-eval &gdb_long_test == &gdb_short_test" ".*equal.*end.*"
 
-gdb_test "maint agent-eval &gdb_long_test < &gdb_short_test" "" "maint agent-eval &gdb_long_test < &gdb_short_test"
+gdb_test "maint agent-eval &gdb_long_test < &gdb_short_test" ""
 

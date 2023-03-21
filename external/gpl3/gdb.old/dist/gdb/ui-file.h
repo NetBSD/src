@@ -1,5 +1,5 @@
 /* UI_FILE - a generic STDIO like output stream.
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -70,6 +70,17 @@ public:
   virtual bool isatty ()
   { return false; }
 
+  /* true indicates terminal output behaviour such as cli_styling.
+     This default implementation indicates to do terminal output
+     behaviour if the UI_FILE is a tty.  A derived class can override
+     TERM_OUT to have cli_styling behaviour without being a tty.  */
+  virtual bool term_out ()
+  { return isatty (); }
+
+  /* true if ANSI escapes can be used on STREAM.  */
+  virtual bool can_emit_style_escape ()
+  { return false; }
+
   virtual void flush ()
   {}
 };
@@ -89,18 +100,6 @@ public:
 /* A preallocated null_file stream.  */
 extern null_file null_stream;
 
-extern void gdb_flush (ui_file *);
-
-extern int ui_file_isatty (struct ui_file *);
-
-extern void ui_file_write (struct ui_file *file, const char *buf,
-			   long length_buf);
-
-extern void ui_file_write_async_safe (struct ui_file *file, const char *buf,
-				      long length_buf);
-
-extern long ui_file_read (struct ui_file *file, char *buf, long length_buf);
-
 extern int gdb_console_fputs (const char *, FILE *);
 
 /* A std::string-based ui_file.  Can be used as a scratch buffer for
@@ -109,7 +108,13 @@ extern int gdb_console_fputs (const char *, FILE *);
 class string_file : public ui_file
 {
 public:
-  string_file () {}
+  /* Construct a string_file to collect 'raw' output, i.e. without
+     'terminal' behaviour such as cli_styling.  */
+  string_file () : m_term_out (false) {};
+  /* If TERM_OUT, construct a string_file with terminal output behaviour
+     such as cli_styling)
+     else collect 'raw' output like the previous constructor.  */
+  explicit string_file (bool term_out) : m_term_out (term_out) {};
   ~string_file () override;
 
   /* Override ui_file methods.  */
@@ -118,6 +123,9 @@ public:
 
   long read (char *buf, long length_buf) override
   { gdb_assert_not_reached ("a string_file is not readable"); }
+
+  bool term_out () override;
+  bool can_emit_style_escape () override;
 
   /* string_file-specific public API.  */
 
@@ -145,6 +153,8 @@ public:
 private:
   /* The internal buffer.  */
   std::string m_string;
+
+  bool m_term_out;
 };
 
 /* A ui_file implementation that maps directly onto <stdio.h>'s FILE.
@@ -182,6 +192,8 @@ public:
   long read (char *buf, long length_buf) override;
 
   bool isatty () override;
+
+  bool can_emit_style_escape () override;
 
 private:
   /* Sets the internal stream to FILE, and saves the FILE's file
@@ -243,11 +255,9 @@ public:
 class tee_file : public ui_file
 {
 public:
-  /* Create a file which writes to both ONE and TWO.  CLOSE_ONE and
-     CLOSE_TWO indicate whether the original files should be closed
-     when the new file is closed.  */
-  tee_file (ui_file *one, bool close_one,
-	    ui_file *two, bool close_two);
+  /* Create a file which writes to both ONE and TWO.  ONE will remain
+     open when this object is destroyed; but TWO will be closed.  */
+  tee_file (ui_file *one, ui_file_up &&two);
   ~tee_file () override;
 
   void write (const char *buf, long length_buf) override;
@@ -255,13 +265,30 @@ public:
   void puts (const char *) override;
 
   bool isatty () override;
+  bool term_out () override;
+  bool can_emit_style_escape () override;
   void flush () override;
 
 private:
-  /* The two underlying ui_files, and whether they should each be
-     closed on destruction.  */
-  ui_file *m_one, *m_two;
-  bool m_close_one, m_close_two;
+  /* The two underlying ui_files.  */
+  ui_file *m_one;
+  ui_file_up m_two;
+};
+
+/* A ui_file implementation that filters out terminal escape
+   sequences.  */
+
+class no_terminal_escape_file : public stdio_file
+{
+public:
+  no_terminal_escape_file ()
+  {
+  }
+
+  /* Like the stdio_file methods, but these filter out terminal escape
+     sequences.  */
+  void write (const char *buf, long length_buf) override;
+  void puts (const char *linebuffer) override;
 };
 
 #endif

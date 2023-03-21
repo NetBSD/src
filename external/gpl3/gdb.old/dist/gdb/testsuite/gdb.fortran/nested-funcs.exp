@@ -1,4 +1,4 @@
-# Copyright 2016-2019 Free Software Foundation, Inc.
+# Copyright 2016-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,10 +25,15 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug f90}]} {
     return -1
 }
 
-if ![runto MAIN__] then {
-    perror "couldn't run to breakpoint MAIN__"
+if ![fortran_runto_main] then {
+    perror "couldn't run to main"
     continue
 }
+
+# Test if we can set a breakpoint in a nested function
+gdb_breakpoint "testnestedfuncs::sub_nested_outer"
+gdb_continue_to_breakpoint "testnestedfuncs::sub_nested_outer" \
+    ".*local_int = 19"
 
 # Test if we can access local and
 # non-local variables defined one level up.
@@ -43,6 +48,11 @@ gdb_test "print local_int" "= 19" "print local_int in outer function"
 gdb_test "up"
 gdb_test "print index" "= 42" "print index at BP1, one frame up"
 
+# Test if we can set a breakpoint in a nested function
+gdb_breakpoint "testnestedfuncs::sub_nested_inner"
+gdb_continue_to_breakpoint "testnestedfuncs::sub_nested_inner" \
+    ".*local_int = 17"
+
 # Test if we can access local and
 # non-local variables defined two level up.
 gdb_breakpoint [gdb_get_line_number "! BP_inner"]
@@ -56,6 +66,24 @@ gdb_breakpoint [gdb_get_line_number "! BP_outer_2"]
 gdb_continue_to_breakpoint "! BP_outer_2" ".*! BP_outer_2"
 gdb_test "print local_int" "= 19" \
   "print local_int in outer function, after sub_nested_inner"
+
+# Test if we can set a breakpoint in public routine with the same name
+# as the internal
+gdb_breakpoint "sub_nested_outer"
+gdb_continue_to_breakpoint "sub_nested_outer" \
+    ".*name = 'sub_nested_outer external'"
+
+# Test if we can set a breakpoint in public routine with the same name
+# as the internal
+gdb_breakpoint "sub_with_sub_nested_outer::sub_nested_outer"
+gdb_continue_to_breakpoint \
+    "sub_with_sub_nested_outer::sub_nested_outer" ".*local_int = 11"
+
+# Test if we can set a breakpoint in public routine with the same name
+# as the internal
+gdb_breakpoint "mod1::sub_nested_outer"
+gdb_continue_to_breakpoint "mod1::sub_nested_outer" \
+    ".*name = 'sub_nested_outer_mod1'"
 
 # Sanity check in main.
 gdb_breakpoint [gdb_get_line_number "! BP_main"]

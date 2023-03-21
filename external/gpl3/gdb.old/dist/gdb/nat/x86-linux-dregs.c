@@ -1,6 +1,6 @@
 /* Low-level debug register code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2019 Free Software Foundation, Inc.
+   Copyright (C) 1999-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common/common-defs.h"
+#include "gdbsupport/common-defs.h"
 #include "nat/gdb_ptrace.h"
 #include <sys/user.h>
 #include "target/waitstatus.h"
@@ -76,7 +76,7 @@ x86_linux_dr_set (ptid_t ptid, int regnum, unsigned long value)
    the actual debug registers immediately prior to LWP resuming.  */
 
 static int
-update_debug_registers_callback (struct lwp_info *lwp, void *arg)
+update_debug_registers_callback (struct lwp_info *lwp)
 {
   lwp_set_debug_registers_changed (lwp, 1);
 
@@ -106,7 +106,7 @@ x86_linux_dr_set_addr (int regnum, CORE_ADDR addr)
 
   gdb_assert (DR_FIRSTADDR <= regnum && regnum <= DR_LASTADDR);
 
-  iterate_over_lwps (pid_ptid, update_debug_registers_callback, NULL);
+  iterate_over_lwps (pid_ptid, update_debug_registers_callback);
 }
 
 /* See nat/x86-linux-dregs.h.  */
@@ -124,7 +124,7 @@ x86_linux_dr_set_control (unsigned long control)
 {
   ptid_t pid_ptid = ptid_t (current_lwp_ptid ().pid ());
 
-  iterate_over_lwps (pid_ptid, update_debug_registers_callback, NULL);
+  iterate_over_lwps (pid_ptid, update_debug_registers_callback);
 }
 
 /* See nat/x86-linux-dregs.h.  */

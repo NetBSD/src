@@ -1,5 +1,5 @@
 /* ELF strtab with GC and suffix merging support.
-   Copyright (C) 2001-2019 Free Software Foundation, Inc.
+   Copyright (C) 2001-2020 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -95,7 +95,7 @@ struct elf_strtab_hash *
 _bfd_elf_strtab_init (void)
 {
   struct elf_strtab_hash *table;
-  bfd_size_type amt = sizeof (struct elf_strtab_hash);
+  size_t amt = sizeof (struct elf_strtab_hash);
 
   table = (struct elf_strtab_hash *) bfd_malloc (amt);
   if (table == NULL)
@@ -245,13 +245,16 @@ _bfd_elf_strtab_save (struct elf_strtab_hash *tab)
 void
 _bfd_elf_strtab_restore (struct elf_strtab_hash *tab, void *buf)
 {
-  size_t idx, curr_size = tab->size;
+  size_t idx, curr_size = tab->size, save_size;
   struct strtab_save *save = (struct strtab_save *) buf;
 
   BFD_ASSERT (tab->sec_size == 0);
-  BFD_ASSERT (save->size <= curr_size);
-  tab->size = save->size;
-  for (idx = 1; idx < save->size; ++idx)
+  save_size = 1;
+  if (save != NULL)
+    save_size = save->size;
+  BFD_ASSERT (save_size <= curr_size);
+  tab->size = save_size;
+  for (idx = 1; idx < save_size; ++idx)
     tab->array[idx]->refcount = save->refcount[idx];
 
   for (; idx < curr_size; ++idx)
@@ -271,6 +274,12 @@ _bfd_elf_strtab_size (struct elf_strtab_hash *tab)
 }
 
 bfd_size_type
+_bfd_elf_strtab_len (struct elf_strtab_hash *tab)
+{
+  return tab->size;
+}
+
+bfd_size_type
 _bfd_elf_strtab_offset (struct elf_strtab_hash *tab, size_t idx)
 {
   struct elf_strtab_hash_entry *entry;
@@ -283,6 +292,19 @@ _bfd_elf_strtab_offset (struct elf_strtab_hash *tab, size_t idx)
   BFD_ASSERT (entry->refcount > 0);
   entry->refcount--;
   return tab->array[idx]->u.index;
+}
+
+const char *
+_bfd_elf_strtab_str (struct elf_strtab_hash *tab, size_t idx,
+		     bfd_size_type *offset)
+{
+  if (idx == 0)
+    return 0;
+  BFD_ASSERT (idx < tab->size);
+  BFD_ASSERT (tab->sec_size);
+  if (offset)
+    *offset = tab->array[idx]->u.index;
+  return tab->array[idx]->root.string;
 }
 
 bfd_boolean
@@ -315,7 +337,9 @@ _bfd_elf_strtab_emit (register bfd *abfd, struct elf_strtab_hash *tab)
   return TRUE;
 }
 
-/* Compare two elf_strtab_hash_entry structures.  Called via qsort.  */
+/* Compare two elf_strtab_hash_entry structures.  Called via qsort.
+   Won't ever return zero as all entries differ, so there is no issue
+   with qsort stability here.  */
 
 static int
 strrevcmp (const void *a, const void *b)
@@ -418,9 +442,8 @@ _bfd_elf_strtab_finalize (struct elf_strtab_hash *tab)
 	}
     }
 
-alloc_failure:
-  if (array)
-    free (array);
+ alloc_failure:
+  free (array);
 
   /* Assign positions to the strings we want to keep.  */
   sec_size = 1;
