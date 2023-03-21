@@ -1,4 +1,4 @@
-/*	$NetBSD: error.h,v 1.24 2023/03/19 17:47:48 kre Exp $	*/
+/*	$NetBSD: error.h,v 1.25 2023/03/21 08:31:30 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,7 +58,7 @@
 #include <setjmp.h>
 
 struct jmploc {
-	jmp_buf loc;
+	sigjmp_buf loc;
 };
 
 extern volatile int errors_suppressed;
