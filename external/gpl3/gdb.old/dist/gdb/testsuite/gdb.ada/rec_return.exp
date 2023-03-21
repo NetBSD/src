@@ -1,4 +1,4 @@
-# Copyright 2010-2019 Free Software Foundation, Inc.
+# Copyright 2010-2020 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 load_lib "ada.exp"
 
+if { [skip_ada_tests] } { return -1 }
+
 standard_ada_testfile foo
 
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" } {
@@ -30,6 +32,4 @@ if ![runto "foo.adb:$bp_location" ] then {
 }
 
 gdb_test "print bar" \
-         "= \\(x => 42, s => \"ABCDEFGH\"\\)" \
-         "print bar"
-
+         "= \\(x => 42, s => \"ABCDEFGH\"\\)"

@@ -1,6 +1,6 @@
 /* Target wait definitions and prototypes.
 
-   Copyright (C) 1990-2019 Free Software Foundation, Inc.
+   Copyright (C) 1990-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

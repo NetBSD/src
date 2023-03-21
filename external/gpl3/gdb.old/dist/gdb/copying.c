@@ -640,8 +640,9 @@ show_warranty_command (const char *ignore, int from_tty)
   printf_filtered ("\n");
 }
 
+void _initialize_copying ();
 void
-_initialize_copying (void)
+_initialize_copying ()
 {
   add_cmd ("copying", no_set_class, show_copying_command,
 	   _("Conditions for redistributing copies of GDB."),

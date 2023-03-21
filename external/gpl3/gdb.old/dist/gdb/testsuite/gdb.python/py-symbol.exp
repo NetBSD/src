@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 Free Software Foundation, Inc.
+# Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,25 @@
 
 load_lib gdb-python.exp
 
-standard_testfile
+standard_testfile py-symbol.c py-symbol-2.c
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
+set opts { debug additional_flags=-DUSE_TWO_FILES }
+if {[prepare_for_testing "failed to prepare" $testfile \
+	 [list $srcfile $srcfile2] $opts]} {
     return -1
 }
 
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
+
+# Check that we find all static symbols before the inferior has
+# started, at which point some of the symtabs might not have been
+# expanded.
+gdb_test "python print (len (gdb.lookup_static_symbols ('rr')))" \
+    "2" "print (len (gdb.lookup_static_symbols ('rr')))"
+
+# Restart so we don't have expanded symtabs after the previous test.
+clean_restart ${binfile}
 
 # Test looking up a global symbol before we runto_main as this is the
 # point where we don't have a current frame, and we don't want to
@@ -48,6 +59,26 @@ gdb_test "python print (gdb.lookup_global_symbol('qq').needs_frame)" \
     "False" \
     "print whether qq needs a frame"
 
+# Similarly, test looking up a static symbol before we runto_main.
+set rr_line [gdb_get_line_number "line of rr"]
+gdb_test "python print (gdb.lookup_global_symbol ('rr') is None)" "True" \
+    "lookup_global_symbol for static var"
+
+gdb_test "python print (gdb.lookup_static_symbol ('rr').line)" "$rr_line" \
+    "print line number of rr"
+
+gdb_test "python print (gdb.lookup_static_symbol ('rr').value ())" "42" \
+    "print value of rr"
+
+gdb_test "python print (gdb.lookup_static_symbol ('rr').needs_frame)" \
+    "False" \
+    "print whether rr needs a frame"
+
+gdb_test "python print (gdb.lookup_static_symbol ('nonexistent') is None)" \
+    "True" "lookup_static_symbol for nonexistent var"
+
+gdb_test "python print (gdb.lookup_static_symbol ('qq') is None)" \
+    "True" "lookup_static_symbol for global var"
 
 if ![runto_main] then {
     fail "can't run to main"
@@ -81,9 +112,30 @@ gdb_test "python print (func.print_name)" "func" "test func.print_name"
 gdb_test "python print (func.linkage_name)" "func" "test func.linkage_name"
 gdb_test "python print (func.addr_class == gdb.SYMBOL_LOC_BLOCK)" "True" "test func.addr_class"
 
-gdb_breakpoint [gdb_get_line_number "Break at end."]
+# Stop in a second file and ensure we find its local static symbol.
+gdb_breakpoint "function_in_other_file"
+gdb_continue_to_breakpoint "function_in_other_file"
+gdb_test "python print (gdb.lookup_static_symbol ('rr').value ())" "99" \
+    "print value of rr from other file"
+gdb_test "python print (gdb.lookup_static_symbols ('rr')\[0\].value ())" "99" \
+    "print value of gdb.lookup_static_symbols ('rr')\[0\], from the other file"
+gdb_test "python print (gdb.lookup_static_symbols ('rr')\[1\].value ())" "42" \
+    "print value of gdb.lookup_static_symbols ('rr')\[1\], from the other file"
+
+# Now continue back to the first source file.
+set linenum [gdb_get_line_number "Break at end."]
+gdb_breakpoint "$srcfile:$linenum"
 gdb_continue_to_breakpoint "Break at end for variable a" ".*Break at end.*"
 gdb_py_test_silent_cmd "python frame = gdb.selected_frame()" "Get Frame" 0
+
+# Check that we find the static sybol local to this file over the
+# static symbol from the second source file.
+gdb_test "python print (gdb.lookup_static_symbol ('rr').value ())" "42" \
+    "print value of rr from main file"
+gdb_test "python print (gdb.lookup_static_symbols ('rr')\[0\].value ())" "99" \
+    "print value of gdb.lookup_static_symbols ('rr')\[0\], from the main file"
+gdb_test "python print (gdb.lookup_static_symbols ('rr')\[1\].value ())" "42" \
+    "print value of gdb.lookup_static_symbols ('rr')\[1\], from the main file"
 
 # Test is_variable attribute.
 gdb_py_test_silent_cmd "python a = gdb.lookup_symbol(\'a\')" "Get variable a" 0
@@ -126,16 +178,16 @@ gdb_test "python print (t\[0\].symtab)" "${py_symbol_c}" "get symtab"
 
 # C++ tests
 # Recompile binary.
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}-cxx" executable "debug c++"] != "" } {
-    untested "failed to compile in C++ mode"
+lappend opts c++
+if {[prepare_for_testing "failed to prepare" "${binfile}-cxx" \
+	 [list $srcfile $srcfile2] $opts]} {
     return -1
 }
 
-# Start with a fresh gdb.
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}-cxx
+gdb_test "python print (gdb.lookup_global_symbol ('(anonymous namespace)::anon') is None)" \
+    "True" "anon is None"
+gdb_test "python print (gdb.lookup_static_symbol ('(anonymous namespace)::anon').value ())" \
+    "10" "print value of anon"
 
 if ![runto_main] then {
     fail "can't run to main"
@@ -159,13 +211,13 @@ gdb_test "python print (cplusfunc.is_function)" \
 
 gdb_test "python print (cplusfunc.name)" "SimpleClass::valueofi().*" "test method.name"
 gdb_test "python print (cplusfunc.print_name)" "SimpleClass::valueofi().*" "test method.print_name"
-gdb_test "python print (cplusfunc.linkage_name)" "SimpleClass::valueofi().*" "test method.linkage_name"
+gdb_test "python print (cplusfunc.linkage_name)" "_ZN11SimpleClass8valueofiEv.*" "test method.linkage_name"
 gdb_test "python print (cplusfunc.addr_class == gdb.SYMBOL_LOC_BLOCK)" "True" "test method.addr_class"
 
 # Test is_valid when the objfile is unloaded.  This must be the last
 # test as it unloads the object file in GDB.
 # Start with a fresh gdb.
-clean_restart ${testfile}
+clean_restart ${binfile}
 if ![runto_main] then {
     fail "cannot run to main."
     return 0

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2019 Free Software Foundation, Inc.
+   Copyright 2008-2020 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -36,18 +36,15 @@ void medium_frame ()
 
 void big_frame ()
 {
-#ifdef __SPU__
-  char S [131072];
-#else
   char S [524188];
-#endif
   small_frame ();
 }
 
-void
+int
 main ()
 {
   small_frame ();
   medium_frame ();
   big_frame ();
+  return 0;
 }

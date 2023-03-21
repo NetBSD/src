@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2019 Free Software Foundation, Inc.
+   Copyright (C) 2013-2020 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>.
 
@@ -26,9 +26,9 @@
    inferior.  For presentation purposes, the branch trace is represented as a
    list of sequential control-flow blocks, one such list per thread.  */
 
-#include "common/btrace-common.h"
+#include "gdbsupport/btrace-common.h"
 #include "target/waitstatus.h" /* For enum target_stop_reason.  */
-#include "common/enum-flags.h"
+#include "gdbsupport/enum-flags.h"
 
 #if defined (HAVE_LIBIPT)
 #  include <intel-pt.h>
@@ -264,9 +264,6 @@ struct btrace_pt_packet
   struct pt_packet packet;
 };
 
-/* Define functions operating on a vector of packets.  */
-typedef struct btrace_pt_packet btrace_pt_packet_s;
-DEF_VEC_O (btrace_pt_packet_s);
 #endif /* defined (HAVE_LIBIPT)  */
 
 /* Branch trace iteration state for "maintenance btrace packet-history".  */
@@ -300,7 +297,7 @@ struct btrace_maint_info
     struct
     {
       /* A vector of decoded packets.  */
-      VEC (btrace_pt_packet_s) *packets;
+      std::vector<btrace_pt_packet> *packets;
 
       /* The packet history iterator.
 	 We are iterating over the above PACKETS vector.  */
@@ -448,7 +445,7 @@ extern int btrace_find_insn_by_number (struct btrace_insn_iterator *,
 				       unsigned int number);
 
 /* Dereference a branch trace call iterator.  Return a pointer to the
-   function the iterator points to or NULL if the interator points past
+   function the iterator points to or NULL if the iterator points past
    the end of the branch trace.  */
 extern const struct btrace_function *
   btrace_call_get (const struct btrace_call_iterator *);

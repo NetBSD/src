@@ -1,4 +1,4 @@
-##Copyright (C) 1991-2019 Free Software Foundation, Inc.
+##Copyright (C) 1991-2020 Free Software Foundation, Inc.
 
 # Makefile for GDB documentation.
 # This file is part of GDB.
@@ -41,6 +41,7 @@ INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_DATA = @INSTALL_DATA@
 
 SYSTEM_GDBINIT = @SYSTEM_GDBINIT@
+SYSTEM_GDBINIT_DIR = @SYSTEM_GDBINIT_DIR@
 
 mkinstalldirs = $(SHELL) $(srcdir)/../../mkinstalldirs
 
@@ -74,7 +75,7 @@ BUGURL_TEXI = @REPORT_BUGS_TEXI@
 
 # Where is the source dir for the READLINE library doc?  
 # Traditionally readline is in .. or .
-READLINE_DIR = ${gdbdir}/../readline/doc
+READLINE_DIR = ${gdbdir}/../readline/readline/doc
 READLINE_TEXI_INCFLAG = @READLINE_TEXI_INCFLAG@
 
 # The GDB/MI docs come from a sibling directory ../mi
@@ -182,7 +183,7 @@ HAVE_NATIVE_GCORE_TARGET = @HAVE_NATIVE_GCORE_TARGET@
 
 ###
 
-all:
+all: info
 
 info: $(INFO_DEPS)
 dvi: gdb.dvi stabs.dvi refcard.dvi annotate.dvi
@@ -424,6 +425,9 @@ GDBvn.texi : version.subst
 	fi
 	if [ -n "$(SYSTEM_GDBINIT)" ]; then \
 	  echo "@set SYSTEM_GDBINIT $(SYSTEM_GDBINIT)" >> ./GDBvn.new; \
+	fi
+	if [ -n "$(SYSTEM_GDBINIT_DIR)" ]; then \
+	  echo "@set SYSTEM_GDBINIT_DIR $(SYSTEM_GDBINIT_DIR)" >> ./GDBvn.new; \
 	fi
 	mv GDBvn.new GDBvn.texi
 

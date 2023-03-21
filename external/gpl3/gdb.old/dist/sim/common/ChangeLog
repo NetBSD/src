@@ -1,3 +1,92 @@
+2020-08-10  Tom de Vries  <tdevries@suse.de>
+
+	* sim-cpu.c: Include stdlib.h for free.
+
+2020-01-19  Simon Marchi  <simon.marchi@polymtl.ca>
+
+	* nrun.c: Include stdlib.h.
+	* sim-core.c: Likewise.
+	* sim-engine.c: Likewise.
+	* sim-io.c: Likewise.
+	* sim-module.c: Likewise.
+	* sim-reason.c: Likewise.
+
+2019-12-19  Tom Tromey  <tromey@adacore.com>
+
+	PR build/24572:
+	* Makefile.in (install-strip): New target.
+
+2019-12-01  Pavel I. Kryukov  <kryukov@frtk.ru>
+
+	* sim-utils.c: Prevent buffer overflow.
+
+2019-09-23  Dimitar Dimitrov  <dimitar@dinux.eu>
+
+	* gennltvals.sh: Add PRU libgloss target.
+	* nltvals.def: Regenerate from the latest libgloss sources.
+
+2019-06-13  Stafford Horne  <shorne@gmail.com>
+
+	* cgen-accfp.c (unorderedsf, unordereddf): New functions.
+	(cgen_init_accurate_fpu): Wire up unorderedsf and unordereddf.
+	* cgen-fpu.h (cgen_fp_ops): Define fields unorderedsf and unordereddf.
+
+2019-06-13  Stafford Horne  <shorne@gmail.com>
+
+	* cgen-accfp.c (floatdidf, fixdfdi): New functions.
+	(cgen_init_accurate_fpu): Add floatdidf and fixdfdi.
+
+2019-04-13  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* cgen-ops.h (SUBWORDXFSI): Compare HOST_BYTE_ORDER not
+	CURRENT_TARGET_BYTE_ORDER.
+	(SUBWORDTFSI): Likewise.
+	(JOINSIDF): Likewise.
+	(JOINSIXF): Likewise.
+	(JOINSITF): Likewise.
+
+2019-03-28  Andrew Burgess  <andrew.burgess@embecosm.com>
+
+	* sim-base.h: Add 'sim-assert.h' include.
+	* sim-basics.h: Add 'libiberty.h' include.
+
+2019-03-28  Stafford Horne  <shorne@gmail.com>
+
+	* sim-options.c: Include "config.h".
+	Include <stdio.h>.
+	* sim-watch.c: Include "config.h".
+	Include <stdio.h>.
+	* hw-device.c: Include <string.h>.
+	* hw-events.c: Include <string.h>.
+	* hw-handles.c: Include <stdlib.h>.
+	* sim-fpu.c: Include <stdlib.h>.
+
+2019-03-28  Stafford Horne  <shorne@gmail.com>
+
+	* Make-common.in (sim-arange_h): Remove sim-arange.c
+	* sim-arange.c: Remove SIM_ARANGE_C.
+	Add ifdef for _SIM_ARANGE_C_.
+	Include "sim-arange.h".
+	Remove include for unused "sim-assert.h".
+	Remove DEFINE_INLINE_P.  Remove DEFINE_NON_INLINE_P.
+	(sim_addr_range_add): Declare as INLINE_SIM_ARANGE.
+	(sim_addr_range_delete): Declare as INLINE_SIM_ARANGE.
+	(sim_addr_range_hit_p): Change from SIM_ARANGE_INLINE to
+	INLINE_SIM_ARANGE.
+	* sim-arange.h (sim_addr_range_add): Declare as
+	INLINE_SIM_ARANGE.
+	(sim_addr_range_delete): Declare as INLINE_SIM_ARANGE.
+	(sim_addr_range_hit_p) Declare as INLINE_SIM_ARANGE.
+	Remove definition of SIM_ARANGE_INLINE.
+	Remove [HAVE_INLINE].
+	Wrap include "sim-arange.c" in H_REVEALS_MODULE_P.
+	* sim-base.h: Include "sim-arange.h"
+	* sim-basics.h: Remove include of "sim-arange.h"
+	* sim-inline.c: Include "sim-arange.c"
+	* sim-inline.h: Define INLINE_SIM_ARANGE.
+	Define SIM_ARANGE_INLINE.  Define EXTERN_SIM_ARANGE_P.
+	Define STATIC_INLINE_SIM_ARANGE.  Define STATIC_SIM_ARANGE.
+
 2019-01-26  Tom Tromey  <tom@tromey.com>
 
 	* Make-common.in (version.c): Use sim's create-version.sh.

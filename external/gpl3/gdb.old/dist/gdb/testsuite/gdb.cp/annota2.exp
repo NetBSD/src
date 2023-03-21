@@ -1,4 +1,4 @@
-#   Copyright 1999-2019 Free Software Foundation, Inc.
+#   Copyright 1999-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -73,9 +73,9 @@ gdb_expect {
     timeout	            { fail "annotation set at level 2 (timeout)" }
   }
 
-gdb_test_multiple "run" "run until main breakpoint" {
+gdb_test_multiple "run" "run until main breakpoint, first time" {
     -re "$main_line.*$gdb_prompt$" {
-	pass "run until main breakpoint"
+	pass $gdb_test_name
     }
 }
 
@@ -138,6 +138,8 @@ set pat [multi_line "" \
 	     "\032\032exited 0" \
 	     "$inferior_exited_re normally." \
 	     "" \
+	     "\032\032thread-exited,id=\"1\",group-id=\"i1\"" \
+	     "" \
 	     "\032\032stopped" \
 	     $gdb_prompt$]
 gdb_test_multiple "continue" "continue until exit" {
@@ -187,9 +189,9 @@ set main_line 22
 # run program up to breakpoint.
 #
 
-gdb_test_multiple "run" "run until main breakpoint" {
+gdb_test_multiple "run" "run until main breakpoint, second time" {
     -re "$main_line.*$gdb_prompt$"    {
-	pass "run until main breakpoint"
+	pass $gdb_test_name
     }
 }
 
@@ -216,7 +218,7 @@ set pat [multi_line "" \
 	     "\032\032post-prompt" \
 	     "" \
 	     "\032\032starting" \
-	     "\(${frames_invalid}\)*${breakpoints_invalid}" \
+	     "\(${frames_invalid}\)*${breakpoints_invalid}\(${frames_invalid}\)*" \
 	     "\032\032watchpoint 3" \
 	     ".*atchpoint 3: a.x" \
 	     "" \

@@ -1,4 +1,4 @@
-# Copyright 2000-2019 Free Software Foundation, Inc.
+# Copyright 2000-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,7 +50,7 @@ proc return_1 { type } {
     gdb_test "print ${type}_resultval == testval.${type}_testval" ".* = 1" \
 	    "${type} value returned successfully"
     gdb_test "print ${type}_resultval != ${type}_returnval" ".* = 1" \
-	    "validate result value not equal to program return value"
+	    "validate result value not equal to program return value, ${type}"
 }
 
 proc return_void { } {

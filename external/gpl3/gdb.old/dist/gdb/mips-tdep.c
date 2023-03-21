@@ -1,6 +1,6 @@
 /* Target-dependent code for the MIPS architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 1988-2019 Free Software Foundation, Inc.
+   Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
    Contributed by Alessandro Forin(af@cs.cmu.edu) at CMU
    and by Per Bothner(bothner@cs.wisc.edu) at U.Wisconsin.
@@ -51,14 +51,12 @@
 #include "infcall.h"
 #include "remote.h"
 #include "target-descriptions.h"
-#include "dwarf2-frame.h"
+#include "dwarf2/frame.h"
 #include "user-regs.h"
 #include "valprint.h"
 #include "ax.h"
 #include "target-float.h"
 #include <algorithm>
-
-static const struct objfile_data *mips_pdr_data;
 
 static struct type *mips_register_type (struct gdbarch *gdbarch, int regnum);
 
@@ -689,7 +687,7 @@ mips_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
   if (reggroup == all_reggroup)
     return pseudo;
   vector_p = TYPE_VECTOR (register_type (gdbarch, regnum));
-  float_p = TYPE_CODE (register_type (gdbarch, regnum)) == TYPE_CODE_FLT;
+  float_p = register_type (gdbarch, regnum)->code () == TYPE_CODE_FLT;
   /* FIXME: cagney/2003-04-13: Can't yet use gdbarch_num_regs
      (gdbarch), as not all architectures are multi-arch.  */
   raw_p = rawnum < gdbarch_num_regs (gdbarch);
@@ -860,7 +858,7 @@ static int heuristic_fence_post = 0;
    register N.  NOTE: This defines the pseudo register type so need to
    rebuild the architecture vector.  */
 
-static int mips64_transfers_32bit_regs_p = 0;
+static bool mips64_transfers_32bit_regs_p = false;
 
 static void
 set_mips64_transfers_32bit_regs (const char *args, int from_tty,
@@ -891,7 +889,7 @@ mips_convert_register_float_case_p (struct gdbarch *gdbarch, int regnum,
   return (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG
 	  && register_size (gdbarch, regnum) == 4
 	  && mips_float_register_p (gdbarch, regnum)
-	  && TYPE_CODE (type) == TYPE_CODE_FLT && TYPE_LENGTH (type) == 8);
+	  && type->code () == TYPE_CODE_FLT && TYPE_LENGTH (type) == 8);
 }
 
 /* This predicate tests for the case of a value of less than 8
@@ -3823,8 +3821,8 @@ mips_stub_frame_sniffer (const struct frame_unwind *self,
      stub.  The stub for foo is named ".pic.foo".  */
   msym = lookup_minimal_symbol_by_pc (pc);
   if (msym.minsym != NULL
-      && MSYMBOL_LINKAGE_NAME (msym.minsym) != NULL
-      && startswith (MSYMBOL_LINKAGE_NAME (msym.minsym), ".pic."))
+      && msym.minsym->linkage_name () != NULL
+      && startswith (msym.minsym->linkage_name (), ".pic."))
     return 1;
 
   return 0;
@@ -4409,8 +4407,8 @@ fp_register_arg_p (struct gdbarch *gdbarch, enum type_code typecode,
 	   || (MIPS_EABI (gdbarch)
 	       && (typecode == TYPE_CODE_STRUCT
 		   || typecode == TYPE_CODE_UNION)
-	       && TYPE_NFIELDS (arg_type) == 1
-	       && TYPE_CODE (check_typedef (TYPE_FIELD_TYPE (arg_type, 0))) 
+	       && arg_type->num_fields () == 1
+	       && check_typedef (arg_type->field (0).type ())->code ()
 	       == TYPE_CODE_FLT))
 	  && MIPS_FPU_TYPE(gdbarch) != MIPS_FPU_NONE);
 }
@@ -4421,23 +4419,23 @@ fp_register_arg_p (struct gdbarch *gdbarch, enum type_code typecode,
 static int
 mips_type_needs_double_align (struct type *type)
 {
-  enum type_code typecode = TYPE_CODE (type);
+  enum type_code typecode = type->code ();
 
   if (typecode == TYPE_CODE_FLT && TYPE_LENGTH (type) == 8)
     return 1;
   else if (typecode == TYPE_CODE_STRUCT)
     {
-      if (TYPE_NFIELDS (type) < 1)
+      if (type->num_fields () < 1)
 	return 0;
-      return mips_type_needs_double_align (TYPE_FIELD_TYPE (type, 0));
+      return mips_type_needs_double_align (type->field (0).type ());
     }
   else if (typecode == TYPE_CODE_UNION)
     {
       int i, n;
 
-      n = TYPE_NFIELDS (type);
+      n = type->num_fields ();
       for (i = 0; i < n; i++)
-	if (mips_type_needs_double_align (TYPE_FIELD_TYPE (type, i)))
+	if (mips_type_needs_double_align (type->field (i).type ()))
 	  return 1;
       return 0;
     }
@@ -4564,7 +4562,7 @@ mips_eabi_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       struct value *arg = args[argnum];
       struct type *arg_type = check_typedef (value_type (arg));
       int len = TYPE_LENGTH (arg_type);
-      enum type_code typecode = TYPE_CODE (arg_type);
+      enum type_code typecode = arg_type->code ();
 
       if (mips_debug)
 	fprintf_unfiltered (gdb_stdlog,
@@ -4784,17 +4782,17 @@ mips_eabi_return_value (struct gdbarch *gdbarch, struct value *function,
   /* Floating point type?  */
   if (tdep->mips_fpu_type != MIPS_FPU_NONE)
     {
-      if (TYPE_CODE (type) == TYPE_CODE_FLT)
+      if (type->code () == TYPE_CODE_FLT)
 	fp_return_type = 1;
       /* Structs with a single field of float type 
 	 are returned in a floating point register.  */
-      if ((TYPE_CODE (type) == TYPE_CODE_STRUCT
-	   || TYPE_CODE (type) == TYPE_CODE_UNION)
-	  && TYPE_NFIELDS (type) == 1)
+      if ((type->code () == TYPE_CODE_STRUCT
+	   || type->code () == TYPE_CODE_UNION)
+	  && type->num_fields () == 1)
 	{
-	  struct type *fieldtype = TYPE_FIELD_TYPE (type, 0);
+	  struct type *fieldtype = type->field (0).type ();
 
-	  if (TYPE_CODE (check_typedef (fieldtype)) == TYPE_CODE_FLT)
+	  if (check_typedef (fieldtype)->code () == TYPE_CODE_FLT)
 	    fp_return_type = 1;
 	}
     }
@@ -4843,7 +4841,7 @@ mips_n32n64_fp_arg_chunk_p (struct gdbarch *gdbarch, struct type *arg_type,
 {
   int i;
 
-  if (TYPE_CODE (arg_type) != TYPE_CODE_STRUCT)
+  if (arg_type->code () != TYPE_CODE_STRUCT)
     return 0;
 
   if (MIPS_FPU_TYPE (gdbarch) != MIPS_FPU_DOUBLE)
@@ -4852,13 +4850,13 @@ mips_n32n64_fp_arg_chunk_p (struct gdbarch *gdbarch, struct type *arg_type,
   if (TYPE_LENGTH (arg_type) < offset + MIPS64_REGSIZE)
     return 0;
 
-  for (i = 0; i < TYPE_NFIELDS (arg_type); i++)
+  for (i = 0; i < arg_type->num_fields (); i++)
     {
       int pos;
       struct type *field_type;
 
       /* We're only looking at normal fields.  */
-      if (field_is_static (&TYPE_FIELD (arg_type, i))
+      if (field_is_static (&arg_type->field (i))
 	  || (TYPE_FIELD_BITPOS (arg_type, i) % 8) != 0)
 	continue;
 
@@ -4867,7 +4865,7 @@ mips_n32n64_fp_arg_chunk_p (struct gdbarch *gdbarch, struct type *arg_type,
       if (pos > offset)
 	return 0;
 
-      field_type = check_typedef (TYPE_FIELD_TYPE (arg_type, i));
+      field_type = check_typedef (arg_type->field (i).type ());
 
       /* If this field is entirely before the requested offset, go
 	 on to the next one.  */
@@ -4875,7 +4873,7 @@ mips_n32n64_fp_arg_chunk_p (struct gdbarch *gdbarch, struct type *arg_type,
 	continue;
 
       /* If this is our special aligned double, we can stop.  */
-      if (TYPE_CODE (field_type) == TYPE_CODE_FLT
+      if (field_type->code () == TYPE_CODE_FLT
 	  && TYPE_LENGTH (field_type) == MIPS64_REGSIZE)
 	return 1;
 
@@ -4954,7 +4952,7 @@ mips_n32n64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       struct value *arg = args[argnum];
       struct type *arg_type = check_typedef (value_type (arg));
       int len = TYPE_LENGTH (arg_type);
-      enum type_code typecode = TYPE_CODE (arg_type);
+      enum type_code typecode = arg_type->code ();
 
       if (mips_debug)
 	fprintf_unfiltered (gdb_stdlog,
@@ -5191,7 +5189,7 @@ mips_n32n64_return_value (struct gdbarch *gdbarch, struct value *function,
 
   if (TYPE_LENGTH (type) > 2 * MIPS64_REGSIZE)
     return RETURN_VALUE_STRUCT_CONVENTION;
-  else if (TYPE_CODE (type) == TYPE_CODE_FLT
+  else if (type->code () == TYPE_CODE_FLT
 	   && TYPE_LENGTH (type) == 16
 	   && tdep->mips_fpu_type != MIPS_FPU_NONE)
     {
@@ -5213,7 +5211,7 @@ mips_n32n64_return_value (struct gdbarch *gdbarch, struct value *function,
 			  writebuf ? writebuf + 8 : writebuf, 0);
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
-  else if (TYPE_CODE (type) == TYPE_CODE_FLT
+  else if (type->code () == TYPE_CODE_FLT
 	   && tdep->mips_fpu_type != MIPS_FPU_NONE)
     {
       /* A single or double floating-point value that fits in FP0.  */
@@ -5227,16 +5225,16 @@ mips_n32n64_return_value (struct gdbarch *gdbarch, struct value *function,
 			  readbuf, writebuf, 0);
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
-  else if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-	   && TYPE_NFIELDS (type) <= 2
-	   && TYPE_NFIELDS (type) >= 1
-	   && ((TYPE_NFIELDS (type) == 1
-		&& (TYPE_CODE (check_typedef (TYPE_FIELD_TYPE (type, 0)))
+  else if (type->code () == TYPE_CODE_STRUCT
+	   && type->num_fields () <= 2
+	   && type->num_fields () >= 1
+	   && ((type->num_fields () == 1
+		&& (check_typedef (type->field (0).type ())->code ()
 		    == TYPE_CODE_FLT))
-	       || (TYPE_NFIELDS (type) == 2
-		   && (TYPE_CODE (check_typedef (TYPE_FIELD_TYPE (type, 0)))
+	       || (type->num_fields () == 2
+		   && (check_typedef (type->field (0).type ())->code ()
 		       == TYPE_CODE_FLT)
-		   && (TYPE_CODE (check_typedef (TYPE_FIELD_TYPE (type, 1)))
+		   && (check_typedef (type->field (1).type ())->code ()
 		       == TYPE_CODE_FLT))))
     {
       /* A struct that contains one or two floats.  Each value is part
@@ -5247,14 +5245,14 @@ mips_n32n64_return_value (struct gdbarch *gdbarch, struct value *function,
       for (field = 0, regnum = (tdep->mips_fpu_type != MIPS_FPU_NONE
 				? mips_regnum (gdbarch)->fp0
 				: MIPS_V0_REGNUM);
-	   field < TYPE_NFIELDS (type); field++, regnum += 2)
+	   field < type->num_fields (); field++, regnum += 2)
 	{
-	  int offset = (FIELD_BITPOS (TYPE_FIELDS (type)[field])
+	  int offset = (FIELD_BITPOS (type->field (field))
 			/ TARGET_CHAR_BIT);
 	  if (mips_debug)
 	    fprintf_unfiltered (gdb_stderr, "Return float struct+%d\n",
 				offset);
-	  if (TYPE_LENGTH (TYPE_FIELD_TYPE (type, field)) == 16)
+	  if (TYPE_LENGTH (type->field (field).type ()) == 16)
 	    {
 	      /* A 16-byte long double field goes in two consecutive
 		 registers.  */
@@ -5272,15 +5270,15 @@ mips_n32n64_return_value (struct gdbarch *gdbarch, struct value *function,
 	  else
 	    mips_xfer_register (gdbarch, regcache,
 				gdbarch_num_regs (gdbarch) + regnum,
-				TYPE_LENGTH (TYPE_FIELD_TYPE (type, field)),
+				TYPE_LENGTH (type->field (field).type ()),
 				gdbarch_byte_order (gdbarch),
 				readbuf, writebuf, offset);
 	}
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
-  else if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-	   || TYPE_CODE (type) == TYPE_CODE_UNION
-	   || TYPE_CODE (type) == TYPE_CODE_ARRAY)
+  else if (type->code () == TYPE_CODE_STRUCT
+	   || type->code () == TYPE_CODE_UNION
+	   || type->code () == TYPE_CODE_ARRAY)
     {
       /* A composite type.  Extract the left justified value,
          regardless of the byte order.  I.e. DO NOT USE
@@ -5421,7 +5419,7 @@ mips_o32_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       struct value *arg = args[argnum];
       struct type *arg_type = check_typedef (value_type (arg));
       int len = TYPE_LENGTH (arg_type);
-      enum type_code typecode = TYPE_CODE (arg_type);
+      enum type_code typecode = arg_type->code ();
 
       if (mips_debug)
 	fprintf_unfiltered (gdb_stdlog,
@@ -5665,11 +5663,11 @@ mips_o32_return_value (struct gdbarch *gdbarch, struct value *function,
   enum mips_fval_reg fval_reg;
 
   fval_reg = readbuf ? mips16 ? mips_fval_gpr : mips_fval_fpr : mips_fval_both;
-  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (type) == TYPE_CODE_UNION
-      || TYPE_CODE (type) == TYPE_CODE_ARRAY)
+  if (type->code () == TYPE_CODE_STRUCT
+      || type->code () == TYPE_CODE_UNION
+      || type->code () == TYPE_CODE_ARRAY)
     return RETURN_VALUE_STRUCT_CONVENTION;
-  else if (TYPE_CODE (type) == TYPE_CODE_FLT
+  else if (type->code () == TYPE_CODE_FLT
 	   && TYPE_LENGTH (type) == 4 && tdep->mips_fpu_type != MIPS_FPU_NONE)
     {
       /* A single-precision floating-point value.  If reading in or copying,
@@ -5706,7 +5704,7 @@ mips_o32_return_value (struct gdbarch *gdbarch, struct value *function,
 			    readbuf, writebuf, 0);
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
-  else if (TYPE_CODE (type) == TYPE_CODE_FLT
+  else if (type->code () == TYPE_CODE_FLT
 	   && TYPE_LENGTH (type) == 8 && tdep->mips_fpu_type != MIPS_FPU_NONE)
     {
       /* A double-precision floating-point value.  If reading in or copying,
@@ -5780,16 +5778,16 @@ mips_o32_return_value (struct gdbarch *gdbarch, struct value *function,
       return RETURN_VALUE_REGISTER_CONVENTION;
     }
 #if 0
-  else if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-	   && TYPE_NFIELDS (type) <= 2
-	   && TYPE_NFIELDS (type) >= 1
-	   && ((TYPE_NFIELDS (type) == 1
-		&& (TYPE_CODE (TYPE_FIELD_TYPE (type, 0))
+  else if (type->code () == TYPE_CODE_STRUCT
+	   && type->num_fields () <= 2
+	   && type->num_fields () >= 1
+	   && ((type->num_fields () == 1
+		&& (TYPE_CODE (type->field (0).type ())
 		    == TYPE_CODE_FLT))
-	       || (TYPE_NFIELDS (type) == 2
-		   && (TYPE_CODE (TYPE_FIELD_TYPE (type, 0))
+	       || (type->num_fields () == 2
+		   && (TYPE_CODE (type->field (0).type ())
 		       == TYPE_CODE_FLT)
-		   && (TYPE_CODE (TYPE_FIELD_TYPE (type, 1))
+		   && (TYPE_CODE (type->field (1).type ())
 		       == TYPE_CODE_FLT)))
 	   && tdep->mips_fpu_type != MIPS_FPU_NONE)
     {
@@ -5799,16 +5797,16 @@ mips_o32_return_value (struct gdbarch *gdbarch, struct value *function,
       int regnum;
       int field;
       for (field = 0, regnum = mips_regnum (gdbarch)->fp0;
-	   field < TYPE_NFIELDS (type); field++, regnum += 2)
+	   field < type->num_fields (); field++, regnum += 2)
 	{
-	  int offset = (FIELD_BITPOS (TYPE_FIELDS (type)[field])
+	  int offset = (FIELD_BITPOS (type->fields ()[field])
 			/ TARGET_CHAR_BIT);
 	  if (mips_debug)
 	    fprintf_unfiltered (gdb_stderr, "Return float struct+%d\n",
 				offset);
 	  mips_xfer_register (gdbarch, regcache,
 			      gdbarch_num_regs (gdbarch) + regnum,
-			      TYPE_LENGTH (TYPE_FIELD_TYPE (type, field)),
+			      TYPE_LENGTH (type->field (field).type ()),
 			      gdbarch_byte_order (gdbarch),
 			      readbuf, writebuf, offset);
 	}
@@ -5816,8 +5814,8 @@ mips_o32_return_value (struct gdbarch *gdbarch, struct value *function,
     }
 #endif
 #if 0
-  else if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-	   || TYPE_CODE (type) == TYPE_CODE_UNION)
+  else if (type->code () == TYPE_CODE_STRUCT
+	   || type->code () == TYPE_CODE_UNION)
     {
       /* A structure or union.  Extract the left justified value,
          regardless of the byte order.  I.e. DO NOT USE
@@ -5943,7 +5941,7 @@ mips_o64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       struct value *arg = args[argnum];
       struct type *arg_type = check_typedef (value_type (arg));
       int len = TYPE_LENGTH (arg_type);
-      enum type_code typecode = TYPE_CODE (arg_type);
+      enum type_code typecode = arg_type->code ();
 
       if (mips_debug)
 	fprintf_unfiltered (gdb_stdlog,
@@ -6111,11 +6109,11 @@ mips_o64_return_value (struct gdbarch *gdbarch, struct value *function,
   enum mips_fval_reg fval_reg;
 
   fval_reg = readbuf ? mips16 ? mips_fval_gpr : mips_fval_fpr : mips_fval_both;
-  if (TYPE_CODE (type) == TYPE_CODE_STRUCT
-      || TYPE_CODE (type) == TYPE_CODE_UNION
-      || TYPE_CODE (type) == TYPE_CODE_ARRAY)
+  if (type->code () == TYPE_CODE_STRUCT
+      || type->code () == TYPE_CODE_UNION
+      || type->code () == TYPE_CODE_ARRAY)
     return RETURN_VALUE_STRUCT_CONVENTION;
-  else if (fp_register_arg_p (gdbarch, TYPE_CODE (type), type))
+  else if (fp_register_arg_p (gdbarch, type->code (), type))
     {
       /* A floating-point value.  If reading in or copying, then we get it
          from/put it to FP0 for standard MIPS code or GPR2 for MIPS16 code.
@@ -6375,10 +6373,7 @@ mips_print_register (struct ui_file *file, struct frame_info *frame,
     fprintf_filtered (file, ": ");
 
   get_formatted_print_options (&opts, 'x');
-  val_print_scalar_formatted (value_type (val),
-			      value_embedded_offset (val),
-			      val,
-			      &opts, 0, file);
+  value_print_scalar_formatted (val, &opts, 0, file);
 }
 
 /* Print IEEE exception condition bits in FLAGS.  */
@@ -6882,23 +6877,6 @@ mips_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
     return mips32_stack_frame_destroyed_p (gdbarch, pc);
 }
 
-/* Root of all "set mips "/"show mips " commands.  This will eventually be
-   used for all MIPS-specific commands.  */
-
-static void
-show_mips_command (const char *args, int from_tty)
-{
-  help_list (showmipscmdlist, "show mips ", all_commands, gdb_stdout);
-}
-
-static void
-set_mips_command (const char *args, int from_tty)
-{
-  printf_unfiltered
-    ("\"set mips\" must be followed by an appropriate subcommand.\n");
-  help_list (setmipscmdlist, "set mips ", all_commands, gdb_stdout);
-}
-
 /* Commands to show/set the MIPS FPU type.  */
 
 static void
@@ -6937,14 +6915,6 @@ show_mipsfpu_command (const char *args, int from_tty)
       ("The MIPS floating-point coprocessor is assumed to be %s\n", fpu);
 }
 
-
-static void
-set_mipsfpu_command (const char *args, int from_tty)
-{
-  printf_unfiltered ("\"set mipsfpu\" must be followed by \"double\", "
-		     "\"single\",\"none\" or \"auto\".\n");
-  show_mipsfpu_command (args, from_tty);
-}
 
 static void
 set_mipsfpu_single_command (const char *args, int from_tty)
@@ -7820,8 +7790,8 @@ mips_skip_pic_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   msym = lookup_minimal_symbol_by_pc (pc);
   if (msym.minsym == NULL
       || BMSYMBOL_VALUE_ADDRESS (msym) != pc
-      || MSYMBOL_LINKAGE_NAME (msym.minsym) == NULL
-      || !startswith (MSYMBOL_LINKAGE_NAME (msym.minsym), ".pic."))
+      || msym.minsym->linkage_name () == NULL
+      || !startswith (msym.minsym->linkage_name (), ".pic."))
     return 0;
 
   /* A two-instruction header.  */
@@ -7977,7 +7947,7 @@ static void
 mips_find_abi_section (bfd *abfd, asection *sect, void *obj)
 {
   enum mips_abi *abip = (enum mips_abi *) obj;
-  const char *name = bfd_get_section_name (abfd, sect);
+  const char *name = bfd_section_name (sect);
 
   if (*abip != MIPS_ABI_UNKNOWN)
     return;
@@ -8005,7 +7975,7 @@ static void
 mips_find_long_section (bfd *abfd, asection *sect, void *obj)
 {
   int *lbp = (int *) obj;
-  const char *name = bfd_get_section_name (abfd, sect);
+  const char *name = bfd_section_name (sect);
 
   if (startswith (name, ".gcc_compiled_long32"))
     *lbp = 32;
@@ -8973,8 +8943,9 @@ mips_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 		      mips_fpu_type_str (MIPS_FPU_TYPE (gdbarch)));
 }
 
+void _initialize_mips_tdep ();
 void
-_initialize_mips_tdep (void)
+_initialize_mips_tdep ()
 {
   static struct cmd_list_element *mipsfpulist = NULL;
 
@@ -8985,8 +8956,6 @@ _initialize_mips_tdep (void)
 
   gdbarch_register (bfd_arch_mips, mips_gdbarch_init, mips_dump_tdep);
 
-  mips_pdr_data = register_objfile_data ();
-
   /* Create feature sets with the appropriate properties.  The values
      are not important.  */
   mips_tdesc_gp32 = allocate_target_description ();
@@ -8996,13 +8965,13 @@ _initialize_mips_tdep (void)
   set_tdesc_property (mips_tdesc_gp64, PROPERTY_GP64, "");
 
   /* Add root prefix command for all "set mips"/"show mips" commands.  */
-  add_prefix_cmd ("mips", no_class, set_mips_command,
-		  _("Various MIPS specific commands."),
-		  &setmipscmdlist, "set mips ", 0, &setlist);
+  add_basic_prefix_cmd ("mips", no_class,
+			_("Various MIPS specific commands."),
+			&setmipscmdlist, "set mips ", 0, &setlist);
 
-  add_prefix_cmd ("mips", no_class, show_mips_command,
-		  _("Various MIPS specific commands."),
-		  &showmipscmdlist, "show mips ", 0, &showlist);
+  add_show_prefix_cmd ("mips", no_class,
+		       _("Various MIPS specific commands."),
+		       &showmipscmdlist, "show mips ", 0, &showlist);
 
   /* Allow the user to override the ABI.  */
   add_setshow_enum_cmd ("abi", class_obscure, mips_abi_strings,
@@ -9041,9 +9010,9 @@ and is updated automatically from ELF file flags if available."),
   /* Let the user turn off floating point and set the fence post for
      heuristic_proc_start.  */
 
-  add_prefix_cmd ("mipsfpu", class_support, set_mipsfpu_command,
-		  _("Set use of MIPS floating-point coprocessor."),
-		  &mipsfpulist, "set mipsfpu ", 0, &setlist);
+  add_basic_prefix_cmd ("mipsfpu", class_support,
+			_("Set use of MIPS floating-point coprocessor."),
+			&mipsfpulist, "set mipsfpu ", 0, &setlist);
   add_cmd ("single", class_support, set_mipsfpu_single_command,
 	   _("Select single-precision MIPS floating-point coprocessor."),
 	   &mipsfpulist);

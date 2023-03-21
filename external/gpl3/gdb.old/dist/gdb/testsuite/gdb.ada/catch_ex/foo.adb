@@ -1,4 +1,4 @@
---  Copyright 2007-2019 Free Software Foundation, Inc.
+--  Copyright 2007-2020 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ procedure Foo is
 begin
 
    begin
-      raise Constraint_Error;  -- SPOT1
+      raise Constraint_Error with "ignore C_E";  -- SPOT1
    exception
       when others =>
          null;

@@ -27,7 +27,7 @@ foo (void)
 void 
 bar (void)
 {
-  *(char *)0 = 0;    /* try to cause a segfault */
+  *(volatile char *)0 = 0;    /* try to cause a segfault */
 
   /* On MMU-less system, previous memory access to address zero doesn't
      trigger a SIGSEGV.  Trigger a SIGILL.  Each arch should define its

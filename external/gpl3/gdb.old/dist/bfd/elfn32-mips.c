@@ -1,5 +1,5 @@
 /* MIPS-specific support for 32-bit ELF
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
 
    Most of the information added by Ian Lance Taylor, Cygnus Support,
    <ian@cygnus.com>.
@@ -72,6 +72,8 @@ static bfd_boolean mips_info_to_howto_rela
   (bfd *, arelent *, Elf_Internal_Rela *);
 static bfd_boolean mips_elf_sym_is_global
   (bfd *, asymbol *);
+static bfd_boolean mips_elf_n32_elfsym_local_is_section
+  (bfd *);
 static bfd_boolean mips_elf_n32_object_p
   (bfd *);
 static bfd_boolean elf32_mips_grok_prstatus
@@ -3841,8 +3843,16 @@ mips_elf_sym_is_global (bfd *abfd ATTRIBUTE_UNUSED, asymbol *sym)
     return (sym->flags & BSF_SECTION_SYM) == 0;
   else
     return ((sym->flags & (BSF_GLOBAL | BSF_WEAK | BSF_GNU_UNIQUE)) != 0
-	    || bfd_is_und_section (bfd_get_section (sym))
-	    || bfd_is_com_section (bfd_get_section (sym)));
+	    || bfd_is_und_section (bfd_asymbol_section (sym))
+	    || bfd_is_com_section (bfd_asymbol_section (sym)));
+}
+
+/* Likewise, return TRUE if the symbol table split overall must be
+   between section symbols and all other symbols.  */
+static bfd_boolean
+mips_elf_n32_elfsym_local_is_section (bfd *abfd)
+{
+  return SGI_COMPAT (abfd);
 }
 
 /* Set the right machine number for a MIPS ELF file.  */
@@ -4160,6 +4170,8 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define elf_backend_ignore_discarded_relocs \
 					_bfd_mips_elf_ignore_discarded_relocs
 #define elf_backend_write_section	_bfd_mips_elf_write_section
+#define elf_backend_elfsym_local_is_section \
+					mips_elf_n32_elfsym_local_is_section
 #define elf_backend_mips_irix_compat	elf_n32_mips_irix_compat
 #define elf_backend_mips_rtype_to_howto	mips_elf_n32_rtype_to_howto
 #define bfd_elf32_bfd_is_target_special_symbol \

@@ -1,4 +1,4 @@
-# Copyright 2014-2019 Free Software Foundation, Inc.
+# Copyright 2014-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -109,17 +109,17 @@ if ![runto_main] {
     return -1
 }
 
-gdb_test "ptype array" "type = char \\\[5\\\]" "ptype array"
-gdb_test "whatis array" "type = char \\\[5\\\]" "whatis array"
-gdb_test "print array" " = \"hello\"" "print array"
-gdb_test "print sizeof array" " = 5" "print sizeof array"
+gdb_test "ptype array" "type = char \\\[5\\\]"
+gdb_test "whatis array" "type = char \\\[5\\\]"
+gdb_test "print array" " = \"hello\""
+gdb_test "print sizeof array" " = 5"
 
-gdb_test "ptype array2" "type = char \\\[1\\\]" "ptype array"
-gdb_test "whatis array2" "type = char \\\[1\\\]" "whatis array"
-gdb_test "print array2" " = \"A\"" "print array"
-gdb_test "print sizeof array2" " = 1" "print sizeof array"
+gdb_test "ptype array2" "type = char \\\[1\\\]"
+gdb_test "whatis array2" "type = char \\\[1\\\]"
+gdb_test "print array2" " = \"A\""
+gdb_test "print sizeof array2" " = 1"
 
-gdb_test "ptype static_array" "type = char \\\[5\\\]" "ptype static_array"
-gdb_test "whatis static_array" "type = char \\\[5\\\]" "whatis static_array"
-gdb_test "print static_array" " = \"world\"" "print static_array"
-gdb_test "print sizeof static_array" " = 5" "print sizeof static_array"
+gdb_test "ptype static_array" "type = char \\\[5\\\]"
+gdb_test "whatis static_array" "type = char \\\[5\\\]"
+gdb_test "print static_array" " = \"world\""
+gdb_test "print sizeof static_array" " = 5"

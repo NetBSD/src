@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2019 Free Software Foundation, Inc.
+# Copyright (C) 2010-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@ if { [skip_guile_tests] } { continue }
 if ![gdb_guile_runto_main] {
     return
 }
+
+set debug_types [debug_types]
 
 # Setup and get the symbol table.
 set line_no [gdb_get_line_number "Block break here."]
@@ -101,8 +103,21 @@ gdb_test "guile (print (->bool (member \"int\" static-symbols)))" \
     "#t" "test int in static symbols"
 gdb_test "guile (print (->bool (member \"char\" static-symbols)))" \
     "#t" "test char in static symbols"
-gdb_test "guile (print (->bool (member \"simple_struct\" static-symbols)))" \
-    "#t" "test simple_struct in static symbols"
+gdb_test_multiple \
+    "guile (print (->bool (member \"simple_struct\" static-symbols)))" \
+    "test simple_struct in static symbols" {
+	-re -wrap "#t" {
+	    pass $gdb_test_name
+	}
+	-re -wrap "#f" {
+	    if { $debug_types } {
+		# Xfail for PR gcc/90232.
+		xfail $gdb_test_name
+	    } else {
+		fail $gdb_test_name
+	    }
+	}
+    }
 
 # Test is_valid when the objfile is unloaded.  This must be the last
 # test as it unloads the object file in GDB.

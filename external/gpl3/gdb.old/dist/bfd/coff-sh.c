@@ -1,5 +1,5 @@
 /* BFD back-end for Renesas Super-H COFF binaries.
-   Copyright (C) 1993-2019 Free Software Foundation, Inc.
+   Copyright (C) 1993-2020 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
    Relaxing code written by Ian Lance Taylor, <ian@cygnus.com>.
@@ -567,7 +567,7 @@ sh_reloc (bfd *      abfd,
 	  bfd *      output_bfd,
 	  char **    error_message ATTRIBUTE_UNUSED)
 {
-  unsigned long insn;
+  bfd_vma insn;
   bfd_vma sym_value;
   unsigned short r_type;
   bfd_vma addr = reloc_entry->address;
@@ -610,14 +610,14 @@ sh_reloc (bfd *      abfd,
 #endif
       insn = bfd_get_32 (abfd, hit_data);
       insn += sym_value + reloc_entry->addend;
-      bfd_put_32 (abfd, (bfd_vma) insn, hit_data);
+      bfd_put_32 (abfd, insn, hit_data);
       break;
 #ifdef COFF_WITH_PE
     case R_SH_IMAGEBASE:
       insn = bfd_get_32 (abfd, hit_data);
       insn += sym_value + reloc_entry->addend;
       insn -= pe_data (input_section->output_section->owner)->pe_opthdr.ImageBase;
-      bfd_put_32 (abfd, (bfd_vma) insn, hit_data);
+      bfd_put_32 (abfd, insn, hit_data);
       break;
 #endif
     case R_SH_PCDISP:
@@ -627,12 +627,10 @@ sh_reloc (bfd *      abfd,
 		    + input_section->output_offset
 		    + addr
 		    + 4);
-      sym_value += (insn & 0xfff) << 1;
-      if (insn & 0x800)
-	sym_value -= 0x1000;
-      insn = (insn & 0xf000) | (sym_value & 0xfff);
-      bfd_put_16 (abfd, (bfd_vma) insn, hit_data);
-      if (sym_value < (bfd_vma) -0x1000 || sym_value >= 0x1000)
+      sym_value += (((insn & 0xfff) ^ 0x800) - 0x800) << 1;
+      insn = (insn & 0xf000) | ((sym_value >> 1) & 0xfff);
+      bfd_put_16 (abfd, insn, hit_data);
+      if (sym_value + 0x1000 >= 0x2000 || (sym_value & 1) != 0)
 	return bfd_reloc_overflow;
       break;
     default:
@@ -724,7 +722,7 @@ sh_relax_section (bfd *abfd,
 
   if (coff_section_data (abfd, sec) == NULL)
     {
-      bfd_size_type amt = sizeof (struct coff_section_tdata);
+      size_t amt = sizeof (struct coff_section_tdata);
       sec->used_by_bfd = bfd_zalloc (abfd, amt);
       if (sec->used_by_bfd == NULL)
 	return FALSE;
@@ -1058,10 +1056,9 @@ sh_relax_section (bfd *abfd,
   return TRUE;
 
  error_return:
-  if (internal_relocs != NULL
-      && internal_relocs != coff_section_data (abfd, sec)->relocs)
+  if (internal_relocs != coff_section_data (abfd, sec)->relocs)
     free (internal_relocs);
-  if (contents != NULL && contents != coff_section_data (abfd, sec)->contents)
+  if (contents != coff_section_data (abfd, sec)->contents)
     free (contents);
   return FALSE;
 }
@@ -2725,8 +2722,7 @@ sh_align_loads (bfd *abfd,
   return TRUE;
 
  error_return:
-  if (labels != NULL)
-    free (labels);
+  free (labels);
   return FALSE;
 }
 
@@ -2997,12 +2993,9 @@ sh_coff_get_relocated_section_contents (bfd *output_bfd,
   return data;
 
  error_return:
-  if (internal_relocs != NULL)
-    free (internal_relocs);
-  if (internal_syms != NULL)
-    free (internal_syms);
-  if (sections != NULL)
-    free (sections);
+  free (internal_relocs);
+  free (internal_syms);
+  free (sections);
   return NULL;
 }
 
@@ -3046,7 +3039,7 @@ CREATE_LITTLE_COFF_TARGET_VEC (TARGET_SYM, TARGET_SHL_NAME, BFD_IS_RELAXABLE,
 /* Only recognize the small versions if the target was not defaulted.
    Otherwise we won't recognize the non default endianness.  */
 
-static const bfd_target *
+static bfd_cleanup
 coff_small_object_p (bfd *abfd)
 {
   if (abfd->target_defaulted)

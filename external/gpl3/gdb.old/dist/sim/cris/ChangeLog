@@ -1,3 +1,7 @@
+2019-09-06  Alan Modra  <amodra@gmail.com>
+
+	* sim-if.c (sim_open): Constify filename variable.
+
 2018-12-06  Andrew Burgess  <andrew.burgess@embecosm.com>
 
 	* Makefile.in: Replace uses of CGEN_CPU_DIR with CPU_DIR, and

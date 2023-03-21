@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2019 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2020 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
 #include "defs.h"
 #include "osabi.h"
 #include "amd64-tdep.h"
-#include "common/x86-xstate.h"
+#include "gdbsupport/x86-xstate.h"
 #include "gdbtypes.h"
 #include "gdbcore.h"
 #include "regcache.h"
@@ -48,7 +48,7 @@ static int amd64_windows_dummy_call_integer_regs[] =
 static int
 amd64_windows_passed_by_integer_register (struct type *type)
 {
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
       case TYPE_CODE_INT:
       case TYPE_CODE_ENUM:
@@ -76,8 +76,8 @@ amd64_windows_passed_by_integer_register (struct type *type)
 static int
 amd64_windows_passed_by_xmm_register (struct type *type)
 {
-  return ((TYPE_CODE (type) == TYPE_CODE_FLT
-	   || TYPE_CODE (type) == TYPE_CODE_DECFLOAT)
+  return ((type->code () == TYPE_CODE_FLT
+	   || type->code () == TYPE_CODE_DECFLOAT)
           && (TYPE_LENGTH (type) == 4 || TYPE_LENGTH (type) == 8));
 }
 
@@ -144,7 +144,7 @@ amd64_windows_store_arg_in_reg (struct regcache *regcache,
 
   gdb_assert (TYPE_LENGTH (type) <= 8);
   memset (buf, 0, sizeof buf);
-  memcpy (buf, valbuf, std::min (TYPE_LENGTH (type), (unsigned int) 8));
+  memcpy (buf, valbuf, std::min (TYPE_LENGTH (type), (ULONGEST) 8));
   regcache->cooked_write (regno, buf);
 }
 
@@ -296,7 +296,7 @@ amd64_windows_return_value (struct gdbarch *gdbarch, struct value *function,
 
   /* See if our value is returned through a register.  If it is, then
      store the associated register number in REGNUM.  */
-  switch (TYPE_CODE (type))
+  switch (type->code ())
     {
       case TYPE_CODE_FLT:
       case TYPE_CODE_DECFLOAT:
@@ -358,8 +358,8 @@ amd64_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 	  call_dest = pc + 5 + extract_signed_integer (buf, 4, byte_order);
  	  s = lookup_minimal_symbol_by_pc (call_dest);
  	  if (s.minsym != NULL
- 	      && MSYMBOL_LINKAGE_NAME (s.minsym) != NULL
- 	      && strcmp (MSYMBOL_LINKAGE_NAME (s.minsym), "__main") == 0)
+ 	      && s.minsym->linkage_name () != NULL
+ 	      && strcmp (s.minsym->linkage_name (), "__main") == 0)
  	    pc += 5;
  	}
     }
@@ -953,8 +953,7 @@ amd64_windows_find_unwind_info (struct gdbarch *gdbarch, CORE_ADDR pc,
   pe = pe_data (sec->objfile->obfd);
   dir = &pe->pe_opthdr.DataDirectory[PE_EXCEPTION_TABLE];
 
-  base = pe->pe_opthdr.ImageBase
-    + ANOFFSET (objfile->section_offsets, SECT_OFF_TEXT (objfile));
+  base = pe->pe_opthdr.ImageBase + objfile->text_section_offset ();
   *image_base = base;
 
   /* Find the entry.
@@ -1187,7 +1186,7 @@ amd64_windows_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 	= (indirect_addr
 	   ? lookup_minimal_symbol_by_pc (indirect_addr).minsym
 	   : NULL);
-      const char *symname = indsym ? MSYMBOL_LINKAGE_NAME (indsym) : NULL;
+      const char *symname = indsym ? indsym->linkage_name () : NULL;
 
       if (symname)
 	{
@@ -1209,12 +1208,14 @@ amd64_windows_auto_wide_charset (void)
   return "UTF-16";
 }
 
+/* Common parts for gdbarch initialization for Windows and Cygwin on AMD64.  */
+
 static void
-amd64_windows_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
+amd64_windows_init_abi_common (gdbarch_info info, struct gdbarch *gdbarch)
 {
   /* The dwarf2 unwinder (appended very early by i386_gdbarch_init) is
      preferred over the SEH one.  The reasons are:
-     - binaries without SEH but with dwarf2 debug info are correcly handled
+     - binaries without SEH but with dwarf2 debug info are correctly handled
        (although they aren't ABI compliant, gcc before 4.7 didn't emit SEH
        info).
      - dwarf3 DW_OP_call_frame_cfa is correctly handled (it can only be
@@ -1228,11 +1229,6 @@ amd64_windows_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   amd64_init_abi (info, gdbarch,
 		  amd64_target_description (X86_XSTATE_SSE_MASK, false));
 
-  windows_init_abi (info, gdbarch);
-
-  /* On Windows, "long"s are only 32bit.  */
-  set_gdbarch_long_bit (gdbarch, 32);
-
   /* Function calls.  */
   set_gdbarch_push_dummy_call (gdbarch, amd64_windows_push_dummy_call);
   set_gdbarch_return_value (gdbarch, amd64_windows_return_value);
@@ -1245,9 +1241,50 @@ amd64_windows_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_auto_wide_charset (gdbarch, amd64_windows_auto_wide_charset);
 }
 
-void
-_initialize_amd64_windows_tdep (void)
+/* gdbarch initialization for Windows on AMD64.  */
+
+static void
+amd64_windows_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
-  gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64, GDB_OSABI_CYGWIN,
+  amd64_windows_init_abi_common (info, gdbarch);
+  windows_init_abi (info, gdbarch);
+
+  /* On Windows, "long"s are only 32bit.  */
+  set_gdbarch_long_bit (gdbarch, 32);
+}
+
+/* gdbarch initialization for Cygwin on AMD64.  */
+
+static void
+amd64_cygwin_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
+{
+  amd64_windows_init_abi_common (info, gdbarch);
+  cygwin_init_abi (info, gdbarch);
+}
+
+static gdb_osabi
+amd64_windows_osabi_sniffer (bfd *abfd)
+{
+  const char *target_name = bfd_get_target (abfd);
+
+  if (!streq (target_name, "pei-x86-64"))
+    return GDB_OSABI_UNKNOWN;
+
+  if (is_linked_with_cygwin_dll (abfd))
+    return GDB_OSABI_CYGWIN;
+
+  return GDB_OSABI_WINDOWS;
+}
+
+void _initialize_amd64_windows_tdep ();
+void
+_initialize_amd64_windows_tdep ()
+{
+  gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64, GDB_OSABI_WINDOWS,
                           amd64_windows_init_abi);
+  gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64, GDB_OSABI_CYGWIN,
+                          amd64_cygwin_init_abi);
+
+  gdbarch_register_osabi_sniffer (bfd_arch_i386, bfd_target_coff_flavour,
+				  amd64_windows_osabi_sniffer);
 }

@@ -1,4 +1,4 @@
-#   Copyright 2009-2019 Free Software Foundation, Inc.
+#   Copyright 2009-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ proc test_one_sig {nextsig} {
     global sig_supported
     global gdb_prompt
     global thissig
+    global record_instruction_kfail
 
     set this_sig_supported $sig_supported
     gdb_test "handle SIG$thissig stop print" \
@@ -50,17 +51,23 @@ proc test_one_sig {nextsig} {
 	if { $thissig == "IO" } {
 	    setup_xfail "i*86-pc-linuxoldld-gnu" "i*86-pc-linuxaout-gnu"
 	}
-	set testmsg "get signal $thissig"
-	gdb_test_multiple "continue" $testmsg {
-	    -re "Program received signal SIG$thissig.*handle_$thissig.*$gdb_prompt $" {
-		fail "$testmsg (wrong location)"
+	gdb_test_multiple "continue" "get signal $thissig" {
+	    -wrap -re \
+		"Program received signal SIG$thissig.*handle_$thissig.*" {
+		fail "$gdb_test_name (wrong location)"
 	    }
-	    -re "Program received signal SIG$thissig.*$gdb_prompt $" {
-		pass $testmsg
+	    -wrap -re "Program received signal SIG$thissig.*" {
+		pass $gdb_test_name
 	    }
-	    -re "Breakpoint.* handle_$thissig.*$gdb_prompt $" {
-		xfail $testmsg
+	    -wrap -re "Breakpoint.* handle_$thissig.*" {
+		xfail $gdb_test_name
 		set need_another_continue 0
+	    }
+	    -wrap -re \
+		"Process record does not support instruction 0xfae64 at.*" {
+		kfail "gdb/25038" $gdb_test_name
+		set record_instruction_kfail 1
+		return
 	    }
 	}
     }
@@ -116,7 +123,7 @@ proc test_one_sig_reverse {prevsig} {
 	-re "Program received signal SIG$prevsig.*$gdb_prompt " {
 	    pass "reverse to signal event, $prevsig"
 
-	    set nested_testmsg "reverse signal delivered"
+	    set nested_testmsg "reverse signal $prevsig delivered"
 	    gdb_test_multiple "frame" $nested_testmsg {
 		-re ".*handle_$prevsig.*$gdb_prompt " {
 		    fail "$nested_testmsg (wrong location)"
@@ -237,8 +244,14 @@ set sig_supported 1
 set thissig "ABRT"
 
 # test signal handling
-foreach sig [lrange $signals 1 end] {
-    test_one_sig $sig
+with_test_prefix "sig-test-1" {
+    set record_instruction_kfail 0
+    foreach sig [lrange $signals 1 end] {
+	test_one_sig $sig
+	if { $record_instruction_kfail } {
+	    return -1
+	}
+    }
 }
 
 # The last signal (SIGTERM) gets handled slightly differently because
@@ -265,6 +278,8 @@ foreach sig [lreverse $signals] {
 set sig_supported 1
 set thissig "ABRT"
 
-foreach sig [lrange $signals 1 end] {
-    test_one_sig $sig
+with_test_prefix "sig-test-2" {
+    foreach sig [lrange $signals 1 end] {
+	test_one_sig $sig
+    }
 }

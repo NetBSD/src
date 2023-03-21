@@ -128,11 +128,15 @@
 
 (df f-branch "branch offset field" (PCREL-ADDR) 15 16 INT
         ((value pc) (sra SI (sub SI value pc) 2))
-        ((value pc) (add SI pc (sra SI (sll SI value 16) 14)))
+	((value pc) (add SI pc (sub (xor (sll (and value #xffff) 2)
+					 #x20000)
+				    #x20000)))
 )
 (df f-call "call offset field" (PCREL-ADDR) 25 26 INT 
         ((value pc) (sra SI (sub SI value pc) 2))
-        ((value pc) (add SI pc (sra SI (sll SI value 6) 4)))
+	((value pc) (add SI pc (sub (xor (sll (and value #x3ffffff) 2)
+					 #x8000000)
+				    #x8000000)))
 )
 
 

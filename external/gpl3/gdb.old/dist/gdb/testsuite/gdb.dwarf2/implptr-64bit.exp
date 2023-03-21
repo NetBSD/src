@@ -1,4 +1,4 @@
-# Copyright 2011-2019 Free Software Foundation, Inc.
+# Copyright 2011-2020 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,10 +81,8 @@ proc test { dwarf_version offset_size addr_size ref_addr_size two_cu } {
 
 		if { !$two_cu } {
 		    subprogram {
-			{ name main }
-			{ low_pc main addr }
-			{ high_pc "main+0x100" addr }
-			{ type %$int_label }
+			{MACRO_AT_func {main}}
+			{ type :$int_label }
 			{ external 1 flag }
 		    } {
 			DW_TAG_variable {
@@ -111,9 +109,7 @@ proc test { dwarf_version offset_size addr_size ref_addr_size two_cu } {
 		    { name 1.c }
 		} {
 		    subprogram {
-			{ name main }
-			{ low_pc main addr }
-			{ high_pc "main+0x100" addr }
+			{ MACRO_AT_func {main} }
 			{ type %$int_label }
 			{ external 1 flag }
 		    } {
