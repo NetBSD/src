@@ -1,9 +1,0 @@
-# NetBSD has (will have) "non-native" libraries in /usr/lib/<arch>.
-# For NetBSD/mips64 we thus have /usr/lib (n32), /usr/lib/o32 and /usr/lib/64.
-
-MULTILIB_OPTIONS = mabi=n32/mabi=64/mabi=32
-MULTILIB_DIRNAMES = n32 n64 o32
-MULTILIB_OSDIRNAMES = . ../lib/64 ../lib/o32
-
-LIBGCC = stmp-multilib
-INSTALL_LIBGCC = install-multilib
