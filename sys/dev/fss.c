@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.113 2022/09/24 23:18:54 thorpej Exp $	*/
+/*	$NetBSD: fss.c,v 1.114 2023/03/22 21:14:46 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.113 2022/09/24 23:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.114 2023/03/22 21:14:46 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1285,7 +1285,7 @@ fss_bs_thread(void *arg)
 
 			/* Not on backing store, read from device. */
 			nbp = getiobuf(NULL, true);
-			nbp->b_flags = B_READ;
+			nbp->b_flags = B_READ | (bp->b_flags & B_PHYS);
 			nbp->b_resid = nbp->b_bcount = bp->b_bcount;
 			nbp->b_bufsize = bp->b_bcount;
 			nbp->b_data = bp->b_data;
