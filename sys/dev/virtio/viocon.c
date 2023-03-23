@@ -1,4 +1,4 @@
-/*	$NetBSD: viocon.c,v 1.7 2023/03/23 03:44:28 yamaguchi Exp $	*/
+/*	$NetBSD: viocon.c,v 1.8 2023/03/23 03:55:11 yamaguchi Exp $	*/
 /*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.7 2023/03/23 03:44:28 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.8 2023/03/23 03:55:11 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -225,7 +225,7 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	viocon_rx_fill(sc->sc_ports[0]);
 
 	if (virtio_child_attach_finish(vsc, sc->sc_vqs, nvqs,
-	    /*config_change*/NULL, virtio_vq_intr, /*req_flags*/0) != 0)
+	    /*config_change*/NULL, /*req_flags*/0) != 0)
 		goto err;
 
 	return;
@@ -256,24 +256,26 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 	txidx = (portidx * VIOCON_PORT_NQS) + VIOCON_PORT_TX;
 
 	snprintf(name, sizeof(name), "p%drx", portidx);
-	if (virtio_alloc_vq(vsc, &sc->sc_vqs[rxidx], rxidx, BUFSIZE, 1,
+	virtio_init_vq_vqdone(vsc, &sc->sc_vqs[rxidx], rxidx,
+	    viocon_rx_intr);
+	if (virtio_alloc_vq(vsc, &sc->sc_vqs[rxidx], BUFSIZE, 1,
 	    name) != 0) {
 		printf("\nCan't alloc %s virtqueue\n", name);
 		goto err;
 	}
 	vp->vp_rx = &sc->sc_vqs[rxidx];
-	vp->vp_rx->vq_done = viocon_rx_intr;
 	vp->vp_si = softint_establish(SOFTINT_SERIAL, viocon_rx_soft, vp);
 	DPRINTF("%s: rx: %p\n", __func__, vp->vp_rx);
 
 	snprintf(name, sizeof(name), "p%dtx", portidx);
-	if (virtio_alloc_vq(vsc, &sc->sc_vqs[txidx], txidx, BUFSIZE, 1,
+	virtio_init_vq_vqdone(vsc, &sc->sc_vqs[txidx], txidx,
+	    viocon_tx_intr);
+	if (virtio_alloc_vq(vsc, &sc->sc_vqs[txidx], BUFSIZE, 1,
 	    name) != 0) {
 		printf("\nCan't alloc %s virtqueue\n", name);
 		goto err;
 	}
 	vp->vp_tx = &sc->sc_vqs[txidx];
-	vp->vp_tx->vq_done = viocon_tx_intr;
 	DPRINTF("%s: tx: %p\n", __func__, vp->vp_tx);
 
 	allocsize = (vp->vp_rx->vq_num + vp->vp_tx->vq_num) * BUFSIZE;

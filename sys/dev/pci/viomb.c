@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.14 2023/03/23 03:27:48 yamaguchi Exp $	*/
+/*	$NetBSD: viomb.c,v 1.15 2023/03/23 03:55:11 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.14 2023/03/23 03:27:48 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.15 2023/03/23 03:55:11 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,17 +163,19 @@ viomb_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_waitlock, MUTEX_DEFAULT, IPL_VM); /* spin */
 	cv_init(&sc->sc_wait, "balloon");
 
-	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQ_INFLATE], 0,
+	virtio_init_vq_vqdone(vsc, &sc->sc_vq[VQ_INFLATE], VQ_INFLATE,
+	    inflateq_done);
+	virtio_init_vq_vqdone(vsc, &sc->sc_vq[VQ_DEFLATE], VQ_DEFLATE,
+	    deflateq_done);
+
+	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQ_INFLATE],
 			     sizeof(uint32_t)*PGS_PER_REQ, 1,
 			     "inflate") != 0)
 		goto err_mutex;
-	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQ_DEFLATE], 1,
+	if (virtio_alloc_vq(vsc, &sc->sc_vq[VQ_DEFLATE],
 			     sizeof(uint32_t)*PGS_PER_REQ, 1,
 			     "deflate") != 0)
 		goto err_vq0;
-
-	sc->sc_vq[VQ_INFLATE].vq_done = inflateq_done;
-	sc->sc_vq[VQ_DEFLATE].vq_done = deflateq_done;
 
 	if (bus_dmamap_create(virtio_dmat(vsc), sizeof(uint32_t)*PGS_PER_REQ,
 			      1, sizeof(uint32_t)*PGS_PER_REQ, 0,
@@ -190,7 +192,7 @@ viomb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (virtio_child_attach_finish(vsc, sc->sc_vq, __arraycount(sc->sc_vq),
-	    viomb_config_change, virtio_vq_intr, 0) != 0)
+	    viomb_config_change, 0) != 0)
 		goto err_out;
 
 	if (kthread_create(PRI_IDLE, KTHREAD_MPSAFE, NULL,

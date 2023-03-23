@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.103 2023/03/23 03:27:48 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.104 2023/03/23 03:55:11 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.103 2023/03/23 03:27:48 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.104 2023/03/23 03:55:11 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -596,8 +596,10 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		 * Allocating a virtqueue for control channel
 		 */
 		sc->sc_ctrlq.ctrlq_vq = &sc->sc_vqs[ctrlq_idx];
-		r = virtio_alloc_vq(vsc, ctrlq->ctrlq_vq, ctrlq_idx,
-		    NBPG, 1, "control");
+		virtio_init_vq(vsc, ctrlq->ctrlq_vq, ctrlq_idx,
+		    vioif_ctrl_intr, ctrlq);
+
+		r = virtio_alloc_vq(vsc, ctrlq->ctrlq_vq, NBPG, 1, "control");
 		if (r != 0) {
 			aprint_error_dev(self, "failed to allocate "
 			    "a virtqueue for control channel, error code %d\n",
@@ -606,9 +608,6 @@ vioif_attach(device_t parent, device_t self, void *aux)
 			sc->sc_has_ctrl = false;
 			cv_destroy(&ctrlq->ctrlq_wait);
 			mutex_destroy(&ctrlq->ctrlq_wait_lock);
-		} else {
-			ctrlq->ctrlq_vq->vq_intrhand = vioif_ctrl_intr;
-			ctrlq->ctrlq_vq->vq_intrhand_arg = (void *) ctrlq;
 		}
 	}
 
@@ -623,7 +622,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		goto err;
 
 	r = virtio_child_attach_finish(vsc, sc->sc_vqs, nvqs,
-	    vioif_config_change, virtio_vq_intrhand, req_flags);
+	    vioif_config_change, req_flags);
 	if (r != 0)
 		goto err;
 
@@ -1470,15 +1469,15 @@ vioif_netqueue_init(struct vioif_softc *sc, struct virtio_softc *vsc,
 	    "%s-%s", device_xname(sc->sc_dev), qname);
 
 	mutex_init(&netq->netq_lock, MUTEX_DEFAULT, IPL_NET);
-	r = virtio_alloc_vq(vsc, vq, qid,
+	virtio_init_vq(vsc, vq, qid, params[dir].intrhand, netq);
+
+	r = virtio_alloc_vq(vsc, vq,
 	    params[dir].segsize + sc->sc_hdr_size,
 	    params[dir].nsegs, qname);
 	if (r != 0)
 		goto err;
 	netq->netq_vq = vq;
 
-	netq->netq_vq->vq_intrhand = params[dir].intrhand;
-	netq->netq_vq->vq_intrhand_arg = netq;
 	netq->netq_softint = softint_establish(softint_flags,
 	    params[dir].sihand, netq);
 	if (netq->netq_softint == NULL) {
@@ -1534,8 +1533,6 @@ err:
 		softint_disestablish(netq->netq_softint);
 		netq->netq_softint = NULL;
 	}
-	netq->netq_vq->vq_intrhand = NULL;
-	netq->netq_vq->vq_intrhand_arg = NULL;
 
 	virtio_free_vq(vsc, vq);
 	mutex_destroy(&netq->netq_lock);

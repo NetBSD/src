@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.66 2023/03/23 03:27:48 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.67 2023/03/23 03:55:11 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.66 2023/03/23 03:27:48 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.67 2023/03/23 03:55:11 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,8 @@ static const char *virtio_device_name[] = {
 };
 #define NDEVNAMES	__arraycount(virtio_device_name)
 
-static void	virtio_init_vq(struct virtio_softc *,
-		    struct virtqueue *, const bool);
+static void	virtio_reset_vq(struct virtio_softc *,
+		    struct virtqueue *);
 
 void
 virtio_set_status(struct virtio_softc *sc, int status)
@@ -108,7 +108,7 @@ virtio_reinit_start(struct virtio_softc *sc)
 			    device_xname(sc->sc_dev),
 			    vq->vq_index);
 		}
-		virtio_init_vq(sc, vq, true);
+		virtio_reset_vq(sc, vq);
 		sc->sc_ops->setup_queue(sc, vq->vq_index,
 		    vq->vq_dmamap->dm_segs[0].ds_addr);
 	}
@@ -434,6 +434,31 @@ virtio_soft_intr(void *arg)
 	(*sc->sc_intrhand)(sc);
 }
 
+/* set to vq->vq_intrhand in virtio_init_vq_vqdone() */
+static int
+virtio_vq_done(void *xvq)
+{
+	struct virtqueue *vq = xvq;
+
+	return vq->vq_done(vq);
+}
+
+static int
+virtio_vq_intr(struct virtio_softc *sc)
+{
+	struct virtqueue *vq;
+	int i, r = 0;
+
+	for (i = 0; i < sc->sc_nvqs; i++) {
+		vq = &sc->sc_vqs[i];
+		if (virtio_vq_is_enqueued(sc, vq) == 1) {
+			r |= (*vq->vq_intrhand)(vq->vq_intrhand_arg);
+		}
+	}
+
+	return r;
+}
+
 /*
  * dmamap sync operations for a virtqueue.
  */
@@ -564,44 +589,6 @@ virtio_vq_is_enqueued(struct virtio_softc *sc, struct virtqueue *vq)
 }
 
 /*
- * Scan vq, bus_dmamap_sync for the vqs (not for the payload),
- * and calls (*vq_done)() if some entries are consumed.
- *
- * Can be used as sc_intrhand.
- */
-int
-virtio_vq_intr(struct virtio_softc *sc)
-{
-	struct virtqueue *vq;
-	int i, r = 0;
-
-	for (i = 0; i < sc->sc_nvqs; i++) {
-		vq = &sc->sc_vqs[i];
-		if (virtio_vq_is_enqueued(sc, vq) == 1) {
-			if (vq->vq_done)
-				r |= (*vq->vq_done)(vq);
-		}
-	}
-
-	return r;
-}
-
-int
-virtio_vq_intrhand(struct virtio_softc *sc)
-{
-	struct virtqueue *vq;
-	int i, r = 0;
-
-	for (i = 0; i < sc->sc_nvqs; i++) {
-		vq = &sc->sc_vqs[i];
-		r |= (*vq->vq_intrhand)(vq->vq_intrhand_arg);
-	}
-
-	return r;
-}
-
-
-/*
  * Increase the event index in order to delay interrupts.
  */
 int
@@ -707,9 +694,11 @@ virtio_start_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 /*
  * Initialize vq structure.
  */
+/*
+ * Reset virtqueue parameters
+ */
 static void
-virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq,
-    const bool reinit)
+virtio_reset_vq(struct virtio_softc *sc, struct virtqueue *vq)
 {
 	int i, j;
 	int vq_size = vq->vq_num;
@@ -736,56 +725,75 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq,
 		    qe_list);
 		vq->vq_entries[i].qe_index = i;
 	}
-	if (!reinit)
-		mutex_init(&vq->vq_freelist_lock, MUTEX_SPIN, sc->sc_ipl);
 
 	/* enqueue/dequeue status */
 	vq->vq_avail_idx = 0;
 	vq->vq_used_idx = 0;
 	vq->vq_queued = 0;
-	if (!reinit) {
-		mutex_init(&vq->vq_aring_lock, MUTEX_SPIN, sc->sc_ipl);
-		mutex_init(&vq->vq_uring_lock, MUTEX_SPIN, sc->sc_ipl);
-	}
 	vq_sync_uring_all(sc, vq, BUS_DMASYNC_PREREAD);
 	vq->vq_queued++;
+}
+
+/* Initialize vq */
+void
+virtio_init_vq_vqdone(struct virtio_softc *sc, struct virtqueue *vq,
+    int index, int (*vq_done)(struct virtqueue *))
+{
+
+	virtio_init_vq(sc, vq, index, virtio_vq_done, vq);
+	vq->vq_done = vq_done;
+}
+
+void
+virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
+   int (*intrhand)(void *), void *arg)
+{
+
+	memset(vq, 0, sizeof(*vq));
+
+	vq->vq_owner = sc;
+	vq->vq_num = sc->sc_ops->read_queue_size(sc, index);
+	vq->vq_index = index;
+	vq->vq_intrhand = intrhand;
+	vq->vq_intrhand_arg = arg;
 }
 
 /*
  * Allocate/free a vq.
  */
 int
-virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
+virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq,
     int maxsegsize, int maxnsegs, const char *name)
 {
-	int vq_size, allocsize1, allocsize2, allocsize3, allocsize = 0;
+	bus_size_t size_desc, size_avail, size_used, size_indirect;
+	bus_size_t allocsize = 0, size_desc_avail;
 	int rsegs, r, hdrlen;
+	unsigned int vq_num;
 #define VIRTQUEUE_ALIGN(n)	roundup(n, VIRTIO_PAGE_SIZE)
 
-	memset(vq, 0, sizeof(*vq));
+	vq_num = vq->vq_num;
 
-	vq_size = sc->sc_ops->read_queue_size(sc, index);
-	if (vq_size == 0) {
+	if (vq_num == 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "virtqueue not exist, index %d for %s\n",
-		    index, name);
+		    vq->vq_index, name);
 		goto err;
 	}
 
 	hdrlen = sc->sc_active_features & VIRTIO_F_RING_EVENT_IDX ? 3 : 2;
 
-	/* allocsize1: descriptor table + avail ring + pad */
-	allocsize1 = VIRTQUEUE_ALIGN(sizeof(struct vring_desc) * vq_size
-	    + sizeof(uint16_t) * (hdrlen + vq_size));
-	/* allocsize2: used ring + pad */
-	allocsize2 = VIRTQUEUE_ALIGN(sizeof(uint16_t) * hdrlen
-	    + sizeof(struct vring_used_elem) * vq_size);
-	/* allocsize3: indirect table */
-	if (sc->sc_indirect && maxnsegs >= MINSEG_INDIRECT)
-		allocsize3 = sizeof(struct vring_desc) * maxnsegs * vq_size;
-	else
-		allocsize3 = 0;
-	allocsize = allocsize1 + allocsize2 + allocsize3;
+	size_desc = sizeof(vq->vq_desc[0]) * vq_num;
+	size_avail = sizeof(uint16_t) * hdrlen
+	    + sizeof(vq->vq_avail[0].ring) * vq_num;
+	size_used = sizeof(uint16_t) *hdrlen
+	    + sizeof(vq->vq_used[0].ring) * vq_num;
+	size_indirect = (sc->sc_indirect && maxnsegs >= MINSEG_INDIRECT) ?
+	    sizeof(struct vring_desc) * maxnsegs * vq_num : 0;
+
+	size_desc_avail = VIRTQUEUE_ALIGN(size_desc + size_avail);
+	size_used = VIRTQUEUE_ALIGN(size_used);
+
+	allocsize = size_desc_avail + size_used + size_indirect;
 
 	/* alloc and map the memory */
 	r = bus_dmamem_alloc(sc->sc_dmat, allocsize, VIRTIO_PAGE_SIZE, 0,
@@ -793,78 +801,86 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "virtqueue %d for %s allocation failed, "
-		    "error code %d\n", index, name, r);
+		    "error code %d\n", vq->vq_index, name, r);
 		goto err;
 	}
+
 	r = bus_dmamem_map(sc->sc_dmat, &vq->vq_segs[0], rsegs, allocsize,
 	    &vq->vq_vaddr, BUS_DMA_WAITOK);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "virtqueue %d for %s map failed, "
-		    "error code %d\n", index, name, r);
+		    "error code %d\n", vq->vq_index, name, r);
 		goto err;
 	}
+
 	r = bus_dmamap_create(sc->sc_dmat, allocsize, 1, allocsize, 0,
 	    BUS_DMA_WAITOK, &vq->vq_dmamap);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "virtqueue %d for %s dmamap creation failed, "
-		    "error code %d\n", index, name, r);
+		    "error code %d\n", vq->vq_index, name, r);
 		goto err;
 	}
+
 	r = bus_dmamap_load(sc->sc_dmat, vq->vq_dmamap,
 	    vq->vq_vaddr, allocsize, NULL, BUS_DMA_WAITOK);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "virtqueue %d for %s dmamap load failed, "
-		    "error code %d\n", index, name, r);
+		    "error code %d\n", vq->vq_index, name, r);
 		goto err;
 	}
 
-	/* remember addresses and offsets for later use */
-	vq->vq_owner = sc;
-	vq->vq_num = vq_size;
-	vq->vq_index = index;
-	vq->vq_desc = vq->vq_vaddr;
-	vq->vq_availoffset = sizeof(struct vring_desc) * vq_size;
-	vq->vq_avail = (void *)(((char *)vq->vq_desc) + vq->vq_availoffset);
-	vq->vq_used_event = (uint16_t *)((char *)vq->vq_avail +
-	    offsetof(struct vring_avail, ring[vq->vq_num]));
-	vq->vq_usedoffset = allocsize1;
-	vq->vq_used = (void *)(((char *)vq->vq_desc) + vq->vq_usedoffset);
-	vq->vq_avail_event = (uint16_t *)((char *)vq->vq_used +
-	    offsetof(struct vring_used, ring[vq->vq_num]));
-
-	if (allocsize3 > 0) {
-		vq->vq_indirectoffset = allocsize1 + allocsize2;
-		vq->vq_indirect = (void *)(((char *)vq->vq_desc)
-		    + vq->vq_indirectoffset);
-	}
 	vq->vq_bytesize = allocsize;
 	vq->vq_maxsegsize = maxsegsize;
 	vq->vq_maxnsegs = maxnsegs;
 
+#define VIRTIO_PTR(base, offset)	(void *)((intptr_t)(base) + (offset))
+	/* initialize vring pointers */
+	vq->vq_desc = VIRTIO_PTR(vq->vq_vaddr, 0);
+	vq->vq_availoffset = size_desc;
+	vq->vq_avail = VIRTIO_PTR(vq->vq_vaddr, vq->vq_availoffset);
+	vq->vq_used_event = VIRTIO_PTR(vq->vq_avail,
+	    offsetof(struct vring_avail, ring[vq_num]));
+	vq->vq_usedoffset = size_desc_avail;
+	vq->vq_used = VIRTIO_PTR(vq->vq_vaddr, vq->vq_usedoffset);
+	vq->vq_avail_event = VIRTIO_PTR(vq->vq_used,
+	    offsetof(struct vring_used, ring[vq_num]));
+
+	if (size_indirect > 0) {
+		vq->vq_indirectoffset = size_desc_avail + size_used;
+		vq->vq_indirect = VIRTIO_PTR(vq->vq_vaddr,
+		    vq->vq_indirectoffset);
+	}
+#undef VIRTIO_PTR
+
 	/* free slot management */
-	vq->vq_entries = kmem_zalloc(sizeof(struct vq_entry) * vq_size,
+	vq->vq_entries = kmem_zalloc(sizeof(struct vq_entry) * vq_num,
 	    KM_SLEEP);
-	virtio_init_vq(sc, vq, false);
+
+	mutex_init(&vq->vq_freelist_lock, MUTEX_SPIN, sc->sc_ipl);
+	mutex_init(&vq->vq_aring_lock, MUTEX_SPIN, sc->sc_ipl);
+	mutex_init(&vq->vq_uring_lock, MUTEX_SPIN, sc->sc_ipl);
+
+	virtio_reset_vq(sc, vq);
 
 	/* set the vq address */
-	sc->sc_ops->setup_queue(sc, index,
+	sc->sc_ops->setup_queue(sc, vq->vq_index,
 	    vq->vq_dmamap->dm_segs[0].ds_addr);
 
 	aprint_verbose_dev(sc->sc_dev,
-	    "allocated %u byte for virtqueue %d for %s, size %d\n",
-	    allocsize, index, name, vq_size);
-	if (allocsize3 > 0)
+	    "allocated %zu byte for virtqueue %d for %s, size %d\n",
+	    allocsize, vq->vq_index, name, vq_num);
+	if (size_indirect > 0)
 		aprint_verbose_dev(sc->sc_dev,
-		    "using %d byte (%d entries) indirect descriptors\n",
-		    allocsize3, maxnsegs * vq_size);
+		    "using %zu byte (%d entries) indirect descriptors\n",
+		    size_indirect, maxnsegs * vq_num);
 
 	return 0;
 
 err:
-	sc->sc_ops->setup_queue(sc, index, 0);
+	sc->sc_ops->setup_queue(sc, vq->vq_index, 0);
 	if (vq->vq_dmamap)
 		bus_dmamap_destroy(sc->sc_dmat, vq->vq_dmamap);
 	if (vq->vq_vaddr)
@@ -1279,7 +1295,7 @@ virtio_child_attach_start(struct virtio_softc *sc, device_t child, int ipl,
 int
 virtio_child_attach_finish(struct virtio_softc *sc,
     struct virtqueue *vqs, size_t nvqs,
-    virtio_callback config_change, virtio_callback intr_hand,
+    virtio_callback config_change,
     int req_flags)
 {
 	int r;
@@ -1292,8 +1308,9 @@ virtio_child_attach_finish(struct virtio_softc *sc,
 
 	for (size_t _i = 0; _i < nvqs; _i++){
 		KASSERT(vqs[_i].vq_index == _i);
-		KASSERT((req_flags & VIRTIO_F_INTR_PERVQ) == 0 ||
-		    vqs[_i].vq_intrhand != NULL);
+		KASSERT(vqs[_i].vq_intrhand != NULL);
+		KASSERT(vqs[_i].vq_done == NULL ||
+		    vqs[_i].vq_intrhand == virtio_vq_done);
 	}
 #endif
 
@@ -1302,7 +1319,7 @@ virtio_child_attach_finish(struct virtio_softc *sc,
 	sc->sc_vqs = vqs;
 	sc->sc_nvqs = nvqs;
 	sc->sc_config_change = config_change;
-	sc->sc_intrhand = intr_hand;
+	sc->sc_intrhand = virtio_vq_intr;
 	sc->sc_flags = req_flags;
 
 	r = sc->sc_ops->alloc_interrupts(sc);
