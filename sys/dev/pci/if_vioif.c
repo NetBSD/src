@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.87 2023/03/23 01:36:50 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.88 2023/03/23 01:39:52 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.87 2023/03/23 01:36:50 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.88 2023/03/23 01:39:52 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -705,7 +705,7 @@ vioif_alloc_mems(struct vioif_softc *sc)
 				goto err_reqs;
 
 			r = vioif_dmamap_create(sc, &rxq->rxq_dmamaps[i],
-			    MCLBYTES, 1, "rx payload");
+			    MCLBYTES - ETHER_ALIGN, 1, "rx payload");
 			if (r != 0)
 				goto err_reqs;
 		}
@@ -1535,8 +1535,10 @@ vioif_add_rx_mbuf(struct vioif_rxqueue *rxq, int i)
 		m_freem(m);
 		return ENOBUFS;
 	}
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
+	m_adj(m, ETHER_ALIGN);
+
 	rxq->rxq_mbufs[i] = m;
-	m->m_len = m->m_pkthdr.len = m->m_ext.ext_size;
 	r = bus_dmamap_load_mbuf(virtio_dmat(vsc),
 	    rxq->rxq_dmamaps[i], m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 	if (r) {
@@ -1595,7 +1597,7 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_rxqueue *rxq
 		bus_dmamap_sync(virtio_dmat(vsc), rxq->rxq_hdr_dmamaps[slot],
 		    0, sc->sc_hdr_size, BUS_DMASYNC_PREREAD);
 		bus_dmamap_sync(virtio_dmat(vsc), rxq->rxq_dmamaps[slot],
-		    0, MCLBYTES, BUS_DMASYNC_PREREAD);
+		    0, rxq->rxq_dmamaps[slot]->dm_mapsize, BUS_DMASYNC_PREREAD);
 		virtio_enqueue(vsc, vq, slot, rxq->rxq_hdr_dmamaps[slot],
 		    false);
 		virtio_enqueue(vsc, vq, slot, rxq->rxq_dmamaps[slot], false);
@@ -1657,7 +1659,7 @@ vioif_rx_deq_locked(struct vioif_softc *sc, struct virtio_softc *vsc,
 		bus_dmamap_sync(virtio_dmat(vsc), rxq->rxq_hdr_dmamaps[slot],
 		    0, sc->sc_hdr_size, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_sync(virtio_dmat(vsc), rxq->rxq_dmamaps[slot],
-		    0, MCLBYTES, BUS_DMASYNC_POSTREAD);
+		    0, rxq->rxq_dmamaps[slot]->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		m = rxq->rxq_mbufs[slot];
 		KASSERT(m != NULL);
 		bus_dmamap_unload(virtio_dmat(vsc), rxq->rxq_dmamaps[slot]);
