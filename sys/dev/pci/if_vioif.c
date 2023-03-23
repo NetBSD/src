@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.92 2023/03/23 01:58:04 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.93 2023/03/23 02:03:01 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.92 2023/03/23 01:58:04 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.93 2023/03/23 02:03:01 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -374,24 +374,24 @@ static int	vioif_ifflags_cb(struct ethercom *);
 /* rx */
 static void	vioif_populate_rx_mbufs_locked(struct vioif_softc *,
 		    struct vioif_rxqueue *);
-static void	vioif_rx_queue_clear(struct vioif_rxqueue *);
+static void	vioif_rx_queue_clear(struct vioif_softc *, struct virtio_softc *,
+		    struct vioif_rxqueue *);
 static bool	vioif_rx_deq_locked(struct vioif_softc *, struct virtio_softc *,
 		    struct vioif_rxqueue *, u_int, size_t *);
 static int	vioif_rx_intr(void *);
 static void	vioif_rx_handle(void *);
 static void	vioif_rx_sched_handle(struct vioif_softc *,
 		    struct vioif_rxqueue *);
-static void	vioif_rx_drain(struct vioif_rxqueue *);
 
 /* tx */
 static int	vioif_tx_intr(void *);
 static void	vioif_tx_handle(void *);
 static void	vioif_tx_sched_handle(struct vioif_softc *,
 		    struct vioif_txqueue *);
-static void	vioif_tx_queue_clear(struct vioif_txqueue *);
+static void	vioif_tx_queue_clear(struct vioif_softc *, struct virtio_softc *,
+		    struct vioif_txqueue *);
 static bool	vioif_tx_deq_locked(struct vioif_softc *, struct virtio_softc *,
 		    struct vioif_txqueue *, u_int);
-static void	vioif_tx_drain(struct vioif_txqueue *);
 static void	vioif_deferred_transmit(void *);
 
 /* workqueue */
@@ -1262,8 +1262,8 @@ vioif_stop(struct ifnet *ifp, int disable)
 	}
 
 	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
-		vioif_rx_queue_clear(&sc->sc_rxq[i]);
-		vioif_tx_queue_clear(&sc->sc_txq[i]);
+		vioif_rx_queue_clear(sc, vsc, &sc->sc_rxq[i]);
+		vioif_tx_queue_clear(sc, vsc, &sc->sc_txq[i]);
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
@@ -1282,14 +1282,6 @@ vioif_stop(struct ifnet *ifp, int disable)
 		txq->txq_stopping = false;
 		KASSERT(!txq->txq_running_handle);
 		mutex_exit(txq->txq_lock);
-	}
-
-	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
-		txq = &sc->sc_txq[i];
-		rxq = &sc->sc_rxq[i];
-
-		vioif_rx_drain(rxq);
-		vioif_tx_drain(txq);
 	}
 }
 
@@ -1505,11 +1497,19 @@ void
 vioif_watchdog(struct ifnet *ifp)
 {
 	struct vioif_softc *sc = ifp->if_softc;
+	struct vioif_txqueue *txq;
 	int i;
 
 	if (ifp->if_flags & IFF_RUNNING) {
 		for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
-			vioif_tx_queue_clear(&sc->sc_txq[i]);
+			txq = &sc->sc_txq[i];
+
+			mutex_enter(txq->txq_lock);
+			if (!txq->txq_running_handle) {
+				txq->txq_running_handle = true;
+				vioif_tx_sched_handle(sc, txq);
+			}
+			mutex_exit(txq->txq_lock);
 		}
 	}
 }
@@ -1589,19 +1589,30 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_rxqueue *rxq
 }
 
 static void
-vioif_rx_queue_clear(struct vioif_rxqueue *rxq)
+vioif_rx_queue_clear(struct vioif_softc *sc, struct virtio_softc *vsc,
+    struct vioif_rxqueue *rxq)
 {
-	struct virtqueue *vq = rxq->rxq_vq;
-	struct virtio_softc *vsc = vq->vq_owner;
-	struct vioif_softc *sc = device_private(virtio_child(vsc));
-	u_int limit = UINT_MAX;
+	struct mbuf *m;
+	unsigned int i, vq_num;
 	bool more;
 
 	mutex_enter(rxq->rxq_lock);
+	vq_num = rxq->rxq_vq->vq_num;
+
 	for (;;) {
-		more = vioif_rx_deq_locked(sc, vsc, rxq, limit, NULL);
+		more = vioif_rx_deq_locked(sc, vsc, rxq, vq_num, NULL);
 		if (more == false)
 			break;
+	}
+
+	for (i = 0; i < vq_num; i++) {
+		m = rxq->rxq_mbufs[i];
+		if (m == NULL)
+			continue;
+		rxq->rxq_mbufs[i] = NULL;
+
+		bus_dmamap_unload(virtio_dmat(vsc), rxq->rxq_dmamaps[i]);
+		m_freem(m);
 	}
 	mutex_exit(rxq->rxq_lock);
 }
@@ -1764,25 +1775,6 @@ vioif_rx_sched_handle(struct vioif_softc *sc, struct vioif_rxqueue *rxq)
 		softint_schedule(rxq->rxq_handle_si);
 }
 
-/* free all the mbufs; called from if_stop(disable) */
-static void
-vioif_rx_drain(struct vioif_rxqueue *rxq)
-{
-	struct virtqueue *vq = rxq->rxq_vq;
-	struct virtio_softc *vsc = vq->vq_owner;
-	struct mbuf *m;
-	int i;
-
-	for (i = 0; i < vq->vq_num; i++) {
-		m = rxq->rxq_mbufs[i];
-		if (m == NULL)
-			continue;
-		rxq->rxq_mbufs[i] = NULL;
-		bus_dmamap_unload(virtio_dmat(vsc), rxq->rxq_dmamaps[i]);
-		m_freem(m);
-	}
-}
-
 /*
  * Transmition implementation
  */
@@ -1904,19 +1896,30 @@ vioif_tx_sched_handle(struct vioif_softc *sc, struct vioif_txqueue *txq)
 }
 
 static void
-vioif_tx_queue_clear(struct vioif_txqueue *txq)
+vioif_tx_queue_clear(struct vioif_softc *sc, struct virtio_softc *vsc,
+    struct vioif_txqueue *txq)
 {
-	struct virtqueue *vq = txq->txq_vq;
-	struct virtio_softc *vsc = vq->vq_owner;
-	struct vioif_softc *sc = device_private(virtio_child(vsc));
-	u_int limit = UINT_MAX;
+	struct mbuf *m;
+	unsigned int i, vq_num;
 	bool more;
 
 	mutex_enter(txq->txq_lock);
+
+	vq_num = txq->txq_vq->vq_num;
 	for (;;) {
-		more = vioif_tx_deq_locked(sc, vsc, txq, limit);
+		more = vioif_tx_deq_locked(sc, vsc, txq, vq_num);
 		if (more == false)
 			break;
+	}
+
+	for (i = 0; i < vq_num; i++) {
+		m = txq->txq_mbufs[i];
+		if (m == NULL)
+			continue;
+		txq->txq_mbufs[i] = NULL;
+
+		bus_dmamap_unload(virtio_dmat(vsc), txq->txq_dmamaps[i]);
+		m_freem(m);
 	}
 	mutex_exit(txq->txq_lock);
 }
@@ -1959,23 +1962,6 @@ vioif_tx_deq_locked(struct vioif_softc *sc, struct virtio_softc *vsc,
 	}
 
 	return more;
-}
-
-/* free all the mbufs already put on vq; called from if_stop(disable) */
-static void
-vioif_tx_drain(struct vioif_txqueue *txq)
-{
-	struct virtqueue *vq = txq->txq_vq;
-	struct virtio_softc *vsc = vq->vq_owner;
-	int i;
-
-	for (i = 0; i < vq->vq_num; i++) {
-		if (txq->txq_mbufs[i] == NULL)
-			continue;
-		bus_dmamap_unload(virtio_dmat(vsc), txq->txq_dmamaps[i]);
-		m_freem(txq->txq_mbufs[i]);
-		txq->txq_mbufs[i] = NULL;
-	}
 }
 
 /*
