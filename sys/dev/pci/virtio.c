@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.65 2023/01/03 19:33:31 jakllsch Exp $	*/
+/*	$NetBSD: virtio.c,v 1.66 2023/03/23 03:27:48 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.65 2023/01/03 19:33:31 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.66 2023/03/23 03:27:48 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,9 +762,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	int rsegs, r, hdrlen;
 #define VIRTQUEUE_ALIGN(n)	roundup(n, VIRTIO_PAGE_SIZE)
 
-	/* Make sure callers allocate vqs in order */
-	KASSERT(sc->sc_nvqs == index);
-
 	memset(vq, 0, sizeof(*vq));
 
 	vq_size = sc->sc_ops->read_queue_size(sc, index);
@@ -864,8 +861,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 		    "using %d byte (%d entries) indirect descriptors\n",
 		    allocsize3, maxnsegs * vq_size);
 
-	sc->sc_nvqs++;
-
 	return 0;
 
 err:
@@ -912,8 +907,6 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 	mutex_destroy(&vq->vq_uring_lock);
 	mutex_destroy(&vq->vq_aring_lock);
 	memset(vq, 0, sizeof(*vq));
-
-	sc->sc_nvqs--;
 
 	return 0;
 }
@@ -1270,19 +1263,12 @@ virtio_dequeue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot)
  */
 void
 virtio_child_attach_start(struct virtio_softc *sc, device_t child, int ipl,
-    struct virtqueue *vqs,
-    virtio_callback config_change,
-    virtio_callback intr_hand,
-    int req_flags, int req_features, const char *feat_bits)
+    uint64_t req_features, const char *feat_bits)
 {
 	char buf[1024];
 
 	sc->sc_child = child;
 	sc->sc_ipl = ipl;
-	sc->sc_vqs = vqs;
-	sc->sc_config_change = config_change;
-	sc->sc_intrhand = intr_hand;
-	sc->sc_flags = req_flags;
 
 	virtio_negotiate_features(sc, req_features);
 	snprintb(buf, sizeof(buf), feat_bits, sc->sc_active_features);
@@ -1290,25 +1276,35 @@ virtio_child_attach_start(struct virtio_softc *sc, device_t child, int ipl,
 	aprint_naive("\n");
 }
 
-void
-virtio_child_attach_set_vqs(struct virtio_softc *sc,
-    struct virtqueue *vqs, int nvq_pairs)
-{
-
-	KASSERT(nvq_pairs == 1 ||
-	    (sc->sc_flags & VIRTIO_F_INTR_SOFTINT) == 0);
-	if (nvq_pairs > 1)
-		sc->sc_child_mq = true;
-
-	sc->sc_vqs = vqs;
-}
-
 int
-virtio_child_attach_finish(struct virtio_softc *sc)
+virtio_child_attach_finish(struct virtio_softc *sc,
+    struct virtqueue *vqs, size_t nvqs,
+    virtio_callback config_change, virtio_callback intr_hand,
+    int req_flags)
 {
 	int r;
 
+#ifdef DIAGNOSTIC
+	KASSERT(nvqs > 0);
+#define VIRTIO_ASSERT_FLAGS	(VIRTIO_F_INTR_SOFTINT | VIRTIO_F_INTR_PERVQ)
+	KASSERT((req_flags & VIRTIO_ASSERT_FLAGS) != VIRTIO_ASSERT_FLAGS);
+#undef VIRTIO_ASSERT_FLAGS
+
+	for (size_t _i = 0; _i < nvqs; _i++){
+		KASSERT(vqs[_i].vq_index == _i);
+		KASSERT((req_flags & VIRTIO_F_INTR_PERVQ) == 0 ||
+		    vqs[_i].vq_intrhand != NULL);
+	}
+#endif
+
 	sc->sc_finished_called = true;
+
+	sc->sc_vqs = vqs;
+	sc->sc_nvqs = nvqs;
+	sc->sc_config_change = config_change;
+	sc->sc_intrhand = intr_hand;
+	sc->sc_flags = req_flags;
+
 	r = sc->sc_ops->alloc_interrupts(sc);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,

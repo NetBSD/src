@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.24 2022/03/24 08:08:05 andvar Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.25 2023/03/23 03:27:48 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -171,7 +171,6 @@ struct virtio_softc {
 
 	int			sc_childdevid;
 	device_t		sc_child; 		/* set by child */
-	bool			sc_child_mq;
 	virtio_callback		sc_config_change; 	/* set by child */
 	virtio_callback		sc_intrhand;		/* set by child */
 };
@@ -184,6 +183,7 @@ struct virtio_softc;
 #define VIRTIO_F_INTR_MPSAFE	(1 << 0)
 #define VIRTIO_F_INTR_SOFTINT	(1 << 1)
 #define VIRTIO_F_INTR_MSIX	(1 << 2)
+#define VIRTIO_F_INTR_PERVQ	(1 << 3)
 
 
 #define	VIRTIO_CHILD_FAILED		((void *)1)
@@ -211,12 +211,10 @@ void virtio_reset(struct virtio_softc *);
 int virtio_reinit_start(struct virtio_softc *);
 void virtio_reinit_end(struct virtio_softc *);
 void virtio_child_attach_start(struct virtio_softc *, device_t, int,
-                    struct virtqueue *,
-                    virtio_callback, virtio_callback, int,
-		    int, const char *);
-void virtio_child_attach_set_vqs(struct virtio_softc *,
-                    struct virtqueue *, int);
-int virtio_child_attach_finish(struct virtio_softc *);
+		    uint64_t, const char *);
+int virtio_child_attach_finish(struct virtio_softc *,
+		    struct virtqueue *, size_t,
+		    virtio_callback, virtio_callback, int);
 void virtio_child_attach_failed(struct virtio_softc *);
 void virtio_child_detach(struct virtio_softc *);
 
