@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.96 2023/03/23 02:30:14 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.97 2023/03/23 02:33:34 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.96 2023/03/23 02:30:14 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.97 2023/03/23 02:33:34 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1532,7 +1532,7 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_rxqueue *rxq
 		r = virtio_enqueue_prep(vsc, vq, &slot);
 		if (r == EAGAIN)
 			break;
-		if (r != 0)
+		if (__predict_false(r != 0))
 			panic("enqueue_prep for rx buffers");
 
 		map = &rxq->rxq_maps[slot];
