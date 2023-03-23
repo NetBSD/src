@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.175 2019/02/25 06:49:44 maxv Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.175.4.1 2023/03/23 12:06:49 martin Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.175 2019/02/25 06:49:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.175.4.1 2023/03/23 12:06:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -204,7 +204,16 @@ rip6_input(struct mbuf **mp, int *offp, int proto)
 			continue;
 		if (in6p->in6p_cksum != -1) {
 			RIP6_STATINC(RIP6_STAT_ISUM);
-			if (in6_cksum(m, proto, *offp,
+			/*
+			 * Although in6_cksum() does not need the position of
+			 * the checksum field for verification, enforce that it
+			 * is located within the packet.  Userland has given
+			 * a checksum offset, a packet too short for that is
+			 * invalid.  Avoid overflow with user supplied offset.
+			 */
+			if (m->m_pkthdr.len < *offp + 2 ||
+			    m->m_pkthdr.len - *offp - 2 < in6p->in6p_cksum ||
+			    in6_cksum(m, proto, *offp,
 			    m->m_pkthdr.len - *offp)) {
 				RIP6_STATINC(RIP6_STAT_BADSUM);
 				continue;
@@ -472,7 +481,7 @@ rip6_output(struct mbuf *m, struct socket * const so,
 			off = offsetof(struct icmp6_hdr, icmp6_cksum);
 		else
 			off = in6p->in6p_cksum;
-		if (plen < off + 1) {
+		if (plen < 2 || plen - 2 < off) {
 			error = EINVAL;
 			goto bad;
 		}
