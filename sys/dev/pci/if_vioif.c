@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.90 2023/03/23 01:46:30 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.91 2023/03/23 01:52:42 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.90 2023/03/23 01:46:30 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.91 2023/03/23 01:52:42 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1288,9 +1288,7 @@ vioif_stop(struct ifnet *ifp, int disable)
 		txq = &sc->sc_txq[i];
 		rxq = &sc->sc_rxq[i];
 
-		if (disable)
-			vioif_rx_drain(rxq);
-
+		vioif_rx_drain(rxq);
 		vioif_tx_drain(txq);
 	}
 }
@@ -1541,36 +1539,31 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_rxqueue *rxq
 		if (r != 0)
 			panic("enqueue_prep for rx buffers");
 
-		m = rxq->rxq_mbufs[slot];
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
-			MGETHDR(m, M_DONTWAIT, MT_DATA);
-			if (m == NULL) {
-				virtio_enqueue_abort(vsc, vq, slot);
-				rxq->rxq_mbuf_enobufs.ev_count++;
-				break;
-			}
-			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0) {
-				virtio_enqueue_abort(vsc, vq, slot);
-				m_freem(m);
-				rxq->rxq_mbuf_enobufs.ev_count++;
-				break;
-			}
+			virtio_enqueue_abort(vsc, vq, slot);
+			rxq->rxq_mbuf_enobufs.ev_count++;
+			break;
+		}
+		MCLGET(m, M_DONTWAIT);
+		if ((m->m_flags & M_EXT) == 0) {
+			virtio_enqueue_abort(vsc, vq, slot);
+			m_freem(m);
+			rxq->rxq_mbuf_enobufs.ev_count++;
+			break;
+		}
 
-			m->m_len = m->m_pkthdr.len = MCLBYTES;
-			m_adj(m, ETHER_ALIGN);
+		m->m_len = m->m_pkthdr.len = MCLBYTES;
+		m_adj(m, ETHER_ALIGN);
 
-			r = bus_dmamap_load_mbuf(virtio_dmat(vsc),
-			    rxq->rxq_dmamaps[slot], m, BUS_DMA_READ | BUS_DMA_NOWAIT);
+		r = bus_dmamap_load_mbuf(virtio_dmat(vsc),
+		    rxq->rxq_dmamaps[slot], m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 
-			if (r != 0) {
-				virtio_enqueue_abort(vsc, vq, slot);
-				m_freem(m);
-				rxq->rxq_mbuf_load_failed.ev_count++;
-				break;
-			}
-		} else {
-			rxq->rxq_mbufs[slot] = NULL;
+		if (r != 0) {
+			virtio_enqueue_abort(vsc, vq, slot);
+			m_freem(m);
+			rxq->rxq_mbuf_load_failed.ev_count++;
+			break;
 		}
 
 		r = virtio_enqueue_reserve(vsc, vq, slot,
@@ -1582,6 +1575,7 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_rxqueue *rxq
 			/* slot already freed by virtio_enqueue_reserve */
 			break;
 		}
+		KASSERT(rxq->rxq_mbufs[slot] == NULL);
 		rxq->rxq_mbufs[slot] = m;
 		bus_dmamap_sync(virtio_dmat(vsc), rxq->rxq_hdr_dmamaps[slot],
 		    0, sc->sc_hdr_size, BUS_DMASYNC_PREREAD);
