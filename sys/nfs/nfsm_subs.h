@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.56 2023/03/23 19:52:33 riastradh Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.57 2023/03/23 19:52:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -366,7 +366,7 @@
 
 #define	nfsm_strsiz(s,m) \
 		{ nfsm_dissect(tl,uint32_t *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(uint32_t,*tl)) > (m)) { \
+		if ((uint32_t)((s) = fxdr_unsigned(uint32_t,*tl)) > (m)) { \
 			m_freem(mrep); \
 			error = EBADRPC; \
 			goto nfsmout; \
@@ -374,7 +374,8 @@
 
 #define	nfsm_srvnamesiz(s) \
 		{ nfsm_dissect(tl,uint32_t *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(uint32_t,*tl)) > NFS_MAXNAMLEN) \
+		if ((uint32_t)((s) = fxdr_unsigned(uint32_t,*tl)) > \
+		    NFS_MAXNAMLEN) \
 			error = NFSERR_NAMETOL; \
 		if (error) \
 			nfsm_reply(0); \
