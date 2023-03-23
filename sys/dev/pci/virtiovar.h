@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.25 2023/03/23 03:27:48 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.26 2023/03/23 03:55:11 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -118,7 +118,7 @@ struct virtqueue {
 	kmutex_t		vq_uring_lock;
 
 	/* interrupt handler */
-	int			(*vq_done)(struct virtqueue*);
+	int			(*vq_done)(struct virtqueue*); /* for compatibility */
 	int			(*vq_intrhand)(void *);
 	void			*vq_intrhand_arg;
 
@@ -172,7 +172,7 @@ struct virtio_softc {
 	int			sc_childdevid;
 	device_t		sc_child; 		/* set by child */
 	virtio_callback		sc_config_change; 	/* set by child */
-	virtio_callback		sc_intrhand;		/* set by child */
+	virtio_callback		sc_intrhand;
 };
 #else
 struct virtio_softc;
@@ -204,7 +204,11 @@ void virtio_write_device_config_8(struct virtio_softc *, int, uint64_t);
 void virtio_write_device_config_le_2(struct virtio_softc *, int, uint16_t);
 void virtio_write_device_config_le_4(struct virtio_softc *, int, uint32_t);
 
-int virtio_alloc_vq(struct virtio_softc*, struct virtqueue*, int, int, int,
+void virtio_init_vq(struct virtio_softc *, struct virtqueue *, int,
+		    int (*)(void *), void *);
+void virtio_init_vq_vqdone(struct virtio_softc *,struct virtqueue *, int,
+		    int (*)(struct virtqueue *));
+int virtio_alloc_vq(struct virtio_softc*, struct virtqueue*, int, int,
 		    const char*);
 int virtio_free_vq(struct virtio_softc*, struct virtqueue*);
 void virtio_reset(struct virtio_softc *);
@@ -214,7 +218,7 @@ void virtio_child_attach_start(struct virtio_softc *, device_t, int,
 		    uint64_t, const char *);
 int virtio_child_attach_finish(struct virtio_softc *,
 		    struct virtqueue *, size_t,
-		    virtio_callback, virtio_callback, int);
+		    virtio_callback, int);
 void virtio_child_attach_failed(struct virtio_softc *);
 void virtio_child_detach(struct virtio_softc *);
 
@@ -231,8 +235,6 @@ int virtio_dequeue(struct virtio_softc*, struct virtqueue*, int *, int *);
 int virtio_dequeue_commit(struct virtio_softc*, struct virtqueue*, int);
 
 bool virtio_vq_is_enqueued(struct virtio_softc *, struct virtqueue *);
-int virtio_vq_intr(struct virtio_softc *);
-int virtio_vq_intrhand(struct virtio_softc *);
 int virtio_postpone_intr(struct virtio_softc *sc, struct virtqueue *vq,
 		uint16_t nslots);
 int virtio_postpone_intr_smart(struct virtio_softc *sc, struct virtqueue *vq);
