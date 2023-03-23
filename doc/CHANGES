@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2954 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2955 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -62,3 +62,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		in various ports. [riastradh 20230301]
 	sh(1): Adjust tilde expansion to comply with upcoming POSIX
 		Issue 8 requirements. [kre 20230306]
+	tzdata: updated to 2023a (using the 2023agtz fork) [kre 20230323]
