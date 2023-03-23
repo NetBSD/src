@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.95 2023/03/23 02:26:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.96 2023/03/23 02:30:14 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.95 2023/03/23 02:26:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.96 2023/03/23 02:30:14 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1307,24 +1307,21 @@ vioif_send_common_locked(struct ifnet *ifp, struct vioif_txqueue *txq,
 
 	for (;;) {
 		int slot, r;
+		r = virtio_enqueue_prep(vsc, vq, &slot);
+		if (r == EAGAIN)
+			break;
+		if (__predict_false(r != 0))
+			panic("enqueue_prep for tx buffers");
 
 		if (is_transmit)
 			m = pcq_get(txq->txq_intrq);
 		else
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 
-		if (m == NULL)
-			break;
-
-		r = virtio_enqueue_prep(vsc, vq, &slot);
-		if (r == EAGAIN) {
-			ifp->if_flags |= IFF_OACTIVE;
-			m_freem(m);
-			if_statinc(ifp, if_oerrors);
+		if (m == NULL) {
+			virtio_enqueue_abort(vsc, vq, slot);
 			break;
 		}
-		if (r != 0)
-			panic("enqueue_prep for a tx buffer");
 
 		map = &txq->txq_maps[slot];
 		KASSERT(map->vnm_mbuf == NULL);
