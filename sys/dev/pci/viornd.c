@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.18 2022/04/14 19:47:14 riastradh Exp $ */
+/* 	$NetBSD: viornd.c,v 1.19 2023/03/23 03:27:48 yamaguchi Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -176,8 +176,7 @@ viornd_attach(device_t parent, device_t self, void *aux)
 		goto load_failed;
 	}
 
-	virtio_child_attach_start(vsc, self, IPL_NET, &sc->sc_vq,
-	    NULL, virtio_vq_intr, 0,
+	virtio_child_attach_start(vsc, self, IPL_NET,
 	    0, VIRTIO_COMMON_FLAG_BITS);
 
 	error = virtio_alloc_vq(vsc, &sc->sc_vq, 0, VIORND_BUFSIZE, 1,
@@ -189,7 +188,9 @@ viornd_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_vq.vq_done = viornd_vq_done;
 
-	if (virtio_child_attach_finish(vsc) != 0) {
+	error = virtio_child_attach_finish(vsc, &sc->sc_vq, 1,
+	    NULL, virtio_vq_intr, 0);
+	if (error) {
 		virtio_free_vq(vsc, &sc->sc_vq);
 		goto vio_failed;
 	}

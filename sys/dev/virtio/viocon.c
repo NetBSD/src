@@ -1,4 +1,4 @@
-/*	$NetBSD: viocon.c,v 1.5 2022/08/13 17:31:32 riastradh Exp $	*/
+/*	$NetBSD: viocon.c,v 1.6 2023/03/23 03:27:48 yamaguchi Exp $	*/
 /*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.5 2022/08/13 17:31:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.6 2023/03/23 03:27:48 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -209,10 +209,8 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ports = kmem_zalloc(maxports * sizeof(sc->sc_ports[0]),
 	    KM_SLEEP);
 
-	virtio_child_attach_start(vsc, self, IPL_TTY, sc->sc_vqs,
-	    /*config_change*/NULL, virtio_vq_intr,
-	    /*req_flags*/0, /*req_features*/VIRTIO_CONSOLE_F_SIZE,
-	    VIRTIO_CONSOLE_FLAG_BITS);
+	virtio_child_attach_start(vsc, self, IPL_TTY,
+	    /*req_features*/VIRTIO_CONSOLE_F_SIZE, VIRTIO_CONSOLE_FLAG_BITS);
 
 	DPRINTF("%s: softc: %p\n", __func__, sc);
 	if (viocon_port_create(sc, 0) != 0) {
@@ -221,7 +219,8 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	}
 	viocon_rx_fill(sc->sc_ports[0]);
 
-	if (virtio_child_attach_finish(vsc) != 0)
+	if (virtio_child_attach_finish(vsc, sc->sc_vqs, sc->sc_max_ports * 2,
+	    /*config_change*/NULL, virtio_vq_intr, /*req_flags*/0) != 0)
 		goto err;
 
 	return;

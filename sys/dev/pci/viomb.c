@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.13 2022/04/13 10:42:12 uwe Exp $	*/
+/*	$NetBSD: viomb.c,v 1.14 2023/03/23 03:27:48 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.13 2022/04/13 10:42:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.14 2023/03/23 03:27:48 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,7 @@ viomb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_virtio = vsc;
 
-	virtio_child_attach_start(vsc, self, IPL_VM, sc->sc_vq,
-	    viomb_config_change, virtio_vq_intr, 0,
+	virtio_child_attach_start(vsc, self, IPL_VM,
 	    VIRTIO_BALLOON_F_MUST_TELL_HOST, VIRTIO_BALLOON_FLAG_BITS);
 
 	features = virtio_features(vsc);
@@ -190,7 +189,8 @@ viomb_attach(device_t parent, device_t self, void *aux)
 		goto err_dmamap;
 	}
 
-	if (virtio_child_attach_finish(vsc) != 0)
+	if (virtio_child_attach_finish(vsc, sc->sc_vq, __arraycount(sc->sc_vq),
+	    viomb_config_change, virtio_vq_intr, 0) != 0)
 		goto err_out;
 
 	if (kthread_create(PRI_IDLE, KTHREAD_MPSAFE, NULL,
