@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.86 2023/03/23 01:33:20 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.87 2023/03/23 01:36:50 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.86 2023/03/23 01:33:20 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.87 2023/03/23 01:36:50 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1685,6 +1685,7 @@ vioif_rx_handle_locked(void *xrxq, u_int limit)
 	struct virtio_softc *vsc = vq->vq_owner;
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
 	bool more;
+	int enqueued;
 
 	KASSERT(mutex_owned(rxq->rxq_lock));
 	KASSERT(!rxq->rxq_stopping);
@@ -1694,8 +1695,10 @@ vioif_rx_handle_locked(void *xrxq, u_int limit)
 		vioif_rx_sched_handle(sc, rxq);
 		return;
 	}
-	more = virtio_start_vq_intr(vsc, rxq->rxq_vq);
-	if (more) {
+
+	enqueued = virtio_start_vq_intr(vsc, rxq->rxq_vq);
+	if (enqueued != 0) {
+		virtio_stop_vq_intr(vsc, rxq->rxq_vq);
 		vioif_rx_sched_handle(sc, rxq);
 		return;
 	}
@@ -1805,6 +1808,7 @@ vioif_tx_handle_locked(struct vioif_txqueue *txq, u_int limit)
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bool more;
+	int enqueued;
 
 	KASSERT(mutex_owned(txq->txq_lock));
 	KASSERT(!txq->txq_stopping);
@@ -1815,11 +1819,11 @@ vioif_tx_handle_locked(struct vioif_txqueue *txq, u_int limit)
 		return;
 	}
 
-	if (virtio_features(vsc) & VIRTIO_F_RING_EVENT_IDX)
-		more = virtio_postpone_intr_smart(vsc, vq);
-	else
-		more = virtio_start_vq_intr(vsc, vq);
-	if (more) {
+	enqueued = (virtio_features(vsc) & VIRTIO_F_RING_EVENT_IDX) ?
+	    virtio_postpone_intr_smart(vsc, vq):
+	    virtio_start_vq_intr(vsc, vq);
+	if (enqueued != 0) {
+		virtio_stop_vq_intr(vsc, vq);
 		vioif_tx_sched_handle(sc, txq);
 		return;
 	}
