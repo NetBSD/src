@@ -1,4 +1,4 @@
-.\"	$NetBSD: entropy.7,v 1.5 2023/03/23 12:22:56 riastradh Exp $
+.\"	$NetBSD: entropy.7,v 1.6 2023/03/23 12:38:17 uwe Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,7 +62,13 @@ then they could impersonate you.
 .Nx
 relies on unpredictable secrets to make sure that private user data
 stored on nonvolatile media when memory is scarce
-.Pq Xr swapctl 8 , using So Li vm.swap_encrypt=1 Sc ; see Xr sysctl 7
+.Po
+.Xr swapctl 8 ,
+using
+.Ql vm.swap_encrypt=1 ;
+see
+.Xr sysctl 7
+.Pc
 cannot be recovered by forensic tools after shutdown.
 .El
 .\""""""""""""""""""""""""""""""""""""""
