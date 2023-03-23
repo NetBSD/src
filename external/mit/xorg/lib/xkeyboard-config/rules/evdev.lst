@@ -300,6 +300,7 @@
   colemak         us: English (Colemak)
   colemak_dh      us: English (Colemak-DH)
   colemak_dh_iso  us: English (Colemak-DH ISO)
+  colemak_dh_ortho us: English (Colemak-DH Ortholinear)
   dvorak          us: English (Dvorak)
   dvorak-intl     us: English (Dvorak, intl., with dead keys)
   dvorak-alt-intl us: English (Dvorak, alt. intl.)
@@ -359,6 +360,7 @@
   ben_inscript    in: Bangla (India, Baishakhi InScript)
   eeyek           in: Manipuri (Eeyek)
   guj             in: Gujarati
+  guj-kagapa      in: Gujarati (KaGaPa, phonetic)
   guru            in: Punjabi (Gurmukhi)
   jhelum          in: Punjabi (Gurmukhi Jhelum)
   kan             in: Kannada
@@ -591,7 +593,8 @@
   apostrophe      lv: Latvian (apostrophe)
   tilde           lv: Latvian (tilde)
   fkey            lv: Latvian (F)
-  modern          lv: Latvian (modern)
+  modern          lv: Latvian (Modern Latin)
+  modern-cyr      lv: Latvian (Modern Cyrillic)
   ergonomic       lv: Latvian (ergonomic, ŪGJRMV)
   adapted         lv: Latvian (adapted)
   cyrillic        me: Montenegrin (Cyrillic)
@@ -850,6 +853,7 @@
   ctrl:rctrl_ralt      Right Ctrl as Right Alt
   ctrl:menu_rctrl      Menu as Right Ctrl
   ctrl:swap_lalt_lctl  Swap Left Alt with Left Ctrl
+  ctrl:swap_ralt_rctl  Swap Right Alt with Right Ctrl
   ctrl:swap_lwin_lctl  Swap Left Win with Left Ctrl
   ctrl:swap_rwin_rctl  Swap Right Win with Right Ctrl
   ctrl:swap_lalt_lctl_lwin Left Alt as Ctrl, Left Ctrl as Win, Left Win as Left Alt
@@ -936,6 +940,8 @@
   numpad:shift3        Shift does not cancel Num Lock, chooses 3rd level instead
   srvrkeys:none        Special keys (Ctrl+Alt+&lt;key&gt;) handled in a server
   apple:alupckeys      Apple Aluminium emulates Pause, PrtSc, Scroll Lock
+  apple:jp_oadg109a    Japanese Apple keyboards emulate OADG109A backslash
+  apple:jp_pc106       Japanese Apple keyboards emulate PC106 backslash
   shift:breaks_caps    Shift cancels Caps Lock
   misc:typo            Enable extra typographic characters
   misc:apl             Enable APL overlay characters
