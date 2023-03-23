@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.101 2023/03/23 02:57:54 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.102 2023/03/23 03:02:17 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.101 2023/03/23 02:57:54 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.102 2023/03/23 03:02:17 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -266,6 +266,7 @@ struct vioif_netqueue {
 
 struct vioif_tx_context {
 	bool			 txc_link_active;
+	bool			 txc_no_free_slots;
 	pcq_t			*txc_intrq;
 	void			*txc_deferred_transmit;
 
@@ -730,7 +731,6 @@ vioif_init(struct ifnet *ifp)
 		sc->sc_act_nvq_pairs = 1;
 
 	SET(ifp->if_flags, IFF_RUNNING);
-	CLR(ifp->if_flags, IFF_OACTIVE);
 
 	vioif_net_intr_enable(sc, vsc);
 
@@ -860,7 +860,12 @@ vioif_watchdog(struct ifnet *ifp)
 	struct vioif_netqueue *netq;
 	int i;
 
-	if (ifp->if_flags & IFF_RUNNING) {
+	if (ISSET(ifp->if_flags, IFF_RUNNING)) {
+		if (ISSET(ifp->if_flags, IFF_DEBUG)) {
+			log(LOG_DEBUG, "%s: watchdog timed out\n",
+			    ifp->if_xname);
+		}
+
 		for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
 			netq = &sc->sc_netqs[VIOIF_NETQ_TXQID(i)];
 
@@ -1496,6 +1501,7 @@ vioif_netqueue_init(struct vioif_softc *sc, struct virtio_softc *vsc,
 			goto err;
 		}
 		txc->txc_link_active = VIOIF_IS_LINK_ACTIVE(sc);
+		txc->txc_no_free_slots = false;
 		txc->txc_intrq = pcq_create(vq->vq_num, KM_SLEEP);
 		break;
 	}
@@ -1971,18 +1977,17 @@ vioif_send_common_locked(struct ifnet *ifp, struct vioif_netqueue *netq,
 
 	txc = netq->netq_ctx;
 
-	if (!txc->txc_link_active)
-		return;
-
-	if (!is_transmit &&
-	    ISSET(ifp->if_flags, IFF_OACTIVE))
+	if (!txc->txc_link_active ||
+	    txc->txc_no_free_slots)
 		return;
 
 	for (;;) {
 		int slot, r;
 		r = virtio_enqueue_prep(vsc, vq, &slot);
-		if (r == EAGAIN)
+		if (r == EAGAIN) {
+			txc->txc_no_free_slots = true;
 			break;
+		}
 		if (__predict_false(r != 0))
 			panic("enqueue_prep for tx buffers");
 
@@ -2049,21 +2054,25 @@ vioif_send_common_locked(struct ifnet *ifp, struct vioif_netqueue *netq,
 /* dequeue sent mbufs */
 static bool
 vioif_tx_deq_locked(struct vioif_softc *sc, struct virtio_softc *vsc,
-    struct vioif_netqueue *netq, u_int limit)
+    struct vioif_netqueue *netq, u_int limit, size_t *ndeqp)
 {
 	struct virtqueue *vq = netq->netq_vq;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct vioif_net_map *map;
 	struct mbuf *m;
 	int slot, len;
-	bool more = false;
+	bool more;
+	size_t ndeq;
 
 	KASSERT(mutex_owned(&netq->netq_lock));
 
-	if (virtio_vq_is_enqueued(vsc, vq) == false)
-		return false;
+	more = false;
+	ndeq = 0;
 
-	for (;;) {
+	if (virtio_vq_is_enqueued(vsc, vq) == false)
+		goto done;
+
+	for (;;ndeq++) {
 		if (limit-- == 0) {
 			more = true;
 			break;
@@ -2082,6 +2091,9 @@ vioif_tx_deq_locked(struct vioif_softc *sc, struct virtio_softc *vsc,
 		m_freem(m);
 	}
 
+done:
+	if (ndeqp != NULL)
+		*ndeqp = ndeq;
 	return more;
 }
 
@@ -2089,6 +2101,7 @@ static void
 vioif_tx_queue_clear(struct vioif_softc *sc, struct virtio_softc *vsc,
     struct vioif_netqueue *netq)
 {
+	struct vioif_tx_context *txc;
 	struct vioif_net_map *map;
 	struct mbuf *m;
 	unsigned int i, vq_num;
@@ -2096,9 +2109,11 @@ vioif_tx_queue_clear(struct vioif_softc *sc, struct virtio_softc *vsc,
 
 	mutex_enter(&netq->netq_lock);
 
+	txc = netq->netq_ctx;
 	vq_num = netq->netq_vq->vq_num;
+
 	for (;;) {
-		more = vioif_tx_deq_locked(sc, vsc, netq, vq_num);
+		more = vioif_tx_deq_locked(sc, vsc, netq, vq_num, NULL);
 		if (more == false)
 			break;
 	}
@@ -2113,6 +2128,9 @@ vioif_tx_queue_clear(struct vioif_softc *sc, struct virtio_softc *vsc,
 		vioif_net_unload_mbuf(vsc, map);
 		m_freem(m);
 	}
+
+	txc->txc_no_free_slots = false;
+
 	mutex_exit(&netq->netq_lock);
 }
 
@@ -2157,11 +2175,17 @@ vioif_tx_handle_locked(struct vioif_netqueue *netq, u_int limit)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bool more;
 	int enqueued;
+	size_t ndeq;
 
 	KASSERT(mutex_owned(&netq->netq_lock));
 	KASSERT(!netq->netq_stopping);
 
-	more = vioif_tx_deq_locked(sc, vsc, netq, limit);
+	more = vioif_tx_deq_locked(sc, vsc, netq, limit, &ndeq);
+	if (txc->txc_no_free_slots && ndeq > 0) {
+		txc->txc_no_free_slots = false;
+		softint_schedule(txc->txc_deferred_transmit);
+	}
+
 	if (more) {
 		vioif_net_sched_handle(sc, netq);
 		return;
@@ -2179,10 +2203,9 @@ vioif_tx_handle_locked(struct vioif_netqueue *netq, u_int limit)
 	netq->netq_running_handle = false;
 
 	/* for ALTQ */
-	if (netq == &sc->sc_netqs[VIOIF_NETQ_TXQID(0)]) {
+	if (netq == &sc->sc_netqs[VIOIF_NETQ_TXQID(0)])
 		if_schedule_deferred_start(ifp);
-		ifp->if_flags &= ~IFF_OACTIVE;
-	}
+
 	softint_schedule(txc->txc_deferred_transmit);
 }
 
