@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.944 2023/02/08 15:52:46 christos Exp $
+# $NetBSD: shl.mi,v 1.945 2023/03/23 05:38:18 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -393,9 +393,9 @@
 ./usr/lib/libiscsi.so				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2				base-iscsi-shlib	iscsi,compatfile
 ./usr/lib/libiscsi.so.2.0			base-iscsi-shlib	iscsi,compatfile
-./usr/lib/libisns.so				base-isns-shlib		obsolete,compatfile
-./usr/lib/libisns.so.0				base-isns-shlib		obsolete,compatfile
-./usr/lib/libisns.so.0.0			base-isns-shlib		obsolete,compatfile
+./usr/lib/libisns.so				base-isns-shlib		compatfile
+./usr/lib/libisns.so.0				base-isns-shlib		compatfile
+./usr/lib/libisns.so.0.0			base-isns-shlib		compatfile
 ./usr/lib/libjemalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libjemalloc.so.0			base-sys-shlib		compatfile
 ./usr/lib/libjemalloc.so.0.0			base-sys-shlib		compatfile
