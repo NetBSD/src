@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.169 2023/03/13 21:36:56 jdc Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.170 2023/03/23 12:09:44 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3225,4 +3225,10 @@ build.sh					1.366 via patch
 	when simply doing mkrepro-timestamp and the current repository setups
 	does not actually require it.
 	[martin, ticket #1807]
+
+sys/netinet6/ip6_output.c			1.233
+sys/netinet6/raw_ip6.c				1.183 (via patch)
+
+	in6: fix IPV6_CHECKSUM handling.
+	[ozaki-r, ticket #1808]
 
