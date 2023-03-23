@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.84 2023/03/23 01:26:29 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.85 2023/03/23 01:30:26 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.84 2023/03/23 01:26:29 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.85 2023/03/23 01:30:26 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.84 2023/03/23 01:26:29 yamaguchi Exp 
 #include <sys/module.h>
 #include <sys/pcq.h>
 #include <sys/workqueue.h>
+#include <sys/xcall.h>
 
 #include <dev/pci/virtioreg.h>
 #include <dev/pci/virtiovar.h>
@@ -420,6 +421,7 @@ static void	vioif_disable_interrupt_vqpairs(struct vioif_softc *);
 static int	vioif_setup_sysctl(struct vioif_softc *);
 static void	vioif_setup_stats(struct vioif_softc *);
 static int	vioif_ifflags(struct vioif_softc *);
+static void	vioif_intr_barrier(void);
 
 CFATTACH_DECL_NEW(vioif, sizeof(struct vioif_softc),
 		  vioif_match, vioif_attach, NULL, NULL);
@@ -958,7 +960,8 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		nvqs++;
 		rxq->rxq_vq->vq_intrhand = vioif_rx_intr;
 		rxq->rxq_vq->vq_intrhand_arg = (void *)rxq;
-		rxq->rxq_stopping = true;
+		rxq->rxq_stopping = false;
+		rxq->rxq_active = false;
 		vioif_work_set(&rxq->rxq_work, vioif_rx_handle, rxq);
 
 		txq->txq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
@@ -987,6 +990,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		txq->txq_vq->vq_intrhand_arg = (void *)txq;
 		txq->txq_link_active = VIOIF_IS_LINK_ACTIVE(sc);
 		txq->txq_stopping = false;
+		txq->txq_active = false;
 		txq->txq_intrq = pcq_create(txq->txq_vq->vq_num, KM_SLEEP);
 		vioif_work_set(&txq->txq_work, vioif_tx_handle, txq);
 	}
@@ -1183,9 +1187,7 @@ vioif_init(struct ifnet *ifp)
 	for (i = 0; i < sc->sc_req_nvq_pairs; i++) {
 		rxq = &sc->sc_rxq[i];
 
-		/* Have to set false before vioif_populate_rx_mbufs */
 		mutex_enter(rxq->rxq_lock);
-		rxq->rxq_stopping = false;
 		vioif_populate_rx_mbufs_locked(sc, rxq);
 		mutex_exit(rxq->rxq_lock);
 
@@ -1201,9 +1203,6 @@ vioif_init(struct ifnet *ifp)
 		sc->sc_act_nvq_pairs = sc->sc_req_nvq_pairs;
 	else
 		sc->sc_act_nvq_pairs = 1;
-
-	for (i = 0; i < sc->sc_act_nvq_pairs; i++)
-		sc->sc_txq[i].txq_stopping = false;
 
 	vioif_enable_interrupt_vqpairs(sc);
 
@@ -1225,16 +1224,7 @@ vioif_stop(struct ifnet *ifp, int disable)
 	struct vioif_ctrlqueue *ctrlq = &sc->sc_ctrlq;
 	int i;
 
-	/* disable interrupts */
-	vioif_disable_interrupt_vqpairs(sc);
-	if (sc->sc_has_ctrl)
-		virtio_stop_vq_intr(vsc, ctrlq->ctrlq_vq);
 
-	/*
-	 * stop all packet processing:
-	 * 1. stop interrupt handlers by rxq_stopping and txq_stopping
-	 * 2. wait for stopping workqueue for packet processing
-	 */
 	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
 		txq = &sc->sc_txq[i];
 		rxq = &sc->sc_rxq[i];
@@ -1242,16 +1232,34 @@ vioif_stop(struct ifnet *ifp, int disable)
 		mutex_enter(rxq->rxq_lock);
 		rxq->rxq_stopping = true;
 		mutex_exit(rxq->rxq_lock);
-		vioif_work_wait(sc->sc_txrx_workqueue, &rxq->rxq_work);
 
 		mutex_enter(txq->txq_lock);
 		txq->txq_stopping = true;
 		mutex_exit(txq->txq_lock);
-		vioif_work_wait(sc->sc_txrx_workqueue, &txq->txq_work);
 	}
 
-	/* only way to stop I/O and DMA is resetting... */
+	/* disable interrupts */
+	vioif_disable_interrupt_vqpairs(sc);
+	if (sc->sc_has_ctrl)
+		virtio_stop_vq_intr(vsc, ctrlq->ctrlq_vq);
+
+	/*
+	 * only way to stop interrupt, I/O and DMA is resetting...
+	 *
+	 * NOTE: Devices based on VirtIO draft specification can not
+	 * stop interrupt completely even if virtio_stop_vq_intr() is called.
+	 */
 	virtio_reset(vsc);
+
+	vioif_intr_barrier();
+
+	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
+		txq = &sc->sc_txq[i];
+		rxq = &sc->sc_rxq[i];
+
+		vioif_work_wait(sc->sc_txrx_workqueue, &rxq->rxq_work);
+		vioif_work_wait(sc->sc_txrx_workqueue, &txq->txq_work);
+	}
 
 	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
 		vioif_rx_queue_clear(&sc->sc_rxq[i]);
@@ -1259,6 +1267,22 @@ vioif_stop(struct ifnet *ifp, int disable)
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	/* all packet processing is stopped */
+	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
+		txq = &sc->sc_txq[i];
+		rxq = &sc->sc_rxq[i];
+
+		mutex_enter(rxq->rxq_lock);
+		rxq->rxq_stopping = false;
+		KASSERT(!rxq->rxq_active);
+		mutex_exit(rxq->rxq_lock);
+
+		mutex_enter(txq->txq_lock);
+		txq->txq_stopping = false;
+		KASSERT(!txq->txq_active);
+		mutex_exit(txq->txq_lock);
+	}
 
 	for (i = 0; i < sc->sc_act_nvq_pairs; i++) {
 		txq = &sc->sc_txq[i];
@@ -1718,13 +1742,19 @@ vioif_rx_handle(void *xrxq)
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
 	u_int limit;
 
-	limit = sc->sc_rx_process_limit;
-
 	mutex_enter(rxq->rxq_lock);
 
-	if (!rxq->rxq_stopping)
-		vioif_rx_handle_locked(rxq, limit);
+	KASSERT(rxq->rxq_active);
 
+	if (rxq->rxq_stopping) {
+		rxq->rxq_active = false;
+		goto done;
+	}
+
+	limit = sc->sc_rx_process_limit;
+	vioif_rx_handle_locked(rxq, limit);
+
+done:
 	mutex_exit(rxq->rxq_lock);
 }
 
@@ -1845,11 +1875,19 @@ vioif_tx_handle(void *xtxq)
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
 	u_int limit;
 
-	limit = sc->sc_tx_process_limit;
-
 	mutex_enter(txq->txq_lock);
-	if (!txq->txq_stopping)
-		vioif_tx_handle_locked(txq, limit);
+
+	KASSERT(txq->txq_active);
+
+	if (txq->txq_stopping) {
+		txq->txq_active = false;
+		goto done;
+	}
+
+	limit = sc->sc_tx_process_limit;
+	vioif_tx_handle_locked(txq, limit);
+
+done:
 	mutex_exit(txq->txq_lock);
 }
 
@@ -1933,8 +1971,6 @@ vioif_tx_drain(struct vioif_txqueue *txq)
 	struct virtqueue *vq = txq->txq_vq;
 	struct virtio_softc *vsc = vq->vq_owner;
 	int i;
-
-	KASSERT(txq->txq_stopping);
 
 	for (i = 0; i < vq->vq_num; i++) {
 		if (txq->txq_mbufs[i] == NULL)
@@ -2627,6 +2663,14 @@ vioif_setup_stats(struct vioif_softc *sc)
 	    NULL, device_xname(sc->sc_dev), "control command dmamap load failed");
 	evcnt_attach_dynamic(&sc->sc_ctrlq.ctrlq_cmd_failed, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "control command failed");
+}
+
+static void
+vioif_intr_barrier(void)
+{
+
+	/* wait for finish all interrupt handler */
+	xc_barrier(0);
 }
 
 MODULE(MODULE_CLASS_DRIVER, if_vioif, "virtio");
