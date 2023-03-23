@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.82 2022/09/12 07:26:04 knakahara Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.83 2023/03/23 01:23:18 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.82 2022/09/12 07:26:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.83 2023/03/23 01:23:18 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1642,12 +1642,7 @@ vioif_rx_deq_locked(struct vioif_softc *sc, struct virtio_softc *vsc,
 		m_set_rcvif(m, ifp);
 		m->m_len = m->m_pkthdr.len = len;
 
-		mutex_exit(rxq->rxq_lock);
 		if_percpuq_enqueue(ifp->if_percpuq, m);
-		mutex_enter(rxq->rxq_lock);
-
-		if (rxq->rxq_stopping)
-			break;
 	}
 
 	if (dequeued)
