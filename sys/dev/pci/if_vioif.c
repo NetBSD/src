@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.89 2023/03/23 01:42:32 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.90 2023/03/23 01:46:30 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.89 2023/03/23 01:42:32 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.90 2023/03/23 01:46:30 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1545,11 +1545,13 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_rxqueue *rxq
 		if (m == NULL) {
 			MGETHDR(m, M_DONTWAIT, MT_DATA);
 			if (m == NULL) {
+				virtio_enqueue_abort(vsc, vq, slot);
 				rxq->rxq_mbuf_enobufs.ev_count++;
 				break;
 			}
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
+				virtio_enqueue_abort(vsc, vq, slot);
 				m_freem(m);
 				rxq->rxq_mbuf_enobufs.ev_count++;
 				break;
@@ -1562,6 +1564,7 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_rxqueue *rxq
 			    rxq->rxq_dmamaps[slot], m, BUS_DMA_READ | BUS_DMA_NOWAIT);
 
 			if (r != 0) {
+				virtio_enqueue_abort(vsc, vq, slot);
 				m_freem(m);
 				rxq->rxq_mbuf_load_failed.ev_count++;
 				break;
