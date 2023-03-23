@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.104 2023/03/23 03:55:11 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.105 2023/03/23 07:26:07 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.104 2023/03/23 03:55:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.105 2023/03/23 07:26:07 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -924,8 +924,10 @@ vioif_ifflags(struct vioif_softc *sc)
 		log(LOG_WARNING,
 		    "%s: couldn't %sable ALLMULTI\n",
 		    ifp->if_xname, onoff ? "en" : "dis");
-		if (onoff == false) {
-			ifp->if_flags |= IFF_ALLMULTI;
+		if (onoff) {
+			CLR(ifp->if_flags, IFF_ALLMULTI);
+		} else {
+			SET(ifp->if_flags, IFF_ALLMULTI);
 		}
 	}
 
@@ -935,8 +937,10 @@ vioif_ifflags(struct vioif_softc *sc)
 		log(LOG_WARNING,
 		    "%s: couldn't %sable PROMISC\n",
 		    ifp->if_xname, onoff ? "en" : "dis");
-		if (onoff == false) {
-			ifp->if_flags |= IFF_PROMISC;
+		if (onoff) {
+			CLR(ifp->if_flags, IFF_PROMISC);
+		} else {
+			SET(ifp->if_flags, IFF_PROMISC);
 		}
 	}
 
