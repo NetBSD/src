@@ -1,4 +1,4 @@
-/*	$NetBSD: viocon.c,v 1.6 2023/03/23 03:27:48 yamaguchi Exp $	*/
+/*	$NetBSD: viocon.c,v 1.7 2023/03/23 03:44:28 yamaguchi Exp $	*/
 /*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.6 2023/03/23 03:27:48 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.7 2023/03/23 03:44:28 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -123,6 +123,9 @@ struct viocon_softc {
 	struct device		*sc_dev;
 	struct virtio_softc	*sc_virtio;
 	struct virtqueue	*sc_vqs;
+#define VIOCON_PORT_RX	0
+#define VIOCON_PORT_TX	1
+#define VIOCON_PORT_NQS	2
 
 	struct virtqueue        *sc_c_vq_rx;
 	struct virtqueue        *sc_c_vq_tx;
@@ -194,6 +197,7 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	struct viocon_softc *sc = device_private(self);
 	struct virtio_softc *vsc = device_private(parent);
 	int maxports = 1;
+	size_t nvqs;
 
 	sc->sc_dev = self;
 	if (virtio_child(vsc) != NULL) {
@@ -203,8 +207,9 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_virtio = vsc;
 	sc->sc_max_ports = maxports;
+	nvqs = VIOCON_PORT_NQS * maxports;
 
-	sc->sc_vqs = kmem_zalloc(2 * (maxports + 1) * sizeof(sc->sc_vqs[0]),
+	sc->sc_vqs = kmem_zalloc(nvqs * sizeof(sc->sc_vqs[0]),
 	    KM_SLEEP);
 	sc->sc_ports = kmem_zalloc(maxports * sizeof(sc->sc_ports[0]),
 	    KM_SLEEP);
@@ -219,13 +224,13 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	}
 	viocon_rx_fill(sc->sc_ports[0]);
 
-	if (virtio_child_attach_finish(vsc, sc->sc_vqs, sc->sc_max_ports * 2,
+	if (virtio_child_attach_finish(vsc, sc->sc_vqs, nvqs,
 	    /*config_change*/NULL, virtio_vq_intr, /*req_flags*/0) != 0)
 		goto err;
 
 	return;
 err:
-	kmem_free(sc->sc_vqs, 2 * (maxports + 1) * sizeof(sc->sc_vqs[0]));
+	kmem_free(sc->sc_vqs, nvqs * sizeof(sc->sc_vqs[0]));
 	kmem_free(sc->sc_ports, maxports * sizeof(sc->sc_ports[0]));
 	virtio_child_attach_failed(vsc);
 }
@@ -247,11 +252,8 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 	vp->vp_sc = sc;
 	DPRINTF("%s: vp: %p\n", __func__, vp);
 
-	if (portidx == 0)
-		rxidx = 0;
-	else
-		rxidx = 2 * (portidx + 1);
-	txidx = rxidx + 1;
+	rxidx = (portidx * VIOCON_PORT_NQS) + VIOCON_PORT_RX;
+	txidx = (portidx * VIOCON_PORT_NQS) + VIOCON_PORT_TX;
 
 	snprintf(name, sizeof(name), "p%drx", portidx);
 	if (virtio_alloc_vq(vsc, &sc->sc_vqs[rxidx], rxidx, BUFSIZE, 1,
