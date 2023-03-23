@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.85 2023/03/23 01:30:26 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.86 2023/03/23 01:33:20 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.85 2023/03/23 01:30:26 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.86 2023/03/23 01:33:20 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -247,7 +247,7 @@ struct vioif_txqueue {
 	void			*txq_handle_si;
 	struct vioif_work	 txq_work;
 	bool			 txq_workqueue;
-	bool			 txq_active;
+	bool			 txq_running_handle;
 
 	char			 txq_evgroup[16];
 	struct evcnt		 txq_defrag_failed;
@@ -270,7 +270,7 @@ struct vioif_rxqueue {
 	void			*rxq_handle_si;
 	struct vioif_work	 rxq_work;
 	bool			 rxq_workqueue;
-	bool			 rxq_active;
+	bool			 rxq_running_handle;
 
 	char			 rxq_evgroup[16];
 	struct evcnt		 rxq_mbuf_add_failed;
@@ -961,7 +961,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		rxq->rxq_vq->vq_intrhand = vioif_rx_intr;
 		rxq->rxq_vq->vq_intrhand_arg = (void *)rxq;
 		rxq->rxq_stopping = false;
-		rxq->rxq_active = false;
+		rxq->rxq_running_handle = false;
 		vioif_work_set(&rxq->rxq_work, vioif_rx_handle, rxq);
 
 		txq->txq_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
@@ -990,7 +990,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		txq->txq_vq->vq_intrhand_arg = (void *)txq;
 		txq->txq_link_active = VIOIF_IS_LINK_ACTIVE(sc);
 		txq->txq_stopping = false;
-		txq->txq_active = false;
+		txq->txq_running_handle = false;
 		txq->txq_intrq = pcq_create(txq->txq_vq->vq_num, KM_SLEEP);
 		vioif_work_set(&txq->txq_work, vioif_tx_handle, txq);
 	}
@@ -1275,12 +1275,12 @@ vioif_stop(struct ifnet *ifp, int disable)
 
 		mutex_enter(rxq->rxq_lock);
 		rxq->rxq_stopping = false;
-		KASSERT(!rxq->rxq_active);
+		KASSERT(!rxq->rxq_running_handle);
 		mutex_exit(rxq->rxq_lock);
 
 		mutex_enter(txq->txq_lock);
 		txq->txq_stopping = false;
-		KASSERT(!txq->txq_active);
+		KASSERT(!txq->txq_running_handle);
 		mutex_exit(txq->txq_lock);
 	}
 
@@ -1700,7 +1700,7 @@ vioif_rx_handle_locked(void *xrxq, u_int limit)
 		return;
 	}
 
-	rxq->rxq_active = false;
+	rxq->rxq_running_handle = false;
 }
 
 static int
@@ -1716,13 +1716,13 @@ vioif_rx_intr(void *arg)
 	mutex_enter(rxq->rxq_lock);
 
 	/* rx handler is already running in softint/workqueue */
-	if (rxq->rxq_active)
+	if (rxq->rxq_running_handle)
 		goto done;
 
 	if (rxq->rxq_stopping)
 		goto done;
 
-	rxq->rxq_active = true;
+	rxq->rxq_running_handle = true;
 
 	limit = sc->sc_rx_intr_process_limit;
 	virtio_stop_vq_intr(vsc, vq);
@@ -1744,10 +1744,10 @@ vioif_rx_handle(void *xrxq)
 
 	mutex_enter(rxq->rxq_lock);
 
-	KASSERT(rxq->rxq_active);
+	KASSERT(rxq->rxq_running_handle);
 
 	if (rxq->rxq_stopping) {
-		rxq->rxq_active = false;
+		rxq->rxq_running_handle = false;
 		goto done;
 	}
 
@@ -1824,7 +1824,7 @@ vioif_tx_handle_locked(struct vioif_txqueue *txq, u_int limit)
 		return;
 	}
 
-	txq->txq_active = false;
+	txq->txq_running_handle = false;
 
 	/* for ALTQ */
 	if (txq == &sc->sc_txq[0]) {
@@ -1849,13 +1849,13 @@ vioif_tx_intr(void *arg)
 	mutex_enter(txq->txq_lock);
 
 	/* tx handler is already running in softint/workqueue */
-	if (txq->txq_active)
+	if (txq->txq_running_handle)
 		goto done;
 
 	if (txq->txq_stopping)
 		goto done;
 
-	txq->txq_active = true;
+	txq->txq_running_handle = true;
 
 	virtio_stop_vq_intr(vsc, vq);
 	txq->txq_workqueue = sc->sc_txrx_workqueue_sysctl;
@@ -1877,10 +1877,10 @@ vioif_tx_handle(void *xtxq)
 
 	mutex_enter(txq->txq_lock);
 
-	KASSERT(txq->txq_active);
+	KASSERT(txq->txq_running_handle);
 
 	if (txq->txq_stopping) {
-		txq->txq_active = false;
+		txq->txq_running_handle = false;
 		goto done;
 	}
 
