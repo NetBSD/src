@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.102 2023/03/23 03:02:17 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.103 2023/03/23 03:27:48 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.102 2023/03/23 03:02:17 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.103 2023/03/23 03:27:48 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -465,7 +465,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	u_int softint_flags;
 	int r, i, req_flags;
 	char xnamebuf[MAXCOMLEN];
-	size_t netq_num;
+	size_t nvqs;
 
 	if (virtio_child(vsc) != NULL) {
 		aprint_normal(": child already attached for %s; "
@@ -509,11 +509,11 @@ vioif_attach(device_t parent, device_t self, void *aux)
 #ifdef VIOIF_MULTIQ
 	req_features |= VIRTIO_NET_F_MQ;
 #endif
-	virtio_child_attach_start(vsc, self, IPL_NET, NULL,
-	    vioif_config_change, virtio_vq_intrhand, req_flags,
-	    req_features, VIRTIO_NET_FLAG_BITS);
 
+	virtio_child_attach_start(vsc, self, IPL_NET,
+	    req_features, VIRTIO_NET_FLAG_BITS);
 	features = virtio_features(vsc);
+
 	if (features == 0)
 		goto err;
 
@@ -565,10 +565,12 @@ vioif_attach(device_t parent, device_t self, void *aux)
 
 		/* Limit the number of queue pairs to use */
 		sc->sc_req_nvq_pairs = MIN(sc->sc_max_nvq_pairs, ncpu);
+
+		if (sc->sc_max_nvq_pairs > 1)
+			req_flags |= VIRTIO_F_INTR_PERVQ;
 	}
 
 	vioif_alloc_queues(sc);
-	virtio_child_attach_set_vqs(vsc, sc->sc_vqs, sc->sc_req_nvq_pairs);
 
 #ifdef VIOIF_MPSAFE
 	softint_flags = SOFTINT_NET | SOFTINT_MPSAFE;
@@ -579,15 +581,17 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize network queues
 	 */
-	netq_num = sc->sc_max_nvq_pairs * 2;
-	for (i = 0; i < netq_num; i++) {
+	nvqs = sc->sc_max_nvq_pairs * 2;
+	for (i = 0; i < nvqs; i++) {
 		r = vioif_netqueue_init(sc, vsc, i, softint_flags);
 		if (r != 0)
 			goto err;
 	}
 
 	if (sc->sc_has_ctrl) {
-		int ctrlq_idx = sc->sc_max_nvq_pairs * 2;
+		int ctrlq_idx = nvqs;
+
+		nvqs++;
 		/*
 		 * Allocating a virtqueue for control channel
 		 */
@@ -618,7 +622,9 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	if (vioif_alloc_mems(sc) < 0)
 		goto err;
 
-	if (virtio_child_attach_finish(vsc) != 0)
+	r = virtio_child_attach_finish(vsc, sc->sc_vqs, nvqs,
+	    vioif_config_change, virtio_vq_intrhand, req_flags);
+	if (r != 0)
 		goto err;
 
 	if (vioif_setup_sysctl(sc) != 0) {
@@ -656,8 +662,8 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	return;
 
 err:
-	netq_num = sc->sc_max_nvq_pairs * 2;
-	for (i = 0; i < netq_num; i++) {
+	nvqs = sc->sc_max_nvq_pairs * 2;
+	for (i = 0; i < nvqs; i++) {
 		vioif_netqueue_teardown(sc, vsc, i);
 	}
 
