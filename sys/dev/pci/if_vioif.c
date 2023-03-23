@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.93 2023/03/23 02:03:01 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.94 2023/03/23 02:15:53 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.93 2023/03/23 02:03:01 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.94 2023/03/23 02:15:53 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1322,6 +1322,7 @@ vioif_send_common_locked(struct ifnet *ifp, struct vioif_txqueue *txq,
 		if (r == EAGAIN) {
 			ifp->if_flags |= IFF_OACTIVE;
 			m_freem(m);
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 		if (r != 0)
@@ -1347,6 +1348,7 @@ vioif_send_common_locked(struct ifnet *ifp, struct vioif_txqueue *txq,
 				txq->txq_mbuf_load_failed.ev_count++;
 skip:
 				m_freem(m);
+				if_statinc(ifp, if_oerrors);
 				virtio_enqueue_abort(vsc, vq, slot);
 				continue;
 			}
@@ -1361,6 +1363,7 @@ skip:
 			     txq->txq_dmamaps[slot]);
 			/* slot already freed by virtio_enqueue_reserve */
 			m_freem(m);
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
