@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.348 2023/03/15 01:25:02 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.349 2023/03/23 18:22:15 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -44,6 +44,7 @@ AI	artificial intelligence
 AL	access list
 AL	active link
 ALE	address latch enable
+ALPN	application-layer protocol negotiation
 ALS	ambient light sensor
 ALSA	advanced Linux sound architecture
 ALU	arithmetic and logical unit
