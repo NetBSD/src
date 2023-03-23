@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.91 2023/03/23 01:52:42 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.92 2023/03/23 01:58:04 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.91 2023/03/23 01:52:42 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.92 2023/03/23 01:58:04 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -376,7 +376,7 @@ static void	vioif_populate_rx_mbufs_locked(struct vioif_softc *,
 		    struct vioif_rxqueue *);
 static void	vioif_rx_queue_clear(struct vioif_rxqueue *);
 static bool	vioif_rx_deq_locked(struct vioif_softc *, struct virtio_softc *,
-		    struct vioif_rxqueue *, u_int);
+		    struct vioif_rxqueue *, u_int, size_t *);
 static int	vioif_rx_intr(void *);
 static void	vioif_rx_handle(void *);
 static void	vioif_rx_sched_handle(struct vioif_softc *,
@@ -1528,9 +1528,6 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_rxqueue *rxq
 
 	KASSERT(mutex_owned(rxq->rxq_lock));
 
-	if (rxq->rxq_stopping)
-		return;
-
 	for (i = 0; i < vq->vq_num; i++) {
 		int slot;
 		r = virtio_enqueue_prep(vsc, vq, &slot);
@@ -1600,11 +1597,9 @@ vioif_rx_queue_clear(struct vioif_rxqueue *rxq)
 	u_int limit = UINT_MAX;
 	bool more;
 
-	KASSERT(rxq->rxq_stopping);
-
 	mutex_enter(rxq->rxq_lock);
 	for (;;) {
-		more = vioif_rx_deq_locked(sc, vsc, rxq, limit);
+		more = vioif_rx_deq_locked(sc, vsc, rxq, limit, NULL);
 		if (more == false)
 			break;
 	}
@@ -1614,29 +1609,31 @@ vioif_rx_queue_clear(struct vioif_rxqueue *rxq)
 /* dequeue received packets */
 static bool
 vioif_rx_deq_locked(struct vioif_softc *sc, struct virtio_softc *vsc,
-    struct vioif_rxqueue *rxq, u_int limit)
+    struct vioif_rxqueue *rxq, u_int limit, size_t *ndeqp)
 {
 	struct virtqueue *vq = rxq->rxq_vq;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mbuf *m;
 	int slot, len;
-	bool more = false, dequeued = false;
+	bool more;
+	size_t ndeq;
 
 	KASSERT(mutex_owned(rxq->rxq_lock));
 
-	if (virtio_vq_is_enqueued(vsc, vq) == false)
-		return false;
+	more = false;
+	ndeq = 0;
 
-	for (;;) {
-		if (limit-- == 0) {
+	if (virtio_vq_is_enqueued(vsc, vq) == false)
+		goto done;
+
+	for (;;ndeq++) {
+		if (ndeq >= limit) {
 			more = true;
 			break;
 		}
 
 		if (virtio_dequeue(vsc, vq, &slot, &len) != 0)
 			break;
-
-		dequeued = true;
 
 		len -= sc->sc_hdr_size;
 		bus_dmamap_sync(virtio_dmat(vsc), rxq->rxq_hdr_dmamaps[slot],
@@ -1654,8 +1651,10 @@ vioif_rx_deq_locked(struct vioif_softc *sc, struct virtio_softc *vsc,
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 
-	if (dequeued)
-		vioif_populate_rx_mbufs_locked(sc, rxq);
+
+done:
+	if (ndeqp != NULL)
+		*ndeqp = ndeq;
 
 	return more;
 }
@@ -1671,11 +1670,15 @@ vioif_rx_handle_locked(void *xrxq, u_int limit)
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
 	bool more;
 	int enqueued;
+	size_t ndeq;
 
 	KASSERT(mutex_owned(rxq->rxq_lock));
 	KASSERT(!rxq->rxq_stopping);
 
-	more = vioif_rx_deq_locked(sc, vsc, rxq, limit);
+	more = vioif_rx_deq_locked(sc, vsc, rxq, limit, &ndeq);
+	if (ndeq > 0)
+		vioif_populate_rx_mbufs_locked(sc, rxq);
+
 	if (more) {
 		vioif_rx_sched_handle(sc, rxq);
 		return;
