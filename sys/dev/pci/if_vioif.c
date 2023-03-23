@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.83 2023/03/23 01:23:18 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.84 2023/03/23 01:26:29 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.83 2023/03/23 01:23:18 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.84 2023/03/23 01:26:29 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1662,6 +1662,7 @@ vioif_rx_handle_locked(void *xrxq, u_int limit)
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
 	bool more;
 
+	KASSERT(mutex_owned(rxq->rxq_lock));
 	KASSERT(!rxq->rxq_stopping);
 
 	more = vioif_rx_deq_locked(sc, vsc, rxq, limit);
@@ -1674,7 +1675,8 @@ vioif_rx_handle_locked(void *xrxq, u_int limit)
 		vioif_rx_sched_handle(sc, rxq);
 		return;
 	}
-	atomic_store_relaxed(&rxq->rxq_active, false);
+
+	rxq->rxq_active = false;
 }
 
 static int
@@ -1686,22 +1688,23 @@ vioif_rx_intr(void *arg)
 	struct vioif_softc *sc = device_private(virtio_child(vsc));
 	u_int limit;
 
-	limit = sc->sc_rx_intr_process_limit;
-
-	if (atomic_load_relaxed(&rxq->rxq_active) == true)
-		return 1;
 
 	mutex_enter(rxq->rxq_lock);
 
-	if (!rxq->rxq_stopping) {
-		rxq->rxq_workqueue = sc->sc_txrx_workqueue_sysctl;
+	/* rx handler is already running in softint/workqueue */
+	if (rxq->rxq_active)
+		goto done;
 
-		virtio_stop_vq_intr(vsc, vq);
-		atomic_store_relaxed(&rxq->rxq_active, true);
+	if (rxq->rxq_stopping)
+		goto done;
 
-		vioif_rx_handle_locked(rxq, limit);
-	}
+	rxq->rxq_active = true;
 
+	limit = sc->sc_rx_intr_process_limit;
+	virtio_stop_vq_intr(vsc, vq);
+	vioif_rx_handle_locked(rxq, limit);
+
+done:
 	mutex_exit(rxq->rxq_lock);
 	return 1;
 }
@@ -1773,6 +1776,7 @@ vioif_tx_handle_locked(struct vioif_txqueue *txq, u_int limit)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bool more;
 
+	KASSERT(mutex_owned(txq->txq_lock));
 	KASSERT(!txq->txq_stopping);
 
 	more = vioif_tx_deq_locked(sc, vsc, txq, limit);
@@ -1790,7 +1794,8 @@ vioif_tx_handle_locked(struct vioif_txqueue *txq, u_int limit)
 		return;
 	}
 
-	atomic_store_relaxed(&txq->txq_active, false);
+	txq->txq_active = false;
+
 	/* for ALTQ */
 	if (txq == &sc->sc_txq[0]) {
 		if_schedule_deferred_start(ifp);
@@ -1811,22 +1816,23 @@ vioif_tx_intr(void *arg)
 
 	limit = sc->sc_tx_intr_process_limit;
 
-	if (atomic_load_relaxed(&txq->txq_active) == true)
-		return 1;
-
 	mutex_enter(txq->txq_lock);
 
-	if (!txq->txq_stopping) {
-		txq->txq_workqueue = sc->sc_txrx_workqueue_sysctl;
+	/* tx handler is already running in softint/workqueue */
+	if (txq->txq_active)
+		goto done;
 
-		virtio_stop_vq_intr(vsc, vq);
-		atomic_store_relaxed(&txq->txq_active, true);
+	if (txq->txq_stopping)
+		goto done;
 
-		vioif_tx_handle_locked(txq, limit);
-	}
+	txq->txq_active = true;
 
+	virtio_stop_vq_intr(vsc, vq);
+	txq->txq_workqueue = sc->sc_txrx_workqueue_sysctl;
+	vioif_tx_handle_locked(txq, limit);
+
+done:
 	mutex_exit(txq->txq_lock);
-
 	return 1;
 }
 
