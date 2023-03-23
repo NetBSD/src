@@ -1,4 +1,4 @@
-.\"	$NetBSD: entropy.7,v 1.6 2023/03/23 12:38:17 uwe Exp $
+.\"	$NetBSD: entropy.7,v 1.7 2023/03/23 12:39:11 uwe Exp $
 .\"
 .\" Copyright (c) 2021 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -130,13 +130,13 @@ entropy; see
 .Xr security.conf 5 .
 .It
 The operator can set
-.Sq Li entropy=check
+.Ql entropy=check
 in
 .Xr rc.conf 5
 so that
 .Nx
 will refuse to boot to multiuser unless there is enough entropy, or set
-.Sq Li entropy=wait
+.Ql entropy=wait
 so that
 .Nx
 will wait for entropy before booting to multiuser (with the caveat that
@@ -212,7 +212,7 @@ After adding entropy,
 that might be predictable because they were previously generated with
 too little entropy.
 For example, if
-.Sq Li sshd=YES
+.Ql sshd=YES
 is enabled in
 .Pa /etc/rc.conf ,
 then
