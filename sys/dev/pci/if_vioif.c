@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.99 2023/03/23 02:48:29 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.100 2023/03/23 02:52:29 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.99 2023/03/23 02:48:29 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.100 2023/03/23 02:52:29 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -326,7 +326,7 @@ struct vioif_softc {
 	bool			sc_has_ctrl;
 	struct vioif_ctrlqueue	sc_ctrlq;
 
-	bus_dma_segment_t	sc_hdr_segs[1];
+	bus_dma_segment_t	 sc_segs[1];
 	void			*sc_dmamem;
 	void			*sc_kmem;
 
@@ -752,14 +752,14 @@ vioif_alloc_mems(struct vioif_softc *sc)
 	}
 
 	r = bus_dmamem_alloc(virtio_dmat(vsc), dmamemsize, 0, 0,
-	    &sc->sc_hdr_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
+	    &sc->sc_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "DMA memory allocation failed, size %zu, "
 		    "error code %d\n", dmamemsize, r);
 		goto err_none;
 	}
-	r = bus_dmamem_map(virtio_dmat(vsc),&sc->sc_hdr_segs[0], 1,
+	r = bus_dmamem_map(virtio_dmat(vsc), &sc->sc_segs[0], 1,
 	    dmamemsize, &vaddr, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -953,7 +953,7 @@ err_reqs:
 	}
 	bus_dmamem_unmap(virtio_dmat(vsc), sc->sc_dmamem, dmamemsize);
 err_dmamem_alloc:
-	bus_dmamem_free(virtio_dmat(vsc), &sc->sc_hdr_segs[0], 1);
+	bus_dmamem_free(virtio_dmat(vsc), &sc->sc_segs[0], 1);
 err_none:
 	return -1;
 }
