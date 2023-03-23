@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.88 2023/03/23 01:39:52 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.89 2023/03/23 01:42:32 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.88 2023/03/23 01:39:52 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.89 2023/03/23 01:42:32 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -273,7 +273,9 @@ struct vioif_rxqueue {
 	bool			 rxq_running_handle;
 
 	char			 rxq_evgroup[16];
-	struct evcnt		 rxq_mbuf_add_failed;
+	struct evcnt		 rxq_mbuf_enobufs;
+	struct evcnt		 rxq_mbuf_load_failed;
+	struct evcnt		 rxq_enqueue_reserve_failed;
 };
 
 struct vioif_ctrlqueue {
@@ -370,8 +372,6 @@ static void	vioif_watchdog(struct ifnet *);
 static int	vioif_ifflags_cb(struct ethercom *);
 
 /* rx */
-static int	vioif_add_rx_mbuf(struct vioif_rxqueue *, int);
-static void	vioif_free_rx_mbuf(struct vioif_rxqueue *, int);
 static void	vioif_populate_rx_mbufs_locked(struct vioif_softc *,
 		    struct vioif_rxqueue *);
 static void	vioif_rx_queue_clear(struct vioif_rxqueue *);
@@ -1519,54 +1519,13 @@ vioif_watchdog(struct ifnet *ifp)
 /*
  * Receive implementation
  */
-/* allocate and initialize a mbuf for receive */
-static int
-vioif_add_rx_mbuf(struct vioif_rxqueue *rxq, int i)
-{
-	struct virtio_softc *vsc = rxq->rxq_vq->vq_owner;
-	struct mbuf *m;
-	int r;
-
-	MGETHDR(m, M_DONTWAIT, MT_DATA);
-	if (m == NULL)
-		return ENOBUFS;
-	MCLGET(m, M_DONTWAIT);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
-		return ENOBUFS;
-	}
-	m->m_len = m->m_pkthdr.len = MCLBYTES;
-	m_adj(m, ETHER_ALIGN);
-
-	rxq->rxq_mbufs[i] = m;
-	r = bus_dmamap_load_mbuf(virtio_dmat(vsc),
-	    rxq->rxq_dmamaps[i], m, BUS_DMA_READ | BUS_DMA_NOWAIT);
-	if (r) {
-		m_freem(m);
-		rxq->rxq_mbufs[i] = NULL;
-		return r;
-	}
-
-	return 0;
-}
-
-/* free a mbuf for receive */
-static void
-vioif_free_rx_mbuf(struct vioif_rxqueue *rxq, int i)
-{
-	struct virtio_softc *vsc = rxq->rxq_vq->vq_owner;
-
-	bus_dmamap_unload(virtio_dmat(vsc), rxq->rxq_dmamaps[i]);
-	m_freem(rxq->rxq_mbufs[i]);
-	rxq->rxq_mbufs[i] = NULL;
-}
-
 /* add mbufs for all the empty receive slots */
 static void
 vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_rxqueue *rxq)
 {
 	struct virtqueue *vq = rxq->rxq_vq;
 	struct virtio_softc *vsc = vq->vq_owner;
+	struct mbuf *m;
 	int i, r, ndone = 0;
 
 	KASSERT(mutex_owned(rxq->rxq_lock));
@@ -1581,19 +1540,46 @@ vioif_populate_rx_mbufs_locked(struct vioif_softc *sc, struct vioif_rxqueue *rxq
 			break;
 		if (r != 0)
 			panic("enqueue_prep for rx buffers");
-		if (rxq->rxq_mbufs[slot] == NULL) {
-			r = vioif_add_rx_mbuf(rxq, slot);
-			if (r != 0) {
-				rxq->rxq_mbuf_add_failed.ev_count++;
+
+		m = rxq->rxq_mbufs[slot];
+		if (m == NULL) {
+			MGETHDR(m, M_DONTWAIT, MT_DATA);
+			if (m == NULL) {
+				rxq->rxq_mbuf_enobufs.ev_count++;
 				break;
 			}
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(m);
+				rxq->rxq_mbuf_enobufs.ev_count++;
+				break;
+			}
+
+			m->m_len = m->m_pkthdr.len = MCLBYTES;
+			m_adj(m, ETHER_ALIGN);
+
+			r = bus_dmamap_load_mbuf(virtio_dmat(vsc),
+			    rxq->rxq_dmamaps[slot], m, BUS_DMA_READ | BUS_DMA_NOWAIT);
+
+			if (r != 0) {
+				m_freem(m);
+				rxq->rxq_mbuf_load_failed.ev_count++;
+				break;
+			}
+		} else {
+			rxq->rxq_mbufs[slot] = NULL;
 		}
+
 		r = virtio_enqueue_reserve(vsc, vq, slot,
 		    rxq->rxq_dmamaps[slot]->dm_nsegs + 1);
 		if (r != 0) {
-			vioif_free_rx_mbuf(rxq, slot);
+			rxq->rxq_enqueue_reserve_failed.ev_count++;
+			bus_dmamap_unload(virtio_dmat(vsc), rxq->rxq_dmamaps[slot]);
+			m_freem(m);
+			/* slot already freed by virtio_enqueue_reserve */
 			break;
 		}
+		rxq->rxq_mbufs[slot] = m;
 		bus_dmamap_sync(virtio_dmat(vsc), rxq->rxq_hdr_dmamaps[slot],
 		    0, sc->sc_hdr_size, BUS_DMASYNC_PREREAD);
 		bus_dmamap_sync(virtio_dmat(vsc), rxq->rxq_dmamaps[slot],
@@ -1783,12 +1769,17 @@ static void
 vioif_rx_drain(struct vioif_rxqueue *rxq)
 {
 	struct virtqueue *vq = rxq->rxq_vq;
+	struct virtio_softc *vsc = vq->vq_owner;
+	struct mbuf *m;
 	int i;
 
 	for (i = 0; i < vq->vq_num; i++) {
-		if (rxq->rxq_mbufs[i] == NULL)
+		m = rxq->rxq_mbufs[i];
+		if (m == NULL)
 			continue;
-		vioif_free_rx_mbuf(rxq, i);
+		rxq->rxq_mbufs[i] = NULL;
+		bus_dmamap_unload(virtio_dmat(vsc), rxq->rxq_dmamaps[i]);
+		m_freem(m);
 	}
 }
 
@@ -2661,8 +2652,12 @@ vioif_setup_stats(struct vioif_softc *sc)
 
 		snprintf(rxq->rxq_evgroup, sizeof(rxq->rxq_evgroup), "%s-RX%d",
 		    device_xname(sc->sc_dev), i);
-		evcnt_attach_dynamic(&rxq->rxq_mbuf_add_failed, EVCNT_TYPE_MISC,
-		    NULL, rxq->rxq_evgroup, "rx mbuf allocation failed");
+		evcnt_attach_dynamic(&rxq->rxq_mbuf_enobufs, EVCNT_TYPE_MISC,
+		    NULL, rxq->rxq_evgroup, "no receive buffer");
+		evcnt_attach_dynamic(&rxq->rxq_mbuf_load_failed, EVCNT_TYPE_MISC,
+		    NULL, rxq->rxq_evgroup, "tx dmamap load failed");
+		evcnt_attach_dynamic(&rxq->rxq_enqueue_reserve_failed, EVCNT_TYPE_MISC,
+		    NULL, rxq->rxq_evgroup, "virtio_enqueue_reserve failed");
 	}
 
 	evcnt_attach_dynamic(&sc->sc_ctrlq.ctrlq_cmd_load_failed, EVCNT_TYPE_MISC,
