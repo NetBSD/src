@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.67 2023/03/23 03:55:11 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.68 2023/03/24 13:32:19 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.67 2023/03/23 03:55:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.68 2023/03/24 13:32:19 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -897,6 +897,9 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 {
 	struct vq_entry *qe;
 	int i = 0;
+
+	if (vq->vq_vaddr == NULL)
+		return 0;
 
 	/* device must be already deactivated */
 	/* confirm the vq is empty */
