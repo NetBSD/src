@@ -1,4 +1,4 @@
-/*	$NetBSD: su_pam.c,v 1.23 2021/11/27 22:16:42 rillig Exp $	*/
+/*	$NetBSD: su_pam.c,v 1.24 2023/03/24 16:58:24 kre Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988\
 #if 0
 static char sccsid[] = "@(#)su.c	8.3 (Berkeley) 4/2/94";*/
 #else
-__RCSID("$NetBSD: su_pam.c,v 1.23 2021/11/27 22:16:42 rillig Exp $");
+__RCSID("$NetBSD: su_pam.c,v 1.24 2023/03/24 16:58:24 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -204,8 +204,9 @@ main(int argc, char **argv)
 	if ((p = strchr(user, ':')) != NULL) {
 		*p = '\0';
 		gname = ++p;
-	}
-	else
+		if (*gname == '\0')
+			errx(EXIT_FAILURE, "missing 'group' after ':'");
+	} else
 		gname = NULL;
 
 #ifdef ALLOW_EMPTY_USER
