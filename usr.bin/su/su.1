@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)su.1	8.2 (Berkeley) 4/18/94
-.\"	$NetBSD: su.1,v 1.54 2019/09/01 19:12:16 wiz Exp $
+.\"	$NetBSD: su.1,v 1.55 2023/03/24 14:34:17 kre Exp $
 .\"
 .Dd September 1, 2019
 .Dt SU 1
@@ -72,6 +72,14 @@ is omitted and
 is provided (form two above), then
 .Ar login
 is assumed to be the current username.
+If neither
+.Ar login
+nor
+.Ar group
+is provided,
+.Dq root
+is used for
+.Ar login .
 .Pp
 When executed by a user, the
 .Ar login
