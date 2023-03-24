@@ -1,4 +1,4 @@
-/* $NetBSD: pvh_consinit.c,v 1.2 2020/05/03 17:23:14 bouyer Exp $ */
+/* $NetBSD: pvh_consinit.c,v 1.3 2023/03/24 12:28:42 bouyer Exp $ */
 
 /*
  * Copyright (c) 2020 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.2 2020/05/03 17:23:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvh_consinit.c,v 1.3 2023/03/24 12:28:42 bouyer Exp $");
 
 #include "xencons.h"
 #include <sys/param.h>
@@ -51,7 +51,7 @@ static struct consdev pvh_xencons = {
 };
 
 
-void
+int
 xen_pvh_consinit(void)
 {
 	/*
@@ -59,21 +59,35 @@ xen_pvh_consinit(void)
 	 * boot stage.
 	 */
 	static int initted = 0;
+	if (xendomain_is_dom0()) {
+		union xen_cmdline_parseinfo xcp;
+		xen_parse_cmdline(XEN_PARSE_CONSOLE, &xcp);
+#ifdef CONS_OVERRIDE
+                if (strcmp(default_consinfo.devname, "tty0") == 0 ||
+		    strcmp(default_consinfo.devname, "pc") == 0) {
+#else
+		if (strcmp(xcp.xcp_console, "tty0") == 0 || /* linux name */
+		    strcmp(xcp.xcp_console, "pc") == 0) { /* NetBSD name */
+#endif /* CONS_OVERRIDE */
+			return 0; /* native console code will do it */
+		}
+	}
 	if (initted == 0 && !xendomain_is_dom0()) {
 		/* pmap not up yet, fall back to printk() */
 		cn_tab = &pvh_xencons;
 		initted++;
-		return;
+		return 1;
 	} else if (initted > 1) {
-		return;
+		return 1;
 	}
 	initted++;
 	if (xendomain_is_dom0()) {
+		/* we know we're using Xen's console at this point */
 		xenconscn_attach(); /* no ring in this case */
 		initted++; /* don't init console twice */
-		return;
+		return 1;
 	}
-		
+
 #if NXENCONS > 0
 	/* we can now map the xencons rings. */
 	struct xen_hvm_param xen_hvm_param;
@@ -98,6 +112,7 @@ xen_pvh_consinit(void)
 	xen_start_info.console.domU.evtchn = xen_hvm_param.value;
 	xenconscn_attach();
 #endif
+	return 1;
 }
 
 static int
