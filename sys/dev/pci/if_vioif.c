@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.105 2023/03/23 07:26:07 yamaguchi Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.106 2023/03/24 13:16:15 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.105 2023/03/23 07:26:07 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.106 2023/03/24 13:16:15 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1401,7 +1401,7 @@ vioif_alloc_queues(struct vioif_softc *sc)
 		nvqs++;
 
 	sc->sc_vqs = kmem_zalloc(sizeof(sc->sc_vqs[0]) * nvqs, KM_SLEEP);
-	sc->sc_netqs = kmem_zalloc(sizeof(sc->sc_vqs[0]) * netq_num,
+	sc->sc_netqs = kmem_zalloc(sizeof(sc->sc_netqs[0]) * netq_num,
 	    KM_SLEEP);
 }
 
