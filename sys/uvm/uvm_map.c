@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.404 2023/02/27 16:24:45 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.405 2023/03/24 07:26:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.404 2023/02/27 16:24:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.405 2023/03/24 07:26:21 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2384,8 +2384,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		}
 
 		if (VM_MAP_IS_KERNEL(map) && (flags & UVM_FLAG_NOWAIT) == 0) {
-			uvm_km_check_empty(map, entry->start,
-			    entry->end);
+			uvm_km_check_empty(map, entry->start, entry->end);
 		}
 #endif /* defined(UVMDEBUG) */
 
