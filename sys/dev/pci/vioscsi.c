@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.32 2023/03/23 03:55:11 yamaguchi Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.33 2023/03/24 13:32:19 yamaguchi Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.32 2023/03/23 03:55:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.33 2023/03/24 13:32:19 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,8 +206,7 @@ err:
 		vioscsi_free_reqs(sc, vsc);
 
 	for (i=0; i < __arraycount(sc->sc_vqs); i++) {
-		if (sc->sc_vqs[i].vq_num > 0)
-			virtio_free_vq(vsc, &sc->sc_vqs[i]);
+		virtio_free_vq(vsc, &sc->sc_vqs[i]);
 	}
 
 	virtio_child_attach_failed(vsc);
