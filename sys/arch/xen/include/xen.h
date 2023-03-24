@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.47 2020/05/02 16:44:36 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.48 2023/03/24 12:28:42 bouyer Exp $	*/
 
 /*
  *
@@ -60,7 +60,7 @@ void	xen_parse_cmdline(int, union xen_cmdline_parseinfo *);
 
 void	xenconscn_attach(void);
 
-void 	xen_pvh_consinit(void);
+int 	xen_pvh_consinit(void);
 
 void	xenprivcmd_init(void);
 
