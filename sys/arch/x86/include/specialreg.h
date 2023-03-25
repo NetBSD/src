@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.203 2023/02/17 09:53:24 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.204 2023/03/25 21:47:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -1065,7 +1065,7 @@
 #define CPUID_AMDEXT2_FSRC	  __BIT(11) /* Fast Short Rep Cmpsb */
 #define CPUID_AMDEXT2_PREFETCHCTL __BIT(13) /* Prefetch control MSR */
 #define CPUID_AMDEXT2_CPUIDUSRDIS __BIT(17) /* CPUID dis. for non-priv. soft */
-#define CPUID_AMDEXT2_EPSF	  __BIT(18) /* Enhanced Predective Store Fwd */
+#define CPUID_AMDEXT2_EPSF	  __BIT(18) /* Enhanced Predictive Store Fwd */
 
 #define CPUID_AMDEXT2_FLAGS	 "\20"					      \
 	"\1NoNestedDataBp" "\2FsGsKernelGsBaseNonSerializing"		      \

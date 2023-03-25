@@ -1,4 +1,4 @@
-/*	$NetBSD: video.h,v 1.8 2022/07/03 11:30:48 andvar Exp $	*/
+/*	$NetBSD: video.h,v 1.9 2023/03/25 21:47:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -117,7 +117,7 @@ struct video {
 #define	TT_SHOLD	0x1000	/* Sample/hold mode			*/
 
 /* The falcon video modes */
-#define RES_FALAUTO	0	/* Falcon resolution dedected at boot	*/
+#define RES_FALAUTO	0	/* Falcon resolution detected at boot	*/
 #define RES_VGA2	1	/* 640x480,   2 colors			*/
 #define RES_VGA4	2	/* 640x480,   4 colors			*/
 #define RES_VGA16	3	/* 640x480,  16 colors			*/
