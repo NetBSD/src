@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.266 2022/09/03 02:47:59 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.267 2023/03/25 21:35:49 andvar Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.266 2022/09/03 02:47:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.267 2023/03/25 21:35:49 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3132,7 +3132,7 @@ sppp_lcp_tlu(struct sppp *sp)
 		if ((sp->pp_flags & PP_LOOPBACK) == 0) {
 			SPPP_LOG(sp, LOG_DEBUG,
 			    "interface is going up, "
-			    "but no loopback packet is deteted\n");
+			    "but no loopback packet is detected\n");
 		}
 		sp->pp_flags &= ~PP_LOOPBACK;
 	}
