@@ -1,4 +1,4 @@
-/*	$NetBSD: video.h,v 1.9 2023/03/25 21:47:10 andvar Exp $	*/
+/*	$NetBSD: video.h,v 1.10 2023/03/25 21:51:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -41,7 +41,7 @@ struct video {
     volatile	u_short	vd_st_rgb[16];	/* RGB for simultaneous colors	(ST)*/
     volatile	u_char	vd_st_res;	/* ST resolution		    */
     volatile	char	vd_fill1;	/* filler			    */
-    volatile	u_short	vd_tt_res;	/* TT-resultion mode		    */
+    volatile	u_short	vd_tt_res;	/* TT-resolution mode		    */
     volatile	u_char  vd_ste_hscroll;	/* MEGA STe hor bitwise scroll	    */
     volatile	u_short vd_fal_res;	/* Falcon resolution		    */
     volatile	char    vd_fill2[23];
