@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.16 2023/03/25 11:00:35 mlelstv Exp $	*/
+/*	$NetBSD: viomb.c,v 1.17 2023/03/25 11:04:34 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.16 2023/03/25 11:00:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.17 2023/03/25 11:04:34 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,7 @@ viomb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (virtio_child_attach_finish(vsc, sc->sc_vq, __arraycount(sc->sc_vq),
-	    viomb_config_change, 0) != 0)
+	    viomb_config_change, VIRTIO_F_INTR_MPSAFE) != 0)
 		goto err_out;
 
 	if (kthread_create(PRI_IDLE, KTHREAD_MPSAFE, NULL,

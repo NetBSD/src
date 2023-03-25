@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.35 2023/03/25 09:03:47 mlelstv Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.36 2023/03/25 11:04:34 mlelstv Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.35 2023/03/25 09:03:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.36 2023/03/25 11:04:34 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,8 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	    cmd_per_lun, qsize, seg_max, max_target, max_lun);
 
 	if (virtio_child_attach_finish(vsc, sc->sc_vqs,
-	    __arraycount(sc->sc_vqs), NULL, VIRTIO_F_INTR_MSIX) != 0)
+	    __arraycount(sc->sc_vqs), NULL,
+	    VIRTIO_F_INTR_MSIX | VIRTIO_F_INTR_MPSAFE) != 0)
 		goto err;
 
 	/*
@@ -186,6 +187,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	adapt->adapt_max_periph = adapt->adapt_openings;
 	adapt->adapt_request = vioscsi_scsipi_request;
 	adapt->adapt_minphys = minphys;
+	adapt->adapt_flags = SCSIPI_ADAPT_MPSAFE;
 
 	/*
 	 * Fill in the scsipi_channel.
