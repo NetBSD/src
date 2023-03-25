@@ -1,4 +1,4 @@
-/* $NetBSD: libstubs.h,v 1.7 2009/10/17 11:18:18 mlelstv Exp $ */
+/* $NetBSD: libstubs.h,v 1.8 2023/03/25 20:14:26 abs Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ void CloseDevice(struct AmigaIO *);
 #endif
 
 void *FindResident(const char *);
+void *InitResident(const char *, u_int32_t);
 void *OpenResource(const char *);
 
 u_int32_t CachePreDMA(u_int32_t, u_int32_t *, int);
