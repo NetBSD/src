@@ -1,4 +1,4 @@
-/*	$NetBSD: viomb.c,v 1.15 2023/03/23 03:55:11 yamaguchi Exp $	*/
+/*	$NetBSD: viomb.c,v 1.16 2023/03/25 11:00:35 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.15 2023/03/23 03:55:11 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viomb.c,v 1.16 2023/03/25 11:00:35 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -286,8 +286,8 @@ inflate(struct viomb_softc *sc)
 	nhpages = nvpages * VIRTIO_PAGE_SIZE / PAGE_SIZE;
 
 	b = &sc->sc_req;
-	if (uvm_pglistalloc(nhpages*PAGE_SIZE, 0, UINT32_MAX*PAGE_SIZE,
-			    0, 0, &b->bl_pglist, nhpages, 1)) {
+	if (uvm_pglistalloc(nhpages*PAGE_SIZE, 0, UINT32_MAX*(paddr_t)PAGE_SIZE,
+			    0, 0, &b->bl_pglist, nhpages, 0)) {
 		printf("%s: %" PRIu64 " pages of physical memory "
 		       "could not be allocated, retrying...\n",
 		       device_xname(sc->sc_dev), nhpages);
@@ -507,9 +507,9 @@ viomb_thread(void *arg)
 				if (r != 0)
 					sleeptime = 10000;
 				else
-					sleeptime = 1000;
+					sleeptime = 100;
 			} else
-				sleeptime = 100;
+				sleeptime = 20;
 		} else if (sc->sc_npages < sc->sc_actual + sc->sc_inflight) {
 			if (sc->sc_inflight == 0)
 				r = deflate(sc);
