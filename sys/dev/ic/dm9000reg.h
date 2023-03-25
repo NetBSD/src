@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000reg.h,v 1.10 2022/05/31 12:59:00 andvar Exp $	*/
+/*	$NetBSD: dm9000reg.h,v 1.11 2023/03/25 21:33:46 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -59,7 +59,7 @@
 #define  DM9000_NCR_WAKEEN	(1<<6)	/* wakeup event enable */
 #define  DM9000_NCR_EXY_PHY	(1<<7)	/* select ext. PHY, immune SW reset */
 #define DM9000_NSR		0x01	/* "network" status */
-#define  DM9000_NSR_RXOV	(1<<1)	/* receive overflow deteced */
+#define  DM9000_NSR_RXOV	(1<<1)	/* receive overflow detected */
 #define  DM9000_NSR_TX1END	(1<<2)	/* transmit 1 completed, W1C */
 #define  DM9000_NSR_TX2END	(1<<3) 	/* transmit 2 completed, W1C */
 #define  DM9000_NSR_WAKEST	(1<<5)	/* wakeup event, W1C */
@@ -99,7 +99,7 @@
 #define  DM9000_RSR_MF		(1<<6)	/* mcast/bcast frame received */
 #define  DM9000_RSR_RF		(1<<7)	/* damaged runt frame received <64 */
 #define DM9000_ROCR		0x07	/* receive overflow counter */
-/* 7: OVF detected, 6:0 statistic couner */
+/* 7: OVF detected, 6:0 statistic counter */
 #define DM9000_BPTR		0x08	/* back pressure threshold */
 /* 7:4 back pressure high watermark (3 def), 3:0 jam pattern time (7 def) */
 #define DM9000_FCTR		0x09	/* flow control threshold */
