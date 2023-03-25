@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.33 2023/03/24 13:32:19 yamaguchi Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.34 2023/03/25 08:14:00 mlelstv Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.33 2023/03/24 13:32:19 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.34 2023/03/25 08:14:00 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,6 +163,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 			sc->sc_vqs[i].vq_done = vioscsi_vq_done;
 	}
 
+	qsize = sc->sc_vqs[VIOSCSI_VQ_REQUEST].vq_num;
 	if (vioscsi_alloc_reqs(sc, vsc, qsize))
 		goto err;
 
