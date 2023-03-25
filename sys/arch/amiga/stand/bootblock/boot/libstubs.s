@@ -1,4 +1,4 @@
-/* $NetBSD: libstubs.s,v 1.10 2009/10/17 11:18:18 mlelstv Exp $ */
+/* $NetBSD: libstubs.s,v 1.11 2023/03/25 20:14:26 abs Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -204,6 +204,16 @@ ENTRY_NOPROFILE(FindResident)
 	movl	%pc@(_C_LABEL(SysBase):w),%a6
 	movl	%sp@(8),%a1
 	jsr	%a6@(-0x60)
+	movl	%sp@+,%a6
+	movl	%d0,%a0			| Comply with ELF ABI
+	rts
+
+ENTRY_NOPROFILE(InitResident)
+	movl	%a6,%sp@-
+	movl	%pc@(_C_LABEL(SysBase):w),%a6
+	movl	%sp@(8),%a1
+	movl	%sp@(12),%d1
+	jsr	%a6@(-0x66)
 	movl	%sp@+,%a6
 	movl	%d0,%a0			| Comply with ELF ABI
 	rts

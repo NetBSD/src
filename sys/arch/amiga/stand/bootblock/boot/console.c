@@ -1,4 +1,4 @@
-/* $NetBSD: console.c,v 1.15 2016/12/18 12:02:37 mlelstv Exp $ */
+/* $NetBSD: console.c,v 1.16 2023/03/25 20:14:26 abs Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -138,8 +138,20 @@ consinit(void *consptr) {
 		goto err;
 
 	mc->cnior->buf = (void *)mc->w;
-	if (OpenDevice("console.device", 0, mc->cnior, 0))
-		goto err;
+	mc->cnior->length = 136; /* sizeof(struct Window) */
+	if (OpenDevice("console.device", 0, mc->cnior, 0)) {
+		/* Kickstart 3.2 decided not to initialize console.device
+                before bootstrap, so we have to do it ourselves. */
+		void *res = FindResident("console.device");
+		if (!res)
+			goto err;
+
+		if (!InitResident(res, 0))
+			goto err;
+
+		if (OpenDevice("console.device", 0, mc->cnior, 0))
+			goto err;
+	}
 
 	mc->tmior = (struct TimerIO *)CreateIORequest(mc->cnmp, sizeof(struct TimerIO));
 	if (!mc->tmior)
