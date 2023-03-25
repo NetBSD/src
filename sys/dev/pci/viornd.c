@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.20 2023/03/23 03:55:11 yamaguchi Exp $ */
+/* 	$NetBSD: viornd.c,v 1.21 2023/03/25 11:04:34 mlelstv Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -191,7 +191,7 @@ viornd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_vq.vq_done = viornd_vq_done;
 
 	error = virtio_child_attach_finish(vsc, &sc->sc_vq, 1,
-	    NULL, 0);
+	    NULL, VIRTIO_F_INTR_MPSAFE);
 	if (error) {
 		virtio_free_vq(vsc, &sc->sc_vq);
 		goto vio_failed;
