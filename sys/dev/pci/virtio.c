@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.68 2023/03/24 13:32:19 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.69 2023/03/25 02:59:23 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.68 2023/03/24 13:32:19 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.69 2023/03/25 02:59:23 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -865,10 +865,6 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq,
 
 	virtio_reset_vq(sc, vq);
 
-	/* set the vq address */
-	sc->sc_ops->setup_queue(sc, vq->vq_index,
-	    vq->vq_dmamap->dm_segs[0].ds_addr);
-
 	aprint_verbose_dev(sc->sc_dev,
 	    "allocated %zu byte for virtqueue %d for %s, size %d\n",
 	    allocsize, vq->vq_index, name, vq_num);
@@ -1301,6 +1297,7 @@ virtio_child_attach_finish(struct virtio_softc *sc,
     virtio_callback config_change,
     int req_flags)
 {
+	size_t i;
 	int r;
 
 #ifdef DIAGNOSTIC
@@ -1309,11 +1306,11 @@ virtio_child_attach_finish(struct virtio_softc *sc,
 	KASSERT((req_flags & VIRTIO_ASSERT_FLAGS) != VIRTIO_ASSERT_FLAGS);
 #undef VIRTIO_ASSERT_FLAGS
 
-	for (size_t _i = 0; _i < nvqs; _i++){
-		KASSERT(vqs[_i].vq_index == _i);
-		KASSERT(vqs[_i].vq_intrhand != NULL);
-		KASSERT(vqs[_i].vq_done == NULL ||
-		    vqs[_i].vq_intrhand == virtio_vq_done);
+	for (i = 0; i < nvqs; i++){
+		KASSERT(vqs[i].vq_index == i);
+		KASSERT(vqs[i].vq_intrhand != NULL);
+		KASSERT(vqs[i].vq_done == NULL ||
+		    vqs[i].vq_intrhand == virtio_vq_done);
 	}
 #endif
 
@@ -1324,6 +1321,12 @@ virtio_child_attach_finish(struct virtio_softc *sc,
 	sc->sc_config_change = config_change;
 	sc->sc_intrhand = virtio_vq_intr;
 	sc->sc_flags = req_flags;
+
+	/* set the vq address */
+	for (i = 0; i < nvqs; i++) {
+		sc->sc_ops->setup_queue(sc, vqs[i].vq_index,
+		    vqs[i].vq_dmamap->dm_segs[0].ds_addr);
+	}
 
 	r = sc->sc_ops->alloc_interrupts(sc);
 	if (r != 0) {
