@@ -1,4 +1,4 @@
-/*	$NetBSD: viewvar.h,v 1.8 2021/09/19 10:34:08 andvar Exp $	*/
+/*	$NetBSD: viewvar.h,v 1.9 2023/03/26 15:24:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 /* The view major device is a placeholder device.  It serves
- * simply to map the semantics of a graphics dipslay to
+ * simply to map the semantics of a graphics display to
  * the semantics of a character block device.  In other
  * words the graphics system as currently built does not like to be
  * referred to by open/close/ioctl.  This device serves as

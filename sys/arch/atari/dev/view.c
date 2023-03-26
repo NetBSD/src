@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.38 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: view.c,v 1.39 2023/03/26 15:24:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,14 +31,14 @@
  */
 
 /* The view major device is a placeholder device.  It serves
- * simply to map the semantics of a graphics dipslay to
+ * simply to map the semantics of a graphics display to
  * the semantics of a character block device.  In other
  * words the graphics system as currently built does not like to be
  * referred to by open/close/ioctl.  This device serves as
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.38 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.39 2023/03/26 15:24:21 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
