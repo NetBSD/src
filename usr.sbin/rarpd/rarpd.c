@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.60 2018/02/13 10:17:04 martin Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.61 2023/03/26 19:10:34 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -25,7 +25,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.60 2018/02/13 10:17:04 martin Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.61 2023/03/26 19:10:34 andvar Exp $");
 #endif
 
 
@@ -704,7 +704,7 @@ lookup_ipaddr(char *ifname, u_int32_t *addrp, u_int32_t *netmaskp)
 	(void)close(fd);
 }
 /*
- * Poke the kernel arp tables with the ethernet/ip address combinataion
+ * Poke the kernel arp tables with the ethernet/ip address combination
  * given.  When processing a reply, we must do this so that the booting
  * host (i.e. the guy running rarpd), won't try to ARP for the hardware
  * address of the guy being booted (he cannot answer the ARP).

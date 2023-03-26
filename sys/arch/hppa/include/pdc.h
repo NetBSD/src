@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.h,v 1.1 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: pdc.h,v 1.2 2023/03/26 19:10:33 andvar Exp $	*/
 
 /*	$OpenBSD: pdc.h,v 1.35 2007/07/15 20:03:48 kettenis Exp $	*/
 
@@ -210,7 +210,7 @@
 #define	PDC_CONF	17	/* (de)configure a module */
 #define	PDC_CONF_DECONF		0	/* deconfigure module */
 #define	PDC_CONF_RECONF		1	/* reconfigure module */
-#define	PDC_CONF_INFO		2	/* get config informaion */
+#define	PDC_CONF_INFO		2	/* get config information */
 
 #define PDC_BLOCK_TLB	18	/* Manage Block TLB entries (BTLB) */
 #define PDC_BTLB_DEFAULT	0	/* Return BTLB configuration info  */

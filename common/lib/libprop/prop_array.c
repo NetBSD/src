@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_array.c,v 1.21 2012/07/27 09:10:59 pooka Exp $	*/
+/*	$NetBSD: prop_array.c,v 1.22 2023/03/26 19:10:32 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -488,7 +488,7 @@ prop_array_count(prop_array_t pa)
 /*
  * prop_array_ensure_capacity --
  *	Ensure that the array has the capacity to store the specified
- *	total number of objects (inluding the objects already stored
+ *	total number of objects (including the objects already stored
  *	in the array).
  */
 bool
