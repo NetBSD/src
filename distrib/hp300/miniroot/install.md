@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: install.md,v 1.20 2020/12/05 18:52:06 tsutsui Exp $
+#	$NetBSD: install.md,v 1.21 2023/03/26 15:08:24 andvar Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -497,7 +497,7 @@ program can cause SIGNIFICANT data loss, and you are advised
 to make sure your hard drive is backed up before beginning the
 installation process.
 
-Default answers are displyed in brackets after the questions.
+Default answers are displayed in brackets after the questions.
 You can hit Control-C at any time to quit, but if you do so at a
 prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
