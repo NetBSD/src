@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrvar_impl.h,v 1.11 2017/01/28 22:56:09 maya Exp $	*/
+/*	$NetBSD: if_agrvar_impl.h,v 1.12 2023/03/26 19:10:33 andvar Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -30,7 +30,7 @@
 #define	_NET_AGR_IF_AGRVAR_IMPL_H_
 
 /*
- * implementaion details for agr(4) driver.  (contrast to if_agrvar.h)
+ * implementation details for agr(4) driver.  (contrast to if_agrvar.h)
  */
 
 #include <sys/mutex.h>

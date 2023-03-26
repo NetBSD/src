@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.159 2021/10/09 20:00:41 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.160 2023/03/26 19:10:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2021/10/09 20:00:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2023/03/26 19:10:33 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_m060sp.h"
@@ -326,7 +326,7 @@ mvme147_init(void)
 int	get_cpuspeed(void);
 
 /*
- * MVME-1[67]x specific initializaion.
+ * MVME-1[67]x specific initialization.
  */
 void
 mvme1xx_init(void)

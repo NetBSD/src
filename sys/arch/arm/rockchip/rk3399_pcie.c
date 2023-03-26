@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.19 2022/10/15 11:07:39 jmcneill Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.20 2023/03/26 19:10:33 andvar Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.19 2022/10/15 11:07:39 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.20 2023/03/26 19:10:33 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 	 * what these errata involved (not public), but posts from the
 	 * @rock-chips.com domain to u-boot and linux-kernel lists indicate
 	 * that there is a errata related to this, and indeed, the Datasheet
-	 * since at least Rev 1.6 and inluding the latest Rev 1.8 say that the
+	 * since at least Rev 1.6 and including the latest Rev 1.8 say that the
 	 * PCIe can handle 2.5GT/s (ie, PCIe 1.x).
 	 */
 	if (of_getprop_uint32(phandle, "max-link-speed", &max_link_speed) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.88 2022/09/16 03:12:03 knakahara Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.89 2023/03/26 19:10:33 andvar Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.88 2022/09/16 03:12:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.89 2023/03/26 19:10:33 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6663,7 +6663,7 @@ ixl_sysctl_itr_handler(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	/* ITRs are applied in ixl_init() for simple implementaion */
+	/* ITRs are applied in ixl_init() for simple implementation */
 	if (ISSET(ifp->if_flags, IFF_RUNNING))
 		return EBUSY;
 
