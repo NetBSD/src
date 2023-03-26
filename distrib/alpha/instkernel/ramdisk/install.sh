@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: install.sh,v 1.7 2020/09/29 02:49:55 msaitoh Exp $
+# $NetBSD: install.sh,v 1.8 2023/03/26 15:08:24 andvar Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -72,7 +72,7 @@ echo	"program can cause SIGNIFICANT data loss, and you are advised"
 echo	"to make sure your hard drive is backed up before beginning the"
 echo	"installation process."
 echo	""
-echo	"Default answers are displyed in brackets after the questions."
+echo	"Default answers are displayed in brackets after the questions."
 echo	"You can hit Control-C at any time to quit, but if you do so at a"
 echo	"prompt, you may have to hit return.  Also, quitting in the middle of"
 echo	"installation may leave your system in an inconsistent state."
