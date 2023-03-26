@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.366 2022/12/16 17:35:42 martin Exp $
+#	$NetBSD: BRANCHES,v 1.367 2023/03/26 19:10:32 andvar Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -764,7 +764,7 @@ End Date:	Sun Aug 19 2021
 Base Tag:	thorpej-futex-base
 Maintainer:	Jason Thorpe <thorpej@netbsd.org>
 Scope:		src/sys src/tests/lib/libc/sys src/distrib/sets/lists
-Notes:		Normal futex operataions pass the test suite, but there are
+Notes:		Normal futex operations pass the test suite, but there are
 		issues with Linux compatibility currently, that need to be
 		addressed before merging.  Also includes new NetBSD extensions
 		to the futex interface to support reader/writer locks.  Those

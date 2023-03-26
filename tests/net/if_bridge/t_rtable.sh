@@ -1,4 +1,4 @@
-#	$NetBSD: t_rtable.sh,v 1.7 2019/08/19 03:22:05 ozaki-r Exp $
+#	$NetBSD: t_rtable.sh,v 1.8 2023/03/26 19:10:34 andvar Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -105,7 +105,7 @@ atf_test_case bridge_rtable_basic cleanup
 bridge_rtable_basic_head()
 {
 
-	atf_set "descr" "Tests basic opearaions of bridge's learning table"
+	atf_set "descr" "Tests basic operations of bridge's learning table"
 	atf_set "require.progs" "rump_server"
 }
 

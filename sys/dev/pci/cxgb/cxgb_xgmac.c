@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_xgmac.c,v 1.2 2018/09/03 16:29:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_xgmac.c,v 1.3 2023/03/26 19:10:33 andvar Exp $");
 
 #ifdef CONFIG_DEFINED
 #include <cxgb_include.h>
@@ -351,7 +351,7 @@ int t3_mac_set_mtu(struct cmac *mac, unsigned int mtu)
     adapter_t *adap = mac->adapter;
 
     /*
-     * MAX_FRAME_SIZE inludes header + FCS, mtu doesn't.  The HW max
+     * MAX_FRAME_SIZE includes header + FCS, mtu doesn't.  The HW max
      * packet size register includes header, but not FCS.
      */
     mtu += 14;
