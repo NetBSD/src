@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.13 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.14 2023/03/26 15:12:34 andvar Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -30,13 +30,13 @@
 /*
  * The main thing to realize about this emulator is that the old console
  * emulator was largely compatible with the DEC VT-220.  Since the
- * wsdiplay driver has a more complete emulation of that terminal, it's
+ * wsdisplay driver has a more complete emulation of that terminal, it's
  * reasonable to pass virtually everything up to that driver without
  * modification.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.13 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.14 2023/03/26 15:12:34 andvar Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"

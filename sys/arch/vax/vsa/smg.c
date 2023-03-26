@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.64 2023/02/11 05:59:39 tsutsui Exp $ */
+/*	$NetBSD: smg.c,v 1.65 2023/03/26 15:12:34 andvar Exp $ */
 /*	$OpenBSD: smg.c,v 1.28 2014/12/23 21:39:12 miod Exp $	*/
 /*
  * Copyright (c) 2006, Miodrag Vallat
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.64 2023/02/11 05:59:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.65 2023/03/26 15:12:34 andvar Exp $");
 
 #include "dzkbd.h"
 #include "wsdisplay.h"
@@ -675,7 +675,7 @@ smg_putchar(void *cookie, int row, int startcol, u_int uc, long attr)
 			 * WSDISPLAY_FONTORDER_R2L to use proper shift ops.
 			 * On the other hand, VRAM data is stored in
 			 * WSDISPLAY_FONTORDER_R2L bitorder and
-			 * WSDIPPLAY_FONTORDER_L2R byteorder.
+			 * WSDISPLAY_FONTORDER_L2R byteorder.
 			 */
 			glyph = 0;
 			for (i = ri->ri_font->stride; i != 0; i--)
