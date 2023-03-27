@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.19 2014/03/08 20:51:20 jdc Exp $	*/
+/*	$NetBSD: disks.c,v 1.20 2023/03/27 23:20:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)disks.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: disks.c,v 1.19 2014/03/08 20:51:20 jdc Exp $");
+__RCSID("$NetBSD: disks.c,v 1.20 2023/03/27 23:20:13 kre Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -71,6 +71,7 @@ disks_drives(char *args)
 	if (args) {
 		for (i = 0; i < ndrive; i++)
 			drv_select[i] = 0;
+		labels();
 		disks_add(args);
 	} else {
 		move(CMDLINE, 0);
@@ -85,6 +86,8 @@ drvselect(char *args, int truefalse, int selections[])
 {
 	char *cp;
 	size_t i;
+	int matched;
+	int changed = 0;
 
 	cp = strchr(args, '\n');
 	if (cp)
@@ -99,15 +102,20 @@ drvselect(char *args, int truefalse, int selections[])
 			*cp++ = '\0';
 		if (cp - args == 0)
 			break;
+		matched = 0;
 		for (i = 0; i < ndrive; i++)
 			if (fnmatch(args, dr_name[i], 0) == 0) {
+				if (selections[i] != truefalse)
+					changed = 1;
 				selections[i] = truefalse;
-				break;
+				matched = 1;
 			}
-		if (i >= ndrive)
+		if (matched == 0)
 			error("%s: unknown drive", args);
 		args = cp;
 	}
-	labels();
-	display(0);
+	if (changed) {
+		labels();
+		display(0);
+	}
 }
