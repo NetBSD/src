@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.69 2023/03/25 02:59:23 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.70 2023/03/27 10:48:46 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.69 2023/03/25 02:59:23 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.70 2023/03/27 10:48:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -746,7 +746,7 @@ virtio_init_vq_vqdone(struct virtio_softc *sc, struct virtqueue *vq,
 
 void
 virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
-   int (*intrhand)(void *), void *arg)
+   int (*func)(void *), void *arg)
 {
 
 	memset(vq, 0, sizeof(*vq));
@@ -754,7 +754,7 @@ virtio_init_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 	vq->vq_owner = sc;
 	vq->vq_num = sc->sc_ops->read_queue_size(sc, index);
 	vq->vq_index = index;
-	vq->vq_intrhand = intrhand;
+	vq->vq_intrhand = func;
 	vq->vq_intrhand_arg = arg;
 }
 
