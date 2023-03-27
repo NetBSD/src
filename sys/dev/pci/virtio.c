@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.70 2023/03/27 10:48:46 riastradh Exp $	*/
+/*	$NetBSD: virtio.c,v 1.71 2023/03/27 14:56:40 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.70 2023/03/27 10:48:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.71 2023/03/27 14:56:40 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -866,12 +866,12 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq,
 	virtio_reset_vq(sc, vq);
 
 	aprint_verbose_dev(sc->sc_dev,
-	    "allocated %zu byte for virtqueue %d for %s, size %d\n",
-	    allocsize, vq->vq_index, name, vq_num);
+	    "allocated %" PRIuBUSSIZE " byte for virtqueue %d for %s, "
+	    "size %d\n", allocsize, vq->vq_index, name, vq_num);
 	if (size_indirect > 0)
 		aprint_verbose_dev(sc->sc_dev,
-		    "using %zu byte (%d entries) indirect descriptors\n",
-		    size_indirect, maxnsegs * vq_num);
+		    "using %" PRIuBUSSIZE " byte (%d entries) indirect "
+		    "descriptors\n", size_indirect, maxnsegs * vq_num);
 
 	return 0;
 
