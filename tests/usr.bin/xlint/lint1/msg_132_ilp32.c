@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132_ilp32.c,v 1.2 2022/06/10 18:29:01 rillig Exp $	*/
+/*	$NetBSD: msg_132_ilp32.c,v 1.3 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_132_ilp32.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -11,8 +11,8 @@
  * ptrdiff_t.
  */
 
-/* lint1-extra-flags: -a */
 /* lint1-only-if: ilp32 int */
+/* lint1-extra-flags: -a -X 351 */
 
 /*
  * Seen in usr.bin/make/var.c, function RegexReplace, in the function call

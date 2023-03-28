@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.189 2023/02/22 22:30:40 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.190 2023/03/28 14:44:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.189 2023/02/22 22:30:40 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.190 2023/03/28 14:44:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -406,6 +406,7 @@ static const char *const msgs[] = {
 	"maximum value %d of '%s' does not match maximum array index %d", /* 348 */
 	"non type argument to alignof is a GCC extension",	      /* 349 */
 	"'_Atomic' requires C11 or later",			      /* 350 */
+	"'extern' declaration of '%s' outside a header",	      /* 351 */
 };
 
 static bool	is_suppressed[sizeof(msgs) / sizeof(msgs[0])];

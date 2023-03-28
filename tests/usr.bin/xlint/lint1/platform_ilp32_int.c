@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_int.c,v 1.1 2023/02/27 23:07:53 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_int.c,v 1.2 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "platform_ilp32_int.c"
 
 /*
@@ -6,8 +6,8 @@
  * pointer types and where size_t is unsigned int, not unsigned long.
  */
 
-/* lint1-extra-flags: -c -h -a -p -b -r -z */
 /* lint1-only-if: ilp32 int */
+/* lint1-extra-flags: -c -h -a -p -b -r -z -X 351 */
 
 int s32;
 unsigned int u32;

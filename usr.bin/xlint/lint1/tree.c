@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.506 2023/02/24 19:18:50 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.507 2023/03/28 14:44:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.506 2023/02/24 19:18:50 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.507 2023/03/28 14:44:35 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -58,9 +58,6 @@ typedef struct integer_constraints {
 	uint64_t	bset;	/* bits that are definitely set */
 	uint64_t	bclr;	/* bits that are definitely clear */
 } integer_constraints;
-
-
-extern sig_atomic_t fpe;
 
 
 static uint64_t

@@ -1,7 +1,9 @@
-/*	$NetBSD: d_packed_structs.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
+/*	$NetBSD: d_packed_structs.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_packed_structs.c"
 
 /* packed tests */
+
+/* lint1-extra-flags: -X 351 */
 
 struct in_addr {
 	int x;

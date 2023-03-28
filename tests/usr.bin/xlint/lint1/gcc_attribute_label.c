@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_label.c,v 1.3 2022/04/28 21:38:38 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_label.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "gcc_attribute_label.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Label-Attributes.html
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void dead(void);
 

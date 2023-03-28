@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.18 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.19 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -11,7 +11,7 @@
  * and functions from system headers may use int expressions as well.
  */
 
-/* lint1-extra-flags: -T */
+/* lint1-extra-flags: -T -X 351 */
 
 extern const unsigned short *ctype_table;
 

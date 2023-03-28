@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_220.c,v 1.8 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_220.c,v 1.9 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_220.c"
 
 // Test for message: fallthrough on case statement [220]
 
-/* lint1-extra-flags: -h */
+/* lint1-extra-flags: -h -X 351 */
 
 extern void
 println(const char *);

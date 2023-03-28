@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_range.c,v 1.4 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: expr_range.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "expr_range.c"
 
 /*
@@ -16,7 +16,7 @@
  * possible values may be related to RangeConstraintManager, just guessing.
  */
 
-/* lint1-extra-flags: -chap */
+/* lint1-extra-flags: -chap -X 351 */
 
 void println(const char *);
 

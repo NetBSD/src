@@ -1,9 +1,11 @@
-/*	$NetBSD: stmt_if.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: stmt_if.c,v 1.3 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "stmt_if.c"
 
 /*
  * Test parsing of 'if' statements.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void println(const char *);
 

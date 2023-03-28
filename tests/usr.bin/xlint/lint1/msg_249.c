@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_249.c,v 1.13 2023/01/29 18:37:20 rillig Exp $	*/
+/*	$NetBSD: msg_249.c,v 1.14 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_249.c"
 
 // Test for message: syntax error '%s' [249]
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * Cover the grammar rule 'top_level_declaration: error T_SEMI'.

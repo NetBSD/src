@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.14 2023/01/04 05:32:01 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.15 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -11,7 +11,7 @@
  * C11 6.5.1.1 "Generic selection"
  */
 
-/* lint1-extra-flags: -Ac11 */
+/* lint1-extra-flags: -Ac11 -X 351 */
 
 /*
  * The type of 'var' is not compatible with any of the types from the

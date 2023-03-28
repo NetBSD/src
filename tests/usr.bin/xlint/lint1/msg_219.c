@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_219.c,v 1.5 2022/02/27 19:32:51 rillig Exp $	*/
+/*	$NetBSD: msg_219.c,v 1.6 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_219.c"
 
 
 /* Test for message: concatenated strings are illegal in traditional C [219] */
 
-/* lint1-flags: -t -w */
+/* lint1-flags: -t -w -X 351 */
 
 char concat1[] = "one";
 /* expect+1: warning: concatenated strings are illegal in traditional C [219] */

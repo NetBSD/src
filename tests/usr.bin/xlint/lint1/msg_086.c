@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_086.c,v 1.5 2022/06/20 21:13:36 rillig Exp $	*/
+/*	$NetBSD: msg_086.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_086.c"
 
 // Test for message: automatic '%s' hides external declaration [86]
 
-/* lint1-flags: -S -g -h -w */
+/* lint1-flags: -S -g -h -w -X 351 */
 
 extern int identifier;
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_124.c,v 1.12 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_124.c,v 1.13 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_124.c"
 
 // Test for message: illegal combination of '%s' and '%s', op '%s' [124]
 
-/* lint1-extra-flags: -s */
+/* lint1-extra-flags: -s -X 351 */
 
 typedef void(*signal_handler)(int);
 

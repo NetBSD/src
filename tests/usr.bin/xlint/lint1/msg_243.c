@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_243.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_243.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_243.c"
 
 // Test for message: dubious comparison of enums, op '%s' [243]
 
-/* lint1-extra-flags: -eP */
+/* lint1-extra-flags: -eP -X 351 */
 
 enum color {
 	RED, GREEN, BLUE

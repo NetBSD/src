@@ -1,10 +1,12 @@
-/*	$NetBSD: parse_type_name.c,v 1.9 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: parse_type_name.c,v 1.10 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "parse_type_name.c"
 
 /*
  * Test parsing of the grammar rule 'type_name', which among others appears
  * in the expression 'sizeof(type_name)'.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void sink(unsigned long);
 

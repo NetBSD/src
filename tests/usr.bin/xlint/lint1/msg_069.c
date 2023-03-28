@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_069.c,v 1.4 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_069.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_069.c"
 
 // Test for message: inappropriate qualifiers with 'void' [69]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+2: error: void type for 'const_void' [19] */
 /* expect+1: warning: inappropriate qualifiers with 'void' [69] */

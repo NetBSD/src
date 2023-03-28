@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_347.c,v 1.4 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: msg_347.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_347.c"
 
 // Test for message: redeclaration of '%s' with type '%s', expected '%s' [347]
 
-/* lint1-extra-flags: -r */
+/* lint1-extra-flags: -r -X 351 */
 
 /*
  * Message 27 already covers redeclarations, but it doesn't include enough

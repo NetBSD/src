@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_160.c,v 1.9 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_160.c,v 1.10 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_160.c"
 
 // Test for message: operator '==' found where '=' was expected [160]
 
-/* lint1-extra-flags: -h */
+/* lint1-extra-flags: -h -X 351 */
 
 _Bool
 both_equal_or_unequal(int a, int b, int c, int d)

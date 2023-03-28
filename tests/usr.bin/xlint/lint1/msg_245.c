@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_245.c,v 1.5 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_245.c,v 1.6 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_245.c"
 
 // Test for message: incompatible structure pointers: '%s' '%s' '%s' [245]
+
+/* lint1-extra-flags: -X 351 */
 
 typedef struct tag_and_typedef_tag {
 	int member;

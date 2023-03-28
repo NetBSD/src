@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_341.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_341.c,v 1.3 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_341.c"
 
 // Test for message: argument to '%s' must be 'unsigned char' or EOF, not '%s' [341]
@@ -7,6 +7,8 @@
  * Ensure that the functions from <ctype.h> are called with the correct
  * argument.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 /* NetBSD 9.99.81, <ctype.h> */
 extern const unsigned short *_ctype_tab_;

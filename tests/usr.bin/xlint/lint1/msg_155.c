@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_155.c,v 1.11 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_155.c,v 1.12 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_155.c"
 
 // Test for message: passing '%s' to incompatible '%s', arg #%d [155]
+
+/* lint1-extra-flags: -X 351 */
 
 
 void c99_6_7_6_example_a(int);

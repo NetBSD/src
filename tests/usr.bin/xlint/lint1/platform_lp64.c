@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.4 2023/02/22 22:12:35 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -6,8 +6,8 @@
  * long and pointer types.
  */
 
-/* lint1-extra-flags: -c -h -a -p -b -r -z */
 /* lint1-only-if: lp64 */
+/* lint1-extra-flags: -c -h -a -p -b -r -z -X 351 */
 
 int s32;
 unsigned int u32;

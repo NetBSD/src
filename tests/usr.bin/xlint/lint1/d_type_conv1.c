@@ -1,4 +1,4 @@
-/*	$NetBSD: d_type_conv1.c,v 1.5 2022/04/15 21:50:07 rillig Exp $	*/
+/*	$NetBSD: d_type_conv1.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_type_conv1.c"
 
 /* Flag information-losing type conversion in argument lists */
@@ -9,6 +9,7 @@
  * non-prototype functions an issue.
  */
 /* lint1-flags: -g -h -w */
+/* lint1-extra-flags: -X 351 */
 
 int f(unsigned int);
 

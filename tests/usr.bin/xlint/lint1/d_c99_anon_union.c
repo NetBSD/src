@@ -1,7 +1,9 @@
-/*	$NetBSD: d_c99_anon_union.c,v 1.4 2021/02/20 22:31:20 rillig Exp $	*/
+/*	$NetBSD: d_c99_anon_union.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_anon_union.c"
 
 /* struct with only anonymous members */
+
+/* lint1-extra-flags: -X 351 */
 
 struct foo {
 	union {

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_001.c,v 1.8 2022/10/01 09:42:40 rillig Exp $	*/
+/*	$NetBSD: msg_001.c,v 1.9 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_001.c"
 
 // Test for message: old-style declaration; add 'int' [1]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: old-style declaration; add 'int' [1] */
 old_style = 1;

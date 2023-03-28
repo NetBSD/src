@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_153.c,v 1.6 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_153.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_153.c"
 
 // Test for message: converting '%s' to incompatible '%s' for argument %d [153]
+
+/* lint1-extra-flags: -X 351 */
 
 
 typedef double (*unary_operator)(double);

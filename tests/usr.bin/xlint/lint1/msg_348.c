@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_348.c,v 1.8 2023/01/14 11:15:07 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.9 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message 348: maximum value %d of '%s' does not match maximum array index %d [348]
 
-/* lint1-extra-flags: -r */
+/* lint1-extra-flags: -r -X 351 */
 
 enum color {
 	red,

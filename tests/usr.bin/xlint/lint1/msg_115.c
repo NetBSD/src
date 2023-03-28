@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_115.c,v 1.10 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_115.c,v 1.11 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_115.c"
 
 // Test for message: %soperand of '%s' must be modifiable lvalue [115]
+
+/* lint1-extra-flags: -X 351 */
 
 void
 example(const int *const_ptr)

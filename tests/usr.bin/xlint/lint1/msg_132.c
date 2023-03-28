@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_132.c,v 1.25 2023/01/29 17:02:09 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.26 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * NetBSD's default lint flags only include a single -a, which only flags

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_323.c,v 1.4 2021/10/10 09:17:24 rillig Exp $	*/
+/*	$NetBSD: msg_323.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_323.c"
 
 // Test for message: continue in 'do ... while (0)' loop [323]
+
+/* lint1-extra-flags: -X 351 */
 
 void println(const char *);
 

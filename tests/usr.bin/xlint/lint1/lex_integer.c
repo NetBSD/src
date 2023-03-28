@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer.c,v 1.10 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: lex_integer.c,v 1.11 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "lex_integer.c"
 
 /*
@@ -8,6 +8,7 @@
  */
 
 /* lint1-only-if: lp64 */
+/* lint1-extra-flags: -X 351 */
 
 long signed_long;
 unsigned long long unsigned_long_long_var;

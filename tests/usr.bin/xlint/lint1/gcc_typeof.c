@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_typeof.c,v 1.5 2023/01/21 08:04:43 rillig Exp $	*/
+/*	$NetBSD: gcc_typeof.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "gcc_typeof.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Typeof.html
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void take_double(typeof(0.0));
 

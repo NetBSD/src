@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_277.c,v 1.6 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_277.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_277.c"
 
 // Test for message: initialization of '%s' with '%s' [277]
 
-/* lint1-extra-flags: -e */
+/* lint1-extra-flags: -e -X 351 */
 
 enum E {
 	E1

@@ -1,10 +1,12 @@
-/*	$NetBSD: d_c99_complex_split.c,v 1.12 2023/02/05 10:57:48 rillig Exp $	*/
+/*	$NetBSD: d_c99_complex_split.c,v 1.13 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_complex_split.c"
 
 /*
  * Checks that the real and imaginary parts of a complex number can be
  * accessed (since C99).
  */
+
+/* lint1-extra-flags: -X 351 */
 
 int
 b(double a)

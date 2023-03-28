@@ -1,4 +1,4 @@
-/*	$NetBSD: init_c90.c,v 1.4 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: init_c90.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "init_c90.c"
 
 /*
@@ -7,7 +7,7 @@
  * C90 3.5.7
  */
 
-/* lint1-flags: -sw */
+/* lint1-flags: -sw -X 351 */
 
 struct point {
 	int x, y;

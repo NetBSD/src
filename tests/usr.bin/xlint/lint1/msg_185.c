@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_185.c,v 1.6 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_185.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_185.c"
 
 // Test for message: cannot initialize '%s' from '%s' [185]
+
+/* lint1-extra-flags: -X 351 */
 
 typedef struct any {
 	const void *value;
