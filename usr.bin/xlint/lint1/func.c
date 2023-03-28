@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.150 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.151 2023/03/28 20:01:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.150 2023/03/28 14:44:35 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.151 2023/03/28 20:01:21 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1324,10 +1324,7 @@ lintlib(int n)
 	vflag = false;
 }
 
-/*
- * Suppress most warnings at the current and the following line.
- */
-/* ARGSUSED */
+/* Suppress one or most warnings at the current and the following line. */
 void
 linted(int n)
 {
