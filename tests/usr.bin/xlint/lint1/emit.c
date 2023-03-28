@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.14 2022/10/01 09:42:40 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.15 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -7,8 +7,8 @@
  * consistently across different translation units.
  */
 
-/* Do not warn about unused parameters. */
-/* lint1-extra-flags: -X 231 */
+/* Do not warn about unused parameters or 'extern' declarations. */
+/* lint1-extra-flags: -X 231 -X 351 */
 
 /*
  * Define some derived types.

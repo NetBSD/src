@@ -1,9 +1,11 @@
-/*	$NetBSD: msg_301.c,v 1.3 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_301.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_301.c"
 
 // Test for message: array of incomplete type [301]
 // This message is not used.
 // TODO: This message occurs in the code but is deactivated.
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: struct 'incomplete' never defined [233] */
 struct incomplete;

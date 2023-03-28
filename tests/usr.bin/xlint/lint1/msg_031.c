@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_031.c,v 1.8 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_031.c,v 1.9 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_031.c"
 
 // Test for message: '%s' has incomplete type '%s' [31]
+
+/* lint1-extra-flags: -X 351 */
 
 struct complete {
 	int dummy;

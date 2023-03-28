@@ -1,9 +1,11 @@
-/*	$NetBSD: d_init_array_using_string.c,v 1.12 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: d_init_array_using_string.c,v 1.13 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_init_array_using_string.c"
 
 /*
  * Test initialization of arrays and pointers by string literals.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void sink(const void *);
 

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_090.c,v 1.4 2022/06/21 21:18:30 rillig Exp $	*/
+/*	$NetBSD: msg_090.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_090.c"
 
 // Test for message: inconsistent redeclaration of extern '%s' [90]
+
+/* lint1-extra-flags: -X 351 */
 
 extern int random_number(void);
 

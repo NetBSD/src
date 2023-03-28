@@ -1,4 +1,4 @@
-/*	$NetBSD: op_shl_lp64.c,v 1.4 2022/08/19 19:40:39 rillig Exp $	*/
+/*	$NetBSD: op_shl_lp64.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "op_shl_lp64.c"
 
 /*
@@ -12,6 +12,7 @@
  */
 
 /* lint1-only-if: lp64 */
+/* lint1-extra-flags: -X 351 */
 
 const __uint128_t zero105 =
     (((__uint128_t)1) << 105)

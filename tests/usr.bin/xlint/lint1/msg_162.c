@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_162.c,v 1.7 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_162.c,v 1.8 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_162.c"
 
 // Test for message: operator '%s' compares '%s' with '%s' [162]
 
-/* lint1-extra-flags: -hp */
+/* lint1-extra-flags: -hp -X 351 */
 
 void
 left_unsigned(unsigned int ui)

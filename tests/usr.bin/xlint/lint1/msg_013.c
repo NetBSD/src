@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_013.c,v 1.4 2022/06/11 12:24:00 rillig Exp $	*/
+/*	$NetBSD: msg_013.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_013.c"
 
 // Test for message: incomplete enum type '%s' [13]
+
+/* lint1-extra-flags: -X 351 */
 
 enum tag;
 

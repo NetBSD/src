@@ -1,9 +1,11 @@
-/*	$NetBSD: expr_precedence.c,v 1.10 2022/08/25 19:03:48 rillig Exp $	*/
+/*	$NetBSD: expr_precedence.c,v 1.11 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "expr_precedence.c"
 
 /*
  * Tests for the precedence among operators.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 int var;
 

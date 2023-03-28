@@ -1,4 +1,4 @@
-/*	$NetBSD: emit_lp64.c,v 1.1 2021/08/05 06:34:43 rillig Exp $	*/
+/*	$NetBSD: emit_lp64.c,v 1.2 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "emit_lp64.c"
 
 /*
@@ -11,7 +11,7 @@
  */
 
 // omit the option '-g' to avoid having the GCC builtins in the .ln file.
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 /* lint1-only-if: lp64 */
 

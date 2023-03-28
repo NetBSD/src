@@ -1,5 +1,7 @@
-/*	$NetBSD: decl_struct_member.c,v 1.15 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.16 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "decl_struct_member.c"
+
+/* lint1-extra-flags: -X 351 */
 
 struct multi_attributes {
 	__attribute__((deprecated))

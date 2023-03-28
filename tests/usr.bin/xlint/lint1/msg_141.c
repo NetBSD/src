@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_141.c,v 1.5 2021/08/23 06:50:01 rillig Exp $	*/
+/*	$NetBSD: msg_141.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_141.c"
 
 // Test for message: integer overflow detected, op '%s' [141]
 
-/* lint1-extra-flags: -h */
+/* lint1-extra-flags: -h -X 351 */
 
 /*
  * Before tree.c 1.347 from 2021-08-23, lint wrongly warned about integer

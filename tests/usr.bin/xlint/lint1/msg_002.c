@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_002.c,v 1.5 2021/07/14 20:39:13 rillig Exp $	*/
+/*	$NetBSD: msg_002.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_002.c"
 
 // Test for message: empty declaration [2]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: empty declaration [2] */
 int;

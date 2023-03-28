@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_071.c,v 1.6 2023/01/22 16:05:08 rillig Exp $	*/
+/*	$NetBSD: msg_071.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_071.c"
 
 // Test for message: too many characters in character constant [71]
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * See also:

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_292.c,v 1.4 2022/02/27 19:32:51 rillig Exp $	*/
+/*	$NetBSD: msg_292.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_292.c"
 
 // Test for message: cannot concatenate wide and regular string literals [292]
+
+/* lint1-extra-flags: -X 351 */
 
 const char c_c_c_w_w_w[] =
 	"c2"

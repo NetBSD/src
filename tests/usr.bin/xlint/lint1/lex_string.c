@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_string.c,v 1.5 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: lex_string.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "lex_string.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * C99 6.4.5 "String literals"
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void sink(const char *);
 

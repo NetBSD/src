@@ -1,11 +1,11 @@
-/*	$NetBSD: expr_binary_trad.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: expr_binary_trad.c,v 1.3 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "expr_binary_trad.c"
 
 /*
  * Test binary operators in traditional C.
  */
 
-/* lint1-flags: -tw */
+/* lint1-flags: -tw -X 351 */
 
 struct incompatible {		/* just to generate the error message */
 	int member;

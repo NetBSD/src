@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_258.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_258.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_258.c"
 
 // Test for message: unterminated string constant [258]
+
+/* lint1-extra-flags: -X 351 */
 
 int dummy;
 

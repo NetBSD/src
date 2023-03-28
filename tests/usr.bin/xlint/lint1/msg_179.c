@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_179.c,v 1.4 2021/12/22 00:45:53 rillig Exp $	*/
+/*	$NetBSD: msg_179.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_179.c"
 
 // Test for message: cannot initialize struct/union with no named member [179]
+
+/* lint1-extra-flags: -X 351 */
 
 struct {
 	unsigned int :0;

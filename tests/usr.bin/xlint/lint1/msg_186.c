@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_186.c,v 1.5 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_186.c,v 1.6 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_186.c"
 
 /* Test for message: bit-field initialization is illegal in traditional C [186] */
 
-/* lint1-flags: -tw */
+/* lint1-flags: -tw -X 351 */
 
 struct bit_field {
 	unsigned one: 1;

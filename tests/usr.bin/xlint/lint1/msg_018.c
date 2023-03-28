@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_018.c,v 1.5 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_018.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_018.c"
 
 // Test for message: illegal use of 'void' [18]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: error: void type for 'x' [19] */
 void x;

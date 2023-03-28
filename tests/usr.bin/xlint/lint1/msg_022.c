@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_022.c,v 1.5 2022/10/01 09:42:40 rillig Exp $	*/
+/*	$NetBSD: msg_022.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_022.c"
 
 // Test for message: incomplete or misplaced function definition [22]
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * Before decl.c 1.264 and func.c 1.130 from 2022-04-02, lint ran into

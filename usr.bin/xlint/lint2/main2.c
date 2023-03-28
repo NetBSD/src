@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.27 2023/02/21 19:32:55 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.28 2023/03/28 14:44:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main2.c,v 1.27 2023/02/21 19:32:55 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.28 2023/03/28 14:44:35 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -84,7 +84,7 @@ bool	Fflag;
  * other input files has been read and, for Cflag, after the new lint library
  * has been written.
  */
-const char **libs;
+static const char **libs;
 
 static	void	usage(void) __attribute__((noreturn));
 

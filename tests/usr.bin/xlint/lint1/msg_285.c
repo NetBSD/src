@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_285.c,v 1.4 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_285.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_285.c"
 
 // Test for message: prototype declaration [285]
 
-/* lint1-extra-flags: -r */
+/* lint1-extra-flags: -r -X 351 */
 
 /* expect+1: prototype declaration [285] */
 void function(int, int, int);

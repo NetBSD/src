@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer_ilp32.c,v 1.7 2023/02/19 11:50:29 rillig Exp $	*/
+/*	$NetBSD: lex_integer_ilp32.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "lex_integer_ilp32.c"
 
 /*
@@ -8,6 +8,7 @@
  */
 
 /* lint1-only-if: ilp32 */
+/* lint1-extra-flags: -X 351 */
 
 void sinki(int);
 void sinku(unsigned int);

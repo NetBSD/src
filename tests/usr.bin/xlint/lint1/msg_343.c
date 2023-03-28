@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_343.c,v 1.8 2022/06/21 21:18:30 rillig Exp $	*/
+/*	$NetBSD: msg_343.c,v 1.9 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_343.c"
 
 /* Test for message: static array size is a C11 extension [343] */
 
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 void takes_int_pointer(int []);
 void takes_int_pointer_with_ignored_size(int [3]);

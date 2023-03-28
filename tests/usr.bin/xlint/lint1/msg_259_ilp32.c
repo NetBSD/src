@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259_ilp32.c,v 1.8 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_259_ilp32.c,v 1.9 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_259_ilp32.c"
 
 /* Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259] */
@@ -11,7 +11,7 @@
  */
 
 /* lint1-only-if: ilp32 */
-/* lint1-flags: -h -w */
+/* lint1-flags: -h -w -X 351 */
 
 void plain_char(char);
 void signed_int(int);

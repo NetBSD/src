@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.7 2022/06/20 21:13:36 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * See arg_declaration in cgram.y.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 typedef double number;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.305 2023/01/29 18:13:56 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.306 2023/03/28 14:44:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.305 2023/01/29 18:13:56 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.306 2023/03/28 14:44:35 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1515,9 +1515,8 @@ old_style_function(sym_t *decl, sym_t *args)
 }
 
 /*
- * Lists of identifiers in functions declarations are allowed only if
- * it's also a function definition. If this is not the case, print an
- * error message.
+ * In a function declaration, a list of identifiers (as opposed to a list of
+ * types) is allowed only if it's also a function definition.
  */
 void
 check_function_definition(sym_t *sym, bool msg)
@@ -1570,7 +1569,7 @@ declarator_name(sym_t *sym)
 		 * static and external symbols without "extern" are
 		 * considered to be tentatively defined, external
 		 * symbols with "extern" are declared, and typedef names
-		 * are defined. Tentative defined and declared symbols
+		 * are defined. Tentatively defined and declared symbols
 		 * may become defined if an initializer is present or
 		 * this is a function definition.
 		 */
@@ -1922,9 +1921,28 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	return sym;
 }
 
-/*
- * Process a single external declarator.
- */
+static bool
+ends_with(const char *s, const char *suffix)
+{
+	size_t s_len = strlen(s);
+	size_t suffix_len = strlen(suffix);
+	return s_len >= suffix_len &&
+	       memcmp(s + s_len - suffix_len, suffix, suffix_len) == 0;
+}
+
+static void
+check_extern_declaration(const sym_t *sym)
+{
+
+	if (sym->s_scl == EXTERN &&
+	    dcs->d_redeclared_symbol == NULL &&
+	    ends_with(curr_pos.p_file, ".c")) {
+		/* 'extern' declaration of '%s' outside a header */
+		warning(351, sym->s_name);
+	}
+}
+
+/* Process a single external or 'static' declarator. */
 static void
 declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 {
@@ -1936,6 +1954,8 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 		(void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);
 		dsym->s_rename = s;
 	}
+
+	check_extern_declaration(dsym);
 
 	check_function_definition(dsym, true);
 

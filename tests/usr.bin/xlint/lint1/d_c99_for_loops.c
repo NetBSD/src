@@ -1,7 +1,8 @@
-/*	$NetBSD: d_c99_for_loops.c,v 1.3 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_c99_for_loops.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_for_loops.c"
 
-/* c99 for loops */
+/* lint1-extra-flags: -X 351 */
+
 extern void foo(int);
 
 int

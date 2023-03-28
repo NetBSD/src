@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_074.c,v 1.5 2022/06/15 20:18:31 rillig Exp $	*/
+/*	$NetBSD: msg_074.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_074.c"
 
 // Test for message: no hex digits follow \x [74]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: error: no hex digits follow \x [74] */
 char invalid_hex = '\x';

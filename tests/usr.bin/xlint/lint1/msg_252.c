@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_252.c,v 1.4 2021/08/28 18:40:15 rillig Exp $	*/
+/*	$NetBSD: msg_252.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_252.c"
 
 // Test for message: integer constant out of range [252]
@@ -24,6 +24,8 @@
  * for now (2021-08-28).
  */
 /* lint1-skip-if: ilp32 */
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: integer constant out of range [252] */
 int constant = 1111111111111111111111111111111111111111111111111111;

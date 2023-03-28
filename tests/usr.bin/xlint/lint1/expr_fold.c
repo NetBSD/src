@@ -1,11 +1,11 @@
-/*	$NetBSD: expr_fold.c,v 1.7 2022/04/19 23:16:14 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
  * Test folding of constant expressions.
  */
 
-/* lint1-extra-flags: -h */
+/* lint1-extra-flags: -h -X 351 */
 
 /*
  * On ILP32 platforms, the integer constant 2147483648 cannot be represented

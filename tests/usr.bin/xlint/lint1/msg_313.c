@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_313.c,v 1.4 2022/02/27 12:00:27 rillig Exp $	*/
+/*	$NetBSD: msg_313.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_313.c"
 
 /* Test for message: struct or union member name in initializer is a C99 feature [313] */
 
-/* lint1-flags: -sw */
+/* lint1-flags: -sw -X 351 */
 
 struct point {
 	int x, y;

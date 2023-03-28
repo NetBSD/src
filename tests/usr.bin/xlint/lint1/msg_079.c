@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_079.c,v 1.3 2021/08/27 20:16:50 rillig Exp $	*/
+/*	$NetBSD: msg_079.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_079.c"
 
 // Test for message: dubious escape \%c [79]
+
+/* lint1-extra-flags: -X 351 */
 
 int my_printf(const char *, ...);
 

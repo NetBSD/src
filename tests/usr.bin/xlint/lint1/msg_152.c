@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_152.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_152.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_152.c"
 
 // Test for message: argument cannot have unknown size, arg #%d [152]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: struct 'incomplete' never defined [233] */
 struct incomplete;

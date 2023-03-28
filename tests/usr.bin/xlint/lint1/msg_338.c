@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_338.c,v 1.8 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_338.c,v 1.9 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_338.c"
 
 // Test for message: option '%c' should be handled in the switch [338]
+
+/* lint1-extra-flags: -X 351 */
 
 int getopt(int, char *const *, const char *);
 extern char *optarg;

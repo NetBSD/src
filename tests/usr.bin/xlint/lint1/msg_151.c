@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_151.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_151.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_151.c"
 
 // Test for message: void expressions may not be arguments, arg #%d [151]
+
+/* lint1-extra-flags: -X 351 */
 
 void sink_int(int);
 

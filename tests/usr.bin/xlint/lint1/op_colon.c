@@ -1,11 +1,11 @@
-/*	$NetBSD: op_colon.c,v 1.6 2023/01/04 05:25:08 rillig Exp $	*/
+/*	$NetBSD: op_colon.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "op_colon.c"
 
 /*
  * Test handling of the operator ':', as part of the '?:'.
  */
 
-/* lint1-extra-flags: -p */
+/* lint1-extra-flags: -p -X 351 */
 
 struct canary {
 	int member;

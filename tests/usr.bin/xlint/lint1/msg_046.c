@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_046.c,v 1.5 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: msg_046.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_046.c"
 
 // Test for message: %s tag '%s' redeclared as %s [46]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: struct 'tag1' never defined [233] */
 struct tag1;

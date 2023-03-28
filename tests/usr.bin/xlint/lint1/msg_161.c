@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_161.c,v 1.9 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_161.c,v 1.10 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_161.c"
 
 // Test for message: constant in conditional context [161]
 
-/* lint1-extra-flags: -h */
+/* lint1-extra-flags: -h -X 351 */
 
 void
 while_1(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: c90.c,v 1.1 2021/07/25 22:03:42 rillig Exp $	*/
+/*	$NetBSD: c90.c,v 1.2 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "c90.c"
 
 /*
@@ -6,7 +6,7 @@
  * later C standards nor GNU extensions.
  */
 
-/* lint1-flags: -sw */
+/* lint1-flags: -sw -X 351 */
 
 /* expect+1: error: ANSI C requires formal parameter before '...' [84] */
 void varargs_function(...);

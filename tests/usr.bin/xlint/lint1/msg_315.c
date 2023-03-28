@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_315.c,v 1.3 2022/02/27 12:00:27 rillig Exp $	*/
+/*	$NetBSD: msg_315.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_315.c"
 
 // Test for message: GCC style struct or union member name in initializer [315]
 
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 struct point {
 	int x, y;

@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_298.c,v 1.4 2022/04/19 20:08:52 rillig Exp $	*/
+/*	$NetBSD: msg_298.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_298.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy, arg #%d [298]
 
-/* lint1-extra-flags: -a */
+/* lint1-extra-flags: -a -X 351 */
 
 void take_uchar(unsigned char);
 void take_schar(signed char);

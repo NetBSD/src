@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool.c,v 1.9 2022/01/16 08:40:31 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool.c,v 1.10 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_bool.c"
 
 /*
@@ -8,6 +8,8 @@
  * This is different from the other integer types, which get truncated or
  * invoke undefined behavior.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 /* Below, each false statement produces "negative array dimension" [20]. */
 

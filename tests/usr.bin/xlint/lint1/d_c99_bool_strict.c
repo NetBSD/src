@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.39 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.40 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -98,7 +98,7 @@
  * __lint_false and true to __lint_true, two predefined constant expressions.
  */
 
-/* lint1-extra-flags: -hT */
+/* lint1-extra-flags: -hT -X 351 */
 
 /*
  * strict-bool-typedef

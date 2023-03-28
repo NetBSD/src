@@ -1,5 +1,7 @@
-/*	$NetBSD: d_c99_complex_num.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_c99_complex_num.c,v 1.3 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_complex_num.c"
+
+/* lint1-extra-flags: -X 351 */
 
 double cabs(double _Complex);
 

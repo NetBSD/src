@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_156.c,v 1.7 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_156.c,v 1.8 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_156.c"
 
 // Test for message: function expects '%s', passing '%s' for arg #%d [156]
+
+/* lint1-extra-flags: -X 351 */
 
 enum color {
 	RED	= 1 << 0,

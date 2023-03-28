@@ -1,9 +1,11 @@
-/*	$NetBSD: msg_130.c,v 1.15 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_130.c,v 1.16 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_130.c"
 
 // Test for message: enum type mismatch: '%s' '%s' '%s' [130]
 
 /* See also msg_241.c, which covers unusual operators on enums. */
+
+/* lint1-extra-flags: -X 351 */
 
 enum color {
 	RED	= 1 << 0,

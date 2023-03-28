@@ -1,4 +1,4 @@
-/* $NetBSD: d_c99_union_init5.c,v 1.1 2021/02/28 20:17:14 rillig Exp $ */
+/* $NetBSD: d_c99_union_init5.c,v 1.2 2023/03/28 14:44:34 rillig Exp $ */
 # 3 "d_c99_union_init5.c"
 
 /*
@@ -7,6 +7,8 @@
  * Has been fixed somewhere between 2005.12.24.20.47.56 and
  * 2006.12.19.19.06.44.
 */
+
+/* lint1-extra-flags: -X 351 */
 
 union mist {
 	char *p;

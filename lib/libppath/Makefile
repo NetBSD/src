@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2013/09/11 23:04:11 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2023/03/28 14:44:34 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,7 @@ SRCS+=ppath_malloc.c
 LIBDPLIBS+=	prop		${NETBSDSRCDIR}/lib/libprop
 
 LINTFLAGS+=-w
+LINTFLAGS.ppath_extant.c+=	-X 351	# 'extern' declaration outside header
 LIB=	ppath
 
 MAN+=		ppath.3

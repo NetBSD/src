@@ -1,5 +1,7 @@
-/*	$NetBSD: d_c99_nested_struct.c,v 1.4 2021/02/20 22:31:20 rillig Exp $	*/
+/*	$NetBSD: d_c99_nested_struct.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_nested_struct.c"
+
+/* lint1-extra-flags: -X 351 */
 
 /* C99 nested struct init with named and non-named initializers */
 typedef struct pthread_mutex_t {

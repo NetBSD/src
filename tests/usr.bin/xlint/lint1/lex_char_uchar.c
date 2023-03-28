@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_char_uchar.c,v 1.4 2021/08/21 11:50:57 rillig Exp $	*/
+/*	$NetBSD: lex_char_uchar.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "lex_char_uchar.c"
 
 /*
@@ -7,6 +7,7 @@
  */
 
 /* lint1-only-if: uchar */
+/* lint1-extra-flags: -X 351 */
 
 /*
  * Before inittyp.c 1.23 from 2021-06-29, the following initialization

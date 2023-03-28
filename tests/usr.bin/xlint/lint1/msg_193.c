@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_193.c,v 1.20 2023/02/21 19:47:21 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.21 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: statement not reached [193]
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * Test the reachability of statements in a function.

@@ -1,8 +1,10 @@
-/*	$NetBSD: msg_014.c,v 1.7 2022/05/12 00:18:35 rillig Exp $	*/
+/*	$NetBSD: msg_014.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_014.c"
 
 // Test for message: compiler takes alignment of function [14]
 /* This message is not used. */
+
+/* lint1-extra-flags: -X 351 */
 
 typedef void function(void);
 

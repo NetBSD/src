@@ -1,11 +1,11 @@
-/*	$NetBSD: expr_promote_trad.c,v 1.3 2023/01/04 05:47:19 rillig Exp $	*/
+/*	$NetBSD: expr_promote_trad.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "expr_promote_trad.c"
 
 /*
  * Test arithmetic promotions in traditional C.
  */
 
-/* lint1-flags: -tw */
+/* lint1-flags: -tw -X 351 */
 
 sink();
 

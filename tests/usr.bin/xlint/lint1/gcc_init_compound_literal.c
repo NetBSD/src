@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_init_compound_literal.c,v 1.6 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: gcc_init_compound_literal.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "gcc_init_compound_literal.c"
 
 /*
@@ -17,6 +17,8 @@
  * in check_global_variable, called by check_global_symbols since these
  * temporary objects have neither storage class EXTERN nor STATIC.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 // Seen in sys/crypto/aes/aes_ccm.c.
 const struct {

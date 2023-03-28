@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.174 2023/02/18 15:21:34 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.175 2023/03/28 14:44:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -31,8 +31,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <signal.h>
+
 /*
- * main.c
+ * main1.c
  */
 extern	int	aflag;
 extern	bool	bflag;
@@ -55,6 +57,8 @@ extern	bool	allow_c90;
 extern	bool	allow_c99;
 extern	bool	allow_c11;
 extern	bool	allow_gcc;
+
+extern sig_atomic_t fpe;
 
 extern	void	norecover(void);
 

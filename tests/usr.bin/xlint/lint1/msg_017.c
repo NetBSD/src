@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_017.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_017.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_017.c"
 
 // Test for message: null dimension [17]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: empty array declaration for 'empty_array_var' [190] */
 int empty_array_var[0];

@@ -1,10 +1,12 @@
-/*	$NetBSD: expr_sizeof.c,v 1.4 2023/01/16 00:37:59 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
  * C99 6.5.3.4 "The sizeof operator"
  * C11 6.5.3.4 "The sizeof operator"
  */
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * A sizeof expression can either take a type name or an expression.

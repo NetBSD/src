@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_154.c,v 1.5 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_154.c,v 1.6 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_154.c"
 
 // Test for message: illegal combination of %s '%s' and %s '%s', arg #%d [154]
+
+/* lint1-extra-flags: -X 351 */
 
 void sink_int(int);
 

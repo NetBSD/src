@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_297.c,v 1.3 2021/08/27 20:49:25 rillig Exp $	*/
+/*	$NetBSD: msg_297.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_297.c"
 
 // Test for message: conversion to '%s' may sign-extend incorrectly, arg #%d [297]
 
-/* lint1-extra-flags: -P -a -p */
+/* lint1-extra-flags: -P -a -p -X 351 */
 
 void take_unsigned_long_long(unsigned long long);
 void take_long_long(long long);

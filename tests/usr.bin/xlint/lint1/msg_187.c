@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_187.c,v 1.4 2021/12/21 22:21:11 rillig Exp $	*/
+/*	$NetBSD: msg_187.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_187.c"
 
 // Test for message: string literal too long (%lu) for target array (%lu) [187]
+
+/* lint1-extra-flags: -X 351 */
 
 char auto_msg[] = "the string length is determined automatically";
 

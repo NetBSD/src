@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_func.c,v 1.3 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_func.c,v 1.4 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "gcc_attribute_func.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Function-Attributes.html
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void deprecated_function(void)
     __attribute__((__noreturn__))

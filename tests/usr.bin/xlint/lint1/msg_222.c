@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_222.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_222.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_222.c"
 
 // Test for message: conversion of negative constant to unsigned type [222]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: initialization of unsigned with negative constant [221] */
 unsigned int global = -1;

@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_204.c,v 1.7 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_204.c,v 1.8 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_204.c"
 
 // Test for message: controlling expressions must have scalar type [204]
 
-/* Suppress message "argument '%s' unused in function '%s'". */
-/* lint1-extra-flags: -X 231 */
+/* Suppress messages for unused arguments and for 'extern' declarations. */
+/* lint1-extra-flags: -X 231 -X 351 */
 
 extern void
 extern_function(void);

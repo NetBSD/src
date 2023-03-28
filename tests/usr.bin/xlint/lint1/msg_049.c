@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_049.c,v 1.5 2022/04/24 15:55:50 rillig Exp $	*/
+/*	$NetBSD: msg_049.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_049.c"
 
 /* Test for message: anonymous struct/union members is a C11 feature [49] */
 
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 struct {
 	unsigned int flag: 1;

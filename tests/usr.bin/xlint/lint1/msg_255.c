@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_255.c,v 1.3 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_255.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_255.c"
 
 // Test for message: undefined or invalid # directive [255]
+
+/* lint1-extra-flags: -X 351 */
 
 #pragma once
 

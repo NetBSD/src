@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_060.c,v 1.5 2022/06/15 20:18:31 rillig Exp $	*/
+/*	$NetBSD: msg_060.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_060.c"
 
 // Test for message: void must be sole parameter [60]
+
+/* lint1-extra-flags: -X 351 */
 
 void example_1(void);
 

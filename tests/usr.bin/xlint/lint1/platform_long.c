@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_long.c,v 1.4 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: platform_long.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "platform_long.c"
 
 /*
@@ -6,8 +6,8 @@
  * long and ptr_diff is signed long.
  */
 
-/* lint1-extra-flags: -c -h -a -p -b -r -z */
 /* lint1-only-if: long */
+/* lint1-extra-flags: -c -h -a -p -b -r -z -X 351 */
 
 void to_size(typeof(sizeof(int)));
 

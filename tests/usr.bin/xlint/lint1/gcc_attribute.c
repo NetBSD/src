@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.12 2022/08/25 19:03:48 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.13 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -7,6 +7,8 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void __attribute__((noinline))
 do_not_inline(void)

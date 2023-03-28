@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_177.c,v 1.3 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_177.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_177.c"
 
 // Test for message: non-constant initializer [177]
+
+/* lint1-extra-flags: -X 351 */
 
 extern int function(void);
 

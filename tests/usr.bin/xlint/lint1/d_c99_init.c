@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_init.c,v 1.44 2023/02/05 13:01:28 rillig Exp $	*/
+/*	$NetBSD: d_c99_init.c,v 1.45 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_init.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * See C99 6.7.8 "Initialization".
 */
+
+/* lint1-extra-flags: -X 351 */
 
 
 void use(const void *);

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2022/01/22 07:35:26 pho Exp $
+#	$NetBSD: Makefile,v 1.28 2023/03/28 14:44:34 rillig Exp $
 #
 
 .include <bsd.own.mk>
@@ -17,5 +17,6 @@ MAN=		puffs.3 puffs_cc.3 puffs_cred.3 puffs_flush.3		\
 INCS=		puffs.h puffsdump.h
 INCSDIR=	/usr/include
 LINTFLAGS+=-S -w
+LINTFLAGS+=	-X 351		# extern declaration outside header
 
 .include <bsd.lib.mk>

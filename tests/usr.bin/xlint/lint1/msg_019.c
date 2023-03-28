@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_019.c,v 1.6 2022/06/20 21:13:36 rillig Exp $	*/
+/*	$NetBSD: msg_019.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_019.c"
 
 // Test for message: void type for '%s' [19]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: error: void type for 'global_variable' [19] */
 void global_variable;

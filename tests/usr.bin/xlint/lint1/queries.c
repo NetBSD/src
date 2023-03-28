@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.9 2023/01/15 14:00:09 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.10 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -15,7 +15,7 @@
  * 	such as casts between arithmetic types.
  */
 
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7 -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_168.c,v 1.9 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_168.c,v 1.10 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_168.c"
 
 // Test for message: array subscript cannot be > %d: %ld [168]
+
+/* lint1-extra-flags: -X 351 */
 
 void print_string(const char *);
 void print_char(char);

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_175.c,v 1.5 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_175.c,v 1.6 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_175.c"
 
 // Test for message: initialization of incomplete type '%s' [175]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: struct 'incomplete' never defined [233] */
 struct incomplete;
