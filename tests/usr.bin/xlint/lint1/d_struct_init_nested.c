@@ -1,4 +1,4 @@
-/*	$NetBSD: d_struct_init_nested.c,v 1.7 2022/01/15 14:22:03 rillig Exp $	*/
+/*	$NetBSD: d_struct_init_nested.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_struct_init_nested.c"
 
 /*
@@ -7,6 +7,8 @@
  *
  * In C99, 6.7.8p13 describes exactly this case.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 typedef enum O1 { O1C = 101 } O1;
 typedef enum O2 { O2C = 102 } O2;

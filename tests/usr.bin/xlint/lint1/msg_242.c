@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_242.c,v 1.6 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_242.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_242.c"
 
 // Test for message: combination of '%s' and '%s', op '%s' [242]
 
-/* lint1-extra-flags: -e */
+/* lint1-extra-flags: -e -X 351 */
 
 enum E {
 	E1

@@ -5,6 +5,8 @@
  * that is completely different.
  */
 
+/* lint1-extra-flags: -X 351 */
+
 void func(int a, int b, int c);
 
 /* expect+4: warning: argument 'num' unused in function 'func' [231] */

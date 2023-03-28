@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_251.c,v 1.4 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_251.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_251.c"
 
 // Test for message: malformed integer constant [251]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: malformed integer constant [251] */
 int lll = 123LLL;

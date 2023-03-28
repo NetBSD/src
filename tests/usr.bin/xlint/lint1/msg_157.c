@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_157.c,v 1.4 2022/04/19 22:14:30 rillig Exp $	*/
+/*	$NetBSD: msg_157.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_157.c"
 
 /* Test for message: ANSI C treats constant as unsigned [157] */
 
-/* lint1-flags: -w */
+/* lint1-flags: -w -X 351 */
 
 /*
  * A rather strange definition for an ARGB color.

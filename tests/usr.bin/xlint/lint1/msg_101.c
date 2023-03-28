@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_101.c,v 1.9 2021/07/04 17:28:06 rillig Exp $	*/
+/*	$NetBSD: msg_101.c,v 1.10 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_101.c"
 
 // Test for message: type '%s' does not have member '%s' [101]
+
+/* lint1-extra-flags: -X 351 */
 
 struct point {
 	int x, y;

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_123.c,v 1.6 2022/06/19 12:14:34 rillig Exp $	*/
+/*	$NetBSD: msg_123.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_123.c"
 
 // Test for message: illegal combination of %s '%s' and %s '%s', op '%s' [123]
+
+/* lint1-extra-flags: -X 351 */
 
 void ok(_Bool);
 void bad(_Bool);

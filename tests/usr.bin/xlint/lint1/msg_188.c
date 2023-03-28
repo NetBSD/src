@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_188.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_188.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_188.c"
 
 /* Test for message: no automatic aggregate initialization in traditional C [188] */
 
-/* lint1-flags: -tw */
+/* lint1-flags: -tw -X 351 */
 
 struct point {
 	int x;

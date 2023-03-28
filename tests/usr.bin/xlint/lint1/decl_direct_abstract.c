@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_direct_abstract.c,v 1.7 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: decl_direct_abstract.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "decl_direct_abstract.c"
 
 /*
@@ -8,6 +8,8 @@
  *
  * See msg_155.c.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * The following tests do not use int, to avoid confusion with the implicit

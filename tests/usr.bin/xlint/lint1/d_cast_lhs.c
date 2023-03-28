@@ -1,4 +1,4 @@
-/*	$NetBSD: d_cast_lhs.c,v 1.5 2021/07/04 13:14:54 rillig Exp $	*/
+/*	$NetBSD: d_cast_lhs.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_cast_lhs.c"
 
 /*
@@ -9,6 +9,9 @@
  * C99 6.5.4 "Cast operators" footnote 85 says "A cast does not yield an
  * lvalue".
  */
+
+/* lint1-extra-flags: -X 351 */
+
 struct str {
 	int member;
 };

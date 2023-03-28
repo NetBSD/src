@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_var.c,v 1.7 2023/02/05 10:57:48 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_var.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "gcc_attribute_var.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Variable-Attributes.html
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void
 write_to_page(unsigned index, char ch)

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_241.c,v 1.9 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_241.c,v 1.10 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_241.c"
 
 // Test for message: dubious operation on enum, op '%s' [241]
@@ -7,7 +7,7 @@
 // share/mk/sys.mk, therefore this message is neither well-known nor
 // well-tested.
 
-/* lint1-extra-flags: -e */
+/* lint1-extra-flags: -e -X 351 */
 
 /*
  * Enums are a possible implementation of bit-sets.

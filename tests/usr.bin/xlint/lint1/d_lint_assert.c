@@ -1,10 +1,12 @@
-/*	$NetBSD: d_lint_assert.c,v 1.6 2022/10/01 09:42:40 rillig Exp $	*/
+/*	$NetBSD: d_lint_assert.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_lint_assert.c"
 
 /*
  * Trigger the various assertions in the lint1 code.  Several of them are
  * just hard to trigger, but not impossible.
 */
+
+/* lint1-extra-flags: -X 351 */
 
 enum {
 	// Before decl.c 1.118 from 2021-01-10:

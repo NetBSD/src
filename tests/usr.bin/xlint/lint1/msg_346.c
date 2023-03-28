@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_346.c,v 1.7 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_346.c,v 1.8 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_346.c"
 
 // Test for message: call to '%s' effectively discards 'const' from argument [346]
+
+/* lint1-extra-flags: -X 351 */
 
 typedef unsigned long size_t;
 

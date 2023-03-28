@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_316.c,v 1.3 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_316.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_316.c"
 
 // Test for message: __FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension [316]
 
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 void println(const char *);
 

@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_135.c,v 1.11 2022/07/16 22:36:06 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.12 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_135.c"
 
 // Test for message: converting '%s' to '%s' increases alignment from %u to %u [135]
 
-/* lint1-extra-flags: -h */
+/* lint1-extra-flags: -h -X 351 */
 
 void sink(const void *);
 

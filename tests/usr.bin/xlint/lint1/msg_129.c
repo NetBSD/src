@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_129.c,v 1.6 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_129.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_129.c"
 
 // Test for message: expression has null effect [129]
 
-/* lint1-extra-flags: -h */
+/* lint1-extra-flags: -h -X 351 */
 
 typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_210.c,v 1.6 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_210.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_210.c"
 
 // Test for message: enum type mismatch between '%s' and '%s' in initialization [210]
+
+/* lint1-extra-flags: -X 351 */
 
 enum A {
 	A1

@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_int.c,v 1.4 2022/04/16 18:41:21 rillig Exp $	*/
+/*	$NetBSD: platform_int.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "platform_int.c"
 
 /*
@@ -6,8 +6,8 @@
  * int and ptr_diff is signed int.
  */
 
-/* lint1-flags: -g -w -c -h -a -p -b -r -z */
 /* lint1-only-if: int */
+/* lint1-flags: -g -w -c -h -a -p -b -r -z -X 351 */
 
 void to_size(typeof(sizeof(int)));
 

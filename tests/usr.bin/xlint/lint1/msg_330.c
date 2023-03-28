@@ -1,11 +1,11 @@
-/*	$NetBSD: msg_330.c,v 1.5 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_330.c,v 1.6 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_330.c"
 
 // Test for message: operand of '%s' must be bool, not '%s' [330]
 //
 // See d_c99_bool_strict.c for many more examples.
 
-/* lint1-extra-flags: -T */
+/* lint1-extra-flags: -T -X 351 */
 
 typedef _Bool bool;
 

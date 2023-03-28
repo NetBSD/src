@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.14 2023/01/04 06:04:07 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.15 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "init.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * C99 6.7.8
  */
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * C99 does not allow empty initializer braces syntactically.

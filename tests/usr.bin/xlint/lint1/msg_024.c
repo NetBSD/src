@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_024.c,v 1.4 2022/06/19 11:50:42 rillig Exp $	*/
+/*	$NetBSD: msg_024.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "msg_024.c"
 
 // Test for message: cannot initialize function '%s' [24]
+
+/* lint1-extra-flags: -X 351 */
 
 typedef void (function)(void);
 

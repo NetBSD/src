@@ -1,5 +1,7 @@
-/*	$NetBSD: d_c99_flex_array_packed.c,v 1.2 2021/01/31 14:39:31 rillig Exp $	*/
+/*	$NetBSD: d_c99_flex_array_packed.c,v 1.3 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_flex_array_packed.c"
+
+/* lint1-extra-flags: -X 351 */
 
 /* Allow packed c99 flexible arrays */
 struct {

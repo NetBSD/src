@@ -1,9 +1,11 @@
-/*	$NetBSD: parse_stmt_iter_error.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: parse_stmt_iter_error.c,v 1.3 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "parse_stmt_iter_error.c"
 
 /*
  * Test parsing of errors in iteration statements (while, do, for).
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void do_nothing(void);
 

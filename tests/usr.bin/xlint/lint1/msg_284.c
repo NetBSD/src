@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_284.c,v 1.3 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_284.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_284.c"
 
 // Test for message: fallthrough on default statement [284]
 
-/* lint1-extra-flags: -h */
+/* lint1-extra-flags: -h -X 351 */
 
 void print_int(int);
 

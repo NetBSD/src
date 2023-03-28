@@ -1,7 +1,9 @@
-/*	$NetBSD: d_c99_func.c,v 1.5 2023/01/29 18:16:48 rillig Exp $	*/
+/*	$NetBSD: d_c99_func.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_func.c"
 
 /* C99 __func__ */
+
+/* lint1-extra-flags: -X 351 */
 
 const char *str;
 

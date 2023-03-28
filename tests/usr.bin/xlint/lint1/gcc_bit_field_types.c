@@ -1,5 +1,7 @@
-/*	$NetBSD: gcc_bit_field_types.c,v 1.8 2023/01/28 08:36:17 rillig Exp $	*/
+/*	$NetBSD: gcc_bit_field_types.c,v 1.9 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "gcc_bit_field_types.c"
+
+/* lint1-extra-flags: -X 351 */
 
 struct incompatible {
 	int dummy;

@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_247.c,v 1.26 2022/06/24 21:22:11 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.27 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
 
-/* lint1-extra-flags: -c */
+/* lint1-extra-flags: -c -X 351 */
 
 /* example taken from Xlib.h */
 typedef struct {

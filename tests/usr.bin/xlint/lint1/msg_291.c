@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_291.c,v 1.3 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_291.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_291.c"
 
 // Test for message: invalid multibyte character [291]
+
+/* lint1-extra-flags: -X 351 */
 
 char foreign[] = "\x80\xC3\x76";
 

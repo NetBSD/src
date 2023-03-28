@@ -1,5 +1,7 @@
-/*	$NetBSD: d_c99_union_init3.c,v 1.5 2021/02/20 22:31:20 rillig Exp $	*/
+/*	$NetBSD: d_c99_union_init3.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_c99_union_init3.c"
+
+/* lint1-extra-flags: -X 351 */
 
 /* C99 struct initialization */
 struct {

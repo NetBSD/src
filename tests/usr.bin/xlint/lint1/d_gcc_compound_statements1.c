@@ -1,7 +1,9 @@
-/*	$NetBSD: d_gcc_compound_statements1.c,v 1.11 2022/06/15 18:11:02 rillig Exp $	*/
+/*	$NetBSD: d_gcc_compound_statements1.c,v 1.12 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "d_gcc_compound_statements1.c"
 
 /* GCC compound statement with expression */
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * Compound statements are only allowed in functions, not at file scope.

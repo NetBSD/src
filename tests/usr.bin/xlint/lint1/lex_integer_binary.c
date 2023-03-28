@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_integer_binary.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: lex_integer_binary.c,v 1.3 2023/03/28 14:44:34 rillig Exp $	*/
 # 3 "lex_integer_binary.c"
 
 /*
@@ -8,7 +8,7 @@
  */
 
 /* Remove the default -g flag. */
-/* lint1-flags: -Ac11 -w */
+/* lint1-flags: -Ac11 -w -X 351 */
 
 void sink(unsigned int);
 

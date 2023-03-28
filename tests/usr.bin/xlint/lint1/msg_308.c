@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_308.c,v 1.7 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_308.c,v 1.8 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_308.c"
 
 // Test for message: invalid type for _Complex [308]
+
+/* lint1-extra-flags: -X 351 */
 
 float _Complex float_complex;
 double _Complex double_complex;

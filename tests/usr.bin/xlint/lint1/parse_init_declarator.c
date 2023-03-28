@@ -1,4 +1,4 @@
-/*	$NetBSD: parse_init_declarator.c,v 1.3 2021/07/25 22:03:42 rillig Exp $	*/
+/*	$NetBSD: parse_init_declarator.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "parse_init_declarator.c"
 
 /*
@@ -7,6 +7,8 @@
  *
  * See also: GCC, c-parser.cpp, function c_parser_declaration_or_fndef.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 int global_var;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2023/02/27 23:07:53 rillig Exp $
+#	$NetBSD: Makefile,v 1.95 2023/03/28 14:44:35 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -19,9 +19,11 @@ CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
 LINTFLAGS+=		-T
 LOBJS.${PROG}+=		${SRCS:M*.y:.y=.ln}
 LOBJS.${PROG}+=		${SRCS:M*.l:.l=.ln}
+LINTFLAGS.cgram.c+=	-X 351		# 'extern' declaration in .c file
 LINTFLAGS.scan.c+=	-X 107,126,330,331,332,333	# strict bool mode
 LINTFLAGS.scan.c+=	-X 192,214	# due to suppressed bool errors
 LINTFLAGS.scan.c+=	-X 307		# static variable unused
+LINTFLAGS.scan.c+=	-X 351		# 'extern' declaration in .c file
 
 CPPFLAGS+=	-DIS_LINT1
 CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR}
@@ -56,9 +58,10 @@ ${MAN}.date:	err.c
 	    -e 1q \
 	    ${.ALLSRC} > ${.TARGET}
 
-# Extra -UYYDEBUG since cgram.c contains 'int yydebug; if (yydebug)'.
+# Extra -UYYDEBUG for lint's strict bool mode, since cgram.c contains 'int
+# yydebug; if (yydebug)'.
 cgram.ln: cgram.c
-	${LINT} ${LINTFLAGS} \
+	${LINT} ${LINTFLAGS} ${LINTFLAGS.${.IMPSRC}} \
 	    ${CPPFLAGS:C/-([IDUW]) */-\1/Wg:M-[IDUW]*} \
 	    -i -UYYDEBUG ${.IMPSRC}
 

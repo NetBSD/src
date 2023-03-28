@@ -1,9 +1,10 @@
-/*	$NetBSD: msg_218.c,v 1.6 2023/02/19 12:00:15 rillig Exp $	*/
+/*	$NetBSD: msg_218.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_218.c"
 
 // Test for message: ANSI C treats constant as unsigned, op '%s' [218]
 
 /* lint1-only-if: ilp32 */
+/* lint1-extra-flags: -X 351 */
 
 _Bool cond;
 signed int s32;

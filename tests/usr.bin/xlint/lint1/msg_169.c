@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_169.c,v 1.6 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_169.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_169.c"
 
 // Test for message: precedence confusion possible: parenthesize! [169]
 
-/* lint1-flags: -g -h -S -w */
+/* lint1-flags: -g -h -S -w -X 351 */
 
 typedef _Bool bool;
 

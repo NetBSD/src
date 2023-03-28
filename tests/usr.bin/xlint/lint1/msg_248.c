@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_248.c,v 1.4 2023/01/21 17:48:29 rillig Exp $	*/
+/*	$NetBSD: msg_248.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
 # 3 "msg_248.c"
 
 // Test for message: floating-point constant out of range [248]
+
+/* lint1-extra-flags: -X 351 */
 
 float fits_flt = 1e37f;
 /* expect+1: warning: floating-point constant out of range [248] */
