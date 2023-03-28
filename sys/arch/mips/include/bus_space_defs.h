@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_defs.h,v 1.4 2020/07/26 08:08:41 simonb Exp $	*/
+/*	$NetBSD: bus_space_defs.h,v 1.5 2023/03/28 10:54:13 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -112,11 +112,13 @@ typedef int64_t bus_addr_t;
 typedef uint64_t bus_size_t;
 #define	PRIxBUSADDR	PRIx64
 #define	PRIxBUSSIZE	PRIx64
+#define	PRIuBUSSIZE	PRIu64
 #else
 typedef paddr_t bus_addr_t;
 typedef psize_t bus_size_t;
 #define	PRIxBUSADDR	PRIxPADDR
 #define	PRIxBUSSIZE	PRIxPSIZE
+#define	PRIuBUSSIZE	PRIuPSIZE
 #endif
 
 /*
