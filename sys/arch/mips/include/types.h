@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.77 2022/07/07 10:06:02 martin Exp $	*/
+/*	$NetBSD: types.h,v 1.78 2023/03/28 10:54:13 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -74,12 +74,14 @@ typedef __uint64_t	psize_t;
 #define	PRIxPADDR	PRIx64
 #define	PRIxPSIZE	PRIx64
 #define	PRIdPSIZE	PRId64
+#define	PRIuPSIZE	PRIu64
 #else
 typedef __uint32_t	paddr_t;
 typedef __uint32_t	psize_t;
 #define	PRIxPADDR	PRIx32
 #define	PRIxPSIZE	PRIx32
 #define	PRIdPSIZE	PRId32
+#define	PRIuPSIZE	PRIu32
 #endif
 #ifdef _LP64
 typedef __uint64_t	vaddr_t;
