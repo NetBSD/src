@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.204 2023/02/28 06:04:28 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.205 2023/03/28 14:39:31 rillig Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -83,8 +83,6 @@ static bool metaCmpFilter = false;	/* do we have CMP_FILTER ? */
 static bool metaCurdirOk = false;	/* write .meta in .CURDIR Ok? */
 static bool metaSilent = false;		/* if we have a .meta be SILENT */
 
-extern bool forceJobs;
-extern char    **environ;
 
 #define MAKE_META_PREFIX	".MAKE.META.PREFIX"
 
