@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.306 2023/03/28 14:44:35 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.307 2023/03/28 20:04:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.306 2023/03/28 14:44:35 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.307 2023/03/28 20:04:52 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2726,6 +2726,11 @@ declare_local(sym_t *dsym, bool initflg)
 		dsym->s_def = DECL;
 		if (dcs->d_scl == NOSCL)
 			dsym->s_scl = EXTERN;
+	}
+
+	if (dsym->s_scl == EXTERN) {
+		/* nested 'extern' declaration of '%s' */
+		warning(352, dsym->s_name);
 	}
 
 	if (dsym->s_type->t_tspec == FUNC) {

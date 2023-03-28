@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.190 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.191 2023/03/28 20:04:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.190 2023/03/28 14:44:35 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.191 2023/03/28 20:04:52 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -407,6 +407,7 @@ static const char *const msgs[] = {
 	"non type argument to alignof is a GCC extension",	      /* 349 */
 	"'_Atomic' requires C11 or later",			      /* 350 */
 	"'extern' declaration of '%s' outside a header",	      /* 351 */
+	"nested 'extern' declaration of '%s'",			      /* 352 */
 };
 
 static bool	is_suppressed[sizeof(msgs) / sizeof(msgs[0])];
