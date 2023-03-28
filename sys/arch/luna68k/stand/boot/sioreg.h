@@ -1,4 +1,4 @@
-/*	$NetBSD: sioreg.h,v 1.4 2015/02/14 05:03:09 tsutsui Exp $	*/
+/*	$NetBSD: sioreg.h,v 1.5 2023/03/28 20:01:57 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -115,7 +115,7 @@ struct siodevice {
 #define WR0_RSTINT	0x10	/* Reset External/Status Interrupt */
 #define WR0_CHANRST	0x18	/* Channel Reset */
 #define WR0_INTNXT	0x20	/* Enable Interrupt on Next Receive Character */
-#define WR0_RSTPEND	0x28	/* Reset Transmitter Interrput/DMA Pending */
+#define WR0_RSTPEND	0x28	/* Reset Transmitter Interrupt/DMA Pending */
 #define WR0_ERRRST	0x30	/* Error Reset */
 #define WR0_ENDINTR	0x38	/* End of Interrupt */
 

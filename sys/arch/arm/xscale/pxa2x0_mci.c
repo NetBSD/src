@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_mci.c,v 1.13 2022/09/27 06:36:43 skrll Exp $	*/
+/*	$NetBSD: pxa2x0_mci.c,v 1.14 2023/03/28 20:01:57 andvar Exp $	*/
 /*	$OpenBSD: pxa2x0_mmc.c,v 1.5 2009/02/23 18:09:55 miod Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.13 2022/09/27 06:36:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_mci.c,v 1.14 2023/03/28 20:01:57 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -742,7 +742,7 @@ pxamci_stop_clock(struct pxamci_softc *sc)
 }
 
 /*
- * SD/MMC controller interrput handler
+ * SD/MMC controller interrupt handler
  */
 static int
 pxamci_intr(void *arg)
