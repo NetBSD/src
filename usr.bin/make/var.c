@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1048 2023/03/09 06:49:37 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1049 2023/03/28 14:39:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1048 2023/03/09 06:49:37 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1049 2023/03/28 14:39:31 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -785,8 +785,6 @@ Var_ExportVars(const char *varnames)
 	ExportVarsExpand(varnames, false, VEM_PLAIN);
 }
 
-
-extern char **environ;
 
 static void
 ClearEnv(void)

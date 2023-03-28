@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.318 2023/03/09 07:06:43 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.319 2023/03/28 14:39:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -768,6 +768,8 @@ typedef struct CmdOpts {
 } CmdOpts;
 
 extern CmdOpts opts;
+extern bool forceJobs;
+extern char **environ;
 
 /* arch.c */
 void Arch_Init(void);
@@ -1179,6 +1181,7 @@ pp_skip_hspace(char **pp)
 }
 
 #if defined(lint)
+extern void do_not_define_rcsid(void); /* for lint */
 # define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
 #elif defined(MAKE_NATIVE)
 # include <sys/cdefs.h>
