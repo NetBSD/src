@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.19 2021/11/10 16:40:55 msaitoh Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.20 2023/03/28 20:10:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,13 +45,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.19 2021/11/10 16:40:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.20 2023/03/28 20:10:01 andvar Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef KGDB
 #ifndef lint
-static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.19 2021/11/10 16:40:55 msaitoh Exp $";
+static char rcsid[] = "$NetBSD: kgdb_stub.c,v 1.20 2023/03/28 20:10:01 andvar Exp $";
 #endif
 
 #include <sys/param.h>
@@ -415,7 +415,7 @@ kgdb_trap(int type, struct frame *frame)
 			 * knowing if we're in or out of this loop
 			 * when he issues a "remote-signal".  (Note
 			 * that without the length check, we could
-			 * loop here forever if the ourput line is
+			 * loop here forever if the output line is
 			 * looped back or the remote host is echoing.)
 			 */
 			if (inlen == 0) {
