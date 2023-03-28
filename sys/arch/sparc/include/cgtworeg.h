@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtworeg.h,v 1.5 2003/05/20 13:38:00 nakayama Exp $ */
+/*	$NetBSD: cgtworeg.h,v 1.6 2023/03/28 20:01:57 andvar Exp $ */
 
 /*
  * Copyright (c) 1994 Dennis Ferguson
@@ -119,7 +119,7 @@ struct cg2_extstatus {
  */
 struct dblbufreg {
 	u_int display_b : 1;	/* display memory B (set) or A (reset) */
-	u_int read_b : 1;	/* accesss memory B (set) or A (reset) */
+	u_int read_b : 1;	/* access memory B (set) or A (reset) */
 	u_int nowrite_b : 1;	/* when set, writes don't update memory B */
 	u_int nowrite_a : 1;	/* when set, writes don't update memory A */
 	u_int read_ecmap : 1;	/* copy from(clear)/to(set) shadow colour map */

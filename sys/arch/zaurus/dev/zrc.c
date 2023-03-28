@@ -1,4 +1,4 @@
-/*	$NetBSD: zrc.c,v 1.12 2021/08/07 16:19:08 thorpej Exp $	*/
+/*	$NetBSD: zrc.c,v 1.13 2023/03/28 20:01:58 andvar Exp $	*/
 /*	$OpenBSD: zaurus_remote.c,v 1.1 2005/11/17 05:26:31 uwe Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.12 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zrc.c,v 1.13 2023/03/28 20:01:58 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -189,7 +189,7 @@ zrc_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_to, 0);
 	callout_setfunc(&sc->sc_to, zrc_timeout, sc);
 
-	/* Establish interrput */
+	/* Establish interrupt */
 	pxa2x0_gpio_set_function(C3000_RC_IRQ_PIN, GPIO_IN);
 	sc->sc_ih = pxa2x0_gpio_intr_establish(C3000_RC_IRQ_PIN,
 	    IST_EDGE_BOTH, IPL_BIO, zrc_intr, sc);

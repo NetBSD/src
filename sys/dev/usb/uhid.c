@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.126 2022/09/24 11:06:41 riastradh Exp $	*/
+/*	$NetBSD: uhid.c,v 1.127 2023/03/28 20:01:58 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.126 2022/09/24 11:06:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.127 2023/03/28 20:01:58 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -301,7 +301,7 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 	else
 		sc->sc_obuf = NULL;
 
-	/* Paranoia: reset SIGIO before enabling interrputs.  */
+	/* Paranoia: reset SIGIO before enabling interrupts.  */
 	mutex_enter(&proc_lock);
 	atomic_store_relaxed(&sc->sc_async, NULL);
 	mutex_exit(&proc_lock);

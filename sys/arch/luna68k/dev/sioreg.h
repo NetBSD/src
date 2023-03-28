@@ -1,4 +1,4 @@
-/* $NetBSD: sioreg.h,v 1.5 2021/09/25 15:18:38 tsutsui Exp $ */
+/* $NetBSD: sioreg.h,v 1.6 2023/03/28 20:01:57 andvar Exp $ */
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -91,7 +91,7 @@
 #define WR0_RSTINT	0x10	/* Reset External/Status Interrupt */
 #define WR0_CHANRST	0x18	/* Channel Reset */
 #define WR0_INTNXT	0x20	/* Enable Interrupt on Next Receive Character */
-#define WR0_RSTPEND	0x28	/* Reset Transmitter Interrput/DMA Pending */
+#define WR0_RSTPEND	0x28	/* Reset Transmitter Interrupt/DMA Pending */
 #define WR0_ERRRST	0x30	/* Error Reset */
 #define WR0_ENDINTR	0x38	/* End of Interrupt */
 
