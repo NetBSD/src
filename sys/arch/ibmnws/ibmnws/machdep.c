@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.19 2022/02/16 23:49:26 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.20 2023/03/28 20:01:57 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.19 2022/02/16 23:49:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.20 2023/03/28 20:01:57 andvar Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -159,7 +159,7 @@ void
 cpu_startup(void)
 {
 	/*
-	 * Mapping PReP interrput vector register.
+	 * Mapping PReP interrupt vector register.
 	 */
 	prep_intr_reg = (vaddr_t) mapiodev(PREP_INTR_REG, PAGE_SIZE, false);
 	if (!prep_intr_reg)
