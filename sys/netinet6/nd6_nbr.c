@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.182 2021/08/02 12:56:25 andvar Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.183 2023/03/29 13:01:44 kardel Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.182 2021/08/02 12:56:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.183 2023/03/29 13:01:44 kardel Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -100,7 +100,7 @@ static int dad_maxtry = 15;	/* max # of *tries* to transmit DAD packet */
 void
 nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp, *ifpc;
 	struct ip6_hdr *ip6 = mtod(m, struct ip6_hdr *);
 	struct nd_neighbor_solicit *nd_ns;
 	struct in6_addr saddr6 = ip6->ip6_src;
@@ -116,10 +116,11 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	union nd_opts ndopts;
 	const struct sockaddr_dl *proxydl = NULL;
 	struct psref psref;
+	struct psref psref_c;
 	struct psref psref_ia;
 	char ip6buf[INET6_ADDRSTRLEN], ip6buf2[INET6_ADDRSTRLEN];
 
-	ifp = m_get_rcvif_psref(m, &psref);
+	ifp = ifpc = m_get_rcvif_psref(m, &psref);
 	if (ifp == NULL)
 		goto freeit;
 
@@ -224,8 +225,15 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 	if (ifp->if_carp && ifp->if_type != IFT_CARP) {
 		int s = pserialize_read_enter();
 		ifa = carp_iamatch6(ifp->if_carp, &taddr6);
-		if (ifa != NULL)
+		if (ifa != NULL) {    
 			ifa_acquire(ifa, &psref_ia);
+			if (ifa->ifa_ifp && ifa->ifa_ifp != ifp) {
+				ifpc = ifa->ifa_ifp;
+				if_acquire(ifpc, &psref_c);
+			}
+		}
+		
+		
 		pserialize_read_exit(s);
 	} else
 		ifa = NULL;
@@ -350,14 +358,14 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 		in6_all = in6addr_linklocal_allnodes;
 		if (in6_setscope(&in6_all, ifp, NULL) != 0)
 			goto bad;
-		nd6_na_output(ifp, &in6_all, &taddr6,
+		nd6_na_output(ifpc, &in6_all, &taddr6,
 		    ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE) |
 		    (ip6_forwarding ? ND_NA_FLAG_ROUTER : 0),
 		    tlladdr, (const struct sockaddr *)proxydl);
 		goto freeit;
 	}
 
-	nd6_cache_lladdr(ifp, &saddr6, lladdr, lladdrlen, ND_NEIGHBOR_SOLICIT, 0);
+	nd6_cache_lladdr(ifpc, &saddr6, lladdr, lladdrlen, ND_NEIGHBOR_SOLICIT, 0);
 
 	nd6_na_output(ifp, &saddr6, &taddr6,
 	    ((anycast || proxy || !tlladdr) ? 0 : ND_NA_FLAG_OVERRIDE) |
@@ -366,6 +374,9 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
  freeit:
 	ifa_release(ifa, &psref_ia);
 	m_put_rcvif_psref(ifp, &psref);
+	if (ifp != ifpc)
+		if_put(ifpc, &psref_c);
+
 	m_freem(m);
 	return;
 
