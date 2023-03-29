@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.71 2023/03/27 14:56:40 nakayama Exp $	*/
+/*	$NetBSD: virtio.c,v 1.72 2023/03/29 09:44:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.71 2023/03/27 14:56:40 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.72 2023/03/29 09:44:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -784,9 +784,9 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq,
 
 	size_desc = sizeof(vq->vq_desc[0]) * vq_num;
 	size_avail = sizeof(uint16_t) * hdrlen
-	    + sizeof(vq->vq_avail[0].ring) * vq_num;
+	    + sizeof(vq->vq_avail[0].ring[0]) * vq_num;
 	size_used = sizeof(uint16_t) *hdrlen
-	    + sizeof(vq->vq_used[0].ring) * vq_num;
+	    + sizeof(vq->vq_used[0].ring[0]) * vq_num;
 	size_indirect = (sc->sc_indirect && maxnsegs >= MINSEG_INDIRECT) ?
 	    sizeof(struct vring_desc) * maxnsegs * vq_num : 0;
 
