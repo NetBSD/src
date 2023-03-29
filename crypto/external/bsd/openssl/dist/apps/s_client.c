@@ -2770,16 +2770,6 @@ int s_client_main(int argc, char **argv)
     for (;;) {
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
-        int fdin = fileno_stdin();
-        if (fdin < 0) {
-            BIO_printf(bio_err,"bad fileno for stdin\n");
-            goto shut;
-        }
-        int fdout = fileno_stdout();
-        if (fdout < 0) {
-            BIO_printf(bio_err,"bad fileno for stdout\n");
-            goto shut;
-        }
 
         if (SSL_is_dtls(con) && DTLSv1_get_timeout(con, &timeout))
             timeoutp = &timeout;
@@ -2834,10 +2824,10 @@ int s_client_main(int argc, char **argv)
                  * set the flag so we exit.
                  */
                 if (read_tty && !at_eof)
-                    openssl_fdset(fdin, &readfds);
+                    openssl_fdset(fileno_stdin(), &readfds);
 #if !defined(OPENSSL_SYS_VMS)
                 if (write_tty)
-                    openssl_fdset(fdout, &writefds);
+                    openssl_fdset(fileno_stdout(), &writefds);
 #endif
             }
             if (read_ssl)
@@ -2965,7 +2955,7 @@ int s_client_main(int argc, char **argv)
         /* Assume Windows/DOS/BeOS can always write */
         else if (!ssl_pending && write_tty)
 #else
-        else if (!ssl_pending && FD_ISSET(fdout, &writefds))
+        else if (!ssl_pending && FD_ISSET(fileno_stdout(), &writefds))
 #endif
         {
 #ifdef CHARSET_EBCDIC
@@ -3052,7 +3042,7 @@ int s_client_main(int argc, char **argv)
 #if defined(OPENSSL_SYS_MSDOS)
         else if (has_stdin_waiting())
 #else
-        else if (FD_ISSET(fdin, &readfds))
+        else if (FD_ISSET(fileno_stdin(), &readfds))
 #endif
         {
             if (crlf) {
