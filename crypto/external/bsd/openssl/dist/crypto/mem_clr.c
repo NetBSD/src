@@ -9,7 +9,6 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
-#include <inttypes.h>
 
 /*
  * Pointer to memset is volatile so that compiler must de-reference
