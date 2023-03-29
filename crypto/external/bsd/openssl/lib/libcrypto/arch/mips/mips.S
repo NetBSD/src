@@ -589,7 +589,7 @@ bn_div_3_words:
 	lw	$4,($7)
 	move	$10,$5
 	bne	$4,$6,bn_div_3_words_internal
-	 lw	$5,-4($7)
+	lw	$5,-4($7)
 	li	$2,-1
 	jr	$31
 	move	$4,$2
