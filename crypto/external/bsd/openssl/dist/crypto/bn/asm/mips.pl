@@ -817,7 +817,7 @@ bn_div_3_words:
 	$LD	$a0,($a3)
 	move	$ta2,$a1
 	bne	$a0,$a2,bn_div_3_words_internal
-	 $LD	$a1,-$BNSZ($a3)
+	$LD	$a1,-$BNSZ($a3)
 	li	$v0,-1
 	jr	$ra
 	move	$a0,$v0
