@@ -1,7 +1,7 @@
-/*	$NetBSD: ssp.h,v 1.13 2015/09/03 20:43:47 plunky Exp $	*/
+/*	$NetBSD: ssp.h,v 1.14 2023/03/29 13:37:10 christos Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2011, 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,7 +36,9 @@
 #if !defined(__cplusplus)
 # if _FORTIFY_SOURCE > 0 && !defined(__lint__) && \
      (__OPTIMIZE__ > 0 || defined(__clang__)) && __GNUC_PREREQ__(4, 1)
-#  if _FORTIFY_SOURCE > 1
+#  if _FORTIFY_SOURCE > 2 && __has_builtin(__builtin_dynamic_object_size)
+#   define __SSP_FORTIFY_LEVEL 3
+#  elif _FORTIFY_SOURCE > 1
 #   define __SSP_FORTIFY_LEVEL 2
 #  else
 #   define __SSP_FORTIFY_LEVEL 1
@@ -58,8 +60,13 @@
 
 #define __ssp_inline static __inline __attribute__((__always_inline__))
 
-#define __ssp_bos(ptr) __builtin_object_size(ptr, __SSP_FORTIFY_LEVEL > 1)
-#define __ssp_bos0(ptr) __builtin_object_size(ptr, 0)
+#if __SSP_FORTIFY_LEVEL > 2
+# define __ssp_bos(ptr) __builtin_dynamic_object_size(ptr, 1)
+# define __ssp_bos0(ptr) __builtin_dynamic_object_size(ptr, 0)
+#else
+# define __ssp_bos(ptr) __builtin_object_size(ptr, __SSP_FORTIFY_LEVEL > 1)
+# define __ssp_bos0(ptr) __builtin_object_size(ptr, 0)
+#endif
 
 #define __ssp_check(buf, len, bos) \
 	if (bos(buf) != (size_t)-1 && len > bos(buf)) \
