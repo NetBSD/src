@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.410 2022/08/28 00:37:41 oster Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.411 2023/03/30 11:02:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.410 2022/08/28 00:37:41 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.411 2023/03/30 11:02:15 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -189,7 +189,7 @@ static int raid_detach(device_t, int);
 static int raidread_component_area(dev_t, struct vnode *, void *, size_t,
     daddr_t, daddr_t);
 static int raidwrite_component_area(dev_t, struct vnode *, void *, size_t,
-    daddr_t, daddr_t, int);
+    daddr_t, daddr_t);
 
 static int raidwrite_component_label(unsigned,
     dev_t, struct vnode *, RF_ComponentLabel_t *);
@@ -2450,7 +2450,7 @@ raidwrite_component_label(unsigned secsize, dev_t dev, struct vnode *b_vp,
 	error = raidwrite_component_area(dev, b_vp, clabel_write,
 	    sizeof(RF_ComponentLabel_t),
 	    rf_component_info_offset(),
-	    rf_component_info_size(secsize), 0);
+	    rf_component_info_size(secsize));
 
 	return error;
 }
@@ -2458,7 +2458,7 @@ raidwrite_component_label(unsigned secsize, dev_t dev, struct vnode *b_vp,
 /* ARGSUSED */
 static int
 raidwrite_component_area(dev_t dev, struct vnode *b_vp, void *data,
-    size_t msize, daddr_t offset, daddr_t dsize, int asyncp)
+    size_t msize, daddr_t offset, daddr_t dsize)
 {
 	struct buf *bp;
 	int error;
@@ -2470,15 +2470,13 @@ raidwrite_component_area(dev_t dev, struct vnode *b_vp, void *data,
 	/* get our ducks in a row for the write */
 	bp->b_blkno = offset / DEV_BSIZE;
 	bp->b_bcount = dsize;
-	bp->b_flags |= B_WRITE | (asyncp ? B_ASYNC : 0);
+	bp->b_flags |= B_WRITE;
  	bp->b_resid = dsize;
 
 	memset(bp->b_data, 0, dsize);
 	memcpy(bp->b_data, data, msize);
 
 	bdev_strategy(bp);
-	if (asyncp)
-		return 0;
 	error = biowait(bp);
 	brelse(bp, 0);
 	if (error) {
@@ -2504,7 +2502,7 @@ rf_paritymap_kern_write(RF_Raid_t *raidPtr, struct rf_paritymap_ondisk *map)
 		    raidPtr->raid_cinfo[c].ci_vp, map,
 		    RF_PARITYMAP_NBYTE,
 		    rf_parity_map_offset(raidPtr),
-		    rf_parity_map_size(raidPtr), 0);
+		    rf_parity_map_size(raidPtr));
 	}
 }
 
