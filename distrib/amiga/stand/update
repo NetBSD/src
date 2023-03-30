@@ -1,0 +1,41 @@
+#!/bin/sh -e
+# Simple helper script for updating
+
+githubdir=https://github.com/rvalles/device-streams
+if [ $# = 0 ] ; then
+    cat <<END
+Usage: update version
+
+Where version is a release from $githubdir
+e.g.: "./update 2.2.1"
+
+Assumes you are using an https capable ftp, and have lha installed from pkgsrc
+END
+    exit 1
+fi
+
+version=$1
+shift
+
+srctar=device-streams-$version-src.tar.gz
+ftp -o $srctar $githubdir/archive/refs/tags/$version.tar.gz
+uuencode $srctar $srctar > $srctar.uue
+rm $srctar
+
+exelha=device-streams-$version.lha
+ftp -o $exelha $githubdir/releases/download/$version/device-streams.lha
+uuencode $exelha $exelha > $exelha.uue
+lha xf $exelha
+for exe in rdbinfo xdevtostream xstreamtodev ; do
+   uuencode devstreams/$exe $exe > $exe.uue
+   rm devstreams/$exe
+done
+mv devstreams/README.md device-streams.README.md
+# Explicitly remove each known file, so any new unknown files trigger error
+rm devstreams/COPYING devstreams/devtostream devstreams/streamtodev
+rmdir devstreams
+rm $exelha
+
+echo
+echo "- Check Makefile for $srctar and $exelha"
+echo "- Cvs add the new $srctar and $exelha and remove the old"
