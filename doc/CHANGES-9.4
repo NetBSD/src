@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.60 2023/03/23 12:07:38 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.61 2023/03/30 12:00:33 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1302,4 +1302,24 @@ sys/netinet6/raw_ip6.c				1.183 (via patch)
 
 	in6: fix IPV6_CHECKSUM handling.
 	[ozaki-r, ticket #1615]
+
+distrib/amiga/stand/Makefile			1.6
+distrib/amiga/stand/device-streams-2.2.1-src.tar.gz.uue 1.1
+distrib/amiga/stand/device-streams-2.2.1.lha.uue 1.1
+distrib/amiga/stand/device-streams.README.md	1.1
+distrib/amiga/stand/device-streams.tar.gz.uue	delete
+distrib/amiga/stand/rdbinfo.uue			1.2
+distrib/amiga/stand/update			1.1
+distrib/amiga/stand/xdevtostream.uue		1.1
+distrib/amiga/stand/xstreamtodev.uue		1.2
+
+	Update device-streams binaries from Roc Valles.
+	[abs, ticket #1616]
+
+sys/nfs/nfs_serv.c				1.184
+sys/nfs/nfs_srvsubs.c				1.17
+sys/nfs/nfsm_subs.h				1.56,1.57
+
+	nfs: server protocol fixes.
+	[riastradh, ticket #1617]
 
