@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.68 2023/02/14 18:56:10 jschauma Exp $ */
+/* $NetBSD: style,v 1.69 2023/03/30 10:39:30 riastradh Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.68 2023/02/14 18:56:10 jschauma Exp $");
+__RCSID("$NetBSD: style,v 1.69 2023/03/30 10:39:30 riastradh Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -56,6 +56,23 @@ __RCSID("$NetBSD: style,v 1.68 2023/02/14 18:56:10 jschauma Exp $");
  */
 #ifndef _SYS_SOCKET_H_
 #define _SYS_SOCKET_H_
+
+/*
+ * extern declarations must only appear in header files, not in .c
+ * files, so the same declaration is used by the .c file defining it
+ * and the .c file using it, giving the compiler the opportunity to
+ * detect type errors.
+ *
+ * extern function declarations should not use the extern keyword,
+ * which is unnecessary.
+ *
+ * Exception: A subroutine written in assembly in an adjacent .S file,
+ * which is used only in one .c file, may be declared in the .c file.
+ */
+extern int frotz;
+
+int frobnicate(const char *);
+
 /*
  * Contents of #include file go between the #ifndef and the #endif at the end.
  */
@@ -345,9 +362,11 @@ function(int a1, int a2, float fl, int a4)
 	 * declarations next to their first use, and initialize
 	 * opportunistically. This avoids over-initialization and
 	 * accidental bugs caused by declaration reordering.
+	 *
+	 * Never declare extern variables in .c files.  Declare them in the
+	 * appropriate .h file shared by the .c file where they are defined
+	 * and the .c file where they are used.
 	 */
-	extern u_char one;
-	extern char two;
 	struct foo three, *four;
 	double five;
 	int *six, seven;
