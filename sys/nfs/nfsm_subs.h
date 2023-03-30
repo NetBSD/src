@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsm_subs.h,v 1.53 2013/09/14 22:29:08 martin Exp $	*/
+/*	$NetBSD: nfsm_subs.h,v 1.53.34.1 2023/03/30 11:59:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -358,7 +358,7 @@
 
 #define	nfsm_strsiz(s,m) \
 		{ nfsm_dissect(tl,uint32_t *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(uint32_t,*tl)) > (m)) { \
+		if ((uint32_t)((s) = fxdr_unsigned(uint32_t,*tl)) > (m)) { \
 			m_freem(mrep); \
 			error = EBADRPC; \
 			goto nfsmout; \
@@ -366,7 +366,8 @@
 
 #define	nfsm_srvnamesiz(s) \
 		{ nfsm_dissect(tl,uint32_t *,NFSX_UNSIGNED); \
-		if (((s) = fxdr_unsigned(uint32_t,*tl)) > NFS_MAXNAMLEN) \
+		if ((uint32_t)((s) = fxdr_unsigned(uint32_t,*tl)) > \
+		    NFS_MAXNAMLEN) \
 			error = NFSERR_NAMETOL; \
 		if (error) \
 			nfsm_reply(0); \
@@ -472,20 +473,24 @@
 		} }
 
 #define nfsm_srvmtofh(nsfh) \
-	{ int fhlen = NFSX_V3FH; \
+	{ uint32_t fhlen = NFSX_V3FH; \
 		if (nfsd->nd_flag & ND_NFSV3) { \
-			nfsm_dissect(tl, u_int32_t *, NFSX_UNSIGNED); \
-			fhlen = fxdr_unsigned(int, *tl); \
+			nfsm_dissect(tl, uint32_t *, NFSX_UNSIGNED); \
+			fhlen = fxdr_unsigned(uint32_t, *tl); \
+			CTASSERT(NFSX_V3FHMAX <= FHANDLE_SIZE_MAX); \
 			if (fhlen > NFSX_V3FHMAX || \
 			    (fhlen < FHANDLE_SIZE_MIN && fhlen > 0)) { \
 				error = EBADRPC; \
 				nfsm_reply(0); \
 			} \
 		} else { \
+			CTASSERT(NFSX_V2FH >= FHANDLE_SIZE_MIN); \
 			fhlen = NFSX_V2FH; \
 		} \
 		(nsfh)->nsfh_size = fhlen; \
 		if (fhlen != 0) { \
+			KASSERT(fhlen >= FHANDLE_SIZE_MIN); \
+			KASSERT(fhlen <= FHANDLE_SIZE_MAX); \
 			nfsm_dissect(tl, u_int32_t *, fhlen); \
 			memcpy(NFSRVFH_DATA(nsfh), tl, fhlen); \
 		} \
