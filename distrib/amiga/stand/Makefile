@@ -1,11 +1,11 @@
-#       $NetBSD: Makefile,v 1.5 2018/05/01 19:59:43 christos Exp $
+#       $NetBSD: Makefile,v 1.5.4.1 2023/03/30 11:51:04 martin Exp $
 #
 
 #include <bsd.hostinit.mk>
 
-MISC_FILES=	runbootblock.README
-UUDECODE_FILES=	device-streams.tar.gz \
-		loadbsd rdbinfo runbootblock xstreamtodev
+MISC_FILES=	runbootblock.README device-streams.README.md
+UUDECODE_FILES=	device-streams-2.2.1-src.tar.gz device-streams-2.2.1.lha \
+		loadbsd rdbinfo runbootblock xdevtostream xstreamtodev
 
 .include <bsd.files.mk>
 .include <bsd.hostprog.mk>
