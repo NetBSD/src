@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.48 2023/03/23 12:12:08 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.49 2023/03/30 11:58:32 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1522,4 +1522,56 @@ sys/dev/fss.c					1.114
 	fss(4): pass B_PHYS when reading from device.  Xbd(4) at least checks
 	this flag and may trigger an assertion.
 	[hannken, ticket #126]
+
+sys/dev/pci/if_vioif.c				1.83-1.102,1.105,1.106
+
+	vioif(4): various bug fixes and code cleanup.
+	[yamaguchi, ticket #128]
+
+sys/kern/vfs_xattr.c				1.39
+
+	ffs2ea: properly handle XATTR_REPLACE flags.
+	Makes glusterfs 10 run on a FFSv2ea file system.
+	[bouyer, ticket #129]
+
+sys/arch/x86/x86/mpacpi.c			1.110
+
+	xen: fix a panic when booting a PVH dom0.
+	[bouyer, ticket #130]
+
+sys/arch/x86/x86/consinit.c			1.36
+sys/arch/xen/include/xen.h			1.48
+sys/arch/xen/x86/pvh_consinit.c			1.3
+
+
+	xen: allow a PVH dom0 to use VGA as console.
+	[bouyer, ticket #131]
+
+distrib/amiga/stand/Makefile			1.6
+distrib/amiga/stand/device-streams-2.2.1-src.tar.gz.uue 1.1
+distrib/amiga/stand/device-streams-2.2.1.lha.uue 1.1
+distrib/amiga/stand/device-streams.README.md	1.1
+distrib/amiga/stand/device-streams.tar.gz.uue	delete
+distrib/amiga/stand/rdbinfo.uue			1.2
+distrib/amiga/stand/update			1.1
+distrib/amiga/stand/xdevtostream.uue		1.1
+distrib/amiga/stand/xstreamtodev.uue		1.2
+
+	Update device-streams binaries from Roc Valles.
+	[abs, ticket #132]
+
+sys/arch/amiga/stand/bootblock/boot/console.c	1.16
+sys/arch/amiga/stand/bootblock/boot/libstubs.h	1.8
+sys/arch/amiga/stand/bootblock/boot/libstubs.s	1.11
+sys/arch/amiga/stand/bootblock/boot/version	1.3
+
+	amiga: fix bootblocks for Kickstart 3.2.
+	[abs, ticket #133]
+
+sys/nfs/nfs_serv.c				1.184
+sys/nfs/nfs_srvsubs.c				1.17
+sys/nfs/nfsm_subs.h				1.56,1.57
+
+	nfs: server protocol fixes.
+	[riastradh, ticket #134]
 
