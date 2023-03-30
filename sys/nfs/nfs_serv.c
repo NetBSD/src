@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.173 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.173.4.1 2023/03/30 12:01:25 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.173 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.173.4.1 2023/03/30 12:01:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1638,10 +1638,10 @@ nfsmout:
 			vput(nd.ni_dvp);
 		if (nd.ni_vp)
 			vput(nd.ni_vp);
-	}
-	if (nd.ni_pathbuf != NULL) {
-		pathbuf_destroy(nd.ni_pathbuf);
-		nd.ni_pathbuf = NULL;
+		if (nd.ni_pathbuf != NULL) {
+			pathbuf_destroy(nd.ni_pathbuf);
+			nd.ni_pathbuf = NULL;
+		}
 	}
 	return (error);
 }
@@ -1792,10 +1792,10 @@ nfsmout:
 			vput(nd.ni_dvp);
 		if (nd.ni_vp)
 			vput(nd.ni_vp);
-	}
-	if (nd.ni_pathbuf != NULL) {
-		pathbuf_destroy(nd.ni_pathbuf);
-		nd.ni_pathbuf = NULL;
+		if (nd.ni_pathbuf != NULL) {
+			pathbuf_destroy(nd.ni_pathbuf);
+			nd.ni_pathbuf = NULL;
+		}
 	}
 	if (dirp)
 		vrele(dirp);
