@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.27 2023/03/31 07:31:48 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.28 2023/03/31 07:34:26 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -158,13 +158,17 @@ struct virtio_softc {
 	uint64_t		sc_active_features;
 	bool			sc_indirect;
 	bool			sc_version_1;
-	bool			sc_finished_called;
 
 	int			sc_nvqs; /* set by child */
 	struct virtqueue	*sc_vqs; /* set by child */
 
 	int			sc_childdevid;
 	device_t		sc_child; 		/* set by child */
+	uint32_t		sc_child_flags;
+#define VIRTIO_CHILD_ATTACH_FINISHED	__BIT(0)
+#define VIRTIO_CHILD_ATTACH_FAILED	__BIT(1)
+#define VIRTIO_CHILD_DETACHED		__BIT(2)
+
 	virtio_callback		sc_config_change; 	/* set by child */
 	virtio_callback		sc_intrhand;
 };
@@ -178,9 +182,6 @@ struct virtio_softc;
 #define VIRTIO_F_INTR_SOFTINT	(1 << 1)
 #define VIRTIO_F_INTR_MSIX	(1 << 2)
 #define VIRTIO_F_INTR_PERVQ	(1 << 3)
-
-
-#define	VIRTIO_CHILD_FAILED		((void *)1)
 
 /* public interface */
 void virtio_negotiate_features(struct virtio_softc*, uint64_t);

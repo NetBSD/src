@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.39 2023/03/23 03:27:48 yamaguchi Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.40 2023/03/31 07:34:26 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.39 2023/03/23 03:27:48 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.40 2023/03/31 07:34:26 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,14 +329,12 @@ virtio_pci_detach(device_t self, int flags)
 	struct virtio_softc * const sc = &psc->sc_sc;
 	int r;
 
-	if (sc->sc_child != NULL) {
-		r = config_detach(sc->sc_child, flags);
-		if (r)
-			return r;
-	}
+	r = config_detach_children(self, flags);
+	if (r != 0)
+		return r;
 
 	/* Check that child detached properly */
-	KASSERT(sc->sc_child == NULL);
+	KASSERT(ISSET(sc->sc_child_flags, VIRTIO_CHILD_DETACHED));
 	KASSERT(sc->sc_vqs == NULL);
 	KASSERT(psc->sc_ihs_num == 0);
 
