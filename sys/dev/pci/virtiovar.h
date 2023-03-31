@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.26 2023/03/23 03:55:11 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.27 2023/03/31 07:31:48 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -70,16 +70,6 @@
 #include <sys/bus.h>
 #include <dev/pci/virtioreg.h>
 
-
-struct vq_entry {
-	SIMPLEQ_ENTRY(vq_entry)	qe_list; /* free list */
-	uint16_t		qe_index; /* index in vq_desc array */
-	/* followings are used only when it is the `head' entry */
-	int16_t			qe_next;     /* next enq slot */
-	bool			qe_indirect; /* 1 if using indirect */
-	struct vring_desc	*qe_desc_base;
-};
-
 struct virtqueue {
 	struct virtio_softc	*vq_owner;
         unsigned int		vq_num; /* queue size (# of entries) */
@@ -89,7 +79,7 @@ struct virtqueue {
         struct vring_desc	*vq_desc;
         struct vring_avail	*vq_avail;
         struct vring_used	*vq_used;
-	void			*vq_indirect;
+	struct vring_desc	*vq_indirect;
 	uint16_t		*vq_used_event;		/* trails avail */
 	uint16_t		*vq_avail_event;	/* trails used  */
 
@@ -105,17 +95,14 @@ struct virtqueue {
 	int			vq_maxsegsize;
 	int			vq_maxnsegs;
 
-	/* free entry management */
-	struct vq_entry		*vq_entries;
-	SIMPLEQ_HEAD(, vq_entry) vq_freelist;
-	kmutex_t		vq_freelist_lock;
-
 	/* enqueue/dequeue status */
 	uint16_t		vq_avail_idx;
 	uint16_t		vq_used_idx;
+	uint16_t		vq_free_idx;
 	int			vq_queued;
 	kmutex_t		vq_aring_lock;
 	kmutex_t		vq_uring_lock;
+	kmutex_t		vq_freedesc_lock;
 
 	/* interrupt handler */
 	int			(*vq_done)(struct virtqueue*); /* for compatibility */
@@ -124,6 +111,13 @@ struct virtqueue {
 
 	/* for 1.0 */
 	uint32_t		vq_notify_off;
+
+	struct vring_desc_extra {
+		bool		use_indirect; /* true if using indirect */
+		struct vring_desc
+				*desc_base;
+		uint16_t	 desc_free_idx;
+	}			*vq_descx;
 };
 
 struct virtio_attach_args {
