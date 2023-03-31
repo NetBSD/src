@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.72 2023/03/29 09:44:25 riastradh Exp $	*/
+/*	$NetBSD: virtio.c,v 1.73 2023/03/31 07:31:48 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.72 2023/03/29 09:44:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.73 2023/03/31 07:31:48 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.72 2023/03/29 09:44:25 riastradh Exp $"
 #include <dev/pci/virtiovar.h> /* XXX: move to non-pci */
 
 #define MINSEG_INDIRECT		2 /* use indirect if nsegs >= this value */
+
+/*
+ * The maximum descriptor size is 2^15. Use that value as the end of
+ * descriptor chain terminator since it will never be a valid index
+ * in the descriptor table.
+ */
+#define VRING_DESC_CHAIN_END		32768
 
 /* incomplete list */
 static const char *virtio_device_name[] = {
@@ -700,10 +707,19 @@ virtio_start_vq_intr(struct virtio_softc *sc, struct virtqueue *vq)
 static void
 virtio_reset_vq(struct virtio_softc *sc, struct virtqueue *vq)
 {
+	struct vring_desc *vds;
 	int i, j;
 	int vq_size = vq->vq_num;
 
 	memset(vq->vq_vaddr, 0, vq->vq_bytesize);
+
+	/* build the descriptor chain for free slot management */
+	vds = vq->vq_desc;
+	for (i = 0; i < vq_size - 1; i++) {
+		vds[i].next = virtio_rw16(sc, i + 1);
+	}
+	vds[i].next = virtio_rw16(sc, VRING_DESC_CHAIN_END);
+	vq->vq_free_idx = 0;
 
 	/* build the indirect descriptor chain */
 	if (vq->vq_indirect != NULL) {
@@ -716,14 +732,6 @@ virtio_reset_vq(struct virtio_softc *sc, struct virtqueue *vq)
 				vd[j].next = virtio_rw16(sc, j + 1);
 			}
 		}
-	}
-
-	/* free slot management */
-	SIMPLEQ_INIT(&vq->vq_freelist);
-	for (i = 0; i < vq_size; i++) {
-		SIMPLEQ_INSERT_TAIL(&vq->vq_freelist, &vq->vq_entries[i],
-		    qe_list);
-		vq->vq_entries[i].qe_index = i;
 	}
 
 	/* enqueue/dequeue status */
@@ -855,11 +863,10 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq,
 	}
 #undef VIRTIO_PTR
 
-	/* free slot management */
-	vq->vq_entries = kmem_zalloc(sizeof(struct vq_entry) * vq_num,
+	vq->vq_descx = kmem_zalloc(sizeof(vq->vq_descx[0]) * vq_num,
 	    KM_SLEEP);
 
-	mutex_init(&vq->vq_freelist_lock, MUTEX_SPIN, sc->sc_ipl);
+	mutex_init(&vq->vq_freedesc_lock, MUTEX_SPIN, sc->sc_ipl);
 	mutex_init(&vq->vq_aring_lock, MUTEX_SPIN, sc->sc_ipl);
 	mutex_init(&vq->vq_uring_lock, MUTEX_SPIN, sc->sc_ipl);
 
@@ -891,15 +898,18 @@ err:
 int
 virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 {
-	struct vq_entry *qe;
-	int i = 0;
+	uint16_t s;
+	size_t i;
 
 	if (vq->vq_vaddr == NULL)
 		return 0;
 
 	/* device must be already deactivated */
 	/* confirm the vq is empty */
-	SIMPLEQ_FOREACH(qe, &vq->vq_freelist, qe_list) {
+	s = vq->vq_free_idx;
+	i = 0;
+	while (s != virtio_rw16(sc, VRING_DESC_CHAIN_END)) {
+		s = vq->vq_desc[s].next;
 		i++;
 	}
 	if (i != vq->vq_num) {
@@ -913,12 +923,12 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 
 	vq_sync_aring_all(sc, vq, BUS_DMASYNC_POSTWRITE);
 
-	kmem_free(vq->vq_entries, sizeof(*vq->vq_entries) * vq->vq_num);
+	kmem_free(vq->vq_descx, sizeof(vq->vq_descx[0]) * vq->vq_num);
 	bus_dmamap_unload(sc->sc_dmat, vq->vq_dmamap);
 	bus_dmamap_destroy(sc->sc_dmat, vq->vq_dmamap);
 	bus_dmamem_unmap(sc->sc_dmat, vq->vq_vaddr, vq->vq_bytesize);
 	bus_dmamem_free(sc->sc_dmat, &vq->vq_segs[0], 1);
-	mutex_destroy(&vq->vq_freelist_lock);
+	mutex_destroy(&vq->vq_freedesc_lock);
 	mutex_destroy(&vq->vq_uring_lock);
 	mutex_destroy(&vq->vq_aring_lock);
 	memset(vq, 0, sizeof(*vq));
@@ -929,31 +939,64 @@ virtio_free_vq(struct virtio_softc *sc, struct virtqueue *vq)
 /*
  * Free descriptor management.
  */
-static struct vq_entry *
-vq_alloc_entry(struct virtqueue *vq)
+static int
+vq_alloc_slot_locked(struct virtio_softc *sc, struct virtqueue *vq,
+    size_t nslots)
 {
-	struct vq_entry *qe;
+	struct vring_desc *vd;
+	uint16_t rv, tail;
+	size_t i;
 
-	mutex_enter(&vq->vq_freelist_lock);
-	if (SIMPLEQ_EMPTY(&vq->vq_freelist)) {
-		mutex_exit(&vq->vq_freelist_lock);
-		return NULL;
+	KASSERT(mutex_owned(&vq->vq_freedesc_lock));
+
+	tail = virtio_rw16(sc, vq->vq_free_idx);
+	for (i = 0; i < nslots - 1; i++) {
+		if (tail == VRING_DESC_CHAIN_END)
+			return VRING_DESC_CHAIN_END;
+
+		vd = &vq->vq_desc[tail];
+		vd->flags = virtio_rw16(sc, VRING_DESC_F_NEXT);
+		tail = virtio_rw16(sc, vd->next);
 	}
-	qe = SIMPLEQ_FIRST(&vq->vq_freelist);
-	SIMPLEQ_REMOVE_HEAD(&vq->vq_freelist, qe_list);
-	mutex_exit(&vq->vq_freelist_lock);
 
-	return qe;
+	if (tail == VRING_DESC_CHAIN_END)
+		return VRING_DESC_CHAIN_END;
+
+	rv = virtio_rw16(sc, vq->vq_free_idx);
+
+	vd = &vq->vq_desc[tail];
+	vd->flags = virtio_rw16(sc, 0);
+	vq->vq_free_idx = vd->next;
+
+	return rv;
+}
+static uint16_t
+vq_alloc_slot(struct virtio_softc *sc, struct virtqueue *vq, size_t nslots)
+{
+	uint16_t rv;
+
+	mutex_enter(&vq->vq_freedesc_lock);
+	rv = vq_alloc_slot_locked(sc, vq, nslots);
+	mutex_exit(&vq->vq_freedesc_lock);
+
+	return rv;
 }
 
 static void
-vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
+vq_free_slot(struct virtio_softc *sc, struct virtqueue *vq, uint16_t slot)
 {
-	mutex_enter(&vq->vq_freelist_lock);
-	SIMPLEQ_INSERT_TAIL(&vq->vq_freelist, qe, qe_list);
-	mutex_exit(&vq->vq_freelist_lock);
+	struct vring_desc *vd;
+	uint16_t s;
 
-	return;
+	mutex_enter(&vq->vq_freedesc_lock);
+	vd = &vq->vq_desc[slot];
+	while ((vd->flags & virtio_rw16(sc, VRING_DESC_F_NEXT)) != 0) {
+		s = virtio_rw16(sc, vd->next);
+		vd = &vq->vq_desc[s];
+	}
+	vd->next = vq->vq_free_idx;
+	vq->vq_free_idx = virtio_rw16(sc, slot);
+	mutex_exit(&vq->vq_freedesc_lock);
 }
 
 /*
@@ -994,16 +1037,15 @@ vq_free_entry(struct virtqueue *vq, struct vq_entry *qe)
 int
 virtio_enqueue_prep(struct virtio_softc *sc, struct virtqueue *vq, int *slotp)
 {
-	struct vq_entry *qe1;
+	uint16_t slot;
 
 	KASSERT(slotp != NULL);
 
-	qe1 = vq_alloc_entry(vq);
-	if (qe1 == NULL)
+	slot = vq_alloc_slot(sc, vq, 1);
+	if (slot == VRING_DESC_CHAIN_END)
 		return EAGAIN;
-	/* next slot is not allocated yet */
-	qe1->qe_next = -1;
-	*slotp = qe1->qe_index;
+
+	*slotp = slot;
 
 	return 0;
 }
@@ -1015,69 +1057,61 @@ int
 virtio_enqueue_reserve(struct virtio_softc *sc, struct virtqueue *vq,
     int slot, int nsegs)
 {
-	int indirect;
-	struct vq_entry *qe1 = &vq->vq_entries[slot];
+	struct vring_desc *vd;
+	struct vring_desc_extra *vdx;
+	int i;
 
-	KASSERT(qe1->qe_next == -1);
 	KASSERT(1 <= nsegs && nsegs <= vq->vq_num);
+
+	vdx = &vq->vq_descx[slot];
+	vd = &vq->vq_desc[slot];
+
+	KASSERT((vd->flags & virtio_rw16(sc, VRING_DESC_F_NEXT)) == 0);
 
 	if ((vq->vq_indirect != NULL) &&
 	    (nsegs >= MINSEG_INDIRECT) &&
 	    (nsegs <= vq->vq_maxnsegs))
-		indirect = 1;
+		vdx->use_indirect = true;
 	else
-		indirect = 0;
-	qe1->qe_indirect = indirect;
+		vdx->use_indirect = false;
 
-	if (indirect) {
-		struct vring_desc *vd;
+	if (vdx->use_indirect) {
 		uint64_t addr;
-		int i;
 
-		vd = &vq->vq_desc[qe1->qe_index];
 		addr = vq->vq_dmamap->dm_segs[0].ds_addr
 		    + vq->vq_indirectoffset;
 		addr += sizeof(struct vring_desc)
-		    * vq->vq_maxnsegs * qe1->qe_index;
+		    * vq->vq_maxnsegs * slot;
+
 		vd->addr  = virtio_rw64(sc, addr);
 		vd->len   = virtio_rw32(sc, sizeof(struct vring_desc) * nsegs);
 		vd->flags = virtio_rw16(sc, VRING_DESC_F_INDIRECT);
 
-		vd = vq->vq_indirect;
-		vd += vq->vq_maxnsegs * qe1->qe_index;
-		qe1->qe_desc_base = vd;
+		vd = &vq->vq_indirect[vq->vq_maxnsegs * slot];
+		vdx->desc_base = vd;
+		vdx->desc_free_idx = 0;
 
 		for (i = 0; i < nsegs - 1; i++) {
 			vd[i].flags = virtio_rw16(sc, VRING_DESC_F_NEXT);
 		}
 		vd[i].flags  = virtio_rw16(sc, 0);
-		qe1->qe_next = 0;
-
-		return 0;
 	} else {
-		struct vring_desc *vd;
-		struct vq_entry *qe;
-		int i, s;
+		uint16_t s;
 
-		vd = &vq->vq_desc[0];
-		qe1->qe_desc_base = vd;
-		qe1->qe_next = qe1->qe_index;
-		s = slot;
-		for (i = 0; i < nsegs - 1; i++) {
-			qe = vq_alloc_entry(vq);
-			if (qe == NULL) {
-				vd[s].flags = virtio_rw16(sc, 0);
-				virtio_enqueue_abort(sc, vq, slot);
-				return EAGAIN;
-			}
-			vd[s].flags = virtio_rw16(sc, VRING_DESC_F_NEXT);
-			vd[s].next  = virtio_rw16(sc, qe->qe_index);
-			s = qe->qe_index;
+		s = vq_alloc_slot(sc, vq, nsegs - 1);
+		if (s == VRING_DESC_CHAIN_END) {
+			vq_free_slot(sc, vq, slot);
+			return EAGAIN;
 		}
-		vd[s].flags = virtio_rw16(sc, 0);
 
-		return 0;
+		vd->next = virtio_rw16(sc, s);
+		vd->flags = virtio_rw16(sc, VRING_DESC_F_NEXT);
+
+		vdx->desc_base = &vq->vq_desc[0];
+		vdx->desc_free_idx = slot;
 	}
+
+	return 0;
 }
 
 /*
@@ -1087,22 +1121,35 @@ int
 virtio_enqueue(struct virtio_softc *sc, struct virtqueue *vq, int slot,
     bus_dmamap_t dmamap, bool write)
 {
-	struct vq_entry *qe1 = &vq->vq_entries[slot];
-	struct vring_desc *vd = qe1->qe_desc_base;
+	struct vring_desc *vds;
+	struct vring_desc_extra *vdx;
+	uint16_t s;
 	int i;
-	int s = qe1->qe_next;
 
-	KASSERT(s >= 0);
 	KASSERT(dmamap->dm_nsegs > 0);
 
+	vdx = &vq->vq_descx[slot];
+	vds = vdx->desc_base;
+	s = vdx->desc_free_idx;
+
+	KASSERT(vds != NULL);
+
 	for (i = 0; i < dmamap->dm_nsegs; i++) {
-		vd[s].addr = virtio_rw64(sc, dmamap->dm_segs[i].ds_addr);
-		vd[s].len  = virtio_rw32(sc, dmamap->dm_segs[i].ds_len);
+		KASSERT(s != VRING_DESC_CHAIN_END);
+
+		vds[s].addr = virtio_rw64(sc, dmamap->dm_segs[i].ds_addr);
+		vds[s].len  = virtio_rw32(sc, dmamap->dm_segs[i].ds_len);
 		if (!write)
-			vd[s].flags |= virtio_rw16(sc, VRING_DESC_F_WRITE);
-		s = virtio_rw16(sc, vd[s].next);
+			vds[s].flags |= virtio_rw16(sc, VRING_DESC_F_WRITE);
+
+		if ((vds[s].flags & virtio_rw16(sc, VRING_DESC_F_NEXT)) == 0) {
+			s = VRING_DESC_CHAIN_END;
+		} else {
+			s = virtio_rw16(sc, vds[s].next);
+		}
 	}
-	qe1->qe_next = s;
+
+	vdx->desc_free_idx = s;
 
 	return 0;
 }
@@ -1112,20 +1159,32 @@ virtio_enqueue_p(struct virtio_softc *sc, struct virtqueue *vq, int slot,
     bus_dmamap_t dmamap, bus_addr_t start, bus_size_t len,
     bool write)
 {
-	struct vq_entry *qe1 = &vq->vq_entries[slot];
-	struct vring_desc *vd = qe1->qe_desc_base;
-	int s = qe1->qe_next;
+	struct vring_desc_extra *vdx;
+	struct vring_desc *vds;
+	uint16_t s;
 
-	KASSERT(s >= 0);
+	vdx = &vq->vq_descx[slot];
+	vds = vdx->desc_base;
+	s = vdx->desc_free_idx;
+
+	KASSERT(s != VRING_DESC_CHAIN_END);
+	KASSERT(vds != NULL);
 	KASSERT(dmamap->dm_nsegs == 1); /* XXX */
 	KASSERT(dmamap->dm_segs[0].ds_len > start);
 	KASSERT(dmamap->dm_segs[0].ds_len >= start + len);
 
-	vd[s].addr = virtio_rw64(sc, dmamap->dm_segs[0].ds_addr + start);
-	vd[s].len  = virtio_rw32(sc, len);
+	vds[s].addr = virtio_rw64(sc, dmamap->dm_segs[0].ds_addr + start);
+	vds[s].len  = virtio_rw32(sc, len);
 	if (!write)
-		vd[s].flags |= virtio_rw16(sc, VRING_DESC_F_WRITE);
-	qe1->qe_next = virtio_rw16(sc, vd[s].next);
+		vds[s].flags |= virtio_rw16(sc, VRING_DESC_F_WRITE);
+
+	if ((vds[s].flags & virtio_rw16(sc, VRING_DESC_F_NEXT)) == 0) {
+		s = VRING_DESC_CHAIN_END;
+	} else {
+		s = virtio_rw16(sc, vds[s].next);
+	}
+
+	vdx->desc_free_idx = s;
 
 	return 0;
 }
@@ -1137,16 +1196,16 @@ int
 virtio_enqueue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot,
     bool notifynow)
 {
-	struct vq_entry *qe1;
 
 	if (slot < 0) {
 		mutex_enter(&vq->vq_aring_lock);
 		goto notify;
 	}
+
 	vq_sync_descs(sc, vq, BUS_DMASYNC_PREWRITE);
-	qe1 = &vq->vq_entries[slot];
-	if (qe1->qe_indirect)
+	if (vq->vq_descx[slot].use_indirect)
 		vq_sync_indirect(sc, vq, slot, BUS_DMASYNC_PREWRITE);
+
 	mutex_enter(&vq->vq_aring_lock);
 	vq->vq_avail->ring[(vq->vq_avail_idx++) % vq->vq_num] =
 	    virtio_rw16(sc, slot);
@@ -1198,23 +1257,14 @@ notify:
 int
 virtio_enqueue_abort(struct virtio_softc *sc, struct virtqueue *vq, int slot)
 {
-	struct vq_entry *qe = &vq->vq_entries[slot];
-	struct vring_desc *vd;
-	int s;
+	struct vring_desc_extra *vdx;
 
-	if (qe->qe_next < 0) {
-		vq_free_entry(vq, qe);
-		return 0;
-	}
+	vq_free_slot(sc, vq, slot);
 
-	s = slot;
-	vd = &vq->vq_desc[0];
-	while (virtio_rw16(sc, vd[s].flags) & VRING_DESC_F_NEXT) {
-		s = virtio_rw16(sc, vd[s].next);
-		vq_free_entry(vq, qe);
-		qe = &vq->vq_entries[s];
-	}
-	vq_free_entry(vq, qe);
+	vdx = &vq->vq_descx[slot];
+	vdx->desc_free_idx = VRING_DESC_CHAIN_END;
+	vdx->desc_base = NULL;
+
 	return 0;
 }
 
@@ -1230,7 +1280,6 @@ virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
     int *slotp, int *lenp)
 {
 	uint16_t slot, usedidx;
-	struct vq_entry *qe;
 
 	if (vq->vq_used_idx == virtio_rw16(sc, vq->vq_used->idx))
 		return ENOENT;
@@ -1239,9 +1288,8 @@ virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
 	mutex_exit(&vq->vq_uring_lock);
 	usedidx %= vq->vq_num;
 	slot = virtio_rw32(sc, vq->vq_used->ring[usedidx].id);
-	qe = &vq->vq_entries[slot];
 
-	if (qe->qe_indirect)
+	if (vq->vq_descx[slot].use_indirect)
 		vq_sync_indirect(sc, vq, slot, BUS_DMASYNC_POSTWRITE);
 
 	if (slotp)
@@ -1259,16 +1307,13 @@ virtio_dequeue(struct virtio_softc *sc, struct virtqueue *vq,
 int
 virtio_dequeue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot)
 {
-	struct vq_entry *qe = &vq->vq_entries[slot];
-	struct vring_desc *vd = &vq->vq_desc[0];
-	int s = slot;
+	struct vring_desc_extra *vdx;
 
-	while (virtio_rw16(sc, vd[s].flags) & VRING_DESC_F_NEXT) {
-		s = virtio_rw16(sc, vd[s].next);
-		vq_free_entry(vq, qe);
-		qe = &vq->vq_entries[s];
-	}
-	vq_free_entry(vq, qe);
+	vq_free_slot(sc, vq, slot);
+
+	vdx = &vq->vq_descx[slot];
+	vdx->desc_base = NULL;
+	vdx->desc_free_idx = VRING_DESC_CHAIN_END;
 
 	return 0;
 }
