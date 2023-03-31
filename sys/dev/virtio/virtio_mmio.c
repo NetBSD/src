@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.8 2023/03/31 07:34:26 yamaguchi Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.9 2023/03/31 23:34:23 yamaguchi Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.8 2023/03/31 07:34:26 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.9 2023/03/31 23:34:23 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,11 +213,11 @@ virtio_mmio_common_detach(struct virtio_mmio_softc *sc, int flags)
 	struct virtio_softc *vsc = &sc->sc_sc;
 	int r;
 
-	r = config_detach_children(self, flags);
+	r = config_detach_children(vsc->sc_dev, flags);
 	if (r != 0)
 		return r;
 
-	KASSERT(ISSET(sc->sc_child_flags, VIRTIO_CHILD_DETACHED));
+	KASSERT(ISSET(vsc->sc_child_flags, VIRTIO_CHILD_DETACHED));
 	KASSERT(vsc->sc_vqs == NULL);
 	KASSERT(sc->sc_ih == NULL);
 
