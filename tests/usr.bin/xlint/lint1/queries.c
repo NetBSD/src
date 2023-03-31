@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.10 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.11 2023/03/31 13:03:05 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -15,7 +15,7 @@
  * 	such as casts between arithmetic types.
  */
 
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7 -X 351 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8 -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
@@ -294,6 +294,21 @@ Q7(void)
 	vstr = (vstr_t)vstr;
 }
 
+/*
+ * Octal numbers were common in the 1970s, especially on 36-bit machines.
+ * 50 years later, they are still used in numeric file permissions.
+ */
+void
+Q8(void)
+{
+
+	u16 = 0;
+	u16 = 000000;
+	/* expect+1: octal number '0644' [Q8] */
+	u16 = 0644;
+	/* expect+1: octal number '0000644' [Q8] */
+	u16 = 0000644;
+}
 
 /*
  * Since queries do not affect the exit status, force a warning to make this
