@@ -824,8 +824,10 @@ static void i915_record_ring_state(struct drm_device *dev,
 	}
 
 #ifdef __NetBSD__
+	spin_lock(&dev_priv->irq_lock);
 	ering->waiting = DRM_SPIN_WAITERS_P(&ring->irq_queue,
 	    &dev_priv->irq_lock);
+	spin_unlock(&dev_priv->irq_lock);
 #else
 	ering->waiting = waitqueue_active(&ring->irq_queue);
 #endif
