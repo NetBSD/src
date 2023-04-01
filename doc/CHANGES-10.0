@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.50 2023/04/01 10:36:04 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.51 2023/04/01 15:25:05 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1575,4 +1575,29 @@ sys/nfs/nfsm_subs.h				1.56,1.57
 
 	nfs: server protocol fixes.
 	[riastradh, ticket #134]
+
+xsrc/external/mit/xorg-server/dist/ChangeLog         up to 1.1.1.24
+xsrc/external/mit/xorg-server/dist/configure         up to 1.17
+xsrc/external/mit/xorg-server/dist/configure.ac      up to 1.19
+xsrc/external/mit/xorg-server/dist/meson.build       up to 1.1.1.14
+xsrc/external/mit/xorg-server/dist/composite/compwindow.c up to 1.1.1.9
+xsrc/external/mit/xorg-server/dist/xkb/xkbUtils.c    up to 1.1.1.8
+xsrc/external/mit/xorg-server/include/dix-config.h   up to 1.50
+xsrc/external/mit/xorg-server/include/version-config.h up to 1.20
+xsrc/external/mit/xorg-server/include/xorg-config.h  up to 1.30
+xsrc/external/mit/xorg-server/include/xorg-server.h  up to 1.30
+xsrc/external/mit/xorg-server.old/dist/composite/compwindow.c	1.2
+share/mk/bsd.x11.mk				1.150
+
+	Update xorg-server and xorg-server.old to fix
+	ZDI-CAN-19866 and CVE-2023-1393, a use-after-free problem.
+	[mrg, ticket #135]
+
+sys/arch/x86/include/intr_private.h		1.1
+sys/arch/x86/isa/clock.c			1.41
+sys/arch/x86/x86/intr.c				1.164
+
+	x86: PR 57197: work around a secret argument to clockintr().
+	[riastradh, ticket #136]
+
 
