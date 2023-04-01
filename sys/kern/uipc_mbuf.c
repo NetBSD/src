@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.249 2023/03/31 19:22:56 riastradh Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.250 2023/04/01 06:30:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.249 2023/03/31 19:22:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.250 2023/04/01 06:30:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -540,7 +540,7 @@ m_get(int how, int type)
 	if (m == NULL)
 		return NULL;
 	KASSERTMSG(((vaddr_t)m->m_dat & PAGE_MASK) + MLEN <= PAGE_SIZE,
-	    "m=%p m->m_dat=0x%p"
+	    "m=%p m->m_dat=%p"
 	    " MLEN=%u PAGE_MASK=0x%x PAGE_SIZE=%u",
 	    m, m->m_dat,
 	    (unsigned)MLEN, (unsigned)PAGE_MASK, (unsigned)PAGE_SIZE);
@@ -599,7 +599,7 @@ m_clget(struct mbuf *m, int how)
 
 	KASSERTMSG((((vaddr_t)m->m_ext_storage.ext_buf & PAGE_MASK) + mclbytes
 		<= PAGE_SIZE),
-	    "m=%p m->m_ext_storage.ext_buf=0x%p"
+	    "m=%p m->m_ext_storage.ext_buf=%p"
 	    " mclbytes=%u PAGE_MASK=0x%x PAGE_SIZE=%u",
 	    m, m->m_dat,
 	    (unsigned)mclbytes, (unsigned)PAGE_MASK, (unsigned)PAGE_SIZE);
