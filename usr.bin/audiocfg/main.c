@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.16 2019/08/24 07:39:42 isaki Exp $ */
+/* $NetBSD: main.c,v 1.17 2023/04/01 12:41:02 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -91,7 +91,8 @@ print_audiodev(struct audiodev *adev, int i)
 	printf("\n");
 	printf("       playback: ");
 	if ((adev->hwinfo.mode & AUMODE_PLAY)) {
-		printf("%uch, %uHz\n",
+		printf("%u, %uch, %uHz\n",
+		    adev->hwinfo.play.precision,
 		    adev->hwinfo.play.channels,
 		    adev->hwinfo.play.sample_rate);
 	} else {
@@ -99,7 +100,8 @@ print_audiodev(struct audiodev *adev, int i)
 	}
 	printf("       record:   ");
 	if ((adev->hwinfo.mode & AUMODE_RECORD)) {
-		printf("%uch, %uHz\n",
+		printf("%u, %uch, %uHz\n",
+		    adev->hwinfo.record.precision,
 		    adev->hwinfo.record.channels,
 		    adev->hwinfo.record.sample_rate);
 	} else {
