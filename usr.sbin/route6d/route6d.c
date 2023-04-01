@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.68 2016/04/04 07:37:08 ozaki-r Exp $	*/
+/*	$NetBSD: route6d.c,v 1.68.8.1 2023/04/01 16:46:33 martin Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.68 2016/04/04 07:37:08 ozaki-r Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.68.8.1 2023/04/01 16:46:33 martin Exp $");
 #endif
 
 #include <stdbool.h>
@@ -570,6 +570,7 @@ init(void)
 	index2ifc = NULL;
 	snprintf(port, sizeof(port), "%u", RIP6_PORT);
 
+	freeaddrinfo(res);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
 	hints.ai_socktype = SOCK_DGRAM;
@@ -637,6 +638,7 @@ init(void)
 		/*NOTREACHED*/
 	}
 	memcpy(&ripsin, res->ai_addr, res->ai_addrlen);
+	freeaddrinfo(res);
 
 	set[0].fd = ripsock;
 	set[0].events = POLLIN;
