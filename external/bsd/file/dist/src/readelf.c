@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.15 2017/05/25 00:11:26 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.15.2.1 2023/04/01 16:41:00 martin Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -32,7 +32,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readelf.c,v 1.136 2017/03/29 19:09:52 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.15 2017/05/25 00:11:26 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.15.2.1 2023/04/01 16:41:00 martin Exp $");
 #endif
 #endif
 
@@ -517,7 +517,7 @@ do_bid_note(struct magic_set *ms, unsigned char *nbuf, uint32_t type,
     size_t noff, size_t doff, int *flags)
 {
 	if (namesz == 4 && strcmp((char *)&nbuf[noff], "GNU") == 0 &&
-	    type == NT_GNU_BUILD_ID && (descsz >= 4 || descsz <= 20)) {
+	    type == NT_GNU_BUILD_ID && (descsz >= 4 && descsz <= 20)) {
 		uint8_t desc[20];
 		const char *btype;
 		uint32_t i;
