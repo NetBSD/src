@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.39 2020/05/29 12:30:41 rin Exp $	*/
+/*	$NetBSD: clock.c,v 1.39.20.1 2023/04/01 15:11:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2020/05/29 12:30:41 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39.20.1 2023/04/01 15:11:00 martin Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -152,6 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.39 2020/05/29 12:30:41 rin Exp $");
 #include <x86/lock.h>
 #include <machine/specialreg.h> 
 #include <x86/rtc.h>
+#include <x86/intr_private.h>
 
 #ifndef __x86_64__
 #include "mca.h"
@@ -187,8 +188,6 @@ void (*x86_delay)(unsigned int) = i8254_delay;
 
 void		sysbeep(int, int);
 static void     tickle_tc(void);
-
-static int	clockintr(void *, struct intrframe *);
 
 int 		sysbeepdetach(device_t, int);
 
@@ -371,8 +370,8 @@ tickle_tc(void)
 
 }
 
-static int
-clockintr(void *arg, struct intrframe *frame)
+int
+i8254_clockintr(void *arg, struct intrframe *frame)
 {
 	tickle_tc();
 
@@ -555,9 +554,14 @@ i8254_initclocks(void)
 	/*
 	 * XXX If you're doing strange things with multiple clocks, you might
 	 * want to keep track of clock handlers.
+	 *
+	 * XXX This is an abuse of the interrupt handler signature with
+	 * __FPTRCAST which requires a special case for IPL_CLOCK in
+	 * intr_establish_xname.  Please fix this nonsense!  See also
+	 * the comments about i8254_clockintr in x86/x86/intr.c.
 	 */
 	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK,
-	    __FPTRCAST(int (*)(void *), clockintr), 0);
+	    __FPTRCAST(int (*)(void *), i8254_clockintr), 0);
 }
 
 void
