@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.82.4.1 2023/03/30 11:36:26 martin Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.82.4.2 2023/04/01 10:31:06 martin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.82.4.1 2023/03/30 11:36:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.82.4.2 2023/04/01 10:31:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1180,7 +1180,7 @@ vioif_alloc_mems(struct vioif_softc *sc)
 	    &sc->sc_segs[0], 1, &rsegs, BUS_DMA_NOWAIT);
 	if (r != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "DMA memory allocation failed, size %zu, "
+		    "DMA memory allocation failed, size %" PRIuBUSSIZE ", "
 		    "error code %d\n", dmamemsize, r);
 		goto err_none;
 	}
