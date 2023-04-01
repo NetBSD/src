@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.349 2023/03/23 18:22:15 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.350 2023/04/01 00:59:10 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1235,6 +1235,7 @@ PIM	personal information manager
 PIM	platform-independent model
 PIO	programmed input/output
 PIPT	physically indexed, physically tagged
+PIR	private information retrieval
 PIQ	prefetch input queue
 PIT	programmable interrupt timer
 PIV	personal identity verification
