@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.61 2023/03/30 12:00:33 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.62 2023/04/01 16:28:55 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1322,4 +1322,51 @@ sys/nfs/nfsm_subs.h				1.56,1.57
 
 	nfs: server protocol fixes.
 	[riastradh, ticket #1617]
+
+external/bsd/fetch/dist/libfetch/common.c	1.3,1.4
+
+	SNI support for libfetch.
+	[mlelstv, ticket #1618]
+
+xsrc/external/mit/xorg-server/dist/composite/compwindow.c up to 1.1.1.9 (patch)
+xsrc/external/mit/xorg-server.old/dist/composite/compwindow.c	1.2 (patch)
+
+	Fix ZDI-CAN-19866 and CVE-2023-1393, a use-after-free problem.
+	[mrg, ticket #1619]
+
+sys/compat/netbsd32/netbsd32_fs.c		1.89
+
+	PR 50058: fix amd(8) under compat32.
+	[riastradh, ticket #1620]
+
+sys/uvm/uvm_mmap.c				1.180
+
+	PR 55533: fix mmap(2) when given a hint.
+	[riastradh, ticket #1621]
+
+sys/uvm/uvm_map.c				1.395
+
+	uvm(9): Fix 19-year-old bug in assertion about mmap hint.
+	[riastradh, ticket #1622]
+
+sys/uvm/uvm_map.c				1.396
+
+	PR 51393: uvm(9): Fix mmap optimization for topdown case.
+	[riastradh, ticket #1623]
+
+libexec/ld.elf_so/rtld.c			1.212
+
+	ld.elf_so(8): PR 56979: make fork take a shared, not exclusive, lock.
+	[riastradh, ticket #1624]
+
+sys/uvm/uvm_map.c				1.403
+
+	mmap(2): PR 56900: avoid arithmetic overflow in search for free space.
+	[riastradh, ticket #1625]
+
+usr.sbin/iostat/iostat.c			1.68
+
+	Fix processing of the archaic arg format (BACKWARD_COMPATIBILITY) so it
+	doesn't repeat the processing every iteration.
+	[kre, ticket #1626]
 
