@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.c,v 1.8 2021/05/06 16:15:33 christos Exp $ */
+/* $NetBSD: gdtoa.c,v 1.9 2023/04/01 23:44:11 dholland Exp $ */
 
 /****************************************************************
 
@@ -128,7 +128,7 @@ gdtoa
 	arguments of ecvt and fcvt; trailing zeros are suppressed from
 	the returned string.  If not null, *rve is set to point
 	to the end of the return value.  If d is +-Infinity or NaN,
-	then *decpt is set to 9999.
+	then *decpt is set to -32768.
 	be = exponent: value = (integer represented by bits) * (2 to the power of be).
 
 	mode:
