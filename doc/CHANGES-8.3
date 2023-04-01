@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.171 2023/03/30 12:03:00 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.172 2023/04/01 16:50:36 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3251,4 +3251,55 @@ sys/nfs/nfsm_subs.h				1.56,1.57
 
 	nfs: server protocol fixes.
 	[riastradh, ticket #1810]
+
+external/bsd/fetch/dist/libfetch/common.c	1.3,1.4
+
+	SNI support for libfetch.
+	[mlelstv, ticket #1811]
+
+xsrc/external/mit/xorg-server/dist/composite/compwindow.c up to 1.1.1.9 (patch)
+xsrc/external/mit/xorg-server.old/dist/composite/compwindow.c	1.2 (patch)
+
+	Fix ZDI-CAN-19866 and CVE-2023-1393, a use-after-free problem.
+	[mrg, ticket #1812]
+
+sys/external/bsd/drm2/dist/drm/i915/i915_gpu_error.c 1.9
+
+	PR 49089: lock around use of irq_queue.
+	[riastradh, ticket #1813]
+
+sys/uvm/uvm_mmap.c				1.180
+
+	PR 55533: fix mmap(2) when given a hint.
+	[riastradh, ticket #1814]
+
+sys/uvm/uvm_map.c				1.395
+
+	uvm(9): Fix 19-year-old bug in assertion about mmap hint.
+	[riastradh, ticket #1815]
+
+sys/uvm/uvm_map.c				1.396
+
+	PR 51393: uvm(9): Fix mmap optimization for topdown case.
+	[riastradh, ticket #1816]
+
+sys/fs/hfs/libhfs.c				1.15
+
+	PR 52993: fix support for case sensitive HFS.
+	[riastradh, ticket #1817]
+
+external/bsd/file/dist/src/readelf.c		(apply patch)
+
+	PR 52532: fix bounds check in ELF header parser.
+	[riastradh, ticket #1818]
+
+sys/sys/common_limits.h				1.3
+
+	PR 53298: fix wrong scoping of {U,}LLONG_MAX.
+	[riastradh, ticket #1819]
+
+usr.sbin/route6d/route6d.c			1.72
+
+	PR/53365: memory leak in route6d.
+	[riastradh, ticket #1820]
 
