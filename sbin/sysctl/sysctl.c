@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.164 2023/04/02 18:11:26 ryo Exp $ */
+/*	$NetBSD: sysctl.c,v 1.165 2023/04/02 18:15:24 ryo Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.164 2023/04/02 18:11:26 ryo Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.165 2023/04/02 18:15:24 ryo Exp $");
 #endif
 #endif /* not lint */
 
@@ -940,13 +940,6 @@ parse(char *l, regex_t *re, size_t *lastcompiled)
 	}
 
 	switch (type) {
-	case CTLTYPE_NODE:
-		/*
-		 * XXX old behavior is to print.  should we error instead?
-		 */
-		print_tree(&name[0], namelen, node, CTLTYPE_NODE, 0, re,
-		    lastcompiled);
-		break;
 	case CTLTYPE_INT:
 	case CTLTYPE_BOOL:
 	case CTLTYPE_QUAD:
@@ -955,6 +948,7 @@ parse(char *l, regex_t *re, size_t *lastcompiled)
 	case CTLTYPE_STRING:
 		write_string(&name[0], namelen, node, value, optional);
 		break;
+	case CTLTYPE_NODE:
 	case CTLTYPE_STRUCT:
 		/*
 		 * XXX old behavior is to print.  should we error instead?
