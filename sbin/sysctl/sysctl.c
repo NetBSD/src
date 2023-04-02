@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.163 2021/12/28 16:06:57 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.164 2023/04/02 18:11:26 ryo Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.163 2021/12/28 16:06:57 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.164 2023/04/02 18:11:26 ryo Exp $");
 #endif
 #endif /* not lint */
 
@@ -944,7 +944,7 @@ parse(char *l, regex_t *re, size_t *lastcompiled)
 		/*
 		 * XXX old behavior is to print.  should we error instead?
 		 */
-		print_tree(&name[0], namelen, node, CTLTYPE_NODE, 1, re,
+		print_tree(&name[0], namelen, node, CTLTYPE_NODE, 0, re,
 		    lastcompiled);
 		break;
 	case CTLTYPE_INT:
