@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.433 2023/02/06 21:01:55 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.434 2023/04/02 19:47:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.433 2023/02/06 21:01:55 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.434 2023/04/02 19:47:54 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2058,9 +2058,9 @@ gcc_attribute_specifier_list:
 
 gcc_attribute_specifier:
 	  T_ATTRIBUTE T_LPAREN T_LPAREN {
-	    in_gcc_attribute = true;
+		in_gcc_attribute = true;
 	  } gcc_attribute_list {
-	    in_gcc_attribute = false;
+		in_gcc_attribute = false;
 	  } T_RPAREN T_RPAREN
 	;
 
@@ -2078,8 +2078,7 @@ gcc_attribute:
 		else if (is_either(name, "used", "__used__") ||
 		    is_either(name, "unused", "__unused__"))
 			dcs_set_used();
-		else if (is_either(name, "fallthrough",
-		    "__fallthrough__"))
+		else if (is_either(name, "fallthrough", "__fallthrough__"))
 			fallthru(1);
 	}
 	| T_NAME T_LPAREN T_RPAREN
