@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.7 2011/02/24 04:28:43 joerg Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.8 2023/04/02 07:26:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.7 2011/02/24 04:28:43 joerg Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.8 2023/04/02 07:26:18 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -56,13 +56,13 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 
 	/* LINTED uintptr_t is safe */
 	gr[_REG_RIP] = (uintptr_t)start;
-	
+
 	sp = (void **) (((uintptr_t)(stack_base + stack_size) & ~15));
 
 	/* LINTED __greg_t is safe */
 	gr[_REG_RDI] = (__greg_t)arg;
 	*--sp = (void *) _lwp_exit;
-	
+
 	/* LINTED uintptr_t is safe */
 	gr[_REG_URSP] = (uintptr_t) sp;
 
