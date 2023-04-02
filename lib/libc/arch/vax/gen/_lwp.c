@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.3 2012/03/22 17:32:22 christos Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.4 2023/04/02 07:26:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.3 2012/03/22 17:32:22 christos Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.4 2023/04/02 07:26:18 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -57,7 +57,7 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	/* Align to a word */
 	/* LINTED uintptr_t is safe */
 	sp = (int *)((uintptr_t)(stack_base + stack_size) & ~0x3);
-	
+
 	/*
 	 * Allocate necessary stack space for arguments including arg count
 	 * and call frame
@@ -71,7 +71,7 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 	sp[4] = (int)(uintptr_t)_lwp_exit + 2;/* return via _lwp_exit */
 	sp[5] = 1;			/* argc */
 	sp[6] = (int)(uintptr_t)arg;		/* argv */
-	
+
 	gr[_REG_AP] = (__greg_t)(uintptr_t)(sp + 5);
 	gr[_REG_SP] = (__greg_t)(uintptr_t)sp;
 	gr[_REG_FP] = (__greg_t)(uintptr_t)sp;
