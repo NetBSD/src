@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.20 2016/11/23 17:25:11 christos Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.21 2023/04/02 18:23:02 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.20 2016/11/23 17:25:11 christos Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.21 2023/04/02 18:23:02 ryo Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -226,7 +226,7 @@ static void __dead
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s [-o <mntopts>] sysctlfs mountpath",
+	fprintf(stderr, "Usage: %s [-o <mntopts>] sysctlfs mountpath\n",
 	    getprogname());
 	exit(1);
 }
