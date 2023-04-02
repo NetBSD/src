@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.16 2012/05/18 07:52:54 jdc Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.17 2023/04/02 14:43:35 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define UAUDIO_VERSION		0x100
+#define UAUDIO_VERSION1		0x100
+#define UAUDIO_VERSION2		0x200
 
 #define UDESC_CS_CONFIG		0x22
 #define UDESC_CS_STRING		0x23
@@ -43,8 +44,13 @@
 #define UDESCSUB_AC_MIXER	4
 #define UDESCSUB_AC_SELECTOR	5
 #define UDESCSUB_AC_FEATURE	6
-#define UDESCSUB_AC_PROCESSING	7
-#define UDESCSUB_AC_EXTENSION	8
+#define UDESCSUB_AC_EFFECT      7
+#define UDESCSUB_AC_PROCESSING	8
+#define UDESCSUB_AC_EXTENSION	9
+#define UDESCSUB_AC_CLKSRC	10
+#define UDESCSUB_AC_CLKSEL	11
+#define UDESCSUB_AC_CLKMULT	12
+#define UDESCSUB_AC_RATECONV    13
 
 /* The first fields are identical to usb_endpoint_descriptor_t */
 typedef struct {
@@ -82,7 +88,7 @@ struct usb_audio_control_descriptor {
 	uByte		baInterfaceNr[1];
 } UPACKED;
 
-struct usb_audio_streaming_interface_descriptor {
+struct usb_audio_streaming_interface_v1_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
@@ -90,6 +96,24 @@ struct usb_audio_streaming_interface_descriptor {
 	uByte		bDelay;
 	uWord		wFormatTag;
 } UPACKED;
+
+struct usb_audio_streaming_interface_v2_descriptor {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		bTerminalLink;
+	uByte		bmControls;
+	uByte		bFormatType;
+	uDWord		bmFormats;
+	uByte		bNrChannels;
+	uDWord		bmChannelConfig;
+	uByte		iChannelNames;
+} UPACKED;
+
+union usb_audio_streaming_interface_descriptor {
+	struct usb_audio_streaming_interface_v1_descriptor v1;
+	struct usb_audio_streaming_interface_v2_descriptor v2;
+};
 
 struct usb_audio_streaming_endpoint_descriptor {
 	uByte		bLength;
@@ -103,7 +127,7 @@ struct usb_audio_streaming_endpoint_descriptor {
 	uWord		wLockDelay;
 } UPACKED;
 
-struct usb_audio_streaming_type1_descriptor {
+struct usb_audio_streaming_type1_v1_descriptor {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
@@ -112,12 +136,26 @@ struct usb_audio_streaming_type1_descriptor {
 	uByte		bSubFrameSize;
 	uByte		bBitResolution;
 	uByte		bSamFreqType;
-#define UA_SAMP_CONTNUOUS 0
+#define UA_SAMP_CONTINUOUS 0
 	uByte		tSamFreq[3*AUFMT_MAX_FREQUENCIES];
 #define UA_GETSAMP(p, n) ((p)->tSamFreq[(n)*3+0] | ((p)->tSamFreq[(n)*3+1] << 8) | ((p)->tSamFreq[(n)*3+2] << 16))
 #define UA_SAMP_LO(p) UA_GETSAMP(p, 0)
 #define UA_SAMP_HI(p) UA_GETSAMP(p, 1)
 } UPACKED;
+
+struct usb_audio_streaming_type1_v2_descriptor {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		bFormatType;
+	uByte		bSubslotSize;
+	uByte		bBitResolution;
+} UPACKED;
+
+union usb_audio_streaming_type1_descriptor {
+	struct usb_audio_streaming_type1_v1_descriptor v1;
+	struct usb_audio_streaming_type1_v2_descriptor v2;
+};
 
 struct usb_audio_cluster {
 	uByte		bNrChannels;
@@ -260,6 +298,41 @@ struct usb_audio_extension_unit_1 {
 	/*uByte		iExtension;*/
 } UPACKED;
 
+/* UDESCSUB_AC_CLKSRC */
+struct usb_audio_clksrc_unit {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		bClockId;
+	uByte		bmAttributes;
+	uByte		bmControls;
+	uByte		bAssocTerminal;
+	uByte		iClockSource;
+} UPACKED;
+
+/* UDESCSUB_AC_CLKSEL */
+struct usb_audio_clksel_unit {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		bClockId;
+	uByte		bNrInPins;
+	uByte		baCSourceId[255];
+	/*uByte		bmControls;*/
+	/*uByte		iClockSelector;*/
+} UPACKED;
+
+/* UDESCSUB_AC_CLKMULT */
+struct usb_audio_clkmult_unit {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		bClockId;
+	uByte		bCSourceId;
+	uByte		bmControls;
+	uByte		iClockMultiplier;
+} UPACKED;
+
 /* USB terminal types */
 #define UAT_UNDEFINED		0x0100
 #define UAT_STREAM		0x0101
@@ -336,6 +409,12 @@ struct usb_audio_extension_unit_1 {
 #define SET_MEM 0x05
 #define GET_MEM 0x85
 #define GET_STAT 0xff
+#define V2_CUR        0x01
+#define V2_RANGES     0x02
+
+#define V2_CUR_CLKFREQ	0x01
+#define V2_CUR_CLKSEL	0x01
+
 
 #define MUTE_CONTROL	0x01
 #define VOLUME_CONTROL	0x02
@@ -347,6 +426,9 @@ struct usb_audio_extension_unit_1 {
 #define DELAY_CONTROL	0x08
 #define BASS_BOOST_CONTROL 0x09
 #define LOUDNESS_CONTROL 0x0a
+#define GAIN_CONTROL	0x0b
+#define GAINPAD_CONTROL	0x0c
+#define PHASEINV_CONTROL 0x0d
 
 #define FU_MASK(u) (1 << ((u)-1))
 
@@ -363,6 +445,12 @@ struct usb_audio_extension_unit_1 {
 #define UA_FMT_MULAW	5
 #define UA_FMT_MPEG	0x1001
 #define UA_FMT_AC3	0x1002
+
+#define UA_V2_FMT_PCM		0x01
+#define UA_V2_FMT_PCM8		0x02
+#define UA_V2_FMT_IEEE_FLOAT	0x04
+#define UA_V2_FMT_ALAW		0x08
+#define UA_V2_FMT_MULAW		0x10
 
 #define SAMPLING_FREQ_CONTROL	0x01
 #define PITCH_CONTROL		0x02
