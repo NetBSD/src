@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.140 2023/04/03 06:33:55 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.141 2023/04/03 06:35:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.140 2023/04/03 06:33:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.141 2023/04/03 06:35:13 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -384,7 +384,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
-	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
+	map->_dm_flags = flags & ~(BUS_DMA_WAITOK | BUS_DMA_NOWAIT);
 	map->_dm_origbuf = NULL;
 	map->_dm_buftype = _BUS_DMA_BUFTYPE_INVALID;
 	map->_dm_vmspace = vmspace_kernel();
@@ -640,8 +640,8 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			error = EFAULT;
 			break;
 		}
-		switch (m->m_flags & (M_EXT|M_EXT_CLUSTER|M_EXT_PAGES)) {
-		case M_EXT|M_EXT_CLUSTER:
+		switch (m->m_flags & (M_EXT | M_EXT_CLUSTER | M_EXT_PAGES)) {
+		case M_EXT | M_EXT_CLUSTER:
 			/* XXX KDASSERT */
 			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
 			paddr = m->m_ext.ext_paddr +
@@ -651,7 +651,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 			    false);
 			break;
 
-		case M_EXT|M_EXT_PAGES:
+		case M_EXT | M_EXT_PAGES:
 			KASSERT(m->m_ext.ext_buf <= m->m_data);
 			KASSERT(m->m_data <=
 			    m->m_ext.ext_buf + m->m_ext.ext_size);
