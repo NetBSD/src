@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.176 2023/04/03 14:19:09 mlelstv Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.177 2023/04/03 16:00:17 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.176 2023/04/03 14:19:09 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.177 2023/04/03 16:00:17 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -74,7 +74,6 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.176 2023/04/03 14:19:09 mlelstv Exp $")
 #include <dev/usb/uaudioreg.h>
 
 /* #define UAUDIO_DEBUG */
-#define UAUDIO_DEBUG
 #define UAUDIO_MULTIPLE_ENDPOINTS
 #ifdef UAUDIO_DEBUG
 #define DPRINTF(x,y...)		do { \
