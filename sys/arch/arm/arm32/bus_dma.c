@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.141 2023/04/03 06:35:13 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.142 2023/04/03 06:39:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.141 2023/04/03 06:35:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.142 2023/04/03 06:39:10 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -875,7 +875,7 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops,
 #endif
 
 	switch (ops) {
-	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+	case BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE:
 		if (!readonly_p) {
 			STAT_INCR(sync_prereadwrite);
 			cpu_dcache_wbinv_range(va, len);
@@ -932,7 +932,7 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops,
 	 * Since these can't be dirty, we can just invalidate them and don't
 	 * have to worry about having to write back their contents.
 	 */
-	case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+	case BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE:
 		STAT_INCR(sync_postreadwrite);
 		cpu_dcache_inv_range(va, len);
 		cpu_sdcache_inv_range(va, pa, len);
@@ -1102,8 +1102,8 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	/*
 	 * Mixing of PRE and POST operations is not allowed.
 	 */
-	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
-	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
+	if ((ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE)) != 0 &&
+	    (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE)) != 0)
 		panic("%s: mix PRE and POST", __func__);
 
 	KASSERTMSG(offset < map->dm_mapsize,
@@ -1121,7 +1121,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 *	here in case a write-back is required by the back-end.
 	 *
 	 *	PREWRITE -- Write-back the D-cache.  Note that if
-	 *	we are doing a PREREAD|PREWRITE, we can collapse
+	 *	we are doing a PREREAD | PREWRITE, we can collapse
 	 *	the whole thing into a single Wb-Inv.
 	 *
 	 *	POSTREAD -- Re-invalidate the D-cache in case speculative
@@ -1136,9 +1136,9 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	const bool bouncing = false;
 #endif
 
-	const int pre_ops = ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	const int pre_ops = ops & (BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 #if defined(CPU_CORTEX) || defined(CPU_ARMV8)
-	const int post_ops = ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+	const int post_ops = ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 #else
 	const int post_ops = 0;
 #endif
@@ -1199,7 +1199,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	/* Skip cache frobbing if mapping was COHERENT */
 	if ((map->_dm_flags & _BUS_DMAMAP_COHERENT)) {
 		switch (ops) {
-		case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+		case BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE:
 			STAT_INCR(sync_coherent_prereadwrite);
 			break;
 
@@ -1211,7 +1211,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 			STAT_INCR(sync_coherent_prewrite);
 			break;
 
-		case BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE:
+		case BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE:
 			STAT_INCR(sync_coherent_postreadwrite);
 			break;
 
