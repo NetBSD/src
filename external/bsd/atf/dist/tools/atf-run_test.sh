@@ -219,11 +219,11 @@ vflag_body()
     atf_check -s eq:1 -o ignore -e ignore -x \
         "ATF_CONFDIR=$(pwd)/etc atf-run helper"
 
-    echo "Checking that defining 'testvar' trough '-v' works."
+    echo "Checking that defining 'testvar' through '-v' works."
     atf_check -s eq:0 -o match:'testvar: a value' -e ignore -x \
         "ATF_CONFDIR=$(pwd)/etc atf-run -v testvar='a value' helper"
 
-    echo "Checking that defining 'testvar' trough the configuration" \
+    echo "Checking that defining 'testvar' through the configuration" \
          "file works."
     mkdir etc
     cat >etc/common.conf <<EOF
@@ -234,7 +234,7 @@ EOF
     atf_check -s eq:0 -o match:'testvar: value in conf file' -e ignore -x \
               "ATF_CONFDIR=$(pwd)/etc atf-run helper"
 
-    echo "Checking that defining 'testvar' trough -v overrides the" \
+    echo "Checking that defining 'testvar' through -v overrides the" \
          "configuration file."
     atf_check -s eq:0 -o match:'testvar: a value' -e ignore -x \
         "ATF_CONFDIR=$(pwd)/etc atf-run -v testvar='a value' helper"
@@ -254,12 +254,12 @@ atffile_body()
     atf_check -s eq:1 -o ignore -e ignore -x \
               "ATF_CONFDIR=$(pwd)/etc atf-run helper"
 
-    echo "Checking that defining 'testvar' trough the Atffile works."
+    echo "Checking that defining 'testvar' through the Atffile works."
     echo 'conf: testvar = "a value"' >>Atffile
     atf_check -s eq:0 -o match:'testvar: a value' -e ignore -x \
               "ATF_CONFDIR=$(pwd)/etc atf-run helper"
 
-    echo "Checking that defining 'testvar' trough the configuration" \
+    echo "Checking that defining 'testvar' through the configuration" \
          "file overrides the one in the Atffile."
     mkdir etc
     cat >etc/common.conf <<EOF
@@ -271,7 +271,7 @@ EOF
               "ATF_CONFDIR=$(pwd)/etc atf-run helper"
     rm -rf etc
 
-    echo "Checking that defining 'testvar' trough -v overrides the" \
+    echo "Checking that defining 'testvar' through -v overrides the" \
          "one in the Atffile."
     atf_check -s eq:0 -o match:'testvar: new value' -e ignore -x \
         "ATF_CONFDIR=$(pwd)/etc atf-run -v testvar='new value' helper"
