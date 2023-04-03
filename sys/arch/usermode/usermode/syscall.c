@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.25 2019/04/06 11:54:21 kamil Exp $ */
+/* $NetBSD: syscall.c,v 1.26 2023/04/03 17:58:41 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25 2019/04/06 11:54:21 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.26 2023/04/03 17:58:41 gutteridge Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,10 +137,10 @@ syscall(void)
 //out:
 	switch (error) {
 	default:
-		/* fall trough */
+		/* FALLTHROUGH */
 	case 0:
 		md_syscall_set_returnargs(l, ucp, error, rval);
-		/* fall trough */
+		/* FALLTHROUGH */
 	case EJUSTRETURN:
 		break;
 	case ERESTART:
