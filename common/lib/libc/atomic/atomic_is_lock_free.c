@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_is_lock_free.c,v 1.1 2023/03/30 15:03:36 riastradh Exp $	*/
+/*	$NetBSD: atomic_is_lock_free.c,v 1.2 2023/04/03 08:00:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -27,11 +27,20 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_is_lock_free.c,v 1.1 2023/03/30 15:03:36 riastradh Exp $");
+__RCSID("$NetBSD: atomic_is_lock_free.c,v 1.2 2023/04/03 08:00:28 riastradh Exp $");
 
 #include <sys/types.h>
 
 #include <sys/stdbool.h>
+
+/*
+ * XXX Work around clang's built-in __atomic_is_lock_free by having the
+ * C name be different but using an asm rename to define the right
+ * symbol.
+ */
+#define	__atomic_is_lock_free	__atomic_is_lock_free_hack
+bool __atomic_is_lock_free(size_t, const volatile void *)
+    __RENAME("__atomic_is_lock_free");
 
 bool
 __atomic_is_lock_free(size_t n, const volatile void *p __unused)
