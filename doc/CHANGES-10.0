@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.52 2023/04/02 10:53:06 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.53 2023/04/03 18:36:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1524,8 +1524,11 @@ sys/dev/fss.c					1.114
 	[hannken, ticket #126]
 
 sys/dev/pci/if_vioif.c				1.83-1.102,1.105-1.107
+sys/arch/mips/include/bus_space_defs.h		1.5
+sys/arch/mips/include/types.h			1.78
 
 	vioif(4): various bug fixes and code cleanup.
+	Add missing PRIuBUSSIZE to mips.
 	[yamaguchi, ticket #128]
 
 sys/kern/vfs_xattr.c				1.39
