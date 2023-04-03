@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.139 2023/02/25 08:05:46 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.140 2023/04/03 06:33:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.139 2023/02/25 08:05:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.140 2023/04/03 06:33:55 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -259,7 +259,7 @@ _bus_dmamap_load_paddr(bus_dma_tag_t t, bus_dmamap_t map,
 	    ((segs[nseg - 1]._ds_flags ^ _ds_flags) & _BUS_DMAMAP_COHERENT) == 0 &&
 	    (map->_dm_boundary == 0 ||
 	     (segs[nseg - 1].ds_addr & bmask) == (curaddr & bmask))) {
-	     	/* coalesce */
+		/* coalesce */
 		segs[nseg - 1].ds_len += sgsize;
 	} else if (nseg >= map->_dm_segcnt) {
 		return EFBIG;
