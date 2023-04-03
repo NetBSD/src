@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.142 2023/04/03 06:39:10 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.143 2023/04/03 06:42:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.142 2023/04/03 06:39:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.143 2023/04/03 06:42:57 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -184,7 +184,7 @@ _bus_dma_busaddr_to_paddr(bus_dma_tag_t t, bus_addr_t curaddr)
 		    && curaddr < dr->dr_busbase + dr->dr_len)
 			return curaddr - dr->dr_busbase + dr->dr_sysbase;
 	}
-	panic("%s: curaddr %#lx not in range", __func__, curaddr);
+	panic("%s: curaddr %#" PRIxBUSADDR "not in range", __func__, curaddr);
 }
 
 /*
@@ -538,7 +538,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	map->dm_nsegs = 0;
 	map->_dm_buftype = _BUS_DMA_BUFTYPE_INVALID;
 	KASSERTMSG(map->dm_maxsegsz <= map->_dm_maxmaxsegsz,
-	    "dm_maxsegsz %lu _dm_maxmaxsegsz %lu",
+	    "dm_maxsegsz %" PRIuBUSSIZE " _dm_maxmaxsegsz %" PRIuBUSSIZE,
 	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
 	if (buflen > map->_dm_size)
@@ -612,7 +612,7 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0,
 	map->dm_nsegs = 0;
 	map->_dm_buftype = _BUS_DMA_BUFTYPE_INVALID;
 	KASSERTMSG(map->dm_maxsegsz <= map->_dm_maxmaxsegsz,
-	    "dm_maxsegsz %lu _dm_maxmaxsegsz %lu",
+	    "dm_maxsegsz %" PRIuBUSSIZE " _dm_maxmaxsegsz %" PRIuBUSSIZE,
 	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
 	KASSERT(m0->m_flags & M_PKTHDR);
@@ -739,7 +739,7 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
 	map->dm_mapsize = 0;
 	map->dm_nsegs = 0;
 	KASSERTMSG(map->dm_maxsegsz <= map->_dm_maxmaxsegsz,
-	    "dm_maxsegsz %lu _dm_maxmaxsegsz %lu",
+	    "dm_maxsegsz %" PRIuBUSSIZE " _dm_maxmaxsegsz %" PRIuBUSSIZE,
 	    map->dm_maxsegsz, map->_dm_maxmaxsegsz);
 
 	resid = uio->uio_resid;
@@ -868,7 +868,7 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops,
 #endif
 
 	KASSERTMSG((va & PAGE_MASK) == (pa & PAGE_MASK),
-	    "va %#lx pa %#lx", va, pa);
+	    "va %#" PRIxVADDR " pa %#" PRIxPADDR, va, pa);
 #if 0
 	printf("sync_segment: va=%#lx pa=%#lx len=%#lx ops=%#x ro=%d\n",
 	    va, pa, len, ops, readonly_p);
@@ -1107,10 +1107,10 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 		panic("%s: mix PRE and POST", __func__);
 
 	KASSERTMSG(offset < map->dm_mapsize,
-	    "offset %lu mapsize %lu",
+	    "offset %" PRIxBUSADDR " mapsize %" PRIuBUSSIZE,
 	    offset, map->dm_mapsize);
 	KASSERTMSG(len > 0 && offset + len <= map->dm_mapsize,
-	    "len %lu offset %lu mapsize %lu",
+	    "len %" PRIuBUSSIZE " offset %" PRIxBUSADDR " mapsize %" PRIuBUSSIZE,
 	    len, offset, map->dm_mapsize);
 
 	/*
@@ -1694,7 +1694,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	int curseg, error;
 
 	KASSERTMSG(boundary == 0 || (boundary & (boundary - 1)) == 0,
-	    "invalid boundary %#lx", boundary);
+	    "invalid boundary %#" PRIxBUSSIZE, boundary);
 
 #ifdef DEBUG_DMA
 	printf("alloc_range: t=%p size=%#lx align=%#lx boundary=%#lx segs=%p nsegs=%#x rsegs=%p flags=%#x lo=%#lx hi=%#lx\n",
@@ -1743,8 +1743,10 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	for (; m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 		KASSERTMSG(low <= curaddr && curaddr < high,
-		    "uvm_pglistalloc returned non-sensicaladdress %#lx "
-		    "(low=%#lx, high=%#lx\n", curaddr, low, high);
+		    "uvm_pglistalloc returned non-sensical "
+		    "address %#" PRIxPADDR "(low=%#" PRIxPADDR
+		    ", high=%#" PRIxPADDR "\n",
+		    curaddr, low, high);
 #ifdef DEBUG_DMA
 		printf("alloc: page %#lx\n", curaddr);
 #endif	/* DEBUG_DMA */
