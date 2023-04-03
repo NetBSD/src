@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_io.c,v 1.5 2014/02/25 18:30:09 pooka Exp $	*/
+/*	$NetBSD: flash_io.c,v 1.6 2023/04/03 18:03:23 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_io.c,v 1.5 2014/02/25 18:30:09 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_io.c,v 1.6 2023/04/03 18:03:23 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -83,7 +83,7 @@ flash_io_getblock(struct flash_io *fio, struct buf *bp)
 	last = (bp->b_rawblkno * DEV_BSIZE + bp->b_resid - 1)
 	    / fio->fio_if->erasesize;
 
-	/* spans trough multiple blocks, needs special handling */
+	/* spans through multiple blocks, needs special handling */
 	if (last != block) {
 		printf("0x%jx -> 0x%jx\n",
 		    bp->b_rawblkno * DEV_BSIZE,

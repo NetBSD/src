@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.172 2022/10/31 21:22:06 andvar Exp $ */
+/* $NetBSD: udf_subr.c,v 1.173 2023/04/03 18:03:24 gutteridge Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.172 2022/10/31 21:22:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.173 2023/04/03 18:03:24 gutteridge Exp $");
 #endif /* not lint */
 
 
@@ -5530,7 +5530,7 @@ udf_loadvnode(struct mount *mp, struct vnode *vp,
 	udf_node->needs_indirect = needs_indirect;
 
 	/*
-	 * Go trough all allocations extents of this descriptor and when
+	 * Go through all allocations extents of this descriptor and when
 	 * encountering a redirect read in the allocation extension. These are
 	 * daisy-chained.
 	 */

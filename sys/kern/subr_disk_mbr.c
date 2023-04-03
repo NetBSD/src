@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.57 2021/05/17 08:50:36 mrg Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.58 2023/04/03 18:03:24 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.57 2021/05/17 08:50:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.58 2023/04/03 18:03:24 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbr.h"
@@ -330,7 +330,7 @@ scan_iso_vrs(mbr_args_t *a)
 		if (error)
 			return SCAN_CONTINUE;
 
-		/* go trough all (data) tracks */
+		/* go through all (data) tracks */
 		sessionnr = -1;
 		for (tracknr = di.first_track;
 		    tracknr <= di.first_track_last_session; tracknr++)
