@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.175 2023/04/02 14:42:55 mlelstv Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.176 2023/04/03 14:19:09 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.175 2023/04/02 14:42:55 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.176 2023/04/03 14:19:09 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.175 2023/04/02 14:42:55 mlelstv Exp $")
 #include <dev/usb/uaudioreg.h>
 
 /* #define UAUDIO_DEBUG */
+#define UAUDIO_DEBUG
 #define UAUDIO_MULTIPLE_ENDPOINTS
 #ifdef UAUDIO_DEBUG
 #define DPRINTF(x,y...)		do { \
@@ -1493,9 +1494,8 @@ uaudio_add_clksrc(struct uaudio_softc *sc, const struct io_terminal *iot, int id
 	struct mixerctl mix;
 
 	d = iot[id].d.cu;
-	DPRINTFN(2,"bUnitId=%d bNrInPins=%d\n",
-		    d->bUnitId, d->bNrInPins);
-	mix.wIndex = MAKE(d->bClockId, sc->sc_ac_iface);
+	DPRINTFN(2,"bClockId=%d bmAttributes=%d bmControls=%d iClockSource=%d\n",
+		    d->bClockId, d->bmAttributes, d->bmControls, d->iClockSource);
 	uaudio_determine_class(&iot[id], &mix);
 	mix.nchan = 1;
 	mix.wValue[0] = MAKE(V2_CUR_CLKFREQ, 0);
@@ -1517,8 +1517,8 @@ uaudio_add_clksel(struct uaudio_softc *sc, const struct io_terminal *iot, int id
 
 	d = iot[id].d.lu;
 	sel = ((const uByte *)&d->baCSourceId[d->bNrInPins])[2]; /* iClockSelector */
-	DPRINTFN(2,"bUnitId=%d bNrInPins=%d\n",
-		    d->bUnitId, d->bNrInPins);
+	DPRINTFN(2,"bClockId=%d bNrInPins=%d iClockSelector=%d\n",
+		    d->bClockId, d->bNrInPins, sel);
 	mix.wIndex = MAKE(d->bClockId, sc->sc_ac_iface);
 	uaudio_determine_class(&iot[id], &mix);
 	mix.nchan = 1;
@@ -1796,9 +1796,9 @@ uaudio_process_as(struct uaudio_softc *sc, const char *tbuf, int *offsp,
 				if (asid != NULL)
 					goto ignore;
 				asid = (const union usb_audio_streaming_interface_descriptor *) desc;
-				DPRINTF("asid: bTerminalLink=%d wFormatTag=%d bmFormats bLength=%d\n",
+				DPRINTF("asid: bTerminalLink=%d wFormatTag=%d bmFormats=0x%x bLength=%d\n",
 					 asid->v1.bTerminalLink, UGETW(asid->v1.wFormatTag),
-					UGETWD(asid->v1.bmFormats), asid->v1.bLength);
+					UGETDW(asid->v2.bmFormats), asid->v1.bLength);
 				break;
 			case FORMAT_TYPE:
 				if (asf1d != NULL)
@@ -2049,19 +2049,23 @@ leave:
 		return USBD_NORMAL_COMPLETION;
 	}
 #ifdef UAUDIO_DEBUG
-/* XXXV2 */
-	aprint_debug_dev(sc->sc_dev, "%s: %dch, %d/%dbit, %s,",
-	       dir == UE_DIR_IN ? "recording" : "playback",
-	       chan, prec, asf1d->v1.bSubFrameSize * 8, format_str);
-	if (asf1d->bSamFreqType == UA_SAMP_CONTINUOUS) {
-		aprint_debug(" %d-%dHz\n", UA_SAMP_LO(&asf1d->v1),
-		    UA_SAMP_HI(&asf1d->v1));
-	} else {
-		int r;
-		aprint_debug(" %d", UA_GETSAMP(&asf1d->v1, 0));
-		for (r = 1; r < asf1d->bSamFreqType; r++)
-			aprint_debug(",%d", UA_GETSAMP(&asf1d->v1, r));
-		aprint_debug("Hz\n");
+	switch (sc->sc_version) {
+	case UAUDIO_VERSION1:
+		aprint_debug_dev(sc->sc_dev, "%s: %dch, %d/%dbit, %s,",
+		       dir == UE_DIR_IN ? "recording" : "playback",
+		       chan, prec, asf1d->v1.bSubFrameSize * 8, format_str);
+		if (asf1d->v1.bSamFreqType == UA_SAMP_CONTINUOUS) {
+			aprint_debug(" %d-%dHz\n", UA_SAMP_LO(&asf1d->v1),
+			    UA_SAMP_HI(&asf1d->v1));
+		} else {
+			int r;
+			aprint_debug(" %d", UA_GETSAMP(&asf1d->v1, 0));
+			for (r = 1; r < asf1d->v1.bSamFreqType; r++)
+				aprint_debug(",%d", UA_GETSAMP(&asf1d->v1, r));
+			aprint_debug("Hz\n");
+		}
+		break;
+	/* XXX V2 */
 	}
 #endif
 	ai.alt = id->bAlternateSetting;
@@ -2417,12 +2421,12 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 			printf("\n");
 			break;
 		case UDESCSUB_AC_CLKSRC:
-			printf("AC_CLKSRC src=%d\n", iot[i].d.cu->bCSourceId);
+			printf("AC_CLKSRC src=%d\n", iot[i].d.cu->iClockSource);
 			break;
 		case UDESCSUB_AC_CLKSEL:
 			printf("AC_CLKSEL src=");
 			for (j = 0; j < iot[i].d.su->bNrInPins; j++)
-				printf("%d ", iot[i].d.su->baCSourceId[j]);
+				printf("%d ", iot[i].d.su->baSourceId[j]);
 			printf("\n");
 			break;
 		case UDESCSUB_AC_CLKMULT:
