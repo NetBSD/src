@@ -1,9 +1,9 @@
-/* $NetBSD: mmcformat.c,v 1.8 2023/04/04 20:17:01 rillig Exp $ */
+/* $NetBSD: mmcformat.c,v 1.9 2023/04/04 20:28:01 rillig Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,27 +23,30 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
-#include <stdio.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <string.h>
-#include <strings.h>
-#include <assert.h>
-#include <limits.h>
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: mmcformat.c,v 1.9 2023/04/04 20:28:01 rillig Exp $");
+
 #include <sys/types.h>
 #include <sys/time.h>
+#include <assert.h>
+#include <errno.h>
+#include <fcntl.h>
 #include <inttypes.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <unistd.h>
 
 #include "uscsilib.h"
 
 
 /* globals */
-struct uscsi_dev dev;
+static struct uscsi_dev dev;
 extern int scsilib_verbose;
 
 /* #define DEBUG(a) {a;} */
@@ -313,7 +316,7 @@ get_format_capabilities(struct uscsi_dev *mydev, uint8_t *buf, uint32_t *len)
 
 static void
 print_format(int format_tp, uint32_t num_blks, uint32_t param,
-	int dscr_type, int verbose, int *supported) 
+	int dscr_type, int verbose, int *supported)
 {
 	char const *format_str, *nblks_str, *param_str, *user_spec;
 
@@ -474,7 +477,7 @@ process_format_caps(uint8_t *buf, int list_length, int verbose,
 	bzero(allow,  255);
 	bzero(blks,   255*4);
 	bzero(params, 255*4);
-	
+
 	fcd = buf + 4;
 	list_length -= 4;		/* strip header */
 
@@ -569,7 +572,7 @@ uscsi_format_cdrw_mode7(struct uscsi_dev *mydev, uint32_t blocks)
 
 static int
 uscsi_format_disc(struct uscsi_dev *mydev, int immed, int format_type,
-	uint32_t blocks, uint32_t param, int certification, int cmplist) 
+	uint32_t blocks, uint32_t param, int certification, int cmplist)
 {
 	scsicmd cmd;
 	struct uscsi_sense sense;
@@ -1075,4 +1078,3 @@ main(int argc, char *argv[])
 
 	return error;
 }
-
