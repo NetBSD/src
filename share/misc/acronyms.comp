@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.350 2023/04/01 00:59:10 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.351 2023/04/04 20:13:02 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -433,6 +433,7 @@ DNARD	Digital network appliance reference design
 DND	drag and drop
 DNLC	directory name lookup cache
 DNS	Domain Name System
+DNSBL   Domain Name System Block List
 DNSSEC	DNS Security Extensions
 DOE	distributed object environment
 DOF	data over fibre
@@ -1345,6 +1346,8 @@ RAS	remote access service
 RAS	restartable atomic sequence
 RAS	row address strobe
 RBF	radial basis function
+RBL     reputation block list
+RBL     real-time blackhole list
 RBNF	routing backus-naur form
 RBT	red-black tree
 RC	release candidate
