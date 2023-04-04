@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.10 2019/05/23 11:13:17 kre Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.11 2023/04/04 20:39:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.10 2019/05/23 11:13:17 kre Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.11 2023/04/04 20:39:36 rillig Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -57,7 +57,7 @@ struct portal_node {
 
 __dead static void usage(void);
 
-PUFFSOP_PROTOS(portal);
+PUFFSOP_PROTOS(portal)
 
 #define PORTAL_ROOT NULL
 #define METADATASIZE (sizeof(int) + sizeof(size_t))
@@ -396,8 +396,6 @@ provide(struct puffs_usermount *pu, struct portal_node *portn,
 int
 main(int argc, char *argv[])
 {
-	extern char *optarg;
-	extern int optind;
 	struct puffs_usermount *pu;
 	struct puffs_ops *pops;
 	mntoptparse_t mp;
