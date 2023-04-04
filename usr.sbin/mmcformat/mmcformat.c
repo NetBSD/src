@@ -1,4 +1,4 @@
-/* $NetBSD: mmcformat.c,v 1.7 2022/05/22 11:27:37 andvar Exp $ */
+/* $NetBSD: mmcformat.c,v 1.8 2023/04/04 20:17:01 rillig Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -680,11 +680,6 @@ usage(char *program)
 	);
 	return 1;
 }
-
-
-extern char	*optarg;
-extern int	 optind;
-extern int	 optreset;
 
 
 int
