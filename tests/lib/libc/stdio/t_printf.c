@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.9 2023/04/04 19:30:11 christos Exp $ */
+/* $NetBSD: t_printf.c,v 1.10 2023/04/04 19:39:38 he Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ ATF_TC_BODY(pr57250_fix, tc)
 	ld = (double)ld;
 	ATF_CHECK(isfinite(ld) == 0);
 	snprintf(buf, sizeof buf, "%Lf\n", ld);
-	ATF_REQUIRE_STREQ(buf, "inf");
+	ATF_REQUIRE_STREQ(buf, "inf\n");
 }
 #endif
 
