@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.105 2022/01/01 21:07:14 andvar Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.106 2023/04/05 21:46:09 andvar Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.105 2022/01/01 21:07:14 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.106 2023/04/05 21:46:09 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -1710,7 +1710,7 @@ aicintr(void *arg)
 
 	/*
 	 * Clear INTEN.  We enable it again before returning.  This makes the
-	 * interrupt esssentially level-triggered.
+	 * interrupt essentially level-triggered.
 	 */
 	bus_space_write_1(iot, ioh, DMACNTRL0, 0);
 
