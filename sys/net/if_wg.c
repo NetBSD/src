@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.74 2023/01/05 20:32:18 christos Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.75 2023/04/05 19:56:27 andvar Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.74 2023/01/05 20:32:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.75 2023/04/05 19:56:27 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -271,7 +271,7 @@ wg_dump_hash(const uint8_t *func, const uint8_t *name, const uint8_t *hash,
 #define WG_DUMP_BUF(buf, size)	__nothing
 #endif /* WG_DEBUG_DUMP */
 
-/* chosen somewhat arbitrarily -- fits in signed 16 bits NUL-termintaed */
+/* chosen somewhat arbitrarily -- fits in signed 16 bits NUL-terminated */
 #define	WG_MAX_PROPLEN		32766
 
 #define WG_MTU			1420
