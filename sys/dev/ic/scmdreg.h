@@ -1,4 +1,4 @@
-/*	$NetBSD: scmdreg.h,v 1.2 2022/05/21 19:07:23 andvar Exp $	*/
+/*	$NetBSD: scmdreg.h,v 1.3 2023/04/05 21:53:56 andvar Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -222,7 +222,7 @@
 
 #define SCMD_LAST_REG			SCMD_REG_REM_READ /* The last register address on a module */
 #define SCMD_REG_SIZE			0x7F /* Size of the register space including the holes */
-#define SCMD_REMOTE_ADDR_LOW		0x50 /* The first remote I2C addreess */
+#define SCMD_REMOTE_ADDR_LOW		0x50 /* The first remote I2C address */
 #define SCMD_REMOTE_ADDR_HIGH		0x5F /* The last remote I2C address */
 #define SCMD_HOLE_VALUE			0x55 /* Artificial value on read for a hole register */
 #define SCMD_IS_HOLE(r) \

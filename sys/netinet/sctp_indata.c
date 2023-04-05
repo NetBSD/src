@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.12 2022/05/28 22:16:44 andvar Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.13 2023/04/05 21:53:56 andvar Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.12 2022/05/28 22:16:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.13 2023/04/05 21:53:56 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2159,7 +2159,7 @@ sctp_process_a_data_chunk(struct sctp_tcb *stcb, struct sctp_association *asoc,
 			 * intervening (aka the TSN is after where our cum-ack needs
 			 * to be) off and put them on a pending_reply_queue. The
 			 * reassembly ones we do not have to worry about since
-			 * they are all sorted and proceessed by TSN order. It
+			 * they are all sorted and processed by TSN order. It
 			 * is only the singletons I must worry about.
 			 */
 			if ((asoc->pending_reply) &&
