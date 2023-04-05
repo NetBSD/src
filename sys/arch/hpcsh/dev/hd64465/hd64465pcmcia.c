@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64465pcmcia.c,v 1.35 2021/08/07 16:18:55 thorpej Exp $	*/
+/*	$NetBSD: hd64465pcmcia.c,v 1.36 2023/04/05 21:53:56 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.35 2021/08/07 16:18:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64465pcmcia.c,v 1.36 2023/04/05 21:53:56 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -806,7 +806,7 @@ __sh_hd64465_map_2page(paddr_t pa)
 		return (0);
 	}
 
- 	/* map to physical addreess with specified memory type. */
+ 	/* map to physical address with specified memory type. */
 	for (i = 0; i < 3; i++, pa += 0x01000000, va += 0x01000000) {
 		if (__sh_hd64465_map(va, pa, 0x2000, mode[i]) != 0) {
 			pmap_kremove(v, 0x03000000);

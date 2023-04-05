@@ -30,7 +30,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2007\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: fusermount.c,v 1.3 2008/07/21 13:36:58 lukem Exp $");
+__RCSID("$NetBSD: fusermount.c,v 1.4 2023/04/05 21:53:56 andvar Exp $");
 #endif
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ refuse_unmount(int argc, char **argv)
 	return ret;
 }
 
-/* print the usage meessage */
+/* print the usage message */
 static void
 usage(const char *prog)
 {
