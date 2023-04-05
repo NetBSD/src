@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ldbl128.c,v 1.4 2023/04/05 20:13:01 rillig Exp $	*/
+/*	$NetBSD: platform_ldbl128.c,v 1.5 2023/04/05 20:17:30 rillig Exp $	*/
 # 3 "platform_ldbl128.c"
 
 /*
@@ -19,8 +19,6 @@ typedef int bytes_per_long_double[sizeof(long double) == 16 ? 1 : -1];
  * 1.189e4932. This is in the same range as for 96-bit 'long double', as the
  * exponent range is the same.
  */
-/* FIXME: remove the duplicate warning. */
-/* expect+2: warning: floating-point constant out of range [248] */
 /* expect+1: warning: floating-point constant out of range [248] */
 double larger_than_ldbl = 1e4933;
 /* expect+1: warning: floating-point constant out of range [248] */
