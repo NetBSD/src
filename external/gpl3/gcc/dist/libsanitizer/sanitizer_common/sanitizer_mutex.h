@@ -39,7 +39,7 @@ class StaticSpinMutex {
   }
 
   void CheckLocked() {
-    CHECK_EQ(atomic_load(&state_, memory_order_relaxed), 1);
+    CHECK_NE(atomic_load(&state_, memory_order_relaxed), 0);
   }
 
  private:
