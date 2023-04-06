@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1479 2023/02/14 14:42:46 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1480 2023/04/06 04:43:43 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6216,7 +6216,7 @@ product INTEL APL_PCIE_A0	0x5ad8	Apollo Lake PCIe A0
 product INTEL APL_PCIE_A1	0x5ad9	Apollo Lake PCIe A1
 product INTEL APL_PCIE_A2	0x5ada	Apollo Lake PCIe A2
 product INTEL APL_PCIE_A3	0x5adb	Apollo Lake PCIe A3
-product INTEL APL_SATA		0x5ae0	Apollo Lake SATA
+product INTEL APL_SATA		0x5ae3	Apollo Lake SATA
 product INTEL APL_LPC		0x5ae8	Apollo Lake LPC
 product INTEL APL_SSRAM		0x5aec	Apollo Lake Shared SRAM
 product INTEL APL_UART_3	0x5aee	Apollo Lake UART 3
