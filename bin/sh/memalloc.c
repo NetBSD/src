@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.38 2023/04/07 10:34:13 kre Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.39 2023/04/07 10:42:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.38 2023/04/07 10:34:13 kre Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.39 2023/04/07 10:42:28 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -402,4 +402,3 @@ ststrcat(size_t *lp, ...)
 
 	return str;
 }
-
