@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.179 2022/04/17 21:24:52 andvar Exp $	*/
+/*	$NetBSD: parser.c,v 1.180 2023/04/07 10:34:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.179 2022/04/17 21:24:52 andvar Exp $");
+__RCSID("$NetBSD: parser.c,v 1.180 2023/04/07 10:34:13 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1508,7 +1508,7 @@ parsebackq(VSS *const stack, char * const in,
 		VTRACE(DBG_PARSE|DBG_LEXER, (" produced %d\n", psavelen));
 		if (psavelen > 0) {
 			pstr = grabstackstr(out);
-			CTRACE(DBG_LEXER, 
+			CTRACE(DBG_LEXER,
 			    ("parsebackq() reprocessing as $(%s)\n", pstr));
 			setinputstring(pstr, 1, line1);
 		}
@@ -2704,7 +2704,7 @@ expandonstack(char *ps, int cmdsub, int lineno)
 
 		readtoken1(pgetc(), DQSYNTAX, 1);
 		if (backquotelist != NULL) {
-			if (!cmdsub) 
+			if (!cmdsub)
 				result = ps;
 			else if (!promptcmds)
 				result = "-o promptcmds not set: ";

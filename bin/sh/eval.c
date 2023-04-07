@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.188 2022/01/05 15:25:44 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.189 2023/04/07 10:34:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.188 2022/01/05 15:25:44 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.189 2023/04/07 10:34:13 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ STATIC int funcnest;		/* depth of function calls */
 STATIC int builtin_flags;	/* evalcommand flags for builtins */
 /*
  * Base function nesting level inside a dot command.  Set to 0 initially
- * and to (funcnest + 1) before every dot command to enable 
+ * and to (funcnest + 1) before every dot command to enable
  *   1) detection of being in a file sourced by a dot command and
  *   2) counting of function nesting in that file for the implementation
  *      of the return command.
@@ -1398,7 +1398,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	default:
 		VXTRACE(DBG_EVAL, ("normal command%s:  ", vforked?" VF":""),
 		    trargs(argv));
-		redirect(cmd->ncmd.redirect, 
+		redirect(cmd->ncmd.redirect,
 		    (vforked ? REDIR_VFORK : 0) | REDIR_KEEP);
 		if (!vforked)
 			for (sp = varlist.list ; sp ; sp = sp->next)

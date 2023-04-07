@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.117 2022/10/30 01:46:16 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.118 2023/04/07 10:34:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.117 2022/10/30 01:46:16 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.118 2023/04/07 10:34:13 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -857,7 +857,7 @@ waitcmd(int argc, char **argv)
 			 * (eg: a child of the executable that exec'd us)
 			 * Simply go back and start all over again
 			 * (this is rare).
-			 */ 
+			 */
 			if (job == NULL)
 				continue;
 
@@ -894,9 +894,8 @@ waitcmd(int argc, char **argv)
 					 * (that is, no pid args)
 					 */
 					snprintf(idstring, sizeof idstring,
-					    "%d", job->ps[ job->nprocs ? 
-						    job->nprocs-1 :
-						    0 ].pid);
+					    "%d", job->ps[ job->nprocs ?
+						    job->nprocs-1 : 0 ].pid);
 					fpid = idstring;
 				    }
 				    VTRACE(DBG_WAIT, (" (for %s)", fpid));
