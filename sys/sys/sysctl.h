@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.236 2021/09/16 22:47:29 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.237 2023/04/07 03:01:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -73,10 +73,10 @@
 struct sysctlnode;
 
 #define	CTL_MAXNAME	12	/* largest number of components supported */
-#define SYSCTL_NAMELEN	32	/* longest name allowed for a node */
+#define	SYSCTL_NAMELEN	32	/* longest name allowed for a node */
 
-#define CREATE_BASE	(1024)	/* start of dynamic mib allocation */
-#define SYSCTL_DEFSIZE	8	/* initial size of a child set */
+#define	CREATE_BASE	(1024)	/* start of dynamic mib allocation */
+#define	SYSCTL_DEFSIZE	8	/* initial size of a child set */
 
 /*
  * Each subsystem defined by sysctl defines a list of variables
@@ -105,38 +105,38 @@ struct ctlname {
 /*
  * Flags that apply to each node, governing access and other features
  */
-#define CTLFLAG_READONLY	0x00000000
+#define	CTLFLAG_READONLY	0x00000000
 /* #define CTLFLAG_UNUSED1		0x00000010 */
 /* #define CTLFLAG_UNUSED2		0x00000020 */
 /* #define CTLFLAG_READ*	0x00000040 */
-#define CTLFLAG_READWRITE	0x00000070
-#define CTLFLAG_ANYWRITE	0x00000080
-#define CTLFLAG_PRIVATE		0x00000100
-#define CTLFLAG_PERMANENT	0x00000200
-#define CTLFLAG_OWNDATA		0x00000400
-#define CTLFLAG_IMMEDIATE	0x00000800
-#define CTLFLAG_HEX		0x00001000
-#define CTLFLAG_ROOT		0x00002000
-#define CTLFLAG_ANYNUMBER	0x00004000
-#define CTLFLAG_HIDDEN		0x00008000
-#define CTLFLAG_ALIAS		0x00010000
-#define CTLFLAG_MMAP		0x00020000
-#define CTLFLAG_OWNDESC		0x00040000
-#define CTLFLAG_UNSIGNED	0x00080000
+#define	CTLFLAG_READWRITE	0x00000070
+#define	CTLFLAG_ANYWRITE	0x00000080
+#define	CTLFLAG_PRIVATE		0x00000100
+#define	CTLFLAG_PERMANENT	0x00000200
+#define	CTLFLAG_OWNDATA		0x00000400
+#define	CTLFLAG_IMMEDIATE	0x00000800
+#define	CTLFLAG_HEX		0x00001000
+#define	CTLFLAG_ROOT		0x00002000
+#define	CTLFLAG_ANYNUMBER	0x00004000
+#define	CTLFLAG_HIDDEN		0x00008000
+#define	CTLFLAG_ALIAS		0x00010000
+#define	CTLFLAG_MMAP		0x00020000
+#define	CTLFLAG_OWNDESC		0x00040000
+#define	CTLFLAG_UNSIGNED	0x00080000
 
 /*
  * sysctl API version
  */
-#define SYSCTL_VERS_MASK	0xff000000
-#define SYSCTL_VERS_0		0x00000000
-#define SYSCTL_VERS_1		0x01000000
-#define SYSCTL_VERSION		SYSCTL_VERS_1
-#define SYSCTL_VERS(f)		((f) & SYSCTL_VERS_MASK)
+#define	SYSCTL_VERS_MASK	0xff000000
+#define	SYSCTL_VERS_0		0x00000000
+#define	SYSCTL_VERS_1		0x01000000
+#define	SYSCTL_VERSION		SYSCTL_VERS_1
+#define	SYSCTL_VERS(f)		((f) & SYSCTL_VERS_MASK)
 
 /*
  * Flags that can be set by a create request from user-space
  */
-#define SYSCTL_USERFLAGS	(CTLFLAG_READWRITE|\
+#define	SYSCTL_USERFLAGS	(CTLFLAG_READWRITE|\
 				CTLFLAG_ANYWRITE|\
 				CTLFLAG_PRIVATE|\
 				CTLFLAG_OWNDATA|\
@@ -147,21 +147,21 @@ struct ctlname {
 /*
  * Accessor macros
  */
-#define SYSCTL_TYPEMASK		0x0000000f
-#define SYSCTL_TYPE(x)		((x) & SYSCTL_TYPEMASK)
-#define SYSCTL_FLAGMASK		0x00fffff0
-#define SYSCTL_FLAGS(x)		((x) & SYSCTL_FLAGMASK)
+#define	SYSCTL_TYPEMASK		0x0000000f
+#define	SYSCTL_TYPE(x)		((x) & SYSCTL_TYPEMASK)
+#define	SYSCTL_FLAGMASK		0x00fffff0
+#define	SYSCTL_FLAGS(x)		((x) & SYSCTL_FLAGMASK)
 
 /*
  * Meta-identifiers
  */
-#define CTL_EOL		(-1)		/* end of createv/destroyv list */
-#define CTL_QUERY	(-2)		/* enumerates children of a node */
-#define CTL_CREATE	(-3)		/* node create request */
-#define CTL_CREATESYM	(-4)		/* node create request with symbol */
-#define CTL_DESTROY	(-5)		/* node destroy request */
-#define CTL_MMAP	(-6)		/* mmap request */
-#define CTL_DESCRIBE	(-7)		/* get node descriptions */
+#define	CTL_EOL		(-1)		/* end of createv/destroyv list */
+#define	CTL_QUERY	(-2)		/* enumerates children of a node */
+#define	CTL_CREATE	(-3)		/* node create request */
+#define	CTL_CREATESYM	(-4)		/* node create request with symbol */
+#define	CTL_DESTROY	(-5)		/* node destroy request */
+#define	CTL_MMAP	(-6)		/* mmap request */
+#define	CTL_DESCRIBE	(-7)		/* get node descriptions */
 
 /*
  * Top-level identifiers
@@ -362,8 +362,8 @@ struct kinfo_proc {
  * Convert pointer to 64 bit unsigned integer for struct
  * kinfo_proc2, etc.
  */
-#define PTRTOUINT64(p) ((uint64_t)(uintptr_t)(p))
-#define UINT64TOPTR(u) ((void *)(uintptr_t)(u))
+#define	PTRTOUINT64(p) ((uint64_t)(uintptr_t)(p))
+#define	UINT64TOPTR(u) ((void *)(uintptr_t)(u))
 
 /*
  * KERN_PROC2 subtype ops return arrays of relatively fixed size
@@ -378,7 +378,7 @@ struct kinfo_proc {
 #define	KI_MAXEMULLEN	16
 #define	KI_LNAMELEN	20	/* extra 4 for alignment */
 
-#define KI_NOCPU	(~(uint64_t)0)
+#define	KI_NOCPU	(~(uint64_t)0)
 
 typedef struct {
 	uint32_t	__bits[4];
@@ -929,7 +929,7 @@ struct kinfo_vmentry {
 #define	PROC_PID_LIMIT_CORE	(RLIMIT_CORE+1)
 #define	PROC_PID_LIMIT_RSS	(RLIMIT_RSS+1)
 #define	PROC_PID_LIMIT_MEMLOCK	(RLIMIT_MEMLOCK+1)
-#define PROC_PID_LIMIT_NPROC	(RLIMIT_NPROC+1)
+#define	PROC_PID_LIMIT_NPROC	(RLIMIT_NPROC+1)
 #define	PROC_PID_LIMIT_NOFILE	(RLIMIT_NOFILE+1)
 #define	PROC_PID_LIMIT_SBSIZE	(RLIMIT_SBSIZE+1)
 #define	PROC_PID_LIMIT_AS	(RLIMIT_AS+1)
@@ -1004,15 +1004,15 @@ extern struct ctldebug debug10, debug11, debug12, debug13, debug14;
 extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 #endif	/* DEBUG */
 
-#define SYSCTLFN_PROTO const int *, u_int, void *, \
+#define	SYSCTLFN_PROTO const int *, u_int, void *, \
 	size_t *, const void *, size_t, \
 	const int *, struct lwp *, const struct sysctlnode *
-#define SYSCTLFN_ARGS const int *name, u_int namelen, \
+#define	SYSCTLFN_ARGS const int *name, u_int namelen, \
 	void *oldp, size_t *oldlenp, \
 	const void *newp, size_t newlen, \
 	const int *oname, struct lwp *l, \
 	const struct sysctlnode *rnode
-#define SYSCTLFN_CALL(node) name, namelen, oldp, \
+#define	SYSCTLFN_CALL(node) name, namelen, oldp, \
 	oldlenp, newp, newlen, \
 	oname, l, node
 
@@ -1024,7 +1024,7 @@ struct sysctl_setup_chain {
 	LIST_ENTRY(sysctl_setup_chain) ssc_entries;
 };
 LIST_HEAD(sysctl_boot_chain, sysctl_setup_chain);
-#define _SYSCTL_REGISTER(name)						\
+#define	_SYSCTL_REGISTER(name)						\
 static struct sysctl_setup_chain __CONCAT(ssc,name) = {			\
 	.ssc_func = name,						\
 };									\
@@ -1048,16 +1048,16 @@ static void sysctldtor_##name(void)					\
 
 #else /* RUMP_USE_CTOR */
 
-#define _SYSCTL_REGISTER(name) __link_set_add_text(sysctl_funcs, name);
+#define	_SYSCTL_REGISTER(name) __link_set_add_text(sysctl_funcs, name);
 
 #endif /* RUMP_USE_CTOR */
 
 #ifdef _MODULE
 
-#define SYSCTL_SETUP_PROTO(name)				\
+#define	SYSCTL_SETUP_PROTO(name)				\
 	void name(struct sysctllog **)
 #ifdef SYSCTL_DEBUG_SETUP
-#define SYSCTL_SETUP(name, desc)				\
+#define	SYSCTL_SETUP(name, desc)				\
 	SYSCTL_SETUP_PROTO(name);				\
 	static void __CONCAT(___,name)(struct sysctllog **);	\
 	void name(struct sysctllog **clog) {			\
@@ -1066,7 +1066,7 @@ static void sysctldtor_##name(void)					\
 	_SYSCTL_REGISTER(name);					\
 	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
-#define SYSCTL_SETUP(name, desc)				\
+#define	SYSCTL_SETUP(name, desc)				\
 	SYSCTL_SETUP_PROTO(name);				\
 	_SYSCTL_REGISTER(name);					\
 	void name(struct sysctllog **clog)
@@ -1074,9 +1074,9 @@ static void sysctldtor_##name(void)					\
 
 #else /* !_MODULE */
 
-#define SYSCTL_SETUP_PROTO(name)
+#define	SYSCTL_SETUP_PROTO(name)
 #ifdef SYSCTL_DEBUG_SETUP
-#define SYSCTL_SETUP(name, desc)				\
+#define	SYSCTL_SETUP(name, desc)				\
 	static void __CONCAT(___,name)(struct sysctllog **);	\
 	static void name(struct sysctllog **clog) {		\
 		printf("%s\n", desc);				\
@@ -1084,7 +1084,7 @@ static void sysctldtor_##name(void)					\
 	_SYSCTL_REGISTER(name);					\
 	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
-#define SYSCTL_SETUP(name, desc)				\
+#define	SYSCTL_SETUP(name, desc)				\
 	static void name(struct sysctllog **);			\
 	_SYSCTL_REGISTER(name);					\
 	static void name(struct sysctllog **clog)
@@ -1147,7 +1147,7 @@ int	sysctl_createv(struct sysctllog **, int,
 		       sysctlfn, u_quad_t, void *, size_t, ...);
 int	sysctl_destroyv(struct sysctlnode *, ...);
 
-#define VERIFY_FN(ctl_type, c_type) \
+#define	VERIFY_FN(ctl_type, c_type) \
 __always_inline static __inline void * \
 __sysctl_verify_##ctl_type##_arg(c_type *arg) \
 { \
@@ -1163,7 +1163,7 @@ VERIFY_FN(CTLTYPE_BOOL, bool);
 VERIFY_FN(CTLTYPE_LONG, long);
 #undef VERIFY_FN
 
-#define sysctl_createv(lg, cfl, rn, cn, fl, type, nm, desc, fn, qv, newp, ...) \
+#define	sysctl_createv(lg, cfl, rn, cn, fl, type, nm, desc, fn, qv, newp, ...) \
     sysctl_createv(lg, cfl, rn, cn, fl, type, nm, desc, fn, qv, \
 	    __sysctl_verify_##type##_arg(newp), __VA_ARGS__)
 
@@ -1176,9 +1176,9 @@ void	sysctl_teardown(struct sysctllog **);
 void	sysctl_log_print(const struct sysctllog *);
 
 #ifdef SYSCTL_INCLUDE_DESCR
-#define SYSCTL_DESCR(s) s
+#define	SYSCTL_DESCR(s) s
 #else /* SYSCTL_INCLUDE_DESCR */
-#define SYSCTL_DESCR(s) NULL
+#define	SYSCTL_DESCR(s) NULL
 #endif /* SYSCTL_INCLUDE_DESCR */
 
 /*
@@ -1246,19 +1246,19 @@ __END_DECLS
  * the expense of making things bigger on 32 bit platforms.
  */
 #if defined(_LP64) || (BYTE_ORDER == LITTLE_ENDIAN)
-#define __sysc_pad(type) union { uint64_t __sysc_upad; \
+#define	__sysc_pad(type) union { uint64_t __sysc_upad; \
 	struct { type __sysc_sdatum; } __sysc_ustr; }
 #else
-#define __sysc_pad(type) union { uint64_t __sysc_upad; \
+#define	__sysc_pad(type) union { uint64_t __sysc_upad; \
 	struct { uint32_t __sysc_spad; type __sysc_sdatum; } __sysc_ustr; }
 #endif
-#define __sysc_unpad(x) x.__sysc_ustr.__sysc_sdatum
+#define	__sysc_unpad(x) x.__sysc_ustr.__sysc_sdatum
 
 /*
  * The following is for gcc2, which doesn't handle __sysc_unpad().
  * The code gets a little less ugly this way.
  */
-#define sysc_init_field(field, value) 	\
+#define	sysc_init_field(field, value) 	\
 	.field = { .__sysc_ustr = { .__sysc_sdatum = (value), }, }
 
 struct sysctlnode {
@@ -1291,26 +1291,26 @@ struct sysctlnode {
 /*
  * padded data
  */
-#define suc_child	__sysc_unpad(_suc_child)
-#define sud_data	__sysc_unpad(_sud_data)
-#define sud_offset	__sysc_unpad(_sud_offset)
-#define sysctl_size	__sysc_unpad(_sysctl_size)
-#define sysctl_func	__sysc_unpad(_sysctl_func)
-#define sysctl_parent	__sysc_unpad(_sysctl_parent)
-#define sysctl_desc	__sysc_unpad(_sysctl_desc)
+#define	suc_child	__sysc_unpad(_suc_child)
+#define	sud_data	__sysc_unpad(_sud_data)
+#define	sud_offset	__sysc_unpad(_sud_offset)
+#define	sysctl_size	__sysc_unpad(_sysctl_size)
+#define	sysctl_func	__sysc_unpad(_sysctl_func)
+#define	sysctl_parent	__sysc_unpad(_sysctl_parent)
+#define	sysctl_desc	__sysc_unpad(_sysctl_desc)
 
 /*
  * nested data (may also be padded)
  */
-#define sysctl_csize	sysctl_un.scu_child.suc_csize
-#define sysctl_clen	sysctl_un.scu_child.suc_clen
-#define sysctl_child	sysctl_un.scu_child.suc_child
-#define sysctl_data	sysctl_un.scu_data.sud_data
-#define sysctl_offset	sysctl_un.scu_data.sud_offset
-#define sysctl_alias	sysctl_un.scu_alias
-#define sysctl_idata	sysctl_un.scu_idata
-#define sysctl_qdata	sysctl_un.scu_qdata
-#define sysctl_bdata	sysctl_un.scu_bdata
+#define	sysctl_csize	sysctl_un.scu_child.suc_csize
+#define	sysctl_clen	sysctl_un.scu_child.suc_clen
+#define	sysctl_child	sysctl_un.scu_child.suc_child
+#define	sysctl_data	sysctl_un.scu_data.sud_data
+#define	sysctl_offset	sysctl_un.scu_data.sud_offset
+#define	sysctl_alias	sysctl_un.scu_alias
+#define	sysctl_idata	sysctl_un.scu_idata
+#define	sysctl_qdata	sysctl_un.scu_qdata
+#define	sysctl_bdata	sysctl_un.scu_bdata
 
 /*
  * when requesting a description of a node (a set of nodes, actually),
@@ -1328,13 +1328,13 @@ struct sysctldesc {
 	char		descr_str[1];	/* not really 1...see above */
 };
 
-#define __sysc_desc_roundup(x) ((((x) - 1) | (sizeof(int32_t) - 1)) + 1)
-#define __sysc_desc_len(l) (offsetof(struct sysctldesc, descr_str) +\
+#define	__sysc_desc_roundup(x) ((((x) - 1) | (sizeof(int32_t) - 1)) + 1)
+#define	__sysc_desc_len(l) (offsetof(struct sysctldesc, descr_str) +\
 		__sysc_desc_roundup(l))
-#define __sysc_desc_adv(d, l) \
+#define	__sysc_desc_adv(d, l) \
 	(/*XXXUNCONST ptr cast*/(struct sysctldesc *) \
 	__UNCONST(((const char*)(d)) + __sysc_desc_len(l)))
-#define NEXT_DESCR(d) __sysc_desc_adv((d), (d)->descr_len)
+#define	NEXT_DESCR(d) __sysc_desc_adv((d), (d)->descr_len)
 
 static __inline const struct sysctlnode *
 sysctl_rootof(const struct sysctlnode *n)
