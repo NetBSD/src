@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.156 2023/04/05 20:17:30 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.157 2023/04/07 11:08:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.156 2023/04/05 20:17:30 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.157 2023/04/07 11:08:31 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -940,21 +940,19 @@ parse_line_directive_flags(const char *p,
 	*is_system = false;
 
 	while (*p != '\0') {
-		const char *word_start, *word_end;
-
 		while (ch_isspace(*p))
 			p++;
 
-		word_start = p;
+		const char *word = p;
 		while (*p != '\0' && !ch_isspace(*p))
 			p++;
-		word_end = p;
+		size_t len = (size_t)(p - word);
 
-		if (word_end - word_start == 1 && word_start[0] == '1')
+		if (len == 1 && word[0] == '1')
 			*is_begin = true;
-		if (word_end - word_start == 1 && word_start[0] == '2')
+		if (len == 1 && word[0] == '2')
 			*is_end = true;
-		if (word_end - word_start == 1 && word_start[0] == '3')
+		if (len == 1 && word[0] == '3')
 			*is_system = true;
 		/* Flag '4' is only interesting for C++. */
 	}
