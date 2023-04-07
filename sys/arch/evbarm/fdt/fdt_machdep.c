@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.101 2023/03/05 22:04:54 mlelstv Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.102 2023/04/07 08:55:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.101 2023/03/05 22:04:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.102 2023/04/07 08:55:31 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -92,6 +92,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.101 2023/03/05 22:04:54 mlelstv Ex
 #include <evbarm/fdt/platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
+
+#include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_private.h>
 #include <dev/fdt/fdt_memory.h>
 
@@ -489,7 +491,7 @@ fdt_map_efi_runtime(const char *prop, enum arm_efirt_mem_type type)
 vaddr_t
 initarm(void *arg)
 {
-	const struct arm_platform *plat;
+	const struct fdt_platform *plat;
 	uint64_t memory_start, memory_end;
 
 	/* set temporally to work printf()/panic() even before consinit() */
@@ -511,7 +513,7 @@ initarm(void *arg)
 	fdtbus_init(fdt_data);
 
 	/* Lookup platform specific backend */
-	plat = arm_fdt_platform();
+	plat = fdt_platform_find();
 	if (plat == NULL)
 		panic("Kernel does not support this device");
 
@@ -533,12 +535,12 @@ initarm(void *arg)
 	 * l1pt VA is fine
 	 */
 
-	VPRINTF("devmap %p\n", plat->ap_devmap());
+	VPRINTF("devmap %p\n", plat->fp_devmap());
 	extern char ARM_BOOTSTRAP_LxPT[];
-	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, plat->ap_devmap());
+	pmap_devmap_bootstrap((vaddr_t)ARM_BOOTSTRAP_LxPT, plat->fp_devmap());
 
 	VPRINTF("bootstrap\n");
-	plat->ap_bootstrap();
+	plat->fp_bootstrap();
 
 	/*
 	 * If stdout-path is specified on the command line, override the
@@ -637,8 +639,8 @@ initarm(void *arg)
 	error = 0;
 	if ((boothowto & RB_MD1) == 0) {
 		VPRINTF("mpstart\n");
-		if (plat->ap_mpstart)
-			error = plat->ap_mpstart();
+		if (plat->fp_mpstart)
+			error = plat->fp_mpstart();
 	}
 
 	if (error)
@@ -696,7 +698,7 @@ void
 consinit(void)
 {
 	static bool initialized = false;
-	const struct arm_platform *plat = arm_fdt_platform();
+	const struct fdt_platform *plat = fdt_platform_find();
 	const struct fdt_console *cons = fdtbus_get_console();
 	struct fdt_attach_args faa;
 	u_int uart_freq = 0;
@@ -704,11 +706,11 @@ consinit(void)
 	if (initialized || cons == NULL)
 		return;
 
-	plat->ap_init_attach_args(&faa);
+	plat->fp_init_attach_args(&faa);
 	faa.faa_phandle = fdtbus_get_stdout_phandle();
 
-	if (plat->ap_uart_freq != NULL)
-		uart_freq = plat->ap_uart_freq();
+	if (plat->fp_uart_freq != NULL)
+		uart_freq = plat->fp_uart_freq();
 
 	cons->consinit(&faa, uart_freq);
 
@@ -733,9 +735,9 @@ cpu_startup_hook(void)
 void
 delay(u_int us)
 {
-	const struct arm_platform *plat = arm_fdt_platform();
+	const struct fdt_platform *plat = fdt_platform_find();
 
-	plat->ap_delay(us);
+	plat->fp_delay(us);
 }
 
 static void
@@ -849,7 +851,7 @@ fdt_detect_root_device(device_t dev)
 static void
 fdt_device_register(device_t self, void *aux)
 {
-	const struct arm_platform *plat = arm_fdt_platform();
+	const struct fdt_platform *plat = fdt_platform_find();
 
 	if (device_is_a(self, "armfdt")) {
 		fdt_setup_initrd();
@@ -870,8 +872,8 @@ fdt_device_register(device_t self, void *aux)
 	}
 #endif
 
-	if (plat && plat->ap_device_register)
-		plat->ap_device_register(self, aux);
+	if (plat && plat->fp_device_register)
+		plat->fp_device_register(self, aux);
 }
 
 static void
@@ -910,12 +912,12 @@ fdt_cpu_rootconf(void)
 static void
 fdt_reset(void)
 {
-	const struct arm_platform *plat = arm_fdt_platform();
+	const struct fdt_platform *plat = fdt_platform_find();
 
 	fdtbus_power_reset();
 
-	if (plat && plat->ap_reset)
-		plat->ap_reset();
+	if (plat && plat->fp_reset)
+		plat->fp_reset();
 }
 
 static void

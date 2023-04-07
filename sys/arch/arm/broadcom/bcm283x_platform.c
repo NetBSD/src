@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.48 2021/04/24 23:36:26 thorpej Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.49 2023/04/07 08:55:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.48 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.49 2023/04/07 08:55:30 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1481,7 +1481,7 @@ bcm283x_platform_uart_freq(void)
 
 	/*
 	 * We are safe to access stdout phandle - consinit did before
-	 * calling ap_uart_freq
+	 * calling fp_uart_freq
 	 */
 	const int phandle = fdtbus_get_stdout_phandle();
 
@@ -1497,55 +1497,55 @@ bcm283x_platform_uart_freq(void)
 }
 
 #if defined(SOC_BCM2835)
-static const struct arm_platform bcm2835_platform = {
-	.ap_devmap = bcm2835_platform_devmap,
-	.ap_bootstrap = bcm2835_platform_bootstrap,
-	.ap_init_attach_args = bcm2835_platform_init_attach_args,
-	.ap_device_register = bcm283x_platform_device_register,
-	.ap_reset = bcm2835_system_reset,
-	.ap_delay = bcm2835_tmr_delay,
-	.ap_uart_freq = bcm283x_platform_uart_freq,
+static const struct fdt_platform bcm2835_platform = {
+	.fp_devmap = bcm2835_platform_devmap,
+	.fp_bootstrap = bcm2835_platform_bootstrap,
+	.fp_init_attach_args = bcm2835_platform_init_attach_args,
+	.fp_device_register = bcm283x_platform_device_register,
+	.fp_reset = bcm2835_system_reset,
+	.fp_delay = bcm2835_tmr_delay,
+	.fp_uart_freq = bcm283x_platform_uart_freq,
 };
 
-ARM_PLATFORM(bcm2835, "brcm,bcm2835", &bcm2835_platform);
+FDT_PLATFORM(bcm2835, "brcm,bcm2835", &bcm2835_platform);
 #endif
 
 #if defined(SOC_BCM2836)
 
-static const struct arm_platform bcm2836_platform = {
-	.ap_devmap = bcm2836_platform_devmap,
-	.ap_bootstrap = bcm2836_platform_bootstrap,
-	.ap_init_attach_args = bcm2836_platform_init_attach_args,
-	.ap_device_register = bcm283x_platform_device_register,
-	.ap_reset = bcm2835_system_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = bcm283x_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform bcm2836_platform = {
+	.fp_devmap = bcm2836_platform_devmap,
+	.fp_bootstrap = bcm2836_platform_bootstrap,
+	.fp_init_attach_args = bcm2836_platform_init_attach_args,
+	.fp_device_register = bcm283x_platform_device_register,
+	.fp_reset = bcm2835_system_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = bcm283x_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-static const struct arm_platform bcm2837_platform = {
-	.ap_devmap = bcm2836_platform_devmap,
-	.ap_bootstrap = bcm2836_platform_bootstrap,
-	.ap_init_attach_args = bcm2836_platform_init_attach_args,
-	.ap_device_register = bcm283x_platform_device_register,
-	.ap_reset = bcm2835_system_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = bcm283x_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform bcm2837_platform = {
+	.fp_devmap = bcm2836_platform_devmap,
+	.fp_bootstrap = bcm2836_platform_bootstrap,
+	.fp_init_attach_args = bcm2836_platform_init_attach_args,
+	.fp_device_register = bcm283x_platform_device_register,
+	.fp_reset = bcm2835_system_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = bcm283x_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-static const struct arm_platform bcm2711_platform = {
-	.ap_devmap = bcm2711_platform_devmap,
-	.ap_bootstrap = bcm2711_platform_bootstrap,
-	.ap_init_attach_args = bcm2711_platform_init_attach_args,
-	.ap_device_register = bcm283x_platform_device_register,
-	.ap_reset = bcm2835_system_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = bcm283x_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform bcm2711_platform = {
+	.fp_devmap = bcm2711_platform_devmap,
+	.fp_bootstrap = bcm2711_platform_bootstrap,
+	.fp_init_attach_args = bcm2711_platform_init_attach_args,
+	.fp_device_register = bcm283x_platform_device_register,
+	.fp_reset = bcm2835_system_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = bcm283x_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(bcm2836, "brcm,bcm2836", &bcm2836_platform);
-ARM_PLATFORM(bcm2837, "brcm,bcm2837", &bcm2837_platform);
-ARM_PLATFORM(bcm2711, "brcm,bcm2711", &bcm2711_platform);
+FDT_PLATFORM(bcm2836, "brcm,bcm2836", &bcm2836_platform);
+FDT_PLATFORM(bcm2837, "brcm,bcm2837", &bcm2837_platform);
+FDT_PLATFORM(bcm2711, "brcm,bcm2711", &bcm2711_platform);
 #endif

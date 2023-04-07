@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_platform.c,v 1.7 2021/04/24 23:36:29 thorpej Exp $ */
+/* $NetBSD: omap3_platform.c,v 1.8 2023/04/07 08:55:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.7 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.8 2023/04/07 08:55:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.7 2021/04/24 23:36:29 thorpej E
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -185,14 +186,14 @@ omap3_platform_delay(u_int n)
 	}
 }
 
-static const struct arm_platform omap3_platform = {
-	.ap_devmap = omap3_platform_devmap,
-	.ap_bootstrap = arm_fdt_cpu_bootstrap,
-	.ap_init_attach_args = omap3_platform_init_attach_args,
-	.ap_device_register = omap3_platform_device_register,
-	.ap_reset = omap3_platform_reset,
-	.ap_delay = omap3_platform_delay,
-	.ap_uart_freq = omap3_platform_uart_freq,
+static const struct fdt_platform omap3_platform = {
+	.fp_devmap = omap3_platform_devmap,
+	.fp_bootstrap = arm_fdt_cpu_bootstrap,
+	.fp_init_attach_args = omap3_platform_init_attach_args,
+	.fp_device_register = omap3_platform_device_register,
+	.fp_reset = omap3_platform_reset,
+	.fp_delay = omap3_platform_delay,
+	.fp_uart_freq = omap3_platform_uart_freq,
 };
 
-ARM_PLATFORM(omap3, "ti,omap3", &omap3_platform);
+FDT_PLATFORM(omap3, "ti,omap3", &omap3_platform);

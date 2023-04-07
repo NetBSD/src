@@ -1,4 +1,4 @@
-/* $NetBSD: vexpress_platform.c,v 1.22 2021/04/24 23:36:29 thorpej Exp $ */
+/* $NetBSD: vexpress_platform.c,v 1.23 2023/04/07 08:55:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.22 2021/04/24 23:36:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vexpress_platform.c,v 1.23 2023/04/07 08:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -215,15 +215,15 @@ vexpress_platform_uart_freq(void)
 	return VEXPRESS_REF_FREQ;
 }
 
-static const struct arm_platform vexpress_platform = {
-	.ap_devmap = vexpress_platform_devmap,
-	.ap_bootstrap = vexpress_platform_bootstrap,
-	.ap_mpstart = vexpress_a15_smp_init,
-	.ap_init_attach_args = vexpress_platform_init_attach_args,
-	.ap_device_register = vexpress_platform_device_register,
-	.ap_reset = vexpress_platform_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = vexpress_platform_uart_freq,
+static const struct fdt_platform vexpress_platform = {
+	.fp_devmap = vexpress_platform_devmap,
+	.fp_bootstrap = vexpress_platform_bootstrap,
+	.fp_mpstart = vexpress_a15_smp_init,
+	.fp_init_attach_args = vexpress_platform_init_attach_args,
+	.fp_device_register = vexpress_platform_device_register,
+	.fp_reset = vexpress_platform_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = vexpress_platform_uart_freq,
 };
 
-ARM_PLATFORM(vexpress, "arm,vexpress", &vexpress_platform);
+FDT_PLATFORM(vexpress, "arm,vexpress", &vexpress_platform);

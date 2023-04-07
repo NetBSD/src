@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.18 2021/04/24 23:36:25 thorpej Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.19 2023/04/07 08:55:29 skrll Exp $ */
 
 /* This file is in the public domain. */
 
@@ -7,7 +7,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.18 2021/04/24 23:36:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.19 2023/04/07 08:55:29 skrll Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -28,8 +28,9 @@ __KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.18 2021/04/24 23:36:25 thorpej E
 #include <arm/bootconfig.h>
 #include <arm/cpufunc.h>
 
-#include <arm/fdt/arm_fdtvar.h>
 #include <dev/fdt/fdtvar.h>
+
+#include <arm/fdt/arm_fdtvar.h>
 #include <dev/ic/comreg.h>
 
 void cycv_platform_early_putchar(char);
@@ -164,15 +165,15 @@ cycv_platform_uart_freq(void) {
 	return cycv_clkmgr_early_get_l4_sp_clk();
 }
 
-static const struct arm_platform cycv_platform = {
-	.ap_devmap = cycv_platform_devmap,
-	.ap_bootstrap = cycv_platform_bootstrap,
-	.ap_init_attach_args = cycv_platform_init_attach_args,
-	.ap_device_register = cycv_platform_device_register,
-	.ap_reset = cycv_platform_reset,
-	.ap_delay = a9tmr_delay,
-	.ap_uart_freq = cycv_platform_uart_freq,
-	.ap_mpstart = cycv_mpstart,
+static const struct fdt_platform cycv_platform = {
+	.fp_devmap = cycv_platform_devmap,
+	.fp_bootstrap = cycv_platform_bootstrap,
+	.fp_init_attach_args = cycv_platform_init_attach_args,
+	.fp_device_register = cycv_platform_device_register,
+	.fp_reset = cycv_platform_reset,
+	.fp_delay = a9tmr_delay,
+	.fp_uart_freq = cycv_platform_uart_freq,
+	.fp_mpstart = cycv_mpstart,
 };
 
-ARM_PLATFORM(cycv, "altr,socfpga-cyclone5", &cycv_platform);
+FDT_PLATFORM(cycv, "altr,socfpga-cyclone5", &cycv_platform);

@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_platform.c,v 1.39 2022/10/29 13:29:46 jmcneill Exp $ */
+/* $NetBSD: exynos_platform.c,v 1.40 2023/04/07 08:55:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.39 2022/10/29 13:29:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_platform.c,v 1.40 2023/04/07 08:55:30 skrll Exp $");
 
 #define	EXYNOS_CORE_VBASE	KERNEL_IO_VBASE
 
@@ -296,18 +296,18 @@ exynos4_platform_bootstrap(void)
 #endif
 }
 
-static const struct arm_platform exynos4_platform = {
-	.ap_devmap = exynos4_platform_devmap,
-//	.ap_mpstart = exynos4_mpstart,
-	.ap_bootstrap = exynos4_platform_bootstrap,
-	.ap_init_attach_args = exynos_platform_init_attach_args,
-	.ap_device_register = exynos_platform_device_register,
-	.ap_reset = exynos5_platform_reset,
-	.ap_delay = mct_delay,
-	.ap_uart_freq = exynos_platform_uart_freq,
+static const struct fdt_platform exynos4_platform = {
+	.fp_devmap = exynos4_platform_devmap,
+//	.fp_mpstart = exynos4_mpstart,
+	.fp_bootstrap = exynos4_platform_bootstrap,
+	.fp_init_attach_args = exynos_platform_init_attach_args,
+	.fp_device_register = exynos_platform_device_register,
+	.fp_reset = exynos5_platform_reset,
+	.fp_delay = mct_delay,
+	.fp_uart_freq = exynos_platform_uart_freq,
 };
 
-ARM_PLATFORM(exynos4, "samsung,exynos4", &exynos4_platform);
+FDT_PLATFORM(exynos4, "samsung,exynos4", &exynos4_platform);
 #endif
 
 
@@ -362,16 +362,16 @@ exynos5_platform_bootstrap(void)
 	arm_fdt_cpu_bootstrap();
 }
 
-static const struct arm_platform exynos5_platform = {
-	.ap_devmap = exynos5_platform_devmap,
-	.ap_bootstrap = exynos5_platform_bootstrap,
-	.ap_mpstart = exynos_platform_mpstart,
-	.ap_init_attach_args = exynos_platform_init_attach_args,
-	.ap_device_register = exynos_platform_device_register,
-	.ap_reset = exynos5_platform_reset,
-	.ap_delay = mct_delay,
-	.ap_uart_freq = exynos_platform_uart_freq,
+static const struct fdt_platform exynos5_platform = {
+	.fp_devmap = exynos5_platform_devmap,
+	.fp_bootstrap = exynos5_platform_bootstrap,
+	.fp_mpstart = exynos_platform_mpstart,
+	.fp_init_attach_args = exynos_platform_init_attach_args,
+	.fp_device_register = exynos_platform_device_register,
+	.fp_reset = exynos5_platform_reset,
+	.fp_delay = mct_delay,
+	.fp_uart_freq = exynos_platform_uart_freq,
 };
 
-ARM_PLATFORM(exynos5, "samsung,exynos5", &exynos5_platform);
+FDT_PLATFORM(exynos5, "samsung,exynos5", &exynos5_platform);
 #endif

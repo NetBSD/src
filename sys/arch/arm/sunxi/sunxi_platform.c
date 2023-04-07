@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.46 2022/06/28 05:19:03 skrll Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.47 2023/04/07 08:55:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.46 2022/06/28 05:19:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.47 2023/04/07 08:55:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.46 2022/06/28 05:19:03 skrll Ex
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -426,121 +427,121 @@ sun50i_h6_platform_reset(void)
 	bus_space_write_4(bst, reset_bsh, SUN50I_H6_WDT_MODE, SUN50I_H6_WDT_MODE_EN);
 }
 
-static const struct arm_platform sun4i_platform = {
-	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sun4i_platform_bootstrap,
-	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_device_register = sunxi_platform_device_register,
-	.ap_reset = sun4i_platform_reset,
-	.ap_delay = sun4i_platform_delay,
-	.ap_uart_freq = sunxi_platform_uart_freq,
+static const struct fdt_platform sun4i_platform = {
+	.fp_devmap = sunxi_platform_devmap,
+	.fp_bootstrap = sun4i_platform_bootstrap,
+	.fp_init_attach_args = sunxi_platform_init_attach_args,
+	.fp_device_register = sunxi_platform_device_register,
+	.fp_reset = sun4i_platform_reset,
+	.fp_delay = sun4i_platform_delay,
+	.fp_uart_freq = sunxi_platform_uart_freq,
 };
 
-ARM_PLATFORM(sun4i_a10, "allwinner,sun4i-a10", &sun4i_platform);
+FDT_PLATFORM(sun4i_a10, "allwinner,sun4i-a10", &sun4i_platform);
 
-static const struct arm_platform sun5i_platform = {
-	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sun4i_platform_bootstrap,
-	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_device_register = sunxi_platform_device_register,
-	.ap_reset = sun4i_platform_reset,
-	.ap_delay = sun4i_platform_delay,
-	.ap_uart_freq = sunxi_platform_uart_freq,
+static const struct fdt_platform sun5i_platform = {
+	.fp_devmap = sunxi_platform_devmap,
+	.fp_bootstrap = sun4i_platform_bootstrap,
+	.fp_init_attach_args = sunxi_platform_init_attach_args,
+	.fp_device_register = sunxi_platform_device_register,
+	.fp_reset = sun4i_platform_reset,
+	.fp_delay = sun4i_platform_delay,
+	.fp_uart_freq = sunxi_platform_uart_freq,
 };
 
-ARM_PLATFORM(sun5i_a13, "allwinner,sun5i-a13", &sun5i_platform);
-ARM_PLATFORM(sun5i_gr8, "nextthing,gr8", &sun5i_platform);
+FDT_PLATFORM(sun5i_a13, "allwinner,sun5i-a13", &sun5i_platform);
+FDT_PLATFORM(sun5i_gr8, "nextthing,gr8", &sun5i_platform);
 
-static const struct arm_platform sun6i_platform = {
-	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sun6i_platform_bootstrap,
-	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_device_register = sunxi_platform_device_register,
-	.ap_reset = sun6i_platform_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = sunxi_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform sun6i_platform = {
+	.fp_devmap = sunxi_platform_devmap,
+	.fp_bootstrap = sun6i_platform_bootstrap,
+	.fp_init_attach_args = sunxi_platform_init_attach_args,
+	.fp_device_register = sunxi_platform_device_register,
+	.fp_reset = sun6i_platform_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = sunxi_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(sun6i_a31, "allwinner,sun6i-a31", &sun6i_platform);
+FDT_PLATFORM(sun6i_a31, "allwinner,sun6i-a31", &sun6i_platform);
 
-static const struct arm_platform sun7i_platform = {
-	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sun4i_platform_bootstrap,
-	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_device_register = sunxi_platform_device_register,
-	.ap_reset = sun4i_platform_reset,
-	.ap_delay = sun4i_platform_delay,
-	.ap_uart_freq = sunxi_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform sun7i_platform = {
+	.fp_devmap = sunxi_platform_devmap,
+	.fp_bootstrap = sun4i_platform_bootstrap,
+	.fp_init_attach_args = sunxi_platform_init_attach_args,
+	.fp_device_register = sunxi_platform_device_register,
+	.fp_reset = sun4i_platform_reset,
+	.fp_delay = sun4i_platform_delay,
+	.fp_uart_freq = sunxi_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(sun7i_a20, "allwinner,sun7i-a20", &sun7i_platform);
+FDT_PLATFORM(sun7i_a20, "allwinner,sun7i-a20", &sun7i_platform);
 
-static const struct arm_platform sun8i_platform = {
-	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sun6i_platform_bootstrap,
-	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_device_register = sunxi_platform_device_register,
-	.ap_reset = sun6i_platform_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = sunxi_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform sun8i_platform = {
+	.fp_devmap = sunxi_platform_devmap,
+	.fp_bootstrap = sun6i_platform_bootstrap,
+	.fp_init_attach_args = sunxi_platform_init_attach_args,
+	.fp_device_register = sunxi_platform_device_register,
+	.fp_reset = sun6i_platform_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = sunxi_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(sun8i_h2plus, "allwinner,sun8i-h2-plus", &sun8i_platform);
-ARM_PLATFORM(sun8i_h3, "allwinner,sun8i-h3", &sun8i_platform);
-ARM_PLATFORM(sun8i_v3s, "allwinner,sun8i-v3s", &sun8i_platform);
+FDT_PLATFORM(sun8i_h2plus, "allwinner,sun8i-h2-plus", &sun8i_platform);
+FDT_PLATFORM(sun8i_h3, "allwinner,sun8i-h3", &sun8i_platform);
+FDT_PLATFORM(sun8i_v3s, "allwinner,sun8i-v3s", &sun8i_platform);
 
-static const struct arm_platform sun8i_a83t_platform = {
-	.ap_devmap = sun8i_a83t_platform_devmap,
-	.ap_bootstrap = sun6i_platform_bootstrap,
-	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_device_register = sunxi_platform_device_register,
-	.ap_reset = sun6i_platform_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = sunxi_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform sun8i_a83t_platform = {
+	.fp_devmap = sun8i_a83t_platform_devmap,
+	.fp_bootstrap = sun6i_platform_bootstrap,
+	.fp_init_attach_args = sunxi_platform_init_attach_args,
+	.fp_device_register = sunxi_platform_device_register,
+	.fp_reset = sun6i_platform_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = sunxi_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(sun8i_a83t, "allwinner,sun8i-a83t", &sun8i_a83t_platform);
+FDT_PLATFORM(sun8i_a83t, "allwinner,sun8i-a83t", &sun8i_a83t_platform);
 
-static const struct arm_platform sun9i_platform = {
-	.ap_devmap = sun9i_a80_platform_devmap,
-	.ap_bootstrap = sun9i_platform_bootstrap,
-	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_device_register = sunxi_platform_device_register,
-	.ap_reset = sun9i_platform_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = sunxi_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform sun9i_platform = {
+	.fp_devmap = sun9i_a80_platform_devmap,
+	.fp_bootstrap = sun9i_platform_bootstrap,
+	.fp_init_attach_args = sunxi_platform_init_attach_args,
+	.fp_device_register = sunxi_platform_device_register,
+	.fp_reset = sun9i_platform_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = sunxi_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(sun9i_a80, "allwinner,sun9i-a80", &sun9i_platform);
+FDT_PLATFORM(sun9i_a80, "allwinner,sun9i-a80", &sun9i_platform);
 
-static const struct arm_platform sun50i_platform = {
-	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sun6i_platform_bootstrap,
-	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_device_register = sunxi_platform_device_register,
-	.ap_reset = sun6i_platform_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = sunxi_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform sun50i_platform = {
+	.fp_devmap = sunxi_platform_devmap,
+	.fp_bootstrap = sun6i_platform_bootstrap,
+	.fp_init_attach_args = sunxi_platform_init_attach_args,
+	.fp_device_register = sunxi_platform_device_register,
+	.fp_reset = sun6i_platform_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = sunxi_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(sun50i_a64, "allwinner,sun50i-a64", &sun50i_platform);
-ARM_PLATFORM(sun50i_h5, "allwinner,sun50i-h5", &sun50i_platform);
+FDT_PLATFORM(sun50i_a64, "allwinner,sun50i-a64", &sun50i_platform);
+FDT_PLATFORM(sun50i_h5, "allwinner,sun50i-h5", &sun50i_platform);
 
-static const struct arm_platform sun50i_h6_platform = {
-	.ap_devmap = sunxi_platform_devmap,
-	.ap_bootstrap = sun50i_h6_platform_bootstrap,
-	.ap_init_attach_args = sunxi_platform_init_attach_args,
-	.ap_device_register = sunxi_platform_device_register,
-	.ap_reset = sun50i_h6_platform_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = sunxi_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform sun50i_h6_platform = {
+	.fp_devmap = sunxi_platform_devmap,
+	.fp_bootstrap = sun50i_h6_platform_bootstrap,
+	.fp_init_attach_args = sunxi_platform_init_attach_args,
+	.fp_device_register = sunxi_platform_device_register,
+	.fp_reset = sun50i_h6_platform_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = sunxi_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(sun50i_h6, "allwinner,sun50i-h6", &sun50i_h6_platform);
+FDT_PLATFORM(sun50i_h6, "allwinner,sun50i-h6", &sun50i_h6_platform);

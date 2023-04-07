@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.20 2021/04/24 23:36:26 thorpej Exp $ */
+/* $NetBSD: meson_platform.c,v 1.21 2023/04/07 08:55:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.20 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.21 2023/04/07 08:55:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.20 2021/04/24 23:36:26 thorpej 
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -440,18 +441,18 @@ meson8b_mpstart(void)
 	return ret;
 }
 
-static const struct arm_platform meson8b_platform = {
-	.ap_devmap = meson_platform_devmap,
-	.ap_bootstrap = meson8b_platform_bootstrap,
-	.ap_init_attach_args = meson_platform_init_attach_args,
-	.ap_device_register = meson8b_platform_device_register,
-	.ap_reset = meson8b_platform_reset,
-	.ap_delay = a9ptmr_delay,
-	.ap_uart_freq = meson_platform_uart_freq,
-	.ap_mpstart = meson8b_mpstart,
+static const struct fdt_platform meson8b_platform = {
+	.fp_devmap = meson_platform_devmap,
+	.fp_bootstrap = meson8b_platform_bootstrap,
+	.fp_init_attach_args = meson_platform_init_attach_args,
+	.fp_device_register = meson8b_platform_device_register,
+	.fp_reset = meson8b_platform_reset,
+	.fp_delay = a9ptmr_delay,
+	.fp_uart_freq = meson_platform_uart_freq,
+	.fp_mpstart = meson8b_mpstart,
 };
 
-ARM_PLATFORM(meson8b, "amlogic,meson8b", &meson8b_platform);
+FDT_PLATFORM(meson8b, "amlogic,meson8b", &meson8b_platform);
 #endif	/* SOC_MESON8B */
 
 #if defined(SOC_MESONGX)
@@ -478,21 +479,21 @@ mesongx_platform_reset(void)
 	}
 }
 
-static const struct arm_platform mesongx_platform = {
-	.ap_devmap = meson_platform_devmap,
-	.ap_bootstrap = meson_platform_bootstrap,
-	.ap_init_attach_args = meson_platform_init_attach_args,
-	.ap_device_register = meson_platform_device_register,
-	.ap_reset = mesongx_platform_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = meson_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform mesongx_platform = {
+	.fp_devmap = meson_platform_devmap,
+	.fp_bootstrap = meson_platform_bootstrap,
+	.fp_init_attach_args = meson_platform_init_attach_args,
+	.fp_device_register = meson_platform_device_register,
+	.fp_reset = mesongx_platform_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = meson_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
 #if defined(SOC_MESONGXBB)
-ARM_PLATFORM(mesongxbb, "amlogic,meson-gxbb", &mesongx_platform);
+FDT_PLATFORM(mesongxbb, "amlogic,meson-gxbb", &mesongx_platform);
 #endif	/* SOC_MESONGXBB */
 #if defined(SOC_MESONGXL)
-ARM_PLATFORM(mesongxl, "amlogic,meson-gxl", &mesongx_platform);
+FDT_PLATFORM(mesongxl, "amlogic,meson-gxl", &mesongx_platform);
 #endif	/* SOC_MESONGXL */
 #endif	/* SOC_MESONGX */

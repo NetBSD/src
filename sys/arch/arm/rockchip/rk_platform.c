@@ -1,4 +1,4 @@
-/* $NetBSD: rk_platform.c,v 1.16 2022/08/23 05:39:06 ryo Exp $ */
+/* $NetBSD: rk_platform.c,v 1.17 2023/04/07 08:55:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018,2021 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.16 2022/08/23 05:39:06 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.17 2023/04/07 08:55:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -39,8 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: rk_platform.c,v 1.16 2022/08/23 05:39:06 ryo Exp $")
 #include <sys/device.h>
 #include <sys/termios.h>
 
-
 #include <dev/fdt/fdtvar.h>
+
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -175,18 +175,18 @@ rk3288_platform_uart_freq(void)
 	return RK3288_UART_FREQ;
 }
 
-static const struct arm_platform rk3288_platform = {
-	.ap_devmap = rk3288_platform_devmap,
-	.ap_bootstrap = rk3288_platform_bootstrap,
-	.ap_init_attach_args = rk_platform_init_attach_args,
-	.ap_device_register = rk_platform_device_register,
-	.ap_reset = rk3288_platform_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = rk3288_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform rk3288_platform = {
+	.fp_devmap = rk3288_platform_devmap,
+	.fp_bootstrap = rk3288_platform_bootstrap,
+	.fp_init_attach_args = rk_platform_init_attach_args,
+	.fp_device_register = rk_platform_device_register,
+	.fp_reset = rk3288_platform_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = rk3288_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(rk3288, "rockchip,rk3288", &rk3288_platform);
+FDT_PLATFORM(rk3288, "rockchip,rk3288", &rk3288_platform);
 #endif /* SOC_RK3288 */
 
 
@@ -232,18 +232,18 @@ rk3328_platform_uart_freq(void)
 	return RK3328_UART_FREQ;
 }
 
-static const struct arm_platform rk3328_platform = {
-	.ap_devmap = rk3328_platform_devmap,
-	.ap_bootstrap = rk_platform_bootstrap,
-	.ap_init_attach_args = rk_platform_init_attach_args,
-	.ap_device_register = rk_platform_device_register,
-	.ap_reset = psci_fdt_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = rk3328_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform rk3328_platform = {
+	.fp_devmap = rk3328_platform_devmap,
+	.fp_bootstrap = rk_platform_bootstrap,
+	.fp_init_attach_args = rk_platform_init_attach_args,
+	.fp_device_register = rk_platform_device_register,
+	.fp_reset = psci_fdt_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = rk3328_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(rk3328, "rockchip,rk3328", &rk3328_platform);
+FDT_PLATFORM(rk3328, "rockchip,rk3328", &rk3328_platform);
 
 #endif /* SOC_RK3328 */
 
@@ -290,18 +290,18 @@ rk3399_platform_uart_freq(void)
 	return RK3399_UART_FREQ;
 }
 
-static const struct arm_platform rk3399_platform = {
-	.ap_devmap = rk3399_platform_devmap,
-	.ap_bootstrap = rk_platform_bootstrap,
-	.ap_init_attach_args = rk_platform_init_attach_args,
-	.ap_device_register = rk_platform_device_register,
-	.ap_reset = psci_fdt_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = rk3399_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform rk3399_platform = {
+	.fp_devmap = rk3399_platform_devmap,
+	.fp_bootstrap = rk_platform_bootstrap,
+	.fp_init_attach_args = rk_platform_init_attach_args,
+	.fp_device_register = rk_platform_device_register,
+	.fp_reset = psci_fdt_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = rk3399_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(rk3399, "rockchip,rk3399", &rk3399_platform);
+FDT_PLATFORM(rk3399, "rockchip,rk3399", &rk3399_platform);
 
 #endif /* SOC_RK3399 */
 
@@ -349,18 +349,18 @@ rk3588_platform_uart_freq(void)
 	return RK3588_UART_FREQ;
 }
 
-static const struct arm_platform rk3588_platform = {
-	.ap_devmap = rk3588_platform_devmap,
-	.ap_bootstrap = rk_platform_bootstrap,
-	.ap_init_attach_args = rk_platform_init_attach_args,
-	.ap_device_register = rk_platform_device_register,
-	.ap_reset = psci_fdt_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = rk3588_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform rk3588_platform = {
+	.fp_devmap = rk3588_platform_devmap,
+	.fp_bootstrap = rk_platform_bootstrap,
+	.fp_init_attach_args = rk_platform_init_attach_args,
+	.fp_device_register = rk_platform_device_register,
+	.fp_reset = psci_fdt_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = rk3588_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(rk3588, "rockchip,rk3588", &rk3588_platform);
+FDT_PLATFORM(rk3588, "rockchip,rk3588", &rk3588_platform);
 
 #endif /* SOC_RK3588 */
 
