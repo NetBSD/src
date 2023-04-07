@@ -1,4 +1,4 @@
-/*	$NetBSD: output.c,v 1.40 2017/11/21 03:42:39 kre Exp $	*/
+/*	$NetBSD: output.c,v 1.41 2023/04/07 10:34:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: output.c,v 1.40 2017/11/21 03:42:39 kre Exp $");
+__RCSID("$NetBSD: output.c,v 1.41 2023/04/07 10:34:13 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -409,7 +409,7 @@ doformat(struct output *dest, const char *f, va_list ap)
 	if (s == NULL)
 		error("Could not allocate formatted output buffer");
 	outstr(s, dest);
-	free(s);     
+	free(s);
 #else	/* !HAVE_VASPRINTF */
 	static const char digit[] = "0123456789ABCDEF";
 	char c;

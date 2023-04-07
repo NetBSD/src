@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.89 2022/09/18 06:03:19 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.90 2023/04/07 10:34:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.89 2022/09/18 06:03:19 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.90 2023/04/07 10:34:13 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,7 +269,7 @@ main(int argc, char **argv)
 
 	if (sflag == 0 || minusc) {
 		static int sigs[] =  {
-		    SIGINT, SIGQUIT, SIGHUP, 
+		    SIGINT, SIGQUIT, SIGHUP,
 #ifdef SIGTSTP
 		    SIGTSTP,
 #endif

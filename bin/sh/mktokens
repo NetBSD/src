@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: mktokens,v 1.14 2017/07/26 03:46:54 kre Exp $
+#	$NetBSD: mktokens,v 1.15 2023/04/07 10:34:13 kre Exp $
 #
 # Copyright (c) 1991, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -90,7 +90,7 @@ ${SED} -e 's/"/\\"/g' \
 echo '};
 '
 ${SED} 's/"//g' /tmp/ka$$ | ${AWK} '
-/TWORD/{print "#define KWDOFFSET " NR; print ""; 
+/TWORD/{print "#define KWDOFFSET " NR; print "";
       print "const char *const parsekwd[] = {"}
 /TIF/,/neverfound/{print "	\"" $3 "\","}'
 echo '	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.25 2021/09/11 20:43:32 christos Exp $	*/
+/*	$NetBSD: jobs.h,v 1.26 2023/04/07 10:34:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -77,7 +77,7 @@ struct job {
 #define	JOBSTOPPED	1	/* all procs are stopped */
 #define	JOBDONE		2	/* all procs are completed */
 	char	used;		/* true if this entry is in used */
-	char	flags;	
+	char	flags;
 #define	JOBCHANGED	1	/* set if status has changed */
 #define	JOBWANTED	2	/* set if this is a job being sought */
 #define	JPIPEFAIL	4	/* set if -o pipefail when job created */

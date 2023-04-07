@@ -1,4 +1,4 @@
-/*	$NetBSD: mystring.c,v 1.19 2022/04/16 14:20:45 kre Exp $	*/
+/*	$NetBSD: mystring.c,v 1.20 2023/04/07 10:34:13 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mystring.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mystring.c,v 1.19 2022/04/16 14:20:45 kre Exp $");
+__RCSID("$NetBSD: mystring.c,v 1.20 2023/04/07 10:34:13 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -115,7 +115,7 @@ number(const char *s)
 	char *ep = NULL;
 	intmax_t n;
 
-	if (!is_digit(*s) || ((n = strtoimax(s, &ep, 10)), 
+	if (!is_digit(*s) || ((n = strtoimax(s, &ep, 10)),
 	    (ep == NULL || ep == s || *ep != '\0')))
 		error("Invalid number: '%s'", s);
 	if (n < INT_MIN || n > INT_MAX)
