@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.27 2021/04/24 23:36:27 thorpej Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.28 2023/04/07 08:55:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.27 2021/04/24 23:36:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.28 2023/04/07 08:55:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -217,31 +217,31 @@ tegra_platform_uart_freq(void)
 #endif	/* SOC_TEGRA124 || SOC_TEGRA210 */
 
 #if defined(SOC_TEGRA124)
-static const struct arm_platform tegra124_platform = {
-	.ap_devmap = tegra_platform_devmap,
-	.ap_bootstrap = tegra124_platform_bootstrap,
-	.ap_init_attach_args = tegra_platform_init_attach_args,
-	.ap_device_register = tegra_platform_device_register,
-	.ap_reset = tegra_platform_reset,
-	.ap_delay = tegra_platform_delay,
-	.ap_uart_freq = tegra_platform_uart_freq,
-	.ap_mpstart = tegra124_mpstart,
+static const struct fdt_platform tegra124_platform = {
+	.fp_devmap = tegra_platform_devmap,
+	.fp_bootstrap = tegra124_platform_bootstrap,
+	.fp_init_attach_args = tegra_platform_init_attach_args,
+	.fp_device_register = tegra_platform_device_register,
+	.fp_reset = tegra_platform_reset,
+	.fp_delay = tegra_platform_delay,
+	.fp_uart_freq = tegra_platform_uart_freq,
+	.fp_mpstart = tegra124_mpstart,
 };
 
-ARM_PLATFORM(tegra124, "nvidia,tegra124", &tegra124_platform);
+FDT_PLATFORM(tegra124, "nvidia,tegra124", &tegra124_platform);
 #endif
 
 #if defined(SOC_TEGRA210)
-static const struct arm_platform tegra210_platform = {
-	.ap_devmap = tegra_platform_devmap,
-	.ap_bootstrap = tegra210_platform_bootstrap,
-	.ap_init_attach_args = tegra_platform_init_attach_args,
-	.ap_device_register = tegra_platform_device_register,
-	.ap_reset = tegra_platform_reset,
-	.ap_delay = tegra_platform_delay,
-	.ap_uart_freq = tegra_platform_uart_freq,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform tegra210_platform = {
+	.fp_devmap = tegra_platform_devmap,
+	.fp_bootstrap = tegra210_platform_bootstrap,
+	.fp_init_attach_args = tegra_platform_init_attach_args,
+	.fp_device_register = tegra_platform_device_register,
+	.fp_reset = tegra_platform_reset,
+	.fp_delay = tegra_platform_delay,
+	.fp_uart_freq = tegra_platform_uart_freq,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(tegra210, "nvidia,tegra210", &tegra210_platform);
+FDT_PLATFORM(tegra210, "nvidia,tegra210", &tegra210_platform);
 #endif

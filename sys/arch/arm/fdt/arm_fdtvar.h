@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.19 2021/09/05 13:20:34 jmcneill Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.20 2023/04/07 08:55:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,50 +29,13 @@
 #ifndef _ARM_ARM_FDTVAR_H
 #define _ARM_ARM_FDTVAR_H
 
-struct fdt_attach_args;
-
-/*
- * Platform-specific data
- */
-
-struct arm_platform {
-	const struct pmap_devmap * (*ap_devmap)(void);
-	void			(*ap_bootstrap)(void);
-	int			(*ap_mpstart)(void);
-	void			(*ap_startup)(void);
-	void			(*ap_init_attach_args)(struct fdt_attach_args *);
-	void			(*ap_device_register)(device_t, void *);
-	void			(*ap_reset)(void);
-	void			(*ap_delay)(u_int);
-	u_int			(*ap_uart_freq)(void);
-};
-
-struct arm_platform_info {
-	const char *			api_compat;
-	const struct arm_platform *	api_ops;
-};
-
-#define ARM_PLATFORM_DEFAULT		""
-
-#define _ARM_PLATFORM_REGISTER(name)	\
-	__link_set_add_rodata(arm_platforms, __CONCAT(name,_platinfo));
-
-#define ARM_PLATFORM(_name, _compat, _ops)				\
-static const struct arm_platform_info __CONCAT(_name,_platinfo) = {	\
-	.api_compat = (_compat),					\
-	.api_ops = (_ops)						\
-};									\
-_ARM_PLATFORM_REGISTER(_name)
-
-const struct arm_platform *	arm_fdt_platform(void);
-
 /*
  * CPU enable methods
  */
 
 struct arm_cpu_method {
-	const char *		acm_compat;
-	int			(*acm_enable)(int);
+	const char *	acm_compat;
+	int		(*acm_enable)(int);
 };
 
 #define	_ARM_CPU_METHOD_REGISTER(_name)	\

@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.20 2021/10/10 13:03:09 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.21 2023/04/07 08:55:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.20 2021/10/10 13:03:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.21 2023/04/07 08:55:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.20 2021/10/10 13:03:09 jmcneill Exp $"
 #include <uvm/uvm_extern.h>
 
 #include <dev/fdt/fdtvar.h>
+
 #include <dev/ofw/openfirm.h>
 
 #include <arm/fdt/arm_fdtvar.h>
@@ -94,7 +95,7 @@ arm_fdt_match(device_t parent, cfdata_t cf, void *aux)
 void
 arm_fdt_attach(device_t parent, device_t self, void *aux)
 {
-	const struct arm_platform *plat = arm_fdt_platform();
+	const struct fdt_platform *plat = fdt_platform_find();
 	struct fdt_attach_args faa;
 
 	aprint_naive("\n");
@@ -106,57 +107,12 @@ arm_fdt_attach(device_t parent, device_t self, void *aux)
 	arm_fdt_efi_init(self);
 #endif
 
-	plat->ap_init_attach_args(&faa);
+	plat->fp_init_attach_args(&faa);
 	faa.faa_name = "";
 	faa.faa_phandle = OF_peer(0);
 
 	config_found(self, &faa, NULL, CFARGS_NONE);
 }
-
-const struct arm_platform *
-arm_fdt_platform(void)
-{
-	static const struct arm_platform_info *booted_platform = NULL;
-	__link_set_decl(arm_platforms, struct arm_platform_info);
-	struct arm_platform_info * const *info;
-
-	if (booted_platform == NULL) {
-		const struct arm_platform_info *best_info = NULL;
-		const int phandle = OF_peer(0);
-		int match, best_match = 0;
-
-		__link_set_foreach(info, arm_platforms) {
-			const struct device_compatible_entry compat_data[] = {
-				{ .compat = (*info)->api_compat },
-				DEVICE_COMPAT_EOL
-			};
-
-			match = of_compatible_match(phandle, compat_data);
-			if (match > best_match) {
-				best_match = match;
-				best_info = *info;
-			}
-		}
-
-		booted_platform = best_info;
-	}
-
-	/*
-	 * No SoC specific platform was found. Try to find a generic
-	 * platform definition and use that if available.
-	 */
-	if (booted_platform == NULL) {
-		__link_set_foreach(info, arm_platforms) {
-			if (strcmp((*info)->api_compat, ARM_PLATFORM_DEFAULT) == 0) {
-				booted_platform = *info;
-				break;
-			}
-		}
-	}
-
-	return booted_platform == NULL ? NULL : booted_platform->api_ops;
-}
-
 void
 arm_fdt_cpu_hatch_register(void *priv, void (*cb)(void *, struct cpu_info *))
 {
