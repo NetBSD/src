@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_bus_machdep.c,v 1.2 2022/10/15 11:07:39 jmcneill Exp $ */
+/* $NetBSD: fdt_bus_machdep.c,v 1.3 2023/04/07 08:55:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_bus_machdep.c,v 1.2 2022/10/15 11:07:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_bus_machdep.c,v 1.3 2023/04/07 08:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
 
 #include <dev/fdt/fdtvar.h>
+
 #include <arm/fdt/arm_fdtvar.h>
 
 extern struct bus_space arm_generic_bs_tag;
@@ -52,11 +53,11 @@ nonposted_mmio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 bus_space_tag_t
 fdtbus_bus_tag_create(int phandle, uint32_t flags)
 {
-	const struct arm_platform *plat = arm_fdt_platform();
+	const struct fdt_platform *plat = fdt_platform_find();
 	struct bus_space *tagp;
 	struct fdt_attach_args faa;
 
-	plat->ap_init_attach_args(&faa);
+	plat->fp_init_attach_args(&faa);
 
 	tagp = kmem_alloc(sizeof(*tagp), KM_SLEEP);
 	*tagp = *faa.faa_bst;

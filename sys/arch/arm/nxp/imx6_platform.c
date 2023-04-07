@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.7 2023/04/07 08:55:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.7 2023/04/07 08:55:30 skrll Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.6 2021/04/24 23:36:28 thorpej Ex
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -222,17 +223,17 @@ imx6_platform_reset(void)
 		__asm("wfi");
 }
 
-const struct arm_platform imx6_platform = {
-	.ap_devmap = imx_platform_devmap,
-	.ap_bootstrap = imx_platform_bootstrap,
-	.ap_init_attach_args = imx_platform_init_attach_args,
-	.ap_device_register = imx_platform_device_register,
-	.ap_reset = imx6_platform_reset,
-	.ap_delay = a9ptmr_delay,
-	.ap_uart_freq = imx_platform_uart_freq,
-	.ap_mpstart = imx_platform_mpstart,
+static const struct fdt_platform imx6_platform = {
+	.fp_devmap = imx_platform_devmap,
+	.fp_bootstrap = imx_platform_bootstrap,
+	.fp_init_attach_args = imx_platform_init_attach_args,
+	.fp_device_register = imx_platform_device_register,
+	.fp_reset = imx6_platform_reset,
+	.fp_delay = a9ptmr_delay,
+	.fp_uart_freq = imx_platform_uart_freq,
+	.fp_mpstart = imx_platform_mpstart,
 };
 
-ARM_PLATFORM(imx6dl, "fsl,imx6dl", &imx6_platform);
-ARM_PLATFORM(imx6q, "fsl,imx6q", &imx6_platform);
-ARM_PLATFORM(imx6qp, "fsl,imx6qp", &imx6_platform);
+FDT_PLATFORM(imx6dl, "fsl,imx6dl", &imx6_platform);
+FDT_PLATFORM(imx6q, "fsl,imx6q", &imx6_platform);
+FDT_PLATFORM(imx6qp, "fsl,imx6qp", &imx6_platform);

@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_platform.c,v 1.10 2022/10/31 22:23:38 jmcneill Exp $	*/
+/*	$NetBSD: zynq_platform.c,v 1.11 2023/04/07 08:55:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.10 2022/10/31 22:23:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.11 2023/04/07 08:55:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -252,18 +252,18 @@ zynq_platform_reset(void)
 	bus_space_write_4(bst, bsh, PSS_RST_CTRL, SOFT_RST);
 }
 
-static const struct arm_platform zynq_platform = {
-	.ap_devmap = zynq_platform_devmap,
-	.ap_bootstrap = zynq_platform_bootstrap,
-	.ap_init_attach_args = zynq_platform_init_attach_args,
-	.ap_device_register = zynq_platform_device_register,
-	.ap_reset = zynq_platform_reset,
-	.ap_delay = a9tmr_delay,
-	.ap_uart_freq = zynq_platform_uart_freq,
+static const struct fdt_platform zynq_platform = {
+	.fp_devmap = zynq_platform_devmap,
+	.fp_bootstrap = zynq_platform_bootstrap,
+	.fp_init_attach_args = zynq_platform_init_attach_args,
+	.fp_device_register = zynq_platform_device_register,
+	.fp_reset = zynq_platform_reset,
+	.fp_delay = a9tmr_delay,
+	.fp_uart_freq = zynq_platform_uart_freq,
 #ifdef MULTIPROCESSOR
-	.ap_mpstart = zynq_platform_mpstart,
+	.fp_mpstart = zynq_platform_mpstart,
 #endif
 };
 
 
-ARM_PLATFORM(zynq, "xlnx,zynq-7000", &zynq_platform);
+FDT_PLATFORM(zynq, "xlnx,zynq-7000", &zynq_platform);

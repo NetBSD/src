@@ -1,4 +1,4 @@
-/* $NetBSD: apple_platform.c,v 1.5 2022/10/15 11:07:38 jmcneill Exp $ */
+/* $NetBSD: apple_platform.c,v 1.6 2023/04/07 08:55:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.5 2022/10/15 11:07:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.6 2023/04/07 08:55:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: apple_platform.c,v 1.5 2022/10/15 11:07:38 jmcneill 
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -150,7 +151,7 @@ apple_platform_devmap(void)
 }
 
 static u_int
-arm_platform_uart_freq(void)
+apple_platform_uart_freq(void)
 {
 	return 0;
 }
@@ -235,15 +236,15 @@ apple_platform_device_register(device_t self, void *aux)
 	}
 }
 
-static const struct arm_platform apple_arm_platform = {
-	.ap_devmap = apple_platform_devmap,
-	.ap_bootstrap = apple_platform_bootstrap,
-	.ap_init_attach_args = apple_platform_init_attach_args,
-	.ap_reset = psci_fdt_reset,
-	.ap_delay = gtmr_delay,
-	.ap_uart_freq = arm_platform_uart_freq,
-	.ap_device_register = apple_platform_device_register,
-	.ap_mpstart = arm_fdt_cpu_mpstart,
+static const struct fdt_platform apple_fdt_platform = {
+	.fp_devmap = apple_platform_devmap,
+	.fp_bootstrap = apple_platform_bootstrap,
+	.fp_init_attach_args = apple_platform_init_attach_args,
+	.fp_reset = psci_fdt_reset,
+	.fp_delay = gtmr_delay,
+	.fp_uart_freq = apple_platform_uart_freq,
+	.fp_device_register = apple_platform_device_register,
+	.fp_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(apple_arm, "apple,arm-platform", &apple_arm_platform);
+FDT_PLATFORM(apple_arm, "apple,arm-platform", &apple_fdt_platform);

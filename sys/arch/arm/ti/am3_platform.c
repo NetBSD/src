@@ -1,13 +1,14 @@
-/* $NetBSD: am3_platform.c,v 1.3 2020/09/28 11:54:23 jmcneill Exp $ */
+/* $NetBSD: am3_platform.c,v 1.4 2023/04/07 08:55:30 skrll Exp $ */
 
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am3_platform.c,v 1.3 2020/09/28 11:54:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am3_platform.c,v 1.4 2023/04/07 08:55:30 skrll Exp $");
 
 #include <sys/param.h>
 
 #include <dev/fdt/fdtvar.h>
+
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -137,13 +138,13 @@ am33xx_platform_reset(void)
 	*resetaddr = 1;
 }
 
-static const struct arm_platform am33xx_platform = {
-	.ap_devmap = am33xx_platform_devmap,
-	.ap_init_attach_args = am33xx_platform_init_attach_args,
-	.ap_bootstrap = am33xx_platform_bootstrap,
-	.ap_uart_freq = am33xx_platform_uart_freq,
-	.ap_delay = am33xx_platform_delay,
-	.ap_reset = am33xx_platform_reset,
+static const struct fdt_platform am33xx_platform = {
+	.fp_devmap = am33xx_platform_devmap,
+	.fp_init_attach_args = am33xx_platform_init_attach_args,
+	.fp_bootstrap = am33xx_platform_bootstrap,
+	.fp_uart_freq = am33xx_platform_uart_freq,
+	.fp_delay = am33xx_platform_delay,
+	.fp_reset = am33xx_platform_reset,
 };
 
-ARM_PLATFORM(am33xx, "ti,am33xx", &am33xx_platform);
+FDT_PLATFORM(am33xx, "ti,am33xx", &am33xx_platform);

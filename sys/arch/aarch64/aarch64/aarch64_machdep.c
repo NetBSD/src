@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.66 2022/08/19 08:17:32 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.67 2023/04/07 08:55:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.66 2022/08/19 08:17:32 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.67 2023/04/07 08:55:29 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.66 2022/08/19 08:17:32 ryo Exp
 #include <aarch64/kcore.h>
 
 #include <arm/fdt/arm_fdtvar.h>
+#include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_memory.h>
 
 #ifdef VERBOSE_INIT_ARM
@@ -677,9 +678,9 @@ cpu_startup(void)
 	consinit();
 
 #ifdef FDT
-	const struct arm_platform * const plat = arm_fdt_platform();
-	if (plat->ap_startup != NULL)
-		plat->ap_startup();
+	const struct fdt_platform * const plat = fdt_platform_find();
+	if (plat->fp_startup != NULL)
+		plat->fp_startup();
 #endif
 
 	/*
