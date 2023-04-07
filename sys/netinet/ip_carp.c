@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.118 2023/03/26 10:32:38 mlelstv Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.119 2023/04/07 06:44:08 mlelstv Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.118 2023/03/26 10:32:38 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.119 2023/04/07 06:44:08 mlelstv Exp $");
 
 /*
  * TODO:
@@ -1091,6 +1091,8 @@ carp_send_ad(void *v)
 		_s = pserialize_read_enter();
 		ifa = ifaof_ifpforaddr(&sa, sc->sc_carpdev);
 		if (ifa == NULL)
+			ifa = ifaof_ifpforaddr(&sa, &sc->sc_if);
+		if (ifa == NULL)
 			ip->ip_src.s_addr = 0;
 		else
 			ip->ip_src.s_addr =
@@ -1142,6 +1144,7 @@ carp_send_ad(void *v)
 	if (sc->sc_naddrs6) {
 		struct ip6_hdr *ip6;
 		struct ifaddr *ifa;
+		struct ifnet *ifp;
 		int _s;
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
@@ -1168,7 +1171,12 @@ carp_send_ad(void *v)
 		memset(&sa, 0, sizeof(sa));
 		sa.sa_family = AF_INET6;
 		_s = pserialize_read_enter();
-		ifa = ifaof_ifpforaddr(&sa, sc->sc_carpdev);
+		ifp = sc->sc_carpdev;
+		ifa = ifaof_ifpforaddr(&sa, ifp);
+		if (ifa == NULL) {	/* This should never happen with IPv6 */
+			ifp = &sc->sc_if;
+			ifa = ifaof_ifpforaddr(&sa, ifp);
+		}
 		if (ifa == NULL)	/* This should never happen with IPv6 */
 			memset(&ip6->ip6_src, 0, sizeof(struct in6_addr));
 		else
@@ -1179,7 +1187,7 @@ carp_send_ad(void *v)
 
 		ip6->ip6_dst.s6_addr16[0] = htons(0xff02);
 		ip6->ip6_dst.s6_addr8[15] = 0x12;
-		if (in6_setscope(&ip6->ip6_dst, &sc->sc_if, NULL) != 0) {
+		if (in6_setscope(&ip6->ip6_dst, ifp, NULL) != 0) {
 			if_statinc(&sc->sc_if, if_oerrors);
 			m_freem(m);
 			CARP_LOG(sc, ("in6_setscope failed"));
