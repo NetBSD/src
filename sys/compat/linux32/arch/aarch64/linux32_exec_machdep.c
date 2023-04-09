@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_exec_machdep.c,v 1.1 2021/11/25 03:08:04 ryo Exp $	*/
+/*	$NetBSD: linux32_exec_machdep.c,v 1.2 2023/04/09 12:29:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_exec_machdep.c,v 1.1 2021/11/25 03:08:04 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_exec_machdep.c,v 1.2 2023/04/09 12:29:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -127,7 +127,8 @@ linux32_exec_setup_stack(struct lwp *l, struct exec_package *epp)
 		NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, noaccess_size,
 		    noaccess_linear_min, NULLVP, 0, VM_PROT_NONE, VMCMD_STACK);
 	}
-	KASSERT(access_size > 0 && access_size <= max_stack_size);
+	KASSERT(access_size > 0);
+	KASSERT(access_size <= max_stack_size);
 	NEW_VMCMD2(&epp->ep_vmcmds, vmcmd_map_zero, access_size,
 	    access_linear_min, NULLVP, 0, VM_PROT_READ | VM_PROT_WRITE,
 	    VMCMD_STACK);
