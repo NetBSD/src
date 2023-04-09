@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.200 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.201 2023/04/09 12:33:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.200 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.201 2023/04/09 12:33:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1229,8 +1229,8 @@ nfs_getreq(struct nfsrv_descript *nd, struct nfsd *nfsd, int has_header)
 
 	nd->nd_md = md;
 	nd->nd_dpos = dpos;
-	KASSERT((nd->nd_cr == NULL && (nfsd->nfsd_flag & NFSD_NEEDAUTH) != 0)
-	     || (nd->nd_cr != NULL && (nfsd->nfsd_flag & NFSD_NEEDAUTH) == 0));
+	KASSERT((nd->nd_cr == NULL) ==
+	    ((nfsd->nfsd_flag & NFSD_NEEDAUTH) != 0));
 	return (0);
 nfsmout:
 errout:
