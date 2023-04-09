@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.183 2023/02/23 14:57:29 riastradh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.184 2023/04/09 08:17:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.183 2023/02/23 14:57:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.184 2023/04/09 08:17:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -67,8 +67,9 @@ __cpu_simple_lock_t kernel_lock[CACHE_LINE_SIZE / sizeof(__cpu_simple_lock_t)]
 void
 assert_sleepable(void)
 {
+	struct lwp *l = curlwp;
 	const char *reason;
-	uint64_t pctr;
+	uint64_t ncsw;
 	bool idle;
 
 	if (__predict_false(panicstr != NULL)) {
@@ -82,30 +83,32 @@ assert_sleepable(void)
 	 * routine may be called in delicate situations.
 	 */
 	do {
-		pctr = lwp_pctr();
+		ncsw = l->l_ncsw;
 		__insn_barrier();
 		idle = CURCPU_IDLE_P();
 		__insn_barrier();
-	} while (pctr != lwp_pctr());
+	} while (__predict_false(ncsw != l->l_ncsw));
 
 	reason = NULL;
-	if (idle && !cold) {
+	if (__predict_false(idle) && !cold) {
 		reason = "idle";
+		goto panic;
 	}
-	if (cpu_intr_p()) {
+	if (__predict_false(cpu_intr_p())) {
 		reason = "interrupt";
+		goto panic;
 	}
-	if (cpu_softintr_p()) {
+	if (__predict_false(cpu_softintr_p())) {
 		reason = "softint";
+		goto panic;
 	}
-	if (!pserialize_not_in_read_section()) {
+	if (__predict_false(!pserialize_not_in_read_section())) {
 		reason = "pserialize";
+		goto panic;
 	}
+	return;
 
-	if (reason) {
-		panic("%s: %s caller=%p", __func__, reason,
-		    (void *)RETURN_ADDRESS);
-	}
+panic:	panic("%s: %s caller=%p", __func__, reason, (void *)RETURN_ADDRESS);
 }
 
 /*
