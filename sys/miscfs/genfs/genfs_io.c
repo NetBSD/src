@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.102 2022/01/14 21:59:50 riastradh Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.103 2023/04/09 12:26:36 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.102 2022/01/14 21:59:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.103 2023/04/09 12:26:36 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,8 @@ startover:
 		GOP_SIZE(vp, origvsize, &memeof, GOP_SIZE_MEM);
 	}
 	KASSERT(ap->a_centeridx >= 0 || ap->a_centeridx <= orignpages);
-	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0 && origoffset >= 0);
+	KASSERT((origoffset & (PAGE_SIZE - 1)) == 0);
+	KASSERT(origoffset >= 0);
 	KASSERT(orignpages > 0);
 
 	/*
@@ -890,7 +891,8 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
 	KASSERT(origflags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE));
-	KASSERT((startoff & PAGE_MASK) == 0 && (endoff & PAGE_MASK) == 0);
+	KASSERT((startoff & PAGE_MASK) == 0);
+	KASSERT((endoff & PAGE_MASK) == 0);
 	KASSERT(startoff < endoff || endoff == 0);
 	KASSERT(rw_write_held(slock));
 
