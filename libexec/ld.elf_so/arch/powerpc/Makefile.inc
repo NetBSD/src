@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.16 2018/04/03 21:10:27 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.17 2023/04/09 17:24:48 chs Exp $
 
 SRCS+=		ppc_reloc.c
 LDFLAGS+=	-Wl,-e,_rtld_start
@@ -12,5 +12,4 @@ CPPFLAGS+=	-DELFSIZE=64
 .else
 SRCS+=		rtld_start.S
 CPPFLAGS+=	-DELFSIZE=32
-LDFLAGS+=	-Wl,--script,${.CURDIR}/arch/powerpc/ld.so.script
 .endif
