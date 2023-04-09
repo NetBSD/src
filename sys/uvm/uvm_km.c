@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.164 2023/02/26 07:27:14 skrll Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.165 2023/04/09 09:00:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.164 2023/02/26 07:27:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.165 2023/04/09 09:00:56 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -537,7 +537,8 @@ uvm_km_pgremove_intrsafe(struct vm_map *map, vaddr_t start, vaddr_t end)
 		for (i = 0; i < npgrm; i++) {
 			pg = PHYS_TO_VM_PAGE(pa[i]);
 			KASSERT(pg);
-			KASSERT(pg->uobject == NULL && pg->uanon == NULL);
+			KASSERT(pg->uobject == NULL);
+			KASSERT(pg->uanon == NULL);
 			KASSERT((pg->flags & PG_BUSY) == 0);
 			uvm_pagefree(pg);
 		}

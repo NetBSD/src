@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.126 2021/03/13 15:29:55 skrll Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.127 2023/04/09 09:00:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.126 2021/03/13 15:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.127 2023/04/09 09:00:56 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -323,7 +323,8 @@ amap_free(struct vm_amap *amap)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	KASSERT(amap->am_ref == 0 && amap->am_nused == 0);
+	KASSERT(amap->am_ref == 0);
+	KASSERT(amap->am_nused == 0);
 	KASSERT((amap->am_flags & AMAP_SWAPOFF) == 0);
 	slots = amap->am_maxslot;
 	kmem_free(amap->am_slots, slots * sizeof(*amap->am_slots));
@@ -774,7 +775,8 @@ amap_wipeout(struct vm_amap *amap)
 
 		slot = amap->am_slots[lcv];
 		anon = amap->am_anon[slot];
-		KASSERT(anon != NULL && anon->an_ref != 0);
+		KASSERT(anon != NULL);
+		KASSERT(anon->an_ref != 0);
 
 		KASSERT(anon->an_lock == amap->am_lock);
 		UVMHIST_LOG(maphist,"  processing anon %#jx, ref=%jd",
@@ -1069,7 +1071,8 @@ ReStart:
 		if (pg->loan_count != 0) {
 			continue;
 		}
-		KASSERT(pg->uanon == anon && pg->uobject == NULL);
+		KASSERT(pg->uanon == anon);
+		KASSERT(pg->uobject == NULL);
 
 		/*
 		 * If the page is busy, then we have to unlock, wait for
