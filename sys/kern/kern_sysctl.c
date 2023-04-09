@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.268 2023/02/17 06:20:31 skrll Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.269 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #define __COMPAT_SYSCTL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.268 2023/02/17 06:20:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.269 2023/04/09 09:18:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -2517,9 +2517,9 @@ sysctl_teardown(struct sysctllog **logp)
 	memset(&node, 0, sizeof(node));
 
 	while (log->log_left < log->log_size) {
-		KASSERT((log->log_left + 3 < log->log_size) &&
-			(log->log_left + log->log_num[log->log_left + 2] <=
-			 log->log_size));
+		KASSERT(log->log_left + 3 < log->log_size);
+		KASSERT(log->log_left + log->log_num[log->log_left + 2] <=
+		    log->log_size);
 		v = log->log_num[log->log_left++];
 		t = log->log_num[log->log_left++];
 		namelen = log->log_num[log->log_left++];

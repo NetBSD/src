@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.72 2022/10/28 21:52:02 riastradh Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.73 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.72 2022/10/28 21:52:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.73 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -433,7 +433,8 @@ softint_disestablish(void *arg)
 	uintptr_t offset;
 
 	offset = (uintptr_t)arg;
-	KASSERTMSG(offset != 0 && offset < softint_bytes, "%"PRIuPTR" %u",
+	KASSERT(offset != 0);
+	KASSERTMSG(offset < softint_bytes, "%"PRIuPTR" %u",
 	    offset, softint_bytes);
 
 	/*
@@ -496,7 +497,8 @@ softint_schedule(void *arg)
 
 	/* Find the handler record for this CPU. */
 	offset = (uintptr_t)arg;
-	KASSERTMSG(offset != 0 && offset < softint_bytes, "%"PRIuPTR" %u",
+	KASSERT(offset != 0);
+	KASSERTMSG(offset < softint_bytes, "%"PRIuPTR" %u",
 	    offset, softint_bytes);
 	sh = (softhand_t *)((uint8_t *)curcpu()->ci_data.cpu_softcpu + offset);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.287 2023/02/24 11:02:27 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.288 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.287 2023/02/24 11:02:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.288 2023/04/09 09:18:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1653,7 +1653,8 @@ pool_reclaim(struct pool *pp)
 	bool klock;
 	int rv;
 
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 
 	if (pp->pr_drain_hook != NULL) {
 		/*
@@ -2407,7 +2408,8 @@ pool_cache_invalidate(pool_cache_t pc)
 	pcg_t *pcg;
 	int n, s;
 
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 
 	if (ncpu < 2 || !mp_online) {
 		/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.26 2020/06/11 02:30:21 thorpej Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.27 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.26 2020/06/11 02:30:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.27 2023/04/09 09:18:09 riastradh Exp $");
 
 #include "opt_veriexec.h"
 
@@ -230,8 +230,11 @@ veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
 {
 	struct veriexec_fpops *ops;
 
-	KASSERT((init != NULL) && (update != NULL) && (final != NULL));
-	KASSERT((hash_len != 0) && (ctx_size != 0));
+	KASSERT(init != NULL);
+	KASSERT(update != NULL);
+	KASSERT(final != NULL);
+	KASSERT(hash_len != 0);
+	KASSERT(ctx_size != 0);
 	KASSERT(fp_type != NULL);
 
 	if (veriexec_fpops_lookup(fp_type) != NULL)

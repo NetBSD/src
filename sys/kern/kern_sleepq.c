@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.73 2022/06/29 22:27:01 riastradh Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.74 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.73 2022/06/29 22:27:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.74 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -225,7 +225,8 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj,
 
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(l->l_stat == LSONPROC);
-	KASSERT(l->l_wchan == NULL && l->l_sleepq == NULL);
+	KASSERT(l->l_wchan == NULL);
+	KASSERT(l->l_sleepq == NULL);
 	KASSERT((l->l_flag & LW_SINTR) == 0);
 
 	l->l_syncobj = sobj;
