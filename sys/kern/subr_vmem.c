@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.108 2022/05/31 08:43:16 andvar Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.109 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.108 2022/05/31 08:43:16 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.109 2023/04/09 09:18:09 riastradh Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -391,7 +391,8 @@ bt_freehead_tofree(vmem_t *vm, vmem_size_t size)
 	const vmem_size_t qsize = size >> vm->vm_quantum_shift;
 	const int idx = SIZE2ORDER(qsize);
 
-	KASSERT(size != 0 && qsize != 0);
+	KASSERT(size != 0);
+	KASSERT(qsize != 0);
 	KASSERT((size & vm->vm_quantum_mask) == 0);
 	KASSERT(idx >= 0);
 	KASSERT(idx < VMEM_MAXORDER);
@@ -414,7 +415,8 @@ bt_freehead_toalloc(vmem_t *vm, vmem_size_t size, vm_flag_t strat)
 	const vmem_size_t qsize = size >> vm->vm_quantum_shift;
 	int idx = SIZE2ORDER(qsize);
 
-	KASSERT(size != 0 && qsize != 0);
+	KASSERT(size != 0);
+	KASSERT(qsize != 0);
 	KASSERT((size & vm->vm_quantum_mask) == 0);
 
 	if (strat == VM_INSTANTFIT && ORDER2SIZE(idx) != qsize) {
@@ -1131,7 +1133,8 @@ vmem_xalloc(vmem_t *vm, const vmem_size_t size0, vmem_size_t align,
 	KASSERT((phase & vm->vm_quantum_mask) == 0);
 	KASSERT((nocross & vm->vm_quantum_mask) == 0);
 	KASSERT((nocross & (nocross - 1)) == 0);
-	KASSERT((align == 0 && phase == 0) || phase < align);
+	KASSERT(align == 0 || phase < align);
+	KASSERT(phase == 0 || phase < align);
 	KASSERT(nocross == 0 || nocross >= size);
 	KASSERT(minaddr <= maxaddr);
 	KASSERT(!VMEM_CROSS_P(phase, phase + size - 1, nocross));

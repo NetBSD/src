@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.27 2020/12/18 15:33:34 martin Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.28 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.27 2020/12/18 15:33:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.28 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -115,7 +115,8 @@ kasan_shadow_map(void *addr, size_t size)
 
 	npages = (eva - sva) / PAGE_SIZE;
 
-	KASSERT(sva >= KASAN_MD_SHADOW_START && eva < KASAN_MD_SHADOW_END);
+	KASSERT(sva >= KASAN_MD_SHADOW_START);
+	KASSERT(eva < KASAN_MD_SHADOW_END);
 
 	for (i = 0; i < npages; i++) {
 		kasan_md_shadow_map_page(sva + i * PAGE_SIZE);

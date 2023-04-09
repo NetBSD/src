@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.251 2022/07/01 01:06:04 riastradh Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.252 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -217,7 +217,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.251 2022/07/01 01:06:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.252 2023/04/09 09:18:09 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1075,7 +1075,8 @@ lwp_exit(struct lwp *l)
 
 	current = (l == curlwp);
 
-	KASSERT(current || (l->l_stat == LSIDL && l->l_target_cpu == NULL));
+	KASSERT(current || l->l_stat == LSIDL);
+	KASSERT(current || l->l_target_cpu == NULL);
 	KASSERT(p == curproc);
 
 	SDT_PROBE(proc, kernel, , lwp__exit, l, 0, 0, 0, 0);

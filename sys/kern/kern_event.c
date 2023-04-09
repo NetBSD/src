@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.146 2022/07/24 19:23:44 riastradh Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.147 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.146 2022/07/24 19:23:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.147 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1400,7 +1400,8 @@ filt_timerexpire(void *knx)
 	kn->kn_data++;
 	knote_activate_locked(kn);
 	if (kn->kn_sdata != FILT_TIMER_NOSCHED) {
-		KASSERT(kn->kn_sdata > 0 && kn->kn_sdata <= INT_MAX);
+		KASSERT(kn->kn_sdata > 0);
+		KASSERT(kn->kn_sdata <= INT_MAX);
 		callout_schedule((callout_t *)kn->kn_hook,
 		    (int)kn->kn_sdata);
 	}
@@ -2448,8 +2449,8 @@ relock:
 			kn->kn_status &= ~KN_BUSY;
 			kq->kq_count--;
 			KASSERT(kn_in_flux(kn) == false);
-			KASSERT((kn->kn_status & KN_WILLDETACH) != 0 &&
-				kn->kn_kevent.udata == curlwp);
+			KASSERT((kn->kn_status & KN_WILLDETACH) != 0);
+			KASSERT(kn->kn_kevent.udata == curlwp);
 			mutex_spin_exit(&kq->kq_lock);
 			knote_detach(kn, fdp, true);
 			mutex_enter(&fdp->fd_lock);

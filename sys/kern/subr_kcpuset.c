@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.14 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.15 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.14 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.15 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -114,7 +114,8 @@ kcpuset_sysinit(void)
 	/* Set a kcpuset_t sizes. */
 	kc_nfields = (KC_MAXCPUS >> KC_SHIFT);
 	kc_bitsize = sizeof(uint32_t) * kc_nfields;
-	KASSERT(kc_nfields != 0 && kc_bitsize != 0);
+	KASSERT(kc_nfields != 0);
+	KASSERT(kc_bitsize != 0);
 
 	kc_cache = pool_cache_init(sizeof(kcpuset_impl_t) + kc_bitsize,
 	    coherency_unit, 0, 0, "kcpuset", NULL, IPL_NONE, NULL, NULL, NULL);

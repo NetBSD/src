@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.45 2022/10/26 23:27:16 riastradh Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.46 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.45 2022/10/26 23:27:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.46 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -385,7 +385,8 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 
 	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
 	KASSERT(mutex_owned(lock));
-	KASSERT(l != NULL && l->l_ts != NULL);
+	KASSERT(l != NULL);
+	KASSERT(l->l_ts != NULL);
 
 	if (ts == NULL) {
 		/*
@@ -394,8 +395,8 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 		 */
 		ts = l->l_ts;
 		KASSERT(TS_ALL_WAITERS(ts) == 0);
-		KASSERT(LIST_EMPTY(&ts->ts_sleepq[TS_READER_Q]) &&
-			LIST_EMPTY(&ts->ts_sleepq[TS_WRITER_Q]));
+		KASSERT(LIST_EMPTY(&ts->ts_sleepq[TS_READER_Q]));
+		KASSERT(LIST_EMPTY(&ts->ts_sleepq[TS_WRITER_Q]));
 		ts->ts_obj = obj;
 		ts->ts_inheritor = NULL;
 		LIST_INSERT_HEAD(tc, ts, ts_chain);
@@ -459,7 +460,8 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 	sq = &ts->ts_sleepq[q];
 
 	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
-	KASSERT(count > 0 && count <= TS_WAITERS(ts, q));
+	KASSERT(count > 0);
+	KASSERT(count <= TS_WAITERS(ts, q));
 	KASSERT(mutex_owned(lock));
 	KASSERT(ts->ts_inheritor == curlwp || ts->ts_inheritor == NULL);
 

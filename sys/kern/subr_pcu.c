@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pcu.c,v 1.27 2022/10/26 23:38:57 riastradh Exp $	*/
+/*	$NetBSD: subr_pcu.c,v 1.28 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2014 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.27 2022/10/26 23:38:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pcu.c,v 1.28 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -308,7 +308,8 @@ pcu_load(const pcu_ops_t *pcu)
 	struct cpu_info *ci, *curci;
 	int s;
 
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 
 	s = splpcu();
 	curci = curcpu();
@@ -378,7 +379,8 @@ pcu_discard(const pcu_ops_t *pcu, lwp_t *l, bool valid)
 {
 	const u_int id = pcu->pcu_id;
 
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 
 	if (__predict_false(valid)) {
 		l->l_pcu_valid |= (1U << id);
@@ -399,7 +401,8 @@ pcu_save(const pcu_ops_t *pcu, lwp_t *l)
 {
 	const u_int id = pcu->pcu_id;
 
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 
 	if (__predict_true(l->l_pcu_cpu[id] == NULL)) {
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.232 2022/08/22 09:14:59 hannken Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.233 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.232 2022/08/22 09:14:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.233 2023/04/09 09:18:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1328,7 +1328,8 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 			error = EOPNOTSUPP;
 			break;
 		}
-		KASSERT(plock != NULL && rw_lock_held(plock));
+		KASSERT(plock != NULL);
+		KASSERT(rw_lock_held(plock));
 
 		/*
 		 * Scored a hit.  Negative is good too (ENOENT).  If there's

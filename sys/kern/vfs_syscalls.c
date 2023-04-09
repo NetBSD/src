@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.557 2023/03/05 14:40:32 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.558 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.557 2023/03/05 14:40:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.558 2023/04/09 09:18:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1947,8 +1947,8 @@ vfs_composefh_alloc(struct vnode *vp, fhandle_t **fhpp)
 	fhp->fh_fsid = mp->mnt_stat.f_fsidx;
 	error = VFS_VPTOFH(vp, &fhp->fh_fid, &fidsize);
 	if (error == 0) {
-		KASSERT((FHANDLE_SIZE(fhp) == fhsize &&
-		    FHANDLE_FILEID(fhp)->fid_len == fidsize));
+		KASSERT(FHANDLE_SIZE(fhp) == fhsize);
+		KASSERT(FHANDLE_FILEID(fhp)->fid_len == fidsize);
 		*fhpp = fhp;
 	} else {
 		kmem_free(fhp, fhsize);
@@ -4374,7 +4374,8 @@ do_sys_renameat(struct lwp *l, int fromfd, const char *from, int tofd,
 	struct mount *mp, *tmp;
 	int error;
 
-	KASSERT(l != NULL || (fromfd == AT_FDCWD && tofd == AT_FDCWD));
+	KASSERT(l != NULL || fromfd == AT_FDCWD);
+	KASSERT(l != NULL || tofd == AT_FDCWD);
 
 	error = pathbuf_maybe_copyin(from, seg, &fpb);
 	if (error)

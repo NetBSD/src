@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.198 2023/02/07 09:25:51 macallan Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.199 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.198 2023/02/07 09:25:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.199 2023/04/09 09:18:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -146,7 +146,8 @@ void
 kprintf_init(void)
 {
 
-	KASSERT(!kprintf_inited && cold); /* not foolproof, but ... */
+	KASSERT(!kprintf_inited); /* not foolproof, but ... */
+	KASSERT(cold);
 	mutex_init(&kprintf_mtx, MUTEX_DEFAULT, IPL_HIGH);
 #ifdef RND_PRINTF
 	rnd_attach_source(&rnd_printf_source, "printf", RND_TYPE_UNKNOWN,

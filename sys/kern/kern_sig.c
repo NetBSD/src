@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.404 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.405 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.404 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.405 2023/04/09 09:18:09 riastradh Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_ptrace.h"
@@ -1316,7 +1316,8 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	KASSERT(mutex_owned(&proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT((ksi->ksi_flags & KSI_QUEUED) == 0);
-	KASSERT(signo > 0 && signo < NSIG);
+	KASSERT(signo > 0);
+	KASSERT(signo < NSIG);
 
 	/*
 	 * If the process is being created by fork, is a zombie or is
@@ -1571,7 +1572,8 @@ proc_stop_done(struct proc *p, int ppmask)
 	KASSERT(mutex_owned(&proc_lock));
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT((p->p_sflag & PS_STOPPING) != 0);
-	KASSERT(p->p_nrlwps == 0 || (p->p_nrlwps == 1 && p == curproc));
+	KASSERT(p->p_nrlwps == 0 || p->p_nrlwps == 1);
+	KASSERT(p->p_nrlwps == 0 || p == curproc);
 
 	p->p_sflag &= ~PS_STOPPING;
 	p->p_stat = SSTOP;

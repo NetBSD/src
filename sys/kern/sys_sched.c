@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.49 2020/05/23 23:42:43 ad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.50 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.49 2020/05/23 23:42:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.50 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -73,7 +73,8 @@ convert_pri(lwp_t *l, int policy, pri_t pri)
 	/* Convert user priority to the in-kernel */
 	if (pri != PRI_NONE) {
 		/* Only for real-time threads */
-		KASSERT(pri >= SCHED_PRI_MIN && pri <= SCHED_PRI_MAX);
+		KASSERT(pri >= SCHED_PRI_MIN);
+		KASSERT(pri <= SCHED_PRI_MAX);
 		KASSERT(policy != SCHED_OTHER);
 		return PRI_USER_RT + pri;
 	}
