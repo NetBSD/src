@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.288 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.289 2023/04/09 12:16:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018,
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.288 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.289 2023/04/09 12:16:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1573,8 +1573,8 @@ pool_update_curpage(struct pool *pp)
 	if (pp->pr_curpage == NULL) {
 		pp->pr_curpage = LIST_FIRST(&pp->pr_emptypages);
 	}
-	KASSERT((pp->pr_curpage == NULL && pp->pr_nitems == 0) ||
-	    (pp->pr_curpage != NULL && pp->pr_nitems > 0));
+	KASSERTMSG((pp->pr_curpage == NULL) == (pp->pr_nitems == 0),
+	    "pp=%p curpage=%p nitems=%u", pp, pp->pr_curpage, pp->pr_nitems);
 }
 
 void
