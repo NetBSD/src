@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdddma.c,v 1.10 2021/12/21 09:51:22 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdddma.c,v 1.11 2023/04/09 12:31:10 riastradh Exp $	*/
 
 /*
  * hcd_ddma.c - DesignWare HS OTG Controller descriptor DMA routines
@@ -40,7 +40,7 @@
  * This file contains the Descriptor DMA implementation for Host mode
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.10 2021/12/21 09:51:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdddma.c,v 1.11 2023/04/09 12:31:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,7 +99,8 @@ static int dwc2_desc_list_alloc(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 {
 	int err;
 
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 
 	qh->desc_list = NULL;
 	qh->desc_list_sz = sizeof(struct dwc2_hcd_dma_desc) *
