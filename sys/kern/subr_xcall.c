@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.34 2020/12/22 01:57:29 ad Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.35 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.34 2020/12/22 01:57:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.35 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -257,7 +257,8 @@ uint64_t
 xc_broadcast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2)
 {
 
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 	ASSERT_SLEEPABLE();
 
 	if (__predict_false(!mp_online)) {
@@ -306,7 +307,8 @@ xc_unicast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2,
 	int s;
 
 	KASSERT(ci != NULL);
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 	ASSERT_SLEEPABLE();
 
 	if (__predict_false(!mp_online)) {
@@ -335,7 +337,8 @@ xc_wait(uint64_t where)
 {
 	xc_state_t *xc;
 
-	KASSERT(!cpu_intr_p() && !cpu_softintr_p());
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 	ASSERT_SLEEPABLE();
 
 	if (__predict_false(!mp_online)) {

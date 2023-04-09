@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.35 2022/06/28 02:04:51 riastradh Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.36 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.35 2022/06/28 02:04:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.36 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -98,7 +98,8 @@ tvtohz(const struct timeval *tv)
 	sec = tv->tv_sec;
 	usec = tv->tv_usec;
 
-	KASSERT(usec >= 0 && usec < 1000000);
+	KASSERT(usec >= 0);
+	KASSERT(usec < 1000000);
 
 	/* catch overflows in conversion time_t->int */
 	if (tv->tv_sec > INT_MAX)

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpufreq.c,v 1.9 2014/02/12 20:20:15 martin Exp $ */
+/*	$NetBSD: subr_cpufreq.c,v 1.10 2023/04/09 09:18:09 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.9 2014/02/12 20:20:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpufreq.c,v 1.10 2023/04/09 09:18:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -378,7 +378,8 @@ cpufreq_get_state_raw(uint32_t freq, struct cpufreq_state *cfs)
 	uint32_t f, hi, i = 0, lo = 0;
 
 	KASSERT(mutex_owned(&cpufreq_lock) != 0);
-	KASSERT(cf->cf_init != false && cfs != NULL);
+	KASSERT(cf->cf_init != false);
+	KASSERT(cfs != NULL);
 
 	hi = cf->cf_state_count;
 

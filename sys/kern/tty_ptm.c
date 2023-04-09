@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.45 2022/09/29 12:18:27 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.46 2023/04/09 09:18:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.45 2022/09/29 12:18:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.46 2023/04/09 09:18:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -142,7 +142,8 @@ pty_vn_open(struct vnode *vp, struct lwp *l)
 
 	if (error) {
 		/* only ptys mean we can't get these */
-		KASSERT(error != EDUPFD && error != EMOVEFD);
+		KASSERT(error != EDUPFD);
+		KASSERT(error != EMOVEFD);
 		vput(vp);
 		return error;
 	}
