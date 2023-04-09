@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.353 2022/12/05 15:47:14 martin Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.354 2023/04/09 12:16:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.353 2022/12/05 15:47:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.354 2023/04/09 12:16:42 riastradh Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -233,7 +233,7 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 	struct lwp *l = curlwp;
 	int error;
 
-	KASSERT(!(timo == 0 && intr == false));
+	KASSERT(timo != 0 || intr);
 
 	if (sleepq_dontsleep(l))
 		return sleepq_abort(NULL, 0);
