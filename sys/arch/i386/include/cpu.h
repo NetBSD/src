@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.183 2021/11/02 11:26:04 ryo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.184 2023/04/09 08:18:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -50,7 +50,7 @@ x86_curcpu(void)
 {
 	struct cpu_info *ci;
 
-	__asm volatile("movl %%fs:%1, %0" :
+	__asm("movl %%fs:%1, %0" :
 	    "=r" (ci) :
 	    "m"
 	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_self)));
@@ -62,7 +62,7 @@ x86_curlwp(void)
 {
 	lwp_t *l;
 
-	__asm volatile("movl %%fs:%1, %0" :
+	__asm("movl %%fs:%1, %0" :
 	    "=r" (l) :
 	    "m"
 	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_curlwp)));
