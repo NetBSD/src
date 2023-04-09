@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.20 2023/04/09 08:17:45 riastradh Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.21 2023/04/09 08:28:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.20 2023/04/09 08:17:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.21 2023/04/09 08:28:24 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -138,7 +138,7 @@ void
 pserialize_read_exit(int s)
 {
 
-	KASSERT((cold || kpreempt_disabled()));
+	KASSERT(__predict_false(cold) || kpreempt_disabled());
 
 	__insn_barrier();
 	if (__predict_false(curcpu()->ci_psz_read_depth-- == 0))
