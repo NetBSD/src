@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.118 2021/03/13 15:29:55 skrll Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.119 2023/04/09 09:00:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.118 2021/03/13 15:29:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.119 2023/04/09 09:00:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -449,7 +449,8 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	 * toss some pages...
 	 */
 
-	KASSERT(newsize != VSIZENOTSET && newsize >= 0);
+	KASSERT(newsize != VSIZENOTSET);
+	KASSERT(newsize >= 0);
 	KASSERT(vp->v_size <= vp->v_writesize);
 	KASSERT(vp->v_size == vp->v_writesize ||
 	    newsize == vp->v_writesize || newsize <= vp->v_size);
@@ -476,7 +477,8 @@ uvm_vnp_setwritesize(struct vnode *vp, voff_t newsize)
 {
 
 	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
-	KASSERT(newsize != VSIZENOTSET && newsize >= 0);
+	KASSERT(newsize != VSIZENOTSET);
+	KASSERT(newsize >= 0);
 	KASSERT(vp->v_size != VSIZENOTSET);
 	KASSERT(vp->v_writesize != VSIZENOTSET);
 	KASSERT(vp->v_size <= vp->v_writesize);

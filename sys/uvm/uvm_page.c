@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.251 2022/10/26 23:38:09 riastradh Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.252 2023/04/09 09:00:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.251 2022/10/26 23:38:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.252 2023/04/09 09:00:56 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1215,7 +1215,8 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	case UVM_PGA_STRAT_ONLY:
 	case UVM_PGA_STRAT_FALLBACK:
 		/* Attempt to allocate from the specified free list. */
-		KASSERT(free_list >= 0 && free_list < VM_NFREELIST);
+		KASSERT(free_list >= 0);
+		KASSERT(free_list < VM_NFREELIST);
 		pg = uvm_pagealloc_pgfl(ucpu, free_list, &color, flags);
 		if (pg != NULL) {
 			goto gotit;
@@ -2100,7 +2101,8 @@ uvm_direct_process(struct vm_page **pgs, u_int npages, voff_t off, vsize_t len,
 	voff_t pgoff = (off & PAGE_MASK);
 	struct vm_page *pg;
 
-	KASSERT(npages > 0 && len > 0);
+	KASSERT(npages > 0);
+	KASSERT(len > 0);
 
 	for (int i = 0; i < npages; i++) {
 		pg = pgs[i];
@@ -2111,7 +2113,8 @@ uvm_direct_process(struct vm_page **pgs, u_int npages, voff_t off, vsize_t len,
 		 * Caller is responsible for ensuring all the pages are
 		 * available.
 		 */
-		KASSERT(pg != NULL && pg != PGO_DONTCARE);
+		KASSERT(pg != NULL);
+		KASSERT(pg != PGO_DONTCARE);
 
 		pa = VM_PAGE_TO_PHYS(pg);
 		todo = MIN(len, PAGE_SIZE - pgoff);

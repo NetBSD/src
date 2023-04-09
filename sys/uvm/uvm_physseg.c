@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.17 2020/07/15 15:08:26 rin Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.18 2023/04/09 09:00:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -173,7 +173,8 @@ uvm_physseg_alloc(size_t sz)
 		size_t n = sz / sizeof(struct uvm_physseg);
 		nseg += n;
 
-		KASSERT(nseg > 0 && nseg <= VM_PHYSSEG_MAX);
+		KASSERT(nseg > 0);
+		KASSERT(nseg <= VM_PHYSSEG_MAX);
 
 		return &uvm_physseg[nseg - n];
 	}
@@ -1012,7 +1013,8 @@ uvm_physseg_set_avail_start(uvm_physseg_t upm, paddr_t avail_start)
 	paddr_t avail_end;
 	avail_end = uvm_physseg_get_avail_end(upm);
 	KASSERT(uvm_physseg_valid_p(upm));
-	KASSERT(avail_start < avail_end && avail_start >= ps->start);
+	KASSERT(avail_start < avail_end);
+	KASSERT(avail_start >= ps->start);
 #endif
 
 	ps->avail_start = avail_start;
@@ -1027,7 +1029,8 @@ uvm_physseg_set_avail_end(uvm_physseg_t upm, paddr_t avail_end)
 	paddr_t avail_start;
 	avail_start = uvm_physseg_get_avail_start(upm);
 	KASSERT(uvm_physseg_valid_p(upm));
-	KASSERT(avail_end > avail_start && avail_end <= ps->end);
+	KASSERT(avail_end > avail_start);
+	KASSERT(avail_end <= ps->end);
 #endif
 
 	ps->avail_end = avail_end;
@@ -1093,7 +1096,8 @@ uvm_physseg_init_seg(uvm_physseg_t upm, struct vm_page *pgs)
 	struct uvm_physseg *seg;
 	struct vm_page *pg;
 
-	KASSERT(upm != UVM_PHYSSEG_TYPE_INVALID && pgs != NULL);
+	KASSERT(upm != UVM_PHYSSEG_TYPE_INVALID);
+	KASSERT(pgs != NULL);
 
 	seg = HANDLE_TO_PHYSSEG_NODE(upm);
 	KASSERT(seg != NULL);

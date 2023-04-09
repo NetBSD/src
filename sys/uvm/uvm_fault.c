@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.231 2022/10/26 23:27:32 riastradh Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.232 2023/04/09 09:00:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.231 2022/10/26 23:27:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.232 2023/04/09 09:00:56 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -2670,7 +2670,8 @@ uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 	 * find the beginning map entry for the region.
 	 */
 
-	KASSERT(start >= vm_map_min(map) && end <= vm_map_max(map));
+	KASSERT(start >= vm_map_min(map));
+	KASSERT(end <= vm_map_max(map));
 	if (uvm_map_lookup_entry(map, start, &entry) == false)
 		panic("uvm_fault_unwire_locked: address not in map");
 
@@ -2683,8 +2684,8 @@ uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 
 		KASSERT(va >= entry->start);
 		while (va >= entry->end) {
-			KASSERT(entry->next != &map->header &&
-				entry->next->start <= entry->end);
+			KASSERT(entry->next != &map->header);
+			KASSERT(entry->next->start <= entry->end);
 			entry = entry->next;
 		}
 

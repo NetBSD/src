@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.207 2022/12/21 02:28:06 chs Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.208 2023/04/09 09:00:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.207 2022/12/21 02:28:06 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.208 2023/04/09 09:00:56 riastradh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1873,7 +1873,8 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * allocate a buf for the i/o.
 	 */
 
-	KASSERT(curlwp != uvm.pagedaemon_lwp || (write && async));
+	KASSERT(curlwp != uvm.pagedaemon_lwp || write);
+	KASSERT(curlwp != uvm.pagedaemon_lwp || async);
 	bp = getiobuf(swapdev_vp, curlwp != uvm.pagedaemon_lwp);
 	if (bp == NULL) {
 		uvm_aio_aiodone_pages(pps, npages, true, ENOMEM);
