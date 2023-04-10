@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.83 2022/07/01 01:06:51 riastradh Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.84 2023/04/10 15:26:56 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.83 2022/07/01 01:06:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.84 2023/04/10 15:26:56 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -442,12 +442,8 @@ static void print_vs_format_dv_descriptor(
 	const uvideo_vs_format_dv_descriptor_t *);
 #endif /* !UVIDEO_DEBUG */
 
-#define GET(type, descp, field)						      \
-	(KASSERT((descp)->bLength >= sizeof(type)),			      \
-	    ((const type *)(descp))->field)
-#define GETP(type, descp, field)					      \
-	(KASSERT((descp)->bLength >= sizeof(type)),			      \
-	    &(((const type *)(descp))->field))
+#define GET(type, descp, field) (((const type *)(descp))->field)
+#define GETP(type, descp, field) (&(((const type *)(descp))->field))
 
 /*
  * Given a format descriptor and frame descriptor, copy values common
@@ -1312,6 +1308,13 @@ uvideo_stream_free(struct uvideo_stream *vs)
 	kmem_free(vs, sizeof(*vs));
 }
 
+#define framedesc_size(T, d) ( \
+	offsetof(T, uFrameInterval) + \
+	((T *)(d))->bFrameIntervalType \
+	    ? ((T *)(d))->bFrameIntervalType \
+	        * sizeof(((T *)(d))->uFrameInterval.discrete) \
+	    : sizeof(((T *)(d))->uFrameInterval.continuous) \
+)
 
 static usbd_status
 uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
@@ -1342,7 +1345,6 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			return USBD_INVAL;
 		}
 		subtype = UDESC_VS_FRAME_UNCOMPRESSED;
-		subtypelen = sizeof(uvideo_vs_frame_uncompressed_descriptor_t);
 		default_index = GET(uvideo_vs_format_uncompressed_descriptor_t,
 				    format_desc,
 				    bDefaultFrameIndex);
@@ -1372,7 +1374,6 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			return USBD_INVAL;
 		}
 		subtype = UDESC_VS_FRAME_FRAME_BASED;
-		subtypelen = sizeof(uvideo_frame_frame_based_descriptor_t);
 		default_index = GET(uvideo_format_frame_based_descriptor_t,
 				    format_desc,
 				    bDefaultFrameIndex);
@@ -1386,7 +1387,6 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			return USBD_INVAL;
 		}
 		subtype = UDESC_VS_FRAME_MJPEG;
-		subtypelen = sizeof(uvideo_vs_frame_mjpeg_descriptor_t);
 		default_index = GET(uvideo_vs_format_mjpeg_descriptor_t,
 				    format_desc,
 				    bDefaultFrameIndex);
@@ -1397,8 +1397,6 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 			 format_desc->bDescriptorSubtype));
 		return USBD_INVAL;
 	}
-
-	KASSERT(subtypelen >= sizeof(*uvdesc));
 
 	pformat = NULL;
 	SIMPLEQ_FOREACH(pfiter, &vs->vs_pixel_formats, entries) {
@@ -1432,6 +1430,29 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 		uvdesc = (const uvideo_descriptor_t *)desc;
 		if (uvdesc->bDescriptorSubtype != subtype)
 			break;
+
+		switch (format_desc->bDescriptorSubtype) {
+		case UDESC_VS_FORMAT_UNCOMPRESSED:
+			subtypelen = framedesc_size(
+			    const uvideo_vs_frame_uncompressed_descriptor_t,
+			    uvdesc);
+			break;
+		case UDESC_VS_FORMAT_MJPEG:
+			subtypelen = framedesc_size(
+			    const uvideo_vs_frame_mjpeg_descriptor_t,
+			    uvdesc);
+			break;
+		case UDESC_VS_FORMAT_FRAME_BASED:
+			subtypelen = framedesc_size(
+			    const uvideo_frame_frame_based_descriptor_t,
+			    uvdesc);
+			break;
+		default:
+			/* will bail out below */
+			subtypelen = uvdesc->bLength;
+			break;
+		}
+
 		if (uvdesc->bLength < subtypelen) {
 			DPRINTF(("uvideo:"
 				" truncated CS subtype-0x%x descriptor,"
@@ -1985,7 +2006,10 @@ uvideo_open(void *addr, int flags)
 		return EIO;
 
 	/* XXX select default format */
+	if (vs->vs_default_format == NULL)
+		return EINVAL;
 	fmt = *vs->vs_default_format;
+
 	return uvideo_set_format(addr, &fmt);
 }
 

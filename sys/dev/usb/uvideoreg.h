@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideoreg.h,v 1.7 2022/05/14 15:28:59 riastradh Exp $	*/
+/*	$NetBSD: uvideoreg.h,v 1.8 2023/04/10 15:26:56 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -435,8 +435,9 @@ typedef struct {
 	uDWord		dwMaxVideoFrameBufferSize;
 	uDWord		dwDefaultFrameInterval;
 	uByte		bFrameIntervalType;
+	uvideo_frame_interval_t uFrameInterval;
 } UPACKED uvideo_vs_frame_uncompressed_descriptor_t;
-CTASSERT(sizeof(uvideo_vs_frame_uncompressed_descriptor_t) == 26);
+
 
 /* Frame based Format and Frame descriptors.  This is for generic
  * frame based payloads not covered by other types (e.g, uncompressed
@@ -470,8 +471,9 @@ typedef struct {
 	uDWord		dwDefaultFrameInterval;
 	uByte		bFrameIntervalType;
 	uDWord		dwBytesPerLine;
+	uvideo_frame_interval_t uFrameInterval;
 } UPACKED uvideo_frame_frame_based_descriptor_t;
-CTASSERT(sizeof(uvideo_frame_frame_based_descriptor_t) == 26);
+
 
 /* MJPEG format and frame descriptors */
 
@@ -504,8 +506,9 @@ typedef struct {
 	uDWord		dwMaxVideoFrameBufferSize;
 	uDWord		dwDefaultFrameInterval;
 	uByte		bFrameIntervalType;
+	uvideo_frame_interval_t uFrameInterval;
 } UPACKED uvideo_vs_frame_mjpeg_descriptor_t;
-CTASSERT(sizeof(uvideo_vs_frame_mjpeg_descriptor_t) == 26);
+
 
 typedef struct {
 	uByte		bLength;
