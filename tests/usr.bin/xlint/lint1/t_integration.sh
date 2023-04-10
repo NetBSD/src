@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.78 2023/02/06 21:20:58 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.79 2023/04/10 23:52:49 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -62,6 +62,8 @@ configure_test_case()
 		}
 
 		function platform_has(prop) {
+			if (platform[prop] != "")
+				return prop == archsubdir
 			if (!match(prop, /^(schar|uchar|ilp32|lp64|int|long|ldbl-64|ldbl-96|ldbl-128)$/)) {
 				printf("bad property '\''%s'\''\n", prop) > "/dev/stderr"
 				exit(1)
