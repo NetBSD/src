@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.17 2023/04/02 14:43:35 mlelstv Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.18 2023/04/10 15:14:50 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ union usb_audio_streaming_type1_descriptor {
 	struct usb_audio_streaming_type1_v2_descriptor v2;
 };
 
-struct usb_audio_cluster {
+struct usb_audio_v1_cluster {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
 #define	UA_CHANNEL_LEFT		0x0001
@@ -175,6 +175,45 @@ struct usb_audio_cluster {
 	uByte		iChannelNames;
 } UPACKED;
 
+struct usb_audio_v2_cluster {
+	uByte		bNrChannels;
+	uDWord		bmChannelConfig;
+/*#define	UA_CHANNEL_LEFT		0x00000001 */
+/*#define	UA_CHANNEL_RIGHT	0x00000002 */
+/*#define	UA_CHANNEL_CENTER	0x00000004 */
+/*#define	UA_CHANNEL_LFE		0x00000008 */
+#define	UA_CHANNEL_BL		0x00000010
+#define	UA_CHANNEL_BR		0x00000020
+#define	UA_CHANNEL_FLC		0x00000040
+#define	UA_CHANNEL_FRC		0x00000080
+#define	UA_CHANNEL_BC		0x00000100
+#define	UA_CHANNEL_SL		0x00000200
+#define	UA_CHANNEL_SR		0x00000400
+#define	UA_CHANNEL_TC		0x00000800
+#define	UA_CHANNEL_TFL		0x00001000
+#define	UA_CHANNEL_TFC		0x00002000
+#define	UA_CHANNEL_TFR		0x00004000
+#define	UA_CHANNEL_TBL		0x00008000
+#define	UA_CHANNEL_TBC		0x00010000
+#define	UA_CHANNEL_TBR		0x00020000
+#define	UA_CHANNEL_TFLC		0x00040000
+#define	UA_CHANNEL_TFRC		0x00080000
+#define	UA_CHANNEL_LLFE		0x00100000
+#define	UA_CHANNEL_RLFE		0x00200000
+#define	UA_CHANNEL_TSL		0x00400000
+#define	UA_CHANNEL_TSR		0x00800000
+#define	UA_CHANNEL_BOTTOM	0x01000000
+#define	UA_CHANNEL_BOTTOMLC	0x02000000
+#define	UA_CHANNEL_BOTTOMRC	0x04000000
+#define	UA_CHANNEL_RD		0x80000000
+	uByte		iChannelNames;
+} UPACKED;
+
+union usb_audio_cluster {
+	struct usb_audio_v1_cluster v1;
+	struct usb_audio_v2_cluster v2;
+};
+
 /* Shared by all units and terminals */
 struct usb_audio_unit {
 	uByte		bLength;
@@ -184,7 +223,7 @@ struct usb_audio_unit {
 };
 
 /* UDESCSUB_AC_INPUT */
-struct usb_audio_input_terminal {
+struct usb_audio_input_v1_terminal {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
@@ -196,9 +235,28 @@ struct usb_audio_input_terminal {
 	uByte		iChannelNames;
 	uByte		iTerminal;
 } UPACKED;
+struct usb_audio_input_v2_terminal {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		bTerminalId;
+	uWord		wTerminalType;
+	uByte		bAssocTerminal;
+	uByte		bCSourceId;
+	uByte		bNrChannels;
+	uDWord		bmChannelConfig;
+	uByte		iChannelNames;
+	uWord		bmControls;
+	uByte		iTerminal;
+} UPACKED;
+
+union usb_audio_input_terminal {
+	struct usb_audio_input_v1_terminal v1;
+	struct usb_audio_input_v2_terminal v2;
+};
 
 /* UDESCSUB_AC_OUTPUT */
-struct usb_audio_output_terminal {
+struct usb_audio_output_v1_terminal {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
@@ -208,6 +266,23 @@ struct usb_audio_output_terminal {
 	uByte		bSourceId;
 	uByte		iTerminal;
 } UPACKED;
+struct usb_audio_output_v2_terminal {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		bTerminalId;
+	uWord		wTerminalType;
+	uByte		bAssocTerminal;
+	uByte		bSourceId;
+	uByte		bCSourceId;
+	uWord		bmControls;
+	uByte		iTerminal;
+} UPACKED;
+
+union usb_audio_output_terminal {
+	struct usb_audio_output_v1_terminal v1;
+	struct usb_audio_output_v2_terminal v2;
+};
 
 /* UDESCSUB_AC_MIXER */
 struct usb_audio_mixer_unit {
@@ -217,15 +292,27 @@ struct usb_audio_mixer_unit {
 	uByte		bUnitId;
 	uByte		bNrInPins;
 	uByte		baSourceId[255]; /* [bNrInPins] */
-	/* struct usb_audio_mixer_unit_1 */
+	/* union usb_audio_mixer_unit_1 */
 } UPACKED;
-struct usb_audio_mixer_unit_1 {
+struct usb_audio_mixer_v1_unit_1 {
 	uByte		bNrChannels;
 	uWord		wChannelConfig;
 	uByte		iChannelNames;
 	uByte		bmControls[255]; /* [bNrChannels] */
 	/*uByte		iMixer;*/
 } UPACKED;
+struct usb_audio_mixer_v2_unit_1 {
+	uByte		bNrChannels;
+	uDWord		bmChannelConfig;
+	uByte		iChannelNames;
+	uByte		bmControls[255]; /* [bNrChannels] */
+	/*uByte		iMixer;*/
+} UPACKED;
+
+union usb_audio_mixer_unit_1 {
+	struct usb_audio_mixer_v1_unit_1 v1;
+	struct usb_audio_mixer_v2_unit_1 v2;
+};
 
 /* UDESCSUB_AC_SELECTOR */
 struct usb_audio_selector_unit {
