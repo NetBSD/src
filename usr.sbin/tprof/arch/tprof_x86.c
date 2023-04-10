@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.15 2022/12/08 05:29:27 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.16 2023/04/10 06:08:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -571,6 +571,8 @@ init_intel_generic(void)
 		case 0x5e: /* Skylake */
 		case 0x8e: /* Kabylake */
 		case 0x9e: /* Kabylake */
+		case 0xa5: /* Cometlake */
+		case 0xa6: /* Cometlake */
 			table->next = init_intel_skylake_kabylake();
 			break;
 		}
