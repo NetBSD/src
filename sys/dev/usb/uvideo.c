@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.84 2023/04/10 15:26:56 mlelstv Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.85 2023/04/10 15:27:51 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.84 2023/04/10 15:26:56 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.85 2023/04/10 15:27:51 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1811,7 +1811,7 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 		}
 
 		/* Give it some time to settle */
-		usbd_delay_ms(vs->vs_parent->sc_udev, 1000);
+		usbd_delay_ms(vs->vs_parent->sc_udev, 20);
 
 		/* Set to zero bandwidth alternate interface zero */
 		err = usbd_set_interface(vs->vs_iface, 0);
