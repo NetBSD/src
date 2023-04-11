@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.308 2023/02/17 23:13:01 riastradh Exp $	*/
+/*	$NetBSD: tty.c,v 1.309 2023/04/11 10:23:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.308 2023/02/17 23:13:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.309 2023/04/11 10:23:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2380,6 +2380,7 @@ ttwrite(struct tty *tp, struct uio *uio, int flag)
 	 * offset and iov pointers have moved forward, but it doesn't matter
 	 * (the call will either return short or restart with a new uio).
 	 */
+	KASSERTMSG(error || cc == 0, "error=%d cc=%d", error, cc);
 	uio->uio_resid += cc;
 	return (error);
 
