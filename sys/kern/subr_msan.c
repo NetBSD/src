@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.18 2022/10/26 23:38:09 riastradh Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.19 2023/04/11 10:19:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.18 2022/10/26 23:38:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.19 2023/04/11 10:19:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -146,6 +146,7 @@ kmsan_orig_name(int type)
 static void
 kmsan_report_hook(const void *addr, size_t size, size_t off, const char *hook)
 {
+	unsigned long symstart;
 	const char *mod, *sym;
 	msan_orig_t *orig;
 	const char *typename;
@@ -175,14 +176,29 @@ kmsan_report_hook(const void *addr, size_t size, size_t off, const char *hook)
 
 	if (kmsan_md_is_pc(ptr)) {
 		s = pserialize_read_enter();
-		if (ksyms_getname(&mod, &sym, (vaddr_t)ptr, KSYMS_PROC)) {
+		if (ksyms_getname(&mod, &sym, (vaddr_t)ptr, KSYMS_PROC) ||
+		    ksyms_getval(mod, sym, &symstart, KSYMS_PROC)) {
 			REPORT("MSan: Uninitialized %s Memory In %s "
 			    "At Offset %zu/%zu, IP %p\n", typename, hook, off,
 			    size, (void *)ptr);
 		} else {
+			char soff[16] = "";
+
+			if ((vaddr_t)ptr < symstart) {
+				snprintf(soff, sizeof(soff), "-0x%"PRIxVADDR,
+				    symstart - (vaddr_t)ptr);
+			} else if ((vaddr_t)ptr > symstart) {
+				snprintf(soff, sizeof(soff), "+0x%"PRIxVADDR,
+				    (vaddr_t)ptr - symstart);
+			}
 			REPORT("MSan: Uninitialized %s Memory In %s "
-			    "At Offset %zu/%zu, From %s()\n", typename, hook,
-			    off, size, sym);
+			    "At Offset %zu/%zu, From %s%s%lx\n",
+			    typename, hook,
+			    off, size, sym,
+			    ((unsigned long)ptr < symstart ? "-" :
+				(unsigned long)ptr > symstart ? "+" :
+				""),
+			    (unsigned long)ptr - symstart);
 		}
 		pserialize_read_exit(s);
 	} else {
