@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_intel.c,v 1.6 2023/04/11 02:47:01 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86_intel.c,v 1.7 2023/04/11 09:53:28 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.6 2023/04/11 02:47:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.7 2023/04/11 09:53:28 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,6 +102,9 @@ static uint32_t
 tprof_intel_ncounters(void)
 {
 	uint32_t descs[4];
+
+	if (cpuid_level < 0x0a)
+		return 0;
 
 	x86_cpuid(0x0a, descs);
 
