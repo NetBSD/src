@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_intel.c,v 1.5 2022/12/01 00:32:52 ryo Exp $	*/
+/*	$NetBSD: tprof_x86_intel.c,v 1.6 2023/04/11 02:47:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.5 2022/12/01 00:32:52 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.6 2023/04/11 02:47:01 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.5 2022/12/01 00:32:52 ryo Exp 
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
 
-#define	NCTRS	4	/* XXX */
 static u_int counter_bitwidth;
 
 #define	PERFEVTSEL(i)		(MSR_EVNTSEL0 + (i))
@@ -102,7 +101,11 @@ static nmi_handler_t *intel_nmi_handle;
 static uint32_t
 tprof_intel_ncounters(void)
 {
-	return NCTRS;
+	uint32_t descs[4];
+
+	x86_cpuid(0x0a, descs);
+
+	return __SHIFTOUT(descs[0], CPUID_PERF_NGPPC);
 }
 
 static u_int
