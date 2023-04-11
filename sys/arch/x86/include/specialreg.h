@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.205 2023/04/11 02:44:06 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.206 2023/04/11 06:42:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -481,7 +481,7 @@
 	"b\14AVX512_BITALG\0" "b\15TME_EN\0" "b\16AVX512_VPOPCNTDQ\0"	      \
 	"b\20LA57\0"							      \
 	"f\21\5MAWAU\0"			"b\26RDPID\0"	"b\27KL\0"	      \
-	"b\30\BUS_LOCK_DETECT" "b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	      \
+	"b\30BUS_LOCK_DETECT" "b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	      \
 	"b\34MOVDIR64B\0" "b\35ENQCMD\0" "b\36SGXLC\0"	"b\37PKS\0"
 
 /* %ecx = 0, %edx */
