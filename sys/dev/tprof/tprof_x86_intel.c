@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_intel.c,v 1.7 2023/04/11 09:53:28 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86_intel.c,v 1.8 2023/04/11 10:07:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.7 2023/04/11 09:53:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_intel.c,v 1.8 2023/04/11 10:07:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,18 +114,21 @@ tprof_intel_ncounters(void)
 static u_int
 tprof_intel_counter_bitwidth(u_int counter)
 {
+
 	return counter_bitwidth;
 }
 
 static inline void
 tprof_intel_counter_write(u_int counter, uint64_t val)
 {
+
 	wrmsr(PERFCTR(counter), val);
 }
 
 static inline uint64_t
 tprof_intel_counter_read(u_int counter)
 {
+
 	return rdmsr(PERFCTR(counter));
 }
 
@@ -142,7 +145,7 @@ tprof_intel_configure_event(u_int counter, const tprof_param_t *param)
 	    PERFEVTSEL_INT;
 	wrmsr(PERFEVTSEL(counter), evtval);
 
-	/* reset the counter */
+	/* Reset the counter */
 	tprof_intel_counter_write(counter, param->p_value);
 }
 
@@ -166,7 +169,8 @@ tprof_intel_stop(tprof_countermask_t stopmask)
 	while ((bit = ffs(stopmask)) != 0) {
 		bit--;
 		CLR(stopmask, __BIT(bit));
-		wrmsr(PERFEVTSEL(bit), rdmsr(PERFEVTSEL(bit)) & ~PERFEVTSEL_EN);
+		wrmsr(PERFEVTSEL(bit), rdmsr(PERFEVTSEL(bit)) &
+		    ~PERFEVTSEL_EN);
 	}
 }
 
@@ -191,13 +195,13 @@ tprof_intel_nmi(const struct trapframe *tf, void *arg)
 			continue;	/* not overflowed */
 
 		if (ISSET(sc->sc_ctr_prof_mask, __BIT(bit))) {
-			/* account for the counter, and reset */
+			/* Account for the counter, and reset */
 			tprof_intel_counter_write(bit,
 			    sc->sc_count[bit].ctr_counter_reset_val);
 			counters_offset[bit] +=
 			    sc->sc_count[bit].ctr_counter_val + ctr;
 
-			/* record a sample */
+			/* Record a sample */
 #if defined(__x86_64__)
 			tfi.tfi_pc = tf->tf_rip;
 #else
@@ -207,12 +211,12 @@ tprof_intel_nmi(const struct trapframe *tf, void *arg)
 			tfi.tfi_inkernel = tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS;
 			tprof_sample(NULL, &tfi);
 		} else {
-			/* not profiled, but require to consider overflow */
+			/* Not profiled, but require to consider overflow */
 			counters_offset[bit] += __BIT(counter_bitwidth);
 		}
 	}
 
-	/* unmask PMI */
+	/* Unmask PMI */
 	pcint = lapic_readreg(LAPIC_LVT_PCINT);
 	KASSERT((pcint & LAPIC_LVT_MASKED) != 0);
 	lapic_writereg(LAPIC_LVT_PCINT, pcint & ~LAPIC_LVT_MASKED);
@@ -223,6 +227,7 @@ tprof_intel_nmi(const struct trapframe *tf, void *arg)
 static uint64_t
 tprof_intel_counter_estimate_freq(u_int counter)
 {
+
 	return curcpu()->ci_data.cpu_cc_freq;
 }
 
@@ -231,20 +236,18 @@ tprof_intel_ident(void)
 {
 	uint32_t descs[4];
 
-	if (cpu_vendor != CPUVENDOR_INTEL) {
+	if (cpu_vendor != CPUVENDOR_INTEL)
 		return TPROF_IDENT_NONE;
-	}
 
-	if (cpuid_level < 0x0A) {
+	if (cpuid_level < 0x0a)
 		return TPROF_IDENT_NONE;
-	}
-	x86_cpuid(0x0A, descs);
-	if ((descs[0] & CPUID_PERF_VERSION) == 0) {
+
+	x86_cpuid(0x0a, descs);
+	if ((descs[0] & CPUID_PERF_VERSION) == 0)
 		return TPROF_IDENT_NONE;
-	}
-	if ((descs[0] & CPUID_PERF_NGPPC) == 0) {
+
+	if ((descs[0] & CPUID_PERF_NGPPC) == 0)
 		return TPROF_IDENT_NONE;
-	}
 
 	counter_bitwidth = __SHIFTOUT(descs[0], CPUID_PERF_NBWGPPC);
 
@@ -273,9 +276,8 @@ tprof_intel_establish(tprof_backend_softc_t *sc)
 {
 	uint64_t xc;
 
-	if (tprof_intel_ident() == TPROF_IDENT_NONE) {
+	if (tprof_intel_ident() == TPROF_IDENT_NONE)
 		return ENOTSUP;
-	}
 
 	KASSERT(intel_nmi_handle == NULL);
 	intel_nmi_handle = nmi_establish(tprof_intel_nmi, sc);
