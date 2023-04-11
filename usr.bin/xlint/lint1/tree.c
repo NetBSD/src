@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.507 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.508 2023/04/11 00:03:42 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.507 2023/03/28 14:44:35 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.508 2023/04/11 00:03:42 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1584,7 +1584,13 @@ fold_float(tnode_t *tn)
 	}
 
 	lint_assert(fpe != 0 || isnan((double)v->v_ldbl) == 0);
-	if (fpe != 0 || isfinite((double)v->v_ldbl) == 0 ||
+	if (is_complex(v->v_tspec)) {
+		/*
+		 * Don't warn, as lint doesn't model the imaginary part of
+		 * complex numbers.
+		 */
+		fpe = 0;
+	} else if (fpe != 0 || isfinite((double)v->v_ldbl) == 0 ||
 	    (t == FLOAT &&
 	     (v->v_ldbl > FLT_MAX || v->v_ldbl < -FLT_MAX)) ||
 	    (t == DOUBLE &&
