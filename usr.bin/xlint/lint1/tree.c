@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.510 2023/04/11 19:07:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.511 2023/04/11 19:40:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.510 2023/04/11 19:07:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.511 2023/04/11 19:40:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3646,11 +3646,11 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 		v->v_ldbl = v->v_ldbl > 0 ? max : min;
 	}
 
-	if (nt == FLOAT) {
+	if (nt == FLOAT || nt == FCOMPLEX) {
 		nv->v_ldbl = (float)v->v_ldbl;
-	} else if (nt == DOUBLE) {
+	} else if (nt == DOUBLE || nt == DCOMPLEX) {
 		nv->v_ldbl = (double)v->v_ldbl;
-	} else if (nt == LDOUBLE) {
+	} else if (nt == LDOUBLE || nt == LCOMPLEX) {
 		nv->v_ldbl = v->v_ldbl;
 	} else {
 		nv->v_quad = (int64_t)v->v_ldbl;
