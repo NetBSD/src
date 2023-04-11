@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.69 2023/03/30 10:39:30 riastradh Exp $ */
+/* $NetBSD: style,v 1.70 2023/04/11 14:22:10 riastradh Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.69 2023/03/30 10:39:30 riastradh Exp $");
+__RCSID("$NetBSD: style,v 1.70 2023/04/11 14:22:10 riastradh Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -362,10 +362,6 @@ function(int a1, int a2, float fl, int a4)
 	 * declarations next to their first use, and initialize
 	 * opportunistically. This avoids over-initialization and
 	 * accidental bugs caused by declaration reordering.
-	 *
-	 * Never declare extern variables in .c files.  Declare them in the
-	 * appropriate .h file shared by the .c file where they are defined
-	 * and the .c file where they are used.
 	 */
 	struct foo three, *four;
 	double five;
