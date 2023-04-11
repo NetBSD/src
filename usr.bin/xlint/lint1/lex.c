@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.157 2023/04/07 11:08:31 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.158 2023/04/11 00:03:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.157 2023/04/07 11:08:31 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.158 2023/04/11 00:03:42 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -626,19 +626,20 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 	const char *cp = yytext;
 	size_t len = yyleng;
 
-	if (cp[len - 1] == 'i')
-		len--;		/* imaginary, do nothing for now */
+	bool imaginary = cp[len - 1] == 'i';
+	if (imaginary)
+		len--;
 
 	char c = cp[len - 1];
 	tspec_t typ;
 	if (c == 'f' || c == 'F') {
-		typ = FLOAT;
+		typ = imaginary ? FCOMPLEX : FLOAT;
 		len--;
 	} else if (c == 'l' || c == 'L') {
-		typ = LDOUBLE;
+		typ = imaginary ? LCOMPLEX : LDOUBLE;
 		len--;
 	} else
-		typ = DOUBLE;
+		typ = imaginary ? DCOMPLEX : DOUBLE;
 
 	if (!allow_c90 && typ != DOUBLE) {
 		/* suffixes F and L are illegal in traditional C */
