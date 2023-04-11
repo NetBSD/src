@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.68 2023/04/11 12:56:07 riastradh Exp $	*/
+/*	$NetBSD: plcom.c,v 1.69 2023/04/11 12:58:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -93,13 +93,13 @@
  * Derived from the NS16550AF com driver.
  *
  * Lock order:
- *	tty_lock (IPL_VM)
+ *	ttylock (IPL_VM)
  *	-> sc->sc_lock (IPL_HIGH)
  *	-> timecounter_lock (IPL_HIGH)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.68 2023/04/11 12:56:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.69 2023/04/11 12:58:03 riastradh Exp $");
 
 #include "opt_plcom.h"
 #include "opt_kgdb.h"
