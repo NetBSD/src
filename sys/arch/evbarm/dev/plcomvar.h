@@ -1,4 +1,4 @@
-/*	$NetBSD: plcomvar.h,v 1.19 2023/01/24 06:56:40 mlelstv Exp $	*/
+/*	$NetBSD: plcomvar.h,v 1.20 2023/04/11 12:56:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -29,6 +29,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef	_SYS_ARCH_EVBARM_DEV_PLCOMVAR_H_
+#define	_SYS_ARCH_EVBARM_DEV_PLCOMVAR_H_
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -171,3 +174,4 @@ void plcom_attach_subr	(struct plcom_softc *);
 int  plcom_detach	(device_t, int);
 int  plcom_activate	(device_t, enum devact);
 
+#endif	/* _SYS_ARCH_EVBARM_DEV_PLCOMVAR_H_ */
