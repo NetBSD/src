@@ -1,4 +1,6 @@
-# $NetBSD: ad.aarch64,v 1.11 2022/12/20 04:10:11 pgoyette Exp $
+# $NetBSD: ad.aarch64,v 1.12 2023/04/11 10:30:41 riastradh Exp $
+./@MODULEDIR@/amdgpu				modules-base-kernel	kmod
+./@MODULEDIR@/amdgpu/amdgpu.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/bpfjit				modules-base-kernel	kmod,sljit
 ./@MODULEDIR@/bpfjit/bpfjit.kmod		modules-base-kernel	kmod,sljit
 ./@MODULEDIR@/compat_linux			modules-base-kernel	kmod
@@ -59,6 +61,16 @@
 ./@MODULEDIR@/compat_netbsd32_sysvipc_14/compat_netbsd32_sysvipc_14.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc_50	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc_50/compat_netbsd32_sysvipc_50.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/drmkms				modules-base-kernel	kmod
+./@MODULEDIR@/drmkms/drmkms.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_linux			modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_linux/drmkms_linux.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_pci			modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_pci/drmkms_pci.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_sched			modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_sched/drmkms_sched.kmod	modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_ttm			modules-base-kernel	kmod
+./@MODULEDIR@/drmkms_ttm/drmkms_ttm.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/exec_elf32			modules-base-kernel	kmod
 ./@MODULEDIR@/exec_elf32/exec_elf32.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/exec_elf64			modules-base-kernel	kmod
