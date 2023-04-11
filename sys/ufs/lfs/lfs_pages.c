@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.26 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.27 2023/04/11 14:50:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.26 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.27 2023/04/11 14:50:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -499,6 +499,9 @@ retry:
 			while (pg->flags & PG_BUSY) {
 				uvm_pagewait(pg, vp->v_uobj.vmobjlock, "lfsput2");
 				rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
+				/* XXX Page can't change identity here? */
+				KDASSERT(pg ==
+				    uvm_pagelookup(&vp->v_uobj, off));
 			}
 			uvm_pagelock(pg);
 			uvm_pageactivate(pg);
