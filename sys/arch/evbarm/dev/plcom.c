@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.67 2023/01/24 06:56:40 mlelstv Exp $	*/
+/*	$NetBSD: plcom.c,v 1.68 2023/04/11 12:56:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -91,10 +91,15 @@
  * COM driver for the Prime Cell PL010 and PL011 UARTs. Both are is similar to
  * the 16C550, but have a completely different programmer's model.
  * Derived from the NS16550AF com driver.
+ *
+ * Lock order:
+ *	tty_lock (IPL_VM)
+ *	-> sc->sc_lock (IPL_HIGH)
+ *	-> timecounter_lock (IPL_HIGH)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.67 2023/01/24 06:56:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.68 2023/04/11 12:56:07 riastradh Exp $");
 
 #include "opt_plcom.h"
 #include "opt_kgdb.h"
@@ -181,12 +186,11 @@ void	plcomcnputc	(dev_t, int);
 void	plcomcnpollc	(dev_t, int);
 void	plcomcnhalt	(dev_t);
 
-#define	integrate	static inline
 void 	plcomsoft	(void *);
-integrate void plcom_rxsoft	(struct plcom_softc *, struct tty *);
-integrate void plcom_txsoft	(struct plcom_softc *, struct tty *);
-integrate void plcom_stsoft	(struct plcom_softc *, struct tty *);
-integrate void plcom_schedrx	(struct plcom_softc *);
+static inline void plcom_rxsoft	(struct plcom_softc *, struct tty *);
+static inline void plcom_txsoft	(struct plcom_softc *, struct tty *);
+static inline void plcom_stsoft	(struct plcom_softc *, struct tty *);
+static inline void plcom_schedrx	(struct plcom_softc *);
 void	plcomdiag		(void *);
 
 bool	plcom_intstatus(struct plcom_instance *, u_int *);
@@ -745,9 +749,9 @@ plcom_shutdown(struct plcom_softc *sc)
 	mutex_spin_exit(&timecounter_lock);
 
 	/*
-	 * Hang up if necessary.  Wait a bit, so the other side has time to
-	 * notice even if we immediately open the port again.
-	 * Avoid tsleeping above splhigh().
+	 * Hang up if necessary.  Record when we hung up, so if we
+	 * immediately open the port again, we will wait a bit until
+	 * the other side has had time to notice that we hung up.
 	 */
 	if (ISSET(tp->t_cflag, HUPCL)) {
 		plcom_modem(sc, 0);
@@ -1249,7 +1253,7 @@ plcomioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	return error;
 }
 
-integrate void
+static inline void
 plcom_schedrx(struct plcom_softc *sc)
 {
 
@@ -1765,19 +1769,17 @@ plcomstart(struct tty *tp)
 	struct plcom_softc *sc =
 		device_lookup_private(&plcom_cd, PLCOMUNIT(tp->t_dev));
 	struct plcom_instance *pi = &sc->sc_pi;
-	int s;
 
 	if (PLCOM_ISALIVE(sc) == 0)
 		return;
 
-	s = spltty();
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
-		goto out;
+		return;
 	if (sc->sc_tx_stopped)
-		goto out;
+		return;
 
 	if (!ttypull(tp))
-		goto out;
+		return;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -1825,9 +1827,6 @@ plcomstart(struct tty *tp)
 		sc->sc_tba += n;
 	}
 	mutex_spin_exit(&sc->sc_lock);
-out:
-	splx(s);
-	return;
 }
 
 /*
@@ -1870,7 +1869,7 @@ plcomdiag(void *arg)
 	    floods, floods == 1 ? "" : "s");
 }
 
-integrate void
+static inline void
 plcom_rxsoft(struct plcom_softc *sc, struct tty *tp)
 {
 	int (*rint) (int, struct tty *) = tp->t_linesw->l_rint;
@@ -1971,7 +1970,7 @@ plcom_rxsoft(struct plcom_softc *sc, struct tty *tp)
 	}
 }
 
-integrate void
+static inline void
 plcom_txsoft(struct plcom_softc *sc, struct tty *tp)
 {
 
@@ -1983,7 +1982,7 @@ plcom_txsoft(struct plcom_softc *sc, struct tty *tp)
 	(*tp->t_linesw->l_start)(tp);
 }
 
-integrate void
+static inline void
 plcom_stsoft(struct plcom_softc *sc, struct tty *tp)
 {
 	u_char msr, delta;
