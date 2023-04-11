@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_142.c,v 1.9 2023/04/10 23:52:49 rillig Exp $	*/
+/*	$NetBSD: msg_142.c,v 1.10 2023/04/11 00:03:42 rillig Exp $	*/
 # 3 "msg_142.c"
 
 // Test for message: floating point overflow on operator '%s' [142]
@@ -20,5 +20,8 @@
 /* expect+1: warning: floating point overflow on operator '*' [142] */
 double dbl = 1e100 * 1e100 * 1e100 * 1e100 * 1e100;
 
-/* expect+1: warning: floating point overflow on operator '+' [142] */
+/*
+ * Ensure that an addition in the complex number space doesn't generate
+ * wrong warnings. Lint doesn't model complex constants accurately.
+ */
 double _Complex complex_sum = 1e308 + 1e308i;
