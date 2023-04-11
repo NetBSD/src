@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.275 2022/12/19 23:19:51 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.276 2023/04/11 10:30:41 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -350,16 +350,21 @@ SUBDIR+=	viadrmums
 .endif
 
 .if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64"
+    ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "aarch64"
 SUBDIR+=	amdgpu
-SUBDIR+=	compat_linux
-SUBDIR+=	drm
 SUBDIR+=	drmkms
-SUBDIR+=	drmkms_agp
 SUBDIR+=	drmkms_linux
 SUBDIR+=	drmkms_pci
 SUBDIR+=	drmkms_sched
 SUBDIR+=	drmkms_ttm
+.endif
+
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	drm
+SUBDIR+=	compat_linux
+SUBDIR+=	drmkms_agp
 SUBDIR+=	i915drm
 SUBDIR+=	i915drmkms
 #
