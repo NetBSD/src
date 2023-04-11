@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.509 2023/04/11 19:02:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.510 2023/04/11 19:07:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.509 2023/04/11 19:02:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.510 2023/04/11 19:07:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1507,12 +1507,7 @@ floating_error_value(tspec_t t, ldbl_t lv)
 		return lv < 0 ? -FLT_MAX : FLT_MAX;
 	if (t == DOUBLE)
 		return lv < 0 ? -DBL_MAX : DBL_MAX;
-
-	/* FIXME: Remove the '(double)' cast near 'isfinite'. */
-	/* FIXME: Inlining the variable 'max' produces a wrong warning. */
-	/* LINTED 248: floating-point constant out of range */
-	ldbl_t max = LDBL_MAX;
-	return lv < 0 ? -max : max;
+	return lv < 0 ? -LDBL_MAX : LDBL_MAX;
 }
 
 /*
@@ -1584,14 +1579,14 @@ fold_float(tnode_t *tn)
 		lint_assert(/*CONSTCOND*/false);
 	}
 
-	lint_assert(fpe != 0 || isnan((double)v->v_ldbl) == 0);
+	lint_assert(fpe != 0 || isnan(v->v_ldbl) == 0);
 	if (is_complex(v->v_tspec)) {
 		/*
 		 * Don't warn, as lint doesn't model the imaginary part of
 		 * complex numbers.
 		 */
 		fpe = 0;
-	} else if (fpe != 0 || isfinite((double)v->v_ldbl) == 0 ||
+	} else if (fpe != 0 || isfinite(v->v_ldbl) == 0 ||
 	    (t == FLOAT &&
 	     (v->v_ldbl > FLT_MAX || v->v_ldbl < -FLT_MAX)) ||
 	    (t == DOUBLE &&
