@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.383 2023/04/11 12:55:59 riastradh Exp $ */
+/* $NetBSD: com.c,v 1.384 2023/04/11 13:01:41 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -65,13 +65,13 @@
  * Supports automatic hardware flow control on StarTech ST16C650A UART
  *
  * Lock order:
- *	tty_lock (IPL_VM)
+ *	ttylock (IPL_VM)
  *	-> sc->sc_lock (IPL_HIGH)
  *	-> timecounter_lock (IPL_HIGH)
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.383 2023/04/11 12:55:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.384 2023/04/11 13:01:41 riastradh Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
