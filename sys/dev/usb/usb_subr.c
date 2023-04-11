@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.277 2022/04/06 22:01:45 mlelstv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.278 2023/04/11 08:50:07 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.277 2022/04/06 22:01:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.278 2023/04/11 08:50:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -866,6 +866,8 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 		    cdp->bConfigurationValue, err, 0, 0);
 		goto bad;
 	}
+
+	KASSERTMSG(dev->ud_ifaces == NULL, "ud_ifaces=%p", dev->ud_ifaces);
 
 	/* Allocate and fill interface data. */
 	nifc = cdp->bNumInterface;
