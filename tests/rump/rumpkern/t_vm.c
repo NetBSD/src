@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vm.c,v 1.6 2021/01/22 22:03:01 chs Exp $	*/
+/*	$NetBSD: t_vm.c,v 1.7 2023/04/11 18:23:42 kre Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ ATF_TC_BODY(busypage, tc)
 #if 0
 	atf_tc_expect_fail("test bug: unbusies an uninitialized page");
 #endif
-	atf_tc_skip("this test is buggy and hits an assertion, but atf doesn't provide any way to expect that a test program crashes, this all we can do is skip");
+	atf_tc_skip("this test is buggy and hits an assertion, but atf doesn't provide any way to expect that a test program crashes, thus all we can do is skip");
 	rump_init();
 
 	rump_schedule();
