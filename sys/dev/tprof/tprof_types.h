@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_types.h,v 1.6 2022/12/01 00:32:52 ryo Exp $	*/
+/*	$NetBSD: tprof_types.h,v 1.7 2023/04/11 10:07:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c)2010,2011 YAMAMOTO Takashi,
@@ -76,8 +76,8 @@ typedef struct tprof_param {
 	 *   speed ratio. if the counter is N times slower than the cycle
 	 *   counter, p_value2 is (0x1_0000_0000 / N). 0 is treated as 1.0.
 	 * TPROF_PARAM_VALUE2_TRIGGERCOUNT:
-	 *   When the event counter counts up p_value2, an interrupt for profile
-	 *   is generated. 0 is treated as 1.
+	 *   When the event counter counts up p_value2, an interrupt for
+	 *   profile is generated. 0 is treated as 1.
 	 */
 } tprof_param_t;
 
