@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.12 2022/04/09 23:51:57 riastradh Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.13 2023/04/11 13:06:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -112,7 +112,7 @@
 #include "utils.h"
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.12 2022/04/09 23:51:57 riastradh Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.13 2023/04/11 13:06:21 riastradh Exp $");
 
 #include <crypto/blake2/blake2s.h>
 
@@ -980,9 +980,6 @@ thmap_create(uintptr_t baseptr, const thmap_ops_t *ops, unsigned flags)
 		return NULL;
 	}
 	thmap = kmem_zalloc(sizeof(thmap_t), KM_SLEEP);
-	if (!thmap) {
-		return NULL;
-	}
 	thmap->baseptr = baseptr;
 	thmap->ops = ops ? ops : &thmap_default_ops;
 	thmap->flags = flags;
