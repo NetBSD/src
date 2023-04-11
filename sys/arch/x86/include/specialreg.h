@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.204 2023/03/25 21:47:10 andvar Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.205 2023/04/11 02:44:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -466,6 +466,7 @@
 #define CPUID_SEF_MAWAU		__BITS(21, 17) /* MAWAU for BND{LD,ST}X */
 #define CPUID_SEF_RDPID		__BIT(22) /* RDPID and IA32_TSC_AUX */
 #define CPUID_SEF_KL		__BIT(23) /* Key Locker */
+#define CPUID_SEF_BUS_LOCK_DETECT __BIT(24) /* OS bus-lock detection */
 #define CPUID_SEF_CLDEMOTE	__BIT(25) /* Cache line demote */
 #define CPUID_SEF_MOVDIRI	__BIT(27) /* MOVDIRI instruction */
 #define CPUID_SEF_MOVDIR64B	__BIT(28) /* MOVDIR64B instruction */
@@ -480,7 +481,7 @@
 	"b\14AVX512_BITALG\0" "b\15TME_EN\0" "b\16AVX512_VPOPCNTDQ\0"	      \
 	"b\20LA57\0"							      \
 	"f\21\5MAWAU\0"			"b\26RDPID\0"	"b\27KL\0"	      \
-			"b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	      \
+	"b\30\BUS_LOCK_DETECT" "b\31CLDEMOTE\0"		"b\33MOVDIRI\0"	      \
 	"b\34MOVDIR64B\0" "b\35ENQCMD\0" "b\36SGXLC\0"	"b\37PKS\0"
 
 /* %ecx = 0, %edx */
