@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.64 2023/01/13 19:41:50 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.65 2023/04/11 19:02:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.64 2023/01/13 19:41:50 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.65 2023/04/11 19:02:19 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -122,18 +122,16 @@ transform_filename(const char *name, size_t len)
 const char *
 record_filename(const char *s, size_t slen)
 {
-	const struct filename *existing_fn;
-	struct filename *fn;
-	char *name;
 
-	if ((existing_fn = search_filename(s, slen)) != NULL)
+	const struct filename *existing_fn = search_filename(s, slen);
+	if (existing_fn != NULL)
 		return existing_fn->fn_name;
 
-	name = xmalloc(slen + 1);
+	char *name = xmalloc(slen + 1);
 	(void)memcpy(name, s, slen);
 	name[slen] = '\0';
 
-	fn = xmalloc(sizeof(*fn));
+	struct filename *fn = xmalloc(sizeof(*fn));
 	fn->fn_name = name;
 	fn->fn_len = slen;
 	fn->fn_id = next_filename_id++;
@@ -160,12 +158,12 @@ get_filename_id(const char *s)
 	return fn->fn_id;
 }
 
-/* Array of memory pools, indexed by mem_block_level. */
 typedef struct memory_pools {
 	struct memory_pool *pools;
 	size_t	cap;
 } memory_pools;
 
+/* Array of memory pools, indexed by mem_block_level. */
 static memory_pools mpools;
 
 /* The pool for the current expression is independent of any block level. */
