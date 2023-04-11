@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.27 2023/04/10 23:56:30 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.28 2023/04/11 17:52:11 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.27 2023/04/10 23:56:30 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.28 2023/04/11 17:52:11 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -81,7 +81,7 @@ debug_indent_dec(void)
 }
 
 void
-(debug_enter)(const char *func)
+debug_enter_func(const char *func)
 {
 
 	printf("%*s+ %s\n", 2 * debug_indentation++, "", func);
@@ -100,7 +100,7 @@ debug_step(const char *fmt, ...)
 }
 
 void
-(debug_leave)(const char *func)
+debug_leave_func(const char *func)
 {
 
 	printf("%*s- %s\n", 2 * --debug_indentation, "", func);
