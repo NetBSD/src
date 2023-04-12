@@ -1,8 +1,8 @@
-/*	$NetBSD: db_disasm.c,v 1.30 2023/04/12 17:53:32 riastradh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.31 2023/04/12 19:47:41 riastradh Exp $	*/
 /*	$OpenBSD: db_disasm.c,v 1.2 1996/12/28 06:21:48 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.30 2023/04/12 17:53:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.31 2023/04/12 19:47:41 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -1059,7 +1059,8 @@ db_disasm(db_addr_t loc, bool extended)
 {
 	int class;
 	instr_t opcode;
-	opcode = *(instr_t *)(loc);
+
+	db_read_bytes(loc, sizeof(opcode), (char *)&opcode);
 	class = opcode >> 26;
 	(opcodes_base[class])(opcode, loc);
 
