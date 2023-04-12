@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.h,v 1.4 2022/09/22 14:42:29 riastradh Exp $	*/
+/*	$NetBSD: tco.h,v 1.5 2023/04/12 06:39:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -40,12 +40,16 @@ struct tco_attach_args {
 	enum {
 		TCO_VERSION_PCIB = 0,
 		TCO_VERSION_RCBA = 1,
+		TCO_VERSION_SMBUS = 2,
 	}			ta_version;
 	bus_space_tag_t		ta_pmt;
 	bus_space_handle_t	ta_pmh;
 	bus_space_tag_t		ta_rcbat;
 	bus_space_handle_t	ta_rcbah;
 	struct pcib_softc *	ta_pcib;
+	bus_space_tag_t		ta_tcot;
+	bus_space_handle_t	ta_tcoh;
+	int			(*ta_set_noreboot)(device_t, bool);
 };
 
 #endif
