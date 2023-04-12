@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.3 2023/02/25 00:40:22 riastradh Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.4 2023/04/12 06:57:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.3 2023/02/25 00:40:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.4 2023/04/12 06:57:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -513,7 +513,8 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 #endif
 	    IPL_NONE);
 
-	pmap_pvlist_lock_init(/*arm_dcache_align*/ 128);
+	// arm_dcache_align
+	pmap_pvlist_lock_init(CACHE_LINE_SIZE);
 
 	VPRINTF("done\n");
 }
