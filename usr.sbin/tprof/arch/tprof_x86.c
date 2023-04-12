@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.16 2023/04/10 06:08:56 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.17 2023/04/12 02:15:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,8 @@ struct event_table {
 
 static struct event_table *cpuevents = NULL;
 
-static void x86_cpuid(unsigned int *eax, unsigned int *ebx,
+static void
+x86_cpuid(unsigned int *eax, unsigned int *ebx,
     unsigned int *ecx, unsigned int *edx)
 {
 	asm volatile("cpuid"
@@ -429,7 +430,7 @@ static struct name_to_event intel_skylake_kabylake_names[] = {
 	{ "OFFCORE_REQUESTS_OUTSTANDING.DEMAND_RFO",	0x60, 0x04, true },
 	{ "OFFCORE_REQUESTS_OUTSTANDING.ALL_DATA_RD",	0x60, 0x08, true },
 	{ "OFFCORE_REQUESTS_OUTSTANDING.L3_MISS_DEMAND_DATA_RD",
-	  						0x60, 0x10, true },
+							0x60, 0x10, true },
 	{ "IDQ.MITE_UOPS",				0x79, 0x04, true },
 	{ "IDQ.DSB_UOPS",				0x79, 0x08, true },
 	{ "IDQ.MS_MITE_UOPS",				0x79, 0x20, true },
