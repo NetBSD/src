@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.60 2020/07/06 09:34:18 rin Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.61 2023/04/12 17:53:32 riastradh Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60 2020/07/06 09:34:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.61 2023/04/12 17:53:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -53,11 +53,19 @@ __KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.60 2020/07/06 09:34:18 rin Exp $");
 #elif defined(PPC_BOOKE)
 #include <powerpc/booke/spr.h>
 #else
-#include unknown powerpc variants
+#ifdef _KERNEL
+#error unknown powerpc variants
+#endif
+#endif
+
+#ifndef _KERNEL			/* crash(8) */
+#include <unistd.h>
+#define	PAGE_SIZE	((unsigned)sysconf(_SC_PAGESIZE))
 #endif
 
 #include <ddb/db_access.h>
 #include <ddb/db_interface.h>
+#include <ddb/db_proc.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
 
@@ -125,9 +133,13 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	bool kernel_only = true;
 	bool trace_thread = false;
 	bool lwpaddr = false;
+#ifdef _KERNEL
 	extern int trapexit[], sctrapexit[];
 #ifdef PPC_BOOKE
 	extern int intrcall[];
+#endif
+#else
+	extern void *trapexit, *sctrapexit, *intrcall;
 #endif
 	bool full = false;
 	bool in_kernel = true;
@@ -157,7 +169,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				(*pr)("trace: pid %d ", p->p_pid);
 			} else {
 				(*pr)("trace: pid %d ", (int)addr);
-				p = proc_find_raw(addr);
+				p = db_proc_find((pid_t)addr);
 				if (p == NULL) {
 					(*pr)("not found\n");
 					return;
@@ -196,7 +208,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		(*pr)("0x%08lx: ", frame);
 		if (lr + 4 == (db_addr_t) trapexit ||
-#ifdef PPC_BOOKE
+#if !defined(_KERNEL) || defined(PPC_BOOKE)
 		    lr + 4 == (db_addr_t) intrcall ||
 #endif
 		    lr + 4 == (db_addr_t) sctrapexit) {
