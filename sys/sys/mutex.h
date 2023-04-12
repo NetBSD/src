@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.26 2022/10/26 23:21:20 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.27 2023/04/12 06:35:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -199,7 +199,6 @@ int	mutex_tryenter(kmutex_t *);
 
 int	mutex_owned(const kmutex_t *);
 int	mutex_ownable(const kmutex_t *);
-lwp_t	*mutex_owner(const kmutex_t *);
 bool	mutex_owner_running(const kmutex_t *);
 
 void	mutex_obj_init(void);

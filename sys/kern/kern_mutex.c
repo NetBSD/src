@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.104 2023/02/24 11:21:28 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.105 2023/04/12 06:35:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.104 2023/02/24 11:21:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.105 2023/04/12 06:35:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -277,9 +277,10 @@ __strong_alias(mutex_spin_enter,mutex_vector_enter);
 __strong_alias(mutex_spin_exit,mutex_vector_exit);
 #endif
 
-static void	mutex_abort(const char *, size_t, const kmutex_t *,
-    const char *);
+static void	mutex_abort(const char *, size_t, volatile const kmutex_t *,
+		    const char *);
 static void	mutex_dump(const volatile void *, lockop_printer_t);
+static lwp_t	*mutex_owner(wchan_t);
 
 lockops_t mutex_spin_lockops = {
 	.lo_name = "Mutex",
@@ -298,7 +299,7 @@ syncobj_t mutex_syncobj = {
 	.sobj_unsleep	= turnstile_unsleep,
 	.sobj_changepri	= turnstile_changepri,
 	.sobj_lendpri	= sleepq_lendpri,
-	.sobj_owner	= (void *)mutex_owner,
+	.sobj_owner	= mutex_owner,
 };
 
 /*
@@ -325,7 +326,8 @@ mutex_dump(const volatile void *cookie, lockop_printer_t pr)
  *	we ask the compiler to not inline it.
  */
 static void __noinline
-mutex_abort(const char *func, size_t line, const kmutex_t *mtx, const char *msg)
+mutex_abort(const char *func, size_t line, volatile const kmutex_t *mtx,
+    const char *msg)
 {
 
 	LOCKDEBUG_ABORT(func, line, mtx, (MUTEX_SPIN_P(mtx->mtx_owner) ?
@@ -835,9 +837,10 @@ mutex_owned(const kmutex_t *mtx)
  *	Return the current owner of an adaptive mutex.  Used for
  *	priority inheritance.
  */
-lwp_t *
-mutex_owner(const kmutex_t *mtx)
+static lwp_t *
+mutex_owner(wchan_t wchan)
 {
+	volatile const kmutex_t *mtx = wchan;
 
 	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx->mtx_owner));
 	return (struct lwp *)MUTEX_OWNER(mtx->mtx_owner);
