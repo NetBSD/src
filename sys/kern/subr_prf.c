@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.199 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.200 2023/04/12 06:35:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.199 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.200 2023/04/12 06:35:26 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -642,7 +642,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 	va_list ap;
 
 	/* mutex_enter(&proc_lock); XXXSMP */
-	if (sess && sess->s_ttyvp && ttycheckoutq(sess->s_ttyp, 0)) {
+	if (sess && sess->s_ttyvp && ttycheckoutq(sess->s_ttyp)) {
 		flags |= TOTTY;
 		tp = sess->s_ttyp;
 	}
