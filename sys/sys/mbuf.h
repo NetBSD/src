@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.237 2022/12/16 08:42:55 msaitoh Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.238 2023/04/12 06:48:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -740,6 +740,8 @@ struct	mbuf *m_devget(char *, int, int, struct ifnet *);
 struct	mbuf *m_dup(struct mbuf *, int, int, int);
 struct	mbuf *m_get(int, int);
 struct	mbuf *m_gethdr(int, int);
+struct	mbuf *m_get_n(int, int, size_t, size_t);
+struct	mbuf *m_gethdr_n(int, int, size_t, size_t);
 struct	mbuf *m_prepend(struct mbuf *,int, int);
 struct	mbuf *m_pulldown(struct mbuf *, int, int, int *);
 struct	mbuf *m_pullup(struct mbuf *, int);

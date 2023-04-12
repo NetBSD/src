@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.250 2023/04/01 06:30:19 skrll Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.251 2023/04/12 06:48:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.250 2023/04/01 06:30:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.251 2023/04/12 06:48:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -583,6 +583,50 @@ m_gethdr(int how, int type)
 	m->m_pkthdr.pattr_class = NULL;
 	m->m_pkthdr.pattr_af = AF_UNSPEC;
 	m->m_pkthdr.pattr_hdr = NULL;
+
+	return m;
+}
+
+struct mbuf *
+m_get_n(int how, int type, size_t alignbytes, size_t nbytes)
+{
+	struct mbuf *m;
+
+	if (alignbytes > MCLBYTES || nbytes > MCLBYTES - alignbytes)
+		return NULL;
+	if ((m = m_get(how, type)) == NULL)
+		return NULL;
+	if (nbytes + alignbytes > MLEN) {
+		m_clget(m, how);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return NULL;
+		}
+	}
+	m->m_len = alignbytes + nbytes;
+	m_adj(m, alignbytes);
+
+	return m;
+}
+
+struct mbuf *
+m_gethdr_n(int how, int type, size_t alignbytes, size_t nbytes)
+{
+	struct mbuf *m;
+
+	if (nbytes > MCLBYTES || nbytes > MCLBYTES - alignbytes)
+		return NULL;
+	if ((m = m_gethdr(how, type)) == NULL)
+		return NULL;
+	if (alignbytes + nbytes > MHLEN) {
+		m_clget(m, how);
+		if ((m->m_flags & M_EXT) == 0) {
+			m_free(m);
+			return NULL;
+		}
+	}
+	m->m_len = m->m_pkthdr.len = alignbytes + nbytes;
+	m_adj(m, alignbytes);
 
 	return m;
 }
