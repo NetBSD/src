@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.103 2022/10/26 23:41:49 riastradh Exp $	*/
+/*	$NetBSD: tty.h,v 1.104 2023/04/12 06:35:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -285,7 +285,7 @@ int	 ttstart(struct tty *);
 void	 ttwakeup(struct tty *);
 int	 ttwrite(struct tty *, struct uio *, int);
 void	 ttychars(struct tty *);
-int	 ttycheckoutq(struct tty *, int);
+int	 ttycheckoutq(struct tty *);
 void	 ttycancel(struct tty *);
 int	 ttyclose(struct tty *);
 void	 ttyflush(struct tty *, int);
