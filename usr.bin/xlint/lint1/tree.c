@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.511 2023/04/11 19:40:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.512 2023/04/12 19:09:48 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.511 2023/04/11 19:40:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.512 2023/04/12 19:09:48 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1507,7 +1507,23 @@ floating_error_value(tspec_t t, ldbl_t lv)
 		return lv < 0 ? -FLT_MAX : FLT_MAX;
 	if (t == DOUBLE)
 		return lv < 0 ? -DBL_MAX : DBL_MAX;
-	return lv < 0 ? -LDBL_MAX : LDBL_MAX;
+	/*
+	 * When lint is compiled on x86_64 to check for sparc64, it uses the
+	 * type 'long double' from x86_64, which is the Intel 80-bit format.
+	 * The constant LDBL_MAX comes from the sparc64 preprocessor though
+	 * and uses the IEEE-754-binary128 format, with the same exponent
+	 * range but a wider mantissa.
+	 *
+	 * To properly handle this situation, lint would have to implement the
+	 * floating-point types in a platform-independent way, which is not
+	 * worth the effort, given how few programs practically use 'long
+	 * double'.
+	 *
+	 * This caveat only affects cross builds.
+	 */
+	/* LINTED 248: floating-point constant out of range */
+	ldbl_t max = LDBL_MAX;
+	return lv < 0 ? -max : max;
 }
 
 /*
