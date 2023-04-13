@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.276 2023/04/11 10:30:41 riastradh Exp $
+#	$NetBSD: Makefile,v 1.277 2023/04/13 07:03:31 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -351,7 +351,7 @@ SUBDIR+=	viadrmums
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "aarch64"
+    ${MACHINE_CPU} == "aarch64"
 SUBDIR+=	amdgpu
 SUBDIR+=	drmkms
 SUBDIR+=	drmkms_linux
