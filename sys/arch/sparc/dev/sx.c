@@ -1,4 +1,4 @@
-/*	$NetBSD: sx.c,v 1.5 2021/09/11 20:28:05 andvar Exp $	*/
+/*	$NetBSD: sx.c,v 1.6 2023/04/13 13:07:48 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.5 2021/09/11 20:28:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.6 2023/04/13 13:07:48 macallan Exp $");
 
 #include "locators.h"
 
@@ -104,7 +104,7 @@ sx_attach(device_t parent, device_t self, void *aux)
 	sx_write(sc, SX_PAGE_BOUND_LOWER, 0xfc000000);
 	/* cg14 takes up the whole 64MB chunk */
 	sx_write(sc, SX_PAGE_BOUND_UPPER, 0xffffffff);
-	sx_write(sc, SX_DIAGNOSTICS, 0);
+	sx_write(sc, SX_DIAGNOSTICS, SX_DIAG_INIT);
 	sx_write(sc, SX_PLANEMASK, 0xffffffff);
 
 	/*
