@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.62 2023/04/12 19:47:41 riastradh Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.63 2023/04/13 06:39:23 riastradh Exp $	*/
 /*	$OpenBSD: db_trace.c,v 1.3 1997/03/21 02:10:48 niklas Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.62 2023/04/12 19:47:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.63 2023/04/13 06:39:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -188,7 +188,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 				}
 			}
 			(*pr)("lid %d ", R(&l->l_lid));
-			pcb = lwp_getpcb(l);
+			pcb = R(&l->l_addr); /* lwp_getpcb */
 			frame = (db_addr_t)R(&pcb->pcb_sp);
 			(*pr)("at %p\n", frame);
 		} else
@@ -215,7 +215,7 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		(*pr)("0x%08lx: ", frame);
 		if (lr + 4 == (db_addr_t) trapexit ||
-#if !defined(_KERNEL) || defined(PPC_BOOKE) /* XXX crash(*) */
+#if !defined(_KERNEL) || defined(PPC_BOOKE) /* XXX crash(8) */
 		    lr + 4 == (db_addr_t) intrcall ||
 #endif
 		    lr + 4 == (db_addr_t) sctrapexit) {
@@ -230,14 +230,14 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 			}
 			switch (R(&tf->tf_exc)) {
 			case EXC_DSI:
-#ifdef PPC_OEA			/* XXX crash(*) */
+#ifdef PPC_OEA			/* XXX crash(8) */
 				(*pr)("DSI %s trap @ %#x by ",
 				    (R(&tf->tf_dsisr) & DSISR_STORE
 					? "write"
 					: "read"),
 				    R(&tf->tf_dar));
 #endif
-#ifdef PPC_IBM4XX		/* XXX crash(*) */
+#ifdef PPC_IBM4XX		/* XXX crash(8) */
 				trapstr = "DSI";
 dsi:
 				(*pr)("%s %s trap @ %#x by ", trapstr,
