@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.124 2022/09/27 17:04:52 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.125 2023/04/13 08:30:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.124 2022/09/27 17:04:52 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.125 2023/04/13 08:30:40 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1200,7 +1200,13 @@ dkfirstopen(struct dkwedge_softc *sc, int flags)
 	} else {
 		/*
 		 * Retrieve mode from an already opened wedge.
+		 *
+		 * At this point, dk_rawopens is bounded by the number
+		 * of dkwedge devices in the system, which is limited
+		 * by autoconf device numbering to INT_MAX.  Since
+		 * dk_rawopens is unsigned, this can't overflow.
 		 */
+		KASSERT(sc->sc_parent->dk_rawopens < UINT_MAX);
 		mode = 0;
 		LIST_FOREACH(nsc, &sc->sc_parent->dk_wedges, sc_plink) {
 			if (nsc == sc || nsc->sc_dk.dk_openmask == 0)
