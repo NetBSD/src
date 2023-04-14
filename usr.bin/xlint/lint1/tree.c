@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.512 2023/04/12 19:09:48 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.513 2023/04/14 18:42:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.512 2023/04/12 19:09:48 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.513 2023/04/14 18:42:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1508,18 +1508,21 @@ floating_error_value(tspec_t t, ldbl_t lv)
 	if (t == DOUBLE)
 		return lv < 0 ? -DBL_MAX : DBL_MAX;
 	/*
-	 * When lint is compiled on x86_64 to check for sparc64, it uses the
-	 * type 'long double' from x86_64, which is the Intel 80-bit format.
-	 * The constant LDBL_MAX comes from the sparc64 preprocessor though
-	 * and uses the IEEE-754-binary128 format, with the same exponent
-	 * range but a wider mantissa.
+	 * When NetBSD is cross-built in MKLINT=yes mode on x86_64 for
+	 * sparc64, tools/lint checks this code while building usr.bin/xlint.
+	 * In that situation, lint uses the preprocessor for sparc64, in which
+	 * the type 'long double' is IEEE-754-binary128, affecting the macro
+	 * LDBL_MAX below. The type 'long double', as well as the strtold
+	 * implementation, comes from the host platform x86_64 though, where
+	 * 'long double' consumes 128 bits as well but only uses 80 of them.
+	 * The exponent range of the two 'long double' types is the same, but
+	 * the maximum finite value differs due to the extended precision on
+	 * sparc64.
 	 *
-	 * To properly handle this situation, lint would have to implement the
-	 * floating-point types in a platform-independent way, which is not
-	 * worth the effort, given how few programs practically use 'long
-	 * double'.
-	 *
-	 * This caveat only affects cross builds.
+	 * To properly handle the data types of the target platform, lint
+	 * would have to implement the floating-point types in a
+	 * platform-independent way, which is not worth the effort, given how
+	 * few programs practically use 'long double'.
 	 */
 	/* LINTED 248: floating-point constant out of range */
 	ldbl_t max = LDBL_MAX;
