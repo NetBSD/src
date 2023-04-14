@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.21 2023/04/09 08:28:24 riastradh Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.22 2023/04/14 16:51:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.21 2023/04/09 08:28:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.22 2023/04/14 16:51:46 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -180,7 +180,7 @@ pserialize_not_in_read_section(void)
 
 	ncsw = l->l_ncsw;
 	__insn_barrier();
-	notin = __predict_true(l->l_cpu->ci_psz_read_depth == 0);
+	notin = __predict_true(curcpu()->ci_psz_read_depth == 0);
 	__insn_barrier();
 
 	/*
