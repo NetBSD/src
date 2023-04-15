@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_302.c,v 1.5 2023/04/15 10:53:59 rillig Exp $	*/
+/*	$NetBSD: msg_302.c,v 1.6 2023/04/15 12:47:32 rillig Exp $	*/
 # 3 "msg_302.c"
 
 // Test for message: '%s' returns pointer to automatic object [302]
@@ -42,6 +42,14 @@ return_local_array(int x)
 	case 5:
 		/* XXX: lint doesn't track this indirection, but Clang-tidy does. */
 		return indirect;
+	case 6:
+		/* expect+1: warning: 'return_local_array' returns pointer to automatic object [302] */
+		return (local);
+	case 7:
+		/* C99 6.5.2.5p6 */
+		/* Neither GCC 10 nor Clang 15 warn about this case. */
+		/* expect+1: warning: 'return_local_array' returns pointer to automatic object [302] */
+		return (char[]){"local string"};
 	default:
 		return "OK";
 	}
