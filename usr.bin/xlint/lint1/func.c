@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.151 2023/03/28 20:01:21 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.152 2023/04/15 10:32:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.151 2023/03/28 20:01:21 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.152 2023/04/15 10:32:46 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1047,6 +1047,32 @@ do_continue(void)
 	set_reached(false);
 }
 
+static void
+check_return_value(bool sys, tnode_t *tn)
+{
+	/* Create a temporary node for the left side */
+	tnode_t *ln = expr_zero_alloc(sizeof(*ln));
+	ln->tn_op = NAME;
+	ln->tn_type = expr_unqualified_type(funcsym->s_type->t_subt);
+	ln->tn_lvalue = true;
+	ln->tn_sym = funcsym;	/* better than nothing */
+
+	tnode_t *retn = build_binary(ln, RETURN, sys, tn);
+
+	if (retn != NULL) {
+		const tnode_t *rn = retn->tn_right;
+		while (rn->tn_op == CVT || rn->tn_op == PLUS)
+			rn = rn->tn_left;
+		if (rn->tn_op == ADDR && rn->tn_left->tn_op == NAME &&
+		    rn->tn_left->tn_sym->s_scl == AUTO) {
+			/* '%s' returns pointer to automatic object */
+			warning(302, funcsym->s_name);
+		}
+	}
+
+	expr(retn, true, false, true, false);
+}
+
 /*
  * T_RETURN T_SEMI
  * T_RETURN expr T_SEMI
@@ -1054,11 +1080,8 @@ do_continue(void)
 void
 do_return(bool sys, tnode_t *tn)
 {
-	tnode_t	*ln, *rn;
-	control_statement *cs;
-	op_t	op;
+	control_statement *cs = cstmt;
 
-	cs = cstmt;
 	if (cs == NULL) {
 		/* syntax error '%s' */
 		error(249, "return outside function");
@@ -1088,35 +1111,10 @@ do_return(bool sys, tnode_t *tn)
 			warning(214, funcsym->s_name);
 	}
 
-	if (tn != NULL) {
-
-		/* Create a temporary node for the left side */
-		ln = expr_zero_alloc(sizeof(*ln));
-		ln->tn_op = NAME;
-		ln->tn_type = expr_unqualified_type(funcsym->s_type->t_subt);
-		ln->tn_lvalue = true;
-		ln->tn_sym = funcsym;		/* better than nothing */
-
-		tn = build_binary(ln, RETURN, sys, tn);
-
-		if (tn != NULL) {
-			rn = tn->tn_right;
-			while ((op = rn->tn_op) == CVT || op == PLUS)
-				rn = rn->tn_left;
-			if (rn->tn_op == ADDR && rn->tn_left->tn_op == NAME &&
-			    rn->tn_left->tn_sym->s_scl == AUTO) {
-				/* '%s' returns pointer to automatic object */
-				warning(302, funcsym->s_name);
-			}
-		}
-
-		expr(tn, true, false, true, false);
-
-	} else {
-
+	if (tn != NULL)
+		check_return_value(sys, tn);
+	else
 		check_statement_reachable();
-
-	}
 
 	set_reached(false);
 }
