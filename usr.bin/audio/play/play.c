@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.62 2023/04/15 12:39:44 mlelstv Exp $	*/
+/*	$NetBSD: play.c,v 1.63 2023/04/15 16:54:39 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002, 2010, 2015, 2019, 2021 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.62 2023/04/15 12:39:44 mlelstv Exp $");
+__RCSID("$NetBSD: play.c,v 1.63 2023/04/15 16:54:39 mlelstv Exp $");
 #endif
 
 #include <sys/param.h>
@@ -65,7 +65,6 @@ static int	volume;
 static int	balance;
 static int	port;
 static int	fflag;
-static int	lflag;
 static int	qflag;
 int	verbose;
 static int	sample_rate;
@@ -88,7 +87,7 @@ main(int argc, char *argv[])
 	const char *defdevice = _PATH_SOUND;
 	const char *device = NULL;
 
-	while ((ch = getopt(argc, argv, "b:B:C:c:d:e:fhilp:P:qs:Vv:")) != -1) {
+	while ((ch = getopt(argc, argv, "b:B:C:c:d:e:fhip:P:qs:Vv:")) != -1) {
 		switch (ch) {
 		case 'b':
 			decode_int(optarg, &balance);
@@ -118,9 +117,6 @@ main(int argc, char *argv[])
 			break;
 		case 'i':
 			iflag++;
-			break;
-		case 'l':
-			lflag++;
 			break;
 		case 'q':
 			qflag++;
@@ -301,57 +297,6 @@ audio_write(int fd, void *buf, size_t len, convert conv)
 	return write(fd, convert_buffer, len);
 }
 
-/*
- * print audio output offset
- */
-static void
-print_offset(off_t written, int ratelimit)
-{
-	static time_t last;
-	time_t now;
-	static off_t base = 0;
-	static off_t played = 0;
-	off_t bps;
-	audio_offset_t aoff;
-	u_int blocksize;
-
-	if (!lflag)
-		return;
-
-	if (ioctl(audiofd, AUDIO_GETOOFFS, &aoff))
-		return;
-
-	bps = info.play.sample_rate
-	          * info.play.channels
-	          * info.play.precision / NBBY;
-	blocksize = info.blocksize > 0 ? info.blocksize : 1;
-
-	/* Check if aoff.samples overflowed */
-	if (aoff.samples < played) {
-		base += UINT_MAX;
-		base += 1;
-	}
-
-	/* Overflow base + number of samples in completed blocks + offset in currently played block */
-	played = base + aoff.samples + (aoff.offset % blocksize);
-
-	/* Print only every second */
-	if (ratelimit) {
-		time(&now);
-		if (now == last)
-			return;
-		last = now;
-	}
-
-	if (bps > 0) {
-		printf("%jdms\n", (written - played) * 1000 / bps);
-	} else {
-		/* unknown rate, report bytes */
-		printf("%jd\n", written - played);
-	}
-	fflush(stdout);
-}
-
 static void
 play(char *file)
 {
@@ -360,7 +305,7 @@ play(char *file)
 	void *addr, *oaddr;
 	off_t	filesize;
 	size_t	sizet_filesize;
-	off_t datasize = 0, written = 0;
+	off_t datasize = 0;
 	ssize_t	hdrlen;
 	int fd;
 	int nw;
@@ -424,7 +369,6 @@ play(char *file)
 	}
 
 	while ((uint64_t)datasize > bufsize) {
-		print_offset(written, 0);
 		nw = audio_write(audiofd, addr, bufsize, conv);
 		if (nw == -1)
 			err(1, "write failed");
@@ -432,17 +376,13 @@ play(char *file)
 			errx(1, "write failed");
 		addr = (char *)addr + bufsize;
 		datasize -= bufsize;
-		written += nw;
 	}
-	print_offset(written, 0);
 	nw = audio_write(audiofd, addr, datasize, conv);
 	if (nw == -1)
 		err(1, "final write failed");
 	if ((off_t)nw != datasize)
 		errx(1, "final write failed");
-	written += nw;
 
-	print_offset(written, 0);
 	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
 	if (munmap(oaddr, sizet_filesize) < 0)
@@ -461,7 +401,7 @@ play_fd(const char *file, int fd)
 	char    *buffer = malloc(bufsize);
 	ssize_t hdrlen;
 	int     nr, nw;
-	off_t	datasize = 0, written = 0;
+	off_t	datasize = 0;
 	off_t	dataout = 0;
 
 	if (buffer == NULL)
@@ -490,8 +430,6 @@ play_fd(const char *file, int fd)
 		memmove(buffer, buffer + hdrlen, nr - hdrlen);
 		nr -= hdrlen;
 	}
-
-	print_offset(written, 0);
 	while (datasize == 0 || dataout < datasize) {
 		if (datasize != 0 && dataout + nr > datasize)
 			nr = datasize - dataout;
@@ -506,13 +444,10 @@ play_fd(const char *file, int fd)
 			goto read_error;
 		if (nr == 0)
 			break;
-		print_offset(written, 1);
-		written += nw;
 	}
 	/* something to think about: no message given for dataout < datasize */
 	if (ioctl(audiofd, AUDIO_DRAIN) < 0 && !qflag)
 		warn("audio drain ioctl failed");
-	print_offset(written, 0);
 	return;
 read_error:
 	err(1, "read of standard input failed");
@@ -638,8 +573,6 @@ set_audio_mode:
 
 	if (ioctl(fd, AUDIO_SETINFO, &info) < 0)
 		err(1, "failed to set audio info");
-	if (ioctl(fd, AUDIO_GETINFO, &info) < 0)
-		err(1, "failed to re-get audio info");
 
 	return (hdr_len);
 }
@@ -648,7 +581,7 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "Usage: %s [-hilqV] [options] files\n", getprogname());
+	fprintf(stderr, "Usage: %s [-hiqV] [options] files\n", getprogname());
 	fprintf(stderr, "Options:\n\t"
 	    "-B buffer size\n\t"
 	    "-b balance (0-63)\n\t"
