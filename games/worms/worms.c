@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.24 2023/04/15 13:00:30 kre Exp $	*/
+/*	$NetBSD: worms.c,v 1.25 2023/04/15 13:40:23 kre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.24 2023/04/15 13:00:30 kre Exp $");
+__RCSID("$NetBSD: worms.c,v 1.25 2023/04/15 13:40:23 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -313,7 +313,18 @@ main(int argc, char *argv[])
 					mvaddch(y1, x1, trail);
 				}
 			}
-			op = &(!x ? (!y ? upleft : (y == bottom ? lowleft : left)) : (x == last ? (!y ? upright : (y == bottom ? lowright : right)) : (!y ? upper : (y == bottom ? lower : normal))))[w->orientation];
+
+			op = &(!x
+				? (!y
+				    ? upleft
+				    : (y == bottom ? lowleft : left))
+				: (x == last
+				    ? (!y ? upright
+					  : (y == bottom ? lowright : right))
+				    : (!y ? upper
+					  : (y == bottom ? lower : normal)))
+			      )[w->orientation];
+
 			switch (op->nopts) {
 			case 0:
 				refresh();
