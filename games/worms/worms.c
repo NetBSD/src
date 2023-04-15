@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.23 2020/10/14 07:32:53 nia Exp $	*/
+/*	$NetBSD: worms.c,v 1.24 2023/04/15 13:00:30 kre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.23 2020/10/14 07:32:53 nia Exp $");
+__RCSID("$NetBSD: worms.c,v 1.24 2023/04/15 13:00:30 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -193,10 +193,8 @@ main(int argc, char *argv[])
 	int CO, LI, last, bottom, ch, length, number, trail;
 	short **ref;
 	const char *field;
-	char *mp;
 	unsigned int delay = 20000;
 
-	mp = NULL;
 	length = 16;
 	number = 3;
 	trail = ' ';
@@ -232,8 +230,7 @@ main(int argc, char *argv[])
 			exit(1);
 		}
 
-	if (!(worm = malloc((size_t)number *
-	    sizeof(struct worm))) || !(mp = malloc((size_t)1024)))
+	if (!(worm = calloc((size_t)number, sizeof(struct worm))))
 		nomem();
 	if (!initscr())
 		errx(0, "couldn't initialize screen");
