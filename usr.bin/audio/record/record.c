@@ -1,4 +1,4 @@
-/*	$NetBSD: record.c,v 1.56 2022/01/09 06:33:13 mlelstv Exp $	*/
+/*	$NetBSD: record.c,v 1.57 2023/04/15 12:39:44 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002, 2003, 2005, 2010 Matthew R. Green
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: record.c,v 1.56 2022/01/09 06:33:13 mlelstv Exp $");
+__RCSID("$NetBSD: record.c,v 1.57 2023/04/15 12:39:44 mlelstv Exp $");
 #endif
 
 
@@ -312,14 +312,22 @@ main(int argc, char *argv[])
 			s = "change sign (big-endian, 16 bit)";
 		else if (conv_func == change_sign16_le)
 			s = "change sign (little-endian, 16 bit)";
+		else if (conv_func == change_sign24_be)
+			s = "change sign (big-endian, 24 bit)";
+		else if (conv_func == change_sign24_le)
+			s = "change sign (little-endian, 24 bit)";
 		else if (conv_func == change_sign32_be)
 			s = "change sign (big-endian, 32 bit)";
 		else if (conv_func == change_sign32_le)
 			s = "change sign (little-endian, 32 bit)";
 		else if (conv_func == change_sign16_swap_bytes_be)
 			s = "change sign & swap bytes (big-endian, 16 bit)";
-		else if (conv_func == change_sign16_swap_bytes_le)
+		else if (conv_func == change_sign24_swap_bytes_le)
 			s = "change sign & swap bytes (little-endian, 16 bit)";
+		else if (conv_func == change_sign16_swap_bytes_be)
+			s = "change sign & swap bytes (big-endian, 24 bit)";
+		else if (conv_func == change_sign24_swap_bytes_le)
+			s = "change sign & swap bytes (little-endian, 24 bit)";
 		else if (conv_func == change_sign32_swap_bytes_be)
 			s = "change sign (big-endian, 32 bit)";
 		else if (conv_func == change_sign32_swap_bytes_le)

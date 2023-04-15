@@ -1,4 +1,4 @@
-/*	$NetBSD: wav.c,v 1.15 2019/11/09 12:46:44 mrg Exp $	*/
+/*	$NetBSD: wav.c,v 1.16 2023/04/15 12:39:44 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2009, 2013, 2015, 2019 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: wav.c,v 1.15 2019/11/09 12:46:44 mrg Exp $");
+__RCSID("$NetBSD: wav.c,v 1.16 2023/04/15 12:39:44 mlelstv Exp $");
 #endif
 
 
@@ -286,6 +286,8 @@ wav_prepare_header(struct track_info *ti, void **hdrp, size_t *lenp, int *leftp)
 	case 8:
 		break;
 	case 16:
+		break;
+	case 24:
 		break;
 	case 32:
 		break;
