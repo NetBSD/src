@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.71 2023/04/14 16:53:13 rillig Exp $ */
+/* $NetBSD: style,v 1.72 2023/04/15 12:22:37 rillig Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.71 2023/04/14 16:53:13 rillig Exp $");
+__RCSID("$NetBSD: style,v 1.72 2023/04/15 12:22:37 rillig Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -151,7 +151,7 @@ static void usage(void) __dead;	/* declare functions that don't return dead */
  * use of TABs should be consistent through a file.
  * If they are an inline expansion of a function, the function is defined
  * all in lowercase, the macro has the same name all in uppercase.
- * If the macro is an expression, wrap the expression in parenthesis.
+ * If the macro is an expression, wrap the expression in parentheses.
  * If the macro is more than a single statement, use ``do { ... } while (0)''
  * or ``do { ... } while (false)'', so that a trailing semicolon works.
  * Right-justify the backslashes; it makes it easier to read.
@@ -328,7 +328,7 @@ main(int argc, char *argv[])
 
 	/*
 	 * Unary operators don't require spaces, binary operators do.
-	 * Don't excessively use parenthesis, but they should be used if
+	 * Don't excessively use parentheses, but they should be used if a
 	 * statement is really confusing without them, such as:
 	 * a = b->c[0] + ~d == (e || f) || g && h ? i : j >> 1;
 	 */
