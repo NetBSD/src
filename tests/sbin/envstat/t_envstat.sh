@@ -1,4 +1,4 @@
-# $NetBSD: t_envstat.sh,v 1.1 2020/06/25 15:01:35 jruoho Exp $
+# $NetBSD: t_envstat.sh,v 1.1.6.1 2023/04/15 12:08:42 jdc Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,9 +36,8 @@ zerotemp_head() {
 
 zerotemp_body() {
 
-	devices="amdtemp0 coretemp0 acpitz0" # XXX: What else?
-
-	for dev in $devices; do
+	for dev in $( envstat -D | awk '{print $1}' )
+	do
 
 		envstat -d $dev >/dev/null 2>&1
 
@@ -47,18 +46,23 @@ zerotemp_body() {
 			continue
 		fi
 
-		if [ $dev = "amdtemp0" ]; then
-			atf_expect_fail "PR kern/53410"
-		fi
+		# extract all temperatures from $dev
+		for tempf in $(envstat -d $dev | \
+			awk -F: '/degC$/{print $2}' | \
+			awk '{print $1}' )
+		do
+			tempi=$(printf "%.0f" $tempf)
 
-		tempf=$(envstat -d $dev | awk '/Current/{getline;print $3}')
-		tempi=$(printf "%.0f" $tempf)
+			echo "$dev = $tempf =~ $tempi"
 
-		echo "$dev = $tempf =~ $tempi"
+			if [ $tempi -eq 0 ]; then
 
-		if [ $tempi -eq 0 ]; then
-			atf_fail "Zero-temperature from $dev"
-		fi
+				if [ $dev = "amdtemp0" ]; then
+					atf_expect_fail "PR kern/53410"
+				fi
+				atf_fail "Zero-temperature from $dev"
+			fi
+		done
 	done
 }
 
