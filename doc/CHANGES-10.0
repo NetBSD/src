@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.53 2023/04/03 18:36:09 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.54 2023/04/15 12:09:07 jdc Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1522,6 +1522,12 @@ sys/dev/fss.c					1.114
 	fss(4): pass B_PHYS when reading from device.  Xbd(4) at least checks
 	this flag and may trigger an assertion.
 	[hannken, ticket #126]
+
+src/tests/sbin/envstat/t_envstat.sh		1.2
+	PR 57284: rewrite test to extract all temperaturs from all local sensors
+	and test them (instead of only one temperature from a tiny list of hard
+	coded possible devices).
+	[martin, ticket #127]
 
 sys/dev/pci/if_vioif.c				1.83-1.102,1.105-1.107
 sys/arch/mips/include/bus_space_defs.h		1.5
