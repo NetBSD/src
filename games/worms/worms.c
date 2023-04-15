@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.25 2023/04/15 13:40:23 kre Exp $	*/
+/*	$NetBSD: worms.c,v 1.26 2023/04/15 15:21:56 kre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.25 2023/04/15 13:40:23 kre Exp $");
+__RCSID("$NetBSD: worms.c,v 1.26 2023/04/15 15:21:56 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,11 +62,14 @@ __RCSID("$NetBSD: worms.c,v 1.25 2023/04/15 13:40:23 kre Exp $");
  */
 #include <sys/types.h>
 
+#include <ctype.h>
 #include <curses.h>
 #include <err.h>
+#include <limits.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <unistd.h>
 
 static const struct options {
@@ -193,7 +196,9 @@ main(int argc, char *argv[])
 	int CO, LI, last, bottom, ch, length, number, trail;
 	short **ref;
 	const char *field;
+	char *ep;
 	unsigned int delay = 20000;
+	unsigned long ul;
 
 	length = 16;
 	number = 3;
@@ -202,23 +207,54 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "d:fl:n:t")) != -1)
 		switch(ch) {
 		case 'd':
-			if ((delay = (unsigned int)strtoul(optarg, NULL, 10)) < 1 || delay > 1000)
-				errx(1, "invalid delay (1-1000)");
-			delay *= 1000;  /* ms -> us */
+			ul = strtoul(optarg, &ep, 10);
+			if (ep != optarg) {
+				while (isspace(*(unsigned char *)ep))
+					ep++;
+			}
+			if (ep == optarg ||
+			    (*ep != '\0' &&
+				( ep[1] == '\0' ? (*ep != 'm' && *ep != 'u') :
+				( strcasecmp(ep, "ms") != 0 &&
+				  strcasecmp(ep, "us") != 0 )) )) {
+				    errx(1, "-d: invalid delay (%s)", optarg);
+			}
+			/*
+			 * if ul >= INT_MAX/1000 we don't need the *1000,
+			 * as even without that it will exceed the limit
+			 * just below and be treated as an error.
+			 * (This does assume >=32 bit int, but so does POSIX)
+			 */
+			if (*ep != 'u' && ul < INT_MAX / 1000)
+				ul *= 1000;  /* ms -> us */
+			if (ul > 1000*1000) {
+				errx(1,
+				   "-d: delay (%s) out of rannge [0 - 1000]",
+				   optarg);
+			}
+			delay = (unsigned int)ul;
 			break;
 		case 'f':
 			field = "WORM";
 			break;
 		case 'l':
-			if ((length = atoi(optarg)) < 2 || length > 1024) {
-				errx(1, "invalid length (%d - %d).",
-				     2, 1024);
+			ul = strtoul(optarg, &ep, 10);
+			if (ep == optarg || *ep != '\0' ||
+			    ul < 2 || ul > 1024) {
+				errx(1, "-l: invalid length (%s) [%d - %d].",
+				     optarg, 2, 1024);
 			}
+			length = (int)ul;
 			break;
 		case 'n':
-			if ((number = atoi(optarg)) < 1) {
-				errx(1, "invalid number of worms.");
+			ul = strtoul(optarg, &ep, 10);
+			if (ep == optarg || *ep != '\0' ||
+			    ul < 1 || ul > INT_MAX / 10 ) {
+				errx(1, "-n: invalid number of worms (%s).",
+				    optarg);
 			}
+			/* upper bound is further limited later */
+			number = (int)ul;
 			break;
 		case 't':
 			trail = '.';
@@ -226,17 +262,32 @@ main(int argc, char *argv[])
 		case '?':
 		default:
 			(void)fprintf(stderr,
-			    "usage: worms [-ft] [-d delay] [-l length] [-n number]\n");
+			    "usage: worms [-ft] [-d delay] [-l length]"
+			    " [-n number]\n");
 			exit(1);
 		}
 
-	if (!(worm = calloc((size_t)number, sizeof(struct worm))))
-		nomem();
 	if (!initscr())
-		errx(0, "couldn't initialize screen");
+		errx(1, "couldn't initialize screen");
 	curs_set(0);
 	CO = COLS;
 	LI = LINES;
+
+	if (CO > 4*length || LI < 4*length) {
+		ul  = (unsigned long)LI / 2;
+		ul *= (unsigned long)CO / length;
+	} else {
+		ul  = (unsigned long)CO / 2;
+		ul *= (unsigned long)LI / length;
+	}
+
+	if ((unsigned long)(unsigned)number > ul) {
+		endwin();
+		errx(1, "-n: too many worms (%d) max: %lu", number, ul);
+	}
+	if (!(worm = calloc((size_t)number, sizeof(struct worm))))
+		nomem();
+
 	last = CO - 1;
 	bottom = LI - 1;
 	if (!(ip = malloc((size_t)(LI * CO * sizeof(short)))))
@@ -351,8 +402,10 @@ onsig(int signo __unused)
 	sig_caught = 1;
 }
 
+/* This is never called before curses is initialised */
 static void
 nomem(void)
 {
+	endwin();
 	errx(1, "not enough memory.");
 }
