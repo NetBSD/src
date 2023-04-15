@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.11 2023/03/31 13:03:05 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.12 2023/04/15 11:34:45 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -15,7 +15,7 @@
  * 	such as casts between arithmetic types.
  */
 
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8 -X 351 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9 -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
@@ -308,6 +308,49 @@ Q8(void)
 	u16 = 0644;
 	/* expect+1: octal number '0000644' [Q8] */
 	u16 = 0000644;
+}
+
+int
+Q9(int x)
+{
+	switch (x) {
+	case 0:
+		return 0;
+	case 1:
+		/* expect+1: parenthesized return value [Q9] */
+		return (0);
+	case 2:
+		return +(0);
+	case 3:
+		return -(13);
+	case 4:
+		/* expect+1: parenthesized return value [Q9] */
+		return (0), (1);
+	case 5:
+		/* expect+1: parenthesized return value [Q9] */
+		return (0, 1);
+	case 6:
+		return 0, 1;
+	case 7:
+		/* expect+1: implicit conversion from floating point 'double' to integer 'int' [Q1] */
+		return 0.0;
+	case 8:
+		/* expect+2: parenthesized return value [Q9] */
+		/* expect+1: implicit conversion from floating point 'double' to integer 'int' [Q1] */
+		return (0.0);
+	case 9:
+		return
+# 344 "queries.c" 3 4
+		((void *)0)
+# 346 "queries.c"
+		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
+		;
+	case 10:
+		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
+		return (void *)(0);
+	default:
+		return 0;
+	}
 }
 
 /*

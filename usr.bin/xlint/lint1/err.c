@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.192 2023/03/31 13:03:05 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.193 2023/04/15 11:34:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.192 2023/03/31 13:03:05 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.193 2023/04/15 11:34:45 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -699,6 +699,7 @@ static const char *queries[] = {
 	"no-op cast from '%s' to '%s'",				      /* Q6 */
 	"redundant cast from '%s' to '%s' before assignment",	      /* Q7 */
 	"octal number '%.*s'",					      /* Q8 */
+	"parenthesized return value",				      /* Q9 */
 };
 
 bool any_query_enabled;		/* for optimizing non-query scenarios */
