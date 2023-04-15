@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_302.c,v 1.6 2023/04/15 12:47:32 rillig Exp $	*/
+/*	$NetBSD: msg_302.c,v 1.7 2023/04/15 12:59:02 rillig Exp $	*/
 # 3 "msg_302.c"
 
 // Test for message: '%s' returns pointer to automatic object [302]
@@ -47,7 +47,6 @@ return_local_array(int x)
 		return (local);
 	case 7:
 		/* C99 6.5.2.5p6 */
-		/* Neither GCC 10 nor Clang 15 warn about this case. */
 		/* expect+1: warning: 'return_local_array' returns pointer to automatic object [302] */
 		return (char[]){"local string"};
 	default:
