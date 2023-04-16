@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.67 2023/04/07 08:55:31 skrll Exp $
+# $NetBSD: files.fdt,v 1.68 2023/04/16 16:51:38 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -162,7 +162,6 @@ attach	dwcmmc at fdt with dwcmmc_fdt
 file	dev/fdt/dwcmmc_fdt.c			dwcmmc_fdt
 
 # Designware Watchdog Timer
-device	dwcwdt: sysmon_wdog
 attach	dwcwdt at fdt with dwcwdt_fdt
 file	dev/fdt/dwcwdt_fdt.c			dwcwdt_fdt
 

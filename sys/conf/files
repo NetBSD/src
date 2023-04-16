@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1306 2022/12/28 18:19:44 jakllsch Exp $
+#	$NetBSD: files,v 1.1307 2023/04/16 16:51:38 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -798,6 +798,10 @@ file	dev/ic/dwc_gmac.c		awge
 # Synopsys DesignWare Ethernet Quality-of-Service controller
 device	eqos: arp, ether, ifnet, mii
 file	dev/ic/dwc_eqos.c		eqos
+
+# Synopsys DesignWare Watchdog
+device	dwcwdt: sysmon_wdog
+file	dev/ic/dwc_wdt.c		dwcwdt
 
 # 8390-family Ethernet controllers
 #
