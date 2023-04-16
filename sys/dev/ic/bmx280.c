@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280.c,v 1.1 2022/12/03 01:04:43 brad Exp $	*/
+/*	$NetBSD: bmx280.c,v 1.2 2023/04/16 17:16:45 brad Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.1 2022/12/03 01:04:43 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.2 2023/04/16 17:16:45 brad Exp $");
 
 /*
  * Common driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
@@ -444,11 +444,6 @@ bmx280_attach(struct bmx280_sc *sc)
 		sc->sc_has_humidity = true;
 	}
 
-	if ((error = bmx280_sysctl_init(sc)) != 0) {
-		aprint_error_dev(sc->sc_dev, "Can't setup sysctl tree (%d)\n", error);
-		goto out;
-	}
-
 	uint8_t raw_blob_tp[24];
 	reg = BMX280_REGISTER_DIG_T1;
 	error = (*(sc->sc_func_read_register))(sc, reg, raw_blob_tp, 24);
@@ -497,6 +492,11 @@ bmx280_attach(struct bmx280_sc *sc)
 
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev, "Unable to setup device\n");
+		goto out;
+	}
+
+	if ((error = bmx280_sysctl_init(sc)) != 0) {
+		aprint_error_dev(sc->sc_dev, "Can't setup sysctl tree (%d)\n", error);
 		goto out;
 	}
 
