@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.91 2023/02/23 14:54:57 riastradh Exp $	*/
+/*	$NetBSD: locore.S,v 1.92 2023/04/16 14:01:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.91 2023/02/23 14:54:57 riastradh Exp $")
+RCSID("$NetBSD: locore.S,v 1.92 2023/04/16 14:01:51 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -1037,7 +1037,7 @@ sctlr_pac:
 	    0)
 
 .L_devmap_addr:
-	.quad	VM_KERNEL_IO_ADDRESS
+	.quad	VM_KERNEL_IO_BASE
 
 	.data
 

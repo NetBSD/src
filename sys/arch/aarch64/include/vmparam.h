@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.19 2022/04/02 11:16:06 skrll Exp $ */
+/* $NetBSD: vmparam.h,v 1.20 2023/04/16 14:01:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -151,11 +151,11 @@
  * last 254MB of kernel vm area (0xfffffffff0000000-0xffffffffffe00000)
  * may be used for devmap.  see aarch64/pmap.c:pmap_devmap_*
  */
-#define VM_KERNEL_IO_ADDRESS	0xfffffffff0000000L
-#define VM_KERNEL_IO_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_IO_ADDRESS)
+#define VM_KERNEL_IO_BASE	0xfffffffff0000000L
+#define VM_KERNEL_IO_SIZE	(VM_MAX_KERNEL_ADDRESS - VM_KERNEL_IO_BASE)
 
 #define VM_KERNEL_VM_BASE	(0xffffc00040000000L)
-#define VM_KERNEL_VM_SIZE	(VM_KERNEL_IO_ADDRESS - VM_KERNEL_VM_BASE)
+#define VM_KERNEL_VM_SIZE	(VM_KERNEL_IO_BASE - VM_KERNEL_VM_BASE)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define USRIOSIZE		(PAGE_SIZE / 8)
