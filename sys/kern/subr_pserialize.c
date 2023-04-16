@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.22 2023/04/14 16:51:46 riastradh Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.23 2023/04/16 04:52:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.22 2023/04/14 16:51:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.23 2023/04/16 04:52:19 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -188,10 +188,8 @@ pserialize_not_in_read_section(void)
 	 * pserialize read section because pserialize read sections
 	 * block preemption.
 	 */
-	if (__predict_false(ncsw != l->l_ncsw)) {
-		KDASSERT(notin);
+	if (__predict_false(ncsw != l->l_ncsw))
 		notin = true;
-	}
 
 	return notin;
 }
