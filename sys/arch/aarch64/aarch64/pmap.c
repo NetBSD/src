@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.147 2022/10/30 14:08:09 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.148 2023/04/16 14:01:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.147 2022/10/30 14:08:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2023/04/16 14:01:51 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -375,8 +375,8 @@ pmap_devmap_bootstrap(vaddr_t l0pt, const struct pmap_devmap *table)
 		    table[i].pd_va);
 		va = table[i].pd_va;
 
-		KASSERT((VM_KERNEL_IO_ADDRESS <= va) &&
-		    (va < (VM_KERNEL_IO_ADDRESS + VM_KERNEL_IO_SIZE)));
+		KASSERT((VM_KERNEL_IO_BASE <= va) &&
+		    (va < (VM_KERNEL_IO_BASE + VM_KERNEL_IO_SIZE)));
 
 		/* update and check virtual_devmap_addr */
 		if (virtual_devmap_addr == 0 || virtual_devmap_addr > va) {
