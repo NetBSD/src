@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudioreg.h,v 1.18 2023/04/10 15:14:50 mlelstv Exp $	*/
+/*	$NetBSD: uaudioreg.h,v 1.19 2023/04/16 19:26:20 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -66,6 +66,9 @@ typedef struct {
 	 * allowed to extend the endpoint descriptor.
 	 * Who knows what goes on in the minds of the people in the USB
 	 * standardization?  :-(
+	 *
+	 * UAC2 no longer uses these extra fields. Check bLength to
+	 * find out if these exist.
 	 */
 	uByte		bRefresh;
 	uByte		bSynchAddress;
@@ -305,9 +308,20 @@ struct usb_audio_mixer_v2_unit_1 {
 	uByte		bNrChannels;
 	uDWord		bmChannelConfig;
 	uByte		iChannelNames;
-	uByte		bmControls[255]; /* [bNrChannels] */
+	uByte		bmMixerControls[255]; /* [bNrChannels] */
+	/*uByte		bmControls;*/
 	/*uByte		iMixer;*/
 } UPACKED;
+#define UA_MIX_CLUSTER_MASK	0x03
+#define UA_MIX_CLUSTER_RO	0x01
+#define UA_MIX_CLUSTER_RW	0x03
+/* UAC2 */
+#define UA_MIX_UNDERFLOW_MASK	0x0c
+#define UA_MIX_UNDERFLOW_RO	0x04
+#define UA_MIX_UNDERFLOW_RW	0x0c
+#define UA_MIX_OVERFLOW_MASK	0x30
+#define UA_MIX_OVERFLOW_RO	0x10
+#define UA_MIX_OVERFLOW_RW	0x30
 
 union usb_audio_mixer_unit_1 {
 	struct usb_audio_mixer_v1_unit_1 v1;
@@ -326,7 +340,7 @@ struct usb_audio_selector_unit {
 } UPACKED;
 
 /* UDESCSUB_AC_FEATURE */
-struct usb_audio_feature_unit {
+struct usb_audio_feature_v1_unit {
 	uByte		bLength;
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
@@ -336,6 +350,20 @@ struct usb_audio_feature_unit {
 	uByte		bmaControls[255]; /* size for more than enough */
 	/* uByte	iFeature; */
 } UPACKED;
+struct usb_audio_feature_v2_unit {
+	uByte		bLength;
+	uByte		bDescriptorType;
+	uByte		bDescriptorSubtype;
+	uByte		bUnitId;
+	uByte		bSourceId;
+	uDWord		bmaControls[255]; /* size for more than enough */
+	/* uByte	iFeature; */
+} UPACKED;
+
+union usb_audio_feature_unit {
+	struct usb_audio_feature_v1_unit v1;
+	struct usb_audio_feature_v2_unit v2;
+};
 
 /* UDESCSUB_AC_PROCESSING */
 struct usb_audio_processing_unit {
@@ -496,11 +524,13 @@ struct usb_audio_clkmult_unit {
 #define SET_MEM 0x05
 #define GET_MEM 0x85
 #define GET_STAT 0xff
-#define V2_CUR        0x01
-#define V2_RANGES     0x02
+
+#define V2_CUR		0x01
+#define V2_RANGES	0x02
 
 #define V2_CUR_CLKFREQ	0x01
 #define V2_CUR_CLKSEL	0x01
+#define V2_CUR_SELECTOR 0x01
 
 
 #define MUTE_CONTROL	0x01
@@ -516,8 +546,12 @@ struct usb_audio_clkmult_unit {
 #define GAIN_CONTROL	0x0b
 #define GAINPAD_CONTROL	0x0c
 #define PHASEINV_CONTROL 0x0d
+/* V2 */
+#define UNDERFLOW_CONTROL 0x0e
+#define OVERFLOW_CONTROL 0x0f
 
 #define FU_MASK(u) (1 << ((u)-1))
+#define V2_FU_MASK(u) (3 << ((u)-1)*2)
 
 #define MASTER_CHAN	0
 
