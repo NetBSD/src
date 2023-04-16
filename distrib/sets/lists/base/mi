@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1314 2022/12/11 06:59:36 kre Exp $
+# $NetBSD: mi,v 1.1315 2023/04/16 20:46:16 nikita Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1206,7 +1206,8 @@
 ./usr/lib/libusb.so				base-obsolete		obsolete
 ./usr/lib/lua					base-sys-usr		compatfile
 ./usr/lib/lua/5.1				base-obsolete		obsolete
-./usr/lib/lua/5.3				base-sys-usr		compatfile
+./usr/lib/lua/5.3				base-obsolete		obsolete
+./usr/lib/lua/5.4				base-sys-usr		compatfile
 ./usr/lib/named					base-sys-usr
 ./usr/lib/npf					base-obsolete		obsolete
 ./usr/lib/postfix				base-postfix-usr
@@ -4173,7 +4174,8 @@
 ./usr/share/locale/zh_TW/LC_MESSAGES/texinfo.mo	base-texinfo_locale-zh	nls
 ./usr/share/lua					base-sys-root
 ./usr/share/lua/5.1				base-obsolete		obsolete
-./usr/share/lua/5.3				base-sys-root
+./usr/share/lua/5.3				base-obsolete		obsolete
+./usr/share/lua/5.4				base-sys-root
 ./usr/share/man					base-man-share
 ./usr/share/man/COPYRIGHT			base-obsolete		obsolete
 ./usr/share/man/cat1				base-man-share

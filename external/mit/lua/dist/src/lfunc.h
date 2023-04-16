@@ -1,7 +1,7 @@
-/*	$NetBSD: lfunc.h,v 1.8 2018/08/04 17:30:01 alnsn Exp $	*/
+/*	$NetBSD: lfunc.h,v 1.9 2023/04/16 20:46:17 nikita Exp $	*/
 
 /*
-** Id: lfunc.h,v 2.15.1.1 2017/04/19 17:39:34 roberto Exp 
+** Id: lfunc.h 
 ** Auxiliary functions to manipulate prototypes and closures
 ** See Copyright Notice in lua.h
 */
@@ -13,11 +13,11 @@
 #include "lobject.h"
 
 
-#define sizeCclosure(n)	(cast(int, sizeof(CClosure)) + \
-                         cast(int, sizeof(TValue)*((n)-1)))
+#define sizeCclosure(n)	(cast_int(offsetof(CClosure, upvalue)) + \
+                         cast_int(sizeof(TValue)) * (n))
 
-#define sizeLclosure(n)	(cast(int, sizeof(LClosure)) + \
-                         cast(int, sizeof(TValue *)*((n)-1)))
+#define sizeLclosure(n)	(cast_int(offsetof(LClosure, upvals)) + \
+                         cast_int(sizeof(TValue *)) * (n))
 
 
 /* test whether thread is in 'twups' list */
@@ -31,30 +31,33 @@
 #define MAXUPVAL	255
 
 
-/*
-** Upvalues for Lua closures
-*/
-struct UpVal {
-  TValue *v;  /* points to stack or to its own value */
-  lu_mem refcount;  /* reference counter */
-  union {
-    struct {  /* (when open) */
-      UpVal *next;  /* linked list */
-      int touched;  /* mark to avoid cycles with dead threads */
-    } open;
-    TValue value;  /* the value (when closed) */
-  } u;
-};
-
 #define upisopen(up)	((up)->v != &(up)->u.value)
 
 
+#define uplevel(up)	check_exp(upisopen(up), cast(StkId, (up)->v))
+
+
+/*
+** maximum number of misses before giving up the cache of closures
+** in prototypes
+*/
+#define MAXMISS		10
+
+
+
+/* special status to close upvalues preserving the top of the stack */
+#define CLOSEKTOP	(-1)
+
+
 LUAI_FUNC Proto *luaF_newproto (lua_State *L);
-LUAI_FUNC CClosure *luaF_newCclosure (lua_State *L, int nelems);
-LUAI_FUNC LClosure *luaF_newLclosure (lua_State *L, int nelems);
+LUAI_FUNC CClosure *luaF_newCclosure (lua_State *L, int nupvals);
+LUAI_FUNC LClosure *luaF_newLclosure (lua_State *L, int nupvals);
 LUAI_FUNC void luaF_initupvals (lua_State *L, LClosure *cl);
 LUAI_FUNC UpVal *luaF_findupval (lua_State *L, StkId level);
-LUAI_FUNC void luaF_close (lua_State *L, StkId level);
+LUAI_FUNC void luaF_newtbcupval (lua_State *L, StkId level);
+LUAI_FUNC void luaF_closeupval (lua_State *L, StkId level);
+LUAI_FUNC void luaF_close (lua_State *L, StkId level, int status, int yy);
+LUAI_FUNC void luaF_unlinkupval (UpVal *uv);
 LUAI_FUNC void luaF_freeproto (lua_State *L, Proto *f);
 LUAI_FUNC const char *luaF_getlocalname (const Proto *func, int local_number,
                                          int pc);
