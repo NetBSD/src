@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2958 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2959 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -65,3 +65,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	tzdata: updated to 2023a (using the 2023agtz fork) [kre 20230323]
 	tzdata: updated to 2023b (using the 2023bgtz fork) [kre 20230324]
 	tzdata: updated to 2023c (using the 2023cgtz fork) [kre 20230331]
+	lua: Import version 5.4.4.
+		Bumped shlib major because of incompatible API/ABI changes.
+		[nikita 20230416]

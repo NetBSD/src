@@ -1,4 +1,4 @@
-/*	$NetBSD: ljumptab.h,v 1.1.1.1 2023/01/02 20:57:29 nikita Exp $	*/
+/*	$NetBSD: ljumptab.h,v 1.2 2023/04/16 20:46:17 nikita Exp $	*/
 
 /*
 ** Id: ljumptab.h 
@@ -29,7 +29,9 @@ static const void *const disptab[NUM_OPCODES] = {
 
 &&L_OP_MOVE,
 &&L_OP_LOADI,
+#ifndef _KERNEL
 &&L_OP_LOADF,
+#endif /* _KERNEL */
 &&L_OP_LOADK,
 &&L_OP_LOADKX,
 &&L_OP_LOADFALSE,
@@ -53,8 +55,10 @@ static const void *const disptab[NUM_OPCODES] = {
 &&L_OP_SUBK,
 &&L_OP_MULK,
 &&L_OP_MODK,
+#ifndef _KERNEL
 &&L_OP_POWK,
 &&L_OP_DIVK,
+#endif /* _KERNEL */
 &&L_OP_IDIVK,
 &&L_OP_BANDK,
 &&L_OP_BORK,
@@ -65,8 +69,10 @@ static const void *const disptab[NUM_OPCODES] = {
 &&L_OP_SUB,
 &&L_OP_MUL,
 &&L_OP_MOD,
+#ifndef _KERNEL
 &&L_OP_POW,
 &&L_OP_DIV,
+#endif /* _KERNEL */
 &&L_OP_IDIV,
 &&L_OP_BAND,
 &&L_OP_BOR,

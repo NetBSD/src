@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lua.mk,v 1.8 2017/04/20 09:29:11 ozaki-r Exp $
+#	$NetBSD: bsd.lua.mk,v 1.9 2023/04/16 20:46:17 nikita Exp $
 #
 # Build rules and definitions for Lua modules
 
@@ -35,10 +35,10 @@
 #
 # C language sources are passed though lint, when MKLINT != "no"
 #
-# The Lua binary searches /usr/share/lua/5.1/ at this time and we could
+# The Lua binary searches /usr/share/lua/5.4/ at this time and we could
 # install .lua modules there which would mean slightly less duplication
 # in compat builds. However, MKSHARE=no would prevent such modules from
-# being installed so we just install everything under /usr/lib/lua/5.1/
+# being installed so we just install everything under /usr/lib/lua/5.4/
 #
 
 .if !defined(_BSD_LUA_MK_)
@@ -64,7 +64,7 @@ CLEANFILES+= a.out [Ee]rrs mklog core *.core
 
 ##
 ##### Global variables
-LUA_VERSION?=	5.3
+LUA_VERSION?=	5.4
 LUA_LIBDIR?=	${LIBDIR}/lua/${LUA_VERSION}
 LUAC?=		/usr/bin/luac
 
