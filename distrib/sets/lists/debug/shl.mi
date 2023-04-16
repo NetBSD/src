@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.303 2023/03/23 12:38:13 riastradh Exp $
+# $NetBSD: shl.mi,v 1.304 2023/04/16 20:46:16 nikita Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -157,7 +157,7 @@
 ./usr/libdata/debug/usr/lib/libldap_r.so.5.0.debug		comp-ldap-debug	debug,compatfile,ldap
 ./usr/libdata/debug/usr/lib/liblsan.so.1.0.debug		comp-sys-debug	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/liblsan.so.2.0.debug		comp-sys-debug	debug,compatfile,cxx,gcc
-./usr/libdata/debug/usr/lib/liblua.so.5.3.debug			comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/liblua.so.6.0.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/liblutok.so.1.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/liblutok.so.2.0.debug		comp-kyua-debug	debug,compatfile,kyua
 ./usr/libdata/debug/usr/lib/liblwres.so.6.0.debug		comp-obsolete	debug,compatfile,obsolete
