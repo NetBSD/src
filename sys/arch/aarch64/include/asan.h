@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.18 2021/04/29 09:27:29 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.19 2023/04/16 14:01:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -61,7 +61,7 @@ static inline bool
 kasan_md_unsupported(vaddr_t addr)
 {
 	return (addr < VM_MIN_KERNEL_ADDRESS) ||
-	    (addr >= VM_KERNEL_IO_ADDRESS);
+	    (addr >= VM_KERNEL_IO_BASE);
 }
 
 static paddr_t

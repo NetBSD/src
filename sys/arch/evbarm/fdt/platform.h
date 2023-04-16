@@ -1,4 +1,4 @@
-/* $NetBSD: platform.h,v 1.10 2020/12/12 09:27:31 skrll Exp $ */
+/* $NetBSD: platform.h,v 1.11 2023/04/16 14:01:51 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #ifndef _EVBARM_FDT_PLATFORM_H
 #define _EVBARM_FDT_PLATFORM_H
 
-#define KERNEL_IO_VBASE		VM_KERNEL_IO_ADDRESS
+#define KERNEL_IO_VBASE		VM_KERNEL_IO_BASE
 #define KERNEL_IO_VSIZE		VM_KERNEL_IO_SIZE
 
 #define KERNEL_VM_BASE		VM_KERNEL_VM_BASE
