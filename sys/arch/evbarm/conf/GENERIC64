@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.210 2023/02/25 08:19:35 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.211 2023/04/16 16:55:01 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -162,6 +162,7 @@ tegratimer*	at fdt?			# Timers
 applewdog*	at fdt?			# Apple watchdog
 bcmpmwdog*	at fdt?			# Broadcom BCM283x watchdog
 dwcwdt* 	at fdt?			# DesignWare watchdog
+dwcwdt*		at acpi?
 mesongxwdt*	at fdt?			# Amlogic Meson GX watchdog
 sbsawdt*	at acpi?		# ARM SBSA-compliant watchdog
 sunxiwdt*	at fdt?			# Allwinner watchdog
