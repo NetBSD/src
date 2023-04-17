@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.c,v 1.16 2023/04/17 19:35:36 nikita Exp $	*/
+/*	$NetBSD: lvm.c,v 1.17 2023/04/17 20:37:43 nikita Exp $	*/
 
 /*
 ** Id: lvm.c 
@@ -1467,6 +1467,7 @@ void luaV_execute (lua_State *L, CallInfo *ci) {
         vmbreak;
       }
       vmcase(OP_MODK) {
+        savestate(L, ci);  /* in case of division by 0 */
         op_arithK(L, luaV_mod, luaV_modf);
         vmbreak;
       }
@@ -1481,6 +1482,7 @@ void luaV_execute (lua_State *L, CallInfo *ci) {
       }
 #endif /* _KERNEL */
       vmcase(OP_IDIVK) {
+        savestate(L, ci);  /* in case of division by 0 */
         op_arithK(L, luaV_idiv, luai_numidiv);
         vmbreak;
       }
@@ -1527,6 +1529,7 @@ void luaV_execute (lua_State *L, CallInfo *ci) {
         vmbreak;
       }
       vmcase(OP_MOD) {
+        savestate(L, ci);  /* in case of division by 0 */
         op_arith(L, luaV_mod, luaV_modf);
         vmbreak;
       }
@@ -1541,6 +1544,7 @@ void luaV_execute (lua_State *L, CallInfo *ci) {
       }
 #endif /* _KERNEL */
       vmcase(OP_IDIV) {  /* floor division */
+        savestate(L, ci);  /* in case of division by 0 */
         op_arith(L, luaV_idiv, luai_numidiv);
         vmbreak;
       }
