@@ -1,4 +1,4 @@
-/*	$NetBSD: lundump.c,v 1.9 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: lundump.c,v 1.10 2023/04/17 21:17:57 nikita Exp $	*/
 
 /*
 ** Id: lundump.c 
@@ -254,6 +254,8 @@ static void loadDebug (LoadState *S, Proto *f) {
     f->locvars[i].endpc = loadInt(S);
   }
   n = loadInt(S);
+  if (n != 0)  /* does it have debug information? */
+    n = f->sizeupvalues;  /* must be this many */
   for (i = 0; i < n; i++)
     f->upvalues[i].name = loadStringN(S, f);
 }
