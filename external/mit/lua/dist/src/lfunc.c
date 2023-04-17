@@ -1,4 +1,4 @@
-/*	$NetBSD: lfunc.c,v 1.9 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: lfunc.c,v 1.10 2023/04/17 19:54:19 nikita Exp $	*/
 
 /*
 ** Id: lfunc.c 
@@ -227,9 +227,9 @@ static void poptbclist (lua_State *L) {
 
 /*
 ** Close all upvalues and to-be-closed variables up to the given stack
-** level.
+** level. Return restored 'level'.
 */
-void luaF_close (lua_State *L, StkId level, int status, int yy) {
+StkId luaF_close (lua_State *L, StkId level, int status, int yy) {
   ptrdiff_t levelrel = savestack(L, level);
   luaF_closeupval(L, level);  /* first, close the upvalues */
   while (L->tbclist >= level) {  /* traverse tbc's down to that level */
@@ -238,6 +238,7 @@ void luaF_close (lua_State *L, StkId level, int status, int yy) {
     prepcallclosemth(L, tbc, status, yy);  /* close variable */
     level = restorestack(L, levelrel);
   }
+  return level;
 }
 
 
