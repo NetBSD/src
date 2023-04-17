@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.76 2023/01/29 17:20:48 skrll Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.77 2023/04/17 08:14:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.76 2023/01/29 17:20:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.77 2023/04/17 08:14:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -74,11 +74,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.76 2023/01/29 17:20:48 skrll Exp $")
 #ifdef MODULAR
 
 #include <sys/param.h>
+
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/proc.h>
 #include <sys/ksyms.h>
 #include <sys/module.h>
+#include <sys/proc.h>
 
 #include <uvm/uvm_extern.h>
 
