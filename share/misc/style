@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.72 2023/04/15 12:22:37 rillig Exp $ */
+/* $NetBSD: style,v 1.73 2023/04/17 00:37:04 dholland Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.72 2023/04/15 12:22:37 rillig Exp $");
+__RCSID("$NetBSD: style,v 1.73 2023/04/17 00:37:04 dholland Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -356,7 +356,8 @@ function(int a1, int a2, float fl, int a4)
 	 * When declaring variables in functions, multiple variables per line
 	 * are okay. If a line overflows reuse the type keyword.
 	 *
-	 * Function prototypes should go in the include file "extern.h".
+	 * Function prototypes and external data declarations should go in a
+	 * suitable include file.
 	 *
 	 * Avoid initializing variables in the declarations; move
 	 * declarations next to their first use, and initialize
