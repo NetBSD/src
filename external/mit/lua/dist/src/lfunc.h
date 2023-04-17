@@ -1,4 +1,4 @@
-/*	$NetBSD: lfunc.h,v 1.9 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: lfunc.h,v 1.10 2023/04/17 19:54:19 nikita Exp $	*/
 
 /*
 ** Id: lfunc.h 
@@ -56,7 +56,7 @@ LUAI_FUNC void luaF_initupvals (lua_State *L, LClosure *cl);
 LUAI_FUNC UpVal *luaF_findupval (lua_State *L, StkId level);
 LUAI_FUNC void luaF_newtbcupval (lua_State *L, StkId level);
 LUAI_FUNC void luaF_closeupval (lua_State *L, StkId level);
-LUAI_FUNC void luaF_close (lua_State *L, StkId level, int status, int yy);
+LUAI_FUNC StkId luaF_close (lua_State *L, StkId level, int status, int yy);
 LUAI_FUNC void luaF_unlinkupval (UpVal *uv);
 LUAI_FUNC void luaF_freeproto (lua_State *L, Proto *f);
 LUAI_FUNC const char *luaF_getlocalname (const Proto *func, int local_number,
