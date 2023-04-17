@@ -1,10 +1,8 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.47 2015/12/29 17:55:23 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.47.26.1 2023/04/17 18:22:20 martin Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
-
-CPPFLAGS+=-DWIDE_DOUBLE
 
 SRCS+=	clrerr.c dprintf.c fclose.c fdopen.c feof.c ferror.c \
 	fflush.c fgetc.c fgetln.c fgetpos.c fgets.c fgetstr.c fgetwc.c \

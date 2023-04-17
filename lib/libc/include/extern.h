@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.26 2020/05/15 14:37:21 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.26.6.1 2023/04/17 18:22:20 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -49,11 +49,17 @@ struct sigaction;
 int __sigaction_sigtramp(int, const struct sigaction *,
     struct sigaction *, const void *, int);
 
+/* is "long double" and "double" different? */
+#if (__LDBL_MANT_DIG__ != __DBL_MANT_DIG__) || \
+    (__LDBL_MAX_EXP__ != __DBL_MAX_EXP__)
+#define WIDE_DOUBLE
+#endif
+
 #ifdef WIDE_DOUBLE
-char *__hdtoa(double, const char *, int, int *, int *, char **);
 char *__hldtoa(long double, const char *, int, int *, int *,  char **);
 char *__ldtoa(long double *, int, int, int *, int *, char **);
 #endif
+char *__hdtoa(double, const char *, int, int *, int *, char **);
 
 #ifndef __LIBC12_SOURCE__
 struct syslog_data;
