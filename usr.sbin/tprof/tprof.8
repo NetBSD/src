@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.26 2023/04/17 07:13:35 msaitoh Exp $
+.\"	$NetBSD: tprof.8,v 1.27 2023/04/17 08:37:24 msaitoh Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -69,10 +69,11 @@ Display the following information:
 a list of performance counter events available on the system
 .It
 the maximum number of counters that can be used simultaneously
+.It
+the default counter for monitor and top command
 .El
 .It monitor Xo
-.Fl e
-.Ar name[:option][,scale]
+.Op Fl e Ar name[:option][,scale]
 .Op Fl e Ar ...
 .Op Fl o Ar outfile
 .Ar command
@@ -91,6 +92,9 @@ specifies the source of the event; it must be a combination of
 Multiple
 .Fl e
 arguments can be specified.
+If none of the
+.Fl e
+arguments are speficied, the CPU's default counter is used.
 The collected samples are written into the file
 .Ar scale
 specifies the ratio of the speed to the cycle counter, or the counter until
