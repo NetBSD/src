@@ -1,4 +1,4 @@
-/*	$NetBSD: vfwprintf.c,v 1.39 2022/04/19 20:32:16 rillig Exp $	*/
+/*	$NetBSD: vfwprintf.c,v 1.39.2.1 2023/04/17 18:22:20 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 static char sccsid[] = "@(#)vfprintf.c	8.1 (Berkeley) 6/4/93";
 __FBSDID("$FreeBSD: src/lib/libc/stdio/vfwprintf.c,v 1.27 2007/01/09 00:28:08 imp Exp $");
 #else
-__RCSID("$NetBSD: vfwprintf.c,v 1.39 2022/04/19 20:32:16 rillig Exp $");
+__RCSID("$NetBSD: vfwprintf.c,v 1.39.2.1 2023/04/17 18:22:20 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -581,9 +581,6 @@ WDECL(vf,printf_l)(FILE * __restrict fp, locale_t loc, const CHAR_T * __restrict
 #define	DEFPREC		6
 
 static int exponent(CHAR_T *, int, int);
-#ifndef WIDE_DOUBLE
-static char *cvt(double, int, int, char *, int *, int, int *);
-#endif
 
 #endif /* !NO_FLOATING_POINT */
 
@@ -649,17 +646,14 @@ WDECL(__vf,printf_unlocked_l)(FILE *fp, locale_t loc, const CHAR_T *fmt0, va_lis
 	 * F:	at least two digits for decimal, at least one digit for hex
 	 */
 	char *decimal_point;	/* locale specific decimal point */
-#ifdef WIDE_DOUBLE
 	int signflag;		/* true if float is negative */
 	union {			/* floating point arguments %[aAeEfFgG] */
 		double dbl;
+#ifdef WIDE_DOUBLE
 		long double ldbl;
+#endif
 	} fparg;
 	char *dtoaend;		/* pointer to end of converted digits */
-#else
-	double _double;		/* double precision arguments %[eEfgG] */
-	char softsign;		/* temporary negative sign for floats */
-#endif
 	char *dtoaresult;	/* buffer allocated by dtoa */
 	int expt;		/* integer value of exponent */
 	char expchar;		/* exponent character: [eEpP\0] */
@@ -1058,7 +1052,6 @@ reswitch:	switch (ch) {
 			base = 10;
 			goto number;
 #ifndef NO_FLOATING_POINT
-#ifdef WIDE_DOUBLE
 		case 'a':
 		case 'A':
 			if (ch == 'a') {
@@ -1072,12 +1065,15 @@ reswitch:	switch (ch) {
 			}
 			if (prec >= 0)
 				prec++;
+#ifdef WIDE_DOUBLE
 			if (flags & LONGDBL) {
 				fparg.ldbl = GETARG(long double);
 				dtoaresult =
 				    __hldtoa(fparg.ldbl, xdigs, prec,
 				        &expt, &signflag, &dtoaend);
-			} else {
+			} else
+#endif
+			{
 				fparg.dbl = GETARG(double);
 				dtoaresult =
 				    __hdtoa(fparg.dbl, xdigs, prec,
@@ -1127,12 +1123,15 @@ reswitch:	switch (ch) {
 fp_begin:
 			if (prec < 0)
 				prec = DEFPREC;
+#ifdef WIDE_DOUBLE
 			if (flags & LONGDBL) {
 				fparg.ldbl = GETARG(long double);
 				dtoaresult =
 				    __ldtoa(&fparg.ldbl, expchar ? 2 : 3, prec,
 				    &expt, &signflag, &dtoaend);
-			} else {
+			} else
+#endif
+			{
 				fparg.dbl = GETARG(double);
 				dtoaresult =
 				    __dtoa(fparg.dbl, expchar ? 2 : 3, prec,
@@ -1170,66 +1169,7 @@ fp_common:
 				flags &= ~ZEROPAD;
 				break;
 			}
-#else
-		case 'e':
-		case 'E':
-		case 'f':
-		case 'F':
-		case 'g':
-		case 'G':
-			if (prec == -1) {
-				prec = DEFPREC;
-			} else if ((ch == 'g' || ch == 'G') && prec == 0) {
-				prec = 1;
-			}
 
-			if (flags & LONGDBL) {
-				_double = (double) GETARG(long double);
-			} else {
-				_double = GETARG(double);
-			}
-
-			/* do this before tricky precision changes */
-			if (isinf(_double)) {
-				if (_double < 0)
-					sign = '-';
-				if (ch == 'E' || ch == 'F' || ch == 'G')
-					result = STRCONST("INF");
-				else
-					result = STRCONST("inf");
-				size = 3;
-				flags &= ~ZEROPAD;
-				break;
-			}
-			if (isnan(_double)) {
-				if (ch == 'E' || ch == 'F' || ch == 'G')
-					result = STRCONST("NAN");
-				else
-					result = STRCONST("nan");
-				size = 3;
-				flags &= ~ZEROPAD;
-				break;
-			}
-
-			flags |= FPT;
-			dtoaresult = cvt(_double, prec, flags, &softsign,
-			    &expt, ch, &ndig);
-			if (dtoaresult == NULL)
-				goto oomem;
-			if (convbuf != NULL)
-				free(convbuf);
-#ifndef NARROW
-			result = convbuf = __mbsconv(dtoaresult, -1, loc);
-#else
-			/*XXX inefficient*/
-			result = convbuf = strdup(dtoaresult);
-#endif
-			if (result == NULL)
-				goto oomem;
-			__freedtoa(dtoaresult);
-			if (softsign)
-				sign = '-';
-#endif
 			flags |= FPT;
 			if (ch == 'g' || ch == 'G') {
 				if (expt > -4 && expt <= prec) {
@@ -2001,57 +1941,7 @@ __grow_type_table (size_t nextarg, enum typeid **typetable, size_t *tablesize)
 	return 0;
 }
 
-
 #ifndef NO_FLOATING_POINT
-#ifndef WIDE_DOUBLE
-static char *
-cvt(double value, int ndigits, int flags, char *sign, int *decpt, int ch,
-    int *length)
-{
-	int mode, dsgn;
-	char *digits, *bp, *rve;
-
-	_DIAGASSERT(decpt != NULL);
-	_DIAGASSERT(length != NULL);
-	_DIAGASSERT(sign != NULL);
-
-	if (ch == 'f') {
-		mode = 3;		/* ndigits after the decimal point */
-	} else {
-		/* To obtain ndigits after the decimal point for the 'e' 
-		 * and 'E' formats, round to ndigits + 1 significant 
-		 * figures.
-		 */
-		if (ch == 'e' || ch == 'E') {
-			ndigits++;
-		}
-		mode = 2;		/* ndigits significant digits */
-	}
-
-	digits = __dtoa(value, mode, ndigits, decpt, &dsgn, &rve);
-	if (digits == NULL)
-		return NULL;
-	if (dsgn) {
-		value = -value;
-		*sign = '-';
-	} else
-		*sign = '\000';
-	if ((ch != 'g' && ch != 'G') || flags & ALT) {	/* Print trailing zeros */
-		bp = digits + ndigits;
-		if (ch == 'f') {
-			if (*digits == '0' && value)
-				*decpt = -ndigits + 1;
-			bp += *decpt;
-		}
-		if (value == 0)	/* kludge for __dtoa irregularity */
-			rve = bp;
-		while (rve < bp)
-			*rve++ = '0';
-	}
-	*length = rve - digits;
-	return digits;
-}
-#endif
 
 static int
 exponent(CHAR_T *p0, int expo, int fmtch)
