@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.160.8.1 2023/02/24 14:17:18 martin Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.160.8.2 2023/04/17 18:13:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.160.8.1 2023/02/24 14:17:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.160.8.2 2023/04/17 18:13:44 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -804,6 +804,7 @@ aprint_error_internal(const char *prefix, const char *fmt, va_list ap)
 
 	if (prefix)
 		kprintf_internal("%s: ", flags, NULL, NULL, prefix);
+	kprintf_internal("autoconfiguration error: ", TOLOG, NULL, NULL);
 	kprintf(fmt, flags, NULL, NULL, ap);
 
 	kprintf_unlock();
@@ -907,7 +908,6 @@ aprint_verbose_internal(const char *prefix, const char *fmt, va_list ap)
 
 	if (prefix)
 		kprintf_internal("%s: ", flags, NULL, NULL, prefix);
-	kprintf_internal("autoconfiguration error: ", TOLOG, NULL, NULL);
 	kprintf(fmt, flags, NULL, NULL, ap);
 
 	kprintf_unlock();
