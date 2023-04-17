@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.25 2023/04/10 06:08:55 msaitoh Exp $
+.\"	$NetBSD: tprof.8,v 1.26 2023/04/17 07:13:35 msaitoh Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 10, 2023
+.Dd April 17, 2023
 .Dt TPROF 8
 .Os
 .Sh NAME
@@ -63,7 +63,13 @@ specifies the action to take.
 Valid actions are:
 .Bl -tag -width offline -offset indent
 .It list
-Display a list of performance counter events available on the system.
+Display the following information:
+.Bl -bullet -compact
+.It
+a list of performance counter events available on the system
+.It
+the maximum number of counters that can be used simultaneously
+.El
 .It monitor Xo
 .Fl e
 .Ar name[:option][,scale]
@@ -82,6 +88,9 @@ specifies the source of the event; it must be a combination of
 (userland) and
 .Ar k
 (kernel). If omitted, it is assumed that both are specified.
+Multiple
+.Fl e
+arguments can be specified.
 The collected samples are written into the file
 .Ar scale
 specifies the ratio of the speed to the cycle counter, or the counter until
