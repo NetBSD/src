@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.54 2023/04/15 12:09:07 jdc Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.55 2023/04/17 18:34:56 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1608,4 +1608,16 @@ sys/arch/x86/x86/intr.c				1.164
 	x86: PR 57197: work around a secret argument to clockintr().
 	[riastradh, ticket #136]
 
+lib/libc/include/extern.h			1.27
+lib/libc/stdio/Makefile.inc			1.48
+lib/libc/stdio/vfwprintf.c			1.40
+
+	PR 57250: fix dtoa for big endian machines where long double uses
+	the same represantation as double.
+	[he, ticket #137]
+
+tests/lib/libc/stdio/t_printf.c			1.9,1.10
+
+	Add a test for PR 57250.
+	[he, ticket #138]
 
