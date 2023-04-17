@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.h,v 1.4 2022/12/16 08:02:04 ryo Exp $	*/
+/*	$NetBSD: tprof.h,v 1.5 2023/04/17 08:37:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@ extern int ncpu;
 extern int devfd;
 extern u_int ncounters;
 
+const char *tprof_cycle_event_name(void);
 int tprof_event_init(uint32_t);
 void tprof_event_list(void);
 void tprof_event_lookup(const char *, struct tprof_param *);
