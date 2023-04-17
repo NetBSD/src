@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.37 2023/04/07 12:09:13 skrll Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.38 2023/04/17 06:46:53 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.37 2023/04/07 12:09:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.38 2023/04/17 06:46:53 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -249,7 +249,7 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	ptp = stp->seg_tab;
 	ppg = (void *)dm_segtabs;
 	memset(ppg, 0, NBPG * dm_nsegtabs);
-	for (size_t i = 0; i < dm_nsegtabs; i++, ptp++, ppg ++) {
+	for (size_t i = 0; i < dm_nsegtabs; i++, ptp++, ppg++) {
 		*ptp = ppg;
 	}
 
