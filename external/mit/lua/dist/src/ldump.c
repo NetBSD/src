@@ -1,4 +1,4 @@
-/*	$NetBSD: ldump.c,v 1.10 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: ldump.c,v 1.11 2023/04/17 21:17:57 nikita Exp $	*/
 
 /*
 ** Id: ldump.c 
@@ -14,6 +14,7 @@
 
 #ifndef _KERNEL
 #include <stddef.h>
+#include <limits.h>
 #endif /* _KERNEL */
 
 #include "lua.h"
@@ -59,8 +60,17 @@ static void dumpByte (DumpState *D, int y) {
 }
 
 
+#ifdef _KERNEL
 /* dumpInt Buff Size */
 #define DIBS    ((sizeof(size_t) * 8 / 7) + 1)
+#endif /* _KERNEL */
+#ifndef _KERNEL
+/*
+** 'dumpSize' buffer size: each byte can store up to 7 bits. (The "+6"
+** rounds up the division.)
+*/
+#define DIBS    ((sizeof(size_t) * CHAR_BIT + 6) / 7)
+#endif /* _KERNEL */
 
 static void dumpSize (DumpState *D, size_t x) {
   lu_byte buff[DIBS];
