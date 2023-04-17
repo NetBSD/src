@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.39 2022/10/26 07:35:20 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.40 2023/04/17 06:48:07 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.39 2022/10/26 07:35:20 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.40 2023/04/17 06:48:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -300,7 +300,7 @@ isi_exception(struct trapframe *tf, ksiginfo_t *ksi)
 		if (VM_PAGEMD_EXECPAGE_P(mdpg))
 			UVMHIST_LOG(pmapexechist,
 			    "srr0=%#x pg=%p (pa %#"PRIxPADDR"): "
-			    "no syncicache (already execpage)", 
+			    "no syncicache (already execpage)",
 			    tf->tf_srr0, (uintptr_t)pg, pa, 0);
 		else
 			UVMHIST_LOG(pmapexechist,
@@ -459,7 +459,7 @@ pgm_exception(struct trapframe *tf, ksiginfo_t *ksi)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmapexechist);
 
-	UVMHIST_LOG(pmapexechist, " srr0/1=%#x/%#x esr=%#x pte=%#x", 
+	UVMHIST_LOG(pmapexechist, " srr0/1=%#x/%#x esr=%#x pte=%#x",
 	    tf->tf_srr0, tf->tf_srr1, tf->tf_esr,
 	    *trap_pte_lookup(tf, trunc_page(tf->tf_srr0), PSL_IS));
 
