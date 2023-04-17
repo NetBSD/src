@@ -1,4 +1,4 @@
-/*	$NetBSD: lstate.c,v 1.10 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: lstate.c,v 1.11 2023/04/17 20:33:12 nikita Exp $	*/
 
 /*
 ** Id: lstate.c 
@@ -347,9 +347,10 @@ int luaE_resetthread (lua_State *L, int status) {
 }
 
 
-LUA_API int lua_resetthread (lua_State *L) {
+LUA_API int lua_resetthread (lua_State *L, lua_State *from) {
   int status;
   lua_lock(L);
+  L->nCcalls = (from) ? getCcalls(from) : 0;
   status = luaE_resetthread(L, L->status);
   lua_unlock(L);
   return status;
