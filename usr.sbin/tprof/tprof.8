@@ -1,4 +1,4 @@
-.\"	$NetBSD: tprof.8,v 1.28 2023/04/17 21:46:12 gutteridge Exp $
+.\"	$NetBSD: tprof.8,v 1.29 2023/04/17 21:51:40 uwe Exp $
 .\"
 .\" Copyright (c)2011 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -37,7 +37,9 @@
 .Sh DESCRIPTION
 The
 .Nm
-tool can be used to monitor hardware events (PMCs) during the execution of
+tool can be used to monitor hardware events
+.Tn ( PMC Ns s )
+during the execution of
 certain commands.
 .Pp
 The
@@ -48,11 +50,8 @@ keeps recording samples from the kernel driver until the command finishes,
 and reports statistics to the standard error.
 .Pp
 The
-.Nm tprof
-pseudo driver and a suitable backend should be loaded beforehand.
-See
 .Xr tprof 4
-for the details.
+pseudo driver and a suitable backend should be loaded beforehand.
 .Pp
 The
 .Nm
@@ -61,8 +60,10 @@ The first argument,
 .Ar op ,
 specifies the action to take.
 Valid actions are:
-.Bl -tag -width offline -offset indent
-.It list
+.Bl -tag -width Cm
+.
+.It Cm list
+.
 Display the following information:
 .Bl -bullet -compact
 .It
@@ -70,24 +71,31 @@ a list of performance counter events available on the system
 .It
 the maximum number of counters that can be used simultaneously
 .It
-the default counter for monitor and top command
+the default counter for
+.Cm monitor
+and
+.Cm top
+commands
 .El
-.It monitor Xo
-.Op Fl e Ar name[:option][,scale]
+.
+.It Cm monitor Xo
+.Op Fl e Ar name\| Ns Oo Cm \&: Ns Ar option\^ Oc Ns Oo Cm \&, Ns Ar scale\^ Oc
 .Op Fl e Ar ...
 .Op Fl o Ar outfile
 .Ar command
 .Xc
-Monitor the execution of command
+.
+Monitor the execution of
 .Ar command .
+The
 .Ar name
-specifies the name of the event to count; it must be taken from the list of
+specifies the event to count; it must be taken from the list of
 available events.
 .Ar option
 specifies the source of the event; it must be a combination of
-.Ar u
+.Cm u
 (userland) and
-.Ar k
+.Cm k
 (kernel).
 If omitted, it is assumed that both are specified.
 Multiple
@@ -96,7 +104,7 @@ arguments can be specified.
 If none of the
 .Fl e
 arguments are speficied, the CPU's default counter is used.
-The collected samples are written into the file
+.Pp
 .Ar scale
 specifies the ratio of the speed to the cycle counter, or the counter until
 overflow.
@@ -105,38 +113,43 @@ speed of the cycle counter by default, but for some events this value may be
 too large (counter increasing too slowly) to be sufficient for profiling.
 For example, to specify an event that increases about 1000 times slower than
 the cycle counter, specify
-.Dq Pa -e event,1000 .
+.Ql -e event,1000 .
 Also, if
-.Dq Pa -e event,=200
+.Ql -e event,=200
 is specified, profiling is performed every time the counter is increased by 200.
+.Pp
+The collected samples are written into the file
 .Ar outfile
 if specified.
 The default is
-.Dq Pa tprof.out .
-.It count Xo
-.Fl e
-.Ar name[:option]
+.Pa tprof.out .
+.
+.It Cm count Xo
+.Fl e Ar name\| Ns Op Cm \&: Ns Ar option
 .Op Fl e Ar ...
 .Op Fl i Ar interval
 .Ar command
 .Xc
+.
 Same as
-.Ar monitor ,
+.Cm monitor ,
 but does not do any profiling,
 only outputs counters every
 .Ar interval
 second.
-.It analyze Xo
+.
+.It Cm analyze Xo
 .Op Fl CkLPs
 .Op Fl p Ar pid
 .Ar file
 .Xc
+.
 Analyze the samples produced by a previous run of
-.Nm tprof ,
+.Nm ,
 stored in
 .Ar file ,
 and generate a plain text representation of them.
-.Bl -tag -width XPXpidXX -offset indent
+.Bl -tag -width Fl
 .It Fl C
 Don't distinguish CPUs.
 All samples are treated as its CPU number is 0.
@@ -156,27 +169,28 @@ and ignore the rest.
 .It Fl s
 Per symbol.
 .El
-.It top Xo
-.Oo
-.Fl e
-.Ar name[,scale]
-.Op Fl e Ar ...
-.Oc
-.Op Fl i Ar interval
+.
+.It Cm top Xo
 .Op Fl acu
+.Op Fl e Ar name\| Ns Oo Cm \&, Ns Ar scale\^ Oc
+.Op Fl e Ar ...
+.Op Fl i Ar interval
 .Xc
+.
 Displays profiling results in real-time.
 .Ar name
 specifies the name of the event to count.
-.Bl -tag -width XXintervalX -offset indent
-.It Fl i Ar interval
-set the update interval in seconds. The default value is 1.
+.Bl -tag -width Fl
 .It Fl a
-Starts in accumulation mode. The display is updated every
+Starts in accumulation mode.
+The display is updated every
 .Ar interval
 second, but the values are accumulative.
 .It Fl c
-show the delta of the event counters.
+Show the delta of the event counters.
+.It Fl i Ar interval
+Set the update interval in seconds.
+The default value is 1.
 .It Fl u
 Userland processes are also included in the profiling.
 .El
@@ -186,23 +200,27 @@ While
 .Ar top
 is running, it accepts commands from the terminal.
 These commands are currently recognized:
-.Bl -tag -width XXcommandsX -offset indent
-.It Ic a
+.Bl -tag -width Ic
+.It Aq Ic a
 toggle accumurative mode.
-.It Ic c
+.It Aq Ic c
 shows/hides the event counters.
-.It Ic q
+.It Aq Ic q
 quit
 .Nm .
-.It Ic z
+.It Aq Ic z
 clear accumulated data.
 .El
 .El
 .Sh EXAMPLES
 The following command profiles the system during 20 seconds and writes the
-samples into the file myfile.out.
+samples into the file
+.Pa myfile.out .
+.Pp
 .Dl # tprof monitor -e llc-misses:k -o myfile.out sleep 20
+.Pp
 The following command displays the results of the sampling.
+.Pp
 .Dl # tprof analyze myfile.out
 .Sh SUPPORT
 The following CPU models are supported:
@@ -234,7 +252,7 @@ x86 Intel Goldmont Plus
 The
 .Nm
 utility reports the following statistics about the activities of the
-.Nm tprof
+.Xr tprof 4
 pseudo driver.
 .Bl -tag -width dropbuf_samples
 .It sample
