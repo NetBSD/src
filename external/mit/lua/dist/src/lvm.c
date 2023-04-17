@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.c,v 1.15 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: lvm.c,v 1.16 2023/04/17 19:35:36 nikita Exp $	*/
 
 /*
 ** Id: lvm.c 
@@ -698,8 +698,10 @@ void luaV_concat (lua_State *L, int total) {
       /* collect total length and number of strings */
       for (n = 1; n < total && tostring(L, s2v(top - n - 1)); n++) {
         size_t l = vslen(s2v(top - n - 1));
-        if (l_unlikely(l >= (MAX_SIZE/sizeof(char)) - tl))
+        if (l_unlikely(l >= (MAX_SIZE/sizeof(char)) - tl)) {
+          L->top = top - total;  /* pop strings to avoid wasting stack */
           luaG_runerror(L, "string length overflow");
+        }
         tl += l;
       }
       if (tl <= LUAI_MAXSHORTLEN) {  /* is result a short string? */
@@ -714,7 +716,7 @@ void luaV_concat (lua_State *L, int total) {
       setsvalue2s(L, top - n, ts);  /* create result */
     }
     total -= n-1;  /* got 'n' strings to create 1 new */
-    L->top -= n-1;  /* popped 'n' strings and pushed one */
+    L->top = top - (n - 1);  /* popped 'n' strings and pushed one */
   } while (total > 1);  /* repeat until only 1 result left */
 }
 

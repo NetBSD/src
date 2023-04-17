@@ -1,4 +1,4 @@
-/*	$NetBSD: ldebug.c,v 1.12 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: ldebug.c,v 1.13 2023/04/17 19:35:36 nikita Exp $	*/
 
 /*
 ** Id: ldebug.c 
@@ -828,8 +828,11 @@ l_noret luaG_runerror (lua_State *L, const char *fmt, ...) {
   va_start(argp, fmt);
   msg = luaO_pushvfstring(L, fmt, argp);  /* format message */
   va_end(argp);
-  if (isLua(ci))  /* if Lua function, add source:line information */
+  if (isLua(ci)) {  /* if Lua function, add source:line information */
     luaG_addinfo(L, msg, ci_func(ci)->p->source, getcurrentline(ci));
+    setobjs2s(L, L->top - 2, L->top - 1);  /* remove 'msg' from the stack */
+    L->top--;
+  }
   luaG_errormsg(L);
 }
 
