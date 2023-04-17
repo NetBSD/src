@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2959 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2960 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -62,9 +62,25 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		in various ports. [riastradh 20230301]
 	sh(1): Adjust tilde expansion to comply with upcoming POSIX
 		Issue 8 requirements. [kre 20230306]
+	libm: Add more long double transcendental functions (as aliases of
+		double functions) from C99. [riastradh 20230313]
 	tzdata: updated to 2023a (using the 2023agtz fork) [kre 20230323]
 	tzdata: updated to 2023b (using the 2023bgtz fork) [kre 20230324]
+	xen: Allow a PVH dom0 to use VGA as console. [bouyer 20230324]
+	vioscsi(4), viornd(4), viomb(4): Mark VirtIO drivers as MPSAFE.
+		[mlelstv 20230325]
+	amiga: Fix bootblocks for Kickstart 3.2. [abs 20230325]
+	libc: Add __atomic_is_lock_free to help stdatomic.h usage with
+		GCC. [riastradh 20230330]
 	tzdata: updated to 2023c (using the 2023cgtz fork) [kre 20230331]
+	tprof(8): Add Intel Comet Lake support. [msaitoh 20230410]
+	vacation(1): Check 'Auto-Submitted:' header in addition to
+		'Precedence:', and set 'Precedence:' in addition to
+		'Auto-Submitted:'.  [hauke 20230411]
+	ichsmb(4), tco(4): Add support for TCO on newer Intel chipsets.
+		[riastradh 20230412]
+	audiorecord(1): Add support for recording 24-bit wav files.
+		[mlelstv 20230415]
 	lua: Import version 5.4.4.
 		Bumped shlib major because of incompatible API/ABI changes.
 		[nikita 20230416]
