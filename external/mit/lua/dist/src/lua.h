@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.h,v 1.12 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: lua.h,v 1.13 2023/04/17 20:33:12 nikita Exp $	*/
 
 /*
 ** Id: lua.h 
@@ -157,7 +157,7 @@ extern const char lua_ident[];
 LUA_API lua_State *(lua_newstate) (lua_Alloc f, void *ud);
 LUA_API void       (lua_close) (lua_State *L);
 LUA_API lua_State *(lua_newthread) (lua_State *L);
-LUA_API int        (lua_resetthread) (lua_State *L);
+LUA_API int        (lua_resetthread) (lua_State *L, lua_State *from);
 
 LUA_API lua_CFunction (lua_atpanic) (lua_State *L, lua_CFunction panicf);
 
