@@ -1,4 +1,4 @@
-/*	$NetBSD: lapi.c,v 1.13 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: lapi.c,v 1.14 2023/04/17 19:54:19 nikita Exp $	*/
 
 /*
 ** Id: lapi.c 
@@ -208,7 +208,7 @@ LUA_API void lua_settop (lua_State *L, int idx) {
   newtop = L->top + diff;
   if (diff < 0 && L->tbclist >= newtop) {
     lua_assert(hastocloseCfunc(ci->nresults));
-    luaF_close(L, newtop, CLOSEKTOP, 0);
+    newtop = luaF_close(L, newtop, CLOSEKTOP, 0);
   }
   L->top = newtop;  /* correct top only after closing any upvalue */
   lua_unlock(L);
@@ -221,8 +221,7 @@ LUA_API void lua_closeslot (lua_State *L, int idx) {
   level = index2stack(L, idx);
   api_check(L, hastocloseCfunc(L->ci->nresults) && L->tbclist == level,
      "no variable to close at given level");
-  luaF_close(L, level, CLOSEKTOP, 0);
-  level = index2stack(L, idx);  /* stack may be moved */
+  level = luaF_close(L, level, CLOSEKTOP, 0);
   setnilvalue(s2v(level));
   lua_unlock(L);
 }
