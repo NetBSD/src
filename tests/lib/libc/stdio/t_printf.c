@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.8 2012/04/11 16:21:42 jruoho Exp $ */
+/* $NetBSD: t_printf.c,v 1.8.42.1 2023/04/17 18:24:52 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <string.h>
 #include <time.h>
 #include <stdlib.h>
+#include <errno.h>
 
 ATF_TC(snprintf_c99);
 ATF_TC_HEAD(snprintf_c99, tc)
@@ -179,6 +180,50 @@ ATF_TC_BODY(sprintf_zeropad, tc)
 #endif
 }
 
+ATF_TC(snprintf_double_a);
+ATF_TC_HEAD(snprintf_double_a, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test printf a format");
+}
+
+ATF_TC_BODY(snprintf_double_a, tc)
+{
+	char buf[1000];
+
+	snprintf(buf, sizeof buf, "%.3a", (double)10.6);
+	ATF_REQUIRE_STREQ("0x1.533p+3", buf);
+}
+
+/* is "long double" and "double" different? */
+#if (__LDBL_MANT_DIG__ != __DBL_MANT_DIG__) || \
+    (__LDBL_MAX_EXP__ != __DBL_MAX_EXP__)
+#define WIDE_DOUBLE
+#endif
+
+#ifndef WIDE_DOUBLE
+ATF_TC(pr57250_fix);
+ATF_TC_HEAD(pr57250_fix, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test for PR57250");
+}
+
+ATF_TC_BODY(pr57250_fix, tc)
+{
+	char *eptr;
+	char buf[1000];
+	long double ld;
+
+	errno = 0;
+	ld = strtold("1e309", &eptr);
+	ATF_CHECK(errno != 0);
+	ld = (double)ld;
+	ATF_CHECK(isfinite(ld) == 0);
+	snprintf(buf, sizeof buf, "%Lf\n", ld);
+	ATF_REQUIRE_STREQ(buf, "inf\n");
+}
+#endif
+
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -189,6 +234,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, snprintf_posarg_error);
 	ATF_TP_ADD_TC(tp, snprintf_float);
 	ATF_TP_ADD_TC(tp, sprintf_zeropad);
+	ATF_TP_ADD_TC(tp, snprintf_double_a);
+#ifndef WIDE_DOUBLE
+	ATF_TP_ADD_TC(tp, pr57250_fix);
+#endif
 
 	return atf_no_error();
 }
