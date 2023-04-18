@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.h,v 1.7 2023/04/18 22:56:41 christos Exp $	*/
+/*	$NetBSD: iso9660_rrip.h,v 1.8 2023/04/18 22:58:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -58,9 +58,9 @@
 #define	 TF_EFFECTIVE	   0x40
 #define	 TF_LONGFORM	   0x80
 
-#define	 NM_CONTINUE	   0x80
-#define	 NM_CURRENT	   0x100
-#define	 NM_PARENT	   0x200
+#define	 NM_CONTINUE	   0x01
+#define	 NM_CURRENT	   0x02
+#define	 NM_PARENT	   0x04
 
 
 #define	 SUSP_LOC_ENTRY	   0x01
