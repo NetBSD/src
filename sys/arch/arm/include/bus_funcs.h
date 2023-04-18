@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.12 2022/11/19 12:15:22 skrll Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.13 2023/04/18 11:06:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -707,8 +707,6 @@ void bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t, int);
 	(*(t)->_dmatag_destroy)(t)
 
 #ifdef _ARM32_BUS_DMA_PRIVATE
-
-extern paddr_t physical_start, physical_end;
 
 int	arm32_dma_range_intersect(struct arm32_dma_range *, int,
 	    paddr_t pa, psize_t size, paddr_t *pap, psize_t *sizep);
