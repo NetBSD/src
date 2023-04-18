@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.26 2023/04/15 15:21:56 kre Exp $	*/
+/*	$NetBSD: worms.c,v 1.27 2023/04/18 15:02:22 kre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.26 2023/04/15 15:21:56 kre Exp $");
+__RCSID("$NetBSD: worms.c,v 1.27 2023/04/18 15:02:22 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,6 +67,7 @@ __RCSID("$NetBSD: worms.c,v 1.26 2023/04/15 15:21:56 kre Exp $");
 #include <err.h>
 #include <limits.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -168,7 +169,8 @@ static const struct options {
 
 
 static const char	flavor[] = {
-	'O', '*', '#', '$', '%', '0', '@', '~'
+	'O', '*', '#', '$', '%', '0', '@', '~',
+	'+', 'w', ':', '^', '_', '&', 'x', 'o'
 };
 static const short	xinc[] = {
 	1,  1,  1,  0, -1, -1, -1,  0
@@ -182,7 +184,6 @@ static struct	worm {
 
 static volatile sig_atomic_t sig_caught = 0;
 
-int	 main(int, char **);
 static void nomem(void) __dead;
 static void onsig(int);
 
@@ -194,17 +195,20 @@ main(int argc, char *argv[])
 	const struct options *op;
 	short *ip;
 	int CO, LI, last, bottom, ch, length, number, trail;
+	unsigned int seed;
 	short **ref;
 	const char *field;
 	char *ep;
 	unsigned int delay = 20000;
 	unsigned long ul;
+	bool argerror = false;
 
 	length = 16;
 	number = 3;
 	trail = ' ';
 	field = NULL;
-	while ((ch = getopt(argc, argv, "d:fl:n:t")) != -1)
+	seed = 0;
+	while ((ch = getopt(argc, argv, "d:fl:n:S:t")) != -1) {
 		switch(ch) {
 		case 'd':
 			ul = strtoul(optarg, &ep, 10);
@@ -233,10 +237,10 @@ main(int argc, char *argv[])
 				   optarg);
 			}
 			delay = (unsigned int)ul;
-			break;
+			continue;
 		case 'f':
 			field = "WORM";
-			break;
+			continue;
 		case 'l':
 			ul = strtoul(optarg, &ep, 10);
 			if (ep == optarg || *ep != '\0' ||
@@ -245,7 +249,7 @@ main(int argc, char *argv[])
 				     optarg, 2, 1024);
 			}
 			length = (int)ul;
-			break;
+			continue;
 		case 'n':
 			ul = strtoul(optarg, &ep, 10);
 			if (ep == optarg || *ep != '\0' ||
@@ -255,17 +259,30 @@ main(int argc, char *argv[])
 			}
 			/* upper bound is further limited later */
 			number = (int)ul;
-			break;
+			continue;
+		case 'S':
+			ul = strtoul(optarg, &ep, 0);
+			if (ep == optarg || *ep != '\0' ||
+			    ul > UINT_MAX ) {
+				errx(1, "-S: invalid seed (%s).", optarg);
+			}
+			seed = (unsigned int)ul;
+			continue;
 		case 't':
 			trail = '.';
-			break;
+			continue;
 		case '?':
 		default:
-			(void)fprintf(stderr,
-			    "usage: worms [-ft] [-d delay] [-l length]"
-			    " [-n number]\n");
-			exit(1);
+			argerror = true;
+			break;
 		}
+		break;
+	}
+
+	if (argerror || argc > optind)
+		errx(1,
+		    "Usage: worms [-ft] [-d delay] [-l length] [-n number]");
+		/* -S omitted deliberately, not useful often enough */
 
 	if (!initscr())
 		errx(1, "couldn't initialize screen");
@@ -273,14 +290,35 @@ main(int argc, char *argv[])
 	CO = COLS;
 	LI = LINES;
 
-	if (CO > 4*length || LI < 4*length) {
-		ul  = (unsigned long)LI / 2;
-		ul *= (unsigned long)CO / length;
-	} else {
-		ul  = (unsigned long)CO / 2;
-		ul *= (unsigned long)LI / length;
+	if (CO == 0 || LI == 0) {
+		endwin();
+		errx(1, "screen must be a rectangle, not (%dx%d)", CO, LI);
+	}
+	if (CO >= INT_MAX / LI) {
+		endwin();
+		errx(1, "screen (%dx%d) too large for worms", CO, LI);
 	}
 
+	/* now known that LI*CO cannot overflow an int => also not a long */
+
+	if (LI < 3 || CO < 3 || LI * CO < 40) {
+		/*
+		 * The placement algorithm is too weak for dimensions < 3.
+		 * Need at least 40 spaces so we can have (n > 1) worms
+		 * of a reasonable length, and still leave empty space.
+		 */
+		endwin();
+		errx(1, "screen (%dx%d) too small for worms", CO, LI);
+	}
+
+	ul = (unsigned long)CO * LI;
+	if ((unsigned long)length > ul / 20) {
+		endwin();
+		errx(1, "-l: worms loo long (%d) for screen; max: %lu",
+		    length, ul / 20);
+	}
+
+	ul /= (length * 3);	/* no more than 33% arena occupancy */
 	if ((unsigned long)(unsigned)number > ul) {
 		endwin();
 		errx(1, "-n: too many worms (%d) max: %lu", number, ul);
@@ -332,6 +370,7 @@ main(int argc, char *argv[])
 			refresh();
 		}
 	}
+	srandom(seed ? seed : arc4random());
 	for (;;) {
 		refresh();
 		if (sig_caught) {
@@ -379,8 +418,9 @@ main(int argc, char *argv[])
 			switch (op->nopts) {
 			case 0:
 				refresh();
+				endwin();
 				abort();
-				return(1);
+				/* NOTREACHED */
 			case 1:
 				w->orientation = op->opts[0];
 				break;
