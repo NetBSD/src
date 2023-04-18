@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_eltorito.c,v 1.25 2022/04/09 10:05:35 riastradh Exp $	*/
+/*	$NetBSD: cd9660_eltorito.c,v 1.26 2023/04/18 23:00:02 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660_eltorito.c,v 1.25 2022/04/09 10:05:35 riastradh Exp $");
+__RCSID("$NetBSD: cd9660_eltorito.c,v 1.26 2023/04/18 23:00:02 christos Exp $");
 #endif  /* !__lint */
 
 #ifdef DEBUG
@@ -377,8 +377,8 @@ cd9660_setup_boot(iso9660_disk *diskStructure, int first_sector)
 	/* Point to catalog: For now assume it consumes one sector */
 	ELTORITO_DPRINTF(("Boot catalog will go in sector %d\n", first_sector));
 	diskStructure->boot_catalog_sector = first_sector;
-	cd9660_bothendian_dword(first_sector,
-		diskStructure->boot_descriptor->boot_catalog_pointer);
+	cd9660_731(first_sector,
+	    diskStructure->boot_descriptor->boot_catalog_pointer);
 
 	/*
 	 * Use system type of default image for validation entry. Fallback to
