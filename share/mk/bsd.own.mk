@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1309 2023/04/02 15:06:06 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1310 2023/04/18 20:11:34 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -130,9 +130,9 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
 #
 HAVE_OPENSSL?=  11
 
-.if ${HAVE_OPENSSL} == 11
+.if ${HAVE_OPENSSL} == 30
 EXTERNAL_OPENSSL_SUBDIR=openssl
-.elif ${HAVE_OPENSSL} == 10
+.elif ${HAVE_OPENSSL} == 11
 EXTERNAL_OPENSSL_SUBDIR=openssl.old
 .else
 EXTERNAL_OPENSSL_SUBDIR=/does/not/exist
