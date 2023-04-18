@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1920 2023/04/16 20:46:16 nikita Exp $
+#	$NetBSD: 3RDPARTY,v 1.1921 2023/04/18 09:56:57 nikita Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -843,6 +843,8 @@ Location:	external/mit/lua/dist
 Notes:
 The default module paths have been changed to not include the current
 working directory '.' to avoid potential security problems.
+All 11 bugfixes listed on http://www.lua.org/bugs.html#5.4.4 as of 2023-04-18
+have been applied.
 
 Package:	Lutok
 Version:	0.3
