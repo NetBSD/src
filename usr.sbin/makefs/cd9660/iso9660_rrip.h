@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.h,v 1.6 2013/01/28 21:03:28 christos Exp $	*/
+/*	$NetBSD: iso9660_rrip.h,v 1.7 2023/04/18 22:56:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -48,15 +48,17 @@
 
 #define	 PX_LENGTH	   0x2C
 #define	 PN_LENGTH	   0x14
-#define	 TF_CREATION	   0x00
-#define	 TF_MODIFY	   0x01
-#define	 TF_ACCESS	   0x02
-#define	 TF_ATTRIBUTES	   0x04
-#define	 TF_BACKUP	   0x08
-#define	 TF_EXPIRATION	   0x10
-#define	 TF_EFFECTIVE	   0x20
-#define	 TF_LONGFORM	   0x40
-#define  NM_CONTINUE	   0x80
+
+#define	 TF_CREATION	   0x01
+#define	 TF_MODIFY	   0x02
+#define	 TF_ACCESS	   0x04
+#define	 TF_ATTRIBUTES	   0x08
+#define	 TF_BACKUP	   0x10
+#define	 TF_EXPIRATION	   0x20
+#define	 TF_EFFECTIVE	   0x40
+#define	 TF_LONGFORM	   0x80
+
+#define	 NM_CONTINUE	   0x80
 #define	 NM_CURRENT	   0x100
 #define	 NM_PARENT	   0x200
 
