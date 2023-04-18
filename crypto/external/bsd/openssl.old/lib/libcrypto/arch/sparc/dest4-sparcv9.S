@@ -1,3 +1,10 @@
+#include "sparc_arch.h"
+
+#ifdef	__arch64__
+.register       %g2,#scratch
+.register       %g3,#scratch
+#endif
+
 .text
 .align	32
 .globl	des_t4_key_expand
@@ -47,7 +54,7 @@ des_t4_key_expand:
 .align	32
 des_t4_cbc_encrypt:
 	cmp		%o2, 0
-	be,pn		%icc, .Lcbc_abort
+	be,pn		SIZE_T_CC, .Lcbc_abort
 	srln		%o2, 0, %o2		! needed on v8+, "nop" on v9
 	ld		[%o4 + 0], %f0	! load ivec
 	ld		[%o4 + 4], %f1
@@ -148,7 +155,7 @@ des_t4_cbc_encrypt:
 .align	32
 des_t4_cbc_decrypt:
 	cmp		%o2, 0
-	be,pn		%icc, .Lcbc_abort
+	be,pn		SIZE_T_CC, .Lcbc_abort
 	srln		%o2, 0, %o2		! needed on v8+, "nop" on v9
 	ld		[%o4 + 0], %f2	! load ivec
 	ld		[%o4 + 4], %f3
@@ -247,7 +254,7 @@ des_t4_cbc_decrypt:
 .align	32
 des_t4_ede3_cbc_encrypt:
 	cmp		%o2, 0
-	be,pn		%icc, .Lcbc_abort
+	be,pn		SIZE_T_CC, .Lcbc_abort
 	srln		%o2, 0, %o2		! needed on v8+, "nop" on v9
 	ld		[%o4 + 0], %f0	! load ivec
 	ld		[%o4 + 4], %f1
@@ -399,7 +406,7 @@ des_t4_ede3_cbc_encrypt:
 .align	32
 des_t4_ede3_cbc_decrypt:
 	cmp		%o2, 0
-	be,pn		%icc, .Lcbc_abort
+	be,pn		SIZE_T_CC, .Lcbc_abort
 	srln		%o2, 0, %o2		! needed on v8+, "nop" on v9
 	ld		[%o4 + 0], %f2	! load ivec
 	ld		[%o4 + 4], %f3

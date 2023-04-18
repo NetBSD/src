@@ -1,4 +1,4 @@
-#	$NetBSD: err.inc,v 1.1.1.1 2018/02/03 22:43:37 christos Exp $
+#	$NetBSD: err.inc,v 1.1.1.2 2023/04/18 14:19:04 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,7 +8,11 @@
 .PATH:	${OPENSSLSRC}/crypto/err
 
 
-ERR_SRCS = err.c err_all.c err_prn.c
+ERR_SRCS = \
+err.c \
+err_all.c \
+err_prn.c
+
 SRCS += ${ERR_SRCS}
 
 .for cryptosrc in ${ERR_SRCS}

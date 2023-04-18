@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2018/02/03 22:43:39 christos Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2023/04/18 14:19:16 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,9 @@ SRCS+=	ornd_keys.c
 
 CPPFLAGS+=-DOPENSSL_VERSION_PTEXT="\" based on OpenSSL 0.9.6j 10 Apr 2003\""
 CPPFLAGS+=-DOPENSSL_cleanse=bzero -DOPENSSL_malloc=malloc
+LINTFLAGS+=	-X 117	# bitwise '>>' on signed value possibly nonportable
+LINTFLAGS+=	-X 132	# conversion from 'long' to 'unsigned int'
+LINTFLAGS+=	-X 220	# fallthrough on case statement
 
 INCS=	des.h
 INCSDIR=/usr/include
@@ -23,10 +26,11 @@ INCSDIR=/usr/include
 make-manpages:
 	pod2man --section=3 --center=libdes --release=0.9.6j des.pod | \
 	sed -e 's/[[:space:]]*$$//' > ${.CURDIR}/des.3
-	pod2man --section=7 --center=libdes --release=0.9.6j des_modes.pod | \
-	sed -e 's/[[:space:]]*$$//' > ${.CURDIR}/des_modes.7
+#	Use the OpenSSL Version
+#	pod2man --section=7 --center=libdes --release=0.9.6j des_modes.pod | \
+#	sed -e 's/[[:space:]]*$$//' > ${.CURDIR}/des_modes.7
 
-MAN=	des.3 des_modes.7
+MAN=	des.3 # des_modes.7
 
 MLINKS+=des.3 des_cbc_cksum.3 \
 	des.3 des_cfb64_encrypt.3 \
