@@ -1,48 +1,23 @@
-/*****************************************************************************
-*                                                                            *
-*  Copyright (c) 2012, Intel Corporation                                     *
-*                                                                            *
-*  All rights reserved.                                                      *
-*                                                                            *
-*  Redistribution and use in source and binary forms, with or without        *
-*  modification, are permitted provided that the following conditions are    *
-*  met:                                                                      *
-*                                                                            *
-*  *  Redistributions of source code must retain the above copyright         *
-*     notice, this list of conditions and the following disclaimer.          *
-*                                                                            *
-*  *  Redistributions in binary form must reproduce the above copyright      *
-*     notice, this list of conditions and the following disclaimer in the    *
-*     documentation and/or other materials provided with the                 *
-*     distribution.                                                          *
-*                                                                            *
-*  *  Neither the name of the Intel Corporation nor the names of its         *
-*     contributors may be used to endorse or promote products derived from   *
-*     this software without specific prior written permission.               *
-*                                                                            *
-*                                                                            *
-*  THIS SOFTWARE IS PROVIDED BY INTEL CORPORATION ""AS IS"" AND ANY          *
-*  EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE         *
-*  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR        *
-*  PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL INTEL CORPORATION OR            *
-*  CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,     *
-*  EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,       *
-*  PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR        *
-*  PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF    *
-*  LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING      *
-*  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS        *
-*  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.              *
-*                                                                            *
-******************************************************************************
-* Developers and authors:                                                    *
-* Shay Gueron (1, 2), and Vlad Krasnov (1)                                   *
-* (1) Intel Corporation, Israel Development Center, Haifa, Israel            *
-* (2) University of Haifa, Israel                                            *
-*****************************************************************************/
+/*
+ * Copyright 2013-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright (c) 2012, Intel Corporation. All Rights Reserved.
+ *
+ * Licensed under the OpenSSL license (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ *
+ * Originally written by Shay Gueron (1, 2), and Vlad Krasnov (1)
+ * (1) Intel Corporation, Israel Development Center, Haifa, Israel
+ * (2) University of Haifa, Israel
+ */
 
+#include <openssl/opensslconf.h>
 #include "rsaz_exp.h"
 
-#ifdef RSAZ_ENABLED
+#ifndef RSAZ_ENABLED
+NON_EMPTY_TRANSLATION_UNIT
+#else
 
 /*
  * See crypto/bn/asm/rsaz-avx2.pl for further details.
@@ -91,6 +66,7 @@ void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
     unsigned char *R2 = table_s; /* borrow */
     int index;
     int wvalue;
+    BN_ULONG tmp[16];
 
     if ((((size_t)p_str & 4095) + 320) >> 12) {
         result = p_str;
@@ -241,7 +217,7 @@ void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
 
         rsaz_1024_sqr_avx2(result, result, m, k0, 5);
 
-        wvalue = *((unsigned short *)&p_str[index / 8]);
+        wvalue = (p_str[(index / 8) + 1] << 8) | p_str[index / 8];
         wvalue = (wvalue >> (index % 8)) & 31;
         index -= 5;
 
@@ -262,7 +238,10 @@ void RSAZ_1024_mod_exp_avx2(BN_ULONG result_norm[16],
 
     rsaz_1024_red2norm_avx2(result_norm, result);
 
+    bn_reduce_once_in_place(result_norm, /*carry=*/0, m_norm, tmp, 16);
+
     OPENSSL_cleanse(storage, sizeof(storage));
+    OPENSSL_cleanse(tmp, sizeof(tmp));
 }
 
 /*
@@ -291,6 +270,7 @@ void RSAZ_512_mod_exp(BN_ULONG result[8],
     unsigned char *p_str = (unsigned char *)exponent;
     int index;
     unsigned int wvalue;
+    BN_ULONG tmp[8];
 
     /* table[0] = 1_inv */
     temp[0] = 0 - m[0];
@@ -334,13 +314,10 @@ void RSAZ_512_mod_exp(BN_ULONG result[8],
     /* from Montgomery */
     rsaz_512_mul_by_one(result, temp, m, k0);
 
+    bn_reduce_once_in_place(result, /*carry=*/0, m, tmp, 8);
+
     OPENSSL_cleanse(storage, sizeof(storage));
+    OPENSSL_cleanse(tmp, sizeof(tmp));
 }
-
-#else
-
-# if defined(PEDANTIC) || defined(__DECC) || defined(__clang__)
-static void *dummy = &dummy;
-# endif
 
 #endif

@@ -1,4 +1,4 @@
-#	$NetBSD: dsa.inc,v 1.1.1.1 2018/02/03 22:43:37 christos Exp $
+#	$NetBSD: dsa.inc,v 1.1.1.2 2023/04/18 14:19:04 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,8 +8,21 @@
 .PATH:	${OPENSSLSRC}/crypto/dsa
 
 
-DSA_SRCS = dsa_gen.c dsa_key.c dsa_lib.c dsa_asn1.c dsa_vrf.c dsa_sign.c \
-	dsa_err.c dsa_ossl.c dsa_depr.c dsa_ameth.c dsa_pmeth.c dsa_prn.c
+DSA_SRCS = \
+dsa_ameth.c \
+dsa_asn1.c \
+dsa_depr.c \
+dsa_err.c \
+dsa_gen.c \
+dsa_key.c \
+dsa_lib.c \
+dsa_meth.c \
+dsa_ossl.c \
+dsa_pmeth.c \
+dsa_prn.c \
+dsa_sign.c \
+dsa_vrf.c
+
 SRCS += ${DSA_SRCS}
 
 .for cryptosrc in ${DSA_SRCS}
