@@ -1,4 +1,4 @@
-.\"	$NetBSD: worms.6,v 1.16 2020/10/14 07:32:53 nia Exp $
+.\"	$NetBSD: worms.6,v 1.17 2023/04/18 15:02:22 kre Exp $
 .\"
 .\" Copyright (c) 1989, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)worms.6	8.1 (Berkeley) 5/31/93
 .\"
-.Dd October 14, 2020
+.Dd April 17, 2023
 .Dt WORMS 6
 .Os
 .Sh NAME
@@ -41,6 +41,7 @@
 .Op Fl d Ar delay
 .Op Fl l Ar length
 .Op Fl n Ar number
+.Op Fl S Ar seed
 .Sh DESCRIPTION
 .Nm
 is a
@@ -49,11 +50,11 @@ version of the DEC-2136 program
 .Dq worms .
 .Pp
 The options are as follows:
-.Bl -tag -width XlXlengthXX
+.Bl -tag -width Fl
 .It Fl d Ar delay
-Specifies
-.Ar delay
-as a delay, in milliseconds, between each update.
+Specifies a
+.Ar delay ,
+in milliseconds, between each update.
 This is useful for fast terminals.
 Reasonable values are around 20-200;
 the default is 20.
@@ -62,13 +63,31 @@ Makes a
 .Dq field
 for the worm(s) to eat.
 .It Fl l Ar length
-Specifies
+Specifies the
 .Ar length
-as a length for each worm; the default is 16.
+of each worm; the default is 16, the minimum is 2.
 .It Fl n Ar number
-Specifies
+Specifies the
 .Ar number
-as the number of worms; the default is 3.
+of worms; the default is 3.
+There must be at least one.
+.It Fl S Ar seed
+Provide an integer
+.Ar seed
+for the random number generator.
+Specifying zero (0, the default) causes a random seed to be used.
 .It Fl t
 Makes each worm leave a trail behind it.
 .El
+.Pp
+The maximum
+.Ar length ,
+and
+.Ar number ,
+of worms depends upon the screen size, though the
+.Ar length
+can never exceed 1024.
+If the screen is particularly small, even the defaults
+for those may be too large.
+Screens with less than 3 rows or columns cannot be handled,
+nor can ones with insufficient total space.
