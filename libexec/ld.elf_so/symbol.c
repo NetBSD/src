@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.74 2023/04/18 16:48:45 christos Exp $	 */
+/*	$NetBSD: symbol.c,v 1.75 2023/04/18 22:42:52 christos Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.74 2023/04/18 16:48:45 christos Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.75 2023/04/18 22:42:52 christos Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -94,7 +94,7 @@ _rtld_sysv_hash(const char *name)
 		h = (h << 4) + *p++;
 		h ^= (h >> 24) & 0xf0;
 	}
-	return (h & 0xffffffff);
+	return (h & 0x0fffffff);
 }
 
 /*
