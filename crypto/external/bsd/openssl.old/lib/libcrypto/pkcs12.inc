@@ -1,4 +1,4 @@
-#	$NetBSD: pkcs12.inc,v 1.1.1.1 2018/02/03 22:43:37 christos Exp $
+#	$NetBSD: pkcs12.inc,v 1.1.1.2 2023/04/18 14:19:04 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,9 +8,24 @@
 .PATH:	${OPENSSLSRC}/crypto/pkcs12
 
 
-PKCS12_SRCS = p12_add.c p12_asn.c p12_attr.c p12_crpt.c p12_crt.c p12_decr.c \
-	p12_init.c p12_key.c p12_kiss.c p12_mutl.c\
-	p12_utl.c p12_npas.c pk12err.c p12_p8d.c p12_p8e.c
+PKCS12_SRCS = \
+p12_add.c \
+p12_asn.c \
+p12_attr.c \
+p12_crpt.c \
+p12_crt.c \
+p12_decr.c \
+p12_init.c \
+p12_key.c \
+p12_kiss.c \
+p12_mutl.c \
+p12_npas.c \
+p12_p8d.c \
+p12_p8e.c \
+p12_sbag.c \
+p12_utl.c \
+pk12err.c
+
 SRCS += ${PKCS12_SRCS}
 
 .for cryptosrc in ${PKCS12_SRCS}

@@ -1,10 +1,15 @@
+#include "sparc_arch.h"
+
+#ifdef	__arch64__
 .register	%g2,#scratch
 .register	%g3,#scratch
+#endif
+
 .section	".text",#alloc,#execinstr
 .globl	bn_mul_mont_vis3
 .align	32
 bn_mul_mont_vis3:
-	add	%sp,	2047,	%g4	! real top of stack
+	add	%sp,	STACK_BIAS,	%g4	! real top of stack
 	sll	%o5,	2,	%o5	! size in bytes
 	add	%o5,	63,	%g5
 	andn	%g5,	63,	%g5	! buffer size rounded up to 64 bytes
@@ -12,12 +17,12 @@ bn_mul_mont_vis3:
 	add	%g5,	%g1,	%g1	! 3*buffer size
 	sub	%g4,	%g1,	%g1
 	andn	%g1,	63,	%g1	! align at 64 byte
-	sub	%g1,	192,	%g1	! new top of stack
+	sub	%g1,	STACK_FRAME,	%g1	! new top of stack
 	sub	%g1,	%g4,	%g1
 
 	save	%sp,	%g1,	%sp
 	ld	[%i4+0],	%l0	! pull n0[0..1] value
-	add	%sp, 2047+192, %l5
+	add	%sp, STACK_BIAS+STACK_FRAME, %l5
 	ld	[%i4+4],	%l1
 	add	%l5,	%g5,	%l7
 	ld	[%i2+0],	%l2	! m0=bp[0]
@@ -235,23 +240,23 @@ bn_mul_mont_vis3:
 	sub	%l7,	%i5,	%l7
 	sub	%i0,	%i5,	%i0
 
-	subc	%l0,	%g0,	%l0	! handle upmost overflow bit
-	and	%l5,	%l0,	%i1
-	andn	%i0,	%l0,	%i3
-	or	%i3,	%i1,	%i1	! ap=borrow?tp:rp
+	subccc	%l0,	%g0,	%l0	! handle upmost overflow bit
 	ba	.Lcopy
 	sub	%i5,	8,	%l4
 
 .align	16
-.Lcopy:					! copy or in-place refresh
-	ld	[%i1+0],	%l2
-	ld	[%i1+4],	%l3
-	add	%i1,	8,	%i1
+.Lcopy:					! conditional copy
+	ld	[%l5+0],	%l0
+	ld	[%l5+4],	%l1
+	ld	[%i0+0],	%l2
+	ld	[%i0+4],	%l3
 	stx	%g0,	[%l5]		! zap
 	add	%l5,	8,	%l5
 	stx	%g0,	[%l7]		! zap
 	stx	%g0,	[%l7+8]
 	add	%l7,	16,	%l7
+	movcs	%icc,	%l0,	%l2
+	movcs	%icc,	%l1,	%l3
 	st	%l3,	[%i0+0]		! flip order
 	st	%l2,	[%i0+4]
 	add	%i0,	8,	%i0

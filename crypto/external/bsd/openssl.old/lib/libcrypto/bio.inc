@@ -1,4 +1,4 @@
-#	$NetBSD: bio.inc,v 1.1.1.1 2018/02/03 22:43:37 christos Exp $
+#	$NetBSD: bio.inc,v 1.1.1.2 2023/04/18 14:19:03 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,11 +8,30 @@
 .PATH:	${OPENSSLSRC}/crypto/bio
 
 
-BIO_SRCS = bio_lib.c bio_cb.c bio_err.c \
-	bss_mem.c bss_null.c bss_fd.c \
-	bss_file.c bss_sock.c bss_conn.c \
-	bf_null.c bf_buff.c b_print.c b_dump.c \
-	b_sock.c bss_acpt.c bf_nbio.c bss_log.c bss_bio.c bss_dgram.c
+BIO_SRCS = \
+b_addr.c \
+b_dump.c \
+b_print.c \
+b_sock.c \
+b_sock2.c \
+bf_buff.c \
+bf_lbuf.c \
+bf_nbio.c \
+bf_null.c \
+bio_cb.c \
+bio_err.c \
+bio_lib.c \
+bio_meth.c \
+bss_acpt.c \
+bss_bio.c \
+bss_conn.c \
+bss_dgram.c \
+bss_fd.c \
+bss_file.c \
+bss_log.c \
+bss_mem.c \
+bss_null.c \
+bss_sock.c
 SRCS += ${BIO_SRCS}
 
 .for cryptosrc in ${BIO_SRCS}
