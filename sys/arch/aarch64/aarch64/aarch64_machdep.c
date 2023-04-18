@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.68 2023/04/16 14:01:51 skrll Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.69 2023/04/18 07:53:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.68 2023/04/16 14:01:51 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.69 2023/04/18 07:53:31 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -289,7 +289,6 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	paddr_t kernstart_phys __unused = KERN_VTOPHYS(kernstart);
 	paddr_t kernend_phys __unused = KERN_VTOPHYS(kernend);
 
-	/* XXX: arm/arm32/bus_dma.c refers physical_{start,end} */
 	physical_start = bootconfig.dram[0].address;
 	physical_end = bootconfig.dram[bootconfig.dramblocks - 1].address +
 		       ptoa(bootconfig.dram[bootconfig.dramblocks - 1].pages);
