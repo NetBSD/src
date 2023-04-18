@@ -1,14 +1,19 @@
-#	$NetBSD: store.inc,v 1.1.1.1 2018/02/03 22:43:37 christos Exp $
+#	$NetBSD: store.inc,v 1.1.1.2 2023/04/18 14:19:04 christos Exp $
 #
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/ec/Makefile
+#	SRCS extracted from src/crypto/dist/openssl/crypto/store/Makefile
 #
 
 .PATH:	${OPENSSLSRC}/crypto/store
 
 
-STORE_SRCS = str_err.c str_lib.c str_locl.h str_mem.c str_meth.c 
+STORE_SRCS += \
+loader_file.c \
+store_init.c \
+store_err.c \
+store_lib.c \
+store_register.c \
+store_strings.c
+
 SRCS += ${STORE_SRCS}
 
 .for cryptosrc in ${STORE_SRCS}

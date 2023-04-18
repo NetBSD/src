@@ -1,4 +1,4 @@
-#	$NetBSD: bf.inc,v 1.1.1.1 2018/02/03 22:43:37 christos Exp $
+#	$NetBSD: bf.inc,v 1.1.1.2 2023/04/18 14:19:04 christos Exp $
 
 CPPFLAGS+=	-DBF_PTR
 

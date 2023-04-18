@@ -1,15 +1,68 @@
-#	$NetBSD: srcs.inc,v 1.1.1.1 2018/02/03 22:43:37 christos Exp $
+#	$NetBSD: srcs.inc,v 1.1.1.2 2023/04/18 14:19:04 christos Exp $
 
 CRYPTOINCS= \
-	aes.inc asn1.inc bf.inc bio.inc bn.inc buffer.inc cast.inc cmac.inc \
-	cms.inc comp.inc conf.inc crypto.inc des.inc dh.inc dsa.inc dso.inc \
-	ec.inc ecdh.inc ecdsa.inc engine.inc err.inc evp.inc hmac.inc \
-	krb5.inc lhash.inc modes.inc camellia.inc \
-	md2.inc md4.inc md5.inc objects.inc ocsp.inc pem.inc \
-	pkcs12.inc pkcs7.inc pqueue.inc rand.inc rc2.inc rc4.inc ripemd.inc \
-	rsa.inc sha.inc srp.inc stack.inc store.inc txt_db.inc ts.inc \
-	ui.inc x509.inc x509v3.inc idea.inc mdc2.inc whrlpool.inc modes.inc \
-	seed.inc
+aes.inc \
+aria.inc \
+asn1.inc \
+async.inc \
+bf.inc \
+bio.inc \
+blake2.inc \
+bn.inc \
+buffer.inc \
+camellia.inc \
+cast.inc \
+chacha.inc \
+cmac.inc \
+cms.inc \
+comp.inc \
+conf.inc \
+crypto.inc \
+ct.inc \
+curve448.inc \
+des.inc \
+dh.inc \
+dsa.inc \
+dso.inc \
+ec.inc \
+engine.inc \
+err.inc \
+evp.inc \
+hmac.inc \
+idea.inc \
+kdf.inc \
+lhash.inc \
+md2.inc \
+md4.inc \
+md5.inc \
+mdc2.inc \
+modes.inc \
+objects.inc \
+ocsp.inc \
+pem.inc \
+pkcs12.inc \
+pkcs7.inc \
+poly1305.inc \
+rand.inc \
+rc2.inc \
+rc4.inc \
+ripemd.inc \
+rsa.inc \
+seed.inc \
+sha.inc \
+siphash.inc \
+sm2.inc \
+sm3.inc \
+sm4.inc \
+srp.inc \
+stack.inc \
+store.inc \
+ts.inc \
+txt_db.inc \
+ui.inc \
+whrlpool.inc \
+x509.inc \
+x509v3.inc \
 
 # patented algorithms - see ../libcrypto_*
 CRYPTOINCS+=	rc5.inc

@@ -1,6 +1,15 @@
 .machine	"any"
 .text
 
+.globl	OPENSSL_fpu_probe
+.type	OPENSSL_fpu_probe,@function
+.align	4
+OPENSSL_fpu_probe:
+	fmr	0,0
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
+
 .globl	OPENSSL_ppc64_probe
 .type	OPENSSL_ppc64_probe,@function
 .align	4
@@ -32,6 +41,17 @@ OPENSSL_crypto207_probe:
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
 
+
+.globl	OPENSSL_madd300_probe
+.type	OPENSSL_madd300_probe,@function
+.align	4
+OPENSSL_madd300_probe:
+	xor	0,0,0
+.long	0x10600033
+.long	0x10600031
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
 
 .globl	OPENSSL_wipe_cpu
 .type	OPENSSL_wipe_cpu,@function
@@ -82,16 +102,21 @@ OPENSSL_atomic_add:
 .long	0
 
 
-.globl	OPENSSL_rdtsc
-.type	OPENSSL_rdtsc,@function
+.globl	OPENSSL_rdtsc_mftb
+.type	OPENSSL_rdtsc_mftb,@function
 .align	4
-OPENSSL_rdtsc:
-.Lrdtsc:
-	mftb	5
-	mftbu	4
+OPENSSL_rdtsc_mftb:
 	mftb	3
-	.long	0x7c032840
-	bne	.Lrdtsc
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,0,0
+
+
+.globl	OPENSSL_rdtsc_mfspr268
+.type	OPENSSL_rdtsc_mfspr268,@function
+.align	4
+OPENSSL_rdtsc_mfspr268:
+	mfspr	3,268
 	blr	
 .long	0
 .byte	0,12,0x14,0,0,0,0,0
@@ -128,5 +153,203 @@ OPENSSL_cleanse:
 	blr	
 .long	0
 .byte	0,12,0x14,0,0,0,2,0
+.long	0
+
+
+.globl	CRYPTO_memcmp
+.type	CRYPTO_memcmp,@function
+.align	4
+CRYPTO_memcmp:
+	cmplwi	5,0
+	li	0,0
+	beq	.Lno_data
+	mtctr	5
+.Loop_cmp:
+	lbz	6,0(3)
+	addi	3,3,1
+	lbz	7,0(4)
+	addi	4,4,1
+	xor	6,6,7
+	or	0,0,6
+	bc	16,0,.Loop_cmp
+
+.Lno_data:
+	li	3,0
+	sub	3,3,0
+	extrwi	3,3,1,0
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,3,0
+.long	0
+
+.globl	OPENSSL_instrument_bus_mftb
+.type	OPENSSL_instrument_bus_mftb,@function
+.align	4
+OPENSSL_instrument_bus_mftb:
+	mtctr	4
+
+	mftb	7
+	li	8,0
+
+	dcbf	0,3
+	lwarx	6,0,3
+	add	6,6,8
+	stwcx.	6,0,3
+	stwx	6,0,3
+
+.Loop:	mftb	6
+	sub	8,6,7
+	mr	7,6
+	dcbf	0,3
+	lwarx	6,0,3
+	add	6,6,8
+	stwcx.	6,0,3
+	stwx	6,0,3
+	addi	3,3,4
+	bc	16,0,.Loop
+
+	mr	3,4
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,2,0
+.long	0
+
+
+.globl	OPENSSL_instrument_bus2_mftb
+.type	OPENSSL_instrument_bus2_mftb,@function
+.align	4
+OPENSSL_instrument_bus2_mftb:
+	mr	0,4
+	slwi	4,4,2
+
+	mftb	7
+	li	8,0
+
+	dcbf	0,3
+	lwarx	6,0,3
+	add	6,6,8
+	stwcx.	6,0,3
+	stwx	6,0,3
+
+	mftb	6
+	sub	8,6,7
+	mr	7,6
+	mr	9,8
+.Loop2:
+	dcbf	0,3
+	lwarx	6,0,3
+	add	6,6,8
+	stwcx.	6,0,3
+	stwx	6,0,3
+
+	addic.	5,5,-1
+	beq	.Ldone2
+
+	mftb	6
+	sub	8,6,7
+	mr	7,6
+	.long	0x7f884840
+	mr	9,8
+
+	mfcr	6
+	not	6,6
+	rlwinm	6,6,1,29,29
+
+	sub.	4,4,6
+	add	3,3,6
+	bne	.Loop2
+
+.Ldone2:
+	srwi	4,4,2
+	sub	3,0,4
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,3,0
+.long	0
+
+
+.globl	OPENSSL_instrument_bus_mfspr268
+.type	OPENSSL_instrument_bus_mfspr268,@function
+.align	4
+OPENSSL_instrument_bus_mfspr268:
+	mtctr	4
+
+	mfspr	7,268
+	li	8,0
+
+	dcbf	0,3
+	lwarx	6,0,3
+	add	6,6,8
+	stwcx.	6,0,3
+	stwx	6,0,3
+
+.Loop3:	mfspr	6,268
+	sub	8,6,7
+	mr	7,6
+	dcbf	0,3
+	lwarx	6,0,3
+	add	6,6,8
+	stwcx.	6,0,3
+	stwx	6,0,3
+	addi	3,3,4
+	bc	16,0,.Loop3
+
+	mr	3,4
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,2,0
+.long	0
+
+
+.globl	OPENSSL_instrument_bus2_mfspr268
+.type	OPENSSL_instrument_bus2_mfspr268,@function
+.align	4
+OPENSSL_instrument_bus2_mfspr268:
+	mr	0,4
+	slwi	4,4,2
+
+	mfspr	7,268
+	li	8,0
+
+	dcbf	0,3
+	lwarx	6,0,3
+	add	6,6,8
+	stwcx.	6,0,3
+	stwx	6,0,3
+
+	mfspr	6,268
+	sub	8,6,7
+	mr	7,6
+	mr	9,8
+.Loop4:
+	dcbf	0,3
+	lwarx	6,0,3
+	add	6,6,8
+	stwcx.	6,0,3
+	stwx	6,0,3
+
+	addic.	5,5,-1
+	beq	.Ldone4
+
+	mfspr	6,268
+	sub	8,6,7
+	mr	7,6
+	.long	0x7f884840
+	mr	9,8
+
+	mfcr	6
+	not	6,6
+	rlwinm	6,6,1,29,29
+
+	sub.	4,4,6
+	add	3,3,6
+	bne	.Loop4
+
+.Ldone4:
+	srwi	4,4,2
+	sub	3,0,4
+	blr	
+.long	0
+.byte	0,12,0x14,0,0,0,3,0
 .long	0
 

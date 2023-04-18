@@ -1,4 +1,4 @@
-#	$NetBSD: rsa.inc,v 1.1.1.1 2018/02/03 22:43:37 christos Exp $
+#	$NetBSD: rsa.inc,v 1.1.1.2 2023/04/18 14:19:04 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -8,10 +8,30 @@
 .PATH:	${OPENSSLSRC}/crypto/rsa
 
 
-RSA_SRCS = rsa_eay.c rsa_gen.c rsa_lib.c rsa_sign.c rsa_saos.c rsa_err.c \
-	rsa_pk1.c rsa_ssl.c rsa_none.c rsa_oaep.c rsa_chk.c rsa_null.c \
-	rsa_asn1.c rsa_x931.c rsa_depr.c rsa_ameth.c rsa_pmeth.c rsa_pss.c \
-	rsa_prn.c rsa_crpt.c
+RSA_SRCS = \
+rsa_ameth.c \
+rsa_asn1.c \
+rsa_chk.c \
+rsa_crpt.c \
+rsa_depr.c \
+rsa_err.c \
+rsa_gen.c \
+rsa_lib.c \
+rsa_meth.c \
+rsa_mp.c \
+rsa_none.c \
+rsa_oaep.c \
+rsa_ossl.c \
+rsa_pk1.c \
+rsa_pmeth.c \
+rsa_prn.c \
+rsa_pss.c \
+rsa_saos.c \
+rsa_sign.c \
+rsa_ssl.c \
+rsa_x931.c \
+rsa_x931g.c
+
 SRCS += ${RSA_SRCS}
 
 .for cryptosrc in ${RSA_SRCS}
