@@ -1,4 +1,4 @@
-/*	$NetBSD: iso9660_rrip.c,v 1.15 2023/04/18 22:56:41 christos Exp $	*/
+/*	$NetBSD: iso9660_rrip.c,v 1.16 2023/04/18 23:02:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: iso9660_rrip.c,v 1.15 2023/04/18 22:56:41 christos Exp $");
+__RCSID("$NetBSD: iso9660_rrip.c,v 1.16 2023/04/18 23:02:51 christos Exp $");
 #endif  /* !__lint */
 
 static void cd9660_rrip_initialize_inode(cd9660node *);
@@ -413,25 +413,11 @@ cd9660_rrip_initialize_node(iso9660_disk *diskStructure, cd9660node *node,
 	} else {
 		cd9660_rrip_initialize_inode(node);
 
-		/*
-		 * Not every node needs a NM set - only if the name is
-		 * actually different. IE: If a file is TEST -> TEST,
-		 * no NM. test -> TEST, need a NM
-		 *
-		 * The rr_moved_dir needs to be assigned a NM record as well.
-		 */
 		if (node == diskStructure->rr_moved_dir) {
 			cd9660_rrip_add_NM(node, RRIP_DEFAULT_MOVE_DIR_NAME);
-		}
-		else if ((node->node != NULL) &&
-			((strlen(node->node->name) !=
-			    (uint8_t)node->isoDirRecord->name_len[0]) ||
-			(memcmp(node->node->name,node->isoDirRecord->name,
-				(uint8_t)node->isoDirRecord->name_len[0]) != 0))) {
+		} else if (node->node != NULL) {
 			cd9660_rrip_NM(node);
 		}
-
-
 
 		/* Rock ridge directory relocation code here. */
 
