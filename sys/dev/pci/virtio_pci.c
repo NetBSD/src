@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.41 2023/04/16 17:57:08 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.42 2023/04/19 00:23:45 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.41 2023/04/16 17:57:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.42 2023/04/19 00:23:45 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,10 +334,7 @@ virtio_pci_detach(device_t self, int flags)
 		return r;
 
 	/* Check that child never attached, or detached properly */
-	KASSERTMSG(!ISSET(sc->sc_child_flags,
-		(VIRTIO_CHILD_ATTACH_FINISHED|VIRTIO_CHILD_ATTACH_FAILED)) ||
-	    ISSET(sc->sc_child_flags, VIRTIO_CHILD_DETACHED),
-	    "%s: child flags %x", device_xname(self), sc->sc_child_flags);
+	KASSERT(sc->sc_child == NULL);
 	KASSERT(sc->sc_vqs == NULL);
 	KASSERT(psc->sc_ihs_num == 0);
 
