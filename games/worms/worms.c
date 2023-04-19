@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.27 2023/04/18 15:02:22 kre Exp $	*/
+/*	$NetBSD: worms.c,v 1.28 2023/04/19 07:40:49 kre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.27 2023/04/18 15:02:22 kre Exp $");
+__RCSID("$NetBSD: worms.c,v 1.28 2023/04/19 07:40:49 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -233,7 +233,7 @@ main(int argc, char *argv[])
 				ul *= 1000;  /* ms -> us */
 			if (ul > 1000*1000) {
 				errx(1,
-				   "-d: delay (%s) out of rannge [0 - 1000]",
+				   "-d: delay (%s) out of range [0 - 1000]",
 				   optarg);
 			}
 			delay = (unsigned int)ul;
