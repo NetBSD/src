@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.76 2023/04/19 00:38:30 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.77 2023/04/19 00:40:30 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.76 2023/04/19 00:38:30 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.77 2023/04/19 00:40:30 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -944,12 +944,12 @@ vq_alloc_slot_locked(struct virtio_softc *sc, struct virtqueue *vq,
     size_t nslots)
 {
 	struct vring_desc *vd;
-	uint16_t rv, tail;
+	uint16_t head, tail;
 	size_t i;
 
 	KASSERT(mutex_owned(&vq->vq_freedesc_lock));
 
-	tail = virtio_rw16(sc, vq->vq_free_idx);
+	head = tail = virtio_rw16(sc, vq->vq_free_idx);
 	for (i = 0; i < nslots - 1; i++) {
 		if (tail == VRING_DESC_CHAIN_END)
 			return VRING_DESC_CHAIN_END;
@@ -962,13 +962,11 @@ vq_alloc_slot_locked(struct virtio_softc *sc, struct virtqueue *vq,
 	if (tail == VRING_DESC_CHAIN_END)
 		return VRING_DESC_CHAIN_END;
 
-	rv = virtio_rw16(sc, vq->vq_free_idx);
-
 	vd = &vq->vq_desc[tail];
 	vd->flags = virtio_rw16(sc, 0);
 	vq->vq_free_idx = vd->next;
 
-	return rv;
+	return head;
 }
 static uint16_t
 vq_alloc_slot(struct virtio_softc *sc, struct virtqueue *vq, size_t nslots)
