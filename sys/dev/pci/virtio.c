@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.75 2023/04/19 00:23:45 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.76 2023/04/19 00:38:30 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.75 2023/04/19 00:23:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.76 2023/04/19 00:38:30 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1096,16 +1096,17 @@ virtio_enqueue_reserve(struct virtio_softc *sc, struct virtqueue *vq,
 		}
 		vd[i].flags  = virtio_rw16(sc, 0);
 	} else {
-		uint16_t s;
+		if (nsegs > 1) {
+			uint16_t s;
 
-		s = vq_alloc_slot(sc, vq, nsegs - 1);
-		if (s == VRING_DESC_CHAIN_END) {
-			vq_free_slot(sc, vq, slot);
-			return EAGAIN;
+			s = vq_alloc_slot(sc, vq, nsegs - 1);
+			if (s == VRING_DESC_CHAIN_END) {
+				vq_free_slot(sc, vq, slot);
+				return EAGAIN;
+			}
+			vd->next = virtio_rw16(sc, s);
+			vd->flags = virtio_rw16(sc, VRING_DESC_F_NEXT);
 		}
-
-		vd->next = virtio_rw16(sc, s);
-		vd->flags = virtio_rw16(sc, VRING_DESC_F_NEXT);
 
 		vdx->desc_base = &vq->vq_desc[0];
 		vdx->desc_free_idx = slot;
