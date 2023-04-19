@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.28 2023/04/19 07:40:49 kre Exp $	*/
+/*	$NetBSD: worms.c,v 1.29 2023/04/19 09:39:29 kre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.28 2023/04/19 07:40:49 kre Exp $");
+__RCSID("$NetBSD: worms.c,v 1.29 2023/04/19 09:39:29 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -314,7 +314,7 @@ main(int argc, char *argv[])
 	ul = (unsigned long)CO * LI;
 	if ((unsigned long)length > ul / 20) {
 		endwin();
-		errx(1, "-l: worms loo long (%d) for screen; max: %lu",
+		errx(1, "-l: worms too long (%d) for screen; max: %lu",
 		    length, ul / 20);
 	}
 
