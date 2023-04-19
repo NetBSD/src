@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.74 2023/03/31 07:34:26 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.75 2023/04/19 00:23:45 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.74 2023/03/31 07:34:26 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.75 2023/04/19 00:23:45 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1328,7 +1328,7 @@ virtio_child_attach_start(struct virtio_softc *sc, device_t child, int ipl,
 	char buf[1024];
 
 	KASSERT(sc->sc_child == NULL);
-	KASSERT(!ISSET(sc->sc_child_flags, VIRTIO_CHILD_DETACHED));
+	KASSERT(sc->sc_child_state == VIRTIO_NO_CHILD);
 
 	sc->sc_child = child;
 	sc->sc_ipl = ipl;
@@ -1404,7 +1404,7 @@ virtio_child_attach_finish(struct virtio_softc *sc,
 		}
 	}
 
-	SET(sc->sc_child_flags, VIRTIO_CHILD_ATTACH_FINISHED);
+	sc->sc_child_state = VIRTIO_CHILD_ATTACH_FINISHED;
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK);
 	return 0;
 
@@ -1425,10 +1425,9 @@ virtio_child_detach(struct virtio_softc *sc)
 {
 
 	/* already detached */
-	if (ISSET(sc->sc_child_flags, VIRTIO_CHILD_DETACHED))
+	if (sc->sc_child == NULL)
 		return;
 
-	sc->sc_vqs = NULL;
 
 	virtio_device_reset(sc);
 
@@ -1439,7 +1438,8 @@ virtio_child_detach(struct virtio_softc *sc)
 		sc->sc_soft_ih = NULL;
 	}
 
-	SET(sc->sc_child_flags, VIRTIO_CHILD_DETACHED);
+	sc->sc_vqs = NULL;
+	sc->sc_child = NULL;
 }
 
 void
@@ -1449,7 +1449,7 @@ virtio_child_attach_failed(struct virtio_softc *sc)
 
 	virtio_set_status(sc, VIRTIO_CONFIG_DEVICE_STATUS_FAILED);
 
-	SET(sc->sc_child_flags, VIRTIO_CHILD_ATTACH_FAILED);
+	sc->sc_child_state = VIRTIO_CHILD_ATTACH_FAILED;
 }
 
 bus_dma_tag_t
@@ -1485,19 +1485,29 @@ virtio_attach_failed(struct virtio_softc *sc)
 	if (sc->sc_childdevid == 0)
 		return 1;
 
-	if (ISSET(sc->sc_child_flags, VIRTIO_CHILD_ATTACH_FAILED)) {
-		aprint_error_dev(self, "virtio configuration failed\n");
-		return 1;
-	}
-
 	if (sc->sc_child == NULL) {
-		aprint_error_dev(self,
-		    "no matching child driver; not configured\n");
+		switch (sc->sc_child_state) {
+		case VIRTIO_CHILD_ATTACH_FAILED:
+			aprint_error_dev(self,
+			    "virtio configuration failed\n");
+			break;
+		case VIRTIO_NO_CHILD:
+			aprint_error_dev(self,
+			    "no matching child driver; not configured\n");
+			break;
+		default:
+			/* sanity check */
+			aprint_error_dev(self,
+			    "virtio internal error, "
+			    "child driver is not configured\n");
+			break;
+		}
+
 		return 1;
 	}
 
 	/* sanity check */
-	if (!ISSET(sc->sc_child_flags, VIRTIO_CHILD_ATTACH_FINISHED)) {
+	if (sc->sc_child_state != VIRTIO_CHILD_ATTACH_FINISHED) {
 		aprint_error_dev(self, "virtio internal error, child driver "
 		    "signaled OK but didn't initialize interrupts\n");
 		return 1;

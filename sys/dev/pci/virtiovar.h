@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.28 2023/03/31 07:34:26 yamaguchi Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.29 2023/04/19 00:23:45 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -164,10 +164,11 @@ struct virtio_softc {
 
 	int			sc_childdevid;
 	device_t		sc_child; 		/* set by child */
-	uint32_t		sc_child_flags;
-#define VIRTIO_CHILD_ATTACH_FINISHED	__BIT(0)
-#define VIRTIO_CHILD_ATTACH_FAILED	__BIT(1)
-#define VIRTIO_CHILD_DETACHED		__BIT(2)
+	enum {
+		VIRTIO_NO_CHILD = 0,
+		VIRTIO_CHILD_ATTACH_FINISHED,
+		VIRTIO_CHILD_ATTACH_FAILED
+	}			sc_child_state;
 
 	virtio_callback		sc_config_change; 	/* set by child */
 	virtio_callback		sc_intrhand;
