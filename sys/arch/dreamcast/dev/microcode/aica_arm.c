@@ -1,7 +1,7 @@
-/*	$NetBSD: aica_arm.c,v 1.6 2019/05/06 17:12:50 ryo Exp $	*/
+/*	$NetBSD: aica_arm.c,v 1.6.2.1 2023/04/20 14:08:07 martin Exp $	*/
 
 /*
- * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
+ * Copyright (c) 2003 Ryo Shimizu <ryo@nerv.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -13,8 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -56,11 +54,11 @@ typedef	unsigned long	uint32_t;
 #define	CH_WRITE_2(ch,off,val)	REG_WRITE_2(((ch) << 7) + (off), val)
 #define	CH_WRITE_4(ch,off,val)	REG_WRITE_4(((ch) << 7) + (off), val)
 
+void *memset(void *, int, unsigned long);
+
 void aica_init(void);
 inline int in_first_half(unsigned int);
 inline int in_second_half(unsigned int);
-void bzero_4(void *, unsigned int);
-void bzero(void *, unsigned int);
 uint32_t rate2reg(unsigned int);
 void aica_stop(void);
 void aica_main(void);
@@ -120,29 +118,6 @@ in_second_half(unsigned int loophalf)
 	return REG_READ_4(0x2814) >= loophalf;
 }
 
-
-void
-bzero_4(void *b, unsigned int len)
-{
-	uint32_t *p;
-
-	p = b;
-	len = (len + 3) & ~3;
-	for (; len != 0; len -= 4)
-		*p++ = 0;
-}
-
-void
-bzero(void *b,unsigned int len)
-{
-	uint8_t *p;
-
-	p = b;
-	for (; len != 0; len--)
-		*p++ = 0;
-}
-
-
 uint32_t
 rate2reg(unsigned int rate)
 {
@@ -197,8 +172,8 @@ aica_stop(void)
 
 	CH_WRITE_4(0, 0x00, 0x8000);
 	CH_WRITE_4(1, 0x00, 0x8000);
-	bzero_4((void *)AICA_DMABUF_LEFT, AICA_DMABUF_SIZE);
-	bzero_4((void *)AICA_DMABUF_RIGHT, AICA_DMABUF_SIZE);
+	memset((void *)AICA_DMABUF_LEFT, 0, AICA_DMABUF_SIZE);
+	memset((void *)AICA_DMABUF_RIGHT, 0, AICA_DMABUF_SIZE);
 }
 
 void
@@ -214,8 +189,8 @@ aica_main(void)
 
 	REG_WRITE_4(0x28b4, 0x0020);	/* INT Enable to SH4 */
 
-	bzero_4((void *)AICA_DMABUF_LEFT, AICA_DMABUF_SIZE);
-	bzero_4((void *)AICA_DMABUF_RIGHT, AICA_DMABUF_SIZE);
+	memset((void *)AICA_DMABUF_LEFT, 0, AICA_DMABUF_SIZE);
+	memset((void *)AICA_DMABUF_RIGHT, 0, AICA_DMABUF_SIZE);
 
 	play_state = 0;
 	serial = aicacmd->serial = 0;
@@ -348,15 +323,15 @@ aica_main(void)
 		case AICA_COMMAND_STOP:
 			switch (play_state) {
 			case 1:
-				bzero_4((void *)(AICA_DMABUF_LEFT + blksize),
+				memset((void *)(AICA_DMABUF_LEFT + blksize), 0,
 				    blksize);
-				bzero_4((void *)(AICA_DMABUF_RIGHT + blksize),
+				memset((void *)(AICA_DMABUF_RIGHT + blksize), 0,
 				    blksize);
 				play_state = 3;
 				break;
 			case 2:
-				bzero_4((void *)AICA_DMABUF_LEFT, blksize);
-				bzero_4((void *)AICA_DMABUF_RIGHT, blksize);
+				memset((void *)AICA_DMABUF_LEFT, 0, blksize);
+				memset((void *)AICA_DMABUF_RIGHT, 0, blksize);
 				play_state = 4;
 				break;
 			default:
