@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.438 2022/12/18 12:02:47 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.439 2023/04/20 08:28:03 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.438 2022/12/18 12:02:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.439 2023/04/20 08:28:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7211,88 +7211,28 @@ pmap_unmap_chunk(vaddr_t l1pt, vaddr_t va, vsize_t size)
 }
 
 
-
-/********************** Static device map routines ***************************/
-
-static const struct pmap_devmap *pmap_devmap_table;
-
-/*
- * Register the devmap table.  This is provided in case early console
- * initialization needs to register mappings created by bootstrap code
- * before pmap_devmap_bootstrap() is called.
- */
-void
-pmap_devmap_register(const struct pmap_devmap *table)
+vsize_t
+pmap_kenter_range(vaddr_t va, paddr_t pa, vsize_t size, vm_prot_t prot,
+    u_int flags)
 {
+	const vaddr_t root = pmap_devmap_root();
 
-	pmap_devmap_table = table;
-}
-
-/*
- * Map all of the static regions in the devmap table, and remember
- * the devmap table so other parts of the kernel can look up entries
- * later.
- */
-void
-pmap_devmap_bootstrap(vaddr_t l1pt, const struct pmap_devmap *table)
-{
-	int i;
-
-	pmap_devmap_table = table;
-
-	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
-		const struct pmap_devmap *pdp = &pmap_devmap_table[i];
-
-		KASSERTMSG(VADDR_MAX - pdp->pd_va >= pdp->pd_size - 1, "va %" PRIxVADDR
-		    " sz %" PRIxPSIZE, pdp->pd_va, pdp->pd_size);
-		KASSERTMSG(PADDR_MAX - pdp->pd_pa >= pdp->pd_size - 1, "pa %" PRIxPADDR
-		    " sz %" PRIxPSIZE, pdp->pd_pa, pdp->pd_size);
-		VPRINTF("devmap: %08lx -> %08lx @ %08lx\n", pdp->pd_pa,
-		    pdp->pd_pa + pdp->pd_size - 1, pdp->pd_va);
-
-		pmap_map_chunk(l1pt, pdp->pd_va, pdp->pd_pa, pdp->pd_size,
-		    pdp->pd_prot, pdp->pd_cache);
-	}
-}
-
-const struct pmap_devmap *
-pmap_devmap_find_pa(paddr_t pa, psize_t size)
-{
-	uint64_t endpa;
-	int i;
-
-	if (pmap_devmap_table == NULL)
-		return NULL;
-
-	endpa = (uint64_t)pa + (uint64_t)(size - 1);
-
-	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
-		if (pa >= pmap_devmap_table[i].pd_pa &&
-		    endpa <= (uint64_t)pmap_devmap_table[i].pd_pa +
-			     (uint64_t)(pmap_devmap_table[i].pd_size - 1))
-			return &pmap_devmap_table[i];
+	int cache;
+	switch (flags) {
+	case PMAP_DEV:
+		cache = PTE_DEV;
+		break;
+	case PMAP_NOCACHE:
+		cache = PTE_NOCACHE;
+		break;
+	default:
+		cache = PTE_CACHE;
+		break;
 	}
 
-	return NULL;
+	return pmap_map_chunk(root, va, pa, size, prot, cache);
 }
 
-const struct pmap_devmap *
-pmap_devmap_find_va(vaddr_t va, vsize_t size)
-{
-	int i;
-
-	if (pmap_devmap_table == NULL)
-		return NULL;
-
-	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
-		if (va >= pmap_devmap_table[i].pd_va &&
-		    va + size - 1 <= pmap_devmap_table[i].pd_va +
-				     pmap_devmap_table[i].pd_size - 1)
-			return &pmap_devmap_table[i];
-	}
-
-	return NULL;
-}
 
 /********************** PTE initialization routines **************************/
 

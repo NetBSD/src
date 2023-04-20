@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.13 2021/12/03 13:27:38 andvar Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.14 2023/04/20 08:28:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -91,20 +91,14 @@ do {									\
 /*
  * Static device map for i.MX23 peripheral address space.
  */
-#define _A(a)	((a) & ~L1_S_OFFSET)
-#define _S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
 static const struct pmap_devmap devmap[] = {
-	{
-		_A(APBH_BASE),			/* Virtual address. */
-		_A(APBH_BASE),			/* Physical address. */
-		_S(APBH_SIZE + APBX_SIZE),	/* APBX located after APBH. */
-		VM_PROT_READ|VM_PROT_WRITE,	/* Protection bits. */
-		PTE_NOCACHE			/* Cache attributes. */
-	},
-	{ 0, 0, 0, 0, 0 }
+	DEVMAP_ENTRY(	
+		APBH_BASE,		/* Virtual address. */
+		APBH_BASE,		/* Physical address. */
+		APBH_SIZE + APBX_SIZE	/* APBX located after APBH. */
+	),
+	DEVMAP_ENTRY_END
 };
-#undef _A
-#undef _S
 
 static struct plcom_instance imx23_pi = {
 	.pi_type = PLCOM_TYPE_PL011,

@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.64 2021/08/17 22:00:28 andvar Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.65 2023/04/20 08:28:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.64 2021/08/17 22:00:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.65 2023/04/20 08:28:04 skrll Exp $");
 
 #include "opt_console.h"
 #include "opt_ddb.h"
@@ -303,41 +303,29 @@ cpu_reboot(int howto, char *bootstr)
 
 /* Static device mappings. */
 static const struct pmap_devmap iq80321_devmap[] = {
-    /*
-     * Map the on-board devices VA == PA so that we can access them
-     * with the MMU on or off.
-     */
-    {
-	IQ80321_OBIO_BASE,
-	IQ80321_OBIO_BASE,
-	IQ80321_OBIO_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
+	/*
+	 * Map the on-board devices VA == PA so that we can access them
+	 * with the MMU on or off.
+	 */
+	DEVMAP_ENTRY(
+		IQ80321_OBIO_BASE,
+		IQ80321_OBIO_BASE,
+		IQ80321_OBIO_SIZE
+	),
 
-    {
-	IQ80321_IOW_VBASE,
-	VERDE_OUT_XLATE_IO_WIN0_BASE,
-	VERDE_OUT_XLATE_IO_WIN_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-   },
+	DEVMAP_ENTRY(
+		IQ80321_IOW_VBASE,
+		VERDE_OUT_XLATE_IO_WIN0_BASE,
+		VERDE_OUT_XLATE_IO_WIN_SIZE
+	),
 
-   {
-	IQ80321_80321_VBASE,
-	VERDE_PMMR_BASE,
-	VERDE_PMMR_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-   },
+	DEVMAP_ENTRY(
+		IQ80321_80321_VBASE,
+		VERDE_PMMR_BASE,
+		VERDE_PMMR_SIZE
+   	),
 
-   {
-	0,
-	0,
-	0,
-	0,
-	0,
-    }
+	DEVMAP_ENTRY_END
 };
 
 static void

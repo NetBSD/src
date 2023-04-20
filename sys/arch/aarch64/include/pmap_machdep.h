@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.2 2022/12/21 11:39:46 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.3 2023/04/20 08:28:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -110,6 +110,8 @@ void	pmap_md_activate_efirt(void);
 void	pmap_md_deactivate_efirt(void);
 
 void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
+
+vsize_t	pmap_kenter_range(vaddr_t, paddr_t, vsize_t, vm_prot_t, u_int flags);
 
 #include <uvm/pmap/vmpagemd.h>
 #include <uvm/pmap/pmap.h>

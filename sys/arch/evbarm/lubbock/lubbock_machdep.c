@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.42 2021/08/17 22:00:29 andvar Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.43 2023/04/20 08:28:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.42 2021/08/17 22:00:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.43 2023/04/20 08:28:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -347,52 +347,40 @@ read_ttb(void)
  * using the 2nd page tables.
  */
 
-#define	_A(a)	((a) & ~L1_S_OFFSET)
-#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
 static const struct pmap_devmap lubbock_devmap[] = {
-    {
+    DEVMAP_ENTRY{
 	    LUBBOCK_OBIO_VBASE,
-	    _A(LUBBOCK_OBIO_PBASE),
-	    _S(LUBBOCK_OBIO_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	    LUBBOCK_OBIO_PBASE,
+	    LUBBOCK_OBIO_SIZE
     },
-    {
+    DEVMAP_ENTRY{
 	    LUBBOCK_GPIO_VBASE,
-	    _A(PXA2X0_GPIO_BASE),
-	    _S(PXA250_GPIO_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	    PXA2X0_GPIO_BASE,
+	    PXA250_GPIO_SIZE
     },
-    {
+    DEVMAP_ENTRY{
 	    LUBBOCK_CLKMAN_VBASE,
-	    _A(PXA2X0_CLKMAN_BASE),
-	    _S(PXA2X0_CLKMAN_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	    PXA2X0_CLKMAN_BASE,
+	    PXA2X0_CLKMAN_SIZE
     },
-    {
+    DEVMAP_ENTRY{
 	    LUBBOCK_INTCTL_VBASE,
-	    _A(PXA2X0_INTCTL_BASE),
-	    _S(PXA2X0_INTCTL_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	    PXA2X0_INTCTL_BASE,
+	    PXA2X0_INTCTL_SIZE
     },
-    {
+    DEVMAP_ENTRY{
 	    LUBBOCK_FFUART_VBASE,
-	    _A(PXA2X0_FFUART_BASE),
-	    _S(4 * COM_NPORTS),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	    PXA2X0_FFUART_BASE,
+	    4 * COM_NPORTS
     },
-    {
+    DEVMAP_ENTRY{
 	    LUBBOCK_BTUART_VBASE,
-	    _A(PXA2X0_BTUART_BASE),
-	    _S(4 * COM_NPORTS),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
+	    PXA2X0_BTUART_BASE,
+	    4 * COM_NPORTS
     },
 
-    {0, 0, 0, 0,}
+    DEVMAP_ENTRY_END
 };
-
-#undef	_A
-#undef	_S
 
 /*
  * vaddr_t initarm(...)

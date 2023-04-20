@@ -1,4 +1,4 @@
-/* $NetBSD: imx31lk_machdep.c,v 1.29 2021/08/17 22:00:28 andvar Exp $ */
+/* $NetBSD: imx31lk_machdep.c,v 1.30 2023/04/20 08:28:04 skrll Exp $ */
 
 /*
  * Startup routines for the ZOOM iMX31 LITEKIT.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.29 2021/08/17 22:00:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx31lk_machdep.c,v 1.30 2023/04/20 08:28:04 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -302,18 +302,13 @@ cpu_reboot(int howto, char *bootstr)
  * with kernel's page table which we build up in initarm().
  */
 
-#define _A(a)   ((a) & ~L1_S_OFFSET)
-#define _S(s)   (((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
 static const struct pmap_devmap imx31lk_devmap[] = {
-    {
+    DEVMAP_ENTRY(
 	IMX31LITEKIT_UART1_VBASE,
-	_A(UART1_BASE),
-	_S(L1_S_SIZE),
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
-	{0, 0, 0, 0, 0 }
+	UART1_BASE,
+	L1_S_SIZE
+    ),
+    DEVMAP_ENTRY_END
 };
 
 #ifndef MEMSTART

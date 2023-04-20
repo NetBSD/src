@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.8 2019/07/16 14:41:44 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.9 2023/04/20 08:28:03 skrll Exp $	*/
 /*
  * Copyright (c) 2012, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.8 2019/07/16 14:41:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.9 2023/04/20 08:28:03 skrll Exp $");
 
 #include "clpscom.h"
 #include "clpslcd.h"
@@ -123,29 +123,23 @@ int epoc32_fb_addr;
  * using the 2nd page tables.
  */
 
-#define _A(a)	((a) & ~L1_S_OFFSET)
-#define _S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE - 1))
 static const struct pmap_devmap epoc32_devmap[] = {
-	{
+	DEVMAP_ENTRY(
 		ARM7XX_INTRREG_VBASE,		/* included com, lcd-ctrl */
-		_A(ARM7XX_INTRREG_BASE),
-		_S(ARM7XX_INTRREG_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
+		ARM7XX_INTRREG_BASE,
+		ARM7XX_INTRREG_SIZE
+	),
 
-	{ 0, 0, 0, 0, 0 }
+	DEVMAP_ENTRY_END
 };
 static const struct pmap_devmap epoc32_fb_devmap[] = {
-	{
+	DEVMAP_ENTRY(
 		ARM7XX_FB_VBASE,
-		_A(ARM7XX_FB_BASE),
-		_S(ARM7XX_FB_SIZE),
-		VM_PROT_READ | VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
+		ARM7XX_FB_BASE,
+		ARM7XX_FB_SIZE
+	),
 
-	{ 0, 0, 0, 0, 0 }
+	DEVMAP_ENTRY_END
 };
 
 /*

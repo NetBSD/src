@@ -1,4 +1,4 @@
-/*	$NetBSD: brh_machdep.c,v 1.51 2021/08/17 22:00:27 andvar Exp $	*/
+/*	$NetBSD: brh_machdep.c,v 1.52 2023/04/20 08:28:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.51 2021/08/17 22:00:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brh_machdep.c,v 1.52 2023/04/20 08:28:03 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -259,69 +259,47 @@ cpu_reboot(int howto, char *bootstr)
 
 /* Static device mappings. */
 static const struct pmap_devmap brh_devmap[] = {
-    {
+    DEVMAP_ENTRY(
 	BRH_PCI_CONF_VBASE,
 	BECC_PCI_CONF_BASE,
-	BRH_PCI_CONF_VSIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
-    {
+	BRH_PCI_CONF_VSIZE
+    ),
+    DEVMAP_ENTRY(
 	BRH_PCI_MEM1_VBASE,
 	BECC_PCI_MEM1_BASE,
-	BRH_PCI_MEM1_VSIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
-    {
+	BRH_PCI_MEM1_VSIZE
+    ),
+    DEVMAP_ENTRY(
 	BRH_PCI_MEM2_VBASE,
 	BECC_PCI_MEM2_BASE,
-	BRH_PCI_MEM2_VSIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
-    {
+	BRH_PCI_MEM2_VSIZE
+    ),
+    DEVMAP_ENTRY(
 	BRH_UART1_VBASE,
 	BRH_UART1_BASE,
-	BRH_UART1_VSIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
-    {
+	BRH_UART1_VSIZE
+    ),
+    DEVMAP_ENTRY(
 	BRH_UART2_VBASE,
 	BRH_UART2_BASE,
-	BRH_UART2_VSIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
-    {
+	BRH_UART2_VSIZE
+    ),
+    DEVMAP_ENTRY(
 	BRH_LED_VBASE,
 	BRH_LED_BASE,
-	BRH_LED_VSIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
-    {
+	BRH_LED_VSIZE
+    ),
+    DEVMAP_ENTRY(
 	BRH_PCI_IO_VBASE,
 	BECC_PCI_IO_BASE,
-	BRH_PCI_IO_VSIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
-    {
+	BRH_PCI_IO_VSIZE
+    ),
+    DEVMAP_ENTRY(
 	BRH_BECC_VBASE,
 	BECC_REG_BASE,
-	BRH_BECC_VSIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
-    {
-	0,
-	0,
-	0,
-	0,
-	0,
-    }
+	BRH_BECC_VSIZE
+    ),
+    DEVMAP_ENTRY_END
 };
 
 static void

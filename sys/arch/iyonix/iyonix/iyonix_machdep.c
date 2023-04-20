@@ -1,4 +1,4 @@
-/*	$NetBSD: iyonix_machdep.c,v 1.31 2022/01/02 16:42:10 christos Exp $	*/
+/*	$NetBSD: iyonix_machdep.c,v 1.32 2023/04/20 08:28:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.31 2022/01/02 16:42:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iyonix_machdep.c,v 1.32 2023/04/20 08:28:06 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -317,45 +317,31 @@ static const struct pmap_devmap iyonix_devmap[] = {
      * Map the on-board devices VA == PA so that we can access them
      * with the MMU on or off.
      */
-    {
+    DEVMAP_ENTRY(
 	IYONIX_OBIO_BASE,
 	IYONIX_OBIO_BASE,
-	IYONIX_OBIO_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
+	IYONIX_OBIO_SIZE
+    ),
 
-    {
+    DEVMAP_ENTRY(
 	IYONIX_IOW_VBASE,
 	VERDE_OUT_XLATE_IO_WIN0_BASE,
-	VERDE_OUT_XLATE_IO_WIN_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-   },
+	VERDE_OUT_XLATE_IO_WIN_SIZE
+   ),
 
-   {
+   DEVMAP_ENTRY(
 	IYONIX_80321_VBASE,
 	VERDE_PMMR_BASE,
-	VERDE_PMMR_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-   },
+	VERDE_PMMR_SIZE
+   ),
 
-   {
+   DEVMAP_ENTRY(
 	IYONIX_FLASH_BASE,
 	IYONIX_FLASH_BASE,
-	IYONIX_FLASH_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-   },
+	IYONIX_FLASH_SIZE
+   ),
 
-   {
-	0,
-	0,
-	0,
-	0,
-	0,
-    }
+   DEVMAP_ENTRY_END
 };
 
 /* Read out the Machine ID from the flash, and stash it away for later use. */

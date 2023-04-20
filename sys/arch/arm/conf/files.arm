@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.167 2022/10/28 07:16:34 skrll Exp $
+#	$NetBSD: files.arm,v 1.168 2023/04/20 08:28:03 skrll Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -235,6 +235,7 @@ file	kern/kern_cctr.c			arm11
 file	arch/arm/arm32/arm11_pmc.c		arm11_pmc
 file	arch/arm/arm32/cortex_pmc.c		cortex_pmc
 file	arch/arm/arm32/arm32_tlb.c		(cpu_armv7 | cpu_arm11) & (!arm11_compat_mmu & !cpu_pre_armv6)
+file	uvm/pmap/pmap_devmap.c
 file	uvm/pmap/pmap_tlb.c			(cpu_armv7 | cpu_arm11) & (!arm11_compat_mmu & !cpu_pre_armv6)
 
 # generic pmap files for arm32 implementations

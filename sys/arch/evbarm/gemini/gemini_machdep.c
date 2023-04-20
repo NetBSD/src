@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.33 2020/11/28 14:02:30 skrll Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.34 2023/04/20 08:28:04 skrll Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -129,7 +129,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.33 2020/11/28 14:02:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.34 2023/04/20 08:28:04 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -418,89 +418,65 @@ cpu_reboot(int howto, char *bootstr)
  * using the 2nd page tables.
  */
 
-#define	_A(a)	((a) & ~L1_S_OFFSET)
-#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
 static const struct pmap_devmap devmap[] = {
 	/* Global regs */
-	{
-		.pd_va = _A(GEMINI_GLOBAL_VBASE),
-		.pd_pa = _A(GEMINI_GLOBAL_BASE),
-		.pd_size = _S(L1_S_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
+	DEVMAP_ENTRY_FLAGS(GEMINI_GLOBAL_VBASE,
+			   GEMINI_GLOBAL_BASE,
+			   L1_S_SIZE,
+			   PMAP_NOCACHE),
 
 	/* Watchdog */
-	{
-		.pd_va = _A(GEMINI_WATCHDOG_VBASE),
-		.pd_pa = _A(GEMINI_WATCHDOG_BASE),
-		.pd_size = _S(L1_S_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
+	DEVMAP_ENTRY_FLAGS(GEMINI_WATCHDOG_VBASE,
+			   GEMINI_WATCHDOG_BASE,
+			   L1_S_SIZE,
+			   PMAP_NOCACHE),
+
+	DEVMAP_ENTRY_FLAGS(GEMINI_WATCHDOG_VBASE,
+			   GEMINI_WATCHDOG_BASE,
+			   L1_S_SIZE,
+			   PMAP_NOCACHE),
 
 	/* UART */
-	{
-		.pd_va = _A(GEMINI_UART_VBASE),
-		.pd_pa = _A(GEMINI_UART_BASE),
-		.pd_size = _S(L1_S_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
+	DEVMAP_ENTRY_FLAGS(GEMINI_UART_VBASE,
+			   GEMINI_UART_BASE,
+			   L1_S_SIZE,
+			   PMAP_NOCACHE),
 
 	/* LPCHC */
-	{
-		.pd_va = _A(GEMINI_LPCHC_VBASE),
-		.pd_pa = _A(GEMINI_LPCHC_BASE),
-		.pd_size = _S(L1_S_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
+	DEVMAP_ENTRY_FLAGS(GEMINI_LPCHC_VBASE,
+			   GEMINI_LPCHC_BASE,
+			   L1_S_SIZE,
+			   PMAP_NOCACHE),
 
 	/* LPCIO */
-	{
-		.pd_va = _A(GEMINI_LPCIO_VBASE),
-		.pd_pa = _A(GEMINI_LPCIO_BASE),
-		.pd_size = _S(L1_S_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
+	DEVMAP_ENTRY_FLAGS(GEMINI_LPCIO_VBASE,
+			   GEMINI_LPCIO_BASE,
+			   L1_S_SIZE,
+			   PMAP_NOCACHE),
 
 	/* Timers */
-	{
-		.pd_va = _A(GEMINI_TIMER_VBASE),
-		.pd_pa = _A(GEMINI_TIMER_BASE),
-		.pd_size = _S(L1_S_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
+	DEVMAP_ENTRY_FLAGS(GEMINI_TIMER_VBASE,
+			   GEMINI_TIMER_BASE,
+			   L1_S_SIZE,
+			   PMAP_NOCACHE),
 
 	/* DRAM Controller */
-	{
-		.pd_va = _A(GEMINI_DRAMC_VBASE),
-		.pd_pa = _A(GEMINI_DRAMC_BASE),
-		.pd_size = _S(L1_S_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
+	DEVMAP_ENTRY_FLAGS(GEMINI_DRAMC_VBASE,
+			   GEMINI_DRAMC_BASE,
+			   L1_S_SIZE,
+			   PMAP_NOCACHE),
 
 #if defined(MEMORY_DISK_DYNAMIC)
 	/* Ramdisk */
-	{
-		.pd_va = _A(GEMINI_RAMDISK_VBASE),
-		.pd_pa = _A(GEMINI_RAMDISK_PBASE),
-		.pd_size = _S(GEMINI_RAMDISK_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
+	DEVMAP_ENTRY_FLAGS(GEMINI_RAMDISK_VBASE,
+			   GEMINI_RAMDISK_PBASE,
+			   L1_S_SIZE,
+			   PMAP_NOCACHE),
 #endif
 
-	{0}	/* list terminator */
+	/* list terminator */
+	DEVMAP_ENTRY_END
 };
-
-#undef	_A
-#undef	_S
 
 #ifdef DDB
 static void gemini_db_trap(int where)

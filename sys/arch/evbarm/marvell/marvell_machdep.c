@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_machdep.c,v 1.37 2021/08/30 00:04:30 rin Exp $ */
+/*	$NetBSD: marvell_machdep.c,v 1.38 2023/04/20 08:28:05 skrll Exp $ */
 /*
  * Copyright (c) 2007, 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.37 2021/08/30 00:04:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: marvell_machdep.c,v 1.38 2023/04/20 08:28:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -257,19 +257,14 @@ read_ttb(void)
  * registers segment-aligned and segment-rounded in order to avoid
  * using the 2nd page tables.
  */
-#define _A(a)	((a) & ~L1_S_OFFSET)
-#define _S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
 
 static struct pmap_devmap marvell_devmap[] = {
-	{
+	DEVMAP_ENTRY(
 		MARVELL_INTERREGS_VBASE,
-		_A(MARVELL_INTERREGS_PBASE),
-		_S(MVSOC_INTERREGS_SIZE),
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
-
-	{ 0, 0, 0, 0, 0 }
+		MARVELL_INTERREGS_PBASE,
+		MVSOC_INTERREGS_SIZE
+	),
+	DEVMAP_ENTRY_END
 };
 
 extern uint32_t *u_boot_args[];

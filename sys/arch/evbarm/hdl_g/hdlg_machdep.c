@@ -1,4 +1,4 @@
-/*	$NetBSD: hdlg_machdep.c,v 1.33 2022/01/04 10:38:04 skrll Exp $	*/
+/*	$NetBSD: hdlg_machdep.c,v 1.34 2023/04/20 08:28:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.33 2022/01/04 10:38:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdlg_machdep.c,v 1.34 2023/04/20 08:28:04 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -171,37 +171,25 @@ static const struct pmap_devmap hdlg_devmap[] = {
      * Map the on-board devices VA == PA so that we can access them
      * with the MMU on or off.
      */
-    {
+    DEVMAP_ENTRY(
 	HDLG_OBIO_BASE,
 	HDLG_OBIO_BASE,
-	HDLG_OBIO_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
+	HDLG_OBIO_SIZE
+    ),
 
-    {
+    DEVMAP_ENTRY(
 	HDLG_IOW_VBASE,
 	VERDE_OUT_XLATE_IO_WIN0_BASE,
-	VERDE_OUT_XLATE_IO_WIN_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-   },
+	VERDE_OUT_XLATE_IO_WIN_SIZE
+    ),
 
-   {
+    DEVMAP_ENTRY(
 	HDLG_80321_VBASE,
 	VERDE_PMMR_BASE,
-	VERDE_PMMR_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-   },
+	VERDE_PMMR_SIZE
+    ),
 
-   {
-	0,
-	0,
-	0,
-	0,
-	0,
-    }
+    DEVMAP_ENTRY_END
 };
 
 static void

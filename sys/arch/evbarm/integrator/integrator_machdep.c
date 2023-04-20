@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.80 2021/08/10 06:47:49 skrll Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.81 2023/04/20 08:28:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.80 2021/08/10 06:47:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.81 2023/04/20 08:28:04 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -264,47 +264,33 @@ cpu_reboot(int howto, char *bootstr)
 /* Statically mapped devices. */
 static const struct pmap_devmap integrator_devmap[] = {
 #if NPLCOM > 0 && defined(PLCONSOLE)
-	{
+	DEVMAP_ENTRY(
 		UART0_BOOT_BASE,
 		IFPGA_IO_BASE + IFPGA_UART0,
-		1024 * 1024,
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
+		1024 * 1024
+	),
 
-	{
+	DEVMAP_ENTRY(
 		UART1_BOOT_BASE,
 		IFPGA_IO_BASE + IFPGA_UART1,
-		1024 * 1024,
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
+		1024 * 1024
+	),
 #endif
 #if NPCI > 0
-	{
+	DEVMAP_ENTRY(
 		IFPGA_PCI_IO_VBASE,
 		IFPGA_PCI_IO_BASE,
-		IFPGA_PCI_IO_VSIZE,
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
+		IFPGA_PCI_IO_VSIZE
+	),
 
-	{
+	DEVMAP_ENTRY(
 		IFPGA_PCI_CONF_VBASE,
 		IFPGA_PCI_CONF_BASE,
-		IFPGA_PCI_CONF_VSIZE,
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE
-	},
+		IFPGA_PCI_CONF_VSIZE
+	),
 #endif
 
-	{
-		0,
-		0,
-		0,
-		0,
-		0
-	}
+	DEVMAP_ENTRY_END
 };
 
 /*

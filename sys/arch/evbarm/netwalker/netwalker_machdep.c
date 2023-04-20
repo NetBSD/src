@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.26 2019/07/24 12:33:18 hkenken Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.27 2023/04/20 08:28:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.26 2019/07/24 12:33:18 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.27 2023/04/20 08:28:05 skrll Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -207,23 +207,15 @@ int comcnmode = CONMODE;
  * with kernel's page table which we build up in initarm().
  */
 
-#define _A(a)   ((a) & ~L1_S_OFFSET)
-#define _S(s)   (((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
 static const struct pmap_devmap netwalker_devmap[] = {
-	{
+	DEVMAP_ENTRY(
 		/* for UART1, IOMUXC */
-		.pd_va = _A(NETWALKER_IO_VBASE0),
-		.pd_pa = _A(NETWALKER_IO_PBASE0),
-		.pd_size = _S(L1_S_SIZE * 4),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
-	{0}
+		NETWALKER_IO_VBASE0,
+		NETWALKER_IO_PBASE0,
+		L1_S_SIZE * 4
+	),
+	DEVMAP_ENTRY_END
 };
-
-#undef	_A
-#undef	_S
 
 #ifndef MEMSTART
 #define MEMSTART	0x90000000

@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.34 2022/07/03 19:58:42 andvar Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.35 2023/04/20 08:28:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.34 2022/07/03 19:58:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.35 2023/04/20 08:28:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -306,50 +306,36 @@ cpu_reboot(int howto, char *bootstr)
 
 /* Static device mappings. */
 static const struct pmap_devmap tsarm_devmap[] = {
-    {
+    DEVMAP_ENTRY(
 	EP93XX_AHB_VBASE,
 	EP93XX_AHB_HWBASE,
-	EP93XX_AHB_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
+	EP93XX_AHB_SIZE
+    ),
 
-    {
+    DEVMAP_ENTRY(
 	EP93XX_APB_VBASE,
 	EP93XX_APB_HWBASE,
-	EP93XX_APB_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
+	EP93XX_APB_SIZE
+    ),
 
 	/*
 	 * IO8 and IO16 space *must* be mapped contiguously with
 	 * IO8_VA == IO16_VA - 64 Mbytes.  ISA busmap driver depends
 	 * on that!
 	 */
-    {
+    DEVMAP_ENTRY(
 	TS7XXX_IO8_VBASE,
 	TS7XXX_IO8_HWBASE,
-	TS7XXX_IO8_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
+	TS7XXX_IO8_SIZE
+    ),
 
-    {
+    DEVMAP_ENTRY(
 	TS7XXX_IO16_VBASE,
 	TS7XXX_IO16_HWBASE,
-	TS7XXX_IO16_SIZE,
-	VM_PROT_READ|VM_PROT_WRITE,
-	PTE_NOCACHE,
-    },
+	TS7XXX_IO16_SIZE
+    ),
 
-   {
-	0,
-	0,
-	0,
-	0,
-	0,
-    }
+    DEVMAP_ENTRY_END
 };
 
 /*
