@@ -1,4 +1,4 @@
-.\"     $NetBSD: optstr.9,v 1.4 2008/04/30 13:10:58 martin Exp $
+.\"     $NetBSD: optstr.9,v 1.5 2023/04/20 09:06:02 skrll Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,16 +27,31 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 11, 2007
+.Dd May 20, 2023
 .Dt OPTSTR 9
 .Os
 .Sh NAME
-.Nm optstr_get
+.Nm optstr_get ,
+.Nm optstr_get_string ,
+.Nm optstr_get_number ,
+.Nm optstr_get_number_binary ,
+.Nm optstr_get_number_hex ,
+.Nm optstr_get_macaddr
 .Nd Options string management
 .Sh SYNOPSIS
 .In sys/optstr.h
 .Ft bool
 .Fn optstr_get "const char *optstr" "const char *key" "char *buf" "size_t bufsize"
+.Ft bool
+.Fn optstr_get_string "const char *optstr" "const char *key" "char **result"
+.Ft bool
+.Fn optstr_get_number "const char *optstr" "const char *key" "unsigned long *result"
+.Ft bool
+.Fn optstr_get_number_binary "const char *optstr" "const char *key" "unsigned long *result"
+.Ft bool
+.Fn optstr_get_number_hex "const char *optstr" "const char *key" "unsigned long *result"
+.Ft bool
+.Fn optstr_get_macaddr "const char *optstr" "const char *key" "uint8_t result[ETHER_ADDR_LEN]"
 .Sh DESCRIPTION
 An options string is a list of key/value pairs represented in textual form.
 Each pair is expressed as
@@ -69,6 +84,33 @@ if the key was found or
 .Sq false
 otherwise, in which case
 .Va buf
+is left unmodified.
+.El
+.Pp
+The
+.Fn optstr_get_ITEM
+family of functions provide the ability to scan for the key, and
+return the value converted to an appropriate type.
+.Pp
+.Bl -tag -width compact
+.It Fn optstr_get_string "optstr" "key" "result"
+.It Fn optstr_get_number "optstr" "key" "result"
+.It Fn optstr_get_number_binary "optstr" "key" "result"
+.It Fn optstr_get_number_hex "optstr" "key" "result"
+.It Fn optstr_get_macaddr "optstr" "key" "result"
+.Pp
+These functions scan the
+.Va optstr
+options string looking for the key
+.Va key
+and returns the key value converted as per the function name in
+.Va result .
+All functions return
+.Sq true
+if the key was found or
+.Sq false
+otherwise, in which case
+.Va result
 is left unmodified.
 .El
 .Sh CODE REFERENCES
