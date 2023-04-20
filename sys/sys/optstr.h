@@ -1,4 +1,4 @@
-/*	$NetBSD: optstr.h,v 1.3 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: optstr.h,v 1.4 2023/04/20 09:04:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,12 +29,29 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#if !defined(_SYS_OPTSTR_H_)
+#ifndef _SYS_OPTSTR_H_
 #define _SYS_OPTSTR_H_
+
+#include "ether.h"
+
+#include <sys/types.h>
+
+#if NETHER > 0
+#include <net/if_ether.h>
+#endif
 
 /*
  * Prototypes for functions defined in sys/kern/subr_optstr.c.
  */
 bool optstr_get(const char *, const char *, char *, size_t);
 
-#endif /* !defined(_SYS_OPTSTR_H_) */
+bool optstr_get_string(const char *, const char *, const char **);
+bool optstr_get_number(const char *, const char *, unsigned long *);
+bool optstr_get_number_hex(const char *, const char *, unsigned long *);
+bool optstr_get_number_binary(const char *, const char *, unsigned long *);
+
+#if NETHER > 0
+bool optstr_get_macaddr(const char *, const char *, uint8_t [ETHER_ADDR_LEN]);
+#endif
+
+#endif /* _SYS_OPTSTR_H_ */
