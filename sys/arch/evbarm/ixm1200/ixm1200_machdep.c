@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.66 2021/08/17 22:00:28 andvar Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.67 2023/04/20 08:28:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.66 2021/08/17 22:00:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.67 2023/04/20 08:28:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -263,48 +263,32 @@ cpu_reboot(int howto, char *bootstr)
 /* Static device mappings. */
 static const struct pmap_devmap ixm1200_devmap[] = {
 	/* StrongARM System and Peripheral Registers */
-	{
+	DEVMAP_ENTRY(
 		IXP12X0_SYS_VBASE,
 		IXP12X0_SYS_HWBASE,
-		IXP12X0_SYS_SIZE,
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
+		IXP12X0_SYS_SIZE
+	),
 	/* PCI Registers Accessible Through StrongARM Core */
-	{
+	DEVMAP_ENTRY(
 		IXP12X0_PCI_VBASE, IXP12X0_PCI_HWBASE,
-		IXP12X0_PCI_SIZE,
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
+		IXP12X0_PCI_SIZE
+	),
 	/* PCI Registers Accessible Through I/O Cycle Access */
-	{
+	DEVMAP_ENTRY(
 		IXP12X0_PCI_IO_VBASE, IXP12X0_PCI_IO_HWBASE,
-		IXP12X0_PCI_IO_SIZE,
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
+		IXP12X0_PCI_IO_SIZE
+	),
 	/* PCI Type0 Configuration Space */
-	{
+	DEVMAP_ENTRY(
 		IXP12X0_PCI_TYPE0_VBASE, IXP12X0_PCI_TYPE0_HWBASE,
-		IXP12X0_PCI_TYPE0_SIZE,
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
+		IXP12X0_PCI_TYPE0_SIZE
+	),
 	/* PCI Type1 Configuration Space */
-	{
+	DEVMAP_ENTRY(
 		IXP12X0_PCI_TYPE1_VBASE, IXP12X0_PCI_TYPE1_HWBASE,
-		IXP12X0_PCI_TYPE1_SIZE,
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
-	{
-		0,
-		0,
-		0,
-		0,
-		0
-	},
+		IXP12X0_PCI_TYPE1_SIZE
+	),
+	DEVMAP_ENTRY_END
 };
 
 /*

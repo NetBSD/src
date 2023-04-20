@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.57 2022/11/03 09:04:56 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.58 2023/04/20 08:28:03 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ pmap_md_tlb_asid_max(void)
 }
 
 #include <uvm/pmap/tlb.h>
+#include <uvm/pmap/pmap_devmap.h>
 #include <uvm/pmap/pmap_tlb.h>
 
 #define KERNEL_PID		0	/* The kernel uses ASID 0 */
@@ -161,22 +162,6 @@ pmap_kvattr(pt_entry_t *ptep, vm_prot_t prot)
 	return opte;
 }
 
-/* devmap */
-struct pmap_devmap {
-	vaddr_t pd_va;		/* virtual address */
-	paddr_t pd_pa;		/* physical address */
-	psize_t pd_size;	/* size of region */
-	vm_prot_t pd_prot;	/* protection code */
-	u_int pd_flags;		/* flags for pmap_kenter_pa() */
-};
-
-void pmap_devmap_register(const struct pmap_devmap *);
-void pmap_devmap_bootstrap(vaddr_t, const struct pmap_devmap *);
-const struct pmap_devmap *pmap_devmap_find_pa(paddr_t, psize_t);
-const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
-vaddr_t pmap_devmap_phystov(paddr_t);
-paddr_t pmap_devmap_vtophys(paddr_t);
-
 #define L1_TRUNC_BLOCK(x)	((x) & L1_FRAME)
 #define L1_ROUND_BLOCK(x)	L1_TRUNC_BLOCK((x) + L1_SIZE - 1)
 #define L2_TRUNC_BLOCK(x)	((x) & L2_FRAME)
@@ -186,16 +171,7 @@ paddr_t pmap_devmap_vtophys(paddr_t);
 
 #define DEVMAP_ALIGN(x)		L3_TRUNC_BLOCK((x))
 #define DEVMAP_SIZE(x)		L3_ROUND_BLOCK((x))
-
-#define	DEVMAP_ENTRY(va, pa, sz)				\
-	{							\
-		.pd_va = DEVMAP_ALIGN(va),			\
-		.pd_pa = DEVMAP_ALIGN(pa),			\
-		.pd_size = DEVMAP_SIZE(sz),			\
-		.pd_prot = VM_PROT_READ | VM_PROT_WRITE,	\
-		.pd_flags = PMAP_DEV				\
-	}
-#define	DEVMAP_ENTRY_END	{ 0 }
+#define DEVMAP_FLAGS		PMAP_DEV
 
 /* Hooks for the pool allocator */
 paddr_t vtophys(vaddr_t);
@@ -267,6 +243,8 @@ void pmapboot_enter(vaddr_t, paddr_t, psize_t, psize_t, pt_entry_t,
 void pmapboot_enter_range(vaddr_t, paddr_t, psize_t, pt_entry_t,
     void (*)(const char *, ...) __printflike(1, 2));
 int pmapboot_protect(vaddr_t, vaddr_t, vm_prot_t);
+
+vsize_t pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, vm_prot_t, u_int);
 
 #if defined(DDB)
 void pmap_db_pte_print(pt_entry_t, int, void (*)(const char *, ...) __printflike(1, 2));
@@ -414,6 +392,8 @@ void	pmap_pv_init(void);
 void	pmap_pv_track(paddr_t, psize_t);
 void	pmap_pv_untrack(paddr_t, psize_t);
 void	pmap_pv_protect(paddr_t, vm_prot_t);
+
+vsize_t	pmap_kenter_range(vaddr_t, paddr_t, vsize_t, vm_prot_t, u_int);
 
 #define	PMAP_MAPSIZE1	L2_SIZE
 

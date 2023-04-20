@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.148 2023/04/16 14:01:51 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.149 2023/04/20 08:28:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.148 2023/04/16 14:01:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.149 2023/04/20 08:28:02 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -215,7 +215,6 @@ static vaddr_t pmap_maxkvaddr;
 
 vaddr_t virtual_avail, virtual_end;
 vaddr_t virtual_devmap_addr;
-bool pmap_devmap_bootstrap_done = false;
 
 static struct pool_cache _pmap_cache;
 static struct pool_cache _pmap_pv_pool;
@@ -336,10 +335,8 @@ phys_to_pp(paddr_t pa)
 #endif /* DIAGNOSTIC */
 
 
-static const struct pmap_devmap *pmap_devmap_table;
-
-static vsize_t
-pmap_map_chunk(vaddr_t va, paddr_t pa, vsize_t size,
+vsize_t
+pmap_kenter_range(vaddr_t va, paddr_t pa, vsize_t size,
     vm_prot_t prot, u_int flags)
 {
 	pt_entry_t attr;
@@ -352,114 +349,6 @@ pmap_map_chunk(vaddr_t va, paddr_t pa, vsize_t size,
 	return resid;
 }
 
-void
-pmap_devmap_register(const struct pmap_devmap *table)
-{
-	pmap_devmap_table = table;
-}
-
-void
-pmap_devmap_bootstrap(vaddr_t l0pt, const struct pmap_devmap *table)
-{
-	bool done = false;
-	vaddr_t va;
-	int i;
-
-	pmap_devmap_register(table);
-
-	VPRINTF("%s:\n", __func__);
-	for (i = 0; table[i].pd_size != 0; i++) {
-		VPRINTF(" devmap: pa %08lx-%08lx = va %016lx\n",
-		    table[i].pd_pa,
-		    table[i].pd_pa + table[i].pd_size - 1,
-		    table[i].pd_va);
-		va = table[i].pd_va;
-
-		KASSERT((VM_KERNEL_IO_BASE <= va) &&
-		    (va < (VM_KERNEL_IO_BASE + VM_KERNEL_IO_SIZE)));
-
-		/* update and check virtual_devmap_addr */
-		if (virtual_devmap_addr == 0 || virtual_devmap_addr > va) {
-			virtual_devmap_addr = va;
-		}
-
-		pmap_map_chunk(
-		    table[i].pd_va,
-		    table[i].pd_pa,
-		    table[i].pd_size,
-		    table[i].pd_prot,
-		    table[i].pd_flags);
-		done = true;
-	}
-	if (done)
-		pmap_devmap_bootstrap_done = true;
-}
-
-const struct pmap_devmap *
-pmap_devmap_find_va(vaddr_t va, vsize_t size)
-{
-	paddr_t endva;
-	int i;
-
-	if (pmap_devmap_table == NULL)
-		return NULL;
-
-	endva = va + size;
-	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
-		if ((va >= pmap_devmap_table[i].pd_va) &&
-		    (endva <= pmap_devmap_table[i].pd_va +
-		              pmap_devmap_table[i].pd_size))
-			return &pmap_devmap_table[i];
-	}
-	return NULL;
-}
-
-const struct pmap_devmap *
-pmap_devmap_find_pa(paddr_t pa, psize_t size)
-{
-	paddr_t endpa;
-	int i;
-
-	if (pmap_devmap_table == NULL)
-		return NULL;
-
-	endpa = pa + size;
-	for (i = 0; pmap_devmap_table[i].pd_size != 0; i++) {
-		if (pa >= pmap_devmap_table[i].pd_pa &&
-		    (endpa <= pmap_devmap_table[i].pd_pa +
-		             pmap_devmap_table[i].pd_size))
-			return (&pmap_devmap_table[i]);
-	}
-	return NULL;
-}
-
-vaddr_t
-pmap_devmap_phystov(paddr_t pa)
-{
-	const struct pmap_devmap *table;
-	paddr_t offset;
-
-	table = pmap_devmap_find_pa(pa, 0);
-	if (table == NULL)
-		return 0;
-
-	offset = pa - table->pd_pa;
-	return table->pd_va + offset;
-}
-
-vaddr_t
-pmap_devmap_vtophys(paddr_t va)
-{
-	const struct pmap_devmap *table;
-	vaddr_t offset;
-
-	table = pmap_devmap_find_va(va, 0);
-	if (table == NULL)
-		return 0;
-
-	offset = va - table->pd_va;
-	return table->pd_pa + offset;
-}
 
 void
 pmap_bootstrap(vaddr_t vstart, vaddr_t vend)

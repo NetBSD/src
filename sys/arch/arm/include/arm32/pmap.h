@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.173 2022/04/02 11:16:07 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.174 2023/04/20 08:28:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -79,7 +79,10 @@
 #endif
 #include <arm/cpufunc.h>
 #include <arm/locore.h>
+
 #include <uvm/uvm_object.h>
+
+#include <uvm/pmap/pmap_devmap.h>
 #include <uvm/pmap/pmap_pvt.h>
 #endif
 
@@ -201,29 +204,10 @@ union pmap_cache_state {
 #define	PMAP_CACHE_STATE_ALL	0xffffffffu
 #endif /* !ARM_MMU_EXTENDED */
 
-/*
- * This structure is used by machine-dependent code to describe
- * static mappings of devices, created at bootstrap time.
- */
-struct pmap_devmap {
-	vaddr_t		pd_va;		/* virtual address */
-	paddr_t		pd_pa;		/* physical address */
-	psize_t		pd_size;	/* size of region */
-	vm_prot_t	pd_prot;	/* protection code */
-	int		pd_cache;	/* cache attributes */
-};
 
 #define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
 #define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)
-#define	DEVMAP_ENTRY(va, pa, sz)			\
-	{						\
-		.pd_va = DEVMAP_ALIGN(va),		\
-		.pd_pa = DEVMAP_ALIGN(pa),		\
-		.pd_size = DEVMAP_SIZE(sz),		\
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
-		.pd_cache = PTE_DEV			\
-	}
-#define	DEVMAP_ENTRY_END	{ 0 }
+#define	DEVMAP_FLAGS	PTE_DEV
 
 /*
  * The pmap structure itself
@@ -419,17 +403,14 @@ void	pmap_postinit(void);
 
 void	vector_page_setprot(int);
 
-const struct pmap_devmap *pmap_devmap_find_pa(paddr_t, psize_t);
-const struct pmap_devmap *pmap_devmap_find_va(vaddr_t, vsize_t);
-
 /* Bootstrapping routines. */
 void	pmap_map_section(vaddr_t, vaddr_t, paddr_t, int, int);
 void	pmap_map_entry(vaddr_t, vaddr_t, paddr_t, int, int);
 vsize_t	pmap_map_chunk(vaddr_t, vaddr_t, paddr_t, vsize_t, int, int);
 void	pmap_unmap_chunk(vaddr_t, vaddr_t, vsize_t);
 void	pmap_link_l2pt(vaddr_t, vaddr_t, pv_addr_t *);
-void	pmap_devmap_bootstrap(vaddr_t, const struct pmap_devmap *);
-void	pmap_devmap_register(const struct pmap_devmap *);
+
+vsize_t pmap_kenter_range(vaddr_t, paddr_t, vsize_t, vm_prot_t, u_int);
 
 /*
  * Special page zero routine for use by the idle loop (no cache cleans).

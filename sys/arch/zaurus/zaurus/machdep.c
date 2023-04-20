@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.50 2022/07/03 19:58:42 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.51 2023/04/20 08:28:06 skrll Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2022/07/03 19:58:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.51 2023/04/20 08:28:06 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -484,76 +484,60 @@ read_ttb(void)
  * registers segment-aligned and segment-rounded in order to avoid
  * using the 2nd page tables.
  */
-#define	_A(a)	((a) & ~L1_S_OFFSET)
-#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
 static const struct pmap_devmap zaurus_devmap[] = {
-    {
+    DEVMAP_ENTRY(
 	    ZAURUS_GPIO_VBASE,
-	    _A(PXA2X0_GPIO_BASE),
-	    _S(PXA2X0_GPIO_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_GPIO_BASE,
+	    PXA2X0_GPIO_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    ZAURUS_CLKMAN_VBASE,
-	    _A(PXA2X0_CLKMAN_BASE),
-	    _S(PXA2X0_CLKMAN_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_CLKMAN_BASE,
+	    PXA2X0_CLKMAN_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    ZAURUS_INTCTL_VBASE,
-	    _A(PXA2X0_INTCTL_BASE),
-	    _S(PXA2X0_INTCTL_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_INTCTL_BASE,
+	    PXA2X0_INTCTL_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    ZAURUS_MEMCTL_VBASE,
-	    _A(PXA2X0_MEMCTL_BASE),
-	    _S(PXA2X0_MEMCTL_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_MEMCTL_BASE,
+	    PXA2X0_MEMCTL_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    ZAURUS_SCOOP0_VBASE,
-	    _A(C3000_SCOOP0_BASE),
-	    _S(SCOOP_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    C3000_SCOOP0_BASE,
+	    SCOOP_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    ZAURUS_SCOOP1_VBASE,
-	    _A(C3000_SCOOP1_BASE),
-	    _S(SCOOP_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    C3000_SCOOP1_BASE,
+	    SCOOP_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    ZAURUS_FFUART_VBASE,
-	    _A(PXA2X0_FFUART_BASE),
-	    _S(4 * COM_NPORTS),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_FFUART_BASE,
+	    4 * COM_NPORTS
+    ),
+    DEVMAP_ENTRY(
 	    ZAURUS_BTUART_VBASE,
-	    _A(PXA2X0_BTUART_BASE),
-	    _S(4 * COM_NPORTS),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_BTUART_BASE,
+	    4 * COM_NPORTS
+    ),
+    DEVMAP_ENTRY(
 	    ZAURUS_STUART_VBASE,
-	    _A(PXA2X0_STUART_BASE),
-	    _S(4 * COM_NPORTS),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_STUART_BASE,
+	    4 * COM_NPORTS
+    ),
+    DEVMAP_ENTRY(
 	    ZAURUS_POWMAN_VBASE,
-	    _A(PXA2X0_POWMAN_BASE),
-	    _S(PXA2X0_POWMAN_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
+	    PXA2X0_POWMAN_BASE,
+	    PXA2X0_POWMAN_SIZE
+    ),
 
-    {0, 0, 0, 0, 0,}
+    DEVMAP_ENTRY_END
 };
-
-#undef	_A
-#undef	_S
 
 void green_on(int virt);
 void

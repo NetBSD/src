@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.45 2021/08/17 22:00:29 andvar Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.46 2023/04/20 08:28:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.45 2021/08/17 22:00:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.46 2023/04/20 08:28:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -328,9 +328,6 @@ cpu_reboot(int howto, char *bootstr)
  * using the 2nd page tables.
  */
 
-#define	_A(a)	((a) & ~L1_S_OFFSET)
-#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
 #define	_V(n)	(SMDK2410_IO_VBASE + (n) * L1_S_SIZE)
 
 #define	GPIO_VBASE	_V(0)
@@ -343,36 +340,30 @@ cpu_reboot(int howto, char *bootstr)
 
 static const struct pmap_devmap smdk2410_devmap[] = {
 	/* GPIO registers */
-	{
+	DEVMAP_ENTRY(
 		GPIO_VBASE,
-		_A(S3C2410_GPIO_BASE),
-		_S(S3C2410_GPIO_SIZE),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-	},
-	{
+		S3C2410_GPIO_BASE,
+		S3C2410_GPIO_SIZE
+	),
+	DEVMAP_ENTRY(
 		INTCTL_VBASE,
-		_A(S3C2410_INTCTL_BASE),
-		_S(S3C2410_INTCTL_SIZE),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-	},
-	{
+		S3C2410_INTCTL_BASE,
+		S3C2410_INTCTL_SIZE
+	),
+	DEVMAP_ENTRY(
 		CLKMAN_VBASE,
-		_A(S3C2410_CLKMAN_BASE),
-		_S(S3C24X0_CLKMAN_SIZE),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-	},
-	{	/* UART registers for UART0, 1, 2. */
+		S3C2410_CLKMAN_BASE,
+		S3C24X0_CLKMAN_SIZE
+	),
+	/* UART registers for UART0, 1, 2. */
+	DEVMAP_ENTRY(
 		UART_VBASE,
-		_A(S3C2410_UART0_BASE),
-		_S(S3C2410_UART_BASE(3) - S3C2410_UART0_BASE),
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-	},
+		S3C2410_UART0_BASE,
+		S3C2410_UART_BASE(3) - S3C2410_UART0_BASE
+	),
 
-	{ 0, 0, 0, 0 }
+	DEVMAP_ENTRY_END
 };
-
-#undef	_A
-#undef	_S
 
 static inline	pd_entry_t *
 read_ttb(void)
