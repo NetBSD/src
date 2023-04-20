@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.29 2018/09/22 12:24:02 rin Exp $
+#	$NetBSD: Makefile.luna68k,v 1.29.4.1 2023/04/20 13:47:02 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -48,7 +48,7 @@ OPT_MODULAR=	%MODULAR%
 MD_OBJS=	locore.o
 MD_LIBS=	${FPSP}
 MD_CFILES=
-MD_SFILES=	
+MD_SFILES=	${LUNA68K}/luna68k/locore.s
 
 locore.o: ${LUNA68K}/luna68k/locore.s assym.h
 	${NORMAL_S}
