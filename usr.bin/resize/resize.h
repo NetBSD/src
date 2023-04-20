@@ -1,4 +1,4 @@
-/*	$NetBSD: resize.h,v 1.2 2021/02/28 00:44:58 christos Exp $	*/
+/*	$NetBSD: resize.h,v 1.3 2023/04/20 22:23:53 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 #define TTYSIZE_COLS(ws) (ws).ws_col
 #define SET_TTYSIZE(fd, ws) ioctl((fd), TIOCSWINSZ, &(ws))
 
-#define x_basename(a) basename(a)
+#define x_basename(a) estrdup(basename(a))
 #define x_strdup(a) estrdup(a)
 #define x_getenv(a) getenv(a)
 #define x_getlogin(u, p) __nothing
