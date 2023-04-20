@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.62 2023/04/01 16:28:55 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.63 2023/04/20 14:15:22 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1369,4 +1369,22 @@ usr.sbin/iostat/iostat.c			1.68
 	Fix processing of the archaic arg format (BACKWARD_COMPATIBILITY) so it
 	doesn't repeat the processing every iteration.
 	[kre, ticket #1626]
+
+sys/arch/luna68k/conf/Makefile.luna68k		1.30
+
+	Fix missing locore.d dependency output on make depend.
+	[tsutsui, ticket #1627]
+
+sys/arch/dreamcast/dev/microcode/Makefile	1.6
+sys/arch/dreamcast/dev/microcode/aica_arm.c	1.7,1.8
+sys/arch/dreamcast/dev/microcode/aica_arm_locore.S 1.4,1.5
+sys/arch/dreamcast/dev/microcode/aica_armcode.h	1.5
+
+	dreamcast: aica(4): audio fix.
+	[tsutsui, ticket #1628]
+
+usr.sbin/npf/npfd/npfd.8			1.7
+
+	npfd(8): fix "-i" argument in tcpdump example.
+	[tsutsui, ticket #1629]
 
