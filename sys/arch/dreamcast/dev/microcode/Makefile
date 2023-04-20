@@ -1,15 +1,16 @@
-#	$NetBSD: Makefile,v 1.5 2019/05/06 17:12:50 ryo Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2023/04/20 14:08:07 martin Exp $
 
 S	= ${.CURDIR}/../../../..
 
-CC	= ${TOOLDIR}/bin/arm--netbsdelf-gcc
-OBJCOPY	= ${TOOLDIR}/bin/arm--netbsdelf-objcopy
+TOOLDIR	?= /usr/pkg/cross-arm-none-eabi
+
+CC	= ${TOOLDIR}/bin/arm-none-eabi-gcc
+OBJCOPY	= ${TOOLDIR}/bin/arm-none-eabi-objcopy
 
 CFLAGS	= -W -Wall -mlittle-endian
 CFLAGS	+= -O3 -mcpu=arm7
 CFLAGS	+= -fomit-frame-pointer -funroll-loops -finline-functions
 CFLAGS	+= -I${S}
-#AFLAGS	= -mcpu=arm7tdmi -mthumb -mthumb-interwork -mapcs-32
 
 all: aica_armcode.h
 
