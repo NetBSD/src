@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.78 2022/09/21 14:29:45 riastradh Exp $	 */
+/*	$NetBSD: exec.c,v 1.79 2023/04/20 00:42:24 manu Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -465,6 +465,7 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 	struct btinfo_symtab btinfo_symtab;
 	u_long extmem;
 	u_long basemem;
+	u_long entry;
 	int error;
 #ifdef EFIBOOT
 	int i;
@@ -497,6 +498,8 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 		goto out;
 	}
 #ifdef EFIBOOT
+	efi_load_start = marks[MARK_START];
+
 	/* adjust to the real load address */
 	marks[MARK_START] -= efi_loadaddr;
 	marks[MARK_ENTRY] -= efi_loadaddr;
@@ -552,6 +555,8 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 
 	if (callback != NULL)
 		(*callback)();
+
+	entry = marks[MARK_ENTRY];
 #ifdef EFIBOOT
 	/* Copy bootinfo to safe arena. */
 	for (i = 0; i < bootinfo->nentries; i++) {
@@ -563,8 +568,22 @@ exec_netbsd(const char *file, physaddr_t loadaddr, int boothowto, int floppy,
 
 	efi_kernel_start = marks[MARK_START];
 	efi_kernel_size = image_end - (efi_loadaddr + efi_kernel_start);
+
+	switch (efi_reloc_type) {
+	case RELOC_NONE:
+		entry += (efi_load_start - efi_kernel_start);
+		efi_kernel_start = efi_load_start;
+		break;
+	case RELOC_ADDR:
+		entry += (efi_kernel_reloc - efi_kernel_start);
+		efi_kernel_start = efi_kernel_reloc;
+		break;
+	case RELOC_DEFAULT:
+	default:
+		break;
+	}
 #endif
-	startprog(marks[MARK_ENTRY], BOOT_NARGS, boot_argv,
+	startprog(entry, BOOT_NARGS, boot_argv,
 	    x86_trunc_page(basemem * 1024));
 	panic("exec returned");
 

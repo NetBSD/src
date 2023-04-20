@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.12 2020/02/09 12:13:39 jmcneill Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.13 2023/04/20 00:42:24 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -36,7 +36,9 @@ EFI_DEVICE_PATH *efi_bootdp;
 enum efi_boot_device_type efi_bootdp_type = BOOT_DEVICE_TYPE_HD;
 EFI_LOADED_IMAGE *efi_li;
 uintptr_t efi_main_sp;
-physaddr_t efi_loadaddr, efi_kernel_start;
+physaddr_t efi_loadaddr, efi_kernel_start, efi_load_start;
+physaddr_t efi_kernel_reloc = 0;
+enum efi_reloc_type efi_reloc_type = RELOC_DEFAULT;
 u_long efi_kernel_size;
 bool efi_cleanuped;
 struct btinfo_efimemmap *btinfo_efimemmap = NULL;
