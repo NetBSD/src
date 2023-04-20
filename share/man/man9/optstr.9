@@ -1,4 +1,4 @@
-.\"     $NetBSD: optstr.9,v 1.5 2023/04/20 09:06:02 skrll Exp $
+.\"     $NetBSD: optstr.9,v 1.6 2023/04/20 10:43:17 uwe Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -30,6 +30,7 @@
 .Dd May 20, 2023
 .Dt OPTSTR 9
 .Os
+.
 .Sh NAME
 .Nm optstr_get ,
 .Nm optstr_get_string ,
@@ -38,79 +39,110 @@
 .Nm optstr_get_number_hex ,
 .Nm optstr_get_macaddr
 .Nd Options string management
+.
 .Sh SYNOPSIS
 .In sys/optstr.h
+.
 .Ft bool
-.Fn optstr_get "const char *optstr" "const char *key" "char *buf" "size_t bufsize"
+.Fo optstr_get
+.Fa "const char *optstr"
+.Fa "const char *key"
+.Fa "char *buf"
+.Fa "size_t bufsize"
+.Fc
+.
 .Ft bool
-.Fn optstr_get_string "const char *optstr" "const char *key" "char **result"
+.Fo optstr_get_string
+.Fa "const char *optstr"
+.Fa "const char *key"
+.Fa "char **result"
+.Fc
+.
 .Ft bool
-.Fn optstr_get_number "const char *optstr" "const char *key" "unsigned long *result"
+.Fo optstr_get_number
+.Fa "const char *optstr"
+.Fa "const char *key"
+.Fa "unsigned long *result"
+.Fc
+.
 .Ft bool
-.Fn optstr_get_number_binary "const char *optstr" "const char *key" "unsigned long *result"
+.Fo optstr_get_number_binary
+.Fa "const char *optstr"
+.Fa "const char *key"
+.Fa "unsigned long *result"
+.Fc
+.
 .Ft bool
-.Fn optstr_get_number_hex "const char *optstr" "const char *key" "unsigned long *result"
+.Fo optstr_get_number_hex
+.Fa "const char *optstr"
+.Fa "const char *key"
+.Fa "unsigned long *result"
+.Fc
+.
 .Ft bool
-.Fn optstr_get_macaddr "const char *optstr" "const char *key" "uint8_t result[ETHER_ADDR_LEN]"
+.Fo optstr_get_macaddr
+.Fa "const char *optstr"
+.Fa "const char *key"
+.Fa "uint8_t result[ETHER_ADDR_LEN]"
+.Fc
+.
 .Sh DESCRIPTION
 An options string is a list of key/value pairs represented in textual form.
 Each pair is expressed as
-.Sq 'key=value'
+.Ar key\^ Ns Li = Ns Ar value
 and is separated from other pairs by one or more spaces.
 For example:
-.Bd -literal
-key1=value1 key2=value2 key3=value3
-.Ed
+.Pp
+.Dl key1=value1 key2=value2 key3=value3
 .Pp
 Options strings are used to pass information between userland programs and
 the kernel in a binary-agnostic way.
 This makes them endianness and ABI independent.
 .Sh FUNCTIONS
 The following functions are provided to manage options strings:
-.Bl -tag -width compact
+.Bl -tag -width Fn
 .It Fn optstr_get "optstr" "key" "buf" "bufsize"
 Scans the
-.Va optstr
+.Fa optstr
 options string looking for the key
-.Va key
+.Fa key
 and stores its value in the buffer pointed to by
-.Va buf
+.Fa buf
 copying a maximum of
-.Va bufsize
+.Fa bufsize
 bytes.
 Returns
-.Sq true
+.Ql true
 if the key was found or
-.Sq false
+.Ql false
 otherwise, in which case
-.Va buf
+.Fa buf
 is left unmodified.
 .El
 .Pp
 The
-.Fn optstr_get_ITEM
+.Li optstr_get_ Ns Ar item
 family of functions provide the ability to scan for the key, and
 return the value converted to an appropriate type.
 .Pp
-.Bl -tag -width compact
+.Bl -tag -width Fn -compact
 .It Fn optstr_get_string "optstr" "key" "result"
 .It Fn optstr_get_number "optstr" "key" "result"
 .It Fn optstr_get_number_binary "optstr" "key" "result"
 .It Fn optstr_get_number_hex "optstr" "key" "result"
 .It Fn optstr_get_macaddr "optstr" "key" "result"
-.Pp
 These functions scan the
-.Va optstr
+.Fa optstr
 options string looking for the key
-.Va key
+.Fa key
 and returns the key value converted as per the function name in
-.Va result .
+.Fa result .
 All functions return
-.Sq true
+.Ql true
 if the key was found or
-.Sq false
+.Ql false
 otherwise, in which case
-.Va result
+.Fa result
 is left unmodified.
 .El
 .Sh CODE REFERENCES
