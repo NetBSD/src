@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.56 2023/04/19 16:41:18 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.57 2023/04/20 14:20:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1630,4 +1630,15 @@ sys/arch/luna68k/luna68k/mainbus.c		1.20
 
 	luna68k: fix device name for xpbus at mainbus for LUNA-II.
 	[tsutsui, ticket #142]
+
+sys/arch/luna68k/conf/Makefile.luna68k		1.30
+
+	Fix missing locore.d dependency output on make depend.
+	[tsutsui, ticket #143]
+
+sys/dev/ic/bmx280.c				1.2
+
+	bmx280thp(4): do not create the sysctl tree if the initial setup of
+	the chip fails.
+	[brad, ticket #144]
 
