@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_optstr.c,v 1.7 2022/11/19 15:30:12 skrll Exp $	*/
+/*	$NetBSD: subr_optstr.c,v 1.8 2023/04/20 09:04:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.7 2022/11/19 15:30:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.8 2023/04/20 09:04:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/optstr.h>
@@ -43,13 +43,15 @@ __KERNEL_RCSID(0, "$NetBSD: subr_optstr.c,v 1.7 2022/11/19 15:30:12 skrll Exp $"
  * with a maximum of bufsize bytes.  If the key is found, returns true;
  * otherwise FALSE.
  */
-bool
-optstr_get(const char *optstr, const char *key, char *buf, size_t bufsize)
+
+
+static bool
+optstr_get_pointer(const char *optstr, const char *key, const char **result)
 {
 	bool found = false;
 
-	/* Skip any initial spaces until we find a word. */
-	while (*optstr == ' ')
+	/* Skip any initial spaces or tabs until we find a word. */
+	while (*optstr == ' ' || *optstr == '\t')
 		optstr++;
 
 	/* Search for the given key within the option string. */
@@ -76,17 +78,118 @@ optstr_get(const char *optstr, const char *key, char *buf, size_t bufsize)
 		}
 	}
 
-	/* If the key was found; copy its value to the target buffer. */
 	if (found) {
-		const char *lastbuf;
-
-		lastbuf = buf + (bufsize - 1);
-
 		optstr++; /* Skip '='. */
-		while (buf != lastbuf && *optstr != ' ' && *optstr != '\0')
-			*buf++ = *optstr++;
-		*buf = '\0';
+		*result = optstr;
 	}
 
 	return found;
 }
+
+bool
+optstr_get(const char *optstr, const char *key, char *buf, size_t bufsize)
+{
+	const char *data;
+	bool found = optstr_get_pointer(optstr, key, &data);
+
+	/* If the key was found; copy its value to the target buffer. */
+	if (found) {
+		const char *lastbuf = buf + (bufsize - 1);
+
+		while (buf != lastbuf && *data != ' ' && *data != '\0')
+			*buf++ = *data++;
+		*buf = '\0';
+	}
+	return found;
+}
+
+
+bool
+optstr_get_string(const char *optstr, const char *key, const char **result)
+{
+	const char *data;
+	const bool found = optstr_get_pointer(optstr, key, &data);
+
+	/* If the key was found; copy its value to the target buffer. */
+	if (found) {
+		*result = data;
+	}
+	return found;
+}
+
+bool
+optstr_get_number(const char *optstr, const char *key, unsigned long *result)
+{
+	const char *data;
+	const bool found = optstr_get_pointer(optstr, key, &data);
+
+	/* If the key was found; copy its value to the target buffer. */
+	if (found) {
+		char *ep;
+		const unsigned long ulval = strtoul(data, &ep, 10);
+		if (ep == data)
+			return false;
+		*result = ulval;
+		return true;
+	}
+	return false;
+}
+
+bool
+optstr_get_number_hex(const char *optstr, const char *key,
+    unsigned long *result)
+{
+	const char *data;
+	const bool found = optstr_get_pointer(optstr, key, &data);
+
+	/* If the key was found; copy its value to the target buffer. */
+	if (found) {
+		char *ep;
+		const unsigned long ulval = strtoul(data, &ep, 16);
+		if (ep == data)
+			return false;
+		*result = ulval;
+		return true;
+	}
+	return false;
+}
+
+bool
+optstr_get_number_binary(const char *optstr, const char *key,
+    unsigned long *result)
+{
+	const char *data;
+	const bool found = optstr_get_pointer(optstr, key, &data);
+
+	/* If the key was found; copy its value to the target buffer. */
+	if (found) {
+		char *ep;
+		const unsigned long ulval = strtoul(data, &ep, 2);
+		if (ep == data)
+			return false;
+		*result = ulval;
+		return true;
+	}
+	return false;
+}
+
+
+#if NETHER > 0
+bool
+optstr_get_macaddr(const char *optstr, const char *key,
+    uint8_t result[ETHER_ADDR_LEN])
+{
+	const char *data;
+	const bool found = optstr_get_pointer(optstr, key, &data);
+
+	/* If the key was found; copy its value to the target buffer. */
+	if (found) {
+		uint8_t temp[ETHER_ADDR_LEN];
+		int error = ether_aton_r(temp, sizeof(temp), data);
+		if (error)
+			return false;
+		memcpy(result, temp, sizeof(temp));
+	}
+	return found;
+}
+#endif
