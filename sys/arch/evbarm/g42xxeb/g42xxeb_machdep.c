@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.39 2022/07/03 19:58:42 andvar Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.40 2023/04/20 08:28:03 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.
@@ -335,52 +335,39 @@ read_ttb(void)
  * using the 2nd page tables.
  */
 
-#define	_A(a)	((a) & ~L1_S_OFFSET)
-#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
 static const struct pmap_devmap g42xxeb_devmap[] = {
-    {
+    DEVMAP_ENTRY(
 	    G42XXEB_PLDREG_VBASE,
-	    _A(G42XXEB_PLDREG_BASE),
-	    _S(G42XXEB_PLDREG_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    G42XXEB_PLDREG_BASE,
+	    G42XXEB_PLDREG_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    G42XXEB_GPIO_VBASE,
-	    _A(PXA2X0_GPIO_BASE),
-	    _S(PXA250_GPIO_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_GPIO_BASE,
+	    PXA250_GPIO_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    G42XXEB_CLKMAN_VBASE,
-	    _A(PXA2X0_CLKMAN_BASE),
-	    _S(PXA2X0_CLKMAN_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_CLKMAN_BASE,
+	    PXA2X0_CLKMAN_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    G42XXEB_INTCTL_VBASE,
-	    _A(PXA2X0_INTCTL_BASE),
-	    _S(PXA2X0_INTCTL_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_INTCTL_BASE,
+	    PXA2X0_INTCTL_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    G42XXEB_FFUART_VBASE,
-	    _A(PXA2X0_FFUART_BASE),
-	    _S(4 * COM_NPORTS),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_FFUART_BASE,
+	    4 * COM_NPORTS
+    ),
+    DEVMAP_ENTRY(
 	    G42XXEB_BTUART_VBASE,
-	    _A(PXA2X0_BTUART_BASE),
-	    _S(4 * COM_NPORTS),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {0, 0, 0, 0,}
+	    PXA2X0_BTUART_BASE,
+	    4 * COM_NPORTS
+    ),
+    DEVMAP_ENTRY_END
 };
-
-#undef	_A
-#undef	_S
-
 
 /*
  * vaddr_t initarm(...)

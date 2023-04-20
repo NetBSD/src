@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.17 2019/07/16 14:41:44 skrll Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.18 2023/04/20 08:28:03 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.17 2019/07/16 14:41:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.18 2023/04/20 08:28:03 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -187,23 +187,14 @@ axp_system_reset(void)
  * using the 2nd page tables.
  */
 
-#define	_A(a)	((a) & ~L1_S_OFFSET)
-#define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
-
 static const struct pmap_devmap devmap[] = {
-	{
-		/* Internal registers */
-		.pd_va = _A(MARVELL_INTERREGS_VBASE),
-		.pd_pa = _A(MARVELL_INTERREGS_PBASE),
-		.pd_size = _S(MVSOC_INTERREGS_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
-	{0, 0, 0, 0, 0}
+	DEVMAP_ENTRY_FLAGS(MARVELL_INTERREGS_VBASE,
+			   MARVELL_INTERREGS_PBASE,
+			   MVSOC_INTERREGS_SIZE,
+			   VM_PROT_READ | VM_PROT_WRITE,
+			   PMAP_NOCACHE),
+	DEVMAP_ENTRY_END
 };
-
-#undef	_A
-#undef	_S
 
 static inline pd_entry_t *
 read_ttb(void)

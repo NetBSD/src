@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.21 2021/10/11 14:36:05 rin Exp $	*/
+/*	$NetBSD: sa11x0_hpc_machdep.c,v 1.22 2023/04/20 08:28:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.21 2021/10/11 14:36:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_hpc_machdep.c,v 1.22 2023/04/20 08:28:06 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -158,13 +158,12 @@ extern void *__sleep_ctx;
  */
 static const struct pmap_devmap sa11x0_devmap[] = {
 	/* Physical/virtual address for UART #3. */
-	{
+	DEVMAP_ENTRY(
 		SACOM3_VBASE,
 		SACOM3_BASE,
-		0x24,
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE
-	},
-	{ 0, 0, 0, 0, 0 }
+		0x24
+	),
+	DEVMAP_ENTRY_END
 };
 
 /*

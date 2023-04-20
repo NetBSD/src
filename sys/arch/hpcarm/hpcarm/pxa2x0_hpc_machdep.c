@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.30 2021/08/17 22:00:29 andvar Exp $	*/
+/*	$NetBSD: pxa2x0_hpc_machdep.c,v 1.31 2023/04/20 08:28:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.30 2021/08/17 22:00:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_hpc_machdep.c,v 1.31 2023/04/20 08:28:06 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_dram_pages.h"
@@ -163,56 +163,45 @@ static void	fakecninit(void);
 #define	PXA2X0_BTUART_VBASE	0xfd500000
 #define	PXA2X0_STUART_VBASE	0xfd600000
 
-#define	_A(a)	((a) & L1_S_FRAME)
-#define	_S(s)	(((s) + L1_S_SIZE - 1) & L1_S_FRAME)
 const struct pmap_devmap pxa2x0_devmap[] = {
-    {
+    DEVMAP_ENTRY(
 	    PXA2X0_GPIO_VBASE,
-	    _A(PXA2X0_GPIO_BASE),
-	    _S(PXA2X0_GPIO_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_GPIO_BASE,
+	    PXA2X0_GPIO_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    PXA2X0_CLKMAN_VBASE,
-	    _A(PXA2X0_CLKMAN_BASE),
-	    _S(PXA2X0_CLKMAN_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_CLKMAN_BASE,
+	    PXA2X0_CLKMAN_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    PXA2X0_INTCTL_VBASE,
-	    _A(PXA2X0_INTCTL_BASE),
-	    _S(PXA2X0_INTCTL_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_INTCTL_BASE,
+	    PXA2X0_INTCTL_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    PXA2X0_MEMCTL_VBASE,
-	    _A(PXA2X0_MEMCTL_BASE),
-	    _S(PXA2X0_MEMCTL_SIZE),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_MEMCTL_BASE,
+	    PXA2X0_MEMCTL_SIZE
+    ),
+    DEVMAP_ENTRY(
 	    PXA2X0_FFUART_VBASE,
-	    _A(PXA2X0_FFUART_BASE),
-	    _S(4 * COM_NPORTS),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_FFUART_BASE,
+	    4 * COM_NPORTS
+    ),
+    DEVMAP_ENTRY(
 	    PXA2X0_BTUART_VBASE,
-	    _A(PXA2X0_BTUART_BASE),
-	    _S(4 * COM_NPORTS),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
-    {
+	    PXA2X0_BTUART_BASE,
+	    4 * COM_NPORTS
+    ),
+    DEVMAP_ENTRY(
 	    PXA2X0_STUART_VBASE,
-	    _A(PXA2X0_STUART_BASE),
-	    _S(4 * COM_NPORTS),
-	    VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-    },
+	    PXA2X0_STUART_BASE,
+	    4 * COM_NPORTS
+    ),
 
-    { 0, 0, 0, 0, 0, }
+    DEVMAP_ENTRY_END
 };
-#undef	_A
-#undef	_S
 extern const struct pmap_devmap machdep_devmap[];
 
 

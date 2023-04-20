@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2800_machdep.c,v 1.50 2021/08/17 22:00:29 andvar Exp $ */
+/*	$NetBSD: smdk2800_machdep.c,v 1.51 2023/04/20 08:28:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005 Fujitsu Component Limited
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.50 2021/08/17 22:00:29 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2800_machdep.c,v 1.51 2023/04/20 08:28:05 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_console.h"
@@ -312,13 +312,12 @@ cpu_reboot(int howto, char *bootstr)
  * at the same position.
  */
 static const struct pmap_devmap smdk2800_devmap[] = {
-	{
+	DEVMAP_ENTRY(
 		SMDK2800_IO_AREA_VBASE,
 		S3C2800_PERIPHERALS,
-		S3C2800_PERIPHERALS_SIZE,
-		VM_PROT_READ|VM_PROT_WRITE, PTE_NOCACHE,
-	},
-	{ 0, 0, 0, 0 }
+		S3C2800_PERIPHERALS_SIZE
+	),
+	DEVMAP_ENTRY_END
 };
 
 #define ioreg_vaddr(pa)	((pa) - S3C2800_PERIPHERALS + SMDK2800_IO_AREA_VBASE)
