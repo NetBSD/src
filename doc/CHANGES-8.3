@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.172 2023/04/01 16:50:36 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.173 2023/04/20 13:50:12 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3302,4 +3302,9 @@ usr.sbin/route6d/route6d.c			1.72
 
 	PR/53365: memory leak in route6d.
 	[riastradh, ticket #1820]
+
+sys/arch/luna68k/conf/Makefile.luna68k		1.30
+
+	Fix missing locore.d dependency output on make depend.
+	[tsutsui, ticket #1821]
 
