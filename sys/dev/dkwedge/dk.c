@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.135 2023/04/21 18:25:49 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.136 2023/04/21 18:26:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.135 2023/04/21 18:25:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.136 2023/04/21 18:26:35 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -96,6 +96,10 @@ struct dkwedge_softc {
 	int		sc_mode;	/* parent open mode */
 };
 
+static int	dkwedge_match(device_t, cfdata_t, void *);
+static void	dkwedge_attach(device_t, device_t, void *);
+static int	dkwedge_detach(device_t, int);
+
 static void	dkstart(struct dkwedge_softc *);
 static void	dkiodone(struct buf *);
 static void	dkrestart(void *);
@@ -119,6 +123,11 @@ static dev_type_strategy(dkstrategy);
 static dev_type_dump(dkdump);
 static dev_type_size(dksize);
 static dev_type_discard(dkdiscard);
+
+CFDRIVER_DECL(dk, DV_DISK, NULL);
+CFATTACH_DECL3_NEW(dk, 0,
+    dkwedge_match, dkwedge_attach, dkwedge_detach, NULL, NULL, NULL,
+    DVF_DETACH_SHUTDOWN);
 
 const struct bdevsw dk_bdevsw = {
 	.d_open = dkopen,
@@ -178,11 +187,6 @@ dkwedge_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
-
-CFDRIVER_DECL(dk, DV_DISK, NULL);
-CFATTACH_DECL3_NEW(dk, 0,
-    dkwedge_match, dkwedge_attach, dkwedge_detach, NULL, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
 
 /*
  * dkwedge_wait_drain:
