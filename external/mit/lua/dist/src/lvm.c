@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.c,v 1.17 2023/04/17 20:37:43 nikita Exp $	*/
+/*	$NetBSD: lvm.c,v 1.18 2023/04/21 17:31:33 nikita Exp $	*/
 
 /*
 ** Id: lvm.c 
@@ -500,18 +500,16 @@ l_sinline int LEfloatint (lua_Number f, lua_Integer i) {
 /*
 ** Return 'l < r', for numbers.
 */
+#ifndef _KERNEL
 l_sinline int LTnum (const TValue *l, const TValue *r) {
   lua_assert(ttisnumber(l) && ttisnumber(r));
   if (ttisinteger(l)) {
     lua_Integer li = ivalue(l);
     if (ttisinteger(r))
       return li < ivalue(r);  /* both are integers */
-#ifndef _KERNEL
     else  /* 'l' is int and 'r' is float */
       return LTintfloat(li, fltvalue(r));  /* l < r ? */
-#endif /* _KERNEL */
   }
-#ifndef _KERNEL
   else {
     lua_Number lf = fltvalue(l);  /* 'l' must be float */
     if (ttisfloat(r))
@@ -519,25 +517,30 @@ l_sinline int LTnum (const TValue *l, const TValue *r) {
     else  /* 'l' is float and 'r' is int */
       return LTfloatint(lf, ivalue(r));
   }
-#endif /* _KERNEL */
 }
+#endif /* _KERNEL */
+#ifdef _KERNEL
+l_sinline int LTnum (const TValue *l, const TValue *r) {
+  lua_assert(ttisnumber(l));
+  lua_assert(ttisnumber(r));
+  return ivalue(l) < ivalue(r);  /* both are integers */
+}
+#endif /* _KERNEL */
 
 
 /*
 ** Return 'l <= r', for numbers.
 */
+#ifndef _KERNEL
 l_sinline int LEnum (const TValue *l, const TValue *r) {
   lua_assert(ttisnumber(l) && ttisnumber(r));
   if (ttisinteger(l)) {
     lua_Integer li = ivalue(l);
     if (ttisinteger(r))
       return li <= ivalue(r);  /* both are integers */
-#ifndef _KERNEL
     else  /* 'l' is int and 'r' is float */
       return LEintfloat(li, fltvalue(r));  /* l <= r ? */
-#endif /* _KERNEL */
   }
-#ifndef _KERNEL
   else {
     lua_Number lf = fltvalue(l);  /* 'l' must be float */
     if (ttisfloat(r))
@@ -545,8 +548,15 @@ l_sinline int LEnum (const TValue *l, const TValue *r) {
     else  /* 'l' is float and 'r' is int */
       return LEfloatint(lf, ivalue(r));
   }
-#endif /* _KERNEL */
 }
+#endif /* _KERNEL */
+#ifdef _KERNEL
+l_sinline int LEnum (const TValue *l, const TValue *r) {
+  lua_assert(ttisinteger(l));
+  lua_assert(ttisinteger(r));
+  return ivalue(l) <= ivalue(r);  /* both are integers */
+}
+#endif /* _KERNEL */
 
 
 /*
