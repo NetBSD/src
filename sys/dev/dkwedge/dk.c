@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.126 2023/04/21 18:09:38 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.127 2023/04/21 18:24:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.126 2023/04/21 18:09:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.127 2023/04/21 18:24:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -242,21 +242,49 @@ dkwedge_compute_pdev(const char *pname, dev_t *pdevp, enum vtype type)
  * dkwedge_array_expand:
  *
  *	Expand the dkwedges array.
+ *
+ *	Releases and reacquires dkwedges_lock as a writer.
  */
-static void
+static int
 dkwedge_array_expand(void)
 {
-	int newcnt = ndkwedges + 16;
-	struct dkwedge_softc **newarray, **oldarray;
 
+	const unsigned incr = 16;
+	unsigned newcnt, oldcnt;
+	struct dkwedge_softc **newarray = NULL, **oldarray = NULL;
+
+	KASSERT(rw_write_held(&dkwedges_lock));
+
+	oldcnt = ndkwedges;
+	oldarray = dkwedges;
+
+	if (oldcnt >= INT_MAX - incr)
+		return ENFILE;	/* XXX */
+	newcnt = oldcnt + incr;
+
+	rw_exit(&dkwedges_lock);
 	newarray = malloc(newcnt * sizeof(*newarray), M_DKWEDGE,
 	    M_WAITOK|M_ZERO);
-	if ((oldarray = dkwedges) != NULL)
+	rw_enter(&dkwedges_lock, RW_WRITER);
+
+	if (ndkwedges != oldcnt || dkwedges != oldarray) {
+		oldarray = NULL; /* already recycled */
+		goto out;
+	}
+
+	if (oldarray != NULL)
 		memcpy(newarray, dkwedges, ndkwedges * sizeof(*newarray));
 	dkwedges = newarray;
+	newarray = NULL;	/* transferred to dkwedges */
 	ndkwedges = newcnt;
+
+out:	rw_exit(&dkwedges_lock);
 	if (oldarray != NULL)
 		free(oldarray, M_DKWEDGE);
+	if (newarray != NULL)
+		free(newarray, M_DKWEDGE);
+	rw_enter(&dkwedges_lock, RW_WRITER);
+	return 0;
 }
 
 static void
@@ -434,9 +462,11 @@ dkwedge_add(struct dkwedge_info *dkw)
 		if (error)
 			break;
 		KASSERT(unit == ndkwedges);
-		if (scpp == NULL)
-			dkwedge_array_expand();
-		else {
+		if (scpp == NULL) {
+			error = dkwedge_array_expand();
+			if (error)
+				break;
+		} else {
 			KASSERT(scpp == &dkwedges[sc->sc_cfdata.cf_unit]);
 			*scpp = sc;
 			break;
