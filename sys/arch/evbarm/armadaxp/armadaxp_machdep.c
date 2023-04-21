@@ -1,4 +1,4 @@
-/*	$NetBSD: armadaxp_machdep.c,v 1.18 2023/04/20 08:28:03 skrll Exp $	*/
+/*	$NetBSD: armadaxp_machdep.c,v 1.19 2023/04/21 15:04:47 skrll Exp $	*/
 /*******************************************************************************
 Copyright (C) Marvell International Ltd. and its affiliates
 
@@ -37,7 +37,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.18 2023/04/20 08:28:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadaxp_machdep.c,v 1.19 2023/04/21 15:04:47 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -188,11 +188,9 @@ axp_system_reset(void)
  */
 
 static const struct pmap_devmap devmap[] = {
-	DEVMAP_ENTRY_FLAGS(MARVELL_INTERREGS_VBASE,
-			   MARVELL_INTERREGS_PBASE,
-			   MVSOC_INTERREGS_SIZE,
-			   VM_PROT_READ | VM_PROT_WRITE,
-			   PMAP_NOCACHE),
+	DEVMAP_ENTRY(MARVELL_INTERREGS_VBASE,
+		     MARVELL_INTERREGS_PBASE,
+		     MVSOC_INTERREGS_SIZE),
 	DEVMAP_ENTRY_END
 };
 

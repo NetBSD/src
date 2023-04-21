@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.27 2021/03/20 05:58:22 skrll Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.28 2023/04/21 15:04:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.27 2021/03/20 05:58:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.28 2023/04/21 15:04:47 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -148,51 +148,39 @@ static struct consdev earlycons = {
  */
 
 static const struct pmap_devmap devmap[] = {
-	{
+	DEVMAP_ENTRY(
 		KERNEL_IO_IOREG_VBASE,
 		BCM53XX_IOREG_PBASE,		/* 0x18000000 */
-		BCM53XX_IOREG_SIZE,		/* 2MB */
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
-	{
+		BCM53XX_IOREG_SIZE		/* 2MB */
+	),
+	DEVMAP_ENTRY(
 		KERNEL_IO_ARMCORE_VBASE,
 		BCM53XX_ARMCORE_PBASE,		/* 0x19000000 */
-		BCM53XX_ARMCORE_SIZE,		/* 1MB */
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
-	{
+		BCM53XX_ARMCORE_SIZE		/* 1MB */
+	),
+	DEVMAP_ENTRY(
 		KERNEL_IO_ROM_REGION_VBASE,
 		BCM53XX_ROM_REGION_PBASE,	/* 0xfff00000 */
-		BCM53XX_ROM_REGION_SIZE,	/* 1MB */
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
+		BCM53XX_ROM_REGION_SIZE		/* 1MB */
+	),
 #if NPCI > 0
-	{
+	DEVMAP_ENTRY(
 		KERNEL_IO_PCIE0_OWIN_VBASE,
 		BCM53XX_PCIE0_OWIN_PBASE,	/* 0x08000000 */
-		BCM53XX_PCIE0_OWIN_SIZE,	/* 4MB */
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
-	{
+		BCM53XX_PCIE0_OWIN_SIZE		/* 4MB */
+	),
+	DEVMAP_ENTRY(
 		KERNEL_IO_PCIE1_OWIN_VBASE,
 		BCM53XX_PCIE1_OWIN_PBASE,	/* 0x40000000 */
-		BCM53XX_PCIE1_OWIN_SIZE,	/* 4MB */
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
-	{
+		BCM53XX_PCIE1_OWIN_SIZE		/* 4MB */
+	),
+	DEVMAP_ENTRY(
 		KERNEL_IO_PCIE2_OWIN_VBASE,
 		BCM53XX_PCIE2_OWIN_PBASE,	/* 0x48000000 */
-		BCM53XX_PCIE2_OWIN_SIZE,	/* 4MB */
-		VM_PROT_READ|VM_PROT_WRITE,
-		PTE_NOCACHE,
-	},
+		BCM53XX_PCIE2_OWIN_SIZE		/* 4MB */
+	),
 #endif /* NPCI > 0 */
-	{ 0, 0, 0, 0, 0 }
+	DEVMAP_ENTRY_END
 };
 
 static const struct boot_physmem bp_first256 = {
