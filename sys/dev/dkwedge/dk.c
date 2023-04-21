@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.132 2023/04/21 18:25:09 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.133 2023/04/21 18:25:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,31 +30,33 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.132 2023/04/21 18:25:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.133 2023/04/21 18:25:22 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/errno.h>
-#include <sys/pool.h>
-#include <sys/ioctl.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
-#include <sys/fcntl.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
 #include <sys/bufq.h>
-#include <sys/vnode.h>
-#include <sys/stat.h>
-#include <sys/conf.h>
 #include <sys/callout.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/errno.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/device.h>
-#include <sys/kauth.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <miscfs/specfs/specdev.h>
 
