@@ -25,7 +25,7 @@ _hostname()
 	if [ -z "${1+x}" ]; then
 		if [ -r /proc/sys/kernel/hostname ]; then
 			read name </proc/sys/kernel/hostname && echo "$name"
-		elif type hostname >/dev/null 2>/dev/null; then
+		elif command -v hostname >/dev/null 2>/dev/null; then
 			hostname
 		elif sysctl kern.hostname >/dev/null 2>&1; then
 			sysctl -n kern.hostname
@@ -39,7 +39,7 @@ _hostname()
 
 	if [ -w /proc/sys/kernel/hostname ]; then
 		echo "$1" >/proc/sys/kernel/hostname
-	elif [ -n "$1" ] && type hostname >/dev/null 2>&1; then
+	elif [ -n "$1" ] && command -v hostname >/dev/null 2>&1; then
 		hostname "$1"
 	elif sysctl kern.hostname >/dev/null 2>&1; then
 		sysctl -w "kern.hostname=$1" >/dev/null
