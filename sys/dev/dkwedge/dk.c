@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.131 2023/04/21 18:24:56 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.132 2023/04/21 18:25:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.131 2023/04/21 18:24:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.132 2023/04/21 18:25:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -221,14 +221,14 @@ dkwedge_compute_pdev(const char *pname, dev_t *pdevp, enum vtype type)
 		break;
 	}
 	if (pmaj == NODEVMAJOR)
-		return ENODEV;
+		return ENXIO;
 
 	name += strlen(devname);
 	for (cp = name, punit = 0; *cp >= '0' && *cp <= '9'; cp++)
 		punit = (punit * 10) + (*cp - '0');
 	if (cp == name) {
 		/* Invalid parent disk name. */
-		return ENODEV;
+		return ENXIO;
 	}
 
 	*pdevp = MAKEDISKDEV(pmaj, punit, RAW_PART);
@@ -325,7 +325,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	dkw->dkw_parent[sizeof(dkw->dkw_parent) - 1] = '\0';
 	pdk = disk_find(dkw->dkw_parent);
 	if (pdk == NULL)
-		return ENODEV;
+		return ENXIO;
 
 	error = dkwedge_compute_pdev(pdk->dk_name, &pdev, VBLK);
 	if (error)
@@ -989,7 +989,7 @@ dkwedge_discover(struct disk *pdk)
 
 	error = VOP_OPEN(vp, FREAD | FSILENT, NOCRED);
 	if (error) {
-		if (error != ENODEV)
+		if (error != ENXIO)
 			aprint_error("%s: unable to open device, error = %d\n",
 			    pdk->dk_name, error);
 		vput(vp);
@@ -1169,7 +1169,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	int error = 0;
 
 	if (sc == NULL)
-		return ENODEV;
+		return ENXIO;
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return ENXIO;
 
@@ -1285,7 +1285,7 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
 	if (sc == NULL)
-		return ENODEV;
+		return ENXIO;
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return ENXIO;
 
@@ -1323,7 +1323,7 @@ dkstrategy(struct buf *bp)
 	uint64_t p_size, p_offset;
 
 	if (sc == NULL) {
-		bp->b_error = ENODEV;
+		bp->b_error = ENXIO;
 		goto done;
 	}
 
@@ -1523,7 +1523,7 @@ dkread(dev_t dev, struct uio *uio, int flags)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
 	if (sc == NULL)
-		return ENODEV;
+		return ENXIO;
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return ENXIO;
 
@@ -1541,7 +1541,7 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
 	if (sc == NULL)
-		return ENODEV;
+		return ENXIO;
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return ENXIO;
 
@@ -1560,7 +1560,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int error = 0;
 
 	if (sc == NULL)
-		return ENODEV;
+		return ENXIO;
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return ENXIO;
 	if (sc->sc_parent->dk_rawvp == NULL)
@@ -1636,7 +1636,7 @@ dkdiscard(dev_t dev, off_t pos, off_t len)
 	int error;
 
 	if (sc == NULL)
-		return ENODEV;
+		return ENXIO;
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return ENXIO;
 	if (sc->sc_parent->dk_rawvp == NULL)
@@ -1717,7 +1717,7 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	int rv = 0;
 
 	if (sc == NULL)
-		return ENODEV;
+		return ENXIO;
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return ENXIO;
 
