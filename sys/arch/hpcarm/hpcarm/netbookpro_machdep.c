@@ -1,4 +1,4 @@
-/*	$NetBSD: netbookpro_machdep.c,v 1.2 2023/04/20 08:28:06 skrll Exp $	*/
+/*	$NetBSD: netbookpro_machdep.c,v 1.3 2023/04/21 15:00:27 skrll Exp $	*/
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbookpro_machdep.c,v 1.2 2023/04/20 08:28:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbookpro_machdep.c,v 1.3 2023/04/21 15:00:27 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -148,7 +148,7 @@ consinit(void)
 static int __unused
 enable_console(void (*init)(struct consdev *), void (*probe)(struct consdev *))
 {
-	struct consdev *cp;	
+	struct consdev *cp;
 
 	for (cp = constab; cp->cn_probe; cp++) {
 		if (cp->cn_init == init) {
@@ -162,7 +162,7 @@ enable_console(void (*init)(struct consdev *), void (*probe)(struct consdev *))
 static void
 disable_consoles(void)
 {
-	struct consdev *cp;	
+	struct consdev *cp;
 
 	for (cp = constab; cp->cn_probe; cp++)
 		cp->cn_probe = cn_nonprobe;

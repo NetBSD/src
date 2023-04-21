@@ -1,4 +1,4 @@
-/*	$NetBSD: at91_bus_space.c,v 1.5 2018/03/16 17:56:31 ryo Exp $ */
+ /*	$NetBSD: at91_bus_space.c,v 1.6 2023/04/21 15:00:48 skrll Exp $ */
 
 /*
  * Based on ep93xx_space.c
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91_bus_space.c,v 1.5 2018/03/16 17:56:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91_bus_space.c,v 1.6 2023/04/21 15:00:48 skrll Exp $");
 
 /*
  * bus_space I/O functions for ep93xx
@@ -201,7 +201,7 @@ at91_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 	panic("at91_bs_alloc(): not implemented\n");
 }
 
-void    
+void
 at91_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	panic("at91_bs_free(): not implemented\n");
@@ -233,5 +233,5 @@ at91_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 /* NULL */
-}	
+}
 /* End of at91_io.c */

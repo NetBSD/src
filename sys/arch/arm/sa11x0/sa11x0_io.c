@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_io.c,v 1.21 2018/03/16 17:56:32 ryo Exp $	*/
+/*	$NetBSD: sa11x0_io.c,v 1.22 2023/04/21 15:00:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.21 2018/03/16 17:56:32 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_io.c,v 1.22 2023/04/21 15:00:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,7 +205,7 @@ sa11x0_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 }
 
-void    
+void
 sa11x0_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
@@ -241,4 +241,4 @@ sa11x0_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 
-}	
+}

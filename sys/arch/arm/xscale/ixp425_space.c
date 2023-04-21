@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_space.c,v 1.9 2018/03/16 17:56:32 ryo Exp $ */
+/*	$NetBSD: ixp425_space.c,v 1.10 2023/04/21 15:00:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_space.c,v 1.9 2018/03/16 17:56:32 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_space.c,v 1.10 2023/04/21 15:00:48 skrll Exp $");
 
 /*
  * bus_space I/O functions for ixp425
@@ -197,7 +197,7 @@ ixp425_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 	panic("ixp425_bs_alloc(): not implemented\n");
 }
 
-void    
+void
 ixp425_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	panic("ixp425_bs_free(): not implemented\n");
@@ -229,5 +229,5 @@ ixp425_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 /* NULL */
-}	
+}
 /* End of ixp425_space.c */

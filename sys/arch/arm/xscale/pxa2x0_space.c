@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_space.c,v 1.13 2018/03/16 17:56:32 ryo Exp $ */
+/*	$NetBSD: pxa2x0_space.c,v 1.14 2023/04/21 15:00:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.13 2018/03/16 17:56:32 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_space.c,v 1.14 2023/04/21 15:00:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ pxa2x0_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 	panic("pxa2x0_io_bs_alloc(): not implemented\n");
 }
 
-void    
+void
 pxa2x0_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 

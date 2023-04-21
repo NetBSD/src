@@ -1,11 +1,11 @@
-/*	$NetBSD: at91sam9260bus.c,v 1.1 2011/11/04 17:20:54 aymeric Exp $	*/
+/*	$NetBSD: at91sam9260bus.c,v 1.2 2023/04/21 15:00:48 skrll Exp $	*/
 /*
  * Copied from at91sam9261bus.c
  * Adaptation to AT91SAM9260 by Aymeric Vincent is in the public domain.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91sam9260bus.c,v 1.1 2011/11/04 17:20:54 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91sam9260bus.c,v 1.2 2023/04/21 15:00:48 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -83,7 +83,7 @@ at91pio_port at91sam9260bus_pio_port(int pid) {
 	case PID_PIOC:	return AT91_PIOC;
 	default:	panic("%s: pid %d not valid", __FUNCTION__, pid);
 	}
-	
+
 }
 
 uint32_t at91sam9260bus_gpio_mask(int pid) {
@@ -124,7 +124,7 @@ const char *at91sam9260bus_peripheral_name(int pid) {
 	}
 }
 
-void at91sam9260bus_search_peripherals(device_t self, 
+void at91sam9260bus_search_peripherals(device_t self,
 			   device_t found_func(device_t, bus_addr_t, int)) {
 	static const struct {
 		bus_addr_t	addr;

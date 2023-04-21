@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmgen_space.c,v 1.7 2020/10/30 18:54:36 skrll Exp $	*/
+/*	$NetBSD: bcmgen_space.c,v 1.8 2023/04/21 15:00:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgen_space.c,v 1.7 2020/10/30 18:54:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgen_space.c,v 1.8 2023/04/21 15:00:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,7 +240,7 @@ bcmgen_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 	flags &= BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE;
-	
+
 	if (flags)
 		dsb(sy);
 }

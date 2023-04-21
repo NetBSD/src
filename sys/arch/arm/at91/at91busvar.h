@@ -1,5 +1,5 @@
-/*	$Id: at91busvar.h,v 1.7 2019/07/16 14:41:43 skrll Exp $	*/
-/*	$NetBSD: at91busvar.h,v 1.7 2019/07/16 14:41:43 skrll Exp $ */
+/*	$Id: at91busvar.h,v 1.8 2023/04/21 15:00:48 skrll Exp $	*/
+/*	$NetBSD: at91busvar.h,v 1.8 2023/04/21 15:00:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -150,7 +150,7 @@ at91_gpio_mask(int pid)
 	return (*at91bus_tag->gpio_mask)(pid);
 }
 
-static __inline void 
+static __inline void
 at91_intr_init(void)
 {
 	return (*at91bus_tag->intr_init)();
