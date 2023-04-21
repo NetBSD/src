@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.144 2023/04/21 18:31:00 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.145 2023/04/21 18:44:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.144 2023/04/21 18:31:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.145 2023/04/21 18:44:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -877,7 +877,7 @@ dkwedge_find_by_wname(const char *wname)
 	struct dkwedge_softc *sc;
 	int i;
 
-	rw_enter(&dkwedges_lock, RW_WRITER);
+	rw_enter(&dkwedges_lock, RW_READER);
 	for (i = 0; i < ndkwedges; i++) {
 		if ((sc = dkwedges[i]) == NULL)
 			continue;
@@ -900,7 +900,7 @@ device_t
 dkwedge_find_by_parent(const char *name, size_t *i)
 {
 
-	rw_enter(&dkwedges_lock, RW_WRITER);
+	rw_enter(&dkwedges_lock, RW_READER);
 	for (; *i < (size_t)ndkwedges; (*i)++) {
 		struct dkwedge_softc *sc;
 		if ((sc = dkwedges[*i]) == NULL)
@@ -920,7 +920,7 @@ dkwedge_print_wnames(void)
 	struct dkwedge_softc *sc;
 	int i;
 
-	rw_enter(&dkwedges_lock, RW_WRITER);
+	rw_enter(&dkwedges_lock, RW_READER);
 	for (i = 0; i < ndkwedges; i++) {
 		if ((sc = dkwedges[i]) == NULL)
 			continue;
