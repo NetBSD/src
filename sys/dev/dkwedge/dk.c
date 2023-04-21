@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.147 2023/04/21 18:45:13 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.148 2023/04/21 18:54:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.147 2023/04/21 18:45:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.148 2023/04/21 18:54:09 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -704,10 +704,6 @@ dkwedge_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	/* Locate the wedge major numbers. */
-	bmaj = bdevsw_lookup_major(&dk_bdevsw);
-	cmaj = cdevsw_lookup_major(&dk_cdevsw);
-
 	/* Kill any pending restart. */
 	mutex_enter(&sc->sc_iolock);
 	sc->sc_iostop = true;
@@ -721,6 +717,10 @@ dkwedge_detach(device_t self, int flags)
 	 */
 	dkstart(sc);
 	dkwedge_wait_drain(sc);
+
+	/* Locate the wedge major numbers. */
+	bmaj = bdevsw_lookup_major(&dk_bdevsw);
+	cmaj = cdevsw_lookup_major(&dk_cdevsw);
 
 	/* Nuke the vnodes for any open instances. */
 	vdevgone(bmaj, unit, unit, VBLK);
