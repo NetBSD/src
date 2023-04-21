@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.138 2023/04/21 18:29:26 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.139 2023/04/21 18:29:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.138 2023/04/21 18:29:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.139 2023/04/21 18:29:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -552,6 +552,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		    sc->sc_cfdata.cf_name, sc->sc_cfdata.cf_unit);
 
 		rw_enter(&dkwedges_lock, RW_WRITER);
+		KASSERT(dkwedges[sc->sc_cfdata.cf_unit] == sc);
 		dkwedges[sc->sc_cfdata.cf_unit] = NULL;
 		rw_exit(&dkwedges_lock);
 
@@ -752,6 +753,7 @@ dkwedge_detach(device_t self, int flags)
 
 	/* Poof. */
 	rw_enter(&dkwedges_lock, RW_WRITER);
+	KASSERT(dkwedges[unit] == sc);
 	dkwedges[unit] = NULL;
 	sc->sc_state = DKW_STATE_DEAD;
 	rw_exit(&dkwedges_lock);
