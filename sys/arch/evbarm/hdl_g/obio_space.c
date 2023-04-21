@@ -1,4 +1,4 @@
-/*	$NetBSD: obio_space.c,v 1.5 2018/03/16 17:56:33 ryo Exp $	*/
+/*	$NetBSD: obio_space.c,v 1.6 2023/04/21 14:58:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.5 2018/03/16 17:56:33 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio_space.c,v 1.6 2023/04/21 14:58:34 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,7 +153,7 @@ obio_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 	endpa = round_page(bpa + size);
 	offset = bpa & PAGE_MASK;
 	startpa = trunc_page(bpa);
-		
+
 	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va == 0)
@@ -201,7 +201,7 @@ obio_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 }
 
-void    
+void
 obio_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
