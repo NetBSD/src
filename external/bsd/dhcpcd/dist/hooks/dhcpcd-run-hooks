@@ -67,7 +67,7 @@ key_get_value()
 	key="$1"
 	shift
 
-	if type sed >/dev/null 2>&1; then
+	if command -v sed >/dev/null 2>&1; then
 		sed -n "s/^$key//p" $@
 	else
 		for x do
@@ -89,7 +89,7 @@ remove_markers()
 	in_marker=0
 
 	shift; shift
-	if type sed >/dev/null 2>&1; then
+	if command -v sed >/dev/null 2>&1; then
 		sed "/^$m1/,/^$m2/d" $@
 	else
 		for x do
@@ -109,9 +109,9 @@ comp_file()
 {
 	[ -e "$1" ] && [ -e "$2" ] || return 1
 
-	if type cmp >/dev/null 2>&1; then
+	if command -v cmp >/dev/null 2>&1; then
 		cmp -s "$1" "$2"
-	elif type diff >/dev/null 2>&1; then
+	elif command -v diff >/dev/null 2>&1; then
 		diff -q "$1" "$2" >/dev/null
 	else
 		# Hopefully we're only working on small text files ...
@@ -178,7 +178,7 @@ syslog()
 	err|error)	echo "$interface: $*" >&2;;
 	*)		echo "$interface: $*";;
 	esac
-	if type logger >/dev/null 2>&1; then
+	if command -v logger >/dev/null 2>&1; then
 		logger -i -p daemon."$lvl" -t dhcpcd-run-hooks "$interface: $*"
 	fi
 }
@@ -234,11 +234,11 @@ detect_init()
 	if [ -x /bin/systemctl ] && [ -S /run/systemd/private ]; then
 		_service_exists="/bin/systemctl --quiet is-enabled \$1.service"
 		_service_status="/bin/systemctl --quiet is-active \$1.service"
-		_service_cmd="/bin/systemctl \$2 \$1.service"
+		_service_cmd="/bin/systemctl \$2 --no-block \$1.service"
 	elif [ -x /usr/bin/systemctl ] && [ -S /run/systemd/private ]; then
 		_service_exists="/usr/bin/systemctl --quiet is-enabled \$1.service"
 		_service_status="/usr/bin/systemctl --quiet is-active \$1.service"
-		_service_cmd="/usr/bin/systemctl \$2 \$1.service"
+		_service_cmd="/usr/bin/systemctl \$2 --no-block \$1.service"
 	elif [ -x /sbin/rc-service ] &&
 	     { [ -s /libexec/rc/init.d/softlevel ] ||
 	     [ -s /run/openrc/softlevel ]; }
@@ -338,9 +338,11 @@ for hook in \
 	/libexec/dhcpcd-hooks/* \
 	/etc/dhcpcd.exit-hook
 do
+	case "$hook" in
+		*/*~)	continue;;
+	esac
 	for skip in $skip_hooks; do
 		case "$hook" in
-			*/*~)				continue 2;;
 			*/"$skip")			continue 2;;
 			*/[0-9][0-9]"-$skip")		continue 2;;
 			*/[0-9][0-9]"-$skip.sh")	continue 2;;

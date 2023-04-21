@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -93,6 +93,7 @@
 #define D6_OPTION_FQDN			39
 #define D6_OPTION_POSIX_TIMEZONE	41
 #define D6_OPTION_TZDB_TIMEZONE		42
+#define D6_OPTION_NTP_SERVER		56
 #define D6_OPTION_PD_EXCLUDE		67
 #define D6_OPTION_SOL_MAX_RT		82
 #define D6_OPTION_INF_MAX_RT		83
