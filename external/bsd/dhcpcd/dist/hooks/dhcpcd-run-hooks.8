@@ -1,4 +1,4 @@
-.\" Copyright (c) 2006-2021 Roy Marples
+.\" Copyright (c) 2006-2023 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 27, 2020
+.Dd August 31, 2022
 .Dt DHCPCD-RUN-HOOKS 8
 .Os
 .Sh NAME
@@ -68,15 +68,14 @@ is set to the interface that
 .Nm dhcpcd
 is run on and
 .Ev $reason
-is to the reason why
-q
+is set to the reason why
 .Nm
 was invoked.
 DHCP information to be configured is held in variables starting with the word
 new_ and old DHCP information to be removed is held in variables starting with
 the word old_.
 .Nm dhcpcd
-can display the full list of variables it knows how about by using the
+can display the full list of variables it knows about by using the
 .Fl V , -variables
 argument.
 .Pp
@@ -85,7 +84,7 @@ Here's a list of reasons why
 could be invoked:
 .Bl -tag -width EXPIREXXXEXPIRE6
 .It Dv PREINIT
-dhcpcd is starting up and any pre-initialisation should be done.
+dhcpcd is starting up and any pre-initialisation required should be performed now.
 .It Dv CARRIER
 dhcpcd has detected the carrier is up.
 This is generally just a notification and no action need be taken.
@@ -94,14 +93,14 @@ dhcpcd lost the carrier.
 The cable may have been unplugged or association to the wireless point lost.
 .It Dv NOCARRIER_ROAMING
 dhcpcd lost the carrier but the interface configuration is persisted.
-The OS has to support wireless roaming or IP Persistance for this to happen.
+The OS has to support wireless roaming or IP Persistence for this to happen.
 .It Dv INFORM | Dv INFORM6
 dhcpcd informed a DHCP server about its address and obtained other
 configuration details.
 .It Dv BOUND | Dv BOUND6
 dhcpcd obtained a new lease from a DHCP server.
 .It Dv RENEW | Dv RENEW6
-dhcpcd renewed it's lease.
+dhcpcd renewed its lease.
 .It Dv REBIND | Dv REBIND6
 dhcpcd has rebound to a new DHCP server.
 .It Dv REBOOT | Dv REBOOT6
@@ -181,7 +180,7 @@ flags.
 .Ev $interface
 MTU.
 .It Ev $ifssid
-the name of the SSID the
+the SSID the
 .Ev interface
 is connected to.
 .It Ev $interface_order
@@ -207,24 +206,24 @@ Address family waiting for, as defined in
 the name of the profile selected from
 .Xr dhcpcd.conf 5 .
 .It Ev $new_delegated_dhcp6_prefix
-space separated list of delegated prefixes.
+space-separated list of delegated prefixes.
 .El
 .Sh FILES
 When
 .Nm
 runs, it loads
-.Pa /etc/dhcpcd.enter-hook
-and any scripts found in
+.Pa /etc/dhcpcd.enter-hook ,
+any scripts found in
 .Pa /libexec/dhcpcd-hooks
-in a lexical order and then finally
-.Pa /etc/dhcpcd.exit-hook
+in lexical order, then finally
+.Pa /etc/dhcpcd.exit-hook .
 .Sh SEE ALSO
 .Xr dhcpcd 8
 .Sh AUTHORS
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
 Please report them to
-.Lk http://roy.marples.name/projects/dhcpcd
+.Lk https://roy.marples.name/projects/dhcpcd
 .Sh SECURITY CONSIDERATIONS
 .Nm dhcpcd
 will validate the content of each option against its encoding.

@@ -102,8 +102,8 @@ wpa_supplicant_stop()
 }
 
 if [ "$ifwireless" = "1" ] && \
-    type wpa_supplicant >/dev/null 2>&1 && \
-    type wpa_cli >/dev/null 2>&1
+    command -v wpa_supplicant >/dev/null 2>&1 && \
+    command -v wpa_cli >/dev/null 2>&1
 then
 	case "$reason" in
 	PREINIT)	wpa_supplicant_start;;

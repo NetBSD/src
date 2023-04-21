@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

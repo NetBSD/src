@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd, BSD driver
- * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,8 @@
  */
 
 #include <sys/ioctl.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
 
 /* Need these for filtering the ioctls */
 #include <arpa/inet.h>
@@ -51,17 +53,43 @@
 #endif
 
 #include <errno.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
 #include "dhcpcd.h"
+#include "if.h"
 #include "logerr.h"
 #include "privsep.h"
 
 static ssize_t
-ps_root_doioctldom(int domain, unsigned long req, void *data, size_t len)
+ps_root_doioctldom(struct dhcpcd_ctx *ctx, int domain, unsigned long req, void *data, size_t len)
 {
-	int s, err;
+#if defined(INET6) || (defined(SIOCALIFADDR) && defined(IFLR_ACTIVE))
+	struct priv *priv = (struct priv *)ctx->priv;
+#endif
+	int s;
+
+	switch(domain) {
+#ifdef INET
+	case PF_INET:
+		s = ctx->pf_inet_fd;
+		break;
+#endif
+#ifdef INET6
+	case PF_INET6:
+		s = priv->pf_inet6_fd;
+		break;
+#endif
+#if defined(SIOCALIFADDR) && defined(IFLR_ACTIVE) /*NetBSD */
+	case PF_LINK:
+		s = priv->pf_link_fd;
+		break;
+#endif
+	default:
+		errno = EPFNOSUPPORT;
+		return -1;
+	}
 
 	/* Only allow these ioctls */
 	switch(req) {
@@ -104,33 +132,20 @@ ps_root_doioctldom(int domain, unsigned long req, void *data, size_t len)
 		return -1;
 	}
 
-	s = socket(domain, SOCK_DGRAM, 0);
-	if (s == -1)
-		return -1;
-	err = ioctl(s, req, data, len);
-	close(s);
-	return err;
+	return ioctl(s, req, data, len);
 }
 
 static ssize_t
-ps_root_doroute(void *data, size_t len)
+ps_root_doroute(struct dhcpcd_ctx *ctx, void *data, size_t len)
 {
-	int s;
-	ssize_t err;
 
-	s = socket(PF_ROUTE, SOCK_RAW, 0);
-	if (s != -1)
-		err = write(s, data, len);
-	else
-		err = -1;
-	if (s != -1)
-		close(s);
-	return err;
+	return write(ctx->link_fd, data, len);
 }
 
 #if defined(HAVE_CAPSICUM) || defined(HAVE_PLEDGE)
 static ssize_t
-ps_root_doindirectioctl(unsigned long req, void *data, size_t len)
+ps_root_doindirectioctl(struct dhcpcd_ctx *ctx,
+    unsigned long req, void *data, size_t len)
 {
 	char *p = data;
 	struct ifreq ifr = { .ifr_flags = 0 };
@@ -147,33 +162,97 @@ ps_root_doindirectioctl(unsigned long req, void *data, size_t len)
 	memmove(data, p + IFNAMSIZ, len);
 	ifr.ifr_data = data;
 
-	return ps_root_doioctldom(PF_INET, req, &ifr, sizeof(ifr));
+	return ps_root_doioctldom(ctx, PF_INET, req, &ifr, sizeof(ifr));
 }
 #endif
 
 #ifdef HAVE_PLEDGE
 static ssize_t
-ps_root_doifignoregroup(void *data, size_t len)
+ps_root_doifignoregroup(struct dhcpcd_ctx *ctx, void *data, size_t len)
 {
-	int s, err;
 
 	if (len == 0 || ((const char *)data)[len - 1] != '\0') {
 		errno = EINVAL;
 		return -1;
 	}
 
-	s = socket(PF_INET, SOCK_DGRAM, 0);
-	if (s == -1)
+	return if_ignoregroup(ctx->pf_inet_fd, data);
+}
+#endif
+
+#ifdef HAVE_CAPSICUM
+static ssize_t
+ps_root_dosysctl(unsigned long flags,
+    void *data, size_t len, void **rdata, size_t *rlen)
+{
+	char *p = data, *e = p + len;
+	int name[10];
+	unsigned int namelen;
+	void *oldp;
+	size_t *oldlenp, oldlen, nlen;
+	void *newp;
+	size_t newlen;
+	int err;
+
+	if (sizeof(namelen) >= len) {
+		errno = EINVAL;
 		return -1;
-	err = if_ignoregroup(s, data);
-	close(s);
+	}
+	memcpy(&namelen, p, sizeof(namelen));
+	p += sizeof(namelen);
+	nlen = sizeof(*name) * namelen;
+	if (namelen > __arraycount(name)) {
+		errno = ENOBUFS;
+		return -1;
+	}
+	if (p + nlen > e) {
+		errno = EINVAL;
+		return -1;
+	}
+	memcpy(name, p, nlen);
+	p += nlen;
+	if (p + sizeof(oldlen) > e) {
+		errno = EINVAL;
+		return -1;
+	}
+	memcpy(&oldlen, p, sizeof(oldlen));
+	p += sizeof(oldlen);
+	if (p + sizeof(newlen) > e) {
+		errno = EINVAL;
+		return -1;
+	}
+	memcpy(&newlen, p, sizeof(newlen));
+	p += sizeof(newlen);
+	if (p + newlen > e) {
+		errno = EINVAL;
+		return -1;
+	}
+	newp = newlen ? p : NULL;
+
+	if (flags & PS_SYSCTL_OLEN) {
+		*rlen = sizeof(oldlen) + oldlen;
+		*rdata = malloc(*rlen);
+		if (*rdata == NULL)
+			return -1;
+		oldlenp = (size_t *)*rdata;
+		*oldlenp = oldlen;
+		if (flags & PS_SYSCTL_ODATA)
+			oldp = (char *)*rdata + sizeof(oldlen);
+		else
+			oldp = NULL;
+	} else {
+		oldlenp = NULL;
+		oldp = NULL;
+	}
+
+	err = sysctl(name, namelen, oldp, oldlenp, newp, newlen);
 	return err;
 }
 #endif
 
 ssize_t
-ps_root_os(struct ps_msghdr *psm, struct msghdr *msg,
-    void **rdata, size_t *rlen)
+ps_root_os(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg,
+    void **rdata, size_t *rlen, bool *free_rdata)
 {
 	struct iovec *iov = msg->msg_iov;
 	void *data = iov->iov_base;
@@ -182,21 +261,28 @@ ps_root_os(struct ps_msghdr *psm, struct msghdr *msg,
 
 	switch (psm->ps_cmd) {
 	case PS_IOCTLLINK:
-		err = ps_root_doioctldom(PF_LINK, psm->ps_flags, data, len);
+		err = ps_root_doioctldom(ctx, PF_LINK, psm->ps_flags, data, len);
 		break;
 	case PS_IOCTL6:
-		err = ps_root_doioctldom(PF_INET6, psm->ps_flags, data, len);
+		err = ps_root_doioctldom(ctx, PF_INET6, psm->ps_flags, data, len);
 		break;
 	case PS_ROUTE:
-		return ps_root_doroute(data, len);
+		return ps_root_doroute(ctx, data, len);
 #if defined(HAVE_CAPSICUM) || defined(HAVE_PLEDGE)
 	case PS_IOCTLINDIRECT:
-		err = ps_root_doindirectioctl(psm->ps_flags, data, len);
+		err = ps_root_doindirectioctl(ctx, psm->ps_flags, data, len);
 		break;
 #endif
 #ifdef HAVE_PLEDGE
 	case PS_IFIGNOREGRP:
-		return ps_root_doifignoregroup(data, len);
+		return ps_root_doifignoregroup(ctx, data, len);
+#endif
+#ifdef HAVE_CAPSICUM
+	case PS_SYSCTL:
+		*free_rdata = true;
+		return ps_root_dosysctl(psm->ps_flags, data, len, rdata, rlen);
+#else
+	UNUSED(free_rdata);
 #endif
 	default:
 		errno = ENOTSUP;
@@ -215,7 +301,7 @@ ps_root_ioctldom(struct dhcpcd_ctx *ctx, uint16_t domain, unsigned long request,
     void *data, size_t len)
 {
 
-	if (ps_sendcmd(ctx, ctx->ps_root_fd, domain,
+	if (ps_sendcmd(ctx, ctx->ps_root->psp_fd, domain,
 	    request, data, len) == -1)
 		return -1;
 	return ps_root_readerror(ctx, data, len);
@@ -241,7 +327,7 @@ ssize_t
 ps_root_route(struct dhcpcd_ctx *ctx, void *data, size_t len)
 {
 
-	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_ROUTE, 0, data, len) == -1)
+	if (ps_sendcmd(ctx, ctx->ps_root->psp_fd, PS_ROUTE, 0, data, len) == -1)
 		return -1;
 	return ps_root_readerror(ctx, data, len);
 }
@@ -260,19 +346,76 @@ ps_root_indirectioctl(struct dhcpcd_ctx *ctx, unsigned long request,
 
 	strlcpy(buf, ifname, IFNAMSIZ);
 	memcpy(buf + IFNAMSIZ, data, len);
-	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_IOCTLINDIRECT,
+	if (ps_sendcmd(ctx, ctx->ps_root->psp_fd, PS_IOCTLINDIRECT,
 	    request, buf, IFNAMSIZ + len) == -1)
 		return -1;
 	return ps_root_readerror(ctx, data, len);
 }
+#endif
 
+#ifdef HAVE_PLEDGE
 ssize_t
 ps_root_ifignoregroup(struct dhcpcd_ctx *ctx, const char *ifname)
 {
 
-	if (ps_sendcmd(ctx, ctx->ps_root_fd, PS_IFIGNOREGRP, 0,
+	if (ps_sendcmd(ctx, ctx->ps_root->psp_fd, PS_IFIGNOREGRP, 0,
 	    ifname, strlen(ifname) + 1) == -1)
 		return -1;
 	return ps_root_readerror(ctx, NULL, 0);
+}
+#endif
+
+#ifdef HAVE_CAPSICUM
+ssize_t
+ps_root_sysctl(struct dhcpcd_ctx *ctx,
+    const int *name, unsigned int namelen,
+    void *oldp, size_t *oldlenp, const void *newp, size_t newlen)
+{
+	char buf[PS_BUFLEN], *p = buf;
+	unsigned long flags = 0;
+	size_t olen = (oldp && oldlenp) ? *oldlenp : 0, nolen;
+
+	if (sizeof(namelen) + (sizeof(*name) * namelen) +
+	    sizeof(oldlenp) +
+	    sizeof(newlen) + newlen > sizeof(buf))
+	{
+		errno = ENOBUFS;
+		return -1;
+	}
+
+	if (oldlenp)
+		flags |= PS_SYSCTL_OLEN;
+	if (oldp)
+		flags |= PS_SYSCTL_ODATA;
+	memcpy(p, &namelen, sizeof(namelen));
+	p += sizeof(namelen);
+	memcpy(p, name, sizeof(*name) * namelen);
+	p += sizeof(*name) * namelen;
+	memcpy(p, &olen, sizeof(olen));
+	p += sizeof(olen);
+	memcpy(p, &newlen, sizeof(newlen));
+	p += sizeof(newlen);
+	if (newlen) {
+		memcpy(p, newp, newlen);
+		p += newlen;
+	}
+
+	if (ps_sendcmd(ctx, ctx->ps_root->psp_fd, PS_SYSCTL,
+	    flags, buf, (size_t)(p - buf)) == -1)
+		return -1;
+
+	if (ps_root_readerror(ctx, buf, sizeof(buf)) == -1)
+		return -1;
+
+	p = buf;
+	memcpy(&nolen, p, sizeof(nolen));
+	p += sizeof(nolen);
+	if (oldlenp) {
+		*oldlenp = nolen;
+		if (oldp && nolen <= olen)
+			memcpy(oldp, p, nolen);
+	}
+
+	return 0;
 }
 #endif

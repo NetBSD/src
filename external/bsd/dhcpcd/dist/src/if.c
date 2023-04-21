@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -356,6 +356,16 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 #endif
 		}
 	}
+}
+
+void if_freeifaddrs(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs)
+{
+#ifndef PRIVSEP_GETIFADDRS
+	UNUSED(ctx);
+#endif
+
+	if (ifaddrs == NULL)
+		return;
 
 #ifdef PRIVSEP_GETIFADDRS
 	if (IN_PRIVSEP(ctx))
@@ -363,7 +373,6 @@ if_learnaddrs(struct dhcpcd_ctx *ctx, struct if_head *ifs,
 	else
 #endif
 		freeifaddrs(*ifaddrs);
-	*ifaddrs = NULL;
 }
 
 void

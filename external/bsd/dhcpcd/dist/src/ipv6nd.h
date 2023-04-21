@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - IPv6 ND handling
- * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -97,6 +97,8 @@ struct rs_state {
 #define	REACHABLE_TIME			30000	/* milliseconds */
 #define	RETRANS_TIMER			1000	/* milliseconds */
 #define	DELAY_FIRST_PROBE_TIME		5	/* seconds */
+
+#define	MIN_EXTENDED_VLTIME		7200	/* seconds */
 
 int ipv6nd_open(bool);
 #ifdef __sun

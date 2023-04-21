@@ -1,11 +1,11 @@
 # dhcpcd
 
 dhcpcd is a
-[DHCP](http://en.wikipedia.org/wiki/Dynamic_Host_Configuration_Protocol) and a
-[DHCPv6](http://en.wikipedia.org/wiki/DHCPv6) client.
-It's also an IPv4LL (aka [ZeroConf](http://en.wikipedia.org/wiki/Zeroconf))
+[DHCP](https://en.wikipedia.org/wiki/Dynamic_Host_Configuration_Protocol) and a
+[DHCPv6](https://en.wikipedia.org/wiki/DHCPv6) client.
+It's also an IPv4LL (aka [ZeroConf](https://en.wikipedia.org/wiki/Zeroconf))
 client.
-In layman's terms, dhcpcd runs on your machine and silently configures your
+In layperson's terms, dhcpcd runs on your machine and silently configures your
 computer to work on the attached networks without trouble and mostly without
 configuration.
 
@@ -93,4 +93,4 @@ dhcpcd-9 defaults the run directory to `/var/run/dhcpcd` instead of
 We no longer supply a ChangeLog.
 However, you're more than welcome to read the
 [commit log](https://roy.marples.name/git/dhcpcd/log) and
-[archived release announcements](http://roy.marples.name/archives/dhcpcd-discuss/).
+[archived release announcements](https://roy.marples.name/archives/dhcpcd-discuss/).
