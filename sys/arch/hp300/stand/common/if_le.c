@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.14 2022/11/21 15:36:29 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.15 2023/04/21 22:43:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1993 Adam Glass
@@ -98,7 +98,7 @@ static struct le_sel le0conf[] = {
 };
 #define NLE0CONF (sizeof(le0conf) / sizeof(le0conf[0]))
 
-extern struct netif_stats	le_stats[];
+static struct netif_stats	le_stats[];
 
 static struct netif_dif le_ifs[] = {
 /*	dif_unit	dif_nsel	dif_stats	dif_private	*/
@@ -106,7 +106,7 @@ static struct netif_dif le_ifs[] = {
 };
 #define NLE_IFS (sizeof(le_ifs) / sizeof(le_ifs[0]))
 
-struct netif_stats le_stats[NLE_IFS];
+static struct netif_stats le_stats[NLE_IFS];
 
 struct netif_driver le_driver = {
 	"le",			/* netif_bname */
