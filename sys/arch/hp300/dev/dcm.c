@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.91 2023/01/15 06:19:45 tsutsui Exp $	*/
+/*	$NetBSD: dcm.c,v 1.92 2023/04/21 23:01:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.91 2023/01/15 06:19:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dcm.c,v 1.92 2023/04/21 23:01:59 tsutsui Exp $");
 
 #include "opt_kgdb.h"
 
@@ -482,7 +482,6 @@ dcmattach(device_t parent, device_t self, void *aux)
 #endif /* KGDB */
 }
 
-/* ARGSUSED */
 static int
 dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -572,7 +571,6 @@ dcmopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return error;
 }
 
-/*ARGSUSED*/
 static int
 dcmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
@@ -1564,7 +1562,6 @@ error:
 	return 1;
 }
 
-/* ARGSUSED */
 static int
 dcmcngetc(dev_t dev)
 {
@@ -1600,7 +1597,6 @@ dcmcngetc(dev_t dev)
 /*
  * Console kernel output character routine.
  */
-/* ARGSUSED */
 static void
 dcmcnputc(dev_t dev, int c)
 {
