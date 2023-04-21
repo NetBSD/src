@@ -1,4 +1,4 @@
-/*	$NetBSD: rd.c,v 1.125 2023/02/12 16:04:57 andvar Exp $	*/
+/*	$NetBSD: rd.c,v 1.126 2023/04/21 23:01:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.125 2023/02/12 16:04:57 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rd.c,v 1.126 2023/04/21 23:01:59 tsutsui Exp $");
 
 #include "opt_useleds.h"
 
@@ -1075,7 +1075,6 @@ rdgo(void *arg)
 	hpibgo(ctlr, slave, C_EXEC, sc->sc_addr, sc->sc_resid, rw, rw != 0);
 }
 
-/* ARGSUSED */
 static void
 rdintr(void *arg)
 {
