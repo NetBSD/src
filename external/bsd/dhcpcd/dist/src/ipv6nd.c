@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - IPv6 ND handling
- * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,7 @@ struct nd_opt_rdnss {           /* RDNSS option RFC 6106 */
 	uint8_t		nd_opt_rdnss_len;
 	uint16_t	nd_opt_rdnss_reserved;
 	uint32_t	nd_opt_rdnss_lifetime;
-        /* followed by list of IP prefixes */
+	/* followed by list of IP prefixes */
 };
 __CTASSERT(sizeof(struct nd_opt_rdnss) == 8);
 #endif
@@ -92,7 +92,7 @@ struct nd_opt_dnssl {		/* DNSSL option RFC 6106 */
 	uint32_t	nd_opt_dnssl_lifetime;
 	/* followed by list of DNS servers */
 };
-__CTASSERT(sizeof(struct nd_opt_rdnss) == 8);
+__CTASSERT(sizeof(struct nd_opt_dnssl) == 8);
 #endif
 
 /* Impossible options, so we can easily add extras */
@@ -131,7 +131,7 @@ __CTASSERT(sizeof(struct nd_opt_rdnss) == 8);
 //#define DEBUG_NS
 //
 
-static void ipv6nd_handledata(void *);
+static void ipv6nd_handledata(void *, unsigned short);
 
 /*
  * Android ships buggy ICMP6 filter headers.
@@ -281,8 +281,14 @@ ipv6nd_openif(struct interface *ifp)
 		return -1;
 	}
 
+	if (eloop_event_add(ifp->ctx->eloop, fd, ELE_READ,
+	    ipv6nd_handledata, ifp) == -1)
+	{
+		close(fd);
+		return -1;
+	}
+
 	state->nd_fd = fd;
-	eloop_event_add(ifp->ctx->eloop, fd, ipv6nd_handledata, ifp);
 	return fd;
 }
 #endif
@@ -388,7 +394,9 @@ ipv6nd_sendrsprobe(void *arg)
 			logerr(__func__);
 			return;
 		}
-		eloop_event_add(ctx->eloop, ctx->nd_fd, ipv6nd_handledata, ctx);
+		if (eloop_event_add(ctx->eloop, ctx->nd_fd, ELE_READ,
+		    ipv6nd_handledata, ctx) == -1)
+			logerr("%s: eloop_event_add", __func__);
 	}
 	s = ifp->ctx->nd_fd;
 #endif
@@ -1306,6 +1314,9 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 
 		switch (ndo.nd_opt_type) {
 		case ND_OPT_PREFIX_INFORMATION:
+		{
+			uint32_t vltime, pltime;
+
 			loglevel = new_data ? LOG_ERR : LOG_DEBUG;
 			if (ndo.nd_opt_len != 4) {
 				logmessage(loglevel,
@@ -1329,9 +1340,10 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 				    ifp->name);
 				continue;
 			}
-			if (ntohl(pi.nd_opt_pi_preferred_time) >
-			    ntohl(pi.nd_opt_pi_valid_time))
-			{
+
+			vltime = ntohl(pi.nd_opt_pi_valid_time);
+			pltime = ntohl(pi.nd_opt_pi_preferred_time);
+			if (pltime > vltime) {
 				logmessage(loglevel, "%s: pltime > vltime",
 				    ifp->name);
 				continue;
@@ -1356,10 +1368,15 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 				    &pi_prefix, pi.nd_opt_pi_prefix_len, flags);
 				if (ia == NULL)
 					break;
+
 				ia->prefix = pi_prefix;
+				ia->created = ia->acquired = rap->acquired;
+				ia->prefix_vltime = vltime;
+				ia->prefix_pltime = pltime;
+
 				if (flags & IPV6_AF_AUTOCONF)
 					ia->dadcallback = ipv6nd_dadcallback;
-				ia->created = ia->acquired = rap->acquired;
+
 				TAILQ_INSERT_TAIL(&rap->addrs, ia, next);
 
 #ifdef IPV6_MANAGETEMPADDR
@@ -1376,18 +1393,58 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 				else
 					new_ia = true;
 #endif
+
 			} else {
-#ifdef IPV6_MANAGETEMPADDR
-				new_ia = false;
-#endif
+				uint32_t rmtime;
+
+				/*
+				 * RFC 4862 5.5.3.e
+				 * Don't terminate existing connections.
+				 * This means that to actually remove the
+				 * existing prefix, the RA needs to stop
+				 * broadcasting the prefix and just let it
+				 * expire in 2 hours.
+				 * It might want to broadcast it to reduce
+				 * the vltime if it was greater than 2 hours
+				 * to start with/
+				 */
+				ia->prefix_pltime = pltime;
+				if (ia->prefix_vltime) {
+					uint32_t elapsed;
+
+					elapsed = (uint32_t)eloop_timespec_diff(
+						&rap->acquired, &ia->acquired,
+						NULL);
+					rmtime = ia->prefix_vltime - elapsed;
+					if (rmtime > ia->prefix_vltime)
+						rmtime = 0;
+				} else
+					rmtime = 0;
+				if (vltime > MIN_EXTENDED_VLTIME ||
+				    vltime > rmtime)
+					ia->prefix_vltime = vltime;
+				else if (rmtime <= MIN_EXTENDED_VLTIME)
+					/* No SEND support from RFC 3971 so
+					 * leave vltime alone */
+					ia->prefix_vltime = rmtime;
+				else
+					ia->prefix_vltime = MIN_EXTENDED_VLTIME;
+
+				/* Ensure pltime still fits */
+				if (pltime < ia->prefix_vltime)
+					ia->prefix_pltime = pltime;
+				else
+					ia->prefix_pltime = ia->prefix_vltime;
+
 				ia->flags |= flags;
 				ia->flags &= ~IPV6_AF_STALE;
 				ia->acquired = rap->acquired;
+
+#ifdef IPV6_MANAGETEMPADDR
+				new_ia = false;
+#endif
 			}
-			ia->prefix_vltime =
-			    ntohl(pi.nd_opt_pi_valid_time);
-			ia->prefix_pltime =
-			    ntohl(pi.nd_opt_pi_preferred_time);
+
 			if (ia->prefix_vltime != 0 &&
 			    ia->flags & IPV6_AF_AUTOCONF)
 				has_address = true;
@@ -1410,6 +1467,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 			}
 #endif
 			break;
+		}
 
 		case ND_OPT_MTU:
 			if (len < sizeof(mtu)) {
@@ -1977,7 +2035,7 @@ ipv6nd_recvmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg)
 }
 
 static void
-ipv6nd_handledata(void *arg)
+ipv6nd_handledata(void *arg, unsigned short events)
 {
 	struct dhcpcd_ctx *ctx;
 	int fd;
@@ -2013,6 +2071,10 @@ ipv6nd_handledata(void *arg)
 	ctx = arg;
 	fd = ctx->nd_fd;
 #endif
+
+	if (events != ELE_READ)
+		logerrx("%s: unexpected event 0x%04x", __func__, events);
+
 	len = recvmsg(fd, &msg, 0);
 	if (len == -1) {
 		logerr(__func__);
