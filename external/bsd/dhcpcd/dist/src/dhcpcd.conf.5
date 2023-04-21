@@ -1,6 +1,6 @@
 .\" SPDX-License-Identifier: BSD-2-Clause
 .\"
-.\" Copyright (c) 2006-2021 Roy Marples
+.\" Copyright (c) 2006-2023 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 23, 2021
+.Dd August 31, 2022
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -216,7 +216,7 @@ of the hardware family and the hardware address.
 .It Ic duid Op ll | lt | uuid | value
 Use a DHCP Unique Identifier.
 If a system UUID is available, that will be used to create a DUID-UUID,
-otheriwse if persistent storage is available then a DUID-LLT
+otherwise if persistent storage is available then a DUID-LLT
 (link local address + time) is generated,
 otherwise DUID-LL is generated (link local address).
 The DUID type can be hinted as an optional parameter if the file
@@ -461,7 +461,7 @@ Enables IPv6 Router Advertisement solicitation.
 This is on by default, but is documented here in the case where it is disabled
 globally but needs to be enabled for one interface.
 .It Ic leasetime Ar seconds
-Request a lease time of
+Request DHCP a lease time of
 .Ar seconds .
 .Ar -1
 represents an infinite lease time.
@@ -469,6 +469,8 @@ By default
 .Nm dhcpcd
 does not request any lease time and leaves it in the hands of the
 DHCP server.
+It is not possible to request a DHCPv6 lease time as this is not RFC compliant.
+See RFC 8415 21.4, 21.6, 21.21 and 21.22.
 .It Ic link_rcvbuf Ar size
 Override the size of the link receive buffer from the kernel default.
 While
@@ -646,13 +648,16 @@ instead of the default
 .It Ic ssid Ar ssid
 Subsequent options are only parsed for this wireless
 .Ar ssid .
-.It Ic slaac Ar hwaddr | Ar private Op Ar temp | Ar temporary
+.It Ic slaac Ic hwaddr | Ic private | Ic token Ar token Op Ic temp | Ic temporary
 Selects the interface identifier used for SLAAC generated IPv6 addresses.
 If
-.Ar private
+.Ic private
 is used, a RFC 7217 address is generated.
+If
+.Ic token Ar token
+is used then the token is combined with the prefix to make the final address.
 The
-.Ar temporary
+.Ic temporary
 directive will create a temporary address for the prefix as well.
 .It Ic static Ar value
 Configures a static
@@ -663,6 +668,13 @@ then
 .Nm dhcpcd
 will not attempt to obtain a lease and will just use the value for the address
 with an infinite lease time.
+If you set an empty value this removes all prior static allocations to
+the same value.
+This is useful when using profiles and in the case of
+.Ic ip_address
+it will remove the static allocation.
+Note that setting 0.0.0.0 keeps the static allocation but waits for a 3rdparty
+to configure the address.
 If you set
 .Ic ip6_address ,
 .Nm dhcpcd
@@ -690,7 +702,7 @@ It uses the special
 keyword to insert the destination address
 into the value.
 .D1 interface ppp0
-.D1 static ip_address=
+.D1 static ip_address=0.0.0.0
 .D1 destination routers
 .It Ic timeout Ar seconds
 Time out after
@@ -1001,4 +1013,4 @@ Same as
 .An Roy Marples Aq Mt roy@marples.name
 .Sh BUGS
 Please report them to
-.Lk http://roy.marples.name/projects/dhcpcd
+.Lk https://roy.marples.name/projects/dhcpcd

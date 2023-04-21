@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd
- * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
 
 /* Start flags */
 #define	PSF_DROPPRIVS		0x01
+#define	PSF_ELOOP		0x02
 
 /* Protocols */
 #define	PS_BOOTP		0x0001
@@ -53,14 +54,21 @@
 #define	PS_CTL			0x0018
 #define	PS_CTL_EOF		0x0019
 #define	PS_LOGREOPEN		0x0020
+#define	PS_STOPPROCS		0x0021
+
+/* Domains */
+#define	PS_ROOT			0x0101
+#define	PS_INET			0x0102
+#define	PS_CONTROL		0x0103
 
 /* BSD Commands */
-#define	PS_IOCTLLINK		0x0101
-#define	PS_IOCTL6		0x0102
-#define	PS_IOCTLINDIRECT	0x0103
-#define	PS_IP6FORWARDING	0x0104
-#define	PS_GETIFADDRS		0x0105
-#define	PS_IFIGNOREGRP		0x0106
+#define	PS_IOCTLLINK		0x0201
+#define	PS_IOCTL6		0x0202
+#define	PS_IOCTLINDIRECT	0x0203
+#define	PS_IP6FORWARDING	0x0204
+#define	PS_GETIFADDRS		0x0205
+#define	PS_IFIGNOREGRP		0x0206
+#define	PS_SYSCTL		0x0207
 
 /* Dev Commands */
 #define	PS_DEV_LISTENING	0x1001
@@ -76,6 +84,10 @@
 #define	PS_CTL_PRIV		0x0004
 #define	PS_CTL_UNPRIV		0x0005
 
+/* Sysctl Needs (via flags) */
+#define	PS_SYSCTL_OLEN		0x0001
+#define	PS_SYSCTL_ODATA		0x0002
+
 /* Process commands */
 #define	PS_START		0x4000
 #define	PS_STOP			0x8000
@@ -87,11 +99,15 @@
 				 CMSG_SPACE(sizeof(struct in6_pktinfo) + \
 					    sizeof(int)))
 
+#define	PSP_NAMESIZE		16 + INET_MAX_ADDRSTRLEN
+
 /* Handy macro to work out if in the privsep engine or not. */
 #define	IN_PRIVSEP(ctx)	\
 	((ctx)->options & DHCPCD_PRIVSEP)
 #define	IN_PRIVSEP_SE(ctx)	\
 	(((ctx)->options & (DHCPCD_PRIVSEP | DHCPCD_FORKED)) == DHCPCD_PRIVSEP)
+
+#define	PS_PROCESS_TIMEOUT	5	/* seconds to stop all processes */
 
 #if defined(PRIVSEP) && defined(HAVE_CAPSICUM)
 #define PRIVSEP_RIGHTS
@@ -145,6 +161,7 @@ struct ps_msg {
 };
 
 struct bpf;
+
 struct ps_process {
 	TAILQ_ENTRY(ps_process) next;
 	struct dhcpcd_ctx *psp_ctx;
@@ -154,13 +171,19 @@ struct ps_process {
 	int psp_work_fd;
 	unsigned int psp_ifindex;
 	char psp_ifname[IF_NAMESIZE];
+	char psp_name[PSP_NAMESIZE];
 	uint16_t psp_proto;
 	const char *psp_protostr;
+	bool psp_started;
 
 #ifdef INET
 	int (*psp_filter)(const struct bpf *, const struct in_addr *);
 	struct interface psp_ifp; /* Move BPF gubbins elsewhere */
 	struct bpf *psp_bpf;
+#endif
+
+#ifdef HAVE_CAPSICUM
+	int psp_pfd;
 #endif
 };
 TAILQ_HEAD(ps_process_head, ps_process);
@@ -175,6 +198,7 @@ TAILQ_HEAD(ps_process_head, ps_process);
 int ps_init(struct dhcpcd_ctx *);
 int ps_start(struct dhcpcd_ctx *);
 int ps_stop(struct dhcpcd_ctx *);
+int ps_stopwait(struct dhcpcd_ctx *);
 int ps_entersandbox(const char *, const char **);
 int ps_managersandbox(struct dhcpcd_ctx *, const char *);
 
@@ -187,8 +211,8 @@ ssize_t ps_sendmsg(struct dhcpcd_ctx *, int, uint16_t, unsigned long,
     const struct msghdr *);
 ssize_t ps_sendcmd(struct dhcpcd_ctx *, int, uint16_t, unsigned long,
     const void *data, size_t len);
-ssize_t ps_recvmsg(struct dhcpcd_ctx *, int, uint16_t, int);
-ssize_t ps_recvpsmsg(struct dhcpcd_ctx *, int,
+ssize_t ps_recvmsg(struct dhcpcd_ctx *, int, unsigned short, uint16_t, int);
+ssize_t ps_recvpsmsg(struct dhcpcd_ctx *, int, unsigned short,
     ssize_t (*callback)(void *, struct ps_msghdr *, struct msghdr *), void *);
 
 /* Internal privsep functions. */
@@ -207,15 +231,17 @@ int ps_rights_limit_fdpair(int []);
 int ps_seccomp_enter(void);
 #endif
 
-pid_t ps_dostart(struct dhcpcd_ctx * ctx,
-    pid_t *priv_pid, int *priv_fd,
-    void (*recv_msg)(void *), void (*recv_unpriv_msg),
-    void *recv_ctx, int (*callback)(void *), void (*)(int, void *),
+pid_t ps_startprocess(struct ps_process *,
+    void (*recv_msg)(void *, unsigned short),
+    void (*recv_unpriv_msg)(void *, unsigned short),
+    int (*callback)(struct ps_process *), void (*)(int, void *),
     unsigned int);
-int ps_dostop(struct dhcpcd_ctx *ctx, pid_t *pid, int *fd);
-
+int ps_stopprocess(struct ps_process *);
 struct ps_process *ps_findprocess(struct dhcpcd_ctx *, struct ps_id *);
+struct ps_process *ps_findprocesspid(struct dhcpcd_ctx *, pid_t);
 struct ps_process *ps_newprocess(struct dhcpcd_ctx *, struct ps_id *);
+bool ps_waitforprocs(struct dhcpcd_ctx *ctx);
+void ps_process_timeout(void *);
 void ps_freeprocess(struct ps_process *);
 void ps_freeprocesses(struct dhcpcd_ctx *, struct ps_process *);
 #endif
