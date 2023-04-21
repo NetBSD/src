@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.134 2022/03/28 12:33:59 riastradh Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.135 2023/04/21 18:30:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.134 2022/03/28 12:33:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.135 2023/04/21 18:30:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -530,11 +530,20 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 #endif
 
 	switch (cmd) {
-	case DIOCGDISKINFO:
-		if (dk->dk_info == NULL)
-			return ENOTSUP;
-		return prop_dictionary_copyout_ioctl(data, cmd, dk->dk_info);
+	case DIOCGDISKINFO: {
+		prop_dictionary_t disk_info;
+		int error;
 
+		mutex_enter(&dk->dk_openlock);
+		if ((disk_info = dk->dk_info) == NULL)
+			return ENOTSUP;
+		prop_object_retain(disk_info);
+		mutex_exit(&dk->dk_openlock);
+
+		error = prop_dictionary_copyout_ioctl(data, cmd, disk_info);
+		prop_object_release(disk_info);
+		return error;
+	}
 	case DIOCGSECTORSIZE:
 		*(u_int *)data = dk->dk_geom.dg_secsize;
 		return 0;
@@ -649,6 +658,14 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 	}
 }
 
+/*
+ * disk_set_info --
+ *	Canonicalize dk->dk_geom and set some parameters.
+ *
+ *	If disk_set_info can happen concurrently with disk_ioctl in a
+ *	driver, the driver must serialize calls to disk_set_info with
+ *	dk_openlock.
+ */
 void
 disk_set_info(device_t dev, struct disk *dk, const char *type)
 {
