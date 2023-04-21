@@ -1,4 +1,4 @@
-/*	$NetBSD: apci.c,v 1.13 2014/04/17 12:35:24 tsutsui Exp $	*/
+/*	$NetBSD: apci.c,v 1.14 2023/04/21 22:44:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999 The NetBSD Foundation, Inc.
@@ -141,7 +141,6 @@ apciinit(struct consdev *cp)
 	apci->ap_mcr = MCR_DTR | MCR_RTS;
 }
 
-/* ARGSUSED */
 #ifndef SMALL
 int
 apcigetchar(dev_t dev)
@@ -164,7 +163,6 @@ apcigetchar(dev_t dev)
 }
 #endif
 
-/* ARGSUSED */
 void
 apciputchar(dev_t dev, int c)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dcm.c,v 1.9 2014/06/21 02:02:40 tsutsui Exp $	*/
+/*	$NetBSD: dcm.c,v 1.10 2023/04/21 22:44:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,7 +103,6 @@ dcminit(struct consdev *cp)
 	DELAY(15000);
 }
 
-/* ARGSUSED */
 #ifndef SMALL
 int
 dcmgetchar(dev_t dev)
@@ -137,7 +136,6 @@ dcmgetchar(dev_t dev)
 }
 #endif
 
-/* ARGSUSED */
 void
 dcmputchar(dev_t dev, int c)
 {
