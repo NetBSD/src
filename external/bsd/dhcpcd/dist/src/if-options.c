@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -193,7 +193,10 @@ add_environ(char ***array, const char *value, int uniq)
 	l = strlen(match);
 
 	while (list && list[i]) {
-		if (match && strncmp(list[i], match, l) == 0) {
+		/* We know that it must contain '=' due to the above test */
+		size_t listl = (size_t)(strchr(list[i], '=') - list[i]);
+
+		if (l == listl && strncmp(list[i], match, l) == 0) {
 			if (uniq) {
 				n = strdup(value);
 				if (n == NULL) {
@@ -266,7 +269,13 @@ parse_str(char *sbuf, size_t slen, const char *str, int flags)
 		}
 	} else {
 		l = (size_t)hwaddr_aton(NULL, str);
-		if ((ssize_t) l != -1 && l > 1) {
+		if (l > 0) {
+			if ((ssize_t)l == -1) {
+				errno = ENOBUFS;
+				return -1;
+			}
+			if (sbuf == NULL)
+				return (ssize_t)l;
 			if (l > slen) {
 				errno = ENOBUFS;
 				return -1;
@@ -1108,8 +1117,13 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			logerrx("static assignment required");
 			return -1;
 		}
-		p++;
+		p = strskipwhite(++p);
 		if (strncmp(arg, "ip_address=", strlen("ip_address=")) == 0) {
+			if (p == NULL) {
+				ifo->options &= ~DHCPCD_STATIC;
+				ifo->req_addr.s_addr = INADDR_ANY;
+				break;
+			}
 			if (parse_addr(&ifo->req_addr,
 			    ifo->req_mask.s_addr == 0 ? &ifo->req_mask : NULL,
 			    p) != 0)
@@ -1120,11 +1134,19 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		} else if (strncmp(arg, "subnet_mask=",
 		    strlen("subnet_mask=")) == 0)
 		{
+			if (p == NULL) {
+				ifo->req_mask.s_addr = INADDR_ANY;
+				break;
+			}
 			if (parse_addr(&ifo->req_mask, NULL, p) != 0)
 				return -1;
 		} else if (strncmp(arg, "broadcast_address=",
 		    strlen("broadcast_address=")) == 0)
 		{
+			if (p == NULL) {
+				ifo->req_brd.s_addr = INADDR_ANY;
+				break;
+			}
 			if (parse_addr(&ifo->req_brd, NULL, p) != 0)
 				return -1;
 		} else if (strncmp(arg, "routes=", strlen("routes=")) == 0 ||
@@ -1136,6 +1158,12 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		        strlen("ms_classless_static_routes=")) == 0)
 		{
 			struct in_addr addr3;
+
+			if (p == NULL) {
+				rt_headclear(&ifo->routes, AF_INET);
+				add_environ(&ifo->config, arg, 1);
+				break;
+			}
 
 			fp = np = strwhite(p);
 			if (np == NULL) {
@@ -1159,6 +1187,11 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			if (rt_proto_add_ctx(&ifo->routes, rt, ctx))
 				add_environ(&ifo->config, arg, 0);
 		} else if (strncmp(arg, "routers=", strlen("routers=")) == 0) {
+			if (p == NULL) {
+				rt_headclear(&ifo->routes, AF_INET);
+				add_environ(&ifo->config, arg, 1);
+				break;
+			}
 			if (parse_addr(&addr, NULL, p) == -1)
 				return -1;
 			if ((rt = rt_new0(ctx)) == NULL)
@@ -1173,6 +1206,8 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		    strlen("interface_mtu=")) == 0 ||
 		    strncmp(arg, "mtu=", strlen("mtu=")) == 0)
 		{
+			if (p == NULL)
+				break;
 			ifo->mtu = (unsigned int)strtou(p, NULL, 0,
 			    MTU_MIN, MTU_MAX, &e);
 			if (e) {
@@ -1180,6 +1215,12 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				return -1;
 			}
 		} else if (strncmp(arg, "ip6_address=", strlen("ip6_address=")) == 0) {
+			if (p == NULL) {
+				memset(&ifo->req_addr6, 0,
+				    sizeof(ifo->req_addr6));
+				break;
+			}
+
 			np = strchr(p, '/');
 			if (np)
 				*np++ = '\0';
@@ -1205,8 +1246,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				return -1;
 			}
 		} else
-			add_environ(&ifo->config, arg, 1);
+			add_environ(&ifo->config, arg, p == NULL ? 1 : 0);
 		break;
+
 	case 'W':
 		if (parse_addr(&addr, &addr2, arg) != 0)
 			return -1;
@@ -2061,7 +2103,7 @@ err_sla:
 		arg = fp;
 		fp = strend(arg);
 		if (fp == NULL) {
-			logerrx("authtoken requies an a key");
+			logerrx("authtoken requires a realm");
 			goto invalid_token;
 		}
 		*fp++ = '\0';
@@ -2114,7 +2156,7 @@ err_sla:
 			if (s == -1)
 				logerr("token_len");
 			else
-				logerrx("authtoken needs a key");
+				logerrx("authtoken requires a key");
 			goto invalid_token;
 		}
 		token->key_len = (size_t)s;
@@ -2229,6 +2271,24 @@ invalid_token:
 			ifo->options |= DHCPCD_SLAACPRIVATE;
 		else
 			ifo->options &= ~DHCPCD_SLAACPRIVATE;
+#ifdef INET6
+		if (strcmp(arg, "token") == 0) {
+			if (np == NULL) {
+				logerrx("slaac token: no token specified");
+				return -1;
+			}
+			arg = np;
+			np = strwhite(np);
+			if (np != NULL) {
+				*np++ = '\0';
+				np = strskipwhite(np);
+			}
+			if (inet_pton(AF_INET6, arg, &ifo->token) != 1) {
+				logerrx("slaac token: invalid token");
+				return -1;
+			}
+		}
+#endif
 		if (np != NULL &&
 		    (strcmp(np, "temp") == 0 || strcmp(np, "temporary") == 0))
 			ifo->options |= DHCPCD_SLAACTEMP;
