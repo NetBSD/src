@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.140 2023/04/21 18:29:43 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.141 2023/04/21 18:30:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.140 2023/04/21 18:29:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.141 2023/04/21 18:30:21 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -116,6 +116,7 @@ static int	dk_close_parent(struct vnode *, int);
 
 static dev_type_open(dkopen);
 static dev_type_close(dkclose);
+static dev_type_cancel(dkcancel);
 static dev_type_read(dkread);
 static dev_type_write(dkwrite);
 static dev_type_ioctl(dkioctl);
@@ -132,6 +133,7 @@ CFATTACH_DECL3_NEW(dk, 0,
 const struct bdevsw dk_bdevsw = {
 	.d_open = dkopen,
 	.d_close = dkclose,
+	.d_cancel = dkcancel,
 	.d_strategy = dkstrategy,
 	.d_ioctl = dkioctl,
 	.d_dump = dkdump,
@@ -143,6 +145,7 @@ const struct bdevsw dk_bdevsw = {
 const struct cdevsw dk_cdevsw = {
 	.d_open = dkopen,
 	.d_close = dkclose,
+	.d_cancel = dkcancel,
 	.d_read = dkread,
 	.d_write = dkwrite,
 	.d_ioctl = dkioctl,
@@ -1374,6 +1377,32 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
+
+	return 0;
+}
+
+/*
+ * dkcancel:		[devsw entry point]
+ *
+ *	Cancel any pending I/O operations waiting on a wedge.
+ */
+static int
+dkcancel(dev_t dev, int flags, int fmt, struct lwp *l)
+{
+	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+
+	KASSERT(sc != NULL);
+	KASSERT(sc->sc_dev != NULL);
+
+	/*
+	 * Disk I/O is expected to complete or fail within a reasonable
+	 * timeframe -- it's storage, not communication.  Further, the
+	 * character and block device interface guarantees that prior
+	 * reads and writes have completed or failed by the time close
+	 * returns -- we are not to cancel them here.  If the parent
+	 * device's hardware is gone, the parent driver can make them
+	 * fail.  Nothing for dk(4) itself to do.
+	 */
 
 	return 0;
 }
