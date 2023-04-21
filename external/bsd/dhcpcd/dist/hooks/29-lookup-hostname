@@ -4,20 +4,20 @@ lookup_hostname()
 {
 	[ -z "$new_ip_address" ] && return 1
 	# Silly ISC programs love to send error text to stdout
-	if type dig >/dev/null 2>&1; then
+	if command -v dig >/dev/null 2>&1; then
 		h=$(dig +short -x $new_ip_address)
 		if [ $? = 0 ]; then
 			echo "$h" | sed 's/\.$//'
 			return 0
 		fi
-	elif type host >/dev/null 2>&1; then
+	elif command -v host >/dev/null 2>&1; then
 		h=$(host $new_ip_address)
 		if [ $? = 0 ]; then 
 			echo "$h" \
 			| sed 's/.* domain name pointer \(.*\)./\1/'
 			return 0
 		fi
-	elif type getent >/dev/null 2>&1; then
+	elif command -v getent >/dev/null 2>&1; then
 		h=$(getent hosts $new_ip_address)
 		if [ $? = 0 ]; then
 			echo "$h" | sed 's/[^ ]* *\([^ ]*\).*/\1/'

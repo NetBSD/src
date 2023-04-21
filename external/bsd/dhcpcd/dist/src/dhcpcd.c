@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2021 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2023 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-static const char dhcpcd_copyright[] = "Copyright (c) 2006-2021 Roy Marples";
+static const char dhcpcd_copyright[] = "Copyright (c) 2006-2023 Roy Marples";
 
 #include <sys/file.h>
 #include <sys/ioctl.h>
@@ -1105,14 +1105,18 @@ out:
 		if_free(ifp);
 	}
 	free(ifs);
+	if_freeifaddrs(ctx, &ifaddrs);
 
 	return e;
 }
 
 static void
-dhcpcd_handlelink(void *arg)
+dhcpcd_handlelink(void *arg, unsigned short events)
 {
 	struct dhcpcd_ctx *ctx = arg;
+
+	if (events != ELE_READ)
+		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
 	if (if_handlelink(ctx) == -1) {
 		if (errno == ENOBUFS || errno == ENOMEM) {
@@ -1241,6 +1245,7 @@ dhcpcd_linkoverflow(struct dhcpcd_ctx *ctx)
 	if_markaddrsstale(ctx->ifaces);
 	if_learnaddrs(ctx, ctx->ifaces, &ifaddrs);
 	if_deletestaleaddrs(ctx->ifaces);
+	if_freeifaddrs(ctx, &ifaddrs);
 }
 
 void
@@ -1406,7 +1411,7 @@ dhcpcd_renew(struct dhcpcd_ctx *ctx)
 
 #ifdef USE_SIGNALS
 #define sigmsg "received %s, %s"
-static void
+void
 dhcpcd_signal_cb(int sig, void *arg)
 {
 	struct dhcpcd_ctx *ctx = arg;
@@ -1465,8 +1470,12 @@ dhcpcd_signal_cb(int sig, void *arg)
 			logerr("logopen");
 		return;
 	case SIGCHLD:
+#ifdef PRIVSEP
+		ps_root_signalcb(sig, ctx);
+#else
 		while (waitpid(-1, NULL, WNOHANG) > 0)
 			;
+#endif
 		return;
 	default:
 		logerrx("received signal %d but don't know what to do with it",
@@ -1648,14 +1657,17 @@ dumperr:
 	return 0;
 }
 
-static void dhcpcd_readdump1(void *);
+static void dhcpcd_readdump1(void *, unsigned short);
 
 static void
-dhcpcd_readdump2(void *arg)
+dhcpcd_readdump2(void *arg, unsigned short events)
 {
 	struct dhcpcd_ctx *ctx = arg;
 	ssize_t len;
 	int exit_code = EXIT_FAILURE;
+
+	if (events != ELE_READ)
+		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
 	len = read(ctx->control_fd, ctx->ctl_buf + ctx->ctl_bufpos,
 	    ctx->ctl_buflen - ctx->ctl_bufpos);
@@ -1675,8 +1687,9 @@ dhcpcd_readdump2(void *arg)
 	fflush(stdout);
 	if (--ctx->ctl_extra != 0) {
 		putchar('\n');
-		eloop_event_add(ctx->eloop, ctx->control_fd,
-		    dhcpcd_readdump1, ctx);
+		if (eloop_event_add(ctx->eloop, ctx->control_fd, ELE_READ,
+		    dhcpcd_readdump1, ctx) == -1)
+			logerr("%s: eloop_event_add", __func__);
 		return;
 	}
 	exit_code = EXIT_SUCCESS;
@@ -1687,10 +1700,13 @@ finished:
 }
 
 static void
-dhcpcd_readdump1(void *arg)
+dhcpcd_readdump1(void *arg, unsigned short events)
 {
 	struct dhcpcd_ctx *ctx = arg;
 	ssize_t len;
+
+	if (events != ELE_READ)
+		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
 	len = read(ctx->control_fd, &ctx->ctl_buflen, sizeof(ctx->ctl_buflen));
 	if (len != sizeof(ctx->ctl_buflen)) {
@@ -1709,8 +1725,9 @@ dhcpcd_readdump1(void *arg)
 		goto err;
 
 	ctx->ctl_bufpos = 0;
-	eloop_event_add(ctx->eloop, ctx->control_fd,
-	    dhcpcd_readdump2, ctx);
+	if (eloop_event_add(ctx->eloop, ctx->control_fd, ELE_READ,
+	    dhcpcd_readdump2, ctx) == -1)
+		logerr("%s: eloop_event_add", __func__);
 	return;
 
 err:
@@ -1719,10 +1736,13 @@ err:
 }
 
 static void
-dhcpcd_readdump0(void *arg)
+dhcpcd_readdump0(void *arg, unsigned short events)
 {
 	struct dhcpcd_ctx *ctx = arg;
 	ssize_t len;
+
+	if (events != ELE_READ)
+		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
 	len = read(ctx->control_fd, &ctx->ctl_extra, sizeof(ctx->ctl_extra));
 	if (len != sizeof(ctx->ctl_extra)) {
@@ -1738,8 +1758,9 @@ dhcpcd_readdump0(void *arg)
 		return;
 	}
 
-	eloop_event_add(ctx->eloop, ctx->control_fd,
-	    dhcpcd_readdump1, ctx);
+	if (eloop_event_add(ctx->eloop, ctx->control_fd, ELE_READ,
+	    dhcpcd_readdump1, ctx) == -1)
+		logerr("%s: eloop_event_add", __func__);
 }
 
 static void
@@ -1759,16 +1780,19 @@ dhcpcd_readdump(struct dhcpcd_ctx *ctx)
 	if (eloop_timeout_add_sec(ctx->eloop, 5,
 	    dhcpcd_readdumptimeout, ctx) == -1)
 		return -1;
-	return eloop_event_add(ctx->eloop, ctx->control_fd,
+	return eloop_event_add(ctx->eloop, ctx->control_fd, ELE_READ,
 	    dhcpcd_readdump0, ctx);
 }
 
 static void
-dhcpcd_fork_cb(void *arg)
+dhcpcd_fork_cb(void *arg, unsigned short events)
 {
 	struct dhcpcd_ctx *ctx = arg;
 	int exit_code;
 	ssize_t len;
+
+	if (!(events & ELE_READ))
+		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
 	len = read(ctx->fork_fd, &exit_code, sizeof(exit_code));
 	if (len == -1) {
@@ -1786,11 +1810,14 @@ dhcpcd_fork_cb(void *arg)
 }
 
 static void
-dhcpcd_stderr_cb(void *arg)
+dhcpcd_stderr_cb(void *arg, unsigned short events)
 {
 	struct dhcpcd_ctx *ctx = arg;
 	char log[BUFSIZ];
 	ssize_t len;
+
+	if (events != ELE_READ)
+		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
 	len = read(ctx->stderr_fd, log, sizeof(log));
 	if (len == -1) {
@@ -1801,6 +1828,24 @@ dhcpcd_stderr_cb(void *arg)
 
 	log[len] = '\0';
 	fprintf(stderr, "%s", log);
+}
+
+static void
+dhcpcd_pidfile_timeout(void *arg)
+{
+	struct dhcpcd_ctx *ctx = arg;
+	pid_t pid;
+
+	pid = pidfile_read(ctx->pidfile);
+
+	if(pid == -1)
+		eloop_exit(ctx->eloop, EXIT_SUCCESS);
+	else if (++ctx->duid_len >= 100) { /* overload duid_len */
+		logerrx("pid %d failed to exit", pid);
+		eloop_exit(ctx->eloop, EXIT_FAILURE);
+	} else
+		eloop_timeout_add_msec(ctx->eloop, 100,
+		    dhcpcd_pidfile_timeout, ctx);
 }
 
 int
@@ -1897,8 +1942,7 @@ main(int argc, char **argv, char **envp)
 	ctx.dhcp6_wfd = -1;
 #endif
 #ifdef PRIVSEP
-	ctx.ps_root_fd = ctx.ps_log_fd = ctx.ps_data_fd = -1;
-	ctx.ps_inet_fd = ctx.ps_control_fd = -1;
+	ctx.ps_log_fd = -1;
 	TAILQ_INIT(&ctx.ps_processes);
 #endif
 
@@ -1939,12 +1983,6 @@ main(int argc, char **argv, char **envp)
 		case 'n':
 			sig = SIGHUP;
 			siga = "HUP";
-			break;
-		case 'g':
-		case 'p':
-			/* Force going via command socket as we're
-			 * out of user definable signals. */
-			i = 4;
 			break;
 		case 'q':
 			/* -qq disables console output entirely.
@@ -2095,6 +2133,14 @@ printpidfile:
 			snprintf(ctx.pidfile, sizeof(ctx.pidfile),
 			    PIDFILE, "", "", "");
 			ctx.options |= DHCPCD_MANAGER;
+
+			/*
+			 * If we are given any interfaces, we
+			 * cannot send a signal as that would impact
+			 * other interfaces.
+			 */
+			if (optind != argc)
+				sig = 0;
 		}
 		if (ctx.options & DHCPCD_PRINT_PIDFILE) {
 			printf("%s\n", ctx.pidfile);
@@ -2130,31 +2176,20 @@ printpidfile:
 		if (pid != 0 && pid != -1)
 			loginfox("sending signal %s to pid %d", siga, pid);
 		if (pid == 0 || pid == -1 || kill(pid, sig) != 0) {
-			if (sig != SIGHUP && sig != SIGUSR1 && errno != EPERM)
-				logerrx(PACKAGE" not running");
 			if (pid != 0 && pid != -1 && errno != ESRCH) {
 				logerr("kill");
 				goto exit_failure;
 			}
 			unlink(ctx.pidfile);
-			if (sig != SIGHUP && sig != SIGUSR1)
-				goto exit_failure;
+			/* We can still continue and send the command
+			 * via the control socket. */
 		} else {
-			struct timespec ts;
-
 			if (sig == SIGHUP || sig == SIGUSR1)
 				goto exit_success;
 			/* Spin until it exits */
 			loginfox("waiting for pid %d to exit", pid);
-			ts.tv_sec = 0;
-			ts.tv_nsec = 100000000; /* 10th of a second */
-			for(i = 0; i < 100; i++) {
-				nanosleep(&ts, NULL);
-				if (pidfile_read(ctx.pidfile) == -1)
-					goto exit_success;
-			}
-			logerrx("pid %d failed to exit", pid);
-			goto exit_failure;
+			dhcpcd_pidfile_timeout(&ctx);
+			goto run_loop;
 		}
 	}
 #endif
@@ -2207,12 +2242,8 @@ printpidfile:
 	}
 #endif
 
-	/* Test against siga instead of sig to avoid gcc
-	 * warning about a bogus potential signed overflow.
-	 * The end result will be the same. */
-	if ((siga == NULL || i == 4 || ctx.ifc != 0) &&
-	    !(ctx.options & DHCPCD_TEST))
-	{
+	/* Try and contact the manager process to send the instruction. */
+	if (!(ctx.options & DHCPCD_TEST)) {
 		ctx.options |= DHCPCD_FORKED; /* avoid socket unlink */
 		if (!(ctx.options & DHCPCD_MANAGER))
 			ctx.control_fd = control_open(argv[optind], family,
@@ -2249,9 +2280,14 @@ printpidfile:
 		} else {
 			if (errno != ENOENT)
 				logerr("%s: control_open", __func__);
-			if (ctx.options & DHCPCD_DUMPLEASE) {
+			/* If asking dhcpcd to exit and we failed to
+			 * send a signal or a message then we
+			 * don't proceed past here. */
+			if (ctx.options & DHCPCD_DUMPLEASE ||
+			    sig == SIGTERM || sig == SIGALRM)
+			{
 				if (errno == ENOENT)
-					logerrx("dhcpcd is not running");
+					logerrx(PACKAGE" is not running");
 				goto exit_failure;
 			}
 			if (errno == EPERM || errno == EACCES)
@@ -2286,9 +2322,9 @@ printpidfile:
 	if (!(ctx.options & DHCPCD_DAEMONISE))
 		goto start_manager;
 
-	if (xsocketpair(AF_UNIX, SOCK_DGRAM | SOCK_CXNB, 0, fork_fd) == -1 ||
+	if (xsocketpair(AF_UNIX, SOCK_SEQPACKET|SOCK_CXNB, 0, fork_fd) == -1 ||
 	    (ctx.stderr_valid &&
-	    xsocketpair(AF_UNIX, SOCK_DGRAM | SOCK_CXNB, 0, stderr_fd) == -1))
+	    xsocketpair(AF_UNIX, SOCK_SEQPACKET|SOCK_CXNB, 0, stderr_fd) == -1))
 	{
 		logerr("socketpair");
 		goto exit_failure;
@@ -2306,7 +2342,9 @@ printpidfile:
 			goto exit_failure;
 		}
 #endif
-		eloop_event_add(ctx.eloop, ctx.fork_fd, dhcpcd_fork_cb, &ctx);
+		if (eloop_event_add(ctx.eloop, ctx.fork_fd, ELE_READ,
+		    dhcpcd_fork_cb, &ctx) == -1)
+			logerr("%s: eloop_event_add", __func__);
 
 		/*
 		 * Redirect stderr to the stderr socketpair.
@@ -2335,6 +2373,7 @@ printpidfile:
 			logerr("fork");
 			goto exit_failure;
 		case 0:
+			eloop_forked(ctx.eloop);
 			break;
 		default:
 			ctx.options |= DHCPCD_FORKED; /* A lie */
@@ -2353,7 +2392,9 @@ printpidfile:
 			goto exit_failure;
 		}
 #endif
-		eloop_event_add(ctx.eloop, ctx.fork_fd, dhcpcd_fork_cb, &ctx);
+		if (eloop_event_add(ctx.eloop, ctx.fork_fd, ELE_READ,
+		    dhcpcd_fork_cb, &ctx) == -1)
+			logerr("%s: eloop_event_add", __func__);
 
 		if (ctx.stderr_valid) {
 			ctx.stderr_fd = stderr_fd[0];
@@ -2364,8 +2405,9 @@ printpidfile:
 				goto exit_failure;
 			}
 #endif
-			eloop_event_add(ctx.eloop, ctx.stderr_fd,
-			    dhcpcd_stderr_cb, &ctx);
+			if (eloop_event_add(ctx.eloop, ctx.stderr_fd, ELE_READ,
+			    dhcpcd_stderr_cb, &ctx) == -1)
+				logerr("%s: eloop_event_add", __func__);
 		}
 #ifdef PRIVSEP
 		if (IN_PRIVSEP(&ctx) && ps_managersandbox(&ctx, NULL) == -1)
@@ -2447,7 +2489,9 @@ start_manager:
 
 	/* Start handling kernel messages for interfaces, addresses and
 	 * routes. */
-	eloop_event_add(ctx.eloop, ctx.link_fd, dhcpcd_handlelink, &ctx);
+	if (eloop_event_add(ctx.eloop, ctx.link_fd, ELE_READ,
+	    dhcpcd_handlelink, &ctx) == -1)
+		logerr("%s: eloop_event_add", __func__);
 
 #ifdef PRIVSEP
 	if (IN_PRIVSEP(&ctx) && ps_managersandbox(&ctx, "stdio route") == -1)
@@ -2497,6 +2541,8 @@ start_manager:
 			dhcpcd_initstate1(ifp, argc, argv, 0);
 	}
 	if_learnaddrs(&ctx, ctx.ifaces, &ifaddrs);
+	if_freeifaddrs(&ctx, &ifaddrs);
+	ifaddrs = NULL;
 
 	if (ctx.options & DHCPCD_BACKGROUND)
 		dhcpcd_daemonise(&ctx);
@@ -2567,17 +2613,7 @@ exit_failure:
 exit1:
 	if (!(ctx.options & DHCPCD_TEST) && control_stop(&ctx) == -1)
 		logerr("%s: control_stop", __func__);
-	if (ifaddrs != NULL) {
-#ifdef PRIVSEP_GETIFADDRS
-		if (IN_PRIVSEP(&ctx))
-			free(ifaddrs);
-		else
-#endif
-			freeifaddrs(ifaddrs);
-	}
-	/* ps_stop will clear DHCPCD_PRIVSEP but we need to
-	 * remember it to avoid attemping to remove the pidfile */
-	oi = ctx.options & DHCPCD_PRIVSEP ? 1 : 0;
+	if_freeifaddrs(&ctx, &ifaddrs);
 #ifdef PRIVSEP
 	ps_stop(&ctx);
 #endif
@@ -2611,14 +2647,20 @@ exit1:
 #ifdef PLUGIN_DEV
 	dev_stop(&ctx);
 #endif
+	if (ctx.script != dhcpcd_default_script)
+		free(ctx.script);
 #ifdef PRIVSEP
+	if (ps_stopwait(&ctx) != EXIT_SUCCESS)
+		i = EXIT_FAILURE;
+#endif
+	if (ctx.options & DHCPCD_STARTED && !(ctx.options & DHCPCD_FORKED))
+		loginfox(PACKAGE " exited");
+#ifdef PRIVSEP
+	if (ps_root_stop(&ctx) == -1)
+		i = EXIT_FAILURE;
 	eloop_free(ctx.ps_eloop);
 #endif
 	eloop_free(ctx.eloop);
-	if (ctx.script != dhcpcd_default_script)
-		free(ctx.script);
-	if (ctx.options & DHCPCD_STARTED && !(ctx.options & DHCPCD_FORKED))
-		loginfox(PACKAGE " exited");
 	logclose();
 	free(ctx.logfile);
 	free(ctx.ctl_buf);
@@ -2632,7 +2674,7 @@ exit1:
 		    write(ctx.fork_fd, &i, sizeof(i)) == -1)
 			logerr("%s: write", __func__);
 	}
-	if (ctx.options & DHCPCD_FORKED || oi != 0)
+	if (ctx.options & (DHCPCD_FORKED | DHCPCD_PRIVSEP))
 		_exit(i); /* so atexit won't remove our pidfile */
 #endif
 	return i;
