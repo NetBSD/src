@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.129 2023/04/21 18:24:39 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.130 2023/04/21 18:24:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.129 2023/04/21 18:24:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.130 2023/04/21 18:24:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1584,7 +1584,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		    l != NULL ? l->l_cred : NOCRED);
 		break;
 	case DIOCGWEDGEINFO: {
-		struct dkwedge_info *dkw = (void *) data;
+		struct dkwedge_info *dkw = data;
 
 		strlcpy(dkw->dkw_devname, device_xname(sc->sc_dev),
 		    sizeof(dkw->dkw_devname));
