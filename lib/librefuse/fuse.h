@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.34 2022/01/22 08:09:39 pho Exp $ */
+/* $NetBSD: fuse.h,v 1.35 2023/04/21 19:29:31 abs Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -637,7 +637,7 @@ fuse_new(struct fuse_args *args, const struct fuse_operations *op,
 #		define fuse_parse_cmdline	fuse_parse_cmdline_v30
 
 /* ===== FUSE 3.4 ===== */
-#	elif FUSE_USE_VERSION >= 34
+#	elif FUSE_USE_VERSION == 34
 		/* Types */
 #		define _FUSE_OP_VERSION__	34
 #		define fuse_fill_dir_t		fuse_fill_dir_t_v30
