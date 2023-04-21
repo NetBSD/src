@@ -1,4 +1,4 @@
-/* $Id: imx23_olinuxino_machdep.c,v 1.14 2023/04/20 08:28:04 skrll Exp $ */
+/* $Id: imx23_olinuxino_machdep.c,v 1.15 2023/04/21 14:58:35 skrll Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@ do {									\
  * Static device map for i.MX23 peripheral address space.
  */
 static const struct pmap_devmap devmap[] = {
-	DEVMAP_ENTRY(	
+	DEVMAP_ENTRY(
 		APBH_BASE,		/* Virtual address. */
 		APBH_BASE,		/* Physical address. */
 		APBH_SIZE + APBX_SIZE	/* APBX located after APBH. */
