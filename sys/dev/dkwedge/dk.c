@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.133 2023/04/21 18:25:22 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.134 2023/04/21 18:25:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.133 2023/04/21 18:25:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.134 2023/04/21 18:25:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.133 2023/04/21 18:25:22 riastradh Exp $");
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/rwlock.h>
 #include <sys/stat.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
