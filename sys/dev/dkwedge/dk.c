@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.130 2023/04/21 18:24:47 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.131 2023/04/21 18:24:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.130 2023/04/21 18:24:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.131 2023/04/21 18:24:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1312,7 +1312,7 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 }
 
 /*
- * dkstragegy:		[devsw entry point]
+ * dkstrategy:		[devsw entry point]
  *
  *	Perform I/O based on the wedge I/O strategy.
  */
