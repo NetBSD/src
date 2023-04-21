@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1256 2023/03/28 20:04:51 rillig Exp $
+# $NetBSD: mi,v 1.1257 2023/04/21 21:50:05 gutteridge Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2232,6 +2232,7 @@
 ./usr/tests/kernel/t_mkdir				tests-obsolete		obsolete
 ./usr/tests/kernel/t_mqueue				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_nointerpreter			tests-kernel-tests	atf
+./usr/tests/kernel/t_open_pr_57260			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_origin				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_pipe				tests-obsolete		obsolete
 ./usr/tests/kernel/t_poll3w				tests-obsolete		obsolete
