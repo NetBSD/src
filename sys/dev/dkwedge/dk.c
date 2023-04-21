@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.143 2023/04/21 18:30:52 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.144 2023/04/21 18:31:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.143 2023/04/21 18:30:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.144 2023/04/21 18:31:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -114,6 +114,8 @@ static int	dkwedge_del1(struct dkwedge_info *, int);
 static int	dk_open_parent(dev_t, int, struct vnode **);
 static int	dk_close_parent(struct vnode *, int);
 
+static int	dkunit(dev_t);
+
 static dev_type_open(dkopen);
 static dev_type_close(dkclose);
 static dev_type_cancel(dkcancel);
@@ -139,6 +141,8 @@ const struct bdevsw dk_bdevsw = {
 	.d_dump = dkdump,
 	.d_psize = dksize,
 	.d_discard = dkdiscard,
+	.d_cfdriver = &dk_cd,
+	.d_devtounit = dkunit,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -155,6 +159,8 @@ const struct cdevsw dk_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = dkdiscard,
+	.d_cfdriver = &dk_cd,
+	.d_devtounit = dkunit,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -1214,6 +1220,36 @@ dk_close_parent(struct vnode *vp, int mode)
 
 	error = vn_close(vp, mode, NOCRED);
 	return error;
+}
+
+/*
+ * dkunit:		[devsw entry point]
+ *
+ *	Return the autoconf device_t unit number of a wedge by its
+ *	devsw dev_t number, or -1 if there is none.
+ *
+ *	XXX This is a temporary hack until dkwedge numbering is made to
+ *	correspond 1:1 to autoconf device numbering.
+ */
+static int
+dkunit(dev_t dev)
+{
+	int mn = minor(dev);
+	struct dkwedge_softc *sc;
+	device_t dv;
+	int unit = -1;
+
+	if (mn < 0)
+		return -1;
+
+	rw_enter(&dkwedges_lock, RW_READER);
+	if (mn < ndkwedges &&
+	    (sc = dkwedges[minor(dev)]) != NULL &&
+	    (dv = sc->sc_dev) != NULL)
+		unit = device_unit(dv);
+	rw_exit(&dkwedges_lock);
+
+	return unit;
 }
 
 /*
