@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.73 2023/04/17 00:37:04 dholland Exp $ */
+/* $NetBSD: style,v 1.74 2023/04/21 16:12:53 rillig Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -30,7 +30,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: style,v 1.73 2023/04/17 00:37:04 dholland Exp $");
+__RCSID("$NetBSD: style,v 1.74 2023/04/21 16:12:53 rillig Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -131,9 +131,8 @@ int frobnicate(const char *);
 #include "pathnames.h"		/* Local includes in double quotes. */
 
 /*
- * ANSI function declarations for private functions (i.e. functions not used
- * elsewhere) and the main() function go at the top of the source module.
- * Don't associate a name with the types.  I.e. use:
+ * Declarations for file-static functions go at the top of the file.
+ * Don't associate a name with the parameter types.  I.e. use:
  *	void function(int);
  * Use your discretion on indenting between the return type and the name, and
  * how to wrap a prototype too long for a single line.  In the latter case,
@@ -400,7 +399,7 @@ function(int a1, int a2, float fl, int a4)
 	 * code is designed to compile and work on different environments
 	 * where we don't have control over the NULL definition (on NetBSD
 	 * it is defined as ((void *)0), but on other systems it can be
-	 * defined as (0) and both definitions are valid under ANSI C), it
+	 * defined as (0) and both definitions are valid), it
 	 * it advised to cast NULL to a pointer on variadic functions,
 	 * because on machines where sizeof(pointer) != sizeof(int) and in
 	 * the absence of a prototype in scope, passing an un-casted NULL,
@@ -429,8 +428,7 @@ function(int a1, int a2, float fl, int a4)
 }
 
 /*
- * Use ANSI function declarations.  ANSI function braces look like
- * old-style (K&R) function braces.
+ * Place the opening brace of a function body in column 1.
  * As per the wrapped prototypes, use your discretion on how to format
  * the subsequent lines.
  */
