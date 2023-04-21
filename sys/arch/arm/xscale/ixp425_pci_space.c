@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci_space.c,v 1.14 2018/03/16 17:56:32 ryo Exp $ */
+/*	$NetBSD: ixp425_pci_space.c,v 1.15 2023/04/21 15:00:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.14 2018/03/16 17:56:32 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci_space.c,v 1.15 2023/04/21 15:00:48 skrll Exp $");
 
 /*
  * bus_space PCI functions for ixp425
@@ -210,7 +210,7 @@ ixp425_pci_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
 	/* NULL */
-}	
+}
 
 paddr_t
 ixp425_pci_bs_mmap(void *t, bus_addr_t addr, off_t off, int prot, int flags)
@@ -344,7 +344,7 @@ _pci_io_bs_w_2(void *v, bus_space_handle_t ioh, bus_size_t off,
 	n = (ioh + off) % 4;
 	be = (0xf & ~((1U << n) | (1U << (n + 1)))) << NP_CBE_SHIFT;
 	data = val << (8 * n);
-	
+
 	PCI_CONF_LOCK(s);
 	CSR_WRITE_4(PCI_NP_AD, (ioh + off) & ~3);
 	CSR_WRITE_4(PCI_NP_CBE, be | COMMAND_NP_IO_WRITE);
@@ -442,7 +442,7 @@ ixp425_pci_mem_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 	panic("ixp425_mem_bs_alloc(): not implemented\n");
 }
 
-void    
+void
 ixp425_pci_mem_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	panic("ixp425_mem_bs_free(): not implemented\n");

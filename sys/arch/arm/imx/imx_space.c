@@ -1,7 +1,7 @@
-/* $Id: imx_space.c,v 1.6 2018/03/16 17:56:31 ryo Exp $ */
+/* $Id: imx_space.c,v 1.7 2023/04/21 15:00:48 skrll Exp $ */
 
 /* derived from: */
-/*	$NetBSD: imx_space.c,v 1.6 2018/03/16 17:56:31 ryo Exp $ */
+/*	$NetBSD: imx_space.c,v 1.7 2023/04/21 15:00:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -291,7 +291,7 @@ imx_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 	panic("imx_io_bs_alloc(): not implemented\n");
 }
 
-void    
+void
 imx_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
