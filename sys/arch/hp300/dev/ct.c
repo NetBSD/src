@@ -1,4 +1,4 @@
-/*	$NetBSD: ct.c,v 1.63 2021/07/05 14:51:23 tsutsui Exp $	*/
+/*	$NetBSD: ct.c,v 1.64 2023/04/21 23:01:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.63 2021/07/05 14:51:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ct.c,v 1.64 2023/04/21 23:01:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,7 +368,6 @@ ctreset(struct ct_softc *sc)
 	hpibrecv(ctlr, slave, C_QSTAT, &stat, sizeof(stat));
 }
 
-/*ARGSUSED*/
 static int
 ctopen(dev_t dev, int flag, int type, struct lwp *l)
 {
@@ -416,7 +415,6 @@ ctopen(dev_t dev, int flag, int type, struct lwp *l)
 	return 0;
 }
 
-/*ARGSUSED*/
 static int
 ctclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
@@ -727,7 +725,6 @@ cteof(struct ct_softc *sc, struct buf *bp)
 #endif
 }
 
-/* ARGSUSED */
 static void
 ctintr(void *arg)
 {
@@ -898,7 +895,6 @@ ctwrite(dev_t dev, struct uio *uio, int flags)
 	return physio(ctstrategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
-/*ARGSUSED*/
 static int
 ctioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.156 2023/01/15 06:19:46 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.157 2023/04/21 23:01:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.156 2023/01/15 06:19:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.157 2023/04/21 23:01:59 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -248,7 +248,6 @@ machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
  * including events such as simulated software interrupts/AST's.
  * System calls are broken out for efficiency.
  */
-/*ARGSUSED*/
 void
 trap(struct frame *fp, int type, u_int code, u_int v)
 {
