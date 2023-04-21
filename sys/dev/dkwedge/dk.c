@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.145 2023/04/21 18:44:18 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.146 2023/04/21 18:44:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.145 2023/04/21 18:44:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.146 2023/04/21 18:44:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1809,9 +1809,6 @@ dksize(dev_t dev)
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return -1;
 
-	mutex_enter(&sc->sc_dk.dk_openlock);
-	mutex_enter(&sc->sc_parent->dk_rawlock);
-
 	/* Our content type is static, no need to open the device. */
 
 	p_size = dkwedge_size(sc) << sc->sc_parent->dk_blkshift;
@@ -1822,9 +1819,6 @@ dksize(dev_t dev)
 		else
 			rv = (int)p_size;
 	}
-
-	mutex_exit(&sc->sc_parent->dk_rawlock);
-	mutex_exit(&sc->sc_dk.dk_openlock);
 
 	return rv;
 }
@@ -1846,9 +1840,6 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		return ENXIO;
 	if (sc->sc_state != DKW_STATE_RUNNING)
 		return ENXIO;
-
-	mutex_enter(&sc->sc_dk.dk_openlock);
-	mutex_enter(&sc->sc_parent->dk_rawlock);
 
 	/* Our content type is static, no need to open the device. */
 
@@ -1878,9 +1869,6 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	rv = (*bdev->d_dump)(sc->sc_pdev, blkno + p_offset, va, size);
 
 out:
-	mutex_exit(&sc->sc_parent->dk_rawlock);
-	mutex_exit(&sc->sc_dk.dk_openlock);
-
 	return rv;
 }
 
