@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.141 2023/04/21 18:30:21 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.142 2023/04/21 18:30:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.141 2023/04/21 18:30:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.142 2023/04/21 18:30:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -93,6 +93,7 @@ struct dkwedge_softc {
 	kmutex_t	sc_iolock;
 	kcondvar_t	sc_dkdrn;
 	u_int		sc_iopend;	/* I/Os pending */
+	bool		sc_iostop;	/* don't schedule restart */
 	int		sc_mode;	/* parent open mode */
 };
 
@@ -724,7 +725,10 @@ dkwedge_detach(device_t self, int flags)
 	cmaj = cdevsw_lookup_major(&dk_cdevsw);
 
 	/* Kill any pending restart. */
-	callout_stop(&sc->sc_restart_ch);
+	mutex_enter(&sc->sc_iolock);
+	sc->sc_iostop = true;
+	mutex_exit(&sc->sc_iolock);
+	callout_halt(&sc->sc_restart_ch, NULL);
 
 	/*
 	 * dkstart() will kill any queued buffers now that the
@@ -1473,7 +1477,7 @@ dkstart(struct dkwedge_softc *sc)
 
 	/* Do as much work as has been enqueued. */
 	while ((bp = bufq_peek(sc->sc_bufq)) != NULL) {
-		if (sc->sc_state != DKW_STATE_RUNNING) {
+		if (sc->sc_iostop) {
 			(void) bufq_get(sc->sc_bufq);
 			if (--sc->sc_iopend == 0)
 				cv_broadcast(&sc->sc_dkdrn);
@@ -1495,7 +1499,8 @@ dkstart(struct dkwedge_softc *sc)
 			 * buffer queued up, and schedule a timer to
 			 * restart the queue in 1/2 a second.
 			 */
-			callout_schedule(&sc->sc_restart_ch, hz/2);
+			if (!sc->sc_iostop)
+				callout_schedule(&sc->sc_restart_ch, hz/2);
 			break;
 		}
 
