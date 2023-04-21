@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.125 2023/04/13 08:30:40 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.126 2023/04/21 18:09:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.125 2023/04/13 08:30:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.126 2023/04/21 18:09:38 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1227,6 +1227,8 @@ dklastclose(struct dkwedge_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_dk.dk_openlock));
 	KASSERT(mutex_owned(&sc->sc_parent->dk_rawlock));
+	KASSERT(sc->sc_parent->dk_rawopens > 0);
+	KASSERT(sc->sc_parent->dk_rawvp != NULL);
 
 	if (--sc->sc_parent->dk_rawopens == 0) {
 		struct vnode *const vp = sc->sc_parent->dk_rawvp;
