@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.77 2023/04/19 00:40:30 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.78 2023/04/21 02:17:32 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.77 2023/04/19 00:40:30 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.78 2023/04/21 02:17:32 yamaguchi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1258,11 +1258,11 @@ virtio_enqueue_abort(struct virtio_softc *sc, struct virtqueue *vq, int slot)
 {
 	struct vring_desc_extra *vdx;
 
-	vq_free_slot(sc, vq, slot);
-
 	vdx = &vq->vq_descx[slot];
 	vdx->desc_free_idx = VRING_DESC_CHAIN_END;
 	vdx->desc_base = NULL;
+
+	vq_free_slot(sc, vq, slot);
 
 	return 0;
 }
@@ -1308,11 +1308,11 @@ virtio_dequeue_commit(struct virtio_softc *sc, struct virtqueue *vq, int slot)
 {
 	struct vring_desc_extra *vdx;
 
-	vq_free_slot(sc, vq, slot);
-
 	vdx = &vq->vq_descx[slot];
 	vdx->desc_base = NULL;
 	vdx->desc_free_idx = VRING_DESC_CHAIN_END;
+
+	vq_free_slot(sc, vq, slot);
 
 	return 0;
 }
