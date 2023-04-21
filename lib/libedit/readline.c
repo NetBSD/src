@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.178 2022/12/02 19:23:15 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.179 2023/04/21 14:56:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.178 2022/12/02 19:23:15 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.179 2023/04/21 14:56:13 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -122,11 +122,11 @@ int rl_filename_completion_desired = 0;
 int rl_ignore_completion_duplicates = 0;
 int readline_echoing_p = 1;
 int _rl_print_completions_horizontally = 0;
-VFunction *rl_redisplay_function = NULL;
+rl_voidfunc_t *rl_redisplay_function = NULL;
 rl_hook_func_t *rl_startup_hook = NULL;
-VFunction *rl_completion_display_matches_hook = NULL;
-VFunction *rl_prep_term_function = (VFunction *)rl_prep_terminal;
-VFunction *rl_deprep_term_function = (VFunction *)rl_deprep_terminal;
+rl_compdisp_func_t *rl_completion_display_matches_hook = NULL;
+rl_vintfunc_t *rl_prep_term_function = (rl_vintfunc_t *)rl_prep_terminal;
+rl_voidfunc_t *rl_deprep_term_function = (rl_voidfunc_t *)rl_deprep_terminal;
 KEYMAP_ENTRY_ARRAY emacs_meta_keymap;
 unsigned long rl_readline_state = RL_STATE_NONE;
 int _rl_complete_mark_directories;
@@ -2573,7 +2573,7 @@ void
 rl_reset_after_signal(void)
 {
 	if (rl_prep_term_function)
-		(*rl_prep_term_function)();
+		(*rl_prep_term_function)(1);
 }
 
 void
