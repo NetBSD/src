@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.146 2023/04/21 18:44:58 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.147 2023/04/21 18:45:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.146 2023/04/21 18:44:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.147 2023/04/21 18:45:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1834,7 +1834,6 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	const struct bdevsw *bdev;
 	uint64_t p_size, p_offset;
-	int rv = 0;
 
 	if (sc == NULL)
 		return ENXIO;
@@ -1845,14 +1844,10 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 
 	if (strcmp(sc->sc_ptype, DKW_PTYPE_SWAP) != 0 &&
 	    strcmp(sc->sc_ptype, DKW_PTYPE_RAID) != 0 &&
-	    strcmp(sc->sc_ptype, DKW_PTYPE_CGD) != 0) {
-		rv = ENXIO;
-		goto out;
-	}
-	if (size % DEV_BSIZE != 0) {
-		rv = EINVAL;
-		goto out;
-	}
+	    strcmp(sc->sc_ptype, DKW_PTYPE_CGD) != 0)
+		return ENXIO;
+	if (size % DEV_BSIZE != 0)
+		return EINVAL;
 
 	p_offset = sc->sc_offset << sc->sc_parent->dk_blkshift;
 	p_size = dkwedge_size(sc) << sc->sc_parent->dk_blkshift;
@@ -1861,15 +1856,11 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 		printf("%s: blkno (%" PRIu64 ") + size / DEV_BSIZE (%zu) > "
 		    "p_size (%" PRIu64 ")\n", __func__, blkno,
 		    size/DEV_BSIZE, p_size);
-		rv = EINVAL;
-		goto out;
+		return EINVAL;
 	}
 
 	bdev = bdevsw_lookup(sc->sc_pdev);
-	rv = (*bdev->d_dump)(sc->sc_pdev, blkno + p_offset, va, size);
-
-out:
-	return rv;
+	return (*bdev->d_dump)(sc->sc_pdev, blkno + p_offset, va, size);
 }
 
 /*
