@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.142 2023/04/21 18:30:32 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.143 2023/04/21 18:30:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.142 2023/04/21 18:30:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.143 2023/04/21 18:30:52 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -108,7 +108,6 @@ static void	dkminphys(struct buf *);
 
 static int	dkfirstopen(struct dkwedge_softc *, int);
 static void	dklastclose(struct dkwedge_softc *);
-static int	dkwedge_cleanup_parent(struct dkwedge_softc *, int);
 static int	dkwedge_detach(device_t, int);
 static void	dkwedge_delall1(struct disk *, bool);
 static int	dkwedge_del1(struct dkwedge_info *, int);
@@ -668,28 +667,6 @@ dkwedge_del1(struct dkwedge_info *dkw, int flags)
 	return config_detach(sc->sc_dev, flags);
 }
 
-static int
-dkwedge_cleanup_parent(struct dkwedge_softc *sc, int flags)
-{
-	struct disk *dk = &sc->sc_dk;
-	int rc;
-
-	rc = 0;
-	mutex_enter(&dk->dk_openlock);
-	if (dk->dk_openmask == 0) {
-		/* nothing to do */
-	} else if ((flags & DETACH_FORCE) == 0) {
-		rc = EBUSY;
-	}  else {
-		mutex_enter(&sc->sc_parent->dk_rawlock);
-		dklastclose(sc);
-		mutex_exit(&sc->sc_parent->dk_rawlock);
-	}
-	mutex_exit(&sc->sc_dk.dk_openlock);
-
-	return rc;
-}
-
 /*
  * dkwedge_detach:
  *
@@ -709,7 +686,8 @@ dkwedge_detach(device_t self, int flags)
 	}
 	if (unit == ndkwedges)
 		rc = ENXIO;
-	else if ((rc = dkwedge_cleanup_parent(sc, flags)) == 0) {
+	else if ((rc = disk_begindetach(&sc->sc_dk, /*lastclose*/NULL, self,
+		    flags)) == 0) {
 		/* Mark the wedge as dying. */
 		sc->sc_state = DKW_STATE_DYING;
 	}
@@ -742,8 +720,17 @@ dkwedge_detach(device_t self, int flags)
 	vdevgone(bmaj, unit, unit, VBLK);
 	vdevgone(cmaj, unit, unit, VCHR);
 
-	/* Clean up the parent. */
-	dkwedge_cleanup_parent(sc, flags | DETACH_FORCE);
+	/*
+	 * At this point, all block device opens have been closed,
+	 * synchronously flushing any buffered writes; and all
+	 * character device I/O operations have completed
+	 * synchronously, and character device opens have been closed.
+	 *
+	 * So there can be no more opens or queued buffers by now.
+	 */
+	KASSERT(sc->sc_dk.dk_openmask == 0);
+	KASSERT(bufq_peek(sc->sc_bufq) == NULL);
+	bufq_drain(sc->sc_bufq);
 
 	/* Announce our departure. */
 	aprint_normal("%s at %s (%s) deleted\n", device_xname(sc->sc_dev),
