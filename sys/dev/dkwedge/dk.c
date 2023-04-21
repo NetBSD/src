@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.134 2023/04/21 18:25:30 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.135 2023/04/21 18:25:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.134 2023/04/21 18:25:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.135 2023/04/21 18:25:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -79,6 +79,7 @@ struct dkwedge_softc {
 
 	struct disk	*sc_parent;	/* parent disk */
 	daddr_t		sc_offset;	/* LBA offset of wedge in parent */
+	krwlock_t	sc_sizelock;
 	uint64_t	sc_size;	/* size of wedge in blocks */
 	char		sc_ptype[32];	/* partition type */
 	dev_t		sc_pdev;	/* cached parent's dev_t */
@@ -289,6 +290,47 @@ out:	rw_exit(&dkwedges_lock);
 }
 
 static void
+dkwedge_size_init(struct dkwedge_softc *sc, uint64_t size)
+{
+
+	rw_init(&sc->sc_sizelock);
+	sc->sc_size = size;
+}
+
+static void
+dkwedge_size_fini(struct dkwedge_softc *sc)
+{
+
+	rw_destroy(&sc->sc_sizelock);
+}
+
+static uint64_t
+dkwedge_size(struct dkwedge_softc *sc)
+{
+	uint64_t size;
+
+	rw_enter(&sc->sc_sizelock, RW_READER);
+	size = sc->sc_size;
+	rw_exit(&sc->sc_sizelock);
+
+	return size;
+}
+
+static void
+dkwedge_size_increase(struct dkwedge_softc *sc, uint64_t size)
+{
+
+	KASSERT(mutex_owned(&sc->sc_dk.dk_openlock));
+
+	rw_enter(&sc->sc_sizelock, RW_WRITER);
+	KASSERTMSG(size >= sc->sc_size,
+	    "decreasing dkwedge size from %"PRIu64" to %"PRIu64,
+	    sc->sc_size, size);
+	sc->sc_size = size;
+	rw_exit(&sc->sc_sizelock);
+}
+
+static void
 dk_set_geometry(struct dkwedge_softc *sc, struct disk *pdk)
 {
 	struct disk *dk = &sc->sc_dk;
@@ -296,7 +338,7 @@ dk_set_geometry(struct dkwedge_softc *sc, struct disk *pdk)
 
 	memset(dg, 0, sizeof(*dg));
 
-	dg->dg_secperunit = sc->sc_size;
+	dg->dg_secperunit = dkwedge_size(sc);
 	dg->dg_secsize = DEV_BSIZE << pdk->dk_blkshift;
 
 	/* fake numbers, 1 cylinder is 1 MB with default sector size */
@@ -351,11 +393,11 @@ dkwedge_add(struct dkwedge_info *dkw)
 			break;
 		if (strcmp(lsc->sc_ptype, dkw->dkw_ptype) != 0)
 			break;
-		if (lsc->sc_size > dkw->dkw_size)
+		if (dkwedge_size(lsc) > dkw->dkw_size)
 			break;
 
 		sc = lsc;
-		sc->sc_size = dkw->dkw_size;
+		dkwedge_size_increase(sc, dkw->dkw_size);
 		dk_set_geometry(sc, pdk);
 
 		break;
@@ -370,7 +412,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	sc->sc_parent = pdk;
 	sc->sc_pdev = pdev;
 	sc->sc_offset = dkw->dkw_offset;
-	sc->sc_size = dkw->dkw_size;
+	dkwedge_size_init(sc, dkw->dkw_size);
 
 	memcpy(sc->sc_wname, dkw->dkw_wname, sizeof(sc->sc_wname));
 	sc->sc_wname[sizeof(sc->sc_wname) - 1] = '\0';
@@ -396,8 +438,11 @@ dkwedge_add(struct dkwedge_info *dkw)
 	else {
 		/* Check for wedge overlap. */
 		LIST_FOREACH(lsc, &pdk->dk_wedges, sc_plink) {
-			daddr_t lastblk = sc->sc_offset + sc->sc_size - 1;
-			daddr_t llastblk = lsc->sc_offset + lsc->sc_size - 1;
+			/* XXX arithmetic overflow */
+			uint64_t size = dkwedge_size(sc);
+			uint64_t lsize = dkwedge_size(lsc);
+			daddr_t lastblk = sc->sc_offset + size - 1;
+			daddr_t llastblk = lsc->sc_offset + lsize - 1;
 
 			if (sc->sc_offset >= lsc->sc_offset &&
 			    sc->sc_offset <= llastblk) {
@@ -412,7 +457,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		}
 		if (lsc != NULL) {
 			if (sc->sc_offset == lsc->sc_offset &&
-			    sc->sc_size == lsc->sc_size &&
+			    dkwedge_size(sc) == dkwedge_size(lsc) &&
 			    strcmp(sc->sc_wname, lsc->sc_wname) == 0)
 				error = EEXIST;
 			else
@@ -427,6 +472,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		cv_destroy(&sc->sc_dkdrn);
 		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
+		dkwedge_size_fini(sc);
 		free(sc, M_DKWEDGE);
 		return error;
 	}
@@ -484,6 +530,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		cv_destroy(&sc->sc_dkdrn);
 		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
+		dkwedge_size_fini(sc);
 		free(sc, M_DKWEDGE);
 		return error;
 	}
@@ -512,6 +559,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		cv_destroy(&sc->sc_dkdrn);
 		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
+		dkwedge_size_fini(sc);
 		free(sc, M_DKWEDGE);
 		return ENOMEM;
 	}
@@ -534,7 +582,7 @@ announce:
 	    "%s at %s: \"%s\", %"PRIu64" blocks at %"PRId64", type: %s\n",
 	    device_xname(sc->sc_dev), pdk->dk_name,
 	    sc->sc_wname,	/* XXX Unicode */
-	    sc->sc_size, sc->sc_offset,
+	    dkwedge_size(sc), sc->sc_offset,
 	    sc->sc_ptype[0] == '\0' ? "<unknown>" : sc->sc_ptype);
 
 	/* Return the devname to the caller. */
@@ -706,6 +754,7 @@ dkwedge_detach(device_t self, int flags)
 
 	mutex_destroy(&sc->sc_iolock);
 	cv_destroy(&sc->sc_dkdrn);
+	dkwedge_size_fini(sc);
 
 	free(sc, M_DKWEDGE);
 
@@ -797,7 +846,7 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 		strlcpy(dkw.dkw_parent, sc->sc_parent->dk_name,
 		    sizeof(dkw.dkw_parent));
 		dkw.dkw_offset = sc->sc_offset;
-		dkw.dkw_size = sc->sc_size;
+		dkw.dkw_size = dkwedge_size(sc);
 		strlcpy(dkw.dkw_ptype, sc->sc_ptype, sizeof(dkw.dkw_ptype));
 
 		error = uiomove(&dkw, sizeof(dkw), &uio);
@@ -1341,7 +1390,7 @@ dkstrategy(struct buf *bp)
 		goto done;
 
 	p_offset = sc->sc_offset << sc->sc_parent->dk_blkshift;
-	p_size   = sc->sc_size << sc->sc_parent->dk_blkshift;
+	p_size = dkwedge_size(sc) << sc->sc_parent->dk_blkshift;
 
 	/* Make sure it's in-range. */
 	if (bounds_check_with_mediasize(bp, DEV_BSIZE, p_size) <= 0)
@@ -1596,7 +1645,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		strlcpy(dkw->dkw_parent, sc->sc_parent->dk_name,
 		    sizeof(dkw->dkw_parent));
 		dkw->dkw_offset = sc->sc_offset;
-		dkw->dkw_size = sc->sc_size;
+		dkw->dkw_size = dkwedge_size(sc);
 		strlcpy(dkw->dkw_ptype, sc->sc_ptype, sizeof(dkw->dkw_ptype));
 
 		break;
@@ -1634,6 +1683,7 @@ static int
 dkdiscard(dev_t dev, off_t pos, off_t len)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	uint64_t size = dkwedge_size(sc);
 	unsigned shift;
 	off_t offset, maxlen;
 	int error;
@@ -1645,14 +1695,15 @@ dkdiscard(dev_t dev, off_t pos, off_t len)
 	if (sc->sc_parent->dk_rawvp == NULL)
 		return ENXIO;
 
+	/* XXX check bounds on size/offset up front */
 	shift = (sc->sc_parent->dk_blkshift + DEV_BSHIFT);
-	KASSERT(__type_fit(off_t, sc->sc_size));
+	KASSERT(__type_fit(off_t, size));
 	KASSERT(__type_fit(off_t, sc->sc_offset));
 	KASSERT(0 <= sc->sc_offset);
-	KASSERT(sc->sc_size <= (__type_max(off_t) >> shift));
-	KASSERT(sc->sc_offset <= ((__type_max(off_t) >> shift) - sc->sc_size));
+	KASSERT(size <= (__type_max(off_t) >> shift));
+	KASSERT(sc->sc_offset <= ((__type_max(off_t) >> shift) - size));
 	offset = ((off_t)sc->sc_offset << shift);
-	maxlen = ((off_t)sc->sc_size << shift);
+	maxlen = ((off_t)size << shift);
 
 	if (len > maxlen)
 		return EINVAL;
@@ -1691,7 +1742,7 @@ dksize(dev_t dev)
 
 	/* Our content type is static, no need to open the device. */
 
-	p_size   = sc->sc_size << sc->sc_parent->dk_blkshift;
+	p_size = dkwedge_size(sc) << sc->sc_parent->dk_blkshift;
 	if (strcmp(sc->sc_ptype, DKW_PTYPE_SWAP) == 0) {
 		/* Saturate if we are larger than INT_MAX. */
 		if (p_size > INT_MAX)
@@ -1741,7 +1792,7 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	}
 
 	p_offset = sc->sc_offset << sc->sc_parent->dk_blkshift;
-	p_size   = sc->sc_size << sc->sc_parent->dk_blkshift;
+	p_size = dkwedge_size(sc) << sc->sc_parent->dk_blkshift;
 
 	if (blkno < 0 || blkno + size/DEV_BSIZE > p_size) {
 		printf("%s: blkno (%" PRIu64 ") + size / DEV_BSIZE (%zu) > "
@@ -1784,7 +1835,7 @@ dkwedge_find_partition(device_t parent, daddr_t startblk, uint64_t nblks)
 			continue;
 		if (strcmp(sc->sc_parent->dk_name, device_xname(parent)) == 0 &&
 		    sc->sc_offset == startblk &&
-		    sc->sc_size == nblks) {
+		    dkwedge_size(sc) == nblks) {
 			if (wedge) {
 				printf("WARNING: double match for boot wedge "
 				    "(%s, %s)\n",
