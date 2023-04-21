@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_space.c,v 1.5 2018/03/16 17:56:31 ryo Exp $	*/
+/*	$NetBSD: gemini_space.c,v 1.6 2023/04/21 15:00:48 skrll Exp $	*/
 
 /* adapted from:
  *	NetBSD: pxa2x0_space.c,v 1.8 2005/11/24 13:08:32 yamt Exp
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_space.c,v 1.5 2018/03/16 17:56:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_space.c,v 1.6 2023/04/21 15:00:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ gemini_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
 	panic("gemini_io_bs_alloc(): not implemented\n");
 }
 
-void    
+void
 gemini_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 

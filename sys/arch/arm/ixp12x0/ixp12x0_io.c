@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_io.c,v 1.18 2018/03/16 17:56:32 ryo Exp $ */
+/*	$NetBSD: ixp12x0_io.c,v 1.19 2023/04/21 15:00:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.18 2018/03/16 17:56:32 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_io.c,v 1.19 2023/04/21 15:00:48 skrll Exp $");
 
 /*
  * bus_space I/O functions for ixp12x0
@@ -151,7 +151,7 @@ ixp12x0_bs_map(void *t, bus_addr_t bpa, bus_size_t size,
 	endpa = round_page(bpa + size);
 	offset = bpa & PAGE_MASK;
 	startpa = trunc_page(bpa);
-		
+
 	va = uvm_km_alloc(kernel_map, endpa - startpa, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (va  == 0)
@@ -213,7 +213,7 @@ ixp12x0_bs_alloc(void *t,
 	panic("ixp12x0_bs_alloc(): not implemented\n");
 }
 
-void    
+void
 ixp12x0_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 	panic("ixp12x0_bs_free(): not implemented\n");
@@ -223,6 +223,6 @@ void
 ixp12x0_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset, bus_size_t len, int flags)
 {
 /* NULL */
-}	
+}
 
 /* End of ixp12x0_io.c */
