@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.139 2023/04/21 18:29:33 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.140 2023/04/21 18:29:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.139 2023/04/21 18:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.140 2023/04/21 18:29:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -340,6 +340,8 @@ dk_set_geometry(struct dkwedge_softc *sc, struct disk *pdk)
 	struct disk *dk = &sc->sc_dk;
 	struct disk_geom *dg = &dk->dk_geom;
 
+	KASSERT(mutex_owned(&pdk->dk_openlock));
+
 	memset(dg, 0, sizeof(*dg));
 
 	dg->dg_secperunit = dkwedge_size(sc);
@@ -575,7 +577,9 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 */
 
 	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
+	mutex_enter(&pdk->dk_openlock);
 	dk_set_geometry(sc, pdk);
+	mutex_exit(&pdk->dk_openlock);
 	disk_attach(&sc->sc_dk);
 
 	/* Disk wedge is ready for use! */
