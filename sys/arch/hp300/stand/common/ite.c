@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.19 2021/07/05 13:41:08 tsutsui Exp $	*/
+/*	$NetBSD: ite.c,v 1.20 2023/04/21 22:44:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -289,7 +289,6 @@ iteinit(struct consdev *cp)
 	kbdinit();
 }
 
-/* ARGSUSED */
 void
 iteputchar(dev_t dev, int c)
 {
@@ -354,7 +353,6 @@ ite_clrtoeol(struct ite_data *ip, struct itesw *sp, int y, int x)
 	(*sp->ite_cursor)(ip, DRAW_CURSOR);
 }
 
-/* ARGSUSED */
 int
 itegetchar(dev_t dev)
 {
