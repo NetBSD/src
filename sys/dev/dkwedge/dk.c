@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.136 2023/04/21 18:26:35 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.137 2023/04/21 18:29:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.136 2023/04/21 18:26:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.137 2023/04/21 18:29:18 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -624,7 +624,7 @@ dkwedge_find(struct dkwedge_info *dkw, u_int *unitp)
 		}
 	}
 	rw_exit(&dkwedges_lock);
-	if (unit == ndkwedges)
+	if (sc == NULL)
 		return NULL;
 
 	if (unitp != NULL)
@@ -1159,14 +1159,17 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 static struct dkwedge_softc *
 dkwedge_lookup(dev_t dev)
 {
-	int unit = minor(dev);
+	const int unit = minor(dev);
+	struct dkwedge_softc *sc;
 
-	if (unit >= ndkwedges)
-		return NULL;
+	rw_enter(&dkwedges_lock, RW_READER);
+	if (unit < 0 || unit >= ndkwedges)
+		sc = NULL;
+	else
+		sc = dkwedges[unit];
+	rw_exit(&dkwedges_lock);
 
-	KASSERT(dkwedges != NULL);
-
-	return dkwedges[unit];
+	return sc;
 }
 
 static int
