@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.53 2022/02/19 17:45:02 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.54 2023/04/21 14:56:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,11 +38,12 @@
 
 /* typedefs */
 typedef int	  Function(const char *, int);
-typedef char     *CPFunction(const char *, int);
-typedef void	  VFunction(void);
+typedef void	  rl_voidfunc_t(void);
+typedef void	  rl_vintfunc_t(int);
 typedef void	  rl_vcpfunc_t(char *);
 typedef char	**rl_completion_func_t(const char *, int, int);
 typedef char     *rl_compentry_func_t(const char *, int);
+typedef void	  rl_compdisp_func_t(char **, int, int);
 typedef int	  rl_command_func_t(int, int);
 typedef int	  rl_hook_func_t(void);
 typedef int       rl_icppfunc_t(char **);
@@ -145,10 +146,10 @@ extern KEYMAP_ENTRY_ARRAY emacs_standard_keymap,
 extern int		rl_filename_completion_desired;
 extern int		rl_ignore_completion_duplicates;
 extern int		(*rl_getc_function)(FILE *);
-extern VFunction	*rl_redisplay_function;
-extern VFunction	*rl_completion_display_matches_hook;
-extern VFunction	*rl_prep_term_function;
-extern VFunction	*rl_deprep_term_function;
+extern rl_voidfunc_t	*rl_redisplay_function;
+extern rl_compdisp_func_t *rl_completion_display_matches_hook;
+extern rl_vintfunc_t	*rl_prep_term_function;
+extern rl_voidfunc_t	*rl_deprep_term_function;
 extern rl_hook_func_t	*rl_event_hook;
 extern int		readline_echoing_p;
 extern int		_rl_print_completions_horizontally;
