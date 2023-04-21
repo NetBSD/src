@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.127 2023/04/21 18:24:19 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.128 2023/04/21 18:24:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.127 2023/04/21 18:24:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.128 2023/04/21 18:24:31 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -160,7 +160,7 @@ dkwedge_match(device_t parent, cfdata_t match,
 {
 
 	/* Pseudo-device; always present. */
-	return (1);
+	return 1;
 }
 
 /*
@@ -223,19 +223,19 @@ dkwedge_compute_pdev(const char *pname, dev_t *pdevp, enum vtype type)
 		break;
 	}
 	if (pmaj == NODEVMAJOR)
-		return (ENODEV);
+		return ENODEV;
 
 	name += strlen(devname);
 	for (cp = name, punit = 0; *cp >= '0' && *cp <= '9'; cp++)
 		punit = (punit * 10) + (*cp - '0');
 	if (cp == name) {
 		/* Invalid parent disk name. */
-		return (ENODEV);
+		return ENODEV;
 	}
 
 	*pdevp = MAKEDISKDEV(pmaj, punit, RAW_PART);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -326,14 +326,14 @@ dkwedge_add(struct dkwedge_info *dkw)
 	dkw->dkw_parent[sizeof(dkw->dkw_parent) - 1] = '\0';
 	pdk = disk_find(dkw->dkw_parent);
 	if (pdk == NULL)
-		return (ENODEV);
+		return ENODEV;
 
 	error = dkwedge_compute_pdev(pdk->dk_name, &pdev, VBLK);
 	if (error)
-		return (error);
+		return error;
 
 	if (dkw->dkw_offset < 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/*
 	 * Check for an existing wedge at the same disk offset. Allow
@@ -426,7 +426,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
-		return (error);
+		return error;
 	}
 
 	/* Fill in our cfdata for the pseudo-device glue. */
@@ -483,7 +483,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
-		return (error);
+		return error;
 	}
 
 	/*
@@ -511,7 +511,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
 		free(sc, M_DKWEDGE);
-		return (ENOMEM);
+		return ENOMEM;
 	}
 
 	/*
@@ -539,7 +539,7 @@ announce:
 	strlcpy(dkw->dkw_devname, device_xname(sc->sc_dev),
 		sizeof(dkw->dkw_devname));
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -599,7 +599,7 @@ dkwedge_del1(struct dkwedge_info *dkw, int flags)
 
 	/* Find our softc. */
 	if ((sc = dkwedge_find(dkw, NULL)) == NULL)
-		return (ESRCH);
+		return ESRCH;
 
 	return config_detach(sc->sc_dev, flags);
 }
@@ -803,7 +803,7 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	dkwl->dkwl_nwedges = pdk->dk_nwedges;
 	mutex_exit(&pdk->dk_openlock);
 
-	return (error);
+	return error;
 }
 
 device_t
@@ -1103,11 +1103,11 @@ dkwedge_lookup(dev_t dev)
 	int unit = minor(dev);
 
 	if (unit >= ndkwedges)
-		return (NULL);
+		return NULL;
 
 	KASSERT(dkwedges != NULL);
 
-	return (dkwedges[unit]);
+	return dkwedges[unit];
 }
 
 static int
@@ -1166,9 +1166,9 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	int error = 0;
 
 	if (sc == NULL)
-		return (ENODEV);
+		return ENODEV;
 	if (sc->sc_state != DKW_STATE_RUNNING)
-		return (ENXIO);
+		return ENXIO;
 
 	/*
 	 * We go through a complicated little dance to only open the parent
@@ -1198,7 +1198,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
  popen_fail:
 	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
-	return (error);
+	return error;
 }
 
 static int
@@ -1520,11 +1520,11 @@ dkread(dev_t dev, struct uio *uio, int flags)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
 	if (sc == NULL)
-		return (ENODEV);
+		return ENODEV;
 	if (sc->sc_state != DKW_STATE_RUNNING)
-		return (ENXIO);
+		return ENXIO;
 
-	return (physio(dkstrategy, NULL, dev, B_READ, dkminphys, uio));
+	return physio(dkstrategy, NULL, dev, B_READ, dkminphys, uio);
 }
 
 /*
@@ -1538,11 +1538,11 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
 	if (sc == NULL)
-		return (ENODEV);
+		return ENODEV;
 	if (sc->sc_state != DKW_STATE_RUNNING)
-		return (ENXIO);
+		return ENXIO;
 
-	return (physio(dkstrategy, NULL, dev, B_WRITE, dkminphys, uio));
+	return physio(dkstrategy, NULL, dev, B_WRITE, dkminphys, uio);
 }
 
 /*
@@ -1557,11 +1557,11 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int error = 0;
 
 	if (sc == NULL)
-		return (ENODEV);
+		return ENODEV;
 	if (sc->sc_state != DKW_STATE_RUNNING)
-		return (ENXIO);
+		return ENXIO;
 	if (sc->sc_parent->dk_rawvp == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	/*
 	 * We pass NODEV instead of our device to indicate we don't
@@ -1569,7 +1569,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	 */
 	error = disk_ioctl(&sc->sc_dk, NODEV, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
-		return (error);
+		return error;
 
 	error = 0;
 
@@ -1618,7 +1618,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = ENOTTY;
 	}
 
-	return (error);
+	return error;
 }
 
 /*
@@ -1635,11 +1635,11 @@ dkdiscard(dev_t dev, off_t pos, off_t len)
 	int error;
 
 	if (sc == NULL)
-		return (ENODEV);
+		return ENODEV;
 	if (sc->sc_state != DKW_STATE_RUNNING)
-		return (ENXIO);
+		return ENXIO;
 	if (sc->sc_parent->dk_rawvp == NULL)
-		return (ENXIO);
+		return ENXIO;
 
 	shift = (sc->sc_parent->dk_blkshift + DEV_BSHIFT);
 	KASSERT(__type_fit(off_t, sc->sc_size));
@@ -1651,9 +1651,9 @@ dkdiscard(dev_t dev, off_t pos, off_t len)
 	maxlen = ((off_t)sc->sc_size << shift);
 
 	if (len > maxlen)
-		return (EINVAL);
+		return EINVAL;
 	if (pos > (maxlen - len))
-		return (EINVAL);
+		return EINVAL;
 
 	pos += offset;
 
@@ -1678,9 +1678,9 @@ dksize(dev_t dev)
 	int rv = -1;
 
 	if (sc == NULL)
-		return (-1);
+		return -1;
 	if (sc->sc_state != DKW_STATE_RUNNING)
-		return (-1);
+		return -1;
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
 	mutex_enter(&sc->sc_parent->dk_rawlock);
@@ -1699,7 +1699,7 @@ dksize(dev_t dev)
 	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
 
-	return (rv);
+	return rv;
 }
 
 /*
@@ -1716,9 +1716,9 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	int rv = 0;
 
 	if (sc == NULL)
-		return (ENODEV);
+		return ENODEV;
 	if (sc->sc_state != DKW_STATE_RUNNING)
-		return (ENXIO);
+		return ENXIO;
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
 	mutex_enter(&sc->sc_parent->dk_rawlock);
