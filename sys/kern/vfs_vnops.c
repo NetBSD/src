@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.237 2023/03/13 18:13:18 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.238 2023/04/22 11:22:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.237 2023/03/13 18:13:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.238 2023/04/22 11:22:36 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -595,9 +595,11 @@ unionread:
 	}
 	auio.uio_resid = count;
 	vn_lock(vp, LK_SHARED | LK_RETRY);
+	mutex_enter(&fp->f_lock);
 	auio.uio_offset = fp->f_offset;
+	mutex_exit(&fp->f_lock);
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookies,
-		    ncookies);
+	    ncookies);
 	mutex_enter(&fp->f_lock);
 	fp->f_offset = auio.uio_offset;
 	mutex_exit(&fp->f_lock);
@@ -656,7 +658,13 @@ vn_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	else
 		vn_lock(vp, LK_SHARED | LK_RETRY);
+	if (__predict_false(vp->v_type == VDIR) &&
+	    offset == &fp->f_offset && (flags & FOF_UPDATE_OFFSET) == 0)
+		mutex_enter(&fp->f_lock);
 	uio->uio_offset = *offset;
+	if (__predict_false(vp->v_type == VDIR) &&
+	    offset == &fp->f_offset && (flags & FOF_UPDATE_OFFSET) == 0)
+		mutex_enter(&fp->f_lock);
 	count = uio->uio_resid;
 	error = VOP_READ(vp, uio, ioflag, cred);
 	if (flags & FOF_UPDATE_OFFSET)
@@ -825,8 +833,13 @@ vn_ioctl(file_t *fp, u_long com, void *data)
 		if (com == FIONREAD) {
 			vn_lock(vp, LK_SHARED | LK_RETRY);
 			error = VOP_GETATTR(vp, &vattr, kauth_cred_get());
-			if (error == 0)
+			if (error == 0) {
+				if (vp->v_type == VDIR)
+					mutex_enter(&fp->f_lock);
 				*(int *)data = vattr.va_size - fp->f_offset;
+				if (vp->v_type == VDIR)
+					mutex_exit(&fp->f_lock);
+			}
 			VOP_UNLOCK(vp);
 			if (error)
 				return error;
@@ -1149,7 +1162,11 @@ vn_seek(struct file *fp, off_t delta, int whence, off_t *newoffp,
 		vn_lock(vp, LK_SHARED | LK_RETRY);
 
 	/* Compute the old and new offsets.  */
+	if (vp->v_type == VDIR && (flags & FOF_UPDATE_OFFSET) == 0)
+		mutex_enter(&fp->f_lock);
 	oldoff = fp->f_offset;
+	if (vp->v_type == VDIR && (flags & FOF_UPDATE_OFFSET) == 0)
+		mutex_exit(&fp->f_lock);
 	switch (whence) {
 	case SEEK_CUR:
 		if (delta > 0) {
