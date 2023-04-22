@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.513 2023/04/14 18:42:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.514 2023/04/22 09:39:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.513 2023/04/14 18:42:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.514 2023/04/22 09:39:14 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3420,7 +3420,7 @@ convert_integer_from_pointer(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 	if (tn->tn_op == CON)
 		return;
 	if (op != CVT)
-		return;		/* We got already an error. */
+		return;		/* We already got an error. */
 	if (portable_size_in_bits(nt) >= portable_size_in_bits(PTR))
 		return;
 
@@ -3643,7 +3643,7 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 	case DCOMPLEX:
 		max = DBL_MAX;		min = -DBL_MAX;		break;
 	case PTR:
-		/* Got already an error because of float --> ptr */
+		/* Already got an error because of float --> ptr */
 	case LDOUBLE:
 	case LCOMPLEX:
 		/* LINTED 248 */
@@ -3856,7 +3856,7 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
  *
  * op		operator which requires conversion
  * arg		if op is FARG, # of argument
- * tp		type in which to convert the constant
+ * tp		type to which to convert the constant
  * nv		new constant
  * v		old constant
  */
