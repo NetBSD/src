@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.54 2023/02/18 15:14:11 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.55 2023/04/22 17:49:14 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.54 2023/02/18 15:14:11 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.55 2023/04/22 17:49:14 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -189,12 +189,12 @@ type_name_of_struct_or_union(buffer *buf, const type_t *tp)
 {
 	buf_add(buf, " ");
 #ifdef IS_LINT1
-	if (tp->t_str->sou_tag->s_name == unnamed &&
-	    tp->t_str->sou_first_typedef != NULL) {
+	if (tp->t_sou->sou_tag->s_name == unnamed &&
+	    tp->t_sou->sou_first_typedef != NULL) {
 		buf_add(buf, "typedef ");
-		buf_add(buf, tp->t_str->sou_first_typedef->s_name);
+		buf_add(buf, tp->t_sou->sou_first_typedef->s_name);
 	} else {
-		buf_add(buf, tp->t_str->sou_tag->s_name);
+		buf_add(buf, tp->t_sou->sou_tag->s_name);
 	}
 #else
 	buf_add(buf, tp->t_isuniqpos ? "*anonymous*" : tp->t_tag->h_name);
@@ -255,7 +255,7 @@ type_name(const type_t *tp)
 		buf_add(&buf, "volatile ");
 
 #ifdef IS_LINT1
-	if (is_struct_or_union(t) && tp->t_str->sou_incomplete)
+	if (is_struct_or_union(t) && tp->t_sou->sou_incomplete)
 		buf_add(&buf, "incomplete ");
 #endif
 	buf_add(&buf, tspec_name(t));

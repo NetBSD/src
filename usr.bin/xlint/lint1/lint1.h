@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.163 2023/02/21 19:30:51 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.164 2023/04/22 17:49:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -149,7 +149,7 @@ typedef	struct {
 
 /*
  * The type of an expression or object. Complex types are formed via t_subt
- * (for arrays, pointers and functions), as well as t_str.
+ * (for arrays, pointers and functions), as well as t_sou.
  */
 struct lint1_type {
 	tspec_t	t_tspec;	/* type specifier */
@@ -174,7 +174,7 @@ struct lint1_type {
 	bool	t_packed:1;
 	union {
 		int	_t_dim;		/* dimension (if ARRAY) */
-		struct_or_union	*_t_str;
+		struct_or_union	*_t_sou;
 		enumeration	*_t_enum;
 		struct	sym *_t_args;	/* arguments (if t_proto) */
 	} t_u;
@@ -188,8 +188,7 @@ struct lint1_type {
 };
 
 #define	t_dim	t_u._t_dim
-/* TODO: rename t_str to t_sou, to avoid confusing it with strings. */
-#define	t_str	t_u._t_str
+#define	t_sou	t_u._t_sou
 #define	t_enum	t_u._t_enum
 #define	t_args	t_u._t_args
 #define	t_flen	t_b._t_flen
@@ -262,7 +261,7 @@ typedef	struct sym {
 		bool s_bool_constant;
 		int s_enum_constant;	/* XXX: should be TARG_INT */
 		struct {
-			/* XXX: what is the difference to s_type->t_str? */
+			/* XXX: what is the difference to s_type->t_sou? */
 			struct_or_union	*sm_sou_type;
 			unsigned int sm_offset_in_bits;
 		} s_member;

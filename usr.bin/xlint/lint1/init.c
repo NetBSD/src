@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.240 2023/02/06 21:01:55 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.241 2023/04/22 17:49:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.240 2023/02/06 21:01:55 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.241 2023/04/22 17:49:15 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -224,7 +224,7 @@ first_named_member(const type_t *tp)
 {
 
 	lint_assert(is_struct_or_union(tp->t_tspec));
-	return skip_unnamed(tp->t_str->sou_first_member);
+	return skip_unnamed(tp->t_sou->sou_first_member);
 }
 
 static const sym_t *
@@ -233,7 +233,7 @@ look_up_member(const type_t *tp, const char *name)
 	const sym_t *m;
 
 	lint_assert(is_struct_or_union(tp->t_tspec));
-	for (m = tp->t_str->sou_first_member; m != NULL; m = m->s_next)
+	for (m = tp->t_sou->sou_first_member; m != NULL; m = m->s_next)
 		if (strcmp(m->s_name, name) == 0)
 			return m;
 	return NULL;
@@ -764,7 +764,7 @@ initialization_lbrace(initialization *in)
 		warning(238);
 	}
 
-	if (is_struct_or_union(tp->t_tspec) && tp->t_str->sou_incomplete) {
+	if (is_struct_or_union(tp->t_tspec) && tp->t_sou->sou_incomplete) {
 		/* initialization of incomplete type '%s' */
 		error(175, type_name(tp));
 		in->in_err = true;

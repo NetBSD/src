@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.28 2023/04/11 17:52:11 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.29 2023/04/22 17:49:15 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.28 2023/04/11 17:52:11 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.29 2023/04/22 17:49:15 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -112,7 +112,7 @@ debug_type_details(const type_t *tp)
 
 	if (is_struct_or_union(tp->t_tspec)) {
 		debug_indent_inc();
-		for (const sym_t *mem = tp->t_str->sou_first_member;
+		for (const sym_t *mem = tp->t_sou->sou_first_member;
 		     mem != NULL; mem = mem->s_next) {
 			debug_sym("", mem, "\n");
 			debug_type_details(mem->s_type);
