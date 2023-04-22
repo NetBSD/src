@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.15 2022/03/29 22:29:29 christos Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.16 2023/04/22 13:54:19 riastradh Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.15 2022/03/29 22:29:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.16 2023/04/22 13:54:19 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/kauth.h>
 
 #include <sys/mount.h>
-#include <sys/vnode.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/proc.h>
@@ -43,20 +42,18 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.15 2022/03/29 22:29:29 chr
 
 #include <secmodel/secmodel.h>
 #include <secmodel/extensions/extensions.h>
+#include <secmodel/extensions/extensions_impl.h>
 
 MODULE(MODULE_CLASS_SECMODEL, extensions, NULL);
 
-static int dovfsusermount;
 static int curtain;
 static int user_set_cpu_affinity;
-static int hardlink_check_uid;
-static int hardlink_check_gid;
 
 #ifdef PT_SETDBREGS
 int user_set_dbregs;
 #endif
 
-static kauth_listener_t l_system, l_process, l_network, l_vnode;
+static kauth_listener_t l_process, l_network;
 
 static secmodel_t extensions_sm;
 
@@ -65,17 +62,12 @@ static void secmodel_extensions_start(void);
 static void secmodel_extensions_stop(void);
 
 static void sysctl_security_extensions_setup(struct sysctllog **);
-static int  sysctl_extensions_user_handler(SYSCTLFN_PROTO);
 static int  sysctl_extensions_curtain_handler(SYSCTLFN_PROTO);
 static bool is_securelevel_above(int);
 
-static int secmodel_extensions_system_cb(kauth_cred_t, kauth_action_t,
-    void *, void *, void *, void *, void *);
 static int secmodel_extensions_process_cb(kauth_cred_t, kauth_action_t,
     void *, void *, void *, void *, void *);
 static int secmodel_extensions_network_cb(kauth_cred_t, kauth_action_t,
-    void *, void *, void *, void *, void *);
-static int secmodel_extensions_vnode_cb(kauth_cred_t, kauth_action_t,
     void *, void *, void *, void *, void *);
 
 SYSCTL_SETUP(sysctl_security_extensions_setup,
@@ -120,14 +112,6 @@ SYSCTL_SETUP(sysctl_security_extensions_setup,
 
 	sysctl_createv(clog, 0, &rnode, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "usermount",
-		       SYSCTL_DESCR("Whether unprivileged users may mount "
-				    "filesystems"),
-		       sysctl_extensions_user_handler, 0, &dovfsusermount, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "curtain",
 		       SYSCTL_DESCR("Curtain information about objects to "\
 		       		    "users not owning them."),
@@ -154,41 +138,6 @@ SYSCTL_SETUP(sysctl_security_extensions_setup,
 		       CTL_CREATE, CTL_EOL);
 #endif
 
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "hardlink_check_uid",
-		       SYSCTL_DESCR("Whether unprivileged users can hardlink "\
-			    "to files they don't own"),
-		       sysctl_extensions_user_handler, 0,
-		       &hardlink_check_uid, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	sysctl_createv(clog, 0, &rnode, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "hardlink_check_gid",
-		       SYSCTL_DESCR("Whether unprivileged users can hardlink "\
-			    "to files that are not in their " \
-			    "group membership"),
-		       sysctl_extensions_user_handler, 0,
-		       &hardlink_check_gid, 0,
-		       CTL_CREATE, CTL_EOL);
-
-	/* Compatibility: vfs.generic.usermount */
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_NODE, "generic",
-		       SYSCTL_DESCR("Non-specific vfs related information"),
-		       NULL, 0, NULL, 0,
-		       CTL_VFS, VFS_GENERIC, CTL_EOL);
-
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "usermount",
-		       SYSCTL_DESCR("Whether unprivileged users may mount "
-				    "filesystems"),
-		       sysctl_extensions_user_handler, 0, &dovfsusermount, 0,
-		       CTL_VFS, VFS_GENERIC, VFS_USERMOUNT, CTL_EOL);
-
 	/* Compatibility: security.curtain */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -197,6 +146,8 @@ SYSCTL_SETUP(sysctl_security_extensions_setup,
 		       		    "users not owning them."),
 		       sysctl_extensions_curtain_handler, 0, &curtain, 0,
 		       CTL_SECURITY, CTL_CREATE, CTL_EOL);
+
+	secmodel_extensions_vfs_sysctl(clog, rnode);
 }
 
 static int
@@ -234,7 +185,7 @@ sysctl_extensions_curtain_handler(SYSCTLFN_ARGS)
  * - setting value != 0 is not permitted when securelevel is above 0 (increase
  *   user rights).
  */
-static int
+int
 sysctl_extensions_user_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
@@ -297,24 +248,20 @@ static void
 secmodel_extensions_start(void)
 {
 
-	l_system = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
-	    secmodel_extensions_system_cb, NULL);
 	l_process = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
 	    secmodel_extensions_process_cb, NULL);
 	l_network = kauth_listen_scope(KAUTH_SCOPE_NETWORK,
 	    secmodel_extensions_network_cb, NULL);
-	l_vnode = kauth_listen_scope(KAUTH_SCOPE_VNODE,
-	    secmodel_extensions_vnode_cb, NULL);
+	secmodel_extensions_vfs_start();
 }
 
 static void
 secmodel_extensions_stop(void)
 {
 
-	kauth_unlisten_scope(l_system);
+	secmodel_extensions_vfs_stop();
 	kauth_unlisten_scope(l_process);
 	kauth_unlisten_scope(l_network);
-	kauth_unlisten_scope(l_vnode);
 }
 
 static int
@@ -355,84 +302,6 @@ extensions_modcmd(modcmd_t cmd, void *arg)
 	}
 
 	return (error);
-}
-
-static int
-secmodel_extensions_system_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
-{
-	vnode_t *vp;
-	struct vattr va;
-	struct mount *mp;
-	u_long flags;
-	int result;
-	enum kauth_system_req req;
-	int error;
-
-	req = (enum kauth_system_req)(uintptr_t)arg0;
-	result = KAUTH_RESULT_DEFER;
-
-	switch (action) {
-	case KAUTH_SYSTEM_MOUNT:
-		if (dovfsusermount == 0)
-			break;
-		switch (req) {
-		case KAUTH_REQ_SYSTEM_MOUNT_NEW:
-			vp = (vnode_t *)arg1;
-			mp = vp->v_mount;
-			flags = (u_long)arg2;
-
-			/*
-			 * Ensure that the user owns the directory onto which
-			 * the mount is attempted.
-			 */
-			vn_lock(vp, LK_SHARED | LK_RETRY);
-			error = VOP_GETATTR(vp, &va, cred);
-			VOP_UNLOCK(vp);
-			if (error)
-				break;
-
-			if (va.va_uid != kauth_cred_geteuid(cred))
-				break;
-
-			error = usermount_common_policy(mp, flags);
-			if (error)
-				break;
-
-			result = KAUTH_RESULT_ALLOW;
-
-			break;
-
-		case KAUTH_REQ_SYSTEM_MOUNT_UNMOUNT:
-			mp = arg1;
-
-			/* Must own the mount. */
-			if (mp->mnt_stat.f_owner == kauth_cred_geteuid(cred))
-				result = KAUTH_RESULT_ALLOW;
-
-			break;
-
-		case KAUTH_REQ_SYSTEM_MOUNT_UPDATE:
-			mp = arg1;
-			flags = (u_long)arg2;
-
-			/* Must own the mount. */
-			if (mp->mnt_stat.f_owner == kauth_cred_geteuid(cred) &&
-				usermount_common_policy(mp, flags) == 0)
-				result = KAUTH_RESULT_ALLOW;
-
-			break;
-
-		default:
-			break;
-		}
-		break;
-
-	default:
-		break;
-	}
-
-	return (result);
 }
 
 static int
@@ -528,35 +397,4 @@ secmodel_extensions_network_cb(kauth_cred_t cred, kauth_action_t action,
 	}
 
 	return (result);
-}
-
-static int
-secmodel_extensions_vnode_cb(kauth_cred_t cred, kauth_action_t action,
-    void *cookie, void *arg0, void *arg1, void *arg2, void *arg3)
-{
-	int error;
-	bool isroot;
-	struct vattr va;
-
-	if ((action & KAUTH_VNODE_ADD_LINK) == 0)
-		return KAUTH_RESULT_DEFER;
-
-	error = VOP_GETATTR((vnode_t *)arg0, &va, cred);
-	if (error)
-		goto checkroot;
-
-	if (hardlink_check_uid && kauth_cred_geteuid(cred) != va.va_uid)
-		goto checkroot;
-
-	if (hardlink_check_gid && kauth_cred_groupmember(cred, va.va_gid) != 0)
-		goto checkroot;
-
-	return KAUTH_RESULT_DEFER;
-checkroot:
-	error = secmodel_eval("org.netbsd.secmodel.suser", "is-root",
-	    cred, &isroot);
-	if (error || !isroot)
-		return KAUTH_RESULT_DENY;
-
-	return KAUTH_RESULT_DEFER;
 }
