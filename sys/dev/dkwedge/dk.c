@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.148 2023/04/21 18:54:09 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.149 2023/04/22 12:33:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.148 2023/04/21 18:54:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.149 2023/04/22 12:33:46 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -796,6 +796,7 @@ dkwedge_delall1(struct disk *pdk, bool idleonly)
 		flags |= DETACH_FORCE;
 
 	for (;;) {
+		mutex_enter(&pdk->dk_rawlock); /* for sc->sc_dk.dk_openmask */
 		mutex_enter(&pdk->dk_openlock);
 		LIST_FOREACH(sc, &pdk->dk_wedges, sc_plink) {
 			if (!idleonly || sc->sc_dk.dk_openmask == 0)
@@ -804,12 +805,14 @@ dkwedge_delall1(struct disk *pdk, bool idleonly)
 		if (sc == NULL) {
 			KASSERT(idleonly || pdk->dk_nwedges == 0);
 			mutex_exit(&pdk->dk_openlock);
+			mutex_exit(&pdk->dk_rawlock);
 			return;
 		}
 		strlcpy(dkw.dkw_parent, pdk->dk_name, sizeof(dkw.dkw_parent));
 		strlcpy(dkw.dkw_devname, device_xname(sc->sc_dev),
 		    sizeof(dkw.dkw_devname));
 		mutex_exit(&pdk->dk_openlock);
+		mutex_exit(&pdk->dk_rawlock);
 		(void) dkwedge_del1(&dkw, flags);
 	}
 }
