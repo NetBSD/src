@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.517 2023/04/22 17:49:15 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.518 2023/04/22 20:17:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.517 2023/04/22 17:49:15 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.518 2023/04/22 20:17:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4049,7 +4049,7 @@ build_alignof(const type_t *tp)
 }
 
 static tnode_t *
-cast_to_union(const tnode_t *otn, type_t *ntp)
+cast_to_union(tnode_t *otn, type_t *ntp)
 {
 
 	if (!allow_gcc) {
@@ -4066,6 +4066,7 @@ cast_to_union(const tnode_t *otn, type_t *ntp)
 			ntn->tn_op = CVT;
 			ntn->tn_type = ntp;
 			ntn->tn_cast = true;
+			ntn->tn_left = otn;
 			ntn->tn_right = NULL;
 			return ntn;
 		}
