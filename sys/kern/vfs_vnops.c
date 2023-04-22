@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.240 2023/04/22 13:52:54 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.241 2023/04/22 13:53:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.240 2023/04/22 13:52:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.241 2023/04/22 13:53:02 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -124,6 +124,7 @@ static int vn_mmap(struct file *, off_t *, size_t, int, int *, int *,
 static int vn_seek(struct file *, off_t, int, off_t *, int);
 static int vn_advlock(struct file *, void *, int, struct flock *, int);
 static int vn_fpathconf(struct file *, int, register_t *);
+static int vn_posix_fadvise(struct file *, off_t, off_t, int);
 
 const struct fileops vnops = {
 	.fo_name = "vn",
@@ -140,6 +141,7 @@ const struct fileops vnops = {
 	.fo_seek = vn_seek,
 	.fo_advlock = vn_advlock,
 	.fo_fpathconf = vn_fpathconf,
+	.fo_posix_fadvise = vn_posix_fadvise,
 };
 
 /*
@@ -1245,6 +1247,86 @@ vn_fpathconf(struct file *fp, int name, register_t *retval)
 	vn_lock(vp, LK_SHARED | LK_RETRY);
 	error = VOP_PATHCONF(vp, name, retval);
 	VOP_UNLOCK(vp);
+
+	return error;
+}
+
+static int
+vn_posix_fadvise(struct file *fp, off_t offset, off_t len, int advice)
+{
+	const off_t OFF_MAX = __type_max(off_t);
+	struct vnode *vp = fp->f_vnode;
+	off_t endoffset;
+	int error;
+
+	if (offset < 0) {
+		return EINVAL;
+	}
+	if (len == 0) {
+		endoffset = OFF_MAX;
+	} else if (len > 0 && (OFF_MAX - offset) >= len) {
+		endoffset = offset + len;
+	} else {
+		return EINVAL;
+	}
+
+	CTASSERT(POSIX_FADV_NORMAL == UVM_ADV_NORMAL);
+	CTASSERT(POSIX_FADV_RANDOM == UVM_ADV_RANDOM);
+	CTASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
+
+	switch (advice) {
+	case POSIX_FADV_WILLNEED:
+	case POSIX_FADV_DONTNEED:
+		if (vp->v_type != VREG && vp->v_type != VBLK)
+			return 0;
+		break;
+	}
+
+	switch (advice) {
+	case POSIX_FADV_NORMAL:
+	case POSIX_FADV_RANDOM:
+	case POSIX_FADV_SEQUENTIAL:
+		/*
+		 * We ignore offset and size.  Must lock the file to
+		 * do this, as f_advice is sub-word sized.
+		 */
+		mutex_enter(&fp->f_lock);
+		fp->f_advice = (u_char)advice;
+		mutex_exit(&fp->f_lock);
+		error = 0;
+		break;
+
+	case POSIX_FADV_WILLNEED:
+		error = uvm_readahead(&vp->v_uobj, offset, endoffset - offset);
+		break;
+
+	case POSIX_FADV_DONTNEED:
+		/*
+		 * Align the region to page boundaries as VOP_PUTPAGES expects
+		 * by shrinking it.  We shrink instead of expand because we
+		 * do not want to deactivate cache outside of the requested
+		 * region.  It means that if the specified region is smaller
+		 * than PAGE_SIZE, we do nothing.
+		 */
+		if (offset <= trunc_page(OFF_MAX) &&
+		    round_page(offset) < trunc_page(endoffset)) {
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
+			error = VOP_PUTPAGES(vp,
+			    round_page(offset), trunc_page(endoffset),
+			    PGO_DEACTIVATE | PGO_CLEANIT);
+		} else {
+			error = 0;
+		}
+		break;
+
+	case POSIX_FADV_NOREUSE:
+		/* Not implemented yet. */
+		error = 0;
+		break;
+	default:
+		error = EINVAL;
+		break;
+	}
 
 	return error;
 }
