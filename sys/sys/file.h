@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.91 2023/04/22 13:52:55 riastradh Exp $	*/
+/*	$NetBSD: file.h,v 1.92 2023/04/22 13:53:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -101,6 +101,8 @@ struct fileops {
 	int	(*fo_advlock)	(struct file *, void *, int, struct flock *,
 				 int);
 	int	(*fo_fpathconf)	(struct file *, int, register_t *);
+	int	(*fo_posix_fadvise)
+				(struct file *, off_t, off_t, int);
 };
 
 union file_data {
