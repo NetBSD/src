@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.255 2023/02/24 11:02:27 riastradh Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.256 2023/04/22 13:52:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.255 2023/02/24 11:02:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.256 2023/04/22 13:52:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -727,14 +727,14 @@ fd_close(unsigned fd)
 	 * If the descriptor was in a message, POSIX-style locks
 	 * aren't passed with the descriptor.
 	 */
-	if (__predict_false((p->p_flag & PK_ADVLOCK) != 0 &&
-	    fp->f_type == DTYPE_VNODE)) {
+	if (__predict_false((p->p_flag & PK_ADVLOCK) != 0) &&
+	    fp->f_ops->fo_advlock != NULL) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
 		lf.l_len = 0;
 		lf.l_type = F_UNLCK;
 		mutex_exit(&fdp->fd_lock);
-		(void)VOP_ADVLOCK(fp->f_vnode, p, F_UNLCK, &lf, F_POSIX);
+		(void)(*fp->f_ops->fo_advlock)(fp, p, F_UNLCK, &lf, F_POSIX);
 		mutex_enter(&fdp->fd_lock);
 	}
 
@@ -852,12 +852,12 @@ closef(file_t *fp)
 	mutex_exit(&fp->f_lock);
 
 	/* We held the last reference - release locks, close and free. */
-	if ((fp->f_flag & FHASLOCK) && fp->f_type == DTYPE_VNODE) {
+	if ((fp->f_flag & FHASLOCK) && fp->f_ops->fo_advlock != NULL) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
 		lf.l_len = 0;
 		lf.l_type = F_UNLCK;
-		(void)VOP_ADVLOCK(fp->f_vnode, fp, F_UNLCK, &lf, F_FLOCK);
+		(void)(*fp->f_ops->fo_advlock)(fp, fp, F_UNLCK, &lf, F_FLOCK);
 	}
 	if (fp->f_ops != NULL) {
 		error = (*fp->f_ops->fo_close)(fp);
