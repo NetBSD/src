@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.308 2023/04/22 17:49:15 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.309 2023/04/22 20:27:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.308 2023/04/22 17:49:15 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.309 2023/04/22 20:27:09 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1936,7 +1936,8 @@ check_extern_declaration(const sym_t *sym)
 
 	if (sym->s_scl == EXTERN &&
 	    dcs->d_redeclared_symbol == NULL &&
-	    ends_with(curr_pos.p_file, ".c")) {
+	    ends_with(curr_pos.p_file, ".c") &&
+	    !ch_isdigit(sym->s_name[0])) {	/* see mktempsym */
 		/* 'extern' declaration of '%s' outside a header */
 		warning(351, sym->s_name);
 	}
