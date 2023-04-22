@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.238 2023/04/22 11:22:36 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.239 2023/04/22 13:52:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.238 2023/04/22 11:22:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.239 2023/04/22 13:52:46 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -122,6 +122,7 @@ static int vn_ioctl(file_t *fp, u_long com, void *data);
 static int vn_mmap(struct file *, off_t *, size_t, int, int *, int *,
     struct uvm_object **, int *);
 static int vn_seek(struct file *, off_t, int, off_t *, int);
+static int vn_advlock(struct file *, void *, int, struct flock *, int);
 
 const struct fileops vnops = {
 	.fo_name = "vn",
@@ -136,6 +137,7 @@ const struct fileops vnops = {
 	.fo_restart = fnullop_restart,
 	.fo_mmap = vn_mmap,
 	.fo_seek = vn_seek,
+	.fo_advlock = vn_advlock,
 };
 
 /*
@@ -1215,6 +1217,21 @@ vn_seek(struct file *fp, off_t delta, int whence, off_t *newoffp,
 
 out:	VOP_UNLOCK(vp);
 	return error;
+}
+
+static int
+vn_advlock(struct file *fp, void *id, int op, struct flock *fl,
+    int flags)
+{
+	struct vnode *const vp = fp->f_vnode;
+
+	if (fl->l_whence == SEEK_CUR) {
+		vn_lock(vp, LK_SHARED | LK_RETRY);
+		fl->l_start += fp->f_offset;
+		VOP_UNLOCK(vp);
+	}
+
+	return VOP_ADVLOCK(vp, id, op, fl, flags);
 }
 
 /*

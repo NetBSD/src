@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.40 2022/04/16 07:59:02 hannken Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.41 2023/04/22 13:52:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.40 2022/04/16 07:59:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.41 2023/04/22 13:52:46 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -235,19 +235,14 @@ int
 do_fcntl_lock(int fd, int cmd, struct flock *fl)
 {
 	file_t *fp;
-	vnode_t *vp;
 	proc_t *p;
+	int (*fo_advlock)(struct file *, void *, int, struct flock *, int);
 	int error, flg;
 
-	if ((error = fd_getvnode(fd, &fp)) != 0)
-		return error;
-
-	vp = fp->f_vnode;
-	if (fl->l_whence == SEEK_CUR) {
-		vn_lock(vp, LK_SHARED | LK_RETRY);
-		fl->l_start += fp->f_offset;
-		VOP_UNLOCK(vp);
-	}
+	if ((fp = fd_getfile(fd)) == NULL)
+		return EBADF;
+	if ((fo_advlock = fp->f_ops->fo_advlock) == NULL)
+		return EINVAL;
 
 	flg = F_POSIX;
 	p = curproc;
@@ -270,7 +265,7 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 				p->p_flag |= PK_ADVLOCK;
 				mutex_exit(p->p_lock);
 			}
-			error = VOP_ADVLOCK(vp, p, F_SETLK, fl, flg);
+			error = (*fo_advlock)(fp, p, F_SETLK, fl, flg);
 			break;
 
 		case F_WRLCK:
@@ -283,11 +278,11 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 				p->p_flag |= PK_ADVLOCK;
 				mutex_exit(p->p_lock);
 			}
-			error = VOP_ADVLOCK(vp, p, F_SETLK, fl, flg);
+			error = (*fo_advlock)(fp, p, F_SETLK, fl, flg);
 			break;
 
 		case F_UNLCK:
-			error = VOP_ADVLOCK(vp, p, F_UNLCK, fl, F_POSIX);
+			error = (*fo_advlock)(fp, p, F_UNLCK, fl, F_POSIX);
 			break;
 
 		default:
@@ -303,7 +298,7 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 			error = EINVAL;
 			break;
 		}
-		error = VOP_ADVLOCK(vp, p, F_GETLK, fl, F_POSIX);
+		error = (*fo_advlock)(fp, p, F_GETLK, fl, F_POSIX);
 		break;
 
 	default:
@@ -629,16 +624,17 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 	} */
 	int fd, how, error;
 	file_t *fp;
-	vnode_t	*vp;
+	int (*fo_advlock)(struct file *, void *, int, struct flock *, int);
 	struct flock lf;
 
 	fd = SCARG(uap, fd);
 	how = SCARG(uap, how);
 
-	if ((error = fd_getvnode(fd, &fp)) != 0)
-		return error == EINVAL ? EOPNOTSUPP : error;
+	if ((fp = fd_getfile(fd)) == NULL)
+		return EBADF;
+	if ((fo_advlock = fp->f_ops->fo_advlock) == NULL)
+		return EOPNOTSUPP;
 
-	vp = fp->f_vnode;
 	lf.l_whence = SEEK_SET;
 	lf.l_start = 0;
 	lf.l_len = 0;
@@ -647,7 +643,7 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 	case LOCK_UN:
 		lf.l_type = F_UNLCK;
 		atomic_and_uint(&fp->f_flag, ~FHASLOCK);
-		error = VOP_ADVLOCK(vp, fp, F_UNLCK, &lf, F_FLOCK);
+		error = (*fo_advlock)(fp, fp, F_UNLCK, &lf, F_FLOCK);
 		fd_putfile(fd);
 		return error;
 	case LOCK_EX:
@@ -663,9 +659,9 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 
 	atomic_or_uint(&fp->f_flag, FHASLOCK);
 	if (how & LOCK_NB) {
-		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, F_FLOCK);
+		error = (*fo_advlock)(fp, fp, F_SETLK, &lf, F_FLOCK);
 	} else {
-		error = VOP_ADVLOCK(vp, fp, F_SETLK, &lf, F_FLOCK|F_WAIT);
+		error = (*fo_advlock)(fp, fp, F_SETLK, &lf, F_FLOCK|F_WAIT);
 	}
 	fd_putfile(fd);
 	return error;
