@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.515 2023/04/22 15:14:37 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.516 2023/04/22 17:42:29 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.515 2023/04/22 15:14:37 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.516 2023/04/22 17:42:29 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3489,6 +3489,17 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 			return false;
 		if (nmem == NULL && omem == NULL)
 			return false;
+	}
+
+	if (nst == UNION || ost == UNION) {
+		const type_t *union_tp = nst == UNION ? nstp : ostp;
+		const type_t *other_tp = nst == UNION ? ostp : nstp;
+		for (const sym_t *mem = union_tp->t_str->sou_first_member;
+		     mem != NULL; mem = mem->s_next) {
+			if (types_compatible(mem->s_type, other_tp,
+			    true, false, NULL))
+				return false;
+		}
 	}
 
 	if (is_struct_or_union(nst) && nstp->t_str != ostp->t_str)
