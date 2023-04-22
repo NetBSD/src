@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.240 2022/11/04 11:20:40 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.241 2023/04/22 14:30:54 hannken Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -141,7 +141,6 @@ struct mount {
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
 	struct mount	*mnt_lower;		/* fs mounted on */
-	void		*mnt_transinfo;		/* for FS-internal use */
 	void		*mnt_data;		/* private data */
 	kmutex_t	*mnt_renamelock;	/* per-fs rename lock */
 	int		mnt_flag;		/* flags */
