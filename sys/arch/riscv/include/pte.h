@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.11 2022/11/12 07:34:18 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.12 2023/04/22 10:03:53 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -104,11 +104,6 @@ typedef uint32_t pd_entry_t;
 #define	pl1_i(va)	(((va) >> L1_SHIFT) & Ln_ADDR_MASK)
 #define	pl0_i(va)	(((va) >> L0_SHIFT) & Ln_ADDR_MASK)
 
-static inline const size_t
-pte_index(vaddr_t va)
-{
-	return ((va >> PGSHIFT) & (NPTEPG - 1));
-}
 
 static inline bool
 pte_valid_p(pt_entry_t pte)
