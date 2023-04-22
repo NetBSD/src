@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.518 2023/04/22 20:17:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.519 2023/04/22 20:54:28 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.518 2023/04/22 20:17:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.519 2023/04/22 20:54:28 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3451,6 +3451,17 @@ is_byte_array(const type_t *tp)
 }
 
 static bool
+union_contains(const type_t *utp, const type_t *mtp)
+{
+	for (const sym_t *mem = utp->t_sou->sou_first_member;
+	     mem != NULL; mem = mem->s_next) {
+		if (types_compatible(mem->s_type, mtp, true, false, NULL))
+			return true;
+	}
+	return false;
+}
+
+static bool
 should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 			       const type_t *ostp, tspec_t ost)
 {
@@ -3494,12 +3505,8 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 	if (nst == UNION || ost == UNION) {
 		const type_t *union_tp = nst == UNION ? nstp : ostp;
 		const type_t *other_tp = nst == UNION ? ostp : nstp;
-		for (const sym_t *mem = union_tp->t_sou->sou_first_member;
-		     mem != NULL; mem = mem->s_next) {
-			if (types_compatible(mem->s_type, other_tp,
-			    true, false, NULL))
-				return false;
-		}
+		if (union_contains(union_tp, other_tp))
+			return false;
 	}
 
 	if (is_struct_or_union(nst) && nstp->t_sou != ostp->t_sou)
@@ -3539,7 +3546,8 @@ convert_pointer_from_pointer(type_t *ntp, tnode_t *tn)
 
 	if (hflag && alignment_in_bits(nstp) > alignment_in_bits(ostp) &&
 	    ost != CHAR && ost != UCHAR &&
-	    !is_incomplete(ostp)) {
+	    !is_incomplete(ostp) &&
+	    !(nst == UNION && union_contains(nstp, ostp))) {
 		/* converting '%s' to '%s' increases alignment ... */
 		warning(135, type_name(otp), type_name(ntp),
 		    alignment_in_bits(ostp) / CHAR_SIZE,
