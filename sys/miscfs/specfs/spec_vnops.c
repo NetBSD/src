@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.217 2023/04/22 14:30:16 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.218 2023/04/22 15:32:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.217 2023/04/22 14:30:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.218 2023/04/22 15:32:49 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -184,7 +184,9 @@ const struct vnodeopv_desc spec_vnodeop_opv_desc =
 static kauth_listener_t rawio_listener;
 static struct kcondvar specfs_iocv;
 
-/* Returns true if vnode is /dev/mem or /dev/kmem. */
+/*
+ * Returns true if vnode is /dev/mem or /dev/kmem.
+ */
 bool
 iskmemvp(struct vnode *vp)
 {
@@ -478,7 +480,7 @@ top:	mutex_enter(&device_lock);
 	}
 	mutex_exit(&device_lock);
 	error = vcache_vget(vp);
-	if (error != 0)
+	if (error)
 		return error;
 	*vpp = vp;
 
@@ -513,7 +515,7 @@ spec_node_lookup_by_mount(struct mount *mp, vnode_t **vpp)
 	mutex_enter(vq->v_interlock);
 	mutex_exit(&device_lock);
 	error = vcache_vget(vq);
-	if (error != 0)
+	if (error)
 		return error;
 	*vpp = vq;
 
@@ -701,7 +703,7 @@ spec_lookup(void *v)
 	} */ *ap = v;
 
 	*ap->a_vpp = NULL;
-	return (ENOTDIR);
+	return ENOTDIR;
 }
 
 typedef int (*spec_ioctl_t)(dev_t, u_long, void *, int, struct lwp *);
@@ -743,7 +745,7 @@ spec_open(void *v)
 	 * Don't allow open if fs is mounted -nodev.
 	 */
 	if (vp->v_mount && (vp->v_mount->mnt_flag & MNT_NODEV))
-		return (ENXIO);
+		return ENXIO;
 
 	switch (ap->a_mode & (FREAD | FWRITE)) {
 	case FREAD | FWRITE:
@@ -757,8 +759,8 @@ spec_open(void *v)
 		break;
 	}
 	error = kauth_authorize_device_spec(ap->a_cred, req, vp);
-	if (error != 0)
-		return (error);
+	if (error)
+		return error;
 
 	/*
 	 * Acquire an open reference -- as long as we hold onto it, and
@@ -877,7 +879,7 @@ spec_open(void *v)
 			error = cdev_open(dev, ap->a_mode, S_IFCHR, l);
 			if (error != ENXIO)
 				break;
-			
+
 			/* Check if we already have a valid driver */
 			mutex_enter(&device_lock);
 			cdev = cdevsw_lookup(dev);
@@ -888,9 +890,9 @@ spec_open(void *v)
 			/* Get device name from devsw_conv array */
 			if ((name = cdevsw_getname(major(dev))) == NULL)
 				break;
-			
+
 			/* Try to autoload device module */
-			(void) module_autoload(name, MODULE_CLASS_DRIVER);
+			(void)module_autoload(name, MODULE_CLASS_DRIVER);
 		} while (gen != module_gen);
 		break;
 
@@ -914,8 +916,8 @@ spec_open(void *v)
 			if ((name = bdevsw_getname(major(dev))) == NULL)
 				break;
 
-                        /* Try to autoload device module */
-			(void) module_autoload(name, MODULE_CLASS_DRIVER);
+			/* Try to autoload device module */
+			(void)module_autoload(name, MODULE_CLASS_DRIVER);
 		} while (gen != module_gen);
 		break;
 
@@ -1062,7 +1064,7 @@ spec_read(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct uio *uio = ap->a_uio;
- 	struct lwp *l = curlwp;
+	struct lwp *l = curlwp;
 	struct specnode *sn;
 	dev_t dev;
 	struct buf *bp;
@@ -1077,12 +1079,12 @@ spec_read(void *v)
 	int nrablks, ratogo;
 
 	KASSERT(uio->uio_rw == UIO_READ);
-	KASSERTMSG(VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
-		   uio->uio_vmspace == curproc->p_vmspace,
-		"vmspace belongs to neither kernel nor curproc");
+	KASSERTMSG((VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
+		uio->uio_vmspace == curproc->p_vmspace),
+	    "vmspace belongs to neither kernel nor curproc");
 
 	if (uio->uio_resid == 0)
-		return (0);
+		return 0;
 
 	switch (vp->v_type) {
 
@@ -1109,12 +1111,12 @@ spec_read(void *v)
 		spec_io_exit(vp, sn);
 out:		/* XXX What if the caller held an exclusive lock?  */
 		vn_lock(vp, LK_SHARED | LK_RETRY);
-		return (error);
+		return error;
 
 	case VBLK:
 		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
 		if (uio->uio_offset < 0)
-			return (EINVAL);
+			return EINVAL;
 
 		if (bdev_ioctl(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, l) == 0)
 			bsize = imin(imax(pi.pi_bsize, DEV_BSIZE), MAXBSIZE);
@@ -1144,8 +1146,8 @@ out:		/* XXX What if the caller held an exclusive lock?  */
 				}
 
 				error = breadn(vp, bn, bsize,
-					       rablks, rasizes, nrablks,
-					       0, &bp);
+				    rablks, rasizes, nrablks,
+				    0, &bp);
 			} else {
 				if (ratogo > 0)
 					--ratogo;
@@ -1161,7 +1163,7 @@ out:		/* XXX What if the caller held an exclusive lock?  */
 		kmem_free(rablks, nra * sizeof(*rablks));
 		kmem_free(rasizes, nra * sizeof(*rasizes));
 
-		return (error);
+		return error;
 
 	default:
 		panic("spec_read type");
@@ -1195,9 +1197,9 @@ spec_write(void *v)
 	int error = 0;
 
 	KASSERT(uio->uio_rw == UIO_WRITE);
-	KASSERTMSG(VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
-		   uio->uio_vmspace == curproc->p_vmspace,
-		"vmspace belongs to neither kernel nor curproc");
+	KASSERTMSG((VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
+		uio->uio_vmspace == curproc->p_vmspace),
+	    "vmspace belongs to neither kernel nor curproc");
 
 	switch (vp->v_type) {
 
@@ -1223,14 +1225,14 @@ spec_write(void *v)
 		error = cdev_write(dev, uio, ap->a_ioflag);
 		spec_io_exit(vp, sn);
 out:		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		return (error);
+		return error;
 
 	case VBLK:
 		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
 		if (uio->uio_resid == 0)
-			return (0);
+			return 0;
 		if (uio->uio_offset < 0)
-			return (EINVAL);
+			return EINVAL;
 
 		if (bdev_ioctl(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, l) == 0)
 			bsize = imin(imax(pi.pi_bsize, DEV_BSIZE), MAXBSIZE);
@@ -1247,7 +1249,7 @@ out:		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			else
 				error = bread(vp, bn, bsize, B_MODIFY, &bp);
 			if (error) {
-				return (error);
+				return error;
 			}
 			n = uimin(n, bsize - bp->b_resid);
 			error = uiomove((char *)bp->b_data + on, n, uio);
@@ -1261,7 +1263,7 @@ out:		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				error = bp->b_error;
 			}
 		} while (error == 0 && uio->uio_resid > 0 && n != 0);
-		return (error);
+		return error;
 
 	default:
 		panic("spec_write type");
@@ -1288,14 +1290,15 @@ spec_fdiscard(void *v)
 	dev = vp->v_rdev;
 
 	switch (vp->v_type) {
-	    case VCHR:
-		// this is not stored for character devices
-		//KASSERT(vp == vp->v_specnode->sn_dev->sd_cdevvp);
+	case VCHR:
+#if 0		/* This is not stored for character devices. */
+		KASSERT(vp == vp->v_specnode->sn_dev->sd_cdevvp);
+#endif
 		return cdev_discard(dev, ap->a_pos, ap->a_len);
-	    case VBLK:
+	case VBLK:
 		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
 		return bdev_discard(dev, ap->a_pos, ap->a_len);
-	    default:
+	default:
 		panic("spec_fdiscard: not a device\n");
 	}
 }
@@ -1331,7 +1334,7 @@ spec_ioctl(void *v)
 	case VBLK:
 		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
 		error = bdev_ioctl(dev, ap->a_command, ap->a_data,
-		   ap->a_fflag, curlwp);
+		    ap->a_fflag, curlwp);
 		break;
 	default:
 		panic("spec_ioctl");
@@ -1459,7 +1462,7 @@ spec_fsync(void *v)
 		}
 		return vflushbuf(vp, ap->a_flags);
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -1566,7 +1569,7 @@ spec_bmap(void *v)
 		*ap->a_bnp = ap->a_bn;
 	if (ap->a_runp != NULL)
 		*ap->a_runp = (MAXBSIZE >> DEV_BSHIFT) - 1;
-	return (0);
+	return 0;
 }
 
 /*
@@ -1656,7 +1659,7 @@ spec_close(void *v)
 		 */
 		error = vinvalbuf(vp, V_SAVE, ap->a_cred, curlwp, 0, 0);
 		if (error)
-			return (error);
+			return error;
 		/*
 		 * We do not want to really close the device if it
 		 * is still in use unless we are trying to close it
@@ -1774,7 +1777,7 @@ spec_close(void *v)
 	if (!(flags & FNONBLOCK))
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -1807,25 +1810,25 @@ spec_pathconf(void *v)
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
 		*ap->a_retval = LINK_MAX;
-		return (0);
+		return 0;
 	case _PC_MAX_CANON:
 		*ap->a_retval = MAX_CANON;
-		return (0);
+		return 0;
 	case _PC_MAX_INPUT:
 		*ap->a_retval = MAX_INPUT;
-		return (0);
+		return 0;
 	case _PC_PIPE_BUF:
 		*ap->a_retval = PIPE_BUF;
-		return (0);
+		return 0;
 	case _PC_CHOWN_RESTRICTED:
 		*ap->a_retval = 1;
-		return (0);
+		return 0;
 	case _PC_VDISABLE:
 		*ap->a_retval = _POSIX_VDISABLE;
-		return (0);
+		return 0;
 	case _PC_SYNC_IO:
 		*ap->a_retval = 1;
-		return (0);
+		return 0;
 	default:
 		return genfs_pathconf(ap);
 	}
