@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_159.c,v 1.5 2023/04/22 15:14:37 rillig Exp $	*/
+/*	$NetBSD: msg_159.c,v 1.6 2023/04/22 17:30:35 rillig Exp $	*/
 # 3 "msg_159.c"
 
 // Test for message: assignment in conditional context [159]
@@ -21,9 +21,9 @@ example(int a, int b)
 		return "comparison, parenthesized";
 
 	if (
-# 20 "msg_159.c" 3 4
+# 25 "msg_159.c" 3 4
 	    (a == b)
-# 22 "msg_159.c"
+# 27 "msg_159.c"
 	    )
 		return "comparison, parenthesized, from system header";
 
