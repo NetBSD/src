@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.80 2023/04/22 13:52:54 riastradh Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.81 2023/04/22 13:53:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.80 2023/04/22 13:52:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.81 2023/04/22 13:53:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.80 2023/04/22 13:52:54 riastradh Ex
 #include <net/route.h>
 
 static int soo_fpathconf(struct file *, int, register_t *);
+static int soo_posix_fadvise(struct file *, off_t, off_t, int);
 
 const struct fileops socketops = {
 	.fo_name = "socket",
@@ -94,6 +95,7 @@ const struct fileops socketops = {
 	.fo_kqfilter = soo_kqfilter,
 	.fo_restart = soo_restart,
 	.fo_fpathconf = soo_fpathconf,
+	.fo_posix_fadvise = soo_posix_fadvise,
 };
 
 int (*ifioctl)(struct socket *, u_long, void *, struct lwp *) = (void *)eopnotsupp;
@@ -278,4 +280,11 @@ soo_fpathconf(struct file *fp, int name, register_t *retval)
 	default:
 		return EINVAL;
 	}
+}
+
+static int
+soo_posix_fadvise(struct file *fp, off_t offset, off_t len, int advice)
+{
+
+	return ESPIPE;
 }
