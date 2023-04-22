@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.516 2023/04/22 17:42:29 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.517 2023/04/22 17:49:15 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.516 2023/04/22 17:42:29 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.517 2023/04/22 17:49:15 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -981,7 +981,7 @@ subt_size_in_bytes(type_t *tp)
 		break;
 	case STRUCT:
 	case UNION:
-		if ((elsz_in_bits = tp->t_str->sou_size_in_bits) == 0)
+		if ((elsz_in_bits = tp->t_sou->sou_size_in_bits) == 0)
 			/* cannot do pointer arithmetic on operand of ... */
 			error(136);
 		break;
@@ -1207,7 +1207,7 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 	} else if (is_struct_or_union(lt)) {
 		/* Both types must be identical. */
 		lint_assert(is_struct_or_union(rt));
-		lint_assert(ln->tn_type->t_str == rn->tn_type->t_str);
+		lint_assert(ln->tn_type->t_sou == rn->tn_type->t_sou);
 		if (is_incomplete(ln->tn_type)) {
 			/* unknown operand size, op '%s' */
 			error(138, op_name(COLON));
@@ -1311,7 +1311,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	if ((op == ASSIGN || op == RETURN || op == INIT) &&
 	    (lt == STRUCT || rt == STRUCT)) {
 		lint_assert(lt == rt);
-		lint_assert(ln->tn_type->t_str == rn->tn_type->t_str);
+		lint_assert(ln->tn_type->t_sou == rn->tn_type->t_sou);
 		if (is_incomplete(ln->tn_type)) {
 			if (op == RETURN) {
 				/* cannot return incomplete type */
@@ -1887,11 +1887,11 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	t = (tp = tn->tn_type)->t_tspec;
 	if (op == POINT) {
 		if (is_struct_or_union(t))
-			str = tp->t_str;
+			str = tp->t_sou;
 	} else if (op == ARROW && t == PTR) {
 		t = (tp = tp->t_subt)->t_tspec;
 		if (is_struct_or_union(t))
-			str = tp->t_str;
+			str = tp->t_sou;
 	}
 
 	/*
@@ -2443,9 +2443,9 @@ typeok_colon(const mod_t *mp,
 	if (lt == BOOL && rt == BOOL)
 		return true;
 
-	if (lt == STRUCT && rt == STRUCT && ltp->t_str == rtp->t_str)
+	if (lt == STRUCT && rt == STRUCT && ltp->t_sou == rtp->t_sou)
 		return true;
-	if (lt == UNION && rt == UNION && ltp->t_str == rtp->t_str)
+	if (lt == UNION && rt == UNION && ltp->t_sou == rtp->t_sou)
 		return true;
 
 	if (lt == PTR && is_null_pointer(rn))
@@ -2488,7 +2488,7 @@ has_constant_member(const type_t *tp)
 {
 	lint_assert(is_struct_or_union(tp->t_tspec));
 
-	for (sym_t *m = tp->t_str->sou_first_member;
+	for (sym_t *m = tp->t_sou->sou_first_member;
 	     m != NULL; m = m->s_next) {
 		const type_t *mtp = m->s_type;
 		if (mtp->t_const)
@@ -2844,7 +2844,7 @@ check_assign_types_compatible(op_t op, int arg,
 
 	if (is_struct_or_union(lt) && is_struct_or_union(rt))
 		/* both are struct or union */
-		return ltp->t_str == rtp->t_str;
+		return ltp->t_sou == rtp->t_sou;
 
 	/* a null pointer may be assigned to any pointer */
 	if (lt == PTR && is_null_pointer(rn))
@@ -3437,8 +3437,8 @@ static bool
 struct_starts_with(const type_t *struct_tp, const type_t *member_tp)
 {
 
-	return struct_tp->t_str->sou_first_member != NULL &&
-	       types_compatible(struct_tp->t_str->sou_first_member->s_type,
+	return struct_tp->t_sou->sou_first_member != NULL &&
+	       types_compatible(struct_tp->t_sou->sou_first_member->s_type,
 		   member_tp, true, false, NULL);
 }
 
@@ -3477,8 +3477,8 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 	if (nst == STRUCT && ost == STRUCT) {
 		debug_type(nstp);
 		debug_type(ostp);
-		const sym_t *nmem = nstp->t_str->sou_first_member;
-		const sym_t *omem = ostp->t_str->sou_first_member;
+		const sym_t *nmem = nstp->t_sou->sou_first_member;
+		const sym_t *omem = ostp->t_sou->sou_first_member;
 		while (nmem != NULL && omem != NULL &&
 		       types_compatible(nmem->s_type, omem->s_type,
 			   true, false, NULL))
@@ -3494,7 +3494,7 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 	if (nst == UNION || ost == UNION) {
 		const type_t *union_tp = nst == UNION ? nstp : ostp;
 		const type_t *other_tp = nst == UNION ? ostp : nstp;
-		for (const sym_t *mem = union_tp->t_str->sou_first_member;
+		for (const sym_t *mem = union_tp->t_sou->sou_first_member;
 		     mem != NULL; mem = mem->s_next) {
 			if (types_compatible(mem->s_type, other_tp,
 			    true, false, NULL))
@@ -3502,7 +3502,7 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 		}
 	}
 
-	if (is_struct_or_union(nst) && nstp->t_str != ostp->t_str)
+	if (is_struct_or_union(nst) && nstp->t_sou != ostp->t_sou)
 		return true;
 
 	return portable_size_in_bits(nst) != portable_size_in_bits(ost);
@@ -3980,7 +3980,7 @@ type_size_in_bits(const type_t *tp)
 			error(143);
 			elsz = 1;
 		} else {
-			elsz = tp->t_str->sou_size_in_bits;
+			elsz = tp->t_sou->sou_size_in_bits;
 		}
 		break;
 	case ENUM:
@@ -4058,7 +4058,7 @@ cast_to_union(const tnode_t *otn, type_t *ntp)
 		return NULL;
 	}
 
-	for (const sym_t *m = ntp->t_str->sou_first_member;
+	for (const sym_t *m = ntp->t_sou->sou_first_member;
 	    m != NULL; m = m->s_next) {
 		if (types_compatible(m->s_type, otn->tn_type,
 		    false, false, NULL)) {

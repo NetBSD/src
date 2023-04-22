@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.65 2023/02/02 22:23:30 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.66 2023/04/22 17:49:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.65 2023/02/02 22:23:30 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.66 2023/04/22 17:49:15 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -121,7 +121,7 @@ outtype(const type_t *tp)
 		} else if (ts == ENUM) {
 			outtt(tp->t_enum->en_tag, tp->t_enum->en_first_typedef);
 		} else if (is_struct_or_union(ts)) {
-			outtt(tp->t_str->sou_tag, tp->t_str->sou_first_typedef);
+			outtt(tp->t_sou->sou_tag, tp->t_sou->sou_first_typedef);
 		} else if (ts == FUNC && tp->t_proto) {
 			na = 0;
 			for (arg = tp->t_args; arg != NULL; arg = arg->s_next)
