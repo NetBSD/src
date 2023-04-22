@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.189 2023/04/22 13:54:19 riastradh Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.190 2023/04/22 13:54:59 riastradh Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -148,11 +148,6 @@ SRCS+=	secmodel.c
 SRCS+=	secmodel_suser.c
 SRCS+=	secmodel_extensions.c
 SRCS+=	secmodel_extensions_rump.c	# stubs
-
-# the funny bit.  this doesn't really belong here, but helps with the
-# needs of kern_descrip.c.  And since it's a fully dynamic interface,
-# it doesn't pull in other gunk.
-SRCS+=	vnode_if.c
 
 # sys/dev
 SRCS+=	clock_subr.c
