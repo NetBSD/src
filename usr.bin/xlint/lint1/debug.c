@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.29 2023/04/22 17:49:15 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.30 2023/04/22 20:17:19 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.29 2023/04/22 17:49:15 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.30 2023/04/22 20:17:19 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -205,8 +205,10 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 		debug_printf("\n");
 
 		debug_indent_inc();
+		lint_assert(tn->tn_left != NULL);
 		debug_node(tn->tn_left);
-		if (is_binary(tn) || tn->tn_right != NULL)
+		lint_assert(is_binary(tn) == (tn->tn_right != NULL));
+		if (tn->tn_right != NULL)
 			debug_node(tn->tn_right);
 		debug_indent_dec();
 	}
