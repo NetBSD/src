@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.188 2022/03/28 20:49:52 christos Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.189 2023/04/22 13:54:19 riastradh Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -147,6 +147,7 @@ SRCS+=	uvm_page_array.c uvm_page_status.c
 SRCS+=	secmodel.c
 SRCS+=	secmodel_suser.c
 SRCS+=	secmodel_extensions.c
+SRCS+=	secmodel_extensions_rump.c	# stubs
 
 # the funny bit.  this doesn't really belong here, but helps with the
 # needs of kern_descrip.c.  And since it's a fully dynamic interface,
