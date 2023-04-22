@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.27 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.28 2023/04/22 17:30:35 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -331,4 +331,63 @@ unnecessary_cast_from_array_to_pointer(int dim)
 		return storage_2d[0];
 
 	return (double *)storage_2d;
+}
+
+
+typedef void (*function)(void);
+
+typedef struct {
+	function m_function_array[5];
+} struct_function_array;
+
+typedef union {
+	int um_int;
+	double um_double;
+	struct_function_array um_function_array;
+} anything;
+
+static int *p_int;
+static double *p_double;
+static function p_function;
+static struct_function_array *p_function_array;
+static anything *p_anything;
+
+void
+conversions_from_and_to_union(void)
+{
+	/* Self-assignment, disguided by a cast to its own type. */
+	p_int = (int *)p_int;
+	/* Self-assignment, disguided by a cast to a pointer. */
+	p_int = (void *)p_int;
+
+	/* expect+1: warning: illegal combination of 'pointer to int' and 'pointer to double', op '=' [124] */
+	p_int = p_double;
+	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to int' may be troublesome [247] */
+	p_int = (int *)p_double;
+
+	/* expect+1: warning: illegal combination of 'pointer to union typedef anything' and 'pointer to double', op '=' [124] */
+	p_anything = p_double;
+	/*  FIXME: OK, since the union 'anything' has a 'double' member. */
+	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to union typedef anything' may be troublesome [247] */
+	p_anything = (anything *)p_double;
+	/* expect+1: warning: illegal combination of 'pointer to double' and 'pointer to union typedef anything', op '=' [124] */
+	p_double = p_anything;
+	/* FIXME: OK, since the union 'anything' has a 'double' member. */
+	/* expect+1: warning: pointer cast from 'pointer to union typedef anything' to 'pointer to double' may be troublesome [247] */
+	p_double = (double *)p_anything;
+
+	/*
+	 * Casting to an intermediate union does not make casting between two
+	 * incompatible types better.
+	 */
+	/* expect+2: warning: pointer cast from 'pointer to int' to 'pointer to union typedef anything' may be troublesome [247] */
+	/* expect+1: warning: illegal combination of 'pointer to function(void) returning void' and 'pointer to union typedef anything', op '=' [124] */
+	p_function = (anything *)p_int;
+
+	/* expect+2: warning: converting 'pointer to function(void) returning void' to 'pointer to union typedef anything' is questionable [229] */
+	/* expect+1: warning: illegal combination of 'pointer to function(void) returning void' and 'pointer to union typedef anything', op '=' [124] */
+	p_function = (anything *)p_function_array->m_function_array[0];
+
+	/* expect+1: warning: illegal combination of 'pointer to int' and 'pointer to function(void) returning void', op '=' [124] */
+	p_int = p_function;
 }
