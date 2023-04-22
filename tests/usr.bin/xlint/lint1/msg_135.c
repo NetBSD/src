@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_135.c,v 1.12 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.13 2023/04/22 19:45:04 rillig Exp $	*/
 # 3 "msg_135.c"
 
 // Test for message: converting '%s' to '%s' increases alignment from %u to %u [135]
@@ -22,7 +22,7 @@ read_uint(const unsigned short **pp)
 struct incomplete;
 
 struct complete {
-    int member;
+	int member;
 };
 
 /*
@@ -73,4 +73,31 @@ plain_char_to_unsigned_type(char *cp)
 
 	usp = (unsigned short *)cp;
 	sink(usp);
+}
+
+/*
+ * Converting a pointer with a low alignment requirement to a union that
+ * includes other types with higher alignment requirements is safe.  While
+ * accessing any other member of the union might trigger an alignment
+ * violation, such an access would invoke undefined behavior anyway.
+ *
+ * A practical case for this pattern are tagged unions, in which the first
+ * member of the struct determines how the remaining members are interpreted.
+ * See sbin/newfs_udf, function udf_validate_tag_and_crc_sums for an example.
+ */
+double
+cast_to_union(void)
+{
+	int align_4 = 0;
+	double align_8 = 0.0;
+	union both {
+		int p_align_4;
+		double p_align_8;
+	} *both;
+
+	/* TODO: don't warn here. */
+	/* expect+1: warning: converting 'pointer to int' to 'pointer to union both' increases alignment from 4 to 8 [135] */
+	both = (union both *)&align_4;
+	both = (union both *)&align_8;
+	return both->p_align_8;
 }
