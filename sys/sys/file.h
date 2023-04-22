@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.89 2023/04/22 13:52:37 riastradh Exp $	*/
+/*	$NetBSD: file.h,v 1.90 2023/04/22 13:52:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 
+struct flock;
 struct iovec;
 struct knote;
 struct lwp;
@@ -95,6 +96,8 @@ struct fileops {
 	int	(*fo_mmap)	(struct file *, off_t *, size_t, int, int *,
 				 int *, struct uvm_object **, int *);
 	int	(*fo_seek)	(struct file *, off_t, int, off_t *, int);
+	int	(*fo_advlock)	(struct file *, void *, int, struct flock *,
+				 int);
 };
 
 union file_data {
