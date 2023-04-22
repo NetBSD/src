@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.2 2021/06/15 18:54:34 tsutsui Exp $	*/
+/*	$NetBSD: trap.c,v 1.3 2023/04/22 10:00:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -98,7 +98,6 @@ const char *trap_type[] = {
 /*
  * Called from the trap handler when a processor trap occurs.
  */
-/*ARGSUSED*/
 void
 trap(int type, unsigned int code, unsigned int v, struct frame frame)
 {
