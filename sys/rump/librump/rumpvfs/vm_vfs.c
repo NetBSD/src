@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.41 2020/12/09 00:03:32 chs Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.42 2023/04/22 13:53:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.41 2020/12/09 00:03:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.42 2023/04/22 13:53:53 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -105,132 +105,4 @@ uvm_aio_aiodone(struct buf *bp)
 	putiobuf(bp);
 
 	kmem_free(pgs, npages * sizeof(*pgs));
-}
-
-/*
- * UBC
- */
-
-#define PAGERFLAGS (PGO_SYNCIO | PGO_NOBLOCKALLOC | PGO_NOTIMESTAMP)
-
-void
-ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
-{
-	struct vm_page **pgs;
-	int maxpages = MIN(32, round_page(len) >> PAGE_SHIFT);
-	int npages, i;
-
-	if (maxpages == 0)
-		return;
-
-	pgs = kmem_alloc(maxpages * sizeof(pgs), KM_SLEEP);
-	rw_enter(uobj->vmobjlock, RW_WRITER);
-	while (len) {
-		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
-		memset(pgs, 0, npages * sizeof(struct vm_page *));
-		(void)uobj->pgops->pgo_get(uobj, trunc_page(off),
-		    pgs, &npages, 0, VM_PROT_READ | VM_PROT_WRITE,
-		    0, PAGERFLAGS | PGO_PASTEOF);
-		KASSERT(npages > 0);
-
-		rw_enter(uobj->vmobjlock, RW_WRITER);
-		for (i = 0; i < npages; i++) {
-			struct vm_page *pg;
-			uint8_t *start;
-			size_t chunkoff, chunklen;
-
-			pg = pgs[i];
-			if (pg == NULL)
-				break;
-
-			KASSERT(pg->uobject != NULL);
-			KASSERT(uobj->vmobjlock == pg->uobject->vmobjlock);
-
-			chunkoff = off & PAGE_MASK;
-			chunklen = MIN(PAGE_SIZE - chunkoff, len);
-			start = (uint8_t *)pg->uanon + chunkoff;
-
-			memset(start, 0, chunklen);
-			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
-
-			off += chunklen;
-			len -= chunklen;
-		}
-		uvm_page_unbusy(pgs, npages);
-	}
-	rw_exit(uobj->vmobjlock);
-	kmem_free(pgs, maxpages * sizeof(pgs));
-}
-
-#define len2npages(off, len)						\
-    ((round_page(off+len) - trunc_page(off)) >> PAGE_SHIFT)
-
-int
-ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
-	int advice, int flags)
-{
-	struct vm_page **pgs;
-	int npages = len2npages(uio->uio_offset, todo);
-	size_t pgalloc;
-	int i, rv, pagerflags;
-	vm_prot_t prot;
-
-	pgalloc = npages * sizeof(pgs);
-	pgs = kmem_alloc(pgalloc, KM_SLEEP);
-
-	pagerflags = PAGERFLAGS;
-	if (flags & UBC_WRITE)
-		pagerflags |= PGO_PASTEOF;
-	if (flags & UBC_FAULTBUSY)
-		pagerflags |= PGO_OVERWRITE;
-
-	prot = VM_PROT_READ;
-	if (flags & UBC_WRITE)
-		prot |= VM_PROT_WRITE;
-
-	rw_enter(uobj->vmobjlock, RW_WRITER);
-	do {
-		npages = len2npages(uio->uio_offset, todo);
-		memset(pgs, 0, pgalloc);
-		rv = uobj->pgops->pgo_get(uobj, trunc_page(uio->uio_offset),
-		    pgs, &npages, 0, prot, 0, pagerflags);
-		if (rv)
-			goto out;
-
-		rw_enter(uobj->vmobjlock, RW_WRITER);
-		for (i = 0; i < npages; i++) {
-			struct vm_page *pg;
-			size_t xfersize;
-			off_t pageoff;
-
-			pg = pgs[i];
-			if (pg == NULL)
-				break;
-
-			KASSERT(pg->uobject != NULL);
-			KASSERT(uobj->vmobjlock == pg->uobject->vmobjlock);
-			pageoff = uio->uio_offset & PAGE_MASK;
-
-			xfersize = MIN(MIN(todo, PAGE_SIZE), PAGE_SIZE-pageoff);
-			KASSERT(xfersize > 0);
-			rv = uiomove((uint8_t *)pg->uanon + pageoff,
-			    xfersize, uio);
-			if (rv) {
-				uvm_page_unbusy(pgs, npages);
-				rw_exit(uobj->vmobjlock);
-				goto out;
-			}
-			if (uio->uio_rw == UIO_WRITE) {
-				pg->flags &= ~PG_FAKE;
-				uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
-			}
-			todo -= xfersize;
-		}
-		uvm_page_unbusy(pgs, npages);
-	} while (todo);
-	rw_exit(uobj->vmobjlock);
-
- out:
-	kmem_free(pgs, pgalloc);
-	return rv;
 }
