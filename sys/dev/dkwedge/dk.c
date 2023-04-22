@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.149 2023/04/22 12:33:46 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.150 2023/04/22 13:11:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.149 2023/04/22 12:33:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.150 2023/04/22 13:11:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1423,6 +1423,8 @@ dkcancel(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	KASSERT(sc != NULL);
 	KASSERT(sc->sc_dev != NULL);
+	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
+	KASSERT(sc->sc_state != DKW_STATE_DEAD);
 
 	/*
 	 * Disk I/O is expected to complete or fail within a reasonable
@@ -1448,16 +1450,10 @@ dkstrategy(struct buf *bp)
 	struct dkwedge_softc *sc = dkwedge_lookup(bp->b_dev);
 	uint64_t p_size, p_offset;
 
-	if (sc == NULL) {
-		bp->b_error = ENXIO;
-		goto done;
-	}
-
-	if (sc->sc_state != DKW_STATE_RUNNING ||
-	    sc->sc_parent->dk_rawvp == NULL) {
-		bp->b_error = ENXIO;
-		goto done;
-	}
+	KASSERT(sc != NULL);
+	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
+	KASSERT(sc->sc_state != DKW_STATE_DEAD);
+	KASSERT(sc->sc_parent->dk_rawvp != NULL);
 
 	/* If it's an empty transfer, wake up the top half now. */
 	if (bp->b_bcount == 0)
@@ -1647,12 +1643,11 @@ dkminphys(struct buf *bp)
 static int
 dkread(dev_t dev, struct uio *uio, int flags)
 {
-	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	struct dkwedge_softc *sc __diagused = dkwedge_lookup(dev);
 
-	if (sc == NULL)
-		return ENXIO;
-	if (sc->sc_state != DKW_STATE_RUNNING)
-		return ENXIO;
+	KASSERT(sc != NULL);
+	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
+	KASSERT(sc->sc_state != DKW_STATE_DEAD);
 
 	return physio(dkstrategy, NULL, dev, B_READ, dkminphys, uio);
 }
@@ -1665,12 +1660,11 @@ dkread(dev_t dev, struct uio *uio, int flags)
 static int
 dkwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+	struct dkwedge_softc *sc __diagused = dkwedge_lookup(dev);
 
-	if (sc == NULL)
-		return ENXIO;
-	if (sc->sc_state != DKW_STATE_RUNNING)
-		return ENXIO;
+	KASSERT(sc != NULL);
+	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
+	KASSERT(sc->sc_state != DKW_STATE_DEAD);
 
 	return physio(dkstrategy, NULL, dev, B_WRITE, dkminphys, uio);
 }
@@ -1686,12 +1680,10 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	int error = 0;
 
-	if (sc == NULL)
-		return ENXIO;
-	if (sc->sc_state != DKW_STATE_RUNNING)
-		return ENXIO;
-	if (sc->sc_parent->dk_rawvp == NULL)
-		return ENXIO;
+	KASSERT(sc != NULL);
+	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
+	KASSERT(sc->sc_state != DKW_STATE_DEAD);
+	KASSERT(sc->sc_parent->dk_rawvp != NULL);
 
 	/*
 	 * We pass NODEV instead of our device to indicate we don't
@@ -1763,12 +1755,10 @@ dkdiscard(dev_t dev, off_t pos, off_t len)
 	off_t offset, maxlen;
 	int error;
 
-	if (sc == NULL)
-		return ENXIO;
-	if (sc->sc_state != DKW_STATE_RUNNING)
-		return ENXIO;
-	if (sc->sc_parent->dk_rawvp == NULL)
-		return ENXIO;
+	KASSERT(sc != NULL);
+	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
+	KASSERT(sc->sc_state != DKW_STATE_DEAD);
+	KASSERT(sc->sc_parent->dk_rawvp != NULL);
 
 	/* XXX check bounds on size/offset up front */
 	shift = (sc->sc_parent->dk_blkshift + DEV_BSHIFT);
