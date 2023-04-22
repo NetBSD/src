@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.41 2023/04/22 13:52:46 riastradh Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.42 2023/04/22 13:52:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.41 2023/04/22 13:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.42 2023/04/22 13:52:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,41 +571,21 @@ sys_fpathconf(struct lwp *l, const struct sys_fpathconf_args *uap,
 		syscallarg(int)	fd;
 		syscallarg(int)	name;
 	} */
-	int fd, error;
+	int fd, name, error;
 	file_t *fp;
 
 	fd = SCARG(uap, fd);
+	name = SCARG(uap, name);
 	error = 0;
 
-	if ((fp = fd_getfile(fd)) == NULL) {
-		return (EBADF);
-	}
-	switch (fp->f_type) {
-	case DTYPE_SOCKET:
-	case DTYPE_PIPE:
-		if (SCARG(uap, name) != _PC_PIPE_BUF)
-			error = EINVAL;
-		else
-			*retval = PIPE_BUF;
-		break;
-
-	case DTYPE_VNODE:
-		vn_lock(fp->f_vnode, LK_SHARED | LK_RETRY);
-		error = VOP_PATHCONF(fp->f_vnode, SCARG(uap, name), retval);
-		VOP_UNLOCK(fp->f_vnode);
-		break;
-
-	case DTYPE_KQUEUE:
-		error = EINVAL;
-		break;
-
-	default:
+	if ((fp = fd_getfile(fd)) == NULL)
+		return EBADF;
+	if (fp->f_ops->fo_fpathconf == NULL)
 		error = EOPNOTSUPP;
-		break;
-	}
-
+	else
+		error = (*fp->f_ops->fo_fpathconf)(fp, name, retval);
 	fd_putfile(fd);
-	return (error);
+	return error;
 }
 
 /*

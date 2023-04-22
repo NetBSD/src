@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.147 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.148 2023/04/22 13:52:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.147 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.148 2023/04/22 13:52:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ static int	kqueue_kqfilter(file_t *, struct knote *);
 static int	kqueue_stat(file_t *, struct stat *);
 static int	kqueue_close(file_t *);
 static void	kqueue_restart(file_t *);
+static int	kqueue_fpathconf(file_t *, int, register_t *);
 static int	kqueue_register(struct kqueue *, struct kevent *);
 static void	kqueue_doclose(struct kqueue *, struct klist *, int);
 
@@ -186,6 +187,7 @@ static const struct fileops kqueueops = {
 	.fo_close = kqueue_close,
 	.fo_kqfilter = kqueue_kqfilter,
 	.fo_restart = kqueue_restart,
+	.fo_fpathconf = kqueue_fpathconf,
 };
 
 static void
@@ -2247,6 +2249,13 @@ kqueue_restart(file_t *fp)
 	kq->kq_count |= KQ_RESTART;
 	cv_broadcast(&kq->kq_cv);
 	mutex_spin_exit(&kq->kq_lock);
+}
+
+static int
+kqueue_fpathconf(struct file *fp, int name, register_t *retval)
+{
+
+	return EINVAL;
 }
 
 /*

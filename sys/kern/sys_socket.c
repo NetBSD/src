@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.79 2020/11/17 03:22:33 chs Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.80 2023/04/22 13:52:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.79 2020/11/17 03:22:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.80 2023/04/22 13:52:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.79 2020/11/17 03:22:33 chs Exp $");
 #include <net/if.h>
 #include <net/route.h>
 
+static int soo_fpathconf(struct file *, int, register_t *);
+
 const struct fileops socketops = {
 	.fo_name = "socket",
 	.fo_read = soo_read,
@@ -91,6 +93,7 @@ const struct fileops socketops = {
 	.fo_close = soo_close,
 	.fo_kqfilter = soo_kqfilter,
 	.fo_restart = soo_restart,
+	.fo_fpathconf = soo_fpathconf,
 };
 
 int (*ifioctl)(struct socket *, u_long, void *, struct lwp *) = (void *)eopnotsupp;
@@ -262,4 +265,17 @@ soo_restart(file_t *fp)
 {
 
 	sorestart(fp->f_socket);
+}
+
+static int
+soo_fpathconf(struct file *fp, int name, register_t *retval)
+{
+
+	switch (name) {
+	case _PC_PIPE_BUF:
+		*retval = PIPE_BUF;
+		return 0;
+	default:
+		return EINVAL;
+	}
 }
