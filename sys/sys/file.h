@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.90 2023/04/22 13:52:46 riastradh Exp $	*/
+/*	$NetBSD: file.h,v 1.91 2023/04/22 13:52:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -63,6 +63,8 @@
 #ifndef _SYS_FILE_H_
 #define	_SYS_FILE_H_
 
+#include <sys/types.h>
+
 #include <sys/fcntl.h>
 #include <sys/unistd.h>
 
@@ -98,6 +100,7 @@ struct fileops {
 	int	(*fo_seek)	(struct file *, off_t, int, off_t *, int);
 	int	(*fo_advlock)	(struct file *, void *, int, struct flock *,
 				 int);
+	int	(*fo_fpathconf)	(struct file *, int, register_t *);
 };
 
 union file_data {
