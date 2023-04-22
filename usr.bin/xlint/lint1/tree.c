@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.514 2023/04/22 09:39:14 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.515 2023/04/22 15:14:37 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.514 2023/04/22 09:39:14 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.515 2023/04/22 15:14:37 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4372,7 +4372,7 @@ expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while)
 		check_statement_reachable();
 
 	check_expr_misc(tn, vctx, cond, !cond, false, false, false);
-	if (tn->tn_op == ASSIGN) {
+	if (tn->tn_op == ASSIGN && !tn->tn_parenthesized) {
 		if (hflag && cond)
 			/* assignment in conditional context */
 			warning(159);
