@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_159.c,v 1.4 2022/07/06 21:13:13 rillig Exp $	*/
+/*	$NetBSD: msg_159.c,v 1.5 2023/04/22 15:14:37 rillig Exp $	*/
 # 3 "msg_159.c"
 
 // Test for message: assignment in conditional context [159]
@@ -12,6 +12,11 @@ example(int a, int b)
 	if (a == b)
 		return "comparison, not parenthesized";
 
+	/*
+	 * Clang-Tidy marks a comparison with extra parentheses as an error,
+	 * expecting that assignments are parenthesized and comparisons
+	 * aren't.
+	 */
 	if ((a == b))
 		return "comparison, parenthesized";
 
@@ -27,10 +32,10 @@ example(int a, int b)
 		return "assignment, not parenthesized";
 
 	/*
-	 * XXX: GCC has the convention that an assignment that is
-	 * parenthesized is intended as an assignment.
+	 * GCC established the convention that an assignment that is
+	 * parenthesized is intended as an assignment, so don't warn about
+	 * that case.
 	 */
-	/* expect+1: warning: assignment in conditional context [159] */
 	if ((a = b))
 		return "assignment, parenthesized";
 
