@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.194 2022/10/26 23:22:07 riastradh Exp $	*/
+/*	$NetBSD: vm.c,v 1.195 2023/04/22 13:53:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.194 2022/10/26 23:22:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.195 2023/04/22 13:53:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -162,6 +162,10 @@ pgdtor(void *arg, void *obj)
 }
 
 static struct pool_cache pagecache;
+
+/* stub for UVM_OBJ_IS_VNODE */
+struct uvm_pagerops rump_uvm_vnodeops;
+__weak_alias(uvm_vnodeops,rump_uvm_vnodeops);
 
 /*
  * Called with the object locked.  We don't support anons.
