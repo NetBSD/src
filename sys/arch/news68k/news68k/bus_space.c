@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.13 2014/09/21 16:34:53 christos Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.14 2023/04/22 10:09:12 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13 2014/09/21 16:34:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.14 2023/04/22 10:09:12 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13 2014/09/21 16:34:53 christos Exp 
 
 extern int *nofault;
 
-/* ARGSUSED */
 int
 bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
@@ -69,7 +68,6 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	return 1;
 }
 
-/* ARGSUSED */
 int
 bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
     bus_size_t size, bus_size_t alignment, bus_size_t boundary, int flags,
@@ -82,7 +80,6 @@ bus_space_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	return EINVAL;
 }
 
-/* ARGSUSED */
 void
 bus_space_free(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 {
@@ -111,7 +108,6 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	return;
 }
 
-/* ARGSUSED */
 int
 bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, bus_size_t size, bus_space_handle_t *nbshp)
@@ -121,7 +117,6 @@ bus_space_subregion(bus_space_tag_t t, bus_space_handle_t bsh,
 	return 0;
 }
 
-/* ARGSUSED */
 int
 news68k_bus_space_probe(bus_space_tag_t t, bus_space_handle_t bsh,
     bus_size_t offset, int sz)
