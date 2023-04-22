@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.c,v 1.18 2023/04/21 17:31:33 nikita Exp $	*/
+/*	$NetBSD: lvm.c,v 1.19 2023/04/22 19:41:15 nikita Exp $	*/
 
 /*
 ** Id: lvm.c 
@@ -500,8 +500,8 @@ l_sinline int LEfloatint (lua_Number f, lua_Integer i) {
 /*
 ** Return 'l < r', for numbers.
 */
-#ifndef _KERNEL
 l_sinline int LTnum (const TValue *l, const TValue *r) {
+#ifndef _KERNEL
   lua_assert(ttisnumber(l) && ttisnumber(r));
   if (ttisinteger(l)) {
     lua_Integer li = ivalue(l);
@@ -517,22 +517,19 @@ l_sinline int LTnum (const TValue *l, const TValue *r) {
     else  /* 'l' is float and 'r' is int */
       return LTfloatint(lf, ivalue(r));
   }
-}
-#endif /* _KERNEL */
-#ifdef _KERNEL
-l_sinline int LTnum (const TValue *l, const TValue *r) {
+#else
   lua_assert(ttisnumber(l));
   lua_assert(ttisnumber(r));
   return ivalue(l) < ivalue(r);  /* both are integers */
-}
 #endif /* _KERNEL */
+}
 
 
 /*
 ** Return 'l <= r', for numbers.
 */
-#ifndef _KERNEL
 l_sinline int LEnum (const TValue *l, const TValue *r) {
+#ifndef _KERNEL
   lua_assert(ttisnumber(l) && ttisnumber(r));
   if (ttisinteger(l)) {
     lua_Integer li = ivalue(l);
@@ -548,15 +545,12 @@ l_sinline int LEnum (const TValue *l, const TValue *r) {
     else  /* 'l' is float and 'r' is int */
       return LEfloatint(lf, ivalue(r));
   }
-}
-#endif /* _KERNEL */
-#ifdef _KERNEL
-l_sinline int LEnum (const TValue *l, const TValue *r) {
+#else
   lua_assert(ttisinteger(l));
   lua_assert(ttisinteger(r));
   return ivalue(l) <= ivalue(r);  /* both are integers */
-}
 #endif /* _KERNEL */
+}
 
 
 /*
