@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.44 2023/04/22 14:23:32 riastradh Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.45 2023/04/22 14:23:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.44 2023/04/22 14:23:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.45 2023/04/22 14:23:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,13 +234,15 @@ fcntl_forfs(int fd, file_t *fp, int cmd, void *arg)
 int
 do_fcntl_lock(int fd, int cmd, struct flock *fl)
 {
-	file_t *fp;
+	struct file *fp = NULL;
 	proc_t *p;
 	int (*fo_advlock)(struct file *, void *, int, struct flock *, int);
 	int error, flg;
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return EBADF;
+	if ((fp = fd_getfile(fd)) == NULL) {
+		error = EBADF;
+		goto out;
+	}
 	if ((fo_advlock = fp->f_ops->fo_advlock) == NULL) {
 		error = EINVAL;
 		goto out;
@@ -308,7 +310,8 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 		break;
 	}
 
-out:	fd_putfile(fd);
+out:	if (fp)
+		fd_putfile(fd);
 	return error;
 }
 
@@ -605,15 +608,17 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 		syscallarg(int)	how;
 	} */
 	int fd, how, error;
-	file_t *fp;
+	struct file *fp = NULL;
 	int (*fo_advlock)(struct file *, void *, int, struct flock *, int);
 	struct flock lf;
 
 	fd = SCARG(uap, fd);
 	how = SCARG(uap, how);
 
-	if ((fp = fd_getfile(fd)) == NULL)
-		return EBADF;
+	if ((fp = fd_getfile(fd)) == NULL) {
+		error = EBADF;
+		goto out;
+	}
 	if ((fo_advlock = fp->f_ops->fo_advlock) == NULL) {
 		error = EOPNOTSUPP;
 		goto out;
@@ -628,8 +633,7 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 		lf.l_type = F_UNLCK;
 		atomic_and_uint(&fp->f_flag, ~FHASLOCK);
 		error = (*fo_advlock)(fp, fp, F_UNLCK, &lf, F_FLOCK);
-		fd_putfile(fd);
-		return error;
+		goto out;
 	case LOCK_EX:
 		lf.l_type = F_WRLCK;
 		break;
@@ -637,8 +641,8 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 		lf.l_type = F_RDLCK;
 		break;
 	default:
-		fd_putfile(fd);
-		return EINVAL;
+		error = EINVAL;
+		goto out;
 	}
 
 	atomic_or_uint(&fp->f_flag, FHASLOCK);
@@ -647,7 +651,8 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 	} else {
 		error = (*fo_advlock)(fp, fp, F_SETLK, &lf, F_FLOCK|F_WAIT);
 	}
-out:	fd_putfile(fd);
+out:	if (fp)
+		fd_putfile(fd);
 	return error;
 }
 
