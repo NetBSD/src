@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_135.c,v 1.13 2023/04/22 19:45:04 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.14 2023/04/22 20:54:28 rillig Exp $	*/
 # 3 "msg_135.c"
 
 // Test for message: converting '%s' to '%s' increases alignment from %u to %u [135]
@@ -95,8 +95,6 @@ cast_to_union(void)
 		double p_align_8;
 	} *both;
 
-	/* TODO: don't warn here. */
-	/* expect+1: warning: converting 'pointer to int' to 'pointer to union both' increases alignment from 4 to 8 [135] */
 	both = (union both *)&align_4;
 	both = (union both *)&align_8;
 	return both->p_align_8;
