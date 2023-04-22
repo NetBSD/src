@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.216 2022/10/15 15:20:46 riastradh Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.217 2023/04/22 14:30:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.216 2022/10/15 15:20:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.217 2023/04/22 14:30:16 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -397,7 +397,6 @@ spec_node_init(vnode_t *vp, dev_t rdev)
 	}
 	if (vp2 == NULL) {
 		/* No existing record, create a new one. */
-		sd->sd_rdev = rdev;
 		sd->sd_mountpoint = NULL;
 		sd->sd_lockf = NULL;
 		sd->sd_refcnt = 1;
