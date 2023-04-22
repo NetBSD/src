@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.28 2023/04/22 17:30:35 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.29 2023/04/22 17:42:29 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -367,20 +367,17 @@ conversions_from_and_to_union(void)
 
 	/* expect+1: warning: illegal combination of 'pointer to union typedef anything' and 'pointer to double', op '=' [124] */
 	p_anything = p_double;
-	/*  FIXME: OK, since the union 'anything' has a 'double' member. */
-	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to union typedef anything' may be troublesome [247] */
+	/* OK, since the union 'anything' has a 'double' member. */
 	p_anything = (anything *)p_double;
 	/* expect+1: warning: illegal combination of 'pointer to double' and 'pointer to union typedef anything', op '=' [124] */
 	p_double = p_anything;
-	/* FIXME: OK, since the union 'anything' has a 'double' member. */
-	/* expect+1: warning: pointer cast from 'pointer to union typedef anything' to 'pointer to double' may be troublesome [247] */
+	/* OK, since the union 'anything' has a 'double' member. */
 	p_double = (double *)p_anything;
 
 	/*
 	 * Casting to an intermediate union does not make casting between two
 	 * incompatible types better.
 	 */
-	/* expect+2: warning: pointer cast from 'pointer to int' to 'pointer to union typedef anything' may be troublesome [247] */
 	/* expect+1: warning: illegal combination of 'pointer to function(void) returning void' and 'pointer to union typedef anything', op '=' [124] */
 	p_function = (anything *)p_int;
 
