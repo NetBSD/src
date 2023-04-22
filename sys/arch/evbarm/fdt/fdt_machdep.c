@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.102 2023/04/07 08:55:31 skrll Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.103 2023/04/22 09:53:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.102 2023/04/07 08:55:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.103 2023/04/22 09:53:45 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.102 2023/04/07 08:55:31 skrll Exp 
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_boot.h>
 #include <dev/fdt/fdt_private.h>
 #include <dev/fdt/fdt_memory.h>
 
@@ -140,7 +141,6 @@ static uint8_t fdt_data[FDT_BUF_SIZE];
 extern char KERNEL_BASE_phys[];
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
 
-static void fdt_update_stdout_path(void);
 static void fdt_device_register(device_t, void *);
 static void fdt_device_register_post_config(device_t, void *);
 static void fdt_cpu_rootconf(void);
@@ -547,7 +547,7 @@ initarm(void *arg)
 	 * value in /chosen/stdout-path before initializing console.
 	 */
 	VPRINTF("stdout\n");
-	fdt_update_stdout_path();
+	fdt_update_stdout_path(fdt_data, boot_args);
 
 #if BYTE_ORDER == BIG_ENDIAN
 	/*
@@ -666,32 +666,6 @@ initarm(void *arg)
 	}
 
 	return sp;
-}
-
-static void
-fdt_update_stdout_path(void)
-{
-	char *stdout_path, *ep;
-	int stdout_path_len;
-	char buf[256];
-
-	const int chosen_off = fdt_path_offset(fdt_data, "/chosen");
-	if (chosen_off == -1)
-		return;
-
-	if (get_bootconf_option(boot_args, "stdout-path",
-	    BOOTOPT_TYPE_STRING, &stdout_path) == 0)
-		return;
-
-	ep = strchr(stdout_path, ' ');
-	stdout_path_len = ep ? (ep - stdout_path) : strlen(stdout_path);
-	if (stdout_path_len >= sizeof(buf))
-		return;
-
-	strncpy(buf, stdout_path, stdout_path_len);
-	buf[stdout_path_len] = '\0';
-	fdt_setprop(fdt_data, chosen_off, "stdout-path",
-	    buf, stdout_path_len + 1);
 }
 
 void

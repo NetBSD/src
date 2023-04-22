@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.68 2023/04/16 16:51:38 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.69 2023/04/22 09:53:45 skrll Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -66,6 +66,7 @@ device	iicmux: i2cbus, i2cmux
 attach	iicmux at fdt with iicmux_fdt
 file	dev/fdt/i2cmux_fdt.c			iicmux_fdt
 
+file	dev/fdt/fdt_boot.c			fdtbase
 file	dev/fdt/fdt_memory.c			fdtbase
 file	dev/fdt/fdt_openfirm.c			fdtbase
 file	dev/fdt/fdt_platform.c			fdtbase
