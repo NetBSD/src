@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.256 2023/04/22 13:52:46 riastradh Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.257 2023/04/22 14:23:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.256 2023/04/22 13:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.257 2023/04/22 14:23:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -852,7 +852,9 @@ closef(file_t *fp)
 	mutex_exit(&fp->f_lock);
 
 	/* We held the last reference - release locks, close and free. */
-	if ((fp->f_flag & FHASLOCK) && fp->f_ops->fo_advlock != NULL) {
+	if (fp->f_ops->fo_advlock == NULL) {
+		KASSERT((fp->f_flag & FHASLOCK) == 0);
+	} else if (fp->f_flag & FHASLOCK) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
 		lf.l_len = 0;

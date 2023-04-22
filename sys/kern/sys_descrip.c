@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.45 2023/04/22 14:23:50 riastradh Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.46 2023/04/22 14:23:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.45 2023/04/22 14:23:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.46 2023/04/22 14:23:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -620,6 +620,7 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 		goto out;
 	}
 	if ((fo_advlock = fp->f_ops->fo_advlock) == NULL) {
+		KASSERT((atomic_load_relaxed(&fp->f_flag) & FHASLOCK) == 0);
 		error = EOPNOTSUPP;
 		goto out;
 	}
