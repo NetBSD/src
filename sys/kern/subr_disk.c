@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.135 2023/04/21 18:30:04 riastradh Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.136 2023/04/22 11:58:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.135 2023/04/21 18:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.136 2023/04/22 11:58:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -535,10 +535,15 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 		int error;
 
 		mutex_enter(&dk->dk_openlock);
-		if ((disk_info = dk->dk_info) == NULL)
-			return ENOTSUP;
-		prop_object_retain(disk_info);
+		if ((disk_info = dk->dk_info) == NULL) {
+			error = ENOTSUP;
+		} else {
+			prop_object_retain(disk_info);
+			error = 0;
+		}
 		mutex_exit(&dk->dk_openlock);
+		if (error)
+			return error;
 
 		error = prop_dictionary_copyout_ioctl(data, cmd, disk_info);
 		prop_object_release(disk_info);
