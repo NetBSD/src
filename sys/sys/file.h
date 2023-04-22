@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.88 2021/09/19 15:51:27 thorpej Exp $	*/
+/*	$NetBSD: file.h,v 1.89 2023/04/22 13:52:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -71,12 +71,12 @@
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 
-struct proc;
-struct lwp;
-struct uio;
 struct iovec;
-struct stat;
 struct knote;
+struct lwp;
+struct proc;
+struct stat;
+struct uio;
 struct uvm_object;
 
 struct fileops {
