@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpvfs,v 1.51 2023/04/22 13:54:59 riastradh Exp $
+#	$NetBSD: Makefile.rumpvfs,v 1.52 2023/04/22 18:55:59 riastradh Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -12,6 +12,7 @@ MAN=	rump_etfs.3 rumpfs.4
 
 .PATH:	${RUMPTOP}/librump/rumpvfs ${RUMPTOP}/librump		\
 	${RUMPTOP}/../kern					\
+	${RUMPTOP}/../secmodel/extensions			\
 	${RUMPTOP}/../miscfs/genfs				\
 	${RUMPTOP}/../miscfs/specfs ${RUMPTOP}/../miscfs/deadfs	\
 	${RUMPTOP}/../compat/common ${RUMPTOP}/../uvm		\
@@ -41,6 +42,9 @@ SRCS+=	vfs_acl.c vfs_bio.c vfs_cache.c vfs_cwd.c vfs_dirhash.c 	\
 
 # sys/kern module support
 SRCS+=	kern_module_vfs.c subr_kobj_vfs.c
+
+# sys/secmodel/extensions
+SRCS+=	secmodel_extensions_vfs.c
 
 # sys/uvm
 SRCS+=	uvm_vnode.c
