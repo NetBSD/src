@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.239 2023/04/22 13:52:46 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.240 2023/04/22 13:52:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.239 2023/04/22 13:52:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.240 2023/04/22 13:52:54 riastradh Exp $");
 
 #include "veriexec.h"
 
@@ -123,6 +123,7 @@ static int vn_mmap(struct file *, off_t *, size_t, int, int *, int *,
     struct uvm_object **, int *);
 static int vn_seek(struct file *, off_t, int, off_t *, int);
 static int vn_advlock(struct file *, void *, int, struct flock *, int);
+static int vn_fpathconf(struct file *, int, register_t *);
 
 const struct fileops vnops = {
 	.fo_name = "vn",
@@ -138,6 +139,7 @@ const struct fileops vnops = {
 	.fo_mmap = vn_mmap,
 	.fo_seek = vn_seek,
 	.fo_advlock = vn_advlock,
+	.fo_fpathconf = vn_fpathconf,
 };
 
 /*
@@ -1232,6 +1234,19 @@ vn_advlock(struct file *fp, void *id, int op, struct flock *fl,
 	}
 
 	return VOP_ADVLOCK(vp, id, op, fl, flags);
+}
+
+static int
+vn_fpathconf(struct file *fp, int name, register_t *retval)
+{
+	struct vnode *const vp = fp->f_vnode;
+	int error;
+
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+	error = VOP_PATHCONF(vp, name, retval);
+	VOP_UNLOCK(vp);
+
+	return error;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.158 2021/10/11 01:07:36 thorpej Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.159 2023/04/22 13:52:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.158 2021/10/11 01:07:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.159 2023/04/22 13:52:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,6 +100,7 @@ static int	pipe_kqfilter(file_t *, struct knote *);
 static int	pipe_stat(file_t *, struct stat *);
 static int	pipe_ioctl(file_t *, u_long, void *);
 static void	pipe_restart(file_t *);
+static int	pipe_fpathconf(file_t *, int, register_t *);
 
 static const struct fileops pipeops = {
 	.fo_name = "pipe",
@@ -112,6 +113,7 @@ static const struct fileops pipeops = {
 	.fo_close = pipe_close,
 	.fo_kqfilter = pipe_kqfilter,
 	.fo_restart = pipe_restart,
+	.fo_fpathconf = pipe_fpathconf,
 };
 
 /*
@@ -911,6 +913,19 @@ pipe_restart(file_t *fp)
 	cv_broadcast(&pipe->pipe_rcv);
 	cv_broadcast(&pipe->pipe_wcv);
 	mutex_exit(pipe->pipe_lock);
+}
+
+static int
+pipe_fpathconf(struct file *fp, int name, register_t *retval)
+{
+
+	switch (name) {
+	case _PC_PIPE_BUF:
+		*retval = PIPE_BUF;
+		return 0;
+	default:
+		return EINVAL;
+	}
 }
 
 static void
