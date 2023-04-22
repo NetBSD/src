@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.307 2023/03/28 20:04:52 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.308 2023/04/22 17:49:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.307 2023/03/28 20:04:52 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.308 2023/04/22 17:49:15 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -191,7 +191,7 @@ expr_unqualified_type(const type_t *tp)
 	 * qualifiers as well, but that would require a deep copy of the
 	 * struct or union type.  This in turn would defeat the type
 	 * comparison in types_compatible, which simply tests whether
-	 * tp1->t_str == tp2->t_str.
+	 * tp1->t_sou == tp2->t_sou.
 	 */
 
 	return ntp;
@@ -211,7 +211,7 @@ is_incomplete(const type_t *tp)
 	if (t == ARRAY)
 		return tp->t_incomplete_array;
 	if (is_struct_or_union(t))
-		return tp->t_str->sou_incomplete;
+		return tp->t_sou->sou_incomplete;
 	if (t == ENUM)
 		return tp->t_enum->en_incomplete;
 
@@ -467,8 +467,8 @@ set_first_typedef(type_t *tp, sym_t *sym)
 	tspec_t	t;
 
 	if (is_struct_or_union(t = tp->t_tspec)) {
-		if (tp->t_str->sou_first_typedef == NULL)
-			tp->t_str->sou_first_typedef = sym;
+		if (tp->t_sou->sou_first_typedef == NULL)
+			tp->t_sou->sou_first_typedef = sym;
 	} else if (t == ENUM) {
 		if (tp->t_enum->en_first_typedef == NULL)
 			tp->t_enum->en_first_typedef = sym;
@@ -495,7 +495,7 @@ set_packed_size(type_t *tp)
 	switch (tp->t_tspec) {
 	case STRUCT:
 	case UNION:
-		sp = tp->t_str;
+		sp = tp->t_sou;
 		sp->sou_size_in_bits = 0;
 		for (mem = sp->sou_first_member;
 		     mem != NULL; mem = mem->s_next) {
@@ -859,7 +859,7 @@ length_in_bits(const type_t *tp, const char *name)
 			/* '%s' has incomplete type '%s' */
 			error(31, name, type_name(tp));
 		}
-		elsz = tp->t_str->sou_size_in_bits;
+		elsz = tp->t_sou->sou_size_in_bits;
 		break;
 	case ENUM:
 		if (is_incomplete(tp) && name != NULL) {
@@ -896,7 +896,7 @@ alignment_in_bits(const type_t *tp)
 		tp = tp->t_subt;
 
 	if (is_struct_or_union(t = tp->t_tspec))
-		a = tp->t_str->sou_align_in_bits;
+		a = tp->t_sou->sou_align_in_bits;
 	else {
 		lint_assert(t != FUNC);
 		if ((a = size_in_bits(t)) == 0)
@@ -1557,7 +1557,7 @@ declarator_name(sym_t *sym)
 	case DK_STRUCT_MEMBER:
 	case DK_UNION_MEMBER:
 		/* Set parent */
-		sym->u.s_member.sm_sou_type = dcs->d_tagtyp->t_str;
+		sym->u.s_member.sm_sou_type = dcs->d_tagtyp->t_sou;
 		sym->s_def = DEF;
 		/* XXX: Where is sym->u.s_member.sm_offset_in_bits set? */
 		sc = dcs->d_kind == DK_STRUCT_MEMBER
@@ -1717,10 +1717,10 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	if (tp->t_tspec == NOTSPEC) {
 		tp->t_tspec = kind;
 		if (kind != ENUM) {
-			tp->t_str = block_zero_alloc(sizeof(*tp->t_str));
-			tp->t_str->sou_align_in_bits = CHAR_SIZE;
-			tp->t_str->sou_tag = tag;
-			tp->t_str->sou_incomplete = true;
+			tp->t_sou = block_zero_alloc(sizeof(*tp->t_sou));
+			tp->t_sou->sou_align_in_bits = CHAR_SIZE;
+			tp->t_sou->sou_tag = tag;
+			tp->t_sou->sou_incomplete = true;
 		} else {
 			tp->t_is_enum = true;
 			tp->t_enum = block_zero_alloc(sizeof(*tp->t_enum));
@@ -1821,12 +1821,12 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 	if (tp->t_tspec == ENUM)
 		tp->t_enum->en_incomplete = false;
 	else
-		tp->t_str->sou_incomplete = false;
+		tp->t_sou->sou_incomplete = false;
 
 	tspec_t t = tp->t_tspec;
 	dcs_align((u_int)dcs->d_sou_align_in_bits, 0);
 
-	struct_or_union *sp = tp->t_str;
+	struct_or_union *sp = tp->t_sou;
 	sp->sou_align_in_bits = dcs->d_sou_align_in_bits;
 	sp->sou_first_member = fmem;
 	if (tp->t_packed)
@@ -2228,7 +2228,7 @@ types_compatible(const type_t *tp1, const type_t *tp2,
 			return false;
 
 		if (is_struct_or_union(t))
-			return tp1->t_str == tp2->t_str;
+			return tp1->t_sou == tp2->t_sou;
 
 		if (t == ENUM && eflag)
 			return tp1->t_enum == tp2->t_enum;
