@@ -1,4 +1,4 @@
-/*	$NetBSD: t_open_pr_57260.c,v 1.1 2023/04/21 21:50:05 gutteridge Exp $	*/
+/*	$NetBSD: t_open_pr_57260.c,v 1.2 2023/04/23 00:46:46 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_open_pr_57260.c,v 1.1 2023/04/21 21:50:05 gutteridge Exp $");
+__RCSID("$NetBSD: t_open_pr_57260.c,v 1.2 2023/04/23 00:46:46 gutteridge Exp $");
 
 #include <sys/stat.h>
 
@@ -49,12 +49,12 @@ static void
 on_alarm(int sig)
 {
 
-    if (!alarmed) {
-        alarmed = 1;
-        alarm(1);
-    } else {
-        longjmp(env, 1);
-    }
+	if (!alarmed) {
+		alarmed = 1;
+		alarm(1);
+	} else {
+		longjmp(env, 1);
+	}
 }
 
 ATF_TC(openrestartsignal);
