@@ -1,4 +1,4 @@
-/*	$NetBSD: lstrlib.c,v 1.19 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: lstrlib.c,v 1.20 2023/04/23 20:52:39 nikita Exp $	*/
 
 /*
 ** Id: lstrlib.c 
@@ -1446,9 +1446,9 @@ typedef enum KOption {
   Kuint,	/* unsigned integers */
 #ifndef _KERNEL
   Kfloat,	/* single-precision floating-point numbers */
-#endif /* _KERNEL */
   Knumber,	/* Lua "native" floating-point numbers */
   Kdouble,	/* double-precision floating-point numbers */
+#endif /* _KERNEL */
   Kchar,	/* fixed-length strings */
   Kstring,	/* strings with prefixed length */
   Kzstr,	/* zero-terminated strings */
@@ -1520,8 +1520,8 @@ static KOption getoption (Header *h, const char **fmt, int *size) {
     case 'T': *size = sizeof(size_t); return Kuint;
 #ifndef _KERNEL
     case 'f': *size = sizeof(float); return Kfloat;
-#endif /* _KERNEL */
     case 'd': *size = sizeof(double); return Kdouble;
+#endif
 #ifndef _KERNEL
     case 'n': *size = sizeof(lua_Number); return Knumber;
 #else /* _KERNEL */
