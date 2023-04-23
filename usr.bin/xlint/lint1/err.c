@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.193 2023/04/15 11:34:45 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.194 2023/04/23 09:04:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.193 2023/04/15 11:34:45 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.194 2023/04/23 09:04:44 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -419,18 +419,23 @@ static struct include_level {
 } *includes;
 
 void
-suppress_messages(char *ids)
+suppress_messages(const char *p)
 {
-	char *ptr, *end;
-	unsigned long id;
+	char *end;
 
-	for (ptr = strtok(ids, ","); ptr != NULL; ptr = strtok(NULL, ",")) {
-		id = strtoul(ptr, &end, 10);
-		if (*end != '\0' || ptr == end ||
-		    id >= sizeof(msgs) / sizeof(msgs[0]))
-			errx(1, "invalid error message id '%s'", ptr);
+	for (; ch_isdigit(*p); p = end + 1) {
+		unsigned long id = strtoul(p, &end, 10);
+		if ((*end != '\0' && *end != ',') ||
+		    id >= sizeof(msgs) / sizeof(msgs[0]) ||
+		    msgs[id][0] == '\0')
+			break;
+
 		is_suppressed[id] = true;
+
+		if (*end == '\0')
+			return;
 	}
+	errx(1, "invalid message ID '%.*s'", (int)(strcspn(p, ",")), p);
 }
 
 void
@@ -722,24 +727,22 @@ void
 }
 
 void
-enable_queries(const char *arg)
+enable_queries(const char *p)
 {
+	char *end;
 
-	for (const char *s = arg;;) {
-		const char *e = s + strcspn(s, ",");
-
-		char *end;
-		unsigned long id = strtoul(s, &end, 10);
-		if (!(ch_isdigit(s[0]) && end == e &&
-		      id < sizeof(queries) / sizeof(queries[0]) &&
-		      queries[id][0] != '\0'))
-			errx(1, "invalid query ID '%.*s'", (int)(e - s), s);
+	for (; ch_isdigit(*p); p = end + 1) {
+		unsigned long id = strtoul(p, &end, 10);
+		if ((*end != '\0' && *end != ',') ||
+		    id >= sizeof(queries) / sizeof(queries[0]) ||
+		    queries[id][0] == '\0')
+			break;
 
 		any_query_enabled = true;
 		is_query_enabled[id] = true;
 
-		if (*e == '\0')
-			break;
-		s = e + 1;
+		if (*end == '\0')
+			return;
 	}
+	errx(1, "invalid query ID '%.*s'", (int)(strcspn(p, ",")), p);
 }

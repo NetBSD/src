@@ -1,4 +1,4 @@
-# $NetBSD: t_usage.sh,v 1.1 2023/04/23 08:47:27 rillig Exp $
+# $NetBSD: t_usage.sh,v 1.2 2023/04/23 09:04:44 rillig Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,29 +48,35 @@ suppress_messages_body()
 	# Larger than the largest known message.
 	atf_check \
 	    -s 'exit:1' \
-	    -e "inline:lint1: invalid error message id '353'\n" \
+	    -e "inline:lint1: invalid message ID '353'\n" \
 	    "$lint1" -X 353 code.c /dev/null
 
-	# XXX: Whitespace should not be allowed before a message ID.
+	# Whitespace is not allowed before a message ID.
 	atf_check \
+	    -s 'exit:1' \
+	    -e "inline:lint1: invalid message ID ' 1'\n" \
 	    "$lint1" -X ' 1' code.c /dev/null
 
 	# Whitespace is not allowed after a message ID.
 	atf_check \
 	    -s 'exit:1' \
-	    -e "inline:lint1: invalid error message id '1 '\n" \
+	    -e "inline:lint1: invalid message ID '1 '\n" \
 	    "$lint1" -X '1 ' code.c /dev/null
 
 	# Multiple message IDs can be comma-separated.
 	atf_check \
 	    "$lint1" -X '1,2,3,4' code.c /dev/null
 
-	# XXX: Whitespace should not be allowed after a comma.
+	# Whitespace is not allowed after a comma.
 	atf_check \
+	    -s 'exit:1' \
+	    -e "inline:lint1: invalid message ID ' 2'\n" \
 	    "$lint1" -X '1, 2, 3, 4' code.c /dev/null
 
-	# XXX: Trailing commas should not be allowed.
+	# Trailing commas are not allowed.
 	atf_check \
+	    -s 'exit:1' \
+	    -e "inline:lint1: invalid message ID ''\n" \
 	    "$lint1" -X '1,,,,,,,' code.c /dev/null
 }
 
