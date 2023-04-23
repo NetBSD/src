@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.138 2023/04/23 06:28:34 mlelstv Exp $	*/
+/*	$NetBSD: audio.c,v 1.139 2023/04/23 06:30:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.138 2023/04/23 06:28:34 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.139 2023/04/23 06:30:58 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1190,19 +1190,19 @@ bad:
 static int
 audio_properties(struct audio_softc *sc)
 {
-       prop_dictionary_t dict = device_properties(sc->sc_dev);
-       audio_device_t adev;
-       int error;
+	prop_dictionary_t dict = device_properties(sc->sc_dev);
+	audio_device_t adev;
+	int error;
 
-       error = sc->hw_if->getdev(sc->hw_hdl, &adev);
-       if (error)
-	       return error;
+	error = sc->hw_if->getdev(sc->hw_hdl, &adev);
+	if (error)
+		return error;
 
-       prop_dictionary_set_string(dict, "name", adev.name);
-       prop_dictionary_set_string(dict, "version", adev.version);
-       prop_dictionary_set_string(dict, "config", adev.config);
+	prop_dictionary_set_string(dict, "name", adev.name);
+	prop_dictionary_set_string(dict, "version", adev.version);
+	prop_dictionary_set_string(dict, "config", adev.config);
 
-       return 0;
+	return 0;
 }
 
 /*
