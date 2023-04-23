@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.137 2023/04/17 20:33:45 mlelstv Exp $	*/
+/*	$NetBSD: audio.c,v 1.138 2023/04/23 06:28:34 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.137 2023/04/17 20:33:45 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.138 2023/04/23 06:28:34 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -561,6 +561,7 @@ static void audio_mixer_restore(struct audio_softc *);
 static void audio_softintr_rd(void *);
 static void audio_softintr_wr(void *);
 
+static int audio_properties(struct audio_softc *);
 static void audio_printf(struct audio_softc *, const char *, ...)
 	__printflike(2, 3);
 static int audio_exlock_mutex_enter(struct audio_softc *);
@@ -1063,6 +1064,10 @@ audioattach(device_t parent, device_t self, void *aux)
 			rhwfmt = phwfmt;
 	}
 
+	/* Make device id available */
+	if (audio_properties(sc))
+		aprint_error_dev(self, "audio_properties failed\n");
+
 	/* Init hardware. */
 	/* hw_probe() also validates [pr]hwfmt.  */
 	error = audio_hw_set_format(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
@@ -1177,6 +1182,27 @@ bad:
 	sc->sc_exlock = 0;
 	aprint_error_dev(sc->sc_dev, "disabled\n");
 	return;
+}
+
+ /*
+ * Identify audio backend device for drvctl.
+ */
+static int
+audio_properties(struct audio_softc *sc)
+{
+       prop_dictionary_t dict = device_properties(sc->sc_dev);
+       audio_device_t adev;
+       int error;
+
+       error = sc->hw_if->getdev(sc->hw_hdl, &adev);
+       if (error)
+	       return error;
+
+       prop_dictionary_set_string(dict, "name", adev.name);
+       prop_dictionary_set_string(dict, "version", adev.version);
+       prop_dictionary_set_string(dict, "config", adev.config);
+
+       return 0;
 }
 
 /*
