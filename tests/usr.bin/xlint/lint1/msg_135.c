@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_135.c,v 1.14 2023/04/22 20:54:28 rillig Exp $	*/
+/*	$NetBSD: msg_135.c,v 1.15 2023/04/23 11:52:43 rillig Exp $	*/
 # 3 "msg_135.c"
 
 // Test for message: converting '%s' to '%s' increases alignment from %u to %u [135]
@@ -77,13 +77,21 @@ plain_char_to_unsigned_type(char *cp)
 
 /*
  * Converting a pointer with a low alignment requirement to a union that
- * includes other types with higher alignment requirements is safe.  While
- * accessing any other member of the union might trigger an alignment
- * violation, such an access would invoke undefined behavior anyway.
+ * includes other types with higher alignment requirements is considered safe.
+ * While accessing any other member of the union might trigger an alignment
+ * violation, such an access is not likely from an application point of view,
+ * as it would access undefined memory and thus invoke undefined behavior.
  *
  * A practical case for this pattern are tagged unions, in which the first
  * member of the struct determines how the remaining members are interpreted.
  * See sbin/newfs_udf, function udf_validate_tag_and_crc_sums for an example.
+ *
+ * C99 6.2.5p26 defines the representation and alignment of types, stating
+ * that pointers to union types need not have the same representation and
+ * alignment as pointers to other types.
+ *
+ * C99 6.7.2.1p14 and C23 6.7.2.1p18 both state that a "pointer to a union
+ * object [...] points to each of its members [...], and vice versa".
  */
 double
 cast_to_union(void)
