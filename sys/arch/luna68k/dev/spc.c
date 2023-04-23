@@ -1,4 +1,4 @@
-/* $NetBSD: spc.c,v 1.10 2013/01/22 15:44:25 tsutsui Exp $ */
+/* $NetBSD: spc.c,v 1.11 2023/04/23 06:57:59 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.10 2013/01/22 15:44:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.11 2023/04/23 06:57:59 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: spc.c,v 1.10 2013/01/22 15:44:25 tsutsui Exp $");
 #include <machine/bus.h>
 #include <machine/cpu.h>
 #include <machine/autoconf.h>
+#include <machine/board.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -66,11 +67,17 @@ spc_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (strcmp(ma->ma_name, spc_cd.cd_name))
 		return 0;
-#if 0
-	if (badaddr((void *)ma->ma_addr, 4))
+
+	/*
+	 * LUNA-I doesn't have the secondary SCSI.
+	 * However we cannot check it by badaddr() at the address range
+	 * of the secondary SCSI on LUNA-II because the address bus lines
+	 * are not fully decoded on LUNA-I and the primary SCSI registers
+	 * are also accessible at the seconadary address range.
+	 */
+	if (machtype == LUNA_I && ma->ma_addr != SCSI_ADDR)
 		return 0;
-	/* Experiments proved 2nd SPC address does NOT make a buserror. */
-#endif
+
 	return 1;
 }
 
