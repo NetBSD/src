@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.12 2020/05/29 03:09:14 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.13 2023/04/23 08:06:05 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
 /*
  * Whether supports [US]LINEAR24/24 as userland format.
  */
-/* #define AUDIO_SUPPORT_LINEAR24 */
+#define AUDIO_SUPPORT_LINEAR24
 
 /*
  * Frequency range.
