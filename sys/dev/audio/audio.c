@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.139 2023/04/23 06:30:58 mlelstv Exp $	*/
+/*	$NetBSD: audio.c,v 1.140 2023/04/23 08:05:36 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.139 2023/04/23 06:30:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.140 2023/04/23 08:05:36 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -696,6 +696,8 @@ static int au_set_monitor_gain(struct audio_softc *, int);
 static int au_get_monitor_gain(struct audio_softc *);
 static int audio_get_port(struct audio_softc *, mixer_ctrl_t *);
 static int audio_set_port(struct audio_softc *, mixer_ctrl_t *);
+
+void audio_mixsample_to_linear(audio_filter_arg_t *);
 
 static __inline struct audio_params
 format2_to_params(const audio_format2_t *f2)
@@ -5377,8 +5379,15 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 		len = mixer->frames_per_block * mixer->mixfmt.channels *
 		    mixer->mixfmt.stride / NBBY;
 		mixer->mixsample = audio_realloc(mixer->mixsample, len);
-	} else {
-		/* No mixing buffer for recording */
+	} else if (reg->codec == NULL) {
+		/*
+		 * Recording requires an input conversion buffer
+		 * unless the hardware provides a codec itself
+		 */
+		mixer->mixfmt = mixer->track_fmt;
+		len = mixer->frames_per_block * mixer->mixfmt.channels *
+		    mixer->mixfmt.stride / NBBY;
+		mixer->mixsample = audio_realloc(mixer->mixsample, len);
 	}
 
 	if (reg->codec) {
@@ -5647,31 +5656,32 @@ audio_pmixer_process(struct audio_softc *sc)
 	 * The rest is the hardware part.
 	 */
 
-	if (mixer->codec) {
-		h = auring_tailptr_aint(&mixer->codecbuf);
-	} else {
-		h = auring_tailptr_aint(&mixer->hwbuf);
-	}
-
 	m = mixer->mixsample;
-	if (!mixer->codec && mixer->swap_endian) {
-		for (i = 0; i < sample_count; i++) {
-			*h++ = bswap16(*m++);
-		}
-	} else {
-		for (i = 0; i < sample_count; i++) {
-			*h++ = *m++;
-		}
-	}
 
-	/* Hardware driver's codec */
 	if (mixer->codec) {
+		TRACE(4, "codec count=%d", frame_count);
+
+		h = auring_tailptr_aint(&mixer->codecbuf);
+		for (i=0; i<sample_count; ++i)
+			*h++ = *m++;
+
+		/* Hardware driver's codec */
 		auring_push(&mixer->codecbuf, frame_count);
 		mixer->codecarg.src = auring_headptr(&mixer->codecbuf);
 		mixer->codecarg.dst = auring_tailptr(&mixer->hwbuf);
 		mixer->codecarg.count = frame_count;
 		mixer->codec(&mixer->codecarg);
 		auring_take(&mixer->codecbuf, mixer->codecarg.count);
+	} else {
+		TRACE(4, "direct count=%d", frame_count);
+
+		/* Direct conversion to linear output */
+		mixer->codecarg.src = m;
+		mixer->codecarg.dst = auring_tailptr(&mixer->hwbuf);
+		mixer->codecarg.count = frame_count;
+		mixer->codecarg.srcfmt = &mixer->mixfmt;
+		mixer->codecarg.dstfmt = &mixer->hwbuf.fmt;
+		audio_mixsample_to_linear(&mixer->codecarg);
 	}
 
 	auring_push(&mixer->hwbuf, frame_count);
@@ -6024,11 +6034,12 @@ audio_rmixer_process(struct audio_softc *sc)
 {
 	audio_trackmixer_t *mixer;
 	audio_ring_t *mixersrc;
+	audio_ring_t tmpsrc;
+	audio_filter_t codec;
+	audio_filter_arg_t codecarg;
 	audio_file_t *f;
-	aint_t *p;
 	int count;
 	int bytes;
-	int i;
 
 	mixer = sc->sc_rmixer;
 
@@ -6046,24 +6057,60 @@ audio_rmixer_process(struct audio_softc *sc)
 
 	/* Hardware driver's codec */
 	if (mixer->codec) {
+		TRACE(4, "codec count=%d", count);
 		mixer->codecarg.src = auring_headptr(&mixer->hwbuf);
 		mixer->codecarg.dst = auring_tailptr(&mixer->codecbuf);
 		mixer->codecarg.count = count;
 		mixer->codec(&mixer->codecarg);
-		auring_take(&mixer->hwbuf, mixer->codecarg.count);
-		auring_push(&mixer->codecbuf, mixer->codecarg.count);
 		mixersrc = &mixer->codecbuf;
 	} else {
-		mixersrc = &mixer->hwbuf;
+		TRACE(4, "direct count=%d", count);
+		/* temporary ring using mixsample buffer */
+		tmpsrc.fmt = mixer->mixfmt;
+		tmpsrc.capacity = mixer->frames_per_block;
+		tmpsrc.mem = mixer->mixsample;
+		tmpsrc.head = 0;
+		tmpsrc.used = 0;
+ 
+		/* ad-hoc codec */
+		codecarg.srcfmt = &mixer->hwbuf.fmt;
+		codecarg.dstfmt = &mixer->mixfmt;
+		codec = NULL;
+		if (audio_format2_is_linear(codecarg.srcfmt)) {
+			switch (codecarg.srcfmt->stride) {
+			case 8:
+				codec = audio_linear8_to_internal;
+				break;
+			case 16:
+				codec = audio_linear16_to_internal;
+				break;
+#if defined(AUDIO_SUPPORT_LINEAR24)
+			case 24:
+				codec = audio_linear24_to_internal;
+				break;
+#endif
+			case 32:
+				codec = audio_linear32_to_internal;
+				break;
+			}
+		}
+		if (codec == NULL) {
+			TRACE(4, "unsupported hw format");
+			return;
+		}
+ 
+		codecarg.src = auring_headptr(&mixer->hwbuf);
+		codecarg.dst = auring_tailptr(&tmpsrc);
+		codecarg.count = count;
+		codec(&codecarg);
+		mixersrc = &tmpsrc;
 	}
 
-	if (!mixer->codec && mixer->swap_endian) {
-		/* inplace conversion */
-		p = auring_headptr_aint(mixersrc);
-		for (i = 0; i < count * mixer->track_fmt.channels; i++, p++) {
-			*p = bswap16(*p);
-		}
-	}
+	auring_take(&mixer->hwbuf, count);
+	auring_push(mixersrc, count);
+ 
+	TRACE(4, "distribute");
+ 
 
 	/* Distribute to all tracks. */
 	SLIST_FOREACH(f, &sc->sc_files, entry) {
@@ -9146,6 +9193,69 @@ audio_query_devinfo(struct audio_softc *sc, mixer_devinfo_t *di)
 
 	return sc->hw_if->query_devinfo(sc->hw_hdl, di);
 }
+
+void
+audio_mixsample_to_linear(audio_filter_arg_t *arg)
+{
+	const audio_format2_t *fmt;
+	const aint2_t *m;
+	uint8_t *p;
+	u_int sample_count;
+	bool swap;
+	aint2_t v, xor;
+	u_int i, bps;
+	bool little;
+
+	DIAGNOSTIC_filter_arg(arg);
+	KASSERT(audio_format2_is_linear(arg->dstfmt));
+	KASSERT(arg->srcfmt->channels == arg->dstfmt->channels);
+
+	fmt = arg->dstfmt;
+	m = arg->src;
+	p = arg->dst;
+	sample_count = arg->count * fmt->channels;
+	swap = arg->dstfmt->encoding == AUDIO_ENCODING_SLINEAR_OE;
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+	little = !swap;
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+	little = swap;
+#endif
+
+	bps = fmt->stride / NBBY;
+
+	xor = audio_format2_is_signed(fmt)
+	   ? 0 : 1 << (fmt->stride - 1);
+
+	for (i=0; i<sample_count; ++i) {
+		v = *m++;
+
+		/* scale up to 32bit and then down to target size */
+		v <<= 32 - AUDIO_INTERNAL_BITS;
+		v >>= (4 - bps) * NBBY;
+
+		/* signed -> unsigned */
+		v ^= xor;
+
+		if (little) {
+			switch (bps) {
+			case 4: *p++ = v; v >>= 8; /* FALLTHROUGH */
+			case 3: *p++ = v; v >>= 8; /* FALLTHROUGH */
+			case 2: *p++ = v; v >>= 8; /* FALLTHROUGH */
+			case 1: *p++ = v; /* FALLTHROUGH */
+			}
+		} else {
+			switch (bps) {
+			case 4: *p++ = v >> 24; v <<= 8; /* FALLTHROUGH */
+			case 3: *p++ = v >> 24; v <<= 8; /* FALLTHROUGH */
+			case 2: *p++ = v >> 24; v <<= 8; /* FALLTHROUGH */
+			case 1: *p++ = v >> 24; /* FALLTHROUGH */
+			}
+		}
+	}
+}
+
 
 #endif /* NAUDIO > 0 */
 
