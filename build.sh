@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.366 2023/03/13 11:52:29 martin Exp $
+#	$NetBSD: build.sh,v 1.367 2023/04/23 02:01:33 uwe Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2010,7 +2010,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.366 2023/03/13 11:52:29 martin Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.367 2023/04/23 02:01:33 uwe Exp $
 # with these arguments: ${_args}
 #
 
@@ -2256,21 +2256,42 @@ installworld()
 # Above all, note that THIS IS NOT A SUBSTITUTE FOR A FULL BUILD.
 #
 
-RUMP_LIBSETS='
-	-lrumpvfs_nofifofs -lrumpvfs -lrump,
-	-lrumpvfs_nofifofs -lrumpvfs -lrumpdev -lrump,
-	-lrumpvfs_nofifofs -lrumpvfs
-	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet -lrump,
-	-lrumpkern_tty -lrumpvfs_nofifofs -lrumpvfs -lrump,
-	-lrumpfs_tmpfs -lrumpvfs_nofifofs -lrumpvfs -lrump,
-	-lrumpfs_ffs -lrumpfs_msdos -lrumpvfs_nofifofs -lrumpvfs -lrumpdev_disk -lrumpdev -lrump,
+# XXX: uwe: kern/56599 - while riastradh addressed librump problems,
+# there are still unwanted dependencies:
+#    net -> net_net
+#    vfs -> fifo
+#    dev -> vfs
+
+# -lrumpvfs -> $LRUMPVFS for now
+LRUMPVFS="-lrumpvfs -lrumpvfs_nofifofs"
+
+# -lrumpdev -> $LRUMPDEV
+# XXX: this may hide problems with other rump libraries that are not
+# supposed to depend on vfs but accidentally do
+LRUMPDEV="-lrumpdev $LRUMPVFS"
+
+RUMP_LIBSETS="
+	-lrump,
+        -lrumpvfs
+            --no-whole-archive -lrumpvfs_nofifofs -lrump,
+	-lrumpdev
+            --no-whole-archive $LRUMPVFS -lrump,
+	-lrumpkern_tty
+            --no-whole-archive $LRUMPVFS -lrump,
+	-lrumpfs_tmpfs
+            --no-whole-archive $LRUMPVFS -lrump,
+	-lrumpfs_ffs -lrumpfs_msdos
+            --no-whole-archive $LRUMPVFS -lrumpdev_disk $LRUMPDEV -lrump,
 	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet
-	    -lrumpdev -lrumpvfs_nofifofs -lrumpvfs -lrump,
-	-lrumpnet_sockin -lrumpfs_nfs
-	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet
-	-lrumpvfs_nofifofs -lrumpvfs -lrump,
-	-lrumpdev_cgd -lrumpdev_raidframe -lrumpdev_disk -lrumpdev_rnd
-	    -lrumpdev_dm -lrumpdev -lrumpvfs_nofifofs -lrumpvfs -lrumpkern_crypto -lrump'
+	    --no-whole-archive -lrump,
+	-lrumpfs_nfs
+	    --no-whole-archive $LRUMPVFS
+	    -lrumpnet_sockin -lrumpnet_virtif -lrumpnet_netinet
+            --start-group -lrumpnet_net -lrumpnet --end-group -lrump,
+	-lrumpdev_cgd -lrumpdev_raidframe -lrumpdev_rnd -lrumpdev_dm
+            --no-whole-archive $LRUMPVFS -lrumpdev_disk $LRUMPDEV -lrumpkern_crypto -lrump
+"
+
 dorump()
 {
 	local doclean=""
@@ -2312,7 +2333,7 @@ dorump()
 	for set in ${RUMP_LIBSETS} ; do
 		IFS="${oIFS}"
 		${runcmd} ${tool_ld} -nostdlib -L${DESTDIR}/usr/lib	\
-		    -static --whole-archive -lpthread -lc ${set} 2>&1 -o /tmp/rumptest.$$ | \
+		    -static --whole-archive ${set} --no-whole-archive -lpthread -lc 2>&1 -o /tmp/rumptest.$$ | \
 		      awk -v quirks="${md_quirks}" '
 			/undefined reference/ &&
 			    !/more undefined references.*follow/{
