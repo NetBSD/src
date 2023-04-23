@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.142 2023/04/23 08:38:53 mlelstv Exp $	*/
+/*	$NetBSD: audio.c,v 1.143 2023/04/23 08:53:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.142 2023/04/23 08:38:53 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.143 2023/04/23 08:53:08 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4764,25 +4764,35 @@ audio_track_set_format(audio_track_t *track, audio_format2_t *usrfmt)
 		if ((error = audio_track_init_freq(track, &last_dst)) != 0)
 			goto error;
 	}
-#if 0
-	/* debug */
-	if (track->freq.filter) {
-		audio_print_format2("freq src", &track->freq.srcbuf.fmt);
-		audio_print_format2("freq dst", &track->freq.dst->fmt);
+
+#if defined(AUDIO_DEBUG)
+	if (audiodebug >= 3) {
+		if (track->freq.filter) {
+			audio_print_format2("freq src",
+			    &track->freq.srcbuf.fmt);
+			audio_print_format2("freq dst",
+			    &track->freq.dst->fmt);
+		}
+		if (track->chmix.filter) {
+			audio_print_format2("chmix src",
+			    &track->chmix.srcbuf.fmt);
+			audio_print_format2("chmix dst",
+			    &track->chmix.dst->fmt);
+		}
+		if (track->chvol.filter) {
+			audio_print_format2("chvol src",
+			    &track->chvol.srcbuf.fmt);
+			audio_print_format2("chvol dst",
+			    &track->chvol.dst->fmt);
+		}
+		if (track->codec.filter) {
+			audio_print_format2("codec src",
+			    &track->codec.srcbuf.fmt);
+			audio_print_format2("codec dst",
+			    &track->codec.dst->fmt);
+		}
 	}
-	if (track->chmix.filter) {
-		audio_print_format2("chmix src", &track->chmix.srcbuf.fmt);
-		audio_print_format2("chmix dst", &track->chmix.dst->fmt);
-	}
-	if (track->chvol.filter) {
-		audio_print_format2("chvol src", &track->chvol.srcbuf.fmt);
-		audio_print_format2("chvol dst", &track->chvol.dst->fmt);
-	}
-	if (track->codec.filter) {
-		audio_print_format2("codec src", &track->codec.srcbuf.fmt);
-		audio_print_format2("codec dst", &track->codec.dst->fmt);
-	}
-#endif
+#endif /* AUDIO_DEBUG */
 
 	/* Stage input buffer */
 	track->input = last_dst;
