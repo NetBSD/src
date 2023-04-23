@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.179 2023/04/16 19:26:20 mlelstv Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.180 2023/04/23 06:13:35 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.179 2023/04/16 19:26:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.180 2023/04/23 06:13:35 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2479,9 +2479,20 @@ Static u_int
 uaudio_get_rates(struct uaudio_softc *sc, int mode, u_int *freqs, u_int len)
 {
 	struct mixerctl *mc;
-	u_int n, freq, start, end, step;
-	int j, k, count;
+	u_int freq, start, end, step;
+	u_int i, n;
+	u_int k, count;
+	int j;
 
+	/*
+	 * With UAC2 the sample rate isn't part of the data format,
+	 * instead, you have separate clock sources that may be
+	 * assigned to individual terminals (inputs, outputs).
+	 *
+	 * For audio(4) we only distinguish between input and output
+	 * formats and collect the unique rates from all possible clock
+	 * sources.
+	 */
 	n = 0;
 	for (j = 0; j < sc->sc_nratectls; ++j) {
 
@@ -2499,6 +2510,18 @@ uaudio_get_rates(struct uaudio_softc *sc, int mode, u_int *freqs, u_int len)
 			end   = (u_int) mc->ranges[k].maxval;
 			step  = (u_int) mc->ranges[k].resval;
 			for (freq = start; freq <= end; freq += step) {
+				/* remove duplicates */
+				for (i = 0; i < n; ++i) {
+					if (freqs[i] == freq)
+						break;
+				}
+				if (i < n) {
+					if (step == 0)
+						break;
+					continue;
+				}
+
+				/* store or count */
 				if (len != 0) {
 					if (n >= len)
 						goto done;
