@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.140 2023/04/23 08:05:36 mlelstv Exp $	*/
+/*	$NetBSD: audio.c,v 1.141 2023/04/23 08:26:05 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.140 2023/04/23 08:05:36 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.141 2023/04/23 08:26:05 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1186,7 +1186,7 @@ bad:
 	return;
 }
 
- /*
+/*
  * Identify audio backend device for drvctl.
  */
 static int
@@ -6071,7 +6071,7 @@ audio_rmixer_process(struct audio_softc *sc)
 		tmpsrc.mem = mixer->mixsample;
 		tmpsrc.head = 0;
 		tmpsrc.used = 0;
- 
+
 		/* ad-hoc codec */
 		codecarg.srcfmt = &mixer->hwbuf.fmt;
 		codecarg.dstfmt = &mixer->mixfmt;
@@ -6098,7 +6098,7 @@ audio_rmixer_process(struct audio_softc *sc)
 			TRACE(4, "unsupported hw format");
 			return;
 		}
- 
+
 		codecarg.src = auring_headptr(&mixer->hwbuf);
 		codecarg.dst = auring_tailptr(&tmpsrc);
 		codecarg.count = count;
@@ -6108,9 +6108,8 @@ audio_rmixer_process(struct audio_softc *sc)
 
 	auring_take(&mixer->hwbuf, count);
 	auring_push(mixersrc, count);
- 
+
 	TRACE(4, "distribute");
- 
 
 	/* Distribute to all tracks. */
 	SLIST_FOREACH(f, &sc->sc_files, entry) {
