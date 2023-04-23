@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1257 2023/04/21 21:50:05 gutteridge Exp $
+# $NetBSD: mi,v 1.1258 2023/04/23 08:47:27 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7384,6 +7384,7 @@
 ./usr/tests/usr.bin/xlint/lint1/stmt_if.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/stmt_if.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/t_integration			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/t_usage				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint2					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint2/Atffile			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint2/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
