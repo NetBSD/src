@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.176 2023/04/11 17:52:11 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.177 2023/04/23 09:04:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -171,7 +171,7 @@ extern	void	c11ism(int, ...);
 extern	void	assert_failed(const char *, int, const char *, const char *)
 		__attribute__((__noreturn__));
 extern	void	update_location(const char *, int, bool, bool);
-extern	void	suppress_messages(char *);
+extern	void	suppress_messages(const char *);
 
 extern	void	query_message(int, ...);
 extern	void	enable_queries(const char *);
