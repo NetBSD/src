@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.140 2023/02/05 17:23:01 rillig Exp $
+# $NetBSD: Makefile,v 1.141 2023/04/23 08:47:27 rillig Exp $
 
 NOMAN=		# defined
 
@@ -8,7 +8,7 @@ ARCHSUBDIR!=	cd ${NETBSDSRCDIR}/usr.bin/xlint/lint1 && ${MAKE} -v ARCHSUBDIR
 
 TESTSDIR=	${TESTSBASE}/usr.bin/xlint/lint1
 
-TESTS_SH=	t_integration
+TESTS_SH=	t_integration t_usage
 TESTS_SH_SRC_t_integration=	archsubdir.sh t_integration.sh
 CLEANFILES+=	archsubdir.sh
 CLEANFILES+=	*.exp
