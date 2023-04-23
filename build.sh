@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.367 2023/04/23 02:01:33 uwe Exp $
+#	$NetBSD: build.sh,v 1.368 2023/04/23 09:54:15 uwe Exp $
 #
 # Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2010,7 +2010,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.367 2023/04/23 02:01:33 uwe Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.368 2023/04/23 09:54:15 uwe Exp $
 # with these arguments: ${_args}
 #
 
@@ -2260,28 +2260,20 @@ installworld()
 # there are still unwanted dependencies:
 #    net -> net_net
 #    vfs -> fifo
-#    dev -> vfs
 
 # -lrumpvfs -> $LRUMPVFS for now
 LRUMPVFS="-lrumpvfs -lrumpvfs_nofifofs"
-
-# -lrumpdev -> $LRUMPDEV
-# XXX: this may hide problems with other rump libraries that are not
-# supposed to depend on vfs but accidentally do
-LRUMPDEV="-lrumpdev $LRUMPVFS"
 
 RUMP_LIBSETS="
 	-lrump,
         -lrumpvfs
             --no-whole-archive -lrumpvfs_nofifofs -lrump,
-	-lrumpdev
-            --no-whole-archive $LRUMPVFS -lrump,
 	-lrumpkern_tty
             --no-whole-archive $LRUMPVFS -lrump,
 	-lrumpfs_tmpfs
             --no-whole-archive $LRUMPVFS -lrump,
 	-lrumpfs_ffs -lrumpfs_msdos
-            --no-whole-archive $LRUMPVFS -lrumpdev_disk $LRUMPDEV -lrump,
+            --no-whole-archive $LRUMPVFS -lrumpdev_disk -lrumpdev -lrump,
 	-lrumpnet_virtif -lrumpnet_netinet -lrumpnet_net -lrumpnet
 	    --no-whole-archive -lrump,
 	-lrumpfs_nfs
@@ -2289,7 +2281,7 @@ RUMP_LIBSETS="
 	    -lrumpnet_sockin -lrumpnet_virtif -lrumpnet_netinet
             --start-group -lrumpnet_net -lrumpnet --end-group -lrump,
 	-lrumpdev_cgd -lrumpdev_raidframe -lrumpdev_rnd -lrumpdev_dm
-            --no-whole-archive $LRUMPVFS -lrumpdev_disk $LRUMPDEV -lrumpkern_crypto -lrump
+            --no-whole-archive $LRUMPVFS -lrumpdev_disk -lrumpdev -lrumpkern_crypto -lrump
 "
 
 dorump()
