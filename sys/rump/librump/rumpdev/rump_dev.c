@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_dev.c,v 1.28 2020/02/23 01:53:03 jdolecek Exp $	*/
+/*	$NetBSD: rump_dev.c,v 1.29 2023/04/23 07:03:30 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.28 2020/02/23 01:53:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.29 2023/04/23 07:03:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -34,9 +34,21 @@ __KERNEL_RCSID(0, "$NetBSD: rump_dev.c,v 1.28 2020/02/23 01:53:03 jdolecek Exp $
 #include <rump-sys/kern.h>
 #include <rump-sys/dev.h>
 
-int nocomponent(void);
-int nocomponent() {return 0;}
-__weak_alias(buf_syncwait,nocomponent);
+int rumpdev_do_sys_sync_stub(struct lwp *);
+int
+rumpdev_do_sys_sync_stub(struct lwp *l)
+{
+	return 0;
+}
+__weak_alias(do_sys_sync,rumpdev_do_sys_sync_stub);
+
+int rumpdev_vfs_syncwait_stub(void);
+int
+rumpdev_vfs_syncwait_stub(void)
+{
+	return 0;
+}
+__weak_alias(vfs_syncwait,rumpdev_vfs_syncwait_stub);
 
 const char *rootspec = "rump0a"; /* usually comes from config */
 
