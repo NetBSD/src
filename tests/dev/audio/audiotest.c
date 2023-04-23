@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.28 2023/02/13 22:24:06 andvar Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.29 2023/04/23 16:49:38 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.28 2023/02/13 22:24:06 andvar Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.29 2023/04/23 16:49:38 mlelstv Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -52,6 +52,9 @@ __RCSID("$NetBSD: audiotest.c,v 1.28 2023/02/13 22:24:06 andvar Exp $");
 #include <rump/rump.h>
 #include <rump/rump_syscalls.h>
 #endif
+
+/* this internal driver option is not exported to userland */
+#define AUDIO_SUPPORT_LINEAR24
 
 #if !defined(AUDIO_ENCODING_SLINEAR_NE)
 #if BYTE_ORDER == LITTLE_ENDIAN
