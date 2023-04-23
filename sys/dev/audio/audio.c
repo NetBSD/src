@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.141 2023/04/23 08:26:05 mlelstv Exp $	*/
+/*	$NetBSD: audio.c,v 1.142 2023/04/23 08:38:53 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.141 2023/04/23 08:26:05 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.142 2023/04/23 08:38:53 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -571,7 +571,8 @@ static void audio_exlock_exit(struct audio_softc *);
 static struct audio_softc *audio_sc_acquire_fromfile(audio_file_t *,
 	struct psref *);
 static void audio_sc_release(struct audio_softc *, struct psref *);
-static int audio_track_waitio(struct audio_softc *, audio_track_t *);
+static int audio_track_waitio(struct audio_softc *, audio_track_t *,
+	const char *mess);
 
 static int audioclose(struct file *);
 static int audioread(struct file *, off_t *, struct uio *, kauth_cred_t, int);
@@ -1692,7 +1693,8 @@ audio_sc_release(struct audio_softc *sc, struct psref *refp)
  * Must be called with sc_lock held.
  */
 static int
-audio_track_waitio(struct audio_softc *sc, audio_track_t *track)
+audio_track_waitio(struct audio_softc *sc, audio_track_t *track,
+    const char *mess)
 {
 	int error;
 
@@ -1714,8 +1716,15 @@ audio_track_waitio(struct audio_softc *sc, audio_track_t *track)
 	}
 	if (error) {
 		TRACET(2, track, "cv_timedwait_sig failed %d", error);
-		if (error == EWOULDBLOCK)
-			audio_printf(sc, "device timeout\n");
+		if (error == EWOULDBLOCK) {
+			audio_ring_t *usrbuf = &track->usrbuf;
+			audio_ring_t *outbuf = &track->outbuf;
+			audio_printf(sc,
+			    "%s: device timeout, seq=%d, usrbuf=%d/H%d, outbuf=%d/%d\n",
+			    mess, (int)track->seq,
+			    usrbuf->used, track->usrbuf_usedhigh,
+			    outbuf->used, outbuf->capacity);
+		}
 	} else {
 		TRACET(3, track, "wakeup");
 	}
@@ -2837,7 +2846,7 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag,
 			}
 
 			TRACET(3, track, "sleep");
-			error = audio_track_waitio(sc, track);
+			error = audio_track_waitio(sc, track, "audio_read");
 			if (error) {
 				mutex_exit(sc->sc_lock);
 				return error;
@@ -2964,7 +2973,7 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag,
 
 			TRACET(3, track, "sleep usrbuf=%d/H%d",
 			    usrbuf->used, track->usrbuf_usedhigh);
-			error = audio_track_waitio(sc, track);
+			error = audio_track_waitio(sc, track, "audio_write");
 			if (error) {
 				mutex_exit(sc->sc_lock);
 				goto abort;
@@ -6418,7 +6427,7 @@ audio_track_drain(struct audio_softc *sc, audio_track_t *track)
 			break;
 
 		TRACET(3, track, "sleep");
-		error = audio_track_waitio(sc, track);
+		error = audio_track_waitio(sc, track, "audio_drain");
 		if (error)
 			return error;
 
