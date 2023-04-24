@@ -1,4 +1,4 @@
-.\"	$NetBSD: dosboot.8,v 1.3 2017/02/17 22:30:28 christos Exp $
+.\"	$NetBSD: dosboot.8,v 1.4 2023/04/24 13:55:45 manu Exp $
 .\"
 .\" Copyright (c) 1997
 .\" 	Matthias Drochner.  All rights reserved.
@@ -95,54 +95,16 @@ by prepending a block device name in terms of
 followed by a colon (see
 .Xr x86/boot 8
 and examples).
-.It Fl adqsv
+.It Fl 1234abcdmqsvxz
 Flags passed to the kernel, see
 .Xr x86/boot 8 .
 .El
 .Pp
-The commands accepted after the
-.Fl c
-flag or in interactive mode are:
-.\" NOTE: some of this text is duplicated in the MI boot.8
-.\" and in other x86-specific *boot.8 files;
-.\" please try to keep all relevant files synchronized.
-.Bl -tag -width 04n -offset 04n
-.It Ic boot Oo Va device : Oc Ns Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
-Boot
-.Nx .
 See
-.Cm boot
-in
 .Xr x86/boot 8
-for full details.
-.It Ic dev Op device
-Set the default device and partition for subsequent file system operations.
-Without an operand, print the current setting.
-This setting doesn't apply to
-.Tn MS-DOS
-mode.
-.It Ic help
-Print an overview about commands and arguments.
-.It Ic ls Op Pa path
-Print a directory listing of
-.Pa path ,
-containing inode number, filename and file type.
-This command works in UFS mode only.
-.Pa path
-can contain a device specification.
-.It Ic mode Va fstype
-Switch file system type;
-.Va fstype
-should be one of
-.Ar dos
-or
-.Ar ufs .
-.It Ic quit
-Leave the
-.Nm
-program and exit to
-.Tn MS-DOS .
-.El
+for commands accepted after the
+.Fl c
+flag or in interactive mode.
 .Pp
 .Nm
 is also installed in the

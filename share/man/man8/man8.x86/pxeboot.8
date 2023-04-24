@@ -1,4 +1,4 @@
-.\"	$NetBSD: pxeboot.8,v 1.5 2020/08/29 13:32:27 fcambus Exp $
+.\"	$NetBSD: pxeboot.8,v 1.6 2023/04/24 13:55:45 manu Exp $
 .\"
 .\" Copyright (c) 2003
 .\" 	Matthias Drochner.  All rights reserved.
@@ -220,26 +220,9 @@ case to access the kernel file, matching the
 kernel's behaviour.
 .El
 .Pp
-The commands accepted in interactive mode are:
-.\" NOTE: some of this text is duplicated in the MI boot.8
-.\" and in other x86-specific *boot.8 files;
-.\" please try to keep all relevant files synchronized.
-.Bl -tag -width 04n -offset 04n
-.It Ic boot Oo Va device : Oc Ns Oo Va filename Oc Oo Fl 1234abcdmqsvxz Oc
-Boot
-.Nx .
 See
-.Cm boot
-in
 .Xr x86/boot 8
-for full details.
-.It Ic help
-Print an overview about commands and arguments.
-.It Ic quit
-Leave the
-.Nm
-program.
-.El
+for the commands accepted in interactive mode.
 .Pp
 By default the output from
 .Nm
