@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2021/07/07 11:51:45 martin Exp $
+#	$NetBSD: Makefile,v 1.14 2023/04/24 20:55:53 uwe Exp $
 #
 
 .include <bsd.init.mk>
@@ -19,7 +19,7 @@ LDFLAGS+=	-Wl,--no-relax
 .endif
 LDADD+= \
     -Wl,--whole-archive -Wl,-Bstatic \
-	-lrumpvfs_nofifofs -lrumpvfs -lrump \
+	-lrumpvfs -lrumpvfs_nofifofs -lrump \
     -Wl,-Bdynamic -Wl,--no-whole-archive
 
 LDADD+=		-lrumpuser -lpthread
