@@ -1,4 +1,4 @@
-/*	$NetBSD: rk_v1crypto.c,v 1.10 2022/05/13 09:49:44 riastradh Exp $	*/
+/*	$NetBSD: rk_v1crypto.c,v 1.11 2023/04/24 05:16:01 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.10 2022/05/13 09:49:44 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_v1crypto.c,v 1.11 2023/04/24 05:16:01 mrg Exp $");
 
 #include <sys/types.h>
 
@@ -98,8 +98,24 @@ RKC_CTRL(struct rk_v1crypto_softc *sc, uint16_t m, uint16_t v)
 CFATTACH_DECL_NEW(rk_v1crypto, sizeof(struct rk_v1crypto_softc),
     rk_v1crypto_match, rk_v1crypto_attach, NULL, NULL);
 
+struct rk_v1crypto_data {
+	int num_clks;
+	const char *const clks[];
+};
+
+static const struct rk_v1crypto_data rk3288_crypto_data = {
+	.num_clks = 4,
+	.clks = {"aclk", "hclk", "sclk", "apb_pclk"},
+};
+
+static const struct rk_v1crypto_data rk3328_crypto_data = {
+	.num_clks = 3,
+	.clks = {"hclk_master", "hclk_slave", "sclk"},
+};
+
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "rockchip,rk3288-crypto" },
+	{ .compat = "rockchip,rk3288-crypto", .data = &rk3288_crypto_data },
+	{ .compat = "rockchip,rk3328-crypto", .data = &rk3328_crypto_data },
 	DEVICE_COMPAT_EOL
 };
 
@@ -114,7 +130,6 @@ rk_v1crypto_match(device_t parent, cfdata_t cf, void *aux)
 static void
 rk_v1crypto_attach(device_t parent, device_t self, void *aux)
 {
-	static const char *const clks[] = {"aclk", "hclk", "sclk", "apb_pclk"};
 	struct rk_v1crypto_softc *const sc = device_private(self);
 	const struct fdt_attach_args *const faa = aux;
 	bus_addr_t addr;
@@ -123,6 +138,9 @@ rk_v1crypto_attach(device_t parent, device_t self, void *aux)
 	struct fdtbus_reset *rst;
 	unsigned i;
 	uint32_t ctrl;
+	const struct rk_v1crypto_data *config =
+	    of_compatible_lookup(phandle, compat_data)->data;
+	const char *const *clks = config->clks;
 
 	fdtbus_clock_assign(phandle);
 
@@ -141,7 +159,7 @@ rk_v1crypto_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Enable the clocks.  */
-	for (i = 0; i < __arraycount(clks); i++) {
+	for (i = 0; i < config->num_clks; i++) {
 		if (fdtbus_clock_enable(phandle, clks[i], true) != 0) {
 			aprint_error(": couldn't enable %s clock\n", clks[i]);
 			return;

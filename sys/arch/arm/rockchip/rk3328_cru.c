@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328_cru.c,v 1.9 2021/11/12 22:02:08 jmcneill Exp $ */
+/* $NetBSD: rk3328_cru.c,v 1.10 2023/04/24 05:16:01 mrg Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.9 2021/11/12 22:02:08 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3328_cru.c,v 1.10 2023/04/24 05:16:01 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -357,6 +357,13 @@ static struct rk_cru_clk rk3328_cru_clks[] = {
 		     CLKGATE_CON(2),	/* gate_reg */
 		     __BIT(6),		/* gate_mask */
 		     0),
+	RK_COMPOSITE(RK3328_SCLK_CRYPTO, "clk_crypto", mux_2plls_parents,
+		     CLKSEL_CON(20),	/* muxdiv_reg */
+		     __BIT(7),		/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(2),	/* gate_reg */
+		     __BIT(4),		/* gate_mask */
+		     0),
 
 	RK_DIV(0, "clk_24m", "xin24m", CLKSEL_CON(2), __BITS(12,8), 0),
 
@@ -464,6 +471,8 @@ static struct rk_cru_clk rk3328_cru_clks[] = {
 	RK_GATE(RK3328_HCLK_I2S1_8CH, "hclk_i2s1", "hclk_bus_pre", CLKGATE_CON(15), 4),
 	RK_GATE(RK3328_HCLK_I2S2_2CH, "hclk_i2s2", "hclk_bus_pre", CLKGATE_CON(15), 5),
 	RK_GATE(RK3328_HCLK_SPDIF_8CH, "hclk_spdif", "hclk_bus_pre", CLKGATE_CON(15), 6),
+	RK_GATE(RK3328_HCLK_CRYPTO_MST, "hclk_crypto_mst", "hclk_bus_pre", CLKGATE_CON(15), 7),
+	RK_GATE(RK3328_HCLK_CRYPTO_SLV, "hclk_crypto_slv", "hclk_bus_pre", CLKGATE_CON(15), 8),
 	RK_COMPOSITE(RK3328_SCLK_I2S1_OUT, "i2s1_out", mux_i2s1out_parents,
 		     CLKSEL_CON(8),	/* muxdiv_reg */
 		     __BIT(12),		/* mux_mask */
