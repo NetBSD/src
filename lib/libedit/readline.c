@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.179 2023/04/21 14:56:13 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.180 2023/04/24 20:02:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.179 2023/04/21 14:56:13 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.180 2023/04/24 20:02:53 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -1978,7 +1978,7 @@ rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 	_rl_update_pos();
 
 	/* Just look at how many global variables modify this operation! */
-	return fn_complete(e,
+	return fn_complete2(e,
 	    (rl_compentry_func_t *)rl_completion_entry_function,
 	    rl_attempted_completion_function,
 	    ct_decode_string(rl_basic_word_break_characters, &wbreak_conv),
@@ -1986,7 +1986,7 @@ rl_complete(int ignore __attribute__((__unused__)), int invoking_key)
 	    _rl_completion_append_character_function,
 	    (size_t)rl_completion_query_items,
 	    &rl_completion_type, &rl_attempted_completion_over,
-	    &rl_point, &rl_end);
+	    &rl_point, &rl_end, 0);
 
 
 }
