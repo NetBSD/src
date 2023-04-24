@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.26 2021/06/22 03:39:21 gutteridge Exp $
+.\"	$NetBSD: boot.8,v 1.27 2023/04/24 13:55:45 manu Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -364,6 +364,8 @@ flag in
 Boot the system in silent mode.
 .El
 .It Ic consdev Ar dev\| Ns Oo Ns Ic \&, Ns Ar speed Oc
+[Not available for 
+.Xr x86/dosboot 8 ]
 Immediately switch the console to the specified device
 .Ar dev
 and reprint the banner.
@@ -397,16 +399,26 @@ Without an argument, print the current setting.
 .Ar device
 is of the form specified in
 .Ic boot .
+.It Ic devpath
+[Only available for UEFI boot] Dump UEFI device paths.
+.It Ic efivar
+[Only available for UEFI boot] Dump UEFI environment variables from NVRAM.
 .It Ic fs Ar file
+[Only available for BIOS and UEFI boot]
 Load a file system image from the specified
 .Ar file ,
 and request the kernel to use it as the root file system.
 The
 .Xr makefs 8
 utility may be used to create suitable file system images.
+.It Ic gop Op Va mode_index
+[Only available for UEFI boot] Without argument, list the available
+video modes. If an argument is given, select a video mode.
 .It Ic help
 Print an overview about commands and arguments.
 .It Ic load Ar module Op Ar arguments
+[Not available for 
+.Xr x86/dosboot 8 ]
 Load the specified kernel
 .Ar module ,
 and pass it the specified
@@ -520,12 +532,17 @@ See
 .Xr pciback 4 .
 .El
 .It Ic ls Op Ar path
+[Not available for
+.Xr x86/pxeboot 8 ]
 Print a directory listing of
 .Ar path ,
 containing inode number, filename, and file type.
 .Ar path
 can contain a device specification.
+.It Ic memmap
+[Only available for UEFI boot] Dump UEFI memory map.
 .It Ic menu
+[Only available for BIOS and UEFI boot]
 Display the boot menu and initiate a countdown,
 similarly to what would have happened if interactive mode
 had not been entered.
@@ -534,6 +551,8 @@ had not been entered.
            No \(or Li enabled \
            No \(or Li disabled\^ \
            Brc
+[Not available for
+.Xr x86/dosboot 8 ]
 The values
 .Ql enabled ,
 .Ql on
@@ -545,7 +564,18 @@ whereas
 .Ql disabled ,
 .Ql off
 will turn off the feature.
+.It Ic mode Va fstype
+[Only available for
+.Xr x86/dosboot 8 ]
+Switch file system type;
+.Va fstype
+should be one of
+.Ar dos
+or
+.Ar ufs .
 .It Ic multiboot Ar kernel Op Ar arguments
+[Not available for
+.Xr x86/dosboot 8 ]
 Boot the specified
 .Ar kernel ,
 using the
@@ -615,12 +645,30 @@ command.
 See the foreign operating system's documentation for the available
 .Ar arguments .
 .El
+.It Ic pkboot
+[Only available for BIOS and UEFI boot] Boot a kernel that has
+the
+.Cd KASLR
+option set, for Kernel Address Space Layout Randomizaton.
 .It Ic quit
 Reboot the system.
-.It Ic root Ar spec
-Pass an explicit root specification to the kernel.
-See BTINFO_ROOTDEVICE for details.
+.It Ic reloc Op Va default No \(or Va none No \(or Va address
+[Only UEFI boot] Sets where the kernel is copied by bootstrap
+before it is started. Values other than default require a kernel
+that can relocate itself at the right address, otherwise a crash
+occurs at boot time.
+.Bl -tag -width default
+.It Va default
+Copy the kernel at ELF header load address, this is the historical
+behavior.
+.It Va none
+Leave the kernel where it was loaded and start it as is. 
+.It Va address
+Copy the kernel at given
+.Va address .
+.El
 .It Ic rndseed Ar file
+[Only available for BIOS and UEFI boot]
 Load the specified
 .Ar file
 and request the kernel to use it as a seed for the
@@ -646,16 +694,12 @@ Using the same seed file on more then one host,
 or for more than one boot on the same host,
 will reduce the quality of random numbers
 and may impact system security.
-.It Ic userconf Ar command
-Pass command
-.Ar command
-to
-.Xr userconf 4
-at boot time.
-These commands are processed before the interactive
-.Xr userconf 4
-shell is executed, if requested.
+.It Ic root Ar spec
+[Only available for BIOS and UEFI boot]
+Pass an explicit root specification to the kernel.
+See BTINFO_ROOTDEVICE for details.
 .It Ic splash Ar file
+[Only available for BIOS and UEFI boot] XXX document
 Load a graphical image from the specified
 .Ar file
 and request the kernel to use it as a splash screen.
@@ -670,12 +714,38 @@ GIF,
 PSD (composited view only),
 or
 PIC.
+.It Ic text Op Va mode_index
+[Only available UEFI boot] Without argument, list the available
+text modes (displayed as column x line in hexadecimal, therefore
+.Li 50x19 
+means 
+.Li 80
+columns and
+.Li 25
+lines). With an argument, select a text mode.
+.It Ic userconf Ar command
+[Not available for
+.Xr x86/dosboot 8 ]
+Pass command
+.Ar command
+to
+.Xr userconf 4
+at boot time.
+These commands are processed before the interactive
+.Xr userconf 4
+shell is executed, if requested.
+.It Ic version Op Ar full
+[Only available UEFI boot] Display UEFI bootstrap version. With the
+.Op full
+argumznt, also display information about UEFI itself.
 .It Ic vesa Bro Ar \^modenum \
         No \(or Li on \
         No \(or Li off \
         No \(or Li enabled \
         No \(or Li disabled \
         No \(or Li list Brc
+[Only available for BIOS and
+.Xr x86/pxeboot 8 ]
 Initialise the video card to the specified resolution and bit depth.
 The
 .Ar modenum
