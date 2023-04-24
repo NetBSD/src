@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.174 2023/04/20 08:28:03 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.175 2023/04/24 16:32:54 martin Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -207,7 +207,7 @@ union pmap_cache_state {
 
 #define	DEVMAP_ALIGN(a)	((a) & ~L1_S_OFFSET)
 #define	DEVMAP_SIZE(s)	roundup2((s), L1_S_SIZE)
-#define	DEVMAP_FLAGS	PTE_DEV
+#define	DEVMAP_FLAGS	PMAP_DEV
 
 /*
  * The pmap structure itself
