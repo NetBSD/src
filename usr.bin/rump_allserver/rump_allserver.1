@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.23 2015/11/05 14:02:07 wiz Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.24 2023/04/24 00:07:04 uwe Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 15, 2014
+.Dd April 24, 2023
 .Dt RUMP_SERVER 1
 .Os
 .Sh NAME
@@ -61,7 +61,7 @@ provides all rump kernel components which were available when the
 system was built.
 At execution time it is possible to load components from the command
 line as described in the options section.
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl c Ar ncpu
 Configure
 .Ar ncpu
@@ -75,76 +75,91 @@ maps a host file in the rump kernel fs namespace.
 The string
 .Ar drivespec
 must be of comma-separated
-.Dq name=value
+.Sm off
+.Ar name\^ Li = Ar value
+.Sm on
 format and must contain the following tokens:
-.Bl -tag -width hostpath1234
-.It Ar key
+.
+.Bl -tag -width Ic -offset indent
+.
+.It Ic key
 Block device path in rump kernel namespace.
 This must be specified according to the rules for a key in
 .Xr rump_etfs 3 .
-.It Ar hostpath
+.
+.It Ic hostpath
 Host file used for storage.
 If the file does not exist, it will be created.
-.It Ar size
-Size of the mapping.
-Similar to
-.Xr dd 1 ,
-this argument accepts a suffix as the multiplier for the number.
-The special value
-.Dq host
-indicates that the current size of
-.Ar hostpath
-will be used.
-In this case it is assumed that
-.Ar hostpath
-exists and is a regular file.
-.It OR
-.It Ar disklabel
-Use a disklabel partition identifier to specify the offset and size
-of the mapping.
-.Ar hostpath
-must contain an existing and valid disklabel within the first 64k.
 .El
+.
 .Pp
-The following are optional:
-.Bl -tag -width hostpath1234
-.It Ar offset
-Offset of the mapping.
-The window into
-.Ar hostpath
-therefore is
-.Fa [ offset , offset+size ] .
-In case this parameter is not given, the default value 0 is used.
-.It Ar type
 The type of file that
-.Ar key
-is exposed as within the rump kernel.
-The possibilities are
-.Dq blk ,
-.Dq chr ,
+.Ic key
+is exposed as within the rump kernel is specified with:
+.
+.Bl -tag -width Ic -offset indent
+.It Ic type
+Possible values are
+.Ql blk ,
+.Ql chr ,
 and
-.Dq reg
+.Ql reg
 for block device, character device and regular file, respectively.
-The default is a block device.
+The default is a block device
+.Pq Ql blk .
 .Pp
-Note: the contents of block devices are cached in the rump kernel's
+.Sy Note :
+the contents of block devices are cached in the rump kernel's
 buffer cache.
 To avoid cache incoherency, it is advisable not to access a file
 through the host namespace while it is mapped as a block device in
 a rump kernel.
 .El
+.
+.Pp
+For block and character devices the
+.Bq Va offset Ns \&,\~ Ns Va offset Ns + Ns Va size
+region of the file must be specified with:
+.
+.Bl -tag -width Ic -offset indent
+.
+.It Ic disklabel
+Use a disklabel partition letter to specify the offset and size
+of the mapping.
+.Ic hostpath
+must contain a valid disklabel within the first 64k.
+.
+.It Ic offset
+Offset of the mapping.
+The default is 0.
+.
+.It Ic size
+Size of the mapping.
+Similar to
+.Xr dd 1 ,
+this argument accepts a suffix as the multiplier for the number.
+The special value
+.Ql host
+indicates that the current size of
+.Ic hostpath
+will be used.
+In this case it is assumed that
+.Ic hostpath
+exists and is a regular file.
+.El
+.
 .Pp
 In case
-.Ar hostpath
+.Ic hostpath
 does not exist, it will be created as a regular file with mode
 0644 (plus any restrictions placed by umask).
 In case
-.Ar hostpath
+.Ic hostpath
 is a regular file and is not large enough to accommodate the
 specified size, it will be extended to the specified size.
 .It Fl l Ar library
 Call
-.Fn dlopen
+.Xr dlopen 3
 on library before initializing the rump kernel.
 In case
 .Ar library
@@ -163,13 +178,13 @@ error due to missing components.
 To test a configuration, run
 .Nm
 with
-.Ev LD_BIND_NOW=1
-(see examples).
+.Ev LD_BIND_NOW Ns Li \&=1
+.Pq see Sx EXAMPLES .
 .It Fl m Ar module
 Load and link a kernel module after the rump kernel is initialized.
 For this to work, the rump kernel must include the vfs faction,
-since the module is loaded using kernel vfs code (see
-.Sx EXAMPLES ) .
+since the module is loaded using kernel vfs code
+.Pq see Sx EXAMPLES .
 .It Fl r Ar total_ram
 Sets the limit of kernel memory allocatable by the server to
 .Ar total_ram
@@ -186,7 +201,10 @@ By default,
 detaches from the terminal once the service is running on
 .Ar url .
 .It Fl v
-Set bootverbose.
+Set
+.Dv AB_VERBOSE
+in rump kernel's
+.Xr boothowto 9 .
 .El
 .Pp
 After use,
@@ -206,26 +224,23 @@ Start a server with the one gigabyte host file
 mapped as the block device
 .Pa /dev/dk
 in the rump kernel.
-.Bd -literal -offset indent
-$ rump_allserver -d key=/dev/dk,hostpath=dk.img,size=1g unix://sock
-.Ed
+.Pp
+.Dl $ rump_allserver -d key=/dev/dk,hostpath=dk.img,size=1g unix://sock
 .Pp
 Start a server which listens on INADDR_ANY port 3755
-.Bd -literal -offset indent
-$ rump_server tcp://0:3755/
-.Ed
+.Pp
+.Dl $ rump_server tcp://0:3755/
 .Pp
 Test that a configuration contains all of the necessary components:
-.Bd -literal -offset indent
-$ env LD_BIND_NOW=1 rump_server -lrumpvfs -lrumpfs_ffs unix://tsock
-.Ed
+.Pp
+.Dl $ env LD_BIND_NOW=1 rump_server -lrumpvfs -lrumpfs_ffs unix://tsock
 .Pp
 Start a FFS server with a 16MB kernel memory limit.
-.Bd -literal -offset indent
-$ rump_server -lrumpfs_ffs [...] -r 16m unix://ffs
-.Ed
+.Pp
+.Dl $ rump_server -lrumpfs_ffs [...] -r 16m unix://ffs
 .Sh SEE ALSO
 .Xr rump.halt 1 ,
 .Xr dlopen 3 ,
 .Xr rump 3 ,
+.Xr rump_etfs 3 ,
 .Xr rump_sp 7
