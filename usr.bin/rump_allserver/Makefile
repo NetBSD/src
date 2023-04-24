@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2021/11/01 21:37:33 nia Exp $
+#	$NetBSD: Makefile,v 1.16 2023/04/24 18:54:22 uwe Exp $
 #
 
 PROG=	rump_allserver
@@ -14,7 +14,8 @@ RUMPTOP=${.CURDIR}/../../sys/rump
 .include "${RUMPTOP}/net/Makefile.rumpnetcomp"
 
 LDADD+=	${RUMPDEVLDADD} ${RUMPFSLDADD} ${RUMPKERNLDADD} ${RUMPNETLDADD}
-LDADD+= -lrumpdev -lrumpnet -lrumpvfs -lrump -lrumpvfs -lrumpvfs_nofifofs -lrump -lrumpuser -lpthread
+LDADD+=	-lrumpdev -lrumpnet -lrumpvfs -lrumpvfs_nofifofs
+LDADD+=	-lrump -lrumpuser -lpthread
 
 .if ${RUMP_SANITIZE:Uno} != "no"
 LDADD+=	-fsanitize=${RUMP_SANITIZE}
