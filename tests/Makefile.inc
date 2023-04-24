@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2021/07/07 11:51:45 martin Exp $
+# $NetBSD: Makefile.inc,v 1.11 2023/04/24 20:35:49 uwe Exp $
 WARNS ?= 4
 CWARNFLAGS+= -Wno-missing-noreturn
 TOOLSSRCDIR:= ${.PARSEDIR}
@@ -7,7 +7,7 @@ CPPFLAGS+= -I${TOOLSSRCDIR}
 LIBRUMPFIFO_PRE = -lrumpvfs_fifofs -lrumpnet_local -lrumpnet_net -lrumpnet
 .endif
 LIBRUMPFIFO = -lrumpvfs_nofifofs 
-LIBRUMPBASE = ${LIBRUMPFIFO_PRE} -lrumpvfs -lrump -lrumpvfs -lrumpvfs_nofifofs -lrumpuser -lrump -lpthread
+LIBRUMPBASE = ${LIBRUMPFIFO_PRE} -lrumpvfs -lrumpvfs_nofifofs -lrump -lrumpuser -lpthread
 
 .if ${RUMP_SANITIZE:Uno} != "no"
 LIBRUMPBASE+=	-fsanitize=${RUMP_SANITIZE}
