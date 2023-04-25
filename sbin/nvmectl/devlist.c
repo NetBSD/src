@@ -1,4 +1,4 @@
-/*	$NetBSD: devlist.c,v 1.5 2018/04/18 10:11:44 nonaka Exp $	*/
+/*	$NetBSD: devlist.c,v 1.5.12.1 2023/04/25 15:25:36 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: devlist.c,v 1.5 2018/04/18 10:11:44 nonaka Exp $");
+__RCSID("$NetBSD: devlist.c,v 1.5.12.1 2023/04/25 15:25:36 martin Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/devlist.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -118,8 +118,10 @@ devlist(int argc, char *argv[])
 		close(fd);
 	}
 
-	if (found == 0)
+	if (found == 0) {
 		printf("No NVMe controllers found.\n");
+		exit(1);
+	}
 
-	exit(1);
+	exit(0);
 }
