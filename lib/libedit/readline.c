@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.c,v 1.180 2023/04/24 20:02:53 christos Exp $	*/
+/*	$NetBSD: readline.c,v 1.181 2023/04/25 17:51:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: readline.c,v 1.180 2023/04/24 20:02:53 christos Exp $");
+__RCSID("$NetBSD: readline.c,v 1.181 2023/04/25 17:51:32 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -51,7 +51,9 @@ __RCSID("$NetBSD: readline.c,v 1.180 2023/04/24 20:02:53 christos Exp $");
 #include <unistd.h>
 #include <vis.h>
 
+#define completion_matches xxx_completion_matches
 #include "readline/readline.h"
+#undef completion_matches
 #include "el.h"
 #include "fcns.h"
 #include "filecomplete.h"
@@ -101,7 +103,7 @@ int max_input_history = 0;
 char history_expansion_char = '!';
 char history_subst_char = '^';
 char *history_no_expand_chars = expand_chars;
-Function *history_inhibit_expansion_function = NULL;
+rl_linebuf_func_t *history_inhibit_expansion_function = NULL;
 char *history_arg_extract(int start, int end, const char *str);
 
 int rl_inhibit_completion = 0;
