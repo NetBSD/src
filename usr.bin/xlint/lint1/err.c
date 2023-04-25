@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.194 2023/04/23 09:04:44 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.195 2023/04/25 19:00:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.194 2023/04/23 09:04:44 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.195 2023/04/25 19:00:57 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -406,7 +406,7 @@ static const char *const msgs[] = {
 	"maximum value %d of '%s' does not match maximum array index %d", /* 348 */
 	"non type argument to alignof is a GCC extension",	      /* 349 */
 	"'_Atomic' requires C11 or later",			      /* 350 */
-	"'extern' declaration of '%s' outside a header",	      /* 351 */
+	"missing%s header declaration for '%s'",		      /* 351 */
 	"nested 'extern' declaration of '%s'",			      /* 352 */
 };
 
