@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.57 2023/04/20 14:20:02 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.58 2023/04/25 16:17:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1641,4 +1641,60 @@ sys/dev/ic/bmx280.c				1.2
 	bmx280thp(4): do not create the sysctl tree if the initial setup of
 	the chip fails.
 	[brad, ticket #144]
+
+sbin/nvmectl/devlist.c				1.6
+
+	nvmectl(8): in "devlist" mode, exit with a 0 return code if
+	any nvme devices are found.
+	[simonb, ticket #145]
+
+lib/librefuse/fuse.h				1.35
+
+	Fix incorrect test for FUSE_USE_VERSION 34
+	[abs, ticket #146]
+
+usr.bin/resize/resize.h				1.3
+
+	resize(1): PR 57355: report correct name of the program.
+	[gutteridge, ticket #147]
+
+games/worms/worms.6				1.17
+games/worms/worms.c				1.24-1.29
+
+	worms(6): make it possible to run without delay
+	and various cosmetic and bug fixes.
+	[kre, ticket #148]
+
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.8
+external/public-domain/tz/dist/Makefile         up to 1.1.1.36
+external/public-domain/tz/dist/NEWS             up to 1.1.1.43
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.35
+external/public-domain/tz/dist/africa           up to 1.1.1.31
+external/public-domain/tz/dist/antarctica       up to 1.1.1.17
+external/public-domain/tz/dist/asia             up to 1.10
+external/public-domain/tz/dist/australasia      up to 1.7
+external/public-domain/tz/dist/backward         up to 1.11
+external/public-domain/tz/dist/backzone         up to 1.1.1.26
+external/public-domain/tz/dist/checktab.awk     up to 1.1.1.12
+external/public-domain/tz/dist/europe           up to 1.1.1.37
+external/public-domain/tz/dist/iso3166.tab      up to 1.1.1.8
+external/public-domain/tz/dist/leap-seconds.list up to 1.5
+external/public-domain/tz/dist/leapseconds      up to 1.5
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.13
+external/public-domain/tz/dist/northamerica     up to 1.1.1.33
+external/public-domain/tz/dist/southamerica     up to 1.1.1.23
+external/public-domain/tz/dist/theory.html      up to 1.1.1.18
+external/public-domain/tz/dist/version          up to 1.10
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.25
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.26
+doc/3RDPARTY					(apply patch)
+
+	Updated tzdata to 2023c.
+	[kre, ticket #149]
+
+sys/netinet/ip_output.c				1.325
+
+	Revert "Fix panic on packet sending via a route with rt_ifa of
+	AF_LINK." The fix was mistakenly upstreamed (to NetBSD).
+	[ozaki-r, ticket #150]
 
