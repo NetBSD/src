@@ -1,4 +1,4 @@
-/*	$NetBSD: readline.h,v 1.54 2023/04/21 14:56:13 christos Exp $	*/
+/*	$NetBSD: readline.h,v 1.55 2023/04/25 17:51:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 /* list of readline stuff supported by editline library's readline wrapper */
 
 /* typedefs */
-typedef int	  Function(const char *, int);
+typedef int	  rl_linebuf_func_t(const char *, int);
 typedef void	  rl_voidfunc_t(void);
 typedef void	  rl_vintfunc_t(int);
 typedef void	  rl_vcpfunc_t(char *);
@@ -65,7 +65,7 @@ typedef struct _keymap_entry {
 #define ISFUNC	0
 #define ISKMAP	1
 #define ISMACR	2
-	Function *function;
+	rl_linebuf_func_t *function;
 } KEYMAP_ENTRY;
 
 #define KEYMAP_SIZE	256
@@ -112,9 +112,7 @@ extern const char	*rl_readline_name;
 extern FILE		*rl_instream;
 extern FILE		*rl_outstream;
 extern char		*rl_line_buffer;
-extern int		 rl_point, rl_end;
-extern int		 history_base, history_length;
-extern int		 max_input_history;
+extern int		rl_point, rl_end;
 extern const char	*rl_basic_quote_characters;
 extern const char	*rl_basic_word_break_characters;
 extern char		*rl_completer_word_break_characters;
@@ -128,12 +126,23 @@ extern int		rl_completion_query_items;
 extern const char	*rl_special_prefixes;
 extern int		rl_completion_append_character;
 extern int		rl_inhibit_completion;
-extern rl_hook_func_t		*rl_pre_input_hook;
-extern rl_hook_func_t		*rl_startup_hook;
+extern rl_hook_func_t	*rl_pre_input_hook;
+extern rl_hook_func_t	*rl_startup_hook;
 extern char		*rl_terminal_name;
 extern int		rl_already_prompted;
 extern char		*rl_prompt;
 extern int		rl_done;
+extern rl_vcpfunc_t	*rl_linefunc;
+extern rl_hook_func_t   *rl_startup1_hook;
+extern char             *rl_prompt_saved;
+extern int		history_base, history_length;
+extern int		history_offset;
+extern char		history_expansion_char;
+extern char		history_subst_char;
+extern char		*history_no_expand_chars;
+extern rl_linebuf_func_t *history_inhibit_expansion_function;
+extern int		max_input_history;
+
 /*
  * The following is not implemented
  */
