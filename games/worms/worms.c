@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.23 2020/10/14 07:32:53 nia Exp $	*/
+/*	$NetBSD: worms.c,v 1.23.6.1 2023/04/25 16:12:05 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.23 2020/10/14 07:32:53 nia Exp $");
+__RCSID("$NetBSD: worms.c,v 1.23.6.1 2023/04/25 16:12:05 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,11 +62,15 @@ __RCSID("$NetBSD: worms.c,v 1.23 2020/10/14 07:32:53 nia Exp $");
  */
 #include <sys/types.h>
 
+#include <ctype.h>
 #include <curses.h>
 #include <err.h>
+#include <limits.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <strings.h>
 #include <unistd.h>
 
 static const struct options {
@@ -165,7 +169,8 @@ static const struct options {
 
 
 static const char	flavor[] = {
-	'O', '*', '#', '$', '%', '0', '@', '~'
+	'O', '*', '#', '$', '%', '0', '@', '~',
+	'+', 'w', ':', '^', '_', '&', 'x', 'o'
 };
 static const short	xinc[] = {
 	1,  1,  1,  0, -1, -1, -1,  0
@@ -179,7 +184,6 @@ static struct	worm {
 
 static volatile sig_atomic_t sig_caught = 0;
 
-int	 main(int, char **);
 static void nomem(void) __dead;
 static void onsig(int);
 
@@ -191,55 +195,137 @@ main(int argc, char *argv[])
 	const struct options *op;
 	short *ip;
 	int CO, LI, last, bottom, ch, length, number, trail;
+	unsigned int seed;
 	short **ref;
 	const char *field;
-	char *mp;
+	char *ep;
 	unsigned int delay = 20000;
+	unsigned long ul;
+	bool argerror = false;
 
-	mp = NULL;
 	length = 16;
 	number = 3;
 	trail = ' ';
 	field = NULL;
-	while ((ch = getopt(argc, argv, "d:fl:n:t")) != -1)
+	seed = 0;
+	while ((ch = getopt(argc, argv, "d:fl:n:S:t")) != -1) {
 		switch(ch) {
 		case 'd':
-			if ((delay = (unsigned int)strtoul(optarg, NULL, 10)) < 1 || delay > 1000)
-				errx(1, "invalid delay (1-1000)");
-			delay *= 1000;  /* ms -> us */
-			break;
+			ul = strtoul(optarg, &ep, 10);
+			if (ep != optarg) {
+				while (isspace(*(unsigned char *)ep))
+					ep++;
+			}
+			if (ep == optarg ||
+			    (*ep != '\0' &&
+				( ep[1] == '\0' ? (*ep != 'm' && *ep != 'u') :
+				( strcasecmp(ep, "ms") != 0 &&
+				  strcasecmp(ep, "us") != 0 )) )) {
+				    errx(1, "-d: invalid delay (%s)", optarg);
+			}
+			/*
+			 * if ul >= INT_MAX/1000 we don't need the *1000,
+			 * as even without that it will exceed the limit
+			 * just below and be treated as an error.
+			 * (This does assume >=32 bit int, but so does POSIX)
+			 */
+			if (*ep != 'u' && ul < INT_MAX / 1000)
+				ul *= 1000;  /* ms -> us */
+			if (ul > 1000*1000) {
+				errx(1,
+				   "-d: delay (%s) out of range [0 - 1000]",
+				   optarg);
+			}
+			delay = (unsigned int)ul;
+			continue;
 		case 'f':
 			field = "WORM";
-			break;
+			continue;
 		case 'l':
-			if ((length = atoi(optarg)) < 2 || length > 1024) {
-				errx(1, "invalid length (%d - %d).",
-				     2, 1024);
+			ul = strtoul(optarg, &ep, 10);
+			if (ep == optarg || *ep != '\0' ||
+			    ul < 2 || ul > 1024) {
+				errx(1, "-l: invalid length (%s) [%d - %d].",
+				     optarg, 2, 1024);
 			}
-			break;
+			length = (int)ul;
+			continue;
 		case 'n':
-			if ((number = atoi(optarg)) < 1) {
-				errx(1, "invalid number of worms.");
+			ul = strtoul(optarg, &ep, 10);
+			if (ep == optarg || *ep != '\0' ||
+			    ul < 1 || ul > INT_MAX / 10 ) {
+				errx(1, "-n: invalid number of worms (%s).",
+				    optarg);
 			}
-			break;
+			/* upper bound is further limited later */
+			number = (int)ul;
+			continue;
+		case 'S':
+			ul = strtoul(optarg, &ep, 0);
+			if (ep == optarg || *ep != '\0' ||
+			    ul > UINT_MAX ) {
+				errx(1, "-S: invalid seed (%s).", optarg);
+			}
+			seed = (unsigned int)ul;
+			continue;
 		case 't':
 			trail = '.';
-			break;
+			continue;
 		case '?':
 		default:
-			(void)fprintf(stderr,
-			    "usage: worms [-ft] [-d delay] [-l length] [-n number]\n");
-			exit(1);
+			argerror = true;
+			break;
 		}
+		break;
+	}
 
-	if (!(worm = malloc((size_t)number *
-	    sizeof(struct worm))) || !(mp = malloc((size_t)1024)))
-		nomem();
+	if (argerror || argc > optind)
+		errx(1,
+		    "Usage: worms [-ft] [-d delay] [-l length] [-n number]");
+		/* -S omitted deliberately, not useful often enough */
+
 	if (!initscr())
-		errx(0, "couldn't initialize screen");
+		errx(1, "couldn't initialize screen");
 	curs_set(0);
 	CO = COLS;
 	LI = LINES;
+
+	if (CO == 0 || LI == 0) {
+		endwin();
+		errx(1, "screen must be a rectangle, not (%dx%d)", CO, LI);
+	}
+	if (CO >= INT_MAX / LI) {
+		endwin();
+		errx(1, "screen (%dx%d) too large for worms", CO, LI);
+	}
+
+	/* now known that LI*CO cannot overflow an int => also not a long */
+
+	if (LI < 3 || CO < 3 || LI * CO < 40) {
+		/*
+		 * The placement algorithm is too weak for dimensions < 3.
+		 * Need at least 40 spaces so we can have (n > 1) worms
+		 * of a reasonable length, and still leave empty space.
+		 */
+		endwin();
+		errx(1, "screen (%dx%d) too small for worms", CO, LI);
+	}
+
+	ul = (unsigned long)CO * LI;
+	if ((unsigned long)length > ul / 20) {
+		endwin();
+		errx(1, "-l: worms too long (%d) for screen; max: %lu",
+		    length, ul / 20);
+	}
+
+	ul /= (length * 3);	/* no more than 33% arena occupancy */
+	if ((unsigned long)(unsigned)number > ul) {
+		endwin();
+		errx(1, "-n: too many worms (%d) max: %lu", number, ul);
+	}
+	if (!(worm = calloc((size_t)number, sizeof(struct worm))))
+		nomem();
+
 	last = CO - 1;
 	bottom = LI - 1;
 	if (!(ip = malloc((size_t)(LI * CO * sizeof(short)))))
@@ -284,6 +370,7 @@ main(int argc, char *argv[])
 			refresh();
 		}
 	}
+	srandom(seed ? seed : arc4random());
 	for (;;) {
 		refresh();
 		if (sig_caught) {
@@ -316,12 +403,24 @@ main(int argc, char *argv[])
 					mvaddch(y1, x1, trail);
 				}
 			}
-			op = &(!x ? (!y ? upleft : (y == bottom ? lowleft : left)) : (x == last ? (!y ? upright : (y == bottom ? lowright : right)) : (!y ? upper : (y == bottom ? lower : normal))))[w->orientation];
+
+			op = &(!x
+				? (!y
+				    ? upleft
+				    : (y == bottom ? lowleft : left))
+				: (x == last
+				    ? (!y ? upright
+					  : (y == bottom ? lowright : right))
+				    : (!y ? upper
+					  : (y == bottom ? lower : normal)))
+			      )[w->orientation];
+
 			switch (op->nopts) {
 			case 0:
 				refresh();
+				endwin();
 				abort();
-				return(1);
+				/* NOTREACHED */
 			case 1:
 				w->orientation = op->opts[0];
 				break;
@@ -343,8 +442,10 @@ onsig(int signo __unused)
 	sig_caught = 1;
 }
 
+/* This is never called before curses is initialised */
 static void
 nomem(void)
 {
+	endwin();
 	errx(1, "not enough memory.");
 }
