@@ -1,4 +1,4 @@
-/*	$NetBSD: lpd.c,v 1.59 2022/04/08 10:17:55 andvar Exp $	*/
+/*	$NetBSD: lpd.c,v 1.60 2023/04/26 18:25:02 kre Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: lpd.c,v 1.59 2022/04/08 10:17:55 andvar Exp $");
+__RCSID("$NetBSD: lpd.c,v 1.60 2023/04/26 18:25:02 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -394,9 +394,9 @@ chkplushost(int good, FILE *fhost, char *hst)
 static void
 reapchild(int signo)
 {
-	union wait status;
+	int status;
 
-	while (wait3((int *)&status, WNOHANG, 0) > 0)
+	while (wait3(&status, WNOHANG, 0) > 0)
 		child_count--;
 }
 
