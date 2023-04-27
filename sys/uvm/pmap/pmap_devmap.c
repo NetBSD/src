@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_devmap.c,v 1.1 2023/04/20 08:28:02 skrll Exp $	*/
+/*	$NetBSD: pmap_devmap.c,v 1.2 2023/04/27 06:23:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_devmap.c,v 1.1 2023/04/20 08:28:02 skrll Exp $");
+__RCSID("$NetBSD: pmap_devmap.c,v 1.2 2023/04/27 06:23:31 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -91,7 +91,7 @@ pmap_devmap_bootstrap(vaddr_t root, const struct pmap_devmap *table)
 	for (size_t i = 0; table[i].pd_size != 0; i++) {
 		const struct pmap_devmap * const pdp = &table[i];
 		const vaddr_t vmax = __type_max_u(vaddr_t);
-		const vaddr_t pmax = __type_max_u(paddr_t);
+		const paddr_t pmax = __type_max_u(paddr_t);
 
 		KASSERT(pdp->pd_size != 0);
 		KASSERTMSG(vmax - pdp->pd_va >= pdp->pd_size - 1,
