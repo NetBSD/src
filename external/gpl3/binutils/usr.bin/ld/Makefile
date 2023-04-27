@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2023/01/09 14:38:14 christos Exp $
+#	$NetBSD: Makefile,v 1.39 2023/04/27 20:55:27 hgutch Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH} \
 		-I${DIST}/ld \
@@ -88,7 +88,7 @@ FILES+= ${f}.${e}
 .  endfor
 . endif
 . if ${BINUTILS_MACHINE_ARCH} == "x86_64"
-.  for e in xce xsce
+.  for e in xce xdce xde xdwe xe xsce xse xswe xwe
 .   if exists(ldscripts/${f}.${e})
 FILES+= ${f}.${e}
 .   endif

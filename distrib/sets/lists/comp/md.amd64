@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.295 2023/01/09 14:37:50 christos Exp $
+# $NetBSD: md.amd64,v 1.296 2023/04/27 20:55:27 hgutch Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -1440,30 +1440,44 @@
 ./usr/libdata/ldscripts/elf_i386.xce		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xd		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xdce		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xde		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xdwe		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xe		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xr		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xs		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xsc		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xsce		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xse		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xswe		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_i386.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_i386.xwe		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.x		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xbn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xc		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xce		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xd		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xdce		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xde		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xdwe		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xe		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xr		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xs		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xsc		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xsce		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xse		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xswe		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_iamcu.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_iamcu.xwe		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_k1om.x		comp-obsolete	obsolete,binutils=239
 ./usr/libdata/ldscripts/elf_k1om.x		comp-util-bin		binutils=234
 ./usr/libdata/ldscripts/elf_k1om.xbn		comp-obsolete	obsolete,binutils=239
@@ -1523,15 +1537,22 @@
 ./usr/libdata/ldscripts/elf_x86_64.xce		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xd		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xdc		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xdce		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xde		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xdw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xdwe		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xe		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xn		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xr		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xs		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xsc		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xsce		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xse		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xsw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xswe		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xu		comp-util-bin		binutils
 ./usr/libdata/ldscripts/elf_x86_64.xw		comp-util-bin		binutils
+./usr/libdata/ldscripts/elf_x86_64.xwe		comp-util-bin		binutils
 ./usr/libdata/ldscripts/i386nbsd.x		comp-obsolete		obsolete
 ./usr/libdata/ldscripts/i386nbsd.xbn		comp-obsolete		obsolete
 ./usr/libdata/ldscripts/i386nbsd.xn		comp-obsolete		obsolete
