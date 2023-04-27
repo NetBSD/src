@@ -167,15 +167,13 @@ if_opensockets_os(struct dhcpcd_ctx *ctx)
 
 #ifdef INET6
 	priv->pf_inet6_fd = xsocket(PF_INET6, SOCK_DGRAM | SOCK_CLOEXEC, 0);
-#ifdef PRIVSEP_RIGHTS
-	if (IN_PRIVSEP(ctx))
-		ps_rights_limit_ioctl(priv->pf_inet6_fd);
-#endif
 	/* Don't return an error so we at least work on kernels witout INET6
 	 * even though we expect INET6 support.
 	 * We will fail noisily elsewhere anyway. */
-#else
-	priv->pf_inet6_fd = -1;
+#ifdef PRIVSEP_RIGHTS
+	if (priv->pf_inet6_fd != -1 && IN_PRIVSEP(ctx))
+		ps_rights_limit_ioctl(priv->pf_inet6_fd);
+#endif
 #endif
 
 	ctx->link_fd = xsocket(PF_ROUTE, SOCK_RAW | SOCK_CXNB, AF_UNSPEC);
@@ -234,8 +232,10 @@ if_closesockets_os(struct dhcpcd_ctx *ctx)
 	struct priv *priv;
 
 	priv = (struct priv *)ctx->priv;
+#ifdef INET6
 	if (priv->pf_inet6_fd != -1)
 		close(priv->pf_inet6_fd);
+#endif
 #if defined(SIOCALIFADDR) && defined(IFLR_ACTIVE) /*NetBSD */
 	if (priv->pf_link_fd != -1)
 		close(priv->pf_link_fd);
