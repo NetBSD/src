@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.8 2012/10/24 01:12:51 enami Exp $	*/
+/*	$NetBSD: chown.c,v 1.9 2023/04/28 09:56:45 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994, 2003\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.8 2012/10/24 01:12:51 enami Exp $");
+__RCSID("$NetBSD: chown.c,v 1.9 2023/04/28 09:56:45 pgoyette Exp $");
 #endif
 #endif /* not lint */
 
@@ -224,7 +224,7 @@ main(int argc, char **argv)
 			/*
 			 * The only symlinks that end up here are ones that
 			 * don't point to anything.  Note that if we are
-			 * doing a phisycal walk, we never reach here unless
+			 * doing a physical walk, we never reach here unless
 			 * we asked to follow explicitly.
 			 */
 			continue;
