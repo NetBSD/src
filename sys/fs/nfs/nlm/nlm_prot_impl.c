@@ -1,4 +1,4 @@
-/*	$NetBSD: nlm_prot_impl.c,v 1.4 2016/12/13 21:58:17 pgoyette Exp $	*/
+/*	$NetBSD: nlm_prot_impl.c,v 1.5 2023/04/28 22:31:38 andvar Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Authors: Doug Rabson <dfr@rabson.org>
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nlm/nlm_prot_impl.c 302216 2016-06-26 20:08:42Z kib "); */
-__RCSID("$NetBSD: nlm_prot_impl.c,v 1.4 2016/12/13 21:58:17 pgoyette Exp $");
+__RCSID("$NetBSD: nlm_prot_impl.c,v 1.5 2023/04/28 22:31:38 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/fail.h>
@@ -247,7 +247,7 @@ struct nlm_host {
 	volatile u_int	nh_refs;       /* (a) reference count */
 	TAILQ_ENTRY(nlm_host) nh_link; /* (g) global list of hosts */
 	char		nh_caller_name[MAXNAMELEN]; /* (c) printable name of host */
-	uint32_t	nh_sysid;	 /* (c) our allocaed system ID */
+	uint32_t	nh_sysid;	 /* (c) our allocated system ID */
 	char		nh_sysid_string[10]; /* (c) string rep. of sysid */
 	struct sockaddr_storage	nh_addr; /* (s) remote address of host */
 	struct nlm_rpc	nh_srvrpc;	 /* (l) RPC for server replies */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_sh4.h,v 1.7 2008/04/28 20:23:35 martin Exp $	*/
+/*	$NetBSD: mmu_sh4.h,v 1.8 2023/04/28 22:31:38 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -73,9 +73,9 @@
     SH4_MMUCR_URC_MASK | SH4_MMUCR_SQMD | SH4_MMUCR_SV | SH4_MMUCR_AT)
 /*
  * memory-mapped TLB
- *	must be access from P2-area program.
- *	branch to the other area must be maed at least 8 instruction
- *	after access.
+ *	must be accessed from P2-area program.
+ *	branch to the other area must be made at least 8 instructions
+ *	after the access.
  */
 #define	SH4_ITLB_ENTRY		4
 #define	SH4_UTLB_ENTRY		64
