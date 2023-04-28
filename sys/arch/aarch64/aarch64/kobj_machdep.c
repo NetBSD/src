@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.6 2020/12/11 18:03:33 skrll Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.7 2023/04/28 07:33:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.6 2020/12/11 18:03:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7 2023/04/28 07:33:55 skrll Exp $");
 
 #define ELFSIZE		ARCH_ELFSIZE
 
@@ -165,6 +165,12 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	switch (rtype) {
 	case R_AARCH64_NONE:
 	case R_AARCH64_NONE2:
+		return 0;
+	}
+
+	const Elf_Sym *sym = kobj_symbol(ko, symidx);
+
+	if (!local && ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
 		return 0;
 	}
 

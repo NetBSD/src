@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.1 2021/03/23 13:22:40 simonb Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.2 2023/04/28 07:33:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -83,6 +83,12 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	addend = rela->r_addend;
 	rtype = ELF_R_TYPE(rela->r_info);
 	symidx = ELF_R_SYM(rela->r_info);
+
+	const Elf_Sym *sym = kobj_symbol(ko, symidx);
+
+	if (!local && ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
+		return 0;
+	}
 
 	/* pointer to 32bit value and instruction */
 	insn = (void *)where;
