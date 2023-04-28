@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1923 2023/04/26 18:42:41 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1924 2023/04/28 16:13:11 gutteridge Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -78,8 +78,8 @@ Current Vers:	0.21
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
 Archive site:	https://github.com/jmmv/atf/releases
 Home page:	https://github.com/jmmv/atf
-Date:		2020-06-13
-Mailing List:	atf-devel@NetBSD.org
+Date:		2023-04-27
+Mailing List:	atf-discuss@googlegroups.com
 Responsible:	jmmv
 License:	The NetBSD Foundation's license (BSD 2-clause)
 Location:	external/bsd/atf/dist
