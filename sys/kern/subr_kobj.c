@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.77 2023/04/17 08:14:51 skrll Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.78 2023/04/28 07:33:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.77 2023/04/17 08:14:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.78 2023/04/28 07:33:57 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -878,6 +878,14 @@ kobj_jettison(kobj_t ko)
 	}
 }
 
+const Elf_Sym *
+kobj_symbol(kobj_t ko, uintptr_t symidx)
+{
+
+	return ko->ko_symtab + symidx;
+}
+
+
 /*
  * kobj_sym_lookup:
  *
@@ -1080,7 +1088,8 @@ kobj_relocate(kobj_t ko, bool local)
 				continue;
 			}
 			sym = ko->ko_symtab + symidx;
-			if (local != (ELF_ST_BIND(sym->st_info) == STB_LOCAL)) {
+			/* Skip non-local symbols in the first pass (local == TRUE) */
+			if (local && (ELF_ST_BIND(sym->st_info) != STB_LOCAL)) {
 				continue;
 			}
 			error = kobj_reloc(ko, base, rel, false, local);
@@ -1116,7 +1125,8 @@ kobj_relocate(kobj_t ko, bool local)
 				continue;
 			}
 			sym = ko->ko_symtab + symidx;
-			if (local != (ELF_ST_BIND(sym->st_info) == STB_LOCAL)) {
+			/* Skip non-local symbols in the first pass (local == TRUE) */
+			if (local && (ELF_ST_BIND(sym->st_info) != STB_LOCAL)) {
 				continue;
 			}
 			error = kobj_reloc(ko, base, rela, true, local);

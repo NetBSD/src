@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.7 2017/11/03 09:59:08 maxv Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.8 2023/04/28 07:33:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Jake Burkholder.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.7 2017/11/03 09:59:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.8 2023/04/28 07:33:56 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -200,6 +200,12 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	where32 = (Elf_Word *)where;
 	rtype = ELF64_R_TYPE(rela->r_info);
 	symidx = ELF_R_SYM(rela->r_info);
+
+	const Elf_Sym *sym = kobj_symbol(ko, symidx);
+
+	if (!local && ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
+		return 0;
+	}
 
 	if (rtype == R_SPARC_NONE)
 		return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.5 2017/11/05 01:18:15 christos Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.6 2023/04/28 07:33:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -137,6 +137,12 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	symidx = ELF_R_SYM(rela->r_info);
 	type = ELF_R_TYPE(rela->r_info);
 	value = rela->r_addend;
+
+	const Elf_Sym *sym = kobj_symbol(ko, symidx);
+
+	if (!local && ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
+		return 0;
+	}
 
 	if (type == R_TYPE(NONE))
 		return 0;

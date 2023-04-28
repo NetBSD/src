@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.8 2019/05/28 03:52:08 kamil Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.9 2023/04/28 07:33:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.8 2019/05/28 03:52:08 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.9 2023/04/28 07:33:55 skrll Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -104,6 +104,12 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 			addend = *where;
 			break;
 		}
+	}
+
+	const Elf_Sym *sym = kobj_symbol(ko, symidx);
+
+	if (!local && ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
+		return 0;
 	}
 
 	switch (rtype) {
