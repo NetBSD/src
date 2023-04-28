@@ -1,4 +1,4 @@
-/*      $NetBSD: kobj_machdep.c,v 1.1 2018/04/30 06:46:12 ragge Exp $   */
+/*      $NetBSD: kobj_machdep.c,v 1.2 2023/04/28 07:33:57 skrll Exp $   */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -54,6 +54,12 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		printf("Elf_Rel not supported");
 		return -1;
 	}
+	const Elf_Sym *sym = kobj_symbol(ko, symidx);
+
+	if (!local && ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
+		return 0;
+	}
+
 	if (rtype != R_VAX_PC32 && rtype != R_VAX_32) {
 		printf("Bad relocation %d", rtype);
 		return -1;
