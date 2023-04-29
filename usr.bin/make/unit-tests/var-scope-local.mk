@@ -1,4 +1,4 @@
-# $NetBSD: var-scope-local.mk,v 1.6 2023/04/28 13:09:48 rillig Exp $
+# $NetBSD: var-scope-local.mk,v 1.7 2023/04/29 10:16:24 rillig Exp $
 #
 # Tests for target-local variables, such as ${.TARGET} or $@.  These variables
 # are relatively short-lived as they are created just before making the
@@ -13,6 +13,11 @@
 .MAIN: all
 
 # Target-local variables in a target rule
+#
+# In target rules, '$*' only strips the extension off the pathname if the
+# extension is listed in '.SUFFIXES'.
+#
+# expect: target-rule.ext: * = <target-rule.ext>
 all: target-rule.ext dir/subdir/target-rule.ext
 target-rule.ext dir/subdir/target-rule.ext: .PHONY
 	@echo '$@: @ = <${@:Uundefined}>'
@@ -22,6 +27,19 @@ target-rule.ext dir/subdir/target-rule.ext: .PHONY
 	@echo '$@: * = <${*:Uundefined}>'
 
 .SUFFIXES: .ir-gen-from .ir-from .ir-to
+
+# In target rules, '$*' strips the extension off the pathname of the target
+# if the extension is listed in '.SUFFIXES'.
+#
+# expect: target-rule.ir-gen-from: * = <target-rule>
+all: target-rule.ir-gen-from dir/subdir/target-rule-dir.ir-gen-from
+target-rule.ir-gen-from dir/subdir/target-rule-dir.ir-gen-from:
+	@echo '$@: @ = <${@:Uundefined}>'
+	@echo '$@: % = <${%:Uundefined}>'
+	@echo '$@: ? = <${?:Uundefined}>'
+	@echo '$@: < = <${<:Uundefined}>'
+	@echo '$@: * = <${*:Uundefined}>'
+
 .ir-from.ir-to:
 	@echo '$@: @ = <${@:Uundefined}>'
 	@echo '$@: % = <${%:Uundefined}>'
@@ -45,6 +63,10 @@ all: inference-rule-chain.ir-to dir/subdir/inference-rule-chain.ir-to
 inference-rule-chain.ir-gen-from: .PHONY
 dir/subdir/inference-rule-chain.ir-gen-from: .PHONY
 
+# The run-time 'check' directives from above happen after the parse-time
+# 'check' directives from below.
+#
+# expect-reset
 
 # Deferred evaluation during parsing
 #
