@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.153 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.154 2023/04/29 10:07:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.153 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.154 2023/04/29 10:07:22 riastradh Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -292,8 +292,6 @@ static const rb_tree_ops_t cache_rbtree_ops = {
 /*
  * dtrace probes.
  */
-SDT_PROVIDER_DEFINE(vfs);
-
 SDT_PROBE_DEFINE1(vfs, namecache, invalidate, done, "struct vnode *");
 SDT_PROBE_DEFINE1(vfs, namecache, purge, parents, "struct vnode *");
 SDT_PROBE_DEFINE1(vfs, namecache, purge, children, "struct vnode *");
