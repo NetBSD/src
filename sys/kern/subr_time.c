@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_time.c,v 1.36 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: subr_time.c,v 1.37 2023/04/29 03:36:55 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.36 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_time.c,v 1.37 2023/04/29 03:36:55 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -255,10 +255,10 @@ ticks2ts(uint64_t ticks, struct timespec *ts)
 	uint64_t sticks = ticks - ts->tv_sec * hz;
 	if (sticks > BINTIME_SCALE_MS)	/* floor(2^64 / 1000) */
 		ts->tv_nsec = sticks / hz * 1000000000LL;
-   	else if (sticks > BINTIME_SCALE_US)	/* floor(2^64 / 1000000) */
-   		ts->tv_nsec = sticks * 1000LL / hz * 1000000LL;
+	else if (sticks > BINTIME_SCALE_US)	/* floor(2^64 / 1000000) */
+		ts->tv_nsec = sticks * 1000LL / hz * 1000000LL;
 	else
-   		ts->tv_nsec = sticks * 1000000000LL / hz;
+		ts->tv_nsec = sticks * 1000000000LL / hz;
 	DPRINTF(("%s: %ju/%ju -> %ju.%ju\n", __func__,
 	    (uintmax_t)ticks, (uintmax_t)sticks,
 	    (uintmax_t)ts->tv_sec, (uintmax_t)ts->tv_nsec));
@@ -307,7 +307,7 @@ clock_gettime1(clockid_t clock_id, struct timespec *ts)
 		DPRINTF(("%s: r=%ju, s=%ju\n", __func__,
 		    (uintmax_t)l->l_rticksum, (uintmax_t)l->l_slpticksum));
 		mutex_exit(p->p_lock);
-        } else
+	} else
 		ticks = (uint64_t)-1;
 
 	if (ticks != (uint64_t)-1) {
