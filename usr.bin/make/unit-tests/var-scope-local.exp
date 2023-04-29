@@ -1,5 +1,5 @@
-Global: .ALLTARGETS =  all target-rule.ext dir/subdir/target-rule.ext inference-rule.ir-to dir/subdir/inference-rule.ir-to inference-rule.ir-from dir/subdir/inference-rule.ir-from inference-rule-chain.ir-to dir/subdir/inference-rule-chain.ir-to inference-rule-chain.ir-gen-from dir/subdir/inference-rule-chain.ir-gen-from one
-Global: .ALLTARGETS =  all target-rule.ext dir/subdir/target-rule.ext inference-rule.ir-to dir/subdir/inference-rule.ir-to inference-rule.ir-from dir/subdir/inference-rule.ir-from inference-rule-chain.ir-to dir/subdir/inference-rule-chain.ir-to inference-rule-chain.ir-gen-from dir/subdir/inference-rule-chain.ir-gen-from one two
+Global: .ALLTARGETS =  all target-rule.ext dir/subdir/target-rule.ext target-rule.ir-gen-from dir/subdir/target-rule-dir.ir-gen-from inference-rule.ir-to dir/subdir/inference-rule.ir-to inference-rule.ir-from dir/subdir/inference-rule.ir-from inference-rule-chain.ir-to dir/subdir/inference-rule-chain.ir-to inference-rule-chain.ir-gen-from dir/subdir/inference-rule-chain.ir-gen-from one
+Global: .ALLTARGETS =  all target-rule.ext dir/subdir/target-rule.ext target-rule.ir-gen-from dir/subdir/target-rule-dir.ir-gen-from inference-rule.ir-to dir/subdir/inference-rule.ir-to inference-rule.ir-from dir/subdir/inference-rule.ir-from inference-rule-chain.ir-to dir/subdir/inference-rule-chain.ir-to inference-rule-chain.ir-gen-from dir/subdir/inference-rule-chain.ir-gen-from one two
 Var_Parse: ${.MAKE.TARGET_LOCAL_VARIABLES} (eval)
 Var_SetExpand: variable name "" expands to empty string, with value "three" - ignored
 Var_SetExpand: variable name "" expands to empty string, with value "three" - ignored
@@ -17,6 +17,16 @@ dir/subdir/target-rule.ext: % = <undefined>
 dir/subdir/target-rule.ext: ? = <>
 dir/subdir/target-rule.ext: < = <undefined>
 dir/subdir/target-rule.ext: * = <dir/subdir/target-rule.ext>
+target-rule.ir-gen-from: @ = <target-rule.ir-gen-from>
+target-rule.ir-gen-from: % = <undefined>
+target-rule.ir-gen-from: ? = <>
+target-rule.ir-gen-from: < = <undefined>
+target-rule.ir-gen-from: * = <target-rule>
+dir/subdir/target-rule-dir.ir-gen-from: @ = <dir/subdir/target-rule-dir.ir-gen-from>
+dir/subdir/target-rule-dir.ir-gen-from: % = <undefined>
+dir/subdir/target-rule-dir.ir-gen-from: ? = <>
+dir/subdir/target-rule-dir.ir-gen-from: < = <undefined>
+dir/subdir/target-rule-dir.ir-gen-from: * = <dir/subdir/target-rule-dir>
 inference-rule.ir-to: @ = <inference-rule.ir-to>
 inference-rule.ir-to: % = <undefined>
 inference-rule.ir-to: ? = <inference-rule.ir-from>
