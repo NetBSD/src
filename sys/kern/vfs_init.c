@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.60 2023/04/29 10:07:13 riastradh Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.61 2023/04/29 10:07:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.60 2023/04/29 10:07:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.61 2023/04/29 10:07:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,12 +80,14 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.60 2023/04/29 10:07:13 riastradh Exp 
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/sdt.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/ucred.h>
 #include <sys/vnode.h>
+#include <sys/vnode_impl.h>
 
 #include <miscfs/deadfs/deadfs.h>
 #include <miscfs/fifofs/fifo.h>
@@ -99,6 +101,8 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.60 2023/04/29 10:07:13 riastradh Exp 
 #else
 #define DODEBUG(A)
 #endif
+
+SDT_PROVIDER_DEFINE(vfs);
 
 pool_cache_t pnbuf_cache;
 
