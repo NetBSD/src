@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.25 2023/04/29 06:28:12 riastradh Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.26 2023/04/29 10:07:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2019, 2020 The NetBSD Foundation, Inc.
@@ -30,6 +30,7 @@
 #define	_SYS_VNODE_IMPL_H_
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
+#include <sys/sdt.h>
 #include <sys/vnode.h>
 
 struct namecache;
@@ -154,6 +155,8 @@ void	vcache_make_anon(vnode_t *);
 int	vcache_vget(vnode_t *);
 int	vcache_tryvget(vnode_t *);
 int	vfs_drainvnodes(void);
+
+SDT_PROVIDER_DECLARE(vfs);
 
 #endif	/* defined(_KERNEL) || defined(_KMEMUSER) */
 #endif	/* !_SYS_VNODE_IMPL_H_ */
