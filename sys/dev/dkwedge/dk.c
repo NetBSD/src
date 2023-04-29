@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.150 2023/04/22 13:11:50 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.151 2023/04/29 06:23:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.150 2023/04/22 13:11:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.151 2023/04/29 06:23:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -333,7 +333,7 @@ static void
 dkwedge_size_increase(struct dkwedge_softc *sc, uint64_t size)
 {
 
-	KASSERT(mutex_owned(&sc->sc_dk.dk_openlock));
+	KASSERT(mutex_owned(&sc->sc_parent->dk_openlock));
 
 	rw_enter(&sc->sc_sizelock, RW_WRITER);
 	KASSERTMSG(size >= sc->sc_size,
