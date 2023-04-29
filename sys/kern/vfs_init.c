@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.59 2022/11/18 00:10:03 riastradh Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.60 2023/04/29 10:07:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,23 +67,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.59 2022/11/18 00:10:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.60 2023/04/29 10:07:13 riastradh Exp $");
 
 #include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/time.h>
-#include <sys/vnode.h>
-#include <sys/stat.h>
-#include <sys/namei.h>
-#include <sys/ucred.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
-#include <sys/errno.h>
-#include <sys/kmem.h>
-#include <sys/systm.h>
-#include <sys/module.h>
 #include <sys/dirhash.h>
-#include <sys/sysctl.h>
+#include <sys/errno.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
+#include <sys/module.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/stat.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/time.h>
+#include <sys/ucred.h>
+#include <sys/vnode.h>
 
 #include <miscfs/deadfs/deadfs.h>
 #include <miscfs/fifofs/fifo.h>
