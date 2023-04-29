@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.116 2023/04/29 08:13:27 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.117 2023/04/29 08:15:13 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005-2020 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.116 2023/04/29 08:13:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.117 2023/04/29 08:15:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -522,6 +522,7 @@ tmpfs_dir_attach(tmpfs_node_t *dnode, tmpfs_dirent_t *de, tmpfs_node_t *node)
 
 	/* Insert the entry to the directory (parent of inode). */
 	TAILQ_INSERT_TAIL(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
+	KASSERT(dnode->tn_size <= __type_max(off_t) - sizeof(tmpfs_dirent_t));
 	dnode->tn_size += sizeof(tmpfs_dirent_t);
 	uvm_vnp_setsize(dvp, dnode->tn_size);
 
@@ -580,6 +581,7 @@ tmpfs_dir_detach(tmpfs_node_t *dnode, tmpfs_dirent_t *de)
 		dnode->tn_spec.tn_dir.tn_readdir_lastp = NULL;
 	}
 	TAILQ_REMOVE(&dnode->tn_spec.tn_dir.tn_dir, de, td_entries);
+	KASSERT(dnode->tn_size >= sizeof(tmpfs_dirent_t));
 	dnode->tn_size -= sizeof(tmpfs_dirent_t);
 	tmpfs_dir_putseq(dnode, de);
 
