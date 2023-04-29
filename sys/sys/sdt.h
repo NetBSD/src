@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.15 2022/10/29 14:00:12 riastradh Exp $	*/
+/*	$NetBSD: sdt.h,v 1.16 2023/04/29 23:30:18 kre Exp $	*/
 
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -36,6 +36,9 @@
 #ifndef _KERNEL
 
 #define	_DTRACE_VERSION	1
+
+#define SDT_PROVIDER_DEFINE(prov)
+#define SDT_PROVIDER_DECLARE(prov)
 
 #define	DTRACE_PROBE(prov, name) do {				\
 	extern void __dtrace_##prov##___##name(void);		\
@@ -137,6 +140,8 @@
 #define	SDT_PROBE_DEFINE7_XLATE(prov, mod, func, name, arg0, xarg0,     \
     arg1, xarg1, arg2, xarg2, arg3, xarg3, arg4, xarg4, arg5, xarg5, arg6,     \
     xarg6)
+
+#define	SDT_VAR_DECL(decl)					__nothing
 
 #define	DTRACE_PROBE(name)					__nothing
 #define	DTRACE_PROBE1(name, type0, arg0)			__nothing
@@ -333,6 +338,8 @@
 			    (uintptr_t)arg3, (uintptr_t)arg4, (uintptr_t)arg5, \
 			    (uintptr_t)arg6);				       \
 	} while (0)
+
+#define	SDT_VAR_DECL(decl)	decl ;
 
 #define	DTRACE_PROBE_IMPL_START(name, arg0, arg1, arg2, arg3, arg4)	do { \
 	static SDT_PROBE_DEFINE(sdt, , , name);				     \

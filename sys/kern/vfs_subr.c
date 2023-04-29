@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.498 2023/04/29 10:07:30 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.499 2023/04/29 23:30:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.498 2023/04/29 10:07:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.499 2023/04/29 23:30:18 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_43.h"
@@ -714,7 +714,7 @@ vn_syncer_add1(struct vnode *vp, int delayx)
 void
 vn_syncer_add_to_worklist(struct vnode *vp, int delayx)
 {
-	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
+	SDT_VAR_DECL(vnode_impl_t *vip = VNODE_TO_VIMPL(vp));
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
@@ -840,9 +840,10 @@ sched_sync(void *arg)
 	struct vnode *vp;
 	struct mount *mp;
 	time_t starttime, endtime;
-	int vdelay, oslot, nslot, delayx;
+	int vdelay, nslot, delayx;
+	SDT_VAR_DECL(int oslot);
 	bool synced;
-	int error;
+	SDT_VAR_DECL(int error);
 
 	for (;;) {
 		starttime = time_second;
@@ -861,14 +862,21 @@ sched_sync(void *arg)
 			}
 
 			vdelay = sync_delay(mp);
+#ifdef KDTRACE_HOOKS
 			oslot = mp->mnt_synclist_slot;
+#endif
 			nslot = sync_delay_slot(vdelay);
 			mp->mnt_synclist_slot = nslot;
 			SDT_PROBE4(vfs, syncer, worklist, mount__update,
 			    mp, vdelay, oslot, nslot);
 
 			SDT_PROBE1(vfs, syncer, sync, mount__start,  mp);
-			error = VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
+#ifdef KDTRACE_HOOKS
+			error =
+#else
+			(void)
+#endif
+				VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
 			SDT_PROBE2(vfs, syncer, sync, mount__done,
 			    mp, error);
 		}
@@ -918,7 +926,9 @@ sched_sync(void *arg)
 				 * into the future.
 				 */
 				delayx = synced ? syncdelay : lockdelay;
+#ifdef KDTRACE_HOOKS
 				oslot = vi->vi_synclist_slot;
+#endif
 				vn_syncer_add1(vp, delayx);
 				nslot = vi->vi_synclist_slot;
 				SDT_PROBE4(vfs, syncer, worklist,
