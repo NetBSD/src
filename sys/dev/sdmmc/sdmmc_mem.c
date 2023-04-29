@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.74 2021/08/03 07:54:39 msaitoh Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.75 2023/04/29 13:21:31 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.74 2021/08/03 07:54:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.75 2023/04/29 13:21:31 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -2125,7 +2125,8 @@ sdmmc_mem_write_block(struct sdmmc_function *sf, uint32_t blkno, u_char *data,
 	SDMMC_LOCK(sc);
 	mutex_enter(&sc->sc_mtx);
 
-	if (sdmmc_chip_write_protect(sc->sc_sct, sc->sc_sch)) {
+	if (ISSET(sc->sc_flags, SMF_SD_MODE) &&
+	    sdmmc_chip_write_protect(sc->sc_sct, sc->sc_sch)) {
 		aprint_normal_dev(sc->sc_dev, "write-protected\n");
 		error = EIO;
 		goto out;
