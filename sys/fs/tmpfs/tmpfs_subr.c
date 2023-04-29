@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.115 2023/04/29 06:29:55 riastradh Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.116 2023/04/29 08:13:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2005-2020 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.115 2023/04/29 06:29:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.116 2023/04/29 08:13:27 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -906,6 +906,9 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 
 	KASSERT(vp->v_type == VREG);
 	KASSERT(newsize >= 0);
+
+	if (newsize > __type_max(off_t) - PAGE_SIZE + 1)
+		return EFBIG;
 
 	oldsize = node->tn_size;
 	oldpages = round_page(oldsize) >> PAGE_SHIFT;
