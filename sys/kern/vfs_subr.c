@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.496 2022/10/26 23:39:43 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.497 2023/04/29 10:06:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,32 +69,34 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.496 2022/10/26 23:39:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.497 2023/04/29 10:06:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
-#include "opt_ddb.h"
-#include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
+#include "opt_compat_netbsd.h"
+#include "opt_ddb.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/dirent.h>
-#include <sys/filedesc.h>
-#include <sys/kernel.h>
-#include <sys/mount.h>
-#include <sys/fstrans.h>
-#include <sys/vnode_impl.h>
-#include <sys/stat.h>
-#include <sys/sysctl.h>
-#include <sys/namei.h>
-#include <sys/buf.h>
 #include <sys/errno.h>
-#include <sys/kmem.h>
-#include <sys/syscallargs.h>
+#include <sys/filedesc.h>
+#include <sys/fstrans.h>
 #include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/stat.h>
+#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/vnode_impl.h>
 
 #include <miscfs/deadfs/deadfs.h>
 #include <miscfs/genfs/genfs.h>
