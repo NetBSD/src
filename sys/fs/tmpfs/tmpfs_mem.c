@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_mem.c,v 1.13 2020/06/11 19:20:46 ad Exp $	*/
+/*	$NetBSD: tmpfs_mem.c,v 1.14 2023/04/29 06:29:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.13 2020/06/11 19:20:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.14 2023/04/29 06:29:55 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -80,8 +80,6 @@ tmpfs_mntmem_set(struct tmpfs_mount *mp, uint64_t memlimit)
 	mutex_exit(&mp->tm_acc_lock);
 	return error;
 }
-
-	
 
 /*
  * tmpfs_mem_info: return the number of available memory pages.
