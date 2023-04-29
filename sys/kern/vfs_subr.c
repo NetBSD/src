@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.497 2023/04/29 10:06:33 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.498 2023/04/29 10:07:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.497 2023/04/29 10:06:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.498 2023/04/29 10:07:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_43.h"
@@ -103,6 +103,54 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.497 2023/04/29 10:06:33 riastradh Exp
 #include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_ddb.h>
+
+SDT_PROBE_DEFINE3(vfs, syncer, worklist, vnode__add,
+    "struct vnode *"/*vp*/,
+    "int"/*delayx*/,
+    "int"/*slot*/);
+SDT_PROBE_DEFINE4(vfs, syncer, worklist, vnode__update,
+    "struct vnode *"/*vp*/,
+    "int"/*delayx*/,
+    "int"/*oslot*/,
+    "int"/*nslot*/);
+SDT_PROBE_DEFINE1(vfs, syncer, worklist, vnode__remove,
+    "struct vnode *"/*vp*/);
+
+SDT_PROBE_DEFINE3(vfs, syncer, worklist, mount__add,
+    "struct mount *"/*mp*/,
+    "int"/*vdelay*/,
+    "int"/*slot*/);
+SDT_PROBE_DEFINE4(vfs, syncer, worklist, mount__update,
+    "struct mount *"/*vp*/,
+    "int"/*vdelay*/,
+    "int"/*oslot*/,
+    "int"/*nslot*/);
+SDT_PROBE_DEFINE1(vfs, syncer, worklist, mount__remove,
+    "struct mount *"/*mp*/);
+
+SDT_PROBE_DEFINE1(vfs, syncer, sync, start,
+    "int"/*starttime*/);
+SDT_PROBE_DEFINE1(vfs, syncer, sync, mount__start,
+    "struct mount *"/*mp*/);
+SDT_PROBE_DEFINE2(vfs, syncer, sync, mount__done,
+    "struct mount *"/*mp*/,
+    "int"/*error*/);
+SDT_PROBE_DEFINE1(vfs, syncer, sync, mount__skip,
+    "struct mount *"/*mp*/);
+SDT_PROBE_DEFINE1(vfs, syncer, sync, vnode__start,
+    "struct vnode *"/*vp*/);
+SDT_PROBE_DEFINE2(vfs, syncer, sync, vnode__done,
+    "struct vnode *"/*vp*/,
+    "int"/*error*/);
+SDT_PROBE_DEFINE2(vfs, syncer, sync, vnode__fail__lock,
+    "struct vnode *"/*vp*/,
+    "int"/*error*/);
+SDT_PROBE_DEFINE2(vfs, syncer, sync, vnode__fail__vget,
+    "struct vnode *"/*vp*/,
+    "int"/*error*/);
+SDT_PROBE_DEFINE2(vfs, syncer, sync, done,
+    "int"/*starttime*/,
+    "int"/*endtime*/);
 
 const enum vtype iftovt_tab[16] = {
 	VNON, VFIFO, VCHR, VNON, VDIR, VNON, VBLK, VNON,
@@ -666,11 +714,14 @@ vn_syncer_add1(struct vnode *vp, int delayx)
 void
 vn_syncer_add_to_worklist(struct vnode *vp, int delayx)
 {
+	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
 	mutex_enter(&syncer_data_lock);
 	vn_syncer_add1(vp, delayx);
+	SDT_PROBE3(vfs, syncer, worklist, vnode__add,
+	    vp, delayx, vip->vi_synclist_slot);
 	mutex_exit(&syncer_data_lock);
 }
 
@@ -687,6 +738,7 @@ vn_syncer_remove_from_worklist(struct vnode *vp)
 
 	if (vp->v_iflag & VI_ONWORKLST) {
 		mutex_enter(&syncer_data_lock);
+		SDT_PROBE1(vfs, syncer, worklist, vnode__remove,  vp);
 		vp->v_iflag &= ~VI_ONWORKLST;
 		slp = &syncer_workitem_pending[vip->vi_synclist_slot];
 		TAILQ_REMOVE(slp, vip, vi_synclist);
@@ -725,6 +777,8 @@ vfs_syncer_add_to_worklist(struct mount *mp)
 	mp->mnt_iflag |= IMNT_ONWORKLIST;
 	vdelay = sync_delay(mp);
 	mp->mnt_synclist_slot = vdelay > 0 ? next % vdelay : 0;
+	SDT_PROBE3(vfs, syncer, worklist, mount__add,
+	    mp, vdelay, mp->mnt_synclist_slot);
 }
 
 /*
@@ -737,6 +791,7 @@ vfs_syncer_remove_from_worklist(struct mount *mp)
 	KASSERT(mutex_owned(mp->mnt_updating));
 	KASSERT((mp->mnt_iflag & IMNT_ONWORKLIST) != 0);
 
+	SDT_PROBE1(vfs, syncer, worklist, mount__remove,  mp);
 	mp->mnt_iflag &= ~IMNT_ONWORKLIST;
 }
 
@@ -747,20 +802,28 @@ static bool
 lazy_sync_vnode(struct vnode *vp)
 {
 	bool synced;
+	int error;
 
 	KASSERT(mutex_owned(&syncer_data_lock));
 
 	synced = false;
-	if (vcache_tryvget(vp) == 0) {
+	if ((error = vcache_tryvget(vp)) == 0) {
 		mutex_exit(&syncer_data_lock);
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
+		if ((error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT)) == 0) {
 			synced = true;
-			(void) VOP_FSYNC(vp, curlwp->l_cred,
+			SDT_PROBE1(vfs, syncer, sync, vnode__start,  vp);
+			error = VOP_FSYNC(vp, curlwp->l_cred,
 			    FSYNC_LAZY, 0, 0);
+			SDT_PROBE2(vfs, syncer, sync, vnode__done,  vp, error);
 			vput(vp);
-		} else
+		} else {
+			SDT_PROBE2(vfs, syncer, sync, vnode__fail__lock,
+			    vp, error);
 			vrele(vp);
+		}
 		mutex_enter(&syncer_data_lock);
+	} else {
+		SDT_PROBE2(vfs, syncer, sync, vnode__fail__vget,  vp, error);
 	}
 	return synced;
 }
@@ -776,11 +839,14 @@ sched_sync(void *arg)
 	struct vnode_impl *vi;
 	struct vnode *vp;
 	struct mount *mp;
-	time_t starttime;
+	time_t starttime, endtime;
+	int vdelay, oslot, nslot, delayx;
 	bool synced;
+	int error;
 
 	for (;;) {
 		starttime = time_second;
+		SDT_PROBE1(vfs, syncer, sync, start,  starttime);
 
 		/*
 		 * Sync mounts whose dirty time has expired.
@@ -789,10 +855,22 @@ sched_sync(void *arg)
 		while ((mp = mountlist_iterator_trynext(iter)) != NULL) {
 			if ((mp->mnt_iflag & IMNT_ONWORKLIST) == 0 ||
 			    mp->mnt_synclist_slot != syncer_delayno) {
+				SDT_PROBE1(vfs, syncer, sync, mount__skip,
+				    mp);
 				continue;
 			}
-			mp->mnt_synclist_slot = sync_delay_slot(sync_delay(mp));
-			VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
+
+			vdelay = sync_delay(mp);
+			oslot = mp->mnt_synclist_slot;
+			nslot = sync_delay_slot(vdelay);
+			mp->mnt_synclist_slot = nslot;
+			SDT_PROBE4(vfs, syncer, worklist, mount__update,
+			    mp, vdelay, oslot, nslot);
+
+			SDT_PROBE1(vfs, syncer, sync, mount__start,  mp);
+			error = VFS_SYNC(mp, MNT_LAZY, curlwp->l_cred);
+			SDT_PROBE2(vfs, syncer, sync, mount__done,
+			    mp, error);
 		}
 		mountlist_iterator_destroy(iter);
 
@@ -839,10 +917,19 @@ sched_sync(void *arg)
 				 * occur no later than syncdelay seconds
 				 * into the future.
 				 */
-				vn_syncer_add1(vp,
-				    synced ? syncdelay : lockdelay);
+				delayx = synced ? syncdelay : lockdelay;
+				oslot = vi->vi_synclist_slot;
+				vn_syncer_add1(vp, delayx);
+				nslot = vi->vi_synclist_slot;
+				SDT_PROBE4(vfs, syncer, worklist,
+				    vnode__update,
+				    vp, delayx, oslot, nslot);
 			}
 		}
+
+		endtime = time_second;
+
+		SDT_PROBE2(vfs, syncer, sync, done,  starttime, endtime);
 
 		/*
 		 * If it has taken us less than a second to process the
@@ -852,7 +939,7 @@ sched_sync(void *arg)
 		 * matter as we are just trying to generally pace the
 		 * filesystem activity.
 		 */
-		if (time_second == starttime) {
+		if (endtime == starttime) {
 			kpause("syncer", false, hz, &syncer_data_lock);
 		}
 		mutex_exit(&syncer_data_lock);
