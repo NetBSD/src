@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.151 2023/04/29 06:23:37 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.152 2023/04/29 13:00:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.151 2023/04/29 06:23:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.152 2023/04/29 13:00:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1282,12 +1282,12 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc->sc_dk.dk_openmask == 0) {
 		error = dkfirstopen(sc, flags);
 		if (error)
-			goto popen_fail;
+			goto out;
 	}
 	KASSERT(sc->sc_mode != 0);
 	if (flags & ~sc->sc_mode & FWRITE) {
 		error = EROFS;
-		goto popen_fail;
+		goto out;
 	}
 	if (fmt == S_IFCHR)
 		sc->sc_dk.dk_copenmask |= 1;
@@ -1296,8 +1296,7 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	sc->sc_dk.dk_openmask =
 	    sc->sc_dk.dk_copenmask | sc->sc_dk.dk_bopenmask;
 
-popen_fail:
-	mutex_exit(&sc->sc_parent->dk_rawlock);
+out:	mutex_exit(&sc->sc_parent->dk_rawlock);
 	mutex_exit(&sc->sc_dk.dk_openlock);
 	return error;
 }
