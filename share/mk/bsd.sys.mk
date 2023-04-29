@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.312 2023/01/22 15:20:01 rillig Exp $
+#	$NetBSD: bsd.sys.mk,v 1.313 2023/04/29 20:31:59 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -163,7 +163,9 @@ CWARNFLAGS+=	${CWARNFLAGS.${ACTIVE_CC}}
 CPPFLAGS+=	${AUDIT:D-D__AUDIT__}
 _NOWERROR=	${defined(NOGCCERROR) || (${ACTIVE_CC} == "clang" && defined(NOCLANGERROR)):?yes:no}
 CFLAGS+=	${${_NOWERROR} == "no" :?-Werror:} ${CWARNFLAGS}
-LINTFLAGS+=	${DESTDIR:D-d ${DESTDIR}}
+.if !empty(DESTDIR)
+LINTFLAGS+=	-d ${DESTDIR}
+.endif
 
 .if !defined(NOSSP) && (${USE_SSP:Uno} != "no") && (${BINDIR:Ux} != "/usr/mdec")
 .   if !defined(KERNSRCDIR) && !defined(KERN) # not for kernels / kern modules
