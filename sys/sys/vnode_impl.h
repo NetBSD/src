@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.24 2022/07/18 04:30:30 thorpej Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.25 2023/04/29 06:28:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2019, 2020 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ typedef struct vnode_impl vnode_impl_t;
  */
 void _vstate_assert(vnode_t *, enum vnode_state, const char *, int, bool);
 
-#if defined(DIAGNOSTIC) 
+#if defined(DIAGNOSTIC)
 
 #define VSTATE_ASSERT(vp, state) \
 	_vstate_assert((vp), (state), __func__, __LINE__, true)
