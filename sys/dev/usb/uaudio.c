@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.180 2023/04/23 06:13:35 mlelstv Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.181 2023/04/30 08:35:52 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.180 2023/04/23 06:13:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.181 2023/04/30 08:35:52 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -105,7 +105,7 @@ int	uaudiodebug = 0;
 /* number of USB frames per request, also the number of ms */
 #define UAUDIO_NFRAMES		10
 /* number of microframes per requewst (high, super)  */
-#define UAUDIO_NFRAMES_HI	(UAUDIO_NFRAMES * USB_UFRAMES_PER_FRAME)
+#define UAUDIO_NFRAMES_HI	40
 
 
 #define MIX_MAX_CHAN 8
