@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.159 2022/01/22 08:58:48 skrll Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.160 2023/04/30 08:45:48 riastradh Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -687,7 +687,38 @@
 #define __CASTV(__dt, __st)	__CAST(__dt, __CAST(void *, __st))
 #define __CASTCV(__dt, __st)	__CAST(__dt, __CAST(const void *, __st))
 
-#define __USE(a) (/*LINTED*/(void)(a))
+/*
+ * Suppresses `variable set but not used' warnings.
+ *
+ * Typically for #ifdefs, where one branch of the #ifdef uses a
+ * variable but the other does not.  Useful in patching external code
+ * to keep the patches narrowly scoped.
+ *
+ * Limitation: Only for variables, and only non-volatile variables.
+ *
+ * (Abusing this for anything else may lead to side effects.  Pointers
+ * to volatile objects are OK, as in `volatile int *a', as long as the
+ * pointer itself is not volatile, as in `int *volatile a'.)
+ */
+#define	__USE(a) (/*LINTED*/(void)(a))
+
+/*
+ * Verifies the expression e compiles, but does not evaluate it.  Safe
+ * when e has side effects.
+ *
+ * Typically used for the arguments to macros with conditional
+ * definitions like DIAGNOSTIC or KDTRACE_HOOKS: when enabled, the
+ * macro uses the argument; when disabled, the macro passes the
+ * argument to __MACROUSE but doesn't otherwise use it.  Cast to long
+ * in case the argument is a bit field, which is forbidden in sizeof.
+ *
+ * Limitation: Doesn't work for expressions of aggregate (struct/union)
+ * types.
+ *
+ * (If you find a way to handle both bit fields and aggregate types,
+ * you could unify __USE and __MACROUSE.)
+ */
+#define	__MACROUSE(e)	(/*LINTED*/(void)sizeof((long)(e)))
 
 #define __type_mask(t) (/*LINTED*/sizeof(t) < sizeof(intmax_t) ? \
     (~((1ULL << (sizeof(t) * NBBY)) - 1)) : 0ULL)
