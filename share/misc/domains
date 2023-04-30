@@ -1,6 +1,6 @@
-# $NetBSD: domains,v 1.9 2023/04/30 22:08:42 nikita Exp $
+# $NetBSD: domains,v 1.10 2023/04/30 22:33:57 nikita Exp $
 # ISO 3166 country codes, from https://www.iana.org/domains/root/db
-# Last update: Mon May 1 00:05:20 CEST 2023
+# Last update: Mon May 1 00:31:16 CEST 2023
 #
 .aaa American Automobile Association, Inc.
 .aarp AARP
@@ -51,7 +51,7 @@
 .ally Ally Financial Inc.
 .alsace REGION GRAND EST
 .alstom ALSTOM
-.am &quot;Internet Society&quot; Non-governmental Organization
+.am "Internet Society" Non-governmental Organization
 .amazon Amazon Registry Services, Inc.
 .americanexpress American Express Travel Related Services Company, Inc.
 .americanfamily AmFam, Inc.
@@ -239,7 +239,7 @@
 .ceb Not assigned
 .center Binky Moon, LLC
 .ceo CEOTLD Pty Ltd
-.cern European Organization for Nuclear Research (&quot;CERN&quot;)
+.cern European Organization for Nuclear Research ("CERN")
 .cf Societe Centrafricaine de Telecommunications (SOCATEL)
 .cfa CFA Institute
 .cfd DOTCFD REGISTRY LTD
@@ -504,7 +504,7 @@
 .gb Reserved Domain - IANA
 .gbiz Charleston Road Registry Inc.
 .gd The National Telecommunications Regulatory Commission (NTRC)
-.gdn Joint Stock Company &quot;Navigation-information systems&quot;
+.gdn Joint Stock Company "Navigation-information systems"
 .ge Caucasus Online LLC
 .gea GEA Group Aktiengesellschaft
 .gent Combell nv
@@ -853,7 +853,7 @@
 .monster XYZ.COM LLC
 .montblanc Not assigned
 .mopar Not assigned
-.mormon IRI Domain Management, LLC (&quot;Applicant&quot;)
+.mormon IRI Domain Management, LLC ("Applicant")
 .mortgage Dog Beach, LLC
 .moscow Foundation for Assistance for Internet Technologies and Infrastructure Development (FAITID)
 .moto Motorola Trademark Holdings, LLC
@@ -1112,7 +1112,7 @@
 .sbs SPECIAL BROADCASTING SERVICE CORPORATION
 .sc VCS Pty Ltd
 .sca SVENSKA CELLULOSA AKTIEBOLAGET SCA (publ)
-.scb The Siam Commercial Bank Public Company Limited (&quot;SCB&quot;)
+.scb The Siam Commercial Bank Public Company Limited ("SCB")
 .schaeffler Schaeffler Technologies AG &amp; Co. KG
 .schmidt SCHMIDT GROUPE S.A.S.
 .scholarships Scholarships.com, LLC
@@ -1234,7 +1234,7 @@
 .taobao Alibaba Group Holding Limited
 .target Target Domain Holdings, LLC
 .tatamotors Tata Motors Ltd
-.tatar Limited Liability Company &quot;Coordination Center of Regional Domain of Tatarstan Republic&quot;
+.tatar Limited Liability Company "Coordination Center of Regional Domain of Tatarstan Republic"
 .tattoo Top Level Design, LLC
 .tax Binky Moon, LLC
 .taxi Binky Moon, LLC
@@ -1525,7 +1525,7 @@
 .广东 Guangzhou YU Wei Information Technology Co., Ltd.
 .இலங்கை LK Domain Registry
 .இந்தியா National Internet Exchange of India
-.հայ &quot;Internet Society&quot; Non-governmental Organization
+.հայ "Internet Society" Non-governmental Organization
 .新加坡 Singapore Network Information Centre (SGNIC) Pte Ltd
 .テスト Not assigned
 .政务 China Organizational Name Administration Center
