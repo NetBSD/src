@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.58 2023/04/25 16:17:59 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.59 2023/04/30 10:58:53 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1697,4 +1697,9 @@ sys/netinet/ip_output.c				1.325
 	Revert "Fix panic on packet sending via a route with rt_ifa of
 	AF_LINK." The fix was mistakenly upstreamed (to NetBSD).
 	[ozaki-r, ticket #150]
+
+sys/dev/sdmmc/sdmmc_mem.c			1.75
+
+	sdmmc(4): only check chipset write protect status for SD cards.
+	[jmcneill, ticket #151]
 
