@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.18 2021/04/24 23:36:26 thorpej Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.19 2023/04/30 14:20:23 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.18 2021/04/24 23:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.19 2023/04/30 14:20:23 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -840,7 +840,7 @@ vcaudio_swvol_codec(audio_filter_arg_t *arg)
 {
 	struct vcaudio_softc *sc = arg->context;
 	const aint_t *src;
-	aint_t *dst;
+	int16_t *dst;
 	u_int sample_count;
 	u_int i;
 
