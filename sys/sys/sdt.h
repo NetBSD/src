@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.17 2023/04/30 08:45:19 riastradh Exp $	*/
+/*	$NetBSD: sdt.h,v 1.18 2023/04/30 08:45:30 riastradh Exp $	*/
 
 /*-
  * Copyright 2006-2008 John Birrell <jb@FreeBSD.org>
@@ -47,37 +47,37 @@
 
 #define	DTRACE_PROBE1(prov, name, arg1) do {			\
 	extern void __dtrace_##prov##___##name(unsigned long);	\
-	__dtrace_##prov##___##name((unsigned long)arg1);	\
+	__dtrace_##prov##___##name((unsigned long)(arg1));	\
 } while (0)
 
 #define	DTRACE_PROBE2(prov, name, arg1, arg2) do {		\
 	extern void __dtrace_##prov##___##name(unsigned long,	\
 	    unsigned long);					\
-	__dtrace_##prov##___##name((unsigned long)arg1,		\
-	    (unsigned long)arg2);				\
+	__dtrace_##prov##___##name((unsigned long)(arg1),	\
+	    (unsigned long)(arg2));				\
 } while (0)
 
 #define	DTRACE_PROBE3(prov, name, arg1, arg2, arg3) do {	\
 	extern void __dtrace_##prov##___##name(unsigned long,	\
 	    unsigned long, unsigned long);			\
-	__dtrace_##prov##___##name((unsigned long)arg1,		\
-	    (unsigned long)arg2, (unsigned long)arg3);		\
+	__dtrace_##prov##___##name((unsigned long)(arg1),	\
+	    (unsigned long)(arg2), (unsigned long)(arg3));	\
 } while (0)
 
 #define	DTRACE_PROBE4(prov, name, arg1, arg2, arg3, arg4) do {	\
 	extern void __dtrace_##prov##___##name(unsigned long,	\
 	    unsigned long, unsigned long, unsigned long);	\
-	__dtrace_##prov##___##name((unsigned long)arg1,		\
-	    (unsigned long)arg2, (unsigned long)arg3,		\
-	    (unsigned long)arg4);				\
+	__dtrace_##prov##___##name((unsigned long)(arg1),	\
+	    (unsigned long)(arg2), (unsigned long)(arg3),	\
+	    (unsigned long)(arg4));				\
 } while (0)
 
 #define	DTRACE_PROBE5(prov, name, arg1, arg2, arg3, arg4, arg5) do {	\
 	extern void __dtrace_##prov##___##name(unsigned long,		\
 	    unsigned long, unsigned long, unsigned long, unsigned long);\
-	__dtrace_##prov##___##name((unsigned long)arg1,			\
-	    (unsigned long)arg2, (unsigned long)arg3,			\
-	    (unsigned long)arg4, (unsigned long)arg5);			\
+	__dtrace_##prov##___##name((unsigned long)(arg1),		\
+	    (unsigned long)(arg2), (unsigned long)(arg3),		\
+	    (unsigned long)(arg4), (unsigned long)(arg5));		\
 } while (0)
 
 #else /* _KERNEL */
@@ -323,8 +323,9 @@
 			    uintptr_t, uintptr_t, uintptr_t, uintptr_t),       \
 			    sdt_probe_func)(  				       \
 			    sdt_##prov##_##mod##_##func##_##name->id,	       \
-			    (uintptr_t)arg0, (uintptr_t)arg1, (uintptr_t)arg2, \
-			    (uintptr_t)arg3, (uintptr_t)arg4, (uintptr_t)arg5);\
+			    (uintptr_t)(arg0), (uintptr_t)(arg1),	       \
+			    (uintptr_t)(arg2), (uintptr_t)(arg3),	       \
+			    (uintptr_t)(arg4), (uintptr_t)(arg5));	       \
 	} while (0)
 #define	SDT_PROBE7(prov, mod, func, name, arg0, arg1, arg2, arg3, arg4, arg5,  \
     arg6)								       \
@@ -334,9 +335,10 @@
 			    uintptr_t, uintptr_t, uintptr_t, uintptr_t,	       \
 			    uintptr_t), sdt_probe_func)(		       \
 			    sdt_##prov##_##mod##_##func##_##name->id,	       \
-			    (uintptr_t)arg0, (uintptr_t)arg1, (uintptr_t)arg2, \
-			    (uintptr_t)arg3, (uintptr_t)arg4, (uintptr_t)arg5, \
-			    (uintptr_t)arg6);				       \
+			    (uintptr_t)(arg0), (uintptr_t)(arg1),	       \
+			    (uintptr_t)(arg2), (uintptr_t)(arg3),	       \
+			    (uintptr_t)(arg4), (uintptr_t)(arg5),	       \
+			    (uintptr_t)(arg6));				       \
 	} while (0)
 
 #define	SDT_VAR_DECL(decl)	decl ;
