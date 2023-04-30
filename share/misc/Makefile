@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2023/04/30 22:08:14 nikita Exp $
+#	$NetBSD: Makefile,v 1.40 2023/04/30 22:32:51 nikita Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/8/93
 
 FILES=	NetBSD.el acronyms acronyms-o acronyms.comp airport ascii \
@@ -33,6 +33,7 @@ update-domains:
 	  ftp -o - ${DOMAIN_URL} \
 	  | ${TOOL_SED} -f ${.CURDIR}/nanpa.sed \
 	  | ${TOOL_SED} '/^\..*/!d' \
+	  | ${TOOL_SED} 's/&quot;/\"/g' \
 	  | ${TOOL_AWK} 'BEGIN{FS=":"} {print $$1 " " $$3}' \
 	 ) > domains ; \
 
