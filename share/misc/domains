@@ -1,254 +1,1556 @@
-# $NetBSD: domains,v 1.8 2013/06/02 16:37:37 rodent Exp $
-# ISO 3166 country codes, from http://www.iana.org/root-whois/index.html
-# Last update: Sat Sep 29 17:40:22 CEST 2007
+# $NetBSD: domains,v 1.9 2023/04/30 22:08:42 nikita Exp $
+# ISO 3166 country codes, from https://www.iana.org/domains/root/db
+# Last update: Mon May 1 00:05:20 CEST 2023
 #
-ac Ascension Island
-ad Andorra
-ae United Arab Emirates
-af Afghanistan
-ag Antigua and Barbuda
-ai Anguilla
-al Albania
-am Armenia
-an Netherlands Antilles
-ao Angola
-aq Antarctica
-ar Argentina
-as American Samoa
-at Austria
-au Australia
-aw Aruba
-ax Aland Islands
-az Azerbaijan
-ba Bosnia and Herzegovina
-bb Barbados
-bd Bangladesh
-be Belgium
-bf Burkina Faso
-bg Bulgaria
-bh Bahrain
-bi Burundi
-bj Benin
-bm Bermuda
-bn Brunei Darussalam
-bo Bolivia
-br Brazil
-bs Bahamas
-bt Bhutan
-bv Bouvet Island
-bw Botswana
-by Belarus
-bz Belize
-ca Canada
-cc Cocos (Keeling) Islands
-cd Congo, The Democratic Republic of the
-cf Central African Republic
-cg Congo, Republic of
-ch Switzerland
-ci Cote d'Ivoire
-ck Cook Islands
-cl Chile
-cm Cameroon
-cn China
-co Colombia
-cr Costa Rica
-cu Cuba
-cv Cape Verde
-cx Christmas Island
-cy Cyprus
-cz Czech Republic
-de Germany
-dj Djibouti
-dk Denmark
-dm Dominica
-do Dominican Republic
-dz Algeria
-ec Ecuador
-ee Estonia
-eg Egypt
-eh Western Sahara
-er Eritrea
-es Spain
-et Ethiopia
-eu European Union
-fi Finland
-fj Fiji
-fk Falkland Islands (Malvinas)
-fm Micronesia, Federated States of
-fo Faroe Islands
-fr France
-ga Gabon
-gb United Kingdom
-gd Grenada
-ge Georgia
-gf French Guiana
-gg Guernsey
-gh Ghana
-gi Gibraltar
-gl Greenland
-gm Gambia
-gn Guinea
-gp Guadeloupe
-gq Equatorial Guinea
-gr Greece
-gs South Georgia and the South Sandwich Islands
-gt Guatemala
-gu Guam
-gw Guinea-Bissau
-gy Guyana
-hk Hong Kong
-hm Heard and McDonald Islands
-hn Honduras
-hr Croatia/Hrvatska
-ht Haiti
-hu Hungary
-id Indonesia
-ie Ireland
-il Israel
-im Isle of Man
-in India
-io British Indian Ocean Territory
-iq Iraq
-ir Iran, Islamic Republic of
-is Iceland
-it Italy
-je Jersey
-jm Jamaica
-jo Jordan
-jp Japan
-ke Kenya
-kg Kyrgyzstan
-kh Cambodia
-ki Kiribati
-km Comoros
-kn Saint Kitts and Nevis
-kp Korea, Democratic People's Republic
-kr Korea, Republic of
-kw Kuwait
-ky Cayman Islands
-kz Kazakhstan
-la Lao People's Democratic Republic
-lb Lebanon
-lc Saint Lucia
-li Liechtenstein
-lk Sri Lanka
-lr Liberia
-ls Lesotho
-lt Lithuania
-lu Luxembourg
-lv Latvia
-ly Libyan Arab Jamahiriya
-ma Morocco
-mc Monaco
-md Moldova, Republic of
-me Montenegro
-mg Madagascar
-mh Marshall Islands
-mk Macedonia, The Former Yugoslav Republic of
-ml Mali
-mm Myanmar
-mn Mongolia
-mo Macao
-mp Northern Mariana Islands
-mq Martinique
-mr Mauritania
-ms Montserrat
-mt Malta
-mu Mauritius
-mv Maldives
-mw Malawi
-mx Mexico
-my Malaysia
-mz Mozambique
-na Namibia
-nc New Caledonia
-ne Niger
-nf Norfolk Island
-ng Nigeria
-ni Nicaragua
-nl Netherlands
-no Norway
-np Nepal
-nr Nauru
-nu Niue
-nz New Zealand
-om Oman
-pa Panama
-pe Peru
-pf French Polynesia
-pg Papua New Guinea
-ph Philippines
-pk Pakistan
-pl Poland
-pm Saint Pierre and Miquelon
-pn Pitcairn Island
-pr Puerto Rico
-ps Palestinian Territory, Occupied
-pt Portugal
-pw Palau
-py Paraguay
-qa Qatar
-re Reunion Island
-ro Romania
-rs Serbia
-ru Russian Federation
-rw Rwanda
-sa Saudi Arabia
-sb Solomon Islands
-sc Seychelles
-sd Sudan
-se Sweden
-sg Singapore
-sh Saint Helena
-si Slovenia
-sj Svalbard and Jan Mayen Islands
-sk Slovak Republic
-sl Sierra Leone
-sm San Marino
-sn Senegal
-so Somalia
-sr Suriname
-st Sao Tome and Principe
-su Soviet Union (being phased out)
-sv El Salvador
-sx Sint Maarten
-sy Syrian Arab Republic
-sz Swaziland
-tc Turks and Caicos Islands
-td Chad
-tf French Southern Territories
-tg Togo
-th Thailand
-tj Tajikistan
-tk Tokelau
-tl Timor-Leste
-tm Turkmenistan
-tn Tunisia
-to Tonga
-tp East Timor
-tr Turkey
-tt Trinidad and Tobago
-tv Tuvalu
-tw Taiwan
-tz Tanzania
-ua Ukraine
-ug Uganda
-uk United Kingdom
-um United States Minor Outlying Islands
-us United States
-uy Uruguay
-uz Uzbekistan
-va Holy See (Vatican City State)
-vc Saint Vincent and the Grenadines
-ve Venezuela
-vg Virgin Islands, British
-vi Virgin Islands, U.S.
-vn Vietnam
-vu Vanuatu
-wf Wallis and Futuna Islands
-ws Samoa
-ye Yemen
-yt Mayotte
-za South Africa
-zm Zambia
-zw Zimbabwe
+.aaa American Automobile Association, Inc.
+.aarp AARP
+.abarth Fiat Chrysler Automobiles N.V.
+.abb ABB Ltd
+.abbott Abbott Laboratories, Inc.
+.abbvie AbbVie Inc.
+.abc Disney Enterprises, Inc.
+.able Able Inc.
+.abogado Registry Services, LLC
+.abudhabi Abu Dhabi Systems and Information Centre
+.ac Internet Computer Bureau Limited
+.academy Binky Moon, LLC
+.accenture Accenture plc
+.accountant dot Accountant Limited
+.accountants Binky Moon, LLC
+.aco ACO Severin Ahlmann GmbH &amp; Co. KG
+.active Not assigned
+.actor Dog Beach, LLC
+.ad Andorra Telecom
+.adac Not assigned
+.ads Charleston Road Registry Inc.
+.adult ICM Registry AD LLC
+.ae Telecommunications and Digital Government Regulatory Authority (TDRA)
+.aeg Aktiebolaget Electrolux
+.aero Societe Internationale de Telecommunications Aeronautique (SITA INC USA)
+.aetna Aetna Life Insurance Company
+.af Ministry of Communications and IT
+.afamilycompany Not assigned
+.afl Australian Football League
+.africa ZA Central Registry NPC trading as Registry.Africa
+.ag UHSA School of Medicine
+.agakhan Fondation Aga Khan (Aga Khan Foundation)
+.agency Binky Moon, LLC
+.ai Government of Anguilla
+.aig American International Group, Inc.
+.aigo Not assigned
+.airbus Airbus S.A.S.
+.airforce Dog Beach, LLC
+.airtel Bharti Airtel Limited
+.akdn Fondation Aga Khan (Aga Khan Foundation)
+.al Electronic and Postal Communications Authority - AKEP
+.alfaromeo Fiat Chrysler Automobiles N.V.
+.alibaba Alibaba Group Holding Limited
+.alipay Alibaba Group Holding Limited
+.allfinanz Allfinanz Deutsche Vermögensberatung Aktiengesellschaft
+.allstate Allstate Fire and Casualty Insurance Company
+.ally Ally Financial Inc.
+.alsace REGION GRAND EST
+.alstom ALSTOM
+.am &quot;Internet Society&quot; Non-governmental Organization
+.amazon Amazon Registry Services, Inc.
+.americanexpress American Express Travel Related Services Company, Inc.
+.americanfamily AmFam, Inc.
+.amex American Express Travel Related Services Company, Inc.
+.amfam AmFam, Inc.
+.amica Amica Mutual Insurance Company
+.amsterdam Gemeente Amsterdam
+.an Not assigned
+.analytics Campus IP LLC
+.android Charleston Road Registry Inc.
+.anquan QIHOO 360 TECHNOLOGY CO. LTD.
+.anz Australia and New Zealand Banking Group Limited
+.ao Ministry of Telecommunications and Information Technologies (MTTI)
+.aol OATH Inc.
+.apartments Binky Moon, LLC
+.app Charleston Road Registry Inc.
+.apple Apple Inc.
+.aq Antarctica Network Information Centre Limited
+.aquarelle Aquarelle.com
+.ar Presidencia de la Nación – Secretaría Legal y Técnica
+.arab League of Arab States
+.aramco Aramco Services Company
+.archi Afilias Limited
+.army Dog Beach, LLC
+.arpa Internet Architecture Board (IAB)
+.art UK Creative Ideas Limited
+.arte Association Relative à la Télévision Européenne G.E.I.E.
+.as AS Domain Registry
+.asda Wal-Mart Stores, Inc.
+.asia DotAsia Organisation Ltd.
+.associates Binky Moon, LLC
+.at nic.at GmbH
+.athleta The Gap, Inc.
+.attorney Dog Beach, LLC
+.au .au Domain Administration (auDA)
+.auction Dog Beach, LLC
+.audi AUDI Aktiengesellschaft
+.audible Amazon Registry Services, Inc.
+.audio XYZ.COM LLC
+.auspost Australian Postal Corporation
+.author Amazon Registry Services, Inc.
+.auto XYZ.COM LLC
+.autos XYZ.COM LLC
+.avianca Avianca Holdings S.A.
+.aw SETAR
+.aws AWS Registry LLC
+.ax Ålands landskapsregering
+.axa AXA Group Operations SAS
+.az IntraNS
+.azure Microsoft Corporation
+.ba Universtiy Telinformatic Centre (UTIC)
+.baby XYZ.COM LLC
+.baidu Baidu, Inc.
+.banamex Citigroup Inc.
+.bananarepublic The Gap, Inc.
+.band Dog Beach, LLC
+.bank fTLD Registry Services, LLC
+.bar Punto 2012 Sociedad Anonima Promotora de Inversion de Capital Variable
+.barcelona Municipi de Barcelona
+.barclaycard Barclays Bank PLC
+.barclays Barclays Bank PLC
+.barefoot Gallo Vineyards, Inc.
+.bargains Binky Moon, LLC
+.baseball MLB Advanced Media DH, LLC
+.basketball Fédération Internationale de Basketball (FIBA)
+.bauhaus Werkhaus GmbH
+.bayern Bayern Connect GmbH
+.bb Ministry of Innovation, Science and Smart Technology
+.bbc British Broadcasting Corporation
+.bbt BB&amp;T Corporation
+.bbva BANCO BILBAO VIZCAYA ARGENTARIA, S.A.
+.bcg The Boston Consulting Group, Inc.
+.bcn Municipi de Barcelona
+.bd Posts and Telecommunications Division
+.be DNS Belgium vzw/asbl
+.beats Beats Electronics, LLC
+.beauty XYZ.COM LLC
+.beer Registry Services, LLC
+.bentley Bentley Motors Limited
+.berlin dotBERLIN GmbH &amp; Co. KG
+.best BestTLD Pty Ltd
+.bestbuy BBY Solutions, Inc.
+.bet Afilias Limited
+.bf ARCE-AutoritÈ de RÈgulation des Communications Electroniques
+.bg Register.BG
+.bh Telecommunications Regulatory Authority (TRA)
+.bharti Bharti Enterprises (Holding) Private Limited
+.bi Centre National de l&#x27;Informatique
+.bible American Bible Society
+.bid dot Bid Limited
+.bike Binky Moon, LLC
+.bing Microsoft Corporation
+.bingo Binky Moon, LLC
+.bio Afilias Limited
+.biz Registry Services, LLC
+.bj Autorité de Régulation des Communications Electroniques et de la Poste du Bénin (ARCEP BENIN)
+.bl Not assigned
+.black Afilias Limited
+.blackfriday Registry Services, LLC
+.blanco Not assigned
+.blockbuster Dish DBS Corporation
+.blog Knock Knock WHOIS There, LLC
+.bloomberg Bloomberg IP Holdings LLC
+.blue Afilias Limited
+.bm Registry General Department, Ministry of Home Affairs
+.bms Bristol-Myers Squibb Company
+.bmw Bayerische Motoren Werke Aktiengesellschaft
+.bn Authority for Info-communications Technology Industry of Brunei Darussalam (AITI)
+.bnl Not assigned
+.bnpparibas BNP Paribas
+.bo Agencia para el Desarrollo de la Información de la Sociedad en Bolivia
+.boats XYZ.COM LLC
+.boehringer Boehringer Ingelheim International GmbH
+.bofa Bank of America Corporation
+.bom Núcleo de Informação e Coordenação do Ponto BR - NIC.br
+.bond Shortdot SA
+.boo Charleston Road Registry Inc.
+.book Amazon Registry Services, Inc.
+.booking Booking.com B.V.
+.boots Not assigned
+.bosch Robert Bosch GMBH
+.bostik Bostik SA
+.boston Registry Services, LLC
+.bot Amazon Registry Services, Inc.
+.boutique Binky Moon, LLC
+.box Intercap Registry Inc.
+.bq Not assigned
+.br Comite Gestor da Internet no Brasil
+.bradesco Banco Bradesco S.A.
+.bridgestone Bridgestone Corporation
+.broadway Celebrate Broadway, Inc.
+.broker Dog Beach, LLC
+.brother Brother Industries, Ltd.
+.brussels DNS.be vzw
+.bs University of The Bahamas
+.bt Ministry of Information and Communications
+.budapest Not assigned
+.bugatti Not assigned
+.build Plan Bee LLC
+.builders Binky Moon, LLC
+.business Binky Moon, LLC
+.buy Amazon Registry Services, INC
+.buzz DOTSTRATEGY CO.
+.bv Norid A/S
+.bw Botswana Communications Regulatory Authority (BOCRA)
+.by Belarusian Cloud Technologies LLC
+.bz University of Belize
+.bzh Association www.bzh
+.ca Canadian Internet Registration Authority (CIRA) Autorité Canadienne pour les enregistrements Internet (ACEI)
+.cab Binky Moon, LLC
+.cafe Binky Moon, LLC
+.cal Charleston Road Registry Inc.
+.call Amazon Registry Services, Inc.
+.calvinklein PVH gTLD Holdings LLC
+.cam CAM Connecting SARL
+.camera Binky Moon, LLC
+.camp Binky Moon, LLC
+.cancerresearch Not assigned
+.canon Canon Inc.
+.capetown ZA Central Registry NPC trading as ZA Central Registry
+.capital Binky Moon, LLC
+.capitalone Capital One Financial Corporation
+.car XYZ.COM LLC
+.caravan Caravan International, Inc.
+.cards Binky Moon, LLC
+.care Binky Moon, LLC
+.career dotCareer LLC
+.careers Binky Moon, LLC
+.cars XYZ.COM LLC
+.cartier Not assigned
+.casa Registry Services, LLC
+.case CNH Industrial N.V.
+.caseih Not assigned
+.cash Binky Moon, LLC
+.casino Binky Moon, LLC
+.cat Fundacio puntCAT
+.catering Binky Moon, LLC
+.catholic Pontificium Consilium de Comunicationibus Socialibus (PCCS) (Pontifical Council for Social Communication)
+.cba COMMONWEALTH BANK OF AUSTRALIA
+.cbn The Christian Broadcasting Network, Inc.
+.cbre CBRE, Inc.
+.cbs CBS Domains Inc.
+.cc eNIC Cocos (Keeling) Islands Pty.Ltd. d/b/a Island Internet Services
+.cd Office Congolais des Postes et Télécommunications - OCPT
+.ceb Not assigned
+.center Binky Moon, LLC
+.ceo CEOTLD Pty Ltd
+.cern European Organization for Nuclear Research (&quot;CERN&quot;)
+.cf Societe Centrafricaine de Telecommunications (SOCATEL)
+.cfa CFA Institute
+.cfd DOTCFD REGISTRY LTD
+.cg Interpoint Switzerland
+.ch SWITCH The Swiss Education &amp; Research Network
+.chanel Chanel International B.V.
+.channel Charleston Road Registry Inc.
+.charity Public Interest Registry (PIR)
+.chase JPMorgan Chase Bank, National Association
+.chat Binky Moon, LLC
+.cheap Binky Moon, LLC
+.chintai CHINTAI Corporation
+.chloe Not assigned
+.christmas XYZ.COM LLC
+.chrome Charleston Road Registry Inc.
+.chrysler Not assigned
+.church Binky Moon, LLC
+.ci Autorité de Régulation des Télécommunications/TIC de Côte d’lvoire (ARTCI)
+.cipriani Hotel Cipriani Srl
+.circle Amazon Registry Services, Inc.
+.cisco Cisco Technology, Inc.
+.citadel Citadel Domain LLC
+.citi Citigroup Inc.
+.citic CITIC Group Corporation
+.city Binky Moon, LLC
+.cityeats Lifestyle Domain Holdings, Inc.
+.ck Telecom Cook Islands Ltd.
+.cl NIC Chile (University of Chile)
+.claims Binky Moon, LLC
+.cleaning Binky Moon, LLC
+.click Internet Naming Co.
+.clinic Binky Moon, LLC
+.clinique The Estée Lauder Companies Inc.
+.clothing Binky Moon, LLC
+.cloud ARUBA PEC S.p.A.
+.club Registry Services, LLC
+.clubmed Club Méditerranée S.A.
+.cm Cameroon Telecommunications (CAMTEL)
+.cn China Internet Network Information Center (CNNIC)
+.co Ministry of Information and Communications Technologies (MinTIC)
+.coach Binky Moon, LLC
+.codes Binky Moon, LLC
+.coffee Binky Moon, LLC
+.college XYZ.COM LLC
+.cologne dotKoeln GmbH
+.com VeriSign Global Registry Services
+.comcast Comcast IP Holdings I, LLC
+.commbank COMMONWEALTH BANK OF AUSTRALIA
+.community Binky Moon, LLC
+.company Binky Moon, LLC
+.compare Registry Services, LLC
+.computer Binky Moon, LLC
+.comsec VeriSign, Inc.
+.condos Binky Moon, LLC
+.construction Binky Moon, LLC
+.consulting Dog Beach, LLC
+.contact Dog Beach, LLC
+.contractors Binky Moon, LLC
+.cooking Registry Services, LLC
+.cookingchannel Lifestyle Domain Holdings, Inc.
+.cool Binky Moon, LLC
+.coop DotCooperation LLC
+.corsica Collectivité de Corse
+.country Internet Naming Co.
+.coupon Amazon Registry Services, Inc.
+.coupons Binky Moon, LLC
+.courses Registry Services, LLC
+.cpa American Institute of Certified Public Accountants
+.cr National Academy of SciencesAcademia Nacional de Ciencias
+.credit Binky Moon, LLC
+.creditcard Binky Moon, LLC
+.creditunion DotCooperation, LLC
+.cricket dot Cricket Limited
+.crown Crown Equipment Corporation
+.crs Federated Co-operatives Limited
+.cruise Viking River Cruises (Bermuda) Ltd.
+.cruises Binky Moon, LLC
+.csc Not assigned
+.cu CENIAInternetIndustria y San JoseCapitolio Nacional
+.cuisinella SCHMIDT GROUPE S.A.S.
+.cv Agência Reguladora Multissectorial da Economia (ARME)
+.cw University of Curacao
+.cx Christmas Island Domain Administration Limited
+.cy University of Cyprus
+.cymru Nominet UK
+.cyou Shortdot SA
+.cz CZ.NIC, z.s.p.o
+.dabur Dabur India Limited
+.dad Charleston Road Registry Inc.
+.dance Dog Beach, LLC
+.data Dish DBS Corporation
+.date dot Date Limited
+.dating Binky Moon, LLC
+.datsun NISSAN MOTOR CO., LTD.
+.day Charleston Road Registry Inc.
+.dclk Charleston Road Registry Inc.
+.dds Registry Services, LLC
+.de DENIC eG
+.deal Amazon Registry Services, Inc.
+.dealer Intercap Registry Inc.
+.deals Binky Moon, LLC
+.degree Dog Beach, LLC
+.delivery Binky Moon, LLC
+.dell Dell Inc.
+.deloitte Deloitte Touche Tohmatsu
+.delta Delta Air Lines, Inc.
+.democrat Dog Beach, LLC
+.dental Binky Moon, LLC
+.dentist Dog Beach, LLC
+.desi Desi Networks LLC
+.design Registry Services, LLC
+.dev Charleston Road Registry Inc.
+.dhl Deutsche Post AG
+.diamonds Binky Moon, LLC
+.diet XYZ.COM LLC
+.digital Binky Moon, LLC
+.direct Binky Moon, LLC
+.directory Binky Moon, LLC
+.discount Binky Moon, LLC
+.discover Discover Financial Services
+.dish Dish DBS Corporation
+.diy Lifestyle Domain Holdings, Inc.
+.dj Djibouti Telecom S.A
+.dk Dansk Internet Forum
+.dm DotDM Corporation
+.dnp Dai Nippon Printing Co., Ltd.
+.do Pontificia Universidad Catolica Madre y MaestraRecinto Santo Tomas de Aquino
+.docs Charleston Road Registry Inc.
+.doctor Binky Moon, LLC
+.dodge Not assigned
+.dog Binky Moon, LLC
+.doha Not assigned
+.domains Binky Moon, LLC
+.doosan Not assigned
+.dot Dish DBS Corporation
+.download dot Support Limited
+.drive Charleston Road Registry Inc.
+.dtv Dish DBS Corporation
+.dubai Dubai Smart Government Department
+.duck Not assigned
+.dunlop The Goodyear Tire &amp; Rubber Company
+.duns Not assigned
+.dupont DuPont Specialty Products USA, LLC
+.durban ZA Central Registry NPC trading as ZA Central Registry
+.dvag Deutsche Vermögensberatung Aktiengesellschaft DVAG
+.dvr Hughes Satellite Systems Corporation
+.dz CERIST
+.earth Interlink Systems Innovation Institute K.K.
+.eat Charleston Road Registry Inc.
+.ec ECUADORDOMAIN S.A.
+.eco Big Room Inc.
+.edeka EDEKA Verband kaufmännischer Genossenschaften e.V.
+.edu EDUCAUSE
+.education Binky Moon, LLC
+.ee Eesti Interneti Sihtasutus (EIS)
+.eg Egyptian Universities Network (EUN)Supreme Council of Universities
+.eh Not assigned
+.email Binky Moon, LLC
+.emerck Merck KGaA
+.energy Binky Moon, LLC
+.engineer Dog Beach, LLC
+.engineering Binky Moon, LLC
+.enterprises Binky Moon, LLC
+.epost Not assigned
+.epson Seiko Epson Corporation
+.equipment Binky Moon, LLC
+.er Eritrea Telecommunication Services Corporation (EriTel)
+.ericsson Telefonaktiebolaget L M Ericsson
+.erni ERNI Group Holding AG
+.es Red.es
+.esq Charleston Road Registry Inc.
+.estate Binky Moon, LLC
+.esurance Not assigned
+.et Ethio telecom
+.etisalat Emirates Telecommunications Corporation (trading as Etisalat)
+.eu EURid vzw/asbl
+.eurovision European Broadcasting Union (EBU)
+.eus Puntueus Fundazioa
+.events Binky Moon, LLC
+.everbank Not assigned
+.exchange Binky Moon, LLC
+.expert Binky Moon, LLC
+.exposed Binky Moon, LLC
+.express Binky Moon, LLC
+.extraspace Extra Space Storage LLC
+.fage Fage International S.A.
+.fail Binky Moon, LLC
+.fairwinds FairWinds Partners, LLC
+.faith dot Faith Limited
+.family Dog Beach, LLC
+.fan Dog Beach, LLC
+.fans ZDNS International Limited
+.farm Binky Moon, LLC
+.farmers Farmers Insurance Exchange
+.fashion Registry Services, LLC
+.fast Amazon Registry Services, Inc.
+.fedex Federal Express Corporation
+.feedback Top Level Spectrum, Inc.
+.ferrari Fiat Chrysler Automobiles N.V.
+.ferrero Ferrero Trading Lux S.A.
+.fi Finnish Transport and Communications Agency Traficom
+.fiat Fiat Chrysler Automobiles N.V.
+.fidelity Fidelity Brokerage Services LLC
+.fido Rogers Communications Canada Inc.
+.film Motion Picture Domain Registry Pty Ltd
+.final Núcleo de Informação e Coordenação do Ponto BR - NIC.br
+.finance Binky Moon, LLC
+.financial Binky Moon, LLC
+.fire Amazon Registry Services, Inc.
+.firestone Bridgestone Licensing Services, Inc.
+.firmdale Firmdale Holdings Limited
+.fish Binky Moon, LLC
+.fishing Registry Services, LLC
+.fit Registry Services, LLC
+.fitness Binky Moon, LLC
+.fj The University of the South PacificIT Services
+.fk Falkland Islands Government
+.flickr Flickr, Inc.
+.flights Binky Moon, LLC
+.flir FLIR Systems, Inc.
+.florist Binky Moon, LLC
+.flowers XYZ.COM LLC
+.flsmidth Not assigned
+.fly Charleston Road Registry Inc.
+.fm FSM Telecommunications Corporation
+.fo FO Council
+.foo Charleston Road Registry Inc.
+.food Lifestyle Domain Holdings, Inc.
+.foodnetwork Lifestyle Domain Holdings, Inc.
+.football Binky Moon, LLC
+.ford Ford Motor Company
+.forex Dog Beach, LLC
+.forsale Dog Beach, LLC
+.forum Fegistry, LLC
+.foundation Public Interest Registry (PIR)
+.fox FOX Registry, LLC
+.fr Association Française pour le Nommage Internet en Coopération (A.F.N.I.C.)
+.free Amazon Registry Services, Inc.
+.fresenius Fresenius Immobilien-Verwaltungs-GmbH
+.frl FRLregistry B.V.
+.frogans OP3FT
+.frontdoor Lifestyle Domain Holdings, Inc.
+.frontier Frontier Communications Corporation
+.ftr Frontier Communications Corporation
+.fujitsu Fujitsu Limited
+.fujixerox Not assigned
+.fun Radix FZC
+.fund Binky Moon, LLC
+.furniture Binky Moon, LLC
+.futbol Dog Beach, LLC
+.fyi Binky Moon, LLC
+.ga Agence Nationale des Infrastructures Numériques et des Fréquences (ANINF)
+.gal Asociación puntoGAL
+.gallery Binky Moon, LLC
+.gallo Gallo Vineyards, Inc.
+.gallup Gallup, Inc.
+.game XYZ.COM LLC
+.games Dog Beach, LLC
+.gap The Gap, Inc.
+.garden Registry Services, LLC
+.gay Top Level Design, LLC
+.gb Reserved Domain - IANA
+.gbiz Charleston Road Registry Inc.
+.gd The National Telecommunications Regulatory Commission (NTRC)
+.gdn Joint Stock Company &quot;Navigation-information systems&quot;
+.ge Caucasus Online LLC
+.gea GEA Group Aktiengesellschaft
+.gent Combell nv
+.genting Resorts World Inc. Pte. Ltd.
+.george Wal-Mart Stores, Inc.
+.gf CANAL+ TELECOM
+.gg Island Networks Ltd.
+.ggee GMO Internet, Inc.
+.gh Network Computer Systems Limited
+.gi Sapphire Networks
+.gift Uniregistry, Corp.
+.gifts Binky Moon, LLC
+.gives Public Interest Registry (PIR)
+.giving Public Interest Registry (PIR)
+.gl TELE Greenland A/S
+.glade Not assigned
+.glass Binky Moon, LLC
+.gle Charleston Road Registry Inc.
+.global Dot Global Domain Registry Limited
+.globo Globo Comunicação e Participações S.A
+.gm GM-NIC
+.gmail Charleston Road Registry Inc.
+.gmbh Binky Moon, LLC
+.gmo GMO Internet, Inc.
+.gmx 1&amp;1 Mail &amp; Media GmbH
+.gn Centre National des Sciences Halieutiques de Boussoura
+.godaddy Go Daddy East, LLC
+.gold Binky Moon, LLC
+.goldpoint YODOBASHI CAMERA CO.,LTD.
+.golf Binky Moon, LLC
+.goo NTT Resonant Inc.
+.goodhands Not assigned
+.goodyear The Goodyear Tire &amp; Rubber Company
+.goog Charleston Road Registry Inc.
+.google Charleston Road Registry Inc.
+.gop Republican State Leadership Committee, Inc.
+.got Amazon Registry Services, Inc.
+.gov Cybersecurity and Infrastructure Security Agency
+.gp Networking Technologies Group
+.gq GETESA
+.gr ICS-FORTH GR
+.grainger Grainger Registry Services, LLC
+.graphics Binky Moon, LLC
+.gratis Binky Moon, LLC
+.green Afilias Limited
+.gripe Binky Moon, LLC
+.grocery Wal-Mart Stores, Inc.
+.group Binky Moon, LLC
+.gs Government of South Georgia and South Sandwich Islands (GSGSSI)
+.gt Universidad del Valle de Guatemala
+.gu University of Guam
+.guardian The Guardian Life Insurance Company of America
+.gucci Guccio Gucci S.p.a.
+.guge Charleston Road Registry Inc.
+.guide Binky Moon, LLC
+.guitars XYZ.COM LLC
+.guru Binky Moon, LLC
+.gw Autoridade Reguladora Nacional - Tecnologias de Informação e Comunicação da Guiné-Bissau
+.gy University of Guyana
+.hair XYZ.COM LLC
+.hamburg Hamburg Top-Level-Domain GmbH
+.hangout Charleston Road Registry Inc.
+.haus Dog Beach, LLC
+.hbo HBO Registry Services, Inc.
+.hdfc HOUSING DEVELOPMENT FINANCE CORPORATION LIMITED
+.hdfcbank HDFC Bank Limited
+.health DotHealth, LLC
+.healthcare Binky Moon, LLC
+.help UNR Corp.
+.helsinki City of Helsinki
+.here Charleston Road Registry Inc.
+.hermes Hermes International
+.hgtv Lifestyle Domain Holdings, Inc.
+.hiphop Dot Hip Hop, LLC
+.hisamitsu Hisamitsu Pharmaceutical Co.,Inc.
+.hitachi Hitachi, Ltd.
+.hiv Internet Naming Co.
+.hk Hong Kong Internet Registration Corporation Ltd.
+.hkt PCCW-HKT DataCom Services Limited
+.hm HM Domain Registry
+.hn Red de Desarrollo Sostenible Honduras
+.hockey Binky Moon, LLC
+.holdings Binky Moon, LLC
+.holiday Binky Moon, LLC
+.homedepot Home Depot Product Authority, LLC
+.homegoods The TJX Companies, Inc.
+.homes XYZ.COM LLC
+.homesense The TJX Companies, Inc.
+.honda Honda Motor Co., Ltd.
+.honeywell Not assigned
+.horse Registry Services, LLC
+.hospital Binky Moon, LLC
+.host Radix FZC
+.hosting XYZ.COM LLC
+.hot Amazon Registry Services, Inc.
+.hoteles Travel Reservations SRL
+.hotels Booking.com B.V.
+.hotmail Microsoft Corporation
+.house Binky Moon, LLC
+.how Charleston Road Registry Inc.
+.hr CARNet - Croatian Academic and Research Network
+.hsbc HSBC Global Services (UK) Limited
+.ht Consortium FDS/RDDH
+.htc Not assigned
+.hu Council of Hungarian Internet Providers (CHIP)
+.hughes Hughes Satellite Systems Corporation
+.hyatt Hyatt GTLD, L.L.C.
+.hyundai Hyundai Motor Company
+.ibm International Business Machines Corporation
+.icbc Industrial and Commercial Bank of China Limited
+.ice IntercontinentalExchange, Inc.
+.icu Shortdot SA
+.id Perkumpulan Pengelola Nama Domain Internet Indonesia (PANDI)
+.ie University College DublinComputing ServicesComputer Centre
+.ieee IEEE Global LLC
+.ifm ifm electronic gmbh
+.iinet Not assigned
+.ikano Ikano S.A.
+.il The Israel Internet Association (RA)
+.im Isle of Man Government
+.imamat Fondation Aga Khan (Aga Khan Foundation)
+.imdb Amazon Registry Services, Inc.
+.immo Binky Moon, LLC
+.immobilien Dog Beach, LLC
+.in National Internet Exchange of India
+.inc Intercap Registry Inc.
+.industries Binky Moon, LLC
+.infiniti NISSAN MOTOR CO., LTD.
+.info Afilias Limited
+.ing Charleston Road Registry Inc.
+.ink Top Level Design, LLC
+.institute Binky Moon, LLC
+.insurance fTLD Registry Services LLC
+.insure Binky Moon, LLC
+.int Internet Assigned Numbers Authority
+.intel Not assigned
+.international Binky Moon, LLC
+.intuit Intuit Administrative Services, Inc.
+.investments Binky Moon, LLC
+.io Internet Computer Bureau Limited
+.ipiranga Ipiranga Produtos de Petroleo S.A.
+.iq Communications and Media Commission (CMC)
+.ir Institute for Research in Fundamental Sciences
+.irish Binky Moon, LLC
+.is ISNIC - Internet Iceland ltd.
+.iselect Not assigned
+.ismaili Fondation Aga Khan (Aga Khan Foundation)
+.ist Istanbul Metropolitan Municipality
+.istanbul Istanbul Metropolitan Municipality
+.it IIT - CNR
+.itau Itau Unibanco Holding S.A.
+.itv ITV Services Limited
+.iveco Not assigned
+.iwc Not assigned
+.jaguar Jaguar Land Rover Ltd
+.java Oracle Corporation
+.jcb JCB Co., Ltd.
+.jcp Not assigned
+.je Island Networks (Jersey) Ltd.
+.jeep FCA US LLC.
+.jetzt Binky Moon, LLC
+.jewelry Binky Moon, LLC
+.jio Affinity Names, Inc.
+.jlc Not assigned
+.jll Jones Lang LaSalle Incorporated
+.jm University of West Indies
+.jmp Matrix IP LLC
+.jnj Johnson &amp; Johnson Services, Inc.
+.jo Ministry of Digital Economy and Entrepreneurship (MoDEE)
+.jobs Employ Media LLC
+.joburg ZA Central Registry NPC trading as ZA Central Registry
+.jot Amazon Registry Services, Inc.
+.joy Amazon Registry Services, Inc.
+.jp Japan Registry Services Co., Ltd.
+.jpmorgan JPMorgan Chase Bank, National Association
+.jprs Japan Registry Services Co., Ltd.
+.juegos Internet Naming Company LLC
+.juniper JUNIPER NETWORKS, INC.
+.kaufen Dog Beach, LLC
+.kddi KDDI CORPORATION
+.ke Kenya Network Information Center (KeNIC)
+.kerryhotels Kerry Trading Co. Limited
+.kerrylogistics Kerry Trading Co. Limited
+.kerryproperties Kerry Trading Co. Limited
+.kfh Kuwait Finance House
+.kg AsiaInfo Telecommunication Enterprise
+.kh Telecommunication Regulator of Cambodia (TRC)
+.ki Ministry of Communications, Transport, and Tourism Development
+.kia KIA MOTORS CORPORATION
+.kids DotKids Foundation Limited
+.kim Afilias Limited
+.kinder Ferrero Trading Lux S.A.
+.kindle Amazon Registry Services, Inc.
+.kitchen Binky Moon, LLC
+.kiwi DOT KIWI LIMITED
+.km Comores Telecom
+.kn Ministry of Finance, Sustainable Development Information &amp; Technology
+.koeln dotKoeln GmbH
+.komatsu Komatsu Ltd.
+.kosher Kosher Marketing Assets LLC
+.kp Star Joint Venture Company
+.kpmg KPMG International Cooperative (KPMG International Genossenschaft)
+.kpn Koninklijke KPN N.V.
+.kr Korea Internet &amp; Security Agency (KISA)
+.krd KRG Department of Information Technology
+.kred KredTLD Pty Ltd
+.kuokgroup Kerry Trading Co. Limited
+.kw Communications and Information Technology Regulatory Authority
+.ky Utility Regulation and Competition Office (OfReg)
+.kyoto Academic Institution
+.kz Association of IT Companies of Kazakhstan
+.la Lao National Internet Center (LANIC),Ministry of Technology and Communications
+.lacaixa CAIXA D&#x27;ESTALVIS I PENSIONS DE BARCELONA
+.ladbrokes Not assigned
+.lamborghini Automobili Lamborghini S.p.A.
+.lamer The Estée Lauder Companies Inc.
+.lancaster LANCASTER
+.lancia Fiat Chrysler Automobiles N.V.
+.lancome Not assigned
+.land Binky Moon, LLC
+.landrover Jaguar Land Rover Ltd
+.lanxess LANXESS Corporation
+.lasalle Jones Lang LaSalle Incorporated
+.lat XYZ.COM LLC
+.latino Dish DBS Corporation
+.latrobe La Trobe University
+.law Registry Services, LLC
+.lawyer Dog Beach, LLC
+.lb American University of BeirutComputing and Networking Services
+.lc University of Puerto Rico
+.lds IRI Domain Management, LLC
+.lease Binky Moon, LLC
+.leclerc A.C.D. LEC Association des Centres Distributeurs Edouard Leclerc
+.lefrak LeFrak Organization, Inc.
+.legal Binky Moon, LLC
+.lego LEGO Juris A/S
+.lexus TOYOTA MOTOR CORPORATION
+.lgbt Afilias Limited
+.li SWITCH The Swiss Education &amp; Research Network
+.liaison Not assigned
+.lidl Schwarz Domains und Services GmbH &amp; Co. KG
+.life Binky Moon, LLC
+.lifeinsurance American Council of Life Insurers
+.lifestyle Lifestyle Domain Holdings, Inc.
+.lighting Binky Moon, LLC
+.like Amazon Registry Services, Inc.
+.lilly Eli Lilly and Company
+.limited Binky Moon, LLC
+.limo Binky Moon, LLC
+.lincoln Ford Motor Company
+.linde Not assigned
+.link Nova Registry Ltd.
+.lipsy Lipsy Ltd
+.live Dog Beach, LLC
+.living Lifestyle Domain Holdings, Inc.
+.lixil Not assigned
+.lk Council for Information TechnologyLK Domain Registrar
+.llc Afilias Limited
+.llp Intercap Registry Inc.
+.loan dot Loan Limited
+.loans Binky Moon, LLC
+.locker Dish DBS Corporation
+.locus Locus Analytics LLC
+.loft Not assigned
+.lol XYZ.COM LLC
+.london Dot London Domains Limited
+.lotte Lotte Holdings Co., Ltd.
+.lotto Afilias Limited
+.love Merchant Law Group LLP
+.lpl LPL Holdings, Inc.
+.lplfinancial LPL Holdings, Inc.
+.lr Data Technology Solutions, Inc.
+.ls Lesotho Network Information Centre Proprietary (LSNIC)
+.lt Kaunas University of Technology
+.ltd Binky Moon, LLC
+.ltda InterNetX Corp.
+.lu RESTENA
+.lundbeck H. Lundbeck A/S
+.lupin Not assigned
+.luxe Registry Services, LLC
+.luxury Luxury Partners LLC
+.lv University of LatviaInstitute of Mathematics and Computer ScienceDepartment of Network Solutions (DNS)
+.ly General Post and Telecommunication Company
+.ma Agence Nationale de Réglementation des Télécommunications (ANRT)
+.macys Not assigned
+.madrid Comunidad de Madrid
+.maif Mutuelle Assurance Instituteur France (MAIF)
+.maison Binky Moon, LLC
+.makeup XYZ.COM LLC
+.man MAN SE
+.management Binky Moon, LLC
+.mango PUNTO FA S.L.
+.map Charleston Road Registry Inc.
+.market Dog Beach, LLC
+.marketing Binky Moon, LLC
+.markets Dog Beach, LLC
+.marriott Marriott Worldwide Corporation
+.marshalls The TJX Companies, Inc.
+.maserati Fiat Chrysler Automobiles N.V.
+.mattel Mattel Sites, Inc.
+.mba Binky Moon, LLC
+.mc Direction des Plateformes et des Ressources Numériques
+.mcd Not assigned
+.mcdonalds Not assigned
+.mckinsey McKinsey Holdings, Inc.
+.md IP Serviciul Tehnologia Informatiei si Securitate Cibernetica
+.me Government of Montenegro
+.med Medistry LLC
+.media Binky Moon, LLC
+.meet Charleston Road Registry Inc.
+.melbourne The Crown in right of the State of Victoria, represented by its Department of State Development, Business and Innovation
+.meme Charleston Road Registry Inc.
+.memorial Dog Beach, LLC
+.men Exclusive Registry Limited
+.menu Dot Menu Registry LLC
+.meo Not assigned
+.merckmsd MSD Registry Holdings, Inc.
+.metlife Not assigned
+.mf Not assigned
+.mg NIC-MG (Network Information Center Madagascar)
+.mh Office of the Cabinet
+.miami Registry Services, LLC
+.microsoft Microsoft Corporation
+.mil DoD Network Information Center
+.mini Bayerische Motoren Werke Aktiengesellschaft
+.mint Intuit Administrative Services, Inc.
+.mit Massachusetts Institute of Technology
+.mitsubishi Mitsubishi Corporation
+.mk Macedonian Academic Research Network Skopje
+.ml Agence des Technologies de l’Information et de la Communication
+.mlb MLB Advanced Media DH, LLC
+.mls The Canadian Real Estate Association
+.mm Ministry of Transport and Communications
+.mma MMA IARD
+.mn Datacom Co., Ltd.
+.mo Macao Post and Telecommunications Bureau (CTT)
+.mobi Afilias Limited
+.mobile Dish DBS Corporation
+.mobily Not assigned
+.moda Dog Beach, LLC
+.moe Interlink Systems Innovation Institute K.K.
+.moi Amazon Registry Services, Inc.
+.mom XYZ.COM LLC
+.monash Monash University
+.money Binky Moon, LLC
+.monster XYZ.COM LLC
+.montblanc Not assigned
+.mopar Not assigned
+.mormon IRI Domain Management, LLC (&quot;Applicant&quot;)
+.mortgage Dog Beach, LLC
+.moscow Foundation for Assistance for Internet Technologies and Infrastructure Development (FAITID)
+.moto Motorola Trademark Holdings, LLC
+.motorcycles XYZ.COM LLC
+.mov Charleston Road Registry Inc.
+.movie Binky Moon, LLC
+.movistar Not assigned
+.mp Saipan Datacom, Inc.
+.mq CANAL+ TELECOM
+.mr Université de Nouakchott Al Aasriya
+.ms MNI Networks Ltd.
+.msd MSD Registry Holdings, Inc.
+.mt NIC (Malta)
+.mtn MTN Dubai Limited
+.mtpc Not assigned
+.mtr MTR Corporation Limited
+.mu Internet Direct Ltd
+.museum Museum Domain Management Association
+.music DotMusic Limited
+.mutual Northwestern Mutual MU TLD Registry, LLC
+.mutuelle Not assigned
+.mv Dhiraagu Pvt. Ltd. (DHIVEHINET)
+.mw Malawi Sustainable Development Network Programme(Malawi SDNP)
+.mx NIC-MexicoITESM - Campus Monterrey
+.my MYNIC Berhad
+.mz Centro de Informatica de Universidade Eduardo Mondlane
+.na Namibian Network Information Center
+.nab National Australia Bank Limited
+.nadex Not assigned
+.nagoya GMO Registry, Inc.
+.name VeriSign Information Services, Inc.
+.nationwide Not assigned
+.natura NATURA COSMÉTICOS S.A.
+.navy Dog Beach, LLC
+.nba NBA REGISTRY, LLC
+.nc Office des Postes et Telecommunications
+.ne SONITEL
+.nec NEC Corporation
+.net VeriSign Global Registry Services
+.netbank COMMONWEALTH BANK OF AUSTRALIA
+.netflix Netflix, Inc.
+.network Binky Moon, LLC
+.neustar NeuStar, Inc.
+.new Charleston Road Registry Inc.
+.newholland Not assigned
+.news Dog Beach, LLC
+.next Next plc
+.nextdirect Next plc
+.nexus Charleston Road Registry Inc.
+.nf Norfolk Island Data Services
+.nfl NFL Reg Ops LLC
+.ng Nigeria Internet Registration Association
+.ngo Public Interest Registry
+.nhk Japan Broadcasting Corporation (NHK)
+.ni Universidad Nacional del IngernieriaCentro de Computo
+.nico DWANGO Co., Ltd.
+.nike NIKE, Inc.
+.nikon NIKON CORPORATION
+.ninja Dog Beach, LLC
+.nissan NISSAN MOTOR CO., LTD.
+.nissay Nippon Life Insurance Company
+.nl SIDN (Stichting Internet Domeinregistratie Nederland)
+.no Norid A/S
+.nokia Nokia Corporation
+.northwesternmutual Northwestern Mutual Registry, LLC
+.norton Symantec Corporation
+.now Amazon Registry Services, Inc.
+.nowruz Asia Green IT System Bilgisayar San. ve Tic. Ltd. Sti.
+.nowtv Starbucks (HK) Limited
+.np Mercantile Communications Pvt. Ltd.
+.nr CENPAC NET
+.nra NRA Holdings Company, INC.
+.nrw Minds + Machines GmbH
+.ntt NIPPON TELEGRAPH AND TELEPHONE CORPORATION
+.nu The IUSN Foundation
+.nyc The City of New York by and through the New York City Department of Information Technology &amp; Telecommunications
+.nz InternetNZ
+.obi OBI Group Holding SE &amp; Co. KGaA
+.observer Dog Beach, LLC
+.off Not assigned
+.office Microsoft Corporation
+.okinawa BRregistry, Inc.
+.olayan Crescent Holding GmbH
+.olayangroup Crescent Holding GmbH
+.oldnavy The Gap, Inc.
+.ollo Dish DBS Corporation
+.om Telecommunications Regulatory Authority (TRA)
+.omega The Swatch Group Ltd
+.one One.com A/S
+.ong Public Interest Registry
+.onl iRegistry GmbH
+.online Radix FZC
+.onyourside Not assigned
+.ooo INFIBEAM INCORPORATION LIMITED
+.open American Express Travel Related Services Company, Inc.
+.oracle Oracle Corporation
+.orange Orange Brand Services Limited
+.org Public Interest Registry (PIR)
+.organic Afilias Limited
+.orientexpress Not assigned
+.origins The Estée Lauder Companies Inc.
+.osaka Osaka Registry Co., Ltd.
+.otsuka Otsuka Holdings Co., Ltd.
+.ott Dish DBS Corporation
+.ovh OVH SAS
+.pa Universidad Tecnologica de Panama
+.page Charleston Road Registry Inc.
+.pamperedchef Not assigned
+.panasonic Panasonic Corporation
+.panerai Not assigned
+.paris City of Paris
+.pars Asia Green IT System Bilgisayar San. ve Tic. Ltd. Sti.
+.partners Binky Moon, LLC
+.parts Binky Moon, LLC
+.party Blue Sky Registry Limited
+.passagens Travel Reservations SRL
+.pay Amazon Registry Services, Inc.
+.pccw PCCW Enterprises Limited
+.pe Red Cientifica Peruana
+.pet Afilias Limited
+.pf Gouvernement de la Polynésie française
+.pfizer Pfizer Inc.
+.pg PNG DNS AdministrationVice Chancellors OfficeThe Papua New Guinea University of Technology
+.ph PH Domain Foundation
+.pharmacy National Association of Boards of Pharmacy
+.phd Charleston Road Registry Inc.
+.philips Koninklijke Philips N.V.
+.phone Dish DBS Corporation
+.photo Registry Services, LLC
+.photography Binky Moon, LLC
+.photos Binky Moon, LLC
+.physio PhysBiz Pty Ltd
+.piaget Not assigned
+.pics XYZ.COM LLC
+.pictet Pictet Europe S.A.
+.pictures Binky Moon, LLC
+.pid Top Level Spectrum, Inc.
+.pin Amazon Registry Services, Inc.
+.ping Ping Registry Provider, Inc.
+.pink Afilias Limited
+.pioneer Pioneer Corporation
+.pizza Binky Moon, LLC
+.pk PKNIC
+.pl Research and Academic Computer Network
+.place Binky Moon, LLC
+.play Charleston Road Registry Inc.
+.playstation Sony Computer Entertainment Inc.
+.plumbing Binky Moon, LLC
+.plus Binky Moon, LLC
+.pm Association Française pour le Nommage Internet en Coopération (A.F.N.I.C.)
+.pn Pitcairn Island Administration
+.pnc PNC Domain Co., LLC
+.pohl Deutsche Vermögensberatung Aktiengesellschaft DVAG
+.poker Afilias Limited
+.politie Politie Nederland
+.porn ICM Registry PN LLC
+.post Universal Postal Union
+.pr Gauss Research Laboratory Inc.
+.pramerica Prudential Financial, Inc.
+.praxi Praxi S.p.A.
+.press Radix FZC
+.prime Amazon Registry Services, Inc.
+.pro Afilias Limited
+.prod Charleston Road Registry Inc.
+.productions Binky Moon, LLC
+.prof Charleston Road Registry Inc.
+.progressive Progressive Casualty Insurance Company
+.promo Afilias Limited
+.properties Binky Moon, LLC
+.property Internet Naming Co.
+.protection XYZ.COM LLC
+.pru Prudential Financial, Inc.
+.prudential Prudential Financial, Inc.
+.ps Ministry Of Telecommunications &amp;Information Technology,Government Computer Center.
+.pt Associação DNS.PT
+.pub Dog Beach, LLC
+.pw Micronesia Investment and Development Corporation
+.pwc PricewaterhouseCoopers LLP
+.py NIC-PY
+.qa Communications Regulatory Authority
+.qpon DOTQPON LLC.
+.quebec PointQuébec Inc
+.quest XYZ.COM LLC
+.qvc Not assigned
+.racing Premier Registry Limited
+.radio European Broadcasting Union (EBU)
+.raid Not assigned
+.re Association Française pour le Nommage Internet en Coopération (A.F.N.I.C.)
+.read Amazon Registry Services, Inc.
+.realestate dotRealEstate LLC
+.realtor Real Estate Domains LLC
+.realty Dog Beach, LLC
+.recipes Binky Moon, LLC
+.red Afilias Limited
+.redstone Redstone Haute Couture Co., Ltd.
+.redumbrella Travelers TLD, LLC
+.rehab Dog Beach, LLC
+.reise Binky Moon, LLC
+.reisen Binky Moon, LLC
+.reit National Association of Real Estate Investment Trusts, Inc.
+.reliance Reliance Industries Limited
+.ren ZDNS International Limited
+.rent XYZ.COM LLC
+.rentals Binky Moon, LLC
+.repair Binky Moon, LLC
+.report Binky Moon, LLC
+.republican Dog Beach, LLC
+.rest Punto 2012 Sociedad Anonima Promotora de Inversion de Capital Variable
+.restaurant Binky Moon, LLC
+.review dot Review Limited
+.reviews Dog Beach, LLC
+.rexroth Robert Bosch GMBH
+.rich iRegistry GmbH
+.richardli Pacific Century Asset Management (HK) Limited
+.ricoh Ricoh Company, Ltd.
+.rightathome Not assigned
+.ril Reliance Industries Limited
+.rio Empresa Municipal de Informática SA - IPLANRIO
+.rip Dog Beach, LLC
+.rmit Not assigned
+.ro National Institute for R&amp;D in Informatics
+.rocher Ferrero Trading Lux S.A.
+.rocks Dog Beach, LLC
+.rodeo Registry Services, LLC
+.rogers Rogers Communications Canada Inc.
+.room Amazon Registry Services, Inc.
+.rs Serbian National Internet Domain Registry (RNIDS)
+.rsvp Charleston Road Registry Inc.
+.ru Coordination Center for TLD RU
+.rugby World Rugby Strategic Developments Limited
+.ruhr dotSaarland GmbH
+.run Binky Moon, LLC
+.rw Rwanda Internet Community and Technology Alliance (RICTA) Ltd
+.rwe RWE AG
+.ryukyu BRregistry, Inc.
+.sa Communications and Information Technology Commission
+.saarland dotSaarland GmbH
+.safe Amazon Registry Services, Inc.
+.safety Safety Registry Services, LLC.
+.sakura SAKURA internet Inc.
+.sale Dog Beach, LLC
+.salon Binky Moon, LLC
+.samsclub Wal-Mart Stores, Inc.
+.samsung SAMSUNG SDS CO., LTD
+.sandvik Sandvik AB
+.sandvikcoromant Sandvik AB
+.sanofi Sanofi
+.sap SAP AG
+.sapo Not assigned
+.sarl Binky Moon, LLC
+.sas Research IP LLC
+.save Amazon Registry Services, Inc.
+.saxo Saxo Bank A/S
+.sb Solomon Telekom Company Limited
+.sbi STATE BANK OF INDIA
+.sbs SPECIAL BROADCASTING SERVICE CORPORATION
+.sc VCS Pty Ltd
+.sca SVENSKA CELLULOSA AKTIEBOLAGET SCA (publ)
+.scb The Siam Commercial Bank Public Company Limited (&quot;SCB&quot;)
+.schaeffler Schaeffler Technologies AG &amp; Co. KG
+.schmidt SCHMIDT GROUPE S.A.S.
+.scholarships Scholarships.com, LLC
+.school Binky Moon, LLC
+.schule Binky Moon, LLC
+.schwarz Schwarz Domains und Services GmbH &amp; Co. KG
+.science dot Science Limited
+.scjohnson Not assigned
+.scor Not assigned
+.scot Dot Scot Registry Limited
+.sd Sudan Internet Society
+.se The Internet Infrastructure Foundation
+.search Charleston Road Registry Inc.
+.seat SEAT, S.A. (Sociedad Unipersonal)
+.secure Amazon Registry Services, Inc.
+.security XYZ.COM LLC
+.seek Seek Limited
+.select Registry Services, LLC
+.sener Sener Ingeniería y Sistemas, S.A.
+.services Binky Moon, LLC
+.ses Not assigned
+.seven Seven West Media Ltd
+.sew SEW-EURODRIVE GmbH &amp; Co KG
+.sex ICM Registry SX LLC
+.sexy Internet Naming Co.
+.sfr Societe Francaise du Radiotelephone - SFR
+.sg Singapore Network Information Centre (SGNIC) Pte Ltd
+.sh Government of St. Helena
+.shangrila Shangri-La International Hotel Management Limited
+.sharp Sharp Corporation
+.shaw Shaw Cablesystems G.P.
+.shell Shell Information Technology International Inc
+.shia Asia Green IT System Bilgisayar San. ve Tic. Ltd. Sti.
+.shiksha Afilias Limited
+.shoes Binky Moon, LLC
+.shop GMO Registry, Inc.
+.shopping Binky Moon, LLC
+.shouji QIHOO 360 TECHNOLOGY CO. LTD.
+.show Binky Moon, LLC
+.showtime CBS Domains Inc.
+.shriram Not assigned
+.si Academic and Research Network of Slovenia (ARNES)
+.silk Amazon Registry Services, Inc.
+.sina Sina Corporation
+.singles Binky Moon, LLC
+.site Radix FZC
+.sj Norid A/S
+.sk SK-NIC, a.s.
+.ski Afilias Limited
+.skin XYZ.COM LLC
+.sky Sky International AG
+.skype Microsoft Corporation
+.sl Sierratel
+.sling Hughes Satellite Systems Corporation
+.sm Telecom Italia San Marino S.p.A.
+.smart Smart Communications, Inc. (SMART)
+.smile Amazon Registry Services, Inc.
+.sn Universite Cheikh Anta Diop
+.sncf SNCF (Société Nationale des Chemins de fer Francais)
+.so Ministry of Post and Telecommunications
+.soccer Binky Moon, LLC
+.social Dog Beach, LLC
+.softbank SoftBank Group Corp.
+.software Dog Beach, LLC
+.sohu Sohu.com Limited
+.solar Binky Moon, LLC
+.solutions Binky Moon, LLC
+.song Amazon Registry Services, Inc.
+.sony Sony Corporation
+.soy Charleston Road Registry Inc.
+.spa Asia Spa and Wellness Promotion Council Limited
+.space Radix FZC
+.spiegel Not assigned
+.sport Global Association of International Sports Federations (GAISF)
+.spot Amazon Registry Services, Inc.
+.spreadbetting Not assigned
+.sr Telesur
+.srl InterNetX Corp.
+.srt Not assigned
+.ss National Communication Authority (NCA)
+.st Tecnisys
+.stada STADA Arzneimittel AG
+.staples Staples, Inc.
+.star Star India Private Limited
+.starhub Not assigned
+.statebank STATE BANK OF INDIA
+.statefarm State Farm Mutual Automobile Insurance Company
+.statoil Not assigned
+.stc Saudi Telecom Company
+.stcgroup Saudi Telecom Company
+.stockholm Stockholms kommun
+.storage XYZ.COM LLC
+.store Radix FZC
+.stream dot Stream Limited
+.studio Dog Beach, LLC
+.study Registry Services, LLC
+.style Binky Moon, LLC
+.su Russian Institute for Development of Public Networks(ROSNIIROS)
+.sucks Vox Populi Registry Ltd.
+.supplies Binky Moon, LLC
+.supply Binky Moon, LLC
+.support Binky Moon, LLC
+.surf Registry Services, LLC
+.surgery Binky Moon, LLC
+.suzuki SUZUKI MOTOR CORPORATION
+.sv SVNet
+.swatch The Swatch Group Ltd
+.swiftcover Not assigned
+.swiss Swiss Confederation
+.sx SX Registry SA B.V.
+.sy National Agency for Network Services (NANS)
+.sydney State of New South Wales, Department of Premier and Cabinet
+.symantec Not assigned
+.systems Binky Moon, LLC
+.sz University of SwazilandDepartment of Computer Science
+.tab Tabcorp Holdings Limited
+.taipei Taipei City Government
+.talk Amazon Registry Services, Inc.
+.taobao Alibaba Group Holding Limited
+.target Target Domain Holdings, LLC
+.tatamotors Tata Motors Ltd
+.tatar Limited Liability Company &quot;Coordination Center of Regional Domain of Tatarstan Republic&quot;
+.tattoo Top Level Design, LLC
+.tax Binky Moon, LLC
+.taxi Binky Moon, LLC
+.tc Melrex TC
+.tci Asia Green IT System Bilgisayar San. ve Tic. Ltd. Sti.
+.td l&#x27;Agence de Développement des Technologies de l&#x27;Information et de la Communication (ADETIC)
+.tdk TDK Corporation
+.team Binky Moon, LLC
+.tech Radix FZC
+.technology Binky Moon, LLC
+.tel Telnames Ltd.
+.telecity Not assigned
+.telefonica Not assigned
+.temasek Temasek Holdings (Private) Limited
+.tennis Binky Moon, LLC
+.teva Teva Pharmaceutical Industries Limited
+.tf Association Française pour le Nommage Internet en Coopération (A.F.N.I.C.)
+.tg Autorité de Régulation des Communications Electroniques et des Postes (ARCEP)
+.th Thai Network Information Center Foundation
+.thd Home Depot Product Authority, LLC
+.theater Binky Moon, LLC
+.theatre XYZ.COM LLC
+.tiaa Teachers Insurance and Annuity Association of America
+.tickets XYZ.COM LLC
+.tienda Binky Moon, LLC
+.tiffany Tiffany and Company
+.tips Binky Moon, LLC
+.tires Binky Moon, LLC
+.tirol punkt Tirol GmbH
+.tj Information Technology Center
+.tjmaxx The TJX Companies, Inc.
+.tjx The TJX Companies, Inc.
+.tk Telecommunication Tokelau Corporation (Teletok)
+.tkmaxx The TJX Companies, Inc.
+.tl Autoridade Nacional de Comunicações
+.tm TM Domain Registry Ltd
+.tmall Alibaba Group Holding Limited
+.tn Agence Tunisienne d&#x27;Internet
+.to Government of the Kingdom of TongaH.R.H. Crown Prince Tupouto&#x27;ac/o Consulate of Tonga
+.today Binky Moon, LLC
+.tokyo GMO Registry, Inc.
+.tools Binky Moon, LLC
+.top Jiangsu Bangning Science &amp; Technology Co.,Ltd.
+.toray Toray Industries, Inc.
+.toshiba TOSHIBA Corporation
+.total Total SA
+.tours Binky Moon, LLC
+.town Binky Moon, LLC
+.toyota TOYOTA MOTOR CORPORATION
+.toys Binky Moon, LLC
+.tp Not assigned
+.tr Bilgi Teknolojileri ve İletişim Kurumu (BTK)
+.trade Elite Registry Limited
+.trading Dog Beach, LLC
+.training Binky Moon, LLC
+.travel Dog Beach, LLC
+.travelchannel Lifestyle Domain Holdings, Inc.
+.travelers Travelers TLD, LLC
+.travelersinsurance Travelers TLD, LLC
+.trust Internet Naming Co.
+.trv Travelers TLD, LLC
+.tt University of the West IndiesFaculty of Engineering
+.tube Latin American Telecom LLC
+.tui TUI AG
+.tunes Amazon Registry Services, Inc.
+.tushu Amazon Registry Services, Inc.
+.tv Ministry of Justice, Communications and Foreign Affairs
+.tvs T V SUNDRAM IYENGAR &amp; SONS PRIVATE LIMITED
+.tw Taiwan Network Information Center (TWNIC)
+.tz Tanzania Communications Regulatory Authority
+.ua Hostmaster Ltd.
+.ubank National Australia Bank Limited
+.ubs UBS AG
+.uconnect Not assigned
+.ug Uganda Online Ltd.
+.uk Nominet UK
+.um Not assigned
+.unicom China United Network Communications Corporation Limited
+.university Binky Moon, LLC
+.uno Radix FZC
+.uol UBN INTERNET LTDA.
+.ups UPS Market Driver, Inc.
+.us Registry Services, LLC
+.uy SeCIU - Universidad de la Republica
+.uz Single Integrator for Creation and Support of State Information Systems UZINFOCOM
+.va Holy See - Vatican City State
+.vacations Binky Moon, LLC
+.vana Lifestyle Domain Holdings, Inc.
+.vanguard The Vanguard Group, Inc.
+.vc Ministry of Telecommunications, Science, Technology and Industry
+.ve Comisión Nacional de Telecomunicaciones (CONATEL)
+.vegas Dot Vegas, Inc.
+.ventures Binky Moon, LLC
+.verisign VeriSign, Inc.
+.versicherung tldbox GmbH
+.vet Dog Beach, LLC
+.vg Telecommunications Regulatory Commission of the Virgin Islands
+.vi Virgin Islands Public Telecommunications System, Inc.
+.viajes Binky Moon, LLC
+.video Dog Beach, LLC
+.vig VIENNA INSURANCE GROUP AG Wiener Versicherung Gruppe
+.viking Viking River Cruises (Bermuda) Ltd.
+.villas Binky Moon, LLC
+.vin Binky Moon, LLC
+.vip Registry Services, LLC
+.virgin Virgin Enterprises Limited
+.visa Visa Worldwide Pte. Limited
+.vision Binky Moon, LLC
+.vista Not assigned
+.vistaprint Not assigned
+.viva Saudi Telecom Company
+.vivo Telefonica Brasil S.A.
+.vlaanderen DNS.be vzw
+.vn Viet Nam Internet Network Information Center (VNNIC)
+.vodka Registry Services, LLC
+.volkswagen Volkswagen Group of America Inc.
+.volvo Volvo Holding Sverige Aktiebolag
+.vote Monolith Registry LLC
+.voting Valuetainment Corp.
+.voto Monolith Registry LLC
+.voyage Binky Moon, LLC
+.vu Telecommunications Radiocommunications and Broadcasting Regulator (TRBR)
+.vuelos Travel Reservations SRL
+.wales Nominet UK
+.walmart Wal-Mart Stores, Inc.
+.walter Sandvik AB
+.wang Zodiac Wang Limited
+.wanggou Amazon Registry Services, Inc.
+.warman Not assigned
+.watch Binky Moon, LLC
+.watches Afilias Limited
+.weather International Business Machines Corporation
+.weatherchannel International Business Machines Corporation
+.webcam dot Webcam Limited
+.weber Saint-Gobain Weber SA
+.website Radix FZC
+.wed Emergency Back-End Registry Operator Program - ICANN
+.wedding Registry Services, LLC
+.weibo Sina Corporation
+.weir Weir Group IP Limited
+.wf Association Française pour le Nommage Internet en Coopération (A.F.N.I.C.)
+.whoswho Who&#x27;s Who Registry
+.wien punkt.wien GmbH
+.wiki Top Level Design, LLC
+.williamhill William Hill Organization Limited
+.win First Registry Limited
+.windows Microsoft Corporation
+.wine Binky Moon, LLC
+.winners The TJX Companies, Inc.
+.wme William Morris Endeavor Entertainment, LLC
+.wolterskluwer Wolters Kluwer N.V.
+.woodside Woodside Petroleum Limited
+.work Registry Services, LLC
+.works Binky Moon, LLC
+.world Binky Moon, LLC
+.wow Amazon Registry Services, Inc.
+.ws Government of Samoa Ministry of Foreign Affairs &amp; Trade
+.wtc World Trade Centers Association, Inc.
+.wtf Binky Moon, LLC
+.xbox Microsoft Corporation
+.xerox Xerox DNHC LLC
+.xfinity Comcast IP Holdings I, LLC
+.xihuan QIHOO 360 TECHNOLOGY CO. LTD.
+.xin Elegant Leader Limited
+.测试 Not assigned
+.कॉम VeriSign Sarl
+.परीक्षा Not assigned
+.セール Amazon Registry Services, Inc.
+.佛山 Guangzhou YU Wei Information Technology Co., Ltd.
+.ಭಾರತ National Internet eXchange of India
+.慈善 Excellent First Limited
+.集团 Eagle Horizon Limited
+.在线 TLD REGISTRY LIMITED
+.한국 KISA (Korea Internet &amp; Security Agency)
+.ଭାରତ National Internet eXchange of India
+.大众汽车 Not assigned
+.点看 VeriSign Sarl
+.คอม VeriSign Sarl
+.ভাৰত National Internet eXchange of India
+.ভারত National Internet Exchange of India
+.八卦 Zodiac Gemini Ltd
+.বাংলা Posts and Telecommunications Division
+.公益 China Organizational Name Administration Center
+.公司 China Internet Network Information Center(CNNIC)
+.香格里拉 Shangri-La International Hotel Management Limited
+.网站 Global Website TLD Asia Limited
+.移动 Afilias Limited
+.我爱你 Tycoon Treasure Limited
+.москва Foundation for Assistance for Internet Technologies and Infrastructure Development (FAITID)
+.испытание Not assigned
+.қаз Association of IT Companies of Kazakhstan
+.католик Pontificium Consilium de Comunicationibus Socialibus (PCCS) (Pontifical Council for Social Communication)
+.онлайн CORE Association
+.сайт CORE Association
+.联通 China United Network Communications Corporation Limited
+.срб Serbian National Internet Domain Registry (RNIDS)
+.бг Imena.BG AD
+.бел Belarusian Cloud Technologies LLC
+.时尚 RISE VICTORY LIMITED
+.微博 Sina Corporation
+.테스트 Not assigned
+.淡马锡 Temasek Holdings (Private) Limited
+.ファッション Amazon Registry Services, Inc.
+.орг Public Interest Registry
+.नेट VeriSign Sarl
+.ストア Amazon Registry Services, Inc.
+.アマゾン Amazon Registry Services, Inc.
+.삼성 SAMSUNG SDS CO., LTD
+.சிங்கப்பூர் Singapore Network Information Centre (SGNIC) Pte Ltd
+.商标 Internet DotTrademark Organisation Limited
+.商店 Binky Moon, LLC
+.商城 Zodiac Aquarius Limited
+.дети The Foundation for Network Initiatives “The Smart Internet”
+.мкд Macedonian Academic Research Network Skopje
+.ею EURid vzw
+.ポイント Amazon Registry Services, Inc.
+.新闻 Guangzhou YU Wei Information and Technology Co.,Ltd
+.工行 Not assigned
+.家電 Amazon Registry Services, Inc.
+.中文网 TLD REGISTRY LIMITED
+.中信 CITIC Group Corporation
+.中国 China Internet Network Information Center (CNNIC)
+.中國 China Internet Network Information Center (CNNIC)
+.娱乐 Binky Moon, LLC
+.谷歌 Charleston Road Registry Inc.
+.భారత్ National Internet Exchange of India
+.ලංකා LK Domain Registry
+.電訊盈科 PCCW Enterprises Limited
+.购物 Nawang Heli(Xiamen) Network Service Co., LTD.
+.測試 Not assigned
+.クラウド Amazon Registry Services, Inc.
+.ભારત National Internet Exchange of India
+.通販 Amazon Registry Services, Inc.
+.भारतम् National Internet eXchange of India
+.भारत National Internet Exchange of India
+.भारोत National Internet eXchange of India
+.பரிட்சை Not assigned
+.网店 Zodiac Taurus Ltd.
+.संगठन Public Interest Registry
+.餐厅 Internet DotTrademark Organisation Limited
+.网络 China Internet Network Information Center(CNNIC)
+.ком VeriSign Sarl
+.укр Ukrainian Network Information Centre (UANIC), Inc.
+.香港 Hong Kong Internet Registration Corporation Ltd.
+.亚马逊 Amazon Registry Services, Inc.
+.诺基亚 Not assigned
+.食品 Amazon Registry Services, Inc.
+.δοκιμή Not assigned
+.飞利浦 Koninklijke Philips N.V.
+.台湾 Taiwan Network Information Center (TWNIC)
+.台灣 Taiwan Network Information Center (TWNIC)
+.手表 Not assigned
+.手机 Beijing RITT-Net Technology Development Co., Ltd
+.мон Datacom Co.,Ltd
+.澳門 Macao Post and Telecommunications Bureau (CTT)
+.닷컴 VeriSign Sarl
+.政府 Net-Chinese Co., Ltd.
+.გე Information Technologies Development Center (ITDC)
+.机构 Public Interest Registry
+.组织机构 Public Interest Registry
+.健康 Stable Tone Limited
+.ไทย Thai Network Information Center Foundation
+.招聘 Dot Trademark TLD Holding Company Limited
+.рус Rusnames Limited
+.рф Coordination Center for TLD RU
+.珠宝 Not assigned
+.大拿 VeriSign Sarl
+.ລາວ Lao National Internet Center (LANIC), Ministry of Technology and Communications
+.みんな Charleston Road Registry Inc.
+.グーグル Charleston Road Registry Inc.
+.ευ EURid vzw
+.ελ ICS-FORTH GR
+.世界 Stable Tone Limited
+.書籍 Amazon Registry Services, Inc.
+.ഭാരതം National Internet eXchange of India
+.ਭਾਰਤ National Internet Exchange of India
+.网址 KNET Co., Ltd
+.닷넷 VeriSign Sarl
+.コム VeriSign Sarl
+.天主教 Pontificium Consilium de Comunicationibus Socialibus (PCCS) (Pontifical Council for Social Communication)
+.游戏 Binky Moon, LLC
+.vermögensberater Deutsche Vermögensberatung Aktiengesellschaft DVAG
+.vermögensberatung Deutsche Vermögensberatung Aktiengesellschaft DVAG
+.企业 Binky Moon, LLC
+.信息 Beijing Tele-info Network Technology Co., Ltd.
+.嘉里大酒店 Kerry Trading Co. Limited
+.嘉里 Kerry Trading Co. Limited
+.广东 Guangzhou YU Wei Information Technology Co., Ltd.
+.இலங்கை LK Domain Registry
+.இந்தியா National Internet Exchange of India
+.հայ &quot;Internet Society&quot; Non-governmental Organization
+.新加坡 Singapore Network Information Centre (SGNIC) Pte Ltd
+.テスト Not assigned
+.政务 China Organizational Name Administration Center
+.xperia Not assigned
+.xxx ICM Registry LLC
+.xyz XYZ.COM LLC
+.yachts XYZ.COM LLC
+.yahoo OATH INC
+.yamaxun Amazon Registry Services, Inc.
+.yandex Yandex Europe B.V.
+.ye TeleYemen
+.yodobashi YODOBASHI CAMERA CO.,LTD.
+.yoga Registry Services, LLC
+.yokohama GMO Registry, Inc.
+.you Amazon Registry Services, Inc.
+.youtube Charleston Road Registry Inc.
+.yt Association Française pour le Nommage Internet en Coopération (A.F.N.I.C.)
+.yun QIHOO 360 TECHNOLOGY CO. LTD.
+.za ZA Domain Name Authority
+.zappos Amazon Registry Services, Inc.
+.zara Industria de Diseño Textil, S.A. (INDITEX, S.A.)
+.zero Amazon Registry Services, Inc.
+.zip Charleston Road Registry Inc.
+.zippo Not assigned
+.zm Zambia Information and Communications Technology Authority (ZICTA)
+.zone Binky Moon, LLC
+.zuerich Kanton Zürich (Canton of Zurich)
+.zw Postal and Telecommunications Regulatory Authority of Zimbabwe (POTRAZ)
