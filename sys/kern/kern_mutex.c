@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.106 2023/05/01 12:17:56 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.107 2023/05/01 12:18:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.106 2023/05/01 12:17:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.107 2023/05/01 12:18:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -242,6 +242,7 @@ static inline int
 MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
 {
 	int rv;
+
 	rv = MUTEX_CAS(&mtx->mtx_owner, owner, owner | MUTEX_BIT_WAITERS);
 	MUTEX_MEMBAR_ENTER();
 	return rv;
@@ -587,15 +588,10 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *
 		 *  CPU 1: MUTEX_SET_WAITERS()      CPU2: mutex_exit()
 		 * ---------------------------- ----------------------------
-		 *		..		    acquire cache line
-		 *		..                   test for waiters
-		 *	acquire cache line    <-      lose cache line
-		 *	 lock cache line	           ..
-		 *     verify mutex is held                ..
-		 *	    set waiters  	           ..
-		 *	 unlock cache line		   ..
-		 *	  lose cache line     ->    acquire cache line
-		 *		..	          clear lock word, waiters
+		 *		..		load mtx->mtx_owner
+		 *		..		see has-waiters bit clear
+		 *	set has-waiters bit  	           ..
+		 *		..		store mtx->mtx_owner := 0
 		 *	  return success
 		 *
 		 * There is another race that can occur: a third CPU could
@@ -612,17 +608,13 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *   be atomic on the local CPU, e.g. in case interrupted
 		 *   or preempted).
 		 *
-		 * o At any given time, MUTEX_SET_WAITERS() can only ever
-		 *   be in progress on one CPU in the system - guaranteed
-		 *   by the turnstile chain lock.
+		 * o At any given time on each mutex, MUTEX_SET_WAITERS()
+		 *   can only ever be in progress on one CPU in the
+		 *   system - guaranteed by the turnstile chain lock.
 		 *
 		 * o No other operations other than MUTEX_SET_WAITERS()
 		 *   and release can modify a mutex with a non-zero
 		 *   owner field.
-		 *
-		 * o The result of a successful MUTEX_SET_WAITERS() call
-		 *   is an unbuffered write that is immediately visible
-		 *   to all other processors in the system.
 		 *
 		 * o If the holding LWP switches away, it posts a store
 		 *   fence before changing curlwp, ensuring that any
@@ -639,9 +631,12 @@ mutex_vector_enter(kmutex_t *mtx)
 		 *   flag by mutex_exit() completes before the modification
 		 *   of ci_biglock_wanted becomes visible.
 		 *
-		 * We now post a read memory barrier (after setting the
-		 * waiters field) and check the lock holder's status again.
-		 * Some of the possible outcomes (not an exhaustive list):
+		 * After MUTEX_SET_WAITERS() succeeds, simultaneously
+		 * confirming that the same LWP still holds the mutex
+		 * since we took the turnstile lock and notifying it that
+		 * we're waiting, we check the lock holder's status again.
+		 * Some of the possible outcomes (not an exhaustive list;
+		 * XXX this should be made exhaustive):
 		 *
 		 * 1. The on-CPU check returns true: the holding LWP is
 		 *    running again.  The lock may be released soon and
