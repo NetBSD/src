@@ -9,7 +9,7 @@
 <p><a href="http://tools.ietf.org/html/draft-ietf-syslog-sign">syslog-sign</a> defines digital signatures for logfiles. This provides end-to-end authentication for network transports, enables the detection of lost UDP messages, and also makes it possible to check a log archive for later modifications (assuming the private key was kept safe).</p>
 
 <h2>Signature Groups</h2>
-<p>A basic concept of syslog-sign is the signature group which describes a set of messages that are grouped and signed together. Their purpose becomes clear with an example: assume you split your messages to two logservers <em>serverA</em> and <em>serverB</em>. Now if all messages were singed as one stream, then a) where do the signatures go to? and b) how could <em>serverA</em>, having only hashes and signatures, decide which message are missing and which are on <em>serverB</em>?<br>
+<p>A basic concept of syslog-sign is the signature group which describes a set of messages that are grouped and signed together. Their purpose becomes clear with an example: assume you split your messages to two logservers <em>serverA</em> and <em>serverB</em>. Now if all messages were signed as one stream, then a) where do the signatures go to? and b) how could <em>serverA</em>, having only hashes and signatures, decide which message are missing and which are on <em>serverB</em>?<br>
 Thus the messages are selected into two signature groups containing all signatures for messages to <em>serverA</em> and <em>serverB</em> respectively. Then every server has its own messages and its own signatures to verify them.</p>
 <p>There are three predefined and one custom signature groups:</p>
 <ol start="0">
@@ -22,7 +22,7 @@ Thus the messages are selected into two signature groups containing all signatur
 
 <h2>Configuration/Activation</h2>
 <p>syslog-sign is enabled with the option "sign_sg" in syslog.conf. The value selects the signature group strategy, so for example the line "sign_sg=0" enables syslog-sign with one signature group.</p>
-<p>The SG="2" strategy is the only one that might require additional configuration. When selected (with "sign_sg=2") the default is to use one signature group per facility (kernel, user, mail, ...). To allow custom configuration there is an additional option "sign_sg2_delim" to specify the numerical SPRI values, i.e. the boundaries betwen the signature groups.<br>
+<p>The SG="2" strategy is the only one that might require additional configuration. When selected (with "sign_sg=2") the default is to use one signature group per facility (kernel, user, mail, ...). To allow custom configuration there is an additional option "sign_sg2_delim" to specify the numerical SPRI values, i.e. the boundaries between the signature groups.<br>
 Example: With "sign_sg2_delim = 15 31" syslogd will set up three signature groups: one for all priorities x &le; 15 (kernel.*,user.*), one for priorities 15 &lt; x &le; 31 (mail.*), and one for all priorities x &gt; 31.</p>
 
 <h2>Key, Signature, and Hash Types</h2>
@@ -137,7 +137,7 @@ messages without signature:
 <td>
   <table>
   <tr> <td> Martin Sch&uuml;tte &lt;<tt>info@mschuette.name</tt>&gt; </td> </tr>
-  <tr> <td> $Id: sign.html,v 1.1 2008/10/31 16:12:19 christos Exp $ </td> </tr>
+  <tr> <td> $Id: sign.html,v 1.2 2023/05/01 11:57:53 andvar Exp $ </td> </tr>
   </table>
 </tr>
 </table>
