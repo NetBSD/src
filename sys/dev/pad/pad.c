@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.81 2023/04/23 08:21:11 mlelstv Exp $ */
+/* $NetBSD: pad.c,v 1.82 2023/05/01 16:35:47 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.81 2023/04/23 08:21:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.82 2023/05/01 16:35:47 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -756,7 +756,7 @@ pad_swvol_codec(audio_filter_arg_t *arg)
 	bits = arg->srcfmt->precision;
 
 	for (i = 0; i < sample_count; i++) {
-		int32_t v;
+		int64_t v;
 
 		switch (howmany(bits, NBBY)) {
 		case 2: /* AUDIO_INTERNAL_BITS == 16 */
