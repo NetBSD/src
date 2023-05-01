@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.8 2020/11/30 17:05:02 bouyer Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.9 2023/05/01 09:03:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.8 2020/11/30 17:05:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.9 2023/05/01 09:03:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.8 2020/11/30 17:05:02 bouyer Exp $")
 #include <sys/kernel.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/time.h>
@@ -74,6 +75,50 @@ static uint64_t	xen_vcputime_raw_systime_ns(void);
 static uint64_t	xen_global_systime_ns(void);
 static unsigned	xen_get_timecount(struct timecounter *);
 static int	xen_timer_handler(void *, struct clockframe *);
+
+/*
+ * dtrace probes
+ */
+SDT_PROBE_DEFINE7(sdt, xen, clock, tsc__backward,
+    "uint64_t"/*raw_systime_ns*/,
+    "uint64_t"/*tsc_timestamp*/,
+    "uint64_t"/*tsc_to_system_mul*/,
+    "int"/*tsc_shift*/,
+    "uint64_t"/*delta_ns*/,
+    "uint64_t"/*tsc*/,
+    "uint64_t"/*systime_ns*/);
+SDT_PROBE_DEFINE7(sdt, xen, clock, tsc__delta__negative,
+    "uint64_t"/*raw_systime_ns*/,
+    "uint64_t"/*tsc_timestamp*/,
+    "uint64_t"/*tsc_to_system_mul*/,
+    "int"/*tsc_shift*/,
+    "uint64_t"/*delta_ns*/,
+    "uint64_t"/*tsc*/,
+    "uint64_t"/*systime_ns*/);
+SDT_PROBE_DEFINE7(sdt, xen, clock, systime__wraparound,
+    "uint64_t"/*raw_systime_ns*/,
+    "uint64_t"/*tsc_timestamp*/,
+    "uint64_t"/*tsc_to_system_mul*/,
+    "int"/*tsc_shift*/,
+    "uint64_t"/*delta_ns*/,
+    "uint64_t"/*tsc*/,
+    "uint64_t"/*systime_ns*/);
+SDT_PROBE_DEFINE7(sdt, xen, clock, systime__backward,
+    "uint64_t"/*raw_systime_ns*/,
+    "uint64_t"/*tsc_timestamp*/,
+    "uint64_t"/*tsc_to_system_mul*/,
+    "int"/*tsc_shift*/,
+    "uint64_t"/*delta_ns*/,
+    "uint64_t"/*tsc*/,
+    "uint64_t"/*systime_ns*/);
+
+SDT_PROBE_DEFINE2(sdt, xen, hardclock, systime__backward,
+    "uint64_t"/*last_systime_ns*/,
+    "uint64_t"/*this_systime_ns*/);
+SDT_PROBE_DEFINE3(sdt, xen, hardclock, missed,
+    "uint64_t"/*last_systime_ns*/,
+    "uint64_t"/*this_systime_ns*/,
+    "uint64_t"/*remaining_ns*/);
 
 /*
  * xen timecounter:
@@ -277,7 +322,11 @@ xen_vcputime_systime_ns(void)
 		 * Notify the console that the CPU's tsc appeared to
 		 * run behind Xen's idea of it, and pretend it hadn't.
 		 */
-#if XEN_CLOCK_DEBUG		/* XXX dtrace hook */
+		SDT_PROBE7(sdt, xen, clock, tsc__backward,
+		    raw_systime_ns, tsc_timestamp,
+		    tsc_to_system_mul, tsc_shift, /*delta_ns*/0, tsc,
+		    /*systime_ns*/raw_systime_ns);
+#if XEN_CLOCK_DEBUG
 		device_printf(ci->ci_dev, "xen cpu tsc %"PRIu64
 		    " ran backwards from timestamp %"PRIu64
 		    " by %"PRIu64"\n",
@@ -301,9 +350,13 @@ xen_vcputime_systime_ns(void)
 	 * This doesn't make sense but I include it out of paranoia.
 	 */
 	if (__predict_false((int64_t)delta_ns < 0)) {
-#if XEN_CLOCK_DEBUG		/* XXX dtrace hook */
-		device_printf(ci->ci_dev, "xen tsc delta in ns went negative: %"PRId64"\n",
-		    delta_ns);
+		SDT_PROBE7(sdt, xen, clock, tsc__delta__negative,
+		    raw_systime_ns, tsc_timestamp,
+		    tsc_to_system_mul, tsc_shift, delta_ns, tsc,
+		    /*systime_ns*/raw_systime_ns);
+#if XEN_CLOCK_DEBUG
+		device_printf(ci->ci_dev, "xen tsc delta in ns went negative:"
+		    " %"PRId64"\n", delta_ns);
 #endif
 		ci->ci_xen_tsc_delta_negative_evcnt.ev_count++;
 		delta_ns = 0;
@@ -322,7 +375,11 @@ xen_vcputime_systime_ns(void)
 	 * (2^64 ns is approximately half a millennium.)
 	 */
 	if (__predict_false(systime_ns < raw_systime_ns)) {
-#if XEN_CLOCK_DEBUG		/* XXX dtrace hook */
+		SDT_PROBE7(sdt, xen, clock, systime__wraparound,
+		    raw_systime_ns, tsc_timestamp,
+		    tsc_to_system_mul, tsc_shift, delta_ns, tsc,
+		    systime_ns);
+#if XEN_CLOCK_DEBUG
 		printf("xen raw systime + tsc delta wrapped around:"
 		    " %"PRIu64" + %"PRIu64" = %"PRIu64"\n",
 		    raw_systime_ns, delta_ns, systime_ns);
@@ -336,7 +393,11 @@ xen_vcputime_systime_ns(void)
 	 * forward.  This seems to happen pretty regularly under load.
 	 */
 	if (__predict_false(ci->ci_xen_last_systime_ns > systime_ns)) {
-#if XEN_CLOCK_DEBUG		/* XXX dtrace hook */
+		SDT_PROBE7(sdt, xen, clock, systime__backward,
+		    raw_systime_ns, tsc_timestamp,
+		    tsc_to_system_mul, tsc_shift, delta_ns, tsc,
+		    systime_ns);
+#if XEN_CLOCK_DEBUG
 		printf("xen raw systime + tsc delta went backwards:"
 		    " %"PRIu64" > %"PRIu64"\n",
 		    ci->ci_xen_last_systime_ns, systime_ns);
@@ -692,8 +753,11 @@ again:
 	last = ci->ci_xen_hardclock_systime_ns;
 	now = xen_vcputime_systime_ns();
 	if (now < last) {
-#if XEN_CLOCK_DEBUG		/* XXX dtrace hook */
-		device_printf(ci->ci_dev, "xen systime ran backwards in hardclock %"PRIu64"ns\n",
+		SDT_PROBE2(sdt, xen, hardclock, systime__backward,
+		    last, now);
+#if XEN_CLOCK_DEBUG
+		device_printf(ci->ci_dev, "xen systime ran backwards"
+		    " in hardclock %"PRIu64"ns\n",
 		    last - now);
 #endif
 		ci->ci_xen_systime_backwards_hardclock_evcnt.ev_count++;
@@ -710,8 +774,11 @@ again:
 		ci->ci_xen_hardclock_systime_ns += NS_PER_TICK;
 		delta -= NS_PER_TICK;
 		hardclock(frame);
-		if (__predict_false(delta >= NS_PER_TICK))
+		if (__predict_false(delta >= NS_PER_TICK)) {
+			SDT_PROBE3(sdt, xen, hardclock, missed,
+			    last, now, delta);
 			ci->ci_xen_missed_hardclock_evcnt.ev_count++;
+		}
 	}
 
 	/*
