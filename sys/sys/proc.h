@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.370 2022/05/09 13:27:24 wiz Exp $	*/
+/*	$NetBSD: proc.h,v 1.371 2023/05/01 05:12:44 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -592,6 +592,10 @@ _proclist_skipmarker(struct proc *p0)
     sizeof(process_fpreg32) : sizeof(struct fpreg))
 #define PROC_DBREGSZ(p) (((p)->p_flag & PK_32) ? \
     sizeof(process_dbreg32) : sizeof(struct dbreg))
+
+#ifndef PROC_MACHINE_ARCH
+#define PROC_MACHINE_ARCH(p) machine_arch
+#endif
 
 /*
  * PROCLIST_FOREACH: iterate on the given proclist, skipping PK_MARKER ones.
