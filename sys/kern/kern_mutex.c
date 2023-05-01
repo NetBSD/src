@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.105 2023/04/12 06:35:40 riastradh Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.106 2023/05/01 12:17:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.105 2023/04/12 06:35:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.106 2023/05/01 12:17:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -673,7 +673,6 @@ mutex_vector_enter(kmutex_t *mtx)
 		 * If the waiters bit is not set it's unsafe to go asleep,
 		 * as we might never be awoken.
 		 */
-		membar_consumer();
 		if (mutex_oncpu(owner)) {
 			turnstile_exit(mtx);
 			owner = mtx->mtx_owner;
