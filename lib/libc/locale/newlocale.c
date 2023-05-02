@@ -1,4 +1,4 @@
-/* $NetBSD: newlocale.c,v 1.3 2013/09/13 13:13:32 joerg Exp $ */
+/* $NetBSD: newlocale.c,v 1.3.30.1 2023/05/02 17:24:55 martin Exp $ */
 
 /*-
  * Copyright (c)2008, 2011 Citrus Project,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: newlocale.c,v 1.3 2013/09/13 13:13:32 joerg Exp $");
+__RCSID("$NetBSD: newlocale.c,v 1.3.30.1 2023/05/02 17:24:55 martin Exp $");
 
 #include "namespace.h"
 #include <assert.h>
@@ -57,7 +57,10 @@ newlocale(int mask, const char *name, locale_t src)
 	if (src == NULL)
 		src = _current_locale();
 	memcpy(dst, src, sizeof(*src));
-	strlcpy(&head[0], name, sizeof(head));
+	if (strlcpy(&head[0], name, sizeof(head)) >= sizeof(head)) {
+		free(dst);
+		return (locale_t)NULL;
+	}
 	tokens[0] = (const char *)&head[0];
 	tail = strchr(tokens[0], '/');
 	if (tail == NULL) {
@@ -77,6 +80,7 @@ newlocale(int mask, const char *name, locale_t src)
 		}
 		if (howmany-- > 0) {
 			for (i = 1; i < howmany; ++i) {
+				*tail++ = '\0';
 				tokens[i] = (const char *)tail;
 				tail = strchr(tokens[i], '/');
 				if (tail == NULL) {
@@ -84,6 +88,7 @@ newlocale(int mask, const char *name, locale_t src)
 					return NULL;
 				}
 			}
+			*tail++ = '\0';
 			tokens[howmany] = tail;
 			tail = strchr(tokens[howmany], '/');
 			if (tail != NULL) {
