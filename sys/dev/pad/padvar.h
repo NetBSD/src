@@ -1,4 +1,4 @@
-/* $NetBSD: padvar.h,v 1.16 2021/06/14 18:44:45 riastradh Exp $ */
+/* $NetBSD: padvar.h,v 1.16.10.1 2023/05/02 17:39:54 martin Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,6 +57,8 @@ struct pad_softc {
 	u_int		sc_wpos;
 
 	uint8_t		sc_swvol;
+
+	u_int		sc_resid;
 };
 
 #endif /* !_SYS_DEV_PAD_PADVAR_H */
