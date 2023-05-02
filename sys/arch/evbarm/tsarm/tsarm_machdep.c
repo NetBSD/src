@@ -1,4 +1,4 @@
-/*	$NetBSD: tsarm_machdep.c,v 1.34 2022/07/03 19:58:42 andvar Exp $ */
+/*	$NetBSD: tsarm_machdep.c,v 1.34.4.1 2023/05/02 17:52:39 martin Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.34 2022/07/03 19:58:42 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsarm_machdep.c,v 1.34.4.1 2023/05/02 17:52:39 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -856,4 +856,10 @@ ep93xx_bus_dma_init(struct arm32_bus_dma_tag *dma_tag_template)
 	dmat->_nranges = bootconfig.dramblocks;
 
 	return dmat;
+}
+
+void
+cpu_startup_hook(void)
+{
+	ep93xx_intr_evcnt_attach();
 }
