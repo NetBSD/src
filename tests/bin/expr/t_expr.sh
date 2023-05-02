@@ -1,4 +1,4 @@
-# $NetBSD: t_expr.sh,v 1.6 2018/06/27 17:39:30 kamil Exp $
+# $NetBSD: t_expr.sh,v 1.7 2023/05/02 00:11:27 gutteridge Exp $
 #
 # Copyright (c) 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,7 +37,7 @@ test_expr() {
 }
 
 atf_test_case lang
-lang_ops_head() {
+lang_head() {
 	atf_set "descr" "Test that expr(1) works with non-C LANG (PR bin/2486)"
 }
 lang_body() {
