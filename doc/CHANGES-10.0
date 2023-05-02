@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.59 2023/04/30 10:58:53 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.60 2023/05/02 17:54:03 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1702,4 +1702,33 @@ sys/dev/sdmmc/sdmmc_mem.c			1.75
 
 	sdmmc(4): only check chipset write protect status for SD cards.
 	[jmcneill, ticket #151]
+
+lib/libc/locale/newlocale.c			1.4
+
+	newlocale(3): fix parsing a locale string with multiple components.
+	[mlelstv, ticket #152]
+
+sys/dev/pad/pad.c				1.79-1.82
+sys/dev/pad/padvar.h				1.17
+
+	pad(4): pace I/O timing to match the audio interface.
+	Write slinear_le 16bit samples, independent from platform and
+	AUDIO_INTERNAL_BITS.
+	[mlelstv, ticket #153]
+
+sys/arch/arm/dts/rk3328-crypto.dtsi		1.1
+sys/arch/arm/dts/rk3328-rock64.dts		1.8
+sys/arch/arm/rockchip/rk3328_cru.c		1.10
+sys/arch/arm/rockchip/rk_v1crypto.c		1.11
+
+	Enable rkv1crypto on rock64.
+	[mrg, ticket #154]
+
+sys/arch/arm/ep93xx/ep93xx_intr.c		1.28
+sys/arch/arm/ep93xx/ep93xxvar.h			1.7
+sys/arch/evbarm/tsarm/tsarm_machdep.c		1.36
+
+	PR 57386: TS7200: defer event counter registration until after evcnt
+	is initialized.
+	[jmcneill, ticket #155]
 
