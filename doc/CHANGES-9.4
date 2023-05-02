@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.63 2023/04/20 14:15:22 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.64 2023/05/02 17:25:54 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1387,4 +1387,9 @@ usr.sbin/npf/npfd/npfd.8			1.7
 
 	npfd(8): fix "-i" argument in tcpdump example.
 	[tsutsui, ticket #1629]
+
+lib/libc/locale/newlocale.c			1.4
+
+	newlocale(3): fix parsing a locale string with multiple components.
+	[mlelstv, ticket #1630]
 
