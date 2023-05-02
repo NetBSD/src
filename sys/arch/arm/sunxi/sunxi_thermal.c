@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.15 2023/05/02 10:18:54 macallan Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.16 2023/05/02 23:08:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.15 2023/05/02 10:18:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.16 2023/05/02 23:08:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,16 +520,22 @@ sunxi_thermal_init_clocks(struct sunxi_thermal_softc *sc)
 	struct clk *clk;
 	int error;
 
-	clk = fdtbus_clock_get(sc->phandle, "ahb");
-	if (clk == 0) clk = fdtbus_clock_get(sc->phandle, "bus");
+	clk = fdtbus_clock_get(sc->phandle, "bus");
+	if (clk == NULL) {
+		/* DTCOMPAT */
+		clk = fdtbus_clock_get(sc->phandle, "ahb");
+	}
 	if (clk) {
 		error = clk_enable(clk);
 		if (error != 0)
 			return error;
 	}
 
-	clk = fdtbus_clock_get(sc->phandle, "ths");
-	if (clk == 0) clk = fdtbus_clock_get(sc->phandle, "mod");
+	clk = fdtbus_clock_get(sc->phandle, "mod");
+	if (clk == NULL) {
+		/* DTCOMPAT */
+		clk = fdtbus_clock_get(sc->phandle, "ths");
+	}
 	if (clk) {
 		error = clk_set_rate(clk, sc->conf->clk_rate);
 		if (error != 0)
