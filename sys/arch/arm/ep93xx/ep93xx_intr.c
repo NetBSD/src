@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.27 2021/11/21 08:25:26 skrll Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.28 2023/05/02 09:49:33 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.27 2021/11/21 08:25:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.28 2023/05/02 09:49:33 jmcneill Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -257,9 +257,6 @@ ep93xx_intr_init(void)
 		TAILQ_INIT(&iq->iq_list);
 
 		snprintf(iq->iq_name, sizeof(iq->iq_name), "irq %d", i);
-		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
-				     NULL, (i < VIC_NIRQ ? "vic1" : "vic2"),
-		                     iq->iq_name);
 	}
 	curcpu()->ci_intr_depth = 0;
 	set_curcpl(0);
@@ -273,6 +270,20 @@ ep93xx_intr_init(void)
 
 	/* Enable IRQs (don't yet use FIQs). */
 	enable_interrupts(I32_bit);
+}
+
+void
+ep93xx_intr_evcnt_attach(void)
+{
+	struct intrq *iq;
+	int i;
+
+	for (i = 0; i < NIRQ; i++) {
+		iq = &intrq[i];
+		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
+				     NULL, (i < VIC_NIRQ ? "vic1" : "vic2"),
+				     iq->iq_name);
+	}
 }
 
 void *

@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xxvar.h,v 1.6 2012/11/12 18:00:36 skrll Exp $ */
+/*	$NetBSD: ep93xxvar.h,v 1.7 2023/05/02 09:49:33 jmcneill Exp $ */
 /*
  * Copyright (c) 2004 Jesse Off
  * All rights reserved.
@@ -69,6 +69,7 @@ extern struct arm32_bus_dma_tag ep93xx_bus_dma;
 void	ep93xx_intr_init(void);
 void	*ep93xx_intr_establish(int irq, int ipl, int (*)(void *), void *);
 void	ep93xx_intr_disestablish(void *);
+void	ep93xx_intr_evcnt_attach(void);
 /* Platform needs to provide this */
 bus_dma_tag_t ep93xx_bus_dma_init(struct arm32_bus_dma_tag *);
 void	ep93xx_reset(void);
