@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.184 2022/05/07 04:40:01 msaitoh Exp $
+#	$NetBSD: files.amiga,v 1.185 2023/05/03 13:49:30 phx Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -21,6 +21,8 @@ defflag	opt_amigacons.h		CV64CONSOLE CV3DCONSOLE TSENGCONSOLE
 defflag	opt_amigacons.h		SERCONSOLE
 
 defflag	opt_mntva.h		MNTVA_CONSOLE
+
+defflag opt_zz9k_fb.h		ZZFB_CONSOLE
 
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_1
 defflag	opt_kfont.h		KFONT_CONS_ISO8859_2
@@ -224,6 +226,28 @@ file	arch/amiga/dev/ite_cv3d.c	grfcv3d & ite
 device	mntva: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
 attach	mntva at zbus
 file	arch/amiga/dev/mntva.c		mntva needs-flag
+
+# MNT ZZ9000
+define	zz9kbus {}
+device	zz9k: zz9kbus
+attach	zz9k at zbus
+file	arch/amiga/dev/zz9k.c		zz9k needs-flag
+
+device	zzfb: wsemuldisplaydev, rasops8, rasops15, rasops16, rasops32, vcons
+attach	zzfb at zz9kbus with zz9k_fb
+file	arch/amiga/dev/zz9k_fb.c	zz9k_fb needs-flag
+
+device	zz: ifnet, ether, arp
+attach	zz at zz9kbus with zz9k_if
+file	arch/amiga/dev/zz9k_if.c	zz9k_if needs-flag
+
+device	zzax: audiobus
+attach	zzax at zz9kbus with zz9k_ax
+file	arch/amiga/dev/zz9k_ax.c	zz9k_ax needs-flag
+
+device	zzusb
+attach	zzusb at zz9kbus with zz9k_usb
+file	arch/amiga/dev/zz9k_usb.c	zz9k_usb needs-flag
 
 # device defined in sys/conf/files
 # A2065, Ameristar, Ariadne ethernet cards
