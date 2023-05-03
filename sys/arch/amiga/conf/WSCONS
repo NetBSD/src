@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.72 2020/03/07 20:27:54 is Exp $
+# $NetBSD: WSCONS,v 1.73 2023/05/03 13:49:30 phx Exp $
 
 # GENERIC with wscons(4)
 #
@@ -45,6 +45,14 @@ no ite7		at grf7
 
 mntva*		at zbus?		# MNTMN VA2000
 #options	MNTVA_CONSOLE
+
+zz9k*		at zbus?		# MNT ZZ9000
+zzfb*		at zz9k?		# Framebuffer
+options		ZZFB_CONSOLE		# Console on ZZ9000
+#zz*		at zz9k?		# Ethernet (experimental)
+#zzax*		at zz9k?		# MNT ZZ9000AX (not functional yet)
+#audio*		at zzax?		# Audio on ZZ9000AX
+#zzusb*		at zz9k?		# USB (not implemented yet)
 
 # PCI framebuffers
 #genfb*		at pci?			# CyberVisionPPC/BlizzardVisionPPC only

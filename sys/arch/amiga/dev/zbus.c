@@ -1,4 +1,4 @@
-/*	$NetBSD: zbus.c,v 1.77 2021/08/07 16:18:42 thorpej Exp $ */
+/*	$NetBSD: zbus.c,v 1.78 2023/05/03 13:49:30 phx Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.77 2021/08/07 16:18:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zbus.c,v 1.78 2023/05/03 13:49:30 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -194,7 +194,10 @@ static const struct aconfdata aconftab[] = {
 	/* Matay Grzegorz Kraszewski */
 	{ "mppb",	44359,	1},	/* Prometheus PCI bridge */
 	/* MNT */
-	{ "mntva",	28014,	1}	/* MNT VA2000 */
+	{ "mntva",	28014,	1},	/* MNT VA2000 */
+	{ "zz9k",	28014, 	3},	/* MNT ZZ9000 Z2 */
+	{ "zz9k",	28014, 	4},	/* MNT ZZ9000 Z3 */
+	{ "zz9k",	28014, 	5}	/* MNT ZZ9000 Z3 256MB */
 };
 static int naconfent = sizeof(aconftab) / sizeof(struct aconfdata);
 
@@ -227,8 +230,10 @@ static struct preconfdata preconftab[] = {
 	{2167,	2, 0},	/* Domino regs */
 	{2167,	3, 0},	/* Domino regs (proto 16M) */
 	{2181,	0, 0},	/* oMniBus mem or regs */
-	{8512,	67, 0}	/* Cybervison 64/3D */		/* grf7 */
-/*	{28014,	1, 0}	// MNTMN VA2000 */
+	{8512,	67, 0},	/* Cybervison 64/3D */		/* grf7 */
+/*	{28014,	1, 0},	// MNTMN VA2000 */
+	{28014,	3, 0},	/* MNT ZZ9000 Z2 */
+	{28014,	4, 0}	/* MNT ZZ9000 Z3 */
 };
 static int npreconfent = sizeof(preconftab) / sizeof(struct preconfdata);
 
