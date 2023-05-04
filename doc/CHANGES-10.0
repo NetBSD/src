@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.60 2023/05/02 17:54:03 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.61 2023/05/04 18:57:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1731,4 +1731,10 @@ sys/arch/evbarm/tsarm/tsarm_machdep.c		1.36
 	PR 57386: TS7200: defer event counter registration until after evcnt
 	is initialized.
 	[jmcneill, ticket #155]
+
+sys/arch/arm/sunxi/sunxi_thermal.c		1.15,1.16
+
+	sunxithermal(4): fix DTS bindings.
+	[jmcneill, ticket #156]
+
 
