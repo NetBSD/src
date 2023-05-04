@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.7 2023/04/07 08:55:30 skrll Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.8 2023/05/04 13:28:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.7 2023/04/07 08:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.8 2023/05/04 13:28:04 bouyer Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.7 2023/04/07 08:55:30 skrll Exp 
 #include <libfdt.h>
 
 #define	IMX_REF_FREQ	80000000
+#define	IMX6SX_REF_FREQ	24000000
 
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
@@ -82,6 +83,18 @@ imx_platform_devmap(void)
 {
 	static const struct pmap_devmap devmap[] = {
 		DEVMAP_ENTRY(KERNEL_IO_IOREG_VBASE, IMX6_IOREG_PBASE, IMX6_IOREG_SIZE),
+		DEVMAP_ENTRY(KERNEL_IO_ARMCORE_VBASE, IMX6_ARMCORE_PBASE, IMX6_ARMCORE_SIZE),
+		DEVMAP_ENTRY_END
+	};
+
+	return devmap;
+}
+
+static const struct pmap_devmap *
+imx6sx_platform_devmap(void)
+{
+	static const struct pmap_devmap devmap[] = {
+		DEVMAP_ENTRY(KERNEL_IO_IOREG_VBASE, IMX6_IOREG_PBASE, IMX6SX_IOREG_SIZE),
 		DEVMAP_ENTRY(KERNEL_IO_ARMCORE_VBASE, IMX6_ARMCORE_PBASE, IMX6_ARMCORE_SIZE),
 		DEVMAP_ENTRY_END
 	};
@@ -139,6 +152,13 @@ imx_platform_uart_freq(void)
 {
 	return IMX_REF_FREQ;
 }
+
+static u_int
+imx6sx_platform_uart_freq(void)
+{
+	return IMX6SX_REF_FREQ;
+}
+
 
 static void
 imx_platform_bootstrap(void)
@@ -234,6 +254,18 @@ static const struct fdt_platform imx6_platform = {
 	.fp_mpstart = imx_platform_mpstart,
 };
 
+static const struct fdt_platform imx6sx_platform = {
+	.fp_devmap = imx6sx_platform_devmap,
+	.fp_bootstrap = imx_platform_bootstrap,
+	.fp_init_attach_args = imx_platform_init_attach_args,
+	.fp_device_register = imx_platform_device_register,
+	.fp_reset = imx6_platform_reset,
+	.fp_delay = a9ptmr_delay,
+	.fp_uart_freq = imx6sx_platform_uart_freq,
+	.fp_mpstart = imx_platform_mpstart,
+};
+
 FDT_PLATFORM(imx6dl, "fsl,imx6dl", &imx6_platform);
+FDT_PLATFORM(imx6sx, "fsl,imx6sx", &imx6sx_platform);
 FDT_PLATFORM(imx6q, "fsl,imx6q", &imx6_platform);
 FDT_PLATFORM(imx6qp, "fsl,imx6qp", &imx6_platform);
