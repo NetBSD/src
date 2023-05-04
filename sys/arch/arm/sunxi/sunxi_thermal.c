@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.14 2021/11/07 17:11:58 jmcneill Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.14.4.1 2023/05/04 18:56:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.14 2021/11/07 17:11:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.14.4.1 2023/05/04 18:56:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -520,14 +520,22 @@ sunxi_thermal_init_clocks(struct sunxi_thermal_softc *sc)
 	struct clk *clk;
 	int error;
 
-	clk = fdtbus_clock_get(sc->phandle, "ahb");
+	clk = fdtbus_clock_get(sc->phandle, "bus");
+	if (clk == NULL) {
+		/* DTCOMPAT */
+		clk = fdtbus_clock_get(sc->phandle, "ahb");
+	}
 	if (clk) {
 		error = clk_enable(clk);
 		if (error != 0)
 			return error;
 	}
 
-	clk = fdtbus_clock_get(sc->phandle, "ths");
+	clk = fdtbus_clock_get(sc->phandle, "mod");
+	if (clk == NULL) {
+		/* DTCOMPAT */
+		clk = fdtbus_clock_get(sc->phandle, "ths");
+	}
 	if (clk) {
 		error = clk_set_rate(clk, sc->conf->clk_rate);
 		if (error != 0)
