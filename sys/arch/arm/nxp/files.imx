@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx,v 1.2 2022/07/20 10:01:10 riastradh Exp $
+#	$NetBSD: files.imx,v 1.3 2023/05/04 13:25:07 bouyer Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -10,6 +10,7 @@ defflag	opt_soc.h				SOC_IMX
 defflag	opt_soc.h				SOC_IMX6DL: SOC_IMX
 defflag	opt_soc.h				SOC_IMX6Q: SOC_IMX
 defflag	opt_soc.h				SOC_IMX6QDL: SOC_IMX
+defflag	opt_soc.h				SOC_IMX6SX: SOC_IMX
 defflag	opt_soc.h				SOC_IMX7D: SOC_IMX
 
 defflag opt_imx.h				IMX6
@@ -17,8 +18,13 @@ defflag opt_imx.h				IMX6
 # Clock
 device	imx6ccm : clk
 attach	imx6ccm at fdt
-file	arch/arm/nxp/imx6_ccm.c			imx6ccm
 file	arch/arm/nxp/imx6_clk.c			imx6ccm
+
+device	imx6sxccm : clk
+attach	imx6sxccm at fdt
+file	arch/arm/nxp/imx6sx_clk.c		imx6sxccm
+
+file	arch/arm/nxp/imx6_ccm.c			imx6ccm | imx6sxccm
 
 # Common FDT clock framework
 define	imx_ccm: clk
