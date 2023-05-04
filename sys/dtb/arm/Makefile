@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2021/11/12 21:55:17 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.6 2023/05/04 13:31:36 bouyer Exp $
 
 DTSARCH=	arm
 DTSGNUARCH=	arm
@@ -12,6 +12,7 @@ DTSMAKEVARS=	CONFIG_SOC_AM33XX=y		\
 		CONFIG_ARCH_BCM2835=y		\
 		CONFIG_ARCH_EXYNOS5=y		\
 		CONFIG_SOC_IMX6Q=y		\
+		CONFIG_SOC_IMX6SX=y		\
 		CONFIG_SOC_IMX7D=y		\
 		CONFIG_MACH_MESON8=y		\
 		CONFIG_ARCH_OMAP3=y		\
