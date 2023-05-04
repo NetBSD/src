@@ -1,4 +1,4 @@
-/*	$NetBSD: twinkle1.c,v 1.6 2005/05/23 04:04:49 christos Exp $	*/
+/*	$NetBSD: twinkle1.c,v 1.7 2023/05/04 11:30:25 uwe Exp $	*/
 
 /*
  * 
@@ -36,7 +36,7 @@
 
 /*
  * the idea for this program was a product of the imagination of
- * Kurt Schoens.  Not responsible for minds lost or stolen.
+ * Kurt Shoens.  Not responsible for minds lost or stolen.
  */
 
 #define	NCOLS	80

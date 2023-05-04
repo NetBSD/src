@@ -1,4 +1,4 @@
-.\" $NetBSD: title.cdrom,v 1.7 2010/12/16 17:42:28 wiz Exp $
+.\" $NetBSD: title.cdrom,v 1.8 2023/05/04 11:30:25 uwe Exp $
 .\"
 .\" Copyright (c) 1994 Regents of the University of California.
 .\" All rights reserved.
@@ -410,7 +410,7 @@ adventure(6)	Will Crowther	ls(1)	Elan Amir
 apply(1)	Rob Pike	ls(1)	Michael Fischbein
 apply(1)	Jan-Simon Pendry	lsearch(3)	Roger L. Snyder
 ar(1)	Hugh A. Smith	m4(1)	Ozan Yigit
-arithmetic(6)	Eamonn McManus	mail(1)	Kurt Schoens
+arithmetic(6)	Eamonn McManus	mail(1)	Kurt Shoens
 arp(8)	Sun Microsystems Inc.	make(1)	Adam de Boor
 at(1)	Steve Wall	me(7)	Eric Allman
 atc(6)	Ed James	mergesort(3)	Peter McIlroy
@@ -474,7 +474,7 @@ file(1)	Ian Darwin	swab(3)	Jeffrey Mogul
 find(1)	Cimarron Taylor	sysconf(3)	Sean Eric Fagan
 finger(1)	Tony Nardo	sysline(1)	J.K. Foderaro
 fish(6)	Muffy Barkocy	syslog(3)	Eric Allman
-fmt(1)	Kurt Schoens	systat(1)	Bill Reeves
+fmt(1)	Kurt Shoens	systat(1)	Bill Reeves
 fnmatch(3)	Guido van Rossum	systat(1)	Robert Elz
 fold(1)	Kevin Ruddy	tail(1)	Edward Sze-Tyan Wang
 fortune(6)	Ken Arnold	talk(1)	Clem Cole
