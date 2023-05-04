@@ -1,4 +1,4 @@
-/*	$NetBSD: chown.c,v 1.11 2023/05/04 18:04:55 martin Exp $	*/
+/*	$NetBSD: chown.c,v 1.12 2023/05/04 18:34:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994, 2003\
 #if 0
 static char sccsid[] = "@(#)chown.c	8.8 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: chown.c,v 1.11 2023/05/04 18:04:55 martin Exp $");
+__RCSID("$NetBSD: chown.c,v 1.12 2023/05/04 18:34:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,9 +242,9 @@ main(int argc, char **argv)
 		 * attempt to update.
 		 */
 		if (dflag &&
-		    ( (uid_t)-1 == uid || p->fts_statp->st_uid == uid ) &&
-		    ( (gid_t)-1 == gid || p->fts_statp->st_gid == gid ) &&
-		    ( p->fts_statp->st_mode & 07000 ) == 0)
+		    (uid == (uid_t)-1 || p->fts_statp->st_uid == uid) &&
+		    (gid == (gid_t)-1 || p->fts_statp->st_gid == gid) &&
+		    (p->fts_statp->st_mode & 07000) == 0)
 			continue;
 
 		if ((*change_owner)(p->fts_accpath, uid, gid) && !fflag) {
