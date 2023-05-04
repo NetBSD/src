@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusbvar.h,v 1.6 2019/07/24 11:20:55 hkenken Exp $	*/
+/*	$NetBSD: imxusbvar.h,v 1.7 2023/05/04 17:09:44 bouyer Exp $	*/
 /*
  * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -48,9 +48,11 @@ struct imxusbc_softc {
 	bus_addr_t sc_ehci_offset;
 	bus_size_t sc_ehci_size;
 
-	void (* sc_init_md_hook)(struct imxehci_softc *);
-	void *(* sc_intr_establish_md_hook)(struct imxehci_softc *);
-	void (* sc_setup_md_hook)(struct imxehci_softc *, enum imx_usb_role);
+	void (* sc_init_md_hook)(struct imxehci_softc *, uintptr_t);
+	void *(* sc_intr_establish_md_hook)(struct imxehci_softc *, uintptr_t);
+	void (* sc_setup_md_hook)(struct imxehci_softc *, enum imx_usb_role,
+				  uintptr_t);
+	uintptr_t sc_md_hook_data;
 };
 
 struct imxusbc_attach_args {

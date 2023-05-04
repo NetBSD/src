@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.18 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.19 2023/05/04 17:09:44 bouyer Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.18 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.19 2023/05/04 17:09:44 bouyer Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -158,7 +158,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 
 	/* Platform dependent setup */
 	if (usbc->sc_init_md_hook)
-		usbc->sc_init_md_hook(sc);
+		usbc->sc_init_md_hook(sc, usbc->sc_md_hook_data);
 
 	imxehci_reset(sc);
 	imxehci_select_interface(sc, sc->sc_iftype);
@@ -178,7 +178,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (usbc->sc_setup_md_hook)
-		usbc->sc_setup_md_hook(sc, IMXUSB_HOST);
+		usbc->sc_setup_md_hook(sc, IMXUSB_HOST, usbc->sc_md_hook_data);
 
 	if (sc->sc_iftype == IMXUSBC_IF_ULPI) {
 #if 0
@@ -202,7 +202,8 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	EOWRITE4(hsc, EHCI_USBINTR, 0);
 
 	if (usbc->sc_intr_establish_md_hook)
-		sc->sc_ih = usbc->sc_intr_establish_md_hook(sc);
+		sc->sc_ih = usbc->sc_intr_establish_md_hook(sc,
+		    usbc->sc_md_hook_data);
 	else if (aa->aa_irq > 0)
 		sc->sc_ih = intr_establish(aa->aa_irq, IPL_USB, IST_LEVEL, ehci_intr, hsc);
 	KASSERT(sc->sc_ih != NULL);
