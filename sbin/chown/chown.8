@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.12 2017/07/04 06:53:12 wiz Exp $
+.\"	$NetBSD: chown.8,v 1.13 2023/05/04 17:07:56 pgoyette Exp $
 .\"
-.Dd September 11, 2016
+.Dd May 1, 2023
 .Dt CHOWN 8
 .Os
 .Sh NAME
@@ -84,6 +84,9 @@ option is specified, no symbolic links are followed.
 .It Fl R
 Change the user ID and/or the group ID for the file hierarchies rooted
 in the files instead of just the files themselves.
+.It Fl d
+Do not attempt to update a file's owner or group or its set-user-id
+and set-group-id bits if they are all already set to the desired values.
 .It Fl f
 Do not report any failure to change file owner or group, nor modify
 the exit status to reflect such failures.
@@ -174,7 +177,9 @@ command is expected to be POSIX 1003.2 compliant.
 .Pp
 The
 .Fl v
-option and the use of ``#'' to force a numeric lookup
+and
+.Fl d
+options and the use of ``#'' to force a numeric lookup
 are extensions to
 .St -p1003.2 .
 .Sh HISTORY

@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chgrp.1,v 1.8 2017/07/04 06:52:20 wiz Exp $
+.\"	$NetBSD: chgrp.1,v 1.9 2023/05/04 17:07:56 pgoyette Exp $
 .\"
-.Dd October 22, 2012
+.Dd May 1, 2023
 .Dt CHGRP 1
 .Os
 .Sh NAME
@@ -86,6 +86,10 @@ option is specified, no symbolic links are followed.
 .It Fl R
 Change the group ID for the file hierarchies rooted
 in the files instead of just the files themselves.
+.It Fl d
+Do not attempt to update a file's group, nor update the file's
+set-user-id or set-group-id bits if they are already set to the
+desired values.
 .It Fl f
 The force option ignores errors, except for usage errors and doesn't
 query about strange modes (unless the user does not have proper permissions).
@@ -164,6 +168,8 @@ utility is expected to be POSIX 1003.2 compatible.
 .Pp
 The
 .Fl v
-option and the use of ``#'' to force a numeric group ID
+and
+.Fl d
+options and the use of ``#'' to force a numeric group ID
 are extensions to
 .St -p1003.2 .
