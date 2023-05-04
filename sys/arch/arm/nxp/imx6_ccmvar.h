@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccmvar.h,v 1.2 2023/04/14 17:45:59 bouyer Exp $	*/
+/*	$NetBSD: imx6_ccmvar.h,v 1.3 2023/05/04 13:25:07 bouyer Exp $	*/
 /*
  * Copyright (c) 2012,2019  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -42,10 +42,18 @@ struct imx6ccm_softc {
 	int sc_imx6_clksize;
 };
 
-void imx6ccm_attach_common(device_t, struct imx6_clk *, int);
+struct imxccm_init_parent;
+
+void imx6ccm_attach_common(device_t, struct imx6_clk *, int,
+    struct imxccm_init_parent *);
 
 struct clk *imx6_get_clock(struct imx6ccm_softc *, const char *);
 struct imx6_clk *imx6_clk_find(struct imx6ccm_softc *sc, const char *);
+
+struct imxccm_init_parent {
+	const char *clock;
+	const char *parent;
+};
 
 
 enum imx6_clk_type {

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.3 2023/04/14 17:45:59 bouyer Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.4 2023/05/04 13:25:07 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.3 2023/04/14 17:45:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.4 2023/05/04 13:25:07 bouyer Exp $");
 
 #include "opt_imx.h"
 #include "opt_cputypes.h"
@@ -52,7 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.3 2023/04/14 17:45:59 bouyer Exp $");
 
 #include <dev/clk/clk_backend.h>
 
-static void imxccm_init_clocks(struct imx6ccm_softc *);
+static void imxccm_init_clocks(struct imx6ccm_softc *,
+			       struct imxccm_init_parent *);
 static struct clk *imxccm_clk_get(void *, const char *);
 static void imxccm_clk_put(void *, struct clk *);
 static u_int imxccm_clk_get_rate(void *, struct clk *);
@@ -74,7 +75,8 @@ static const struct clk_funcs imxccm_clk_funcs = {
 };
 
 void
-imx6ccm_attach_common(device_t self, struct imx6_clk *imx6_clks, int size)
+imx6ccm_attach_common(device_t self, struct imx6_clk *imx6_clks, int size, 
+    struct imxccm_init_parent *imxccm_init_parents)
 {
 	struct imx6ccm_softc * const sc = device_private(self);
 
@@ -90,12 +92,13 @@ imx6ccm_attach_common(device_t self, struct imx6_clk *imx6_clks, int size)
 		clk_attach(&imx6_clks[n].base);
 	}
 
-	imxccm_init_clocks(sc);
+	imxccm_init_clocks(sc, imxccm_init_parents);
 
 	for (int n = 0; n < size; n++) {
 		struct clk *clk = &imx6_clks[n].base;
 		struct clk *clk_parent = clk_get_parent(clk);
 		const char *parent_str = clk_parent ? clk_parent->name : "none";
+
 		aprint_verbose_dev(self, "%s (%s) : %u Hz\n", clk->name,
 		    parent_str, clk_get_rate(clk));
 	}
@@ -127,27 +130,14 @@ imx6_clk_find(struct imx6ccm_softc *sc, const char *name)
 	return NULL;
 }
 
-struct imxccm_init_parent {
-	const char *clock;
-	const char *parent;
-} imxccm_init_parents[] = {
-	{ "pll1_bypass",	"pll1" },
-	{ "pll2_bypass",	"pll2" },
-	{ "pll3_bypass",	"pll3" },
-	{ "pll4_bypass",	"pll4" },
-	{ "pll5_bypass",	"pll5" },
-	{ "pll6_bypass",	"pll6" },
-	{ "pll7_bypass",	"pll7" },
-	{ "lvds1_sel",		"sata_ref_100m" },
-};
-
 static void
-imxccm_init_clocks(struct imx6ccm_softc *sc)
+imxccm_init_clocks(struct imx6ccm_softc *sc,
+    struct imxccm_init_parent *imxccm_init_parents)
 {
 	struct clk *clk;
 	struct clk *clk_parent;
 
-	for (u_int n = 0; n < __arraycount(imxccm_init_parents); n++) {
+	for (u_int n = 0; imxccm_init_parents[n].clock != NULL; n++) {
 		clk = clk_get(&sc->sc_clkdom, imxccm_init_parents[n].clock);
 		KASSERT(clk != NULL);
 		clk_parent = clk_get(&sc->sc_clkdom, imxccm_init_parents[n].parent);
@@ -402,7 +392,8 @@ imxccm_clk_get_parent_mux(struct imx6ccm_softc *sc, struct imx6_clk *iclk)
 	uint32_t v = bus_space_read_4(sc->sc_iot, ioh, mux->reg);
 	u_int sel = __SHIFTOUT(v, mux->mask);
 
-	KASSERT(sel < mux->nparents);
+	KASSERTMSG(sel < mux->nparents, "mux %s sel %d nparents %d",
+	    iclk->base.name, sel, mux->nparents);
 
 	iclk->parent = mux->parents[sel];
 

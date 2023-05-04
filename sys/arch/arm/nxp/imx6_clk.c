@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_clk.c,v 1.5 2023/04/14 17:45:59 bouyer Exp $	*/
+/*	$NetBSD: imx6_clk.c,v 1.6 2023/05/04 13:25:07 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.5 2023/04/14 17:45:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_clk.c,v 1.6 2023/05/04 13:25:07 bouyer Exp $");
 
 #include "opt_fdt.h"
 
@@ -1145,6 +1145,19 @@ static struct imx6_clk imx6q_clks[] = {
 	CLK_GATE_EXCLUSIVE("lvds2_in", "anaclk2", CCM_ANALOG, MISC1, LVDS_CLK2_IBEN, LVDS_CLK2_OBEN),
 };
 
+struct imxccm_init_parent imxccm6q_init_parents[] = {
+	{ "pll1_bypass",        "pll1" },
+	{ "pll2_bypass",        "pll2" },
+	{ "pll3_bypass",        "pll3" },
+	{ "pll4_bypass",        "pll4" },
+	{ "pll5_bypass",        "pll5" },
+	{ "pll6_bypass",        "pll6" },
+	{ "pll7_bypass",        "pll7" },
+	{ "lvds1_sel",          "sata_ref_100m" },
+	{ 0 },
+};
+
+
 static struct imx6_clk *
 imx6q_clk_find_by_id(struct imx6ccm_softc *sc, u_int clock_id)
 {
@@ -1272,7 +1285,8 @@ imx6qccm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Clock Control Module\n");
 
-	imx6ccm_attach_common(self, &imx6q_clks[0], __arraycount(imx6q_clks));
+	imx6ccm_attach_common(self, &imx6q_clks[0], __arraycount(imx6q_clks), 
+	    imxccm6q_init_parents);
 
 	imx6q_clk_fixed_from_fdt(sc, "ckil");
 	imx6q_clk_fixed_from_fdt(sc, "ckih");
