@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.118 2023/02/25 08:19:35 skrll Exp $
+#	$NetBSD: GENERIC,v 1.119 2023/05/04 13:39:51 bouyer Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -16,6 +16,7 @@ options 	SOC_EXYNOS5422
 options 	SOC_IMX6DL
 options 	SOC_IMX6Q
 options 	SOC_IMX6QDL
+options 	SOC_IMX6SX
 options 	SOC_IMX7D
 options 	SOC_MESON8B
 options 	SOC_OMAP3
@@ -136,7 +137,8 @@ cycvclkmgr* 	at fdt? pass 1		# Cyclone V clock manager
 cycvrstmgr* 	at fdt? pass 0		# Cyclone V reset manager
 exy5410clk* 	at fdt? pass 3		# Exynos5410 clock controller
 exy5422clk* 	at fdt? pass 3		# Exynos5422 clock controller
-imx6ccm* 	at fdt? pass 1		# i.MX6 CCM
+imx6ccm* 	at fdt? pass 1		# i.MX6Q* CCM
+imx6sxccm* 	at fdt? pass 1		# i.MX6SX CCM
 imx7dccm* 	at fdt? pass 2		# i.MX7D CCM
 meson8bclkc* 	at fdt? pass 2		# Amlogic Meson8b clock controller
 mesonresets* 	at fdt? pass 2		# Amlogic Meson misc. clock resets
