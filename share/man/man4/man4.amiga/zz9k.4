@@ -1,4 +1,4 @@
-.\" $NetBSD: zz9k.4,v 1.1 2023/05/03 13:49:30 phx Exp $
+.\" $NetBSD: zz9k.4,v 1.2 2023/05/04 09:20:00 rillig Exp $
 .\"
 .\" Copyright (c) 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,28 +37,36 @@
 .Cd "zz9k*	at zbus?"
 .Cd "zzfb*	at zz9k?"
 .Cd "options	ZZFB_CONSOLE"
-.Cd "zz*	at zz9k?"
+.Cd "zz*		at zz9k?"
 .Cd "zzax*	at zz9k?"
 .Cd "zzusb*	at zz9k?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for the MNT ZZ9000 graphics card and ethernet interface.
-Each driver can be individually enabled or disabled. However all ZZ9000 drivers
-depend on the zz9k* as the root to work.
+Each driver can be individually enabled or disabled.
+However, all ZZ9000 drivers depend on the
+zz9k*
+as the root to work.
 .Pp
-The zzfb*
+The
+zzfb*
 .Xr wscons 4
-driver implements blitter accelerated support for the boot console. Support
-for an unaccelerated X11 framebuffer is also available via the
+driver implements blitter-accelerated support for the boot console.
+Support for an unaccelerated X11 framebuffer is also available via the
 .Xr wsfb 4
 driver.
 .Pp
-The zz* driver implements the ZZ9000 ethernet interface.
+The
+zz*
+driver implements the ZZ9000 ethernet interface.
 .Pp
-There is also provision for for adding ZZ9000AX audio card support as zzax* and
-the USB port support as zzusb* at a later time. None of these are functional
-yet.
+There is also provision for adding ZZ9000AX audio card support as
+zzax*
+and the USB port support as
+zzusb*
+at a later time.
+None of these are functional yet.
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsdisplay 4
@@ -80,20 +88,37 @@ For the ZZ9000 to assume the boot console, the user has to explicitly set the
 option in the kernel config file.
 .Pp
 Currently, the video mode is hard-coded to 1280x720 at 8 bpp for the console
-emulation and 16 bpp for the framebuffer used by X11. Resolutions and color
-depths can be individually changed in the zz9k_fb.c source code. Please follow
-the source code comments.
+emulation and 16 bpp for the framebuffer used by X11.
+Resolutions and color depths can be individually changed in the
+.Pa zz9k_fb.c
+source code.
+Please follow the source code comments.
 .Pp
-zz* ethernet driver is considered experimental. As the MAC address is not
-stored permanently in the card, it will use it's default address. This should
-not impose any problem unless two ZZ9000 will be used in the same LAN. Please
-configure the desired link address for the zz0 interface in rc.conf or in the
-/etc/ifconfig.zz0 file, to avoid a MAC address collision.
+The
+zz*
+ethernet driver is considered experimental.
+As the MAC address is not stored permanently in the card,
+it will use its default address.
+This should not impose any problem unless two ZZ9000 will be used
+in the same LAN.
+Please configure the desired link address for the
+zz0
+interface in
+.Pa rc.conf
+or in the
+.Pa /etc/ifconfig.zz0
+file, to avoid a MAC address collision.
 .Pp
-zzax* audio card driver is not functional yet. Only a basic skeleton source code
-is available for a possible later implementation.
+The
+zzax*
+audio card driver is not functional yet.
+Only a basic skeleton source code is available for a possible later
+implementation.
 .Pp
-zzusb* USB driver is not functional yet. Only a basic skeleton source code is
-available for a possible later implementation.
+The
+zzusb*
+USB driver is not functional yet.
+Only a basic skeleton source code is available for a possible later
+implementation.
 .Sh BUGS
 None known.
