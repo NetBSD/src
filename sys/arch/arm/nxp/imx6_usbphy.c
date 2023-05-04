@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usbphy.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: imx6_usbphy.c,v 1.3 2023/05/04 13:29:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: imx6_usbphy.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_usbphy.c,v 1.3 2023/05/04 13:29:33 bouyer Exp $");
 
 #include "opt_fdt.h"
 
@@ -63,6 +63,7 @@ CFATTACH_DECL_NEW(imxusbphy, sizeof(struct imx6_usbphy_softc),
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "fsl,imx6q-usbphy" },
+	{ .compat = "fsl,imx6sx-usbphy" },
 	DEVICE_COMPAT_EOL
 };
 

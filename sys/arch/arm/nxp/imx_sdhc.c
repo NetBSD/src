@@ -1,4 +1,4 @@
-/*	$NetBSD: imx_sdhc.c,v 1.7 2022/02/06 15:52:20 jmcneill Exp $	*/
+/*	$NetBSD: imx_sdhc.c,v 1.8 2023/05/04 13:29:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_sdhc.c,v 1.7 2022/02/06 15:52:20 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_sdhc.c,v 1.8 2023/05/04 13:29:33 bouyer Exp $");
 
 #include "opt_fdt.h"
 
@@ -86,6 +86,7 @@ static const struct imx6_sdhc_config imx7d_config = {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "fsl,imx6q-usdhc",	.data = &imx6q_config },
+	{ .compat = "fsl,imx6sx-usdhc",	.data = &imx6q_config },
 	{ .compat = "fsl,imx7d-usdhc",	.data = &imx7d_config },
 	DEVICE_COMPAT_EOL
 };

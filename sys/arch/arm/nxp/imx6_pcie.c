@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.7 2023/05/04 13:29:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.7 2023/05/04 13:29:33 bouyer Exp $");
 
 #include "opt_pci.h"
 #include "opt_fdt.h"
@@ -92,6 +92,7 @@ CFATTACH_DECL_NEW(imxpcie_fdt, sizeof(struct imxpcie_fdt_softc),
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "fsl,imx6q-pcie",	.value = false },
 	{ .compat = "fsl,imx6qp-pcie",	.value = true },
+	{ .compat = "fsl,imx6sx-pcie",	.value = true },
 	DEVICE_COMPAT_EOL
 };
 
