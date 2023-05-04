@@ -1,4 +1,4 @@
-# $NetBSD: t_fexecve.sh,v 1.1 2019/09/15 16:53:58 christos Exp $
+# $NetBSD: t_fexecve.sh,v 1.2 2023/05/04 00:02:10 gutteridge Exp $
 #
 # Copyright (c) 2019 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,7 @@
 HELPER=$(atf_get_srcdir)/h_fexecve
 
 atf_test_case fexecve_elf
-fexecve_elf()
+fexecve_elf_head()
 {
 	atf_set "descr" "Test fexecve with ELF executables"
 }
@@ -50,7 +50,7 @@ EOF
 }
 
 atf_test_case fexecve_script
-fexecve_script()
+fexecve_script_head()
 {
 	atf_set "descr" "Test fexecve with a shell script"
 }
