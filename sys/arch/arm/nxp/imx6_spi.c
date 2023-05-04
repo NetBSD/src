@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_spi.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $	*/
+/*	$NetBSD: imx6_spi.c,v 1.8 2023/05/04 13:29:33 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.7 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.8 2023/05/04 13:29:33 bouyer Exp $");
 
 #include "opt_imxspi.h"
 
@@ -62,6 +62,7 @@ static const struct imx_spi_config imx6q_spi_config = {
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "fsl,imx6q-ecspi",	.data = &imx6q_spi_config },
+	{ .compat = "fsl,imx6sx-ecspi",	.data = &imx6q_spi_config },
 	DEVICE_COMPAT_EOL
 };
 
