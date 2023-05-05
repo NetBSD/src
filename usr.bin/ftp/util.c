@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.166 2023/02/25 12:07:25 mlelstv Exp $	*/
+/*	$NetBSD: util.c,v 1.167 2023/05/05 15:46:06 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2023 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.166 2023/02/25 12:07:25 mlelstv Exp $");
+__RCSID("$NetBSD: util.c,v 1.167 2023/05/05 15:46:06 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -1439,8 +1439,8 @@ ftp_connect(int sock, const struct sockaddr *name, socklen_t namelen, int pe)
 			}
 			pfd[0].revents = 0;
 			rv = ftp_poll(pfd, 1, timeout);
-						/* loop until poll ! EINTR */
-		} while (rv == -1 && errno == EINTR);
+					/* loop until poll !EINTR && !EAGAIN */
+		} while (rv == -1 && (errno == EINTR || errno == EAGAIN));
 
 		if (rv == 0) {			/* poll (connect) timed out */
 			errno = ETIMEDOUT;
