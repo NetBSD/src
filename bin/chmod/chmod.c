@@ -1,4 +1,4 @@
-/* $NetBSD: chmod.c,v 1.38 2012/10/22 18:00:46 christos Exp $ */
+/* $NetBSD: chmod.c,v 1.39 2023/05/05 04:14:02 kre Exp $ */
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)chmod.c	8.8 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chmod.c,v 1.38 2012/10/22 18:00:46 christos Exp $");
+__RCSID("$NetBSD: chmod.c,v 1.39 2023/05/05 04:14:02 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,17 +74,17 @@ main(int argc, char *argv[])
 	FTS *ftsp;
 	FTSENT *p;
 	void *set;
-	mode_t mval;
-	int Hflag, Lflag, Rflag, ch, fflag, fts_options, hflag, rval;
+	mode_t mval, nval;
+	int Hflag, Lflag, Rflag, ch, dflag, fflag, fts_options, hflag, rval;
 	char *mode, *reference;
 	int (*change_mode)(const char *, mode_t);
 
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	Hflag = Lflag = Rflag = fflag = hflag = 0;
+	Hflag = Lflag = Rflag = dflag = fflag = hflag = 0;
 	reference = NULL;
-	while ((ch = getopt_long(argc, argv, "HLPRXfghorstuwx",
+	while ((ch = getopt_long(argc, argv, "HLPRXdfghorstuwx",
 	    chmod_longopts, NULL)) != -1)
 		switch (ch) {
 		case 1:
@@ -103,6 +103,9 @@ main(int argc, char *argv[])
 			break;
 		case 'R':
 			Rflag = 1;
+			break;
+		case 'd':
+			dflag = 1;
 			break;
 		case 'f':
 			fflag = 1;
@@ -212,9 +215,10 @@ done:	argv += optind;
 		default:
 			break;
 		}
-		if ((*change_mode)(p->fts_accpath,
-		    set ? getmode(set, p->fts_statp->st_mode) : mval)
-		    && !fflag) {
+		nval = set ? getmode(set, p->fts_statp->st_mode) : mval;
+		if (dflag && nval == p->fts_statp->st_mode)
+			continue;
+		if ((*change_mode)(p->fts_accpath, nval) && !fflag) {
 			warn("%s", p->fts_path);
 			rval = 1;
 		}
@@ -231,8 +235,8 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-R [-H | -L | -P]] [-fh] mode file ...\n"
-	    "\t%s [-R [-H | -L | -P]] [-fh] --reference=rfile file ...\n",
+	    "Usage: %s [-R [-H | -L | -P]] [-dfh] mode file ...\n"
+	    "\t%s [-R [-H | -L | -P]] [-dfh] --reference=rfile file ...\n",
 	    getprogname(), getprogname());
 	exit(1);
 	/* NOTREACHED */
