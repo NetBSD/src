@@ -1,4 +1,4 @@
-# $NetBSD: std.amd64,v 1.12 2020/04/25 15:26:16 bouyer Exp $
+# $NetBSD: std.amd64,v 1.13 2023/05/05 00:34:41 manu Exp $
 #
 # standard, required NetBSD/amd64 'options'
 
@@ -14,6 +14,8 @@ options 	MULTIPROCESSOR
 
 options 	CHILD_MAX=1024	# 160 is too few
 options 	OPEN_MAX=1024	# 128 is too few
+
+options 	SELFRELOC
 
 mainbus0 at root
 cpu* at mainbus?

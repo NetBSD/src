@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.523 2022/08/28 14:29:05 riastradh Exp $
+.\"	$NetBSD: options.4,v 1.524 2023/05/05 00:34:41 manu Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -1307,6 +1307,14 @@ See
 and
 .Xr vnconfig 8
 for more information.
+.It Cd options SELFRELOC
+Make the kernel able to self relocate at bootstrap, so that it can
+run whatever its load address is. 
+This is intented to be used withe the 
+.Ic reloc
+boostrap command documented in
+.Xr x86/boot 8 ,
+to workaround UEFI bugs, and is only available on amd64.
 .It Cd options SPLDEBUG
 Help the kernel programmer find bugs related to the interrupt priority
 level.

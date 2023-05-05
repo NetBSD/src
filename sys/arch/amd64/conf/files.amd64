@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.120 2020/10/21 13:31:51 christos Exp $
+#	$NetBSD: files.amd64,v 1.121 2023/05/05 00:34:41 manu Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -19,6 +19,9 @@ defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 
 # Enable GCC spectre V2 mitigation options
 defflag opt_spectre.h	SPECTRE_V2_GCC_MITIGATION
+
+# Enable kernel self-relocation at bootstrap
+defflag opt_selfreloc.h SELFRELOC
 
 #
 # XXX these are just here at the moment so that we can share files
