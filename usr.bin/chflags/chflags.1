@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.24 2013/12/17 09:54:08 apb Exp $
+.\"	$NetBSD: chflags.1,v 1.25 2023/05/05 04:14:02 kre Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,6 +44,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
+.Op Fl d
 .Op Fl h
 .Ar flags
 .Ar
@@ -57,6 +58,11 @@ operand.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl d
+If the change requested would not alter the
+flags currently set for
+.Ar file
+then attempt no change operation.
 .It Fl H
 If the
 .Fl R

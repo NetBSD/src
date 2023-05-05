@@ -1,4 +1,4 @@
-.\"	$NetBSD: chmod.1,v 1.28 2017/07/04 06:47:27 wiz Exp $
+.\"	$NetBSD: chmod.1,v 1.29 2023/05/05 04:14:02 kre Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,7 +44,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl fh
+.Op Fl dfh
 .Ar mode
 .Ar
 .Nm
@@ -52,7 +52,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl fh
+.Op Fl dfh
 .Fl Fl reference=rfile
 .Ar
 .Sh DESCRIPTION
@@ -84,12 +84,18 @@ If the
 .Fl R
 option is specified, no symbolic links are followed.
 .It Fl R
-Change the modes of the file hierarchies rooted in the files
+Change the modes of the file hierarchies rooted in the
+.Ar file Ns s
 instead of just the files themselves.
+.It Fl d
+Do not attempt to change the mode of a
+.Ar file
+if its mode is already as requested.
 .It Fl f
 Do not display a diagnostic message or modify the exit status if
 .Nm
-fails to change the mode of a file.
+fails to change the mode of a
+.Ar file .
 .It Fl h
 If
 .Ar file

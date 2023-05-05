@@ -1,4 +1,4 @@
-/*	$NetBSD: chflags.c,v 1.17 2023/04/28 22:23:45 andvar Exp $	*/
+/*	$NetBSD: chflags.c,v 1.18 2023/05/05 04:14:02 kre Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "from: @(#)chflags.c	8.5 (Berkeley) 4/1/94";
 #else
-__RCSID("$NetBSD: chflags.c,v 1.17 2023/04/28 22:23:45 andvar Exp $");
+__RCSID("$NetBSD: chflags.c,v 1.18 2023/05/05 04:14:02 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,12 +64,12 @@ main(int argc, char *argv[])
 	FTSENT *p;
 	u_long clear, set, newflags;
 	long val;
-	int Hflag, Lflag, Rflag, ch, fts_options, hflag, oct, rval;
+	int Hflag, Lflag, Rflag, ch, fts_options, dflag, hflag, oct, rval;
 	char *flags, *ep;
 	int (*change_flags)(const char *, u_long);
 
-	Hflag = Lflag = Rflag = hflag = 0;
-	while ((ch = getopt(argc, argv, "HLPRh")) != -1)
+	Hflag = Lflag = Rflag = dflag = hflag = 0;
+	while ((ch = getopt(argc, argv, "HLPRdh")) != -1)
 		switch (ch) {
 		case 'H':
 			Hflag = 1;
@@ -84,6 +84,9 @@ main(int argc, char *argv[])
 			break;
 		case 'R':
 			Rflag = 1;
+			break;
+		case 'd':
+			dflag = 1;
 			break;
 		case 'h':
 			hflag = 1;
@@ -181,6 +184,8 @@ main(int argc, char *argv[])
 			newflags |= set;
 			newflags &= clear;
 		}
+		if (dflag && newflags == p->fts_statp->st_flags)
+			continue;
 		if ((*change_flags)(p->fts_accpath, newflags)) {
 			warn("%s", p->fts_path);
 			rval = 1;
@@ -196,6 +201,6 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: chflags [-R [-H | -L | -P]] [-h] flags file ...\n");
+	    "usage: chflags [-R [-H | -L | -P]] [-dh] flags file ...\n");
 	exit(1);
 }
