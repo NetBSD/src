@@ -1,4 +1,4 @@
-# $NetBSD: t_trapsignal.sh,v 1.5 2019/01/26 16:44:30 martin Exp $
+# $NetBSD: t_trapsignal.sh,v 1.6 2023/05/05 01:27:18 gutteridge Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@ HELPER=$(atf_get_srcdir)/h_segv
 # SIGSEGV
 
 atf_test_case segv_simple
-segv_simple()
+segv_simple_head()
 {
 	atf_set "descr" "Test unhandled SIGSEGV with the right exit code"
 }
@@ -44,7 +44,7 @@ segv_simple_body()
 }
 
 atf_test_case segv_handle
-segv_handle()
+segv_handle_head()
 {
 	atf_set "descr" "Test handled SIGSEGV traps call the signal handler"
 }
@@ -55,7 +55,7 @@ segv_handle_body()
 }
 
 atf_test_case segv_mask
-segv_mask()
+segv_mask_head()
 {
 	atf_set "descr" "Test that masking SIGSEGV get reset"
 }
@@ -66,7 +66,7 @@ segv_mask_body()
 }
 
 atf_test_case segv_handle_mask
-segv_handle_mask()
+segv_handle_mask_head()
 {
 	atf_set "descr" "Test handled and masked SIGSEGV traps get reset"
 }
@@ -77,7 +77,7 @@ segv_handle_mask_body()
 }
 
 atf_test_case segv_handle_recurse
-segv_handle_recurse()
+segv_handle_recurse_head()
 {
 	atf_set "descr" "Test that receiving SIGSEGV in the handler resets"
 }
@@ -89,7 +89,7 @@ segv_handle_recurse_body()
 }
 
 atf_test_case segv_ignore
-segv_ignore()
+segv_ignore_head()
 {
 	atf_set "descr" "Test ignored SIGSEGV trap with right exit code"
 }
@@ -103,7 +103,7 @@ segv_ignore_body()
 # SIGTRAP
 
 atf_test_case trap_simple
-trap_simple()
+trap_simple_head()
 {
 	atf_set "descr" "Test unhandled SIGTRAP with the right exit code"
 }
@@ -114,7 +114,7 @@ trap_simple_body()
 }
 
 atf_test_case trap_handle
-trap_handle()
+trap_handle_head()
 {
 	atf_set "descr" "Test handled SIGTRAP traps call the signal handler"
 }
@@ -125,7 +125,7 @@ trap_handle_body()
 }
 
 atf_test_case trap_mask
-trap_mask()
+trap_mask_head()
 {
 	atf_set "descr" "Test that masking the trapped SIGTRAP signal get reset"
 }
@@ -136,7 +136,7 @@ trap_mask_body()
 }
 
 atf_test_case trap_handle_mask
-trap_handle_mask()
+trap_handle_mask_head()
 {
 	atf_set "descr" "Test handled and masked SIGTRAP traps get reset"
 }
@@ -147,7 +147,7 @@ trap_handle_mask_body()
 }
 
 atf_test_case trap_handle_recurse
-trap_handle_recurse()
+trap_handle_recurse_head()
 {
 	atf_set "descr" "Test that receiving SIGTRAP in the handler resets"
 }
@@ -159,7 +159,7 @@ trap_handle_recurse_body()
 }
 
 atf_test_case trap_ignore
-trap_ignore()
+trap_ignore_head()
 {
 	atf_set "descr" "Test ignored trap with right exit code"
 }
@@ -185,7 +185,7 @@ fpe_available()
 }
 
 atf_test_case fpe_simple
-fpe_simple()
+fpe_simple_head()
 {
 	atf_set "descr" "Test unhandled SIGFPE with the right exit code"
 }
@@ -197,7 +197,7 @@ fpe_simple_body()
 }
 
 atf_test_case fpe_handle
-fpe_handle()
+fpe_handle_head()
 {
 	atf_set "descr" "Test handled SIGFPE traps call the signal handler"
 }
@@ -209,7 +209,7 @@ fpe_handle_body()
 }
 
 atf_test_case fpe_mask
-fpe_mask()
+fpe_mask_head()
 {
 	atf_set "descr" "Test that masking the trapped SIGFPE signal get reset"
 }
@@ -221,7 +221,7 @@ fpe_mask_body()
 }
 
 atf_test_case fpe_handle_mask
-fpe_handle_mask()
+fpe_handle_mask_head()
 {
 	atf_set "descr" "Test handled and masked SIGFPE traps get reset"
 }
@@ -233,7 +233,7 @@ fpe_handle_mask_body()
 }
 
 atf_test_case fpe_handle_recurse
-fpe_handle_recurse()
+fpe_handle_recurse_head()
 {
 	atf_set "descr" "Test that receiving SIGFPE in the handler resets"
 }
@@ -246,7 +246,7 @@ fpe_handle_recurse_body()
 }
 
 atf_test_case fpe_ignore
-fpe_ignore()
+fpe_ignore_head()
 {
 	atf_set "descr" "Test ignored trap with right exit code"
 }
@@ -261,7 +261,7 @@ fpe_ignore_body()
 # SIGBUS
 
 atf_test_case bus_simple
-bus_simple()
+bus_simple_head()
 {
 	atf_set "descr" "Test unhandled SIGBUS with the right exit code"
 }
@@ -272,7 +272,7 @@ bus_simple_body()
 }
 
 atf_test_case bus_handle
-bus_handle()
+bus_handle_head()
 {
 	atf_set "descr" "Test handled SIGBUS traps call the signal handler"
 }
@@ -283,7 +283,7 @@ bus_handle_body()
 }
 
 atf_test_case bus_mask
-bus_mask()
+bus_mask_head()
 {
 	atf_set "descr" "Test that masking the trapped SIGBUS signal get reset"
 }
@@ -294,7 +294,7 @@ bus_mask_body()
 }
 
 atf_test_case bus_handle_mask
-bus_handle_mask()
+bus_handle_mask_head()
 {
 	atf_set "descr" "Test handled and masked SIGBUS traps get reset"
 }
@@ -305,7 +305,7 @@ bus_handle_mask_body()
 }
 
 atf_test_case bus_handle_recurse
-bus_handle_recurse()
+bus_handle_recurse_head()
 {
 	atf_set "descr" "Test that receiving SIGBUS in the handler resets"
 }
@@ -317,7 +317,7 @@ bus_handle_recurse_body()
 }
 
 atf_test_case bus_ignore
-bus_ignore()
+bus_ignore_head()
 {
 	atf_set "descr" "Test ignored trap with right exit code"
 }
