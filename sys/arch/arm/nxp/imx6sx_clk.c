@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6sx_clk.c,v 1.1 2023/05/04 13:25:07 bouyer Exp $	*/
+/*	$NetBSD: imx6sx_clk.c,v 1.2 2023/05/05 09:29:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6sx_clk.c,v 1.1 2023/05/04 13:25:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6sx_clk.c,v 1.2 2023/05/05 09:29:35 bouyer Exp $");
 
 #include "opt_fdt.h"
 
@@ -1297,7 +1297,7 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_GATE("pwm8", "perclk", CCM, CCGR6, PWM8_CLK_ENABLE),
 	CLK_GATE("vadc", "vid_podf", CCM, CCGR6, VADC_CLK_ENABLE),
 	CLK_GATE("gis", "display_podf", CCM, CCGR6, GIS_CLK_ENABLE),
-	CLK_GATE("i2cs4", "perclk", CCM, CCGR6, I2CS4_CLK_ENABLE),
+	CLK_GATE("i2c4", "perclk", CCM, CCGR6, I2CS4_CLK_ENABLE),
 	CLK_GATE("pwm5", "perclk", CCM, CCGR6, PWM5_CLK_ENABLE),
 	CLK_GATE("pwm6", "perclk", CCM, CCGR6, PWM6_CLK_ENABLE),
 	CLK_GATE("pwm7", "perclk", CCM, CCGR6, PWM7_CLK_ENABLE),
