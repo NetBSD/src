@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6sx_clk.c,v 1.2 2023/05/05 09:29:35 bouyer Exp $	*/
+/*	$NetBSD: imx6sx_clk.c,v 1.3 2023/05/05 09:34:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6sx_clk.c,v 1.2 2023/05/05 09:29:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6sx_clk.c,v 1.3 2023/05/05 09:34:09 bouyer Exp $");
 
 #include "opt_fdt.h"
 
@@ -975,15 +975,13 @@ static const int audiovideo_div_tbl[] = { 1, 2, 1, 4, 0 };
 
 static struct imx6_clk imx6sx_clks[] = {
 	CLK_FIXED("dummy", 0),
-
 	CLK_FIXED("ckil", IMX6_CKIL_FREQ),
 	CLK_FIXED("osc", IMX6_OSC_FREQ),
 	CLK_FIXED("ipp_di0", IMX6_OSC_FREQ), 
 	CLK_FIXED("ipp_di1", IMX6_OSC_FREQ), 
 	CLK_FIXED("anaclk1", IMX6_ANACLK1_FREQ),
 	CLK_FIXED("anaclk2", IMX6_ANACLK2_FREQ),
-//#
-//#	CLK_FIXED_FACTOR("sata_ref", "pll6_enet", 5, 1),
+
 	CLK_FIXED_FACTOR("pcie_ref", "pll6_enet", 5, 1),
 	CLK_FIXED_FACTOR("pll2_198m", "pll2_pfd2_396m", 2, 1),
 	CLK_FIXED_FACTOR("pll3_120m", "pll3_usb_otg", 4, 1),
@@ -991,15 +989,12 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_FIXED_FACTOR("pll3_60m", "pll3_usb_otg", 8, 1),
 	CLK_FIXED_FACTOR("twd", "arm", 2, 1),
 	CLK_FIXED_FACTOR("gpt_3m", "osc", 8, 1),
-//#	CLK_FIXED_FACTOR("video_27m", "pll3_pfd1_540m", 20, 1),
-//#	CLK_FIXED_FACTOR("gpu2d_axi", "mmdc_ch0_axi_podf", 1, 1),
-//#	CLK_FIXED_FACTOR("gpu3d_axi", "mmdc_ch0_axi_podf", 1, 1),
 	CLK_FIXED_FACTOR("ldb_di0_div_3_5", "ldb_di0_sel", 7, 2),
 	CLK_FIXED_FACTOR("ldb_di0_div_7", "ldb_di0_sel", 7, 1),
 	CLK_FIXED_FACTOR("ldb_di1_div_3_5", "ldb_di1_sel", 7, 2),
 	CLK_FIXED_FACTOR("ldb_di1_div_7", "ldb_di1_sel", 7, 1),
 	CLK_FIXED_FACTOR("enet_ptp_ref", "pll6_enet", 20, 1),
-//#
+
 	CLK_PFD("pll2_pfd0_352m", "pll2_bus", PFD_528, 0),
 	CLK_PFD("pll2_pfd1_594m", "pll2_bus", PFD_528, 1),
 	CLK_PFD("pll2_pfd2_396m", "pll2_bus", PFD_528, 2),
@@ -1008,7 +1003,7 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_PFD("pll3_pfd1_540m", "pll3_usb_otg", PFD_480, 1),
 	CLK_PFD("pll3_pfd2_508m", "pll3_usb_otg", PFD_480, 2),
 	CLK_PFD("pll3_pfd3_454m", "pll3_usb_otg", PFD_480, 3),
-//#
+
 	CLK_PLL("pll1", "osc", SYS, PLL_ARM, DIV_SELECT, POWERDOWN, 0),
 	CLK_PLL("pll2", "osc", GENERIC, PLL_SYS, DIV_SELECT, POWERDOWN, 0),
 	CLK_PLL("pll3", "osc", USB, PLL_USB1, DIV_SELECT, POWER, 0),
@@ -1016,7 +1011,7 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_PLL("pll5", "osc", AUDIO_VIDEO, PLL_VIDEO, DIV_SELECT, POWERDOWN, 0),
 	CLK_PLL("pll6", "osc", ENET, PLL_ENET, DIV_SELECT, POWERDOWN, 500000000),
 	CLK_PLL("pll7", "osc", USB, PLL_USB2, DIV_SELECT, POWER, 0),
-//#
+
 	CLK_DIV("periph_clk2", "periph_clk2_sel", CBCDR, PERIPH_CLK2_PODF),
 	CLK_DIV("periph2_clk2", "periph2_clk2_sel", CBCDR, PERIPH2_CLK2_PODF),
 	CLK_DIV_BUSY("ocram_podf", "ocram_sel", CBCDR, AXI_PODF, CDHIPR, AXI_PODF_BUSY),
@@ -1026,36 +1021,19 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_DIV("lcdif1_podf", "lcdif1_pred", CBCMR, GPU2D_CORE_CLK_PODF),
 	CLK_DIV("esai_pred", "esai_sel", CS1CDR, ESAI_CLK_PRED),
 	CLK_DIV("esai_podf", "esai_pred", CS1CDR, ESAI_CLK_PODF),
-//#	CLK_DIV("asrc_pred", "asrc_sel", CDCDR, SPDIF1_CLK_PRED),
-//#	CLK_DIV("asrc_podf", "asrc_pred", CDCDR, SPDIF1_CLK_PODF),
 	CLK_DIV("spdif_pred", "spdif_sel", CDCDR, SPDIF0_CLK_PRED),
 	CLK_DIV("spdif_podf", "spdif_pred", CDCDR, SPDIF0_CLK_PODF),
 	CLK_DIV("audio_pred", "audio_sel", CDCDR, SPDIF1_CLK_PRED),
 	CLK_DIV("audio_podf", "audio_pred", CDCDR, SPDIF1_CLK_PODF),
-//#	CLK_DIV("ecspi_root", "pll3_60m", CSCDR2, ECSPI_CLK_PODF),
-//#	CLK_DIV("can_root", "pll3_60m", CSCMR2, CAN_CLK_PODF),
 	CLK_DIV("vid_podf", "vid_sel", CSCMR2, VID_CLK_PODF),
 	CLK_DIV("can_podf", "can_sel", CSCMR2, CAN_CLK_PODF),
-//#	CLK_DIV("uart_serial_podf", "pll3_80m", CSCDR1, UART_CLK_PODF),
-//#	CLK_DIV("gpu2d_core_podf", "gpu2d_core_sel", CBCMR, GPU2D_CORE_CLK_PODF),
-//#	CLK_DIV("gpu3d_core_podf", "gpu3d_core_sel", CBCMR, GPU3D_CORE_PODF),
-//#	CLK_DIV("gpu3d_shader", "gpu3d_shader_sel", CBCMR, GPU3D_SHADER_PODF),
 	CLK_DIV("display_podf", "display_sel", CSCDR3, IPU2_HSP_PODF),
 	CLK_DIV("csi_podf", "csi_sel", CSCDR3, IPU1_HSP_PODF),
-//#	CLK_DIV("ipu1_podf", "ipu1_sel", CSCDR3, IPU1_HSP_PODF),
-//#	CLK_DIV("ipu2_podf", "ipu2_sel", CSCDR3, IPU2_HSP_PODF),
-//#	CLK_DIV("ldb_di0_podf", "ldb_di0_div_3_5", CSCMR2, LDB_DI0_IPU_DIV),
-//#	CLK_DIV("ldb_di1_podf", "ldb_di1_div_3_5", CSCMR2, LDB_DI1_IPU_DIV),
 	CLK_DIV("enet_podf", "enet_pre_sel", CHSCCDR, IPU1_DI1_PODF),
 	CLK_DIV("m4_podf", "m4_sel", CHSCCDR, IPU1_DI0_PODF),
-//#	CLK_DIV("ipu1_di0_pre", "ipu1_di0_pre_sel", CHSCCDR, IPU1_DI0_PODF),
-//#	CLK_DIV("ipu1_di1_pre", "ipu1_di1_pre_sel", CHSCCDR, IPU1_DI1_PODF),
 	CLK_DIV("ecspi_podf", "ecspi_sel", CSCDR2, ECSPI_CLK_PODF),
 	CLK_DIV("lcdif1_pred", "lcdif1_pre_sel", CSCDR2, IPU2_DI1_PODF),
 	CLK_DIV("lcdif2_pred", "lcdif2_pre_sel", CSCDR2, IPU2_DI0_PODF),
-//#	CLK_DIV("ipu2_di0_pre", "ipu2_di0_pre_sel", CSCDR2, IPU2_DI0_PODF),
-//#	CLK_DIV("ipu2_di1_pre", "ipu2_di1_pre_sel", CSCDR2, IPU2_DI1_PODF),
-//#	CLK_DIV("hsi_tx_podf", "hsi_tx_sel", CDCDR, HSI_TX_PODF),
 	CLK_DIV("ssi1_pred", "ssi1_sel", CS1CDR, SSI1_CLK_PRED),
 	CLK_DIV("ssi1_podf", "ssi1_pred", CS1CDR, SSI1_CLK_PODF),
 	CLK_DIV("ssi2_pred", "ssi2_sel", CS2CDR, SSI2_CLK_PRED),
@@ -1069,32 +1047,24 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_DIV("uart_podf", "uart_sel", CSCDR1, UART_CLK_PODF),
 	CLK_DIV("qspi2_pred", "qspi2_sel", CS2CDR, ENFC_CLK_PRED),
 	CLK_DIV("qspi2_podf", "qspi2_pred", CS2CDR, ENFC_CLK_PODF),
-//#	CLK_DIV("enfc_pred", "enfc_sel", CS2CDR, ENFC_CLK_PRED),
-//#	CLK_DIV("enfc_podf", "enfc_pred", CS2CDR, ENFC_CLK_PODF),
-//#	CLK_DIV("vpu_axi_podf", "vpu_axi_sel", CSCDR1, VPU_AXI_PODF),
 	CLK_DIV("cko1_podf", "cko1_sel", CCOSR, CLKO1_DIV),
 	CLK_DIV("cko2_podf", "cko2_sel", CCOSR, CLKO2_DIV),
-//#	CLK_DIV("ipg_per", "ipg", CSCMR1, PERCLK_PODF),
-//#	CLK_DIV("eim_podf", "eim_sel", CSCMR1, ACLK_PODF),
 	CLK_DIV("qspi1_podf", "qspi1_sel", CSCMR1, QSPI1_PODF),
 	CLK_DIV("eim_slow_podf", "eim_slow_sel", CSCMR1, ACLK_EIM_SLOW_PODF),
 	CLK_DIV("lcdif2_podf", "lcdif2_pred", CSCMR1, ACLK_PODF),
 	CLK_DIV("perclk", "perclk_sel", CSCMR1, PERCLK_PODF),
-//#
-//#	CLK_DIV_BUSY("axi", "axi_sel", CBCDR, AXI_PODF, CDHIPR, AXI_PODF_BUSY),
-//#	CLK_DIV_BUSY("mmdc_ch0_axi_podf", "periph", CBCDR, MMDC_CH0_AXI_PODF, CDHIPR, MMDC_CH0_PODF_BUSY),
-//#	CLK_DIV_BUSY("mmdc_ch1_axi_podf", "periph2", CBCDR, MMDC_CH1_AXI_PODF, CDHIPR, MMDC_CH1_PODF_BUSY),
+
 	CLK_DIV_BUSY("arm", "pll1_sw", CACRR, ARM_PODF, CDHIPR, ARM_PODF_BUSY),
 	CLK_DIV_BUSY("ahb", "periph", CBCDR, AHB_PODF, CDHIPR, AHB_PODF_BUSY),
 	CLK_DIV_BUSY("mmdc_podf", "periph2", CBCDR, MMDC_CH1_AXI_PODF, CDHIPR, MMDC_CH1_PODF_BUSY),
-//#
+
 	CLK_DIV_TABLE("pll4_post_div", "pll4_audio", PLL_AUDIO, POST_DIV_SELECT, post_div_tbl),
 	CLK_DIV_TABLE("pll4_audio_div", "pll4_post_div", MISC2, AUDIO_DIV_LSB, audiovideo_div_tbl),
 	CLK_DIV_TABLE("pll5_post_div", "pll5_video", PLL_VIDEO, POST_DIV_SELECT, post_div_tbl),
 	CLK_DIV_TABLE("pll5_video_div", "pll5_post_div", MISC2, VIDEO_DIV, audiovideo_div_tbl),
 	CLK_DIV_TABLE("enet_ref", "pll6_enet", PLL_ENET, DIV_SELECT, enet_ref_tbl),
 	CLK_DIV_TABLE("enet2_ref", "pll6_enet", PLL_ENET, DIV2_SELECT, enet_ref_tbl),
-//#
+
 	CLK_MUX("step", step_p, CCM, CCSR, STEP_SEL),
 	CLK_MUX("pll1_sw", pll1_sw_p, CCM, CCSR, PLL1_SW_CLK_SEL),
 	CLK_MUX("ocram_sel", ocram_p, CCM, CBCDR, AXI_SEL),
@@ -1102,21 +1072,14 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_MUX("periph2_pre", periph2_pre_p, CCM, CBCMR, PRE_PERIPH2_CLK_SEL),
 	CLK_MUX("periph_clk2_sel", periph_clk2_p, CCM,CBCMR, PERIPH_CLK2_SEL),
 	CLK_MUX("periph2_clk2_sel", periph2_clk2_p, CCM,CBCMR, PERIPH2_CLK2_SEL),
-//#	CLK_MUX("axi_sel", axi_p, CCM, CBCDR, AXI_SEL),
-//#	CLK_MUX("asrc_sel", audio_p, CCM, CDCDR, SPDIF1_CLK_SEL),
 	CLK_MUX("spdif_sel", audio_p, CCM, CDCDR, SPDIF0_CLK_SEL),
 	CLK_MUX("audio_sel", audio_p, CCM, CDCDR, SPDIF1_CLK_SEL),
-//#	CLK_MUX("gpu2d_core_sel", gpu2d_core_p, CCM, CBCMR, GPU2D_CLK_SEL),
-//#	CLK_MUX("gpu3d_core_sel", gpu3d_core_p, CCM, CBCMR, GPU3D_CORE_CLK_SEL),
-//#	CLK_MUX("gpu3d_shader_sel", gpu3d_shader_p, CCM,CBCMR, GPU3D_SHADER_CLK_SEL),
 	CLK_MUX("vid_sel", vid_p, CCM, CSCMR2, VID_CLK_SEL),
 	CLK_MUX("esai_sel", audio_p, CCM, CSCMR2, ESAI_CLK_SEL),
 	CLK_MUX("ldb_di0_div_sel", ldb_di0_div_p, CCM, CSCMR2, LDB_DI0_IPU_DIV),
 	CLK_MUX("ldb_di1_div_sel", ldb_di1_div_p, CCM, CSCMR2, LDB_DI1_IPU_DIV),
 	CLK_MUX("can_sel", can_p, CCM, CSCMR2, CAN_CLK_SEL),
 	CLK_MUX("uart_sel", uart_p, CCM, CSCDR1, UART_CLK_SEL),
-//#	CLK_MUX("ipu1_sel", ipu_p, CCM, CSCDR3, IPU1_HSP_CLK_SEL),
-//#	CLK_MUX("ipu2_sel", ipu_p, CCM, CSCDR3, IPU2_HSP_CLK_SEL),
 	CLK_MUX("enet_pre_sel", enet_pre_p, CCM, CHSCCDR, ENET_PRE_CLK_SEL),
 	CLK_MUX("enet_sel", enet_p, CCM, CHSCCDR, ENET_CLK_SEL),
 	CLK_MUX("m4_pre_sel", m4_pre_p, CCM, CHSCCDR, M4_PRE_CLK_SEL),
@@ -1129,23 +1092,12 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_MUX("lcdif2_sel", lcdif2_p, CCM, CSCDR2, IPU2_DI0_CLK_SEL),
 	CLK_MUX("display_sel", display_p, CCM, CSCDR3, IPU2_HSP_CLK_SEL),
 	CLK_MUX("csi_sel", csi_p, CCM, CSCDR3, IPU1_HSP_CLK_SEL),
-//#	CLK_MUX("ipu1_di0_pre_sel", ipu_di_pre_p, CCM, CHSCCDR, IPU1_DI0_PRE_CLK_SEL),
-//#	CLK_MUX("ipu1_di1_pre_sel", ipu_di_pre_p, CCM, CHSCCDR, IPU1_DI1_PRE_CLK_SEL),
-//#	CLK_MUX("ipu2_di0_pre_sel", ipu_di_pre_p, CCM, CSCDR2, IPU2_DI0_PRE_CLK_SEL),
-//#	CLK_MUX("ipu2_di1_pre_sel", ipu_di_pre_p, CCM, CSCDR2, IPU2_DI1_PRE_CLK_SEL),
-//#	CLK_MUX("ipu1_di0_sel", ipu1_di0_p, CCM, CHSCCDR, IPU1_DI0_CLK_SEL),
-//#	CLK_MUX("ipu1_di1_sel", ipu1_di1_p, CCM, CHSCCDR, IPU1_DI1_CLK_SEL),
-//#	CLK_MUX("ipu2_di0_sel", ipu2_di0_p, CCM, CSCDR2, IPU2_DI0_CLK_SEL),
-//#	CLK_MUX("ipu2_di1_sel", ipu2_di1_p, CCM, CSCDR2, IPU2_DI1_CLK_SEL),
 	CLK_MUX("qspi2_sel", qspi2_p, CCM, CS2CDR, QSPI2_CLK_SEL),
 	CLK_MUX("ldb_di0_sel", ldb_di0_p, CCM, CS2CDR, LDB_DI0_CLK_SEL),
 	CLK_MUX("ldb_di1_sel", ldb_di1_p, CCM, CS2CDR, LDB_DI1_CLK_SEL),
-//#	CLK_MUX("vdo_axi_sel", vdo_axi_p, CCM, CBCMR, VDOAXI_CLK_SEL),
-//#	CLK_MUX("vpu_axi_sel", vpu_axi_p, CCM, CBCMR, VPU_AXI_CLK_SEL),
 	CLK_MUX("cko1_sel", cko1_p, CCM, CCOSR, CLKO1_SEL),
 	CLK_MUX("cko2_sel", cko2_p, CCM, CCOSR, CLKO2_SEL),
 	CLK_MUX("cko", cko_p, CCM, CCOSR, CLK_OUT_SEL),
-//#	CLK_MUX("hsi_tx_sel", hsi_tx_p, CCM, CDCDR, HSI_TX_CLK_SEL),
 	CLK_MUX("pcie_axi_sel", pcie_axi_p, CCM, CBCMR, PCIE_AXI_CLK_SEL),
 	CLK_MUX("gpu_axi_sel", gpu_axi_p, CCM, CBCMR, GPU3D_SHADER_CLK_SEL),
 	CLK_MUX("gpu_core_sel", gpu_core_p, CCM, CBCMR, GPU3D_CORE_CLK_SEL),
@@ -1158,10 +1110,7 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_MUX("usdhc4_sel", usdhc_p, CCM, CSCMR1, USDHC4_CLK_SEL),
 	CLK_MUX("qspi1_sel", qspi1_p, CCM, CSCMR1, QSOI1_SEL),
 	CLK_MUX("perclk_sel", perclk_p, CCM, CSCMR1, PERCLK_SEL),
-//#	CLK_MUX("eim_sel", eim_p, CCM, CSCMR1, ACLK_SEL),
 	CLK_MUX("eim_slow_sel", eim_slow_p, CCM, CSCMR1, ACLK_EIM_SLOW_SEL),
-//#	CLK_MUX("enfc_sel", enfc_p, CCM, CS2CDR, ENFC_CLK_SEL),
-//#
 	CLK_MUX("pll1_bypass_src", pll_bypass_src_p, CCM_ANALOG, PLL_ARM, BYPASS_CLK_SRC_6SX),
 	CLK_MUX("pll2_bypass_src", pll_bypass_src_p, CCM_ANALOG, PLL_SYS, BYPASS_CLK_SRC_6SX),
 	CLK_MUX("pll3_bypass_src", pll_bypass_src_p, CCM_ANALOG, PLL_USB1, BYPASS_CLK_SRC_6SX),
@@ -1179,14 +1128,13 @@ static struct imx6_clk imx6sx_clks[] = {
 
 	CLK_MUX("lvds1_sel", lvds_p, CCM_ANALOG, MISC1, LVDS_CLK1_SRC),
 	CLK_MUX("lvds2_sel", lvds_p, CCM_ANALOG, MISC1, LVDS_CLK2_SRC),
-//#
+
 	CLK_MUX_BUSY("periph", periph_p, CBCDR, PERIPH_CLK_SEL, CDHIPR, PERIPH_CLK_SEL_BUSY),
 	CLK_MUX_BUSY("periph2", periph2_p, CBCDR, PERIPH2_CLK_SEL, CDHIPR, PERIPH2_CLK_SEL_BUSY),
-//#
+
 	CLK_GATE("aips_tz1", "ahb", CCM, CCGR0, AIPS_TZ1_CLK_ENABLE),
 	CLK_GATE("aips_tz2", "ahb", CCM, CCGR0, AIPS_TZ2_CLK_ENABLE),
 	CLK_GATE("apbh_dma", "usdhc3", CCM, CCGR0, APBHDMA_HCLK_ENABLE),
-//#	CLK_GATE("asrc", "asrc_podf", CCM, CCGR0, ASRC_CLK_ENABLE),
 	CLK_GATE("asrc_ipg", "ahb", CCM, CCGR0, ASRC_CLK_ENABLE),
 	CLK_GATE("asrc_mem", "ahb", CCM, CCGR0, ASRC_CLK_ENABLE),
 	CLK_GATE("caam_mem", "ahb", CCM, CCGR0, CAAM_SECURE_MEM_CLK_ENABLE),
@@ -1212,13 +1160,10 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_GATE("wakeup", "ipg", CCM, CCGR1, WAKEUP_CLK_ENABLE),
 	CLK_GATE("gpt_bus", "perclk", CCM, CCGR1, GPT_CLK_ENABLE),
 	CLK_GATE("gpt_serial", "perclk", CCM, CCGR1, GPT_SERIAL_CLK_ENABLE),
-//#	CLK_GATE("gpu2d_core", "gpu2d_core_podf", CCM, CCGR1, GPU2D_CLK_ENABLE),
 	CLK_GATE("gpu", "gpu_core_podf", CCM, CCGR1, GPU3D_CLK_ENABLE),
 	CLK_GATE("ocram_s", "ahb", CCM, CCGR1, OCRAM_CLK_ENABLE),
 	CLK_GATE("canfd", "can_podf", CCM, CCGR1, CANFD_CLK_ENABLE),
 	CLK_GATE("csi", "csi_podf", CCM, CCGR2, CSI_CLK_ENABLE),
-//#	CLK_GATE("hdmi_iahb", "ahb", CCM, CCGR2, HDMI_TX_IAHBCLK_ENABLE),
-//#	CLK_GATE("hdmi_isfr", "video_27m", CCM, CCGR2, HDMI_TX_ISFRCLK_ENABLE),
 	CLK_GATE("i2c1", "perclk", CCM, CCGR2, I2C1_SERIAL_CLK_ENABLE),
 	CLK_GATE("i2c2", "perclk", CCM, CCGR2, I2C2_SERIAL_CLK_ENABLE),
 	CLK_GATE("i2c3", "perclk", CCM, CCGR2, I2C3_SERIAL_CLK_ENABLE),
@@ -1230,7 +1175,6 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_GATE("tzasc1", "mmdc_podf", CCM, CCGR2, IPSYNC_IP2APB_TZASC1_IPG_CLK_ENABLE),
 	CLK_GATE("lcdif_apb", "display_podf", CCM, CCGR2, LCDIF_APB_CLK_ENABLE),
 	CLK_GATE("pxp_axi", "display_podf", CCM, CCGR2, PXP_AXI_CLK_ENABLE),
-//#	CLK_GATE("vdoa", "vdo_axi", CCM, CCGR2, IPSYNC_VDOA_IPG_CLK_ENABLE),
 	CLK_GATE("enet", "ipg", CCM, CCGR3, IPU1_IPU_DI1_CLK_ENABLE),
 	CLK_GATE("enet_ahb", "enet_sel", CCM, CCGR3, IPU1_IPU_DI1_CLK_ENABLE),
 	CLK_GATE("m4", "m4_podf", CCM, CCGR3, IPU1_IPU_DI0_CLK_ENABLE),
@@ -1242,21 +1186,8 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_GATE("mlb", "ahb", CCM, CCGR3, MLB_CLK_ENABLE),
 	CLK_GATE("mmdc_p0_fast", "mmdc_podf", CCM, CCGR3, MMDC_CORE_ACLK_FAST_CORE_P0_ENABLE),
 	CLK_GATE("mmdc_p0_ipg", "ipg", CCM, CCGR3, MMDC_CORE_IPG_CLK_P0_ENABLE),
-//#	CLK_GATE("ipu1", "ipu1_podf", CCM, CCGR3, IPU1_IPU_CLK_ENABLE),
-//#	CLK_GATE("ipu1_di0", "ipu1_di0_sel", CCM, CCGR3, IPU1_IPU_DI0_CLK_ENABLE),
-//#	CLK_GATE("ipu1_di1", "ipu1_di1_sel", CCM, CCGR3, IPU1_IPU_DI1_CLK_ENABLE),
-//#	CLK_GATE("ipu2", "ipu2_podf", CCM, CCGR3, IPU2_IPU_CLK_ENABLE),
-//#	CLK_GATE("ipu2_di0", "ipu2_di0_sel", CCM, CCGR3, IPU2_IPU_DI0_CLK_ENABLE),
-//#	CLK_GATE("ldb_di1", "ldb_di1_podf", CCM, CCGR3, LDB_DI1_CLK_ENABLE),
-//#	CLK_GATE("ipu2_di1", "ipu2_di1_sel", CCM, CCGR3, IPU2_IPU_DI1_CLK_ENABLE),
-//#	CLK_GATE("hsi_tx", "hsi_tx_podf", CCM, CCGR3, MIPI_CORE_CFG_CLK_ENABLE),
-//#	CLK_GATE("mipi_core_cfg", "video_27m", CCM, CCGR3, MIPI_CORE_CFG_CLK_ENABLE),
-//#	CLK_GATE("mipi_ipg", "ipg", CCM, CCGR3, MIPI_CORE_CFG_CLK_ENABLE),
-//#	CLK_GATE("mmdc_ch0_axi", "mmdc_ch0_axi_podf", CCM, CCGR3, MMDC_CORE_ACLK_FAST_CORE_P0_ENABLE),
-//#	CLK_GATE("mmdc_ch1_axi", "mmdc_ch1_axi_podf", CCM, CCGR3, MMDC_CORE_ACLK_FAST_CORE_P1_ENABLE),
 	CLK_GATE("mmdc_p1_ipg", "ipg", CCM, CCGR3, MMDC_P1_IPG_CLK_ENABLE),
 	CLK_GATE("ocram", "ahb", CCM, CCGR3, OCRAM_CLK_ENABLE),
-//#	CLK_GATE("openvg_axi", "axi", CCM, CCGR3, OPENVGAXICLK_CLK_ROOT_ENABLE),
 	CLK_GATE("pcie_axi", "display_podf", CCM, CCGR4, PCIE_ROOT_ENABLE),
 	CLK_GATE("qspi2", "qspi2_podf", CCM, CCGR4, QSPI2_ENABLE),
 	CLK_GATE("per1_bch", "usdhc3", CCM, CCGR4, PL301_MX6QPER1_BCHCLK_ENABLE),
@@ -1270,7 +1201,6 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_GATE("gpmi_io", "qspi2_podf", CCM, CCGR4, RAWNAND_U_GPMI_BCH_INPUT_GPMI_IO_CLK_ENABLE),
 	CLK_GATE("gpmi_apb", "usdhc3", CCM, CCGR4, RAWNAND_U_GPMI_INPUT_APB_CLK_ENABLE),
 	CLK_GATE("rom", "ahb", CCM, CCGR5, ROM_CLK_ENABLE),
-//#	CLK_GATE("sata", "ahb", CCM, CCGR5, SATA_CLK_ENABLE),
 	CLK_GATE("sdma", "ahb", CCM, CCGR5, SDMA_CLK_ENABLE),
 	CLK_GATE("spba", "ipg", CCM, CCGR5, SPBA_CLK_ENABLE),
 	CLK_GATE("audio", "audio_podf", CCM, CCGR5, SPDIF_CLK_ENABLE),
@@ -1301,16 +1231,11 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_GATE("pwm5", "perclk", CCM, CCGR6, PWM5_CLK_ENABLE),
 	CLK_GATE("pwm6", "perclk", CCM, CCGR6, PWM6_CLK_ENABLE),
 	CLK_GATE("pwm7", "perclk", CCM, CCGR6, PWM7_CLK_ENABLE),
-//#	CLK_GATE("vdo_axi", "vdo_axi_sel", CCM, CCGR6, VDOAXICLK_CLK_ENABLE),
-//#	CLK_GATE("vpu_axi", "vpu_axi_podf", CCM, CCGR6, VPU_CLK_ENABLE),
 	CLK_GATE("cko1", "cko1_podf", CCM, CCOSR, CLKO1_EN),
 	CLK_GATE("cko2", "cko2_podf", CCM, CCOSR, CLKO2_EN),
-//#
-//#	CLK_GATE("sata_ref_100m", "sata_ref", CCM_ANALOG, PLL_ENET, ENABLE_100M),
 	CLK_GATE("enet_ptp_25m", "enet_ptp_ref", CCM_ANALOG, PLL_ENET, ENET_25M_REF_EN),
 	CLK_GATE("enet2_ref_125m", "enet2_ref", CCM_ANALOG, PLL_ENET, ENABLE_100M),
 	CLK_GATE("pcie_ref_125m", "pcie_ref", CCM_ANALOG, PLL_ENET, ENABLE_125M),
-//#
 	CLK_GATE("pll1_sys", "pll1_bypass", CCM_ANALOG, PLL_ARM, ENABLE),
 	CLK_GATE("pll2_bus", "pll2_bypass", CCM_ANALOG, PLL_SYS, ENABLE),
 	CLK_GATE("pll3_usb_otg", "pll3_bypass", CCM_ANALOG, PLL_USB1, ENABLE),
@@ -1323,11 +1248,9 @@ static struct imx6_clk imx6sx_clks[] = {
 	CLK_GATE("usbphy2", "pll7_usb_host", CCM_ANALOG, PLL_USB2, RESERVED),
 	CLK_GATE("usbphy1_gate", "dummy", CCM_ANALOG, PLL_USB2, EN_USB_CLK),
 	CLK_GATE("usbphy2_gate", "dummy", CCM_ANALOG, PLL_USB2, EN_USB_CLK),
-//#
+
 	CLK_GATE_EXCLUSIVE("lvds2_out", "lvds2_sel", CCM_ANALOG, MISC1, LVDS_CLK2_OBEN, LVDS_CLK2_IBEN),
 	CLK_GATE_EXCLUSIVE("lvds2_in", "anaclk2", CCM_ANALOG, MISC1, LVDS_CLK2_IBEN, LVDS_CLK2_OBEN),
-//#	CLK_GATE_EXCLUSIVE("lvds1_gate", "lvds1_sel", CCM_ANALOG, MISC1, LVDS_CLK1_OBEN, LVDS_CLK1_IBEN),
-//#	CLK_GATE_EXCLUSIVE("lvds2_gate", "lvds2_sel", CCM_ANALOG, MISC1, LVDS_CLK2_OBEN, LVDS_CLK2_IBEN),
 	CLK_GATE_EXCLUSIVE("lvds1_in", "anaclk1", CCM_ANALOG, MISC1, LVDS_CLK1_IBEN, LVDS_CLK1_OBEN),
 };
 
