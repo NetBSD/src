@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.219 2023/04/20 00:42:23 manu Exp $	*/
+/*	$NetBSD: locore.S,v 1.220 2023/05/05 00:34:41 manu Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -156,6 +156,7 @@
 #include "opt_ddbparam.h"
 #include "opt_modular.h"
 #include "opt_realmem.h"
+#include "opt_selfreloc.h"
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -456,6 +457,7 @@ ENTRY(start)
 #ifndef XENPV
 	.code32
 
+#ifdef SELFRELOC
 	call	next
 next:	pop	%edi
 	sub     $(next - kernel_text), %edi 
@@ -463,6 +465,7 @@ next:	pop	%edi
 	/* If not KERNBASE, reloc ourselves to KERNBASE */
 	cmpl	$(KERNTEXTOFF_LO - KERNBASE_LO), %edi
 	jne	selfreloc_start
+#endif /* SELFRELOC */
 
 	/* Warm boot */
 	movw	$0x1234,0x472
@@ -1766,6 +1769,7 @@ LABEL(nomds_leave)
 	NOMDS_LEAVE
 LABEL(nomds_leave_end)
 
+#ifdef SELFRELOC
 /*
  * selfreloc(loadddr edi)
  * This is adapted from sys/arch/i386/i386/locore.S
@@ -1900,3 +1904,4 @@ gdtr:
 gdtrr:
 	.quad
 END(selfreloc_start)
+#endif /* SELFRELOC */
