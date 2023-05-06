@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2023/05/06 17:07:22 christos Exp $
+#	$NetBSD: Makefile,v 1.24 2023/05/06 17:21:51 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -295,7 +295,7 @@ x509v3.h
 .for i in ${GENH}
 $i: $i.in
 	${_MKTARGET_CREATE}
-	${.CURDIR}/../../gen ${.ALLSRC} > ${.TARGET}
+	${.CURDIR}/gen ${.ALLSRC} > ${.TARGET}
 .endfor
 
 .include <bsd.lib.mk>
