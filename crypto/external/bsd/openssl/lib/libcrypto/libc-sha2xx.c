@@ -3,10 +3,9 @@
  * of libc.
  */
 
+
 #include <string.h>
 #include <sys/sha2.h>
-
-#include "crypto/sha.h"
 
 static const uint64_t sha512_224_initial_hash_value[] = {
 	0x8c3d37c819544da2ULL,
@@ -30,6 +29,8 @@ static const uint64_t sha512_256_initial_hash_value[] = {
 	0x0eb72ddc81c52ca2ULL,
 };
 
+extern int
+sha512_224_init(SHA512_CTX *context);
 int
 sha512_224_init(SHA512_CTX *context)
 {
@@ -45,6 +46,8 @@ sha512_224_init(SHA512_CTX *context)
 
 }
 
+extern int
+sha512_256_init(SHA512_CTX *context);
 int
 sha512_256_init(SHA512_CTX *context)
 {

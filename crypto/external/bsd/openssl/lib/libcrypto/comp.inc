@@ -1,16 +1,14 @@
-#	$NetBSD: comp.inc,v 1.2 2018/02/08 21:57:24 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/comp/Makefile
-#
+#	$NetBSD: comp.inc,v 1.3 2023/05/06 17:07:22 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/comp
 
+COMP_SRCS += \
+c_zlib.c \
+comp_err.c \
+comp_lib.c \
 
-COMP_SRCS = comp_lib.c comp_err.c c_zlib.c
 SRCS += ${COMP_SRCS}
 
 .for cryptosrc in ${COMP_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/comp
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/comp ${COMPCPPFLAGS}
 .endfor

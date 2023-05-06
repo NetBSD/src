@@ -1,19 +1,17 @@
-#	$NetBSD: cast.inc,v 1.1 2009/07/19 23:30:43 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/cast/Makefile
-#
+#	$NetBSD: cast.inc,v 1.2 2023/05/06 17:07:22 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/cast
 
-.if !defined(CAST_SRCS)
-CAST_SRCS = c_enc.c
-.endif
+CAST_SRCS ?= c_enc.c
 
-CAST_SRCS += c_skey.c c_ecb.c c_cfb64.c c_ofb64.c 
+CAST_SRCS += \
+c_cfb64.c \
+c_ecb.c \
+c_ofb64.c \
+c_skey.c \
+
 SRCS += ${CAST_SRCS}
 
 .for cryptosrc in ${CAST_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/cast
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/cast ${CASTCPPFLAGS}
 .endfor

@@ -1,12 +1,9 @@
-#	$NetBSD: aria.inc,v 1.1 2018/09/23 13:33:04 christos Exp $
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/aria/Makefile
-#
+#	$NetBSD: aria.inc,v 1.2 2023/05/06 17:07:22 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/aria
 
-
-ARIA_SRCS += aria.c
+ARIA_SRCS += \
+aria.c \
 
 SRCS += ${ARIA_SRCS}
 
