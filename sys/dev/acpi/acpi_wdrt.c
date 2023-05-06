@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_wdrt.c,v 1.4 2015/04/23 23:23:00 pgoyette Exp $ */
+/* $NetBSD: acpi_wdrt.c,v 1.5 2023/05/06 21:34:40 andvar Exp $ */
 
 /*
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
 /* #define ACPIWDRT_DEBUG */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wdrt.c,v 1.4 2015/04/23 23:23:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wdrt.c,v 1.5 2023/05/06 21:34:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -142,7 +142,7 @@ acpi_wdrt_match(device_t parent, cfdata_t match, void *opaque)
 		return 0;
 	}
 
-	/* Read control regster */
+	/* Read control register */
 	rv = AcpiOsReadMemory(wdrt->ControlRegister.Address, &val,
 	    wdrt->ControlRegister.BitWidth);
 	if (ACPI_FAILURE(rv))

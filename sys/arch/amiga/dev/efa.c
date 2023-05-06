@@ -1,4 +1,4 @@
-/*	$NetBSD: efa.c,v 1.15 2017/10/20 07:06:06 jdolecek Exp $ */
+/*	$NetBSD: efa.c,v 1.16 2023/05/06 21:34:39 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@ efa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	if (!efa_mapreg_native(sc)) {
-		aprint_error_dev(self, "couldn't map FastATA regsters\n");
+		aprint_error_dev(self, "couldn't map FastATA registers\n");
 		return;
 	}
 

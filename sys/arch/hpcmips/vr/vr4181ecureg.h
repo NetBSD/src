@@ -1,4 +1,4 @@
-/* $NetBSD: vr4181ecureg.h,v 1.2 2008/04/28 20:23:22 martin Exp $ */
+/* $NetBSD: vr4181ecureg.h,v 1.3 2023/05/06 21:34:40 andvar Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,6 +37,6 @@
 #define ECU_SIZE		0x20	/* bus map size */
 #define ECU_INTSTAT_REG_W	0x18	/* interrupt status */
 #define ECU_INTMSK_REG_W	0x1a	/* interrupt mask */
-#define ECU_CFG_REG_1_W		0x1e	/* configuration regster 1 */
+#define ECU_CFG_REG_1_W		0x1e	/* configuration register 1 */
 
 #define ECU_MAX_INTR		16
