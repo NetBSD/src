@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.16 2019/10/15 18:20:44 msaitoh Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.17 2023/05/06 22:17:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -147,7 +147,7 @@
 
 
 /*
- * Special resister definition for Toshiba ToPIC95/97
+ * Special register definition for Toshiba ToPIC95/97
  * These values are borrowed from pcmcia-cs/Linux.
  */
 #define TOPIC_SOCKET_CTRL  0x90

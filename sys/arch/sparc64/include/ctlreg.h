@@ -1,4 +1,4 @@
-/*	$NetBSD: ctlreg.h,v 1.67 2019/11/13 10:06:38 nakayama Exp $ */
+/*	$NetBSD: ctlreg.h,v 1.68 2023/05/06 22:17:28 andvar Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -396,7 +396,7 @@
  * Interrupt registers.  This really gets hairy.
  */
 
-/* IRSR -- Interrupt Receive Status Ragister */
+/* IRSR -- Interrupt Receive Status Register */
 #define	ASI_IRSR	0x49
 #define	IRSR		0x00
 #define	IRSR_BUSY	0x020
