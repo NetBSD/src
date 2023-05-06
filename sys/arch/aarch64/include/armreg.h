@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.63 2022/12/01 00:32:52 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.64 2023/05/06 21:53:26 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -619,7 +619,7 @@ AARCH64REG_WRITE_INLINE3(APGAKeyHi_EL1, apgakeyhi_el1, ATTR_ARCH("armv8.3-a"))
 AARCH64REG_READ_INLINE3(pan, pan, ATTR_ARCH("armv8.1-a"))
 AARCH64REG_WRITE_INLINE3(pan, pan, ATTR_ARCH("armv8.1-a"))
 
-AARCH64REG_READ_INLINE(cpacr_el1)	// Coprocessor Access Control Regiser
+AARCH64REG_READ_INLINE(cpacr_el1)	// Coprocessor Access Control Register
 AARCH64REG_WRITE_INLINE(cpacr_el1)
 
 #define	CPACR_TTA		__BIT(28)	 // System Register Access Traps

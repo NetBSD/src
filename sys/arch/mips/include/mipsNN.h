@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsNN.h,v 1.13 2022/11/08 13:04:49 simonb Exp $	*/
+/*	$NetBSD: mipsNN.h,v 1.14 2023/05/06 21:53:26 andvar Exp $	*/
 
 /*
  * Copyright 2000, 2001
@@ -462,7 +462,7 @@
 /* "LLB" (R): Load-Linked Bit (LLB) is present in COP0 LLAddr. */
 #define	MIPSNN_CFG5_LLB					__BIT(4)
 
-/* "MRP" (R): COP0 Memory Accessibility Attributes Regisers are present. */
+/* "MRP" (R): COP0 Memory Accessibility Attributes Registers are present. */
 #define	MIPSNN_CFG5_MRP					__BIT(3)
 
 /* "UFR" (R): Allows user-mode access to Status[FR] using CTC1/CFC1. */

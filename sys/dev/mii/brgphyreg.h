@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphyreg.h,v 1.12 2020/05/25 19:48:38 jmcneill Exp $	*/
+/*	$NetBSD: brgphyreg.h,v 1.13 2023/05/06 21:53:26 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -237,7 +237,7 @@
 
 #define BRGPHY_5708S_BMCR_2500			0x20
 
-/* Autoneg Next Page Transmit 1 Regiser */
+/* Autoneg Next Page Transmit 1 Register */
 #define BRGPHY_5708S_ANEG_NXT_PG_XMIT1		0x0B
 #define BRGPHY_5708S_ANEG_NXT_PG_XMIT1_25G	0x0001
 
