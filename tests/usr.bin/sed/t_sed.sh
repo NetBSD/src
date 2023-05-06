@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.10 2023/05/06 02:07:42 gutteridge Exp $
+# $NetBSD: t_sed.sh,v 1.11 2023/05/06 02:12:11 gutteridge Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -175,6 +175,16 @@ escapes_in_re_bracket_body() {
 		-x 'echo "foo\\d88bar" | sed -e "s/[\d88]/ /g"'
 }
 
+atf_test_case relative_addressing
+relative_addressing_head() {
+	atf_set "descr" "Test that sed(1) handles relative addressing " \
+		"properly (PR bin/49109)"
+}
+
+relative_addressing_body() {
+	atf_check -o match:"3" -x 'seq 1 4 | sed -n "1,+2p" | wc -l'
+}
+
 atf_init_test_cases() {
 	atf_add_test_case c2048
 	atf_add_test_case emptybackref
@@ -184,4 +194,5 @@ atf_init_test_cases() {
 	atf_add_test_case escapes_in_subst
 	atf_add_test_case escapes_in_re
 	atf_add_test_case escapes_in_re_bracket
+	atf_add_test_case relative_addressing
 }
