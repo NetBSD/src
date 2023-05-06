@@ -1,4 +1,4 @@
-/*	$NetBSD: vrc4172gpio.c,v 1.17 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: vrc4172gpio.c,v 1.18 2023/05/06 21:34:40 andvar Exp $	*/
 /*-
  * Copyright (c) 2001 TAKEMRUA Shin. All rights reserved.
  *
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.17 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrc4172gpio.c,v 1.18 2023/05/06 21:34:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,7 +141,7 @@ CFATTACH_DECL_NEW(vrc4172gpio, sizeof(struct vrc4172gpio_softc),
     vrc4172gpio_match, vrc4172gpio_attach, NULL, NULL);
 
 /*
- * regster access method
+ * register access method
  */
 static inline u_int16_t
 read_2(struct vrc4172gpio_softc *sc, bus_addr_t off)

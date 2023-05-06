@@ -1,4 +1,4 @@
-/* $NetBSD: vga_subr.c,v 1.25 2012/08/09 20:25:05 uwe Exp $ */
+/* $NetBSD: vga_subr.c,v 1.26 2023/05/06 21:34:40 andvar Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.25 2012/08/09 20:25:05 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_subr.c,v 1.26 2023/05/06 21:34:40 andvar Exp $");
 
 /* for WSDISPLAY_BORDER_COLOR */
 #include "opt_wsdisplay_border.h"
@@ -348,7 +348,7 @@ static const uint8_t vga_atc[] = {
 };
 
 /* video DAC palette registers */
-/* XXX only set up 16 colors used by internal palette in ATC regsters */
+/* XXX only set up 16 colors used by internal palette in ATC registers */
 static const uint8_t vga_dacpal[] = {
 	/* R     G     B */
 	0x00, 0x00, 0x00,	/* BLACK        */
@@ -379,23 +379,23 @@ vga_initregs(struct vga_handle *vh)
 
 	/* synchronous reset */
 	vga_ts_write(vh, syncreset, 0x01);
-	/* set TS regsters */
+	/* set TS registers */
 	for (i = 2; i < VGA_TS_NREGS; i++)
 		_vga_ts_write(vh, i, vga_ts[i]);
 	/* clear synchronous reset */
 	vga_ts_write(vh, syncreset, 0x03);
 
-	/* unprotect CRTC regsters */
+	/* unprotect CRTC registers */
 	vga_6845_write(vh, vsynce, vga_6845_read(vh, vsynce) & ~0x80);
-	/* set CRTC regsters */
+	/* set CRTC registers */
 	for (i = 0; i < MC6845_NREGS; i++)
 		_vga_6845_write(vh, i, vga_crtc[i]);
 
-	/* set GDC regsters */
+	/* set GDC registers */
 	for (i = 0; i < VGA_GDC_NREGS; i++)
 		_vga_gdc_write(vh, i, vga_gdc[i]);
 
-	/* set ATC regsters */
+	/* set ATC registers */
 	for (i = 0; i < VGA_ATC_NREGS; i++)
 		_vga_attr_write(vh, i, vga_atc[i]);
 

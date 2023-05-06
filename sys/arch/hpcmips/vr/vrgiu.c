@@ -1,4 +1,4 @@
-/*	$NetBSD: vrgiu.c,v 1.47 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: vrgiu.c,v 1.48 2023/05/06 21:34:40 andvar Exp $	*/
 /*-
  * Copyright (c) 1999-2001
  *         Shin Takemura and PocketBSD Project. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.47 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrgiu.c,v 1.48 2023/05/06 21:34:40 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,7 +412,7 @@ vrgiu_dump_regs(struct vrgiu_softc *sc)
 	printf(" INTHTSEL: %08x\n", vrgiu_regread_4(sc, GIUINTHTSEL_REG));
 }
 /*
- * GIU regster access method.
+ * GIU register access method.
  */
 u_int32_t
 vrgiu_regread_4(struct vrgiu_softc *sc, bus_addr_t offs)
