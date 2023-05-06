@@ -156,7 +156,7 @@ s3c2440_i2s_init(struct s3c2440_i2s_softc *i2s_sc)
 	reg = GPIO_SET_FUNC(reg, 4, 2);
 	bus_space_write_4(sc->sc_iot, sc->sc_gpio_ioh, GPIO_PECON, reg);
 
-	/* Disable Pull-up resister for all I2S pins */
+	/* Disable Pull-up resistor for all I2S pins */
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_gpio_ioh, GPIO_PEUP);
 
 	reg = GPIO_SET_DATA(reg, 0, 1);

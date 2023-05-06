@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xxreg.h,v 1.5 2022/12/30 20:25:56 andvar Exp $	*/
+/*	$NetBSD: cd18xxreg.h,v 1.6 2023/05/06 22:17:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -259,7 +259,7 @@
 #define	CD18xx_RBR_RxD		0x40	/* last RxD input */
 #define	CD18xx_RBR_STARTHUNT	0x20	/* hunting for a start bit */
 
-/* bit rate period resisters */
+/* bit rate period registers */
 #define CD18xx_xBRPR_TPC	0x10	/* ticks per character */
 
 /* mode change register */
