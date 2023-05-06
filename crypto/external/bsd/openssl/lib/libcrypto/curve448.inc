@@ -1,10 +1,10 @@
-#	$NetBSD: curve448.inc,v 1.2 2018/09/23 21:43:00 christos Exp $
+#	$NetBSD: curve448.inc,v 1.3 2023/05/06 17:07:22 christos Exp $
 #
 #	SRCS extracted from src/crypto/dist/openssl/crypto/ec/curve448
 #
 
 CURVE448=${OPENSSLSRC}/crypto/ec/curve448
-.PATH:	${CURVE448} ${CURVE448}/arch_32
+.PATH:	${CURVE448} ${CURVE448}/arch_32 ${CURVE448}/arch_64
 
 
 CURVE448_SRCS += \
@@ -12,7 +12,8 @@ curve448.c \
 curve448_tables.c \
 eddsa.c \
 f_generic.c \
-f_impl.c \
+f_impl32.c \
+f_impl64.c \
 scalar.c
 
 SRCS += ${CURVE448_SRCS}

@@ -1,4 +1,4 @@
-#	$NetBSD: srcs.inc,v 1.6 2018/09/23 13:33:04 christos Exp $
+#	$NetBSD: srcs.inc,v 1.7 2023/05/06 17:07:23 christos Exp $
 
 CRYPTOINCS= \
 aes.inc \
@@ -14,9 +14,11 @@ camellia.inc \
 cast.inc \
 chacha.inc \
 cmac.inc \
+cmp.inc \
 cms.inc \
 comp.inc \
 conf.inc \
+crmf.inc \
 crypto.inc \
 ct.inc \
 curve448.inc \
@@ -25,14 +27,17 @@ dh.inc \
 dsa.inc \
 dso.inc \
 ec.inc \
+encode_decode.inc \
 engine.inc \
 err.inc \
+ess.inc \
 evp.inc \
+ffc.inc \
 hmac.inc \
+http.inc \
 idea.inc \
 kdf.inc \
 lhash.inc \
-md2.inc \
 md4.inc \
 md5.inc \
 mdc2.inc \
@@ -43,6 +48,9 @@ pem.inc \
 pkcs12.inc \
 pkcs7.inc \
 poly1305.inc \
+pqueue.inc \
+property.inc \
+providers.inc \
 rand.inc \
 rc2.inc \
 rc4.inc \
@@ -62,10 +70,6 @@ txt_db.inc \
 ui.inc \
 whrlpool.inc \
 x509.inc \
-x509v3.inc \
-
-# patented algorithms - see ../libcrypto_*
-CRYPTOINCS+=	rc5.inc
 
 CRYPTOINCS+=	man.inc
 

@@ -1,14 +1,13 @@
-#	$NetBSD: srp.inc,v 1.1 2011/06/05 23:09:50 spz Exp $
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/srp/Makefile
-#
+#	$NetBSD: srp.inc,v 1.2 2023/05/06 17:07:23 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/srp
 
+SRP_SRCS += \
+srp_lib.c \
+srp_vfy.c \
 
-SRP_SRCS = srp_lib.c srp_vfy.c
 SRCS += ${SRP_SRCS}
 
 .for cryptosrc in ${SRP_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/srp
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/srp ${SRPCPPFLAGS}
 .endfor

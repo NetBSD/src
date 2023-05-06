@@ -1,14 +1,9 @@
-#	$NetBSD: evp.inc,v 1.10 2020/05/09 13:16:41 nia Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/evp/Makefile
-#
+#	$NetBSD: evp.inc,v 1.11 2023/05/06 17:07:23 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/evp
 
-
-EVP_SRCS = \
+EVP_SRCS += \
+asymcipher.c \
 bio_b64.c \
 bio_enc.c \
 bio_md.c \
@@ -16,7 +11,11 @@ bio_ok.c \
 c_allc.c \
 c_alld.c \
 cmeth_lib.c \
+ctrl_params_translate.c \
+dh_ctrl.c \
+dh_support.c \
 digest.c \
+dsa_ctrl.c \
 e_aes.c \
 e_aes_cbc_hmac_sha1.c \
 e_aes_cbc_hmac_sha256.c \
@@ -37,54 +36,56 @@ e_rc5.c \
 e_seed.c \
 e_sm4.c \
 e_xcbc_d.c \
+ec_ctrl.c \
+ec_support.c \
 encode.c \
 evp_cnf.c \
 evp_enc.c \
 evp_err.c \
+evp_fetch.c \
 evp_key.c \
 evp_lib.c \
 evp_pbe.c \
 evp_pkey.c \
-m_md2.c \
-m_md4.c \
-m_md5.c \
-m_md5_sha1.c \
-m_mdc2.c \
+evp_rand.c \
+evp_utils.c \
+exchange.c \
+kdf_lib.c \
+kdf_meth.c \
+kem.c \
+keymgmt_lib.c \
+keymgmt_meth.c \
+legacy_blake2.c \
+legacy_md4.c \
+legacy_md5.c \
+legacy_md5_sha1.c \
+legacy_mdc2.c \
+legacy_ripemd.c \
+legacy_sha.c \
+legacy_wp.c \
 m_null.c \
-m_ripemd.c \
-m_sha1.c \
-m_sha3.c \
 m_sigver.c \
-m_wp.c \
+mac_lib.c \
+mac_meth.c \
 names.c \
 p5_crpt.c \
 p5_crpt2.c \
 p_dec.c \
 p_enc.c \
+p_legacy.c \
 p_lib.c \
 p_open.c \
 p_seal.c \
 p_sign.c \
 p_verify.c \
 pbe_scrypt.c \
-pmeth_fn.c \
+pmeth_check.c \
 pmeth_gn.c \
 pmeth_lib.c \
-scrypt.c
+signature.c \
 
 SRCS += ${EVP_SRCS}
 
 .for cryptosrc in ${EVP_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/evp
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/evp ${EVPCPPFLAGS}
 .endfor
-
-EVP_AES_SRCS = e_aes.c
-
-# XXX Should do this too, but it requires some other asm changes.
-#EVP_AES_SRCS += e_aes_cbc_hmac_sha1.c
-
-.for cryptosrc in ${EVP_AES_SRCS}
-CPPFLAGS.${cryptosrc} += ${AESCPPFLAGS}
-.endfor
-
-CPPFLAGS.e_aes.c += -I${OPENSSLSRC}/crypto/modes

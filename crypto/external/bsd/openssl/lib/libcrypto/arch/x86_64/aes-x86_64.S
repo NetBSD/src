@@ -3,6 +3,7 @@
 .type	_x86_64_AES_encrypt,@function
 .align	16
 _x86_64_AES_encrypt:
+.cfi_startproc	
 	xorl	0(%r15),%eax
 	xorl	4(%r15),%ebx
 	xorl	8(%r15),%ecx
@@ -152,10 +153,12 @@ _x86_64_AES_encrypt:
 	xorl	%r12d,%ecx
 	xorl	%r8d,%edx
 .byte	0xf3,0xc3
+.cfi_endproc	
 .size	_x86_64_AES_encrypt,.-_x86_64_AES_encrypt
 .type	_x86_64_AES_encrypt_compact,@function
 .align	16
 _x86_64_AES_encrypt_compact:
+.cfi_startproc	
 	leaq	128(%r14),%r8
 	movl	0-128(%r8),%edi
 	movl	32-128(%r8),%ebp
@@ -325,6 +328,7 @@ _x86_64_AES_encrypt_compact:
 	xorl	8(%r15),%ecx
 	xorl	12(%r15),%edx
 .byte	0xf3,0xc3
+.cfi_endproc	
 .size	_x86_64_AES_encrypt_compact,.-_x86_64_AES_encrypt_compact
 .globl	AES_encrypt
 .type	AES_encrypt,@function
@@ -334,6 +338,7 @@ _x86_64_AES_encrypt_compact:
 asm_AES_encrypt:
 AES_encrypt:
 .cfi_startproc	
+.byte	243,15,30,250
 	movq	%rsp,%rax
 .cfi_def_cfa_register	%rax
 	pushq	%rbx
@@ -414,6 +419,7 @@ AES_encrypt:
 .type	_x86_64_AES_decrypt,@function
 .align	16
 _x86_64_AES_decrypt:
+.cfi_startproc	
 	xorl	0(%r15),%eax
 	xorl	4(%r15),%ebx
 	xorl	8(%r15),%ecx
@@ -565,10 +571,12 @@ _x86_64_AES_decrypt:
 	xorl	%r12d,%ecx
 	xorl	%r8d,%edx
 .byte	0xf3,0xc3
+.cfi_endproc	
 .size	_x86_64_AES_decrypt,.-_x86_64_AES_decrypt
 .type	_x86_64_AES_decrypt_compact,@function
 .align	16
 _x86_64_AES_decrypt_compact:
+.cfi_startproc	
 	leaq	128(%r14),%r8
 	movl	0-128(%r8),%edi
 	movl	32-128(%r8),%ebp
@@ -790,6 +798,7 @@ _x86_64_AES_decrypt_compact:
 	xorl	8(%r15),%ecx
 	xorl	12(%r15),%edx
 .byte	0xf3,0xc3
+.cfi_endproc	
 .size	_x86_64_AES_decrypt_compact,.-_x86_64_AES_decrypt_compact
 .globl	AES_decrypt
 .type	AES_decrypt,@function
@@ -799,6 +808,7 @@ _x86_64_AES_decrypt_compact:
 asm_AES_decrypt:
 AES_decrypt:
 .cfi_startproc	
+.byte	243,15,30,250
 	movq	%rsp,%rax
 .cfi_def_cfa_register	%rax
 	pushq	%rbx
@@ -883,6 +893,7 @@ AES_decrypt:
 .align	16
 AES_set_encrypt_key:
 .cfi_startproc	
+.byte	243,15,30,250
 	pushq	%rbx
 .cfi_adjust_cfa_offset	8
 .cfi_offset	%rbx,-16
@@ -921,6 +932,7 @@ AES_set_encrypt_key:
 .type	_x86_64_AES_set_encrypt_key,@function
 .align	16
 _x86_64_AES_set_encrypt_key:
+.cfi_startproc	
 	movl	%esi,%ecx
 	movq	%rdi,%rsi
 	movq	%rdx,%rdi
@@ -1156,12 +1168,14 @@ _x86_64_AES_set_encrypt_key:
 	movq	$-1,%rax
 .Lexit:
 .byte	0xf3,0xc3
+.cfi_endproc	
 .size	_x86_64_AES_set_encrypt_key,.-_x86_64_AES_set_encrypt_key
 .globl	AES_set_decrypt_key
 .type	AES_set_decrypt_key,@function
 .align	16
 AES_set_decrypt_key:
 .cfi_startproc	
+.byte	243,15,30,250
 	pushq	%rbx
 .cfi_adjust_cfa_offset	8
 .cfi_offset	%rbx,-16
@@ -1375,11 +1389,13 @@ AES_set_decrypt_key:
 asm_AES_cbc_encrypt:
 AES_cbc_encrypt:
 .cfi_startproc	
+.byte	243,15,30,250
 	cmpq	$0,%rdx
 	je	.Lcbc_epilogue
 	pushfq
+
+
 .cfi_adjust_cfa_offset	8
-.cfi_offset	49,-16
 	pushq	%rbx
 .cfi_adjust_cfa_offset	8
 .cfi_offset	%rbx,-24
@@ -1408,6 +1424,7 @@ AES_cbc_encrypt:
 	cmpq	$0,%r9
 	cmoveq	%r10,%r14
 
+.cfi_remember_state	
 	movl	OPENSSL_ia32cap_P(%rip),%r10d
 	cmpq	$512,%rdx
 	jb	.Lcbc_slow_prologue
@@ -1643,6 +1660,7 @@ AES_cbc_encrypt:
 
 .align	16
 .Lcbc_slow_prologue:
+.cfi_restore_state	
 
 	leaq	-88(%rsp),%rbp
 	andq	$-64,%rbp
@@ -1654,8 +1672,10 @@ AES_cbc_encrypt:
 	subq	%r10,%rbp
 
 	xchgq	%rsp,%rbp
+.cfi_def_cfa_register	%rbp
 
 	movq	%rbp,16(%rsp)
+.cfi_escape	0x0f,0x05,0x77,0x10,0x06,0x23,0x40
 .Lcbc_slow_body:
 
 
@@ -1844,8 +1864,9 @@ AES_cbc_encrypt:
 .cfi_def_cfa	%rsp,16
 .Lcbc_popfq:
 	popfq
+
+
 .cfi_adjust_cfa_offset	-8
-.cfi_restore	49
 .Lcbc_epilogue:
 	.byte	0xf3,0xc3
 .cfi_endproc	
@@ -2636,3 +2657,24 @@ AES_cbc_encrypt:
 .long	0x1b1b1b1b, 0x1b1b1b1b, 0, 0
 .byte	65,69,83,32,102,111,114,32,120,56,54,95,54,52,44,32,67,82,89,80,84,79,71,65,77,83,32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115,115,108,46,111,114,103,62,0
 .align	64
+	.section ".note.gnu.property", "a"
+	.p2align 3
+	.long 1f - 0f
+	.long 4f - 1f
+	.long 5
+0:
+	# "GNU" encoded with .byte, since .asciz isn't supported
+	# on Solaris.
+	.byte 0x47
+	.byte 0x4e
+	.byte 0x55
+	.byte 0
+1:
+	.p2align 3
+	.long 0xc0000002
+	.long 3f - 2f
+2:
+	.long 3
+3:
+	.p2align 3
+4:

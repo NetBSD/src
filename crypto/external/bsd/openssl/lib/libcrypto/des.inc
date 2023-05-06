@@ -1,13 +1,9 @@
-#	$NetBSD: des.inc,v 1.3 2018/09/23 13:33:04 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/des/Makefile
-#
+#	$NetBSD: des.inc,v 1.4 2023/05/06 17:07:22 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/des
 
 DES_SRCS ?= des_enc.c fcrypt_b.c
+
 DES_SRCS += \
 cbc_cksm.c \
 cbc_enc.c \
@@ -25,10 +21,10 @@ qud_cksm.c \
 rand_key.c \
 set_key.c \
 str2key.c \
-xcbc_enc.c
+xcbc_enc.c \
 
 SRCS += ${DES_SRCS}
 
 .for cryptosrc in ${DES_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/des
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/des ${DESCPPFLAGS}
 .endfor

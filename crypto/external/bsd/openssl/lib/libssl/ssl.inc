@@ -1,4 +1,4 @@
-#	$NetBSD: ssl.inc,v 1.10 2018/09/23 13:33:09 christos Exp $
+#	$NetBSD: ssl.inc,v 1.11 2023/05/06 17:07:24 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -10,14 +10,13 @@
 CPPFLAGS+=	-I${OPENSSLSRC}/ssl
 
 SRCS+= \
+s3_cbc.c \
 bio_ssl.c \
 d1_lib.c \
 d1_msg.c \
 d1_srtp.c \
 methods.c \
-packet.c \
 pqueue.c \
-s3_cbc.c \
 s3_enc.c \
 s3_lib.c \
 s3_msg.c \
@@ -26,10 +25,12 @@ ssl_cert.c \
 ssl_ciph.c \
 ssl_conf.c \
 ssl_err.c \
+ssl_err_legacy.c \
 ssl_init.c \
 ssl_lib.c \
 ssl_mcnf.c \
 ssl_rsa.c \
+ssl_rsa_legacy.c \
 ssl_sess.c \
 ssl_stat.c \
 ssl_txt.c \
@@ -37,5 +38,6 @@ ssl_utst.c \
 t1_enc.c \
 t1_lib.c \
 t1_trce.c \
-tls_srp.c \
-tls13_enc.c
+tls13_enc.c \
+tls_depr.c \
+tls_srp.c

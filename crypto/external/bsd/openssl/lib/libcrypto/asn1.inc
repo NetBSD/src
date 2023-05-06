@@ -1,14 +1,8 @@
-#	$NetBSD: asn1.inc,v 1.4 2018/09/23 13:33:04 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/asn1/Makefile
-#
+#	$NetBSD: asn1.inc,v 1.5 2023/05/06 17:07:22 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/asn1
 
-
-ASN1_SRCS = \
+ASN1_SRCS += \
 a_bitstr.c \
 a_d2i_fp.c \
 a_digest.c \
@@ -33,20 +27,20 @@ asn1_err.c \
 asn1_gen.c \
 asn1_item_list.c \
 asn1_lib.c \
-asn1_par.c \
+asn1_parse.c \
 asn_mime.c \
 asn_moid.c \
 asn_mstbl.c \
 asn_pack.c \
 bio_asn1.c \
 bio_ndef.c \
+d2i_param.c \
 d2i_pr.c \
 d2i_pu.c \
 evp_asn1.c \
 f_int.c \
 f_string.c \
-i2d_pr.c \
-i2d_pu.c \
+i2d_evp.c \
 n_pkey.c \
 nsseq.c \
 p5_pbe.c \
@@ -72,10 +66,10 @@ x_long.c \
 x_pkey.c \
 x_sig.c \
 x_spki.c \
-x_val.c
+x_val.c \
 
 SRCS += ${ASN1_SRCS}
 
 .for cryptosrc in ${ASN1_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/asn1
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/asn1 ${ASN1CPPFLAGS}
 .endfor

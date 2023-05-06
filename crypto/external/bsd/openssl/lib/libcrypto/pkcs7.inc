@@ -1,17 +1,19 @@
-#	$NetBSD: pkcs7.inc,v 1.2 2016/10/14 16:09:43 spz Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/pkcs7/Makefile
-#
+#	$NetBSD: pkcs7.inc,v 1.3 2023/05/06 17:07:23 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/pkcs7
 
+PKCS7_SRCS += \
+bio_pk7.c \
+pk7_asn1.c \
+pk7_attr.c \
+pk7_doit.c \
+pk7_lib.c \
+pk7_mime.c \
+pk7_smime.c \
+pkcs7err.c \
 
-PKCS7_SRCS = pk7_asn1.c pk7_lib.c pkcs7err.c pk7_doit.c pk7_smime.c pk7_attr.c \
-	pk7_mime.c bio_pk7.c
 SRCS += ${PKCS7_SRCS}
 
 .for cryptosrc in ${PKCS7_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/pkcs7
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/pkcs7 ${PKCS7CPPFLAGS}
 .endfor

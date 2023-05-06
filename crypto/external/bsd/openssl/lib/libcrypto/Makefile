@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2022/04/15 23:21:33 rillig Exp $
+#	$NetBSD: Makefile,v 1.23 2023/05/06 17:07:22 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -43,14 +43,25 @@ CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/crypto/include
 CPPFLAGS+= -I${OPENSSLSRC}/crypto/asn1 -I${OPENSSLSRC}/crypto/evp
 CPPFLAGS+= -I${OPENSSLSRC}/crypto/modes
 CPPFLAGS+= -I${OPENSSLSRC}/../include
+CPPFLAGS+= -I${OPENSSLSRC}/providers/common/include
+CPPFLAGS+= -I${OPENSSLSRC}/providers/implementations/include
+
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
+OPENSSLINC=	${OPENSSLSRC}/include/openssl
 
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
-.PATH: ${OPENSSLSRC} ${OPENSSLSRC}/include/openssl
-.PATH: ${OPENSSLSRC}/../include/openssl ${OPENSSLSRC}/include/internal
+.PATH: ${OPENSSLSRC} ${OPENSSLINC}
+.PATH: ${OPENSSLSRC}/../include/openssl
+.PATH: ${OPENSSLSRC}/providers/implementations/digests
+.PATH: ${OPENSSLSRC}/providers/implementations/macs
 
 .include "srcs.inc"
+.include "${.CURDIR}/../libdefault/srcs.inc"
+CPPFLAGS+= -I${.CURDIR}/../libdefault
+.PATH: ${.CURDIR}/../libdefault
+.include "${.CURDIR}/../libcommon/srcs.inc"
+.PATH: ${.CURDIR}/../libcommon
 
 AFLAGS+=-DELF
 LIBDPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
@@ -90,6 +101,9 @@ buffererr.h \
 camellia.h \
 cast.h \
 cmac.h \
+cmp.h \
+cmp_util.h \
+cmperr.h \
 cms.h \
 cmserr.h \
 comp.h \
@@ -97,10 +111,21 @@ comperr.h \
 conf.h \
 conf_api.h \
 conferr.h \
+configuration.h \
+conftypes.h \
+core.h \
+core_dispatch.h \
+core_names.h \
+core_object.h \
+crmf.h \
+crmferr.h \
 crypto.h \
 cryptoerr.h \
+cryptoerr_legacy.h \
 ct.h \
 cterr.h \
+decoder.h \
+decodererr.h \
 des.h \
 dh.h \
 dherr.h \
@@ -113,15 +138,24 @@ ec.h \
 ecdh.h \
 ecdsa.h \
 ecerr.h \
+encoder.h \
+encodererr.h \
 engine.h \
 engineerr.h \
 err.h \
+ess.h \
+esserr.h \
 evp.h \
 evperr.h \
+fips_names.h \
+fipskey.h \
 hmac.h \
+http.h \
+httperr.h \
 kdf.h \
 kdferr.h \
 lhash.h \
+macros.h \
 md2.h \
 md4.h \
 md5.h \
@@ -134,6 +168,8 @@ ocsperr.h \
 opensslconf.h \
 opensslv.h \
 ossl_typ.h \
+param_build.h \
+params.h \
 pem.h \
 pem2.h \
 pemerr.h \
@@ -141,8 +177,10 @@ pkcs12.h \
 pkcs12err.h \
 pkcs7.h \
 pkcs7err.h \
+prov_ssl.h \
+proverr.h \
+provider.h \
 rand.h \
-rand_drbg.h \
 randerr.h \
 rc2.h \
 rc4.h \
@@ -151,6 +189,7 @@ rsa.h \
 rsaerr.h \
 safestack.h \
 seed.h \
+self_test.h \
 sha.h \
 srp.h \
 srtp.h \
@@ -158,14 +197,17 @@ ssl.h \
 ssl2.h \
 ssl3.h \
 sslerr.h \
+sslerr_legacy.h \
 stack.h \
 store.h \
 storeerr.h \
 symhacks.h \
 tls1.h \
+trace.h \
 ts.h \
 tserr.h \
 txt_db.h \
+types.h \
 ui.h \
 uierr.h \
 whrlpool.h \
@@ -225,6 +267,36 @@ LDFLAGS+=-Wl,--version-script=${.CURDIR}/crypto.map
 PKGCONFIG=libcrypto
 .include "${.CURDIR}/../../pkgconfig.mk"
 
+# too much of a pain to generate opensslv.h / configuration.h / fipskey.h
+GENH = \
+asn1.h \
+asn1t.h \
+bio.h \
+cmp.h \
+cms.h \
+conf.h \
+crmf.h \
+crypto.h \
+ct.h \
+err.h \
+ess.h \
+lhash.h \
+ocsp.h \
+pkcs12.h \
+pkcs7.h \
+safestack.h \
+srp.h \
+ssl.h \
+ui.h \
+x509.h \
+x509_vfy.h \
+x509v3.h
+
+.for i in ${GENH}
+$i: $i.in
+	${_MKTARGET_CREATE}
+	${.CURDIR}/../../gen ${.ALLSRC} > ${.TARGET}
+.endfor
 
 .include <bsd.lib.mk>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: record.inc,v 1.2 2018/09/23 13:33:09 christos Exp $
+#	$NetBSD: record.inc,v 1.3 2023/05/06 17:07:24 christos Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -10,6 +10,7 @@
 CPPFLAGS+=	-I${OPENSSLSRC}/ssl/record
 
 SRCS+= \
+tls_pad.c \
 dtls1_bitmap.c \
 rec_layer_d1.c \
 rec_layer_s3.c \

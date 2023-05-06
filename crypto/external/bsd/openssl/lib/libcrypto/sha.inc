@@ -1,21 +1,22 @@
-#	$NetBSD: sha.inc,v 1.6 2018/09/23 13:33:04 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/sha/Makefile
-#
+#	$NetBSD: sha.inc,v 1.7 2023/05/06 17:07:23 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/sha
 
 
-SHA_SRCS += sha1dgst.c sha1_one.c
+SHA_SRCS += sha1dgst.c sha3.c
 
 # Replaced OpenSSL version to avoid overlap with libc
-SHA_SRCS+= libc-sha512.c libc-sha256.c libc-sha2xx.c
-#SHA_SRCS+= sha256.c sha512.c
+SHA_SRCS+= libc-sha1.c libc-sha512.c libc-sha256.c libc-sha2xx.c
+
 .if !defined(KECCAKNI)
 SHA_SRCS+= keccak1600.c
 .endif
+#SHA_SRCS += \
+#sha1_one.c \
+#sha1dgst.c \
+#sha256.c \
+#sha3.c \
+#sha512.c \
 
 SRCS += ${SHA_SRCS}
 

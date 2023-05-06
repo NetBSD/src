@@ -1,9 +1,4 @@
-#	$NetBSD: aes.inc,v 1.4 2018/02/08 21:57:24 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/aes/Makefile
-#
+#	$NetBSD: aes.inc,v 1.5 2023/05/06 17:07:22 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/aes
 
@@ -15,11 +10,10 @@ aes_ecb.c \
 aes_ige.c \
 aes_misc.c \
 aes_ofb.c \
-aes_wrap.c
+aes_wrap.c \
 
 SRCS += ${AES_SRCS}
 
 .for cryptosrc in ${AES_SRCS}
 CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/aes ${AESCPPFLAGS}
 .endfor
-

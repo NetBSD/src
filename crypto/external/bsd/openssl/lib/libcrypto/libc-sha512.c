@@ -9,12 +9,14 @@
  * according to the OpenSSL license [found in ../../LICENSE].
  * ====================================================================
  */
-#include <openssl/opensslconf.h>
+// #include <openssl/opensslconf.h>
 
 #include <stdlib.h>
 #include <string.h>
 
 #include <openssl/crypto.h>
+#undef OSSL_DEPRECATEDIN_3_0
+#define OSSL_DEPRECATEDIN_3_0
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
 

@@ -1,18 +1,11 @@
-#	$NetBSD: chacha.inc,v 1.2 2018/02/10 16:16:28 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/chacha/Makefile
-#
+#	$NetBSD: chacha.inc,v 1.3 2023/05/06 17:07:22 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/chacha
 
-
-CHACHA_SRCS ?= \
-chacha_enc.c
+CHACHA_SRCS += \
 
 SRCS += ${CHACHA_SRCS}
 
 .for cryptosrc in ${CHACHA_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/chacha ${CHACHA_CPPFLAGS}
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/chacha ${CHACHACPPFLAGS}
 .endfor

@@ -1,19 +1,11 @@
-#	$NetBSD: engine.inc,v 1.13 2018/12/08 17:07:27 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/engine/Makefile
-#
+#	$NetBSD: engine.inc,v 1.14 2023/05/06 17:07:23 christos Exp $
 
-.PATH:	${OPENSSLSRC}/crypto/engine ${OPENSSLSRC}/engines \
-    ${OPENSSLSRC}/engines/ccgost
-
+.PATH:	${OPENSSLSRC}/crypto/engine
 
 ENGINE_SRCS += \
 eng_all.c \
 eng_cnf.c \
 eng_ctrl.c \
-eng_devcrypto.c \
 eng_dyn.c \
 eng_err.c \
 eng_fat.c \
@@ -32,7 +24,7 @@ tb_dsa.c \
 tb_eckey.c \
 tb_pkmeth.c \
 tb_rand.c \
-tb_rsa.c
+tb_rsa.c \
 
 SRCS += ${ENGINE_SRCS}
 
@@ -41,5 +33,5 @@ CRYPTOCPPFLAGS+=-DNEED_CPUID_SETUP
 .endif
 
 .for cryptosrc in ${ENGINE_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/engine ${CRYPTOCPPFLAGS} -DHAVE_CRYPTODEV
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/engine ${ENGINECPPFLAGS}
 .endfor
