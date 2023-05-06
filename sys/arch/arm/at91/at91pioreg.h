@@ -1,5 +1,5 @@
-/*	$Id: at91pioreg.h,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
-/*	$NetBSD: at91pioreg.h,v 1.2 2008/07/03 01:15:38 matt Exp $	*/
+/*	$Id: at91pioreg.h,v 1.3 2023/05/06 22:17:28 andvar Exp $	*/
+/*	$NetBSD: at91pioreg.h,v 1.3 2023/05/06 22:17:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -58,6 +58,6 @@
 #define	PIO_OWER	0xA0U	/* A0: PIO Output Write Enable		*/
 #define	PIO_OWDR	0xA4U	/* A4: PIO Output Write Disable		*/
 #define	PIO_OWSR	0xA8U	/* A8: PIO Output Write Status Reg	*/
-#define	PIO_VERSION	0xFCU	/* FC: version reqister	(AT91SAM92xx)	*/
+#define	PIO_VERSION	0xFCU	/* FC: version register	(AT91SAM92xx)	*/
 
 #endif	/* _AT91GPIOREG_H_ */

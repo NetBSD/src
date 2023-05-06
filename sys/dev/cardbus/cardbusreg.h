@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbusreg.h,v 1.7 2011/08/01 11:20:27 drochner Exp $ */
+/*	$NetBSD: cardbusreg.h,v 1.8 2023/05/06 22:17:28 andvar Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -31,7 +31,7 @@
 
 #include <dev/pci/pcivar.h>	/* for pcitag_t */
 
-/* Base Resisters */
+/* Base Registers */
 #define CARDBUS_CIS_REG    0x28
 #define CARDBUS_ROM_REG	   0x30
 #  define CARDBUS_CIS_ASIMASK 0x07
