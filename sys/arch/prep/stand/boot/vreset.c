@@ -1,4 +1,4 @@
-/* $NetBSD: vreset.c,v 1.10 2022/02/16 23:49:27 riastradh Exp $ */
+/* $NetBSD: vreset.c,v 1.11 2023/05/06 21:34:40 andvar Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -113,7 +113,7 @@ static vga_reg_t GR_regs[GRREGS] = {
 };
 
 /* video DAC palette registers */
-/* XXX only set up 16 colors used by internal palette in ATC regsters */
+/* XXX only set up 16 colors used by internal palette in ATC registers */
 static const u_int8_t vga_dacpal[] = {
 	/* R     G     B */
 	0x00, 0x00, 0x00,	/* BLACK        */

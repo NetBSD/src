@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_vga.c,v 1.20 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: pci_vga.c,v 1.21 2023/05/06 21:34:39 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 Leo Weppelman.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.20 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_vga.c,v 1.21 2023/05/06 21:34:39 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -81,7 +81,7 @@ static const uint8_t vga_atc[] = {
 };
 
 /* video DAC palette registers */
-/* XXX only set up 16 colors used by internal palette in ATC regsters */
+/* XXX only set up 16 colors used by internal palette in ATC registers */
 static const uint8_t vga_dacpal[] = {
 	/* R     G     B */
 	0x00, 0x00, 0x00,	/* BLACK        */
