@@ -1,4 +1,4 @@
-# $NetBSD: t_sed.sh,v 1.9 2021/11/07 20:31:09 andvar Exp $
+# $NetBSD: t_sed.sh,v 1.10 2023/05/06 02:07:42 gutteridge Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,7 @@
 atf_test_case c2048
 c2048_head() {
 	atf_set "descr" "Test that sed(1) does not fail when the " \
-			"2048'th character is a backslash (PR bin/25899)"
+			"2048th character is a backslash (PR bin/25899)"
 }
 
 c2048_body() {
@@ -81,7 +81,7 @@ rangeselection_body() {
 		-x "printf 'A\nB\nC\nD\n' | sed '1,3d'"
 	atf_check -o inline:"A\n" \
 		-x "printf 'A\nB\nC\nD\n' | sed '2,4d'"
-	# two nonoverlapping ranges
+	# two non-overlapping ranges
 	atf_check -o inline:"C\n" \
 		-x "printf 'A\nB\nC\nD\nE\n' | sed '1,2d;4,5d'"
 	# overlapping ranges; the first prevents the second from being entered
@@ -98,7 +98,7 @@ rangeselection_body() {
 		-x "printf 'A\nB\nC\nD\n' | sed '/A/,/C/d'"
 	atf_check -o inline:"A\n" \
 		-x "printf 'A\nB\nC\nD\n' | sed '/B/,/D/d'"
-	# two nonoverlapping ranges
+	# two non-overlapping ranges
 	atf_check -o inline:"C\n" \
 		-x "printf 'A\nB\nC\nD\nE\n' | sed '/A/,/B/d;/D/,/E/d'"
 	# two overlapping ranges; the first blocks the second as above
@@ -174,6 +174,7 @@ escapes_in_re_bracket_body() {
 	atf_check -o inline:"foo    bar\n" \
 		-x 'echo "foo\\d88bar" | sed -e "s/[\d88]/ /g"'
 }
+
 atf_init_test_cases() {
 	atf_add_test_case c2048
 	atf_add_test_case emptybackref
