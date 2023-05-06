@@ -1,16 +1,12 @@
-#	$NetBSD: dsa.inc,v 1.2 2018/02/08 21:57:24 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/dsa/Makefile
-#
+#	$NetBSD: dsa.inc,v 1.3 2023/05/06 17:07:22 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/dsa
 
-
-DSA_SRCS = \
+DSA_SRCS += \
 dsa_ameth.c \
 dsa_asn1.c \
+dsa_backend.c \
+dsa_check.c \
 dsa_depr.c \
 dsa_err.c \
 dsa_gen.c \
@@ -21,10 +17,10 @@ dsa_ossl.c \
 dsa_pmeth.c \
 dsa_prn.c \
 dsa_sign.c \
-dsa_vrf.c
+dsa_vrf.c \
 
 SRCS += ${DSA_SRCS}
 
 .for cryptosrc in ${DSA_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/dsa
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/dsa ${DSACPPFLAGS}
 .endfor

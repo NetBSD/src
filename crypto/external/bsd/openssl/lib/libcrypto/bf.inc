@@ -1,18 +1,17 @@
-#	$NetBSD: bf.inc,v 1.1 2009/07/19 23:30:42 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/bf/Makefile
-#
+#	$NetBSD: bf.inc,v 1.2 2023/05/06 17:07:22 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/bf
 
-.if !defined(BF_SRCS)
-BF_SRCS = bf_enc.c 
-.endif
-BF_SRCS += bf_skey.c bf_ecb.c bf_cfb64.c bf_ofb64.c 
+BF_SRCS ?= bf_enc.c 
+
+BF_SRCS += \
+bf_cfb64.c \
+bf_ecb.c \
+bf_ofb64.c \
+bf_skey.c \
+
 SRCS += ${BF_SRCS}
 
 .for cryptosrc in ${BF_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/bf
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/bf ${BFCPPFLAGS}
 .endfor

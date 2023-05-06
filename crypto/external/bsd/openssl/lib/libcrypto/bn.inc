@@ -1,9 +1,4 @@
-#	$NetBSD: bn.inc,v 1.8 2023/02/08 15:51:36 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/bn/Makefile
-#
+#	$NetBSD: bn.inc,v 1.9 2023/05/06 17:07:22 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/bn
 
@@ -13,6 +8,7 @@ BN_SRCS += \
 bn_add.c \
 bn_blind.c \
 bn_const.c \
+bn_conv.c \
 bn_ctx.c \
 bn_depr.c \
 bn_dh.c \
@@ -34,6 +30,7 @@ bn_prime.c \
 bn_print.c \
 bn_rand.c \
 bn_recp.c \
+bn_rsa_fips186_4.c \
 bn_shift.c \
 bn_sqr.c \
 bn_sqrt.c \
@@ -41,13 +38,15 @@ bn_srp.c \
 bn_word.c \
 bn_x931p.c \
 rsa_sup_mul.c \
-rsaz_exp.c
+rsaz_exp.c \
+rsaz_exp_x2.c \
 
 SRCS += ${BN_SRCS}
 
 .for cryptosrc in ${BN_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/bn ${BNCPPFLAGS}
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/bn ${BNCPPFLAGS}
 .endfor
+
 
 LINTFLAGS.bn_nist.c+=	-X 132	# conversion from 'unsigned long' to 'int'
 LINTFLAGS.bn_nist.c+=	-X 161	# constant in conditional context

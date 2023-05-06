@@ -1,9 +1,4 @@
-#	$NetBSD: modes.inc,v 1.6 2018/02/08 21:57:24 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/modes/Makefile
-#
+#	$NetBSD: modes.inc,v 1.7 2023/05/06 17:07:23 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/modes
 
@@ -16,12 +11,12 @@ cts128.c \
 gcm128.c \
 ocb128.c \
 ofb128.c \
+siv128.c \
 wrap128.c \
-xts128.c
-
+xts128.c \
 
 SRCS += ${MODES_SRCS}
 
 .for cryptosrc in ${MODES_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/modes ${MODESCPPFLAGS}
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/modes ${MODESCPPFLAGS}
 .endfor

@@ -1,16 +1,13 @@
-#	$NetBSD: mdc2.inc,v 1.4 2017/05/21 14:24:05 riastradh Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/mdc2/Makefile
-#
+#	$NetBSD: mdc2.inc,v 1.5 2023/05/06 17:07:23 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/mdc2
 
+MDC2_SRCS += \
+mdc2_one.c \
+mdc2dgst.c \
 
-MDC2_SRCS = mdc2_one.c
-SRCS+=	${MDC2_SRCS} mdc2dgst.c
+SRCS += ${MDC2_SRCS}
 
 .for cryptosrc in ${MDC2_SRCS}
-CPPFLAGS.${cryptosrc} = -I${OPENSSLSRC}/crypto/mdc2
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/mdc2 ${MDC2CPPFLAGS}
 .endfor

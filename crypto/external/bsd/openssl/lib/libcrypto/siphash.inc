@@ -1,19 +1,12 @@
-#	$NetBSD: siphash.inc,v 1.1 2018/09/23 13:33:04 christos Exp $
-#
-#	SRCS extracted from src/crypto/dist/openssl/crypto/siphash
-#
+#	$NetBSD: siphash.inc,v 1.2 2023/05/06 17:07:23 christos Exp $
 
-SIPHASH=${OPENSSLSRC}/crypto/siphash
-.PATH:	${SIPHASH}
-
+.PATH:	${OPENSSLSRC}/crypto/siphash
 
 SIPHASH_SRCS += \
 siphash.c \
-siphash_ameth.c \
-siphash_pmeth.c
 
 SRCS += ${SIPHASH_SRCS}
 
 .for cryptosrc in ${SIPHASH_SRCS}
-CPPFLAGS.${cryptosrc} = -I${SIPHASH} ${SIPHASHCPPFLAGS}
+CPPFLAGS.${cryptosrc} += -I${OPENSSLSRC}/crypto/siphash ${SIPHASHCPPFLAGS}
 .endfor
