@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_dma_machdep.c,v 1.1 2022/09/11 15:31:12 skrll Exp $	*/
+/*	$NetBSD: fdt_dma_machdep.c,v 1.2 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_dma_machdep.c,v 1.1 2022/09/11 15:31:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_dma_machdep.c,v 1.2 2023/05/07 12:41:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,9 +38,39 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_dma_machdep.c,v 1.1 2022/09/11 15:31:12 skrll Ex
 
 #include <dev/fdt/fdtvar.h>
 
+extern struct riscv_bus_dma_tag riscv_generic_dma_tag;
+
 bus_dma_tag_t
 fdtbus_dma_tag_create(int phandle, const struct fdt_dma_range *ranges,
     u_int nranges)
 {
-	return NULL;
+	struct riscv_bus_dma_tag *tagp;
+	u_int n;
+
+	// Check bindings.
+	const int flags = of_hasprop(phandle, "dma-coherent") ?
+	    _BUS_DMAMAP_COHERENT : 0;
+
+	tagp = kmem_alloc(sizeof(*tagp), KM_SLEEP);
+	*tagp = riscv_generic_dma_tag;
+	if (nranges == 0) {
+		tagp->_nranges = 1;
+		tagp->_ranges = kmem_alloc(sizeof(*tagp->_ranges), KM_SLEEP);
+		tagp->_ranges[0].dr_sysbase = 0;
+		tagp->_ranges[0].dr_busbase = 0;
+		tagp->_ranges[0].dr_len = UINTPTR_MAX;
+		tagp->_ranges[0].dr_flags = flags;
+	} else {
+		tagp->_nranges = nranges;
+		tagp->_ranges = kmem_alloc(sizeof(*tagp->_ranges) * nranges,
+		    KM_SLEEP);
+		for (n = 0; n < nranges; n++) {
+			tagp->_ranges[n].dr_sysbase = ranges[n].dr_sysbase;
+			tagp->_ranges[n].dr_busbase = ranges[n].dr_busbase;
+			tagp->_ranges[n].dr_len = ranges[n].dr_len;
+			tagp->_ranges[n].dr_flags = flags;
+		}
+	}
+
+	return tagp;
 }

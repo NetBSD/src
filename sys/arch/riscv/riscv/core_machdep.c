@@ -1,4 +1,4 @@
-/*	$NetBSD: core_machdep.c,v 1.5 2020/11/04 07:09:46 skrll Exp $	*/
+/*	$NetBSD: core_machdep.c,v 1.6 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef CORENAME
-__RCSID("$NetBSD: core_machdep.c,v 1.5 2020/11/04 07:09:46 skrll Exp $");
+__RCSID("$NetBSD: core_machdep.c,v 1.6 2023/05/07 12:41:48 skrll Exp $");
 #endif
 
 #include <sys/param.h>
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: core_machdep.c,v 1.5 2020/11/04 07:09:46 skrll Exp $");
 #include <sys/cpu.h>
 #include <sys/compat_stub.h>
 
+#include <riscv/frame.h>
 #include <riscv/locore.h>
 
 #ifndef CORENAME

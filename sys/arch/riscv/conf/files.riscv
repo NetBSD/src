@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.11 2022/10/14 07:58:30 skrll Exp $
+#	$NetBSD: files.riscv,v 1.12 2023/05/07 12:41:48 skrll Exp $
 #
 
 maxpartitions	16
@@ -12,14 +12,21 @@ defflag  opt_riscv_debug.h	VERBOSE_INIT_RISCV
 
 defflag	opt_ddb.h		DDB_TRACE
 
-file	arch/riscv/fdt/fdt_dma_machdep.c
+device	mainbus {}: fdt
+attach	mainbus at root
+file	arch/riscv/riscv/mainbus.c		mainbus
+
+device cpu {}: fdt
 
 file	arch/riscv/riscv/autoconf.c
+file	arch/riscv/riscv/bus_dma.c
 file	arch/riscv/riscv/bus_space.c
 file	arch/riscv/riscv/bus_space_generic.S
 file	arch/riscv/riscv/bus_space_notimpl.S
+file	arch/riscv/riscv/bus_stubs.c
 file	arch/riscv/riscv/clock_machdep.c
 file	arch/riscv/riscv/core_machdep.c		coredump
+file	arch/riscv/riscv/cpu.c			cpu
 file	arch/riscv/riscv/cpu_subr.c
 file	arch/riscv/riscv/cpu_switch.S
 file	arch/riscv/riscv/db_interface.c		ddb
@@ -30,12 +37,15 @@ file	arch/riscv/riscv/exec_machdep.c
 file	arch/riscv/riscv/fixup.c
 file	arch/riscv/riscv/fpu.c			fpe
 file	arch/riscv/riscv/ipifuncs.c		multiprocessor
+file	arch/riscv/riscv/interrupt.c
 file	arch/riscv/riscv/kgdb_machdep.c		kgdb
 file	arch/riscv/riscv/kobj_machdep.c		modular
 file	arch/riscv/riscv/pmap_machdep.c
 file	arch/riscv/riscv/process_machdep.c
 file	arch/riscv/riscv/procfs_machdep.c	procfs
+file	arch/riscv/riscv/riscv_generic_dma.c
 file	arch/riscv/riscv/riscv_machdep.c
+file	arch/riscv/riscv/sbi.c			# SBI
 file	arch/riscv/riscv/sig_machdep.c		# signal delivery
 file	arch/riscv/riscv/softint_machdep.c
 file	arch/riscv/riscv/spl.S
@@ -51,8 +61,14 @@ file	dev/md_root.c				memory_disk_hooks
 file	kern/subr_disk_mbr.c			disk
 
 file	uvm/pmap/pmap.c
+file	uvm/pmap/pmap_devmap.c
 file	uvm/pmap/pmap_segtab.c
 file	uvm/pmap/pmap_tlb.c
+
+device  plic
+file	arch/riscv/dev/plic.c			plic
+attach  plic at fdt with plic_fdt
+file	arch/riscv/dev/plic_fdt.c		plic & fdt
 
 # Binary compatibility with 32bit NetBSD (COMPAT_NETBSD32)
 file	arch/riscv/riscv/core32_machdep.c	compat_netbsd32 & coredump
@@ -60,24 +76,15 @@ file	arch/riscv/riscv/netbsd32_machdep.c	compat_netbsd32
 file	arch/riscv/riscv/sig32_machdep.c	compat_netbsd32
 include "compat/netbsd32/files.netbsd32"
 
-device	mainbus {}: fdt
-attach	mainbus at root
+include "arch/riscv/fdt/files.fdt"
 
-file	arch/riscv/riscv/mainbus.c		mainbus
-
-# Machine-independent I2O drivers.
-include "dev/i2o/files.i2o"
-
-# Machine-independent SCSI drivers
+# Machine-independent drivers
+include "dev/ata/files.ata"			# ATA drivers
+include "dev/bluetooth/files.bluetooth"		# Bluetooth devices
+include "dev/i2o/files.i2o"			# I2O drivers.
+include "dev/sdmmc/files.sdmmc"			# SD/MMC devices
 include "dev/scsipi/files.scsipi"
-
-# Machine-independent ATA drivers
-include "dev/ata/files.ata"
-
-# Machine-independent USB device support
-include "dev/usb/files.usb"
-
-# Machine-independent PCI device support
-#include "dev/pci/files.pci"
+include "dev/usb/files.usb"			# USB device support
+include "dev/pci/files.pci"			# PCI device support
 
 include "arch/riscv/conf/majors.riscv"

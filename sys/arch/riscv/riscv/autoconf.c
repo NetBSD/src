@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2021/05/01 07:11:12 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,23 +31,27 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: autoconf.c,v 1.3 2021/05/01 07:11:12 skrll Exp $");
+__RCSID("$NetBSD: autoconf.c,v 1.4 2023/05/07 12:41:48 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
+
+#include <machine/sysreg.h>
 
 void
 cpu_configure(void)
 {
-	splhigh();
+	(void) splhigh();
 
-	if (config_rootfound("mainbus", NULL) == NULL)
-		panic("no mainbus found");
+	config_rootfound("mainbus", NULL);
 
+	/* Time to start taking interrupts so lets open the flood gates ... */
 	spl0();
 }
 
@@ -60,10 +64,5 @@ cpu_rootconf(void)
 
 void
 device_register(device_t dv, void *aux)
-{
-}
-
-void
-consinit(void)
 {
 }

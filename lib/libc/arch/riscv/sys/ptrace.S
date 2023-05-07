@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.3 2023/05/07 12:41:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,15 +35,15 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: ptrace.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
+	RCSID("$NetBSD: ptrace.S,v 1.3 2023/05/07 12:41:47 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
-#define	XCALLFRAME_SIZ	(8*SZREG)
-#define	XCALLFRAME_RA	(0*SZREG)
-#define	XCALLFRAME_A0	(1*SZREG)
-#define	XCALLFRAME_A1	(2*SZREG)
-#define	XCALLFRAME_A2	(3*SZREG)
-#define	XCALLFRAME_A3	(4*SZREG)
+#define	XCALLFRAME_SIZ	(8 * SZREG)
+#define	XCALLFRAME_RA	(0 * SZREG)
+#define	XCALLFRAME_A0	(1 * SZREG)
+#define	XCALLFRAME_A1	(2 * SZREG)
+#define	XCALLFRAME_A2	(3 * SZREG)
+#define	XCALLFRAME_A3	(4 * SZREG)
 
 ENTRY(ptrace)
 #ifdef _REENTRANT

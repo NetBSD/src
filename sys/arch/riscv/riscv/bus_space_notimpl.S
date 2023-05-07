@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_notimpl.S,v 1.1 2022/09/11 15:31:12 skrll Exp $	*/
+/*	$NetBSD: bus_space_notimpl.S,v 1.2 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>

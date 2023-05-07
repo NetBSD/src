@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2022/10/16 06:14:53 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -58,8 +58,8 @@
  * address space.  We use PAGE_SIZE instead of 0x800 since these need to be
  * page-aligned.
  */
-#define	USRSTACK	(VM_MAXUSER_ADDRESS-PAGE_SIZE) /* Start of user stack */
-#define	USRSTACK32	((uint32_t)VM_MAXUSER_ADDRESS32-PAGE_SIZE)
+#define	USRSTACK	(VM_MAXUSER_ADDRESS - PAGE_SIZE) /* Start of user stack */
+#define	USRSTACK32	((uint32_t)VM_MAXUSER_ADDRESS32 - PAGE_SIZE)
 
 /*
  * Virtual memory related constants, all in bytes
@@ -107,9 +107,13 @@
 /*
  * User/kernel map constants.
  */
-#define VM_MIN_ADDRESS		((vaddr_t)0x00000000)
+#define VM_MIN_ADDRESS		((vaddr_t)PAGE_SIZE)
 #ifdef _LP64	/* Sv39 / Sv48 / Sv57 */
 /*
+ * SV39 gives 1 << (39 - 1) address space to kernel and same to userland.
+ * This is 256GiB each. Split the kernel space in two and use the top half
+ * for direct map.
+ *
  * kernel virtual space layout:
  *   0xffff_ffc0_0000_0000  -   64GiB  KERNEL VM Space (inc. text/data/bss)
  *  (0xffff_ffc0_4000_0000      +1GiB) KERNEL VM start of KVA
@@ -121,9 +125,40 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xffffffd000000000)
 
 #else		/* Sv32 */
-#define VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xffffffff80000000 */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xffffffff80000000 */
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x40000000)	/* 0xffffffffc0000000 */
+/*
+ * kernel virtual space layout:
+ *   0x8000_0000  -   64GiB  KERNEL VM Space (inc. text/data/bss)
+ *  (0x4000_0000      +1GiB) KERNEL VM start of KVA
+ *  (0x0000_0000      64GiB) reserved
+ */
+
+/*
+ * kernel virtual space layout without direct map (common case)
+ *
+ *   0x8000_0000 -  256MB kernel text/data/bss
+ *   0x9000_0000 - 1536MB Kernel VM Space
+ *   0xf000_0000 -  256MB IO
+ *
+ * kernel virtual space layout with KASAN
+ *
+ *   0x8000_0000 -  256MB kernel text/data/bss
+ *   0x9000_0000 -  768MB Kernel VM Space
+ *   0xc000_0000 -  128MB (KASAN SHADOW MAP)
+ *   0xc800_0000 -  640MB (spare)
+ *   0xf000_0000 -  256MB IO
+ *
+ * kernel virtual space layout with direct map (1GB limited)
+ *   0x8000_0000 - 1024MB kernel text/data/bss and direct map start
+ *   0xc000_0000 -  768MB Kernel VM Space
+ *   0xf000_0000 -  256MB IO
+ *
+ */
+
+
+
+#define VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xffff_ffff_8000_0000 */
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xffff_ffff_8000_0000 */
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x10000000)	/* 0xffff_ffff_f000_0000 */
 
 #endif
 #define VM_KERNEL_BASE		VM_MIN_KERNEL_ADDRESS
@@ -150,7 +185,7 @@
 #define RISCV_DIRECTMAP_SIZE	(-RISCV_DIRECTMAP_MASK - PAGE_SIZE)	/* 128GiB */
 #define RISCV_DIRECTMAP_START	RISCV_DIRECTMAP_MASK
 #define RISCV_DIRECTMAP_END	(RISCV_DIRECTMAP_START + RISCV_DIRECTMAP_SIZE)
-#define RISCV_KVA_P(va)	(((vaddr_t) (va) & RISCV_DIRECTMAP_MASK) != 0)
+#define RISCV_DIRECTMAP_P(va)	(((vaddr_t) (va) & RISCV_DIRECTMAP_MASK) == RISCV_DIRECTMAP_MASK)
 #define RISCV_PA_TO_KVA(pa)	((vaddr_t) ((pa) | RISCV_DIRECTMAP_START))
 #define RISCV_KVA_TO_PA(va)	((paddr_t) ((va) & ~RISCV_DIRECTMAP_MASK))
 #endif
@@ -173,16 +208,17 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
-/* VM_PHYSSEG_MAX defined by platform-dependent code. */
-#ifndef VM_PHYSSEG_MAX
-#define VM_PHYSSEG_MAX		16
-#endif
-#if VM_PHYSSEG_MAX == 1
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
-#else
+/*
+ * max number of non-contig chunks of physical RAM you can have
+ */
+#define VM_PHYSSEG_MAX		64
+
+/*
+ * when converting a physical address to a vm_page structure, we
+ * want to use a binary search on the chunks of physical memory
+ * to find our RAM
+ */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-#endif
-#define	VM_PHYSSEG_NOADD	/* can add RAM after vm_mem_init */
 
 #ifndef VM_NFREELIST
 #define	VM_NFREELIST		2	/* 2 distinct memory segments */
@@ -191,9 +227,6 @@
 #endif
 
 #ifdef _KERNEL
-#define	UVM_KM_VMFREELIST	riscv_poolpage_vmfreelist
-extern int riscv_poolpage_vmfreelist;
-
 #ifdef _LP64
 void *	cpu_uarea_alloc(bool);
 bool	cpu_uarea_free(void *);

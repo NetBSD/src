@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.7 2022/10/12 07:50:00 simonb Exp $ */
+/* $NetBSD: param.h,v 1.8 2023/05/07 12:41:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -50,57 +50,61 @@
  */
 
 #ifdef _LP64
-#define	_MACHINE_ARCH	riscv64
-#define	MACHINE_ARCH	"riscv64"
-#define	_MACHINE_ARCH32	riscv32
-#define	MACHINE_ARCH32	"riscv32"
+#define	_MACHINE_ARCH		riscv64
+#define	MACHINE_ARCH		"riscv64"
+#define	_MACHINE_ARCH32		riscv32
+#define	MACHINE_ARCH32		"riscv32"
 #else
-#define	_MACHINE_ARCH	riscv32
-#define	MACHINE_ARCH	"riscv32"
+#define	_MACHINE_ARCH		riscv32
+#define	MACHINE_ARCH		"riscv32"
 #endif
-#define	_MACHINE	riscv
-#define	MACHINE		"riscv"
+#define	_MACHINE		riscv
+#define	MACHINE			"riscv"
 
-#define	MID_MACHINE	MID_RISCV
+#define	MID_MACHINE		MID_RISCV
 
-/* RISCV-specific macro to align a stack pointer (downwards). */
-#define STACK_ALIGNBYTES	(__BIGGEST_ALIGNMENT__ - 1)
-#define	ALIGNBYTES32	__BIGGEST_ALIGNMENT__
+/* RISC-V specific macro to align a stack pointer (downwards). */
+#define STACK_ALIGNBYTES	(16UL - 1)
+#define	ALIGNBYTES32		__BIGGEST_ALIGNMENT__
 
 #define NKMEMPAGES_MIN_DEFAULT		((128UL * 1024 * 1024) >> PAGE_SHIFT)
 #define NKMEMPAGES_MAX_UNLIMITED	1
 
-#define PGSHIFT		12
-#define	NBPG		(1 << PGSHIFT)
-#define PGOFSET		(NBPG - 1)
+#define PGSHIFT			12
+#define	NBPG			(1 << PGSHIFT)
+#define PGOFSET			(NBPG - 1)
 
-#define UPAGES		2
-#define	USPACE		(UPAGES << PGSHIFT)
-#define USPACE_ALIGN	NBPG
+#define UPAGES			2
+#define	USPACE			(UPAGES << PGSHIFT)
+#define USPACE_ALIGN		NBPG
 
 /*
  * Constants related to network buffer management.
  * MCLBYTES must be no larger than NBPG (the software page size), and
  * NBPG % MCLBYTES must be zero.
  */
-#define	MSIZE		512		/* size of an mbuf */
+#define	MSIZE			512		/* size of an mbuf */
 
 #ifndef MCLSHIFT
-#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
-					/* 2K cluster can hold Ether frame */
+#define	MCLSHIFT		11		/* convert bytes to m_buf clusters */
+						/* 2K cluster can hold Ether frame */
 #endif	/* MCLSHIFT */
 
-#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+#define	MCLBYTES		(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE		65536	/* default message buffer size */
+#define MSGBUFSIZE		65536		/* default message buffer size */
 #endif
 
 #define MAXCPUS			32
 
 #ifdef _KERNEL
 void delay(unsigned long);
-#define	DELAY(x)	delay(x)
+#define	DELAY(x)		delay(x)
 #endif
+
+#define riscv_btop(x)		((unsigned long)(x) >> PGSHIFT)
+#define riscv_ptob(x)		((unsigned long)(x) << PGSHIFT)
+
 
 #endif /* _RISCV_PARAM_H_ */

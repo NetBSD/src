@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2022/09/11 15:31:12 skrll Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_console.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.1 2022/09/11 15:31:12 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.2 2023/05/07 12:41:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +63,10 @@ bs_protos(bs_notimpl);
 #endif
 
 struct bus_space riscv_generic_bs_tag = {
+//	.bs_cookie = &riscv_generic_bs_tag,
+
 	.bs_stride = 0,
+//	.bs_flags = 0,
 
 	.bs_map = generic_bs_map,
 	.bs_unmap = generic_bs_unmap,
@@ -86,27 +91,27 @@ struct bus_space riscv_generic_bs_tag = {
 
 	/* read region */
 	.bs_rr_1 = generic_bs_rr_1,
-	.bs_rr_2 = bs_notimpl_bs_rr_2,
-	.bs_rr_4 = bs_notimpl_bs_rr_4,
-	.bs_rr_8 = bs_notimpl_bs_rr_8,
+	.bs_rr_2 = bs_notimpl_bs_rr_2 /*generic_bs_rr_2*/,
+	.bs_rr_4 = bs_notimpl_bs_rr_4 /*generic_bs_rr_4*/,
+	.bs_rr_8 = bs_notimpl_bs_rr_8 /*generic_bs_rr_8*/,
 
 	/* write region */
-	.bs_wr_1 = bs_notimpl_bs_wr_1,
-	.bs_wr_2 = bs_notimpl_bs_wr_2,
-	.bs_wr_4 = bs_notimpl_bs_wr_4,
-	.bs_wr_8 = bs_notimpl_bs_wr_8,
+	.bs_wr_1 = bs_notimpl_bs_wr_1 /*generic_bs_wr_1*/,
+	.bs_wr_2 = bs_notimpl_bs_wr_2 /*generic_bs_wr_2*/,
+	.bs_wr_4 = bs_notimpl_bs_wr_4 /*generic_bs_wr_4*/,
+	.bs_wr_8 = bs_notimpl_bs_wr_8 /*generic_bs_wr_8*/,
 
 	/* copy region */
-	.bs_c_1 = bs_notimpl_bs_c_1,
-	.bs_c_2 = bs_notimpl_bs_c_2,
-	.bs_c_4 = bs_notimpl_bs_c_4,
-	.bs_c_8 = bs_notimpl_bs_c_8,
+	.bs_c_1 = bs_notimpl_bs_c_1 /* generic_bs_c_1 */,
+	.bs_c_2 = bs_notimpl_bs_c_2 /* generic_bs_c_2 */,
+	.bs_c_4 = bs_notimpl_bs_c_4 /* generic_bs_c_4 */,
+	.bs_c_8 = bs_notimpl_bs_c_8 /* generic_bs_c_8 */,
 
 	/* set region */
-	.bs_sr_1 = bs_notimpl_bs_sr_1,
-	.bs_sr_2 = bs_notimpl_bs_sr_2,
-	.bs_sr_4 = bs_notimpl_bs_sr_4,
-	.bs_sr_8 = bs_notimpl_bs_sr_8,
+	.bs_sr_1 = bs_notimpl_bs_sr_1 /* generic_bs_sr_1 */,
+	.bs_sr_2 = bs_notimpl_bs_sr_2 /* generic_bs_sr_2 */,
+	.bs_sr_4 = bs_notimpl_bs_sr_4 /* generic_bs_sr_4 */,
+	.bs_sr_8 = bs_notimpl_bs_sr_8 /* generic_bs_sr_8 */,
 
 	/* read multi */
 	.bs_rm_1 = generic_bs_rm_1,
@@ -121,10 +126,10 @@ struct bus_space riscv_generic_bs_tag = {
 	.bs_wm_8 = GENERIC_BS_WM_8,
 
 	/* set multi */
-	.bs_sm_1 = bs_notimpl_bs_sm_1,
-	.bs_sm_2 = bs_notimpl_bs_sm_2,
-	.bs_sm_4 = bs_notimpl_bs_sm_4,
-	.bs_sm_8 = bs_notimpl_bs_sm_8,
+	.bs_sm_1 = bs_notimpl_bs_sm_1 /* generic_bs_sm_1 */,
+	.bs_sm_2 = bs_notimpl_bs_sm_2 /* generic_bs_sm_2 */,
+	.bs_sm_4 = bs_notimpl_bs_sm_4 /* generic_bs_sm_4 */,
+	.bs_sm_8 = bs_notimpl_bs_sm_8 /* generic_bs_sm_8 */,
 
 #ifdef __BUS_SPACE_HAS_STREAM_METHODS
 	/* read stream */
@@ -142,14 +147,14 @@ struct bus_space riscv_generic_bs_tag = {
 	/* read region stream */
 	.bs_rr_1_s = generic_bs_rr_1,
 	.bs_rr_2_s = generic_bs_rr_2,
-	.bs_rr_4_s = bs_notimpl_bs_rr_4,
-	.bs_rr_8_s = bs_notimpl_bs_rr_8,
+	.bs_rr_4_s = bs_notimpl_bs_rr_4 /*generic_bs_rr_4*/,
+	.bs_rr_8_s = bs_notimpl_bs_rr_8 /*generic_bs_rr_8*/,
 
 	/* write region stream */
-	.bs_wr_1_s = bs_notimpl_bs_wr_1,
-	.bs_wr_2_s = bs_notimpl_bs_wr_2,
-	.bs_wr_4_s = bs_notimpl_bs_wr_4,
-	.bs_wr_8_s = bs_notimpl_bs_wr_8,
+	.bs_wr_1_s = bs_notimpl_bs_wr_1 /*generic_bs_wr_1*/,
+	.bs_wr_2_s = bs_notimpl_bs_wr_2 /*generic_bs_wr_2*/,
+	.bs_wr_4_s = bs_notimpl_bs_wr_4 /*generic_bs_wr_4*/,
+	.bs_wr_8_s = bs_notimpl_bs_wr_8 /*generic_bs_wr_8*/,
 
 	/* read multi stream */
 	.bs_rm_1_s = generic_bs_rm_1,
@@ -164,15 +169,142 @@ struct bus_space riscv_generic_bs_tag = {
 	.bs_wm_8_s = GENERIC_BS_WM_8,
 #endif
 
+#ifdef __BUS_SPACE_HAS_PROBING_METHODS
+	/* peek */
+	.bs_pe_1 = generic_bs_pe_1,
+	.bs_pe_2 = generic_bs_pe_2,
+	.bs_pe_4 = generic_bs_pe_4,
+	.bs_pe_8 = generic_bs_pe_8,
+
+	/* poke */
+	.bs_po_1 = generic_bs_po_1,
+	.bs_po_2 = generic_bs_po_2,
+	.bs_po_4 = generic_bs_po_4,
+	.bs_po_8 = generic_bs_po_8,
+#endif
+};
+
+struct bus_space riscv_generic_a4x_bs_tag = {
+//	.bs_cookie = &riscv_generic_a4x_bs_tag,
+
+	.bs_stride = 2,
+//	.bs_flags = 0,
+
+	.bs_map = generic_bs_map,
+	.bs_unmap = generic_bs_unmap,
+	.bs_subregion = generic_bs_subregion,
+	.bs_alloc = generic_bs_alloc,
+	.bs_free = generic_bs_free,
+	.bs_vaddr = generic_bs_vaddr,
+	.bs_mmap = generic_bs_mmap,
+	.bs_barrier = generic_bs_barrier,
+
+	/* read */
+	.bs_r_1 = generic_bs_r_1,
+	.bs_r_2 = generic_bs_r_2,
+	.bs_r_4 = generic_bs_r_4,
+	.bs_r_8 = GENERIC_BS_R_8,
+
+	/* write */
+	.bs_w_1 = generic_bs_w_1,
+	.bs_w_2 = generic_bs_w_2,
+	.bs_w_4 = generic_bs_w_4,
+	.bs_w_8 = GENERIC_BS_W_8,
+
+	/* read region */
+	.bs_rr_1 = generic_bs_rr_1,
+	.bs_rr_2 = generic_bs_rr_2,
+	.bs_rr_4 = bs_notimpl_bs_rr_4 /*generic_bs_rr_4*/,
+	.bs_rr_8 = bs_notimpl_bs_rr_8 /*generic_bs_rr_8*/,
+
+	/* write region */
+	.bs_wr_1 = bs_notimpl_bs_wr_1 /*generic_bs_wr_1*/,
+	.bs_wr_2 = bs_notimpl_bs_wr_2 /*generic_bs_wr_2*/,
+	.bs_wr_4 = bs_notimpl_bs_wr_4 /*generic_bs_wr_4*/,
+	.bs_wr_8 = bs_notimpl_bs_wr_8 /*generic_bs_wr_8*/,
+
+	/* copy region */
+	.bs_c_1 = bs_notimpl_bs_c_1 /* generic_bs_c_1 */,
+	.bs_c_2 = bs_notimpl_bs_c_2 /* generic_bs_c_2 */,
+	.bs_c_4 = bs_notimpl_bs_c_4 /* generic_bs_c_4 */,
+	.bs_c_8 = bs_notimpl_bs_c_8 /* generic_bs_c_8 */,
+
+	/* set region */
+	.bs_sr_1 = bs_notimpl_bs_sr_1 /* generic_bs_sr_1 */,
+	.bs_sr_2 = bs_notimpl_bs_sr_2 /* generic_bs_sr_2 */,
+	.bs_sr_4 = bs_notimpl_bs_sr_4 /* generic_bs_sr_4 */,
+	.bs_sr_8 = bs_notimpl_bs_sr_8 /* generic_bs_sr_8 */,
+
+	/* read multi */
+	.bs_rm_1 = generic_bs_rm_1,
+	.bs_rm_2 = generic_bs_rm_2,
+	.bs_rm_4 = generic_bs_rm_4,
+	.bs_rm_8 = GENERIC_BS_RM_8,
+
+	/* write multi */
+	.bs_wm_1 = generic_bs_wm_1,
+	.bs_wm_2 = generic_bs_wm_2,
+	.bs_wm_4 = generic_bs_wm_4,
+	.bs_wm_8 = GENERIC_BS_WM_8,
+
+	/* set multi */
+	.bs_sm_1 = bs_notimpl_bs_sm_1 /* generic_bs_sm_1 */,
+	.bs_sm_2 = bs_notimpl_bs_sm_2 /* generic_bs_sm_2 */,
+	.bs_sm_4 = bs_notimpl_bs_sm_4 /* generic_bs_sm_4 */,
+	.bs_sm_8 = bs_notimpl_bs_sm_8 /* generic_bs_sm_8 */,
+
+#ifdef __BUS_SPACE_HAS_STREAM_METHODS
+	/* read stream */
+	.bs_r_1_s = generic_bs_r_1,
+	.bs_r_2_s = generic_bs_r_2,
+	.bs_r_4_s = generic_bs_r_4,
+	.bs_r_8_s = GENERIC_BS_R_8,
+
+	/* write stream */
+	.bs_w_1_s = generic_bs_w_1,
+	.bs_w_2_s = generic_bs_w_2,
+	.bs_w_4_s = generic_bs_w_4,
+	.bs_w_8_s = GENERIC_BS_W_8,
+
+	/* read region stream */
+	.bs_rr_1_s = generic_bs_rr_1,
+	.bs_rr_2_s = generic_bs_rr_2,
+	.bs_rr_4_s = bs_notimpl_bs_rr_4 /*generic_bs_rr_4*/,
+	.bs_rr_8_s = bs_notimpl_bs_rr_8 /*generic_bs_rr_8*/,
+
+	/* write region stream */
+	.bs_wr_1_s = bs_notimpl_bs_wr_1 /*generic_bs_wr_1*/,
+	.bs_wr_2_s = bs_notimpl_bs_wr_2 /*generic_bs_wr_2*/,
+	.bs_wr_4_s = bs_notimpl_bs_wr_4 /*generic_bs_wr_4*/,
+	.bs_wr_8_s = bs_notimpl_bs_wr_8 /*generic_bs_wr_8*/,
+
+	/* read multi stream */
+	.bs_rm_1_s = generic_bs_rm_1,
+	.bs_rm_2_s = generic_bs_rm_2,
+	.bs_rm_4_s = generic_bs_rm_4,
+	.bs_rm_8_s = GENERIC_BS_RM_8,
+
+	/* write multi stream */
+	.bs_wm_1_s = generic_bs_wm_1,
+	.bs_wm_2_s = generic_bs_wm_2,
+	.bs_wm_4_s = generic_bs_wm_4,
+	.bs_wm_8_s = GENERIC_BS_WM_8,
+#endif
 };
 
 int
 generic_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
+	const struct pmap_devmap *pd;
 	paddr_t startpa, endpa, pa;
 	vaddr_t va;
 	int pmapflags;
+
+	if ((pd = pmap_devmap_find_pa(bpa, size)) != NULL) {
+		*bshp = pd->pd_va + (bpa - pd->pd_pa);
+		return 0;
+	}
 
 	startpa = trunc_page(bpa);
 	endpa = round_page(bpa + size);
@@ -185,6 +317,17 @@ generic_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 		return ENOMEM;
 
 	*bshp = (bus_space_handle_t)(va + (bpa - startpa));
+
+#if 0
+	if ((flag & BUS_SPACE_MAP_PREFETCHABLE) != 0)
+		pmapflags = PMAP_WRITE_COMBINE;
+	else if ((flag & BUS_SPACE_MAP_CACHEABLE) != 0)
+		pmapflags = PMAP_WRITE_BACK;
+	else if ((flag & _RISCV_BUS_SPACE_MAP_STRONGLY_ORDERED) != 0)
+		pmapflags = PMAP_DEV_NP;
+	else
+		pmapflags = PMAP_DEV;
+#endif
 
 	pmapflags = 0;
 
@@ -202,6 +345,8 @@ generic_bs_unmap(void *t, bus_space_handle_t bsh, bus_size_t size)
 	vaddr_t va;
 	vsize_t sz;
 
+	if (pmap_devmap_find_va(bsh, size) != NULL)
+		return;
 	va = trunc_page(bsh);
 	sz = round_page(bsh + size) - va;
 
@@ -223,6 +368,21 @@ void
 generic_bs_barrier(void *t, bus_space_handle_t bsh, bus_size_t offset,
     bus_size_t len, int flags)
 {
+#if 0
+	flags &= BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE;
+
+	switch (flags) {
+	case BUS_SPACE_BARRIER_READ:
+		dmb(ishld);
+		break;
+	case BUS_SPACE_BARRIER_WRITE:
+		dmb(ishst);
+		break;
+	case BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE:
+		dmb(ish);
+		break;
+	}
+#endif
 }
 
 void *
@@ -235,6 +395,16 @@ paddr_t
 generic_bs_mmap(void *t, bus_addr_t bpa, off_t offset, int prot, int flags)
 {
 	paddr_t bus_flags = 0;
+
+#if 0
+	if ((flags & BUS_SPACE_MAP_CACHEABLE) != 0)
+		bus_flags |= RISCV_MMAP_WRITEBACK;
+	else if ((flags & BUS_SPACE_MAP_PREFETCHABLE) != 0)
+		bus_flags |= RISCV_MMAP_WRITECOMBINE;
+	else
+		bus_flags |= RISCV_MMAP_DEVICE;
+
+#endif
 
 	return (atop(bpa + (offset << ((struct bus_space *)t)->bs_stride)) |
 	    bus_flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.2 2015/03/31 01:36:27 matt Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.3 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@ pthread__sp(void)
 {
 	unsigned long ret;
 
-	__asm("move\t%0, sp" : "=r" (ret));
+	__asm("mv\t%0, sp" : "=r" (ret));
 
 	return ret;
 }

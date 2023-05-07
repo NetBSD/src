@@ -1,4 +1,4 @@
-/*	$NetBSD: getcontext.S,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: getcontext.S,v 1.2 2023/05/07 12:41:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -33,16 +33,17 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: getcontext.S,v 1.1 2014/09/19 17:36:25 matt Exp $")
+	RCSID("$NetBSD: getcontext.S,v 1.2 2023/05/07 12:41:47 skrll Exp $")
 #endif /* SYSLIBC_SCCS && !lint */
 
 #ifdef WEAK_ALIAS
 WEAK_ALIAS(getcontext, _getcontext)
 #endif
 ENTRY(_getcontext)
+	mv	t0, a0
 	SYSTRAP(getcontext)
-	JUMP_TO_CERROR()		/* error */
-	REG_S		zero, UC_GREGS_RV(a0) /* success */
-	REG_S		ra, UC_GREGS_PC(a0)
+	JUMP_TO_CERROR()			/* error */
+	REG_S		zero, UC_GREGS_RV(t0)	/* success */
+	REG_S		ra, UC_GREGS_PC(t0)
 	ret
 END(_getcontext)
