@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2023/05/06 17:21:51 christos Exp $
+#	$NetBSD: Makefile,v 1.25 2023/05/07 19:13:15 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -43,18 +43,14 @@ CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/crypto/include
 CPPFLAGS+= -I${OPENSSLSRC}/crypto/asn1 -I${OPENSSLSRC}/crypto/evp
 CPPFLAGS+= -I${OPENSSLSRC}/crypto/modes
 CPPFLAGS+= -I${OPENSSLSRC}/../include
-CPPFLAGS+= -I${OPENSSLSRC}/providers/common/include
-CPPFLAGS+= -I${OPENSSLSRC}/providers/implementations/include
 
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 OPENSSLINC=	${OPENSSLSRC}/include/openssl
 
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
-.PATH: ${OPENSSLSRC} ${OPENSSLINC}
+.PATH: ${OPENSSLSRC} ${OPENSSLINC} 
 .PATH: ${OPENSSLSRC}/../include/openssl
-.PATH: ${OPENSSLSRC}/providers/implementations/digests
-.PATH: ${OPENSSLSRC}/providers/implementations/macs
 
 .include "srcs.inc"
 .include "${.CURDIR}/../libdefault/srcs.inc"
@@ -286,7 +282,6 @@ pkcs12.h \
 pkcs7.h \
 safestack.h \
 srp.h \
-ssl.h \
 ui.h \
 x509.h \
 x509_vfy.h \
