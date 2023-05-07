@@ -1,7 +1,7 @@
 /*
- * Copyright 2017-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -42,7 +42,8 @@ static void test_fail_string_common(const char *prefix, const char *file,
                                     const char *op, const char *m1, size_t l1,
                                     const char *m2, size_t l2)
 {
-    const size_t width = (MAX_STRING_WIDTH - subtest_level() - 12) / 16 * 16;
+    const size_t width =
+        (MAX_STRING_WIDTH - BIO_get_indent(bio_err) - 12) / 16 * 16;
     char b1[MAX_STRING_WIDTH + 1], b2[MAX_STRING_WIDTH + 1];
     char bdiff[MAX_STRING_WIDTH + 1];
     size_t n1, n2, i;
@@ -64,7 +65,7 @@ static void test_fail_string_common(const char *prefix, const char *file,
         goto fin;
     }
 
-    if (l1 != l2 || strcmp(m1, m2) != 0)
+    if (l1 != l2 || strncmp(m1, m2, l1) != 0)
         test_diff_header(left, right);
 
     while (l1 > 0 || l2 > 0) {
