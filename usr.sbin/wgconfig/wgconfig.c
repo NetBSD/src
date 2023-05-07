@@ -1,4 +1,4 @@
-/*	$NetBSD: wgconfig.c,v 1.5 2020/08/28 17:17:53 tih Exp $	*/
+/*	$NetBSD: wgconfig.c,v 1.6 2023/05/07 16:05:07 oster Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wgconfig.c,v 1.5 2020/08/28 17:17:53 tih Exp $");
+__RCSID("$NetBSD: wgconfig.c,v 1.6 2023/05/07 16:05:07 oster Exp $");
 
 #include <sys/ioctl.h>
 
@@ -680,14 +680,18 @@ handle_options(int argc, char *argv[], prop_dictionary_t prop_dict)
 {
 
 	while (argc > 0) {
+		int found = 0;
 		for (size_t i = 0; i < __arraycount(options); i++) {
 			const struct option *opt = &options[i];
 			size_t optlen = strlen(opt->option);
 			if (strncmp(argv[0], opt->option, optlen) == 0) {
 				opt->func(argv[0] + optlen, prop_dict);
+				found = 1;
 				break;
 			}
 		}
+		if (found == 0)
+			errx(EXIT_FAILURE, "invalid option: %s", argv[0]);
 		argc -= 1;
 		argv += 1;
 	}
