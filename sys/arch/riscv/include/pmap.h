@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.14 2022/12/23 10:44:25 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.15 2023/05/07 12:41:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -55,8 +55,11 @@
 
 #ifdef _LP64
 #define	PTPSHIFT	3
+/* This is SV57. */
+//#define	XSEGSHIFT	(SEGSHIFT + SEGLENGTH + SEGLENGTH + SEGLENGTH)
+
 /* This is SV48. */
-//#define SEGLENGTH + SEGSHIFT + SEGSHIFT */
+//#define	XSEGSHIFT	(SEGSHIFT + SEGLENGTH + SEGLENGTH)
 
 /* This is SV39. */
 #define	XSEGSHIFT	(SEGSHIFT + SEGLENGTH)
@@ -108,6 +111,7 @@ pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
 }
 
 #include <uvm/pmap/tlb.h>
+#include <uvm/pmap/pmap_devmap.h>
 #include <uvm/pmap/pmap_tlb.h>
 
 #define	PMAP_GROWKERNEL
@@ -118,7 +122,6 @@ pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
 #define	__HAVE_PMAP_MD
 struct pmap_md {
 	paddr_t md_ppn;
-	pd_entry_t *md_pdetab;
 };
 
 struct vm_page *
@@ -139,13 +142,36 @@ bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
 
 void	pmap_bootstrap(vaddr_t kstart, vaddr_t kend);
 
+vsize_t	pmap_kenter_range(vaddr_t, paddr_t, vsize_t, vm_prot_t, u_int);
+
+#ifdef _LP64
 extern vaddr_t pmap_direct_base;
 extern vaddr_t pmap_direct_end;
+#if 0	/* XXXSB is pmap_direct_base not initialised correctly somehow?  didn't check */
 #define	PMAP_DIRECT_MAP(pa)	(pmap_direct_base + (pa))
 #define	PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - pmap_direct_base)
+#else
+#define	PMAP_DIRECT_MAP(pa)	RISCV_PA_TO_KVA(pa)
+#define	PMAP_DIRECT_UNMAP(va)	RISCV_KVA_TO_PA(va)
+
+#endif
+
+/*
+ * Other hooks for the pool allocator.
+ */
+#define	POOL_PHYSTOV(pa)	RISCV_PA_TO_KVA((paddr_t)(pa))
+#define	POOL_VTOPHYS(va)	RISCV_KVA_TO_PA((vaddr_t)(va))
+
+#endif	/* _LP64 */
 
 #define	MEGAPAGE_TRUNC(x)	((x) & ~SEGOFSET)
 #define	MEGAPAGE_ROUND(x)	MEGAPAGE_TRUNC((x) + SEGOFSET)
+
+#define	PMAP_DEV		__BIT(29)	/* 0x2000_0000 */
+
+#define	DEVMAP_ALIGN(x)		MEGAPAGE_TRUNC((x))
+#define	DEVMAP_SIZE(x)		MEGAPAGE_ROUND((x))
+#define	DEVMAP_FLAGS		PMAP_DEV
 
 #ifdef __PMAP_PRIVATE
 
@@ -185,6 +211,26 @@ static inline size_t
 pmap_md_tlb_asid_max(void)
 {
 	return PMAP_TLB_NUM_PIDS - 1;
+}
+
+static inline pt_entry_t *
+pmap_md_nptep(pt_entry_t *ptep)
+{
+	return ptep + 1;
+}
+
+static inline bool
+pmap_md_kernel_vaddr_p(vaddr_t va)
+{
+	return false;
+}
+
+static inline paddr_t
+pmap_md_kernel_vaddr_to_paddr(vaddr_t vax)
+{
+	/* Not used due to false from pmap_md_kernel_vaddr_p */
+
+	return 0;
 }
 
 #endif /* __PMAP_PRIVATE */

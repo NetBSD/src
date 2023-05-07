@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.81 2022/08/07 23:42:09 riastradh Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.82 2023/05/07 12:41:48 skrll Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -59,7 +59,7 @@ CFLAGS+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -mno-pltseq :}
 .elif ${MACHINE_CPU} == "vax"
 CFLAGS+=	-fno-pic
 .elif ${MACHINE_CPU} == "riscv"
-CFLAGS+=	-fPIC -Wa,-fno-pic
+CFLAGS+=	-mcmodel=medany
 .elif ${MACHINE_ARCH} == "mips64eb" && !defined(BSD_MK_COMPAT_FILE)
 CFLAGS+=	-mabi=64
 AFLAGS+=	-mabi=64

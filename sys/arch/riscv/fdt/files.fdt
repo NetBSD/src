@@ -1,0 +1,19 @@
+# $NetBSD: files.fdt,v 1.1 2023/05/07 12:41:48 skrll Exp $
+
+include	"dev/pckbport/files.pckbport"
+
+file	arch/riscv/fdt/riscv_platform.c
+
+file	arch/riscv/fdt/fdt_dma_machdep.c
+file	arch/riscv/fdt/fdt_cpus_machdep.c
+
+attach	cpu at fdt with cpu_fdt
+file	arch/riscv/fdt/cpu_fdt.c		cpu_fdt
+
+device	clint: fdt
+attach	clint at fdt with clint_fdt
+file	arch/riscv/fdt/clint_fdt.c		clint_fdt
+
+device	intc: fdt
+attach	intc at fdt with intc_fdt
+file	arch/riscv/fdt/intc_fdt.c		intc_fdt

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.3 2015/03/31 06:47:47 matt Exp $	*/
+/*	$NetBSD: proc.h,v 1.4 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -65,7 +65,12 @@ struct mdproc {
 };
 
 #ifdef _KERNEL
-#define	LWP0_CPU_INFO	&cpu_info_store	/* staticly set in lwp0 */
+#define	LWP0_CPU_INFO	&cpu_info_store[0]	/* staticly set in lwp0 */
+#if 0
+#define LWP0_MD_INITIALIZER {   \
+                .md_utf = (void *)0xdeadbeef, \
+        }
+#endif
 #endif /* _KERNEL */
 
 #endif /* _RISCV_PROC_H_ */

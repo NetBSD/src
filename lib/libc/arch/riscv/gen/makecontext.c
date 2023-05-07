@@ -1,4 +1,4 @@
-/*	$NetBSD: makecontext.c,v 1.1 2014/09/19 17:36:25 matt Exp $	*/
+/*	$NetBSD: makecontext.c,v 1.2 2023/05/07 12:41:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: makecontext.c,v 1.1 2014/09/19 17:36:25 matt Exp $");
+__RCSID("$NetBSD: makecontext.c,v 1.2 2023/05/07 12:41:47 skrll Exp $");
 #endif
 
 #include <inttypes.h>
@@ -57,8 +57,8 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 	sp  = (long *)
 	    ((uintptr_t)ucp->uc_stack.ss_sp + ucp->uc_stack.ss_size);
 	/* LINTED uintptr_t is safe */
-	sp -= 1 + (argc > 8 ? argc - 8: 0); /* Make room for call frame. */
-	sp  = (long *) ((uintptr_t)sp & -16L); /* Align on 16byte boundary. */
+	sp -= 1 + (argc > 8 ? argc - 8: 0);	/* Make room for call frame. */
+	sp  = (long *) ((uintptr_t)sp & -16L);	/* Align on 16byte boundary. */
 
 	/*
 	 * Start executing at <func> -- when <func> completes, return to
@@ -73,7 +73,7 @@ makecontext(ucontext_t *ucp, void (*func)(void), int argc, ...)
 
 	/* Construct argument list. */
 	va_start(ap, argc);
-	/* Up to the first six arguments are passed in x18-x25 */
+	/* Up to the first eight arguments are passed in a0(x10)-a7(x17) */
 	for (i = 0; i < argc && i < 8; i++)
 		gr[_REG_A0 + i] = va_arg(ap, int);
 	/* Pass remaining arguments on the stack above the backchain/lr gap. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.2 2022/11/19 12:16:03 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -68,12 +68,15 @@
  * Addresses (in bus space).
  */
 typedef paddr_t bus_addr_t;
-typedef psize_t bus_size_t;
+typedef u_long bus_size_t;
 
 #define PRIxBUSADDR	PRIxPADDR
-#define PRIxBUSSIZE	PRIxPSIZE
-#define PRIuBUSSIZE	PRIuPSIZE
+#define PRIxBUSSIZE	"lx"
+#define PRIuBUSSIZE	"lu"
 
+/*
+ * Access methods for bus space.
+ */
 typedef struct bus_space *bus_space_tag_t;
 typedef uintptr_t bus_space_handle_t;
 
@@ -90,8 +93,14 @@ typedef uintptr_t bus_space_handle_t;
 #define	BUS_SPACE_MAP_BUS3		__BIT(10)
 #define	BUS_SPACE_MAP_BUS4		__BIT(11)
 
+#define	_RISCV_BUS_SPACE_MAP_STRONGLY_ORDERED	BUS_SPACE_MAP_BUS1
+
 struct bus_space {
+	/* cookie */
+	void		*bs_cookie;
+
 	int		bs_stride;	/* offset <<= bs_stride (if needed) */
+	int		bs_flags;
 
 	/* mapping/unmapping */
 	int		(*bs_map)(void *, bus_addr_t, bus_size_t,
@@ -330,6 +339,7 @@ struct riscv_bus_dma_segment {
 	 * PRIVATE MEMBERS:
 	 */
 	uint32_t	_ds_flags;	/* _BUS_DMAMAP_COHERENT */
+	paddr_t		_ds_paddr;	/* CPU address */
 };
 typedef struct riscv_bus_dma_segment	bus_dma_segment_t;
 
@@ -437,6 +447,12 @@ struct riscv_bus_dmamap {
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
 
+#if defined(KASAN)
+	void		*dm_buf;
+	bus_size_t	dm_buflen;
+	int		dm_buftype;
+#endif
+
 	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
@@ -451,6 +467,7 @@ struct riscv_bus_dmamap {
 #define	_BUS_DMA_BUFTYPE_RAW		4
 
 #ifdef _RISCV_BUS_DMA_PRIVATE
+#define	_BUS_AVAIL_END	physical_end
 /*
  * Cookie used for bounce buffers. A pointer to one of these it stashed in
  * the DMA map.

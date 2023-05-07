@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.25 2022/11/17 13:11:08 simonb Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.26 2023/05/07 12:41:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -29,14 +29,16 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_ddb.h"
 #include "opt_modular.h"
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.25 2022/11/17 13:11:08 simonb Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.26 2023/05/07 12:41:49 skrll Exp $");
 
 #include <sys/param.h>
 
+#include <sys/asan.h>
 #include <sys/boot_flag.h>
 #include <sys/cpu.h>
 #include <sys/exec.h>
@@ -44,24 +46,31 @@ __RCSID("$NetBSD: riscv_machdep.c,v 1.25 2022/11/17 13:11:08 simonb Exp $");
 #include <sys/ktrace.h>
 #include <sys/lwp.h>
 #include <sys/module.h>
+#include <sys/mount.h>
 #include <sys/msgbuf.h>
+#include <sys/optstr.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 
 #include <dev/cons.h>
 #include <uvm/uvm_extern.h>
 
+#include <riscv/frame.h>
 #include <riscv/locore.h>
 #include <riscv/machdep.h>
 #include <riscv/pte.h>
+#include <riscv/sbi.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_boot.h>
 #include <dev/fdt/fdt_memory.h>
+#include <dev/fdt/fdt_private.h>
 
-int cpu_printfataltraps;
+int cpu_printfataltraps = 1;
 char machine[] = MACHINE;
 char machine_arch[] = MACHINE_ARCH;
 
@@ -74,9 +83,15 @@ char machine_arch[] = MACHINE_ARCH;
 #ifndef FDT_MAX_BOOT_STRING
 #define	FDT_MAX_BOOT_STRING 1024
 #endif
+/* 64 should be enough, even for a ZFS UUID */
+#define	MAX_BOOT_DEV_STR	64
 
 char bootargs[FDT_MAX_BOOT_STRING] = "";
+char bootdevstr[MAX_BOOT_DEV_STR] = "";
 char *boot_args = NULL;
+
+paddr_t physical_start;
+paddr_t physical_end;
 
 static void
 earlyconsputc(dev_t dev, int c)
@@ -99,12 +114,6 @@ static struct consdev earlycons = {
 struct vm_map *phys_map;
 
 struct trapframe cpu_ddb_regs;
-
-struct cpu_info cpu_info_store = {
-	.ci_cpl = IPL_HIGH,
-	.ci_ddb_regs = &cpu_ddb_regs,
-};
-
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 #ifdef FPE
 	[PCU_FPU] = &pcu_fpu_ops,
@@ -116,6 +125,19 @@ const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
  * keep it in data
  */
 unsigned long kern_vtopdiff __attribute__((__section__(".data")));
+
+
+/*
+ * machine dependent system variables.
+ */
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
+}
 
 void
 delay(unsigned long us)
@@ -141,10 +163,9 @@ module_init_md(void)
 
 /*
  * Set registers on exec.
- * Clear all registers except sp, pc, and t9.
- * $sp is set to the stack pointer passed in.  $pc is set to the entry
- * point given by the exec_package passed in, as is $t9 (used for PIC
- * code by the MIPS elf abi).
+ * Clear all registers except sp, pc.
+ * sp is set to the stack pointer passed in.  pc is set to the entry
+ * point given by the exec_package passed in.
  */
 void
 setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
@@ -152,7 +173,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	struct trapframe * const tf = l->l_md.md_utf;
 	struct proc * const p = l->l_proc;
 
-	memset(tf, 0, sizeof(struct trapframe));
+	memset(tf, 0, sizeof(*tf));
 	tf->tf_sp = (intptr_t)stack_align(stack);
 	tf->tf_pc = (intptr_t)pack->ep_entry & ~1;
 #ifdef _LP64
@@ -160,22 +181,44 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 #else
 	tf->tf_sr = SR_USER;
 #endif
-	// Set up arguments for _start(obj, cleanup, ps_strings)
-	tf->tf_a0 = 0;			// obj
-	tf->tf_a1 = 0;			// cleanup
-	tf->tf_a2 = p->p_psstrp;	// ps_strings
+
+	// Set up arguments for ___start(cleanup, ps_strings)
+	tf->tf_a0 = 0;			// cleanup
+	tf->tf_a1 = p->p_psstrp;	// ps_strings
+
+	/*
+	 * Must have interrupts disabled for exception return.
+	 * Must be switching to user mode.
+	 * Must enable interrupts after sret.
+	 */
+	KASSERT(__SHIFTOUT(tf->tf_sr, SR_SIE) == 0);
+	KASSERT(__SHIFTOUT(tf->tf_sr, SR_SPP) == 0);
+	KASSERT(__SHIFTOUT(tf->tf_sr, SR_SPIE) != 0);
 }
 
 void
 md_child_return(struct lwp *l)
 {
-	struct trapframe * const tf = l->l_md.md_utf;
+	struct trapframe * const tf = lwp_trapframe(l);
 
 	tf->tf_a0 = 0;
 	tf->tf_a1 = 1;
 #ifdef FPE
-	tf->tf_sr &= ~SR_EF;		/* Disable FP as we can't be them. */
+	/* Disable FP as we can't be using it (yet). */
+	tf->tf_sr &= ~SR_FS;
 #endif
+
+	/*
+	 * Must have interrupts disabled for exception return.
+	 * Must be switching to user mode.
+	 * Must enable interrupts after sret.
+	 */
+
+	KASSERT(__SHIFTOUT(tf->tf_sr, SR_SIE) == 0);
+	KASSERT(__SHIFTOUT(tf->tf_sr, SR_SPP) == 0);
+	KASSERT(__SHIFTOUT(tf->tf_sr, SR_SPIE) != 0);
+
+	userret(l);
 }
 
 void
@@ -197,7 +240,7 @@ startlwp(void *arg)
 	error = cpu_setmcontext(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
 
-	kmem_free(uc, sizeof(ucontext_t));
+	kmem_free(uc, sizeof(*uc));
 	userret(l);
 }
 
@@ -216,8 +259,6 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* Save register context. */
 	*(struct reg *)mcp->__gregs = tf->tf_regs;
-
-	mcp->__private = (intptr_t)l->l_private;
 
 	*flags |= _UC_CPU | _UC_TLSBASE;
 
@@ -270,7 +311,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	/* Restore the private thread context */
 	if (flags & _UC_TLSBASE) {
-		lwp_setprivate(l, (void *)(intptr_t)mcp->__private);
+		lwp_setprivate(l, (void *)(intptr_t)mcp->__gregs[_X_TP]);
 	}
 
 	/* Restore floating point register context, if any. */
@@ -294,7 +335,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
-	return (0);
+	return 0;
 }
 
 void
@@ -317,7 +358,7 @@ cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 		cpu_send_ipi(ci, IPI_AST);
 #endif
 	} else {
-		l->l_md.md_astpending = 1;		/* force call to ast() */
+		l->l_md.md_astpending = 1;	/* force call to ast() */
 	}
 }
 
@@ -338,6 +379,7 @@ cpu_signotify(struct lwp *l)
 	}
 }
 
+
 void
 cpu_need_proftick(struct lwp *l)
 {
@@ -348,11 +390,78 @@ cpu_need_proftick(struct lwp *l)
 	l->l_md.md_astpending = 1;		/* force call to ast() */
 }
 
-void
-cpu_reboot(int how, char *bootstr)
+
+/* Sync the discs, unmount the filesystems, and adjust the todr */
+static void
+bootsync(void)
 {
-	for (;;) {
+	static bool bootsyncdone = false;
+
+	if (bootsyncdone)
+		return;
+
+	bootsyncdone = true;
+
+	/* Make sure we can still manage to do things */
+	if ((csr_sstatus_read() & SR_SIE) == 0) {
+		/*
+		 * If we get here then boot has been called without RB_NOSYNC
+		 * and interrupts were disabled. This means the boot() call
+		 * did not come from a user process e.g. shutdown, but must
+		 * have come from somewhere in the kernel.
+		 */
+		ENABLE_INTERRUPTS();
+		printf("Warning interrupts disabled during boot()\n");
 	}
+
+	vfs_shutdown();
+
+	resettodr();
+}
+
+
+void
+cpu_reboot(int howto, char *bootstr)
+{
+
+	/*
+	 * If RB_NOSYNC was not specified sync the discs.
+	 * Note: Unless cold is set to 1 here, syslogd will die during the
+	 * unmount.  It looks like syslogd is getting woken up only to find
+	 * that it cannot page part of the binary in as the filesystem has
+	 * been unmounted.
+	 */
+	if ((howto & RB_NOSYNC) == 0)
+		bootsync();
+
+#if 0
+	/* Disable interrupts. */
+	const int s = splhigh();
+
+	/* Do a dump if requested. */
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+		dumpsys();
+
+	splx(s);
+#endif
+
+	pmf_system_shutdown(boothowto);
+
+	/* Say NO to interrupts for good */
+	splhigh();
+
+	/* Run any shutdown hooks */
+	doshutdownhooks();
+
+	/* Make sure IRQ's are disabled */
+	DISABLE_INTERRUPTS();
+
+	sbi_system_reset(SBI_RESET_TYPE_COLDREBOOT, SBI_RESET_REASON_NONE);
+
+	for (;;) {
+		asm volatile("wfi" ::: "memory");
+	}
+	/* NOTREACHED */
 }
 
 void
@@ -361,11 +470,23 @@ cpu_dumpconf(void)
 	// TBD!!
 }
 
+
+int
+cpu_lwp_setprivate(lwp_t *l, void *addr)
+{
+	struct trapframe * const tf = lwp_trapframe(l);
+
+	tf->tf_reg[_REG_TP] = (register_t)addr;
+
+	return 0;
+}
+
+
 void
 cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
-	char pbuf[9];	/* "99999 MB" */
+	char pbuf[10];	/* "999999 MB" -- But Sv39 is max 512GB */
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -383,6 +504,83 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
+
+	fdtbus_intr_init();
+}
+
+static void
+riscv_add_memory(const struct fdt_memory *m, void *arg)
+{
+	paddr_t first = atop(m->start);
+	paddr_t last = atop(m->end);
+	int freelist = VM_FREELIST_DEFAULT;
+
+	VPRINTF("adding %#16" PRIxPADDR " - %#16" PRIxPADDR"  to freelist %d\n",
+	    m->start, m->end, freelist);
+
+	uvm_page_physload(first, last, first, last, freelist);
+	physmem += last - first;
+}
+
+
+static void
+cpu_kernel_vm_init(paddr_t memory_start, paddr_t memory_end)
+{
+	extern char __kernel_text[];
+	extern char _end[];
+
+	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
+	vaddr_t kernend = round_page((vaddr_t)_end);
+	paddr_t kernstart_phys = KERN_VTOPHYS(kernstart);
+	paddr_t kernend_phys = KERN_VTOPHYS(kernend);
+
+	VPRINTF("%s: kernel phys start %#" PRIxPADDR " end %#" PRIxPADDR "\n",
+	    __func__, kernstart_phys, kernend_phys);
+	fdt_memory_remove_range(kernstart_phys,
+	    kernend_phys - kernstart_phys);
+
+	/*
+	 * Don't give these pages to UVM.
+	 *
+	 * cpu_kernel_vm_init need to create proper tables then the following
+	 * will be true.
+	 *
+	 * Now we have APs started the pages used for stacks and L1PT can
+	 * be given to uvm
+	 */
+	extern char const __start__init_memory[];
+	extern char const __stop__init_memory[] __weak;
+	if (__start__init_memory != __stop__init_memory) {
+		const paddr_t spa = KERN_VTOPHYS((vaddr_t)__start__init_memory);
+		const paddr_t epa = KERN_VTOPHYS((vaddr_t)__stop__init_memory);
+
+		VPRINTF("%s: init   phys start %#" PRIxPADDR
+		    " end %#" PRIxPADDR "\n", __func__, spa, epa);
+		fdt_memory_remove_range(spa, epa - spa);
+	}
+
+#ifdef _LP64
+	paddr_t pa = memory_start & ~XSEGOFSET;
+	pmap_direct_base = RISCV_DIRECTMAP_START;
+	extern pd_entry_t l2_pte[PAGE_SIZE / sizeof(pd_entry_t)];
+
+
+	const vsize_t vshift = XSEGSHIFT;
+	const vaddr_t pdetab_mask = PMAP_PDETABSIZE - 1;
+	const vsize_t inc = 1UL << vshift;
+
+	const vaddr_t sva = RISCV_DIRECTMAP_START + pa;
+	const vaddr_t eva = RISCV_DIRECTMAP_END;
+	const size_t sidx = (sva >> vshift) & pdetab_mask;
+	const size_t eidx = (eva >> vshift) & pdetab_mask;
+
+	/* Allocate gigapages covering all physical memory in the direct map. */
+	for (size_t i = sidx; i < eidx && pa < memory_end; i++, pa += inc) {
+		l2_pte[i] = PA_TO_PTE(pa) | PTE_KERN | PTE_HARDWIRED | PTE_RW;
+		VPRINTF("dm:   %p :  %#" PRIxPADDR "\n", &l2_pte[i], l2_pte[i]);
+	}
+#endif
+//	pt_dump(printf);
 }
 
 static void
@@ -395,7 +593,7 @@ riscv_init_lwp0_uarea(void)
 	memset(lwp_getpcb(&lwp0), 0, sizeof(struct pcb));
 
 	struct trapframe *tf = (struct trapframe *)(lwp0uspace + USPACE) - 1;
-	memset(tf, 0, sizeof(struct trapframe));
+	memset(tf, 0, sizeof(*tf));
 
 	lwp0.l_md.md_utf = lwp0.l_md.md_ktf = tf;
 }
@@ -411,21 +609,50 @@ riscv_print_memory(const struct fdt_memory *m, void *arg)
 
 
 static void
-parse_bi_bootargs(char *args)
+parse_mi_bootargs(char *args)
 {
 	int howto;
+	bool found, start, skipping;
 
+	if (args == NULL)
+		return;
+
+	start = true;
+	skipping = false;
 	for (char *cp = args; *cp; cp++) {
-		/* Ignore superfluous '-', if there is one */
-		if (*cp == '-')
+		/* check for "words" starting with a "-" only */
+		if (start) {
+			if (*cp == '-') {
+				skipping = false;
+			} else {
+				skipping = true;
+			}
+			start = false;
 			continue;
+		}
 
+		if (*cp == ' ') {
+			start = true;
+			skipping = false;
+			continue;
+		}
+
+		if (skipping) {
+			continue;
+		}
+
+		/* Check valid boot flags */
 		howto = 0;
 		BOOT_FLAG(*cp, howto);
 		if (!howto)
 			printf("bootflag '%c' not recognised\n", *cp);
 		else
 			boothowto |= howto;
+	}
+
+	found = optstr_get(args, "root", bootdevstr, sizeof(bootdevstr));
+	if (found) {
+		bootspec = bootdevstr;
 	}
 }
 
@@ -446,13 +673,11 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 	fdtbus_init(fdt_data);
 
-#if 0
 	/* Lookup platform specific backend */
-	plat = riscv_fdt_platform();
+	const struct fdt_platform *plat = fdt_platform_find();
 	if (plat == NULL)
 		panic("Kernel does not support this device");
 
-#endif
 	/* Early console may be available, announce ourselves. */
 	VPRINTF("FDT<%p>\n", fdt_data);
 
@@ -461,19 +686,27 @@ init_riscv(register_t hartid, paddr_t dtb)
 		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
 	boot_args = bootargs;
 
-#if 0
+	VPRINTF("devmap %p\n", plat->fp_devmap());
+	pmap_devmap_bootstrap(0, plat->fp_devmap());
+
+	VPRINTF("bootstrap\n");
+	plat->fp_bootstrap();
+
 	/*
 	 * If stdout-path is specified on the command line, override the
 	 * value in /chosen/stdout-path before initializing console.
 	 */
 	VPRINTF("stdout\n");
-	fdt_update_stdout_path();
-#endif
+	fdt_update_stdout_path(fdt_data, boot_args);
 
 	/*
 	 * Done making changes to the FDT.
 	 */
 	fdt_pack(fdt_data);
+
+	const uint32_t dtbsize = round_page(fdt_totalsize(fdt_data));
+
+	VPRINTF("fdt size %x/%x\n", dtbsize, fdt_totalsize(fdt_data));
 
 	VPRINTF("consinit ");
 	consinit();
@@ -484,14 +717,13 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 #ifdef BOOT_ARGS
 	char mi_bootargs[] = BOOT_ARGS;
-	parse_bi_bootargs(mi_bootargs);
+	parse_mi_bootargs(mi_bootargs);
 #endif
-
-	/* SPAM me while testing */
-	boothowto |= AB_DEBUG;
 
 	uint64_t memory_start, memory_end;
 	fdt_memory_get(&memory_start, &memory_end);
+	physical_start = memory_start;
+	physical_end = memory_end;
 
 	fdt_memory_foreach(riscv_print_memory, NULL);
 
@@ -509,15 +741,28 @@ init_riscv(register_t hartid, paddr_t dtb)
 	VPRINTF("%s: memory start %" PRIx64 " end %" PRIx64 " (len %"
 	    PRIx64 ")\n", __func__, memory_start, memory_end, memory_size);
 
+	fdt_memory_remove_reserved(memory_start, memory_end);
+
+	fdt_memory_remove_range(dtb, dtb + dtbsize);
+
 	/* Perform PT build and VM init */
-	//cpu_kernel_vm_init();
+	cpu_kernel_vm_init(memory_start, memory_end);
 
 	VPRINTF("bootargs: %s\n", bootargs);
 
-	parse_bi_bootargs(boot_args);
+	parse_mi_bootargs(boot_args);
+
+#ifdef DDB
+	if (boothowto & RB_KDB) {
+		printf("Entering DDB...\n");
+		cpu_Debugger();
+	}
+#endif
 
 	extern char __kernel_text[];
 	extern char _end[];
+//	extern char __data_start[];
+//	extern char __rodata_start[];
 
 	vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
 	vaddr_t kernend = round_page((vaddr_t)_end);
@@ -531,6 +776,42 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 	kernelvmstart = kernend_mega;
 
+#if 0
+#ifdef MODULAR
+#define MODULE_RESERVED_MAX	(1024 * 1024 * 128)
+#define MODULE_RESERVED_SIZE	(1024 * 1024 * 32)	/* good enough? */
+	module_start = kernelvmstart;
+	module_end = kernend_mega + MODULE_RESERVED_SIZE;
+	if (module_end >= kernstart_mega + MODULE_RESERVED_MAX)
+		module_end = kernstart_mega + MODULE_RESERVED_MAX;
+	KASSERT(module_end > kernend_mega);
+	kernelvmstart = module_end;
+#endif /* MODULAR */
+#endif
+	KASSERT(kernelvmstart < VM_KERNEL_VM_BASE);
+
+	kernelvmstart = VM_KERNEL_VM_BASE;
+
+	/*
+	 * msgbuf is allocated from the top of the last biggest memory block.
+	 */
+	paddr_t msgbufaddr = 0;
+
+#ifdef _LP64
+	/* XXX check all ranges for last one with a big enough hole */
+	msgbufaddr = memory_end - MSGBUFSIZE;
+	KASSERT(msgbufaddr != 0);	/* no space for msgbuf */
+	fdt_memory_remove_range(msgbufaddr, msgbufaddr + MSGBUFSIZE);
+	msgbufaddr = RISCV_PA_TO_KVA(msgbufaddr);
+	VPRINTF("msgbufaddr = %#lx\n", msgbufaddr);
+	initmsgbuf((void *)msgbufaddr, MSGBUFSIZE);
+#endif
+
+	KASSERT(msgbufaddr != 0);	/* no space for msgbuf */
+#ifdef _LP64
+	initmsgbuf((void *)RISCV_PA_TO_KVA(msgbufaddr), MSGBUFSIZE);
+#endif
+
 #define	DPRINTF(v)	VPRINTF("%24s = 0x%16lx\n", #v, (unsigned long)v);
 
 	VPRINTF("------------------------------------------\n");
@@ -540,35 +821,150 @@ init_riscv(register_t hartid, paddr_t dtb)
 	DPRINTF(memory_size);
 	DPRINTF(kernstart_phys);
 	DPRINTF(kernend_phys)
+	DPRINTF(msgbufaddr);
+//	DPRINTF(physical_end);
 	DPRINTF(VM_MIN_KERNEL_ADDRESS);
 	DPRINTF(kernstart_mega);
 	DPRINTF(kernstart);
 	DPRINTF(kernend);
 	DPRINTF(kernend_mega);
+#if 0
+#ifdef MODULAR
+	DPRINTF(module_start);
+	DPRINTF(module_end);
+#endif
+#endif
 	DPRINTF(VM_MAX_KERNEL_ADDRESS);
+#ifdef _LP64
+	DPRINTF(pmap_direct_base);
+#endif
 	VPRINTF("------------------------------------------\n");
 
 #undef DPRINTF
 
-	KASSERT(kernelvmstart < VM_KERNEL_VM_BASE);
-
-	kernelvmstart = VM_KERNEL_VM_BASE;
+	uvm_md_init();
 
 	/*
-	 * msgbuf is allocated from the bottom of any one of memory blocks
-	 * to avoid corruption due to bootloader or changing kernel layout.
+	 * pass memory pages to uvm
 	 */
-	paddr_t msgbufaddr = 0;
-
-	KASSERT(msgbufaddr != 0);	/* no space for msgbuf */
-#ifdef _LP64
-	initmsgbuf((void *)RISCV_PA_TO_KVA(msgbufaddr), MSGBUFSIZE);
-#endif
-
-	uvm_md_init();
+	physmem = 0;
+	fdt_memory_foreach(riscv_add_memory, NULL);
 
 	pmap_bootstrap(kernelvmstart, VM_MAX_KERNEL_ADDRESS);
 
+	kasan_init();
+
 	/* Finish setting up lwp0 on our end before we call main() */
 	riscv_init_lwp0_uarea();
+}
+
+
+#ifdef _LP64
+static void
+pte_bits(void (*pr)(const char *, ...), pt_entry_t pte)
+{
+	(*pr)("%c%c%c%c%c%c%c%c",
+	    (pte & PTE_D) ? 'D' : '.',
+	    (pte & PTE_A) ? 'A' : '.',
+	    (pte & PTE_G) ? 'G' : '.',
+	    (pte & PTE_U) ? 'U' : '.',
+	    (pte & PTE_X) ? 'X' : '.',
+	    (pte & PTE_W) ? 'W' : '.',
+	    (pte & PTE_R) ? 'R' : '.',
+	    (pte & PTE_V) ? 'V' : '.');
+}
+
+static void
+dump_ln_table(paddr_t pdp_pa, int topbit, int level, vaddr_t va,
+    void (*pr)(const char *, ...) __printflike(1, 2))
+{
+	pd_entry_t *pdp = (void *)PMAP_DIRECT_MAP(pdp_pa);
+
+	(*pr)("l%u     @  pa %#16" PRIxREGISTER "\n", level, pdp_pa);
+	for (size_t i = 0; i < PAGE_SIZE / sizeof(pd_entry_t); i++) {
+		pd_entry_t entry = pdp[i];
+
+		if (topbit) {
+			va = i << (PGSHIFT + level * SEGLENGTH);
+			if (va & __BIT(topbit)) {
+				va |= __BITS(63, topbit);
+			}
+		}
+		if (entry != 0) {
+			paddr_t pa = __SHIFTOUT(entry, PTE_PPN) << PGSHIFT;
+			// check level PPN bits.
+			if (PTE_ISLEAF_P(entry)) {
+				(*pr)("l%u %3zu    va 0x%016lx  pa 0x%012lx - ",
+				      level, i, va, pa);
+				pte_bits(pr, entry);
+				(*pr)("\n");
+			} else {
+				(*pr)("l%u %3zu    va 0x%016lx  -> 0x%012lx - ",
+				      level, i, va, pa);
+				pte_bits(pr, entry);
+				(*pr)("\n");
+				if (level == 0) {
+					(*pr)("wtf\n");
+					continue;
+				}
+				if (pte_pde_valid_p(entry))
+					dump_ln_table(pa, 0, level - 1, va, pr);
+			}
+		}
+		va += 1UL << (PGSHIFT + level * SEGLENGTH);
+	}
+}
+
+#endif
+
+void
+pt_dump(void (*pr)(const char *, ...) __printflike(1, 2))
+{
+	const register_t satp = csr_satp_read();
+	size_t topbit = sizeof(long) * NBBY - 1;
+
+#ifdef _LP64
+	const paddr_t satp_pa = __SHIFTOUT(satp, SATP_PPN) << PGSHIFT;
+	const uint8_t mode = __SHIFTOUT(satp, SATP_MODE);
+	u_int level = 1;
+
+	switch (mode) {
+	case SATP_MODE_SV39:
+	case SATP_MODE_SV48:
+		topbit = (39 - 1) + (mode - 8) * SEGLENGTH;
+		level = mode - 6;
+		break;
+	}
+#endif
+	(*pr)("topbit = %zu\n", topbit);
+
+	(*pr)("satp   = 0x%" PRIxREGISTER "\n", satp);
+#ifdef _LP64
+	dump_ln_table(satp_pa, topbit, level, 0, pr);
+#endif
+}
+
+void
+consinit(void)
+{
+	static bool initialized = false;
+	const struct fdt_console *cons = fdtbus_get_console();
+	const struct fdt_platform *plat = fdt_platform_find();
+
+	if (initialized || cons == NULL)
+		return;
+
+	u_int uart_freq = 0;
+	extern struct bus_space riscv_generic_bs_tag;
+	struct fdt_attach_args faa = {
+		.faa_bst = &riscv_generic_bs_tag,
+	};
+
+	faa.faa_phandle = fdtbus_get_stdout_phandle();
+	if (plat->fp_uart_freq != NULL)
+		uart_freq = plat->fp_uart_freq();
+
+	cons->consinit(&faa, uart_freq);
+
+	initialized = true;
 }

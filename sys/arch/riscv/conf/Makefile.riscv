@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.riscv,v 1.8 2022/09/28 05:02:02 skrll Exp $
+#	$NetBSD: Makefile.riscv,v 1.9 2023/05/07 12:41:48 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -39,15 +39,6 @@ GENASSYM_CONF=	${RISCV}/riscv/genassym.cf
 ##
 CPPFLAGS+=	-D${MACHINE}
 CFLAGS+=	-mcmodel=medany
-.if !defined(LP64) || ${LP64} == "no"
-CFLAGS+=	-m32
-AFLAGS+=	-m32
-LDFLAGS+=	-m elf32lriscv
-LINKFORMAT+=	-m elf32lriscv
-SYSTEM_LD_TAIL_EXTRA+= \
-		;echo ${OBJCOPY} -O elf32-littleriscv $@ $@.elf32; \
-		${OBJCOPY} -O elf32-littleriscv $@ $@.elf32
-.endif # LP64=no
 AFLAGS+=	-x assembler-with-cpp ${AOPTS}
 
 ##

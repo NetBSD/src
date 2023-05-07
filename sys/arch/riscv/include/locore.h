@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.11 2022/09/20 07:18:23 skrll Exp $ */
+/* $NetBSD: locore.h,v 1.12 2023/05/07 12:41:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -38,56 +38,6 @@
 #include <riscv/reg.h>
 #include <riscv/sysreg.h>
 
-struct trapframe {
-	struct reg tf_regs;
-	register_t tf_tval;
-	register_t tf_cause;
-	register_t tf_sr;
-#define tf_reg		tf_regs.r_reg
-#define tf_pc		tf_regs.r_pc
-#define tf_ra		tf_reg[_X_RA]
-#define tf_sp		tf_reg[_X_SP]
-#define tf_gp		tf_reg[_X_GP]
-#define tf_tp		tf_reg[_X_TP]
-#define tf_t0		tf_reg[_X_T0]
-#define tf_t1		tf_reg[_X_T1]
-#define tf_t2		tf_reg[_X_T2]
-#define tf_s0		tf_reg[_X_S0]
-#define tf_s1		tf_reg[_X_S1]
-#define tf_a0		tf_reg[_X_A0]
-#define tf_a1		tf_reg[_X_A1]
-#define tf_a2		tf_reg[_X_A2]
-#define tf_a3		tf_reg[_X_A3]
-#define tf_a4		tf_reg[_X_A4]
-#define tf_a5		tf_reg[_X_A5]
-#define tf_a6		tf_reg[_X_A6]
-#define tf_a7		tf_reg[_X_A7]
-#define tf_s2		tf_reg[_X_S2]
-#define tf_s3		tf_reg[_X_S3]
-#define tf_s4		tf_reg[_X_S4]
-#define tf_s5		tf_reg[_X_S5]
-#define tf_s6		tf_reg[_X_S6]
-#define tf_s7		tf_reg[_X_S7]
-#define tf_s8		tf_reg[_X_S8]
-#define tf_s9		tf_reg[_X_S9]
-#define tf_s10		tf_reg[_X_S10]
-#define tf_s11		tf_reg[_X_S11]
-#define tf_t3		tf_reg[_X_T3]
-#define tf_t4		tf_reg[_X_T4]
-#define tf_t5		tf_reg[_X_T5]
-#define tf_t6		tf_reg[_X_T6]
-};
-
-#ifdef _LP64
-// For COMPAT_NETBSD32 coredumps
-struct trapframe32 {
-	struct reg32 tf_regs;
-	register32_t tf_tval;
-	register32_t tf_cause;
-	register32_t tf_sr;
-};
-#endif
-
 #define	FB_A0	0
 #define	FB_RA	1
 #define	FB_SP	2
@@ -112,11 +62,6 @@ struct faultbuf {
 };
 
 CTASSERT(sizeof(label_t) == sizeof(struct faultbuf));
-
-struct mainbus_attach_args {
-	const char *maa_name;
-	u_int maa_instance;
-};
 
 #ifdef _KERNEL
 extern int cpu_printfataltraps;
@@ -212,7 +157,7 @@ void	cpu_trap(struct trapframe */*tf*/, register_t /*epc*/,
 void	cpu_ast(struct trapframe *);
 void	cpu_fast_switchto(struct lwp *, int);
 
-void	cpu_lwp_trampoline(void);
+void	lwp_trampoline(void);
 
 void *	cpu_sendsig_getframe(struct lwp *, int, bool *);
 

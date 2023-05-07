@@ -1,4 +1,4 @@
-/*	$NetBSD: sbrk.S,v 1.5 2022/12/04 17:04:06 skrll Exp $	*/
+/*	$NetBSD: sbrk.S,v 1.6 2023/05/07 12:41:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,10 +42,10 @@ ENTRY(_sbrk)
 	lla		t1, _C_LABEL(__curbrk)
 	PTR_L		t2, 0(t1)
 	add		a0, a0, t2	// compute current break
+	mv		t5, a0		// save for success
 	SYSTRAP(break)
 	JUMP_TO_CERROR()		/* error */
-	PTR_S		a0, 0(t1)	// save current val of curbrk from above
+	PTR_S		t5, 0(t1)	// save new val of curbrk from above
 	mv		a0, t2		// return old val of curbrk from above
 	ret
-1:
 END(_sbrk)

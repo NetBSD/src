@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.3 2022/10/16 06:14:53 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.4 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _RISCV_MACHDEP_H_
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.h,v 1.3 2022/10/16 06:14:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.h,v 1.4 2023/05/07 12:41:48 skrll Exp $");
 
 #include <sys/proc.h>
 #include <sys/lwp.h>
@@ -58,12 +58,25 @@ riscv_kern_phystov(paddr_t pa)
 #define KERN_VTOPHYS(va)	riscv_kern_vtophys((vaddr_t)va)
 #define KERN_PHYSTOV(pa)	riscv_kern_phystov((paddr_t)pa)
 
+extern	paddr_t physical_start;
+extern	paddr_t physical_end;
 
 void	uartputc(int);
 int	uartgetc(void);
 
 paddr_t	init_mmu(paddr_t);
 void	init_riscv(register_t, paddr_t);
+
+void	riscv_timer_frequency_set(uint32_t);	// which header?
+void	riscv_timer_register(void (*timerfn)(void));
+void	riscv_intr_set_handler(void (*intr_handler)(struct trapframe *,
+	    register_t, register_t, register_t));
+
+int	riscv_timer_intr(void *arg);
+
+void	cpus_fdt_md_attach(device_t, device_t, void *);
+
+void    pt_dump(void (*)(const char *, ...));
 
 
 #endif	/* _RISCV_MACHDEP_H_ */

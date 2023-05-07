@@ -1,4 +1,4 @@
-/*	$NetBSD: softint_machdep.c,v 1.2 2020/11/04 07:09:46 skrll Exp $	*/
+/*	$NetBSD: softint_machdep.c,v 1.3 2023/05/07 12:41:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: softint_machdep.c,v 1.2 2020/11/04 07:09:46 skrll Exp $");
+__RCSID("$NetBSD: softint_machdep.c,v 1.3 2023/05/07 12:41:49 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -39,6 +39,8 @@ __RCSID("$NetBSD: softint_machdep.c,v 1.2 2020/11/04 07:09:46 skrll Exp $");
 #include <sys/intr.h>
 
 #include <riscv/locore.h>
+
+#ifdef __HAVE_FAST_SOFTINTS
 
 #define	SOFTINT2IPLMAP \
 	(((IPL_SOFTSERIAL - IPL_SOFTCLOCK) << (SOFTINT_SERIAL * 4)) | \
@@ -109,4 +111,4 @@ softint_deliver(void)
 		panic("dosoftints wtf (softints=%u?, ipl=%d)", softints, opl);
 	}
 }
-
+#endif /* __HAVE_FAST_SOFTINTS */

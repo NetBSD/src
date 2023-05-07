@@ -1,5 +1,39 @@
 #
-# $NetBSD: std.riscv64,v 1.2 2019/04/11 14:38:06 kamil Exp $
+# $NetBSD: std.riscv64,v 1.3 2023/05/07 12:41:48 skrll Exp $
 #
-include 	"arch/riscv/conf/std.riscv"
+machine		riscv
+
+include		"conf/std"
+
+options		EXEC_SCRIPT
+options		EXEC_ELF64
+
 makeoptions	LP64="yes"
+
+#no defflag COMPAT_09
+#no defflag COMPAT_10
+#no defflag COMPAT_11
+#no defflag COMPAT_12
+#no defflag COMPAT_13
+#no defflag COMPAT_14
+#no defflag COMPAT_15
+#no defflag COMPAT_16
+#no defflag COMPAT_20
+#no defflag COMPAT_30
+#no defflag COMPAT_40
+#no defflag COMPAT_50
+#no defflag COMPAT_60
+
+#obsolete defflag COMPAT_60
+#obsolete defflag COMPAT_50
+#obsolete defflag COMPAT_40
+#obsolete defflag COMPAT_30
+#obsolete defflag COMPAT_20
+#obsolete defflag COMPAT_16
+#obsolete defflag COMPAT_15
+#obsolete defflag COMPAT_14
+#obsolete defflag COMPAT_13
+#obsolete defflag COMPAT_12
+#obsolete defflag COMPAT_11
+#obsolete defflag COMPAT_10
+#obsolete defflag COMPAT_09

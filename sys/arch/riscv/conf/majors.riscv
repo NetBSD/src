@@ -1,6 +1,6 @@
-#	$NetBSD: majors.riscv,v 1.8 2020/03/14 16:12:15 skrll Exp $
+#	$NetBSD: majors.riscv,v 1.9 2023/05/07 12:41:48 skrll Exp $
 #
-# Device majors for riscv
+# Device majors for RISC-V
 #
 
 device-major	tun		char 7			tun

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.277 2023/04/13 07:03:31 riastradh Exp $
+#	$NetBSD: Makefile,v 1.278 2023/05/07 12:41:49 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -217,6 +217,7 @@ SUBDIR+=	exec_elf32
 .if ${MACHINE_CPU} == "aarch64" || \
     ${MACHINE_ARCH} == "alpha" || \
     ${MACHINE_ARCH} == "ia64" || \
+    ${MACHINE_ARCH} == "riscv64" || \
     ${MACHINE_ARCH} == "sparc64" || \
     ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	exec_elf64

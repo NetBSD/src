@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.1 2014/09/19 17:36:26 matt Exp $ */
+/* $NetBSD: pcb.h,v 1.2 2023/05/07 12:41:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,8 +34,17 @@
 
 #include <riscv/reg.h>
 
+struct pcb_faultinfo {
+        void *pfi_faultptep;
+        vaddr_t pfi_faultaddr;
+        u_int pfi_repeats;
+        pid_t pfi_lastpid;
+        uint8_t pfi_cause;
+};
+
 struct pcb {
 	struct fpreg pcb_fpregs;
+	struct pcb_faultinfo pcb_faultinfo;
 };
 
 struct md_coredump {

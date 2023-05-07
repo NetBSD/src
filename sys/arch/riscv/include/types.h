@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.15 2022/11/08 13:34:17 simonb Exp $ */
+/* $NetBSD: types.h,v 1.16 2023/05/07 12:41:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -90,7 +90,10 @@ typedef __int32_t	__register_t;
 #define	__HAVE_COMPAT_NETBSD32
 #define	__HAVE_CPU_COUNTER
 #define	__HAVE_CPU_DATA_FIRST
-#define	__HAVE_FAST_SOFTINTS
+#define	__HAVE_CPU_LWP_SETPRIVATE
+#if 0
+#define	__HAVE_FAST_SOFTINTS		// Not yet
+#endif
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_NEW_STYLE_BUS_H
 #define	__HAVE_SYSCALL_INTERN
@@ -98,6 +101,8 @@ typedef __int32_t	__register_t;
 /* XXX temporary */
 #define	__HAVE_UNLOCKED_PMAP
 #define	__HAVE___LWP_GETPRIVATE_FAST
+#define	__HAVE___LWP_GETTCB_FAST
+#define	__HAVE___LWP_SETTCB
 
 #ifdef __LP64
 #define	__HAVE_ATOMIC64_OPS

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.3 2021/10/07 07:13:35 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.4 2023/05/07 12:41:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2021/10/07 07:13:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.4 2023/05/07 12:41:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.3 2021/10/07 07:13:35 skrll Exp $");
 #include <sys/signal.h>
 #include <sys/systm.h>
 
+#include <riscv/frame.h>
 #include <riscv/locore.h>
 
 #ifndef EMULNAME
@@ -61,6 +62,7 @@ EMULNAME(syscall_intern)(struct proc *p)
 	p->p_md.md_syscall = EMULNAME(syscall);
 }
 
+#define INSN_SIZE 4
 /*
  * Process a system call.
  *
@@ -90,8 +92,6 @@ EMULNAME(syscall)(struct trapframe *tf)
 
 	curcpu()->ci_data.cpu_nsyscall++;
 
-	tf->tf_pc += sizeof(uint32_t);
-
 	callp = p->p_emul->e_sysent;
 	code = tf->tf_t6 - SYSCALL_SHIFT;
 
@@ -100,8 +100,12 @@ EMULNAME(syscall)(struct trapframe *tf)
 	 * usual place so these code's should never get to the kernel.
 	 */
 	if (code == SYS_syscall || code == SYS___syscall) {
-		error = ENOSYS;
-		goto bad;
+#ifdef RISCV_SYSCALL_DEBUG
+		printf("syscall: _syscall code %#"PRIxREGISTER"\n", tf->tf_a0);
+#endif
+		/* XXX 32-bit vs 64-bit handling?? */
+		code = *args;	/* syscall num is first arg */
+		args++;		/* shuffle args */
 	}
 
 	if (code >= p->p_emul->e_nsysent)
@@ -197,13 +201,22 @@ EMULNAME(syscall)(struct trapframe *tf)
 	}
 	printf("\n");
 #endif
+	/*
+	 * Assume success and fixup pc to point after the ecall and jump
+	 * to cerror.  fork, and friends, expect this.
+	 */
+	tf->tf_pc +=
+	    INSN_SIZE + 	// ecall
+	    INSN_SIZE * 2;	// jump to cerror (or nops)
 
 	error = sy_invoke(callp, l, args, retval, code);
 
 	switch (error) {
 	case 0:
 #ifdef _LP64
+#if 0
 		if (pk32_p && SYCALL_RET_64_P(callp)) {
+
 			/*
 			 * If this is from O32 and it's a 64bit quantity,
 			 * split it into 2 32bit values in adjacent registers.
@@ -213,32 +226,39 @@ EMULNAME(syscall)(struct trapframe *tf)
 			tf->tf_reg[_X_A0 + _QUAD_HIGHWORD] = tmp >> 32;
 		}
 #endif
+#endif
+
+		tf->tf_a0 = retval[0];
+		tf->tf_a1 = retval[1];
+
 #ifdef RISCV_SYSCALL_DEBUG
 		if (p->p_emul->e_syscallnames)
 			printf("syscall %s:", p->p_emul->e_syscallnames[code]);
 		else
 			printf("syscall %u:", code);
-		printf(" return a0=%#"PRIxREGISTER" a1=%#"PRIxREGISTER"\n",
-		    tf->tf_a0, tf->tf_a1);
+		printf(" return a0=%#"PRIxREGISTER" a1=%#"PRIxREGISTER" to"
+		    " %#"PRIxREGISTER "\n",
+		    tf->tf_a0, tf->tf_a1, tf->tf_pc);
 #endif
-		tf->tf_pc += sizeof(uint32_t);
 		break;
 	case ERESTART:
-		tf->tf_pc -= sizeof(uint32_t);
+		tf->tf_pc -=
+		    INSN_SIZE + 	// ecall
+		    INSN_SIZE * 2;	// jump to cerror (or nops)
 		break;
 	case EJUSTRETURN:
-		break;	/* nothing to do */
+		break;
 	default:
-	bad:
 		if (p->p_emul->e_errno)
 			error = p->p_emul->e_errno[error];
 		tf->tf_a0 = error;
+		tf->tf_pc -= INSN_SIZE * 2;	// jump to cerror.
 #ifdef RISCV_SYSCALL_DEBUG
 		if (p->p_emul->e_syscallnames)
 			printf("syscall %s:", p->p_emul->e_syscallnames[code]);
 		else
 			printf("syscall %u:", code);
-		printf(" return error=%d\n", error);
+		printf(" return error=%d to %#" PRIxREGISTER "\n", error, tf->tf_pc);
 #endif
 		break;
 	}

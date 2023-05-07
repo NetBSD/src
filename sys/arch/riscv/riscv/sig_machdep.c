@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.4 2020/11/04 07:09:46 skrll Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.5 2023/05/07 12:41:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 
 #ifndef COMPATNAME1
-__RCSID("$NetBSD: sig_machdep.c,v 1.4 2020/11/04 07:09:46 skrll Exp $");
+__RCSID("$NetBSD: sig_machdep.c,v 1.5 2023/05/07 12:41:49 skrll Exp $");
 #endif
 
 #include <sys/param.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: sig_machdep.c,v 1.4 2020/11/04 07:09:46 skrll Exp $");
 #include <sys/signalvar.h>
 
 #include <riscv/locore.h>
+#include <riscv/frame.h>
 
 #ifndef COMPATNAME1
 #define COMPATNAME1(x)		x

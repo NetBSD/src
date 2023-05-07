@@ -1,4 +1,4 @@
-/*	$NetBSD: fork.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
+/*	$NetBSD: fork.S,v 1.3 2023/05/07 12:41:47 skrll Exp $	*/
 
 
 /*-
@@ -32,8 +32,16 @@
 #include "SYS.h"
 
 #if defined(LIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: fork.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
+	RCSID("$NetBSD: fork.S,v 1.3 2023/05/07 12:41:47 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
+
+/*
+ * pid = fork();
+ *
+ * On return from the SYSTRAP:
+ * a1 == 0 in parent process, a1 == 1 in child process.
+ * a0 == pid of child in parent, a0 == pid of parent in child.
+ */
 
 ENTRY(__fork)
 	SYSTRAP(fork)		// pid = fork()

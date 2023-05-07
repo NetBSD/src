@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.5 2022/12/05 07:33:43 skrll Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.6 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,23 +34,22 @@
 	.globl _C_LABEL(_rtld_relocate_nonplt_self)
 	.globl _C_LABEL(_rtld)
 
-#if __SIZEOF_POINTER__ != SZREG
-#error SZREG is the wrong size
-#endif
+#define PTRSZ	__SIZEOF_POINTER__
 
 /*
  * void
- * ___start(void (*cleanup)(void),
- *     const Obj_Entry *obj,
- *     struct ps_strings *ps_strings)
+ * ___start(
+ *     void (*cleanup)(void),
+ *     struct ps_strings *ps_strings
+ * )
  */
+
 ENTRY(_rtld_start)
 	mv	s0, sp			# save stack pointer
-	addi	sp, sp, -4 * SZREG
-					# adjust stack pointer
+	addi	sp, sp, -4 * PTRSZ	# adjust stack pointer
 					# -> 2 * PTR_SIZE(sp) for atexit
 					# -> 3 * PTR_SIZE(sp) for obj_main
-	mv	s1, a2			# save ps_strings pointer
+	mv	s1, a1			# save ps_strings pointer
 
 .L0:	auipc	gp, %pcrel_hi(_GLOBAL_OFFSET_TABLE_)
 	PTR_L	t0, %pcrel_lo(.L0)(gp) # &_DYNAMIC
@@ -61,17 +60,21 @@ ENTRY(_rtld_start)
 	call	_C_LABEL(_rtld_relocate_nonplt_self)
 
 	mv	a1, s2			# relocbase
-	addi	a0, sp, 2 * SZREG	# sp
+	addi	a0, sp, 2 * PTRSZ	# sp
 	call	_C_LABEL(_rtld)		# a0 = _rtld(sp, relocbase)
 	mv	t0, a0
 
-	PTR_L	a0, 2 * SZREG(sp)	# cleanup function
-	PTR_L	a1, 3 * SZREG(sp)	# obj_main entry
-	mv	a2, s1			# restore ps_strings
-	mv	sp, s0			# readjust stack
+	PTR_L	a0, 2 * PTRSZ(sp)	# cleanup function
+//	PTR_L	a1, 3 * PTRSZ(sp)	# obj_main pointer (not used)
+	mv	a1, s1			# restore ps_strings
+	mv	sp, s0			# restore stack pointer
 	mv	s0, zero		# break stack chain
-	jr	t0			# _start(cleanup, obj_main, ps_strings);
+	jr	t0			# _start(cleanup, ps_strings);
 END(_rtld_start)
+
+/*
+ * Needs to be 12 so that stack alignment is preserved on both RV32 and RV64.
+ */
 
 #define	XCALLFRAME_SIZ		(12 * SZREG)
 #define	XCALLFRAME_RA		( 8 * SZREG)

@@ -560,6 +560,11 @@ riscv*-*-linux*)
  			linux-tdep.o solib-svr4.o symfile-mem.o linux-record.o"
 	;;
 
+riscv*-*-netbsd*)
+	# Target: FreeBSD/riscv
+	gdb_target_obs="riscv-nbsd-tdep.o"
+	;;
+
 riscv*-*-*)
 	# Target: RISC-V architecture
 	gdb_target_obs=""

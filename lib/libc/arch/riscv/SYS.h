@@ -1,11 +1,11 @@
-/*	$NetBSD: SYS.h,v 1.3 2019/04/13 16:08:54 maya Exp $ */
+/*	$NetBSD: SYS.h,v 1.4 2023/05/07 12:41:47 skrll Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014,2022 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Matt Thomas of 3am Software Foundry.
+ * by Matt Thomas of 3am Software Foundry, and Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,8 +32,20 @@
 #include <sys/syscall.h>
 #include <machine/asm.h>
 
-#define SYSTRAP(x)		li	t6,SYS_ ## x; scall
-#define	JUMP_TO_CERROR()	tail	_C_LABEL(__cerror)
+#define SYSTRAP(x)							\
+	li	t6, SYS_ ## x;						\
+	ecall
+
+#define	JUMP_TO_CERROR()						\
+	.option push							;\
+	.option norelax							;\
+	tail	_C_LABEL(__cerror)					;\
+	.option pop
+
+#define	SYSTRAP_NOERROR(x)						\
+	SYSTRAP(x)							;\
+	nop; nop		/* size of ... 			*/	;\
+	nop; nop		/*     JUMP_TO_CERROR		*/	;\
 
 /*
  * Do a syscall that cannot fail (sync, get{p,u,g,eu,eg)id)
@@ -60,9 +72,8 @@
  */
 #define PSEUDO_NOERROR(x,y)						\
 ENTRY(x);								;\
-	SYSTRAP(y)							;\
-	ret	/* error */						;\
-	ret	/* success */						;\
+	SYSTRAP_NOERROR(y)						;\
+	ret			/* success */				;\
 	END(x)
 
 #define PSEUDO(x,y)							\

@@ -1,0 +1,50 @@
+# $NetBSD: GENERIC64,v 1.1 2023/05/07 12:41:48 skrll Exp $
+#
+# GENERIC machine description file
+#
+# This machine description file is used to generate the default NetBSD
+# kernel for RV64.  The generic kernel does not include all options,
+# subsystems and device drivers, but should be useful for most applications.
+#
+# The machine description file can be customised for your specific
+# machine to reduce the kernel size and improve its performance.
+#
+# For further information on compiling NetBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+include	"arch/riscv/conf/std.riscv64"
+include	"arch/riscv/conf/files.generic64"
+include	"arch/riscv/conf/GENERIC.common"
+
+#options 	EARLYCONS=com, CONSADDR=0x10000000	# qemu virt
+options 	VERBOSE_INIT_RISCV
+
+# Diagnostic/debugging support options
+options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+				# XXX to be commented out on release branch
+options 	DEBUG		# expensive debugging checks/support
+#options 	LOCKDEBUG	# expensive locking checks/support
+#options 	KERNHIST
+#options 	KERNHIST_PRINT
+#options 	UVMHIST
+#options 	UVMHIST_PRINT
+#options 	PMAPHIST
+#options 	PMAPHIST_PRINT
+#options 	SYSCTL_DEBUG
+#options 	SYSCTL_DEBUG_SETUP
+#options 	SYSCTL_DEBUG_CREATE
+#options 	PMAP_FAULTINFO
+#options 	RISCV_SYSCALL_DEBUG
+#options 	SYSCALL_DEBUG
+
+#options 	COMPAT_NETBSD32
+#options 	EXEC_ELF32
+
+# Pull in optional local configuration - always at end
+cinclude 	"arch/riscv/conf/GENERIC64.local"

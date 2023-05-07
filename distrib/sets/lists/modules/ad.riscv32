@@ -1,0 +1,3 @@
+# $NetBSD: ad.riscv32,v 1.1 2023/05/07 12:41:46 skrll Exp $
+./@MODULEDIR@/exec_elf32			modules-base-kernel	kmod
+./@MODULEDIR@/exec_elf32/exec_elf32.kmod	modules-base-kernel	kmod

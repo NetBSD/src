@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.6 2022/09/27 08:18:21 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.7 2023/05/07 12:41:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define	_RISCV_DB_MACHDEP_H_
 
 #include <riscv/locore.h>		/* T_BREAK */
+#include <riscv/frame.h>
 
 #define	DB_ELF_SYMBOLS
 
@@ -42,7 +43,7 @@ typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
 
-extern const uint32_t __cpu_Debugger_insn[1];
+extern const uint32_t cpu_Debugger_insn[1];
 extern db_regs_t ddb_regs;
 #define	DDB_REGS	(&ddb_regs)
 
@@ -55,7 +56,7 @@ extern db_regs_t ddb_regs;
 
 /* Similar to PC_ADVANCE(), except only advance on cpu_Debugger()'s bpt */
 #define	PC_BREAK_ADVANCE(tf) do {				\
-	if ((tf)->tf_pc == (register_t) __cpu_Debugger_insn)	\
+	if ((tf)->tf_pc == (register_t)cpu_Debugger_insn)	\
 		(tf)->tf_pc += BKPT_SIZE;			\
 } while(0)
 

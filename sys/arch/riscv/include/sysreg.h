@@ -1,4 +1,4 @@
-/* $NetBSD: sysreg.h,v 1.28 2022/12/03 11:09:59 skrll Exp $ */
+/* $NetBSD: sysreg.h,v 1.29 2023/05/07 12:41:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -54,53 +54,53 @@
 #define	FCSR_NX		__BIT(0)	// iNeXact
 
 static inline uint32_t
-riscvreg_fcsr_read(void)
+fcsr_read(void)
 {
 	uint32_t __fcsr;
-	__asm("frcsr %0" : "=r"(__fcsr));
+	asm volatile("frcsr %0" : "=r"(__fcsr) :: "memory");
 	return __fcsr;
 }
 
 
 static inline uint32_t
-riscvreg_fcsr_write(uint32_t __new)
+fcsr_write(uint32_t __new)
 {
 	uint32_t __old;
-	__asm("fscsr %0, %1" : "=r"(__old) : "r"(__new));
+	asm volatile("fscsr %0, %1" : "=r"(__old) : "r"(__new) : "memory");
 	return __old;
 }
 
 static inline uint32_t
-riscvreg_fcsr_read_fflags(void)
+fcsr_fflags_read(void)
 {
 	uint32_t __old;
-	__asm("frflags %0" : "=r"(__old));
+	asm volatile("frflags %0" : "=r"(__old) :: "memory");
 	return __SHIFTOUT(__old, FCSR_FFLAGS);
 }
 
 static inline uint32_t
-riscvreg_fcsr_write_fflags(uint32_t __new)
+fcsr_fflags_write(uint32_t __new)
 {
 	uint32_t __old;
 	__new = __SHIFTIN(__new, FCSR_FFLAGS);
-	__asm("fsflags %0, %1" : "=r"(__old) : "r"(__new));
+	asm volatile("fsflags %0, %1" : "=r"(__old) : "r"(__new) : "memory");
 	return __SHIFTOUT(__old, FCSR_FFLAGS);
 }
 
 static inline uint32_t
-riscvreg_fcsr_read_frm(void)
+fcsr_frm_read(void)
 {
 	uint32_t __old;
-	__asm("frrm\t%0" : "=r"(__old));
+	asm volatile("frrm\t%0" : "=r"(__old) :: "memory");
 	return __SHIFTOUT(__old, FCSR_FRM);
 }
 
 static inline uint32_t
-riscvreg_fcsr_write_frm(uint32_t __new)
+fcsr_frm_write(uint32_t __new)
 {
 	uint32_t __old;
 	__new = __SHIFTIN(__new, FCSR_FRM);
-	__asm __volatile("fsrm\t%0, %1" : "=r"(__old) : "r"(__new));
+	asm volatile("fsrm\t%0, %1" : "=r"(__old) : "r"(__new) : "memory");
 	return __SHIFTOUT(__old, FCSR_FRM);
 }
 
@@ -231,13 +231,14 @@ RISCVREG_READ_SET_CLEAR_INLINE(sie)		// supervisor interrupt enable
 			/* Bit 0 is WIRI */
 
 /* Mask for all interrupts */
-#define	SIE_IM		(SIE_SEI |SIE_STIE | SIE_SSIE)
+#define	SIE_IM		(SIE_SEI | SIE_STIE | SIE_SSIE)	/* XXX unused? */
 
+// U-mode sstatus values
 #ifdef _LP64
-#define	SR_USER64	(SR_SPIE | SR_UXL_64)	// 64-bit U-mode sstatus
-#define	SR_USER32	(SR_SPIE | SR_UXL_32)	// 32-bit U-mode sstatus
+#define	SR_USER64	(SR_SPIE | __SHIFTIN(SR_UXL_64, SR_UXL))
+#define	SR_USER32	(SR_SPIE | __SHIFTIN(SR_UXL_32, SR_UXL))
 #else
-#define	SR_USER		(SR_SPIE)		// U-mode sstatus
+#define	SR_USER		(SR_SPIE)
 #endif
 
 // Cause register
@@ -265,12 +266,17 @@ RISCVREG_READ_SET_CLEAR_INLINE(sie)		// supervisor interrupt enable
 /* >= 16 is reserved/custom */
 
 // Cause register - interrupts
-#define	IRQ_SUPERVISOR_SOFTWARE	1
-#define	IRQ_MACHINE_SOFTWARE	3
-#define	IRQ_SUPERVISOR_TIMER	5
-#define	IRQ_MACHINE_TIMER	7
-#define	IRQ_SUPERVISOR_EXTERNAL	9
-#define	IRQ_MACHINE_EXTERNAL	11
+#define	IRQ_SUPERVISOR_SOFTWARE		 1
+#define	IRQ_VIRTUAL_SUPERVISOR_SOFTWARE	 2
+#define	IRQ_MACHINE_SOFTWARE		 3
+#define	IRQ_SUPERVISOR_TIMER		 5
+#define	IRQ_VIRTUAL_SUPERVISOR_TIMER	 6
+#define	IRQ_MACHINE_TIMER		 7
+#define	IRQ_SUPERVISOR_EXTERNAL		 9
+#define	IRQ_VIRTUAL_SUPERVISOR_EXTERNAL	10
+#define	IRQ_MACHINE_EXTERNAL		11
+#define	IRQ_SUPERVISOR_GUEST_EXTERNAL	12
+#define IRQ_NSOURCES			16
 
 RISCVREG_READ_INLINE(time)
 #ifdef _LP64
@@ -281,7 +287,7 @@ csr_cycle_read(void)
 {
 	uint32_t __hi0, __hi1, __lo0;
 	do {
-		__asm __volatile(
+		asm volatile(
 			"csrr\t%[__hi0], cycleh"
 		"\n\t"	"csrr\t%[__lo0], cycle"
 		"\n\t"	"csrr\t%[__hi1], cycleh"

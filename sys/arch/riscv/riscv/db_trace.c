@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.3 2022/09/27 08:18:21 skrll Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.4 2023/05/07 12:41:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_trace.c,v 1.3 2022/09/27 08:18:21 skrll Exp $");
+__RCSID("$NetBSD: db_trace.c,v 1.4 2023/05/07 12:41:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,11 +53,10 @@ __RCSID("$NetBSD: db_trace.c,v 1.3 2022/09/27 08:18:21 skrll Exp $");
 #define MAXBACKTRACE	128	/* against infinite loop */
 #define TRACEFLAG_LOOKUPLWP	0x00000001
 
-__CTASSERT(VM_MIN_ADDRESS == 0);
 #define IN_USER_VM_ADDRESS(addr)	\
-	((addr) < VM_MAX_ADDRESS)
+	(VM_MIN_ADDRESS <= (addr) && (addr) < VM_MAX_ADDRESS)
 #define IN_KERNEL_VM_ADDRESS(addr)	\
-	((VM_MIN_KERNEL_ADDRESS <= (addr)) && ((addr) < VM_MAX_KERNEL_ADDRESS))
+	(VM_MIN_KERNEL_ADDRESS <= (addr) && (addr) < VM_MAX_KERNEL_ADDRESS)
 
 static bool __unused
 is_lwp(void *p)
@@ -128,6 +127,12 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 	bool trace_user = false;
 	bool trace_thread = false;
 	bool trace_lwp = false;
+
+	printf("have_addr: %s\n", have_addr ? "true" : "false");
+	if (have_addr)
+		printf("addr: %lx\n", addr);
+	printf("count: %ld\n", count);
+	printf("modif: %s\n", modif);
 
 	for (; *modif != '\0'; modif++) {
 		switch (*modif) {
@@ -248,7 +253,38 @@ db_stack_trace_print(db_expr_t addr, bool have_addr, db_expr_t count,
 
 		if (!trace_user && (IN_USER_VM_ADDRESS(ra) || IN_USER_VM_ADDRESS(fp)))
 			break;
+#if defined(_KERNEL)
+		extern char exception_kernexit[];
 
-		pr_traceaddr("fp", fp, ra - 4, flags, pr);
+		if (((char *)ra == (char *)exception_kernexit)) {
+
+			tf = (struct trapframe *)lastfp;
+
+			lastra = ra;
+			ra = fp = 0;
+			db_read_bytes((db_addr_t)&tf->tf_pc, sizeof(ra), (char *)&ra);
+			db_read_bytes((db_addr_t)&tf->tf_s0, sizeof(fp), (char *)&fp);
+
+			pr_traceaddr("tf", (db_addr_t)tf, lastra, flags, pr);
+
+			(*pr)("---- trapframe %p (%zu bytes) ----\n",
+			    tf, sizeof(*tf));
+			dump_trapframe(tf, pr);
+			(*pr)("------------------------"
+			      "------------------------\n");
+			if (ra == 0)
+				break;
+			tf = NULL;
+
+			if (!trace_user && IN_USER_VM_ADDRESS(ra))
+				break;
+
+			pr_traceaddr("fp", fp, ra, flags, pr);
+
+		} else
+#endif
+		{
+			pr_traceaddr("fp", fp, ra - 4, flags, pr);
+		}
 	}
 }

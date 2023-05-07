@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.7 2022/12/04 16:23:48 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.8 2023/05/07 12:41:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2022/12/04 16:23:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.8 2023/05/07 12:41:49 skrll Exp $");
 
 #define _PMAP_PRIVATE
 
@@ -49,7 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.7 2022/12/04 16:23:48 skrll Exp $")
 
 #include <dev/mm.h>
 
+#include <riscv/frame.h>
 #include <riscv/locore.h>
+#include <riscv/machdep.h>
 
 /*
  * cpu_lwp_fork: Finish a fork operation, with lwp l2 nearly set up.
@@ -87,15 +89,15 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * will be to right address, with correct registers.
 	 */
 	vaddr_t ua2 = uvm_lwp_getuarea(l2);
+
 	tf = (struct trapframe *)(ua2 + USPACE) - 1;
 	*tf = *l1->l_md.md_utf;
 #ifdef FPE
-	tf->tf_sr &= ~SR_EF;	/* floating point must be disabled */
+	tf->tf_sr &= ~SR_FS;	/* floating point must be disabled */
 #endif
 
 	/* If specified, set a different user stack for a child. */
 	if (stack != NULL) {
-		KASSERT(stacksize != 0);
 		tf->tf_sp = stack_align((intptr_t)stack + stacksize);
 	}
 
@@ -110,12 +112,14 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 */
 	--tf;	/* cpu_switchto uses trapframes */
 
-	tf->tf_sr = csr_sstatus_read();
-	tf->tf_s0 = (intptr_t)func;			/* S0 */
-	tf->tf_s1 = (intptr_t)arg;			/* S1 */
-	tf->tf_ra = (intptr_t)cpu_lwp_trampoline;	/* RA */
-	l2->l_md.md_ktf = tf;				/* SP */
-	KASSERT(tf->tf_sr & SR_SIE);
+	tf->tf_s0 = 0;				/* S0 (aka frame pointer) */
+	tf->tf_s1 = (intptr_t)func;		/* S1 */
+	tf->tf_s2 = (intptr_t)arg;		/* S2 */
+	tf->tf_ra = (intptr_t)lwp_trampoline;	/* RA */
+
+	l2->l_md.md_ktf = tf;			/* SP */
+
+	KASSERT(l2->l_md.md_astpending == 0);
 }
 
 /*
@@ -267,7 +271,7 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)
 {
-	if (atop(pa) < physmem) {
+	if (pa >= physical_start && pa <= physical_end) {
 		if (*vap)
 			*vap = pmap_md_direct_map_paddr(pa);
 		return true;

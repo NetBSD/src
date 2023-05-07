@@ -1,4 +1,4 @@
-/* $NetBSD: mcontext.h,v 1.6 2020/03/14 16:12:16 skrll Exp $ */
+/* $NetBSD: mcontext.h,v 1.7 2023/05/07 12:41:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -101,15 +101,13 @@ typedef _BSD_FPREG_T_	__fregset_t[_NFREG];
 typedef struct {
 	__gregset_t	__gregs;	/* General Purpose Register set */
 	__fregset_t	__fregs;	/* Floating Point Register set */
-	__greg_t	__private;	/* copy of l_private */
-	__greg_t	__spare[8];	/* future proof */
+	__greg_t	__spare[7];	/* future proof */
 } mcontext_t;
 
 typedef struct {
 	__gregset32_t	__gregs;	/* General Purpose Register set */
 	__fregset_t	__fregs;	/* Floating Point Register set */
-	__greg32_t	__private;	/* copy of l_private */
-	__greg32_t	__spare[8];	/* future proof */
+	__greg32_t	__spare[7];	/* future proof */
 } mcontext32_t;
 
 /* Machine-dependent uc_flags */
@@ -117,31 +115,34 @@ typedef struct {
 #define	_UC_CLRSTACK	0x00020000	/* see <sys/ucontext.h> */
 #define	_UC_TLSBASE	0x00080000	/* see <sys/ucontext.h> */
 
-#define _UC_MACHINE_SP(uc)	((uc)->uc_mcontext.__gregs[_REG_SP])
-#define _UC_MACHINE_FP(uc)	((uc)->uc_mcontext.__gregs[_REG_S0])
-#define _UC_MACHINE_PC(uc)	((uc)->uc_mcontext.__gregs[_REG_PC])
-#define _UC_MACHINE_INTRV(uc)	((uc)->uc_mcontext.__gregs[_REG_RV])
+#define _UC_MACHINE_SP(uc)		((uc)->uc_mcontext.__gregs[_REG_SP])
+#define _UC_MACHINE_FP(uc)		((uc)->uc_mcontext.__gregs[_REG_S0])
+#define _UC_MACHINE_PC(uc)		((uc)->uc_mcontext.__gregs[_REG_PC])
+#define _UC_MACHINE_INTRV(uc)		((uc)->uc_mcontext.__gregs[_REG_RV])
 
 #define	_UC_MACHINE_SET_PC(uc, pc)	_UC_MACHINE_PC(uc) = (pc)
 
 #if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || defined(__LIBPTHREAD_SOURCE__)
 #include <sys/tls.h>
 
-/*
- * On RISCV, since displacements are signed 12-bit values, the TCB pointer is
- * not and points to the first static entry.
- */
-#define	TLS_TP_OFFSET	0x0
-#define	TLS_DTV_OFFSET	0x800
-__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x800);
-
 static __inline void *
 __lwp_getprivate_fast(void)
 {
 	void *__tp;
-	__asm("move %0,tp" : "=r"(__tp));
+	__asm("mv %0, tp" : "=r"(__tp));
 	return __tp;
 }
+
+/*
+ * On RISCV, since displacements are signed 12-bit values, the TCB Pointer
+ * is biased by sizeof(tcb) so that first thread datum can be addressed by
+ * -sizeof(tcb).
+ */
+
+#define	TLS_TP_OFFSET	0x0
+#define	TLS_TCB_ALIGN	16
+#define	TLS_DTV_OFFSET	0x800
+__CTASSERT(TLS_TP_OFFSET + sizeof(struct tls_tcb) < 0x800);
 
 static __inline void *
 __lwp_gettcb_fast(void)
@@ -149,7 +150,7 @@ __lwp_gettcb_fast(void)
 	void *__tcb;
 
 	__asm __volatile(
-		"addi %[__tcb],tp,%[__offset]"
+		"addi %[__tcb], tp, %[__offset]"
 	    :	[__tcb] "=r" (__tcb)
 	    :	[__offset] "n" (-(TLS_TP_OFFSET + sizeof(struct tls_tcb))));
 
@@ -160,11 +161,12 @@ static __inline void
 __lwp_settcb(void *__tcb)
 {
 	__asm __volatile(
-		"addi tp,%[__tcb],%[__offset]"
+		"addi tp, %[__tcb], %[__offset]"
 	    :
 	    :	[__tcb] "r" (__tcb),
 		[__offset] "n" (TLS_TP_OFFSET + sizeof(struct tls_tcb)));
 }
+
 #endif /* _RTLD_SOURCE || _LIBC_SOURCE || __LIBPTHREAD_SOURCE__ */
 
 #endif /* !_RISCV_MCONTEXT_H_ */

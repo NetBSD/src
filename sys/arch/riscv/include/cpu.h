@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.9 2022/11/17 09:50:23 simonb Exp $ */
+/* $NetBSD: cpu.h,v 1.10 2023/05/07 12:41:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,6 +59,9 @@ struct cpu_info {
 	struct trapframe *ci_ddb_regs;
 
 	uint64_t ci_lastintr;
+	uint64_t ci_lastintr_scheduled;
+	struct evcnt ci_ev_timer;
+	struct evcnt ci_ev_timer_missed;
 
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
@@ -87,7 +90,7 @@ struct cpu_info {
 
 #ifdef _KERNEL
 
-extern struct cpu_info cpu_info_store;
+extern struct cpu_info cpu_info_store[];
 
 // This is also in <sys/lwp.h>
 struct lwp;
@@ -96,6 +99,7 @@ static inline struct cpu_info *lwp_getcpu(struct lwp *);
 register struct lwp *riscv_curlwp __asm("tp");
 #define	curlwp		riscv_curlwp
 #define	curcpu()	lwp_getcpu(curlwp)
+#define	curpcb		((struct pcb *)lwp_getpcb(curlwp))
 
 static inline cpuid_t
 cpu_number(void)
@@ -146,6 +150,7 @@ vaddr_t	cpu_lwp_pc(struct lwp *);
 static inline void
 cpu_idle(void)
 {
+	asm volatile("wfi" ::: "memory");
 }
 
 #endif /* _KERNEL */

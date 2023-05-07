@@ -1,0 +1,7 @@
+#	$NetBSD: files.generic64,v 1.1 2023/05/07 12:41:48 skrll Exp $
+#
+# 	Generic (RV64) kernel configuration info
+#
+
+# Add other board files here
+include "arch/riscv/sifive/files.sifive"
