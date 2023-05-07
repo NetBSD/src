@@ -1,0 +1,29 @@
+#!/bin/sh
+
+BUILD=../../openssl-3.0.8
+
+create() {
+	sed -e "s,@proto@,$proto,g" -e "s/@PROTO@/$PROTO/g" -e "/@SRCS@/ {
+r $fn.out
+d
+}" PROTO.in > $fn.inc
+rm -f $fn.out
+}
+
+d=
+for i in $(find ${BUILD} -name 'liblegacy-lib-*.d'); do
+	nd=$(dirname "$i" | sed -e s,${BUILD}/,,)
+	if [ "$nd" != "$d" ]; then
+		if [ -n "$d" ]; then
+			create
+		fi
+		fn=$(echo $nd | tr '/' '_')
+		proto=$nd
+		PROTO=$(echo $fn | tr '[a-z]' '[A-Z]')
+		d=$nd
+		rm -f $fn.out
+	fi
+	echo $(basename $i) | \
+	    sed -e 's/.*-lib-//' -e 's/\.d/.c \\/' >> $fn.out
+done
+create
