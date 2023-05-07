@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2961 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2962 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -85,4 +85,5 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		Bumped shlib major because of incompatible API/ABI changes.
 		[nikita 20230416]
 	dhcpcd: Import version 10.0.1. [roy 20230421]
-
+	ftp(1): Add timeout for SSL connection setup, defaulting to 60 seconds.
+		[lukem 20230505]
