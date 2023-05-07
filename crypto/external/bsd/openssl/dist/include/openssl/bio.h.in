@@ -484,7 +484,7 @@ struct bio_dgram_sctp_prinfo {
 int BIO_read_filename(BIO *b, const char *name);
 # else
 #  define BIO_read_filename(b,name) (int)BIO_ctrl(b,BIO_C_SET_FILENAME, \
-                BIO_CLOSE|BIO_FP_READ,(char *)(name))
+                BIO_CLOSE|BIO_FP_READ,(char *)(intptr_t)(name))
 # endif
 # define BIO_write_filename(b,name) (int)BIO_ctrl(b,BIO_C_SET_FILENAME, \
                 BIO_CLOSE|BIO_FP_WRITE,name)

@@ -138,8 +138,8 @@ static const OSSL_DISPATCH fake_rand_functions[] = {
 };
 
 static const OSSL_ALGORITHM fake_rand_rand[] = {
-    { "FAKE", "provider=fake", fake_rand_functions },
-    { NULL, NULL, NULL }
+    { "FAKE", "provider=fake", fake_rand_functions, NULL },
+    { NULL, NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM *fake_rand_query(void *provctx,
