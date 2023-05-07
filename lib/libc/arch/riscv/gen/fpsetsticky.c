@@ -1,4 +1,4 @@
-/*	$NetBSD: fpsetsticky.c,v 1.2 2022/12/03 09:38:53 skrll Exp $	*/
+/*	$NetBSD: fpsetsticky.c,v 1.3 2023/05/07 12:41:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,13 +31,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpsetsticky.c,v 1.2 2022/12/03 09:38:53 skrll Exp $");
+__RCSID("$NetBSD: fpsetsticky.c,v 1.3 2023/05/07 12:41:47 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <sys/types.h>
 #include <ieeefp.h>
+
 #include <riscv/sysreg.h>
 
 #ifdef __weak_alias
@@ -47,5 +48,5 @@ __weak_alias(fpsetsticky,_fpsetsticky)
 fp_except
 fpsetsticky(fp_except mask)
 {
-	return __SHIFTOUT(riscvreg_fcsr_write_fflags(__SHIFTIN(mask, FCSR_FFLAGS)), FCSR_FFLAGS);
+	return __SHIFTOUT(fcsr_fflags_write(__SHIFTIN(mask, FCSR_FFLAGS)), FCSR_FFLAGS);
 }

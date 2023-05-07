@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.2 2015/03/27 06:44:28 matt Exp $	*/
+/*	$NetBSD: __sigtramp2.S,v 1.3 2023/05/07 12:41:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #include "assym.h"
 
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: __sigtramp2.S,v 1.2 2015/03/27 06:44:28 matt Exp $")
+	RCSID("$NetBSD: __sigtramp2.S,v 1.3 2023/05/07 12:41:47 skrll Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 
@@ -48,7 +48,6 @@
  */
 ENTRY_NP(__sigtramp_siginfo_2)
 	addi		a0, sp, SIGINFO_SIZE	/* address of ucontext */
-	SYSTRAP(setcontext)			/* and do setcontext */
-	nop
+	SYSTRAP_NOERROR(setcontext)		/* and do setcontext */
 	SYSTRAP(exit)				/* if sigreturn fails */
 END(__sigtramp_siginfo_2)

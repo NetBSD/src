@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.13 2022/10/16 06:14:53 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.14 2023/05/07 12:41:49 skrll Exp $
 
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,8 +33,10 @@ quote #define __MUTEX_PRIVATE
 quote #define __RWLOCK_PRIVATE
 quote #define __INTR_PRIVATE
 quote #define __PMAP_PRIVATE
+quote #define __RVSBI_LEGACY
 
 include <sys/param.h>
+
 include <sys/bitops.h>
 include <sys/bus.h>
 include <sys/cpu.h>
@@ -47,15 +49,21 @@ include <sys/rwlock.h>
 include <uvm/uvm_extern.h>
 
 include <riscv/locore.h>
+include <riscv/frame.h>
 include <riscv/sysreg.h>
+include <riscv/sbi.h>
 
-
+define	SR_SUM		SR_SUM
 define	SR_SPP		SR_SPP
 define	SR_SIE		SR_SIE
 define	SR_FS		SR_FS
 # define	SR_PS		SR_PS
 # define	SR_S		SR_S
 define	SR_SUM		SR_SUM
+
+define	SIE_SEIE	SIE_SEIE
+define	SIE_STIE	SIE_STIE
+define	SIE_SSIE	SIE_SSIE
 
 define	CAUSE_SYSCALL	CAUSE_SYSCALL
 
@@ -68,7 +76,7 @@ define	SATP_MODE_SV32	__SHIFTIN(SATP_MODE_SV32, SATP_MODE)
 endif
 
 define	IPL_HIGH	IPL_HIGH
-define	IPL_DDB		IPL_DDB
+#define	IPL_DDB		IPL_DDB
 define	IPL_SCHED	IPL_SCHED
 define	IPL_VM		IPL_VM
 define	IPL_SOFTSERIAL	IPL_SOFTSERIAL
@@ -79,7 +87,7 @@ define	IPL_NONE	IPL_NONE
 
 #define	CPU_MAXNUM	CPU_MAXNUM
 
-define	TF_LEN		roundup(sizeof(struct trapframe), STACK_ALIGNBYTES+1)
+define	TF_LEN		sizeof(struct trapframe)
 define	TF_RA		offsetof(struct trapframe, tf_reg[_X_RA])
 define	TF_S0		offsetof(struct trapframe, tf_reg[_X_S0])
 define	TF_S1		offsetof(struct trapframe, tf_reg[_X_S1])
@@ -209,19 +217,8 @@ define	PTE_R		PTE_R
 define	PTE_V		PTE_V
 
 define	PTE_KERN	PTE_KERN
+define	PTE_HARDWIRED	PTE_HARDWIRED
 
-define	L0_SHIFT	L0_SHIFT
-define	L1_SHIFT	L1_SHIFT
-define	L1_SIZE		L1_SIZE
-define	L1_OFFSET	L1_OFFSET
-define	L2_SHIFT	L2_SHIFT
-define	L2_SIZE		L2_SIZE
-define	L2_OFFSET	L2_OFFSET
-#define	L3_SHIFT	L3_SHIFT
-#define	L3_SIZE		L3_SIZE
-#define	L3_OFFSET	L3_OFFSET
-define	Ln_ENTRIES	Ln_ENTRIES
-define	Ln_ADDR_MASK	Ln_ADDR_MASK
 #define	PTE_PPN0_S	PTE_PPN0_S
 #define	PTE_PPN1_S	PTE_PPN1_S
 #define	PTE_PPN2_S	PTE_PPN2_S
@@ -229,8 +226,10 @@ define	Ln_ADDR_MASK	Ln_ADDR_MASK
 #define	PTE_SIZE	PTE_SIZE
 define	PTE_PPN_SHIFT	PTE_PPN_SHIFT
 
-define	PM_MD_PDETAB	offsetof(struct pmap, pm_md.md_pdetab)
+define	PM_PDETAB	offsetof(struct pmap, pm_pdetab)
 define	PM_MD_PPN	offsetof(struct pmap, pm_md.md_ppn)
+
+define	SBI_LEGACY_CONSOLE_PUTCHAR	SBI_LEGACY_CONSOLE_PUTCHAR
 
 # for bus_space_asm
 define	BS_STRIDE		offsetof(struct bus_space, bs_stride)

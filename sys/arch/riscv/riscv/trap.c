@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.20 2023/02/26 07:13:55 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.21 2023/05/07 12:41:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,19 +34,21 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.20 2023/02/26 07:13:55 skrll Exp $");
+__RCSID("$NetBSD: trap.c,v 1.21 2023/05/07 12:41:49 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/atomic.h>
 
+#include <sys/atomic.h>
+#include <sys/kauth.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm.h>
 
 #include <machine/locore.h>
+#include <machine/machdep.h>
 #include <machine/db_machdep.h>
 
 #define	MACHINE_ECALL_TRAP_MASK	(__BIT(CAUSE_MACHINE_ECALL))
@@ -105,7 +107,10 @@ cpu_jump_onfault(struct trapframe *tf, const struct faultbuf *fb)
 	tf->tf_s9 = fb->fb_reg[FB_S9];
 	tf->tf_s10 = fb->fb_reg[FB_S10];
 	tf->tf_s11 = fb->fb_reg[FB_S11];
+	tf->tf_sp = fb->fb_reg[FB_SP];
+	tf->tf_pc = fb->fb_reg[FB_RA];
 }
+
 
 int
 copyin(const void *uaddr, void *kaddr, size_t len)
@@ -113,10 +118,25 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 	struct faultbuf fb;
 	int error;
 
+	if (__predict_false(len == 0)) {
+		return 0;
+	}
+
+	// XXXNH cf. VM_MIN_ADDRESS and user_va0_disable
+	if (uaddr == NULL)
+		return EFAULT;
+
+	const vaddr_t uva = (vaddr_t)uaddr;
+	if (uva > VM_MAXUSER_ADDRESS - len)
+		return EFAULT;
+
+	csr_sstatus_set(SR_SUM);
 	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
 		memcpy(kaddr, uaddr, len);
 		cpu_unset_onfault();
 	}
+	csr_sstatus_clear(SR_SUM);
+
 	return error;
 }
 
@@ -126,10 +146,25 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 	struct faultbuf fb;
 	int error;
 
+	if (__predict_false(len == 0)) {
+		return 0;
+	}
+
+	// XXXNH cf. VM_MIN_ADDRESS and user_va0_disable
+	if (uaddr == NULL)
+		return EFAULT;
+
+	const vaddr_t uva = (vaddr_t)uaddr;
+	if (uva > VM_MAXUSER_ADDRESS - len)
+		return EFAULT;
+
+	csr_sstatus_set(SR_SUM);
 	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
 		memcpy(uaddr, kaddr, len);
 		cpu_unset_onfault();
 	}
+	csr_sstatus_clear(SR_SUM);
+
 	return error;
 }
 
@@ -143,6 +178,7 @@ kcopy(const void *kfaddr, void *kdaddr, size_t len)
 		memcpy(kdaddr, kfaddr, len);
 		cpu_unset_onfault();
 	}
+
 	return error;
 }
 
@@ -150,15 +186,35 @@ int
 copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
 	struct faultbuf fb;
+	size_t retlen;
 	int error;
 
+	if (__predict_false(len == 0)) {
+		return 0;
+	}
+
+	if (__predict_false(uaddr == NULL))
+		return EFAULT;
+	/*
+	 * Can only check if starting user address is out of range here.
+	 * The string may end before uva + len.
+	 */
+	const vaddr_t uva = (vaddr_t)uaddr;
+	if (uva > VM_MAXUSER_ADDRESS)
+		return EFAULT;
+
+	csr_sstatus_set(SR_SUM);
 	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
-		len = strlcpy(kaddr, uaddr, len);
+		retlen = strlcpy(kaddr, uaddr, len);
 		cpu_unset_onfault();
-		if (done != NULL) {
-			*done = len;
+		if (retlen >= len) {
+			error = ENAMETOOLONG;
+		} else if (done != NULL) {
+			*done = retlen + 1;
 		}
 	}
+	csr_sstatus_clear(SR_SUM);
+
 	return error;
 }
 
@@ -166,53 +222,78 @@ int
 copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 {
 	struct faultbuf fb;
+	size_t retlen;
 	int error;
 
+	if (__predict_false(len == 0)) {
+		return 0;
+	}
+
+	if (__predict_false(uaddr == NULL))
+		return EFAULT;
+	/*
+	 * Can only check if starting user address is out of range here.
+	 * The string may end before uva + len.
+	 */
+	const vaddr_t uva = (vaddr_t)uaddr;
+	if (uva > VM_MAXUSER_ADDRESS)
+		return EFAULT;
+
+	csr_sstatus_set(SR_SUM);
 	if ((error = cpu_set_onfault(&fb, EFAULT)) == 0) {
-		len = strlcpy(uaddr, kaddr, len);
+		retlen = strlcpy(uaddr, kaddr, len);
 		cpu_unset_onfault();
-		if (done != NULL) {
-			*done = len;
+		if (retlen >= len) {
+			error = ENAMETOOLONG;
+		} else if (done != NULL) {
+			*done = retlen + 1;
 		}
 	}
+	csr_sstatus_clear(SR_SUM);
+
 	return error;
+}
+
+static const char *
+cause_name(register_t cause)
+{
+	if (CAUSE_INTERRUPT_P(cause))
+		return "interrupt";
+	const char *name = "(unk)";
+	if (cause < __arraycount(causenames) && causenames[cause] != NULL)
+		name = causenames[cause];
+
+	return name;
 }
 
 void
 dump_trapframe(const struct trapframe *tf, void (*pr)(const char *, ...))
 {
-	const char *causestr = "?";
-	if (tf->tf_cause < __arraycount(causenames)
-	    && causenames[tf->tf_cause] != NULL)
-		causestr = causenames[tf->tf_cause];
+	const char *name = cause_name(tf->tf_cause);
+	static const char *regname[] = {
+	           "ra",  "sp",  "gp",	//  x0,  x1,  x2,  x3,
+	    "tp",  "t0",  "t1",  "t2",	//  x4,  x5,  x6,  x7,
+	    "s0",  "s1",  "a0",  "a1",	//  x8,  x9, x10, x11,
+	    "a2",  "a3",  "a4",  "a5",	// x12, x13, x14, x15,
+	    "a6",  "a7",  "s2",  "s3",	// x16, x17, x18, x19,
+	    "s4",  "s5",  "s6",  "s7",	// x20, x21, x22, x23,
+	    "s8",  "s9", "s10", "s11",	// x24, x25, x26, x27,
+	    "t3",  "t4",  "t5",  "t6",	// x28, x29, x30, x31,
+	};
+
 	(*pr)("Trapframe @ %p "
 	    "(cause=%d (%s), status=%#x, pc=%#18" PRIxREGISTER
 	    ", va=%#" PRIxREGISTER "):\n",
-	    tf, tf->tf_cause, causestr, tf->tf_sr, tf->tf_pc, tf->tf_tval);
-	(*pr)("ra =%#18" PRIxREGISTER ", sp =%#18" PRIxREGISTER
-	    ", gp =%#18" PRIxREGISTER ", tp =%#18" PRIxREGISTER "\n",
-	    tf->tf_ra, tf->tf_sp, tf->tf_gp, tf->tf_tp);
-	(*pr)("s0 =%#18" PRIxREGISTER ", s1 =%#18" PRIxREGISTER
-	    ", s2 =%#18" PRIxREGISTER ", s3 =%#18" PRIxREGISTER "\n",
-	    tf->tf_s0, tf->tf_s1, tf->tf_s2, tf->tf_s3);
-	(*pr)("s4 =%#18" PRIxREGISTER ", s5 =%#18" PRIxREGISTER
-	    ", s6 =%#18" PRIxREGISTER ", s7 =%#18" PRIxREGISTER "\n",
-	    tf->tf_s4, tf->tf_s5, tf->tf_s6, tf->tf_s7);
-	(*pr)("s8 =%#18" PRIxREGISTER ", s9 =%#18" PRIxREGISTER
-	    ", s10=%#18" PRIxREGISTER ", s11=%#18" PRIxREGISTER "\n",
-	    tf->tf_s8, tf->tf_s9, tf->tf_s10, tf->tf_s11);
-	(*pr)("a0 =%#18" PRIxREGISTER ", a1 =%#18" PRIxREGISTER
-	    ", a2 =%#18" PRIxREGISTER ", a3 =%#18" PRIxREGISTER "\n",
-	    tf->tf_a0, tf->tf_a1, tf->tf_a2, tf->tf_a3);
-	(*pr)("a4 =%#18" PRIxREGISTER ", a5 =%#18" PRIxREGISTER
-	    ", a5 =%#18" PRIxREGISTER ", a7 =%#18" PRIxREGISTER "\n",
-	    tf->tf_a4, tf->tf_a5, tf->tf_a6, tf->tf_a7);
-	(*pr)("t0 =%#18" PRIxREGISTER ", t1 =%#18" PRIxREGISTER
-	    ", t2 =%#18" PRIxREGISTER ", t3 =%#18" PRIxREGISTER "\n",
-	    tf->tf_t0, tf->tf_t1, tf->tf_t2, tf->tf_t3);
-	(*pr)("t4 =%#18" PRIxREGISTER ", t5 =%#18" PRIxREGISTER
-	    ", t6 =%#18" PRIxREGISTER "\n",
-	    tf->tf_t4, tf->tf_t5, tf->tf_t6);
+	    tf, tf->tf_cause, name, tf->tf_sr, tf->tf_pc, tf->tf_tval);
+
+	(*pr)("                        ");
+	for (unsigned reg = 1; reg < 32; reg++) {
+		(*pr)("%-3s=%#18" PRIxREGISTER "  ",
+		    regname[reg - 1],
+		    tf->tf_regs.r_reg[reg - 1]);
+		if (reg % 4 == 3)
+			(*pr)("\n");
+	}
 }
 
 static inline void
@@ -241,9 +322,9 @@ get_faulttype(register_t cause)
 	if (cause == CAUSE_LOAD_ACCESS || cause == CAUSE_LOAD_PAGE_FAULT)
 		return VM_PROT_READ;
 	if (cause == CAUSE_STORE_ACCESS || cause == CAUSE_STORE_PAGE_FAULT)
-		return VM_PROT_READ | VM_PROT_WRITE;
+		return VM_PROT_WRITE;
 	KASSERT(cause == CAUSE_FETCH_ACCESS || cause == CAUSE_FETCH_PAGE_FAULT);
-	return VM_PROT_READ | VM_PROT_EXECUTE;
+	return VM_PROT_EXECUTE;
 }
 
 static bool
@@ -257,11 +338,17 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 		return false;
 
 	pt_entry_t opte = *ptep;
+	if (!pte_valid_p(opte))
+		return false;
+
 	pt_entry_t npte;
 	u_int attr;
 	do {
-		if ((opte & ~PTE_G) == 0)
-			return false;
+		/* TODO: PTE_G is just the kernel PTE, but all pages
+		 * can fault for CAUSE_LOAD_PAGE_FAULT and
+		 * CAUSE_STORE_PAGE_FAULT...*/
+		/* if ((opte & ~PTE_G) == 0) */
+		/* 	return false; */
 
 		pg = PHYS_TO_VM_PAGE(pte_to_paddr(opte));
 		if (pg == NULL)
@@ -269,26 +356,34 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 
 		attr = 0;
 		npte = opte;
-		if ((npte & PTE_V) == 0) {
-			npte |= PTE_V;
-			attr |= VM_PAGEMD_REFERENCED;
-		}
-#if 0		/* XXX Outdated */
-		if (cause == CAUSE_STORE_ACCESS) {
-			if ((npte & PTE_NW) != 0) {
-				npte &= ~PTE_NW;
+
+		switch (cause) {
+		case CAUSE_STORE_ACCESS:
+			if ((npte & PTE_W) != 0) {
+				npte |= PTE_A | PTE_D;
 				attr |= VM_PAGEMD_MODIFIED;
 			}
-		} else if (cause == CAUSE_FETCH_ACCESS) {
+			break;
+		case CAUSE_STORE_PAGE_FAULT:
+			if ((npte & PTE_D) == 0) {
+				npte |= PTE_A | PTE_D;
+				attr |= VM_PAGEMD_REFERENCED | VM_PAGEMD_MODIFIED;
+			}
+			break;
+		case CAUSE_FETCH_ACCESS:
+		case CAUSE_FETCH_PAGE_FAULT:
+#if 0
 			if ((npte & PTE_NX) != 0) {
 				npte &= ~PTE_NX;
 				attr |= VM_PAGEMD_EXECPAGE;
 			}
-		}
 #endif
+			break;
+		default:
+			panic("%s: Unhandled cause!", __func__);
+		}
 		if (attr == 0)
 			return false;
-
 	} while (opte != atomic_cas_pte(ptep, opte, npte));
 
 	pmap_page_set_attributes(VM_PAGE_TO_MD(pg), attr);
@@ -322,33 +417,88 @@ trap_pagefault(struct trapframe *tf, register_t epc, register_t status,
 		return false;
 	}
 
-	struct vm_map * const map = (addr >= 0 ? &p->p_vmspace->vm_map : kernel_map);
+	struct vm_map * const map = (addr >= 0 ?
+	    &p->p_vmspace->vm_map : kernel_map);
 
 	// See if this fault is for reference/modified/execpage tracking
 	if (trap_pagefault_fixup(tf, map->pmap, cause, addr))
 		return true;
+
+#ifdef PMAP_FAULTINFO
+	struct pcb * const pcb = lwp_getpcb(curlwp);
+	struct pcb_faultinfo * const pfi = &pcb->pcb_faultinfo;
+
+	if (p->p_pid == pfi->pfi_lastpid && addr == pfi->pfi_faultaddr) {
+		if (++pfi->pfi_repeats > 4) {
+			tlb_asid_t asid = tlb_get_asid();
+			pt_entry_t *ptep = pfi->pfi_faultptep;
+			printf("%s: fault #%u (%s) for %#" PRIxVADDR
+			    "(%#"PRIxVADDR") at pc %#"PRIxVADDR" curpid=%u/%u "
+			    "ptep@%p=%#"PRIxPTE")\n", __func__,
+			    pfi->pfi_repeats, cause_name(tf->tf_cause),
+			    tval, addr, epc, map->pmap->pm_pai[0].pai_asid,
+			    asid, ptep, ptep ? pte_value(*ptep) : 0);
+			if (pfi->pfi_repeats >= 4) {
+				cpu_Debugger();
+			} else {
+				pfi->pfi_cause = cause;
+			}
+		}
+	} else {
+		pfi->pfi_lastpid = p->p_pid;
+		pfi->pfi_faultaddr = addr;
+		pfi->pfi_repeats = 0;
+		pfi->pfi_faultptep = NULL;
+		pfi->pfi_cause = cause;
+	}
+#endif /* PMAP_FAULTINFO */
 
 	const vm_prot_t ftype = get_faulttype(cause);
 
 	if (usertrap_p) {
 		int error = uvm_fault(&p->p_vmspace->vm_map, addr, ftype);
 		if (error) {
-			trap_ksi_init(ksi, SIGSEGV,
-			    error == EACCES ? SEGV_ACCERR : SEGV_MAPERR,
-			    (intptr_t)tval, cause);
+			int signo = SIGSEGV;
+			int code = SEGV_MAPERR;
+
+			switch (error) {
+			case ENOMEM: {
+				struct lwp * const l = curlwp;
+				printf("UVM: pid %d (%s), uid %d killed: "
+				    "out of swap\n",
+				    l->l_proc->p_pid, l->l_proc->p_comm,
+				    l->l_cred ?
+					kauth_cred_geteuid(l->l_cred) : -1);
+				signo = SIGKILL;
+				code = 0;
+				break;
+			    }
+			case EACCES:
+				KASSERT(signo == SIGSEGV);
+				code = SEGV_ACCERR;
+				break;
+			case EINVAL:
+				signo = SIGBUS;
+				code = BUS_ADRERR;
+				break;
+			}
+
+			trap_ksi_init(ksi, signo, code, (intptr_t)tval, cause);
 			return false;
 		}
 		uvm_grow(p, addr);
+
 		return true;
 	}
 
-	// Page fault are not allowed while dealing with interrupts
+	// Page faults are not allowed while dealing with interrupts
 	if (cpu_intr_p())
 		return false;
 
 	struct faultbuf * const fb = cpu_disable_onfault();
 	int error = uvm_fault(map, addr, ftype);
 	cpu_enable_onfault(fb);
+
 	if (error == 0) {
 		if (map != kernel_map) {
 			uvm_grow(p, addr);
@@ -369,6 +519,11 @@ trap_instruction(struct trapframe *tf, register_t epc, register_t status,
     register_t cause, register_t tval, bool usertrap_p, ksiginfo_t *ksi)
 {
 	if (usertrap_p) {
+		if (__SHIFTOUT(tf->tf_sr, SR_FS) == SR_FS_OFF) {
+			fpu_load();
+			return true;
+		}
+
 		trap_ksi_init(ksi, SIGILL, ILL_ILLOPC,
 		    (intptr_t)tval, cause);
 	}
@@ -390,11 +545,18 @@ void
 cpu_trap(struct trapframe *tf, register_t epc, register_t status,
     register_t cause, register_t tval)
 {
-	const u_int fault_mask = 1U << cause;
+	const register_t code = CAUSE_CODE(cause);
+	const register_t fault_mask = __BIT(code);
 	const intptr_t addr = tval;
 	const bool usertrap_p = (status & SR_SPP) == 0;
 	bool ok = true;
 	ksiginfo_t ksi;
+
+	KASSERT(!CAUSE_INTERRUPT_P(cause));
+	KASSERT(__SHIFTOUT(tf->tf_sr, SR_SIE) == 0);
+
+	/* We can allow interrupts now */
+	csr_sstatus_set(SR_SIE);
 
 	if (__predict_true(fault_mask & FAULT_TRAP_MASK)) {
 #ifndef _LP64
@@ -415,14 +577,8 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 	} else if (fault_mask & INSTRUCTION_TRAP_MASK) {
 		ok = trap_instruction(tf, epc, status, cause, addr,
 		    usertrap_p, &ksi);
-#if 0
-	} else if (fault_mask && __BIT(CAUSE_FP_DISABLED)) {
-		if (!usertrap_p) {
-			panic("%s: fp used @ %#"PRIxREGISTER" in kernel!",
-			    __func__, tf->tf_pc);
-		}
-		fpu_load();
-#endif
+	} else if (fault_mask & SYSCALL_TRAP_MASK) {
+		panic("cpu_exception_handler failure");
 	} else if (fault_mask & MISALIGNED_TRAP_MASK) {
 		ok = trap_misalignment(tf, epc, status, cause, addr,
 		    usertrap_p, &ksi);
@@ -431,6 +587,7 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 			dump_trapframe(tf, printf);
 #if defined(DDB)
 			kdb_trap(cause, tf);
+			PC_BREAK_ADVANCE(tf);
 			return;	/* KERN */
 #endif
 			panic("%s: unknown kernel trap", __func__);
@@ -440,31 +597,50 @@ cpu_trap(struct trapframe *tf, register_t epc, register_t status,
 	if (usertrap_p) {
 		if (!ok)
 			cpu_trapsignal(tf, &ksi);
+
 		userret(curlwp);
 	} else if (!ok) {
 		dump_trapframe(tf, printf);
 		panic("%s: fatal kernel trap", __func__);
 	}
+	/*
+	 * Ensure interrupts are disabled in sstatus, and that interrupts
+	 * will get enabled on 'sret' for userland.
+	 */
+	KASSERT(__SHIFTOUT(tf->tf_sr, SR_SIE) == 0);
+	KASSERT(__SHIFTOUT(tf->tf_sr, SR_SPIE) != 0 ||
+	    __SHIFTOUT(tf->tf_sr, SR_SPP) != 0);
 }
 
 void
 cpu_ast(struct trapframe *tf)
 {
+	struct lwp * const l = curlwp;
 
-	atomic_swap_uint(&curlwp->l_md.md_astpending, 0);
+	/*
+	 * allow to have a chance of context switch just prior to user
+	 * exception return.
+	 */
+#ifdef __HAVE_PREEMPTION
+	kpreempt_disable();
+#endif
+	struct cpu_info * const ci = curcpu();
+
+	ci->ci_data.cpu_ntrap++;
+
+	KDASSERT(ci->ci_cpl == IPL_NONE);
+#ifdef __HAVE_PREEMPTION
+	kpreempt_enable();
+#endif
 
 	if (curlwp->l_pflag & LP_OWEUPC) {
 		curlwp->l_pflag &= ~LP_OWEUPC;
 		ADDUPROF(curlwp);
 	}
+
+	userret(l);
 }
 
-void
-cpu_intr(struct trapframe *tf, register_t epc, register_t status,
-    register_t cause)
-{
-	/* XXX */
-}
 
 static int
 fetch_user_data(const void *uaddr, void *valp, size_t size)
@@ -472,9 +648,14 @@ fetch_user_data(const void *uaddr, void *valp, size_t size)
 	struct faultbuf fb;
 	int error;
 
+	const vaddr_t uva = (vaddr_t)uaddr;
+	if (__predict_false(uva > VM_MAXUSER_ADDRESS - size))
+		return EFAULT;
+
 	if ((error = cpu_set_onfault(&fb, 1)) != 0)
 		return error;
 
+	csr_sstatus_set(SR_SUM);
 	switch (size) {
 	case 1:
 		*(uint8_t *)valp = *(volatile const uint8_t *)uaddr;
@@ -493,8 +674,10 @@ fetch_user_data(const void *uaddr, void *valp, size_t size)
 	default:
 		error = EINVAL;
 	}
+	csr_sstatus_clear(SR_SUM);
 
 	cpu_unset_onfault();
+
 	return error;
 }
 
@@ -530,9 +713,14 @@ store_user_data(void *uaddr, const void *valp, size_t size)
 	struct faultbuf fb;
 	int error;
 
+	const vaddr_t uva = (vaddr_t)uaddr;
+	if (__predict_false(uva > VM_MAXUSER_ADDRESS - size))
+		return EFAULT;
+
 	if ((error = cpu_set_onfault(&fb, 1)) != 0)
 		return error;
 
+	csr_sstatus_set(SR_SUM);
 	switch (size) {
 	case 1:
 		*(volatile uint8_t *)uaddr = *(const uint8_t *)valp;
@@ -551,8 +739,10 @@ store_user_data(void *uaddr, const void *valp, size_t size)
 	default:
 		error = EINVAL;
 	}
+	csr_sstatus_clear(SR_SUM);
 
 	cpu_unset_onfault();
+
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_sub_64.S,v 1.2 2015/03/27 06:42:37 matt Exp $	*/
+/*	$NetBSD: atomic_sub_64.S,v 1.3 2023/05/07 12:41:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -75,5 +75,5 @@ CRT_ALIAS(__atomic_sub_fetch_8,_atomic_sub_64_nv)
 ATOMIC_OP_ALIAS(atomic_dec_64_nv,_atomic_dec_64_nv)
 ATOMIC_OP_ALIAS(atomic_dec_ulong_nv,_atomic_dec_64_nv)
 STRONG_ALIAS(_atomic_dec_ulong_nv,_atomic_dec_64_nv)
-ATOMIC_OP_ALIAS(atomic_dec_ptr_nv,_atomic_sub_64_nv)
+ATOMIC_OP_ALIAS(atomic_dec_ptr_nv,_atomic_dec_64_nv)
 STRONG_ALIAS(_atomic_sub_ptr_nv,_atomic_sub_64_nv)

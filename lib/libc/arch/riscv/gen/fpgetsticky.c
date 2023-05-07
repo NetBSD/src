@@ -1,4 +1,4 @@
-/*	$NetBSD: fpgetsticky.c,v 1.2 2022/12/03 09:38:53 skrll Exp $	*/
+/*	$NetBSD: fpgetsticky.c,v 1.3 2023/05/07 12:41:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: fpgetsticky.c,v 1.2 2022/12/03 09:38:53 skrll Exp $");
+__RCSID("$NetBSD: fpgetsticky.c,v 1.3 2023/05/07 12:41:47 skrll Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,5 +47,5 @@ __weak_alias(fpgetsticky,_fpgetsticky)
 fp_except
 fpgetsticky(void)
 {
-	return __SHIFTOUT(riscvreg_fcsr_read(), FCSR_FFLAGS);
+	return __SHIFTOUT(fcsr_read(), FCSR_FFLAGS);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.33 2022/09/06 02:31:08 nat Exp $	*/
+/*	$NetBSD: udl.c,v 1.34 2023/05/07 12:41:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.33 2022/09/06 02:31:08 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.34 2023/05/07 12:41:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -704,6 +704,8 @@ udl_mmap(void *v, void *vs, off_t off, int prot)
 #define PTOMMAP(paddr)	mips_btop(paddr)
 #elif defined(__powerpc__)
 #define PTOMMAP(paddr)	(paddr)
+#elif defined(__riscv__)
+#define PTOMMAP(paddr)	riscv_btop(paddr)
 #elif defined(__sh__)
 #define PTOMMAP(paddr)	sh3_btop(paddr)
 #elif defined(__sparc__)

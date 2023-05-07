@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1311 2023/05/07 12:26:32 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1312 2023/05/07 12:41:48 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -849,8 +849,6 @@ MKGDB.riscv64=	no
 
 # No kernel modules for or1k or riscv (yet)
 MKKMOD.or1k=	no
-MKKMOD.riscv32=	no
-MKKMOD.riscv64=	no
 
 # No profiling for or1k (yet)
 MKPROFILE.or1k=	no

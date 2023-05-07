@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.12 2023/04/22 10:03:53 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.13 2023/05/07 12:41:48 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -78,31 +78,17 @@ typedef uint32_t pd_entry_t;
 #define	PTE_V		__BIT(0)	// Valid
 
 #define	PTE_HARDWIRED	(PTE_A | PTE_D)
-#define	PTE_KERN	(PTE_V | PTE_G | PTE_A | PTE_D)
+#define	PTE_USER	(PTE_V | PTE_U)
+#define	PTE_KERN	(PTE_V | PTE_G)
 #define	PTE_RW		(PTE_R | PTE_W)
 #define	PTE_RX		(PTE_R | PTE_X)
+#define	PTE_RWX		(PTE_R | PTE_W | PTE_X)
+
+#define	PTE_ISLEAF_P(pte) (((pte) & PTE_RWX) != 0)
 
 #define	PA_TO_PTE(pa)	(((pa) >> PAGE_SHIFT) << PTE_PPN_SHIFT)
 #define	PTE_TO_PA(pte)	(((pte) >> PTE_PPN_SHIFT) << PAGE_SHIFT)
 
-#define	L2_SHIFT	30
-#define	L1_SHIFT	21
-#define	L0_SHIFT	12
-
-#define	L2_SIZE 	(1 << L2_SHIFT)
-#define	L1_SIZE 	(1 << L1_SHIFT)
-#define	L0_SIZE 	(1 << L0_SHIFT)
-
-#define	L2_OFFSET 	(L2_SIZE - 1)
-#define	L1_OFFSET 	(L1_SIZE - 1)
-#define	L0_OFFSET 	(L0_SIZE - 1)
-
-#define	Ln_ENTRIES	(1 << 9)
-#define	Ln_ADDR_MASK	(Ln_ENTRIES - 1)
-
-#define	pl2_i(va)	(((va) >> L2_SHIFT) & Ln_ADDR_MASK)
-#define	pl1_i(va)	(((va) >> L1_SHIFT) & Ln_ADDR_MASK)
-#define	pl0_i(va)	(((va) >> L0_SHIFT) & Ln_ADDR_MASK)
 
 
 static inline bool
@@ -126,6 +112,7 @@ pte_modified_p(pt_entry_t pte)
 static inline bool
 pte_cached_p(pt_entry_t pte)
 {
+	/* TODO: This seems wrong... */
 	return true;
 }
 
@@ -138,13 +125,13 @@ pte_deferred_exec_p(pt_entry_t pte)
 static inline pt_entry_t
 pte_wire_entry(pt_entry_t pte)
 {
-	return pte | PTE_WIRED;
+	return pte | PTE_HARDWIRED | PTE_WIRED;
 }
 
 static inline pt_entry_t
 pte_unwire_entry(pt_entry_t pte)
 {
-	return pte & ~PTE_WIRED;
+	return pte & ~(PTE_HARDWIRED | PTE_WIRED);
 }
 
 static inline paddr_t
@@ -180,11 +167,9 @@ pte_prot_downgrade(pt_entry_t pte, vm_prot_t newprot)
 static inline pt_entry_t
 pte_prot_bits(struct vm_page_md *mdpg, vm_prot_t prot, bool kernel_p)
 {
-	pt_entry_t pte;
-
 	KASSERT(prot & VM_PROT_READ);
+	pt_entry_t pte = PTE_R;
 
-	pte = PTE_R;
 	if (prot & VM_PROT_EXECUTE) {
 		pte |= PTE_X;
 	}
@@ -198,23 +183,7 @@ pte_prot_bits(struct vm_page_md *mdpg, vm_prot_t prot, bool kernel_p)
 static inline pt_entry_t
 pte_flag_bits(struct vm_page_md *mdpg, int flags, bool kernel_p)
 {
-#if 0
-	if (__predict_false(flags & PMAP_NOCACHE)) {
-		if (__predict_true(mdpg != NULL)) {
-			return pte_nocached_bits();
-		} else {
-			return pte_ionocached_bits();
-		}
-	} else {
-		if (__predict_false(mdpg != NULL)) {
-			return pte_cached_bits();
-		} else {
-			return pte_iocached_bits();
-		}
-	}
-#else
 	return 0;
-#endif
 }
 
 static inline pt_entry_t
@@ -223,11 +192,33 @@ pte_make_enter(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 {
 	pt_entry_t pte = (pt_entry_t)PA_TO_PTE(pa);
 
+	pte |= kernel_p ? PTE_KERN : PTE_USER;
 	pte |= pte_flag_bits(mdpg, flags, kernel_p);
 	pte |= pte_prot_bits(mdpg, prot, kernel_p);
 
-	if (mdpg == NULL && VM_PAGEMD_REFERENCED_P(mdpg))
-		pte |= PTE_V;
+	if (mdpg != NULL) {
+
+		if ((prot & VM_PROT_WRITE) != 0 &&
+		    ((flags & VM_PROT_WRITE) != 0 || VM_PAGEMD_MODIFIED_P(mdpg))) {
+			/*
+			* This is a writable mapping, and the page's mod state
+			* indicates it has already been modified.  No need for
+			* modified emulation.
+			*/
+			pte |= PTE_A;
+		} else if ((flags & VM_PROT_ALL) || VM_PAGEMD_REFERENCED_P(mdpg)) {
+			/*
+			* - The access type indicates that we don't need to do
+			*   referenced emulation.
+			* OR
+			* - The physical page has already been referenced so no need
+			*   to re-do referenced emulation here.
+			*/
+			pte |= PTE_A;
+		}
+	} else {
+		pte |= PTE_A | PTE_D;
+	}
 
 	return pte;
 }
@@ -238,9 +229,9 @@ pte_make_kenter_pa(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 {
 	pt_entry_t pte = (pt_entry_t)PA_TO_PTE(pa);
 
-	pte |= PTE_WIRED | PTE_G | PTE_V;
+	pte |= PTE_KERN | PTE_HARDWIRED | PTE_WIRED;
 	pte |= pte_flag_bits(NULL, flags, true);
-	pte |= pte_prot_bits(NULL, prot, true); /* pretend unmanaged */
+	pte |= pte_prot_bits(NULL, prot, true);
 
 	return pte;
 }

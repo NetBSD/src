@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.40 2022/11/19 09:55:11 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.41 2023/05/07 12:41:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -146,7 +146,6 @@ ENTRY_NP(start)
 
 	// s2	L1 PDE (SV32:4MiB megapages, SV{39,48}: 2MiB megapages)
 	// s3	L2 PDE (_LP64 SV39 only)
-	// s4	L3 PDE (_LP64 SV48 only)
 	// s5	lwp0uspace
 	// s6	bootstk
 	// s7   end of memory to clear
@@ -156,10 +155,6 @@ ENTRY_NP(start)
 #ifdef _LP64
 	VPRINTS("l2:      ")
 	VPRINTXNL(s3)
-#ifdef notyet
-	VPRINTS("l3:      ")
-	VPRINTXNL(s4)
-#endif
 #endif
 
 	VPRINTS("uspace:  ")
@@ -195,30 +190,20 @@ ENTRY_NP(start)
 	// Need to setup tables so that for
 	// sv32 : s2
 	// sv39 : s3 -> s2
-	// sv48 : s4 -> s3 -> s2
 
 #ifdef _LP64
+	VPRINTS("l2pde:   ")
 	srli	t0, s2, (PGSHIFT - PTE_PPN_SHIFT)
 	or	t0, t0, s7		// Assumes s2[11:0] == 0
 #if ((VM_MIN_KERNEL_ADDRESS >> XSEGSHIFT) & (NPDEPG - 1)) * SZREG
 	li	t1, ((VM_MIN_KERNEL_ADDRESS >> XSEGSHIFT) & (NPDEPG - 1)) * SZREG
-#ifdef notyet
-	add	t1, t1, s4
-#else
 	add	t1, t1, s3
-#endif
 	REG_S	t0, 0(t1)
 
-	VPRINTS("l2pde:   ")
 	VPRINTX(t1)
 #else
-#ifdef notyet
-	REG_S	t0, 0(s4)
-#else
 	REG_S	t0, 0(s3)
-#endif
 
-	VPRINTS("l2pde:   ")
 	VPRINTX(s3)
 #endif
 
@@ -237,7 +222,7 @@ ENTRY_NP(start)
 
 	li	s5, (VM_KERNEL_SIZE >> SEGSHIFT)		// # of megapages
 	li	s6, (NBSEG >> (PGSHIFT - PTE_PPN_SHIFT))	// load for ease
-	li	s7, PTE_KERN | PTE_R | PTE_W | PTE_X
+	li	s7, PTE_KERN | PTE_HARDWIRED | PTE_R | PTE_W | PTE_X
 
 	//
 	// Fill in the PDEs for kernel.
@@ -262,7 +247,7 @@ ENTRY_NP(start)
 	li	t1,  ((VM_KERNEL_DTB_BASE >> SEGSHIFT) & (NPDEPG - 1)) * SZREG
 	add	s9, s2, t1
 
-	li	s7, PTE_KERN | PTE_R | PTE_W
+	li	s7, PTE_KERN | PTE_HARDWIRED | PTE_R | PTE_W
 
 	//
 	// Fill in the PDE for the DTB. Only do one - if any more are required
@@ -285,7 +270,7 @@ ENTRY_NP(start)
 	add	s9, s2, t1
 
 	// Fill in the PDE for CONSADDR.
-	ld	t0, .Lconsaddr
+	PTR_L	t0, .Lconsaddr
 	mv	s0, t0
 	srli	s0, s0, SEGSHIFT	// round down to NBSEG, and shift in
 	slli	s0, s0, (SEGSHIFT - PGSHIFT + PTE_PPN_SHIFT)	// ... to PPN
@@ -349,12 +334,16 @@ vstart:
 	PTR_LA	t1, _C_LABEL(kernel_pmap_store)
 	add	t2, s4, s8 		// PA -> VA
 	srli	t3, s4, PGSHIFT
-	PTR_S	t2, PM_MD_PDETAB(t1)	// VA of kernel PDETAB
+	PTR_S	t2, PM_PDETAB(t1)	// VA of kernel PDETAB
 	PTR_S	t3, PM_MD_PPN(t1)	// PPN of kernel PDETAB
 
 	/*
 	 * Store kern_vtopdiff (the difference between the physical
 	 * and virtual address of the "start" symbol).
+	 *
+	 * XXX For some reason doing this store to the physical
+	 * XXX address of kern_vtopdiff before the MMU is enabled
+	 * XXX doesn't work on the AllWinner D1.
 	 */
 	PTR_LA	t0, _C_LABEL(kern_vtopdiff)
 	PTR_S	s8, 0(t0)	/* kern_vtopdiff = start(virt) - start(phys) */
@@ -551,27 +540,34 @@ _C_LABEL(lwp0uspace):
 	.space	UPAGES * PAGE_SIZE
 bootstk:
 
+
 	/*
 	 * Allocate some memory after the kernel image for stacks and
 	 * bootstrap L1PT
 	 */
 	.align PGSHIFT
+#if 0
+.global start_stacks_bottom
+	.global start_stacks_top
+start_stacks_bottom:
+	.space	INIT_ARM_TOTAL_STACK
+start_stacks_top:
+#endif
+
 
 	.section "_init_memory", "aw", %nobits
 	.align PGSHIFT
 mmutables_start:
-	.global _C_LABEL(l1_pte)
-l1_pte:
-	.space PAGE_SIZE
+bootstrap_pde:
+	.global _C_LABEL(bootstrap_pde)
 #ifdef _LP64
 	.global _C_LABEL(l2_pte)
 l2_pte:
 	.space PAGE_SIZE
-#ifdef notyet
-l3_pte:
+#endif
+	.global _C_LABEL(l1_pte)
+l1_pte:
 	.space PAGE_SIZE
-#endif
-#endif
 mmutables_end:
 
 

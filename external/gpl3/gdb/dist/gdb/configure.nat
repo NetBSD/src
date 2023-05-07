@@ -353,6 +353,10 @@ case ${gdb_host} in
 		# Host: NetBSD/powerpc
 		NATDEPFILES="${NATDEPFILES} ppc-nbsd-nat.o"
 		;;
+	    riscv*)
+		# Host: NetBSD/riscv
+		NATDEPFILES="${NATDEPFILES} riscv-nbsd-nat.o"
+		;;
 	    sh)
 		# Host: NetBSD/sh
 		NATDEPFILES="${NATDEPFILES} sh-nbsd-nat.o"

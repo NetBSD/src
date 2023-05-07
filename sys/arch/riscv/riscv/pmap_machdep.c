@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.15 2022/12/23 10:44:25 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.16 2023/05/07 12:41:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.15 2022/12/23 10:44:25 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.16 2023/05/07 12:41:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -50,8 +50,6 @@ __RCSID("$NetBSD: pmap_machdep.c,v 1.15 2022/12/23 10:44:25 skrll Exp $");
 #else
 #define	VPRINTF(...)	__nothing
 #endif
-
-int riscv_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
 
 vaddr_t pmap_direct_base __read_mostly;
 vaddr_t pmap_direct_end __read_mostly;
@@ -88,9 +86,6 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 struct vm_page *
 pmap_md_alloc_poolpage(int flags)
 {
-	if (riscv_poolpage_vmfreelist != VM_FREELIST_DEFAULT)
-		return uvm_pagealloc_strat(NULL, 0, NULL, flags,
-		    UVM_PGA_STRAT_ONLY, riscv_poolpage_vmfreelist);
 
 	return uvm_pagealloc(NULL, 0, NULL, flags);
 }
@@ -98,7 +93,11 @@ pmap_md_alloc_poolpage(int flags)
 vaddr_t
 pmap_md_map_poolpage(paddr_t pa, vsize_t len)
 {
+#ifdef _LP64
 	return PMAP_DIRECT_MAP(pa);
+#else
+	panic("not supported");
+#endif
 }
 
 void
@@ -107,10 +106,15 @@ pmap_md_unmap_poolpage(vaddr_t pa, vsize_t len)
 	/* nothing to do */
 }
 
+
 bool
 pmap_md_direct_mapped_vaddr_p(vaddr_t va)
 {
-	return VM_MAX_KERNEL_ADDRESS <= va && (intptr_t) va < 0;
+#ifdef _LP64
+	return RISCV_DIRECTMAP_P(va);
+#else
+	return false;
+#endif
 }
 
 bool
@@ -138,13 +142,17 @@ pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t va)
 vaddr_t
 pmap_md_direct_map_paddr(paddr_t pa)
 {
+#ifdef _LP64
 	return PMAP_DIRECT_MAP(pa);
+#else
+	panic("not supported");
+#endif
 }
 
 void
 pmap_md_init(void)
 {
-        pmap_tlb_info_evcnt_attach(&pmap_tlb0_info);
+	pmap_tlb_info_evcnt_attach(&pmap_tlb0_info);
 }
 
 bool
@@ -157,7 +165,10 @@ pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
 void
 pmap_md_xtab_activate(struct pmap *pmap, struct lwp *l)
 {
-        struct pmap_asid_info * const pai = PMAP_PAI(pmap, cpu_tlb_info(ci));
+//	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
+
+//	struct cpu_info * const ci = curcpu();
+	struct pmap_asid_info * const pai = PMAP_PAI(pmap, cpu_tlb_info(ci));
 
 	 uint64_t satp =
 #ifdef _LP64
@@ -175,7 +186,8 @@ void
 pmap_md_xtab_deactivate(struct pmap *pmap)
 {
 
-	csr_satp_write(0);
+	/* switch to kernel pmap */
+	pmap_md_xtab_activate(pmap_kernel(), NULL);
 }
 
 void
@@ -183,36 +195,123 @@ pmap_md_pdetab_init(struct pmap *pmap)
 {
 	KASSERT(pmap != NULL);
 
-	const vaddr_t pdetabva = (vaddr_t)pmap->pm_md.md_pdetab;
+	const vaddr_t pdetabva = (vaddr_t)pmap->pm_pdetab;
 	const paddr_t pdetabpa = pmap_md_direct_mapped_vaddr_to_paddr(pdetabva);
-	pmap->pm_md.md_pdetab[NPDEPG-1] = pmap_kernel()->pm_md.md_pdetab[NPDEPG-1];
 	pmap->pm_md.md_ppn = pdetabpa >> PAGE_SHIFT;
+
+	/* XXXSB can we "pre-optimise" this by keeping a list of pdes to copy? */
+	/* XXXSB for relatively normal size memory (8gb) we only need 10-20ish ptes? */
+	/* XXXSB most (all?) of these ptes are  in two consecutive ranges. */
+	for (size_t i = NPDEPG / 2; i < NPDEPG; ++i) {
+		/*
+		 * XXXSB where/when do new entries in pmap_kernel()->pm_pdetab
+		 * XXXSB get added to existing pmaps?
+		 *
+		 * pmap_growkernal doesn't have support for fixing up exiting
+		 * pmaps. (yet)
+		 *
+		 * Various options:
+		 *
+		 * - do the x86 thing. maintain a list of pmaps and update them
+		 *   all in pmap_growkernel.
+		 * - make sure the top level entries are populated and them simply
+		 *   copy "them all" here.  If pmap_growkernel runs the new entries
+		 *   will become visible to all pmaps.
+		 * - ...
+		 */
+
+		/* XXXSB is this any faster than blindly copying all "high" entries? */
+		pd_entry_t pde = pmap_kernel()->pm_pdetab->pde_pde[i];
+
+		/*  we might have leaf entries (direct map) as well as non-leaf */
+		if (pde) {
+			pmap->pm_pdetab->pde_pde[i] = pde;
+		}
+	}
 }
 
 void
 pmap_md_pdetab_fini(struct pmap *pmap)
 {
-        KASSERT(pmap != NULL);
+
+	if (pmap == pmap_kernel())
+		return;
+	for (size_t i = NPDEPG / 2; i < NPDEPG; ++i) {
+		KASSERT(pte_invalid_pde() == 0);
+		pmap->pm_pdetab->pde_pde[i] = 0;
+	}
 }
+
+static void
+pmap_md_grow(pmap_pdetab_t *ptb, vaddr_t va, vsize_t vshift,
+    vsize_t *remaining)
+{
+	KASSERT((va & (NBSEG - 1)) == 0);
+#ifdef _LP64
+	const vaddr_t pdetab_mask = PMAP_PDETABSIZE - 1;
+	const vsize_t vinc = 1UL << vshift;
+
+	for (size_t i = (va >> vshift) & pdetab_mask;
+	    i < PMAP_PDETABSIZE; i++, va += vinc) {
+		pd_entry_t * const pde_p =
+		    &ptb->pde_pde[(va >> vshift) & pdetab_mask];
+
+		vaddr_t pdeva;
+		if (pte_pde_valid_p(*pde_p)) {
+			const paddr_t pa = pte_pde_to_paddr(*pde_p);
+			pdeva = pmap_md_direct_map_paddr(pa);
+		} else {
+			/*
+			 * uvm_pageboot_alloc() returns a direct mapped address
+			 */
+			pdeva = uvm_pageboot_alloc(PAGE_SIZE);
+			paddr_t pdepa = RISCV_KVA_TO_PA(pdeva);
+			*pde_p = pte_pde_pdetab(pdepa, true);
+			memset((void *)pdeva, 0, PAGE_SIZE);
+		}
+
+		if (vshift > SEGSHIFT) {
+			pmap_md_grow((pmap_pdetab_t *)pdeva, va,
+			    vshift - SEGLENGTH, remaining);
+		} else {
+			if (*remaining > vinc)
+				*remaining -= vinc;
+			else
+				*remaining = 0;
+		}
+		if (*remaining == 0)
+			return;
+	}
+    #endif
+}
+
 
 void
 pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 {
-	extern pd_entry_t l1_pte[512];
+	extern pmap_pdetab_t bootstrap_pde[PAGE_SIZE / sizeof(pd_entry_t)];
+
+//	pmap_pdetab_t * const kptb = &pmap_kern_pdetab;
 	pmap_t pm = pmap_kernel();
 
+	VPRINTF("common ");
 	pmap_bootstrap_common();
 
-	/* Use the tables we already built in init_mmu() */
-	pm->pm_md.md_pdetab = l1_pte;
+	VPRINTF("bs_pde %p ", bootstrap_pde);
 
-	/* Get the PPN for l1_pte */
-	pm->pm_md.md_ppn = atop(KERN_VTOPHYS((vaddr_t)l1_pte));
+//	kend = (kend + 0x200000 - 1) & -0x200000;
+
+	/* Use the tables we already built in init_riscv() */
+	pm->pm_pdetab = bootstrap_pde;
+
+	/* Get the PPN for our page table root */
+	pm->pm_md.md_ppn = atop(KERN_VTOPHYS((vaddr_t)bootstrap_pde));
 
 	/* Setup basic info like pagesize=PAGE_SIZE */
-	uvm_md_init();
+//	uvm_md_init();
 
 	/* init the lock */
+	// XXXNH per cpu?
 	pmap_tlb_info_init(&pmap_tlb0_info);
 
 #ifdef MULTIPROCESSOR
@@ -249,6 +348,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	/* Calculate VA address space and roundup to NBSEG tables */
 	kvmsize = roundup(kvmsize, NBSEG);
 
+
 	/*
 	 * Initialize `FYI' variables.	Note we're relying on
 	 * the fact that BSEARCH sorts the vm_physmem[] array
@@ -264,18 +364,59 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	pmap_limits.virtual_start = vstart;
 	pmap_limits.virtual_end = vend;
 
-	VPRINTF("\nlimits: %" PRIxVADDR " - %" PRIxVADDR "\n", vstart, vend);
+	VPRINTF("limits: %" PRIxVADDR " - %" PRIxVADDR "\n", vstart, vend);
+
+	const vaddr_t kvmstart = vstart;
+	pmap_curmaxkvaddr = vstart + kvmsize;
+
+	VPRINTF("kva   : %" PRIxVADDR " - %" PRIxVADDR "\n", kvmstart,
+	    pmap_curmaxkvaddr);
+
+	pmap_md_grow(pmap_kernel()->pm_pdetab, kvmstart, XSEGSHIFT, &kvmsize);
 
 	/*
 	 * Initialize the pools.
 	 */
+
 	pool_init(&pmap_pmap_pool, PMAP_SIZE, 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr, IPL_NONE);
-	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
-	    &pmap_pv_page_allocator, IPL_NONE);
 
-	pmap_pvlist_lock_init(/*riscv_dcache_align*/ 64);
+	pool_init(&pmap_pv_pool, sizeof(struct pv_entry), 0, 0, 0, "pvpl",
+#ifdef KASAN
+	    NULL,
+#else
+	    &pmap_pv_page_allocator,
+#endif
+	    IPL_NONE);
+
+	// riscv_dcache_align
+	pmap_pvlist_lock_init(CACHE_LINE_SIZE);
 }
+
+
+vsize_t
+pmap_kenter_range(vaddr_t va, paddr_t pa, vsize_t size,
+    vm_prot_t prot, u_int flags)
+{
+	extern pd_entry_t l1_pte[PAGE_SIZE / sizeof(pd_entry_t)];
+
+	vaddr_t sva = MEGAPAGE_TRUNC(va);
+	paddr_t spa = MEGAPAGE_TRUNC(pa);
+	const vaddr_t eva = MEGAPAGE_ROUND(va + size);
+	const vaddr_t pdetab_mask = PMAP_PDETABSIZE - 1;
+	const vsize_t vshift = SEGSHIFT;
+
+	while (sva < eva) {
+		const size_t sidx = (sva >> vshift) & pdetab_mask;
+
+		l1_pte[sidx] = PA_TO_PTE(spa) | PTE_KERN | PTE_HARDWIRED | PTE_RW;
+		spa += NBSEG;
+		sva += NBSEG;
+	}
+
+	return 0;
+}
+
 
 /* -------------------------------------------------------------------------- */
 
@@ -336,7 +477,7 @@ tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
 		    : [va] "r" (va), [asid] "r" (asid)
 		    : "memory");
 	}
-	return false;
+	return true;
 }
 
 u_int
