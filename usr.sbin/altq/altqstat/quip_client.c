@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_client.c,v 1.14 2020/02/07 21:53:20 fox Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.15 2023/05/07 11:41:49 andvar Exp $	*/
 /*	$KAME: quip_client.c,v 1.9 2003/05/17 05:59:00 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -310,7 +310,7 @@ quip_selectinterface(char *ifname)
 	if (server == NULL)
 		return (ifname);
 
-	/* get an inferface list from the server */
+	/* get an interface list from the server */
 	quip_sendrequest(server, "GET list?*\n");
 
 	result_code = quip_recvresponse(server, NULL, buf, &len);
