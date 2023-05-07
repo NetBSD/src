@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2023/05/06 17:07:24 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2023/05/07 19:13:15 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -57,7 +57,7 @@ ssl.h
 .for i in ${GENH}
 $i: $i.in
 	${_MKTARGET_CREATE}
-	${.CURDIR}/../../gen ${.ALLSRC} > ${.TARGET}
+	${.CURDIR}/../libcrypto/gen ${.ALLSRC} > ${.TARGET}
 .endfor
 
 .include <bsd.lib.mk>
