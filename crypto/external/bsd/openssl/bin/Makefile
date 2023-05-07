@@ -1,6 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2023/05/07 16:19:24 christos Exp $
-
-WARNS?=	2	# XXX -Wcast-qual
+#	$NetBSD: Makefile,v 1.12 2023/05/07 18:41:34 christos Exp $
 
 NOMAN=	# defined
 BINDIR=/usr/bin
@@ -8,22 +6,6 @@ BINDIR=/usr/bin
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# cryptographic software
-
-# RCSid:
-#	$Id: Makefile,v 1.11 2023/05/07 16:19:24 christos Exp $
-#
-#	@(#) Copyright (c) 1995 Simon J. Gerraty
-#
-#	This file is provided in the hope that it will
-#	be of use.  There is absolutely NO WARRANTY.
-#	Permission to copy, redistribute or otherwise
-#	use this file is hereby granted provided that 
-#	the above copyright notice and this notice are
-#	left intact. 
-#      
-#	Please send copies of changes and bug-fixes to:
-#	sjg@quick.com.au
-#
 
 PROG=	openssl
 
@@ -83,7 +65,7 @@ verify.c \
 version.c \
 x509.c \
 
-CPPFLAGS+= -DMONOLITH -DUSE_SSL -I${OPENSSLSRC} -I${.CURDIR}
+CPPFLAGS+= -I${OPENSSLSRC} -I${.CURDIR}/../include
 CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/apps/include
 
 PROGDPLIBSSTATIC=yes
