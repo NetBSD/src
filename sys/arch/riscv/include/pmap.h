@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.15 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.16 2023/05/08 07:56:08 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ void	pmap_md_pdetab_init(struct pmap *);
 void	pmap_md_pdetab_fini(struct pmap *);
 bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
 
-void	pmap_bootstrap(vaddr_t kstart, vaddr_t kend);
+void	pmap_bootstrap(vaddr_t, vaddr_t);
 
 vsize_t	pmap_kenter_range(vaddr_t, paddr_t, vsize_t, vm_prot_t, u_int);
 
