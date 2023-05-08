@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.75 2023/05/03 13:49:30 phx Exp $	*/
+/*	$NetBSD: conf.c,v 1.76 2023/05/08 08:26:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.75 2023/05/03 13:49:30 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.76 2023/05/08 08:26:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,7 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: conf.c,v 1.75 2023/05/03 13:49:30 phx Exp $");
 #include "grf.h"
 #include "amidisplaycc.h"
 #include "mntva.h"
+#ifndef __powerpc__
 #include "zz9k_fb.h"
+#endif
 #include "wsdisplay.h"
 
 /*
