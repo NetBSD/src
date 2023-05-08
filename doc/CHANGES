@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2962 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2963 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -84,6 +84,21 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	lua: Import version 5.4.4.
 		Bumped shlib major because of incompatible API/ABI changes.
 		[nikita 20230416]
+	evbarm: Install a boot.cfg file for the EFI bootloader by default.
+		[brook 20230419]
 	dhcpcd: Import version 10.0.1. [roy 20230421]
+	evbarm: Enable rkv1crypto driver on Rock64. [mrg 20230424]
+	worms(6): Add a little bit of optional colour, code and
+		ideas from RVP. [kre 20230426]
+	amiga: Add driver for the MNT ZZ9000 Zorro board - submitted by
+		Alain Runa. [phx 20230503]
+	evbarm: Experimental IMX6SX support - tested on the UDOO Neo Full board.
+		[bouyer 20230504]
+	chown(8): Add a -d flag to avoid changing a file's owner/group to the
+		current value.  This avoids some unnecessary operations on the
+		file. [pgoyette 20230504]
 	ftp(1): Add timeout for SSL connection setup, defaulting to 60 seconds.
 		[lukem 20230505]
+	riscv: Add RISC-V support that works on QEMU with a single hart.
+		[skrll 20230507]
+	riscv: Add Google Goldfish RTC driver. [skrll 20230508]
