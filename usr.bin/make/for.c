@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.172 2023/05/08 09:01:20 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.173 2023/05/08 10:24:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.172 2023/05/08 09:01:20 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.173 2023/05/08 10:24:07 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -139,6 +139,13 @@ ForLoop_Details(ForLoop *f)
 }
 
 static bool
+IsValidInVarname(char c)
+{
+	return c != '$' && c != ':' && c != '\\' &&
+	    c != '(' && c != '{' && c != ')' && c != '}';
+}
+
+static bool
 ForLoop_ParseVarnames(ForLoop *f, const char **pp)
 {
 	const char *p = *pp;
@@ -152,12 +159,15 @@ ForLoop_ParseVarnames(ForLoop *f, const char **pp)
 			return false;
 		}
 
-		/*
-		 * XXX: This allows arbitrary variable names;
-		 * see directive-for.mk.
-		 */
-		for (len = 1; p[len] != '\0' && !ch_isspace(p[len]); len++)
-			continue;
+		for (len = 0; p[len] != '\0' && !ch_isspace(p[len]); len++) {
+			if (!IsValidInVarname(p[len])) {
+				Parse_Error(PARSE_FATAL,
+				    "invalid character '%c' "
+				    "in .for loop variable name",
+				    p[len]);
+				return false;
+			}
+		}
 
 		if (len == 2 && p[0] == 'i' && p[1] == 'n') {
 			p += 2;
