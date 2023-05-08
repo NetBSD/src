@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.16 2023/05/08 09:01:20 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.17 2023/05/08 09:24:42 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -146,6 +146,18 @@ EXPANSION${plus}=	value
 var=	outer
 .for var:Q in value "quoted"
 .  info ${var} ${var:Q} ${var:Q:Q}
+.endfor
+# The short expression '$$' is preserved, the long expressions are
+# substituted.
+# expect+2: $ value value
+.for $ in value
+.  info $$ ${$} $($)
+.endfor
+# From https://gnats.netbsd.org/53146.
+# expect+3: <> <> <a>
+# expect+2: <> <> <b>
+.for $(FOO) in a b
+.  info <$(FOO)> <$(foo)> <$($(FOO))>
 .endfor
 
 
