@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.342 2023/05/07 23:24:51 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.343 2023/05/08 14:31:08 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -408,7 +408,7 @@ PROGDO.${_lib}!=	cd "${_dir}" && ${PRINTOBJDIR}
 DPADD+=		${PROGDO.${_lib}}/lib${_lib}.a
 LDADD+=		${PROGDO.${_lib}}/lib${_lib}.a
 .else
-LDADD+=		${PROGDPLIBBEGIN} -L${PROGDO.${_lib}} -l${_lib} ${PROGDPLIBEND}
+LDADD+=		-L${PROGDO.${_lib}} -l${_lib}
 .if exists(${PROGDO.${_lib}}/lib${_lib}_pic.a)
 DPADD+=		${PROGDO.${_lib}}/lib${_lib}_pic.a
 .elif exists(${PROGDO.${_lib}}/lib${_lib}.so)
