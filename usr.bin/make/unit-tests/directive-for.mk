@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.15 2022/10/01 09:23:04 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.16 2023/05/08 09:01:20 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -214,12 +214,19 @@ var=	outer
 .endif				# no 'if-less endif'
 
 
-# When make parses a .for loop, it assumes that there is no line break between
-# the '.' and the 'for' or 'endfor', as there is no practical reason to break
-# the line at this point.  When make scans the outer .for loop, it does not
-# recognize the inner directives as such.  When make scans the inner .for
-# loop, it recognizes the '.\n for' but does not recognize the '.\n endfor',
-# as LK_FOR_BODY preserves the backslash-newline sequences.
+# Before for.c 1.172 from 2023-05-08, when make parsed a .for loop, it
+# assumed that there was no line continuation between the '.' and the 'for'
+# or 'endfor', as there is no practical reason to break the line at this
+# point.
+#
+# When make scanned the outer .for loop, it did not recognize the inner .for
+# loop as such and instead treated it as an unknown directive.  The body of
+# the outer .for loop thus ended above the '.endfor'.
+#
+# When make scanned the inner .for loop, it did not recognize the inner
+# .endfor as such, which led to a parse error 'Unexpected end of file in .for
+# loop' from the '.endfor' line, followed by a second parse error 'for-less
+# .endfor' from the '.\\n endfor' line.
 .MAKEFLAGS: -df
 .for outer in o
 .\
