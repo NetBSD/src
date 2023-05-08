@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.69 2023/04/22 09:53:45 skrll Exp $
+# $NetBSD: files.fdt,v 1.70 2023/05/08 10:18:03 skrll Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -215,3 +215,8 @@ file	dev/fdt/genet_fdt.c			genet_fdt
 # VMware Tools driver
 attach	vmt at fdt with vmt_fdt
 file	dev/fdt/vmt_fdt.c			vmt_fdt
+
+# Google Goldfish RTC
+device	gfrtc
+attach	gfrtc at fdt with gfrtc_fdt
+file	dev/fdt/gfrtc_fdt.c			gfrtc_fdt
