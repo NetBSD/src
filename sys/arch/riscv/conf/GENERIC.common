@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.1 2023/05/07 12:41:48 skrll Exp $
+#	$NetBSD: GENERIC.common,v 1.2 2023/05/08 07:52:55 skrll Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -139,6 +139,9 @@ com* 		at fdt?			# UART
 
 # Firmware devices
 #qemufwcfg* 	at fdt?			# QEMU Firmware Configuration device
+
+# RTC devices
+gfrtc* 		at fdt?			# Google Goldfish RTC
 
 # USB
 xhci* 		at fdt?			# XHCI
