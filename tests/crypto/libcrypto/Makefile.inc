@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.10 2018/09/28 23:40:45 christos Exp $
+# $NetBSD: Makefile.inc,v 1.11 2023/05/08 17:46:06 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -14,11 +14,13 @@ MAN=		# empty
 BINDIR=		${TESTSDIR}
 
 CWARNFLAGS.clang+=	-Wno-format
+CWARNFLAGS+=-Wno-error=deprecated-declarations
 
 CPPFLAGS+=	-DOPENSSL_FIPS
 CPPFLAGS+=	-I${OPENSSLSRC} -I${OPENSSLSRC}/crypto
 CPPFLAGS+=	-I${OPENSSLSRC}/include -I${OPENSSLSRC}/../include
 CPPFLAGS+=	-I${OPENSSLSRC}/crypto/include
+CPPFLAGS+=	-I${OPENSSLSRC}/apps/include
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 .if ${HAVE_OPENSSL} != 10
