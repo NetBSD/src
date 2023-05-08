@@ -14,11 +14,15 @@ make: "directive-for.mk" line 140: {{}} {{}} {{}}
 make: "directive-for.mk" line 140: )( )( )(
 make: "directive-for.mk" line 140: ][ ][ ][
 make: "directive-for.mk" line 140: }{ }{ }{
-make: "directive-for.mk" line 148: outer value value
-make: "directive-for.mk" line 148: outer "quoted" \"quoted\"
-make: "directive-for.mk" line 154: $ value value
-make: "directive-for.mk" line 160: <> <> <a>
-make: "directive-for.mk" line 160: <> <> <b>
+make: "directive-for.mk" line 148: invalid character ':' in .for loop variable name
+make: "directive-for.mk" line 149: <outer> <outer> <outer>
+make: "directive-for.mk" line 150: for-less endfor
+make: "directive-for.mk" line 154: invalid character '$' in .for loop variable name
+make: "directive-for.mk" line 155: <$> <> <>
+make: "directive-for.mk" line 156: for-less endfor
+make: "directive-for.mk" line 159: invalid character '$' in .for loop variable name
+make: "directive-for.mk" line 160: <> <> <>
+make: "directive-for.mk" line 161: for-less endfor
 make: "directive-for.mk" line 166: Unknown modifier "Z"
 make: "directive-for.mk" line 167: XXX: Not reached word1
 make: "directive-for.mk" line 167: XXX: Not reached word3
