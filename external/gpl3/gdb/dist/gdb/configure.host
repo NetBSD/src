@@ -147,6 +147,7 @@ powerpc64*-*-linux*)	gdb_host=ppc64-linux ;;
 powerpc*-*-linux*)	gdb_host=linux ;;
 
 riscv*-*-freebsd*)	gdb_host=fbsd ;;
+riscv*-*-netbsd*)	gdb_host=nbsd ;;
 riscv*-*-linux*)	gdb_host=linux ;;
 
 s390*-*-linux*)		gdb_host=linux ;;
