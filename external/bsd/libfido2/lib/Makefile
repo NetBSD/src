@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2021/09/24 13:07:34 christos Exp $
+# $NetBSD: Makefile,v 1.9 2023/05/08 23:45:52 christos Exp $
 
 NOLINT=
 .include <bsd.own.mk>
@@ -111,5 +111,12 @@ SHLIB_MINOR=0
 FILESDIR=/usr/lib/pkgconfig
 FILES+=libfido2.pc
 FILESBUILD_libfido2.pc=yes
+
+COPTS.assert.c+=-Wno-error=deprecated-declarations
+COPTS.cbor.c+=-Wno-error=deprecated-declarations
+COPTS.cred.c+=-Wno-error=deprecated-declarations
+COPTS.ecdh.c+=-Wno-error=deprecated-declarations
+COPTS.es256.c+=-Wno-error=deprecated-declarations
+COPTS.rs256.c+=-Wno-error=deprecated-declarations
 
 .include <bsd.lib.mk>
