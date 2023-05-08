@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2023/03/21 16:55:31 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2023/05/08 20:57:34 skrll Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -22,10 +22,12 @@ SRCS=		${GSRCS:.lo=.c}
 DPSRCS+=	elf32-target.h elf64-target.h targmatch.h \
 		elf32-aarch64.c elf64-aarch64.c \
 		elf32-ia64.c elf64-ia64.c \
+		elf32-riscv.c elf64-riscv.c \
 		peigen.c pex64igen.c
 CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h \
 		elf32-aarch64.c elf64-aarch64.c \
 		elf32-ia64.c elf64-ia64.c \
+		elf32-riscv.c elf64-riscv.c \
 		peigen.c pex64igen.c
 
 .PATH: ${DIST}/bfd
@@ -62,6 +64,14 @@ elf32-ia64.c: elfxx-ia64.c
 	${TOOL_SED} -e s/NN/32/g < $> > $@
 
 elf64-ia64.c: elfxx-ia64.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/NN/64/g < $> > $@
+
+elf32-riscv.c: elfnn-riscv.c
+	${_MKTARGET_CREATE}
+	${TOOL_SED} -e s/NN/32/g < $> > $@
+
+elf64-riscv.c: elfnn-riscv.c
 	${_MKTARGET_CREATE}
 	${TOOL_SED} -e s/NN/64/g < $> > $@
 
