@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.4 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: proc.h,v 1.5 2023/05/08 20:51:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,8 +46,8 @@ struct mdlwp {
 	struct trapframe *md_utf;	/* trapframe from userspace */
 	struct trapframe *md_ktf;	/* trapframe from userspace */
 	struct faultbuf *md_onfault;	/* registers to store on fault */
-	register_t md_usp;		/* for locore.S */
-	vaddr_t	md_ss_addr;		/* single step address for ptrace */
+	unsigned long md_usp;		/* for locore.S */
+	unsigned long md_ss_addr;	/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
 	volatile int md_astpending;	/* AST pending on return to userland */
 #if 0
