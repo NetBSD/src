@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2017/01/29 15:42:58 christos Exp $
+# $NetBSD: Makefile,v 1.12 2023/05/08 22:17:37 christos Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -549,6 +549,14 @@ vars.texi: vars.tin
 
 
 CLEANFILES+=	vars.texi
+
+COPTS.crypto-des.c+= -Wno-error=deprecated-declarations
+COPTS.crypto-des3.c+= -Wno-error=deprecated-declarations
+COPTS.pkinit.c+= -Wno-error=deprecated-declarations
+COPTS.pkinit-ec.c+= -Wno-error=deprecated-declarations
+COPTS.salt-des.c+= -Wno-error=deprecated-declarations
+COPTS.salt-des3.c+= -Wno-error=deprecated-declarations
+COPTS.sp800-108-kdf.c+= -Wno-error=deprecated-declarations
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>

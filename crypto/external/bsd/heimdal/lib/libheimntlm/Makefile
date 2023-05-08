@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2018/07/06 08:31:43 martin Exp $
+# $NetBSD: Makefile,v 1.4 2023/05/08 22:17:36 christos Exp $
 
 USE_FORT?= yes	# cryptographic software
 
@@ -23,6 +23,8 @@ HEIMSRCS= ntlm_err.et ntlm.c
 INCS=		heimntlm.h heimntlm-protos.h ${COMPILE_ET_INCS}
 
 INCSDIR=	/usr/include/krb5
+
+COPTS.ntlm.c+= -Wno-error=deprecated-declarations
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>

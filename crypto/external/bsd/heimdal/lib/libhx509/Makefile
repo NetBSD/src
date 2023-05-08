@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2021/06/20 10:38:54 christos Exp $
+# $NetBSD: Makefile,v 1.8 2023/05/08 22:17:36 christos Exp $
 
 NOLINT=		# defined
 
@@ -84,6 +84,11 @@ ASN1_FILES.ocsp.asn1 =			\
 	asn1_id_pkix_ocsp.x             \
 	asn1_id_pkix_ocsp_basic.x       \
 	asn1_id_pkix_ocsp_nonce.x
+
+COPTS.cert.c += -Wno-error=deprecated-declarations
+COPTS.crypto-ec.c += -Wno-error=deprecated-declarations
+COPTS.crypto.c += -Wno-error=deprecated-declarations
+COPTS.ks_p11.c += -Wno-error=deprecated-declarations
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>
