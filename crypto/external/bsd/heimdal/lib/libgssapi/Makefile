@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2018/07/10 13:17:36 martin Exp $
+# $NetBSD: Makefile,v 1.6 2023/05/08 22:17:36 christos Exp $
 
 USE_FORT?= yes        # network protocol library
 
@@ -275,6 +275,14 @@ INCSDIR=	/usr/include
 CPPFLAGS+=			\
 	-I${HEIMDIST}/lib/krb5	\
 	-I${HEIMDIST}/lib/asn1	\
+
+COPTS.krb5__get_mic.c+= -Wno-error=deprecated-declarations
+COPTS.krb5__wrap.c+= -Wno-error=deprecated-declarations
+COPTS.krb5__unwrap.c+= -Wno-error=deprecated-declarations
+COPTS.krb5__verify_mic.c+= -Wno-error=deprecated-declarations
+COPTS.ntlm__accept_sec_context.c+= -Wno-error=deprecated-declarations
+COPTS.ntlm__crypto.c+= -Wno-error=deprecated-declarations
+COPTS.ntlm__init_sec_context.c+= -Wno-error=deprecated-declarations
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>

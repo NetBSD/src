@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2018/07/06 08:54:30 martin Exp $
+# $NetBSD: Makefile,v 1.5 2023/05/08 22:17:37 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -37,6 +37,10 @@ INCSDIR=/usr/include/krb5
 INCS= kdc-protos.h kdc.h
 
 CPPFLAGS+= -I${HEIMDIST}/lib/krb5
+
+COPTS.kx509.c+= -Wno-error=deprecated-declarations
+COPTS.pkinit-ec.c+= -Wno-error=deprecated-declarations
+COPTS.pkinit.c+= -Wno-error=deprecated-declarations
 
 # Prevent collision with old MIT Kerberos includes -- require manual
 # intervention of the operator.
