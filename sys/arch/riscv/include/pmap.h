@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.16 2023/05/08 07:56:08 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.17 2023/05/08 08:07:36 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -147,14 +147,8 @@ vsize_t	pmap_kenter_range(vaddr_t, paddr_t, vsize_t, vm_prot_t, u_int);
 #ifdef _LP64
 extern vaddr_t pmap_direct_base;
 extern vaddr_t pmap_direct_end;
-#if 0	/* XXXSB is pmap_direct_base not initialised correctly somehow?  didn't check */
-#define	PMAP_DIRECT_MAP(pa)	(pmap_direct_base + (pa))
-#define	PMAP_DIRECT_UNMAP(va)	((paddr_t)(va) - pmap_direct_base)
-#else
 #define	PMAP_DIRECT_MAP(pa)	RISCV_PA_TO_KVA(pa)
 #define	PMAP_DIRECT_UNMAP(va)	RISCV_KVA_TO_PA(va)
-
-#endif
 
 /*
  * Other hooks for the pool allocator.
