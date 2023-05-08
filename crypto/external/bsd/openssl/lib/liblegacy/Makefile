@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2023/05/07 16:22:10 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2023/05/08 14:30:34 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -54,10 +54,10 @@ OPENSSLINC=	${OPENSSLSRC}/include/openssl
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 .PATH: ${OPENSSLSRC} ${OPENSSLINC}
 .PATH: ${OPENSSLSRC}/../include/openssl
-.PATH: ${OPENSSLSRC}/providers/implementations/digests
-.PATH: ${OPENSSLSRC}/providers/implementations/macs
 
 .include "srcs.inc"
+
+SRCS+=legacyprov.c
 
 AFLAGS+=-DELF
 
@@ -77,6 +77,9 @@ libinstall::
 .endif
 
 LDFLAGS+=-Wl,--version-script=${.CURDIR}/${LIB}.map
+
+LIBDPLIBS+= common ${.CURDIR}/../libcommon
+LIBDPLIBS+= crypto ${.CURDIR}/../libcrypto
 
 .include <bsd.lib.mk>
 
