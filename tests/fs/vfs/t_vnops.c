@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.62 2022/02/01 18:27:24 martin Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.63 2023/05/08 19:23:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -104,9 +104,9 @@ lookup_complex(const atf_tc_t *tc, const char *mountpath)
 	 * The lookup is permitted to modify the access time of
 	 * any directories searched - such a directory is the
 	 * subject of this test.   Any difference should cause
-	 * the 2nd lookup atime tp be >= the first, if it is ==, all is
+	 * the 2nd lookup atime to be >= the first, if it is ==, all is
 	 * OK (atime is not required to be modified by the search, or
-	 * both references may happen within the came clock tick), if the
+	 * both references may happen within the same clock tick), if the
 	 * 2nd lookup atime is > the first, but not "too much" greater,
 	 * just set it back, so the memcmp just below succeeds
 	 * (assuming all else is OK).
@@ -167,7 +167,7 @@ dir_simple(const atf_tc_t *tc, const char *mountpath)
 	if (rump_sys_stat(pb, &sb) == -1)
 		atf_tc_fail_errno("stat new directory");
 
-	/* check we can remove then and that it makes them unreachable */
+	/* check we can remove them and that it makes them unreachable */
 	if (rump_sys_rmdir(pb) == -1)
 		atf_tc_fail_errno("rmdir");
 	if (rump_sys_stat(pb, &sb) != -1 || errno != ENOENT)
