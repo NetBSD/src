@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.16 2022/06/12 16:09:21 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.17 2023/05/08 10:24:07 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -121,20 +121,21 @@ VALUES=		begin<$${UNDEF:Ufallback:N{{{}}}}>end
 .  info ${i}
 .endfor
 
-# As of 2020-12-31, the name of the iteration variable can even contain
-# colons, which then affects variable expressions having this exact modifier.
-# This is clearly an unintended side effect of the implementation.
+# Before for.c 1.173 from 2023-05-08, the name of the iteration variable
+# could contain colons, which affected variable expressions having this exact
+# modifier.  This possibility was neither intended nor documented.
 NUMBERS=	one two three
+# expect+1: invalid character ':' in .for loop variable name
 .for NUMBERS:M*e in replaced
 .  info ${NUMBERS} ${NUMBERS:M*e}
 .endfor
 
-# As of 2020-12-31, the name of the iteration variable can contain braces,
-# which gets even more surprising than colons, since it allows to replace
-# sequences of variable expressions.  There is no practical use case for
-# this, though.
+# Before for.c 1.173 from 2023-05-08, the name of the iteration variable
+# could contain braces, which allowed to replace sequences of variable
+# expressions.  This possibility was neither intended nor documented.
 BASENAME=	one
 EXT=		.c
+# expect+1: invalid character '}' in .for loop variable name
 .for BASENAME}${EXT in replaced
 .  info ${BASENAME}${EXT}
 .endfor
@@ -156,10 +157,11 @@ i,=		comma
 .  info .  adjacent: $i${i}${i:M*}$i
 .endfor
 
-# The variable name can be a single '$' since there is no check on valid
-# variable names. ForLoop_SubstVarShort skips "stupid" variable names though,
-# but ForLoop_SubstVarLong naively parses the body of the loop, substituting
-# each '${$}' with an actual 'dollar'.
+# Before for.c 1.173 from 2023-05-08, the variable name could be a single '$'
+# since there was no check on valid variable names.  ForLoop_SubstVarShort
+# skipped "stupid" variable names though, but ForLoop_SubstVarLong naively
+# parsed the body of the loop, substituting each '${$}' with an actual
+# '${:Udollar}'.
 .for $ in dollar
 .  info eight $$$$$$$$ and no cents.
 .  info eight ${$}${$}${$}${$} and no cents.

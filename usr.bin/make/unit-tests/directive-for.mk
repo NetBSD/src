@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.17 2023/05/08 09:24:42 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.18 2023/05/08 10:24:07 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -144,18 +144,18 @@ EXPANSION${plus}=	value
 # except for whitespace.  This allows for creative side effects. Hopefully
 # nobody is misusing this "feature".
 var=	outer
+# expect+1: invalid character ':' in .for loop variable name
 .for var:Q in value "quoted"
-.  info ${var} ${var:Q} ${var:Q:Q}
+.  info <${var}> <${var:Q}> <${var:Q:Q}>
 .endfor
 # The short expression '$$' is preserved, the long expressions are
 # substituted.
-# expect+2: $ value value
+# expect+1: invalid character '$' in .for loop variable name
 .for $ in value
-.  info $$ ${$} $($)
+.  info <$$> <${$}> <$($)>
 .endfor
 # From https://gnats.netbsd.org/53146.
-# expect+3: <> <> <a>
-# expect+2: <> <> <b>
+# expect+1: invalid character '$' in .for loop variable name
 .for $(FOO) in a b
 .  info <$(FOO)> <$(foo)> <$($(FOO))>
 .endfor
