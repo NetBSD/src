@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2023/05/07 19:13:15 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2023/05/08 19:14:28 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -282,6 +282,7 @@ pkcs12.h \
 pkcs7.h \
 safestack.h \
 srp.h \
+ssl.h \
 ui.h \
 x509.h \
 x509_vfy.h \
