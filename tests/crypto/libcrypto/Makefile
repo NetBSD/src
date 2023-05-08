@@ -1,9 +1,13 @@
-# $NetBSD: Makefile,v 1.14 2018/09/23 13:34:57 christos Exp $
+# $NetBSD: Makefile,v 1.15 2023/05/08 17:46:06 christos Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR+=bf bn cast conf des dh dsa ec ecdh ecdsa engine evp hmac \
-	md2 rc2 rc4 rsa srp threads
+SUBDIR+=bf bn cast conf des dh dsa ec engine evp hmac \
+	rc2 rc4 rsa srp threads
+
+.if ${HAVE_OPENSSL} <= 11
+SUBDIR+= ecdh ecdsa md2
+.endif
 
 SUBDIR+=idea mdc2
 SUBDIR+=rc5
