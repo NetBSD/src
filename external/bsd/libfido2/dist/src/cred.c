@@ -266,7 +266,7 @@ verify_sig(const fido_blob_t *dgst, const fido_blob_t *x5c,
 	if ((rawcert = BIO_new_mem_buf(x5c->ptr, (int)x5c->len)) == NULL ||
 	    (cert = d2i_X509_bio(rawcert, NULL)) == NULL ||
 	    (pkey = X509_get_pubkey(cert)) == NULL ||
-	    (ec = EVP_PKEY_get0_EC_KEY(pkey)) == NULL) {
+	    (ec = __UNCONST(EVP_PKEY_get0_EC_KEY(pkey))) == NULL) {
 		fido_log_debug("%s: x509 key", __func__);
 		goto fail;
 	}
