@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2020/09/24 14:53:17 christos Exp $
+#	$NetBSD: Makefile,v 1.41 2023/05/08 09:47:20 skrll Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -59,6 +59,7 @@ MKNATIVE?=	${.CURDIR}/mknative-gdb
 MKNATIVE_CONFIGURE_PRESET= \
 	ac_cv_prog_cc_cross=yes \
 	ac_cv_func_fork_works=yes \
+	ac_cv_func_sigprocmask=yes \
 	ac_cv_func_strcoll_works=yes \
 	ac_cv_func_XML_StopParser=yes \
 	ac_cv_libexpat=yes \
