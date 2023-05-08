@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.171 2023/02/14 21:38:31 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.172 2023/05/08 09:01:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.171 2023/02/14 21:38:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.172 2023/05/08 09:01:20 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -71,6 +71,22 @@ typedef struct ForLoop {
 
 static ForLoop *accumFor;	/* Loop being accumulated */
 
+
+/* See LK_FOR_BODY. */
+static void
+skip_whitespace_or_line_continuation(const char **pp)
+{
+	const char *p = *pp;
+	for (;;) {
+		if (ch_isspace(*p))
+			p++;
+		else if (p[0] == '\\' && p[1] == '\n')
+			p += 2;
+		else
+			break;
+	}
+	*pp = p;
+}
 
 static ForLoop *
 ForLoop_New(void)
@@ -221,7 +237,7 @@ For_Eval(const char *line)
 	ForLoop *f;
 
 	p = line + 1;		/* skip the '.' */
-	cpp_skip_whitespace(&p);
+	skip_whitespace_or_line_continuation(&p);
 
 	if (IsFor(p)) {
 		p += 3;
@@ -254,7 +270,7 @@ For_Accum(const char *line, int *forLevel)
 
 	if (*p == '.') {
 		p++;
-		cpp_skip_whitespace(&p);
+		skip_whitespace_or_line_continuation(&p);
 
 		if (IsEndfor(p)) {
 			DEBUG1(FOR, "For: end for %d\n", *forLevel);
