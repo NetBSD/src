@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libldap,v 1.13 2021/09/13 01:12:36 dholland Exp $
+#	$NetBSD: Makefile.libldap,v 1.14 2023/05/09 01:21:09 christos Exp $
 
 .include "../../openldap.mk"
 
@@ -21,6 +21,8 @@ SRCS+=		bind.c open.c result.c error.c compare.c search.c \
 SRCS+=		tls2.c tls_o.c tls_g.c
 
 CPPFLAGS+=	-DLDAP_LIBRARY
+
+COPTS.tls_o.c+=-Wno-error=deprecated-declarations
 
 LIBDPLIBS+=	lber	${.CURDIR}/../liblber
 
