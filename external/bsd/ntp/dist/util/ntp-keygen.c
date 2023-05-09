@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.14 2020/05/27 23:52:20 christos Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.15 2023/05/09 20:51:15 christos Exp $	*/
 
 /*
  * Program to generate cryptographic keys for ntp clients and servers
@@ -645,7 +645,7 @@ main(
 		RSA	*rsa;
 		const BIGNUM *q;
 
-		rsa = EVP_PKEY_get0_RSA(pkey_gqkey);
+		rsa = __UNCONST(EVP_PKEY_get0_RSA(pkey_gqkey));
 		RSA_get0_factors(rsa, NULL, &q);
 		grpkey = BN_bn2hex(q);
 	}
@@ -666,7 +666,7 @@ main(
 		    ctime(&epoch));
 		/* XXX: This modifies the private key and should probably use a
 		 * copy of it instead. */
-		rsa = EVP_PKEY_get0_RSA(pkey_gqkey);
+		rsa = __UNCONST(EVP_PKEY_get0_RSA(pkey_gqkey));
 		RSA_set0_factors(rsa, BN_dup(BN_value_one()), BN_dup(BN_value_one()));
 		pkey = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(pkey, rsa);
@@ -689,7 +689,7 @@ main(
 		    filename);
 		fprintf(stdout, "# %s\n# %s\n", filename,
 		    ctime(&epoch));
-		rsa = EVP_PKEY_get0_RSA(pkey_gqkey);
+		rsa = __UNCONST(EVP_PKEY_get0_RSA(pkey_gqkey));
 		pkey = EVP_PKEY_new();
 		EVP_PKEY_assign_RSA(pkey, rsa);
 		PEM_write_PKCS8PrivateKey(stdout, pkey, cipher, NULL, 0,
@@ -732,7 +732,7 @@ main(
 		    ctime(&epoch));
 		/* XXX: This modifies the private key and should probably use a
 		 * copy of it instead. */
-		dsa = EVP_PKEY_get0_DSA(pkey_iffkey);
+		dsa = __UNCONST(EVP_PKEY_get0_DSA(pkey_iffkey));
 		DSA_set0_key(dsa, NULL, BN_dup(BN_value_one()));
 		pkey = EVP_PKEY_new();
 		EVP_PKEY_assign_DSA(pkey, dsa);
@@ -755,7 +755,7 @@ main(
 		    filename);
 		fprintf(stdout, "# %s\n# %s\n", filename,
 		    ctime(&epoch));
-		dsa = EVP_PKEY_get0_DSA(pkey_iffkey);
+		dsa = __UNCONST(EVP_PKEY_get0_DSA(pkey_iffkey));
 		pkey = EVP_PKEY_new();
 		EVP_PKEY_assign_DSA(pkey, dsa);
 		PEM_write_PKCS8PrivateKey(stdout, pkey, cipher, NULL, 0,

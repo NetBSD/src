@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.16 2020/05/25 20:47:25 christos Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.17 2023/05/09 20:51:14 christos Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -836,7 +836,7 @@ crypto_recv(
 			 * errors.
 			 */
 			if (vallen == (u_int)EVP_PKEY_size(host_pkey)) {
-				RSA *rsa = EVP_PKEY_get0_RSA(host_pkey);
+				RSA *rsa = __UNCONST(EVP_PKEY_get0_RSA(host_pkey));
 				u_int32 *cookiebuf = malloc(RSA_size(rsa));
 				if (!cookiebuf) {
 					rval = XEVNT_CKY;
@@ -1613,7 +1613,7 @@ crypto_encrypt(
 	puch = vp->ptr;
 	temp32 = htonl(*cookie);
 	if (RSA_public_encrypt(4, (u_char *)&temp32, puch,
-	    EVP_PKEY_get0_RSA(pkey), RSA_PKCS1_OAEP_PADDING) <= 0) {
+	    __UNCONST(EVP_PKEY_get0_RSA(pkey)), RSA_PKCS1_OAEP_PADDING) <= 0) {
 		msyslog(LOG_ERR, "crypto_encrypt: %s",
 		    ERR_error_string(ERR_get_error(), NULL));
 		free(vp->ptr);
@@ -2186,7 +2186,7 @@ crypto_alice(
 		return (XEVNT_ID);
 	}
 
-	if ((dsa = EVP_PKEY_get0_DSA(peer->ident_pkey->pkey)) == NULL) {
+	if ((dsa = __UNCONST(EVP_PKEY_get0_DSA(peer->ident_pkey->pkey))) == NULL) {
 		msyslog(LOG_NOTICE, "crypto_alice: defective key");
 		return (XEVNT_PUB);
 	}
@@ -2264,7 +2264,7 @@ crypto_bob(
 		msyslog(LOG_NOTICE, "crypto_bob: scheme unavailable");
 		return (XEVNT_ID);
 	}
-	dsa = EVP_PKEY_get0_DSA(iffkey_info->pkey);
+	dsa = __UNCONST(EVP_PKEY_get0_DSA(iffkey_info->pkey));
 	DSA_get0_pqg(dsa, &p, &q, &g);
 	DSA_get0_key(dsa, NULL, &priv_key);
 
@@ -2383,7 +2383,7 @@ crypto_iff(
 		    ntohl(ep->fstamp));
 		return (XEVNT_FSP);
 	}
-	if ((dsa = EVP_PKEY_get0_DSA(peer->ident_pkey->pkey)) == NULL) {
+	if ((dsa = __UNCONST(EVP_PKEY_get0_DSA(peer->ident_pkey->pkey))) == NULL) {
 		msyslog(LOG_NOTICE, "crypto_iff: defective key");
 		return (XEVNT_PUB);
 	}
@@ -2516,7 +2516,7 @@ crypto_alice2(
 	if (peer->ident_pkey == NULL)
 		return (XEVNT_ID);
 
-	if ((rsa = EVP_PKEY_get0_RSA(peer->ident_pkey->pkey)) == NULL) {
+	if ((rsa = __UNCONST(EVP_PKEY_get0_RSA(peer->ident_pkey->pkey))) == NULL) {
 		msyslog(LOG_NOTICE, "crypto_alice2: defective key");
 		return (XEVNT_PUB);
 	}
@@ -2594,7 +2594,7 @@ crypto_bob2(
 		msyslog(LOG_NOTICE, "crypto_bob2: scheme unavailable");
 		return (XEVNT_ID);
 	}
-	rsa = EVP_PKEY_get0_RSA(gqkey_info->pkey);
+	rsa = __UNCONST(EVP_PKEY_get0_RSA(gqkey_info->pkey));
 	RSA_get0_key(rsa, &n, &p, &e);
 
 	/*
@@ -2707,7 +2707,7 @@ crypto_gq(
 		    ntohl(ep->fstamp));
 		return (XEVNT_FSP);
 	}
-	if ((rsa = EVP_PKEY_get0_RSA(peer->ident_pkey->pkey)) == NULL) {
+	if ((rsa = __UNCONST(EVP_PKEY_get0_RSA(peer->ident_pkey->pkey))) == NULL) {
 		msyslog(LOG_NOTICE, "crypto_gq: defective key");
 		return (XEVNT_PUB);
 	}
@@ -2860,7 +2860,7 @@ crypto_alice3(
 	if (peer->ident_pkey == NULL)
 		return (XEVNT_ID);
 
-	if ((dsa = EVP_PKEY_get0_DSA(peer->ident_pkey->pkey)) == NULL) {
+	if ((dsa = __UNCONST(EVP_PKEY_get0_DSA(peer->ident_pkey->pkey))) == NULL) {
 		msyslog(LOG_NOTICE, "crypto_alice3: defective key");
 		return (XEVNT_PUB);
 	}
@@ -2938,7 +2938,7 @@ crypto_bob3(
 		msyslog(LOG_NOTICE, "crypto_bob3: scheme unavailable");
 		return (XEVNT_ID);
 	}
-	dsa = EVP_PKEY_get0_DSA(mvkey_info->pkey);
+	dsa = __UNCONST(EVP_PKEY_get0_DSA(mvkey_info->pkey));
 	DSA_get0_pqg(dsa, &p, &q, &g);
 	DSA_get0_key(dsa, &pub_key, &priv_key);
 
@@ -3058,7 +3058,7 @@ crypto_mv(
 		    ntohl(ep->fstamp));
 		return (XEVNT_FSP);
 	}
-	if ((dsa = EVP_PKEY_get0_DSA(peer->ident_pkey->pkey)) == NULL) {
+	if ((dsa = __UNCONST(EVP_PKEY_get0_DSA(peer->ident_pkey->pkey))) == NULL) {
 		msyslog(LOG_NOTICE, "crypto_mv: defective key");
 		return (XEVNT_PUB);
 	}
