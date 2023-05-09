@@ -1,38 +1,30 @@
-make: "directive-for.mk" line 108: outer
-make: "directive-for.mk" line 133: a:\ a:\file.txt
-make: "directive-for.mk" line 133: d:\\
-make: "directive-for.mk" line 133: d:\\file.txt
-make: "directive-for.mk" line 140: ( ( (
-make: "directive-for.mk" line 140: [ [ [
-make: "directive-for.mk" line 140: { { {
-make: "directive-for.mk" line 140: ) ) )
-make: "directive-for.mk" line 140: ] ] ]
-make: "directive-for.mk" line 140: } } }
-make: "directive-for.mk" line 140: (()) (()) (())
-make: "directive-for.mk" line 140: [[]] [[]] [[]]
-make: "directive-for.mk" line 140: {{}} {{}} {{}}
-make: "directive-for.mk" line 140: )( )( )(
-make: "directive-for.mk" line 140: ][ ][ ][
-make: "directive-for.mk" line 140: }{ }{ }{
-make: "directive-for.mk" line 148: invalid character ':' in .for loop variable name
-make: "directive-for.mk" line 149: <outer> <outer> <outer>
-make: "directive-for.mk" line 150: for-less endfor
-make: "directive-for.mk" line 154: invalid character '$' in .for loop variable name
-make: "directive-for.mk" line 155: <$> <> <>
-make: "directive-for.mk" line 156: for-less endfor
-make: "directive-for.mk" line 159: invalid character '$' in .for loop variable name
-make: "directive-for.mk" line 160: <> <> <>
-make: "directive-for.mk" line 161: for-less endfor
-make: "directive-for.mk" line 166: Unknown modifier "Z"
-make: "directive-for.mk" line 167: XXX: Not reached word1
-make: "directive-for.mk" line 167: XXX: Not reached word3
-make: "directive-for.mk" line 172: no iteration variables in for
-make: "directive-for.mk" line 174: Missing argument for ".error"
-make: "directive-for.mk" line 175: for-less endfor
-make: "directive-for.mk" line 199: 1 open conditional
-make: "directive-for.mk" line 215: for-less endfor
-make: "directive-for.mk" line 216: if-less endif
-make: "directive-for.mk" line 224: if-less endif
+make: "directive-for.mk" line 119: outer
+make: "directive-for.mk" line 137: a:\ a:\file.txt
+make: "directive-for.mk" line 137: d:\\
+make: "directive-for.mk" line 137: d:\\file.txt
+make: "directive-for.mk" line 148: ( ( (
+make: "directive-for.mk" line 148: [ [ [
+make: "directive-for.mk" line 148: { { {
+make: "directive-for.mk" line 148: ) ) )
+make: "directive-for.mk" line 148: ] ] ]
+make: "directive-for.mk" line 148: } } }
+make: "directive-for.mk" line 148: (()) (()) (())
+make: "directive-for.mk" line 148: [[]] [[]] [[]]
+make: "directive-for.mk" line 148: {{}} {{}} {{}}
+make: "directive-for.mk" line 148: )( )( )(
+make: "directive-for.mk" line 148: ][ ][ ][
+make: "directive-for.mk" line 148: }{ }{ }{
+make: "directive-for.mk" line 168: invalid character ':' in .for loop variable name
+make: "directive-for.mk" line 174: invalid character '$' in .for loop variable name
+make: "directive-for.mk" line 179: invalid character '$' in .for loop variable name
+make: "directive-for.mk" line 188: Unknown modifier "Z"
+make: "directive-for.mk" line 189: XXX: Not reached word1
+make: "directive-for.mk" line 189: XXX: Not reached word3
+make: "directive-for.mk" line 196: no iteration variables in for
+make: "directive-for.mk" line 222: 1 open conditional
+make: "directive-for.mk" line 238: for-less endfor
+make: "directive-for.mk" line 239: if-less endif
+make: "directive-for.mk" line 247: if-less endif
 For: new loop 2
 For: end for 2
 For: end for 1
