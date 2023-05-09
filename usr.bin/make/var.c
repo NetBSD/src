@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1051 2023/05/09 20:14:27 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1052 2023/05/09 20:53:23 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1051 2023/05/09 20:14:27 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1052 2023/05/09 20:53:23 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2841,6 +2841,7 @@ ApplyModifier_Mtime(const char **pp, ModChain *ch)
 	Expr *expr = ch->expr;
 	const char *args, *mod = *pp;
 	struct stat st;
+	bool error = false;
 	int i = -1;
 
 	if (!ModMatchEq(mod, "mtime", ch))
@@ -2849,13 +2850,20 @@ ApplyModifier_Mtime(const char **pp, ModChain *ch)
 	args = *pp;
 	if (args[0] == '=') {
 		args++;
-		if (!TryParseIntBase0(&args, &i))
-			return AMR_BAD;
+		if (!TryParseIntBase0(&args, &i)) {
+			if (strncmp(args, "error", 5) == 0) {
+				error = true;
+				args += 5;
+			} else
+				return AMR_BAD;
+		}
 		*pp = args;
 	}
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 	if (stat(Expr_Str(expr), &st) < 0) {
+		if (error)
+			return AMR_BAD;
 		if (i < 0)
 			time(&st.st_mtime);
 		else
