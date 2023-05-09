@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.28 2023/05/09 15:37:29 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.29 2023/05/09 15:45:06 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -372,8 +372,6 @@ void
 test_ic_cvt(void)
 {
 	u16 = (u32 & 0x0000ff00);
-	/* FIXME: Don't throw away the constraint. */
-	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned short' may lose accuracy [132] */
 	u16 = (u32_t)(u32 & 0x0000ff00);
 }
 
