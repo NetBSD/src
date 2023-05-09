@@ -1,4 +1,4 @@
-/*	$NetBSD: script.c,v 1.33 2022/02/13 19:40:14 christos Exp $	*/
+/*	$NetBSD: script.c,v 1.34 2023/05/09 15:43:39 hgutch Exp $	*/
 
 /*
  * Copyright (c) 1980, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: script.c,v 1.33 2022/02/13 19:40:14 christos Exp $");
+__RCSID("$NetBSD: script.c,v 1.34 2023/05/09 15:43:39 hgutch Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -192,6 +192,7 @@ main(int argc, char *argv[])
 		fail();
 	}
 	if (child == 0) {
+		(void)xsignal(SIGCHLD, SIG_DFL);
 		subchild = child = fork();
 		if (child == -1) {
 			warn("fork");
