@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2022/10/05 22:39:36 christos Exp $
+#	$NetBSD: Makefile,v 1.26 2023/05/09 22:25:26 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -73,5 +73,7 @@ DPADD+=	${LIBBLOCKLIST}
 
 COPTS.sshlogin.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 COPTS.ldapauth.c+=	${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.monitor.c+= -Wno-error=deprecated-declarations
+COPTS.kexgexs.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.prog.mk>
