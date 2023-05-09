@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.26 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.27 2023/05/09 14:46:36 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -24,6 +24,8 @@ typedef signed short s16_t;
 typedef signed int s32_t;
 typedef signed long long s64_t;
 
+_Bool cond;
+char ch;
 
 u8_t u8;
 u16_t u16;
@@ -364,4 +366,29 @@ test_ic_bitand(void)
 
 	/* expect+1: warning: conversion from 'unsigned int' to 'unsigned char' may lose accuracy [132] */
 	u8 = u16 & u32;
+}
+
+void
+test_ic_conditional(char c1, char c2)
+{
+	/* Both operands are representable as char. */
+	/* FIXME */
+	/* expect+1: warning: conversion from 'int' to 'char' may lose accuracy [132] */
+	ch = cond ? '?' : ':';
+
+	/*
+	 * Both operands are representable as char. Clang-Tidy 17 wrongly
+	 * warns about a narrowing conversion from 'int' to signed type
+	 * 'char'.
+	 */
+	/* FIXME */
+	/* expect+1: warning: conversion from 'int' to 'char' may lose accuracy [132] */
+	ch = cond ? c1 : c2;
+
+	/* FIXME */
+	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
+	s8 = cond ? s8 : u8;
+
+	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
+	u8 = cond ? s8 : u8;
 }
