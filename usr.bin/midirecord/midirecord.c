@@ -1,4 +1,4 @@
-/*	$NetBSD: midirecord.c,v 1.12 2017/06/03 21:31:14 mrg Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.13 2023/05/09 20:42:19 mrg Exp $	*/
 
 /*
  * Copyright (c) 2014, 2015, 2017 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.12 2017/06/03 21:31:14 mrg Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.13 2023/05/09 20:42:19 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -576,11 +576,12 @@ midi_event_to_output(seq_event_t e, u_char *buffer, size_t bufsize)
 {
 	size_t size = 0;
 
-	LOG("event: %02x:%02x:%02x:%02x %02x:%02x:%02x:%02x", e.tag,
+	LOG("event: %02x:%02x:%02x:%02x %02x:%02x:%02x:%02x (%zu valid)",
+	     e.tag,
 	     e.unknown.byte[0], e.unknown.byte[1],
 	     e.unknown.byte[2], e.unknown.byte[3],
 	     e.unknown.byte[4], e.unknown.byte[5],
-	     e.unknown.byte[6]);
+	     e.unknown.byte[6], bufsize);
 
 	switch (e.tag) {
 	case SEQ_LOCAL:
