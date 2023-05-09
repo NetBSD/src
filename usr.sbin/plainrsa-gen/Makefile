@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2022/01/23 14:35:44 christos Exp $
+# $NetBSD: Makefile,v 1.2 2023/05/09 20:14:37 christos Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -24,6 +24,11 @@ CPPFLAGS+=	-DOPENSSL_API_COMPAT=0x10100000L
 
 LDADD+= -lcrypto -lipsec
 DPADD+= ${LIBCRYPTO} ${LIBIPSEC}
+
+COPTS.plainrsa-gen.c+= -Wno-error=deprecated-declarations
+COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
+COPTS.rsalist.c+= -Wno-error=deprecated-declarations
+COPTS.prsa_par.c+= -Wno-error=deprecated-declarations
 
 LPREFIX=prsa
 YPREFIX=prsa
