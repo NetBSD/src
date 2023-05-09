@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2022/05/14 11:43:25 rillig Exp $
+#	$NetBSD: Makefile,v 1.9 2023/05/09 14:08:18 christos Exp $
 
 LIB=dns
 #USE_SHLIBDIR=   yes
@@ -57,5 +57,12 @@ SRCS=	acl.c adb.c badcache.c byaddr.c cache.c callbacks.c catz.c \
 	soa.c ssu.c ssu_external.c stats.c tcpmsg.c time.c timer.c tkey.c \
 	tsig.c ttl.c private.c validator.c version.c view.c xfrin.c zone.c \
 	zonekey.c zoneverify.c zt.c sdlz.c update.c ${DNSSEC_SRCS}
+
+COPTS.openssl_link.c+= -Wno-error=deprecated-declarations
+COPTS.openssldh_link.c+= -Wno-error=deprecated-declarations
+COPTS.openssldsa_link.c+= -Wno-error=deprecated-declarations
+COPTS.opensslecdsa_link.c+= -Wno-error=deprecated-declarations
+COPTS.openssleddsa_link.c+= -Wno-error=deprecated-declarations
+COPTS.opensslrsa_link.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.lib.mk>
