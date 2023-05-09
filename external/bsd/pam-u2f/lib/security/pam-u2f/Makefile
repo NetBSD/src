@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2020/11/04 13:46:46 khorben Exp $
+# $NetBSD: Makefile,v 1.6 2023/05/09 15:02:59 christos Exp $
 
 .include <bsd.own.mk>
 .PATH: ${NETBSDSRCDIR}/external/bsd/pam-u2f/dist
@@ -10,7 +10,7 @@ LIB=	pam_u2f
 SRCS=	pam-u2f.c drop_privs.c util.c b64.c explicit_bzero.c
 MAN=	pam_u2f.8
 
-COPTS.util.c += -Wno-error=stack-protector
+COPTS.util.c += -Wno-error=stack-protector -Wno-error=deprecated-declarations
 
 LIBDPLIBS+= \
 	fido2	${NETBSDSRCDIR}/external/bsd/libfido2/lib \
