@@ -5,6 +5,11 @@
 .align	16
 aesni_encrypt:
 .L_aesni_encrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movl	4(%esp),%eax
 	movl	12(%esp),%edx
 	movups	(%eax),%xmm2
@@ -32,6 +37,11 @@ aesni_encrypt:
 .align	16
 aesni_decrypt:
 .L_aesni_decrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movl	4(%esp),%eax
 	movl	12(%esp),%edx
 	movups	(%eax),%xmm2
@@ -57,6 +67,11 @@ aesni_decrypt:
 .type	_aesni_encrypt2,@function
 .align	16
 _aesni_encrypt2:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movups	(%edx),%xmm0
 	shll	$4,%ecx
 	movups	16(%edx),%xmm1
@@ -84,6 +99,11 @@ _aesni_encrypt2:
 .type	_aesni_decrypt2,@function
 .align	16
 _aesni_decrypt2:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movups	(%edx),%xmm0
 	shll	$4,%ecx
 	movups	16(%edx),%xmm1
@@ -111,6 +131,11 @@ _aesni_decrypt2:
 .type	_aesni_encrypt3,@function
 .align	16
 _aesni_encrypt3:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movups	(%edx),%xmm0
 	shll	$4,%ecx
 	movups	16(%edx),%xmm1
@@ -143,6 +168,11 @@ _aesni_encrypt3:
 .type	_aesni_decrypt3,@function
 .align	16
 _aesni_decrypt3:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movups	(%edx),%xmm0
 	shll	$4,%ecx
 	movups	16(%edx),%xmm1
@@ -175,6 +205,11 @@ _aesni_decrypt3:
 .type	_aesni_encrypt4,@function
 .align	16
 _aesni_encrypt4:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movups	(%edx),%xmm0
 	movups	16(%edx),%xmm1
 	shll	$4,%ecx
@@ -213,6 +248,11 @@ _aesni_encrypt4:
 .type	_aesni_decrypt4,@function
 .align	16
 _aesni_decrypt4:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movups	(%edx),%xmm0
 	movups	16(%edx),%xmm1
 	shll	$4,%ecx
@@ -251,6 +291,11 @@ _aesni_decrypt4:
 .type	_aesni_encrypt6,@function
 .align	16
 _aesni_encrypt6:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movups	(%edx),%xmm0
 	shll	$4,%ecx
 	movups	16(%edx),%xmm1
@@ -305,6 +350,11 @@ _aesni_encrypt6:
 .type	_aesni_decrypt6,@function
 .align	16
 _aesni_decrypt6:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movups	(%edx),%xmm0
 	shll	$4,%ecx
 	movups	16(%edx),%xmm1
@@ -361,6 +411,11 @@ _aesni_decrypt6:
 .align	16
 aesni_ecb_encrypt:
 .L_aesni_ecb_encrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -596,6 +651,11 @@ aesni_ecb_encrypt:
 .align	16
 aesni_ccm64_encrypt_blocks:
 .L_aesni_ccm64_encrypt_blocks_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -684,6 +744,11 @@ aesni_ccm64_encrypt_blocks:
 .align	16
 aesni_ccm64_decrypt_blocks:
 .L_aesni_ccm64_decrypt_blocks_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -807,6 +872,11 @@ aesni_ccm64_decrypt_blocks:
 .align	16
 aesni_ctr32_encrypt_blocks:
 .L_aesni_ctr32_encrypt_blocks_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -1045,6 +1115,11 @@ aesni_ctr32_encrypt_blocks:
 .align	16
 aesni_xts_encrypt:
 .L_aesni_xts_encrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -1405,6 +1480,11 @@ aesni_xts_encrypt:
 .align	16
 aesni_xts_decrypt:
 .L_aesni_xts_decrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -1795,6 +1875,11 @@ aesni_xts_decrypt:
 .align	16
 aesni_ocb_encrypt:
 .L_aesni_ocb_encrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -1944,7 +2029,7 @@ aesni_ocb_encrypt:
 	movdqu	%xmm6,-32(%edi,%esi,1)
 	movdqu	%xmm7,-16(%edi,%esi,1)
 	cmpl	%eax,%esi
-	jb	.L077grandloop
+	jbe	.L077grandloop
 .L076short:
 	addl	$96,%eax
 	subl	%esi,%eax
@@ -2190,6 +2275,11 @@ aesni_ocb_encrypt:
 .align	16
 aesni_ocb_decrypt:
 .L_aesni_ocb_decrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -2339,7 +2429,7 @@ aesni_ocb_decrypt:
 	pxor	%xmm7,%xmm1
 	movdqu	%xmm7,-16(%edi,%esi,1)
 	cmpl	%eax,%esi
-	jb	.L087grandloop
+	jbe	.L087grandloop
 .L086short:
 	addl	$96,%eax
 	subl	%esi,%eax
@@ -2585,6 +2675,11 @@ aesni_ocb_decrypt:
 .align	16
 aesni_cbc_encrypt:
 .L_aesni_cbc_encrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
@@ -2844,6 +2939,11 @@ aesni_cbc_encrypt:
 .type	_aesni_set_encrypt_key,@function
 .align	16
 _aesni_set_encrypt_key:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	pushl	%ebp
 	pushl	%ebx
 	testl	%eax,%eax
@@ -3179,6 +3279,11 @@ _aesni_set_encrypt_key:
 .align	16
 aesni_set_encrypt_key:
 .L_aesni_set_encrypt_key_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movl	4(%esp),%eax
 	movl	8(%esp),%ecx
 	movl	12(%esp),%edx
@@ -3190,6 +3295,11 @@ aesni_set_encrypt_key:
 .align	16
 aesni_set_decrypt_key:
 .L_aesni_set_decrypt_key_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movl	4(%esp),%eax
 	movl	8(%esp),%ecx
 	movl	12(%esp),%edx
@@ -3236,3 +3346,20 @@ aesni_set_decrypt_key:
 .byte	32,98,121,32,60,97,112,112,114,111,64,111,112,101,110,115
 .byte	115,108,46,111,114,103,62,0
 .comm	OPENSSL_ia32cap_P,16,4
+
+	.section ".note.gnu.property", "a"
+	.p2align 2
+	.long 1f - 0f
+	.long 4f - 1f
+	.long 5
+0:
+	.asciz "GNU"
+1:
+	.p2align 2
+	.long 0xc0000002
+	.long 3f - 2f
+2:
+	.long 3
+3:
+	.p2align 2
+4:
