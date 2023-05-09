@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_openssl.c,v 1.28 2018/04/01 22:59:57 christos Exp $	*/
+/*	$NetBSD: crypto_openssl.c,v 1.29 2023/05/09 02:31:02 christos Exp $	*/
 
 /* Id: crypto_openssl.c,v 1.47 2006/05/06 20:42:09 manubsd Exp */
 
@@ -876,7 +876,7 @@ eay_check_x509sign(source, sig, cert)
 		return -1;
 	}
 
-	res = eay_rsa_verify(source, sig, EVP_PKEY_get0_RSA(evp));
+	res = eay_rsa_verify(source, sig, __UNCONST(EVP_PKEY_get0_RSA(evp)));
 
 	EVP_PKEY_free(evp);
 	X509_free(x509);
@@ -1018,7 +1018,7 @@ eay_get_x509sign(src, privkey)
 	if (evp == NULL)
 		return NULL;
 
-	sig = eay_rsa_sign(src, EVP_PKEY_get0_RSA(evp));
+	sig = eay_rsa_sign(src, __UNCONST(EVP_PKEY_get0_RSA(evp)));
 
 	EVP_PKEY_free(evp);
 
