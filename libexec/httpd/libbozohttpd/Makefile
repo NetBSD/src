@@ -24,4 +24,6 @@ INCSDIR=	/usr/include
 LDADD+=	-lssl -lcrypto
 DPADD+=	${LIBSSL} ${LIBCRYPTO}
 
+COPTS.ssl-bozo.c+= -Wno-error=deprecated-declarations
+
 .include <bsd.lib.mk>
