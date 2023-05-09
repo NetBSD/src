@@ -1,4 +1,4 @@
-# $NetBSD: varmod-localtime.mk,v 1.10 2023/05/09 16:27:00 rillig Exp $
+# $NetBSD: varmod-localtime.mk,v 1.11 2023/05/09 16:31:41 rillig Exp $
 #
 # Tests for the :localtime variable modifier, which formats a timestamp
 # using strftime(3) in local time.
@@ -46,17 +46,6 @@
 
 # Before var.c 1.1050 from 2023-05-09, it was not possible to pass the
 # seconds via a variable expression.
-# delete me
-# delete me
-# delete me
-# delete me
-# delete me
-# delete me
-# delete me
-# delete me
-# delete me
-# delete me
-# delete me
 .if ${%Y:L:localtime=${:U1593536400}} != "2020"
 .  error
 .endif
