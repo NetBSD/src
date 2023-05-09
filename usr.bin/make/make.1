@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.363 2023/05/07 16:43:50 sjg Exp $
+.\"	$NetBSD: make.1,v 1.364 2023/05/09 20:14:27 sjg Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd May 6, 2023
+.Dd May 9, 2023
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -1510,6 +1510,18 @@ producing the formatted timestamp.
 If a
 .Ar timestamp
 value is not provided or is 0, the current time is used.
+.It Cm \&:mtime Ns Oo Cm = Ns Ar timestamp Oc
+call
+.Xr stat 2
+with the value as pathname;
+use
+.Ql st_mtime
+as the new value.
+If
+.Xr stat 2
+fails; use
+.Ar timestamp
+or current time.
 .It Cm \&:tA
 Attempts to convert the value to an absolute path using
 .Xr realpath 3 .
