@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.59 2023/04/12 06:39:15 riastradh Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.60 2023/05/09 23:10:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.59 2023/04/12 06:39:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.60 2023/05/09 23:10:11 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -347,9 +347,9 @@ lpcibattach(device_t parent, device_t self, void *aux)
 	sc->sc_pmt = pa->pa_iot;
 	pmbase = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_PCI_PMBASE);
 	if (bus_space_map(sc->sc_pmt, PCI_MAPREG_IO_ADDR(pmbase),
-	    LPCIB_PCI_PM_SIZE, 0, &sc->sc_pmh) != 0) {
+		LPCIB_PCI_PM_SIZE, 0, &sc->sc_pmh) != 0) {
 		aprint_error_dev(self,
-	    	"can't map power management i/o space\n");
+		    "can't map power management i/o space\n");
 		return;
 	}
 
@@ -370,7 +370,7 @@ lpcibattach(device_t parent, device_t self, void *aux)
 		sc->sc_rcbat = sc->sc_pa.pa_memt;
 
 		rcba = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
-		     LPCIB_RCBA);
+		    LPCIB_RCBA);
 		if ((rcba & LPCIB_RCBA_EN) == 0) {
 			aprint_error_dev(self, "RCBA is not enabled\n");
 			return;
@@ -378,7 +378,7 @@ lpcibattach(device_t parent, device_t self, void *aux)
 		rcba &= ~LPCIB_RCBA_EN;
 
 		if (bus_space_map(sc->sc_rcbat, rcba, LPCIB_RCBA_SIZE, 0,
-				  &sc->sc_rcbah)) {
+			&sc->sc_rcbah)) {
 			aprint_error_dev(self, "RCBA could not be mapped\n");
 			return;
 		}
@@ -407,7 +407,7 @@ lpcibattach(device_t parent, device_t self, void *aux)
 
 	/* Install power handler */
 	if (!pmf_device_register1(self, lpcib_suspend, lpcib_resume,
-	    lpcib_shutdown))
+		lpcib_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
@@ -477,7 +477,7 @@ lpcibrescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct lpcib_softc *sc = device_private(self);
 
-	if(ifattr_match(ifattr, "tcoichbus") && sc->sc_tco == NULL)
+	if (ifattr_match(ifattr, "tcoichbus") && sc->sc_tco == NULL)
 		tcotimer_configure(self);
 
 #if NFWHRNG > 0
@@ -604,7 +604,7 @@ pmtimer_configure(device_t self)
 	struct lpcib_softc *sc = device_private(self);
 	pcireg_t control;
 
-	/* 
+	/*
 	 * Check if power management I/O space is enabled and enable the ACPI_EN
 	 * bit if it's disabled.
 	 */
@@ -716,16 +716,16 @@ speedstep_configure(device_t self)
 	if (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801DBM_LPC ||
 	    PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC ||
 	    (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC &&
-	     pci_find_device(&sc->sc_pa, speedstep_bad_hb_check) == 0)) {
+		pci_find_device(&sc->sc_pa, speedstep_bad_hb_check) == 0)) {
 		pcireg_t pmcon;
 
 		/* Enable SpeedStep if it isn't already enabled. */
 		pmcon = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
-				      LPCIB_PCI_GEN_PMCON_1);
+		    LPCIB_PCI_GEN_PMCON_1);
 		if ((pmcon & LPCIB_PCI_GEN_PMCON_1_SS_EN) == 0)
 			pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
-				       LPCIB_PCI_GEN_PMCON_1,
-				       pmcon | LPCIB_PCI_GEN_PMCON_1_SS_EN);
+			    LPCIB_PCI_GEN_PMCON_1,
+			    pmcon | LPCIB_PCI_GEN_PMCON_1_SS_EN);
 
 		/* Put in machdep.speedstep_state (0 for low, 1 for high). */
 		if ((rv = sysctl_createv(&sc->sc_log, 0, NULL, &node,
@@ -928,7 +928,7 @@ lpcib_gpio_configure(device_t self)
 	}
 
 	gpio_cntl = pci_conf_read(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
-				  cntl_reg);
+	    cntl_reg);
 
 	/* Is GPIO enabled? */
 	if ((gpio_cntl & LPCIB_PCI_GPIO_CNTL_EN) == 0)
@@ -1023,14 +1023,14 @@ lpcib_gpio_pin_read(void *arg, int pin)
 	struct lpcib_softc *sc = arg;
 	uint32_t data;
 	int reg, shift;
-	
+
 	reg = (pin < 32) ? LPCIB_GPIO_GP_LVL : LPCIB_GPIO_GP_LVL2;
 	shift = pin % 32;
 
 	mutex_enter(&sc->sc_gpio_mtx);
 	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg);
 	mutex_exit(&sc->sc_gpio_mtx);
-	
+
 	return (__SHIFTOUT(data, __BIT(shift)) ? GPIO_PIN_HIGH : GPIO_PIN_LOW);
 }
 
@@ -1048,7 +1048,7 @@ lpcib_gpio_pin_write(void *arg, int pin, int value)
 
 	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg);
 
-	if(value)
+	if (value)
 		data |= __BIT(shift);
 	else
 		data &= ~__BIT(shift);
@@ -1067,11 +1067,11 @@ lpcib_gpio_pin_ctl(void *arg, int pin, int flags)
 
 	shift = pin % 32;
 	reg = (pin < 32) ? LPCIB_GPIO_GP_IO_SEL : LPCIB_GPIO_GP_IO_SEL2;
-	
+
 	mutex_enter(&sc->sc_gpio_mtx);
-	
+
 	data = bus_space_read_4(sc->sc_gpio_iot, sc->sc_gpio_ioh, reg);
-	
+
 	if (flags & GPIO_PIN_OUTPUT)
 		data &= ~__BIT(shift);
 
