@@ -1,7 +1,10 @@
-# $NetBSD: varmod-localtime.mk,v 1.8 2021/01/19 05:26:34 rillig Exp $
+# $NetBSD: varmod-localtime.mk,v 1.9 2023/05/09 08:26:14 rillig Exp $
 #
 # Tests for the :localtime variable modifier, which formats a timestamp
 # using strftime(3) in local time.
+#
+# See also:
+#	varmod-gmtime.mk
 
 .if ${TZ} != "Europe/Berlin"	# see unit-tests/Makefile
 .  error
@@ -75,6 +78,8 @@
 # because it would make sense but just as a side-effect from using strtoul.
 .if ${:L:localtime= 1} != ""
 .  error
+.else
+.  error
 .endif
 
 
@@ -115,7 +120,8 @@
 # ULONG_MAX, which got converted to -1.  This resulted in a time stamp of
 # the second before 1970.
 #
-# Since var.c 1.631, the overflow is detected and produces a parse error.
+# Since var.c 1.631 from 2020-10-31, the overflow is detected and produces a
+# parse error.
 .if ${:L:localtime=10000000000000000000000000000000} != ""
 .  error
 .else
@@ -133,5 +139,11 @@
 .  error
 .endif
 
+# Before var.c 1.TODO from XXXX-XX-XX, the timestamp could be directly
+# followed by the next modifier, without a ':' separator.  This is the same
+# bug as for the ':L' and ':P' modifiers.
+.if ${%Y:L:localtime=100000S,1970,bad,} != "bad"
+.  error
+.endif
 
 all:
