@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1050 2023/05/09 16:26:59 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1051 2023/05/09 20:14:27 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1050 2023/05/09 16:26:59 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1051 2023/05/09 20:14:27 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2833,6 +2833,39 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 	return AMR_OK;
 }
 
+/* :mtime */
+static ApplyModifierResult
+ApplyModifier_Mtime(const char **pp, ModChain *ch)
+{
+	char buf[BUFSIZ];
+	Expr *expr = ch->expr;
+	const char *args, *mod = *pp;
+	struct stat st;
+	int i = -1;
+
+	if (!ModMatchEq(mod, "mtime", ch))
+		return AMR_UNKNOWN;
+	*pp += 5;
+	args = *pp;
+	if (args[0] == '=') {
+		args++;
+		if (!TryParseIntBase0(&args, &i))
+			return AMR_BAD;
+		*pp = args;
+	}
+	if (!ModChain_ShouldEval(ch))
+		return AMR_OK;
+	if (stat(Expr_Str(expr), &st) < 0) {
+		if (i < 0)
+			time(&st.st_mtime);
+		else
+			st.st_mtime = (time_t)i;
+	}
+	snprintf(buf, sizeof(buf), "%u", (unsigned)st.st_mtime);
+	Expr_SetValueOwn(expr, bmake_strdup(buf));
+	return AMR_OK;
+}
+
 static void
 ParsePatternFlags(const char **pp, PatternFlags *pflags, bool *oneBigWord)
 {
@@ -3815,6 +3848,8 @@ ApplyModifier(const char **pp, ModChain *ch)
 	case 'M':
 	case 'N':
 		return ApplyModifier_Match(pp, ch);
+	case 'm':
+		return ApplyModifier_Mtime(pp, ch);
 	case 'O':
 		return ApplyModifier_Order(pp, ch);
 	case 'P':
