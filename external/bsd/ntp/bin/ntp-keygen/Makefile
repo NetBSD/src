@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2020/10/11 07:07:31 rin Exp $
+#	$NetBSD: Makefile,v 1.8 2023/05/09 20:51:14 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -21,6 +21,7 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts
 .PATH: ${DIST}
 
 COPTS.ntp-keygen.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=restrict :}
+COPTS.ntp-keygen.c+=	-Wno-error=deprecated-declarations
 
 CLEANFILES+=${MAN}
 
