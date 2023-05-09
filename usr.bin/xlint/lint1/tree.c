@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.520 2023/05/09 15:45:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.521 2023/05/09 15:51:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.520 2023/05/09 15:45:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.521 2023/05/09 15:51:33 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -255,6 +255,20 @@ ic_shr(const type_t *tp, integer_constraints a, integer_constraints b)
 }
 
 static integer_constraints
+ic_cond(integer_constraints a, integer_constraints b)
+{
+	integer_constraints c;
+
+	c.smin = a.smin < b.smin ? a.smin : b.smin;
+	c.smax = a.smax > b.smax ? a.smax : b.smax;
+	c.umin = a.umin < b.umin ? a.umin : b.umin;
+	c.umax = a.umax > b.umax ? a.umax : b.umax;
+	c.bset = a.bset | b.bset;
+	c.bclr = a.bclr & b.bclr;
+	return c;
+}
+
+static integer_constraints
 ic_expr(const tnode_t *tn)
 {
 	integer_constraints lc, rc;
@@ -289,6 +303,10 @@ ic_expr(const tnode_t *tn)
 		lc = ic_expr(tn->tn_left);
 		rc = ic_expr(tn->tn_right);
 		return ic_bitor(lc, rc);
+	case QUEST:
+		lc = ic_expr(tn->tn_right->tn_left);
+		rc = ic_expr(tn->tn_right->tn_right);
+		return ic_cond(lc, rc);
 	default:
 		return ic_any(tn->tn_type);
 	}
@@ -3361,6 +3379,12 @@ can_represent(const type_t *tp, const tnode_t *tn)
 
 	integer_constraints c = ic_expr(tn);
 	if ((~c.bclr & ~nmask) == 0)
+		return true;
+
+	integer_constraints tpc = ic_any(tp);
+	if (is_uinteger(tp->t_tspec)
+	    ? tpc.umin <= c.umin && tpc.umax >= c.umax
+	    : tpc.smin <= c.smin && tpc.smax >= c.smax)
 		return true;
 
 	return false;
