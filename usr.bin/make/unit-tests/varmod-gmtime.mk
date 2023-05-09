@@ -1,7 +1,10 @@
-# $NetBSD: varmod-gmtime.mk,v 1.10 2021/01/19 05:26:34 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.11 2023/05/09 08:26:14 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
 # using strftime(3) in UTC.
+#
+# See also:
+#	varmod-localtime.mk
 
 .if ${TZ:Uundefined} != "undefined"	# see unit-tests/Makefile
 .  error
@@ -75,6 +78,8 @@
 # because it would make sense but just as a side-effect from using strtoul.
 .if ${:L:gmtime= 1} != ""
 .  error
+.else
+.  error
 .endif
 
 
@@ -115,7 +120,8 @@
 # ULONG_MAX, which got converted to -1.  This resulted in a time stamp of
 # the second before 1970.
 #
-# Since var.c 1.631, the overflow is detected and produces a parse error.
+# Since var.c 1.631 from 2020-10-31, the overflow is detected and produces a
+# parse error.
 .if ${:L:gmtime=10000000000000000000000000000000} != ""
 .  error
 .else
@@ -133,5 +139,11 @@
 .  error
 .endif
 
+# Before var.c 1.TODO from XXXX-XX-XX, the timestamp could be directly
+# followed by the next modifier, without a ':' separator.  This is the same
+# bug as for the ':L' and ':P' modifiers.
+.if ${%Y:L:gmtime=100000S,1970,bad,} != "bad"
+.  error
+.endif
 
 all:
