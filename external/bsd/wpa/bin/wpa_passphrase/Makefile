@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2019/01/05 05:40:00 christos Exp $
+# $NetBSD: Makefile,v 1.6 2023/05/09 21:05:24 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -25,5 +25,6 @@ SRCS+= sha1-pbkdf2.c sha1.c md5.c
 
 
 MAN=	wpa_passphrase.8
+COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.prog.mk>
