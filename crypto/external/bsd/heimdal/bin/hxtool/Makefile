@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:16 he Exp $
+# $NetBSD: Makefile,v 1.3 2023/05/09 22:12:33 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -19,6 +19,8 @@ LDADD+= -ledit -lterminfo
 DPADD+= ${LIBGSSAPI}
 DPADD+= ${LIBSL}
 DPADD+= ${LIBEDIT} ${LIBTERMINFO}
+
+COPTS.hxtool.c+= -Wno-error=deprecated-declarations
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
