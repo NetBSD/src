@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.29 2023/05/09 15:45:06 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.30 2023/05/09 15:51:33 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -379,8 +379,6 @@ void
 test_ic_conditional(char c1, char c2)
 {
 	/* Both operands are representable as char. */
-	/* FIXME */
-	/* expect+1: warning: conversion from 'int' to 'char' may lose accuracy [132] */
 	ch = cond ? '?' : ':';
 
 	/*
@@ -388,14 +386,19 @@ test_ic_conditional(char c1, char c2)
 	 * warns about a narrowing conversion from 'int' to signed type
 	 * 'char'.
 	 */
-	/* FIXME */
-	/* expect+1: warning: conversion from 'int' to 'char' may lose accuracy [132] */
 	ch = cond ? c1 : c2;
 
-	/* FIXME */
+	/*
+	 * Mixing s8 and u8 results in a number from -128 to 255, which does
+	 * not necessarily fit into s8.
+	 */
 	/* expect+1: warning: conversion from 'int' to 'signed char' may lose accuracy [132] */
 	s8 = cond ? s8 : u8;
 
+	/*
+	 * Mixing s8 and u8 results in a number from -128 to 255, which does
+	 * not necessarily fit into u8.
+	 */
 	/* expect+1: warning: conversion from 'int' to 'unsigned char' may lose accuracy [132] */
 	u8 = cond ? s8 : u8;
 }
