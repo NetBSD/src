@@ -1,4 +1,4 @@
-# $NetBSD: varmod-gmtime.mk,v 1.11 2023/05/09 08:26:14 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.12 2023/05/09 16:27:00 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
 # using strftime(3) in UTC.
@@ -44,20 +44,20 @@
 .endif
 
 
-# As of 2020-08-16, it is not possible to pass the seconds via a
-# variable expression.  This is because parsing of the :gmtime
-# modifier stops at the '$' and returns to ApplyModifiers.
-#
-# There, a colon would be skipped but not a dollar.
-# Parsing therefore continues at the '$' of the ${:U159...}, looking
-# for an ordinary variable modifier.
-#
-# At this point, the ${:U} is expanded and interpreted as a variable
-# modifier, which results in the error message "Unknown modifier '1'".
-#
-# If ApplyModifier_Gmtime were to pass its argument through
-# ParseModifierPart, this would work.
-.if ${%Y:L:gmtime=${:U1593536400}} != "mtime=11593536400}"
+# Before var.c 1.1050 from 2023-05-09, it was not possible to pass the
+# seconds via a variable expression.
+# delete me
+# delete me
+# delete me
+# delete me
+# delete me
+# delete me
+# delete me
+# delete me
+# delete me
+# delete me
+# delete me
+.if ${%Y:L:gmtime=${:U1593536400}} != "2020"
 .  error
 .endif
 
@@ -139,7 +139,7 @@
 .  error
 .endif
 
-# Before var.c 1.TODO from XXXX-XX-XX, the timestamp could be directly
+# Before var.c 1.1050 from 2023-05-09, the timestamp could be directly
 # followed by the next modifier, without a ':' separator.  This is the same
 # bug as for the ':L' and ':P' modifiers.
 .if ${%Y:L:gmtime=100000S,1970,bad,} != "bad"
