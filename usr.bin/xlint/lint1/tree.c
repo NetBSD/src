@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.519 2023/04/22 20:54:28 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.520 2023/05/09 15:45:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.519 2023/04/22 20:54:28 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.520 2023/05/09 15:45:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -147,9 +147,14 @@ ic_con(const type_t *tp, const val_t *v)
 static integer_constraints
 ic_cvt(const type_t *ntp, const type_t *otp, integer_constraints a)
 {
+	unsigned nw = width_in_bits(ntp);
+	unsigned ow = width_in_bits(otp);
+	bool nu = is_uinteger(ntp->t_tspec);
+	bool ou = is_uinteger(otp->t_tspec);
 
-	if (width_in_bits(ntp) > width_in_bits(otp) &&
-	    is_uinteger(otp->t_tspec))
+	if (nw >= ow && nu == ou)
+		return a;
+	if (nw > ow && ou)
 		return a;
 	return ic_any(ntp);
 }
