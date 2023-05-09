@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.391 2023/05/08 14:31:43 christos Exp $
+#	$NetBSD: bsd.lib.mk,v 1.392 2023/05/09 22:52:22 riastradh Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -73,9 +73,9 @@ LDADD+=		-L${LIBDO.${_lib}} -l${_lib}
 DPADD+=         ${LIBDO.${_lib}}/lib${_lib}_pic.a
 .elif exists(${LIBDO.${_lib}}/lib${_lib}.so)
 DPADD+=         ${LIBDO.${_lib}}/lib${_lib}.so
-.else   
+.else
 DPADD+=         ${LIBDO.${_lib}}/lib${_lib}.a
-.endif  
+.endif
 .endif
 .endfor
 .endif									# }
@@ -225,7 +225,7 @@ LIBSTRIPOBJCOBJS=	yes
 .if !defined(FFLAGS) || empty(FFLAGS:M*-g*)
 LIBSTRIPFOBJS=	yes
 .endif
-.if !defined(CSHLIBFLAGS) || empty(CSHLIBFLAGS:M*-g*) 
+.if !defined(CSHLIBFLAGS) || empty(CSHLIBFLAGS:M*-g*)
 LIBSTRIPSHLIBOBJS=	yes
 .endif
 
@@ -822,7 +822,7 @@ ${_DEST.OBJ}/${_LIB.so.full}: ${_LIB.so.full}
 	    ${.ALLSRC} ${.TARGET}
 .if ${_LIBSODIR} != ${LIBDIR}
 	${INSTALL_SYMLINK} -l r ${_DEST.OBJ}/${_LIB.so.full} \
-	    ${_DEST.LIB}/${_LIB.so.full} 
+	    ${_DEST.LIB}/${_LIB.so.full}
 .endif
 .if defined(SHLIB_FULLVERSION) && defined(SHLIB_MAJOR) && \
     "${SHLIB_FULLVERSION}" != "${SHLIB_MAJOR}"
@@ -851,7 +851,7 @@ ${_DEST.DEBUG}/${_LIB.so.debug}: ${_LIB.so.debug}
 	    ${.ALLSRC} ${.TARGET}
 .if ${_LIBSODIR} != ${LIBDIR}
 	${INSTALL_SYMLINK} -l r ${_DEST.DEBUG}/${_LIB.so.debug} \
-	    ${_DEST.ODEBUG}/${_LIB.so.debug} 
+	    ${_DEST.ODEBUG}/${_LIB.so.debug}
 .endif
 .endif
 
