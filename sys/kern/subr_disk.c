@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.136 2023/04/22 11:58:01 riastradh Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.137 2023/05/09 12:04:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.136 2023/04/22 11:58:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.137 2023/05/09 12:04:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -655,7 +655,7 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		dkwedge_delall(dk);
+		dkwedge_delidle(dk);
 		return 0;
 
 	default:
