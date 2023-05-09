@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.60 2023/05/09 23:10:11 riastradh Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.61 2023/05/09 23:11:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.60 2023/05/09 23:10:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.61 2023/05/09 23:11:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -138,21 +138,19 @@ static bool lpcib_resume(device_t, const pmf_qual_t *);
 static bool lpcib_shutdown(device_t, int);
 
 static void pmtimer_configure(device_t);
-static int pmtimer_unconfigure(device_t, int);
+static void pmtimer_unconfigure(device_t, int);
 
 static void tcotimer_configure(device_t);
-static int tcotimer_unconfigure(device_t, int);
 
 static void speedstep_configure(device_t);
 static void speedstep_unconfigure(device_t);
 static int speedstep_sysctl_helper(SYSCTLFN_ARGS);
 
 static void lpcib_hpet_configure(device_t);
-static int lpcib_hpet_unconfigure(device_t, int);
 
 #if NGPIO > 0
 static void lpcib_gpio_configure(device_t);
-static int lpcib_gpio_unconfigure(device_t, int);
+static void lpcib_gpio_unconfigure(device_t);
 static int lpcib_gpio_pin_read(void *, int);
 static void lpcib_gpio_pin_write(void *, int, int);
 static void lpcib_gpio_pin_ctl(void *, int, int);
@@ -160,7 +158,6 @@ static void lpcib_gpio_pin_ctl(void *, int, int);
 
 #if NFWHRNG > 0
 static void lpcib_fwh_configure(device_t);
-static int lpcib_fwh_unconfigure(device_t, int);
 #endif
 
 struct lpcib_softc *speedstep_cookie;	/* XXX */
@@ -500,38 +497,32 @@ static int
 lpcibdetach(device_t self, int flags)
 {
 	struct lpcib_softc *sc = device_private(self);
-	int rc;
+	int error;
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
 
-#if NFWHRNG > 0
-	if ((rc = lpcib_fwh_unconfigure(self, flags)) != 0)
-		return rc;
-#endif
-
-	if ((rc = lpcib_hpet_unconfigure(self, flags)) != 0)
-		return rc;
-
 #if NGPIO > 0
-	if ((rc = lpcib_gpio_unconfigure(self, flags)) != 0)
-		return rc;
+	lpcib_gpio_unconfigure(self);
 #endif
 
 	/* Set up SpeedStep. */
 	speedstep_unconfigure(self);
 
-	if ((rc = tcotimer_unconfigure(self, flags)) != 0)
-		return rc;
-
-	if ((rc = pmtimer_unconfigure(self, flags)) != 0)
-		return rc;
+	pmtimer_unconfigure(self, flags);
 
 	if (sc->sc_has_rcba)
 		bus_space_unmap(sc->sc_rcbat, sc->sc_rcbah, LPCIB_RCBA_SIZE);
 
 	bus_space_unmap(sc->sc_pmt, sc->sc_pmh, sc->sc_iosize);
 
-	return pcibdetach(self, flags);
+	error = pcibdetach(self, flags);
+	KASSERTMSG(error == 0, "error=%d", error);
+
+	return 0;
 }
 
 static bool
@@ -622,20 +613,19 @@ pmtimer_configure(device_t self)
 	    PMC_PM1_TMR, 0);
 }
 
-static int
+static void
 pmtimer_unconfigure(device_t self, int flags)
 {
 	struct lpcib_softc *sc = device_private(self);
-	int rc;
+	int error __diagused;
 
-	if (sc->sc_pmtimer != NULL &&
-	    (rc = acpipmtimer_detach(sc->sc_pmtimer, flags)) != 0)
-		return rc;
+	if (sc->sc_pmtimer != NULL) {
+		error = acpipmtimer_detach(sc->sc_pmtimer, flags);
+		KASSERTMSG(error == 0, "error=%d", error);
+	}
 
 	pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
 	    LPCIB_PCI_ACPI_CNTL, sc->sc_acpi_cntl);
-
-	return 0;
 }
 
 /*
@@ -661,19 +651,6 @@ tcotimer_configure(device_t self)
 
 	sc->sc_tco = config_found(self, &arg, NULL,
 	    CFARGS(.iattr = "tcoichbus"));
-}
-
-static int
-tcotimer_unconfigure(device_t self, int flags)
-{
-	struct lpcib_softc *sc = device_private(self);
-	int rc;
-
-	if (sc->sc_tco != NULL &&
-	    (rc = config_detach(sc->sc_tco, flags)) != 0)
-		return rc;
-
-	return 0;
 }
 
 
@@ -891,19 +868,6 @@ lpcib_hpet_configure(device_t self)
 	    CFARGS(.iattr = "hpetichbus"));
 }
 
-static int
-lpcib_hpet_unconfigure(device_t self, int flags)
-{
-	struct lpcib_softc *sc = device_private(self);
-	int rc;
-
-	if (sc->sc_hpetbus != NULL &&
-	    (rc = config_detach(sc->sc_hpetbus, flags)) != 0)
-		return rc;
-
-	return 0;
-}
-
 #if NGPIO > 0
 static void
 lpcib_gpio_configure(device_t self)
@@ -1000,21 +964,14 @@ lpcib_gpio_configure(device_t self)
 	    CFARGS(.iattr = "gpiobus"));
 }
 
-static int
-lpcib_gpio_unconfigure(device_t self, int flags)
+static void
+lpcib_gpio_unconfigure(device_t self)
 {
 	struct lpcib_softc *sc = device_private(self);
-	int rc;
-
-	if (sc->sc_gpiobus != NULL &&
-	    (rc = config_detach(sc->sc_gpiobus, flags)) != 0)
-		return rc;
 
 	mutex_destroy(&sc->sc_gpio_mtx);
 
 	bus_space_unmap(sc->sc_gpio_iot, sc->sc_gpio_ioh, sc->sc_gpio_ios);
-
-	return 0;
 }
 
 static int
@@ -1126,18 +1083,5 @@ lpcib_fwh_configure(device_t self)
 	/* restore previous write enable setting */
 	pci_conf_write(sc->sc_pcib.sc_pc, sc->sc_pcib.sc_tag,
 	    LPCIB_PCI_BIOS_CNTL, pr);
-}
-
-static int
-lpcib_fwh_unconfigure(device_t self, int flags)
-{
-	struct lpcib_softc *sc = device_private(self);
-	int rc;
-
-	if (sc->sc_fwhbus != NULL &&
-	    (rc = config_detach(sc->sc_fwhbus, flags)) != 0)
-		return rc;
-
-	return 0;
 }
 #endif
