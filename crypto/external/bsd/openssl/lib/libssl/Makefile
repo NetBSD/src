@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2023/05/07 19:13:15 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2023/05/09 19:22:07 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -36,6 +36,8 @@ CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .PATH: ${OPENSSLSRC} ${OPENSSLSRC}/crypto/pqueue ${OPENSSLSRC}/include/openssl
 
 .include "srcs.inc"
+.PATH: ${OPENSSLSRC}/crypto
+SRCS+= packet.c
 
 LIBDPLIBS+=crypto ${.CURDIR}/../libcrypto
 
@@ -49,6 +51,7 @@ LDFLAGS+=-Wl,--version-script=${.CURDIR}/ssl.map
 
 PKGCONFIG=libssl openssl
 .include "${.CURDIR}/../../pkgconfig.mk"
+
 
 
 GENH = \
