@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt_isa.c,v 1.7 2021/03/24 04:46:41 simonb Exp $	*/
+/*	$NetBSD: fbt_isa.c,v 1.8 2023/05/09 21:29:07 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -103,7 +103,7 @@ fbt_patch_tracepoint(fbt_probe_t *fbt, fbt_patchval_t val)
 		return;
 	if (!mm_md_direct_mapped_phys(pa, &va))
 		return;
-	*(fbt_patchval_t *)va = val;
+	*(fbt_patchval_t *)va = htole32(val);
 	cpu_icache_sync_range((vm_offset_t)fbt->fbtp_patchpoint, sizeof(val));
 }
 
@@ -157,7 +157,7 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 
 	/* Look for stp (pre-indexed) operation */
 	for (; instr < limit; instr++) {
-		if ((*instr & LDP_STP_MASK) == STP_64)
+		if ((le32toh(*instr) & LDP_STP_MASK) == STP_64)
 			break;
 	}
 
@@ -181,7 +181,7 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 #ifdef __NetBSD__
 	fbt->fbtp_ctl = mod;
 #endif
-	fbt->fbtp_savedval = *instr;
+	fbt->fbtp_savedval = le32toh(*instr);
 	fbt->fbtp_patchval = FBT_PATCHVAL;
 	fbt->fbtp_symindx = symindx;
 
@@ -195,10 +195,10 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 	retfbt = NULL;
 again:
 	for (; instr < limit; instr++) {
-		if (*instr == RET_INSTR)
+		if (le32toh(*instr) == RET_INSTR)
 			break;
-		else if ((*instr & B_MASK) == B_INSTR) {
-			offs = (*instr & B_DATA_MASK);
+		else if ((le32toh(*instr) & B_MASK) == B_INSTR) {
+			offs = (le32toh(*instr) & B_DATA_MASK);
 			offs *= 4;
 			target = (instr + offs);
 #ifdef __FreeBSD__
@@ -241,7 +241,7 @@ again:
 #ifdef __NetBSD__
 	fbt->fbtp_ctl = mod;
 #endif
-	fbt->fbtp_savedval = *instr;
+	fbt->fbtp_savedval = le32toh(*instr);
 	fbt->fbtp_patchval = FBT_PATCHVAL;
 	fbt->fbtp_symindx = symindx;
 
