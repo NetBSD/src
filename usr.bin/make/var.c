@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1049 2023/03/28 14:39:31 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1050 2023/05/09 16:26:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1049 2023/03/28 14:39:31 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1050 2023/05/09 16:26:59 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2188,6 +2188,8 @@ ParseModifierPartBalanced(const char **pp, LazyBuf *part)
 static bool
 ParseModifierPartSubst(
     const char **pp,
+    /* If true, parse up to but excluding the next ':' or ch->endc. */
+    bool whole,
     char delim,
     VarEvalMode emode,
     ModChain *ch,
@@ -2205,11 +2207,14 @@ ParseModifierPartSubst(
 )
 {
 	const char *p;
+	char end1, end2;
 
 	p = *pp;
 	LazyBuf_Init(part, p);
 
-	while (*p != '\0' && *p != delim) {
+	end1 = whole ? ':' : delim;
+	end2 = whole ? ch->endc : delim;
+	while (*p != '\0' && *p != end1 && *p != end2) {
 		if (IsEscapedModifierPart(p, delim, subst)) {
 			LazyBuf_Add(part, p[1]);
 			p += 2;
@@ -2231,15 +2236,15 @@ ParseModifierPartSubst(
 			ParseModifierPartExpr(&p, part, ch, emode);
 	}
 
-	if (*p != delim) {
-		*pp = p;
+	*pp = p;
+	if (*p != end1 && *p != end2) {
 		Error("Unfinished modifier for \"%s\" ('%c' missing)",
-		    ch->expr->name, delim);
+		    ch->expr->name, end2);
 		LazyBuf_Done(part);
 		return false;
 	}
-
-	*pp = p + 1;
+	if (!whole)
+		(*pp)++;
 
 	{
 		Substring sub = LazyBuf_Get(part);
@@ -2272,7 +2277,8 @@ ParseModifierPart(
     LazyBuf *part
 )
 {
-	return ParseModifierPartSubst(pp, delim, emode, ch, part, NULL, NULL);
+	return ParseModifierPartSubst(pp, false, delim, emode, ch, part,
+	    NULL, NULL);
 }
 
 MAKE_INLINE bool
@@ -2568,11 +2574,23 @@ ApplyModifier_Time(const char **pp, ModChain *ch)
 
 	if (args[0] == '=') {
 		const char *p = args + 1;
-		if (!TryParseTime(&p, &t)) {
-			Parse_Error(PARSE_FATAL,
-			    "Invalid time value at \"%s\"", p);
+		LazyBuf buf;
+		if (!ParseModifierPartSubst(&p, true, '\0', ch->expr->emode,
+		    ch, &buf, NULL, NULL))
 			return AMR_CLEANUP;
-		}
+		if (ModChain_ShouldEval(ch)) {
+			Substring arg = LazyBuf_Get(&buf);
+			const char *arg_p = arg.start;
+			if (!TryParseTime(&arg_p, &t) || arg_p != arg.end) {
+				Parse_Error(PARSE_FATAL,
+				    "Invalid time value \"%.*s\"",
+				    (int)Substring_Length(arg), arg.start);
+				LazyBuf_Done(&buf);
+				return AMR_CLEANUP;
+			}
+		} else
+			t = 0;
+		LazyBuf_Done(&buf);
 		*pp = p;
 	} else {
 		t = 0;
@@ -2862,13 +2880,13 @@ ApplyModifier_Subst(const char **pp, ModChain *ch)
 		(*pp)++;
 	}
 
-	if (!ParseModifierPartSubst(pp, delim, ch->expr->emode, ch, &lhsBuf,
-	    &args.pflags, NULL))
+	if (!ParseModifierPartSubst(pp,
+	    false, delim, ch->expr->emode, ch, &lhsBuf, &args.pflags, NULL))
 		return AMR_CLEANUP;
 	args.lhs = LazyBuf_Get(&lhsBuf);
 
-	if (!ParseModifierPartSubst(pp, delim, ch->expr->emode, ch, &rhsBuf,
-	    NULL, &args)) {
+	if (!ParseModifierPartSubst(pp,
+	    false, delim, ch->expr->emode, ch, &rhsBuf, NULL, &args)) {
 		LazyBuf_Done(&lhsBuf);
 		return AMR_CLEANUP;
 	}
