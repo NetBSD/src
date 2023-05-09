@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2020/03/01 20:59:53 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2023/05/09 22:25:26 christos Exp $
 
 BINDIR=	/usr/bin
 
 PROG=	ssh-keyscan
 SRCS=	ssh-keyscan.c ssh_api.c kexgexs.c
 MAN=	ssh-keyscan.1
+
+COPTS.kexgexs.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.prog.mk>
