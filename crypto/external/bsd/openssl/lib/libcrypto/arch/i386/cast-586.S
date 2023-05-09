@@ -5,6 +5,11 @@
 .align	16
 CAST_encrypt:
 .L_CAST_encrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 
 	pushl	%ebp
 	pushl	%ebx
@@ -375,6 +380,11 @@ CAST_encrypt:
 .align	16
 CAST_decrypt:
 .L_CAST_decrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 
 	pushl	%ebp
 	pushl	%ebx
@@ -742,6 +752,11 @@ CAST_decrypt:
 .align	16
 CAST_cbc_encrypt:
 .L_CAST_cbc_encrypt_begin:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 
 	pushl	%ebp
 	pushl	%ebx
@@ -805,21 +820,56 @@ CAST_cbc_encrypt:
 	xorl	%edx,%edx
 	jmp	*%ebp
 .L008ej7:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movb	6(%esi),%dh
 	shll	$8,%edx
 .L009ej6:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movb	5(%esi),%dh
 .L010ej5:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movb	4(%esi),%dl
 .L011ej4:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movl	(%esi),%ecx
 	jmp	.L012ejend
 .L013ej3:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movb	2(%esi),%ch
 	shll	$8,%ecx
 .L014ej2:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movb	1(%esi),%ch
 .L015ej1:
+	#ifdef __CET__
+
+.byte	243,15,30,251
+	#endif
+
 	movb	(%esi),%cl
 .L012ejend:
 	xorl	%ecx,%eax
@@ -931,3 +981,20 @@ CAST_cbc_encrypt:
 .long	.L008ej7-.L006PIC_point
 .align	64
 .size	CAST_cbc_encrypt,.-.L_CAST_cbc_encrypt_begin
+
+	.section ".note.gnu.property", "a"
+	.p2align 2
+	.long 1f - 0f
+	.long 4f - 1f
+	.long 5
+0:
+	.asciz "GNU"
+1:
+	.p2align 2
+	.long 0xc0000002
+	.long 3f - 2f
+2:
+	.long 3
+3:
+	.p2align 2
+4:
