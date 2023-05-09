@@ -1,7 +1,6 @@
 #include "arm_asm.h"
 #include "arm_arch.h"
 
-.text
 #if defined(__thumb2__) && !defined(__APPLE__)
 .syntax	unified
 .thumb
@@ -9,6 +8,8 @@
 .code	32
 #undef	__thumb2__
 #endif
+
+.text
 
 .align	5
 .globl	OPENSSL_atomic_add
