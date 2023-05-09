@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.153 2023/05/09 12:03:55 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.154 2023/05/09 12:04:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.153 2023/05/09 12:03:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.154 2023/05/09 12:04:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -774,14 +774,27 @@ dkwedge_detach(device_t self, int flags)
 /*
  * dkwedge_delall:	[exported function]
  *
- *	Delete all of the wedges on the specified disk.  Used when
- *	a disk is being detached.
+ *	Forcibly delete all of the wedges on the specified disk.  Used
+ *	when a disk is being detached.
  */
 void
 dkwedge_delall(struct disk *pdk)
 {
 
-	dkwedge_delall1(pdk, false);
+	dkwedge_delall1(pdk, /*idleonly*/false);
+}
+
+/*
+ * dkwedge_delidle:	[exported function]
+ *
+ *	Delete all of the wedges on the specified disk if idle.  Used
+ *	by ioctl(DIOCRMWEDGES).
+ */
+void
+dkwedge_delidle(struct disk *pdk)
+{
+
+	dkwedge_delall1(pdk, /*idleonly*/true);
 }
 
 static void
@@ -1065,7 +1078,7 @@ dkwedge_discover(struct disk *pdk)
 	/*
 	 * Remove unused wedges
 	 */
-	dkwedge_delall1(pdk, true);
+	dkwedge_delidle(pdk);
 
 	/*
 	 * For each supported partition map type, look to see if
