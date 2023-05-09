@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.41 2023/05/09 02:30:21 christos Exp $
+# $NetBSD: Makefile,v 1.42 2023/05/09 20:11:54 christos Exp $
 
 WARNS?=	0	# XXX third-party program, many issues
 NOCLANGERROR=	# defined
@@ -84,9 +84,10 @@ prsa_par.c: ${DIST}/src/racoon/prsa_par.y
 CWARNFLAGS.gcc+=        ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 COPTS+=		-fcommon
-COPTS.crypto_openssl.c+=-Wno-error=deprecated-declarations
-COPTS.rsalist.c+=-Wno-error=deprecated-declarations
-COPTS.prsa_par.c+=-Wno-error=deprecated-declarations
+COPTS.crypto_openssl.c+= -Wno-error=deprecated-declarations
+COPTS.rsalist.c+= -Wno-error=deprecated-declarations
+COPTS.prsa_par.c+= -Wno-error=deprecated-declarations
+COPTS.plainrsa-gen.c+= -Wno-error=deprecated-declarations
 
 
 .include <bsd.prog.mk>
