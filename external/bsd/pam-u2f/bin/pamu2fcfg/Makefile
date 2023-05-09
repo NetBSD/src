@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2020/11/04 13:46:46 khorben Exp $
+# $NetBSD: Makefile,v 1.5 2023/05/09 21:08:34 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -26,5 +26,7 @@ pamu2fcfg.1:
 	asciidoc -b docbook45 -d manpage -o pamu2fcfg.1.xml ../../dist/man/pamu2fcfg.1.txt
 	xsltproc --nonet --xinclude -o pamu2fcfg.1 'http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl' pamu2fcfg.1.xml
 	rm -f pamu2fcfg.1.xml
+
+COPTS.util.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.prog.mk>
