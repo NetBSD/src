@@ -1,17 +1,28 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.3 2022/04/15 09:33:20 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.4 2023/05/09 19:43:12 rillig Exp $
 
 --[[
 
 usage: lua ./check-expect.lua *.mk
 
-Check that each text from an '# expect: ...' comment in the .mk source files
-occurs in the corresponding .exp file, in the same order as in the .mk file.
+Check that the various 'expect' comments in the .mk files produce the
+expected text in the corresponding .exp file.
 
-Check that each text from an '# expect[+-]offset: ...' comment in the .mk
-source files occurs in the corresponding .exp file and refers back to the
-correct line in the .mk file.
+# expect: <line>
+        All of these lines must occur in the .exp file, in the same order as
+        in the .mk file.
 
+# expect-reset
+        Search the following 'expect:' comments from the top of the .exp
+        file again.
+
+# expect[+-]offset: <message>
+        Each message must occur in the .exp file and refer back to the
+        source line in the .mk file.
+
+# expect-all
+        Each message from the .exp file that can be matched by an
+        'expect[+-]offset' comment must actually be matched.
 ]]
 
 
@@ -68,6 +79,7 @@ local function check_mk(mk_fname)
   if exp_lines == nil then return end
   local by_location = collect_lineno_diagnostics(exp_lines)
   local prev_expect_line = 0
+  local match_all = false
 
   for mk_lineno, mk_line in ipairs(mk_lines) do
     for text in mk_line:gmatch("#%s*expect:%s*(.*)") do
@@ -108,6 +120,22 @@ local function check_mk(mk_fname)
       if not found then
         print_error("error: %s:%d: %s must contain '%s'",
           mk_fname, mk_lineno, exp_fname, text)
+      end
+    end
+
+    if mk_line:match("^#%s*expect%-all$") then
+      match_all = true
+    end
+  end
+
+  if match_all then
+    -- XXX: The messages are not sorted in any meaningful way.
+    for location, messages in pairs(by_location) do
+      for _, message in ipairs(messages) do
+        if message ~= "" then
+          print_error("error: %s: missing 'expect' comment for '%s'",
+            location, message)
+        end
       end
     end
   end

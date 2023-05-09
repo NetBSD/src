@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.173 2023/05/08 10:24:07 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.174 2023/05/09 19:43:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.173 2023/05/08 10:24:07 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.174 2023/05/09 19:43:12 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -145,7 +145,7 @@ IsValidInVarname(char c)
 	    c != '(' && c != '{' && c != ')' && c != '}';
 }
 
-static bool
+static void
 ForLoop_ParseVarnames(ForLoop *f, const char **pp)
 {
 	const char *p = *pp;
@@ -156,7 +156,8 @@ ForLoop_ParseVarnames(ForLoop *f, const char **pp)
 		cpp_skip_whitespace(&p);
 		if (*p == '\0') {
 			Parse_Error(PARSE_FATAL, "missing `in' in for");
-			return false;
+			f->vars.len = 0;
+			return;
 		}
 
 		for (len = 0; p[len] != '\0' && !ch_isspace(p[len]); len++) {
@@ -165,7 +166,8 @@ ForLoop_ParseVarnames(ForLoop *f, const char **pp)
 				    "invalid character '%c' "
 				    "in .for loop variable name",
 				    p[len]);
-				return false;
+				f->vars.len = 0;
+				return;
 			}
 		}
 
@@ -180,11 +182,10 @@ ForLoop_ParseVarnames(ForLoop *f, const char **pp)
 
 	if (f->vars.len == 0) {
 		Parse_Error(PARSE_FATAL, "no iteration variables in for");
-		return false;
+		return;
 	}
 
 	*pp = p;
-	return true;
 }
 
 static bool
@@ -253,11 +254,8 @@ For_Eval(const char *line)
 		p += 3;
 
 		f = ForLoop_New();
-		if (!ForLoop_ParseVarnames(f, &p)) {
-			ForLoop_Free(f);
-			return -1;
-		}
-		if (!ForLoop_ParseItems(f, p))
+		ForLoop_ParseVarnames(f, &p);
+		if (f->vars.len > 0 && !ForLoop_ParseItems(f, p))
 			f->items.len = 0;	/* don't iterate */
 
 		accumFor = f;
