@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.155 2023/05/09 12:49:00 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.156 2023/05/09 13:14:14 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.155 2023/05/09 12:49:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.156 2023/05/09 13:14:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1369,7 +1369,7 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc == NULL)
 		return ENXIO;
 	if (sc->sc_state != DKW_STATE_RUNNING &&
-	    sc->sc_satte != DKW_STATE_DYING)
+	    sc->sc_state != DKW_STATE_DYING)
 		return ENXIO;
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
