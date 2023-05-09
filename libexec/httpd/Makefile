@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2021/02/28 04:18:46 mrg Exp $
+#	$NetBSD: Makefile,v 1.32 2023/05/09 01:47:21 christos Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -32,6 +32,8 @@ MLINKS+=bozohttpd.8 httpd.8
 SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c lua-bozo.c
 SRCS+=	main.c
+
+COPTS.ssl-bozo.c+=-Wno-error=deprecated-declarations
 
 LDADD=	-lblocklist -lcrypt -llua -lm
 DPADD=	${LIBBLOCKLIST} ${LIBCRYPT} ${LIBLUA} ${LIBM}
