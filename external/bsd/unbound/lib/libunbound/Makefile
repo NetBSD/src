@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2021/03/15 20:15:36 christos Exp $
+# $NetBSD: Makefile,v 1.8 2023/05/09 14:31:55 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -106,6 +106,9 @@ MAN=libunbound.3
 CLEANFILES+=libunbound.3
 
 libunbound.3: libunbound.3.in __subst
+
+COPTS.keyraw.c+= -Wno-error=deprecated-declarations
+COPTS.net_help.c+= -Wno-error=deprecated-declarations
 
 .include <bsd.lib.mk>
 
