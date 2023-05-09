@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2021/03/05 17:47:16 christos Exp $
+#	$NetBSD: Makefile,v 1.35 2023/05/09 02:08:31 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -129,5 +129,20 @@ COPTS.umac.c+=		-O0
 
 COPTS.hostfile.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.sshkey.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.cipher.c+=	-Wno-error=deprecated-declarations
+COPTS.dh.c+=		-Wno-error=deprecated-declarations
+COPTS.kex.c+=		-Wno-error=deprecated-declarations
+COPTS.kexdh.c+=		-Wno-error=deprecated-declarations
+COPTS.kexecdh.c+=	-Wno-error=deprecated-declarations
+COPTS.kexgexc.c+=	-Wno-error=deprecated-declarations
+COPTS.ssh-dss.c+=	-Wno-error=deprecated-declarations
+COPTS.ssh-ecdsa-sk.c+=	-Wno-error=deprecated-declarations
+COPTS.ssh-ecdsa.c+=	-Wno-error=deprecated-declarations
+COPTS.ssh-pkcs11.c+=	-Wno-error=deprecated-declarations
+COPTS.ssh-rsa.c+=	-Wno-error=deprecated-declarations
+COPTS.sshbuf-getput-crypto.c+=	-Wno-error=deprecated-declarations
+COPTS.sshkey.c+=	-Wno-error=deprecated-declarations
+COPTS.umac.c+=		-Wno-error=deprecated-declarations
+COPTS.umac128.c+=	-Wno-error=deprecated-declarations
 
 .include <bsd.lib.mk>
