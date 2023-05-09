@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.154 2023/05/09 12:04:04 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.155 2023/05/09 12:49:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.154 2023/05/09 12:04:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.155 2023/05/09 12:49:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -91,8 +91,6 @@ struct dkwedge_softc {
 	struct callout	sc_restart_ch;	/* callout to restart I/O */
 
 	kmutex_t	sc_iolock;
-	kcondvar_t	sc_dkdrn;
-	u_int		sc_iopend;	/* I/Os pending */
 	bool		sc_iostop;	/* don't schedule restart */
 	int		sc_mode;	/* parent open mode */
 };
@@ -195,21 +193,6 @@ dkwedge_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-}
-
-/*
- * dkwedge_wait_drain:
- *
- *	Wait for I/O on the wedge to drain.
- */
-static void
-dkwedge_wait_drain(struct dkwedge_softc *sc)
-{
-
-	mutex_enter(&sc->sc_iolock);
-	while (sc->sc_iopend != 0)
-		cv_wait(&sc->sc_dkdrn, &sc->sc_iolock);
-	mutex_exit(&sc->sc_iolock);
 }
 
 /*
@@ -441,7 +424,6 @@ dkwedge_add(struct dkwedge_info *dkw)
 	callout_setfunc(&sc->sc_restart_ch, dkrestart, sc);
 
 	mutex_init(&sc->sc_iolock, MUTEX_DEFAULT, IPL_BIO);
-	cv_init(&sc->sc_dkdrn, "dkdrn");
 
 	/*
 	 * Wedge will be added; increment the wedge count for the parent.
@@ -484,7 +466,6 @@ dkwedge_add(struct dkwedge_info *dkw)
 	}
 	mutex_exit(&pdk->dk_openlock);
 	if (error) {
-		cv_destroy(&sc->sc_dkdrn);
 		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
 		dkwedge_size_fini(sc);
@@ -542,7 +523,6 @@ dkwedge_add(struct dkwedge_info *dkw)
 		LIST_REMOVE(sc, sc_plink);
 		mutex_exit(&pdk->dk_openlock);
 
-		cv_destroy(&sc->sc_dkdrn);
 		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
 		dkwedge_size_fini(sc);
@@ -572,7 +552,6 @@ dkwedge_add(struct dkwedge_info *dkw)
 		LIST_REMOVE(sc, sc_plink);
 		mutex_exit(&pdk->dk_openlock);
 
-		cv_destroy(&sc->sc_dkdrn);
 		mutex_destroy(&sc->sc_iolock);
 		bufq_free(sc->sc_bufq);
 		dkwedge_size_fini(sc);
@@ -710,14 +689,6 @@ dkwedge_detach(device_t self, int flags)
 	mutex_exit(&sc->sc_iolock);
 	callout_halt(&sc->sc_restart_ch, NULL);
 
-	/*
-	 * dkstart() will kill any queued buffers now that the
-	 * state of the wedge is not RUNNING.  Once we've done
-	 * that, wait for any other pending I/O to complete.
-	 */
-	dkstart(sc);
-	dkwedge_wait_drain(sc);
-
 	/* Locate the wedge major numbers. */
 	bmaj = bdevsw_lookup_major(&dk_bdevsw);
 	cmaj = cdevsw_lookup_major(&dk_cdevsw);
@@ -763,7 +734,6 @@ dkwedge_detach(device_t self, int flags)
 	rw_exit(&dkwedges_lock);
 
 	mutex_destroy(&sc->sc_iolock);
-	cv_destroy(&sc->sc_dkdrn);
 	dkwedge_size_fini(sc);
 
 	free(sc, M_DKWEDGE);
@@ -1484,7 +1454,6 @@ dkstrategy(struct buf *bp)
 
 	/* Place it in the queue and start I/O on the unit. */
 	mutex_enter(&sc->sc_iolock);
-	sc->sc_iopend++;
 	disk_wait(&sc->sc_dk);
 	bufq_put(sc->sc_bufq, bp);
 	mutex_exit(&sc->sc_iolock);
@@ -1514,8 +1483,6 @@ dkstart(struct dkwedge_softc *sc)
 	while ((bp = bufq_peek(sc->sc_bufq)) != NULL) {
 		if (sc->sc_iostop) {
 			(void) bufq_get(sc->sc_bufq);
-			if (--sc->sc_iopend == 0)
-				cv_broadcast(&sc->sc_dkdrn);
 			mutex_exit(&sc->sc_iolock);
 			bp->b_error = ENXIO;
 			bp->b_resid = bp->b_bcount;
@@ -1601,9 +1568,6 @@ dkiodone(struct buf *bp)
 	putiobuf(bp);
 
 	mutex_enter(&sc->sc_iolock);
-	if (--sc->sc_iopend == 0)
-		cv_broadcast(&sc->sc_dkdrn);
-
 	disk_unbusy(&sc->sc_dk, obp->b_bcount - obp->b_resid,
 	    obp->b_flags & B_READ);
 	mutex_exit(&sc->sc_iolock);
