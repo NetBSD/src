@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1052 2023/05/09 20:53:23 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1053 2023/05/09 21:24:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1052 2023/05/09 20:53:23 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1053 2023/05/09 21:24:56 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2862,8 +2862,12 @@ ApplyModifier_Mtime(const char **pp, ModChain *ch)
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
 	if (stat(Expr_Str(expr), &st) < 0) {
-		if (error)
-			return AMR_BAD;
+		if (error) {
+			Parse_Error(PARSE_FATAL,
+			    "Cannot determine mtime for '%s': %s",
+			    Expr_Str(expr), strerror(errno));
+			return AMR_CLEANUP;
+		}
 		if (i < 0)
 			time(&st.st_mtime);
 		else
