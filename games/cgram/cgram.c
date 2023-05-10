@@ -1,4 +1,4 @@
-/* $NetBSD: cgram.c,v 1.29 2022/06/12 14:59:44 rillig Exp $ */
+/* $NetBSD: cgram.c,v 1.30 2023/05/10 12:30:27 rillig Exp $ */
 
 /*-
  * Copyright (c) 2013, 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.c,v 1.29 2022/06/12 14:59:44 rillig Exp $");
+__RCSID("$NetBSD: cgram.c,v 1.30 2023/05/10 12:30:27 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -488,21 +488,22 @@ handle_key(void)
 {
 	int ch = getch();
 
+#define CTRL(letter) (letter - 64)
 	switch (ch) {
-	case 1:			/* ^A */
+	case CTRL('A'):
 	case KEY_BEG:
 	case KEY_HOME:
 		cursor_x = 0;
 		break;
-	case 2:			/* ^B */
+	case CTRL('B'):
 	case KEY_LEFT:
 		go_left();
 		break;
-	case 5:			/* ^E */
+	case CTRL('E'):
 	case KEY_END:
 		cursor_x = cur_max_x();
 		break;
-	case 6:			/* ^F */
+	case CTRL('F'):
 	case KEY_RIGHT:
 		go_right();
 		break;
@@ -515,14 +516,14 @@ handle_key(void)
 	case '\n':
 		go_to_next_line();
 		break;
-	case 12:		/* ^L */
+	case CTRL('L'):
 		clear();
 		break;
-	case 14:		/* ^N */
+	case CTRL('N'):
 	case KEY_DOWN:
 		cursor_y++;
 		break;
-	case 16:		/* ^P */
+	case CTRL('P'):
 	case KEY_UP:
 		cursor_y--;
 		break;
