@@ -26,7 +26,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 27, 2010
+.Dd May 10, 2023
 .Dt ATF-CHECK 1
 .Os
 .Sh NAME
@@ -39,14 +39,11 @@
 .Op Fl e Ar action:arg ...
 .Op Fl x
 .Ar command
-.Nm
-.Fl h
 .Sh DESCRIPTION
 .Nm
 executes a given command and analyzes its results, including
 exit code, stdout and stderr.
 .Pp
-In the first synopsis form,
 .Nm
 will execute the provided command and apply checks specified
 by arguments.
@@ -61,14 +58,8 @@ Multiple checks for the same output channel are allowed and, if specified,
 their results will be combined as a logical and (meaning that the output must
 match all the provided checks).
 .Pp
-In the second synopsis form,
-.Nm
-will print information about all supported options and their purpose.
-.Pp
 The following options are available:
 .Bl -tag  -width XqualXvalueXX
-.It Fl h
-Shows a short summary of all available options and their purpose.
 .It Fl s Ar qual:value
 Analyzes termination status.
 Must be one of:
