@@ -1,4 +1,4 @@
-/*	$NetBSD: wmi_acpi.c,v 1.20 2021/12/12 22:20:52 andvar Exp $	*/
+/*	$NetBSD: wmi_acpi.c,v 1.21 2023/05/10 00:08:22 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.20 2021/12/12 22:20:52 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmi_acpi.c,v 1.21 2023/05/10 00:08:22 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -126,17 +126,18 @@ static int
 acpi_wmi_detach(device_t self, int flags)
 {
 	struct acpi_wmi_softc *sc = device_private(self);
+	int error;
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	acpi_wmi_event_del(sc);
 
 	if (sc->sc_ecdev != NULL) {
-
 		(void)AcpiRemoveAddressSpaceHandler(sc->sc_node->ad_handle,
 		    ACPI_ADR_SPACE_EC, acpi_wmi_ec_handler);
 	}
-
-	if (sc->sc_child != NULL)
-		(void)config_detach(sc->sc_child, flags);
 
 	acpi_wmi_del(sc);
 	pmf_device_deregister(self);
