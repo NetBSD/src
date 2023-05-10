@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.23 2021/08/07 16:19:10 thorpej Exp $ */
+/* $NetBSD: gpiosim.c,v 1.24 2023/05/10 00:09:39 riastradh Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -149,10 +149,12 @@ static int
 gpiosim_detach(device_t self, int flags)
 {
 	struct gpiosim_softc *sc = device_private(self);
+	int error;
 
 	/* Detach the gpio driver that attached here */
-	if (sc->sc_gdev != NULL)
-		config_detach(sc->sc_gdev, 0);
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
 	if (sc->sc_log != NULL) {
