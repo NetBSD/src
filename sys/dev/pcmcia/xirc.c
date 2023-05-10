@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.38 2021/08/07 16:19:15 thorpej Exp $	*/
+/*	$NetBSD: xirc.c,v 1.39 2023/05/10 00:12:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.38 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.39 2023/05/10 00:12:20 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -396,17 +396,11 @@ int
 xirc_detach(device_t self, int flags)
 {
 	struct xirc_softc *sc = device_private(self);
-	int rv;
+	int error;
 
-	if (sc->sc_ethernet != NULL) {
-		if ((rv = config_detach(sc->sc_ethernet, flags)) != 0)
-			return rv;
-	}
-
-	if (sc->sc_modem != NULL) {
-		if ((rv = config_detach(sc->sc_modem, flags)) != 0)
-			return rv;
-	}
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	/* Unmap our i/o windows. */
 	if (sc->sc_flags & XIRC_ETHERNET_MAPPED)
@@ -420,8 +414,7 @@ xirc_detach(device_t self, int flags)
 	if (sc->sc_flags & XIRC_MODEM_ALLOCED)
 		pcmcia_io_free(sc->sc_pf, &sc->sc_modem_pcioh);
 	sc->sc_flags = 0;
-
-	return (0);
+	return 0;
 }
 
 int
