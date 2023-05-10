@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.334 2023/05/09 20:14:27 sjg Exp $
+# $NetBSD: Makefile,v 1.335 2023/05/10 13:03:06 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -212,7 +212,6 @@ TESTS+=		export
 TESTS+=		export-all
 TESTS+=		export-env
 TESTS+=		export-variants
-TESTS+=		forloop
 TESTS+=		forsubst
 TESTS+=		gnode-submake
 TESTS+=		hanoi-include

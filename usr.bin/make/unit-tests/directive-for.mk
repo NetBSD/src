@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.19 2023/05/09 19:43:12 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.20 2023/05/10 13:03:06 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -60,7 +60,7 @@ WORDS+=	counted
 # A noticeable effect of this implementation technique is that the .for
 # iteration variables and the normal global variables live in separate
 # namespaces and do not influence each other.  The "scope" of the .for loop
-# variables is restricted to the current makefile, it does not each over to
+# variables is restricted to the current makefile, it does not reach over to
 # any included makefiles.
 var=	value before
 var2=	value before
@@ -160,24 +160,34 @@ EXPANSION${plus}=	value
 # expect-12: ][ ][ ][
 # expect-13: }{ }{ }{
 
-# As of 2020-10-25, the variable names may contain arbitrary characters,
-# except for whitespace.  This allows for creative side effects. Hopefully
-# nobody is misusing this "feature".
+# Before 2023-05-09, the variable names could contain arbitrary characters,
+# except for whitespace, allowing for creative side effects, as usual for
+# arbitrary code injection.
 var=	outer
 # expect+1: invalid character ':' in .for loop variable name
 .for var:Q in value "quoted"
 .  info <${var}> <${var:Q}> <${var:Q:Q}>
 .endfor
-# The short expression '$$' is preserved, the long expressions are
-# substituted.
+
+# Before 2023-05-09, when variable names could contain '$', the short
+# expression '$$' was preserved, the long expressions were substituted.
 # expect+1: invalid character '$' in .for loop variable name
 .for $ in value
 .  info <$$> <${$}> <$($)>
 .endfor
-# From https://gnats.netbsd.org/53146.
+
+
+# https://gnats.netbsd.org/53146 mentions the idea of using a dynamic
+# variable name in .for loops, based on some other variable.  The .for loops
+# are already tricky enough to understand in detail, even without this
+# possibility, therefore the variable names are restricted to using harmless
+# characters only.
+INDIRECT=	direct
 # expect+1: invalid character '$' in .for loop variable name
-.for $(FOO) in a b
-.  info <$(FOO)> <$(foo)> <$($(FOO))>
+.for $(INDIRECT) in value
+# If the variable name could be chosen dynamically, the iteration variable
+# might have been 'direct', thereby expanding the expression '${direct}'.
+.  info <$(INDIRECT)> <$(direct)> <$($(INDIRECT))>
 .endfor
 
 
@@ -286,3 +296,12 @@ var=	outer
 .    error
 .  endif
 .endfor
+
+
+# Since at least 1993, iteration stops at the first newline.
+# Back then, the .newline variable didn't exist, therefore it was unlikely
+# that a newline ever occurred.
+.for var in a${.newline}b${.newline}c
+.  info newline-item=(${var})
+.endfor
+# expect-2: newline-item=(a)
