@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_cfi.c,v 1.1 2011/08/02 03:38:48 cliff Exp $	*/
+/*	$NetBSD: ralink_cfi.c,v 1.2 2023/05/10 00:07:58 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_cfi.c,v 1.1 2011/08/02 03:38:48 cliff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_cfi.c,v 1.2 2023/05/10 00:07:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,14 +178,15 @@ static int
 ra_cfi_detach(device_t self, int flags)
 {
 	struct ra_cfi_softc *sc = device_private(self);
-	int rv = 0;
+	int error;
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
 
-	if (sc->sc_nordev != NULL)
-		rv = config_detach(sc->sc_nordev, flags);
-
 	bus_space_unmap(sc->sc_cfi.cfi_bst, sc->sc_cfi.cfi_bsh, sc->sc_size);
 
-	return rv;
+	return 0;
 }

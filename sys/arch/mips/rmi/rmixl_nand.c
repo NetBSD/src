@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_nand.c,v 1.7 2011/07/01 19:01:31 dyoung Exp $	*/
+/*	$NetBSD: rmixl_nand.c,v 1.8 2023/05/10 00:07:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.7 2011/07/01 19:01:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_nand.c,v 1.8 2023/05/10 00:07:58 riastradh Exp $");
 
 #include "opt_flash.h"
 
@@ -235,16 +235,17 @@ static int
 rmixl_nand_detach(device_t self, int flags)
 {
 	struct rmixl_nand_softc *sc = device_private(self);
-	int rv = 0;
+	int error;
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
 
-	if (sc->sc_nanddev != NULL)
-		rv = config_detach(sc->sc_nanddev, flags);
-
 	bus_space_unmap(sc->sc_iobus_bst, sc->sc_iobus_bsh, sc->sc_iobus_size);
 
-	return rv;
+	return 0;
 }
 
 static void
