@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.15 2022/03/28 12:44:17 riastradh Exp $	*/
+/*	$NetBSD: uts.c,v 1.16 2023/05/10 00:12:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.15 2022/03/28 12:44:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.16 2023/05/10 00:12:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -270,16 +270,17 @@ Static int
 uts_detach(device_t self, int flags)
 {
 	struct uts_softc *sc = device_private(self);
-	int rv = 0;
+	int error;
 
+	__USE(sc);
 	DPRINTF(("uts_detach: sc=%p flags=%d\n", sc, flags));
 
-	if (sc->sc_wsmousedev != NULL)
-		rv = config_detach(sc->sc_wsmousedev, flags);
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
-
-	return rv;
+	return 0;
 }
 
 Static void
