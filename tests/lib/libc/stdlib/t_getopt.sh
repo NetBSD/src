@@ -1,4 +1,4 @@
-# $NetBSD: t_getopt.sh,v 1.2 2023/02/20 15:47:56 christos Exp $
+# $NetBSD: t_getopt.sh,v 1.3 2023/05/10 23:44:15 gutteridge Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -66,7 +66,7 @@ getopt_body()
 }
 
 atf_test_case getopt_optval
-getopt_optval()
+getopt_optval_head()
 {
 	atf_set "descr" "Checks getopt(3) with optional value"
 }
