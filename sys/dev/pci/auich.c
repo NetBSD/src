@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.160 2021/02/06 09:45:17 isaki Exp $	*/
+/*	$NetBSD: auich.c,v 1.161 2023/05/10 00:11:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.160 2021/02/06 09:45:17 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.161 2023/05/10 00:11:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,10 +702,12 @@ static int
 auich_detach(device_t self, int flags)
 {
 	struct auich_softc *sc = device_private(self);
+	int error;
 
 	/* audio */
-	if (sc->sc_audiodev != NULL)
-		config_detach(sc->sc_audiodev, flags);
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	/* sysctl */
 	sysctl_teardown(&sc->sc_log);
