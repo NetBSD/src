@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.304 2023/04/16 20:46:16 nikita Exp $
+# $NetBSD: shl.mi,v 1.305 2023/05/10 15:52:07 christos Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -8,6 +8,7 @@
 ./usr/libdata/debug/lib/libcrypt.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libcrypto.so.12.0.debug			comp-sys-debug	debug,dynamicroot,openssl=10
 ./usr/libdata/debug/lib/libcrypto.so.14.1.debug			comp-sys-debug	debug,dynamicroot,openssl=11
+./usr/libdata/debug/lib/libcrypto.so.15.0.debug			comp-sys-debug	debug,dynamicroot,openssl=30
 ./usr/libdata/debug/lib/libdevmapper.so.1.0.debug		comp-sys-debug	debug,dynamicroot,lvm
 ./usr/libdata/debug/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libedit.so.3.1.debug			comp-sys-debug	debug,dynamicroot
@@ -92,6 +93,7 @@
 ./usr/libdata/debug/usr/lib/libcrypt.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libcrypto.so.12.0.debug		comp-crypto-debug	debug,compatfile,openssl=10
 ./usr/libdata/debug/usr/lib/libcrypto.so.14.1.debug		comp-crypto-debug	debug,compatfile,openssl=11
+./usr/libdata/debug/usr/lib/libcrypto.so.15.0.debug		comp-crypto-debug	debug,compatfile,openssl=30
 ./usr/libdata/debug/usr/lib/libcrypto_idea.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_mdc2.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_rc5.so.12.0.debug		comp-obsolete	debug,compatfile,obsolete
@@ -104,6 +106,7 @@
 ./usr/libdata/debug/usr/lib/libcurses.so.9.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libdes.so.12.0.debug			comp-crypto-debug	debug,compatfile,openssl=10
 ./usr/libdata/debug/usr/lib/libdes.so.14.0.debug			comp-crypto-debug	debug,compatfile,openssl=11
+./usr/libdata/debug/usr/lib/libdes.so.15.0.debug			comp-crypto-debug	debug,compatfile,openssl=30
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug		comp-lvm-debug	debug,compatfile,lvm
 ./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libdns.so.19.0.debug 		comp-bind-debug debug,compatfile
@@ -316,6 +319,7 @@
 ./usr/libdata/debug/usr/lib/libssh.so.44.0.debug		comp-secsh-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssl.so.12.0.debug		comp-crypto-debug	debug,compatfile,openssl=10
 ./usr/libdata/debug/usr/lib/libssl.so.14.0.debug		comp-crypto-debug	debug,compatfile,openssl=11
+./usr/libdata/debug/usr/lib/libssl.so.15.0.debug		comp-crypto-debug	debug,compatfile,openssl=30
 ./usr/libdata/debug/usr/lib/libstdc++.so.9.0.debug		comp-sys-debug	debug,compatfile,gcc=9,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.9.0.debug		comp-sys-debug	debug,compatfile,gcc=10,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,obsolete,compatfile

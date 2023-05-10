@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.287 2022/01/09 18:11:09 martin Exp $
+# $NetBSD: md.amd64,v 1.288 2023/05/10 15:52:07 christos Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -11,6 +11,10 @@
 ./usr/lib/i386/libproc.so.1.0			base-compat-shlib	compat,pic,dtrace
 ./usr/lib/i386/librtld_db.so.0			base-compat-shlib	compat,pic,dtrace
 ./usr/lib/i386/librtld_db.so.0.0		base-compat-shlib	compat,pic,dtrace
+./usr/lib/i386/openssl				base-crypto-usr
+./usr/lib/i386/openssl/engines			base-crypto-usr
+./usr/lib/i386/openssl/modules			base-crypto-usr
+./usr/lib/i386/openssl/modules/legacy.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/lib/libtsan.so				base-sys-shlib		cxx,gcc=9
 ./usr/lib/libtsan.so.1				base-sys-shlib		cxx,gcc=9
 ./usr/lib/libtsan.so.1.0			base-sys-shlib		cxx,gcc=9
