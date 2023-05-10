@@ -1,4 +1,4 @@
-# $NetBSD: varmod-gmtime.mk,v 1.13 2023/05/09 16:31:41 rillig Exp $
+# $NetBSD: varmod-gmtime.mk,v 1.14 2023/05/10 15:53:32 rillig Exp $
 #
 # Tests for the :gmtime variable modifier, which formats a timestamp
 # using strftime(3) in UTC.
@@ -129,7 +129,7 @@
 .endif
 
 # Before var.c 1.1050 from 2023-05-09, the timestamp could be directly
-# followed by the next modifier, without a ':' separator.  This is the same
+# followed by the next modifier, without a ':' separator.  This was the same
 # bug as for the ':L' and ':P' modifiers.
 .if ${%Y:L:gmtime=100000S,1970,bad,} != "bad"
 .  error
