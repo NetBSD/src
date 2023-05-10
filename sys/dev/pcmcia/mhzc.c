@@ -1,4 +1,4 @@
-/*	$NetBSD: mhzc.c,v 1.55 2023/01/20 01:35:03 msaitoh Exp $	*/
+/*	$NetBSD: mhzc.c,v 1.56 2023/05/10 00:12:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.55 2023/01/20 01:35:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mhzc.c,v 1.56 2023/05/10 00:12:05 riastradh Exp $");
 
 #include "opt_inet.h"
 
@@ -334,17 +334,11 @@ int
 mhzc_detach(device_t self, int flags)
 {
 	struct mhzc_softc *sc = device_private(self);
-	int rv;
+	int error;
 
-	if (sc->sc_ethernet != NULL) {
-		if ((rv = config_detach(sc->sc_ethernet, flags)) != 0)
-			return rv;
-	}
-
-	if (sc->sc_modem != NULL) {
-		if ((rv = config_detach(sc->sc_modem, flags)) != 0)
-			return rv;
-	}
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	/* Unmap our i/o windows. */
 	if (sc->sc_flags & MHZC_MODEM_MAPPED)
