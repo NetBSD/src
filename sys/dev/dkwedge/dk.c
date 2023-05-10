@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.156 2023/05/09 13:14:14 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.157 2023/05/10 23:08:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.156 2023/05/09 13:14:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.157 2023/05/10 23:08:24 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1266,12 +1266,22 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 		error = dkfirstopen(sc, flags);
 		if (error)
 			goto out;
-	}
-	KASSERT(sc->sc_mode != 0);
-	if (flags & ~sc->sc_mode & FWRITE) {
+	} else if (flags & ~sc->sc_mode & FWRITE) {
+		/*
+		 * The parent is already open, but the previous attempt
+		 * to open it read/write failed and fell back to
+		 * read-only.  In that case, we assume the medium is
+		 * read-only and fail to open the wedge read/write.
+		 */
 		error = EROFS;
 		goto out;
 	}
+	KASSERT(sc->sc_mode != 0);
+	KASSERTMSG(sc->sc_mode & FREAD, "%s: sc_mode=%x",
+	    device_xname(sc->sc_dev), sc->sc_mode);
+	KASSERTMSG((flags & FWRITE) ? (sc->sc_mode & FWRITE) : 1,
+	    "%s: flags=%x sc_mode=%x",
+	    device_xname(sc->sc_dev), flags, sc->sc_mode);
 	if (fmt == S_IFCHR)
 		sc->sc_dk.dk_copenmask |= 1;
 	else
