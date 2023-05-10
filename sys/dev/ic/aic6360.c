@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6360.c,v 1.106 2023/04/05 21:46:09 andvar Exp $	*/
+/*	$NetBSD: aic6360.c,v 1.107 2023/05/10 00:10:35 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Charles M. Hannum.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.106 2023/04/05 21:46:09 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6360.c,v 1.107 2023/05/10 00:10:35 riastradh Exp $");
 
 #include "opt_ddb.h"
 
@@ -301,13 +301,13 @@ aicattach(struct aic_softc *sc)
 int
 aic_detach(device_t self, int flags)
 {
-	struct aic_softc *sc = device_private(self);
-	int rv = 0;
+	int error;
 
-	if (sc->sc_child != NULL)
-		rv = config_detach(sc->sc_child, flags);
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
-	return (rv);
+	return 0;
 }
 
 /* Initialize AIC6360 chip itself
