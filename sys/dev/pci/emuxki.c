@@ -1,4 +1,4 @@
-/*	$NetBSD: emuxki.c,v 1.76 2022/09/07 03:34:43 khorben Exp $	*/
+/*	$NetBSD: emuxki.c,v 1.77 2023/05/10 00:11:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.76 2022/09/07 03:34:43 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emuxki.c,v 1.77 2023/05/10 00:11:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -483,11 +483,12 @@ unmap:
 static int
 emuxki_detach(device_t self, int flags)
 {
-	struct emuxki_softc *sc;
+	struct emuxki_softc *sc = device_private(self);
+	int error;
 
-	sc = device_private(self);
-	if (sc->sc_audev != NULL) /* Test in case audio didn't attach */
-		config_detach(sc->sc_audev, 0);
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	/* All voices should be stopped now but add some code here if not */
 	emuxki_writeio_4(sc, EMU_HCFG,
