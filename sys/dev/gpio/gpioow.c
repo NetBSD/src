@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.19 2021/08/07 16:19:10 thorpej Exp $ */
+/* $NetBSD: gpioow.c,v 1.20 2023/05/10 00:09:31 riastradh Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.19 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.20 2023/05/10 00:09:31 riastradh Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -162,16 +162,15 @@ static int
 gpioow_detach(device_t self, int flags)
 {
 	struct gpioow_softc *sc = device_private(self);
-	int rv = 0;
+	int error;
 
-	if (sc->sc_ow_dev != NULL)
-		rv = config_detach(sc->sc_ow_dev, flags);
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
-	if (!rv) {
-		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
-		pmf_device_deregister(self);
-	}
-	return rv;
+	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
+	pmf_device_deregister(self);
+	return 0;
 }
 
 static int
