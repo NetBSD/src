@@ -1,4 +1,4 @@
-/*	$NetBSD: nandemulator.c,v 1.9 2019/10/01 18:00:08 chs Exp $	*/
+/*	$NetBSD: nandemulator.c,v 1.10 2023/05/10 00:11:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.9 2019/10/01 18:00:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nandemulator.c,v 1.10 2023/05/10 00:11:16 riastradh Exp $");
 
 /* XXX this code likely needs work */
 
@@ -281,20 +281,19 @@ static int
 nandemulator_detach(device_t self, int flags)
 {
 	struct nandemulator_softc *sc = device_private(self);
-	int ret = 0;
+	int error;
 
 	aprint_normal_dev(sc->sc_dev, "detaching emulator\n");
 
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
+
 	pmf_device_deregister(sc->sc_dev);
-
-	if (sc->sc_nanddev != NULL)
-		ret = config_detach(sc->sc_nanddev, flags);
-
 	kmem_free(sc->sc_backend, sc->sc_backend_size);
 	kmem_free(sc->sc_parameter_page,
 	    sizeof(struct onfi_parameter_page) * 4);
-
-	return ret;
+	return 0;
 }
 
 /**
