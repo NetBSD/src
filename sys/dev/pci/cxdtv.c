@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.20 2021/08/07 16:19:14 thorpej Exp $ */
+/* $NetBSD: cxdtv.c,v 1.21 2023/05/10 00:11:32 riastradh Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.20 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.21 2023/05/10 00:11:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -89,7 +89,7 @@ static int	cxdtv_risc_buffer(struct cxdtv_softc *, uint32_t, uint32_t);
 static int	cxdtv_risc_field(struct cxdtv_softc *, uint32_t *, uint32_t);
 
 static int     cxdtv_mpeg_attach(struct cxdtv_softc *);
-static int     cxdtv_mpeg_detach(struct cxdtv_softc *, int flags);
+static void    cxdtv_mpeg_detach(struct cxdtv_softc *, int flags);
 static int     cxdtv_mpeg_intr(struct cxdtv_softc *);
 static int     cxdtv_mpeg_reset(struct cxdtv_softc *);
 
@@ -268,9 +268,11 @@ cxdtv_detach(device_t self, int flags)
 	struct cxdtv_softc *sc = device_private(self);
 	int error;
 
-	error = cxdtv_mpeg_detach(sc, flags);
+	error = config_detach_children(self, flags);
 	if (error)
 		return error;
+
+	cxdtv_mpeg_detach(sc, flags);
 
 	if (sc->sc_ih)
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
@@ -464,16 +466,9 @@ cxdtv_mpeg_attach(struct cxdtv_softc *sc)
 	return (sc->sc_dtvdev != NULL);
 }
 
-int
+void
 cxdtv_mpeg_detach(struct cxdtv_softc *sc, int flags)
 {
-	int error = 0;
-
-	if (sc->sc_dtvdev) {
-		error = config_detach(sc->sc_dtvdev, flags);
-		if (error)
-			return error;
-	}
 
 	if (sc->sc_demod) {
 		switch (sc->sc_board->cb_demod) {
@@ -504,8 +499,6 @@ cxdtv_mpeg_detach(struct cxdtv_softc *sc, int flags)
 		sc->sc_riscbuf = NULL;
 		sc->sc_riscbufsz = 0;
 	}
-
-	return error;
 }
 
 static void
