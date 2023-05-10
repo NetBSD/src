@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2023/05/07 20:06:19 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2023/05/10 02:23:56 christos Exp $
 
 # the makefile is not, and should not be visited during normal build process.
 # try to use latest pod2man, which comes with the latest perl.
@@ -20,7 +20,10 @@ make-manpages:
 		1) if [ "$$fn" = "openssl" ]; then \
 			dst=$$fn.$$sec; \
 		   else \
-			dst=openssl_$$fn.$$sec; \
+			case $$fn \
+			openssl*) dst=$$fn.$$sec;; \
+			*) dst=openssl_$$fn.$$sec;; \
+			eaac; \\
 		   fi;; \
 		*) dst=$$fn.$$sec;; \
 		esac; \
