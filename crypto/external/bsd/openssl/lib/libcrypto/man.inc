@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.15 2023/05/07 20:06:17 christos Exp $
+#	$NetBSD: man.inc,v 1.16 2023/05/10 02:23:56 christos Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -721,8 +721,12 @@ openssl-core.h.7 \
 openssl-core_dispatch.h.7 \
 openssl-core_names.h.7 \
 openssl-env.7 \
+openssl-format-options.1 \
 openssl-glossary.7 \
+openssl-namedisplay-options.1 \
+openssl-passphrase-options.1 \
 openssl-threads.7 \
+openssl-verification-options.1 \
 openssl.1 \
 openssl.cnf.5 \
 openssl_CA.pl.1 \
@@ -752,10 +756,6 @@ openssl_genrsa.1 \
 openssl_list.1 \
 openssl_nseq.1 \
 openssl_ocsp.1 \
-openssl_openssl-format-options.1 \
-openssl_openssl-namedisplay-options.1 \
-openssl_openssl-passphrase-options.1 \
-openssl_openssl-verification-options.1 \
 openssl_passwd.1 \
 openssl_pkcs12.1 \
 openssl_pkcs7.1 \
