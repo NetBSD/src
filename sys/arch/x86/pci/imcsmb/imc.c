@@ -1,4 +1,4 @@
-/* $NetBSD: imc.c,v 1.5 2022/09/28 10:09:48 msaitoh Exp $ */
+/* $NetBSD: imc.c,v 1.6 2023/05/10 00:07:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.5 2022/09/28 10:09:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imc.c,v 1.6 2023/05/10 00:07:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -259,16 +259,11 @@ imc_rescan(device_t self, const char *ifattr, const int *locs)
 static int
 imc_detach(device_t self, int flags)
 {
-	struct imc_softc *sc = device_private(self);
-	int i, error;
+	int error;
 
-	for (i = 0; i < 2; i++) {
-		if (sc->sc_smbchild[i] != NULL) {
-			error = config_detach(sc->sc_smbchild[i], flags);     
-			if (error)
-				return error;
-		}
-	}
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
 	return 0;
