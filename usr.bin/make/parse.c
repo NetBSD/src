@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.697 2023/05/10 15:57:16 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.698 2023/05/10 16:10:02 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.697 2023/05/10 15:57:16 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.698 2023/05/10 16:10:02 rillig Exp $");
 
 /*
  * A file being read.
@@ -384,8 +384,11 @@ PrintStackTrace(bool includingInnermost)
 		const char *fname = entry->name.str;
 		char dirbuf[MAXPATHLEN + 1];
 
-		if (fname[0] != '/' && strcmp(fname, "(stdin)") != 0)
-			fname = realpath(fname, dirbuf);
+		if (fname[0] != '/' && strcmp(fname, "(stdin)") != 0) {
+			const char *realPath = realpath(fname, dirbuf);
+			if (realPath != NULL)
+				fname = realPath;
+		}
 
 		if (entry->forLoop != NULL) {
 			char *details = ForLoop_Details(entry->forLoop);
