@@ -1,4 +1,4 @@
-/*	$NetBSD: opl.c,v 1.43 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: opl.c,v 1.44 2023/05/10 21:30:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.43 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl.c,v 1.44 2023/05/10 21:30:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,12 +192,13 @@ opl_attach(struct opl_softc *sc)
 int
 opl_detach(struct opl_softc *sc, int flags)
 {
-	int rv = 0;
+	int error;
 
-	if (sc->sc_mididev != NULL)
-		rv = config_detach(sc->sc_mididev, flags);
+	error = config_detach_children(sc->dev, flags);
+	if (error)
+		return error;
 
-	return(rv);
+	return 0;
 }
 
 static void
