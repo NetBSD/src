@@ -16,6 +16,7 @@ base-crypto-bin base-sys-usr
 base-crypto-examples base-sys-share
 base-crypto-root base-sys-root
 base-crypto-shlib base-sys-usr
+base-crypto-usr base-sys-usr
 base-cxx-usr base-c-usr
 base-debug-bin base-sys-usr
 base-dhcpd-bin base-sys-share
