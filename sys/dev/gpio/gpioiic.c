@@ -1,4 +1,4 @@
-/* $NetBSD: gpioiic.c,v 1.11 2021/08/07 16:19:10 thorpej Exp $ */
+/* $NetBSD: gpioiic.c,v 1.12 2023/05/10 00:08:30 riastradh Exp $ */
 /*	$OpenBSD: gpioiic.c,v 1.8 2008/11/24 12:12:12 mbalmer Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.11 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioiic.c,v 1.12 2023/05/10 00:08:30 riastradh Exp $");
 
 /*
  * I2C bus bit-banging through GPIO pins.
@@ -207,17 +207,16 @@ int
 gpioiic_detach(device_t self, int flags)
 {
 	struct gpioiic_softc *sc = device_private(self);
-	int rv = 0;
+	int error;
 
-	if (sc->sc_i2c_dev != NULL)
-		rv = config_detach(sc->sc_i2c_dev, flags);
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
-	if (!rv) {
-		iic_tag_fini(&sc->sc_i2c_tag);
-		gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
-		pmf_device_deregister(self);
-	}
-	return rv;
+	iic_tag_fini(&sc->sc_i2c_tag);
+	gpio_pin_unmap(sc->sc_gpio, &sc->sc_map);
+	pmf_device_deregister(self);
+	return 0;
 }
 
 int
