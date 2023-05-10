@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1053 2023/05/09 21:24:56 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1054 2023/05/10 18:22:33 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1053 2023/05/09 21:24:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1054 2023/05/10 18:22:33 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2833,49 +2833,69 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 	return AMR_OK;
 }
 
+struct ModifyWord_MtimeArgs {
+	bool error;
+	bool fallback;
+	ApplyModifierResult rc;
+	time_t t;
+};
+
+static void
+ModifyWord_Mtime(Substring word, SepBuf *buf, void *data)
+{
+	char tbuf[BUFSIZ];
+	struct stat st;
+	struct ModifyWord_MtimeArgs *args = data;
+
+	if (Substring_IsEmpty(word))
+		return;
+	assert(word.end[0] == '\0');	/* assume null-terminated word */
+	if (stat(word.start, &st) < 0) {
+		if (args->error) {
+			Parse_Error(PARSE_FATAL,
+			    "Cannot determine mtime for '%s': %s",
+			    word.start, strerror(errno));
+			args->rc = AMR_CLEANUP;
+			return;
+		}
+		if (args->fallback)
+			st.st_mtime = args->t;
+		else
+			time(&st.st_mtime);
+	}
+	snprintf(tbuf, sizeof(tbuf), "%u", (unsigned)st.st_mtime);
+	SepBuf_AddStr(buf, tbuf);
+}
+
 /* :mtime */
 static ApplyModifierResult
 ApplyModifier_Mtime(const char **pp, ModChain *ch)
 {
-	char buf[BUFSIZ];
-	Expr *expr = ch->expr;
-	const char *args, *mod = *pp;
-	struct stat st;
-	bool error = false;
-	int i = -1;
+	const char *p, *mod = *pp;
+	struct ModifyWord_MtimeArgs args;
 
 	if (!ModMatchEq(mod, "mtime", ch))
 		return AMR_UNKNOWN;
 	*pp += 5;
-	args = *pp;
-	if (args[0] == '=') {
-		args++;
-		if (!TryParseIntBase0(&args, &i)) {
-			if (strncmp(args, "error", 5) == 0) {
-				error = true;
-				args += 5;
+	p = *pp;
+	args.error = args.fallback = false;
+	args.rc = AMR_OK;
+	if (p[0] == '=') {
+		p++;
+		args.fallback = true;
+		if (!TryParseTime(&p, &args.t)) {
+			if (strncmp(p, "error", 5) == 0) {
+				args.error = true;
+				p += 5;
 			} else
 				return AMR_BAD;
 		}
-		*pp = args;
+		*pp = p;
 	}
 	if (!ModChain_ShouldEval(ch))
 		return AMR_OK;
-	if (stat(Expr_Str(expr), &st) < 0) {
-		if (error) {
-			Parse_Error(PARSE_FATAL,
-			    "Cannot determine mtime for '%s': %s",
-			    Expr_Str(expr), strerror(errno));
-			return AMR_CLEANUP;
-		}
-		if (i < 0)
-			time(&st.st_mtime);
-		else
-			st.st_mtime = (time_t)i;
-	}
-	snprintf(buf, sizeof(buf), "%u", (unsigned)st.st_mtime);
-	Expr_SetValueOwn(expr, bmake_strdup(buf));
-	return AMR_OK;
+	ModifyWords(ch, ModifyWord_Mtime, &args, ch->oneBigWord);
+	return args.rc;
 }
 
 static void
