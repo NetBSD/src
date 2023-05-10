@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.696 2023/02/15 06:52:58 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.697 2023/05/10 15:57:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -91,7 +91,7 @@
  *	Parse_Error	Report a parse error, a warning or an informational
  *			message.
  *
- *	Parse_MainName	Returns a list of the single main target to create.
+ *	Parse_MainName	Populate the list of targets to create.
  */
 
 #include <sys/types.h>
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.696 2023/02/15 06:52:58 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.697 2023/05/10 15:57:16 rillig Exp $");
 
 /*
  * A file being read.
@@ -241,10 +241,7 @@ SearchPath *defSysIncPath;	/* default for sysIncPath */
 
 /*
  * The parseKeywords table is searched using binary search when deciding
- * if a target or source is special. The 'spec' field is the ParseSpecial
- * type of the keyword (SP_NOT if the keyword isn't special as a target) while
- * the 'op' field is the operator to apply to the list of targets if the
- * keyword is used as a source ("0" if the keyword isn't special as a source)
+ * if a target or source is special.
  */
 static const struct {
 	const char name[17];
@@ -309,7 +306,7 @@ GetInclude(size_t i)
 	return Vector_Get(&includes, i);
 }
 
-/* The file that is currently being read. */
+/* The makefile that is currently being read. */
 static IncludedFile *
 CurFile(void)
 {
@@ -642,7 +639,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 
 	if (op == OP_DOUBLEDEP && (gn->type & OP_OPMASK) == OP_DOUBLEDEP) {
 		/*
-		 * If the node was of the left-hand side of a '::' operator,
+		 * If the node was on the left-hand side of a '::' operator,
 		 * we need to create a new instance of it for the children
 		 * and commands on this dependency line since each of these
 		 * dependency groups has its own attributes and commands,
@@ -2988,10 +2985,7 @@ Parse_End(void)
 }
 
 
-/*
- * Return a list containing the single main target to create.
- * If no such target exists, we Punt with an obnoxious error message.
- */
+/* Populate the list with the single main target to create, or error out. */
 void
 Parse_MainName(GNodeList *mainList)
 {
