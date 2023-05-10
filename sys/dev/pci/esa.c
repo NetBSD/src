@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.65 2019/06/08 08:02:38 isaki Exp $ */
+/* $NetBSD: esa.c,v 1.66 2023/05/10 00:11:49 riastradh Exp $ */
 
 /*
  * Copyright (c) 2001-2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.65 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.66 2023/05/10 00:11:49 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1100,14 +1100,12 @@ esa_childdet(device_t self, device_t child)
 static int
 esa_detach(device_t self, int flags)
 {
-	struct esa_softc *sc;
-	int i;
+	struct esa_softc *sc = device_private(self);
+	int error;
 
-	sc = device_private(self);
-	for (i = 0; i < ESA_NUM_VOICES; i++) {
-		if (sc->sc_audiodev[i] != NULL)
-			config_detach(sc->sc_audiodev[i], flags);
-	}
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	if (sc->sc_ih != NULL)
 		pci_intr_disestablish(sc->sc_pct, sc->sc_ih);
