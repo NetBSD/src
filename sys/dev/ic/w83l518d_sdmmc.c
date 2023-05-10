@@ -1,4 +1,4 @@
-/* $NetBSD: w83l518d_sdmmc.c,v 1.6 2021/08/07 16:19:12 thorpej Exp $ */
+/* $NetBSD: w83l518d_sdmmc.c,v 1.7 2023/05/10 00:11:08 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.6 2021/08/07 16:19:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: w83l518d_sdmmc.c,v 1.7 2023/05/10 00:11:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -191,13 +191,11 @@ wb_sdmmc_attach(struct wb_softc *wb)
 int
 wb_sdmmc_detach(struct wb_softc *wb, int flags)
 {
-	int rv;
+	int error;
 
-	if (wb->wb_sdmmc_dev) {
-		rv = config_detach(wb->wb_sdmmc_dev, flags);
-		if (rv)
-			return rv;
-	}
+	error = config_detach_children(wb->wb_dev, flags);
+	if (error)
+		return error;
 	wb_sdmmc_disable(wb);
 
 	callout_halt(&wb->wb_sdmmc_callout, NULL);
