@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.521 2023/05/09 15:51:33 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.522 2023/05/10 21:46:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.521 2023/05/09 15:51:33 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.522 2023/05/10 21:46:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -81,6 +81,7 @@ str_endswith(const char *haystack, const char *needle)
 	return nlen <= hlen &&
 	       memcmp(haystack + hlen - nlen, needle, nlen) == 0;
 }
+
 static const char *
 op_name(op_t op)
 {
@@ -98,9 +99,7 @@ width_in_bits(const type_t *tp)
 static bool
 ic_maybe_signed(const type_t *tp, const integer_constraints *ic)
 {
-
-	return !is_uinteger(tp->t_tspec) &&
-	    (ic->bclr & ((uint64_t)1 << 63)) == 0;
+	return !is_uinteger(tp->t_tspec) && ic->bclr >> 63 == 0;
 }
 
 static integer_constraints
@@ -4486,11 +4485,9 @@ check_array_index(tnode_t *tn, bool amper)
 	elsz /= CHAR_SIZE;
 
 	/* Change the unit of the index from bytes to element size. */
-	int64_t con;
-	if (is_uinteger(rn->tn_type->t_tspec))
-		con = (uint64_t)rn->tn_val->v_quad / elsz;
-	else
-		con = rn->tn_val->v_quad / elsz;
+	int64_t con = is_uinteger(rn->tn_type->t_tspec)
+	    ? (int64_t)((uint64_t)rn->tn_val->v_quad / elsz)
+	    : rn->tn_val->v_quad / elsz;
 
 	int dim = ln->tn_left->tn_type->t_dim + (amper ? 1 : 0);
 
