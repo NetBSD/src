@@ -30,7 +30,7 @@
 #define LBC_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3nandfcm.c,v 1.4 2020/07/06 10:22:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3nandfcm.c,v 1.5 2023/05/10 00:08:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,16 +111,17 @@ int
 pq3nandfcm_detach(device_t self, int flags)
 {
 	struct pq3nandfcm_softc * const sc = device_private(self);
-	int rv = 0;
+	int error;
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
 
-	if (sc->sc_nanddev != NULL)
-		rv = config_detach(sc->sc_nanddev, flags);
-
 	bus_space_unmap(sc->sc_window_bst, sc->sc_window_bsh,
 	    sc->sc_window_size);
-	return rv;
+	return 0;
 }
 void
 pq3nandfcm_command(device_t self, uint8_t command)
