@@ -1,4 +1,4 @@
-/* $NetBSD: unicode.h,v 1.1 2013/08/05 14:11:30 reinoud Exp $ */
+/* $NetBSD: unicode.h,v 1.2 2023/05/10 12:23:42 rillig Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -91,11 +91,10 @@ wget_utf8(const char **str, size_t *sz)
 	if (c == 0 || c > *sz) {
     decoding_error:
 		/*
-		 * The first character is in range 128-255 and doesn't
-		 * mark valid a valid UTF-8 sequence. There is not much
-		 * we can do with this, so handle by returning
-		 * the first character as if it would be a correctly
-		 * encoded ISO-8859-1 character.
+		 * The first character is in range 128-255 and doesn't mark a
+		 * valid UTF-8 sequence. There is not much we can do with
+		 * this, so handle by returning the first byte as if it were a
+		 * correctly encoded ISO-8859-1 character.
 		 */
 		c = 1;
 	}
