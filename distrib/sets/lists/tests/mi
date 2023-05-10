@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1259 2023/05/09 20:14:28 sjg Exp $
+# $NetBSD: mi,v 1.1260 2023/05/10 13:03:06 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5746,8 +5746,8 @@
 ./usr/tests/usr.bin/make/unit-tests/export-variants.mk				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/export.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/export.mk					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/forloop.exp					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/forloop.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/forloop.exp					tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/forloop.mk					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/make/unit-tests/forsubst.exp				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/forsubst.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/gnode-submake.exp				tests-usr.bin-tests	compattestfile,atf
