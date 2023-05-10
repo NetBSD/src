@@ -60,7 +60,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ismt/ismt.c 266474 2014-05-20 19:55:06Z jimharris $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.9 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.10 2023/05/10 00:11:57 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -623,16 +623,14 @@ ismt_bread(struct ismt_softc *sc, i2c_addr_t slave, i2c_op_t op, char cmd,
 static int
 ismt_detach(device_t self, int flags)
 {
-	struct ismt_softc	*sc;
-	int rv = 0;
+	struct ismt_softc *sc = device_private(self);
+	int error;
 
 	ISMT_DEBUG(self, "%s\n", __func__);
-	sc = device_private(self);
-	if (sc->smbdev != NULL) {
-		rv = config_detach(sc->smbdev, flags);
-		if (rv != 0)
-			return rv;
-	}
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
+
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 		sc->sc_ih = NULL;
@@ -653,7 +651,7 @@ ismt_detach(device_t self, int flags)
 		bus_space_unmap(sc->mmio_tag, sc->mmio_handle, sc->mmio_size);
 
 	iic_tag_fini(&sc->sc_i2c_tag);
-	return rv;
+	return 0;
 }
 
 static void
