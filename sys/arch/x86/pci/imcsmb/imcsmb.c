@@ -1,4 +1,4 @@
-/* $NetBSD: imcsmb.c,v 1.5 2021/08/07 16:19:08 thorpej Exp $ */
+/* $NetBSD: imcsmb.c,v 1.6 2023/05/10 00:07:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.5 2021/08/07 16:19:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imcsmb.c,v 1.6 2023/05/10 00:07:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -182,14 +182,12 @@ imcsmb_chdet(device_t self, device_t child)
 static int
 imcsmb_detach(device_t self, int flags)
 {
-	int error;
 	struct imcsmb_softc *sc = device_private(self);
+	int error;
 
-	if (sc->sc_smbus != NULL) {
-		error = config_detach(sc->sc_smbus, flags);
-		if (error)
-			return error;
-	}
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
 	iic_tag_fini(&sc->sc_i2c_tag);
