@@ -1,4 +1,4 @@
-/* $NetBSD: flash_cfi.c,v 1.4 2015/09/07 23:00:08 phx Exp $ */
+/* $NetBSD: flash_cfi.c,v 1.5 2023/05/10 00:08:14 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -32,7 +32,7 @@
  * NOR CFI driver support for sandpoint
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_cfi.c,v 1.4 2015/09/07 23:00:08 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_cfi.c,v 1.5 2023/05/10 00:08:14 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,16 +158,15 @@ sandpointcfi_attach(device_t parent, device_t self, void *aux)
 static int
 sandpointcfi_detach(device_t self, int flags)
 {
-	struct sandpointcfi_softc *sc;
-	int rv;
+	struct sandpointcfi_softc *sc device_private(self);
+	int error;
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
-	sc = device_private(self);
-	rv = 0;
-
-	if (sc->sc_nordev != NULL)
-		rv = config_detach(sc->sc_nordev, flags);
 
 	bus_space_unmap(sc->sc_cfi.cfi_bst, sc->sc_cfi.cfi_bsh, sc->sc_size);
-	return rv;
+	return 0;
 }
