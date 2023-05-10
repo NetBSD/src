@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3cfi.c,v 1.7 2020/07/06 10:22:44 rin Exp $	*/
+/*	$NetBSD: pq3cfi.c,v 1.8 2023/05/10 00:08:07 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.7 2020/07/06 10:22:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3cfi.c,v 1.8 2023/05/10 00:08:07 riastradh Exp $");
 
 #include "locators.h"
 
@@ -164,14 +164,15 @@ static int
 pq3cfi_detach(device_t self, int flags)
 {
 	struct pq3cfi_softc *sc = device_private(self);
-	int rv = 0;
+	int error;
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	pmf_device_deregister(self);
 
-	if (sc->sc_nordev != NULL)
-		rv = config_detach(sc->sc_nordev, flags);
-
 	bus_space_unmap(sc->sc_cfi.cfi_bst, sc->sc_cfi.cfi_bsh, sc->sc_size);
 
-	return rv;
+	return 0;
 }
