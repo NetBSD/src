@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.8 2021/08/07 16:19:16 thorpej Exp $ */
+/* $NetBSD: irmce.c,v 1.9 2023/05/10 00:12:28 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.8 2021/08/07 16:19:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.9 2023/05/10 00:12:28 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -255,11 +255,9 @@ irmce_detach(device_t self, int flags)
 	struct irmce_softc *sc = device_private(self);
 	int error;
 
-	if (sc->sc_cirdev) {
-		error = config_detach(sc->sc_cirdev, flags);
-		if (error)
-			return error;
-	}
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	if (sc->sc_bulkin_pipe) {
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
