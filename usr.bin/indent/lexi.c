@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.174 2023/05/11 10:51:34 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.175 2023/05/11 11:25:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.174 2023/05/11 10:51:34 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.175 2023/05/11 11:25:47 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -301,10 +301,6 @@ debug_ps_paren(const struct parser_state *prev_ps)
 static void
 debug_lexi(lexer_symbol lsym)
 {
-    /*
-     * Watch out for 'rolled back parser state' in the debug output; the
-     * differences around these are unreliable.
-     */
     static struct parser_state prev_ps;
 
     debug_println("");
@@ -316,8 +312,8 @@ debug_lexi(lexer_symbol lsym)
     debug_print_buf("comment", &com);
 
     debug_println("           ps.prev_token = %s", lsym_name(ps.prev_token));
-    debug_ps_bool(next_col_1);
     debug_ps_bool(curr_col_1);
+    debug_ps_bool(next_col_1);
     debug_ps_bool(next_unary);
     debug_ps_bool(is_function_definition);
     debug_ps_bool(want_blank);
@@ -342,11 +338,22 @@ debug_lexi(lexer_symbol lsym)
     debug_ps_bool(in_decl);
     debug_ps_int(just_saw_decl);
     debug_ps_bool(in_func_def_params);
+    // No debug output for in_enum.
     debug_ps_bool(decl_indent_done);
+    debug_ps_int(decl_ind);
+    // No debug output for di_stack.
+    debug_ps_bool(tabs_to_var);
 
     debug_ps_bool(in_stmt_or_decl);
     debug_ps_bool(in_stmt_cont);
     debug_ps_bool(is_case_label);
+    debug_ps_bool(seen_case);
+
+    // The debug output for the parser symbols is done in 'parse' instead.
+
+    // No debug output for hd.
+    debug_ps_bool(spaced_expr);
+    debug_ps_int(quest_level);
 
     prev_ps = ps;
 }

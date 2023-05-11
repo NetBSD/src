@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.114 2023/05/11 10:51:34 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.115 2023/05/11 11:25:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -330,6 +330,9 @@ extern struct parser_state {
     } in_enum;			/* enum { . } */
     bool decl_indent_done;	/* whether the indentation for a declaration
 				 * has been added to the code buffer. */
+    int decl_ind;		/* current indentation for declarations */
+    int di_stack[20];		/* a stack of structure indentation levels */
+    bool tabs_to_var;		/* true if using tabs to indent to var name */
 
     bool in_stmt_or_decl;	/* whether in a statement or a struct
 				 * declaration or a plain declaration */
@@ -338,11 +341,22 @@ extern struct parser_state {
 				 * middle of a statement */
     bool is_case_label;		/* 'case' and 'default' labels are indented
 				 * differently from regular labels */
+    bool seen_case;		/* set to true when we see a 'case', so we
+				 * know what to do with the following colon */
 
     int tos;			/* pointer to top of stack */
     parser_symbol s_sym[STACKSIZE];
     int s_ind_level[STACKSIZE];
     float s_case_ind_level[STACKSIZE];
+
+    stmt_head hd;		/* the type of statement for 'if (...)', 'for
+				 * (...)', etc */
+    bool spaced_expr;		/* whether we are in a parenthesized expression
+				 * that should be surrounded by spaces, such as
+				 * in 'if', 'while', 'switch'. */
+    int quest_level;		/* when this is positive, we have seen a '?'
+				 * without the matching ':' in a '?:'
+				 * expression */
 
     struct {
 	int comments;
