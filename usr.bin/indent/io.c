@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.153 2023/05/11 19:01:35 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.154 2023/05/11 19:14:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.153 2023/05/11 19:01:35 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.154 2023/05/11 19:14:54 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -56,13 +56,11 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 #include "indent.h"
 
 /*
- * The buffer 'inp' contains the current line, terminated with '\n'. The
- * current read position is inp.s, and inp.buf <= inp.s < inp.e holds.
+ * The current line, ready to be split into tokens, terminated with '\n'. The
+ * current read position is inp.s, and the invariant inp.buf <= inp.s < inp.e
+ * holds.
  */
-static struct {
-    struct buffer inp;		/* one line of input, ready to be split into
-				 * tokens */
-} inbuf;
+static struct buffer inp;
 
 static int paren_indent;
 
@@ -70,51 +68,51 @@ static int paren_indent;
 void
 inp_init(void)
 {
-    inbuf.inp.buf = xmalloc(10);
-    inbuf.inp.l = inbuf.inp.buf + 8;
-    inbuf.inp.s = inbuf.inp.buf;
-    inbuf.inp.e = inbuf.inp.buf;
+    inp.buf = xmalloc(10);
+    inp.l = inp.buf + 8;
+    inp.s = inp.buf;
+    inp.e = inp.buf;
 }
 
 const char *
 inp_p(void)
 {
-    assert(inbuf.inp.s < inbuf.inp.e);
-    return inbuf.inp.s;
+    assert(inp.s < inp.e);
+    return inp.s;
 }
 
 const char *
 inp_line_start(void)
 {
-    return inbuf.inp.buf;
+    return inp.buf;
 }
 
 const char *
 inp_line_end(void)
 {
-    return inbuf.inp.e;
+    return inp.e;
 }
 
 char
 inp_peek(void)
 {
-    assert(inbuf.inp.s < inbuf.inp.e);
-    return *inbuf.inp.s;
+    assert(inp.s < inp.e);
+    return *inp.s;
 }
 
 char
 inp_lookahead(size_t i)
 {
-    assert(i < (size_t)(inbuf.inp.e - inbuf.inp.s));
-    return inbuf.inp.s[i];
+    assert(i < (size_t)(inp.e - inp.s));
+    return inp.s[i];
 }
 
 void
 inp_skip(void)
 {
-    assert(inbuf.inp.s < inbuf.inp.e);
-    inbuf.inp.s++;
-    if (inbuf.inp.s >= inbuf.inp.e)
+    assert(inp.s < inp.e);
+    inp.s++;
+    if (inp.s >= inp.e)
 	inp_read_line();
 }
 
@@ -129,22 +127,22 @@ inp_next(void)
 static void
 inp_add(char ch)
 {
-    if (inbuf.inp.e >= inbuf.inp.l) {
-	size_t new_size = (size_t)(inbuf.inp.l - inbuf.inp.buf) * 2 + 10;
-	size_t offset = (size_t)(inbuf.inp.e - inbuf.inp.buf);
-	inbuf.inp.buf = xrealloc(inbuf.inp.buf, new_size);
-	inbuf.inp.s = inbuf.inp.buf;
-	inbuf.inp.e = inbuf.inp.buf + offset;
-	inbuf.inp.l = inbuf.inp.buf + new_size - 2;
+    if (inp.e >= inp.l) {
+	size_t new_size = (size_t)(inp.l - inp.buf) * 2 + 10;
+	size_t offset = (size_t)(inp.e - inp.buf);
+	inp.buf = xrealloc(inp.buf, new_size);
+	inp.s = inp.buf;
+	inp.e = inp.buf + offset;
+	inp.l = inp.buf + new_size - 2;
     }
-    *inbuf.inp.e++ = ch;
+    *inp.e++ = ch;
 }
 
 static void
 inp_read_next_line(FILE *f)
 {
-    inbuf.inp.s = inbuf.inp.buf;
-    inbuf.inp.e = inbuf.inp.buf;
+    inp.s = inp.buf;
+    inp.e = inp.buf;
 
     for (;;) {
 	int ch = getc(f);
@@ -414,7 +412,7 @@ parse_indent_comment(void)
 {
     bool on;
 
-    const char *p = inbuf.inp.buf;
+    const char *p = inp.buf;
 
     skip_blank(&p);
     if (!skip_string(&p, "/*"))
@@ -449,5 +447,5 @@ inp_read_line(void)
     parse_indent_comment();
 
     if (inhibit_formatting)
-	output_range(inbuf.inp.s, inbuf.inp.e);
+	output_range(inp.s, inp.e);
 }
