@@ -1,8 +1,8 @@
-/* $NetBSD: opt_bap_sob.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_bap_sob.c,v 1.5 2023/05/11 18:13:55 rillig Exp $ */
 
 /*
- * As of 2021-03-08, the combination of -bap and -sob, which occurs in the
- * example indent.pro from NetBSD, removes the empty line above the
+ * Before 2023-05-11, the combination of -bap and -sob, which occurs in the
+ * example indent.pro from NetBSD, removed the empty line above the
  * separator.  Seen in games/cgram/cgram.c.
  */
 
@@ -27,26 +27,7 @@ function3(void)
 }
 //indent end
 
-//indent run -bap -sob
-void
-function1(void)
-{
-}
-/* $ FIXME: Keep the empty line between the '}' and the '//'. */
-///// C99 separator /////
-
-void
-function2(void)
-{
-}
-/* $ FIXME: Keep the empty line. */
-/* C block separator */
-
-void
-function3(void)
-{
-}
-//indent end
+//indent run-equals-input -bap -sob
 
 /*
  * XXX: Strangely, the option '-nbap' keeps the empty lines after the

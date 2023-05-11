@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.250 2023/05/11 11:25:47 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.251 2023/05/11 18:13:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.250 2023/05/11 11:25:47 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.251 2023/05/11 18:13:55 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -101,7 +101,6 @@ static struct parser_state state_stack[5];
 
 FILE *input;
 FILE *output;
-struct output_control out;
 
 static const char *in_name = "Standard Input";
 static const char *out_name = "Standard Output";
@@ -703,9 +702,6 @@ process_lbrace(void)
 	}
     }
 
-    if (ps.in_func_def_params)
-	out.blank_line_before = false;
-
     if (ps.nparen > 0) {
 	diag(1, "Unbalanced parentheses");
 	ps.nparen = 0;
@@ -729,8 +725,6 @@ process_lbrace(void)
 	ps.decl_on_line = false;	/* we can't be in the middle of a
 					 * declaration, so don't do special
 					 * indentation of comments */
-	if (opt.blanklines_after_decl_at_top && ps.in_func_def_params)
-	    out.blank_line_after = true;
 	ps.in_func_def_params = false;
 	ps.in_decl = false;
     }
@@ -782,11 +776,7 @@ process_rbrace(void)
 	ps.in_decl = true;
     }
 
-    out.blank_line_before = false;
     parse(psym_rbrace);
-
-    if (ps.tos <= 1 && opt.blanklines_after_procs && ps.decl_level <= 0)
-	out.blank_line_after = true;
 }
 
 static void
@@ -843,8 +833,6 @@ process_type(void)
     ps.in_decl = ps.decl_on_line = ps.prev_token != lsym_typedef;
     if (ps.decl_level <= 0)
 	ps.just_saw_decl = 2;
-
-    out.blank_line_before = false;
 
     int len = (int)buf_len(&token) + 1;
     int ind = ps.ind_level == 0 || ps.decl_level > 0
@@ -1036,14 +1024,6 @@ process_preprocessing(void)
 	}
     }
 
-    if (opt.blanklines_around_conditional_compilation) {
-	out.blank_line_after = true;
-	out.blank_lines_to_output = 0;
-    } else {
-	out.blank_line_after = false;
-	out.blank_line_before = false;
-    }
-
     /*
      * subsequent processing of the newline character will cause the line to
      * be printed
@@ -1164,7 +1144,6 @@ main_loop(void)
 
 	case lsym_typedef:
 	case lsym_storage_class:
-	    out.blank_line_before = false;
 	    goto copy_token;
 
 	case lsym_tag:

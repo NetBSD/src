@@ -1,4 +1,4 @@
-/* $NetBSD: indent_off_on.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: indent_off_on.c,v 1.9 2023/05/11 18:13:55 rillig Exp $ */
 
 /*
  * Tests for the comments 'INDENT OFF' and 'INDENT ON', which temporarily
@@ -24,6 +24,8 @@
 }
 /* $ FIXME: This empty line must stay. */
 /*INDENT OFF*/
+/* $ FIXME: The empty line below must be above the 'OFF' comment. */
+
 /* INDENT ON */
 
 {
@@ -42,9 +44,10 @@
 //indent run
 {
 }
-/* $ FIXME: This empty line must stay. */
-/* $ FIXME: This empty line must stay. */
+
 /*INDENT OFF*/
+/* $ FIXME: The empty line below must be above the 'OFF' comment. */
+
 /* INDENT ON */
 //indent end
 
@@ -64,6 +67,8 @@
 {
 }
  /* INDENT OFF */
+/* $ FIXME: The empty line below must be removed. */
+
 /* INDENT ON */
 {
 }
@@ -85,6 +90,8 @@
 {
 }
 	/* INDENT OFF */
+/* $ FIXME: The empty line below must be removed. */
+
 /* INDENT ON */
 {
 }
@@ -107,6 +114,8 @@ int   decl   ;
 int decl;
 /*INDENTOFF*/
 int   decl   ;
+/* $ FIXME: The empty line below must be removed. */
+
 /* INDENTON */
 int decl;
 //indent end
@@ -132,6 +141,8 @@ int   decl   ;
 int decl;
 /*		INDENT		OFF		*/
 int   decl   ;
+/* $ FIXME: The empty line below must be removed. */
+
 /* INDENT		ON		*/
 int decl;
 //indent end
@@ -151,6 +162,8 @@ int format( void ) {{{
 int format( void ) {{{
 /* $ XXX: Why is the INDENT ON comment indented? */
 /* $ XXX: Why does the INDENT ON comment get spaces, but not the OFF comment? */
+/* $ FIXME: The empty line below must be removed. */
+
 			/* INDENT ON */
 }
 }
@@ -184,6 +197,8 @@ void indent_still_on ( void ) ;	/* due to the extra comment to the right */
 //indent run
 /* INDENT OFF */
 void indent_off ( void ) ;
+/* $ FIXME: The empty line below must be removed. */
+
 /* $ XXX: The double space from the below comment got merged to a single */
 /* $ XXX: space even though the comment might be regarded to be still in */
 /* $ XXX: the OFF section. */
@@ -191,6 +206,8 @@ void indent_off ( void ) ;
 void		indent_on(void);
 /* INDENT OFF */
 void indent_off ( void ) ;
+/* $ FIXME: The empty line below must be removed. */
+
 /* $ XXX: The below comment got moved from column 9 to column 1. */
 /* INDENT ON */
 void		indent_on(void);	/* the comment may be indented */
@@ -200,6 +217,8 @@ void indent_off ( void ) ;
 void indent_still_off ( void ) ;	/* due to the word 'INDENTATION' */
 /* INDENT ON * */
 void indent_still_off ( void ) ;	/* due to the extra '*' at the end */
+/* $ FIXME: The empty line below must be removed. */
+
 /* INDENT ON */
 void		indent_on(void);
 /* INDENT: OFF */

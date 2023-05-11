@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bacc.c,v 1.10 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_bacc.c,v 1.11 2023/05/11 18:13:55 rillig Exp $ */
 
 /*
  * Tests for the options '-bacc' and '-nbacc' ("blank line around conditional
@@ -55,17 +55,7 @@ int		space_b;
 int		space_c;
 //indent end
 
-//indent run -bacc
-int		space_a;
-/* $ FIXME: expecting a blank line here */
-#if 0
-
-/* $ FIXME: expecting NO blank line here */
-int		space_b;
-#endif
-
-int		space_c;
-//indent end
+//indent run-equals-input -bacc
 
 /* The option '-nbacc' does not remove anything. */
 //indent run-equals-input -nbacc
@@ -92,12 +82,8 @@ os_name(void)
 {
 /* $ FIXME: expecting a blank line here. */
 #if defined(__NetBSD__) || defined(__FreeBSD__)
-/* $ FIXME: expecting NO blank line here. */
-
 	return "BSD";
 #else
-/* $ FIXME: expecting NO blank line here. */
-
 	return "unknown";
 #endif
 /* $ FIXME: expecting a blank line here. */
@@ -118,15 +104,7 @@ int decl;
 #endif
 //indent end
 
-//indent run -di0 -bacc
-#if outer
-
-#if inner
-int decl;
-#endif
-
-#endif
-//indent end
+//indent run-equals-input -di0 -bacc
 
 //indent run-equals-input -di0 -nbacc
 
