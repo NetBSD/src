@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.246 2023/05/11 09:28:53 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.247 2023/05/11 10:39:25 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.246 2023/05/11 09:28:53 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.247 2023/05/11 10:39:25 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -794,7 +794,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 }
 
 static void
-process_do(bool *force_nl, bool *last_else)
+process_do(bool *force_nl)
 {
     ps.in_stmt_or_decl = false;
 
@@ -806,12 +806,11 @@ process_do(bool *force_nl, bool *last_else)
     }
 
     *force_nl = true;		/* following stuff must go onto new line */
-    *last_else = false;
     parse(psym_do);
 }
 
 static void
-process_else(bool *force_nl, bool *last_else)
+process_else(bool *force_nl)
 {
     ps.in_stmt_or_decl = false;
 
@@ -823,7 +822,6 @@ process_else(bool *force_nl, bool *last_else)
     }
 
     *force_nl = true;		/* following stuff must go onto new line */
-    *last_else = true;
     parse(psym_else);
 }
 
@@ -1057,7 +1055,7 @@ process_preprocessing(void)
      */
 }
 
-static void __attribute__((__noreturn__))
+__dead static void
 main_loop(void)
 {
     bool force_nl = false;	/* when true, code must be broken */
@@ -1181,11 +1179,12 @@ main_loop(void)
 	    goto copy_token;
 
 	case lsym_do:
-	    process_do(&force_nl, &last_else);
+	    process_do(&force_nl);
 	    goto copy_token;
 
 	case lsym_else:
-	    process_else(&force_nl, &last_else);
+	    process_else(&force_nl);
+	    last_else = true;
 	    goto copy_token;
 
 	case lsym_typedef:
