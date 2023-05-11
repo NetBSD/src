@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.154 2022/04/16 07:59:46 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.155 2023/05/11 23:11:25 chs Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.154 2022/04/16 07:59:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.155 2023/05/11 23:11:25 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -990,7 +990,7 @@ cgaccount1(int cg, struct vnode *vp, void *data, int passno)
 		    fs->fs_bsize - fs->fs_cgsize);
 	numblks = howmany(fs->fs_size, fs->fs_frag);
 	len = howmany(fs->fs_fpg, fs->fs_frag);
-	base = cg * fs->fs_fpg / fs->fs_frag;
+	base = cgbase(fs, cg) / fs->fs_frag;
 	if (base + len >= numblks)
 		len = numblks - base - 1;
 	loc = 0;
