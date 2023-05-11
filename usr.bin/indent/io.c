@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.150 2023/05/11 18:13:55 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.151 2023/05/11 18:26:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.150 2023/05/11 18:13:55 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.151 2023/05/11 18:26:56 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -194,60 +194,6 @@ inp_comment_check_size(size_t n)
 }
 
 void
-inp_comment_init_newline(void)
-{
-    if (inbuf.save_com_e != NULL)
-	return;
-
-    inbuf.save_com_s = inbuf.save_com_buf;
-    inbuf.save_com_s[0] = ' ';	/* see inp_comment_insert_lbrace */
-    inbuf.save_com_s[1] = ' ';	/* see inp_comment_insert_lbrace */
-    inbuf.save_com_e = &inbuf.save_com_s[2];
-    debug_inp(__func__);
-}
-
-void
-inp_comment_init_comment(void)
-{
-    if (inbuf.save_com_e != NULL)
-	return;
-
-    /*
-     * Copy everything from the start of the line, because process_comment()
-     * will use that to calculate the original indentation of a boxed comment.
-     */
-    /*
-     * TODO: Don't store anything in the memory range [input.inp.buf,
-     * input.inp.s), as that data can easily get lost.
-     */
-    /*
-     * FIXME: The '4' below is completely wrong. For example, in the snippet
-     * 'if(expr)/''*comment', the 'r)' of the code is not copied. If there is
-     * an additional line break before the ')', memcpy tries to copy
-     * (size_t)-1 bytes.
-     *
-     * The original author of this magic number doesn't remember its purpose
-     * anymore, so there is no point in keeping it. The existing tests must
-     * still pass though.
-     */
-    assert((size_t)(inbuf.inp.s - inbuf.inp.buf) >= 4);
-    size_t line_len = (size_t)(inbuf.inp.s - inbuf.inp.buf) - 4;
-    assert(line_len < array_length(inbuf.save_com_buf));
-
-    memcpy(inbuf.save_com_buf, inbuf.inp.buf, line_len);
-    inbuf.save_com_s = inbuf.save_com_buf + line_len;
-
-    inbuf.save_com_s[0] = ' ';	/* see inp_comment_insert_lbrace */
-    inbuf.save_com_s[1] = ' ';	/* see inp_comment_insert_lbrace */
-    inbuf.save_com_e = &inbuf.save_com_s[2];
-
-    debug_vis_range("search_stmt_comment: before save_com is \"",
-	inbuf.save_com_buf, inbuf.save_com_s, "\"\n");
-    debug_vis_range("search_stmt_comment: save_com is \"",
-	inbuf.save_com_s, inbuf.save_com_e, "\"\n");
-}
-
-void
 inp_comment_init_preproc(void)
 {
     if (inbuf.save_com_e == NULL) {	/* if this is the first comment, we
@@ -282,31 +228,9 @@ inp_comment_add_range(const char *s, const char *e)
 }
 
 bool
-inp_comment_complete_block(void)
-{
-    return inbuf.save_com_e[-2] == '*' && inbuf.save_com_e[-1] == '/';
-}
-
-bool
 inp_comment_seen(void)
 {
     return inbuf.save_com_e != NULL;
-}
-
-void
-inp_comment_rtrim_blank(void)
-{
-    while (inbuf.save_com_e > inbuf.save_com_s &&
-	    ch_isblank(inbuf.save_com_e[-1]))
-	inbuf.save_com_e--;
-}
-
-void
-inp_comment_rtrim_newline(void)
-{
-    while (inbuf.save_com_e > inbuf.save_com_s &&
-	    inbuf.save_com_e[-1] == '\n')
-	inbuf.save_com_e--;
 }
 
 /*
@@ -342,13 +266,6 @@ inp_from_file(void)
     inbuf.saved_inp_s = inbuf.saved_inp_e = NULL;
     debug_println("switched inp.s back to saved_inp_s");
     return inbuf.inp.s < inbuf.inp.e;
-}
-
-void
-inp_comment_insert_lbrace(void)
-{
-    assert(inbuf.save_com_s[0] == ' ');	/* see inp_comment_init_newline */
-    inbuf.save_com_s[0] = '{';
 }
 
 static void
