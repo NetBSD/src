@@ -1,7 +1,8 @@
-#	$NetBSD: whrlpool.inc,v 1.3 2023/05/06 17:07:23 christos Exp $
+#	$NetBSD: whrlpool.inc,v 1.4 2023/05/11 20:08:59 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/whrlpool
 
+WHRLPOOL_SRCS ?= wp_block.c
 WHRLPOOL_SRCS += \
 wp_dgst.c \
 
