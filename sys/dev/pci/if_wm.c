@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.772 2023/05/11 07:04:06 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.773 2023/05/11 07:07:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.772 2023/05/11 07:04:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.773 2023/05/11 07:07:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -7688,7 +7688,9 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 		WM_Q_MISC_EVCNT_ATTACH(txq, descdrop, txq, i, xname);
 		WM_Q_MISC_EVCNT_ATTACH(txq, toomanyseg, txq, i, xname);
 		WM_Q_MISC_EVCNT_ATTACH(txq, defrag, txq, i, xname);
-		WM_Q_MISC_EVCNT_ATTACH(txq, underrun, txq, i, xname);
+		/* Only for 82544 (and earlier?) */
+		if (sc->sc_type <= WM_T_82544)
+			WM_Q_MISC_EVCNT_ATTACH(txq, underrun, txq, i, xname);
 		WM_Q_MISC_EVCNT_ATTACH(txq, skipcontext, txq, i, xname);
 #endif /* WM_EVENT_COUNTERS */
 
@@ -7809,7 +7811,8 @@ wm_free_txrx_queues(struct wm_softc *sc)
 		WM_Q_EVCNT_DETACH(txq, descdrop, txq, i);
 		WM_Q_EVCNT_DETACH(txq, toomanyseg, txq, i);
 		WM_Q_EVCNT_DETACH(txq, defrag, txq, i);
-		WM_Q_EVCNT_DETACH(txq, underrun, txq, i);
+		if (sc->sc_type <= WM_T_82544)
+			WM_Q_EVCNT_DETACH(txq, underrun, txq, i);
 		WM_Q_EVCNT_DETACH(txq, skipcontext, txq, i);
 #endif /* WM_EVENT_COUNTERS */
 
@@ -9431,14 +9434,8 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 		    device_xname(sc->sc_dev), i, txs->txs_firstdesc,
 		    txs->txs_lastdesc));
 
-		/*
-		 * XXX We should probably be using the statistics
-		 * XXX registers, but I don't know if they exist
-		 * XXX on chips before the i82544.
-		 */
-
 #ifdef WM_EVENT_COUNTERS
-		if (status & WTX_ST_TU)
+		if ((status & WTX_ST_TU) && (sc->sc_type <= WM_T_82544))
 			WM_Q_EVCNT_INCR(txq, underrun);
 #endif /* WM_EVENT_COUNTERS */
 
