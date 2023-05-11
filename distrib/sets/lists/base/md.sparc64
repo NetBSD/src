@@ -1,8 +1,12 @@
-# $NetBSD: md.sparc64,v 1.257 2022/09/08 05:16:45 rillig Exp $
+# $NetBSD: md.sparc64,v 1.258 2023/05/11 17:57:14 christos Exp $
 ./libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
 ./sbin/edlabel					base-obsolete	obsolete
 ./usr/bin/fdformat				base-util-bin
 ./usr/libexec/ld.elf_so-sparc			base-sysutil-bin	compat,pic
+./usr/lib/sparc/openssl				base-crypto-usr
+./usr/lib/sparc/openssl/engines			base-crypto-usr
+./usr/lib/sparc/openssl/modules			base-crypto-usr
+./usr/lib/sparc/openssl/modules/legacy.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/lkm/compat_netbsd32.o			base-obsolete		obsolete
 ./usr/lkm/compat_sunos32.o			base-obsolete		obsolete
 ./usr/lkm/compat_svr4.o				base-obsolete		obsolete
