@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_preprocessing.c,v 1.8 2023/05/11 19:01:35 rillig Exp $ */
+/* $NetBSD: lsym_preprocessing.c,v 1.9 2023/05/11 21:36:31 rillig Exp $ */
 
 /*
  * Tests for the token lsym_preprocessing, which represents a '#' that starts
@@ -241,3 +241,33 @@ do {				\
 //indent end
 
 //indent run-equals-input
+
+
+/*
+ * The 'INDENT OFF' state is global, it does not depend on the preprocessing
+ * directives, otherwise the declarations for 'on' and 'after' would be moved
+ * to column 1.
+ */
+//indent input
+int first_line;
+	int before;
+#if 0
+/*INDENT OFF*/
+	int off;
+#else
+	int on;
+#endif
+	int after;
+//indent end
+
+//indent run -di0
+int first_line;
+int before;
+#if 0
+/*INDENT OFF*/
+	int off;
+#else
+	int on;
+#endif
+	int after;
+//indent end
