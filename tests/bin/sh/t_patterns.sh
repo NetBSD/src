@@ -1,4 +1,4 @@
-# $NetBSD: t_patterns.sh,v 1.5 2019/07/10 05:57:43 martin Exp $
+# $NetBSD: t_patterns.sh,v 1.6 2023/05/11 01:50:40 gutteridge Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -173,7 +173,7 @@ results()
 ####### End helpers
 
 atf_test_case filename_expansion
-filename_expansion() {
+filename_expansion_head() {
 	atf_set descr "Test correct operation of filename expansion"
 }
 filename_expansion_body() {
