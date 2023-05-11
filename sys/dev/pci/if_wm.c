@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.779 2023/05/11 07:43:11 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.780 2023/05/11 07:45:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.779 2023/05/11 07:43:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.780 2023/05/11 07:45:04 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -6696,7 +6696,7 @@ wm_update_stats(struct wm_softc *sc)
 		    ((uint64_t)CSR_READ(sc, WMREG_HGOTCH) << 32));
 		WM_EVCNT_ADD(&sc->sc_ev_lenerrs, CSR_READ(sc, WMREG_LENERRS));
 	}
-	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
+	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
 		WM_EVCNT_ADD(&sc->sc_ev_tlpic, CSR_READ(sc, WMREG_TLPIC));
 		WM_EVCNT_ADD(&sc->sc_ev_rlpic, CSR_READ(sc, WMREG_RLPIC));
 		if ((CSR_READ(sc, WMREG_MANC) & MANC_EN_BMC2OS) != 0) {
