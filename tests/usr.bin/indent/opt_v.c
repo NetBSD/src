@@ -1,4 +1,4 @@
-/* $NetBSD: opt_v.c,v 1.10 2023/05/11 18:13:55 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.11 2023/05/11 19:01:35 rillig Exp $ */
 
 /*
  * Tests for the options '-v' and '-nv'.
@@ -40,9 +40,9 @@ example(void)
 
 #define macro1 /* prefix */ suffix
 
-#define macro2 prefix		/* suffix */
-There were 12 output lines and 2 comments
-(Lines with comments)/(Lines with code):  0.571
+#define macro2 prefix /* suffix */
+There were 12 output lines and 1 comments
+(Lines with comments)/(Lines with code):  0.429
 //indent end
 
 

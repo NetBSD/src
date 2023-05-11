@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_preprocessing.c,v 1.7 2023/05/11 18:44:14 rillig Exp $ */
+/* $NetBSD: lsym_preprocessing.c,v 1.8 2023/05/11 19:01:35 rillig Exp $ */
 
 /*
  * Tests for the token lsym_preprocessing, which represents a '#' that starts
@@ -79,16 +79,16 @@
 #else
 #endif
 
-#if 0				/* if comment */
-#else				/* else comment */
-#endif				/* endif comment */
+#if 0 /* if comment */
+#else /* else comment */
+#endif /* endif comment */
 
-#if 0				/* outer if comment */
+#if 0 /* outer if comment */
 /* $ XXX: The indentation is removed, which can get confusing */
-#if nested			/* inner if comment */
-#else				/* inner else comment */
-#endif				/* inner endif comment */
-#endif				/* outer endif comment */
+#if nested /* inner if comment */
+#else /* inner else comment */
+#endif /* inner endif comment */
+#endif /* outer endif comment */
 //indent end
 
 
@@ -204,15 +204,7 @@ int		unary_plus =
 #endif/* comment */
 //indent end
 
-//indent run
-#if 0				/* comment */
-#else				/* comment */
-#endif				/* comment */
-
-#if 0				/* comment */
-#else				/* comment */
-#endif				/* comment */
-//indent end
+//indent run-equals-input
 
 
 /*
@@ -221,7 +213,7 @@ int		unary_plus =
 //indent input
 #define eol_comment		// EOL
 
-#define wrap_comment		/* line 1
+#define no_wrap_comment		/* line 1
 				 * line 2
 				 * line 3
 				 */
@@ -235,20 +227,7 @@ int		unary_plus =
 #define three_comments		/* first */ /* second */ /*third*/
 //indent end
 
-//indent run
-#define eol_comment		// EOL
-
-#define wrap_comment		/* line 1 line 2 line 3 */
-
-/* $ FIXME: Keep the original indentation of the follow-up lines. */
-#define fixed_comment		/*- line 1
-								 * line 2
-								 * line 3
-								 */
-
-#define two_comments /* 1 */ /* 2 */	/* 3 */
-#define three_comments		/* first */ /* second */	/* third */
-//indent end
+//indent run-equals-input
 
 
 /*

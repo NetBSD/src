@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.251 2023/05/11 18:13:55 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.252 2023/05/11 19:01:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.251 2023/05/11 18:13:55 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.252 2023/05/11 19:01:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -927,7 +927,6 @@ read_preprocessing_line(void)
     buf_add_char(&lab, '#');
 
     state = PLAIN;
-    int com_start = 0, com_end = 0;
 
     while (ch_isblank(inp_peek()))
 	inp_skip();
@@ -944,7 +943,6 @@ read_preprocessing_line(void)
 	    if (inp_peek() == '*' && state == PLAIN) {
 		state = COMM;
 		*lab.e++ = inp_next();
-		com_start = (int)buf_len(&lab) - 2;
 	    }
 	    break;
 	case '"':
@@ -963,7 +961,6 @@ read_preprocessing_line(void)
 	    if (inp_peek() == '/' && state == COMM) {
 		state = PLAIN;
 		*lab.e++ = inp_next();
-		com_end = (int)buf_len(&lab);
 	    }
 	    break;
 	}
@@ -971,16 +968,6 @@ read_preprocessing_line(void)
 
     while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	lab.e--;
-    if (lab.e - lab.s == com_end && !inp_comment_seen()) {
-	/* comment on preprocessor line */
-	inp_comment_init_preproc();
-	inp_comment_add_range(lab.s + com_start, lab.s + com_end);
-	lab.e = lab.s + com_start;
-	while (lab.e > lab.s && ch_isblank(lab.e[-1]))
-	    lab.e--;
-	inp_comment_add_char(' ');	/* add trailing blank, just in case */
-	inp_from_comment();
-    }
     buf_terminate(&lab);
 }
 
