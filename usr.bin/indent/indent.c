@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.248 2023/05/11 10:51:33 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.249 2023/05/11 10:54:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.248 2023/05/11 10:51:33 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.249 2023/05/11 10:54:14 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -1056,7 +1056,6 @@ process_preprocessing(void)
 __dead static void
 main_loop(void)
 {
-    bool last_else = false;	/* true iff last keyword was an else */
     int decl_ind = 0;		/* current indentation for declarations */
     int di_stack[20];		/* a stack of structure indentation levels */
     bool tabs_to_var = false;	/* true if using tabs to indent to var name */
@@ -1075,9 +1074,8 @@ main_loop(void)
     for (;;) {			/* loop until we reach eof */
 	lexer_symbol lsym = lexi();
 
-	if (lsym == lsym_if && last_else && opt.else_if)
+	if (lsym == lsym_if && ps.prev_token == lsym_else && opt.else_if)
 	    ps.force_nl = false;
-	last_else = false;
 
 	if (lsym == lsym_eof) {
 	    process_eof();
@@ -1181,7 +1179,6 @@ main_loop(void)
 
 	case lsym_else:
 	    process_else();
-	    last_else = true;
 	    goto copy_token;
 
 	case lsym_typedef:
