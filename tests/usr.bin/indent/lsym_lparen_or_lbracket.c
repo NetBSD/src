@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.7 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.8 2023/05/11 18:13:55 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -297,9 +297,7 @@ cover_want_blank_before_lparen(void)
 	}
 #define preprocessing
 	(preprocessing)();
-
-/* $ XXX: Where has the '\f' gone? It should have been preserved. */
-	(lsym_form_feed)();	/* XXX: should be skipped */
+	(lsym_form_feed)();	/* XXX: should be skipped */
 	for (;;);
 	do
 		(lsym_do) = 3;

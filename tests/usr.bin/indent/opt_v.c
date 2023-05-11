@@ -1,4 +1,4 @@
-/* $NetBSD: opt_v.c,v 1.9 2023/05/11 09:28:53 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.10 2023/05/11 18:13:55 rillig Exp $ */
 
 /*
  * Tests for the options '-v' and '-nv'.
@@ -41,7 +41,7 @@ example(void)
 #define macro1 /* prefix */ suffix
 
 #define macro2 prefix		/* suffix */
-There were 10 output lines and 2 comments
+There were 12 output lines and 2 comments
 (Lines with comments)/(Lines with code):  0.571
 //indent end
 
@@ -82,7 +82,7 @@ int *
 function(void)
 {
 }
-There were 5 output lines and 1 comments
+There were 6 output lines and 1 comments
 (Lines with comments)/(Lines with code):  0.250
 //indent end
 /* In the above output, the '5' means 5 non-empty lines. */

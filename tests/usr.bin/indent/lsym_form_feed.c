@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_form_feed.c,v 1.5 2023/05/11 09:28:53 rillig Exp $ */
+/* $NetBSD: lsym_form_feed.c,v 1.6 2023/05/11 18:13:55 rillig Exp $ */
 
 /*
  * Tests for the token lsym_form_feed, which represents a form feed, a special
@@ -13,14 +13,7 @@ void function_1(void);
 void function_2(void);
 //indent end
 
-//indent run -di0
-void function_1(void);
-
-/* $ XXX: The form feed is not preserved. */
-/* $ XXX: Why 2 empty lines? */
-
-void function_2(void);
-//indent end
+//indent run-equals-input -di0
 
 
 /*
@@ -41,9 +34,7 @@ void
 function(void)
 {
 	if (expr)
-		/* $ XXX: The form feed has disappeared. */
-
-		/* <-- form feed */
+		/* <-- form feed */
 	{
 	}
 }

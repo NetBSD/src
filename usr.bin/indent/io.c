@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.149 2023/05/11 17:22:56 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.150 2023/05/11 18:13:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.149 2023/05/11 17:22:56 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.150 2023/05/11 18:13:55 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -510,39 +510,9 @@ output_line_comment(int ind)
 static void
 output_complete_line(char line_terminator)
 {
-    static bool first_line = true;
-
     ps.is_function_definition = false;
 
-    debug_println("%s: %d %s%s%s%s",
-	__func__,
-	out.blank_lines_to_output,
-	out.blank_lines_to_output == 1 ? "line" : "lines",
-	out.blank_line_before ? ", before" : "",
-	out.blank_line_after ? ", after" : "",
-	out.suppress_blanklines ? ", suppress" : "");
-
-    if (code.s == code.e && lab.s == lab.e && com.s == com.e) {
-	if (out.suppress_blanklines)
-	    out.suppress_blanklines = false;
-	else
-	    out.blank_lines_to_output++;
-
-    } else if (!inhibit_formatting) {
-	out.suppress_blanklines = false;
-	if (out.blank_line_before && !first_line) {
-	    if (opt.swallow_optional_blanklines) {
-		if (out.blank_lines_to_output == 1)
-		    out.blank_lines_to_output = 0;
-	    } else {
-		if (out.blank_lines_to_output == 0)
-		    out.blank_lines_to_output = 1;
-	    }
-	}
-
-	for (; out.blank_lines_to_output > 0; out.blank_lines_to_output--)
-	    output_char('\n');
-
+    if (!inhibit_formatting) {
 	if (ps.ind_level == 0)
 	    ps.in_stmt_cont = false;	/* this is a class A kludge */
 
@@ -561,12 +531,8 @@ output_complete_line(char line_terminator)
 	ps.stats.lines++;
 
 	/* TODO: rename to blank_line_after_decl */
-	if (ps.just_saw_decl == 1 && opt.blanklines_after_decl) {
-	    out.blank_line_before = true;
+	if (ps.just_saw_decl == 1 && opt.blanklines_after_decl)
 	    ps.just_saw_decl = 0;
-	} else
-	    out.blank_line_before = out.blank_line_after;
-	out.blank_line_after = false;
     }
 
     ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */
@@ -585,8 +551,6 @@ output_complete_line(char line_terminator)
 	paren_indent = -1 - ps.paren[ps.nparen - 1].indent;
 	debug_println("paren_indent is now %d", paren_indent);
     }
-
-    first_line = false;
 }
 
 void
@@ -700,16 +664,6 @@ parse_indent_comment(void)
 	output_line();
 
     inhibit_formatting = !on;
-    if (on) {
-	/*
-	 * XXX: Does this make sense? Is the handling of blank lines above
-	 * INDENT OFF comments essentially the same?
-	 */
-	out.blank_lines_to_output = 0;
-	out.blank_line_after = false;
-	out.blank_line_before = false;
-	out.suppress_blanklines = true;
-    }
 }
 
 void
