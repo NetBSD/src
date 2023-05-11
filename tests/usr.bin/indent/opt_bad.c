@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bad.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_bad.c,v 1.7 2023/05/11 18:13:55 rillig Exp $ */
 
 /*
  * Tests for the options '-bad' and '-nbad'.
@@ -67,10 +67,10 @@ void
 function_definition(void)
 {
 	int		local_variable;
-
+/* $ TODO: add empty line */
 	function_call();
 	int		local_variable_after_statement;
-
+/* $ TODO: add empty line */
 	function_call();
 }
 //indent end

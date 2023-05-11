@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.116 2023/05/11 17:22:56 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.117 2023/05/11 18:13:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -142,13 +142,6 @@ struct buffer {
     char *buf;			/* start of the allocated memory */
     char *l;			/* end of the allocated memory */
 };
-
-extern struct output_control {
-    int blank_lines_to_output;
-    bool blank_line_before;
-    bool blank_line_after;
-    bool suppress_blanklines;
-} out;
 
 extern FILE *input;
 extern FILE *output;

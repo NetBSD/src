@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.9 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.10 2023/05/11 18:13:55 rillig Exp $ */
 
 /*
  * Tests for the options '-badp' and '-nbadp'.
@@ -53,14 +53,8 @@ statement(void)
 }
 //indent end
 
-//indent run -badp
-void
-statement(void)
-{
-
-	stmt();
-}
-//indent end
+/* TODO: add blank line */
+//indent run-equals-input -badp
 
 //indent run-equals-input -nbadp
 
