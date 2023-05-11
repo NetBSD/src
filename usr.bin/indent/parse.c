@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.49 2022/04/22 21:21:20 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.50 2023/05/11 09:28:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: parse.c,v 1.49 2022/04/22 21:21:20 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.50 2023/05/11 09:28:53 rillig Exp $");
 #else
 __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pstef $");
 #endif
@@ -113,9 +113,6 @@ parse(parser_symbol psym)
     switch (psym) {
 
     case psym_decl:
-	ps.search_stmt = opt.brace_same_line;
-	/* indicate that following brace should be on same line */
-
 	if (ps.s_sym[ps.tos] == psym_decl)
 	    break;		/* only put one declaration onto stack */
 
@@ -142,7 +139,6 @@ parse(parser_symbol psym)
 	ps.s_sym[++ps.tos] = psym;
 	ps.s_ind_level[ps.tos] = ps.ind_level = ps.ind_level_follow;
 	++ps.ind_level_follow;	/* subsequent statements should be indented 1 */
-	ps.search_stmt = opt.brace_same_line;
 	break;
 
     case psym_lbrace:
@@ -182,7 +178,6 @@ parse(parser_symbol psym)
 	    ps.s_sym[++ps.tos] = psym_while_expr;
 	    ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 	    ++ps.ind_level_follow;
-	    ps.search_stmt = opt.brace_same_line;
 	}
 
 	break;
@@ -194,8 +189,6 @@ parse(parser_symbol psym)
 	    ps.ind_level = ps.s_ind_level[ps.tos];
 	    ps.ind_level_follow = ps.ind_level + 1;
 	    ps.s_sym[ps.tos] = psym_if_expr_stmt_else;
-
-	    ps.search_stmt = opt.brace_same_line || opt.else_if;
 	}
 	break;
 
@@ -214,7 +207,6 @@ parse(parser_symbol psym)
 	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 	case_ind = (float)ps.ind_level_follow + opt.case_indent;
 	ps.ind_level_follow += (int)opt.case_indent + 1;
-	ps.search_stmt = opt.brace_same_line;
 	break;
 
     case psym_semicolon:	/* a simple statement */

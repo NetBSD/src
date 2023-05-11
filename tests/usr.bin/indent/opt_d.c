@@ -1,4 +1,4 @@
-/* $NetBSD: opt_d.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_d.c,v 1.5 2023/05/11 09:28:53 rillig Exp $ */
 
 /*
  * Tests for the option '-d', which moves comments to the left of the
@@ -27,9 +27,9 @@ example(void)
 //indent run -d1
 void
 example(void)
+/* comment at level 0 */
+/* comment at level 0 */
 {
-/* comment at level 0 */
-/* comment at level 0 */
 /* comment at level 1 */
 /* comment at level 1 */
 /* comment at level 1 */

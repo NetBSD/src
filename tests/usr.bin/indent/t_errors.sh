@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.24 2022/04/22 21:21:20 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.25 2023/05/11 09:28:53 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -441,7 +441,7 @@ unbalanced_parentheses_3_body()
 atf_test_case 'search_stmt_comment_segv'
 search_stmt_comment_segv_body()
 {
-	# As of NetBSD indent.c 1.188 from 2021-10-30, indent crashes while
+	# Before 2023-05-11, indent crashed while
 	# trying to format the following artificial code.
 
 	printf '{if(expr\n)/*c*/;}\n' > code.c
@@ -449,13 +449,11 @@ search_stmt_comment_segv_body()
 	cat <<\EOF > code.exp
 {
 	if (expr
-		)		/* c */
-		;
+		) /* c */ ;
 }
 EOF
 
-	# TODO: actually produce code.exp instead of an assertion failure.
-	atf_check -s 'signal' -o 'ignore' -e 'match:assert' \
+	atf_check -o 'file:code.exp' \
 	    "$indent" code.c -st
 }
 
@@ -530,10 +528,9 @@ function(void)
 EOF
 	sed '/^#/d' <<EOF > expected.err
 # FIXME: The parentheses _are_ balanced, the '}' does not end the block.
-error: code.c:9: Unbalanced parentheses
-warning: code.c:10: Extra ')'
-# FIXME: There is no line 12 in the input file.
-warning: code.c:12: Extra ')'
+error: code.c:7: Unbalanced parentheses
+warning: code.c:8: Extra ')'
+warning: code.c:9: Extra ')'
 EOF
 
 	atf_check -s 'exit:1' -o 'file:expected.out' -e 'file:expected.err' \

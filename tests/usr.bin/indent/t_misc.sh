@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.20 2022/04/22 21:21:20 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.21 2023/05/11 09:28:53 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -397,6 +397,16 @@ command_line_vs_profile_body()
 	    "$indent" -Pcustom.pro code.c -st -di0
 }
 
+
+atf_test_case 'opt_v_break_line'
+opt_v_break_line_body()
+{
+	printf '%s\n' 'int *function(void)' '{}' > code.c
+
+	atf_check -o 'ignore' -e 'inline:warning: code.c:2: Line broken\n' \
+	    "$indent" -v code.c -st
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'in_place'
@@ -407,6 +417,7 @@ atf_init_test_cases()
 	atf_add_test_case 'opt'
 	atf_add_test_case 'opt_npro'
 	atf_add_test_case 'opt_U'
+	atf_add_test_case 'opt_v_break_line'
 	atf_add_test_case 'line_no_counting'
 	atf_add_test_case 'default_backup_extension'
 	atf_add_test_case 'several_profiles'
