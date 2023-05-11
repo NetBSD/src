@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.247 2023/05/11 10:39:25 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.248 2023/05/11 10:51:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,13 +43,12 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.247 2023/05/11 10:39:25 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.248 2023/05/11 10:51:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
 
 #include <sys/param.h>
-#include <assert.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -403,9 +402,9 @@ process_eof(void)
 }
 
 static void
-maybe_break_line(lexer_symbol lsym, bool *force_nl)
+maybe_break_line(lexer_symbol lsym)
 {
-    if (!*force_nl)
+    if (!ps.force_nl)
 	return;
     if (lsym == lsym_semicolon)
 	return;
@@ -416,7 +415,7 @@ maybe_break_line(lexer_symbol lsym, bool *force_nl)
 	diag(0, "Line broken");
     output_line();
     ps.want_blank = false;
-    *force_nl = false;
+    ps.force_nl = false;
 }
 
 static void
@@ -515,7 +514,7 @@ process_lparen_or_lbracket(int decl_ind, bool tabs_to_var, bool spaced_expr)
 }
 
 static void
-process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
+process_rparen_or_rbracket(bool *spaced_expr, stmt_head hd)
 {
     if (ps.paren[ps.nparen - 1].maybe_cast &&
 	!ps.paren[ps.nparen - 1].no_cast) {
@@ -539,7 +538,7 @@ process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
     if (*spaced_expr && ps.nparen == 0) {	/* check for end of 'if
 						 * (...)', or some such */
 	*spaced_expr = false;
-	*force_nl = true;	/* must force newline after if */
+	ps.force_nl = true;
 	ps.next_unary = true;
 	ps.in_stmt_or_decl = false;	/* don't use stmt continuation
 					 * indentation */
@@ -601,7 +600,7 @@ process_question(int *quest_level)
 }
 
 static void
-process_colon(int *quest_level, bool *force_nl, bool *seen_case)
+process_colon(int *quest_level, bool *seen_case)
 {
     if (*quest_level > 0) {	/* part of a '?:' operator */
 	--*quest_level;
@@ -625,14 +624,14 @@ process_colon(int *quest_level, bool *force_nl, bool *seen_case)
 
     ps.in_stmt_or_decl = false;
     ps.is_case_label = *seen_case;
-    *force_nl = *seen_case;
+    ps.force_nl = *seen_case;
     *seen_case = false;
     ps.want_blank = false;
 }
 
 static void
 process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
-    bool tabs_to_var, bool *spaced_expr, stmt_head hd, bool *force_nl)
+    bool tabs_to_var, bool *spaced_expr, stmt_head hd)
 {
     if (ps.decl_level == 0)
 	ps.init_or_struct = false;
@@ -674,19 +673,18 @@ process_semicolon(bool *seen_case, int *quest_level, int decl_ind,
 
     if (!*spaced_expr) {	/* if not if for (;;) */
 	parse(psym_semicolon);	/* let parser know about end of stmt */
-	*force_nl = true;	/* force newline after an end of stmt */
+	ps.force_nl = true;
     }
 }
 
 static void
-process_lbrace(bool *force_nl, bool *spaced_expr, stmt_head hd,
+process_lbrace(bool *spaced_expr, stmt_head hd,
     int *di_stack, int di_stack_cap, int *decl_ind)
 {
     ps.in_stmt_or_decl = false;	/* don't indent the {} */
 
     if (!ps.block_init)
-	*force_nl = true;	/* force other stuff on same line as '{' onto
-				 * new line */
+	ps.force_nl = true;
     else if (ps.block_init_level <= 0)
 	ps.block_init_level = 1;
     else
@@ -794,7 +792,7 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 }
 
 static void
-process_do(bool *force_nl)
+process_do(void)
 {
     ps.in_stmt_or_decl = false;
 
@@ -805,12 +803,12 @@ process_do(bool *force_nl)
 	ps.want_blank = false;
     }
 
-    *force_nl = true;		/* following stuff must go onto new line */
+    ps.force_nl = true;
     parse(psym_do);
 }
 
 static void
-process_else(bool *force_nl)
+process_else(void)
 {
     ps.in_stmt_or_decl = false;
 
@@ -821,7 +819,7 @@ process_else(bool *force_nl)
 	ps.want_blank = false;
     }
 
-    *force_nl = true;		/* following stuff must go onto new line */
+    ps.force_nl = true;
     parse(psym_else);
 }
 
@@ -860,7 +858,7 @@ process_type(int *decl_ind, bool *tabs_to_var)
 
 static void
 process_ident(lexer_symbol lsym, int decl_ind, bool tabs_to_var,
-    bool *spaced_expr, bool *force_nl, stmt_head hd)
+    bool *spaced_expr, stmt_head hd)
 {
     if (ps.in_decl) {
 	if (lsym == lsym_funcname) {
@@ -882,7 +880,7 @@ process_ident(lexer_symbol lsym, int decl_ind, bool tabs_to_var,
 
     } else if (*spaced_expr && ps.nparen == 0) {
 	*spaced_expr = false;
-	*force_nl = true;
+	ps.force_nl = true;
 	ps.next_unary = true;
 	ps.in_stmt_or_decl = false;
 	parse_stmt_head(hd);
@@ -907,7 +905,7 @@ process_period(void)
 }
 
 static void
-process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
+process_comma(int decl_ind, bool tabs_to_var)
 {
     ps.want_blank = code.s != code.e;	/* only put blank after comma if comma
 					 * does not start the line */
@@ -929,7 +927,7 @@ process_comma(int decl_ind, bool tabs_to_var, bool *force_nl)
 	if (break_comma && (opt.break_after_comma ||
 		ind_add(compute_code_indent(), code.s, code.e)
 		>= opt.max_line_length - varname_len))
-	    *force_nl = true;
+	    ps.force_nl = true;
     }
 }
 
@@ -1058,7 +1056,6 @@ process_preprocessing(void)
 __dead static void
 main_loop(void)
 {
-    bool force_nl = false;	/* when true, code must be broken */
     bool last_else = false;	/* true iff last keyword was an else */
     int decl_ind = 0;		/* current indentation for declarations */
     int di_stack[20];		/* a stack of structure indentation levels */
@@ -1079,7 +1076,7 @@ main_loop(void)
 	lexer_symbol lsym = lexi();
 
 	if (lsym == lsym_if && last_else && opt.else_if)
-	    force_nl = false;
+	    ps.force_nl = false;
 	last_else = false;
 
 	if (lsym == lsym_eof) {
@@ -1089,9 +1086,9 @@ main_loop(void)
 
 	if (lsym == lsym_newline || lsym == lsym_form_feed ||
 		lsym == lsym_preprocessing)
-	    force_nl = false;
+	    ps.force_nl = false;
 	else if (lsym != lsym_comment) {
-	    maybe_break_line(lsym, &force_nl);
+	    maybe_break_line(lsym);
 	    ps.in_stmt_or_decl = true;	/* add an extra level of indentation;
 					 * turned off again by a ';' or '}' */
 	    if (com.s != com.e)
@@ -1115,7 +1112,7 @@ main_loop(void)
 	    break;
 
 	case lsym_rparen_or_rbracket:
-	    process_rparen_or_rbracket(&spaced_expr, &force_nl, hd);
+	    process_rparen_or_rbracket(&spaced_expr, hd);
 	    break;
 
 	case lsym_unary_op:
@@ -1139,16 +1136,16 @@ main_loop(void)
 	    goto copy_token;
 
 	case lsym_colon:
-	    process_colon(&quest_level, &force_nl, &seen_case);
+	    process_colon(&quest_level, &seen_case);
 	    break;
 
 	case lsym_semicolon:
 	    process_semicolon(&seen_case, &quest_level, decl_ind, tabs_to_var,
-		&spaced_expr, hd, &force_nl);
+		&spaced_expr, hd);
 	    break;
 
 	case lsym_lbrace:
-	    process_lbrace(&force_nl, &spaced_expr, hd, di_stack,
+	    process_lbrace(&spaced_expr, hd, di_stack,
 		(int)array_length(di_stack), &decl_ind);
 	    break;
 
@@ -1179,11 +1176,11 @@ main_loop(void)
 	    goto copy_token;
 
 	case lsym_do:
-	    process_do(&force_nl);
+	    process_do();
 	    goto copy_token;
 
 	case lsym_else:
-	    process_else(&force_nl);
+	    process_else();
 	    last_else = true;
 	    goto copy_token;
 
@@ -1206,8 +1203,7 @@ main_loop(void)
 	case lsym_word:
 	case lsym_funcname:
 	case lsym_return:
-	    process_ident(lsym, decl_ind, tabs_to_var, &spaced_expr,
-		&force_nl, hd);
+	    process_ident(lsym, decl_ind, tabs_to_var, &spaced_expr, hd);
     copy_token:
 	    copy_token();
 	    if (lsym != lsym_funcname)
@@ -1219,7 +1215,7 @@ main_loop(void)
 	    break;
 
 	case lsym_comma:
-	    process_comma(decl_ind, tabs_to_var, &force_nl);
+	    process_comma(decl_ind, tabs_to_var);
 	    break;
 
 	case lsym_preprocessing:
