@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bl_br.c,v 1.7 2023/05/11 09:28:53 rillig Exp $ */
+/* $NetBSD: opt_bl_br.c,v 1.8 2023/05/11 17:22:56 rillig Exp $ */
 
 //indent input
 void
@@ -44,7 +44,7 @@ standard_style(int n)
  */
 //indent input
 void
-example(int n)
+condensed_style(int n)
 {
 	if (n > 99) { print("large"); }
 	else if (n > 9) { print("double-digit"); }
@@ -55,7 +55,7 @@ example(int n)
 
 //indent run -bl
 void
-example(int n)
+condensed_style(int n)
 {
 	if (n > 99)
 	{
@@ -76,7 +76,7 @@ example(int n)
 
 //indent run -br
 void
-example(int n)
+condensed_style(int n)
 {
 	if (n > 99) {
 		print("large");
@@ -98,21 +98,22 @@ example(int n)
  * line.
  */
 //indent input
-void function(void)
-{
-	if (expr) // C99 comment
-		stmt();
-
-	if (expr) // C99 comment
-	{
-		stmt();
-	}
-}
-//indent end
-
-//indent run
 void
-function(void)
+eol_comment(void)
+{
+	if (expr) // C99 comment
+		stmt();
+
+	if (expr) // C99 comment
+	{
+		stmt();
+	}
+}
+//indent end
+
+//indent run -br
+void
+eol_comment(void)
 {
 	if (expr)		// C99 comment
 		stmt();
@@ -123,6 +124,8 @@ function(void)
 	}
 }
 //indent end
+
+//indent run-equals-prev-output -bl
 
 
 /*
@@ -173,3 +176,95 @@ function(void)
 
 /* TODO: Remove the newline between ')' and '{'. */
 //indent run-equals-input -br
+
+
+//indent input
+void
+comments(void)
+{
+	if(cond){}
+
+	if (cond)
+	{}
+
+	if (cond) /* comment */
+	{}
+
+	if (cond)
+	/* comment */
+	{}
+
+	if (cond)
+	// comment1
+	// comment2
+	{}
+
+	if (cond) // comment
+	{}
+}
+//indent end
+
+//indent run -bl
+void
+comments(void)
+{
+	if (cond)
+	{
+	}
+
+	if (cond)
+	{
+	}
+
+	if (cond)		/* comment */
+	{
+	}
+
+	if (cond)
+		/* comment */
+	{
+	}
+
+	if (cond)
+		// comment1
+		// comment2
+	{
+	}
+
+	if (cond)		// comment
+	{
+	}
+}
+//indent end
+
+//indent run -br
+void
+comments(void)
+{
+	if (cond) {
+	}
+
+	if (cond)
+	{
+	}
+
+	if (cond)		/* comment */
+	{
+	}
+
+	if (cond)
+		/* comment */
+	{
+	}
+
+	if (cond)
+		// comment1
+		// comment2
+	{
+	}
+
+	if (cond)		// comment
+	{
+	}
+}
+//indent end

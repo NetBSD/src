@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.115 2023/05/11 11:25:47 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.116 2023/05/11 17:22:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -279,7 +279,7 @@ extern struct parser_state {
 
     bool force_nl;		/* when true, the following token goes to the
 				 * next line, unless it is a '{' and
-				 * opt.brace_right is set. */
+				 * opt.brace_same_line is set. */
 
     int line_start_nparen;	/* the number of parentheses or brackets that
 				 * were already open at the beginning of the
