@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.773 2023/05/11 07:07:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.774 2023/05/11 07:08:47 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.773 2023/05/11 07:07:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.774 2023/05/11 07:08:47 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -637,7 +637,7 @@ struct wm_softc {
 	struct evcnt sc_ev_ptc1023;	/* Packets Tx (512-1023 bytes) */
 	struct evcnt sc_ev_ptc1522;	/* Packets Tx (1024-1522 Bytes) */
 	struct evcnt sc_ev_mptc;	/* Multicast Packets Tx */
-	struct evcnt sc_ev_bptc;	/* Broadcast Packets Tx Count */
+	struct evcnt sc_ev_bptc;	/* Broadcast Packets Tx */
 	struct evcnt sc_ev_tsctc;	/* TCP Segmentation Context Tx */
 	struct evcnt sc_ev_tsctfc;	/* TCP Segmentation Context Tx Fail */
 	struct evcnt sc_ev_iac;		/* Interrupt Assertion */
@@ -3316,7 +3316,7 @@ alloc_retry:
 	evcnt_attach_dynamic(&sc->sc_ev_mptc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Multicast Packets Tx");
 	evcnt_attach_dynamic(&sc->sc_ev_bptc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Broadcast Packets Tx Count");
+	    NULL, xname, "Broadcast Packets Tx");
 	evcnt_attach_dynamic(&sc->sc_ev_iac, EVCNT_TYPE_MISC,
 	    NULL, xname, "Interrupt Assertion");
 	if (sc->sc_type < WM_T_82575) {
