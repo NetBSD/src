@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.767 2022/12/08 08:14:28 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.768 2023/05/11 06:54:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767 2022/12/08 08:14:28 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.768 2023/05/11 06:54:23 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -3786,9 +3786,11 @@ wm_tick(void *arg)
 	WM_EVCNT_ADD(&sc->sc_ev_gptc, CSR_READ(sc, WMREG_GPTC));
 
 	WM_EVCNT_ADD(&sc->sc_ev_gorc,
-	    CSR_READ(sc, WMREG_GORCL) + CSR_READ(sc, WMREG_GORCH));
+	    CSR_READ(sc, WMREG_GORCL) +
+	    ((uint64_t)CSR_READ(sc, WMREG_GORCH) << 32));
 	WM_EVCNT_ADD(&sc->sc_ev_gotc,
-	    CSR_READ(sc, WMREG_GOTCL) + CSR_READ(sc, WMREG_GOTCH));
+	    CSR_READ(sc, WMREG_GOTCL) +
+	    ((uint64_t)CSR_READ(sc, WMREG_GOTCH) << 32));
 
 	WM_EVCNT_ADD(&sc->sc_ev_rnbc, CSR_READ(sc, WMREG_RNBC));
 	WM_EVCNT_ADD(&sc->sc_ev_ruc, CSR_READ(sc, WMREG_RUC));
@@ -3797,9 +3799,11 @@ wm_tick(void *arg)
 	WM_EVCNT_ADD(&sc->sc_ev_rjc, CSR_READ(sc, WMREG_RJC));
 
 	WM_EVCNT_ADD(&sc->sc_ev_tor,
-	    CSR_READ(sc, WMREG_TORL) + CSR_READ(sc, WMREG_TORH));
+	    CSR_READ(sc, WMREG_TORL) +
+	    ((uint64_t)CSR_READ(sc, WMREG_TORH) << 32));
 	WM_EVCNT_ADD(&sc->sc_ev_tot,
-	    CSR_READ(sc, WMREG_TOTL) + CSR_READ(sc, WMREG_TOTH));
+	    CSR_READ(sc, WMREG_TOTL) +
+	    ((uint64_t)CSR_READ(sc, WMREG_TOTH) << 32));
 
 	WM_EVCNT_ADD(&sc->sc_ev_tpr, CSR_READ(sc, WMREG_TPR));
 	WM_EVCNT_ADD(&sc->sc_ev_tpt, CSR_READ(sc, WMREG_TPT));
