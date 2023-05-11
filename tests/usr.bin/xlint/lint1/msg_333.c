@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_333.c,v 1.5 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_333.c,v 1.6 2023/05/11 08:01:36 rillig Exp $	*/
 # 3 "msg_333.c"
 
 // Test for message: controlling expression must be bool, not '%s' [333]
@@ -8,6 +8,14 @@
 /* lint1-extra-flags: -T */
 
 typedef _Bool bool;
+
+static enum tagged_color {
+	tagged_red,
+} e1;
+typedef enum {
+	typedef_red,
+} typedef_color;
+static typedef_color e2;
 
 const char *
 example(bool b, int i, const char *p)
@@ -19,6 +27,14 @@ example(bool b, int i, const char *p)
 	/* expect+1: error: controlling expression must be bool, not 'int' [333] */
 	if (i)
 		return "int";
+
+	/* expect+1: error: controlling expression must be bool, not 'enum tagged_color' [333] */
+	if (e1)
+		return "tagged enum";
+
+	/* expect+1: error: controlling expression must be bool, not 'enum typedef typedef_color' [333] */
+	if (e2)
+		return "typedef enum";
 
 	/* expect+1: error: controlling expression must be bool, not 'pointer' [333] */
 	if (p)
