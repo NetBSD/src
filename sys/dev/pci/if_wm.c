@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.770 2023/05/11 06:59:31 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.771 2023/05/11 07:01:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.770 2023/05/11 06:59:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.771 2023/05/11 07:01:57 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -3199,6 +3199,35 @@ alloc_retry:
 	evcnt_attach_dynamic(&sc->sc_ev_linkintr, EVCNT_TYPE_INTR,
 	    NULL, xname, "linkintr");
 
+	evcnt_attach_dynamic(&sc->sc_ev_crcerrs, EVCNT_TYPE_MISC,
+	    NULL, xname, "CRC Error");
+	evcnt_attach_dynamic(&sc->sc_ev_symerrc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Symbol Error");
+	evcnt_attach_dynamic(&sc->sc_ev_mpc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Missed Packets");
+	evcnt_attach_dynamic(&sc->sc_ev_colc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Collision");
+	evcnt_attach_dynamic(&sc->sc_ev_sec, EVCNT_TYPE_MISC,
+	    NULL, xname, "Sequence Error");
+	evcnt_attach_dynamic(&sc->sc_ev_rlec, EVCNT_TYPE_MISC,
+	    NULL, xname, "Receive Length Error");
+
+	if (sc->sc_type >= WM_T_82543) {
+		evcnt_attach_dynamic(&sc->sc_ev_algnerrc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Alignment Error");
+		evcnt_attach_dynamic(&sc->sc_ev_rxerrc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Receive Error");
+		evcnt_attach_dynamic(&sc->sc_ev_cexterr, EVCNT_TYPE_MISC,
+		    NULL, xname, "Carrier Extension Error");
+
+		evcnt_attach_dynamic(&sc->sc_ev_tncrs, EVCNT_TYPE_MISC,
+		    NULL, xname, "Tx with No CRS");
+		evcnt_attach_dynamic(&sc->sc_ev_tsctc, EVCNT_TYPE_MISC,
+		    NULL, xname, "TCP Segmentation Context Tx");
+		evcnt_attach_dynamic(&sc->sc_ev_tsctfc, EVCNT_TYPE_MISC,
+		    NULL, xname, "TCP Segmentation Context Tx Fail");
+	}
+
 	if (sc->sc_type >= WM_T_82542_2_1) {
 		evcnt_attach_dynamic(&sc->sc_ev_tx_xoff, EVCNT_TYPE_MISC,
 		    NULL, xname, "tx_xoff");
@@ -3212,28 +3241,6 @@ alloc_retry:
 		    NULL, xname, "rx_macctl");
 	}
 
-	evcnt_attach_dynamic(&sc->sc_ev_crcerrs, EVCNT_TYPE_MISC,
-	    NULL, xname, "CRC Error");
-	evcnt_attach_dynamic(&sc->sc_ev_symerrc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Symbol Error");
-
-	if (sc->sc_type >= WM_T_82543) {
-		evcnt_attach_dynamic(&sc->sc_ev_algnerrc, EVCNT_TYPE_MISC,
-		    NULL, xname, "Alignment Error");
-		evcnt_attach_dynamic(&sc->sc_ev_rxerrc, EVCNT_TYPE_MISC,
-		    NULL, xname, "Receive Error");
-		evcnt_attach_dynamic(&sc->sc_ev_cexterr, EVCNT_TYPE_MISC,
-		    NULL, xname, "Carrier Extension Error");
-	}
-
-	evcnt_attach_dynamic(&sc->sc_ev_mpc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Missed Packets");
-	evcnt_attach_dynamic(&sc->sc_ev_colc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Collision");
-	evcnt_attach_dynamic(&sc->sc_ev_sec, EVCNT_TYPE_MISC,
-	    NULL, xname, "Sequence Error");
-	evcnt_attach_dynamic(&sc->sc_ev_rlec, EVCNT_TYPE_MISC,
-	    NULL, xname, "Receive Length Error");
 	evcnt_attach_dynamic(&sc->sc_ev_scc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Single Collision");
 	evcnt_attach_dynamic(&sc->sc_ev_ecol, EVCNT_TYPE_MISC,
@@ -3244,6 +3251,18 @@ alloc_retry:
 	    NULL, xname, "Late Collisions");
 	evcnt_attach_dynamic(&sc->sc_ev_dc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Defer");
+	evcnt_attach_dynamic(&sc->sc_ev_prc64, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (64 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_prc127, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (65-127 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_prc255, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (128-255 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_prc511, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (255-511 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_prc1023, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (512-1023 bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_prc1522, EVCNT_TYPE_MISC,
+	    NULL, xname, "Packets Rx (1024-1522 bytes)");
 	evcnt_attach_dynamic(&sc->sc_ev_gprc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Good Packets Rx");
 	evcnt_attach_dynamic(&sc->sc_ev_bprc, EVCNT_TYPE_MISC,
@@ -3266,6 +3285,14 @@ alloc_retry:
 	    NULL, xname, "Rx Oversize");
 	evcnt_attach_dynamic(&sc->sc_ev_rjc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Rx Jabber");
+	if (sc->sc_type >= WM_T_82540) {
+		evcnt_attach_dynamic(&sc->sc_ev_mgtprc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Management Packets RX");
+		evcnt_attach_dynamic(&sc->sc_ev_mgtpdc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Management Packets Dropped");
+		evcnt_attach_dynamic(&sc->sc_ev_mgtptc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Management Packets TX");
+	}
 	evcnt_attach_dynamic(&sc->sc_ev_tor, EVCNT_TYPE_MISC,
 	    NULL, xname, "Total Octets Rx");
 	evcnt_attach_dynamic(&sc->sc_ev_tot, EVCNT_TYPE_MISC,
@@ -3274,22 +3301,6 @@ alloc_retry:
 	    NULL, xname, "Total Packets Rx");
 	evcnt_attach_dynamic(&sc->sc_ev_tpt, EVCNT_TYPE_MISC,
 	    NULL, xname, "Total Packets Tx");
-	evcnt_attach_dynamic(&sc->sc_ev_mptc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Multicast Packets Tx");
-	evcnt_attach_dynamic(&sc->sc_ev_bptc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Broadcast Packets Tx Count");
-	evcnt_attach_dynamic(&sc->sc_ev_prc64, EVCNT_TYPE_MISC,
-	    NULL, xname, "Packets Rx (64 bytes)");
-	evcnt_attach_dynamic(&sc->sc_ev_prc127, EVCNT_TYPE_MISC,
-	    NULL, xname, "Packets Rx (65-127 bytes)");
-	evcnt_attach_dynamic(&sc->sc_ev_prc255, EVCNT_TYPE_MISC,
-	    NULL, xname, "Packets Rx (128-255 bytes)");
-	evcnt_attach_dynamic(&sc->sc_ev_prc511, EVCNT_TYPE_MISC,
-	    NULL, xname, "Packets Rx (255-511 bytes)");
-	evcnt_attach_dynamic(&sc->sc_ev_prc1023, EVCNT_TYPE_MISC,
-	    NULL, xname, "Packets Rx (512-1023 bytes)");
-	evcnt_attach_dynamic(&sc->sc_ev_prc1522, EVCNT_TYPE_MISC,
-	    NULL, xname, "Packets Rx (1024-1522 bytes)");
 	evcnt_attach_dynamic(&sc->sc_ev_ptc64, EVCNT_TYPE_MISC,
 	    NULL, xname, "Packets Tx (64 bytes)");
 	evcnt_attach_dynamic(&sc->sc_ev_ptc127, EVCNT_TYPE_MISC,
@@ -3302,6 +3313,10 @@ alloc_retry:
 	    NULL, xname, "Packets Tx (512-1023 bytes)");
 	evcnt_attach_dynamic(&sc->sc_ev_ptc1522, EVCNT_TYPE_MISC,
 	    NULL, xname, "Packets Tx (1024-1522 Bytes)");
+	evcnt_attach_dynamic(&sc->sc_ev_mptc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Multicast Packets Tx");
+	evcnt_attach_dynamic(&sc->sc_ev_bptc, EVCNT_TYPE_MISC,
+	    NULL, xname, "Broadcast Packets Tx Count");
 	evcnt_attach_dynamic(&sc->sc_ev_iac, EVCNT_TYPE_MISC,
 	    NULL, xname, "Interrupt Assertion");
 	evcnt_attach_dynamic(&sc->sc_ev_icrxptc, EVCNT_TYPE_MISC,
@@ -3320,22 +3335,6 @@ alloc_retry:
 	    NULL, xname, "Intr. Cause Rx Desc Min Thresh");
 	evcnt_attach_dynamic(&sc->sc_ev_icrxoc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Interrupt Cause Receiver Overrun");
-	if (sc->sc_type >= WM_T_82543) {
-		evcnt_attach_dynamic(&sc->sc_ev_tncrs, EVCNT_TYPE_MISC,
-		    NULL, xname, "Tx with No CRS");
-		evcnt_attach_dynamic(&sc->sc_ev_tsctc, EVCNT_TYPE_MISC,
-		    NULL, xname, "TCP Segmentation Context Tx");
-		evcnt_attach_dynamic(&sc->sc_ev_tsctfc, EVCNT_TYPE_MISC,
-		    NULL, xname, "TCP Segmentation Context Tx Fail");
-	}
-	if (sc->sc_type >= WM_T_82540) {
-		evcnt_attach_dynamic(&sc->sc_ev_mgtprc, EVCNT_TYPE_MISC,
-		    NULL, xname, "Management Packets RX");
-		evcnt_attach_dynamic(&sc->sc_ev_mgtpdc, EVCNT_TYPE_MISC,
-		    NULL, xname, "Management Packets Dropped");
-		evcnt_attach_dynamic(&sc->sc_ev_mgtptc, EVCNT_TYPE_MISC,
-		    NULL, xname, "Management Packets TX");
-	}
 	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
 		evcnt_attach_dynamic(&sc->sc_ev_b2ogprc, EVCNT_TYPE_MISC,
 		    NULL, xname, "BMC2OS Packets received by host");
@@ -3393,6 +3392,23 @@ wm_detach(device_t self, int flags __unused)
 #ifdef WM_EVENT_COUNTERS
 	evcnt_detach(&sc->sc_ev_linkintr);
 
+	evcnt_detach(&sc->sc_ev_crcerrs);
+	evcnt_detach(&sc->sc_ev_symerrc);
+	evcnt_detach(&sc->sc_ev_mpc);
+	evcnt_detach(&sc->sc_ev_colc);
+	evcnt_detach(&sc->sc_ev_sec);
+	evcnt_detach(&sc->sc_ev_rlec);
+
+	if (sc->sc_type >= WM_T_82543) {
+		evcnt_detach(&sc->sc_ev_algnerrc);
+		evcnt_detach(&sc->sc_ev_rxerrc);
+		evcnt_detach(&sc->sc_ev_cexterr);
+
+		evcnt_detach(&sc->sc_ev_tncrs);
+		evcnt_detach(&sc->sc_ev_tsctc);
+		evcnt_detach(&sc->sc_ev_tsctfc);
+	}
+
 	if (sc->sc_type >= WM_T_82542_2_1) {
 		evcnt_detach(&sc->sc_ev_tx_xoff);
 		evcnt_detach(&sc->sc_ev_tx_xon);
@@ -3401,23 +3417,17 @@ wm_detach(device_t self, int flags __unused)
 		evcnt_detach(&sc->sc_ev_rx_macctl);
 	}
 
-	evcnt_detach(&sc->sc_ev_crcerrs);
-	evcnt_detach(&sc->sc_ev_symerrc);
-
-	if (sc->sc_type >= WM_T_82543) {
-		evcnt_detach(&sc->sc_ev_algnerrc);
-		evcnt_detach(&sc->sc_ev_rxerrc);
-		evcnt_detach(&sc->sc_ev_cexterr);
-	}
-	evcnt_detach(&sc->sc_ev_mpc);
-	evcnt_detach(&sc->sc_ev_colc);
-	evcnt_detach(&sc->sc_ev_sec);
-	evcnt_detach(&sc->sc_ev_rlec);
 	evcnt_detach(&sc->sc_ev_scc);
 	evcnt_detach(&sc->sc_ev_ecol);
 	evcnt_detach(&sc->sc_ev_mcc);
 	evcnt_detach(&sc->sc_ev_latecol);
 	evcnt_detach(&sc->sc_ev_dc);
+	evcnt_detach(&sc->sc_ev_prc64);
+	evcnt_detach(&sc->sc_ev_prc127);
+	evcnt_detach(&sc->sc_ev_prc255);
+	evcnt_detach(&sc->sc_ev_prc511);
+	evcnt_detach(&sc->sc_ev_prc1023);
+	evcnt_detach(&sc->sc_ev_prc1522);
 	evcnt_detach(&sc->sc_ev_gprc);
 	evcnt_detach(&sc->sc_ev_bprc);
 	evcnt_detach(&sc->sc_ev_mprc);
@@ -3429,24 +3439,23 @@ wm_detach(device_t self, int flags __unused)
 	evcnt_detach(&sc->sc_ev_rfc);
 	evcnt_detach(&sc->sc_ev_roc);
 	evcnt_detach(&sc->sc_ev_rjc);
+	if (sc->sc_type >= WM_T_82540) {
+		evcnt_detach(&sc->sc_ev_mgtprc);
+		evcnt_detach(&sc->sc_ev_mgtpdc);
+		evcnt_detach(&sc->sc_ev_mgtptc);
+	}
 	evcnt_detach(&sc->sc_ev_tor);
 	evcnt_detach(&sc->sc_ev_tot);
 	evcnt_detach(&sc->sc_ev_tpr);
 	evcnt_detach(&sc->sc_ev_tpt);
-	evcnt_detach(&sc->sc_ev_mptc);
-	evcnt_detach(&sc->sc_ev_bptc);
-	evcnt_detach(&sc->sc_ev_prc64);
-	evcnt_detach(&sc->sc_ev_prc127);
-	evcnt_detach(&sc->sc_ev_prc255);
-	evcnt_detach(&sc->sc_ev_prc511);
-	evcnt_detach(&sc->sc_ev_prc1023);
-	evcnt_detach(&sc->sc_ev_prc1522);
 	evcnt_detach(&sc->sc_ev_ptc64);
 	evcnt_detach(&sc->sc_ev_ptc127);
 	evcnt_detach(&sc->sc_ev_ptc255);
 	evcnt_detach(&sc->sc_ev_ptc511);
 	evcnt_detach(&sc->sc_ev_ptc1023);
 	evcnt_detach(&sc->sc_ev_ptc1522);
+	evcnt_detach(&sc->sc_ev_mptc);
+	evcnt_detach(&sc->sc_ev_bptc);
 	evcnt_detach(&sc->sc_ev_iac);
 	evcnt_detach(&sc->sc_ev_icrxptc);
 	evcnt_detach(&sc->sc_ev_icrxatc);
@@ -3456,16 +3465,6 @@ wm_detach(device_t self, int flags __unused)
 	evcnt_detach(&sc->sc_ev_ictxqmtc);
 	evcnt_detach(&sc->sc_ev_icrxdmtc);
 	evcnt_detach(&sc->sc_ev_icrxoc);
-	if (sc->sc_type >= WM_T_82543) {
-		evcnt_detach(&sc->sc_ev_tncrs);
-		evcnt_detach(&sc->sc_ev_tsctc);
-		evcnt_detach(&sc->sc_ev_tsctfc);
-	}
-	if (sc->sc_type >= WM_T_82540) {
-		evcnt_detach(&sc->sc_ev_mgtprc);
-		evcnt_detach(&sc->sc_ev_mgtpdc);
-		evcnt_detach(&sc->sc_ev_mgtptc);
-	}
 	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
 		evcnt_detach(&sc->sc_ev_b2ogprc);
 		evcnt_detach(&sc->sc_ev_o2bspc);
@@ -3768,6 +3767,20 @@ wm_tick(void *arg)
 	WM_EVCNT_ADD(&sc->sc_ev_sec, sec);
 	WM_EVCNT_ADD(&sc->sc_ev_rlec, rlec);
 
+	if (sc->sc_type >= WM_T_82543) {
+		algnerrc = CSR_READ(sc, WMREG_ALGNERRC);
+		rxerrc = CSR_READ(sc, WMREG_RXERRC);
+		cexterr = CSR_READ(sc, WMREG_CEXTERR);
+		WM_EVCNT_ADD(&sc->sc_ev_algnerrc, algnerrc);
+		WM_EVCNT_ADD(&sc->sc_ev_rxerrc, rxerrc);
+		WM_EVCNT_ADD(&sc->sc_ev_cexterr, cexterr);
+
+		WM_EVCNT_ADD(&sc->sc_ev_tncrs, CSR_READ(sc, WMREG_TNCRS));
+		WM_EVCNT_ADD(&sc->sc_ev_tsctc, CSR_READ(sc, WMREG_TSCTC));
+		WM_EVCNT_ADD(&sc->sc_ev_tsctfc, CSR_READ(sc, WMREG_TSCTFC));
+	} else
+		algnerrc = rxerrc = cexterr = 0;
+
 	if (sc->sc_type >= WM_T_82542_2_1) {
 		WM_EVCNT_ADD(&sc->sc_ev_rx_xon, CSR_READ(sc, WMREG_XONRXC));
 		WM_EVCNT_ADD(&sc->sc_ev_tx_xon, CSR_READ(sc, WMREG_XONTXC));
@@ -3844,19 +3857,6 @@ wm_tick(void *arg)
 	WM_EVCNT_ADD(&sc->sc_ev_icrxdmtc, CSR_READ(sc, WMREG_ICRXDMTC));
 	WM_EVCNT_ADD(&sc->sc_ev_icrxoc, CSR_READ(sc, WMREG_ICRXOC));
 
-	if (sc->sc_type >= WM_T_82543) {
-		algnerrc = CSR_READ(sc, WMREG_ALGNERRC);
-		rxerrc = CSR_READ(sc, WMREG_RXERRC);
-		cexterr = CSR_READ(sc, WMREG_CEXTERR);
-		WM_EVCNT_ADD(&sc->sc_ev_algnerrc, algnerrc);
-		WM_EVCNT_ADD(&sc->sc_ev_rxerrc, rxerrc);
-		WM_EVCNT_ADD(&sc->sc_ev_cexterr, cexterr);
-
-		WM_EVCNT_ADD(&sc->sc_ev_tncrs, CSR_READ(sc, WMREG_TNCRS));
-		WM_EVCNT_ADD(&sc->sc_ev_tsctc, CSR_READ(sc, WMREG_TSCTC));
-		WM_EVCNT_ADD(&sc->sc_ev_tsctfc, CSR_READ(sc, WMREG_TSCTFC));
-	} else
-		algnerrc = rxerrc = cexterr = 0;
 
 	if (((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003))
 	    && ((CSR_READ(sc, WMREG_MANC) & MANC_EN_BMC2OS) != 0)) {
