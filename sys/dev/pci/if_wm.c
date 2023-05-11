@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.771 2023/05/11 07:01:57 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.772 2023/05/11 07:04:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.771 2023/05/11 07:01:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.772 2023/05/11 07:04:06 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -3319,22 +3319,24 @@ alloc_retry:
 	    NULL, xname, "Broadcast Packets Tx Count");
 	evcnt_attach_dynamic(&sc->sc_ev_iac, EVCNT_TYPE_MISC,
 	    NULL, xname, "Interrupt Assertion");
-	evcnt_attach_dynamic(&sc->sc_ev_icrxptc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Intr. Cause Rx Pkt Timer Expire");
-	evcnt_attach_dynamic(&sc->sc_ev_icrxatc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Intr. Cause Rx Abs Timer Expire");
-	evcnt_attach_dynamic(&sc->sc_ev_ictxptc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Intr. Cause Tx Pkt Timer Expire");
-	evcnt_attach_dynamic(&sc->sc_ev_ictxact, EVCNT_TYPE_MISC,
-	    NULL, xname, "Intr. Cause Tx Abs Timer Expire");
-	evcnt_attach_dynamic(&sc->sc_ev_ictxqec, EVCNT_TYPE_MISC,
-	    NULL, xname, "Intr. Cause Tx Queue Empty");
-	evcnt_attach_dynamic(&sc->sc_ev_ictxqmtc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Intr. Cause Tx Queue Min Thresh");
-	evcnt_attach_dynamic(&sc->sc_ev_icrxdmtc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Intr. Cause Rx Desc Min Thresh");
-	evcnt_attach_dynamic(&sc->sc_ev_icrxoc, EVCNT_TYPE_MISC,
-	    NULL, xname, "Interrupt Cause Receiver Overrun");
+	if (sc->sc_type < WM_T_82575) {
+		evcnt_attach_dynamic(&sc->sc_ev_icrxptc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Intr. Cause Rx Pkt Timer Expire");
+		evcnt_attach_dynamic(&sc->sc_ev_icrxatc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Intr. Cause Rx Abs Timer Expire");
+		evcnt_attach_dynamic(&sc->sc_ev_ictxptc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Intr. Cause Tx Pkt Timer Expire");
+		evcnt_attach_dynamic(&sc->sc_ev_ictxact, EVCNT_TYPE_MISC,
+		    NULL, xname, "Intr. Cause Tx Abs Timer Expire");
+		evcnt_attach_dynamic(&sc->sc_ev_ictxqec, EVCNT_TYPE_MISC,
+		    NULL, xname, "Intr. Cause Tx Queue Empty");
+		evcnt_attach_dynamic(&sc->sc_ev_ictxqmtc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Intr. Cause Tx Queue Min Thresh");
+		evcnt_attach_dynamic(&sc->sc_ev_icrxdmtc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Intr. Cause Rx Desc Min Thresh");
+		evcnt_attach_dynamic(&sc->sc_ev_icrxoc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Interrupt Cause Receiver Overrun");
+	}
 	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
 		evcnt_attach_dynamic(&sc->sc_ev_b2ogprc, EVCNT_TYPE_MISC,
 		    NULL, xname, "BMC2OS Packets received by host");
@@ -3457,14 +3459,16 @@ wm_detach(device_t self, int flags __unused)
 	evcnt_detach(&sc->sc_ev_mptc);
 	evcnt_detach(&sc->sc_ev_bptc);
 	evcnt_detach(&sc->sc_ev_iac);
-	evcnt_detach(&sc->sc_ev_icrxptc);
-	evcnt_detach(&sc->sc_ev_icrxatc);
-	evcnt_detach(&sc->sc_ev_ictxptc);
-	evcnt_detach(&sc->sc_ev_ictxact);
-	evcnt_detach(&sc->sc_ev_ictxqec);
-	evcnt_detach(&sc->sc_ev_ictxqmtc);
-	evcnt_detach(&sc->sc_ev_icrxdmtc);
-	evcnt_detach(&sc->sc_ev_icrxoc);
+	if (sc->sc_type < WM_T_82575) {
+		evcnt_detach(&sc->sc_ev_icrxptc);
+		evcnt_detach(&sc->sc_ev_icrxatc);
+		evcnt_detach(&sc->sc_ev_ictxptc);
+		evcnt_detach(&sc->sc_ev_ictxact);
+		evcnt_detach(&sc->sc_ev_ictxqec);
+		evcnt_detach(&sc->sc_ev_ictxqmtc);
+		evcnt_detach(&sc->sc_ev_icrxdmtc);
+		evcnt_detach(&sc->sc_ev_icrxoc);
+	}
 	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
 		evcnt_detach(&sc->sc_ev_b2ogprc);
 		evcnt_detach(&sc->sc_ev_o2bspc);
@@ -3848,15 +3852,18 @@ wm_tick(void *arg)
 	WM_EVCNT_ADD(&sc->sc_ev_mptc, CSR_READ(sc, WMREG_MPTC));
 	WM_EVCNT_ADD(&sc->sc_ev_bptc, CSR_READ(sc, WMREG_BPTC));
 	WM_EVCNT_ADD(&sc->sc_ev_iac, CSR_READ(sc, WMREG_IAC));
-	WM_EVCNT_ADD(&sc->sc_ev_icrxptc, CSR_READ(sc, WMREG_ICRXPTC));
-	WM_EVCNT_ADD(&sc->sc_ev_icrxatc, CSR_READ(sc, WMREG_ICRXATC));
-	WM_EVCNT_ADD(&sc->sc_ev_ictxptc, CSR_READ(sc, WMREG_ICTXPTC));
-	WM_EVCNT_ADD(&sc->sc_ev_ictxact, CSR_READ(sc, WMREG_ICTXATC));
-	WM_EVCNT_ADD(&sc->sc_ev_ictxqec, CSR_READ(sc, WMREG_ICTXQEC));
-	WM_EVCNT_ADD(&sc->sc_ev_ictxqmtc, CSR_READ(sc, WMREG_ICTXQMTC));
-	WM_EVCNT_ADD(&sc->sc_ev_icrxdmtc, CSR_READ(sc, WMREG_ICRXDMTC));
-	WM_EVCNT_ADD(&sc->sc_ev_icrxoc, CSR_READ(sc, WMREG_ICRXOC));
-
+	if (sc->sc_type < WM_T_82575) {
+		WM_EVCNT_ADD(&sc->sc_ev_icrxptc, CSR_READ(sc, WMREG_ICRXPTC));
+		WM_EVCNT_ADD(&sc->sc_ev_icrxatc, CSR_READ(sc, WMREG_ICRXATC));
+		WM_EVCNT_ADD(&sc->sc_ev_ictxptc, CSR_READ(sc, WMREG_ICTXPTC));
+		WM_EVCNT_ADD(&sc->sc_ev_ictxact, CSR_READ(sc, WMREG_ICTXATC));
+		WM_EVCNT_ADD(&sc->sc_ev_ictxqec, CSR_READ(sc, WMREG_ICTXQEC));
+		WM_EVCNT_ADD(&sc->sc_ev_ictxqmtc,
+		    CSR_READ(sc, WMREG_ICTXQMTC));
+		WM_EVCNT_ADD(&sc->sc_ev_icrxdmtc,
+		    CSR_READ(sc, WMREG_ICRXDMTC));
+		WM_EVCNT_ADD(&sc->sc_ev_icrxoc, CSR_READ(sc, WMREG_ICRXOC));
+	}
 
 	if (((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003))
 	    && ((CSR_READ(sc, WMREG_MANC) & MANC_EN_BMC2OS) != 0)) {
