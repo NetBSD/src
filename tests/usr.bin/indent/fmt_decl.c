@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.36 2022/04/24 10:36:37 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.37 2023/05/11 09:28:53 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -55,7 +55,8 @@ static const struct
 //indent end
 
 //indent run
-static const struct {
+static const struct
+{
 	double		x;
 	double		y, z;
 }		n[m + 1] =
@@ -78,7 +79,8 @@ typedef struct Complex
 //indent end
 
 //indent run
-typedef struct Complex {
+typedef struct Complex
+{
 	double		x;
 	double		y;
 }		Complex;
@@ -528,7 +530,8 @@ function_name_____20________30________40________50
 /* FIXME: The space between '){' is missing. */
 //indent run
 int	       *function_name_____20________30________40________50
-		(void){
+		(void)
+{
 }
 //indent end
 
@@ -546,7 +549,8 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 //indent run
 int	       *aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
-		(void){
+		(void)
+{
 }
 //indent end
 

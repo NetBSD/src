@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.245 2022/05/09 21:41:49 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.246 2023/05/11 09:28:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.245 2022/05/09 21:41:49 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.246 2023/05/11 09:28:53 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -216,193 +216,6 @@ ind_add(int ind, const char *start, const char *end)
 	    ++ind;
     }
     return ind;
-}
-
-static void
-search_stmt_newline(bool *force_nl)
-{
-    inp_comment_init_newline();
-    inp_comment_add_char('\n');
-    debug_inp(__func__);
-
-    line_no++;
-
-    /*
-     * We may have inherited a force_nl == true from the previous token (like
-     * a semicolon). But once we know that a newline has been scanned in this
-     * loop, force_nl should be false.
-     *
-     * However, the force_nl == true must be preserved if newline is never
-     * scanned in this loop, so this assignment cannot be done earlier.
-     */
-    *force_nl = false;
-}
-
-static void
-search_stmt_comment(void)
-{
-    inp_comment_init_comment();
-    inp_comment_add_range(token.s, token.e);
-    if (token.e[-1] == '/') {
-	while (inp_peek() != '\n')
-	    inp_comment_add_char(inp_next());
-	debug_inp("search_stmt_comment: end of C99 comment");
-    } else {
-	while (!inp_comment_complete_block())
-	    inp_comment_add_char(inp_next());
-	debug_inp("search_stmt_comment: end of block comment");
-    }
-}
-
-static bool
-search_stmt_lbrace(void)
-{
-    /*
-     * Put KNF-style lbraces before the buffered up tokens and jump out of
-     * this loop in order to avoid copying the token again.
-     */
-    if (inp_comment_seen() && opt.brace_same_line) {
-	inp_comment_insert_lbrace();
-	/*
-	 * Originally the lbrace may have been alone on its own line, but it
-	 * will be moved into "the else's line", so if there was a newline
-	 * resulting from the "{" before, it must be scanned now and ignored.
-	 */
-	while (ch_isspace(inp_peek())) {
-	    inp_skip();
-	    if (inp_peek() == '\n')
-		break;
-	}
-	debug_inp(__func__);
-	return true;
-    }
-    return false;
-}
-
-static bool
-search_stmt_other(lexer_symbol lsym, bool *force_nl,
-    bool comment_buffered, bool last_else)
-{
-    bool remove_newlines;
-
-    remove_newlines =
-	/* "} else" */
-	(lsym == lsym_else && code.e != code.s && code.e[-1] == '}')
-	/* "else if" */
-	|| (lsym == lsym_if && last_else && opt.else_if);
-    if (remove_newlines)
-	*force_nl = false;
-
-    if (!inp_comment_seen()) {
-	ps.search_stmt = false;
-	return false;
-    }
-
-    debug_inp(__func__);
-    inp_comment_rtrim_blank();
-
-    if (opt.swallow_optional_blanklines ||
-	(!comment_buffered && remove_newlines)) {
-	*force_nl = !remove_newlines;
-	inp_comment_rtrim_newline();
-    }
-
-    if (*force_nl) {		/* if we should insert a newline here, put it
-				 * into the buffer */
-	*force_nl = false;
-	--line_no;		/* this will be re-increased when the newline
-				 * is read from the buffer */
-	inp_comment_add_char('\n');
-	inp_comment_add_char(' ');
-	if (opt.verbose)	/* warn if the line was not already broken */
-	    diag(0, "Line broken");
-    }
-
-    inp_comment_add_range(token.s, token.e);
-
-    debug_inp("search_stmt_other end");
-    return true;
-}
-
-static void
-search_stmt_lookahead(lexer_symbol *lsym)
-{
-    if (*lsym == lsym_eof)
-	return;
-
-    /*
-     * The only intended purpose of calling lexi() below is to categorize the
-     * next token in order to decide whether to continue buffering forthcoming
-     * tokens. Once the buffering is over, lexi() will be called again
-     * elsewhere on all of the tokens - this time for normal processing.
-     *
-     * Calling it for this purpose is a bug, because lexi() also changes the
-     * parser state and discards leading whitespace, which is needed mostly
-     * for comment-related considerations.
-     *
-     * Work around the former problem by giving lexi() a copy of the current
-     * parser state and discard it if the call turned out to be just a
-     * lookahead.
-     *
-     * Work around the latter problem by copying all whitespace characters
-     * into the buffer so that the later lexi() call will read them.
-     */
-    if (inp_comment_seen()) {
-	while (ch_isblank(inp_peek()))
-	    inp_comment_add_char(inp_next());
-	debug_inp(__func__);
-    }
-
-    struct parser_state backup_ps = ps;
-    debug_println("backed up parser state");
-    *lsym = lexi();
-    if (*lsym == lsym_newline || *lsym == lsym_form_feed ||
-	*lsym == lsym_comment || ps.search_stmt) {
-	ps = backup_ps;
-	debug_println("restored parser state");
-    }
-}
-
-/*
- * Move newlines and comments following an 'if (expr)', 'while (expr)',
- * 'else', etc. up to the start of the following statement to a buffer. This
- * allows proper handling of both kinds of brace placement (-br, -bl) and
- * "cuddling else" (-ce).
- */
-static void
-search_stmt(lexer_symbol *lsym, bool *force_nl, bool *last_else)
-{
-    bool comment_buffered = false;
-
-    while (ps.search_stmt) {
-	switch (*lsym) {
-	case lsym_newline:
-	    search_stmt_newline(force_nl);
-	    break;
-	case lsym_form_feed:
-	    /* XXX: Is simply removed from the source code. */
-	    break;
-	case lsym_comment:
-	    search_stmt_comment();
-	    comment_buffered = true;
-	    break;
-	case lsym_lbrace:
-	    if (search_stmt_lbrace())
-		goto switch_buffer;
-	    /* FALLTHROUGH */
-	default:
-	    if (!search_stmt_other(*lsym, force_nl, comment_buffered,
-		    *last_else))
-		return;
-    switch_buffer:
-	    ps.search_stmt = false;
-	    inp_comment_add_char(' ');	/* add trailing blank, just in case */
-	    inp_from_comment();
-	}
-	search_stmt_lookahead(lsym);
-    }
-
-    *last_else = false;
 }
 
 static void
@@ -733,12 +546,6 @@ process_rparen_or_rbracket(bool *spaced_expr, bool *force_nl, stmt_head hd)
 
 	parse_stmt_head(hd);
     }
-
-    /*
-     * This should ensure that constructs such as main(){...} and int[]{...}
-     * have their braces put in the right place.
-     */
-    ps.search_stmt = opt.brace_same_line;
 }
 
 static bool
@@ -981,9 +788,6 @@ process_rbrace(bool *spaced_expr, int *decl_ind, const int *di_stack)
 
     out.blank_line_before = false;
     parse(psym_rbrace);
-    ps.search_stmt = opt.cuddle_else
-	&& ps.s_sym[ps.tos] == psym_if_expr_stmt
-	&& ps.s_ind_level[ps.tos] >= ps.ind_level;
 
     if (ps.tos <= 1 && opt.blanklines_after_procs && ps.decl_level <= 0)
 	out.blank_line_after = true;
@@ -1276,7 +1080,9 @@ main_loop(void)
     for (;;) {			/* loop until we reach eof */
 	lexer_symbol lsym = lexi();
 
-	search_stmt(&lsym, &force_nl, &last_else);
+	if (lsym == lsym_if && last_else && opt.else_if)
+	    force_nl = false;
+	last_else = false;
 
 	if (lsym == lsym_eof) {
 	    process_eof();

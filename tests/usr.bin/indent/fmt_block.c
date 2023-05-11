@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_block.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: fmt_block.c,v 1.5 2023/05/11 09:28:53 rillig Exp $ */
 
 /*
  * Tests for formatting blocks of statements and declarations.
@@ -23,20 +23,7 @@ function(void)
 }
 //indent end
 
-//indent run
-void
-function(void)
-{
-	if (true) {
-
-/* $ FIXME: indent must not merge these braces. */
-	} {
-/* $ FIXME: the following empty line was not in the input. */
-
-		print("block");
-	}
-}
-//indent end
+//indent run-equals-input
 
 
 /*

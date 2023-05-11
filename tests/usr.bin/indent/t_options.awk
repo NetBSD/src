@@ -1,4 +1,4 @@
-# $NetBSD: t_options.awk,v 1.10 2022/04/24 09:04:12 rillig Exp $
+# $NetBSD: t_options.awk,v 1.11 2023/05/11 09:28:53 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -154,6 +154,9 @@ section == "" {
 		section_incl_comm = ""
 		unused_input_lineno = NR
 		seen_input_section = 1
+		output_excl_comm = ""
+		output_incl_comm = ""
+		output_lineno = 0
 
 	} else if ($2 == "run") {
 		if (section != "")

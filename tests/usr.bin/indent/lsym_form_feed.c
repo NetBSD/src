@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_form_feed.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: lsym_form_feed.c,v 1.5 2023/05/11 09:28:53 rillig Exp $ */
 
 /*
  * Tests for the token lsym_form_feed, which represents a form feed, a special
@@ -40,9 +40,11 @@ void function(void)
 void
 function(void)
 {
-	if (expr) {
+	if (expr)
 		/* $ XXX: The form feed has disappeared. */
+
 		/* <-- form feed */
+	{
 	}
 }
 //indent end

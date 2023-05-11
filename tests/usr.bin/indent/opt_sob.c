@@ -1,4 +1,4 @@
-/* $NetBSD: opt_sob.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_sob.c,v 1.6 2023/05/11 09:28:53 rillig Exp $ */
 
 /*
  * Tests for the options '-sob' and '-nsob'.
@@ -94,57 +94,6 @@ function_with_1_blank_line(void)
 	var = value;
 
 	if (var > 0)
-		var--;
-
-	return var;
-
-}
-
-
-int
-function_with_2_blank_lines(void)
-{
-
-
-	int		var;
-
-
-	var = value;
-
-
-	if (var > 0)
-		var--;
-
-
-	return var;
-
-
-}
-//indent end
-
-//indent run -nsob
-void		function_declaration(void);
-
-
-int
-function_with_0_blank_lines(void)
-{
-	int		var;
-	var = value;
-	if (var > 0)
-		var--;
-	return var;
-}
-
-int
-function_with_1_blank_line(void)
-{
-
-	int		var;
-
-	var = value;
-
-	if (var > 0)
 
 		var--;
 
@@ -175,3 +124,5 @@ function_with_2_blank_lines(void)
 
 }
 //indent end
+
+//indent run-equals-prev-output -nsob

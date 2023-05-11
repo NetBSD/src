@@ -1,23 +1,26 @@
-/* $NetBSD: opt_bl_br.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_bl_br.c,v 1.7 2023/05/11 09:28:53 rillig Exp $ */
 
 //indent input
 void
-example(int n)
+standard_style(int n)
 {
-	if (n > 99) { print("large"); }
-	else if (n > 9) { print("double-digit"); }
-	else if (n > 0) print("positive");
-	else { print("negative"); }
+	if (n > 99) {
+		print("large");
+	} else if (n > 9) {
+		print("double-digit");
+	} else if (n > 0)
+		print("positive");
+	else {
+		print("negative");
+	}
 }
 //indent end
 
-/*
- * XXX: The '} else' looks strange in this style since the '}' is not on a
- * line of its own.
- */
+//indent run-equals-input -br
+
 //indent run -bl
 void
-example(int n)
+standard_style(int n)
 {
 	if (n > 99)
 	{
@@ -34,15 +37,54 @@ example(int n)
 }
 //indent end
 
+
+/*
+ * In this very condensed style, the additional newline between '}' and 'else'
+ * is kept.
+ */
+//indent input
+void
+example(int n)
+{
+	if (n > 99) { print("large"); }
+	else if (n > 9) { print("double-digit"); }
+	else if (n > 0) print("positive");
+	else { print("negative"); }
+}
+//indent end
+
+//indent run -bl
+void
+example(int n)
+{
+	if (n > 99)
+	{
+		print("large");
+	}
+	else if (n > 9)
+	{
+		print("double-digit");
+	}
+	else if (n > 0)
+		print("positive");
+	else
+	{
+		print("negative");
+	}
+}
+//indent end
+
 //indent run -br
 void
 example(int n)
 {
 	if (n > 99) {
 		print("large");
-	} else if (n > 9) {
+	}
+	else if (n > 9) {
 		print("double-digit");
-	} else if (n > 0)
+	}
+	else if (n > 0)
 		print("positive");
 	else {
 		print("negative");
@@ -52,7 +94,8 @@ example(int n)
 
 
 /*
- * Test C99 comments after 'if (expr)', which are handled by search_stmt.
+ * An end-of-line comment after 'if (expr)' forces the '{' to go to the next
+ * line.
  */
 //indent input
 void function(void)
@@ -74,7 +117,8 @@ function(void)
 	if (expr)		// C99 comment
 		stmt();
 
-	if (expr) {		// C99 comment
+	if (expr)		// C99 comment
+	{
 		stmt();
 	}
 }
@@ -127,14 +171,5 @@ function(void)
 }
 //indent end
 
-//indent run -br
-void
-function(void)
-{
-	if (cond) {
-		stmt();
-	} else if (cond) {
-		stmt();
-	}
-}
-//indent end
+/* TODO: Remove the newline between ')' and '{'. */
+//indent run-equals-input -br

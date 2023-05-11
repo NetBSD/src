@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.5 2023/05/11 09:28:53 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -340,7 +340,7 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 /* The comment in the output has moved to the right of the '{'. */
 //indent run
 {
-	if (0) {		/* comment */
+	if (0) /* comment */ {
 	}
 }
 //indent end
@@ -729,8 +729,7 @@ while(cond)/*comment*/;
 void
 loop(void)
 {
-	while (cond)		/* comment */
-		;
+	while (cond) /* comment */ ;
 
 	while (cond)
 /* $ XXX: The spaces around the comment look unintentional. */

@@ -1,4 +1,4 @@
-/* $NetBSD: psym_if_expr_stmt_else.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: psym_if_expr_stmt_else.c,v 1.5 2023/05/11 09:28:53 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_if_expr_stmt_else, which represents the
@@ -25,8 +25,10 @@ void
 example(_Bool cond)
 {
 	if (cond) {
-	} else if (cond) {
-	} else if (cond)
+	}
+	else if (cond) {
+	}
+	else if (cond)
 		i++;
 	else {
 	}
@@ -43,9 +45,11 @@ example(_Bool cond)
 {
 	if (cond)
 	{
-	} else if (cond)
+	}
+	else if (cond)
 	{
-	} else if (cond)
+	}
+	else if (cond)
 		i++;
 	else
 	{
@@ -53,23 +57,7 @@ example(_Bool cond)
 }
 //indent end
 
-//indent run -bl -nce
-void
-example(_Bool cond)
-{
-	if (cond)
-	{
-	}
-	else if (cond)
-	{
-	}
-	else if (cond)
-		i++;
-	else
-	{
-	}
-}
-//indent end
+//indent run-equals-prev-output -bl -nce
 
 /*
  * Adding the option '-nei' (do not join 'else if') expands the code even

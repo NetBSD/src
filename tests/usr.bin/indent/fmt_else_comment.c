@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_else_comment.c,v 1.4 2022/04/24 09:04:12 rillig Exp $	*/
+/*	$NetBSD: fmt_else_comment.c,v 1.5 2023/05/11 09:28:53 rillig Exp $	*/
 
 /*
  * Tests for comments after 'if (expr)' and 'else'. If the option '-br' is
@@ -95,7 +95,10 @@ t(void)
 	if (1)
 	{
 		int		a;
-	} else if (0)
+	}
+
+
+	else if (0)
 	{
 		int		b;
 	}
