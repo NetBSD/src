@@ -1,4 +1,4 @@
-# $NetBSD: t_patterns.sh,v 1.6 2023/05/11 01:50:40 gutteridge Exp $
+# $NetBSD: t_patterns.sh,v 1.7 2023/05/11 10:08:34 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -301,8 +301,8 @@ filename_expansion_body() {
 	esac
 	case "${ATF_TEST_SAVE_FILES}" in
 	'')	;;
-	/*)	(cd ../..; tar cf "${ATF_TEST_SAVE_FILES}" D) ;;
-	*)	(cd ../..; tar cf "${TMPDIR:-/tmp}/${ATF_TEST_SAVE_FILES}" D) ;;
+	/*)	(cd ..; tar cf "${ATF_TEST_SAVE_FILES}" .D) ;;
+	*)	(cd ..; tar cf "${TMPDIR:-/tmp}/${ATF_TEST_SAVE_FILES}" .D) ;;
 	esac
 
 	# Now we have lots of files, try some matching
