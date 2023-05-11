@@ -1,4 +1,4 @@
-# $NetBSD: t_cmdsub.sh,v 1.5 2017/06/16 07:37:41 kre Exp $
+# $NetBSD: t_cmdsub.sh,v 1.6 2023/05/11 00:32:48 gutteridge Exp $
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -513,7 +513,7 @@ u_nested_backticks_in_heredoc_body() {
 }
 
 atf_test_case v_cmdsub_paren_tests
-v_cmdsub__paren_tests_head() {
+v_cmdsub_paren_tests_head() {
 	atf_set "descr" "tests with cmdsubs containing embedded ')'"
 }
 v_cmdsub_paren_tests_body() {
