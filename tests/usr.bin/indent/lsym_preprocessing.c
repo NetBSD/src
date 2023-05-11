@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_preprocessing.c,v 1.5 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: lsym_preprocessing.c,v 1.6 2023/05/11 18:36:36 rillig Exp $ */
 
 /*
  * Tests for the token lsym_preprocessing, which represents a '#' that starts
@@ -212,4 +212,34 @@ int		unary_plus =
 #if 0				/* comment */
 #else				/* comment */
 #endif				/* comment */
+//indent end
+
+
+/*
+ * Multi-line comments in preprocessing lines.
+ */
+//indent input
+#define eol_comment		// EOL
+
+#define wrap_comment		/* line 1
+				 * line 2
+				 * line 3
+				 */
+
+#define fixed_comment		/*- line 1
+				 * line 2
+				 * line 3
+				 */
+//indent end
+
+//indent run
+#define eol_comment		// EOL
+
+#define wrap_comment		/* line 1 line 2 line 3 */
+
+/* $ FIXME: Keep the original indentation of the follow-up lines. */
+#define fixed_comment		/*- line 1
+								 * line 2
+								 * line 3
+								 */
 //indent end
