@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2022/09/24 17:38:18 christos Exp $
+# $NetBSD: Makefile,v 1.4 2023/05/11 16:18:31 christos Exp $
 
 LIBISPRIVATE=yes
 .include <bsd.init.mk>
@@ -50,6 +50,8 @@ b64_pton.c
 LIBDPLIBS+= ${DPLIBS}
 
 .include <bsd.lib.mk>
+
+COPTS.tsig-openssl.c+= -Wno-error=deprecated-declarations
 
 # Use the generated files
 .y.c:
