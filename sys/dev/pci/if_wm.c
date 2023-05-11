@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.776 2023/05/11 07:19:02 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.777 2023/05/11 07:27:09 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.776 2023/05/11 07:19:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.777 2023/05/11 07:27:09 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -884,6 +884,7 @@ static int	wm_setup_msix(struct wm_softc *);
 static int	wm_init(struct ifnet *);
 static int	wm_init_locked(struct ifnet *);
 static void	wm_init_sysctls(struct wm_softc *);
+static void	wm_update_stats(struct wm_softc *);
 static void	wm_unset_stopping_flags(struct wm_softc *);
 static void	wm_set_stopping_flags(struct wm_softc *);
 static void	wm_stop(struct ifnet *, int);
@@ -3881,8 +3882,6 @@ wm_tick(void *arg)
 {
 	struct wm_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint64_t crcerrs, algnerrc, symerrc, mpc, colc,  sec, rlec, rxerrc,
-	    cexterr;
 
 	mutex_enter(sc->sc_core_lock);
 
@@ -3891,180 +3890,7 @@ wm_tick(void *arg)
 		return;
 	}
 
-	crcerrs = CSR_READ(sc, WMREG_CRCERRS);
-	symerrc = CSR_READ(sc, WMREG_SYMERRC);
-	mpc = CSR_READ(sc, WMREG_MPC);
-	colc = CSR_READ(sc, WMREG_COLC);
-	sec = CSR_READ(sc, WMREG_SEC);
-	rlec = CSR_READ(sc, WMREG_RLEC);
-
-	WM_EVCNT_ADD(&sc->sc_ev_crcerrs, crcerrs);
-	WM_EVCNT_ADD(&sc->sc_ev_symerrc, symerrc);
-	WM_EVCNT_ADD(&sc->sc_ev_mpc, mpc);
-	WM_EVCNT_ADD(&sc->sc_ev_colc, colc);
-	WM_EVCNT_ADD(&sc->sc_ev_sec, sec);
-	WM_EVCNT_ADD(&sc->sc_ev_rlec, rlec);
-
-	if (sc->sc_type >= WM_T_82543) {
-		algnerrc = CSR_READ(sc, WMREG_ALGNERRC);
-		rxerrc = CSR_READ(sc, WMREG_RXERRC);
-		WM_EVCNT_ADD(&sc->sc_ev_algnerrc, algnerrc);
-		WM_EVCNT_ADD(&sc->sc_ev_rxerrc, rxerrc);
-		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc)) {
-			cexterr = CSR_READ(sc, WMREG_CEXTERR);
-			WM_EVCNT_ADD(&sc->sc_ev_cexterr, cexterr);
-		} else {
-			cexterr = 0;
-			/* Excessive collision + Link down */
-			WM_EVCNT_ADD(&sc->sc_ev_htdpmc,
-			    CSR_READ(sc, WMREG_HTDPMC));
-		}
-
-		WM_EVCNT_ADD(&sc->sc_ev_tncrs, CSR_READ(sc, WMREG_TNCRS));
-		WM_EVCNT_ADD(&sc->sc_ev_tsctc, CSR_READ(sc, WMREG_TSCTC));
-		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc))
-			WM_EVCNT_ADD(&sc->sc_ev_tsctfc,
-			    CSR_READ(sc, WMREG_TSCTFC));
-		else {
-			WM_EVCNT_ADD(&sc->sc_ev_cbrmpc,
-			    CSR_READ(sc, WMREG_CBRMPC));
-		}
-	} else
-		algnerrc = rxerrc = cexterr = 0;
-
-	if (sc->sc_type >= WM_T_82542_2_1) {
-		WM_EVCNT_ADD(&sc->sc_ev_rx_xon, CSR_READ(sc, WMREG_XONRXC));
-		WM_EVCNT_ADD(&sc->sc_ev_tx_xon, CSR_READ(sc, WMREG_XONTXC));
-		WM_EVCNT_ADD(&sc->sc_ev_rx_xoff, CSR_READ(sc, WMREG_XOFFRXC));
-		WM_EVCNT_ADD(&sc->sc_ev_tx_xoff, CSR_READ(sc, WMREG_XOFFTXC));
-		WM_EVCNT_ADD(&sc->sc_ev_rx_macctl, CSR_READ(sc, WMREG_FCRUC));
-	}
-
-	WM_EVCNT_ADD(&sc->sc_ev_scc, CSR_READ(sc, WMREG_SCC));
-	WM_EVCNT_ADD(&sc->sc_ev_ecol, CSR_READ(sc, WMREG_ECOL));
-	WM_EVCNT_ADD(&sc->sc_ev_mcc, CSR_READ(sc, WMREG_MCC));
-	WM_EVCNT_ADD(&sc->sc_ev_latecol, CSR_READ(sc, WMREG_LATECOL));
-
-	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
-		WM_EVCNT_ADD(&sc->sc_ev_cbtmpc, CSR_READ(sc, WMREG_CBTMPC));
-	}
-
-	WM_EVCNT_ADD(&sc->sc_ev_dc, CSR_READ(sc, WMREG_DC));
-	WM_EVCNT_ADD(&sc->sc_ev_prc64, CSR_READ(sc, WMREG_PRC64));
-	WM_EVCNT_ADD(&sc->sc_ev_prc127, CSR_READ(sc, WMREG_PRC127));
-	WM_EVCNT_ADD(&sc->sc_ev_prc255, CSR_READ(sc, WMREG_PRC255));
-	WM_EVCNT_ADD(&sc->sc_ev_prc511, CSR_READ(sc, WMREG_PRC511));
-	WM_EVCNT_ADD(&sc->sc_ev_prc1023, CSR_READ(sc, WMREG_PRC1023));
-	WM_EVCNT_ADD(&sc->sc_ev_prc1522, CSR_READ(sc, WMREG_PRC1522));
-	WM_EVCNT_ADD(&sc->sc_ev_gprc, CSR_READ(sc, WMREG_GPRC));
-	WM_EVCNT_ADD(&sc->sc_ev_bprc, CSR_READ(sc, WMREG_BPRC));
-	WM_EVCNT_ADD(&sc->sc_ev_mprc, CSR_READ(sc, WMREG_MPRC));
-	WM_EVCNT_ADD(&sc->sc_ev_gptc, CSR_READ(sc, WMREG_GPTC));
-
-	WM_EVCNT_ADD(&sc->sc_ev_gorc,
-	    CSR_READ(sc, WMREG_GORCL) +
-	    ((uint64_t)CSR_READ(sc, WMREG_GORCH) << 32));
-	WM_EVCNT_ADD(&sc->sc_ev_gotc,
-	    CSR_READ(sc, WMREG_GOTCL) +
-	    ((uint64_t)CSR_READ(sc, WMREG_GOTCH) << 32));
-
-	WM_EVCNT_ADD(&sc->sc_ev_rnbc, CSR_READ(sc, WMREG_RNBC));
-	WM_EVCNT_ADD(&sc->sc_ev_ruc, CSR_READ(sc, WMREG_RUC));
-	WM_EVCNT_ADD(&sc->sc_ev_rfc, CSR_READ(sc, WMREG_RFC));
-	WM_EVCNT_ADD(&sc->sc_ev_roc, CSR_READ(sc, WMREG_ROC));
-	WM_EVCNT_ADD(&sc->sc_ev_rjc, CSR_READ(sc, WMREG_RJC));
-
-	if (sc->sc_type >= WM_T_82540) {
-		WM_EVCNT_ADD(&sc->sc_ev_mgtprc, CSR_READ(sc, WMREG_MGTPRC));
-		WM_EVCNT_ADD(&sc->sc_ev_mgtpdc, CSR_READ(sc, WMREG_MGTPDC));
-		WM_EVCNT_ADD(&sc->sc_ev_mgtptc, CSR_READ(sc, WMREG_MGTPTC));
-	}
-
-	/*
-	 * The TOR(L) register includes:
-	 *  - Error
-	 *  - Flow control
-	 *  - Broadcast rejected (This note is described in 82574 and newer
-	 *    datasheets. What does "broadcast rejected" mean?)
-	 */
-	WM_EVCNT_ADD(&sc->sc_ev_tor,
-	    CSR_READ(sc, WMREG_TORL) +
-	    ((uint64_t)CSR_READ(sc, WMREG_TORH) << 32));
-	WM_EVCNT_ADD(&sc->sc_ev_tot,
-	    CSR_READ(sc, WMREG_TOTL) +
-	    ((uint64_t)CSR_READ(sc, WMREG_TOTH) << 32));
-
-	WM_EVCNT_ADD(&sc->sc_ev_tpr, CSR_READ(sc, WMREG_TPR));
-	WM_EVCNT_ADD(&sc->sc_ev_tpt, CSR_READ(sc, WMREG_TPT));
-	WM_EVCNT_ADD(&sc->sc_ev_ptc64, CSR_READ(sc, WMREG_PTC64));
-	WM_EVCNT_ADD(&sc->sc_ev_ptc127, CSR_READ(sc, WMREG_PTC127));
-	WM_EVCNT_ADD(&sc->sc_ev_ptc255, CSR_READ(sc, WMREG_PTC255));
-	WM_EVCNT_ADD(&sc->sc_ev_ptc511, CSR_READ(sc, WMREG_PTC511));
-	WM_EVCNT_ADD(&sc->sc_ev_ptc1023, CSR_READ(sc, WMREG_PTC1023));
-	WM_EVCNT_ADD(&sc->sc_ev_ptc1522, CSR_READ(sc, WMREG_PTC1522));
-	WM_EVCNT_ADD(&sc->sc_ev_mptc, CSR_READ(sc, WMREG_MPTC));
-	WM_EVCNT_ADD(&sc->sc_ev_bptc, CSR_READ(sc, WMREG_BPTC));
-	WM_EVCNT_ADD(&sc->sc_ev_iac, CSR_READ(sc, WMREG_IAC));
-	if (sc->sc_type < WM_T_82575) {
-		WM_EVCNT_ADD(&sc->sc_ev_icrxptc, CSR_READ(sc, WMREG_ICRXPTC));
-		WM_EVCNT_ADD(&sc->sc_ev_icrxatc, CSR_READ(sc, WMREG_ICRXATC));
-		WM_EVCNT_ADD(&sc->sc_ev_ictxptc, CSR_READ(sc, WMREG_ICTXPTC));
-		WM_EVCNT_ADD(&sc->sc_ev_ictxact, CSR_READ(sc, WMREG_ICTXATC));
-		WM_EVCNT_ADD(&sc->sc_ev_ictxqec, CSR_READ(sc, WMREG_ICTXQEC));
-		WM_EVCNT_ADD(&sc->sc_ev_ictxqmtc,
-		    CSR_READ(sc, WMREG_ICTXQMTC));
-		WM_EVCNT_ADD(&sc->sc_ev_rxdmtc,
-		    CSR_READ(sc, WMREG_ICRXDMTC));
-		WM_EVCNT_ADD(&sc->sc_ev_icrxoc, CSR_READ(sc, WMREG_ICRXOC));
-	} else if (!WM_IS_ICHPCH(sc)) {
-		WM_EVCNT_ADD(&sc->sc_ev_rpthc, CSR_READ(sc, WMREG_RPTHC));
-		WM_EVCNT_ADD(&sc->sc_ev_debug1, CSR_READ(sc, WMREG_DEBUG1));
-		WM_EVCNT_ADD(&sc->sc_ev_debug2, CSR_READ(sc, WMREG_DEBUG2));
-		WM_EVCNT_ADD(&sc->sc_ev_debug3, CSR_READ(sc, WMREG_DEBUG3));
-		WM_EVCNT_ADD(&sc->sc_ev_hgptc,  CSR_READ(sc, WMREG_HGPTC));
-		WM_EVCNT_ADD(&sc->sc_ev_debug4, CSR_READ(sc, WMREG_DEBUG4));
-		WM_EVCNT_ADD(&sc->sc_ev_rxdmtc, CSR_READ(sc, WMREG_RXDMTC));
-		WM_EVCNT_ADD(&sc->sc_ev_htcbdpc, CSR_READ(sc, WMREG_HTCBDPC));
-
-		WM_EVCNT_ADD(&sc->sc_ev_hgorc,
-		    CSR_READ(sc, WMREG_HGORCL) +
-		    ((uint64_t)CSR_READ(sc, WMREG_HGORCH) << 32));
-		WM_EVCNT_ADD(&sc->sc_ev_hgotc,
-		    CSR_READ(sc, WMREG_HGOTCL) +
-		    ((uint64_t)CSR_READ(sc, WMREG_HGOTCH) << 32));
-		WM_EVCNT_ADD(&sc->sc_ev_lenerrs, CSR_READ(sc, WMREG_LENERRS));
-	}
-	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
-		WM_EVCNT_ADD(&sc->sc_ev_tlpic, CSR_READ(sc, WMREG_TLPIC));
-		WM_EVCNT_ADD(&sc->sc_ev_rlpic, CSR_READ(sc, WMREG_RLPIC));
-		if ((CSR_READ(sc, WMREG_MANC) & MANC_EN_BMC2OS) != 0) {
-			WM_EVCNT_ADD(&sc->sc_ev_b2ogprc,
-			    CSR_READ(sc, WMREG_B2OGPRC));
-			WM_EVCNT_ADD(&sc->sc_ev_o2bspc,
-			    CSR_READ(sc, WMREG_O2BSPC));
-			WM_EVCNT_ADD(&sc->sc_ev_b2ospc,
-			    CSR_READ(sc, WMREG_B2OSPC));
-			WM_EVCNT_ADD(&sc->sc_ev_o2bgptc,
-			    CSR_READ(sc, WMREG_O2BGPTC));
-		}
-		WM_EVCNT_ADD(&sc->sc_ev_scvpc, CSR_READ(sc, WMREG_SCVPC));
-		WM_EVCNT_ADD(&sc->sc_ev_hrmpc, CSR_READ(sc, WMREG_HRMPC));
-	}
-	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
-	if_statadd_ref(nsr, if_collisions, colc);
-	if_statadd_ref(nsr, if_ierrors,
-	    crcerrs + algnerrc + symerrc + rxerrc + sec + cexterr + rlec);
-	/*
-	 * WMREG_RNBC is incremented when there are no available buffers in
-	 * host memory. It does not mean the number of dropped packets, because
-	 * an Ethernet controller can receive packets in such case if there is
-	 * space in the phy's FIFO.
-	 *
-	 * If you want to know the nubmer of WMREG_RMBC, you should use such as
-	 * own EVCNT instead of if_iqdrops.
-	 */
-	if_statadd_ref(nsr, if_iqdrops, mpc);
-	IF_STAT_PUTREF(ifp);
+	wm_update_stats(sc);
 
 	if (sc->sc_flags & WM_F_HAS_MII)
 		mii_tick(&sc->sc_mii);
@@ -6697,6 +6523,189 @@ err:
 	sc->sc_sysctllog = NULL;
 	device_printf(sc->sc_dev, "%s: sysctl_createv failed, rv = %d\n",
 	    __func__, rv);
+}
+
+static void
+wm_update_stats(struct wm_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	uint64_t crcerrs, algnerrc, symerrc, mpc, colc,  sec, rlec, rxerrc,
+	    cexterr;
+
+	crcerrs = CSR_READ(sc, WMREG_CRCERRS);
+	symerrc = CSR_READ(sc, WMREG_SYMERRC);
+	mpc = CSR_READ(sc, WMREG_MPC);
+	colc = CSR_READ(sc, WMREG_COLC);
+	sec = CSR_READ(sc, WMREG_SEC);
+	rlec = CSR_READ(sc, WMREG_RLEC);
+
+	WM_EVCNT_ADD(&sc->sc_ev_crcerrs, crcerrs);
+	WM_EVCNT_ADD(&sc->sc_ev_symerrc, symerrc);
+	WM_EVCNT_ADD(&sc->sc_ev_mpc, mpc);
+	WM_EVCNT_ADD(&sc->sc_ev_colc, colc);
+	WM_EVCNT_ADD(&sc->sc_ev_sec, sec);
+	WM_EVCNT_ADD(&sc->sc_ev_rlec, rlec);
+
+	if (sc->sc_type >= WM_T_82543) {
+		algnerrc = CSR_READ(sc, WMREG_ALGNERRC);
+		rxerrc = CSR_READ(sc, WMREG_RXERRC);
+		WM_EVCNT_ADD(&sc->sc_ev_algnerrc, algnerrc);
+		WM_EVCNT_ADD(&sc->sc_ev_rxerrc, rxerrc);
+		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc)) {
+			cexterr = CSR_READ(sc, WMREG_CEXTERR);
+			WM_EVCNT_ADD(&sc->sc_ev_cexterr, cexterr);
+		} else {
+			cexterr = 0;
+			/* Excessive collision + Link down */
+			WM_EVCNT_ADD(&sc->sc_ev_htdpmc,
+			    CSR_READ(sc, WMREG_HTDPMC));
+		}
+
+		WM_EVCNT_ADD(&sc->sc_ev_tncrs, CSR_READ(sc, WMREG_TNCRS));
+		WM_EVCNT_ADD(&sc->sc_ev_tsctc, CSR_READ(sc, WMREG_TSCTC));
+		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc))
+			WM_EVCNT_ADD(&sc->sc_ev_tsctfc,
+			    CSR_READ(sc, WMREG_TSCTFC));
+		else {
+			WM_EVCNT_ADD(&sc->sc_ev_cbrmpc,
+			    CSR_READ(sc, WMREG_CBRMPC));
+		}
+	} else
+		algnerrc = rxerrc = cexterr = 0;
+
+	if (sc->sc_type >= WM_T_82542_2_1) {
+		WM_EVCNT_ADD(&sc->sc_ev_rx_xon, CSR_READ(sc, WMREG_XONRXC));
+		WM_EVCNT_ADD(&sc->sc_ev_tx_xon, CSR_READ(sc, WMREG_XONTXC));
+		WM_EVCNT_ADD(&sc->sc_ev_rx_xoff, CSR_READ(sc, WMREG_XOFFRXC));
+		WM_EVCNT_ADD(&sc->sc_ev_tx_xoff, CSR_READ(sc, WMREG_XOFFTXC));
+		WM_EVCNT_ADD(&sc->sc_ev_rx_macctl, CSR_READ(sc, WMREG_FCRUC));
+	}
+
+	WM_EVCNT_ADD(&sc->sc_ev_scc, CSR_READ(sc, WMREG_SCC));
+	WM_EVCNT_ADD(&sc->sc_ev_ecol, CSR_READ(sc, WMREG_ECOL));
+	WM_EVCNT_ADD(&sc->sc_ev_mcc, CSR_READ(sc, WMREG_MCC));
+	WM_EVCNT_ADD(&sc->sc_ev_latecol, CSR_READ(sc, WMREG_LATECOL));
+
+	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
+		WM_EVCNT_ADD(&sc->sc_ev_cbtmpc, CSR_READ(sc, WMREG_CBTMPC));
+	}
+
+	WM_EVCNT_ADD(&sc->sc_ev_dc, CSR_READ(sc, WMREG_DC));
+	WM_EVCNT_ADD(&sc->sc_ev_prc64, CSR_READ(sc, WMREG_PRC64));
+	WM_EVCNT_ADD(&sc->sc_ev_prc127, CSR_READ(sc, WMREG_PRC127));
+	WM_EVCNT_ADD(&sc->sc_ev_prc255, CSR_READ(sc, WMREG_PRC255));
+	WM_EVCNT_ADD(&sc->sc_ev_prc511, CSR_READ(sc, WMREG_PRC511));
+	WM_EVCNT_ADD(&sc->sc_ev_prc1023, CSR_READ(sc, WMREG_PRC1023));
+	WM_EVCNT_ADD(&sc->sc_ev_prc1522, CSR_READ(sc, WMREG_PRC1522));
+	WM_EVCNT_ADD(&sc->sc_ev_gprc, CSR_READ(sc, WMREG_GPRC));
+	WM_EVCNT_ADD(&sc->sc_ev_bprc, CSR_READ(sc, WMREG_BPRC));
+	WM_EVCNT_ADD(&sc->sc_ev_mprc, CSR_READ(sc, WMREG_MPRC));
+	WM_EVCNT_ADD(&sc->sc_ev_gptc, CSR_READ(sc, WMREG_GPTC));
+
+	WM_EVCNT_ADD(&sc->sc_ev_gorc,
+	    CSR_READ(sc, WMREG_GORCL) +
+	    ((uint64_t)CSR_READ(sc, WMREG_GORCH) << 32));
+	WM_EVCNT_ADD(&sc->sc_ev_gotc,
+	    CSR_READ(sc, WMREG_GOTCL) +
+	    ((uint64_t)CSR_READ(sc, WMREG_GOTCH) << 32));
+
+	WM_EVCNT_ADD(&sc->sc_ev_rnbc, CSR_READ(sc, WMREG_RNBC));
+	WM_EVCNT_ADD(&sc->sc_ev_ruc, CSR_READ(sc, WMREG_RUC));
+	WM_EVCNT_ADD(&sc->sc_ev_rfc, CSR_READ(sc, WMREG_RFC));
+	WM_EVCNT_ADD(&sc->sc_ev_roc, CSR_READ(sc, WMREG_ROC));
+	WM_EVCNT_ADD(&sc->sc_ev_rjc, CSR_READ(sc, WMREG_RJC));
+
+	if (sc->sc_type >= WM_T_82540) {
+		WM_EVCNT_ADD(&sc->sc_ev_mgtprc, CSR_READ(sc, WMREG_MGTPRC));
+		WM_EVCNT_ADD(&sc->sc_ev_mgtpdc, CSR_READ(sc, WMREG_MGTPDC));
+		WM_EVCNT_ADD(&sc->sc_ev_mgtptc, CSR_READ(sc, WMREG_MGTPTC));
+	}
+
+	/*
+	 * The TOR(L) register includes:
+	 *  - Error
+	 *  - Flow control
+	 *  - Broadcast rejected (This note is described in 82574 and newer
+	 *    datasheets. What does "broadcast rejected" mean?)
+	 */
+	WM_EVCNT_ADD(&sc->sc_ev_tor,
+	    CSR_READ(sc, WMREG_TORL) +
+	    ((uint64_t)CSR_READ(sc, WMREG_TORH) << 32));
+	WM_EVCNT_ADD(&sc->sc_ev_tot,
+	    CSR_READ(sc, WMREG_TOTL) +
+	    ((uint64_t)CSR_READ(sc, WMREG_TOTH) << 32));
+
+	WM_EVCNT_ADD(&sc->sc_ev_tpr, CSR_READ(sc, WMREG_TPR));
+	WM_EVCNT_ADD(&sc->sc_ev_tpt, CSR_READ(sc, WMREG_TPT));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc64, CSR_READ(sc, WMREG_PTC64));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc127, CSR_READ(sc, WMREG_PTC127));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc255, CSR_READ(sc, WMREG_PTC255));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc511, CSR_READ(sc, WMREG_PTC511));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc1023, CSR_READ(sc, WMREG_PTC1023));
+	WM_EVCNT_ADD(&sc->sc_ev_ptc1522, CSR_READ(sc, WMREG_PTC1522));
+	WM_EVCNT_ADD(&sc->sc_ev_mptc, CSR_READ(sc, WMREG_MPTC));
+	WM_EVCNT_ADD(&sc->sc_ev_bptc, CSR_READ(sc, WMREG_BPTC));
+	WM_EVCNT_ADD(&sc->sc_ev_iac, CSR_READ(sc, WMREG_IAC));
+	if (sc->sc_type < WM_T_82575) {
+		WM_EVCNT_ADD(&sc->sc_ev_icrxptc, CSR_READ(sc, WMREG_ICRXPTC));
+		WM_EVCNT_ADD(&sc->sc_ev_icrxatc, CSR_READ(sc, WMREG_ICRXATC));
+		WM_EVCNT_ADD(&sc->sc_ev_ictxptc, CSR_READ(sc, WMREG_ICTXPTC));
+		WM_EVCNT_ADD(&sc->sc_ev_ictxact, CSR_READ(sc, WMREG_ICTXATC));
+		WM_EVCNT_ADD(&sc->sc_ev_ictxqec, CSR_READ(sc, WMREG_ICTXQEC));
+		WM_EVCNT_ADD(&sc->sc_ev_ictxqmtc,
+		    CSR_READ(sc, WMREG_ICTXQMTC));
+		WM_EVCNT_ADD(&sc->sc_ev_rxdmtc,
+		    CSR_READ(sc, WMREG_ICRXDMTC));
+		WM_EVCNT_ADD(&sc->sc_ev_icrxoc, CSR_READ(sc, WMREG_ICRXOC));
+	} else if (!WM_IS_ICHPCH(sc)) {
+		WM_EVCNT_ADD(&sc->sc_ev_rpthc, CSR_READ(sc, WMREG_RPTHC));
+		WM_EVCNT_ADD(&sc->sc_ev_debug1, CSR_READ(sc, WMREG_DEBUG1));
+		WM_EVCNT_ADD(&sc->sc_ev_debug2, CSR_READ(sc, WMREG_DEBUG2));
+		WM_EVCNT_ADD(&sc->sc_ev_debug3, CSR_READ(sc, WMREG_DEBUG3));
+		WM_EVCNT_ADD(&sc->sc_ev_hgptc,  CSR_READ(sc, WMREG_HGPTC));
+		WM_EVCNT_ADD(&sc->sc_ev_debug4, CSR_READ(sc, WMREG_DEBUG4));
+		WM_EVCNT_ADD(&sc->sc_ev_rxdmtc, CSR_READ(sc, WMREG_RXDMTC));
+		WM_EVCNT_ADD(&sc->sc_ev_htcbdpc, CSR_READ(sc, WMREG_HTCBDPC));
+
+		WM_EVCNT_ADD(&sc->sc_ev_hgorc,
+		    CSR_READ(sc, WMREG_HGORCL) +
+		    ((uint64_t)CSR_READ(sc, WMREG_HGORCH) << 32));
+		WM_EVCNT_ADD(&sc->sc_ev_hgotc,
+		    CSR_READ(sc, WMREG_HGOTCL) +
+		    ((uint64_t)CSR_READ(sc, WMREG_HGOTCH) << 32));
+		WM_EVCNT_ADD(&sc->sc_ev_lenerrs, CSR_READ(sc, WMREG_LENERRS));
+	}
+	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
+		WM_EVCNT_ADD(&sc->sc_ev_tlpic, CSR_READ(sc, WMREG_TLPIC));
+		WM_EVCNT_ADD(&sc->sc_ev_rlpic, CSR_READ(sc, WMREG_RLPIC));
+		if ((CSR_READ(sc, WMREG_MANC) & MANC_EN_BMC2OS) != 0) {
+			WM_EVCNT_ADD(&sc->sc_ev_b2ogprc,
+			    CSR_READ(sc, WMREG_B2OGPRC));
+			WM_EVCNT_ADD(&sc->sc_ev_o2bspc,
+			    CSR_READ(sc, WMREG_O2BSPC));
+			WM_EVCNT_ADD(&sc->sc_ev_b2ospc,
+			    CSR_READ(sc, WMREG_B2OSPC));
+			WM_EVCNT_ADD(&sc->sc_ev_o2bgptc,
+			    CSR_READ(sc, WMREG_O2BGPTC));
+		}
+		WM_EVCNT_ADD(&sc->sc_ev_scvpc, CSR_READ(sc, WMREG_SCVPC));
+		WM_EVCNT_ADD(&sc->sc_ev_hrmpc, CSR_READ(sc, WMREG_HRMPC));
+	}
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_collisions, colc);
+	if_statadd_ref(nsr, if_ierrors,
+	    crcerrs + algnerrc + symerrc + rxerrc + sec + cexterr + rlec);
+	/*
+	 * WMREG_RNBC is incremented when there are no available buffers in
+	 * host memory. It does not mean the number of dropped packets, because
+	 * an Ethernet controller can receive packets in such case if there is
+	 * space in the phy's FIFO.
+	 *
+	 * If you want to know the nubmer of WMREG_RMBC, you should use such as
+	 * own EVCNT instead of if_iqdrops.
+	 */
+	if_statadd_ref(nsr, if_iqdrops, mpc);
+	IF_STAT_PUTREF(ifp);
 }
 
 /*
