@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.768 2023/05/11 06:54:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.769 2023/05/11 06:56:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.768 2023/05/11 06:54:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.769 2023/05/11 06:56:49 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -3798,6 +3798,13 @@ wm_tick(void *arg)
 	WM_EVCNT_ADD(&sc->sc_ev_roc, CSR_READ(sc, WMREG_ROC));
 	WM_EVCNT_ADD(&sc->sc_ev_rjc, CSR_READ(sc, WMREG_RJC));
 
+	/*
+	 * The TOR(L) register includes:
+	 *  - Error
+	 *  - Flow control
+	 *  - Broadcast rejected (This note is described in 82574 and newer
+	 *    datasheets. What does "broadcast rejected" mean?)
+	 */
 	WM_EVCNT_ADD(&sc->sc_ev_tor,
 	    CSR_READ(sc, WMREG_TORL) +
 	    ((uint64_t)CSR_READ(sc, WMREG_TORH) << 32));
