@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.778 2023/05/11 07:38:30 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.779 2023/05/11 07:43:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.778 2023/05/11 07:38:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.779 2023/05/11 07:43:11 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -616,7 +616,7 @@ struct wm_softc {
 	struct evcnt sc_ev_prc64;	/* Packets Rx (64 bytes) */
 	struct evcnt sc_ev_prc127;	/* Packets Rx (65-127 bytes) */
 	struct evcnt sc_ev_prc255;	/* Packets Rx (128-255 bytes) */
-	struct evcnt sc_ev_prc511;	/* Packets Rx (255-511 bytes) */
+	struct evcnt sc_ev_prc511;	/* Packets Rx (256-511 bytes) */
 	struct evcnt sc_ev_prc1023;	/* Packets Rx (512-1023 bytes) */
 	struct evcnt sc_ev_prc1522;	/* Packets Rx (1024-1522 bytes) */
 	struct evcnt sc_ev_gprc;	/* Good Packets Rx */
@@ -3323,7 +3323,7 @@ alloc_retry:
 	evcnt_attach_dynamic(&sc->sc_ev_prc255, EVCNT_TYPE_MISC,
 	    NULL, xname, "Packets Rx (128-255 bytes)");
 	evcnt_attach_dynamic(&sc->sc_ev_prc511, EVCNT_TYPE_MISC,
-	    NULL, xname, "Packets Rx (255-511 bytes)");
+	    NULL, xname, "Packets Rx (256-511 bytes)");
 	evcnt_attach_dynamic(&sc->sc_ev_prc1023, EVCNT_TYPE_MISC,
 	    NULL, xname, "Packets Rx (512-1023 bytes)");
 	evcnt_attach_dynamic(&sc->sc_ev_prc1522, EVCNT_TYPE_MISC,
