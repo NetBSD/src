@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.777 2023/05/11 07:27:09 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.778 2023/05/11 07:38:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.777 2023/05/11 07:27:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.778 2023/05/11 07:38:30 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -757,25 +757,33 @@ do {									\
 #define	WM_EVCNT_INCR(ev)						\
 	atomic_store_relaxed(&((ev)->ev_count),				\
 	    atomic_load_relaxed(&(ev)->ev_count) + 1)
+#define	WM_EVCNT_STORE(ev, val)						\
+	atomic_store_relaxed(&((ev)->ev_count), (val))
 #define	WM_EVCNT_ADD(ev, val)						\
 	atomic_store_relaxed(&((ev)->ev_count),				\
 	    atomic_load_relaxed(&(ev)->ev_count) + (val))
 #else
 #define	WM_EVCNT_INCR(ev)						\
 	((ev)->ev_count)++
+#define	WM_EVCNT_STORE(ev, val)						\
+	((ev)->ev_count = (val))
 #define	WM_EVCNT_ADD(ev, val)						\
 	(ev)->ev_count += (val)
 #endif
 
 #define WM_Q_EVCNT_INCR(qname, evname)			\
 	WM_EVCNT_INCR(&(qname)->qname##_ev_##evname)
+#define WM_Q_EVCNT_STORE(qname, evname, val)		\
+	WM_EVCNT_STORE(&(qname)->qname##_ev_##evname, (val))
 #define WM_Q_EVCNT_ADD(qname, evname, val)		\
 	WM_EVCNT_ADD(&(qname)->qname##_ev_##evname, (val))
 #else /* !WM_EVENT_COUNTERS */
 #define	WM_EVCNT_INCR(ev)	/* nothing */
+#define	WM_EVCNT_STORE(ev, val)	/* nothing */
 #define	WM_EVCNT_ADD(ev, val)	/* nothing */
 
 #define WM_Q_EVCNT_INCR(qname, evname)		/* nothing */
+#define WM_Q_EVCNT_STORE(qname, evname, val)	/* nothing */
 #define WM_Q_EVCNT_ADD(qname, evname, val)	/* nothing */
 #endif /* !WM_EVENT_COUNTERS */
 
@@ -885,6 +893,7 @@ static int	wm_init(struct ifnet *);
 static int	wm_init_locked(struct ifnet *);
 static void	wm_init_sysctls(struct wm_softc *);
 static void	wm_update_stats(struct wm_softc *);
+static void	wm_clear_evcnt(struct wm_softc *);
 static void	wm_unset_stopping_flags(struct wm_softc *);
 static void	wm_set_stopping_flags(struct wm_softc *);
 static void	wm_stop(struct ifnet *, int);
@@ -4028,6 +4037,18 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		KASSERT(IFNET_LOCKED(ifp));
 	}
 
+	if (cmd == SIOCZIFDATA) {
+		/*
+		 * Special handling for SIOCZIFDATA.
+		 * Copying and clearing the if_data structure is done with
+		 * ether_ioctl() below.
+		 */
+		mutex_enter(sc->sc_core_lock);
+		wm_update_stats(sc);
+		wm_clear_evcnt(sc);
+		mutex_exit(sc->sc_core_lock);
+	}
+
 	switch (cmd) {
 	case SIOCSIFMEDIA:
 		mutex_enter(sc->sc_core_lock);
@@ -6706,6 +6727,167 @@ wm_update_stats(struct wm_softc *sc)
 	 */
 	if_statadd_ref(nsr, if_iqdrops, mpc);
 	IF_STAT_PUTREF(ifp);
+}
+
+void
+wm_clear_evcnt(struct wm_softc *sc)
+{
+#ifdef WM_EVENT_COUNTERS
+	int i;
+
+	/* RX queues */
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct wm_rxqueue *rxq = &sc->sc_queue[i].wmq_rxq;
+
+		WM_Q_EVCNT_STORE(rxq, intr, 0);
+		WM_Q_EVCNT_STORE(rxq, defer, 0);
+		WM_Q_EVCNT_STORE(rxq, ipsum, 0);
+		WM_Q_EVCNT_STORE(rxq, tusum, 0);
+	}
+
+	/* TX queues */
+	for (i = 0; i < sc->sc_nqueues; i++) {
+		struct wm_txqueue *txq = &sc->sc_queue[i].wmq_txq;
+		int j;
+
+		WM_Q_EVCNT_STORE(txq, txsstall, 0);
+		WM_Q_EVCNT_STORE(txq, txdstall, 0);
+		WM_Q_EVCNT_STORE(txq, fifo_stall, 0);
+		WM_Q_EVCNT_STORE(txq, txdw, 0);
+		WM_Q_EVCNT_STORE(txq, txqe, 0);
+		WM_Q_EVCNT_STORE(txq, ipsum, 0);
+		WM_Q_EVCNT_STORE(txq, tusum, 0);
+		WM_Q_EVCNT_STORE(txq, tusum6, 0);
+		WM_Q_EVCNT_STORE(txq, tso, 0);
+		WM_Q_EVCNT_STORE(txq, tso6, 0);
+		WM_Q_EVCNT_STORE(txq, tsopain, 0);
+
+		for (j = 0; j < WM_NTXSEGS; j++)
+			WM_EVCNT_STORE(&txq->txq_ev_txseg[j], 0);
+
+		WM_Q_EVCNT_STORE(txq, pcqdrop, 0);
+		WM_Q_EVCNT_STORE(txq, descdrop, 0);
+		WM_Q_EVCNT_STORE(txq, toomanyseg, 0);
+		WM_Q_EVCNT_STORE(txq, defrag, 0);
+		if (sc->sc_type <= WM_T_82544)
+			WM_Q_EVCNT_STORE(txq, underrun, 0);
+		WM_Q_EVCNT_STORE(txq, skipcontext, 0);
+	}
+
+	/* Miscs */
+	WM_EVCNT_STORE(&sc->sc_ev_linkintr, 0);
+
+	WM_EVCNT_STORE(&sc->sc_ev_crcerrs, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_symerrc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_mpc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_colc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_sec, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_rlec, 0);
+
+	if (sc->sc_type >= WM_T_82543) {
+		WM_EVCNT_STORE(&sc->sc_ev_algnerrc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_rxerrc, 0);
+		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc))
+			WM_EVCNT_STORE(&sc->sc_ev_cexterr, 0);
+		else
+			WM_EVCNT_STORE(&sc->sc_ev_htdpmc, 0);
+
+		WM_EVCNT_STORE(&sc->sc_ev_tncrs, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_tsctc, 0);
+		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc))
+			WM_EVCNT_STORE(&sc->sc_ev_tsctfc, 0);
+		else {
+			WM_EVCNT_STORE(&sc->sc_ev_cbrdpc, 0);
+			WM_EVCNT_STORE(&sc->sc_ev_cbrmpc, 0);
+		}
+	}
+
+	if (sc->sc_type >= WM_T_82542_2_1) {
+		WM_EVCNT_STORE(&sc->sc_ev_tx_xoff, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_tx_xon, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_rx_xoff, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_rx_xon, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_rx_macctl, 0);
+	}
+
+	WM_EVCNT_STORE(&sc->sc_ev_scc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_ecol, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_mcc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_latecol, 0);
+
+	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc))
+		WM_EVCNT_STORE(&sc->sc_ev_cbtmpc, 0);
+
+	WM_EVCNT_STORE(&sc->sc_ev_dc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_prc64, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_prc127, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_prc255, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_prc511, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_prc1023, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_prc1522, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_gprc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_bprc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_mprc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_gptc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_gorc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_gotc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_rnbc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_ruc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_rfc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_roc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_rjc, 0);
+	if (sc->sc_type >= WM_T_82540) {
+		WM_EVCNT_STORE(&sc->sc_ev_mgtprc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_mgtpdc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_mgtptc, 0);
+	}
+	WM_EVCNT_STORE(&sc->sc_ev_tor, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_tot, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_tpr, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_tpt, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_ptc64, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_ptc127, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_ptc255, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_ptc511, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_ptc1023, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_ptc1522, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_mptc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_bptc, 0);
+	WM_EVCNT_STORE(&sc->sc_ev_iac, 0);
+	if (sc->sc_type < WM_T_82575) {
+		WM_EVCNT_STORE(&sc->sc_ev_icrxptc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_icrxatc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_ictxptc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_ictxact, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_ictxqec, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_ictxqmtc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_rxdmtc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_icrxoc, 0);
+	} else if (!WM_IS_ICHPCH(sc)) {
+		WM_EVCNT_STORE(&sc->sc_ev_rpthc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_debug1, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_debug2, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_debug3, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_hgptc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_debug4, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_rxdmtc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_htcbdpc, 0);
+
+		WM_EVCNT_STORE(&sc->sc_ev_hgorc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_hgotc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_lenerrs, 0);
+	}
+	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
+		WM_EVCNT_STORE(&sc->sc_ev_tlpic, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_rlpic, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_b2ogprc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_o2bspc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_b2ospc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_o2bgptc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_scvpc, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_hrmpc, 0);
+	}
+#endif
 }
 
 /*
