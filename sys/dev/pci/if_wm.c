@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.769 2023/05/11 06:56:49 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.770 2023/05/11 06:59:31 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.769 2023/05/11 06:56:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.770 2023/05/11 06:59:31 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -585,10 +585,10 @@ struct wm_softc {
 	struct evcnt sc_ev_linkintr;	/* Link interrupts */
 
 	/* >= WM_T_82542_2_1 */
-	struct evcnt sc_ev_tx_xoff;	/* Tx PAUSE(!0) frames */
+	struct evcnt sc_ev_rx_xon;	/* Rx PAUSE(0) frames */
 	struct evcnt sc_ev_tx_xon;	/* Tx PAUSE(0) frames */
 	struct evcnt sc_ev_rx_xoff;	/* Rx PAUSE(!0) frames */
-	struct evcnt sc_ev_rx_xon;	/* Rx PAUSE(0) frames */
+	struct evcnt sc_ev_tx_xoff;	/* Tx PAUSE(!0) frames */
 	struct evcnt sc_ev_rx_macctl;	/* Rx Unsupported */
 
 	struct evcnt sc_ev_crcerrs;	/* CRC Error */
@@ -596,15 +596,22 @@ struct wm_softc {
 	struct evcnt sc_ev_symerrc;	/* Symbol Error */
 	struct evcnt sc_ev_rxerrc;	/* Receive Error */
 	struct evcnt sc_ev_mpc;		/* Missed Packets */
-	struct evcnt sc_ev_colc;	/* Collision */
-	struct evcnt sc_ev_sec;		/* Sequence Error */
-	struct evcnt sc_ev_cexterr;	/* Carrier Extension Error */
-	struct evcnt sc_ev_rlec;	/* Receive Length Error */
 	struct evcnt sc_ev_scc;		/* Single Collision */
 	struct evcnt sc_ev_ecol;	/* Excessive Collision */
 	struct evcnt sc_ev_mcc;		/* Multiple Collision */
 	struct evcnt sc_ev_latecol;	/* Late Collision */
+	struct evcnt sc_ev_colc;	/* Collision */
 	struct evcnt sc_ev_dc;		/* Defer */
+	struct evcnt sc_ev_tncrs;	/* Tx-No CRS */
+	struct evcnt sc_ev_sec;		/* Sequence Error */
+	struct evcnt sc_ev_cexterr;	/* Carrier Extension Error */
+	struct evcnt sc_ev_rlec;	/* Receive Length Error */
+	struct evcnt sc_ev_prc64;	/* Packets Rx (64 bytes) */
+	struct evcnt sc_ev_prc127;	/* Packets Rx (65-127 bytes) */
+	struct evcnt sc_ev_prc255;	/* Packets Rx (128-255 bytes) */
+	struct evcnt sc_ev_prc511;	/* Packets Rx (255-511 bytes) */
+	struct evcnt sc_ev_prc1023;	/* Packets Rx (512-1023 bytes) */
+	struct evcnt sc_ev_prc1522;	/* Packets Rx (1024-1522 bytes) */
 	struct evcnt sc_ev_gprc;	/* Good Packets Rx */
 	struct evcnt sc_ev_bprc;	/* Broadcast Packets Rx */
 	struct evcnt sc_ev_mprc;	/* Multicast Packets Rx */
@@ -616,24 +623,23 @@ struct wm_softc {
 	struct evcnt sc_ev_rfc;		/* Rx Fragment */
 	struct evcnt sc_ev_roc;		/* Rx Oversize */
 	struct evcnt sc_ev_rjc;		/* Rx Jabber */
+	struct evcnt sc_ev_mgtprc;	/* Management Packets RX */
+	struct evcnt sc_ev_mgtpdc;	/* Management Packets Dropped */
+	struct evcnt sc_ev_mgtptc;	/* Management Packets TX */
 	struct evcnt sc_ev_tor;		/* Total Octets Rx */
 	struct evcnt sc_ev_tot;		/* Total Octets Tx */
 	struct evcnt sc_ev_tpr;		/* Total Packets Rx */
 	struct evcnt sc_ev_tpt;		/* Total Packets Tx */
-	struct evcnt sc_ev_mptc;	/* Multicast Packets Tx */
-	struct evcnt sc_ev_bptc;	/* Broadcast Packets Tx Count */
-	struct evcnt sc_ev_prc64;	/* Packets Rx (64 bytes) */
-	struct evcnt sc_ev_prc127;	/* Packets Rx (65-127 bytes) */
-	struct evcnt sc_ev_prc255;	/* Packets Rx (128-255 bytes) */
-	struct evcnt sc_ev_prc511;	/* Packets Rx (255-511 bytes) */
-	struct evcnt sc_ev_prc1023;	/* Packets Rx (512-1023 bytes) */
-	struct evcnt sc_ev_prc1522;	/* Packets Rx (1024-1522 bytes) */
 	struct evcnt sc_ev_ptc64;	/* Packets Tx (64 bytes) */
 	struct evcnt sc_ev_ptc127;	/* Packets Tx (65-127 bytes) */
 	struct evcnt sc_ev_ptc255;	/* Packets Tx (128-255 bytes) */
 	struct evcnt sc_ev_ptc511;	/* Packets Tx (256-511 bytes) */
 	struct evcnt sc_ev_ptc1023;	/* Packets Tx (512-1023 bytes) */
 	struct evcnt sc_ev_ptc1522;	/* Packets Tx (1024-1522 Bytes) */
+	struct evcnt sc_ev_mptc;	/* Multicast Packets Tx */
+	struct evcnt sc_ev_bptc;	/* Broadcast Packets Tx Count */
+	struct evcnt sc_ev_tsctc;	/* TCP Segmentation Context Tx */
+	struct evcnt sc_ev_tsctfc;	/* TCP Segmentation Context Tx Fail */
 	struct evcnt sc_ev_iac;		/* Interrupt Assertion */
 	struct evcnt sc_ev_icrxptc;	/* Intr. Cause Rx Pkt Timer Expire */
 	struct evcnt sc_ev_icrxatc;	/* Intr. Cause Rx Abs Timer Expire */
@@ -643,12 +649,6 @@ struct wm_softc {
 	struct evcnt sc_ev_ictxqmtc;	/* Intr. Cause Tx Queue Min Thresh */
 	struct evcnt sc_ev_icrxdmtc;	/* Intr. Cause Rx Desc Min Thresh */
 	struct evcnt sc_ev_icrxoc;	/* Intr. Cause Receiver Overrun */
-	struct evcnt sc_ev_tncrs;	/* Tx-No CRS */
-	struct evcnt sc_ev_tsctc;	/* TCP Segmentation Context Tx */
-	struct evcnt sc_ev_tsctfc;	/* TCP Segmentation Context Tx Fail */
-	struct evcnt sc_ev_mgtprc;	/* Management Packets RX */
-	struct evcnt sc_ev_mgtpdc;	/* Management Packets Dropped */
-	struct evcnt sc_ev_mgtptc;	/* Management Packets TX */
 	struct evcnt sc_ev_b2ogprc;	/* BMC2OS pkts received by host */
 	struct evcnt sc_ev_o2bspc;	/* OS2BMC pkts transmitted by host */
 	struct evcnt sc_ev_b2ospc;	/* BMC2OS pkts sent by BMC */
@@ -3780,6 +3780,12 @@ wm_tick(void *arg)
 	WM_EVCNT_ADD(&sc->sc_ev_mcc, CSR_READ(sc, WMREG_MCC));
 	WM_EVCNT_ADD(&sc->sc_ev_latecol, CSR_READ(sc, WMREG_LATECOL));
 	WM_EVCNT_ADD(&sc->sc_ev_dc, CSR_READ(sc, WMREG_DC));
+	WM_EVCNT_ADD(&sc->sc_ev_prc64, CSR_READ(sc, WMREG_PRC64));
+	WM_EVCNT_ADD(&sc->sc_ev_prc127, CSR_READ(sc, WMREG_PRC127));
+	WM_EVCNT_ADD(&sc->sc_ev_prc255, CSR_READ(sc, WMREG_PRC255));
+	WM_EVCNT_ADD(&sc->sc_ev_prc511, CSR_READ(sc, WMREG_PRC511));
+	WM_EVCNT_ADD(&sc->sc_ev_prc1023, CSR_READ(sc, WMREG_PRC1023));
+	WM_EVCNT_ADD(&sc->sc_ev_prc1522, CSR_READ(sc, WMREG_PRC1522));
 	WM_EVCNT_ADD(&sc->sc_ev_gprc, CSR_READ(sc, WMREG_GPRC));
 	WM_EVCNT_ADD(&sc->sc_ev_bprc, CSR_READ(sc, WMREG_BPRC));
 	WM_EVCNT_ADD(&sc->sc_ev_mprc, CSR_READ(sc, WMREG_MPRC));
@@ -3798,6 +3804,12 @@ wm_tick(void *arg)
 	WM_EVCNT_ADD(&sc->sc_ev_roc, CSR_READ(sc, WMREG_ROC));
 	WM_EVCNT_ADD(&sc->sc_ev_rjc, CSR_READ(sc, WMREG_RJC));
 
+	if (sc->sc_type >= WM_T_82540) {
+		WM_EVCNT_ADD(&sc->sc_ev_mgtprc, CSR_READ(sc, WMREG_MGTPRC));
+		WM_EVCNT_ADD(&sc->sc_ev_mgtpdc, CSR_READ(sc, WMREG_MGTPDC));
+		WM_EVCNT_ADD(&sc->sc_ev_mgtptc, CSR_READ(sc, WMREG_MGTPTC));
+	}
+
 	/*
 	 * The TOR(L) register includes:
 	 *  - Error
@@ -3814,20 +3826,14 @@ wm_tick(void *arg)
 
 	WM_EVCNT_ADD(&sc->sc_ev_tpr, CSR_READ(sc, WMREG_TPR));
 	WM_EVCNT_ADD(&sc->sc_ev_tpt, CSR_READ(sc, WMREG_TPT));
-	WM_EVCNT_ADD(&sc->sc_ev_mptc, CSR_READ(sc, WMREG_MPTC));
-	WM_EVCNT_ADD(&sc->sc_ev_bptc, CSR_READ(sc, WMREG_BPTC));
-	WM_EVCNT_ADD(&sc->sc_ev_prc64, CSR_READ(sc, WMREG_PRC64));
-	WM_EVCNT_ADD(&sc->sc_ev_prc127, CSR_READ(sc, WMREG_PRC127));
-	WM_EVCNT_ADD(&sc->sc_ev_prc255, CSR_READ(sc, WMREG_PRC255));
-	WM_EVCNT_ADD(&sc->sc_ev_prc511, CSR_READ(sc, WMREG_PRC511));
-	WM_EVCNT_ADD(&sc->sc_ev_prc1023, CSR_READ(sc, WMREG_PRC1023));
-	WM_EVCNT_ADD(&sc->sc_ev_prc1522, CSR_READ(sc, WMREG_PRC1522));
 	WM_EVCNT_ADD(&sc->sc_ev_ptc64, CSR_READ(sc, WMREG_PTC64));
 	WM_EVCNT_ADD(&sc->sc_ev_ptc127, CSR_READ(sc, WMREG_PTC127));
 	WM_EVCNT_ADD(&sc->sc_ev_ptc255, CSR_READ(sc, WMREG_PTC255));
 	WM_EVCNT_ADD(&sc->sc_ev_ptc511, CSR_READ(sc, WMREG_PTC511));
 	WM_EVCNT_ADD(&sc->sc_ev_ptc1023, CSR_READ(sc, WMREG_PTC1023));
 	WM_EVCNT_ADD(&sc->sc_ev_ptc1522, CSR_READ(sc, WMREG_PTC1522));
+	WM_EVCNT_ADD(&sc->sc_ev_mptc, CSR_READ(sc, WMREG_MPTC));
+	WM_EVCNT_ADD(&sc->sc_ev_bptc, CSR_READ(sc, WMREG_BPTC));
 	WM_EVCNT_ADD(&sc->sc_ev_iac, CSR_READ(sc, WMREG_IAC));
 	WM_EVCNT_ADD(&sc->sc_ev_icrxptc, CSR_READ(sc, WMREG_ICRXPTC));
 	WM_EVCNT_ADD(&sc->sc_ev_icrxatc, CSR_READ(sc, WMREG_ICRXATC));
@@ -3852,11 +3858,6 @@ wm_tick(void *arg)
 	} else
 		algnerrc = rxerrc = cexterr = 0;
 
-	if (sc->sc_type >= WM_T_82540) {
-		WM_EVCNT_ADD(&sc->sc_ev_mgtprc, CSR_READ(sc, WMREG_MGTPRC));
-		WM_EVCNT_ADD(&sc->sc_ev_mgtpdc, CSR_READ(sc, WMREG_MGTPDC));
-		WM_EVCNT_ADD(&sc->sc_ev_mgtptc, CSR_READ(sc, WMREG_MGTPTC));
-	}
 	if (((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003))
 	    && ((CSR_READ(sc, WMREG_MANC) & MANC_EN_BMC2OS) != 0)) {
 		WM_EVCNT_ADD(&sc->sc_ev_b2ogprc, CSR_READ(sc, WMREG_B2OGPRC));
