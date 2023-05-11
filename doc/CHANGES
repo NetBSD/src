@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2964 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2965 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -31,6 +31,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	ppp(4): Remove several non-functioning ioctls. [chs 20221221]
 	libc: Update Unicode tables to Unicode 15.0.0. [wiz 20221221]
 	dse(4): Added Dayna SCSI/Link ethernet driver. [nat 20221222]
+	binutils: Updated to FSF binutils 2.39. [christos 20221224]
 	sdhc(4): Add quirk for some Intel eMMC devices (like
 		GIGABYTE MA10-ST0) to allow the driver to attach
 		successfully. [msaitoh 20230105]
