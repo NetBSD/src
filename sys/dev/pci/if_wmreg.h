@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.128 2022/10/19 06:37:25 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.129 2023/05/11 07:14:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1155,7 +1155,12 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_DC	0x4030	/* Defer Count - R/clr */
 #define	WMREG_TNCRS	0x4034	/* Tx with No CRS - R/clr */
 #define	WMREG_SEC	0x4038	/* Sequence Error Count */
+
+/* Old */
 #define	WMREG_CEXTERR	0x403c	/* Carrier Extension Error Count */
+/* New */
+#define	WMREG_HTDPMC	0x403c	/* Host Tx Discarded Packets by MAC Count */
+
 #define	WMREG_RLEC	0x4040	/* Receive Length Error Count */
 #define	WMREG_XONRXC	0x4048	/* XON Rx Count - R/clr */
 #define	WMREG_XONTXC	0x404c	/* XON Tx Count - R/clr */
@@ -1199,8 +1204,15 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_MPTC	0x40f0	/* Multicast Packets Tx Count - R/clr */
 #define	WMREG_BPTC	0x40f4	/* Broadcast Packets Tx Count */
 #define	WMREG_TSCTC	0x40f8	/* TCP Segmentation Context Tx */
+
+/* Old */
 #define	WMREG_TSCTFC	0x40fc	/* TCP Segmentation Context Tx Fail */
+/* New */
+#define	WMREG_CBRMPC	0x40fc	/* Circuit Breaker Rx Manageability Packet */
+
 #define	WMREG_IAC	0x4100	/* Interrupt Assertion Count */
+
+/* Old */
 #define	WMREG_ICRXPTC	0x4104	/* Interrupt Cause Rx Pkt Timer Expire Count */
 #define	WMREG_ICRXATC	0x4108	/* Interrupt Cause Rx Abs Timer Expire Count */
 #define	WMREG_ICTXPTC	0x410c	/* Interrupt Cause Tx Pkt Timer Expire Count */
@@ -1209,6 +1221,16 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_ICTXQMTC	0x411c	/* Interrupt Cause Tx Queue Min Thresh Count */
 #define	WMREG_ICRXDMTC	0x4120	/* Interrupt Cause Rx Desc Min Thresh Count */
 #define	WMREG_ICRXOC	0x4124	/* Interrupt Cause Receiver Overrun Count */
+/* New */
+#define	WMREG_RPTHC	0x4104	/* Rx Pkt To Host Count */
+#define	WMREG_DEBUG1	0x4108	/* Debug Counter 1 */
+#define	WMREG_DEBUG2	0x410c	/* Debug Counter 2 */
+#define	WMREG_DEBUG3	0x4110	/* Debug Counter 3 */
+#define	WMREG_HGPTC	0x4118	/* Host Good Packets Tx Count (>=82576?) */
+#define	WMREG_DEBUG4	0x411c	/* Debug Counter 4 */
+#define	WMREG_RXDMTC	0x4120	/* Rx Desc Min Thresh Count */
+#define	WMREG_HTCBDPC	0x4124	/* Host Tx Circuit Breaker Dropped Pkt. Cnt. */
+
 #define	WMREG_TLPIC	0x4148	/* EEE Tx LPI Count */
 #define	WMREG_RLPIC	0x414c	/* EEE Rx LPI Count */
 #define	WMREG_B2OGPRC	0x4158	/* BMC2OS packets received by host */
