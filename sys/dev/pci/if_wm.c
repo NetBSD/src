@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.780 2023/05/11 07:45:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.781 2023/05/11 07:47:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.780 2023/05/11 07:45:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.781 2023/05/11 07:47:14 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -658,7 +658,7 @@ struct wm_softc {
 	struct evcnt sc_ev_icrxptc;	/* Intr. Cause Rx Pkt Timer Expire */
 	struct evcnt sc_ev_icrxatc;	/* Intr. Cause Rx Abs Timer Expire */
 	struct evcnt sc_ev_ictxptc;	/* Intr. Cause Tx Pkt Timer Expire */
-	struct evcnt sc_ev_ictxact;	/* Intr. Cause Tx Abs Timer Expire */
+	struct evcnt sc_ev_ictxatc;	/* Intr. Cause Tx Abs Timer Expire */
 	struct evcnt sc_ev_ictxqec;	/* Intr. Cause Tx Queue Empty */
 	struct evcnt sc_ev_ictxqmtc;	/* Intr. Cause Tx Queue Min Thresh */
 	/*
@@ -3391,7 +3391,7 @@ alloc_retry:
 		    NULL, xname, "Intr. Cause Rx Abs Timer Expire");
 		evcnt_attach_dynamic(&sc->sc_ev_ictxptc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Intr. Cause Tx Pkt Timer Expire");
-		evcnt_attach_dynamic(&sc->sc_ev_ictxact, EVCNT_TYPE_MISC,
+		evcnt_attach_dynamic(&sc->sc_ev_ictxatc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Intr. Cause Tx Abs Timer Expire");
 		evcnt_attach_dynamic(&sc->sc_ev_ictxqec, EVCNT_TYPE_MISC,
 		    NULL, xname, "Intr. Cause Tx Queue Empty");
@@ -3590,7 +3590,7 @@ wm_detach(device_t self, int flags __unused)
 		evcnt_detach(&sc->sc_ev_icrxptc);
 		evcnt_detach(&sc->sc_ev_icrxatc);
 		evcnt_detach(&sc->sc_ev_ictxptc);
-		evcnt_detach(&sc->sc_ev_ictxact);
+		evcnt_detach(&sc->sc_ev_ictxatc);
 		evcnt_detach(&sc->sc_ev_ictxqec);
 		evcnt_detach(&sc->sc_ev_ictxqmtc);
 		evcnt_detach(&sc->sc_ev_rxdmtc);
@@ -6671,7 +6671,7 @@ wm_update_stats(struct wm_softc *sc)
 		WM_EVCNT_ADD(&sc->sc_ev_icrxptc, CSR_READ(sc, WMREG_ICRXPTC));
 		WM_EVCNT_ADD(&sc->sc_ev_icrxatc, CSR_READ(sc, WMREG_ICRXATC));
 		WM_EVCNT_ADD(&sc->sc_ev_ictxptc, CSR_READ(sc, WMREG_ICTXPTC));
-		WM_EVCNT_ADD(&sc->sc_ev_ictxact, CSR_READ(sc, WMREG_ICTXATC));
+		WM_EVCNT_ADD(&sc->sc_ev_ictxatc, CSR_READ(sc, WMREG_ICTXATC));
 		WM_EVCNT_ADD(&sc->sc_ev_ictxqec, CSR_READ(sc, WMREG_ICTXQEC));
 		WM_EVCNT_ADD(&sc->sc_ev_ictxqmtc,
 		    CSR_READ(sc, WMREG_ICTXQMTC));
@@ -6858,7 +6858,7 @@ wm_clear_evcnt(struct wm_softc *sc)
 		WM_EVCNT_STORE(&sc->sc_ev_icrxptc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_icrxatc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_ictxptc, 0);
-		WM_EVCNT_STORE(&sc->sc_ev_ictxact, 0);
+		WM_EVCNT_STORE(&sc->sc_ev_ictxatc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_ictxqec, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_ictxqmtc, 0);
 		WM_EVCNT_STORE(&sc->sc_ev_rxdmtc, 0);
