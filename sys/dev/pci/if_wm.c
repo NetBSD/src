@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.774 2023/05/11 07:08:47 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.775 2023/05/11 07:14:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.774 2023/05/11 07:08:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.775 2023/05/11 07:14:46 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -604,7 +604,12 @@ struct wm_softc {
 	struct evcnt sc_ev_dc;		/* Defer */
 	struct evcnt sc_ev_tncrs;	/* Tx-No CRS */
 	struct evcnt sc_ev_sec;		/* Sequence Error */
+
+	/* Old */
 	struct evcnt sc_ev_cexterr;	/* Carrier Extension Error */
+	/* New */
+	struct evcnt sc_ev_htdpmc;	/* Host Tx Discarded Pkts by MAC */
+
 	struct evcnt sc_ev_rlec;	/* Receive Length Error */
 	struct evcnt sc_ev_prc64;	/* Packets Rx (64 bytes) */
 	struct evcnt sc_ev_prc127;	/* Packets Rx (65-127 bytes) */
@@ -639,16 +644,36 @@ struct wm_softc {
 	struct evcnt sc_ev_mptc;	/* Multicast Packets Tx */
 	struct evcnt sc_ev_bptc;	/* Broadcast Packets Tx */
 	struct evcnt sc_ev_tsctc;	/* TCP Segmentation Context Tx */
+
+	/* Old */
 	struct evcnt sc_ev_tsctfc;	/* TCP Segmentation Context Tx Fail */
+	/* New */
+	struct evcnt sc_ev_cbrmpc;	/* Circuit Breaker Rx Mng. Packet */
+
 	struct evcnt sc_ev_iac;		/* Interrupt Assertion */
+
+	/* Old */
 	struct evcnt sc_ev_icrxptc;	/* Intr. Cause Rx Pkt Timer Expire */
 	struct evcnt sc_ev_icrxatc;	/* Intr. Cause Rx Abs Timer Expire */
 	struct evcnt sc_ev_ictxptc;	/* Intr. Cause Tx Pkt Timer Expire */
 	struct evcnt sc_ev_ictxact;	/* Intr. Cause Tx Abs Timer Expire */
 	struct evcnt sc_ev_ictxqec;	/* Intr. Cause Tx Queue Empty */
 	struct evcnt sc_ev_ictxqmtc;	/* Intr. Cause Tx Queue Min Thresh */
-	struct evcnt sc_ev_icrxdmtc;	/* Intr. Cause Rx Desc Min Thresh */
+	/*
+	 * sc_ev_rxdmtc is shared with both "Intr. cause" and
+	 * non "Intr. cause" register.
+	 */
+	struct evcnt sc_ev_rxdmtc;	/* (Intr. Cause) Rx Desc Min Thresh */
 	struct evcnt sc_ev_icrxoc;	/* Intr. Cause Receiver Overrun */
+	/* New */
+	struct evcnt sc_ev_rpthc;	/* Rx Packets To Host */
+	struct evcnt sc_ev_debug1;	/* Debug Counter 1 */
+	struct evcnt sc_ev_debug2;	/* Debug Counter 2 */
+	struct evcnt sc_ev_debug3;	/* Debug Counter 3 */
+	struct evcnt sc_ev_hgptc;	/* Host Good Packets TX */
+	struct evcnt sc_ev_debug4;	/* Debug Counter 4 */
+	struct evcnt sc_ev_htcbdpc;	/* Host Tx Circuit Breaker Drp. Pkts */
+
 	struct evcnt sc_ev_b2ogprc;	/* BMC2OS pkts received by host */
 	struct evcnt sc_ev_o2bspc;	/* OS2BMC pkts transmitted by host */
 	struct evcnt sc_ev_b2ospc;	/* BMC2OS pkts sent by BMC */
@@ -3217,15 +3242,30 @@ alloc_retry:
 		    NULL, xname, "Alignment Error");
 		evcnt_attach_dynamic(&sc->sc_ev_rxerrc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Receive Error");
-		evcnt_attach_dynamic(&sc->sc_ev_cexterr, EVCNT_TYPE_MISC,
-		    NULL, xname, "Carrier Extension Error");
+		/* XXX Does 82575 have HTDPMC? */
+		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc))
+			evcnt_attach_dynamic(&sc->sc_ev_cexterr,
+			    EVCNT_TYPE_MISC, NULL, xname,
+			    "Carrier Extension Error");
+		else
+			evcnt_attach_dynamic(&sc->sc_ev_htdpmc,
+			    EVCNT_TYPE_MISC, NULL, xname,
+			    "Host Transmit Discarded Packets by MAC");
 
 		evcnt_attach_dynamic(&sc->sc_ev_tncrs, EVCNT_TYPE_MISC,
 		    NULL, xname, "Tx with No CRS");
 		evcnt_attach_dynamic(&sc->sc_ev_tsctc, EVCNT_TYPE_MISC,
 		    NULL, xname, "TCP Segmentation Context Tx");
-		evcnt_attach_dynamic(&sc->sc_ev_tsctfc, EVCNT_TYPE_MISC,
-		    NULL, xname, "TCP Segmentation Context Tx Fail");
+		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc))
+			evcnt_attach_dynamic(&sc->sc_ev_tsctfc,
+			    EVCNT_TYPE_MISC, NULL, xname,
+			    "TCP Segmentation Context Tx Fail");
+		else {
+			/* XXX Is the circuit breaker only for 82576? */
+			evcnt_attach_dynamic(&sc->sc_ev_cbrmpc,
+			    EVCNT_TYPE_MISC, NULL, xname,
+			    "Circuit Breaker Rx Manageability Packet");
+		}
 	}
 
 	if (sc->sc_type >= WM_T_82542_2_1) {
@@ -3332,10 +3372,45 @@ alloc_retry:
 		    NULL, xname, "Intr. Cause Tx Queue Empty");
 		evcnt_attach_dynamic(&sc->sc_ev_ictxqmtc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Intr. Cause Tx Queue Min Thresh");
-		evcnt_attach_dynamic(&sc->sc_ev_icrxdmtc, EVCNT_TYPE_MISC,
+		evcnt_attach_dynamic(&sc->sc_ev_rxdmtc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Intr. Cause Rx Desc Min Thresh");
+
+		/* XXX 82575 document says it has ICRXOC. Is that right? */
 		evcnt_attach_dynamic(&sc->sc_ev_icrxoc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Interrupt Cause Receiver Overrun");
+	} else if (!WM_IS_ICHPCH(sc)) {
+		/*
+		 * For 82575 and newer.
+		 *
+		 * On 80003, ICHs and PCHs, it seems all of the following
+		 * registers are zero.
+		 */
+		evcnt_attach_dynamic(&sc->sc_ev_rpthc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Rx Packets To Host");
+		evcnt_attach_dynamic(&sc->sc_ev_debug1, EVCNT_TYPE_MISC,
+		    NULL, xname, "Debug Counter 1");
+		evcnt_attach_dynamic(&sc->sc_ev_debug2, EVCNT_TYPE_MISC,
+		    NULL, xname, "Debug Counter 2");
+		evcnt_attach_dynamic(&sc->sc_ev_debug3, EVCNT_TYPE_MISC,
+		    NULL, xname, "Debug Counter 3");
+
+		/*
+		 * 82575 datasheet says 0x4118 is for TXQEC(Tx Queue Empty).
+		 * I think it's wrong. The real count I observed is the same
+		 * as GPTC(Good Packets Tx) and TPT(Total Packets Tx).
+		 * It's HGPTC(Host Good Packets Tx) which is described in
+		 * 82576's datasheet.
+		 */
+		evcnt_attach_dynamic(&sc->sc_ev_hgptc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Host Good Packets TX");
+
+		evcnt_attach_dynamic(&sc->sc_ev_debug4, EVCNT_TYPE_MISC,
+		    NULL, xname, "Debug Counter 4");
+		evcnt_attach_dynamic(&sc->sc_ev_rxdmtc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Rx Desc Min Thresh");
+		/* XXX Is the circuit breaker only for 82576? */
+		evcnt_attach_dynamic(&sc->sc_ev_htcbdpc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Host Tx Circuit Breaker Dropped Packets");
 	}
 	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
 		evcnt_attach_dynamic(&sc->sc_ev_b2ogprc, EVCNT_TYPE_MISC,
@@ -3404,11 +3479,17 @@ wm_detach(device_t self, int flags __unused)
 	if (sc->sc_type >= WM_T_82543) {
 		evcnt_detach(&sc->sc_ev_algnerrc);
 		evcnt_detach(&sc->sc_ev_rxerrc);
-		evcnt_detach(&sc->sc_ev_cexterr);
+		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc))
+			evcnt_detach(&sc->sc_ev_cexterr);
+		else
+			evcnt_detach(&sc->sc_ev_htdpmc);
 
 		evcnt_detach(&sc->sc_ev_tncrs);
 		evcnt_detach(&sc->sc_ev_tsctc);
-		evcnt_detach(&sc->sc_ev_tsctfc);
+		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc))
+			evcnt_detach(&sc->sc_ev_tsctfc);
+		else
+			evcnt_detach(&sc->sc_ev_cbrmpc);
 	}
 
 	if (sc->sc_type >= WM_T_82542_2_1) {
@@ -3466,8 +3547,17 @@ wm_detach(device_t self, int flags __unused)
 		evcnt_detach(&sc->sc_ev_ictxact);
 		evcnt_detach(&sc->sc_ev_ictxqec);
 		evcnt_detach(&sc->sc_ev_ictxqmtc);
-		evcnt_detach(&sc->sc_ev_icrxdmtc);
+		evcnt_detach(&sc->sc_ev_rxdmtc);
 		evcnt_detach(&sc->sc_ev_icrxoc);
+	} else if (!WM_IS_ICHPCH(sc)) {
+		evcnt_detach(&sc->sc_ev_rpthc);
+		evcnt_detach(&sc->sc_ev_debug1);
+		evcnt_detach(&sc->sc_ev_debug2);
+		evcnt_detach(&sc->sc_ev_debug3);
+		evcnt_detach(&sc->sc_ev_hgptc);
+		evcnt_detach(&sc->sc_ev_debug4);
+		evcnt_detach(&sc->sc_ev_rxdmtc);
+		evcnt_detach(&sc->sc_ev_htcbdpc);
 	}
 	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
 		evcnt_detach(&sc->sc_ev_b2ogprc);
@@ -3774,14 +3864,27 @@ wm_tick(void *arg)
 	if (sc->sc_type >= WM_T_82543) {
 		algnerrc = CSR_READ(sc, WMREG_ALGNERRC);
 		rxerrc = CSR_READ(sc, WMREG_RXERRC);
-		cexterr = CSR_READ(sc, WMREG_CEXTERR);
 		WM_EVCNT_ADD(&sc->sc_ev_algnerrc, algnerrc);
 		WM_EVCNT_ADD(&sc->sc_ev_rxerrc, rxerrc);
-		WM_EVCNT_ADD(&sc->sc_ev_cexterr, cexterr);
+		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc)) {
+			cexterr = CSR_READ(sc, WMREG_CEXTERR);
+			WM_EVCNT_ADD(&sc->sc_ev_cexterr, cexterr);
+		} else {
+			cexterr = 0;
+			/* Excessive collision + Link down */
+			WM_EVCNT_ADD(&sc->sc_ev_htdpmc,
+			    CSR_READ(sc, WMREG_HTDPMC));
+		}
 
 		WM_EVCNT_ADD(&sc->sc_ev_tncrs, CSR_READ(sc, WMREG_TNCRS));
 		WM_EVCNT_ADD(&sc->sc_ev_tsctc, CSR_READ(sc, WMREG_TSCTC));
-		WM_EVCNT_ADD(&sc->sc_ev_tsctfc, CSR_READ(sc, WMREG_TSCTFC));
+		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc))
+			WM_EVCNT_ADD(&sc->sc_ev_tsctfc,
+			    CSR_READ(sc, WMREG_TSCTFC));
+		else {
+			WM_EVCNT_ADD(&sc->sc_ev_cbrmpc,
+			    CSR_READ(sc, WMREG_CBRMPC));
+		}
 	} else
 		algnerrc = rxerrc = cexterr = 0;
 
@@ -3860,9 +3963,18 @@ wm_tick(void *arg)
 		WM_EVCNT_ADD(&sc->sc_ev_ictxqec, CSR_READ(sc, WMREG_ICTXQEC));
 		WM_EVCNT_ADD(&sc->sc_ev_ictxqmtc,
 		    CSR_READ(sc, WMREG_ICTXQMTC));
-		WM_EVCNT_ADD(&sc->sc_ev_icrxdmtc,
+		WM_EVCNT_ADD(&sc->sc_ev_rxdmtc,
 		    CSR_READ(sc, WMREG_ICRXDMTC));
 		WM_EVCNT_ADD(&sc->sc_ev_icrxoc, CSR_READ(sc, WMREG_ICRXOC));
+	} else if (!WM_IS_ICHPCH(sc)) {
+		WM_EVCNT_ADD(&sc->sc_ev_rpthc, CSR_READ(sc, WMREG_RPTHC));
+		WM_EVCNT_ADD(&sc->sc_ev_debug1, CSR_READ(sc, WMREG_DEBUG1));
+		WM_EVCNT_ADD(&sc->sc_ev_debug2, CSR_READ(sc, WMREG_DEBUG2));
+		WM_EVCNT_ADD(&sc->sc_ev_debug3, CSR_READ(sc, WMREG_DEBUG3));
+		WM_EVCNT_ADD(&sc->sc_ev_hgptc,  CSR_READ(sc, WMREG_HGPTC));
+		WM_EVCNT_ADD(&sc->sc_ev_debug4, CSR_READ(sc, WMREG_DEBUG4));
+		WM_EVCNT_ADD(&sc->sc_ev_rxdmtc, CSR_READ(sc, WMREG_RXDMTC));
+		WM_EVCNT_ADD(&sc->sc_ev_htcbdpc, CSR_READ(sc, WMREG_HTCBDPC));
 	}
 
 	if (((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003))
@@ -4989,7 +5101,7 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 
 	/* For 82571 variant, 80003 and ICHs */
 	if (((sc->sc_type >= WM_T_82571) && (sc->sc_type <= WM_T_82583))
-	    || (sc->sc_type >= WM_T_80003)) {
+	    || WM_IS_ICHPCH(sc)) {
 
 		/* Transmit Descriptor Control 0 */
 		reg = CSR_READ(sc, WMREG_TXDCTL(0));
