@@ -1,4 +1,4 @@
-#	$NetBSD: ec.inc,v 1.10 2023/05/11 15:26:13 christos Exp $
+#	$NetBSD: ec.inc,v 1.11 2023/05/11 20:08:59 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/ec
 
@@ -38,7 +38,9 @@ ecx_meth.c \
 .if defined(ECNI)
 COPTS.ecp_nistz256.c+=-Wno-error=stack-protector
 EC_SRCS+= ecp_nistz256.c
+.if empty(ECCPPFLAGS:M*OPENSSL_NO_EC_NISTP_64_GCC_128*)
 EC_SRCS+= ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
+.endif
 .endif
 
 SRCS += ${EC_SRCS}

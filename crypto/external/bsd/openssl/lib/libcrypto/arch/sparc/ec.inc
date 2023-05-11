@@ -8,4 +8,6 @@ AFLAGS.ecp_nistz256-sparcv9.S += -Wa,-Av9
 .else
 .endif
 
+ECCPPFLAGS+= -DOPENSSL_NO_EC_NISTP_64_GCC_128
+
 .include "../../ec.inc"
