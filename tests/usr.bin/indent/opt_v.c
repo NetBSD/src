@@ -1,4 +1,4 @@
-/* $NetBSD: opt_v.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.9 2023/05/11 09:28:53 rillig Exp $ */
 
 /*
  * Tests for the options '-v' and '-nv'.
@@ -71,7 +71,8 @@ example(void)
 /* Demonstrates line number counting in verbose mode. */
 
 int *function(void)
-{}
+{
+}
 //indent end
 
 //indent run -v

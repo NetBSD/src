@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.112 2022/04/23 06:43:22 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.113 2023/05/11 09:28:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -334,12 +334,6 @@ extern struct parser_state {
 				 * middle of a statement */
     bool is_case_label;		/* 'case' and 'default' labels are indented
 				 * differently from regular labels */
-
-    bool search_stmt;		/* whether it is necessary to buffer up all
-				 * text up to the start of a statement after
-				 * an 'if (expr)', 'while (expr)', etc., to
-				 * move the comments after the opening brace
-				 * of the following statement */
 
     int tos;			/* pointer to top of stack */
     parser_symbol s_sym[STACKSIZE];

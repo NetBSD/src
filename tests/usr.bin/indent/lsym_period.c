@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_period.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lsym_period.c,v 1.5 2023/05/11 09:28:53 rillig Exp $ */
 
 /*
  * Tests for the token lsym_period, which represents '.' in these contexts:
@@ -42,19 +42,13 @@ get_time(struct stat st)
 
 //indent run
 time_t
-/* $ FIXME: The '{' must be in the next line. */
-get_time(struct stat st){
-	return st.st_mtime > 0 ? st.st_atime : st.st_ctime;
-}
-//indent end
-
-//indent run -Ttime_t
-time_t
 get_time(struct stat st)
 {
 	return st.st_mtime > 0 ? st.st_atime : st.st_ctime;
 }
 //indent end
+
+//indent run-equals-prev-output -Ttime_t
 
 
 /* Varargs in a function declaration */
