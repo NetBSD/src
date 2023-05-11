@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.153 2023/04/15 11:34:45 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.154 2023/05/11 08:01:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.153 2023/04/15 11:34:45 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.154 2023/05/11 08:01:36 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -623,7 +623,8 @@ check_controlling_expression(tnode_t *tn)
 
 	if (tn != NULL && Tflag && !is_typeok_bool_compares_with_zero(tn)) {
 		/* controlling expression must be bool, not '%s' */
-		error(333, tspec_name(tn->tn_type->t_tspec));
+		error(333, tn->tn_type->t_is_enum ? type_name(tn->tn_type)
+		    : tspec_name(tn->tn_type->t_tspec));
 	}
 
 	return tn;
