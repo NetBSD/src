@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.107 2023/03/27 14:56:40 nakayama Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.108 2023/05/11 05:50:18 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.107 2023/03/27 14:56:40 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.108 2023/05/11 05:50:18 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1922,6 +1922,9 @@ vioif_rx_intr(void *arg)
 
 	/* handler is already running in softint/workqueue */
 	if (netq->netq_running_handle)
+		goto done;
+
+	if (netq->netq_stopping)
 		goto done;
 
 	netq->netq_running_handle = true;
