@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_preprocessing.c,v 1.6 2023/05/11 18:36:36 rillig Exp $ */
+/* $NetBSD: lsym_preprocessing.c,v 1.7 2023/05/11 18:44:14 rillig Exp $ */
 
 /*
  * Tests for the token lsym_preprocessing, which represents a '#' that starts
@@ -230,6 +230,9 @@ int		unary_plus =
 				 * line 2
 				 * line 3
 				 */
+
+#define two_comments /* 1 */ /* 2 */ /*3*/
+#define three_comments		/* first */ /* second */ /*third*/
 //indent end
 
 //indent run
@@ -242,4 +245,20 @@ int		unary_plus =
 								 * line 2
 								 * line 3
 								 */
+
+#define two_comments /* 1 */ /* 2 */	/* 3 */
+#define three_comments		/* first */ /* second */	/* third */
 //indent end
+
+
+/*
+ * Do not touch multi-line macro definitions.
+ */
+//indent input
+#define do_once(stmt)		\
+do {				\
+	stmt;			\
+} while (/* constant condition */ false)
+//indent end
+
+//indent run-equals-input
