@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1314 2023/05/10 16:46:39 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1315 2023/05/11 08:49:41 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -28,8 +28,11 @@ MACHINE_MIPS64= 	0
 #
 # Subdirectory used below ${RELEASEDIR} when building a release
 #
-.if ${MACHINE:Mevbarm} || ${MACHINE:Mevbmips} \
-	|| ${MACHINE:Mevbsh3}
+.if \
+    ${MACHINE:Mevbarm} || \
+    ${MACHINE:Mevbmips} || \
+    ${MACHINE:Mevbsh3} || \
+    ${MACHINE:Mriscv}
 RELEASEMACHINEDIR?=	${MACHINE}-${MACHINE_ARCH}
 .else
 RELEASEMACHINEDIR?=	${MACHINE}
