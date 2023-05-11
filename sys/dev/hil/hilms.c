@@ -1,4 +1,4 @@
-/*	$NetBSD: hilms.c,v 1.6 2023/05/10 00:09:47 riastradh Exp $	*/
+/*	$NetBSD: hilms.c,v 1.7 2023/05/11 09:35:57 martin Exp $	*/
 /*	$OpenBSD: hilms.c,v 1.5 2007/04/10 22:37:17 miod Exp $	*/
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -167,7 +167,6 @@ hilmsattach(device_t parent, device_t self, void *aux)
 int
 hilmsdetach(device_t self, int flags)
 {
-	struct hilms_softc *sc = device_private(self);
 	int error;
 
 	error = config_detach_children(self, flags);
