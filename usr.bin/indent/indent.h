@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.118 2023/05/11 18:26:56 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.119 2023/05/11 19:01:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -388,19 +388,6 @@ char inp_peek(void);
 char inp_lookahead(size_t);
 void inp_skip(void);
 char inp_next(void);
-
-void inp_comment_init_preproc(void);
-void inp_comment_add_char(char);
-void inp_comment_add_range(const char *, const char *);
-bool inp_comment_seen(void);
-
-void inp_from_comment(void);
-
-#ifdef debug
-void debug_inp(const char *);
-#else
-#define debug_inp(prefix) do { } while (false)
-#endif
 
 lexer_symbol lexi(void);
 void diag(int, const char *, ...)__printflike(2, 3);

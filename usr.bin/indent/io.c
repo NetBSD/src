@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.152 2023/05/11 18:44:14 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.153 2023/05/11 19:01:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.152 2023/05/11 18:44:14 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.153 2023/05/11 19:01:35 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -56,40 +56,12 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 #include "indent.h"
 
 /*
- * There are 3 modes for reading the input.
- *
- * default: In this mode, the input comes from the input file. The buffer
- * 'inp' contains the current line, terminated with '\n'. The current read
- * position is inp.s, and there is always inp.buf <= inp.s < inp.e. All other
- * pointers are null.
- *
- * copy-in: After reading 'if (expr)' or similar tokens, the input still comes
- * from 'inp', but instead of processing it, it is copied to 'save_com'. The
- * goal of this mode is to move the comments after the '{', that is to
- * transform 'if (expr) comment {' to 'if (expr) { comment'. When the next
- * token cannot be part of this transformation, switch to copy-out.
- *
- * copy-out: In this mode, the input comes from 'save_com', which contains the
- * tokens to be placed after the '{'. The input still comes from the range
- * [inp.s, inp.e), but these two members have been overwritten with pointers
- * into save_com_buf, so inp.buf and inp.s are unrelated, which is unusual.
- * In this mode, inp.e[-1] is usually not terminated with '\n'. After reading
- * all tokens from save_com, switch to default mode again.
+ * The buffer 'inp' contains the current line, terminated with '\n'. The
+ * current read position is inp.s, and inp.buf <= inp.s < inp.e holds.
  */
 static struct {
     struct buffer inp;		/* one line of input, ready to be split into
-				 * tokens; occasionally 's' and 'e' switch
-				 * to save_com_buf */
-    char save_com_buf[5000];	/* input text is saved here when looking for
-				 * the brace after an if, while, etc */
-    char *save_com_s;		/* start of the comment in save_com_buf, or
-				 * null */
-    char *save_com_e;		/* end of the comment in save_com_buf, or
-				 * null */
-
-    char *saved_inp_s;		/* saved value of inp.s when taking input from
-				 * save_com, or null */
-    char *saved_inp_e;		/* saved value of inp.e, or null */
+				 * tokens */
 } inbuf;
 
 static int paren_indent;
@@ -114,7 +86,7 @@ inp_p(void)
 const char *
 inp_line_start(void)
 {
-    return inbuf.saved_inp_s != NULL ? inbuf.save_com_buf : inbuf.inp.buf;
+    return inbuf.inp.buf;
 }
 
 const char *
@@ -152,116 +124,6 @@ inp_next(void)
     char ch = inp_peek();
     inp_skip();
     return ch;
-}
-
-#ifdef debug
-static void
-debug_inp_buf(const char *name, const char *s, const char *e)
-{
-    if (s != NULL && e != NULL) {
-	debug_printf("    %-12s ", name);
-	debug_vis_range("\"", s, e, "\"\n");
-    }
-}
-
-void
-debug_inp(const char *prefix)
-{
-    assert(inp_line_start() <= inbuf.inp.s);
-    assert(inbuf.inp.s <= inbuf.inp.e);
-
-    debug_println("%s %s:", __func__, prefix);
-    if (inbuf.saved_inp_s == NULL)
-	debug_inp_buf("inp.buf", inbuf.inp.buf, inbuf.inp.s);
-    debug_inp_buf("inp", inbuf.inp.s, inbuf.inp.e);	/* never null */
-    debug_inp_buf("save_com.buf", inbuf.save_com_buf, inbuf.save_com_s);
-    debug_inp_buf("save_com", inbuf.save_com_s, inbuf.save_com_e);
-    debug_inp_buf("saved_inp", inbuf.saved_inp_s, inbuf.saved_inp_e);
-}
-#endif
-
-static void
-inp_comment_check_size(size_t n)
-{
-    if ((size_t)(inbuf.save_com_e - inbuf.save_com_buf) + n <=
-	array_length(inbuf.save_com_buf))
-	return;
-
-    diag(1, "Internal buffer overflow - "
-	"Move big comment from right after if, while, or whatever");
-    fflush(output);
-    exit(1);
-}
-
-void
-inp_comment_init_preproc(void)
-{
-    if (inbuf.save_com_e == NULL) {	/* if this is the first comment, we
-					 * must set up the buffer */
-	inbuf.save_com_s = inbuf.save_com_buf;
-	inbuf.save_com_e = inbuf.save_com_s;
-    } else {
-	inp_comment_add_char('\n');	/* add newline between comments */
-	inp_comment_add_char(' ');
-	--line_no;
-    }
-}
-
-void
-inp_comment_add_char(char ch)
-{
-    inp_comment_check_size(1);
-    *inbuf.save_com_e++ = ch;
-}
-
-void
-inp_comment_add_range(const char *s, const char *e)
-{
-    size_t len = (size_t)(e - s);
-    inp_comment_check_size(len);
-    memcpy(inbuf.save_com_e, s, len);
-    inbuf.save_com_e += len;
-}
-
-bool
-inp_comment_seen(void)
-{
-    return inbuf.save_com_e != NULL;
-}
-
-/*
- * Switch the input to come from save_com, replaying the copied tokens while
- * looking for the next '{'.
- */
-void
-inp_from_comment(void)
-{
-    debug_inp("before inp_from_comment");
-    inbuf.saved_inp_s = inbuf.inp.s;
-    inbuf.saved_inp_e = inbuf.inp.e;
-
-    inbuf.inp.s = inbuf.save_com_s;
-    inbuf.inp.e = inbuf.save_com_e;
-    inbuf.save_com_s = NULL;
-    inbuf.save_com_e = NULL;
-    debug_inp("after inp_from_comment");
-}
-
-/*
- * After having read from save_com, continue with the rest of the input line
- * before reading the next line from the input file.
- */
-static bool
-inp_from_file(void)
-{
-    if (inbuf.saved_inp_s == NULL)
-	return false;
-
-    inbuf.inp.s = inbuf.saved_inp_s;
-    inbuf.inp.e = inbuf.saved_inp_e;
-    inbuf.saved_inp_s = inbuf.saved_inp_e = NULL;
-    debug_println("switched inp.s back to saved_inp_s");
-    return inbuf.inp.s < inbuf.inp.e;
 }
 
 static void
@@ -582,9 +444,6 @@ parse_indent_comment(void)
 void
 inp_read_line(void)
 {
-    if (inp_from_file())
-	return;
-
     inp_read_next_line(input);
 
     parse_indent_comment();
