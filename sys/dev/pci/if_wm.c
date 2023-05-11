@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.775 2023/05/11 07:14:46 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.776 2023/05/11 07:19:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.775 2023/05/11 07:14:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.776 2023/05/11 07:19:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -601,6 +601,7 @@ struct wm_softc {
 	struct evcnt sc_ev_mcc;		/* Multiple Collision */
 	struct evcnt sc_ev_latecol;	/* Late Collision */
 	struct evcnt sc_ev_colc;	/* Collision */
+	struct evcnt sc_ev_cbtmpc;	/* Circuit Breaker Tx Mng. Packet */
 	struct evcnt sc_ev_dc;		/* Defer */
 	struct evcnt sc_ev_tncrs;	/* Tx-No CRS */
 	struct evcnt sc_ev_sec;		/* Sequence Error */
@@ -611,6 +612,7 @@ struct wm_softc {
 	struct evcnt sc_ev_htdpmc;	/* Host Tx Discarded Pkts by MAC */
 
 	struct evcnt sc_ev_rlec;	/* Receive Length Error */
+	struct evcnt sc_ev_cbrdpc;	/* Circuit Breaker Rx Dropped Packet */
 	struct evcnt sc_ev_prc64;	/* Packets Rx (64 bytes) */
 	struct evcnt sc_ev_prc127;	/* Packets Rx (65-127 bytes) */
 	struct evcnt sc_ev_prc255;	/* Packets Rx (128-255 bytes) */
@@ -673,12 +675,17 @@ struct wm_softc {
 	struct evcnt sc_ev_hgptc;	/* Host Good Packets TX */
 	struct evcnt sc_ev_debug4;	/* Debug Counter 4 */
 	struct evcnt sc_ev_htcbdpc;	/* Host Tx Circuit Breaker Drp. Pkts */
-
+	struct evcnt sc_ev_hgorc;	/* Host Good Octets Rx */
+	struct evcnt sc_ev_hgotc;	/* Host Good Octets Tx */
+	struct evcnt sc_ev_lenerrs;	/* Length Error */
+	struct evcnt sc_ev_tlpic;	/* EEE Tx LPI */
+	struct evcnt sc_ev_rlpic;	/* EEE Rx LPI */
 	struct evcnt sc_ev_b2ogprc;	/* BMC2OS pkts received by host */
 	struct evcnt sc_ev_o2bspc;	/* OS2BMC pkts transmitted by host */
 	struct evcnt sc_ev_b2ospc;	/* BMC2OS pkts sent by BMC */
 	struct evcnt sc_ev_o2bgptc;	/* OS2BMC pkts received by BMC */
-
+	struct evcnt sc_ev_scvpc;	/* SerDes/SGMII Code Violation Pkt. */
+	struct evcnt sc_ev_hrmpc;	/* Header Redirection Missed Packet */
 #endif /* WM_EVENT_COUNTERS */
 
 	struct sysctllog *sc_sysctllog;
@@ -3262,6 +3269,9 @@ alloc_retry:
 			    "TCP Segmentation Context Tx Fail");
 		else {
 			/* XXX Is the circuit breaker only for 82576? */
+			evcnt_attach_dynamic(&sc->sc_ev_cbrdpc,
+			    EVCNT_TYPE_MISC, NULL, xname,
+			    "Circuit Breaker Rx Dropped Packet");
 			evcnt_attach_dynamic(&sc->sc_ev_cbrmpc,
 			    EVCNT_TYPE_MISC, NULL, xname,
 			    "Circuit Breaker Rx Manageability Packet");
@@ -3289,6 +3299,11 @@ alloc_retry:
 	    NULL, xname, "Multiple Collision");
 	evcnt_attach_dynamic(&sc->sc_ev_latecol, EVCNT_TYPE_MISC,
 	    NULL, xname, "Late Collisions");
+
+	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc))
+		evcnt_attach_dynamic(&sc->sc_ev_cbtmpc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Circuit Breaker Tx Manageability Packet");
+
 	evcnt_attach_dynamic(&sc->sc_ev_dc, EVCNT_TYPE_MISC,
 	    NULL, xname, "Defer");
 	evcnt_attach_dynamic(&sc->sc_ev_prc64, EVCNT_TYPE_MISC,
@@ -3411,8 +3426,19 @@ alloc_retry:
 		/* XXX Is the circuit breaker only for 82576? */
 		evcnt_attach_dynamic(&sc->sc_ev_htcbdpc, EVCNT_TYPE_MISC,
 		    NULL, xname, "Host Tx Circuit Breaker Dropped Packets");
+
+		evcnt_attach_dynamic(&sc->sc_ev_hgorc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Host Good Octets Rx");
+		evcnt_attach_dynamic(&sc->sc_ev_hgotc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Host Good Octets Tx");
+		evcnt_attach_dynamic(&sc->sc_ev_lenerrs, EVCNT_TYPE_MISC,
+		    NULL, xname, "Length Errors");
 	}
-	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
+	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
+		evcnt_attach_dynamic(&sc->sc_ev_tlpic, EVCNT_TYPE_MISC,
+		    NULL, xname, "EEE Tx LPI");
+		evcnt_attach_dynamic(&sc->sc_ev_rlpic, EVCNT_TYPE_MISC,
+		    NULL, xname, "EEE Rx LPI");
 		evcnt_attach_dynamic(&sc->sc_ev_b2ogprc, EVCNT_TYPE_MISC,
 		    NULL, xname, "BMC2OS Packets received by host");
 		evcnt_attach_dynamic(&sc->sc_ev_o2bspc, EVCNT_TYPE_MISC,
@@ -3421,6 +3447,10 @@ alloc_retry:
 		    NULL, xname, "BMC2OS Packets sent by BMC");
 		evcnt_attach_dynamic(&sc->sc_ev_o2bgptc, EVCNT_TYPE_MISC,
 		    NULL, xname, "OS2BMC Packets received by BMC");
+		evcnt_attach_dynamic(&sc->sc_ev_scvpc, EVCNT_TYPE_MISC,
+		    NULL, xname, "SerDes/SGMII Code Violation Packet");
+		evcnt_attach_dynamic(&sc->sc_ev_hrmpc, EVCNT_TYPE_MISC,
+		    NULL, xname, "Header Redirection Missed Packet");
 	}
 #endif /* WM_EVENT_COUNTERS */
 
@@ -3488,8 +3518,10 @@ wm_detach(device_t self, int flags __unused)
 		evcnt_detach(&sc->sc_ev_tsctc);
 		if ((sc->sc_type < WM_T_82575) || WM_IS_ICHPCH(sc))
 			evcnt_detach(&sc->sc_ev_tsctfc);
-		else
+		else {
+			evcnt_detach(&sc->sc_ev_cbrdpc);
 			evcnt_detach(&sc->sc_ev_cbrmpc);
+		}
 	}
 
 	if (sc->sc_type >= WM_T_82542_2_1) {
@@ -3504,6 +3536,10 @@ wm_detach(device_t self, int flags __unused)
 	evcnt_detach(&sc->sc_ev_ecol);
 	evcnt_detach(&sc->sc_ev_mcc);
 	evcnt_detach(&sc->sc_ev_latecol);
+
+	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc))
+		evcnt_detach(&sc->sc_ev_cbtmpc);
+
 	evcnt_detach(&sc->sc_ev_dc);
 	evcnt_detach(&sc->sc_ev_prc64);
 	evcnt_detach(&sc->sc_ev_prc127);
@@ -3558,12 +3594,20 @@ wm_detach(device_t self, int flags __unused)
 		evcnt_detach(&sc->sc_ev_debug4);
 		evcnt_detach(&sc->sc_ev_rxdmtc);
 		evcnt_detach(&sc->sc_ev_htcbdpc);
+
+		evcnt_detach(&sc->sc_ev_hgorc);
+		evcnt_detach(&sc->sc_ev_hgotc);
+		evcnt_detach(&sc->sc_ev_lenerrs);
 	}
-	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
+	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
+		evcnt_detach(&sc->sc_ev_tlpic);
+		evcnt_detach(&sc->sc_ev_rlpic);
 		evcnt_detach(&sc->sc_ev_b2ogprc);
 		evcnt_detach(&sc->sc_ev_o2bspc);
 		evcnt_detach(&sc->sc_ev_b2ospc);
 		evcnt_detach(&sc->sc_ev_o2bgptc);
+		evcnt_detach(&sc->sc_ev_scvpc);
+		evcnt_detach(&sc->sc_ev_hrmpc);
 	}
 #endif /* WM_EVENT_COUNTERS */
 
@@ -3895,10 +3939,16 @@ wm_tick(void *arg)
 		WM_EVCNT_ADD(&sc->sc_ev_tx_xoff, CSR_READ(sc, WMREG_XOFFTXC));
 		WM_EVCNT_ADD(&sc->sc_ev_rx_macctl, CSR_READ(sc, WMREG_FCRUC));
 	}
+
 	WM_EVCNT_ADD(&sc->sc_ev_scc, CSR_READ(sc, WMREG_SCC));
 	WM_EVCNT_ADD(&sc->sc_ev_ecol, CSR_READ(sc, WMREG_ECOL));
 	WM_EVCNT_ADD(&sc->sc_ev_mcc, CSR_READ(sc, WMREG_MCC));
 	WM_EVCNT_ADD(&sc->sc_ev_latecol, CSR_READ(sc, WMREG_LATECOL));
+
+	if ((sc->sc_type >= WM_T_I350) && !WM_IS_ICHPCH(sc)) {
+		WM_EVCNT_ADD(&sc->sc_ev_cbtmpc, CSR_READ(sc, WMREG_CBTMPC));
+	}
+
 	WM_EVCNT_ADD(&sc->sc_ev_dc, CSR_READ(sc, WMREG_DC));
 	WM_EVCNT_ADD(&sc->sc_ev_prc64, CSR_READ(sc, WMREG_PRC64));
 	WM_EVCNT_ADD(&sc->sc_ev_prc127, CSR_READ(sc, WMREG_PRC127));
@@ -3975,14 +4025,30 @@ wm_tick(void *arg)
 		WM_EVCNT_ADD(&sc->sc_ev_debug4, CSR_READ(sc, WMREG_DEBUG4));
 		WM_EVCNT_ADD(&sc->sc_ev_rxdmtc, CSR_READ(sc, WMREG_RXDMTC));
 		WM_EVCNT_ADD(&sc->sc_ev_htcbdpc, CSR_READ(sc, WMREG_HTCBDPC));
-	}
 
-	if (((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003))
-	    && ((CSR_READ(sc, WMREG_MANC) & MANC_EN_BMC2OS) != 0)) {
-		WM_EVCNT_ADD(&sc->sc_ev_b2ogprc, CSR_READ(sc, WMREG_B2OGPRC));
-		WM_EVCNT_ADD(&sc->sc_ev_o2bspc, CSR_READ(sc, WMREG_O2BSPC));
-		WM_EVCNT_ADD(&sc->sc_ev_b2ospc, CSR_READ(sc, WMREG_B2OSPC));
-		WM_EVCNT_ADD(&sc->sc_ev_o2bgptc, CSR_READ(sc, WMREG_O2BGPTC));
+		WM_EVCNT_ADD(&sc->sc_ev_hgorc,
+		    CSR_READ(sc, WMREG_HGORCL) +
+		    ((uint64_t)CSR_READ(sc, WMREG_HGORCH) << 32));
+		WM_EVCNT_ADD(&sc->sc_ev_hgotc,
+		    CSR_READ(sc, WMREG_HGOTCL) +
+		    ((uint64_t)CSR_READ(sc, WMREG_HGOTCH) << 32));
+		WM_EVCNT_ADD(&sc->sc_ev_lenerrs, CSR_READ(sc, WMREG_LENERRS));
+	}
+	if ((sc->sc_type >= WM_T_I350) && (sc->sc_type < WM_T_80003)) {
+		WM_EVCNT_ADD(&sc->sc_ev_tlpic, CSR_READ(sc, WMREG_TLPIC));
+		WM_EVCNT_ADD(&sc->sc_ev_rlpic, CSR_READ(sc, WMREG_RLPIC));
+		if ((CSR_READ(sc, WMREG_MANC) & MANC_EN_BMC2OS) != 0) {
+			WM_EVCNT_ADD(&sc->sc_ev_b2ogprc,
+			    CSR_READ(sc, WMREG_B2OGPRC));
+			WM_EVCNT_ADD(&sc->sc_ev_o2bspc,
+			    CSR_READ(sc, WMREG_O2BSPC));
+			WM_EVCNT_ADD(&sc->sc_ev_b2ospc,
+			    CSR_READ(sc, WMREG_B2OSPC));
+			WM_EVCNT_ADD(&sc->sc_ev_o2bgptc,
+			    CSR_READ(sc, WMREG_O2BGPTC));
+		}
+		WM_EVCNT_ADD(&sc->sc_ev_scvpc, CSR_READ(sc, WMREG_SCVPC));
+		WM_EVCNT_ADD(&sc->sc_ev_hrmpc, CSR_READ(sc, WMREG_HRMPC));
 	}
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if_statadd_ref(nsr, if_collisions, colc);
