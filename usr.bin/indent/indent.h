@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.119 2023/05/11 19:01:35 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.120 2023/05/12 08:40:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -126,14 +126,6 @@ typedef enum parser_symbol {
     psym_do_stmt,		/* 'do' stmt */
     psym_while_expr,		/* 'while' '(' expr ')' */
 } parser_symbol;
-
-typedef enum stmt_head {
-    hd_0,			/* placeholder for uninitialized */
-    hd_for,
-    hd_if,
-    hd_switch,
-    hd_while,
-} stmt_head;
 
 /* A range of characters, in some cases null-terminated. */
 struct buffer {
@@ -342,11 +334,11 @@ extern struct parser_state {
     int s_ind_level[STACKSIZE];
     float s_case_ind_level[STACKSIZE];
 
-    stmt_head hd;		/* the type of statement for 'if (...)', 'for
-				 * (...)', etc */
-    bool spaced_expr;		/* whether we are in a parenthesized expression
-				 * that should be surrounded by spaces, such as
-				 * in 'if', 'while', 'switch'. */
+    parser_symbol spaced_expr_psym;	/* the parser symbol to be shifted
+					 * after the parenthesized expression
+					 * from a 'for', 'if', 'switch' or
+					 * 'while'; or psym_semicolon */
+
     int quest_level;		/* when this is positive, we have seen a '?'
 				 * without the matching ':' in a '?:'
 				 * expression */
@@ -363,11 +355,10 @@ extern struct parser_state {
 #define array_length(array) (sizeof(array) / sizeof((array)[0]))
 
 #ifdef debug
-void
-debug_vis_range(const char *, const char *, const char *,
-    const char *);
+void debug_vis_range(const char *, const char *, const char *, const char *);
 void debug_printf(const char *, ...)__printflike(1, 2);
 void debug_println(const char *, ...)__printflike(1, 2);
+const char *psym_name(parser_symbol);
 #else
 #define		debug_printf(fmt, ...) do { } while (false)
 #define		debug_println(fmt, ...) do { } while (false)
@@ -395,7 +386,6 @@ void output_line(void);
 void output_line_ff(void);
 void inp_read_line(void);
 void parse(parser_symbol);
-void parse_stmt_head(stmt_head);
 void process_comment(void);
 void set_option(const char *, const char *);
 void load_profiles(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.175 2023/05/11 11:25:47 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.176 2023/05/12 08:40:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.175 2023/05/11 11:25:47 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.176 2023/05/12 08:40:54 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -261,6 +261,12 @@ debug_full_parser_state(void)
 	    debug_println("%3d -> %3d ps." #name, prev_ps.name, ps.name); \
 	else if (debug_full_parser_state()) \
 	    debug_println("       %3d ps." #name, ps.name)
+#define debug_ps_enum(name, repr) \
+	if (ps.name != prev_ps.name) \
+	    debug_println("%3s -> %3s ps." #name, \
+		repr(prev_ps.name), repr(ps.name)); \
+	else if (debug_full_parser_state()) \
+	    debug_println("%10s ps." #name, repr(ps.name))
 
 static bool
 ps_paren_has_changed(const struct parser_state *prev_ps)
@@ -351,8 +357,7 @@ debug_lexi(lexer_symbol lsym)
 
     // The debug output for the parser symbols is done in 'parse' instead.
 
-    // No debug output for hd.
-    debug_ps_bool(spaced_expr);
+    debug_ps_enum(spaced_expr_psym, psym_name);
     debug_ps_int(quest_level);
 
     prev_ps = ps;

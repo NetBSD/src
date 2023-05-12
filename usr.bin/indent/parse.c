@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.50 2023/05/11 09:28:53 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.51 2023/05/12 08:40:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,12 +43,11 @@ static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: parse.c,v 1.50 2023/05/11 09:28:53 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.51 2023/05/12 08:40:54 rillig Exp $");
 #else
 __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pstef $");
 #endif
 
-#include <assert.h>
 #include <err.h>
 #include <stdio.h>
 
@@ -57,7 +56,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pste
 static void reduce(void);
 
 #ifdef debug
-static const char *
+const char *
 psym_name(parser_symbol psym)
 {
     static const char *const name[] = {
@@ -77,8 +76,6 @@ psym_name(parser_symbol psym)
 	"do_stmt",
 	"while_expr",
     };
-
-    assert(array_length(name) == (int)psym_while_expr + 1);
 
     return name[psym];
 }
@@ -233,18 +230,6 @@ parse(parser_symbol psym)
 	printf(" empty");
     printf("\n");
 #endif
-}
-
-void
-parse_stmt_head(stmt_head hd)
-{
-    static const parser_symbol psym[] = {
-	[hd_for] = psym_for_exprs,
-	[hd_if] = psym_if_expr,
-	[hd_switch] = psym_switch_expr,
-	[hd_while] = psym_while_expr
-    };
-    parse(psym[hd]);
 }
 
 /*
