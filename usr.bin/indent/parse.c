@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.52 2023/05/12 22:36:15 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.53 2023/05/12 22:38:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: parse.c,v 1.52 2023/05/12 22:36:15 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.53 2023/05/12 22:38:47 rillig Exp $");
 #else
 __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pstef $");
 #endif
@@ -60,7 +60,7 @@ const char *
 psym_name(parser_symbol psym)
 {
     static const char *const name[] = {
-	"semicolon",
+	"0",
 	"lbrace",
 	"rbrace",
 	"decl",
@@ -221,7 +221,7 @@ parse(parser_symbol psym)
 	ps.ind_level_follow += (int)opt.case_indent + 1;
 	break;
 
-    case psym_semicolon:	/* a simple statement */
+    case psym_0:		/* a simple statement */
 	break_comma = false;	/* don't break after comma in a declaration */
 	ps.s_sym[++ps.tos] = psym_stmt;
 	ps.s_ind_level[ps.tos] = ps.ind_level;

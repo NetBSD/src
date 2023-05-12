@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.255 2023/05/12 15:36:02 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.256 2023/05/12 22:38:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.255 2023/05/12 15:36:02 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.256 2023/05/12 22:38:47 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -485,7 +485,7 @@ process_lparen_or_lbracket(void)
     debug_println("paren_indents[%d] is now %d",
 	ps.nparen - 1, ps.paren[ps.nparen - 1].indent);
 
-    if (ps.spaced_expr_psym != psym_semicolon
+    if (ps.spaced_expr_psym != psym_0
 	    && ps.nparen == 1 && opt.extra_expr_indent
 	    && ps.paren[0].indent < 2 * opt.indent_size) {
 	ps.paren[0].indent = (short)(2 * opt.indent_size);
@@ -497,7 +497,7 @@ process_lparen_or_lbracket(void)
 	 * this is a kluge to make sure that declarations will be aligned
 	 * right if proc decl has an explicit type on it, i.e. "int a(x) {..."
 	 */
-	parse(psym_semicolon);	/* I said this was a kluge... */
+	parse(psym_0);
 	ps.init_or_struct = false;
     }
 
@@ -528,12 +528,12 @@ process_rparen_or_rbracket(void)
 
     *code.e++ = token.s[0];
 
-    if (ps.spaced_expr_psym != psym_semicolon && ps.nparen == 0) {
+    if (ps.spaced_expr_psym != psym_0 && ps.nparen == 0) {
 	ps.force_nl = true;
 	ps.next_unary = true;
 	ps.in_stmt_or_decl = false;
 	parse(ps.spaced_expr_psym);
-	ps.spaced_expr_psym = psym_semicolon;
+	ps.spaced_expr_psym = psym_0;
     }
 }
 
@@ -651,17 +651,17 @@ process_semicolon(void)
 	 */
 	diag(1, "Unbalanced parentheses");
 	ps.nparen = 0;
-	if (ps.spaced_expr_psym != psym_semicolon) {
+	if (ps.spaced_expr_psym != psym_0) {
 	    parse(ps.spaced_expr_psym);
-	    ps.spaced_expr_psym = psym_semicolon;
+	    ps.spaced_expr_psym = psym_0;
 	}
     }
     *code.e++ = ';';
     ps.want_blank = true;
     ps.in_stmt_or_decl = ps.nparen > 0;
 
-    if (ps.spaced_expr_psym == psym_semicolon) {
-	parse(psym_semicolon);	/* let parser know about end of stmt */
+    if (ps.spaced_expr_psym == psym_0) {
+	parse(psym_0);	/* let parser know about end of stmt */
 	ps.force_nl = true;
     }
 }
@@ -696,9 +696,9 @@ process_lbrace(void)
     if (ps.nparen > 0) {
 	diag(1, "Unbalanced parentheses");
 	ps.nparen = 0;
-	if (ps.spaced_expr_psym != psym_semicolon) {
+	if (ps.spaced_expr_psym != psym_0) {
 	    parse(ps.spaced_expr_psym);
-	    ps.spaced_expr_psym = psym_semicolon;
+	    ps.spaced_expr_psym = psym_0;
 	    ps.ind_level = ps.ind_level_follow;
 	}
     }
@@ -735,7 +735,7 @@ process_rbrace(void)
     if (ps.nparen > 0) {	/* check for unclosed if, for, else. */
 	diag(1, "Unbalanced parentheses");
 	ps.nparen = 0;
-	ps.spaced_expr_psym = psym_semicolon;
+	ps.spaced_expr_psym = psym_0;
     }
 
     ps.just_saw_decl = 0;
@@ -849,12 +849,12 @@ process_ident(lexer_symbol lsym)
 	    ps.want_blank = false;
 	}
 
-    } else if (ps.spaced_expr_psym != psym_semicolon && ps.nparen == 0) {
+    } else if (ps.spaced_expr_psym != psym_0 && ps.nparen == 0) {
 	ps.force_nl = true;
 	ps.next_unary = true;
 	ps.in_stmt_or_decl = false;
 	parse(ps.spaced_expr_psym);
-	ps.spaced_expr_psym = psym_semicolon;
+	ps.spaced_expr_psym = psym_0;
     }
 }
 
