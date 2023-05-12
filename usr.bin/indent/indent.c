@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.253 2023/05/12 08:40:54 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.254 2023/05/12 10:53:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.253 2023/05/12 08:40:54 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.254 2023/05/12 10:53:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -388,13 +388,6 @@ process_eof(void)
 
     if (ps.tos > 1)		/* check for balanced braces */
 	diag(1, "Stuff missing from end of file");
-
-    if (opt.verbose) {
-	printf("There were %d output lines and %d comments\n",
-	    ps.stats.lines, ps.stats.comments);
-	printf("(Lines with comments)/(Lines with code): %6.3f\n",
-	    (1.0 * ps.stats.comment_lines) / ps.stats.code_lines);
-    }
 
     fflush(output);
     exit(found_err ? EXIT_FAILURE : EXIT_SUCCESS);

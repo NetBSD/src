@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.120 2023/05/12 08:40:54 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.121 2023/05/12 10:53:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -342,13 +342,6 @@ extern struct parser_state {
     int quest_level;		/* when this is positive, we have seen a '?'
 				 * without the matching ':' in a '?:'
 				 * expression */
-
-    struct {
-	int comments;
-	int lines;
-	int code_lines;
-	int comment_lines;
-    }      stats;
 } ps;
 
 

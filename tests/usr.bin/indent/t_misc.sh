@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.21 2023/05/11 09:28:53 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.22 2023/05/12 10:53:33 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -86,8 +86,6 @@ verbose_profile_body()
 		profile: -bacc
 		profile: -v
 		profile: -fc1
-		There were 1 output lines and 0 comments
-		(Lines with comments)/(Lines with code):  0.000
 	EOF
 
 	# The code in args.c function set_profile suggests that options from

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.154 2023/05/11 19:14:54 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.155 2023/05/12 10:53:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.154 2023/05/11 19:14:54 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.155 2023/05/12 10:53:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -263,7 +263,6 @@ output_line_comment(int ind)
     if (ind > target_ind) {
 	output_char('\n');
 	ind = 0;
-	ps.stats.lines++;
     }
 
     while (com.e > p && ch_isspace(com.e[-1]))
@@ -273,7 +272,6 @@ output_line_comment(int ind)
     output_range(p, com.e);
 
     ps.comment_delta = ps.n_comment_delta;
-    ps.stats.comment_lines++;
 }
 
 /*
@@ -289,9 +287,6 @@ output_complete_line(char line_terminator)
 	if (ps.ind_level == 0)
 	    ps.in_stmt_cont = false;	/* this is a class A kludge */
 
-	if (lab.e != lab.s || code.e != code.s)
-	    ps.stats.code_lines++;
-
 	int ind = 0;
 	if (lab.e != lab.s)
 	    ind = output_line_label();
@@ -301,7 +296,6 @@ output_complete_line(char line_terminator)
 	    output_line_comment(ind);
 
 	output_char(line_terminator);
-	ps.stats.lines++;
 
 	/* TODO: rename to blank_line_after_decl */
 	if (ps.just_saw_decl == 1 && opt.blanklines_after_decl)
