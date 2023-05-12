@@ -1,14 +1,18 @@
-/* $NetBSD: opt_v.c,v 1.11 2023/05/11 19:01:35 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.12 2023/05/12 10:53:33 rillig Exp $ */
 
 /*
  * Tests for the options '-v' and '-nv'.
  *
  * The option '-v' enables verbose mode. It outputs some information about
- * what's going on under the hood, especially when lines are broken. It also
- * outputs a few statistics about line counts and comments at the end.
+ * what's going on under the hood, especially when lines are broken.
  *
  * The option '-nv' disables verbose mode. Only errors and warnings are output
  * in this mode, but no progress messages.
+ */
+
+/*
+ * XXX: It's rather strange that -v writes to stdout, even in filter mode.
+ * This output belongs on stderr instead.
  */
 
 //indent input
@@ -41,8 +45,6 @@ example(void)
 #define macro1 /* prefix */ suffix
 
 #define macro2 prefix /* suffix */
-There were 12 output lines and 1 comments
-(Lines with comments)/(Lines with code):  0.429
 //indent end
 
 
@@ -67,34 +69,9 @@ example(void)
 //indent end
 
 
-//indent input
-/* Demonstrates line number counting in verbose mode. */
-
-int *function(void)
-{
-}
-//indent end
-
-//indent run -v
-/* Demonstrates line number counting in verbose mode. */
-
-int *
-function(void)
-{
-}
-There were 6 output lines and 1 comments
-(Lines with comments)/(Lines with code):  0.250
-//indent end
-/* In the above output, the '5' means 5 non-empty lines. */
-
 /*
- * XXX: It's rather strange that -v writes to stdout, even in filter mode.
- * This output belongs on stderr instead.
- */
-
-
-/*
- * Test line counting in preprocessor directives.
+ * Before 2023-05-12, indent wrote some wrong statistics to stdout, in which
+ * the line numbers were counted wrong.
  */
 //indent input
 #if 0
@@ -106,18 +83,4 @@ int line = 5;
 #endif
 //indent end
 
-//indent run -v -di0
-#if 0
-int line = 1;
-int line = 2;
-int line = 3;
-#else
-int line = 5;
-#endif
-There were 3 output lines and 0 comments
-(Lines with comments)/(Lines with code):  0.000
-//indent end
-/*
- * FIXME: The lines within the conditional compilation directives must be
- * counted as well. TODO: Move stats out of parser_state.
- */
+//indent run-equals-input -v -di0

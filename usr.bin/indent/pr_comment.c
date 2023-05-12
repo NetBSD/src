@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.129 2023/05/11 18:13:55 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.130 2023/05/12 10:53:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.129 2023/05/11 18:13:55 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.130 2023/05/12 10:53:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -355,7 +355,6 @@ process_comment(void)
     bool may_wrap, break_delim;
 
     ps.just_saw_decl = 0;
-    ps.stats.comments++;
 
     int saved_just_saw_decl = ps.just_saw_decl;
     analyze_comment(&may_wrap, &break_delim, &adj_max_line_length);
