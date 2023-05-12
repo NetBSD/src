@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2427 2023/05/10 15:52:07 christos Exp $
+#	$NetBSD: mi,v 1.2428 2023/05/12 11:13:09 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2922,20 +2922,20 @@
 ./usr/include/openpgpsdk/version.h		comp-obsolete		obsolete
 ./usr/include/openpgpsdk/writer.h		comp-obsolete		obsolete
 ./usr/include/openpgpsdk/writer_armoured.h	comp-obsolete		obsolete
-./usr/include/openssl/aes.h			comp-c-include	
-./usr/include/openssl/asn1.h			comp-c-include	
-./usr/include/openssl/asn1_mac.h		comp-c-include	
-./usr/include/openssl/asn1err.h			comp-c-include	
-./usr/include/openssl/asn1t.h			comp-c-include	
-./usr/include/openssl/async.h			comp-c-include	
-./usr/include/openssl/asyncerr.h		comp-c-include	
+./usr/include/openssl/aes.h			comp-c-include
+./usr/include/openssl/asn1.h			comp-c-include
+./usr/include/openssl/asn1_mac.h		comp-c-include
+./usr/include/openssl/asn1err.h			comp-c-include
+./usr/include/openssl/asn1t.h			comp-c-include
+./usr/include/openssl/async.h			comp-c-include
+./usr/include/openssl/asyncerr.h		comp-c-include
 ./usr/include/openssl/bio.h			comp-c-include
-./usr/include/openssl/bioerr.h			comp-c-include	
+./usr/include/openssl/bioerr.h			comp-c-include
 ./usr/include/openssl/blowfish.h		comp-c-include
 ./usr/include/openssl/bn.h			comp-c-include
-./usr/include/openssl/bnerr.h			comp-c-include	
+./usr/include/openssl/bnerr.h			comp-c-include
 ./usr/include/openssl/buffer.h			comp-c-include
-./usr/include/openssl/buffererr.h		comp-c-include	
+./usr/include/openssl/buffererr.h		comp-c-include
 ./usr/include/openssl/camellia.h		comp-c-include
 ./usr/include/openssl/cast.h			comp-c-include
 ./usr/include/openssl/cmac.h			comp-c-include
@@ -2943,12 +2943,12 @@
 ./usr/include/openssl/cmp_util.h		comp-c-include		openssl=30
 ./usr/include/openssl/cmperr.h			comp-c-include		openssl=30
 ./usr/include/openssl/cms.h			comp-c-include
-./usr/include/openssl/cmserr.h			comp-c-include	
+./usr/include/openssl/cmserr.h			comp-c-include
 ./usr/include/openssl/comp.h			comp-c-include
-./usr/include/openssl/comperr.h			comp-c-include	
+./usr/include/openssl/comperr.h			comp-c-include
 ./usr/include/openssl/conf.h			comp-c-include
 ./usr/include/openssl/conf_api.h		comp-c-include
-./usr/include/openssl/conferr.h			comp-c-include	
+./usr/include/openssl/conferr.h			comp-c-include
 ./usr/include/openssl/configuration.h		comp-c-include		openssl=30
 ./usr/include/openssl/conftypes.h		comp-c-include		openssl=30
 ./usr/include/openssl/core.h			comp-c-include		openssl=30
@@ -2958,17 +2958,17 @@
 ./usr/include/openssl/crmf.h			comp-c-include		openssl=30
 ./usr/include/openssl/crmferr.h			comp-c-include		openssl=30
 ./usr/include/openssl/crypto.h			comp-c-include
-./usr/include/openssl/cryptoerr.h		comp-c-include	
+./usr/include/openssl/cryptoerr.h		comp-c-include
 ./usr/include/openssl/cryptoerr_legacy.h	comp-c-include		openssl=30
-./usr/include/openssl/ct.h			comp-c-include	
-./usr/include/openssl/cterr.h			comp-c-include	
+./usr/include/openssl/ct.h			comp-c-include
+./usr/include/openssl/cterr.h			comp-c-include
 ./usr/include/openssl/decoder.h			comp-c-include		openssl=30
 ./usr/include/openssl/decodererr.h		comp-c-include		openssl=30
 ./usr/include/openssl/des.h			comp-c-include
 ./usr/include/openssl/dh.h			comp-c-include
-./usr/include/openssl/dherr.h			comp-c-include	
+./usr/include/openssl/dherr.h			comp-c-include
 ./usr/include/openssl/dsa.h			comp-c-include
-./usr/include/openssl/dsaerr.h			comp-c-include	
+./usr/include/openssl/dsaerr.h			comp-c-include
 ./usr/include/openssl/dso.h			comp-obsolete		obsolete
 ./usr/include/openssl/dtls1.h			comp-c-include
 ./usr/include/openssl/e_os.h			comp-obsolete		obsolete
@@ -2977,16 +2977,16 @@
 ./usr/include/openssl/ec.h			comp-c-include
 ./usr/include/openssl/ecdh.h			comp-c-include
 ./usr/include/openssl/ecdsa.h			comp-c-include
-./usr/include/openssl/ecerr.h			comp-c-include	
+./usr/include/openssl/ecerr.h			comp-c-include
 ./usr/include/openssl/encoder.h			comp-c-include		openssl=30
 ./usr/include/openssl/encodererr.h		comp-c-include		openssl=30
 ./usr/include/openssl/engine.h			comp-c-include
-./usr/include/openssl/engineerr.h		comp-c-include	
+./usr/include/openssl/engineerr.h		comp-c-include
 ./usr/include/openssl/err.h			comp-c-include
 ./usr/include/openssl/ess.h			comp-c-include		openssl=30
 ./usr/include/openssl/esserr.h			comp-c-include		openssl=30
 ./usr/include/openssl/evp.h			comp-c-include
-./usr/include/openssl/evperr.h			comp-c-include	
+./usr/include/openssl/evperr.h			comp-c-include
 ./usr/include/openssl/fips.h			comp-obsolete		obsolete
 ./usr/include/openssl/fips_names.h		comp-c-include		openssl=30
 ./usr/include/openssl/fips_rand.h		comp-obsolete		obsolete
@@ -2995,8 +2995,8 @@
 ./usr/include/openssl/http.h			comp-c-include		openssl=30
 ./usr/include/openssl/httperr.h			comp-c-include		openssl=30
 ./usr/include/openssl/idea.h			comp-c-include
-./usr/include/openssl/kdf.h			comp-c-include  
-./usr/include/openssl/kdferr.h			comp-c-include	
+./usr/include/openssl/kdf.h			comp-c-include
+./usr/include/openssl/kdferr.h			comp-c-include
 ./usr/include/openssl/krb5_asn.h		comp-obsolete		obsolete
 ./usr/include/openssl/kssl.h			comp-obsolete		obsolete
 ./usr/include/openssl/lhash.h			comp-c-include
@@ -3008,9 +3008,9 @@
 ./usr/include/openssl/modes.h			comp-c-include
 ./usr/include/openssl/obj_mac.h			comp-c-include
 ./usr/include/openssl/objects.h			comp-c-include
-./usr/include/openssl/objectserr.h		comp-c-include	
+./usr/include/openssl/objectserr.h		comp-c-include
 ./usr/include/openssl/ocsp.h			comp-c-include
-./usr/include/openssl/ocsperr.h			comp-c-include	
+./usr/include/openssl/ocsperr.h			comp-c-include
 ./usr/include/openssl/opensslconf.h		comp-c-include
 ./usr/include/openssl/opensslv.h		comp-c-include
 ./usr/include/openssl/ossl_typ.h		comp-c-include
@@ -3018,11 +3018,11 @@
 ./usr/include/openssl/params.h			comp-c-include		openssl=30
 ./usr/include/openssl/pem.h			comp-c-include
 ./usr/include/openssl/pem2.h			comp-c-include
-./usr/include/openssl/pemerr.h			comp-c-include	
+./usr/include/openssl/pemerr.h			comp-c-include
 ./usr/include/openssl/pkcs12.h			comp-c-include
-./usr/include/openssl/pkcs12err.h		comp-c-include	
+./usr/include/openssl/pkcs12err.h		comp-c-include
 ./usr/include/openssl/pkcs7.h			comp-c-include
-./usr/include/openssl/pkcs7err.h		comp-c-include	
+./usr/include/openssl/pkcs7err.h		comp-c-include
 ./usr/include/openssl/pq_compat.h		comp-obsolete		obsolete
 ./usr/include/openssl/pqueue.h			comp-obsolete		obsolete
 ./usr/include/openssl/prov_ssl.h		comp-c-include		openssl=30
@@ -3030,13 +3030,13 @@
 ./usr/include/openssl/provider.h		comp-c-include		openssl=30
 ./usr/include/openssl/rand.h			comp-c-include
 ./usr/include/openssl/rand_drbg.h		comp-c-include	openssl=11
-./usr/include/openssl/randerr.h			comp-c-include	
+./usr/include/openssl/randerr.h			comp-c-include
 ./usr/include/openssl/rc2.h			comp-c-include
 ./usr/include/openssl/rc4.h			comp-c-include
 ./usr/include/openssl/rc5.h			comp-c-include
 ./usr/include/openssl/ripemd.h			comp-c-include
 ./usr/include/openssl/rsa.h			comp-c-include
-./usr/include/openssl/rsaerr.h			comp-c-include	
+./usr/include/openssl/rsaerr.h			comp-c-include
 ./usr/include/openssl/rsaref.h			comp-obsolete		obsolete
 ./usr/include/openssl/safestack.h		comp-c-include
 ./usr/include/openssl/seed.h			comp-c-include
@@ -3048,28 +3048,28 @@
 ./usr/include/openssl/ssl2.h			comp-c-include
 ./usr/include/openssl/ssl23.h			comp-obsolete		obsolete
 ./usr/include/openssl/ssl3.h			comp-c-include
-./usr/include/openssl/sslerr.h			comp-c-include	
+./usr/include/openssl/sslerr.h			comp-c-include
 ./usr/include/openssl/sslerr_legacy.h		comp-c-include		openssl=30
 ./usr/include/openssl/stack.h			comp-c-include
 ./usr/include/openssl/store.h			comp-c-include
-./usr/include/openssl/storeerr.h		comp-c-include	
+./usr/include/openssl/storeerr.h		comp-c-include
 ./usr/include/openssl/symhacks.h		comp-c-include
 ./usr/include/openssl/tls1.h			comp-c-include
 ./usr/include/openssl/tmdiff.h			comp-obsolete		obsolete
 ./usr/include/openssl/trace.h			comp-c-include		openssl=30
 ./usr/include/openssl/ts.h			comp-c-include
-./usr/include/openssl/tserr.h			comp-c-include	
+./usr/include/openssl/tserr.h			comp-c-include
 ./usr/include/openssl/txt_db.h			comp-c-include
 ./usr/include/openssl/types.h			comp-c-include		openssl=30
 ./usr/include/openssl/ui.h			comp-c-include
 ./usr/include/openssl/ui_compat.h		comp-obsolete		obsolete
-./usr/include/openssl/uierr.h			comp-c-include	
+./usr/include/openssl/uierr.h			comp-c-include
 ./usr/include/openssl/whrlpool.h		comp-c-include
 ./usr/include/openssl/x509.h			comp-c-include
 ./usr/include/openssl/x509_vfy.h		comp-c-include
-./usr/include/openssl/x509err.h			comp-c-include	
+./usr/include/openssl/x509err.h			comp-c-include
 ./usr/include/openssl/x509v3.h			comp-c-include
-./usr/include/openssl/x509v3err.h		comp-c-include	
+./usr/include/openssl/x509v3err.h		comp-c-include
 ./usr/include/panel.h				comp-c-include
 ./usr/include/paths.h				comp-c-include
 ./usr/include/pcap-namedb.h			comp-c-include
