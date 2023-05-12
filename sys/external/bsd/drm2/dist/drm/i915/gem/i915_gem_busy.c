@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_busy.c,v 1.3 2021/12/19 11:20:25 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_busy.c,v 1.4 2023/05/12 10:13:37 riastradh Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_busy.c,v 1.3 2021/12/19 11:20:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_busy.c,v 1.4 2023/05/12 10:13:37 riastradh Exp $");
 
 #include "gt/intel_engine.h"
 
@@ -130,6 +130,8 @@ retry:
 			struct dma_fence *fence =
 				rcu_dereference(list->shared[i]);
 
+			if (read_seqcount_retry(&obj->base.resv->seq, seq))
+				goto retry;
 			args->busy |= busy_check_reader(fence);
 		}
 	}
