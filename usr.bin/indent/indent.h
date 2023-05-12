@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.121 2023/05/12 10:53:33 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.122 2023/05/12 22:38:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -110,7 +110,7 @@ typedef enum lexer_symbol {
 } lexer_symbol;
 
 typedef enum parser_symbol {
-    psym_semicolon,		/* rather a placeholder than a semicolon */
+    psym_0,			/* a placeholder */
     psym_lbrace,
     psym_rbrace,
     psym_decl,
@@ -337,7 +337,7 @@ extern struct parser_state {
     parser_symbol spaced_expr_psym;	/* the parser symbol to be shifted
 					 * after the parenthesized expression
 					 * from a 'for', 'if', 'switch' or
-					 * 'while'; or psym_semicolon */
+					 * 'while'; or psym_0 */
 
     int quest_level;		/* when this is positive, we have seen a '?'
 				 * without the matching ':' in a '?:'
