@@ -1,4 +1,4 @@
-/*	$NetBSD: worms.c,v 1.30 2023/04/26 22:58:09 kre Exp $	*/
+/*	$NetBSD: worms.c,v 1.31 2023/05/12 13:29:41 kre Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worms.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worms.c,v 1.30 2023/04/26 22:58:09 kre Exp $");
+__RCSID("$NetBSD: worms.c,v 1.31 2023/05/12 13:29:41 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,6 +173,11 @@ static const char	flavor[] = {
 	'+', 'x', ':', '^', '_', '&', '@', 'w'
 };
 static const int flavors = __arraycount(flavor);
+static const char	eyeball[] = {
+	'0', 'X', '@', 'S', 'X', '@', 'O', '=',
+	'#', '*', '=', 'v', 'L', '@', 'o', 'm'
+};
+__CTASSERT(sizeof(flavor) == sizeof(eyeball));
 
 static const short	xinc[] = {
 	1,  1,  1,  0, -1, -1, -1,  0
@@ -182,7 +187,7 @@ static const short	xinc[] = {
 static struct	worm {
 	int orientation, head, len;
 	short *xpos, *ypos;
-	chtype ch, attr;
+	chtype ch, eye, attr;
 } *worm;
 
 static volatile sig_atomic_t sig_caught;
@@ -447,6 +452,7 @@ main(int argc, char *argv[])
 		w->attr = nc ? ctab[n % nc] : 0;
 		i = (nc && number > flavors ? n / nc : n) % flavors;
 		w->ch = flavor[i];
+		w->eye = eyeball[i];
 
 		if (!(ip = malloc((size_t)(w->len * sizeof(short)))))
 			nomem();
@@ -493,7 +499,7 @@ main(int argc, char *argv[])
 				sleep(delay / 1000000);
 		}
 		for (n = 0, w = &worm[0]; n < number; n++, w++) {
-			chtype c = docaput ? (w->ch == '@' ? '0' : '@') : w->ch;
+			chtype c = docaput ? w->eye : w->ch;
 
 			if ((x = w->xpos[h = w->head]) < 0) {
 				mvaddch(y = w->ypos[h] = bottom,
