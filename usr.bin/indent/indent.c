@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.252 2023/05/11 19:01:35 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.253 2023/05/12 08:40:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.252 2023/05/11 19:01:35 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.253 2023/05/12 08:40:54 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -492,7 +492,8 @@ process_lparen_or_lbracket(void)
     debug_println("paren_indents[%d] is now %d",
 	ps.nparen - 1, ps.paren[ps.nparen - 1].indent);
 
-    if (ps.spaced_expr && ps.nparen == 1 && opt.extra_expr_indent
+    if (ps.spaced_expr_psym != psym_semicolon
+	    && ps.nparen == 1 && opt.extra_expr_indent
 	    && ps.paren[0].indent < 2 * opt.indent_size) {
 	ps.paren[0].indent = (short)(2 * opt.indent_size);
 	debug_println("paren_indents[0] is now %d", ps.paren[0].indent);
@@ -534,14 +535,12 @@ process_rparen_or_rbracket(void)
 
     *code.e++ = token.s[0];
 
-    if (ps.spaced_expr && ps.nparen == 0) {
-	ps.spaced_expr = false;
+    if (ps.spaced_expr_psym != psym_semicolon && ps.nparen == 0) {
 	ps.force_nl = true;
 	ps.next_unary = true;
-	ps.in_stmt_or_decl = false;	/* don't use stmt continuation
-					 * indentation */
-
-	parse_stmt_head(ps.hd);
+	ps.in_stmt_or_decl = false;
+	parse(ps.spaced_expr_psym);
+	ps.spaced_expr_psym = psym_semicolon;
     }
 }
 
@@ -652,24 +651,23 @@ process_semicolon(void)
 					 * structure declaration before, we
 					 * aren't anymore */
 
-    if ((!ps.spaced_expr || ps.hd != hd_for) && ps.nparen > 0) {
-
+    if (ps.nparen > 0 && ps.spaced_expr_psym != psym_for_exprs) {
 	/*
 	 * There were unbalanced parentheses in the statement. It is a bit
 	 * complicated, because the semicolon might be in a for statement.
 	 */
 	diag(1, "Unbalanced parentheses");
 	ps.nparen = 0;
-	if (ps.spaced_expr) {
-	    ps.spaced_expr = false;
-	    parse_stmt_head(ps.hd);
+	if (ps.spaced_expr_psym != psym_semicolon) {
+	    parse(ps.spaced_expr_psym);
+	    ps.spaced_expr_psym = psym_semicolon;
 	}
     }
     *code.e++ = ';';
     ps.want_blank = true;
     ps.in_stmt_or_decl = ps.nparen > 0;
 
-    if (!ps.spaced_expr) {
+    if (ps.spaced_expr_psym == psym_semicolon) {
 	parse(psym_semicolon);	/* let parser know about end of stmt */
 	ps.force_nl = true;
     }
@@ -705,9 +703,9 @@ process_lbrace(void)
     if (ps.nparen > 0) {
 	diag(1, "Unbalanced parentheses");
 	ps.nparen = 0;
-	if (ps.spaced_expr) {
-	    ps.spaced_expr = false;
-	    parse_stmt_head(ps.hd);
+	if (ps.spaced_expr_psym != psym_semicolon) {
+	    parse(ps.spaced_expr_psym);
+	    ps.spaced_expr_psym = psym_semicolon;
 	    ps.ind_level = ps.ind_level_follow;
 	}
     }
@@ -749,7 +747,7 @@ process_rbrace(void)
     if (ps.nparen > 0) {	/* check for unclosed if, for, else. */
 	diag(1, "Unbalanced parentheses");
 	ps.nparen = 0;
-	ps.spaced_expr = false;
+	ps.spaced_expr_psym = psym_semicolon;
     }
 
     ps.just_saw_decl = 0;
@@ -863,12 +861,12 @@ process_ident(lexer_symbol lsym)
 	    ps.want_blank = false;
 	}
 
-    } else if (ps.spaced_expr && ps.nparen == 0) {
-	ps.spaced_expr = false;
+    } else if (ps.spaced_expr_psym != psym_semicolon && ps.nparen == 0) {
 	ps.force_nl = true;
 	ps.next_unary = true;
 	ps.in_stmt_or_decl = false;
-	parse_stmt_head(ps.hd);
+	parse(ps.spaced_expr_psym);
+	ps.spaced_expr_psym = psym_semicolon;
     }
 }
 
@@ -1102,23 +1100,19 @@ main_loop(void)
 	    break;
 
 	case lsym_switch:
-	    ps.spaced_expr = true;
-	    ps.hd = hd_switch;
+	    ps.spaced_expr_psym = psym_switch_expr;
 	    goto copy_token;
 
 	case lsym_for:
-	    ps.spaced_expr = true;
-	    ps.hd = hd_for;
+	    ps.spaced_expr_psym = psym_for_exprs;
 	    goto copy_token;
 
 	case lsym_if:
-	    ps.spaced_expr = true;
-	    ps.hd = hd_if;
+	    ps.spaced_expr_psym = psym_if_expr;
 	    goto copy_token;
 
 	case lsym_while:
-	    ps.spaced_expr = true;
-	    ps.hd = hd_while;
+	    ps.spaced_expr_psym = psym_while_expr;
 	    goto copy_token;
 
 	case lsym_do:
