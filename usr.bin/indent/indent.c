@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.254 2023/05/12 10:53:33 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.255 2023/05/12 15:36:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.254 2023/05/12 10:53:33 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.255 2023/05/12 15:36:02 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -732,11 +732,6 @@ process_lbrace(void)
 static void
 process_rbrace(void)
 {
-    if (ps.s_sym[ps.tos] == psym_decl && !ps.block_init) {
-	/* semicolons can be omitted in declarations */
-	parse(psym_semicolon);
-    }
-
     if (ps.nparen > 0) {	/* check for unclosed if, for, else. */
 	diag(1, "Unbalanced parentheses");
 	ps.nparen = 0;
