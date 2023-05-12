@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.51 2023/05/12 08:40:54 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.52 2023/05/12 22:36:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: parse.c,v 1.51 2023/05/12 08:40:54 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.52 2023/05/12 22:36:15 rillig Exp $");
 #else
 __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pstef $");
 #endif
@@ -90,6 +90,21 @@ decl_level(void)
 	    level++;
     return level;
 }
+
+#ifdef debug
+static void
+debug_parse_stack(const char *situation)
+{
+    printf("parse stack %s:", situation);
+    for (int i = 1; i <= ps.tos; ++i)
+	printf(" %s %d", psym_name(ps.s_sym[i]), ps.s_ind_level[i]);
+    if (ps.tos == 0)
+	printf(" empty");
+    printf("\n");
+}
+#else
+#define debug_parse_stack(situation) do { } while (false)
+#endif
 
 /*
  * Shift the token onto the parser stack, or reduce it by combining it with
@@ -220,16 +235,9 @@ parse(parser_symbol psym)
     if (ps.tos >= STACKSIZE - 1)
 	errx(1, "Parser stack overflow");
 
+    debug_parse_stack("before reduction");
     reduce();			/* see if any reduction can be done */
-
-#ifdef debug
-    printf("parse stack:");
-    for (int i = 1; i <= ps.tos; ++i)
-	printf(" %s %d", psym_name(ps.s_sym[i]), ps.s_ind_level[i]);
-    if (ps.tos == 0)
-	printf(" empty");
-    printf("\n");
-#endif
+    debug_parse_stack("after reduction");
 }
 
 /*
