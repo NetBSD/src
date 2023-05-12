@@ -1,4 +1,4 @@
-.\"	$NetBSD: indent.1,v 1.30 2021/09/26 21:31:57 rillig Exp $
+.\"	$NetBSD: indent.1,v 1.31 2023/05/12 11:01:11 rillig Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"	@(#)indent.1	8.1 (Berkeley) 7/1/93
 .\" $FreeBSD: head/usr.bin/indent/indent.1 334944 2018-06-11 05:35:57Z pstef $
 .\"
-.Dd September 26, 2021
+.Dd May 12, 2023
 .Dt INDENT 1
 .Os
 .Sh NAME
@@ -491,8 +491,7 @@ turns on `verbose' mode;
 turns it off.
 When in verbose mode,
 .Nm
-reports when it splits one line of input into two or more lines of output,
-and gives some size statistics at completion.
+reports when it splits one line of input into two or more lines of output.
 The default is
 .Fl \&nv .
 .It Fl -version
@@ -554,10 +553,6 @@ automatically extended in extreme cases.
 In general,
 .Nm
 leaves preprocessor lines alone.
-The only
-reformatting that it will do is to straighten up trailing comments.
-It
-leaves embedded comments alone.
 Conditional compilation
 .Pq Ic #ifdef...#endif
 is recognized and
