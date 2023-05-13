@@ -1,4 +1,4 @@
-/* $NetBSD: esareg.h,v 1.10 2005/12/11 12:22:49 christos Exp $ */
+/* $NetBSD: esareg.h,v 1.11 2023/05/13 11:30:27 andvar Exp $ */
 
 /*
  * Copyright (c) 2002 Lennart Augustsson
@@ -481,7 +481,7 @@
 #define ESA_KDATA_KERNEL_SCRATCH	    (ESA_KDATA_BASE_ADDR + 0x0070)
 #define ESA_KDATA_KERNEL_ISR_SCRATCH	    (ESA_KDATA_BASE_ADDR + 0x0071)
 
-#define ESA_KDATA_OUEUE_LEFT		    (ESA_KDATA_BASE_ADDR + 0x0072)
+#define ESA_KDATA_QUEUE_LEFT		    (ESA_KDATA_BASE_ADDR + 0x0072)
 #define ESA_KDATA_QUEUE_RIGHT		    (ESA_KDATA_BASE_ADDR + 0x0073)
 
 #define ESA_KDATA_ADC1_REQUEST		    (ESA_KDATA_BASE_ADDR + 0x0074)
