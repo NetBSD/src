@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2012/08/17 16:22:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2023/05/13 10:56:08 riastradh Exp $
 
 # hacky method to get compat multilib base objdirs created before
 # make tries to go create the subdirs used for builds.
@@ -8,7 +8,7 @@
 # and from there into the ../../lib dirs, it ends up setting the forced
 # MAKEOBJDIR to something based upon ${.CURDIR}, since the objdir
 # doesn't exist yet.
-# 
+#
 # our solution is simple - from this Makefile we traverse the same list
 # of $arch/$libtype's with "BOOTSTRAP_SUBDIR=".  then the compat/Makefile
 # handles these subdirs as normal, with the base objdir created.

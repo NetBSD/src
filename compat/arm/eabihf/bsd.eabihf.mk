@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.eabihf.mk,v 1.3 2015/06/24 22:20:24 matt Exp $
+#	$NetBSD: bsd.eabihf.mk,v 1.4 2023/05/13 10:56:08 riastradh Exp $
 
 .if !defined(MLIBDIR)
 
@@ -29,7 +29,7 @@ ARM_MACHINE_ARCH=	earmhf
 ARM_LD=			-m armelf_nbsd_eabihf
 .endif
 
-EARM_COMPAT_FLAGS+=	-B ${TOOLDIR}/aarch64--netbsd/bin 
+EARM_COMPAT_FLAGS+=	-B ${TOOLDIR}/aarch64--netbsd/bin
 
 LIBC_MACHINE_ARCH=	${ARM_MACHINE_ARCH}
 LIBGCC_MACHINE_ARCH=	${ARM_MACHINE_ARCH}
