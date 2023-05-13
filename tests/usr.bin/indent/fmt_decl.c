@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.37 2023/05/11 09:28:53 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.38 2023/05/13 06:52:48 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -88,38 +88,8 @@ typedef struct Complex
 
 
 /*
- * As of 2021-11-07, indent parses the following function definition as these
- * tokens:
- *
- * line 1: type_outside_parentheses "void"
- * line 1: newline "\n"
- * line 2: funcname "t1"
- * line 2: newline "\n"		repeated, see search_stmt
- * line 3: funcname "t1"	XXX: wrong line_no
- * line 3: lparen_or_lbracket "("
- * line 3: type_in_parentheses "char"
- * line 3: unary_op "*"
- * line 3: word "a"
- * line 3: comma ","
- * line 3: type_in_parentheses "int"
- * line 3: word "b"
- * line 3: comma ","
- * line 3: newline "\n"
- * line 4: type_in_parentheses "void"
- * line 4: lparen_or_lbracket "("
- * line 4: unary_op "*"
- * line 4: word "fn"
- * line 4: rparen_or_rbracket ")"
- * line 4: lparen_or_lbracket "("
- * line 4: type_in_parentheses "void"
- * line 4: rparen_or_rbracket ")"
- * line 4: rparen_or_rbracket ")"
- * line 4: newline "\n"
- * line 5: lbrace "{"
- * line 5: lbrace "{"		repeated, see search_stmt
- * line 5: newline "\n"		FIXME: there is no newline in the source
- * line 6: rbrace "}"
- * line 6: eof "\n"
+ * Ensure that function definitions are reasonably indented.  Before
+ * 2023-05-11, tokens were repeatedly read, and the line numbers were wrong.
  */
 //indent input
 void
@@ -527,7 +497,10 @@ function_name_____20________30________40________50
 {}
 //indent end
 
-/* FIXME: The space between '){' is missing. */
+/*
+ * Before 2023-05-11, indent moved the '{' right after the '(void)', without
+ * any space in between.
+ */
 //indent run
 int	       *function_name_____20________30________40________50
 		(void)
@@ -547,6 +520,10 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 {}
 //indent end
 
+/*
+ * Before 2023-05-11, indent moved the '{' right after the '(void)', without
+ * any space in between.
+ */
 //indent run
 int	       *aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 		(void)
@@ -607,7 +584,8 @@ buffer_add(buffer *buf, char ch)
 
 
 /*
- * Indent gets easily confused by type names it does not know about.
+ * Before lexi.c 1.153 from 2021-11-25, indent did not recognize 'Token' as a
+ * type name and then messed up the positioning of the '{'.
  */
 //indent input
 static Token
