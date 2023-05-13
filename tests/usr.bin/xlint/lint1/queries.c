@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.12 2023/04/15 11:34:45 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.13 2023/05/13 20:55:44 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -15,7 +15,7 @@
  * 	such as casts between arithmetic types.
  */
 
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9 -X 351 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10 -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
@@ -351,6 +351,20 @@ Q9(int x)
 	default:
 		return 0;
 	}
+}
+
+void
+Q10(void)
+{
+	int a, b, c;
+
+	/* expect+2: chained assignment with '=' and '=' [Q10] */
+	/* expect+1: chained assignment with '=' and '=' [Q10] */
+	a = b = c = 0;
+
+	/* expect+2: chained assignment with '*=' and '-=' [Q10] */
+	/* expect+1: chained assignment with '+=' and '*=' [Q10] */
+	a += b *= c -= 0;
 }
 
 /*

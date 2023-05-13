@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.522 2023/05/10 21:46:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.523 2023/05/13 20:55:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.522 2023/05/10 21:46:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.523 2023/05/13 20:55:44 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1305,20 +1305,39 @@ is_cast_redundant(const tnode_t *tn)
 	return false;
 }
 
-/*
- * Create a node for an assignment operator (both = and op= ).
- */
+static bool
+is_assignment(op_t op)
+{
+
+	return op == ASSIGN ||
+	       op == MULASS ||
+	       op == DIVASS ||
+	       op == MODASS ||
+	       op == ADDASS ||
+	       op == SUBASS ||
+	       op == SHLASS ||
+	       op == SHRASS ||
+	       op == ANDASS ||
+	       op == XORASS ||
+	       op == ORASS ||
+	       op == RETURN ||
+	       op == INIT;
+}
+
+/* Create a node for an assignment operator (both '=' and 'op='). */
 static tnode_t *
 build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 {
 	tspec_t	lt, rt;
 	tnode_t	*ntn, *ctn;
 
-	lint_assert(ln != NULL);
-	lint_assert(rn != NULL);
-
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
+
+	if (any_query_enabled && is_assignment(rn->tn_op)) {
+		/* chained assignment with '%s' and '%s' */
+		query_message(10, op_name(op), op_name(rn->tn_op));
+	}
 
 	if ((op == ADDASS || op == SUBASS) && lt == PTR) {
 		lint_assert(is_integer(rt));
