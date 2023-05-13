@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.261 2023/05/13 16:19:37 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.262 2023/05/13 16:40:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.261 2023/05/13 16:19:37 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.262 2023/05/13 16:40:18 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -413,7 +413,8 @@ maybe_break_line(lexer_symbol lsym)
 static void
 move_com_to_code(void)
 {
-    buf_add_char(&code, ' ');
+    if (lab.e != lab.s || code.e != code.s)
+	buf_add_char(&code, ' ');
     buf_add_buf(&code, &com);
     buf_add_char(&code, ' ');
     buf_terminate(&code);
