@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.160 2023/05/13 15:34:22 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.161 2023/05/13 17:20:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.160 2023/05/13 15:34:22 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.161 2023/05/13 17:20:41 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -331,6 +331,8 @@ output_complete_line(char line_terminator)
 	paren_indent = -1 - ps.paren[ps.nparen - 1].indent;
 	debug_println("paren_indent is now %d", paren_indent);
     }
+
+    ps.want_blank = false;
 }
 
 void
