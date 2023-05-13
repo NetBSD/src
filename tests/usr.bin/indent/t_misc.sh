@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.23 2023/05/13 06:52:48 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.24 2023/05/13 08:33:39 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -198,7 +198,7 @@ option_P_in_profile_file_body()
 
 	echo 'syntax # error' > code.c
 
-	atf_check -o 'inline:syntax\n#error\n' \
+	atf_check -o 'inline:syntax\n# error\n' \
 	    "$indent" < code.c
 }
 

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.25 2023/05/11 09:28:53 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.26 2023/05/13 08:33:39 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -366,8 +366,8 @@ preprocessing_unrecognized_body()
 		#else
 	EOF
 	cat <<-\EOF > stderr.exp
-		error: code.c:1: Unrecognized cpp directive
-		error: code.c:2: Unrecognized cpp directive
+		error: code.c:1: Unrecognized cpp directive "unknown"
+		error: code.c:2: Unrecognized cpp directive ""
 		error: code.c:3: Unmatched #elif
 		error: code.c:4: Unmatched #else
 	EOF
