@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2023/05/06 17:07:23 christos Exp $
+# $NetBSD: Makefile,v 1.5 2023/05/13 11:11:39 riastradh Exp $
 
 LIBISPRIVATE=	yes
 LIB=		cryptotest
@@ -35,5 +35,9 @@ testutil_init.c
 
 SRCS+= \
 opt.c
+
+COPTS.opt.c+=		-Wno-missing-field-initializers
+COPTS.options.c+=	-Wno-format-nonliteral
+COPTS.test_options.c+=	-Wno-missing-field-initializers
 
 .include <bsd.lib.mk>
