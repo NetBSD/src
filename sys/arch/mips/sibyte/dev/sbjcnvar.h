@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcnvar.h,v 1.8 2018/07/09 14:07:37 christos Exp $ */
+/* $NetBSD: sbjcnvar.h,v 1.9 2023/05/13 11:19:19 andvar Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -100,7 +100,7 @@ struct sbjcn_channel {
 	struct callout	ch_callout;	/* callout for channel processing */
 
 	volatile char	*ch_input_reg;	/* kseg1 addr of input reg */
-	volatile char	*ch_output_reg;	/* kseg1 addr of outpu reg */
+	volatile char	*ch_output_reg;	/* kseg1 addr of output reg */
 	volatile char	*ch_control_reg;/* kseg1 addr of control reg */
 
 	volatile int	ch_waiting_input; /*  */
