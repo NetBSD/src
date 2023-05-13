@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.45 2022/04/24 10:36:37 rillig Exp $
+#	$NetBSD: Makefile,v 1.46 2023/05/13 13:24:01 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ FILES+=		indent_off_on.c
 FILES+=		label.c
 FILES+=		lex_char.c
 FILES+=		lex_ident.c
+FILES+=		lex_number.c
 FILES+=		lex_string.c
 FILES+=		lsym_binary_op.c
 FILES+=		lsym_case_label.c
