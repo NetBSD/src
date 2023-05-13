@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.125 2023/05/13 12:31:02 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.126 2023/05/13 13:48:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -151,14 +151,14 @@ extern struct buffer com;	/* the trailing comment of the line, or the
 
 extern struct options {
     bool blanklines_around_conditional_compilation;
-    bool blanklines_after_decl_at_top;	/* this is vaguely similar to
-					 * blanklines_after_decl except that
+    bool blank_line_after_decl_at_top;	/* this is vaguely similar to
+					 * blank_line_after_decl except that
 					 * it only applies to the first set of
 					 * declarations in a procedure (just
 					 * after the first '{') and it causes
 					 * a blank line to be generated even
 					 * if there are no declarations */
-    bool blanklines_after_decl;
+    bool blank_line_after_decl;
     bool blanklines_after_procs;
     bool blanklines_before_block_comments;
     bool break_after_comma;	/* whether to break declarations after commas */
