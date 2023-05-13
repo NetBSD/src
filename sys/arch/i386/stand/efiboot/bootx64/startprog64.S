@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog64.S,v 1.3 2017/02/11 10:23:39 nonaka Exp $	*/
+/*	$NetBSD: startprog64.S,v 1.3.24.1 2023/05/13 11:45:53 martin Exp $	*/
 /*	NetBSD: startprog.S,v 1.3 2003/02/01 14:48:18 dsl Exp	*/
 
 /* starts program in protected mode / flat space
@@ -96,6 +96,10 @@ start:
 	cld		/* LynxOS depends on it */
 
 	cli
+
+	/* skip copy if same source and destination */
+	cmpq	%rdi,%rsi
+	jz	.Lcopy_done
 
 	/* Copy kernel */
 	mov	%rcx, %r12		/* original kernel size */
