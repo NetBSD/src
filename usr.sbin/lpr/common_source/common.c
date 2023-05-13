@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.43 2014/12/20 13:15:48 prlw1 Exp $	*/
+/*	$NetBSD: common.c,v 1.44 2023/05/13 11:48:19 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.43 2014/12/20 13:15:48 prlw1 Exp $");
+__RCSID("$NetBSD: common.c,v 1.44 2023/05/13 11:48:19 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -285,7 +285,7 @@ getq(struct queue **namelist[])
 				goto errdone;
 			}
 			(void)memset(&nqueue[arraysz], 0,
-			    arraysz * sizeof(struct queueue *));
+			    arraysz * sizeof(nqueue[0]));
 			queue = nqueue;
 			arraysz *= 2;
 		}
