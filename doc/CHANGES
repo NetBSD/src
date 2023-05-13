@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2940 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2940.2.1 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -752,9 +752,41 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tprof: Revamped tprof(4), and multiple event counters can be
 		referenced with tprof(8). Add some improvements to tprof(8).
 		[ryo 20221201]
+	hp300: Fix rd(4) driver to make raid(4) work on HP-IB disks.
+		[tsutsui 20221203]
 	tprof: Add AMD family 19h (zen3 and zen4) support to tprof(4) and
 		tprof(8). [msaitoh 20221208]
 	acpi(4): Updated ACPICA to 20221020. [christos 20221210]
 	tzdata: updated to 2022g (using the 2022ggtz fork) [kre 20221211]
+	i386: Enable options DISKLABEL_EI in GENERIC kernel. [tsutsui 20221211]
 	tzcode: Updated to 2022g. [christos 20221211]
 	wbsio(4),lm(4): Add Nuvoton NCT6797D support. [msaitoh 20221215]
+	m68k: Fix out of bounds invalidate and writeback bug in
+		bus_dmamap_sync(9) that could cause panic by POOL_REDZONE
+		assertion on mac68k with sn(4) driver. [tsutsui 20230105]
+	wg(4): Allow non-root to retrieve information other than the
+		private key and the peer preshared key. [jakllsch 20230105]
+	mac68k: Disable options DIAGNOSTIC in INSTALL kenrels.
+		[tsutsui 20230105]
+	vax: Fix smg(4) monochrome framebuffer that has been broken since
+		NetBSD 4.0. [tsutsui 20230113]
+	next68k: Fix "cannot input from keyboard" problem that has been broken
+		since NetBSD 7.0. [tsutsui 20230127]
+	next68k: Fix silent stall of esp(4) SCSI driver that has been broken
+		since NetBSD 6.0. [tsutsui 20230127]
+	vax: Fix a bootloader that failed on 8MB RAM VAXen. [tsutsui 20230129]
+	vax: Port gpx(4) color framebuffer driver (found on VAXstation 3100)
+		from OpenBSD/vax. [tsutsui 20230206]
+	next68k: Fix bootloader bugs that has been broken since NetBSD 1.5 days
+		on loading a kernel from SCSI disks. [tsutsui 20230207]
+	OpenSSL: Imported 1.1.1t. [christos 20230207]
+	next68k: Handle NeXT Turbo framebuffer VRAM properly. [tsutsui 20230211]
+	next68k: Add support for NeXT Cube Turbo. [tsutsui 20230211]
+	vax: Port rasops(9)-ified smg(4) framebuffer driver for
+		VS3100 from OpenBSD/vax.  This allows using more fonts.
+		[tsutsui 20230211]
+	next68k: Add a RAMDISK root kernel. [tsutsui 20230211]
+	urndis(4): Add support for OnePlus 5T device quirks
+		[nia 20230211]
+	u3g(4): Add support for ZTE MF112 and D-Link DWM222 3G USB
+		modems [manu 20230213]
