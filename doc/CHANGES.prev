@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.169 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.170 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -13405,6 +13405,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[tsutsui 20230105]
 	vax: Fix smg(4) monochrome framebuffer that has been broken since
 		NetBSD 4.0. [tsutsui 20230113]
+	aq(4): add support for AQC113-116 [ryo 20230114]
 	next68k: Fix "cannot input from keyboard" problem that has been broken
 		since NetBSD 7.0. [tsutsui 20230127]
 	next68k: Fix silent stall of esp(4) SCSI driver that has been broken
