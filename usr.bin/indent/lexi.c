@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.178 2023/05/13 12:31:02 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.179 2023/05/13 13:31:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.178 2023/05/13 12:31:02 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.179 2023/05/13 13:31:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -206,6 +206,12 @@ lex_number(void)
 {
     for (unsigned char s = 'A'; s != 'f' && s != 'i' && s != 'u';) {
 	unsigned char ch = (unsigned char)inp_peek();
+	if (ch == '\\' && inp_lookahead(1) == '\n') {
+	    inp_skip();
+	    inp_skip();
+	    line_no++;
+	    continue;
+	}
 	if (ch >= array_length(lex_number_row) || lex_number_row[ch] == 0)
 	    break;
 
