@@ -1,4 +1,4 @@
-/* $NetBSD: lex_number.c,v 1.1 2023/05/13 13:24:01 rillig Exp $ */
+/* $NetBSD: lex_number.c,v 1.2 2023/05/13 13:31:37 rillig Exp $ */
 
 /*
  * Test lexing of numbers.
@@ -33,8 +33,6 @@ x\
 78;
 //indent end
 
-/* FIXME: properly unwrap numbers */
 //indent run -di0
-int wrapped = 0 \
-x12345678;
+int wrapped = 0x12345678;
 //indent end
