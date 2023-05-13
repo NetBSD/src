@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.61 2023/05/04 18:57:28 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.62 2023/05/13 12:22:26 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1737,4 +1737,112 @@ sys/arch/arm/sunxi/sunxi_thermal.c		1.15,1.16
 	sunxithermal(4): fix DTS bindings.
 	[jmcneill, ticket #156]
 
+
+sys/dev/pci/if_vioif.c				1.103,1.104
+sys/dev/pci/ld_virtio.c				1.31,1.32
+sys/dev/pci/vio9p.c				1.10,1.11
+sys/dev/pci/viomb.c				1.14,1.15,1.17
+sys/dev/pci/viornd.c				1.19-1.21
+sys/dev/pci/vioscsi.c				1.31-1.34,1.36
+sys/dev/pci/virtio.c				1.66-1.74
+sys/dev/pci/virtio_pci.c			1.39,1.40
+sys/dev/pci/virtioreg.h				1.12
+sys/dev/pci/virtiovar.h				1.25-1.28
+sys/dev/virtio/viocon.c				1.6-1.8
+sys/dev/virtio/virtio_mmio.c			1.8,1.9
+
+	virtio(4): various bug fixes and code cleanup for VirtIO devices.
+	This includes an API/ABI change for virtio drivers.
+	[yamaguchi, ticket #139]
+
+doc/CHANGES					r1.167-r1.169 (via patch)
+
+	Note more user visible changes.
+	[tsutsui, ticket #141]
+
+doc/CHANGES					(apply patch)
+
+	Note aq(4) changes, pulled up in ticket #60
+	[rin, ticket #157]
+
+share/man/man4/video.4				1.11
+
+	video(4): PR 57364: fix a typo.
+	[khorben, ticket #158]
+
+share/man/man4/options.4			1.524
+share/man/man8/man8.x86/boot.8			1.27-1.29
+share/man/man8/man8.x86/dosboot.8		1.4
+share/man/man8/man8.x86/pxeboot.8		1.6
+sys/arch/amd64/amd64/locore.S			1.219,1.220
+sys/arch/amd64/conf/files.amd64			1.121
+sys/arch/amd64/conf/std.amd64			1.13
+sys/arch/i386/stand/efiboot/boot.c		1.22
+sys/arch/i386/stand/efiboot/bootia32/efibootia32.c 1.6
+sys/arch/i386/stand/efiboot/bootia32/startprog32.S 1.3
+sys/arch/i386/stand/efiboot/bootx64/efibootx64.c 1.6
+sys/arch/i386/stand/efiboot/bootx64/startprog64.S 1.4
+sys/arch/i386/stand/efiboot/efiboot.c		1.13
+sys/arch/i386/stand/efiboot/efiboot.h		1.12
+sys/arch/i386/stand/efiboot/version		1.3
+sys/arch/i386/stand/lib/exec.c			1.79
+
+	x86: add a "reloc" keyword to the EFI bootstrap to allow loading
+	kernels at different addresses.
+	[manu, ticket #159]
+
+sbin/fsck_ffs/main.c				1.91
+sbin/fsck_ffs/pass1.c				1.63
+sbin/fsck_ffs/pass1b.c				1.24
+sbin/fsck_ffs/pass4.c				1.29
+sbin/fsck_ffs/pass5.c				1.56
+sbin/fsck_ffs/setup.c				1.105
+sbin/fsdb/fsdb.c				1.54
+sbin/newfs/mkfs.c				1.133
+sbin/resize_ffs/resize_ffs.c			1.58
+sbin/tunefs/tunefs.c				1.58
+sys/ufs/ffs/ffs_alloc.c				1.172
+sys/ufs/ffs/ffs_extern.h			1.88
+sys/ufs/ffs/ffs_subr.c				1.54
+sys/ufs/ffs/fs.h				1.71
+usr.sbin/dumpfs/dumpfs.c			1.68
+usr.sbin/makefs/Makefile			1.40
+usr.sbin/makefs/ffs.c				1.74
+usr.sbin/makefs/ffs/ffs_alloc.c			1.31
+usr.sbin/makefs/ffs/ffs_extern.h		1.9
+usr.sbin/makefs/ffs/mkfs.c			1.42
+usr.sbin/quotacheck/quotacheck.c		1.51
+
+	ufs: fixed signed/unsigned bugs affecting large file systems.
+	[chs, ticket #160]
+
+sbin/fsck_ffs/pass5.c				1.57
+sbin/fsck_ffs/setup.c				1.106
+
+	ufs: fix the previous signed/unsigned fixes to build on 32-bit.
+	[chs, ticket #161]
+
+sbin/fsck_ffs/fsck.h				1.57
+sbin/fsck_ffs/inode.c				1.74
+sbin/fsck_ffs/pass4.c				1.30
+sbin/fsck_ffs/utilities.c			1.68
+
+	fsck(8): catch up with sign changes in the fs.h
+	[chs, ticket #162]
+
+sbin/fsck_ffs/inode.c				1.75
+
+	fsck(8): use %zu rather than %lu to print a size_t.
+	[chs, ticket #163]
+
+sbin/fsck_ffs/pass2.c				1.52
+
+	fsck(8): improve handling of missing '.' and '..' in UFS directories.
+	[chs, ticket #164]
+
+sys/ufs/ffs/ffs_snapshot.c			1.155
+
+	PR 57307: fix a bug that caused UFS2 filesystems bigger than 2TB to
+	prematurely report that they were full and/or to panic the kernel.
+	[chs, ticket #165]
 
