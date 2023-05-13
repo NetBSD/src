@@ -1,0 +1,244 @@
+/*	$NetBSD: debug.c,v 1.1 2023/05/13 09:27:49 rillig Exp $	*/
+
+/*-
+ * Copyright (c) 2023 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Roland Illig <rillig@NetBSD.org>.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: debug.c,v 1.1 2023/05/13 09:27:49 rillig Exp $");
+
+#include "indent.h"
+
+#ifdef debug
+const char *const lsym_name[] = {
+    "eof",
+    "preprocessing",
+    "newline",
+    "form_feed",
+    "comment",
+    "lparen_or_lbracket",
+    "rparen_or_rbracket",
+    "lbrace",
+    "rbrace",
+    "period",
+    "unary_op",
+    "binary_op",
+    "postfix_op",
+    "question",
+    "colon",
+    "comma",
+    "semicolon",
+    "typedef",
+    "storage_class",
+    "type_outside_parentheses",
+    "type_in_parentheses",
+    "tag",
+    "case_label",
+    "sizeof",
+    "offsetof",
+    "word",
+    "funcname",
+    "do",
+    "else",
+    "for",
+    "if",
+    "switch",
+    "while",
+    "return",
+};
+
+const char *const psym_name[] = {
+    "0",
+    "lbrace",
+    "rbrace",
+    "decl",
+    "stmt",
+    "stmt_list",
+    "for_exprs",
+    "if_expr",
+    "if_expr_stmt",
+    "if_expr_stmt_else",
+    "else",
+    "switch_expr",
+    "do",
+    "do_stmt",
+    "while_expr",
+};
+
+static bool debug_full_parser_state = true;
+
+static void
+debug_print_buf(const char *name, const struct buffer *buf)
+{
+    if (buf->s < buf->e) {
+	debug_printf("%s ", name);
+	debug_vis_range("\"", buf->s, buf->e, "\"\n");
+    }
+}
+
+void
+debug_buffers(void)
+{
+    if (lab.e != lab.s) {
+	debug_printf(" label ");
+	debug_vis_range("\"", lab.s, lab.e, "\"");
+    }
+    if (code.e != code.s) {
+	debug_printf(" code ");
+	debug_vis_range("\"", code.s, code.e, "\"");
+    }
+    if (com.e < com.s) {
+	debug_printf(" comment ");
+	debug_vis_range("\"", com.s, com.e, "\"");
+    }
+}
+
+#define debug_ps_bool(name) \
+        if (ps.name != prev_ps.name) \
+	    debug_println("[%c] -> [%c] ps." #name, \
+		prev_ps.name ? 'x' : ' ', ps.name ? 'x' : ' '); \
+	else if (debug_full_parser_state) \
+	    debug_println("       [%c] ps." #name, ps.name ? 'x' : ' ')
+#define debug_ps_int(name) \
+	if (ps.name != prev_ps.name) \
+	    debug_println("%3d -> %3d ps." #name, prev_ps.name, ps.name); \
+	else if (debug_full_parser_state) \
+	    debug_println("       %3d ps." #name, ps.name)
+#define debug_ps_enum(name, names) \
+	if (ps.name != prev_ps.name) \
+	    debug_println("%3s -> %3s ps." #name, \
+		(names)[prev_ps.name], (names)[ps.name]); \
+	else if (debug_full_parser_state) \
+	    debug_println("%10s ps." #name, (names)[ps.name])
+
+static bool
+ps_paren_has_changed(const struct parser_state *prev_ps)
+{
+    const paren_level_props *prev = prev_ps->paren, *curr = ps.paren;
+
+    if (prev_ps->nparen != ps.nparen)
+	return true;
+
+    for (int i = 0; i < ps.nparen; i++) {
+	if (curr[i].indent != prev[i].indent ||
+	    curr[i].maybe_cast != prev[i].maybe_cast ||
+	    curr[i].no_cast != prev[i].no_cast)
+	    return true;
+    }
+    return false;
+}
+
+static void
+debug_ps_paren(const struct parser_state *prev_ps)
+{
+    if (!debug_full_parser_state && !ps_paren_has_changed(prev_ps))
+	return;
+
+    debug_printf("           ps.paren:");
+    for (int i = 0; i < ps.nparen; i++) {
+	const paren_level_props *props = ps.paren + i;
+	const char *cast = props->no_cast ? "(no cast)"
+	    : props->maybe_cast ? "(cast)"
+	    : "";
+	debug_printf(" %s%d", cast, props->indent);
+    }
+    if (ps.nparen == 0)
+	debug_printf(" none");
+    debug_println("");
+}
+
+void
+debug_parser_state(lexer_symbol lsym)
+{
+    static struct parser_state prev_ps;
+
+    debug_println("");
+    debug_printf("line %d: %s", line_no, lsym_name[lsym]);
+    debug_vis_range(" \"", token.s, token.e, "\"\n");
+
+    debug_print_buf("label", &lab);
+    debug_print_buf("code", &code);
+    debug_print_buf("comment", &com);
+
+    debug_println("           ps.prev_token = %s", lsym_name[ps.prev_token]);
+    debug_ps_bool(curr_col_1);
+    debug_ps_bool(next_col_1);
+    debug_ps_bool(next_unary);
+    debug_ps_bool(is_function_definition);
+    debug_ps_bool(want_blank);
+    debug_ps_bool(force_nl);
+    debug_ps_int(line_start_nparen);
+    debug_ps_int(nparen);
+    debug_ps_paren(&prev_ps);
+
+    debug_ps_int(comment_delta);
+    debug_ps_int(n_comment_delta);
+    debug_ps_int(com_ind);
+
+    debug_ps_bool(block_init);
+    debug_ps_int(block_init_level);
+    debug_ps_bool(init_or_struct);
+
+    debug_ps_int(ind_level);
+    debug_ps_int(ind_level_follow);
+
+    debug_ps_int(decl_level);
+    debug_ps_bool(decl_on_line);
+    debug_ps_bool(in_decl);
+    debug_ps_int(just_saw_decl);
+    debug_ps_bool(in_func_def_params);
+    // No debug output for in_enum.
+    debug_ps_bool(decl_indent_done);
+    debug_ps_int(decl_ind);
+    // No debug output for di_stack.
+    debug_ps_bool(tabs_to_var);
+
+    debug_ps_bool(in_stmt_or_decl);
+    debug_ps_bool(in_stmt_cont);
+    debug_ps_bool(is_case_label);
+    debug_ps_bool(seen_case);
+
+    // The debug output for the parser symbols is done in 'parse' instead.
+
+    debug_ps_enum(spaced_expr_psym, psym_name);
+    debug_ps_int(quest_level);
+
+    prev_ps = ps;
+}
+
+void
+debug_parse_stack(const char *situation)
+{
+    printf("parse stack %s:", situation);
+    for (int i = 1; i <= ps.tos; ++i)
+	printf(" %s %d", psym_name[ps.s_sym[i]], ps.s_ind_level[i]);
+    if (ps.tos == 0)
+	printf(" empty");
+    printf("\n");
+}
+#endif

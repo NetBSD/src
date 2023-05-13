@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.155 2023/05/12 10:53:33 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.156 2023/05/13 09:27:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.155 2023/05/12 10:53:33 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.156 2023/05/13 09:27:49 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -277,10 +277,16 @@ output_line_comment(int ind)
 /*
  * Write a line of formatted source to the output file. The line consists of
  * the label, the code and the comment.
+ *
+ * Comments are written directly, bypassing this function.
  */
 static void
 output_complete_line(char line_terminator)
 {
+    debug_printf("%s", __func__);
+    debug_buffers();
+    debug_println("%s", line_terminator == '\f' ? " form_feed" : "");
+
     ps.is_function_definition = false;
 
     if (!inhibit_formatting) {
