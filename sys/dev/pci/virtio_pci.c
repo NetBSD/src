@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.38 2022/05/30 20:28:18 riastradh Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.38.4.1 2023/05/13 10:56:10 martin Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.38 2022/05/30 20:28:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.38.4.1 2023/05/13 10:56:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ static int	virtio_pci_detach(device_t, int);
 				sizeof(pcireg_t))
 struct virtio_pci_softc {
 	struct virtio_softc	sc_sc;
+	bool			sc_intr_pervq;
 
 	/* IO space */
 	bus_space_tag_t		sc_iot;
@@ -328,14 +329,12 @@ virtio_pci_detach(device_t self, int flags)
 	struct virtio_softc * const sc = &psc->sc_sc;
 	int r;
 
-	if (sc->sc_child != NULL) {
-		r = config_detach(sc->sc_child, flags);
-		if (r)
-			return r;
-	}
+	r = config_detach_children(self, flags);
+	if (r != 0)
+		return r;
 
 	/* Check that child detached properly */
-	KASSERT(sc->sc_child == NULL);
+	KASSERT(ISSET(sc->sc_child_flags, VIRTIO_CHILD_DETACHED));
 	KASSERT(sc->sc_vqs == NULL);
 	KASSERT(psc->sc_ihs_num == 0);
 
@@ -629,7 +628,7 @@ virtio_pci_setup_queue_09(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
 
 	if (psc->sc_ihs_num > 1) {
 		int vec = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
-		if (sc->sc_child_mq)
+		if (psc->sc_intr_pervq)
 			vec += idx;
 		bus_space_write_2(psc->sc_iot, psc->sc_ioh,
 		    VIRTIO_CONFIG_MSI_QUEUE_VECTOR, vec);
@@ -751,7 +750,7 @@ virtio_pci_setup_queue_10(struct virtio_softc *sc, uint16_t idx, uint64_t addr)
 
 	if (psc->sc_ihs_num > 1) {
 		int vec = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
-		if (sc->sc_child_mq)
+		if (psc->sc_intr_pervq)
 			vec += idx;
 		bus_space_write_2(iot, ioh,
 			VIRTIO_CONFIG1_QUEUE_MSIX_VECTOR, vec);
@@ -849,7 +848,7 @@ virtio_pci_setup_interrupts_10(struct virtio_softc *sc, int reinit)
 	for (qid = 0; qid < sc->sc_nvqs; qid++) {
 		vector = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
 
-		if (sc->sc_child_mq)
+		if (psc->sc_intr_pervq)
 			vector += qid;
 		bus_space_write_2(iot, ioh, VIRTIO_CONFIG1_QUEUE_SELECT, qid);
 		bus_space_write_2(iot, ioh, VIRTIO_CONFIG1_QUEUE_MSIX_VECTOR,
@@ -895,7 +894,7 @@ virtio_pci_setup_interrupts_09(struct virtio_softc *sc, int reinit)
 		offset = VIRTIO_CONFIG_MSI_QUEUE_VECTOR;
 		vector = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
 
-		if (sc->sc_child_mq)
+		if (psc->sc_intr_pervq)
 			vector += qid;
 
 		bus_space_write_2(psc->sc_iot, psc->sc_ioh, offset, vector);
@@ -941,7 +940,7 @@ virtio_pci_establish_msix_interrupts(struct virtio_softc *sc,
 	}
 
 	idx = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
-	if (sc->sc_child_mq) {
+	if (psc->sc_intr_pervq) {
 		for (qid = 0; qid < sc->sc_nvqs; qid++) {
 			n = idx + qid;
 			vq = &sc->sc_vqs[qid];
@@ -979,7 +978,7 @@ virtio_pci_establish_msix_interrupts(struct virtio_softc *sc,
 	intrstr = pci_intr_string(pc, psc->sc_ihp[idx], intrbuf, sizeof(intrbuf));
 	aprint_normal_dev(self, "config interrupting at %s\n", intrstr);
 	idx = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
-	if (sc->sc_child_mq) {
+	if (psc->sc_intr_pervq) {
 		kcpuset_t *affinity;
 		int affinity_to, r;
 
@@ -1019,7 +1018,7 @@ error:
 	if (psc->sc_ihs[idx] != NULL)
 		pci_intr_disestablish(psc->sc_pa.pa_pc, psc->sc_ihs[idx]);
 	idx = VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
-	if (sc->sc_child_mq) {
+	if (psc->sc_intr_pervq) {
 		for (qid = 0; qid < sc->sc_nvqs; qid++) {
 			n = idx + qid;
 			if (psc->sc_ihs[n] == NULL)
@@ -1085,13 +1084,10 @@ virtio_pci_alloc_interrupts(struct virtio_softc *sc)
 		counts[PCI_INTR_TYPE_INTX] = 1;
 	} else {
 		/* Try MSI-X first and INTx second */
-		if (sc->sc_nvqs + VIRTIO_MSIX_QUEUE_VECTOR_INDEX <= nmsix) {
+		if (ISSET(sc->sc_flags, VIRTIO_F_INTR_PERVQ) &&
+		    sc->sc_nvqs + VIRTIO_MSIX_QUEUE_VECTOR_INDEX <= nmsix) {
 			nmsix = sc->sc_nvqs + VIRTIO_MSIX_QUEUE_VECTOR_INDEX;
 		} else {
-			sc->sc_child_mq = false;
-		}
-
-		if (sc->sc_child_mq == false) {
 			nmsix = 2;
 		}
 
@@ -1109,6 +1105,7 @@ retry:
 	}
 
 	if (pci_intr_type(pc, psc->sc_ihp[0]) == PCI_INTR_TYPE_MSIX) {
+		psc->sc_intr_pervq = nmsix > 2 ? true : false;
 		psc->sc_ihs = kmem_zalloc(sizeof(*psc->sc_ihs) * nmsix,
 		    KM_SLEEP);
 
@@ -1127,6 +1124,7 @@ retry:
 		psc->sc_devcfg_offset = VIRTIO_CONFIG_DEVICE_CONFIG_MSI;
 		virtio_pci_adjust_config_region(psc);
 	} else if (pci_intr_type(pc, psc->sc_ihp[0]) == PCI_INTR_TYPE_INTX) {
+		psc->sc_intr_pervq = false;
 		psc->sc_ihs = kmem_zalloc(sizeof(*psc->sc_ihs) * 1,
 		    KM_SLEEP);
 
@@ -1149,6 +1147,8 @@ retry:
 		}
 	}
 
+	if (!psc->sc_intr_pervq)
+		CLR(sc->sc_flags, VIRTIO_F_INTR_PERVQ);
 	return 0;
 }
 

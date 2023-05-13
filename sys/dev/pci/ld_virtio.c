@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.30 2022/04/13 10:42:12 uwe Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.30.4.1 2023/05/13 10:56:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.30 2022/04/13 10:42:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.30.4.1 2023/05/13 10:56:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -275,8 +275,7 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_virtio = vsc;
 
-	virtio_child_attach_start(vsc, self, IPL_BIO, &sc->sc_vq,
-	    NULL, virtio_vq_intr, VIRTIO_F_INTR_MSIX,
+	virtio_child_attach_start(vsc, self, IPL_BIO,
 	    (VIRTIO_BLK_F_SIZE_MAX | VIRTIO_BLK_F_SEG_MAX |
 	     VIRTIO_BLK_F_GEOMETRY | VIRTIO_BLK_F_RO | VIRTIO_BLK_F_BLK_SIZE |
 	     VIRTIO_BLK_F_FLUSH | VIRTIO_BLK_F_CONFIG_WCE),
@@ -333,14 +332,17 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	/* 2 for the minimum size */
 	maxnsegs += VIRTIO_BLK_MIN_SEGMENTS;
 
-	if (virtio_alloc_vq(vsc, &sc->sc_vq, 0, maxxfersize, maxnsegs,
+	virtio_init_vq_vqdone(vsc, &sc->sc_vq, 0,
+	    ld_virtio_vq_done);
+
+	if (virtio_alloc_vq(vsc, &sc->sc_vq, maxxfersize, maxnsegs,
 	    "I/O request") != 0) {
 		goto err;
 	}
 	qsize = sc->sc_vq.vq_num;
-	sc->sc_vq.vq_done = ld_virtio_vq_done;
 
-	if (virtio_child_attach_finish(vsc) != 0)
+	if (virtio_child_attach_finish(vsc, &sc->sc_vq, 1,
+	    NULL, VIRTIO_F_INTR_MSIX) != 0)
 		goto err;
 
 	ld->sc_dv = self;

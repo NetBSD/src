@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.82.4.2 2023/04/01 10:31:06 martin Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.82.4.3 2023/05/13 10:56:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.82.4.2 2023/04/01 10:31:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.82.4.3 2023/05/13 10:56:10 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -465,7 +465,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	u_int softint_flags;
 	int r, i, req_flags;
 	char xnamebuf[MAXCOMLEN];
-	size_t netq_num;
+	size_t nvqs;
 
 	if (virtio_child(vsc) != NULL) {
 		aprint_normal(": child already attached for %s; "
@@ -509,11 +509,11 @@ vioif_attach(device_t parent, device_t self, void *aux)
 #ifdef VIOIF_MULTIQ
 	req_features |= VIRTIO_NET_F_MQ;
 #endif
-	virtio_child_attach_start(vsc, self, IPL_NET, NULL,
-	    vioif_config_change, virtio_vq_intrhand, req_flags,
-	    req_features, VIRTIO_NET_FLAG_BITS);
 
+	virtio_child_attach_start(vsc, self, IPL_NET,
+	    req_features, VIRTIO_NET_FLAG_BITS);
 	features = virtio_features(vsc);
+
 	if (features == 0)
 		goto err;
 
@@ -565,10 +565,12 @@ vioif_attach(device_t parent, device_t self, void *aux)
 
 		/* Limit the number of queue pairs to use */
 		sc->sc_req_nvq_pairs = MIN(sc->sc_max_nvq_pairs, ncpu);
+
+		if (sc->sc_max_nvq_pairs > 1)
+			req_flags |= VIRTIO_F_INTR_PERVQ;
 	}
 
 	vioif_alloc_queues(sc);
-	virtio_child_attach_set_vqs(vsc, sc->sc_vqs, sc->sc_req_nvq_pairs);
 
 #ifdef VIOIF_MPSAFE
 	softint_flags = SOFTINT_NET | SOFTINT_MPSAFE;
@@ -579,21 +581,25 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Initialize network queues
 	 */
-	netq_num = sc->sc_max_nvq_pairs * 2;
-	for (i = 0; i < netq_num; i++) {
+	nvqs = sc->sc_max_nvq_pairs * 2;
+	for (i = 0; i < nvqs; i++) {
 		r = vioif_netqueue_init(sc, vsc, i, softint_flags);
 		if (r != 0)
 			goto err;
 	}
 
 	if (sc->sc_has_ctrl) {
-		int ctrlq_idx = sc->sc_max_nvq_pairs * 2;
+		int ctrlq_idx = nvqs;
+
+		nvqs++;
 		/*
 		 * Allocating a virtqueue for control channel
 		 */
 		sc->sc_ctrlq.ctrlq_vq = &sc->sc_vqs[ctrlq_idx];
-		r = virtio_alloc_vq(vsc, ctrlq->ctrlq_vq, ctrlq_idx,
-		    NBPG, 1, "control");
+		virtio_init_vq(vsc, ctrlq->ctrlq_vq, ctrlq_idx,
+		    vioif_ctrl_intr, ctrlq);
+
+		r = virtio_alloc_vq(vsc, ctrlq->ctrlq_vq, NBPG, 1, "control");
 		if (r != 0) {
 			aprint_error_dev(self, "failed to allocate "
 			    "a virtqueue for control channel, error code %d\n",
@@ -602,9 +608,6 @@ vioif_attach(device_t parent, device_t self, void *aux)
 			sc->sc_has_ctrl = false;
 			cv_destroy(&ctrlq->ctrlq_wait);
 			mutex_destroy(&ctrlq->ctrlq_wait_lock);
-		} else {
-			ctrlq->ctrlq_vq->vq_intrhand = vioif_ctrl_intr;
-			ctrlq->ctrlq_vq->vq_intrhand_arg = (void *) ctrlq;
 		}
 	}
 
@@ -618,7 +621,9 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	if (vioif_alloc_mems(sc) < 0)
 		goto err;
 
-	if (virtio_child_attach_finish(vsc) != 0)
+	r = virtio_child_attach_finish(vsc, sc->sc_vqs, nvqs,
+	    vioif_config_change, req_flags);
+	if (r != 0)
 		goto err;
 
 	if (vioif_setup_sysctl(sc) != 0) {
@@ -656,8 +661,8 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	return;
 
 err:
-	netq_num = sc->sc_max_nvq_pairs * 2;
-	for (i = 0; i < netq_num; i++) {
+	nvqs = sc->sc_max_nvq_pairs * 2;
+	for (i = 0; i < nvqs; i++) {
 		vioif_netqueue_teardown(sc, vsc, i);
 	}
 
@@ -1468,15 +1473,15 @@ vioif_netqueue_init(struct vioif_softc *sc, struct virtio_softc *vsc,
 	    "%s-%s", device_xname(sc->sc_dev), qname);
 
 	mutex_init(&netq->netq_lock, MUTEX_DEFAULT, IPL_NET);
-	r = virtio_alloc_vq(vsc, vq, qid,
+	virtio_init_vq(vsc, vq, qid, params[dir].intrhand, netq);
+
+	r = virtio_alloc_vq(vsc, vq,
 	    params[dir].segsize + sc->sc_hdr_size,
 	    params[dir].nsegs, qname);
 	if (r != 0)
 		goto err;
 	netq->netq_vq = vq;
 
-	netq->netq_vq->vq_intrhand = params[dir].intrhand;
-	netq->netq_vq->vq_intrhand_arg = netq;
 	netq->netq_softint = softint_establish(softint_flags,
 	    params[dir].sihand, netq);
 	if (netq->netq_softint == NULL) {
@@ -1532,8 +1537,6 @@ err:
 		softint_disestablish(netq->netq_softint);
 		netq->netq_softint = NULL;
 	}
-	netq->netq_vq->vq_intrhand = NULL;
-	netq->netq_vq->vq_intrhand_arg = NULL;
 
 	virtio_free_vq(vsc, vq);
 	mutex_destroy(&netq->netq_lock);

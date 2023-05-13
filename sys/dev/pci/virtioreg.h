@@ -1,4 +1,4 @@
-/*	$NetBSD: virtioreg.h,v 1.11 2022/10/15 20:00:35 riastradh Exp $	*/
+/*	$NetBSD: virtioreg.h,v 1.11.2.1 2023/05/13 10:56:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -153,7 +153,7 @@ struct vring_desc {
 struct vring_avail {
         uint16_t flags;
         uint16_t idx;
-        uint16_t ring[0];
+        uint16_t ring[];
 	/* trailed by uint16_t used_event when VIRTIO_F_RING_EVENT_IDX */
 } __packed;
 
@@ -168,7 +168,7 @@ struct vring_used_elem {
 struct vring_used {
         uint16_t flags;
         uint16_t idx;
-        struct vring_used_elem ring[0];
+        struct vring_used_elem ring[];
 	/* trailed by uint16_t avail_event when VIRTIO_F_RING_EVENT_IDX */
 } __packed;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vioscsi.c,v 1.30 2022/10/11 22:03:37 andvar Exp $	*/
+/*	$NetBSD: vioscsi.c,v 1.30.2.1 2023/05/13 10:56:10 martin Exp $	*/
 /*	$OpenBSD: vioscsi.c,v 1.3 2015/03/14 03:38:49 jsg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.30 2022/10/11 22:03:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.30.2.1 2023/05/13 10:56:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,8 +128,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	virtio_child_attach_start(vsc, self, ipl, sc->sc_vqs,
-	    NULL, virtio_vq_intr, VIRTIO_F_INTR_MSIX,
+	virtio_child_attach_start(vsc, self, ipl,
 	    0, VIRTIO_COMMON_FLAG_BITS);
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, ipl);
@@ -149,7 +148,9 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_seg_max = seg_max;
 
 	for(i=0; i < __arraycount(sc->sc_vqs); i++) {
-		rv = virtio_alloc_vq(vsc, &sc->sc_vqs[i], i, MAXPHYS,
+		virtio_init_vq_vqdone(vsc, &sc->sc_vqs[i], i,
+		    vioscsi_vq_done);
+		rv = virtio_alloc_vq(vsc, &sc->sc_vqs[i], MAXPHYS,
 		    VIRTIO_SCSI_MIN_SEGMENTS + howmany(MAXPHYS, NBPG),
 		    vioscsi_vq_names[i]);
 		if (rv) {
@@ -171,7 +172,9 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	    " max_lun %u\n",
 	    cmd_per_lun, qsize, seg_max, max_target, max_lun);
 
-	if (virtio_child_attach_finish(vsc) != 0)
+	if (virtio_child_attach_finish(vsc, sc->sc_vqs,
+	    __arraycount(sc->sc_vqs), NULL,
+	    VIRTIO_F_INTR_MSIX | VIRTIO_F_INTR_MPSAFE) != 0)
 		goto err;
 
 	/*
@@ -184,6 +187,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	adapt->adapt_max_periph = adapt->adapt_openings;
 	adapt->adapt_request = vioscsi_scsipi_request;
 	adapt->adapt_minphys = minphys;
+	adapt->adapt_flags = SCSIPI_ADAPT_MPSAFE;
 
 	/*
 	 * Fill in the scsipi_channel.
@@ -205,8 +209,7 @@ err:
 		vioscsi_free_reqs(sc, vsc);
 
 	for (i=0; i < __arraycount(sc->sc_vqs); i++) {
-		if (sc->sc_vqs[i].vq_num > 0)
-			virtio_free_vq(vsc, &sc->sc_vqs[i]);
+		virtio_free_vq(vsc, &sc->sc_vqs[i]);
 	}
 
 	virtio_child_attach_failed(vsc);
