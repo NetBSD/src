@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_do.c,v 1.5 2023/05/11 10:39:26 rillig Exp $ */
+/* $NetBSD: lsym_do.c,v 1.6 2023/05/13 06:52:48 rillig Exp $ */
 
 /*
  * Tests for the token lsym_do, which represents the keyword 'do' that starts
@@ -45,6 +45,43 @@ else_do(int i)
 	if (i > 0)
 		return;
 	else
+		do {
+		} while (0);
+}
+//indent end
+
+
+//indent input
+void
+variants(void)
+{
+	do stmt(); while (0);
+
+	do { stmt(); } while (0);
+
+	do /* comment */ stmt(); while (0);
+
+	while (0) do {} while (0);
+}
+//indent end
+
+//indent run
+void
+variants(void)
+{
+	do
+		stmt();
+	while (0);
+
+	do {
+		stmt();
+	} while (0);
+
+	do			/* comment */
+		stmt();
+	while (0);
+
+	while (0)
 		do {
 		} while (0);
 }

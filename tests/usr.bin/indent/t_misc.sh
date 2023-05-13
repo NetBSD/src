@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.22 2023/05/12 10:53:33 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.23 2023/05/13 06:52:48 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -26,7 +26,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 
 # Tests for indent that do not follow the input-profile-output scheme that is
-# used in t_indent.
+# used in t_options.
 
 indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
 

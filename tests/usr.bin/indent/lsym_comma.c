@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comma.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lsym_comma.c,v 1.6 2023/05/13 06:52:48 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comma, which represents a ',' in these contexts:
@@ -150,8 +150,6 @@ function(void)
 
 /*
  * In an initializer list, a ',' separates the initializer expressions.
- *
- * If a ',' starts a line, indent doesn't put a space before it.
  */
 //indent input
 int arr[] = {1, 2, 3};

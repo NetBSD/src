@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_block.c,v 1.5 2023/05/11 09:28:53 rillig Exp $ */
+/* $NetBSD: fmt_block.c,v 1.6 2023/05/13 06:52:48 rillig Exp $ */
 
 /*
  * Tests for formatting blocks of statements and declarations.
@@ -23,6 +23,10 @@ function(void)
 }
 //indent end
 
+/*
+ * Before 2023-05-11, indent incorrectly merged the '} {' into a single line,
+ * even though they are completely unrelated.
+ */
 //indent run-equals-input
 
 
