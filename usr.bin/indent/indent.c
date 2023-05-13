@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.263 2023/05/13 17:20:41 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.264 2023/05/13 17:54:34 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.263 2023/05/13 17:20:41 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.264 2023/05/13 17:54:34 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -507,6 +507,11 @@ process_lparen_or_lbracket(void)
 static void
 process_rparen_or_rbracket(void)
 {
+    if (ps.nparen == 0) {
+	diag(0, "Extra '%c'", *token.s);
+	goto unbalanced;	/* TODO: better exit immediately */
+    }
+
     if (ps.paren[ps.nparen - 1].maybe_cast &&
 	!ps.paren[ps.nparen - 1].no_cast) {
 	ps.next_unary = true;
@@ -518,12 +523,11 @@ process_rparen_or_rbracket(void)
 
     if (ps.nparen > 0)
 	ps.nparen--;
-    else
-	diag(0, "Extra '%c'", *token.s);
 
     if (code.e == code.s)	/* if the paren starts the line */
 	ps.line_start_nparen = ps.nparen;	/* then indent it */
 
+unbalanced:
     *code.e++ = token.s[0];
 
     if (ps.spaced_expr_psym != psym_0 && ps.nparen == 0) {
