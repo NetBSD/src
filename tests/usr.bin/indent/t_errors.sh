@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.26 2023/05/13 08:33:39 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.27 2023/05/13 16:40:18 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -438,8 +438,8 @@ unbalanced_parentheses_3_body()
 	    "$indent" code.c
 }
 
-atf_test_case 'search_stmt_comment_segv'
-search_stmt_comment_segv_body()
+atf_test_case 'crash_comment_after_controlling_expression'
+crash_comment_after_controlling_expression_body()
 {
 	# Before 2023-05-11, indent crashed while
 	# trying to format the following artificial code.
@@ -457,8 +457,8 @@ EOF
 	    "$indent" code.c -st
 }
 
-atf_test_case 'search_stmt_fits_in_one_line'
-search_stmt_fits_in_one_line_body()
+atf_test_case 'comment_fits_in_one_line'
+comment_fits_in_one_line_body()
 {
 	# The comment is placed after 'if (0) ...', where it is processed
 	# by search_stmt_comment. That function redirects the input buffer to
@@ -482,7 +482,7 @@ f(void)
 	if (0)
 		/*
 		 * 0123456789012345678901
-		  */ ;
+		 */ ;
 }
 EOF
 
@@ -572,7 +572,7 @@ atf_init_test_cases()
 	atf_add_test_case 'unbalanced_parentheses_1'
 	atf_add_test_case 'unbalanced_parentheses_2'
 	atf_add_test_case 'unbalanced_parentheses_3'
-	atf_add_test_case 'search_stmt_comment_segv'
-	atf_add_test_case 'search_stmt_fits_in_one_line'
+	atf_add_test_case 'crash_comment_after_controlling_expression'
+	atf_add_test_case 'comment_fits_in_one_line'
 	atf_add_test_case 'compound_literal'
 }

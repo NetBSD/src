@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fc1.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_fc1.c,v 1.9 2023/05/13 16:40:18 rillig Exp $ */
 
 /*
  * Tests for the options '-fc1' and '-nfc1'.
@@ -135,9 +135,9 @@
 //indent end
 
 //indent run -fc1
- /* comment */ int decl2;	/* comment */
- /* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2;	/* second comment */
- /* first comment */ int decl2;	/* looooooooooooooooooooooooooooooooooooooooong
+/* comment */ int decl2;	/* comment */
+/* looooooooooooooooooooooooooooooooooooooooong first comment */ int decl2;	/* second comment */
+/* first comment */ int decl2;	/* looooooooooooooooooooooooooooooooooooooooong
 				 * second comment */
 //indent end
 

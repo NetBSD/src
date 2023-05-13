@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.6 2023/05/13 06:52:48 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.7 2023/05/13 16:40:18 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -732,8 +732,8 @@ loop(void)
 	while (cond) /* comment */ ;
 
 	while (cond)
-/* $ XXX: The spaces around the comment look unintentional. */
-		 /* comment */ ;
+/* $ XXX: The space after the comment looks unintentional. */
+		/* comment */ ;
 }
 //indent end
 
@@ -940,7 +940,7 @@ f(void)
 		/*
 		 * 12 1234 123 123456 1234 1234567 123
 		 * 1234.
-		  */ ;
+		 */ ;
 }
 //indent end
 
@@ -950,7 +950,7 @@ int
 f(void)
 {
 	if (0)
-		 /* 12 1234 123 123456 1234 1234567 123 1234.  */ ;
+		/* 12 1234 123 123456 1234 1234567 123 1234.  */ ;
 }
 //indent end
 
