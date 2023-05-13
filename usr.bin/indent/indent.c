@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.259 2023/05/13 12:31:02 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.260 2023/05/13 14:30:48 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.259 2023/05/13 12:31:02 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.260 2023/05/13 14:30:48 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -630,7 +630,7 @@ process_semicolon(void)
 	ps.in_func_def_params = false;
     ps.block_init = false;
     ps.block_init_level = 0;
-    ps.just_saw_decl--;
+    ps.declaration = ps.declaration == decl_begin ? decl_end : decl_no;
 
     if (ps.in_decl && code.s == code.e && !ps.block_init &&
 	!ps.decl_indent_done && ps.line_start_nparen == 0) {
@@ -725,7 +725,7 @@ process_lbrace(void)
 	*code.e++ = ' ';
     ps.want_blank = false;
     *code.e++ = '{';
-    ps.just_saw_decl = 0;
+    ps.declaration = decl_no;
 }
 
 static void
@@ -737,7 +737,7 @@ process_rbrace(void)
 	ps.spaced_expr_psym = psym_0;
     }
 
-    ps.just_saw_decl = 0;
+    ps.declaration = decl_no;
     ps.block_init_level--;
 
     if (code.s != code.e && !ps.block_init) {	/* '}' must be first on line */
@@ -754,7 +754,7 @@ process_rbrace(void)
     if (ps.decl_level > 0) {	/* multi-level structure declaration */
 	ps.decl_ind = ps.di_stack[--ps.decl_level];
 	if (ps.decl_level == 0 && !ps.in_func_def_params) {
-	    ps.just_saw_decl = 2;
+	    ps.declaration = decl_begin;
 	    ps.decl_ind = ps.ind_level == 0
 		? opt.decl_indent : opt.local_decl_indent;
 	}
@@ -817,7 +817,7 @@ process_type(void)
     ps.init_or_struct = /* maybe */ true;
     ps.in_decl = ps.decl_on_line = ps.prev_token != lsym_typedef;
     if (ps.decl_level <= 0)
-	ps.just_saw_decl = 2;
+	ps.declaration = decl_begin;
 
     int len = (int)buf_len(&token) + 1;
     int ind = ps.ind_level == 0 || ps.decl_level > 0
