@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1319 2023/05/13 10:56:55 riastradh Exp $
+#	$NetBSD: bsd.own.mk,v 1.1320 2023/05/13 15:44:59 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -134,6 +134,8 @@ EXTERNAL_GDB_SUBDIR=		/does/not/exist
 .if ${MACHINE} == "amd64" || \
     ${MACHINE_ARCH:Maarch64*} || \
     ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE} == "i386" || \
+    ${MACHINE_ARCH} == "m68k" || \
     ${MACHINE} == "vax"
 HAVE_OPENSSL?=	30
 .else
