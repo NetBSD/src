@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.262 2023/05/13 16:40:18 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.263 2023/05/13 17:20:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.262 2023/05/13 16:40:18 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.263 2023/05/13 17:20:41 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -406,7 +406,6 @@ maybe_break_line(lexer_symbol lsym)
     if (opt.verbose)
 	diag(0, "Line broken");
     output_line();
-    ps.want_blank = false;
     ps.force_nl = false;
 }
 
@@ -438,7 +437,6 @@ process_newline(void)
 	goto stay_in_line;
 
     output_line();
-    ps.want_blank = false;
 
 stay_in_line:
     ++line_no;
@@ -679,16 +677,13 @@ process_lbrace(void)
 	ps.block_init_level++;
 
     if (code.s != code.e && !ps.block_init) {
-	if (!opt.brace_same_line) {
+	if (!opt.brace_same_line)
 	    output_line();
-	    ps.want_blank = false;
-	} else if (ps.in_func_def_params && !ps.init_or_struct) {
+	else if (ps.in_func_def_params && !ps.init_or_struct) {
 	    ps.ind_level_follow = 0;
-	    if (opt.function_brace_split) {	/* dump the line prior to the
-						 * brace ... */
+	    if (opt.function_brace_split)
 		output_line();
-		ps.want_blank = false;
-	    } else		/* add a space between the decl and brace */
+	    else
 		ps.want_blank = true;
 	}
     }
@@ -774,7 +769,6 @@ process_do(void)
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	output_line();
-	ps.want_blank = false;
     }
 
     ps.force_nl = true;
@@ -789,8 +783,7 @@ process_else(void)
     if (code.e > code.s && !(opt.cuddle_else && code.e[-1] == '}')) {
 	if (opt.verbose)
 	    diag(0, "Line broken");
-	output_line();		/* make sure this starts a line */
-	ps.want_blank = false;
+	output_line();
     }
 
     ps.force_nl = true;
@@ -803,10 +796,8 @@ process_type(void)
     parse(psym_decl);		/* let the parser worry about indentation */
 
     if (ps.prev_token == lsym_rparen_or_rbracket && ps.tos <= 1) {
-	if (code.s != code.e) {
+	if (code.s != code.e)
 	    output_line();
-	    ps.want_blank = false;
-	}
     }
 
     if (ps.in_func_def_params && opt.indent_parameters &&
