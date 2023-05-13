@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.17 2022/05/23 15:03:05 bouyer Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.18 2023/05/13 11:27:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.17 2022/05/23 15:03:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.18 2023/05/13 11:27:10 andvar Exp $");
 
 #include "opt_intrdebug.h"
 #include "ioapic.h"
@@ -433,7 +433,7 @@ x86_pci_msi_release(pci_chipset_tag_t pc, pci_intr_handle_t *pihs, int count)
 
 /*
  * Establish a MSI handle.
- * If multiple MSI handle is requied to establish, device driver must call
+ * If multiple MSI handle is required to establish, device driver must call
  * this function for each handle.
  */
 void *
@@ -453,7 +453,7 @@ x86_pci_msi_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 
 /*
  * Disestablish a MSI handle.
- * If multiple MSI handle is requied to disestablish, device driver must call
+ * If multiple MSI handle is required to disestablish, device driver must call
  * this function for each handle.
  */
 void
@@ -478,7 +478,7 @@ x86_pci_msix_release(pci_chipset_tag_t pc, pci_intr_handle_t *pihs, int count)
 
 /*
  * Establish a MSI-X handle.
- * If multiple MSI-X handle is requied to establish, device driver must call
+ * If multiple MSI-X handle is required to establish, device driver must call
  * this function for each handle.
  */
 void *
@@ -498,7 +498,7 @@ x86_pci_msix_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 
 /*
  * Disestablish a MSI-X handle.
- * If multiple MSI-X handle is requied to disestablish, device driver must call
+ * If multiple MSI-X handle is required to disestablish, device driver must call
  * this function for each handle.
  */
 void
