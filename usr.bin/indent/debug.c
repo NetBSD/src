@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.3 2023/05/13 14:30:48 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.4 2023/05/13 15:34:22 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.3 2023/05/13 14:30:48 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.4 2023/05/13 15:34:22 rillig Exp $");
 
 #include "indent.h"
 
@@ -224,6 +224,7 @@ debug_parser_state(lexer_symbol lsym)
     debug_ps_bool(decl_on_line);
     debug_ps_bool(in_decl);
     debug_ps_enum(declaration, declaration_name);
+    debug_ps_bool(blank_line_after_decl);
     debug_ps_bool(in_func_def_params);
     debug_ps_enum(in_enum, in_enum_name);
     debug_ps_bool(decl_indent_done);

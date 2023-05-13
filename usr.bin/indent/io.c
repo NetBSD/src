@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.159 2023/05/13 14:30:48 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.160 2023/05/13 15:34:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.159 2023/05/13 14:30:48 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.160 2023/05/13 15:34:22 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -288,9 +288,21 @@ output_complete_line(char line_terminator)
 
     ps.is_function_definition = false;
 
+    if (ps.blank_line_after_decl && ps.declaration == decl_no) {
+	ps.blank_line_after_decl = false;
+	if (lab.e != lab.s || code.e != code.s || com.e != com.s)
+	    output_char('\n');
+    }
+
     if (!inhibit_formatting) {
 	if (ps.ind_level == 0)
 	    ps.in_stmt_cont = false;	/* this is a class A kludge */
+
+	if (opt.blank_line_after_decl && ps.declaration == decl_end
+	    && ps.tos > 1) {
+	    ps.declaration = decl_no;
+	    ps.blank_line_after_decl = true;
+	}
 
 	int ind = 0;
 	if (lab.e != lab.s)
@@ -301,9 +313,6 @@ output_complete_line(char line_terminator)
 	    output_line_comment(ind);
 
 	output_char(line_terminator);
-
-	if (ps.declaration == decl_end && opt.blank_line_after_decl)
-	    ps.declaration = decl_no;
     }
 
     ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */

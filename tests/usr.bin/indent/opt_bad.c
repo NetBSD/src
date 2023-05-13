@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bad.c,v 1.8 2023/05/13 14:19:14 rillig Exp $ */
+/* $NetBSD: opt_bad.c,v 1.9 2023/05/13 15:34:22 rillig Exp $ */
 
 /*
  * Tests for the options '-bad' and '-nbad'.
@@ -67,10 +67,10 @@ void
 function_definition(void)
 {
 	int		local_variable;
-/* $ TODO: add empty line */
+
 	function_call();
 	int		local_variable_after_statement;
-/* $ TODO: add empty line */
+
 	function_call();
 }
 //indent end
@@ -127,12 +127,18 @@ comments(void)
 void
 initializer(void)
 {
-	int local_var_init_1[] = {
-		1
-	};
-	int local_var_init_2[] = {
-		1
-	};
+	int local_var_init_1[] = {1};
+	int local_var_init_2[] = {1};
+	function_call();
+}
+
+void
+initializer_with_blank(void)
+{
+	int local_var_init_1[] = {1};
+
+	int local_var_init_2[] = {1};
+
 	function_call();
 }
 //indent end
@@ -141,13 +147,19 @@ initializer(void)
 void
 initializer(void)
 {
-	int local_var_init_1[] = {
-		1
-	};
-	int local_var_init_2[] = {
-		1
-	};
-	/* $ TODO: Add blank line here. */
+	int local_var_init_1[] = {1};
+	int local_var_init_2[] = {1};
+
+	function_call();
+}
+
+void
+initializer_with_blank(void)
+{
+	int local_var_init_1[] = {1};
+
+	int local_var_init_2[] = {1};
+
 	function_call();
 }
 //indent end
