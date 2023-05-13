@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.73 2023/01/20 00:24:25 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.74 2023/05/13 06:36:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.73 2023/01/20 00:24:25 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.74 2023/05/13 06:36:33 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -303,8 +303,11 @@ load_profiles(const char *profile_name)
     if (profile_name != NULL)
 	load_profile(profile_name, true);
     else {
-	snprintf(fname, sizeof(fname), "%s/.indent.pro", getenv("HOME"));
-	load_profile(fname, false);
+	const char *home = getenv("HOME");
+	if (home != NULL) {
+	    snprintf(fname, sizeof(fname), "%s/.indent.pro", home);
+	    load_profile(fname, false);
+	}
     }
     load_profile(".indent.pro", false);
 }
