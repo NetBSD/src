@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.73.6.1 2023/05/13 12:13:54 martin Exp $	*/
+/*	$NetBSD: inode.c,v 1.73.6.2 2023/05/13 12:16:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.73.6.1 2023/05/13 12:13:54 martin Exp $");
+__RCSID("$NetBSD: inode.c,v 1.73.6.2 2023/05/13 12:16:06 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -737,7 +737,7 @@ allocino(ino_t request, int type)
 			MAX(2 * inostathead[cg].il_numalloced, 10));
 		info = calloc(newalloced, sizeof(*info));
 		if (info == NULL) {
-			pwarn("cannot alloc %lu bytes to extend inoinfo\n",
+			pwarn("cannot alloc %zu bytes to extend inoinfo\n",
 				sizeof(struct inostat) * newalloced);
 			return 0;
 		}
