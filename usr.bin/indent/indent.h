@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.122 2023/05/12 22:38:47 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.123 2023/05/13 09:27:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -348,14 +348,22 @@ extern struct parser_state {
 #define array_length(array) (sizeof(array) / sizeof((array)[0]))
 
 #ifdef debug
+void debug_printf(const char *, ...) __printflike(1, 2);
+void debug_println(const char *, ...) __printflike(1, 2);
 void debug_vis_range(const char *, const char *, const char *, const char *);
-void debug_printf(const char *, ...)__printflike(1, 2);
-void debug_println(const char *, ...)__printflike(1, 2);
-const char *psym_name(parser_symbol);
+void debug_parser_state(lexer_symbol);
+void debug_parse_stack(const char *);
+void debug_buffers(void);
+extern const char *const lsym_name[];
+extern const char *const psym_name[];
 #else
-#define		debug_printf(fmt, ...) do { } while (false)
-#define		debug_println(fmt, ...) do { } while (false)
-#define		debug_vis_range(prefix, s, e, suffix) do { } while (false)
+#define debug_noop() do { } while (false)
+#define	debug_printf(fmt, ...) debug_noop()
+#define	debug_println(fmt, ...) debug_noop()
+#define	debug_vis_range(prefix, s, e, suffix) debug_noop()
+#define	debug_parser_state() debug_noop()
+#define	debug_parse_stack(situation) debug_noop()
+#define	debug_buffers() debug_noop()
 #endif
 
 void register_typename(const char *);

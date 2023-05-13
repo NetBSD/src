@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.176 2023/05/12 08:40:54 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.177 2023/05/13 09:27:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.176 2023/05/12 08:40:54 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.177 2023/05/13 09:27:49 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -191,184 +191,12 @@ token_add_char(char ch)
     *token.e++ = ch;
 }
 
-#ifdef debug
-static const char *
-lsym_name(lexer_symbol sym)
-{
-    static const char *const name[] = {
-	"eof",
-	"preprocessing",
-	"newline",
-	"form_feed",
-	"comment",
-	"lparen_or_lbracket",
-	"rparen_or_rbracket",
-	"lbrace",
-	"rbrace",
-	"period",
-	"unary_op",
-	"binary_op",
-	"postfix_op",
-	"question",
-	"colon",
-	"comma",
-	"semicolon",
-	"typedef",
-	"storage_class",
-	"type_outside_parentheses",
-	"type_in_parentheses",
-	"tag",
-	"case_label",
-	"sizeof",
-	"offsetof",
-	"word",
-	"funcname",
-	"do",
-	"else",
-	"for",
-	"if",
-	"switch",
-	"while",
-	"return",
-    };
-
-    return name[sym];
-}
-
-static void
-debug_print_buf(const char *name, const struct buffer *buf)
-{
-    if (buf->s < buf->e) {
-	debug_printf("%s ", name);
-	debug_vis_range("\"", buf->s, buf->e, "\"\n");
-    }
-}
-
-static bool
-debug_full_parser_state(void)
-{
-    return true;
-}
-
-#define debug_ps_bool(name) \
-        if (ps.name != prev_ps.name) \
-	    debug_println("[%c] -> [%c] ps." #name, \
-		prev_ps.name ? 'x' : ' ', ps.name ? 'x' : ' '); \
-	else if (debug_full_parser_state()) \
-	    debug_println("       [%c] ps." #name, ps.name ? 'x' : ' ')
-#define debug_ps_int(name) \
-	if (ps.name != prev_ps.name) \
-	    debug_println("%3d -> %3d ps." #name, prev_ps.name, ps.name); \
-	else if (debug_full_parser_state()) \
-	    debug_println("       %3d ps." #name, ps.name)
-#define debug_ps_enum(name, repr) \
-	if (ps.name != prev_ps.name) \
-	    debug_println("%3s -> %3s ps." #name, \
-		repr(prev_ps.name), repr(ps.name)); \
-	else if (debug_full_parser_state()) \
-	    debug_println("%10s ps." #name, repr(ps.name))
-
-static bool
-ps_paren_has_changed(const struct parser_state *prev_ps)
-{
-    const paren_level_props *prev = prev_ps->paren, *curr = ps.paren;
-
-    if (prev_ps->nparen != ps.nparen)
-	return true;
-
-    for (int i = 0; i < ps.nparen; i++) {
-	if (curr[i].indent != prev[i].indent ||
-	    curr[i].maybe_cast != prev[i].maybe_cast ||
-	    curr[i].no_cast != prev[i].no_cast)
-	    return true;
-    }
-    return false;
-}
-
-static void
-debug_ps_paren(const struct parser_state *prev_ps)
-{
-    if (!debug_full_parser_state() && !ps_paren_has_changed(prev_ps))
-	return;
-
-    debug_printf("           ps.paren:");
-    for (int i = 0; i < ps.nparen; i++) {
-	const paren_level_props *props = ps.paren + i;
-	const char *cast = props->no_cast ? "(no cast)"
-	    : props->maybe_cast ? "(cast)"
-	    : "";
-	debug_printf(" %s%d", cast, props->indent);
-    }
-    if (ps.nparen == 0)
-	debug_printf(" none");
-    debug_println("");
-}
-
-static void
-debug_lexi(lexer_symbol lsym)
-{
-    static struct parser_state prev_ps;
-
-    debug_println("");
-    debug_printf("line %d: %s", line_no, lsym_name(lsym));
-    debug_vis_range(" \"", token.s, token.e, "\"\n");
-
-    debug_print_buf("label", &lab);
-    debug_print_buf("code", &code);
-    debug_print_buf("comment", &com);
-
-    debug_println("           ps.prev_token = %s", lsym_name(ps.prev_token));
-    debug_ps_bool(curr_col_1);
-    debug_ps_bool(next_col_1);
-    debug_ps_bool(next_unary);
-    debug_ps_bool(is_function_definition);
-    debug_ps_bool(want_blank);
-    debug_ps_bool(force_nl);
-    debug_ps_int(line_start_nparen);
-    debug_ps_int(nparen);
-    debug_ps_paren(&prev_ps);
-
-    debug_ps_int(comment_delta);
-    debug_ps_int(n_comment_delta);
-    debug_ps_int(com_ind);
-
-    debug_ps_bool(block_init);
-    debug_ps_int(block_init_level);
-    debug_ps_bool(init_or_struct);
-
-    debug_ps_int(ind_level);
-    debug_ps_int(ind_level_follow);
-
-    debug_ps_int(decl_level);
-    debug_ps_bool(decl_on_line);
-    debug_ps_bool(in_decl);
-    debug_ps_int(just_saw_decl);
-    debug_ps_bool(in_func_def_params);
-    // No debug output for in_enum.
-    debug_ps_bool(decl_indent_done);
-    debug_ps_int(decl_ind);
-    // No debug output for di_stack.
-    debug_ps_bool(tabs_to_var);
-
-    debug_ps_bool(in_stmt_or_decl);
-    debug_ps_bool(in_stmt_cont);
-    debug_ps_bool(is_case_label);
-    debug_ps_bool(seen_case);
-
-    // The debug output for the parser symbols is done in 'parse' instead.
-
-    debug_ps_enum(spaced_expr_psym, psym_name);
-    debug_ps_int(quest_level);
-
-    prev_ps = ps;
-}
-#endif
 
 static lexer_symbol
 lexi_end(lexer_symbol lsym)
 {
 #ifdef debug
-    debug_lexi(lsym);
+    debug_parser_state(lsym);
 #endif
     return lsym;
 }

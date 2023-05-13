@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.53 2023/05/12 22:38:47 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.54 2023/05/13 09:27:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)parse.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: parse.c,v 1.53 2023/05/12 22:38:47 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.54 2023/05/13 09:27:49 rillig Exp $");
 #else
 __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pstef $");
 #endif
@@ -55,32 +55,6 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/parse.c 337651 2018-08-11 19:20:06Z pste
 
 static void reduce(void);
 
-#ifdef debug
-const char *
-psym_name(parser_symbol psym)
-{
-    static const char *const name[] = {
-	"0",
-	"lbrace",
-	"rbrace",
-	"decl",
-	"stmt",
-	"stmt_list",
-	"for_exprs",
-	"if_expr",
-	"if_expr_stmt",
-	"if_expr_stmt_else",
-	"else",
-	"switch_expr",
-	"do",
-	"do_stmt",
-	"while_expr",
-    };
-
-    return name[psym];
-}
-#endif
-
 static int
 decl_level(void)
 {
@@ -91,21 +65,6 @@ decl_level(void)
     return level;
 }
 
-#ifdef debug
-static void
-debug_parse_stack(const char *situation)
-{
-    printf("parse stack %s:", situation);
-    for (int i = 1; i <= ps.tos; ++i)
-	printf(" %s %d", psym_name(ps.s_sym[i]), ps.s_ind_level[i]);
-    if (ps.tos == 0)
-	printf(" empty");
-    printf("\n");
-}
-#else
-#define debug_parse_stack(situation) do { } while (false)
-#endif
-
 /*
  * Shift the token onto the parser stack, or reduce it by combining it with
  * previous tokens.
@@ -113,7 +72,7 @@ debug_parse_stack(const char *situation)
 void
 parse(parser_symbol psym)
 {
-    debug_println("parse token: %s", psym_name(psym));
+    debug_println("parse token: %s", psym_name[psym]);
 
     if (psym != psym_else) {
 	while (ps.s_sym[ps.tos] == psym_if_expr_stmt) {
