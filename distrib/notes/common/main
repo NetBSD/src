@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.570 2022/12/16 16:58:14 martin Exp $
+.\"	$NetBSD: main,v 1.570.2.1 2023/05/13 14:04:04 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -504,6 +504,25 @@ possible,
 .Nx
 would not exist.
 .
+.if \n[FOR_RELEASE] \{\
+.Ss "Dedication"
+.Pp
+.
+.Nx
+\n[major].0 is dedicated to the memory of Ryo SHIMIZU, who
+passed away in May 2023.
+.Pp
+Ryo's technical contributions are too many to list here in full.
+He was a long term contributor and worked on a lot of low-level code
+over various architectures, from x68k to aarch64.
+He also worked on various out-of-tree
+.Nx
+items, like the IIJ git repository conversion.
+.Pp
+The project lost an excellent technical contributor and many
+of us a good friend.
+.Pp
+.\} \"  \n[FOR_RELEASE]
 .ie \n[RELEASE_BRANCH] .Ss Changes Between The NetBSD \n[oldvers] \
 and \n[major] Releases
 .el .Ss Changes Between The NetBSD \n[oldvers] and \
