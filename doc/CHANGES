@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2940.2.1 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2940.2.2 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -790,3 +790,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[nia 20230211]
 	u3g(4): Add support for ZTE MF112 and D-Link DWM222 3G USB
 		modems [manu 20230213]
+	aq(4): add support for AQC113-116 [ryo 20230114]
