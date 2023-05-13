@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2023/05/08 17:46:06 christos Exp $
+# $NetBSD: Makefile,v 1.4 2023/05/13 17:46:09 riastradh Exp $
 
 .include <bsd.own.mk>
 HELPER_NAME=	evp_test
@@ -86,6 +86,7 @@ evppkey_rsa.txt \
 evppkey_rsa_common.txt \
 evppkey_sm2.txt \
 evprand.txt
+COPTS.evp_test.c+=	-Wno-missing-field-initializers
 .endif
 
 .include <bsd.init.mk>
