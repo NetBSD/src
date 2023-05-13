@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.177 2023/05/13 09:27:49 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.178 2023/05/13 12:31:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.177 2023/05/13 09:27:49 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.178 2023/05/13 12:31:02 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -180,7 +180,7 @@ static const unsigned char lex_number_row[] = {
 static void
 check_size_token(size_t desired_size)
 {
-    if (token.e + desired_size >= token.l)
+    if (token.e + desired_size >= token.limit)
 	buf_expand(&token, desired_size);
 }
 
