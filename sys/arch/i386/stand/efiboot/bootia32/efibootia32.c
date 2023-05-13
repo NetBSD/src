@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootia32.c,v 1.5 2019/09/13 02:19:45 manu Exp $	*/
+/*	$NetBSD: efibootia32.c,v 1.5.26.1 2023/05/13 13:26:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -76,7 +76,7 @@ startprog(physaddr_t entry, uint32_t argc, uint32_t *argv, physaddr_t sp)
 
 	(*startprog32)(entry, argc, argv,
 	    (physaddr_t)startprog32 + startprog32_size,
-	    efi_kernel_start, efi_kernel_start + efi_loadaddr,
+	    efi_kernel_start, efi_load_start,
 	    efi_kernel_size, startprog32);
 }
 

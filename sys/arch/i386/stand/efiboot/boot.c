@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.21 2022/06/08 21:43:45 wiz Exp $	*/
+/*	$NetBSD: boot.c,v 1.21.4.1 2023/05/13 13:26:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -83,6 +83,7 @@ void	command_menu(char *);
 #endif
 void	command_modules(char *);
 void	command_multiboot(char *);
+void	command_reloc(char *);
 void	command_text(char *);
 void	command_version(char *);
 
@@ -109,6 +110,7 @@ const struct bootblk_command commands[] = {
 #endif
 	{ "modules",	command_modules },
 	{ "multiboot",	command_multiboot },
+	{ "reloc",	command_reloc },
 	{ "rndseed",	rnd_add },
 	{ "splash",	splash_add },
 	{ "text",	command_text },
@@ -406,6 +408,7 @@ command_help(char *arg)
 #endif
 	       "modules {on|off|enabled|disabled}\n"
 	       "multiboot [dev:][filename] [<args>]\n"
+	       "reloc {address|none|default}\n"
 	       "rndseed {path_to_rndseed_file}\n"
 	       "splash {path_to_image_file}\n"
 	       "text [{modenum|list}]\n"
@@ -638,6 +641,48 @@ command_multiboot(char *arg)
 		       strerror(errno));
 	else
 		printf("boot returned\n");
+}
+
+void
+command_reloc(char *arg)
+{
+	char *ep;
+	
+	if (*arg == '\0') {
+		switch (efi_reloc_type) {
+		case RELOC_NONE:
+			printf("reloc: none\n");
+			break;
+		case RELOC_ADDR:
+			printf("reloc: %p\n", (void *)efi_kernel_reloc);
+			break;
+		case RELOC_DEFAULT:
+		default:
+			printf("reloc: default\n");
+			break;
+		}
+		goto out;
+	}
+
+	if (strcmp(arg, "default") == 0) {
+		efi_reloc_type = RELOC_DEFAULT;
+		goto out;
+	}
+
+	if (strcmp(arg, "none") == 0) {
+		efi_reloc_type = RELOC_NONE;
+		goto out;
+	}
+
+	errno = 0;
+	efi_kernel_reloc = strtoul(arg, &ep, 0);
+	if (ep == arg || *ep != '\0' || errno)
+		printf("could not parse address \"%s\"\n", arg);
+	else
+		efi_reloc_type = RELOC_ADDR;
+out:
+	return;
+
 }
 
 void
