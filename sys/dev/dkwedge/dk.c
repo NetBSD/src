@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.157 2023/05/10 23:08:24 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.158 2023/05/13 10:11:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.157 2023/05/10 23:08:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.158 2023/05/13 10:11:36 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1333,12 +1333,14 @@ dkfirstopen(struct dkwedge_softc *sc, int flags)
 		KASSERT(sc->sc_parent->dk_rawopens < UINT_MAX);
 		KASSERT(sc->sc_parent->dk_rawvp != NULL);
 		mode = 0;
+		mutex_enter(&sc->sc_parent->dk_openlock);
 		LIST_FOREACH(nsc, &sc->sc_parent->dk_wedges, sc_plink) {
 			if (nsc == sc || nsc->sc_dk.dk_openmask == 0)
 				continue;
 			mode = nsc->sc_mode;
 			break;
 		}
+		mutex_exit(&sc->sc_parent->dk_openlock);
 	}
 	sc->sc_mode = mode;
 	sc->sc_parent->dk_rawopens++;
