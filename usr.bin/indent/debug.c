@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.1 2023/05/13 09:27:49 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.2 2023/05/13 13:45:24 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.1 2023/05/13 09:27:49 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.2 2023/05/13 13:45:24 rillig Exp $");
 
 #include "indent.h"
 
@@ -88,6 +88,13 @@ const char *const psym_name[] = {
     "do",
     "do_stmt",
     "while_expr",
+};
+
+static const char *in_enum_name[] = {
+    "no",
+    "enum",
+    "type",
+    "brace",
 };
 
 static bool debug_full_parser_state = true;
@@ -212,7 +219,7 @@ debug_parser_state(lexer_symbol lsym)
     debug_ps_bool(in_decl);
     debug_ps_int(just_saw_decl);
     debug_ps_bool(in_func_def_params);
-    // No debug output for in_enum.
+    debug_ps_enum(in_enum, in_enum_name);
     debug_ps_bool(decl_indent_done);
     debug_ps_int(decl_ind);
     // No debug output for di_stack.
