@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootx64.c,v 1.5 2019/09/13 02:19:46 manu Exp $	*/
+/*	$NetBSD: efibootx64.c,v 1.5.26.1 2023/05/13 13:26:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -80,7 +80,7 @@ startprog(physaddr_t entry, uint32_t argc, uint32_t *argv, physaddr_t sp)
 		memcpy(newsp, argv, sizeof(*argv) * argc);
 	}
 
-	(*startprog64)(efi_kernel_start, efi_kernel_start + efi_loadaddr,
+	(*startprog64)(efi_kernel_start, efi_load_start,
 	    (physaddr_t)newsp, efi_kernel_size, startprog64, entry);
 }
 

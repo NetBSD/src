@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog32.S,v 1.2 2017/02/24 12:24:25 nonaka Exp $	*/
+/*	$NetBSD: startprog32.S,v 1.2.52.1 2023/05/13 13:26:57 martin Exp $	*/
 /*	NetBSD: startprog.S,v 1.4 2016/12/04 08:21:08 maxv Exp	*/
 
 /*
@@ -117,6 +117,11 @@ start:
 	movl	24(%ebp), %edi	/* dest */
 	movl	28(%ebp), %esi	/* src */
 	movl	32(%ebp), %ecx	/* size */
+
+	/* skip copy if same source and destination */
+	cmpl    %edi,%esi
+	jz      .Lcopy_done
+
 #if defined(NO_OVERLAP)
 	movl	%ecx, %eax
 #else
