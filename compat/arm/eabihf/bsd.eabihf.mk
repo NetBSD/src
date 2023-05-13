@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.eabihf.mk,v 1.4 2023/05/13 10:56:08 riastradh Exp $
+#	$NetBSD: bsd.eabihf.mk,v 1.5 2023/05/13 10:56:55 riastradh Exp $
 
 .if !defined(MLIBDIR)
 
@@ -61,6 +61,9 @@ CPUFLAGS+=		${EARM_COMPAT_FLAGS}
 LDADD+=			${EARM_COMPAT_FLAGS}
 LDFLAGS+=		${EARM_COMPAT_FLAGS}
 MKDEPFLAGS+=		${EARM_COMPAT_FLAGS}
+
+# sync with MKRELRO in bsd.own.mk
+NORELRO=		# defined
 
 .include "${.PARSEDIR}/../../Makefile.compat"
 
