@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.258 2023/05/13 09:40:47 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.259 2023/05/13 12:31:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.258 2023/05/13 09:40:47 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.259 2023/05/13 12:31:02 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -112,12 +112,12 @@ static void
 buf_init(struct buffer *buf)
 {
     size_t size = 200;
-    buf->buf = xmalloc(size);
-    buf->l = buf->buf + size - 5 /* safety margin */;
-    buf->s = buf->buf + 1;	/* allow accessing buf->e[-1] */
+    buf->mem = xmalloc(size);
+    buf->limit = buf->mem + size - 5 /* safety margin */;
+    buf->s = buf->mem + 1;	/* allow accessing buf->e[-1] */
     buf->e = buf->s;
-    buf->buf[0] = ' ';
-    buf->buf[1] = '\0';
+    buf->mem[0] = ' ';
+    buf->e[0] = '\0';
 }
 
 static size_t
@@ -129,11 +129,11 @@ buf_len(const struct buffer *buf)
 void
 buf_expand(struct buffer *buf, size_t add_size)
 {
-    size_t new_size = (size_t)(buf->l - buf->s) + 400 + add_size;
+    size_t new_size = (size_t)(buf->limit - buf->s) + 400 + add_size;
     size_t len = buf_len(buf);
-    buf->buf = xrealloc(buf->buf, new_size);
-    buf->l = buf->buf + new_size - 5;
-    buf->s = buf->buf + 1;
+    buf->mem = xrealloc(buf->mem, new_size);
+    buf->limit = buf->mem + new_size - 5;
+    buf->s = buf->mem + 1;
     buf->e = buf->s + len;
     /* At this point, the buffer may not be null-terminated anymore. */
 }
@@ -141,7 +141,7 @@ buf_expand(struct buffer *buf, size_t add_size)
 static void
 buf_reserve(struct buffer *buf, size_t n)
 {
-    if (n >= (size_t)(buf->l - buf->e))
+    if (n >= (size_t)(buf->limit - buf->e))
 	buf_expand(buf, n);
 }
 
