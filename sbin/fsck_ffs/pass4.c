@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.28.38.1 2023/05/13 11:51:14 martin Exp $	*/
+/*	$NetBSD: pass4.c,v 1.28.38.2 2023/05/13 12:13:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.28.38.1 2023/05/13 11:51:14 martin Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.28.38.2 2023/05/13 12:13:54 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,8 @@ pass4(void)
 	struct zlncnt *zlnp;
 	union dinode *dp;
 	struct inodesc idesc;
-	int n, i;
+	int n;
+	size_t i;
 	uint32_t cg;
 	struct inostat *info;
 
