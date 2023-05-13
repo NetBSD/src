@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.104.2.1 2023/05/13 11:51:14 martin Exp $	*/
+/*	$NetBSD: setup.c,v 1.104.2.2 2023/05/13 11:54:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.104.2.1 2023/05/13 11:51:14 martin Exp $");
+__RCSID("$NetBSD: setup.c,v 1.104.2.2 2023/05/13 11:54:17 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,8 @@ int16_t sblkpostbl[256];
 int
 setup(const char *dev, const char *origdev)
 {
-	long cg, size, asked, i, j;
+	uint32_t cg;
+	long size, asked, i, j;
 	long bmapsize;
 	struct disk_geom geo;
 	struct dkwedge_info dkw;

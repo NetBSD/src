@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.55.2.1 2023/05/13 11:51:14 martin Exp $	*/
+/*	$NetBSD: pass5.c,v 1.55.2.2 2023/05/13 11:54:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.55.2.1 2023/05/13 11:51:14 martin Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.55.2.2 2023/05/13 11:54:17 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,12 +60,15 @@ void
 pass5(void)
 {
 	int blk, frags, basesize, sumsize, mapsize, cssize;
-	int inomapsize, blkmapsize;
+	uint32_t inomapsize, blkmapsize;
 	uint32_t c;
 	struct fs *fs = sblock;
 	daddr_t dbase, dmax;
 	daddr_t d;
-	long i, j, k;
+	uint32_t i;
+	int32_t j;
+	int k;
+	ino_t inum;
 	struct csum *cs;
 	struct csum_total cstotal;
 	struct inodesc idesc[4];
@@ -317,9 +320,9 @@ pass5(void)
 		if (!is_ufs2 && ((fs->fs_old_flags & FS_FLAGS_UPDATED) == 0) &&
 		    fs->fs_old_postblformat == FS_42POSTBLFMT)
 			ocg->cg_magic = CG_MAGIC;
-		j = fs->fs_ipg * c;
-		for (i = 0; i < fs->fs_ipg; j++, i++) {
-			info = inoinfo(j);
+		inum = fs->fs_ipg * c;
+		for (i = 0; i < fs->fs_ipg; inum++, i++) {
+			info = inoinfo(inum);
 			switch (info->ino_state) {
 
 			case USTATE:
@@ -338,14 +341,14 @@ pass5(void)
 				break;
 
 			default:
-				if ((ino_t)j < UFS_ROOTINO)
+				if (inum < UFS_ROOTINO)
 					break;
-				errexit("BAD STATE %d FOR INODE I=%ld",
-				    info->ino_state, (long)j);
+				errexit("BAD STATE %d FOR INODE I=%ju",
+				    info->ino_state, (uintmax_t)inum);
 			}
 		}
 		if (c == 0)
-			for (i = 0; i < (long)UFS_ROOTINO; i++) {
+			for (i = 0; i < UFS_ROOTINO; i++) {
 				setbit(cg_inosused(newcg, 0), i);
 				newcg->cg_cs.cs_nifree--;
 			}
@@ -450,7 +453,7 @@ pass5(void)
 						continue;
 					if (cg_inosused(cg, 0)[i] & (1 << k))
 						continue;
-					pwarn("ALLOCATED INODE %ld "
+					pwarn("ALLOCATED INODE %u "
 					    "MARKED FREE\n",
 					    c * fs->fs_ipg + i * 8 + k);
 				}
@@ -464,7 +467,7 @@ pass5(void)
 						continue;
 					if (cg_inosused(cg, 0)[i] & (1 << k))
 						continue;
-					pwarn("ALLOCATED FRAG %ld "
+					pwarn("ALLOCATED FRAG %u "
 					    "MARKED FREE\n",
 					    c * fs->fs_fpg + i * 8 + k);
 				}
