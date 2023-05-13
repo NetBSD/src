@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1318 2023/05/12 11:49:47 ryoon Exp $
+#	$NetBSD: bsd.own.mk,v 1.1319 2023/05/13 10:56:55 riastradh Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1136,6 +1136,9 @@ MKPIE?=		no
 
 #
 # RELRO is enabled on i386, amd64, and aarch64 by default
+#
+# sync with NORELRO in compat/*/*/bsd.*.mk for the relro-enabled 64-bit
+# platforms with relro-disabled 32-bit compat
 #
 .if ${MACHINE} == "i386" || \
     ${MACHINE} == "amd64" || \
