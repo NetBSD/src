@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.257 2023/05/13 08:33:39 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.258 2023/05/13 09:40:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.257 2023/05/13 08:33:39 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.258 2023/05/13 09:40:47 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -485,9 +485,8 @@ process_lparen_or_lbracket(void)
     debug_println("paren_indents[%d] is now %d",
 	ps.nparen - 1, ps.paren[ps.nparen - 1].indent);
 
-    if (ps.spaced_expr_psym != psym_0
-	    && ps.nparen == 1 && opt.extra_expr_indent
-	    && ps.paren[0].indent < 2 * opt.indent_size) {
+    if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0
+	    && ps.nparen == 1 && ps.paren[0].indent < 2 * opt.indent_size) {
 	ps.paren[0].indent = (short)(2 * opt.indent_size);
 	debug_println("paren_indents[0] is now %d", ps.paren[0].indent);
     }
