@@ -1,4 +1,8 @@
-#	$NetBSD: NetBSD.dist.aarch64,v 1.9 2022/05/15 21:41:56 mrg Exp $
+#	$NetBSD: NetBSD.dist.aarch64,v 1.10 2023/05/13 13:04:14 riastradh Exp $
 
 ./usr/include/aarch64
 ./usr/include/arm
+./usr/lib/eabi/openssl
+./usr/lib/eabi/openssl/modules
+./usr/lib/eabihf/openssl
+./usr/lib/eabihf/openssl/modules

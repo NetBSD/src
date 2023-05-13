@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.37 2023/04/16 20:46:16 nikita Exp $
+# $NetBSD: ad.aarch64,v 1.38 2023/05/13 13:04:14 riastradh Exp $
 ./lib/eabi					base-compat-lib		compat,llvm
 ./lib/eabi/npf					base-compat-lib		compat,llvm
 ./lib/eabihf					base-compat-lib		compat,llvm
@@ -17,6 +17,9 @@
 ./usr/lib/eabi/lua				base-compat-lib		compat,llvm
 ./usr/lib/eabi/lua/5.3				base-obsolete		obsolete
 ./usr/lib/eabi/lua/5.4				base-compat-lib		compat,llvm
+./usr/lib/eabi/openssl				base-compat-lib		compat,llvm
+./usr/lib/eabi/openssl/engines			base-compat-lib		compat,llvm
+./usr/lib/eabi/openssl/modules			base-compat-lib		compat,llvm
 ./usr/lib/eabi/security				base-compat-lib		compat,llvm
 ./usr/lib/eabihf				base-compat-lib		compat,llvm
 ./usr/lib/eabihf/i18n				base-compat-lib		compat,llvm
@@ -25,6 +28,9 @@
 ./usr/lib/eabihf/lua				base-compat-lib		compat,llvm
 ./usr/lib/eabihf/lua/5.3			base-obsolete		obsolete
 ./usr/lib/eabihf/lua/5.4			base-compat-lib		compat,llvm
+./usr/lib/eabihf/openssl			base-compat-lib		compat,llvm
+./usr/lib/eabihf/openssl/engines		base-compat-lib		compat,llvm
+./usr/lib/eabihf/openssl/modules		base-compat-lib		compat,llvm
 ./usr/lib/eabihf/security			base-compat-lib		compat,llvm
 ./usr/lib/oabi					base-obsolete		obsolete
 ./usr/lib/oabi/i18n				base-obsolete		obsolete
