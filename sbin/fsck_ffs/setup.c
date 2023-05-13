@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.104 2022/11/17 06:40:38 chs Exp $	*/
+/*	$NetBSD: setup.c,v 1.104.2.1 2023/05/13 11:51:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.104 2022/11/17 06:40:38 chs Exp $");
+__RCSID("$NetBSD: setup.c,v 1.104.2.1 2023/05/13 11:51:14 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -1150,7 +1150,7 @@ static int
 check_snapinum(void)
 {
 	int loc, loc2, res;
-	int *snapinum = &sblock->fs_snapinum[0];
+	uint32_t *snapinum = &sblock->fs_snapinum[0];
 
 	res = 0;
  

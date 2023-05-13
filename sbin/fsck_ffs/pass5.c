@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.55 2022/11/17 06:40:38 chs Exp $	*/
+/*	$NetBSD: pass5.c,v 1.55.2.1 2023/05/13 11:51:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.55 2022/11/17 06:40:38 chs Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.55.2.1 2023/05/13 11:51:14 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,8 +59,9 @@ void print_bmap(u_char *,u_int32_t);
 void
 pass5(void)
 {
-	int c, blk, frags, basesize, sumsize, mapsize, cssize;
+	int blk, frags, basesize, sumsize, mapsize, cssize;
 	int inomapsize, blkmapsize;
+	uint32_t c;
 	struct fs *fs = sblock;
 	daddr_t dbase, dmax;
 	daddr_t d;
@@ -290,15 +291,15 @@ pass5(void)
 		newcg->cg_cs.cs_nffree = 0;
 		newcg->cg_cs.cs_nbfree = 0;
 		newcg->cg_cs.cs_nifree = fs->fs_ipg;
-		if (cg->cg_rotor >= 0 && cg->cg_rotor < newcg->cg_ndblk)
+		if (cg->cg_rotor < newcg->cg_ndblk)
 			newcg->cg_rotor = cg->cg_rotor;
 		else
 			newcg->cg_rotor = 0;
-		if (cg->cg_frotor >= 0 && cg->cg_frotor < newcg->cg_ndblk)
+		if (cg->cg_frotor < newcg->cg_ndblk)
 			newcg->cg_frotor = cg->cg_frotor;
 		else
 			newcg->cg_frotor = 0;
-		if (cg->cg_irotor >= 0 && cg->cg_irotor < fs->fs_ipg)
+		if (cg->cg_irotor < fs->fs_ipg)
 			newcg->cg_irotor = cg->cg_irotor;
 		else
 			newcg->cg_irotor = 0;
