@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_binary_op.c,v 1.6 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: lsym_binary_op.c,v 1.7 2023/05/13 06:52:48 rillig Exp $ */
 
 /*
  * Tests for the token lsym_binary_op, which represents a binary operator in
@@ -160,3 +160,14 @@ int		col_9		//
 =				//
 9;
 //indent end
+
+
+/*
+ * The ternary conditional operator is not a binary operator, but both its
+ * components '?' and ':' follow the same spacing rules.
+ */
+//indent input
+int conditional = condition ? number : number;
+//indent end
+
+//indent run-equals-input -di0
