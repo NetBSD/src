@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.185 2019/05/18 13:32:12 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.185.2.1 2023/05/13 11:45:53 martin Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -155,6 +155,7 @@
 #include "opt_ddbparam.h"
 #include "opt_modular.h"
 #include "opt_realmem.h"
+#include "opt_selfreloc.h"
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -436,6 +437,16 @@ tmpstk:
 ENTRY(start)
 #ifndef XENPV
 	.code32
+
+#ifdef SELFRELOC
+	call	next
+next:	pop	%edi
+	sub     $(next - kernel_text), %edi 
+
+	/* If not KERNBASE, reloc ourselves to KERNBASE */
+	cmpl	$(KERNTEXTOFF_LO - KERNBASE_LO), %edi
+	jne	selfreloc_start
+#endif /* SELFRELOC */
 
 	/* Warm boot */
 	movw	$0x1234,0x472
@@ -1701,3 +1712,140 @@ LABEL(mds_leave_end)
 LABEL(nomds_leave)
 	NOMDS_LEAVE
 LABEL(nomds_leave_end)
+
+#ifdef SELFRELOC
+/*
+ * selfreloc(loadddr edi)
+ * This is adapted from sys/arch/i386/i386/locore.S
+ */
+	.code32
+ENTRY(selfreloc_start)
+	movl	%edi, %ebx		/* loadaddr saved in ebx */
+	movl	%edi, %esi				/* src */
+	movl	$_RELOC(kernel_text), %edi		/* dest */
+	movl	16(%esp),%ecx				/* esym */
+	subl	$_RELOC(kernel_text), %ecx		/* size */
+
+#if defined(NO_OVERLAP)
+        movl    %ecx, %eax
+#else 
+        movl    %edi, %eax
+        subl    %esi, %eax
+        cmpl    %ecx, %eax      /* overlapping? */
+        movl    %ecx, %eax
+        jb      .Lbackwards
+#endif
+        /* nope, copy forwards. */
+        shrl    $2, %ecx        /* copy by words */
+        rep
+        movsl
+        and     $3, %eax        /* any bytes left? */
+        jnz     .Ltrailing
+        jmp     .Lcopy_done
+
+.Ltrailing:
+        cmp     $2, %eax
+        jb      11f
+        movw    (%esi), %ax
+        movw    %ax, (%edi)
+        je      .Lcopy_done
+        movb    2(%esi), %al
+        movb    %al, 2(%edi)
+        jmp     .Lcopy_done
+11:     movb    (%esi), %al
+        movb    %al, (%edi)
+        jmp     .Lcopy_done
+
+#if !defined(NO_OVERLAP)
+.Lbackwards:
+        addl    %ecx, %edi      /* copy backwards. */
+        addl    %ecx, %esi
+        and     $3, %eax        /* any fractional bytes? */
+        jnz     .Lback_align
+.Lback_aligned:
+        shrl    $2, %ecx
+        subl    $4, %esi
+        subl    $4, %edi
+        std
+        rep
+        movsl
+        cld
+        jmp     .Lcopy_done
+
+.Lback_align:
+        sub     %eax, %esi
+        sub     %eax, %edi
+        cmp     $2, %eax
+        jb      11f
+        je      12f
+        movb    2(%esi), %al
+        movb    %al, 2(%edi)
+12:     movw    (%esi), %ax
+        movw    %ax, (%edi)
+        jmp     .Lback_aligned
+11:     movb    (%esi), %al
+        movb    %al, (%edi)
+        jmp     .Lback_aligned
+#endif
+        /* End of copy kernel */
+.Lcopy_done:
+	cld			/* LynxOS depends on it */
+
+	/* load current selfreloc_start addesss in $edi */
+	movl	%ebx, %edi	/* loadaddr was saved in ebx */
+	addl	$(selfreloc_start - kernel_text), %edi
+
+	/* Prepare jump address */
+	lea	(selfreloc_start32a - selfreloc_start)(%edi), %eax
+	movl	%eax, (selfreloc_start32r - selfreloc_start)(%edi)
+
+	/* Setup GDT */
+	lea	(gdt - selfreloc_start)(%edi), %eax
+	mov	%eax, (gdtrr - selfreloc_start)(%edi)
+	lgdt	(gdtr - selfreloc_start)(%edi)
+
+	/* Jump to set %cs */
+	ljmp	*(selfreloc_start32r - selfreloc_start)(%edi)
+
+	.align	4
+selfreloc_start32a:
+	movl	$0x10, %eax	/* #define DATA_SEGMENT 0x10 */
+	movw	%ax, %ds
+	movw	%ax, %es
+	movw	%ax, %fs
+	movw	%ax, %gs
+	movw	%ax, %ss
+
+	/* Disable Paging in CR0 */
+	movl	%cr0, %eax
+	andl	$(~CR0_PG), %eax
+	movl	%eax, %cr0
+
+	/* Disable PAE in CR4 */
+	movl	%cr4, %eax
+	andl	$(~CR4_PAE), %eax
+	movl	%eax, %cr4
+
+	jmp	selfreloc_start32b
+
+	.align	4
+selfreloc_start32b:
+	xor	%eax, %eax
+	movl	$_RELOC(start), %esi
+	jmp	*%esi
+
+	.align	16
+selfreloc_start32r:
+	.long	0
+	.long	0x08	/* #define	CODE_SEGMENT	0x08 */
+	.align	16
+gdt:
+	.long	0, 0
+	.byte	0xff, 0xff, 0x00, 0x00, 0x00, 0x9f, 0xcf, 0x00
+	.byte	0xff, 0xff, 0x00, 0x00, 0x00, 0x93, 0xcf, 0x00
+gdtr:
+	.word	gdtr - gdt
+gdtrr:
+	.quad
+END(selfreloc_start)
+#endif /* SELFRELOC */
