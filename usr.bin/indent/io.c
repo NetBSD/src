@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.156 2023/05/13 09:27:49 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.157 2023/05/13 12:31:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.156 2023/05/13 09:27:49 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.157 2023/05/13 12:31:02 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -57,8 +57,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $
 
 /*
  * The current line, ready to be split into tokens, terminated with '\n'. The
- * current read position is inp.s, and the invariant inp.buf <= inp.s < inp.e
- * holds.
+ * current read position is inp.s, and the invariant inp.s < inp.e holds.
  */
 static struct buffer inp;
 
@@ -68,10 +67,10 @@ static int paren_indent;
 void
 inp_init(void)
 {
-    inp.buf = xmalloc(10);
-    inp.l = inp.buf + 8;
-    inp.s = inp.buf;
-    inp.e = inp.buf;
+    inp.mem = xmalloc(10);
+    inp.limit = inp.mem + 8;
+    inp.s = inp.mem;
+    inp.e = inp.mem;
 }
 
 const char *
@@ -84,7 +83,7 @@ inp_p(void)
 const char *
 inp_line_start(void)
 {
-    return inp.buf;
+    return inp.mem;
 }
 
 const char *
@@ -127,13 +126,13 @@ inp_next(void)
 static void
 inp_add(char ch)
 {
-    if (inp.e >= inp.l) {
-	size_t new_size = (size_t)(inp.l - inp.buf) * 2 + 10;
-	size_t offset = (size_t)(inp.e - inp.buf);
-	inp.buf = xrealloc(inp.buf, new_size);
-	inp.s = inp.buf;
-	inp.e = inp.buf + offset;
-	inp.l = inp.buf + new_size - 2;
+    if (inp.e >= inp.limit) {
+	size_t new_size = (size_t)(inp.limit - inp.mem) * 2 + 10;
+	size_t e_offset = (size_t)(inp.e - inp.mem);
+	inp.mem = xrealloc(inp.mem, new_size);
+	inp.s = inp.mem;
+	inp.e = inp.mem + e_offset;
+	inp.limit = inp.mem + new_size - 2;
     }
     *inp.e++ = ch;
 }
@@ -141,8 +140,8 @@ inp_add(char ch)
 static void
 inp_read_next_line(FILE *f)
 {
-    inp.s = inp.buf;
-    inp.e = inp.buf;
+    inp.s = inp.mem;
+    inp.e = inp.mem;
 
     for (;;) {
 	int ch = getc(f);
@@ -314,7 +313,7 @@ output_complete_line(char line_terminator)
 
     *(lab.e = lab.s) = '\0';	/* reset buffers */
     *(code.e = code.s) = '\0';
-    *(com.e = com.s = com.buf + 1) = '\0';
+    *(com.e = com.s = com.mem + 1) = '\0';
 
     ps.ind_level = ps.ind_level_follow;
     ps.line_start_nparen = ps.nparen;
@@ -412,7 +411,7 @@ parse_indent_comment(void)
 {
     bool on;
 
-    const char *p = inp.buf;
+    const char *p = inp.mem;
 
     skip_blank(&p);
     if (!skip_string(&p, "/*"))

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.124 2023/05/13 09:40:47 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.125 2023/05/13 12:31:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -131,8 +131,8 @@ typedef enum parser_symbol {
 struct buffer {
     char *s;			/* start of the usable text */
     char *e;			/* end of the usable text */
-    char *buf;			/* start of the allocated memory */
-    char *l;			/* end of the allocated memory */
+    char *mem;			/* start of the allocated memory */
+    char *limit;		/* end of the allocated memory */
 };
 
 extern FILE *input;

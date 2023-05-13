@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.130 2023/05/12 10:53:33 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.131 2023/05/13 12:31:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.130 2023/05/12 10:53:33 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.131 2023/05/13 12:31:02 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
@@ -57,7 +57,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z
 static void
 com_add_char(char ch)
 {
-    if (1 >= com.l - com.e)
+    if (1 >= com.limit - com.e)
 	buf_expand(&com, 1);
     *com.e++ = ch;
 }
@@ -74,7 +74,7 @@ com_add_delim(void)
 static void
 com_terminate(void)
 {
-    if (1 >= com.l - com.e)
+    if (1 >= com.limit - com.e)
 	buf_expand(&com, 1);
     *com.e = '\0';
 }
@@ -193,7 +193,7 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 static void
 copy_comment_wrap(int adj_max_line_length, bool break_delim)
 {
-    ssize_t last_blank = -1;	/* index of the last blank in com.buf */
+    ssize_t last_blank = -1;	/* index of the last blank in com.mem */
 
     for (;;) {
 	switch (inp_peek()) {
@@ -228,7 +228,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 		ps.next_col_1 = true;
 		if (!(com.e > com.s && ch_isblank(com.e[-1])))
 		    com_add_char(' ');
-		last_blank = com.e - 1 - com.buf;
+		last_blank = com.e - 1 - com.mem;
 	    }
 	    ++line_no;
 
@@ -277,7 +277,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 	    for (;;) {
 		char ch = inp_next();
 		if (ch_isblank(ch))
-		    last_blank = com.e - com.buf;
+		    last_blank = com.e - com.mem;
 		com_add_char(ch);
 		now_len++;
 		if (memchr("*\n\r\b\t", inp_peek(), 6) != NULL)
@@ -299,9 +299,9 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 		break;
 	    }
 
-	    const char *last_word_s = com.buf + last_blank + 1;
+	    const char *last_word_s = com.mem + last_blank + 1;
 	    size_t last_word_len = (size_t)(com.e - last_word_s);
-	    com.e = com.buf + last_blank;
+	    com.e = com.mem + last_blank;
 	    output_line();
 	    com_add_delim();
 
