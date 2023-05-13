@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bad.c,v 1.7 2023/05/11 18:13:55 rillig Exp $ */
+/* $NetBSD: opt_bad.c,v 1.8 2023/05/13 14:19:14 rillig Exp $ */
 
 /*
  * Tests for the options '-bad' and '-nbad'.
@@ -87,3 +87,69 @@ function_definition(void)
 	function_call();
 }
 //indent end
+
+
+/*
+ * A comment after a declaration does not change whether there should be a
+ * blank line below the declaration.
+ */
+//indent input
+void
+comments(void)
+{
+	int local_var_1;	/* comment */
+	int local_var_2;	/* comment */
+	/* comment line */
+	function_call();
+}
+//indent end
+
+//indent run -ldi0 -bad
+void
+comments(void)
+{
+	int local_var_1;	/* comment */
+	int local_var_2;	/* comment */
+	/* comment line */
+	/* $ TODO: Add blank line here. */
+	function_call();
+}
+//indent end
+
+//indent run-equals-input -ldi0 -nbad
+
+
+/*
+ * A declaration that has a braced initializer is still a declaration and
+ * therefore needs a blank line below.
+ */
+//indent input
+void
+initializer(void)
+{
+	int local_var_init_1[] = {
+		1
+	};
+	int local_var_init_2[] = {
+		1
+	};
+	function_call();
+}
+//indent end
+
+//indent run -ldi0 -bad
+void
+initializer(void)
+{
+	int local_var_init_1[] = {
+		1
+	};
+	int local_var_init_2[] = {
+		1
+	};
+	/* $ TODO: Add blank line here. */
+	function_call();
+}
+//indent end
+
+//indent run-equals-input -ldi0 -nbad
