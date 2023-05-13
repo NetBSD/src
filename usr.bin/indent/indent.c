@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.256 2023/05/12 22:38:47 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.257 2023/05/13 08:33:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.256 2023/05/12 22:38:47 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.257 2023/05/13 08:33:39 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -915,7 +915,7 @@ read_preprocessing_line(void)
     state = PLAIN;
 
     while (ch_isblank(inp_peek()))
-	inp_skip();
+	buf_add_char(&lab, inp_next());
 
     while (inp_peek() != '\n' || (state == COMM && !had_eof)) {
 	buf_reserve(&lab, 2);
@@ -957,6 +957,26 @@ read_preprocessing_line(void)
     buf_terminate(&lab);
 }
 
+typedef struct {
+    const char *s;
+    const char *e;
+} substring;
+
+static bool
+substring_equals(substring ss, const char *str)
+{
+    size_t len = (size_t)(ss.e - ss.s);
+    return len == strlen(str) && memcmp(ss.s, str, len) == 0;
+}
+
+static bool
+substring_starts_with(substring ss, const char *prefix)
+{
+    while (ss.s < ss.e && *prefix != '\0' && *ss.s == *prefix)
+	ss.s++, prefix++;
+    return *prefix == '\0';
+}
+
 static void
 process_preprocessing(void)
 {
@@ -967,32 +987,41 @@ process_preprocessing(void)
 
     ps.is_case_label = false;
 
-    if (strncmp(lab.s, "#if", 3) == 0) {	/* also ifdef, ifndef */
+    substring dir;
+    dir.s = lab.s + 1;
+    while (dir.s < lab.e && ch_isblank(*dir.s))
+	dir.s++;
+    dir.e = dir.s;
+    while (dir.e < lab.e && ch_isalpha(*dir.e))
+	dir.e++;
+
+    if (substring_starts_with(dir, "if")) {	/* also ifdef, ifndef */
 	if ((size_t)ifdef_level < array_length(state_stack))
 	    state_stack[ifdef_level++] = ps;
 	else
 	    diag(1, "#if stack overflow");
 
-    } else if (strncmp(lab.s, "#el", 3) == 0) {	/* else, elif */
+    } else if (substring_starts_with(dir, "el")) {	/* else, elif */
 	if (ifdef_level <= 0)
-	    diag(1, lab.s[3] == 'i' ? "Unmatched #elif" : "Unmatched #else");
+	    diag(1, dir.s[2] == 'i' ? "Unmatched #elif" : "Unmatched #else");
 	else
 	    ps = state_stack[ifdef_level - 1];
 
-    } else if (strncmp(lab.s, "#endif", 6) == 0) {
+    } else if (substring_equals(dir, "endif")) {
 	if (ifdef_level <= 0)
 	    diag(1, "Unmatched #endif");
 	else
 	    ifdef_level--;
 
     } else {
-	if (strncmp(lab.s + 1, "pragma", 6) != 0 &&
-	    strncmp(lab.s + 1, "error", 5) != 0 &&
-	    strncmp(lab.s + 1, "line", 4) != 0 &&
-	    strncmp(lab.s + 1, "undef", 5) != 0 &&
-	    strncmp(lab.s + 1, "define", 6) != 0 &&
-	    strncmp(lab.s + 1, "include", 7) != 0) {
-	    diag(1, "Unrecognized cpp directive");
+	if (!substring_equals(dir, "pragma") &&
+	    !substring_equals(dir, "error") &&
+	    !substring_equals(dir, "line") &&
+	    !substring_equals(dir, "undef") &&
+	    !substring_equals(dir, "define") &&
+	    !substring_equals(dir, "include")) {
+	    diag(1, "Unrecognized cpp directive \"%.*s\"",
+		 (int)(dir.e - dir.s), dir.s);
 	    return;
 	}
     }

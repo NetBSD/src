@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_preprocessing.c,v 1.9 2023/05/11 21:36:31 rillig Exp $ */
+/* $NetBSD: lsym_preprocessing.c,v 1.10 2023/05/13 08:33:39 rillig Exp $ */
 
 /*
  * Tests for the token lsym_preprocessing, which represents a '#' that starts
@@ -74,22 +74,7 @@
 #endif /* outer endif comment */
 //indent end
 
-//indent run
-#if 0
-#else
-#endif
-
-#if 0 /* if comment */
-#else /* else comment */
-#endif /* endif comment */
-
-#if 0 /* outer if comment */
-/* $ XXX: The indentation is removed, which can get confusing */
-#if nested /* inner if comment */
-#else /* inner else comment */
-#endif /* inner endif comment */
-#endif /* outer endif comment */
-//indent end
+//indent run-equals-input
 
 
 //indent input
