@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2023/05/08 17:46:06 christos Exp $
+# $NetBSD: Makefile,v 1.7 2023/05/13 17:46:10 riastradh Exp $
 
 .include <bsd.own.mk>
 PROGDPLIBSSTATIC=yes
@@ -7,6 +7,8 @@ HELPER_DIR=	threads
 
 CPPFLAGS+=	-DPTHREADS
 CFLAGS+=	-pthread
+
+COPTS.threadstest.c+=	-Wno-missing-field-initializers
 
 DPADD+=		${LIBPTHREAD} ${LIBSSL}
 LDADD+=		-lpthread -lssl
