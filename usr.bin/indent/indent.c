@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.260 2023/05/13 14:30:48 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.261 2023/05/13 16:19:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.260 2023/05/13 14:30:48 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.261 2023/05/13 16:19:37 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -380,7 +380,7 @@ code_add_decl_indent(int decl_ind, bool tabs_to_var)
     }
 }
 
-static void __attribute__((__noreturn__))
+static int
 process_eof(void)
 {
     if (lab.s != lab.e || code.s != code.e || com.s != com.e)
@@ -390,7 +390,7 @@ process_eof(void)
 	diag(1, "Stuff missing from end of file");
 
     fflush(output);
-    exit(found_err ? EXIT_FAILURE : EXIT_SUCCESS);
+    return found_err ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 
 static void
@@ -1031,7 +1031,7 @@ process_preprocessing(void)
      */
 }
 
-__dead static void
+static int
 main_loop(void)
 {
 
@@ -1043,10 +1043,8 @@ main_loop(void)
 	if (lsym == lsym_if && ps.prev_token == lsym_else && opt.else_if)
 	    ps.force_nl = false;
 
-	if (lsym == lsym_eof) {
-	    process_eof();
-	    /* NOTREACHED */
-	}
+	if (lsym == lsym_eof)
+	    return process_eof();
 
 	if (lsym == lsym_newline || lsym == lsym_form_feed ||
 		lsym == lsym_preprocessing)
@@ -1198,7 +1196,7 @@ main(int argc, char **argv)
     main_load_profiles(argc, argv);
     main_parse_command_line(argc, argv);
     main_prepare_parsing();
-    main_loop();
+    return main_loop();
 }
 
 #ifdef debug
