@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.18 2022/04/14 19:47:14 riastradh Exp $ */
+/* 	$NetBSD: viornd.c,v 1.18.4.1 2023/05/13 10:56:10 martin Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -176,11 +176,12 @@ viornd_attach(device_t parent, device_t self, void *aux)
 		goto load_failed;
 	}
 
-	virtio_child_attach_start(vsc, self, IPL_NET, &sc->sc_vq,
-	    NULL, virtio_vq_intr, 0,
+	virtio_child_attach_start(vsc, self, IPL_NET,
 	    0, VIRTIO_COMMON_FLAG_BITS);
 
-	error = virtio_alloc_vq(vsc, &sc->sc_vq, 0, VIORND_BUFSIZE, 1,
+	virtio_init_vq_vqdone(vsc, &sc->sc_vq, 0, viornd_vq_done);
+
+	error = virtio_alloc_vq(vsc, &sc->sc_vq, VIORND_BUFSIZE, 1,
 	    "Entropy request");
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "can't alloc virtqueue: %d\n",
@@ -189,7 +190,9 @@ viornd_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_vq.vq_done = viornd_vq_done;
 
-	if (virtio_child_attach_finish(vsc) != 0) {
+	error = virtio_child_attach_finish(vsc, &sc->sc_vq, 1,
+	    NULL, VIRTIO_F_INTR_MPSAFE);
+	if (error) {
 		virtio_free_vq(vsc, &sc->sc_vq);
 		goto vio_failed;
 	}

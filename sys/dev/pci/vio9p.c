@@ -1,4 +1,4 @@
-/*	$NetBSD: vio9p.c,v 1.9 2022/04/20 22:08:10 uwe Exp $	*/
+/*	$NetBSD: vio9p.c,v 1.9.4.1 2023/05/13 10:56:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.9 2022/04/20 22:08:10 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vio9p.c,v 1.9.4.1 2023/05/13 10:56:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,24 +500,18 @@ vio9p_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_virtio = vsc;
 
-	virtio_child_attach_start(vsc, self, IPL_VM, sc->sc_vq,
-	    NULL, virtio_vq_intr,
-	    VIRTIO_F_INTR_MPSAFE | VIRTIO_F_INTR_SOFTINT,
-	    VIO9P_F_MOUNT_TAG,
-	    VIO9P_FLAG_BITS);
+	virtio_child_attach_start(vsc, self, IPL_VM,
+	    VIO9P_F_MOUNT_TAG, VIO9P_FLAG_BITS);
 
 	features = virtio_features(vsc);
 	if ((features & VIO9P_F_MOUNT_TAG) == 0)
 		goto err_none;
 
-	error = virtio_alloc_vq(vsc, &sc->sc_vq[0], 0, VIO9P_MAX_REQLEN,
+	virtio_init_vq_vqdone(vsc, &sc->sc_vq[0], 0, vio9p_request_done);
+	error = virtio_alloc_vq(vsc, &sc->sc_vq[0], VIO9P_MAX_REQLEN,
 	    VIO9P_N_SEGMENTS * 2, "vio9p");
 	if (error != 0)
 		goto err_none;
-
-	sc->sc_vq[0].vq_done = vio9p_request_done;
-
-	virtio_child_attach_set_vqs(vsc, sc->sc_vq, 1);
 
 	sc->sc_buf_tx = kmem_alloc(VIO9P_MAX_REQLEN, KM_SLEEP);
 	sc->sc_buf_rx = kmem_alloc(VIO9P_MAX_REQLEN, KM_SLEEP);
@@ -559,7 +553,9 @@ vio9p_attach(device_t parent, device_t self, void *aux)
 	vio9p_read_config(sc);
 	aprint_normal_dev(self, "tagged as %s\n", sc->sc_tag);
 
-	error = virtio_child_attach_finish(vsc);
+	error = virtio_child_attach_finish(vsc, sc->sc_vq,
+	    __arraycount(sc->sc_vq), NULL,
+	    VIRTIO_F_INTR_MPSAFE | VIRTIO_F_INTR_SOFTINT);
 	if (error != 0)
 		goto err_mutex;
 

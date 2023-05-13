@@ -1,4 +1,4 @@
-/*	$NetBSD: viocon.c,v 1.5 2022/08/13 17:31:32 riastradh Exp $	*/
+/*	$NetBSD: viocon.c,v 1.5.4.1 2023/05/13 10:56:10 martin Exp $	*/
 /*	$OpenBSD: viocon.c,v 1.8 2021/11/05 11:38:29 mpi Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.5 2022/08/13 17:31:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viocon.c,v 1.5.4.1 2023/05/13 10:56:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -123,6 +123,9 @@ struct viocon_softc {
 	struct device		*sc_dev;
 	struct virtio_softc	*sc_virtio;
 	struct virtqueue	*sc_vqs;
+#define VIOCON_PORT_RX	0
+#define VIOCON_PORT_TX	1
+#define VIOCON_PORT_NQS	2
 
 	struct virtqueue        *sc_c_vq_rx;
 	struct virtqueue        *sc_c_vq_tx;
@@ -194,6 +197,7 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	struct viocon_softc *sc = device_private(self);
 	struct virtio_softc *vsc = device_private(parent);
 	int maxports = 1;
+	size_t nvqs;
 
 	sc->sc_dev = self;
 	if (virtio_child(vsc) != NULL) {
@@ -203,16 +207,15 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	}
 	sc->sc_virtio = vsc;
 	sc->sc_max_ports = maxports;
+	nvqs = VIOCON_PORT_NQS * maxports;
 
-	sc->sc_vqs = kmem_zalloc(2 * (maxports + 1) * sizeof(sc->sc_vqs[0]),
+	sc->sc_vqs = kmem_zalloc(nvqs * sizeof(sc->sc_vqs[0]),
 	    KM_SLEEP);
 	sc->sc_ports = kmem_zalloc(maxports * sizeof(sc->sc_ports[0]),
 	    KM_SLEEP);
 
-	virtio_child_attach_start(vsc, self, IPL_TTY, sc->sc_vqs,
-	    /*config_change*/NULL, virtio_vq_intr,
-	    /*req_flags*/0, /*req_features*/VIRTIO_CONSOLE_F_SIZE,
-	    VIRTIO_CONSOLE_FLAG_BITS);
+	virtio_child_attach_start(vsc, self, IPL_TTY,
+	    /*req_features*/VIRTIO_CONSOLE_F_SIZE, VIRTIO_CONSOLE_FLAG_BITS);
 
 	DPRINTF("%s: softc: %p\n", __func__, sc);
 	if (viocon_port_create(sc, 0) != 0) {
@@ -221,12 +224,13 @@ viocon_attach(struct device *parent, struct device *self, void *aux)
 	}
 	viocon_rx_fill(sc->sc_ports[0]);
 
-	if (virtio_child_attach_finish(vsc) != 0)
+	if (virtio_child_attach_finish(vsc, sc->sc_vqs, nvqs,
+	    /*config_change*/NULL, /*req_flags*/0) != 0)
 		goto err;
 
 	return;
 err:
-	kmem_free(sc->sc_vqs, 2 * (maxports + 1) * sizeof(sc->sc_vqs[0]));
+	kmem_free(sc->sc_vqs, nvqs * sizeof(sc->sc_vqs[0]));
 	kmem_free(sc->sc_ports, maxports * sizeof(sc->sc_ports[0]));
 	virtio_child_attach_failed(vsc);
 }
@@ -248,31 +252,30 @@ viocon_port_create(struct viocon_softc *sc, int portidx)
 	vp->vp_sc = sc;
 	DPRINTF("%s: vp: %p\n", __func__, vp);
 
-	if (portidx == 0)
-		rxidx = 0;
-	else
-		rxidx = 2 * (portidx + 1);
-	txidx = rxidx + 1;
+	rxidx = (portidx * VIOCON_PORT_NQS) + VIOCON_PORT_RX;
+	txidx = (portidx * VIOCON_PORT_NQS) + VIOCON_PORT_TX;
 
 	snprintf(name, sizeof(name), "p%drx", portidx);
-	if (virtio_alloc_vq(vsc, &sc->sc_vqs[rxidx], rxidx, BUFSIZE, 1,
+	virtio_init_vq_vqdone(vsc, &sc->sc_vqs[rxidx], rxidx,
+	    viocon_rx_intr);
+	if (virtio_alloc_vq(vsc, &sc->sc_vqs[rxidx], BUFSIZE, 1,
 	    name) != 0) {
 		printf("\nCan't alloc %s virtqueue\n", name);
 		goto err;
 	}
 	vp->vp_rx = &sc->sc_vqs[rxidx];
-	vp->vp_rx->vq_done = viocon_rx_intr;
 	vp->vp_si = softint_establish(SOFTINT_SERIAL, viocon_rx_soft, vp);
 	DPRINTF("%s: rx: %p\n", __func__, vp->vp_rx);
 
 	snprintf(name, sizeof(name), "p%dtx", portidx);
-	if (virtio_alloc_vq(vsc, &sc->sc_vqs[txidx], txidx, BUFSIZE, 1,
+	virtio_init_vq_vqdone(vsc, &sc->sc_vqs[txidx], txidx,
+	    viocon_tx_intr);
+	if (virtio_alloc_vq(vsc, &sc->sc_vqs[txidx], BUFSIZE, 1,
 	    name) != 0) {
 		printf("\nCan't alloc %s virtqueue\n", name);
 		goto err;
 	}
 	vp->vp_tx = &sc->sc_vqs[txidx];
-	vp->vp_tx->vq_done = viocon_tx_intr;
 	DPRINTF("%s: tx: %p\n", __func__, vp->vp_tx);
 
 	allocsize = (vp->vp_rx->vq_num + vp->vp_tx->vq_num) * BUFSIZE;

@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio_mmio.c,v 1.7 2021/10/22 02:57:23 yamaguchi Exp $	*/
+/*	$NetBSD: virtio_mmio.c,v 1.7.4.1 2023/05/13 10:56:10 martin Exp $	*/
 /*	$OpenBSD: virtio_mmio.c,v 1.2 2017/02/24 17:12:31 patrick Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.7 2021/10/22 02:57:23 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_mmio.c,v 1.7.4.1 2023/05/13 10:56:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,12 +213,11 @@ virtio_mmio_common_detach(struct virtio_mmio_softc *sc, int flags)
 	struct virtio_softc *vsc = &sc->sc_sc;
 	int r;
 
-	if (vsc->sc_child != NULL && vsc->sc_child != VIRTIO_CHILD_FAILED) {
-		r = config_detach(vsc->sc_child, flags);
-		if (r)
-			return r;
-	}
-	KASSERT(vsc->sc_child == NULL || vsc->sc_child == VIRTIO_CHILD_FAILED);
+	r = config_detach_children(vsc->sc_dev, flags);
+	if (r != 0)
+		return r;
+
+	KASSERT(ISSET(vsc->sc_child_flags, VIRTIO_CHILD_DETACHED));
 	KASSERT(vsc->sc_vqs == NULL);
 	KASSERT(sc->sc_ih == NULL);
 
