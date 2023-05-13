@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.62 2023/05/13 12:22:26 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.63 2023/05/13 14:06:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1846,3 +1846,7 @@ sys/ufs/ffs/ffs_snapshot.c			1.155
 	prematurely report that they were full and/or to panic the kernel.
 	[chs, ticket #165]
 
+distrib/notes/common/main			(manually edited)
+
+	Add dedication to Ryo Shimizu.
+	[from board]
