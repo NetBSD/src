@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.73 2020/04/17 09:42:27 jdolecek Exp $	*/
+/*	$NetBSD: inode.c,v 1.73.6.1 2023/05/13 12:13:54 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.73 2020/04/17 09:42:27 jdolecek Exp $");
+__RCSID("$NetBSD: inode.c,v 1.73.6.1 2023/05/13 12:13:54 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -731,11 +731,11 @@ allocino(ino_t request, int type)
 		return (0);
 	cg = ino_to_cg(sblock, ino);
 	/* If necessary, extend the inoinfo array. grow exponentially */
-	if ((ino % sblock->fs_ipg) >= (uint64_t)inostathead[cg].il_numalloced) {
-		unsigned long newalloced, i;
+	if ((ino % sblock->fs_ipg) >= inostathead[cg].il_numalloced) {
+		size_t newalloced, i;
 		newalloced = MIN(sblock->fs_ipg,
 			MAX(2 * inostathead[cg].il_numalloced, 10));
-		info = calloc(newalloced, sizeof(struct inostat));
+		info = calloc(newalloced, sizeof(*info));
 		if (info == NULL) {
 			pwarn("cannot alloc %lu bytes to extend inoinfo\n",
 				sizeof(struct inostat) * newalloced);
