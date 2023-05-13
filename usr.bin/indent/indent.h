@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.123 2023/05/13 09:27:49 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.124 2023/05/13 09:40:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -120,7 +120,7 @@ typedef enum parser_symbol {
     psym_if_expr,		/* 'if' '(' expr ')' */
     psym_if_expr_stmt,		/* 'if' '(' expr ')' stmt */
     psym_if_expr_stmt_else,	/* 'if' '(' expr ')' stmt 'else' */
-    psym_else,			/* 'else' */
+    psym_else,			/* 'else'; not stored on the stack */
     psym_switch_expr,		/* 'switch' '(' expr ')' */
     psym_do,			/* 'do' */
     psym_do_stmt,		/* 'do' stmt */
@@ -184,8 +184,8 @@ extern struct options {
 				 * placed this many indentation levels to the
 				 * left of code */
     bool extra_expr_indent;	/* whether continuation lines from the
-				 * expression part of "if(e)", "while(e)",
-				 * "for(e;e;e)" should be indented an extra
+				 * expression part of "if (e)", "while (e)",
+				 * "for (e; e; e)" should be indented an extra
 				 * tab stop so that they don't conflict with
 				 * the code that follows */
     bool else_if;		/* whether else-if pairs should be handled
@@ -254,7 +254,8 @@ extern struct parser_state {
 				 * 1 of the unformatted input */
     bool next_col_1;
     bool next_unary;		/* whether the following operator should be
-				 * unary */
+				 * unary; is used in declarations for '*', as
+				 * well as in expressions */
 
     bool is_function_definition;
 
