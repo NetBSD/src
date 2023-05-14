@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.135 2023/05/14 16:47:06 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.136 2023/05/14 17:13:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.135 2023/05/14 16:47:06 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.136 2023/05/14 17:13:37 rillig Exp $");
 
 #include <string.h>
 
@@ -145,16 +145,16 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	ps.n_comment_delta = -ind_add(0, inp_line_start(), inp_p() - 2);
     } else {
 	ps.n_comment_delta = 0;
-	while (ch_isblank(inp_peek()))
-	    inp_skip();
+	if (!(inp_peek() == '\t' && !ch_isblank(inp_lookahead(1))))
+	    while (ch_isblank(inp_peek()))
+		inp_skip();
     }
 
     ps.comment_delta = 0;
     com_add_char('/');
     com_add_char(token.e[-1]);	/* either '*' or '/' */
 
-    /* TODO: Maybe preserve a single '\t' as well. */
-    if (inp_peek() != ' ' && may_wrap)
+    if (may_wrap && !ch_isblank(inp_peek()))
 	com_add_char(' ');
 
     if (break_delim && fits_in_one_line(com_ind, adj_max_line_length))

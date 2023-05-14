@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fc1.c,v 1.9 2023/05/13 16:40:18 rillig Exp $ */
+/* $NetBSD: opt_fc1.c,v 1.10 2023/05/14 17:13:37 rillig Exp $ */
 
 /*
  * Tests for the options '-fc1' and '-nfc1'.
@@ -55,8 +55,8 @@
 /* $ The indentation got removed. */
 /* space */
 
-/* $ The indentation got removed, only the leading tab got replaced by a space. */
-/* indented tab	*/
+/* $ The indentation got removed. */
+/*	indented tab	*/
 
 /* $ The space between these comments got removed. */
 /* block1 *//* block2 */
@@ -76,7 +76,7 @@
  /* space */
 
 /* $ The indentation was changed from a single tab to a single space. */
- /* indented tab	*/
+ /*	indented tab	*/
 
 /* $ The space between these two comments got removed. */
 /* $ XXX: The option '-nfc1' says that comments in column 1 do not get */
