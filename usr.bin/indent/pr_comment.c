@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.133 2023/05/14 12:12:02 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.134 2023/05/14 14:14:07 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,10 +38,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.133 2023/05/14 12:12:02 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.134 2023/05/14 14:14:07 rillig Exp $");
 
-#include <assert.h>
-#include <stdio.h>
 #include <string.h>
 
 #include "indent.h"
@@ -74,15 +72,12 @@ com_terminate(void)
 static bool
 fits_in_one_line(int com_ind, int max_line_length)
 {
-    for (const char *p = inp_p(); *p != '\n'; p++) {
-	assert(*p != '\0');
-	assert(inp_line_end() - p >= 2);
-	if (!(p[0] == '*' && p[1] == '/'))
-	    continue;
-
-	int len = ind_add(com_ind + 3, inp_p(), p);
-	len += ch_isblank(p[-1]) ? 2 : 3;
-	return len <= max_line_length;
+    for (const char *start = inp_p(), *p = start; *p != '\n'; p++) {
+	if (p[0] == '*' && p[1] == '/') {
+	    int len = ind_add(com_ind + 3, start, p);
+	    len += ch_isblank(p[-1]) ? 2 : 3;
+	    return len <= max_line_length;
+	}
     }
     return false;
 }
@@ -147,8 +142,7 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	 * Find out how much indentation there was originally, because that
 	 * much will have to be ignored by output_complete_line.
 	 */
-	const char *start = inp_line_start();
-	ps.n_comment_delta = -ind_add(0, start, inp_p() - 2);
+	ps.n_comment_delta = -ind_add(0, inp_line_start(), inp_p() - 2);
     } else {
 	ps.n_comment_delta = 0;
 	while (ch_isblank(inp_peek()))
