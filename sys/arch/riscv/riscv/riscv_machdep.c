@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.26 2023/05/07 12:41:49 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.27 2023/05/14 09:14:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.26 2023/05/07 12:41:49 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.27 2023/05/14 09:14:30 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -456,8 +456,23 @@ cpu_reboot(int howto, char *bootstr)
 	/* Make sure IRQ's are disabled */
 	DISABLE_INTERRUPTS();
 
-	sbi_system_reset(SBI_RESET_TYPE_COLDREBOOT, SBI_RESET_REASON_NONE);
+	if (howto & RB_HALT) {
+		printf("\n");
+		printf("The operating system has halted.\n");
+		printf("Please press any key to reboot.\n\n");
+		cnpollc(1);	/* for proper keyboard command handling */
+		if (cngetc() == 0) {
+			/* no console attached, so just hlt */
+			printf("No keyboard - cannot reboot after all.\n");
+			goto spin;
+		}
+		cnpollc(0);
+	}
 
+	printf("rebooting...\n");
+
+	sbi_system_reset(SBI_RESET_TYPE_COLDREBOOT, SBI_RESET_REASON_NONE);
+spin:
 	for (;;) {
 		asm volatile("wfi" ::: "memory");
 	}
