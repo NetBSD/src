@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.46 2023/04/22 14:23:59 riastradh Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.47 2023/05/14 09:29:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.46 2023/04/22 14:23:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.47 2023/05/14 09:29:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -334,7 +334,7 @@ do_fcntl_getpath(struct lwp *l, file_t *fp, char *upath)
 
 	return error;
 }
-	
+
 /*
  * The file control system call.
  */
