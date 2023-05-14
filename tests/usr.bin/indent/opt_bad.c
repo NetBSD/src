@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bad.c,v 1.9 2023/05/13 15:34:22 rillig Exp $ */
+/* $NetBSD: opt_bad.c,v 1.10 2023/05/14 16:47:06 rillig Exp $ */
 
 /*
  * Tests for the options '-bad' and '-nbad'.
@@ -110,8 +110,8 @@ comments(void)
 {
 	int local_var_1;	/* comment */
 	int local_var_2;	/* comment */
+
 	/* comment line */
-	/* $ TODO: Add blank line here. */
 	function_call();
 }
 //indent end
