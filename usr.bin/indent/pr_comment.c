@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.134 2023/05/14 14:14:07 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.135 2023/05/14 16:47:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.134 2023/05/14 14:14:07 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.135 2023/05/14 16:47:06 rillig Exp $");
 
 #include <string.h>
 
@@ -111,7 +111,7 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	 * XXX: This condition looks suspicious since it ignores the case
 	 * where the end of the previous comment is still in 'com'.
 	 *
-	 * See test token_comment.c, keyword 'analyze_comment'.
+	 * See test lsym_comment.c, keyword 'analyze_comment'.
 	 */
 	if (lab.s == lab.e && code.s == code.e) {
 	    adj_max_line_length = opt.block_comment_max_line_length;
@@ -340,13 +340,9 @@ process_comment(void)
     int adj_max_line_length;
     bool may_wrap, break_delim;
 
-    ps.declaration = decl_no;
-
-    enum declaration saved_just_saw_decl = ps.declaration;
     analyze_comment(&may_wrap, &break_delim, &adj_max_line_length);
     if (may_wrap)
 	copy_comment_wrap(adj_max_line_length, break_delim);
     else
 	copy_comment_nowrap();
-    ps.declaration = saved_just_saw_decl;
 }
