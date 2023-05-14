@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.29 2023/05/08 00:40:50 manu Exp $
+.\"	$NetBSD: boot.8,v 1.30 2023/05/14 09:03:02 riastradh Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -364,7 +364,7 @@ flag in
 Boot the system in silent mode.
 .El
 .It Ic consdev Ar dev\| Ns Oo Ns Ic \&, Ns Ar speed Oc
-[Not available for 
+[Not available for
 .Xr x86/dosboot 8 ]
 Immediately switch the console to the specified device
 .Ar dev
@@ -417,7 +417,7 @@ video modes. If an argument is given, select a video mode.
 .It Ic help
 Print an overview about commands and arguments.
 .It Ic load Ar module Op Ar arguments
-[Not available for 
+[Not available for
 .Xr x86/dosboot 8 ]
 Load the specified kernel
 .Ar module ,
@@ -664,7 +664,7 @@ otherwise a crash occurs at boot time.
 Copy the kernel at ELF header load address, this is the historical
 behavior.
 .It Va none
-Leave the kernel where it was loaded and start it as is. 
+Leave the kernel where it was loaded and start it as is.
 .It Va address
 Copy the kernel at given
 .Va address .
@@ -719,8 +719,8 @@ PIC.
 .It Ic text Op Va mode_index
 [Only available UEFI boot] Without argument, list the available
 text modes (displayed as column x line in hexadecimal, therefore
-.Li 50x19 
-means 
+.Li 50x19
+means
 .Li 80
 columns and
 .Li 25
