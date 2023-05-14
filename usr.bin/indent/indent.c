@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.265 2023/05/14 11:29:23 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.266 2023/05/14 12:12:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -37,16 +37,8 @@
  * SUCH DAMAGE.
  */
 
-#if 0
-static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
-#endif
-
 #include <sys/cdefs.h>
-#if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.265 2023/05/14 11:29:23 rillig Exp $");
-#elif defined(__FreeBSD__)
-__FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
-#endif
+__RCSID("$NetBSD: indent.c,v 1.266 2023/05/14 12:12:02 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>

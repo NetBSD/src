@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.76 2023/05/14 11:29:23 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.77 2023/05/14 12:12:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -37,16 +37,8 @@
  * SUCH DAMAGE.
  */
 
-#if 0
-static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
-#endif
-
 #include <sys/cdefs.h>
-#if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.76 2023/05/14 11:29:23 rillig Exp $");
-#elif defined(__FreeBSD__)
-__FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
-#endif
+__RCSID("$NetBSD: args.c,v 1.77 2023/05/14 12:12:02 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 

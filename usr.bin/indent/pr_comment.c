@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.132 2023/05/13 14:30:48 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.133 2023/05/14 12:12:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -37,16 +37,8 @@
  * SUCH DAMAGE.
  */
 
-#if 0
-static char sccsid[] = "@(#)pr_comment.c	8.1 (Berkeley) 6/6/93";
-#endif
-
 #include <sys/cdefs.h>
-#if defined(__NetBSD__)
-__RCSID("$NetBSD: pr_comment.c,v 1.132 2023/05/13 14:30:48 rillig Exp $");
-#elif defined(__FreeBSD__)
-__FBSDID("$FreeBSD: head/usr.bin/indent/pr_comment.c 334927 2018-06-10 16:44:18Z pstef $");
-#endif
+__RCSID("$NetBSD: pr_comment.c,v 1.133 2023/05/14 12:12:02 rillig Exp $");
 
 #include <assert.h>
 #include <stdio.h>
