@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.164 2023/05/14 14:14:07 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.165 2023/05/14 22:26:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.164 2023/05/14 14:14:07 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.165 2023/05/14 22:26:37 rillig Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -190,7 +190,6 @@ output_line_label(void)
 
     while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	lab.e--;
-    *lab.e = '\0';
 
     ind = output_indent(0, compute_label_indent());
     output_range(lab.s, lab.e);
@@ -304,9 +303,9 @@ output_complete_line(char line_terminator)
     ps.in_stmt_cont = ps.in_stmt_or_decl && !ps.in_decl;
     ps.decl_indent_done = false;
 
-    *(lab.e = lab.s) = '\0';	/* reset buffers */
-    *(code.e = code.s) = '\0';
-    *(com.e = com.s = com.mem + 1) = '\0';
+    lab.e = lab.s;		/* reset buffers */
+    code.e = code.s;
+    com.e = com.s = com.mem + 1;
 
     ps.ind_level = ps.ind_level_follow;
     ps.line_start_nparen = ps.nparen;

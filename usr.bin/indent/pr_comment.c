@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.138 2023/05/14 18:05:52 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.139 2023/05/14 22:26:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.138 2023/05/14 18:05:52 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.139 2023/05/14 22:26:37 rillig Exp $");
 
 #include <string.h>
 
@@ -59,14 +59,6 @@ com_add_delim(void)
 	return;
     const char *delim = " * ";
     buf_add_range(&com, delim, delim + 3);
-}
-
-static void
-com_terminate(void)
-{
-    if (1 >= com.limit - com.e)
-	buf_expand(&com, 1);
-    *com.e = '\0';
 }
 
 static bool
@@ -241,14 +233,13 @@ copy_comment_wrap(int line_length, bool delim)
 		    com_add_char(' ');
 		com_add_char('*');
 		com_add_char('/');
-		com_terminate();
 		return;
 
 	    } else		/* handle isolated '*' */
 		com_add_char('*');
 	    break;
 
-	default:		/* we have a random char */
+	default:
 	    ;
 	    int now_len = ind_add(ps.com_ind, com.s, com.e);
 	    for (;;) {
@@ -294,10 +285,8 @@ copy_comment_nowrap(void)
 {
     for (;;) {
 	if (inp_peek() == '\n') {
-	    if (token.e[-1] == '/') {
-		com_terminate();
+	    if (token.e[-1] == '/')
 		return;
-	    }
 
 	    if (had_eof) {
 		diag(1, "Unterminated comment");
@@ -314,10 +303,8 @@ copy_comment_nowrap(void)
 	}
 
 	com_add_char(inp_next());
-	if (com.e[-2] == '*' && com.e[-1] == '/' && token.e[-1] == '*') {
-	    com_terminate();
+	if (com.e[-2] == '*' && com.e[-1] == '/' && token.e[-1] == '*')
 	    return;
-	}
     }
 }
 
