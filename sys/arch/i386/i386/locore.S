@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.194 2023/03/03 14:32:27 riastradh Exp $	*/
+/*	$NetBSD: locore.S,v 1.195 2023/05/14 09:05:38 riastradh Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.194 2023/03/03 14:32:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.195 2023/05/14 09:05:38 riastradh Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -279,7 +279,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.194 2023/03/03 14:32:27 riastradh Exp $
 	ELFNOTE(Xen, XEN_ELFNOTE_FEATURES,       .asciz, "writable_descriptor_tables|auto_translated_physmap|supervisor_mode_kernel|hvm_callback_vector")
 	ELFNOTE(Xen, XEN_ELFNOTE_PAE_MODE,       .asciz, "yes")
 	ELFNOTE(Xen, XEN_ELFNOTE_L1_MFN_VALID,   .quad,  PTE_P, PTE_P)\
-	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,         .asciz, "generic")     
+	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,         .asciz, "generic")
 	ELFNOTE(Xen, XEN_ELFNOTE_SUSPEND_CANCEL, .long,  0)
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	ELFNOTE(Xen, XEN_ELFNOTE_BSD_SYMTAB,     .asciz, "yes")
@@ -378,8 +378,8 @@ _C_LABEL(Multiboot2_Header):
 	.long	efi_multiboot2_loader - KERNBASE
 	.long   0	/* pad for 8 bytes alignment */
 
-#if notyet 
-	/* 
+#if notyet
+	/*
 	 * Could be used to get an early console for debug,
 	 * but this is broken.
 	 */
@@ -421,12 +421,12 @@ efi_multiboot2_loader:
 	/*
 	 * EFI32 multiboot2 entry point. We are left here without
 	 * stack and with no idea of where we were loaded in memory.
-	 * The only inputs are 
+	 * The only inputs are
 	 * %eax MULTIBOOT2_BOOTLOADER_MAGIC
 	 * %ebx pointer to multiboot_info
 	 *
 	 * Here we will copy the kernel to 0x100000 (KERNTEXTOFF - KERNBASE)
-	 * as almost all the code in locore.S assume it is there. Once done, 
+	 * as almost all the code in locore.S assume it is there. Once done,
 	 * we join the main start code .This is derived from
 	 * src/sys/arch/i386/stand/efiboot/bootia32/startprog32.S
 	 */
@@ -447,7 +447,7 @@ next:	popl	%edx
 	 * overwrite it.
 	 */
 	movl	%ebx, (multiboot2_info_ptr - efi_multiboot2_loader)(%edx)
- 
+
 	/*
 	 * Get relocated multiboot2_loader entry point in %ebx
 	 */
@@ -455,13 +455,13 @@ next:	popl	%edx
 	addl	$(multiboot2_loader - start), %ebx
 
         /* Copy kernel */
-        movl    $(KERNTEXTOFF - KERNBASE), %edi		/* dest */ 
+        movl    $(KERNTEXTOFF - KERNBASE), %edi		/* dest */
         movl    %edx, %esi
 	subl	$(efi_multiboot2_loader - start), %esi	/* src */
 	movl	$(__kernel_end - kernel_text), %ecx	/* size */
 #if defined(NO_OVERLAP)
         movl    %ecx, %eax
-#else 
+#else
         movl    %edi, %eax
         subl    %esi, %eax
         cmpl    %ecx, %eax      /* overlapping? */
@@ -1064,7 +1064,7 @@ begin:
 	 * we saved before from C code.  Note that we cannot delay its
 	 * parsing any more because initgdt (called below) needs to make
 	 * use of this information.
-	 * We call both multiboot 1 and 2 flavors, they now if they 
+	 * We call both multiboot 1 and 2 flavors, they now if they
 	 * have something to do on their own.
 	 */
 	call	_C_LABEL(multiboot1_post_reloc)
@@ -1175,10 +1175,10 @@ ENTRY(start_xenpvh)
 	jmp     $GSEL(GCODE_SEL, SEL_KPL), $RELOC(.Lreload_cs)
 
 .Lreload_cs:
-	movw    $GSEL(GDATA_SEL, SEL_KPL), %ax          
+	movw    $GSEL(GDATA_SEL, SEL_KPL), %ax
 	movw    %ax, %ds
 	movw    %ax, %es
-	movw    %ax, %ss   
+	movw    %ax, %ss
 
 	/* we need a valid stack */
 	movl	$RELOC(tmpstk),%esp

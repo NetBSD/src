@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.220 2023/05/05 00:34:41 manu Exp $	*/
+/*	$NetBSD: locore.S,v 1.221 2023/05/14 09:05:39 riastradh Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -313,7 +313,7 @@
 	ELFNOTE(Xen, XEN_ELFNOTE_FEATURES,       .asciz, "writable_descriptor_tables|auto_translated_physmap|supervisor_mode_kernel|hvm_callback_vector")
 	ELFNOTE(Xen, XEN_ELFNOTE_PAE_MODE,       .asciz, "yes")
 	ELFNOTE(Xen, XEN_ELFNOTE_L1_MFN_VALID,   .long,  PTE_P, PTE_P)\
-	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,         .asciz, "generic")     
+	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,         .asciz, "generic")
 	ELFNOTE(Xen, XEN_ELFNOTE_SUSPEND_CANCEL, .long,  0)
 #if NKSYMS > 0 || defined(DDB) || defined(MODULAR)
 	ELFNOTE(Xen, XEN_ELFNOTE_BSD_SYMTAB,     .asciz, "yes")
@@ -428,11 +428,11 @@ gdtdesc32:
 	.word	gdt32end - gdt32
 	.long	RELOC(gdt32)
 	.long	0
-gdt32:  
+gdt32:
 	.long	0			# null descriptor
 	.long	0
 	.long	0x0000ffff		# %cs
-	.long	0x00cf9a00 
+	.long	0x00cf9a00
 	.long	0x0000ffff		# %ds, %es, %ss
 	.long	0x00cf9200
 gdt32end:
@@ -460,7 +460,7 @@ ENTRY(start)
 #ifdef SELFRELOC
 	call	next
 next:	pop	%edi
-	sub     $(next - kernel_text), %edi 
+	sub     $(next - kernel_text), %edi
 
 	/* If not KERNBASE, reloc ourselves to KERNBASE */
 	cmpl	$(KERNTEXTOFF_LO - KERNBASE_LO), %edi
@@ -1028,10 +1028,10 @@ ENTRY(start_xen32)
 	jmp     $GSEL(GCODE_SEL, SEL_KPL), $RELOC(.Lreload_cs)
 
 .Lreload_cs:
-	movw    $GSEL(GDATA_SEL, SEL_KPL), %ax          
+	movw    $GSEL(GDATA_SEL, SEL_KPL), %ax
 	movw    %ax, %ds
 	movw    %ax, %es
-	movw    %ax, %ss   
+	movw    %ax, %ss
 
 	/* we need a valid stack */
 	movl	$RELOC(tmpstk),%esp
@@ -1784,7 +1784,7 @@ ENTRY(selfreloc_start)
 
 #if defined(NO_OVERLAP)
         movl    %ecx, %eax
-#else 
+#else
         movl    %edi, %eax
         subl    %esi, %eax
         cmpl    %ecx, %eax      /* overlapping? */
