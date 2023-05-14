@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.7 2023/05/13 16:40:18 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.8 2023/05/14 17:53:38 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -1066,10 +1066,10 @@ line 4
 join*/
 //indent end
 
-/* FIXME: The last line of the first comment must not be modified. */
 //indent run -nfc1
 /*
-  *//*
+ */
+ /*
   * join
   */
 //indent end
@@ -1088,7 +1088,8 @@ error*/
 
 //indent run -nfc1
 /*
- *//*
+*/
+ /*
   * error
   */
 //indent end
