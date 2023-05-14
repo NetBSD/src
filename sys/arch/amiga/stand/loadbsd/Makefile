@@ -1,14 +1,17 @@
-#	$NetBSD: Makefile,v 1.4 2022/09/06 17:50:18 phx Exp $
-#
+#	$NetBSD: Makefile,v 1.5 2023/05/14 16:13:05 phx Exp $
+# Set sdkprefix to your gcc-amiga toolchain as needed.
 TARGET	= loadbsd
 
-sdkprefix = 
+sdkprefix =
 CC	= $(sdkprefix)gcc
 CFLAGS	= -D_STANDALONE -DNO_MID_CHECK -I./include -Os -fomit-frame-pointer -msmall-code -m68020
-LDFLAGS	= -noixemul
+AS	= $(sdkprefix)as
+ASFLAGS	=
+#LDFLAGS	= -noixemul
+LDFLAGS	= -mcrt=nix20
 LDLIBS	=
 
-OBJS	= loadbsd.o loadfile.o loadfile_aout.o loadfile_elf32.o getopt.o
+OBJS	= loadbsd.o startit.o loadfile.o loadfile_aout.o loadfile_elf32.o
 
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
