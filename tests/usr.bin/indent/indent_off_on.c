@@ -1,4 +1,4 @@
-/* $NetBSD: indent_off_on.c,v 1.9 2023/05/11 18:13:55 rillig Exp $ */
+/* $NetBSD: indent_off_on.c,v 1.10 2023/05/14 17:53:38 rillig Exp $ */
 
 /*
  * Tests for the comments 'INDENT OFF' and 'INDENT ON', which temporarily
@@ -223,9 +223,10 @@ void indent_still_off ( void ) ;	/* due to the extra '*' at the end */
 void		indent_on(void);
 /* INDENT: OFF */
 void		indent_still_on(void);	/* due to the colon in the middle */
-/* $ The extra comment got moved to the left since there is no code in */
-/* $ that line. */
-/* INDENT OFF *//* extra comment */
+/* $ The extra comment got moved to a separate line, but indenting is still */
+/* $ off because the 'INDENT OFF' comment was not in a line of its own. */
+/* INDENT OFF */
+/* extra comment */
 void		indent_still_on(void);	/* due to the extra comment to the
 					 * right */
 //indent end

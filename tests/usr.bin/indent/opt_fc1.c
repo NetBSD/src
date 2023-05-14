@@ -1,4 +1,4 @@
-/* $NetBSD: opt_fc1.c,v 1.10 2023/05/14 17:13:37 rillig Exp $ */
+/* $NetBSD: opt_fc1.c,v 1.11 2023/05/14 17:53:38 rillig Exp $ */
 
 /*
  * Tests for the options '-fc1' and '-nfc1'.
@@ -41,11 +41,11 @@
 /* $ Indented by a single tab, single tabs around the text. */
 	/*	indented tab	*/
 
-/* $ The space between these comments gets removed. */
-/* block1 */ /* block2 */
+/* $ The second comment is moved to a separate line. */
+/* col1 space-padded */ /* space-padded */
 
 /* $ Both comment texts get surrounded by spaces. */
-/*block1*//*block2*/
+/*col1 no-padding*//*no-padding*/
 //indent end
 
 //indent run -fc1
@@ -58,11 +58,13 @@
 /* $ The indentation got removed. */
 /*	indented tab	*/
 
-/* $ The space between these comments got removed. */
-/* block1 *//* block2 */
+/* $ Each comment got its separate line. */
+/* col1 space-padded */
+/* space-padded */
 
 /* $ Both comment texts got surrounded by spaces. */
-/* block1 *//* block2 */
+/* col1 no-padding */
+/* no-padding */
 //indent end
 
 //indent run -nfc1
@@ -78,21 +80,15 @@
 /* $ The indentation was changed from a single tab to a single space. */
  /*	indented tab	*/
 
-/* $ The space between these two comments got removed. */
-/* $ XXX: The option '-nfc1' says that comments in column 1 do not get */
-/* $ formatted, but the comment 'block1' was moved from column 1 to 2. */
-/* $ This is probably because there is a second comment in the same line. */
- /* block1 *//* block2 */
+/* $ The second comment moved to a separate line. */
+/* col1 space-padded */
+ /* space-padded */
 
-/* $ It may seem strange at first that the left comment is not touched */
-/* $ but the right comment gets spaces added. This difference is the */
-/* $ exact purpose of the option '-nfc1', which says "do not touch comments */
-/* $ that start in column 1. The first comment starts in column 1, the */
-/* $ second comment doesn't. */
-/* $ XXX: The option '-nfc1' says that comments in column 1 do not get */
-/* $ formatted, but the comment 'block1' was moved from column 1 to 2. */
-/* $ This is probably because there is a second comment in the same line. */
- /*block1*//* block2 */
+/* $ The 'col1' comment starts in column 1 and is thus not modified. */
+/* $ The second comment started further to the right and thus was modified */
+/* $ by moving it to a separate line, but not to column 1. */
+/*col1 no-padding*/
+ /* no-padding */
 //indent end
 
 
@@ -112,17 +108,18 @@
 //indent run -fc1
 /*
  * A multi-line comment that starts in column 1.
- *//*
+ */
+/*
  * followed by another multi-line comment that starts in column 4.
  */
 //indent end
 
-/* FIXME: The last line of the first comment must not be modified. */
 //indent run -nfc1
 /*
  * A multi-line comment that starts
  * in column 1.
-  *//*
+ */
+ /*
   * followed by another multi-line comment that starts in column 4.
   */
 //indent end

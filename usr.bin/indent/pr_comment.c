@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.136 2023/05/14 17:13:37 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.137 2023/05/14 17:53:38 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.136 2023/05/14 17:13:37 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.137 2023/05/14 17:53:38 rillig Exp $");
 
 #include <string.h>
 
@@ -107,18 +107,13 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
 	    break_delim = false;
 	}
 
-	/*
-	 * XXX: This condition looks suspicious since it ignores the case
-	 * where the end of the previous comment is still in 'com'.
-	 *
-	 * See test lsym_comment.c, keyword 'analyze_comment'.
-	 */
+	if (com.e != com.s)
+	    output_line();
 	if (lab.s == lab.e && code.s == code.e) {
 	    adj_max_line_length = opt.block_comment_max_line_length;
 	    com_ind = (ps.ind_level - opt.unindent_displace) * opt.indent_size;
 	    if (com_ind <= 0)
 		com_ind = opt.format_col1_comments ? 0 : 1;
-
 	} else {
 	    break_delim = false;
 
