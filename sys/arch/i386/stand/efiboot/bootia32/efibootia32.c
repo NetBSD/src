@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootia32.c,v 1.6 2023/04/20 00:42:24 manu Exp $	*/
+/*	$NetBSD: efibootia32.c,v 1.7 2023/05/14 09:07:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -60,7 +60,7 @@ efi_md_init(void)
         addr = EFI_ALLOCATE_MAX_ADDRESS;
         sz = EFI_SIZE_TO_PAGES(multiboot32_size);
         status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
-            EfiLoaderData, sz, &addr); 
+            EfiLoaderData, sz, &addr);
         if (EFI_ERROR(status))
                 panic("%s: AllocatePages() failed: %d page(s): %" PRIxMAX,
                     __func__, sz, (uintmax_t)status);
