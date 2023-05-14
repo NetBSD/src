@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.807 2023/02/11 22:41:15 nia Exp $
+$NetBSD: usbdevs,v 1.808 2023/05/14 22:30:13 pgoyette Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -2729,6 +2729,7 @@ product PINNACLE PCTV73E	0x0237	Pinnacle PCTV 73e
 
 /* PixArt */
 product PIXART RPIMOUSE		0x2510	Raspberry Pi Mouse
+product LENOVO OPTUSBMOUSE	0x600e	Lenovo USB Optical Mouse
 
 /* Planex Communications products */
 product PLANEX  GW_US11H	0x14ea	GW-US11H WLAN
