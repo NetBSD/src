@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.129 2023/05/14 11:29:23 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.130 2023/05/14 12:12:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -63,10 +63,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if 0
-__FBSDID("$FreeBSD: head/usr.bin/indent/indent.h 336333 2018-07-16 05:46:50Z pstef $");
-#endif
 
 #include <ctype.h>
 #include <stdbool.h>
