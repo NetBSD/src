@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.137 2023/05/14 17:53:38 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.138 2023/05/14 18:05:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.137 2023/05/14 17:53:38 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.138 2023/05/14 18:05:52 rillig Exp $");
 
 #include <string.h>
 
@@ -83,54 +83,50 @@ fits_in_one_line(int com_ind, int max_line_length)
 }
 
 static void
-analyze_comment(bool *p_may_wrap, bool *p_break_delim,
-    int *p_adj_max_line_length)
+analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 {
-    int adj_max_line_length;	/* Adjusted max_line_length for comments that
-				 * spill over the right margin */
-    bool break_delim = opt.comment_delimiter_on_blankline;
-    int com_ind;
-
-    adj_max_line_length = opt.max_line_length;
     bool may_wrap = true;
+    bool delim = opt.comment_delimiter_on_blankline;
+    int ind;
+    int line_length = opt.max_line_length;
 
     if (ps.curr_col_1 && !opt.format_col1_comments) {
 	may_wrap = false;
-	break_delim = false;
-	com_ind = 0;
+	delim = false;
+	ind = 0;
 
     } else {
 	if (inp_peek() == '-' || inp_peek() == '*' ||
 		token.e[-1] == '/' ||
 		(inp_peek() == '\n' && !opt.format_block_comments)) {
 	    may_wrap = false;
-	    break_delim = false;
+	    delim = false;
 	}
 
 	if (com.e != com.s)
 	    output_line();
 	if (lab.s == lab.e && code.s == code.e) {
-	    adj_max_line_length = opt.block_comment_max_line_length;
-	    com_ind = (ps.ind_level - opt.unindent_displace) * opt.indent_size;
-	    if (com_ind <= 0)
-		com_ind = opt.format_col1_comments ? 0 : 1;
+	    ind = (ps.ind_level - opt.unindent_displace) * opt.indent_size;
+	    if (ind <= 0)
+		ind = opt.format_col1_comments ? 0 : 1;
+	    line_length = opt.block_comment_max_line_length;
 	} else {
-	    break_delim = false;
+	    delim = false;
 
 	    int target_ind = code.s != code.e
 		? ind_add(compute_code_indent(), code.s, code.e)
 		: ind_add(compute_label_indent(), lab.s, lab.e);
 
-	    com_ind = ps.decl_on_line || ps.ind_level == 0
+	    ind = ps.decl_on_line || ps.ind_level == 0
 		? opt.decl_comment_column - 1 : opt.comment_column - 1;
-	    if (com_ind <= target_ind)
-		com_ind = next_tab(target_ind);
-	    if (com_ind + 25 > adj_max_line_length)
-		adj_max_line_length = com_ind + 25;
+	    if (ind <= target_ind)
+		ind = next_tab(target_ind);
+	    if (ind + 25 > line_length)
+		line_length = ind + 25;
 	}
     }
 
-    ps.com_ind = com_ind;
+    ps.com_ind = ind;
 
     if (!may_wrap) {
 	/*
@@ -152,16 +148,16 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
     if (may_wrap && !ch_isblank(inp_peek()))
 	com_add_char(' ');
 
-    if (break_delim && fits_in_one_line(com_ind, adj_max_line_length))
-	break_delim = false;
+    if (delim && fits_in_one_line(ind, line_length))
+	delim = false;
 
-    if (break_delim) {
+    if (delim) {
 	output_line();
 	com_add_delim();
     }
 
-    *p_adj_max_line_length = adj_max_line_length;
-    *p_break_delim = break_delim;
+    *p_line_length = line_length;
+    *p_delim = delim;
     *p_may_wrap = may_wrap;
 }
 
@@ -172,7 +168,7 @@ analyze_comment(bool *p_may_wrap, bool *p_break_delim,
  * copying.
  */
 static void
-copy_comment_wrap(int adj_max_line_length, bool break_delim)
+copy_comment_wrap(int line_length, bool delim)
 {
     ssize_t last_blank = -1;	/* index of the last blank in com.mem */
 
@@ -233,7 +229,7 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 	end_of_comment:
 		inp_skip();
 
-		if (break_delim) {
+		if (delim) {
 		    if (com.e - com.s > 3)
 			output_line();
 		    else
@@ -263,13 +259,13 @@ copy_comment_wrap(int adj_max_line_length, bool break_delim)
 		now_len++;
 		if (memchr("*\n\r\b\t", inp_peek(), 6) != NULL)
 		    break;
-		if (now_len >= adj_max_line_length && last_blank != -1)
+		if (now_len >= line_length && last_blank != -1)
 		    break;
 	    }
 
 	    ps.next_col_1 = false;
 
-	    if (now_len <= adj_max_line_length)
+	    if (now_len <= line_length)
 		break;
 	    if (ch_isspace(com.e[-1]))
 		break;
@@ -332,12 +328,12 @@ copy_comment_nowrap(void)
 void
 process_comment(void)
 {
-    int adj_max_line_length;
-    bool may_wrap, break_delim;
+    int line_length;
+    bool may_wrap, delim;
 
-    analyze_comment(&may_wrap, &break_delim, &adj_max_line_length);
+    analyze_comment(&may_wrap, &delim, &line_length);
     if (may_wrap)
-	copy_comment_wrap(adj_max_line_length, break_delim);
+	copy_comment_wrap(line_length, delim);
     else
 	copy_comment_nowrap();
 }
