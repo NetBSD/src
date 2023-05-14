@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.183 2023/05/14 14:14:07 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.184 2023/05/14 22:26:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.183 2023/05/14 14:14:07 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.184 2023/05/14 22:26:37 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -381,14 +381,11 @@ lexi_alnum(void)
 	    ps.next_unary = false;
 
 	    check_size_token(1);
-	    *token.e = '\0';
 
 	    return lsym_word;
 	}
     } else
 	return lsym_eof;	/* just as a placeholder */
-
-    *token.e = '\0';
 
     while (ch_isblank(inp_peek()))
 	inp_skip();
@@ -398,6 +395,8 @@ lexi_alnum(void)
     if (ps.prev_token == lsym_tag && ps.nparen == 0)
 	return lsym_type_outside_parentheses;
 
+    token_add_char('\0');
+    token.e--;
     const struct keyword *kw = bsearch(token.s, keywords,
 	array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
     bool is_type = false;
@@ -509,7 +508,6 @@ lexi(void)
 
     check_size_token(3);	/* for things like "<<=" */
     *token.e++ = inp_next();
-    *token.e = '\0';
 
     lexer_symbol lsym;
     bool next_unary;
@@ -582,10 +580,8 @@ lexi(void)
     case '=':
 	if (ps.init_or_struct)
 	    ps.block_init = true;
-	if (inp_peek() == '=') {	/* == */
+	if (inp_peek() == '=')
 	    *token.e++ = inp_next();
-	    *token.e = '\0';
-	}
 	lsym = lsym_binary_op;
 	next_unary = true;
 	break;
@@ -638,7 +634,6 @@ lexi(void)
     ps.next_unary = next_unary;
 
     check_size_token(1);
-    *token.e = '\0';
 
     return lexi_end(lsym);
 }

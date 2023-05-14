@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.131 2023/05/14 14:14:07 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.132 2023/05/14 22:26:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -123,7 +123,7 @@ typedef enum parser_symbol {
     psym_while_expr,		/* 'while' '(' expr ')' */
 } parser_symbol;
 
-/* A range of characters, in some cases null-terminated. */
+/* A range of characters, not null-terminated. */
 struct buffer {
     char *s;			/* start of the usable text */
     char *e;			/* end of the usable text */

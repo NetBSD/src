@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.266 2023/05/14 12:12:02 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.267 2023/05/14 22:26:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.266 2023/05/14 12:12:02 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.267 2023/05/14 22:26:37 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -109,7 +109,6 @@ buf_init(struct buffer *buf)
     buf->s = buf->mem + 1;	/* allow accessing buf->e[-1] */
     buf->e = buf->s;
     buf->mem[0] = ' ';
-    buf->e[0] = '\0';
 }
 
 static size_t
@@ -127,7 +126,6 @@ buf_expand(struct buffer *buf, size_t add_size)
     buf->limit = buf->mem + new_size - 5;
     buf->s = buf->mem + 1;
     buf->e = buf->s + len;
-    /* At this point, the buffer may not be null-terminated anymore. */
 }
 
 static void
@@ -157,13 +155,6 @@ static void
 buf_add_buf(struct buffer *buf, const struct buffer *add)
 {
     buf_add_range(buf, add->s, add->e);
-}
-
-static void
-buf_terminate(struct buffer *buf)
-{
-    buf_reserve(buf, 1);
-    *buf->e = '\0';
 }
 
 static void
@@ -356,7 +347,7 @@ code_add_decl_indent(int decl_ind, bool tabs_to_var)
     int base_ind = ps.ind_level * opt.indent_size;
     int ind = base_ind + (int)buf_len(&code);
     int target_ind = base_ind + decl_ind;
-    char *orig_code_e = code.e;
+    const char *orig_code_e = code.e;
 
     if (tabs_to_var)
 	for (int next; (next = next_tab(ind)) <= target_ind; ind = next)
@@ -407,7 +398,6 @@ move_com_to_code(void)
 	buf_add_char(&code, ' ');
     buf_add_buf(&code, &com);
     buf_add_char(&code, ' ');
-    buf_terminate(&code);
     buf_reset(&com);
     ps.want_blank = false;
 }
@@ -610,7 +600,6 @@ process_colon(void)
 
     buf_add_buf(&lab, &code);	/* 'case' or 'default' or named label */
     buf_add_char(&lab, ':');
-    buf_terminate(&lab);
     buf_reset(&code);
 
     ps.in_stmt_or_decl = false;
@@ -827,12 +816,10 @@ process_ident(lexer_symbol lsym)
     if (ps.in_decl) {
 	if (lsym == lsym_funcname) {
 	    ps.in_decl = false;
-	    if (opt.procnames_start_line && code.s != code.e) {
-		*code.e = '\0';
+	    if (opt.procnames_start_line && code.s != code.e)
 		output_line();
-	    } else if (ps.want_blank) {
+	    else if (ps.want_blank)
 		*code.e++ = ' ';
-	    }
 	    ps.want_blank = false;
 
 	} else if (!ps.block_init && !ps.decl_indent_done &&
@@ -936,7 +923,6 @@ read_preprocessing_line(void)
 
     while (lab.e > lab.s && ch_isblank(lab.e[-1]))
 	lab.e--;
-    buf_terminate(&lab);
 }
 
 typedef struct {
@@ -1167,7 +1153,6 @@ main_loop(void)
 	    break;
 	}
 
-	*code.e = '\0';
 	if (lsym != lsym_comment && lsym != lsym_newline &&
 		lsym != lsym_preprocessing)
 	    ps.prev_token = lsym;
