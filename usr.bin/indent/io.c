@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.161 2023/05/13 17:20:41 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.162 2023/05/14 11:29:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,14 +43,13 @@ static char sccsid[] = "@(#)io.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: io.c,v 1.161 2023/05/13 17:20:41 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.162 2023/05/14 11:29:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/io.c 334927 2018-06-10 16:44:18Z pstef $");
 #endif
 
 #include <assert.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 #include "indent.h"
@@ -350,19 +349,19 @@ output_line_ff(void)
 static int
 compute_code_indent_lineup(int base_ind)
 {
-    int ti = paren_indent;
-    int overflow = ind_add(ti, code.s, code.e) - opt.max_line_length;
+    int ind = paren_indent;
+    int overflow = ind_add(ind, code.s, code.e) - opt.max_line_length;
     if (overflow < 0)
-	return ti;
+	return ind;
 
     if (ind_add(base_ind, code.s, code.e) < opt.max_line_length) {
-	ti -= overflow + 2;
-	if (ti > base_ind)
-	    return ti;
+	ind -= overflow + 2;
+	if (ind > base_ind)
+	    return ind;
 	return base_ind;
     }
 
-    return ti;
+    return ind;
 }
 
 int

@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.27 2023/05/13 16:40:18 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.28 2023/05/14 11:29:23 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -181,15 +181,15 @@ atf_test_case 'option_special_missing_param'
 option_special_missing_param_body()
 {
 	expect_error \
-	    'indent: Command line: ``-cli'\'\'' requires an argument' \
+	    'indent: Command line: option "-cli" requires an argument' \
 	    -cli
 
 	expect_error \
-	    'indent: Command line: ``-T'\'\'' requires an argument' \
+	    'indent: Command line: option "-T" requires an argument' \
 	    -T
 
 	expect_error \
-	    'indent: Command line: ``-U'\'\'' requires an argument' \
+	    'indent: Command line: option "-U" requires an argument' \
 	    -U
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.180 2023/05/14 11:02:53 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.181 2023/05/14 11:29:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)lexi.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: lexi.c,v 1.180 2023/05/14 11:02:53 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.181 2023/05/14 11:29:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef $");
 #endif
@@ -53,10 +53,7 @@ __FBSDID("$FreeBSD: head/usr.bin/indent/lexi.c 337862 2018-08-15 18:19:45Z pstef
 
 #include "indent.h"
 
-/*
- * While inside lexi_alnum, this constant just marks a type, independently of
- * the parentheses level.
- */
+/* In lexi_alnum, this constant marks a type, independent of parentheses. */
 #define lsym_type lsym_type_outside_parentheses
 
 /* must be sorted alphabetically, is used in binary search */

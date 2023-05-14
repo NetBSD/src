@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.128 2023/05/13 15:34:22 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.129 2023/05/14 11:29:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -188,13 +188,12 @@ extern struct options {
 				 * "for (e; e; e)" should be indented an extra
 				 * tab stop so that they don't conflict with
 				 * the code that follows */
-    bool else_if;		/* whether else-if pairs should be handled
-				 * specially */
+    bool else_if;		/* whether else-if pairs use the same line */
     bool function_brace_split;	/* split function declaration and brace onto
 				 * separate lines */
     bool format_col1_comments;	/* If comments which start in column 1 are to
-				 * be magically reformatted (just like
-				 * comments that begin in later columns) */
+				 * be reformatted (just like comments that
+				 * begin in later columns) */
     bool format_block_comments;	/* whether comments beginning with '/ * \n'
 				 * are to be reformatted */
     bool indent_parameters;
@@ -247,11 +246,26 @@ typedef struct paren_level_props {
 				 * form a type cast */
 } paren_level_props;
 
+/*
+ * The parser state determines the layout of the formatted text.
+ *
+ * In a function body, the number of block braces determines the indentation
+ * of statements and declarations.
+ *
+ * In a statement, the number of parentheses or brackets determines the
+ * indentation of follow-up lines.
+ *
+ * In an expression, the token type determine whether to put spaces around.
+ *
+ * In a source file, the types of line determine the vertical spacing, such as
+ * around preprocessing directives or function bodies, or above block
+ * comments.
+ */
 extern struct parser_state {
     lexer_symbol prev_token;	/* the previous token, but never comment,
 				 * newline or preprocessing line */
     bool curr_col_1;		/* whether the current token started in column
-				 * 1 of the unformatted input */
+				 * 1 of the original input */
     bool next_col_1;
     bool next_unary;		/* whether the following operator should be
 				 * unary; is used in declarations for '*', as
@@ -263,9 +277,8 @@ extern struct parser_state {
 				 * prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
 
-    bool force_nl;		/* when true, the following token goes to the
-				 * next line, unless it is a '{' and
-				 * opt.brace_same_line is set. */
+    bool force_nl;		/* whether the next token goes to a new
+				 * line */
 
     int line_start_nparen;	/* the number of parentheses or brackets that
 				 * were already open at the beginning of the
@@ -286,13 +299,12 @@ extern struct parser_state {
     int com_ind;		/* indentation of the current comment */
 
     bool block_init;		/* whether inside a block initialization */
-    int block_init_level;	/* The level of brace nesting in an
+    int block_init_level;	/* the level of brace nesting in an
 				 * initialization */
-    bool init_or_struct;	/* whether there has been a declarator (e.g.
-				 * int or char) and no left parenthesis since
-				 * the last semicolon. When true, a '{' is
-				 * starting a structure definition or an
-				 * initialization list */
+    bool init_or_struct;	/* whether there has been a type name and no
+				 * left parenthesis since the last semicolon.
+				 * When true, a '{' starts a structure
+				 * definition or an initialization list */
 
     int ind_level;		/* the indentation level for the line that is
 				 * currently prepared for output */
@@ -332,10 +344,10 @@ extern struct parser_state {
     bool in_stmt_cont;		/* whether the next line should have an extra
 				 * indentation level because we are in the
 				 * middle of a statement */
-    bool is_case_label;		/* 'case' and 'default' labels are indented
-				 * differently from regular labels */
     bool seen_case;		/* set to true when we see a 'case', so we
 				 * know what to do with the following colon */
+    bool is_case_label;		/* 'case' and 'default' labels are indented
+				 * differently from regular labels */
 
     int tos;			/* pointer to top of stack */
     parser_symbol s_sym[STACKSIZE];
@@ -390,7 +402,7 @@ void inp_skip(void);
 char inp_next(void);
 
 lexer_symbol lexi(void);
-void diag(int, const char *, ...)__printflike(2, 3);
+void diag(int, const char *, ...) __printflike(2, 3);
 void output_line(void);
 void output_line_ff(void);
 void inp_read_line(void);
