@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.106 2023/05/14 22:30:13 pgoyette Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.107 2023/05/14 23:58:35 pgoyette Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.106 2023/05/14 22:30:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.107 2023/05/14 23:58:35 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -401,7 +401,7 @@ Static const struct usbd_quirk_entry {
 	{ UQ_ALWAYS_ON, NULL }},
  { USB_VENDOR_LOGITECH, 	USB_PRODUCT_LOGITECH_B100,		ANY,
 	{ UQ_ALWAYS_ON, NULL }},
- { USB_VENDOR_LENOVO,		USB_PRODUCT_LENOVO_OPTUSBMOUSE,		ANY,		{ UQ_ALQAYS_ON, NULL }},
+ { USB_VENDOR_LENOVO,		USB_PRODUCT_LENOVO_OPTUSBMOUSE,		ANY,		{ UQ_ALWAYS_ON, NULL }},
 /*
  * The HAILUCK USB Keyboard has a built-in touchpad, which
  * needs to be active for the keyboard to function properly.
