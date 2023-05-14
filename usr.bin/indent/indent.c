@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.264 2023/05/13 17:54:34 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.265 2023/05/14 11:29:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)indent.c	5.17 (Berkeley) 6/7/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: indent.c,v 1.264 2023/05/13 17:54:34 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.265 2023/05/14 11:29:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/indent.c 340138 2018-11-04 19:24:49Z oshogbo $");
 #endif
@@ -330,9 +330,9 @@ main_parse_command_line(int argc, char **argv)
 	opt.comment_column = 2;	/* don't put normal comments before column 2 */
     if (opt.block_comment_max_line_length <= 0)
 	opt.block_comment_max_line_length = opt.max_line_length;
-    if (opt.local_decl_indent < 0)	/* if not specified by user, set this */
+    if (opt.local_decl_indent < 0)
 	opt.local_decl_indent = opt.decl_indent;
-    if (opt.decl_comment_column <= 0)	/* if not specified by user, set this */
+    if (opt.decl_comment_column <= 0)
 	opt.decl_comment_column = opt.ljust_decl
 	    ? (opt.comment_column <= 10 ? 2 : opt.comment_column - 8)
 	    : opt.comment_column;
@@ -355,8 +355,7 @@ main_prepare_parsing(void)
 	    break;
     }
 
-    if (ind >= opt.indent_size)
-	ps.ind_level = ps.ind_level_follow = ind / opt.indent_size;
+    ps.ind_level = ps.ind_level_follow = ind / opt.indent_size;
 }
 
 static void
@@ -443,6 +442,17 @@ stay_in_line:
 }
 
 static bool
+is_function_pointer_declaration(void)
+{
+    return token.s[0] == '('
+	&& ps.in_decl
+	&& !ps.block_init
+	&& !ps.decl_indent_done
+	&& !ps.is_function_definition
+	&& ps.line_start_nparen == 0;
+}
+
+static bool
 want_blank_before_lparen(void)
 {
     if (!ps.want_blank)
@@ -469,10 +479,7 @@ process_lparen_or_lbracket(void)
 	ps.nparen--;
     }
 
-    if (token.s[0] == '(' && ps.in_decl
-	&& !ps.block_init && !ps.decl_indent_done &&
-	!ps.is_function_definition && ps.line_start_nparen == 0) {
-	/* function pointer declarations */
+    if (is_function_pointer_declaration()) {
 	code_add_decl_indent(ps.decl_ind, ps.tabs_to_var);
 	ps.decl_indent_done = true;
     } else if (want_blank_before_lparen())
@@ -499,7 +506,6 @@ process_lparen_or_lbracket(void)
 	ps.init_or_struct = false;
     }
 
-    /* parenthesized type following sizeof or offsetof is not a cast */
     if (ps.prev_token == lsym_offsetof || ps.prev_token == lsym_sizeof)
 	ps.paren[ps.nparen - 1].no_cast = true;
 }
@@ -854,14 +860,6 @@ process_ident(lexer_symbol lsym)
 }
 
 static void
-copy_token(void)
-{
-    if (ps.want_blank)
-	buf_add_char(&code, ' ');
-    buf_add_buf(&code, &token);
-}
-
-static void
 process_period(void)
 {
     if (code.e > code.s && code.e[-1] == ',')
@@ -888,11 +886,10 @@ process_comma(void)
     if (ps.nparen == 0) {
 	if (ps.block_init_level <= 0)
 	    ps.block_init = false;
-	int varname_len = 8;	/* rough estimate for the length of a typical
-				 * variable name */
+	int typical_varname_length = 8;
 	if (break_comma && (opt.break_after_comma ||
 		ind_add(compute_code_indent(), code.s, code.e)
-		>= opt.max_line_length - varname_len))
+		>= opt.max_line_length - typical_varname_length))
 	    ps.force_nl = true;
     }
 }
@@ -903,11 +900,9 @@ read_preprocessing_line(void)
 {
     enum {
 	PLAIN, STR, CHR, COMM
-    } state;
+    } state = PLAIN;
 
     buf_add_char(&lab, '#');
-
-    state = PLAIN;
 
     while (ch_isblank(inp_peek()))
 	buf_add_char(&lab, inp_next());
@@ -1036,11 +1031,11 @@ main_loop(void)
     for (;;) {			/* loop until we reach eof */
 	lexer_symbol lsym = lexi();
 
-	if (lsym == lsym_if && ps.prev_token == lsym_else && opt.else_if)
-	    ps.force_nl = false;
-
 	if (lsym == lsym_eof)
 	    return process_eof();
+
+	if (lsym == lsym_if && ps.prev_token == lsym_else && opt.else_if)
+	    ps.force_nl = false;
 
 	if (lsym == lsym_newline || lsym == lsym_form_feed ||
 		lsym == lsym_preprocessing)
@@ -1153,7 +1148,9 @@ main_loop(void)
 	case lsym_return:
 	    process_ident(lsym);
     copy_token:
-	    copy_token();
+	    if (ps.want_blank)
+		buf_add_char(&code, ' ');
+	    buf_add_buf(&code, &token);
 	    if (lsym != lsym_funcname)
 		ps.want_blank = true;
 	    break;

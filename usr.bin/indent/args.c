@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.75 2023/05/13 13:48:54 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.76 2023/05/14 11:29:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)args.c	8.1 (Berkeley) 6/6/93";
 
 #include <sys/cdefs.h>
 #if defined(__NetBSD__)
-__RCSID("$NetBSD: args.c,v 1.75 2023/05/13 13:48:54 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.76 2023/05/14 11:29:23 rillig Exp $");
 #elif defined(__FreeBSD__)
 __FBSDID("$FreeBSD: head/usr.bin/indent/args.c 336318 2018-07-15 21:04:21Z pstef $");
 #endif
@@ -125,6 +125,7 @@ static const struct pro {
     /* "U" is special */
     bool_options("ut", use_tabs),
     bool_options("v", verbose),
+    /* "-version" is special */
 };
 
 
@@ -138,7 +139,7 @@ add_typedefs_from_file(const char *fname)
 	fprintf(stderr, "indent: cannot open file %s\n", fname);
 	exit(1);
     }
-    while ((fgets(line, BUFSIZ, file)) != NULL) {
+    while ((fgets(line, sizeof(line), file)) != NULL) {
 	/* Only keep the first word of the line. */
 	line[strcspn(line, " \t\n\r")] = '\0';
 	register_typename(line);
@@ -157,7 +158,7 @@ set_special_option(const char *arg, const char *option_source)
     }
 
     if (arg[0] == 'P' || strcmp(arg, "npro") == 0)
-	return true;
+	return true;		/* see main_load_profiles */
 
     if (strncmp(arg, "cli", 3) == 0) {
 	arg_end = arg + 3;
@@ -198,7 +199,7 @@ set_special_option(const char *arg, const char *option_source)
     return false;
 
 need_arg:
-    errx(1, "%s: ``-%.*s'' requires an argument",
+    errx(1, "%s: option \"-%.*s\" requires an argument",
 	option_source, (int)(arg_end - arg), arg);
     /* NOTREACHED */
 }
@@ -277,7 +278,7 @@ load_profile(const char *fname, bool must_exist)
 		comment_ch = ch == '/' && comment_ch == '*' ? -1 : ch;
 	    } else if (ch_isspace((char)ch)) {
 		break;
-	    } else if (n >= array_length(buf) - 5) {
+	    } else if (n >= array_length(buf) - 2) {
 		errx(1, "buffer overflow in %s, starting with '%.10s'",
 		    fname, buf);
 	    } else
