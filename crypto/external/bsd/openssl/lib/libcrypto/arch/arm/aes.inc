@@ -1,13 +1,15 @@
 .include "arm.inc"
 
 .PATH.S: ${.PARSEDIR}
-AES_SRCS += aes-armv4.S aes_cbc.c
+AES_SRCS += aes-armv4.S aes_cbc.c aesv8-armx.S
 
-.if ${ARM_MAX_ARCH} >= 7
+.if ${ARM_MAX_ARCH} >= 8
+AES_SRCS+=vpaes-armv8.S
+AESCPPFLAGS += -DVPAES_ASM
+.elif ${ARM_MAX_ARCH} >= 7
 AES_SRCS+=bsaes-armv7.S
-.elif ${ARM_MAX_ARCH} >= 8
-AES_SRCS+=aesv8-armx.S
+AESCPPFLAGS += -DBSAES_ASM
 .endif
 
-AESCPPFLAGS = -DAES_ASM -DBSAES_ASM
+AESCPPFLAGS += -DAES_ASM
 .include "../../aes.inc"
