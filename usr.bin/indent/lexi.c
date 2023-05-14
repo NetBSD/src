@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.182 2023/05/14 12:12:02 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.183 2023/05/14 14:14:07 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.182 2023/05/14 12:12:02 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.183 2023/05/14 14:14:07 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -331,16 +331,16 @@ static bool
 probably_looking_at_definition(void)
 {
     int paren_level = 0;
-    for (const char *p = inp_p(), *e = inp_line_end(); p < e; p++) {
+    for (const char *p = inp_p(); *p != '\n'; p++) {
 	if (*p == '(')
 	    paren_level++;
 	if (*p == ')' && --paren_level == 0) {
 	    p++;
 
-	    while (p < e && (ch_isspace(*p) || is_identifier_part(*p)))
+	    while (*p != '\n' && (ch_isspace(*p) || is_identifier_part(*p)))
 		p++;		/* '__dead' or '__unused' */
 
-	    if (p == e)		/* func(...) */
+	    if (*p == '\n')	/* func(...) */
 		break;
 	    if (*p == ';')	/* func(...); */
 		return false;
@@ -472,21 +472,19 @@ lex_asterisk_unary(void)
     }
 
     if (ps.in_decl) {
-	const char *tp = inp_p(), *e = inp_line_end();
-
-	while (tp < e) {
+	for (const char *tp = inp_p(); *tp != '\n';) {
 	    if (ch_isspace(*tp))
 		tp++;
 	    else if (is_identifier_start(*tp)) {
 		tp++;
-		while (tp < e && is_identifier_part(*tp))
+		while (is_identifier_part(*tp))
 		    tp++;
-	    } else
+	    } else {
+		if (*tp == '(')
+		    ps.is_function_definition = true;
 		break;
+	    }
 	}
-
-	if (tp < e && *tp == '(')
-	    ps.is_function_definition = true;
     }
 }
 
