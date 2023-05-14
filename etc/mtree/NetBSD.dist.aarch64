@@ -1,6 +1,4 @@
-#	$NetBSD: NetBSD.dist.aarch64,v 1.12 2023/05/14 12:45:56 christos Exp $
+#	$NetBSD: NetBSD.dist.aarch64,v 1.13 2023/05/14 17:21:53 christos Exp $
 
-./lib/eabi
 ./usr/include/aarch64
 ./usr/include/arm
-./usr/lib/eabi
