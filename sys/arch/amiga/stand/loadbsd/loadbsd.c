@@ -1,4 +1,4 @@
-/*	$NetBSD: loadbsd.c,v 1.37 2022/09/06 17:50:18 phx Exp $	*/
+/*	$NetBSD: loadbsd.c,v 1.38 2023/05/14 16:13:05 phx Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -104,8 +104,12 @@
  *		11/18/15 - (gnikl) Added detection of A600.
  *		Fix handling of multiple -n options.
  *	3.2	09/02/22 - Make it compile with modern AmigaOS gcc ports.
+ *	3.3	01/04/22 - Loading the kernel to the highest priority memory
+ *		segment is the default now. New option -l to revert to the
+ *		previous behaviour of largest segment.
+ *		New option -M to define a minimum size for the memory segment.
  */
-static const char _version[] = "$VER: LoadBSD 3.2 (02.09.2022)";
+static const char _version[] = "$VER: LoadBSD 3.3 (01.04.2023)";
 
 /*
  * Kernel startup interface version
@@ -133,6 +137,7 @@ struct boot_memlist {
 struct boot_memlist memlist;
 struct boot_memlist *kmemlist;
 
+void err(int eval, const char *, ...);
 int getopt(int, char * const [], const char *);
 void get_mem_config (void **, u_long *, u_long *);
 void get_cpuid (void);
@@ -140,7 +145,7 @@ void get_eclock (void);
 void get_AGA (void);
 void usage (void);
 void verbose_usage (void);
-void startit (void *, u_long, u_long, void *, u_long, u_long, int, void *,
+extern void startit (void *, u_long, u_long, void *, u_long, u_long, int, void *,
 		int, int, u_long, u_long, int);
 extern u_long startit_sz;
 
@@ -150,8 +155,9 @@ extern int optind;
 struct ExpansionBase *ExpansionBase = NULL;
 struct GfxBase *GfxBase = NULL;
 
+u_int minmemsz = 2 * 1024 * 1024;
+int p_flag = 1;
 int k_flag;
-int p_flag;
 int t_flag;
 int reqmemsz;
 int S_flag;
@@ -163,8 +169,6 @@ long amiga_flags;
 char *program_name;
 u_char *kp;
 u_long kpsz;
-
-static void err(int, const char *fmt, ...);
 
 
 void
@@ -186,7 +190,7 @@ main(int argc, char **argv)
 	int boothowto, ncd, i, mem_ix, ch;
 	u_short kvers;
 	int *nkcd;
-	void *fmem;
+	u_char *fmem;
 	char *esym;
 	void (*start_it) (void *, u_long, u_long, void *, u_long, u_long,
 	     int, void *, int, int, u_long, u_long, int) = startit;
@@ -205,7 +209,7 @@ main(int argc, char **argv)
 	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
 		err(20, "can't open expansion library");
 
-	while ((ch = getopt(argc, argv, "aAbCc:DhI:km:n:qptsSvVZ")) != -1) {
+	while ((ch = getopt(argc, argv, "aAbCc:DhI:klm:M:n:qptsSvVZ")) != -1) {
 		switch (ch) {
 		case 'k':
 			k_flag = 1;
@@ -220,11 +224,17 @@ main(int argc, char **argv)
 		case 'p':
 			p_flag = 1;
 			break;
+		case 'l':
+			p_flag = 0;
+			break;
 		case 't':
 			t_flag = 1;
 			break;
 		case 'm':
 			reqmemsz = atoi(optarg) * 1024;
+			break;
+		case 'M':
+			minmemsz = atoi(optarg) * 1024 * 1024;
 			break;
 		case 's':
 			boothowto &= ~(RB_AUTOBOOT);
@@ -286,7 +296,7 @@ main(int argc, char **argv)
 	for (cd = 0, ncd = 0; cd = FindConfigDev(cd, -1, -1); ncd++)
 		;
 	get_cpuid();
-	get_mem_config(&fmem, &fmemsz, &cmemsz);
+	get_mem_config((void **)&fmem, &fmemsz, &cmemsz);
 	get_eclock();
 	get_AGA();
 
@@ -307,15 +317,15 @@ main(int argc, char **argv)
 
 	if (t_flag) {
 		for (i = 0; i < memlist.m_nseg; ++i) {
-			printf("mem segment %d: start=%08lx size=%08lx"
-			    " attribute=%04lx pri=%d\n",
+			printf("mem segment %d: start=%08x size=%08x"
+			    " attribute=%04x pri=%d\n",
 			    i + 1,
 			    memlist.m_seg[i].ms_start,
 			    memlist.m_seg[i].ms_size,
 			    memlist.m_seg[i].ms_attrib,
 			    memlist.m_seg[i].ms_pri);
 		}
-		printf("kernel size: %ld\n", ksize);
+		printf("kernel size: %lu\n", ksize);
 	}
 
 	kpsz = ksize + 256 + startit_sz;
@@ -343,7 +353,7 @@ main(int argc, char **argv)
 	if (boothowto & RB_ASKNAME)
 		printf("Askboot...");
 
-	printf("Using %ld%c FASTMEM at 0x%lx, %ldM CHIPMEM\n",
+	printf("Using %lu%c FASTMEM at 0x%lx, %luM CHIPMEM\n",
 	    (fmemsz & 0xfffff) ? fmemsz >> 10 : fmemsz >> 20,
 	    (fmemsz & 0xfffff) ? 'K' : 'M', (u_long)fmem, cmemsz >> 20);
 
@@ -386,14 +396,16 @@ main(int argc, char **argv)
 	*nkcd = ncd;
 	kcd = (struct ConfigDev *)(nkcd + 1);
 	while((cd = FindConfigDev(cd, -1, -1))) {
+		u_char *ba = kcd->cd_BoardAddr;
+
 		memcpy(kcd, cd, sizeof(*kcd));
-		if (((cpuid >> 24) == 0x7d) &&
-		    ((u_long)kcd->cd_BoardAddr < 0x1000000)) {
+		if (((cpuid >> 24) == 0x7d) && ((u_long)ba < 0x1000000)) {
 			if (t_flag)
-				printf("Transformed Z2 device from %08lx ", (u_long)kcd->cd_BoardAddr);
-			kcd->cd_BoardAddr += 0x3000000;
+				printf("Transformed Z2 device from %08lx ", (u_long)ba);
+			ba += 0x3000000;
+			kcd->cd_BoardAddr = ba;
 			if (t_flag)
-				printf("to %08lx\n", (u_long)kcd->cd_BoardAddr);
+				printf("to %08lx\n", (u_long)ba);
 		}
 		++kcd;
 	}
@@ -409,13 +421,18 @@ main(int argc, char **argv)
 		 * option was not specified.  Copy startup code to end
 		 * of kernel image and set start_it.
 		 */
-		if ((void *)kp < fmem) {
+		if (ksize >= fmemsz) {
+			printf("Kernel size %lu exceeds best Fast Memory segment of %lu\n",
+			    ksize, fmemsz);
+			err(20, "Insufficient Fast Memory for kernel");
+		}
+		if (kp < fmem) {
 			printf("Kernel at %08lx, Fastmem used at %08lx\n",
 			    (u_long)kp, (u_long)fmem);
 			err(20, "Can't copy upwards yet.\nDefragment your memory and try again OR try the -p OR try the -Z options.");
 		}
-		start_it = (void (*)())kp + ksize + 256;
-		memcpy(start_it, startit, startit_sz);
+		start_it = (void (*)())(kp + ksize + 256);
+		memcpy((void *)start_it, (void *)startit, startit_sz);
 		CacheClearU();
 		printf("*** Loading from %08lx to Fastmem %08lx ***\n",
 		    (u_long)kp, (u_long)fmem);
@@ -427,7 +444,7 @@ main(int argc, char **argv)
 		 * fits into chipmem.
 		 */
 		if (ksize >= cmemsz) {
-			printf("Kernel size %ld exceeds Chip Memory of %ld\n",
+			printf("Kernel size %lu exceeds Chip Memory of %lu\n",
 			    ksize, cmemsz);
 			err(20, "Insufficient Chip Memory for kernel");
 		}
@@ -462,9 +479,10 @@ get_mem_config(void **fmem, u_long *fmemsz, u_long *cmemsz)
 	mempri = -128;
 	*fmemsz = 0;
 	*cmemsz = 0;
+	*fmem = NULL;
 
 	/*
-	 * walk thru the exec memory list
+	 * walk through the exec memory list
 	 */
 	Forbid();
 	for (mh  = (void *) SysBase->MemList.lh_Head;
@@ -573,10 +591,10 @@ get_mem_config(void **fmem, u_long *fmemsz, u_long *cmemsz)
 			memlist.m_seg[nmem].ms_start = seg;
 			memlist.m_seg[nmem].ms_size = segsz;
 			/*
-			 *  If this segment is smaller than 2M,
+			 *  If this segment is smaller than minmemsz (default: 2M),
 			 *  don't use it to load the kernel
 			 */
-			if (segsz < 2 * 1024 * 1024)
+			if (segsz < minmemsz)
 				continue;
 			/*
 			 * if p_flag is set, select memory by priority
@@ -619,7 +637,7 @@ get_cpuid(void)
 		case 4000:
 			return;
 		default:
-			printf("machine Amiga %ld is not recognized\n",
+			printf("machine Amiga %lu is not recognized\n",
 			    cpuid >> 16);
 			exit(1);
 		}
@@ -664,193 +682,10 @@ get_AGA(void)
 	 */
 }
 
-__asm("
-	.text
-
-_startit:
-	movel	sp,a3
-	movel	4:w,a6
-	lea	pc@(start_super),a5
-	jmp	a6@(-0x1e)		| supervisor-call
-
-start_super:
-	movew	#0x2700,sr
-
-	| the BSD kernel wants values into the following registers:
-	| a0:  fastmem-start
-	| d0:  fastmem-size
-	| d1:  chipmem-size
-	| d3:  Amiga specific flags
-	| d4:  E clock frequency
-	| d5:  AttnFlags (cpuid)
-	| d7:  boothowto
-	| a4:  esym location
-	| a2:  Inhibit sync flags
-	| All other registers zeroed for possible future requirements.
-
-	lea	pc@(_startit),sp	| make sure we have a good stack ***
-
-	movel	a3@(4),a1		| loaded kernel
-	movel	a3@(8),d2		| length of loaded kernel
-|	movel	a3@(12),sp		| entry point in stack pointer
-	movel	a3@(12),a6		| push entry point		***
-	movel	a3@(16),a0		| fastmem-start
-	movel	a3@(20),d0		| fastmem-size
-	movel	a3@(24),d1		| chipmem-size
-	movel	a3@(28),d7		| boothowto
-	movel	a3@(32),a4		| esym
-	movel	a3@(36),d5		| cpuid
-	movel	a3@(40),d4		| E clock frequency
-	movel	a3@(44),d3		| Amiga flags
-	movel	a3@(48),a2		| Inhibit sync flags
-	movel	a3@(52),d6		| Load to fastmem flag
-	subl	a5,a5			| target, load to 0
-
-	cmpb	#0x7D,a3@(36)		| is it DraCo?
-	beq	nott			| yes, switch off MMU later
-
-					| no, it is an Amiga:
-
-|	movew	#0xf00,0xdff180		|red
-|	moveb	#0,0x200003c8
-|	moveb	#63,0x200003c9
-|	moveb	#0,0x200003c9
-|	moveb	#0,0x200003c9
-
-	movew	#(1<<9),0xdff096	| disable DMA on Amigas.
-
-| ------ mmu off start -----
-
-	btst	#3,d5			| AFB_68040,SysBase->AttnFlags
-	beq	not040
-
-| Turn off 68040/060 MMU
-
-	subl	a3,a3
-	.word 0x4e7b,0xb003		| movec a3,tc
-	.word 0x4e7b,0xb806		| movec a3,urp
-	.word 0x4e7b,0xb807		| movec a3,srp
-	.word 0x4e7b,0xb004		| movec a3,itt0
-	.word 0x4e7b,0xb005		| movec a3,itt1
-	.word 0x4e7b,0xb006		| movec a3,dtt0
-	.word 0x4e7b,0xb007		| movec a3,dtt1
-	bra	nott
-
-not040:
-	lea	pc@(zero),a3
-	pmove	a3@,tc			| Turn off MMU
-	lea	pc@(nullrp),a3
-	pmove	a3@,crp			| Turn off MMU some more
-	pmove	a3@,srp			| Really, really, turn off MMU
-
-| Turn off 68030 TT registers
-
-	btst	#2,d5			| AFB_68030,SysBase->AttnFlags
-	beq	nott			| Skip TT registers if not 68030
-	lea	pc@(zero),a3
-	.word 0xf013,0x0800		| pmove a3@,tt0 (gas only knows about 68851 ops..)
-	.word 0xf013,0x0c00		| pmove a3@,tt1 (gas only knows about 68851 ops..)
-
-nott:
-| ---- mmu off end ----
-|	movew	#0xf60,0xdff180		| orange
-|	moveb	#0,0x200003c8
-|	moveb	#63,0x200003c9
-|	moveb	#24,0x200003c9
-|	moveb	#0,0x200003c9
-
-| ---- copy kernel start ----
-
-	tstl	d6			| Can we load to fastmem?
-	beq	L0			| No, leave destination at 0
-	movl	a0,a5			| Move to start of fastmem chunk
-	addl	a0,a6			| relocate kernel entry point
-L0:
-	movl	a1@+,a5@+
-	subl	#4,d2
-	bcc	L0
-
-	lea	pc@(ckend),a1
-	movl	a5,sp@-
-	movl	#_startit_end - ckend,d2
-L2:
-	movl	a1@+,a5@+
-	subl	#4,d2
-	bcc	L2
-
-	btst	#3,d5
-	jeq	L1
-	.word	0xf4f8
-L1:
-	movql	#0,d2			| switch off cache to ensure we use
-	movec	d2,cacr			| valid kernel data
-
-|	movew	#0xFF0,0xdff180		| yellow
-|	moveb	#0,0x200003c8
-|	moveb	#63,0x200003c9
-|	moveb	#0,0x200003c9
-|	moveb	#0,0x200003c9
-	rts
-
-| ---- copy kernel end ----
-
-ckend:
-|	movew	#0x0ff,0xdff180		| petrol
-|	moveb	#0,0x200003c8
-|	moveb	#0,0x200003c9
-|	moveb	#63,0x200003c9
-|	moveb	#63,0x200003c9
-
-	movl	d5,d2
-	roll	#8,d2
-	cmpb	#0x7D,d2
-	jne	noDraCo
-
-| DraCo: switch off MMU now:
-
-	subl	a3,a3
-	.word 0x4e7b,0xb003		| movec a3,tc
-	.word 0x4e7b,0xb806		| movec a3,urp
-	.word 0x4e7b,0xb807		| movec a3,srp
-	.word 0x4e7b,0xb004		| movec a3,itt0
-	.word 0x4e7b,0xb005		| movec a3,itt1
-	.word 0x4e7b,0xb006		| movec a3,dtt0
-	.word 0x4e7b,0xb007		| movec a3,dtt1
-
-noDraCo:
-	moveq	#0,d2			| zero out unused registers
-	moveq	#0,d6			| (might make future compatibility
-	movel	d6,a1			|  would have known contents)
-	movel	d6,a3
-	movel	d6,a5
-	movel	a6,sp			| entry point into stack pointer
-	movel	d6,a6
-
-|	movew	#0x0F0,0xdff180		| green
-|	moveb	#0,0x200003c8
-|	moveb	#0,0x200003c9
-|	moveb	#63,0x200003c9
-|	moveb	#0,0x200003c9
-
-	jmp	sp@			| jump to kernel entry point
-
-| A do-nothing MMU root pointer (includes the following long as well)
-
-nullrp:	.long	0x7fff0001
-zero:	.long	0
-
-_startit_end:
-
-	.data
-_startit_sz: .long _startit_end-_startit
-
-	.text
-");
-
 void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-abhkpstACDSVZ] [-c machine] [-m mem] [-n mode] [-I sync-inhibit] kernel\n",
+	fprintf(stderr, "usage: %s [-abhklpstACDSVZ] [-c machine] [-m size] [-M size] [-n mode] [-I sync-inhibit] kernel\n",
 	    program_name);
 	exit(1);
 }
@@ -862,12 +697,12 @@ verbose_usage(void)
 NAME\n\
 \t%s - loads NetBSD from amiga dos.\n\
 SYNOPSIS\n\
-\t%s [-abhkpstADSVZ] [-c machine] [-m mem] [-n flags] [-I sync-inhibit] kernel\n\
+\t%s [-abhklpstACDSVZ] [-c machine] [-m size] [-M size] [-n mode] [-I sync-inhibit] kernel\n\
 OPTIONS\n\
 \t-a  Boot up to multiuser mode.\n\
 \t-A  Use AGA display mode, if available.\n\
 \t-b  Ask for which root device.\n\
-\t    Its possible to have multiple roots and choose between them.\n\
+\t    It is possible to have multiple roots and choose between them.\n\
 \t-c  Set machine type. [e.g 3000; use 32000+N for DraCo rev. N]\n\
 \t-C  Use Serial Console.\n\
 \t-D  Enter debugger\n\
@@ -875,15 +710,16 @@ OPTIONS\n\
 \t-I  Inhibit sync negotiation. Option value is bit-encoded targets.\n\
 \t-k  Reserve the first 4M of fast mem [Some one else\n\
 \t    is going to have to answer what that it is used for].\n\
+\t-l  Use the largest memory segment for loading the kernel.\n\
 \t-m  Tweak amount of available memory, for finding minimum amount\n\
 \t    of memory required to run. Sets fastmem size to specified\n\
 \t    size in Kbytes.\n\
+\t-M  Request a minimum size in Mbytes for the kernel's memory\n\
+\t    segment. Defaults to 2M.\n\
 \t-n  Enable multiple non-contiguous memory: value = 0 (disabled),\n\
 \t    1 (two segments), 2 (all avail segments), 3 (same as 2?).\n\
-\t-p  Use highest priority fastmem segement instead of the largest\n\
-\t    segment. The higher priority segment is usually faster\n\
-\t    (i.e. 32 bit memory), but some people have smaller amounts\n\
-\t    of 32 bit memory.\n\
+\t-p  Use highest priority fastmem segment for loading the kernel.\n\
+\t    This is the default.\n\
 \t-q  Boot up in quiet mode.\n\
 \t-s  Boot up in singleuser mode (default).\n\
 \t-S  Include kernel symbol table.\n\
@@ -923,18 +759,6 @@ err(int eval, const char *fmt, ...)
 	exit(eval);
 }
 
-#if 0
-void
-errx(int eval, const char *fmt, ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	_Vdomessage(0, fmt, ap);
-	va_end(ap);
-	exit(eval);
-}
-#endif
-
 void
 warn(const char *fmt, ...)
 {
@@ -943,14 +767,3 @@ warn(const char *fmt, ...)
 	_Vdomessage(1, fmt, ap);
 	va_end(ap);
 }
-
-#if 0
-void
-warnx(const char *fmt, ...)
-{
-	va_list ap;
-	va_start(ap, fmt);
-	_Vdomessage(0, fmt, ap);
-	va_end(ap);
-}
-#endif
