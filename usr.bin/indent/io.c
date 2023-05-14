@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.163 2023/05/14 12:12:02 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.164 2023/05/14 14:14:07 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.163 2023/05/14 12:12:02 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.164 2023/05/14 14:14:07 rillig Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -75,12 +75,6 @@ const char *
 inp_line_start(void)
 {
     return inp.mem;
-}
-
-const char *
-inp_line_end(void)
-{
-    return inp.e;
 }
 
 char
