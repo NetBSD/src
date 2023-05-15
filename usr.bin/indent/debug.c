@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.5 2023/05/15 07:28:45 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.6 2023/05/15 07:57:22 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.5 2023/05/15 07:28:45 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.6 2023/05/15 07:57:22 rillig Exp $");
+
+#include <stdarg.h>
 
 #include "indent.h"
 
@@ -104,6 +106,50 @@ static const char *in_enum_name[] = {
 };
 
 static bool debug_full_parser_state = true;
+
+void
+debug_printf(const char *fmt, ...)
+{
+    FILE *f = output == stdout ? stderr : stdout;
+    va_list ap;
+
+    va_start(ap, fmt);
+    vfprintf(f, fmt, ap);
+    va_end(ap);
+}
+
+void
+debug_println(const char *fmt, ...)
+{
+    FILE *f = output == stdout ? stderr : stdout;
+    va_list ap;
+
+    va_start(ap, fmt);
+    vfprintf(f, fmt, ap);
+    va_end(ap);
+    fprintf(f, "\n");
+}
+
+void
+debug_vis_range(const char *prefix, const char *s, size_t len,
+    const char *suffix)
+{
+    debug_printf("%s", prefix);
+    for (size_t i = 0; i < len; i++) {
+	const char *p = s + i;
+	if (*p == '\\' || *p == '"')
+	    debug_printf("\\%c", *p);
+	else if (isprint((unsigned char)*p))
+	    debug_printf("%c", *p);
+	else if (*p == '\n')
+	    debug_printf("\\n");
+	else if (*p == '\t')
+	    debug_printf("\\t");
+	else
+	    debug_printf("\\x%02x", (unsigned char)*p);
+    }
+    debug_printf("%s", suffix);
+}
 
 static void
 debug_print_buf(const char *name, const struct buffer *buf)

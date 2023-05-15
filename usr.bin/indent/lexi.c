@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.185 2023/05/15 07:28:45 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.186 2023/05/15 07:57:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.185 2023/05/15 07:28:45 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.186 2023/05/15 07:57:22 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -172,15 +172,6 @@ token_add_char(char ch)
     buf_add_char(&token, ch);
 }
 
-
-static lexer_symbol
-lexi_end(lexer_symbol lsym)
-{
-#ifdef debug
-    debug_parser_state(lsym);
-#endif
-    return lsym;
-}
 
 static void
 lex_number(void)
@@ -491,8 +482,10 @@ lexi(void)
     }
 
     lexer_symbol alnum_lsym = lexi_alnum();
-    if (alnum_lsym != lsym_eof)
-	return lexi_end(alnum_lsym);
+    if (alnum_lsym != lsym_eof) {
+	debug_parser_state(alnum_lsym);
+	return alnum_lsym;
+    }
 
     /* Scan a non-alphanumeric token */
 
@@ -623,7 +616,8 @@ lexi(void)
 
     ps.next_unary = next_unary;
 
-    return lexi_end(lsym);
+    debug_parser_state(lsym);
+    return lsym;
 }
 
 void

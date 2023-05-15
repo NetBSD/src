@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.133 2023/05/15 07:28:45 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.134 2023/05/15 07:57:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -377,7 +377,7 @@ extern const char *const psym_name[];
 #define	debug_printf(fmt, ...) debug_noop()
 #define	debug_println(fmt, ...) debug_noop()
 #define	debug_vis_range(prefix, s, e, suffix) debug_noop()
-#define	debug_parser_state() debug_noop()
+#define	debug_parser_state(lsym) debug_noop()
 #define	debug_parse_stack(situation) debug_noop()
 #define	debug_buffers() debug_noop()
 #endif
