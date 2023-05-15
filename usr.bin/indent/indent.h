@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.137 2023/05/15 10:13:40 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.138 2023/05/15 12:59:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -307,6 +307,8 @@ extern struct parser_state {
     int decl_ind;		/* current indentation for declarations */
     int di_stack[20];		/* a stack of structure indentation levels */
     bool tabs_to_var;		/* true if using tabs to indent to var name */
+
+    bool extra_expr_indent;
 
     enum {
 	in_enum_no,		/* outside any 'enum { ... }' */
