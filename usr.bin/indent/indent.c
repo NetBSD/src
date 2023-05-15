@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.281 2023/05/15 20:12:28 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.282 2023/05/15 20:30:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.281 2023/05/15 20:12:28 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.282 2023/05/15 20:30:20 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -539,7 +539,7 @@ process_unary_op(void)
 static void
 process_binary_op(void)
 {
-    if (code.len > 0)
+    if (code.len > 0 && ps.want_blank)
 	buf_add_char(&code, ' ');
     buf_add_buf(&code, &token);
     ps.want_blank = true;
