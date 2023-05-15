@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.135 2023/05/15 08:02:01 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.136 2023/05/15 09:53:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -260,22 +260,74 @@ typedef struct paren_level_props {
 extern struct parser_state {
     lexer_symbol prev_token;	/* the previous token, but never comment,
 				 * newline or preprocessing line */
-    bool curr_col_1;		/* whether the current token started in column
-				 * 1 of the original input */
-    bool next_col_1;
+
+    /* Token classification */
+
+    int quest_level;		/* when this is positive, we have seen a '?'
+				 * without the matching ':' in a '?:'
+				 * expression */
+    bool is_function_definition;
+    bool block_init;		/* whether inside a block initialization */
+    int block_init_level;	/* the level of brace nesting in an
+				 * initialization */
+    bool init_or_struct;	/* whether there has been a type name and no
+				 * left parenthesis since the last semicolon.
+				 * When true, a '{' starts a structure
+				 * definition or an initialization list */
+    bool decl_on_line;		/* whether this line of code has part of a
+				 * declaration on it */
+    bool in_stmt_or_decl;	/* whether in a statement or a struct
+				 * declaration or a plain declaration */
+    bool in_decl;		/* whether we are in a declaration. The
+				 * processing of braces is then slightly
+				 * different */
+    bool in_func_def_params;
+    bool seen_case;		/* set to true when we see a 'case', so we
+				 * know what to do with the following colon */
+    bool is_case_label;		/* 'case' and 'default' labels are indented
+				 * differently from regular labels */
+    parser_symbol spaced_expr_psym;	/* the parser symbol to be shifted
+					 * after the parenthesized expression
+					 * from a 'for', 'if', 'switch' or
+					 * 'while'; or psym_0 */
+
+    /* Indentation of statements and declarations */
+
+    int ind_level;		/* the indentation level for the line that is
+				 * currently prepared for output */
+    int ind_level_follow;	/* the level to which ind_level should be set
+				 * after the current line is printed */
+    bool in_stmt_cont;		/* whether the next line should have an extra
+				 * indentation level because we are in the
+				 * middle of a statement */
+    int decl_level;		/* current nesting level for a structure
+				 * declaration or an initializer */
+    bool decl_indent_done;	/* whether the indentation for a declaration
+				 * has been added to the code buffer. */
+    int decl_ind;		/* current indentation for declarations */
+    int di_stack[20];		/* a stack of structure indentation levels */
+    bool tabs_to_var;		/* true if using tabs to indent to var name */
+
+    enum {
+	in_enum_no,		/* outside any 'enum { ... }' */
+	in_enum_enum,		/* after keyword 'enum' */
+	in_enum_type,		/* after 'enum' or 'enum tag' */
+	in_enum_brace		/* between '{' and '}' */
+    } in_enum;			/* enum { . } */
+
+    int tos;			/* pointer to top of stack */
+    parser_symbol s_sym[STACKSIZE];
+    int s_ind_level[STACKSIZE];
+    float s_case_ind_level[STACKSIZE];
+
+    /* Spacing inside a statement or declaration */
+
     bool next_unary;		/* whether the following operator should be
 				 * unary; is used in declarations for '*', as
 				 * well as in expressions */
-
-    bool is_function_definition;
-
     bool want_blank;		/* whether the following token should be
 				 * prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
-
-    bool force_nl;		/* whether the next token goes to a new
-				 * line */
-
     int line_start_nparen;	/* the number of parentheses or brackets that
 				 * were already open at the beginning of the
 				 * current line; used to indent within
@@ -286,6 +338,8 @@ extern struct parser_state {
 				 * initializer or declaration */
     paren_level_props paren[20];
 
+    /* Horizontal spacing for comments */
+
     int comment_delta;		/* used to set up indentation for all lines of
 				 * a boxed comment after the first one */
     int n_comment_delta;	/* remembers how many columns there were
@@ -294,26 +348,10 @@ extern struct parser_state {
 				 * indented properly */
     int com_ind;		/* indentation of the current comment */
 
-    bool block_init;		/* whether inside a block initialization */
-    int block_init_level;	/* the level of brace nesting in an
-				 * initialization */
-    bool init_or_struct;	/* whether there has been a type name and no
-				 * left parenthesis since the last semicolon.
-				 * When true, a '{' starts a structure
-				 * definition or an initialization list */
+    /* Vertical spacing */
 
-    int ind_level;		/* the indentation level for the line that is
-				 * currently prepared for output */
-    int ind_level_follow;	/* the level to which ind_level should be set
-				 * after the current line is printed */
-
-    int decl_level;		/* current nesting level for a structure
-				 * declaration or an initializer */
-    bool decl_on_line;		/* whether this line of code has part of a
-				 * declaration on it */
-    bool in_decl;		/* whether we are in a declaration. The
-				 * processing of braces is then slightly
-				 * different */
+    bool force_nl;		/* whether the next token goes to a new
+				 * line */
 
     enum declaration {
 	decl_no,		/* no declaration anywhere nearby */
@@ -322,42 +360,11 @@ extern struct parser_state {
     } declaration;
     bool blank_line_after_decl;
 
-    bool in_func_def_params;
-    enum {
-	in_enum_no,		/* outside any 'enum { ... }' */
-	in_enum_enum,		/* after keyword 'enum' */
-	in_enum_type,		/* after 'enum' or 'enum tag' */
-	in_enum_brace		/* between '{' and '}' */
-    } in_enum;			/* enum { . } */
-    bool decl_indent_done;	/* whether the indentation for a declaration
-				 * has been added to the code buffer. */
-    int decl_ind;		/* current indentation for declarations */
-    int di_stack[20];		/* a stack of structure indentation levels */
-    bool tabs_to_var;		/* true if using tabs to indent to var name */
+    /* Comments */
 
-    bool in_stmt_or_decl;	/* whether in a statement or a struct
-				 * declaration or a plain declaration */
-    bool in_stmt_cont;		/* whether the next line should have an extra
-				 * indentation level because we are in the
-				 * middle of a statement */
-    bool seen_case;		/* set to true when we see a 'case', so we
-				 * know what to do with the following colon */
-    bool is_case_label;		/* 'case' and 'default' labels are indented
-				 * differently from regular labels */
-
-    int tos;			/* pointer to top of stack */
-    parser_symbol s_sym[STACKSIZE];
-    int s_ind_level[STACKSIZE];
-    float s_case_ind_level[STACKSIZE];
-
-    parser_symbol spaced_expr_psym;	/* the parser symbol to be shifted
-					 * after the parenthesized expression
-					 * from a 'for', 'if', 'switch' or
-					 * 'while'; or psym_0 */
-
-    int quest_level;		/* when this is positive, we have seen a '?'
-				 * without the matching ':' in a '?:'
-				 * expression */
+    bool curr_col_1;		/* whether the current token started in column
+				 * 1 of the original input */
+    bool next_col_1;
 } ps;
 
 
