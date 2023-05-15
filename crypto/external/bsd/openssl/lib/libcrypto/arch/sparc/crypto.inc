@@ -12,4 +12,8 @@ AFLAGS.sparcv9a-mont.S+= -Wa,-Av9a
 AFLAGS.sparct4-mont.S+= -Wa,-Av9a
 AFLAGS.vis3-mont.S+= -Wa,-Av9a
 
+.if ${MACHINE} == "sparc"
+COPTS.threads_pthread.c += -DBROKEN_CLANG_ATOMICS       # no atomic 64 bit ops
+.endif
+
 .include "../../crypto.inc"
