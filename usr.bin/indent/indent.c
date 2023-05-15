@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.274 2023/05/15 10:13:40 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.275 2023/05/15 12:59:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.274 2023/05/15 10:13:40 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.275 2023/05/15 12:59:43 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -348,6 +348,7 @@ maybe_break_line(lexer_symbol lsym)
 	diag(0, "Line broken");
     output_line();
     ps.force_nl = false;
+    ps.extra_expr_indent = false;
 }
 
 static void
@@ -431,6 +432,11 @@ process_lparen_or_lbracket(void)
     ps.paren[ps.nparen - 1].indent = (short)ind_add(0, code.st, code.len);
     debug_println("paren_indents[%d] is now %d",
 	ps.nparen - 1, ps.paren[ps.nparen - 1].indent);
+
+    if (opt.extra_expr_indent && !opt.lineup_to_parens
+	    && ps.spaced_expr_psym != psym_0 && ps.nparen == 1
+	    && opt.continuation_indent == opt.indent_size)
+	ps.extra_expr_indent = true;
 
     if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0
 	    && ps.nparen == 1 && ps.paren[0].indent < 2 * opt.indent_size) {
