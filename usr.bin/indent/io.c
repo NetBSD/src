@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.166 2023/05/15 07:28:45 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.167 2023/05/15 08:11:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,9 +38,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.166 2023/05/15 07:28:45 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.167 2023/05/15 08:11:27 rillig Exp $");
 
-#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
