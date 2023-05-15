@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.38 2023/05/13 06:52:48 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.39 2023/05/15 14:55:47 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -164,17 +164,18 @@ MAXALIGN(offsetof(int, test)) + MAXIMUM_ALIGNOF;
  * sensible way.
  */
 //indent input
+void single_param(int) __attribute__((__noreturn__)) ;
+void function(const char *, ...) __attribute__((format(printf, 1, 2))) ;
+//indent end
+
+//indent run -di0
+void single_param(int) __attribute__((__noreturn__));
 void function(const char *, ...) __attribute__((format(printf, 1, 2)));
 //indent end
 
-/* FIXME: missing space before '__attribute__' */
-//indent run -di0
-void function(const char *, ...)__attribute__((format(printf, 1, 2)));
-//indent end
-
-/* FIXME: missing space before '__attribute__' */
 //indent run
-void		function(const char *, ...)__attribute__((format(printf, 1, 2)));
+void		single_param(int) __attribute__((__noreturn__));
+void		function(const char *, ...) __attribute__((format(printf, 1, 2)));
 //indent end
 
 
@@ -734,8 +735,7 @@ static void JobRestartJobs(void);
 //indent end
 
 //indent run
-/* $ FIXME: Missing space before 'MAKE_ATTR_DEAD'. */
-static void	JobInterrupt(bool, int)MAKE_ATTR_DEAD;
+static void	JobInterrupt(bool, int) MAKE_ATTR_DEAD;
 static void	JobRestartJobs(void);
 //indent end
 

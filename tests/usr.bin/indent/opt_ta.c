@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ta.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_ta.c,v 1.5 2023/05/15 14:55:47 rillig Exp $ */
 
 /*
  * Tests for the option '-ta', which assumes that all identifiers that end in
@@ -20,7 +20,7 @@ example(void *arg)
 void
 example(void *arg)
 {
-	int		mult = (unknown_type_name) * arg;
+	int		mult = (unknown_type_name)*arg;
 
 	int		cast = (unknown_type_name_t)*arg;
 }
