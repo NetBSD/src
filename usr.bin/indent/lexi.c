@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.189 2023/05/15 13:37:16 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.190 2023/05/15 17:28:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.189 2023/05/15 13:37:16 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.190 2023/05/15 17:28:14 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -476,9 +476,16 @@ lexi(void)
     ps.curr_col_1 = ps.next_col_1;
     ps.next_col_1 = false;
 
-    while (ch_isblank(inp_peek())) {
-	ps.curr_col_1 = false;
-	inp_skip();
+    for (;;) {
+	if (ch_isblank(inp_peek())) {
+	    ps.curr_col_1 = false;
+	    inp_skip();
+	} else if (inp_peek() == '\\' && inp_lookahead(1) == '\n') {
+	    inp_skip();
+	    inp_skip();
+	    line_no++;
+	} else
+	    break;
     }
 
     lexer_symbol alnum_lsym = lexi_alnum();
