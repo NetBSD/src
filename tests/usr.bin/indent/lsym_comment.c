@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.11 2023/05/15 19:55:51 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.12 2023/05/15 20:30:20 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -1077,4 +1077,23 @@ error*/
  /*
   * error
   */
+//indent end
+
+
+/*
+ * Ensure that there is exactly one space between the comment and the
+ * following binary operator.
+ */
+//indent input
+{
+a /* */ > b;
+a>b;
+}
+//indent end
+
+//indent run
+{
+	a /* */ > b;
+	a > b;
+}
 //indent end
