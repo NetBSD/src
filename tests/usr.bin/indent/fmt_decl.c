@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.40 2023/05/15 15:04:48 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.41 2023/05/15 20:50:37 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -890,8 +890,8 @@ char *(*fn)(int, int) = NULL;
 
 
 /*
- * Depending on the line break in the function header, the spaces around the
- * '||' operator were removed.
+ * Depending on whether there was a line break in the function header, the
+ * spaces around the '||' operator were erroneously removed.
  */
 //indent input
 bool is_identifier_start(char ch)
@@ -916,6 +916,6 @@ is_identifier_start(char ch)
 bool
 is_identifier_start(char ch)
 {
-	return ch_isalpha(ch)||ch == '_';
+	return ch_isalpha(ch) || ch == '_';
 }
 //indent end
