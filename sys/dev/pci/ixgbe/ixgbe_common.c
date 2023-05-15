@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.43 2022/06/06 02:16:37 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.44 2023/05/15 08:01:22 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -36,7 +36,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe_common.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.43 2022/06/06 02:16:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe_common.c,v 1.44 2023/05/15 08:01:22 msaitoh Exp $");
 
 #include "ixgbe_common.h"
 #include "ixgbe_phy.h"
@@ -544,6 +544,8 @@ s32 ixgbe_clear_hw_cntrs_generic(struct ixgbe_hw *hw)
 
 	IXGBE_READ_REG(hw, IXGBE_MLFC);
 	IXGBE_READ_REG(hw, IXGBE_MRFC);
+	if (hw->mac.type == ixgbe_mac_X550EM_a)
+		IXGBE_READ_REG(hw, IXGBE_LINK_DN_CNT);
 	IXGBE_READ_REG(hw, IXGBE_RLEC);
 	IXGBE_READ_REG(hw, IXGBE_LXONTXC);
 	IXGBE_READ_REG(hw, IXGBE_LXOFFTXC);
