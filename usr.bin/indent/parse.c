@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.57 2023/05/15 08:11:27 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.58 2023/05/15 20:12:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.57 2023/05/15 08:11:27 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.58 2023/05/15 20:12:28 rillig Exp $");
 
 #include <err.h>
 
@@ -100,7 +100,7 @@ parse(parser_symbol psym)
     case psym_for_exprs:
 	ps.s_sym[++ps.tos] = psym;
 	ps.s_ind_level[ps.tos] = ps.ind_level = ps.ind_level_follow;
-	++ps.ind_level_follow;	/* subsequent statements should be indented 1 */
+	++ps.ind_level_follow;
 	break;
 
     case psym_lbrace:

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.139 2023/05/15 13:33:19 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.140 2023/05/15 20:12:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -139,7 +139,8 @@ extern struct buffer token;	/* the current token to be processed, is
 				 * in some cases to 'lab'. */
 
 extern struct buffer lab;	/* the label or preprocessor directive */
-extern struct buffer code;	/* the main part of the current line of code */
+extern struct buffer code;	/* the main part of the current line of code,
+				 * containing declarations or statements */
 extern struct buffer com;	/* the trailing comment of the line, or the
 				 * start or end of a multi-line comment, or
 				 * while in process_comment, a single line of
@@ -157,7 +158,8 @@ extern struct options {
     bool blank_line_after_decl;
     bool blanklines_after_procs;
     bool blanklines_before_block_comments;
-    bool break_after_comma;	/* whether to break declarations after commas */
+    bool break_after_comma;	/* whether to add a line break after each
+				 * declarator */
     bool brace_same_line;	/* whether brace should be on same line as if,
 				 * while, etc */
     bool blank_after_sizeof;	/* whether a blank should always be inserted
@@ -208,7 +210,7 @@ extern struct options {
 				 * procedure and its name) */
     bool space_after_cast;	/* "b = (int) a" vs "b = (int)a" */
     bool star_comment_cont;	/* whether comment continuation lines should
-				 * have stars at the beginning of each line. */
+				 * have stars at the beginning of each line */
     bool swallow_optional_blanklines;
     bool auto_typedefs;		/* whether to recognize identifiers ending in
 				 * "_t" like typedefs */
@@ -335,9 +337,9 @@ extern struct parser_state {
 				 * prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
     int line_start_nparen;	/* the number of parentheses or brackets that
-				 * were already open at the beginning of the
-				 * current line; used to indent within
-				 * statements, initializers and declarations */
+				 * were open at the beginning of the current
+				 * line; used to indent within statements,
+				 * initializers and declarations */
     int nparen;			/* the number of parentheses or brackets that
 				 * are currently open; used to indent the
 				 * remaining lines of the statement,
@@ -356,8 +358,10 @@ extern struct parser_state {
 
     /* Vertical spacing */
 
-    bool force_nl;		/* whether the next token goes to a new
-				 * line */
+    bool force_nl;		/* whether the next token is forced to go to
+				 * a new line; used after 'if (expr)' and
+				 * similar situations; tokens like '{' may
+				 * ignore this */
 
     enum declaration {
 	decl_no,		/* no declaration anywhere nearby */
