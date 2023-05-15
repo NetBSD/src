@@ -1,4 +1,4 @@
-/* $NetBSD: ps_ind_level.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: ps_ind_level.c,v 1.7 2023/05/15 14:55:47 rillig Exp $ */
 
 /*
  * The indentation of the very first line of a file determines the
@@ -24,18 +24,9 @@ void function_in_column_1(void){}
 //indent run -i5 -ts8
 		    int		    indented_by_24;
 
-		    void	    function_in_column_1(void){
+		    void	    function_in_column_1(void) {
 		    }
 //indent end
-/*
- * In the above function declaration, the space between '){' is missing. This
- * is because the tokenizer only recognizes function definitions if they start
- * at indentation level 0, but this declaration starts at indentation level 4,
- * due to the indentation in line 1. It's an edge case that is probably not
- * worth fixing.
- *
- * See 'in_func_def_params = true'.
- */
 
 
 /*
@@ -54,7 +45,7 @@ label:;
 //indent run -i8 -ts8 -di0
 			int indent_by_24;
 
-			void function(void){
+			void function(void) {
 		label:		;
 			}
 //indent end
