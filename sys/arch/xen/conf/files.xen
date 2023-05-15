@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.178.4.1 2020/07/15 17:25:08 martin Exp $
+#	$NetBSD: files.xen,v 1.178.4.2 2023/05/15 10:25:31 martin Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -11,6 +11,9 @@ endif
 maxusers 2 16 128
 
 defparam opt_kernbase.h	KERNBASE
+
+# This options is of no use to Xen, but building requires its definition
+defflag opt_selfreloc.h SELFRELOC
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
