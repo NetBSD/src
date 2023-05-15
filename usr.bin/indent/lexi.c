@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.191 2023/05/15 18:22:40 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.192 2023/05/15 22:52:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.191 2023/05/15 18:22:40 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.192 2023/05/15 22:52:21 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -401,8 +401,8 @@ lexi_alnum(void)
 found_typename:
 	if (ps.nparen > 0) {
 	    /* inside parentheses: cast, param list, offsetof or sizeof */
-	    if (!ps.paren[ps.nparen - 1].no_cast)
-		ps.paren[ps.nparen - 1].maybe_cast = true;
+	    if (ps.paren[ps.nparen - 1].cast == cast_unknown)
+		ps.paren[ps.nparen - 1].cast = cast_maybe;
 	}
 	if (ps.prev_token != lsym_period && ps.prev_token != lsym_unary_op) {
 	    if (kw != NULL && kw->lsym == lsym_tag) {

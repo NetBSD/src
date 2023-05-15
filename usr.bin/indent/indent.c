@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.285 2023/05/15 22:35:41 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.286 2023/05/15 22:52:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.285 2023/05/15 22:35:41 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.286 2023/05/15 22:52:21 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -443,7 +443,7 @@ process_lparen_or_lbracket(void)
     buf_add_char(&code, token.st[0]);
 
     int indent = ind_add(0, code.st, code.len);
-    bool no_cast = false;
+    enum paren_level_cast cast = cast_unknown;
 
     if (opt.extra_expr_indent && !opt.lineup_to_parens
 	    && ps.spaced_expr_psym != psym_0 && ps.nparen == 1
@@ -465,13 +465,12 @@ process_lparen_or_lbracket(void)
 
     if (ps.prev_token == lsym_offsetof || ps.prev_token == lsym_sizeof
 	    || ps.is_function_definition)
-	no_cast = true;
+	cast = cast_no;
 
     ps.paren[ps.nparen - 1].indent = (short)indent;
-    ps.paren[ps.nparen - 1].maybe_cast = false;
-    ps.paren[ps.nparen - 1].no_cast = no_cast;
+    ps.paren[ps.nparen - 1].cast = cast;
     debug_println("paren_indents[%d] is now %s%d",
-	ps.nparen - 1, no_cast ? "(no cast)" : "", indent);
+	ps.nparen - 1, paren_level_cast_name[cast], indent);
 }
 
 static void
@@ -482,13 +481,11 @@ process_rparen_or_rbracket(void)
 	goto unbalanced;
     }
 
-    bool maybe_cast = ps.paren[ps.nparen - 1].maybe_cast;
-    bool no_cast = ps.paren[ps.nparen - 1].no_cast;
+    enum paren_level_cast cast = ps.paren[--ps.nparen].cast;
     if (ps.decl_on_line && !ps.block_init)
-	no_cast = true;
-    ps.nparen--;
+	cast = cast_no;
 
-    if (maybe_cast && !no_cast) {
+    if (cast == cast_maybe) {
 	ps.next_unary = true;
 	ps.want_blank = opt.space_after_cast;
     } else
