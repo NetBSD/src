@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.351 2023/04/04 20:13:02 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.352 2023/05/15 20:54:53 andvar Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -909,6 +909,7 @@ LPC	low pin count
 LPS	local positioning system
 LRC	longitudinal redundancy check
 LRM	left-to-right mark
+LRO	Large Receive Offload
 LRO	left-to-right override
 LRU	least recently used
 LS	link state
@@ -1407,6 +1408,7 @@ RR	random replacement
 RR	round robin
 RS	relay station
 RSA	Rivest, Shamir, [and] Adleman
+RSC	Receive Segment Coalescing
 RSIP	Realm Specific IP
 RSN	Robust Secure Network
 RSS	really simple syndication
