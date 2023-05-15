@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.24 2023/05/13 08:33:39 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.25 2023/05/15 17:38:56 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -311,7 +311,7 @@ opt_U_body()
 
 		size_t			from stddef.h
 		off_t			for file offsets
- 		 ignored_t		is ignored since it is indented
+		 ignored_t		is ignored since it is indented
 	EOF
 
 	cat <<-\EOF > code.c

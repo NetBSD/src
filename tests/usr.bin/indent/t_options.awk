@@ -1,4 +1,4 @@
-# $NetBSD: t_options.awk,v 1.11 2023/05/11 09:28:53 rillig Exp $
+# $NetBSD: t_options.awk,v 1.12 2023/05/15 17:38:56 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,7 +93,7 @@ function quote(s)
 function check_empty_lines_block(n)
 {
 	if (max_empty_lines != n && seen_input_section)
-	 	warn(NR, "expecting " n " empty " (n != 1 ? "lines" : "line") ", got " max_empty_lines)
+		warn(NR, "expecting " n " empty " (n != 1 ? "lines" : "line") ", got " max_empty_lines)
 }
 
 function check_unused_input()
