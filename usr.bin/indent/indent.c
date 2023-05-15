@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.284 2023/05/15 21:51:45 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.285 2023/05/15 22:35:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.284 2023/05/15 21:51:45 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.285 2023/05/15 22:35:41 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -442,9 +442,8 @@ process_lparen_or_lbracket(void)
     ps.want_blank = false;
     buf_add_char(&code, token.st[0]);
 
-    ps.paren[ps.nparen - 1].indent = (short)ind_add(0, code.st, code.len);
-    debug_println("paren_indents[%d] is now %d",
-	ps.nparen - 1, ps.paren[ps.nparen - 1].indent);
+    int indent = ind_add(0, code.st, code.len);
+    bool no_cast = false;
 
     if (opt.extra_expr_indent && !opt.lineup_to_parens
 	    && ps.spaced_expr_psym != psym_0 && ps.nparen == 1
@@ -452,10 +451,8 @@ process_lparen_or_lbracket(void)
 	ps.extra_expr_indent = eei_yes;
 
     if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0
-	    && ps.nparen == 1 && ps.paren[0].indent < 2 * opt.indent_size) {
-	ps.paren[0].indent = (short)(2 * opt.indent_size);
-	debug_println("paren_indents[0] is now %d", ps.paren[0].indent);
-    }
+	    && ps.nparen == 1 && indent < 2 * opt.indent_size)
+	indent = 2 * opt.indent_size;
 
     if (ps.init_or_struct && *token.st == '(' && ps.tos <= 2) {
 	/*
@@ -467,9 +464,14 @@ process_lparen_or_lbracket(void)
     }
 
     if (ps.prev_token == lsym_offsetof || ps.prev_token == lsym_sizeof
-	    || ps.prev_token == lsym_word
 	    || ps.is_function_definition)
-	ps.paren[ps.nparen - 1].no_cast = true;
+	no_cast = true;
+
+    ps.paren[ps.nparen - 1].indent = (short)indent;
+    ps.paren[ps.nparen - 1].maybe_cast = false;
+    ps.paren[ps.nparen - 1].no_cast = no_cast;
+    debug_println("paren_indents[%d] is now %s%d",
+	ps.nparen - 1, no_cast ? "(no cast)" : "", indent);
 }
 
 static void
@@ -477,23 +479,20 @@ process_rparen_or_rbracket(void)
 {
     if (ps.nparen == 0) {
 	diag(0, "Extra '%c'", *token.st);
-	goto unbalanced;	/* TODO: better exit immediately */
+	goto unbalanced;
     }
 
-    if (ps.nparen > 0 && ps.decl_on_line && !ps.block_init)
-	ps.paren[ps.nparen - 1].no_cast = true;
+    bool maybe_cast = ps.paren[ps.nparen - 1].maybe_cast;
+    bool no_cast = ps.paren[ps.nparen - 1].no_cast;
+    if (ps.decl_on_line && !ps.block_init)
+	no_cast = true;
+    ps.nparen--;
 
-    if (ps.paren[ps.nparen - 1].maybe_cast &&
-	    !ps.paren[ps.nparen - 1].no_cast) {
+    if (maybe_cast && !no_cast) {
 	ps.next_unary = true;
-	ps.paren[ps.nparen - 1].maybe_cast = false;
 	ps.want_blank = opt.space_after_cast;
     } else
 	ps.want_blank = true;
-    ps.paren[ps.nparen - 1].no_cast = false;
-
-    if (ps.nparen > 0)
-	ps.nparen--;
 
     if (code.len == 0)		/* if the paren starts the line */
 	ps.line_start_nparen = ps.nparen;	/* then indent it */
