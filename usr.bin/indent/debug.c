@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.7 2023/05/15 09:00:51 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.8 2023/05/15 13:37:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.7 2023/05/15 09:00:51 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.8 2023/05/15 13:37:16 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -210,8 +210,8 @@ ps_paren_has_changed(const struct parser_state *prev_ps)
 
     for (int i = 0; i < ps.nparen; i++) {
 	if (curr[i].indent != prev[i].indent ||
-	    curr[i].maybe_cast != prev[i].maybe_cast ||
-	    curr[i].no_cast != prev[i].no_cast)
+		curr[i].maybe_cast != prev[i].maybe_cast ||
+		curr[i].no_cast != prev[i].no_cast)
 	    return true;
     }
     return false;

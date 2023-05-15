@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.169 2023/05/15 13:33:19 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.170 2023/05/15 13:37:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.169 2023/05/15 13:33:19 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.170 2023/05/15 13:37:16 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -255,7 +255,7 @@ output_complete_line(char line_terminator)
 	    ps.in_stmt_cont = false;	/* this is a class A kludge */
 
 	if (opt.blank_line_after_decl && ps.declaration == decl_end
-	    && ps.tos > 1) {
+		&& ps.tos > 1) {
 	    ps.declaration = decl_no;
 	    ps.blank_line_after_decl = true;
 	}

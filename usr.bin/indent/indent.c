@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.276 2023/05/15 13:33:19 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.277 2023/05/15 13:37:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.276 2023/05/15 13:33:19 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.277 2023/05/15 13:37:16 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -372,8 +372,8 @@ static void
 process_newline(void)
 {
     if (ps.prev_token == lsym_comma && ps.nparen == 0 && !ps.block_init &&
-	!opt.break_after_comma && break_comma &&
-	com.len == 0)
+	    !opt.break_after_comma && break_comma &&
+	    com.len == 0)
 	goto stay_in_line;
 
     output_line();
@@ -465,7 +465,7 @@ process_rparen_or_rbracket(void)
     }
 
     if (ps.paren[ps.nparen - 1].maybe_cast &&
-	!ps.paren[ps.nparen - 1].no_cast) {
+	    !ps.paren[ps.nparen - 1].no_cast) {
 	ps.next_unary = true;
 	ps.paren[ps.nparen - 1].maybe_cast = false;
 	ps.want_blank = opt.space_after_cast;
@@ -508,7 +508,7 @@ static void
 process_unary_op(void)
 {
     if (!ps.decl_indent_done && ps.in_decl && !ps.block_init &&
-	!ps.is_function_definition && ps.line_start_nparen == 0) {
+	    !ps.is_function_definition && ps.line_start_nparen == 0) {
 	/* pointer declarations */
 	code_add_decl_indent(ps.decl_ind - (int)token.len, ps.tabs_to_var);
 	ps.decl_indent_done = true;
@@ -598,7 +598,7 @@ process_semicolon(void)
     ps.declaration = ps.declaration == decl_begin ? decl_end : decl_no;
 
     if (ps.in_decl && code.len == 0 && !ps.block_init &&
-	!ps.decl_indent_done && ps.line_start_nparen == 0) {
+	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
 	/* indent stray semicolons in declarations */
 	code_add_decl_indent(ps.decl_ind - 1, ps.tabs_to_var);
 	ps.decl_indent_done = true;
@@ -958,11 +958,11 @@ process_preprocessing(void)
 
     } else {
 	if (!substring_equals(dir, "pragma") &&
-	    !substring_equals(dir, "error") &&
-	    !substring_equals(dir, "line") &&
-	    !substring_equals(dir, "undef") &&
-	    !substring_equals(dir, "define") &&
-	    !substring_equals(dir, "include")) {
+		!substring_equals(dir, "error") &&
+		!substring_equals(dir, "line") &&
+		!substring_equals(dir, "undef") &&
+		!substring_equals(dir, "define") &&
+		!substring_equals(dir, "include")) {
 	    diag(1, "Unrecognized cpp directive \"%.*s\"",
 		(int)(dir.e - dir.s), dir.s);
 	    return;
