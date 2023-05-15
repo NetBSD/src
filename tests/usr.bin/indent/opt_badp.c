@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.10 2023/05/11 18:13:55 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.11 2023/05/15 09:05:08 rillig Exp $ */
 
 /*
  * Tests for the options '-badp' and '-nbadp'.
@@ -111,3 +111,23 @@ declaration_blank_blank_statement(void)
 //indent run-equals-input -badp
 
 //indent run-equals-input -nbadp
+
+
+/*
+ * A struct declaration or an initializer are not function bodies, so don't
+ * add a blank line after them.
+ */
+//indent input
+struct {
+	int member[2];
+} s = {
+	{
+		0,
+		0,
+	}
+};
+//indent end
+
+//indent run-equals-input -di0 -badp
+
+//indent run-equals-input -di0 -nbadp
