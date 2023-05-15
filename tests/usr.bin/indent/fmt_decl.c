@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.39 2023/05/15 14:55:47 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.40 2023/05/15 15:04:48 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -887,3 +887,35 @@ char *(*fn)(int, int) = NULL;
 /* XXX: The parameter '(int)' is wrongly interpreted as a type cast. */
 /* XXX: The parameter '(int, int)' is wrongly interpreted as a type cast. */
 //indent run-equals-input -di0
+
+
+/*
+ * Depending on the line break in the function header, the spaces around the
+ * '||' operator were removed.
+ */
+//indent input
+bool is_identifier_start(char ch)
+{
+	return ch_isalpha(ch) || ch == '_';
+}
+
+bool
+is_identifier_start(char ch)
+{
+	return ch_isalpha(ch) || ch == '_';
+}
+//indent end
+
+//indent run
+bool
+is_identifier_start(char ch)
+{
+	return ch_isalpha(ch) || ch == '_';
+}
+
+bool
+is_identifier_start(char ch)
+{
+	return ch_isalpha(ch)||ch == '_';
+}
+//indent end
