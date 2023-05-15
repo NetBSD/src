@@ -1,4 +1,4 @@
-/* $NetBSD: lex_ident.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lex_ident.c,v 1.6 2023/05/15 17:28:14 rillig Exp $ */
 
 /*
  * Test lexing of word-like tokens, such as keywords, identifiers, numeric
@@ -43,9 +43,7 @@ struct long_tag_name_to_overflow_the_token_buffer_4567890\
 //indent end
 
 //indent run
-/* $ XXX: The indentation of the backslash is one short of a tab. */
-int	       \
-		variable;
+int		variable;
 
 int
 		no_backslash;
