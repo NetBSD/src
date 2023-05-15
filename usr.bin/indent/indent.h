@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.141 2023/05/15 20:30:20 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.142 2023/05/15 22:52:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -238,10 +238,11 @@ typedef struct paren_level_props {
     short indent;		/* indentation of the operand/argument,
 				 * relative to the enclosing statement; if
 				 * negative, reflected at -1 */
-    bool maybe_cast;		/* whether the parentheses may form a type
-				 * cast */
-    bool no_cast;		/* whether the parentheses definitely do not
-				 * form a type cast */
+    enum paren_level_cast {
+	cast_unknown,
+	cast_maybe,
+	cast_no,
+    } cast;			/* whether the parentheses form a type cast */
 } paren_level_props;
 
 /*
@@ -389,6 +390,7 @@ void debug_parse_stack(const char *);
 void debug_buffers(void);
 extern const char *const lsym_name[];
 extern const char *const psym_name[];
+extern const char *const paren_level_cast_name[];
 #else
 #define debug_noop() do { } while (false)
 #define	debug_printf(fmt, ...) debug_noop()

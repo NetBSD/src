@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.8 2023/05/15 13:37:16 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.9 2023/05/15 22:52:21 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.8 2023/05/15 13:37:16 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.9 2023/05/15 22:52:21 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -99,17 +99,23 @@ const char *const psym_name[] = {
     "while_expr",
 };
 
-static const char *declaration_name[] = {
+static const char *const declaration_name[] = {
     "no",
     "begin",
     "end",
 };
 
-static const char *in_enum_name[] = {
+static const char *const in_enum_name[] = {
     "no",
     "enum",
     "type",
     "brace",
+};
+
+const char *const paren_level_cast_name[] = {
+    "(unknown cast)",
+    "(maybe cast)",
+    "(no cast)",
 };
 
 void
@@ -208,12 +214,9 @@ ps_paren_has_changed(const struct parser_state *prev_ps)
     if (prev_ps->nparen != ps.nparen)
 	return true;
 
-    for (int i = 0; i < ps.nparen; i++) {
-	if (curr[i].indent != prev[i].indent ||
-		curr[i].maybe_cast != prev[i].maybe_cast ||
-		curr[i].no_cast != prev[i].no_cast)
+    for (int i = 0; i < ps.nparen; i++)
+	if (curr[i].indent != prev[i].indent || curr[i].cast != prev[i].cast)
 	    return true;
-    }
     return false;
 }
 
@@ -225,11 +228,8 @@ debug_ps_paren(const struct parser_state *prev_ps)
 
     debug_printf("           ps.paren:");
     for (int i = 0; i < ps.nparen; i++) {
-	const paren_level_props *props = ps.paren + i;
-	const char *cast = props->no_cast ? "(no cast)"
-	    : props->maybe_cast ? "(cast)"
-	    : "";
-	debug_printf(" %s%d", cast, props->indent);
+	debug_printf(" %s%d",
+	    paren_level_cast_name[ps.paren[i].cast], ps.paren[i].indent);
     }
     if (ps.nparen == 0)
 	debug_printf(" none");
