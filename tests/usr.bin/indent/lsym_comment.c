@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.9 2023/05/14 22:26:37 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.10 2023/05/15 07:28:45 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -1028,18 +1028,6 @@ line 4
 //indent end
 
 //indent run-equals-input -nsc -ncdb
-
-
-/*
- * Cover the code for expanding the comment buffer. As of 2021-11-07, the
- * default buffer size is 200. To actually fill the comment buffer, there must
- * be a single line of a comment that is longer than 200 bytes.
- */
-//indent input
-/*-_____10________20________30________40________50________60________70________80________90_______100_______110_______120_______130_______140_______150_______160_______170_______180_______190_______200 */
-//indent end
-
-//indent run-equals-input
 
 
 /*

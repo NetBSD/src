@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.184 2023/05/14 22:26:37 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.185 2023/05/15 07:28:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.184 2023/05/14 22:26:37 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.185 2023/05/15 07:28:45 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -167,17 +167,9 @@ static const unsigned char lex_number_row[] = {
 };
 
 static void
-check_size_token(size_t desired_size)
-{
-    if (token.e + desired_size >= token.limit)
-	buf_expand(&token, desired_size);
-}
-
-static void
 token_add_char(char ch)
 {
-    check_size_token(1);
-    *token.e++ = ch;
+    buf_add_char(&token, ch);
 }
 
 
@@ -239,6 +231,7 @@ lex_word(void)
 	else if (inp_peek() == '\\' && inp_lookahead(1) == '\n') {
 	    inp_skip();
 	    inp_skip();
+	    line_no++;
 	} else
 	    return;
     }
@@ -247,17 +240,17 @@ lex_word(void)
 static void
 lex_char_or_string(void)
 {
-    for (char delim = token.e[-1];;) {
+    for (char delim = token.mem[token.len - 1];;) {
 	if (inp_peek() == '\n') {
 	    diag(1, "Unterminated literal");
 	    return;
 	}
 
 	token_add_char(inp_next());
-	if (token.e[-1] == delim)
+	if (token.mem[token.len - 1] == delim)
 	    return;
 
-	if (token.e[-1] == '\\') {
+	if (token.mem[token.len - 1] == '\\') {
 	    if (inp_peek() == '\n')
 		++line_no;
 	    token_add_char(inp_next());
@@ -311,10 +304,10 @@ static bool
 is_typename(void)
 {
     if (opt.auto_typedefs &&
-	token.e - token.s >= 2 && memcmp(token.e - 2, "_t", 2) == 0)
+	token.len >= 2 && memcmp(token.mem + token.len - 2, "_t", 2) == 0)
 	return true;
 
-    return bsearch_typenames(token.s) >= 0;
+    return bsearch_typenames(token.st) >= 0;
 }
 
 static int
@@ -374,14 +367,11 @@ lexi_alnum(void)
     } else if (is_identifier_start(inp_peek())) {
 	lex_word();
 
-	if (token.s[0] == 'L' && token.e - token.s == 1 &&
+	if (token.len == 1 && token.st[0] == 'L' &&
 		(inp_peek() == '"' || inp_peek() == '\'')) {
 	    token_add_char(inp_next());
 	    lex_char_or_string();
 	    ps.next_unary = false;
-
-	    check_size_token(1);
-
 	    return lsym_word;
 	}
     } else
@@ -396,8 +386,8 @@ lexi_alnum(void)
 	return lsym_type_outside_parentheses;
 
     token_add_char('\0');
-    token.e--;
-    const struct keyword *kw = bsearch(token.s, keywords,
+    token.len--;
+    const struct keyword *kw = bsearch(token.st, keywords,
 	array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
     bool is_type = false;
     if (kw == NULL) {
@@ -423,7 +413,7 @@ found_typename:
 	}
 	if (ps.prev_token != lsym_period && ps.prev_token != lsym_unary_op) {
 	    if (kw != NULL && kw->lsym == lsym_tag) {
-		if (token.s[0] == 'e' /* enum */)
+		if (token.st[0] == 'e' /* enum */)
 		    ps.in_enum = in_enum_enum;
 		return lsym_tag;
 	    }
@@ -491,7 +481,7 @@ lex_asterisk_unary(void)
 lexer_symbol
 lexi(void)
 {
-    token.e = token.s;
+    token.len = 0;
     ps.curr_col_1 = ps.next_col_1;
     ps.next_col_1 = false;
 
@@ -506,13 +496,12 @@ lexi(void)
 
     /* Scan a non-alphanumeric token */
 
-    check_size_token(3);	/* for things like "<<=" */
-    *token.e++ = inp_next();
+    token_add_char(inp_next());
 
     lexer_symbol lsym;
     bool next_unary;
 
-    switch (token.e[-1]) {
+    switch (token.mem[token.len - 1]) {
 
     /* INDENT OFF */
     case '(':
@@ -558,8 +547,8 @@ lexi(void)
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 	next_unary = true;
 
-	if (inp_peek() == token.e[-1]) {	/* '++' or '--' */
-	    *token.e++ = inp_next();
+	if (inp_peek() == token.mem[token.len - 1]) {	/* '++' or '--' */
+	    token_add_char(inp_next());
 	    if (ps.prev_token == lsym_word ||
 		    ps.prev_token == lsym_rparen_or_rbracket) {
 		lsym = ps.next_unary ? lsym_unary_op : lsym_postfix_op;
@@ -567,10 +556,10 @@ lexi(void)
 	    }
 
 	} else if (inp_peek() == '=') {	/* '+=' or '-=' */
-	    *token.e++ = inp_next();
+	    token_add_char(inp_next());
 
 	} else if (inp_peek() == '>') {	/* '->' */
-	    *token.e++ = inp_next();
+	    token_add_char(inp_next());
 	    lsym = lsym_unary_op;
 	    next_unary = false;
 	    ps.want_blank = false;
@@ -581,7 +570,7 @@ lexi(void)
 	if (ps.init_or_struct)
 	    ps.block_init = true;
 	if (inp_peek() == '=')
-	    *token.e++ = inp_next();
+	    token_add_char(inp_next());
 	lsym = lsym_binary_op;
 	next_unary = true;
 	break;
@@ -590,9 +579,9 @@ lexi(void)
     case '<':
     case '!':			/* ops like <, <<, <=, !=, etc */
 	if (inp_peek() == '>' || inp_peek() == '<' || inp_peek() == '=')
-	    *token.e++ = inp_next();
+	    token_add_char(inp_next());
 	if (inp_peek() == '=')
-	    *token.e++ = inp_next();
+	    token_add_char(inp_next());
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 	next_unary = true;
 	break;
@@ -604,22 +593,23 @@ lexi(void)
 	    next_unary = true;
 	} else {
 	    if (inp_peek() == '=')
-		*token.e++ = inp_next();
+		token_add_char(inp_next());
 	    lsym = lsym_binary_op;
 	    next_unary = true;
 	}
 	break;
 
     default:
-	if (token.e[-1] == '/' && (inp_peek() == '*' || inp_peek() == '/')) {
-	    *token.e++ = inp_next();
+	if (token.mem[token.len - 1] == '/'
+		&& (inp_peek() == '*' || inp_peek() == '/')) {
+	    token_add_char(inp_next());
 	    lsym = lsym_comment;
 	    next_unary = ps.next_unary;
 	    break;
 	}
 
 	/* handle '||', '&&', etc., and also things as in 'int *****i' */
-	while (token.e[-1] == inp_peek() || inp_peek() == '=')
+	while (token.mem[token.len - 1] == inp_peek() || inp_peek() == '=')
 	    token_add_char(inp_next());
 
 	lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
@@ -632,8 +622,6 @@ lexi(void)
 	ps.in_enum = in_enum_no;
 
     ps.next_unary = next_unary;
-
-    check_size_token(1);
 
     return lexi_end(lsym);
 }

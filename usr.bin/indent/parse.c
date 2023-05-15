@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.55 2023/05/14 12:12:02 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.56 2023/05/15 07:28:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.55 2023/05/14 12:12:02 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.56 2023/05/15 07:28:45 rillig Exp $");
 
 #include <err.h>
 #include <stdio.h>
@@ -111,7 +111,7 @@ parse(parser_symbol psym)
 	    ++ps.ind_level_follow;	/* it is a random, isolated stmt group
 					 * or a declaration */
 	else {
-	    if (code.s == code.e) {
+	    if (code.len == 0) {
 		/* it is a group as part of a while, for, etc. */
 		--ps.ind_level;
 

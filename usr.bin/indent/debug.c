@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.4 2023/05/13 15:34:22 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.5 2023/05/15 07:28:45 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.4 2023/05/13 15:34:22 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.5 2023/05/15 07:28:45 rillig Exp $");
 
 #include "indent.h"
 
@@ -108,26 +108,26 @@ static bool debug_full_parser_state = true;
 static void
 debug_print_buf(const char *name, const struct buffer *buf)
 {
-    if (buf->s < buf->e) {
+    if (buf->len > 0) {
 	debug_printf("%s ", name);
-	debug_vis_range("\"", buf->s, buf->e, "\"\n");
+	debug_vis_range("\"", buf->st, buf->len, "\"\n");
     }
 }
 
 void
 debug_buffers(void)
 {
-    if (lab.e != lab.s) {
+    if (lab.len > 0) {
 	debug_printf(" label ");
-	debug_vis_range("\"", lab.s, lab.e, "\"");
+	debug_vis_range("\"", lab.st, lab.len, "\"");
     }
-    if (code.e != code.s) {
+    if (code.len > 0) {
 	debug_printf(" code ");
-	debug_vis_range("\"", code.s, code.e, "\"");
+	debug_vis_range("\"", code.st, code.len, "\"");
     }
-    if (com.e < com.s) {
+    if (com.len > 0) {
 	debug_printf(" comment ");
-	debug_vis_range("\"", com.s, com.e, "\"");
+	debug_vis_range("\"", com.st, com.len, "\"");
     }
 }
 
@@ -192,7 +192,7 @@ debug_parser_state(lexer_symbol lsym)
 
     debug_println("");
     debug_printf("line %d: %s", line_no, lsym_name[lsym]);
-    debug_vis_range(" \"", token.s, token.e, "\"\n");
+    debug_vis_range(" \"", token.st, token.len, "\"\n");
 
     debug_print_buf("label", &lab);
     debug_print_buf("code", &code);

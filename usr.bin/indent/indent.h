@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.132 2023/05/14 22:26:37 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.133 2023/05/15 07:28:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -125,10 +125,10 @@ typedef enum parser_symbol {
 
 /* A range of characters, not null-terminated. */
 struct buffer {
-    char *s;			/* start of the usable text */
-    char *e;			/* end of the usable text */
-    char *mem;			/* start of the allocated memory */
-    char *limit;		/* end of the allocated memory */
+    const char *st;		/* start of the usable text */
+    char *mem;
+    size_t len;			/* length of the usable text, from 'mem' */
+    size_t cap;
 };
 
 extern FILE *input;
@@ -366,7 +366,7 @@ extern struct parser_state {
 #ifdef debug
 void debug_printf(const char *, ...) __printflike(1, 2);
 void debug_println(const char *, ...) __printflike(1, 2);
-void debug_vis_range(const char *, const char *, const char *, const char *);
+void debug_vis_range(const char *, const char *, size_t, const char *);
 void debug_parser_state(lexer_symbol);
 void debug_parse_stack(const char *);
 void debug_buffers(void);
@@ -385,9 +385,7 @@ extern const char *const psym_name[];
 void register_typename(const char *);
 int compute_code_indent(void);
 int compute_label_indent(void);
-int ind_add(int, const char *, const char *);
-
-void inp_init(void);
+int ind_add(int, const char *, size_t);
 
 const char *inp_p(void);
 const char *inp_line_start(void);
@@ -406,13 +404,11 @@ void process_comment(void);
 void set_option(const char *, const char *);
 void load_profiles(const char *);
 
-void *xmalloc(size_t);
 void *xrealloc(void *, size_t);
 char *xstrdup(const char *);
 
-void buf_expand(struct buffer *, size_t);
 void buf_add_char(struct buffer *, char);
-void buf_add_range(struct buffer *, const char *, const char *);
+void buf_add_chars(struct buffer *, const char *, size_t);
 
 static inline bool
 ch_isalnum(char ch)
