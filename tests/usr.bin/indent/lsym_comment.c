@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.10 2023/05/15 07:28:45 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.11 2023/05/15 19:55:51 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -584,7 +584,12 @@ function(void)
 			{
 				int decl;	/* indented declaration */
 				{
-					int decl;	/* indented declaration */
+// $ This comment is indented so far to the right that it may overshoot the
+// $ right margin.  The allowed line length is increased to the starting
+// $ indentation of 56 plus a fixed amount of 25 columns, resulting in 81.
+// $ The trailing '*' would fit, but the trailing '/' is too much.
+					int decl;	/* indented declaration
+							 */
 				}
 			}
 		}
@@ -641,23 +646,29 @@ function(void)
 }
 //indent end
 
-//indent run
+//indent run -l78
 void
 function(void)
 {
 	code();			/* code comment */
 	code();			/* code comment _________ to line length 78 */
-	code();			/* code comment __________ to line length 79 */
-	code();			/* code comment ___________ to line length 80 */
-	code();			/* code comment ____________ to line length 81 */
+	code();			/* code comment __________ to line length 79
+				 */
+	code();			/* code comment ___________ to line length 80
+				 */
+	code();			/* code comment ____________ to line length 81
+				 */
 	code();			/* code comment _____________ to line length
 				 * 82 */
 
 /* $ In the following comments, the line length is measured after formatting. */
 	code();			/* code comment _________ to line length 78 */
-	code();			/* code comment __________ to line length 79 */
-	code();			/* code comment ___________ to line length 80 */
-	code();			/* code comment ____________ to line length 81 */
+	code();			/* code comment __________ to line length 79
+				 */
+	code();			/* code comment ___________ to line length 80
+				 */
+	code();			/* code comment ____________ to line length 81
+				 */
 	code();			/* code comment _____________ to line length
 				 * 82 */
 
