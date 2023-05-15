@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_question.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lsym_question.c,v 1.5 2023/05/15 10:13:40 rillig Exp $ */
 
 /*
  * Tests for the token lsym_question, which represents the '?' in a '?:'
@@ -56,11 +56,18 @@ void
 function(void)
 {
 	const char *branch = cond
-	// $ TODO: Indent these continuation lines as they are part of the
-	// $ TODO: initializer expression, not of the declarator part to the
-	// $ TODO: left of the '='.
-	? "then"
-	: "else";
+		? "then"
+		: "else";
+
+	const char *multiple_branches = cond1
+		? "then 1"
+		: cond2
+		? "then 2"
+		: "else";
+
+	const char *condensed = cond1 ? "condensed 1"
+		: cond2 ? "condensed 2"
+		: "condensed else";
 }
 //indent end
 
