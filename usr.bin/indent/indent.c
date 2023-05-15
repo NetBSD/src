@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.269 2023/05/15 07:57:22 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.270 2023/05/15 08:02:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.269 2023/05/15 07:57:22 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.270 2023/05/15 08:02:01 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -104,7 +104,7 @@ static void
 buf_expand(struct buffer *buf, size_t add_size)
 {
     buf->cap = buf->cap + add_size + 400;
-    buf->mem = xrealloc(buf->mem, buf->cap);
+    buf->mem = nonnull(realloc(buf->mem, buf->cap));
     buf->st = buf->mem;
 }
 
@@ -1125,22 +1125,10 @@ main(int argc, char **argv)
     return main_loop();
 }
 
-static void *
+void *
 nonnull(void *p)
 {
     if (p == NULL)
 	err(EXIT_FAILURE, NULL);
     return p;
-}
-
-void *
-xrealloc(void *p, size_t new_size)
-{
-    return nonnull(realloc(p, new_size));
-}
-
-char *
-xstrdup(const char *s)
-{
-    return nonnull(strdup(s));
 }
