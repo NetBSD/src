@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.267 2023/05/14 22:26:37 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.268 2023/05/15 07:28:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.267 2023/05/14 22:26:37 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.268 2023/05/15 07:28:45 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -101,66 +101,34 @@ static char bakfile[MAXPATHLEN] = "";
 
 
 static void
-buf_init(struct buffer *buf)
-{
-    size_t size = 200;
-    buf->mem = xmalloc(size);
-    buf->limit = buf->mem + size - 5 /* safety margin */;
-    buf->s = buf->mem + 1;	/* allow accessing buf->e[-1] */
-    buf->e = buf->s;
-    buf->mem[0] = ' ';
-}
-
-static size_t
-buf_len(const struct buffer *buf)
-{
-    return (size_t)(buf->e - buf->s);
-}
-
-void
 buf_expand(struct buffer *buf, size_t add_size)
 {
-    size_t new_size = (size_t)(buf->limit - buf->s) + 400 + add_size;
-    size_t len = buf_len(buf);
-    buf->mem = xrealloc(buf->mem, new_size);
-    buf->limit = buf->mem + new_size - 5;
-    buf->s = buf->mem + 1;
-    buf->e = buf->s + len;
-}
-
-static void
-buf_reserve(struct buffer *buf, size_t n)
-{
-    if (n >= (size_t)(buf->limit - buf->e))
-	buf_expand(buf, n);
+    buf->cap = buf->cap + add_size + 400;
+    buf->mem = xrealloc(buf->mem, buf->cap);
+    buf->st = buf->mem;
 }
 
 void
 buf_add_char(struct buffer *buf, char ch)
 {
-    buf_reserve(buf, 1);
-    *buf->e++ = ch;
+    if (buf->len == buf->cap)
+	buf_expand(buf, 1);
+    buf->mem[buf->len++] = ch;
 }
 
 void
-buf_add_range(struct buffer *buf, const char *s, const char *e)
+buf_add_chars(struct buffer *buf, const char *s, size_t len)
 {
-    size_t len = (size_t)(e - s);
-    buf_reserve(buf, len);
-    memcpy(buf->e, s, len);
-    buf->e += len;
+    if (len > buf->cap - buf->len)
+	buf_expand(buf, len);
+    memcpy(buf->mem + buf->len, s, len);
+    buf->len += len;
 }
 
 static void
 buf_add_buf(struct buffer *buf, const struct buffer *add)
 {
-    buf_add_range(buf, add->s, add->e);
-}
-
-static void
-buf_reset(struct buffer *buf)
-{
-    buf->e = buf->s;
+    buf_add_chars(buf, add->st, add->len);
 }
 
 void
@@ -180,13 +148,13 @@ diag(int level, const char *msg, ...)
 }
 
 /*
- * Compute the indentation from starting at 'ind' and adding the text from
- * 'start' to 'end'.
+ * Compute the indentation from starting at 'ind' and adding the text starting
+ * at 's'.
  */
 int
-ind_add(int ind, const char *start, const char *end)
+ind_add(int ind, const char *s, size_t len)
 {
-    for (const char *p = start; p != end; ++p) {
+    for (const char *p = s; len > 0; p++, len--) {
 	if (*p == '\n' || *p == '\f')
 	    ind = 0;
 	else if (*p == '\t')
@@ -202,14 +170,6 @@ ind_add(int ind, const char *start, const char *end)
 static void
 main_init_globals(void)
 {
-    inp_init();
-
-    buf_init(&token);
-
-    buf_init(&lab);
-    buf_init(&code);
-    buf_init(&com);
-
     ps.s_sym[0] = psym_stmt_list;
     ps.prev_token = lsym_semicolon;
     ps.next_col_1 = true;
@@ -345,9 +305,9 @@ static void
 code_add_decl_indent(int decl_ind, bool tabs_to_var)
 {
     int base_ind = ps.ind_level * opt.indent_size;
-    int ind = base_ind + (int)buf_len(&code);
+    int ind = base_ind + (int)code.len;
     int target_ind = base_ind + decl_ind;
-    const char *orig_code_e = code.e;
+    size_t orig_code_len = code.len;
 
     if (tabs_to_var)
 	for (int next; (next = next_tab(ind)) <= target_ind; ind = next)
@@ -356,7 +316,7 @@ code_add_decl_indent(int decl_ind, bool tabs_to_var)
     for (; ind < target_ind; ind++)
 	buf_add_char(&code, ' ');
 
-    if (code.e == orig_code_e && ps.want_blank) {
+    if (code.len == orig_code_len && ps.want_blank) {
 	buf_add_char(&code, ' ');
 	ps.want_blank = false;
     }
@@ -365,7 +325,7 @@ code_add_decl_indent(int decl_ind, bool tabs_to_var)
 static int
 process_eof(void)
 {
-    if (lab.s != lab.e || code.s != code.e || com.s != com.e)
+    if (lab.len > 0 || code.len > 0 || com.len > 0)
 	output_line();
 
     if (ps.tos > 1)		/* check for balanced braces */
@@ -394,11 +354,11 @@ maybe_break_line(lexer_symbol lsym)
 static void
 move_com_to_code(void)
 {
-    if (lab.e != lab.s || code.e != code.s)
+    if (lab.len > 0 || code.len > 0)
 	buf_add_char(&code, ' ');
     buf_add_buf(&code, &com);
     buf_add_char(&code, ' ');
-    buf_reset(&com);
+    com.len = 0;
     ps.want_blank = false;
 }
 
@@ -414,7 +374,7 @@ process_newline(void)
 {
     if (ps.prev_token == lsym_comma && ps.nparen == 0 && !ps.block_init &&
 	!opt.break_after_comma && break_comma &&
-	com.s == com.e)
+	com.len == 0)
 	goto stay_in_line;
 
     output_line();
@@ -426,7 +386,7 @@ stay_in_line:
 static bool
 is_function_pointer_declaration(void)
 {
-    return token.s[0] == '('
+    return token.st[0] == '('
 	&& ps.in_decl
 	&& !ps.block_init
 	&& !ps.decl_indent_done
@@ -465,11 +425,11 @@ process_lparen_or_lbracket(void)
 	code_add_decl_indent(ps.decl_ind, ps.tabs_to_var);
 	ps.decl_indent_done = true;
     } else if (want_blank_before_lparen())
-	*code.e++ = ' ';
+	buf_add_char(&code, ' ');
     ps.want_blank = false;
-    *code.e++ = token.s[0];
+    buf_add_char(&code, token.st[0]);
 
-    ps.paren[ps.nparen - 1].indent = (short)ind_add(0, code.s, code.e);
+    ps.paren[ps.nparen - 1].indent = (short)ind_add(0, code.st, code.len);
     debug_println("paren_indents[%d] is now %d",
 	ps.nparen - 1, ps.paren[ps.nparen - 1].indent);
 
@@ -479,7 +439,7 @@ process_lparen_or_lbracket(void)
 	debug_println("paren_indents[0] is now %d", ps.paren[0].indent);
     }
 
-    if (ps.init_or_struct && *token.s == '(' && ps.tos <= 2) {
+    if (ps.init_or_struct && *token.st == '(' && ps.tos <= 2) {
 	/*
 	 * this is a kluge to make sure that declarations will be aligned
 	 * right if proc decl has an explicit type on it, i.e. "int a(x) {..."
@@ -496,7 +456,7 @@ static void
 process_rparen_or_rbracket(void)
 {
     if (ps.nparen == 0) {
-	diag(0, "Extra '%c'", *token.s);
+	diag(0, "Extra '%c'", *token.st);
 	goto unbalanced;	/* TODO: better exit immediately */
     }
 
@@ -512,11 +472,11 @@ process_rparen_or_rbracket(void)
     if (ps.nparen > 0)
 	ps.nparen--;
 
-    if (code.e == code.s)	/* if the paren starts the line */
+    if (code.len == 0)		/* if the paren starts the line */
 	ps.line_start_nparen = ps.nparen;	/* then indent it */
 
 unbalanced:
-    *code.e++ = token.s[0];
+    buf_add_char(&code, token.st[0]);
 
     if (ps.spaced_expr_psym != psym_0 && ps.nparen == 0) {
 	ps.force_nl = true;
@@ -532,8 +492,8 @@ want_blank_before_unary_op(void)
 {
     if (ps.want_blank)
 	return true;
-    if (token.s[0] == '+' || token.s[0] == '-')
-	return code.e > code.s && code.e[-1] == token.s[0];
+    if (token.st[0] == '+' || token.st[0] == '-')
+	return code.len > 0 && code.mem[code.len - 1] == token.st[0];
     return false;
 }
 
@@ -543,11 +503,10 @@ process_unary_op(void)
     if (!ps.decl_indent_done && ps.in_decl && !ps.block_init &&
 	!ps.is_function_definition && ps.line_start_nparen == 0) {
 	/* pointer declarations */
-	code_add_decl_indent(ps.decl_ind - (int)buf_len(&token),
-			     ps.tabs_to_var);
+	code_add_decl_indent(ps.decl_ind - (int)token.len, ps.tabs_to_var);
 	ps.decl_indent_done = true;
     } else if (want_blank_before_unary_op())
-	*code.e++ = ' ';
+	buf_add_char(&code, ' ');
 
     buf_add_buf(&code, &token);
     ps.want_blank = false;
@@ -556,7 +515,7 @@ process_unary_op(void)
 static void
 process_binary_op(void)
 {
-    if (buf_len(&code) > 0)
+    if (code.len > 0)
 	buf_add_char(&code, ' ');
     buf_add_buf(&code, &token);
     ps.want_blank = true;
@@ -565,8 +524,7 @@ process_binary_op(void)
 static void
 process_postfix_op(void)
 {
-    *code.e++ = token.s[0];
-    *code.e++ = token.s[1];
+    buf_add_buf(&code, &token);
     ps.want_blank = true;
 }
 
@@ -575,8 +533,8 @@ process_question(void)
 {
     ps.quest_level++;
     if (ps.want_blank)
-	*code.e++ = ' ';
-    *code.e++ = '?';
+	buf_add_char(&code, ' ');
+    buf_add_char(&code, '?');
     ps.want_blank = true;
 }
 
@@ -586,21 +544,21 @@ process_colon(void)
     if (ps.quest_level > 0) {	/* part of a '?:' operator */
 	ps.quest_level--;
 	if (ps.want_blank)
-	    *code.e++ = ' ';
-	*code.e++ = ':';
+	    buf_add_char(&code, ' ');
+	buf_add_char(&code, ':');
 	ps.want_blank = true;
 	return;
     }
 
     if (ps.init_or_struct) {	/* bit-field */
-	*code.e++ = ':';
+	buf_add_char(&code, ':');
 	ps.want_blank = false;
 	return;
     }
 
     buf_add_buf(&lab, &code);	/* 'case' or 'default' or named label */
     buf_add_char(&lab, ':');
-    buf_reset(&code);
+    code.len = 0;
 
     ps.in_stmt_or_decl = false;
     ps.is_case_label = ps.seen_case;
@@ -622,7 +580,7 @@ process_semicolon(void)
     ps.block_init_level = 0;
     ps.declaration = ps.declaration == decl_begin ? decl_end : decl_no;
 
-    if (ps.in_decl && code.s == code.e && !ps.block_init &&
+    if (ps.in_decl && code.len == 0 && !ps.block_init &&
 	!ps.decl_indent_done && ps.line_start_nparen == 0) {
 	/* indent stray semicolons in declarations */
 	code_add_decl_indent(ps.decl_ind - 1, ps.tabs_to_var);
@@ -645,7 +603,7 @@ process_semicolon(void)
 	    ps.spaced_expr_psym = psym_0;
 	}
     }
-    *code.e++ = ';';
+    buf_add_char(&code, ';');
     ps.want_blank = true;
     ps.in_stmt_or_decl = ps.nparen > 0;
 
@@ -667,7 +625,7 @@ process_lbrace(void)
     else
 	ps.block_init_level++;
 
-    if (code.s != code.e && !ps.block_init) {
+    if (code.len > 0 && !ps.block_init) {
 	if (!opt.brace_same_line)
 	    output_line();
 	else if (ps.in_func_def_params && !ps.init_or_struct) {
@@ -689,7 +647,7 @@ process_lbrace(void)
 	}
     }
 
-    if (code.s == code.e)
+    if (code.len == 0)
 	ps.in_stmt_cont = false;	/* don't indent the '{' itself */
     if (ps.in_decl && ps.init_or_struct) {
 	ps.di_stack[ps.decl_level] = ps.decl_ind;
@@ -709,9 +667,9 @@ process_lbrace(void)
     ps.decl_ind = 0;
     parse(psym_lbrace);
     if (ps.want_blank)
-	*code.e++ = ' ';
+	buf_add_char(&code, ' ');
     ps.want_blank = false;
-    *code.e++ = '{';
+    buf_add_char(&code, '{');
     ps.declaration = decl_no;
 }
 
@@ -727,13 +685,13 @@ process_rbrace(void)
     ps.declaration = decl_no;
     ps.block_init_level--;
 
-    if (code.s != code.e && !ps.block_init) {	/* '}' must be first on line */
+    if (code.len > 0 && !ps.block_init) {	/* '}' must be first on line */
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	output_line();
     }
 
-    *code.e++ = '}';
+    buf_add_char(&code, '}');
     ps.want_blank = true;
     ps.in_stmt_or_decl = false;
     ps.in_stmt_cont = false;
@@ -756,7 +714,7 @@ process_do(void)
 {
     ps.in_stmt_or_decl = false;
 
-    if (code.e != code.s) {	/* make sure this starts a line */
+    if (code.len > 0) {	/* make sure this starts a line */
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	output_line();
@@ -771,7 +729,7 @@ process_else(void)
 {
     ps.in_stmt_or_decl = false;
 
-    if (code.e > code.s && !(opt.cuddle_else && code.e[-1] == '}')) {
+    if (code.len > 0 && !(opt.cuddle_else && code.mem[code.len - 1] == '}')) {
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	output_line();
@@ -787,7 +745,7 @@ process_type(void)
     parse(psym_decl);		/* let the parser worry about indentation */
 
     if (ps.prev_token == lsym_rparen_or_rbracket && ps.tos <= 1) {
-	if (code.s != code.e)
+	if (code.len > 0)
 	    output_line();
     }
 
@@ -802,7 +760,7 @@ process_type(void)
     if (ps.decl_level <= 0)
 	ps.declaration = decl_begin;
 
-    int len = (int)buf_len(&token) + 1;
+    int len = (int)token.len + 1;
     int ind = ps.ind_level == 0 || ps.decl_level > 0
 	? opt.decl_indent	/* global variable or local member */
 	: opt.local_decl_indent;	/* local variable */
@@ -816,10 +774,10 @@ process_ident(lexer_symbol lsym)
     if (ps.in_decl) {
 	if (lsym == lsym_funcname) {
 	    ps.in_decl = false;
-	    if (opt.procnames_start_line && code.s != code.e)
+	    if (opt.procnames_start_line && code.len > 0)
 		output_line();
 	    else if (ps.want_blank)
-		*code.e++ = ' ';
+		buf_add_char(&code, ' ');
 	    ps.want_blank = false;
 
 	} else if (!ps.block_init && !ps.decl_indent_done &&
@@ -841,16 +799,16 @@ process_ident(lexer_symbol lsym)
 static void
 process_period(void)
 {
-    if (code.e > code.s && code.e[-1] == ',')
-	*code.e++ = ' ';
-    *code.e++ = '.';
+    if (code.len > 0 && code.mem[code.len - 1] == ',')
+	buf_add_char(&code, ' ');
+    buf_add_char(&code, '.');
     ps.want_blank = false;
 }
 
 static void
 process_comma(void)
 {
-    ps.want_blank = code.s != code.e;	/* only put blank after comma if comma
+    ps.want_blank = code.len > 0;	/* only put blank after comma if comma
 					 * does not start the line */
 
     if (ps.in_decl && !ps.is_function_definition && !ps.block_init &&
@@ -860,14 +818,14 @@ process_comma(void)
 	ps.decl_indent_done = true;
     }
 
-    *code.e++ = ',';
+    buf_add_char(&code, ',');
 
     if (ps.nparen == 0) {
 	if (ps.block_init_level <= 0)
 	    ps.block_init = false;
 	int typical_varname_length = 8;
 	if (break_comma && (opt.break_after_comma ||
-		ind_add(compute_code_indent(), code.s, code.e)
+		ind_add(compute_code_indent(), code.st, code.len)
 		>= opt.max_line_length - typical_varname_length))
 	    ps.force_nl = true;
     }
@@ -887,17 +845,16 @@ read_preprocessing_line(void)
 	buf_add_char(&lab, inp_next());
 
     while (inp_peek() != '\n' || (state == COMM && !had_eof)) {
-	buf_reserve(&lab, 2);
-	*lab.e++ = inp_next();
-	switch (lab.e[-1]) {
+	buf_add_char(&lab, inp_next());
+	switch (lab.mem[lab.len - 1]) {
 	case '\\':
 	    if (state != COMM)
-		*lab.e++ = inp_next();
+		buf_add_char(&lab, inp_next());
 	    break;
 	case '/':
 	    if (inp_peek() == '*' && state == PLAIN) {
 		state = COMM;
-		*lab.e++ = inp_next();
+		buf_add_char(&lab, inp_next());
 	    }
 	    break;
 	case '"':
@@ -915,14 +872,14 @@ read_preprocessing_line(void)
 	case '*':
 	    if (inp_peek() == '/' && state == COMM) {
 		state = PLAIN;
-		*lab.e++ = inp_next();
+		buf_add_char(&lab, inp_next());
 	    }
 	    break;
 	}
     }
 
-    while (lab.e > lab.s && ch_isblank(lab.e[-1]))
-	lab.e--;
+    while (lab.len > 0 && ch_isblank(lab.mem[lab.len - 1]))
+	lab.len--;
 }
 
 typedef struct {
@@ -948,19 +905,20 @@ substring_starts_with(substring ss, const char *prefix)
 static void
 process_preprocessing(void)
 {
-    if (com.s != com.e || lab.s != lab.e || code.s != code.e)
+    if (lab.len > 0 || code.len > 0 || com.len > 0)
 	output_line();
 
     read_preprocessing_line();
 
     ps.is_case_label = false;
 
+    const char *end = lab.mem + lab.len;
     substring dir;
-    dir.s = lab.s + 1;
-    while (dir.s < lab.e && ch_isblank(*dir.s))
+    dir.s = lab.st + 1;
+    while (dir.s < end && ch_isblank(*dir.s))
 	dir.s++;
     dir.e = dir.s;
-    while (dir.e < lab.e && ch_isalpha(*dir.e))
+    while (dir.e < end && ch_isalpha(*dir.e))
 	dir.e++;
 
     if (substring_starts_with(dir, "if")) {	/* also ifdef, ifndef */
@@ -1022,11 +980,9 @@ main_loop(void)
 	    maybe_break_line(lsym);
 	    ps.in_stmt_or_decl = true;	/* add an extra level of indentation;
 					 * turned off again by a ';' or '}' */
-	    if (com.s != com.e)
+	    if (com.len > 0)
 		move_com_to_code();
 	}
-
-	buf_reserve(&code, 3);	/* space for 2 characters plus '\0' */
 
 	switch (lsym) {
 
@@ -1194,11 +1150,12 @@ debug_println(const char *fmt, ...)
 }
 
 void
-debug_vis_range(const char *prefix, const char *s, const char *e,
+debug_vis_range(const char *prefix, const char *s, size_t len,
     const char *suffix)
 {
     debug_printf("%s", prefix);
-    for (const char *p = s; p < e; p++) {
+    for (size_t i = 0; i < len; i++) {
+	const char *p = s + i;
 	if (*p == '\\' || *p == '"')
 	    debug_printf("\\%c", *p);
 	else if (isprint((unsigned char)*p))
@@ -1220,12 +1177,6 @@ nonnull(void *p)
     if (p == NULL)
 	err(EXIT_FAILURE, NULL);
     return p;
-}
-
-void *
-xmalloc(size_t size)
-{
-    return nonnull(malloc(size));
 }
 
 void *
