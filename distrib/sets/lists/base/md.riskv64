@@ -1,0 +1,5 @@
+# $NetBSD: md.riskv64,v 1.1 2023/05/15 21:12:11 christos Exp $
+./usr/lib/rv32/openssl				base-crypto-usr
+./usr/lib/rv32/openssl/engines			base-crypto-usr
+./usr/lib/rv32/openssl/modules			base-crypto-usr
+./usr/lib/rv32/openssl/modules/legacy.so	base-crypto-usr		compat,pic,openssl=30
