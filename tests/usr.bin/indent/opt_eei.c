@@ -1,4 +1,4 @@
-/* $NetBSD: opt_eei.c,v 1.10 2023/05/15 12:59:43 rillig Exp $ */
+/* $NetBSD: opt_eei.c,v 1.11 2023/05/15 13:28:05 rillig Exp $ */
 
 /*
  * Tests for the options '-eei' and '-neei'.
@@ -158,5 +158,32 @@ b)
       switch (
 	a)
 	    stmt();
+}
+//indent end
+
+
+/*
+ * Ensure that after a condition with extra indentation, the following
+ * statements are not affected.
+ */
+//indent input
+{
+	if (
+		cond
+	)
+		stmt(
+			arg
+		);
+}
+//indent end
+
+//indent run -eei -nlp -i4
+{
+    if (
+	    cond
+	)
+	stmt(
+		arg
+	    );
 }
 //indent end
