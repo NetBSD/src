@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.188 2023/05/15 09:22:53 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.189 2023/05/15 13:37:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.188 2023/05/15 09:22:53 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.189 2023/05/15 13:37:16 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -295,7 +295,7 @@ static bool
 is_typename(void)
 {
     if (opt.auto_typedefs &&
-	token.len >= 2 && memcmp(token.mem + token.len - 2, "_t", 2) == 0)
+	    token.len >= 2 && memcmp(token.mem + token.len - 2, "_t", 2) == 0)
 	return true;
 
     return bsearch_typenames(token.st) >= 0;
@@ -414,7 +414,7 @@ found_typename:
     }
 
     if (inp_peek() == '(' && ps.tos <= 1 && ps.ind_level == 0 &&
-	!ps.in_func_def_params && !ps.block_init) {
+	    !ps.in_func_def_params && !ps.block_init) {
 
 	if (ps.nparen == 0 && probably_looking_at_definition()) {
 	    ps.is_function_definition = true;
