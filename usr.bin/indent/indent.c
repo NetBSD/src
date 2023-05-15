@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.273 2023/05/15 09:22:53 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.274 2023/05/15 10:13:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.273 2023/05/15 09:22:53 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.274 2023/05/15 10:13:40 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -532,6 +532,11 @@ static void
 process_question(void)
 {
     ps.quest_level++;
+    if (code.len == 0) {
+	ps.in_stmt_cont = true;
+	ps.in_stmt_or_decl = true;
+	ps.in_decl = false;
+    }
     if (ps.want_blank)
 	buf_add_char(&code, ' ');
     buf_add_char(&code, '?');
@@ -543,6 +548,11 @@ process_colon(void)
 {
     if (ps.quest_level > 0) {	/* part of a '?:' operator */
 	ps.quest_level--;
+	if (code.len == 0) {
+	    ps.in_stmt_cont = true;
+	    ps.in_stmt_or_decl = true;
+	    ps.in_decl = false;
+	}
 	if (ps.want_blank)
 	    buf_add_char(&code, ' ');
 	buf_add_char(&code, ':');
