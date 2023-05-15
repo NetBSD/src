@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.55 2021/12/24 05:11:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.56 2023/05/15 08:01:22 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -991,6 +991,7 @@ struct ixgbe_dmac_config {
 #define IXGBE_MPC(_i)	(0x03FA0 + ((_i) * 4)) /* 8 of these 3FA0-3FBC*/
 #define IXGBE_MLFC	0x04034
 #define IXGBE_MRFC	0x04038
+#define IXGBE_LINK_DN_CNT 0x0403c	/* LINK Down Counter */
 #define IXGBE_RLEC	0x04040
 #define IXGBE_LXONTXC	0x03F60
 #define IXGBE_LXONRXC	0x0CF60
@@ -3918,6 +3919,7 @@ struct ixgbe_hw_stats {
 	struct evcnt mpc[IXGBE_TC_COUNTER_NUM];
 	struct evcnt mlfc;
 	struct evcnt mrfc;
+	struct evcnt link_dn_cnt;
 	struct evcnt rlec;
 	struct evcnt lxontxc;
 	struct evcnt lxonrxc;

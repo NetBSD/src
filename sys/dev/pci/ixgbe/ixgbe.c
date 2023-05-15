@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.325 2023/02/03 05:43:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.326 2023/05/15 08:01:22 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.325 2023/02/03 05:43:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.326 2023/05/15 08:01:22 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1680,6 +1680,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_MLFC, mlfc);
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_MRFC, mrfc);
 	}
+	if (hw->mac.type == ixgbe_mac_X550EM_a)
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_LINK_DN_CNT, link_dn_cnt);
 	IXGBE_EVC_REGADD2(hw, stats, IXGBE_RLEC, rlec);
 
 	/* Hardware workaround, gprc counts missed packets */
@@ -2029,6 +2031,9 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "MAC Local Faults");
 	evcnt_attach_dynamic(&stats->mrfc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "MAC Remote Faults");
+	if (hw->mac.type == ixgbe_mac_X550EM_a)
+		evcnt_attach_dynamic(&stats->link_dn_cnt, EVCNT_TYPE_MISC,
+		    NULL, stats->namebuf, "Link down event in the MAC");
 	evcnt_attach_dynamic(&stats->rlec, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Receive Length Errors");
 	evcnt_attach_dynamic(&stats->lxontxc, EVCNT_TYPE_MISC, NULL,
@@ -2197,6 +2202,8 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	IXGBE_EVC_STORE(&stats->mpctotal, 0);
 	IXGBE_EVC_STORE(&stats->mlfc, 0);
 	IXGBE_EVC_STORE(&stats->mrfc, 0);
+	if (hw->mac.type == ixgbe_mac_X550EM_a)
+		IXGBE_EVC_STORE(&stats->link_dn_cnt, 0);
 	IXGBE_EVC_STORE(&stats->rlec, 0);
 	IXGBE_EVC_STORE(&stats->lxontxc, 0);
 	IXGBE_EVC_STORE(&stats->lxonrxc, 0);
@@ -3802,6 +3809,8 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&stats->mpctotal);
 	evcnt_detach(&stats->mlfc);
 	evcnt_detach(&stats->mrfc);
+	if (hw->mac.type == ixgbe_mac_X550EM_a)
+		evcnt_detach(&stats->link_dn_cnt);
 	evcnt_detach(&stats->rlec);
 	evcnt_detach(&stats->lxontxc);
 	evcnt_detach(&stats->lxonrxc);
