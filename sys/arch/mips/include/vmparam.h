@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.66 2021/06/23 15:11:40 simonb Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.66.10.1 2023/05/15 10:37:24 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -88,7 +88,7 @@
  */
 #if defined(__mips_o32)
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(64*1024*1024)		/* max text size */
+#define	MAXTSIZ		(128*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
 #define	DFLDSIZ		(128*1024*1024)		/* initial data size limit */
