@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.56 2023/05/15 07:28:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.57 2023/05/15 08:11:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,10 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.56 2023/05/15 07:28:45 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.57 2023/05/15 08:11:27 rillig Exp $");
 
 #include <err.h>
-#include <stdio.h>
 
 #include "indent.h"
 

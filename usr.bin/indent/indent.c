@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.270 2023/05/15 08:02:01 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.271 2023/05/15 08:11:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,11 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.270 2023/05/15 08:02:01 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.271 2023/05/15 08:11:27 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
-#include <errno.h>
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
