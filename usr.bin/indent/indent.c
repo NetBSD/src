@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.282 2023/05/15 20:30:20 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.283 2023/05/15 20:50:37 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.282 2023/05/15 20:30:20 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.283 2023/05/15 20:50:37 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -466,7 +466,8 @@ process_lparen_or_lbracket(void)
 	ps.init_or_struct = false;
     }
 
-    if (ps.prev_token == lsym_offsetof || ps.prev_token == lsym_sizeof)
+    if (ps.prev_token == lsym_offsetof || ps.prev_token == lsym_sizeof
+	    || ps.is_function_definition)
 	ps.paren[ps.nparen - 1].no_cast = true;
 }
 
