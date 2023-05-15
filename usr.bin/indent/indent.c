@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.277 2023/05/15 13:37:16 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.278 2023/05/15 14:12:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.277 2023/05/15 13:37:16 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.278 2023/05/15 14:12:03 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -799,6 +799,9 @@ process_ident(lexer_symbol lsym)
 
 	} else if (!ps.block_init && !ps.decl_indent_done &&
 		ps.line_start_nparen == 0) {
+	    if (opt.decl_indent == 0
+		    && code.len > 0 && code.mem[code.len - 1] == '}')
+		ps.decl_ind = ind_add(0, code.st, code.len) + 1;
 	    code_add_decl_indent(ps.decl_ind, ps.tabs_to_var);
 	    ps.decl_indent_done = true;
 	    ps.want_blank = false;
