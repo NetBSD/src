@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.271 2023/05/15 08:11:27 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.272 2023/05/15 08:56:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.271 2023/05/15 08:11:27 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.272 2023/05/15 08:56:39 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -483,6 +483,7 @@ unbalanced:
 	ps.in_stmt_or_decl = false;
 	parse(ps.spaced_expr_psym);
 	ps.spaced_expr_psym = psym_0;
+	ps.want_blank = true;
     }
 }
 
