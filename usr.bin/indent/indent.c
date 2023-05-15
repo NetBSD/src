@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.278 2023/05/15 14:12:03 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.279 2023/05/15 14:55:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.278 2023/05/15 14:12:03 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.279 2023/05/15 14:55:47 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -463,6 +463,9 @@ process_rparen_or_rbracket(void)
 	diag(0, "Extra '%c'", *token.st);
 	goto unbalanced;	/* TODO: better exit immediately */
     }
+
+    if (ps.nparen > 0 && ps.decl_on_line && !ps.block_init)
+	ps.paren[ps.nparen - 1].no_cast = true;
 
     if (ps.paren[ps.nparen - 1].maybe_cast &&
 	    !ps.paren[ps.nparen - 1].no_cast) {

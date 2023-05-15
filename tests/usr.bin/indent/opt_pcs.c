@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.13 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.14 2023/05/15 14:55:47 rillig Exp $ */
 
 /*
  * Tests for the options '-pcs' and '-npcs'.
@@ -48,7 +48,8 @@ int var = (function)(arg);
 
 //indent run -di0 -pcs
 void (*signal (void (*handler) (int))) (int);
-int var = (function) (arg);
+// $ This may be a function call or a cast, depending on the context.
+int var = (function)(arg);
 //indent end
 
 //indent run -di0 -npcs
