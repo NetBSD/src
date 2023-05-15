@@ -1,4 +1,4 @@
-/* $NetBSD: opt_eei.c,v 1.9 2023/05/15 12:11:07 rillig Exp $ */
+/* $NetBSD: opt_eei.c,v 1.10 2023/05/15 12:59:43 rillig Exp $ */
 
 /*
  * Tests for the options '-eei' and '-neei'.
@@ -127,22 +127,17 @@ b)
 //indent run -eei -i4 -nlp
 {
     if (a <
-/* $ FIXME: Needs extra indentation. */
-	b)
+	    b)
 	stmt();
     if (a
-/* $ FIXME: Needs extra indentation. */
-	<
-/* $ FIXME: Needs extra indentation. */
-	b)
+	    <
+	    b)
 	stmt();
     while (a
-/* $ FIXME: Needs extra indentation. */
-	< b)
+	    < b)
 	stmt();
     switch (
-/* $ FIXME: Needs extra indentation. */
-	a)
+	    a)
 	stmt();
 }
 //indent end
