@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.6 2023/05/15 07:57:22 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.7 2023/05/15 09:00:51 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,13 +30,20 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.6 2023/05/15 07:57:22 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.7 2023/05/15 09:00:51 rillig Exp $");
 
 #include <stdarg.h>
 
 #include "indent.h"
 
 #ifdef debug
+
+/*
+ * false	show only the changes to the parser state
+ * true		show unchanged parts of the parser state as well
+ */
+static bool debug_full_parser_state = true;
+
 const char *const lsym_name[] = {
     "eof",
     "preprocessing",
@@ -104,8 +111,6 @@ static const char *in_enum_name[] = {
     "type",
     "brace",
 };
-
-static bool debug_full_parser_state = true;
 
 void
 debug_printf(const char *fmt, ...)
