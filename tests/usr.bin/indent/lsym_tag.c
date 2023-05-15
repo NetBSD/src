@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_tag.c,v 1.6 2023/05/15 13:53:32 rillig Exp $ */
+/* $NetBSD: lsym_tag.c,v 1.7 2023/05/15 14:12:03 rillig Exp $ */
 
 /*
  * Tests for the token lsym_tag, which represents one of the keywords
@@ -118,28 +118,19 @@ struct /* comment */ tag var;
 
 /*
  * Ensure that the names of struct members are all indented the same.
- * Before XXXX-XX-XX, the indentation depended on their type name.
+ * Before 2023-05-15, the indentation depended on their type name.
  */
 //indent input
-struct {
+struct outer {
 	enum {
 		untagged_constant,
-	} untagged_member;
+	} untagged_member,
+	  second_untagged_member;
 	enum tag_name {
 		tagged_constant,
-	} tagged_member;
+	} tagged_member,
+	  second_tagged_member;
 };
 //indent end
 
-//indent run -di0
-struct {
-	enum {
-		untagged_constant,
-	}    untagged_member;
-	/* $ FIXME: 4 spaces above, should be 1. */
-	enum tag_name {
-		tagged_constant,
-	}        tagged_member;
-	/* $ FIXME: 8 spaces above, should be 1. */
-};
-//indent end
+//indent run-equals-input -di0
