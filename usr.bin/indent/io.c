@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.168 2023/05/15 12:59:43 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.169 2023/05/15 13:33:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.168 2023/05/15 12:59:43 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.169 2023/05/15 13:33:19 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -274,6 +274,8 @@ output_complete_line(char line_terminator)
     ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */
     ps.in_stmt_cont = ps.in_stmt_or_decl && !ps.in_decl;
     ps.decl_indent_done = false;
+    if (ps.extra_expr_indent == eei_last)
+	ps.extra_expr_indent = eei_no;
 
     lab.len = 0;
     code.len = 0;
@@ -338,7 +340,7 @@ compute_code_indent(void)
 	return compute_code_indent_lineup(base_ind);
     }
 
-    if (ps.extra_expr_indent)
+    if (ps.extra_expr_indent != eei_no)
 	return base_ind + 2 * opt.continuation_indent;
 
     if (2 * opt.continuation_indent == opt.indent_size)
