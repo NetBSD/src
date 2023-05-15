@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.280 2023/05/15 18:22:40 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.281 2023/05/15 20:12:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.280 2023/05/15 18:22:40 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.281 2023/05/15 20:12:28 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -269,7 +269,8 @@ main_parse_command_line(int argc, char **argv)
     }
 
     if (opt.comment_column <= 1)
-	opt.comment_column = 2;	/* don't put normal comments before column 2 */
+	opt.comment_column = 2;	/* don't put normal comments in column 1, see
+				 * opt.format_col1_comments */
     if (opt.block_comment_max_line_length <= 0)
 	opt.block_comment_max_line_length = opt.max_line_length;
     if (opt.local_decl_indent < 0)
@@ -605,8 +606,8 @@ process_semicolon(void)
 {
     if (ps.decl_level == 0)
 	ps.init_or_struct = false;
-    ps.seen_case = false;	/* these will only need resetting in an error */
-    ps.quest_level = 0;
+    ps.seen_case = false;	/* only needs to be reset on error */
+    ps.quest_level = 0;		/* only needs to be reset on error */
     if (ps.prev_token == lsym_rparen_or_rbracket)
 	ps.in_func_def_params = false;
     ps.block_init = false;
@@ -718,7 +719,7 @@ process_rbrace(void)
     ps.declaration = decl_no;
     ps.block_init_level--;
 
-    if (code.len > 0 && !ps.block_init) {	/* '}' must be first on line */
+    if (code.len > 0 && !ps.block_init) {
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	output_line();
