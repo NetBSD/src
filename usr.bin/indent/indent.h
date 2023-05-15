@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.136 2023/05/15 09:53:32 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.137 2023/05/15 10:13:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -297,9 +297,9 @@ extern struct parser_state {
 				 * currently prepared for output */
     int ind_level_follow;	/* the level to which ind_level should be set
 				 * after the current line is printed */
-    bool in_stmt_cont;		/* whether the next line should have an extra
-				 * indentation level because we are in the
-				 * middle of a statement */
+    bool in_stmt_cont;		/* whether the current line should have an
+				 * extra indentation level because we are in
+				 * the middle of a statement */
     int decl_level;		/* current nesting level for a structure
 				 * declaration or an initializer */
     bool decl_indent_done;	/* whether the indentation for a declaration
