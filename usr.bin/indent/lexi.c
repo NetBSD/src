@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.187 2023/05/15 08:02:01 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.188 2023/05/15 09:22:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.187 2023/05/15 08:02:01 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.188 2023/05/15 09:22:53 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -626,7 +626,7 @@ register_typename(const char *name)
     if (typenames.len >= typenames.cap) {
 	typenames.cap = 16 + 2 * typenames.cap;
 	typenames.items = nonnull(realloc(typenames.items,
-	    sizeof(typenames.items[0]) * typenames.cap));
+		sizeof(typenames.items[0]) * typenames.cap));
     }
 
     int pos = bsearch_typenames(name);

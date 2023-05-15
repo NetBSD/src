@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.272 2023/05/15 08:56:39 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.273 2023/05/15 09:22:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.272 2023/05/15 08:56:39 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.273 2023/05/15 09:22:53 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -608,7 +608,7 @@ process_semicolon(void)
     ps.in_stmt_or_decl = ps.nparen > 0;
 
     if (ps.spaced_expr_psym == psym_0) {
-	parse(psym_0);	/* let parser know about end of stmt */
+	parse(psym_0);		/* let parser know about end of stmt */
 	ps.force_nl = true;
     }
 }
@@ -653,7 +653,7 @@ process_lbrace(void)
 	ps.di_stack[ps.decl_level] = ps.decl_ind;
 	if (++ps.decl_level == (int)array_length(ps.di_stack)) {
 	    diag(0, "Reached internal limit of %d struct levels",
-		 (int)array_length(ps.di_stack));
+		(int)array_length(ps.di_stack));
 	    ps.decl_level--;
 	}
     } else {
@@ -714,7 +714,7 @@ process_do(void)
 {
     ps.in_stmt_or_decl = false;
 
-    if (code.len > 0) {	/* make sure this starts a line */
+    if (code.len > 0) {		/* make sure this starts a line */
 	if (opt.verbose)
 	    diag(0, "Line broken");
 	output_line();
@@ -947,7 +947,7 @@ process_preprocessing(void)
 	    !substring_equals(dir, "define") &&
 	    !substring_equals(dir, "include")) {
 	    diag(1, "Unrecognized cpp directive \"%.*s\"",
-		 (int)(dir.e - dir.s), dir.s);
+		(int)(dir.e - dir.s), dir.s);
 	    return;
 	}
     }

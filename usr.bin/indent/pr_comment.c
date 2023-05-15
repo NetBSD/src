@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.140 2023/05/15 07:28:45 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.141 2023/05/15 09:22:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.140 2023/05/15 07:28:45 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.141 2023/05/15 09:22:53 rillig Exp $");
 
 #include <string.h>
 
@@ -272,8 +272,8 @@ copy_comment_wrap(int line_length, bool delim)
 	    com_add_delim();
 
 	    /*
-	     * Assume that output_line and com_add_delim don't invalidate
-	     * the "unused" part of the buffer beyond com.mem + com.len.
+	     * Assume that output_line and com_add_delim don't invalidate the
+	     * "unused" part of the buffer beyond com.mem + com.len.
 	     */
 	    memmove(com.mem + com.len, last_word_s, last_word_len);
 	    com.len += last_word_len;
