@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.190 2023/05/15 17:28:14 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.191 2023/05/15 18:22:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.190 2023/05/15 17:28:14 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.191 2023/05/15 18:22:40 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: lexi.c,v 1.190 2023/05/15 17:28:14 rillig Exp $");
 
 /* In lexi_alnum, this constant marks a type, independent of parentheses. */
 #define lsym_type lsym_type_outside_parentheses
+#define lsym_type_modifier lsym_storage_class
 
 /* must be sorted alphabetically, is used in binary search */
 static const struct keyword {
@@ -62,7 +63,7 @@ static const struct keyword {
     {"case", lsym_case_label},
     {"char", lsym_type},
     {"complex", lsym_type},
-    {"const", lsym_type},
+    {"const", lsym_type_modifier},
     {"continue", lsym_word},
     {"default", lsym_case_label},
     {"do", lsym_do},
@@ -92,7 +93,7 @@ static const struct keyword {
     {"union", lsym_tag},
     {"unsigned", lsym_type},
     {"void", lsym_type},
-    {"volatile", lsym_type},
+    {"volatile", lsym_type_modifier},
     {"while", lsym_while}
 };
 
@@ -371,7 +372,8 @@ lexi_alnum(void)
     while (ch_isblank(inp_peek()))
 	inp_skip();
 
-    ps.next_unary = ps.prev_token == lsym_tag;	/* for 'struct s *' */
+    ps.next_unary = ps.prev_token == lsym_tag
+	|| ps.prev_token == lsym_typedef;
 
     if (ps.prev_token == lsym_tag && ps.nparen == 0)
 	return lsym_type_outside_parentheses;

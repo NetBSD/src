@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.279 2023/05/15 14:55:47 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.280 2023/05/15 18:22:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.279 2023/05/15 14:55:47 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.280 2023/05/15 18:22:40 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -411,6 +411,18 @@ want_blank_before_lparen(void)
     return true;
 }
 
+static bool
+want_blank_before_lbracket(void)
+{
+    if (code.len == 0)
+	return false;
+    if (ps.prev_token == lsym_comma)
+	return true;
+    if (ps.prev_token == lsym_binary_op)
+	return true;
+    return false;
+}
+
 static void
 process_lparen_or_lbracket(void)
 {
@@ -423,7 +435,8 @@ process_lparen_or_lbracket(void)
     if (is_function_pointer_declaration()) {
 	code_add_decl_indent(ps.decl_ind, ps.tabs_to_var);
 	ps.decl_indent_done = true;
-    } else if (want_blank_before_lparen())
+    } else if (token.st[0] == '('
+	    ? want_blank_before_lparen() : want_blank_before_lbracket())
 	buf_add_char(&code, ' ');
     ps.want_blank = false;
     buf_add_char(&code, token.st[0]);
