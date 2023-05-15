@@ -1,4 +1,6 @@
-#	$NetBSD: NetBSD.compat.powerpc64,v 1.1 2019/02/09 21:43:23 mrg Exp $
+#	$NetBSD: NetBSD.compat.powerpc64,v 1.2 2023/05/15 19:03:23 christos Exp $
 
 ./usr/include/g++/bits/powerpc
 ./usr/include/g++/bits/powerpc64
+./usr/lib/powerpc/openssl
+./usr/lib/powerpc/openssl/modules
