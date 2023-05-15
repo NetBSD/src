@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_type_outside_parentheses.c,v 1.4 2023/05/15 17:51:49 rillig Exp $ */
+/* $NetBSD: lsym_type_outside_parentheses.c,v 1.5 2023/05/15 18:22:40 rillig Exp $ */
 
 /*
  * Tests for the token lsym_type_outside_parentheses, which represents a type
@@ -6,6 +6,7 @@
  * function.
  *
  * See also:
+ *	fmt_decl
  *	lex_ident
  *	lsym_type_in_parentheses
  *	lsym_word
@@ -19,11 +20,12 @@
 //indent input
 t1		       *no_init_ptr;
 t2		       *init_ptr = 0;
-/* $ FIXME: Assume that an identifier after 'const' is a type name. */
-const			t3 * const_no_init_ptr;
+const t3	       *const_no_init_ptr;
 static t4	       *static_no_init_ptr;
-/* $ FIXME: Assume that an identifier after 'typedef' is a type name. */
-typedef t5 * typedef_no_init_ptr;
+typedef t5 *typedef_no_init_ptr;
+
+// $ XXX: There's no point aligning the word 'const' with the other names.
+const char	       *const names[3];
 //indent end
 
 //indent run-equals-input -di24
