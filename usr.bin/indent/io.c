@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.170 2023/05/15 13:37:16 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.171 2023/05/15 22:35:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.170 2023/05/15 13:37:16 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.171 2023/05/15 22:35:41 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -177,8 +177,8 @@ output_line_code(int ind)
 
     int target_ind = compute_code_indent();
     for (int i = 0; i < ps.nparen; i++) {
-	if (ps.paren[i].indent >= 0) {
-	    int paren_ind = ps.paren[i].indent;
+	int paren_ind = ps.paren[i].indent;
+	if (paren_ind >= 0) {
 	    ps.paren[i].indent = (short)(-1 - (paren_ind + target_ind));
 	    debug_println(
 		"setting paren_indents[%d] from %d to %d for column %d",
