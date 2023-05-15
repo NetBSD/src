@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.41 2023/05/15 20:50:37 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.42 2023/05/15 21:51:46 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -919,3 +919,44 @@ is_identifier_start(char ch)
 	return ch_isalpha(ch) || ch == '_';
 }
 //indent end
+
+
+//indent input
+void buf_add_chars(struct buffer *, const char *, size_t);
+
+static inline bool
+ch_isalnum(char ch)
+{
+    return isalnum((unsigned char)ch) != 0;
+}
+
+static inline bool
+ch_isalpha(char ch)
+{
+    return isalpha((unsigned char)ch) != 0;
+}
+//indent end
+
+//indent run -i4 -di0
+// $ FIXME: 'buffer' is classified as 'word'.
+// $
+// $ XXX: 'char' is classified as 'type_in_parentheses'; check whether this
+// $ XXX: lexer symbol should only be used for types in cast expressions.
+// $
+// $ FIXME: 'size_t' is classified as 'word'.
+void buf_add_chars(struct buffer *, const char *, size_t);
+
+static inline bool
+ch_isalnum(char ch)
+{
+    return isalnum((unsigned char)ch) != 0;
+}
+
+static inline bool
+ch_isalpha(char ch)
+{
+    return isalpha((unsigned char)ch) != 0;
+}
+//indent end
+
+//indent run-equals-input -i4 -di0
