@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.405 2023/03/24 07:26:21 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.406 2023/05/15 01:42:42 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.405 2023/03/24 07:26:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.406 2023/05/15 01:42:42 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -3887,8 +3887,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
  * => never a need to flush amap layer since the anonymous memory has
  *	no permanent home, but may deactivate pages there
  * => called from sys_msync() and sys_madvise()
- * => caller must not write-lock map (read OK).
- * => we may sleep while cleaning if SYNCIO [with map read-locked]
+ * => caller must not have map locked
  */
 
 int
@@ -3910,10 +3909,10 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 	KASSERT((flags & (PGO_FREE|PGO_DEACTIVATE)) !=
 		(PGO_FREE|PGO_DEACTIVATE));
 
-	vm_map_lock_read(map);
+	vm_map_lock(map);
 	VM_MAP_RANGE_CHECK(map, start, end);
-	if (uvm_map_lookup_entry(map, start, &entry) == false) {
-		vm_map_unlock_read(map);
+	if (!uvm_map_lookup_entry(map, start, &entry)) {
+		vm_map_unlock(map);
 		return EFAULT;
 	}
 
@@ -3923,22 +3922,24 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 
 	for (current = entry; current->start < end; current = current->next) {
 		if (UVM_ET_ISSUBMAP(current)) {
-			vm_map_unlock_read(map);
+			vm_map_unlock(map);
 			return EINVAL;
 		}
 		if ((flags & PGO_FREE) != 0 && VM_MAPENT_ISWIRED(entry)) {
-			vm_map_unlock_read(map);
+			vm_map_unlock(map);
 			return EBUSY;
 		}
 		if (end <= current->end) {
 			break;
 		}
 		if (current->end != current->next->start) {
-			vm_map_unlock_read(map);
+			vm_map_unlock(map);
 			return EFAULT;
 		}
 	}
 
+	vm_map_busy(map);
+	vm_map_unlock(map);
 	error = 0;
 	for (current = entry; start < end; current = current->next) {
 		amap = current->aref.ar_amap;	/* upper layer */
@@ -4044,8 +4045,8 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		}
 		start += size;
 	}
-	vm_map_unlock_read(map);
-	return (error);
+	vm_map_unbusy(map);
+	return error;
 }
 
 
