@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.63 2023/05/13 14:06:13 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.64 2023/05/15 10:40:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1850,3 +1850,26 @@ distrib/notes/common/main			(manually edited)
 
 	Add dedication to Ryo Shimizu.
 	[from board]
+
+sys/arch/x68k/stand/boot_ufs/Makefile		1.39
+
+	Add udivdi3/umoddi3 (and ashldi3) that were required by recent
+	UFS change.
+	[chs, ticket #166]
+
+sys/uvm/uvm_map.c				1.406
+
+	uvm: PR 56952: avoid a deadlock in uvm_map_clean().
+	[chs, ticket #167]
+
+sys/arch/hppa/stand/xxboot/Makefile		1.4
+sys/sys/types.h					1.106
+
+	hppa: avoid 64bit math in the first stage bootloader.
+	[chs, ticket #168]
+
+sys/arch/mips/include/vmparam.h			1.67
+
+	mips: bump MAXTSIZ from 64MB to 128MB also for the o32 ABI.
+	[he, ticket #169]
+
