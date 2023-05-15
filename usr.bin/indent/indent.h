@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.140 2023/05/15 20:12:28 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.141 2023/05/15 20:30:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -358,8 +358,8 @@ extern struct parser_state {
 
     /* Vertical spacing */
 
-    bool force_nl;		/* whether the next token is forced to go to
-				 * a new line; used after 'if (expr)' and
+    bool force_nl;		/* whether the next token is forced to go to a
+				 * new line; used after 'if (expr)' and in
 				 * similar situations; tokens like '{' may
 				 * ignore this */
 
