@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.268 2023/05/15 07:28:45 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.269 2023/05/15 07:57:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.268 2023/05/15 07:28:45 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.269 2023/05/15 07:57:22 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -1124,52 +1124,6 @@ main(int argc, char **argv)
     main_prepare_parsing();
     return main_loop();
 }
-
-#ifdef debug
-void
-debug_printf(const char *fmt, ...)
-{
-    FILE *f = output == stdout ? stderr : stdout;
-    va_list ap;
-
-    va_start(ap, fmt);
-    vfprintf(f, fmt, ap);
-    va_end(ap);
-}
-
-void
-debug_println(const char *fmt, ...)
-{
-    FILE *f = output == stdout ? stderr : stdout;
-    va_list ap;
-
-    va_start(ap, fmt);
-    vfprintf(f, fmt, ap);
-    va_end(ap);
-    fprintf(f, "\n");
-}
-
-void
-debug_vis_range(const char *prefix, const char *s, size_t len,
-    const char *suffix)
-{
-    debug_printf("%s", prefix);
-    for (size_t i = 0; i < len; i++) {
-	const char *p = s + i;
-	if (*p == '\\' || *p == '"')
-	    debug_printf("\\%c", *p);
-	else if (isprint((unsigned char)*p))
-	    debug_printf("%c", *p);
-	else if (*p == '\n')
-	    debug_printf("\\n");
-	else if (*p == '\t')
-	    debug_printf("\\t");
-	else
-	    debug_printf("\\x%02x", (unsigned char)*p);
-    }
-    debug_printf("%s", suffix);
-}
-#endif
 
 static void *
 nonnull(void *p)
