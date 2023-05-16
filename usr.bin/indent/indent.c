@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.286 2023/05/15 22:52:21 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.287 2023/05/16 08:04:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.286 2023/05/15 22:52:21 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.287 2023/05/16 08:04:03 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -85,7 +85,7 @@ bool break_comma;
 float case_ind;
 bool had_eof;
 int line_no = 1;
-bool inhibit_formatting;
+enum indent_enabled indent_enabled;
 
 static int ifdef_level;
 static struct parser_state state_stack[5];
@@ -118,6 +118,8 @@ buf_add_char(struct buffer *buf, char ch)
 void
 buf_add_chars(struct buffer *buf, const char *s, size_t len)
 {
+    if (len == 0)
+	return;
     if (len > buf->cap - buf->len)
 	buf_expand(buf, len);
     memcpy(buf->mem + buf->len, s, len);
@@ -327,6 +329,10 @@ process_eof(void)
 {
     if (lab.len > 0 || code.len > 0 || com.len > 0)
 	output_line();
+    if (indent_enabled != indent_on) {
+	indent_enabled = indent_last_off_line;
+	output_line();
+    }
 
     if (ps.tos > 1)		/* check for balanced braces */
 	diag(1, "Stuff missing from end of file");

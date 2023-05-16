@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.193 2023/05/16 07:13:05 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.194 2023/05/16 08:04:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.193 2023/05/16 07:13:05 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.194 2023/05/16 08:04:03 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -488,11 +488,9 @@ skip_string(const char **pp, const char *s)
     return false;
 }
 
-void
+static void
 lex_indent_comment(void)
 {
-    bool on;
-
     const char *p = inp_line_start();
 
     skip_blank(&p);
@@ -502,11 +500,12 @@ lex_indent_comment(void)
     if (!skip_string(&p, "INDENT"))
 	return;
 
+    enum indent_enabled enabled;
     skip_blank(&p);
     if (*p == '*' || skip_string(&p, "ON"))
-	on = true;
+	enabled = indent_last_off_line;
     else if (skip_string(&p, "OFF"))
-	on = false;
+	enabled = indent_off;
     else
 	return;
 
@@ -517,7 +516,7 @@ lex_indent_comment(void)
     if (lab.len > 0 || code.len > 0 || com.len > 0)
 	output_line();
 
-    inhibit_formatting = !on;
+    indent_enabled = enabled;
 }
 
 /* Reads the next token, placing it in the global variable "token". */
@@ -654,6 +653,10 @@ lexi(void)
     default:
 	if (token.mem[token.len - 1] == '/'
 		&& (inp_peek() == '*' || inp_peek() == '/')) {
+	    enum indent_enabled prev = indent_enabled;
+	    lex_indent_comment();
+	    if (prev == indent_on && indent_enabled == indent_off)
+		clear_indent_off_text();
 	    token_add_char(inp_next());
 	    lsym = lsym_comment;
 	    next_unary = ps.next_unary;
