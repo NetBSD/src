@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.287 2023/05/16 08:04:03 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.288 2023/05/16 08:22:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.287 2023/05/16 08:04:03 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.288 2023/05/16 08:22:11 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -357,13 +357,24 @@ maybe_break_line(lexer_symbol lsym)
     ps.force_nl = false;
 }
 
-static void
-move_com_to_code(void)
+static bool
+want_blank_before_comment(void)
 {
-    if (lab.len > 0 || code.len > 0)
+    if (code.len > 0) {
+	char ch = code.mem[code.len - 1];
+	return ch != '[' && ch != '(';
+    }
+    return lab.len > 0;
+}
+
+static void
+move_com_to_code(lexer_symbol lsym)
+{
+    if (want_blank_before_comment())
 	buf_add_char(&code, ' ');
     buf_add_buf(&code, &com);
-    buf_add_char(&code, ' ');
+    if (lsym != lsym_rparen_or_rbracket)
+	buf_add_char(&code, ' ');
     com.len = 0;
     ps.want_blank = false;
 }
@@ -1022,7 +1033,7 @@ main_loop(void)
 	    ps.in_stmt_or_decl = true;	/* add an extra level of indentation;
 					 * turned off again by a ';' or '}' */
 	    if (com.len > 0)
-		move_com_to_code();
+		move_com_to_code(lsym);
 	}
 
 	switch (lsym) {
