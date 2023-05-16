@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.174 2023/05/16 11:32:01 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.175 2023/05/16 13:26:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,46 +38,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.174 2023/05/16 11:32:01 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.175 2023/05/16 13:26:26 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
 
 #include "indent.h"
 
-/*
- * The current line, ready to be split into tokens, terminated with '\n'. The
- * current read position is inp.s, and the invariant inp.s < inp.e holds.
- */
-static struct buffer inp;
+struct buffer inp;
 static struct buffer indent_off_text;
 
 static int paren_indent;
 
-
-const char *
-inp_p(void)
-{
-    return inp.st;
-}
-
-const char *
-inp_line_start(void)
-{
-    return inp.mem;
-}
-
-char
-inp_peek(void)
-{
-    return *inp.st;
-}
-
-char
-inp_lookahead(size_t i)
-{
-    return inp.st[i];
-}
 
 void
 inp_skip(void)
@@ -90,7 +62,7 @@ inp_skip(void)
 char
 inp_next(void)
 {
-    char ch = inp_peek();
+    char ch = inp.st[0];
     inp_skip();
     return ch;
 }
