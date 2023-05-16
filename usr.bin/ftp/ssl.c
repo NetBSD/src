@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.c,v 1.12.2.1 2023/05/16 16:16:00 martin Exp $	*/
+/*	$NetBSD: ssl.c,v 1.12.2.2 2023/05/16 16:23:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ssl.c,v 1.12.2.1 2023/05/16 16:16:00 martin Exp $");
+__RCSID("$NetBSD: ssl.c,v 1.12.2.2 2023/05/16 16:23:45 martin Exp $");
 #endif
 
 #include <errno.h>
@@ -63,11 +63,7 @@ __RCSID("$NetBSD: ssl.c,v 1.12.2.1 2023/05/16 16:16:00 martin Exp $");
 #endif
 
 #include "ssl.h"
-
-#include <stringlist.h>
-#include <histedit.h>
-#include <sys/poll.h>
-#include "extern.h"
+#include "ftp_var.h"
 
 extern int quit_time, verbose, ftp_debug;
 extern FILE *ttyout;
