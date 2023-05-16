@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.8 2023/05/11 18:13:55 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.9 2023/05/16 11:32:02 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -249,8 +249,7 @@ void cover_want_blank_before_lparen(void)
 	switch (expr) {}
 #define preprocessing
 	(preprocessing)();
-	/* $ XXX: lsym_form_feed should be skipped, just as newline. */
-	(lsym_form_feed)();	/* XXX: should be skipped */
+	(lsym_form_feed)();
 	for(;;);
 	do(lsym_do)=3;while(0);
 	if(cond);else(lsym_else)();
@@ -297,7 +296,7 @@ cover_want_blank_before_lparen(void)
 	}
 #define preprocessing
 	(preprocessing)();
-	(lsym_form_feed)();	/* XXX: should be skipped */
+	(lsym_form_feed)();
 	for (;;);
 	do
 		(lsym_do) = 3;

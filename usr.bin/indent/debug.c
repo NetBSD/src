@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.9 2023/05/15 22:52:21 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.10 2023/05/16 11:32:01 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.9 2023/05/15 22:52:21 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.10 2023/05/16 11:32:01 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -48,7 +48,6 @@ const char *const lsym_name[] = {
     "eof",
     "preprocessing",
     "newline",
-    "form_feed",
     "comment",
     "lparen_or_lbracket",
     "rparen_or_rbracket",
