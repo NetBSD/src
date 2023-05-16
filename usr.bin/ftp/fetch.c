@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.235 2022/09/11 20:49:27 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.235.2.1 2023/05/16 16:16:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.235 2022/09/11 20:49:27 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.235.2.1 2023/05/16 16:16:00 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -617,13 +617,15 @@ parse_url(const char *url, const char *desc, struct urlinfo *ui,
 sigjmp_buf	httpabort;
 
 static int
-ftp_socket(const struct urlinfo *ui, void **ssl)
+ftp_socket(const struct urlinfo *ui, void **ssl, struct authinfo *auth)
 {
 	struct addrinfo hints, *res, *res0 = NULL;
 	int error;
 	int s;
 	const char *host = ui->host;
 	const char *port = ui->port;
+	char *fuser = NULL, *pass = NULL, *facct = NULL;
+	int n;
 
 	if (ui->utype != HTTPS_URL_T)
 		ssl = NULL;
@@ -688,6 +690,28 @@ ftp_socket(const struct urlinfo *ui, void **ssl)
 			continue;
 		}
 
+		if (ruserpass("", &fuser, &pass, &facct) < 0) {
+			close(s);
+			s = -1;
+			continue;
+		}
+
+		if (autologin) {
+			if (fuser != NULL && auth->user == NULL)
+				auth->user = ftp_strdup(fuser);
+			if (pass != NULL && auth->pass == NULL)
+				auth->pass = ftp_strdup(pass);
+		}
+
+		for (n = 0; n < macnum; ++n) {
+			if (!strcmp("init", macros[n].mac_name)) {
+				(void)strlcpy(line, "$init", sizeof(line));
+				makeargv();
+				domacro(margc, margv);
+				break;
+			}
+		}
+
 #ifdef WITH_SSL
 		if (ssl) {
 			if ((*ssl = fetch_start_ssl(s, host)) == NULL) {
@@ -699,6 +723,15 @@ ftp_socket(const struct urlinfo *ui, void **ssl)
 #endif
 		break;
 	}
+
+	FREEPTR(fuser);
+	if (pass != NULL)
+		memset(pass, 0, strlen(pass));
+	FREEPTR(pass);
+	if (facct != NULL)
+		memset(facct, 0, strlen(facct));
+	FREEPTR(facct);
+
 	if (res0)
 		freeaddrinfo(res0);
 	return s;
@@ -1484,6 +1517,10 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 		}
 	} else {				/* ftp:// or http:// URLs */
 		int hasleading;
+		static char hostnamebuf[MAXHOSTNAMELEN];
+
+		(void)strlcpy(hostnamebuf, ui.host, sizeof(hostnamebuf));
+		hostname = hostnamebuf;
 
 		if (penv == NULL) {
 #ifdef WITH_SSL
@@ -1517,7 +1554,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 			}
 		} /* ! EMPTYSTRING(penv) */
 
-		s = ftp_socket(&ui, &ssl);
+		s = ftp_socket(&ui, &ssl, &wauth);
 		if (s < 0) {
 			warnx("Can't connect to `%s:%s'", ui.host, ui.port);
 			goto cleanup_fetch_url;

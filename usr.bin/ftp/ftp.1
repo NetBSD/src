@@ -1,6 +1,6 @@
-.\" 	$NetBSD: ftp.1,v 1.147 2022/08/30 08:51:28 christos Exp $
+.\" 	$NetBSD: ftp.1,v 1.147.2.1 2023/05/16 16:16:00 martin Exp $
 .\"
-.\" Copyright (c) 1996-2021 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd August 29, 2022
+.Dd February 25, 2023
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -1382,7 +1382,7 @@ and
 .Ar value
 are not given, display all of the options and their values.
 The currently supported options are:
-.Bl -tag -width "https_proxy" -offset indent
+.Bl -tag -width "sslnoverify" -offset indent
 .It Cm anonpass
 Defaults to
 .Ev $FTPANONPASS
@@ -1407,6 +1407,9 @@ Defaults to
 .It Cm rprompt
 Defaults to
 .Ev $FTPRPROMPT .
+.It Cm sslnoverify
+Defaults to
+.Ev $FTPSSLNOVERIFY .
 .El
 .It Ic site Op Ar arg ...
 The arguments specified are sent, verbatim, to the remote
@@ -2312,6 +2315,8 @@ The value to send for the
 .Tn HTTP
 User-Agent
 header.
+.It Ev FTPSSLNOVERIFY
+Set to 1 to not verify SSL certificates.
 .It Ev HOME
 For default location of a
 .Pa .netrc
@@ -2320,8 +2325,6 @@ file, if one exists.
 An alternate location of the
 .Pa .netrc
 file.
-.It Ev NO_CERT_VERIFY
-Don't verify SSL certificates.
 .It Ev PAGER
 Used by various commands to display files.
 Defaults to
