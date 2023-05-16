@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.136 2023/05/16 21:21:38 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.137 2023/05/16 21:39:26 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd October 13, 2020
+.Dd May 16, 2023
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -374,7 +374,7 @@ object directory names, and can be consulted in the
 configuration file in order to set additional build parameters,
 such as compiler flags.
 It will also be used as part of the kernel version string,
-which can be printed by
+which can be shown by
 .Dq Li uname \-v .
 .DFLTu
 .
@@ -468,17 +468,17 @@ are shown.
 Brief messages are shown describing what is being done,
 but the actual commands executed by
 .Xr make 1
-are not displayed.
+are not shown.
 .It 2
 Descriptive messages are shown as above (prefixed with a
 .Sq # ) ,
 and ordinary commands performed by
 .Xr make 1
-are displayed.
+are shown.
 .It 3
 In addition to the above, all commands performed by
 .Xr make 1
-are displayed, even if they would ordinarily have been hidden
+are shown, even if they would ordinarily have been hidden
 through use of the
 .Dq \&@
 prefix in the relevant makefile.
@@ -996,22 +996,22 @@ This is set automatically when building from the top level, or when using
 .Sy build.sh .
 .
 .It Fl n
-Display the commands that would have been executed, but do not
+Show the commands that would have been executed, but do not
 actually execute them.
 This will still cause recursion to take place.
 .
 .It Fl V Ar var
-Print
+Show
 .Xr make 1 Ns 's
 idea of the value of
 .Ar var .
 Does not build any targets.
 .
-.It Em var=value
+.It Ar var Ns Sy = Ns Ar value
 Set the variable
-.Em var
+.Ar var
 to
-.Em value ,
+.Ar value ,
 overriding any setting specified by the process environment, the
 .Sy MAKECONF
 configuration file, or the system Makefile segments.
@@ -1412,7 +1412,7 @@ but if that fails, then the following set of commands may be used instead:
 If
 .Sy build.sh
 detects that it is being executed under an unsuitable shell, it attempts
-to exec a suitable shell instead, or prints an error message.
+to exec a suitable shell instead, or shows an error message.
 If
 .Sy HOST_SH
 is not set explicitly, then
@@ -1483,6 +1483,9 @@ Build a full release as per
 This command first runs the
 .Sy distribution
 operation.
+.
+.It Sy help
+Show a help message, and exit.
 .
 .It Sy makewrapper
 Create the
@@ -1632,7 +1635,7 @@ Perform
 .Dq make live-image .
 .
 .It Sy list-arch
-Prints a list of valid
+Show a list of valid
 .Sy MACHINE
 and
 .Sy MACHINE_ARCH
@@ -1754,7 +1757,7 @@ It is highly recommended that you know what you are doing when
 you use this option.
 .
 .It Fl h
-Print a help message.
+Show a help message, and exit.
 .
 .It Fl j Ar njob
 Run up to
@@ -1931,6 +1934,7 @@ from the same source tree without cleaning between builds (in which
 case, one would specify distinct
 .Ar obj
 locations for each).
+.
 .It Fl o
 Set the value of
 .Sy MKOBJDIRS
@@ -1940,6 +1944,13 @@ Otherwise, it will be automatically set to
 .Dq yes .
 This default is opposite to the behaviour when not using
 .Sy build.sh .
+.
+.It Fl P
+Set the value of 
+.Sy MKREPRO
+and
+.Sy MKREPRO_TIMESTAMP
+to the latest source CVS timestamp for reproducible builds.
 .
 .It Fl R Ar rel
 Set the value of
@@ -2037,6 +2048,9 @@ This is propagated to the
 .Sy \*[toolprefix]make
 wrapper.
 .
+.It Fl ?
+Show a help message, and exit.
+.
 .El
 .
 .Ss The \*q\*[toolprefix]make-MACHINE\*q wrapper script
@@ -2091,7 +2105,7 @@ build a complete distribution to a
 .Sy DESTDIR
 directory that
 .Sy build.sh
-selects (and will display).
+selects (and will show).
 .
 .It
 .Li "# ./build.sh [options] -U install=/"
@@ -2117,7 +2131,7 @@ and
 .Sy RELEASEDIR
 directories that
 .Sy build.sh
-selects (and will display).
+selects (and will show).
 .Sy MKUPDATE=yes
 .Pq Fl u
 is set to prevent the
