@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.143 2023/05/16 07:13:05 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.144 2023/05/16 08:04:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -229,7 +229,11 @@ extern float case_ind;		/* indentation level to be used for a "case
 				 * n:" */
 extern bool had_eof;		/* whether input is exhausted */
 extern int line_no;		/* the current line number. */
-extern bool inhibit_formatting;	/* true if INDENT OFF is in effect */
+extern enum indent_enabled {
+    indent_on,
+    indent_off,
+    indent_last_off_line,
+} indent_enabled;
 
 #define	STACKSIZE 256
 
@@ -412,9 +416,9 @@ char inp_peek(void);
 char inp_lookahead(size_t);
 void inp_skip(void);
 char inp_next(void);
+void clear_indent_off_text(void);
 
 lexer_symbol lexi(void);
-void lex_indent_comment(void);
 void diag(int, const char *, ...) __printflike(2, 3);
 void output_line(void);
 void output_line_ff(void);
