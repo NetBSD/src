@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.147.2.2 2023/05/16 16:20:27 martin Exp $
+.\" 	$NetBSD: ftp.1,v 1.147.2.3 2023/05/16 16:22:15 martin Exp $
 .\"
 .\" Copyright (c) 1996-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1792,24 +1792,38 @@ and where to use
 For example, the following URLs correspond to the
 equivalents of the indicated commands:
 .Bl -tag -width "ftp://host/%2Fdir1%2Fdir2%2Ffile"
-.It ftp://host/dir1/dir2/file
-.Dq "cd dir1" ,
-.Dq "cd dir2" ,
-.Dq "get file" .
-.It ftp://host/%2Fdir1/dir2/file
-.Dq "cd /dir1" ,
-.Dq "cd dir2" ,
-.Dq "get file" .
-.It ftp://host/dir1%2Fdir2/file
-.Dq "cd dir1/dir2" ,
-.Dq "get file" .
-.It ftp://host/%2Fdir1%2Fdir2/file
-.Dq "cd /dir1/dir2" ,
-.Dq "get file" .
-.It ftp://host/dir1%2Fdir2%2Ffile
-.Dq "get dir1/dir2/file" .
-.It ftp://host/%2Fdir1%2Fdir2%2Ffile
-.Dq "get /dir1/dir2/file" .
+.It Xo \" ftp://host/dir1/dir2/file
+.Sm off
+.Ic ftp:// Ar host
+.Ic / Ar dir1
+.Ic / Ar dir2
+.Ic / Ar file
+.Sm on
+.Xc
+.Ic cd Ar dir1 ,
+.Ic cd Ar dir2 ,
+.Ic get Ar file .
+.It Xo \" ftp://host/%2Fdir1/dir2/file
+.Sm off
+.Ic ftp:// Ar host
+.Ic /%2F Ar dir1
+.Ic / Ar dir2
+.Ic / Ar file
+.Sm on
+.Xc
+.Ic cd / Ns Ar dir1 ,
+.Ic cd Ar dir2 ,
+.Ic get Ar file .
+.It Xo \" ftp://host/dir1%2Fdir2/file
+.Sm off
+.Ic ftp:// Ar host
+.Ic / Ar dir1
+.Ic %2F Ar dir2
+.Ic / Ar file
+.Sm on
+.Xc
+.Ic cd Ar dir1 Ns Ic / Ns Ar dir2 ,
+.Ic get Ar file .
 .El
 .It
 You must have appropriate access permission for each of the
