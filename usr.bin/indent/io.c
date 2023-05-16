@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.171 2023/05/15 22:35:41 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.172 2023/05/16 07:13:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.171 2023/05/15 22:35:41 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.172 2023/05/16 07:13:05 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -359,62 +359,12 @@ compute_label_indent(void)
     return opt.indent_size * (ps.ind_level - 2);
 }
 
-static void
-skip_blank(const char **pp)
-{
-    while (ch_isblank(**pp))
-	(*pp)++;
-}
-
-static bool
-skip_string(const char **pp, const char *s)
-{
-    size_t len = strlen(s);
-    if (strncmp(*pp, s, len) == 0) {
-	*pp += len;
-	return true;
-    }
-    return false;
-}
-
-static void
-parse_indent_comment(void)
-{
-    bool on;
-
-    const char *p = inp.mem;
-
-    skip_blank(&p);
-    if (!skip_string(&p, "/*"))
-	return;
-    skip_blank(&p);
-    if (!skip_string(&p, "INDENT"))
-	return;
-
-    skip_blank(&p);
-    if (*p == '*' || skip_string(&p, "ON"))
-	on = true;
-    else if (skip_string(&p, "OFF"))
-	on = false;
-    else
-	return;
-
-    skip_blank(&p);
-    if (!skip_string(&p, "*/\n"))
-	return;
-
-    if (lab.len > 0 || code.len > 0 || com.len > 0)
-	output_line();
-
-    inhibit_formatting = !on;
-}
-
 void
 inp_read_line(void)
 {
     inp_read_next_line(input);
 
-    parse_indent_comment();
+    lex_indent_comment();
 
     if (inhibit_formatting)
 	output_range(inp.st, inp.len);
