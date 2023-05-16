@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.10 2023/05/16 11:32:01 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.11 2023/05/16 12:46:43 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.10 2023/05/16 11:32:01 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.11 2023/05/16 12:46:43 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -38,7 +38,7 @@ __RCSID("$NetBSD: debug.c,v 1.10 2023/05/16 11:32:01 rillig Exp $");
 
 #ifdef debug
 
-/*
+/*-
  * false	show only the changes to the parser state
  * true		show unchanged parts of the parser state as well
  */

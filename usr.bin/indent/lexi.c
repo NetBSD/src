@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.195 2023/05/16 11:32:01 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.196 2023/05/16 12:46:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.195 2023/05/16 11:32:01 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.196 2023/05/16 12:46:43 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -103,7 +103,7 @@ static struct {
     unsigned int cap;
 } typenames;
 
-/*
+/*-
  * The transition table below was rewritten by hand from lx's output, given
  * the following definitions. lx is Katherine Flavel's lexer generator.
  *
