@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2023/05/06 17:07:22 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2023/05/16 19:06:09 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -15,7 +15,7 @@
 #	Please send copies of changes and bug-fixes to:
 #	sjg@quick.com.au
 #
-LIBISPRIVATE=	yes
+LIBISPRIVATE=	pic
 LIB=	common
 USE_FORT?= yes	# cryptographic software
 USE_SHLIBDIR=	no
