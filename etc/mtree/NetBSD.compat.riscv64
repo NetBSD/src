@@ -1,7 +1,4 @@
-# $NetBSD: NetBSD.compat.riscv64,v 1.2 2023/05/15 21:13:07 christos Exp $
+# $NetBSD: NetBSD.compat.riscv64,v 1.3 2023/05/16 13:21:59 christos Exp $
 
 ./usr/include/g++/bits/riscv32
 ./usr/include/g++/bits/riscv64
-./usr/lib/rv32/openssl
-./usr/lib/rv32/openssl/engines
-./usr/lib/rv32/openssl/modules
