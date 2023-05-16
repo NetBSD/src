@@ -168,7 +168,7 @@ CONFIGURATION
                  directory names, and can be consulted in the make(1)
                  configuration file in order to set additional build
                  parameters, such as compiler flags.  It will also be used as
-                 part of the kernel version string, which can be printed by
+                 part of the kernel version string, which can be shown by
                  "uname -v".
 
                  Default: Unset.
@@ -225,15 +225,15 @@ CONFIGURATION
 
                  1    Brief messages are shown describing what is being done,
                       but the actual commands executed by make(1) are not
-                      displayed.
+                      shown.
 
                  2    Descriptive messages are shown as above (prefixed with a
                       `#'), and ordinary commands performed by make(1) are
-                      displayed.
+                      shown.
 
                  3    In addition to the above, all commands performed by
-                      make(1) are displayed, even if they would ordinarily
-                      have been hidden through use of the "@" prefix in the
+                      make(1) are shown, even if they would ordinarily have
+                      been hidden through use of the "@" prefix in the
                       relevant makefile.
 
                  4    In addition to the above, commands executed by make(1)
@@ -553,11 +553,11 @@ BUILDING
                 automatically when building from the top level, or when using
                 build.sh.
 
-     -n         Display the commands that would have been executed, but do not
+     -n         Show the commands that would have been executed, but do not
                 actually execute them.  This will still cause recursion to
                 take place.
 
-     -V var     Print make(1)'s idea of the value of var.  Does not build any
+     -V var     Show make(1)'s idea of the value of var.  Does not build any
                 targets.
 
      var=value  Set the variable var to value, overriding any setting
@@ -777,7 +777,7 @@ BUILDING
            ${HOST_SH} build.sh [options]
 
      If build.sh detects that it is being executed under an unsuitable shell,
-     it attempts to exec a suitable shell instead, or prints an error message.
+     it attempts to exec a suitable shell instead, or shows an error message.
      If HOST_SH is not set explicitly, then build.sh sets a default using
      heuristics dependent on the host platform, or from the shell under which
      build.sh is executed (if that can be determined), or using the first copy
@@ -805,6 +805,8 @@ BUILDING
 
      release       Build a full release as per "make release".  This command
                    first runs the distribution operation.
+
+     help          Show a help message, and exit.
 
      makewrapper   Create the nbmake-MACHINE wrapper.  This operation is
                    automatically performed for any of the other operations.
@@ -877,8 +879,8 @@ BUILDING
 
      live-image    Perform "make live-image".
 
-     list-arch     Prints a list of valid MACHINE and MACHINE_ARCH settings,
-                   the default MACHINE_ARCH for each MACHINE, and aliases for
+     list-arch     Show a list of valid MACHINE and MACHINE_ARCH settings, the
+                   default MACHINE_ARCH for each MACHINE, and aliases for
                    MACHINE/MACHINE_ARCH pairs, and then exits.  The -m or -a
                    options (or both) may be used to specify glob patterns that
                    will be used to narrow the list of results; for example,
@@ -933,7 +935,7 @@ BUILDING
                Note: It is highly recommended that you know what you are doing
                when you use this option.
 
-     -h        Print a help message.
+     -h        Show a help message, and exit.
 
      -j njob   Run up to njob make(1) subjobs in parallel; passed through to
                make(1).  If you see failures for reasons other than running
@@ -1018,6 +1020,9 @@ BUILDING
                automatically set to "yes".  This default is opposite to the
                behaviour when not using build.sh.
 
+     -P        Set the value of MKREPRO and MKREPRO_TIMESTAMP to the latest
+               source CVS timestamp for reproducible builds.
+
      -R rel    Set the value of RELEASEDIR to rel.  If a relative path is
                specified, it will be converted to an absolute path before
                being used.
@@ -1060,6 +1065,8 @@ BUILDING
      -Z var    Unset ("zap") the environment variable var.  This is propagated
                to the nbmake wrapper.
 
+     -?        Show a help message, and exit.
+
    The "nbmake-MACHINE" wrapper script
      If using the build.sh script to build NetBSD, a nbmake-MACHINE script
      will be created in TOOLDIR/bin upon the first build to assist in building
@@ -1083,7 +1090,7 @@ EXAMPLES
      2.   % ./build.sh [options] -U distribution
 
           Using unprivileged mode, build a complete distribution to a DESTDIR
-          directory that build.sh selects (and will display).
+          directory that build.sh selects (and will show).
 
      3.   # ./build.sh [options] -U install=/
 
@@ -1095,7 +1102,7 @@ EXAMPLES
      4.   % ./build.sh [options] -U -u release
 
           Using unprivileged mode, build a complete release to DESTDIR and
-          RELEASEDIR directories that build.sh selects (and will display).
+          RELEASEDIR directories that build.sh selects (and will show).
           MKUPDATE=yes (-u) is set to prevent the "make cleandir", so that if
           this is run after example 2, it doesn't need to redo that portion of
           the release build.
@@ -1121,4 +1128,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                         October 13, 2020                         NetBSD
+NetBSD                           May 16, 2023                           NetBSD
