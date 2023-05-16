@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.143 2023/05/16 11:32:01 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.144 2023/05/16 13:26:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.143 2023/05/16 11:32:01 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.144 2023/05/16 13:26:26 rillig Exp $");
 
 #include <string.h>
 
@@ -61,7 +61,7 @@ com_add_delim(void)
 static bool
 fits_in_one_line(int com_ind, int max_line_length)
 {
-    for (const char *start = inp_p(), *p = start; *p != '\n'; p++) {
+    for (const char *start = inp.st, *p = start; *p != '\n'; p++) {
 	if (p[0] == '*' && p[1] == '/') {
 	    int len = ind_add(com_ind + 3, start, (size_t)(p - start));
 	    len += p == start || ch_isblank(p[-1]) ? 2 : 3;
@@ -85,9 +85,9 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 	ind = 0;
 
     } else {
-	if (inp_peek() == '-' || inp_peek() == '*' ||
+	if (inp.st[0] == '-' || inp.st[0] == '*' ||
 		token.mem[token.len - 1] == '/' ||
-		(inp_peek() == '\n' && !opt.format_block_comments)) {
+		(inp.st[0] == '\n' && !opt.format_block_comments)) {
 	    may_wrap = false;
 	    delim = false;
 	}
@@ -122,20 +122,20 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 	 * Find out how much indentation there was originally, because that
 	 * much will have to be ignored by output_complete_line.
 	 */
-	size_t len = (size_t)(inp_p() - 2 - inp_line_start());
-	ps.n_comment_delta = -ind_add(0, inp_line_start(), len);
+	size_t len = (size_t)(inp.st - 2 - inp.mem);
+	ps.n_comment_delta = -ind_add(0, inp.mem, len);
     } else {
 	ps.n_comment_delta = 0;
-	if (!(inp_peek() == '\t' && !ch_isblank(inp_lookahead(1))))
-	    while (ch_isblank(inp_peek()))
-		inp_skip();
+	if (!(inp.st[0] == '\t' && !ch_isblank(inp.st[1])))
+	    while (ch_isblank(inp.st[0]))
+		inp.st++;
     }
 
     ps.comment_delta = 0;
     com_add_char('/');
     com_add_char(token.mem[token.len - 1]);	/* either '*' or '/' */
 
-    if (may_wrap && !ch_isblank(inp_peek()))
+    if (may_wrap && !ch_isblank(inp.st[0]))
 	com_add_char(' ');
 
     if (delim && fits_in_one_line(ind, line_length))
@@ -163,7 +163,7 @@ copy_comment_wrap(int line_length, bool delim)
     ssize_t last_blank = -1;	/* index of the last blank in com.mem */
 
     for (;;) {
-	switch (inp_peek()) {
+	switch (inp.st[0]) {
 	case '\n':
 	    if (had_eof) {
 		diag(1, "Unterminated comment");
@@ -194,21 +194,21 @@ copy_comment_wrap(int line_length, bool delim)
 	    do {		/* flush any blanks and/or tabs at start of
 				 * next line */
 		inp_skip();
-		if (inp_peek() == '*' && skip_asterisk) {
+		if (inp.st[0] == '*' && skip_asterisk) {
 		    skip_asterisk = false;
-		    inp_skip();
-		    if (inp_peek() == '/')
+		    inp.st++;
+		    if (inp.st[0] == '/')
 			goto end_of_comment;
 		}
-	    } while (ch_isblank(inp_peek()));
+	    } while (ch_isblank(inp.st[0]));
 
 	    break;		/* end of case for newline */
 
 	case '*':
-	    inp_skip();
-	    if (inp_peek() == '/') {
+	    inp.st++;
+	    if (inp.st[0] == '/') {
 	end_of_comment:
-		inp_skip();
+		inp.st++;
 
 		if (delim) {
 		    if (com.len > 3)
@@ -244,7 +244,7 @@ copy_comment_wrap(int line_length, bool delim)
 		    last_blank = (ssize_t)com.len;
 		com_add_char(ch);
 		now_len++;
-		if (memchr("*\n\r\b\t", inp_peek(), 6) != NULL)
+		if (memchr("*\n\r\b\t", inp.st[0], 6) != NULL)
 		    break;
 		if (now_len >= line_length && last_blank != -1)
 		    break;
@@ -284,7 +284,7 @@ static void
 copy_comment_nowrap(void)
 {
     for (;;) {
-	if (inp_peek() == '\n') {
+	if (inp.st[0] == '\n') {
 	    if (token.mem[token.len - 1] == '/')
 		return;
 
@@ -302,7 +302,7 @@ copy_comment_nowrap(void)
 	    continue;
 	}
 
-	com_add_char(inp_next());
+	com_add_char(*inp.st++);
 	if (com.mem[com.len - 2] == '*' && com.mem[com.len - 1] == '/'
 		&& token.mem[token.len - 1] == '*')
 	    return;
