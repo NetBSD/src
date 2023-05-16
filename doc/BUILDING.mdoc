@@ -1,6 +1,6 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.135 2022/08/21 07:10:03 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.136 2023/05/16 21:21:38 lukem Exp $
 .\"
-.\" Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -76,7 +76,9 @@ compilers in order to create the toolchain
 is not required); all other tools are created as part of the
 .Nx
 build process.
-(See the environment variables section below if you need
+(See the
+.Sx Environment variables
+section below if you need
 to override or manually select your compilers.)
 .
 .Sh FILES
@@ -233,6 +235,11 @@ Path name to C++ compiler used to create the toolchain.
 .
 .It Sy HOST_CXXFLAGS
 Flags passed to the host C++ compiler.
+.
+.It Sy INSTALLBOOT_UBOOT_PATHS
+A colon-separated list of search paths used by
+.Xr installboot 8
+to find U-Boot packages.
 .
 .It Sy MACHINE
 Machine type, e.g.,
@@ -577,7 +584,7 @@ will be run against portions of the
 source code during the build, and whether lint libraries will be
 installed into
 .Sy DESTDIR Ns Pa /usr/libdata/lint .
-.DFLTy
+.DFLTn
 .
 .It Sy MKMAN
 .YorN
@@ -822,6 +829,7 @@ if that exists; otherwise
 .El
 .
 .Ss \*qmake\*q variables for full builds
+.
 These variables only affect the top level
 .Dq Makefile
 and do not affect manually building subtrees of the
@@ -829,6 +837,17 @@ and do not affect manually building subtrees of the
 source code.
 .
 .Bl -tag -width "INSTALLWORLDDIR"
+.
+.It Sy INSTALLBOOT_BOARDS
+A list of boards to create bootable images for.
+If corresponding U-Boot packages are installed,
+bootable images are created as part of a release.
+See the
+.Bk -words
+.Fl o Sy board= Ns Ar name
+.Ek
+option of
+.Xr installboot 8 .
 .
 .It Sy INSTALLWORLDDIR
 Location for the
@@ -2128,6 +2147,7 @@ To disable, use
 .Xr hier 7 ,
 .Xr release 7 ,
 .Xr etcupdate 8 ,
+.Xr installboot 8 ,
 .Xr postinstall 8 ,
 .Xr sysinst 8 ,
 .Pa pkgsrc/sysutils/cdrtools

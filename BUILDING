@@ -13,7 +13,7 @@ REQUIREMENTS
      system to create a build toolchain for the target architecture.  The host
      system must have at least C and C++ compilers in order to create the
      toolchain (make is not required); all other tools are created as part of
-     the NetBSD build process.  (See the environment variables section below
+     the NetBSD build process.  (See the Environment variables section below
      if you need to override or manually select your compilers.)
 
 FILES
@@ -117,6 +117,10 @@ CONFIGURATION
 
      HOST_CXXFLAGS     Flags passed to the host C++ compiler.
 
+     INSTALLBOOT_UBOOT_PATHS
+                       A colon-separated list of search paths used by
+                       installboot(8) to find U-Boot packages.
+
      MACHINE           Machine type, e.g., "macppc".
 
      MACHINE_ARCH      Machine architecture, e.g., "powerpc".
@@ -152,18 +156,6 @@ CONFIGURATION
                        the environment or via the -M flag of build.sh; it
                        cannot usefully be set inside a Makefile, including
                        mk.conf or ${MAKECONF}.
-
-     INSTALLBOOT_BOARDS
-                       A list of boards to create bootable images for.
-                       If corresponding U-Boot packages are installed,
-                       bootable images are created as part of a
-                       release.  See the -o "board=" option of
-                       installboot(8).
-
-     INSTALLBOOT_UBOOT_PATHS
-                       A colon-separated list of search paths used by
-                       installboot to find U-Boot packages; see
-                       installboot(8).
 
    "make" variables
      Several variables control the behavior of NetBSD builds.  Unless
@@ -473,6 +465,12 @@ CONFIGURATION
    "make" variables for full builds
      These variables only affect the top level "Makefile" and do not affect
      manually building subtrees of the NetBSD source code.
+
+     INSTALLBOOT_BOARDS
+                      A list of boards to create bootable images for.  If
+                      corresponding U-Boot packages are installed, bootable
+                      images are created as part of a release.  See the
+                      -o board=name option of installboot(8).
 
      INSTALLWORLDDIR  Location for the "make installworld" target to install
                       to.  If specified, must be an absolute path.
@@ -1110,8 +1108,8 @@ OBSOLETE VARIABLES
                  TOOLCHAIN_MISSING=yes.
 
 SEE ALSO
-     make(1), hier(7), release(7), etcupdate(8), postinstall(8), sysinst(8),
-     pkgsrc/sysutils/cdrtools
+     make(1), hier(7), release(7), etcupdate(8), installboot(8),
+     postinstall(8), sysinst(8), pkgsrc/sysutils/cdrtools
 
 HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
