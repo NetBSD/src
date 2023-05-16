@@ -1,11 +1,7 @@
-#	$NetBSD: NetBSD.dist.x86_64,v 1.18 2023/05/11 11:58:55 christos Exp $
+#	$NetBSD: NetBSD.dist.x86_64,v 1.19 2023/05/16 13:20:38 christos Exp $
 
 ./usr/include/dev/nvmm
 ./usr/include/dev/nvmm/x86
 ./usr/include/i386
 ./usr/include/x86
 ./usr/include/xen
-./usr/lib/i386
-./usr/lib/i386/openssl
-./usr/lib/i386/openssl/modules
-./usr/lib/i386/openssl/engines
