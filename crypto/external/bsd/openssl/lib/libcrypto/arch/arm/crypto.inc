@@ -5,7 +5,7 @@ CPUID = yes
 CPPFLAGS += -DOPENSSL_BN_ASM_MONT -DOPENSSL_BN_ASM_GF2m
 CPPFLAGS += -DOPENSSL_CPUID_OBJ
 
-.if ${MACHINE_ARCH:Nearmv[4,5]*} == ""
+.if ${MACHINE_ARCH:Nearmv[45]*} == ""
 COPTS.threads_pthread.c += -DBROKEN_CLANG_ATOMICS       # no atomic 64 bit ops
 .endif
 
