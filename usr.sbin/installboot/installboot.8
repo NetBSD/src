@@ -1,6 +1,6 @@
-.\"	$NetBSD: installboot.8,v 1.105 2022/08/19 00:50:08 riastradh Exp $
+.\"	$NetBSD: installboot.8,v 1.106 2023/05/16 21:52:42 lukem Exp $
 .\"
-.\" Copyright (c) 2002-2019 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2002-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 5, 2021
+.Dd May 16, 2023
 .Dt INSTALLBOOT 8
 .Os
 .Sh NAME
@@ -294,7 +294,7 @@ to the end of
 .Ar filesystem ,
 which must be a regular file in this case.
 .
-.It Sy board=<board name>
+.It Sy board Ns Op = Ns Ar type
 .Sy [ evbarm ]
 Specify the board type used to determine the correct boot loader image
 and installation procedure.
@@ -310,21 +310,33 @@ natively.
 .Dq boot.cfg
 file.
 .
-.It Sy command=<boot command>
+.It Sy command= Ns Ar commandline
 .Sy [ amiga ]
 Modify the default boot command line.
 .
-.It Sy console=<console name>
+.It Sy console= Ns Ar name
 .Sy [ amd64 ,
 .Sy i386 ]
-Set the console device, <console name> must be one of:
-pc, com0, com1, com2, com3, com0kbd, com1kbd, com2kbd, com3kbd or auto.
+Set the console device.
+.Ar name
+must be one of:
+.Sy pc ,
+.Sy com0 ,
+.Sy com1 ,
+.Sy com2 ,
+.Sy com3 ,
+.Sy com0kbd ,
+.Sy com1kbd ,
+.Sy com2kbd ,
+.Sy com3kbd ,
+or
+.Sy auto .
 .
-.It Sy dtb=/path/to/dtb/file
+.It Sy dtb= Ns Ar dtbfile
 .Sy [ evbarm ]
 Attempt to determine the board type from information in the device tree
 blob file at
-.Pa /path/to/dtb/file .
+.Pa dtbfile .
 If both
 .Sy board
 and
@@ -333,17 +345,19 @@ options are specified,
 .Sy board
 takes precendence.
 .
-.It Sy ioaddr=<ioaddr>
+.It Sy ioaddr= Ns Ar ioaddr
 .Sy [ amd64 ,
 .Sy i386 ]
 Set the IO address to be used for the console serial port.
 Defaults to the IO address used by the system BIOS for the specified port.
 .
-.It Sy keymap=<keymap>
+.It Sy keymap= Ns Ar keymap
 .Sy [ amd64 ,
 .Sy i386 ]
 Set a boot time keyboard translation map.
-Each character in <keymap> will be replaced by the one following it.
+Each character in
+.Ar keymap
+will be replaced by the one following it.
 For example, an argument of
 .Dq zyz
 would swap the lowercase letters
@@ -351,7 +365,7 @@ would swap the lowercase letters
 and
 .Sq z .
 .
-.It Sy media=<media type>
+.It Sy media= Ns Ar type
 .Sy [ evbarm ]
 Some boards require a different boot loader binary and/or installation
 procedure depending on what type of media will be used to boot the system.
@@ -359,14 +373,17 @@ For such boards, this option is required, and omitting it will display a
 usage message that lists the valid media types for the board.
 For boards that do not require special media handling, this option is
 not allowed.
-Common values: sdmmc, emmc, usb.
+Common values:
+.Sy sdmmc ,
+.Sy emmc ,
+.Sy usb .
 .
 .It Sy modules
 .Sy [ amd64 ,
 .Sy i386 ]
 (Don't) load kernel modules.
 .
-.It Sy password=<password>
+.It Sy password= Ns Ar password
 .Sy [ amd64 ,
 .Sy i386 ]
 Set the password which must be entered before the boot menu can be accessed.
@@ -376,7 +393,7 @@ Set the password which must be entered before the boot menu can be accessed.
 .Sy i386 ]
 Reset the video before booting.
 .
-.It Sy speed=<baud rate>
+.It Sy speed= Ns Ar baud
 .Sy [ amd64 ,
 .Sy i386 ]
 Set the baud rate for the serial console.
@@ -395,7 +412,7 @@ The existing
 .Nx Ns /sparc
 disklabel should use no more than 4 partitions.
 .
-.It Sy timeout=<seconds>
+.It Sy timeout= Ns Ar seconds
 .Sy [ amd64 ,
 .Sy i386 ]
 Set the timeout before the automatic boot begins to the given number of seconds.
@@ -437,7 +454,7 @@ packages with
 installation overlays.
 If multiple overlays are found, overlays from paths closer to the front
 of the list take precedence.
-If not specified, environment variable 
+If not specified, environment variable
 .Ev INSTALLBOOT_UBOOT_PATHS
 is used if defined; otherwise, the default path is
 .Pa /usr/pkg/share/u-boot .
