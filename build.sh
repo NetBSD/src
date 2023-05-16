@@ -1,7 +1,7 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.368 2023/04/23 09:54:15 uwe Exp $
+#	$NetBSD: build.sh,v 1.369 2023/05/16 21:39:26 lukem Exp $
 #
-# Copyright (c) 2001-2022 The NetBSD Foundation, Inc.
+# Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 # We try to determine whether or not this script is being run under
 # a shell that supports the features that we use.  If not, we try to
 # re-exec the script under another shell.  If we can't find another
-# suitable shell, then we print a message and exit.
+# suitable shell, then we show a message and exit.
 #
 
 errmsg=''		# error message, if not empty
@@ -358,8 +358,8 @@ warning()
 	statusmsg "Warning: $@"
 }
 
-# Find a program in the PATH, and print the result.  If not found,
-# print a default.  If $2 is defined (even if it is an empty string),
+# Find a program in the PATH, and show the result.  If not found,
+# show a default.  If $2 is defined (even if it is an empty string),
 # then that is the default; otherwise, $1 is used as the default.
 #
 find_in_PATH()
@@ -490,7 +490,7 @@ level of source directory"
 	#
 	# Note that "uname -p" is not part of POSIX, but we want uname_p
 	# to be set to the host MACHINE_ARCH, if possible.  On systems
-	# where "uname -p" fails, prints "unknown", or prints a string
+	# where "uname -p" fails, shows "unknown", or shows a string
 	# that does not look like an identifier, fall back to using the
 	# output from "uname -m" instead.
 	#
@@ -906,7 +906,7 @@ listarch()
 }
 
 # nobomb_getmakevar --
-# Given the name of a make variable in $1, print make's idea of the
+# Given the name of a make variable in $1, show make's idea of the
 # value of that variable, or return 1 if there's an error.
 #
 nobomb_getmakevar()
@@ -921,7 +921,7 @@ EOF
 }
 
 # bomb_getmakevar --
-# Given the name of a make variable in $1, print make's idea of the
+# Given the name of a make variable in $1, show make's idea of the
 # value of that variable, or bomb if there's an error.
 #
 bomb_getmakevar()
@@ -931,8 +931,8 @@ bomb_getmakevar()
 }
 
 # getmakevar --
-# Given the name of a make variable in $1, print make's idea of the
-# value of that variable, or print a literal '$' followed by the
+# Given the name of a make variable in $1, show make's idea of the
+# value of that variable, or show a literal '$' followed by the
 # variable name if ${make} is not executable.  This is intended for use in
 # messages that need to be readable even if $make hasn't been built,
 # such as when build.sh is run with the "-n" option.
@@ -1022,7 +1022,8 @@ resolvepath()
 	eval ${var}=\"\${val}\"
 }
 
-# Display synopsis to stdout.
+# Show synopsis to stdout.
+#
 synopsis()
 {
 	cat <<_usage_
@@ -1038,7 +1039,7 @@ Usage: ${progname} [-EnoPRrUux] [-a ARCH] [-B BID] [-C EXTRAS]
 _usage_
 }
 
-# Display help to stdout.
+# Show help to stdout.
 #
 help()
 {
@@ -1050,7 +1051,7 @@ help()
     release             Run "make release" (includes kernels & distrib media).
 
  Other OPERATIONs:
-    help                Show this message and exit.
+    help                Show this help message, and exit.
     makewrapper         Create ${toolprefix}make-\${MACHINE} wrapper and ${toolprefix}make.
                         Always performed.
     cleandir            Run "make cleandir".  [Default unless -u is used]
@@ -1083,8 +1084,8 @@ help()
                         RELEASEDIR/RELEASEMACHINEDIR/installation/installimage.
     disk-image=TARGET   Create bootable disk image in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/gzimg/TARGET.img.gz.
-    params              Display various make(1) parameters.
-    list-arch           Display a list of valid MACHINE/MACHINE_ARCH values,
+    params              Show various make(1) parameters.
+    list-arch           Show a list of valid MACHINE/MACHINE_ARCH values,
                         and exit.  The list may be narrowed by passing glob
                         patterns or exact values in MACHINE or MACHINE_ARCH.
     mkrepro-timestamp   Show the latest source timestamp used for reproducable
@@ -1102,7 +1103,7 @@ help()
     -E             Set "expert" mode; disables various safety checks.
                    Should not be used without expert knowledge of the build
                    system.
-    -h             Print this help message, and exit.
+    -h             Show this help message, and exit.
     -j NJOB        Run up to NJOB jobs in parallel; see make(1) -j.
     -M MOBJ        Set obj root directory to MOBJ; sets MAKEOBJDIRPREFIX=MOBJ,
                    unsets MAKEOBJDIR.
@@ -1143,12 +1144,12 @@ help()
     -X X11SRC      Set X11SRCDIR=X11SRC.  [Default: /usr/xsrc]
     -x             Set MKX11=yes; build X11 from X11SRCDIR.
     -Z VAR         Unset ("zap") variable VAR.
-    -?             Print this help message, and exit.
+    -?             Show this help message, and exit.
 
 _usage_
 }
 
-# Display optional error message, help to stderr, and exit 1.
+# Show optional error message, help to stderr, and exit 1.
 #
 usage()
 {
@@ -1559,9 +1560,10 @@ sanitycheck()
 	done
 }
 
-# print_tooldir_make --
-# Try to find and print a path to an existing
+# print_tooldir_program --
+# Try to find and show a path to an existing
 # ${TOOLDIR}/bin/${toolprefix}program
+#
 print_tooldir_program()
 {
 	local possible_TOP_OBJ
@@ -1615,8 +1617,9 @@ print_tooldir_program()
 	done
 	echo ""
 }
+
 # print_tooldir_make --
-# Try to find and print a path to an existing
+# Try to find and show a path to an existing
 # ${TOOLDIR}/bin/${toolprefix}make, for use by rebuildmake() before a
 # new version of ${toolprefix}make has been built.
 #
@@ -1634,7 +1637,7 @@ print_tooldir_program()
 #   nobomb_getmakevar to find the correct value for TOOLDIR, and believe the
 #   result only if it's a directory that already exists;
 # * If a value of TOOLDIR was found above, and if
-#   ${TOOLDIR}/bin/${toolprefix}make exists, print that value.
+#   ${TOOLDIR}/bin/${toolprefix}make exists, show that value.
 #
 print_tooldir_make()
 {
@@ -1758,7 +1761,7 @@ rebuildmake()
 # Creates the top-level obj directory, because that
 # is needed by some of the sanity checks.
 #
-# Prints status messages reporting the values of several variables.
+# Shows status messages reporting the values of several variables.
 #
 validatemakeparams()
 {
@@ -2010,7 +2013,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.368 2023/04/23 09:54:15 uwe Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.369 2023/05/16 21:39:26 lukem Exp $
 # with these arguments: ${_args}
 #
 
