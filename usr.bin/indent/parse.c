@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.58 2023/05/15 20:12:28 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.59 2023/05/16 12:46:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.58 2023/05/15 20:12:28 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.59 2023/05/16 12:46:43 rillig Exp $");
 
 #include <err.h>
 
@@ -241,8 +241,8 @@ reduce_stmt(void)
 }
 
 /*
- * Repeatedly try to reduce the top two symbols on the parse stack to a
- * single symbol, until no more reductions are possible.
+ * Repeatedly try to reduce the top two symbols on the parse stack to a single
+ * symbol, until no more reductions are possible.
  */
 static void
 reduce(void)
