@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.95.2.1 2023/05/16 16:16:00 martin Exp $	*/
+/*	$NetBSD: version.h,v 1.95.2.2 2023/05/16 16:26:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
@@ -34,5 +34,5 @@
 #endif
 
 #ifndef FTP_VERSION
-#define	FTP_VERSION	"20230225"
+#define	FTP_VERSION	"20230505"
 #endif
