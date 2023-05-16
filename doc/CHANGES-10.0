@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.64 2023/05/15 10:40:13 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.65 2023/05/16 16:27:44 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1872,4 +1872,40 @@ sys/arch/mips/include/vmparam.h			1.67
 
 	mips: bump MAXTSIZ from 64MB to 128MB also for the o32 ABI.
 	[he, ticket #169]
+
+usr.bin/ftp/cmdtab.c				1.53
+usr.bin/ftp/extern.h				1.83
+usr.bin/ftp/fetch.c				1.236
+usr.bin/ftp/ftp.1				1.148
+usr.bin/ftp/main.c				1.129
+usr.bin/ftp/ssl.c				1.13
+usr.bin/ftp/util.c				1.166
+usr.bin/ftp/version.h				1.96
+
+	ftp(1): verify SSL (TLS) certificates by default and add
+	controls to disable this feature.
+	[lukem, ticket #170]
+
+usr.bin/ftp/ftp.1				1.149
+
+	ftp(1): minor markup tweaks.
+	[lukem, ticket #172]
+
+usr.bin/ftp/ftp.1				1.150
+
+	ftp(1): better mark up for url vs cd example.
+	[lukem, ticket #173]
+
+usr.bin/ftp/ssl.c				1.14
+
+	Simplify includes.
+	[lukem, ticket #174]
+
+usr.bin/ftp/ftp.c				1.175
+usr.bin/ftp/ssl.c				1.15
+usr.bin/ftp/util.c				1.167
+usr.bin/ftp/version.h				1.97
+
+	ftp(1): add timeout for ssl connect.
+	[lukem, ticket #171]
 
