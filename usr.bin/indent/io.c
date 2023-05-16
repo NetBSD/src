@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.172 2023/05/16 07:13:05 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.173 2023/05/16 08:04:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.172 2023/05/16 07:13:05 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.173 2023/05/16 08:04:03 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: io.c,v 1.172 2023/05/16 07:13:05 rillig Exp $");
  * current read position is inp.s, and the invariant inp.s < inp.e holds.
  */
 static struct buffer inp;
+static struct buffer indent_off_text;
 
 static int paren_indent;
 
@@ -103,7 +104,7 @@ inp_read_next_line(FILE *f)
     for (;;) {
 	int ch = getc(f);
 	if (ch == EOF) {
-	    if (!inhibit_formatting) {
+	    if (indent_enabled == indent_on) {
 		buf_add_char(&inp, ' ');
 		buf_add_char(&inp, '\n');
 	    }
@@ -250,7 +251,7 @@ output_complete_line(char line_terminator)
 	    output_char('\n');
     }
 
-    if (!inhibit_formatting) {
+    if (indent_enabled == indent_on) {
 	if (ps.ind_level == 0)
 	    ps.in_stmt_cont = false;	/* this is a class A kludge */
 
@@ -269,6 +270,12 @@ output_complete_line(char line_terminator)
 	    output_line_comment(ind);
 
 	output_char(line_terminator);
+    }
+
+    if (indent_enabled == indent_last_off_line) {
+	indent_enabled = indent_on;
+	output_range(indent_off_text.st, indent_off_text.len);
+	indent_off_text.len = 0;
     }
 
     ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */
@@ -362,10 +369,14 @@ compute_label_indent(void)
 void
 inp_read_line(void)
 {
+    if (indent_enabled == indent_on)
+	indent_off_text.len = 0;
+    buf_add_chars(&indent_off_text, inp.mem, inp.len);
     inp_read_next_line(input);
+}
 
-    lex_indent_comment();
-
-    if (inhibit_formatting)
-	output_range(inp.st, inp.len);
+void
+clear_indent_off_text(void)
+{
+    indent_off_text.len = 0;
 }
