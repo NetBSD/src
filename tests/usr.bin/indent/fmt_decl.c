@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.42 2023/05/15 21:51:46 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.43 2023/05/16 08:22:11 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -128,7 +128,7 @@ void t2 (char *x, int y)
 	,n
 	,o
 	;
-	int		chars[ /* push the comma beyond column 74 .... */ ], x;
+	int		chars[ /* push the comma beyond column 74 ...... */ ], x;
 }
 //indent end
 
@@ -145,7 +145,7 @@ t2(char *x, int y)
 		       ,n
 		       ,o
 		       ;
-	int		chars[ /* push the comma beyond column 74 .... */ ],
+	int		chars[/* push the comma beyond column 74 ...... */],
 			x;
 }
 //indent end
