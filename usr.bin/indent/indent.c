@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.288 2023/05/16 08:22:11 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.289 2023/05/16 11:32:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.288 2023/05/16 08:22:11 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.289 2023/05/16 11:32:01 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -156,7 +156,7 @@ int
 ind_add(int ind, const char *s, size_t len)
 {
     for (const char *p = s; len > 0; p++, len--) {
-	if (*p == '\n' || *p == '\f')
+	if (*p == '\n')
 	    ind = 0;
 	else if (*p == '\t')
 	    ind = next_tab(ind);
@@ -376,13 +376,6 @@ move_com_to_code(lexer_symbol lsym)
     if (lsym != lsym_rparen_or_rbracket)
 	buf_add_char(&code, ' ');
     com.len = 0;
-    ps.want_blank = false;
-}
-
-static void
-process_form_feed(void)
-{
-    output_line_ff();
     ps.want_blank = false;
 }
 
@@ -1025,8 +1018,7 @@ main_loop(void)
 	if (lsym == lsym_if && ps.prev_token == lsym_else && opt.else_if)
 	    ps.force_nl = false;
 
-	if (lsym == lsym_newline || lsym == lsym_form_feed ||
-		lsym == lsym_preprocessing)
+	if (lsym == lsym_newline || lsym == lsym_preprocessing)
 	    ps.force_nl = false;
 	else if (lsym != lsym_comment) {
 	    maybe_break_line(lsym);
@@ -1037,10 +1029,6 @@ main_loop(void)
 	}
 
 	switch (lsym) {
-
-	case lsym_form_feed:
-	    process_form_feed();
-	    break;
 
 	case lsym_newline:
 	    process_newline();

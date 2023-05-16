@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.12 2023/05/15 20:30:20 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.13 2023/05/16 11:32:02 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -880,9 +880,8 @@ int		decl;
 
 
 /*
- * At the beginning of a block comment or after a '*', '\f' is special. This
- * is an implementation detail that should not be visible from the outside.
- * Form feeds in comments are seldom used though, so this is no problem.
+ * Form feeds are seldom used, especially in comments, so treat them as an
+ * ordinary character.
  */
 //indent input
 /* comment*/
@@ -890,18 +889,11 @@ int		decl;
 //indent end
 
 //indent run
-/* * comment */
-/* text* * comment */
+/*  comment */
+/* text* comment */
 //indent end
 
-/*
- * Without 'star_comment_cont', there is no separator between the form feed
- * and the surrounding text.
- */
-//indent run -nsc
-/*comment */
-/* text*comment */
-//indent end
+//indent run-equals-prev-output -nsc
 
 //indent run-equals-input -nfc1
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.173 2023/05/16 08:04:03 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.174 2023/05/16 11:32:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.173 2023/05/16 08:04:03 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.174 2023/05/16 11:32:01 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -236,12 +236,12 @@ output_line_comment(int ind)
  *
  * Comments are written directly, bypassing this function.
  */
-static void
-output_complete_line(char line_terminator)
+void
+output_line(void)
 {
     debug_printf("%s", __func__);
     debug_buffers();
-    debug_println("%s", line_terminator == '\f' ? " form_feed" : "");
+    debug_println("");
 
     ps.is_function_definition = false;
 
@@ -269,7 +269,7 @@ output_complete_line(char line_terminator)
 	if (com.len > 0)
 	    output_line_comment(ind);
 
-	output_char(line_terminator);
+	output_char('\n');
     }
 
     if (indent_enabled == indent_last_off_line) {
@@ -298,18 +298,6 @@ output_complete_line(char line_terminator)
     }
 
     ps.want_blank = false;
-}
-
-void
-output_line(void)
-{
-    output_complete_line('\n');
-}
-
-void
-output_line_ff(void)
-{
-    output_complete_line('\f');
 }
 
 static int

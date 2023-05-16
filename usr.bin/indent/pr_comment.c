@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.142 2023/05/15 19:55:51 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.143 2023/05/16 11:32:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.142 2023/05/15 19:55:51 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.143 2023/05/16 11:32:01 rillig Exp $");
 
 #include <string.h>
 
@@ -164,15 +164,6 @@ copy_comment_wrap(int line_length, bool delim)
 
     for (;;) {
 	switch (inp_peek()) {
-	case '\f':
-	    output_line_ff();
-	    last_blank = -1;
-	    com_add_delim();
-	    inp_skip();
-	    while (ch_isblank(inp_peek()))
-		inp_skip();
-	    break;
-
 	case '\n':
 	    if (had_eof) {
 		diag(1, "Unterminated comment");

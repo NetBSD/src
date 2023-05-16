@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.194 2023/05/16 08:04:03 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.195 2023/05/16 11:32:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.194 2023/05/16 08:04:03 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.195 2023/05/16 11:32:01 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -571,12 +571,6 @@ lexi(void)
     case '\n':
 	/* if data has been exhausted, the '\n' is a dummy. */
 	lsym = had_eof ? lsym_eof : lsym_newline;
-	next_unary = ps.next_unary;
-	ps.next_col_1 = true;
-	break;
-
-    case '\f':
-	lsym = lsym_form_feed;
 	next_unary = ps.next_unary;
 	ps.next_col_1 = true;
 	break;
