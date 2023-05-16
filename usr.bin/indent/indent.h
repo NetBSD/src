@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.145 2023/05/16 11:32:01 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.146 2023/05/16 13:26:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -132,6 +132,15 @@ struct buffer {
 
 extern FILE *input;
 extern FILE *output;
+
+/*
+ * The current line from the input file, used by the lexer to generate tokens.
+ * To read from the line, start at inp.st and continue up to and including the
+ * next '\n'. To read beyond the '\n', call inp_skip or inp_next, which will
+ * make the next line available, invalidating any pointers into the previous
+ * line.
+ */
+extern struct buffer inp;
 
 extern struct buffer token;	/* the current token to be processed, is
 				 * typically copied to the buffer 'code', or
@@ -409,10 +418,6 @@ int compute_code_indent(void);
 int compute_label_indent(void);
 int ind_add(int, const char *, size_t);
 
-const char *inp_p(void);
-const char *inp_line_start(void);
-char inp_peek(void);
-char inp_lookahead(size_t);
 void inp_skip(void);
 char inp_next(void);
 void clear_indent_off_text(void);

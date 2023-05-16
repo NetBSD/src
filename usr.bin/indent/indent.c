@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.289 2023/05/16 11:32:01 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.290 2023/05/16 13:26:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.289 2023/05/16 11:32:01 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.290 2023/05/16 13:26:26 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -291,7 +291,7 @@ main_prepare_parsing(void)
     inp_read_line();
 
     int ind = 0;
-    for (const char *p = inp_p();; p++) {
+    for (const char *p = inp.st;; p++) {
 	if (*p == ' ')
 	    ind++;
 	else if (*p == '\t')
@@ -886,10 +886,10 @@ read_preprocessing_line(void)
 
     buf_add_char(&lab, '#');
 
-    while (ch_isblank(inp_peek()))
-	buf_add_char(&lab, inp_next());
+    while (ch_isblank(inp.st[0]))
+	buf_add_char(&lab, *inp.st++);
 
-    while (inp_peek() != '\n' || (state == COMM && !had_eof)) {
+    while (inp.st[0] != '\n' || (state == COMM && !had_eof)) {
 	buf_add_char(&lab, inp_next());
 	switch (lab.mem[lab.len - 1]) {
 	case '\\':
@@ -897,9 +897,9 @@ read_preprocessing_line(void)
 		buf_add_char(&lab, inp_next());
 	    break;
 	case '/':
-	    if (inp_peek() == '*' && state == PLAIN) {
+	    if (inp.st[0] == '*' && state == PLAIN) {
 		state = COMM;
-		buf_add_char(&lab, inp_next());
+		buf_add_char(&lab, *inp.st++);
 	    }
 	    break;
 	case '"':
@@ -915,9 +915,9 @@ read_preprocessing_line(void)
 		state = CHR;
 	    break;
 	case '*':
-	    if (inp_peek() == '/' && state == COMM) {
+	    if (inp.st[0] == '/' && state == COMM) {
 		state = PLAIN;
-		buf_add_char(&lab, inp_next());
+		buf_add_char(&lab, *inp.st++);
 	    }
 	    break;
 	}
