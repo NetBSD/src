@@ -1,4 +1,4 @@
-/* $NetBSD: t_ptm.c,v 1.1 2011/01/13 03:19:57 pgoyette Exp $ */
+/* $NetBSD: t_ptm.c,v 1.2 2023/05/17 03:16:11 gutteridge Exp $ */
 
 /*
  * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_ptm.c,v 1.1 2011/01/13 03:19:57 pgoyette Exp $");
+__RCSID("$NetBSD: t_ptm.c,v 1.2 2023/05/17 03:16:11 gutteridge Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -164,11 +164,37 @@ ATF_TC_BODY(ptmx, tc)
 	ATF_REQUIRE_EQ_MSG(sts.st_gid, gp->gr_gid, "bad slave gid");
 }
 
+ATF_TC(ptmx_extra);
+
+ATF_TC_HEAD(ptmx_extra, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "Checks /dev/ptmx device "
+	    "applies O_NONBLOCK and O_CLOEXEC");
+}
+
+ATF_TC_BODY(ptmx_extra, tc)
+{
+	int fdm;
+
+	if ((fdm = posix_openpt(O_RDWR|O_NOCTTY|O_NONBLOCK|O_CLOEXEC)) == -1) {
+		if (errno == ENOENT || errno == ENODEV)
+			atf_tc_skip("/dev/ptmx: %s", strerror(errno));
+
+		atf_tc_fail("/dev/ptmx: %s", strerror(errno));
+	}
+
+	/* O_NOCTTY is ignored, not set. */
+	ATF_CHECK_EQ(O_RDWR|O_NONBLOCK, fcntl(fdm, F_GETFL));
+	ATF_CHECK_EQ(FD_CLOEXEC, fcntl(fdm, F_GETFD));
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, ptm);
 	ATF_TP_ADD_TC(tp, ptmx);
+	ATF_TP_ADD_TC(tp, ptmx_extra);
 
 	return atf_no_error();
 }
