@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscp.c,v 1.49 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: pcscp.c,v 1.50 2023/05/17 18:20:30 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999 The NetBSD Foundation, Inc.
@@ -35,11 +35,11 @@
  * written by Izumi Tsutsui <tsutsui@NetBSD.org>
  *
  * Technical manual available at
- * http://support.amd.com/TechDocs/19113.pdf
+ * https://www.amd.com/system/files/TechDocs/19113.pdf
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.49 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcscp.c,v 1.50 2023/05/17 18:20:30 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
