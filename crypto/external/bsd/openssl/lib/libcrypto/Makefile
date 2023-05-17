@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2023/05/09 19:22:07 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2023/05/17 19:09:41 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -25,8 +25,8 @@ USE_FIPS=	no
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
 
-# XXX: There's a bit of work to do before we can enable warnings.
-WARNS=0
+COPTS+= -Wno-error=cast-qual -Wno-error=discarded-qualifiers
+COPTS+= -Wno-error=missing-field-initializers -Wno-error=char-subscripts
 CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses -Wno-implicit-int-float-conversion
 # XXX: This warning seems to trigger incorrectly
 CWARNFLAGS.clang+=	-Wno-atomic-alignment
