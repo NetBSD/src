@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.11 2023/05/16 12:46:43 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.12 2023/05/17 18:03:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.11 2023/05/16 12:46:43 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.12 2023/05/17 18:03:25 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -188,7 +188,7 @@ debug_buffers(void)
 }
 
 #define debug_ps_bool(name) \
-        if (ps.name != prev_ps.name) \
+	if (ps.name != prev_ps.name) \
 	    debug_println("[%c] -> [%c] ps." #name, \
 		prev_ps.name ? 'x' : ' ', ps.name ? 'x' : ' '); \
 	else if (debug_full_parser_state) \
