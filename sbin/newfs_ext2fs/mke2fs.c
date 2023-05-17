@@ -1,4 +1,4 @@
-/*	$NetBSD: mke2fs.c,v 1.25 2016/09/05 10:44:36 martin Exp $	*/
+/*	$NetBSD: mke2fs.c,v 1.26 2023/05/17 09:54:59 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 Izumi Tsutsui.  All rights reserved.
@@ -88,11 +88,11 @@
  * Reference:
  *	- All NetBSD sources under src/sys/ufs/ext2fs and src/sbin/fsck_ext2fs
  *	- Ext2fs Home Page
- *		http://e2fsprogs.sourceforge.net/ext2.html
+ *		https://e2fsprogs.sourceforge.net/ext2.html
  *	- Design and Implementation of the Second Extended Filesystem
- *		http://e2fsprogs.sourceforge.net/ext2intro.html
+ *		https://e2fsprogs.sourceforge.net/ext2intro.html
  *	- Linux Documentation "The Second Extended Filesystem"
- *		http://www.kernel.org/doc/Documentation/filesystems/ext2.txt
+ *		https://www.kernel.org/doc/Documentation/filesystems/ext2.txt
  */
 
 #include <sys/cdefs.h>
@@ -100,7 +100,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mke2fs.c,v 1.25 2016/09/05 10:44:36 martin Exp $");
+__RCSID("$NetBSD: mke2fs.c,v 1.26 2023/05/17 09:54:59 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
