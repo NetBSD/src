@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.h,v 1.4 2019/11/23 17:13:46 tkusumi Exp $	*/
+/*	$NetBSD: autofs.h,v 1.5 2023/05/17 06:44:38 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -94,13 +94,6 @@ extern int autofs_interruptible;
 			    __func__, ## __VA_ARGS__);	\
 		}					\
 	} while (0)
-
-/*
- * APRINTF is only for debugging.
- */
-#define APRINTF(X, ...)					\
-	printf("### %s(%s): " X,			\
-	    __func__, curproc->p_comm, ## __VA_ARGS__)
 
 struct autofs_node {
 	RB_ENTRY(autofs_node)		an_entry;
