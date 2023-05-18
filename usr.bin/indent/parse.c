@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.60 2023/05/18 04:23:03 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.61 2023/05/18 05:33:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.60 2023/05/18 04:23:03 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.61 2023/05/18 05:33:27 rillig Exp $");
 
 #include <err.h>
 
@@ -88,7 +88,8 @@ parse(parser_symbol psym)
 		break;
 
 	case psym_if_expr:
-		if (ps.s_sym[ps.tos] == psym_if_expr_stmt_else && opt.else_if) {
+		if (ps.s_sym[ps.tos] == psym_if_expr_stmt_else
+		    && opt.else_if) {
 			/* Reduce "else if" to "if". This saves a lot of stack
 			 * space in case of a long "if-else-if ... else-if"
 			 * sequence. */
@@ -105,7 +106,8 @@ parse(parser_symbol psym)
 	case psym_lbrace:
 		break_comma = false;	/* don't break comma in an initializer
 					 * list */
-		if (ps.s_sym[ps.tos] == psym_stmt || ps.s_sym[ps.tos] == psym_decl
+		if (ps.s_sym[ps.tos] == psym_stmt
+		    || ps.s_sym[ps.tos] == psym_decl
 		    || ps.s_sym[ps.tos] == psym_stmt_list)
 			++ps.ind_level_follow;	/* it is a random, isolated
 						 * stmt group or a declaration
@@ -133,9 +135,10 @@ parse(parser_symbol psym)
 	case psym_while_expr:
 		if (ps.s_sym[ps.tos] == psym_do_stmt) {
 			/* it is matched with do stmt */
-			ps.ind_level = ps.ind_level_follow = ps.s_ind_level[ps.tos];
+			ps.ind_level =
+			    ps.ind_level_follow = ps.s_ind_level[ps.tos];
 			ps.s_sym[++ps.tos] = psym_while_expr;
-			ps.s_ind_level[ps.tos] = ps.ind_level = ps.ind_level_follow;
+			ps.s_ind_level[ps.tos] = ps.ind_level;
 
 		} else {	/* it is a while loop */
 			ps.s_sym[++ps.tos] = psym_while_expr;
@@ -158,7 +161,8 @@ parse(parser_symbol psym)
 	case psym_rbrace:
 		/* stack should have <lbrace> <stmt> or <lbrace> <stmt_list> */
 		if (ps.tos > 0 && ps.s_sym[ps.tos - 1] == psym_lbrace) {
-			ps.ind_level = ps.ind_level_follow = ps.s_ind_level[--ps.tos];
+			ps.ind_level = ps.ind_level_follow
+			    = ps.s_ind_level[--ps.tos];
 			ps.s_sym[ps.tos] = psym_stmt;
 		} else
 			diag(1, "Statement nesting error");
