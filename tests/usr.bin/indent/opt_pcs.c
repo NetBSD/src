@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.15 2023/05/15 20:50:37 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.16 2023/05/18 08:09:28 rillig Exp $ */
 
 /*
  * Tests for the options '-pcs' and '-npcs'.
@@ -109,4 +109,17 @@ int sizeof_expr = sizeof 0;
 
 int offset = offsetof(struct s, member);
 int offset = offsetof(struct s, member);
+//indent end
+
+
+//indent input
+int unary = +call();
+int binary = 1 + call();
+//indent end
+
+//indent run-equals-input -npcs -di0
+
+//indent run -pcs -di0
+int unary = +call ();
+int binary = 1 + call ();
 //indent end
