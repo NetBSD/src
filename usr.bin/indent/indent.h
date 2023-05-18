@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.146 2023/05/16 13:26:26 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.147 2023/05/18 03:38:34 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -247,7 +247,7 @@ extern enum indent_enabled {
 
 /* Properties of each level of parentheses or brackets. */
 typedef struct paren_level_props {
-    short indent;		/* indentation of the operand/argument,
+    int indent;			/* indentation of the operand/argument,
 				 * relative to the enclosing statement; if
 				 * negative, reflected at -1 */
     enum paren_level_cast {
