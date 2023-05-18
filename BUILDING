@@ -157,6 +157,15 @@ CONFIGURATION
                        cannot usefully be set inside a Makefile, including
                        mk.conf or ${MAKECONF}.
 
+     TMPDIR            Top-level directory to store temporary directories used
+                       by build.sh before paths to other directories such as
+                       .OBJDIR can be determined.
+
+                       Note: Must support execution of binaries.  I.e.,
+                       without mount(8)'s -o noexec option.
+
+                       Default: "/tmp".
+
    "make" variables
      Several variables control the behavior of NetBSD builds.  Unless
      otherwise specified, these variables may be set in either the process
@@ -1115,7 +1124,7 @@ OBSOLETE VARIABLES
                  TOOLCHAIN_MISSING=yes.
 
 SEE ALSO
-     make(1), hier(7), release(7), etcupdate(8), installboot(8),
+     make(1), hier(7), release(7), etcupdate(8), installboot(8), mount(8),
      postinstall(8), sysinst(8), pkgsrc/sysutils/cdrtools
 
 HISTORY
@@ -1128,4 +1137,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                           May 16, 2023                           NetBSD
+NetBSD                           May 18, 2023                           NetBSD

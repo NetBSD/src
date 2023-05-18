@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.137 2023/05/16 21:39:26 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.138 2023/05/18 14:22:53 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd May 16, 2023
+.Dd May 18, 2023
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -186,6 +186,28 @@ and the release layout is described in
 .
 .Ss Environment variables
 .
+.de YorN
+Can be set to
+.Dq yes
+or
+.Dq no .
+..
+.de DFLT
+.Pp
+.Em Default :
+..
+.de DFLTu
+.DFLT
+Unset.
+..
+.de DFLTy
+.DFLT
+.Dq yes
+..
+.de DFLTn
+.DFLT
+.Dq no
+..
 Several environment variables control the behaviour of
 .Nx
 builds.
@@ -327,32 +349,28 @@ it cannot usefully be set inside a Makefile, including
 or
 .Sy ${MAKECONF} .
 .
+.
+.It Sy TMPDIR
+Top-level directory to store temporary directories used by
+.Sy build.sh
+before paths to other directories such as
+.Sy .OBJDIR
+can be determined.
+.Pp
+.Em Note :
+Must support execution of binaries.
+I.e., without
+.Xr mount 8 Ns 's
+.Fl o
+.Sy noexec
+option.
+.DFLT
+.Dq /tmp .
+.
 .El
 .
 .Ss \*qmake\*q variables
 .
-.de YorN
-Can be set to
-.Dq yes
-or
-.Dq no .
-..
-.de DFLT
-.Pp
-.Em Default :
-..
-.de DFLTu
-.DFLT
-Unset.
-..
-.de DFLTy
-.DFLT
-.Dq yes
-..
-.de DFLTn
-.DFLT
-.Dq no
-..
 Several variables control the behavior of
 .Nx
 builds.
@@ -2162,6 +2180,7 @@ To disable, use
 .Xr release 7 ,
 .Xr etcupdate 8 ,
 .Xr installboot 8 ,
+.Xr mount 8 ,
 .Xr postinstall 8 ,
 .Xr sysinst 8 ,
 .Pa pkgsrc/sysutils/cdrtools
