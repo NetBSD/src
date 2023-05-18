@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.294 2023/05/18 06:01:39 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.295 2023/05/18 07:13:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.294 2023/05/18 06:01:39 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.295 2023/05/18 07:13:05 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -367,20 +367,10 @@ maybe_break_line(lexer_symbol lsym)
 	ps.force_nl = false;
 }
 
-static bool
-want_blank_before_comment(void)
-{
-	if (code.len > 0) {
-		char ch = code.mem[code.len - 1];
-		return ch != '[' && ch != '(';
-	}
-	return lab.len > 0;
-}
-
 static void
 move_com_to_code(lexer_symbol lsym)
 {
-	if (want_blank_before_comment())
+	if (ps.want_blank)
 		buf_add_char(&code, ' ');
 	buf_add_buf(&code, &com);
 	if (lsym != lsym_rparen_or_rbracket)
