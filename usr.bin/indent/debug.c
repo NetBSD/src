@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.12 2023/05/17 18:03:25 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.13 2023/05/18 04:23:03 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.12 2023/05/17 18:03:25 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.13 2023/05/18 04:23:03 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -45,146 +45,146 @@ __RCSID("$NetBSD: debug.c,v 1.12 2023/05/17 18:03:25 rillig Exp $");
 static bool debug_full_parser_state = true;
 
 const char *const lsym_name[] = {
-    "eof",
-    "preprocessing",
-    "newline",
-    "comment",
-    "lparen_or_lbracket",
-    "rparen_or_rbracket",
-    "lbrace",
-    "rbrace",
-    "period",
-    "unary_op",
-    "binary_op",
-    "postfix_op",
-    "question",
-    "colon",
-    "comma",
-    "semicolon",
-    "typedef",
-    "storage_class",
-    "type_outside_parentheses",
-    "type_in_parentheses",
-    "tag",
-    "case_label",
-    "sizeof",
-    "offsetof",
-    "word",
-    "funcname",
-    "do",
-    "else",
-    "for",
-    "if",
-    "switch",
-    "while",
-    "return",
+	"eof",
+	"preprocessing",
+	"newline",
+	"comment",
+	"lparen_or_lbracket",
+	"rparen_or_rbracket",
+	"lbrace",
+	"rbrace",
+	"period",
+	"unary_op",
+	"binary_op",
+	"postfix_op",
+	"question",
+	"colon",
+	"comma",
+	"semicolon",
+	"typedef",
+	"storage_class",
+	"type_outside_parentheses",
+	"type_in_parentheses",
+	"tag",
+	"case_label",
+	"sizeof",
+	"offsetof",
+	"word",
+	"funcname",
+	"do",
+	"else",
+	"for",
+	"if",
+	"switch",
+	"while",
+	"return",
 };
 
 const char *const psym_name[] = {
-    "0",
-    "lbrace",
-    "rbrace",
-    "decl",
-    "stmt",
-    "stmt_list",
-    "for_exprs",
-    "if_expr",
-    "if_expr_stmt",
-    "if_expr_stmt_else",
-    "else",
-    "switch_expr",
-    "do",
-    "do_stmt",
-    "while_expr",
+	"0",
+	"lbrace",
+	"rbrace",
+	"decl",
+	"stmt",
+	"stmt_list",
+	"for_exprs",
+	"if_expr",
+	"if_expr_stmt",
+	"if_expr_stmt_else",
+	"else",
+	"switch_expr",
+	"do",
+	"do_stmt",
+	"while_expr",
 };
 
 static const char *const declaration_name[] = {
-    "no",
-    "begin",
-    "end",
+	"no",
+	"begin",
+	"end",
 };
 
 static const char *const in_enum_name[] = {
-    "no",
-    "enum",
-    "type",
-    "brace",
+	"no",
+	"enum",
+	"type",
+	"brace",
 };
 
 const char *const paren_level_cast_name[] = {
-    "(unknown cast)",
-    "(maybe cast)",
-    "(no cast)",
+	"(unknown cast)",
+	"(maybe cast)",
+	"(no cast)",
 };
 
 void
 debug_printf(const char *fmt, ...)
 {
-    FILE *f = output == stdout ? stderr : stdout;
-    va_list ap;
+	FILE *f = output == stdout ? stderr : stdout;
+	va_list ap;
 
-    va_start(ap, fmt);
-    vfprintf(f, fmt, ap);
-    va_end(ap);
+	va_start(ap, fmt);
+	vfprintf(f, fmt, ap);
+	va_end(ap);
 }
 
 void
 debug_println(const char *fmt, ...)
 {
-    FILE *f = output == stdout ? stderr : stdout;
-    va_list ap;
+	FILE *f = output == stdout ? stderr : stdout;
+	va_list ap;
 
-    va_start(ap, fmt);
-    vfprintf(f, fmt, ap);
-    va_end(ap);
-    fprintf(f, "\n");
+	va_start(ap, fmt);
+	vfprintf(f, fmt, ap);
+	va_end(ap);
+	fprintf(f, "\n");
 }
 
 void
 debug_vis_range(const char *prefix, const char *s, size_t len,
     const char *suffix)
 {
-    debug_printf("%s", prefix);
-    for (size_t i = 0; i < len; i++) {
-	const char *p = s + i;
-	if (*p == '\\' || *p == '"')
-	    debug_printf("\\%c", *p);
-	else if (isprint((unsigned char)*p))
-	    debug_printf("%c", *p);
-	else if (*p == '\n')
-	    debug_printf("\\n");
-	else if (*p == '\t')
-	    debug_printf("\\t");
-	else
-	    debug_printf("\\x%02x", (unsigned char)*p);
-    }
-    debug_printf("%s", suffix);
+	debug_printf("%s", prefix);
+	for (size_t i = 0; i < len; i++) {
+		const char *p = s + i;
+		if (*p == '\\' || *p == '"')
+			debug_printf("\\%c", *p);
+		else if (isprint((unsigned char)*p))
+			debug_printf("%c", *p);
+		else if (*p == '\n')
+			debug_printf("\\n");
+		else if (*p == '\t')
+			debug_printf("\\t");
+		else
+			debug_printf("\\x%02x", (unsigned char)*p);
+	}
+	debug_printf("%s", suffix);
 }
 
 static void
 debug_print_buf(const char *name, const struct buffer *buf)
 {
-    if (buf->len > 0) {
-	debug_printf("%s ", name);
-	debug_vis_range("\"", buf->st, buf->len, "\"\n");
-    }
+	if (buf->len > 0) {
+		debug_printf("%s ", name);
+		debug_vis_range("\"", buf->st, buf->len, "\"\n");
+	}
 }
 
 void
 debug_buffers(void)
 {
-    if (lab.len > 0) {
-	debug_printf(" label ");
-	debug_vis_range("\"", lab.st, lab.len, "\"");
-    }
-    if (code.len > 0) {
-	debug_printf(" code ");
-	debug_vis_range("\"", code.st, code.len, "\"");
-    }
-    if (com.len > 0) {
-	debug_printf(" comment ");
-	debug_vis_range("\"", com.st, com.len, "\"");
-    }
+	if (lab.len > 0) {
+		debug_printf(" label ");
+		debug_vis_range("\"", lab.st, lab.len, "\"");
+	}
+	if (code.len > 0) {
+		debug_printf(" code ");
+		debug_vis_range("\"", code.st, code.len, "\"");
+	}
+	if (com.len > 0) {
+		debug_printf(" comment ");
+		debug_vis_range("\"", com.st, com.len, "\"");
+	}
 }
 
 #define debug_ps_bool(name) \
@@ -208,101 +208,101 @@ debug_buffers(void)
 static bool
 ps_paren_has_changed(const struct parser_state *prev_ps)
 {
-    const paren_level_props *prev = prev_ps->paren, *curr = ps.paren;
+	const paren_level_props *prev = prev_ps->paren, *curr = ps.paren;
 
-    if (prev_ps->nparen != ps.nparen)
-	return true;
+	if (prev_ps->nparen != ps.nparen)
+		return true;
 
-    for (int i = 0; i < ps.nparen; i++)
-	if (curr[i].indent != prev[i].indent || curr[i].cast != prev[i].cast)
-	    return true;
-    return false;
+	for (int i = 0; i < ps.nparen; i++)
+		if (curr[i].indent != prev[i].indent || curr[i].cast != prev[i].cast)
+			return true;
+	return false;
 }
 
 static void
 debug_ps_paren(const struct parser_state *prev_ps)
 {
-    if (!debug_full_parser_state && !ps_paren_has_changed(prev_ps))
-	return;
+	if (!debug_full_parser_state && !ps_paren_has_changed(prev_ps))
+		return;
 
-    debug_printf("           ps.paren:");
-    for (int i = 0; i < ps.nparen; i++) {
-	debug_printf(" %s%d",
-	    paren_level_cast_name[ps.paren[i].cast], ps.paren[i].indent);
-    }
-    if (ps.nparen == 0)
-	debug_printf(" none");
-    debug_println("");
+	debug_printf("           ps.paren:");
+	for (int i = 0; i < ps.nparen; i++) {
+		debug_printf(" %s%d",
+		    paren_level_cast_name[ps.paren[i].cast], ps.paren[i].indent);
+	}
+	if (ps.nparen == 0)
+		debug_printf(" none");
+	debug_println("");
 }
 
 void
 debug_parser_state(lexer_symbol lsym)
 {
-    static struct parser_state prev_ps;
+	static struct parser_state prev_ps;
 
-    debug_println("");
-    debug_printf("line %d: %s", line_no, lsym_name[lsym]);
-    debug_vis_range(" \"", token.st, token.len, "\"\n");
+	debug_println("");
+	debug_printf("line %d: %s", line_no, lsym_name[lsym]);
+	debug_vis_range(" \"", token.st, token.len, "\"\n");
 
-    debug_print_buf("label", &lab);
-    debug_print_buf("code", &code);
-    debug_print_buf("comment", &com);
+	debug_print_buf("label", &lab);
+	debug_print_buf("code", &code);
+	debug_print_buf("comment", &com);
 
-    debug_println("           ps.prev_token = %s", lsym_name[ps.prev_token]);
-    debug_ps_bool(curr_col_1);
-    debug_ps_bool(next_col_1);
-    debug_ps_bool(next_unary);
-    debug_ps_bool(is_function_definition);
-    debug_ps_bool(want_blank);
-    debug_ps_bool(force_nl);
-    debug_ps_int(line_start_nparen);
-    debug_ps_int(nparen);
-    debug_ps_paren(&prev_ps);
+	debug_println("           ps.prev_token = %s", lsym_name[ps.prev_token]);
+	debug_ps_bool(curr_col_1);
+	debug_ps_bool(next_col_1);
+	debug_ps_bool(next_unary);
+	debug_ps_bool(is_function_definition);
+	debug_ps_bool(want_blank);
+	debug_ps_bool(force_nl);
+	debug_ps_int(line_start_nparen);
+	debug_ps_int(nparen);
+	debug_ps_paren(&prev_ps);
 
-    debug_ps_int(comment_delta);
-    debug_ps_int(n_comment_delta);
-    debug_ps_int(com_ind);
+	debug_ps_int(comment_delta);
+	debug_ps_int(n_comment_delta);
+	debug_ps_int(com_ind);
 
-    debug_ps_bool(block_init);
-    debug_ps_int(block_init_level);
-    debug_ps_bool(init_or_struct);
+	debug_ps_bool(block_init);
+	debug_ps_int(block_init_level);
+	debug_ps_bool(init_or_struct);
 
-    debug_ps_int(ind_level);
-    debug_ps_int(ind_level_follow);
+	debug_ps_int(ind_level);
+	debug_ps_int(ind_level_follow);
 
-    debug_ps_int(decl_level);
-    debug_ps_bool(decl_on_line);
-    debug_ps_bool(in_decl);
-    debug_ps_enum(declaration, declaration_name);
-    debug_ps_bool(blank_line_after_decl);
-    debug_ps_bool(in_func_def_params);
-    debug_ps_enum(in_enum, in_enum_name);
-    debug_ps_bool(decl_indent_done);
-    debug_ps_int(decl_ind);
-    // No debug output for di_stack.
-    debug_ps_bool(tabs_to_var);
+	debug_ps_int(decl_level);
+	debug_ps_bool(decl_on_line);
+	debug_ps_bool(in_decl);
+	debug_ps_enum(declaration, declaration_name);
+	debug_ps_bool(blank_line_after_decl);
+	debug_ps_bool(in_func_def_params);
+	debug_ps_enum(in_enum, in_enum_name);
+	debug_ps_bool(decl_indent_done);
+	debug_ps_int(decl_ind);
+	// No debug output for di_stack.
+	debug_ps_bool(tabs_to_var);
 
-    debug_ps_bool(in_stmt_or_decl);
-    debug_ps_bool(in_stmt_cont);
-    debug_ps_bool(is_case_label);
-    debug_ps_bool(seen_case);
+	debug_ps_bool(in_stmt_or_decl);
+	debug_ps_bool(in_stmt_cont);
+	debug_ps_bool(is_case_label);
+	debug_ps_bool(seen_case);
 
-    // The debug output for the parser symbols is done in 'parse' instead.
+	// The debug output for the parser symbols is done in 'parse' instead.
 
-    debug_ps_enum(spaced_expr_psym, psym_name);
-    debug_ps_int(quest_level);
+	debug_ps_enum(spaced_expr_psym, psym_name);
+	debug_ps_int(quest_level);
 
-    prev_ps = ps;
+	prev_ps = ps;
 }
 
 void
 debug_parse_stack(const char *situation)
 {
-    printf("parse stack %s:", situation);
-    for (int i = 1; i <= ps.tos; ++i)
-	printf(" %s %d", psym_name[ps.s_sym[i]], ps.s_ind_level[i]);
-    if (ps.tos == 0)
-	printf(" empty");
-    printf("\n");
+	printf("parse stack %s:", situation);
+	for (int i = 1; i <= ps.tos; ++i)
+		printf(" %s %d", psym_name[ps.s_sym[i]], ps.s_ind_level[i]);
+	if (ps.tos == 0)
+		printf(" empty");
+	printf("\n");
 }
 #endif
