@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.openssl,v 1.14 2023/05/17 19:10:04 christos Exp $
+#	$NetBSD: Makefile.openssl,v 1.15 2023/05/18 12:01:58 martin Exp $
 
 .ifndef _MAKEFILE_OPENSSL_INCLUDED
 _MAKEFILE_OPENSSL_INCLUDED=1
@@ -8,6 +8,7 @@ WARNS=3
 # would require changing a lot of code
 COPTS+= -Wno-error=cast-qual -Wno-error=discarded-qualifiers
 COPTS+= -Wno-error=missing-field-initializers -Wno-error=char-subscripts
+COPTS+= -Wno-error=shadow
 
 
 .if ${HAVE_OPENSSL} <= 11
