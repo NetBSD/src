@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.293 2023/05/18 05:33:27 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.294 2023/05/18 06:01:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.293 2023/05/18 05:33:27 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.294 2023/05/18 06:01:39 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -98,6 +98,14 @@ static const char *out_name = "Standard Output";
 static const char *backup_suffix = ".BAK";
 static char bakfile[MAXPATHLEN] = "";
 
+
+void *
+nonnull(void *p)
+{
+	if (p == NULL)
+		err(EXIT_FAILURE, NULL);
+	return p;
+}
 
 static void
 buf_expand(struct buffer *buf, size_t add_size)
@@ -169,7 +177,7 @@ ind_add(int ind, const char *s, size_t len)
 }
 
 static void
-main_init_globals(void)
+init_globals(void)
 {
 	ps.s_sym[0] = psym_stmt_list;
 	ps.prev_token = lsym_semicolon;
@@ -222,7 +230,7 @@ bakcopy(void)
 }
 
 static void
-main_load_profiles(int argc, char **argv)
+load_profiles(int argc, char **argv)
 {
 	const char *profile_name = NULL;
 
@@ -234,11 +242,12 @@ main_load_profiles(int argc, char **argv)
 		if (arg[0] == '-' && arg[1] == 'P' && arg[2] != '\0')
 			profile_name = arg + 2;
 	}
-	load_profiles(profile_name);
+
+	load_profile_files(profile_name);
 }
 
 static void
-main_parse_command_line(int argc, char **argv)
+parse_command_line(int argc, char **argv)
 {
 	for (int i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
@@ -287,7 +296,7 @@ main_parse_command_line(int argc, char **argv)
 }
 
 static void
-main_prepare_parsing(void)
+set_initial_indentation(void)
 {
 	inp_read_line();
 
@@ -1008,7 +1017,7 @@ process_preprocessing(void)
 }
 
 static int
-main_loop(void)
+indent(void)
 {
 
 	ps.di_stack[ps.decl_level = 0] = 0;
@@ -1166,17 +1175,9 @@ main_loop(void)
 int
 main(int argc, char **argv)
 {
-	main_init_globals();
-	main_load_profiles(argc, argv);
-	main_parse_command_line(argc, argv);
-	main_prepare_parsing();
-	return main_loop();
-}
-
-void *
-nonnull(void *p)
-{
-	if (p == NULL)
-		err(EXIT_FAILURE, NULL);
-	return p;
+	init_globals();
+	load_profiles(argc, argv);
+	parse_command_line(argc, argv);
+	set_initial_indentation();
+	return indent();
 }

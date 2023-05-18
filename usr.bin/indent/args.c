@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.79 2023/05/18 05:33:27 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.80 2023/05/18 06:01:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: args.c,v 1.79 2023/05/18 05:33:27 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.80 2023/05/18 06:01:39 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 
@@ -150,7 +150,7 @@ set_special_option(const char *arg, const char *option_source)
 	}
 
 	if (arg[0] == 'P' || strcmp(arg, "npro") == 0)
-		return true;	/* see main_load_profiles */
+		return true;	/* see load_profiles */
 
 	if (strncmp(arg, "cli", 3) == 0) {
 		arg_end = arg + 3;
@@ -299,15 +299,14 @@ load_profile(const char *fname, bool must_exist)
 }
 
 void
-load_profiles(const char *profile_name)
+load_profile_files(const char *path)
 {
-	char fname[PATH_MAX];
-
-	if (profile_name != NULL)
-		load_profile(profile_name, true);
+	if (path != NULL)
+		load_profile(path, true);
 	else {
 		const char *home = getenv("HOME");
 		if (home != NULL) {
+			char fname[PATH_MAX];
 			snprintf(fname, sizeof(fname), "%s/.indent.pro", home);
 			load_profile(fname, false);
 		}
