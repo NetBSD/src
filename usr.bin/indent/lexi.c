@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.198 2023/05/18 04:23:03 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.199 2023/05/18 05:33:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.198 2023/05/18 04:23:03 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.199 2023/05/18 05:33:27 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -121,31 +121,31 @@ static struct {
  */
 /* INDENT OFF */
 static const unsigned char lex_number_state[][26] = {
-    /*                examples:
-                                     00
-             s                      0xx
-             t                    00xaa
-             a     11       101100xxa..
-             r   11ee0001101lbuuxx.a.pp
-             t.01.e+008bLuxll0Ll.aa.p+0
-    states:  ABCDEFGHIJKLMNOPQRSTUVWXYZ */
-    [0] =   "uuiifuufiuuiiuiiiiiuiuuuuu",	/* (other) */
-    [1] =   "CEIDEHHHIJQ  U  Q  VUVVZZZ",	/* 0 */
-    [2] =   "DEIDEHHHIJQ  U  Q  VUVVZZZ",	/* 1 */
-    [3] =   "DEIDEHHHIJ   U     VUVVZZZ",	/* 2 3 4 5 6 7 */
-    [4] =   "DEJDEHHHJJ   U     VUVVZZZ",	/* 8 9 */
-    [5] =   "             U     VUVV   ",	/* A a C c D d */
-    [6] =   "  K          U     VUVV   ",	/* B b */
-    [7] =   "  FFF   FF   U     VUVV   ",	/* E e */
-    [8] =   "    f  f     U     VUVV  f",	/* F f */
-    [9] =   "  LLf  fL  PR   Li  L    f",	/* L */
-    [10] =  "  OOf  fO   S P O i O    f",	/* l */
-    [11] =  "                    FFX   ",	/* P p */
-    [12] =  "  MM    M  i  iiM   M     ",	/* U u */
-    [13] =  "  N                       ",	/* X x */
-    [14] =  "     G                 Y  ",	/* + - */
-    [15] =  "B EE    EE   T      W     ",	/* . */
-    /*       ABCDEFGHIJKLMNOPQRSTUVWXYZ */
+	/*                examples:
+	                                 00
+	         s                      0xx
+	         t                    00xaa
+	         a     11       101100xxa..
+	         r   11ee0001101lbuuxx.a.pp
+	         t.01.e+008bLuxll0Ll.aa.p+0
+	states:  ABCDEFGHIJKLMNOPQRSTUVWXYZ */
+	[0] =   "uuiifuufiuuiiuiiiiiuiuuuuu",	/* (other) */
+	[1] =   "CEIDEHHHIJQ  U  Q  VUVVZZZ",	/* 0 */
+	[2] =   "DEIDEHHHIJQ  U  Q  VUVVZZZ",	/* 1 */
+	[3] =   "DEIDEHHHIJ   U     VUVVZZZ",	/* 2 3 4 5 6 7 */
+	[4] =   "DEJDEHHHJJ   U     VUVVZZZ",	/* 8 9 */
+	[5] =   "             U     VUVV   ",	/* A a C c D d */
+	[6] =   "  K          U     VUVV   ",	/* B b */
+	[7] =   "  FFF   FF   U     VUVV   ",	/* E e */
+	[8] =   "    f  f     U     VUVV  f",	/* F f */
+	[9] =   "  LLf  fL  PR   Li  L    f",	/* L */
+	[10] =  "  OOf  fO   S P O i O    f",	/* l */
+	[11] =  "                    FFX   ",	/* P p */
+	[12] =  "  MM    M  i  iiM   M     ",	/* U u */
+	[13] =  "  N                       ",	/* X x */
+	[14] =  "     G                 Y  ",	/* + - */
+	[15] =  "B EE    EE   T      W     ",	/* . */
+	/*       ABCDEFGHIJKLMNOPQRSTUVWXYZ */
 };
 /* INDENT ON */
 
@@ -173,7 +173,6 @@ token_add_char(char ch)
 	buf_add_char(&token, ch);
 }
 
-
 static void
 lex_number(void)
 {
@@ -185,7 +184,8 @@ lex_number(void)
 			line_no++;
 			continue;
 		}
-		if (ch >= array_length(lex_number_row) || lex_number_row[ch] == 0)
+		if (ch >= array_length(lex_number_row)
+		    || lex_number_row[ch] == 0)
 			break;
 
 		unsigned char row = lex_number_row[ch];
@@ -322,7 +322,8 @@ probably_looking_at_definition(void)
 		if (*p == ')' && --paren_level == 0) {
 			p++;
 
-			while (*p != '\n' && (ch_isspace(*p) || is_identifier_part(*p)))
+			while (*p != '\n'
+			    && (ch_isspace(*p) || is_identifier_part(*p)))
 				p++;	/* '__dead' or '__unused' */
 
 			if (*p == '\n')	/* func(...) */
@@ -405,7 +406,8 @@ found_typename:
 			if (ps.paren[ps.nparen - 1].cast == cast_unknown)
 				ps.paren[ps.nparen - 1].cast = cast_maybe;
 		}
-		if (ps.prev_token != lsym_period && ps.prev_token != lsym_unary_op) {
+		if (ps.prev_token != lsym_period
+		    && ps.prev_token != lsym_unary_op) {
 			if (kw != NULL && kw->lsym == lsym_tag) {
 				if (token.st[0] == 'e' /* enum */)
 					ps.in_enum = in_enum_enum;
@@ -593,11 +595,13 @@ lexi(void)
 		lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 		next_unary = true;
 
-		if (inp.st[0] == token.mem[token.len - 1]) {	/* '++' or '--' */
+		/* '++' or '--' */
+		if (inp.st[0] == token.mem[token.len - 1]) {
 			token_add_char(*inp.st++);
 			if (ps.prev_token == lsym_word ||
 			    ps.prev_token == lsym_rparen_or_rbracket) {
-				lsym = ps.next_unary ? lsym_unary_op : lsym_postfix_op;
+				lsym = ps.next_unary
+				    ? lsym_unary_op : lsym_postfix_op;
 				next_unary = false;
 			}
 
@@ -658,9 +662,9 @@ lexi(void)
 			break;
 		}
 
-		/* handle '||', '&&', etc., and also things as in 'int *****i'
-		 */
-		while (inp.st[0] == token.mem[token.len - 1] || inp.st[0] == '=')
+		/* things like '||', '&&', '<<=', 'int *****i' */
+		while (inp.st[0] == token.mem[token.len - 1]
+		    || inp.st[0] == '=')
 			token_add_char(*inp.st++);
 
 		lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;

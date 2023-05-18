@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.13 2023/05/18 04:23:03 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.14 2023/05/18 05:33:27 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.13 2023/05/18 04:23:03 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.14 2023/05/18 05:33:27 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -214,7 +214,8 @@ ps_paren_has_changed(const struct parser_state *prev_ps)
 		return true;
 
 	for (int i = 0; i < ps.nparen; i++)
-		if (curr[i].indent != prev[i].indent || curr[i].cast != prev[i].cast)
+		if (curr[i].indent != prev[i].indent
+		    || curr[i].cast != prev[i].cast)
 			return true;
 	return false;
 }
@@ -228,7 +229,8 @@ debug_ps_paren(const struct parser_state *prev_ps)
 	debug_printf("           ps.paren:");
 	for (int i = 0; i < ps.nparen; i++) {
 		debug_printf(" %s%d",
-		    paren_level_cast_name[ps.paren[i].cast], ps.paren[i].indent);
+		    paren_level_cast_name[ps.paren[i].cast],
+		    ps.paren[i].indent);
 	}
 	if (ps.nparen == 0)
 		debug_printf(" none");
@@ -248,7 +250,8 @@ debug_parser_state(lexer_symbol lsym)
 	debug_print_buf("code", &code);
 	debug_print_buf("comment", &com);
 
-	debug_println("           ps.prev_token = %s", lsym_name[ps.prev_token]);
+	debug_println("           ps.prev_token = %s",
+	    lsym_name[ps.prev_token]);
 	debug_ps_bool(curr_col_1);
 	debug_ps_bool(next_col_1);
 	debug_ps_bool(next_unary);

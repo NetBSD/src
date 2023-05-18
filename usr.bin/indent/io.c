@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.177 2023/05/18 04:23:03 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.178 2023/05/18 05:33:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.177 2023/05/18 04:23:03 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.178 2023/05/18 05:33:27 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -154,7 +154,8 @@ output_line_code(int ind)
 		if (paren_ind >= 0) {
 			ps.paren[i].indent = -1 - (paren_ind + target_ind);
 			debug_println(
-			    "setting paren_indents[%d] from %d to %d for column %d",
+			    "setting paren_indents[%d] from %d to %d "
+			    "for column %d",
 			    i, paren_ind, ps.paren[i].indent, target_ind + 1);
 		}
 	}
@@ -314,7 +315,8 @@ compute_code_indent(void)
 	if (2 * opt.continuation_indent == opt.indent_size)
 		return base_ind + opt.continuation_indent;
 	else
-		return base_ind + opt.continuation_indent * ps.line_start_nparen;
+		return base_ind +
+		    opt.continuation_indent * ps.line_start_nparen;
 }
 
 int

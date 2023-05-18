@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.78 2023/05/18 04:23:03 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.79 2023/05/18 05:33:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: args.c,v 1.78 2023/05/18 04:23:03 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.79 2023/05/18 05:33:27 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 
@@ -159,7 +159,8 @@ set_special_option(const char *arg, const char *option_source)
 		char *end;
 		opt.case_indent = (float)strtod(arg_end, &end);
 		if (*end != '\0')
-			errx(1, "%s: argument \"%s\" to option \"-%.*s\" must be numeric",
+			errx(1, "%s: argument \"%s\" to option \"-%.*s\" "
+			    "must be numeric",
 			    option_source, arg_end, (int)(arg_end - arg), arg);
 		return true;
 	}
@@ -218,29 +219,35 @@ set_option(const char *arg, const char *option_source)
 	if (set_special_option(arg, option_source))
 		return;
 
-	for (p = pro + array_length(pro); p-- != pro;)
-		if ((arg_arg = skip_over(arg, p->p_may_negate, p->p_name)) != NULL)
+	for (p = pro + array_length(pro); p-- != pro;) {
+		arg_arg = skip_over(arg, p->p_may_negate, p->p_name);
+		if (arg_arg != NULL)
 			goto found;
+	}
 	errx(1, "%s: unknown option \"-%s\"", option_source, arg);
 found:
 
 	if (p->p_is_bool) {
 		if (arg_arg[0] != '\0')
-			errx(1, "%s: unknown option \"-%s\"", option_source, arg);
+			errx(1, "%s: unknown option \"-%s\"",
+			    option_source, arg);
 
-		*(bool *)p->p_var = p->p_may_negate ? arg[0] != 'n' : p->p_bool_value;
+		*(bool *)p->p_var =
+		    p->p_may_negate ? arg[0] != 'n' : p->p_bool_value;
 		return;
 	}
 
 	char *end;
 	long num = strtol(arg_arg, &end, 10);
 	if (*end != '\0')
-		errx(1, "%s: argument \"%s\" to option \"-%s\" must be an integer",
+		errx(1, "%s: argument \"%s\" to option \"-%s\" "
+		    "must be an integer",
 		    option_source, arg_arg, p->p_name);
 
 	if (!(ch_isdigit(*arg_arg) && p->i_min <= num && num <= p->i_max))
 		errx(1,
-		    "%s: argument \"%s\" to option \"-%s\" must be between %d and %d",
+		    "%s: argument \"%s\" to option \"-%s\" "
+		    "must be between %d and %d",
 		    option_source, arg_arg, p->p_name, p->i_min, p->i_max);
 
 	*(int *)p->p_var = (int)num;
@@ -263,15 +270,18 @@ load_profile(const char *fname, bool must_exist)
 		int ch, comment_ch = -1;
 
 		while ((ch = getc(f)) != EOF) {
-			if (ch == '*' && comment_ch == -1 && n > 0 && buf[n - 1] == '/') {
+			if (ch == '*' && comment_ch == -1
+			    && n > 0 && buf[n - 1] == '/') {
 				n--;
 				comment_ch = '*';
 			} else if (comment_ch != -1) {
-				comment_ch = ch == '/' && comment_ch == '*' ? -1 : ch;
+				comment_ch = ch == '/' && comment_ch == '*'
+				    ? -1 : ch;
 			} else if (ch_isspace((char)ch)) {
 				break;
 			} else if (n >= array_length(buf) - 2) {
-				errx(1, "buffer overflow in %s, starting with '%.10s'",
+				errx(1, "buffer overflow in %s, "
+				    "starting with '%.10s'",
 				    fname, buf);
 			} else
 				buf[n++] = (char)ch;

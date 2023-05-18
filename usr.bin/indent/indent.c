@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.292 2023/05/18 04:23:03 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.293 2023/05/18 05:33:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.292 2023/05/18 04:23:03 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.293 2023/05/18 05:33:27 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -254,7 +254,8 @@ main_parse_command_line(int argc, char **argv)
 		} else if (output == NULL) {
 			out_name = arg;
 			if (strcmp(in_name, out_name) == 0)
-				errx(1, "input and output files must be different");
+				errx(1, "input and output files "
+				    "must be different");
 			if ((output = fopen(out_name, "w")) == NULL)
 				err(1, "%s", out_name);
 
@@ -306,16 +307,16 @@ main_prepare_parsing(void)
 static void
 code_add_decl_indent(int decl_ind, bool tabs_to_var)
 {
-	int base_ind = ps.ind_level * opt.indent_size;
-	int ind = base_ind + (int)code.len;
-	int target_ind = base_ind + decl_ind;
+	int base = ps.ind_level * opt.indent_size;
+	int ind = base + (int)code.len;
+	int target = base + decl_ind;
 	size_t orig_code_len = code.len;
 
 	if (tabs_to_var)
-		for (int next; (next = next_tab(ind)) <= target_ind; ind = next)
+		for (int next; (next = next_tab(ind)) <= target; ind = next)
 			buf_add_char(&code, '\t');
 
-	for (; ind < target_ind; ind++)
+	for (; ind < target; ind++)
 		buf_add_char(&code, ' ');
 
 	if (code.len == orig_code_len && ps.want_blank) {
@@ -534,7 +535,8 @@ process_unary_op(void)
 	if (!ps.decl_indent_done && ps.in_decl && !ps.block_init &&
 	    !ps.is_function_definition && ps.line_start_nparen == 0) {
 		/* pointer declarations */
-		code_add_decl_indent(ps.decl_ind - (int)token.len, ps.tabs_to_var);
+		code_add_decl_indent(ps.decl_ind - (int)token.len,
+		    ps.tabs_to_var);
 		ps.decl_indent_done = true;
 	} else if (want_blank_before_unary_op())
 		buf_add_char(&code, ' ');
@@ -772,7 +774,8 @@ process_else(void)
 {
 	ps.in_stmt_or_decl = false;
 
-	if (code.len > 0 && !(opt.cuddle_else && code.mem[code.len - 1] == '}')) {
+	if (code.len > 0
+	    && !(opt.cuddle_else && code.mem[code.len - 1] == '}')) {
 		if (opt.verbose)
 			diag(0, "Line broken");
 		output_line();
@@ -827,7 +830,8 @@ process_ident(lexer_symbol lsym)
 		    ps.line_start_nparen == 0) {
 			if (opt.decl_indent == 0
 			    && code.len > 0 && code.mem[code.len - 1] == '}')
-				ps.decl_ind = ind_add(0, code.st, code.len) + 1;
+				ps.decl_ind =
+				    ind_add(0, code.st, code.len) + 1;
 			code_add_decl_indent(ps.decl_ind, ps.tabs_to_var);
 			ps.decl_indent_done = true;
 			ps.want_blank = false;
@@ -975,7 +979,8 @@ process_preprocessing(void)
 
 	} else if (substring_starts_with(dir, "el")) {	/* else, elif */
 		if (ifdef_level <= 0)
-			diag(1, dir.s[2] == 'i' ? "Unmatched #elif" : "Unmatched #else");
+			diag(1, dir.s[2] == 'i'
+			    ? "Unmatched #elif" : "Unmatched #else");
 		else
 			ps = state_stack[ifdef_level - 1];
 
@@ -1014,17 +1019,19 @@ main_loop(void)
 		if (lsym == lsym_eof)
 			return process_eof();
 
-		if (lsym == lsym_if && ps.prev_token == lsym_else && opt.else_if)
+		if (lsym == lsym_if && ps.prev_token == lsym_else
+		    && opt.else_if)
 			ps.force_nl = false;
 
 		if (lsym == lsym_newline || lsym == lsym_preprocessing)
 			ps.force_nl = false;
 		else if (lsym != lsym_comment) {
 			maybe_break_line(lsym);
-			ps.in_stmt_or_decl = true;	/* add an extra level of
-							 * indentation; turned
-							 * off again by a ';' or
-							 * '}' */
+			/*
+			 * Add an extra level of indentation; turned off again
+			 * by a ';' or '}'.
+			 */
+			ps.in_stmt_or_decl = true;
 			if (com.len > 0)
 				move_com_to_code(lsym);
 		}

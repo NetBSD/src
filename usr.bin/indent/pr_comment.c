@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.145 2023/05/18 04:23:03 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.146 2023/05/18 05:33:27 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.145 2023/05/18 04:23:03 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.146 2023/05/18 05:33:27 rillig Exp $");
 
 #include <string.h>
 
@@ -63,7 +63,8 @@ fits_in_one_line(int com_ind, int max_line_length)
 {
 	for (const char *start = inp.st, *p = start; *p != '\n'; p++) {
 		if (p[0] == '*' && p[1] == '/') {
-			int len = ind_add(com_ind + 3, start, (size_t)(p - start));
+			int len = ind_add(com_ind + 3,
+			    start, (size_t)(p - start));
 			len += p == start || ch_isblank(p[-1]) ? 2 : 3;
 			return len <= max_line_length;
 		}
@@ -95,7 +96,8 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 		if (com.len > 0)
 			output_line();
 		if (lab.len == 0 && code.len == 0) {
-			ind = (ps.ind_level - opt.unindent_displace) * opt.indent_size;
+			ind = (ps.ind_level - opt.unindent_displace)
+			    * opt.indent_size;
 			if (ind <= 0)
 				ind = opt.format_col1_comments ? 0 : 1;
 			line_length = opt.block_comment_max_line_length;
@@ -107,7 +109,8 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 			    : ind_add(compute_label_indent(), lab.st, lab.len);
 
 			ind = ps.decl_on_line || ps.ind_level == 0
-			    ? opt.decl_comment_column - 1 : opt.comment_column - 1;
+			    ? opt.decl_comment_column - 1
+			    : opt.comment_column - 1;
 			if (ind <= target_ind)
 				ind = next_tab(target_ind);
 			if (ind + 25 > line_length)
@@ -173,9 +176,10 @@ copy_comment_wrap(int line_length, bool delim)
 
 			last_blank = -1;
 			if (ps.next_col_1) {
-				if (com.len == 0)
-					com_add_char(' ');	/* force empty line of
-								 * output */
+				if (com.len == 0) {
+					/* force empty line of output */
+					com_add_char(' ');
+				}
 				if (com.len > 3) {
 					output_line();
 					com_add_delim();
@@ -185,7 +189,8 @@ copy_comment_wrap(int line_length, bool delim)
 
 			} else {
 				ps.next_col_1 = true;
-				if (!(com.len > 0 && ch_isblank(com.mem[com.len - 1])))
+				if (!(com.len > 0
+				    && ch_isblank(com.mem[com.len - 1])))
 					com_add_char(' ');
 				last_blank = (int)com.len - 1;
 			}
@@ -218,15 +223,17 @@ copy_comment_wrap(int line_length, bool delim)
 						com.len = 0;
 					com_add_char(' ');
 				} else {
-					size_t trimmed_len = com.len;
-					while (ch_isblank(com.mem[trimmed_len - 1]))
-						trimmed_len--;
-					int now_len = ind_add(ps.com_ind, com.st, trimmed_len);
-					if (now_len + 3 /* ' ' '*' '/' */ > line_length)
+					size_t len = com.len;
+					while (ch_isblank(com.mem[len - 1]))
+						len--;
+					int now_len = ind_add(
+					    ps.com_ind, com.st, len);
+					if (now_len + 3 > line_length)
 						output_line();
 				}
 
-				if (!(com.len > 0 && ch_isblank(com.mem[com.len - 1])))
+				if (!(com.len > 0
+				    && ch_isblank(com.mem[com.len - 1])))
 					com_add_char(' ');
 				com_add_char('*');
 				com_add_char('/');
@@ -258,15 +265,16 @@ copy_comment_wrap(int line_length, bool delim)
 			if (ch_isspace(com.mem[com.len - 1]))
 				break;
 
-			if (last_blank == -1) {	/* only a single word in this
-						 * line */
+			if (last_blank == -1) {
+				/* only a single word in this line */
 				output_line();
 				com_add_delim();
 				break;
 			}
 
 			const char *last_word_s = com.mem + last_blank + 1;
-			size_t last_word_len = com.len - (size_t)(last_blank + 1);
+			size_t last_word_len = com.len
+			- (size_t)(last_blank + 1);
 			com.len = (size_t)last_blank;
 			output_line();
 			com_add_delim();
