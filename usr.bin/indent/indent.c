@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.290 2023/05/16 13:26:26 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.291 2023/05/18 03:38:34 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.290 2023/05/16 13:26:26 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.291 2023/05/18 03:38:34 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -477,7 +477,7 @@ process_lparen_or_lbracket(void)
 	    || ps.is_function_definition)
 	cast = cast_no;
 
-    ps.paren[ps.nparen - 1].indent = (short)indent;
+    ps.paren[ps.nparen - 1].indent = indent;
     ps.paren[ps.nparen - 1].cast = cast;
     debug_println("paren_indents[%d] is now %s%d",
 	ps.nparen - 1, paren_level_cast_name[cast], indent);
