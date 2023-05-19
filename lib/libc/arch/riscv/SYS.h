@@ -1,4 +1,4 @@
-/*	$NetBSD: SYS.h,v 1.4 2023/05/07 12:41:47 skrll Exp $ */
+/*	$NetBSD: SYS.h,v 1.5 2023/05/19 06:41:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014,2022 The NetBSD Foundation, Inc.
@@ -71,14 +71,14 @@
  * and syscall name are not the same.
  */
 #define PSEUDO_NOERROR(x,y)						\
-ENTRY(x);								;\
+ENTRY(x)								;\
 	SYSTRAP_NOERROR(y)						;\
 	ret			/* success */				;\
-	END(x)
+END(x)
 
 #define PSEUDO(x,y)							\
-ENTRY(x);								;\
+ENTRY(x)								;\
 	SYSTRAP(y)							;\
 	JUMP_TO_CERROR()	/* error */				;\
 	ret			/* success */				;\
-	END(x)
+END(x)
