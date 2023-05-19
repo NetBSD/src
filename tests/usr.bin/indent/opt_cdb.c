@@ -1,4 +1,4 @@
-/* $NetBSD: opt_cdb.c,v 1.8 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_cdb.c,v 1.9 2023/05/19 07:05:26 rillig Exp $ */
 
 /*
  * Tests for the options '-cdb' and '-ncdb'.
@@ -197,4 +197,31 @@ example(void)
 //indent run -ncdb
 /*
  * */
+//indent end
+
+
+/*
+ * Since 2019-04-04, the -ncdb option condenses multi-line comments as well,
+ * not only single-line comments.
+ *
+ * XXX: Is this intended?
+ */
+//indent input
+{
+	/*
+	 * This is the first paragraph.
+	 *
+	 * This is the second paragraph.
+	 */
+}
+//indent end
+
+//indent run-equals-input -cdb
+
+//indent run -ncdb
+{
+	/* This is the first paragraph.
+	 *
+	 * This is the second paragraph. */
+}
 //indent end
