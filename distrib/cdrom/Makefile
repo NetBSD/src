@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.52 2018/01/24 09:04:40 skrll Exp $
+# $NetBSD: Makefile,v 1.53 2023/05/19 14:47:16 hauke Exp $
 #
 # Consult "*.conf" for the configuration variables; this Makefile is typically
 # not edited for basic configuration changes.
@@ -288,7 +288,7 @@ MKISOFS_ARGS.${image}+=	-b ${BOOTFILE.amd64} -c boot.catalog -no-emul-boot
 MKISOFS_ARGS.${image}+= -b ${BOOTFILE.amd64} -c boot.catalog
 .endif
 .endif
-        
+
 # Mac (mac68k, macppc)
 
 .if !empty(ports:Mmacppc)
@@ -299,7 +299,7 @@ MKISOFS_ARGS.${image}+=	-hfs -part -hide-hfs-list ${.CURDIR}/hide-hfs.lst \
 UUDECODE_FILES=	${BOOTHFS}
 .include <bsd.files.mk>
 .elif defined(USE_APPLE_ISO) || !empty(ports:Mmac68k)
-MKISOFS_ARGS.${image}+=	-apple --macbin -map ${.CURDIR}/hfsmap.lst
+MKISOFS_ARGS.${image}+=	-apple --macbin -data-change-warn -map ${.CURDIR}/hfsmap.lst
 .endif
 
 # Sun (sparc, sparc64, sun3)
