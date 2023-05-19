@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2023/05/17 19:09:42 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2023/05/19 18:45:52 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -76,7 +76,11 @@ libinstall::
 
 LDFLAGS+=-Wl,--version-script=${.CURDIR}/${LIB}.map
 
+.if ${MKPICLIB} == "yes"
 LIBDPLIBS+= common_pic ${.CURDIR}/../libcommon
+.else
+LIBDPLIBS+= common ${.CURDIR}/../libcommon
+.endif
 LIBDPLIBS+= crypto ${.CURDIR}/../libcrypto
 
 .include <bsd.lib.mk>
