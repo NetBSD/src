@@ -1,10 +1,10 @@
-# $NetBSD: ad.riscv,v 1.24 2023/05/18 00:28:37 christos Exp $
+# $NetBSD: ad.riscv,v 1.25 2023/05/19 11:43:20 christos Exp $
 ./libexec/ld.elf_so-rv32			base-compat-shlib	compat,pic,arch64
 ./usr/libexec/ld.elf_so-rv32			base-compat-shlib	compat,pic,arch64
-./usr/lib/r32/openssl				base-crypto-usr		compat
-./usr/lib/r32/openssl/engines			base-crypto-usr		compat
-./usr/lib/r32/openssl/modules			base-crypto-usr		compat
-./usr/lib/r32/openssl/modules/legacy.so		base-crypto-usr		compat,pic,openssl=30
+./usr/lib/rv32/openssl				base-crypto-usr		compat
+./usr/lib/rv32/openssl/engines			base-crypto-usr		compat
+./usr/lib/rv32/openssl/modules			base-crypto-usr		compat
+./usr/lib/rv32/openssl/modules/legacy.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/mdec/bootriscv64.efi			base-sysutil-bin	uefi,arch64
 ./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
 ./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
