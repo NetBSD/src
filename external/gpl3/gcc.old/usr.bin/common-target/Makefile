@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2023/02/20 02:12:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2023/05/19 23:28:21 lukem Exp $
 
+HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
 
 # For ../Makefile.inc and bsd.own.mk
@@ -42,8 +43,6 @@ HOST_CPPFLAGS+=	-DGENERATOR_FILE
 
 MKPIC:=		no
 MKPICLIB:=	no
-
-HOSTPROG_CXX=	1
 
 .include <bsd.lib.mk>
 
