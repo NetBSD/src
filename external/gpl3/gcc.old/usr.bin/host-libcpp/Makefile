@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2023/02/20 02:12:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2023/05/19 10:42:34 lukem Exp $
 
 BUILD_ENV= \
 		AR=${HOST_AR:Q} \
@@ -19,7 +19,7 @@ BUILD_ENV= \
 		RANLIB=${HOST_RANLIB:Q} \
 		YACC=${YACC:Q}
 
-GMAKE_J_ARGS?=	${MAKEFLAGS:[*]:M*-j*:C/.*(-j ?[0-9]*).*/\1/W}
+GMAKE_J_ARGS?=	${MAKEFLAGS:[*]:M*-j*:C/(^|.* )(-j ?[0-9][0-9]*).*/\2/W}
 BUILD_COMMAND=	/usr/bin/env -i ${BUILD_ENV} ${TOOL_GMAKE} ${GMAKE_J_ARGS} -e
 
 libcpp/libcpp.a:
