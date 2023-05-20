@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.15 2023/05/20 02:47:35 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.16 2023/05/20 10:09:02 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.15 2023/05/20 02:47:35 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.16 2023/05/20 10:09:02 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -115,6 +115,12 @@ const char *const paren_level_cast_name[] = {
 	"(unknown cast)",
 	"(maybe cast)",
 	"(no cast)",
+};
+
+static const char *const line_kind_name[] = {
+	"other",
+	"#if",
+	"#endif",
 };
 
 void
@@ -319,6 +325,9 @@ debug_parser_state(lexer_symbol lsym)
 
 	debug_ps_enum(spaced_expr_psym, psym_name);
 	debug_ps_int(quest_level);
+
+	debug_ps_enum(line_kind, line_kind_name);
+	debug_ps_enum(prev_line_kind, line_kind_name);
 
 	prev_ps = ps;
 }

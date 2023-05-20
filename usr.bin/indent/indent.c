@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.296 2023/05/20 02:47:35 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.297 2023/05/20 10:09:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.296 2023/05/20 02:47:35 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.297 2023/05/20 10:09:02 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -975,6 +975,7 @@ process_preprocessing(void)
 			state_stack[ifdef_level++] = ps;
 		else
 			diag(1, "#if stack overflow");
+		ps.line_kind = lk_if;
 
 	} else if (substring_starts_with(dir, "el")) {	/* else, elif */
 		if (ifdef_level <= 0)
@@ -988,6 +989,7 @@ process_preprocessing(void)
 			diag(1, "Unmatched #endif");
 		else
 			ifdef_level--;
+		ps.line_kind = lk_endif;
 
 	} else {
 		if (!substring_equals(dir, "pragma") &&

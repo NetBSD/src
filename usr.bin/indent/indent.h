@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.152 2023/05/20 02:47:35 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.153 2023/05/20 10:09:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -394,6 +394,14 @@ extern struct parser_state {
 	} declaration;
 	bool blank_line_after_decl;
 
+	enum line_kind {
+		lk_other,
+		lk_if,		/* #if, #ifdef, #ifndef */
+		lk_endif,	/* #endif */
+	} line_kind;		/* kind of the current line, is reset to
+				 * lk_other at the beginning of each line */
+	enum line_kind prev_line_kind;
+
 	/* Comments */
 
 	bool curr_col_1;	/* whether the current token started in column
@@ -436,7 +444,6 @@ void clear_indent_off_text(void);
 lexer_symbol lexi(void);
 void diag(int, const char *, ...) __printflike(2, 3);
 void output_line(void);
-void output_line_ff(void);
 void inp_read_line(void);
 void parse(parser_symbol);
 void process_comment(void);
