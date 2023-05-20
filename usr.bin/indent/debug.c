@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.14 2023/05/18 05:33:27 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.15 2023/05/20 02:47:35 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.14 2023/05/18 05:33:27 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.15 2023/05/20 02:47:35 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -208,11 +208,10 @@ debug_buffers(void)
 static bool
 ps_paren_has_changed(const struct parser_state *prev_ps)
 {
-	const paren_level_props *prev = prev_ps->paren, *curr = ps.paren;
-
 	if (prev_ps->nparen != ps.nparen)
 		return true;
 
+	const paren_level_props *prev = prev_ps->paren, *curr = ps.paren;
 	for (int i = 0; i < ps.nparen; i++)
 		if (curr[i].indent != prev[i].indent
 		    || curr[i].cast != prev[i].cast)
@@ -233,6 +232,32 @@ debug_ps_paren(const struct parser_state *prev_ps)
 		    ps.paren[i].indent);
 	}
 	if (ps.nparen == 0)
+		debug_printf(" none");
+	debug_println("");
+}
+
+static bool
+ps_di_stack_has_changed(const struct parser_state *prev_ps)
+{
+	if (prev_ps->decl_level != ps.decl_level)
+		return true;
+	for (int i = 0; i < ps.decl_level; i++)
+		if (prev_ps->di_stack[i] != ps.di_stack[i])
+			return true;
+	return false;
+}
+
+static void
+debug_ps_di_stack(const struct parser_state *prev_ps)
+{
+	bool changed = ps_di_stack_has_changed(prev_ps);
+	if (!debug_full_parser_state && !changed)
+		return;
+
+	debug_printf("    %s     ps.di_stack:", changed ? "->" : "  ");
+	for (int i = 0; i < ps.decl_level; i++)
+		debug_printf(" %d", ps.di_stack[i]);
+	if (ps.decl_level == 0)
 		debug_printf(" none");
 	debug_println("");
 }
@@ -274,6 +299,7 @@ debug_parser_state(lexer_symbol lsym)
 	debug_ps_int(ind_level_follow);
 
 	debug_ps_int(decl_level);
+	debug_ps_di_stack(&prev_ps);
 	debug_ps_bool(decl_on_line);
 	debug_ps_bool(in_decl);
 	debug_ps_enum(declaration, declaration_name);
@@ -282,7 +308,6 @@ debug_parser_state(lexer_symbol lsym)
 	debug_ps_enum(in_enum, in_enum_name);
 	debug_ps_bool(decl_indent_done);
 	debug_ps_int(decl_ind);
-	// No debug output for di_stack.
 	debug_ps_bool(tabs_to_var);
 
 	debug_ps_bool(in_stmt_or_decl);
