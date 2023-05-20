@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.201 2023/05/20 01:28:14 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.202 2023/05/20 11:53:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.201 2023/05/20 01:28:14 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.202 2023/05/20 11:53:53 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -657,7 +657,7 @@ lexi(void)
 			enum indent_enabled prev = indent_enabled;
 			lex_indent_comment();
 			if (prev == indent_on && indent_enabled == indent_off)
-				clear_indent_off_text();
+				out.indent_off_text.len = 0;
 			token_add_char(*inp.st++);
 			lsym = lsym_comment;
 			next_unary = ps.next_unary;
