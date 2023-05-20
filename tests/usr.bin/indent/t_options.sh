@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_options.sh,v 1.10 2022/04/24 09:04:12 rillig Exp $
+# $NetBSD: t_options.sh,v 1.11 2023/05/20 21:32:05 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -52,7 +52,7 @@ indent=$(atf_config_get usr.bin.indent.test_indent /usr/bin/indent)
 check()
 {
 	atf_check -o "file:expected.out" \
-	    env INDENT="$indent" awk -f "$srcdir/t_options.awk" "$srcdir/$1.c"
+	    env INDENT="$indent" lua "$srcdir/t_options.lua" "$srcdir/$1.c"
 }
 
 atf_init_test_cases()
