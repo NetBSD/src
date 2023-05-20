@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.151 2023/05/20 00:17:56 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.152 2023/05/20 02:47:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -328,10 +328,10 @@ extern struct parser_state {
 				 * the middle of a statement */
 	int decl_level;		/* current nesting level for a structure
 				 * declaration or an initializer */
+	int di_stack[20];	/* a stack of structure indentation levels */
 	bool decl_indent_done;	/* whether the indentation for a declaration
 				 * has been added to the code buffer. */
 	int decl_ind;		/* current indentation for declarations */
-	int di_stack[20];	/* a stack of structure indentation levels */
 	bool tabs_to_var;	/* true if using tabs to indent to var name */
 
 	enum {
