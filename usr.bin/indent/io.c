@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.180 2023/05/20 10:25:47 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.181 2023/05/20 10:46:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.180 2023/05/20 10:25:47 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.181 2023/05/20 10:46:21 rillig Exp $");
 
 #include <stdio.h>
 
@@ -150,6 +150,9 @@ want_blank_line(void)
 		if (ps.prev_line_kind == lk_endif && ps.line_kind != lk_endif)
 			return true;
 	}
+
+	if (opt.blanklines_after_procs && ps.prev_line_kind == lk_func_end)
+		return true;
 
 	return false;
 }
