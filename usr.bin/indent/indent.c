@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.295 2023/05/18 07:13:05 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.296 2023/05/20 02:47:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.295 2023/05/18 07:13:05 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.296 2023/05/20 02:47:35 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -1009,9 +1009,6 @@ process_preprocessing(void)
 static int
 indent(void)
 {
-
-	ps.di_stack[ps.decl_level = 0] = 0;
-
 	for (;;) {		/* loop until we reach eof */
 		lexer_symbol lsym = lexi();
 
