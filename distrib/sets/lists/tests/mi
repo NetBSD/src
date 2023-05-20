@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1263 2023/05/13 13:24:01 rillig Exp $
+# $NetBSD: mi,v 1.1264 2023/05/20 21:32:05 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5263,7 +5263,8 @@
 ./usr/tests/usr.bin/indent/t_indent					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/t_misc					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/t_options					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/t_options.awk				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/t_options.awk				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/t_options.lua				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/token-binary_op.0				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token-binary_op.0.pro			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/token-binary_op.0.stdout			tests-obsolete		obsolete,atf
