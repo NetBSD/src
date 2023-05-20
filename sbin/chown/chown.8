@@ -26,9 +26,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chown.8	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chown.8,v 1.13 2023/05/04 17:07:56 pgoyette Exp $
+.\"	$NetBSD: chown.8,v 1.14 2023/05/20 00:54:15 pgoyette Exp $
 .\"
-.Dd May 1, 2023
+.Dd May 19, 2023
 .Dt CHOWN 8
 .Os
 .Sh NAME
@@ -40,7 +40,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl fhv
+.Op Fl dfhv
 .Ar owner Ns Op Ar :group
 .Ar
 .Nm
@@ -48,7 +48,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl fhv
+.Op Fl dfhv
 .Ar :group
 .Ar
 .Nm
@@ -56,7 +56,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl fhv
+.Op Fl dfhv
 .Fl Fl reference=rfile
 .Ar
 .Sh DESCRIPTION
