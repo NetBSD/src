@@ -1,4 +1,4 @@
-/* $NetBSD: indent_off_on.c,v 1.11 2023/05/16 08:04:04 rillig Exp $ */
+/* $NetBSD: indent_off_on.c,v 1.12 2023/05/20 10:25:47 rillig Exp $ */
 
 /*
  * Tests for the comments 'INDENT OFF' and 'INDENT ON', which temporarily
@@ -236,3 +236,19 @@ int still_on;
 /* INDENT OFF */
 int   finally_off   ;
 //indent end
+
+
+/*
+ * Ensure that in 'INDENT OFF' mode, no blank line is added between lines, even
+ * when requested via the -bacc option.
+ */
+//indent input
+/* INDENT OFF */
+int declaration;
+#if 0
+#endif
+int declaration;
+/* INDENT ON */
+//indent end
+
+//indent run-equals-input -bacc
