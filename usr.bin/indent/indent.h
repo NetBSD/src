@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.150 2023/05/18 08:09:28 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.151 2023/05/20 00:17:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -286,7 +286,13 @@ extern struct parser_state {
 	int quest_level;	/* when this is positive, we have seen a '?'
 				 * without the matching ':' in a '?:'
 				 * expression */
-	bool is_function_definition;
+	bool is_function_definition;	/* starts either at the 'name(' from a
+					 * function definition if it occurs at
+					 * the beginning of a line, or at the
+					 * first '*' from inside a declaration
+					 * when the line starts with words
+					 * followed by a '('; ends at the end
+					 * of that line */
 	bool block_init;	/* whether inside a block initialization */
 	int block_init_level;	/* the level of brace nesting in an
 				 * initialization */
