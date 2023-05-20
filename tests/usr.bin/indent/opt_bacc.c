@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bacc.c,v 1.11 2023/05/11 18:13:55 rillig Exp $ */
+/* $NetBSD: opt_bacc.c,v 1.12 2023/05/20 10:09:03 rillig Exp $ */
 
 /*
  * Tests for the options '-bacc' and '-nbacc' ("blank line around conditional
@@ -8,7 +8,7 @@
  * block.  For example, in front of every #ifdef and after every #endif.
  * Other blank lines surrounding such blocks are swallowed.
  *
- * The option '-nbacc' TODO.
+ * The option '-nbacc' leaves the vertical spacing as-is.
  */
 
 
@@ -21,24 +21,17 @@ int		b;
 int		c;
 //indent end
 
-/*
- * XXX: As of 2021-11-19, the option -bacc has no effect on declarations since
- * process_type resets out.blank_line_before unconditionally.
- */
 //indent run -bacc
 int		a;
-/* $ FIXME: expecting a blank line here */
+
 #if 0
 int		b;
 #endif
-/* $ FIXME: expecting a blank line here */
+
 int		c;
 //indent end
 
-/*
- * With '-nbacc' the code is unchanged since there are no blank lines to
- * remove.
- */
+/* The option '-nbacc' does not remove anything. */
 //indent run-equals-input -nbacc
 
 
@@ -80,13 +73,13 @@ os_name(void)
 const char *
 os_name(void)
 {
-/* $ FIXME: expecting a blank line here. */
+
 #if defined(__NetBSD__) || defined(__FreeBSD__)
 	return "BSD";
 #else
 	return "unknown";
 #endif
-/* $ FIXME: expecting a blank line here. */
+
 }
 //indent end
 
@@ -122,6 +115,16 @@ int outer_below;
 #endif
 //indent end
 
-//indent run-equals-input -di0 -bacc
+//indent run -di0 -bacc
+#ifdef outer
+int outer_above;
+
+#ifdef inner
+int inner;
+#endif
+
+int outer_below;
+#endif
+//indent end
 
 //indent run-equals-input -di0 -nbacc

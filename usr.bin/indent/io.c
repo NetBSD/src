@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.178 2023/05/18 05:33:27 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.179 2023/05/20 10:09:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,16 +38,18 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.178 2023/05/18 05:33:27 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.179 2023/05/20 10:09:02 rillig Exp $");
 
 #include <stdio.h>
-#include <string.h>
 
 #include "indent.h"
 
 struct buffer inp;
-static struct buffer indent_off_text;
-
+static struct buffer indent_off_text;	/* text from between 'INDENT OFF' and
+					 * 'INDENT ON', both inclusive */
+static unsigned wrote_newlines = 2;	/* 0 in the middle of a line, 1 after
+					 * a single '\n', > 1 means there were
+					 * (n - 1) blank lines above */
 static int paren_indent;
 
 
@@ -92,10 +94,11 @@ inp_read_next_line(FILE *f)
 }
 
 static void
-output_char(char ch)
+output_newline(void)
 {
-	fputc(ch, output);
-	debug_vis_range("output_char '", &ch, 1, "'\n");
+	fputc('\n', output);
+	debug_println("output_newline");
+	wrote_newlines++;
 }
 
 static void
@@ -103,6 +106,8 @@ output_range(const char *s, size_t len)
 {
 	fwrite(s, 1, len, output);
 	debug_vis_range("output_range \"", s, len, "\"\n");
+	for (size_t i = 0; i < len; i++)
+		wrote_newlines = s[i] == '\n' ? wrote_newlines + 1 : 0;
 }
 
 static int
@@ -118,14 +123,39 @@ output_indent(int old_ind, int new_ind)
 		for (int i = 0; i < n; i++) {
 			fputc('\t', output);
 			ind += tabsize;
+			wrote_newlines = 0;
 		}
 	}
 
-	for (; ind < new_ind; ind++)
+	for (; ind < new_ind; ind++) {
 		fputc(' ', output);
+		wrote_newlines = 0;
+	}
 
 	debug_println("output_indent %d", ind);
 	return ind;
+}
+
+static void
+maybe_output_blank_line(void)
+{
+	bool want_blank_line = false;
+
+	if (ps.blank_line_after_decl && ps.declaration == decl_no) {
+		ps.blank_line_after_decl = false;
+		want_blank_line = true;
+	}
+
+	if (opt.blanklines_around_conditional_compilation) {
+		if (ps.prev_line_kind != lk_if && ps.line_kind == lk_if)
+			want_blank_line = true;
+		if (ps.prev_line_kind == lk_endif && ps.line_kind != lk_endif)
+			want_blank_line = true;
+	}
+
+	if (want_blank_line && wrote_newlines < 2
+	    && (lab.len > 0 || code.len > 0 || com.len > 0))
+		output_newline();
 }
 
 static int
@@ -190,7 +220,7 @@ output_line_comment(int ind)
 
 	/* if comment can't fit on this line, put it on the next line */
 	if (ind > target_ind) {
-		output_char('\n');
+		output_newline();
 		ind = 0;
 	}
 
@@ -218,11 +248,7 @@ output_line(void)
 
 	ps.is_function_definition = false;
 
-	if (ps.blank_line_after_decl && ps.declaration == decl_no) {
-		ps.blank_line_after_decl = false;
-		if (lab.len > 0 || code.len > 0 || com.len > 0)
-			output_char('\n');
-	}
+	maybe_output_blank_line();
 
 	if (indent_enabled == indent_on) {
 		if (ps.ind_level == 0)
@@ -243,7 +269,7 @@ output_line(void)
 		if (com.len > 0)
 			output_line_comment(ind);
 
-		output_char('\n');
+		output_newline();
 	}
 
 	if (indent_enabled == indent_last_off_line) {
@@ -272,6 +298,8 @@ output_line(void)
 	}
 
 	ps.want_blank = false;
+	ps.prev_line_kind = ps.line_kind;
+	ps.line_kind = lk_other;
 }
 
 static int
