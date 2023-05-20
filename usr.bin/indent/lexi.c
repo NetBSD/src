@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.200 2023/05/20 00:17:56 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.201 2023/05/20 01:28:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.200 2023/05/20 00:17:56 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.201 2023/05/20 01:28:14 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -383,22 +383,21 @@ lexi_alnum(void)
 	token.len--;
 	const struct keyword *kw = bsearch(token.st, keywords,
 	    array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
-	bool is_type = false;
-	if (kw == NULL) {
-		if (is_typename()) {
-			is_type = true;
-			ps.next_unary = true;
-			if (ps.in_enum == in_enum_enum)
-				ps.in_enum = in_enum_type;
-			goto found_typename;
-		}
-
-	} else {		/* we have a keyword */
-		is_type = kw->lsym == lsym_type;
+	lexer_symbol lsym = lsym_word;
+	if (kw != NULL) {
+		if (kw->lsym == lsym_type)
+			lsym = lsym_type_in_parentheses;
 		ps.next_unary = true;
-		if (kw->lsym != lsym_tag && kw->lsym != lsym_type)
-			return kw->lsym;
+		if (kw->lsym == lsym_tag || kw->lsym == lsym_type)
+			goto found_typename;
+		return kw->lsym;
+	}
 
+	if (is_typename()) {
+		lsym = lsym_type_in_parentheses;
+		ps.next_unary = true;
+		if (ps.in_enum == in_enum_enum)
+			ps.in_enum = in_enum_type;
 found_typename:
 		if (ps.nparen > 0) {
 			/* inside parentheses: cast, param list, offsetof or
@@ -433,7 +432,7 @@ found_typename:
 		return lsym_type_outside_parentheses;
 	}
 
-	return is_type ? lsym_type_in_parentheses : lsym_word;
+	return lsym;
 }
 
 static bool
