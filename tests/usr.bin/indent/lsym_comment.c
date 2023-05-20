@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.13 2023/05/16 11:32:02 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.14 2023/05/20 11:19:17 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -100,6 +100,7 @@ t(void) {
 void
 t(void)
 {
+
 	/*
 	 * Old indent wrapped the URL near where this sentence ends.
 	 *

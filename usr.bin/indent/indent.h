@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.154 2023/05/20 10:46:21 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.155 2023/05/20 11:19:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -399,6 +399,7 @@ extern struct parser_state {
 		lk_if,		/* #if, #ifdef, #ifndef */
 		lk_endif,	/* #endif */
 		lk_func_end,	/* the last '}' of a function body */
+		lk_block_comment,
 	} line_kind;		/* kind of the current output line, is reset to
 				 * lk_other at the beginning of each output
 				 * line; used for inserting blank lines */
