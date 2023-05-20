@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.298 2023/05/20 10:46:21 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.299 2023/05/20 11:53:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.298 2023/05/20 10:46:21 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.299 2023/05/20 11:53:53 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -751,7 +751,7 @@ process_rbrace(void)
 	}
 
 	if (ps.tos == 2 && code.len == 1 && code.st[0] == '}')
-		ps.line_kind = lk_func_end;
+		out.line_kind = lk_func_end;
 
 	parse(psym_rbrace);
 }
@@ -978,7 +978,7 @@ process_preprocessing(void)
 			state_stack[ifdef_level++] = ps;
 		else
 			diag(1, "#if stack overflow");
-		ps.line_kind = lk_if;
+		out.line_kind = lk_if;
 
 	} else if (substring_starts_with(dir, "el")) {	/* else, elif */
 		if (ifdef_level <= 0)
@@ -992,7 +992,7 @@ process_preprocessing(void)
 			diag(1, "Unmatched #endif");
 		else
 			ifdef_level--;
-		ps.line_kind = lk_endif;
+		out.line_kind = lk_endif;
 
 	} else {
 		if (!substring_equals(dir, "pragma") &&

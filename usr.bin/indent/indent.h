@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.155 2023/05/20 11:19:17 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.156 2023/05/20 11:53:53 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -264,6 +264,9 @@ typedef struct paren_level_props {
 /*
  * The parser state determines the layout of the formatted text.
  *
+ * At each '#if', the parser state is copied so that the corresponding '#else'
+ * lines start in the same state.
+ *
  * In a function body, the number of block braces determines the indentation
  * of statements and declarations.
  *
@@ -394,6 +397,14 @@ extern struct parser_state {
 	} declaration;
 	bool blank_line_after_decl;
 
+	/* Comments */
+
+	bool curr_col_1;	/* whether the current token started in column
+				 * 1 of the original input */
+	bool next_col_1;
+} ps;
+
+extern struct output_state {
 	enum line_kind {
 		lk_other,
 		lk_if,		/* #if, #ifdef, #ifndef */
@@ -405,12 +416,9 @@ extern struct parser_state {
 				 * line; used for inserting blank lines */
 	enum line_kind prev_line_kind;
 
-	/* Comments */
-
-	bool curr_col_1;	/* whether the current token started in column
-				 * 1 of the original input */
-	bool next_col_1;
-} ps;
+	struct buffer indent_off_text;	/* text from between 'INDENT OFF' and
+					 * 'INDENT ON', both inclusive */
+} out;
 
 
 #define array_length(array) (sizeof(array) / sizeof((array)[0]))
@@ -425,6 +433,7 @@ void debug_buffers(void);
 extern const char *const lsym_name[];
 extern const char *const psym_name[];
 extern const char *const paren_level_cast_name[];
+extern const char *const line_kind_name[];
 #else
 #define debug_noop() do { } while (false)
 #define	debug_printf(fmt, ...) debug_noop()
@@ -442,7 +451,6 @@ int ind_add(int, const char *, size_t);
 
 void inp_skip(void);
 char inp_next(void);
-void clear_indent_off_text(void);
 
 lexer_symbol lexi(void);
 void diag(int, const char *, ...) __printflike(2, 3);
