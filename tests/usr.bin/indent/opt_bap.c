@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bap.c,v 1.7 2023/05/20 10:46:22 rillig Exp $ */
+/* $NetBSD: opt_bap.c,v 1.8 2023/05/20 12:05:01 rillig Exp $ */
 
 /*
  * Tests for the options '-bap' and '-nbap' ("blank line after procedure
@@ -95,3 +95,19 @@ has_several_blank_lines_below(void)
 
 int		the_end;
 //indent end
+
+
+/*
+ * Don't insert a blank line between the end of a function body and an '#endif'
+ * line, as both are closing elements.
+ */
+//indent input
+#if 0
+void
+example(void)
+{
+}
+#endif
+//indent end
+
+//indent run-equals-input -bap
