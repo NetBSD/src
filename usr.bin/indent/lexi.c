@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.199 2023/05/18 05:33:27 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.200 2023/05/20 00:17:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.199 2023/05/18 05:33:27 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.200 2023/05/20 00:17:56 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -447,6 +447,22 @@ is_asterisk_unary(void)
 	return ps.in_decl && ps.nparen > 0;
 }
 
+static bool
+probably_in_function_definition(void)
+{
+	for (const char *tp = inp.st; *tp != '\n';) {
+		if (ch_isspace(*tp))
+			tp++;
+		else if (is_identifier_start(*tp)) {
+			tp++;
+			while (is_identifier_part(*tp))
+				tp++;
+		} else
+			return *tp == '(';
+	}
+	return false;
+}
+
 static void
 lex_asterisk_unary(void)
 {
@@ -456,21 +472,8 @@ lex_asterisk_unary(void)
 		inp_skip();
 	}
 
-	if (ps.in_decl) {
-		for (const char *tp = inp.st; *tp != '\n';) {
-			if (ch_isspace(*tp))
-				tp++;
-			else if (is_identifier_start(*tp)) {
-				tp++;
-				while (is_identifier_part(*tp))
-					tp++;
-			} else {
-				if (*tp == '(')
-					ps.is_function_definition = true;
-				break;
-			}
-		}
-	}
+	if (ps.in_decl && probably_in_function_definition())
+		ps.is_function_definition = true;
 }
 
 static void
