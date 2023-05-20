@@ -29,9 +29,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)chgrp.1	8.3 (Berkeley) 3/31/94
-.\"	$NetBSD: chgrp.1,v 1.9 2023/05/04 17:07:56 pgoyette Exp $
+.\"	$NetBSD: chgrp.1,v 1.10 2023/05/20 09:41:34 pgoyette Exp $
 .\"
-.Dd May 1, 2023
+.Dd May 19, 2023
 .Dt CHGRP 1
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl fhv
+.Op Fl dfhv
 .Ar group
 .Ar
 .Nm
@@ -51,7 +51,7 @@
 .Fl R
 .Op Fl H | Fl L | Fl P
 .Oc
-.Op Fl fhv
+.Op Fl dfhv
 .Fl Fl reference=rfile
 .Ar
 .Sh DESCRIPTION
