@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.179 2023/05/20 10:09:02 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.180 2023/05/20 10:25:47 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.179 2023/05/20 10:09:02 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.180 2023/05/20 10:25:47 rillig Exp $");
 
 #include <stdio.h>
 
@@ -136,26 +136,22 @@ output_indent(int old_ind, int new_ind)
 	return ind;
 }
 
-static void
-maybe_output_blank_line(void)
+static bool
+want_blank_line(void)
 {
-	bool want_blank_line = false;
-
 	if (ps.blank_line_after_decl && ps.declaration == decl_no) {
 		ps.blank_line_after_decl = false;
-		want_blank_line = true;
+		return true;
 	}
 
 	if (opt.blanklines_around_conditional_compilation) {
 		if (ps.prev_line_kind != lk_if && ps.line_kind == lk_if)
-			want_blank_line = true;
+			return true;
 		if (ps.prev_line_kind == lk_endif && ps.line_kind != lk_endif)
-			want_blank_line = true;
+			return true;
 	}
 
-	if (want_blank_line && wrote_newlines < 2
-	    && (lab.len > 0 || code.len > 0 || com.len > 0))
-		output_newline();
+	return false;
 }
 
 static int
@@ -248,9 +244,11 @@ output_line(void)
 
 	ps.is_function_definition = false;
 
-	maybe_output_blank_line();
-
 	if (indent_enabled == indent_on) {
+		if (want_blank_line() && wrote_newlines < 2
+		    && (lab.len > 0 || code.len > 0 || com.len > 0))
+			output_newline();
+
 		if (ps.ind_level == 0)
 			ps.in_stmt_cont = false;	/* this is a class A
 							 * kludge */
