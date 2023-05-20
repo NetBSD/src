@@ -1,4 +1,4 @@
-# $NetBSD: t_options.awk,v 1.12 2023/05/15 17:38:56 rillig Exp $
+# $NetBSD: t_options.awk,v 1.13 2023/05/20 17:31:53 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -85,11 +85,6 @@ function warn(lineno, msg)
 	warned = 1
 }
 
-function quote(s)
-{
-	return "'" s "'"
-}
-
 function check_empty_lines_block(n)
 {
 	if (max_empty_lines != n && seen_input_section)
@@ -160,7 +155,7 @@ section == "" {
 
 	} else if ($2 == "run") {
 		if (section != "")
-			warn(NR, "unfinished section " quote(section))
+			warn(NR, "unfinished section '" section "'")
 		check_empty_lines_block(1)
 		if (prev_empty_lines != 1)
 			warn(NR, "run section needs 1 empty line above, " \
@@ -209,10 +204,10 @@ section == "" {
 		max_empty_lines = 0
 
 	} else if ($2 == "end") {
-		warn(NR, "misplaced " quote("//indent end"))
+		warn(NR, "misplaced '//indent end'")
 
 	} else {
-		die(NR, "invalid line " quote($0))
+		die(NR, "invalid line '" $0 "'")
 	}
 
 	prev_empty_lines = 0
@@ -235,7 +230,7 @@ section == "" && !/^$/ && !/^#/ && !/^\// && !/^ \*/ {
 
 END {
 	if (section != "")
-		die(NR, "still in section " quote(section))
+		die(NR, "still in section '" section "'")
 	check_unused_input()
 	if (warned)
 		exit(1)
