@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.16 2023/05/20 10:09:02 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.17 2023/05/20 10:46:21 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.16 2023/05/20 10:09:02 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.17 2023/05/20 10:46:21 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -121,6 +121,7 @@ static const char *const line_kind_name[] = {
 	"other",
 	"#if",
 	"#endif",
+	"}",
 };
 
 void
