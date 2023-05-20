@@ -1,4 +1,4 @@
--- $NetBSD: t_options.lua,v 1.1 2023/05/20 21:32:05 rillig Exp $
+-- $NetBSD: t_options.lua,v 1.2 2023/05/20 22:08:07 rillig Exp $
 --
 -- Copyright (c) 2023 The NetBSD Foundation, Inc.
 -- All rights reserved.
@@ -129,7 +129,7 @@ local function run_indent(inp, args)
 	local indent_in = assert(io.open("indent.in", "w"))
 	indent_in:write(inp)
 	indent_in:close()
-	ok, kind, info = os.execute(cmd)
+	local ok, kind, info = os.execute(cmd)
 	if not ok then
 		print(kind .. " " .. info)
 	end
@@ -155,84 +155,103 @@ local function handle_empty_section(line)
 	end
 end
 
+local function handle_indent_input()
+	if prev_empty_lines ~= 2 and seen_input_section then
+		warn(lineno, "input section needs 2 empty lines "
+		    .. "above, not " .. prev_empty_lines)
+	end
+	check_empty_lines_block(2)
+	check_unused_input()
+	section = "input"
+	section_excl_comm = ""
+	section_incl_comm = ""
+	unused_input_lineno = lineno
+	seen_input_section = true
+	output_excl_comm = ""
+	output_incl_comm = ""
+	output_lineno = 0
+end
+
+local function handle_indent_run(args)
+	if section ~= "" then
+		warn(lineno, "unfinished section '" .. section .. "'")
+	end
+	check_empty_lines_block(1)
+	if prev_empty_lines ~= 1 then
+		warn(lineno, "run section needs 1 empty line above, "
+		    .. "not " .. prev_empty_lines)
+	end
+	section = "run"
+	output_lineno = lineno
+	section_excl_comm = ""
+	section_incl_comm = ""
+
+	run_indent(input_excl_comm, args)
+	unused_input_lineno = 0
+end
+
+local function handle_indent_run_equals_input(args)
+	check_empty_lines_block(1)
+	run_indent(input_excl_comm, args)
+	expected_out:write(input_excl_comm)
+	unused_input_lineno = 0
+	max_empty_lines = 0
+end
+
+local function handle_indent_run_equals_prev_output(args)
+	check_empty_lines_block(1)
+	run_indent(input_excl_comm, args)
+	expected_out:write(output_excl_comm)
+	max_empty_lines = 0
+end
+
+local function handle_indent_end_input()
+	if section_incl_comm == input_incl_comm then
+		warn(lineno, "duplicate input; remove this section")
+	end
+
+	input_excl_comm = section_excl_comm
+	input_incl_comm = section_incl_comm
+	section = ""
+	max_empty_lines = 0
+end
+
+local function handle_indent_end_run()
+	if section_incl_comm == input_incl_comm then
+		warn(output_lineno,
+		    "output == input; use run-equals-input")
+	end
+	if section_incl_comm == output_incl_comm then
+		warn(output_lineno,
+		    "duplicate output; use run-equals-prev-output")
+	end
+
+	output_excl_comm = section_excl_comm
+	output_incl_comm = section_incl_comm
+	section = ""
+	max_empty_lines = 0
+end
+
 local function handle_indent_directive(line, command, args)
 	print(line)
 	expected_out:write(line .. "\n")
 
-	if command == "input" then
-		if prev_empty_lines ~= 2 and seen_input_section then
-			warn(lineno, "input section needs 2 empty lines "
-			    .. "above, not " .. prev_empty_lines)
-		end
-		check_empty_lines_block(2)
-		check_unused_input()
-		section = "input"
-		section_excl_comm = ""
-		section_incl_comm = ""
-		unused_input_lineno = lineno
-		seen_input_section = true
-		output_excl_comm = ""
-		output_incl_comm = ""
-		output_lineno = 0
-
+	if command == "input" and args == "" then
+		handle_indent_input()
 	elseif command == "run" then
-		if section ~= "" then
-			warn(lineno, "unfinished section '" .. section .. "'")
-		end
-		check_empty_lines_block(1)
-		if prev_empty_lines ~= 1 then
-			warn(lineno, "run section needs 1 empty line above, "
-			    .. "not " .. prev_empty_lines)
-		end
-		section = "run"
-		output_lineno = lineno
-		section_excl_comm = ""
-		section_incl_comm = ""
-
-		run_indent(input_excl_comm, args)
-		unused_input_lineno = 0
-
+		handle_indent_run(args)
 	elseif command == "run-equals-input" then
-		check_empty_lines_block(1)
-		run_indent(input_excl_comm, args)
-		expected_out:write(input_excl_comm)
-		unused_input_lineno = 0
-		max_empty_lines = 0
-
+		handle_indent_run_equals_input(args)
 	elseif command == "run-equals-prev-output" then
-		check_empty_lines_block(1)
-		run_indent(input_excl_comm, args)
-		expected_out:write(output_excl_comm)
-		max_empty_lines = 0
-
+		handle_indent_run_equals_prev_output(args)
+	elseif command == "end" and args ~= "" then
+		warn(lineno, "'//indent end' does not take arguments")
 	elseif command == "end" and section == "input" then
-		if section_incl_comm == input_incl_comm then
-			warn(lineno, "duplicate input; remove this section")
-		end
-
-		input_excl_comm = section_excl_comm
-		input_incl_comm = section_incl_comm
-		section = ""
-		max_empty_lines = 0
-
+		handle_indent_end_input()
 	elseif command == "end" and section == "run" then
-		if section_incl_comm == input_incl_comm then
-			warn(output_lineno,
-			    "output == input; use run-equals-input")
-		end
-		if section_incl_comm == output_incl_comm then
-			warn(output_lineno,
-			    "duplicate output; use run-equals-prev-output")
-		end
-
-		output_excl_comm = section_excl_comm
-		output_incl_comm = section_incl_comm
-		section = ""
-		max_empty_lines = 0
-
+		handle_indent_end_run()
 	elseif command == "end" then
 		warn(lineno, "misplaced '//indent end'")
-
 	else
 		die(lineno, "invalid line '" .. line .. "'")
 	end
