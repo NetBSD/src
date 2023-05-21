@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.300 2023/05/20 16:31:31 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.301 2023/05/21 09:48:22 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.300 2023/05/20 16:31:31 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.301 2023/05/21 09:48:22 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -934,26 +934,6 @@ read_preprocessing_line(void)
 		lab.len--;
 }
 
-typedef struct {
-	const char *s;
-	const char *e;
-} substring;
-
-static bool
-substring_equals(substring ss, const char *str)
-{
-	size_t len = (size_t)(ss.e - ss.s);
-	return len == strlen(str) && memcmp(ss.s, str, len) == 0;
-}
-
-static bool
-substring_starts_with(substring ss, const char *prefix)
-{
-	while (ss.s < ss.e && *prefix != '\0' && *ss.s == *prefix)
-		ss.s++, prefix++;
-	return *prefix == '\0';
-}
-
 static void
 process_preprocessing(void)
 {
@@ -965,46 +945,33 @@ process_preprocessing(void)
 	ps.is_case_label = false;
 
 	const char *end = lab.mem + lab.len;
-	substring dir;
-	dir.s = lab.st + 1;
-	while (dir.s < end && ch_isblank(*dir.s))
-		dir.s++;
-	dir.e = dir.s;
-	while (dir.e < end && ch_isalpha(*dir.e))
-		dir.e++;
+	const char *dir = lab.st + 1;
+	while (dir < end && ch_isblank(*dir))
+		dir++;
+	const char *dir_end = dir;
+	while (dir_end < end && ch_isalpha(*dir_end))
+		dir_end++;
 
-	if (substring_starts_with(dir, "if")) {	/* also ifdef, ifndef */
+	if (strncmp(dir, "if", 2) == 0) {	/* also ifdef, ifndef */
 		if ((size_t)ifdef_level < array_length(state_stack))
 			state_stack[ifdef_level++] = ps;
 		else
 			diag(1, "#if stack overflow");
 		out.line_kind = lk_if;
 
-	} else if (substring_starts_with(dir, "el")) {	/* else, elif */
+	} else if (strncmp(dir, "el", 2) == 0) {	/* else, elif */
 		if (ifdef_level <= 0)
-			diag(1, dir.s[2] == 'i'
+			diag(1, dir[2] == 'i'
 			    ? "Unmatched #elif" : "Unmatched #else");
 		else
 			ps = state_stack[ifdef_level - 1];
 
-	} else if (substring_equals(dir, "endif")) {
+	} else if (dir_end - dir == 5 && memcmp(dir, "endif", 5) == 0) {
 		if (ifdef_level <= 0)
 			diag(1, "Unmatched #endif");
 		else
 			ifdef_level--;
 		out.line_kind = lk_endif;
-
-	} else {
-		if (!substring_equals(dir, "pragma") &&
-		    !substring_equals(dir, "error") &&
-		    !substring_equals(dir, "line") &&
-		    !substring_equals(dir, "undef") &&
-		    !substring_equals(dir, "define") &&
-		    !substring_equals(dir, "include")) {
-			diag(1, "Unrecognized cpp directive \"%.*s\"",
-			    (int)(dir.e - dir.s), dir.s);
-			return;
-		}
 	}
 
 	/* subsequent processing of the newline character will cause the line
