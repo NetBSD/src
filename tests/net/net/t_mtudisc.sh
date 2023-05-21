@@ -1,4 +1,4 @@
-#	$NetBSD: t_mtudisc.sh,v 1.10 2017/03/06 07:33:27 ozaki-r Exp $
+#	$NetBSD: t_mtudisc.sh,v 1.11 2023/05/21 18:01:38 andvar Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -114,7 +114,7 @@ mtudisc_basic_body()
 	# Check default value
 	atf_check -s exit:0 -o match:"1" rump.sysctl -n net.inet.ip.mtudisc
 
-	# Teach the peer thar 10.0.0.2(local server) is behind 10.0.1.1(gateway server)
+	# Teach the peer that 10.0.0.2(local server) is behind 10.0.1.1(gateway server)
 	atf_check -s exit:0 -o ignore rump.route add $local_ip/32 $gateway_remote_ip
 
 	# Don't accept fragmented packets
@@ -123,7 +123,7 @@ mtudisc_basic_body()
 	### Setup local server
 	export RUMP_SERVER=$SOCKLOCAL
 
-	# Teach the peer thar 10.0.1.2(remote server) is behind 10.0.0.1(gateway server)
+	# Teach the peer that 10.0.1.2(remote server) is behind 10.0.0.1(gateway server)
 	atf_check -s exit:0 -o ignore rump.route add $remote_ip/32 $gateway_local_ip
 
 	#
