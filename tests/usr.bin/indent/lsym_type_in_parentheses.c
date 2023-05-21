@@ -1,7 +1,7 @@
-/* $NetBSD: lsym_type_in_parentheses.c,v 1.3 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lsym_type_in_parentheses.c,v 1.4 2023/05/21 10:18:44 rillig Exp $ */
 
 /*
- * Tests for the token lsym_token_in_parentheses, which represents a type name
+ * Tests for the token lsym_type_in_parentheses, which represents a type name
  * inside parentheses in the following contexts:
  *
  * As part of a parameter list of a function prototype.

@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.14 2023/05/20 11:19:17 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.15 2023/05/21 10:18:44 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -8,7 +8,7 @@
  *
  * See also:
  *	opt_fc1.c
- *	token_comment.c
+ *	lsym_comment.c
  */
 
 /*-
@@ -138,16 +138,13 @@ t(void)
  *
  * The other Christmas tree is a standalone block comment, therefore the
  * comment starts in the code column.
- *
- * Since the comments occur between psym_if_expr and the following statement,
- * they are handled by search_stmt_comment.
  */
 //indent input
 {
-	if (1) /*- a Christmas tree  *  search_stmt_comment
+	if (1) /*- a Christmas tree  *
 				    ***
 				   ***** */
-		    /*- another one *  search_stmt_comment
+		    /*- another one *
 				   ***
 				  ***** */
 		1;
@@ -156,10 +153,10 @@ t(void)
 
 //indent run -bbb
 {
-	if (1)			/*- a Christmas tree  *  search_stmt_comment
+	if (1)			/*- a Christmas tree  *
 						     ***
 						    ***** */
-		/*- another one *  search_stmt_comment
+		/*- another one *
 			       ***
 			      ***** */
 		1;
@@ -219,16 +216,16 @@ int decl;			/*-fixed comment
 
 //indent input
 {
-	if (0)/*-search_stmt_comment   |
-	   search_stmt_comment         |*/
+	if (0)/*-first line            |
+	   second line                 |*/
 		;
 }
 //indent end
 
 //indent run -di0
 {
-	if (0)			/*-search_stmt_comment   |
-			     search_stmt_comment         |*/
+	if (0)			/*-first line            |
+			     second line                 |*/
 		;
 }
 //indent end
@@ -252,21 +249,19 @@ int decl;			/*-fixed comment
 /*
  * Ensure that all text of the comment is preserved when the comment is moved
  * to the right.
- *
- * This comment is handled by search_stmt_comment.
  */
 //indent input
 {
-	if(0)/*-search_stmt_comment
-123456789ab search_stmt_comment   |*/
+	if(0)/*-first line
+123456789ab second line           |*/
 	    ;
 }
 //indent end
 
 //indent run -di0
 {
-	if (0)			/*-search_stmt_comment
-		   123456789ab search_stmt_comment   |*/
+	if (0)			/*-first line
+		   123456789ab second line           |*/
 		;
 }
 //indent end
@@ -300,12 +295,10 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
  * Ensure that all text of the comment is preserved when the comment is moved
  * to the left. In this case, the internal layout of the comment cannot be
  * preserved since the second line already starts in column 1.
- *
- * This comment is processed by search_stmt_comment.
  */
 //indent input
 {
-	if(0)					    /*-|search_stmt_comment
+	if(0)					    /*-|first line
 					| minus 12     |
 		| tabs inside		|
 	    |---|
@@ -317,7 +310,7 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 
 //indent run -di0
 {
-	if (0)			/*-|search_stmt_comment
+	if (0)			/*-|first line
 		    | minus 12     |
 | tabs inside		|
 |---|
@@ -329,7 +322,7 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 
 
 /*
- * Ensure that '{' after a search_stmt_comment is preserved.
+ * Ensure that '{' after a comment is preserved.
  */
 //indent input
 {
@@ -338,7 +331,7 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 }
 //indent end
 
-/* Before 2023-05-11, the comment moved to the right of the '{'. */
+/* Before 2023-05-11, the comment and the '{' swapped places. */
 //indent run
 {
 	if (0) /* comment */ {
@@ -902,7 +895,7 @@ int		decl;
 /*
  * A completely empty line in a box comment must be copied unmodified to the
  * output. This is done in process_comment by adding a space to the end of an
- * otherwise empty comment. This space forces output_complete_line to add some output,
+ * otherwise empty comment. This space forces output_line to add some output,
  * but the trailing space is discarded, resulting in an empty line.
  */
 //indent input
