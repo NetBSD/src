@@ -1,4 +1,4 @@
--- $NetBSD: t_options.lua,v 1.2 2023/05/20 22:08:07 rillig Exp $
+-- $NetBSD: t_options.lua,v 1.3 2023/05/21 10:18:44 rillig Exp $
 --
 -- Copyright (c) 2023 The NetBSD Foundation, Inc.
 -- All rights reserved.
@@ -293,7 +293,6 @@ local function handle_line(line)
 
 	if section == ""
 	    and line ~= ""
-	    and line:sub(1, 1) ~= "#"
 	    and line:sub(1, 1) ~= "/"
 	    and line:sub(1, 2) ~= " *" then
 		warn(lineno, "non-comment line outside 'input' or 'run' "

@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bl_br.c,v 1.8 2023/05/11 17:22:56 rillig Exp $ */
+/* $NetBSD: opt_bl_br.c,v 1.9 2023/05/21 10:18:44 rillig Exp $ */
 
 //indent input
 void
@@ -156,7 +156,7 @@ function(void)
 
 /*
  * The combination of the options '-br' and '-ei' (both active by default)
- * remove extra newlines between the tokens '}', 'else' and 'if'.
+ * removes extra newlines between the tokens '}', 'else' and 'if'.
  */
 //indent input
 void

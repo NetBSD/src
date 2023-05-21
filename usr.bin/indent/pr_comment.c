@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.148 2023/05/20 11:53:53 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.149 2023/05/21 10:18:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.148 2023/05/20 11:53:53 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.149 2023/05/21 10:18:44 rillig Exp $");
 
 #include <string.h>
 
@@ -124,8 +124,7 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 
 	if (!may_wrap) {
 		/* Find out how much indentation there was originally, because
-		 * that much will have to be ignored by output_complete_line.
-		 */
+		 * that much will have to be ignored by output_line. */
 		size_t len = (size_t)(inp.st - 2 - inp.mem);
 		ps.n_comment_delta = -ind_add(0, inp.mem, len);
 	} else {
