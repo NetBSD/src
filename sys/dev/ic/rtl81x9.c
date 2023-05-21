@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.113 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.114 2023/05/21 18:01:38 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.113 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.114 2023/05/21 18:01:38 andvar Exp $");
 
 
 #include <sys/param.h>
@@ -699,7 +699,7 @@ rtk_attach(struct rtk_softc *sc)
 
 	/*
 	 * From this point forward, the attachment cannot fail. A failure
-	 * before this releases all resources thar may have been
+	 * before this releases all resources that may have been
 	 * allocated.
 	 */
 	sc->sc_flags |= RTK_ATTACHED;
