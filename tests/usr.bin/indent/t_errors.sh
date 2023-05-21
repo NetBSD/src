@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.29 2023/05/21 09:48:22 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.30 2023/05/21 10:18:44 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -100,7 +100,6 @@ option_tabsize_zero_body()
 atf_test_case 'option_tabsize_large'
 option_tabsize_large_body()
 {
-	# Integer overflow, on both ILP32 and LP64 platforms.
 	expect_error \
 	    'indent: Command line: argument "81" to option "-ts" must be between 1 and 80' \
 	    -ts81
@@ -458,11 +457,9 @@ EOF
 atf_test_case 'comment_fits_in_one_line'
 comment_fits_in_one_line_body()
 {
-	# The comment is placed after 'if (0) ...', where it is processed
-	# by search_stmt_comment. That function redirects the input buffer to
-	# a temporary buffer that is not guaranteed to be terminated by '\n'.
-	# Before NetBSD pr_comment.c 1.91 from 2021-10-30, this produced an
-	# assertion failure in fits_in_one_line.
+	# The comment is placed after 'if (0) ...'. Before NetBSD pr_comment.c
+	# 1.91 from 2021-10-30, this produced an assertion failure in
+	# fits_in_one_line.
 	cat <<EOF > code.c
 int f(void)
 {
