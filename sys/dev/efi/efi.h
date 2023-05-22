@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.h,v 1.2 2022/09/22 14:46:37 riastradh Exp $	*/
+/*	$NetBSD: efi.h,v 1.3 2023/05/22 16:27:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004 Marcel Moolenaar
@@ -43,6 +43,22 @@
 #else
 #define	EFIAPI	/* empty */
 #endif
+
+#ifdef _LP64
+#define	EFIERR(x)		(0x8000000000000000 | (x))
+#else
+#define	EFIERR(x)		(0x80000000 | (x))
+#endif
+
+#define	EFI_SUCCESS		0
+#define	EFI_INVALID_PARAMETER	EFIERR(2)
+#define	EFI_UNSUPPORTED		EFIERR(3)
+#define	EFI_BUFFER_TOO_SMALL	EFIERR(5)
+#define	EFI_DEVICE_ERROR	EFIERR(7)
+#define	EFI_WRITE_PROTECTED	EFIERR(8)
+#define	EFI_OUT_OF_RESOURCES	EFIERR(9)
+#define	EFI_NOT_FOUND		EFIERR(14)
+#define	EFI_SECURITY_VIOLATION	EFIERR(26)
 
 enum efi_reset {
 	EFI_RESET_COLD,

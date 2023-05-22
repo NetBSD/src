@@ -1,4 +1,4 @@
-/* $NetBSD: efi.c,v 1.5 2023/05/22 16:27:39 riastradh Exp $ */
+/* $NetBSD: efi.c,v 1.6 2023/05/22 16:27:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.5 2023/05/22 16:27:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.6 2023/05/22 16:27:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,22 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.5 2023/05/22 16:27:39 riastradh Exp $");
 #include <sys/efiio.h>
 
 #include <dev/efivar.h>
-
-#ifdef _LP64
-#define	EFIERR(x)		(0x8000000000000000 | (x))
-#else
-#define	EFIERR(x)		(0x80000000 | (x))
-#endif
-
-#define	EFI_SUCCESS		0
-#define	EFI_INVALID_PARAMETER	EFIERR(2)
-#define	EFI_UNSUPPORTED		EFIERR(3)
-#define	EFI_BUFFER_TOO_SMALL	EFIERR(5)
-#define	EFI_DEVICE_ERROR	EFIERR(7)
-#define	EFI_WRITE_PROTECTED	EFIERR(8)
-#define	EFI_OUT_OF_RESOURCES	EFIERR(9)
-#define	EFI_NOT_FOUND		EFIERR(14)
-#define	EFI_SECURITY_VIOLATION	EFIERR(26)
 
 #include "ioconf.h"
 
