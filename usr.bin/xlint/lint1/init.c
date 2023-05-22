@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.241 2023/04/22 17:49:15 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.242 2023/05/22 17:53:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.241 2023/04/22 17:49:15 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.242 2023/05/22 17:53:27 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -252,6 +252,7 @@ update_type_of_array_of_unknown_size(sym_t *sym, size_t size)
 	tp->t_incomplete_array = false;
 	sym->s_type = tp;
 	debug_step("completed array type is '%s'", type_name(sym->s_type));
+	outsym(sym, sym->s_scl, sym->s_def);
 }
 
 
