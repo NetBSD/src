@@ -1,4 +1,4 @@
-/* $NetBSD: efi.c,v 1.7 2023/05/22 16:27:58 riastradh Exp $ */
+/* $NetBSD: efi.c,v 1.8 2023/05/22 16:28:16 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.7 2023/05/22 16:27:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.8 2023/05/22 16:28:16 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -336,7 +336,8 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 {
 	uint16_t *namebuf;
 	void *databuf = NULL;
-	size_t datasize;
+	size_t databufsize;
+	unsigned long datasize;
 	efi_status status;
 	int error;
 
@@ -345,6 +346,9 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 		return EINVAL;
 	}
 	if (var->namesize > EFI_VARNAME_MAXLENGTH) {
+		return ENOMEM;
+	}
+	if (var->datasize > ULONG_MAX) { /* XXX stricter limit */
 		return ENOMEM;
 	}
 
@@ -357,21 +361,24 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 		error = EINVAL;
 		goto done;
 	}
-	datasize = var->datasize;
-	if (datasize != 0) {
-		databuf = kmem_alloc(datasize, KM_SLEEP);
-		error = copyin(var->data, databuf, datasize);
+	databufsize = var->datasize;
+	if (databufsize != 0) {
+		databuf = kmem_alloc(databufsize, KM_SLEEP);
+		error = copyin(var->data, databuf, databufsize);
 		if (error != 0) {
 			goto done;
 		}
 	}
 
+	datasize = databufsize;
 	status = efi_ops->efi_getvar(namebuf, &var->vendor, &var->attrib,
-	    &var->datasize, databuf);
+	    &datasize, databuf);
 	if (status != EFI_SUCCESS && status != EFI_BUFFER_TOO_SMALL) {
 		error = efi_status_to_error(status);
 		goto done;
 	}
+	KASSERT(datasize <= databufsize);
+	var->datasize = datasize;
 	if (status == EFI_SUCCESS && databuf != NULL) {
 		error = copyout(databuf, var->data, var->datasize);
 	} else {
@@ -381,7 +388,7 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 done:
 	kmem_free(namebuf, var->namesize);
 	if (databuf != NULL) {
-		kmem_free(databuf, datasize);
+		kmem_free(databuf, databufsize);
 	}
 	return error;
 }
@@ -391,7 +398,8 @@ efi_ioctl_var_next(struct efi_var_ioc *var)
 {
 	efi_status status;
 	uint16_t *namebuf;
-	size_t namesize;
+	size_t namebufsize;
+	unsigned long namesize;
 	int error;
 
 	if (var->name == NULL || var->namesize == 0) {
@@ -401,18 +409,22 @@ efi_ioctl_var_next(struct efi_var_ioc *var)
 		return ENOMEM;
 	}
 
-	namesize = var->namesize;
-	namebuf = kmem_alloc(namesize, KM_SLEEP);
-	error = copyin(var->name, namebuf, namesize);
+	namebufsize = var->namesize;
+	namebuf = kmem_alloc(namebufsize, KM_SLEEP);
+	error = copyin(var->name, namebuf, namebufsize);
 	if (error != 0) {
 		goto done;
 	}
 
-	status = efi_ops->efi_nextvar(&var->namesize, namebuf, &var->vendor);
+	CTASSERT(EFI_VARNAME_MAXLENGTH <= ULONG_MAX);
+	namesize = namebufsize;
+	status = efi_ops->efi_nextvar(&namesize, namebuf, &var->vendor);
 	if (status != EFI_SUCCESS && status != EFI_BUFFER_TOO_SMALL) {
 		error = efi_status_to_error(status);
 		goto done;
 	}
+	KASSERT(namesize <= namebufsize);
+	var->namesize = namesize;
 	if (status == EFI_SUCCESS) {
 		error = copyout(namebuf, var->name, var->namesize);
 	} else {
@@ -420,7 +432,7 @@ efi_ioctl_var_next(struct efi_var_ioc *var)
 	}
 
 done:
-	kmem_free(namebuf, namesize);
+	kmem_free(namebuf, namebufsize);
 	return error;
 }
 
