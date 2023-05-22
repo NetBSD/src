@@ -1,4 +1,4 @@
-/* $NetBSD: efi.c,v 1.4 2022/09/24 11:06:03 riastradh Exp $ */
+/* $NetBSD: efi.c,v 1.5 2023/05/22 16:27:39 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.4 2022/09/24 11:06:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.5 2023/05/22 16:27:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -43,9 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.4 2022/09/24 11:06:03 riastradh Exp $");
 #include <dev/efivar.h>
 
 #ifdef _LP64
-#define	EFIERR(x)		(0x8000000000000000 | x)
+#define	EFIERR(x)		(0x8000000000000000 | (x))
 #else
-#define	EFIERR(x)		(0x80000000 | x)
+#define	EFIERR(x)		(0x80000000 | (x))
 #endif
 
 #define	EFI_SUCCESS		0
