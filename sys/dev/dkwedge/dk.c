@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.165 2023/05/22 14:59:25 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.166 2023/05/22 14:59:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.165 2023/05/22 14:59:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.166 2023/05/22 14:59:34 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1210,6 +1210,16 @@ dkwedge_lookup(dev_t dev)
 	return device_lookup_private(&dk_cd, minor(dev));
 }
 
+static struct dkwedge_softc *
+dkwedge_lookup_acquire(dev_t dev)
+{
+	device_t dv = device_lookup_acquire(&dk_cd, minor(dev));
+
+	if (dv == NULL)
+		return NULL;
+	return device_private(dv);
+}
+
 static int
 dk_open_parent(dev_t dev, int mode, struct vnode **vpp)
 {
@@ -1925,8 +1935,11 @@ dkwedge_get_parent_name(dev_t dev)
 
 	if (major(dev) != bmaj && major(dev) != cmaj)
 		return NULL;
-	struct dkwedge_softc *sc = dkwedge_lookup(dev);
+
+	struct dkwedge_softc *const sc = dkwedge_lookup_acquire(dev);
 	if (sc == NULL)
 		return NULL;
-	return sc->sc_parent->dk_name;
+	const char *const name = sc->sc_parent->dk_name;
+	device_release(sc->sc_dev);
+	return name;
 }
