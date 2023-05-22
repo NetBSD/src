@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.57 2023/04/15 12:29:43 rillig Exp $
+.\" $NetBSD: lint.1,v 1.58 2023/05/22 19:36:13 rillig Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 21, 2023
+.Dd May 22, 2023
 .Dt LINT 1
 .Os
 .Sh NAME
@@ -277,8 +277,7 @@ and
 are always available).
 .It Fl H
 If a complaint stems from an included file,
-.Nm
-prints the name of the included file instead of the source file name
+print the name of the included file instead of the source file name
 followed by a question mark.
 .It Fl h
 Apply a number of heuristic tests to attempt to intuit
@@ -581,6 +580,11 @@ to be used to
 only the source files that have been modified since the last
 time the set of source files were
 .Nm Ns No ed .
+.Sh EXIT STATUS
+.Ex -std lint
+If the
+.Fl w
+flag is given, warnings are considered errors.
 .Sh ENVIRONMENT
 .Bl -tag -width Fl
 .It Ev LIBDIR
@@ -612,16 +616,43 @@ various prebuilt lint libraries
 .It Pa /tmp/lint*
 temporaries
 .El
+.Sh EXAMPLES
+.Bl -tag
+.It Li Nm Fl i Fl Sg Pa source.c
+Run
+.Nm
+in C99 mode with GNU extensions,
+with only few checks,
+creating
+.Pa source.ln .
+.It Li Nm Fl i Fl abcFghprSxz Pa source.c
+Run
+.Nm
+with the same checks as in the NetBSD build.
+.It Li Nm Fl i Fl Ac11 Fl g Fl aabceFhpPrTxz Pa source.c
+Run
+.Nm
+in C11 mode with GNU extensions,
+enabling all available checks,
+including lossy conversions on small integer types,
+unusual operations on enum types,
+more portability warnings,
+and strict bool mode.
+.El
+.\" .Sh DIAGNOSTICS
 .Sh SEE ALSO
 .Xr cc 1 ,
 .Xr cpp 1 ,
 .Xr make 1 ,
 .Xr lint 7
+.\" .Sh STANDARDS
+.\" .Sh HISTORY
 .Sh AUTHORS
 .An Jochen Pohl
 (1995)
 .An Roland Illig
 (2021)
+.\" .Sh CAVEATS
 .Sh BUGS
 The routines
 .Xr exit 3 ,
@@ -643,3 +674,4 @@ to be reported in error messages.
 For these reasons, it is recommended to use the
 .Fl C
 option to create lint libraries.
+.\" .Sh SECURITY CONSIDERATIONS
