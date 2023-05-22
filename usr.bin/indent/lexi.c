@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.202 2023/05/20 11:53:53 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.203 2023/05/22 22:09:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.202 2023/05/20 11:53:53 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.203 2023/05/22 22:09:45 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -559,19 +559,19 @@ lexi(void)
 
 	switch (token.mem[token.len - 1]) {
 
-    /* INDENT OFF */
-    case '(':
-    case '[':	lsym = lsym_lparen_or_lbracket;	next_unary = true;	break;
-    case ')':
-    case ']':	lsym = lsym_rparen_or_rbracket;	next_unary = false;	break;
-    case '?':	lsym = lsym_question;		next_unary = true;	break;
-    case ':':	lsym = lsym_colon;		next_unary = true;	break;
-    case ';':	lsym = lsym_semicolon;		next_unary = true;	break;
-    case '{':	lsym = lsym_lbrace;		next_unary = true;	break;
-    case '}':	lsym = lsym_rbrace;		next_unary = true;	break;
-    case ',':	lsym = lsym_comma;		next_unary = true;	break;
-    case '.':	lsym = lsym_period;		next_unary = false;	break;
-    /* INDENT ON */
+	/* INDENT OFF */
+	case '(':
+	case '[': lsym = lsym_lparen_or_lbracket; next_unary = true;	break;
+	case ')':
+	case ']': lsym = lsym_rparen_or_rbracket; next_unary = false;	break;
+	case '?':	lsym = lsym_question;	next_unary = true;	break;
+	case ':':	lsym = lsym_colon;	next_unary = true;	break;
+	case ';':	lsym = lsym_semicolon;	next_unary = true;	break;
+	case '{':	lsym = lsym_lbrace;	next_unary = true;	break;
+	case '}':	lsym = lsym_rbrace;	next_unary = true;	break;
+	case ',':	lsym = lsym_comma;	next_unary = true;	break;
+	case '.':	lsym = lsym_period;	next_unary = false;	break;
+	/* INDENT ON */
 
 	case '\n':
 		/* if data has been exhausted, the '\n' is a dummy. */
