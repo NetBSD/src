@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_machdep.c,v 1.4 2022/12/24 15:23:02 andvar Exp $	*/
+/*	$NetBSD: efi_machdep.c,v 1.5 2023/05/22 16:27:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.4 2022/12/24 15:23:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.5 2023/05/22 16:27:48 riastradh Exp $");
 
 #include "efi.h"
 #include "opt_efi.h"
@@ -580,18 +580,6 @@ efi_get_e820memmap(void)
 }
 
 #ifdef EFI_RUNTIME
-
-/*
- * XXX move to sys/dev/efi/efi.h
- */
-#ifdef _LP64
-#define	EFIERR(x)	(0x8000000000000000ul | (x))
-#else
-#define	EFIERR(x)	(0x80000000ul | (x))
-#endif
-
-#define	EFI_UNSUPPORTED		EFIERR(3)
-#define	EFI_DEVICE_ERROR	EFIERR(7)
 
 /*
  * efi_runtime_init()
