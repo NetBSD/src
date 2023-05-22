@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.53 2023/01/14 08:48:18 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.54 2023/05/22 12:55:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.53 2023/01/14 08:48:18 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.54 2023/05/22 12:55:04 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -610,7 +610,7 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 	const	char *fp;
 	char	fc;
 	bool	fwidth, prec, left, sign, space, alt, zero;
-	tspec_t	sz, t1, t2 = NOTSPEC;
+	tspec_t	sz, t1, t2 = NO_TSPEC;
 	type_t	*tp;
 
 	fp = fmt;
@@ -628,7 +628,7 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		}
 		fc = *fp++;
 		fwidth = prec = left = sign = space = alt = zero = false;
-		sz = NOTSPEC;
+		sz = NO_TSPEC;
 
 		/* Flags */
 		for (;;) {
@@ -704,11 +704,11 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		} else if (fc == 'L') {
 			sz = LDOUBLE;
 		}
-		if (sz != NOTSPEC)
+		if (sz != NO_TSPEC)
 			fc = *fp++;
 
 		if (fc == '%') {
-			if (sz != NOTSPEC || left || sign || space ||
+			if (sz != NO_TSPEC || left || sign || space ||
 			    alt || zero || prec || fwidth) {
 				bad_format_string(hte, call);
 			}
@@ -768,7 +768,7 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 					inconsistent_arguments(hte, call, n);
 			}
 		} else if (fc == 'D' || fc == 'O' || fc == 'U') {
-			if ((alt && fc != 'O') || sz != NOTSPEC || !tflag)
+			if ((alt && fc != 'O') || sz != NO_TSPEC || !tflag)
 				bad_format_string(hte, call);
 			sz = LONG;
 			if (fc == 'D') {
@@ -778,26 +778,26 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			}
 		} else if (fc == 'f' || fc == 'e' || fc == 'E' ||
 			   fc == 'g' || fc == 'G') {
-			if (sz == NOTSPEC)
+			if (sz == NO_TSPEC)
 				sz = DOUBLE;
 			if (sz != DOUBLE && sz != LDOUBLE)
 				bad_format_string(hte, call);
 			if (t1 != sz)
 				inconsistent_arguments(hte, call, n);
 		} else if (fc == 'c') {
-			if (sz != NOTSPEC || alt || zero)
+			if (sz != NO_TSPEC || alt || zero)
 				bad_format_string(hte, call);
 			if (t1 != INT)
 				inconsistent_arguments(hte, call, n);
 		} else if (fc == 's') {
-			if (sz != NOTSPEC || alt || zero)
+			if (sz != NO_TSPEC || alt || zero)
 				bad_format_string(hte, call);
 			if (t1 != PTR ||
 			    (t2 != CHAR && t2 != UCHAR && t2 != SCHAR)) {
 				inconsistent_arguments(hte, call, n);
 			}
 		} else if (fc == 'p') {
-			if (fwidth || prec || sz != NOTSPEC || alt || zero)
+			if (fwidth || prec || sz != NO_TSPEC || alt || zero)
 				bad_format_string(hte, call);
 			if (t1 != PTR || (hflag && t2 != VOID))
 				inconsistent_arguments(hte, call, n);
@@ -835,7 +835,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 	const	char *fp;
 	char	fc;
 	bool	noasgn, fwidth;
-	tspec_t	sz, t1 = NOTSPEC, t2 = NOTSPEC;
+	tspec_t	sz, t1 = NO_TSPEC, t2 = NO_TSPEC;
 	type_t	*tp = NULL;
 
 	fp = fmt;
@@ -854,7 +854,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		fc = *fp++;
 
 		noasgn = fwidth = false;
-		sz = NOTSPEC;
+		sz = NO_TSPEC;
 
 		if (fc == '*') {
 			noasgn = true;
@@ -875,11 +875,11 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		} else if (fc == 'L') {
 			sz = LDOUBLE;
 		}
-		if (sz != NOTSPEC)
+		if (sz != NO_TSPEC)
 			fc = *fp++;
 
 		if (fc == '%') {
-			if (sz != NOTSPEC || noasgn || fwidth)
+			if (sz != NO_TSPEC || noasgn || fwidth)
 				bad_format_string(hte, call);
 			fc = *fp++;
 			continue;
@@ -926,12 +926,12 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			}
 			goto conv;
 		} else if (fc == 'D') {
-			if (sz != NOTSPEC || !tflag)
+			if (sz != NO_TSPEC || !tflag)
 				bad_format_string(hte, call);
 			sz = LONG;
 			goto conv;
 		} else if (fc == 'O') {
-			if (sz != NOTSPEC || !tflag)
+			if (sz != NO_TSPEC || !tflag)
 				bad_format_string(hte, call);
 			sz = ULONG;
 			goto conv;
@@ -940,7 +940,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			 * XXX valid in ANSI C, but in NetBSD's libc imple-
 			 * mented as "lx". That's why it should be avoided.
 			 */
-			if (sz != NOTSPEC || !tflag)
+			if (sz != NO_TSPEC || !tflag)
 				bad_format_string(hte, call);
 			sz = ULONG;
 			goto conv;
@@ -949,13 +949,13 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			 * XXX valid in ANSI C, but in NetBSD's libc imple-
 			 * mented as "lf". That's why it should be avoided.
 			 */
-			if (sz != NOTSPEC || !tflag)
+			if (sz != NO_TSPEC || !tflag)
 				bad_format_string(hte, call);
 			sz = DOUBLE;
 			goto conv;
 		} else if (fc == 'F') {
 			/* XXX only for backward compatibility */
-			if (sz != NOTSPEC || !tflag)
+			if (sz != NO_TSPEC || !tflag)
 				bad_format_string(hte, call);
 			sz = DOUBLE;
 			goto conv;
@@ -964,12 +964,12 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			 * XXX valid in ANSI C, but in NetBSD's libc not
 			 * implemented
 			 */
-			if (sz != NOTSPEC && sz != LONG && sz != LDOUBLE)
+			if (sz != NO_TSPEC && sz != LONG && sz != LDOUBLE)
 				bad_format_string(hte, call);
 			goto fconv;
 		} else if (fc == 'e' || fc == 'f' || fc == 'g') {
 		fconv:
-			if (sz == NOTSPEC) {
+			if (sz == NO_TSPEC) {
 				sz = FLOAT;
 			} else if (sz == LONG) {
 				sz = DOUBLE;
@@ -979,7 +979,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			}
 			goto conv;
 		} else if (fc == 's' || fc == '[' || fc == 'c') {
-			if (sz != NOTSPEC)
+			if (sz != NO_TSPEC)
 				bad_format_string(hte, call);
 			if (fc == '[') {
 				if ((fc = *fp++) == '-') {
@@ -1001,7 +1001,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 				}
 			}
 		} else if (fc == 'p') {
-			if (sz != NOTSPEC)
+			if (sz != NO_TSPEC)
 				bad_format_string(hte, call);
 			if (!noasgn) {
 				if (t1 != PTR || t2 != PTR) {
@@ -1213,7 +1213,7 @@ types_compatible(type_t *tp1, type_t *tp2,
 	tspec_t	t, to;
 	int	indir;
 
-	to = NOTSPEC;
+	to = NO_TSPEC;
 	indir = 0;
 
 	while (tp1 != NULL && tp2 != NULL) {

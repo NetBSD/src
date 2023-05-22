@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.35 2022/02/07 21:57:47 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.36 2023/05/22 12:55:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -51,7 +51,7 @@
  * Type specifiers, used in type structures (type_t) and elsewhere.
  */
 typedef enum {
-	NOTSPEC = 0,
+	NO_TSPEC = 0,
 	SIGNED,		/* keyword "signed", only used in the parser */
 	UNSIGN,		/* keyword "unsigned", only used in the parser */
 	BOOL,		/* _Bool */

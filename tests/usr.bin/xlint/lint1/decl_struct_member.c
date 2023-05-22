@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_struct_member.c,v 1.16 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: decl_struct_member.c,v 1.17 2023/05/22 12:55:04 rillig Exp $	*/
 # 3 "decl_struct_member.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -86,7 +86,7 @@ struct {
  * Before cgram.y 1.328 from 2021-07-15, lint ran into an assertion failure
  * at the closing semicolon:
  *
- * assertion "t == NOTSPEC" failed in end_type at decl.c:774
+ * assertion "t == NO_TSPEC" failed in end_type at decl.c:774
  */
 };
 /* expect+1: error: cannot recover from previous errors [224] */

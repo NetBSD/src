@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.523 2023/05/13 20:55:44 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.524 2023/05/22 12:55:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.523 2023/05/13 20:55:44 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.524 2023/05/22 12:55:04 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2205,7 +2205,7 @@ warn_incompatible_types(op_t op,
 		/* operands of '%s' have incompatible types '%s' and '%s' */
 		error(107, mp->m_name, tspec_name(lt), tspec_name(rt));
 	} else {
-		lint_assert(rt == NOTSPEC);
+		lint_assert(rt == NO_TSPEC);
 		/* operand of '%s' has invalid type '%s' */
 		error(108, mp->m_name, type_name(ltp));
 	}
@@ -2869,7 +2869,7 @@ static bool
 check_assign_types_compatible(op_t op, int arg,
 			      const tnode_t *ln, const tnode_t *rn)
 {
-	tspec_t	lt, rt, lst = NOTSPEC, rst = NOTSPEC;
+	tspec_t	lt, rt, lst = NO_TSPEC, rst = NO_TSPEC;
 	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
 
 	if ((lt = (ltp = ln->tn_type)->t_tspec) == PTR)
@@ -3201,7 +3201,7 @@ typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 		rt = rtp->t_tspec;
 	} else {
 		rtp = NULL;
-		rt = NOTSPEC;
+		rt = NO_TSPEC;
 	}
 
 	if (Tflag && !typeok_scalar_strict_bool(op, mp, arg, ln, rn))
