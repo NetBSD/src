@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.19 2020/08/09 09:23:17 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.20 2023/05/22 06:50:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.19 2020/08/09 09:23:17 skrll Exp $")
+RCSID("$NetBSD: spl.S,v 1.20 2023/05/22 06:50:52 skrll Exp $")
 
 #include "assym.h"
 
@@ -350,7 +350,7 @@ STATIC_LEAF(_splsw_splintr)
 	and	v1, ta2				# apply to pending bits
 
 1:
-	INT_L	ta2, (ta3)			# get SR bits for ipl in v0
+	INT_L	ta2, (ta3)			# get SR bits for ipl in ta2
 	NOP_L					# load delay
 	xor	ta2, MIPS_INT_MASK		# invert
 	and	ta2, v1				# any match to pending intrs?
