@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.435 2023/04/22 17:49:15 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.436 2023/05/22 17:47:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.435 2023/04/22 17:49:15 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.436 2023/05/22 17:47:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2151,9 +2151,9 @@ cgram_print(FILE *output, int token, YYSTYPE val)
 #endif
 
 static void
-cgram_declare(sym_t *decl, bool initflg, sbuf_t *renaming)
+cgram_declare(sym_t *decl, bool has_initializer, sbuf_t *renaming)
 {
-	declare(decl, initflg, renaming);
+	declare(decl, has_initializer, renaming);
 	if (renaming != NULL)
 		freeyyv(&renaming, T_NAME);
 }
