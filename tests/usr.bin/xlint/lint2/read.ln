@@ -1,4 +1,4 @@
-# $NetBSD: read.ln,v 1.5 2021/08/30 21:23:37 rillig Exp $
+# $NetBSD: read.ln,v 1.6 2023/05/22 12:55:04 rillig Exp $
 #
 # Cover each path of reading declarations, definitions and usages.
 
@@ -10,7 +10,7 @@ S read.c
 # The line numbers correspond to the constant values of tspec_t,
 # with the 128-bit types included.
 #
-# NOTSPEC	cannot occur in lint1 output.
+# NO_TSPEC	cannot occur in lint1 output.
 # SIGNED	cannot occur in lint1 output.
 # UNSIGN	cannot occur in lint1 output.
 103 d 0.103 e 4f103 F0 B	# BOOL		_Bool		f103(void);

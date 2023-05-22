@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.30 2023/04/22 20:17:19 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.31 2023/05/22 12:55:04 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.30 2023/04/22 20:17:19 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.31 2023/05/22 12:55:04 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -382,13 +382,13 @@ debug_dinfo(const dinfo_t *d) // NOLINT(misc-no-recursion)
 	if (d->d_type != NULL) {
 		debug_printf(" '%s'", type_name(d->d_type));
 	} else {
-		if (d->d_abstract_type != NOTSPEC)
+		if (d->d_abstract_type != NO_TSPEC)
 			debug_printf(" %s", tspec_name(d->d_abstract_type));
-		if (d->d_complex_mod != NOTSPEC)
+		if (d->d_complex_mod != NO_TSPEC)
 			debug_printf(" %s", tspec_name(d->d_complex_mod));
-		if (d->d_sign_mod != NOTSPEC)
+		if (d->d_sign_mod != NO_TSPEC)
 			debug_printf(" %s", tspec_name(d->d_sign_mod));
-		if (d->d_rank_mod != NOTSPEC)
+		if (d->d_rank_mod != NO_TSPEC)
 			debug_printf(" %s", tspec_name(d->d_rank_mod));
 	}
 	if (d->d_redeclared_symbol != NULL)
