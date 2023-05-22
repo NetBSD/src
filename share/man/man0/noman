@@ -1,5 +1,6 @@
-#	$NetBSD: noman,v 1.1 2001/06/24 02:34:49 hubertf Exp $
+#	$NetBSD: noman,v 1.2 2023/05/22 12:34:48 lukem Exp $
 # troff files that are no manpages - ready for fgrep -v
 USD.doc/csh
+bind/dist/bin/tests
 libcurses/PSD.doc
 /intro
