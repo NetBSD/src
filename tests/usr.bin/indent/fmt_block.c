@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_block.c,v 1.6 2023/05/13 06:52:48 rillig Exp $ */
+/* $NetBSD: fmt_block.c,v 1.7 2023/05/22 23:03:16 rillig Exp $ */
 
 /*
  * Tests for formatting blocks of statements and declarations.
@@ -47,24 +47,10 @@ void
 function(void)
 {
 	{
-/* $ FIXME: '{' must start a new line. */
-	} {
+	}
+	{
 	}
 }
 //indent end
 
-/*
- * The buggy behavior only occurs with the default setting '-br', which
- * places an opening brace to the right of the preceding 'if (expr)' or
- * similar statements.
- */
-//indent run -bl
-void
-function(void)
-{
-	{
-	}
-	{
-	}
-}
-//indent end
+//indent run-equals-prev-output -bl
