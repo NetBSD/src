@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.185 2022/08/24 11:19:25 riastradh Exp $ */
+/* $NetBSD: device.h,v 1.186 2023/05/22 14:58:22 riastradh Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -554,14 +554,20 @@ device_t config_found(device_t, void *, cfprint_t, const struct cfargs *);
 device_t config_rootfound(const char *, void *);
 device_t config_attach(device_t, cfdata_t, void *, cfprint_t,
 	    const struct cfargs *);
+device_t config_found_acquire(device_t, void *, cfprint_t,
+	    const struct cfargs *);
+device_t config_attach_acquire(device_t, cfdata_t, void *, cfprint_t,
+	    const struct cfargs *);
 int	config_match(device_t, cfdata_t, void *);
 int	config_probe(device_t, cfdata_t, void *);
 
 bool	ifattr_match(const char *, const char *);
 
 device_t config_attach_pseudo(cfdata_t);
+device_t config_attach_pseudo_acquire(cfdata_t, void *);
 
 int	config_detach(device_t, int);
+int	config_detach_release(device_t, int);
 int	config_detach_children(device_t, int flags);
 void	config_detach_commit(device_t);
 bool	config_detach_all(int);
@@ -588,6 +594,7 @@ device_t	device_lookup(cfdriver_t, int);
 void		*device_lookup_private(cfdriver_t, int);
 
 device_t	device_lookup_acquire(cfdriver_t, int);
+void		device_acquire(device_t);
 void		device_release(device_t);
 
 void		device_register(device_t, void *);
