@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.166 2023/05/22 14:59:34 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.167 2023/05/22 14:59:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.166 2023/05/22 14:59:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.167 2023/05/22 14:59:42 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1277,8 +1277,8 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 
 	if (sc == NULL)
 		return ENXIO;
-	if (sc->sc_state != DKW_STATE_RUNNING)
-		return ENXIO;
+	KASSERT(sc->sc_dev != NULL);
+	KASSERT(sc->sc_state == DKW_STATE_RUNNING);
 
 	/*
 	 * We go through a complicated little dance to only open the parent
