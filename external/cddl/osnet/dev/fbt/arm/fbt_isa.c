@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt_isa.c,v 1.1 2018/05/28 23:47:39 chs Exp $	*/
+/*	$NetBSD: fbt_isa.c,v 1.2 2023/05/22 15:12:54 riastradh Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -56,6 +56,26 @@
 #define	FBT_ENTRY	"entry"
 #define	FBT_RETURN	"return"
 
+static uint32_t
+ldinstr(const uint32_t *instr)
+{
+#ifdef _ARM_ARCH_BE8		/* big-endian data, big-endian instructions */
+	return *instr;
+#else				/* little-endian instructions */
+	return le32toh(*instr);
+#endif
+}
+
+static void
+stinstr(uint32_t *instr, uint32_t val)
+{
+
+#ifdef _ARM_ARCH_BE8		/* big-endian data, big-endian instructions */
+	val = bswap32(val);
+#endif
+	ktext_write(instr, &val, sizeof(val)); /* write little-endian */
+}
+
 int
 fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t rval)
 {
@@ -98,9 +118,7 @@ fbt_patch_tracepoint(fbt_probe_t *fbt, fbt_patchval_t val)
 	dtrace_icookie_t c;
 
 	c = dtrace_interrupt_disable();
-
-	ktext_write(fbt->fbtp_patchpoint, &val, sizeof (val));
-
+	stinstr(fbt->fbtp_patchpoint, val);
 	dtrace_interrupt_enable(c);
 }
 
@@ -126,14 +144,14 @@ fbt_provide_module_function(linker_file_t lf, int symindx,
 	 * va_arg functions has first instruction of
 	 * sub sp, sp, #?
 	 */
-	if ((*instr & 0xfffff000) == FBT_SUBSP)
+	if ((ldinstr(instr) & 0xfffff000) == FBT_SUBSP)
 		instr++;
 
 	/*
 	 * check if insn is a pushm with LR
 	 */
-	if ((*instr & 0xffff0000) != FBT_PUSHM ||
-	    (*instr & (1 << LR)) == 0)
+	if ((ldinstr(instr) & 0xffff0000) != FBT_PUSHM ||
+	    (ldinstr(instr) & (1 << LR)) == 0)
 		return (0);
 
 	fbt = kmem_zalloc(sizeof (fbt_probe_t), KM_SLEEP);
@@ -143,7 +161,7 @@ fbt_provide_module_function(linker_file_t lf, int symindx,
 	fbt->fbtp_patchpoint = instr;
 	fbt->fbtp_ctl = lf;
 	fbt->fbtp_loadcnt = lf->loadcnt;
-	fbt->fbtp_savedval = *instr;
+	fbt->fbtp_savedval = ldinstr(instr);
 	fbt->fbtp_patchval = FBT_BREAKPOINT;
 	fbt->fbtp_rval = DTRACE_INVOP_PUSHM;
 	fbt->fbtp_symindx = symindx;
@@ -153,18 +171,18 @@ fbt_provide_module_function(linker_file_t lf, int symindx,
 
 	lf->fbt_nentries++;
 
-	popm = FBT_POPM | ((*instr) & 0x3FFF) | 0x8000;
+	popm = FBT_POPM | (ldinstr(instr) & 0x3FFF) | 0x8000;
 
 	retfbt = NULL;
 again:
 	for (; instr < limit; instr++) {
-		if (*instr == popm)
+		if (ldinstr(instr) == popm)
 			break;
-		else if ((*instr & 0xff000000) == FBT_JUMP) {
+		else if ((ldinstr(instr) & 0xff000000) == FBT_JUMP) {
 			uint32_t *target, *start;
 			int offset;
 
-			offset = (*instr & 0xffffff);
+			offset = (ldinstr(instr) & 0xffffff);
 			offset <<= 8;
 			offset /= 64;
 			target = instr + (2 + offset);
@@ -195,11 +213,11 @@ again:
 	fbt->fbtp_ctl = lf;
 	fbt->fbtp_loadcnt = lf->loadcnt;
 	fbt->fbtp_symindx = symindx;
-	if ((*instr & 0xff000000) == FBT_JUMP)
+	if ((ldinstr(instr) & 0xff000000) == FBT_JUMP)
 		fbt->fbtp_rval = DTRACE_INVOP_B;
 	else
 		fbt->fbtp_rval = DTRACE_INVOP_POPM;
-	fbt->fbtp_savedval = *instr;
+	fbt->fbtp_savedval = ldinstr(instr);
 	fbt->fbtp_patchval = FBT_BREAKPOINT;
 	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
 	fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
@@ -279,14 +297,14 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 	instr = (uint32_t *) value;
 	limit = (uint32_t *)((uintptr_t)value + symsize);
 
-	if (!FBT_MOV_IP_SP_P(*instr)
-	    && !FBT_BX_LR_P(*instr)
-	    && !FBT_MOVW_P(*instr)
-	    && !FBT_MOV_IMM_P(*instr)
-	    && !FBT_B_LABEL_P(*instr)
-	    && !FBT_LDR_IMM_P(*instr)
-	    && !FBT_CMP_IMM_P(*instr)
-	    && !FBT_PUSH_P(*instr)
+	if (!FBT_MOV_IP_SP_P(ldinstr(instr))
+	    && !FBT_BX_LR_P(ldinstr(instr))
+	    && !FBT_MOVW_P(ldinstr(instr))
+	    && !FBT_MOV_IMM_P(ldinstr(instr))
+	    && !FBT_B_LABEL_P(ldinstr(instr))
+	    && !FBT_LDR_IMM_P(ldinstr(instr))
+	    && !FBT_CMP_IMM_P(ldinstr(instr))
+	    && !FBT_PUSH_P(ldinstr(instr))
 	    ) {
 		return 0;
 	}
@@ -298,31 +316,39 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 	fbt->fbtp_patchpoint = instr;
 	fbt->fbtp_ctl = mod;
 	/* fbt->fbtp_loadcnt = lf->loadcnt; */
-	if (FBT_MOV_IP_SP_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOV_IP_SP);
-	else if (FBT_LDR_IMM_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_LDR_IMM);
-	else if (FBT_MOVW_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOVW);
-	else if (FBT_MOV_IMM_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOV_IMM);
-	else if (FBT_CMP_IMM_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_CMP_IMM);
-	else if (FBT_BX_LR_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_BX_LR);
-	else if (FBT_PUSH_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_PUSHM);
-	else if (FBT_B_LABEL_P(*instr))
-		fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_B);
-	else
+	if (FBT_MOV_IP_SP_P(ldinstr(instr))) {
+		fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+		    DTRACE_INVOP_MOV_IP_SP);
+	} else if (FBT_LDR_IMM_P(ldinstr(instr))) {
+		fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+		    DTRACE_INVOP_LDR_IMM);
+	} else if (FBT_MOVW_P(ldinstr(instr))) {
+		fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr), DTRACE_INVOP_MOVW);
+	} else if (FBT_MOV_IMM_P(ldinstr(instr))) {
+		fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+		    DTRACE_INVOP_MOV_IMM);
+	} else if (FBT_CMP_IMM_P(ldinstr(instr))) {
+		fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+		    DTRACE_INVOP_CMP_IMM);
+	} else if (FBT_BX_LR_P(ldinstr(instr))) {
+		fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+		    DTRACE_INVOP_BX_LR);
+	} else if (FBT_PUSH_P(ldinstr(instr))) {
+		fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+		    DTRACE_INVOP_PUSHM);
+	} else if (FBT_B_LABEL_P(ldinstr(instr))) {
+		fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+		    DTRACE_INVOP_B);
+	} else {
 		KASSERT(0);
+	}
 
 	KASSERTMSG((fbt->fbtp_rval >> 28) != 0,
 		   "fbt %p insn 0x%x name %s rval 0x%08x",
-		   fbt, *instr, name, fbt->fbtp_rval);
+		   fbt, ldinstr(instr), name, fbt->fbtp_rval);
 
-	fbt->fbtp_patchval = PATCHVAL_ENCODE_COND(*instr);
-	fbt->fbtp_savedval = *instr;
+	fbt->fbtp_patchval = PATCHVAL_ENCODE_COND(ldinstr(instr));
+	fbt->fbtp_savedval = ldinstr(instr);
 	fbt->fbtp_symindx = symindx;
 
 	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
@@ -336,13 +362,14 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 
 		size = 1;
 
-		if (!FBT_BX_LR_P(*instr)
-		    && !FBT_MOV_PC_LR_P(*instr)
-		    && !FBT_LDM_P(*instr)
-		    && !FBT_LDMIB_P(*instr)
-		    && !(was_ldm_lr && FBT_B_LABEL_P(*instr))
+		if (!FBT_BX_LR_P(ldinstr(instr))
+		    && !FBT_MOV_PC_LR_P(ldinstr(instr))
+		    && !FBT_LDM_P(ldinstr(instr))
+		    && !FBT_LDMIB_P(ldinstr(instr))
+		    && !(was_ldm_lr && FBT_B_LABEL_P(ldinstr(instr)))
 		    ) {
-			if (FBT_LDM_LR_P(*instr) || FBT_LDMIB_LR_P(*instr))
+			if (FBT_LDM_LR_P(ldinstr(instr)) ||
+			    FBT_LDMIB_LR_P(ldinstr(instr)))
 				was_ldm_lr = true;
 			else
 				was_ldm_lr = false;
@@ -370,26 +397,32 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 		/* fbt->fbtp_loadcnt = lf->loadcnt; */
 		fbt->fbtp_symindx = symindx;
 
-		if (FBT_BX_LR_P(*instr))
-			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_BX_LR);
-		else if (FBT_MOV_PC_LR_P(*instr))
-			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_MOV_PC_LR);
-		else if (FBT_LDM_P(*instr))
-			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_LDM);
-		else if (FBT_LDMIB_P(*instr))
-			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_POPM);
-		else if (FBT_B_LABEL_P(*instr))
-			fbt->fbtp_rval = BUILD_RVAL(*instr, DTRACE_INVOP_B);
-		else
+		if (FBT_BX_LR_P(ldinstr(instr))) {
+			fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+			    DTRACE_INVOP_BX_LR);
+		} else if (FBT_MOV_PC_LR_P(ldinstr(instr))) {
+			fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+			    DTRACE_INVOP_MOV_PC_LR);
+		} else if (FBT_LDM_P(ldinstr(instr))) {
+			fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+			    DTRACE_INVOP_LDM);
+		} else if (FBT_LDMIB_P(ldinstr(instr))) {
+			fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+			    DTRACE_INVOP_POPM);
+		} else if (FBT_B_LABEL_P(ldinstr(instr))) {
+			fbt->fbtp_rval = BUILD_RVAL(ldinstr(instr),
+			    DTRACE_INVOP_B);
+		} else {
 			KASSERT(0);
+		}
 
 		KASSERTMSG((fbt->fbtp_rval >> 28) != 0, "fbt %p name %s rval 0x%08x",
 			   fbt, name, fbt->fbtp_rval);
 
 		fbt->fbtp_roffset = (uintptr_t)(instr - (uint32_t *) value);
-		fbt->fbtp_patchval = PATCHVAL_ENCODE_COND(*instr);
+		fbt->fbtp_patchval = PATCHVAL_ENCODE_COND(ldinstr(instr));
 
-		fbt->fbtp_savedval = *instr;
+		fbt->fbtp_savedval = ldinstr(instr);
 		fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
 		fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
 
