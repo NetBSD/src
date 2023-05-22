@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.161 2023/05/22 14:58:50 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.162 2023/05/22 14:58:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.161 2023/05/22 14:58:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.162 2023/05/22 14:58:59 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -781,7 +781,6 @@ dkwedge_delidle(struct disk *pdk)
 static void
 dkwedge_delall1(struct disk *pdk, bool idleonly)
 {
-	struct dkwedge_info dkw;
 	struct dkwedge_softc *sc;
 	int flags;
 
@@ -793,8 +792,18 @@ dkwedge_delall1(struct disk *pdk, bool idleonly)
 		mutex_enter(&pdk->dk_rawlock); /* for sc->sc_dk.dk_openmask */
 		mutex_enter(&pdk->dk_openlock);
 		LIST_FOREACH(sc, &pdk->dk_wedges, sc_plink) {
-			if (!idleonly || sc->sc_dk.dk_openmask == 0)
+			/*
+			 * Wedge is not yet created.  This is a race --
+			 * it may as well have been added just after we
+			 * deleted all the wedges, so pretend it's not
+			 * here yet.
+			 */
+			if (sc->sc_dev == NULL)
+				continue;
+			if (!idleonly || sc->sc_dk.dk_openmask == 0) {
+				device_acquire(sc->sc_dev);
 				break;
+			}
 		}
 		if (sc == NULL) {
 			KASSERT(idleonly || pdk->dk_nwedges == 0);
@@ -802,12 +811,9 @@ dkwedge_delall1(struct disk *pdk, bool idleonly)
 			mutex_exit(&pdk->dk_rawlock);
 			return;
 		}
-		strlcpy(dkw.dkw_parent, pdk->dk_name, sizeof(dkw.dkw_parent));
-		strlcpy(dkw.dkw_devname, device_xname(sc->sc_dev),
-		    sizeof(dkw.dkw_devname));
 		mutex_exit(&pdk->dk_openlock);
 		mutex_exit(&pdk->dk_rawlock);
-		(void) dkwedge_del1(&dkw, flags);
+		(void)config_detach_release(sc->sc_dev, flags);
 	}
 }
 
