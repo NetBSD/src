@@ -1,85 +1,85 @@
-0semit.c
-Semit.c
-47d0.47e12extern__BoolB
-48d0.48e21extern__Complex_floatsX
-49d0.49e22extern__Complex_doubleX
-50d0.50e27extern__Complex_long_doublelX
-51d0.51e11extern_charC
-52d0.52e18extern_signed_charsC
-53d0.53e20extern_unsigned_charuC
-54d0.54e12extern_shortS
-55d0.55e19extern_signed_shortS
-56d0.56e21extern_unsigned_shortuS
-57d0.57e10extern_intI
-58d0.58e17extern_signed_intI
-59d0.59e19extern_unsigned_intuI
-60d0.60e11extern_longL
-61d0.61e18extern_signed_longL
-62d0.62e20extern_unsigned_longuL
-63d0.63e16extern_long_longQ
-64d0.64e23extern_signed_long_longQ
-65d0.65e25extern_unsigned_long_longuQ
-66d0.66e12extern_floatsD
-67d0.67e13extern_doubleD
-68d0.68e18extern_long_doublelD
-74d0.74e22extern_pointer_to_voidPV
-75d0.75e21extern_array_5_of_intA5I
-82d0.82e17extern_struct_tagsT110struct_tag
-83d0.83e21extern_struct_typedefsT214struct_typedef
-84d0.84e16extern_union_taguT19union_tag
-85d0.85e20extern_union_typedefuT213union_typedef
-86d0.86e15extern_enum_tageT18enum_tag
-87d0.87e19extern_enum_typedefeT212enum_typedef
-91d0.91e23extern_anonymous_structsT389.0.0
-94d0.94e22extern_anonymous_unionuT392.0.0
-97d0.97e21extern_anonymous_enumeT395.0.0
-105d0.105e12declared_intI
-106d0.106t11defined_intI
-114d0.114e16extern_const_intcI
-115d0.115e19extern_volatile_intvI
-116d0.116e25extern_const_volatile_intcvI
-122d0.122e30return_void_unknown_parametersFV
-123d0.123e38return_implicit_int_unknown_parametersFI
-126d0.126e32extern_return_void_no_parametersF0V
-127d0.127e25return_void_no_parametersF0V
-129d0.129es32static_return_void_no_parametersF0V
-131d0.131e10taking_intF1IV
-133d0.133e16taking_const_intF1cIV
-134d0.134e22taking_int_double_boolF3IDBV
-136d0.135e29taking_struct_union_enum_tagsF3sT110struct_taguT19union_tageT18enum_tagV
-138d0.137e33taking_struct_union_enum_typedefsF3sT214struct_typedefuT213union_typedefeT212enum_typedefV
-140d0.140e14taking_varargsF2PcCEV
-149d0.149es15static_functionF0I
-151d0.151e9my_printfF2PcCEV
-152d0.152e8my_scanfF2PcCEV
-165c0.165s2"%"i9my_printff2PcCPCV
-166c0.166s2"%s"i9my_printff2PcCPCV
-167c0.167s2"%%"i9my_printff2PcCPCV
-168c0.168s2"%\\%\"%\'%\a%\b%\f%\n%\r%\t%\v%\177"i9my_printff2PcCPCV
-163d0.163d14cover_outqcharF0V
-174c0.174s2"%-3d%+3d% d%#x%03d%*.*s%6.2f%hd%ld%Ld%qd"i9my_printff2PcCPCV
-175c0.175s2"%[-]%[--]%[---]%[]"i8my_scanff2PcCPCV
-172d0.172d14cover_outfstrgF0V
-184d0.184d17call_gcc_builtinsF2IPLV
-204d0.204v0d15varargs_commentF1PcCV
-210d0.210v0d17varargs_0_commentF1PcCV
-216d0.216v3d17varargs_3_commentF4IIIPcCV
-222d0.222d18printflike_commentF1PcCV
-228d0.228d20printflike_0_commentF1PcCV
-234d0.234v3P3d20printflike_3_commentF3IIPcCV
-240d0.240v10P10d21printflike_10_commentF10IIIIIIIIIPcCV
-248d0.248d17scanflike_commentF1PcCV
-254d0.254d19scanflike_0_commentF1PcCV
-260d0.260v3S3d19scanflike_3_commentF3IIPcCV
-265d0.265dr13used_functionF0I
-273c0.273i13used_functionf0I
-274c0.274d13used_functionf0I
-275c0.275u13used_functionf0I
-271d0.271dri15inline_functionF0I
-278d0.278e17declared_used_varI
-279d0.279t16defined_used_varI
-288u0.288x17declared_used_var
-289u0.289x16defined_used_var
-286d0.286d8use_varsF0V
-305d0.305d8compoundsT134compound_expression_in_initializer
-317d0.317d21array_of_unknown_sizeA8cC
+0 s emit.c
+S emit.c
+47 d 0.47 e 12extern__Bool B
+48 d 0.48 e 21extern__Complex_float sX
+49 d 0.49 e 22extern__Complex_double X
+50 d 0.50 e 27extern__Complex_long_double lX
+51 d 0.51 e 11extern_char C
+52 d 0.52 e 18extern_signed_char sC
+53 d 0.53 e 20extern_unsigned_char uC
+54 d 0.54 e 12extern_short S
+55 d 0.55 e 19extern_signed_short S
+56 d 0.56 e 21extern_unsigned_short uS
+57 d 0.57 e 10extern_int I
+58 d 0.58 e 17extern_signed_int I
+59 d 0.59 e 19extern_unsigned_int uI
+60 d 0.60 e 11extern_long L
+61 d 0.61 e 18extern_signed_long L
+62 d 0.62 e 20extern_unsigned_long uL
+63 d 0.63 e 16extern_long_long Q
+64 d 0.64 e 23extern_signed_long_long Q
+65 d 0.65 e 25extern_unsigned_long_long uQ
+66 d 0.66 e 12extern_float sD
+67 d 0.67 e 13extern_double D
+68 d 0.68 e 18extern_long_double lD
+74 d 0.74 e 22extern_pointer_to_void PV
+75 d 0.75 e 21extern_array_5_of_int A5I
+82 d 0.82 e 17extern_struct_tag sT1 10struct_tag
+83 d 0.83 e 21extern_struct_typedef sT2 14struct_typedef
+84 d 0.84 e 16extern_union_tag uT1 9union_tag
+85 d 0.85 e 20extern_union_typedef uT2 13union_typedef
+86 d 0.86 e 15extern_enum_tag eT1 8enum_tag
+87 d 0.87 e 19extern_enum_typedef eT2 12enum_typedef
+91 d 0.91 e 23extern_anonymous_struct sT3 89.0.0
+94 d 0.94 e 22extern_anonymous_union uT3 92.0.0
+97 d 0.97 e 21extern_anonymous_enum eT3 95.0.0
+105 d 0.105 e 12declared_int I
+106 d 0.106 t 11defined_int I
+114 d 0.114 e 16extern_const_int cI
+115 d 0.115 e 19extern_volatile_int vI
+116 d 0.116 e 25extern_const_volatile_int cvI
+122 d 0.122 e 30return_void_unknown_parameters F V
+123 d 0.123 e 38return_implicit_int_unknown_parameters F I
+126 d 0.126 e 32extern_return_void_no_parameters F0 V
+127 d 0.127 e 25return_void_no_parameters F0 V
+129 d 0.129 e s32static_return_void_no_parameters F0 V
+131 d 0.131 e 10taking_int F1 I V
+133 d 0.133 e 16taking_const_int F1 cI V
+134 d 0.134 e 22taking_int_double_bool F3 I D B V
+136 d 0.135 e 29taking_struct_union_enum_tags F3 sT1 10struct_tag uT1 9union_tag eT1 8enum_tag V
+138 d 0.137 e 33taking_struct_union_enum_typedefs F3 sT2 14struct_typedef uT2 13union_typedef eT2 12enum_typedef V
+140 d 0.140 e 14taking_varargs F2 PcC E V
+149 d 0.149 e s 15static_function F0 I
+151 d 0.151 e 9my_printf F2 PcC E V
+152 d 0.152 e 8my_scanf F2 PcC E V
+165 c 0.165 s2 "%" i 9my_printf f2 PcC PC V
+166 c 0.166 s2 "%s" i 9my_printf f2 PcC PC V
+167 c 0.167 s2 "%%" i 9my_printf f2 PcC PC V
+168 c 0.168 s2 "%\\%\"%\'%\a%\b%\f%\n%\r%\t%\v%\177" i 9my_printf f2 PcC PC V
+163 d 0.163 d 14cover_outqchar F0 V
+174 c 0.174 s2 "%-3d%+3d% d%#x%03d%*.*s%6.2f%hd%ld%Ld%qd" i 9my_printf f2 PcC PC V
+175 c 0.175 s2 "%[-]%[--]%[---]%[]" i 8my_scanf f2 PcC PC V
+172 d 0.172 d 14cover_outfstrg F0 V
+184 d 0.184 d 17call_gcc_builtins F2 I PL V
+204 d 0.204 v0 d 15varargs_comment F1 PcC V
+210 d 0.210 v0 d 17varargs_0_comment F1 PcC V
+216 d 0.216 v3 d 17varargs_3_comment F4 I I I PcC V
+222 d 0.222 d 18printflike_comment F1 PcC V
+228 d 0.228 d 20printflike_0_comment F1 PcC V
+234 d 0.234 v 3P3d20printflike_3_comment F3 I I PcC V
+240 d 0.240 v 10P10d21printflike_10_comment F10 I I I I I I I I I PcC V
+248 d 0.248 d 17scanflike_comment F1 PcC V
+254 d 0.254 d 19scanflike_0_comment F1 PcC V
+260 d 0.260 v 3S3d19scanflike_3_comment F3 I I PcC V
+265 d 0.265 d r13used_function F0 I
+273 c 0.273 i 13used_function f0 I
+274 c 0.274 d 13used_function f0 I
+275 c 0.275 u 13used_function f0 I
+271 d 0.271 d ri15inline_function F0 I
+278 d 0.278 e 17declared_used_var I
+279 d 0.279 t 16defined_used_var I
+288 u 0.288 x 17declared_used_var
+289 u 0.289 x 16defined_used_var
+286 d 0.286 d 8use_vars F0 V
+305 d 0.305 d 8compound sT1 34compound_expression_in_initializer
+317 d 0.317 d 21array_of_unknown_size A8cC
