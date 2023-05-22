@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.168 2023/05/22 14:59:50 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.169 2023/05/22 14:59:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.168 2023/05/22 14:59:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.169 2023/05/22 14:59:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1477,6 +1477,7 @@ dkstrategy(struct buf *bp)
 	uint64_t p_size, p_offset;
 
 	KASSERT(sc != NULL);
+	KASSERT(sc->sc_dev != NULL);
 	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
 	KASSERT(sc->sc_state != DKW_STATE_DEAD);
 	KASSERT(sc->sc_parent->dk_rawvp != NULL);
@@ -1605,6 +1606,9 @@ dkiodone(struct buf *bp)
 	struct buf *obp = bp->b_private;
 	struct dkwedge_softc *sc = dkwedge_lookup(obp->b_dev);
 
+	KASSERT(sc != NULL);
+	KASSERT(sc->sc_dev != NULL);
+
 	if (bp->b_error != 0)
 		obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;
@@ -1646,6 +1650,9 @@ dkminphys(struct buf *bp)
 	struct dkwedge_softc *sc = dkwedge_lookup(bp->b_dev);
 	dev_t dev;
 
+	KASSERT(sc != NULL);
+	KASSERT(sc->sc_dev != NULL);
+
 	dev = bp->b_dev;
 	bp->b_dev = sc->sc_pdev;
 	if (sc->sc_parent->dk_driver && sc->sc_parent->dk_driver->d_minphys)
@@ -1666,6 +1673,7 @@ dkread(dev_t dev, struct uio *uio, int flags)
 	struct dkwedge_softc *sc __diagused = dkwedge_lookup(dev);
 
 	KASSERT(sc != NULL);
+	KASSERT(sc->sc_dev != NULL);
 	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
 	KASSERT(sc->sc_state != DKW_STATE_DEAD);
 
@@ -1683,6 +1691,7 @@ dkwrite(dev_t dev, struct uio *uio, int flags)
 	struct dkwedge_softc *sc __diagused = dkwedge_lookup(dev);
 
 	KASSERT(sc != NULL);
+	KASSERT(sc->sc_dev != NULL);
 	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
 	KASSERT(sc->sc_state != DKW_STATE_DEAD);
 
@@ -1701,6 +1710,7 @@ dkioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int error = 0;
 
 	KASSERT(sc != NULL);
+	KASSERT(sc->sc_dev != NULL);
 	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
 	KASSERT(sc->sc_state != DKW_STATE_DEAD);
 	KASSERT(sc->sc_parent->dk_rawvp != NULL);
@@ -1776,6 +1786,7 @@ dkdiscard(dev_t dev, off_t pos, off_t len)
 	int error;
 
 	KASSERT(sc != NULL);
+	KASSERT(sc->sc_dev != NULL);
 	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
 	KASSERT(sc->sc_state != DKW_STATE_DEAD);
 	KASSERT(sc->sc_parent->dk_rawvp != NULL);
