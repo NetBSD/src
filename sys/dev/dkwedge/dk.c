@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.162 2023/05/22 14:58:59 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.163 2023/05/22 14:59:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.162 2023/05/22 14:58:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.163 2023/05/22 14:59:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -849,7 +849,7 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 		if (uio.uio_resid < sizeof(dkw))
 			break;
 
-		if (sc->sc_state != DKW_STATE_RUNNING)
+		if (sc->sc_dev == NULL)
 			continue;
 
 		strlcpy(dkw.dkw_devname, device_xname(sc->sc_dev),
@@ -882,7 +882,7 @@ dkwedge_find_by_wname(const char *wname)
 
 	rw_enter(&dkwedges_lock, RW_READER);
 	for (i = 0; i < ndkwedges; i++) {
-		if ((sc = dkwedges[i]) == NULL)
+		if ((sc = dkwedges[i]) == NULL || sc->sc_dev == NULL)
 			continue;
 		if (strcmp(sc->sc_wname, wname) == 0) {
 			if (dv != NULL) {
@@ -906,7 +906,7 @@ dkwedge_find_by_parent(const char *name, size_t *i)
 	rw_enter(&dkwedges_lock, RW_READER);
 	for (; *i < (size_t)ndkwedges; (*i)++) {
 		struct dkwedge_softc *sc;
-		if ((sc = dkwedges[*i]) == NULL)
+		if ((sc = dkwedges[*i]) == NULL || sc->sc_dev == NULL)
 			continue;
 		if (strcmp(sc->sc_parent->dk_name, name) != 0)
 			continue;
@@ -925,7 +925,7 @@ dkwedge_print_wnames(void)
 
 	rw_enter(&dkwedges_lock, RW_READER);
 	for (i = 0; i < ndkwedges; i++) {
-		if ((sc = dkwedges[i]) == NULL)
+		if ((sc = dkwedges[i]) == NULL || sc->sc_dev == NULL)
 			continue;
 		printf(" wedge:%s", sc->sc_wname);
 	}
@@ -1844,7 +1844,7 @@ dkwedge_find_partition(device_t parent, daddr_t startblk, uint64_t nblks)
 
 	rw_enter(&dkwedges_lock, RW_READER);
 	for (i = 0; i < ndkwedges; i++) {
-		if ((sc = dkwedges[i]) == NULL)
+		if ((sc = dkwedges[i]) == NULL || sc->sc_dev == NULL)
 			continue;
 		if (strcmp(sc->sc_parent->dk_name, device_xname(parent)) == 0 &&
 		    sc->sc_offset == startblk &&
