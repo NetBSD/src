@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.169 2023/05/22 14:59:58 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.170 2023/05/22 15:00:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.169 2023/05/22 14:59:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.170 2023/05/22 15:00:06 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1824,6 +1824,11 @@ dkdiscard(dev_t dev, off_t pos, off_t len)
 static int
 dksize(dev_t dev)
 {
+	/*
+	 * Don't bother taking a reference because this is only used
+	 * either (a) while the device is open (for swap), or (b) while
+	 * any multiprocessing is quiescent (for crash dumps).
+	 */
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	uint64_t p_size;
 	int rv = -1;
@@ -1855,6 +1860,10 @@ dksize(dev_t dev)
 static int
 dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
 {
+	/*
+	 * Don't bother taking a reference because this is only used
+	 * while any multiprocessing is quiescent.
+	 */
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 	const struct bdevsw *bdev;
 	uint64_t p_size, p_offset;
