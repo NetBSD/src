@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.506 2023/02/09 14:09:48 abs Exp $
+# $NetBSD: ALL,v 1.507 2023/05/22 16:28:25 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.506 $"
+#ident		"ALL-$Revision: 1.507 $"
 
 maxusers	64		# estimated number of users
 
@@ -1810,9 +1810,9 @@ pseudo-device	pad
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
 
-# EFI runtime support -- doesn't build yet
-#options 	EFI_RUNTIME
-#pseudo-device 	efi			# /dev/efi
+# EFI runtime support
+options 	EFI_RUNTIME
+pseudo-device 	efi			# /dev/efi
 
 # Pass-to-Userspace Transporter
 pseudo-device	putter
