@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.102 2023/02/22 08:09:09 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.103 2023/05/22 02:12:13 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.102 2023/02/22 08:09:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.103 2023/05/22 02:12:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -138,22 +138,14 @@ mii_phy_setmedia(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	u_int subtype;
 	uint16_t bmcr, anar, gtcr;
 
 	KASSERT(mii_locked(mii));
 
-	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
-		/*
-		 * Force renegotiation if MIIF_DOPAUSE.
-		 *
-		 * XXX This is only necessary because many NICs don't
-		 * XXX advertise PAUSE capabilities at boot time.  Maybe
-		 * XXX we should force this only once?
-		 */
-		PHY_READ(sc, MII_BMCR, &bmcr);
-		if ((bmcr & BMCR_AUTOEN) == 0 ||
-		    (sc->mii_flags & (MIIF_FORCEANEG | MIIF_DOPAUSE)))
-			(void) mii_phy_auto(sc);
+	subtype = IFM_SUBTYPE(ife->ifm_media);
+	if ((subtype == IFM_AUTO) || (subtype == IFM_1000_T)) {
+		(void) mii_phy_auto(sc);
 		return;
 	}
 
@@ -169,7 +161,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 	gtcr = mii_media_table[ife->ifm_data].mm_gtcr;
 
 	if (mii->mii_media.ifm_media & IFM_ETH_MASTER) {
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
+		switch (subtype) {
 		case IFM_1000_T:
 			gtcr |= GTCR_MAN_MS | GTCR_ADV_MS;
 			break;
@@ -198,10 +190,7 @@ mii_phy_setmedia(struct mii_softc *sc)
 	PHY_WRITE(sc, MII_ANAR, anar);
 	if (sc->mii_flags & MIIF_HAVE_GTCR)
 		PHY_WRITE(sc, MII_100T2CR, gtcr);
-	if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T)
-		mii_phy_auto(sc);
-	else
-		PHY_WRITE(sc, MII_BMCR, bmcr);
+	PHY_WRITE(sc, MII_BMCR, bmcr);
 }
 
 /* Setup autonegotiation and start it. */
