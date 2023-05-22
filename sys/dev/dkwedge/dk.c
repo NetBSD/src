@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.163 2023/05/22 14:59:07 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.164 2023/05/22 14:59:16 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.163 2023/05/22 14:59:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.164 2023/05/22 14:59:16 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -862,9 +862,19 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 		dkw.dkw_size = dkwedge_size(sc);
 		strlcpy(dkw.dkw_ptype, sc->sc_ptype, sizeof(dkw.dkw_ptype));
 
+		/*
+		 * Acquire a device reference so this wedge doesn't go
+		 * away before our next iteration in LIST_FOREACH, and
+		 * then release the lock for uiomove.
+		 */
+		device_acquire(sc->sc_dev);
+		mutex_exit(&pdk->dk_openlock);
 		error = uiomove(&dkw, sizeof(dkw), &uio);
+		mutex_enter(&pdk->dk_openlock);
+		device_release(sc->sc_dev);
 		if (error)
 			break;
+
 		dkwl->dkwl_ncopied++;
 	}
 	dkwl->dkwl_nwedges = pdk->dk_nwedges;
