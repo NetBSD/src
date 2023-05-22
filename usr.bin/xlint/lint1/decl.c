@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.311 2023/05/22 12:55:04 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.312 2023/05/22 17:47:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.311 2023/05/22 12:55:04 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.312 2023/05/22 17:47:27 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1946,7 +1946,7 @@ check_extern_declaration(const sym_t *sym)
 
 /* Process a single external or 'static' declarator. */
 static void
-declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
+declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
 {
 
 	if (renaming != NULL) {
@@ -1963,7 +1963,7 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 
 	check_type(dsym);
 
-	if (initflg && !check_init(dsym))
+	if (has_initializer && !check_init(dsym))
 		dsym->s_def = DEF;
 
 	/*
@@ -2061,25 +2061,25 @@ declare_extern(sym_t *dsym, bool initflg, sbuf_t *renaming)
 }
 
 void
-declare(sym_t *decl, bool initflg, sbuf_t *renaming)
+declare(sym_t *decl, bool has_initializer, sbuf_t *renaming)
 {
 
 	if (dcs->d_kind == DK_EXTERN)
-		declare_extern(decl, initflg, renaming);
+		declare_extern(decl, has_initializer, renaming);
 	else if (dcs->d_kind == DK_OLD_STYLE_ARG ||
 		 dcs->d_kind == DK_PROTO_ARG) {
 		if (renaming != NULL) {
 			/* symbol renaming can't be used on function arguments */
 			error(310);
 		} else
-			(void)declare_argument(decl, initflg);
+			(void)declare_argument(decl, has_initializer);
 	} else {
 		lint_assert(dcs->d_kind == DK_AUTO);
 		if (renaming != NULL) {
 			/* symbol renaming can't be used on automatic variables */
 			error(311);
 		} else
-			declare_local(decl, initflg);
+			declare_local(decl, has_initializer);
 	}
 }
 
@@ -2414,7 +2414,7 @@ complete_type(sym_t *dsym, sym_t *ssym)
  * Completes the declaration of a single argument.
  */
 sym_t *
-declare_argument(sym_t *sym, bool initflg)
+declare_argument(sym_t *sym, bool has_initializer)
 {
 	tspec_t t;
 
@@ -2436,7 +2436,7 @@ declare_argument(sym_t *sym, bool initflg)
 		sym->s_arg = true;
 	}
 
-	if (initflg) {
+	if (has_initializer) {
 		/* cannot initialize parameter '%s' */
 		error(52, sym->s_name);
 	}
@@ -2720,7 +2720,7 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rsym)
  * Completes a single local declaration/definition.
  */
 void
-declare_local(sym_t *dsym, bool initflg)
+declare_local(sym_t *dsym, bool has_initializer)
 {
 
 	/* Correct a mistake done in declarator_name(). */
@@ -2785,7 +2785,7 @@ declare_local(sym_t *dsym, bool initflg)
 	if (dcs->d_redeclared_symbol != NULL)
 		check_local_redeclaration(dsym, dcs->d_redeclared_symbol);
 
-	if (initflg && !check_init(dsym)) {
+	if (has_initializer && !check_init(dsym)) {
 		dsym->s_def = DEF;
 		mark_as_set(dsym);
 	}
