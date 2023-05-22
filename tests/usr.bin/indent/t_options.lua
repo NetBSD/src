@@ -1,4 +1,4 @@
--- $NetBSD: t_options.lua,v 1.3 2023/05/21 10:18:44 rillig Exp $
+-- $NetBSD: t_options.lua,v 1.4 2023/05/22 06:35:56 rillig Exp $
 --
 -- Copyright (c) 2023 The NetBSD Foundation, Inc.
 -- All rights reserved.
@@ -24,6 +24,8 @@
 -- ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 -- POSSIBILITY OF SUCH DAMAGE.
 
+-- usage: [INDENT=...] lua t_options.lua <file>...
+--
 -- Test driver for indent that runs indent on several inputs, checks the
 -- output and can run indent with different command line options on the same
 -- input.
@@ -32,11 +34,11 @@
 -- and the output, all as close together as possible. The test files use the
 -- following directives:
 --
---	//indent input [description]
+--	//indent input
 --		Specifies the input to be formatted.
 --	//indent run [options]
 --		Runs indent on the input, using the given options.
---	//indent end [description]
+--	//indent end
 --		Finishes an '//indent input' or '//indent run' section.
 --	//indent run-equals-input [options]
 --		Runs indent on the input, expecting unmodified output.
@@ -124,16 +126,14 @@ end
 
 local function run_indent(inp, args)
 	local indent = os.getenv("INDENT") or "indent"
-	local cmd = indent .. " " .. args .. " indent.in -st"
+	local cmd = indent .. " " .. args .. " 2>&1"
 
-	local indent_in = assert(io.open("indent.in", "w"))
+	local indent_in = assert(io.popen(cmd, "w"))
 	indent_in:write(inp)
-	indent_in:close()
-	local ok, kind, info = os.execute(cmd)
+	local ok, kind, info = indent_in:close()
 	if not ok then
 		print(kind .. " " .. info)
 	end
-	os.remove("indent.in")
 end
 
 local function handle_empty_section(line)
@@ -236,7 +236,9 @@ local function handle_indent_directive(line, command, args)
 	print(line)
 	expected_out:write(line .. "\n")
 
-	if command == "input" and args == "" then
+	if command == "input" and args ~= "" then
+		warn(lineno, "'//indent input' does not take arguments")
+	elseif command == "input" then
 		handle_indent_input()
 	elseif command == "run" then
 		handle_indent_run(args)
