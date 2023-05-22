@@ -1,4 +1,4 @@
-/* $NetBSD: edge_cases.c,v 1.1 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: edge_cases.c,v 1.2 2023/05/22 23:01:27 rillig Exp $ */
 
 /*
  * Tests for edge cases in the C programming language that indent does not
@@ -7,7 +7,8 @@
 
 /*
  * Digraphs are replacements for the characters '[', '{' and '#', which are
- * missing in some exotic restricted source character sets.
+ * missing in some exotic restricted source character sets.  They are not used
+ * in practice, therefore indent doesn't need to support them.
  *
  * See C99 6.4.6
  */
@@ -28,12 +29,15 @@ void
 digraphs(void)
 {
 	/* same as 'array[subscript]' */
-// $ XXX: The indentation is completely wrong.
-// $ XXX: The space between 'array' and '<' doesn't belong there.
+// $ Indent interprets everything before the second ':' as a label name,
+// $ therefore the statement is indented that far to the left.
+// $
+// $ The space between 'array' and '<' comes from the binary operator '<'.
 number = array <:subscript:>;
 
 	/* same as '(int){ initializer }' */
-// $ XXX: The space between '%' and '>' doesn't belong there.
+// $ The opening '<' and '%' are interpreted as unary operators.
+// $ The closing '%' and '>' are interpreted as a binary and unary operator.
 	number = (int)<%initializer % >;
 }
 //indent end

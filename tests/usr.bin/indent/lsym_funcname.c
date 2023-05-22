@@ -1,10 +1,8 @@
-/* $NetBSD: lsym_funcname.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: lsym_funcname.c,v 1.5 2023/05/22 23:01:27 rillig Exp $ */
 
 /*
- * Tests for the token lsym_funcname, which is an identifier that is followed
- * by an opening parenthesis.
- *
- * TODO: Document how lsym_funcname is handled differently from lsym_word.
+ * Tests for the token lsym_funcname, which is the name of a function, but only
+ * in a function definition, not in a declaration or a call expression.
  *
  * See also:
  *	lsym_word.c
