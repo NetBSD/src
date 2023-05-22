@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.313 2023/05/22 17:53:27 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.314 2023/05/22 18:10:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.313 2023/05/22 17:53:27 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.314 2023/05/22 18:10:57 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1997,8 +1997,8 @@ declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
 		outsym(dsym, dsym->s_scl, dsym->s_def);
 	}
 
-	sym_t *rdsym;
-	if ((rdsym = dcs->d_redeclared_symbol) != NULL) {
+	sym_t *rdsym = dcs->d_redeclared_symbol;
+	if (rdsym != NULL) {
 
 		/*
 		 * If the old symbol stems from an old-style function
@@ -2107,58 +2107,58 @@ bool
 check_redeclaration(sym_t *dsym, bool *dowarn)
 {
 
-	sym_t *rsym = dcs->d_redeclared_symbol;
-	if (rsym->s_scl == ENUM_CONST) {
+	sym_t *rdsym = dcs->d_redeclared_symbol;
+	if (rdsym->s_scl == ENUM_CONST) {
 		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
-		print_previous_declaration(rsym);
+		print_previous_declaration(rdsym);
 		return true;
 	}
-	if (rsym->s_scl == TYPEDEF) {
+	if (rdsym->s_scl == TYPEDEF) {
 		/* typedef '%s' redeclared */
 		error(89, dsym->s_name);
-		print_previous_declaration(rsym);
+		print_previous_declaration(rdsym);
 		return true;
 	}
 	if (dsym->s_scl == TYPEDEF) {
 		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
-		print_previous_declaration(rsym);
+		print_previous_declaration(rdsym);
 		return true;
 	}
-	if (rsym->s_def == DEF && dsym->s_def == DEF) {
+	if (rdsym->s_def == DEF && dsym->s_def == DEF) {
 		/* redefinition of '%s' */
 		error(28, dsym->s_name);
-		print_previous_declaration(rsym);
+		print_previous_declaration(rdsym);
 		return true;
 	}
-	if (!types_compatible(rsym->s_type, dsym->s_type, false, false, dowarn)) {
+	if (!types_compatible(rdsym->s_type, dsym->s_type, false, false, dowarn)) {
 		/* redeclaration of '%s' with type '%s', expected '%s' */
 		error(347, dsym->s_name,
-		    type_name(dsym->s_type), type_name(rsym->s_type));
-		print_previous_declaration(rsym);
+		    type_name(dsym->s_type), type_name(rdsym->s_type));
+		print_previous_declaration(rdsym);
 		return true;
 	}
-	if (rsym->s_scl == EXTERN && dsym->s_scl == EXTERN)
+	if (rdsym->s_scl == EXTERN && dsym->s_scl == EXTERN)
 		return false;
-	if (rsym->s_scl == STATIC && dsym->s_scl == STATIC)
+	if (rdsym->s_scl == STATIC && dsym->s_scl == STATIC)
 		return false;
-	if (rsym->s_scl == STATIC && dsym->s_def == DECL)
+	if (rdsym->s_scl == STATIC && dsym->s_def == DECL)
 		return false;
-	if (rsym->s_scl == EXTERN && rsym->s_def == DEF) {
+	if (rdsym->s_scl == EXTERN && rdsym->s_def == DEF) {
 		/*
 		 * All cases except "int a = 1; static int a;" are caught
 		 * above with or without a warning
 		 */
 		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
-		print_previous_declaration(rsym);
+		print_previous_declaration(rdsym);
 		return true;
 	}
-	if (rsym->s_scl == EXTERN) {
+	if (rdsym->s_scl == EXTERN) {
 		/* '%s' was previously declared extern, becomes static */
 		warning(29, dsym->s_name);
-		print_previous_declaration(rsym);
+		print_previous_declaration(rdsym);
 		return false;
 	}
 	/*
@@ -2169,7 +2169,7 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 	if (!allow_trad && !allow_c99) {
 		/* redeclaration of '%s'; ANSI C requires static */
 		warning(30, dsym->s_name);
-		print_previous_declaration(rsym);
+		print_previous_declaration(rdsym);
 	}
 	dsym->s_scl = STATIC;
 	return false;
@@ -2680,16 +2680,16 @@ check_local_hiding(const sym_t *dsym)
 }
 
 static void
-check_local_redeclaration(const sym_t *dsym, sym_t *rsym)
+check_local_redeclaration(const sym_t *dsym, sym_t *rdsym)
 {
-	if (rsym->s_block_level == 0) {
+	if (rdsym->s_block_level == 0) {
 		if (hflag)
 			check_local_hiding(dsym);
 
-	} else if (rsym->s_block_level == block_level) {
+	} else if (rdsym->s_block_level == block_level) {
 
 		/* no hflag, because it's illegal! */
-		if (rsym->s_arg) {
+		if (rdsym->s_arg) {
 			/*
 			 * if allow_c90, a "redeclaration of '%s'" error
 			 * is produced below
@@ -2699,21 +2699,21 @@ check_local_redeclaration(const sym_t *dsym, sym_t *rsym)
 					/* declaration of '%s' hides ... */
 					warning(91, dsym->s_name);
 				}
-				rmsym(rsym);
+				rmsym(rdsym);
 			}
 		}
 
-	} else if (rsym->s_block_level < block_level) {
+	} else if (rdsym->s_block_level < block_level) {
 		if (hflag) {
 			/* declaration of '%s' hides earlier one */
 			warning(95, dsym->s_name);
 		}
 	}
 
-	if (rsym->s_block_level == block_level) {
+	if (rdsym->s_block_level == block_level) {
 		/* redeclaration of '%s' */
 		error(27, dsym->s_name);
-		rmsym(rsym);
+		rmsym(rdsym);
 	}
 }
 
