@@ -1,4 +1,4 @@
-/*	$NetBSD: intelfb.c,v 1.24 2022/07/18 23:34:02 riastradh Exp $	*/
+/*	$NetBSD: intelfb.c,v 1.25 2023/05/22 22:36:53 nat Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.24 2022/07/18 23:34:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intelfb.c,v 1.25 2023/05/22 22:36:53 nat Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -181,8 +181,8 @@ intelfb_drmfb_mmapfb(struct drmfb_softc *drmfb, off_t offset, int prot)
 	KASSERT(0 <= offset);
 	KASSERT(offset < vma->node.size);
 
-	return bus_space_mmap(dev->bst, ggtt->gmadr.start, vma->node.start,
-	    prot, BUS_SPACE_MAP_PREFETCHABLE);
+	return bus_space_mmap(dev->bst, ggtt->gmadr.start,
+	    vma->node.start + offset, prot, BUS_SPACE_MAP_PREFETCHABLE);
 }
 
 static void
