@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1324 2023/05/15 16:12:39 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1325 2023/05/22 12:55:45 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -454,6 +454,7 @@ TOOL_GROFF_ENV= \
     GROFF_FONT_PATH=${GROFF_SHARE_PATH}/site-font:${GROFF_SHARE_PATH}/font \
     GROFF_TMAC_PATH=${GROFF_SHARE_PATH}/site-tmac:${GROFF_SHARE_PATH}/tmac
 TOOL_GROFF=		${TOOL_GROFF_ENV} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff ${GROFF_FLAGS}
+TOOL_GROPS=		${TOOL_GROFF_ENV} ${TOOLDIR}/lib/groff/grops
 
 TOOL_HEXDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
 TOOL_HP300MKBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}hp300-mkboot
@@ -571,6 +572,7 @@ TOOL_GMAKE=		gmake
 TOOL_GPT=		gpt
 TOOL_GREP=		grep
 TOOL_GROFF=		groff
+TOOL_GROPS=		grops
 TOOL_HEXDUMP=		hexdump
 TOOL_HP300MKBOOT=	hp300-mkboot
 TOOL_HPPAMKBOOT=	hppa-mkboot
@@ -1741,6 +1743,7 @@ _MKMSG_REMOVE?=		${_MKMSG} " remove "
 _MKMSG_YACC?=		${_MKMSG} "   yacc "
 
 _MKSHMSG_CREATE?=	${_MKSHMSG} " create "
+_MKSHMSG_FORMAT?=	${_MKSHMSG} " format "
 _MKSHMSG_INSTALL?=	${_MKSHMSG} "install "
 
 _MKTARGET_BUILD?=	${_MKMSG_BUILD} ${.CURDIR:T}/${.TARGET}
