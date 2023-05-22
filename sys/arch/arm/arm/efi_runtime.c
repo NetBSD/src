@@ -1,4 +1,4 @@
-/* $NetBSD: efi_runtime.c,v 1.10 2022/10/15 11:19:23 jmcneill Exp $ */
+/* $NetBSD: efi_runtime.c,v 1.11 2023/05/22 16:27:48 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.10 2022/10/15 11:19:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.11 2023/05/22 16:27:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -44,15 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: efi_runtime.c,v 1.10 2022/10/15 11:19:23 jmcneill Ex
 
 #include <arm/arm/efi_runtime.h>
 #include <arm/bootconfig.h>
-
-#ifdef _LP64
-#define	EFIERR(x)	(0x8000000000000000 | x)
-#else
-#define	EFIERR(x)	(0x80000000 | x)
-#endif
-
-#define	EFI_UNSUPPORTED		EFIERR(3)
-#define	EFI_DEVICE_ERROR	EFIERR(7)
 
 static kmutex_t efi_lock;
 static struct efi_rt *RT;
