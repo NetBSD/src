@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.15 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.16 2023/05/22 11:51:46 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -307,3 +307,12 @@ struct compound_expression_in_initializer compound = {
 		[0] = "zero",
 	},
 };
+
+/*
+ * FIXME: The type that ends up in the .ln file is 'A0cC', which is wrong as it
+ * has array size 0 instead of the correct 8.
+ *
+ * This is caused by cgram_declare being called before processing the
+ * initializer.
+ */
+const char array_of_unknown_size[] = "unknown";
