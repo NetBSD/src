@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.158 2023/05/13 10:11:36 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.159 2023/05/22 14:58:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.158 2023/05/13 10:11:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.159 2023/05/22 14:58:32 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -98,6 +98,8 @@ struct dkwedge_softc {
 static int	dkwedge_match(device_t, cfdata_t, void *);
 static void	dkwedge_attach(device_t, device_t, void *);
 static int	dkwedge_detach(device_t, int);
+
+static void	dk_set_geometry(struct dkwedge_softc *, struct disk *);
 
 static void	dkstart(struct dkwedge_softc *);
 static void	dkiodone(struct buf *);
@@ -190,9 +192,34 @@ dkwedge_match(device_t parent, cfdata_t match, void *aux)
 static void
 dkwedge_attach(device_t parent, device_t self, void *aux)
 {
+	struct dkwedge_softc *sc = aux;
+	struct disk *pdk = sc->sc_parent;
+	int unit = device_unit(self);
+
+	KASSERTMSG(unit >= 0, "unit=%d", unit);
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	mutex_enter(&pdk->dk_openlock);
+	rw_enter(&dkwedges_lock, RW_WRITER);
+	KASSERTMSG(unit < ndkwedges, "unit=%d ndkwedges=%u", unit, ndkwedges);
+	KASSERTMSG(sc == dkwedges[unit], "sc=%p dkwedges[%d]=%p",
+	    sc, unit, dkwedges[unit]);
+	KASSERTMSG(sc->sc_dev == NULL, "sc=%p sc->sc_dev=%p", sc, sc->sc_dev);
+	sc->sc_dev = self;
+	rw_exit(&dkwedges_lock);
+	mutex_exit(&pdk->dk_openlock);
+
+	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
+	mutex_enter(&pdk->dk_openlock);
+	dk_set_geometry(sc, pdk);
+	mutex_exit(&pdk->dk_openlock);
+	disk_attach(&sc->sc_dk);
+
+	/* Disk wedge is ready for use! */
+	device_set_private(self, sc);
+	sc->sc_state = DKW_STATE_RUNNING;
 }
 
 /*
@@ -364,6 +391,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	u_int unit;
 	int error;
 	dev_t pdev;
+	device_t dev __diagused;
 
 	dkw->dkw_parent[sizeof(dkw->dkw_parent) - 1] = '\0';
 	pdk = disk_find(dkw->dkw_parent);
@@ -393,8 +421,11 @@ dkwedge_add(struct dkwedge_info *dkw)
 			break;
 		if (dkwedge_size(lsc) > dkw->dkw_size)
 			break;
+		if (lsc->sc_dev == NULL)
+			break;
 
 		sc = lsc;
+		device_acquire(sc->sc_dev);
 		dkwedge_size_increase(sc, dkw->dkw_size);
 		dk_set_geometry(sc, pdk);
 
@@ -477,7 +508,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	sc->sc_cfdata.cf_name = dk_cd.cd_name;
 	sc->sc_cfdata.cf_atname = dk_ca.ca_name;
 	/* sc->sc_cfdata.cf_unit set below */
-	sc->sc_cfdata.cf_fstate = FSTATE_STAR;
+	sc->sc_cfdata.cf_fstate = FSTATE_NOTFOUND; /* use chosen cf_unit */
 
 	/* Insert the larval wedge into the array. */
 	rw_enter(&dkwedges_lock, RW_WRITER);
@@ -538,7 +569,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 	 * This should never fail, unless we're almost totally out of
 	 * memory.
 	 */
-	if ((sc->sc_dev = config_attach_pseudo(&sc->sc_cfdata)) == NULL) {
+	if ((dev = config_attach_pseudo_acquire(&sc->sc_cfdata, sc)) == NULL) {
 		aprint_error("%s%u: unable to attach pseudo-device\n",
 		    sc->sc_cfdata.cf_name, sc->sc_cfdata.cf_unit);
 
@@ -559,19 +590,7 @@ dkwedge_add(struct dkwedge_info *dkw)
 		return ENOMEM;
 	}
 
-	/*
-	 * XXX Really ought to make the disk_attach() and the changing
-	 * of state to RUNNING atomic.
-	 */
-
-	disk_init(&sc->sc_dk, device_xname(sc->sc_dev), NULL);
-	mutex_enter(&pdk->dk_openlock);
-	dk_set_geometry(sc, pdk);
-	mutex_exit(&pdk->dk_openlock);
-	disk_attach(&sc->sc_dk);
-
-	/* Disk wedge is ready for use! */
-	sc->sc_state = DKW_STATE_RUNNING;
+	KASSERT(dev == sc->sc_dev);
 
 announce:
 	/* Announce our arrival. */
@@ -586,11 +605,12 @@ announce:
 	strlcpy(dkw->dkw_devname, device_xname(sc->sc_dev),
 	    sizeof(dkw->dkw_devname));
 
+	device_release(sc->sc_dev);
 	return 0;
 }
 
 /*
- * dkwedge_find:
+ * dkwedge_find_acquire:
  *
  *	Lookup a disk wedge based on the provided information.
  *	NOTE: We look up the wedge based on the wedge devname,
@@ -598,10 +618,11 @@ announce:
  *
  *	Return NULL if the wedge is not found, otherwise return
  *	the wedge's softc.  Assign the wedge's unit number to unitp
- *	if unitp is not NULL.
+ *	if unitp is not NULL.  The wedge's sc_dev is referenced and
+ *	must be released by device_release or equivalent.
  */
 static struct dkwedge_softc *
-dkwedge_find(struct dkwedge_info *dkw, u_int *unitp)
+dkwedge_find_acquire(struct dkwedge_info *dkw, u_int *unitp)
 {
 	struct dkwedge_softc *sc = NULL;
 	u_int unit;
@@ -611,8 +632,10 @@ dkwedge_find(struct dkwedge_info *dkw, u_int *unitp)
 	rw_enter(&dkwedges_lock, RW_READER);
 	for (unit = 0; unit < ndkwedges; unit++) {
 		if ((sc = dkwedges[unit]) != NULL &&
+		    sc->sc_dev != NULL &&
 		    strcmp(device_xname(sc->sc_dev), dkw->dkw_devname) == 0 &&
 		    strcmp(sc->sc_parent->dk_name, dkw->dkw_parent) == 0) {
+			device_acquire(sc->sc_dev);
 			break;
 		}
 	}
@@ -646,10 +669,10 @@ dkwedge_del1(struct dkwedge_info *dkw, int flags)
 	struct dkwedge_softc *sc = NULL;
 
 	/* Find our softc. */
-	if ((sc = dkwedge_find(dkw, NULL)) == NULL)
+	if ((sc = dkwedge_find_acquire(dkw, NULL)) == NULL)
 		return ESRCH;
 
-	return config_detach(sc->sc_dev, flags);
+	return config_detach_release(sc->sc_dev, flags);
 }
 
 /*
@@ -660,26 +683,16 @@ dkwedge_del1(struct dkwedge_info *dkw, int flags)
 static int
 dkwedge_detach(device_t self, int flags)
 {
-	struct dkwedge_softc *sc = NULL;
-	u_int unit;
-	int bmaj, cmaj, rc;
+	struct dkwedge_softc *const sc = device_private(self);
+	const u_int unit = device_unit(self);
+	int bmaj, cmaj, error;
 
-	rw_enter(&dkwedges_lock, RW_WRITER);
-	for (unit = 0; unit < ndkwedges; unit++) {
-		if ((sc = dkwedges[unit]) != NULL && sc->sc_dev == self)
-			break;
-	}
-	if (unit == ndkwedges)
-		rc = ENXIO;
-	else if ((rc = disk_begindetach(&sc->sc_dk, /*lastclose*/NULL, self,
-		    flags)) == 0) {
-		/* Mark the wedge as dying. */
-		sc->sc_state = DKW_STATE_DYING;
-	}
-	rw_exit(&dkwedges_lock);
+	error = disk_begindetach(&sc->sc_dk, /*lastclose*/NULL, self, flags);
+	if (error)
+		return error;
 
-	if (rc != 0)
-		return rc;
+	/* Mark the wedge as dying. */
+	sc->sc_state = DKW_STATE_DYING;
 
 	pmf_device_deregister(self);
 
@@ -1147,6 +1160,8 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
  * dkwedge_lookup:
  *
  *	Look up a dkwedge_softc based on the provided dev_t.
+ *
+ *	Caller must guarantee the wedge is referenced.
  */
 static struct dkwedge_softc *
 dkwedge_lookup(dev_t dev)
