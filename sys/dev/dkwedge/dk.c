@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.167 2023/05/22 14:59:42 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.168 2023/05/22 14:59:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.167 2023/05/22 14:59:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.168 2023/05/22 14:59:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -1404,11 +1404,16 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct dkwedge_softc *sc = dkwedge_lookup(dev);
 
+	/*
+	 * dkclose can be called even if dkopen didn't succeed, so we
+	 * have to handle the same possibility that the wedge may not
+	 * exist.
+	 */
 	if (sc == NULL)
 		return ENXIO;
-	if (sc->sc_state != DKW_STATE_RUNNING &&
-	    sc->sc_state != DKW_STATE_DYING)
-		return ENXIO;
+	KASSERT(sc->sc_dev != NULL);
+	KASSERT(sc->sc_state != DKW_STATE_LARVAL);
+	KASSERT(sc->sc_state != DKW_STATE_DEAD);
 
 	mutex_enter(&sc->sc_dk.dk_openlock);
 	mutex_enter(&sc->sc_parent->dk_rawlock);
