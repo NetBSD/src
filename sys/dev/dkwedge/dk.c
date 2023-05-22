@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.170 2023/05/22 15:00:06 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.171 2023/05/22 15:00:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.170 2023/05/22 15:00:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.171 2023/05/22 15:00:17 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -70,29 +70,65 @@ typedef enum {
 	DKW_STATE_DEAD		= 666
 } dkwedge_state_t;
 
+/*
+ * Lock order:
+ *
+ *	sc->sc_dk.dk_openlock
+ *	=> sc->sc_parent->dk_rawlock
+ *	=> sc->sc_parent->dk_openlock
+ *	=> dkwedges_lock
+ *	=> sc->sc_sizelock
+ *
+ * Locking notes:
+ *
+ *	W	dkwedges_lock
+ *	D	device reference
+ *	O	sc->sc_dk.dk_openlock
+ *	P	sc->sc_parent->dk_openlock
+ *	R	sc->sc_parent->dk_rawlock
+ *	S	sc->sc_sizelock
+ *	I	sc->sc_iolock
+ *	$	stable after initialization
+ *	1	used only by a single thread
+ *
+ * x&y means both x and y must be held to write (with a write lock if
+ * one is rwlock), and either x or y must be held to read.
+ */
+
 struct dkwedge_softc {
-	device_t	sc_dev;	/* pointer to our pseudo-device */
-	struct cfdata	sc_cfdata;	/* our cfdata structure */
-	uint8_t		sc_wname[128];	/* wedge name (Unicode, UTF-8) */
+	device_t	sc_dev;	/* P&W: pointer to our pseudo-device */
+		/* sc_dev is also stable while device is referenced */
+	struct cfdata	sc_cfdata;	/* 1: our cfdata structure */
+	uint8_t		sc_wname[128];	/* $: wedge name (Unicode, UTF-8) */
 
 	dkwedge_state_t sc_state;	/* state this wedge is in */
+		/* stable while device is referenced */
+		/* used only in assertions when stable, and in dump in ddb */
 
-	struct disk	*sc_parent;	/* parent disk */
-	daddr_t		sc_offset;	/* LBA offset of wedge in parent */
+	struct disk	*sc_parent;	/* $: parent disk */
+		/* P: sc_parent->dk_openmask */
+		/* P: sc_parent->dk_nwedges */
+		/* P: sc_parent->dk_wedges */
+		/* R: sc_parent->dk_rawopens */
+		/* R: sc_parent->dk_rawvp (also stable while wedge is open) */
+	daddr_t		sc_offset;	/* $: LBA offset of wedge in parent */
 	krwlock_t	sc_sizelock;
-	uint64_t	sc_size;	/* size of wedge in blocks */
-	char		sc_ptype[32];	/* partition type */
-	dev_t		sc_pdev;	/* cached parent's dev_t */
-					/* link on parent's wedge list */
+	uint64_t	sc_size;	/* S: size of wedge in blocks */
+	char		sc_ptype[32];	/* $: partition type */
+	dev_t		sc_pdev;	/* $: cached parent's dev_t */
+					/* P: link on parent's wedge list */
 	LIST_ENTRY(dkwedge_softc) sc_plink;
 
 	struct disk	sc_dk;		/* our own disk structure */
-	struct bufq_state *sc_bufq;	/* buffer queue */
-	struct callout	sc_restart_ch;	/* callout to restart I/O */
+		/* O&R: sc_dk.dk_bopenmask */
+		/* O&R: sc_dk.dk_copenmask */
+		/* O&R: sc_dk.dk_openmask */
+	struct bufq_state *sc_bufq;	/* $: buffer queue */
+	struct callout	sc_restart_ch;	/* I: callout to restart I/O */
 
 	kmutex_t	sc_iolock;
-	bool		sc_iostop;	/* don't schedule restart */
-	int		sc_mode;	/* parent open mode */
+	bool		sc_iostop;	/* I: don't schedule restart */
+	int		sc_mode;	/* O&R: parent open mode */
 };
 
 static int	dkwedge_match(device_t, cfdata_t, void *);
