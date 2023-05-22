@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.303 2023/05/22 10:28:59 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.304 2023/05/22 23:03:16 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.303 2023/05/22 10:28:59 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.304 2023/05/22 23:03:16 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -669,7 +669,8 @@ process_lbrace(void)
 		ps.block_init_level++;
 
 	if (code.len > 0 && !ps.block_init) {
-		if (!opt.brace_same_line)
+		if (!opt.brace_same_line ||
+		    (code.len > 0 && code.mem[code.len - 1] == '}'))
 			output_line();
 		else if (ps.in_func_def_params && !ps.init_or_struct) {
 			ps.ind_level_follow = 0;
