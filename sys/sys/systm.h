@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.301 2021/06/16 11:55:10 rin Exp $	*/
+/*	$NetBSD: systm.h,v 1.302 2023/05/22 14:07:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -620,6 +620,8 @@ void	trace_exit(register_t, const struct sysent *, const void *,
 
 int	uiomove(void *, size_t, struct uio *);
 int	uiomove_frombuf(void *, size_t, struct uio *);
+int	uiopeek(void *, size_t, struct uio *);
+void	uioskip(size_t, struct uio *);
 
 #ifdef _KERNEL
 int	setjmp(label_t *) __returns_twice;
