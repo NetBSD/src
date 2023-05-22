@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.156 2023/05/20 11:53:53 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.157 2023/05/22 10:28:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -407,14 +407,20 @@ extern struct parser_state {
 extern struct output_state {
 	enum line_kind {
 		lk_other,
+		lk_blank,
 		lk_if,		/* #if, #ifdef, #ifndef */
 		lk_endif,	/* #endif */
+		lk_stmt_head,	/* the ')' of an incomplete statement such as
+				 * 'if (expr)' or 'for (expr; expr; expr)' */
 		lk_func_end,	/* the last '}' of a function body */
 		lk_block_comment,
-	} line_kind;		/* kind of the current output line, is reset to
-				 * lk_other at the beginning of each output
-				 * line; used for inserting blank lines */
-	enum line_kind prev_line_kind;
+	} line_kind;		/* kind of the line that is being prepared for
+				 * output; is reset to lk_other each time after
+				 * trying to send a line to the output, even if
+				 * that line was a suppressed blank line; used
+				 * for inserting or removing blank lines */
+	enum line_kind prev_line_kind;	/* the kind of line that was actually
+					 * sent to the output */
 
 	struct buffer indent_off_text;	/* text from between 'INDENT OFF' and
 					 * 'INDENT ON', both inclusive */

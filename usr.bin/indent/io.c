@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.184 2023/05/20 12:05:01 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.185 2023/05/22 10:28:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.184 2023/05/20 12:05:01 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.185 2023/05/22 10:28:59 rillig Exp $");
 
 #include <stdio.h>
 
@@ -161,6 +161,16 @@ want_blank_line(void)
 	return false;
 }
 
+static bool
+is_blank_line_optional(void)
+{
+	if (out.prev_line_kind == lk_stmt_head)
+		return wrote_newlines >= 1;
+	if (ps.tos >= 2)
+		return wrote_newlines >= 2;
+	return wrote_newlines >= 3;
+}
+
 static int
 output_line_label(void)
 {
@@ -252,8 +262,11 @@ output_line(void)
 	ps.is_function_definition = false;
 
 	if (indent_enabled == indent_on) {
+		if (lab.len == 0 && code.len == 0 && com.len == 0)
+			out.line_kind = lk_blank;
+
 		if (want_blank_line() && wrote_newlines < 2
-		    && (lab.len > 0 || code.len > 0 || com.len > 0))
+		    && out.line_kind != lk_blank)
 			output_newline();
 
 		if (ps.ind_level == 0)
@@ -266,6 +279,11 @@ output_line(void)
 			ps.blank_line_after_decl = true;
 		}
 
+		if (opt.swallow_optional_blanklines
+		    && out.line_kind == lk_blank
+		    && is_blank_line_optional())
+			goto dont_write_line;
+
 		int ind = 0;
 		if (lab.len > 0)
 			ind = output_line_label();
@@ -275,6 +293,7 @@ output_line(void)
 			output_line_comment(ind);
 
 		output_newline();
+		out.prev_line_kind = out.line_kind;
 	}
 
 	if (indent_enabled == indent_last_off_line) {
@@ -283,6 +302,7 @@ output_line(void)
 		out.indent_off_text.len = 0;
 	}
 
+dont_write_line:
 	ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */
 	ps.in_stmt_cont = ps.in_stmt_or_decl && !ps.in_decl;
 	ps.decl_indent_done = false;
@@ -303,7 +323,6 @@ output_line(void)
 	}
 
 	ps.want_blank = false;
-	out.prev_line_kind = out.line_kind;
 	out.line_kind = lk_other;
 }
 

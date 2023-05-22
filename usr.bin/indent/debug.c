@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.19 2023/05/20 11:53:53 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.20 2023/05/22 10:28:59 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.19 2023/05/20 11:53:53 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.20 2023/05/22 10:28:59 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -119,8 +119,10 @@ const char *const paren_level_cast_name[] = {
 
 const char *const line_kind_name[] = {
 	"other",
+	"blank",
 	"#if",
 	"#endif",
+	"stmt head",
 	"}",
 	"block comment",
 };
