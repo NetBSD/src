@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1246 2023/02/09 14:09:48 abs Exp $
+# $NetBSD: GENERIC,v 1.1247 2023/05/22 16:28:34 riastradh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1246 $"
+#ident		"GENERIC-$Revision: 1.1247 $"
 
 maxusers	64		# estimated number of users
 
@@ -1504,9 +1504,9 @@ pseudo-device	cmos
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
 
-# EFI runtime support -- not yet tested
-#options 	EFI_RUNTIME
-#pseudo-device 	efi			# /dev/efi
+# EFI runtime support
+options 	EFI_RUNTIME
+pseudo-device 	efi			# /dev/efi
 
 include "dev/veriexec.config"
 
