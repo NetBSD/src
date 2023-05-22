@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.79 2023/02/21 19:30:51 rillig Exp $ */
+/* $NetBSD: read.c,v 1.80 2023/05/22 12:55:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.79 2023/02/21 19:30:51 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.80 2023/05/22 12:55:04 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -780,7 +780,7 @@ gettlen(const char *cp, const char **epp)
 		break;
 	}
 
-	t = NOTSPEC;
+	t = NO_TSPEC;
 
 	switch (c) {
 	case 'B':
@@ -872,7 +872,7 @@ gettlen(const char *cp, const char **epp)
 		break;
 	}
 
-	if (t == NOTSPEC)
+	if (t == NO_TSPEC)
 		inperr("bad type: %c %c", c, s);
 
 	switch (t) {

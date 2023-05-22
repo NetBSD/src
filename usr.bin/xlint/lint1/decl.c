@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.310 2023/04/25 19:00:57 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.311 2023/05/22 12:55:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.310 2023/04/25 19:00:57 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.311 2023/05/22 12:55:04 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -234,8 +234,8 @@ dcs_add_storage_class(scl_t sc)
 		return;
 	}
 
-	if (dcs->d_type != NULL || dcs->d_abstract_type != NOTSPEC ||
-	    dcs->d_sign_mod != NOTSPEC || dcs->d_rank_mod != NOTSPEC) {
+	if (dcs->d_type != NULL || dcs->d_abstract_type != NO_TSPEC ||
+	    dcs->d_sign_mod != NO_TSPEC || dcs->d_rank_mod != NO_TSPEC) {
 		/* storage class after type is obsolescent */
 		warning(83);
 	}
@@ -268,9 +268,9 @@ dcs_add_type(type_t *tp)
 		 * This should not happen with current grammar.
 		 */
 		lint_assert(dcs->d_type == NULL);
-		lint_assert(dcs->d_abstract_type == NOTSPEC);
-		lint_assert(dcs->d_sign_mod == NOTSPEC);
-		lint_assert(dcs->d_rank_mod == NOTSPEC);
+		lint_assert(dcs->d_abstract_type == NO_TSPEC);
+		lint_assert(dcs->d_sign_mod == NO_TSPEC);
+		lint_assert(dcs->d_rank_mod == NO_TSPEC);
 
 		dcs->d_type = tp;
 		return;
@@ -283,12 +283,12 @@ dcs_add_type(type_t *tp)
 		 * something like "int struct a ..."
 		 * struct/union/enum with anything else is not allowed
 		 */
-		if (dcs->d_type != NULL || dcs->d_abstract_type != NOTSPEC ||
-		    dcs->d_rank_mod != NOTSPEC || dcs->d_sign_mod != NOTSPEC) {
+		if (dcs->d_type != NULL || dcs->d_abstract_type != NO_TSPEC ||
+		    dcs->d_rank_mod != NO_TSPEC || dcs->d_sign_mod != NO_TSPEC) {
 			dcs->d_invalid_type_combination = true;
-			dcs->d_abstract_type = NOTSPEC;
-			dcs->d_sign_mod = NOTSPEC;
-			dcs->d_rank_mod = NOTSPEC;
+			dcs->d_abstract_type = NO_TSPEC;
+			dcs->d_sign_mod = NO_TSPEC;
+			dcs->d_rank_mod = NO_TSPEC;
 		}
 		dcs->d_type = tp;
 		return;
@@ -313,13 +313,13 @@ dcs_add_type(type_t *tp)
 			error(308);
 			t = DCOMPLEX; /* just as a fallback */
 		}
-		dcs->d_complex_mod = NOTSPEC;
+		dcs->d_complex_mod = NO_TSPEC;
 	}
 
 	if (t == LONG && dcs->d_rank_mod == LONG) {
 		/* "long long" or "long ... long" */
 		t = QUAD;
-		dcs->d_rank_mod = NOTSPEC;
+		dcs->d_rank_mod = NO_TSPEC;
 		if (!quadflg)
 			/* %s does not support 'long long' */
 			c99ism(265, allow_c90 ? "C90" : "traditional C");
@@ -337,7 +337,7 @@ dcs_add_type(type_t *tp)
 		 * remember specifiers "signed" & "unsigned" in
 		 * dcs->d_sign_mod
 		 */
-		if (dcs->d_sign_mod != NOTSPEC)
+		if (dcs->d_sign_mod != NO_TSPEC)
 			/* more than one "signed" and/or "unsigned" */
 			dcs->d_invalid_type_combination = true;
 		dcs->d_sign_mod = t;
@@ -346,17 +346,17 @@ dcs_add_type(type_t *tp)
 		 * remember specifiers "short", "long" and "long long" in
 		 * dcs->d_rank_mod
 		 */
-		if (dcs->d_rank_mod != NOTSPEC)
+		if (dcs->d_rank_mod != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_rank_mod = t;
 	} else if (t == FLOAT || t == DOUBLE) {
-		if (dcs->d_rank_mod == NOTSPEC || dcs->d_rank_mod == LONG) {
-			if (dcs->d_complex_mod != NOTSPEC
+		if (dcs->d_rank_mod == NO_TSPEC || dcs->d_rank_mod == LONG) {
+			if (dcs->d_complex_mod != NO_TSPEC
 			    || (t == FLOAT && dcs->d_rank_mod == LONG))
 				dcs->d_invalid_type_combination = true;
 			dcs->d_complex_mod = t;
 		} else {
-			if (dcs->d_abstract_type != NOTSPEC)
+			if (dcs->d_abstract_type != NO_TSPEC)
 				dcs->d_invalid_type_combination = true;
 			dcs->d_abstract_type = t;
 		}
@@ -367,7 +367,7 @@ dcs_add_type(type_t *tp)
 		 * remember specifiers "void", "char", "int",
 		 * or "_Complex" in dcs->d_abstract_type
 		 */
-		if (dcs->d_abstract_type != NOTSPEC)
+		if (dcs->d_abstract_type != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_abstract_type = t;
 	}
@@ -684,10 +684,10 @@ void
 dcs_begin_type(void)
 {
 
-	dcs->d_abstract_type = NOTSPEC;
-	dcs->d_complex_mod = NOTSPEC;
-	dcs->d_sign_mod = NOTSPEC;
-	dcs->d_rank_mod = NOTSPEC;
+	dcs->d_abstract_type = NO_TSPEC;
+	dcs->d_complex_mod = NO_TSPEC;
+	dcs->d_sign_mod = NO_TSPEC;
+	dcs->d_rank_mod = NO_TSPEC;
 	dcs->d_scl = NOSCL;
 	dcs->d_type = NULL;
 	dcs->d_const = false;
@@ -736,37 +736,37 @@ dcs_merge_declaration_specifiers(void)
 	tp = dcs->d_type;
 
 	debug_step("%s: %s", __func__, type_name(tp));
-	if (t == NOTSPEC && s == NOTSPEC && l == NOTSPEC && c == NOTSPEC &&
+	if (t == NO_TSPEC && s == NO_TSPEC && l == NO_TSPEC && c == NO_TSPEC &&
 	    tp == NULL)
 		dcs->d_notyp = true;
-	if (t == NOTSPEC && s == NOTSPEC && (l == NOTSPEC || l == LONG) &&
+	if (t == NO_TSPEC && s == NO_TSPEC && (l == NO_TSPEC || l == LONG) &&
 	    tp == NULL)
 		t = c;
 
 	if (tp != NULL) {
-		lint_assert(t == NOTSPEC);
-		lint_assert(s == NOTSPEC);
-		lint_assert(l == NOTSPEC);
+		lint_assert(t == NO_TSPEC);
+		lint_assert(s == NO_TSPEC);
+		lint_assert(l == NO_TSPEC);
 		return;
 	}
 
-	if (t == NOTSPEC)
+	if (t == NO_TSPEC)
 		t = INT;
-	if (s == NOTSPEC && t == INT)
+	if (s == NO_TSPEC && t == INT)
 		s = SIGNED;
-	if (l != NOTSPEC && t == CHAR) {
+	if (l != NO_TSPEC && t == CHAR) {
 		dcs->d_invalid_type_combination = true;
-		l = NOTSPEC;
+		l = NO_TSPEC;
 	}
 	if (l == LONG && t == FLOAT) {
-		l = NOTSPEC;
+		l = NO_TSPEC;
 		t = DOUBLE;
 		if (allow_c90)
 			/* use 'double' instead of 'long float' */
 			warning(6);
 	}
 	if ((l == LONG && t == DOUBLE) || t == LDOUBLE) {
-		l = NOTSPEC;
+		l = NO_TSPEC;
 		t = LDOUBLE;
 	}
 	if (t == LDOUBLE && !allow_c90) {
@@ -774,15 +774,15 @@ dcs_merge_declaration_specifiers(void)
 		warning(266);
 	}
 	if (l == LONG && t == DCOMPLEX) {
-		l = NOTSPEC;
+		l = NO_TSPEC;
 		t = LCOMPLEX;
 	}
 
-	if (t != INT && t != CHAR && (s != NOTSPEC || l != NOTSPEC)) {
+	if (t != INT && t != CHAR && (s != NO_TSPEC || l != NO_TSPEC)) {
 		dcs->d_invalid_type_combination = true;
-		l = s = NOTSPEC;
+		l = s = NO_TSPEC;
 	}
-	if (l != NOTSPEC)
+	if (l != NO_TSPEC)
 		t = l;
 	dcs->d_type = gettyp(merge_signedness(t, s));
 }
@@ -943,7 +943,7 @@ check_type(sym_t *sym)
 	type_t	**tpp, *tp;
 
 	tpp = &sym->s_type;
-	to = NOTSPEC;
+	to = NO_TSPEC;
 	while ((tp = *tpp) != NULL) {
 		t = tp->t_tspec;
 		/*
@@ -951,7 +951,7 @@ check_type(sym_t *sym)
 		 * a better warning is printed in begin_function().
 		 */
 		if (t == FUNC && !tp->t_proto &&
-		    !(to == NOTSPEC && sym->s_osdef)) {
+		    !(to == NO_TSPEC && sym->s_osdef)) {
 			/* TODO: Make this an error in C99 mode as well. */
 			if ((!allow_trad && !allow_c99) && hflag)
 				/* function declaration is not a prototype */
@@ -993,7 +993,7 @@ check_type(sym_t *sym)
 			 * No need to check for incomplete types here as
 			 * length_in_bits already does this.
 			 */
-		} else if (to == NOTSPEC && t == VOID) {
+		} else if (to == NO_TSPEC && t == VOID) {
 			if (dcs->d_kind == DK_PROTO_ARG) {
 				if (sym->s_scl != ABSTRACT) {
 					lint_assert(sym->s_name != unnamed);
@@ -1054,7 +1054,7 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 				warning(34, type_name(btp));
 			}
 		}
-	} else if (t == INT && dcs->d_sign_mod == NOTSPEC) {
+	} else if (t == INT && dcs->d_sign_mod == NO_TSPEC) {
 		if (pflag && !bitfieldtype_ok) {
 			/* bit-field of type plain 'int' has ... */
 			warning(344);
@@ -1714,7 +1714,7 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		dcs->d_enclosing->d_nonempty_decl = true;
 	}
 
-	if (tp->t_tspec == NOTSPEC) {
+	if (tp->t_tspec == NO_TSPEC) {
 		tp->t_tspec = kind;
 		if (kind != ENUM) {
 			tp->t_sou = block_zero_alloc(sizeof(*tp->t_sou));
