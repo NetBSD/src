@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.164 2023/05/22 14:59:16 riastradh Exp $	*/
+/*	$NetBSD: dk.c,v 1.165 2023/05/22 14:59:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.164 2023/05/22 14:59:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.165 2023/05/22 14:59:25 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -883,8 +883,8 @@ dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
 	return error;
 }
 
-device_t
-dkwedge_find_by_wname(const char *wname)
+static device_t
+dkwedge_find_by_wname_acquire(const char *wname)
 {
 	device_t dv = NULL;
 	struct dkwedge_softc *sc;
@@ -902,6 +902,7 @@ dkwedge_find_by_wname(const char *wname)
 				    device_xname(sc->sc_dev));
 				continue;
 			}
+			device_acquire(sc->sc_dev);
 			dv = sc->sc_dev;
 		}
 	}
@@ -909,8 +910,8 @@ dkwedge_find_by_wname(const char *wname)
 	return dv;
 }
 
-device_t
-dkwedge_find_by_parent(const char *name, size_t *i)
+static device_t
+dkwedge_find_by_parent_acquire(const char *name, size_t *i)
 {
 
 	rw_enter(&dkwedges_lock, RW_READER);
@@ -920,11 +921,36 @@ dkwedge_find_by_parent(const char *name, size_t *i)
 			continue;
 		if (strcmp(sc->sc_parent->dk_name, name) != 0)
 			continue;
+		device_acquire(sc->sc_dev);
 		rw_exit(&dkwedges_lock);
 		return sc->sc_dev;
 	}
 	rw_exit(&dkwedges_lock);
 	return NULL;
+}
+
+/* XXX unsafe */
+device_t
+dkwedge_find_by_wname(const char *wname)
+{
+	device_t dv;
+
+	if ((dv = dkwedge_find_by_wname_acquire(wname)) == NULL)
+		return NULL;
+	device_release(dv);
+	return dv;
+}
+
+/* XXX unsafe */
+device_t
+dkwedge_find_by_parent(const char *name, size_t *i)
+{
+	device_t dv;
+
+	if ((dv = dkwedge_find_by_parent_acquire(name, i)) == NULL)
+		return NULL;
+	device_release(dv);
+	return dv;
 }
 
 void
@@ -1845,8 +1871,9 @@ dkdump(dev_t dev, daddr_t blkno, void *va, size_t size)
  *	Find wedge corresponding to the specified parent name
  *	and offset/length.
  */
-device_t
-dkwedge_find_partition(device_t parent, daddr_t startblk, uint64_t nblks)
+static device_t
+dkwedge_find_partition_acquire(device_t parent, daddr_t startblk,
+    uint64_t nblks)
 {
 	struct dkwedge_softc *sc;
 	int i;
@@ -1867,11 +1894,26 @@ dkwedge_find_partition(device_t parent, daddr_t startblk, uint64_t nblks)
 				continue;
 			}
 			wedge = sc->sc_dev;
+			device_acquire(wedge);
 		}
 	}
 	rw_exit(&dkwedges_lock);
 
 	return wedge;
+}
+
+/* XXX unsafe */
+device_t
+dkwedge_find_partition(device_t parent, daddr_t startblk,
+    uint64_t nblks)
+{
+	device_t dv;
+
+	if ((dv = dkwedge_find_partition_acquire(parent, startblk, nblks))
+	    == NULL)
+		return NULL;
+	device_release(dv);
+	return dv;
 }
 
 const char *
