@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.312 2023/05/23 00:31:42 riastradh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.313 2023/05/23 08:16:43 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.312 2023/05/23 00:31:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.313 2023/05/23 08:16:43 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2318,8 +2318,6 @@ out:
 int
 config_detach(device_t dev, int flags)
 {
-
-	KASSERT(KERNEL_LOCKED_P());
 
 	device_acquire(dev);
 	return config_detach_release(dev, flags);
