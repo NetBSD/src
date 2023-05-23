@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.308 2023/05/23 12:12:29 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.309 2023/05/23 16:53:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.308 2023/05/23 12:12:29 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.309 2023/05/23 16:53:57 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -687,6 +687,7 @@ process_semicolon(void)
 	buf_add_char(&code, ';');
 	ps.want_blank = true;
 	ps.in_stmt_or_decl = ps.nparen > 0;
+	ps.decl_ind = 0;
 
 	if (ps.spaced_expr_psym == psym_0) {
 		parse(psym_0);	/* let parser know about end of stmt */
