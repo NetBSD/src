@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.45 2023/05/23 06:43:19 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.46 2023/05/23 16:53:57 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -602,7 +602,8 @@ ToToken(bool cond)
 
 
 /*
- * Indent gets easily confused by unknown type names in struct declarations.
+ * Before indent.c 1.309 from 2023-05-23, indent easily got confused by unknown
+ * type names in struct declarations, as a ';' did not finish a declaration.
  */
 //indent input
 typedef struct OpenDirs {
@@ -611,20 +612,14 @@ typedef struct OpenDirs {
 }		OpenDirs;
 //indent end
 
-/* FIXME: The word 'HashTable' must not be aligned like a member name. */
-//indent run
-typedef struct OpenDirs {
-	CachedDirList	list;
-			HashTable /* of CachedDirListNode */ table;
-}		OpenDirs;
-//indent end
-
 //indent run-equals-input -THashTable
+
+//indent run-equals-input
 
 
 /*
- * Indent gets easily confused by unknown type names, even in declarations
- * that are syntactically unambiguous.
+ * Before lexi.c 1.153 from 2021-11-25, indent easily got confused by unknown
+ * type names, even in declarations that are syntactically unambiguous.
  */
 //indent input
 static CachedDir *dot = NULL;
@@ -632,14 +627,12 @@ static CachedDir *dot = NULL;
 
 //indent run-equals-input -TCachedDir
 
-/* Since lexi.c 1.153 from 2021-11-25. */
 //indent run-equals-input
 
 
 /*
- * Before lexi.c 1.156 from 2021-11-25, indent easily got confused by unknown
- * type names in declarations and generated 'HashEntry * he' with an extra
- * space.
+ * Before lexi.c 1.153 from 2021-11-25, indent easily got confused by unknown
+ * type names in declarations.
  */
 //indent input
 static CachedDir *
@@ -648,7 +641,6 @@ CachedDir_New(const char *name)
 }
 //indent end
 
-/* Since lexi.c 1.153 from 2021-11-25. */
 //indent run-equals-input
 
 
@@ -697,15 +689,15 @@ CachedDir_Assign(CachedDir **var, CachedDir *dir)
 }
 //indent end
 
-//indent run-equals-input
-
 //indent run-equals-input -TCachedDir
+
+//indent run-equals-input
 
 
 /*
  * Before lexi.c 1.153 from 2021-11-25, all initializer expressions after the
- * first one were indented as if they would be statement continuations. This
- * was because the token 'Shell' was identified as a word, not as a type name.
+ * first one were indented as if they were statement continuations. This was
+ * caused by the token 'Shell' being identified as a word, not as a type name.
  */
 //indent input
 static Shell	shells[] = {
@@ -716,7 +708,6 @@ static Shell	shells[] = {
 };
 //indent end
 
-/* Since lexi.c 1.153 from 2021-11-25. */
 //indent run-equals-input
 
 
@@ -960,22 +951,6 @@ ch_isalpha(char ch)
 //indent end
 
 //indent run-equals-input -i4 -di0
-
-
-//indent input
-struct {
-	void *list;
-	Table /* comment */ table;
-} var;
-//indent end
-
-//indent run -di0
-struct {
-	void *list;
-// $ FIXME: Wrong indentation, as 'Table' starts a new declaration.
-	     Table /* comment */ table;
-} var;
-//indent end
 
 
 //indent input
