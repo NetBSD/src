@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_unary_op.c,v 1.6 2023/05/13 06:52:48 rillig Exp $ */
+/* $NetBSD: lsym_unary_op.c,v 1.7 2023/05/23 06:18:00 rillig Exp $ */
 
 /*
  * Tests for the token lsym_unary_op, which represents a unary operator.
@@ -77,3 +77,18 @@ unary_operators(void)
 //indent end
 
 //indent run-equals-input -di0
+
+
+//indent input
+{
+sbuf_t *sb = *(sbuf_t **)sp;
+}
+//indent end
+
+//indent run -di0
+{
+// $ FIXME: Wrong spacing between the '*'.
+// $ FIXME: Wrong spacing after the cast.
+	sbuf_t *sb = *(sbuf_t * *) sp;
+}
+//indent end

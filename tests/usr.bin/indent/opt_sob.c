@@ -1,4 +1,4 @@
-/* $NetBSD: opt_sob.c,v 1.7 2023/05/22 10:28:59 rillig Exp $ */
+/* $NetBSD: opt_sob.c,v 1.8 2023/05/23 06:18:00 rillig Exp $ */
 
 /*
  * Tests for the options '-sob' and '-nsob'.
@@ -26,6 +26,9 @@ function_with_0_blank_lines(void)
 	var = value;
 	if (var > 0)
 		var--;
+	if (var > 0) {
+		var--;
+	}
 	return var;
 }
 
@@ -41,6 +44,13 @@ function_with_1_blank_line(void)
 /* $ The following line is "optional" and is removed due to '-sob'. */
 
 		var--;
+
+	if (var > 0) {
+/* $ The following line is "optional" and is removed due to '-sob'. */
+
+		var--;
+
+	}
 
 	return var;
 
@@ -65,6 +75,15 @@ function_with_2_blank_lines(void)
 		var--;
 
 
+	if (var > 0) {
+
+
+		var--;
+
+
+	}
+
+
 	return var;
 
 
@@ -82,6 +101,9 @@ function_with_0_blank_lines(void)
 	var = value;
 	if (var > 0)
 		var--;
+	if (var > 0) {
+		var--;
+	}
 	return var;
 }
 
@@ -95,6 +117,12 @@ function_with_1_blank_line(void)
 
 	if (var > 0)
 		var--;
+
+	if (var > 0) {
+		var--;
+// $ XXX: The following blank line may be considered optional.
+
+	}
 
 	return var;
 
@@ -111,6 +139,12 @@ function_with_2_blank_lines(void)
 
 	if (var > 0)
 		var--;
+
+	if (var > 0) {
+		var--;
+// $ XXX: The following blank line may be considered optional.
+
+	}
 
 	return var;
 
