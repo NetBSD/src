@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.157 2023/05/22 10:28:59 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.158 2023/05/23 06:35:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -371,6 +371,14 @@ extern struct parser_state {
 				 * are currently open; used to indent the
 				 * remaining lines of the statement,
 				 * initializer or declaration */
+	enum {
+	    dp_start,
+	    dp_word,
+	    dp_word_asterisk,
+	    dp_other,
+	} decl_ptr;		/* detects declarations like 'typename *x',
+				 * to prevent the '*' from being interpreted as
+				 * a binary operator */
 	paren_level_props paren[20];
 
 	/* Horizontal spacing for comments */
