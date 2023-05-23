@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_for.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: lsym_for.c,v 1.5 2023/05/23 06:18:00 rillig Exp $ */
 
 /*
  * Tests for the token lsym_for, which represents the keyword 'for' that
@@ -87,3 +87,19 @@ function(void)
 //indent end
 
 //indent run-equals-input
+
+
+//indent input
+{
+	for (const list_item *i = first; i != NULL; i = i->next) {
+	}
+}
+//indent end
+
+//indent run
+{
+// $ FIXME: Wrong spacing after '*'.
+	for (const list_item * i = first; i != NULL; i = i->next) {
+	}
+}
+//indent end
