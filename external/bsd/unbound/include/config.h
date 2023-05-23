@@ -773,7 +773,7 @@
 #define PACKAGE_VERSION "1.16.3"
 
 /* default pidfile location */
-#define PIDFILE CHROOT_DIR "/var/run/unbound.pid"
+#define PIDFILE "/var/run/unbound.pid"
 
 /* Define to necessary symbol if this constant uses a non-standard name on
    your system. */
