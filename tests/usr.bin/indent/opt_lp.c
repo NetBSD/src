@@ -1,4 +1,4 @@
-/* $NetBSD: opt_lp.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_lp.c,v 1.7 2023/05/23 06:18:00 rillig Exp $ */
 
 /*
  * Tests for the options '-lp' and '-nlp'.
@@ -85,5 +85,27 @@ example(void)
 	p1 = first_procedure(
 	    second_procedure(p2, p3),
 	    third_procedure(p4, p5));
+}
+//indent end
+
+
+//indent input
+{
+if (cond) {
+} else if (cond &&
+cond &&
+cond) {
+}
+}
+//indent end
+
+//indent run -ci4 -nlp
+{
+	if (cond) {
+	} else if (cond &&
+// $ FIXME: Wrong indentation, should be 4 spaces only.
+		    cond &&
+	    cond) {
+	}
 }
 //indent end

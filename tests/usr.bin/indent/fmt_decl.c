@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.43 2023/05/16 08:22:11 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.44 2023/05/23 06:18:00 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -960,3 +960,53 @@ ch_isalpha(char ch)
 //indent end
 
 //indent run-equals-input -i4 -di0
+
+
+//indent input
+struct {
+	void *list;
+	Table /* comment */ table;
+} var;
+//indent end
+
+//indent run -di0
+struct {
+	void *list;
+// $ FIXME: Wrong indentation, as 'Table' starts a new declaration.
+	     Table /* comment */ table;
+} var;
+//indent end
+
+
+//indent input
+void __printflike(1, 2)
+debug_printf(const char *fmt, ...)
+{
+}
+//indent end
+
+//indent run
+void
+// $ FIXME: No line break here.
+__printflike(1, 2)
+debug_printf(const char *fmt, ...)
+{
+}
+//indent end
+
+
+//indent input
+void
+(error_at)(int msgid, const pos_t *pos, ...)
+{
+}
+//indent end
+
+//indent run -ci4 -di0 -ndj -nlp
+void
+// $ FIXME: Wrong indentation, should be 0 instead.
+// $ FIXME: Wrong spacing around '*'.
+     (error_at)(int msgid, const pos_t * pos, ...)
+{
+}
+//indent end
