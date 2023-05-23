@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.61 2023/05/18 05:33:27 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.62 2023/05/23 12:12:29 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.61 2023/05/18 05:33:27 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.62 2023/05/23 12:12:29 rillig Exp $");
 
 #include <err.h>
 
@@ -63,6 +63,7 @@ decl_level(void)
 void
 parse(parser_symbol psym)
 {
+	debug_blank_line();
 	debug_println("parse token: %s", psym_name[psym]);
 
 	if (psym != psym_else) {

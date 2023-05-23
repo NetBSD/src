@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.307 2023/05/23 11:37:23 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.308 2023/05/23 12:12:29 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.307 2023/05/23 11:37:23 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.308 2023/05/23 12:12:29 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -1146,8 +1146,15 @@ process_lsym(lexer_symbol lsym)
 static int
 indent(void)
 {
+	debug_parser_state();
+
 	for (;;) {		/* loop until we reach eof */
 		lexer_symbol lsym = lexi();
+
+		debug_blank_line();
+		debug_printf("line %d: %s", line_no, lsym_name[lsym]);
+		debug_buffers();
+		debug_blank_line();
 
 		if (lsym == lsym_eof)
 			return process_eof();
@@ -1172,6 +1179,8 @@ indent(void)
 		update_ps_decl_ptr(lsym);
 
 		process_lsym(lsym);
+
+		debug_parser_state();
 
 		if (lsym != lsym_comment && lsym != lsym_newline &&
 		    lsym != lsym_preprocessing)
