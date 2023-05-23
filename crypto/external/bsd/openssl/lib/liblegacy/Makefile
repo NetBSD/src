@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2023/05/19 18:45:52 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2023/05/23 12:04:42 christos Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -24,17 +24,6 @@ USE_FORT?= yes	# cryptographic software
 
 .include <bsd.own.mk>
 .include <bsd.shlib.mk>
-
-CWARNFLAGS.clang+=	-Wno-empty-body -Wno-unused-value -Wno-parentheses -Wno-implicit-int-float-conversion
-# XXX: This warning seems to trigger incorrectly
-CWARNFLAGS.clang+=	-Wno-atomic-alignment
-
-LINTFLAGS+=	-X 161	# constant in conditional context
-LINTFLAGS+=	-X 129	# expression has null effect
-LINTFLAGS+=	-X 117	# bitwise '>>' on signed value possibly nonportable
-LINTFLAGS+=	-X 231	# argument '%s' unused in function '%s'
-LINTFLAGS+=	-X 220	# fallthrough on case statement
-LINTFLAGS+=	-X 118	# semantics of '%s' change in ANSI C; use explicit cast
 
 CPPFLAGS+= -Dlib${LIB} -I. -I${OPENSSLSRC}/crypto -I${OPENSSLSRC} -I${.CURDIR}
 CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/crypto/include
