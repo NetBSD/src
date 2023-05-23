@@ -5294,6 +5294,7 @@ _ACEOF
 fi
 
 for ac_func in atoll asprintf asnprintf basename devname dirfd dirname \
+	dispatch_semaphore_create \
 	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
 	getopt getopt_long group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
