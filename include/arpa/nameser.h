@@ -1,4 +1,4 @@
-/*	$NetBSD: nameser.h,v 1.27 2021/12/08 20:50:01 andvar Exp $	*/
+/*	$NetBSD: nameser.h,v 1.28 2023/05/23 10:22:42 andvar Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -343,7 +343,7 @@ typedef enum __ns_type {
 	ns_t_rrsig = 46,	/*%< RRset Signature */
 	ns_t_nsec = 47,		/*%< Negative security */
 	ns_t_dnskey = 48,	/*%< DNS Key */
-	ns_t_dhcid = 49,	/*%< Dynamic host configuratin identifier */
+	ns_t_dhcid = 49,	/*%< Dynamic host configuration identifier */
 	ns_t_nsec3 = 50,	/*%< Negative security type 3 */
 	ns_t_nsec3param = 51,	/*%< Negative security type 3 parameters */
 	ns_t_hip = 55,		/*%< Host Identity Protocol */
