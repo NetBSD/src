@@ -42,6 +42,7 @@
  * get a return code of 0.
  */
 
+#include <errno.h>
 #include <pthread.h>
 #ifdef illumos
 #include <synch.h>
@@ -49,15 +50,19 @@
 #include <stdio.h>
 
 #include "barrier.h"
+#include "ctftools.h"
 
 void
 barrier_init(barrier_t *bar, int nthreads)
 {
-	pthread_mutex_init(&bar->bar_lock, NULL);
+	if ((errno = pthread_mutex_init(&bar->bar_lock, NULL)) != 0)
+		terminate("%s: pthread_mutex_init(bar_lock)", __func__);
 #ifdef illumos
-	sema_init(&bar->bar_sem, 0, USYNC_THREAD, NULL);
+	if ((errno = sema_init(&bar->bar_sem, 0, USYNC_THREAD, NULL)) != 0)
+		terminate("%s: sema_init(bar_sem)", __func__);
 #else
-	sem_init(&bar->bar_sem, 0, 0);
+	if (sem_init(&bar->bar_sem, 0, 0) == -1)
+		terminate("%s: sem_init(bar_sem)", __func__);
 #endif
 
 	bar->bar_numin = 0;
@@ -67,14 +72,19 @@ barrier_init(barrier_t *bar, int nthreads)
 int
 barrier_wait(barrier_t *bar)
 {
-	pthread_mutex_lock(&bar->bar_lock);
+	if ((errno = pthread_mutex_lock(&bar->bar_lock)) != 0)
+		terminate("%s: pthread_mutex_lock(bar_lock)", __func__);
 
 	if (++bar->bar_numin < bar->bar_nthr) {
-		pthread_mutex_unlock(&bar->bar_lock);
+		if ((errno = pthread_mutex_unlock(&bar->bar_lock)) != 0)
+			terminate("%s: pthread_mutex_unlock(bar_lock)",
+			    __func__);
 #ifdef illumos
-		sema_wait(&bar->bar_sem);
+		if ((errno = sema_wait(&bar->bar_sem)) != 0)
+			terminate("%s: sema_wait(bar_sem)", __func__);
 #else
-		sem_wait(&bar->bar_sem);
+		if (sem_wait(&bar->bar_sem) == -1)
+			terminate("%s: sem_wait(bar_sem)", __func__);
 #endif
 
 		return (0);
@@ -86,11 +96,15 @@ barrier_wait(barrier_t *bar)
 		bar->bar_numin = 0;
 		for (i = 1; i < bar->bar_nthr; i++)
 #ifdef illumos
-			sema_post(&bar->bar_sem);
+			if ((errno = sema_post(&bar->bar_sem)) != 0)
+				terminate("%s: sema_post(bar_sem)", __func__);
 #else
-			sem_post(&bar->bar_sem);
+			if (sem_post(&bar->bar_sem) == -1)
+				terminate("%s: sem_post(bar_sem)", __func__);
 #endif
-		pthread_mutex_unlock(&bar->bar_lock);
+		if ((errno = pthread_mutex_unlock(&bar->bar_lock)) != 0)
+			terminate("%s: pthread_mutex_unlock(bar_lock)",
+			    __func__);
 
 		return (1);
 	}
