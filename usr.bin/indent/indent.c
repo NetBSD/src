@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.305 2023/05/23 06:35:01 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.306 2023/05/23 06:43:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.305 2023/05/23 06:35:01 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.306 2023/05/23 06:43:19 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -365,6 +365,8 @@ update_ps_decl_ptr(lexer_symbol lsym)
 			ps.decl_ptr = dp_start;
 		if (lsym == lsym_lparen_or_lbracket
 		    && ps.prev_token == lsym_for)
+			ps.decl_ptr = dp_start;
+		if (lsym == lsym_comma && ps.in_decl)
 			ps.decl_ptr = dp_start;
 		break;
 	}

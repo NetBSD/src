@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.44 2023/05/23 06:18:00 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.45 2023/05/23 06:43:19 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -1005,8 +1005,7 @@ void
 //indent run -ci4 -di0 -ndj -nlp
 void
 // $ FIXME: Wrong indentation, should be 0 instead.
-// $ FIXME: Wrong spacing around '*'.
-     (error_at)(int msgid, const pos_t * pos, ...)
+     (error_at)(int msgid, const pos_t *pos, ...)
 {
 }
 //indent end
