@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1325 2023/05/22 12:55:45 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.1326 2023/05/23 20:20:54 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1740,6 +1740,7 @@ _MKMSG_INSTALL?=	${_MKMSG} "install "
 _MKMSG_LINK?=		${_MKMSG} "   link "
 _MKMSG_LEX?=		${_MKMSG} "    lex "
 _MKMSG_REMOVE?=		${_MKMSG} " remove "
+_MKMSG_REGEN?=		${_MKMSG} "  regen "
 _MKMSG_YACC?=		${_MKMSG} "   yacc "
 
 _MKSHMSG_CREATE?=	${_MKSHMSG} " create "
