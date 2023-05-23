@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.306 2023/05/23 06:43:19 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.307 2023/05/23 11:37:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.306 2023/05/23 06:43:19 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.307 2023/05/23 11:37:23 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -1018,6 +1018,131 @@ process_preprocessing(void)
 	 * to be printed */
 }
 
+static void
+process_lsym(lexer_symbol lsym)
+{
+	switch (lsym) {
+
+	case lsym_newline:
+		process_newline();
+		break;
+
+	case lsym_lparen_or_lbracket:
+		process_lparen_or_lbracket();
+		break;
+
+	case lsym_rparen_or_rbracket:
+		process_rparen_or_rbracket();
+		break;
+
+	case lsym_unary_op:
+		process_unary_op();
+		break;
+
+	case lsym_binary_op:
+		process_binary_op();
+		break;
+
+	case lsym_postfix_op:
+		process_postfix_op();
+		break;
+
+	case lsym_question:
+		process_question();
+		break;
+
+	case lsym_case_label:
+		ps.seen_case = true;
+		goto copy_token;
+
+	case lsym_colon:
+		process_colon();
+		break;
+
+	case lsym_semicolon:
+		process_semicolon();
+		break;
+
+	case lsym_lbrace:
+		process_lbrace();
+		break;
+
+	case lsym_rbrace:
+		process_rbrace();
+		break;
+
+	case lsym_switch:
+		ps.spaced_expr_psym = psym_switch_expr;
+		goto copy_token;
+
+	case lsym_for:
+		ps.spaced_expr_psym = psym_for_exprs;
+		goto copy_token;
+
+	case lsym_if:
+		ps.spaced_expr_psym = psym_if_expr;
+		goto copy_token;
+
+	case lsym_while:
+		ps.spaced_expr_psym = psym_while_expr;
+		goto copy_token;
+
+	case lsym_do:
+		process_do();
+		goto copy_token;
+
+	case lsym_else:
+		process_else();
+		goto copy_token;
+
+	case lsym_typedef:
+	case lsym_storage_class:
+		goto copy_token;
+
+	case lsym_tag:
+		if (ps.nparen > 0)
+			goto copy_token;
+		/* FALLTHROUGH */
+	case lsym_type_outside_parentheses:
+		process_type();
+		goto copy_token;
+
+	case lsym_type_in_parentheses:
+	case lsym_offsetof:
+	case lsym_sizeof:
+	case lsym_word:
+	case lsym_funcname:
+	case lsym_return:
+		process_ident(lsym);
+	copy_token:
+		if (ps.want_blank)
+			buf_add_char(&code, ' ');
+		buf_add_buf(&code, &token);
+		if (lsym != lsym_funcname)
+			ps.want_blank = true;
+		break;
+
+	case lsym_period:
+		process_period();
+		break;
+
+	case lsym_comma:
+		process_comma();
+		break;
+
+	case lsym_preprocessing:
+		process_preprocessing();
+		break;
+
+	case lsym_comment:
+		process_comment();
+		break;
+
+	default:
+		break;
+	}
+}
+
 static int
 indent(void)
 {
@@ -1046,126 +1171,7 @@ indent(void)
 
 		update_ps_decl_ptr(lsym);
 
-		switch (lsym) {
-
-		case lsym_newline:
-			process_newline();
-			break;
-
-		case lsym_lparen_or_lbracket:
-			process_lparen_or_lbracket();
-			break;
-
-		case lsym_rparen_or_rbracket:
-			process_rparen_or_rbracket();
-			break;
-
-		case lsym_unary_op:
-			process_unary_op();
-			break;
-
-		case lsym_binary_op:
-			process_binary_op();
-			break;
-
-		case lsym_postfix_op:
-			process_postfix_op();
-			break;
-
-		case lsym_question:
-			process_question();
-			break;
-
-		case lsym_case_label:
-			ps.seen_case = true;
-			goto copy_token;
-
-		case lsym_colon:
-			process_colon();
-			break;
-
-		case lsym_semicolon:
-			process_semicolon();
-			break;
-
-		case lsym_lbrace:
-			process_lbrace();
-			break;
-
-		case lsym_rbrace:
-			process_rbrace();
-			break;
-
-		case lsym_switch:
-			ps.spaced_expr_psym = psym_switch_expr;
-			goto copy_token;
-
-		case lsym_for:
-			ps.spaced_expr_psym = psym_for_exprs;
-			goto copy_token;
-
-		case lsym_if:
-			ps.spaced_expr_psym = psym_if_expr;
-			goto copy_token;
-
-		case lsym_while:
-			ps.spaced_expr_psym = psym_while_expr;
-			goto copy_token;
-
-		case lsym_do:
-			process_do();
-			goto copy_token;
-
-		case lsym_else:
-			process_else();
-			goto copy_token;
-
-		case lsym_typedef:
-		case lsym_storage_class:
-			goto copy_token;
-
-		case lsym_tag:
-			if (ps.nparen > 0)
-				goto copy_token;
-			/* FALLTHROUGH */
-		case lsym_type_outside_parentheses:
-			process_type();
-			goto copy_token;
-
-		case lsym_type_in_parentheses:
-		case lsym_offsetof:
-		case lsym_sizeof:
-		case lsym_word:
-		case lsym_funcname:
-		case lsym_return:
-			process_ident(lsym);
-	copy_token:
-			if (ps.want_blank)
-				buf_add_char(&code, ' ');
-			buf_add_buf(&code, &token);
-			if (lsym != lsym_funcname)
-				ps.want_blank = true;
-			break;
-
-		case lsym_period:
-			process_period();
-			break;
-
-		case lsym_comma:
-			process_comma();
-			break;
-
-		case lsym_preprocessing:
-			process_preprocessing();
-			break;
-
-		case lsym_comment:
-			process_comment();
-			break;
-
-		default:
-			break;
-		}
+		process_lsym(lsym);
 
 		if (lsym != lsym_comment && lsym != lsym_newline &&
 		    lsym != lsym_preprocessing)
