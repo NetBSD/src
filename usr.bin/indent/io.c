@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.185 2023/05/22 10:28:59 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.186 2023/05/23 12:12:29 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.185 2023/05/22 10:28:59 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.186 2023/05/23 12:12:29 rillig Exp $");
 
 #include <stdio.h>
 
@@ -255,9 +255,9 @@ output_line_comment(int ind)
 void
 output_line(void)
 {
+	debug_blank_line();
 	debug_printf("%s", __func__);
 	debug_buffers();
-	debug_println("");
 
 	ps.is_function_definition = false;
 
