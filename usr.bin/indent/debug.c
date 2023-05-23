@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.21 2023/05/23 06:35:01 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.22 2023/05/23 12:12:29 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.21 2023/05/23 06:35:01 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.22 2023/05/23 12:12:29 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -134,6 +134,8 @@ static const char *const decl_ptr_name[] = {
 	"other",
 };
 
+static unsigned wrote_newlines;
+
 void
 debug_printf(const char *fmt, ...)
 {
@@ -143,6 +145,7 @@ debug_printf(const char *fmt, ...)
 	va_start(ap, fmt);
 	vfprintf(f, fmt, ap);
 	va_end(ap);
+	wrote_newlines = 0;
 }
 
 void
@@ -155,6 +158,14 @@ debug_println(const char *fmt, ...)
 	vfprintf(f, fmt, ap);
 	va_end(ap);
 	fprintf(f, "\n");
+	wrote_newlines = fmt[0] == '\0' ? wrote_newlines + 1 : 1;
+}
+
+void
+debug_blank_line(void)
+{
+	while (wrote_newlines < 2)
+		debug_println("");
 }
 
 void
@@ -182,26 +193,19 @@ static void
 debug_print_buf(const char *name, const struct buffer *buf)
 {
 	if (buf->len > 0) {
-		debug_printf("%s ", name);
-		debug_vis_range("\"", buf->st, buf->len, "\"\n");
+		debug_printf(" %s ", name);
+		debug_vis_range("\"", buf->st, buf->len, "\"");
 	}
 }
 
 void
 debug_buffers(void)
 {
-	if (lab.len > 0) {
-		debug_printf(" label ");
-		debug_vis_range("\"", lab.st, lab.len, "\"");
-	}
-	if (code.len > 0) {
-		debug_printf(" code ");
-		debug_vis_range("\"", code.st, code.len, "\"");
-	}
-	if (com.len > 0) {
-		debug_printf(" comment ");
-		debug_vis_range("\"", com.st, com.len, "\"");
-	}
+	debug_print_buf("token", &token);
+	debug_print_buf("label", &lab);
+	debug_print_buf("code", &code);
+	debug_print_buf("comment", &com);
+	debug_println("");
 }
 
 #define debug_ps_bool(name) \
@@ -280,18 +284,11 @@ debug_ps_di_stack(const struct parser_state *prev_ps)
 }
 
 void
-debug_parser_state(lexer_symbol lsym)
+debug_parser_state(void)
 {
 	static struct parser_state prev_ps;
 
-	debug_println("");
-	debug_printf("line %d: %s", line_no, lsym_name[lsym]);
-	debug_vis_range(" \"", token.st, token.len, "\"\n");
-
-	debug_print_buf("label", &lab);
-	debug_print_buf("code", &code);
-	debug_print_buf("comment", &com);
-
+	debug_blank_line();
 	debug_println("           ps.prev_token = %s",
 	    lsym_name[ps.prev_token]);
 	debug_ps_bool(curr_col_1);
@@ -337,6 +334,7 @@ debug_parser_state(lexer_symbol lsym)
 
 	debug_ps_enum(spaced_expr_psym, psym_name);
 	debug_ps_int(quest_level);
+	debug_blank_line();
 
 	prev_ps = ps;
 }
