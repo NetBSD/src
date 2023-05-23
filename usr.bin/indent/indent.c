@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.309 2023/05/23 16:53:57 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.310 2023/05/23 18:16:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.309 2023/05/23 16:53:57 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.310 2023/05/23 18:16:28 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -368,6 +368,36 @@ update_ps_decl_ptr(lexer_symbol lsym)
 			ps.decl_ptr = dp_start;
 		if (lsym == lsym_comma && ps.in_decl)
 			ps.decl_ptr = dp_start;
+		break;
+	}
+}
+
+static void
+update_ps_in_enum(lexer_symbol lsym)
+{
+	switch (ps.in_enum) {
+	case in_enum_no:
+		if (lsym == lsym_tag && token.st[0] == 'e')
+			ps.in_enum = in_enum_enum;
+		break;
+	case in_enum_enum:
+		if (lsym == lsym_type_outside_parentheses
+		    || lsym == lsym_type_in_parentheses)
+			ps.in_enum = in_enum_type;
+		else if (lsym == lsym_lbrace)
+			ps.in_enum = in_enum_brace;
+		else
+			ps.in_enum = in_enum_no;
+		break;
+	case in_enum_type:
+		if (lsym == lsym_lbrace)
+			ps.in_enum = in_enum_brace;
+		else
+			ps.in_enum = in_enum_no;
+		break;
+	case in_enum_brace:
+		if (lsym == lsym_rbrace)
+			ps.in_enum = in_enum_no;
 		break;
 	}
 }
@@ -1166,7 +1196,9 @@ indent(void)
 
 		if (lsym == lsym_newline || lsym == lsym_preprocessing)
 			ps.force_nl = false;
-		else if (lsym != lsym_comment) {
+		else if (lsym == lsym_comment) {
+			/* no special processing */
+		} else {
 			maybe_break_line(lsym);
 			/*
 			 * Add an extra level of indentation; turned off again
@@ -1175,9 +1207,9 @@ indent(void)
 			ps.in_stmt_or_decl = true;
 			if (com.len > 0)
 				move_com_to_code(lsym);
+			update_ps_decl_ptr(lsym);
+			update_ps_in_enum(lsym);
 		}
-
-		update_ps_decl_ptr(lsym);
 
 		process_lsym(lsym);
 
