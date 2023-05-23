@@ -31,6 +31,7 @@
 # include "nbtool_config.h"
 #endif
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <strings.h>
@@ -396,7 +397,8 @@ tdata_new(void)
 	new->td_nextid = 1;
 	new->td_curvgen = 1;
 
-	pthread_mutex_init(&new->td_mergelock, NULL);
+	if ((errno = pthread_mutex_init(&new->td_mergelock, NULL)) != 0)
+		terminate("%s: pthread_mutex_init(td_mergelock)", __func__);
 
 	return (new);
 }
@@ -414,7 +416,8 @@ tdata_free(tdata_t *td)
 	free(td->td_parlabel);
 	free(td->td_parname);
 
-	pthread_mutex_destroy(&td->td_mergelock);
+	if ((errno = pthread_mutex_destroy(&td->td_mergelock)) != 0)
+		terminate("%s: pthread_mutex_destroy(td_mergelock)", __func__);
 
 	free(td);
 }
