@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.20 2023/05/22 10:28:59 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.21 2023/05/23 06:35:01 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.20 2023/05/22 10:28:59 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.21 2023/05/23 06:35:01 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -125,6 +125,13 @@ const char *const line_kind_name[] = {
 	"stmt head",
 	"}",
 	"block comment",
+};
+
+static const char *const decl_ptr_name[] = {
+	"start",
+	"word",
+	"word *",
+	"other",
 };
 
 void
@@ -316,6 +323,7 @@ debug_parser_state(lexer_symbol lsym)
 	debug_ps_bool(blank_line_after_decl);
 	debug_ps_bool(in_func_def_params);
 	debug_ps_enum(in_enum, in_enum_name);
+	debug_ps_enum(decl_ptr, decl_ptr_name);
 	debug_ps_bool(decl_indent_done);
 	debug_ps_int(decl_ind);
 	debug_ps_bool(tabs_to_var);

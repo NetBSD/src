@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.304 2023/05/22 23:03:16 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.305 2023/05/23 06:35:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.304 2023/05/22 23:03:16 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.305 2023/05/23 06:35:01 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -331,6 +331,42 @@ code_add_decl_indent(int decl_ind, bool tabs_to_var)
 	if (code.len == orig_code_len && ps.want_blank) {
 		buf_add_char(&code, ' ');
 		ps.want_blank = false;
+	}
+}
+
+static void
+update_ps_decl_ptr(lexer_symbol lsym)
+{
+	switch (ps.decl_ptr) {
+	case dp_start:
+		if (lsym == lsym_storage_class)
+			ps.decl_ptr = dp_start;
+		else if (lsym == lsym_type_outside_parentheses)
+			ps.decl_ptr = dp_word;
+		else if (lsym == lsym_word)
+			ps.decl_ptr = dp_word;
+		else
+			ps.decl_ptr = dp_other;
+		break;
+	case dp_word:
+		if (lsym == lsym_unary_op && token.st[0] == '*')
+			ps.decl_ptr = dp_word_asterisk;
+		else
+			ps.decl_ptr = dp_other;
+		break;
+	case dp_word_asterisk:
+		if (lsym == lsym_unary_op && token.st[0] == '*')
+			ps.decl_ptr = dp_word_asterisk;
+		else
+			ps.decl_ptr = dp_other;
+		break;
+	case dp_other:
+		if (lsym == lsym_semicolon || lsym == lsym_rbrace)
+			ps.decl_ptr = dp_start;
+		if (lsym == lsym_lparen_or_lbracket
+		    && ps.prev_token == lsym_for)
+			ps.decl_ptr = dp_start;
+		break;
 	}
 }
 
@@ -1005,6 +1041,8 @@ indent(void)
 			if (com.len > 0)
 				move_com_to_code(lsym);
 		}
+
+		update_ps_decl_ptr(lsym);
 
 		switch (lsym) {
 
