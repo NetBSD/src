@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.337 2023/03/23 07:15:08 mrg Exp $
+$NetBSD: UPDATING,v 1.338 2023/05/23 20:26:52 lukem Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,6 +19,11 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+
+20230523:
+	ctfmerge was fixed as macOS host tool. This may require a clean tools
+	rebuild to detect the update to tools/compat/configure.
+
 20230322:
 	Fixes for moved /lib/libisns* mean that builds will complain about
 	./usr/lib/libisns* being missing until src/lib/libisns is forced
@@ -32,7 +37,6 @@ Recent changes:
 	userland.
 
 20221116:
-
 	The addition to NetBSD's version of UFS2 of support for extended
 	attributes broke backward compatibility with previous releases
 	of NetBSD, so UFS2 has been restored to being compatible with
