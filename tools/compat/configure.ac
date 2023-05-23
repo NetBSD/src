@@ -1,10 +1,10 @@
-#	$NetBSD: configure.ac,v 1.99 2021/02/25 13:41:58 christos Exp $
+#	$NetBSD: configure.ac,v 1.100 2023/05/23 19:53:24 lukem Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
 # When you edit configure.ac:
 # 0. Create the tools versions of autoconf and autoheader:
-#        cd ${SRCDIR} && build.sh -V MKMAINTAINERTOOLS=yes tools
+#        cd ${SRCDIR} && ./build.sh -V MKMAINTAINERTOOLS=yes tools
 #    (This might not work if you try it after editing configure.ac.)
 # 1. edit configure.ac
 # 2. Regenerate "configure" and "nbtool_config.h.in" from "configure.ac":
@@ -12,7 +12,7 @@
 #    (Please don't use a non-tools version of autoconf or autoheader.)
 # 3. Test that the tools still build:
 #        mv ${TOOLDIR} ${TOOLDIR}.bak
-#        cd ${SRCDIR} && build.sh -V MKMAINTAINERTOOLS=yes tools
+#        cd ${SRCDIR} && ./build.sh -V MKMAINTAINERTOOLS=yes tools
 # 4. cvs commit files that you edited.
 # 5. Regen again, to pick up changed RCS IDs from the above commit:
 #        cd ${SRCDIR}/tools/compat && ${TOOLDIR}/bin/nbmake-${MACHINE} regen
@@ -220,6 +220,7 @@ AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 # Library functions (where a .h check isn't enough).
 AC_FUNC_ALLOCA
 AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
+	dispatch_semaphore_create \
 	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
 	getopt getopt_long group_from_gid gid_from_group \
 	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
@@ -313,7 +314,7 @@ main(void)
         [AC_MSG_RESULT(yes)],
         [AC_MSG_RESULT(no)
          AC_DEFINE(BROKEN_FPARSELN, 1,
-            [Define to 1 if your `fparseln' function is broken.])],
+            [Define to 1 if your 'fparseln' function is broken.])],
         [AC_MSG_WARN([cross compiling: not checking farseln])]
     )
 ])

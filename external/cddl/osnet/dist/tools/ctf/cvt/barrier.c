@@ -60,6 +60,9 @@ barrier_init(barrier_t *bar, int nthreads)
 #ifdef illumos
 	if ((errno = sema_init(&bar->bar_sem, 0, USYNC_THREAD, NULL)) != 0)
 		terminate("%s: sema_init(bar_sem)", __func__);
+#elif defined(HAVE_DISPATCH_SEMAPHORE_CREATE)
+	if ((bar->bar_sem = dispatch_semaphore_create(0)) == NULL)
+		terminate("%s: dispatch_semaphore_create()\n", __func__);
 #else
 	if (sem_init(&bar->bar_sem, 0, 0) == -1)
 		terminate("%s: sem_init(bar_sem)", __func__);
@@ -72,6 +75,9 @@ barrier_init(barrier_t *bar, int nthreads)
 int
 barrier_wait(barrier_t *bar)
 {
+#if defined(HAVE_DISPATCH_SEMAPHORE_CREATE)
+	long error;
+#endif
 	if ((errno = pthread_mutex_lock(&bar->bar_lock)) != 0)
 		terminate("%s: pthread_mutex_lock(bar_lock)", __func__);
 
@@ -82,6 +88,10 @@ barrier_wait(barrier_t *bar)
 #ifdef illumos
 		if ((errno = sema_wait(&bar->bar_sem)) != 0)
 			terminate("%s: sema_wait(bar_sem)", __func__);
+#elif defined(HAVE_DISPATCH_SEMAPHORE_CREATE)
+		if ((error = dispatch_semaphore_wait(bar->bar_sem, DISPATCH_TIME_FOREVER)) != 0)
+			terminate("%s: dispatch_semaphore_wait(bar_sem) = %ld\n",
+			    __func__, error);
 #else
 		if (sem_wait(&bar->bar_sem) == -1)
 			terminate("%s: sem_wait(bar_sem)", __func__);
@@ -94,14 +104,19 @@ barrier_wait(barrier_t *bar)
 
 		/* reset for next use */
 		bar->bar_numin = 0;
-		for (i = 1; i < bar->bar_nthr; i++)
+		for (i = 1; i < bar->bar_nthr; i++) {
 #ifdef illumos
 			if ((errno = sema_post(&bar->bar_sem)) != 0)
 				terminate("%s: sema_post(bar_sem)", __func__);
+#elif defined(HAVE_DISPATCH_SEMAPHORE_CREATE)
+			if ((error = dispatch_semaphore_signal(bar->bar_sem)) != 0)
+				terminate("%s: dispatch_semaphore_signal(bar_sem) = %ld\n",
+				    __func__, error);
 #else
 			if (sem_post(&bar->bar_sem) == -1)
 				terminate("%s: sem_post(bar_sem)", __func__);
 #endif
+		}
 		if ((errno = pthread_mutex_unlock(&bar->bar_lock)) != 0)
 			terminate("%s: pthread_mutex_unlock(bar_lock)",
 			    __func__);

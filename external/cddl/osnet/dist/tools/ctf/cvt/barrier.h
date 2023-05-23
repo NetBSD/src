@@ -33,8 +33,15 @@
  * APIs for the barrier synchronization primitive.
  */
 
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #ifdef illumos
 #include <synch.h>
+#elif defined(HAVE_DISPATCH_SEMAPHORE_CREATE)
+#include <dispatch/dispatch.h>
+typedef dispatch_semaphore_t sema_t;
 #else
 #include <semaphore.h>
 typedef sem_t	sema_t;
