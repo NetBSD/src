@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.205 2023/05/23 12:12:29 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.206 2023/05/23 18:16:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.205 2023/05/23 12:12:29 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.206 2023/05/23 18:16:28 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -396,8 +396,6 @@ lexi_alnum(void)
 	if (is_typename()) {
 		lsym = lsym_type_in_parentheses;
 		ps.next_unary = true;
-		if (ps.in_enum == in_enum_enum)
-			ps.in_enum = in_enum_type;
 found_typename:
 		if (ps.nparen > 0) {
 			/* inside parentheses: cast, param list, offsetof or
@@ -407,11 +405,8 @@ found_typename:
 		}
 		if (ps.prev_token != lsym_period
 		    && ps.prev_token != lsym_unary_op) {
-			if (kw != NULL && kw->lsym == lsym_tag) {
-				if (token.st[0] == 'e' /* enum */)
-					ps.in_enum = in_enum_enum;
+			if (kw != NULL && kw->lsym == lsym_tag)
 				return lsym_tag;
-			}
 			if (ps.nparen == 0)
 				return lsym_type_outside_parentheses;
 		}
@@ -672,11 +667,6 @@ lexi(void)
 		lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 		next_unary = true;
 	}
-
-	if (ps.in_enum == in_enum_enum || ps.in_enum == in_enum_type)
-		ps.in_enum = lsym == lsym_lbrace ? in_enum_brace : in_enum_no;
-	if (lsym == lsym_rbrace)
-		ps.in_enum = in_enum_no;
 
 	ps.next_unary = next_unary;
 
