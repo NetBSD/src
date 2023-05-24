@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.442 2022/10/01 08:55:45 rillig Exp $
+#	$NetBSD: bsd.README,v 1.443 2023/05/24 10:07:16 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1831,10 +1831,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBXXF86DGA?=		${DESTDIR}/usr/X11R7/lib/libXxf86dga.a
 		LIBXXF86MISC?=		${DESTDIR}/usr/X11R7/lib/libXxf86misc.a
 		LIBXXF86VM?=		${DESTDIR}/usr/X11R7/lib/libXxf86vm.a
-
-SHAREDSTRINGS	If defined, a new .c.o rule is used that results in shared
-		strings, using xstr(1). Note that this will not work with
-		parallel makes.
 
 STRIPFLAG	The flag passed to the install program to cause the binary
 		to be stripped.
