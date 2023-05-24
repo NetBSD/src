@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_entropy.c,v 1.59 2023/03/03 12:52:49 riastradh Exp $	*/
+/*	$NetBSD: kern_entropy.c,v 1.60 2023/05/24 20:22:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.59 2023/03/03 12:52:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_entropy.c,v 1.60 2023/05/24 20:22:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2414,6 +2414,7 @@ entropy_ioctl(unsigned long cmd, void *data)
 			E->pending = 0;
 			atomic_store_relaxed(&E->needed,
 			    ENTROPY_CAPACITY*NBBY);
+			E->consolidate = false;
 			mutex_exit(&E->lock);
 		}
 
