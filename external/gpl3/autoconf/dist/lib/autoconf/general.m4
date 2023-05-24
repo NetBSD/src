@@ -2119,7 +2119,7 @@ m4_define([AC_DEFINE_UNQUOTED], [_AC_DEFINE_Q([_$0], $@)])
 # no backslash, no command substitution, no complex variable
 # substitution, and no quadrigraphs.
 m4_define([_AC_DEFINE_UNQUOTED],
-[m4_if(m4_bregexp([$1], [\\\|`\|\$(\|\$\{\|@]), [-1],
+[m4_if(m4_bregexp([$1], [\\\|`\|\$(\|\${\|@]), [-1],
        [AS_ECHO(["AS_ESCAPE([$1], [""])"]) >>confdefs.h],
        [cat >>confdefs.h <<_ACEOF
 [$1]
