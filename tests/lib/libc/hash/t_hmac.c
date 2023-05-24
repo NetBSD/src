@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hmac.c,v 1.2 2018/02/07 13:18:33 christos Exp $	*/
+/*	$NetBSD: t_hmac.c,v 1.3 2023/05/24 18:22:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_hmac.c,v 1.2 2018/02/07 13:18:33 christos Exp $");
+__RCSID("$NetBSD: t_hmac.c,v 1.3 2023/05/24 18:22:05 christos Exp $");
 
 #include <atf-c.h>
 #include <string.h>
@@ -52,7 +52,9 @@ test(void)
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 		EVP_md2(),
 #endif
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 		EVP_md4(),
+#endif
 		EVP_md5(),
 		EVP_ripemd160(),
 		EVP_sha1(),
@@ -65,7 +67,9 @@ test(void)
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
 		"md2",
 #endif
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
 		"md4",
+#endif
 		"md5",
 		"rmd160",
 		"sha1",
@@ -91,7 +95,8 @@ test(void)
 			memset(tmp1, 0, sizeof(tmp1));
 			memset(tmp2, 0, sizeof(tmp2));
 			e1 = HMAC(evps[t], key, i, data, j, tmp1, &tmp1len);
-			ATF_REQUIRE(e1 != NULL);
+			ATF_REQUIRE_MSG(e1 != NULL, "hash %s could not be "
+			    "created", names[t]);
 			tmp2len = hmac(names[t], key, i, data, j, tmp2,
 			    sizeof(tmp2));
 			ATF_REQUIRE_MSG(tmp1len == tmp2len, "hash %s len %u "
