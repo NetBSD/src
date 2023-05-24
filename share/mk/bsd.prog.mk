@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.343 2023/05/08 14:31:08 christos Exp $
+#	$NetBSD: bsd.prog.mk,v 1.344 2023/05/24 10:07:16 lukem Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -34,22 +34,6 @@ realinstall:	proginstall scriptsinstall
 .endfor
 
 CLEANFILES+= a.out [Ee]rrs mklog core *.core .gdbinit
-
-.if defined(SHAREDSTRINGS)
-CLEANFILES+=strings
-.c.o:
-	${CC} -E ${CPPFLAGS} ${CFLAGS} ${.IMPSRC} | xstr -c -
-	@${CC} ${CPPFLAGS} ${CFLAGS} -c x.c ${OBJECT_TARGET}
-	${CTFCONVERT_RUN}
-	@rm -f x.c
-
-.cc.o .cpp.o .cxx.o .C.o:
-	${CXX} -E ${CPPFLAGS} ${CXXFLAGS} ${.IMPSRC} | xstr -c -
-	@${MV} x.c x.cc
-	@${CXX} ${CPPFLAGS} ${CXXFLAGS} -c x.cc ${OBJECT_TARGET}
-	${CTFCONVERT_RUN}
-	@rm -f x.cc
-.endif
 
 .if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
 CFLAGS+=	${PIE_CFLAGS}
