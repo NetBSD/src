@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.398 2023/05/10 15:52:07 christos Exp $
+# $NetBSD: mi,v 1.399 2023/05/24 13:00:15 lukem Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -689,7 +689,7 @@
 ./usr/libdata/debug/usr/bin/mkesdb.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/mkfifo.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/mklocale.debug	comp-locale-debug	debug
-./usr/libdata/debug/usr/bin/mkstr.debug		comp-c-debug		debug
+./usr/libdata/debug/usr/bin/mkstr.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/mktemp.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/mkubootimage.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/modstat.debug	comp-obsolete		obsolete
@@ -896,7 +896,7 @@
 ./usr/libdata/debug/usr/bin/xargs.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/xgettext.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/xmlwf.debug		comp-util-debug		debug
-./usr/libdata/debug/usr/bin/xstr.debug		comp-c-debug		debug
+./usr/libdata/debug/usr/bin/xstr.debug		comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/xz.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/yacc.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/yes.debug		comp-util-debug		debug
