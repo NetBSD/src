@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.238 2022/06/06 10:56:29 nia Exp $
+#	$NetBSD: Makefile,v 1.239 2023/05/24 13:00:15 lukem Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -17,7 +17,7 @@ SUBDIR= aiomixer apply asa at audio audiocfg \
 	kdump ktrace ktruss lam last lastcomm ldd leave \
 	locale locate lock logger login logname look lorder m4 \
 	machine mail make man menuc mesg midiplay midirecord mixerctl \
-	mkcsmapper mkdep mkesdb mkfifo mklocale mkstr mktemp mkubootimage \
+	mkcsmapper mkdep mkesdb mkfifo mklocale mktemp mkubootimage \
 	moduli msgc msgs \
 	nbperf nc netgroup netstat newgrp newsyslog nfsstat nice nl nohup \
 	pagesize passwd paste patch pathchk pkill pmap pr \
@@ -34,7 +34,7 @@ SUBDIR= aiomixer apply asa at audio audiocfg \
 	uudecode uuencode uuidgen vacation vgrind videoctl vis \
 	vmstat vndcompress w \
 	wall wc what whereis who whois \
-	write xargs xinstall xlint xstr yes
+	write xargs xinstall xlint yes
 
 SUBDIR+= ../external/zlib/pigz/bin/pigz
 

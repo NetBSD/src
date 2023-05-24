@@ -2469,7 +2469,6 @@ mkostemps
 mkquery
 mkstemp
 mkstemps
-mkstr
 mktemp
 mktime
 mkubootimage
@@ -4781,7 +4780,6 @@ xname
 xpci
 xprt
 xsh
-xstr
 xsurf
 xt
 xvif
