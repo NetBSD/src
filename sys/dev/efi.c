@@ -1,4 +1,4 @@
-/* $NetBSD: efi.c,v 1.8 2023/05/22 16:28:16 riastradh Exp $ */
+/* $NetBSD: efi.c,v 1.9 2023/05/24 00:02:51 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.8 2023/05/22 16:28:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.9 2023/05/24 00:02:51 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -377,10 +377,10 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 		error = efi_status_to_error(status);
 		goto done;
 	}
-	KASSERT(datasize <= databufsize);
 	var->datasize = datasize;
-	if (status == EFI_SUCCESS && databuf != NULL) {
-		error = copyout(databuf, var->data, var->datasize);
+	if (status == EFI_SUCCESS && databufsize != 0) {
+		error = copyout(databuf, var->data,
+		    MIN(datasize, databufsize));
 	} else {
 		var->data = NULL;
 	}
@@ -423,10 +423,10 @@ efi_ioctl_var_next(struct efi_var_ioc *var)
 		error = efi_status_to_error(status);
 		goto done;
 	}
-	KASSERT(namesize <= namebufsize);
 	var->namesize = namesize;
 	if (status == EFI_SUCCESS) {
-		error = copyout(namebuf, var->name, var->namesize);
+		error = copyout(namebuf, var->name,
+		    MIN(namesize, namebufsize));
 	} else {
 		var->name = NULL;
 	}
