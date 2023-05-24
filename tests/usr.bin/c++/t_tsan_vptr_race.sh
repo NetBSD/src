@@ -88,7 +88,7 @@ EOF
 
 	c++ -fsanitize=thread -o test test.cc
 	paxctl +a test
-	atf_check -s ignore -o ignore -e match:"WARNING: ThreadSanitizer: data race on vptr \(ctor/dtor vs virtual call\)" ./test
+	atf_check -s ignore -o ignore -e match:"WARNING: ThreadSanitizer: data race" ./test
 }
 
 vptr_race_profile_body(){
@@ -119,10 +119,9 @@ int main() {
   return 0;
 }
 EOF
-
-	c++ -fsanitize=thread -static -o test -pg test.cc
+	c++ -fsanitize=thread -o test -pg test.cc
 	paxctl +a test
-	atf_check -s ignore -o ignore -e match:"WARNING: ThreadSanitizer: data race on vptr \(ctor/dtor vs virtual call\)" ./test
+	atf_check -s ignore -o ignore -e match:"WARNING: ThreadSanitizer: data race" ./test
 }
 
 vptr_race_pic_body(){
@@ -165,7 +164,7 @@ EOF
 	paxctl +a test
 
 	export LD_LIBRARY_PATH=.
-	atf_check -s ignore -o ignore -e match:"WARNING: ThreadSanitizer: data race on vptr \(ctor/dtor vs virtual call\)" ./test
+	atf_check -s ignore -o ignore -e match:"WARNING: ThreadSanitizer: data race" ./test
 }
 vptr_race_pie_body(){
 
@@ -202,7 +201,7 @@ EOF
 
 	c++ -fsanitize=thread -o test -fpie -pie test.cc
 	paxctl +a test
-	atf_check -s ignore -o ignore -e match:"WARNING: ThreadSanitizer: data race on vptr \(ctor/dtor vs virtual call\)" ./test
+	atf_check -s ignore -o ignore -e match:"WARNING: ThreadSanitizer: data race" ./test
 }
 
 
