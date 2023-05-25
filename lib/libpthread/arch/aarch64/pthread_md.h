@@ -1,4 +1,4 @@
-/* $NetBSD: pthread_md.h,v 1.1 2014/08/10 05:47:37 matt Exp $ */
+/* $NetBSD: pthread_md.h,v 1.2 2023/05/25 14:30:02 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ pthread__sp(void)
 	return ret;
 }
 
-#define pthread__smt_pause()	__asm __volatile("wfe") /* wfe */
+#define pthread__smt_wait()	__asm __volatile("wfe") /* wfe */
 #define pthread__smt_wake()	__asm __volatile("sev") /* sev */
 
 #define	pthread__uc_sp(ucp)	((ucp)->uc_mcontext.__gregs[_REG_SP])
