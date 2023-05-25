@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.30 2023/05/25 01:31:27 uwe Exp $
+.\"	$NetBSD: chflags.1,v 1.31 2023/05/25 12:57:37 jschauma Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)chflags.1	8.4 (Berkeley) 5/2/95
 .\"
-.Dd May 24, 2023
+.Dd May 25, 2023
 .Dt CHFLAGS 1
 .Os
 .Sh NAME
@@ -103,18 +103,6 @@ The following keywords are currently defined:
 .It Li uappnd Ta user append-only Ta owner or super-user
 .It Li uchg Ta user immutable Ta owner or super-user
 .El
-.Pp
-The
-.Cm arch
-flag is only used in connection with certain foreign
-filesystems (e.g., MS-DOS, where it indicates whether
-a file has been modified since it was last backed up).
-.Pp
-A file with the
-.Cm nodump
-flag set will by default only be backed up by
-.Xr dump 8
-during full backups.
 .Pp
 Putting the letters
 .Sq Cm no
