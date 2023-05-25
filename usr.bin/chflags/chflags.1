@@ -1,4 +1,4 @@
-.\"	$NetBSD: chflags.1,v 1.29 2023/05/24 22:33:17 jschauma Exp $
+.\"	$NetBSD: chflags.1,v 1.30 2023/05/25 01:31:27 uwe Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -105,13 +105,13 @@ The following keywords are currently defined:
 .El
 .Pp
 The
-.Va arch
+.Cm arch
 flag is only used in connection with certain foreign
 filesystems (e.g., MS-DOS, where it indicates whether
 a file has been modified since it was last backed up).
 .Pp
 A file with the
-.Va nodump
+.Cm nodump
 flag set will by default only be backed up by
 .Xr dump 8
 during full backups.
