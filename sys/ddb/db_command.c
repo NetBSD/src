@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.181 2022/04/28 07:08:38 msaitoh Exp $	*/
+/*	$NetBSD: db_command.c,v 1.182 2023/05/25 21:46:55 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.181 2022/04/28 07:08:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.182 2023/05/25 21:46:55 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -203,7 +203,7 @@ static void	db_show_all_locks(db_expr_t, bool, db_expr_t, const char *);
 static void	db_show_lockstats(db_expr_t, bool, db_expr_t, const char *);
 static void	db_show_all_freelists(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, bool, db_expr_t, const char *);
-static void	db_show_all_mount(db_expr_t, bool, db_expr_t, const char *);
+static void	db_show_all_mounts(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mbuf_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_kqueue_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_map_print_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -279,10 +279,10 @@ static const struct db_command db_show_cmds[] = {
 	    "-c prints all mbuf chains") },
 	{ DDB_ADD_CMD("module", db_show_module_cmd,	0,
 	    "Print kernel modules", NULL, NULL) },
-	{ DDB_ADD_CMD("mount",	db_show_all_mount,	0,
-	    "Print all mount structures.", "[/f]", NULL) },
 	{ DDB_ADD_CMD("mount",	db_mount_print_cmd,	0,
 	    "Print the mount structure at address.", "[/f] address",NULL) },
+	{ DDB_ADD_CMD("mounts",	db_show_all_mounts,	0,
+	    "Print all mount structures.", "[/f]", NULL) },
 #ifdef MQUEUE
 	{ DDB_ADD_CMD("mqueue", db_show_mqueue_cmd,	0,
 	    "Print the message queues", NULL, NULL) },
@@ -1244,7 +1244,7 @@ db_mount_print_cmd(db_expr_t addr, bool have_addr,
 }
 
 static void
-db_show_all_mount(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+db_show_all_mounts(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 #ifdef _KERNEL	/* XXX CRASH(8) */
 	bool full = false;
