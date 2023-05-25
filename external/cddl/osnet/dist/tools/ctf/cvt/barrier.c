@@ -109,9 +109,8 @@ barrier_wait(barrier_t *bar)
 			if ((errno = sema_post(&bar->bar_sem)) != 0)
 				terminate("%s: sema_post(bar_sem)", __func__);
 #elif defined(HAVE_DISPATCH_SEMAPHORE_CREATE)
-			if ((error = dispatch_semaphore_signal(bar->bar_sem)) != 0)
-				terminate("%s: dispatch_semaphore_signal(bar_sem) = %ld\n",
-				    __func__, error);
+			/* return value doesn't matter */
+			dispatch_semaphore_signal(bar->bar_sem);
 #else
 			if (sem_post(&bar->bar_sem) == -1)
 				terminate("%s: sem_post(bar_sem)", __func__);
