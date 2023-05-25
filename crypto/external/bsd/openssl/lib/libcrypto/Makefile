@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2023/05/25 15:52:28 riastradh Exp $
+#	$NetBSD: Makefile,v 1.31 2023/05/25 16:05:28 riastradh Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -30,6 +30,10 @@ CPPFLAGS+= -I${OPENSSLSRC}/include -I${OPENSSLSRC}/crypto/include
 CPPFLAGS+= -I${OPENSSLSRC}/crypto/asn1 -I${OPENSSLSRC}/crypto/evp
 CPPFLAGS+= -I${OPENSSLSRC}/crypto/modes
 CPPFLAGS+= -I${OPENSSLSRC}/../include
+
+# OpenSSL extensively uses string literals as char *, which clang
+# (reasonably if not exactly rightly) objects to.
+CWARNFLAGS.clang+=-Wno-error=incompatible-pointer-types-discards-qualifiers
 
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 OPENSSLINC=	${OPENSSLSRC}/include/openssl
