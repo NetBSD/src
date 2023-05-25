@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.18 2023/02/21 11:39:39 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.19 2023/05/25 12:07:43 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.18 2023/02/21 11:39:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.19 2023/05/25 12:07:43 riastradh Exp $");
 
 #include <linux/power_supply.h>
 #include <linux/kthread.h>
@@ -3085,7 +3085,6 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 	}
 #ifdef __NetBSD__
 	if (i == DEVICE_COUNT_RESOURCE)
-		DRM_ERROR("Unable to find PCI I/O BAR\n");
 #else
 	if (adev->rio_mem == NULL)
 #endif
