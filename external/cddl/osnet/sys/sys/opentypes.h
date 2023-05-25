@@ -37,7 +37,11 @@ typedef id_t		ctid_t;
 #define	B_FALSE	0
 #define	B_TRUE	1
 #ifndef _KERNEL
+#if defined(__APPLE__)
+#include <mach/boolean.h>
+#else
 typedef int		boolean_t;
+#endif
 #endif
 
 #ifndef __defined_hr_t
