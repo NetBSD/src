@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.109 2022/04/19 20:32:17 rillig Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.110 2023/05/25 14:29:45 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -301,10 +301,10 @@ int	pthread__checkpri(int) PTHREAD_HIDE;
 int	pthread__add_specific(pthread_t, pthread_key_t, const void *) PTHREAD_HIDE;
 
 #ifndef pthread__smt_pause
-#define	pthread__smt_pause()	/* nothing */
+#define	pthread__smt_pause()	__nothing
 #endif
 #ifndef pthread__smt_wake
-#define	pthread__smt_wake()	/* nothing */
+#define	pthread__smt_wake()	__nothing
 #endif
 
 /*
