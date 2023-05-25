@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.openssl,v 1.16 2023/05/23 12:05:10 christos Exp $
+#	$NetBSD: Makefile.openssl,v 1.17 2023/05/25 19:12:06 riastradh Exp $
 
 .ifndef _MAKEFILE_OPENSSL_INCLUDED
 _MAKEFILE_OPENSSL_INCLUDED=1
@@ -13,6 +13,10 @@ COPTS+= -Wno-error=shadow
 
 CWARNFLAGS.gcc+= -Wno-error=discarded-qualifiers
 CWARNFLAGS.clang+= -Wno-error=ignored-qualifiers
+
+# OpenSSL extensively uses string literals as char *, which clang
+# (reasonably if not exactly rightly) objects to.
+CWARNFLAGS.clang+= -Wno-error=incompatible-pointer-types-discards-qualifiers
 
 # XXX: re-examine the below
 CWARNFLAGS.clang+= -Wno-empty-body -Wno-unused-value -Wno-parentheses
