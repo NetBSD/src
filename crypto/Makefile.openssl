@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.openssl,v 1.18 2023/05/25 19:12:42 riastradh Exp $
+#	$NetBSD: Makefile.openssl,v 1.19 2023/05/25 19:12:51 riastradh Exp $
 
 .ifndef _MAKEFILE_OPENSSL_INCLUDED
 _MAKEFILE_OPENSSL_INCLUDED=1
@@ -7,10 +7,10 @@ _MAKEFILE_OPENSSL_INCLUDED=1
 WARNS=3
 
 # would require changing a lot of code
-COPTS+= -Wno-error=cast-qual
-COPTS+= -Wno-error=char-subscripts # XXX likely real ctype(3) missing cast bugs
-COPTS+= -Wno-error=missing-field-initializers
-COPTS+= -Wno-error=shadow
+CWARNFLAGS+= -Wno-error=cast-qual
+CWARNFLAGS+= -Wno-error=char-subscripts # XXX likely real ctype(3) missing cast bugs
+CWARNFLAGS+= -Wno-error=missing-field-initializers
+CWARNFLAGS+= -Wno-error=shadow
 
 CWARNFLAGS.gcc+= -Wno-error=discarded-qualifiers
 CWARNFLAGS.clang+= -Wno-error=ignored-qualifiers
