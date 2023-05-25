@@ -12,7 +12,7 @@ extract() {
     else
 	c=$1
     fi
-    ls -1 ${BUILD}/crypto/$c/libcrypto-shlib-*.d | sed -e 's/.*-shlib-//' -e 's/\.d/.c \\/' 
+    ls -1 ${BUILD}/crypto/$c/libcrypto-shlib-*.d | sed -e 's/.*-shlib-//' -e 's/\.d/.c \\/'
 }
 
 for d in ${DIRS} crypto; do

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2023/05/17 19:09:42 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2023/05/25 15:52:29 riastradh Exp $
 
 # RCSid:
 #	Id: Makefile,v 1.33 1998/11/11 11:53:53 sjg Exp
@@ -8,10 +8,10 @@
 #	This file is provided in the hope that it will
 #	be of use.  There is absolutely NO WARRANTY.
 #	Permission to copy, redistribute or otherwise
-#	use this file is hereby granted provided that 
+#	use this file is hereby granted provided that
 #	the above copyright notice and this notice are
-#	left intact. 
-#      
+#	left intact.
+#
 #	Please send copies of changes and bug-fixes to:
 #	sjg@quick.com.au
 #

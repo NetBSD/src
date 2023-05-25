@@ -44,7 +44,7 @@ V=V"#define sk_OPENSSL_STRING_is_sorted(sk) OPENSSL_sk_is_sorted(ossl_check_cons
 V=V"#define sk_OPENSSL_STRING_dup(sk) ((STACK_OF(OPENSSL_STRING) *)OPENSSL_sk_dup(ossl_check_const_OPENSSL_STRING_sk_type(sk)))\n"
 V=V"#define sk_OPENSSL_STRING_deep_copy(sk, copyfunc, freefunc) ((STACK_OF(OPENSSL_STRING) *)OPENSSL_sk_deep_copy(ossl_check_const_OPENSSL_STRING_sk_type(sk), ossl_check_OPENSSL_STRING_copyfunc_type(copyfunc), ossl_check_OPENSSL_STRING_freefunc_type(freefunc)))\n"
 V=V"#define sk_OPENSSL_STRING_set_cmp_func(sk, cmp) ((sk_OPENSSL_STRING_compfunc)OPENSSL_sk_set_cmp_func(ossl_check_OPENSSL_STRING_sk_type(sk), ossl_check_OPENSSL_STRING_compfunc_type(cmp)))\n"
-	
+
 	printf("%s", V);
 	next;
 }

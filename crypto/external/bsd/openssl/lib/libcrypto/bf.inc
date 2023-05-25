@@ -1,8 +1,8 @@
-#	$NetBSD: bf.inc,v 1.2 2023/05/06 17:07:22 christos Exp $
+#	$NetBSD: bf.inc,v 1.3 2023/05/25 15:52:28 riastradh Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/bf
 
-BF_SRCS ?= bf_enc.c 
+BF_SRCS ?= bf_enc.c
 
 BF_SRCS += \
 bf_cfb64.c \
