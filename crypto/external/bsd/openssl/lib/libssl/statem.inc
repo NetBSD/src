@@ -1,4 +1,4 @@
-#	$NetBSD: statem.inc,v 1.2 2018/09/23 13:33:09 christos Exp $
+#	$NetBSD: statem.inc,v 1.3 2023/05/25 15:52:29 riastradh Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
@@ -18,4 +18,4 @@ statem.c \
 statem_clnt.c \
 statem_dtls.c \
 statem_lib.c \
-statem_srvr.c 
+statem_srvr.c
