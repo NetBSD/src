@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.10 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.11 2023/05/25 06:17:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ struct clockframe {
 
 #define CLKF_USERMODE(cf)	(((cf)->cf_status & SR_SPP) == 0)
 #define CLKF_PC(cf)		((cf)->cf_epc)
-#define CLKF_INTR(cf)		((cf)->cf_intr_depth > 0)
+#define CLKF_INTR(cf)		((cf)->cf_intr_depth > 1)
 
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
