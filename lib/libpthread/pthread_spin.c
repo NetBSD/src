@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_spin.c,v 1.10 2022/04/10 10:38:33 riastradh Exp $	*/
+/*	$NetBSD: pthread_spin.c,v 1.11 2023/05/25 14:30:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_spin.c,v 1.10 2022/04/10 10:38:33 riastradh Exp $");
+__RCSID("$NetBSD: pthread_spin.c,v 1.11 2023/05/25 14:30:03 riastradh Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -98,7 +98,7 @@ pthread_spin_lock(pthread_spinlock_t *lock)
 
 	self = pthread__self();
 	while (pthread__spintrylock(self, &lock->pts_spin) == 0) {
-		pthread__smt_pause();
+		pthread__smt_wait();
 	}
 
 	return 0;
