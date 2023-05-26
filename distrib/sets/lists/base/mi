@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1319 2023/05/14 11:04:56 riastradh Exp $
+# $NetBSD: mi,v 1.1320 2023/05/26 13:21:52 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1211,7 +1211,6 @@
 ./usr/lib/named					base-sys-usr
 ./usr/lib/npf					base-obsolete		obsolete
 ./usr/lib/openssl				base-crypto-usr
-./usr/lib/openssl/engines			base-crypto-usr
 ./usr/lib/openssl/modules			base-crypto-usr
 ./usr/lib/openssl/modules/legacy.so		base-crypto-usr		pic,openssl=30
 ./usr/lib/postfix				base-postfix-usr
