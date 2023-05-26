@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.83 2023/05/26 10:39:56 nat Exp $ */
+/* $NetBSD: pad.c,v 1.84 2023/05/26 12:10:13 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.83 2023/05/26 10:39:56 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.84 2023/05/26 12:10:13 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -324,7 +324,7 @@ pad_get_block(struct pad_softc *sc, pad_block_t *pb, int maxblksize, int dowait)
 	KASSERT(maxblksize > 0);
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
-	if (sc->sc_buflen == 0 && dowait)
+	if (sc->sc_buflen == 0 && !dowait)
 		return EAGAIN;
 
 	while (sc->sc_buflen == 0) {
@@ -515,13 +515,13 @@ pad_read(struct pad_softc *sc, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	int err, first;
 
 	err = 0;
-	first = 1;
+	first = 0;
 	DPRINTF("%s: resid=%zu\n", __func__, uio->uio_resid);
 	while (uio->uio_resid > 0) {
 		mutex_enter(&sc->sc_intr_lock);
 		err = pad_get_block(sc, &pb, MIN(uio->uio_resid, INT_MAX), first);
 		mutex_exit(&sc->sc_intr_lock);
-		first = 0;
+		first = 1;
 		if (err == EAGAIN) {
 			err = 0;
 			break;
