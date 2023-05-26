@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.32 2022/05/15 11:47:42 martin Exp $
+# $NetBSD: sshd,v 1.33 2023/05/26 10:44:59 riastradh Exp $
 #
 
 # PROVIDE: sshd
@@ -13,7 +13,7 @@ rcvar=$name
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/etc/ssh/sshd_config"
-extra_commands="keygen keyregen reload"
+extra_commands="check keygen keyregen reload"
 
 sshd_motd_unsafe_keys_warning()
 {
@@ -77,8 +77,20 @@ sshd_precmd()
 	run_rc_command keygen
 }
 
+sshd_check()
+{
+	sshd -t
+}
+
+sshd_reload_precmd()
+{
+	run_rc_command check
+}
+
+check_cmd=sshd_check
 keygen_cmd=sshd_keygen
 keyregen_cmd="sshd_keygen force"
+reload_precmd=sshd_reload_precmd
 start_precmd=sshd_precmd
 
 load_rc_config $name
