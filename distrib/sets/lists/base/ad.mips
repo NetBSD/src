@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.84 2023/05/17 15:01:17 christos Exp $
+# $NetBSD: ad.mips,v 1.85 2023/05/26 13:21:52 riastradh Exp $
 ./lib/libc_fp.so				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0.0				base-sys-shlib		dynamicroot,softfloat,arch64
@@ -9,7 +9,6 @@
 ./usr/lib/64/libc_fp.so.0			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
 ./usr/lib/64/libc_fp.so.0.0			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
 ./usr/lib/64/openssl      			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
-./usr/lib/64/openssl/engines			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
 ./usr/lib/64/openssl/modules			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
 ./usr/lib/64/openssl/modules/legacy.so		base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
 ./usr/lib/libc_fp.so				base-sys-shlib		softfloat,arch64
@@ -23,14 +22,12 @@
 ./usr/lib/o32/libgomp.so.2.0			base-compat-shlib	compat,pic,arch64,gcc=10,obsolete
 ./usr/lib/o32/libgomp.so.2.1			base-compat-shlib	compat,pic,arch64,gcc=10
 ./usr/lib/o32/openssl				base-crypto-usr		compat,pic,arch64
-./usr/lib/o32/openssl/engines			base-crypto-usr		compat,pic,arch64
 ./usr/lib/o32/openssl/modules			base-crypto-usr		compat,pic,arch64
 ./usr/lib/o32/openssl/modules/legacy.so		base-crypto-usr		compat,pic,arch64
 ./usr/lib/n32/libc_fp.so			base-compat-shlib	compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb
 ./usr/lib/n32/libc_fp.so.0			base-compat-shlib	compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb
 ./usr/lib/n32/libc_fp.so.0.0			base-compat-shlib	compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb
 ./usr/lib/n32/openssl				base-crypto-usr		compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb
-./usr/lib/n32/openssl/engines			base-crypto-usr		compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb
 ./usr/lib/n32/openssl/modules			base-crypto-usr		compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb
 ./usr/lib/n32/openssl/modules/legacy.so		base-crypto-usr		compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb
 ./usr/libexec/ld.elf_so-64			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
