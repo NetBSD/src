@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.352 2023/05/15 20:54:53 andvar Exp $
+$NetBSD: acronyms.comp,v 1.353 2023/05/26 03:30:57 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -311,6 +311,7 @@ CPT	command pass through
 CPU	central processing unit
 CR	carriage return
 CRC	cyclic redundancy check
+CRDT	conflict-free replicated data type
 CRL	carrier recovery loop
 CRLF	carriage return line feed
 CSPM	cloud security posture management
@@ -1730,6 +1731,7 @@ UDI	uniform driver interface
 UDMA	ultra DMA
 UDO	ultra density optical
 UDP	User Datagram Protocol
+UDS	Unix Domain Socket
 UEFI	unified extensible firmware interface
 UFO	UDP fragmentation offload
 UFS	Unix File System
