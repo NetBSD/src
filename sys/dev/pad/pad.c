@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.82 2023/05/01 16:35:47 mlelstv Exp $ */
+/* $NetBSD: pad.c,v 1.83 2023/05/26 10:39:56 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.82 2023/05/01 16:35:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.83 2023/05/26 10:39:56 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -324,7 +324,7 @@ pad_get_block(struct pad_softc *sc, pad_block_t *pb, int maxblksize, int dowait)
 	KASSERT(maxblksize > 0);
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 
-	if (sc->sc_buflen == 0 && !dowait)
+	if (sc->sc_buflen == 0 && dowait)
 		return EAGAIN;
 
 	while (sc->sc_buflen == 0) {
