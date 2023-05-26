@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.compat.in,v 1.5 2023/05/26 13:21:52 riastradh Exp $
+#	$NetBSD: NetBSD.dist.compat.in,v 1.6 2023/05/26 22:26:11 riastradh Exp $
 
 ./lib/@ARCH_SUBDIR@
 ./lib/@ARCH_SUBDIR@/npf
@@ -7,6 +7,7 @@
 ./usr/lib/@ARCH_SUBDIR@/lua
 ./usr/lib/@ARCH_SUBDIR@/lua/5.4
 ./usr/lib/@ARCH_SUBDIR@/openssl
+./usr/lib/@ARCH_SUBDIR@/openssl/engines
 ./usr/lib/@ARCH_SUBDIR@/openssl/modules
 ./usr/lib/@ARCH_SUBDIR@/security
 ./usr/libdata/debug/lib/@ARCH_SUBDIR@
