@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.88 2023/05/27 00:08:30 riastradh Exp $
+# $NetBSD: ad.mips,v 1.89 2023/05/27 00:09:06 riastradh Exp $
 ./lib/libc_fp.so				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0.0				base-sys-shlib		dynamicroot,softfloat,arch64
@@ -12,8 +12,8 @@
 ./usr/lib/64/openssl/engines			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
 ./usr/lib/64/openssl/engines/capi.so		base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
 ./usr/lib/64/openssl/engines/dasync.so		base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
-./usr/lib/64/openssl/engines/devcryptoapi.so	base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
-./usr/lib/64/openssl/engines/loader_atticapi.so	base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
+./usr/lib/64/openssl/engines/devcrypto.so	base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
+./usr/lib/64/openssl/engines/loader_attic.so	base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
 ./usr/lib/64/openssl/engines/ossltest.so	base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
 ./usr/lib/64/openssl/modules			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
 ./usr/lib/64/openssl/modules/legacy.so		base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
