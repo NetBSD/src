@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1322 2023/05/26 22:27:51 riastradh Exp $
+# $NetBSD: mi,v 1.1323 2023/05/27 00:08:30 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1217,7 +1217,6 @@
 ./usr/lib/openssl/engines/devcrypto.so		base-crypto-usr		pic,openssl=30
 ./usr/lib/openssl/engines/loader_attic.so	base-crypto-usr		pic,openssl=30
 ./usr/lib/openssl/engines/ossltest.so		base-crypto-usr		pic,openssl=30
-./usr/lib/openssl/engines/padlock.so		base-crypto-usr		pic,openssl=30
 ./usr/lib/openssl/modules			base-crypto-usr
 ./usr/lib/openssl/modules/legacy.so		base-crypto-usr		pic,openssl=30
 ./usr/lib/postfix				base-postfix-usr
