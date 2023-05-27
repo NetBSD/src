@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.84 2023/05/26 12:10:13 nat Exp $ */
+/* $NetBSD: pad.c,v 1.85 2023/05/27 14:51:47 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.84 2023/05/26 12:10:13 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.85 2023/05/27 14:51:47 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -515,13 +515,13 @@ pad_read(struct pad_softc *sc, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	int err, first;
 
 	err = 0;
-	first = 0;
+	first = 1;
 	DPRINTF("%s: resid=%zu\n", __func__, uio->uio_resid);
 	while (uio->uio_resid > 0) {
 		mutex_enter(&sc->sc_intr_lock);
 		err = pad_get_block(sc, &pb, MIN(uio->uio_resid, INT_MAX), first);
 		mutex_exit(&sc->sc_intr_lock);
-		first = 1;
+		first = 0;
 		if (err == EAGAIN) {
 			err = 0;
 			break;
