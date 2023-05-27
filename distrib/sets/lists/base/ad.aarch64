@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.42 2023/05/27 00:08:30 riastradh Exp $
+# $NetBSD: ad.aarch64,v 1.43 2023/05/27 02:28:46 riastradh Exp $
 ./lib/eabi					base-compat-lib		compat,llvm
 ./lib/eabi/npf					base-compat-lib		compat,llvm
 ./lib/eabihf					base-compat-lib		compat,llvm
@@ -19,7 +19,6 @@
 ./usr/lib/eabi/lua/5.4				base-compat-lib		compat,llvm
 ./usr/lib/eabi/openssl				base-compat-lib		compat,llvm
 ./usr/lib/eabi/openssl/engines			base-compat-lib		compat,llvm
-./usr/lib/eabi/openssl/engines/capi.so		base-compat-lib		pic,openssl=30,compat,llvm
 ./usr/lib/eabi/openssl/engines/dasync.so	base-compat-lib		pic,openssl=30,compat,llvm
 ./usr/lib/eabi/openssl/engines/devcrypto.so	base-compat-lib		pic,openssl=30,compat,llvm
 ./usr/lib/eabi/openssl/engines/loader_attic.so	base-compat-lib		pic,openssl=30,compat,llvm
@@ -36,7 +35,6 @@
 ./usr/lib/eabihf/lua/5.4			base-compat-lib		compat,llvm
 ./usr/lib/eabihf/openssl			base-compat-lib		compat,llvm
 ./usr/lib/eabihf/openssl/engines		base-compat-lib		compat,llvm
-./usr/lib/eabihf/openssl/engines/capi.so	base-compat-lib		pic,openssl=30,compat,llvm
 ./usr/lib/eabihf/openssl/engines/dasync.so	base-compat-lib		pic,openssl=30,compat,llvm
 ./usr/lib/eabihf/openssl/engines/devcrypto.so	base-compat-lib		pic,openssl=30,compat,llvm
 ./usr/lib/eabihf/openssl/engines/loader_attic.so	base-compat-lib		pic,openssl=30,compat,llvm

@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.89 2023/05/27 00:09:06 riastradh Exp $
+# $NetBSD: ad.mips,v 1.90 2023/05/27 02:28:46 riastradh Exp $
 ./lib/libc_fp.so				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0				base-sys-shlib		dynamicroot,softfloat,arch64
 ./lib/libc_fp.so.0.0				base-sys-shlib		dynamicroot,softfloat,arch64
@@ -10,7 +10,6 @@
 ./usr/lib/64/libc_fp.so.0.0			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
 ./usr/lib/64/openssl      			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
 ./usr/lib/64/openssl/engines			base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb
-./usr/lib/64/openssl/engines/capi.so		base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
 ./usr/lib/64/openssl/engines/dasync.so		base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
 ./usr/lib/64/openssl/engines/devcrypto.so	base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
 ./usr/lib/64/openssl/engines/loader_attic.so	base-compat-shlib	compat,pic,arch64,!machine_arch=mipsn64el,!machine_arch=mipsn64eb,openssl=30
@@ -29,7 +28,6 @@
 ./usr/lib/o32/libgomp.so.2.1			base-compat-shlib	compat,pic,arch64,gcc=10
 ./usr/lib/o32/openssl				base-crypto-usr		compat,pic,arch64
 ./usr/lib/o32/openssl/engines			base-crypto-usr		compat,pic,arch64
-./usr/lib/o32/openssl/engines/capi.so		base-compat-shlib	compat,pic,arch64,openssl=30
 ./usr/lib/o32/openssl/engines/dasync.so		base-compat-shlib	compat,pic,arch64,openssl=30
 ./usr/lib/o32/openssl/engines/devcrypto.so	base-compat-shlib	compat,pic,arch64,openssl=30
 ./usr/lib/o32/openssl/engines/loader_attic.so	base-compat-shlib	compat,pic,arch64,openssl=30
@@ -41,7 +39,6 @@
 ./usr/lib/n32/libc_fp.so.0.0			base-compat-shlib	compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb
 ./usr/lib/n32/openssl				base-crypto-usr		compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb
 ./usr/lib/n32/openssl/engines			base-crypto-usr		compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb
-./usr/lib/n32/openssl/engines/capi.so		base-compat-shlib	compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb,openssl=30
 ./usr/lib/n32/openssl/engines/dasync.so		base-compat-shlib	compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb,openssl=30
 ./usr/lib/n32/openssl/engines/devcrypto.so	base-compat-shlib	compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb,openssl=30
 ./usr/lib/n32/openssl/engines/loader_attic.so	base-compat-shlib	compat,pic,arch64,!machine_arch=mips64el,!machine_arch=mips64eb,openssl=30
