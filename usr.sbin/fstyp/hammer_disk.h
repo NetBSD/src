@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer_disk.h,v 1.4 2023/01/31 21:11:24 andvar Exp $      */
+/*        $NetBSD: hammer_disk.h,v 1.5 2023/05/27 21:38:06 andvar Exp $      */
 
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -36,7 +36,7 @@
  * $DragonFly: src/sys/vfs/hammer/hammer_disk.h,v 1.55 2008/11/13 02:18:43 dillon Exp $
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer_disk.h,v 1.4 2023/01/31 21:11:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer_disk.h,v 1.5 2023/05/27 21:38:06 andvar Exp $");
 
 #ifndef VFS_HAMMER_DISK_H_
 #define VFS_HAMMER_DISK_H_
@@ -1004,7 +1004,7 @@ typedef struct hammer_symlink_data {
 struct hammer_pseudofs_data {
 	hammer_tid_t	sync_low_tid;	/* full history beyond this point */
 	hammer_tid_t	sync_beg_tid;	/* earliest tid w/ full history avail */
-	hammer_tid_t	sync_end_tid;	/* current synchronizatoin point */
+	hammer_tid_t	sync_end_tid;	/* current synchronization point */
 	uint64_t	sync_beg_ts;	/* real-time of last completed sync */
 	uint64_t	sync_end_ts;	/* initiation of current sync cycle */
 	hammer_uuid_t	shared_uuid;	/* shared uuid (match required) */
