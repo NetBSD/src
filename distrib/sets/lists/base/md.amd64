@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.292 2023/05/27 00:08:30 riastradh Exp $
+# $NetBSD: md.amd64,v 1.293 2023/05/27 02:28:46 riastradh Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./libexec/ld.elf_so-i386			base-sys-shlib		compat,pic
@@ -13,7 +13,6 @@
 ./usr/lib/i386/librtld_db.so.0.0		base-compat-shlib	compat,pic,dtrace
 ./usr/lib/i386/openssl				base-crypto-usr
 ./usr/lib/i386/openssl/engines			base-crypto-usr
-./usr/lib/i386/openssl/engines/capi.so		base-crypto-usr		compat,pic,openssl=30
 ./usr/lib/i386/openssl/engines/dasync.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/lib/i386/openssl/engines/devcrypto.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/lib/i386/openssl/engines/loader_attic.so	base-crypto-usr		compat,pic,openssl=30
