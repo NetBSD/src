@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.h,v 1.31 2021/12/10 20:36:04 andvar Exp $	*/
+/*	$NetBSD: rf_reconstruct.h,v 1.32 2023/05/27 21:38:06 andvar Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -76,7 +76,7 @@ struct RF_ReconBuffer_s {
  *    RF_REVENT_BLOCKCLEAR  -- a reconstruction blockage has been cleared
  *    RF_REVENT_BUFCLEAR    -- the buffer manager has released a process blocked on submission
  *    RF_REVENT_SKIP        -- we need to skip the current RU and go on to the next one, typ. b/c we found recon forced
- *    RF_REVENT_FORCEDREADONE- a forced-reconstructoin read operation has completed
+ *    RF_REVENT_FORCEDREADONE- a forced-reconstruction read operation has completed
  */
 typedef enum RF_Revent_e {
 	RF_REVENT_READDONE,

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.23 2022/03/13 17:50:55 andvar Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.24 2023/05/27 21:38:06 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.23 2022/03/13 17:50:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.24 2023/05/27 21:38:06 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -139,7 +139,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	if (error != 0) {
 		/*
 		 * Process has trashed its stack; give it an illegal
-		 * instructoin to halt it in its tracks.
+		 * instruction to halt it in its tracks.
 		 */
 		sigexit(l, SIGILL);
 		/* NOTREACHED */
