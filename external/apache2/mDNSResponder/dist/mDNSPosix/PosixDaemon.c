@@ -50,6 +50,10 @@ extern int daemon(int, int);
 #include "PlatformCommon.h"
 #include "DNSCommon.h"
 
+#ifndef MDNSD_USER
+#define MDNSD_USER "nobody"
+#endif
+
 #define CONFIG_FILE "/etc/mdnsd.conf"
 static domainname DynDNSZone;                // Default wide-area zone for service registration
 static domainname DynDNSHostname;
@@ -190,11 +194,21 @@ int main(int argc, char **argv)
     // Now that we're finished with anything privileged, switch over to running as "nobody"
     if (mStatus_NoError == err)
     {
-        const struct passwd *pw = getpwnam("nobody");
+        const struct passwd *pw = getpwnam(MDNSD_USER);
         if (pw != NULL)
+	{
+            setgid(pw->pw_gid);
             setuid(pw->pw_uid);
+	}
         else
-            LogMsg("WARNING: mdnsd continuing as root because user \"nobody\" does not exist");
+#ifdef MDNSD_NOROOT
+        {
+            LogMsg("WARNING: mdnsd exiting because user \""MDNSD_USER"\" does not exist");
+            err = mStatus_Invalid;
+        }
+#else
+            LogMsg("WARNING: mdnsd continuing as root because user \""MDNSD_USER"\" does not exist");
+#endif
     }
 
     if (mStatus_NoError == err)
