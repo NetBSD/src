@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.45 2023/05/26 22:27:51 riastradh Exp $
+# $NetBSD: ad.powerpc,v 1.46 2023/05/27 00:08:30 riastradh Exp $
 ./libexec/ld.elf_so-powerpc			base-sysutil-bin	compat,pic
 ./usr/bin/fdformat				base-util-bin
 ./usr/libexec/ld.elf_so-powerpc			base-sysutil-bin	compat,pic
@@ -9,6 +9,5 @@
 ./usr/lib/powerpc/openssl/engines/devcrypto.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/lib/powerpc/openssl/engines/loader_attic.so	base-crypto-usr	compat,pic,openssl=30
 ./usr/lib/powerpc/openssl/engines/ossltest.so	base-crypto-usr		compat,pic,openssl=30
-./usr/lib/powerpc/openssl/engines/padlock.so	base-crypto-usr		compat,pic,openssl=30
 ./usr/lib/powerpc/openssl/modules		base-crypto-usr		compat
 ./usr/lib/powerpc/openssl/modules/legacy.so	base-crypto-usr		compat,pic,openssl=30

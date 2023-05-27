@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.157 2022/09/08 05:16:45 rillig Exp $
+# $NetBSD: md.i386,v 1.158 2023/05/27 00:08:30 riastradh Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -27,6 +27,7 @@
 ./usr/lib/libpmc.so				base-obsolete		obsolete
 ./usr/lib/libpmc.so.1				base-obsolete		obsolete
 ./usr/lib/libpmc.so.1.0				base-obsolete		obsolete
+./usr/lib/openssl/engines/padlock.so		base-crypto-usr		pic,openssl=30
 ./usr/libexec/ld.so				base-sys-shlib
 ./usr/lkm/aps.o					base-obsolete		obsolete
 ./usr/lkm/compat_freebsd.o			base-obsolete		obsolete
