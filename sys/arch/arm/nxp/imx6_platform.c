@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.6.16.1 2023/05/28 10:14:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.6 2021/04/24 23:36:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.6.16.1 2023/05/28 10:14:35 martin Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.6 2021/04/24 23:36:28 thorpej Ex
 #include <libfdt.h>
 
 #define	IMX_REF_FREQ	80000000
+#define	IMX6SX_REF_FREQ	24000000
 
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
@@ -81,6 +82,18 @@ imx_platform_devmap(void)
 {
 	static const struct pmap_devmap devmap[] = {
 		DEVMAP_ENTRY(KERNEL_IO_IOREG_VBASE, IMX6_IOREG_PBASE, IMX6_IOREG_SIZE),
+		DEVMAP_ENTRY(KERNEL_IO_ARMCORE_VBASE, IMX6_ARMCORE_PBASE, IMX6_ARMCORE_SIZE),
+		DEVMAP_ENTRY_END
+	};
+
+	return devmap;
+}
+
+static const struct pmap_devmap *
+imx6sx_platform_devmap(void)
+{
+	static const struct pmap_devmap devmap[] = {
+		DEVMAP_ENTRY(KERNEL_IO_IOREG_VBASE, IMX6_IOREG_PBASE, IMX6SX_IOREG_SIZE),
 		DEVMAP_ENTRY(KERNEL_IO_ARMCORE_VBASE, IMX6_ARMCORE_PBASE, IMX6_ARMCORE_SIZE),
 		DEVMAP_ENTRY_END
 	};
@@ -139,6 +152,13 @@ imx_platform_uart_freq(void)
 	return IMX_REF_FREQ;
 }
 
+static u_int
+imx6sx_platform_uart_freq(void)
+{
+	return IMX6SX_REF_FREQ;
+}
+
+
 static void
 imx_platform_bootstrap(void)
 {
@@ -152,6 +172,76 @@ imx_platform_bootstrap(void)
 #endif
 
 	arm_fdt_cpu_bootstrap();
+}
+
+static void
+imx6sx_platform_bootstrap(void)
+{
+	void *fdt_data;
+	int ofw_root;
+	int soc_node, timer_node, intc_node, clks_node;
+	int ret;
+	fdt32_t intval[3];
+	fdt32_t clkval[2];
+	u_int val32;
+
+	imx_platform_bootstrap();
+
+	/*
+	 * if there's no entry for the TWD timer in the provided DTB, fake one.
+	 * we can't boot witthout it.
+	 * The upstream imx6sx.dtsi is missing the entry
+	 */
+
+	fdt_data = __UNCONST(fdtbus_get_data());
+	KASSERT(fdt_data != NULL);
+	ofw_root = OF_peer(0);
+	if (of_find_bycompat(ofw_root, "arm,cortex-a9-twd-timer") > 0) {
+		/* already there */
+		VPRINTF("timer already present\n");
+		return;
+	}
+	VPRINTF("creating timer fdt@%p", fdt_data);
+	soc_node = fdt_path_offset(fdt_data, "/soc");
+	VPRINTF(" soc_node %d", soc_node);
+	KASSERT(soc_node >= 0);
+
+	timer_node = fdt_add_subnode(fdt_data, soc_node, "timer@a00600");
+	VPRINTF(" timer_node %d\n", timer_node);
+	KASSERT(timer_node >= 0);
+
+	ret = fdt_setprop_string(fdt_data, timer_node, "compatible",
+	    "arm,cortex-a9-twd-timer");
+	KASSERTMSG(ret == 0, "fdt_setprop(compatible) returns %d", ret);
+
+	ret = fdt_appendprop_addrrange(fdt_data, soc_node, timer_node,
+	    "reg", 0x00a00600, 0x20);
+	KASSERTMSG(ret == 0, "fdt_appendprop_addrrange returns %d", ret);
+
+	intval[0] = cpu_to_fdt32(1);
+	intval[1] = cpu_to_fdt32(13);
+	intval[2] = cpu_to_fdt32(0xf01);
+	ret = fdt_setprop(fdt_data, timer_node, "interrupts",
+	    intval, sizeof(intval));
+	KASSERTMSG(ret == 0, "fdt_setprop(interrupts) returns %d", ret);
+
+	intc_node = of_find_bycompat(ofw_root, "arm,cortex-a9-gic");
+	KASSERT(intc_node >= 0);
+	val32 = 0;
+	of_getprop_uint32(intc_node, "phandle", &val32);
+	ret = fdt_setprop_u32(fdt_data, timer_node, "interrupt-parent",
+	    val32);
+	KASSERTMSG(ret == 0, "fdt_setprop(interrupt-parent) returns %d", ret);
+
+	val32 = 0;
+	clks_node = of_find_bycompat(ofw_root, "fsl,imx6sx-ccm");
+	KASSERT(clks_node >= 0);
+	of_getprop_uint32(clks_node, "phandle", &val32);
+	clkval[0] = cpu_to_fdt32(val32);
+	clkval[1] = cpu_to_fdt32(30); /* IMX6SXCLK_TWD */
+	ret = fdt_setprop(fdt_data, timer_node, "clocks",
+	    clkval, sizeof(clkval));
+	KASSERTMSG(ret == 0, "fdt_setprop(clocks) returns %d", ret);
 }
 
 static int
@@ -233,6 +323,18 @@ const struct arm_platform imx6_platform = {
 	.ap_mpstart = imx_platform_mpstart,
 };
 
+static const struct arm_platform imx6sx_platform = {
+	.ap_devmap = imx6sx_platform_devmap,
+	.ap_bootstrap = imx6sx_platform_bootstrap,
+	.ap_init_attach_args = imx_platform_init_attach_args,
+	.ap_device_register = imx_platform_device_register,
+	.ap_reset = imx6_platform_reset,
+	.ap_delay = a9ptmr_delay,
+	.ap_uart_freq = imx6sx_platform_uart_freq,
+	.ap_mpstart = imx_platform_mpstart,
+};
+
 ARM_PLATFORM(imx6dl, "fsl,imx6dl", &imx6_platform);
+ARM_PLATFORM(imx6sx, "fsl,imx6sx", &imx6sx_platform);
 ARM_PLATFORM(imx6q, "fsl,imx6q", &imx6_platform);
 ARM_PLATFORM(imx6qp, "fsl,imx6qp", &imx6_platform);

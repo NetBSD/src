@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usb.c,v 1.6 2021/08/07 16:18:45 thorpej Exp $	*/
+/*	$NetBSD: imx6_usb.c,v 1.6.6.1 2023/05/28 10:14:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.6 2021/08/07 16:18:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.6.6.1 2023/05/28 10:14:35 martin Exp $");
 
 #include "opt_fdt.h"
 
@@ -63,19 +63,20 @@ struct imxusbc_fdt_softc {
 static int imx6_usb_match(device_t, struct cfdata *, void *);
 static void imx6_usb_attach(device_t, device_t, void *);
 static int imx6_usb_init_clocks(struct imxusbc_softc *);
-static void imx6_usb_init(struct imxehci_softc *);
+static void imx6_usb_init(struct imxehci_softc *, uintptr_t);
 static void init_otg(struct imxehci_softc *);
 static void init_h1(struct imxehci_softc *);
 static int imxusbc_print(void *, const char *);
-static void *imx6_usb_intr_establish(struct imxehci_softc *);
+static void *imx6_usb_intr_establish(struct imxehci_softc *, uintptr_t);
 
 /* attach structures */
 CFATTACH_DECL_NEW(imxusbc_fdt, sizeof(struct imxusbc_fdt_softc),
     imx6_usb_match, imx6_usb_attach, NULL, NULL);
 
 static const struct device_compatible_entry compat_data[] = {
-	{ .compat = "fsl,imx6q-usb" },
-	{ .compat = "fsl,imx7d-usb" },
+	{ .compat = "fsl,imx6q-usb", .value = 1 },
+	{ .compat = "fsl,imx6sx-usb", .value = 2 },
+	{ .compat = "fsl,imx7d-usb", .value = 1 },
 	DEVICE_COMPAT_EOL
 };
 
@@ -99,6 +100,7 @@ imx6_usb_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
+	struct fdtbus_regulator *reg;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -125,6 +127,7 @@ imx6_usb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_init_md_hook = imx6_usb_init;
 	sc->sc_intr_establish_md_hook = imx6_usb_intr_establish;
 	sc->sc_setup_md_hook = NULL;
+	sc->sc_md_hook_data = of_compatible_lookup(phandle, compat_data)->value;
 
 	sc->sc_dev = self;
 	sc->sc_iot = bst;
@@ -167,6 +170,21 @@ imx6_usb_attach(device_t parent, device_t self, void *aux)
 	config_found(self, &iaa, imxusbc_print,
 	    CFARGS_NONE);
 
+	if (of_hasprop(phandle, "vbus-supply")) {
+		reg = fdtbus_regulator_acquire(phandle, "vbus-supply");
+		if (reg == NULL) {
+			aprint_error_dev(self,
+			    "couldn't acquire vbus-supply\n");
+		} else {
+			error = fdtbus_regulator_enable(reg);
+			if (error != 0) {
+				aprint_error_dev(self,
+				    "couldn't enable vbus-supply\n");
+			}
+		}
+	} else {
+		aprint_verbose_dev(self, "no regulator\n");
+	}
 	return;
 }
 
@@ -197,14 +215,19 @@ imx6_usb_init_clocks(struct imxusbc_softc *sc)
 }
 
 static void
-imx6_usb_init(struct imxehci_softc *sc)
+imx6_usb_init(struct imxehci_softc *sc, uintptr_t data)
 {
+	int notg = data;
+
 	switch (sc->sc_unit) {
 	case 0:	/* OTG controller */
 		init_otg(sc);
 		break;
 	case 1:	/* EHCI Host 1 */
-		init_h1(sc);
+		if (notg >= 2)
+			init_otg(sc);
+		else
+			init_h1(sc);
 		break;
 	case 2:	/* EHCI Host 2 */
 	case 3:	/* EHCI Host 3 */
@@ -256,7 +279,7 @@ init_h1(struct imxehci_softc *sc)
 }
 
 static void *
-imx6_usb_intr_establish(struct imxehci_softc *sc)
+imx6_usb_intr_establish(struct imxehci_softc *sc, uintptr_t data)
 {
 	struct imxusbc_fdt_softc *ifsc = (struct imxusbc_fdt_softc *)sc->sc_usbc;
 	ehci_softc_t *hsc = &sc->sc_hsc;

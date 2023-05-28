@@ -1,4 +1,4 @@
-/* $Id: imx23_usb.c,v 1.5 2021/08/07 16:18:44 thorpej Exp $ */
+/* $Id: imx23_usb.c,v 1.5.6.1 2023/05/28 10:14:36 martin Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -152,7 +152,7 @@ imxusbc_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 }
 
 static
-void imx23_usb_init(struct imxehci_softc *sc)
+void imx23_usb_init(struct imxehci_softc *sc, uintptr_t data)
 {
 
 	sc->sc_iftype = IMXUSBC_IF_UTMI;
