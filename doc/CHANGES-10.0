@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.65 2023/05/16 16:27:44 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.66 2023/05/28 10:36:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1908,4 +1908,84 @@ usr.bin/ftp/version.h				1.97
 
 	ftp(1): add timeout for ssl connect.
 	[lukem, ticket #171]
+
+sys/kern/vfs_lookup.c				1.234
+sys/sys/proc.h					1.371
+
+	PR 57320: fix magic "@machine_arch" symlinks to match
+	`uname -p` output.
+	[gutteridge, ticket #175]
+
+external/gpl3/gcc/usr.bin/backend/Makefile	1.67
+external/gpl3/gcc/usr.bin/common-target/Makefile 1.12
+external/gpl3/gcc/usr.bin/common/Makefile	1.12
+external/gpl3/gcc/usr.bin/frontend/Makefile	1.15
+external/gpl3/gcc/usr.bin/libcpp/Makefile	1.10
+external/gpl3/gcc/usr.bin/libdecnumber/Makefile	1.9
+
+	PR 57014: gcc: fix build with clang++ HOST_CXX.
+	[lukem, ticket #176]
+
+external/gpl3/gcc/usr.bin/host-libcpp/Makefile	1.6
+tools/Makefile.gnuhost				1.56
+
+	PR 54456: fix passing -j NNN to gmake.
+	[lukem, ticket #177]
+
+distrib/cdrom/Makefile				1.53
+etc/etc.mac68k/Makefile.inc			1.24
+
+	PR 42166: work around bug in mkisofs when generating
+	mac68k images.
+	[lukem, ticket #178]
+
+external/bsd/unbound/include/config.h		1.11
+
+	PR /57242: fix path for unbound pid file in chrooted environments.
+	[hannken, ticket #179]
+
+usr.bin/m4/gnum4.c				1.12
+
+	PR 57431: m4 -g: { and } aren't supported in patsubst() or regexp().
+	[lukem, ticket #180]
+
+usr.bin/m4/gnum4.c				1.13
+
+	Simplify previous fix to m4 in gnu compat mode (ticket #180).
+	[lukem, ticket #181]
+
+distrib/sets/lists/dtb/ad.earmv7hf		1.10
+sys/arch/arm/imx/imx23_usb.c			1.6
+sys/arch/arm/imx/imxusb.c			1.19
+sys/arch/arm/imx/imxusbvar.h			1.7
+sys/arch/arm/nxp/files.imx			1.3
+sys/arch/arm/nxp/imx6_ccm.c			1.3,1.4
+sys/arch/arm/nxp/imx6_ccmreg.h			1.2
+sys/arch/arm/nxp/imx6_ccmvar.h			1.2,1.3
+sys/arch/arm/nxp/imx6_clk.c			1.5,1.6
+sys/arch/arm/nxp/imx6_gpc.c			1.4
+sys/arch/arm/nxp/imx6_iomux.c			1.3
+sys/arch/arm/nxp/imx6_pcie.c			1.7
+sys/arch/arm/nxp/imx6_platform.c		1.8,1.9 (via patch)
+sys/arch/arm/nxp/imx6_reg.h			1.2
+sys/arch/arm/nxp/imx6_spi.c			1.8
+sys/arch/arm/nxp/imx6_usb.c			1.7,1.8
+sys/arch/arm/nxp/imx6_usbphy.c			1.3
+sys/arch/arm/nxp/imx6sx_clk.c			1.1-1.3
+sys/arch/arm/nxp/imx_sdhc.c			1.8
+sys/arch/evbarm/conf/GENERIC			1.119
+sys/dtb/arm/Makefile				1.6
+
+	arm: add suppport for the i.mx6sx SoC       
+	[bouyer, ticket #182]
+
+external/apache2/mDNSResponder/dist/mDNSPosix/PosixDaemon.c 1.15
+
+	PR 57442: mdnsd(8): fix privilege separation.
+	[andvar, ticket #183]
+
+usr.sbin/bta2dpd/bta2dpd/sbc_encode.c		1.11
+
+	bta2dpd(8): fix playback, pad(4) may return partial reads.
+	[nat, ticket #184]
 
