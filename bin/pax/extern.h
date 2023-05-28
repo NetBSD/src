@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.60 2020/04/03 16:13:32 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.61 2023/05/28 21:42:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -115,7 +115,7 @@ int rd_wrbuf(char *, int);
 int wr_skip(off_t);
 int wr_rdfile(ARCHD *, int, off_t *);
 int rd_wrfile(ARCHD *, int, off_t *);
-void cp_file(ARCHD *, int, int);
+int cp_file(ARCHD *, int, int);
 int buf_fill(void);
 int buf_flush(int);
 
@@ -150,6 +150,7 @@ extern char *gnu_name_string, *gnu_link_string;
 extern size_t gnu_name_length, gnu_link_length;
 extern char *xtmp_name;
 int file_creat(ARCHD *, int);
+void file_cleanup(ARCHD *, int);
 void file_close(ARCHD *, int);
 int lnk_creat(ARCHD *, int *);
 int cross_lnk(ARCHD *);
@@ -162,7 +163,7 @@ int set_ids(char *, uid_t, gid_t);
 void set_pmode(char *, mode_t);
 void set_chflags(char *fnm, u_int32_t flags);
 int file_write(int, char *, int, int *, int *, int, char *);
-void file_flush(int, char *, int);
+int file_flush(int, char *, int);
 void rdfile_close(ARCHD *, int *);
 int set_crc(ARCHD *, int);
 

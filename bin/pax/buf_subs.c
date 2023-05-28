@@ -1,4 +1,4 @@
-/*	$NetBSD: buf_subs.c,v 1.30 2022/05/28 10:36:21 andvar Exp $	*/
+/*	$NetBSD: buf_subs.c,v 1.31 2023/05/28 21:42:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)buf_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: buf_subs.c,v 1.30 2022/05/28 10:36:21 andvar Exp $");
+__RCSID("$NetBSD: buf_subs.c,v 1.31 2023/05/28 21:42:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -745,8 +745,11 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 	 * written. just closing with the file offset moved forward may not put
 	 * a hole at the end of the file.
 	 */
-	if (ofd >= 0 && isem && (arcn->sb.st_size > 0L))
-		file_flush(ofd, fnm, isem);
+	if (ofd >= 0 && isem && (arcn->sb.st_size > 0L)) {
+		if (file_flush(ofd, fnm, isem) < 0) {
+			/* write flush errors are not an error here */;
+		}
+	}
 
 	/*
 	 * if we failed from archive read, we do not want to skip
@@ -758,9 +761,11 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
 	 * some formats record a crc on file data. If so, then we compare the
 	 * calculated crc to the crc stored in the archive
 	 */
-	if (docrc && (size == 0L) && (arcn->crc != crc))
+	if (docrc && (size == 0L) && (arcn->crc != crc)) {
 		tty_warn(1,"Actual crc does not match expected crc %s",
 		    arcn->name);
+		/* crc warning is not an error */
+	}
 	return 0;
 }
 
@@ -769,9 +774,11 @@ rd_wrfile(ARCHD *arcn, int ofd, off_t *left)
  *	copy the contents of one file to another. used during -rw phase of pax
  *	just as in rd_wrfile() we use a special write function to write the
  *	destination file so we can properly copy files with holes.
+ * Return:
+ *	0 if ok, -1 if any error.
  */
 
-void
+int
 cp_file(ARCHD *arcn, int fd1, int fd2)
 {
 	int cnt;
@@ -783,6 +790,7 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	int rem;
 	int sz = MINFBSZ;
 	struct stat sb, origsb;
+	int rv = 0;
 
 	/*
 	 * check for holes in the source file. If none, we will use regular
@@ -797,8 +805,10 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	 * if Mflag is set, use the actual mtime instead.
 	 */
 	origsb = arcn->sb;
-	if (Mflag && (fstat(fd1, &origsb) < 0))
+	if (Mflag && (fstat(fd1, &origsb) < 0)) {
 		syswarn(1, errno, "Failed stat on %s", arcn->org_name);
+		rv = -1;
+	}
 
 	/*
 	 * pass the blocksize of the file being written to the write routine,
@@ -830,17 +840,22 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	/*
 	 * check to make sure the copy is valid.
 	 */
-	if (res < 0)
+	if (res < 0) {
 		syswarn(1, errno, "Failed write during copy of %s to %s",
 			arcn->org_name, arcn->name);
-	else if (cpcnt != arcn->sb.st_size)
+		rv = -1;
+	} else if (cpcnt != arcn->sb.st_size) {
 		tty_warn(1, "File %s changed size during copy to %s",
 			arcn->org_name, arcn->name);
-	else if (fstat(fd1, &sb) < 0)
+		rv = -1;
+	} else if (fstat(fd1, &sb) < 0) {
 		syswarn(1, errno, "Failed stat of %s", arcn->org_name);
-	else if (origsb.st_mtime != sb.st_mtime)
+		rv = -1;
+	} else if (origsb.st_mtime != sb.st_mtime) {
 		tty_warn(1, "File %s was modified during copy to %s",
 			arcn->org_name, arcn->name);
+		rv = -1;
+	}
 
 	/*
 	 * if the last block has a file hole (all zero), we must make sure this
@@ -848,9 +863,11 @@ cp_file(ARCHD *arcn, int fd1, int fd2)
 	 * written. just closing with the file offset moved forward may not put
 	 * a hole at the end of the file.
 	 */
-	if (!no_hole && isem && (arcn->sb.st_size > 0L))
-		file_flush(fd2, fnm, isem);
-	return;
+	if (!no_hole && isem && (arcn->sb.st_size > 0L)) {
+		if (file_flush(fd2, fnm, isem) < 0)
+			rv = -1;
+	}
+	return rv;
 }
 
 /*
