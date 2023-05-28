@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.66 2023/05/15 10:26:43 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.67 2023/05/28 10:23:12 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1425,4 +1425,9 @@ sys/ufs/ffs/ffs_snapshot.c			1.155
 	PR 57307: fix a bug that caused UFS2 filesystems bigger than 2TB to
 	prematurely report that they were full and/or to panic the kernel.
 	[chs, ticket #1633]
+
+external/apache2/mDNSResponder/dist/mDNSPosix/PosixDaemon.c 1.15
+
+	PR 57442: mdnsd(8): fix privilege separation.
+	[andvar, ticket #1634]
 
