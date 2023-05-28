@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.10 2019/09/21 00:01:33 nat Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.11 2023/05/28 07:59:17 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -813,6 +813,29 @@ make_frame(uint8_t *frame, int16_t *input)
 	return frame - frameStart;
 }
 
+static ssize_t
+readloop(int fd, void *buf, size_t nbytes)
+{
+	size_t count;
+	ssize_t ret;
+
+	count = 0;
+	while (nbytes > 0) {
+		ret = read(fd, ((char *)buf) + count, nbytes);
+		if (ret < 0) {
+			if (count == 0)
+				return ret;
+			break;
+		}
+		if (ret == 0)
+			break;
+		count += (size_t)ret;
+		nbytes -= (size_t)ret;
+	}
+
+	return (ssize_t) count;
+}
+
 ssize_t
 stream(int in, int outfd, uint8_t mode, uint8_t freq, uint8_t bands, uint8_t
     blocks, uint8_t alloc_method, uint8_t bitpool, size_t mtu, int volume)
@@ -891,7 +914,7 @@ stream(int in, int outfd, uint8_t mode, uint8_t freq, uint8_t bands, uint8_t
 	pkt_len = 80;
 	while (totalSize + ((size_t)pkt_len * 2) <= mtu) {
 
-		len = read(in, music, readsize);
+		len = readloop(in, music, readsize);
 		if (len < (int)readsize)
 			break;
 
