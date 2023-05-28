@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.18 2022/12/31 21:15:20 andvar Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.19 2023/05/28 08:01:46 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -2010,7 +2010,7 @@ fail:
 	if (mv_s)
 		mvxpsec_session_dealloc(mv_s);
 	log(LOG_WARNING,
-	    "%s: Failed to add H/W crypto sessoin (id:%u): err=%d\n",
+	    "%s: Failed to add H/W crypto session (id:%u): err=%d\n",
 	   __func__, session, err);
 
 	mutex_exit(&sc->sc_session_mtx);
