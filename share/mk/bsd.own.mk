@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1326 2023/05/23 20:20:54 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.1327 2023/05/28 10:49:00 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1022,7 +1022,7 @@ dependall:	.NOTMAIN realdepend .MAKE
 # including bsd.own.mk.
 #
 .for var in \
-	NOCOMPAT NOCRYPTO NODOC NOHTML NOINFO NOLIBCSANITIZER NOLINKLIB \
+	NOCOMPAT NODOC NOHTML NOINFO NOLIBCSANITIZER NOLINKLIB \
 	NOLINT NOMAN NONLS NOOBJ NOPIC NOPICINSTALL NOPROFILE NOSHARE \
 	NOSTATICLIB NODEBUGLIB NOSANITIZER NORELRO
 .if defined(${var})
