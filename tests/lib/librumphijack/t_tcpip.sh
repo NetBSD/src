@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.21 2021/11/11 07:38:21 gson Exp $
+#       $NetBSD: t_tcpip.sh,v 1.22 2023/05/28 08:17:00 hannken Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -182,7 +182,8 @@ test_nfs()
 
 	atf_check -s exit:0 rump.sysctl -q -w kern.module.autoload=1
 
-	atf_check -s exit:0 -e ignore mount_ffs /dk /rump/export
+	atf_check -s exit:0 -e ignore env RUMPHIJACK='path=/rump,blanket=/dk' \
+		mount_ffs /dk /rump/export
 	atf_check -s exit:0 -x "echo ${magicstr} > /rump/export/im_alive"
 
 	# start rpcbind.  we want /var/run/rpcbind.sock

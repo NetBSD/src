@@ -1,4 +1,4 @@
-#       $NetBSD: t_vfs.sh,v 1.6 2012/08/04 03:56:47 riastradh Exp $
+#       $NetBSD: t_vfs.sh,v 1.7 2023/05/28 08:17:00 hannken Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,7 +35,8 @@ domount()
 
 	mntdir=$1
 	[ $# -eq 0 ] && mntdir=/rump/mnt
-	atf_check -s exit:0 -e ignore mount_ffs /img ${mntdir}
+	atf_check -s exit:0 -e ignore env RUMPHIJACK='path=/rump,blanket=/img' \
+		mount_ffs /img ${mntdir}
 }
 
 dounmount()

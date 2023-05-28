@@ -1,4 +1,4 @@
-# $NetBSD: t_rquotad.sh,v 1.9 2020/08/20 13:58:30 riastradh Exp $
+# $NetBSD: t_rquotad.sh,v 1.10 2023/05/28 08:17:00 hannken Exp $
 #
 #  Copyright (c) 2011 Manuel Bouyer
 #  All rights reserved.
@@ -110,7 +110,8 @@ get_nfs_quota()
 	/bin/echo "/export -noresvport -noresvmnt 10.1.1.100" | \
 		dd of=/rump/etc/exports 2> /dev/null
 
-	atf_check -s exit:0 -e ignore mount_ffs /dk /rump/export
+	atf_check -s exit:0 -e ignore env RUMPHIJACK='path=/rump,blanket=/dk' \
+		mount_ffs /dk /rump/export
 
 #set a quota limit (and check that we can read it back)
 	for q in ${expect} ; do
