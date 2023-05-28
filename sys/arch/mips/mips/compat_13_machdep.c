@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.21 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.22 2023/05/28 08:21:24 andvar Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.21 2011/02/20 07:45:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.22 2023/05/28 08:21:24 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args
 	if ((uint32_t)ksc.sc_regs[_R_ZERO] != 0xacedbadeU)/* magic number */
 		return (EINVAL);
 
-	/* Resture the register context. */
+	/* Restore the register context. */
 	tf->tf_regs[_R_PC] = ksc.sc_pc;
 	tf->tf_regs[_R_MULLO] = ksc.mullo;
 	tf->tf_regs[_R_MULHI] = ksc.mulhi;

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_nfsdstate.c,v 1.4 2016/12/13 21:50:32 pgoyette Exp $	*/
+/*	$NetBSD: nfs_nfsdstate.c,v 1.5 2023/05/28 08:21:24 andvar Exp $	*/
 /*-
  * Copyright (c) 2009 Rick Macklem, University of Guelph
  * All rights reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsserver/nfs_nfsdstate.c 307694 2016-10-20 23:53:16Z rmacklem "); */
-__RCSID("$NetBSD: nfs_nfsdstate.c,v 1.4 2016/12/13 21:50:32 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_nfsdstate.c,v 1.5 2023/05/28 08:21:24 andvar Exp $");
 
 #ifndef APPLEKEXT
 #include <fs/nfs/common/nfsport.h>
@@ -4208,7 +4208,7 @@ nfsrv_docallback(struct nfsclient *clp, int procnum,
 				 * client somehow does an RPC without a
 				 * SequenceID Op that causes a callback just
 				 * after the nfsd threads have been terminated
-				 * and restared we could conceivably get here
+				 * and restarted we could conceivably get here
 				 * without a backchannel xprt.
 				 */
 				printf("nfsrv_docallback: no xprt\n");
