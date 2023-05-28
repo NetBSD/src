@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.21 2022/09/04 17:34:43 thorpej Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.22 2023/05/28 08:09:34 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.21 2022/09/04 17:34:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.22 2023/05/28 08:09:34 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -552,7 +552,7 @@ pktq_flush(pktqueue_t *pq)
 
 	/*
 	 * Acquire the barrier lock.  While the caller ensures that
-	 * no explcit pktq_barrier() calls will be issued, this holds
+	 * no explicit pktq_barrier() calls will be issued, this holds
 	 * off any implicit pktq_barrier() calls that would happen
 	 * as the result of pktq_ifdetach().
 	 */
