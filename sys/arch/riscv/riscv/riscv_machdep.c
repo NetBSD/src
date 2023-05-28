@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.27 2023/05/14 09:14:30 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.28 2023/05/28 12:56:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.27 2023/05/14 09:14:30 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.28 2023/05/28 12:56:56 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -758,7 +758,7 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 	fdt_memory_remove_reserved(memory_start, memory_end);
 
-	fdt_memory_remove_range(dtb, dtb + dtbsize);
+	fdt_memory_remove_range(dtb, dtbsize);
 
 	/* Perform PT build and VM init */
 	cpu_kernel_vm_init(memory_start, memory_end);
