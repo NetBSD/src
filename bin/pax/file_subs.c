@@ -1,4 +1,4 @@
-/*	$NetBSD: file_subs.c,v 1.64 2019/03/20 03:13:39 gutteridge Exp $	*/
+/*	$NetBSD: file_subs.c,v 1.65 2023/05/28 21:42:40 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)file_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: file_subs.c,v 1.64 2019/03/20 03:13:39 gutteridge Exp $");
+__RCSID("$NetBSD: file_subs.c,v 1.65 2023/05/28 21:42:40 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -179,11 +179,43 @@ file_creat(ARCHD *arcn, int write_to_hardlink)
 }
 
 /*
+ * file_cleanup()
+ *	Close file descriptor to a file just created by pax.
+ *	Unlinks any temporary file.
+ */
+
+void
+file_cleanup(ARCHD *arcn, int fd)
+{
+	char *tmp_name;
+
+	if (fd < 0)
+		return;
+
+	tmp_name = (arcn->tmp_name != NULL) ? arcn->tmp_name : arcn->name;
+
+	if (close(fd) < 0)
+		syswarn(0, errno, "Cannot close file descriptor on %s",
+		    tmp_name);
+
+	/* No temporary file to cleanup? */
+	if (arcn->tmp_name == NULL)
+		return;
+
+	/* Cleanup the temporary file. */
+	if (unlink(arcn->tmp_name) < 0) {
+		syswarn(0, errno, "Cannot unlink %s", arcn->tmp_name);
+	}
+
+	free(arcn->tmp_name);
+	arcn->tmp_name = NULL;
+	xtmp_name = NULL;
+}
+
+/*
  * file_close()
  *	Close file descriptor to a file just created by pax. Sets modes,
  *	ownership and times as required.
- * Return:
- *	0 for success, -1 for failure
  */
 
 void
@@ -1039,9 +1071,11 @@ file_write(int fd, char *str, int cnt, int *rem, int *isempt, int sz,
  *	when the last file block in a file is zero, many file systems will not
  *	let us create a hole at the end. To get the last block with zeros, we
  *	write the last BYTE with a zero (back up one byte and write a zero).
+ * Return:
+ *	0 if was able to flush the file, -1 otherwise
  */
 
-void
+int
 file_flush(int fd, char *fname, int isempt)
 {
 	static char blnk[] = "\0";
@@ -1051,19 +1085,21 @@ file_flush(int fd, char *fname, int isempt)
 	 * filled with all zeros.
 	 */
 	if (!isempt)
-		return;
+		return 0;
 
 	/*
 	 * move back one byte and write a zero
 	 */
 	if (lseek(fd, (off_t)-1, SEEK_CUR) < 0) {
 		syswarn(1, errno, "Failed seek on file %s", fname);
-		return;
+		return -1;
 	}
 
-	if (write_with_restart(fd, blnk, 1) < 0)
+	if (write_with_restart(fd, blnk, 1) < 0) {
 		syswarn(1, errno, "Failed write to file %s", fname);
-	return;
+		return -1;
+	}
+	return 0;
 }
 
 /*
