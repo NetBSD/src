@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gnuhost,v 1.54 2021/08/29 08:36:00 rillig Exp $
+#	$NetBSD: Makefile.gnuhost,v 1.54.2.1 2023/05/28 09:49:03 martin Exp $
 #
 # Rules used when building a GNU host package.  Expects MODULE to be set.
 #
@@ -100,7 +100,7 @@ BUILD_COMMAND=	${BUILD_ENV} ${MAKE} ${MAKE_ARGS}
 # gmake version of this puts MAKE_ARGS in the environment to be sure that
 # sub-gmake's get them, otherwise tools/gcc tries to build libgcc and
 # fails.  it also uses "env -i" to entirely clear out MAKEFLAGS.
-GMAKE_J_ARGS?=	${MAKEFLAGS:[*]:M*-j*:C/.*(-j ?[0-9]*).*/\1/W}
+GMAKE_J_ARGS?=	${MAKEFLAGS:[*]:M*-j*:C/(^|.* )(-j ?[0-9][0-9]*).*/\2/W}
 BUILD_COMMAND=	/usr/bin/env -i ${BUILD_ENV} ${MAKE_ARGS:N-*} ${TOOL_GMAKE} ${GMAKE_J_ARGS} -e ${MAKE_ARGS}
 
 .endif
