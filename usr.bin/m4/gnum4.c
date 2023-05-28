@@ -1,4 +1,4 @@
-/* $NetBSD: gnum4.c,v 1.11.2.1 2023/05/28 10:03:54 martin Exp $ */
+/* $NetBSD: gnum4.c,v 1.11.2.2 2023/05/28 10:07:11 martin Exp $ */
 /* $OpenBSD: gnum4.c,v 1.39 2008/08/21 21:01:04 espie Exp $ */
 
 /*
@@ -33,7 +33,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gnum4.c,v 1.11.2.1 2023/05/28 10:03:54 martin Exp $");
+__RCSID("$NetBSD: gnum4.c,v 1.11.2.2 2023/05/28 10:07:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -438,7 +438,7 @@ twiddle(const char *p)
 			p+=2;
 			continue;
 		}
-		if (*p == '(' || *p == ')' || *p == '|' || *p == '{' || *p == '}')
+		if (strchr("()|{}", *p) != NULL)
 			addchar('\\');
 
 		addchar(*p);
