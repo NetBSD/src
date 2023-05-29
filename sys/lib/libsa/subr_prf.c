@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.29 2020/06/06 15:45:47 thorpej Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.30 2023/05/29 03:56:52 rin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -209,6 +209,7 @@ reswitch:
 					break;
 				++fmt;
 			}
+			goto reswitch;
 #endif
 		case 'l':
 #ifdef LIBSA_PRINTF_LONGLONG_SUPPORT
