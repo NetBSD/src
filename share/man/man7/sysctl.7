@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.163 2022/12/16 08:42:55 msaitoh Exp $
+.\"	$NetBSD: sysctl.7,v 1.164 2023/05/29 23:30:47 gutteridge Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd December 16, 2022
+.Dd May 29, 2023
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -927,7 +927,7 @@ program.
 .It Li kern.osrelease ( Dv KERN_OSRELEASE )
 The system release string.
 .It Li kern.osrevision ( Dv KERN_OSREV )
-The system revision string.
+The system revision, expressed as an integer.
 .It Li kern.ostype ( Dv KERN_OSTYPE )
 The system type string.
 .\".It Li kern.panic_now
