@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.100 2023/05/23 19:53:24 lukem Exp $
+#	$NetBSD: configure.ac,v 1.101 2023/05/29 21:30:42 lukem Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -23,6 +23,8 @@ AC_INIT([libnbcompat], [noversion], [lib-bug-people@NetBSD.org])
 AC_CONFIG_HEADERS(nbtool_config.h)
 AC_CONFIG_FILES(defs.mk)
 
+m4_pattern_forbid([^NB_])
+
 # Autoheader header and footer
 AH_TOP([/*      $][NetBSD$    */
  
@@ -32,8 +34,8 @@ AH_TOP([/*      $][NetBSD$    */
 AH_BOTTOM([#include "compat_defs.h"
 #endif /* !__NETBSD_NBTOOL_CONFIG_H__ */])
 
-AC_DEFUN([AC_NETBSD],
-[AC_BEFORE([$0], [AC_COMPILE_IFELSE])dnl
+AC_DEFUN([NB_NETBSD], [dnl
+      AC_BEFORE([$0], [AC_COMPILE_IFELSE])dnl
       AC_BEFORE([$0], [AC_RUN_IFELSE])dnl
       AC_MSG_CHECKING([for NetBSD])
       AC_EGREP_CPP(yes,
@@ -46,17 +48,17 @@ AC_DEFUN([AC_NETBSD],
 	 AC_DEFINE([_POSIX_C_SOURCE], 200112L, [Define for NetBSD headers.])
 	 AC_DEFINE([_XOPEN_SOURCE], 600, [Define for NetBSD headers.])],
 	[AC_MSG_RESULT([no])])
-])# AC_NETBSD
+])dnl NB_NETBSD
 
-AC_NETBSD
+NB_NETBSD()
 AC_PATH_PROG(BSHELL, sh, )
 if test x"$BSHELL" = x; then
 	AC_MSG_ERROR([sh must be somewhere on \$PATH])
 fi
 AC_DEFINE_UNQUOTED([PATH_BSHELL], "$BSHELL", [Path to sh(1).])
 
-AC_C_BIGENDIAN
-AC_HEADER_STDC
+AC_C_BIGENDIAN()
+AC_HEADER_STDC()
 
 # Confirm existence of zlib.  (This is available as a default install
 # option on many OS's; this could be added as a reachover build in the
@@ -77,7 +79,7 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/param.h \
 	AC_MSG_ERROR([standard system header file not found]))
 
 # Find headers that may not be available.
-AC_HEADER_DIRENT
+AC_HEADER_DIRENT()
 AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h stdio_ext.h \
 	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h sys/uio.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
@@ -104,7 +106,7 @@ AC_CHECK_HEADERS(netconfig.h,,
 	fi])
 
 # Typedefs.
-AC_TYPE_SIZE_T
+AC_TYPE_SIZE_T()
 AC_CHECK_TYPES([id_t, long long, u_long, u_char, u_short, u_int, u_quad_t])
 AC_CHECK_TYPES([uchar_t, ushort_t, uint_t, ulong_t])
 AC_CHECK_TYPE(socklen_t, [AC_DEFINE([HAVE_SOCKLEN_T], 1,
@@ -142,7 +144,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 dnl XXX - This is UGLY.  Need a better way to homogenize the bitsized types,
 dnl including use of compiler primitive types via AC_CHECK_SIZEOF.
 dnl
-define([NB_CHECK_INTTYPE], [
+AC_DEFUN([NB_CHECK_INTTYPE], [dnl
 	AC_CHECK_TYPE(uint][$1][_t,, [
 		AC_CHECK_TYPE(u_int][$1][_t,
 			AC_DEFINE(uint][$1][_t, u_int][$1][_t, \
@@ -155,7 +157,7 @@ define([NB_CHECK_INTTYPE], [
 				  [Define if you have uint][$1][_t, but not u_int][$1][_t.]),
 			AC_MSG_ERROR([cannot find a suitable type for u_int][$1][_t]))
 	])
-])
+])dnl NB_CHECK_INTTYPE
 
 NB_CHECK_INTTYPE(8)
 NB_CHECK_INTTYPE(16)
@@ -218,7 +220,7 @@ AC_CHECK_DECLS([optind, optreset],,, [
 AC_CHECK_DECLS(sys_signame,,, [#include <signal.h>])
 
 # Library functions (where a .h check isn't enough).
-AC_FUNC_ALLOCA
+AC_FUNC_ALLOCA()
 AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	dispatch_semaphore_create \
 	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
@@ -322,4 +324,4 @@ main(void)
 # Variables substituted via @VARNAME@ in defs.mk.in
 AC_SUBST(HAVE_PTHREAD_H, $ac_cv_header_pthread_h)
 
-AC_OUTPUT
+AC_OUTPUT()
