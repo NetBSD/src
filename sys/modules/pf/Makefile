@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.15 2020/10/18 19:56:42 christos Exp $
+# $NetBSD: Makefile,v 1.16 2023/05/29 20:31:10 lukem Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	${S}/dist/pf/net ${S}/dist/pf/netinet
 
-KMOD=   pf
+KMOD=	pf
 IOCONF=	pf.ioconf
 SRCS=	if_compat.c
 SRCS+=	if_pflog.c
@@ -25,8 +25,8 @@ WARNS=	3
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.pf.c+=	-Wno-error=implicit-fallthrough
 .endif
-COPTS.pf.c+=   ${NO_ADDR_OF_PACKED_MEMBER}
-COPTS.pf_norm.c+=   ${NO_ADDR_OF_PACKED_MEMBER}
-COPTS.pf_table.c+=   ${NO_ADDR_OF_PACKED_MEMBER}
+COPTS.pf.c+=		${CC_NO_ADDR_OF_PACKED_MEMBER}
+COPTS.pf_norm.c+=	${CC_NO_ADDR_OF_PACKED_MEMBER}
+COPTS.pf_table.c+=	${CC_NO_ADDR_OF_PACKED_MEMBER}
 
 .include <bsd.kmodule.mk>

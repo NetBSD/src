@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2020/10/18 19:56:42 christos Exp $
+# $NetBSD: Makefile,v 1.29 2023/05/29 20:31:10 lukem Exp $
 #
 # Public Domain.
 #
@@ -21,7 +21,7 @@ SRCS+=		nvlist.c nvpair.c nv_kern_netbsd.c dnvlist.c
 CPPFLAGS+=	-DINET6
 CPPFLAGS+=	-I${S}/external/bsd/libnv/dist
 
-COPTS.npf_inet.c+=   ${NO_ADDR_OF_PACKED_MEMBER}
+COPTS.npf_inet.c+=	${CC_NO_ADDR_OF_PACKED_MEMBER}
 
 
 .include <bsd.kmodule.mk>

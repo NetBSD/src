@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1328 2023/05/29 17:35:11 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.1329 2023/05/29 20:31:09 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -872,8 +872,9 @@ NOPROFILE=	# defined
 .endif
 
 #
-# GCC warnings with simple disables.  Use these with eg
-# COPTS.foo.c+= ${GCC_NO_STRINGOP_TRUNCATION}.
+# GCC_NO_*: Disable specific warnings from GCC.
+# Use these with e.g.
+#	COPTS.foo.c+= ${GCC_NO_STRINGOP_TRUNCATION}
 #
 GCC_NO_FORMAT_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-truncation :}
 GCC_NO_FORMAT_OVERFLOW=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-overflow :}
@@ -886,11 +887,18 @@ GCC_NO_MAYBE_UNINITIALIZED=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -W
 GCC_NO_RETURN_LOCAL_ADDR=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-return-local-addr :}
 
 #
-# Clang warnings
+# CLANG_NO_*: Disable specific warnings from Clang.
+# Use these with e.g.
+#	COPTS.foo.c+= ${CLANG_NO_ADDR_OF_PACKED_MEMBER}
 #
 CLANG_NO_ADDR_OF_PACKED_MEMBER=	${${ACTIVE_CC} == "clang" :? -Wno-error=address-of-packed-member :}
 
-NO_ADDR_OF_PACKED_MEMBER=	${CLANG_NO_ADDR_OF_PACKED_MEMBER} ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+#
+# CC_NO_*: Disable specific warnings from both Clang and GCC.
+# Use these with e.g.
+#	COPTS.foo.c+= ${CC_NO_ADDR_OF_PACKED_MEMBER}
+#
+CC_NO_ADDR_OF_PACKED_MEMBER=	${CLANG_NO_ADDR_OF_PACKED_MEMBER} ${GCC_NO_ADDR_OF_PACKED_MEMBER}
 
 #
 # The ia64 port is incomplete.
