@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.82 2023/04/12 06:39:15 riastradh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.83 2023/05/30 04:14:30 msaitoh Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.44 2020/10/07 11:23:05 jsg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.82 2023/04/12 06:39:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.83 2023/05/30 04:14:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -651,7 +651,7 @@ timeout:
 	st = bus_space_read_1(sc->sc_iot, sc->sc_ioh, SMB_HS);
 	if ((st & SMB_HS_FAILED) == 0) {
 		snprintb(fbuf, sizeof(fbuf), SMB_HS_BITS, st);
-		aprint_error_dev(sc->sc_dev, "abort failed, status %s\n",
+		device_printf(sc->sc_dev, "abort failed, status %s\n",
 		    fbuf);
 	}
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, SMB_HS, st);
