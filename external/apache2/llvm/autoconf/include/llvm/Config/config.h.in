@@ -3,6 +3,10 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#ifdef __cplusplus
+#include <cstdint>
+#endif
+
 /* Exported configuration */
 #include "llvm/Config/llvm-config.h"
 
