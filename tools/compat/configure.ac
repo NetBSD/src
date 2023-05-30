@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.103 2023/05/30 18:39:19 lukem Exp $
+#	$NetBSD: configure.ac,v 1.104 2023/05/30 18:54:21 lukem Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -339,6 +339,7 @@ m4_pushdef([NB_WFLAG], m4_bpatsubst(NB_FLAG, [^-Wno-], [-W]))
 m4_pushdef([NB_VAR], [CC]m4_translit(NB_FLAG, [-a-z], [_A-Z]))
 AX_CHECK_COMPILE_FLAG(NB_WFLAG, [AS_VAR_SET(NB_VAR,NB_FLAG)], [], [$cc_fail_unknown])
 AC_SUBST(NB_VAR)
+m4_append([NB_CC_FLAG_VARS], NB_VAR, [ ])
 m4_popdef([NB_FLAG])
 m4_popdef([NB_WFLAG])
 m4_popdef([NB_VAR])
@@ -347,13 +348,20 @@ m4_popdef([NB_VAR])
 dnl Disable use of pre-compiled headers on Darwin.
 NB_CC_FLAG([-no-cpp-precomp])
 
+dnl Detect HOST_CC support for <bsd.own.mk> CC_* warnings
+NB_CC_FLAG([-Wno-format-truncation])
+NB_CC_FLAG([-Wno-maybe-uninitialized])
+NB_CC_FLAG([-Wno-stringop-overflow])
+NB_CC_FLAG([-Wno-stringop-truncation])
 
 AC_OUTPUT()
 
-# Display results
-#
+dnl Display results
+dnl
 AC_MSG_NOTICE([========= Configuration results =========])
 AC_MSG_NOTICE([CC                              $CC])
-AC_MSG_NOTICE([CC_NO_CPP_PRECOMP               $CC_NO_CPP_PRECOMP])
+m4_foreach_w([NB_VAR], NB_CC_FLAG_VARS, [dnl
+AC_MSG_NOTICE(m4_format([%-32s],NB_VAR)[$NB_VAR])
+])
 AC_MSG_NOTICE([LIBS                            $LIBS])
 AC_MSG_NOTICE([=========================================])
