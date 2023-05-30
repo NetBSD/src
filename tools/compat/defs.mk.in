@@ -1,4 +1,4 @@
-#	$NetBSD: defs.mk.in,v 1.13 2023/05/30 18:31:55 lukem Exp $
+#	$NetBSD: defs.mk.in,v 1.14 2023/05/30 18:39:19 lukem Exp $
 #
 # Makefile fragment for building with libnbcompat and associated
 # include files.  It can also be used for building just with
@@ -71,10 +71,7 @@ HOST_BSHELL=	@BSHELL@
 
 BUILD_OSTYPE!=  uname -s
 
-# Disable use of pre-compiled headers on Darwin.
-.if ${BUILD_OSTYPE} == "Darwin"
-HOST_CPPFLAGS+=	-no-cpp-precomp
-.endif
+HOST_CFLAGS+=	@CC_NO_CPP_PRECOMP@
 
 HOST_CPPFLAGS+=	${COMPATINCFLAGS} -I${NETBSDSRCDIR}/tools/compat \
 		-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64

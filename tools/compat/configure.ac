@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.102 2023/05/30 18:31:55 lukem Exp $
+#	$NetBSD: configure.ac,v 1.103 2023/05/30 18:39:19 lukem Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -20,9 +20,11 @@
 #
 
 AC_INIT([libnbcompat], [noversion], [lib-bug-people@NetBSD.org])
-AC_CONFIG_HEADERS(nbtool_config.h)
-AC_CONFIG_FILES(defs.mk)
+AC_CONFIG_HEADERS([nbtool_config.h])
+AC_CONFIG_FILES([defs.mk])
+AC_CONFIG_MACRO_DIR([buildaux])
 
+m4_pattern_forbid([^AX_])
 m4_pattern_forbid([^NB_])
 
 # Autoheader header and footer
@@ -321,4 +323,37 @@ main(void)
     )
 ])
 
+dnl
+dnl Set per-warning CC_* variables if supported by HOST_CC.
+dnl
+
+dnl clang needs to fail if given an unknown -WWARN.
+cc_fail_unknown=
+AX_CHECK_COMPILE_FLAG([-Werror=unknown-warning-option],
+ [AS_VAR_APPEND([cc_fail_unknown], [-Werror=unknown-warning-option])])
+
+AC_DEFUN([NB_CC_FLAG], [dnl
+m4_pushdef([NB_FLAG], [$1])
+dnl gcc ignores unknown -Wno-WARN but will fail unknown equivalent -WWARN.
+m4_pushdef([NB_WFLAG], m4_bpatsubst(NB_FLAG, [^-Wno-], [-W]))
+m4_pushdef([NB_VAR], [CC]m4_translit(NB_FLAG, [-a-z], [_A-Z]))
+AX_CHECK_COMPILE_FLAG(NB_WFLAG, [AS_VAR_SET(NB_VAR,NB_FLAG)], [], [$cc_fail_unknown])
+AC_SUBST(NB_VAR)
+m4_popdef([NB_FLAG])
+m4_popdef([NB_WFLAG])
+m4_popdef([NB_VAR])
+]) dnl NB_CC_FLAG
+
+dnl Disable use of pre-compiled headers on Darwin.
+NB_CC_FLAG([-no-cpp-precomp])
+
+
 AC_OUTPUT()
+
+# Display results
+#
+AC_MSG_NOTICE([========= Configuration results =========])
+AC_MSG_NOTICE([CC                              $CC])
+AC_MSG_NOTICE([CC_NO_CPP_PRECOMP               $CC_NO_CPP_PRECOMP])
+AC_MSG_NOTICE([LIBS                            $LIBS])
+AC_MSG_NOTICE([=========================================])
