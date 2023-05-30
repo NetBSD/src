@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.66 2023/05/28 10:36:40 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.67 2023/05/30 07:21:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1955,6 +1955,7 @@ usr.bin/m4/gnum4.c				1.13
 	[lukem, ticket #181]
 
 distrib/sets/lists/dtb/ad.earmv7hf		1.10
+distrib/sets/lists/dtb/ad.earmv7hfeb		1.10
 sys/arch/arm/imx/imx23_usb.c			1.6
 sys/arch/arm/imx/imxusb.c			1.19
 sys/arch/arm/imx/imxusbvar.h			1.7
