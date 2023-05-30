@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.101 2023/05/29 21:30:42 lukem Exp $
+#	$NetBSD: configure.ac,v 1.102 2023/05/30 18:31:55 lukem Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -320,8 +320,5 @@ main(void)
         [AC_MSG_WARN([cross compiling: not checking farseln])]
     )
 ])
-
-# Variables substituted via @VARNAME@ in defs.mk.in
-AC_SUBST(HAVE_PTHREAD_H, $ac_cv_header_pthread_h)
 
 AC_OUTPUT()
