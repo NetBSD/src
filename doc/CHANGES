@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2968 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2969 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -107,3 +107,6 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		Fix semaphores for macOS host tool.  [lukem 20230523]
 	share/mk: Deprecate non-functional SHAREDSTRINGS. [lukem 20230524]
 	mkstr(1), xstr(1): Obsolete unused PDP-11-era tools. [lukem 20230524]
+	pax(1): Exit 0 if stdin filelist is used and no files are supplied.
+		Don't overwrite existing destination files if -r -w copy
+		fails for any reason. [lukem 20230528]
