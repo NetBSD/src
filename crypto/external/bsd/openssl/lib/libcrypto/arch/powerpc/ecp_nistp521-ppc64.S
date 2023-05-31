@@ -1,3 +1,4 @@
+.machine	"any"
 .text
 
 .globl	p521_felem_mul
