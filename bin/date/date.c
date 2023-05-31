@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.64 2023/05/31 16:01:53 kim Exp $ */
+/* $NetBSD: date.c,v 1.65 2023/05/31 17:56:54 kim Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.64 2023/05/31 16:01:53 kim Exp $");
+__RCSID("$NetBSD: date.c,v 1.65 2023/05/31 17:56:54 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -404,11 +404,11 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-ajnu] [-d date] [-r seconds] [+format]",
+	    "Usage: %s [-ajnRu] [-d date] [-r seconds] [+format]",
 	    getprogname());
 	(void)fprintf(stderr, " [[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n");
 	(void)fprintf(stderr,
-	    "       %s [-ajnu] -f input_format new_date [+format]\n",
+	    "       %s [-ajnRu] -f input_format new_date [+format]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
