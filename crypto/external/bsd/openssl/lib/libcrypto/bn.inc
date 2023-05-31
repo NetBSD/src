@@ -1,4 +1,4 @@
-#	$NetBSD: bn.inc,v 1.9 2023/05/06 17:07:22 christos Exp $
+#	$NetBSD: bn.inc,v 1.10 2023/05/31 20:57:31 christos Exp $
 
 .PATH:	${OPENSSLSRC}/crypto/bn
 
@@ -37,7 +37,6 @@ bn_sqrt.c \
 bn_srp.c \
 bn_word.c \
 bn_x931p.c \
-rsa_sup_mul.c \
 rsaz_exp.c \
 rsaz_exp_x2.c \
 
