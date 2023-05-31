@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_extern.c,v 1.1 2023/05/31 00:18:44 riastradh Exp $	*/
+/*	$NetBSD: t_tls_extern.c,v 1.2 2023/05/31 00:46:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <atf-c.h>
 #include <dlfcn.h>
 
-#define	ATF_CHECK_DL(x)	ATF_CHECK_MSG(x, "%s: %s", #x, dlerror())
+#define	ATF_REQUIRE_DL(x)	ATF_REQUIRE_MSG(x, "%s: %s", #x, dlerror())
 
 ATF_TC(tls_extern_static);
 ATF_TC_HEAD(tls_extern_static, tc)
@@ -45,10 +45,10 @@ ATF_TC_BODY(tls_extern_static, tc)
 	int *pdef, *puse;
 
 	(void)dlerror();
-	ATF_CHECK_DL(def = dlopen("libh_def_static.so", RTLD_LAZY));
-	ATF_CHECK_DL(use = dlopen("libh_use_static.so", RTLD_LAZY));
-	ATF_CHECK_DL(fdef = dlsym(def, "fdef"));
-	ATF_CHECK_DL(fuse = dlsym(use, "fuse"));
+	ATF_REQUIRE_DL(use = dlopen("libh_use_static.so", 0));
+	ATF_REQUIRE_DL(def = dlopen("libh_def_static.so", RTLD_NOLOAD));
+	ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
+	ATF_REQUIRE_DL(fuse = dlsym(use, "fuse"));
 
 	pdef = (*fdef)();
 	puse = (*fuse)();
