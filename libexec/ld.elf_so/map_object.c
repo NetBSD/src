@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.65 2023/01/12 19:17:11 christos Exp $	 */
+/*	$NetBSD: map_object.c,v 1.66 2023/05/31 18:44:39 riastradh Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.65 2023/01/12 19:17:11 christos Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.66 2023/05/31 18:44:39 riastradh Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -310,6 +310,9 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 		obj->tlsalign = phtls->p_align;
 		obj->tlsinitsize = phtls->p_filesz;
 		tls_vaddr = phtls->p_vaddr;
+		dbg(("%s: tls index %zu size %zu align %zu initsize %zu",
+		    obj->path, obj->tlsindex, obj->tlssize, obj->tlsalign,
+		    obj->tlsinitsize));
 	}
 #endif
 
@@ -437,8 +440,11 @@ _rtld_map_object(const char *path, int fd, const struct stat *sb)
 	}
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-	if (phtls != NULL)
+	if (phtls != NULL) {
 		obj->tlsinit = mapbase + tls_vaddr;
+		dbg(("%s: tls init = %p + %"PRImemsz" = %p", obj->path,
+		    mapbase, tls_vaddr, obj->tlsinit));
+	}
 #endif
 
 	obj->mapbase = mapbase;
