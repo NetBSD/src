@@ -1,4 +1,4 @@
-/*	$NetBSD: h_use_static.c,v 1.1 2023/05/31 00:18:44 riastradh Exp $	*/
+/*	$NetBSD: h_use_static.c,v 1.2 2023/05/31 00:46:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -26,7 +26,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-__thread int mysym __attribute__((tls_model("initial-exec"))) = 0;
+extern __thread int mysym __attribute__((tls_model("initial-exec")));
 
 int *fuse(void);
 int *
