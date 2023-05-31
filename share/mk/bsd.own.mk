@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1330 2023/05/31 20:45:02 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.1331 2023/05/31 20:47:35 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1227,7 +1227,7 @@ _MKVARS.yes= \
 	MKYP
 
 .for var in ${_MKVARS.yes}
-${var}?=	${${var}.${MACHINE_ARCH}:Uyes}
+${var}?=	${${var}.${MACHINE_ARCH}:U${${var}.${MACHINE}:Uyes}}
 .endfor
 
 #
