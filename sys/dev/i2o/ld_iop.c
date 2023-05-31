@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_iop.c,v 1.39 2017/08/09 16:44:39 mlelstv Exp $	*/
+/*	$NetBSD: ld_iop.c,v 1.40 2023/05/31 20:00:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.39 2017/08/09 16:44:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_iop.c,v 1.40 2023/05/31 20:00:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -555,7 +555,7 @@ ld_iop_adjqparam(device_t dv, int mpi)
 	struct ld_softc *ld = &sc->sc_ld;
 
 	/*
-	 * AMI controllers seem to loose the plot if you hand off lots of
+	 * AMI controllers seem to lose the plot if you hand off lots of
 	 * queued commands.
 	 */
 	if (le16toh(I2O_ORG_AMI) == iop->sc_status.orgid && mpi > 64)
