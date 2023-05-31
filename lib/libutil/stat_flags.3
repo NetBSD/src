@@ -1,4 +1,4 @@
-.\" $NetBSD: stat_flags.3,v 1.8 2012/09/19 23:22:56 wiz Exp $
+.\" $NetBSD: stat_flags.3,v 1.9 2023/05/31 21:49:39 uwe Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 20, 2012
+.Dd May 31, 2023
 .Dt STAT_FLAGS 3
 .Os
 .Sh NAME
@@ -49,36 +49,59 @@ and
 .Fn string_to_flags
 functions are used by
 programs such as
+.Xr chflags 1 ,
 .Xr ls 1 ,
-.Xr mtree 8 ,
 .Xr makefs 8 ,
+.Xr mtree 8 ,
 etc., to parse and/or print the
-.Dv st_flags field in the
+.Fa st_flags
+field in the
 .Xr stat 2
 structure.
+.
 .Pp
 They recognize the following flags:
-.Bl -column -offset indent "uappnd " "SF_IMMUTABLE" "xxx"
-.It Sy String Ta Sy Flag Ta Sy Description
-.It Va arch Ta Dv SF_ARCHIVED Ta file is archived
-.It Va nodump Ta Dv UF_NODUMP Ta do not dump file
-.It Va opaque Ta Dv UF_OPAQUE Ta directory is opaque in union filesystems
-.It Va sappnd Ta Dv SF_APPEND Ta writes to the file may only append
-.It Va schg Ta Dv SF_IMMUTABLE Ta file cannot be changed; it is immutable
-.It Va snap Ta Dv SF_SNAPSHOT Ta file is a snapshot inode
-.It Va uappnd Ta Dv UF_APPEND Ta writes to the file may only append
-.It Va uchg Ta Dv UF_IMMUTABLE Ta file cannot be changed; it is immutable
+.
+.Bl -tag -width Cm -offset indent
+.
+.It Cm arch , Cm archived Pq Dv SF_ARCHIVED
+file is archived
+.Po legacy/compat flag for
+.Xr mount_msdos 8
+filesystems
+.Pc
+.
+.It Cm nodump Pq Dv UF_NODUMP
+do not
+.Xr dump 8
+file
+.
+.It Cm opaque Pq Dv UF_OPAQUE
+directory is opaque in
+.Xr mount_union 8
+filesystems
+.
+.It Cm sappnd , Cm sappend Pq Dv SF_APPEND
+writes to the file may only append
+.Pq flag can be changed by the superuser only
+.
+.It Cm schg , Cm schange , Cm simmutable Pq Dv SF_IMMUTABLE
+file cannot be changed; it is immutable
+.Pq flag can be changed by the superuser only
+.
+.It Cm snap Pq Dv SF_SNAPSHOT
+file is an
+.Xr fss 4
+snapshot inode
+.
+.It Cm uappnd , Cm uappend Pq Dv UF_APPEND
+writes to the file may only append
+.
+.It Cm uchg , Cm uchange , Cm uimmutable Pq Dv UF_IMMUTABLE
+file cannot be changed; it is immutable
+.
 .El
-.Pp
-The
-.Dv SF_APPEND
-and
-.Dv SF_IMMUTABLE
-flags are for the superuser only, whereas
-.Dv UF_APPEND
-and
-.Dv UF_IMMUTABLE
-are for the user only.
+.
 .Pp
 The
 .Fn flags_to_string
@@ -94,6 +117,10 @@ and it is the responsibility of the caller to
 .Xr free 3
 it.
 .Pp
+Where the above list has several flag names for a flag,
+the first of the listed names is returned.
+.
+.Pp
 The
 .Fn string_to_flags
 function takes a
@@ -102,16 +129,35 @@ of space, comma, or tab separated flag names
 and places their bit value on the
 .Fa setp
 argument.
-If the flag name is prefixed by:
-.Dq no ,
+.Pp
+If the flag name is prefixed by
+.Ql no ,
 then the bit value is placed on the
 .Fa clrp
 argument.
+Both
+.Cm nonodump
+and
+.Cm dump
+are recognized as negative forms of the
+.Cm nodump
+flag name.
+.Pp
+Where the above list has several flag names for a flag,
+all of them are recognized.
+The
+.Cm snap
+flag name is
+.Em not
+recognized
+.Pq as its flag cannot be changed anyway .
+.
 .Sh RETURN VALUES
 .Fn flags_to_string
 returns the symbolic representation of flags, the default string, or
 .Dv NULL
 if allocation failed.
+.
 .Pp
 .Fn string_to_flags
 returns
@@ -120,7 +166,7 @@ on success and
 .Dv 1
 if it fails to parse the string, setting
 .Fa stringp
-to point to the first string that it failed to parse.
+to point to the first name that it failed to parse.
 .Sh SEE ALSO
 .Xr chflags 2 ,
 .Xr stat 2
