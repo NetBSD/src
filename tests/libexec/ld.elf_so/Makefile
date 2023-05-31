@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2023/05/31 00:18:44 riastradh Exp $
+# $NetBSD: Makefile,v 1.14 2023/05/31 00:46:11 riastradh Exp $
 #
 
 NOMAN=		# defined
@@ -14,6 +14,7 @@ SUBDIR+=	helper_dso1 helper_dso3 .WAIT helper_dso2 .WAIT \
 		data
 
 SUBDIR+=	helper_def_static
+SUBDIR+=	.WAIT
 SUBDIR+=	helper_use_static
 
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
@@ -66,6 +67,9 @@ PROGS+=			h_dl_symver_v2
 SRCS.h_dl_symver_v2=	h_dl_symver.c
 V2ODIR!=		cd ${.CURDIR}/helper_symver_dso2 && ${PRINTOBJDIR}
 LDADD.h_dl_symver_v2=	-L${V2ODIR} -lh_helper_symver_dso
+
+PROGS+=			h_tls_extern
+LDADD.h_tls_extern+=	-Wl,-rpath,${TESTSDIR}
 
 .include <bsd.test.mk>
 
