@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match-escape.mk,v 1.7 2021/04/03 11:08:40 rillig Exp $
+# $NetBSD: varmod-match-escape.mk,v 1.8 2023/06/01 20:56:35 rillig Exp $
 #
 # As of 2020-08-01, the :M and :N modifiers interpret backslashes differently,
 # depending on whether there was a variable expression somewhere before the
@@ -39,6 +39,7 @@ SPECIALS=	\: : \\ * \*
 #
 VALUES=		: :: :\:
 .if ${VALUES:M\:${:U\:}} != ${VALUES:M${:U\:}\:}
+# expect+1: warning: XXX: Oops
 .  warning XXX: Oops
 .endif
 
@@ -64,6 +65,7 @@ VALUES=		: :: :\:
 
 # In lint mode, the case of a lonely '$' is covered with an error message.
 .MAKEFLAGS: -dL
+# expect+1: Dollar followed by nothing
 .if ${:U\$:M\$} != ""
 .  error
 .endif

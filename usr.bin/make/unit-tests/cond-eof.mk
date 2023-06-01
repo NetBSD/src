@@ -1,9 +1,7 @@
-# $NetBSD: cond-eof.mk,v 1.4 2023/06/01 07:27:30 rillig Exp $
+# $NetBSD: cond-eof.mk,v 1.5 2023/06/01 20:56:35 rillig Exp $
 #
 # Tests for parsing the end of '.if' conditions, which are represented as the
 # token TOK_EOF.
-
-# expect-all
 
 
 SIDE_EFFECT=	${:!echo 'side effect' 1>&2!}

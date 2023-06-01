@@ -1,4 +1,4 @@
-# $NetBSD: cond-cmp-unary.mk,v 1.4 2023/06/01 07:44:10 rillig Exp $
+# $NetBSD: cond-cmp-unary.mk,v 1.5 2023/06/01 20:56:35 rillig Exp $
 #
 # Tests for unary comparisons in .if conditions, that is, comparisons with
 # a single operand.  If the operand is a number, it is compared to zero,
@@ -50,6 +50,7 @@
 # a commit from 1992-04-15 saying "A variable is empty when it just contains
 # spaces".
 .if ${:U   }
+# expect+1: This is only reached because of a bug in EvalTruthy.
 .  info This is only reached because of a bug in EvalTruthy.
 .else
 .  error
