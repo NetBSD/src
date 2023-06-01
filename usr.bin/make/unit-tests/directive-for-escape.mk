@@ -1,4 +1,4 @@
-# $NetBSD: directive-for-escape.mk,v 1.18 2023/05/09 19:43:12 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.19 2023/06/01 09:02:14 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
@@ -74,11 +74,11 @@ VALUES=		$${UNDEF:U\$$\$$ {{}} end}
 # When these words are injected into the body of the .for loop, each inside a
 # '${:U...}' expression, the result is:
 #
-# expect: For: loop body:
+# expect: For: loop body with i = ${UNDEF:U\$\$:
 # expect: # ${:U\${UNDEF\:U\\$\\$}
-# expect: For: loop body:
+# expect: For: loop body with i = {{}}:
 # expect: # ${:U{{\}\}}
-# expect: For: loop body:
+# expect: For: loop body with i = end}:
 # expect: # ${:Uend\}}
 # expect: For: end for 1
 #
