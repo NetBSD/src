@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.16 2023/05/31 18:44:39 riastradh Exp $	*/
+/*	$NetBSD: tls.c,v 1.17 2023/06/01 08:20:10 riastradh Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.16 2023/05/31 18:44:39 riastradh Exp $");
+__RCSID("$NetBSD: tls.c,v 1.17 2023/06/01 08:20:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -129,7 +129,7 @@ _rtld_tls_allocate_locked(void)
 	tcb = (struct tls_tcb *)p;
 	tcb->tcb_self = tcb;
 #endif
-	dbg(("tcb %p", tcb));
+	dbg(("lwp %d tls tcb %p", _lwp_self(), tcb));
 	tcb->tcb_dtv = xcalloc(sizeof(*tcb->tcb_dtv) * (2 + _rtld_tls_max_index));
 	++tcb->tcb_dtv;
 	SET_DTV_MAX_INDEX(tcb->tcb_dtv, _rtld_tls_max_index);
@@ -142,8 +142,9 @@ _rtld_tls_allocate_locked(void)
 #else
 			q = p - obj->tlsoffset;
 #endif
-			dbg(("obj %p dtv %p tlsoffset %zu",
-			    obj, q, obj->tlsoffset));
+			dbg(("%s: [lwp %d] tls dtv %p index %zu offset %zu",
+			    obj->path, _lwp_self(),
+			    q, obj->tlsindex, obj->tlsoffset));
 			if (obj->tlsinitsize)
 				memcpy(q, obj->tlsinit, obj->tlsinitsize);
 			tcb->tcb_dtv[obj->tlsindex] = q;
