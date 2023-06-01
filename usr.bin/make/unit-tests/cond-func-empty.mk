@@ -1,4 +1,4 @@
-# $NetBSD: cond-func-empty.mk,v 1.18 2023/03/04 21:15:30 rillig Exp $
+# $NetBSD: cond-func-empty.mk,v 1.19 2023/06/01 07:27:30 rillig Exp $
 #
 # Tests for the empty() function in .if conditions, which tests a variable
 # expression for emptiness.
@@ -25,7 +25,7 @@ WORD=	word
 .endif
 
 # The :S modifier replaces the empty value with an actual word.  After
-# applying the :S modifier to the expression, it value is 'empty', so it is
+# applying the :S modifier to the expression, its value is 'empty', so it is
 # no longer empty, but it is still based on an undefined variable.  There are
 # a few modifiers that turn an undefined expression into a defined expression,
 # among them :U and :D, but not :S.  Therefore, at the end of evaluating the
