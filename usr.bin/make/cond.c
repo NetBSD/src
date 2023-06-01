@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.344 2023/02/14 21:08:00 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.345 2023/06/01 07:44:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.344 2023/02/14 21:08:00 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.345 2023/06/01 07:44:10 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -136,10 +136,10 @@ typedef struct CondParser {
 
 	/*
 	 * The plain '.if ${VAR}' evaluates to true if the value of the
-	 * expression has length > 0.  The other '.if' variants delegate
-	 * to evalBare instead, for example '.ifdef ${VAR}' is equivalent to
-	 * '.if defined(${VAR})', checking whether the variable named by the
-	 * expression '${VAR}' is defined.
+	 * expression has length > 0 and is not numerically zero.  The other
+	 * '.if' variants delegate to evalBare instead, for example '.ifdef
+	 * ${VAR}' is equivalent to '.if defined(${VAR})', checking whether
+	 * the variable named by the expression '${VAR}' is defined.
 	 */
 	bool plain;
 
@@ -338,7 +338,7 @@ FuncCommands(const char *node)
 }
 
 /*
- * Convert the string into a floating-point number.  Accepted formats are
+ * Convert the string to a floating point number.  Accepted formats are
  * base-10 integer, base-16 integer and finite floating point numbers.
  */
 static bool
@@ -507,7 +507,7 @@ return_str:
  * ".if 0".
  */
 static bool
-EvalNotEmpty(CondParser *par, const char *value, bool quoted)
+EvalTruthy(CondParser *par, const char *value, bool quoted)
 {
 	double num;
 
@@ -631,7 +631,7 @@ CondParser_Comparison(CondParser *par, bool doEval)
 
 	if (!CondParser_ComparisonOp(par, &op)) {
 		/* Unknown operator, compare against an empty string or 0. */
-		t = ToToken(doEval && EvalNotEmpty(par, lhs.str, lhsQuoted));
+		t = ToToken(doEval && EvalTruthy(par, lhs.str, lhsQuoted));
 		goto done_lhs;
 	}
 

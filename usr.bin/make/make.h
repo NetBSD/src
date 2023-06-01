@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.319 2023/03/28 14:39:31 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.320 2023/06/01 07:44:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -820,7 +820,7 @@ int For_Eval(const char *) MAKE_ATTR_USE;
 bool For_Accum(const char *, int *) MAKE_ATTR_USE;
 void For_Run(unsigned, unsigned);
 bool For_NextIteration(struct ForLoop *, Buffer *);
-char *ForLoop_Details(struct ForLoop *);
+char *ForLoop_Details(const struct ForLoop *);
 void ForLoop_Free(struct ForLoop *);
 void For_Break(struct ForLoop *);
 
