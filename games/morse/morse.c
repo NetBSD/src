@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.19 2021/05/02 12:50:45 rillig Exp $	*/
+/*	$NetBSD: morse.c,v 1.20 2023/06/01 04:08:36 mrg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.19 2021/05/02 12:50:45 rillig Exp $");
+__RCSID("$NetBSD: morse.c,v 1.20 2023/06/01 04:08:36 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ static const struct punc {
 	{ '=', "-...-" },
 	{ '+', ".-.-." },
 	{ '_', "..--.-" },
+	{ '@', ".--.-." },
 	{ '\0', NULL }
 };
 
