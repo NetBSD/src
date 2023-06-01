@@ -1,9 +1,7 @@
-# $NetBSD: directive-for-break.mk,v 1.4 2023/06/01 06:25:34 rillig Exp $
+# $NetBSD: directive-for-break.mk,v 1.5 2023/06/01 20:56:35 rillig Exp $
 #
 # Tests for .break in .for loops, which immediately terminates processing of
 # the surrounding .for loop.
-
-# expect-all
 
 
 # .break terminates the loop early.

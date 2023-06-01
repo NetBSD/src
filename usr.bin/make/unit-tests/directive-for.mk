@@ -1,4 +1,4 @@
-# $NetBSD: directive-for.mk,v 1.21 2023/06/01 07:27:30 rillig Exp $
+# $NetBSD: directive-for.mk,v 1.22 2023/06/01 20:56:35 rillig Exp $
 #
 # Tests for the .for directive.
 #
@@ -11,8 +11,6 @@
 #
 # See also:
 #	varmod-loop.mk		The ':@var@...@' modifier
-
-# expect-all
 
 # A typical use case for a .for loop is to populate a variable with a list of
 # values depending on other variables.  In simple cases, the same effect can

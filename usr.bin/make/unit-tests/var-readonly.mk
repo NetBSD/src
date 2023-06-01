@@ -1,4 +1,4 @@
-# $NetBSD: var-readonly.mk,v 1.1 2023/01/24 00:20:00 sjg Exp $
+# $NetBSD: var-readonly.mk,v 1.2 2023/06/01 20:56:35 rillig Exp $
 
 # the answer
 N = 42
@@ -17,4 +17,3 @@ N = 69
 .endif
 
 all:
-

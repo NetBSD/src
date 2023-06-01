@@ -1,4 +1,4 @@
-# $NetBSD: directive-endif.mk,v 1.6 2023/06/01 07:27:30 rillig Exp $
+# $NetBSD: directive-endif.mk,v 1.7 2023/06/01 20:56:35 rillig Exp $
 #
 # Tests for the .endif directive.
 #
@@ -7,8 +7,6 @@
 #
 # See also:
 #	Cond_EvalLine
-
-# expect-all
 
 .MAKEFLAGS: -dL
 

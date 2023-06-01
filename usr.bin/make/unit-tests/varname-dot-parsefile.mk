@@ -1,4 +1,4 @@
-# $NetBSD: varname-dot-parsefile.mk,v 1.5 2020/10/24 08:50:17 rillig Exp $
+# $NetBSD: varname-dot-parsefile.mk,v 1.6 2023/06/01 20:56:35 rillig Exp $
 #
 # Tests for the special .PARSEFILE variable, which contains the basename part
 # of the file that is currently parsed.
@@ -20,6 +20,7 @@
 
 # The variable .PARSEFILE is indirectly used by the .info directive,
 # via PrintLocation.
+# expect+1: At this point, .PARSEFILE is undefined.
 .info At this point, .PARSEFILE is undefined.
 
 # There is absolutely no point in faking the location of the file that is
@@ -30,6 +31,7 @@
 
 # After including another file, .PARSEFILE is reset.
 .include "/dev/null"
+# expect+1: The location is no longer fake.
 .info The location is no longer fake.
 
 all:

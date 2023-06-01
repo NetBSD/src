@@ -1,10 +1,8 @@
-# $NetBSD: directive-for-escape.mk,v 1.19 2023/06/01 09:02:14 rillig Exp $
+# $NetBSD: directive-for-escape.mk,v 1.20 2023/06/01 20:56:35 rillig Exp $
 #
 # Test escaping of special characters in the iteration values of a .for loop.
 # These values get expanded later using the :U variable modifier, and this
 # escaping and unescaping must pass all characters and strings unmodified.
-
-# expect-all
 
 .MAKEFLAGS: -df
 

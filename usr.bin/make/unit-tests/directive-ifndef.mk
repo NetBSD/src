@@ -1,4 +1,4 @@
-# $NetBSD: directive-ifndef.mk,v 1.6 2020/10/24 08:46:08 rillig Exp $
+# $NetBSD: directive-ifndef.mk,v 1.7 2023/06/01 20:56:35 rillig Exp $
 #
 # Tests for the .ifndef directive, which can be used for multiple-inclusion
 # guards.  In contrast to C, where #ifndef and #define nicely line up the
@@ -7,6 +7,7 @@
 
 .ifndef GUARD
 GUARD=	# defined
+# expect+1: guarded section
 .  info guarded section
 .endif
 

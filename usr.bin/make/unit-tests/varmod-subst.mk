@@ -1,8 +1,6 @@
-# $NetBSD: varmod-subst.mk,v 1.10 2023/06/01 07:27:30 rillig Exp $
+# $NetBSD: varmod-subst.mk,v 1.11 2023/06/01 20:56:35 rillig Exp $
 #
 # Tests for the :S,from,to, variable modifier.
-
-# expect-all
 
 all: mod-subst
 all: mod-subst-delimiter
