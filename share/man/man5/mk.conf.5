@@ -1,6 +1,6 @@
-.\"	$NetBSD: mk.conf.5,v 1.97 2022/07/09 08:27:35 nia Exp $
+.\"	$NetBSD: mk.conf.5,v 1.98 2023/06/01 21:58:05 lukem Exp $
 .\"
-.\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
+.\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
 .\"
 .\"  This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 9, 2022
+.Dd June 1, 2022
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -50,15 +50,13 @@ relevant manual pages.
 .
 .Ss NetBSD System variables
 .
-.de YorN
-Can be set to
-.Dq yes
-or
-.Dq no .
-..
 .de DFLT
 .Pp
 .Em Default :
+..
+.de DFLTn
+.DFLT
+.Dq no
 ..
 .de DFLTu
 .DFLT
@@ -68,44 +66,51 @@ Unset.
 .DFLT
 .Dq yes
 ..
-.de DFLTn
-.DFLT
+.de NODEF
+.Pp
+Forced to
 .Dq no
-..
-.Bl -tag -width MKDYNAMICROOT
-.
-.It Sy NETBSDSRCDIR
-The path to the top level of the
-.Nx
-sources.
-If
+if
+.Sy \\$*
+is defined,
+usually in the Makefile before any
 .Xr make 1
-is run from within the
-.Nx
-source tree, the default is the top
-level of that tree (as determined by the presence of
-.Pa build.sh
-and
-.Pa tools/ ) ,
-otherwise
-.Sy BSDSRCDIR
-will be used.
+.Cm \&.include
+directives.
+..
+.de NOVAR
+.Pp
+Forced to
+.Dq no
+if
+.Sy \\$* .
+..
+.de YorN
+Can be set to
+.Dq yes
+or
+.Dq no .
+..
+.
+.Bl -tag -width 15n
+.
+.\" These entries are sorted alphabetically
 .
 .It Sy BSDOBJDIR
-The real path to the
-.Sq obj
-tree for the
+The real path to the object directory tree for the
 .Nx
 source tree.
 .DFLT
-.Pa /usr/obj
+.Dq Pa /usr/obj
 .
 .It Sy BSDSRCDIR
 The real path to the
 .Nx
-source tree.
+source tree, if
+.Sy NETBSDSRCDIR
+isn't defined.
 .DFLT
-.Pa /usr/src
+.Dq Pa /usr/src
 .
 .It Sy BUILD
 If defined,
@@ -165,24 +170,25 @@ character (for installation into the system's root directory, set
 to an empty string).
 The directory must reside on a file system which supports long file
 names and hard links.
-.DFLT
-Empty string if
-.Sy USETOOLS
-is
-.Dq yes ;
-unset otherwise.
 .Pp
 .Em Note :
 .Sy build.sh
 will provide a default of
-.Pa destdir. Ns Sy MACHINE
+.Dq Pa destdir . Ns Sy MACHINE
 (in the top-level
 .Sy .OBJDIR )
 unless run in
 .Sq expert
 mode
+.DFLT
+Empty string if
+.Sy USETOOLS=yes ;
+unset otherwise.
 .
-.It Sy KERNEL_DIR No Pq experimental
+.It Sy EXTSRCSRCDIR
+Obsolete.
+.
+.It Sy KERNEL_DIR Pq No experimental
 .YorN
 Indicates if a top-level directory
 .Sy /netbsd/
@@ -216,7 +222,7 @@ It is also subject to change without notice.
 .It Sy MAKEVERBOSE
 Level of verbosity of status messages.
 Supported values:
-.Bl -tag -width xxx
+.Bl -tag -width 2n
 .It 0
 No descriptive messages or commands executed by
 .Xr make 1
@@ -250,18 +256,57 @@ flag.
 .DFLT
 2
 .
+.It Sy MKAMDGPUFIRMWARE
+.YorN
+Indicates whether to install the
+.Pa /libdata/firmware/amdgpu
+directory, which is necessary for the
+.Xr amdgpu 4
+AMD RADEON GPU video driver.
+.DFLTy
+on
+.Sy i386
+and
+.Sy x86_64 ;
+.Dq no
+on other platforms.
+.
+.It Sy MKARGON2
+.YorN
+Indicates whether the Argon2 hash is enabled in libcrypt.
+.DFLTy
+.
+.It Sy MKARZERO
+.YorN
+Indicates whether
+.Xr ar 1
+should zero the timestamp, uid, and gid in the archive
+for reproducible builds.
+.DFLT
+The value of
+.Sy MKREPRO
+(if defined), otherwise
+.Dq no .
+.
 .It Sy MKATF
 .YorN
-Indicates whether the Automated Testing Framework is built and installed.
+Indicates whether the Automated Testing Framework (ATF)
+will be built and installed.
 This also controls whether the
 .Nx
-test suite is built and installed,
+test suite will be built and installed,
 as the tests rely on ATF and cannot be built without it.
+.NOVAR MKCXX=no
 .DFLTy
+.
+.It Sy MKBFD
+Obsolete, use
+.Sy MKBINUTILS .
 .
 .It Sy MKBINUTILS
 .YorN
-Indicates whether any of the binutils tools or libraries should be built.
+Indicates whether any of the binutils tools or libraries
+will be built and installed.
 That is, the libraries
 .Sy libbfd ,
 .Sy libiberty ,
@@ -271,28 +316,46 @@ or any of the things that depend upon them, e.g.
 .Xr dbsym 8 ,
 or
 .Xr mdsetimage 8 .
+.NOVAR TOOLCHAIN_MISSING!=no
 .DFLTy
+.
+.It Sy MKBSDGREP
+.YorN
+Determines which implementation of
+.Xr grep 1
+will be built and installed.
+If
+.Dq yes ,
+use the BSD implementation.
+If
+.Dq no ,
+use the GNU implementation.
+.DFLTn
 .
 .It Sy MKBSDTAR
 .YorN
-If
-.Dq yes ,
-.Sy libarchive Ns - Ns
-based implementations of
+Determines which implementation of
 .Xr cpio 1
 and
 .Xr tar 1
-are built and installed.
+will be built and installed.
+If
+.Dq yes ,
+use the
+.Sy libarchive Ns - Ns
+based implementations.
 If
 .Dq no ,
+use the
 .Xr pax 1
-based frontends are used.
+based implementations.
 .DFLTy
 .
 .It Sy MKCATPAGES
 .YorN
 Indicates whether preformatted plaintext manual pages will be created
 and installed.
+.NOVAR MKMAN=no No or Sy MKSHARE=no
 .DFLTn
 .
 .It Sy MKCLEANSRC
@@ -343,10 +406,47 @@ then file deletions will not be verified.
 .YorN
 Indicates whether support for multiple ABIs is to be built and
 installed.
+.NODEF NOCOMPAT
 .DFLTy
-on amd64, mips64 and sparc64,
+on
+.Sy aarch64
+(without gcc),
+.Sy mips64 ,
+.Sy powerpc64 ,
+.Sy riscv64 ,
+.Sy sparc64 ,
+and
+.Sy x86_64 ;
 .Dq no
-on other architectures.
+on other platforms.
+.
+.It Sy MKCOMPATMODULES
+.YorN
+Indicates whether the compat kernel modules will be built and installed.
+.NOVAR MKCOMPAT=no
+.DFLTy
+on
+.Sy evbppc-powerpc
+and
+.Sy mips64 ;
+.Dq no
+on other platforms.
+.
+.It Sy MKCOMPATTESTS
+.YorN
+Indicates whether the
+.Nx
+test suite for
+.Pa src/compat
+will be built and installed.
+.NOVAR MKCOMPAT=no
+.DFLTn
+.
+.It Sy MKCOMPATX11
+.YorN
+Indicates whether the X11 libraries will be built and installed.
+.NOVAR MKCOMPAT=no
+.DFLTn
 .
 .It Sy MKCOMPLEX
 .YorN
@@ -356,24 +456,52 @@ is compiled with support for
 .In complex.h .
 .DFLTy
 .
+.It Sy MKCRYPTO
+Obsolete.
+.
 .It Sy MKCTF
 .YorN
 Indicates whether CTF tools are to be built and installed.
-If yes, the tools will be used to generate and manipulate
+If
+.Dq yes ,
+the tools will be used to generate and manipulate
 CTF data of ELF binaries during build.
-.DFLTn
+.NODEF NOCTF
+.Pp
+This is disabled internally for standalone programs in
+.Pa /usr/mdec .
+.DFLTy
+on
+.Sy aarch64 ,
+.Sy amd64 ,
+and
+.Sy i386 ;
+.Dq no
+on other platforms.
 .
 .It Sy MKCVS
 .YorN
 Indicates whether
 .Xr cvs 1
-is built.
+will be built and installed.
+.DFLTy
+.
+.It Sy MKCXX
+.YorN
+Indicates whether C++ support is enabled.
+.Pp
+If
+.Dq no ,
+C++ compilers and software will not be built,
+and acts as
+.Sy MKATF=no MKGCCCMDS=no MKGDB=no MKGROFF=no MKKYUA=no .
 .DFLTy
 .
 .It Sy MKDEBUG
 .YorN
 Indicates whether separate debugging symbols should be installed into
 .Sy DESTDIR Ns Pa /usr/libdata/debug .
+.NODEF NODEBUG
 .DFLTn
 .
 .It Sy MKDEBUGKERNEL
@@ -395,6 +523,7 @@ Indicates whether debug libraries
 will be built and installed.
 Debug libraries are compiled with
 .Dq Li -g -DDEBUG .
+.NODEF NODEBUGLIB
 .DFLTn
 .
 .It Sy MKDEBUGTOOLS
@@ -404,19 +533,60 @@ Indicates whether debug information
 will be included in the build toolchain.
 .DFLTn
 .
+.It Sy MKDEPINCLUDES
+.YorN
+Indicates whether to add
+.Cm \&.include
+statements in the
+.Pa .depend
+files instead of inlining the contents of the
+.Pa *.d
+files.
+This is useful when stale dependencies are present,
+to list the exact files that need refreshing, but
+it is possibly slower than inlining.
+.DFLTn
+.
 .It Sy MKDOC
 .YorN
 Indicates whether system documentation destined for
 .Sy DESTDIR Ns Pa /usr/share/doc
 will be installed.
+.NODEF NODOC
+.NOVAR MKSHARE=no
+.DFLTy
+.
+.It Sy MKDTB
+Indicates whether the devicetree blobs will be built and installed.
+.DFLTy
+on
+.Sy aarch64 ,
+.Sy armv6 ,
+.Sy armv7 ,
+.Sy riscv32 ,
+and
+.Sy riscv64 ;
+.Dq no
+on other platforms.
+.
+.It Sy MKDTC
+.YorN
+Indicates whether the Device Tree Compiler (dtc) will be built and installed.
 .DFLTy
 .
 .It Sy MKDTRACE
 .YorN
-Indicates whether the kernel modules, utilities and libraries for
+Indicates whether the kernel modules, utilities, and libraries for
 .Xr dtrace 1
 support are to be built and installed.
-.DFLTn
+.DFLTy
+on
+.Sy aarch64 ,
+.Sy amd64 ,
+and
+.Sy i386 ;
+.Dq no
+on other platforms.
 .
 .It Sy MKDYNAMICROOT
 .YorN
@@ -430,13 +600,59 @@ and the shared linker
 into
 .Pa /lib .
 If
-.Sq no ,
+.Dq no ,
 link programs in
 .Pa /bin
 and
 .Pa /sbin
 statically.
+.DFLTn
+on
+.Sy ia64 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKEXTSRC
+Obsolete.
+.
+.It Sy MKFIRMWARE
+.YorN
+Indicates whether to install the
+.Pa /libdata/firmware
+directory, which is necessary for various drivers, including:
+.Xr athn 4 ,
+.Xr bcm43xx 4 ,
+.Xr bwfm 4 ,
+.Xr ipw 4 ,
+.Xr iwi 4 ,
+.Xr iwm 4 ,
+.Xr iwn 4 ,
+.Xr otus 4 ,
+.Xr ral 4 ,
+.Xr rtwn 4 ,
+.Xr rum 4 ,
+.Xr run 4 ,
+.Xr urtwn 4 ,
+.Xr wpi 4 ,
+.Xr zyd 4 ,
+and the Tegra 124 SoC.
 .DFLTy
+on
+.Sy amd64 ,
+.Sy cobalt ,
+.Sy evbarm ,
+.Sy evbmips ,
+.Sy evbppc ,
+.Sy hpcarm ,
+.Sy hppa ,
+.Sy i386 ,
+.Sy mac68k ,
+.Sy macppc ,
+.Sy sandpoint ,
+and
+.Sy sparc64 ;
+.Dq no
+on other platforms.
 .
 .It Sy MKGCC
 .YorN
@@ -444,38 +660,70 @@ Indicates whether
 .Xr gcc 1
 or any related libraries
 .Pq Sy libg2c , libgcc , libobjc , libstdc++
-are built.
+will be built and installed.
+.NOVAR TOOLCHAIN_MISSING!=no No or Sy EXTERNAL_TOOLCHAIN No is defined
 .DFLTy
 .
 .It Sy MKGCCCMDS
 .YorN
 Indicates whether
 .Xr gcc 1
-is built.
+will be built and installed.
 If
 .Dq no ,
 then
 .Sy MKGCC
 controls if the
-GCC libraries are built.
-.DFLTy
+GCC libraries will be built and installed.
+.NOVAR MKCXX=no
+.DFLTn
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKGDB
 .YorN
 Indicates whether
 .Xr gdb 1
-is built.
+will be built and installed.
+.NOVAR MKCXX=no No or Sy TOOLCHAIN_MISSING!=no
+.DFLTn
+on
+.Sy ia64
+and
+.Sy or1k ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKGROFF
+.YorN
+Indicates whether
+.Xr groff 1
+will be built, installed,
+and used to format some of the PostScript and PDF
+documentation.
+.NOVAR MKCXX=no
 .DFLTy
+.
+.It Sy MKGROFFHTMLDOC
+.YorN
+Indicates whether to use
+.Xr groff 1
+to generate HTML for miscellaneous articles which
+sometimes requires software not in the base installation.
+Does not affect the generation of HTML man pages.
+.DFLTn
 .
 .It Sy MKHESIOD
 .YorN
 Indicates whether the Hesiod infrastructure
-(libraries and support programs) is built and installed.
+(libraries and support programs) will be built and installed.
 .DFLTy
 .
 .It Sy MKHOSTOBJ
 .YorN
-If set to
+If
 .Dq yes ,
 then for programs intended to be run on the compile host,
 the name, release, and architecture of the host operating system
@@ -484,7 +732,7 @@ will be suffixed to the name of the object directory created by
 (This allows multiple host systems to compile
 .Nx
 for a single target.)
-If set to
+If
 .Dq no ,
 then programs built to be run on the compile host will use the same
 object directory names as programs built to be run on the target.
@@ -493,42 +741,56 @@ object directory names as programs built to be run on the target.
 .It Sy MKHTML
 .YorN
 Indicates whether the HTML manual pages are created and installed.
+.NODEF NOHTML
+.NOVAR MKMAN=no No or Sy MKSHARE=no
 .DFLTy
 .
 .It Sy MKIEEEFP
 .YorN
-Indicates whether code for IEEE754/IEC60559 conformance is built.
+Indicates whether code for IEEE754/IEC60559 conformance
+will be built and installed.
 Has no effect on most platforms.
 .DFLTy
 .
 .It Sy MKINET6
+.YorN
 Indicates whether INET6 (IPv6) infrastructure
-(libraries and support programs) is built and installed.
+(libraries and support programs) will be built and installed.
 .DFLTy
 .
 .It Sy MKINFO
 .YorN
 Indicates whether GNU Info files, used for the documentation for
 most of the compilation tools, will be built and installed.
+.NODEF NOINFO
+.NOVAR MKSHARE=no
 .DFLTy
 .
 .It Sy MKIPFILTER
 .YorN
 Indicates whether the
 .Xr ipf 4
-programs, headers and other components will be built and installed.
+programs, headers, and other components will be built and installed.
 .DFLTy
 .
 .It Sy MKISCSI
 .YorN
 Indicates whether the iSCSI library and applications are
 built and installed.
-.DFLTy
+.DFLTn
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKKDEBUG
+Deprecated, use
+.Sy MKDEBUGKERNEL .
 .
 .It Sy MKKERBEROS
 .YorN
 Indicates whether the Kerberos v5 infrastructure
-(libraries and support programs) is built and installed.
+(libraries and support programs) will be built and installed.
 Caution: the default
 .Xr pam 8
 configuration requires that Kerberos be present even if not used.
@@ -540,22 +802,31 @@ files or disabling PAM via
 Otherwise all logins will fail.
 .DFLTy
 .
+.It Sy MKKERBEROS4
+Obsolete.
+.
 .It Sy MKKMOD
 .YorN
-Indicates whether kernel modules are built and installed.
-.DFLTy
+Indicates whether kernel modules will be built and installed.
+.DFLTn
+on
+.Sy or1k ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKKYUA
 .YorN
 Indicates whether Kyua (the testing infrastructure used by
 .Nx )
-is built and installed.
-Note that
-.Em this does not control the installation of the tests themselves .
+will be built and installed.
+.NOVAR MKCXX=no
+.Pp
+.Em Note :
+This does not control the installation of the tests themselves.
 The tests rely on the ATF libraries and therefore their build is controlled
 by the
 .Sy MKATF
-knob.
+variable.
 .DFLTn
 until the import of Kyua is done and validated.
 .
@@ -563,14 +834,41 @@ until the import of Kyua is done and validated.
 .YorN
 Indicates whether the Lightweight Directory Access Protocol (LDAP)
 infrastructure
-(libraries and support programs) is built and installed.
+(libraries and support programs) will be built and installed.
+.DFLTy
+.
+.It Sy MKLIBCSANITIZER
+.YorN
+Indicates whether to use the sanitizer for libc,
+using the sanitizer defined by
+.Sy USE_LIBCSANITIZER .
+.NODEF NOLIBCSANITIZER
+.DFLTn
+.
+.It Sy MKLIBCXX
+.YorN
+Indicates if libc++ will be built and installed
+(usually for
+.Xr clang++ 1 ) .
+.DFLTy
+if
+.Sy MKLLVM=yes ;
+.Dq no
+otherwise.
+.
+.It Sy MKLIBSTDCXX
+.YorN
+Indicates if libstdc++ will be built and installed
+(usually for
+.Xr g++ 1 ) .
 .DFLTy
 .
 .It Sy MKLINKLIB
 .YorN
-Indicates whether all of the shared library infrastructure is built.
+Indicates whether all of the shared library infrastructure
+will be built and installed.
 If
-.Sq no ,
+.Dq no ,
 prevents:
 installation of the
 .Sy *.a
@@ -585,12 +883,13 @@ or
 installation of
 .Sy .so
 symlinks on ELF systems.
-.DFLTy
+.NODEF NOLINKLIB
 .Pp
 If
 .Dq no ,
 acts as
-.Sy MKPICINSTALL=no MKPROFILE=no .
+.Sy MKLINT=no MKPICINSTALL=no MKPROFILE=no .
+.DFLTy
 .
 .It Sy MKLINT
 .YorN
@@ -601,7 +900,53 @@ will be run against portions of the
 source code during the build, and whether lint libraries will be
 installed into
 .Sy DESTDIR Ns Pa /usr/libdata/lint .
-.DFLTy
+.NODEF NOLINT
+.NOVAR MKLINKLIB=no
+.DFLTn
+.
+.It Sy MKLLD
+Obsolete.
+.
+.It Sy MKLLDB
+Obsolete.
+.
+.It Sy MKLLVM
+.YorN
+Indicates whether
+.Xr clang 1
+is installed as a host tool and target compiler.
+.Pp
+If
+.Dq yes ,
+acts as
+.Sy MKLIBCXX=yes .
+.Pp
+.Em Note :
+Use of
+.Xr clang 1
+as the system compiler is controlled by
+.Sy HAVE_LLVM  .
+.DFLTn
+.
+.It Sy MKLLVMRT
+.YorN
+Indicates whether to build the LLVM PIC libraries necessary
+for the various Mesa backend and the native JIT of the target
+architecture, if supported.
+(Radeon R300 and newer, LLVMPIPE for most.)
+.DFLT
+If
+.Sy MKX11=yes
+and
+.Sy HAVE_MESA_VER>=19 ,
+.Dq yes
+on
+.Sy aarch64 ,
+.Sy amd64 ,
+and
+.Sy i386 ;
+.Dq no
+otherwise.
 .
 .It Sy MKLVM
 .YorN
@@ -610,61 +955,118 @@ If not
 build and install the logical volume manager.
 .DFLTy
 .
+.It Sy MKMAKEMANDB
+.YorN
+Indicates if the whatis tools
+.Xr ( apropos 1 ,
+.Xr whatis 1 ,
+.Xr getNAME 8 ,
+.Xr makemandb 8 ,
+and
+.Xr makewhatis 8 ) ,
+should be built, installed, and used to
+create and install the
+.Pa whatis.db .
+.DFLTy
+.
 .It Sy MKMAN
 .YorN
 Indicates whether manual pages will be installed.
-.DFLTy
+.NODEF NOMAN
+.NOVAR MKSHARE=no
 .Pp
 If
 .Dq no ,
 acts as
 .Sy MKCATPAGES=no MKHTML=no .
+.DFLTy
+.
+.It Sy MKMANDOC
+.YorN
+Indicates whether
+.Xr mandoc 1
+will be built and installed, and used to create and install
+catman and HTML pages.
+.Pp
+If
+.Dq no ,
+use
+.Xr groff 1
+instead of
+.Xr mandoc 1 .
+.NODEF NOMANDOC No or Sy NOMANDOC . Ns Ar target No (for a given target Ar target )
+.Pp
+Only used if
+.Sy MKMAN=yes .
+.DFLTy
 .
 .It Sy MKMANZ
 .YorN
 Indicates whether manual pages should be compressed with
 .Xr gzip 1
 at installation time.
+.Pp
+Only used if
+.Sy MKMAN=yes .
 .DFLTn
+.
+.It Sy MKMCLINKER
+Obsolete.
 .
 .It Sy MKMDNS
 .YorN
 Indicates whether the mDNS (Multicast DNS) infrastructure
-(libraries and support programs) is built and installed.
+(libraries and support programs) will be built and installed.
 .DFLTy
 .
 .It Sy MKNLS
 .YorN
 Indicates whether Native Language System (NLS) locale zone files will be
 built and installed.
+.NODEF NONLS
+.NOVAR MKSHARE=no
 .DFLTy
 .
 .It Sy MKNOUVEAUFIRMWARE
 .YorN
 Indicates whether to install the
 .Pa /libdata/firmware/nouveau
-directory, which is necessary for the nvidia DRM driver.
-.DFLT
-Platform dependent.
+directory, which is necessary for the
+.Xr nouveau 4
+NVIDIA video driver.
+.DFLTy
+on
+.Sy aarch64 ,
+.Sy i386 ,
+and
+.Sy x86_64 ,
+.Dq no
+on other platforms.
 .
 .It Sy MKNPF
 .YorN
 Indicates whether the NPF packet filter is to be built and installed.
 .DFLTy
 .
+.It Sy MKNSD
+.YorN
+Indicates whether the Name Server Daemon (NSD) is to be built and installed.
+.DFLTn
+.
 .It Sy MKOBJ
 .YorN
 Indicates whether object directories will be created when running
 .Dq make obj .
-If set to
+If
 .Dq no ,
 then all built files will be located inside the regular source tree.
-.DFLTy
+.NODEF NOOBJ
 .Pp
 If
 .Dq no ,
 acts as
 .Sy MKOBJDIRS=no .
+.DFLTy
 .
 .It Sy MKOBJDIRS
 .YorN
@@ -672,13 +1074,14 @@ Indicates whether object directories will be created automatically
 (via a
 .Dq make obj
 pass) at the start of a build.
+.NOVAR MKOBJ=no
 .DFLTn
 .
 .It Sy MKPAM
 .YorN
 Indicates whether the
 .Xr pam 8
-framework (libraries and support files) is built.
+framework (libraries and support files) will be built and installed.
 The pre-PAM code is not supported and may be removed in the future.
 .DFLTy
 .
@@ -688,34 +1091,37 @@ Indicates whether
 .Xr pcc 1
 or any related libraries
 .Pq Sy libpcc , libpccsoftfloat
-are built.
+will be built and installed.
 .DFLTn
+.
+.It Sy MKPERFUSE
+Obsolete.
 .
 .It Sy MKPF
 .YorN
 Indicates whether the
 .Xr pf 4
-programs, headers and LKM will be built and installed.
+programs, headers, and LKM will be built and installed.
 .DFLTy
 .
 .It Sy MKPIC
 .YorN
 Indicates whether shared objects and libraries will be created and
 installed.
-If set to
+If
 .Dq no ,
 the entire built system will be statically linked.
-.DFLT
-Platform dependent.
-As of this writing, all platforms except
-.Sy m68000
-default to
-.Dq yes .
+.NODEF NOPIC
 .Pp
 If
 .Dq no ,
 acts as
 .Sy MKPICLIB=no .
+.DFLTn
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKPICINSTALL
 .YorN
@@ -724,7 +1130,9 @@ Indicates whether the
 format libraries
 .Sy ( lib*_pic.a ) ,
 used to generate shared libraries, are installed.
-.DFLTy
+.NODEF NOPICINSTALL
+.NOVAR MKLINKLIB=no
+.DFLTn
 .
 .It Sy MKPICLIB
 .YorN
@@ -733,13 +1141,34 @@ Indicates whether the
 format libraries
 .Sy ( lib*_pic.a ) ,
 used to generate shared libraries.
-.DFLTy
+.NOVAR MKPIC=no
+.DFLTn
+on
+.Sy vax ;
+.Dq yes
+on other platforms.
 .
 .It Sy MKPIE
 Indicates whether Position Independent Executables (PIE)
-are built and installed.
-.DFLT
-Platform dependent.
+will be built and installed.
+.NODEF NOPIE
+.NOVAR COVERITY_TOP_CONFIG No is defined
+.Pp
+This is disabled internally for standalone programs in
+.Pa /usr/mdec .
+.DFLTy
+on
+.Sy aarch64 ,
+.Sy arm ,
+.Sy i386 ,
+.Sy m68k ,
+.Sy mips ,
+.Sy sh3 ,
+.Sy sparc64 ,
+and
+.Sy x86_64 ;
+.Dq no
+on other platforms.
 .
 .It Sy MKPIGZGZIP
 .YorN
@@ -753,7 +1182,7 @@ utility is not installed as
 .
 .It Sy MKPOSTFIX
 .YorN
-Indicates whether Postfix is built.
+Indicates whether Postfix will be built and installed.
 .DFLTy
 .
 .It Sy MKPROFILE
@@ -761,11 +1190,64 @@ Indicates whether Postfix is built.
 Indicates whether profiled libraries
 .Sy ( lib*_p.a )
 will be built and installed.
+.NODEF NOPROFILE
+.NOVAR MKLINKLIB=no
+.DFLTn
+on
+.Sy or1k ,
+.Sy riscv32 ,
+and
+.Sy riscv64
+(due to toolchain problems with profiled code);
+.Dq yes
+on other platforms.
+.
+.It Sy MKRADEONFIRMWARE
+.YorN
+Indicates whether to install the
+.Pa /libdata/firmware/radeon
+directory, which is necessary for the
+.Xr radeon 4
+AMD RADEON GPU video driver.
+.DFLTy
+on
+.Sy aarch64 ,
+.Sy i386 ,
+and
+.Sy x86_64 ,
+.Dq no
+on other platforms.
+.
+.It Sy MKRELRO
+Indicates whether to enable support for Relocation Read-Only (RELRO).
+Supported values:
+.Bl -tag -width partial
+.It partial
+Set the non-PLT GOT to read-only.
+.It full
+Set the non-PLT GOT to read-only and
+also force immediate symbol binding,
+unless
+.Sy NOFULLRELRO
+is defined and not
+.Dq no
+(usually in the Makefile before any
+.Xr make 1
+.Cm \&.include
+directives).
+.It no
+Disable RELRO.
+.El
+.NODEF NORELRO
 .DFLT
-.Dq yes ;
-however, some platforms turn off
-.Sy MKPROFILE
-by default at times due to toolchain problems with profiled code.
+.Dq partial
+on
+.Sy aarch64 ,
+.Sy i386 ,
+and
+.Sy x86_64 ;
+.Dq no
+on other platforms.
 .
 .It Sy MKREPRO
 .YorN
@@ -774,64 +1256,102 @@ If
 .Dq yes ,
 two builds from the same source tree will produce the same build
 results.
+.Pp
+Used as the default for
+.Sy MKARZERO .
 .DFLTn
-.
-.It Sy MKRADEONFIRMWARE
-.YorN
-Indicates whether to install the
-.Pa /libdata/firmware/radeon
-directory, which is necessary for the radeon DRM driver.
-.DFLT
-Platform dependent.
-.
-.It Sy MKRELRO
-If
-.Dq partial ,
-set the non-PLT GOT to read-only.
-If
-.Dq full ,
-also force immediate symbol binding.
-.DFLT
-Platform dependent.
 .
 .It Sy MKRUMP
 .YorN
 Indicates whether the
 .Xr rump 3
-headers, libraries and programs are to be installed.
+headers, libraries, and programs are to be installed.
+.NOVAR COVERITY_TOP_CONFIG No is defined
 .DFLTy
+.
+.It Sy MKSANITIZER
+.YorN
+Indicates whether to use the sanitizer to compile userland programs,
+using the sanitizer defined by
+.Sy USE_SANITIZER .
+.NODEF NOSANITIZER
+.DFLTn
 .
 .It Sy MKSHARE
 .YorN
 Indicates whether files destined to reside in
 .Sy DESTDIR Ns Pa /usr/share
 will be built and installed.
-.DFLTy
+.NODEF NOSHARE
 .Pp
 If
 .Dq no ,
 acts as
 .Sy MKCATPAGES=no MKDOC=no MKINFO=no MKHTML=no MKMAN=no MKNLS=no .
+.DFLTy
 .
 .It Sy MKSKEY
 .YorN
 Indicates whether the S/key infrastructure
-(libraries and support programs) is built.
+(libraries and support programs) will be built and installed.
 .DFLTy
+.
+.It Sy MKSLJIT
+.YorN
+Indicates whether to enable support for sljit
+(stack-less platform-independent Just in Time (JIT) compiler)
+private library and tests.
+.DFLTy
+on
+.Sy i386 ,
+.Sy sparc ,
+and
+.Sy x86_64 ;
+.Dq no
+on other platforms.
 .
 .It Sy MKSOFTFLOAT
 .YorN
 Indicates whether the compiler generates output containing
 library calls for floating point and possibly soft-float library
 support.
-.DFLTn
+.Pp
+Forced to
+.Dq yes
+on
+.Sy arm
+without
+.Sq hf ,
+.Sy coldfire ,
+.Sy emips ,
+.Sy or1k ,
+and
+.Sy sh3 .
+.DFLTy
+on
+.Sy mips64 ;
+.Dq no
+on other platforms.
 .
 .It Sy MKSTATICLIB
 .YorN
 Indicates whether the normal static libraries
 .Sy ( lib*_g.a )
 will be built and installed.
+.NODEF NOSTATICLIB
 .DFLTy
+.
+.It Sy MKSTATICPIE
+.YorN
+Indicates whether support for static PIE binaries
+will be built and installed.
+.DFLTy
+on
+.Sy i386
+and
+.Sy x86_64 ;
+.Dq no
+on other platforms.
 .
 .It Sy MKSTRIPIDENT
 .YorN
@@ -846,13 +1366,13 @@ Indicates whether all local symbols should be stripped from shared libraries.
 If
 .Dq yes ,
 strip all local symbols from shared libraries;
-the affect is equivalent to the
+the effect is equivalent to the
 .Fl x
 option of
 .Xr ld 1 .
 If
 .Dq no ,
-strip only temporary local symbols; the affect is equivalent
+strip only temporary local symbols; the effect is equivalent
 to the
 .Fl X
 option of
@@ -861,6 +1381,35 @@ Keeping non-temporary local symbols
 such as static function names is useful on using DTrace for
 userland libraries and getting a backtrace from a rump kernel
 loading shared libraries.
+.DFLTy
+.
+.It Sy MKTEGRAFIRMWARE
+.YorN
+Indicates whether to install the
+.Pa /libdata/firmware/nvidia
+directory, which is necessary for the
+NVIDIA Tegra XHCI driver.
+.DFLTy
+on
+.Sy evbarm ;
+.Dq no
+on other platforms.
+.
+.It Sy MKTOOLSDEBUG
+Deprecated, use
+.Sy MKDEBUGTOOLS .
+.
+.It Sy MKTPM
+.YorN
+Indicates whether to install the Trusted Platform Module (TPM)
+infrastructure.
+.DFLTn
+.
+.It Sy MKUNBOUND
+.YorN
+Indicates whether the
+.Xr unbound 8
+DNS resolver will be built and installed.
 .DFLTy
 .
 .It Sy MKUNPRIVED
@@ -889,7 +1438,7 @@ This also has implications on full builds (see next subsection).
 .
 .It Sy MKX11
 .YorN
-Indicates whether X11 is built and installed
+Indicates whether X11 will be built and installed
 (by descending into
 .Pa src/external/mit/xorg ) .
 .DFLTn
@@ -899,15 +1448,10 @@ Indicates whether X11 is built and installed
 If
 .Dq no ,
 do not build and install the X fonts.
+.Pp
+Only used if
+.Sy MKX11=yes .
 .DFLTy
-.
-.It Sy X11MOTIFPATH
-Location of the Motif installation to use if setting
-.Sy MKX11MOTIF
-to
-.Dq yes .
-.DFLT
-.Pa /usr/pkg
 .
 .It Sy MKX11MOTIF
 .YorN
@@ -918,24 +1462,105 @@ Requires that Motif can be found via
 .Sy X11MOTIFPATH .
 .DFLTn
 .
+.It Sy MKXORG_SERVER
+.YorN
+Indicates whether the
+.Xr Xorg 7
+X server and drivers will be built and installed.
+.DFLTy
+on
+.Sy alpha ,
+.Sy amd64 ,
+.Sy amiga ,
+.Sy bebox ,
+.Sy cats ,
+.Sy dreamcast ,
+.Sy ews4800mips ,
+.Sy evbarm ,
+.Sy evbmips ,
+.Sy evbppc ,
+.Sy hp300 ,
+.Sy hpcarm ,
+.Sy hpcmips ,
+.Sy hpcsh ,
+.Sy hppa ,
+.Sy i386 ,
+.Sy ibmnws ,
+.Sy iyonix ,
+.Sy luna68k ,
+.Sy mac68k ,
+.Sy macppc ,
+.Sy netwinder ,
+.Sy newsmips ,
+.Sy pmax ,
+.Sy prep ,
+.Sy ofppc ,
+.Sy sgimips ,
+.Sy shark ,
+.Sy sparc ,
+.Sy sparc64 ,
+.Sy vax ,
+and
+.Sy zaurus ;
+.Dq no
+on other platforms.
+.
 .It Sy MKYP
 .YorN
 Indicates whether the YP (NIS) infrastructure
-(libraries and support programs) is built.
+(libraries and support programs) will be built and installed.
 .DFLTy
 .
 .It Sy MKZFS
 .YorN
 Indicates whether the ZFS kernel module and the utilities and
-libraries used to manage the ZFS system are to be built.
+libraries used to manage the ZFS system are to be built and installed.
 .DFLTy
-on amd64,
+on
+.Sy aarch64 ,
+.Sy amd64 ,
+and
+.Sy sparc64 ;
 .Dq no
-on other architectures.
+on other platforms.
+.
+.It Sy NETBSDSRCDIR
+The path to the top level of the
+.Nx
+sources.
+If
+.Xr make 1
+is run from within the
+.Nx
+source tree, the default is the top
+level of that tree (as determined by the presence of
+.Pa build.sh
+and
+.Pa tools/ ) ,
+otherwise
+.Sy BSDSRCDIR
+will be used.
+.
+.It Sy NETBSD_OFFICIAL_RELEASE
+.YorN
+Indicates whether the build creates an official
+.Nx
+release which is going to be available from
+.Lk ftp.NetBSD.org
+and/or
+.Lk cdn.NetBSD.org
+locations.
+This variable modifies a few default paths in the installer
+and also creates different links in the install documentation.
+The auto-build cluster uses this variable to distinguish
+.Sq daily
+builds from real releases.
+.DFLTu
+.Pq Dq no .
 .
 .It Sy OBJMACHINE
 If defined, creates objdirs of the form
-.Pa obj. Ns Sy MACHINE ,
+.Pa obj . Ns Sy MACHINE ,
 where
 .Sy MACHINE
 is the current architecture (as per
@@ -946,17 +1571,20 @@ If set, specifies the directory to which a
 .Xr release 7
 layout will be written at the end of a
 .Dq make release .
-.DFLTu
 .Pp
 .Em Note :
 .Sy build.sh
 will provide a default of
-.Pa releasedir
+.Dq Pa releasedir
 (in the top-level
 .Sy .OBJDIR )
 unless run in
 .Sq expert
-mode
+mode.
+.DFLTu
+.
+.It Sy SHAREDSTRINGS
+Obsolete.
 .
 .It Sy TOOLDIR
 Directory to hold the host tools, once built.
@@ -975,117 +1603,6 @@ of
 .Pa src .
 .DFLTu
 .
-.It Sy USE_FORT
-Indicates whether the so-called
-.Dq FORTIFY_SOURCE
-.Xr security 7
-extensions are enabled; see
-.Xr ssp 3
-for details.
-This imposes some performance penalty.
-.DFLTn
-.
-.It Sy USE_HESIOD
-.YorN
-Indicates whether Hesiod support is
-enabled in the various applications that support it.
-If
-.Sy MKHESIOD=no ,
-.Sy USE_HESIOD
-will also be forced to
-.Dq no .
-.DFLTy
-.
-.It Sy USE_INET6
-.YorN
-Indicates whether INET6 (IPv6) support is
-enabled in the various applications that support it.
-If
-.Sy MKINET6=no ,
-.Sy USE_INET6
-will also be forced to
-.Dq no .
-.DFLTy
-.
-.It Sy USE_JEMALLOC
-.YorN
-Indicates whether the
-.Em jemalloc
-allocator
-.Pq which is designed for improved performance with threaded applications
-is used instead of the
-.Em phkmalloc
-allocator
-.Pq that was the default until Nx 5.0 .
-.DFLTy
-.
-.It Sy USE_KERBEROS
-.YorN
-Indicates whether Kerberos v5 support is
-enabled in the various applications that support it.
-If
-.Sy MKKERBEROS=no ,
-.Sy USE_KERBEROS
-will also be forced to
-.Dq no .
-.DFLTy
-.
-.It Sy USE_LDAP
-.YorN
-Indicates whether LDAP support is
-enabled in the various applications that support it.
-If
-.Sy MKLDAP=no ,
-.Sy USE_LDAP
-will also be forced to
-.Dq no .
-.DFLTy
-.
-.It Sy USE_PAM
-.YorN
-Indicates whether
-.Xr pam 8
-support is enabled in the various applications that support it.
-If
-.Sy MKPAM=no ,
-.Sy USE_PAM
-will also be forced to
-.Dq no .
-.DFLTy
-.
-.It Sy USE_SKEY
-.YorN
-Indicates whether S/key support is
-enabled in the various applications that support it.
-If
-.Sy MKSKEY=no ,
-.Sy USE_SKEY
-will also be forced to
-.Dq no .
-.DFLTy
-.Pp
-This is mutually exclusive to
-.Sy USE_PAM!=no .
-.
-.It Sy USE_SSP
-.YorN
-Indicates whether GCC stack-smashing protection (SSP) support,
-which detects stack overflows and aborts the program,
-is enabled.
-This imposes some performance penalty.
-.DFLTy
-.
-.It Sy USE_YP
-.YorN
-Indicates whether YP (NIS) support is
-enabled in the various applications that support it.
-If
-.Sy MKYP=no ,
-.Sy USE_YP
-will also be forced to
-.Dq no .
-.DFLTy
-.
 .It Sy USETOOLS
 Indicates whether the tools specified by
 .Sy TOOLDIR
@@ -1093,16 +1610,17 @@ should be used as part of a build in progress.
 Must be set to
 .Dq yes
 if cross-compiling.
-.Bl -tag -width "never"
-.It Sy yes
+Supported values:
+.Bl -tag -width never
+.It yes
 Use the tools from
 .Sy TOOLDIR .
-.It Sy no
+.It no
 Do not use the tools from
 .Sy TOOLDIR ,
 but refuse to build native compilation tool components that are
 version-specific for that tool.
-.It Sy never
+.It never
 Do not use the tools from
 .Sy TOOLDIR ,
 even when building native tool components.
@@ -1127,6 +1645,204 @@ otherwise (to preserve traditional semantics of the
 .Xr make 1
 include files).
 .
+.It Sy USE_COMBINE
+Obsolete.
+.
+.It Sy USE_FORT
+.YorN
+Indicates whether the so-called
+.Dq FORTIFY_SOURCE
+.Xr security 7
+extensions are enabled; see
+.Xr ssp 3
+for details.
+This imposes some performance penalty.
+.NODEF NOFORT
+.DFLTn
+.
+.It Sy USE_HESIOD
+.YorN
+Indicates whether Hesiod support is
+enabled in the various applications that support it.
+.NOVAR MKHESIOD=no
+.DFLTy
+.
+.It Sy USE_INET6
+.YorN
+Indicates whether INET6 (IPv6) support is
+enabled in the various applications that support it.
+.NOVAR MKINET6=no
+.DFLTy
+.
+.It Sy USE_JEMALLOC
+.YorN
+Indicates whether the
+.Em jemalloc
+allocator
+.Pq which is designed for improved performance with threaded applications
+is used instead of the
+.Em phkmalloc
+allocator
+.Pq that was the default until Nx 5.0 .
+.DFLTy
+.
+.It Sy USE_KERBEROS
+.YorN
+Indicates whether Kerberos v5 support is
+enabled in the various applications that support it.
+.NOVAR MKKERBEROS=no
+.DFLTy
+.
+.It Sy USE_LDAP
+.YorN
+Indicates whether LDAP support is
+enabled in the various applications that support it.
+.NOVAR MKLDAP=no
+.DFLTy
+.
+.It Sy USE_LIBCSANITIZER
+Selects the sanitizer in libc to compile userland programs and libraries.
+Supported values:
+.Bl -tag -width undefined
+.It undefined
+Enables the micro-UBSan in the user mode (uUBSan)
+undefined behaviour sanitizer, with
+.Li -fsanitize=no-vptr
+as that sanitizer is not supported.
+.El
+.Pp
+The value of
+.Sy USE_LIBCSANITIZER
+is passed to the C and C++ compilers as the argument to
+.Li -fsanitize= .
+Additional sanitizer arguments can be passed through
+.Sy LIBCSANITIZERFLAGS .
+.Pp
+Disabled if
+.Sy MKLIBCSANITIZER=no .
+.DFLT
+.Dq undefined .
+.
+.It Sy USE_PAM
+.YorN
+Indicates whether
+.Xr pam 8
+support is enabled in the various applications that support it.
+.NOVAR MKPAM=no
+.DFLTy
+.
+.It Sy USE_PIGZGZIP
+.YorN
+Indicates whether
+.Xr pigz 1
+is used instead of
+.Xr gzip 1
+for multi-threaded gzip compression of the distribution tar sets.
+.DFLTn
+.
+.It Sy USE_SANITIZER
+Selects the sanitizer to compile userland programs and libraries.
+Supported (one or more, comma-separated) values:
+.Bl -tag -width safe-stack
+.It address
+A memory error detector.
+.It cfi
+A control flow detector.
+.It dataflow
+A general data flow analysis.
+.It leak
+A memory leak detector.
+.It memory
+An uninitialized memory read detector.
+.It safe-stack
+Protect against stack-based corruption.
+.It scudo
+The Scudo Hardened Allocator.
+.It thread
+A data race detector.
+.It undefined
+An undefined behavior detector.
+.El
+.Pp
+The value of
+.Sy USE_SANITIZER
+is passed to the C and C++ compilers as the argument to
+.Li -fsanitize= .
+Additional sanitizer arguments can be passed through
+.Sy SANITIZERFLAGS .
+.Pp
+The list of supported features and their valid combinations
+depends on the compiler version and target CPU architecture.
+.Pp
+Disabled if
+.Sy MKSANITIZER=no .
+.DFLT
+.Dq address .
+.
+.It Sy USE_SKEY
+.YorN
+Indicates whether S/key support is
+enabled in the various applications that support it.
+.NOVAR MKSKEY=no
+.Pp
+.Em Note :
+This is mutually exclusive to
+.Sy USE_PAM!=no .
+.DFLTn
+.
+.It Sy USE_SSP
+.YorN
+Indicates whether GCC stack-smashing protection (SSP) support,
+which detects stack overflows and aborts the program,
+is enabled.
+This imposes some performance penalty.
+.Pp
+This is disabled internally for standalone programs in
+.Pa /usr/mdec .
+.NODEF NOSSP
+.NOVAR COVERITY_TOP_CONFIG No is defined
+.DFLTn
+on
+.Sy alpha ,
+.Sy hppa ,
+.Sy ia64 ,
+and
+.Sy mips ;
+.Dq yes
+on other platforms.
+.
+.It Sy USE_XZ_SETS
+.YorN
+Indicates whether the distribution tar files are to be compressed
+with
+.Xr xz 1
+instead of
+.Xr gzip 1
+or
+.Xr pigz 1 .
+.NOVAR USE_PIGZGZIP=yes
+.DFLTy
+on
+.Sy aarch64 ,
+.Sy amd64 ,
+and
+.Sy sparc64 ,
+.Dq no
+on other platforms.
+.
+.It Sy USE_YP
+.YorN
+Indicates whether YP (NIS) support is
+enabled in the various applications that support it.
+.NOVAR MKYP=no
+.DFLTy
+.
+.It Sy X11MOTIFPATH
+Path of the Motif installation to use if
+.Sy MKX11MOTIF=yes .
+.DFLT
+.Dq Pa /usr/pkg
+.
 .El
 .
 .Ss pkgsrc system variables
@@ -1150,7 +1866,68 @@ Examples for settings regarding the pkgsrc collection.
 .El
 .
 .Sh SEE ALSO
+.Xr apropos 1 ,
+.Xr ar 1 ,
+.Xr as 1 ,
+.Xr clang 1 ,
+.Xr clang++ 1 ,
+.Xr cpio 1 ,
+.Xr cvs 1 ,
+.Xr dtrace 1 ,
+.Xr g++ 1 ,
+.Xr gcc 1 ,
+.Xr gdb 1 ,
+.Xr groff 1 ,
+.Xr gzip 1 ,
+.Xr ident 1 ,
+.Xr ld 1 ,
+.Xr ld.elf_so 1 ,
+.Xr lint 1 ,
+.Xr ls 1 ,
 .Xr make 1 ,
+.Xr mandoc 1 ,
+.Xr pax 1 ,
+.Xr pcc 1 ,
+.Xr pigz 1 ,
+.Xr sh 1 ,
+.Xr tar 1 ,
+.Xr uname 1 ,
+.Xr whatis 1 ,
+.Xr xz 1 ,
+.Xr rump 3 ,
+.Xr ssp 3 ,
+.Xr amdgpu 4 ,
+.Xr athn 4 ,
+.Xr bcm43xx 4 ,
+.Xr bwfm 4 ,
+.Xr ipf 4 ,
+.Xr ipw 4 ,
+.Xr iwi 4 ,
+.Xr iwm 4 ,
+.Xr iwn 4 ,
+.Xr nouveau 4 ,
+.Xr options 4 ,
+.Xr otus 4 ,
+.Xr pf 4 ,
+.Xr radeon 4 ,
+.Xr ral 4 ,
+.Xr rtwn 4 ,
+.Xr rum 4 ,
+.Xr run 4 ,
+.Xr urtwn 4 ,
+.Xr wpi 4 ,
+.Xr zyd 4 ,
+.Xr pam.conf 5 ,
+.Xr release 7 ,
+.Xr security 7 ,
+.Xr Xorg 7 ,
+.Xr dbsym 8 ,
+.Xr getNAME 8 ,
+.Xr makemandb 8 ,
+.Xr makewhatis 8 ,
+.Xr mdsetimage 8 ,
+.Xr pam 8 ,
+.Xr unbound 8 ,
 .Pa /usr/share/mk/bsd.README ,
 .Pa pkgsrc/doc/pkgsrc.txt ,
 .Lk http://www.netbsd.org/Documentation/pkgsrc/
