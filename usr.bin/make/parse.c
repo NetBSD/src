@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.698 2023/05/10 16:10:02 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.699 2023/06/01 06:25:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.698 2023/05/10 16:10:02 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.699 2023/06/01 06:25:34 rillig Exp $");
 
 /*
  * A file being read.
@@ -2700,9 +2700,13 @@ ParseLine_ShellCommand(const char *p)
 }
 
 static void
-HandleBreak(void)
+HandleBreak(const char *arg)
 {
 	IncludedFile *curFile = CurFile();
+
+	if (arg[0] != '\0')
+		Parse_Error(PARSE_FATAL,
+		    "The .break directive does not take arguments");
 
 	if (curFile->forLoop != NULL) {
 		/* pretend we reached EOF */
@@ -2742,7 +2746,7 @@ ParseDirective(char *line)
 	arg = cp;
 
 	if (Substring_Equals(dir, "break"))
-		HandleBreak();
+		HandleBreak(arg);
 	else if (Substring_Equals(dir, "undef"))
 		Var_Undef(arg);
 	else if (Substring_Equals(dir, "export"))
