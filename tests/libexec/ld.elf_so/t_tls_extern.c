@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_extern.c,v 1.3 2023/06/01 20:48:30 riastradh Exp $	*/
+/*	$NetBSD: t_tls_extern.c,v 1.4 2023/06/01 20:50:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,6 +32,87 @@
 #include <dlfcn.h>
 
 #define	ATF_REQUIRE_DL(x)	ATF_REQUIRE_MSG(x, "%s: %s", #x, dlerror())
+
+ATF_TC(tls_extern_dynamic_defuse);
+ATF_TC_HEAD(tls_extern_dynamic_defuse, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "extern __thread for dynamic TLS works,"
+	    " loading def then use");
+}
+ATF_TC_BODY(tls_extern_dynamic_defuse, tc)
+{
+	void *def, *use;
+	int *(*fdef)(void), *(*fuse)(void);
+	int *pdef, *puse;
+
+	(void)dlerror();
+
+	ATF_REQUIRE_DL(def = dlopen("libh_def_dynamic.so", 0));
+	ATF_REQUIRE_DL(use = dlopen("libh_use_dynamic.so", 0));
+
+	ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
+	ATF_REQUIRE_DL(fuse = dlsym(use, "fuse"));
+
+	pdef = (*fdef)();
+	puse = (*fuse)();
+	ATF_CHECK_EQ_MSG(pdef, puse,
+	    "%p in defining library != %p in using library",
+	    pdef, puse);
+}
+
+ATF_TC(tls_extern_dynamic_usedef);
+ATF_TC_HEAD(tls_extern_dynamic_usedef, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "extern __thread for dynamic TLS works,"
+	    " loading use then def");
+}
+ATF_TC_BODY(tls_extern_dynamic_usedef, tc)
+{
+	void *def, *use;
+	int *(*fdef)(void), *(*fuse)(void);
+	int *pdef, *puse;
+
+	(void)dlerror();
+
+	ATF_REQUIRE_DL(use = dlopen("libh_use_dynamic.so", 0));
+	ATF_REQUIRE_DL(def = dlopen("libh_def_dynamic.so", 0));
+
+	ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
+	ATF_REQUIRE_DL(fuse = dlsym(use, "fuse"));
+
+	pdef = (*fdef)();
+	puse = (*fuse)();
+	ATF_CHECK_EQ_MSG(pdef, puse,
+	    "%p in defining library != %p in using library",
+	    pdef, puse);
+}
+
+ATF_TC(tls_extern_dynamic_usedefnoload);
+ATF_TC_HEAD(tls_extern_dynamic_usedefnoload, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "extern __thread for dynamic TLS works,"
+	    " loading use then def with RTLD_NOLOAD");
+}
+ATF_TC_BODY(tls_extern_dynamic_usedefnoload, tc)
+{
+	void *def, *use;
+	int *(*fdef)(void), *(*fuse)(void);
+	int *pdef, *puse;
+
+	(void)dlerror();
+
+	ATF_REQUIRE_DL(use = dlopen("libh_use_dynamic.so", 0));
+	ATF_REQUIRE_DL(def = dlopen("libh_def_dynamic.so", RTLD_NOLOAD));
+
+	ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
+	ATF_REQUIRE_DL(fuse = dlsym(use, "fuse"));
+
+	pdef = (*fdef)();
+	puse = (*fuse)();
+	ATF_CHECK_EQ_MSG(pdef, puse,
+	    "%p in defining library != %p in using library",
+	    pdef, puse);
+}
 
 ATF_TC(tls_extern_static_defuse);
 ATF_TC_HEAD(tls_extern_static_defuse, tc)
@@ -121,6 +202,9 @@ ATF_TC_BODY(tls_extern_static_usedefnoload, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
+	ATF_TP_ADD_TC(tp, tls_extern_dynamic_defuse);
+	ATF_TP_ADD_TC(tp, tls_extern_dynamic_usedef);
+	ATF_TP_ADD_TC(tp, tls_extern_dynamic_usedefnoload);
 	ATF_TP_ADD_TC(tp, tls_extern_static_defuse);
 	ATF_TP_ADD_TC(tp, tls_extern_static_usedef);
 	ATF_TP_ADD_TC(tp, tls_extern_static_usedefnoload);
