@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_extern.c,v 1.6 2023/06/01 22:26:40 riastradh Exp $	*/
+/*	$NetBSD: t_tls_extern.c,v 1.7 2023/06/01 22:26:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -78,145 +78,145 @@ tls_extern(const char *libdef, const char *libuse, enum order order,
 	    pdef, puse);
 }
 
-ATF_TC(tls_extern_dynamic_abusedef);
-ATF_TC_HEAD(tls_extern_dynamic_abusedef, tc)
+ATF_TC(dynamic_abusedef);
+ATF_TC_HEAD(dynamic_abusedef, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
 	    " loading static use than dynamic def");
 }
-ATF_TC_BODY(tls_extern_dynamic_abusedef, tc)
+ATF_TC_BODY(dynamic_abusedef, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so",
 	    USE_DEF, /*xfail*/true);
 }
 
-ATF_TC(tls_extern_dynamic_abusedefnoload);
-ATF_TC_HEAD(tls_extern_dynamic_abusedefnoload, tc)
+ATF_TC(dynamic_abusedefnoload);
+ATF_TC_HEAD(dynamic_abusedefnoload, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
 	    " loading static use then dynamic def with RTLD_NOLOAD");
 }
-ATF_TC_BODY(tls_extern_dynamic_abusedefnoload, tc)
+ATF_TC_BODY(dynamic_abusedefnoload, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so",
 	    USE_DEF_NOLOAD, /*xfail*/true);
 }
 
-ATF_TC(tls_extern_dynamic_defabuse);
-ATF_TC_HEAD(tls_extern_dynamic_defabuse, tc)
+ATF_TC(dynamic_defabuse);
+ATF_TC_HEAD(dynamic_defabuse, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
 	    " loading dynamic def then static use");
 }
-ATF_TC_BODY(tls_extern_dynamic_defabuse, tc)
+ATF_TC_BODY(dynamic_defabuse, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so",
 	    DEF_USE, /*xfail*/true);
 }
 
-ATF_TC(tls_extern_dynamic_defuse);
-ATF_TC_HEAD(tls_extern_dynamic_defuse, tc)
+ATF_TC(dynamic_defuse);
+ATF_TC_HEAD(dynamic_defuse, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for dynamic TLS works,"
 	    " loading def then use");
 }
-ATF_TC_BODY(tls_extern_dynamic_defuse, tc)
+ATF_TC_BODY(dynamic_defuse, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
 	    DEF_USE, /*xfail*/false);
 }
 
-ATF_TC(tls_extern_dynamic_usedef);
-ATF_TC_HEAD(tls_extern_dynamic_usedef, tc)
+ATF_TC(dynamic_usedef);
+ATF_TC_HEAD(dynamic_usedef, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for dynamic TLS works,"
 	    " loading use then def");
 }
-ATF_TC_BODY(tls_extern_dynamic_usedef, tc)
+ATF_TC_BODY(dynamic_usedef, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
 	    USE_DEF, /*xfail*/false);
 }
 
-ATF_TC(tls_extern_dynamic_usedefnoload);
-ATF_TC_HEAD(tls_extern_dynamic_usedefnoload, tc)
+ATF_TC(dynamic_usedefnoload);
+ATF_TC_HEAD(dynamic_usedefnoload, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for dynamic TLS works,"
 	    " loading use then def with RTLD_NOLOAD");
 }
-ATF_TC_BODY(tls_extern_dynamic_usedefnoload, tc)
+ATF_TC_BODY(dynamic_usedefnoload, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
 	    USE_DEF_NOLOAD, /*xfail*/false);
 }
 
-ATF_TC(tls_extern_static_abusedef);
-ATF_TC_HEAD(tls_extern_static_abusedef, tc)
+ATF_TC(static_abusedef);
+ATF_TC_HEAD(static_abusedef, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
 	    " loading dynamic use then static def");
 }
-ATF_TC_BODY(tls_extern_static_abusedef, tc)
+ATF_TC_BODY(static_abusedef, tc)
 {
 	tls_extern("libh_def_static.so", "libh_abuse_static.so",
 	    USE_DEF, /*xfail*/true);
 }
 
-ATF_TC(tls_extern_static_abusedefnoload);
-ATF_TC_HEAD(tls_extern_static_abusedefnoload, tc)
+ATF_TC(static_abusedefnoload);
+ATF_TC_HEAD(static_abusedefnoload, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
 	    " loading dynamic use then static def with RTLD_NOLOAD");
 }
-ATF_TC_BODY(tls_extern_static_abusedefnoload, tc)
+ATF_TC_BODY(static_abusedefnoload, tc)
 {
 	tls_extern("libh_def_static.so", "libh_abuse_static.so",
 	    USE_DEF_NOLOAD, /*xfail*/true);
 }
 
-ATF_TC(tls_extern_static_defabuse);
-ATF_TC_HEAD(tls_extern_static_defabuse, tc)
+ATF_TC(static_defabuse);
+ATF_TC_HEAD(static_defabuse, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
 	    " loading static def then dynamic use");
 }
-ATF_TC_BODY(tls_extern_static_defabuse, tc)
+ATF_TC_BODY(static_defabuse, tc)
 {
 	tls_extern("libh_def_static.so", "libh_abuse_static.so",
 	    DEF_USE, /*xfail*/true);
 }
 
-ATF_TC(tls_extern_static_defuse);
-ATF_TC_HEAD(tls_extern_static_defuse, tc)
+ATF_TC(static_defuse);
+ATF_TC_HEAD(static_defuse, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for static TLS works,"
 	    " loading def then use");
 }
-ATF_TC_BODY(tls_extern_static_defuse, tc)
+ATF_TC_BODY(static_defuse, tc)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
 	    DEF_USE, /*xfail*/false);
 }
 
-ATF_TC(tls_extern_static_usedef);
-ATF_TC_HEAD(tls_extern_static_usedef, tc)
+ATF_TC(static_usedef);
+ATF_TC_HEAD(static_usedef, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for static TLS works,"
 	    " loading use then def");
 }
-ATF_TC_BODY(tls_extern_static_usedef, tc)
+ATF_TC_BODY(static_usedef, tc)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
 	    USE_DEF, /*xfail*/true);
 }
 
-ATF_TC(tls_extern_static_usedefnoload);
-ATF_TC_HEAD(tls_extern_static_usedefnoload, tc)
+ATF_TC(static_usedefnoload);
+ATF_TC_HEAD(static_usedefnoload, tc)
 {
 	atf_tc_set_md_var(tc, "descr", "extern __thread for static TLS works,"
 	    " loading use then def with RTLD_NOLOAD");
 }
-ATF_TC_BODY(tls_extern_static_usedefnoload, tc)
+ATF_TC_BODY(static_usedefnoload, tc)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
 	    USE_DEF_NOLOAD, /*xfail*/true);
@@ -225,17 +225,17 @@ ATF_TC_BODY(tls_extern_static_usedefnoload, tc)
 ATF_TP_ADD_TCS(tp)
 {
 
-	ATF_TP_ADD_TC(tp, tls_extern_dynamic_abusedef);
-	ATF_TP_ADD_TC(tp, tls_extern_dynamic_abusedefnoload);
-	ATF_TP_ADD_TC(tp, tls_extern_dynamic_defabuse);
-	ATF_TP_ADD_TC(tp, tls_extern_dynamic_defuse);
-	ATF_TP_ADD_TC(tp, tls_extern_dynamic_usedef);
-	ATF_TP_ADD_TC(tp, tls_extern_dynamic_usedefnoload);
-	ATF_TP_ADD_TC(tp, tls_extern_static_abusedef);
-	ATF_TP_ADD_TC(tp, tls_extern_static_abusedefnoload);
-	ATF_TP_ADD_TC(tp, tls_extern_static_defabuse);
-	ATF_TP_ADD_TC(tp, tls_extern_static_defuse);
-	ATF_TP_ADD_TC(tp, tls_extern_static_usedef);
-	ATF_TP_ADD_TC(tp, tls_extern_static_usedefnoload);
+	ATF_TP_ADD_TC(tp, dynamic_abusedef);
+	ATF_TP_ADD_TC(tp, dynamic_abusedefnoload);
+	ATF_TP_ADD_TC(tp, dynamic_defabuse);
+	ATF_TP_ADD_TC(tp, dynamic_defuse);
+	ATF_TP_ADD_TC(tp, dynamic_usedef);
+	ATF_TP_ADD_TC(tp, dynamic_usedefnoload);
+	ATF_TP_ADD_TC(tp, static_abusedef);
+	ATF_TP_ADD_TC(tp, static_abusedefnoload);
+	ATF_TP_ADD_TC(tp, static_defabuse);
+	ATF_TP_ADD_TC(tp, static_defuse);
+	ATF_TP_ADD_TC(tp, static_usedef);
+	ATF_TP_ADD_TC(tp, static_usedefnoload);
 	return atf_no_error();
 }
