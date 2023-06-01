@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-arcfour.c,v 1.4 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: crypto-arcfour.c,v 1.5 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -184,7 +184,8 @@ ARCFOUR_subencrypt(krb5_context context,
     ctx = EVP_CIPHER_CTX_new();
 #endif
 
-    EVP_CipherInit_ex(ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 1);
+    if (!EVP_CipherInit_ex(ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 1))
+	krb5_abortx(context, "rc4 cipher not supported");
     EVP_Cipher(ctx, cdata + 16, cdata + 16, len - 16);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
     EVP_CIPHER_CTX_cleanup(ctx);
@@ -251,7 +252,8 @@ ARCFOUR_subdecrypt(krb5_context context,
 #else
     ctx = EVP_CIPHER_CTX_new();
 #endif
-    EVP_CipherInit_ex(ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 0);
+    if (!EVP_CipherInit_ex(ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 0))
+	krb5_abortx(context, "rc4 cipher not supported");
     EVP_Cipher(ctx, cdata + 16, cdata + 16, len - 16);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
     EVP_CIPHER_CTX_cleanup(ctx);

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des-common.c,v 1.4 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: crypto-des-common.c,v 1.5 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -88,7 +88,8 @@ _krb5_des_checksum(krb5_context context,
     ctx->ectx = EVP_CIPHER_CTX_new();
 #endif
 
-    EVP_CipherInit_ex(ctx->ectx, NULL, NULL, NULL, (void *)&ivec, -1);
+    if (!EVP_CipherInit_ex(ctx->ectx, NULL, NULL, NULL, (void *)&ivec, -1))
+	krb5_abortx(context, "can't initialize cipher");
     EVP_Cipher(ctx->ectx, p, p, 24);
 
     return 0;
@@ -120,7 +121,8 @@ _krb5_des_verify(krb5_context context,
 #else
     ctx->dctx = EVP_CIPHER_CTX_new();
 #endif
-    EVP_CipherInit_ex(ctx->dctx, NULL, NULL, NULL, (void *)&ivec, -1);
+    if (!EVP_CipherInit_ex(ctx->dctx, NULL, NULL, NULL, (void *)&ivec, -1))
+	krb5_abortx(context, "can't initialize cipher");
     EVP_Cipher(ctx->dctx, tmp, C->checksum.data, 24);
 
     EVP_DigestInit_ex(m, evp_md, NULL);

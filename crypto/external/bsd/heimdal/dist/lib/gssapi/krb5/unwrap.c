@@ -1,4 +1,4 @@
-/*	$NetBSD: unwrap.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: unwrap.c,v 1.4 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -113,7 +113,10 @@ unwrap_des
 #else
       des_ctx = EVP_CIPHER_CTX_new();
 #endif
-      EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, deskey, zero, 0);
+      if (!EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, deskey, zero, 0)) {
+	*minor_status = EINVAL;
+	return GSS_S_FAILURE;
+      }
       EVP_Cipher(des_ctx, p, p, input_message_buffer->length - len);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
       EVP_CIPHER_CTX_cleanup(des_ctx);
@@ -163,7 +166,11 @@ unwrap_des
 #else
   des_ctx = EVP_CIPHER_CTX_new();
 #endif
-  EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash, 0);
+  if (!EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash,
+      0)) {
+    *minor_status = EINVAL;
+    return GSS_S_FAILURE;
+  }
   EVP_Cipher(des_ctx, p, p, 8);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
   EVP_CIPHER_CTX_cleanup(des_ctx);

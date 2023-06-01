@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-aes-sha1.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
+/*	$NetBSD: crypto-aes-sha1.c,v 1.4 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -134,9 +134,12 @@ AES_SHA1_PRF(krb5_context context,
 #else
 	ctx = EVP_CIPHER_CTX_new(); /* ivec all zero */
 #endif
-	EVP_CipherInit_ex(ctx, c, NULL, derived->keyvalue.data, NULL, 1);
-	EVP_Cipher(ctx, out->data, result.checksum.data,
-		   crypto->et->blocksize);
+	if (EVP_CipherInit_ex(ctx, c, NULL, derived->keyvalue.data, NULL, 1)) {
+	    EVP_Cipher(ctx, out->data, result.checksum.data,
+		       crypto->et->blocksize);
+	    ret = EINVAL;
+	    krb5_set_error_message(context, ret, "Cannot initialize cipher");
+	}
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	EVP_CIPHER_CTX_cleanup(ctx);
 #else

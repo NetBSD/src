@@ -1,4 +1,4 @@
-/*	$NetBSD: wrap.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: wrap.c,v 1.4 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -308,7 +308,11 @@ wrap_des
 #else
   des_ctx = EVP_CIPHER_CTX_new();
 #endif
-  EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, p + 8, 1);
+  if (!EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data,
+      p + 8, 1)) {
+    *minor_status = EINVAL;
+    return GSS_S_FAILURE;
+  }
   EVP_Cipher(des_ctx, p, p, 8);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
   EVP_CIPHER_CTX_cleanup(des_ctx);
@@ -337,7 +341,10 @@ wrap_des
 #else
       des_ctx = EVP_CIPHER_CTX_new();
 #endif
-      EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, deskey, zero, 1);
+      if (!EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, deskey, zero, 1)) {
+	*minor_status = EINVAL;
+	return GSS_S_FAILURE;
+      }
       EVP_Cipher(des_ctx, p, p, datalen);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
       EVP_CIPHER_CTX_cleanup(des_ctx);
