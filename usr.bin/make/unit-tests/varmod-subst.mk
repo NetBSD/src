@@ -1,6 +1,8 @@
-# $NetBSD: varmod-subst.mk,v 1.9 2021/09/06 21:18:55 rillig Exp $
+# $NetBSD: varmod-subst.mk,v 1.10 2023/06/01 07:27:30 rillig Exp $
 #
 # Tests for the :S,from,to, variable modifier.
+
+# expect-all
 
 all: mod-subst
 all: mod-subst-delimiter
@@ -98,6 +100,14 @@ WORDS=		sequences of letters
 .if ${:Uvalue:S,ue$,&-&-&,} != "value-ue-ue"
 .  error
 .endif
+
+
+# When a word is replaced with nothing, the remaining words are separated by a
+# single space, not two.
+.if ${1 2 3:L:S,2,,} != "1 3"
+.  error
+.endif
+
 
 mod-subst:
 	@echo $@:
