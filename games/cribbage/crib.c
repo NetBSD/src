@@ -1,4 +1,4 @@
-/*	$NetBSD: crib.c,v 1.26 2023/01/06 17:13:46 christos Exp $	*/
+/*	$NetBSD: crib.c,v 1.27 2023/06/01 20:15:16 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: crib.c,v 1.26 2023/01/06 17:13:46 christos Exp $");
+__RCSID("$NetBSD: crib.c,v 1.27 2023/06/01 20:15:16 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -493,7 +493,7 @@ peg(BOOLEAN mycrib)
 		prhand(ph, pnum, Playwin, FALSE);
 		prhand(ch, cnum, Compwin, TRUE);
 		prtable(sum);
-		if (myturn) {	/* my tyrn to play */
+		if (myturn) {	/* my turn to play */
 			if (!anymove(ch, cnum, sum)) {	/* if no card to play */
 				if (!mego && cnum) {	/* go for comp? */
 					msg("GO");

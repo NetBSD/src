@@ -1,4 +1,4 @@
--/* $NetBSD: isp_target.h,v 1.26 2009/06/25 23:44:02 mjacob Exp $ */
+-/* $NetBSD: isp_target.h,v 1.27 2023/06/01 20:15:16 andvar Exp $ */
 /*-
  *  Copyright (c) 1997-2008 by Matthew Jacob
  *  All rights reserved.
@@ -90,7 +90,7 @@ typedef struct isp_notify {
     if (isp->isp_dblev & ISP_LOGTDEBUG2) isp_print_qentry(isp, msg, idx, arg)
 
 /*
- * Special Constatns
+ * Special Constants
  */
 #define INI_ANY			((uint64_t) -1)
 #define VALID_INI(ini)		(ini != INI_NONE && ini != INI_ANY)
