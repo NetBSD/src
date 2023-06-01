@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
+/*	$NetBSD: crypto-des.c,v 1.4 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -228,7 +228,8 @@ evp_des_encrypt_null_ivec(krb5_context context,
     DES_cblock ivec;
     memset(&ivec, 0, sizeof(ivec));
     c = encryptp ? ctx->ectx : ctx->dctx;
-    EVP_CipherInit_ex(c, NULL, NULL, NULL, (void *)&ivec, -1);
+    if (!EVP_CipherInit_ex(c, NULL, NULL, NULL, (void *)&ivec, -1))
+	krb5_abortx(context, "can't initialize cipher");
     EVP_Cipher(c, data, data, len);
     return 0;
 }
@@ -247,7 +248,8 @@ evp_des_encrypt_key_ivec(krb5_context context,
     DES_cblock ivec;
     memcpy(&ivec, key->key->keyvalue.data, sizeof(ivec));
     c = encryptp ? ctx->ectx : ctx->dctx;
-    EVP_CipherInit_ex(c, NULL, NULL, NULL, (void *)&ivec, -1);
+    if (!EVP_CipherInit_ex(c, NULL, NULL, NULL, (void *)&ivec, -1))
+	krb5_abortx(context, "can't initialize cipher");
     EVP_Cipher(c, data, data, len);
     return 0;
 }

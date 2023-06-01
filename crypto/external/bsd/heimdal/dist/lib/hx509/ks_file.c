@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_file.c,v 1.4 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: ks_file.c,v 1.5 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2007 Kungliga Tekniska Högskolan
@@ -122,7 +122,12 @@ try_decrypt(hx509_context context,
 #else
 	ctx = EVP_CIPHER_CTX_new();
 #endif
-	EVP_CipherInit_ex(ctx, c, NULL, key, ivdata, 0);
+	if (!EVP_CipherInit_ex(ctx, c, NULL, key, ivdata, 0)) {
+	    hx509_set_error_string(context, 0, EINVAL,
+				   "Cannot initialize cipher");
+	    ret = EINVAL;
+	    goto out;
+	}
 	EVP_Cipher(ctx, clear.data, cipher, len);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	EVP_CIPHER_CTX_cleanup(ctx);

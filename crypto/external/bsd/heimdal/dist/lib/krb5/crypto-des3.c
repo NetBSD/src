@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des3.c,v 1.5 2018/02/05 16:00:53 christos Exp $	*/
+/*	$NetBSD: crypto-des3.c,v 1.6 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -101,7 +101,8 @@ DES3_prf(krb5_context context,
 #else
 	ctx = EVP_CIPHER_CTX_new();
 #endif
-	EVP_CipherInit_ex(ctx, c, NULL, derived->keyvalue.data, NULL, 1);
+	if (!EVP_CipherInit_ex(ctx, c, NULL, derived->keyvalue.data, NULL, 1))
+	    krb5_abortx(context, "can't initialize cipher");
 	EVP_Cipher(ctx, out->data, result.checksum.data,
 		   crypto->et->prf_length);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL

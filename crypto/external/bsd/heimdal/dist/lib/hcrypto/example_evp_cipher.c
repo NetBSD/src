@@ -1,4 +1,4 @@
-/*	$NetBSD: example_evp_cipher.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: example_evp_cipher.c,v 1.3 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan
@@ -137,7 +137,8 @@ main(int argc, char **argv)
      * ivec.
      */
     EVP_CIPHER_CTX_init(&ctx);
-    EVP_CipherInit_ex(&ctx, c, NULL, key, ivec, encryptp);
+    if (!EVP_CipherInit_ex(&ctx, c, NULL, key, ivec, encryptp))
+	errx(1, "EVP_CipherInit_ex failed");
 
     /* read in buffer */
     while ((ilen = fread(ibuf, 1, block_size, in)) > 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntlm.c,v 1.3 2019/12/15 22:50:51 christos Exp $	*/
+/*	$NetBSD: ntlm.c,v 1.4 2023/06/01 20:40:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -1197,7 +1197,8 @@ splitandenc(unsigned char *hash,
     ctx = EVP_CIPHER_CTX_new();
 #endif
 
-    EVP_CipherInit_ex(ctx, EVP_des_cbc(), NULL, key, NULL, 1);
+    if (!EVP_CipherInit_ex(ctx, EVP_des_cbc(), NULL, key, NULL, 1))
+	abort();
     EVP_Cipher(ctx, answer, challenge, 8);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
     EVP_CIPHER_CTX_cleanup(ctx);
