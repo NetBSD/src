@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1333 2023/06/01 21:50:26 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.1334 2023/06/01 21:54:17 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1028,6 +1028,7 @@ dependall:	.NOTMAIN realdepend .MAKE
 #
 # Source makefiles should set NO*, and not MK*, and must do so before
 # including bsd.own.mk.
+# Please keep alphabetically sorted with one entry per line.
 #
 _NOVARS= \
 	NOCOMPAT \
@@ -1176,6 +1177,7 @@ MKSTATICPIE?=	no
 
 #
 # MK* options which default to "yes".
+# Please keep alphabetically sorted with one entry per line.
 #
 _MKVARS.yes= \
 	MKARGON2 \
@@ -1344,9 +1346,9 @@ MKDEBUGKERNEL?=${MKKDEBUG:Uno}
 MKDEBUGTOOLS?=${MKTOOLSDEBUG:Uno}
 
 #
-# MK* options which default to "no".  Note that MKZFS has a different
-# default for some platforms, see above.  Please keep alphabetically
-# sorted with at most one letter per line.
+# MK* options which default to "no".
+# Note that MKZFS has a different default for some platforms, see above.
+# Please keep alphabetically sorted with one entry per line.
 #
 _MKVARS.no= \
 	MKAMDGPUFIRMWARE \
