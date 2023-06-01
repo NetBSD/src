@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.175 2023/06/01 07:44:10 rillig Exp $	*/
+/*	$NetBSD: for.c,v 1.176 2023/06/01 09:02:14 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -58,7 +58,7 @@
 #include "make.h"
 
 /*	"@(#)for.c	8.1 (Berkeley) 6/6/93"	*/
-MAKE_RCSID("$NetBSD: for.c,v 1.175 2023/06/01 07:44:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: for.c,v 1.176 2023/06/01 09:02:14 rillig Exp $");
 
 
 typedef struct ForLoop {
@@ -513,7 +513,12 @@ For_NextIteration(ForLoop *f, Buffer *body)
 
 	f->nextItem += (unsigned int)f->vars.len;
 	ForLoop_SubstBody(f, f->nextItem - (unsigned int)f->vars.len, body);
-	DEBUG1(FOR, "For: loop body:\n%s", body->data);
+	if (DEBUG(FOR)) {
+		char *details = ForLoop_Details(f);
+		debug_printf("For: loop body with %s:\n%s",
+		    details, body->data);
+		free(details);
+	}
 	return true;
 }
 
