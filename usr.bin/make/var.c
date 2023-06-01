@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1054 2023/05/10 18:22:33 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1055 2023/06/01 07:44:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1054 2023/05/10 18:22:33 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1055 2023/06/01 07:44:10 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1314,7 +1314,7 @@ SepBuf_AddBytes(SepBuf *buf, const char *mem, size_t mem_size)
 }
 
 static void
-SepBuf_AddBytesBetween(SepBuf *buf, const char *start, const char *end)
+SepBuf_AddRange(SepBuf *buf, const char *start, const char *end)
 {
 	SepBuf_AddBytes(buf, start, (size_t)(end - start));
 }
@@ -1328,7 +1328,7 @@ SepBuf_AddStr(SepBuf *buf, const char *str)
 static void
 SepBuf_AddSubstring(SepBuf *buf, Substring sub)
 {
-	SepBuf_AddBytesBetween(buf, sub.start, sub.end);
+	SepBuf_AddRange(buf, sub.start, sub.end);
 }
 
 static char *
@@ -1385,7 +1385,7 @@ ModifyWord_Suffix(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 {
 	const char *lastDot = Substring_LastIndex(word, '.');
 	if (lastDot != NULL)
-		SepBuf_AddBytesBetween(buf, lastDot + 1, word.end);
+		SepBuf_AddRange(buf, lastDot + 1, word.end);
 }
 
 /*
@@ -1400,7 +1400,7 @@ ModifyWord_Root(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 
 	lastDot = Substring_LastIndex(word, '.');
 	end = lastDot != NULL ? lastDot : word.end;
-	SepBuf_AddBytesBetween(buf, word.start, end);
+	SepBuf_AddRange(buf, word.start, end);
 }
 
 /*
@@ -1463,9 +1463,9 @@ ModifyWord_SysVSubst(Substring word, SepBuf *buf, void *data)
 	percent = args->lhsPercent ? strchr(rhs.str, '%') : NULL;
 
 	if (percent != NULL)
-		SepBuf_AddBytesBetween(buf, rhs.str, percent);
+		SepBuf_AddRange(buf, rhs.str, percent);
 	if (percent != NULL || !args->lhsPercent)
-		SepBuf_AddBytesBetween(buf,
+		SepBuf_AddRange(buf,
 		    word.start + Substring_Length(args->lhsPrefix),
 		    word.end - Substring_Length(args->lhsSuffix));
 	SepBuf_AddStr(buf, percent != NULL ? percent + 1 : rhs.str);
@@ -1522,7 +1522,7 @@ ModifyWord_Subst(Substring word, SepBuf *buf, void *data)
 
 		/* :S,^prefix,replacement, or :S,^whole$,replacement, */
 		SepBuf_AddSubstring(buf, args->rhs);
-		SepBuf_AddBytesBetween(buf, word.start + lhsLen, wordEnd);
+		SepBuf_AddRange(buf, word.start + lhsLen, wordEnd);
 		args->matched = true;
 		return;
 	}
@@ -1534,7 +1534,7 @@ ModifyWord_Subst(Substring word, SepBuf *buf, void *data)
 			goto nosub;
 
 		/* :S,suffix$,replacement, */
-		SepBuf_AddBytesBetween(buf, word.start, wordEnd - lhsLen);
+		SepBuf_AddRange(buf, word.start, wordEnd - lhsLen);
 		SepBuf_AddSubstring(buf, args->rhs);
 		args->matched = true;
 		return;
@@ -1545,7 +1545,7 @@ ModifyWord_Subst(Substring word, SepBuf *buf, void *data)
 
 	/* unanchored case, may match more than once */
 	while ((match = Substring_Find(word, args->lhs)) != NULL) {
-		SepBuf_AddBytesBetween(buf, word.start, match);
+		SepBuf_AddRange(buf, word.start, match);
 		SepBuf_AddSubstring(buf, args->rhs);
 		args->matched = true;
 		word.start = match + lhsLen;
@@ -1581,7 +1581,7 @@ RegexReplaceBackref(char ref, SepBuf *buf, const char *wp,
 		if (opts.strict)
 			Error("No match for subexpression \\%u", n);
 	} else {
-		SepBuf_AddBytesBetween(buf,
+		SepBuf_AddRange(buf,
 		    wp + (size_t)m[n].rm_so,
 		    wp + (size_t)m[n].rm_eo);
 	}
@@ -1605,7 +1605,7 @@ RegexReplace(Substring replace, SepBuf *buf, const char *wp,
 			 ch_isdigit(rp[1]))
 			RegexReplaceBackref(*++rp, buf, wp, m, nsub);
 		else if (*rp == '&') {
-			SepBuf_AddBytesBetween(buf,
+			SepBuf_AddRange(buf,
 			    wp + (size_t)m[0].rm_so,
 			    wp + (size_t)m[0].rm_eo);
 		} else
@@ -1646,7 +1646,7 @@ again:
 	if (xrv != REG_NOMATCH)
 		VarREError(xrv, &args->re, "Unexpected regex error");
 no_match:
-	SepBuf_AddBytesBetween(buf, wp, word.end);
+	SepBuf_AddRange(buf, wp, word.end);
 	return;
 
 ok:
@@ -1801,8 +1801,7 @@ SubstringWords_JoinFree(SubstringWords words)
 			 */
 			Buf_AddByte(&buf, ' ');
 		}
-		Buf_AddBytesBetween(&buf,
-		    words.words[i].start, words.words[i].end);
+		Buf_AddRange(&buf, words.words[i].start, words.words[i].end);
 	}
 
 	SubstringWords_Free(words);
@@ -4735,7 +4734,7 @@ VarSubstPlain(const char **pp, Buffer *res)
 
 	for (p++; *p != '$' && *p != '\0'; p++)
 		continue;
-	Buf_AddBytesBetween(res, start, p);
+	Buf_AddRange(res, start, p);
 	*pp = p;
 }
 
