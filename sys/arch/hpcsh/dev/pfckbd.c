@@ -1,4 +1,4 @@
-/*	$NetBSD: pfckbd.c,v 1.32 2021/08/07 16:18:54 thorpej Exp $	*/
+/*	$NetBSD: pfckbd.c,v 1.33 2023/06/01 20:15:16 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  * currently, HP Jornada 680/690, HITACHI PERSONA HPW-50PAD only.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.32 2021/08/07 16:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pfckbd.c,v 1.33 2023/06/01 20:15:16 andvar Exp $");
 
 #include "debug_hpcsh.h"
 
@@ -90,7 +90,7 @@ static void pfckbd_callout_hitachi(struct pfckbd_core *);
 void pfckbd_poll_hitachi_power(void);
 
 
-/* callout function table. this function is platfrom specific. */
+/* callout function table. this function is platform specific. */
 static const struct {
 	platid_mask_t *platform;
 	void (*func)(struct pfckbd_core *);
