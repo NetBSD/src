@@ -1,4 +1,4 @@
-/*	$NetBSD: get_mic.c,v 1.4 2019/12/15 22:50:47 christos Exp $	*/
+/*	$NetBSD: get_mic.c,v 1.5 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -122,7 +122,11 @@ mic_des
   des_ctx = EVP_CIPHER_CTX_new();
 #endif
   EVP_CIPHER_CTX_init(des_ctx);
-  EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, p + 8, 1);
+  if (!EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data,
+      p + 8, 1)) {
+      *minor_status = EINVAL;
+      return GSS_S_FAILURE;
+  }
   EVP_Cipher(des_ctx, p, p, 8);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
   EVP_CIPHER_CTX_cleanup(des_ctx);

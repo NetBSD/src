@@ -1,4 +1,4 @@
-/*	$NetBSD: arcfour.c,v 1.4 2019/12/15 22:50:47 christos Exp $	*/
+/*	$NetBSD: arcfour.c,v 1.5 2023/06/01 20:40:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2006 Kungliga Tekniska Högskolan
@@ -308,7 +308,11 @@ _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
 #else
     rc4_key = EVP_CIPHER_CTX_new();
 #endif
-    EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+    if (!EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1)) {
+	*minor_status = EINVAL;
+	return GSS_S_FAILURE;
+    }
+	
     EVP_Cipher(rc4_key, p, p, 8);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
     EVP_CIPHER_CTX_cleanup(rc4_key);
@@ -393,7 +397,11 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
 	rc4_key = EVP_CIPHER_CTX_new();
 #endif
 
-	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, (void *)k6_data, NULL, 0);
+	if (!EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, (void *)k6_data, NULL,
+	    0)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
 	EVP_Cipher(rc4_key, SND_SEQ, p, 8);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	EVP_CIPHER_CTX_cleanup(rc4_key);
@@ -557,7 +565,10 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 #endif
 
 	EVP_CIPHER_CTX_init(rc4_key);
-	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	if (!EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
 	EVP_Cipher(rc4_key, p0 + 24, p0 + 24, 8 + datalen);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	EVP_CIPHER_CTX_cleanup(rc4_key);
@@ -586,7 +597,10 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 	rc4_key = EVP_CIPHER_CTX_new();
 #endif
 
-	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	if (!EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
 	EVP_Cipher(rc4_key, p0 + 8, p0 + 8 /* SND_SEQ */, 8);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	EVP_CIPHER_CTX_cleanup(rc4_key);
@@ -696,7 +710,10 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
 	rc4_key = EVP_CIPHER_CTX_new();
 #endif
 
-	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	if (!EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
 	EVP_Cipher(rc4_key, SND_SEQ, p0 + 8, 8);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	EVP_CIPHER_CTX_cleanup(rc4_key);
@@ -753,7 +770,10 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
 #else
 	rc4_key = EVP_CIPHER_CTX_new();
 #endif
-	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	if (!EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
 	EVP_Cipher(rc4_key, Confounder, p0 + 24, 8);
 	EVP_Cipher(rc4_key, output_message_buffer->value, p0 + GSS_ARCFOUR_WRAP_TOKEN_SIZE, datalen);
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
@@ -1147,7 +1167,10 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 #else
 	rc4_key = EVP_CIPHER_CTX_new();
 #endif
-	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	if (!EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
 
 	/* Confounder */
 	EVP_Cipher(rc4_key, p0 + 24, p0 + 24, 8);
@@ -1197,7 +1220,10 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
 #else
 	rc4_key = EVP_CIPHER_CTX_new();
 #endif
-	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	if (!EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
 	EVP_Cipher(rc4_key, p0 + 8, p0 + 8, 8); /* SND_SEQ */
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	EVP_CIPHER_CTX_cleanup(rc4_key);
@@ -1344,7 +1370,10 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 #endif
 
 	EVP_CIPHER_CTX_init(rc4_key);
-	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	if (!EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
 	EVP_Cipher(rc4_key, snd_seq, p0 + 8, 8); /* SND_SEQ */
 #if OPENSSL_VERSION_NUMBER < 0x10100000UL
 	EVP_CIPHER_CTX_cleanup(rc4_key);
@@ -1407,7 +1436,10 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 	rc4_key = EVP_CIPHER_CTX_new();
 #endif
 
-	EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
+	if (!EVP_CipherInit_ex(rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1)) {
+	    *minor_status = EINVAL;
+	    return GSS_S_FAILURE;
+	}
 
 	/* Confounder */
 	EVP_Cipher(rc4_key, Confounder, p0 + 24, 8);
