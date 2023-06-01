@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.4 2023/05/09 19:43:12 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.5 2023/06/01 07:27:30 rillig Exp $
 
 --[[
 
@@ -58,7 +58,7 @@ local function collect_lineno_diagnostics(exp_lines)
   for _, line in ipairs(exp_lines) do
     ---@type string | nil, string, string
     local l_fname, l_lineno, l_msg =
-      line:match("^make: \"([^\"]+)\" line (%d+): (.*)")
+      line:match('^make: "([^"]+)" line (%d+): (.*)')
     if l_fname ~= nil then
       local location = ("%s:%d"):format(l_fname, l_lineno)
       if by_location[location] == nil then
