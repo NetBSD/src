@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_extern.c,v 1.10 2023/06/02 19:08:48 riastradh Exp $	*/
+/*	$NetBSD: t_tls_extern.c,v 1.11 2023/06/02 19:09:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -285,6 +285,22 @@ ATF_TC_BODY(static_usedefnoload, tc)
 	    USE_DEF_NOLOAD, /*xfail*/true);
 }
 
+ATF_TC(onlydef_dynamic_static_ctor);
+ATF_TC_HEAD(onlydef_dynamic_static_ctor, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "definition-only library,"
+	    " dynamic load and use in ctor, then static load fails");
+}
+ATF_TC_BODY(onlydef_dynamic_static_ctor, tc)
+{
+
+	ATF_REQUIRE_DL(dlopen("libh_onlydef.so", 0));
+	ATF_REQUIRE_DL(dlopen("libh_onlyctor_dynamic.so", 0));
+	atf_tc_expect_fail("rtld fails to detect dynamic-then-static abuse");
+	ATF_CHECK_EQ_MSG(NULL, dlopen("libh_onlyuse_static.so", 0),
+	    "dlopen failed to detect dynamic-then-static abuse");
+}
+
 ATF_TC(onlydef_dynamic_static_eager);
 ATF_TC_HEAD(onlydef_dynamic_static_eager, tc)
 {
@@ -393,6 +409,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, dynamic_defuse_lazy);
 	ATF_TP_ADD_TC(tp, dynamic_usedef);
 	ATF_TP_ADD_TC(tp, dynamic_usedefnoload);
+	ATF_TP_ADD_TC(tp, onlydef_dynamic_static_ctor);
 	ATF_TP_ADD_TC(tp, onlydef_dynamic_static_eager);
 	ATF_TP_ADD_TC(tp, onlydef_dynamic_static_lazy);
 	ATF_TP_ADD_TC(tp, onlydef_static_dynamic_eager);

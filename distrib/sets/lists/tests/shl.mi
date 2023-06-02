@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.15 2023/06/02 19:08:48 riastradh Exp $
+# $NetBSD: shl.mi,v 1.16 2023/06/02 19:09:11 riastradh Exp $
 #
 ./usr/tests/lib/csu/h_initfini3_dso.so		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/csu/h_initfini3_dso.so.1	tests-lib-tests		compattestfile,atf
@@ -32,6 +32,8 @@
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso3.so.1				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so				tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso.so.1			tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_onlyctor_dynamic.so				tests-libexec-tests	compattestfile,atf
+./usr/tests/libexec/ld.elf_so/libh_onlyctor_dynamic.so.1			tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_onlydef.so					tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_onlydef.so.1					tests-libexec-tests	compattestfile,atf
 ./usr/tests/libexec/ld.elf_so/libh_onlyuse_dynamic.so				tests-libexec-tests	compattestfile,atf
