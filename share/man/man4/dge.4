@@ -1,4 +1,4 @@
-.\"	$NetBSD: dge.4,v 1.11 2017/07/03 21:30:58 wiz Exp $
+.\"	$NetBSD: dge.4,v 1.12 2023/06/02 08:51:46 andvar Exp $
 .\"
 .\" Copyright (c) 2004, SUNET, Swedish University Computer Network.
 .\" All rights reserved.
@@ -94,7 +94,7 @@ and the chip will be reset to resume normal operation.
 .It dge%d: Receive overrun
 If the computer is under heavy load, the software may not be able to
 keep up removing received datagrams from the receive queue, and
-will therefore loose datagrams.
+will therefore lose datagrams.
 To avoid this, check that the other end is using the XON/XOFF
 protocol, if possible, or increase the receive descriptor ring size
 in the driver.

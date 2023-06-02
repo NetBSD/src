@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_sun4m.c,v 1.32 2021/12/04 13:23:03 andvar Exp $	*/
+/*	$NetBSD: timer_sun4m.c,v 1.33 2023/06/02 08:51:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.32 2021/12/04 13:23:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_sun4m.c,v 1.33 2023/06/02 08:51:47 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -203,7 +203,7 @@ statintr_4m(void *cap)
 
 	/*
 	 * Use the `non-resetting' limit register, so we don't
-	 * loose the counter ticks that happened since this
+	 * lose the counter ticks that happened since this
 	 * interrupt was raised.
 	 */
 	counterreg4m->t_limit_nr = tmr_ustolim4m(newint);

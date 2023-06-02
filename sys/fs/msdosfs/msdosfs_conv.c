@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_conv.c,v 1.19 2023/02/13 23:14:21 andvar Exp $	*/
+/*	$NetBSD: msdosfs_conv.c,v 1.20 2023/06/02 08:51:47 andvar Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1997 Wolfgang Solfrank.
@@ -58,7 +58,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.19 2023/02/13 23:14:21 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_conv.c,v 1.20 2023/06/02 08:51:47 andvar Exp $");
 
 /*
  * System include files.
@@ -108,7 +108,7 @@ static int char8match(u_int16_t *, u_int16_t *, int n);
 #define	DOSBIASYEAR	1980
 #define	SECONDSTO1980	(((8 * 365) + (2 * 366)) * (24 * 60 * 60))
 /*
- * msdos fs can not store dates beyound the year 2234
+ * msdos fs can not store dates beyond the year 2234
  */
 #define DOSMAXYEAR	((DD_YEAR_MASK >> DD_YEAR_SHIFT) + DOSBIASYEAR)
 
