@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.369 2023/05/16 21:39:26 lukem Exp $
+#	$NetBSD: build.sh,v 1.370 2023/06/02 14:29:11 lukem Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2013,7 +2013,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.369 2023/05/16 21:39:26 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.370 2023/06/02 14:29:11 lukem Exp $
 # with these arguments: ${_args}
 #
 
@@ -2500,7 +2500,7 @@ main()
 
 		live-image|install-image)
 			# install-image and live-image require mtree spec files
-			# built with UNPRIVED.  Assume UNPRIVED build has been
+			# built with MKUNPRIVED.  Assume MKUNPRIVED build has been
 			# performed if METALOG file is created in DESTDIR.
 			if [ ! -e "${DESTDIR}/METALOG" ] ; then
 				bomb "The release binaries must have been built with -U to create images"
