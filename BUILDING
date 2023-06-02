@@ -1,7 +1,7 @@
 BUILDING(8)                 System Manager's Manual                BUILDING(8)
 
 NAME
-     BUILDING - Procedure for building NetBSD from source code.
+     BUILDING - Procedure for building NetBSD from source code
 
 REQUIREMENTS
      NetBSD is designed to be buildable on most POSIX-compliant host systems.
@@ -127,6 +127,13 @@ CONFIGURATION
 
      MAKE              Path name to invoke make(1) as.
 
+     MAKECONF          The name of the make(1) configuration file.  See "make"
+                       variables and mk.conf(5).
+
+                       Note: Only settable in the process environment.
+
+                       Default: "/etc/mk.conf"
+
      MAKEFLAGS         Flags to invoke make(1) with.  Note that build.sh
                        ignores the value of MAKEFLAGS passed in the
                        environment, but allows MAKEFLAGS to be set via the -V
@@ -138,10 +145,12 @@ CONFIGURATION
                        variable to a value involving the use of
                        `${.CURDIR:S...}' or `${.CURDIR:C...}', to derive the
                        value of .OBJDIR from the value of .CURDIR.  Used only
-                       if MAKEOBJDIRPREFIX is not defined.  MAKEOBJDIR can be
-                       provided only in the environment or via the -O flag of
-                       build.sh; it cannot usefully be set inside a Makefile,
-                       including mk.conf or ${MAKECONF}.
+                       if MAKEOBJDIRPREFIX is not defined.
+
+                       Note: MAKEOBJDIR can be provided only in the
+                       environment or via the -O flag of build.sh; it cannot
+                       usefully be set inside a Makefile, including in
+                       mk.conf(5) or MAKECONF.
 
      MAKEOBJDIRPREFIX  Top level directory of the object directory tree.  The
                        value is subjected to variable expansion by make(1).
@@ -152,10 +161,12 @@ CONFIGURATION
                        value is defined and valid, then
                        ${MAKEOBJDIRPREFIX}/${.CURDIR} is used as the .OBJDIR
                        for the current directory.  The current directory may
-                       be read only.  MAKEOBJDIRPREFIX can be provided only in
-                       the environment or via the -M flag of build.sh; it
-                       cannot usefully be set inside a Makefile, including
-                       mk.conf or ${MAKECONF}.
+                       be read only.
+
+                       Note: MAKEOBJDIRPREFIX can be provided only in the
+                       environment or via the -M flag of build.sh; it cannot
+                       usefully be set inside a Makefile, including in
+                       mk.conf(5) or MAKECONF.
 
      TMPDIR            Top-level directory to store temporary directories used
                        by build.sh before paths to other directories such as
@@ -169,7 +180,9 @@ CONFIGURATION
    "make" variables
      Several variables control the behavior of NetBSD builds.  Unless
      otherwise specified, these variables may be set in either the process
-     environment or the make(1) configuration file specified by MAKECONF.
+     environment or the make(1) configuration file mk.conf(5) specified by
+     MAKECONF.  This list is not comprehensive; all supported variables and
+     their defaults are documented in mk.conf(5).
 
      BUILDID     Identifier for the build.  If set, this should be a short
                  string that is suitable for use as part of a file or
@@ -220,11 +233,6 @@ CONFIGURATION
 
                  Note: build.sh will provide a default of destdir.MACHINE (in
                  the top-level .OBJDIR) unless run in `expert' mode.
-
-     MAKECONF    The name of the make(1) configuration file.  Only settable in
-                 the process environment.
-
-                 Default: "/etc/mk.conf"
 
      MAKEVERBOSE
                  Level of verbosity of status messages.  Supported values:
@@ -1124,8 +1132,8 @@ OBSOLETE VARIABLES
                  TOOLCHAIN_MISSING=yes.
 
 SEE ALSO
-     make(1), hier(7), release(7), etcupdate(8), installboot(8), mount(8),
-     postinstall(8), sysinst(8), pkgsrc/sysutils/cdrtools
+     make(1), mk.conf(5), hier(7), release(7), etcupdate(8), installboot(8),
+     mount(8), postinstall(8), sysinst(8), pkgsrc/sysutils/cdrtools
 
 HISTORY
      The build.sh based build scheme was introduced for NetBSD 1.6 as
