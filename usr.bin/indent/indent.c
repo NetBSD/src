@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.310 2023/05/23 18:16:28 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.311 2023/06/02 11:43:07 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.310 2023/05/23 18:16:28 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.311 2023/06/02 11:43:07 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -81,7 +81,6 @@ struct buffer code;
 struct buffer com;
 
 bool found_err;
-bool break_comma;
 float case_ind;
 bool had_eof;
 int line_no = 1;
@@ -450,9 +449,11 @@ move_com_to_code(lexer_symbol lsym)
 static void
 process_newline(void)
 {
-	if (ps.prev_token == lsym_comma && ps.nparen == 0 && !ps.block_init &&
-	    !opt.break_after_comma && break_comma &&
-	    com.len == 0)
+	if (ps.prev_token == lsym_comma
+	    && ps.nparen == 0 && !ps.block_init
+	    && !opt.break_after_comma && ps.break_after_comma
+	    && lab.len == 0 /* for preprocessing lines */
+	    && com.len == 0)
 		goto stay_in_line;
 
 	output_line();
@@ -947,7 +948,7 @@ process_comma(void)
 		if (ps.block_init_level <= 0)
 			ps.block_init = false;
 		int typical_varname_length = 8;
-		if (break_comma && (opt.break_after_comma ||
+		if (ps.break_after_comma && (opt.break_after_comma ||
 		    ind_add(compute_code_indent(), code.st, code.len)
 		    >= opt.max_line_length - typical_varname_length))
 			ps.force_nl = true;

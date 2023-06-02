@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.159 2023/05/23 12:12:29 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.160 2023/06/02 11:43:07 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -235,8 +235,6 @@ extern struct options {
 } opt;
 
 extern bool found_err;
-extern bool break_comma;	/* when true and not in parentheses, break
-				 * after a comma */
 extern float case_ind;		/* indentation level to be used for a "case n:"
 				 */
 extern bool had_eof;		/* whether input is exhausted */
@@ -393,6 +391,9 @@ extern struct parser_state {
 
 	/* Vertical spacing */
 
+	bool break_after_comma;	/* whether to add a newline after the next
+				 * comma; used in declarations but not in
+				 * initializer lists */
 	bool force_nl;		/* whether the next token is forced to go to a
 				 * new line; used after 'if (expr)' and in
 				 * similar situations; tokens like '{' may
