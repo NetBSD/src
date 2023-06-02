@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.33 2023/06/02 14:25:35 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.34 2023/06/02 14:32:04 lukem Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -26,6 +26,9 @@ SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
 	SHLIB_LDSTARTFILE=${DESTDIR}${LIBDIR}/crtbeginS.o \
 	SHLIB_LDENDFILE=${DESTDIR}${LIBDIR}/crtendS.o
 
+
+snap_md_post:
+
 .if ${MACHINE_ARCH} == "sparc64" && ${MK32BITLIBS} != "no"
 
 	# build 32 bit programs
@@ -35,7 +38,7 @@ SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
 	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} obj)
 .endif
 .if ${MKUPDATE} == "no"
-	(cd ${NETBSDSRCDIR}/${_s64dir} && ${MAKE} cleandir
+	(cd ${NETBSDSRCDIR}/${_s64dir} && ${MAKE} cleandir)
 .endif
 	(cd ${NETBSDSRCDIR}/${_s64dir} && \
 	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} ${_J} MKSHARE=no dependall \
@@ -43,10 +46,7 @@ SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
 .endfor
 .endif	# MACHINE_ARCH==sparc64 && MACHINE==sparc && MK32BITLIBS!=no
 
-#
-# Install miniroot images and auxiliary scripts to the release tree
-#
-snap_md_post:
+	# Install miniroot images and auxiliary scripts to the release tree
 .if exists($(XSRCDIR)/xc/Imakefile)
 	# build X11
 .ifndef XSRC_DONE
@@ -72,6 +72,7 @@ snap_md_post:
 .for dir in ${MD_INSTALLATION_DIRS}
 	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/${dir} '*'
 .endfor
+
 
 ISOBOOTFILEDIR!=cd ${.CURDIR}/../distrib/${MACHINE}/bootfs && ${PRINTOBJDIR}
 ISOBOOTFILE?=	${ISOBOOTFILEDIR}/boot.fs
