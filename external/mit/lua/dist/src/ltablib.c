@@ -1,4 +1,4 @@
-/*	$NetBSD: ltablib.c,v 1.1.1.13 2023/01/02 20:57:30 nikita Exp $	*/
+/*	$NetBSD: ltablib.c,v 1.1.1.14 2023/06/02 14:13:26 nikita Exp $	*/
 
 /*
 ** Id: ltablib.c 
@@ -95,7 +95,7 @@ static int tremove (lua_State *L) {
   lua_Integer pos = luaL_optinteger(L, 2, size);
   if (pos != size)  /* validate 'pos' if given */
     /* check whether 'pos' is in [1, size + 1] */
-    luaL_argcheck(L, (lua_Unsigned)pos - 1u <= (lua_Unsigned)size, 1,
+    luaL_argcheck(L, (lua_Unsigned)pos - 1u <= (lua_Unsigned)size, 2,
                      "position out of bounds");
   lua_geti(L, 1, pos);  /* result = t[pos] */
   for ( ; pos < size; pos++) {

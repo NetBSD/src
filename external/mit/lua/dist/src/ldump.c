@@ -1,4 +1,4 @@
-/*	$NetBSD: ldump.c,v 1.1.1.13 2023/01/02 20:57:29 nikita Exp $	*/
+/*	$NetBSD: ldump.c,v 1.1.1.14 2023/06/02 14:13:26 nikita Exp $	*/
 
 /*
 ** Id: ldump.c 
@@ -12,6 +12,7 @@
 #include "lprefix.h"
 
 
+#include <limits.h>
 #include <stddef.h>
 
 #include "lua.h"
@@ -57,8 +58,11 @@ static void dumpByte (DumpState *D, int y) {
 }
 
 
-/* dumpInt Buff Size */
-#define DIBS    ((sizeof(size_t) * 8 / 7) + 1)
+/*
+** 'dumpSize' buffer size: each byte can store up to 7 bits. (The "+6"
+** rounds up the division.)
+*/
+#define DIBS    ((sizeof(size_t) * CHAR_BIT + 6) / 7)
 
 static void dumpSize (DumpState *D, size_t x) {
   lu_byte buff[DIBS];

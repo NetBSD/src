@@ -1,4 +1,4 @@
-/*	$NetBSD: lfunc.h,v 1.1.1.11 2023/01/02 20:57:29 nikita Exp $	*/
+/*	$NetBSD: lfunc.h,v 1.1.1.12 2023/06/02 14:13:26 nikita Exp $	*/
 
 /*
 ** Id: lfunc.h 
@@ -31,10 +31,10 @@
 #define MAXUPVAL	255
 
 
-#define upisopen(up)	((up)->v != &(up)->u.value)
+#define upisopen(up)	((up)->v.p != &(up)->u.value)
 
 
-#define uplevel(up)	check_exp(upisopen(up), cast(StkId, (up)->v))
+#define uplevel(up)	check_exp(upisopen(up), cast(StkId, (up)->v.p))
 
 
 /*
@@ -56,7 +56,7 @@ LUAI_FUNC void luaF_initupvals (lua_State *L, LClosure *cl);
 LUAI_FUNC UpVal *luaF_findupval (lua_State *L, StkId level);
 LUAI_FUNC void luaF_newtbcupval (lua_State *L, StkId level);
 LUAI_FUNC void luaF_closeupval (lua_State *L, StkId level);
-LUAI_FUNC void luaF_close (lua_State *L, StkId level, int status, int yy);
+LUAI_FUNC StkId luaF_close (lua_State *L, StkId level, int status, int yy);
 LUAI_FUNC void luaF_unlinkupval (UpVal *uv);
 LUAI_FUNC void luaF_freeproto (lua_State *L, Proto *f);
 LUAI_FUNC const char *luaF_getlocalname (const Proto *func, int local_number,

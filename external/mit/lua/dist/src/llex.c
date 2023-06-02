@@ -1,4 +1,4 @@
-/*	$NetBSD: llex.c,v 1.1.1.13 2023/01/02 20:57:29 nikita Exp $	*/
+/*	$NetBSD: llex.c,v 1.1.1.14 2023/06/02 14:13:26 nikita Exp $	*/
 
 /*
 ** Id: llex.c 
@@ -130,7 +130,7 @@ l_noret luaX_syntaxerror (LexState *ls, const char *msg) {
 ** ensuring there is only one copy of each unique string.  The table
 ** here is used as a set: the string enters as the key, while its value
 ** is irrelevant. We use the string itself as the value only because it
-** is a TValue readly available. Later, the code generation can change
+** is a TValue readily available. Later, the code generation can change
 ** this value.
 */
 TString *luaX_newstring (LexState *ls, const char *str, size_t l) {
@@ -140,12 +140,12 @@ TString *luaX_newstring (LexState *ls, const char *str, size_t l) {
   if (!ttisnil(o))  /* string already present? */
     ts = keystrval(nodefromval(o));  /* get saved copy */
   else {  /* not in use yet */
-    TValue *stv = s2v(L->top++);  /* reserve stack space for string */
+    TValue *stv = s2v(L->top.p++);  /* reserve stack space for string */
     setsvalue(L, stv, ts);  /* temporarily anchor the string */
     luaH_finishset(L, ls->h, stv, o, stv);  /* t[string] = string */
     /* table is not a metatable, so it does not need to invalidate cache */
     luaC_checkGC(L);
-    L->top--;  /* remove string from stack */
+    L->top.p--;  /* remove string from stack */
   }
   return ts;
 }

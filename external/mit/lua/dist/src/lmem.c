@@ -1,4 +1,4 @@
-/*	$NetBSD: lmem.c,v 1.1.1.12 2023/01/02 20:57:29 nikita Exp $	*/
+/*	$NetBSD: lmem.c,v 1.1.1.13 2023/06/02 14:13:25 nikita Exp $	*/
 
 /*
 ** Id: lmem.c 
@@ -24,25 +24,6 @@
 #include "lstate.h"
 
 
-#if defined(EMERGENCYGCTESTS)
-/*
-** First allocation will fail whenever not building initial state.
-** (This fail will trigger 'tryagain' and a full GC cycle at every
-** allocation.)
-*/
-static void *firsttry (global_State *g, void *block, size_t os, size_t ns) {
-  if (completestate(g) && ns > 0)  /* frees never fail */
-    return NULL;  /* fail */
-  else  /* normal allocation */
-    return (*g->frealloc)(g->ud, block, os, ns);
-}
-#else
-#define firsttry(g,block,os,ns)    ((*g->frealloc)(g->ud, block, os, ns))
-#endif
-
-
-
-
 
 /*
 ** About the realloc function:
@@ -60,6 +41,43 @@ static void *firsttry (global_State *g, void *block, size_t os, size_t ns) {
 ** size 'x' to size 'y'. Returns NULL if it cannot reallocate the
 ** block to the new size.
 */
+
+
+/*
+** Macro to call the allocation function.
+*/
+#define callfrealloc(g,block,os,ns)    ((*g->frealloc)(g->ud, block, os, ns))
+
+
+/*
+** When an allocation fails, it will try again after an emergency
+** collection, except when it cannot run a collection.  The GC should
+** not be called while the state is not fully built, as the collector
+** is not yet fully initialized. Also, it should not be called when
+** 'gcstopem' is true, because then the interpreter is in the middle of
+** a collection step.
+*/
+#define cantryagain(g)	(completestate(g) && !g->gcstopem)
+
+
+
+
+#if defined(EMERGENCYGCTESTS)
+/*
+** First allocation will fail except when freeing a block (frees never
+** fail) and when it cannot try again; this fail will trigger 'tryagain'
+** and a full GC cycle at every allocation.
+*/
+static void *firsttry (global_State *g, void *block, size_t os, size_t ns) {
+  if (ns > 0 && cantryagain(g))
+    return NULL;  /* fail */
+  else  /* normal allocation */
+    return callfrealloc(g, block, os, ns);
+}
+#else
+#define firsttry(g,block,os,ns)    callfrealloc(g, block, os, ns)
+#endif
+
 
 
 
@@ -134,7 +152,7 @@ l_noret luaM_toobig (lua_State *L) {
 void luaM_free_ (lua_State *L, void *block, size_t osize) {
   global_State *g = G(L);
   lua_assert((osize == 0) == (block == NULL));
-  (*g->frealloc)(g->ud, block, osize, 0);
+  callfrealloc(g, block, osize, 0);
   g->GCdebt -= osize;
 }
 
@@ -142,19 +160,15 @@ void luaM_free_ (lua_State *L, void *block, size_t osize) {
 /*
 ** In case of allocation fail, this function will do an emergency
 ** collection to free some memory and then try the allocation again.
-** The GC should not be called while state is not fully built, as the
-** collector is not yet fully initialized. Also, it should not be called
-** when 'gcstopem' is true, because then the interpreter is in the
-** middle of a collection step.
 */
 static void *tryagain (lua_State *L, void *block,
                        size_t osize, size_t nsize) {
   global_State *g = G(L);
-  if (completestate(g) && !g->gcstopem) {
+  if (cantryagain(g)) {
     luaC_fullgc(L, 1);  /* try to free some memory... */
-    return (*g->frealloc)(g->ud, block, osize, nsize);  /* try again */
+    return callfrealloc(g, block, osize, nsize);  /* try again */
   }
-  else return NULL;  /* cannot free any memory without a full state */
+  else return NULL;  /* cannot run an emergency collection */
 }
 
 

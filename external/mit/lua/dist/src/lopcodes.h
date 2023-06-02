@@ -1,4 +1,4 @@
-/*	$NetBSD: lopcodes.h,v 1.1.1.11 2023/01/02 20:57:30 nikita Exp $	*/
+/*	$NetBSD: lopcodes.h,v 1.1.1.12 2023/06/02 14:13:26 nikita Exp $	*/
 
 /*
 ** Id: lopcodes.h 
@@ -23,7 +23,7 @@ iABC          C(8)     |      B(8)     |k|     A(8)      |   Op(7)     |
 iABx                Bx(17)               |     A(8)      |   Op(7)     |
 iAsBx              sBx (signed)(17)      |     A(8)      |   Op(7)     |
 iAx                           Ax(25)                     |   Op(7)     |
-isJ                           sJ(25)                     |   Op(7)     |
+isJ                           sJ (signed)(25)            |   Op(7)     |
 
   A signed argument is represented in excess K: the represented value is
   the written unsigned value minus K, where K is half the maximum for the
