@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.21 2008/03/18 04:20:37 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.22 2023/06/02 14:25:35 lukem Exp $
 #
 #	etc.hp300/Makefile.inc -- hp300-specific etc Makefile targets
 #
@@ -14,7 +14,7 @@ INSTALLATION_DIRS+=	installation/miniroot	\
 			installation/misc
 
 snap_md_post:
-.ifndef UPDATE
+.if ${MKUPDATE} == "no"
 	cd ${KERNSRCDIR}/arch/hp300/stand && ${MAKE} cleandir
 .endif
 	cd ${KERNSRCDIR}/arch/hp300/stand && \
