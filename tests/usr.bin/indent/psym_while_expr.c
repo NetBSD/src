@@ -1,4 +1,4 @@
-/* $NetBSD: psym_while_expr.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: psym_while_expr.c,v 1.5 2023/06/02 15:07:46 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_while_expr, which represents the keyword
@@ -38,11 +38,10 @@ function(void)
 	} while (cond);
 
 	if (cmd)
-	/* $ XXX: Where does the code say that ';' stays on the same line? */
 		while (cond);
 
 	{
-	/* $ FIXME: the '}' must be on a line of its own. */
-	} while (cond);
+	}
+	while (cond);
 }
 //indent end
