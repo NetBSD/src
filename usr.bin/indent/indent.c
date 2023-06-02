@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.313 2023/06/02 14:21:55 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.314 2023/06/02 14:34:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.313 2023/06/02 14:21:55 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.314 2023/06/02 14:34:14 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -455,6 +455,10 @@ process_newline(void)
 	    && lab.len == 0 /* for preprocessing lines */
 	    && com.len == 0)
 		goto stay_in_line;
+	if (ps.s_sym[ps.tos] == psym_switch_expr && opt.brace_same_line) {
+		ps.force_nl = true;
+		goto stay_in_line;
+	}
 
 	output_line();
 
