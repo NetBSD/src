@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2023/06/01 22:26:40 riastradh Exp $
+# $NetBSD: Makefile,v 1.18 2023/06/02 19:08:48 riastradh Exp $
 #
 
 NOMAN=		# defined
@@ -15,9 +15,12 @@ SUBDIR+=	helper_dso1 helper_dso3 .WAIT helper_dso2 .WAIT \
 
 SUBDIR+=	helper_def_dynamic
 SUBDIR+=	helper_def_static
+SUBDIR+=	helper_onlydef
 SUBDIR+=	.WAIT
 SUBDIR+=	helper_abuse_dynamic
 SUBDIR+=	helper_abuse_static
+SUBDIR+=	helper_onlyuse_dynamic
+SUBDIR+=	helper_onlyuse_static
 SUBDIR+=	helper_use_dynamic
 SUBDIR+=	helper_use_static
 

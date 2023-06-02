@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_extern.c,v 1.9 2023/06/02 19:08:01 riastradh Exp $	*/
+/*	$NetBSD: t_tls_extern.c,v 1.10 2023/06/02 19:08:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -285,6 +285,103 @@ ATF_TC_BODY(static_usedefnoload, tc)
 	    USE_DEF_NOLOAD, /*xfail*/true);
 }
 
+ATF_TC(onlydef_dynamic_static_eager);
+ATF_TC_HEAD(onlydef_dynamic_static_eager, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "definition-only library,"
+	    " dynamic load and use, then static load fails");
+}
+ATF_TC_BODY(onlydef_dynamic_static_eager, tc)
+{
+	void *use_dynamic;
+	int *(*fdynamic)(void);
+
+	ATF_REQUIRE_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
+	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
+	(void)(*fdynamic)();
+	atf_tc_expect_fail("rtld fails to detect dynamic-then-static abuse");
+	ATF_CHECK_EQ_MSG(NULL, dlopen("libh_onlyuse_static.so", 0),
+	    "dlopen failed to detect dynamic-then-static abuse");
+}
+
+ATF_TC(onlydef_dynamic_static_lazy);
+ATF_TC_HEAD(onlydef_dynamic_static_lazy, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
+	    " with definition-only library, dynamic and static load and use");
+}
+ATF_TC_BODY(onlydef_dynamic_static_lazy, tc)
+{
+	void *use_dynamic, *use_static;
+	int *(*fdynamic)(void), *(*fstatic)(void);
+	int *pdynamic, *pstatic;
+
+	ATF_REQUIRE_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
+	ATF_REQUIRE_DL(use_static = dlopen("libh_onlyuse_static.so", 0));
+	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
+	ATF_REQUIRE_DL(fstatic = dlsym(use_static, "fstatic"));
+	pdynamic = (*fdynamic)();
+	pstatic = (*fstatic)();
+	atf_tc_expect_fail("PR toolchain/50277:"
+	    " rtld relocation bug with thread local storage");
+	ATF_CHECK_EQ_MSG(pdynamic, pstatic,
+	    "%p in dynamic tls user != %p in static tls user",
+	    pdynamic, pstatic);
+}
+
+ATF_TC(onlydef_static_dynamic_eager);
+ATF_TC_HEAD(onlydef_static_dynamic_eager, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
+	    " with definition-only library,"
+	    " static load and use, then dynamic load and use");
+}
+ATF_TC_BODY(onlydef_static_dynamic_eager, tc)
+{
+	void *use_static, *use_dynamic;
+	int *(*fstatic)(void), *(*fdynamic)(void);
+	int *pstatic, *pdynamic;
+
+	ATF_REQUIRE_DL(dlopen("libh_onlydef.so", 0));
+	ATF_REQUIRE_DL(use_static = dlopen("libh_onlyuse_static.so", 0));
+	ATF_REQUIRE_DL(fstatic = dlsym(use_static, "fstatic"));
+	pstatic = (*fstatic)();
+	ATF_REQUIRE_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
+	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
+	pdynamic = (*fdynamic)();
+	atf_tc_expect_fail("PR toolchain/50277:"
+	    " rtld relocation bug with thread local storage");
+	ATF_CHECK_EQ_MSG(pstatic, pdynamic,
+	    "%p in static tls user != %p in dynamic tls user",
+	    pstatic, pdynamic);
+}
+
+ATF_TC(onlydef_static_dynamic_lazy);
+ATF_TC_HEAD(onlydef_static_dynamic_lazy, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
+	    " with definition-only library, static and dynamic load and use");
+}
+ATF_TC_BODY(onlydef_static_dynamic_lazy, tc)
+{
+	void *use_static, *use_dynamic;
+	int *(*fstatic)(void), *(*fdynamic)(void);
+	int *pstatic, *pdynamic;
+
+	ATF_REQUIRE_DL(dlopen("libh_onlydef.so", 0));
+	ATF_REQUIRE_DL(use_static = dlopen("libh_onlyuse_static.so", 0));
+	ATF_REQUIRE_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
+	ATF_REQUIRE_DL(fstatic = dlsym(use_static, "fstatic"));
+	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
+	pstatic = (*fstatic)();
+	pdynamic = (*fdynamic)();
+	atf_tc_expect_fail("PR toolchain/50277:"
+	    " rtld relocation bug with thread local storage");
+	ATF_CHECK_EQ_MSG(pstatic, pdynamic,
+	    "%p in static tls user != %p in dynamic tls user",
+	    pstatic, pdynamic);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -296,6 +393,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, dynamic_defuse_lazy);
 	ATF_TP_ADD_TC(tp, dynamic_usedef);
 	ATF_TP_ADD_TC(tp, dynamic_usedefnoload);
+	ATF_TP_ADD_TC(tp, onlydef_dynamic_static_eager);
+	ATF_TP_ADD_TC(tp, onlydef_dynamic_static_lazy);
+	ATF_TP_ADD_TC(tp, onlydef_static_dynamic_eager);
+	ATF_TP_ADD_TC(tp, onlydef_static_dynamic_lazy);
 	ATF_TP_ADD_TC(tp, static_abusedef);
 	ATF_TP_ADD_TC(tp, static_abusedefnoload);
 	ATF_TP_ADD_TC(tp, static_defabuse_eager);
