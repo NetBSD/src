@@ -1,5 +1,5 @@
 /*	$KAME: sctp_pcb.h,v 1.21 2005/07/16 01:18:47 suz Exp $	*/
-/*	$NetBSD: sctp_pcb.h,v 1.7 2022/10/28 05:26:29 ozaki-r Exp $ */
+/*	$NetBSD: sctp_pcb.h,v 1.8 2023/06/02 08:51:48 andvar Exp $ */
 
 #ifndef __SCTP_PCB_H__
 #define __SCTP_PCB_H__
@@ -375,7 +375,7 @@ struct sctp_tcb {
  * Most other locks (INP and INFO) attempt to localize
  * the locking i.e. we try to contain the lock and
  * unlock within the function that needs to lock it. This
- * sometimes mean we do extra locks and unlocks and loose
+ * sometimes mean we do extra locks and unlocks and lose
  * a bit of efficiency, but if the performance statements about
  * non-recursive locks are true this should not be a problem.
  * One issue that arises with this only lock when needed

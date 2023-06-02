@@ -1,9 +1,9 @@
-/*	$NetBSD: var.c,v 1.24 2018/05/08 16:37:59 kamil Exp $	*/
+/*	$NetBSD: var.c,v 1.25 2023/06/02 08:51:46 andvar Exp $	*/
 
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.24 2018/05/08 16:37:59 kamil Exp $");
+__RCSID("$NetBSD: var.c,v 1.25 2023/06/02 08:51:46 andvar Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -1136,7 +1136,7 @@ unsetspec(vp)
 	   * set in various places.
 	   * Don't know what at&t does for:
 	   *		MAIL, MAILPATH, HISTSIZE, HISTFILE,
-	   * Unsetting these in at&t ksh does not loose the `specialness':
+	   * Unsetting these in at&t ksh does not lose the `specialness':
 	   *    no effect: IFS, COLUMNS, PATH, TMPDIR,
 	   *		VISUAL, EDITOR,
 	   * pdkshisms: no effect:

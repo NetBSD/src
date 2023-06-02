@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.55 2018/04/03 21:10:27 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.56 2023/06/02 08:51:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.55 2018/04/03 21:10:27 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.56 2023/06/02 08:51:46 andvar Exp $");
 #endif /* not lint */
 
 #include <machine/elf_support.h>
@@ -301,7 +301,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 
 		/*
 		 * If it is no TLS relocation (handled above), we can not
-		 * deal with it if it is beyound R_SPARC_6.
+		 * deal with it if it is beyond R_SPARC_6.
 		 */
 		if (type > R_TYPE(6))
 			return (-1);
