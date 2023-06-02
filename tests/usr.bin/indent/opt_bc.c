@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bc.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_bc.c,v 1.7 2023/06/02 11:26:21 rillig Exp $ */
 
 /*
  * Tests for the options '-bc' and '-nbc'.
@@ -62,4 +62,38 @@ double		a, b, c;
 {
 	return a + b + c;
 }
+//indent end
+
+
+//indent input
+int a,
+#if 0
+b, c; int d;
+#else
+b, c; int d;
+#endif
+//indent end
+
+//indent run -bc
+int		a,
+#if 0
+		b,
+		c;
+int		d;
+#else
+// $ FIXME: The '#else' branch must be indented like the '#if' branch.
+		b, c;
+int		d;
+#endif
+//indent end
+
+//indent run -nbc
+int		a,
+// $ FIXME: 'b, c' must not be merged into the preprocessing line.
+#if 0		b, c;
+int		d;
+#else
+		b, c;
+int		d;
+#endif
 //indent end
