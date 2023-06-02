@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.2 2018/09/25 17:57:33 riz Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2023/06/02 20:47:27 lukem Exp $
 
 XZ_TOPLEVEL:=	${.PARSEDIR}/../../external/public-domain/xz
 
-NOMAN=          # defined
+NOMAN=		# defined
+NONLS=		# defined
 MKREPRO=no	# Native toolchain might be unable to do it
-MKNLS=no
 
 CPPFLAGS+=	-std=c99
 
