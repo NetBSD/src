@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_extern.c,v 1.8 2023/06/01 23:47:24 riastradh Exp $	*/
+/*	$NetBSD: t_tls_extern.c,v 1.9 2023/06/02 19:08:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -113,13 +113,20 @@ ATF_TC_BODY(dynamic_abusedefnoload, tc)
 ATF_TC(dynamic_defabuse_eager);
 ATF_TC_HEAD(dynamic_defabuse_eager, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "extern __thread for TLS works,"
+	atf_tc_set_md_var(tc, "descr", "dlopen refuses extern __thread for TLS,"
 	    " loading dynamic def then static use eagerly");
 }
 ATF_TC_BODY(dynamic_defabuse_eager, tc)
 {
-	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so",
-	    DEF_USE_EAGER, /*xfail*/true);
+	void *def;
+	int *(*fdef)(void);
+
+	ATF_REQUIRE_DL(def = dlopen("libh_def_dynamic.so", 0));
+	ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
+	(void)(*fdef)();
+	atf_tc_expect_fail("rtld fails to detect dynamic-then-static abuse");
+	ATF_CHECK_EQ_MSG(NULL, dlopen("libh_abuse_dynamic.so", 0),
+	    "dlopen failed to detect static-then-dynamic abuse");
 }
 
 ATF_TC(dynamic_defabuse_lazy);
