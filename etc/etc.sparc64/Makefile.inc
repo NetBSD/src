@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2012/01/15 17:36:55 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2023/06/02 14:25:35 lukem Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -34,7 +34,7 @@ SPARC32=COPTS=-m32 LD="ld -m elf32_sparc" AS="as -32" \
 	(cd ${NETBSDSRCDIR}/${_s64dir} && \
 	    ${SPARC32_ENV} ${MAKE} ${SPARC32} ${_M} obj)
 .endif
-.ifndef UPDATE
+.if ${MKUPDATE} == "no"
 	(cd ${NETBSDSRCDIR}/${_s64dir} && ${MAKE} cleandir
 .endif
 	(cd ${NETBSDSRCDIR}/${_s64dir} && \
