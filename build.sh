@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.370 2023/06/02 14:29:11 lukem Exp $
+#	$NetBSD: build.sh,v 1.371 2023/06/02 20:48:09 lukem Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -563,6 +563,7 @@ level of source directory"
 	do_install_image=false
 	do_disk_image=false
 	do_params=false
+	do_show_params=false
 	do_rump=false
 	do_dtb=false
 
@@ -1084,7 +1085,8 @@ help()
                         RELEASEDIR/RELEASEMACHINEDIR/installation/installimage.
     disk-image=TARGET   Create bootable disk image in
                         RELEASEDIR/RELEASEMACHINEDIR/binary/gzimg/TARGET.img.gz.
-    params              Show various make(1) parameters.
+    params              Create params file with various make(1) parameters.
+    show-params         Show various make(1) parameters.
     list-arch           Show a list of valid MACHINE/MACHINE_ARCH values,
                         and exit.  The list may be narrowed by passing glob
                         patterns or exact values in MACHINE or MACHINE_ARCH.
@@ -1461,6 +1463,7 @@ parseoptions()
 		rump|\
 		rumptest|\
 		sets|\
+		show-params|\
 		sourcesets|\
 		syspkgs|\
 		tools)
@@ -2013,7 +2016,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.370 2023/06/02 14:29:11 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.371 2023/06/02 20:48:09 lukem Exp $
 # with these arguments: ${_args}
 #
 
@@ -2485,7 +2488,7 @@ main()
 			statusmsg "Successful make ${op}"
 			;;
 
-		cleandir|obj|sourcesets|syspkgs|params)
+		cleandir|obj|sourcesets|syspkgs|params|show-params)
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
 			statusmsg "Successful make ${op}"
