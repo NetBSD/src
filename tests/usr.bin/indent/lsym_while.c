@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_while.c,v 1.5 2023/05/13 06:52:48 rillig Exp $ */
+/* $NetBSD: lsym_while.c,v 1.6 2023/06/02 15:07:46 rillig Exp $ */
 
 /*
  * Tests for the token 'lsym_while', which represents the keyword 'while' that
@@ -44,7 +44,7 @@ void
 function(void)
 {
 	{
-/* $ FIXME: The '} while' is misleading. */
-	} while (0);
+	}
+	while (0);
 }
 //indent end

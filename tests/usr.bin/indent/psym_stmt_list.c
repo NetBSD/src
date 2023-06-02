@@ -1,4 +1,4 @@
-/* $NetBSD: psym_stmt_list.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: psym_stmt_list.c,v 1.5 2023/06/02 15:07:46 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_stmt_list, which represents a list of
@@ -41,7 +41,7 @@ void
 return_after_rbrace(void)
 {
 	{
-// $ FIXME: The 'return' must go in a separate line.
-	} return;
+	}
+	return;
 }
 //indent end
