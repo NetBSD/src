@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.307 2023/06/01 20:50:18 riastradh Exp $
+# $NetBSD: shl.mi,v 1.308 2023/06/02 12:08:26 riastradh Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -363,6 +363,8 @@
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso1/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_helper_symver_dso2/libh_helper_symver_dso.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/h_thread_local_dtor.debug	tests-libexec-debug	debug,compattestfile,atf
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_abuse_dynamic.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
+./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_abuse_static.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_def_dynamic.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_def_static.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so/libh_helper_dso1.so.1.debug	tests-libexec-debug	debug,compattestfile,atf
