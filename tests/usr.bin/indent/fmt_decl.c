@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.46 2023/05/23 16:53:57 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.47 2023/06/02 14:21:55 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -570,18 +570,7 @@ buffer_add(buffer *buf, char ch)
 }
 //indent end
 
-/* Before lexi.c 1.156 from 2021-11-25, indent generated 'buffer * buf'. */
-//indent run
-void		buffer_add(buffer *, char);
-/* $ FIXME: space after '*' */
-void		buffer_add(buffer * buf, char ch);
-
-void
-buffer_add(buffer *buf, char ch)
-{
-	*buf->e++ = ch;
-}
-//indent end
+//indent run-equals-input
 
 
 /*
