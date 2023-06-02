@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.316 2022/04/09 23:38:32 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.317 2023/06/02 08:51:47 andvar Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.316 2022/04/09 23:38:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.317 2023/06/02 08:51:47 andvar Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1402,7 +1402,7 @@ pmap_virtual_space(vaddr_t *start, vaddr_t *end)
 	 */
 #ifdef __arch64__
 	/*
-	 * On 64 bit kernels, start it beyound firmware, so
+	 * On 64 bit kernels, start it beyond firmware, so
 	 * we are basically unrestricted.
 	 */
 	*start = kbreak = VM_KERNEL_MEM_VA_START;

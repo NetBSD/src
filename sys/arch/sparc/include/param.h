@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.74 2020/05/01 08:21:27 isaki Exp $ */
+/*	$NetBSD: param.h,v 1.75 2023/06/02 08:51:46 andvar Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,7 +75,7 @@ extern int nbpg, pgofset, pgshift;
 #else
 /*
  * JS1/OF has prom sitting in f000.0000..f007.ffff, modify kernel VA 
- * layout to work around that. XXX - kernel should live beyound prom on
+ * layout to work around that. XXX - kernel should live beyond prom on
  * those machines.
  */
 #define	KERNBASE	0xe8000000

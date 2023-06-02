@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2022/02/06 20:20:19 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 2023/06/02 08:51:47 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2022/02/06 20:20:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2023/06/02 08:51:47 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -869,7 +869,7 @@ pmeg_allocate(pmap_t pmap, vaddr_t va)
 
 /*
  * Put pmeg on the inactive queue, leaving its contents intact.
- * This happens when we loose our context.  We may reclaim
+ * This happens when we lose our context.  We may reclaim
  * this pmeg later if it is still in the inactive queue.
  */
 static void 

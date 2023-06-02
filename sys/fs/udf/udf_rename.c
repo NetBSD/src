@@ -1,4 +1,4 @@
-/* $NetBSD: udf_rename.c,v 1.14 2021/10/20 03:08:17 thorpej Exp $ */
+/* $NetBSD: udf_rename.c,v 1.15 2023/06/02 08:51:48 andvar Exp $ */
 
 /*
  * Copyright (c) 2013 Reinoud Zandijk
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.14 2021/10/20 03:08:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_rename.c,v 1.15 2023/06/02 08:51:48 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -628,7 +628,7 @@ udf_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		/* sanity check */
 		if (vp->v_type != VDIR) {
 			/* 
-			 * Odd, but can happen if we loose the race and the
+			 * Odd, but can happen if we lose the race and the
 			 * '..' node has been recycled.
 			 */
 			vput(vp);

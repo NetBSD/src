@@ -15,7 +15,7 @@ call OK mvaddstr 22 0 "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE
 call OK refresh
 call OK attroff $BOLD
 compare mutt_test3.chk
-# check add on bottom row, this sbould be 123456789 in normal rendition
+# check add on bottom row, this should be 123456789 in normal rendition
 call OK mvaddchstr 23 0 `\0041\0042\0043\0044\0045\0046\0047\0048\0049`
 input "i"
 call 105 getch
