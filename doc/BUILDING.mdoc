@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.138 2023/05/18 14:22:53 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.139 2023/06/02 20:48:41 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,7 +52,7 @@
 .Nm BUILDING
 .Nd Procedure for building
 .Nx
-from source code.
+from source code
 .
 .Sh REQUIREMENTS
 .
@@ -99,8 +99,8 @@ should only be run for native builds with an appropriately up-to-date
 version of
 .Nx
 .Xr make 1 .
-Intended for expert use with knowledge of its shortcomings, it has been superseded
-by the
+Intended for expert use with knowledge of its shortcomings,
+it has been superseded by the
 .Nm build.sh
 shell script as the recommended means for building
 .Nx .
@@ -276,6 +276,20 @@ Path name to invoke
 .Xr make 1
 as.
 .
+.It Sy MAKECONF
+The name of the
+.Xr make 1
+configuration file.
+See
+.Sx \*qmake\*q variables
+and
+.Xr mk.conf 5 .
+.Pp
+.Em Note :
+Only settable in the process environment.
+.DFLT
+.Dq /etc/mk.conf
+.
 .It Sy MAKEFLAGS
 Flags to invoke
 .Xr make 1
@@ -307,15 +321,17 @@ from the value of
 Used only if
 .Sy MAKEOBJDIRPREFIX
 is not defined.
+.Pp
+.Em Note :
 .Sy MAKEOBJDIR
 can be provided only in the environment or via the
 .Fl O
 flag of
 .Nm build.sh ;
-it cannot usefully be set inside a Makefile, including
-.Pa mk.conf
+it cannot usefully be set inside a Makefile, including in
+.Xr mk.conf 5
 or
-.Sy ${MAKECONF} .
+.Sy MAKECONF .
 .
 .It Sy MAKEOBJDIRPREFIX
 Top level directory of the object directory tree.
@@ -339,16 +355,17 @@ is used as the
 .Sy .OBJDIR
 for the current directory.
 The current directory may be read only.
+.Pp
+.Em Note :
 .Sy MAKEOBJDIRPREFIX
 can be provided only in the environment or via the
 .Fl M
 flag of
 .Nm build.sh ;
-it cannot usefully be set inside a Makefile, including
-.Pa mk.conf
+it cannot usefully be set inside a Makefile, including in
+.Xr mk.conf 5
 or
-.Sy ${MAKECONF} .
-.
+.Sy MAKECONF .
 .
 .It Sy TMPDIR
 Top-level directory to store temporary directories used by
@@ -377,8 +394,13 @@ builds.
 Unless otherwise specified, these variables may be set in
 either the process environment or the
 .Xr make 1
-configuration file specified by
+configuration file
+.Xr mk.conf 5
+specified by
 .Sy MAKECONF .
+This list is not comprehensive;
+all supported variables and their defaults are documented in
+.Xr mk.conf 5 .
 .
 .Bl -tag -width "MKCATPAGES"
 .
@@ -459,20 +481,12 @@ unset otherwise.
 .Em Note :
 .Sy build.sh
 will provide a default of
-.Pa destdir. Ns Sy MACHINE
+.Pa destdir . Ns Sy MACHINE
 (in the top-level
 .Sy .OBJDIR )
 unless run in
 .Sq expert
 mode.
-.
-.It Sy MAKECONF
-The name of the
-.Xr make 1
-configuration file.
-.Em Only settable in the process environment.
-.DFLT
-.Dq /etc/mk.conf
 .
 .It Sy MAKEVERBOSE
 Level of verbosity of status messages.
@@ -1964,7 +1978,7 @@ This default is opposite to the behaviour when not using
 .Sy build.sh .
 .
 .It Fl P
-Set the value of 
+Set the value of
 .Sy MKREPRO
 and
 .Sy MKREPRO_TIMESTAMP
@@ -2176,6 +2190,7 @@ To disable, use
 .El
 .Sh SEE ALSO
 .Xr make 1 ,
+.Xr mk.conf 5 ,
 .Xr hier 7 ,
 .Xr release 7 ,
 .Xr etcupdate 8 ,
