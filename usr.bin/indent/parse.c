@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.62 2023/05/23 12:12:29 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.63 2023/06/02 11:43:07 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.62 2023/05/23 12:12:29 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.63 2023/06/02 11:43:07 rillig Exp $");
 
 #include <err.h>
 
@@ -79,8 +79,7 @@ parse(parser_symbol psym)
 		if (ps.s_sym[ps.tos] == psym_decl)
 			break;	/* only put one declaration onto stack */
 
-		break_comma = true;	/* while in a declaration, force a
-					 * newline after comma */
+		ps.break_after_comma = true;
 		ps.s_sym[++ps.tos] = psym_decl;
 		ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 
@@ -105,8 +104,7 @@ parse(parser_symbol psym)
 		break;
 
 	case psym_lbrace:
-		break_comma = false;	/* don't break comma in an initializer
-					 * list */
+		ps.break_after_comma = false;
 		if (ps.s_sym[ps.tos] == psym_stmt
 		    || ps.s_sym[ps.tos] == psym_decl
 		    || ps.s_sym[ps.tos] == psym_stmt_list)
@@ -178,8 +176,7 @@ parse(parser_symbol psym)
 		break;
 
 	case psym_0:		/* a simple statement */
-		break_comma = false;	/* don't break after comma in a
-					 * declaration */
+		ps.break_after_comma = false;
 		ps.s_sym[++ps.tos] = psym_stmt;
 		ps.s_ind_level[ps.tos] = ps.ind_level;
 		break;

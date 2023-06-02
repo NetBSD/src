@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bc.c,v 1.7 2023/06/02 11:26:21 rillig Exp $ */
+/* $NetBSD: opt_bc.c,v 1.8 2023/06/02 11:43:07 rillig Exp $ */
 
 /*
  * Tests for the options '-bc' and '-nbc'.
@@ -65,6 +65,11 @@ double		a, b, c;
 //indent end
 
 
+/*
+ * Before indent.c 1.311 from 2023-06-02, indent formatted the two '#if'
+ * branches differently and merged the 'b, c' with the preceding preprocessing
+ * line.
+ */
 //indent input
 int a,
 #if 0
@@ -81,16 +86,16 @@ int		a,
 		c;
 int		d;
 #else
-// $ FIXME: The '#else' branch must be indented like the '#if' branch.
-		b, c;
+		b,
+		c;
 int		d;
 #endif
 //indent end
 
 //indent run -nbc
 int		a,
-// $ FIXME: 'b, c' must not be merged into the preprocessing line.
-#if 0		b, c;
+#if 0
+		b, c;
 int		d;
 #else
 		b, c;
