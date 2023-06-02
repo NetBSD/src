@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.6 2023/05/13 09:40:47 rillig Exp $	*/
+/*	$NetBSD: label.c,v 1.7 2023/06/02 14:34:14 rillig Exp $	*/
 
 /* See FreeBSD r303489 */
 
@@ -20,9 +20,7 @@ U: ;
 void
 t(void)
 {
-	switch (1)
-/* $ TODO: Move the '{' up to the ')'. */
-	{
+	switch (1) {
 	case 1:			/* test */
 	case 2:			/* test */
 	}
