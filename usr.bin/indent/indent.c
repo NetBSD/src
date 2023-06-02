@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.311 2023/06/02 11:43:07 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.312 2023/06/02 13:59:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.311 2023/06/02 11:43:07 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.312 2023/06/02 13:59:33 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -521,17 +521,10 @@ process_lparen_or_lbracket(void)
 	ps.want_blank = false;
 	buf_add_char(&code, token.st[0]);
 
-	int indent = ind_add(0, code.st, code.len);
-	enum paren_level_cast cast = cast_unknown;
-
 	if (opt.extra_expr_indent && !opt.lineup_to_parens
 	    && ps.spaced_expr_psym != psym_0 && ps.nparen == 1
 	    && opt.continuation_indent == opt.indent_size)
 		ps.extra_expr_indent = eei_yes;
-
-	if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0
-	    && ps.nparen == 1 && indent < 2 * opt.indent_size)
-		indent = 2 * opt.indent_size;
 
 	if (ps.init_or_struct && *token.st == '(' && ps.tos <= 2) {
 		/* this is a kluge to make sure that declarations will be
@@ -541,6 +534,12 @@ process_lparen_or_lbracket(void)
 		ps.init_or_struct = false;
 	}
 
+	int indent = ind_add(0, code.st, code.len);
+	if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0
+	    && ps.nparen == 1 && indent < 2 * opt.indent_size)
+		indent = 2 * opt.indent_size;
+
+	enum paren_level_cast cast = cast_unknown;
 	if (ps.prev_token == lsym_offsetof || ps.prev_token == lsym_sizeof
 	    || ps.is_function_definition)
 		cast = cast_no;
@@ -1185,6 +1184,7 @@ indent(void)
 
 		debug_blank_line();
 		debug_printf("line %d: %s", line_no, lsym_name[lsym]);
+		debug_print_buf("token", &token);
 		debug_buffers();
 		debug_blank_line();
 

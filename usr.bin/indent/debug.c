@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.24 2023/06/02 11:43:07 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.25 2023/06/02 13:59:33 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.24 2023/06/02 11:43:07 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.25 2023/06/02 13:59:33 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -189,7 +189,7 @@ debug_vis_range(const char *prefix, const char *s, size_t len,
 	debug_printf("%s", suffix);
 }
 
-static void
+void
 debug_print_buf(const char *name, const struct buffer *buf)
 {
 	if (buf->len > 0) {
@@ -201,7 +201,6 @@ debug_print_buf(const char *name, const struct buffer *buf)
 void
 debug_buffers(void)
 {
-	debug_print_buf("token", &token);
 	debug_print_buf("label", &lab);
 	debug_print_buf("code", &code);
 	debug_print_buf("comment", &com);

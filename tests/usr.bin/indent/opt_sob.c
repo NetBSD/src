@@ -1,4 +1,4 @@
-/* $NetBSD: opt_sob.c,v 1.8 2023/05/23 06:18:00 rillig Exp $ */
+/* $NetBSD: opt_sob.c,v 1.9 2023/06/02 13:59:33 rillig Exp $ */
 
 /*
  * Tests for the options '-sob' and '-nsob'.
@@ -11,10 +11,6 @@
  * The option '-nsob' keeps optional blank lines as is.
  */
 
-/*
- * FIXME: There are lots of 'optional blank lines' here that should be
- *  swallowed.
- */
 //indent input
 void		function_declaration(void);
 
