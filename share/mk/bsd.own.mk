@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1334 2023/06/01 21:54:17 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.1335 2023/06/02 14:30:23 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1053,15 +1053,6 @@ _NOVARS= \
 .for var in ${_NOVARS}
 .if defined(${var})
 MK${var:S/^NO//}:=	no
-.endif
-.endfor
-
-#
-# Older-style variables that enabled behaviour when set.
-#
-.for var in MANZ UNPRIVED UPDATE
-.if defined(${var})
-MK${var}:=	yes
 .endif
 .endfor
 
