@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lbrace.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lsym_lbrace.c,v 1.7 2023/06/03 21:44:08 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lbrace, which represents a '{' in these contexts:
@@ -40,11 +40,12 @@ void function(void) {{{ body(); }}}
 //indent run
 void
 function(void)
-/* $ FIXME: Each '{' must be properly indented. */
-{{{
+{
+	{
+		{
 			body();
-}
-}
+		}
+	}
 }
 //indent end
 

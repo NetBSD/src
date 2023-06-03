@@ -1,4 +1,4 @@
-/* $NetBSD: indent_off_on.c,v 1.13 2023/05/21 10:18:44 rillig Exp $ */
+/* $NetBSD: indent_off_on.c,v 1.14 2023/06/03 21:44:08 rillig Exp $ */
 
 /*
  * Tests for the comments 'INDENT OFF' and 'INDENT ON', which temporarily
@@ -134,8 +134,8 @@ int format( void ) {{{
 /* No formatting takes place here. */
 int format( void ) {{{
 /*INDENT ON*/
-}
-}
+		}
+	}
 }
 //indent end
 
