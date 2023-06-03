@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2021/12/19 16:01:29 riastradh Exp $
+# $NetBSD: Makefile,v 1.6 2023/06/03 21:30:23 lukem Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -31,8 +31,6 @@ SRCS+=	via_pci.c
 
 WARNS=	3
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.via_dmablit.c+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS.via_dmablit.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 .include <bsd.kmodule.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2022/12/13 21:16:38 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2023/06/03 21:30:21 lukem Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -64,12 +64,10 @@ CPPFLAGS+=-DISC_PLATFORM_NEEDIN6ADDRANY
 .include "${.CURDIR}/../../Makefile.inc"
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.configfile.c+=		-Wno-error=implicit-fallthrough
-COPTS.libopts.c+=		-Wno-error=implicit-fallthrough
-COPTS.ntp_loopfilter.c+=	-Wno-error=implicit-fallthrough
-COPTS.refclock_ulink.c+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS.configfile.c+=		${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.libopts.c+=		${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.ntp_loopfilter.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.refclock_ulink.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 .SUFFIXES: .1 .5 .8 .1ntpdmdoc .5mdoc .1ntp-keygenmdoc .1ntpdcmdoc .1ntpqmdoc .1sntpmdoc
 

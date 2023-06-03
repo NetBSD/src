@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.36 2019/09/29 23:44:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.37 2023/06/03 21:30:20 lukem Exp $
 
 WARNS=3
 CWARNFLAGS.clang+=	-Wno-error=cast-qual
@@ -48,8 +48,6 @@ ksh.1: ksh.Man mkman
 	${HOST_SH} $(.CURDIR)/mkman ksh $(.CURDIR)/ksh.Man >ksh.1.tmp \
 	    && mv ksh.1.tmp ksh.1
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 .include <bsd.prog.mk>
