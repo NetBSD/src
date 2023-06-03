@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.196 2023/05/13 20:55:44 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.197 2023/06/03 21:08:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.196 2023/05/13 20:55:44 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.197 2023/06/03 21:08:06 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -706,6 +706,7 @@ static const char *queries[] = {
 	"octal number '%.*s'",					      /* Q8 */
 	"parenthesized return value",				      /* Q9 */
 	"chained assignment with '%s' and '%s'",		      /* Q10 */
+	"static variable '%s' in function",			      /* Q11 */
 };
 
 bool any_query_enabled;		/* for optimizing non-query scenarios */
