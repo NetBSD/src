@@ -1,4 +1,4 @@
-/*        $NetBSD: elf_machdep.h,v 1.4 2019/04/11 14:38:06 kamil Exp $	*/
+/*        $NetBSD: elf_machdep.h,v 1.5 2023/06/03 20:41:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996-1997 John D. Polstra.
@@ -102,7 +102,7 @@
 #define	R_IA64_LTV64MSB		0x76	/* word64 MSB	S + A */
 #define	R_IA64_LTV64LSB		0x77	/* word64 LSB	S + A */
 #define	R_IA64_IPLTMSB		0x80	/* function descriptor MSB special */
-#define	R_IA64_IPLTLSB		0x81	/* function descriptor LSB speciaal */
+#define	R_IA64_IPLTLSB		0x81	/* function descriptor LSB special */
 #define	R_IA64_SUB		0x85	/* immediate64	A - S */
 #define	R_IA64_LTOFF22X		0x86	/* immediate22	special */
 #define	R_IA64_LDXMOV		0x87	/* immediate22	special */
