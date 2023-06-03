@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.316 2023/06/03 21:24:26 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.317 2023/06/03 21:44:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.316 2023/06/03 21:24:26 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.317 2023/06/03 21:44:08 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -425,7 +425,8 @@ maybe_break_line(lexer_symbol lsym)
 		return;
 	if (lsym == lsym_semicolon)
 		return;
-	if (lsym == lsym_lbrace && opt.brace_same_line)
+	if (lsym == lsym_lbrace && opt.brace_same_line
+	    && ps.prev_token != lsym_lbrace)
 		return;
 
 	if (opt.verbose)
