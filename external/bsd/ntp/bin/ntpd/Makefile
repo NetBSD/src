@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2023/06/03 09:09:04 lukem Exp $
+#	$NetBSD: Makefile,v 1.32 2023/06/03 21:31:46 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -87,7 +87,7 @@ CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts -I${IDIST}/ntpd -I.
 .PATH: ${DIST}
 YHEADER=1
 
-COPTS.ntp_control.c+=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-error=maybe-uninitialized :}
+COPTS.ntp_control.c+=		${CC_WNO_MAYBE_UNINITIALIZED}
 COPTS.ntp_loopfilter.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-error=restrict :}
 COPTS.ntp_loopfilter.c+=	${CC_WNO_FORMAT_TRUNCATION}
 COPTS.ntp_crypto.c+=		${CC_WNO_FORMAT_TRUNCATION}

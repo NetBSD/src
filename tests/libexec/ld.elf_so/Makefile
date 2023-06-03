@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2023/06/02 19:09:11 riastradh Exp $
+# $NetBSD: Makefile,v 1.20 2023/06/03 21:31:47 lukem Exp $
 #
 
 NOMAN=		# defined
@@ -31,7 +31,7 @@ TESTS_C+=	t_dlerror-cleared t_dlerror-false t_dlinfo t_dlvsym t_ifunc
 TESTS_C+=	t_rtld_r_debug
 TESTS_C+=	t_tls_extern
 
-COPTS.t_rtld_r_debug.c += ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
+COPTS.t_rtld_r_debug.c += ${CC_WNO_MAYBE_UNINITIALIZED}
 
 LDADD.t_dlerror-false=	-Wl,-rpath,/var/nonexistent/lib
 LDADD.t_dlvsym=		-Wl,-rpath,${TESTSDIR}/h_helper_symver_dso2
