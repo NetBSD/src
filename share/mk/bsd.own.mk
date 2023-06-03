@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1337 2023/06/03 09:09:13 lukem Exp $
+#	$NetBSD: bsd.own.mk,v 1.1338 2023/06/03 21:21:32 lukem Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1172,6 +1172,8 @@ _MKVARS.yes= \
 	MKATF \
 	MKBINUTILS \
 	MKBSDTAR \
+	MKCLEANSRC \
+	MKCLEANVERIFY \
 	MKCOMPLEX \
 	MKCVS \
 	MKCXX \
