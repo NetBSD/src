@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.315 2023/06/02 15:07:46 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.316 2023/06/03 21:24:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.315 2023/06/02 15:07:46 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.316 2023/06/03 21:24:26 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -534,7 +534,7 @@ process_lparen_or_lbracket(void)
 		/* this is a kluge to make sure that declarations will be
 		 * aligned right if proc decl has an explicit type on it, i.e.
 		 * "int a(x) {..." */
-		parse(psym_0);
+		parse(psym_stmt);
 		ps.init_or_struct = false;
 	}
 
@@ -724,7 +724,7 @@ process_semicolon(void)
 	ps.decl_ind = 0;
 
 	if (ps.spaced_expr_psym == psym_0) {
-		parse(psym_0);	/* let parser know about end of stmt */
+		parse(psym_stmt);
 		ps.force_nl = true;
 	}
 }
