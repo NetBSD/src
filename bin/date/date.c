@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.61 2014/09/01 21:42:21 dholland Exp $ */
+/* $NetBSD: date.c,v 1.61.18.1 2023/06/03 15:27:13 martin Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -29,6 +29,10 @@
  * SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT(
@@ -40,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.61 2014/09/01 21:42:21 dholland Exp $");
+__RCSID("$NetBSD: date.c,v 1.61.18.1 2023/06/03 15:27:13 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,11 +64,15 @@ __RCSID("$NetBSD: date.c,v 1.61 2014/09/01 21:42:21 dholland Exp $");
 #include <tzfile.h>
 #include <unistd.h>
 #include <util.h>
+#if !HAVE_NBTOOL_CONFIG_H
+#include <utmpx.h>
+#endif
 
 #include "extern.h"
 
 static time_t tval;
-static int aflag, jflag, rflag, nflag;
+static int Rflag, aflag, jflag, rflag, nflag;
+static char *fmt;
 
 __dead static void badcanotime(const char *, const char *, size_t);
 static void setthetime(const char *);
@@ -83,13 +91,14 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "ad:jnr:u")) != -1) {
+	while ((ch = getopt(argc, argv, "ad:f:jnRr:u")) != -1) {
 		switch (ch) {
 		case 'a':		/* adjust time slowly */
 			aflag = 1;
 			nflag = 1;
 			break;
 		case 'd':
+#ifndef HAVE_NBTOOL_CONFIG_H
 			rflag = 1;
 			tval = parsedate(optarg, NULL, NULL);
 			if (tval == -1) {
@@ -97,11 +106,21 @@ main(int argc, char *argv[])
 				    "%s: Unrecognized date format", optarg);
 			}
 			break;
+#else
+			errx(EXIT_FAILURE,
+			    "-d not supported in the tool version");
+#endif
+		case 'f':
+			fmt = optarg;
+			break;
 		case 'j':		/* don't set time */
 			jflag = 1;
 			break;
 		case 'n':		/* don't set network */
 			nflag = 1;
+			break;
+		case 'R':		/* RFC-5322 email format */
+			Rflag = 1;
 			break;
 		case 'r':		/* user specified seconds */
 			if (optarg[0] == '\0') {
@@ -137,13 +156,17 @@ main(int argc, char *argv[])
 	if (*argv && **argv == '+') {
 		format = *argv;
 		++argv;
+	} else if (Rflag) {
+		(void)setlocale(LC_TIME, "C");
+		format = "+%a, %-e %b %Y %H:%M:%S %z";
 	} else
 		format = "+%a %b %e %H:%M:%S %Z %Y";
 
 	if (*argv) {
 		setthetime(*argv);
 		++argv;
-	}
+	} else if (fmt)
+		usage();
 
 	if (*argv && **argv == '+')
 		format = *argv;
@@ -186,6 +209,22 @@ setthetime(const char *p)
 	size_t len;
 	int yearset;
 
+	if ((lt = localtime(&tval)) == NULL)
+		err(EXIT_FAILURE, "%lld: localtime", (long long)tval);
+
+	lt->tm_isdst = -1;			/* Divine correct DST */
+
+	if (fmt) {
+		t = strptime(p, fmt, lt);
+		if (t == NULL) {
+			warnx("Failed conversion of ``%s''"
+			    " using format ``%s''\n", p, fmt);
+		} else if (*t != '\0')
+			warnx("Ignoring %zu extraneous"
+				" characters in date string (%s)",
+				strlen(t), t);
+		goto setit;
+	}
 	for (t = p, dot = NULL; *t; ++t) {
 		if (*t == '.') {
 			if (dot == NULL) {
@@ -198,10 +237,6 @@ setthetime(const char *p)
 		}
 	}
 
-	if ((lt = localtime(&tval)) == NULL)
-		err(EXIT_FAILURE, "%lld: localtime", (long long)tval);
-
-	lt->tm_isdst = -1;			/* Divine correct DST */
 
 	if (dot != NULL) {			/* .ss */
 		len = strlen(dot);
@@ -316,11 +351,11 @@ setthetime(const char *p)
 		    badcanotime("Not enough digits", p, strlen(p) - len);
 	    }
 	}
-
+setit:
 	/* convert broken-down time to UTC clock time */
 	if ((new_time = mktime(lt)) == -1) {
 		/* Can this actually happen? */
-		err(EXIT_FAILURE, "%s: mktime", op);
+		err(EXIT_FAILURE, "mktime");
 	}
 
 	/* if jflag is set, don't actually change the time, just return */
@@ -330,6 +365,13 @@ setthetime(const char *p)
 	}
 
 	/* set the time */
+#ifndef HAVE_NBTOOL_CONFIG_H
+	struct utmpx utx;
+	memset(&utx, 0, sizeof(utx));
+	utx.ut_type = OLD_TIME;
+	(void)gettimeofday(&utx.ut_tv, NULL);
+	pututxline(&utx);
+
 	if (nflag || netsettime(new_time)) {
 		logwtmp("|", "date", "");
 		if (aflag) {
@@ -346,19 +388,28 @@ setthetime(const char *p)
 		}
 		logwtmp("{", "date", "");
 	}
+	utx.ut_type = NEW_TIME;
+	(void)gettimeofday(&utx.ut_tv, NULL);
+	pututxline(&utx);
 
 	if ((p = getlogin()) == NULL)
 		p = "???";
 	syslog(LOG_AUTH | LOG_NOTICE, "date set by %s", p);
+#else
+	errx(EXIT_FAILURE, "Can't set the time in the tools version");
+#endif
 }
 
 static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-ajnu] [-d date] [-r seconds] [+format]",
+	    "Usage: %s [-ajnRu] [-d date] [-r seconds] [+format]",
 	    getprogname());
 	(void)fprintf(stderr, " [[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n");
+	(void)fprintf(stderr,
+	    "       %s [-ajnRu] -f input_format new_date [+format]\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */
 }
