@@ -1,4 +1,4 @@
-# $NetBSD: bsd.clean.mk,v 1.9 2021/12/07 22:40:52 rillig Exp $
+# $NetBSD: bsd.clean.mk,v 1.10 2023/06/03 21:21:32 lukem Exp $
 
 # <bsd.clean.mk>
 #
@@ -30,9 +30,6 @@
 _BSD_CLEAN_MK_=1
 
 .include <bsd.init.mk>
-
-MKCLEANSRC?=	yes
-MKCLEANVERIFY?=	yes
 
 clean:		.PHONY __doclean
 __doclean:	.PHONY .MADE __cleanuse CLEANFILES
