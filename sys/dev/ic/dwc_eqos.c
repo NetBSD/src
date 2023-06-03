@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.16 2022/09/18 18:20:31 thorpej Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.17 2023/06/03 20:41:45 andvar Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.16 2022/09/18 18:20:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.17 2023/06/03 20:41:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -540,7 +540,7 @@ eqos_init_rings(struct eqos_softc *sc, int qid)
 	WR4(sc, GMAC_DMA_CHAN0_TX_BASE_ADDR,
 	    (uint32_t)sc->sc_tx.desc_ring_paddr);
 	WR4(sc, GMAC_DMA_CHAN0_TX_RING_LEN, TX_DESC_COUNT - 1);
-	DPRINTF(EDEB_TXRING, "tx ring paddr %lx with %u decriptors\n",
+	DPRINTF(EDEB_TXRING, "tx ring paddr %lx with %u descriptors\n",
 	    sc->sc_tx.desc_ring_paddr, TX_DESC_COUNT);
 
 	sc->sc_rx.cur = sc->sc_rx.next = sc->sc_rx.queued = 0;
@@ -552,7 +552,7 @@ eqos_init_rings(struct eqos_softc *sc, int qid)
 	WR4(sc, GMAC_DMA_CHAN0_RX_END_ADDR,
 	    (uint32_t)sc->sc_rx.desc_ring_paddr +
 	    DESC_OFF((sc->sc_rx.cur - 1) % RX_DESC_COUNT));
-	DPRINTF(EDEB_RXRING, "rx ring paddr %lx with %u decriptors\n",
+	DPRINTF(EDEB_RXRING, "rx ring paddr %lx with %u descriptors\n",
 	    sc->sc_rx.desc_ring_paddr, RX_DESC_COUNT);
 }
 

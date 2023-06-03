@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.2 2006/04/22 07:58:53 cherry Exp $	*/
+*	$NetBSD: start.S,v 1.3 2023/06/03 20:41:45 andvar Exp $	*/
 	
 /*-
  * Copyright (c) 2001 Doug Rabson
@@ -74,7 +74,7 @@
 #define R_IA64_REL64MSB		0x6e	/* word64 MSB	BD + A */
 #define R_IA64_REL32LSB		0x6d	/* word32 LSB	BD + A */
 #define R_IA64_REL64LSB		0x6f	/* word64 LSB	BD + A */
-#define	R_IA64_IPLTLSB		0x81	/* function descriptor LSB speciaal */
+#define	R_IA64_IPLTLSB		0x81	/* function descriptor LSB special */
 
 ENTRY(_start, 2)
 	alloc	loc0=ar.pfs,2,3,3,0

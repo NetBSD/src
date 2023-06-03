@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.173 2023/04/03 18:03:24 gutteridge Exp $ */
+/* $NetBSD: udf_subr.c,v 1.174 2023/06/03 20:41:45 andvar Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.173 2023/04/03 18:03:24 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.174 2023/06/03 20:41:45 andvar Exp $");
 #endif /* not lint */
 
 
@@ -5344,7 +5344,7 @@ error_out:
  *
  * Since the size of the space reserved for allocation descriptors is limited,
  * there is a mechanim provided for extending this space; this is done by a
- * special extent to allow schrinking of the allocations without breaking the
+ * special extent to allow shrinking of the allocations without breaking the
  * linkage to the allocation extent descriptor.
  */
 

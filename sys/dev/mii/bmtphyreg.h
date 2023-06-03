@@ -1,4 +1,4 @@
-/*	$NetBSD: bmtphyreg.h,v 1.2 2008/04/28 20:23:53 martin Exp $	*/
+/*	$NetBSD: bmtphyreg.h,v 1.3 2023/06/03 20:41:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
 #define	INTR_INTR_STATUS	0x0001	/* interrupt status */
 
 
-#define	MII_BMTPHY_AUX2		0x1b	/* auliliary mode 2 */
+#define	MII_BMTPHY_AUX2		0x1b	/* auxiliary mode 2 */
 #define	AUX2_BLOCK_RXDV		0x0200	/* block RXDV mode enabled */
 #define	AUX2_ANPDQ		0x0100	/* auto-neg parallel detection Q mode */
 #define	AUX2_TRAFFIC_LED	0x0040	/* traffic meter led enable */
