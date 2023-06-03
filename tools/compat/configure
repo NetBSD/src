@@ -625,8 +625,14 @@ ac_subst_vars='LTLIBOBJS
 LIBOBJS
 CC_WNO_STRINGOP_TRUNCATION
 CC_WNO_STRINGOP_OVERFLOW
+CC_WNO_RETURN_LOCAL_ADDR
 CC_WNO_MAYBE_UNINITIALIZED
+CC_WNO_IMPLICIT_FALLTHROUGH
 CC_WNO_FORMAT_TRUNCATION
+CC_WNO_FORMAT_OVERFLOW
+CC_WNO_ERROR_ADDRESS_OF_PACKED_MEMBER
+CC_WNO_CAST_FUNCTION_TYPE
+CC_WNO_ADDRESS_OF_PACKED_MEMBER
 CC_NO_CPP_PRECOMP
 ALLOCA
 BSHELL
@@ -6360,6 +6366,190 @@ fi
 
 
 
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Waddress-of-packed-member" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Waddress-of-packed-member" >&5
+$as_echo_n "checking whether C compiler accepts -Waddress-of-packed-member... " >&6; }
+if eval \${$as_CACHEVAR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS $cc_fail_unknown -Waddress-of-packed-member"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$as_CACHEVAR=yes"
+else
+  eval "$as_CACHEVAR=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+eval ac_res=\$$as_CACHEVAR
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
+  CC_WNO_ADDRESS_OF_PACKED_MEMBER=-Wno-address-of-packed-member
+else
+  :
+fi
+
+
+
+
+
+
+
+
+
+
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wcast-function-type" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wcast-function-type" >&5
+$as_echo_n "checking whether C compiler accepts -Wcast-function-type... " >&6; }
+if eval \${$as_CACHEVAR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS $cc_fail_unknown -Wcast-function-type"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$as_CACHEVAR=yes"
+else
+  eval "$as_CACHEVAR=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+eval ac_res=\$$as_CACHEVAR
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
+  CC_WNO_CAST_FUNCTION_TYPE=-Wno-cast-function-type
+else
+  :
+fi
+
+
+
+
+
+
+
+
+
+
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Werror=address-of-packed-member" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Werror=address-of-packed-member" >&5
+$as_echo_n "checking whether C compiler accepts -Werror=address-of-packed-member... " >&6; }
+if eval \${$as_CACHEVAR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS $cc_fail_unknown -Werror=address-of-packed-member"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$as_CACHEVAR=yes"
+else
+  eval "$as_CACHEVAR=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+eval ac_res=\$$as_CACHEVAR
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
+  CC_WNO_ERROR_ADDRESS_OF_PACKED_MEMBER=-Wno-error=address-of-packed-member
+else
+  :
+fi
+
+
+
+
+
+
+
+
+
+
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wformat-overflow" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wformat-overflow" >&5
+$as_echo_n "checking whether C compiler accepts -Wformat-overflow... " >&6; }
+if eval \${$as_CACHEVAR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS $cc_fail_unknown -Wformat-overflow"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$as_CACHEVAR=yes"
+else
+  eval "$as_CACHEVAR=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+eval ac_res=\$$as_CACHEVAR
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
+  CC_WNO_FORMAT_OVERFLOW=-Wno-format-overflow
+else
+  :
+fi
+
+
+
+
+
+
+
+
+
+
 as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wformat-truncation" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wformat-truncation" >&5
 $as_echo_n "checking whether C compiler accepts -Wformat-truncation... " >&6; }
@@ -6406,6 +6596,52 @@ fi
 
 
 
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wimplicit-fallthrough" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wimplicit-fallthrough" >&5
+$as_echo_n "checking whether C compiler accepts -Wimplicit-fallthrough... " >&6; }
+if eval \${$as_CACHEVAR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS $cc_fail_unknown -Wimplicit-fallthrough"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$as_CACHEVAR=yes"
+else
+  eval "$as_CACHEVAR=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+eval ac_res=\$$as_CACHEVAR
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
+  CC_WNO_IMPLICIT_FALLTHROUGH=-Wno-implicit-fallthrough
+else
+  :
+fi
+
+
+
+
+
+
+
+
+
+
 as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wmaybe-uninitialized" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wmaybe-uninitialized" >&5
 $as_echo_n "checking whether C compiler accepts -Wmaybe-uninitialized... " >&6; }
@@ -6439,6 +6675,52 @@ eval ac_res=\$$as_CACHEVAR
 $as_echo "$ac_res" >&6; }
 if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
   CC_WNO_MAYBE_UNINITIALIZED=-Wno-maybe-uninitialized
+else
+  :
+fi
+
+
+
+
+
+
+
+
+
+
+as_CACHEVAR=`$as_echo "ax_cv_check_cflags_$cc_fail_unknown_-Wreturn-local-addr" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether C compiler accepts -Wreturn-local-addr" >&5
+$as_echo_n "checking whether C compiler accepts -Wreturn-local-addr... " >&6; }
+if eval \${$as_CACHEVAR+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+
+  ax_check_save_flags=$CFLAGS
+  CFLAGS="$CFLAGS $cc_fail_unknown -Wreturn-local-addr"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$as_CACHEVAR=yes"
+else
+  eval "$as_CACHEVAR=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS=$ax_check_save_flags
+fi
+eval ac_res=\$$as_CACHEVAR
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_CACHEVAR"\" = x"yes"; then :
+  CC_WNO_RETURN_LOCAL_ADDR=-Wno-return-local-addr
 else
   :
 fi
@@ -7816,22 +8098,34 @@ $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: ========= Configuration results =========" >&5
-$as_echo "$as_me: ========= Configuration results =========" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: CC                              $CC" >&5
-$as_echo "$as_me: CC                              $CC" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_NO_CPP_PRECOMP               $CC_NO_CPP_PRECOMP" >&5
-$as_echo "$as_me: CC_NO_CPP_PRECOMP               $CC_NO_CPP_PRECOMP" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_FORMAT_TRUNCATION        $CC_WNO_FORMAT_TRUNCATION" >&5
-$as_echo "$as_me: CC_WNO_FORMAT_TRUNCATION        $CC_WNO_FORMAT_TRUNCATION" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_MAYBE_UNINITIALIZED      $CC_WNO_MAYBE_UNINITIALIZED" >&5
-$as_echo "$as_me: CC_WNO_MAYBE_UNINITIALIZED      $CC_WNO_MAYBE_UNINITIALIZED" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_STRINGOP_OVERFLOW        $CC_WNO_STRINGOP_OVERFLOW" >&5
-$as_echo "$as_me: CC_WNO_STRINGOP_OVERFLOW        $CC_WNO_STRINGOP_OVERFLOW" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_STRINGOP_TRUNCATION      $CC_WNO_STRINGOP_TRUNCATION" >&5
-$as_echo "$as_me: CC_WNO_STRINGOP_TRUNCATION      $CC_WNO_STRINGOP_TRUNCATION" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: ============= Configuration results =============" >&5
+$as_echo "$as_me: ============= Configuration results =============" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC                                      $CC" >&5
+$as_echo "$as_me: CC                                      $CC" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: LIBS                                    $LIBS" >&5
+$as_echo "$as_me: LIBS                                    $LIBS" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_NO_CPP_PRECOMP                       $CC_NO_CPP_PRECOMP" >&5
+$as_echo "$as_me: CC_NO_CPP_PRECOMP                       $CC_NO_CPP_PRECOMP" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_ADDRESS_OF_PACKED_MEMBER         $CC_WNO_ADDRESS_OF_PACKED_MEMBER" >&5
+$as_echo "$as_me: CC_WNO_ADDRESS_OF_PACKED_MEMBER         $CC_WNO_ADDRESS_OF_PACKED_MEMBER" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_CAST_FUNCTION_TYPE               $CC_WNO_CAST_FUNCTION_TYPE" >&5
+$as_echo "$as_me: CC_WNO_CAST_FUNCTION_TYPE               $CC_WNO_CAST_FUNCTION_TYPE" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_ERROR_ADDRESS_OF_PACKED_MEMBER   $CC_WNO_ERROR_ADDRESS_OF_PACKED_MEMBER" >&5
+$as_echo "$as_me: CC_WNO_ERROR_ADDRESS_OF_PACKED_MEMBER   $CC_WNO_ERROR_ADDRESS_OF_PACKED_MEMBER" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_FORMAT_OVERFLOW                  $CC_WNO_FORMAT_OVERFLOW" >&5
+$as_echo "$as_me: CC_WNO_FORMAT_OVERFLOW                  $CC_WNO_FORMAT_OVERFLOW" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_FORMAT_TRUNCATION                $CC_WNO_FORMAT_TRUNCATION" >&5
+$as_echo "$as_me: CC_WNO_FORMAT_TRUNCATION                $CC_WNO_FORMAT_TRUNCATION" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_IMPLICIT_FALLTHROUGH             $CC_WNO_IMPLICIT_FALLTHROUGH" >&5
+$as_echo "$as_me: CC_WNO_IMPLICIT_FALLTHROUGH             $CC_WNO_IMPLICIT_FALLTHROUGH" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_MAYBE_UNINITIALIZED              $CC_WNO_MAYBE_UNINITIALIZED" >&5
+$as_echo "$as_me: CC_WNO_MAYBE_UNINITIALIZED              $CC_WNO_MAYBE_UNINITIALIZED" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_RETURN_LOCAL_ADDR                $CC_WNO_RETURN_LOCAL_ADDR" >&5
+$as_echo "$as_me: CC_WNO_RETURN_LOCAL_ADDR                $CC_WNO_RETURN_LOCAL_ADDR" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_STRINGOP_OVERFLOW                $CC_WNO_STRINGOP_OVERFLOW" >&5
+$as_echo "$as_me: CC_WNO_STRINGOP_OVERFLOW                $CC_WNO_STRINGOP_OVERFLOW" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: CC_WNO_STRINGOP_TRUNCATION              $CC_WNO_STRINGOP_TRUNCATION" >&5
+$as_echo "$as_me: CC_WNO_STRINGOP_TRUNCATION              $CC_WNO_STRINGOP_TRUNCATION" >&6;}
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: LIBS                            $LIBS" >&5
-$as_echo "$as_me: LIBS                            $LIBS" >&6;}
-{ $as_echo "$as_me:${as_lineno-$LINENO}: =========================================" >&5
-$as_echo "$as_me: =========================================" >&6;}
+{ $as_echo "$as_me:${as_lineno-$LINENO}: ================================================" >&5
+$as_echo "$as_me: ================================================" >&6;}
