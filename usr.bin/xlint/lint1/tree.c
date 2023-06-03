@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.524 2023/05/22 12:55:04 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.525 2023/06/03 20:28:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.524 2023/05/22 12:55:04 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.525 2023/06/03 20:28:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2203,7 +2203,7 @@ warn_incompatible_types(op_t op,
 		error(171, type_name(ltp), type_name(rtp));
 	} else if (mp->m_binary) {
 		/* operands of '%s' have incompatible types '%s' and '%s' */
-		error(107, mp->m_name, tspec_name(lt), tspec_name(rt));
+		error(107, mp->m_name, type_name(ltp), type_name(rtp));
 	} else {
 		lint_assert(rt == NO_TSPEC);
 		/* operand of '%s' has invalid type '%s' */
