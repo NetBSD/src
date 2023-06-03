@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2020/06/07 23:09:34 fox Exp $
+# $NetBSD: Makefile,v 1.24 2023/06/03 09:09:03 lukem Exp $
 
 NOLINT=		# defined
 
@@ -54,7 +54,7 @@ INCSDIR_atf-c.h=/usr/include
 MAN=		atf-c-api.3
 
 COPTS.tc.c+=	${${ACTIVE_CC} == "clang" && ${MACHINE_ARCH} == "powerpc":? -O0 :}
-COPTS.fs.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.fs.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .if ${MKSHARE} != "no"
 FILES+=		atf-c.pc

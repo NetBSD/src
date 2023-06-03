@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2022/07/17 15:36:05 riastradh Exp $
+# $NetBSD: Makefile,v 1.2 2023/06/03 09:09:14 lukem Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -12,7 +12,7 @@ CPPFLAGS+=	-DCONFIG_AGP=1
 
 WARNS=	3
 
-COPTS.ttm_bo.c+=	${GCC_NO_IMPLICIT_FALLTHRU}
+COPTS.ttm_bo.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 CWARNFLAGS+=		-Wno-missing-field-initializers
 CWARNFLAGS+=		-Wno-shadow

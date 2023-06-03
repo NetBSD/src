@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2021/04/12 02:54:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2023/06/03 09:09:06 lukem Exp $
 
 LIBISPRIVATE=	yes
 
@@ -24,7 +24,7 @@ CPPFLAGS+=	-Wno-stack-protector
 .endif
 
 CPPFLAGS.imLcLkup.c=-Wno-error
-COPTS.fs.c+=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.fs.c+=	${CC_WNO_STRINGOP_OVERFLOW}
 
 SRCS+=		activate.c lvmcache.c toolcontext.c config.c btree.c \
 		str_list.c dev-cache.c dev-io.c dev-md.c device.c dev-swap.c \

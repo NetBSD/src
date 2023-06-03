@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.3 2020/02/09 15:10:31 fox Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/03 09:09:24 lukem Exp $
 # This file is in the public domain.
 
 PROG=	srtconfig
 SRCS=	srtconfig.c
 
-COPTS.srtconfig.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.srtconfig.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

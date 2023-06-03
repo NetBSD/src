@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2019/10/13 07:28:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.25 2023/06/03 09:09:23 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -31,8 +31,8 @@ COPTS.pcnfsd_v2.c+=	-Wno-pointer-sign
 
 CLEANFILES += clnt.pcnfsd pcnfsd_test.o pcnfsd_test.ln pcnfsd_clnt.*
 
-COPTS.pcnfsd_misc.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.pcnfsd_print.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.pcnfsd_svc.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.pcnfsd_misc.c+=	${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.pcnfsd_print.c+=	${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.pcnfsd_svc.c+=	${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

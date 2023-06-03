@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2019/10/13 07:28:19 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2023/06/03 09:09:22 lukem Exp $
 #	@(#)Makefile	8.3 (Berkeley) 1/25/94
 
 USE_FORT?= yes	# network server
@@ -15,6 +15,6 @@ DPADD+=	${LIBIPSEC} ${LIBUTIL}
 
 .include <bsd.prog.mk>
 
-COPTS.mountd.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.mountd.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
 .PATH: ${INETDDIR}

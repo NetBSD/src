@@ -1,4 +1,4 @@
-$NetBSD: README.warnings,v 1.3 2023/06/03 08:52:54 lukem Exp $
+$NetBSD: README.warnings,v 1.4 2023/06/03 09:09:06 lukem Exp $
 
 What to do about GCC warnings and NetBSD.
 
@@ -13,15 +13,15 @@ modified for updates to warnings and new warnings.
 
 
 <bsd.own.mk> provides several variables for use in Makefiles:
-   COPTS.foo.c += ${GCC_NO_FORMAT_TRUNCATION}
-   COPTS.foo.c += ${GCC_NO_FORMAT_OVERFLOW}
-   COPTS.foo.c += ${GCC_NO_STRINGOP_OVERFLOW}
-   COPTS.foo.c += ${GCC_NO_STRINGOP_TRUNCATION}
-   COPTS.foo.c += ${GCC_NO_CAST_FUNCTION_TYPE}
-   COPTS.foo.c += ${GCC_NO_IMPLICIT_FALLTHRU}
+   COPTS.foo.c += ${CC_WNO_FORMAT_TRUNCATION}
+   COPTS.foo.c += ${CC_WNO_FORMAT_OVERFLOW}
+   COPTS.foo.c += ${CC_WNO_STRINGOP_OVERFLOW}
+   COPTS.foo.c += ${CC_WNO_STRINGOP_TRUNCATION}
+   COPTS.foo.c += ${CC_WNO_CAST_FUNCTION_TYPE}
+   COPTS.foo.c += ${CC_WNO_IMPLICIT_FALLTHROUGH}
    COPTS.foo.c += ${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
-   COPTS.foo.c += ${GCC_NO_MAYBE_UNINITIALIZED}
-   COPTS.foo.c += ${GCC_NO_RETURN_LOCAL_ADDR}
+   COPTS.foo.c += ${CC_WNO_MAYBE_UNINITIALIZED}
+   COPTS.foo.c += ${CC_WNO_RETURN_LOCAL_ADDR}
 
 
 new GCC 10 warnings:
@@ -36,7 +36,7 @@ new GCC 10 warnings:
       significantly enhanced in GCC 10, unfortunately, many of
       the new instances are incorrect.
 
-      bsd.own.mk variable: ${GCC_NO_MAYBE_UNINITIALIZED}
+      bsd.own.mk variable: ${CC_WNO_MAYBE_UNINITIALIZED}
 
   -Wno-return-local-addr
 
@@ -44,7 +44,7 @@ new GCC 10 warnings:
       10.  Unfortunately, the new instances are failing to correctly
       analyze code flow and miss that most of the are handled.
 
-      bsd.own.mk variable: ${GCC_NO_RETURN_LOCAL_ADDR}
+      bsd.own.mk variable: ${CC_WNO_RETURN_LOCAL_ADDR}
 
 
 new GCC 9 warnings:
@@ -68,7 +68,7 @@ new GCC 8 warnings:
       general family of string functions (str*(), etc.), and has
       similar issues of false positives.
 
-      bsd.own.mk variable: ${GCC_NO_STRINGOP_TRUNCATION}
+      bsd.own.mk variable: ${CC_WNO_STRINGOP_TRUNCATION}
 
 
   -Wcast-function-type
@@ -78,7 +78,7 @@ new GCC 8 warnings:
       false positives, and hopefully this warning will become
       more useful in the future.  See __FPTRCAST().
 
-      bsd.own.mk variable: ${GCC_NO_CAST_FUNCTION_TYPE}
+      bsd.own.mk variable: ${CC_WNO_CAST_FUNCTION_TYPE}
 
 
 new GCC 7 warnings:
@@ -92,7 +92,7 @@ new GCC 7 warnings:
       cases and should always be inspected, but false positives
       are also seen.
 
-      bsd.own.mk variable: ${GCC_NO_STRINGOP_OVERFLOW}
+      bsd.own.mk variable: ${CC_WNO_STRINGOP_OVERFLOW}
 
 
   -Wformat-truncation
@@ -105,7 +105,7 @@ new GCC 7 warnings:
     Code should always be manually inspected for this warning
     as it does pick up real issues.
 
-    bsd.own.mk variable: ${GCC_NO_FORMAT_TRUNCATION}
+    bsd.own.mk variable: ${CC_WNO_FORMAT_TRUNCATION}
 
 
   -Wformat-overflow
@@ -117,7 +117,7 @@ new GCC 7 warnings:
     Code should always be manually inspected for this warning
     as it does pick up real issues.
 
-    bsd.own.mk variable: ${GCC_NO_FORMAT_OVERFLOW}
+    bsd.own.mk variable: ${CC_WNO_FORMAT_OVERFLOW}
 
 
   -Wimplicit-fallthrough
@@ -129,4 +129,4 @@ new GCC 7 warnings:
     Code should always be manually inspected for this warning
     as it does pick up real issues.
 
-    bsd.own.mk variable: ${GCC_NO_IMPLICIT_FALLTHRU}
+    bsd.own.mk variable: ${CC_WNO_IMPLICIT_FALLTHROUGH}

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2021/11/01 15:56:53 christos Exp $
+# $NetBSD: Makefile,v 1.31 2023/06/03 09:09:10 lukem Exp $
 #-
 # Copyright (c) 1998 Juniper Networks, Inc.
 # All rights reserved.
@@ -212,7 +212,7 @@ openpam_static_modules.o: openpam_static.o ${STATIC_MODULE_LIBS}
 	    openpam_static.o ${STATIC_MODULE_LIBS}
 
 CWARNFLAGS.clang+=	-Wno-error=tautological-pointer-compare
-COPTS.openpam_dynamic.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.openpam_dynamic.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.lib.mk>
 .PATH.h: ${DIST}/include

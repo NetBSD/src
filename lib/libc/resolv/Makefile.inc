@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2019/10/13 07:28:10 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2023/06/03 09:09:09 lukem Exp $
 
 # net sources
 .PATH: ${.CURDIR}/resolv
@@ -10,4 +10,4 @@ SRCS+=	h_errno.c herror.c res_comp.c res_data.c res_debug.c \
 # For COMPAT__RES
 SRCS+=	res_compat.c
 
-COPTS.res_query.c+=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.res_query.c+=	${CC_WNO_STRINGOP_OVERFLOW}

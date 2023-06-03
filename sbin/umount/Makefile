@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2020/04/23 04:21:13 christos Exp $
+#	$NetBSD: Makefile,v 1.21 2023/06/03 09:09:13 lukem Exp $
 #	@(#)Makefile	8.4 (Berkeley) 6/22/95
 
 .include <bsd.own.mk>
@@ -18,6 +18,6 @@ SRCS+=	vfslist.c
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
 
-COPTS.umount.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.umount.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

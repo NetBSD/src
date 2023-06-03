@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2023/05/09 02:08:31 christos Exp $
+#	$NetBSD: Makefile,v 1.36 2023/06/03 09:09:02 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -127,8 +127,8 @@ COPTS.poly1305.c+=	-O0
 COPTS.umac.c+=		-O0
 .endif
 
-COPTS.hostfile.c+=	${GCC_NO_FORMAT_TRUNCATION}
-COPTS.sshkey.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.hostfile.c+=	${CC_WNO_FORMAT_TRUNCATION}
+COPTS.sshkey.c+=	${CC_WNO_FORMAT_TRUNCATION}
 COPTS.cipher.c+=	-Wno-error=deprecated-declarations
 COPTS.dh.c+=		-Wno-error=deprecated-declarations
 COPTS.kex.c+=		-Wno-error=deprecated-declarations

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2021/11/01 21:37:33 nia Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/03 09:09:10 lukem Exp $
 
 USE_FORT?=	yes
 USE_SHLIBDIR=   yes
@@ -23,6 +23,6 @@ SRCS+=		if_indextoname.c if_nametoindex.c
 #SRCS+=		gethnamaddr.c sethostent.c
 CPPFLAGS+= 	-DRUMP_ACTION
 
-COPTS.getaddrinfo.c+=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.getaddrinfo.c+=	${CC_WNO_STRINGOP_OVERFLOW}
 
 .include <bsd.lib.mk>

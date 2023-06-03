@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2021/10/31 18:06:42 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2023/06/03 09:09:21 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -9,7 +9,7 @@ MAN=	mopd.8
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
 
-COPTS.process.c+=	-Wno-pointer-sign ${GCC_NO_FORMAT_TRUNCATION}
+COPTS.process.c+=	-Wno-pointer-sign ${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>
 

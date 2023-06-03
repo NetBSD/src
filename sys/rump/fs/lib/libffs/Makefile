@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2023/06/03 08:52:59 lukem Exp $
+#	$NetBSD: Makefile,v 1.23 2023/06/03 09:09:14 lukem Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/ffs ${.CURDIR}/../../../../ufs/ufs
@@ -17,7 +17,7 @@ SRCS+=	ufs_acl.c ufs_bmap.c ufs_dirhash.c ufs_extattr.c ufs_inode.c	\
 CPPFLAGS+=	-DFFS_EI -DUFS_DIRHASH -DWAPBL -DAPPLE_UFS -DUFS_EXTATTR \
 		-DQUOTA2 -DUFS_ACL
 
-CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER} ${GCC_NO_FORMAT_TRUNCATION}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER} ${CC_WNO_FORMAT_TRUNCATION}
 CWARNFLAGS.gcc+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=restrict :}
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.93 2023/06/03 08:52:54 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.94 2023/06/03 09:09:09 lukem Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -151,5 +151,5 @@ MAN+=	sctp_bindx.3 sctp_connectx.3 sctp_freepaddrs.3 sctp_getaddrlen.3 \
 	sctp_getassocid.3 sctp_getpaddrs.3 sctp_opt_info.3 sctp_peeloff.3 \
 	sctp_recvmsg.3 sctp_send.3 sctp_sendmsg.3
 
-COPTS.getaddrinfo.c+=		${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.getaddrinfo.c+=		${CC_WNO_STRINGOP_OVERFLOW}
 COPTS.sctp_sys_calls.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
