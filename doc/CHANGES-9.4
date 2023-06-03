@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.67 2023/05/28 10:23:12 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.68 2023/06/03 15:36:22 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1430,4 +1430,54 @@ external/apache2/mDNSResponder/dist/mDNSPosix/PosixDaemon.c 1.15
 
 	PR 57442: mdnsd(8): fix privilege separation.
 	[andvar, ticket #1634]
+
+external/gpl3/gcc/usr.bin/backend/Makefile	1.67
+external/gpl3/gcc/usr.bin/common-target/Makefile 1.12
+external/gpl3/gcc/usr.bin/common/Makefile	1.12
+external/gpl3/gcc/usr.bin/frontend/Makefile	1.15
+external/gpl3/gcc/usr.bin/libcpp/Makefile	1.10
+external/gpl3/gcc/usr.bin/libdecnumber/Makefile	1.9
+
+	PR 57014: gcc: fix build with clang++ HOST_CXX.
+	[lukem, ticket #1635]
+
+sys/lib/libsa/subr_prf.c			1.30
+
+	libsa/printf: do not fetch long va_arg as long long.
+	[rin, ticket #1636]
+
+sys/dev/pci/if_aq.c				1.45
+
+	aq(4): if_transmit: invoke softint_schedule(9) with kpreempt disabled.
+	[rin, ticket #1637]
+
+distrib/amiga/stand/loadbsd.uue			1.4
+sys/arch/amiga/stand/loadbsd/Makefile		1.5
+sys/arch/amiga/stand/loadbsd/README		1.6
+sys/arch/amiga/stand/loadbsd/loadbsd.c		1.38
+sys/arch/amiga/stand/loadbsd/startit.s		1.1
+sys/arch/amiga/stand/loadbsd/vmakefile		1.1
+
+	Update loadbsd source and distribution binary to version 3.3.
+	[abs, ticket #1638]
+
+sys/dev/ipmi.c					1.10
+
+	ipmi(4): ignore non-recoverable and critical limits smaller than
+	the warning limits. These are usually invalid.
+	[sborrill, ticket #1639]
+
+bin/date/Makefile                               up to 1.16
+bin/date/date.1                                 up to 1.54
+bin/date/date.c                                 up to 1.65
+
+	date(1): add -R option for displaying time in RFC 5322 format
+	and -f option to set the time.
+	[kim, ticket #1640]
+
+external/apache2/mDNSResponder/dist/mDNSPosix/PosixDaemon.c 1.16
+external/apache2/mDNSResponder/dist/mDNSShared/PlatformCommon.c 1.7
+
+	mdnsd(8): restore fixes for PR 46758.
+	[andvar, ticket #1641]
 
