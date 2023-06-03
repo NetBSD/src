@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2019/09/29 23:44:58 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2023/06/03 21:31:45 lukem Exp $
 
 NOLINT=		# defined
 
@@ -36,8 +36,6 @@ SRCS=		application.cpp \
 		ui.cpp \
 		user.cpp
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.parser.cpp += -Wno-error=maybe-uninitialized
-.endif
+COPTS.parser.cpp += ${CC_WNO_MAYBE_UNINITIALIZED}
 
 .include <bsd.lib.mk>
