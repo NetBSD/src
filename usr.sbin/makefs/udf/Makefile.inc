@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2023/06/03 08:53:00 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2023/06/03 21:26:29 lukem Exp $
 #
 
 UDF=	${NETBSDSRCDIR}/sys/fs/udf
@@ -16,5 +16,5 @@ DPADD+=${LIBUTIL}
 LDADD+=-lutil -lprop
 .endif
 
-CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member -Wno-error=constant-conversion
-CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+CWARNFLAGS.clang+=	-Wno-error=constant-conversion
+CWARNFLAGS+=		${CC_WNO_ADDRESS_OF_PACKED_MEMBER}

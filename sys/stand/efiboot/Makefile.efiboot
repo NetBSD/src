@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.27 2023/06/03 08:52:59 lukem Exp $
+# $NetBSD: Makefile.efiboot,v 1.28 2023/06/03 21:26:29 lukem Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -106,8 +106,7 @@ CPPFLAGS+= -DDEFAULT_TIMEOUT=5
 # Follow the suit of Makefile.kern.inc; needed for the lfs64 union
 # accessors -- they don't actually dereference the resulting pointer,
 # just use it for type-checking.
-CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
-CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+CWARNFLAGS+=		${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_WIDTH_SUPPORT
