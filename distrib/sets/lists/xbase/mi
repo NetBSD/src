@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.173 2023/02/04 16:34:36 wiz Exp $
+# $NetBSD: mi,v 1.174 2023/06/03 19:57:33 andvar Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1355,7 +1355,7 @@
 ./usr/X11R7/man/cat1/xfontsel.0				xbase-xfontsel-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xfs.0				xbase-xfs-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xfsinfo.0				xbase-xfsinfo-catman	.cat,xorg
-./usr/X11R7/man/cat1/xfwp.0				xbase-obsolet	obsolete
+./usr/X11R7/man/cat1/xfwp.0				xbase-obsolete	obsolete
 ./usr/X11R7/man/cat1/xgamma.0				xbase-xgamma-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xgc.0				xbase-xgc-catman	.cat,xorg
 ./usr/X11R7/man/cat1/xhost.0				xbase-xhost-catman	.cat,xorg
