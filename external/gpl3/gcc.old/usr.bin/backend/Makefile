@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2023/05/19 23:28:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.18 2023/06/03 21:31:46 lukem Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
@@ -601,7 +601,7 @@ COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 
 CFLAGS+=	-Wno-stack-protector
 
-COPTS.dwarf2out.c+=-Wno-error=maybe-uninitialized
+COPTS.dwarf2out.c+=${CC_WNO_MAYBE_UNINITIALIZED}
 
 .if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
 	${GCC_MACHINE_ARCH} == "coldfire"

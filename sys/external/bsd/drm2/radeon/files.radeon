@@ -1,4 +1,4 @@
-#	$NetBSD: files.radeon,v 1.38 2023/06/03 21:30:22 lukem Exp $
+#	$NetBSD: files.radeon,v 1.39 2023/06/03 21:31:47 lukem Exp $
 
 version	20180827
 
@@ -34,7 +34,7 @@ makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-pointer-arith"
 makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-shadow"
 makeoptions	radeon	"CWARNFLAGS.radeon"+="-Wno-unused-const-variable"
 
-makeoptions	radeon	"CWARNFLAGS.radeon"+="${${ACTIVE_CC} == gcc:? -Wno-maybe-uninitialized :}"
+makeoptions	radeon	"CWARNFLAGS.radeon"+="${CC_WNO_MAYBE_UNINITIALIZED}"
 
 #makeoptions 	radeon 	"CWARNFLAGS.radeon_cs.c"+="${CC_WNO_IMPLICIT_FALLTHROUGH}"
 makeoptions 	radeon 	"CWARNFLAGS.radeon_evergreen_cs.c"+="${CC_WNO_IMPLICIT_FALLTHROUGH}"

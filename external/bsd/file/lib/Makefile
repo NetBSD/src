@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2019/12/17 18:59:39 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2023/06/03 21:31:45 lukem Exp $
 #
 
 USE_FORT?= yes	# data driven bugs?
@@ -41,7 +41,5 @@ magic.c:	magic.h
 magic.h:        magic.h.in
 	${TOOL_SED} -e "s/X.YY/${VERSION:S/.//g}/" < ${.ALLSRC} > ${.TARGET}
 CLEANFILES+=	magic.h
-
-CFLAGS+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-maybe-uninitialized :}
 
 .include <bsd.lib.mk>
