@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lua.mk,v 1.9 2023/04/16 20:46:17 nikita Exp $
+#	$NetBSD: bsd.lua.mk,v 1.10 2023/06/03 21:24:57 lukem Exp $
 #
 # Build rules and definitions for Lua modules
 
@@ -129,7 +129,7 @@ DPSRCS+=${LUA_SRCS.${_M}}
 SRCS+=${LUA_SRCS.${_M}}
 
 LUA_LDOPTS=	-Wl,--warn-shared-textrel
-.if ${MKSTRIPSYM:Uyes} == "yes"
+.if ${MKSTRIPSYM} != "no"
 LUA_LDOPTS+=	-Wl,-x
 .else
 LUA_LDOPTS+=	-Wl,-X
