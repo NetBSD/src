@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2021/04/13 06:25:48 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2023/06/03 08:52:53 lukem Exp $
 
 PROG=	mdnsd
 
@@ -18,7 +18,7 @@ COPTS.uds_daemon.c += -Wno-stack-protector
 MAN=	mdnsd.8
 
 CWARNFLAGS.clang+=	-Wno-unused-value -Wno-error=address-of-packed-member
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 COPTS.DNSCommon.c+=	${GCC_NO_RETURN_LOCAL_ADDR}
 

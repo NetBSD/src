@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.8 2020/09/06 07:20:30 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2023/06/03 08:52:59 lukem Exp $
 #
 
 RUMPTOP=	${.CURDIR}/../../..
 
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member -Werror=constant-conversion
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 .include "${RUMPTOP}/Makefile.rump"

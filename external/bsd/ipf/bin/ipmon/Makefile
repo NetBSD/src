@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2020/09/06 07:20:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2023/06/03 08:52:53 lukem Exp $
 
 PROG=		ipmon
 SRCS=		ipmon.c ipmon_y.c ipmon_l.c
@@ -36,6 +36,6 @@ ipmon_l.h: lexer.h
 	${TOOL_SED} -e 's/yy/ipmon_yy/g' \
 	    ${.ALLSRC} > ${.TARGET}
 
-COPTS.ipmon.c+=        	${GCC_NO_ADDR_OF_PACKED_MEMBER} ${GCC_NO_FORMAT_OVERFLOW}
+COPTS.ipmon.c+=        	${CC_WNO_ADDRESS_OF_PACKED_MEMBER} ${GCC_NO_FORMAT_OVERFLOW}
 
 .include <bsd.prog.mk>

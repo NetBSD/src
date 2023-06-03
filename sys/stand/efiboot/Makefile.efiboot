@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.26 2022/03/25 21:23:00 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.27 2023/06/03 08:52:59 lukem Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -107,7 +107,7 @@ CPPFLAGS+= -DDEFAULT_TIMEOUT=5
 # accessors -- they don't actually dereference the resulting pointer,
 # just use it for type-checking.
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_LONGLONG_SUPPORT
 SAMISCCPPFLAGS+= -DLIBSA_PRINTF_WIDTH_SUPPORT
