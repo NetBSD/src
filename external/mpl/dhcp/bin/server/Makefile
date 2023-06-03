@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2021/04/13 06:25:48 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2023/06/03 09:09:08 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ COPTS.ddns.c +=-Wno-stringop-overflow
 
 COPTS.mdb6.c +=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=format-overflow :}
 COPTS.omapi.c +=	-Wno-stack-protector
-COPTS.confpars.c+=	${GCC_NO_STRINGOP_TRUNCATION}
-COPTS.mdb6.c+=		${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.confpars.c+=	${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.mdb6.c+=		${CC_WNO_STRINGOP_OVERFLOW}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2019/10/13 07:28:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2023/06/03 09:09:18 lukem Exp $
 #	from: @(#)Makefile	5.2 (Berkeley) 5/11/90
 
 .include <bsd.own.mk>
@@ -17,6 +17,6 @@ CPPFLAGS+=	-DINET6
 
 .PATH:	${LIBCRPCDIR}
 
-COPTS.rpcinfo.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcinfo.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

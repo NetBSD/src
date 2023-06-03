@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2020/01/14 23:13:36 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2023/06/03 09:09:13 lukem Exp $
 
 .include <bsd.own.mk>
 
 PROG=	rndctl
 MAN=	rndctl.8
 
-COPTS.rndctl.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.rndctl.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 SRCS+=	rndctl.c
 

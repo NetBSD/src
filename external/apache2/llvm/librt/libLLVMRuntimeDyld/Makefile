@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2020/09/07 00:18:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2023/06/03 09:09:02 lukem Exp $
 
 .include <bsd.init.mk>
 
-CWARNFLAGS.gcc+=	${GCC_NO_STRINGOP_OVERFLOW}
+CWARNFLAGS.gcc+=	${CC_WNO_STRINGOP_OVERFLOW}

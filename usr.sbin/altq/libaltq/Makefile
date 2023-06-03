@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/10/13 07:28:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2023/06/03 09:09:20 lukem Exp $
 
 LIBISPRIVATE=	yes
 
@@ -15,6 +15,6 @@ CPPFLAGS+= -DALTQ
 CPPFLAGS+= -DINET6
 .endif
 
-COPTS+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.lib.mk>

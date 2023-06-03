@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2019/10/13 07:28:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2023/06/03 09:09:13 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/19/93
 
 USE_FORT?= yes	# network client/server
@@ -17,7 +17,7 @@ MLINKS=	routed.8 rdisc.8
 COPTS.main.c = -Wno-format-nonliteral
 COPTS.trace.c = -Wno-format-nonliteral
 
-COPTS.if.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.if.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

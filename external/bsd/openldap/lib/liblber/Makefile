@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2021/04/12 06:08:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2023/06/03 09:09:05 lukem Exp $
 
 USE_FORT?=	yes
 
@@ -58,6 +58,6 @@ MLINKS+=	lber-types.3 ber_bvarray_add.3 \
 		lber-types.3 ber_str2bv.3
 
 # GCC 10 is wrong here.
-COPTS.memory.c+=	${GCC_NO_RETURN_LOCAL_ADDR}
+COPTS.memory.c+=	${CC_WNO_RETURN_LOCAL_ADDR}
 
 .include <bsd.lib.mk>

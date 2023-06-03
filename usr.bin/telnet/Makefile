@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59 2019/10/13 07:28:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.60 2023/06/03 09:09:19 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -82,6 +82,6 @@ COPTS.${f}.c+=  -Wno-pointer-sign
 COPTS.telnet.c+=	-Wno-error=implicit-fallthrough
 .endif
 
-COPTS.sys_bsd.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.sys_bsd.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

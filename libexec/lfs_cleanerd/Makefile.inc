@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2020/06/07 23:15:53 fox Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2023/06/03 09:09:11 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 WARNS?=3		# XXX: too many sign-compare issues
@@ -11,7 +11,7 @@ SRCS+=	bufcache.c vnode.c lfs.c kernelops.c # segwrite.c
 .PATH:	${NETBSDSRCDIR}/sys/ufs/lfs ${NETBSDSRCDIR}/sbin/fsck_lfs	\
 	${NETBSDSRCDIR}/libexec/lfs_cleanerd
 
-COPTS.lfs_cleanerd.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.lfs_cleanerd.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 FSCK_LFS= ${NETBSDSRCDIR}/sbin/fsck_lfs
 DPADD+=  ${LIBUTIL}

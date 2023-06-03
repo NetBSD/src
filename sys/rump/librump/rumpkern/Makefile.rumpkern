@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.190 2023/04/22 13:54:59 riastradh Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.191 2023/06/03 09:09:15 lukem Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -243,11 +243,11 @@ SRCS+=		atomic_cas_generic.c
 #SRCS+=		rump_atomic_cas_up.c
 .endif
 
-COPTS.if_ethersubr.c+=		${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.kern_hook.c+=		${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.subr_vmem.c+=		${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.subr_pool.c+=		${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.rump.c+=			${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.if_ethersubr.c+=		${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.kern_hook.c+=		${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.subr_vmem.c+=		${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.subr_pool.c+=		${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.rump.c+=			${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

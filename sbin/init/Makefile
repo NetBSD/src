@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2019/10/13 07:28:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.41 2023/06/03 09:09:12 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 7/19/93
 
 PROG=	init
@@ -17,6 +17,6 @@ DPADD+=		${LIBCRYPT}
 LDADD+=		-lcrypt
 .endif
 
-COPTS.init.c+=	${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.init.c+=	${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_STRINGOP_TRUNCATION} ${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

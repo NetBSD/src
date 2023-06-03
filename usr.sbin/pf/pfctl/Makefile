@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2021/04/12 02:54:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2023/06/03 09:09:22 lukem Exp $
 #	$OpenBSD: Makefile,v 1.17 2004/07/16 23:44:24 frantzen Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
@@ -25,6 +25,6 @@ LDSTATIC?=	-static
 
 .include <bsd.prog.mk>
 
-COPTS.pfctl_osfp.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.pfctl_osfp.c+=	${CC_WNO_FORMAT_TRUNCATION}
 
 .PATH: ${NETBSDSRCDIR}/dist/pf/sbin/pfctl

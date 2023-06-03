@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2020/06/01 00:55:24 kamil Exp $
+# $NetBSD: Makefile,v 1.18 2023/06/03 09:09:03 lukem Exp $
 
 LIB=		fetch
 SRCS=		fetch.c common.c ftp.c http.c file.c
@@ -32,6 +32,6 @@ httperr.h: ${LIBFETCHDIR}/http.errors ${LIBFETCHDIR}/errlist.sh
 	${HOST_SH} ${LIBFETCHDIR}/errlist.sh http_errlist HTTP \
 	    ${LIBFETCHDIR}/http.errors > ${.TARGET}
 
-COPTS.http.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.http.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.lib.mk>

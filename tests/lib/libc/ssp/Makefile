@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2019/10/13 07:28:14 mrg Exp $
+# $NetBSD: Makefile,v 1.11 2023/06/03 09:09:15 lukem Exp $
 
 NOMAN=		# defined
 
@@ -49,6 +49,6 @@ PROGS+=		h_vsnprintf
 PROGS+=		h_vsprintf
 
 # Test exercises truncation
-COPTS.h_snprintf.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.h_snprintf.c+=	${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.test.mk>

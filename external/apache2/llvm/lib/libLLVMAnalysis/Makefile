@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2021/05/30 01:56:50 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2023/06/03 09:09:02 lukem Exp $
 
 LIB=	LLVMAnalysis
 
@@ -127,4 +127,4 @@ SRCS+=	AliasAnalysis.cpp \
 .include <bsd.lib.mk>
 .endif
 
-CWARNFLAGS.gcc+=	${GCC_NO_STRINGOP_OVERFLOW}
+CWARNFLAGS.gcc+=	${CC_WNO_STRINGOP_OVERFLOW}

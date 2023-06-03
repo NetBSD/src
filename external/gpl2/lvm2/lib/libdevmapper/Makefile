@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2021/04/12 02:54:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2023/06/03 09:09:06 lukem Exp $
 
 USE_SHLIBDIR=	yes
 USE_FORT?=	no
@@ -46,7 +46,7 @@ COPTS.libdm-nbsd-iface.c+= -O0
 .PATH: ${LIBDEVMAPPER_DISTDIR}/regex
 .PATH: ${LIBDEVMAPPER_DISTDIR}/ioctl
 
-COPTS.libdm-common.c	+= ${GCC_NO_STRINGOP_OVERFLOW}
-COPTS.fs.c		+= ${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.libdm-common.c	+= ${CC_WNO_STRINGOP_OVERFLOW}
+COPTS.fs.c		+= ${CC_WNO_STRINGOP_OVERFLOW}
 
 .include <bsd.lib.mk>

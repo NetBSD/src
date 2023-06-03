@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2019/10/13 07:28:12 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2023/06/03 09:09:13 lukem Exp $
 
 RUMPPRG=raidctl 
 SRCS=	rf_configure.c raidctl.c
@@ -7,6 +7,6 @@ MAN=	raidctl.8
 DPADD=  ${LIBUTIL}
 LDADD=  -lutil
 
-COPTS.raidctl.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.raidctl.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

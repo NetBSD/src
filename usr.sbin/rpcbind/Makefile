@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2021/03/07 00:23:06 christos Exp $
+#	$NetBSD: Makefile,v 1.18 2023/06/03 09:09:23 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -30,10 +30,10 @@ CPPFLAGS+=	-DYP
 LDADD+= -lwrap -lblocklist -lutil
 DPADD+= ${LIBWRAP} ${LIBBLOCKLIST} ${LIBUTIL}
 
-COPTS.rpcb_svc_4.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.pmap_svc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.rpcb_svc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.rpcb_svc_com.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_svc_4.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.pmap_svc.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_svc.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_svc_com.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
 .PATH:  ${LIBCRPCDIR}
 

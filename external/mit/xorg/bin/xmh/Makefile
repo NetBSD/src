@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2019/10/13 07:28:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2023/06/03 09:09:07 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -23,7 +23,7 @@ DPADD+=	${LIBXAW} ${LIBXMU} ${LIBXT} ${LIBSM} ${LIBICE} \
 
 CWARNFLAGS.clang+=	-Wno-format
 
-COPTS+=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS+=	${CC_WNO_STRINGOP_OVERFLOW}
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>
