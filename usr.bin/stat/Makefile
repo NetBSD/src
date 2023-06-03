@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2022/06/22 18:02:43 kre Exp $
+#	$NetBSD: Makefile,v 1.13 2023/06/03 21:30:24 lukem Exp $
 
 PROG=	stat
 
@@ -10,9 +10,7 @@ MAN=	stat.1 readlink.1
 .include <bsd.own.mk>
 
 # Has fallthru comment that is missed
-.if !defined(HOSTPROG) && defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.stat.c+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS.stat.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 COPTS.stat.c += -Wno-format-nonliteral
 

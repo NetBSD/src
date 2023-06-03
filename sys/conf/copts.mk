@@ -1,4 +1,4 @@
-#	$NetBSD: copts.mk,v 1.9 2023/06/03 09:09:13 lukem Exp $
+#	$NetBSD: copts.mk,v 1.10 2023/06/03 21:30:21 lukem Exp $
 
 # MI per-file compiler options required.
 
@@ -8,12 +8,10 @@
 .ifndef _SYS_CONF_COPTS_MK_
 _SYS_CONF_COPTS_MK_=1
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.zlib.c+=		-Wno-error=implicit-fallthrough
-COPTS.pf.c+=		-Wno-error=implicit-fallthrough
-COPTS.radeon_cs.c+=	-Wno-error=implicit-fallthrough
-COPTS.via_dmablit.c+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS.zlib.c+=		${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.pf.c+=		${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.radeon_cs.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.via_dmablit.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 8 && ${ACTIVE_CC} == "gcc" && \
     (${MACHINE_ARCH} == "mipseb" || ${MACHINE_ARCH} == "mipsel")

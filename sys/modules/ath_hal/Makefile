@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2019/09/29 23:44:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2023/06/03 21:30:23 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -96,10 +96,8 @@ SRCS+=	ar2133.c \
 
 .include "Makefile.inc"
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.ar5212_xmit.c+=	-Wno-error=implicit-fallthrough
-COPTS.ar5416_xmit.c+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS.ar5212_xmit.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.ar5416_xmit.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 .include <bsd.kmodule.mk>
 KMODSCRIPT=	${S}/modules/ath_hal/ath_hal.ldscript
