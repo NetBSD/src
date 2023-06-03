@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.4.4.2 2021/12/08 15:50:13 martin Exp $ */
+/*	$NetBSD: ipmi.c,v 1.4.4.3 2023/06/03 15:17:31 martin Exp $ */
 
 /*
  * Copyright (c) 2019 Michael van Elst
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4.4.2 2021/12/08 15:50:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.4.4.3 2023/06/03 15:17:31 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1533,6 +1533,14 @@ ipmi_get_limits(struct sysmon_envsys *sme, envsys_data_t *edata,
 	return;
 }
 
+/* valid bits for (upper,lower) x (non-recoverable, critical, warn) */
+#define UN	0x20
+#define UC	0x10
+#define UW	0x08
+#define LN	0x04
+#define LC	0x02
+#define LW	0x01
+
 static void
 ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		       sysmon_envsys_lim_t *limits, uint32_t *props)
@@ -1540,7 +1548,7 @@ ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 	struct sdrtype1	*s1 = (struct sdrtype1 *)psensor->i_sdr;
 	bool failure;
 	int	rxlen;
-	uint8_t	data[32];
+	uint8_t	data[32], valid;
 	uint32_t prop_critmax, prop_warnmax, prop_critmin, prop_warnmin;
 	int32_t *pcritmax, *pwarnmax, *pcritmin, *pwarnmin;
 
@@ -1582,27 +1590,43 @@ ipmi_get_sensor_limits(struct ipmi_softc *sc, struct ipmi_sensor *psensor,
 		break;
 	}
 
-	if (data[0] & 0x20 && data[6] != 0xff) {
+	valid = data[0];
+
+	/* if upper non-recoverable < warning, ignore it */
+	if ((valid & (UN|UW)) == (UN|UW) && data[6] < data[4])
+		valid ^= UN;
+	/* if upper critical < warning, ignore it */
+	if ((valid & (UC|UW)) == (UC|UW) && data[5] < data[4])
+		valid ^= UC;
+
+	/* if lower non-recoverable > warning, ignore it */
+	if ((data[0] & (LN|LW)) == (LN|LW) && data[3] > data[1])
+		valid ^= LN;
+	/* if lower critical > warning, ignore it */
+	if ((data[0] & (LC|LW)) == (LC|LW) && data[2] > data[1])
+		valid ^= LC;
+
+	if (valid & UN && data[6] != 0xff) {
 		*pcritmax = ipmi_convert_sensor(&data[6], psensor);
 		*props |= prop_critmax;
 	}
-	if (data[0] & 0x10 && data[5] != 0xff) {
+	if (valid & UC && data[5] != 0xff) {
 		*pcritmax = ipmi_convert_sensor(&data[5], psensor);
 		*props |= prop_critmax;
 	}
-	if (data[0] & 0x08 && data[4] != 0xff) {
+	if (valid & UW && data[4] != 0xff) {
 		*pwarnmax = ipmi_convert_sensor(&data[4], psensor);
 		*props |= prop_warnmax;
 	}
-	if (data[0] & 0x04 && data[3] != 0x00) {
+	if (valid & LN && data[3] != 0x00) {
 		*pcritmin = ipmi_convert_sensor(&data[3], psensor);
 		*props |= prop_critmin;
 	}
-	if (data[0] & 0x02 && data[2] != 0x00) {
+	if (valid & LC && data[2] != 0x00) {
 		*pcritmin = ipmi_convert_sensor(&data[2], psensor);
 		*props |= prop_critmin;
 	}
-	if (data[0] & 0x01 && data[1] != 0x00) {
+	if (valid & LW && data[1] != 0x00) {
 		*pwarnmin = ipmi_convert_sensor(&data[1], psensor);
 		*props |= prop_warnmin;
 	}
