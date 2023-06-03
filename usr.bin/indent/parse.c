@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.63 2023/06/02 11:43:07 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.64 2023/06/03 21:24:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.63 2023/06/02 11:43:07 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.64 2023/06/03 21:24:26 rillig Exp $");
 
 #include <err.h>
 
@@ -54,6 +54,20 @@ decl_level(void)
 		if (ps.s_sym[i] == psym_decl)
 			level++;
 	return level;
+}
+
+static void
+ps_push(parser_symbol psym)
+{
+	ps.s_sym[++ps.tos] = psym;
+	ps.s_ind_level[ps.tos] = ps.ind_level;
+}
+
+static void
+ps_push_follow(parser_symbol psym)
+{
+	ps.s_sym[++ps.tos] = psym;
+	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 }
 
 /*
@@ -80,27 +94,20 @@ parse(parser_symbol psym)
 			break;	/* only put one declaration onto stack */
 
 		ps.break_after_comma = true;
-		ps.s_sym[++ps.tos] = psym_decl;
-		ps.s_ind_level[ps.tos] = ps.ind_level_follow;
+		ps_push_follow(psym_decl);
 
 		if (opt.ljust_decl)
 			ps.ind_level_follow = ps.ind_level = decl_level();
 		break;
 
 	case psym_if_expr:
-		if (ps.s_sym[ps.tos] == psym_if_expr_stmt_else
-		    && opt.else_if) {
-			/* Reduce "else if" to "if". This saves a lot of stack
-			 * space in case of a long "if-else-if ... else-if"
-			 * sequence. */
+		if (ps.s_sym[ps.tos] == psym_if_expr_stmt_else && opt.else_if)
 			ps.ind_level_follow = ps.s_ind_level[ps.tos--];
-		}
 		/* FALLTHROUGH */
 	case psym_do:
 	case psym_for_exprs:
-		ps.s_sym[++ps.tos] = psym;
-		ps.s_ind_level[ps.tos] = ps.ind_level = ps.ind_level_follow;
-		++ps.ind_level_follow;
+		ps.ind_level = ps.ind_level_follow++;
+		ps_push(psym);
 		break;
 
 	case psym_lbrace:
@@ -125,60 +132,52 @@ parse(parser_symbol psym)
 			}
 		}
 
-		ps.s_sym[++ps.tos] = psym_lbrace;
-		ps.s_ind_level[ps.tos] = ps.ind_level;
-		ps.s_sym[++ps.tos] = psym_stmt;
-		ps.s_ind_level[ps.tos] = ps.ind_level_follow;
+		ps_push(psym_lbrace);
+		ps_push_follow(psym_stmt);
 		break;
 
 	case psym_while_expr:
 		if (ps.s_sym[ps.tos] == psym_do_stmt) {
-			/* it is matched with do stmt */
 			ps.ind_level =
 			    ps.ind_level_follow = ps.s_ind_level[ps.tos];
-			ps.s_sym[++ps.tos] = psym_while_expr;
-			ps.s_ind_level[ps.tos] = ps.ind_level;
-
-		} else {	/* it is a while loop */
-			ps.s_sym[++ps.tos] = psym_while_expr;
-			ps.s_ind_level[ps.tos] = ps.ind_level_follow;
+			ps_push(psym_while_expr);
+		} else {
+			ps_push_follow(psym_while_expr);
 			++ps.ind_level_follow;
 		}
 
 		break;
 
 	case psym_else:
-		if (ps.s_sym[ps.tos] != psym_if_expr_stmt)
+		if (ps.s_sym[ps.tos] != psym_if_expr_stmt) {
 			diag(1, "Unmatched 'else'");
-		else {
-			ps.ind_level = ps.s_ind_level[ps.tos];
-			ps.ind_level_follow = ps.ind_level + 1;
-			ps.s_sym[ps.tos] = psym_if_expr_stmt_else;
+			break;
 		}
+		ps.ind_level = ps.s_ind_level[ps.tos];
+		ps.ind_level_follow = ps.ind_level + 1;
+		ps.s_sym[ps.tos] = psym_if_expr_stmt_else;
 		break;
 
 	case psym_rbrace:
 		/* stack should have <lbrace> <stmt> or <lbrace> <stmt_list> */
-		if (ps.tos > 0 && ps.s_sym[ps.tos - 1] == psym_lbrace) {
-			ps.ind_level = ps.ind_level_follow
-			    = ps.s_ind_level[--ps.tos];
-			ps.s_sym[ps.tos] = psym_stmt;
-		} else
+		if (!(ps.tos > 0 && ps.s_sym[ps.tos - 1] == psym_lbrace)) {
 			diag(1, "Statement nesting error");
+			break;
+		}
+		ps.ind_level = ps.ind_level_follow = ps.s_ind_level[--ps.tos];
+		ps.s_sym[ps.tos] = psym_stmt;
 		break;
 
 	case psym_switch_expr:
-		ps.s_sym[++ps.tos] = psym_switch_expr;
+		ps_push_follow(psym_switch_expr);
 		ps.s_case_ind_level[ps.tos] = case_ind;
-		ps.s_ind_level[ps.tos] = ps.ind_level_follow;
 		case_ind = (float)ps.ind_level_follow + opt.case_indent;
 		ps.ind_level_follow += (int)opt.case_indent + 1;
 		break;
 
-	case psym_0:		/* a simple statement */
+	case psym_stmt:
 		ps.break_after_comma = false;
-		ps.s_sym[++ps.tos] = psym_stmt;
-		ps.s_ind_level[ps.tos] = ps.ind_level;
+		ps_push(psym_stmt);
 		break;
 
 	default:
