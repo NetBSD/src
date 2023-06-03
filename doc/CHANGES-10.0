@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.67 2023/05/30 07:21:22 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.68 2023/06/03 15:33:41 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -1989,4 +1989,60 @@ usr.sbin/bta2dpd/bta2dpd/sbc_encode.c		1.11
 
 	bta2dpd(8): fix playback, pad(4) may return partial reads.
 	[nat, ticket #184]
+
+sys/lib/libsa/subr_prf.c			1.30
+
+	libsa/printf: do not fetch long va_arg as long long.
+	[rin, ticket #185]
+
+sys/dev/pci/virtio.c				1.75-1.78
+sys/dev/pci/virtio_pci.c			1.41,1.42
+sys/dev/pci/virtiovar.h				1.29
+sys/dev/virtio/virtio_mmio.c			1.10
+
+	virtio(4): bug fixes, including PRs 57357 and 57358.
+	[yamaguchi, ticket #186]
+
+sys/dev/pci/if_aq.c				1.45
+
+	aq(4): if_transmit: invoke softint_schedule(9) with kpreempt disabled.
+	[rin, ticket #187]
+
+sys/ddb/db_command.c				1.182
+
+	ddb(4): PR 57435: fix duplicate "show mount".
+	[uwe, ticket #188]
+
+distrib/amiga/stand/loadbsd.uue			1.4
+sys/arch/amiga/stand/loadbsd/Makefile		1.5
+sys/arch/amiga/stand/loadbsd/README		1.6
+sys/arch/amiga/stand/loadbsd/loadbsd.c		1.38
+sys/arch/amiga/stand/loadbsd/startit.s		1.1
+sys/arch/amiga/stand/loadbsd/vmakefile		1.1
+
+	amiga: update loadbsd source and distribution binary to version 3.3.
+	[abs, ticket #189]
+
+sys/external/bsd/drm2/i915drm/intelfb.c		1.25
+
+	intelfb(4): fix mmap(2) offset calculation.
+	[nat, ticket #190]
+
+sys/dev/ipmi.c					1.10
+
+	ipmi(4): ignore non-recoverable and critical limits smaller than
+	the warning limits. These are usually invalid.
+	[sborrill, ticket #191]
+
+bin/date/date.1					1.52-1.54
+bin/date/date.c					1.64,1.65
+
+	date(1): add -R option for displaying time in RFC 5322 format.
+	[kim, ticket #192]
+
+external/apache2/mDNSResponder/dist/mDNSPosix/PosixDaemon.c 1.16
+external/apache2/mDNSResponder/dist/mDNSShared/PlatformCommon.c 1.7
+
+	mdnsd(8): restore fixes for PR 46758.
+	[andvar, ticket #193]
 
