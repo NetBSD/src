@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2019/10/13 07:28:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2023/06/03 09:09:23 lukem Exp $
 
 PROG=	rpc.statd
 SRCS=	sm_inter_svc.c statd.c stat_proc.c
@@ -16,10 +16,10 @@ RPC_SVCFILES=	sm_inter_svc.c
 RPC_SVCFLAGS=	-L -m
 RPC_XDIR=	${DESTDIR}/usr/include/rpcsvc/
 
-COPTS.sm_inter_svc.c+=	${GCC_NO_CAST_FUNCTION_TYPE} ${GCC_NO_FORMAT_TRUNCATION}
-COPTS.statd.c+=		${GCC_NO_CAST_FUNCTION_TYPE} ${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION}
-COPTS.stat_proc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.rpcb_svc_4.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.sm_inter_svc.c+=	${CC_WNO_CAST_FUNCTION_TYPE} ${CC_WNO_FORMAT_TRUNCATION}
+COPTS.statd.c+=		${CC_WNO_CAST_FUNCTION_TYPE} ${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.stat_proc.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_svc_4.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.rpc.mk>
 .include <bsd.prog.mk>

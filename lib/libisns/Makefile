@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2022/07/31 12:40:35 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.8 2023/06/03 09:09:10 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,6 @@ WARNS?=	5
 
 LIBDPLIBS+=	pthread	${.CURDIR}/../libpthread
 
-COPTS.isns.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.isns.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.lib.mk>

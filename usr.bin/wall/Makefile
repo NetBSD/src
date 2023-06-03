@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2019/10/13 07:28:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.13 2023/06/03 09:09:19 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -16,6 +16,6 @@ LDADD+=-lutil
 CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/who -DSUPPORT_UTMPX -DSUPPORT_UTMP
 CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/write
 
-COPTS.wall.c+=		${GCC_NO_FORMAT_TRUNCATION}
+COPTS.wall.c+=		${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

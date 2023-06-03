@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2022/10/05 22:39:36 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2023/06/03 09:09:02 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,6 @@ LDADD+=	-lgssapi -lheimntlm ${LIBKRB5_LDADD}
 DPADD+=	${LIBGSSAPI} ${LIBHEIMNTLM} ${LIBKRB5_DPADD}
 .endif
 
-COPTS.sshconnect.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.sshconnect.c+=	${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

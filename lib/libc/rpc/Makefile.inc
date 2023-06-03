@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2020/10/03 18:31:29 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2023/06/03 09:09:10 lukem Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/rpc
@@ -169,12 +169,12 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		xdr.3 xdr_void.3 \
 		xdr.3 xdr_wrapstring.3
 
-COPTS.clnt_bcast.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.clnt_generic.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.clnt_vc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.rpcb_clnt.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.xdr_sizeof.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.svc_simple.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.pmap_getmaps.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.rpc_generic.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
-COPTS.getrpcent.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.clnt_bcast.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.clnt_generic.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.clnt_vc.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_clnt.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.xdr_sizeof.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.svc_simple.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.pmap_getmaps.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.rpc_generic.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
+COPTS.getrpcent.c+=	${CC_WNO_STRINGOP_TRUNCATION}

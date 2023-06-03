@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2021/04/12 02:54:08 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2023/06/03 09:09:08 lukem Exp $
 
 PROG=	xz
 BINDIR=	/usr/bin
@@ -52,4 +52,4 @@ LDADD+=	-llzma -lintl -lpthread
 .include <bsd.prog.mk>
 .endif
 
-COPTS.message.c		+= ${GCC_NO_FORMAT_TRUNCATION}
+COPTS.message.c		+= ${CC_WNO_FORMAT_TRUNCATION}

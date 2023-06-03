@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2021/11/01 21:37:32 nia Exp $
+#	$NetBSD: Makefile,v 1.17 2023/06/03 09:09:10 lukem Exp $
 #
 
 NOFULLRELRO=	yes
@@ -35,6 +35,6 @@ COPTS.rump_syscalls.c+= -fno-strict-aliasing
 	@ln -s ${NETBSDSRCDIR}/sys/sys srcsys
 .endif
 
-COPTS.rumpclient.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rumpclient.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.lib.mk>

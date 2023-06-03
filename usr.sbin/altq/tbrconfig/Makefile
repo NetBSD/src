@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2019/10/13 07:28:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2023/06/03 09:09:20 lukem Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition
 
@@ -12,6 +12,6 @@ LDSTATIC?=-static
 
 CPPFLAGS+= -DALTQ -I${.CURDIR}/../libaltq
 
-COPTS.tbrconfig.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.tbrconfig.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

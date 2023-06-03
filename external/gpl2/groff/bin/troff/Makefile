@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2019/10/13 07:28:08 mrg Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/03 09:09:06 lukem Exp $
 
 # $FreeBSD: src/gnu/usr.bin/groff/src/roff/troff/Makefile,v 1.4 2003/05/01 13:22:20 ru Exp $
 
@@ -15,7 +15,7 @@ USETBL=
 
 CWARNFLAGS.clang+=	-Wno-format-security
 
-COPTS.input.cpp+=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.input.cpp+=	${CC_WNO_STRINGOP_OVERFLOW}
 
 .include <bsd.prog.mk>
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2021/10/21 13:21:53 andvar Exp $
+#	$NetBSD: Makefile,v 1.28 2023/06/03 09:09:11 lukem Exp $
 
 WARNS=	3
 
@@ -29,8 +29,8 @@ FILESGRP_zlib.pc=	${BINGRP}
 FILESMODE_zlib.pc=	${NONBINMODE}
 FILESDIR_zlib.pc=	/usr/lib/pkgconfig
 
-COPTS.infback.c+=	${GCC_NO_IMPLICIT_FALLTHRU}
-COPTS.inflate.c+=	${GCC_NO_IMPLICIT_FALLTHRU}
+COPTS.infback.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.inflate.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 .include <bsd.lib.mk>
 

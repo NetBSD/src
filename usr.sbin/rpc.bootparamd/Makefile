@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2019/10/13 07:28:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.27 2023/06/03 09:09:22 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -22,7 +22,7 @@ RPC_XDIR=	${DESTDIR}/usr/include/rpcsvc/
 
 CPPFLAGS+=	-I${RPC_XDIR}
 
-COPTS.bootparam_prot_svc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.bootparam_prot_svc.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.rpc.mk>
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2019/10/13 07:28:06 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2023/06/03 09:09:03 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -23,6 +23,6 @@ ISCSIDIST=	${.CURDIR}/../dist
 
 LIBDPLIBS+=      pthread  ${.CURDIR}/../../../../lib/libpthread
 
-COPTS.target.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.target.c+=	${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.lib.mk>

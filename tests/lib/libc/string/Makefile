@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.13 2023/01/30 19:49:49 christos Exp $
+# $NetBSD: Makefile,v 1.14 2023/06/03 09:09:15 lukem Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/string
 DBG=-g
 
-COPTS.t_strcat.c+= ${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.t_strcat.c+= ${CC_WNO_STRINGOP_TRUNCATION}
 
 TESTS_C+=	t_bm
 TESTS_C+=	t_memchr

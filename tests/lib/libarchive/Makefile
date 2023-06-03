@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2020/06/07 23:20:52 fox Exp $
+# $NetBSD: Makefile,v 1.6 2023/06/03 09:09:15 lukem Exp $
 
 NOMAN=
 
@@ -609,5 +609,5 @@ list.h: ${SRCS.h_libarchive} Makefile
 	    ${TOOL_GREP} -v _truncated_filter_ | \
 	    ${TOOL_GREP} -v test_compat_pax_libarchive_2x > ${.TARGET}
 
-COPTS.test_archive_string_conversion.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.test_archive_string_conversion.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 

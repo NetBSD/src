@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2019/10/13 07:28:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.16 2023/06/03 09:09:17 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 PROG=	hexdump
@@ -15,6 +15,6 @@ LINKS=	${BINDIR}/hexdump ${BINDIR}/od
 COPTS.conv.c += -Wno-format-nonliteral
 COPTS.display.c += -Wno-format-nonliteral
 
-COPTS.parse.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.parse.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2019/10/13 07:28:10 mrg Exp $
+# $NetBSD: Makefile,v 1.12 2023/06/03 09:09:10 lukem Exp $
 # Copyright 2001 Mark R V Murray
 # All rights reserved.
 #
@@ -35,4 +35,4 @@ LIBDPLIBS+=	util	${.CURDIR}/../../../libutil
 
 .include "${.CURDIR}/../mod.mk"
 
-COPTS.pam_lastlog.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.pam_lastlog.c+=	${CC_WNO_STRINGOP_TRUNCATION}

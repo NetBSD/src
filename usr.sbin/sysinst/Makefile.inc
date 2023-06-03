@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.45 2022/01/09 16:39:50 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.46 2023/06/03 09:09:24 lukem Exp $
 #
 # Makefile for sysinst
 
@@ -144,8 +144,8 @@ COPTS += -Os
 CPPFLAGS+=-DINET6
 .endif
 
-COPTS+=	${GCC_NO_FORMAT_TRUNCATION}
-COPTS.disklabel.c+= ${GCC_NO_STRINGOP_TRUNCATION}
+COPTS+=	${CC_WNO_FORMAT_TRUNCATION}
+COPTS.disklabel.c+= ${CC_WNO_STRINGOP_TRUNCATION}
 
 # Host to ftp from.  Default:
 #	"ftp.NetBSD.org"
@@ -256,7 +256,7 @@ check-lang:	msg.def msg_defs.h
 	${HOST_SH} ${MSG_CMP_SH} msg_defs.h /tmp/sysinst.en sysinstmsgs.${LANG}
 	@rm /tmp/sysinst.en
 
-COPTS.util.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.util.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS+=		-fcommon
 
 .include <bsd.prog.mk>

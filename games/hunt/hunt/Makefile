@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2019/10/13 07:28:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2023/06/03 09:09:09 lukem Exp $
 
 PROG=	hunt
 SRCS=	connect.c hunt.c otto.c playit.c server.c
@@ -9,6 +9,6 @@ HIDEGAME=hidegame
 
 CPPFLAGS+=-I${.CURDIR}/../include
 
-COPTS.hunt.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.hunt.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2023/06/03 08:52:53 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2023/06/03 09:09:03 lukem Exp $
 
 WARNS?=	1	# XXX -Wcast-qual -Wshadow
 CWARNFLAGS.clang+=	-Wno-format -Wno-tautological-compare \
@@ -33,7 +33,7 @@ LDADD+=		-L${IPFOBJDIR} -lipf -lkvm
 
 CLEANFILES+=	y.tab.c y.tab.h
 
-COPTS+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .PATH:	${UDIST}	\
 	${UDIST}/lib	\

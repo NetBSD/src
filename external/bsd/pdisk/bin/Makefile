@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/10/13 07:28:07 mrg Exp $	
+#	$NetBSD: Makefile,v 1.5 2023/06/03 09:09:05 lukem Exp $	
 
 .include <bsd.own.mk>
 WARNS=5
@@ -26,7 +26,7 @@ COPTS.pathname.c+=	-Wno-implicit-fallthrough
 COPTS.pdisk.c+=		-Wno-implicit-fallthrough
 .endif
 
-COPTS.partition_map.c+=	${GCC_NO_STRINGOP_TRUNCATION}
-COPTS.pdisk.c+=		${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.partition_map.c+=	${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.pdisk.c+=		${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

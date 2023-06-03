@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2020/07/01 06:31:18 martin Exp $
+#	$NetBSD: Makefile,v 1.23 2023/06/03 09:09:19 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -14,6 +14,6 @@ CPPFLAGS+= -DSUPPORT_UTMP -DSUPPORT_UTMPX
 .PATH: ${NETBSDSRCDIR}/bin/ps
 
 COPTS.pr_time.c += -Wno-format-y2k
-COPTS.w.c += ${GCC_NO_FORMAT_TRUNCATION}
+COPTS.w.c += ${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2023/05/09 20:51:14 christos Exp $
+# $NetBSD: Makefile,v 1.11 2023/06/03 09:09:04 lukem Exp $
 
 USE_FORT?= yes	# network client/server
 
@@ -33,7 +33,7 @@ CPPFLAGS+= -DSAVENAME=\"/var/db/sntp.state\"
 LDADD+= -L${LIBISC} -liscntp -levent -lm
 DPADD+=	${LIBM} ${LIBEVENT}
 
-COPTS.utilities.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.utilities.c+=	${CC_WNO_FORMAT_TRUNCATION}
 COPTS.crypto.c+=	-Wno-error=deprecated-declarations
 
 CLEANFILES+=${MAN}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2021/04/13 09:28:42 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2023/06/03 09:09:06 lukem Exp $
 
 # $FreeBSD: head/cddl/usr.bin/ctfconvert/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -34,9 +34,9 @@ SRCS=		alist.c \
 		traverse.c \
 		util.c
 
-COPTS.dwarf.c +=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.dwarf.c +=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.st_parse.c +=	-Wno-format-nonliteral
 COPTS.util.c +=		-Wno-format-nonliteral
-COPTS.st_parse.c +=	${GCC_NO_MAYBE_UNINITIALIZED}
+COPTS.st_parse.c +=	${CC_WNO_MAYBE_UNINITIALIZED}
 
 .include <bsd.prog.mk>

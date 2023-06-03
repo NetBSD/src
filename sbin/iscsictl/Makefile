@@ -13,7 +13,7 @@ CPPFLAGS+=	-I${.CURDIR}/../iscsid
 
 MAN=	iscsictl.8
 
-COPTS.iscsic_main.c+=		${GCC_NO_FORMAT_TRUNCATION}
-COPTS.iscsic_driverif.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.iscsic_main.c+=		${CC_WNO_FORMAT_TRUNCATION}
+COPTS.iscsic_driverif.c+=	${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

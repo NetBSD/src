@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2020/10/21 13:30:02 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2023/06/03 09:09:14 lukem Exp $
 #
 .include "../Makefile.inc"
 
@@ -11,6 +11,6 @@ SRCS=	sys_ptrace_common.c
 
 WARNS=	3
 
-COPTS.sys_ptrace_common.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.sys_ptrace_common.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
 .include <bsd.kmodule.mk>

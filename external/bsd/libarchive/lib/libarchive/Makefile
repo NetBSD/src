@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2023/05/08 21:20:29 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2023/06/03 09:09:04 lukem Exp $
 
 .include <bsd.init.mk>
 
@@ -449,13 +449,13 @@ MLINKS+=	archive_write_set_options.3 archive_write_set_option.3
 MLINKS+=	archive_write_set_passphrase.3 archive_write_set_passphrase_callback.3
 MLINKS+=	libarchive.3 archive.3
 
-COPTS.archive_acl.c+=				${GCC_NO_IMPLICIT_FALLTHRU}
-COPTS.archive_read.c+=				${GCC_NO_IMPLICIT_FALLTHRU}
-COPTS.archive_read_support_format_7zip.c+=	${GCC_NO_IMPLICIT_FALLTHRU}
-COPTS.archive_read_support_format_mtree.c+=	${GCC_NO_IMPLICIT_FALLTHRU}
-COPTS.archive_read_support_format_rar5.c+=	${GCC_NO_MAYBE_UNINITIALIZED}
-COPTS.target.c+=				${GCC_NO_STRINGOP_TRUNCATION}
-COPTS.archive_write_set_format_iso9660.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.archive_acl.c+=				${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.archive_read.c+=				${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.archive_read_support_format_7zip.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.archive_read_support_format_mtree.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.archive_read_support_format_rar5.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
+COPTS.target.c+=				${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.archive_write_set_format_iso9660.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.archive_hmac.c+=	-Wno-error=deprecated-declarations
 
 FILES+=				libarchive.pc

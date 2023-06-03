@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.ximcp,v 1.5 2019/10/13 07:28:08 mrg Exp $
+# $NetBSD: Makefile.ximcp,v 1.6 2023/06/03 09:09:07 lukem Exp $
 
 .PATH:	${X11SRCDIR.X11}/modules/im/ximcp
 SRCS.ximcp= \
@@ -45,4 +45,4 @@ COPTS.imTrans.c=	-Wno-error
 COPTS.imLcLkup.c=	-Wno-stack-protector
 COPTS.imInsClbk.c=	-Wno-unused-value
 
-COPTS.imDefIm.c=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.imDefIm.c=	${CC_WNO_STRINGOP_OVERFLOW}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2023/06/03 08:53:00 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2023/06/03 09:09:22 lukem Exp $
 #	from: Id: Makefile,v 1.5 1993/06/24 05:11:16 deering Exp
 
 .include <bsd.own.mk>
@@ -17,7 +17,7 @@ CPPFLAGS+= -I${.CURDIR}
 CWARNFLAGS.clang+=	-Wno-format-extra-args
 CWARNFLAGS.gcc+=        ${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
-COPTS.cfparse.c+=	${GCC_NO_STRINGOP_TRUNCATION}
-COPTS.vif.c+=		${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.cfparse.c+=	${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.vif.c+=		${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

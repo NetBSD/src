@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2019/10/13 07:28:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.3 2023/06/03 09:09:19 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -9,6 +9,6 @@ CPPFLAGS+=-I${NETBSDSRCDIR}/usr.bin/ftp -DSTANDALONE_PROGRESS
 
 .PATH:	${NETBSDSRCDIR}/usr.bin/ftp
 
-COPTS.utoppya.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.utoppya.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

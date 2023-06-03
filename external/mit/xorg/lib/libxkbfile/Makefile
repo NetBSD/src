@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2022/10/29 21:06:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2023/06/03 09:09:08 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,7 @@ LIBDPLIBS=	X11	${.CURDIR}/../libX11/dynamic
 
 PKGCONFIG=	xkbfile
 
-COPTS.xkbatom.c=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.xkbatom.c=	${CC_WNO_STRINGOP_OVERFLOW}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>

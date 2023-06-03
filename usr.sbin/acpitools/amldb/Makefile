@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2020/09/12 15:25:42 jmcneill Exp $
+# $NetBSD: Makefile,v 1.9 2023/06/03 09:09:20 lukem Exp $
 # Id: Makefile,v 1.5 2000/07/14 18:16:30 iwasaki Exp 
 # $FreeBSD: src/usr.sbin/acpi/amldb/Makefile,v 1.7 2001/10/22 17:25:32 iwasaki Exp $
 
@@ -15,7 +15,7 @@ CPPFLAGS+= -I${.CURDIR} -D_KERNTYPES
 
 MAN=	amldb.8
 
-COPTS.aml_name.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.aml_name.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>
 .PATH: ${.CURDIR}/../aml

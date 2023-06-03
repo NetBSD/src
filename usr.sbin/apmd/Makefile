@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2019/10/13 07:28:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2023/06/03 09:09:20 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,6 @@ MAN=	apmd.8
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
 
-COPTS.apmd.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.apmd.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

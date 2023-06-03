@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.44 2020/12/11 07:24:38 simonb Exp $
+#	$NetBSD: Makefile,v 1.45 2023/06/03 09:09:18 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -29,8 +29,8 @@ SRCS+=	ip6.c
 
 .include "../../compat/exec.mk"
 
-COPTS.df.c+=		${GCC_NO_FORMAT_TRUNCATION}
-COPTS.ifstat.c+=	${GCC_NO_STRINGOP_TRUNCATION}
-COPTS.ps.c+=		${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_FORMAT_TRUNCATION}
+COPTS.df.c+=		${CC_WNO_FORMAT_TRUNCATION}
+COPTS.ifstat.c+=	${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.ps.c+=		${CC_WNO_STRINGOP_TRUNCATION} ${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

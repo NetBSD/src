@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2019/10/13 07:28:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.33 2023/06/03 09:09:13 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 .include <bsd.own.mk>
@@ -29,6 +29,6 @@ DPADD+=${LIBUTIL}
 # keywords.c keywords.h : keywords.sh
 # 	${HOST_SH} keywords.sh
 
-COPTS.rtutil.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.rtutil.c+=	${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

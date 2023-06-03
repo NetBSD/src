@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2019/10/13 07:28:18 mrg Exp $
+# $NetBSD: Makefile,v 1.7 2023/06/03 09:09:20 lukem Exp $
 #
 
 PROG=	btpand
@@ -8,6 +8,6 @@ SRCS=	btpand.c bnep.c channel.c client.c packet.c server.c tap.c
 DPADD+=	${LIBBLUETOOTH} ${LIBEVENT} ${LIBUTIL}
 LDADD+=	-lbluetooth -levent -lutil
 
-COPTS.tap.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.tap.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

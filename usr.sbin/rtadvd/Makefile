@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2021/02/03 06:50:07 roy Exp $
+# $NetBSD: Makefile,v 1.27 2023/06/03 09:09:23 lukem Exp $
 
 WARNS?=	4
 
@@ -31,7 +31,7 @@ LDADD.rump+=	-lrumpres
 DPADD.rump+=	${LIBRUMPRES}
 .endif
 
-COPTS.if.c+=		${GCC_NO_STRINGOP_TRUNCATION}
-COPTS.config.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.if.c+=		${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.config.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2023/04/16 20:46:18 nikita Exp $
+#	$NetBSD: Makefile,v 1.14 2023/06/03 09:09:14 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -24,6 +24,6 @@ CPPFLAGS+=	-I${S}/../external/mit/lua/dist/src \
 
 CWARNFLAGS.clang+=     -Wno-error=string-plus-int
 
-COPTS.lstring.c+=	${GCC_NO_STRINGOP_OVERFLOW}
+COPTS.lstring.c+=	${CC_WNO_STRINGOP_OVERFLOW}
 
 .include <bsd.kmodule.mk>

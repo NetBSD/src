@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.20 2022/10/31 09:37:37 wiz Exp $
+# $NetBSD: Makefile,v 1.21 2023/06/03 09:09:04 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -46,6 +46,6 @@ SRCS+=		${SRCS.libmandoc} compat_strtonum.c
 
 COPTS.man_term.c+= -Wno-error=array-bounds
 
-COPTS.tbl_term.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.tbl_term.c+=	${CC_WNO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2021/04/12 06:08:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.17 2023/06/03 09:09:04 lukem Exp $
 
 LIBISPRIVATE=yes
 
@@ -20,6 +20,6 @@ COPTS.libopts.c+=	 -DPOSIX_SHELL="\"/bin/sh\"" -Wno-format-nonliteral
 
 COPTS.libopts.c+=	${${ACTIVE_CC} == "gcc":? -Wno-format-contains-nul :}
 COPTS.libopts.c+=	${${ACTIVE_CC} == "clang":? -Wno-format :}
-COPTS.libopts.c+=	${GCC_NO_FORMAT_OVERFLOW}
+COPTS.libopts.c+=	${CC_WNO_FORMAT_OVERFLOW}
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2021/04/13 09:20:55 mrg Exp $
+#	$NetBSD: Makefile,v 1.31 2023/06/03 09:09:05 lukem Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -85,8 +85,8 @@ COPTS.dt_printf.c	+= -Wno-stack-protector
 COPTS.dt_program.c	+= -Wno-stack-protector
 COPTS.dt_provider.c	+= -Wno-stack-protector
 COPTS.dt_subr.c		+= -Wno-stack-protector
-COPTS.dt_lex.c		+= ${GCC_NO_STRINGOP_TRUNCATION}
-COPTS.dt_pid.c		+= ${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.dt_lex.c		+= ${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.dt_pid.c		+= ${CC_WNO_STRINGOP_TRUNCATION}
 
 COPTS.dt_consume.c	+= -Wno-parentheses
 COPTS.dt_consume.c	+= ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
@@ -119,7 +119,7 @@ CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/arm
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/mips
 .PATH:		${.CURDIR}/../../dist/lib/libdtrace/mips
 .endif
-COPTS.dt_link.c		+= ${GCC_NO_FORMAT_TRUNCATION}
+COPTS.dt_link.c		+= ${CC_WNO_FORMAT_TRUNCATION}
 
 LFLAGS+=-l
 

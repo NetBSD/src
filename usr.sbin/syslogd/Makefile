@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2023/05/09 20:10:07 christos Exp $
+#	$NetBSD: Makefile,v 1.33 2023/06/03 09:09:24 lukem Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 .include <bsd.own.mk>
 
@@ -31,7 +31,7 @@ DPADD+=	${LIBWRAP} ${LIBBLOCKLIST}
 LDADD+=	-lssl -lcrypto
 
 # Overflow that appears impossible
-COPTS.syslogd.c+=        ${GCC_NO_FORMAT_TRUNCATION} ${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.syslogd.c+=        ${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.tls.c+= -Wno-error=deprecated-declarations
 COPTS.sign.c+= -Wno-error=deprecated-declarations
 
