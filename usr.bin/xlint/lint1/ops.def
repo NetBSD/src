@@ -1,4 +1,4 @@
-/*	$NetBSD: ops.def,v 1.29 2022/06/15 18:44:41 rillig Exp $ */
+/*	$NetBSD: ops.def,v 1.30 2023/06/03 20:58:00 rillig Exp $ */
 
 begin_ops()
 
@@ -34,6 +34,11 @@ op(	NOT,	"!",		 ,1,1,1, , , ,1,1, , , , , , , , , ,1, )
 op(	COMPL,	"~",		 , , , , ,1, , ,1,1, , , , , , , , ,1,1)
 op(	INC,	"++",		 , , , , , , , , , , , , , , , , , , , )
 op(	DEC,	"--",		 , , , , , , , , , , , , , , , , , , , )
+/*
+ * The '++' and '--' operators are conceptually unary operators, but lint
+ * implements them as binary operators due to the pre-multiplied pointer
+ * arithmetics, see build_prepost_incdec and build_plus_minus.
+ */
 op(	INCBEF,	"++x",		 , , , , , , ,1, , , , ,1, , , , , ,1, )
 op(	DECBEF,	"--x",		 , , , , , , ,1, , , , ,1, , , , , ,1, )
 op(	INCAFT,	"x++",		 , , , , , , ,1, , , , ,1, , , , , ,1, )
