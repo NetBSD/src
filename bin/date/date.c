@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.63 2022/10/22 20:11:43 christos Exp $ */
+/* $NetBSD: date.c,v 1.63.2.1 2023/06/03 15:23:42 martin Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.63 2022/10/22 20:11:43 christos Exp $");
+__RCSID("$NetBSD: date.c,v 1.63.2.1 2023/06/03 15:23:42 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ __RCSID("$NetBSD: date.c,v 1.63 2022/10/22 20:11:43 christos Exp $");
 #include "extern.h"
 
 static time_t tval;
-static int aflag, jflag, rflag, nflag;
+static int Rflag, aflag, jflag, rflag, nflag;
 static char *fmt;
 
 __dead static void badcanotime(const char *, const char *, size_t);
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "ad:f:jnr:u")) != -1) {
+	while ((ch = getopt(argc, argv, "ad:f:jnRr:u")) != -1) {
 		switch (ch) {
 		case 'a':		/* adjust time slowly */
 			aflag = 1;
@@ -118,6 +118,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':		/* don't set network */
 			nflag = 1;
+			break;
+		case 'R':		/* RFC-5322 email format */
+			Rflag = 1;
 			break;
 		case 'r':		/* user specified seconds */
 			if (optarg[0] == '\0') {
@@ -153,6 +156,9 @@ main(int argc, char *argv[])
 	if (*argv && **argv == '+') {
 		format = *argv;
 		++argv;
+	} else if (Rflag) {
+		(void)setlocale(LC_TIME, "C");
+		format = "+%a, %-e %b %Y %H:%M:%S %z";
 	} else
 		format = "+%a %b %e %H:%M:%S %Z %Y";
 
@@ -398,11 +404,11 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "Usage: %s [-ajnu] [-d date] [-r seconds] [+format]",
+	    "Usage: %s [-ajnRu] [-d date] [-r seconds] [+format]",
 	    getprogname());
 	(void)fprintf(stderr, " [[[[[[CC]yy]mm]dd]HH]MM[.SS]]\n");
 	(void)fprintf(stderr,
-	    "       %s [-ajnu] -f input_format new_date [+format]\n",
+	    "       %s [-ajnRu] -f input_format new_date [+format]\n",
 	    getprogname());
 	exit(EXIT_FAILURE);
 	/* NOTREACHED */

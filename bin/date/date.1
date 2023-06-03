@@ -1,4 +1,4 @@
-.\"	$NetBSD: date.1,v 1.51 2022/10/22 20:11:43 christos Exp $
+.\"	$NetBSD: date.1,v 1.51.2.1 2023/06/03 15:23:42 martin Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)date.1	8.3 (Berkeley) 4/28/95
 .\"
-.Dd October 22, 2022
+.Dd May 31, 2023
 .Dt DATE 1
 .Os
 .Sh NAME
@@ -40,23 +40,26 @@
 .Nd display or set date and time
 .Sh SYNOPSIS
 .Nm
-.Op Fl ajnu
+.Op Fl ajnRu
 .Op Fl d Ar date
 .Op Fl r Ar seconds
 .Op Cm + Ns Ar format
 .Sm off
-.Oo Oo Oo Oo Oo Oo
+.Oo
+.Oo Oo Oo Oo Oo
 .Ar CC Oc
 .Ar yy Oc
 .Ar mm Oc
 .Ar dd Oc
-.Ar HH Oc Ar MM Oo
-.Li \&. Ar SS Oc Oc
+.Ar HH Oc
+.Ar MM
+.Op Cm \&. Ar SS
+.Oc
 .Sm on
 .Nm
-.Op Fl ajnu
+.Op Fl ajnRu
 .Fl f Ar input_format
-new_date
+.Ar new_date
 .Op Cm + Ns Ar format
 .Sh DESCRIPTION
 .Nm
@@ -66,7 +69,7 @@ way or set the date.
 Only the superuser may set the date.
 .Pp
 The options are as follows:
-.Bl -tag -width 12n
+.Bl -tag -width Fl
 .It Fl a
 Use
 .Xr adjtime 2
@@ -89,12 +92,13 @@ as the format string to parse the
 provided rather than using the default
 .Sm off
 .Oo Oo Oo Oo Oo
-.Ar cc Oc
+.Ar CC Oc
 .Ar yy Oc
 .Ar mm Oc
 .Ar dd Oc
-.Ar HH
-.Oc Ar MM Op Cm \&. Ar SS
+.Ar HH Oc
+.Ar MM
+.Op Cm \&. Ar SS
 .Sm on
 format.
 Parsing is done using
@@ -116,6 +120,9 @@ The
 option stops
 .Nm
 from setting the time for other than the current machine.
+.It Fl R
+Use a default display format that conforms to the date and time
+specification in RFC 5322 (Internet Message Format).
 .It Fl r Ar seconds
 Print out the date and time that is
 .Ar seconds
@@ -132,7 +139,9 @@ The format string may contain any of the conversion specifications described
 in the
 .Xr strftime 3
 manual page, as well as any arbitrary text.
-A <newline> character is always output after the characters
+A
+.Aq newline
+character is always output after the characters
 specified by the format string.
 The format string for the default display is:
 .Pp
@@ -178,7 +187,7 @@ and years are handled automatically.
 .Sh ENVIRONMENT
 The following environment variables affect the execution of
 .Nm :
-.Bl -tag -width iTZ
+.Bl -tag -width Ev
 .It Ev TZ
 The timezone to use when displaying dates.
 See
@@ -186,13 +195,14 @@ See
 for more information.
 .El
 .Sh FILES
-.Bl -tag -width /usr/share/zoneinfo/posixrules -compact
+.Bl -tag -width Pa -compact
 .It Pa /etc/localtime
 Symlink pointing to system's default timezone information file in
 .Pa /usr/share/zoneinfo
 directory.
-.It Pa /usr/lib/locale/<L>/LC_TIME
-Description of time locale <L>.
+.It Pa /usr/lib/locale/ Ns Ao Ar L Ac Ns Pa /LC_TIME
+Description of time locale
+.Aq Ar L .
 .It Pa /usr/share/zoneinfo
 Time zone information directory.
 .It Pa /usr/share/zoneinfo/posixrules
