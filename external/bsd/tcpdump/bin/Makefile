@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2023/06/03 09:09:05 lukem Exp $	
+#	$NetBSD: Makefile,v 1.25 2023/06/03 21:26:27 lukem Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -205,8 +205,7 @@ tcpdump.8: tcpdump.1.in
 	@rm -f ${.TARGET}
 	cp ${.ALLSRC} ${.TARGET}
 
-CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
-CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+CWARNFLAGS+=		${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 COPTS.print-bgp.c+=	${CC_WNO_FORMAT_TRUNCATION}
 COPTS.signature.c+=	-Wno-error=deprecated-declarations
 COPTS.print-tcp.c+=	-Wno-error=deprecated-declarations
