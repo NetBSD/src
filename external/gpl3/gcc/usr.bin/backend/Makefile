@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile,v 1.55 2019/02/09 21:03:24 maya Exp $
+#	$NetBSD: Makefile,v 1.55.2.1 2023/06/03 14:24:25 martin Exp $
 
+HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
+
+# For ../Makefile.inc and bsd.own.mk
+.include <bsd.init.mk>
 
 LIB=		backend
 
@@ -26,10 +30,6 @@ CPPFLAGS.cppdefault.c+=	-DPREFIX=\"/usr\" \
 			-DNATIVE_SYSTEM_HEADER_DIR=\"${G_NATIVE_SYSTEM_HEADER_DIR}\"
 
 HOST_CXXFLAGS+=	-std=gnu++98
-
-HOSTPROG_CXX=	1
-
-.include <bsd.init.mk>
 
 HOST_LIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
 
