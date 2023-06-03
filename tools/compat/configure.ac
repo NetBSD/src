@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.104 2023/05/30 18:54:21 lukem Exp $
+#	$NetBSD: configure.ac,v 1.105 2023/06/03 09:10:13 lukem Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -332,11 +332,16 @@ cc_fail_unknown=
 AX_CHECK_COMPILE_FLAG([-Werror=unknown-warning-option],
  [AS_VAR_APPEND([cc_fail_unknown], [-Werror=unknown-warning-option])])
 
+dnl NB_CC_FLAG(FLAG)
+dnl	Determine if HOST_CC supports FLAG, and
+dnl	sets output variable VAR (derived from FLAG)
+dnl	to FLAG if it is supported.
+dnl
 AC_DEFUN([NB_CC_FLAG], [dnl
 m4_pushdef([NB_FLAG], [$1])
 dnl gcc ignores unknown -Wno-WARN but will fail unknown equivalent -WWARN.
 m4_pushdef([NB_WFLAG], m4_bpatsubst(NB_FLAG, [^-Wno-], [-W]))
-m4_pushdef([NB_VAR], [CC]m4_translit(NB_FLAG, [-a-z], [_A-Z]))
+m4_pushdef([NB_VAR], [CC]m4_translit(NB_FLAG, [-=a-z], [__A-Z]))
 AX_CHECK_COMPILE_FLAG(NB_WFLAG, [AS_VAR_SET(NB_VAR,NB_FLAG)], [], [$cc_fail_unknown])
 AC_SUBST(NB_VAR)
 m4_append([NB_CC_FLAG_VARS], NB_VAR, [ ])
@@ -349,8 +354,14 @@ dnl Disable use of pre-compiled headers on Darwin.
 NB_CC_FLAG([-no-cpp-precomp])
 
 dnl Detect HOST_CC support for <bsd.own.mk> CC_* warnings
+NB_CC_FLAG([-Wno-address-of-packed-member])
+NB_CC_FLAG([-Wno-cast-function-type])
+NB_CC_FLAG([-Wno-error=address-of-packed-member])
+NB_CC_FLAG([-Wno-format-overflow])
 NB_CC_FLAG([-Wno-format-truncation])
+NB_CC_FLAG([-Wno-implicit-fallthrough])
 NB_CC_FLAG([-Wno-maybe-uninitialized])
+NB_CC_FLAG([-Wno-return-local-addr])
 NB_CC_FLAG([-Wno-stringop-overflow])
 NB_CC_FLAG([-Wno-stringop-truncation])
 
@@ -358,10 +369,8 @@ AC_OUTPUT()
 
 dnl Display results
 dnl
-AC_MSG_NOTICE([========= Configuration results =========])
-AC_MSG_NOTICE([CC                              $CC])
-m4_foreach_w([NB_VAR], NB_CC_FLAG_VARS, [dnl
-AC_MSG_NOTICE(m4_format([%-32s],NB_VAR)[$NB_VAR])
+AC_MSG_NOTICE([============= Configuration results =============])
+m4_foreach_w([NB_VAR], [CC LIBS ]NB_CC_FLAG_VARS, [dnl
+AC_MSG_NOTICE(m4_format([%-40s],NB_VAR)[$NB_VAR])
 ])
-AC_MSG_NOTICE([LIBS                            $LIBS])
-AC_MSG_NOTICE([=========================================])
+AC_MSG_NOTICE([================================================])
