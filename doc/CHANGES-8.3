@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.174 2023/05/02 17:27:31 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.175 2023/06/03 15:10:56 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3312,4 +3312,14 @@ lib/libc/locale/newlocale.c			1.4
 
 	newlocale(3): fix parsing a locale string with multiple components.
 	[mlelstv, ticket #1822]
+
+distrib/amiga/stand/loadbsd.uue			1.4
+sys/arch/amiga/stand/loadbsd/Makefile		1.5
+sys/arch/amiga/stand/loadbsd/README		1.6
+sys/arch/amiga/stand/loadbsd/loadbsd.c		1.38
+sys/arch/amiga/stand/loadbsd/startit.s		1.1
+sys/arch/amiga/stand/loadbsd/vmakefile		1.1
+
+	Update loadbsd source and distribution binary to version 3.3.
+	[abs, ticket #1823]
 
