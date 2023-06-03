@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.313 2023/04/29 20:31:59 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.314 2023/06/03 21:24:57 lukem Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -347,7 +347,7 @@ OBJCOPYLIBFLAGS_EXTRA=-w -K '[$$][dx]' -K '[$$][dx]\.*'
 OBJCOPYLIBFLAGS_EXTRA=-w -K '[$$][adt]' -K '[$$][adt]\.*'
 .endif
 
-.if ${MKSTRIPSYM:Uyes} == "yes"
+.if ${MKSTRIPSYM} != "no"
 OBJCOPYLIBFLAGS?=${"${.TARGET:M*.po}" != "":?-X:-x} ${OBJCOPYLIBFLAGS_EXTRA}
 .else
 OBJCOPYLIBFLAGS?=-X ${OBJCOPYLIBFLAGS_EXTRA}
