@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.9 2019/02/04 04:49:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2023/06/03 14:24:25 martin Exp $
 
+HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
 
 # For ../Makefile.inc and bsd.own.mk
@@ -20,8 +21,6 @@ CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 
 MKPIC:=		no
 MKPICLIB:=	no
-
-HOSTPROG_CXX=	1
 
 COPTS.diagnostic.c=	-Wno-stack-protector
 COPTS.intl.c=		-Wno-stack-protector
