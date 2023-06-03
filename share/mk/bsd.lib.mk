@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.393 2023/05/28 10:33:13 lukem Exp $
+#	$NetBSD: bsd.lib.mk,v 1.394 2023/06/03 21:24:57 lukem Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -563,7 +563,7 @@ _LIBLDOPTS+=	-Wl,-rpath,${SHLIBDIR} \
 _LIBLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 		-L=${SHLIBINSTALLDIR}
 .endif
-.if ${MKSTRIPSYM:Uyes} == "yes"
+.if ${MKSTRIPSYM} != "no"
 _LIBLDOPTS+=	-Wl,-x
 .else
 _LIBLDOPTS+=	-Wl,-X
