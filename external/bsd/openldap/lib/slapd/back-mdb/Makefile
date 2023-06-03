@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2021/12/28 17:05:44 christos Exp $
+# $NetBSD: Makefile,v 1.2 2023/06/03 21:33:02 lukem Exp $
 
 USE_FORT=yes
 LIBISPRIVATE=yes
@@ -13,7 +13,7 @@ LMDB=${LDAP_DISTDIR}/libraries/liblmdb
 
 .PATH: ${BACK_MDB} ${LMDB}
 
-COPTS.mdb.c += -Wno-error=stringop-overflow
+COPTS.mdb.c += ${CC_WNO_STRINGOP_OVERFLOW}
 
 CPPFLAGS+=-I${SLAPD} -I${BACK_MDB} -I${LMDB}
 
