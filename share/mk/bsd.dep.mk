@@ -1,4 +1,6 @@
-#	$NetBSD: bsd.dep.mk,v 1.88 2021/12/14 16:22:07 christos Exp $
+#	$NetBSD: bsd.dep.mk,v 1.89 2023/06/03 21:23:07 lukem Exp $
+
+.include <bsd.init.mk>
 
 ##### Basic targets
 realdepend:	beforedepend .depend afterdepend
@@ -39,7 +41,7 @@ ${__DPSRCS.d}: ${__DPSRCS.notd} ${DPSRCS}
 
 MKDEPSUFFLAGS=-s ${MKDEP_SUFFIXES:Q}
 
-.if defined(MKDEPINCLUDES) && ${MKDEPINCLUDES} != "no"
+.if ${MKDEPINCLUDES} != "no"
 .STALE:
 	@echo Rebuilding dependency file: ${.ALLSRC}
 	@rm -f ${.ALLSRC}
