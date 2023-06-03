@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.314 2023/05/22 18:10:57 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.315 2023/06/03 21:08:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.314 2023/05/22 18:10:57 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.315 2023/06/03 21:08:06 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2780,7 +2780,6 @@ declare_local(sym_t *dsym, bool has_initializer)
 			outsym(dsym, EXTERN, dsym->s_def);
 		else
 			outsym(dsym, dsym->s_ext_sym->s_scl, dsym->s_def);
-
 	}
 
 	if (dcs->d_redeclared_symbol != NULL)
@@ -2797,10 +2796,10 @@ declare_local(sym_t *dsym, bool has_initializer)
 		set_first_typedef(dsym->s_type, dsym);
 	}
 
-	/*
-	 * Before we can check the size we must wait for an initialization
-	 * that may follow.
-	 */
+	if (dsym->s_scl == STATIC && any_query_enabled) {
+		/* static variable '%s' in function */
+		query_message(11, dsym->s_name);
+	}
 }
 
 /* Processes (re)declarations of external symbols inside blocks. */
