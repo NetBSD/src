@@ -1,0 +1,17 @@
+# vbcc Makefile for loadbsd
+# Requires PosixLib! Adapt the path to PosixLib in CFLAGS and LDFLAGS!
+TARGET	= loadbsd
+
+CC	= vc +aos68k
+CFLAGS	= -D_STANDALONE -DNO_MID_CHECK -D_POSIX_C_SOURCE -Iinclude \
+          -I/path/to/PosixLib/include \
+          -size -sc -O2 -cpu=68020 -dontwarn=153
+AS	= vasmm68k_std
+ASFLAGS	= -quiet -Fhunk -gas -m68020 -m68851
+LDFLAGS	= -L/path/to/PosixLib/AmigaOS3
+LDLIBS	= -lposix
+
+OBJS	= loadbsd.o startit.o loadfile.o loadfile_aout.o loadfile_elf32.o
+
+$(TARGET): $(OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LDLIBS)
