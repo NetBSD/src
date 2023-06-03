@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.39.2.1 2023/01/30 11:52:22 martin Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.39.2.2 2023/06/03 14:44:34 martin Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.39.2.1 2023/01/30 11:52:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.39.2.2 2023/06/03 14:44:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -5901,7 +5901,9 @@ aq_transmit(struct ifnet *ifp, struct mbuf *m)
 		aq_send_common_locked(ifp, sc, txring, true);
 		mutex_exit(&txring->txr_mutex);
 	} else {
+		kpreempt_disable();
 		softint_schedule(txring->txr_softint);
+		kpreempt_enable();
 	}
 	return 0;
 }
