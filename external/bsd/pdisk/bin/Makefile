@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2023/06/03 09:09:05 lukem Exp $	
+#	$NetBSD: Makefile,v 1.6 2023/06/03 21:30:21 lukem Exp $	
 
 .include <bsd.own.mk>
 WARNS=5
@@ -20,13 +20,9 @@ CPPFLAGS+=	-I${SRCDIR}
 
 CPPFLAGS+=	-D__unix__
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.file_media.c+=	-Wno-implicit-fallthrough
-COPTS.pathname.c+=	-Wno-implicit-fallthrough
-COPTS.pdisk.c+=		-Wno-implicit-fallthrough
-.endif
-
+COPTS.file_media.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 COPTS.partition_map.c+=	${CC_WNO_STRINGOP_TRUNCATION}
-COPTS.pdisk.c+=		${CC_WNO_STRINGOP_TRUNCATION}
+COPTS.pathname.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.pdisk.c+=		${CC_WNO_IMPLICIT_FALLTHROUGH} ${CC_WNO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: files.i915drmkms,v 1.88 2022/07/19 23:19:06 riastradh Exp $
+#	$NetBSD: files.i915drmkms,v 1.89 2023/06/03 21:30:22 lukem Exp $
 
 version	20180827
 
@@ -50,11 +50,11 @@ makeoptions	i915drmkms	"CWARNFLAGS.i915_sw_fence.c"+="${${ACTIVE_CC} == clang :?
 
 makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sprite.c"+="${${ACTIVE_CC} == gcc:? -Wno-maybe-uninitialized :}"
 
-makeoptions 	i915drmkms 	"CWARNFLAGS.intel_ddi.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 10:? -Wno-maybe-uninitialized :} ${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}"
-makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_ddi.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 10:? -Wno-maybe-uninitialized :} ${CC_WNO_IMPLICIT_FALLTHROUGH}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_display.c"+="${CC_WNO_IMPLICIT_FALLTHROUGH}"
 makeoptions	i915drmkms	"CWARNFLAGS.intel_guc_submission.c"+="${${ACTIVE_CC} == clang :? -Wno-unused-function :}"
 makeoptions	i915drmkms	"CWARNFLAGS.intel_hdmi.c"+="${${ACTIVE_CC} == clang :? -Wno-unused-function :}"
-makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sdvo.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}"
+makeoptions 	i915drmkms 	"CWARNFLAGS.intel_sdvo.c"+="${CC_WNO_IMPLICIT_FALLTHROUGH}"
 
 makeoptions	intelfb		"CPPFLAGS.intelfb"+="${CPPFLAGS.i915drmkms}"
 makeoptions	intelfb		"CWARNFLAGS.intelfb"+="${CWARNFLAGS.i915drmkms}"

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2019/02/04 04:05:16 mrg Exp $
+# $NetBSD: Makefile,v 1.6 2023/06/03 21:30:20 lukem Exp $
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -29,10 +29,8 @@ poll.c \
 select.c \
 signal.c
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.bufferevent_filter.c += -Wno-error=implicit-fallthrough
-COPTS.evdns.c += -Wno-error=implicit-fallthrough
-COPTS.event.c += -Wno-error=implicit-fallthrough
-.endif
+COPTS.bufferevent_filter.c +=	${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.evdns.c +=		${CC_WNO_IMPLICIT_FALLTHROUGH}
+COPTS.event.c +=		${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 .include <bsd.lib.mk>

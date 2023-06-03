@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2019/09/29 23:45:00 mrg Exp $
+# $NetBSD: Makefile,v 1.5 2023/06/03 21:30:23 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -17,8 +17,6 @@ CPPFLAGS+=	-I${S}/external/bsd/drm/dist/bsd-core \
 
 WARNS=	3
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.savage_state.c+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS.savage_state.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 .include <bsd.kmodule.mk>

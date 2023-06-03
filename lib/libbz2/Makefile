@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2019/09/29 23:44:59 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2023/06/03 21:30:21 lukem Exp $
 
 USE_FORT?= yes	# data driven bugs?
 
@@ -20,9 +20,7 @@ INCSDIR=	/usr/include
 COPTS+=		-O0
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS+=		-Wno-error=implicit-fallthrough
-.endif
+COPTS+=		${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 # XXX blocksort.c gets mis-compiled with 4.1
 .if (${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb") && \

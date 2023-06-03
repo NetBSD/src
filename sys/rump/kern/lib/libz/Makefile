@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/09/29 23:45:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2023/06/03 21:30:24 lukem Exp $
 #
 
 # zlib.c is logically in sys/net
@@ -12,6 +12,4 @@ SRCS=	zlib.c
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.zlib.c+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS.zlib.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}

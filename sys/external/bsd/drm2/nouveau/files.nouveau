@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.38 2022/07/19 23:19:07 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.39 2023/06/03 21:30:22 lukem Exp $
 
 version	20180827
 
@@ -35,7 +35,7 @@ makeoptions	nouveau	"CWARNFLAGS.nouveau"+="-Wno-missing-field-initializers"
 makeoptions	nouveau	"CWARNFLAGS.nouveau"+="-Wno-pointer-arith"
 makeoptions	nouveau	"CWARNFLAGS.nouveau"+="-Wno-shadow"
 makeoptions	nouveau	"CWARNFLAGS.nouveau"+="${${ACTIVE_CC} == clang:? -Wno-error=gnu-variable-sized-type-not-at-end :}"
-makeoptions	nouveau	"CWARNFLAGS.nouveau"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions	nouveau	"CWARNFLAGS.nouveau"+="${CC_WNO_IMPLICIT_FALLTHROUGH}"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_nvkm_subdev_bios_timing.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=int-in-bool-context :}"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_nvkm_subdev_clk_gt215.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=int-in-bool-context :}"
 makeoptions	nouveau	"CWARNFLAGS.nouveau_nvkm_subdev_instmem_base.c"+="${${ACTIVE_CC} == clang :? -Wno-unused-function :}"

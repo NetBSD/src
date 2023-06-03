@@ -1,4 +1,4 @@
-#	$NetBSD: files.ath_hal,v 1.8 2019/09/30 00:06:02 mrg Exp $
+#	$NetBSD: files.ath_hal,v 1.9 2023/06/03 21:30:22 lukem Exp $
 
 defflag opt_athhal.h	ATHHAL_ASSERT ATHHAL_DEBUG ATHHAL_DEBUG_ALQ
 defflag opt_athhal.h	ATHHAL_WRITE_EEPROM ATHHAL_WRITE_REGDOMAIN
@@ -93,7 +93,7 @@ file	external/isc/atheros_hal/dist/ar5212/ar5212_reset.c	ath & athhal_ar5212_sub
 file	external/isc/atheros_hal/dist/ar5212/ar5212_rfgain.c	ath & athhal_ar5212_subr
 file	external/isc/atheros_hal/dist/ar5212/ar5212_xmit.c	ath & athhal_ar5212_subr
 
-makeoptions ath		"CWARNFLAGS.ar5212_xmit.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions ath		"CWARNFLAGS.ar5212_xmit.c"+="${CC_WNO_IMPLICIT_FALLTHROUGH}"
 
 # Atheros AR5312 family
 #
@@ -142,7 +142,7 @@ file	external/isc/atheros_hal/dist/ar5416/ar9285.c		ath & athhal_ar5416
 file	external/isc/atheros_hal/dist/ar5416/ar9285_attach.c	ath & athhal_ar5416
 file	external/isc/atheros_hal/dist/ar5416/ar9285_reset.c	ath & athhal_ar5416
 
-makeoptions ath		"CWARNFLAGS.ar5416_xmit.c"+="${${ACTIVE_CC} == gcc && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}"
+makeoptions ath		"CWARNFLAGS.ar5416_xmit.c"+="${CC_WNO_IMPLICIT_FALLTHROUGH}"
 
 #
 #

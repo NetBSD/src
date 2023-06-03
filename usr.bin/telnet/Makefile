@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.60 2023/06/03 09:09:19 lukem Exp $
+#	$NetBSD: Makefile,v 1.61 2023/06/03 21:30:24 lukem Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -78,9 +78,7 @@ COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
 
 # Has fallthru comment that is missed
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.telnet.c+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS.telnet.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 
 COPTS.sys_bsd.c+=	${CC_WNO_CAST_FUNCTION_TYPE}
 
