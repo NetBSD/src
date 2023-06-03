@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootxx,v 1.52 2020/09/06 07:20:28 mrg Exp $
+# $NetBSD: Makefile.bootxx,v 1.53 2023/06/03 08:52:56 lukem Exp $
 
 S=	${.CURDIR}/../../../../..
 
@@ -138,7 +138,7 @@ ${PROG}: ${OBJS} ${LIBLIST} ${LDSCRIPT}
 		echo "${PROG} size $$sz, $$((${BOOTXX_MAXSIZE} - $$sz)) free"; \
 	fi
 
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
 KLINK_MACHINE=	i386

@@ -1,4 +1,4 @@
-$NetBSD: README.warnings,v 1.1 2021/04/15 05:15:04 mrg Exp $
+$NetBSD: README.warnings,v 1.2 2023/06/03 08:52:54 lukem Exp $
 
 What to do about GCC warnings and NetBSD.
 
@@ -19,7 +19,7 @@ modified for updates to warnings and new warnings.
    COPTS.foo.c += ${GCC_NO_STRINGOP_TRUNCATION}
    COPTS.foo.c += ${GCC_NO_CAST_FUNCTION_TYPE}
    COPTS.foo.c += ${GCC_NO_IMPLICIT_FALLTHRU}
-   COPTS.foo.c += ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+   COPTS.foo.c += ${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
    COPTS.foo.c += ${GCC_NO_MAYBE_UNINITIALIZED}
    COPTS.foo.c += ${GCC_NO_RETURN_LOCAL_ADDR}
 
@@ -56,7 +56,7 @@ new GCC 9 warnings:
       general family of string functions (str*(), etc.), and has
       similar issues of false positives.
 
-      bsd.own.mk variable: ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+      bsd.own.mk variable: ${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 
 new GCC 8 warnings:

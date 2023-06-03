@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2020/09/07 22:22:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.33 2023/06/03 08:52:57 lukem Exp $
 
 NOMAN= # defined
 
@@ -66,7 +66,7 @@ ${PROG}: ${OBJS} ${LIBS}
 
 .include "${S}/conf/newvers_stand.mk"
 
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
 .include <bsd.klinks.mk>

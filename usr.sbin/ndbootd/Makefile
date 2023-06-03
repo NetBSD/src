@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2020/09/06 07:20:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2023/06/03 08:53:01 lukem Exp $
 
 WARNS?=	1	# XXX -Wsign-compare -Wshadow
 
@@ -15,7 +15,7 @@ COPTS.ndbootd.c+=	-fno-tree-ter -fno-tree-lrs
 .endif
 
 CWARNFLAGS.clang+=	-Wno-tautological-compare
-CWARNFLAGS.gcc+=        ${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=        ${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 .include <bsd.own.mk>
 .include <bsd.prog.mk>

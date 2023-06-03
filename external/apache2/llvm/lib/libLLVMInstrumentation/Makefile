@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2021/05/30 01:56:53 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2023/06/03 08:52:53 lukem Exp $
 
 LIB=	LLVMInstrumentation
 
@@ -32,4 +32,4 @@ SRCS+=	AddressSanitizer.cpp \
 .include <bsd.lib.mk>
 .endif
 
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}

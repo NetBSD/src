@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2023/05/29 20:31:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2023/06/03 08:52:58 lukem Exp $
 #
 
 .include "../Makefile.inc"
@@ -57,12 +57,12 @@ SRCS+=	radix_ipf.c
 WARNS=	3
 
 CWARNFLAGS.clang+=	-Wno-self-assign
-COPTS.fil.c+=		${CC_NO_ADDR_OF_PACKED_MEMBER}
-COPTS.ip_fil_netbsd.c+=	${CC_NO_ADDR_OF_PACKED_MEMBER}
-COPTS.ip_htable.c+=	${CC_NO_ADDR_OF_PACKED_MEMBER}
-COPTS.ip_nat.c+=	${CC_NO_ADDR_OF_PACKED_MEMBER}
-COPTS.ip_nat6.c+=	${CC_NO_ADDR_OF_PACKED_MEMBER}
-COPTS.ip_proxy.c+=	${CC_NO_ADDR_OF_PACKED_MEMBER}
-COPTS.ip_state.c+=	${CC_NO_ADDR_OF_PACKED_MEMBER}
+COPTS.fil.c+=		${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+COPTS.ip_fil_netbsd.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+COPTS.ip_htable.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+COPTS.ip_nat.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+COPTS.ip_nat6.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+COPTS.ip_proxy.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+COPTS.ip_state.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 .include <bsd.kmodule.mk>

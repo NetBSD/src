@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2023/05/29 20:31:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2023/06/03 08:52:58 lukem Exp $
 
 .include "../Makefile.inc"
 
@@ -13,7 +13,7 @@ WARNS=	3
 
 CWARNFLAGS.clang=	-Wno-self-assign
 
-COPTS.udf_allocation.c+=	${CC_NO_ADDR_OF_PACKED_MEMBER}
-COPTS.udf_subr.c+=		${CC_NO_ADDR_OF_PACKED_MEMBER}
+COPTS.udf_allocation.c+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
+COPTS.udf_subr.c+=		${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 .include <bsd.kmodule.mk>

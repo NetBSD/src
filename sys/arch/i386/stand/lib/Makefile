@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2020/09/06 07:20:29 mrg Exp $
+#	$NetBSD: Makefile,v 1.49 2023/06/03 08:52:57 lukem Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -32,7 +32,7 @@ SRCS+= realprot.S message.S message32.S dump_eax.S pvcopy.S putstr.S putstr32.S
 SRCS+= rasops.c vbe.c biosvbe.S
 .if (${I386_INCLUDE_DISK} == "yes")
 SRCS+= biosdisk.c biosdisk_ll.c bios_disk.S
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 .endif
 .if (${I386_INCLUDE_DOS} == "yes")
 SRCS+= dosfile.c dos_file.S

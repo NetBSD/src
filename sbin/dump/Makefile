@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2020/09/06 07:20:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.42 2023/06/03 08:52:55 lukem Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/5/93
 
 #	dump.h			header file
@@ -39,7 +39,7 @@ LDADD+= -lutil
 
 COPTS.ffs_inode.c+=	-Wno-pointer-sign
 COPTS.traverse.c+=	${GCC_NO_FORMAT_TRUNCATION}
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 CWARNFLAGS.gcc+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

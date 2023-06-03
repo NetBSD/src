@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2020/09/06 07:20:28 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2023/06/03 08:52:56 lukem Exp $
 
 .include <bsd.own.mk>
 
@@ -20,6 +20,6 @@ MAN=	nvmectl.8
 DPADD+= ${LIBUTIL}
 LDADD+= -lutil
 
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>

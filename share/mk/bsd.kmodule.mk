@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.82 2023/05/07 12:41:48 skrll Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.83 2023/06/03 08:52:56 lukem Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -38,7 +38,7 @@ CWARNFLAGS.clang+=	-Wno-error=constant-conversion
 CFLAGS+=	-fno-strict-aliasing
 CWARNFLAGS+=	-Wno-pointer-sign -Wno-attributes
 CWARNFLAGS+=	-Wno-type-limits
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
 
 # XXX This is a workaround for platforms that have relative relocations

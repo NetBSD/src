@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2020/09/06 07:20:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.51 2023/06/03 08:52:55 lukem Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 # when making a change to this file, please check if the change is
@@ -13,7 +13,7 @@ SUBDIR.roff=	SMM.doc
 
 .include "Makefile.common"
 
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2021/08/22 22:24:12 rillig Exp $
+#	$NetBSD: Makefile,v 1.33 2023/06/03 08:53:00 lukem Exp $
 
 NOMAN=		# defined
 
@@ -33,7 +33,7 @@ misc.c misc.h: ${DESTDIR}/usr/include/sys/errno.h makeerrnos.sh \
 CPPFLAGS+=	-I. -I${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys \
 		-I${NETBSDSRCDIR}/usr.bin/kdump -DKTRUSS -D_KERNTYPES
 
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 .include <bsd.prog.mk>
 
