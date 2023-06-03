@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.110 2020/09/07 07:07:32 mrg Exp $
+# $NetBSD: Makefile.sun3,v 1.111 2023/06/03 08:52:57 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -35,7 +35,7 @@ CPPFLAGS+=	-Dsun3
 CFLAGS+=	${CMACHFLAGS} -fno-defer-pop
 CFLAGS+=	-msoft-float
 AFLAGS+=	-x assembler-with-cpp
-COPTS.sunmon.c+=${GCC_NO_ADDR_OF_PACKED_MEMBER} ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=array-bounds :}
+COPTS.sunmon.c+=${CC_WNO_ADDRESS_OF_PACKED_MEMBER} ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-error=array-bounds :}
 
 ##
 ## (3) libkern and compat

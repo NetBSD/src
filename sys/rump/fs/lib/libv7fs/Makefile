@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2020/09/06 07:20:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2023/06/03 08:52:59 lukem Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../fs/v7fs
@@ -15,7 +15,7 @@ SRCS+=	v7fs_io_kern.c v7fs_extern.c v7fs_vnops.c v7fs_vfsops.c
 
 CPPFLAGS+= -DV7FS_EI
 
-CWARNFLAGS.gcc+=	${GCC_NO_ADDR_OF_PACKED_MEMBER}
+CWARNFLAGS.gcc+=	${CC_WNO_ADDRESS_OF_PACKED_MEMBER}
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
