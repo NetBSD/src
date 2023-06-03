@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2021/09/17 02:18:05 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2023/06/03 21:33:02 lukem Exp $
 
 .include "../common.mk"
 .include "../sources.mk"
@@ -25,7 +25,7 @@ CPPFLAGS+=	-I${TOPDIR}/lib
 CPPFLAGS+=	-I${TOPDIR}/include
 
 CWARNFLAGS.clang+=	-Wno-error=cast-qual-unrelated
-CWARNFLAGS.gcc+=	-Wno-error=stringop-overflow
+CWARNFLAGS.gcc+=	${CC_WNO_STRINGOP_OVERFLOW}
 
 COPTS+=		-fPIC
 

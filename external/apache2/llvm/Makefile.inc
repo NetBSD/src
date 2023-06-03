@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2022/02/28 16:30:10 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2023/06/03 21:33:01 lukem Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -18,9 +18,6 @@ LLVM_TOPLEVEL:=	${.PARSEDIR}
 CONFIG_DIR:=	${.PARSEDIR}/autoconf
 
 CPPFLAGS+=	-I. -I${CLANG_SRCDIR}/include -I${LLVM_SRCDIR}/include
-
-# Bogus warning with -O2 in GCC 7 and 8.
-CWARNFLAGS.gcc+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} < 9:? -Wno-stringop-overflow :}
 
 MODULES_CXXFLAGS=	-fmodules -fcxx-modules -Werror=incomplete-umbrella \
 			-fmodules-validate-system-headers \
