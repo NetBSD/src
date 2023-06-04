@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.30 2023/05/21 10:18:44 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.31 2023/06/04 13:26:07 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -511,11 +511,7 @@ function(void)
 	origin =
 		    ((int)
 		     ((-1) *
-		      (struct point){
-# FIXME: the '{' is part of the expression, not a separate block.
-		0, 0
-# FIXME: the '}' is part of the expression, not a separate block.
-	}
+		      (struct point){0, 0}
 # FIXME: the ')' must be aligned with the corresponding '('.
 	)
 		    );

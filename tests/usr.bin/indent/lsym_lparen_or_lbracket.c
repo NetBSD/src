@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.9 2023/05/16 11:32:02 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.10 2023/06/04 13:26:07 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -194,14 +194,34 @@ function(void)
 		(cond) ? 123 : 456;
 
 	/* C99 compound literal */
-	origin = (struct point){
-		0, 0
-	};
+	origin = (struct point){0, 0};
 
 	/* GCC statement expression */
 	/* expr = ({if(expr)debug();expr;}); */
 }
 //indent end
+
+
+/*
+ * Test a few variants of C99 compound expressions, as the '{' and '}' must not
+ * be treated as block delimiters.
+ */
+//indent input
+{
+	return (struct point){0, 0};
+	return (struct point){
+		0, 0
+	};
+	return (struct point){.x = 0, .y = 0};
+	return (struct point){
+		.x = 0,
+// $ FIXME: The initializers must be indented the same.
+			.y = 0,
+	};
+}
+//indent end
+
+//indent run-equals-input
 
 
 /*

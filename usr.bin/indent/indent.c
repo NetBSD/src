@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.322 2023/06/04 12:46:57 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.323 2023/06/04 13:26:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.322 2023/06/04 12:46:57 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.323 2023/06/04 13:26:06 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -769,6 +769,15 @@ process_semicolon(void)
 static void
 process_lbrace(void)
 {
+	parser_symbol psym = ps.s_sym[ps.tos];
+	if (ps.prev_token == lsym_rparen
+	    && ps.tos >= 2
+	    && !(psym == psym_for_exprs || psym == psym_if_expr
+		    || psym == psym_switch_expr || psym == psym_while_expr)) {
+		ps.block_init = true;
+		ps.init_or_struct = true;
+	}
+
 	ps.in_stmt_or_decl = false;	/* don't indent the {} */
 
 	if (!ps.block_init)

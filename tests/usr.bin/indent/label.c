@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.7 2023/06/02 14:34:14 rillig Exp $	*/
+/*	$NetBSD: label.c,v 1.8 2023/06/04 13:26:07 rillig Exp $	*/
 
 /* See FreeBSD r303489 */
 
@@ -8,6 +8,8 @@ void t(void) {
 	{
 		case 1:	/* test */
 		case 2:		/* test */
+		case 3: /* test */
+		case 4: /* test */
 	}
 CLEANUP:
 	;
@@ -23,6 +25,8 @@ t(void)
 	switch (1) {
 	case 1:			/* test */
 	case 2:			/* test */
+	case 3:			/* test */
+	case 4:			/* test */
 	}
 CLEANUP:
 	;
