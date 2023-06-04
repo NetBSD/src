@@ -1,10 +1,11 @@
-/* $NetBSD: opt_badp.c,v 1.11 2023/05/15 09:05:08 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.12 2023/06/04 19:28:54 rillig Exp $ */
 
 /*
  * Tests for the options '-badp' and '-nbadp'.
  *
- * The option '-badp' forces a blank line after the first set of declarations
- * in a function. It produces a blank line even if there are no declarations.
+ * The option '-badp' forces a blank line between the first set of declarations
+ * in a function and the next comment or statement. It produces a blank line
+ * even if there are no declarations.
  */
 
 //indent input
