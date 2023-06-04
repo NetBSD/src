@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.324 2023/06/04 14:20:00 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.325 2023/06/04 14:38:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.324 2023/06/04 14:20:00 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.325 2023/06/04 14:38:15 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -782,8 +782,6 @@ process_lbrace(void)
 
 	if (!ps.block_init)
 		ps.force_nl = true;
-	else if (ps.block_init_level <= 0)
-		ps.block_init_level = 1;
 	else
 		ps.block_init_level++;
 
@@ -848,7 +846,8 @@ process_rbrace(void)
 	}
 
 	ps.declaration = decl_no;
-	ps.block_init_level--;
+	if (ps.block_init_level > 0)
+		ps.block_init_level--;
 
 	if (code.len > 0 && !ps.block_init) {
 		if (opt.verbose)
@@ -999,7 +998,7 @@ process_comma(void)
 	buf_add_char(&code, ',');
 
 	if (ps.nparen == 0) {
-		if (ps.block_init_level <= 0)
+		if (ps.block_init_level == 0)
 			ps.block_init = false;
 		int typical_varname_length = 8;
 		if (ps.break_after_comma && (opt.break_after_comma ||
