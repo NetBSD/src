@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2023/06/03 21:33:01 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2023/06/04 17:48:05 lukem Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -36,7 +36,7 @@ HOST_CXXFLAGS+=	-O2 -fno-rtti -fno-exceptions -fno-strict-aliasing
 .if ${HOST_SUPPORTS_MODULES:Uno} == "yes"
 HOST_CXXFLAGS+=	${MODULES_CXXFLAGS}
 .endif
-HOST_CPPFLAGS+=	-std=c++14
+HOST_CXXFLAGS+=	-std=c++14
 LLVM_TARGETS=	x86,powerpc,sparc,aarch64,arm,mips
 .else
 LLVM_INCLUDE_CONFIG=	${LLVM_TOPLEVEL}/config
