@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.338 2023/05/23 20:26:52 lukem Exp $
+$NetBSD: UPDATING,v 1.339 2023/06/04 16:14:59 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,6 +19,11 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20230604:
+	Building native kernels with the installed make(1) instead of
+	the $TOOLDIR/bin/nbmake-${arch} wrapper will fail if userland
+	has not been updated. Note that this is an unsupported build
+	configuration (but usually works if userland is -current enough).
 
 20230523:
 	ctfmerge was fixed as macOS host tool. This may require a clean tools
