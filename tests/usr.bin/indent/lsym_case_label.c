@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_case_label.c,v 1.7 2023/06/04 12:46:57 rillig Exp $ */
+/* $NetBSD: lsym_case_label.c,v 1.8 2023/06/04 18:58:30 rillig Exp $ */
 
 /*
  * Tests for the tokens lsym_case and lsym_default, which represent the
@@ -66,8 +66,7 @@ function(void)
 	case 1:	{
 			break;
 		}
-	/* $ FIXME: missing space between ':' and '{'. */
-	case 11:{
+	case 11: {
 			break;
 		}
 	}
