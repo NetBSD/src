@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.8 2023/06/04 13:26:07 rillig Exp $	*/
+/*	$NetBSD: label.c,v 1.9 2023/06/04 18:58:30 rillig Exp $	*/
 
 /* See FreeBSD r303489 */
 
@@ -61,8 +61,8 @@ L_3:	;
 L__4:	;
 L___5:	;
 L____6:	;
-L_____7:;
-L______8:;
+L_____7: ;
+L______8: ;
 }
 //indent end
 

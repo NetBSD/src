@@ -1,4 +1,4 @@
-/* $NetBSD: edge_cases.c,v 1.2 2023/05/22 23:01:27 rillig Exp $ */
+/* $NetBSD: edge_cases.c,v 1.3 2023/06/04 18:58:30 rillig Exp $ */
 
 /*
  * Tests for edge cases in the C programming language that indent does not
@@ -30,10 +30,10 @@ digraphs(void)
 {
 	/* same as 'array[subscript]' */
 // $ Indent interprets everything before the second ':' as a label name,
-// $ therefore the statement is indented that far to the left.
+// $ indenting the "label" 2 levels to the left.
 // $
 // $ The space between 'array' and '<' comes from the binary operator '<'.
-number = array <:subscript:>;
+number = array <:subscript: >;
 
 	/* same as '(int){ initializer }' */
 // $ The opening '<' and '%' are interpreted as unary operators.
