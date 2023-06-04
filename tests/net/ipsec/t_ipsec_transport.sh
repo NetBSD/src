@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_transport.sh,v 1.6 2017/08/03 03:16:27 ozaki-r Exp $
+#	$NetBSD: t_ipsec_transport.sh,v 1.7 2023/06/04 22:18:47 chs Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -261,15 +261,15 @@ atf_init_test_cases()
 {
 	local algo=
 
-	for algo in $ESP_ENCRYPTION_ALGORITHMS; do
+	for algo in $ESP_ENCRYPTION_ALGORITHMS_MINIMUM; do
 		add_test_transport_mode ipv4 esp $algo
 		add_test_transport_mode ipv6 esp $algo
 	done
-	for algo in $AH_AUTHENTICATION_ALGORITHMS; do
+	for algo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
 		add_test_transport_mode ipv4 ah $algo
 		add_test_transport_mode ipv6 ah $algo
 	done
-	for algo in $IPCOMP_COMPRESSION_ALGORITHMS; do
+	for algo in $IPCOMP_COMPRESSION_ALGORITHMS_MINIMUM; do
 		add_test_transport_mode ipv4 ipcomp $algo
 		add_test_transport_mode ipv6 ipcomp $algo
 	done
