@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.318 2023/06/04 10:23:36 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.319 2023/06/04 11:09:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.318 2023/06/04 10:23:36 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.319 2023/06/04 11:09:18 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -712,8 +712,9 @@ process_colon(void)
 	buf_add_char(&lab, ':');
 	code.len = 0;
 
+	if (ps.seen_case)
+		out.line_kind = lk_case_or_default;
 	ps.in_stmt_or_decl = false;
-	ps.is_case_label = ps.seen_case;
 	ps.force_nl = ps.seen_case;
 	ps.seen_case = false;
 	ps.want_blank = false;
@@ -1057,8 +1058,6 @@ process_preprocessing(void)
 		output_line();
 
 	read_preprocessing_line();
-
-	ps.is_case_label = false;
 
 	const char *end = lab.mem + lab.len;
 	const char *dir = lab.st + 1;
