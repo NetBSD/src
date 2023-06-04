@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.320 2023/06/04 11:33:36 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.321 2023/06/04 11:45:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.320 2023/06/04 11:33:36 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.321 2023/06/04 11:45:00 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -338,7 +338,7 @@ update_ps_decl_ptr(lexer_symbol lsym)
 {
 	switch (ps.decl_ptr) {
 	case dp_start:
-		if (lsym == lsym_storage_class)
+		if (lsym == lsym_modifier)
 			ps.decl_ptr = dp_start;
 		else if (lsym == lsym_type_outside_parentheses)
 			ps.decl_ptr = dp_word;
@@ -1187,7 +1187,7 @@ process_lsym(lexer_symbol lsym)
 		goto copy_token;
 
 	case lsym_typedef:
-	case lsym_storage_class:
+	case lsym_modifier:
 		goto copy_token;
 
 	case lsym_tag:
