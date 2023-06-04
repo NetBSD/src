@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.163 2023/06/04 10:23:36 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.164 2023/06/04 11:09:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -313,8 +313,6 @@ extern struct parser_state {
 	bool in_func_def_params;
 	bool seen_case;		/* set to true when we see a 'case', so we know
 				 * what to do with the following colon */
-	bool is_case_label;	/* 'case' and 'default' labels are indented
-				 * differently from regular labels */
 	parser_symbol spaced_expr_psym;	/* the parser symbol to be shifted
 					 * after the parenthesized expression
 					 * from a 'for', 'if', 'switch' or
@@ -425,6 +423,7 @@ extern struct output_state {
 				 * 'if (expr)' or 'for (expr; expr; expr)' */
 		lk_func_end,	/* the last '}' of a function body */
 		lk_block_comment,
+		lk_case_or_default,
 	} line_kind;		/* kind of the line that is being prepared for
 				 * output; is reset to lk_other each time after
 				 * trying to send a line to the output, even if
