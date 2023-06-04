@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.213 2023/06/04 22:36:10 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.214 2023/06/04 22:57:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.213 2023/06/04 22:36:10 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.214 2023/06/04 22:57:18 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -667,12 +667,13 @@ lexi(void)
 			break;
 		}
 
-		/* things like '||', '&&', '<<=', 'int *****i' */
-		while (inp_p[0] == token.s[token.len - 1]
-		    || inp_p[0] == '=')
-			token_add_char(*inp_p++);
-
+		/* things like '||', '&&', '<<=' */
 		lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
+		if (inp_p[0] == token.s[token.len - 1])
+			token_add_char(*inp_p++), lsym = lsym_binary_op;
+		if (inp_p[0] == '=')
+			token_add_char(*inp_p++), lsym = lsym_binary_op;
+
 		next_unary = true;
 	}
 
