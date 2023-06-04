@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.56 2023/06/02 08:51:46 andvar Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.57 2023/06/04 01:24:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.56 2023/06/02 08:51:46 andvar Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.57 2023/06/04 01:24:58 joerg Exp $");
 #endif /* not lint */
 
 #include <machine/elf_support.h>
@@ -282,9 +282,9 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				break;
 
 			case R_TYPE(TLS_TPOFF32):
-				if (!defobj->tls_done &&
-					_rtld_tls_offset_allocate(obj))
-					     return -1;
+				if (!defobj->tls_static &&
+				    _rtld_tls_offset_allocate(__UNCONST(defobj)))
+					return -1;
 
 				*where = (Elf_Addr)(def->st_value -
 				    defobj->tlsoffset + rela->r_addend);

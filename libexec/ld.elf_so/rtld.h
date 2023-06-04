@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.145 2023/04/18 16:48:45 christos Exp $	 */
+/*	$NetBSD: rtld.h,v 1.146 2023/06/04 01:24:56 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -219,7 +219,9 @@ typedef struct Struct_Obj_Entry {
 			phdr_loaded:1,	/* Phdr is loaded and doesn't need to
 					 * be freed. */
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-			tls_done:1,	/* True if static TLS offset
+			tls_static:1,	/* True if static TLS offset
+					 * has been allocated */
+			tls_dynamic:1,	/* True if any non-static DTV entry
 					 * has been allocated */
 #endif
 			ref_nodel:1,	/* Refcount increased to prevent dlclose */
@@ -483,7 +485,6 @@ _rtld_fetch_ventry(const Obj_Entry *obj, unsigned long symnum)
 /* tls.c */
 void *_rtld_tls_get_addr(void *, size_t, size_t);
 void _rtld_tls_initial_allocation(void);
-void *_rtld_tls_module_allocate(size_t index);
 int _rtld_tls_offset_allocate(Obj_Entry *);
 void _rtld_tls_offset_free(Obj_Entry *);
 

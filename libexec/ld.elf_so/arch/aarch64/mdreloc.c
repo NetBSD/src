@@ -1,4 +1,4 @@
-/* $NetBSD: mdreloc.c,v 1.17 2022/12/03 09:10:40 skrll Exp $ */
+/* $NetBSD: mdreloc.c,v 1.18 2023/06/04 01:24:56 joerg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.17 2022/12/03 09:10:40 skrll Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.18 2023/06/04 01:24:56 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -157,7 +157,7 @@ _rtld_tlsdesc_fill(const Obj_Entry *obj, const Elf_Rela *rela, Elf_Addr *where, 
 	}
 	offs += rela->r_addend;
 
-	if (defobj->tls_done) {
+	if (defobj->tls_static) {
 		/* Variable is in initially allocated TLS segment */
 		where[0] = (Elf_Addr)_rtld_tlsdesc_static;
 		where[1] = defobj->tlsoffset + offs +
@@ -299,8 +299,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TLS_TYPE(TLS_TPREL):
-			if (!defobj->tls_done &&
-			    _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			*where = (Elf_Addr)(def->st_value + defobj->tlsoffset +
