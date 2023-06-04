@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.10 2023/06/04 13:26:07 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.11 2023/06/04 13:49:00 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -215,8 +215,7 @@ function(void)
 	return (struct point){.x = 0, .y = 0};
 	return (struct point){
 		.x = 0,
-// $ FIXME: The initializers must be indented the same.
-			.y = 0,
+		.y = 0,
 	};
 }
 //indent end

@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lbrace.c,v 1.7 2023/06/03 21:44:08 rillig Exp $ */
+/* $NetBSD: lsym_lbrace.c,v 1.8 2023/06/04 13:49:00 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lbrace, which represents a '{' in these contexts:
@@ -62,14 +62,4 @@ origin(void)
 }
 //indent end
 
-//indent run
-struct point
-origin(void)
-{
-	return (struct point){
-		.x = 0,
-/* $ FIXME: All initializers must be indented to the same level. */
-			.y = 0,
-	};
-}
-//indent end
+//indent run-equals-input

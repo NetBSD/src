@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.188 2023/06/04 11:09:18 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.189 2023/06/04 13:49:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.188 2023/06/04 11:09:18 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.189 2023/06/04 13:49:00 rillig Exp $");
 
 #include <stdio.h>
 
@@ -300,7 +300,8 @@ output_line(void)
 
 dont_write_line:
 	ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */
-	ps.in_stmt_cont = ps.in_stmt_or_decl && !ps.in_decl;
+	ps.in_stmt_cont = ps.in_stmt_or_decl
+	    && !ps.in_decl && ps.block_init_level <= 0;
 	ps.decl_indent_done = false;
 	if (ps.extra_expr_indent == eei_last)
 		ps.extra_expr_indent = eei_no;
