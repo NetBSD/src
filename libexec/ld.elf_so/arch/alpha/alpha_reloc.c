@@ -1,4 +1,4 @@
-/*	$NetBSD: alpha_reloc.c,v 1.43 2017/08/10 19:03:26 joerg Exp $	*/
+/*	$NetBSD: alpha_reloc.c,v 1.44 2023/06/04 01:24:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: alpha_reloc.c,v 1.43 2017/08/10 19:03:26 joerg Exp $");
+__RCSID("$NetBSD: alpha_reloc.c,v 1.44 2023/06/04 01:24:57 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -280,8 +280,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TPREL64):
-			if (!defobj->tls_done &&
-			    _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			tmp = (Elf64_Addr)(def->st_value +

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_extern.c,v 1.11 2023/06/02 19:09:11 riastradh Exp $	*/
+/*	$NetBSD: t_tls_extern.c,v 1.12 2023/06/04 01:24:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -41,8 +41,7 @@ enum order {
 };
 
 static void
-tls_extern(const char *libdef, const char *libuse, enum order order,
-    bool xfail)
+tls_extern(const char *libdef, const char *libuse, enum order order)
 {
 	void *def, *use;
 	int *(*fdef)(void), *(*fuse)(void);
@@ -77,10 +76,6 @@ lazy:		ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
 		break;
 	}
 
-	if (xfail) {
-		atf_tc_expect_fail("PR toolchain/50277:"
-		    " rtld relocation bug with thread local storage");
-	}
 	ATF_CHECK_EQ_MSG(pdef, puse,
 	    "%p in defining library != %p in using library",
 	    pdef, puse);
@@ -94,8 +89,7 @@ ATF_TC_HEAD(dynamic_abusedef, tc)
 }
 ATF_TC_BODY(dynamic_abusedef, tc)
 {
-	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so",
-	    USE_DEF, /*xfail*/true);
+	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so", USE_DEF);
 }
 
 ATF_TC(dynamic_abusedefnoload);
@@ -107,7 +101,7 @@ ATF_TC_HEAD(dynamic_abusedefnoload, tc)
 ATF_TC_BODY(dynamic_abusedefnoload, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so",
-	    USE_DEF_NOLOAD, /*xfail*/true);
+	    USE_DEF_NOLOAD);
 }
 
 ATF_TC(dynamic_defabuse_eager);
@@ -124,7 +118,6 @@ ATF_TC_BODY(dynamic_defabuse_eager, tc)
 	ATF_REQUIRE_DL(def = dlopen("libh_def_dynamic.so", 0));
 	ATF_REQUIRE_DL(fdef = dlsym(def, "fdef"));
 	(void)(*fdef)();
-	atf_tc_expect_fail("rtld fails to detect dynamic-then-static abuse");
 	ATF_CHECK_EQ_MSG(NULL, dlopen("libh_abuse_dynamic.so", 0),
 	    "dlopen failed to detect static-then-dynamic abuse");
 }
@@ -138,7 +131,7 @@ ATF_TC_HEAD(dynamic_defabuse_lazy, tc)
 ATF_TC_BODY(dynamic_defabuse_lazy, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_abuse_dynamic.so",
-	    DEF_USE_LAZY, /*xfail*/true);
+	    DEF_USE_LAZY);
 }
 
 ATF_TC(dynamic_defuse_eager);
@@ -150,7 +143,7 @@ ATF_TC_HEAD(dynamic_defuse_eager, tc)
 ATF_TC_BODY(dynamic_defuse_eager, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
-	    DEF_USE_EAGER, /*xfail*/false);
+	    DEF_USE_EAGER);
 }
 
 ATF_TC(dynamic_defuse_lazy);
@@ -162,7 +155,7 @@ ATF_TC_HEAD(dynamic_defuse_lazy, tc)
 ATF_TC_BODY(dynamic_defuse_lazy, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
-	    DEF_USE_LAZY, /*xfail*/false);
+	    DEF_USE_LAZY);
 }
 
 ATF_TC(dynamic_usedef);
@@ -174,7 +167,7 @@ ATF_TC_HEAD(dynamic_usedef, tc)
 ATF_TC_BODY(dynamic_usedef, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
-	    USE_DEF, /*xfail*/false);
+	    USE_DEF);
 }
 
 ATF_TC(dynamic_usedefnoload);
@@ -186,7 +179,7 @@ ATF_TC_HEAD(dynamic_usedefnoload, tc)
 ATF_TC_BODY(dynamic_usedefnoload, tc)
 {
 	tls_extern("libh_def_dynamic.so", "libh_use_dynamic.so",
-	    USE_DEF_NOLOAD, /*xfail*/false);
+	    USE_DEF_NOLOAD);
 }
 
 ATF_TC(static_abusedef);
@@ -197,8 +190,7 @@ ATF_TC_HEAD(static_abusedef, tc)
 }
 ATF_TC_BODY(static_abusedef, tc)
 {
-	tls_extern("libh_def_static.so", "libh_abuse_static.so",
-	    USE_DEF, /*xfail*/true);
+	tls_extern("libh_def_static.so", "libh_abuse_static.so", USE_DEF);
 }
 
 ATF_TC(static_abusedefnoload);
@@ -210,7 +202,7 @@ ATF_TC_HEAD(static_abusedefnoload, tc)
 ATF_TC_BODY(static_abusedefnoload, tc)
 {
 	tls_extern("libh_def_static.so", "libh_abuse_static.so",
-	    USE_DEF_NOLOAD, /*xfail*/true);
+	    USE_DEF_NOLOAD);
 }
 
 ATF_TC(static_defabuse_eager);
@@ -222,7 +214,7 @@ ATF_TC_HEAD(static_defabuse_eager, tc)
 ATF_TC_BODY(static_defabuse_eager, tc)
 {
 	tls_extern("libh_def_static.so", "libh_abuse_static.so",
-	    DEF_USE_EAGER, /*xfail*/true);
+	    DEF_USE_EAGER);
 }
 
 ATF_TC(static_defabuse_lazy);
@@ -234,7 +226,7 @@ ATF_TC_HEAD(static_defabuse_lazy, tc)
 ATF_TC_BODY(static_defabuse_lazy, tc)
 {
 	tls_extern("libh_def_static.so", "libh_abuse_static.so",
-	    DEF_USE_LAZY, /*xfail*/true);
+	    DEF_USE_LAZY);
 }
 
 ATF_TC(static_defuse_eager);
@@ -246,7 +238,7 @@ ATF_TC_HEAD(static_defuse_eager, tc)
 ATF_TC_BODY(static_defuse_eager, tc)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
-	    DEF_USE_EAGER, /*xfail*/false);
+	    DEF_USE_EAGER);
 }
 
 ATF_TC(static_defuse_lazy);
@@ -258,7 +250,7 @@ ATF_TC_HEAD(static_defuse_lazy, tc)
 ATF_TC_BODY(static_defuse_lazy, tc)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
-	    DEF_USE_LAZY, /*xfail*/false);
+	    DEF_USE_LAZY);
 }
 
 ATF_TC(static_usedef);
@@ -270,7 +262,7 @@ ATF_TC_HEAD(static_usedef, tc)
 ATF_TC_BODY(static_usedef, tc)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
-	    USE_DEF, /*xfail*/true);
+	    USE_DEF);
 }
 
 ATF_TC(static_usedefnoload);
@@ -282,7 +274,7 @@ ATF_TC_HEAD(static_usedefnoload, tc)
 ATF_TC_BODY(static_usedefnoload, tc)
 {
 	tls_extern("libh_def_static.so", "libh_use_static.so",
-	    USE_DEF_NOLOAD, /*xfail*/true);
+	    USE_DEF_NOLOAD);
 }
 
 ATF_TC(onlydef_dynamic_static_ctor);
@@ -296,7 +288,6 @@ ATF_TC_BODY(onlydef_dynamic_static_ctor, tc)
 
 	ATF_REQUIRE_DL(dlopen("libh_onlydef.so", 0));
 	ATF_REQUIRE_DL(dlopen("libh_onlyctor_dynamic.so", 0));
-	atf_tc_expect_fail("rtld fails to detect dynamic-then-static abuse");
 	ATF_CHECK_EQ_MSG(NULL, dlopen("libh_onlyuse_static.so", 0),
 	    "dlopen failed to detect dynamic-then-static abuse");
 }
@@ -315,7 +306,6 @@ ATF_TC_BODY(onlydef_dynamic_static_eager, tc)
 	ATF_REQUIRE_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
 	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
 	(void)(*fdynamic)();
-	atf_tc_expect_fail("rtld fails to detect dynamic-then-static abuse");
 	ATF_CHECK_EQ_MSG(NULL, dlopen("libh_onlyuse_static.so", 0),
 	    "dlopen failed to detect dynamic-then-static abuse");
 }
@@ -338,8 +328,6 @@ ATF_TC_BODY(onlydef_dynamic_static_lazy, tc)
 	ATF_REQUIRE_DL(fstatic = dlsym(use_static, "fstatic"));
 	pdynamic = (*fdynamic)();
 	pstatic = (*fstatic)();
-	atf_tc_expect_fail("PR toolchain/50277:"
-	    " rtld relocation bug with thread local storage");
 	ATF_CHECK_EQ_MSG(pdynamic, pstatic,
 	    "%p in dynamic tls user != %p in static tls user",
 	    pdynamic, pstatic);
@@ -365,8 +353,6 @@ ATF_TC_BODY(onlydef_static_dynamic_eager, tc)
 	ATF_REQUIRE_DL(use_dynamic = dlopen("libh_onlyuse_dynamic.so", 0));
 	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
 	pdynamic = (*fdynamic)();
-	atf_tc_expect_fail("PR toolchain/50277:"
-	    " rtld relocation bug with thread local storage");
 	ATF_CHECK_EQ_MSG(pstatic, pdynamic,
 	    "%p in static tls user != %p in dynamic tls user",
 	    pstatic, pdynamic);
@@ -391,8 +377,6 @@ ATF_TC_BODY(onlydef_static_dynamic_lazy, tc)
 	ATF_REQUIRE_DL(fdynamic = dlsym(use_dynamic, "fdynamic"));
 	pstatic = (*fstatic)();
 	pdynamic = (*fdynamic)();
-	atf_tc_expect_fail("PR toolchain/50277:"
-	    " rtld relocation bug with thread local storage");
 	ATF_CHECK_EQ_MSG(pstatic, pdynamic,
 	    "%p in static tls user != %p in dynamic tls user",
 	    pstatic, pdynamic);

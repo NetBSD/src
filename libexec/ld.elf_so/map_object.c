@@ -1,4 +1,4 @@
-/*	$NetBSD: map_object.c,v 1.66 2023/05/31 18:44:39 riastradh Exp $	 */
+/*	$NetBSD: map_object.c,v 1.67 2023/06/04 01:24:56 joerg Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: map_object.c,v 1.66 2023/05/31 18:44:39 riastradh Exp $");
+__RCSID("$NetBSD: map_object.c,v 1.67 2023/06/04 01:24:56 joerg Exp $");
 #endif /* not lint */
 
 #include <errno.h>
@@ -490,7 +490,7 @@ _rtld_obj_free(Obj_Entry *obj)
 	Name_Entry *entry;
 
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-	if (obj->tls_done)
+	if (obj->tls_static)
 		_rtld_tls_offset_free(obj);
 #endif
 	xfree(obj->path);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mdreloc.c,v 1.69 2018/04/03 21:10:27 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.70 2023/06/04 01:24:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo Horvath.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.69 2018/04/03 21:10:27 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.70 2023/06/04 01:24:58 joerg Exp $");
 #endif /* not lint */
 
 #include <machine/elf_support.h>
@@ -383,9 +383,9 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 				break;
 
 			case R_TYPE(TLS_TPOFF64):
-				if (!defobj->tls_done &&
-					_rtld_tls_offset_allocate(obj))
-					     return -1;
+				if (!defobj->tls_static &&
+				    _rtld_tls_offset_allocate(__UNCONST(defobj)))
+					return -1;
 
 				*where = (Elf64_Addr)(def->st_value -
 				    defobj->tlsoffset + rela->r_addend);
