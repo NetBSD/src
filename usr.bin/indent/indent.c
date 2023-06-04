@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.323 2023/06/04 13:26:06 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.324 2023/06/04 14:20:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.323 2023/06/04 13:26:06 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.324 2023/06/04 14:20:00 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -179,7 +179,7 @@ static void
 init_globals(void)
 {
 	ps.s_sym[0] = psym_stmt_list;
-	ps.prev_token = lsym_semicolon;
+	ps.prev_lsym = lsym_semicolon;
 	ps.next_col_1 = true;
 
 	const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
@@ -362,7 +362,7 @@ update_ps_decl_ptr(lexer_symbol lsym)
 	case dp_other:
 		if (lsym == lsym_semicolon || lsym == lsym_rbrace)
 			ps.decl_ptr = dp_start;
-		if (lsym == lsym_lparen && ps.prev_token != lsym_sizeof)
+		if (lsym == lsym_lparen && ps.prev_lsym != lsym_sizeof)
 			ps.decl_ptr = dp_start;
 		if (lsym == lsym_comma && ps.in_decl)
 			ps.decl_ptr = dp_start;
@@ -425,7 +425,7 @@ maybe_break_line(lexer_symbol lsym)
 	if (lsym == lsym_semicolon)
 		return;
 	if (lsym == lsym_lbrace && opt.brace_same_line
-	    && ps.prev_token != lsym_lbrace)
+	    && ps.prev_lsym != lsym_lbrace)
 		return;
 
 	if (opt.verbose)
@@ -449,7 +449,7 @@ move_com_to_code(lexer_symbol lsym)
 static void
 process_newline(void)
 {
-	if (ps.prev_token == lsym_comma
+	if (ps.prev_lsym == lsym_comma
 	    && ps.nparen == 0 && !ps.block_init
 	    && !opt.break_after_comma && ps.break_after_comma
 	    && lab.len == 0 /* for preprocessing lines */
@@ -483,13 +483,13 @@ want_blank_before_lparen(void)
 		return false;
 	if (opt.proc_calls_space)
 		return true;
-	if (ps.prev_token == lsym_rparen || ps.prev_token == lsym_rbracket)
+	if (ps.prev_lsym == lsym_rparen || ps.prev_lsym == lsym_rbracket)
 		return false;
-	if (ps.prev_token == lsym_offsetof)
+	if (ps.prev_lsym == lsym_offsetof)
 		return false;
-	if (ps.prev_token == lsym_sizeof)
+	if (ps.prev_lsym == lsym_sizeof)
 		return opt.blank_after_sizeof;
-	if (ps.prev_token == lsym_word || ps.prev_token == lsym_funcname)
+	if (ps.prev_lsym == lsym_word || ps.prev_lsym == lsym_funcname)
 		return false;
 	return true;
 }
@@ -530,7 +530,7 @@ process_lparen(void)
 		indent = 2 * opt.indent_size;
 
 	enum paren_level_cast cast = cast_unknown;
-	if (ps.prev_token == lsym_offsetof || ps.prev_token == lsym_sizeof
+	if (ps.prev_lsym == lsym_offsetof || ps.prev_lsym == lsym_sizeof
 	    || ps.is_function_definition)
 		cast = cast_no;
 
@@ -545,9 +545,9 @@ want_blank_before_lbracket(void)
 {
 	if (code.len == 0)
 		return false;
-	if (ps.prev_token == lsym_comma)
+	if (ps.prev_lsym == lsym_comma)
 		return true;
-	if (ps.prev_token == lsym_binary_op)
+	if (ps.prev_lsym == lsym_binary_op)
 		return true;
 	return false;
 }
@@ -727,7 +727,7 @@ process_semicolon(void)
 		ps.init_or_struct = false;
 	ps.seen_case = false;	/* only needs to be reset on error */
 	ps.quest_level = 0;	/* only needs to be reset on error */
-	if (ps.prev_token == lsym_rparen)
+	if (ps.prev_lsym == lsym_rparen)
 		ps.in_func_def_params = false;
 	ps.block_init = false;
 	ps.block_init_level = 0;
@@ -770,7 +770,7 @@ static void
 process_lbrace(void)
 {
 	parser_symbol psym = ps.s_sym[ps.tos];
-	if (ps.prev_token == lsym_rparen
+	if (ps.prev_lsym == lsym_rparen
 	    && ps.tos >= 2
 	    && !(psym == psym_for_exprs || psym == psym_if_expr
 		    || psym == psym_switch_expr || psym == psym_while_expr)) {
@@ -918,7 +918,7 @@ process_type(void)
 {
 	parse(psym_decl);	/* let the parser worry about indentation */
 
-	if (ps.prev_token == lsym_rparen && ps.tos <= 1) {
+	if (ps.prev_lsym == lsym_rparen && ps.tos <= 1) {
 		if (code.len > 0)
 			output_line();
 	}
@@ -930,7 +930,7 @@ process_type(void)
 	}
 
 	ps.init_or_struct = /* maybe */ true;
-	ps.in_decl = ps.decl_on_line = ps.prev_token != lsym_typedef;
+	ps.in_decl = ps.decl_on_line = ps.prev_lsym != lsym_typedef;
 	if (ps.decl_level <= 0)
 		ps.declaration = decl_begin;
 
@@ -1261,7 +1261,7 @@ indent(void)
 		if (lsym == lsym_eof)
 			return process_eof();
 
-		if (lsym == lsym_if && ps.prev_token == lsym_else
+		if (lsym == lsym_if && ps.prev_lsym == lsym_else
 		    && opt.else_if)
 			ps.force_nl = false;
 
@@ -1288,7 +1288,7 @@ indent(void)
 
 		if (lsym != lsym_comment && lsym != lsym_newline &&
 		    lsym != lsym_preprocessing)
-			ps.prev_token = lsym;
+			ps.prev_lsym = lsym;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.30 2023/06/04 12:46:57 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.31 2023/06/04 14:20:00 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.30 2023/06/04 12:46:57 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.31 2023/06/04 14:20:00 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -294,8 +294,8 @@ debug_parser_state(void)
 	static struct parser_state prev_ps;
 
 	debug_blank_line();
-	debug_println("           ps.prev_token = %s",
-	    lsym_name[ps.prev_token]);
+	debug_println("           ps.prev_lsym = %s",
+	    lsym_name[ps.prev_lsym]);
 	debug_ps_bool(curr_col_1);
 	debug_ps_bool(next_col_1);
 	debug_ps_bool(next_unary);

@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.11 2023/06/04 13:49:00 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.12 2023/06/04 14:20:01 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -242,7 +242,7 @@ int array[] = {
 //indent input
 void cover_want_blank_before_lparen(void)
 {
-	/* ps.prev_token can never be 'newline'. */
+	/* ps.prev_lsym can never be 'newline'. */
 	int newline =
 	(3);
 
@@ -287,7 +287,7 @@ void cover_want_blank_before_lparen(void)
 void
 cover_want_blank_before_lparen(void)
 {
-	/* ps.prev_token can never be 'newline'. */
+	/* ps.prev_lsym can never be 'newline'. */
 	int newline =
 	(3);
 
