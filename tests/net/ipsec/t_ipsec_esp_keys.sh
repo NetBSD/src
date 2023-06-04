@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_esp_keys.sh,v 1.2 2017/08/03 03:16:27 ozaki-r Exp $
+#	$NetBSD: t_ipsec_esp_keys.sh,v 1.3 2023/06/04 22:18:47 chs Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -152,7 +152,7 @@ add_test_invalid_keys()
 atf_init_test_cases()
 {
 
-	for ealgo in $ESP_ENCRYPTION_ALGORITHMS; do
+	for ealgo in $ESP_ENCRYPTION_ALGORITHMS_MINIMUM; do
 		add_test_valid_keys $ealgo
 		add_test_invalid_keys $ealgo
 	done

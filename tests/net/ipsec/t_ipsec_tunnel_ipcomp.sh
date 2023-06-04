@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel_ipcomp.sh,v 1.2 2017/08/03 03:16:27 ozaki-r Exp $
+#	$NetBSD: t_ipsec_tunnel_ipcomp.sh,v 1.3 2023/06/04 22:18:47 chs Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -395,7 +395,7 @@ atf_init_test_cases()
 {
 	local calgo= algo=
 
-	for calgo in $IPCOMP_COMPRESSION_ALGORITHMS; do
+	for calgo in $IPCOMP_COMPRESSION_ALGORITHMS_MINIMUM; do
 		for algo in $ESP_ENCRYPTION_ALGORITHMS_MINIMUM; do
 			add_test_tunnel_mode ipv4 esp $algo $calgo
 			add_test_tunnel_mode ipv6 esp $algo $calgo
