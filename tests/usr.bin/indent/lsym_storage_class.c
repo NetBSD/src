@@ -1,8 +1,9 @@
-/* $NetBSD: lsym_storage_class.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: lsym_storage_class.c,v 1.5 2023/06/04 11:45:00 rillig Exp $ */
 
 /*
- * Tests for the token lsym_storage_class, which represents a storage class as
- * part of a declaration.
+ * Tests for the token lsym_modifier (formerly named lsym_storage_class), which
+ * represents a type modifier such as 'const', a variable modifier such as a
+ * storage class, or a function modifier such as 'inline'.
  */
 
 //indent input
