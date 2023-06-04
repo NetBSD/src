@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.192 2023/06/04 18:58:30 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.193 2023/06/04 20:51:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,13 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.192 2023/06/04 18:58:30 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.193 2023/06/04 20:51:19 rillig Exp $");
 
 #include <stdio.h>
 
 #include "indent.h"
 
 struct buffer inp;
+const char *inp_p;
 struct output_state out;
 static unsigned wrote_newlines = 2;	/* 0 in the middle of a line, 1 after a
 					 * single '\n', > 1 means there were (n
@@ -55,15 +56,15 @@ static int paren_indent;
 void
 inp_skip(void)
 {
-	inp.st++;
-	if ((size_t)(inp.st - inp.mem) >= inp.len)
+	inp_p++;
+	if ((size_t)(inp_p - inp.s) >= inp.len)
 		inp_read_line();
 }
 
 char
 inp_next(void)
 {
-	char ch = inp.st[0];
+	char ch = inp_p[0];
 	inp_skip();
 	return ch;
 }
@@ -71,7 +72,6 @@ inp_next(void)
 static void
 inp_read_next_line(FILE *f)
 {
-	inp.st = inp.mem;
 	inp.len = 0;
 
 	for (;;) {
@@ -90,6 +90,7 @@ inp_read_next_line(FILE *f)
 		if (ch == '\n')
 			break;
 	}
+	inp_p = inp.s;
 }
 
 static void
@@ -175,12 +176,12 @@ static int
 output_line_label(void)
 {
 
-	while (lab.len > 0 && ch_isblank(lab.mem[lab.len - 1]))
+	while (lab.len > 0 && ch_isblank(lab.s[lab.len - 1]))
 		lab.len--;
 
 	int ind = output_indent(0, compute_label_indent());
-	output_range(lab.st, lab.len);
-	return ind_add(ind, lab.st, lab.len);
+	output_range(lab.s, lab.len);
+	return ind_add(ind, lab.s, lab.len);
 }
 
 static int
@@ -202,15 +203,15 @@ output_line_code(int ind)
 	int code_ind = output_indent(ind, target_ind);
 	if (ind > 0 && code_ind == ind)
 		output_range(" ", 1), code_ind++;
-	output_range(code.st, code.len);
-	return ind_add(code_ind, code.st, code.len);
+	output_range(code.s, code.len);
+	return ind_add(code_ind, code.s, code.len);
 }
 
 static void
 output_line_comment(int ind)
 {
 	int target_ind = ps.com_ind;
-	const char *p = com.st;
+	const char *p = com.s;
 
 	target_ind += ps.comment_delta;
 
@@ -235,11 +236,11 @@ output_line_comment(int ind)
 		ind = 0;
 	}
 
-	while (com.mem + com.len > p && ch_isspace(com.mem[com.len - 1]))
+	while (com.s + com.len > p && ch_isspace(com.s[com.len - 1]))
 		com.len--;
 
 	(void)output_indent(ind, target_ind);
-	output_range(p, com.len - (size_t)(p - com.mem));
+	output_range(p, com.len - (size_t)(p - com.s));
 
 	ps.comment_delta = ps.n_comment_delta;
 }
@@ -296,7 +297,7 @@ output_line(void)
 
 	if (indent_enabled == indent_last_off_line) {
 		indent_enabled = indent_on;
-		output_range(out.indent_off_text.st, out.indent_off_text.len);
+		output_range(out.indent_off_text.s, out.indent_off_text.len);
 		out.indent_off_text.len = 0;
 	}
 
@@ -329,11 +330,11 @@ static int
 compute_code_indent_lineup(int base_ind)
 {
 	int ind = paren_indent;
-	int overflow = ind_add(ind, code.st, code.len) - opt.max_line_length;
+	int overflow = ind_add(ind, code.s, code.len) - opt.max_line_length;
 	if (overflow < 0)
 		return ind;
 
-	if (ind_add(base_ind, code.st, code.len) < opt.max_line_length) {
+	if (ind_add(base_ind, code.s, code.len) < opt.max_line_length) {
 		ind -= overflow + 2;
 		if (ind > base_ind)
 			return ind;
@@ -377,7 +378,7 @@ compute_label_indent(void)
 {
 	if (out.line_kind == lk_case_or_default)
 		return (int)(case_ind * (float)opt.indent_size);
-	if (lab.st[0] == '#')
+	if (lab.s[0] == '#')
 		return 0;
 	return opt.indent_size * (ps.ind_level - 2);
 }
@@ -387,6 +388,6 @@ inp_read_line(void)
 {
 	if (indent_enabled == indent_on)
 		out.indent_off_text.len = 0;
-	buf_add_chars(&out.indent_off_text, inp.mem, inp.len);
+	buf_add_chars(&out.indent_off_text, inp.s, inp.len);
 	inp_read_next_line(input);
 }

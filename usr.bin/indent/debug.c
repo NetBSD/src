@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.33 2023/06/04 17:54:11 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.34 2023/06/04 20:51:19 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.33 2023/06/04 17:54:11 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.34 2023/06/04 20:51:19 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -196,7 +196,7 @@ debug_print_buf(const char *name, const struct buffer *buf)
 {
 	if (buf->len > 0) {
 		debug_printf(" %s ", name);
-		debug_vis_range("\"", buf->st, buf->len, "\"");
+		debug_vis_range("\"", buf->s, buf->len, "\"");
 	}
 }
 

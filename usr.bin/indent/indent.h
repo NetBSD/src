@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.170 2023/06/04 17:54:11 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.171 2023/06/04 20:51:19 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -139,9 +139,8 @@ typedef enum parser_symbol {
 
 /* A range of characters, not null-terminated. */
 struct buffer {
-	const char *st;		/* start of the usable text */
-	char *mem;
-	size_t len;		/* length of the usable text, from 'mem' */
+	char *s;
+	size_t len;
 	size_t cap;
 };
 
@@ -150,12 +149,13 @@ extern FILE *output;
 
 /*
  * The current line from the input file, used by the lexer to generate tokens.
- * To read from the line, start at inp.st and continue up to and including the
+ * To read from the line, start at inp_p and continue up to and including the
  * next '\n'. To read beyond the '\n', call inp_skip or inp_next, which will
  * make the next line available, invalidating any pointers into the previous
  * line.
  */
 extern struct buffer inp;
+extern const char *inp_p;
 
 extern struct buffer token;	/* the current token to be processed, is
 				 * typically copied to the buffer 'code', or in
