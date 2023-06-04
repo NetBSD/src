@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.164 2023/06/04 11:09:18 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.165 2023/06/04 11:33:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -84,7 +84,12 @@ typedef enum lexer_symbol {
 	lsym_binary_op,		/* e.g. '*', '&', '<<', '&&' or '/=' */
 	lsym_postfix_op,	/* trailing '++' or '--' */
 	lsym_question,		/* the '?' from a '?:' expression */
-	lsym_colon,
+	lsym_colon_question,	/* the ':' from a '?:' expression */
+	lsym_colon_label,	/* the ':' after a label */
+	lsym_colon_other,	/* bit-fields, generic-association (C11),
+				 * enum-type-specifier (C23),
+				 * attribute-prefixed-token (C23),
+				 * pp-prefixed-parameter (C23 6.10)*/
 	lsym_comma,
 	lsym_semicolon,
 	lsym_typedef,
