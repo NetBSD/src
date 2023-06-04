@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.208 2023/06/04 11:33:36 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.209 2023/06/04 11:45:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.208 2023/06/04 11:33:36 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.209 2023/06/04 11:45:00 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: lexi.c,v 1.208 2023/06/04 11:33:36 rillig Exp $");
 
 /* In lexi_alnum, this constant marks a type, independent of parentheses. */
 #define lsym_type lsym_type_outside_parentheses
-#define lsym_type_modifier lsym_storage_class
 
 /* must be sorted alphabetically, is used in binary search */
 static const struct keyword {
@@ -57,43 +56,43 @@ static const struct keyword {
 	{"_Bool", lsym_type},
 	{"_Complex", lsym_type},
 	{"_Imaginary", lsym_type},
-	{"auto", lsym_storage_class},
+	{"auto", lsym_modifier},
 	{"bool", lsym_type},
 	{"break", lsym_word},
 	{"case", lsym_case_label},
 	{"char", lsym_type},
 	{"complex", lsym_type},
-	{"const", lsym_type_modifier},
+	{"const", lsym_modifier},
 	{"continue", lsym_word},
 	{"default", lsym_case_label},
 	{"do", lsym_do},
 	{"double", lsym_type},
 	{"else", lsym_else},
 	{"enum", lsym_tag},
-	{"extern", lsym_storage_class},
+	{"extern", lsym_modifier},
 	{"float", lsym_type},
 	{"for", lsym_for},
 	{"goto", lsym_word},
 	{"if", lsym_if},
 	{"imaginary", lsym_type},
-	{"inline", lsym_word},
+	{"inline", lsym_modifier},
 	{"int", lsym_type},
 	{"long", lsym_type},
 	{"offsetof", lsym_offsetof},
-	{"register", lsym_storage_class},
+	{"register", lsym_modifier},
 	{"restrict", lsym_word},
 	{"return", lsym_return},
 	{"short", lsym_type},
 	{"signed", lsym_type},
 	{"sizeof", lsym_sizeof},
-	{"static", lsym_storage_class},
+	{"static", lsym_modifier},
 	{"struct", lsym_tag},
 	{"switch", lsym_switch},
 	{"typedef", lsym_typedef},
 	{"union", lsym_tag},
 	{"unsigned", lsym_type},
 	{"void", lsym_type},
-	{"volatile", lsym_type_modifier},
+	{"volatile", lsym_modifier},
 	{"while", lsym_while}
 };
 
@@ -254,7 +253,7 @@ lex_char_or_string(void)
 static bool
 probably_typename(void)
 {
-	if (ps.prev_token == lsym_storage_class)
+	if (ps.prev_token == lsym_modifier)
 		return true;
 	if (ps.block_init)
 		return false;
