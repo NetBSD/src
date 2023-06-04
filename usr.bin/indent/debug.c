@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.29 2023/06/04 11:45:00 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.30 2023/06/04 12:46:57 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.29 2023/06/04 11:45:00 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.30 2023/06/04 12:46:57 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -70,7 +70,8 @@ const char *const lsym_name[] = {
 	"type_outside_parentheses",
 	"type_in_parentheses",
 	"tag",
-	"case_label",
+	"case",
+	"default",
 	"sizeof",
 	"offsetof",
 	"word",
