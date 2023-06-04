@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.166 2023/06/04 11:45:00 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.167 2023/06/04 12:46:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -70,7 +70,7 @@
 
 typedef enum lexer_symbol {
 	lsym_eof,
-	lsym_preprocessing,	/* '#' */
+	lsym_preprocessing,	/* the initial '#' of a preprocessing line */
 	lsym_newline,
 	lsym_comment,		/* the initial '/ *' or '//' of a comment */
 	lsym_lparen,
@@ -97,7 +97,8 @@ typedef enum lexer_symbol {
 	lsym_type_outside_parentheses,
 	lsym_type_in_parentheses,
 	lsym_tag,		/* 'struct', 'union' or 'enum' */
-	lsym_case_label,	/* 'case' or 'default' */
+	lsym_case,
+	lsym_default,
 	lsym_sizeof,
 	lsym_offsetof,
 	lsym_word,		/* identifier, constant or string */
@@ -108,7 +109,7 @@ typedef enum lexer_symbol {
 	lsym_if,
 	lsym_switch,
 	lsym_while,
-	lsym_return
+	lsym_return,
 } lexer_symbol;
 
 typedef enum parser_symbol {
@@ -316,8 +317,8 @@ extern struct parser_state {
 				 * processing of braces is then slightly
 				 * different */
 	bool in_func_def_params;
-	bool seen_case;		/* set to true when we see a 'case', so we know
-				 * what to do with the following colon */
+	bool seen_case;		/* whether there was a 'case' or 'default',
+				 * to properly space the following ':' */
 	parser_symbol spaced_expr_psym;	/* the parser symbol to be shifted
 					 * after the parenthesized expression
 					 * from a 'for', 'if', 'switch' or

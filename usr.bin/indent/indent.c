@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.321 2023/06/04 11:45:00 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.322 2023/06/04 12:46:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.321 2023/06/04 11:45:00 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.322 2023/06/04 12:46:57 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -1134,7 +1134,8 @@ process_lsym(lexer_symbol lsym)
 		process_question();
 		break;
 
-	case lsym_case_label:
+	case lsym_case:
+	case lsym_default:
 		ps.seen_case = true;
 		goto copy_token;
 

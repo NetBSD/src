@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.209 2023/06/04 11:45:00 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.210 2023/06/04 12:46:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.209 2023/06/04 11:45:00 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.210 2023/06/04 12:46:57 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -59,12 +59,12 @@ static const struct keyword {
 	{"auto", lsym_modifier},
 	{"bool", lsym_type},
 	{"break", lsym_word},
-	{"case", lsym_case_label},
+	{"case", lsym_case},
 	{"char", lsym_type},
 	{"complex", lsym_type},
 	{"const", lsym_modifier},
 	{"continue", lsym_word},
-	{"default", lsym_case_label},
+	{"default", lsym_default},
 	{"do", lsym_do},
 	{"double", lsym_type},
 	{"else", lsym_else},

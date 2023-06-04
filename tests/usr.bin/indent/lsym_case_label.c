@@ -1,9 +1,8 @@
-/* $NetBSD: lsym_case_label.c,v 1.6 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: lsym_case_label.c,v 1.7 2023/06/04 12:46:57 rillig Exp $ */
 
 /*
- * Tests for the token lsym_case_label, which represents either the keyword
- * 'case' or the keyword 'default', which are both used in 'switch'
- * statements.
+ * Tests for the tokens lsym_case and lsym_default, which represent the
+ * keywords 'case' and 'default', which are both used in 'switch' statements.
  *
  * Since C11, the keyword 'default' is used in _Generic selections as well.
  *
