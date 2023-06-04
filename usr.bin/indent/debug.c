@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.26 2023/06/04 10:23:36 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.27 2023/06/04 11:09:18 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.26 2023/06/04 10:23:36 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.27 2023/06/04 11:09:18 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -127,6 +127,7 @@ const char *const line_kind_name[] = {
 	"stmt head",
 	"}",
 	"block comment",
+	"case/default",
 };
 
 static const char *const decl_ptr_name[] = {
@@ -329,7 +330,6 @@ debug_parser_state(void)
 
 	debug_ps_bool(in_stmt_or_decl);
 	debug_ps_bool(in_stmt_cont);
-	debug_ps_bool(is_case_label);
 	debug_ps_bool(seen_case);
 
 	// The debug output for the parser symbols is done in 'parse' instead.

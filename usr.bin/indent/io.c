@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.187 2023/05/23 18:16:28 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.188 2023/06/04 11:09:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.187 2023/05/23 18:16:28 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.188 2023/06/04 11:09:18 rillig Exp $");
 
 #include <stdio.h>
 
@@ -174,17 +174,13 @@ is_blank_line_optional(void)
 static int
 output_line_label(void)
 {
-	int ind;
 
 	while (lab.len > 0 && ch_isblank(lab.mem[lab.len - 1]))
 		lab.len--;
 
-	ind = output_indent(0, compute_label_indent());
+	int ind = output_indent(0, compute_label_indent());
 	output_range(lab.st, lab.len);
-	ind = ind_add(ind, lab.st, lab.len);
-
-	ps.is_case_label = false;
-	return ind;
+	return ind_add(ind, lab.st, lab.len);
 }
 
 static int
@@ -376,7 +372,7 @@ compute_code_indent(void)
 int
 compute_label_indent(void)
 {
-	if (ps.is_case_label)
+	if (out.line_kind == lk_case_or_default)
 		return (int)(case_ind * (float)opt.indent_size);
 	if (lab.st[0] == '#')
 		return 0;
