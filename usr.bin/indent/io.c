@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.191 2023/06/04 17:54:11 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.192 2023/06/04 18:58:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.191 2023/06/04 17:54:11 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.192 2023/06/04 18:58:30 rillig Exp $");
 
 #include <stdio.h>
 
@@ -199,9 +199,11 @@ output_line_code(int ind)
 		}
 	}
 
-	ind = output_indent(ind, target_ind);
+	int code_ind = output_indent(ind, target_ind);
+	if (ind > 0 && code_ind == ind)
+		output_range(" ", 1), code_ind++;
 	output_range(code.st, code.len);
-	return ind_add(ind, code.st, code.len);
+	return ind_add(code_ind, code.st, code.len);
 }
 
 static void
