@@ -1,15 +1,6 @@
-#	$NetBSD: Makefile.nbincludes,v 1.5 2016/09/14 00:41:04 christos Exp $
+#	$NetBSD: Makefile.nbincludes,v 1.6 2023/06/04 10:00:20 lukem Exp $
 
-# NOxxx definitions are copied from Makefile.host, and are
-# required before .include <bsd.own.mk>.   The include of bsd.own.mk
-# itself is required to get definitions of TOOL_* variables used in
-# "!=" variable assignments (which are performed early).
-#
-NOINFO=		# defined
-NOLINT=		# defined
-NOMAN=		# defined
-
-.include <bsd.own.mk>
+.include <bsd.hostinit.mk>
 
 _ARCHDIR=	${.CURDIR}/../../sys/arch
 _INCDIR=	${.CURDIR}/../../include
