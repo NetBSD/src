@@ -1,4 +1,4 @@
-/*	$NetBSD: hppa_reloc.c,v 1.49 2022/05/30 17:06:34 skrll Exp $	*/
+/*	$NetBSD: hppa_reloc.c,v 1.50 2023/06/04 01:24:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hppa_reloc.c,v 1.49 2022/05/30 17:06:34 skrll Exp $");
+__RCSID("$NetBSD: hppa_reloc.c,v 1.50 2023/06/04 01:24:57 joerg Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -553,7 +553,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_TPREL32):
-			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			*where = (Elf_Addr)(defobj->tlsoffset + def->st_value +

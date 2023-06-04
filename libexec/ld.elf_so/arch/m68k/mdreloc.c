@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.33 2017/08/10 19:03:26 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.34 2023/06/04 01:24:57 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.33 2017/08/10 19:03:26 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.34 2023/06/04 01:24:57 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -142,9 +142,6 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_DTPREL32):
-			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
-				return -1;
-
 			*where = (Elf_Addr)(def->st_value + rela->r_addend
 			    - TLS_DTV_OFFSET);
 			rdbg(("DTPREL32 %s in %s --> %p in %s",
@@ -153,7 +150,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_TPREL32):
-			if (!defobj->tls_done && _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			*where = (Elf_Addr)(def->st_value + rela->r_addend

@@ -1,8 +1,8 @@
-/*	$NetBSD: mdreloc.c,v 1.45 2020/06/16 21:02:20 joerg Exp $	*/
+/*	$NetBSD: mdreloc.c,v 1.46 2023/06/04 01:24:57 joerg Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mdreloc.c,v 1.45 2020/06/16 21:02:20 joerg Exp $");
+__RCSID("$NetBSD: mdreloc.c,v 1.46 2023/06/04 01:24:57 joerg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -228,8 +228,8 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			break;
 
 		case R_TYPE(TLS_TPOFF32):
-			if (!defobj->tls_done &&
-			    _rtld_tls_offset_allocate(obj))
+			if (!defobj->tls_static &&
+			    _rtld_tls_offset_allocate(__UNCONST(defobj)))
 				return -1;
 
 			if (__predict_true(RELOC_ALIGNED_P(where)))
