@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.99 2023/06/03 11:13:40 lukem Exp $
+.\"	$NetBSD: mk.conf.5,v 1.100 2023/06/04 20:04:52 lukem Exp $
 .\"
 .\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 3, 2023
+.Dd June 4, 2023
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -94,7 +94,7 @@ or
 .
 .Bl -tag -width 15n
 .
-.\" These entries are sorted alphabetically
+.\" These entries are sorted alphabetically.
 .
 .It Sy BSDOBJDIR
 The real path to the object directory tree for the
@@ -122,11 +122,53 @@ out of date or non-existent targets.
 .
 .It Sy BUILDID
 Identifier for the build.
+If set, this should be a short string that is suitable for use as
+part of a file or directory name.
 The identifier will be appended to
 object directory names, and can be consulted in the
 .Xr make 1
 configuration file in order to set additional build parameters,
 such as compiler flags.
+It will also be used as part of the kernel version string,
+which can be shown by
+.Dq Li uname \-v .
+.DFLTu
+.
+.It Sy BUILDINFO
+Optional multi-line string containing information about the build.
+This will appear in
+.Sy DESTDIR Ns Pa /etc/release ,
+and it will be stored in the
+.Va buildinfo
+variable in any kernels that are built.
+When such kernels are booted, the
+.Xr sysctl 7
+.Va kern.buildinfo
+variable will report this value.
+The string may contain backslash escape sequences, such as
+.Dq "\e\e"
+(representing a backslash character)
+and
+.Dq "\en"
+(representing a newline).
+.DFLTu
+.
+.It Sy BUILDSEED
+.Xr g++ 1
+uses random numbers when compiling C++ code.
+This variable seeds the
+.Xr g++ 1
+random number generator using
+.Fl frandom-seed
+with this value.
+By default, it is set to
+.Do NetBSD-( Ns Em majorversion ) Dc .
+Using a fixed value causes C++ binaries to be the same when
+built from the same sources, resulting in identical (reproducible) builds.
+Additional information is available in the
+.Xr g++ 1
+documentation of
+.Fl frandom-seed .
 .DFLTu
 .
 .It Sy COPTS
@@ -134,13 +176,15 @@ Extra options for the C compiler.
 Should be appended to (e.g.,
 .Sy COPTS+=-g ) ,
 rather than explicitly set.
-Note that
+.Pp
+.Em Note :
 .Sy CPUFLAGS ,
 not
 .Sy COPTS ,
 should be used for
 compiler flags that select CPU-related options.
-Also note that
+.Pp
+.Em Note :
 .Sy CFLAGS
 should never be set in
 .Nm .
@@ -184,6 +228,34 @@ mode
 Empty string if
 .Sy USETOOLS=yes ;
 unset otherwise.
+.
+.It Sy EXTERNAL_TOOLCHAIN
+If defined, this variable indicates the root directory of
+an external toolchain which will be used to build the tree.
+For example, if a platform is a
+.Sy TOOLCHAIN_MISSING
+platform,
+.Sy EXTERNAL_TOOLCHAIN
+can be used to re-enable the cross-compile framework.
+.Pp
+If
+.Sy EXTERNAL_TOOLCHAIN
+is defined, act as
+.Sy MKGCC=no ,
+since the external version of the compiler may not be
+able to build the library components of the in-tree compiler.
+.Pp
+This variable should be used in conjunction with an appropriate
+.Sy HAVE_GCC
+or
+.Sy HAVE_LLVM
+setting to control the compiler flags.
+.Pp
+.Em Note :
+This variable is not yet used in as many places as it should be.
+Expect the exact semantics of this variable to change in the short
+term as parts of the cross-compile framework continue to be cleaned up.
+.DFLTu
 .
 .It Sy EXTSRCSRCDIR
 Obsolete.
@@ -456,6 +528,11 @@ is compiled with support for
 .In complex.h .
 .DFLTy
 .
+.It Sy MKCROSSGDB
+.YorN
+Create a cross-gdb as a host tool.
+.DFLTn
+.
 .It Sy MKCRYPTO
 Obsolete.
 .
@@ -499,7 +576,13 @@ and acts as
 .
 .It Sy MKDEBUG
 .YorN
-Indicates whether separate debugging symbols should be installed into
+Indicates whether debug information should be generated for
+all userland binaries.
+The result is collected as an additional
+.Sy debug.tgz
+and
+.Sy xdebug.tgz
+set and installed in
 .Sy DESTDIR Ns Pa /usr/libdata/debug .
 .NODEF NODEBUG
 .DFLTn
@@ -510,10 +593,14 @@ Indicates whether debugging symbols will be built for kernels
 by default; pretend as if
 .Em makeoptions DEBUG="-g"
 is specified in kernel configuration files.
-This will also put the debug kernel in the kernel sets.
+This will also put the debug kernel
+.Pa netbsd.gdb
+in the kernel sets.
 See
 .Xr options 4
 for details.
+This is useful if a cross-gdb is built as well (see
+.Sy MKCROSSGDB ) .
 .DFLTn
 .
 .It Sy MKDEBUGLIB
@@ -1066,6 +1153,14 @@ If
 .Dq no ,
 acts as
 .Sy MKOBJDIRS=no .
+.Pp
+.Em Note :
+Setting
+.Sy MKOBJ
+to
+.Dq no
+is not recommended and may cause problems when updating the tree with
+.Xr cvs 1 .
 .DFLTy
 .
 .It Sy MKOBJDIRS
@@ -1261,6 +1356,14 @@ Used as the default for
 .Sy MKARZERO .
 .DFLTn
 .
+.It Sy MKREPRO_TIMESTAMP
+Unix timestamp.
+When
+.Sy MKREPRO
+is set, the timestamp of all files in the sets will be set
+to this value.
+.DFLTu
+.
 .It Sy MKRUMP
 .YorN
 Indicates whether the
@@ -1416,7 +1519,7 @@ DNS resolver will be built and installed.
 .YorN
 Indicates whether an unprivileged install will occur.
 The user, group, permissions, and file flags, will not be set on
-the installed item; instead the information will be appended to
+the installed items; instead the information will be appended to
 a file called
 .Pa METALOG
 in
@@ -1433,14 +1536,12 @@ Indicates whether all install operations intended to write to
 .Sy DESTDIR
 will compare file timestamps before installing, and skip the install
 phase if the destination files are up-to-date.
-This also has implications on full builds (see next subsection).
 .DFLTn
 .
 .It Sy MKX11
 .YorN
-Indicates whether X11 will be built and installed
-(by descending into
-.Pa src/external/mit/xorg ) .
+Indicates whether X11 will be built and installed from
+.Sy X11SRCDIR .
 .DFLTn
 .
 .It Sy MKX11FONTS
@@ -1528,15 +1629,16 @@ on other platforms.
 The path to the top level of the
 .Nx
 sources.
-If
-.Xr make 1
-is run from within the
+.DFLT
+Top level of the
 .Nx
-source tree, the default is the top
-level of that tree (as determined by the presence of
+source tree (as determined by the presence of
 .Pa build.sh
 and
-.Pa tools/ ) ,
+.Pa tools/ )
+if
+.Xr make 1
+is run from within that tree;
 otherwise
 .Sy BSDSRCDIR
 will be used.
@@ -1586,6 +1688,21 @@ mode.
 .It Sy SHAREDSTRINGS
 Obsolete.
 .
+.It Sy TOOLCHAIN_MISSING
+.YorN
+If not
+.Dq no ,
+this indicates that the platform
+.Dq Sy MACHINE_ARCH
+being built does not have a working in-tree toolchain.
+.Pp
+If not
+.Dq no ,
+acts as
+.Sy MKBINUTILS=no MKGCC=no MKGDB=no .
+.\" See MKGCCCMDS for example text if a platform defaults to yes.
+.DFLTn
+.
 .It Sy TOOLDIR
 Directory to hold the host tools, once built.
 This directory should be unique to a given host system and
@@ -1604,6 +1721,7 @@ of
 .DFLTu
 .
 .It Sy USETOOLS
+.YorN
 Indicates whether the tools specified by
 .Sy TOOLDIR
 should be used as part of a build in progress.
@@ -1634,16 +1752,15 @@ This may cause build or runtime problems when building the whole
 .Nx
 source tree.
 .El
-.DFLT
-.Dq yes
-if building all or part of a whole
-.Nx
-source tree (detected automatically);
-.Dq no
-otherwise (to preserve traditional semantics of the
+.DFLTn
+when using
 .Aq bsd.*.mk
-.Xr make 1
-include files).
+outside the
+.Nx
+source tree (detected automatically) or if
+.Sy TOOLCHAIN_MISSING=yes ;
+.Dq yes
+otherwise.
 .
 .It Sy USE_COMBINE
 Obsolete.
@@ -1842,6 +1959,16 @@ Path of the Motif installation to use if
 .Sy MKX11MOTIF=yes .
 .DFLT
 .Dq Pa /usr/pkg
+.
+.It Sy X11SRCDIR
+Directory containing the modular Xorg source.
+If specified, must be an absolute path.
+The main modular Xorg source is found in
+.Sy X11SRCDIR Ns Pa /external/mit .
+.DFLT
+.Sy NETBSDSRCDIR Ns Pa /../xsrc ,
+if that exists; otherwise
+.Pa /usr/xsrc .
 .
 .El
 .
