@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.210 2023/06/04 12:46:57 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.211 2023/06/04 14:20:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.210 2023/06/04 12:46:57 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.211 2023/06/04 14:20:00 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -253,7 +253,7 @@ lex_char_or_string(void)
 static bool
 probably_typename(void)
 {
-	if (ps.prev_token == lsym_modifier)
+	if (ps.prev_lsym == lsym_modifier)
 		return true;
 	if (ps.block_init)
 		return false;
@@ -266,9 +266,9 @@ probably_typename(void)
 		goto maybe;
 	return false;
 maybe:
-	return ps.prev_token == lsym_semicolon ||
-	    ps.prev_token == lsym_lbrace ||
-	    ps.prev_token == lsym_rbrace;
+	return ps.prev_lsym == lsym_semicolon ||
+	    ps.prev_lsym == lsym_lbrace ||
+	    ps.prev_lsym == lsym_rbrace;
 }
 
 static int
@@ -372,10 +372,10 @@ lexi_alnum(void)
 	while (ch_isblank(inp.st[0]))
 		inp.st++;
 
-	ps.next_unary = ps.prev_token == lsym_tag
-	    || ps.prev_token == lsym_typedef;
+	ps.next_unary = ps.prev_lsym == lsym_tag
+	    || ps.prev_lsym == lsym_typedef;
 
-	if (ps.prev_token == lsym_tag && ps.nparen == 0)
+	if (ps.prev_lsym == lsym_tag && ps.nparen == 0)
 		return lsym_type_outside_parentheses;
 
 	token_add_char('\0');
@@ -402,8 +402,8 @@ found_typename:
 			if (ps.paren[ps.nparen - 1].cast == cast_unknown)
 				ps.paren[ps.nparen - 1].cast = cast_maybe;
 		}
-		if (ps.prev_token != lsym_period
-		    && ps.prev_token != lsym_unary_op) {
+		if (ps.prev_lsym != lsym_period
+		    && ps.prev_lsym != lsym_unary_op) {
 			if (kw != NULL && kw->lsym == lsym_tag)
 				return lsym_tag;
 			if (ps.nparen == 0)
@@ -436,9 +436,9 @@ is_asterisk_unary(void)
 		return true;
 	if (ps.next_unary || ps.in_func_def_params)
 		return true;
-	if (ps.prev_token == lsym_word ||
-	    ps.prev_token == lsym_rparen ||
-	    ps.prev_token == lsym_rbracket)
+	if (ps.prev_lsym == lsym_word ||
+	    ps.prev_lsym == lsym_rparen ||
+	    ps.prev_lsym == lsym_rbracket)
 		return false;
 	return ps.in_decl && ps.nparen > 0;
 }
@@ -603,9 +603,9 @@ lexi(void)
 		/* '++' or '--' */
 		if (inp.st[0] == token.mem[token.len - 1]) {
 			token_add_char(*inp.st++);
-			if (ps.prev_token == lsym_word ||
-			    ps.prev_token == lsym_rparen ||
-			    ps.prev_token == lsym_rbracket) {
+			if (ps.prev_lsym == lsym_word ||
+			    ps.prev_lsym == lsym_rparen ||
+			    ps.prev_lsym == lsym_rbracket) {
 				lsym = ps.next_unary
 				    ? lsym_unary_op : lsym_postfix_op;
 				next_unary = false;

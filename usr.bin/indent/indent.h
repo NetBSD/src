@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.167 2023/06/04 12:46:57 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.168 2023/06/04 14:20:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -286,9 +286,8 @@ typedef struct paren_level_props {
  * comments.
  */
 extern struct parser_state {
-	lexer_symbol prev_token;	/* the previous token, but never
-					 * comment, newline or preprocessing
-					 * line */
+	lexer_symbol prev_lsym;	/* the previous token, but never comment,
+				 * newline or preprocessing line */
 
 	/* Token classification */
 
