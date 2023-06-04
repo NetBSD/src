@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.64 2023/06/03 21:24:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.65 2023/06/04 17:54:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.64 2023/06/03 21:24:26 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.65 2023/06/04 17:54:11 rillig Exp $");
 
 #include <err.h>
 
@@ -68,6 +68,15 @@ ps_push_follow(parser_symbol psym)
 {
 	ps.s_sym[++ps.tos] = psym;
 	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
+}
+
+static bool
+is_lbrace(parser_symbol psym)
+{
+	return psym == psym_lbrace_block
+	    || psym == psym_lbrace_struct
+	    || psym == psym_lbrace_union
+	    || psym == psym_lbrace_enum;
 }
 
 /*
@@ -110,7 +119,10 @@ parse(parser_symbol psym)
 		ps_push(psym);
 		break;
 
-	case psym_lbrace:
+	case psym_lbrace_block:
+	case psym_lbrace_struct:
+	case psym_lbrace_union:
+	case psym_lbrace_enum:
 		ps.break_after_comma = false;
 		if (ps.s_sym[ps.tos] == psym_stmt
 		    || ps.s_sym[ps.tos] == psym_decl
@@ -132,7 +144,7 @@ parse(parser_symbol psym)
 			}
 		}
 
-		ps_push(psym_lbrace);
+		ps_push(psym);
 		ps_push_follow(psym_stmt);
 		break;
 
@@ -160,7 +172,7 @@ parse(parser_symbol psym)
 
 	case psym_rbrace:
 		/* stack should have <lbrace> <stmt> or <lbrace> <stmt_list> */
-		if (!(ps.tos > 0 && ps.s_sym[ps.tos - 1] == psym_lbrace)) {
+		if (!(ps.tos > 0 && is_lbrace(ps.s_sym[ps.tos - 1]))) {
 			diag(1, "Statement nesting error");
 			break;
 		}
@@ -217,7 +229,7 @@ reduce_stmt(void)
 		int i = ps.tos - 1;
 		while (ps.s_sym[i] != psym_stmt &&
 		    ps.s_sym[i] != psym_stmt_list &&
-		    ps.s_sym[i] != psym_lbrace)
+		    ps.s_sym[i] != psym_lbrace_block)
 			--i;
 		ps.ind_level_follow = ps.s_ind_level[i];
 		/* For the time being, assume that there is no 'else' on this

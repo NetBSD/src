@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.325 2023/06/04 14:38:15 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.326 2023/06/04 17:54:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.325 2023/06/04 14:38:15 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.326 2023/06/04 17:54:11 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -181,6 +181,7 @@ init_globals(void)
 	ps.s_sym[0] = psym_stmt_list;
 	ps.prev_lsym = lsym_semicolon;
 	ps.next_col_1 = true;
+	ps.lbrace_kind = psym_lbrace_block;
 
 	const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
 	if (suffix != NULL)
@@ -371,33 +372,16 @@ update_ps_decl_ptr(lexer_symbol lsym)
 }
 
 static void
-update_ps_in_enum(lexer_symbol lsym)
+update_ps_prev_tag(lexer_symbol lsym)
 {
-	switch (ps.in_enum) {
-	case in_enum_no:
-		if (lsym == lsym_tag && token.st[0] == 'e')
-			ps.in_enum = in_enum_enum;
-		break;
-	case in_enum_enum:
-		if (lsym == lsym_type_outside_parentheses
-		    || lsym == lsym_type_in_parentheses)
-			ps.in_enum = in_enum_type;
-		else if (lsym == lsym_lbrace)
-			ps.in_enum = in_enum_brace;
-		else
-			ps.in_enum = in_enum_no;
-		break;
-	case in_enum_type:
-		if (lsym == lsym_lbrace)
-			ps.in_enum = in_enum_brace;
-		else
-			ps.in_enum = in_enum_no;
-		break;
-	case in_enum_brace:
-		if (lsym == lsym_rbrace)
-			ps.in_enum = in_enum_no;
-		break;
-	}
+	if (lsym == lsym_tag) {
+		ps.lbrace_kind = token.mem[0] == 's' ? psym_lbrace_struct :
+		    token.mem[0] == 'u' ? psym_lbrace_union :
+		    psym_lbrace_enum;
+	} else if (lsym != lsym_type_outside_parentheses
+	    && lsym != lsym_word
+	    && lsym != lsym_lbrace)
+		ps.lbrace_kind = psym_lbrace_block;
 }
 
 static int
@@ -828,7 +812,7 @@ process_lbrace(void)
 	}
 
 	ps.decl_ind = 0;
-	parse(psym_lbrace);
+	parse(ps.lbrace_kind);
 	if (ps.want_blank)
 		buf_add_char(&code, ' ');
 	ps.want_blank = false;
@@ -1278,7 +1262,7 @@ indent(void)
 			if (com.len > 0)
 				move_com_to_code(lsym);
 			update_ps_decl_ptr(lsym);
-			update_ps_in_enum(lsym);
+			update_ps_prev_tag(lsym);
 		}
 
 		process_lsym(lsym);
