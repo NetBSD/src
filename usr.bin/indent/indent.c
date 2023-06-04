@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.317 2023/06/03 21:44:08 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.318 2023/06/04 10:23:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.317 2023/06/03 21:44:08 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.318 2023/06/04 10:23:36 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -362,8 +362,7 @@ update_ps_decl_ptr(lexer_symbol lsym)
 	case dp_other:
 		if (lsym == lsym_semicolon || lsym == lsym_rbrace)
 			ps.decl_ptr = dp_start;
-		if (lsym == lsym_lparen_or_lbracket && token.st[0] == '('
-		    && ps.prev_token != lsym_sizeof)
+		if (lsym == lsym_lparen && ps.prev_token != lsym_sizeof)
 			ps.decl_ptr = dp_start;
 		if (lsym == lsym_comma && ps.in_decl)
 			ps.decl_ptr = dp_start;
@@ -441,7 +440,7 @@ move_com_to_code(lexer_symbol lsym)
 	if (ps.want_blank)
 		buf_add_char(&code, ' ');
 	buf_add_buf(&code, &com);
-	if (lsym != lsym_rparen_or_rbracket)
+	if (lsym != lsym_rparen && lsym != lsym_rbracket)
 		buf_add_char(&code, ' ');
 	com.len = 0;
 	ps.want_blank = false;
@@ -470,8 +469,7 @@ stay_in_line:
 static bool
 is_function_pointer_declaration(void)
 {
-	return token.st[0] == '('
-	    && ps.in_decl
+	return ps.in_decl
 	    && !ps.block_init
 	    && !ps.decl_indent_done
 	    && !ps.is_function_definition
@@ -485,7 +483,7 @@ want_blank_before_lparen(void)
 		return false;
 	if (opt.proc_calls_space)
 		return true;
-	if (ps.prev_token == lsym_rparen_or_rbracket)
+	if (ps.prev_token == lsym_rparen || ps.prev_token == lsym_rbracket)
 		return false;
 	if (ps.prev_token == lsym_offsetof)
 		return false;
@@ -496,20 +494,8 @@ want_blank_before_lparen(void)
 	return true;
 }
 
-static bool
-want_blank_before_lbracket(void)
-{
-	if (code.len == 0)
-		return false;
-	if (ps.prev_token == lsym_comma)
-		return true;
-	if (ps.prev_token == lsym_binary_op)
-		return true;
-	return false;
-}
-
 static void
-process_lparen_or_lbracket(void)
+process_lparen(void)
 {
 	if (++ps.nparen == array_length(ps.paren)) {
 		diag(0, "Reached internal limit of %zu unclosed parentheses",
@@ -520,8 +506,7 @@ process_lparen_or_lbracket(void)
 	if (is_function_pointer_declaration()) {
 		code_add_decl_indent(ps.decl_ind, ps.tabs_to_var);
 		ps.decl_indent_done = true;
-	} else if (token.st[0] == '('
-	    ? want_blank_before_lparen() : want_blank_before_lbracket())
+	} else if (want_blank_before_lparen())
 		buf_add_char(&code, ' ');
 	ps.want_blank = false;
 	buf_add_char(&code, token.st[0]);
@@ -531,7 +516,7 @@ process_lparen_or_lbracket(void)
 	    && opt.continuation_indent == opt.indent_size)
 		ps.extra_expr_indent = eei_yes;
 
-	if (ps.init_or_struct && *token.st == '(' && ps.tos <= 2) {
+	if (ps.init_or_struct && ps.tos <= 2) {
 		/* this is a kluge to make sure that declarations will be
 		 * aligned right if proc decl has an explicit type on it, i.e.
 		 * "int a(x) {..." */
@@ -555,8 +540,41 @@ process_lparen_or_lbracket(void)
 	    ps.nparen - 1, paren_level_cast_name[cast], indent);
 }
 
+static bool
+want_blank_before_lbracket(void)
+{
+	if (code.len == 0)
+		return false;
+	if (ps.prev_token == lsym_comma)
+		return true;
+	if (ps.prev_token == lsym_binary_op)
+		return true;
+	return false;
+}
+
 static void
-process_rparen_or_rbracket(void)
+process_lbracket(void)
+{
+	if (++ps.nparen == array_length(ps.paren)) {
+		diag(0, "Reached internal limit of %zu unclosed parentheses",
+		    array_length(ps.paren));
+		ps.nparen--;
+	}
+
+	if (want_blank_before_lbracket())
+		buf_add_char(&code, ' ');
+	ps.want_blank = false;
+	buf_add_char(&code, token.st[0]);
+
+	int indent = ind_add(0, code.st, code.len);
+
+	ps.paren[ps.nparen - 1].indent = indent;
+	ps.paren[ps.nparen - 1].cast = cast_no;
+	debug_println("paren_indents[%d] is now %d", ps.nparen - 1, indent);
+}
+
+static void
+process_rparen(void)
 {
 	if (ps.nparen == 0) {
 		diag(0, "Extra '%c'", *token.st);
@@ -573,8 +591,8 @@ process_rparen_or_rbracket(void)
 	} else
 		ps.want_blank = true;
 
-	if (code.len == 0)	/* if the paren starts the line */
-		ps.line_start_nparen = ps.nparen;	/* then indent it */
+	if (code.len == 0)
+		ps.line_start_nparen = ps.nparen;
 
 unbalanced:
 	buf_add_char(&code, token.st[0]);
@@ -590,6 +608,23 @@ unbalanced:
 		ps.want_blank = true;
 		out.line_kind = lk_stmt_head;
 	}
+}
+
+static void
+process_rbracket(void)
+{
+	if (ps.nparen == 0) {
+		diag(0, "Extra '%c'", *token.st);
+		goto unbalanced;
+	}
+	--ps.nparen;
+
+	ps.want_blank = true;
+	if (code.len == 0)
+		ps.line_start_nparen = ps.nparen;
+
+unbalanced:
+	buf_add_char(&code, token.st[0]);
 }
 
 static bool
@@ -691,7 +726,7 @@ process_semicolon(void)
 		ps.init_or_struct = false;
 	ps.seen_case = false;	/* only needs to be reset on error */
 	ps.quest_level = 0;	/* only needs to be reset on error */
-	if (ps.prev_token == lsym_rparen_or_rbracket)
+	if (ps.prev_token == lsym_rparen)
 		ps.in_func_def_params = false;
 	ps.block_init = false;
 	ps.block_init_level = 0;
@@ -873,7 +908,7 @@ process_type(void)
 {
 	parse(psym_decl);	/* let the parser worry about indentation */
 
-	if (ps.prev_token == lsym_rparen_or_rbracket && ps.tos <= 1) {
+	if (ps.prev_token == lsym_rparen && ps.tos <= 1) {
 		if (code.len > 0)
 			output_line();
 	}
@@ -1068,12 +1103,20 @@ process_lsym(lexer_symbol lsym)
 		process_newline();
 		break;
 
-	case lsym_lparen_or_lbracket:
-		process_lparen_or_lbracket();
+	case lsym_lparen:
+		process_lparen();
 		break;
 
-	case lsym_rparen_or_rbracket:
-		process_rparen_or_rbracket();
+	case lsym_lbracket:
+		process_lbracket();
+		break;
+
+	case lsym_rparen:
+		process_rparen();
+		break;
+
+	case lsym_rbracket:
+		process_rbracket();
 		break;
 
 	case lsym_unary_op:

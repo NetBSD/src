@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.206 2023/05/23 18:16:28 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.207 2023/06/04 10:23:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.206 2023/05/23 18:16:28 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.207 2023/06/04 10:23:36 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -438,7 +438,8 @@ is_asterisk_unary(void)
 	if (ps.next_unary || ps.in_func_def_params)
 		return true;
 	if (ps.prev_token == lsym_word ||
-	    ps.prev_token == lsym_rparen_or_rbracket)
+	    ps.prev_token == lsym_rparen ||
+	    ps.prev_token == lsym_rbracket)
 		return false;
 	return ps.in_decl && ps.nparen > 0;
 }
@@ -555,10 +556,10 @@ lexi(void)
 	switch (token.mem[token.len - 1]) {
 
 	/* INDENT OFF */
-	case '(':
-	case '[': lsym = lsym_lparen_or_lbracket; next_unary = true;	break;
-	case ')':
-	case ']': lsym = lsym_rparen_or_rbracket; next_unary = false;	break;
+	case '(':	lsym = lsym_lparen;	next_unary = true;	break;
+	case '[':	lsym = lsym_lbracket;	next_unary = true;	break;
+	case ')':	lsym = lsym_rparen;	next_unary = false;	break;
+	case ']':	lsym = lsym_rbracket;	next_unary = false;	break;
 	case '?':	lsym = lsym_question;	next_unary = true;	break;
 	case ':':	lsym = lsym_colon;	next_unary = true;	break;
 	case ';':	lsym = lsym_semicolon;	next_unary = true;	break;
@@ -596,7 +597,8 @@ lexi(void)
 		if (inp.st[0] == token.mem[token.len - 1]) {
 			token_add_char(*inp.st++);
 			if (ps.prev_token == lsym_word ||
-			    ps.prev_token == lsym_rparen_or_rbracket) {
+			    ps.prev_token == lsym_rparen ||
+			    ps.prev_token == lsym_rbracket) {
 				lsym = ps.next_unary
 				    ? lsym_unary_op : lsym_postfix_op;
 				next_unary = false;
