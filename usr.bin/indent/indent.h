@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.169 2023/06/04 17:02:06 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.170 2023/06/04 17:54:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -118,7 +118,10 @@ typedef enum lexer_symbol {
  */
 typedef enum parser_symbol {
 	psym_0,			/* a placeholder; not stored on the stack */
-	psym_lbrace,
+	psym_lbrace_block,	/* '{' for a block of code */
+	psym_lbrace_struct,	/* '{' in 'struct ... { ... }' */
+	psym_lbrace_union,	/* '{' in 'union ... { ... }' */
+	psym_lbrace_enum,	/* '{' in 'enum ... { ... }' */
 	psym_rbrace,		/* not stored on the stack */
 	psym_decl,
 	psym_stmt,
@@ -326,6 +329,8 @@ extern struct parser_state {
 					 * after the parenthesized expression
 					 * from a 'for', 'if', 'switch' or
 					 * 'while'; or psym_0 */
+	parser_symbol lbrace_kind;	/* the kind of brace to be pushed to
+					 * the parser symbol stack next */
 
 	/* Indentation of statements and declarations */
 
@@ -349,13 +354,6 @@ extern struct parser_state {
 		eei_yes,
 		eei_last
 	} extra_expr_indent;
-
-	enum {
-		in_enum_no,	/* outside any 'enum { ... }' */
-		in_enum_enum,	/* after keyword 'enum' */
-		in_enum_type,	/* after 'enum' or 'enum tag' */
-		in_enum_brace	/* between '{' and '}' */
-	} in_enum;		/* enum { . } */
 
 	int tos;		/* pointer to top of stack */
 	parser_symbol s_sym[STACKSIZE];
