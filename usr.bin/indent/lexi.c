@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.207 2023/06/04 10:23:36 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.208 2023/06/04 11:33:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.207 2023/06/04 10:23:36 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.208 2023/06/04 11:33:36 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -561,13 +561,21 @@ lexi(void)
 	case ')':	lsym = lsym_rparen;	next_unary = false;	break;
 	case ']':	lsym = lsym_rbracket;	next_unary = false;	break;
 	case '?':	lsym = lsym_question;	next_unary = true;	break;
-	case ':':	lsym = lsym_colon;	next_unary = true;	break;
 	case ';':	lsym = lsym_semicolon;	next_unary = true;	break;
 	case '{':	lsym = lsym_lbrace;	next_unary = true;	break;
 	case '}':	lsym = lsym_rbrace;	next_unary = true;	break;
 	case ',':	lsym = lsym_comma;	next_unary = true;	break;
 	case '.':	lsym = lsym_period;	next_unary = false;	break;
 	/* INDENT ON */
+
+	case ':':
+		lsym = ps.quest_level > 0
+		    ? (ps.quest_level--, lsym_colon_question)
+		    : ps.init_or_struct
+		    ? lsym_colon_other
+		    : lsym_colon_label;
+		next_unary = true;
+		break;
 
 	case '\n':
 		/* if data has been exhausted, the '\n' is a dummy. */

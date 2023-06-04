@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.319 2023/06/04 11:09:18 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.320 2023/06/04 11:33:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.319 2023/06/04 11:09:18 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.320 2023/06/04 11:33:36 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -685,30 +685,23 @@ process_question(void)
 }
 
 static void
-process_colon(void)
+process_colon_question(void)
 {
-	if (ps.quest_level > 0) {	/* part of a '?:' operator */
-		ps.quest_level--;
-		if (code.len == 0) {
-			ps.in_stmt_cont = true;
-			ps.in_stmt_or_decl = true;
-			ps.in_decl = false;
-		}
-		if (ps.want_blank)
-			buf_add_char(&code, ' ');
-		buf_add_char(&code, ':');
-		ps.want_blank = true;
-		return;
+	if (code.len == 0) {
+		ps.in_stmt_cont = true;
+		ps.in_stmt_or_decl = true;
+		ps.in_decl = false;
 	}
+	if (ps.want_blank)
+		buf_add_char(&code, ' ');
+	buf_add_char(&code, ':');
+	ps.want_blank = true;
+}
 
-	if (ps.init_or_struct) {	/* bit-field */
-		buf_add_char(&code, ':');
-		ps.want_blank = false;
-		return;
-	}
-
-	buf_add_buf(&lab, &code);	/* 'case' or 'default' or named label
-					 */
+static void
+process_colon_label(void)
+{
+	buf_add_buf(&lab, &code);
 	buf_add_char(&lab, ':');
 	code.len = 0;
 
@@ -717,6 +710,13 @@ process_colon(void)
 	ps.in_stmt_or_decl = false;
 	ps.force_nl = ps.seen_case;
 	ps.seen_case = false;
+	ps.want_blank = false;
+}
+
+static void
+process_colon_other(void)
+{
+	buf_add_char(&code, ':');
 	ps.want_blank = false;
 }
 
@@ -1138,8 +1138,16 @@ process_lsym(lexer_symbol lsym)
 		ps.seen_case = true;
 		goto copy_token;
 
-	case lsym_colon:
-		process_colon();
+	case lsym_colon_question:
+		process_colon_question();
+		break;
+
+	case lsym_colon_label:
+		process_colon_label();
+		break;
+
+	case lsym_colon_other:
+		process_colon_other();
 		break;
 
 	case lsym_semicolon:
