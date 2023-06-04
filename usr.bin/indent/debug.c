@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.32 2023/06/04 17:02:06 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.33 2023/06/04 17:54:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.32 2023/06/04 17:02:06 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.33 2023/06/04 17:54:11 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -86,8 +86,11 @@ const char *const lsym_name[] = {
 };
 
 const char *const psym_name[] = {
-	"0",
-	"lbrace",
+	"-",
+	"lbrace_block",
+	"lbrace_struct",
+	"lbrace_union",
+	"lbrace_enum",
 	"rbrace",
 	"decl",
 	"stmt",
@@ -107,13 +110,6 @@ static const char *const declaration_name[] = {
 	"no",
 	"begin",
 	"end",
-};
-
-static const char *const in_enum_name[] = {
-	"no",
-	"enum",
-	"type",
-	"brace",
 };
 
 const char *const paren_level_cast_name[] = {
@@ -325,7 +321,7 @@ debug_parser_state(void)
 	debug_ps_enum(declaration, declaration_name);
 	debug_ps_bool(blank_line_after_decl);
 	debug_ps_bool(in_func_def_params);
-	debug_ps_enum(in_enum, in_enum_name);
+	debug_ps_enum(lbrace_kind, psym_name);
 	debug_ps_enum(decl_ptr, decl_ptr_name);
 	debug_ps_bool(decl_indent_done);
 	debug_ps_int(decl_ind);
