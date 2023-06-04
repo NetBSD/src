@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.168 2023/06/04 14:20:00 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.169 2023/06/04 17:02:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -112,10 +112,14 @@ typedef enum lexer_symbol {
 	lsym_return,
 } lexer_symbol;
 
+/*
+ * Structure of the source code, in terms of declarations, statements and
+ * braces; used to determine the indentation level of these parts.
+ */
 typedef enum parser_symbol {
-	psym_0,			/* a placeholder */
+	psym_0,			/* a placeholder; not stored on the stack */
 	psym_lbrace,
-	psym_rbrace,
+	psym_rbrace,		/* not stored on the stack */
 	psym_decl,
 	psym_stmt,
 	psym_stmt_list,
