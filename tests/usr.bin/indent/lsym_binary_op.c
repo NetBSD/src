@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_binary_op.c,v 1.9 2023/06/04 22:20:04 rillig Exp $ */
+/* $NetBSD: lsym_binary_op.c,v 1.10 2023/06/04 22:36:10 rillig Exp $ */
 
 /*
  * Tests for the token lsym_binary_op, which represents a binary operator in
@@ -183,10 +183,13 @@ int x = arr[3] * y;
 //indent end
 
 
+/*
+ * Ensure that after an assignment, a '*=' operator is properly spaced, like
+ * any other binary operator.
+ */
 //indent input
 {
 	a = a;
-// $ FIXME: The first '*=' is categorized as 'unary_op token "*"'.
 	a *= b *= c;
 }
 //indent end
