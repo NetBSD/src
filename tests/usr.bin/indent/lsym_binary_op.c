@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_binary_op.c,v 1.7 2023/05/13 06:52:48 rillig Exp $ */
+/* $NetBSD: lsym_binary_op.c,v 1.8 2023/06/04 19:28:54 rillig Exp $ */
 
 /*
  * Tests for the token lsym_binary_op, which represents a binary operator in
@@ -82,9 +82,9 @@ int var = expr * *ptr;
  * arbitrary amount of '='.  This is used for operators like '&&' or
  * '|||==='.
  *
- * Before 2021-03-07 22:11:01, the comment '//' was treated as an
- * operator as well, and so was the comment '/////', leading to
- * unexpected results.
+ * Before 2021-03-07 22:11:01, the comment '//' was treated as a binary
+ * operator as well, and so was the comment '/////', leading to unexpected
+ * spacing.
  *
  * See lexi.c, lexi, "default:".
  */

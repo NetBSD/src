@@ -1,4 +1,4 @@
-/* $NetBSD: lex_ident.c,v 1.6 2023/05/15 17:28:14 rillig Exp $ */
+/* $NetBSD: lex_ident.c,v 1.7 2023/06/04 19:28:54 rillig Exp $ */
 
 /*
  * Test lexing of word-like tokens, such as keywords, identifiers, numeric
@@ -19,15 +19,13 @@ iable;
 int
 	no_backslash;
 
-/* $ See check_size_token. */
-/* $ The default buffer size is 200, the limit is 195. */
+// $ Test long identifiers, to cover the code that expands a buffer first to
+// $ more than 400 bytes and then to more than 1400 bytes.
 struct long_tag_name_to_overflow_the_token_buffer_4567890\
 12345678901234567890123456789012345678901234567890\
 12345678901234567890123456789012345678901234567890\
 12345678901234567890123456789012345678901234567890;
 
-/* $ See check_size_token. */
-/* $ The difference between limit and start got incremented to 595. */
 struct long_tag_name_to_overflow_the_token_buffer_4567890\
 12345678901234567890123456789012345678901234567890\
 12345678901234567890123456789012345678901234567890\
