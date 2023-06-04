@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.212 2023/06/04 20:51:19 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.213 2023/06/04 22:36:10 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.212 2023/06/04 20:51:19 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.213 2023/06/04 22:36:10 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -643,16 +643,15 @@ lexi(void)
 		break;
 
 	case '*':
-		if (is_asterisk_unary()) {
+		if (inp_p[0] == '=') {
+			token_add_char(*inp_p++);
+			lsym = lsym_binary_op;
+		} else if (is_asterisk_unary()) {
 			lex_asterisk_unary();
 			lsym = lsym_unary_op;
-			next_unary = true;
-		} else {
-			if (inp_p[0] == '=')
-				token_add_char(*inp_p++);
+		} else
 			lsym = lsym_binary_op;
-			next_unary = true;
-		}
+		next_unary = true;
 		break;
 
 	default:
