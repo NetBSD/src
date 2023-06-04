@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_binary_op.c,v 1.10 2023/06/04 22:36:10 rillig Exp $ */
+/* $NetBSD: lsym_binary_op.c,v 1.11 2023/06/04 22:57:18 rillig Exp $ */
 
 /*
  * Tests for the token lsym_binary_op, which represents a binary operator in
@@ -77,10 +77,9 @@ int var = expr * *ptr;
 
 
 /*
- * When indent tokenizes some operators, it allows for
- * arbitrary repetitions of the operator character, followed by an
- * arbitrary amount of '='.  This is used for operators like '&&' or
- * '|||==='.
+ * Before 2023-06-04, indent allowed for arbitrary repetitions of some operator
+ * characters, followed by an arbitrary amount of '='.  This could be used for
+ * operators like '&&' or '|||==='.
  *
  * Before 2021-03-07 22:11:01, the comment '//' was treated as a binary
  * operator as well, and so was the comment '/////', leading to unexpected
@@ -99,7 +98,16 @@ long_run_of_operators(void)
 }
 //indent end
 
-//indent run-equals-input
+//indent run
+void
+long_run_of_operators(void)
+{
+	if (a && && && &b)
+		return;
+	if (a || |= == b)
+		return;
+}
+//indent end
 
 
 /*
