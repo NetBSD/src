@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.149 2023/05/21 10:18:44 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.150 2023/06/04 20:23:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.149 2023/05/21 10:18:44 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.150 2023/06/04 20:23:12 rillig Exp $");
 
 #include <string.h>
 
@@ -293,9 +293,11 @@ copy_comment_wrap(int line_length, bool delim)
 static void
 copy_comment_nowrap(void)
 {
+	char kind = token.mem[token.len - 1];
+
 	for (;;) {
 		if (inp.st[0] == '\n') {
-			if (token.mem[token.len - 1] == '/')
+			if (kind == '/')
 				return;
 
 			if (had_eof) {
@@ -314,8 +316,10 @@ copy_comment_nowrap(void)
 		}
 
 		com_add_char(*inp.st++);
-		if (com.mem[com.len - 2] == '*' && com.mem[com.len - 1] == '/'
-		    && token.mem[token.len - 1] == '*')
+		if (com.len >= 2
+		    && com.mem[com.len - 2] == '*'
+		    && com.mem[com.len - 1] == '/'
+		    && kind == '*')
 			return;
 	}
 }
