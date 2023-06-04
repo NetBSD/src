@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_binary_op.c,v 1.8 2023/06/04 19:28:54 rillig Exp $ */
+/* $NetBSD: lsym_binary_op.c,v 1.9 2023/06/04 22:20:04 rillig Exp $ */
 
 /*
  * Tests for the token lsym_binary_op, which represents a binary operator in
@@ -168,6 +168,27 @@ int		col_9		//
  */
 //indent input
 int conditional = condition ? number : number;
+//indent end
+
+//indent run-equals-input -di0
+
+
+// After a ']', a '*' is a binary operator.
+//indent input
+int x = arr[3]*y;
+//indent end
+
+//indent run -di0
+int x = arr[3] * y;
+//indent end
+
+
+//indent input
+{
+	a = a;
+// $ FIXME: The first '*=' is categorized as 'unary_op token "*"'.
+	a *= b *= c;
+}
 //indent end
 
 //indent run-equals-input -di0
