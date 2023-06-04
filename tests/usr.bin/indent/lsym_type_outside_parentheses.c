@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_type_outside_parentheses.c,v 1.5 2023/05/15 18:22:40 rillig Exp $ */
+/* $NetBSD: lsym_type_outside_parentheses.c,v 1.6 2023/06/04 22:20:04 rillig Exp $ */
 
 /*
  * Tests for the token lsym_type_outside_parentheses, which represents a type
@@ -29,3 +29,19 @@ const char	       *const names[3];
 //indent end
 
 //indent run-equals-input -di24
+
+
+//indent input
+{
+{}
+size_t hello;
+}
+//indent end
+
+//indent run
+{
+	{
+	}
+	size_t		hello;
+}
+//indent end

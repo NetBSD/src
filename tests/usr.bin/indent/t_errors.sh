@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.31 2023/06/04 13:26:07 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.32 2023/06/04 22:20:04 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -212,6 +212,28 @@ unterminated_comment_nowrap_body()
 	    -o 'inline:/*-\n\n' \
 	    -e 'inline:error: Standard Input:2: Unterminated comment\n' \
 	    "$indent" -st < comment.c
+}
+
+atf_test_case 'unterminated_char_constant'
+unterminated_char_constant_body()
+{
+	echo "char ch = 'x" > char.c
+
+	atf_check -s 'exit:1' \
+	    -o "inline:char ch = 'x\n" \
+	    -e 'inline:error: Standard Input:1: Unterminated literal\n' \
+	    "$indent" -st -di0 < char.c
+}
+
+atf_test_case 'unterminated_string_literal'
+unterminated_string_literal_body()
+{
+	echo 'const char str[] = "x' > string.c
+
+	atf_check -s 'exit:1' \
+	    -o 'inline:const char str[] = "x\n' \
+	    -e 'inline:error: Standard Input:1: Unterminated literal\n' \
+	    "$indent" -st -di0 < string.c
 }
 
 atf_test_case 'in_place_wrong_backup'
@@ -549,6 +571,8 @@ atf_init_test_cases()
 	atf_add_test_case 'option_indent_size_zero'
 	atf_add_test_case 'unterminated_comment_wrap'
 	atf_add_test_case 'unterminated_comment_nowrap'
+	atf_add_test_case 'unterminated_char_constant'
+	atf_add_test_case 'unterminated_string_literal'
 	atf_add_test_case 'in_place_wrong_backup'
 	atf_add_test_case 'argument_input_enoent'
 	atf_add_test_case 'argument_output_equals_input_name'

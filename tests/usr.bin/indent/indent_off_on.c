@@ -1,4 +1,4 @@
-/* $NetBSD: indent_off_on.c,v 1.14 2023/06/03 21:44:08 rillig Exp $ */
+/* $NetBSD: indent_off_on.c,v 1.15 2023/06/04 22:20:04 rillig Exp $ */
 
 /*
  * Tests for the comments 'INDENT OFF' and 'INDENT ON', which temporarily
@@ -252,3 +252,24 @@ int declaration;
 //indent end
 
 //indent run-equals-input -bacc
+
+
+/*
+ * If an 'INDENT OFF' comment directly follows a line continuation, the line
+ * continuation is dropped but the rest of the line is still formatted.
+ */
+//indent input
+int x ; \
+/* INDENT OFF */
+  int y ;
+/* INDENT ON */
+int z ;
+//indent end
+
+//indent run
+int		x;
+/* INDENT OFF */
+  int y ;
+/* INDENT ON */
+int		z;
+//indent end
