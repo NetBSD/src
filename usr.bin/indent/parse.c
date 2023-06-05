@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.65 2023/06/04 17:54:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.66 2023/06/05 07:35:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.65 2023/06/04 17:54:11 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.66 2023/06/05 07:35:05 rillig Exp $");
 
 #include <err.h>
 
@@ -105,12 +105,13 @@ parse(parser_symbol psym)
 		ps.break_after_comma = true;
 		ps_push_follow(psym_decl);
 
-		if (opt.ljust_decl)
+		if (opt.left_justify_decl)
 			ps.ind_level_follow = ps.ind_level = decl_level();
 		break;
 
 	case psym_if_expr:
-		if (ps.s_sym[ps.tos] == psym_if_expr_stmt_else && opt.else_if)
+		if (ps.s_sym[ps.tos] == psym_if_expr_stmt_else
+		    && opt.else_if_in_same_line)
 			ps.ind_level_follow = ps.s_ind_level[ps.tos--];
 		/* FALLTHROUGH */
 	case psym_do:
