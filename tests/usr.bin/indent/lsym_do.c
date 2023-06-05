@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_do.c,v 1.8 2023/06/05 08:10:25 rillig Exp $ */
+/* $NetBSD: lsym_do.c,v 1.9 2023/06/05 08:22:00 rillig Exp $ */
 
 /*
  * Tests for the token lsym_do, which represents the keyword 'do' that starts
@@ -125,8 +125,7 @@ variants(void)
 
 //indent run
 {
-// $ FIXME: Trailing whitespace.
-	/* */ 
+	/* */
 	do {
 	} while (false);
 
@@ -141,8 +140,7 @@ label:	do {
 
 //indent run -sob
 {
-// $ FIXME: Trailing whitespace.
-	/* */ 
+	/* */
 	do {
 	} while (false);
 // $ FIXME: This blank line is not optional and must be preserved.

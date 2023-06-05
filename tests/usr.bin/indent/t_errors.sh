@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.32 2023/06/04 22:20:04 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.33 2023/06/05 08:22:00 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -468,7 +468,7 @@ crash_comment_after_controlling_expression_body()
 	cat <<\EOF > code.exp
 {
 	if (expr
-		) /* c */ ;
+		) /* c */;
 }
 EOF
 
@@ -499,7 +499,7 @@ f(void)
 	if (0)
 		/*
 		 * 0123456789012345678901
-		 */ ;
+		 */;
 }
 EOF
 
