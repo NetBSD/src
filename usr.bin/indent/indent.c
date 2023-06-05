@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.332 2023/06/05 09:41:40 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.333 2023/06/05 10:12:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.332 2023/06/05 09:41:40 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.333 2023/06/05 10:12:21 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -393,8 +393,6 @@ maybe_break_line(lexer_symbol lsym)
 	    && ps.prev_lsym != lsym_lbrace)
 		return;
 
-	if (opt.verbose)
-		diag(0, "Line broken");
 	output_line();
 	ps.force_nl = false;
 }
@@ -810,11 +808,8 @@ process_rbrace(void)
 	if (ps.block_init_level > 0)
 		ps.block_init_level--;
 
-	if (code.len > 0 && !ps.block_init) {
-		if (opt.verbose)
-			diag(0, "Line broken");
+	if (code.len > 0 && !ps.block_init)
 		output_line();
-	}
 
 	buf_add_char(&code, '}');
 	ps.want_blank = true;
@@ -848,11 +843,8 @@ process_do(void)
 	ps.in_stmt_or_decl = false;
 	ps.in_decl = false;
 
-	if (code.len > 0) {	/* make sure this starts a line */
-		if (opt.verbose)
-			diag(0, "Line broken");
+	if (code.len > 0)
 		output_line();
-	}
 
 	ps.force_nl = true;
 	parse(psym_do);
@@ -864,11 +856,8 @@ process_else(void)
 	ps.in_stmt_or_decl = false;
 
 	if (code.len > 0
-	    && !(opt.cuddle_else && code.s[code.len - 1] == '}')) {
-		if (opt.verbose)
-			diag(0, "Line broken");
+	    && !(opt.cuddle_else && code.s[code.len - 1] == '}'))
 		output_line();
-	}
 
 	ps.force_nl = true;
 	parse(psym_else);
