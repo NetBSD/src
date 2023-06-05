@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.143 2023/04/23 08:53:08 mlelstv Exp $	*/
+/*	$NetBSD: audio.c,v 1.144 2023/06/05 16:26:05 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,7 +181,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.143 2023/04/23 08:53:08 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.144 2023/06/05 16:26:05 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -6095,7 +6095,8 @@ audio_rmixer_process(struct audio_softc *sc)
 		codecarg.srcfmt = &mixer->hwbuf.fmt;
 		codecarg.dstfmt = &mixer->mixfmt;
 		codec = NULL;
-		if (audio_format2_is_linear(codecarg.srcfmt)) {
+		if (audio_format2_is_linear(codecarg.srcfmt) &&
+		    codecarg.srcfmt->stride == codecarg.srcfmt->precision) {
 			switch (codecarg.srcfmt->stride) {
 			case 8:
 				codec = audio_linear8_to_internal;
@@ -6115,6 +6116,8 @@ audio_rmixer_process(struct audio_softc *sc)
 		}
 		if (codec == NULL) {
 			TRACE(4, "unsupported hw format");
+			/* drain hwbuf */
+			auring_take(&mixer->hwbuf, count);
 			return;
 		}
 
