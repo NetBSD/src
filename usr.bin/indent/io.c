@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.196 2023/06/05 09:41:40 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.197 2023/06/05 12:01:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.196 2023/06/05 09:41:40 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.197 2023/06/05 12:01:33 rillig Exp $");
 
 #include <stdio.h>
 
@@ -169,8 +169,7 @@ want_blank_line(void)
 static bool
 is_blank_line_optional(void)
 {
-	if (out.prev_line_kind == lk_stmt_head
-	    && ps.prev_lsym != lsym_semicolon)
+	if (out.prev_line_kind == lk_stmt_head)
 		return wrote_newlines >= 1;
 	if (ps.tos >= 2)
 		return wrote_newlines >= 2;
