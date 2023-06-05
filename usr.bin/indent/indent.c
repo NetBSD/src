@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.331 2023/06/05 09:10:31 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.332 2023/06/05 09:41:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.331 2023/06/05 09:10:31 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.332 2023/06/05 09:41:40 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -846,6 +846,7 @@ static void
 process_do(void)
 {
 	ps.in_stmt_or_decl = false;
+	ps.in_decl = false;
 
 	if (code.len > 0) {	/* make sure this starts a line */
 		if (opt.verbose)

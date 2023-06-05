@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_do.c,v 1.9 2023/06/05 08:22:00 rillig Exp $ */
+/* $NetBSD: lsym_do.c,v 1.10 2023/06/05 09:41:40 rillig Exp $ */
 
 /*
  * Tests for the token lsym_do, which represents the keyword 'do' that starts
@@ -131,25 +131,11 @@ variants(void)
 
 	word
 	do {
-	} while		(false);
+	} while (false);
 
 label:	do {
 	} while (false);
 }
 //indent end
 
-//indent run -sob
-{
-	/* */
-	do {
-	} while (false);
-// $ FIXME: This blank line is not optional and must be preserved.
-	word
-	do {
-// $ FIXME: The expression is indented too far to the right.
-	} while		(false);
-// $ FIXME: This blank line is not optional and must be preserved.
-label:	do {
-	} while (false);
-}
-//indent end
+//indent run-equals-prev-output -sob
