@@ -1,6 +1,6 @@
 include "arch/amd64/conf/GENERIC"
 
-#ident		"NOCOMPAT-$Revision: 1.6 $"
+ident		"NOCOMPAT-$Revision: 1.7 $"
 
 no options 	SYSVMSG		# System V-like message queues
 no options 	SYSVSEM		# System V-like semaphores
