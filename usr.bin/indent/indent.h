@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.173 2023/06/05 10:12:21 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.174 2023/06/05 12:05:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -89,7 +89,7 @@ typedef enum lexer_symbol {
 	lsym_colon_other,	/* bit-fields, generic-association (C11),
 				 * enum-type-specifier (C23),
 				 * attribute-prefixed-token (C23),
-				 * pp-prefixed-parameter (C23 6.10)*/
+				 * pp-prefixed-parameter (C23 6.10) */
 	lsym_comma,
 	lsym_semicolon,
 	lsym_typedef,
@@ -320,8 +320,8 @@ extern struct parser_state {
 				 * processing of braces is then slightly
 				 * different */
 	bool in_func_def_params;
-	bool seen_case;		/* whether there was a 'case' or 'default',
-				 * to properly space the following ':' */
+	bool seen_case;		/* whether there was a 'case' or 'default', to
+				 * properly space the following ':' */
 	parser_symbol spaced_expr_psym;	/* the parser symbol to be shifted
 					 * after the parenthesized expression
 					 * from a 'for', 'if', 'switch' or
@@ -374,13 +374,13 @@ extern struct parser_state {
 				 * remaining lines of the statement,
 				 * initializer or declaration */
 	enum {
-	    dp_start,		/* the beginning of a declaration */
-	    dp_word,		/* seen a type name */
-	    dp_word_asterisk,	/* seen a type name and some '*' */
-	    dp_other,
-	} decl_ptr;		/* detects declarations like 'typename *x',
-				 * to prevent the '*' from being interpreted as
-				 * a binary operator */
+		dp_start,	/* the beginning of a declaration */
+		dp_word,	/* seen a type name */
+		dp_word_asterisk,	/* seen a type name and some '*' */
+		dp_other,
+	} decl_ptr;		/* detects declarations like 'typename *x', to
+				 * prevent the '*' from being interpreted as a
+				 * binary operator */
 	paren_level_props paren[20];
 
 	/* Horizontal spacing for comments */

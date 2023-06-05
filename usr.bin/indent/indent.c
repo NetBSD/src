@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.334 2023/06/05 12:01:33 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.335 2023/06/05 12:05:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.334 2023/06/05 12:01:33 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.335 2023/06/05 12:05:01 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -413,7 +413,7 @@ process_newline(void)
 	if (ps.prev_lsym == lsym_comma
 	    && ps.nparen == 0 && !ps.block_init
 	    && !opt.break_after_comma && ps.break_after_comma
-	    && lab.len == 0 /* for preprocessing lines */
+	    && lab.len == 0	/* for preprocessing lines */
 	    && com.len == 0)
 		goto stay_in_line;
 	if (ps.s_sym[ps.tos] == psym_switch_expr && opt.brace_same_line) {
@@ -1167,7 +1167,7 @@ process_lsym(lexer_symbol lsym)
 	case lsym_funcname:
 	case lsym_return:
 		process_ident(lsym);
-	copy_token:
+copy_token:
 		if (ps.want_blank)
 			buf_add_char(&code, ' ');
 		buf_add_buf(&code, &token);
