@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_do.c,v 1.7 2023/05/22 23:01:27 rillig Exp $ */
+/* $NetBSD: lsym_do.c,v 1.8 2023/06/05 08:10:25 rillig Exp $ */
 
 /*
  * Tests for the token lsym_do, which represents the keyword 'do' that starts
@@ -108,5 +108,50 @@ variants(void)
 		do
 		{
 		} while (0);
+}
+//indent end
+
+
+/* Ensure that the 'do' starts a line. */
+//indent input
+{
+	/* */ do {} while (false);
+
+	word do {} while (false);
+
+	label: do {} while (false);
+}
+//indent end
+
+//indent run
+{
+// $ FIXME: Trailing whitespace.
+	/* */ 
+	do {
+	} while (false);
+
+	word
+	do {
+	} while		(false);
+
+label:	do {
+	} while (false);
+}
+//indent end
+
+//indent run -sob
+{
+// $ FIXME: Trailing whitespace.
+	/* */ 
+	do {
+	} while (false);
+// $ FIXME: This blank line is not optional and must be preserved.
+	word
+	do {
+// $ FIXME: The expression is indented too far to the right.
+	} while		(false);
+// $ FIXME: This blank line is not optional and must be preserved.
+label:	do {
+	} while (false);
 }
 //indent end
