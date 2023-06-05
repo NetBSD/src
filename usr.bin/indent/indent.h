@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.171 2023/06/04 20:51:19 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.172 2023/06/05 07:35:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -201,17 +201,16 @@ extern struct options {
 	int comment_column;	/* the column in which comments to the right of
 				 * code should start */
 	int decl_indent;	/* indentation of identifier in declaration */
-	bool ljust_decl;	/* true if declarations should be left
-				 * justified */
+	bool left_justify_decl;
 	int unindent_displace;	/* comments not to the right of code will be
 				 * placed this many indentation levels to the
 				 * left of code */
 	bool extra_expr_indent;	/* whether continuation lines from the
 				 * expression part of "if (e)", "while (e)",
 				 * "for (e; e; e)" should be indented an extra
-				 * tab stop so that they don't conflict with
+				 * tab stop so that they are not confused with
 				 * the code that follows */
-	bool else_if;		/* whether else-if pairs use the same line */
+	bool else_if_in_same_line;
 	bool function_brace_split;	/* split function declaration and brace
 					 * onto separate lines */
 	bool format_col1_comments;	/* If comments which start in column 1
@@ -230,12 +229,11 @@ extern struct options {
 				 * lined up to the open paren */
 	bool proc_calls_space;	/* whether function calls look like: foo (bar)
 				 * rather than foo(bar) */
-	bool procnames_start_line;	/* whether the names of procedures
-					 * being defined get placed in column 1
-					 * (i.e. a newline is placed between
-					 * the type of the procedure and its
-					 * name) */
-	bool space_after_cast;	/* "b = (int) a" vs "b = (int)a" */
+	bool procnames_start_line;	/* whether the names of functions being
+					 * defined get placed in column 1 (i.e.
+					 * a newline is placed between the type
+					 * of the function and its name) */
+	bool space_after_cast;	/* "b = (int) a" vs. "b = (int)a" */
 	bool star_comment_cont;	/* whether comment continuation lines should
 				 * have stars at the beginning of each line */
 	bool swallow_optional_blanklines;
