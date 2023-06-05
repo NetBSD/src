@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.335 2023/06/05 12:05:01 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.336 2023/06/05 20:56:18 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.335 2023/06/05 12:05:01 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.336 2023/06/05 20:56:18 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -489,7 +489,12 @@ process_lparen(void)
 		indent = 2 * opt.indent_size;
 
 	enum paren_level_cast cast = cast_unknown;
-	if (ps.prev_lsym == lsym_offsetof || ps.prev_lsym == lsym_sizeof
+	if (ps.prev_lsym == lsym_offsetof
+	    || ps.prev_lsym == lsym_sizeof
+	    || ps.prev_lsym == lsym_for
+	    || ps.prev_lsym == lsym_if
+	    || ps.prev_lsym == lsym_switch
+	    || ps.prev_lsym == lsym_while
 	    || ps.is_function_definition)
 		cast = cast_no;
 
