@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.34 2023/06/04 20:51:19 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.35 2023/06/05 14:22:26 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.34 2023/06/04 20:51:19 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.35 2023/06/05 14:22:26 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -127,6 +127,12 @@ const char *const line_kind_name[] = {
 	"}",
 	"block comment",
 	"case/default",
+};
+
+static const char *const extra_expr_indent_name[] = {
+	"no",
+	"yes",
+	"last",
 };
 
 static const char *const decl_ptr_name[] = {
@@ -290,51 +296,58 @@ debug_parser_state(void)
 	static struct parser_state prev_ps;
 
 	debug_blank_line();
-	debug_println("           ps.prev_lsym = %s",
-	    lsym_name[ps.prev_lsym]);
-	debug_ps_bool(curr_col_1);
-	debug_ps_bool(next_col_1);
-	debug_ps_bool(next_unary);
+	debug_println("           ps.prev_lsym = %s", lsym_name[ps.prev_lsym]);
+
+	debug_println("token classification");
+	debug_ps_int(quest_level);
 	debug_ps_bool(is_function_definition);
+	debug_ps_bool(block_init);
+	debug_ps_int(block_init_level);
+	debug_ps_bool(init_or_struct);
+	debug_ps_bool(decl_on_line);
+	debug_ps_bool(in_stmt_or_decl);
+	debug_ps_bool(in_decl);
+	debug_ps_bool(in_func_def_params);
+	debug_ps_bool(seen_case);
+	debug_ps_enum(spaced_expr_psym, psym_name);
+	debug_ps_enum(lbrace_kind, psym_name);
+
+	debug_println("indentation of statements and declarations");
+	debug_ps_int(ind_level);
+	debug_ps_int(ind_level_follow);
+	debug_ps_bool(in_stmt_cont);
+	debug_ps_int(decl_level);
+	debug_ps_di_stack(&prev_ps);
+	debug_ps_bool(decl_indent_done);
+	debug_ps_int(decl_ind);
+	debug_ps_bool(tabs_to_var);
+	debug_ps_enum(extra_expr_indent, extra_expr_indent_name);
+
+	// The parser symbol stack is printed in debug_parse_stack instead.
+
+	debug_println("spacing inside a statement or declaration");
+	debug_ps_bool(next_unary);
 	debug_ps_bool(want_blank);
-	debug_ps_bool(break_after_comma);
-	debug_ps_bool(force_nl);
 	debug_ps_int(line_start_nparen);
 	debug_ps_int(nparen);
 	debug_ps_paren(&prev_ps);
+	debug_ps_enum(decl_ptr, decl_ptr_name);
 
+	debug_println("horizontal spacing for comments");
 	debug_ps_int(comment_delta);
 	debug_ps_int(n_comment_delta);
 	debug_ps_int(com_ind);
 
-	debug_ps_bool(block_init);
-	debug_ps_int(block_init_level);
-	debug_ps_bool(init_or_struct);
-
-	debug_ps_int(ind_level);
-	debug_ps_int(ind_level_follow);
-
-	debug_ps_int(decl_level);
-	debug_ps_di_stack(&prev_ps);
-	debug_ps_bool(decl_on_line);
-	debug_ps_bool(in_decl);
+	debug_println("vertical spacing");
+	debug_ps_bool(break_after_comma);
+	debug_ps_bool(force_nl);
 	debug_ps_enum(declaration, declaration_name);
 	debug_ps_bool(blank_line_after_decl);
-	debug_ps_bool(in_func_def_params);
-	debug_ps_enum(lbrace_kind, psym_name);
-	debug_ps_enum(decl_ptr, decl_ptr_name);
-	debug_ps_bool(decl_indent_done);
-	debug_ps_int(decl_ind);
-	debug_ps_bool(tabs_to_var);
 
-	debug_ps_bool(in_stmt_or_decl);
-	debug_ps_bool(in_stmt_cont);
-	debug_ps_bool(seen_case);
+	debug_println("comments");
+	debug_ps_bool(curr_col_1);
+	debug_ps_bool(next_col_1);
 
-	// The debug output for the parser symbols is done in 'parse' instead.
-
-	debug_ps_enum(spaced_expr_psym, psym_name);
-	debug_ps_int(quest_level);
 	debug_blank_line();
 
 	prev_ps = ps;
@@ -345,7 +358,7 @@ debug_parse_stack(const char *situation)
 {
 	printf("parse stack %s:", situation);
 	for (int i = 0; i <= ps.tos; ++i)
-		printf(" %s %d", psym_name[ps.s_sym[i]], ps.s_ind_level[i]);
+		printf(" %d %s", ps.s_ind_level[i], psym_name[ps.s_sym[i]]);
 	printf("\n");
 }
 #endif
