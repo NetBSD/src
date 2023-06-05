@@ -1,4 +1,4 @@
-/* $NetBSD: opt_dj.c,v 1.7 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_dj.c,v 1.8 2023/06/05 15:02:54 rillig Exp $ */
 
 /*
  * Tests for the options '-dj' and '-ndj'.
@@ -74,5 +74,79 @@ dbl_plus3(a, b, c)
 	double		a, b, c;
 {
 	return a + b + c;
+}
+//indent end
+
+
+//indent input
+struct a {
+	struct b {
+		struct c {
+			struct d1 {
+				int e;
+			} d1;
+			struct d2 {
+				int e;
+			} d2;
+		} c;
+	} b;
+};
+//indent end
+
+//indent run -d0
+struct a {
+	struct b {
+		struct c {
+			struct d1 {
+				int		e;
+			}		d1;
+			struct d2 {
+				int		e;
+			}		d2;
+		}		c;
+	}		b;
+};
+//indent end
+
+//indent run-equals-input -di0
+
+//indent run-equals-prev-output -dj
+
+
+//indent input
+{
+	{
+		struct a {
+			struct b {
+				struct c {
+					struct d1 {
+						int e;
+					} d1;
+					struct d2 {
+						int e;
+					} d2;
+				} c;
+			} b;
+		};
+	}
+}
+//indent end
+
+//indent run -dj
+{
+	{
+struct a {
+	struct b {
+		struct c {
+			struct d1 {
+				int		e;
+			}		d1;
+			struct d2 {
+				int		e;
+			}		d2;
+		}		c;
+	}		b;
+};
+	}
 }
 //indent end
