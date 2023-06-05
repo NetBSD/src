@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.193 2023/06/04 20:51:19 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.194 2023/06/05 06:43:14 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.193 2023/06/04 20:51:19 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.194 2023/06/05 06:43:14 rillig Exp $");
 
 #include <stdio.h>
 
@@ -46,7 +46,9 @@ __RCSID("$NetBSD: io.c,v 1.193 2023/06/04 20:51:19 rillig Exp $");
 
 struct buffer inp;
 const char *inp_p;
+
 struct output_state out;
+static int out_ind;		/* width of the line that is being written */
 static unsigned wrote_newlines = 2;	/* 0 in the middle of a line, 1 after a
 					 * single '\n', > 1 means there were (n
 					 * - 1) blank lines above */
@@ -99,6 +101,7 @@ output_newline(void)
 	fputc('\n', output);
 	debug_println("output_newline");
 	wrote_newlines++;
+	out_ind = 0;
 }
 
 static void
@@ -108,12 +111,13 @@ output_range(const char *s, size_t len)
 	debug_vis_range("output_range \"", s, len, "\"\n");
 	for (size_t i = 0; i < len; i++)
 		wrote_newlines = s[i] == '\n' ? wrote_newlines + 1 : 0;
+	out_ind = ind_add(out_ind, s, len);
 }
 
-static int
-output_indent(int old_ind, int new_ind)
+static void
+output_indent(int new_ind)
 {
-	int ind = old_ind;
+	int ind = out_ind;
 
 	if (opt.use_tabs) {
 		int tabsize = opt.tabsize;
@@ -133,7 +137,7 @@ output_indent(int old_ind, int new_ind)
 	}
 
 	debug_println("output_indent %d", ind);
-	return ind;
+	out_ind = ind;
 }
 
 static bool
@@ -172,22 +176,20 @@ is_blank_line_optional(void)
 	return wrote_newlines >= 3;
 }
 
-static int
+static void
 output_line_label(void)
 {
 
 	while (lab.len > 0 && ch_isblank(lab.s[lab.len - 1]))
 		lab.len--;
 
-	int ind = output_indent(0, compute_label_indent());
+	output_indent(compute_label_indent());
 	output_range(lab.s, lab.len);
-	return ind_add(ind, lab.s, lab.len);
 }
 
-static int
-output_line_code(int ind)
+static void
+output_line_code(void)
 {
-
 	int target_ind = compute_code_indent();
 	for (int i = 0; i < ps.nparen; i++) {
 		int paren_ind = ps.paren[i].indent;
@@ -200,23 +202,21 @@ output_line_code(int ind)
 		}
 	}
 
-	int code_ind = output_indent(ind, target_ind);
-	if (ind > 0 && code_ind == ind)
-		output_range(" ", 1), code_ind++;
+	int label_end_ind = out_ind;
+	output_indent(target_ind);
+	if (label_end_ind > 0 && out_ind == label_end_ind)
+		output_range(" ", 1);
 	output_range(code.s, code.len);
-	return ind_add(code_ind, code.s, code.len);
 }
 
 static void
-output_line_comment(int ind)
+output_line_comment(void)
 {
-	int target_ind = ps.com_ind;
-	const char *p = com.s;
-
-	target_ind += ps.comment_delta;
+	int target_ind = ps.com_ind + ps.comment_delta;
+	const char *p;
 
 	/* consider original indentation in case this is a box comment */
-	for (; *p == '\t'; p++)
+	for (p = com.s; *p == '\t'; p++)
 		target_ind += opt.tabsize;
 
 	for (; target_ind < 0; p++) {
@@ -230,16 +230,13 @@ output_line_comment(int ind)
 		}
 	}
 
-	/* if comment can't fit on this line, put it on the next line */
-	if (ind > target_ind) {
+	if (out_ind > target_ind)
 		output_newline();
-		ind = 0;
-	}
 
 	while (com.s + com.len > p && ch_isspace(com.s[com.len - 1]))
 		com.len--;
 
-	(void)output_indent(ind, target_ind);
+	output_indent(target_ind);
 	output_range(p, com.len - (size_t)(p - com.s));
 
 	ps.comment_delta = ps.n_comment_delta;
@@ -283,13 +280,12 @@ output_line(void)
 		    && is_blank_line_optional())
 			goto dont_write_line;
 
-		int ind = 0;
 		if (lab.len > 0)
-			ind = output_line_label();
+			output_line_label();
 		if (code.len > 0)
-			ind = output_line_code(ind);
+			output_line_code();
 		if (com.len > 0)
-			output_line_comment(ind);
+			output_line_comment();
 
 		output_newline();
 		out.prev_line_kind = out.line_kind;
