@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.80 2023/05/18 06:01:39 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.81 2023/06/05 07:35:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: args.c,v 1.80 2023/05/18 06:01:39 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.81 2023/06/05 07:35:05 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 
@@ -91,9 +91,9 @@ static const struct pro {
 	bool_options("cs", space_after_cast),
 	int_option("d", unindent_displace, -999, 999),
 	int_option("di", decl_indent, 0, 999),
-	bool_options("dj", ljust_decl),
+	bool_options("dj", left_justify_decl),
 	bool_options("eei", extra_expr_indent),
-	bool_options("ei", else_if),
+	bool_options("ei", else_if_in_same_line),
 	bool_options("fbs", function_brace_split),
 	bool_options("fc1", format_col1_comments),
 	bool_options("fcb", format_block_comments),

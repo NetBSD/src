@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.328 2023/06/05 07:23:03 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.329 2023/06/05 07:35:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.328 2023/06/05 07:23:03 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.329 2023/06/05 07:35:05 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -57,7 +57,7 @@ struct options opt = {
 	.cuddle_else = true,
 	.comment_column = 33,
 	.decl_indent = 16,
-	.else_if = true,
+	.else_if_in_same_line = true,
 	.function_brace_split = true,
 	.format_col1_comments = true,
 	.format_block_comments = true,
@@ -287,7 +287,7 @@ parse_command_line(int argc, char **argv)
 	if (opt.local_decl_indent < 0)
 		opt.local_decl_indent = opt.decl_indent;
 	if (opt.decl_comment_column <= 0)
-		opt.decl_comment_column = opt.ljust_decl
+		opt.decl_comment_column = opt.left_justify_decl
 		    ? (opt.comment_column <= 10 ? 2 : opt.comment_column - 8)
 		    : opt.comment_column;
 	if (opt.continuation_indent == 0)
@@ -500,9 +500,7 @@ process_lparen(void)
 		ps.extra_expr_indent = eei_yes;
 
 	if (ps.init_or_struct && ps.tos <= 2) {
-		/* this is a kluge to make sure that declarations will be
-		 * aligned right if proc decl has an explicit type on it, i.e.
-		 * "int a(x) {..." */
+		/* A kludge to correctly align function definitions. */
 		parse(psym_stmt);
 		ps.init_or_struct = false;
 	}
@@ -1241,7 +1239,7 @@ indent(void)
 			return process_eof();
 
 		if (lsym == lsym_if && ps.prev_lsym == lsym_else
-		    && opt.else_if)
+		    && opt.else_if_in_same_line)
 			ps.force_nl = false;
 
 		if (lsym == lsym_newline || lsym == lsym_preprocessing)
