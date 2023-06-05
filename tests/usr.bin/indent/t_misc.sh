@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_misc.sh,v 1.25 2023/05/15 17:38:56 rillig Exp $
+# $NetBSD: t_misc.sh,v 1.26 2023/06/05 07:23:03 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -405,6 +405,16 @@ opt_v_break_line_body()
 	    "$indent" -v code.c -st
 }
 
+
+atf_test_case 'trailing_whitespace_in_preprocessing_line'
+trailing_whitespace_in_preprocessing_line_body()
+{
+	printf '#if trailing && space \n#endif\n' > code.c
+
+	atf_check -o 'inline:#if trailing && space\n#endif\n' \
+	    "$indent" code.c -st
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case 'in_place'
@@ -421,4 +431,5 @@ atf_init_test_cases()
 	atf_add_test_case 'several_profiles'
 	atf_add_test_case 'command_line_vs_profile'
 	atf_add_test_case 'in_place_parse_error'
+	atf_add_test_case 'trailing_whitespace_in_preprocessing_line'
 }
