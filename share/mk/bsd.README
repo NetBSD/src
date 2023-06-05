@@ -1,11 +1,14 @@
-#	$NetBSD: bsd.README,v 1.443 2023/05/24 10:07:16 lukem Exp $
+#	$NetBSD: bsd.README,v 1.444 2023/06/05 22:36:58 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
 source tree.  The files are installed in /usr/share/mk, and are,
 by convention, named with the suffix ".mk".
 
-Note, this file is not intended to replace reading through the .mk
+Other sources of relevant documentation are BUILDING in the top
+level of the NetBSD source tree, and the mk.conf(5) man page.
+
+Note: this file is not intended to replace reading through the .mk
 files for anything tricky.
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -66,32 +69,35 @@ and are tested with  ${VAR} == "no"  and  ${VAR} != "no" .
 
 The basic rule for the variable naming scheme is as follows:
 
-HOST_xxx	A command that runs on the host machine regardless of
+HOST_<cmd>	A command that runs on the host machine regardless of
 		whether or not the system is being cross compiled, or
 		flags for such a command.
 
-MKxxx		Can be set to "no" to disable functionality, or
-		"yes" to enable it.
+MK<feature>	Can be set to "no" to disable feature <feature>,
+		or "yes" to enable feature <feature>.
 		Usually defaults to "yes", although some variables
 		default to "no".
 		Due to make(1) implementation issues, if a temporary
 		command-line override of a mk.conf(5) or <bsd.own.mk>
 		setting is required whilst still honoring a particular
-		Makefile's setting of MKxxx, use
-			env MKxxx=value make
+		Makefile's setting of MK<feature>, use
+			env MK<feature>=value make
 		instead of
-			make MKxxx=value
+			make MK<feature>=value
 
-NOxxx		If defined, disables a feature.
+NO<feature>	If defined, disables feature <feature>, overriding
+		a user's MK<feature>=yes configuration.
 		Not intended for users.
 		This is to allow Makefiles to disable functionality
 		that they don't support (such as missing man pages).
-		NOxxx variables must be defined before <bsd.own.mk>
-		is included.
+		NO<feature> variables must be defined before <bsd.own.mk>
+		is included, which generally means define before
+		any <*.mk> is included.
+		See "Variables for a Makefile".
 
-TOOL_xxx	A tool that is provided as part of the USETOOLS
+TOOL_<tool>	A tool that is provided as part of the USETOOLS
 		framework.  When not using the USETOOLS framework,
-		TOOL_xxx variables should refer to tools that are
+		TOOL_<tool> variables should refer to tools that are
 		already installed on the host system.
 
 The following variables control how things are made/installed that
@@ -99,530 +105,1094 @@ are not set by default. These should not be set by Makefiles; they're for
 the user to define in MAKECONF (see <bsd.own.mk>, below, or mk.conf(5))
 or on the make(1) command line:
 
-BUILD 		If defined, 'make install' checks that the targets in the
-		source directories are up-to-date and remakes them if they
-                are out of date, instead of blindly trying to install
-                out of date or non-existent targets.
+BUILD		If defined, 'make install' checks that the targets in the
+		source directories are up-to-date and re-makes them if
+		they are out of date, instead of blindly trying to
+		install out of date or non-existent targets.
 
-MAKEVERBOSE	Control how "verbose" the standard make(1) rules are.
+		Default: Unset.
+
+BUILDID		Identifier for the build.  If set, this should be a short
+		string that is suitable for use as part of a file or
+		directory name.  The identifier will be appended to
+		object directory names, and can be consulted in the
+		make(1) configuration file in order to set additional
+		build parameters, such as compiler flags.  It will also
+		be used as part of the kernel version string, which can
+		be shown by "uname -v".
+
+		Default: Unset.
+
+BUILDINFO	Optional multi-line string containing information about
+		the build.  This will appear in DESTDIR/etc/release, and
+		it will be stored in the buildinfo variable in any
+		kernels that are built.  When such kernels are booted,
+		the sysctl(7) kern.buildinfo variable will report this
+		value.  The string may contain backslash escape
+		sequences, such as "\\" (representing a backslash
+		character) and "\n" (representing a newline).
+
+		Default: Unset.
+
+BUILDSEED	g++(1) uses random numbers when compiling C++ code.  This
+		variable seeds the g++(1) random number generator using
+		-frandom-seed with this value.  By default, it is set to
+		"NetBSD-(majorversion)".  Using a fixed value causes C++
+		binaries to be the same when built from the same sources,
+		resulting in identical (reproducible) builds.  Additional
+		information is available in the g++(1) documentation of
+		-frandom-seed.
+
+		Default: Unset.
+
+MAKEVERBOSE	Level of verbosity of status messages.  Supported values:
+
+		0   No descriptive messages or commands executed by
+		    make(1) are shown.
+
+		1   Brief messages are shown describing what is being
+		    done, but the actual commands executed by make(1) are
+		    not displayed.
+
+		2   Descriptive messages are shown as above (prefixed
+		    with a `#'), and ordinary commands performed by
+		    make(1) are displayed.
+
+		3   In addition to the above, all commands performed by
+		    make(1) are displayed, even if they would ordinarily
+		    have been hidden through use of the "@" prefix in the
+		    relevant makefile.
+
+		4   In addition to the above, commands executed by
+		    make(1) are traced through use of the sh(1) "-x"
+		    flag.
+
 		Default: 2
-		Supported values:
-		    0	Minimal output ("quiet")
-		    1	Describe what is occurring
-		    2	Describe what is occurring and echo the actual command
-		    3	Ignore the effect of the "@" prefix in make commands
-		    4	Trace shell commands using the shell's -x flag
 
-MKARGON2	If "no", don't build support for Argon2 into libcrypt.
-		Default: yes
+MKAMDGPUFIRMWARE
+		Can be set to "yes" or "no".  Indicates whether to
+		install the /libdata/firmware/amdgpu directory, which is
+		necessary for the amdgpu(4) AMD RADEON GPU video driver.
 
-MKATF		If "no", don't build the Automated Testing Framework (ATF),
-		which includes the libatf-c, libatf-c++ and libatf-sh libraries
-		and the various command line tools.  Also, because the build of
-		the libraries is disabled, don't build the NetBSD test suite
-		either.
-		Default: yes
+		Default: "yes" on i386 and x86_64; "no" on other
+		platforms.
 
-MKBFD		Obsolete, use MKBINUTILS
+MKARGON2	Can be set to "yes" or "no".  Indicates whether the
+		Argon2 hash is enabled in libcrypt.
 
-MKBINUTILS	If "no", don't build binutils (gas, ld, etc and libbfd,
-		libopcodes)
-		Default: yes
+		Default: "yes"
 
-MKBSDTAR	If "yes", use the libarchive based cpio and tar instead of
-		the pax frontends.
-		Default: yes
+MKARZERO	Can be set to "yes" or "no".  Indicates whether ar(1)
+		should zero the timestamp, uid, and gid in the archive
+		for reproducible builds.
 
-MKCATPAGES	If "no", don't build or install the catman pages.
-		Default: no
+		Default: The value of MKREPRO (if defined), otherwise
+		"no".
 
-MKCOMPAT  	If "no", don't build or install the src/compat.
-		Default: yes on amd64, mips64 and sparc64, no elsewhere.
+MKATF		Can be set to "yes" or "no".  Indicates whether the
+		Automated Testing Framework (ATF) will be built and
+		installed.  This also controls whether the NetBSD test
+		suite will be built and installed, as the tests rely on
+		ATF and cannot be built without it.
 
-MKCOMPATTESTS  	If "yes", build and install the NetBSD test suite when
-		building and installing src/compat.
-		Default: no
+		Forced to "no" if MKCXX=no.
 
-MKCOMPATX11  	If "yes", build and install the X11 libraries when
-		building and installing src/compat.
-		Default: no
+		Default: "yes"
 
-MKCOMPATMODULES	If "no", don't build compat modules (xen, etc.)
-		Default: yes
+MKBFD		Obsolete, use MKBINUTILS.
 
-MKCOMPLEX	If "no", don't build libm support for <complex.h>
-		Default: yes
+MKBINUTILS	Can be set to "yes" or "no".  Indicates whether any of
+		the binutils tools or libraries will be built and
+		installed.  That is, the libraries libbfd, libiberty, or
+		any of the things that depend upon them, e.g.  as(1),
+		ld(1), dbsym(8), or mdsetimage(8).
 
-MKCTF		If "no", do not build and install CTF tools, and also
-		don't generate and manipulate CTF data of ELF binaries
-		during build.
-		Default: no
+		Forced to "no" if TOOLCHAIN_MISSING!=no.
 
-NETBSD_OFFICIAL_RELEASE
-		If defined and set to "yes", the build targets an official
-		NetBSD release which is going to be available from
-		ftp.NetBSD.org / cdn.NetBSD.org. This modifies a few
-		default paths in the installer and also creates different
-		links in the install documentation.
-		The auto-build cluster uses this variable to distinguish
-		"daily" builds from real releases.
-		Default: undefined (no)
+		Default: "yes"
 
-NOCTF		Don't generate and manipulate CTF data of ELF binaries
-		during build. It is set internally for standalone programs.
+MKBSDGREP	Can be set to "yes" or "no".  Determines which
+		implementation of grep(1) will be built and installed.
+		If "yes", use the BSD implementation.  If "no", use the
+		GNU implementation.
 
-MKCVS		If "no", don't build or install cvs(1).
-		Default: yes
+		Default: "no"
 
-MKDEBUG		If "no", don't build and install separate debugging symbols
-		into /usr/libdata/debug.
-		Default: no
+MKBSDTAR	Can be set to "yes" or "no".  Determines which
+		implementation of cpio(1) and tar(1) will be built and
+		installed.  If "yes", use the libarchive-based
+		implementations.  If "no", use the pax(1) based
+		implementations.
 
-NODEBUG		Don't compile with debugging symbols during build.
-		It is set internally for standalone programs.
+		Default: "yes"
 
-MKDEBUGLIB	Build *_g.a debugging libraries, which are compiled
-		with -DDEBUG.
-		Default: no
+MKCATPAGES	Can be set to "yes" or "no".  Indicates whether
+		preformatted plaintext manual pages will be created and
+		installed.
 
-MKDEBUGKERNEL	If "yes", force building of kernel symbol info and creation
-		of netbsd.gdb in all kernel builds, independently of the
-		settings for "makeoptions DEBUG" in the kernel config file.
-		The .gdb kernels will be included with the kernel sets.
-		Default: no
+		Forced to "no" if MKMAN=no or MKSHARE=no.
 
-MKDEBUGTOOLS	If "yes" build the tools with debugging symbols.
-		Default: no
+		Default: "no"
 
-MKDEPINCLUDES	If "yes" issue .include statements in the .depend file
-		instead of inlining the contents of the .d files. Useful
+MKCLEANSRC	Can be set to "yes" or "no".  Indicates whether `make
+		clean' and `make cleandir' will delete file names in
+		CLEANFILES or CLEANDIRFILES from both the object
+		directory, .OBJDIR, and the source directory, .SRCDIR.
+
+		If "yes", then these file names will be deleted relative
+		to both .OBJDIR and .CURDIR.  If "no", then the deletion
+		will be performed relative to .OBJDIR only.
+
+		Default: "yes"
+
+MKCLEANVERIFY	Can be set to "yes" or "no".  Controls whether `make
+		clean' and `make cleandir' will verify that files have
+		been deleted.  If "yes", then file deletions will be
+		verified using ls(1).  If "no", then file deletions will
+		not be verified.
+
+		Default: "yes"
+
+MKCOMPAT	Can be set to "yes" or "no".  Indicates whether support
+		for multiple ABIs is to be built and installed.
+
+		Forced to "no" if NOCOMPAT is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		Default: "yes" on aarch64 (without gcc), mips64,
+		powerpc64, riscv64, sparc64, and x86_64; "no" on other
+		platforms.
+
+MKCOMPATMODULES
+		Can be set to "yes" or "no".  Indicates whether the
+		compat kernel modules will be built and installed.
+
+		Forced to "no" if MKCOMPAT=no.
+
+		Default: "yes" on evbppc-powerpc and mips64; "no" on
+		other platforms.
+
+MKCOMPATTESTS	Can be set to "yes" or "no".  Indicates whether the
+		NetBSD test suite for src/compat will be built and
+		installed.
+
+		Forced to "no" if MKCOMPAT=no.
+
+		Default: "no"
+
+MKCOMPATX11	Can be set to "yes" or "no".  Indicates whether the X11
+		libraries will be built and installed.
+
+		Forced to "no" if MKCOMPAT=no.
+
+		Default: "no"
+
+MKCOMPLEX	Can be set to "yes" or "no".  Indicates whether the Math
+		Library (libm, -lm) is compiled with support for
+		<complex.h>.
+
+		Default: "yes"
+
+MKCROSSGDB	Can be set to "yes" or "no".  Create a cross-gdb as a
+		host tool.
+
+		Default: "no"
+
+MKCRYPTO	Obsolete.
+
+MKCTF		Can be set to "yes" or "no".  Indicates whether CTF tools
+		are to be built and installed.  If "yes", the tools will
+		be used to generate and manipulate CTF data of ELF
+		binaries during build.
+
+		Forced to "no" if NOCTF is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		This is disabled internally for standalone programs in
+		/usr/mdec.
+
+		Default: "yes" on aarch64, amd64, and i386; "no" on other
+		platforms.
+
+MKCVS		Can be set to "yes" or "no".  Indicates whether cvs(1)
+		will be built and installed.
+
+		Default: "yes"
+
+MKCXX		Can be set to "yes" or "no".  Indicates whether C++
+		support is enabled.
+
+		If "no", C++ compilers and software will not be built,
+		and acts as MKATF=no MKGCCCMDS=no MKGDB=no MKGROFF=no
+		MKKYUA=no.
+
+		Default: "yes"
+
+MKDEBUG		Can be set to "yes" or "no".  Indicates whether debug
+		information should be generated for all userland
+		binaries.  The result is collected as an additional
+		debug.tgz and xdebug.tgz set and installed in
+		DESTDIR/usr/libdata/debug.
+
+		Forced to "no" if NODEBUG is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		Default: "no"
+
+MKDEBUGKERNEL	Can be set to "yes" or "no".  Indicates whether debugging
+		symbols will be built for kernels by default; pretend as
+		if makeoptions DEBUG="-g" is specified in kernel
+		configuration files.  This will also put the debug kernel
+		netbsd.gdb in the kernel sets.  See options(4) for
+		details.  This is useful if a cross-gdb is built as well
+		(see MKCROSSGDB).
+
+		Default: "no"
+
+MKDEBUGLIB	Can be set to "yes" or "no".  Indicates whether debug
+		libraries (lib*_g.a) will be built and installed.  Debug
+		libraries are compiled with "-g -DDEBUG".
+
+		Forced to "no" if NODEBUGLIB is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		Default: "no"
+
+MKDEBUGTOOLS	Can be set to "yes" or "no".  Indicates whether debug
+		information (lib*_g.a) will be included in the build
+		toolchain.
+
+		Default: "no"
+
+MKDEPINCLUDES	Can be set to "yes" or "no".  Indicates whether to add
+		.include statements in the .depend files instead of
+		inlining the contents of the *.d files.  This is useful
 		when stale dependencies are present, to list the exact
-		files that need refreshing. It is off by default because
-		it is possibly slower.
-		Default "no"
+		files that need refreshing, but it is possibly slower
+		than inlining.
 
-MKDOC		If "no", don't build or install the documentation.
-		Default: yes
+		Default: "no"
 
-MKDTRACE	If "no", do not build and install the kernel modules,
-		utilities and libraries used to implement the dtrace(1)
-		facility.
-		Default: no
+MKDOC		Can be set to "yes" or "no".  Indicates whether system
+		documentation destined for DESTDIR/usr/share/doc will be
+		installed.
 
-MKDTB		If "no", disables building of devicetree blobs.
-		Default: yes on aarch64 and armv7, no elsewhere.
+		Forced to "no" if NODOC is defined, usually in the
+		Makefile before any make(1) .include directives.
 
-MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
-		don't install certain libraries in /lib, and don't
-		install the shared linker into /libexec.
-		Default: yes
+		Forced to "no" if MKSHARE=no.
 
-MKFIRMWARE      If not "no", install the /libdata/firmware directory,
-		which is necessary for several drivers: athn(4), bwfm(4),
-		ipw(4), iwi(4), iwm(4), iwn(4), otus(4), rtwn(4), urtwn(4),
-		wpi(4), ral(4), rum(4), run(4), zyd(4), bcm43xx(4), and
-		the Tegra 124 SoC.
-		Default: yes on amd64, cobalt, evbarm evbmips, evbppc, hpcarm,
-		hppa, i386, mac68k, macppc, sandpoint, and sparc64, no elsewhere.
+		Default: "yes"
 
-MKGCC		If "no", don't build gcc(1) or any of the GCC-related
-		libraries (libgcc, libobjc, libstdc++).
-		Default: yes
+MKDTB		Can be set to "yes" or "no".  Indicates whether the
+		devicetree blobs will be built and installed.
 
-MKGCCCMDS	If "no", don't build gcc(1), but do build the GCC-related
-		libraries (libgcc, libobjc, libstdc++).
-		Default: yes
+		Default: "yes" on aarch64, armv6, armv7, riscv32, and
+		riscv64; "no" on other platforms.
 
-MKGDB		If "no", don't build gdb(1).
-		Default: yes
+MKDTC		Can be set to "yes" or "no".  Indicates whether the
+		Device Tree Compiler (dtc) will be built and installed.
 
-MKGROFFHTMLDOC	If "no", avoid trying to use groff to generate html for
-		miscellaneous articles, as this seems to sometimes want
-		to run software not in base. Does not affect html man
+		Default: "yes"
+
+MKDTRACE	Can be set to "yes" or "no".  Indicates whether the
+		kernel modules, utilities, and libraries for dtrace(1)
+		support are to be built and installed.
+
+		Default: "yes" on aarch64, amd64, and i386; "no" on other
+		platforms.
+
+MKDYNAMICROOT	Can be set to "yes" or "no".  Indicates whether all
+		programs should be dynamically linked, and to install
+		shared libraries required by /bin and /sbin and the
+		shared linker ld.elf_so(1) into /lib.  If "no", link
+		programs in /bin and /sbin statically.
+
+		Default: "no" on ia64; "yes" on other platforms.
+
+MKEXTSRC	Obsolete.
+
+MKFIRMWARE	Can be set to "yes" or "no".  Indicates whether to
+		install the /libdata/firmware directory, which is
+		necessary for various drivers, including: athn(4),
+		bcm43xx(4), bwfm(4), ipw(4), iwi(4), iwm(4), iwn(4),
+		otus(4), ral(4), rtwn(4), rum(4), run(4), urtwn(4),
+		wpi(4), zyd(4), and the Tegra 124 SoC.
+
+		Default: "yes" on amd64, cobalt, evbarm, evbmips, evbppc,
+		hpcarm, hppa, i386, mac68k, macppc, sandpoint, and
+		sparc64; "no" on other platforms.
+
+MKGCC		Can be set to "yes" or "no".  Indicates whether gcc(1) or
+		any related libraries (libg2c, libgcc, libobjc,
+		libstdc++) will be built and installed.
+
+		Forced to "no" if TOOLCHAIN_MISSING!=no or
+		EXTERNAL_TOOLCHAIN is defined.
+
+		Default: "yes"
+
+MKGCCCMDS	Can be set to "yes" or "no".  Indicates whether gcc(1)
+		will be built and installed.  If "no", then MKGCC
+		controls if the GCC libraries will be built and
+		installed.
+
+		Forced to "no" if MKCXX=no.
+
+		Default: "no" on m68000; "yes" on other platforms.
+
+MKGDB		Can be set to "yes" or "no".  Indicates whether gdb(1)
+		will be built and installed.
+
+		Forced to "no" if MKCXX=no or TOOLCHAIN_MISSING!=no.
+
+		Default: "no" on ia64 and or1k; "yes" on other platforms.
+
+MKGROFF		Can be set to "yes" or "no".  Indicates whether groff(1)
+		will be built, installed, and used to format some of the
+		PostScript and PDF documentation.
+
+		Forced to "no" if MKCXX=no.
+
+		Default: "yes"
+
+MKGROFFHTMLDOC	Can be set to "yes" or "no".  Indicates whether to use
+		groff(1) to generate HTML for miscellaneous articles
+		which sometimes requires software not in the base
+		installation.  Does not affect the generation of HTML man
 		pages.
-		Default: no
 
-MKHESIOD	If "no", disables building of Hesiod infrastructure
-		(libraries and support programs).
-		Default: yes
+		Default: "no"
 
-MKHOSTOBJ	If not "no", for programs intended to be run on the compile
-		host, the name, release, and architecture of the host
-		operating system will be suffixed to the name of the object
-		directory created by "make obj".
-		Default: no
+MKHESIOD	Can be set to "yes" or "no".  Indicates whether the
+		Hesiod infrastructure (libraries and support programs)
+		will be built and installed.
 
-MKHTML		If "no", don't build or install the HTML man pages.
-		Default: yes
+		Default: "yes"
 
-MKIEEEFP	If "no", don't add code for IEEE754/IEC60559 conformance.
+MKHOSTOBJ	Can be set to "yes" or "no".  If "yes", then for programs
+		intended to be run on the compile host, the name,
+		release, and architecture of the host operating system
+		will be suffixed to the name of the object directory
+		created by "make obj".  (This allows multiple host
+		systems to compile NetBSD for a single target.)	 If "no",
+		then programs built to be run on the compile host will
+		use the same object directory names as programs built to
+		be run on the target.
+
+		Default: "no"
+
+MKHTML		Can be set to "yes" or "no".  Indicates whether the HTML
+		manual pages are created and installed.
+
+		Forced to "no" if NOHTML is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		Forced to "no" if MKMAN=no or MKSHARE=no.
+
+		Default: "yes"
+
+MKIEEEFP	Can be set to "yes" or "no".  Indicates whether code for
+		IEEE754/IEC60559 conformance will be built and installed.
 		Has no effect on most platforms.
-		Default: yes
 
-MKSTRIPIDENT	Strip the RCS IDs from program binaries and shared libraries.
-		Default: no
+		Default: "yes"
 
-MKINET6		If "no", disables building of INET6 (IPv6) infrastructure
-		(libraries and support programs).  This option must not be
-		set to "no" if MKX11 is not "no".
-		Default: yes
+MKINET6		Can be set to "yes" or "no".  Indicates whether INET6
+		(IPv6) infrastructure (libraries and support programs)
+		will be built and installed.
 
-MKINFO		If "no", don't build or install Info documentation from
-		Texinfo source files.
-		Default: yes
+		Note: MKINET6 must not be set to "no" if MKX11!=no.
 
-MKIPFILTER	If "no", don't build or install the IP Filter programs and LKM.
-		Default: yes
+		Default: "yes"
 
-MKISCSI		If "no", don't build or install iSCSI library or applications
-		(depends on libpthread.)
-		Default: yes
+MKINFO		Can be set to "yes" or "no".  Indicates whether GNU Info
+		files, used for the documentation for most of the
+		compilation tools, will be built and installed.
 
-MKKERBEROS	If "no", disables building of Kerberos v5
-		infrastructure (libraries and support programs).
-		Default: yes
+		Forced to "no" if NOINFO is defined, usually in the
+		Makefile before any make(1) .include directives.
 
-MKKMOD		If "no", disables building of kernel modules.
-		Default: yes
+		Forced to "no" if MKSHARE=no.
 
-MKKYUA		If "no", don't build Kyua nor its dependent library Lutok.
-		Note that setting this to "no" does not disable the build of
-		the NetBSD test suite itself; the build of the tests is
-		controlled by the MKATF knob.
-		Default: no (until the import is done and validated)
+		Default: "yes"
 
-MKLDAP		If "no", disables building of LDAP infrastructure
-		(libraries and support programs).
-		Default: yes
+MKIPFILTER	Can be set to "yes" or "no".  Indicates whether the
+		ipf(4) programs, headers, and other components will be
+		built and installed.
 
-MKLIBCSANITIZER	If "yes", use the selected sanitizer inside libc to compile
-		userland programs and libraries as defined in
-		USE_LIBCSANITIZER, which defaults to "undefined".
+		Default: "yes"
 
-		The undefined behavior detector is currently the only supported
-		sanitizer in this mode. Its runtime differs from the UBSan
-		available in MKSANITIZER, and it is reimplemented from scratch
-		as micro-UBSan in the user mode (uUBSan). Its code is shared
-		with the kernel mode variation (kUBSan). The runtime is
-		stripped down from C++ features, in particular -fsanitize=vptr
-		is not supported and explicitly disabled. The only runtime
-		configuration is restricted to the LIBC_UBSAN environment
-		variable, that is designed to be safe for hardening.
+MKISCSI		Can be set to "yes" or "no".  Indicates whether the iSCSI
+		library and applications are built and installed.
 
-		The USE_LIBCSANITIZER value is passed to the -fsanitize=
-		argument to the compiler in CFLAGS and CXXFLAGS, but not in
-		LDFLAGS, as the runtime part is located inside libc.
+		Default: "no" on m68000; "yes" on other platforms.
 
-		Additional sanitizer arguments can be passed through
-		LIBCSANITIZERFLAGS.
-		Default: no
+MKKDEBUG	Deprecated, use MKDEBUGKERNEL.
 
-MKLIBCXX	If not "no", build and install libc++.
-		Default: no
+MKKERBEROS	Can be set to "yes" or "no".  Indicates whether the
+		Kerberos v5 infrastructure (libraries and support
+		programs) will be built and installed.  Caution: the
+		default pam(8) configuration requires that Kerberos be
+		present even if not used.  Do not install a userland
+		without Kerberos without also either updating the
+		pam.conf(5) files or disabling PAM via MKPAM.  Otherwise
+		all logins will fail.
 
-MKLIBSTDCXX	If not "no", build and install libstdc++.
-		Default: yes
+		Default: "yes"
 
-MKLINKLIB	If "no", act as "MKLINT=no MKPICINSTALL=no MKPROFILE=no".
-		Also:
-			- don't install the .a libraries
-			- don't install _pic.a libraries on PIC systems
-			- don't build .a libraries on PIC systems
-			- don't install the .so symlink on ELF systems
+MKKERBEROS4	Obsolete.
+
+MKKMOD		Can be set to "yes" or "no".  Indicates whether kernel
+		modules will be built and installed.
+
+		Default: "no" on or1k; "yes" on other platforms.
+
+MKKYUA		Can be set to "yes" or "no".  Indicates whether Kyua (the
+		testing infrastructure used by NetBSD) will be built and
+		installed.
+
+		Forced to "no" if MKCXX=no.
+
+		Note: This does not control the installation of the tests
+		themselves.  The tests rely on the ATF libraries and
+		therefore their build is controlled by the MKATF
+		variable.
+
+		Default: "no" until the import of Kyua is done and
+		validated.
+
+MKLDAP		Can be set to "yes" or "no".  Indicates whether the
+		Lightweight Directory Access Protocol (LDAP)
+		infrastructure (libraries and support programs) will be
+		built and installed.
+
+		Default: "yes"
+
+MKLIBCSANITIZER
+		Can be set to "yes" or "no".  Indicates whether to use
+		the sanitizer for libc, using the sanitizer defined by
+		USE_LIBCSANITIZER.
+
+		Forced to "no" if NOLIBCSANITIZER is defined, usually in
+		the Makefile before any make(1) .include directives.
+
+		Default: "no"
+
+MKLIBCXX	Can be set to "yes" or "no".  Indicates if libc++ will be
+		built and installed (usually for clang++(1)).
+
+		Default: "yes" if MKLLVM=yes; "no" otherwise.
+
+MKLIBSTDCXX	Can be set to "yes" or "no".  Indicates if libstdc++ will
+		be built and installed (usually for g++(1)).
+
+		Default: "yes"
+
+MKLINKLIB	Can be set to "yes" or "no".  Indicates whether all of
+		the shared library infrastructure will be built and
+		installed.
+
+		If "no", prevents:
+		-   installation of the *.a libraries
+		-   installation of the *_pic.a libraries on PIC systems
+		-   building of *.a libraries on PIC systems
+		-   installation of .so symlinks on ELF systems
+
 		I.e, only install the shared library (and the .so.major
 		symlink on ELF).
-		Default: yes
 
-MKLINT		If not "no", build and install the lint libraries.
-		Default: no
+		Forced to "no" if NOLINKLIB is defined, usually in the
+		Makefile before any make(1) .include directives.
 
-MKLLVM		If "yes", build and install clang as host tool and target
-		compiler.  Use as system compiler is enabled with HAVE_LLVM
-		(see below for details).
-		Default: no
+		If "no", acts as MKLINT=no MKPICINSTALL=no MKPROFILE=no.
 
-MKLLVMRT	If "yes", build the LLVM PIC libraries necessary for the
-		various Mesa backend and the native JIT of the target
-		architecture, if supported.  (Radeon R300 and newer,
-		LLVMPIPE for most.)
-		Default: no, enabled automatically with X11 on x86 and aarch64.
+		Default: "yes"
 
-MKLVM		If "no", don't build or install the logical volume manager
-		and device mapper tools and libraries
-		Default: yes
+MKLINT		Can be set to "yes" or "no".  Indicates whether lint(1)
+		will be run against portions of the NetBSD source code
+		during the build, and whether lint libraries will be
+		installed into DESTDIR/usr/libdata/lint.
 
-MKMAN		If "no", don't build or install the man or catman pages,
-		and also acts as "MKCATPAGES=no MKHTML=no".
-		Default: yes
+		Forced to "no" if NOLINT is defined, usually in the
+		Makefile before any make(1) .include directives.
 
-MKMANDOC	If "yes", mandoc is built as tool and used to compile
-		catman or html pages.  A directory can be exempted by
-		defining NOMANDOC.  Individual man pages are exempted
-		if NOMANDOC.${target} is set to "yes".
-		Default: yes
+		Forced to "no" if MKLINKLIB=no.
 
-MKMANZ		If not "no", compress manual pages at installation time.
-		Default: no
+		Default: "no"
 
-MKMDNS		If "no", disables building of mDNS infrastructure
-		(libraries and support programs).
-		Default: yes
+MKLLD		Obsolete.
 
-MKNLS		If "no", don't build or install the NLS files and locale
-		definition files.
-		Default: yes
+MKLLDB		Obsolete.
 
-MKNOUVEAUFIRMWARE If "yes", install the /libdata/firmware/nouveau directory,
-		which is necessary for the nouveau DRM driver.
-		Default: yes on x86 and aarch64, no elsewhere.
+MKLLVM		Can be set to "yes" or "no".  Indicates whether clang(1)
+		is installed as a host tool and target compiler.
 
-MKNPF		If "no", don't build or install the NPF and its modules.
-		Default: yes
+		If "yes", acts as MKLIBCXX=yes.
 
-MKNSD		If "no", don't build or install the "nsd" DNS authoritative
-		server.
-		Default: no
+		Note: Use of clang(1) as the system compiler is
+		controlled by HAVE_LLVM.
 
-MKOBJ		If "no", don't enable the rule which creates objdirs,
-		and also acts as "MKOBJDIRS=no".
-		Default: yes
+		Default: "no"
 
-MKOBJDIRS	If "no", don't create objdirs during a "make build".
-		Default: no
+MKLLVMRT	Can be set to "yes" or "no".  Indicates whether to build
+		the LLVM PIC libraries necessary for the various Mesa
+		backend and the native JIT of the target architecture, if
+		supported.  (Radeon R300 and newer, LLVMPIPE for most.)
 
-MKPAM		If "no", disables building of PAM authentication
-		infrastructure (libraries and support programs).
-		Default: yes
+		Default: If MKX11=yes and HAVE_MESA_VER>=19, "yes" on
+		aarch64, amd64, and i386; "no" otherwise.
 
-MKPCC		If "no", don't build pcc(1) or any of the PCC-related
-		libraries (libpcc, libpccsoftfloat).
-		Default: no
+MKLVM		Can be set to "yes" or "no".  If not "no", build and
+		install the logical volume manager.
 
-MKPF		If "no", don't build or install the pf programs and LKM.
-		Default: yes
+		Default: "yes"
 
-MKPIC		If "no", don't build or install shared libraries, and
-		also acts as "MKPICLIB=no"
-		Default: yes (for MACHINE_ARCHs that support it)
+MKMAKEMANDB	Can be set to "yes" or "no".  Indicates if the whatis
+		tools (apropos(1), whatis(1), getNAME(8), makemandb(8),
+		and makewhatis(8)), should be built, installed, and used
+		to create and install the whatis.db.
 
-MKPICINSTALL	If "no", don't install the *_pic.a libraries.
-		Default: yes
+		Default: "yes"
 
-MKPICLIB	If "no", don't build *_pic.a libraries, and build the
-		shared object libraries from the .a libraries.
-		A symlink is installed in ${DESTDIR}/usr/lib for the
-		_pic.a library pointing to the .a library.
-		Default: yes
+MKMAN		Can be set to "yes" or "no".  Indicates whether manual
+		pages will be installed.
 
-MKPIE		If "no", create regular executables. Otherwise create
-		PIE (Position Independent Executables).
-		Default: depends on CPU architecture
+		Forced to "no" if NOMAN is defined, usually in the
+		Makefile before any make(1) .include directives.
 
-NOPIE		Don't create PIE (Position Independent Executables)
-		It is set internally for standalone programs.
+		Forced to "no" if MKSHARE=no.
 
-MKPIGZGZIP	If "no", only install pigz as pigz, not gzip.
-		Default: no
+		If "no", acts as MKCATPAGES=no MKHTML=no.
 
-MKPOSTFIX	If "no", don't build or install postfix(1).
-		Default: yes
+		Default: "yes"
 
-MKPROFILE	If "no", don't build or install the profiling (*_p.a) libraries.
-		Default: yes
+MKMANDOC	Can be set to "yes" or "no".  Indicates whether mandoc(1)
+		will be built and installed, and used to create and
+		install catman and HTML pages.
 
-MKRADEONFIRMWARE If "yes", install the /libdata/firmware/radeon directory,
-		which is necessary for the radeon DRM driver.
-		Default: yes on x86 and aarch64, no elsewhere.
+		If "no", use groff(1) instead of mandoc(1).
 
-MKRELRO		If "partial", set the non-PLT GOT to read-only. If "full"
-		also force immediate symbol binding.
-		Default: partial on x86 and aarch64, no elsewhere.
+		Forced to "no" if NOMANDOC or NOMANDOC.<target> (for a
+		given target <target>) is defined, usually in the Makefile
+		before any make(1) .include directives.
 
-NOFULLRELRO	Don't compile with immediate symbol binding during build.
-		It is set internally for standalone programs.
+		Only used if MKMAN=yes.
 
-MKREPRO         If "yes", create reproducible builds. This enables
-		different switches to make two builds from the same source tree
-		result in the same build results.
-		Default: no
+		Default: "yes"
 
-MKSANITIZER	if "yes", use the selected sanitizer to compile userland
-		programs as defined in USE_SANITIZER, which defaults to
-		"address". A selection of available sanitizers:
-			address:	A memory error detector (default)
-			thread:		A data race detector
-			memory:		An uninitialized memory read detector
-			undefined:	An undefined behavior detector
-			leak:		A memory leak detector
-			dataflow:	A general data flow analysis
-			cfi:		A control flow detector
-			safe-stack:	Protect against stack-based corruption
-			scudo:		The Scudo Hardened allocator
-		It's possible to specify multiple sanitizers within the
-		USE_SANITIZER option (comma separated). The USE_SANITIZER value
-		is passed to the -fsanitize= argument to the compiler.
-		Additional arguments can be passed through SANITIZERFLAGS.
-		The list of supported features and their valid combinations
-		depends on the compiler version and target CPU architecture.
-		Default: no
+MKMANZ		Can be set to "yes" or "no".  Indicates whether manual
+		pages should be compressed with gzip(1) at installation
+		time.
 
-MKSHARE		If "no", act as "MKCATPAGES=no MKDOC=no MKHTML=no MKINFO=no
-		MKMAN=no MKNLS=no".
-		I.e, don't build catman pages, documentation, Info
-		documentation, man pages, NLS files, ...
-		Default: yes
+		Only used if MKMAN=yes.
 
-MKSKEY		If "no", disables building of S/key authentication
-		infrastructure (libraries and support programs).
-		Default: yes
+		Default: "no"
 
-MKSLJIT		If "no", disables building of sljit (stack-less platform
-		independent JIT compiler) private library and tests.
-		Default: yes on amd64, i386 and sparc, no elsewhere.
+MKMCLINKER	Obsolete.
 
-MKSOFTFLOAT	If not "no", build with options to enable the compiler to
-		generate output containing library calls for floating
-		point and possibly soft-float library support.
-		Default: no
+MKMDNS		Can be set to "yes" or "no".  Indicates whether the mDNS
+		(Multicast DNS) infrastructure (libraries and support
+		programs) will be built and installed.
 
-MKSTATICLIB	If "no", don't build or install the normal static (*.a)
+		Default: "yes"
+
+MKNLS		Can be set to "yes" or "no".  Indicates whether Native
+		Language System (NLS) locale zone files will be built and
+		installed.
+
+		Forced to "no" if NONLS is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		Forced to "no" if MKSHARE=no.
+
+		Default: "yes"
+
+MKNOUVEAUFIRMWARE
+		Can be set to "yes" or "no".  Indicates whether to
+		install the /libdata/firmware/nouveau directory, which is
+		necessary for the nouveau(4) NVIDIA video driver.
+
+		Default: "yes" on aarch64, i386, and x86_64, "no" on
+		other platforms.
+
+MKNPF		Can be set to "yes" or "no".  Indicates whether the NPF
+		packet filter is to be built and installed.
+
+		Default: "yes"
+
+MKNSD		Can be set to "yes" or "no".  Indicates whether the Name
+		Server Daemon (NSD) is to be built and installed.
+
+		Default: "no"
+
+MKOBJ		Can be set to "yes" or "no".  Indicates whether object
+		directories will be created when running "make obj".  If
+		"no", then all built files will be located inside the
+		regular source tree.
+
+		Forced to "no" if NOOBJ is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		If "no", acts as MKOBJDIRS=no.
+
+		Note: Setting MKOBJ to "no" is not recommended and may
+		cause problems when updating the tree with cvs(1).
+
+		Default: "yes"
+
+MKOBJDIRS	Can be set to "yes" or "no".  Indicates whether object
+		directories will be created automatically (via a "make
+		obj" pass) at the start of a build.
+
+		Forced to "no" if MKOBJ=no.
+
+		Default: "no"
+
+MKPAM		Can be set to "yes" or "no".  Indicates whether the
+		pam(8) framework (libraries and support files) will be
+		built and installed.  The pre-PAM code is not supported
+		and may be removed in the future.
+
+		Default: "yes"
+
+MKPCC		Can be set to "yes" or "no".  Indicates whether pcc(1) or
+		any related libraries (libpcc, libpccsoftfloat) will be
+		built and installed.
+
+		Default: "no"
+
+MKPERFUSE	Obsolete.
+
+MKPF		Can be set to "yes" or "no".  Indicates whether the pf(4)
+		programs, headers, and LKM will be built and installed.
+
+		Default: "yes"
+
+MKPIC		Can be set to "yes" or "no".  Indicates whether shared
+		objects and libraries will be created and installed.  If
+		"no", the entire built system will be statically linked.
+
+		Forced to "no" if NOPIC is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		If "no", acts as MKPICLIB=no.
+
+		Default: "no" on m68000; "yes" on other platforms.
+
+MKPICINSTALL	Can be set to "yes" or "no".  Indicates whether the ar(1)
+		format libraries (lib*_pic.a), used to generate shared
+		libraries, are installed.
+
+		Forced to "no" if NOPICINSTALL is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		Forced to "no" if MKLINKLIB=no.
+
+		Default: "no"
+
+MKPICLIB	Can be set to "yes" or "no".  Indicates whether the ar(1)
+		format libraries (lib*_pic.a), used to generate shared
 		libraries.
-		Default: yes
 
-MKSTATICPIE	Compile in support for static pie binaries. These binaries
-		use a special support in crt0.o for resolving relative
-		relocations and require linker support.
-		Default: yes on platforms that support it.
+		Forced to "no" if MKPIC=no.
 
-MKSTRIPSYM	If "yes", strip all local symbols from shared libraries;
-		the affect is equivalent to -x option of ld(1). If "no",
-		strip only temporary local symbols; the affect is equivalent
-		to -X option of ld(1). Keeping non-temporary local symbols
-		such as static function names is useful on using DTrace for
-		userland libraries and getting a backtrace from a rump kernel
-		loading shared libraries.
-		Default: yes
+		Default: "no" on vax; "yes" on other platforms.
 
-MKTEGRAFIRMWARE	If "no", install the /libdata/firmware/nvidia directory,
-		which is necessary for the NVIDIA Tegra XHCI driver.
-		Default: yes on evbarm, no elsewhere.
+MKPIE		Indicates whether Position Independent Executables (PIE)
+		will be built and installed.
 
-MKTPM		If "no" then don't build the Trusted Platform Module
-		infrastructure.
-		Default: no
+		Forced to "no" if NOPIE is defined, usually in the
+		Makefile before any make(1) .include directives.
 
-MKUNBOUND	If not "no", build and install the "unbound" DNS resolver.
-		Default: yes
+		Forced to "no" if COVERITY_TOP_CONFIG is defined.
 
-MKUNPRIVED	If not "no", don't set the owner/group/mode when installing
-		files or directories, and keep a metadata log of what
-		the owner/group/mode should be.  This allows a
-		non-root "make install".
-		Default: no
+		This is disabled internally for standalone programs in
+		/usr/mdec.
 
-MKUPDATE 	If not "no", 'make install' only installs targets that are
-		more recently modified in the source directories that their
-		installed counterparts.
-		Default: no
+		Default: "yes" on aarch64, arm, i386, m68k, mips, sh3,
+		sparc64, and x86_64; "no" on other platforms.
 
-MKX11		If not "no", 'make build' also descends into
-		src/external/mit/xorg to cross-build X11 and automatically
-		enables creation of X sets.
-		Default: no
+MKPIGZGZIP	Can be set to "yes" or "no".  If "no", the pigz(1)
+		utility is not installed as gzip(1).
 
-MKX11FONTS	If not "no", do not build or install the X fonts.  The xfont
-		set is still created but will be empty.
-		Default: yes
+		Default: "no"
 
-MKX11MOTIF:	If "yes", build the native X11 libGLw with Motif stubs.  If
-		Motif is not installed in the default location /usr/pkg, the
-		location can be specified using the X11MOTIFPATH variable.
-		Default: no
+MKPOSTFIX	Can be set to "yes" or "no".  Indicates whether Postfix
+		will be built and installed.
 
-MKYP		If "no", disables building of YP (NIS)
-		infrastructure (libraries and support programs).
-		Default: yes
+		Default: "yes"
 
-MKZFS		If "no", do not build and install utilities and libraries
-		used to manage ZFS file system. Do not build zfs and solaris
-		compatibility kernel modules.  Note: ZFS requires 64bit
-		atomic operations.
-		Default: yes on aarch64, amd64 and sparc64, no elsewhere.
+MKPROFILE	Can be set to "yes" or "no".  Indicates whether profiled
+		libraries (lib*_p.a) will be built and installed.
 
-MKRUMP		If "no", do not build and install rump related headers,
-		libraries, and programs.
-		Default: yes
+		Forced to "no" if NOPROFILE is defined, usually in the
+		Makefile before any make(1) .include directives.
 
-USE_HESIOD	If "no", disables building Hesiod support into
-		various system utilities/libraries that support it.
-		If ${MKHESIOD} is "no", USE_HESIOD will also be
-		forced to "no".
+		Forced to "no" if MKLINKLIB=no.
 
-USE_INET6	If "no", disables building INET6 (IPv6) support into
-		various system utilities/libraries that support it.
-		If ${MKINET6} is "no", USE_INET6 will also be
-		forced to "no".
+		Default: "no" on or1k, riscv32, and riscv64 (due to
+		toolchain problems with profiled code); "yes" on other
+		platforms.
 
-USE_JEMALLOC	If "no", disables building the "jemalloc" allocator
-		designed for improved performance with threaded
-		applications.  The "phkmalloc" allocator as used up
-		before NetBSD-5.0 will be substituted.
+MKRADEONFIRMWARE
+		Can be set to "yes" or "no".  Indicates whether to
+		install the /libdata/firmware/radeon directory, which is
+		necessary for the radeon(4) AMD RADEON GPU video driver.
 
-USE_KERBEROS	If "no", disables building Kerberos v5
-		support into various system utilities/libraries that
-		support it.  If ${MKKERBEROS} is "no", USE_KERBEROS
-		will also be forced to "no".
+		Default: "yes" on aarch64, i386, and x86_64, "no" on
+		other platforms.
 
-USE_LDAP	If "no", disables building LDAP support into various
-		system utilities/libraries that support it.
-		If ${MKLDAP} is "no", USE_LDAP will also be forced to "no".
+MKRELRO		Indicates whether to enable support for Relocation Read-
+		Only (RELRO).  Supported values:
 
-USE_PAM		If "no", disables building PAM authentication support
-		into various system utilities/libraries that support it.
-		If ${MKPAM} is "no", USE_PAM will also be forced to "no".
+		partial	 Set the non-PLT GOT to read-only.
 
-USE_SKEY	If "no", disables building S/key authentication
-		support into various system utilities/libraries that
-		support it.  If ${MKSKEY} is "no", USE_SKEY will
-		also be forced to "no".
-		Default: no
+		full	 Set the non-PLT GOT to read-only and also force
+			 immediate symbol binding, unless NOFULLRELRO is
+			 defined and not "no" (usually in the Makefile
+			 before any make(1) .include directives).
 
-USE_SSP		If "no", disables GCC stack protection code, which
-		detects stack overflows and aborts the program. The
-		stack protection code imposes a performance penalty
-		of about 5%.
-		Default: "no", unless "USE_FORT" is set to "yes"
+		no	 Disable RELRO.
 
-NOSSP		Don't compile with stack protector during build.
-		It is set internally for standalone programs.
+		Forced to "no" if NORELRO is defined, usually in the
+		Makefile before any make(1) .include directives.
 
-USE_FORT 	If "yes" turns on substitute wrappers for commonly used
-		functions that do not do bounds checking regularly, but
-		they could in some cases by using the gcc
-		__builtin_object_size() function to determine the buffer
-		size where it is known and detect buffer overflows.
-		These substitute functions are in /usr/include/ssp.
-		Default: depends on the part of the source tree
+		Default: "partial" on aarch64, i386, and x86_64; "no" on
+		other platforms.
 
-NOFORT		Don't compile with substitute wrappers during build.
-		It is set internally for standalone programs.
+MKREPRO		Can be set to "yes" or "no".  Indicates whether builds
+		are to be reproducible.  If "yes", two builds from the
+		same source tree will produce the same build results.
 
-USE_YP		If "no", disables building YP (NIS) support into
-		various system utilities/libraries that support it.
-		If ${MKYP} is "no", USE_YP will also be forced to "no".
+		Used as the default for MKARZERO.
 
-USE_PIGZGZIP	If "no", use the host "gzip" program to compress things.
-		Otherwise, build tools/pigz, set TOOL_GZIP=${TOOL_PIGZ},
-		and use nbpigz to compress things.
-		Default: "no".
+		Default: "no"
 
-USE_XZ_SETS	If "no", use the host "gzip" program to compress sets.
-		Otherwise use xz to compress things.
-		Default: "yes" for architectures with "enough" memory to
-		decompress, "no" for older ones.
-		This is currently incompatible with USE_PIGZGZIP, setting
-		USE_PIGZGZIP=yes sets USE_XZ_SETS=no by default for all
-		architectures.
+MKREPRO_TIMESTAMP
+		Unix timestamp.  When MKREPRO is set, the timestamp of
+		all files in the sets will be set to this value.
+
+		Default: Unset.
+
+MKRUMP		Can be set to "yes" or "no".  Indicates whether the
+		rump(3) headers, libraries, and programs are to be
+		installed.
+
+		Forced to "no" if COVERITY_TOP_CONFIG is defined.
+
+		Default: "yes"
+
+MKSANITIZER	Can be set to "yes" or "no".  Indicates whether to use
+		the sanitizer to compile userland programs, using the
+		sanitizer defined by USE_SANITIZER.
+
+		Forced to "no" if NOSANITIZER is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		Default: "no"
+
+MKSHARE		Can be set to "yes" or "no".  Indicates whether files
+		destined to reside in DESTDIR/usr/share will be built and
+		installed.
+
+		Forced to "no" if NOSHARE is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		If "no", acts as MKCATPAGES=no MKDOC=no MKINFO=no
+		MKHTML=no MKMAN=no MKNLS=no.
+
+		Default: "yes"
+
+MKSKEY		Can be set to "yes" or "no".  Indicates whether the S/key
+		infrastructure (libraries and support programs) will be
+		built and installed.
+
+		Default: "yes"
+
+MKSLJIT		Can be set to "yes" or "no".  Indicates whether to enable
+		support for sljit (stack-less platform-independent Just
+		in Time (JIT) compiler) private library and tests.
+
+		Default: "yes" on i386, sparc, and x86_64; "no" on other
+		platforms.
+
+MKSOFTFLOAT	Can be set to "yes" or "no".  Indicates whether the
+		compiler generates output containing library calls for
+		floating point and possibly soft-float library support.
+
+		Forced to "yes" on arm without `hf', coldfire, emips,
+		or1k, and sh3.
+
+		Default: "yes" on mips64; "no" on other platforms.
+
+MKSTATICLIB	Can be set to "yes" or "no".  Indicates whether the
+		normal static libraries (lib*_g.a) will be built and
+		installed.
+
+		Forced to "no" if NOSTATICLIB is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		Default: "yes"
+
+MKSTATICPIE	Can be set to "yes" or "no".  Indicates whether support
+		for static PIE binaries will be built and installed.
+		These binaries use a special support in crt0.o for
+		resolving relative relocations and require linker
+		support.
+
+		Default: "yes" on i386 and x86_64; "no" on other
+		platforms.
+
+MKSTRIPIDENT	Can be set to "yes" or "no".  Indicates whether RCS IDs,
+		for use with ident(1), should be stripped from program
+		binaries and shared libraries.
+
+		Default: "no"
+
+MKSTRIPSYM	Can be set to "yes" or "no".  Indicates whether all local
+		symbols should be stripped from shared libraries.  If
+		"yes", strip all local symbols from shared libraries; the
+		effect is equivalent to the -x option of ld(1).  If "no",
+		strip only temporary local symbols; the effect is
+		equivalent to the -X option of ld(1).  Keeping non-
+		temporary local symbols such as static function names is
+		useful on using DTrace for userland libraries and getting
+		a backtrace from a rump kernel loading shared libraries.
+
+		Default: "yes"
+
+MKTEGRAFIRMWARE
+		Can be set to "yes" or "no".  Indicates whether to
+		install the /libdata/firmware/nvidia directory, which is
+		necessary for the NVIDIA Tegra XHCI driver.
+
+		Default: "yes" on evbarm; "no" on other platforms.
+
+MKTOOLSDEBUG	Deprecated, use MKDEBUGTOOLS.
+
+MKTPM		Can be set to "yes" or "no".  Indicates whether to
+		install the Trusted Platform Module (TPM) infrastructure.
+
+		Default: "no"
+
+MKUNBOUND	Can be set to "yes" or "no".  Indicates whether the
+		unbound(8) DNS resolver will be built and installed.
+
+		Default: "yes"
+
+MKUNPRIVED	Can be set to "yes" or "no".  Indicates whether an
+		unprivileged install will occur.  The user, group,
+		permissions, and file flags, will not be set on the
+		installed items; instead the information will be appended
+		to a file called METALOG in DESTDIR.  The contents of
+		METALOG is used during the generation of the distribution
+		tar files to ensure that the appropriate file ownership
+		is stored.  This allows a non-root `make install'.
+
+		Default: "no"
+
+MKUPDATE	Can be set to "yes" or "no".  Indicates whether all
+		install operations intended to write to DESTDIR will
+		compare file timestamps before installing, and skip the
+		install phase if the destination files are up-to-date.
+
+		Default: "no"
+
+MKX11		Can be set to "yes" or "no".  Indicates whether X11 will
+		be built and installed from X11SRCDIR, and whether the X
+		sets will be created.
+
+		Note: If "yes", requires MKINET6=yes.
+
+		Default: "no"
+
+MKX11FONTS	Can be set to "yes" or "no".  If "no", do not build and
+		install the X fonts.  The xfont set is still created but
+		will be empty.
+
+		Only used if MKX11=yes.
+
+		Default: "yes"
+
+MKX11MOTIF	Can be set to "yes" or "no".  If "yes", build the native
+		Xorg libGLw with Motif stubs.  Requires that Motif can be
+		found via X11MOTIFPATH.
+
+		Default: "no"
+
+MKXORG_SERVER	Can be set to "yes" or "no".  Indicates whether the
+		Xorg(7) X server and drivers will be built and installed.
+
+		Default: "yes" on alpha, amd64, amiga, bebox, cats,
+		dreamcast, ews4800mips, evbarm, evbmips, evbppc, hp300,
+		hpcarm, hpcmips, hpcsh, hppa, i386, ibmnws, iyonix,
+		luna68k, mac68k, macppc, netwinder, newsmips, pmax, prep,
+		ofppc, sgimips, shark, sparc, sparc64, vax, and zaurus;
+		"no" on other platforms.
+
+MKYP		Can be set to "yes" or "no".  Indicates whether the YP
+		(NIS) infrastructure (libraries and support programs)
+		will be built and installed.
+
+		Default: "yes"
+
+MKZFS		Can be set to "yes" or "no".  Indicates whether the ZFS
+		kernel module and the utilities and libraries used to
+		manage the ZFS system are to be built and installed.
+
+		Note: ZFS requires 64-bit atomic operations .
+
+		Default: "yes" on aarch64, amd64, and sparc64; "no" on
+		other platforms.
+
+NETBSD_OFFICIAL_RELEASE
+		Can be set to "yes" or "no".  Indicates whether the build
+		creates an official NetBSD release which is going to be
+		available from ftp.NetBSD.org and/or cdn.NetBSD.org
+		locations.  This variable modifies a few default paths in
+		the installer and also creates different links in the
+		install documentation.  The auto-build cluster uses this
+		variable to distinguish `daily' builds from real
+		releases.
+
+		Default: Unset.  ("no").
+
+USE_FORT	Can be set to "yes" or "no".  Indicates whether the so-
+		called "FORTIFY_SOURCE" security(7) extensions are
+		enabled; see ssp(3) for details.  This imposes some
+		performance penalty.
+
+		Forced to "no" if NOFORT is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		Default: "no"
+
+USE_HESIOD	Can be set to "yes" or "no".  Indicates whether Hesiod
+		support is enabled in the various applications that
+		support it.
+
+		Forced to "no" if MKHESIOD=no.
+
+		Default: "yes"
+
+USE_INET6	Can be set to "yes" or "no".  Indicates whether INET6
+		(IPv6) support is enabled in the various applications
+		that support it.
+
+		Forced to "no" if MKINET6=no.
+
+		Default: "yes"
+
+USE_JEMALLOC	Can be set to "yes" or "no".  Indicates whether the
+		jemalloc allocator (which is designed for improved
+		performance with threaded applications) is used instead
+		of the phkmalloc allocator (that was the default until
+		NetBSD 5.0).
+
+		Default: "yes"
+
+USE_KERBEROS	Can be set to "yes" or "no".  Indicates whether Kerberos
+		v5 support is enabled in the various applications that
+		support it.
+
+		Forced to "no" if MKKERBEROS=no.
+
+		Default: "yes"
+
+USE_LDAP	Can be set to "yes" or "no".  Indicates whether LDAP
+		support is enabled in the various applications that
+		support it.
+
+		Forced to "no" if MKLDAP=no.
+
+		Default: "yes"
+
+USE_LIBCSANITIZER
+		Selects the sanitizer in libc to compile userland
+		programs and libraries.  Supported values:
+
+		undefined  Enables the micro-UBSan in the user mode
+			   (uUBSan) undefined behaviour sanitizer.  The
+			   code is shared with the kernel mode variation
+			   (kUBSan).  The runtime runtime differs from
+			   the UBSan available in MKSANITIZER.  The
+			   runtime is stripped down from C++ features,
+			   and is invoked with -fsanitize=no-vptr as that
+			   sanitizer is not supported.  The runtime
+			   configuration is restricted to the LIBC_UBSAN
+			   environment variable, that is designed to be
+			   safe for hardening.
+
+		The value of USE_LIBCSANITIZER is passed to the C and C++
+		compilers as the argument to -fsanitize=.  Additional
+		sanitizer arguments can be passed through
+		LIBCSANITIZERFLAGS.
+
+		Disabled if MKLIBCSANITIZER=no.
+
+		Default: "undefined".
+
+USE_PAM		Can be set to "yes" or "no".  Indicates whether pam(8)
+		support is enabled in the various applications that
+		support it.
+
+		Forced to "no" if MKPAM=no.
+
+		Default: "yes"
+
+USE_PIGZGZIP	Can be set to "yes" or "no".  Indicates whether pigz(1)
+		is used instead of gzip(1) for multi-threaded gzip
+		compression of the distribution tar sets.
+
+		Default: "no"
+
+USE_SKEY	Can be set to "yes" or "no".  Indicates whether S/key
+		support is enabled in the various applications that
+		support it.
+
+		Forced to "no" if MKSKEY=no.
+
+		Note: This is mutually exclusive to USE_PAM!=no.
+
+		Default: "no"
+
+USE_SSP		Can be set to "yes" or "no".  Indicates whether GCC
+		stack-smashing protection (SSP) support, which detects
+		stack overflows and aborts the program, is enabled.  This
+		imposes some performance penalty (approximately 5%).
+
+		This is disabled internally for standalone programs in
+		/usr/mdec.
+
+		Forced to "no" if NOSSP is defined, usually in the
+		Makefile before any make(1) .include directives.
+
+		Forced to "no" if COVERITY_TOP_CONFIG is defined.
+
+		Default: "no" on alpha, hppa, ia64, and mips; "yes" on
+		other platforms if USE_FORT=yes; "no" otherwise.
+
+USE_XZ_SETS	Can be set to "yes" or "no".  Indicates whether the
+		distribution tar files are to be compressed with xz(1)
+		instead of gzip(1) or pigz(1).
+
+		Forced to "no" if USE_PIGZGZIP=yes.
+
+		Default: "yes" on aarch64, amd64, and sparc64, "no" on
+		other platforms.
+
+USE_YP		Can be set to "yes" or "no".  Indicates whether YP (NIS)
+		support is enabled in the various applications that
+		support it.
+
+		Forced to "no" if MKYP=no.
+
+		Default: "yes"
+
+X11MOTIFPATH	Path of the Motif installation to use if MKX11MOTIF=yes.
+
+		Default: "/usr/pkg"
 
 COPTS.lib<lib>
 OBJCOPTS.lib<lib>
@@ -633,7 +1203,7 @@ COPTS.<prog>
 OBJCOPTS.<prog>
 LDADD.<prog>
 CPPFLAGS.<prog>
-CXXFLAGS.<prog>	These provide a way to specify additions to the associated
+CXXFLAGS.<prog> These provide a way to specify additions to the associated
 		variables in a way that applies only to a particular library
 		or program.  <lib> corresponds to the LIB variable set in
 		the library's makefile.  <prog> corresponds to either PROG
@@ -647,13 +1217,51 @@ AVAILABLE_COMPILER
 		for selecting the active compiler for each frontend.
 HAVE_PCC	If defined, PCC is present and enabled.
 HAVE_LLVM	If defined, LLVM/Clang is present and enabled.
-UNSUPPORTED_COMPILER.xxx
-		If defined, the support for compiler "xxx" is disabled.
+UNSUPPORTED_COMPILER.<comp>
+		If defined, the support for compiler <comp> is disabled.
 
 For the frontends (CC, CPP, CXX, FC and OBJC) the following variables exist:
 ACTIVE_CC	Active compile suite for the CC frontend.
 SUPPORTED_CC	Compile suite with support for the CC frontend.
-TOOL_CC.xxx	Path to the CC frontend for compiler "xxx"
+TOOL_CC.<comp>	Path to the CC frontend for compiler <comp>.
+
+
+=-=-=-=-=   Variables for a Makefile   =-=-=-=-=
+
+If the following varialbes are defined in the Makefile before
+any make(1) .include directives, they force the specific behavior.
+
+NOCOMPAT	Force MKCOMPAT=no.
+NOCTF		Force MKCTF=no.
+NODEBUG		Force MKDEBUG=no.
+NODEBUGLIB	Force MKDEBUGLIB=no.
+NODOC		Force MKDOC=no.
+NOFORT		Force USE_FORT=no.
+NOHTML		Force MKHTML=no.
+NOINFO		Force MKINFO=no.
+NOLIBCSANITIZER Force MKLIBCSANITIZER=no (and USE_LIBCSANITIZER=no)
+NOLINKLIB	Force MKLINKLIB=no.
+NOLINT		Force MKLINT=no.
+NOMAN		Force MKMAN=no.
+NOMANDOC	Force MKMANDOC=no.
+NONLS		Force MKNLS=no.
+NOOBJ		Force MKOBJ=no.
+NOPIC		Force MKPIC=no.
+NOPICINSTALL	Force MKPICINSTALL=no.
+NOPIE		Force MKPIE=no.
+NOPROFILE	Force MKPROFILE=no.
+NORELRO		Force MKREPRO=no.
+NOSANITIZER	Force MKSANITIZER=no (and USE_SANITIZER=no)
+NOSHARE		Force MKSHARE=no.
+NOSSP		Force USE_SSP=no.
+NOSTATICLIB	Force MKSTATICLIB=no.
+
+Special variations:
+
+NOFULLRELRO!=no Force MKRELRO=no if MKRELRO=full
+
+TODO: NOFULLRELRO should just be a defined test for consistency.
+
 
 =-=-=-=-=   sys.mk   =-=-=-=-=
 
@@ -750,7 +1358,7 @@ LIBOWN		Library owner.  [${BINOWN}]
 LIBMODE		Library mode.  [${NONBINMODE}]
 
 DOCDIR		Base path for system documentation (e.g. PSD, USD, etc.)
-	        installation.  [/usr/share/doc]
+		installation.  [/usr/share/doc]
 
 DOCGRP		Documentation group.  [wheel]
 
@@ -774,7 +1382,7 @@ NLSMODE		Native Language Support files mode.  [${NONBINMODE}]
 X11SRCDIR	The path to the xsrc tree.  [${NETBSDSRCDIR}/../xsrc,
 		if that exists; otherwise /usr/xsrc]
 
-X11SRCDIR.local	The path to the local X11 src tree.  [${X11SRCDIR}/local]
+X11SRCDIR.local The path to the local X11 src tree.  [${X11SRCDIR}/local]
 
 X11SRCDIR.lib<package>
 X11SRCDIR.<package>
@@ -1009,7 +1617,7 @@ TOOL_PIC		Compile pictures for groff.  [pic]
 
 TOOL_PIGZ		Parallel compressor.  [pigz]
 
-TOOL_POWERPCMKBOOTIMAGE	Make bootable image for powerpc.  [powerpc-mkbootimage]
+TOOL_POWERPCMKBOOTIMAGE Make bootable image for powerpc.  [powerpc-mkbootimage]
 
 TOOL_PWD_MKDB		Generate the password databases.  [pwd_mkdb]
 
@@ -1137,6 +1745,7 @@ SRCS		List of source files to build the program.
 DPSRCS		List of source files which are needed for generating
 		dependencies, but are not needed in ${SRCS}.
 
+NODPSRCS	TODO
 
 =-=-=-=-=   bsd.files.mk   =-=-=-=-=
 
@@ -1174,7 +1783,7 @@ FILESBUILD	If this variable is defined, then its value will be
 		used as the default for all FILESBUILD_<fn> variables.
 		Otherwise, the default will be "no".
 
-FILESBUILD_<fn>	A value different from "no" will add the file to the list of
+FILESBUILD_<fn> A value different from "no" will add the file to the list of
 		targets to be built by `realall'.  Users of that variable
 		should provide a target to build the file.
 
@@ -1239,7 +1848,7 @@ INCSYMLINKS	Similar to SYMLINKS in <bsd.links.mk>, except that these
 		are installed in the 'includes' target and not the
 		(much later) 'install' target.
 
-INCSNAME_<file>	The name file <file> should be installed as, if not <file>,
+INCSNAME_<file> The name file <file> should be installed as, if not <file>,
 		same as FILESNAME_<file>, but for include files.
 
 
@@ -1325,7 +1934,7 @@ MKARZERO	Normally, ar(1) sets the timestamps, uid, gid and
 		permissions to be set to 644. This allows .a files
 		from different builds to be bit identical.
 
-SHLIBINSTALLDIR	Target directory for shared libraries if ${USE_SHLIBDIR}
+SHLIBINSTALLDIR Target directory for shared libraries if ${USE_SHLIBDIR}
 		is not "no".
 
 SHLIB_MAJOR
@@ -1380,7 +1989,7 @@ SRCS		List of source files to build the library.  Suffix types
 
 LIBDPLIBS/
 PROGDPLIBS	A list of the tuples:
-			libname  path-to-srcdir-of-libname
+			libname	 path-to-srcdir-of-libname
 
 		Instead of depending on installed versions of the libraries,
 		one can depend on their built version in the source directory.
@@ -1528,10 +2137,10 @@ OBJMACHINE	If this is set but MAKEOBJDIR is not set, creates
 		object directories or links named "obj.${MACHINE}";
 		otherwise, just creates ones named "obj".
 
-OBJMACHINE_ARCH	If set with OBJMACHINE, creates object directories or
+OBJMACHINE_ARCH If set with OBJMACHINE, creates object directories or
 		links named "obj.${MACHINE}-${MACHINE_ARCH}".
 
-USR_OBJMACHINE  If set, and the current directory is a subdirectory of
+USR_OBJMACHINE	If set, and the current directory is a subdirectory of
 		${BSDSRCDIR}, create object directory in the
 		corresponding subdirectory of ${BSDOBJDIR}.${MACHINE};
 		otherwise, create it in the corresponding subdirectory
@@ -1887,14 +2496,14 @@ The following macros may be defined in makefiles which include
 <bsd.rpc.mk> in order to control which files get built and how they
 are to be built:
 
-RPC_INCS:	construct .h file from .x file
-RPC_XDRFILES:	construct _xdr.c from .x file
+RPC_INCS	construct .h file from .x file
+RPC_XDRFILES	construct _xdr.c from .x file
 		(for marshalling/unmarshalling data types)
-RPC_SVCFILES:	construct _svc.c from .x file
+RPC_SVCFILES	construct _svc.c from .x file
 		(server-side stubs)
-RPC_SVCFLAGS:	Additional flags passed to builds of RPC_SVCFILES.
+RPC_SVCFLAGS	Additional flags passed to builds of RPC_SVCFILES.
 
-RPC_XDIR:	Directory containing .x/.h files
+RPC_XDIR	Directory containing .x/.h files
 
 
 =-=-=-=-=   bsd.shlib.mk   =-=-=-=-=
@@ -1906,7 +2515,7 @@ included before <bsd.shlib.mk>.
 <bsd.own.mk> sets the following variables, if they are not already defined
 (defaults are in brackets):
 
-SHLIBINSTALLDIR	If ${USE_SHLIBDIR} is not "no", use ${SHLIBINSTALLDIR}
+SHLIBINSTALLDIR If ${USE_SHLIBDIR} is not "no", use ${SHLIBINSTALLDIR}
 		instead of ${LIBDIR} as the base path for shared library
 		installation.  [/lib]
 
@@ -2064,8 +2673,8 @@ FC		Fortran compiler.  [f77]
 
 FFLAGS		Options to {$FC}.  [-O]
 
-HOST_SH		Shell.	This must be an absolute path, because it may be
-		substituted into "#!" lines in scripts.	 [/bin/sh]
+HOST_SH		Shell.  This must be an absolute path, because it may be
+		substituted into "#!" lines in scripts.  [/bin/sh]
 
 INSTALL		install(1) command.  [install]
 
@@ -2093,7 +2702,7 @@ MKDEPCXX	Construct Makefile dependency list for C++ files.  [mkdep]
 
 NM		List symbols from object files.  [nm]
 
-PC		Pascal compiler.  [pc]  (Not present)
+PC		Pascal compiler.  [pc]	(Not present)
 
 PFLAGS		Options to ${PC}.  []
 
@@ -2103,7 +2712,7 @@ OBJCFLAGS	Options to ${OBJC}.  [${CFLAGS}]
 
 OBJCOPY		Copy and translate object files.  [objcopy]
 
-OBJCOPYLIBFLAGS	Flags to pass to objcopy when library objects are
+OBJCOPYLIBFLAGS Flags to pass to objcopy when library objects are
 		being built. [${.TARGET} =~ "*.po" ? -X : -x]
 
 OBJDUMP		Display information from object files.  [objdump]
@@ -2133,13 +2742,13 @@ YPREFIX		If defined, add "-p ${YPREFIX}" to YFLAGS.
 
 Other variables of note (incomplete list):
 
+NOCLANGERROR	If defined and clang is used as C compiler, -Werror is not
+		passed to it.
+
 NOGCCERROR	If defined, prevents passing certain ${CFLAGS} to GCC
 		that cause warnings to be fatal, such as:
 			-Werror -Wa,--fatal-warnings
 		(The latter being for as(1).)
-
-NOCLANGERROR	If defined and clang is used as C compiler, -Werror is not
-		passed to it.
 
 WARNS		Crank up compiler warning options; the distinct levels are:
 			WARNS=1
@@ -2149,7 +2758,7 @@ WARNS		Crank up compiler warning options; the distinct levels are:
 			WARNS=5
 			WARNS=6
 
-=-=-=-=-=   bsd.host.mk  =-=-=-=-=
+=-=-=-=-=   bsd.host.mk   =-=-=-=-=
 
 This file is automatically included from bsd.own.mk. It contains settings
 for all the HOST_* variables that are used in host programs and libraries.
