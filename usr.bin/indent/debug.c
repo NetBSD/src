@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.35 2023/06/05 14:22:26 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.36 2023/06/05 14:40:13 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.35 2023/06/05 14:22:26 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.36 2023/06/05 14:40:13 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -87,11 +87,11 @@ const char *const lsym_name[] = {
 
 const char *const psym_name[] = {
 	"-",
-	"lbrace_block",
-	"lbrace_struct",
-	"lbrace_union",
-	"lbrace_enum",
-	"rbrace",
+	"{block",
+	"{struct",
+	"{union",
+	"{enum",
+	"}",
 	"decl",
 	"stmt",
 	"stmt_list",
@@ -217,21 +217,21 @@ debug_buffers(void)
 
 #define debug_ps_bool(name) \
 	if (ps.name != prev_ps.name) \
-	    debug_println("[%c] -> [%c] ps." #name, \
-		prev_ps.name ? 'x' : ' ', ps.name ? 'x' : ' '); \
+	    debug_println("        [%c]  ps." #name, \
+		" -+x"[(prev_ps.name ? 1 : 0) + (ps.name ? 2 : 0)]); \
 	else if (debug_full_parser_state) \
-	    debug_println("       [%c] ps." #name, ps.name ? 'x' : ' ')
+	    debug_println("        [%c]  ps." #name, ps.name ? 'x' : ' ')
 #define debug_ps_int(name) \
 	if (ps.name != prev_ps.name) \
-	    debug_println("%3d -> %3d ps." #name, prev_ps.name, ps.name); \
+	    debug_println(" %3d -> %3d  ps." #name, prev_ps.name, ps.name); \
 	else if (debug_full_parser_state) \
-	    debug_println("       %3d ps." #name, ps.name)
+	    debug_println("        %3d  ps." #name, ps.name)
 #define debug_ps_enum(name, names) \
 	if (ps.name != prev_ps.name) \
-	    debug_println("%3s -> %3s ps." #name, \
+	    debug_println(" %3s -> %3s  ps." #name, \
 		(names)[prev_ps.name], (names)[ps.name]); \
 	else if (debug_full_parser_state) \
-	    debug_println("%10s ps." #name, (names)[ps.name])
+	    debug_println(" %10s  ps." #name, (names)[ps.name])
 
 static bool
 ps_paren_has_changed(const struct parser_state *prev_ps)
@@ -253,7 +253,7 @@ debug_ps_paren(const struct parser_state *prev_ps)
 	if (!debug_full_parser_state && !ps_paren_has_changed(prev_ps))
 		return;
 
-	debug_printf("           ps.paren:");
+	debug_printf("             ps.paren:");
 	for (int i = 0; i < ps.nparen; i++) {
 		debug_printf(" %s%d",
 		    paren_level_cast_name[ps.paren[i].cast],
@@ -282,7 +282,7 @@ debug_ps_di_stack(const struct parser_state *prev_ps)
 	if (!debug_full_parser_state && !changed)
 		return;
 
-	debug_printf("    %s     ps.di_stack:", changed ? "->" : "  ");
+	debug_printf("     %s      ps.di_stack:", changed ? "->" : "  ");
 	for (int i = 0; i < ps.decl_level; i++)
 		debug_printf(" %d", ps.di_stack[i]);
 	if (ps.decl_level == 0)
@@ -296,7 +296,8 @@ debug_parser_state(void)
 	static struct parser_state prev_ps;
 
 	debug_blank_line();
-	debug_println("           ps.prev_lsym = %s", lsym_name[ps.prev_lsym]);
+	debug_println("             ps.prev_lsym = %s",
+	    lsym_name[ps.prev_lsym]);
 
 	debug_println("token classification");
 	debug_ps_int(quest_level);
