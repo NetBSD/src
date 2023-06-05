@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.197 2023/06/05 12:01:33 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.198 2023/06/05 12:06:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.197 2023/06/05 12:01:33 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.198 2023/06/05 12:06:51 rillig Exp $");
 
 #include <stdio.h>
 
@@ -240,8 +240,6 @@ output_line_comment(void)
 /*
  * Write a line of formatted source to the output file. The line consists of
  * the label, the code and the comment.
- *
- * Comments are written directly, bypassing this function.
  */
 void
 output_line(void)
@@ -260,9 +258,9 @@ output_line(void)
 		    && out.line_kind != lk_blank)
 			output_newline();
 
+		/* This kludge aligns function definitions correctly. */
 		if (ps.ind_level == 0)
-			ps.in_stmt_cont = false;	/* this is a class A
-							 * kludge */
+			ps.in_stmt_cont = false;
 
 		if (opt.blank_line_after_decl && ps.declaration == decl_end
 		    && ps.tos > 1) {
