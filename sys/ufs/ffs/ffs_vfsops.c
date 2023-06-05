@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.379 2022/12/21 18:58:25 chs Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.380 2023/06/05 04:59:46 rin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.379 2022/12/21 18:58:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.380 2023/06/05 04:59:46 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -195,7 +195,7 @@ ffs_checkrange(struct mount *mp, ino_t ino)
 	struct fs *fs = VFSTOUFS(mp)->um_fs;
 
 	if (ino < UFS_ROOTINO || ino >= fs->fs_ncg * fs->fs_ipg) {
-		DPRINTF("out of range %u\n", ino);
+		DPRINTF("out of range %" PRIu64 "\n", ino);
 		return ESTALE;
 	}
 
@@ -213,7 +213,8 @@ ffs_checkrange(struct mount *mp, ino_t ino)
 	int error = bread(ump->um_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
 	    (int)fs->fs_cgsize, B_MODIFY, &bp);
 	if (error) {
-		DPRINTF("error %d reading cg %d ino %u\n", error, cg, ino);
+		DPRINTF("error %d reading cg %d ino %" PRIu64 "\n",
+		    error, cg, ino);
 		return error;
 	}
 
@@ -222,7 +223,8 @@ ffs_checkrange(struct mount *mp, ino_t ino)
 	struct cg *cgp = (struct cg *)bp->b_data;
 	if (!cg_chkmagic(cgp, needswap)) {
 		brelse(bp, 0);
-		DPRINTF("bad cylinder group magic cg %d ino %u\n", cg, ino);
+		DPRINTF("bad cylinder group magic cg %d ino %" PRIu64 "\n",
+		    cg, ino);
 		return ESTALE;
 	}
 
@@ -230,7 +232,7 @@ ffs_checkrange(struct mount *mp, ino_t ino)
 	brelse(bp, 0);
 
 	if (cg * fs->fs_ipg + initediblk < ino) {
-		DPRINTF("cg=%d fs->fs_ipg=%d initediblk=%d ino=%u\n",
+		DPRINTF("cg=%d fs->fs_ipg=%d initediblk=%d ino=%" PRIu64 "\n",
 		    cg, fs->fs_ipg, initediblk, ino);
 		return ESTALE;
 	}
