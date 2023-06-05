@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.333 2023/06/05 10:12:21 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.334 2023/06/05 12:01:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.333 2023/06/05 10:12:21 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.334 2023/06/05 12:01:33 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -682,6 +682,8 @@ process_colon_other(void)
 static void
 process_semicolon(void)
 {
+	if (out.line_kind == lk_stmt_head)
+		out.line_kind = lk_other;
 	if (ps.decl_level == 0)
 		ps.init_or_struct = false;
 	ps.seen_case = false;	/* only needs to be reset on error */
@@ -736,6 +738,9 @@ process_lbrace(void)
 		ps.block_init = true;
 		ps.init_or_struct = true;
 	}
+
+	if (out.line_kind == lk_stmt_head)
+		out.line_kind = lk_other;
 
 	ps.in_stmt_or_decl = false;	/* don't indent the {} */
 
