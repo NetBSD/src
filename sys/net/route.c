@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.236 2022/12/22 13:54:57 riastradh Exp $	*/
+/*	$NetBSD: route.c,v 1.237 2023/06/05 03:51:45 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.236 2022/12/22 13:54:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.237 2023/06/05 03:51:45 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -229,12 +229,14 @@ static krwlock_t		rt_lock __cacheline_aligned;
 #define RT_UNLOCK()		rw_exit(&rt_lock)
 #define RT_WLOCKED()		rw_write_held(&rt_lock)
 #define	RT_ASSERT_WLOCK()	KASSERT(rw_write_held(&rt_lock))
+#define RT_WQ_FLAGS		WQ_MPSAFE
 #else
 #define RT_RLOCK()		do {} while (0)
 #define RT_WLOCK()		do {} while (0)
 #define RT_UNLOCK()		do {} while (0)
 #define RT_WLOCKED()		true
 #define	RT_ASSERT_WLOCK()	do {} while (0)
+#define RT_WQ_FLAGS		0
 #endif
 
 static uint64_t rtcache_generation;
@@ -477,7 +479,7 @@ rt_init(void)
 	rt_psref_class = psref_class_create("rtentry", IPL_SOFTNET);
 
 	error = workqueue_create(&rt_free_global.wq, "rt_free",
-	    rt_free_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
+	    rt_free_work, NULL, PRI_SOFTNET, IPL_SOFTNET, RT_WQ_FLAGS);
 	if (error)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 
@@ -1822,7 +1824,7 @@ rt_timer_init(void)
 	LIST_INIT(&rttimer_queue_head);
 	callout_init(&rt_timer_ch, CALLOUT_MPSAFE);
 	error = workqueue_create(&rt_timer_wq, "rt_timer",
-	    rt_timer_work, NULL, PRI_SOFTNET, IPL_SOFTNET, WQ_MPSAFE);
+	    rt_timer_work, NULL, PRI_SOFTNET, IPL_SOFTNET, RT_WQ_FLAGS);
 	if (error)
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
