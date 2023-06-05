@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.172 2023/06/05 07:35:05 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.173 2023/06/05 10:12:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -243,8 +243,7 @@ extern struct options {
 	int max_line_length;
 	bool use_tabs;		/* set true to use tabs for spacing, false uses
 				 * all spaces */
-	bool verbose;		/* whether non-essential error messages are
-				 * printed */
+	bool verbose;		/* print configuration to stderr */
 } opt;
 
 extern bool found_err;

@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.81 2023/06/05 07:35:05 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.82 2023/06/05 10:12:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: args.c,v 1.81 2023/06/05 07:35:05 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.82 2023/06/05 10:12:21 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 
@@ -290,7 +290,7 @@ load_profile(const char *fname, bool must_exist)
 		if (n > 0) {
 			buf[n] = '\0';
 			if (opt.verbose)
-				printf("profile: %s\n", buf);
+				fprintf(stderr, "profile: %s\n", buf);
 			set_option(buf, fname);
 		} else if (ch == EOF)
 			break;

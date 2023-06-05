@@ -1,18 +1,12 @@
-/* $NetBSD: opt_v.c,v 1.12 2023/05/12 10:53:33 rillig Exp $ */
+/* $NetBSD: opt_v.c,v 1.13 2023/06/05 10:12:21 rillig Exp $ */
 
 /*
  * Tests for the options '-v' and '-nv'.
  *
- * The option '-v' enables verbose mode. It outputs some information about
- * what's going on under the hood, especially when lines are broken.
+ * The option '-v' enables verbose mode.
  *
  * The option '-nv' disables verbose mode. Only errors and warnings are output
- * in this mode, but no progress messages.
- */
-
-/*
- * XXX: It's rather strange that -v writes to stdout, even in filter mode.
- * This output belongs on stderr instead.
+ * in this mode.
  */
 
 //indent input
@@ -25,10 +19,10 @@ example(void)
 	printf("A very long message template with %d arguments: %s, %s, %s", 3, "first", "second", "third");
 }
 
-/* $ The below comment is neither counted nor formatted. */
+// $ Indent does not format comments in preprocessing lines.
 #define macro1 /* prefix */ suffix
 
-/* $ The below comment is formatted and counted. */
+// $ Indent does not format comments in preprocessing lines.
 #define macro2 prefix /* suffix */
 //indent end
 
