@@ -1,4 +1,4 @@
-*	$NetBSD: start.S,v 1.3 2023/06/03 20:41:45 andvar Exp $	*/
+/*	$NetBSD: start.S,v 1.4 2023/06/05 18:16:07 martin Exp $	*/
 	
 /*-
  * Copyright (c) 2001 Doug Rabson
