@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.48 2023/06/02 14:34:14 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.49 2023/06/05 15:02:54 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -974,3 +974,21 @@ void
 {
 }
 //indent end
+
+
+//indent input
+struct a {
+	struct b {
+		struct c {
+			struct d1 {
+				int e;
+			} d1;
+			struct d2 {
+				int e;
+			} d2;
+		} c;
+	} b;
+};
+//indent end
+
+//indent run-equals-input -di0
