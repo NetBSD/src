@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.329 2023/06/05 07:35:05 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.330 2023/06/05 08:22:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.329 2023/06/05 07:35:05 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.330 2023/06/05 08:22:00 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -423,10 +423,8 @@ move_com_to_code(lexer_symbol lsym)
 	if (ps.want_blank)
 		buf_add_char(&code, ' ');
 	buf_add_buf(&code, &com);
-	if (lsym != lsym_rparen && lsym != lsym_rbracket)
-		buf_add_char(&code, ' ');
 	com.len = 0;
-	ps.want_blank = false;
+	ps.want_blank = lsym != lsym_rparen && lsym != lsym_rbracket;
 }
 
 static void
