@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.33 2023/05/26 10:44:59 riastradh Exp $
+# $NetBSD: sshd,v 1.34 2023/06/05 11:51:19 riastradh Exp $
 #
 
 # PROVIDE: sshd
@@ -61,7 +61,6 @@ sshd_keygen()
 		    printf "ssh-keygen: " && "${keygen}" -f "${f}" -l
 		new_key_created=true
 	done << _EOF
-dsa	1024	ssh_host_dsa_key
 ecdsa	521	ssh_host_ecdsa_key
 ed25519	-1	ssh_host_ed25519_key
 rsa	0	ssh_host_rsa_key
