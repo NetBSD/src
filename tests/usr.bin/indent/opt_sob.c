@@ -1,4 +1,4 @@
-/* $NetBSD: opt_sob.c,v 1.9 2023/06/02 13:59:33 rillig Exp $ */
+/* $NetBSD: opt_sob.c,v 1.10 2023/06/05 12:01:34 rillig Exp $ */
 
 /*
  * Tests for the options '-sob' and '-nsob'.
@@ -115,8 +115,8 @@ function_with_1_blank_line(void)
 		var--;
 
 	if (var > 0) {
+
 		var--;
-// $ XXX: The following blank line may be considered optional.
 
 	}
 
@@ -137,8 +137,8 @@ function_with_2_blank_lines(void)
 		var--;
 
 	if (var > 0) {
+
 		var--;
-// $ XXX: The following blank line may be considered optional.
 
 	}
 
@@ -148,3 +148,27 @@ function_with_2_blank_lines(void)
 //indent end
 
 //indent run-equals-input -nsob
+
+
+//indent input
+{
+	switch (expr) {
+
+	case 1:
+
+	}
+}
+//indent end
+
+//indent run-equals-input -sob
+
+//indent run -sob -bl
+{
+	switch (expr)
+	{
+
+	case 1:
+
+	}
+}
+//indent end
