@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.327 2023/06/04 20:51:19 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.328 2023/06/05 07:23:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.327 2023/06/04 20:51:19 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.328 2023/06/05 07:23:03 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -1000,9 +1000,6 @@ read_preprocessing_line(void)
 	} state = PLAIN;
 
 	buf_add_char(&lab, '#');
-
-	while (ch_isblank(inp_p[0]))
-		buf_add_char(&lab, *inp_p++);
 
 	while (inp_p[0] != '\n' || (state == COMM && !had_eof)) {
 		buf_add_char(&lab, inp_next());
