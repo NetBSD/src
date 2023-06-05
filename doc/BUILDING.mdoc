@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.140 2023/06/04 20:08:21 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.141 2023/06/05 22:36:17 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd June 4, 2023
+.Dd June 5, 2023
 .Dt BUILDING 8
 .Os NetBSD
 .\" turn off hyphenation
@@ -253,7 +253,9 @@ Several environment variables control the behaviour of
 .Nx
 builds.
 .
-.Bl -tag -width 15n
+.Bl -tag -width 14n
+.
+.\" These entries are sorted alphabetically.
 .
 .It Sy HOST_CC
 Path name to C compiler used to create the toolchain.
@@ -444,10 +446,11 @@ This list is not comprehensive;
 all supported variables and their defaults are documented in
 .Xr mk.conf 5 .
 .
-.Bl -tag -width 15n
+.Bl -tag -width 14n
 .
 .\" These entries are sorted alphabetically.
-.\" Keep in sync with canonical reference share/man/man5/mk.conf.5.
+.\" Keep in sync with canonical reference share/man/man5/mk.conf.5
+.\" and with share/mk/bsd.README.
 .
 .It Sy BSDOBJDIR
 The real path to the object directory tree for the
@@ -986,7 +989,14 @@ This also has implications on full builds (see next subsection).
 .It Sy MKX11
 .YorN
 Indicates whether X11 is built and installed from
-.Sy X11SRCDIR .
+.Sy X11SRCDIR ,
+and whether the X sets will be created.
+.Pp
+.Em Note :
+If
+.Dq yes ,
+requires
+.Sy MKINET6=yes .
 .DFLTn
 .
 .It Sy NETBSDSRCDIR
@@ -1099,7 +1109,9 @@ and do not affect manually building subtrees of the
 .Nx
 source code.
 .
-.Bl -tag -width 15n
+.Bl -tag -width 14n
+.
+.\" These entries are sorted alphabetically.
 .
 .It Sy INSTALLBOOT_BOARDS
 A list of boards to create bootable images for.
