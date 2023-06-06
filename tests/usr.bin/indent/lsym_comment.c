@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.17 2023/06/06 05:39:49 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.18 2023/06/06 07:51:35 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -371,18 +371,28 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 
 
 /*
- * TODO: Trailing whitespace in a comment is ignored when determining whether the
- * comment fits in a single line.
+ * When determining whether the comment fits in a single line, only the first
+ * trailing space or tab is kept, the others are removed.
  */
 //indent input
+/* tab: */
 /* 456789 123456789 123456789 12345		*/
 /* 456789 123456789 123456789 123456		*/
+/* space: */
+/* 456789 123456789 123456789 12345             */
+/* 456789 123456789 123456789 123456            */
 //indent end
 
 //indent run -l38
+/* tab: */
 /*
  * 456789 123456789 123456789 12345
  */
+/*
+ * 456789 123456789 123456789 123456
+ */
+/* space: */
+/* 456789 123456789 123456789 12345 */
 /*
  * 456789 123456789 123456789 123456
  */
@@ -965,7 +975,7 @@ int
 f(void)
 {
 	if (0)
-		/* 12 1234 123 123456 1234 1234567 123 1234.  */;
+		/* 12 1234 123 123456 1234 1234567 123 1234. */;
 }
 //indent end
 
