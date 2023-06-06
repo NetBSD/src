@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.199 2023/06/06 04:37:26 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.200 2023/06/06 05:11:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.199 2023/06/06 04:37:26 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.200 2023/06/06 05:11:11 rillig Exp $");
 
 #include <stdio.h>
 
@@ -54,22 +54,6 @@ static unsigned wrote_newlines = 2;	/* 0 in the middle of a line, 1 after a
 					 * - 1) blank lines above */
 static int paren_indent;
 
-
-void
-inp_skip(void)
-{
-	inp_p++;
-	if ((size_t)(inp_p - inp.s) >= inp.len)
-		inp_read_line();
-}
-
-char
-inp_next(void)
-{
-	char ch = inp_p[0];
-	inp_skip();
-	return ch;
-}
 
 static void
 inp_read_next_line(FILE *f)
@@ -94,6 +78,32 @@ inp_read_next_line(FILE *f)
 	}
 	inp_p = inp.s;
 }
+
+void
+inp_read_line(void)
+{
+	if (indent_enabled == indent_on)
+		out.indent_off_text.len = 0;
+	buf_add_chars(&out.indent_off_text, inp.s, inp.len);
+	inp_read_next_line(input);
+}
+
+void
+inp_skip(void)
+{
+	inp_p++;
+	if ((size_t)(inp_p - inp.s) >= inp.len)
+		inp_read_line();
+}
+
+char
+inp_next(void)
+{
+	char ch = inp_p[0];
+	inp_skip();
+	return ch;
+}
+
 
 static void
 output_newline(void)
@@ -176,11 +186,78 @@ is_blank_line_optional(void)
 	return wrote_newlines >= 3;
 }
 
+static int
+compute_case_label_indent(void)
+{
+	int i = ps.tos;
+	while (i > 0 && ps.s_sym[i] != psym_switch_expr)
+		i--;
+	float case_ind = (float)ps.s_ind_level[i] + opt.case_indent;
+	return (int)(case_ind * (float)opt.indent_size);
+}
+
+int
+compute_label_indent(void)
+{
+	if (out.line_kind == lk_case_or_default)
+		return compute_case_label_indent();
+	if (lab.s[0] == '#')
+		return 0;
+	return opt.indent_size * (ps.ind_level - 2);
+}
+
 static void
 output_line_label(void)
 {
 	output_indent(compute_label_indent());
 	output_range(lab.s, lab.len);
+}
+
+static int
+compute_code_indent_lineup(int base_ind)
+{
+	int ind = paren_indent;
+	int overflow = ind_add(ind, code.s, code.len) - opt.max_line_length;
+	if (overflow < 0)
+		return ind;
+
+	if (ind_add(base_ind, code.s, code.len) < opt.max_line_length) {
+		ind -= overflow + 2;
+		if (ind > base_ind)
+			return ind;
+		return base_ind;
+	}
+
+	return ind;
+}
+
+int
+compute_code_indent(void)
+{
+	int base_ind = ps.ind_level * opt.indent_size;
+
+	if (ps.line_start_nparen == 0) {
+		if (ps.tos >= 1 && ps.s_sym[ps.tos - 1] == psym_lbrace_enum)
+			return base_ind;
+		if (ps.in_stmt_cont)
+			return base_ind + opt.continuation_indent;
+		return base_ind;
+	}
+
+	if (opt.lineup_to_parens) {
+		if (opt.lineup_to_parens_always)
+			return paren_indent;
+		return compute_code_indent_lineup(base_ind);
+	}
+
+	if (ps.extra_expr_indent != eei_no)
+		return base_ind + 2 * opt.continuation_indent;
+
+	if (2 * opt.continuation_indent == opt.indent_size)
+		return base_ind + opt.continuation_indent;
+	else
+		return base_ind +
+		    opt.continuation_indent * ps.line_start_nparen;
 }
 
 static void
@@ -313,80 +390,4 @@ dont_write_line:
 
 	ps.want_blank = false;
 	out.line_kind = lk_other;
-}
-
-static int
-compute_code_indent_lineup(int base_ind)
-{
-	int ind = paren_indent;
-	int overflow = ind_add(ind, code.s, code.len) - opt.max_line_length;
-	if (overflow < 0)
-		return ind;
-
-	if (ind_add(base_ind, code.s, code.len) < opt.max_line_length) {
-		ind -= overflow + 2;
-		if (ind > base_ind)
-			return ind;
-		return base_ind;
-	}
-
-	return ind;
-}
-
-int
-compute_code_indent(void)
-{
-	int base_ind = ps.ind_level * opt.indent_size;
-
-	if (ps.line_start_nparen == 0) {
-		if (ps.tos >= 1 && ps.s_sym[ps.tos - 1] == psym_lbrace_enum)
-			return base_ind;
-		if (ps.in_stmt_cont)
-			return base_ind + opt.continuation_indent;
-		return base_ind;
-	}
-
-	if (opt.lineup_to_parens) {
-		if (opt.lineup_to_parens_always)
-			return paren_indent;
-		return compute_code_indent_lineup(base_ind);
-	}
-
-	if (ps.extra_expr_indent != eei_no)
-		return base_ind + 2 * opt.continuation_indent;
-
-	if (2 * opt.continuation_indent == opt.indent_size)
-		return base_ind + opt.continuation_indent;
-	else
-		return base_ind +
-		    opt.continuation_indent * ps.line_start_nparen;
-}
-
-static int
-compute_case_label_indent(void)
-{
-	int i = ps.tos;
-	while (i > 0 && ps.s_sym[i] != psym_switch_expr)
-		i--;
-	float case_ind = (float)ps.s_ind_level[i] + opt.case_indent;
-	return (int)(case_ind * (float)opt.indent_size);
-}
-
-int
-compute_label_indent(void)
-{
-	if (out.line_kind == lk_case_or_default)
-		return compute_case_label_indent();
-	if (lab.s[0] == '#')
-		return 0;
-	return opt.indent_size * (ps.ind_level - 2);
-}
-
-void
-inp_read_line(void)
-{
-	if (indent_enabled == indent_on)
-		out.indent_off_text.len = 0;
-	buf_add_chars(&out.indent_off_text, inp.s, inp.len);
-	inp_read_next_line(input);
 }

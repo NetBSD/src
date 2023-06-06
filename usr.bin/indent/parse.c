@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.67 2023/06/06 04:37:26 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.68 2023/06/06 05:11:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,13 +38,57 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.67 2023/06/06 04:37:26 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.68 2023/06/06 05:11:11 rillig Exp $");
 
 #include <err.h>
 
 #include "indent.h"
 
-static void reduce(void);
+/*
+ * Try to combine the statement on the top of the parse stack with the symbol
+ * directly below it, replacing these two symbols with a single symbol.
+ */
+static bool
+reduce_stmt(void)
+{
+	switch (ps.s_sym[ps.tos - 1]) {
+
+	case psym_stmt:
+	case psym_stmt_list:
+		ps.s_sym[--ps.tos] = psym_stmt_list;
+		return true;
+
+	case psym_do:
+		ps.s_sym[--ps.tos] = psym_do_stmt;
+		ps.ind_level_follow = ps.s_ind_level[ps.tos];
+		return true;
+
+	case psym_if_expr:
+		ps.s_sym[--ps.tos] = psym_if_expr_stmt;
+		int i = ps.tos - 1;
+		while (ps.s_sym[i] != psym_stmt &&
+		    ps.s_sym[i] != psym_stmt_list &&
+		    ps.s_sym[i] != psym_lbrace_block)
+			--i;
+		ps.ind_level_follow = ps.s_ind_level[i];
+		/* For the time being, assume that there is no 'else' on this
+		 * 'if', and set the indentation level accordingly. If an
+		 * 'else' is scanned, it will be fixed up later. */
+		return true;
+
+	case psym_switch_expr:
+	case psym_decl:
+	case psym_if_expr_stmt_else:
+	case psym_for_exprs:
+	case psym_while_expr:
+		ps.s_sym[--ps.tos] = psym_stmt;
+		ps.ind_level_follow = ps.s_ind_level[ps.tos];
+		return true;
+
+	default:
+		return false;
+	}
+}
 
 static int
 decl_level(void)
@@ -68,6 +112,23 @@ ps_push_follow(parser_symbol psym)
 {
 	ps.s_sym[++ps.tos] = psym;
 	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
+}
+
+/*
+ * Repeatedly try to reduce the top two symbols on the parse stack to a single
+ * symbol, until no more reductions are possible.
+ */
+static void
+reduce(void)
+{
+again:
+	if (ps.s_sym[ps.tos] == psym_stmt && reduce_stmt())
+		goto again;
+	if (ps.s_sym[ps.tos] == psym_while_expr &&
+	    ps.s_sym[ps.tos - 1] == psym_do_stmt) {
+		ps.tos -= 2;
+		goto again;
+	}
 }
 
 static bool
@@ -202,67 +263,4 @@ parse(parser_symbol psym)
 	debug_parse_stack("before reduction");
 	reduce();		/* see if any reduction can be done */
 	debug_parse_stack("after reduction");
-}
-
-/*
- * Try to combine the statement on the top of the parse stack with the symbol
- * directly below it, replacing these two symbols with a single symbol.
- */
-static bool
-reduce_stmt(void)
-{
-	switch (ps.s_sym[ps.tos - 1]) {
-
-	case psym_stmt:
-	case psym_stmt_list:
-		ps.s_sym[--ps.tos] = psym_stmt_list;
-		return true;
-
-	case psym_do:
-		ps.s_sym[--ps.tos] = psym_do_stmt;
-		ps.ind_level_follow = ps.s_ind_level[ps.tos];
-		return true;
-
-	case psym_if_expr:
-		ps.s_sym[--ps.tos] = psym_if_expr_stmt;
-		int i = ps.tos - 1;
-		while (ps.s_sym[i] != psym_stmt &&
-		    ps.s_sym[i] != psym_stmt_list &&
-		    ps.s_sym[i] != psym_lbrace_block)
-			--i;
-		ps.ind_level_follow = ps.s_ind_level[i];
-		/* For the time being, assume that there is no 'else' on this
-		 * 'if', and set the indentation level accordingly. If an
-		 * 'else' is scanned, it will be fixed up later. */
-		return true;
-
-	case psym_switch_expr:
-	case psym_decl:
-	case psym_if_expr_stmt_else:
-	case psym_for_exprs:
-	case psym_while_expr:
-		ps.s_sym[--ps.tos] = psym_stmt;
-		ps.ind_level_follow = ps.s_ind_level[ps.tos];
-		return true;
-
-	default:
-		return false;
-	}
-}
-
-/*
- * Repeatedly try to reduce the top two symbols on the parse stack to a single
- * symbol, until no more reductions are possible.
- */
-static void
-reduce(void)
-{
-again:
-	if (ps.s_sym[ps.tos] == psym_stmt && reduce_stmt())
-		goto again;
-	if (ps.s_sym[ps.tos] == psym_while_expr &&
-	    ps.s_sym[ps.tos - 1] == psym_do_stmt) {
-		ps.tos -= 2;
-		goto again;
-	}
 }
