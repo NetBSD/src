@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2970 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2971 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -102,12 +102,28 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	riscv: Add RISC-V support that works on QEMU with a single hart.
 		[skrll 20230507]
 	riscv: Add Google Goldfish RTC driver. [skrll 20230508]
-	OpenSSL: Imported 3.0.8. [christos 20230510]
+	openssl(1): Imported 3.0.8. [christos 20230510]
+	make(1): Make :mtime operate on each word in variable
+		value. [sjg 20230510]
+	worms(6): When using -H, make the appearance of the worm head
+		depend upon the body (more than it did before). [kre 20230512]
+	mips: Bump the maximum text size for binaries from 64MB
+		to 128MB. [he 20230514]
+	amiga: Update loadbsd source and distribution binary to version 3.3.
+		[phx 20230514]
+	i386: Add /dev/efi device. [riastradh 20230522]
+	efi(4): Add EFIIOC_GET_TABLE ioctl support on x86. [riastradh 20230522]
 	ctfmerge(1): Add error handling to pthread APIs.
 		Fix semaphores for macOS host tool.  [lukem 20230523]
 	share/mk: Deprecate non-functional SHAREDSTRINGS. [lukem 20230524]
 	mkstr(1), xstr(1): Obsolete unused PDP-11-era tools. [lukem 20230524]
+	pthread(3): Reduce power consumption when spinning for a lock on
+		arm. [riastradh 20230525]
 	pax(1): Exit 0 if stdin filelist is used and no files are supplied.
 		Don't overwrite existing destination files if -r -w copy
 		fails for any reason. [lukem 20230528]
-	OpenSSL: Imported 3.0.9. [christos 20230531]
+	date(1): Add -R option for displaying time in RFC 5322 format,
+		similar to GNU date. [kim 20230531]
+	openssl(1): Imported 3.0.9. [christos 20230531]
+	mk.conf(5): Obsolete non-MK variants MANZ UNPRIVED UPDATE [lukem 20230602]
+	build.sh: Add show-params operation [lukem 20230602]
