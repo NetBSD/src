@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.152 2023/06/06 06:51:44 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.153 2023/06/06 06:59:39 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.152 2023/06/06 06:51:44 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.153 2023/06/06 06:59:39 rillig Exp $");
 
 #include <string.h>
 
@@ -226,16 +226,16 @@ copy_comment_wrap_newline(ssize_t *last_blank)
 	++line_no;
 
 	/* flush any blanks and/or tabs at start of next line */
-	bool skip_asterisk = true;
-	do {
-		inp_skip();
-		if (inp_p[0] == '*' && skip_asterisk) {
-			skip_asterisk = false;
+	inp_skip();		/* '\n' */
+	while (ch_isblank(inp_p[0]))
+		inp_p++;
+	if (inp_p[0] == '*' && inp_p[1] == '/')
+		return false;
+	if (inp_p[0] == '*') {
+		inp_p++;
+		while (ch_isblank(inp_p[0]))
 			inp_p++;
-			if (inp_p[0] == '/')
-				return false;
-		}
-	} while (ch_isblank(inp_p[0]));
+	}
 
 	return true;
 }
@@ -243,8 +243,6 @@ copy_comment_wrap_newline(ssize_t *last_blank)
 static void
 copy_comment_wrap_finish(int line_length, bool delim)
 {
-	inp_p++;
-
 	if (delim) {
 		if (com.len > 3)
 			output_line();
@@ -260,6 +258,7 @@ copy_comment_wrap_finish(int line_length, bool delim)
 			output_line();
 	}
 
+	inp_p += 2;
 	if (!(com.len > 0 && ch_isblank(com.s[com.len - 1])))
 		com_add_char(' ');
 	com_add_char('*');
@@ -283,10 +282,9 @@ copy_comment_wrap(int line_length, bool delim)
 				goto unterminated_comment;
 			if (!copy_comment_wrap_newline(&last_blank))
 				goto end_of_comment;
-		} else if (inp_p[0] == '*' && inp_p[1] == '/') {
-			inp_p++;
+		} else if (inp_p[0] == '*' && inp_p[1] == '/')
 			goto end_of_comment;
-		} else
+		else
 			copy_comment_wrap_text(line_length, &last_blank);
 	}
 
