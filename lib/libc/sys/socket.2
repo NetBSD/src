@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.44 2023/06/06 09:10:08 riastradh Exp $
+.\"	$NetBSD: socket.2,v 1.45 2023/06/06 09:14:27 riastradh Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,12 +76,24 @@ The socket has the indicated
 which specifies the semantics of communication.
 Currently defined types are:
 .Pp
-.Bl -tag -offset indent -compact
+.Bl -tag -offset indent -width 20n
 .It Dv SOCK_STREAM
+Provides sequenced, reliable, two-way connection based byte streams.
+An out-of-band data transmission mechanism may be supported.
 .It Dv SOCK_DGRAM
+Supports datagrams: connectionless, unreliable messages of a
+fixed\(emtypically small\(emmaximum length.
 .It Dv SOCK_RAW
+Provides access to internal network protocols and interfaces.
+Available only to the super-user.
+Not described here.
 .It Dv SOCK_SEQPACKET
+Provide a sequenced, reliable, two-way connection-based data
+transmission path for datagrams of fixed maximum length.
+A consumer may be required to read an entire packet with each read
+system call.
 .It Dv SOCK_RDM
+Not implemented.
 .El
 .Pp
 The following flags can be or'ed to the type to condition the returned
@@ -99,34 +111,6 @@ Return
 instead of raising
 .Dv SIGPIPE .
 .El
-.Pp
-A
-.Dv SOCK_STREAM
-type provides sequenced, reliable,
-two-way connection based byte streams.
-An out-of-band data transmission mechanism may be supported.
-A
-.Dv SOCK_DGRAM
-socket supports
-datagrams (connectionless, unreliable messages of
-a fixed (typically small) maximum length).
-A
-.Dv SOCK_SEQPACKET
-socket may provide a sequenced, reliable,
-two-way connection-based data transmission path for datagrams
-of fixed maximum length; a consumer may be required to read
-an entire packet with each read system call.
-This facility is protocol specific, and presently implemented
-only for
-.Dv PF_NS .
-.Dv SOCK_RAW
-sockets provide access to internal network protocols and interfaces.
-The types
-.Dv SOCK_RAW ,
-which is available only to the super-user, and
-.Dv SOCK_RDM ,
-which is planned,
-but not yet implemented, are not described here.
 .Pp
 The
 .Fa protocol
