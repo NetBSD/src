@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.16 2023/06/05 08:22:00 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.17 2023/06/06 05:39:49 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -366,6 +366,25 @@ tab1+++	tab2---	tab3+++	tab4---	tab5+++	tab6---	tab7+++fixed comment*/
 /*
  * 456789 123456789 123456789
  * 123456789
+ */
+//indent end
+
+
+/*
+ * TODO: Trailing whitespace in a comment is ignored when determining whether the
+ * comment fits in a single line.
+ */
+//indent input
+/* 456789 123456789 123456789 12345		*/
+/* 456789 123456789 123456789 123456		*/
+//indent end
+
+//indent run -l38
+/*
+ * 456789 123456789 123456789 12345
+ */
+/*
+ * 456789 123456789 123456789 123456
  */
 //indent end
 
