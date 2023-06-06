@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.43 2022/06/28 20:12:52 rillig Exp $
+.\"	$NetBSD: socket.2,v 1.44 2023/06/06 09:10:08 riastradh Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,33 +54,41 @@ These families are defined in the include file
 .Ao Pa sys/socket.h Ac .
 The currently understood formats are:
 .Pp
-.Bd -literal -offset indent -compact
-PF_LOCAL	local (previously UNIX) domain protocols
-PF_INET		ARPA Internet protocols
-PF_INET6	IPv6 (Internet Protocol version 6) protocols
-PF_NS		Xerox Network Systems protocols
-PF_APPLETALK	AppleTalk protocols
-PF_BLUETOOTH	Bluetooth protocols
-PF_CAN		CAN bus protocols
-.Ed
+.Bl -tag -offset indent -width 20n -compact
+.It Dv PF_LOCAL
+local (previously UNIX) domain protocols
+.It Dv PF_INET
+ARPA Internet protocols
+.It Dv PF_INET6
+IPv6 (Internet Protocol version 6) protocols
+.It Dv PF_NS
+Xerox Network Systems protocols
+.It Dv PF_APPLETALK
+AppleTalk protocols
+.It Dv PF_BLUETOOTH
+Bluetooth protocols
+.It Dv PF_CAN
+CAN bus protocols
+.El
 .Pp
 The socket has the indicated
 .Fa type ,
 which specifies the semantics of communication.
 Currently defined types are:
 .Pp
-.Bd -literal -offset indent -compact
-SOCK_STREAM
-SOCK_DGRAM
-SOCK_RAW
-SOCK_SEQPACKET
-SOCK_RDM
-.Ed
+.Bl -tag -offset indent -compact
+.It Dv SOCK_STREAM
+.It Dv SOCK_DGRAM
+.It Dv SOCK_RAW
+.It Dv SOCK_SEQPACKET
+.It Dv SOCK_RDM
+.El
 .Pp
 The following flags can be or'ed to the type to condition the returned
 file descriptor:
 The following flags are valid:
-.Bl -column SOCK_NONBLOCK -offset indent
+.Pp
+.Bl -tag -offset indent -width 20n -compact
 .It Dv SOCK_CLOEXEC
 Set the close on exec property.
 .It Dv SOCK_NONBLOCK
