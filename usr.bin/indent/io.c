@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.200 2023/06/06 05:11:11 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.201 2023/06/06 05:27:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.200 2023/06/06 05:11:11 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.201 2023/06/06 05:27:56 rillig Exp $");
 
 #include <stdio.h>
 
@@ -130,13 +130,11 @@ output_indent(int new_ind)
 	int ind = out_ind;
 
 	if (opt.use_tabs) {
-		int tabsize = opt.tabsize;
-		int n = new_ind / tabsize - ind / tabsize;
-		if (n > 0)
-			ind -= ind % tabsize;
-		for (int i = 0; i < n; i++) {
-			fputc('\t', output);
-			ind += tabsize;
+		int n = new_ind / opt.tabsize - ind / opt.tabsize;
+		if (n > 0) {
+			ind = ind - ind % opt.tabsize + n * opt.tabsize;
+			while (n-- > 0)
+				fputc('\t', output);
 			wrote_newlines = 0;
 		}
 	}
