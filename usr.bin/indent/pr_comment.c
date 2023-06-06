@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.151 2023/06/04 20:51:19 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.152 2023/06/06 06:51:44 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.151 2023/06/04 20:51:19 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.152 2023/06/06 06:51:44 rillig Exp $");
 
 #include <string.h>
 
@@ -73,7 +73,8 @@ fits_in_one_line(int com_ind, int max_line_length)
 }
 
 static void
-analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
+analyze_comment(bool *p_may_wrap, bool *p_delim,
+    int *p_ind, int *p_line_length)
 {
 	bool may_wrap = true;
 	bool delim = opt.comment_delimiter_on_blankline;
@@ -134,6 +135,15 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 				inp_p++;
 	}
 
+	*p_may_wrap = may_wrap;
+	*p_delim = delim;
+	*p_ind = ind;
+	*p_line_length = line_length;
+}
+
+static void
+copy_comment_start(bool may_wrap, bool *delim, int ind, int line_length)
+{
 	ps.comment_delta = 0;
 	com_add_char('/');
 	com_add_char(token.s[token.len - 1]);	/* either '*' or '/' */
@@ -141,17 +151,119 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 	if (may_wrap && !ch_isblank(inp_p[0]))
 		com_add_char(' ');
 
-	if (delim && fits_in_one_line(ind, line_length))
-		delim = false;
+	if (*delim && fits_in_one_line(ind, line_length))
+		*delim = false;
 
-	if (delim) {
+	if (*delim) {
 		output_line();
 		com_add_delim();
 	}
+}
 
-	*p_line_length = line_length;
-	*p_delim = delim;
-	*p_may_wrap = may_wrap;
+static void
+copy_comment_wrap_text(int line_length, ssize_t *last_blank)
+{
+	int now_len = ind_add(ps.com_ind, com.s, com.len);
+	for (;;) {
+		char ch = inp_next();
+		if (ch_isblank(ch))
+			*last_blank = (ssize_t)com.len;
+		com_add_char(ch);
+		now_len++;
+		if (memchr("*\n\r\b\t", inp_p[0], 6) != NULL)
+			break;
+		if (now_len >= line_length && *last_blank != -1)
+			break;
+	}
+
+	ps.next_col_1 = false;
+
+	if (now_len <= line_length)
+		return;
+	if (ch_isspace(com.s[com.len - 1]))
+		return;
+
+	if (*last_blank == -1) {
+		/* only a single word in this line */
+		output_line();
+		com_add_delim();
+		return;
+	}
+
+	const char *last_word_s = com.s + *last_blank + 1;
+	size_t last_word_len = com.len - (size_t)(*last_blank + 1);
+	com.len = (size_t)*last_blank;
+	output_line();
+	com_add_delim();
+
+	/* Assume that output_line and com_add_delim don't
+	 * invalidate the "unused" part of the buffer beyond
+	 * com.s + com.len. */
+	memmove(com.s + com.len, last_word_s, last_word_len);
+	com.len += last_word_len;
+	*last_blank = -1;
+}
+
+static bool
+copy_comment_wrap_newline(ssize_t *last_blank)
+{
+	*last_blank = -1;
+	if (ps.next_col_1) {
+		if (com.len == 0)
+			com_add_char(' ');	/* force empty output line */
+		if (com.len > 3) {
+			output_line();
+			com_add_delim();
+		}
+		output_line();
+		com_add_delim();
+	} else {
+		ps.next_col_1 = true;
+		if (!(com.len > 0 && ch_isblank(com.s[com.len - 1])))
+			com_add_char(' ');
+		*last_blank = (int)com.len - 1;
+	}
+	++line_no;
+
+	/* flush any blanks and/or tabs at start of next line */
+	bool skip_asterisk = true;
+	do {
+		inp_skip();
+		if (inp_p[0] == '*' && skip_asterisk) {
+			skip_asterisk = false;
+			inp_p++;
+			if (inp_p[0] == '/')
+				return false;
+		}
+	} while (ch_isblank(inp_p[0]));
+
+	return true;
+}
+
+static void
+copy_comment_wrap_finish(int line_length, bool delim)
+{
+	inp_p++;
+
+	if (delim) {
+		if (com.len > 3)
+			output_line();
+		else
+			com.len = 0;
+		com_add_char(' ');
+	} else {
+		size_t len = com.len;
+		while (ch_isblank(com.s[len - 1]))
+			len--;
+		int now_len = ind_add(ps.com_ind, com.s, len);
+		if (now_len + 3 > line_length)
+			output_line();
+	}
+
+	if (!(com.len > 0 && ch_isblank(com.s[com.len - 1])))
+		com_add_char(' ');
+	com_add_char('*');
+	com_add_char('/');
 }
 
 /*
@@ -166,127 +278,25 @@ copy_comment_wrap(int line_length, bool delim)
 	ssize_t last_blank = -1;	/* index of the last blank in 'com' */
 
 	for (;;) {
-		switch (inp_p[0]) {
-		case '\n':
-			if (had_eof) {
-				diag(1, "Unterminated comment");
-				output_line();
-				return;
-			}
-
-			last_blank = -1;
-			if (ps.next_col_1) {
-				if (com.len == 0) {
-					/* force empty line of output */
-					com_add_char(' ');
-				}
-				if (com.len > 3) {
-					output_line();
-					com_add_delim();
-				}
-				output_line();
-				com_add_delim();
-
-			} else {
-				ps.next_col_1 = true;
-				if (!(com.len > 0
-				    && ch_isblank(com.s[com.len - 1])))
-					com_add_char(' ');
-				last_blank = (int)com.len - 1;
-			}
-			++line_no;
-
-			bool skip_asterisk = true;
-			do {	/* flush any blanks and/or tabs at start of
-				 * next line */
-				inp_skip();
-				if (inp_p[0] == '*' && skip_asterisk) {
-					skip_asterisk = false;
-					inp_p++;
-					if (inp_p[0] == '/')
-						goto end_of_comment;
-				}
-			} while (ch_isblank(inp_p[0]));
-
-			break;	/* end of case for newline */
-
-		case '*':
+		if (inp_p[0] == '\n') {
+			if (had_eof)
+				goto unterminated_comment;
+			if (!copy_comment_wrap_newline(&last_blank))
+				goto end_of_comment;
+		} else if (inp_p[0] == '*' && inp_p[1] == '/') {
 			inp_p++;
-			if (inp_p[0] == '/') {
-		end_of_comment:
-				inp_p++;
-
-				if (delim) {
-					if (com.len > 3)
-						output_line();
-					else
-						com.len = 0;
-					com_add_char(' ');
-				} else {
-					size_t len = com.len;
-					while (ch_isblank(com.s[len - 1]))
-						len--;
-					int now_len = ind_add(
-					    ps.com_ind, com.s, len);
-					if (now_len + 3 > line_length)
-						output_line();
-				}
-
-				if (!(com.len > 0
-				    && ch_isblank(com.s[com.len - 1])))
-					com_add_char(' ');
-				com_add_char('*');
-				com_add_char('/');
-				return;
-
-			} else	/* handle isolated '*' */
-				com_add_char('*');
-			break;
-
-		default:
-			;
-			int now_len = ind_add(ps.com_ind, com.s, com.len);
-			for (;;) {
-				char ch = inp_next();
-				if (ch_isblank(ch))
-					last_blank = (ssize_t)com.len;
-				com_add_char(ch);
-				now_len++;
-				if (memchr("*\n\r\b\t", inp_p[0], 6) != NULL)
-					break;
-				if (now_len >= line_length && last_blank != -1)
-					break;
-			}
-
-			ps.next_col_1 = false;
-
-			if (now_len <= line_length)
-				break;
-			if (ch_isspace(com.s[com.len - 1]))
-				break;
-
-			if (last_blank == -1) {
-				/* only a single word in this line */
-				output_line();
-				com_add_delim();
-				break;
-			}
-
-			const char *last_word_s = com.s + last_blank + 1;
-			size_t last_word_len = com.len
-			- (size_t)(last_blank + 1);
-			com.len = (size_t)last_blank;
-			output_line();
-			com_add_delim();
-
-			/* Assume that output_line and com_add_delim don't
-			 * invalidate the "unused" part of the buffer beyond
-			 * com.s + com.len. */
-			memmove(com.s + com.len, last_word_s, last_word_len);
-			com.len += last_word_len;
-			last_blank = -1;
-		}
+			goto end_of_comment;
+		} else
+			copy_comment_wrap_text(line_length, &last_blank);
 	}
+
+end_of_comment:
+	copy_comment_wrap_finish(line_length, delim);
+	return;
+
+unterminated_comment:
+	diag(1, "Unterminated comment");
+	output_line();
 }
 
 static void
@@ -330,10 +340,11 @@ copy_comment_nowrap(void)
 void
 process_comment(void)
 {
-	int line_length;
 	bool may_wrap, delim;
+	int ind, line_length;
 
-	analyze_comment(&may_wrap, &delim, &line_length);
+	analyze_comment(&may_wrap, &delim, &ind, &line_length);
+	copy_comment_start(may_wrap, &delim, ind, line_length);
 	if (may_wrap)
 		copy_comment_wrap(line_length, delim);
 	else
