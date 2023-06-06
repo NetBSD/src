@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.153 2023/06/06 06:59:39 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.154 2023/06/06 07:14:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.153 2023/06/06 06:59:39 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.154 2023/06/06 07:14:20 rillig Exp $");
 
 #include <string.h>
 
@@ -53,9 +53,8 @@ com_add_char(char ch)
 static void
 com_add_delim(void)
 {
-	if (!opt.star_comment_cont)
-		return;
-	buf_add_chars(&com, " * ", 3);
+	if (opt.star_comment_cont)
+		buf_add_chars(&com, " * ", 3);
 }
 
 static bool
@@ -253,16 +252,16 @@ copy_comment_wrap_finish(int line_length, bool delim)
 		size_t len = com.len;
 		while (ch_isblank(com.s[len - 1]))
 			len--;
-		int now_len = ind_add(ps.com_ind, com.s, len);
-		if (now_len + 3 > line_length)
+		int end_ind = ind_add(ps.com_ind, com.s, len);
+		if (end_ind + 3 > line_length)
 			output_line();
 	}
 
 	inp_p += 2;
-	if (!(com.len > 0 && ch_isblank(com.s[com.len - 1])))
-		com_add_char(' ');
-	com_add_char('*');
-	com_add_char('/');
+	if (com.len > 0 && ch_isblank(com.s[com.len - 1]))
+		buf_add_chars(&com, "*/", 2);
+	else
+		buf_add_chars(&com, " */", 3);
 }
 
 /*
