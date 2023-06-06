@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.66 2023/06/05 07:35:05 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.67 2023/06/06 04:37:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.66 2023/06/05 07:35:05 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.67 2023/06/06 04:37:26 rillig Exp $");
 
 #include <err.h>
 
@@ -183,8 +183,6 @@ parse(parser_symbol psym)
 
 	case psym_switch_expr:
 		ps_push_follow(psym_switch_expr);
-		ps.s_case_ind_level[ps.tos] = case_ind;
-		case_ind = (float)ps.ind_level_follow + opt.case_indent;
 		ps.ind_level_follow += (int)opt.case_indent + 1;
 		break;
 
@@ -239,9 +237,7 @@ reduce_stmt(void)
 		return true;
 
 	case psym_switch_expr:
-		case_ind = ps.s_case_ind_level[ps.tos - 1];
-		/* FALLTHROUGH */
-	case psym_decl:		/* finish of a declaration */
+	case psym_decl:
 	case psym_if_expr_stmt_else:
 	case psym_for_exprs:
 	case psym_while_expr:

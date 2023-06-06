@@ -1,14 +1,10 @@
-/* $NetBSD: psym_switch_expr.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: psym_switch_expr.c,v 1.5 2023/06/06 04:37:27 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_switch_expr, which represents the keyword
  * 'switch' followed by the controlling expression, now waiting for a
  * statement (usually a block) containing the 'case' labels.
  */
-
-//indent input
-// TODO: add input
-//indent end
 
 //indent run-equals-input
 
@@ -39,6 +35,20 @@ function(void)
 	case 1:
 			return;
 	case 2:
+			break;
+		}
+}
+//indent end
+
+//indent run -cli-0.375
+void
+function(void)
+{
+	switch (expr)
+		if (cond) {
+     case 1:
+			return;
+     case 2:
 			break;
 		}
 }
