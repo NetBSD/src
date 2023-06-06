@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.45 2023/06/06 09:14:27 riastradh Exp $
+.\"	$NetBSD: socket.2,v 1.46 2023/06/06 23:27:15 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,21 +54,14 @@ These families are defined in the include file
 .Ao Pa sys/socket.h Ac .
 The currently understood formats are:
 .Pp
-.Bl -tag -offset indent -width 20n -compact
-.It Dv PF_LOCAL
-local (previously UNIX) domain protocols
-.It Dv PF_INET
-ARPA Internet protocols
-.It Dv PF_INET6
-IPv6 (Internet Protocol version 6) protocols
-.It Dv PF_NS
-Xerox Network Systems protocols
-.It Dv PF_APPLETALK
-AppleTalk protocols
-.It Dv PF_BLUETOOTH
-Bluetooth protocols
-.It Dv PF_CAN
-CAN bus protocols
+.Bl -column -offset indent ".Dv PF_APPLETALK"
+.It Dv PF_LOCAL Ta local domain Po previously Tn UNIX domain Pc protocols
+.It Dv PF_INET Ta Tn ARPA Internet protocols
+.It Dv PF_INET6 Ta Tn IPv6 (Internet Protocol version 6) protocols
+.It Dv PF_NS Ta Xerox Network Systems protocols
+.It Dv PF_APPLETALK Ta AppleTalk protocols
+.It Dv PF_BLUETOOTH Ta Bluetooth protocols
+.It Dv PF_CAN Ta Tn CAN bus protocols
 .El
 .Pp
 The socket has the indicated
@@ -76,7 +69,7 @@ The socket has the indicated
 which specifies the semantics of communication.
 Currently defined types are:
 .Pp
-.Bl -tag -offset indent -width 20n
+.Bl -tag -offset indent -width Dv
 .It Dv SOCK_STREAM
 Provides sequenced, reliable, two-way connection based byte streams.
 An out-of-band data transmission mechanism may be supported.
@@ -100,16 +93,10 @@ The following flags can be or'ed to the type to condition the returned
 file descriptor:
 The following flags are valid:
 .Pp
-.Bl -tag -offset indent -width 20n -compact
-.It Dv SOCK_CLOEXEC
-Set the close on exec property.
-.It Dv SOCK_NONBLOCK
-Sets non-blocking I/O.
-.It Dv SOCK_NOSIGPIPE
-Return
-.Er EPIPE
-instead of raising
-.Dv SIGPIPE .
+.Bl -column -offset indent ".Dv SOCK_NOSIGPIPE"
+.It Dv SOCK_CLOEXEC Ta Set the close on exec property.
+.It Dv SOCK_NONBLOCK Ta Set non-blocking I/O.
+.It Dv SOCK_NOSIGPIPE Ta Return Er EPIPE instead of raising Dv SIGPIPE .
 .El
 .Pp
 The
