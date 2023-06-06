@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.402 2023/06/06 06:51:00 pgoyette Exp $
+# $NetBSD: mi,v 1.403 2023/06/06 08:27:44 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2529,14 +2529,14 @@
 ./usr/libdata/debug/usr/tests/util/id/h_id.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-obsolete		obsolete,compattestfile
 ./usr/tests/lib/libc/tls/libh_tls_dynamic_g.a	comp-c-debuglib		atf,debuglib,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_abuse_dynamic_g.a			tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_abuse_static_g.a			tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_def_dynamic_g.a			tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_def_static_g.a			tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_onlyctor_dynamic_g.a			tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_onlydef_g.a				tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_onlyuse_dynamic_g.a			tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_onlyuse_static_g.a			tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_use_dynamic_g.a			tests-libexec-debug	debug,atf,pic,compattestfile
-./usr/tests/libexec/ld.elf_so/libh_use_static_g.a			tests-libexec-debug	debug,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_abuse_dynamic_g.a			tests-libexec-debug	debuglib,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_abuse_static_g.a			tests-libexec-debug	debuglib,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_def_dynamic_g.a			tests-libexec-debug	debuglib,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_def_static_g.a			tests-libexec-debug	debuglib,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_onlyctor_dynamic_g.a			tests-libexec-debug	debuglib,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_onlydef_g.a				tests-libexec-debug	debuglib,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_onlyuse_dynamic_g.a			tests-libexec-debug	debuglib,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_onlyuse_static_g.a			tests-libexec-debug	debuglib,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_use_dynamic_g.a			tests-libexec-debug	debuglib,atf,pic,compattestfile
+./usr/tests/libexec/ld.elf_so/libh_use_static_g.a			tests-libexec-debug	debuglib,atf,pic,compattestfile
 ./var/db/obsolete/debug				base-sys-root		debug
