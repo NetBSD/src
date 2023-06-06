@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.336 2023/06/05 20:56:18 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.337 2023/06/06 04:37:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.336 2023/06/05 20:56:18 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.337 2023/06/06 04:37:26 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -81,7 +81,6 @@ struct buffer code;
 struct buffer com;
 
 bool found_err;
-float case_ind;
 bool had_eof;
 int line_no = 1;
 enum indent_enabled indent_enabled;
