@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.36 2023/06/05 14:40:13 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.37 2023/06/06 05:11:11 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.36 2023/06/05 14:40:13 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.37 2023/06/06 05:11:11 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -143,6 +143,7 @@ static const char *const decl_ptr_name[] = {
 };
 
 static unsigned wrote_newlines = 1;
+
 
 void
 debug_printf(const char *fmt, ...)

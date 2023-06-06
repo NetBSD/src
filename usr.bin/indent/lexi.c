@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.214 2023/06/04 22:57:18 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.215 2023/06/06 05:11:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.214 2023/06/04 22:57:18 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.215 2023/06/06 05:11:11 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -165,6 +165,7 @@ static const unsigned char lex_number_row[] = {
 	['+'] = 14, ['-'] = 14,
 	['.'] = 15,
 };
+
 
 static void
 token_add_char(char ch)
