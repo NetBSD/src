@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.198 2023/06/05 12:06:51 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.199 2023/06/06 04:37:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.198 2023/06/05 12:06:51 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.199 2023/06/06 04:37:26 rillig Exp $");
 
 #include <stdio.h>
 
@@ -362,11 +362,21 @@ compute_code_indent(void)
 		    opt.continuation_indent * ps.line_start_nparen;
 }
 
+static int
+compute_case_label_indent(void)
+{
+	int i = ps.tos;
+	while (i > 0 && ps.s_sym[i] != psym_switch_expr)
+		i--;
+	float case_ind = (float)ps.s_ind_level[i] + opt.case_indent;
+	return (int)(case_ind * (float)opt.indent_size);
+}
+
 int
 compute_label_indent(void)
 {
 	if (out.line_kind == lk_case_or_default)
-		return (int)(case_ind * (float)opt.indent_size);
+		return compute_case_label_indent();
 	if (lab.s[0] == '#')
 		return 0;
 	return opt.indent_size * (ps.ind_level - 2);

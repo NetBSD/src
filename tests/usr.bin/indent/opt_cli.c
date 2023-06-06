@@ -1,4 +1,4 @@
-/* $NetBSD: opt_cli.c,v 1.5 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_cli.c,v 1.6 2023/06/06 04:37:27 rillig Exp $ */
 
 /*
  * Tests for the option '-cli' ("case label indentation"), which sets the
@@ -69,6 +69,31 @@ classify(int n)
 		    default:
 			print("large");
 			break;
+	}
+}
+//indent end
+
+//indent run -cli3.25
+void
+classify(int n)
+{
+	switch (n) {
+				  case 0:
+					print("zero");
+					break;
+				  case 1:
+					print("one");
+					break;
+				  case 2:
+				  case 3:
+					print("prime");
+					break;
+				  case 4:
+					print("square");
+					break;
+				  default:
+					print("large");
+					break;
 	}
 }
 //indent end

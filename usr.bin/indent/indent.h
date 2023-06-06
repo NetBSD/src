@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.175 2023/06/05 14:22:26 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.176 2023/06/06 04:37:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -247,8 +247,6 @@ extern struct options {
 } opt;
 
 extern bool found_err;
-extern float case_ind;		/* indentation level to be used for a "case n:"
-				 */
 extern bool had_eof;		/* whether input is exhausted */
 extern int line_no;		/* the current line number. */
 extern enum indent_enabled {
@@ -355,7 +353,6 @@ extern struct parser_state {
 	int tos;		/* pointer to top of stack */
 	parser_symbol s_sym[STACKSIZE];
 	int s_ind_level[STACKSIZE];
-	float s_case_ind_level[STACKSIZE];
 
 	/* Spacing inside a statement or declaration */
 
