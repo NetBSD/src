@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.154 2023/06/06 07:14:20 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.155 2023/06/06 07:51:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.154 2023/06/06 07:14:20 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.155 2023/06/06 07:51:35 rillig Exp $");
 
 #include <string.h>
 
@@ -62,6 +62,10 @@ fits_in_one_line(int com_ind, int max_line_length)
 {
 	for (const char *start = inp_p, *p = start; *p != '\n'; p++) {
 		if (p[0] == '*' && p[1] == '/') {
+			while (p - inp_p >= 2
+			    && ch_isblank(p[-1])
+			    && ch_isblank(p[-2]))
+				p--;
 			int len = ind_add(com_ind + 3,
 			    start, (size_t)(p - start));
 			len += p == start || ch_isblank(p[-1]) ? 2 : 3;
@@ -256,6 +260,11 @@ copy_comment_wrap_finish(int line_length, bool delim)
 		if (end_ind + 3 > line_length)
 			output_line();
 	}
+
+	while (com.len >= 2
+	    && ch_isblank(com.s[com.len - 1])
+	    && ch_isblank(com.s[com.len - 2]))
+		com.len--;
 
 	inp_p += 2;
 	if (com.len > 0 && ch_isblank(com.s[com.len - 1]))
