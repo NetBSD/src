@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.92 2022/09/12 10:34:20 martin Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.93 2023/06/07 20:22:22 mrg Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2022 Matthew R. Green
+.\" Copyright (c) 1997-2023 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd Sep 12, 22
+.Dd Sep 12, 2023
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -524,6 +524,11 @@ To disable SSL SUPPORT compile
 with
 .Dq -DNO_SSL_SUPPORT
 on the compiler command line.
+.Pp
+To have an enforced redirect, such as http to https, create a shadow
+directory root that contains a
+.Pa .bzabsredirect
+file that points to the real target.
 .Ss COMPRESSION
 .Nm
 supports a very basic form of compression.
@@ -641,6 +646,7 @@ fi
 
 exit 1
 .Ed
+
 .Sh SEE ALSO
 .Xr inetd.conf 5 ,
 .Xr inetd 8
@@ -658,7 +664,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20220517.
+version 20230602.
 .Sh AUTHORS
 .An -nosplit
 .Nm
