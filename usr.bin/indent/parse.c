@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.68 2023/06/06 05:11:11 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.69 2023/06/07 15:46:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.68 2023/06/06 05:11:11 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.69 2023/06/07 15:46:12 rillig Exp $");
 
 #include <err.h>
 
@@ -49,28 +49,28 @@ __RCSID("$NetBSD: parse.c,v 1.68 2023/06/06 05:11:11 rillig Exp $");
  * directly below it, replacing these two symbols with a single symbol.
  */
 static bool
-reduce_stmt(void)
+psyms_reduce_stmt(struct psym_stack *psyms)
 {
-	switch (ps.s_sym[ps.tos - 1]) {
+	switch (psyms->sym[psyms->top - 1]) {
 
 	case psym_stmt:
 	case psym_stmt_list:
-		ps.s_sym[--ps.tos] = psym_stmt_list;
+		psyms->sym[--psyms->top] = psym_stmt_list;
 		return true;
 
 	case psym_do:
-		ps.s_sym[--ps.tos] = psym_do_stmt;
-		ps.ind_level_follow = ps.s_ind_level[ps.tos];
+		psyms->sym[--psyms->top] = psym_do_stmt;
+		ps.ind_level_follow = psyms->ind_level[psyms->top];
 		return true;
 
 	case psym_if_expr:
-		ps.s_sym[--ps.tos] = psym_if_expr_stmt;
-		int i = ps.tos - 1;
-		while (ps.s_sym[i] != psym_stmt &&
-		    ps.s_sym[i] != psym_stmt_list &&
-		    ps.s_sym[i] != psym_lbrace_block)
+		psyms->sym[--psyms->top] = psym_if_expr_stmt;
+		int i = psyms->top - 1;
+		while (psyms->sym[i] != psym_stmt &&
+		    psyms->sym[i] != psym_stmt_list &&
+		    psyms->sym[i] != psym_lbrace_block)
 			--i;
-		ps.ind_level_follow = ps.s_ind_level[i];
+		ps.ind_level_follow = psyms->ind_level[i];
 		/* For the time being, assume that there is no 'else' on this
 		 * 'if', and set the indentation level accordingly. If an
 		 * 'else' is scanned, it will be fixed up later. */
@@ -81,8 +81,8 @@ reduce_stmt(void)
 	case psym_if_expr_stmt_else:
 	case psym_for_exprs:
 	case psym_while_expr:
-		ps.s_sym[--ps.tos] = psym_stmt;
-		ps.ind_level_follow = ps.s_ind_level[ps.tos];
+		psyms->sym[--psyms->top] = psym_stmt;
+		ps.ind_level_follow = psyms->ind_level[psyms->top];
 		return true;
 
 	default:
@@ -94,8 +94,8 @@ static int
 decl_level(void)
 {
 	int level = 0;
-	for (int i = ps.tos - 1; i > 0; i--)
-		if (ps.s_sym[i] == psym_decl)
+	for (int i = ps.psyms.top - 1; i > 0; i--)
+		if (ps.psyms.sym[i] == psym_decl)
 			level++;
 	return level;
 }
@@ -103,15 +103,15 @@ decl_level(void)
 static void
 ps_push(parser_symbol psym)
 {
-	ps.s_sym[++ps.tos] = psym;
-	ps.s_ind_level[ps.tos] = ps.ind_level;
+	ps.psyms.sym[++ps.psyms.top] = psym;
+	ps.psyms.ind_level[ps.psyms.top] = ps.ind_level;
 }
 
 static void
 ps_push_follow(parser_symbol psym)
 {
-	ps.s_sym[++ps.tos] = psym;
-	ps.s_ind_level[ps.tos] = ps.ind_level_follow;
+	ps.psyms.sym[++ps.psyms.top] = psym;
+	ps.psyms.ind_level[ps.psyms.top] = ps.ind_level_follow;
 }
 
 /*
@@ -119,14 +119,14 @@ ps_push_follow(parser_symbol psym)
  * symbol, until no more reductions are possible.
  */
 static void
-reduce(void)
+psyms_reduce(struct psym_stack *psyms)
 {
 again:
-	if (ps.s_sym[ps.tos] == psym_stmt && reduce_stmt())
+	if (psyms->sym[psyms->top] == psym_stmt && psyms_reduce_stmt(psyms))
 		goto again;
-	if (ps.s_sym[ps.tos] == psym_while_expr &&
-	    ps.s_sym[ps.tos - 1] == psym_do_stmt) {
-		ps.tos -= 2;
+	if (psyms->sym[psyms->top] == psym_while_expr &&
+	    psyms->sym[psyms->top - 1] == psym_do_stmt) {
+		psyms->top -= 2;
 		goto again;
 	}
 }
@@ -150,17 +150,18 @@ parse(parser_symbol psym)
 	debug_blank_line();
 	debug_println("parse token: %s", psym_name[psym]);
 
+	struct psym_stack *psyms = &ps.psyms;
 	if (psym != psym_else) {
-		while (ps.s_sym[ps.tos] == psym_if_expr_stmt) {
-			ps.s_sym[ps.tos] = psym_stmt;
-			reduce();
+		while (psyms->sym[psyms->top] == psym_if_expr_stmt) {
+			psyms->sym[psyms->top] = psym_stmt;
+			psyms_reduce(&ps.psyms);
 		}
 	}
 
 	switch (psym) {
 
 	case psym_decl:
-		if (ps.s_sym[ps.tos] == psym_decl)
+		if (psyms->sym[psyms->top] == psym_decl)
 			break;	/* only put one declaration onto stack */
 
 		ps.break_after_comma = true;
@@ -171,9 +172,9 @@ parse(parser_symbol psym)
 		break;
 
 	case psym_if_expr:
-		if (ps.s_sym[ps.tos] == psym_if_expr_stmt_else
+		if (psyms->sym[psyms->top] == psym_if_expr_stmt_else
 		    && opt.else_if_in_same_line)
-			ps.ind_level_follow = ps.s_ind_level[ps.tos--];
+			ps.ind_level_follow = psyms->ind_level[psyms->top--];
 		/* FALLTHROUGH */
 	case psym_do:
 	case psym_for_exprs:
@@ -186,9 +187,9 @@ parse(parser_symbol psym)
 	case psym_lbrace_union:
 	case psym_lbrace_enum:
 		ps.break_after_comma = false;
-		if (ps.s_sym[ps.tos] == psym_stmt
-		    || ps.s_sym[ps.tos] == psym_decl
-		    || ps.s_sym[ps.tos] == psym_stmt_list)
+		if (psyms->sym[psyms->top] == psym_stmt
+		    || psyms->sym[psyms->top] == psym_decl
+		    || psyms->sym[psyms->top] == psym_stmt_list)
 			++ps.ind_level_follow;	/* it is a random, isolated
 						 * stmt group or a declaration
 						 */
@@ -200,8 +201,8 @@ parse(parser_symbol psym)
 
 				/* for a switch, brace should be two levels out
 				 * from the code */
-				if (ps.s_sym[ps.tos] == psym_switch_expr &&
-				    opt.case_indent >= 1.0F)
+				if (psyms->sym[psyms->top] == psym_switch_expr
+				    && opt.case_indent >= 1.0F)
 					--ps.ind_level;
 			}
 		}
@@ -211,9 +212,9 @@ parse(parser_symbol psym)
 		break;
 
 	case psym_while_expr:
-		if (ps.s_sym[ps.tos] == psym_do_stmt) {
+		if (psyms->sym[psyms->top] == psym_do_stmt) {
 			ps.ind_level =
-			    ps.ind_level_follow = ps.s_ind_level[ps.tos];
+			    ps.ind_level_follow = psyms->ind_level[psyms->top];
 			ps_push(psym_while_expr);
 		} else {
 			ps_push_follow(psym_while_expr);
@@ -223,23 +224,25 @@ parse(parser_symbol psym)
 		break;
 
 	case psym_else:
-		if (ps.s_sym[ps.tos] != psym_if_expr_stmt) {
+		if (psyms->sym[psyms->top] != psym_if_expr_stmt) {
 			diag(1, "Unmatched 'else'");
 			break;
 		}
-		ps.ind_level = ps.s_ind_level[ps.tos];
+		ps.ind_level = psyms->ind_level[psyms->top];
 		ps.ind_level_follow = ps.ind_level + 1;
-		ps.s_sym[ps.tos] = psym_if_expr_stmt_else;
+		psyms->sym[psyms->top] = psym_if_expr_stmt_else;
 		break;
 
 	case psym_rbrace:
 		/* stack should have <lbrace> <stmt> or <lbrace> <stmt_list> */
-		if (!(ps.tos > 0 && is_lbrace(ps.s_sym[ps.tos - 1]))) {
+		if (!(psyms->top > 0
+		    && is_lbrace(psyms->sym[psyms->top - 1]))) {
 			diag(1, "Statement nesting error");
 			break;
 		}
-		ps.ind_level = ps.ind_level_follow = ps.s_ind_level[--ps.tos];
-		ps.s_sym[ps.tos] = psym_stmt;
+		ps.ind_level = ps.ind_level_follow =
+		    psyms->ind_level[--psyms->top];
+		psyms->sym[psyms->top] = psym_stmt;
 		break;
 
 	case psym_switch_expr:
@@ -257,10 +260,10 @@ parse(parser_symbol psym)
 		return;
 	}
 
-	if (ps.tos >= STACKSIZE - 1)
+	if (psyms->top >= STACKSIZE - 1)
 		errx(1, "Parser stack overflow");
 
 	debug_parse_stack("before reduction");
-	reduce();		/* see if any reduction can be done */
+	psyms_reduce(&ps.psyms);
 	debug_parse_stack("after reduction");
 }

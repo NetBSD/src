@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.337 2023/06/06 04:37:26 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.338 2023/06/07 15:46:11 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.337 2023/06/06 04:37:26 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.338 2023/06/07 15:46:11 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -176,7 +176,7 @@ ind_add(int ind, const char *s, size_t len)
 static void
 init_globals(void)
 {
-	ps.s_sym[0] = psym_stmt_list;
+	ps.psyms.sym[0] = psym_stmt_list;
 	ps.prev_lsym = lsym_semicolon;
 	ps.next_col_1 = true;
 	ps.lbrace_kind = psym_lbrace_block;
@@ -374,7 +374,7 @@ process_eof(void)
 		output_line();
 	}
 
-	if (ps.tos > 1)		/* check for balanced braces */
+	if (ps.psyms.top > 1)	/* check for balanced braces */
 		diag(1, "Stuff missing from end of file");
 
 	fflush(output);
@@ -415,7 +415,8 @@ process_newline(void)
 	    && lab.len == 0	/* for preprocessing lines */
 	    && com.len == 0)
 		goto stay_in_line;
-	if (ps.s_sym[ps.tos] == psym_switch_expr && opt.brace_same_line) {
+	if (ps.psyms.sym[ps.psyms.top] == psym_switch_expr
+	    && opt.brace_same_line) {
 		ps.force_nl = true;
 		goto stay_in_line;
 	}
@@ -476,7 +477,7 @@ process_lparen(void)
 	    && opt.continuation_indent == opt.indent_size)
 		ps.extra_expr_indent = eei_yes;
 
-	if (ps.init_or_struct && ps.tos <= 2) {
+	if (ps.init_or_struct && ps.psyms.top <= 2) {
 		/* A kludge to correctly align function definitions. */
 		parse(psym_stmt);
 		ps.init_or_struct = false;
@@ -734,9 +735,9 @@ process_semicolon(void)
 static void
 process_lbrace(void)
 {
-	parser_symbol psym = ps.s_sym[ps.tos];
+	parser_symbol psym = ps.psyms.sym[ps.psyms.top];
 	if (ps.prev_lsym == lsym_rparen
-	    && ps.tos >= 2
+	    && ps.psyms.top >= 2
 	    && !(psym == psym_for_exprs || psym == psym_if_expr
 		    || psym == psym_switch_expr || psym == psym_while_expr)) {
 		ps.block_init = true;
@@ -835,14 +836,14 @@ process_rbrace(void)
 		ps.in_decl = true;
 	}
 
-	if (ps.tos == 2)
+	if (ps.psyms.top == 2)
 		out.line_kind = lk_func_end;
 
 	parse(psym_rbrace);
 
 	if (!ps.init_or_struct
-	    && ps.s_sym[ps.tos] != psym_do_stmt
-	    && ps.s_sym[ps.tos] != psym_if_expr_stmt)
+	    && ps.psyms.sym[ps.psyms.top] != psym_do_stmt
+	    && ps.psyms.sym[ps.psyms.top] != psym_if_expr_stmt)
 		ps.force_nl = true;
 }
 
@@ -877,7 +878,7 @@ process_type(void)
 {
 	parse(psym_decl);	/* let the parser worry about indentation */
 
-	if (ps.prev_lsym == lsym_rparen && ps.tos <= 1) {
+	if (ps.prev_lsym == lsym_rparen && ps.psyms.top <= 1) {
 		if (code.len > 0)
 			output_line();
 	}

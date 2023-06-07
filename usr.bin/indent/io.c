@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.201 2023/06/06 05:27:56 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.202 2023/06/07 15:46:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.201 2023/06/06 05:27:56 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.202 2023/06/07 15:46:12 rillig Exp $");
 
 #include <stdio.h>
 
@@ -179,7 +179,7 @@ is_blank_line_optional(void)
 {
 	if (out.prev_line_kind == lk_stmt_head)
 		return wrote_newlines >= 1;
-	if (ps.tos >= 2)
+	if (ps.psyms.top >= 2)
 		return wrote_newlines >= 2;
 	return wrote_newlines >= 3;
 }
@@ -187,10 +187,10 @@ is_blank_line_optional(void)
 static int
 compute_case_label_indent(void)
 {
-	int i = ps.tos;
-	while (i > 0 && ps.s_sym[i] != psym_switch_expr)
+	int i = ps.psyms.top;
+	while (i > 0 && ps.psyms.sym[i] != psym_switch_expr)
 		i--;
-	float case_ind = (float)ps.s_ind_level[i] + opt.case_indent;
+	float case_ind = (float)ps.psyms.ind_level[i] + opt.case_indent;
 	return (int)(case_ind * (float)opt.indent_size);
 }
 
@@ -235,7 +235,8 @@ compute_code_indent(void)
 	int base_ind = ps.ind_level * opt.indent_size;
 
 	if (ps.line_start_nparen == 0) {
-		if (ps.tos >= 1 && ps.s_sym[ps.tos - 1] == psym_lbrace_enum)
+		if (ps.psyms.top >= 1
+		    && ps.psyms.sym[ps.psyms.top - 1] == psym_lbrace_enum)
 			return base_ind;
 		if (ps.in_stmt_cont)
 			return base_ind + opt.continuation_indent;
@@ -338,7 +339,7 @@ output_line(void)
 			ps.in_stmt_cont = false;
 
 		if (opt.blank_line_after_decl && ps.declaration == decl_end
-		    && ps.tos > 1) {
+		    && ps.psyms.top > 1) {
 			ps.declaration = decl_no;
 			ps.blank_line_after_decl = true;
 		}
