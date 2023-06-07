@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.176 2023/06/06 04:37:26 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.177 2023/06/07 15:46:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -269,6 +269,12 @@ typedef struct paren_level_props {
 	} cast;			/* whether the parentheses form a type cast */
 } paren_level_props;
 
+struct psym_stack {
+	int top;		/* pointer to top of stack */
+	parser_symbol sym[STACKSIZE];
+	int ind_level[STACKSIZE];
+};
+
 /*
  * The parser state determines the layout of the formatted text.
  *
@@ -350,9 +356,7 @@ extern struct parser_state {
 		eei_last
 	} extra_expr_indent;
 
-	int tos;		/* pointer to top of stack */
-	parser_symbol s_sym[STACKSIZE];
-	int s_ind_level[STACKSIZE];
+	struct psym_stack psyms;
 
 	/* Spacing inside a statement or declaration */
 
