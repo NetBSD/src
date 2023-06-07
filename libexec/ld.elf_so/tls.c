@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.18 2023/06/04 01:24:56 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.19 2023/06/07 13:50:04 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.18 2023/06/04 01:24:56 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.19 2023/06/07 13:50:04 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
@@ -212,7 +212,7 @@ _rtld_tls_module_allocate(struct tls_tcb *tcb, size_t idx)
 	}
 	if (obj->tls_static) {
 #ifdef __HAVE_TLS_VARIANT_I
-		p = (uint8_t *)tcb + obj->tlsoffset;
+		p = (uint8_t *)tcb + obj->tlsoffset + sizeof(struct tls_tcb);
 #else
 		p = (uint8_t *)tcb - obj->tlsoffset;
 #endif
