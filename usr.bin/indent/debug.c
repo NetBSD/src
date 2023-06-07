@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.37 2023/06/06 05:11:11 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.38 2023/06/07 15:25:08 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.37 2023/06/06 05:11:11 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.38 2023/06/07 15:25:08 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -358,9 +358,9 @@ debug_parser_state(void)
 void
 debug_parse_stack(const char *situation)
 {
-	printf("parse stack %s:", situation);
+	debug_printf("parse stack %s:", situation);
 	for (int i = 0; i <= ps.tos; ++i)
-		printf(" %d %s", ps.s_ind_level[i], psym_name[ps.s_sym[i]]);
-	printf("\n");
+		debug_printf(" %d %s", ps.s_ind_level[i], psym_name[ps.s_sym[i]]);
+	debug_println("");
 }
 #endif
