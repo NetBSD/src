@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.338 2023/06/07 15:46:11 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.339 2023/06/08 06:47:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.338 2023/06/07 15:46:11 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.339 2023/06/08 06:47:13 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -312,7 +312,7 @@ set_initial_indentation(void)
 }
 
 static void
-code_add_decl_indent(int decl_ind, bool tabs_to_var)
+indent_declarator(int decl_ind, bool tabs_to_var)
 {
 	int base = ps.ind_level * opt.indent_size;
 	int ind = base + (int)code.len;
@@ -330,6 +330,7 @@ code_add_decl_indent(int decl_ind, bool tabs_to_var)
 		buf_add_char(&code, ' ');
 		ps.want_blank = false;
 	}
+	ps.decl_indent_done = true;
 }
 
 static void
@@ -352,7 +353,7 @@ update_ps_decl_ptr(lexer_symbol lsym)
 }
 
 static void
-update_ps_prev_tag(lexer_symbol lsym)
+update_ps_lbrace_kind(lexer_symbol lsym)
 {
 	if (lsym == lsym_tag) {
 		ps.lbrace_kind = token.s[0] == 's' ? psym_lbrace_struct :
@@ -464,10 +465,9 @@ process_lparen(void)
 		ps.nparen--;
 	}
 
-	if (is_function_pointer_declaration()) {
-		code_add_decl_indent(ps.decl_ind, ps.tabs_to_var);
-		ps.decl_indent_done = true;
-	} else if (want_blank_before_lparen())
+	if (is_function_pointer_declaration())
+		indent_declarator(ps.decl_ind, ps.tabs_to_var);
+	else if (want_blank_before_lparen())
 		buf_add_char(&code, ' ');
 	ps.want_blank = false;
 	buf_add_char(&code, token.s[0]);
@@ -504,18 +504,6 @@ process_lparen(void)
 	    ps.nparen - 1, paren_level_cast_name[cast], indent);
 }
 
-static bool
-want_blank_before_lbracket(void)
-{
-	if (code.len == 0)
-		return false;
-	if (ps.prev_lsym == lsym_comma)
-		return true;
-	if (ps.prev_lsym == lsym_binary_op)
-		return true;
-	return false;
-}
-
 static void
 process_lbracket(void)
 {
@@ -525,7 +513,7 @@ process_lbracket(void)
 		ps.nparen--;
 	}
 
-	if (want_blank_before_lbracket())
+	if (ps.prev_lsym == lsym_comma || ps.prev_lsym == lsym_binary_op)
 		buf_add_char(&code, ' ');
 	ps.want_blank = false;
 	buf_add_char(&code, token.s[0]);
@@ -591,39 +579,21 @@ unbalanced:
 	buf_add_char(&code, token.s[0]);
 }
 
-static bool
-want_blank_before_unary_op(void)
-{
-	if (ps.want_blank)
-		return true;
-	if (token.s[0] == '+' || token.s[0] == '-')
-		return code.len > 0 && code.s[code.len - 1] == token.s[0];
-	return false;
-}
-
 static void
 process_unary_op(void)
 {
-	if (!ps.decl_indent_done && ps.in_decl && !ps.block_init &&
-	    !ps.is_function_definition && ps.line_start_nparen == 0) {
-		/* pointer declarations */
-		code_add_decl_indent(ps.decl_ind - (int)token.len,
-		    ps.tabs_to_var);
-		ps.decl_indent_done = true;
-	} else if (want_blank_before_unary_op())
-		buf_add_char(&code, ' ');
+	if (is_function_pointer_declaration()) {
+		int ind = ps.decl_ind - (int)token.len;
+		indent_declarator(ind, ps.tabs_to_var);
+		ps.want_blank = false;
+	} else if ((token.s[0] == '+' || token.s[0] == '-')
+	   && code.len > 0 && code.s[code.len - 1] == token.s[0])
+		ps.want_blank = true;
 
+	if (ps.want_blank)
+		buf_add_char(&code, ' ');
 	buf_add_buf(&code, &token);
 	ps.want_blank = false;
-}
-
-static void
-process_binary_op(void)
-{
-	if (code.len > 0 && ps.want_blank)
-		buf_add_char(&code, ' ');
-	buf_add_buf(&code, &token);
-	ps.want_blank = true;
 }
 
 static void
@@ -642,10 +612,6 @@ process_question(void)
 		ps.in_stmt_or_decl = true;
 		ps.in_decl = false;
 	}
-	if (ps.want_blank)
-		buf_add_char(&code, ' ');
-	buf_add_char(&code, '?');
-	ps.want_blank = true;
 }
 
 static void
@@ -656,10 +622,6 @@ process_colon_question(void)
 		ps.in_stmt_or_decl = true;
 		ps.in_decl = false;
 	}
-	if (ps.want_blank)
-		buf_add_char(&code, ' ');
-	buf_add_char(&code, ':');
-	ps.want_blank = true;
 }
 
 static void
@@ -702,8 +664,7 @@ process_semicolon(void)
 	if (ps.in_decl && code.len == 0 && !ps.block_init &&
 	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
 		/* indent stray semicolons in declarations */
-		code_add_decl_indent(ps.decl_ind - 1, ps.tabs_to_var);
-		ps.decl_indent_done = true;
+		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
 	}
 
 	ps.in_decl = ps.decl_level > 0;	/* if we were in a first level
@@ -823,7 +784,7 @@ process_rbrace(void)
 
 	buf_add_char(&code, '}');
 	ps.want_blank = true;
-	ps.in_stmt_or_decl = false;
+	ps.in_stmt_or_decl = false;	// XXX: Initializers don't end a stmt
 	ps.in_stmt_cont = false;
 
 	if (ps.decl_level > 0) {	/* multi-level structure declaration */
@@ -878,10 +839,8 @@ process_type(void)
 {
 	parse(psym_decl);	/* let the parser worry about indentation */
 
-	if (ps.prev_lsym == lsym_rparen && ps.psyms.top <= 1) {
-		if (code.len > 0)
-			output_line();
-	}
+	if (ps.prev_lsym == lsym_rparen && ps.psyms.top <= 1 && code.len > 0)
+		output_line();
 
 	if (ps.in_func_def_params && opt.indent_parameters &&
 	    ps.decl_level == 0) {
@@ -918,10 +877,8 @@ process_ident(lexer_symbol lsym)
 		    ps.line_start_nparen == 0) {
 			if (opt.decl_indent == 0
 			    && code.len > 0 && code.s[code.len - 1] == '}')
-				ps.decl_ind =
-				    ind_add(0, code.s, code.len) + 1;
-			code_add_decl_indent(ps.decl_ind, ps.tabs_to_var);
-			ps.decl_indent_done = true;
+				ps.decl_ind = ind_add(0, code.s, code.len) + 1;
+			indent_declarator(ps.decl_ind, ps.tabs_to_var);
 			ps.want_blank = false;
 		}
 
@@ -952,8 +909,7 @@ process_comma(void)
 	if (ps.in_decl && !ps.is_function_definition && !ps.block_init &&
 	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
 		/* indent leading commas and not the actual identifiers */
-		code_add_decl_indent(ps.decl_ind - 1, ps.tabs_to_var);
-		ps.decl_indent_done = true;
+		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
 	}
 
 	buf_add_char(&code, ',');
@@ -1025,12 +981,11 @@ process_preprocessing(void)
 
 	read_preprocessing_line();
 
-	const char *end = lab.s + lab.len;
-	const char *dir = lab.s + 1;
-	while (dir < end && ch_isblank(*dir))
+	const char *dir = lab.s + 1, *line_end = lab.s + lab.len;
+	while (dir < line_end && ch_isblank(*dir))
 		dir++;
 	size_t dir_len = 0;
-	while (dir + dir_len < end && ch_isalpha(dir[dir_len]))
+	while (dir + dir_len < line_end && ch_isalpha(dir[dir_len]))
 		dir_len++;
 
 	if (dir_len >= 2 && memcmp(dir, "if", 2) == 0) {
@@ -1054,108 +1009,43 @@ process_preprocessing(void)
 			ifdef_level--;
 		out.line_kind = lk_endif;
 	}
-
-	/* subsequent processing of the newline character will cause the line
-	 * to be printed */
 }
 
 static void
 process_lsym(lexer_symbol lsym)
 {
 	switch (lsym) {
-
-	case lsym_newline:
-		process_newline();
-		break;
-
-	case lsym_lparen:
-		process_lparen();
-		break;
-
-	case lsym_lbracket:
-		process_lbracket();
-		break;
-
-	case lsym_rparen:
-		process_rparen();
-		break;
-
-	case lsym_rbracket:
-		process_rbracket();
-		break;
-
-	case lsym_unary_op:
-		process_unary_op();
-		break;
-
-	case lsym_binary_op:
-		process_binary_op();
-		break;
-
-	case lsym_postfix_op:
-		process_postfix_op();
-		break;
-
-	case lsym_question:
-		process_question();
-		break;
-
-	case lsym_case:
-	case lsym_default:
-		ps.seen_case = true;
-		goto copy_token;
-
-	case lsym_colon_question:
-		process_colon_question();
-		break;
-
-	case lsym_colon_label:
-		process_colon_label();
-		break;
-
-	case lsym_colon_other:
-		process_colon_other();
-		break;
-
-	case lsym_semicolon:
-		process_semicolon();
-		break;
-
-	case lsym_lbrace:
-		process_lbrace();
-		break;
-
-	case lsym_rbrace:
-		process_rbrace();
-		break;
-
-	case lsym_switch:
-		ps.spaced_expr_psym = psym_switch_expr;
-		goto copy_token;
-
-	case lsym_for:
-		ps.spaced_expr_psym = psym_for_exprs;
-		goto copy_token;
-
-	case lsym_if:
-		ps.spaced_expr_psym = psym_if_expr;
-		goto copy_token;
-
-	case lsym_while:
-		ps.spaced_expr_psym = psym_while_expr;
-		goto copy_token;
-
-	case lsym_do:
-		process_do();
-		goto copy_token;
-
-	case lsym_else:
-		process_else();
-		goto copy_token;
-
-	case lsym_typedef:
-	case lsym_modifier:
-		goto copy_token;
+	/* INDENT OFF */
+	case lsym_preprocessing: process_preprocessing(); break;
+	case lsym_newline:	process_newline();	break;
+	case lsym_comment:	process_comment();	break;
+	case lsym_lparen:	process_lparen();	break;
+	case lsym_lbracket:	process_lbracket();	break;
+	case lsym_rparen:	process_rparen();	break;
+	case lsym_rbracket:	process_rbracket();	break;
+	case lsym_lbrace:	process_lbrace();	break;
+	case lsym_rbrace:	process_rbrace();	break;
+	case lsym_period:	process_period();	break;
+	case lsym_unary_op:	process_unary_op();	break;
+	case lsym_postfix_op:	process_postfix_op();	break;
+	case lsym_binary_op:				goto copy_token;
+	case lsym_question:	process_question();	goto copy_token;
+	case lsym_colon_question: process_colon_question(); goto copy_token;
+	case lsym_colon_label:	process_colon_label();	break;
+	case lsym_colon_other:	process_colon_other();	break;
+	case lsym_comma:	process_comma();	break;
+	case lsym_semicolon:	process_semicolon();	break;
+	case lsym_typedef:				goto copy_token;
+	case lsym_modifier:				goto copy_token;
+	case lsym_case:		ps.seen_case = true;	goto copy_token;
+	case lsym_default:	ps.seen_case = true;	goto copy_token;
+	case lsym_do:		process_do();		goto copy_token;
+	case lsym_else:		process_else();		goto copy_token;
+	case lsym_for:		ps.spaced_expr_psym = psym_for_exprs; goto copy_token;
+	case lsym_if:		ps.spaced_expr_psym = psym_if_expr; goto copy_token;
+	case lsym_switch:	ps.spaced_expr_psym = psym_switch_expr; goto copy_token;
+	case lsym_while:	ps.spaced_expr_psym = psym_while_expr; goto copy_token;
+	/* INDENT ON */
 
 	case lsym_tag:
 		if (ps.nparen > 0)
@@ -1166,8 +1056,8 @@ process_lsym(lexer_symbol lsym)
 		goto copy_token;
 
 	case lsym_type_in_parentheses:
-	case lsym_offsetof:
 	case lsym_sizeof:
+	case lsym_offsetof:
 	case lsym_word:
 	case lsym_funcname:
 	case lsym_return:
@@ -1178,22 +1068,6 @@ copy_token:
 		buf_add_buf(&code, &token);
 		if (lsym != lsym_funcname)
 			ps.want_blank = true;
-		break;
-
-	case lsym_period:
-		process_period();
-		break;
-
-	case lsym_comma:
-		process_comma();
-		break;
-
-	case lsym_preprocessing:
-		process_preprocessing();
-		break;
-
-	case lsym_comment:
-		process_comment();
 		break;
 
 	default:
@@ -1228,15 +1102,11 @@ indent(void)
 			/* no special processing */
 		} else {
 			maybe_break_line(lsym);
-			/*
-			 * Add an extra level of indentation; turned off again
-			 * by a ';' or '}'.
-			 */
 			ps.in_stmt_or_decl = true;
 			if (com.len > 0)
 				move_com_to_code(lsym);
 			update_ps_decl_ptr(lsym);
-			update_ps_prev_tag(lsym);
+			update_ps_lbrace_kind(lsym);
 		}
 
 		process_lsym(lsym);

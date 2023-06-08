@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.177 2023/06/07 15:46:12 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.178 2023/06/08 06:47:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -81,8 +81,8 @@ typedef enum lexer_symbol {
 	lsym_rbrace,
 	lsym_period,
 	lsym_unary_op,		/* e.g. '*', '&', '-' or leading '++' */
-	lsym_binary_op,		/* e.g. '*', '&', '<<', '&&' or '/=' */
 	lsym_postfix_op,	/* trailing '++' or '--' */
+	lsym_binary_op,		/* e.g. '*', '&', '<<', '&&' or '/=' */
 	lsym_question,		/* the '?' from a '?:' expression */
 	lsym_colon_question,	/* the ':' from a '?:' expression */
 	lsym_colon_label,	/* the ':' after a label */
@@ -317,12 +317,11 @@ extern struct parser_state {
 				 * When true, a '{' starts a structure
 				 * definition or an initialization list */
 	bool decl_on_line;	/* whether this line of code has part of a
-				 * declaration on it */
+				 * declaration on it; used for indenting
+				 * comments */
 	bool in_stmt_or_decl;	/* whether in a statement or a struct
 				 * declaration or a plain declaration */
-	bool in_decl;		/* whether we are in a declaration. The
-				 * processing of braces is then slightly
-				 * different */
+	bool in_decl;		/* XXX: double-check the exact meaning */
 	bool in_func_def_params;
 	bool seen_case;		/* whether there was a 'case' or 'default', to
 				 * properly space the following ':' */

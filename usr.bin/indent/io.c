@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.202 2023/06/07 15:46:12 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.203 2023/06/08 06:47:13 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.202 2023/06/07 15:46:12 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.203 2023/06/08 06:47:13 rillig Exp $");
 
 #include <stdio.h>
 
@@ -347,7 +347,7 @@ output_line(void)
 		if (opt.swallow_optional_blanklines
 		    && out.line_kind == lk_blank
 		    && is_blank_line_optional())
-			goto dont_write_line;
+			goto prepare_next_line;
 
 		if (lab.len > 0)
 			output_line_label();
@@ -366,20 +366,21 @@ output_line(void)
 		out.indent_off_text.len = 0;
 	}
 
-dont_write_line:
-	ps.decl_on_line = ps.in_decl;	/* for proper comment indentation */
+prepare_next_line:
+	lab.len = 0;
+	code.len = 0;
+	com.len = 0;
+
+	ps.decl_on_line = ps.in_decl;
+	// XXX: don't reset in_stmt_cont here; see process_colon_question.
 	ps.in_stmt_cont = ps.in_stmt_or_decl
 	    && !ps.in_decl && ps.block_init_level == 0;
 	ps.decl_indent_done = false;
 	if (ps.extra_expr_indent == eei_last)
 		ps.extra_expr_indent = eei_no;
-
-	lab.len = 0;
-	code.len = 0;
-	com.len = 0;
-
 	ps.ind_level = ps.ind_level_follow;
 	ps.line_start_nparen = ps.nparen;
+	ps.want_blank = false;
 
 	if (ps.nparen > 0) {
 		/* TODO: explain what negative indentation means */
@@ -387,6 +388,5 @@ dont_write_line:
 		debug_println("paren_indent is now %d", paren_indent);
 	}
 
-	ps.want_blank = false;
 	out.line_kind = lk_other;
 }
