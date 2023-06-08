@@ -1,4 +1,4 @@
-/* $NetBSD: opt_lp.c,v 1.8 2023/06/08 20:28:50 rillig Exp $ */
+/* $NetBSD: opt_lp.c,v 1.9 2023/06/08 20:36:35 rillig Exp $ */
 
 /*
  * Tests for the options '-lp' and '-nlp'.
@@ -89,6 +89,11 @@ example(void)
 //indent end
 
 
+/*
+ * Ensure that in multi-line else-if conditions, all lines are indented by the
+ * correct amount.  The 'else if' condition is tricky because it has the same
+ * indentation as the preceding 'if' condition.
+ */
 //indent input
 {
 if (cond11a
@@ -121,8 +126,7 @@ stmt22;
 	    && cond11c) {
 		stmt11;
 	} else if (cond12a
-// $ FIXME: Wrong indentation, should be 4 spaces only.
-		    && cond12b
+	    && cond12b
 	    && cond12c) {
 		stmt12;
 	}
@@ -134,8 +138,7 @@ stmt22;
 	    && cond21c)
 		stmt21;
 	else if (cond22a
-// $ FIXME: Wrong indentation, should be 4 spaces only.
-		    && cond22b
+	    && cond22b
 	    && cond22c)
 		stmt22;
 }
