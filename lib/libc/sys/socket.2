@@ -1,4 +1,4 @@
-.\"	$NetBSD: socket.2,v 1.48 2023/06/06 23:31:01 uwe Exp $
+.\"	$NetBSD: socket.2,v 1.49 2023/06/08 00:27:34 uwe Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -93,14 +93,16 @@ The following flags can be or'ed to the type to condition the returned
 file descriptor:
 The following flags are valid:
 .Pp
-.Bl -column -offset indent ".Dv SOCK_NOSIGPIPE"
-.It Dv SOCK_CLOEXEC Ta Set the close on exec property.
-.It Dv SOCK_NONBLOCK Ta Set non-blocking I/O.
-.It Dv SOCK_NOSIGPIPE Ta Return Xo
+.Bl -tag -offset indent -width Dv
+.It Dv SOCK_CLOEXEC
+Set the close on exec property.
+.It Dv SOCK_NONBLOCK
+Set non-blocking I/O.
+.It Dv SOCK_NOSIGPIPE
+Return
 .Er EPIPE
 instead of raising
 .Dv SIGPIPE .
-.Xc
 .El
 .Pp
 The
