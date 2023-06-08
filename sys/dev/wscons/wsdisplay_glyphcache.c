@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.11 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.12 2023/06/08 05:48:41 macallan Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -53,16 +53,23 @@
 static inline int
 attr2idx(long attr)
 {
-	if ((attr & 0xf0f0fff8) != 0)
+	if ((attr & 0xf0f00ff8) != 0)
 		return -1;
 	
 	return (((attr >> 16) & 0x0f) | ((attr >> 20) & 0xf0));
 }
 
-/* first line, lines, width, attr */
 int
 glyphcache_init(glyphcache *gc, int first, int lines, int width,
     int cellwidth, int cellheight, long attr)
+{
+	return glyphcache_init_align(gc, first, lines, width, cellwidth, cellheight,
+	    attr, 0);
+}
+
+int
+glyphcache_init_align(glyphcache *gc, int first, int lines, int width,
+    int cellwidth, int cellheight, long attr, int alignment)
 {
 
 	/* first the geometry stuff */
@@ -72,6 +79,7 @@ glyphcache_init(glyphcache *gc, int first, int lines, int width,
 	gc->gc_cellheight = -1;
 	gc->gc_firstline = first;
 	gc->gc_lines = lines;
+	gc->gc_cellalign = alignment;
 	gc->gc_buckets = NULL;
 	gc->gc_numbuckets = 0;
 	// XXX: Never free?
@@ -97,9 +105,16 @@ glyphcache_reconfig(glyphcache *gc, int cellwidth, int cellheight, long attr)
 	}
 
 	gc->gc_cellwidth = cellwidth;
+	if (gc->gc_cellalign != 0) {
+		/* alignment in bytes */
+		gc->gc_cellstride = 
+		    (gc->gc_cellwidth + gc->gc_cellalign - 1) &
+		    ~(gc->gc_cellalign - 1);
+	} else
+		gc->gc_cellstride = cellwidth;
 	gc->gc_cellheight = cellheight;
 
-	gc->gc_cellsperline = gc->gc_width / cellwidth;
+	gc->gc_cellsperline = gc->gc_width / gc->gc_cellstride;
 
 	cache_lines = gc->gc_lines / cellheight;
 	gc->gc_numcells = cache_lines * gc->gc_cellsperline;
@@ -144,6 +159,8 @@ glyphcache_reconfig(glyphcache *gc, int cellwidth, int cellheight, long attr)
 	glyphcache_wipe(gc);
 	DPRINTF("%s: using %d cells total, from %d width %d\n", __func__,
 	    gc->gc_numcells, gc->gc_firstline, gc->gc_cellsperline);
+	DPRINTF("%s: cell size %d x %d, stride %d\n", __func__,
+	    gc->gc_cellwidth, gc->gc_cellheight, gc->gc_cellstride);
 	return 0;
 }
 
@@ -209,7 +226,7 @@ glyphcache_add(glyphcache *gc, int c, int x, int y)
 	cell += b->gb_firstcell;
 	cy = gc->gc_firstline +
 	    (cell / gc->gc_cellsperline) * gc->gc_cellheight;
-	cx = (cell % gc->gc_cellsperline) * gc->gc_cellwidth;
+	cx = (cell % gc->gc_cellsperline) * gc->gc_cellstride;
 	b->gb_map[c - 33] = (cx << 16) | cy;
 	gc->gc_bitblt(gc->gc_blitcookie, x, y, cx, cy,
 	    gc->gc_cellwidth, gc->gc_cellheight, gc->gc_rop);
