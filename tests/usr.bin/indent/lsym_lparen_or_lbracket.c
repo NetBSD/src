@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.13 2023/06/04 18:58:30 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.14 2023/06/08 20:49:04 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -336,3 +336,19 @@ cover_want_blank_before_lparen(void)
 //indent end
 
 /* See t_errors.sh, test case 'compound_literal'. */
+
+
+//indent input
+int arr[] = {
+['0'] = 1,
+['1'] = 2,
+};
+//indent end
+
+//indent run -di0
+int arr[] = {
+	['0'] = 1,
+// $ FIXME: 1 space extra indentation.
+	 ['1'] = 2,
+};
+//indent end
