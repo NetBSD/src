@@ -1,4 +1,4 @@
-/*	$NetBSD: lutf8lib.c,v 1.10 2023/04/17 20:27:40 nikita Exp $	*/
+/*	$NetBSD: lutf8lib.c,v 1.11 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: lutf8lib.c 
@@ -28,6 +28,7 @@
 #define MAXUNICODE	0x10FFFFu
 
 #define MAXUTF		0x7FFFFFFFu
+
 
 #define MSGInvalid	"invalid UTF-8 code"
 
@@ -233,7 +234,7 @@ static int iter_aux (lua_State *L, int strict) {
   const char *s = luaL_checklstring(L, 1, &len);
   lua_Unsigned n = (lua_Unsigned)lua_tointeger(L, 2);
   if (n < len) {
-    while (iscontp(s + n)) n++;  /* skip continuation bytes */
+    while (iscontp(s + n)) n++;  /* go to next character */
   }
   if (n >= len)  /* (also handles original 'n' being negative) */
     return 0;  /* no more codepoints */
