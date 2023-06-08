@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.h,v 1.11 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: lvm.h,v 1.12 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: lvm.h 
@@ -115,6 +115,11 @@ typedef enum {
     { setobj2t(L, cast(TValue *,slot), v); \
       luaC_barrierback(L, gcvalue(t), v); }
 
+
+/*
+** Shift right is the same as shift left with a negative 'y'
+*/
+#define luaV_shiftr(x,y)	luaV_shiftl(x,intop(-, 0, y))
 
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: loadlib.c,v 1.10 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: loadlib.c,v 1.11 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: loadlib.c 
@@ -710,8 +710,13 @@ static const luaL_Reg ll_funcs[] = {
 
 
 static void createsearcherstable (lua_State *L) {
-  static const lua_CFunction searchers[] =
-    {searcher_preload, searcher_Lua, searcher_C, searcher_Croot, NULL};
+  static const lua_CFunction searchers[] = {
+    searcher_preload,
+    searcher_Lua,
+    searcher_C,
+    searcher_Croot,
+    NULL
+  };
   int i;
   /* create 'searchers' table */
   lua_createtable(L, sizeof(searchers)/sizeof(searchers[0]) - 1, 0);

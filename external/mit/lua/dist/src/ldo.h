@@ -1,4 +1,4 @@
-/*	$NetBSD: ldo.h,v 1.11 2023/04/21 17:48:06 nikita Exp $	*/
+/*	$NetBSD: ldo.h,v 1.12 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: ldo.h 
@@ -10,6 +10,7 @@
 #define ldo_h
 
 
+#include "llimits.h"
 #include "lobject.h"
 #include "lstate.h"
 #include "lzio.h"
@@ -25,7 +26,7 @@
 ** at every check.
 */
 #define luaD_checkstackaux(L,n,pre,pos)  \
-	if (l_unlikely(L->stack_last - L->top <= (n))) \
+	if (l_unlikely(L->stack_last.p - L->top.p <= (n))) \
 	  { pre; luaD_growstack(L, n, 1); pos; } \
         else { condmovestack(L,pre,pos); }
 
@@ -34,11 +35,18 @@
 
 
 
-#define savestack(L,p)		((char *)(p) - (char *)L->stack)
-#define restorestack(L,n)	((StkId)((char *)L->stack + (n)))
+#define savestack(L,pt)		(cast_charp(pt) - cast_charp(L->stack.p))
+#define restorestack(L,n)	cast(StkId, cast_charp(L->stack.p) + (n))
 
 
 /* macro to check stack size, preserving 'p' */
+#define checkstackp(L,n,p)  \
+  luaD_checkstackaux(L, n, \
+    ptrdiff_t t__ = savestack(L, p),  /* save 'p' */ \
+    p = restorestack(L, t__))  /* 'pos' part: restore 'p' */
+
+
+/* macro to check stack size and GC, preserving 'p' */
 #define checkstackGCp(L,n,p)  \
   luaD_checkstackaux(L, n, \
     ptrdiff_t t__ = savestack(L, p);  /* save 'p' */ \

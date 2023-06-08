@@ -1,4 +1,4 @@
-/*	$NetBSD: lcorolib.c,v 1.9 2023/04/17 20:33:12 nikita Exp $	*/
+/*	$NetBSD: lcorolib.c,v 1.10 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: lcorolib.c 
@@ -80,7 +80,7 @@ static int luaB_auxwrap (lua_State *L) {
   if (l_unlikely(r < 0)) {  /* error? */
     int stat = lua_status(co);
     if (stat != LUA_OK && stat != LUA_YIELD) {  /* error in the coroutine? */
-      stat = lua_resetthread(co, L);  /* close its tbc variables */
+      stat = lua_closethread(co, L);  /* close its tbc variables */
       lua_assert(stat != LUA_OK);
       lua_xmove(co, L, 1);  /* move error message to the caller */
     }
@@ -176,7 +176,7 @@ static int luaB_close (lua_State *L) {
   int status = auxstatus(L, co);
   switch (status) {
     case COS_DEAD: case COS_YIELD: {
-      status = lua_resetthread(co, L);
+      status = lua_closethread(co, L);
       if (status == LUA_OK) {
         lua_pushboolean(L, 1);
         return 1;
