@@ -1,4 +1,4 @@
-/* $NetBSD: opt_lp.c,v 1.7 2023/05/23 06:18:00 rillig Exp $ */
+/* $NetBSD: opt_lp.c,v 1.8 2023/06/08 20:28:50 rillig Exp $ */
 
 /*
  * Tests for the options '-lp' and '-nlp'.
@@ -91,21 +91,52 @@ example(void)
 
 //indent input
 {
-if (cond) {
-} else if (cond &&
-cond &&
-cond) {
+if (cond11a
+&& cond11b
+&& cond11c) {
+stmt11;
+} else if (cond12a
+&& cond12b
+&& cond12c) {
+stmt12;
 }
+}
+
+{
+if (cond21a
+&& cond21b
+&& cond21c)
+stmt21;
+else if (cond22a
+&& cond22b
+&& cond22c)
+stmt22;
 }
 //indent end
 
 //indent run -ci4 -nlp
 {
-	if (cond) {
-	} else if (cond &&
+	if (cond11a
+	    && cond11b
+	    && cond11c) {
+		stmt11;
+	} else if (cond12a
 // $ FIXME: Wrong indentation, should be 4 spaces only.
-		    cond &&
-	    cond) {
+		    && cond12b
+	    && cond12c) {
+		stmt12;
 	}
+}
+
+{
+	if (cond21a
+	    && cond21b
+	    && cond21c)
+		stmt21;
+	else if (cond22a
+// $ FIXME: Wrong indentation, should be 4 spaces only.
+		    && cond22b
+	    && cond22c)
+		stmt22;
 }
 //indent end
