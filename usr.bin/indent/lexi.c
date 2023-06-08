@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.216 2023/06/07 15:46:12 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.217 2023/06/08 21:18:54 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.216 2023/06/07 15:46:12 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.217 2023/06/08 21:18:54 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -433,7 +433,7 @@ found_typename:
 static bool
 is_asterisk_unary(void)
 {
-	if (ps.decl_ptr == dp_word)
+	if (inp_p[strspn(inp_p, "* \t")] == ')')
 		return true;
 	if (ps.next_unary || ps.in_func_def_params)
 		return true;

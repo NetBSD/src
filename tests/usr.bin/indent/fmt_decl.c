@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.49 2023/06/05 15:02:54 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.50 2023/06/08 21:18:54 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -570,7 +570,17 @@ buffer_add(buffer *buf, char ch)
 }
 //indent end
 
-//indent run-equals-input
+//indent run
+void		buffer_add(buffer *, char);
+// $ FIXME: There should be no space after the '*'.
+void		buffer_add(buffer * buf, char ch);
+
+void
+buffer_add(buffer *buf, char ch)
+{
+	*buf->e++ = ch;
+}
+//indent end
 
 
 /*
@@ -788,8 +798,7 @@ char str[*ptr * *ptr];
 char str[sizeof(expr * expr)];
 char str[sizeof(int) * expr];
 char str[sizeof(*ptr)];
-/* $ FIXME: should be 'type **' */
-char str[sizeof(type * *)];
+char str[sizeof(type **)];
 char str[sizeof(**ptr)];
 //indent end
 
@@ -970,7 +979,8 @@ void
 //indent run -ci4 -di0 -ndj -nlp
 void
 // $ FIXME: Wrong indentation, should be 0 instead.
-     (error_at)(int msgid, const pos_t *pos, ...)
+// $ FIXME: There should be no space after the '*'.
+     (error_at)(int msgid, const pos_t * pos, ...)
 {
 }
 //indent end

@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.39 2023/06/07 15:46:11 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.40 2023/06/08 21:18:54 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.39 2023/06/07 15:46:11 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.40 2023/06/08 21:18:54 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -133,13 +133,6 @@ static const char *const extra_expr_indent_name[] = {
 	"no",
 	"yes",
 	"last",
-};
-
-static const char *const decl_ptr_name[] = {
-	"start",
-	"word",
-	"word *",
-	"other",
 };
 
 static unsigned wrote_newlines = 1;
@@ -333,7 +326,6 @@ debug_parser_state(void)
 	debug_ps_int(line_start_nparen);
 	debug_ps_int(nparen);
 	debug_ps_paren(&prev_ps);
-	debug_ps_enum(decl_ptr, decl_ptr_name);
 
 	debug_println("horizontal spacing for comments");
 	debug_ps_int(comment_delta);
