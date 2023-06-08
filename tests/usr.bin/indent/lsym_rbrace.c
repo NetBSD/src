@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_rbrace.c,v 1.6 2023/06/04 13:49:00 rillig Exp $ */
+/* $NetBSD: lsym_rbrace.c,v 1.7 2023/06/08 06:47:14 rillig Exp $ */
 
 /*
  * Tests for the token lsym_rbrace, which represents a '}' in these contexts:
@@ -66,3 +66,33 @@ origin(void)
 //indent end
 
 //indent run-equals-input
+
+
+//indent input
+{
+int numbers[][] = {
+{11},
+{21},
+{31},
+};
+int numbers[][] = {{11},
+{21},
+{31},
+};
+}
+//indent end
+
+//indent run -di0
+{
+	int numbers[][] = {
+		{11},
+		{21},
+		{31},
+	};
+	int numbers[][] = {{11},
+	// $ FIXME: Must be indented.
+	{21},
+	{31},
+	};
+}
+//indent end
