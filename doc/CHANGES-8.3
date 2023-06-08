@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.175 2023/06/03 15:10:56 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.176 2023/06/08 11:20:02 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3322,4 +3322,10 @@ sys/arch/amiga/stand/loadbsd/vmakefile		1.1
 
 	Update loadbsd source and distribution binary to version 3.3.
 	[abs, ticket #1823]
+
+sys/net/route.c					1.237
+
+	route: run workqueue kthreads with KERNEL_LOCK unless NET_MPSAFE
+	to avoid use-after-free of deleted routes.
+	[ozaki-r, ticket #1824]
 
