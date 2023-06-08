@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.948 2023/05/10 15:52:07 christos Exp $
+# $NetBSD: shl.mi,v 1.949 2023/06/08 21:14:09 nikita Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -444,7 +444,7 @@
 ./usr/lib/liblsan.so.2.0			base-sys-shlib		compatfile,cxx,gcc
 ./usr/lib/liblua.so				base-sys-shlib		compatfile
 ./usr/lib/liblua.so.6				base-sys-shlib		compatfile
-./usr/lib/liblua.so.6.0				base-sys-shlib		compatfile
+./usr/lib/liblua.so.6.1				base-sys-shlib		compatfile
 ./usr/lib/liblutok.so				base-sys-shlib		kyua,compatfile
 ./usr/lib/liblutok.so.1				base-obsolete		obsolete
 ./usr/lib/liblutok.so.1.0			base-obsolete		obsolete
