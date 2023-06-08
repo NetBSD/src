@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.14 2023/06/08 20:49:04 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.15 2023/06/08 20:55:22 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -338,6 +338,10 @@ cover_want_blank_before_lparen(void)
 /* See t_errors.sh, test case 'compound_literal'. */
 
 
+/*
+ * Ensure that a designated initializer after a comma is not indented further
+ * than necessary, as in most other contexts, there is no space before a '['.
+ */
 //indent input
 int arr[] = {
 ['0'] = 1,
@@ -348,7 +352,6 @@ int arr[] = {
 //indent run -di0
 int arr[] = {
 	['0'] = 1,
-// $ FIXME: 1 space extra indentation.
-	 ['1'] = 2,
+	['1'] = 2,
 };
 //indent end
