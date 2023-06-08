@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.68 2023/06/03 15:33:41 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.69 2023/06/08 11:16:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2045,4 +2045,15 @@ external/apache2/mDNSResponder/dist/mDNSShared/PlatformCommon.c 1.7
 
 	mdnsd(8): restore fixes for PR 46758.
 	[andvar, ticket #193]
+
+usr.sbin/wgconfig/wgconfig.c			1.6
+
+	wgconfig(8): fix PR 57392, do not accept invalid options.
+	[oster, ticket #194]
+
+sys/net/route.c					1.237
+
+	route: run workqueue kthreads with KERNEL_LOCK unless NET_MPSAFE
+	to avoid use-after-free of deleted routes.
+	[ozaki-r, ticket #195]
 
