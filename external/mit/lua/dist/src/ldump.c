@@ -1,4 +1,4 @@
-/*	$NetBSD: ldump.c,v 1.11 2023/04/17 21:17:57 nikita Exp $	*/
+/*	$NetBSD: ldump.c,v 1.12 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: ldump.c 
@@ -13,8 +13,8 @@
 
 
 #ifndef _KERNEL
-#include <stddef.h>
 #include <limits.h>
+#include <stddef.h>
 #endif /* _KERNEL */
 
 #include "lua.h"
@@ -71,6 +71,7 @@ static void dumpByte (DumpState *D, int y) {
 */
 #define DIBS    ((sizeof(size_t) * CHAR_BIT + 6) / 7)
 #endif /* _KERNEL */
+
 
 static void dumpSize (DumpState *D, size_t x) {
   lu_byte buff[DIBS];

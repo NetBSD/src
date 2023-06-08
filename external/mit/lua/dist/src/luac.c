@@ -1,4 +1,4 @@
-/*	$NetBSD: luac.c,v 1.11 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: luac.c,v 1.12 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: luac.c 
@@ -123,7 +123,7 @@ static int doargs(int argc, char* argv[])
  return i;
 }
 
-#define FUNCTION "(function()end)();"
+#define FUNCTION "(function()end)();\n"
 
 static const char* reader(lua_State* L, void* ud, size_t* size)
 {
@@ -140,7 +140,7 @@ static const char* reader(lua_State* L, void* ud, size_t* size)
  }
 }
 
-#define toproto(L,i) getproto(s2v(L->top+(i)))
+#define toproto(L,i) getproto(s2v(L->top.p+(i)))
 
 static const Proto* combine(lua_State* L, int n)
 {
@@ -157,8 +157,6 @@ static const Proto* combine(lua_State* L, int n)
    f->p[i]=toproto(L,i-n-1);
    if (f->p[i]->sizeupvalues>0) f->p[i]->upvalues[0].instack=0;
   }
-  luaM_freearray(L,f->lineinfo,f->sizelineinfo);
-  f->sizelineinfo=0;
   return f;
  }
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lobject.h,v 1.11 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: lobject.h,v 1.12 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: lobject.h 
@@ -56,6 +56,8 @@ typedef union Value {
 #ifndef _KERNEL
   lua_Number n;    /* float numbers */
 #endif /* _KERNEL */
+  /* not used, but may avoid warnings for uninitialized value */
+  lu_byte ub;
 } Value;
 
 
@@ -158,6 +160,17 @@ typedef union StackValue {
 
 /* index to stack elements */
 typedef StackValue *StkId;
+
+
+/*
+** When reallocating the stack, change all pointers to the stack into
+** proper offsets.
+*/
+typedef union {
+  StkId p;  /* actual pointer */
+  ptrdiff_t offset;  /* used while the stack is being reallocated */
+} StkIdRel;
+
 
 /* convert a 'StackValue' to a 'TValue' */
 #define s2v(o)	(&(o)->val)
@@ -627,8 +640,10 @@ typedef struct Proto {
 */
 typedef struct UpVal {
   CommonHeader;
-  lu_byte tbc;  /* true if it represents a to-be-closed variable */
-  TValue *v;  /* points to stack or to its own value */
+  union {
+    TValue *p;  /* points to stack or to its own value */
+    ptrdiff_t offset;  /* used while the stack is being reallocated */
+  } v;
   union {
     struct {  /* (when open) */
       struct UpVal *next;  /* linked list */

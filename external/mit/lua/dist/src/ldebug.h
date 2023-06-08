@@ -1,4 +1,4 @@
-/*	$NetBSD: ldebug.h,v 1.10 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: ldebug.h,v 1.11 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: ldebug.h 
@@ -17,7 +17,7 @@
 
 
 /* Active Lua function (given call info) */
-#define ci_func(ci)		(clLvalue(s2v((ci)->func)))
+#define ci_func(ci)		(clLvalue(s2v((ci)->func.p)))
 
 
 #define resethookcount(L)	(L->hookcount = L->basehookcount)

@@ -1,4 +1,4 @@
-/*	$NetBSD: lstrlib.c,v 1.20 2023/04/23 20:52:39 nikita Exp $	*/
+/*	$NetBSD: lstrlib.c,v 1.21 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: lstrlib.c 
@@ -578,7 +578,7 @@ static const char *match_capture (MatchState *ms, const char *s, int l) {
 static const char *match (MatchState *ms, const char *s, const char *p) {
   if (l_unlikely(ms->matchdepth-- == 0))
     luaL_error(ms->L, "pattern too complex");
-  init: /* using goto's to optimize tail recursion */
+  init: /* using goto to optimize tail recursion */
   if (p != ms->p_end) {  /* end of pattern? */
     switch (*p) {
       case '(': {  /* start capture */

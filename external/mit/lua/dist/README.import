@@ -17,17 +17,4 @@ How to import Lua x.y.z
 Vendor branches are usually named LUA_<<x_y_z>> but if there was a problem
 with cvs import, they can be named differently.
 
-The last imported vendor branch is called LUA_5_4_4_try2.
-
-This is Lua version 5.4.4 with these patches applied:
-https://github.com/lua/lua/commit/25b143dd34fb587d1e35290c4b25bc08954800e2
-https://github.com/lua/lua/commit/1f3c6f4534c6411313361697d98d1145a1f030fa
-https://github.com/lua/lua/commit/c764ca71a639f5585b5f466bea25dc42b855a4b0
-https://github.com/lua/lua/commit/42d40581dd919fb134c07027ca1ce0844c670daf
-https://github.com/lua/lua/commit/196bb94d66e727e0aec053a0276c3ad701500762
-https://github.com/lua/lua/commit/997f11f54322883c3181225f29d101a597f31730
-https://github.com/lua/lua/commit/a1f77a234a053da46b06d5d4be00ffb30d3eb45b
-https://github.com/lua/lua/commit/a1089b415a3f5c753aa1b40758ffdaf28d5701b0
-https://github.com/lua/lua/commit/1e64c1391f9a14115b5cc82066dbf545ae73ee27
-https://github.com/lua/lua/commit/02bab9fc258fe1cbc6088b1bd61193499d058eff
-https://github.com/lua/lua/commit/ab859fe59b464a038a45552921cb2b23892343af
+The last imported vendor branch is called LUA_5_4_6.

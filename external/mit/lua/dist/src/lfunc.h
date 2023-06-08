@@ -1,4 +1,4 @@
-/*	$NetBSD: lfunc.h,v 1.10 2023/04/17 19:54:19 nikita Exp $	*/
+/*	$NetBSD: lfunc.h,v 1.11 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: lfunc.h 
@@ -31,10 +31,10 @@
 #define MAXUPVAL	255
 
 
-#define upisopen(up)	((up)->v != &(up)->u.value)
+#define upisopen(up)	((up)->v.p != &(up)->u.value)
 
 
-#define uplevel(up)	check_exp(upisopen(up), cast(StkId, (up)->v))
+#define uplevel(up)	check_exp(upisopen(up), cast(StkId, (up)->v.p))
 
 
 /*

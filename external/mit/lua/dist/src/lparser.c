@@ -1,4 +1,4 @@
-/*	$NetBSD: lparser.c,v 1.14 2023/04/17 20:07:32 nikita Exp $	*/
+/*	$NetBSD: lparser.c,v 1.15 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: lparser.c 
@@ -525,12 +525,12 @@ static l_noret jumpscopeerror (LexState *ls, Labeldesc *gt) {
 
 /*
 ** Solves the goto at index 'g' to given 'label' and removes it
-** from the list of pending goto's.
+** from the list of pending gotos.
 ** If it jumps into the scope of some variable, raises an error.
 */
 static void solvegoto (LexState *ls, int g, Labeldesc *label) {
   int i;
-  Labellist *gl = &ls->dyd->gt;  /* list of goto's */
+  Labellist *gl = &ls->dyd->gt;  /* list of gotos */
   Labeldesc *gt = &gl->arr[g];  /* goto to be resolved */
   lua_assert(eqstr(gt->name, label->name));
   if (l_unlikely(gt->nactvar < label->nactvar))  /* enter some scope? */
@@ -584,7 +584,7 @@ static int newgotoentry (LexState *ls, TString *name, int line, int pc) {
 /*
 ** Solves forward jumps. Check whether new label 'lb' matches any
 ** pending gotos in current block and solves them. Return true
-** if any of the goto's need to close upvalues.
+** if any of the gotos need to close upvalues.
 */
 static int solvegotos (LexState *ls, Labeldesc *lb) {
   Labellist *gl = &ls->dyd->gt;
@@ -605,7 +605,7 @@ static int solvegotos (LexState *ls, Labeldesc *lb) {
 /*
 ** Create a new label with the given 'name' at the given 'line'.
 ** 'last' tells whether label is the last non-op statement in its
-** block. Solves all pending goto's to this new label and adds
+** block. Solves all pending gotos to this new label and adds
 ** a close instruction if necessary.
 ** Returns true iff it added a close instruction.
 */
@@ -1958,10 +1958,10 @@ LClosure *luaY_parser (lua_State *L, ZIO *z, Mbuffer *buff,
   LexState lexstate;
   FuncState funcstate;
   LClosure *cl = luaF_newLclosure(L, 1);  /* create main closure */
-  setclLvalue2s(L, L->top, cl);  /* anchor it (to avoid being collected) */
+  setclLvalue2s(L, L->top.p, cl);  /* anchor it (to avoid being collected) */
   luaD_inctop(L);
   lexstate.h = luaH_new(L);  /* create table for scanner */
-  sethvalue2s(L, L->top, lexstate.h);  /* anchor it */
+  sethvalue2s(L, L->top.p, lexstate.h);  /* anchor it */
   luaD_inctop(L);
   funcstate.f = cl->p = luaF_newproto(L);
   luaC_objbarrier(L, cl, cl->p);
@@ -1975,7 +1975,7 @@ LClosure *luaY_parser (lua_State *L, ZIO *z, Mbuffer *buff,
   lua_assert(!funcstate.prev && funcstate.nups == 1 && !lexstate.fs);
   /* all scopes should be correctly finished */
   lua_assert(dyd->actvar.n == 0 && dyd->gt.n == 0 && dyd->label.n == 0);
-  L->top--;  /* remove scanner's table */
+  L->top.p--;  /* remove scanner's table */
   return cl;  /* closure is on the stack, too */
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ltable.h,v 1.9 2023/04/16 20:46:17 nikita Exp $	*/
+/*	$NetBSD: ltable.h,v 1.10 2023/06/08 21:12:08 nikita Exp $	*/
 
 /*
 ** Id: ltable.h 
@@ -61,7 +61,6 @@ LUAI_FUNC unsigned int luaH_realasize (const Table *t);
 
 #if defined(LUA_DEBUG)
 LUAI_FUNC Node *luaH_mainposition (const Table *t, const TValue *key);
-LUAI_FUNC int luaH_isdummy (const Table *t);
 #endif
 
 
