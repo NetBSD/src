@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2971 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2972 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -127,3 +127,7 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	openssl(1): Imported 3.0.9. [christos 20230531]
 	mk.conf(5): Obsolete non-MK variants MANZ UNPRIVED UPDATE [lukem 20230602]
 	build.sh: Add show-params operation [lukem 20230602]
+	lua: Import version 5.4.6.
+		Bumped shlib minor because of API/ABI changes.
+		[nikita 20230608]
+
