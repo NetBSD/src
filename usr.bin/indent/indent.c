@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.342 2023/06/09 07:20:30 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.343 2023/06/09 08:10:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.342 2023/06/09 07:20:30 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.343 2023/06/09 08:10:58 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -453,10 +453,8 @@ process_lparen(void)
 	ps.want_blank = false;
 	buf_add_char(&code, token.s[0]);
 
-	if (opt.extra_expr_indent && !opt.lineup_to_parens
-	    && ps.spaced_expr_psym != psym_0 && ps.nparen == 1
-	    && opt.continuation_indent == opt.indent_size)
-		ps.extra_expr_indent = eei_yes;
+	if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0)
+		ps.extra_expr_indent = eei_maybe;
 
 	if (ps.init_or_struct && ps.psyms.top <= 2) {
 		/* A kludge to correctly align function definitions. */
@@ -465,9 +463,6 @@ process_lparen(void)
 	}
 
 	int indent = ind_add(0, code.s, code.len);
-	if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0
-	    && ps.nparen == 1 && indent < 2 * opt.indent_size)
-		indent = 2 * opt.indent_size;
 
 	enum paren_level_cast cast = cast_unknown;
 	if (ps.prev_lsym == lsym_offsetof
@@ -532,7 +527,7 @@ unbalanced:
 	buf_add_char(&code, token.s[0]);
 
 	if (ps.spaced_expr_psym != psym_0 && ps.nparen == 0) {
-		if (ps.extra_expr_indent == eei_yes)
+		if (ps.extra_expr_indent == eei_maybe)
 			ps.extra_expr_indent = eei_last;
 		ps.force_nl = true;
 		ps.next_unary = true;

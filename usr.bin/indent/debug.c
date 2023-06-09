@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.40 2023/06/08 21:18:54 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.41 2023/06/09 08:10:58 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.40 2023/06/08 21:18:54 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.41 2023/06/09 08:10:58 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -131,7 +131,7 @@ const char *const line_kind_name[] = {
 
 static const char *const extra_expr_indent_name[] = {
 	"no",
-	"yes",
+	"maybe",
 	"last",
 };
 

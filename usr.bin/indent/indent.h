@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.179 2023/06/08 21:18:54 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.180 2023/06/09 08:10:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -351,7 +351,7 @@ extern struct parser_state {
 
 	enum {
 		eei_no,
-		eei_yes,
+		eei_maybe,
 		eei_last
 	} extra_expr_indent;
 
