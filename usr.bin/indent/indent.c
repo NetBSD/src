@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.343 2023/06/09 08:10:58 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.344 2023/06/09 08:16:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.343 2023/06/09 08:10:58 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.344 2023/06/09 08:16:06 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -92,7 +92,6 @@ FILE *input;
 FILE *output;
 
 static const char *in_name = "Standard Input";
-static const char *out_name = "Standard Output";
 static const char *backup_suffix = ".BAK";
 static char bakfile[MAXPATHLEN] = "";
 
@@ -259,12 +258,11 @@ parse_command_line(int argc, char **argv)
 				err(1, "%s", in_name);
 
 		} else if (output == NULL) {
-			out_name = arg;
-			if (strcmp(in_name, out_name) == 0)
+			if (strcmp(arg, in_name) == 0)
 				errx(1, "input and output files "
 				    "must be different");
-			if ((output = fopen(out_name, "w")) == NULL)
-				err(1, "%s", out_name);
+			if ((output = fopen(arg, "w")) == NULL)
+				err(1, "%s", arg);
 
 		} else
 			errx(1, "too many arguments: %s", arg);
@@ -273,10 +271,8 @@ parse_command_line(int argc, char **argv)
 	if (input == NULL) {
 		input = stdin;
 		output = stdout;
-	} else if (output == NULL) {
-		out_name = in_name;
+	} else if (output == NULL)
 		bakcopy();
-	}
 
 	if (opt.comment_column <= 1)
 		opt.comment_column = 2;	/* don't put normal comments in column
