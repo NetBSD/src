@@ -1,4 +1,4 @@
-/* $NetBSD: opt_lp.c,v 1.9 2023/06/08 20:36:35 rillig Exp $ */
+/* $NetBSD: opt_lp.c,v 1.10 2023/06/09 06:36:58 rillig Exp $ */
 
 /*
  * Tests for the options '-lp' and '-nlp'.
@@ -66,10 +66,6 @@ example(void)
 }
 //indent end
 
-/*
- * XXX: Combining the options '-nlp' and '-ci4' is counterproductive as the
- * indentation does not make the nesting level of the function calls visible.
- */
 //indent run -nlp -ci4
 void
 example(void)
@@ -78,9 +74,9 @@ example(void)
 	    third_procedure(p4, p5));
 
 	p1 = first_procedure(second_procedure(p2,
-	    p3),
+		p3),
 	    third_procedure(p4,
-	    p5));
+		p5));
 
 	p1 = first_procedure(
 	    second_procedure(p2, p3),
