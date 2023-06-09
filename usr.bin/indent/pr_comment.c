@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.155 2023/06/06 07:51:35 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.156 2023/06/09 07:04:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.155 2023/06/06 07:51:35 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.156 2023/06/09 07:04:51 rillig Exp $");
 
 #include <string.h>
 
@@ -80,22 +80,18 @@ analyze_comment(bool *p_may_wrap, bool *p_delim,
     int *p_ind, int *p_line_length)
 {
 	bool may_wrap = true;
-	bool delim = opt.comment_delimiter_on_blankline;
+	bool delim = false;
 	int ind;
 	int line_length = opt.max_line_length;
 
 	if (ps.curr_col_1 && !opt.format_col1_comments) {
 		may_wrap = false;
-		delim = false;
 		ind = 0;
-
 	} else {
 		if (inp_p[0] == '-' || inp_p[0] == '*' ||
 		    token.s[token.len - 1] == '/' ||
-		    (inp_p[0] == '\n' && !opt.format_block_comments)) {
+		    (inp_p[0] == '\n' && !opt.format_block_comments))
 			may_wrap = false;
-			delim = false;
-		}
 		if (code.len == 0 && inp_p[strspn(inp_p, "*")] == '\n')
 			out.line_kind = lk_block_comment;
 
@@ -107,9 +103,8 @@ analyze_comment(bool *p_may_wrap, bool *p_delim,
 			if (ind <= 0)
 				ind = opt.format_col1_comments ? 0 : 1;
 			line_length = opt.block_comment_max_line_length;
+			delim = opt.comment_delimiter_on_blankline;
 		} else {
-			delim = false;
-
 			int target_ind = code.len > 0
 			    ? ind_add(compute_code_indent(), code.s, code.len)
 			    : ind_add(compute_label_indent(), lab.s, lab.len);
@@ -151,15 +146,16 @@ copy_comment_start(bool may_wrap, bool *delim, int ind, int line_length)
 	com_add_char('/');
 	com_add_char(token.s[token.len - 1]);	/* either '*' or '/' */
 
-	if (may_wrap && !ch_isblank(inp_p[0]))
-		com_add_char(' ');
+	if (may_wrap) {
+		if (!ch_isblank(inp_p[0]))
+			com_add_char(' ');
 
-	if (*delim && fits_in_one_line(ind, line_length))
-		*delim = false;
-
-	if (*delim) {
-		output_line();
-		com_add_delim();
+		if (*delim && fits_in_one_line(ind, line_length))
+			*delim = false;
+		if (*delim) {
+			output_line();
+			com_add_delim();
+		}
 	}
 }
 
