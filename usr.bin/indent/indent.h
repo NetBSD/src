@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.180 2023/06/09 08:10:58 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.181 2023/06/09 10:24:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -331,6 +331,7 @@ extern struct parser_state {
 					 * 'while'; or psym_0 */
 	parser_symbol lbrace_kind;	/* the kind of brace to be pushed to
 					 * the parser symbol stack next */
+	bool prev_paren_was_cast;
 
 	/* Indentation of statements and declarations */
 

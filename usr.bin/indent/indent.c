@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.344 2023/06/09 08:16:06 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.345 2023/06/09 10:24:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.344 2023/06/09 08:16:06 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.345 2023/06/09 10:24:55 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -507,9 +507,10 @@ process_rparen(void)
 	}
 
 	enum paren_level_cast cast = ps.paren[--ps.nparen].cast;
-	if (ps.decl_on_line && !ps.block_init)
+	if (ps.in_func_def_params || (ps.decl_on_line && !ps.block_init))
 		cast = cast_no;
 
+	ps.prev_paren_was_cast = cast == cast_maybe;
 	if (cast == cast_maybe) {
 		ps.next_unary = true;
 		ps.want_blank = opt.space_after_cast;
@@ -669,11 +670,7 @@ process_semicolon(void)
 static void
 process_lbrace(void)
 {
-	parser_symbol psym = ps.psyms.sym[ps.psyms.top];
-	if (ps.prev_lsym == lsym_rparen
-	    && ps.psyms.top >= 2
-	    && !(psym == psym_for_exprs || psym == psym_if_expr
-		|| psym == psym_switch_expr || psym == psym_while_expr)) {
+	if (ps.prev_lsym == lsym_rparen && ps.prev_paren_was_cast) {
 		ps.block_init = true;
 		ps.init_or_struct = true;
 	}
