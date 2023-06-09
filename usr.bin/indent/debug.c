@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.42 2023/06/09 10:24:55 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.43 2023/06/09 18:09:30 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.42 2023/06/09 10:24:55 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.43 2023/06/09 18:09:30 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -50,32 +50,32 @@ const char *const lsym_name[] = {
 	"newline",
 	"comment",
 	"lparen",
-	"lbracket",
 	"rparen",
+	"lbracket",
 	"rbracket",
 	"lbrace",
 	"rbrace",
 	"period",
 	"unary_op",
-	"binary_op",
-	"postfix_op",
-	"question",
-	"'?:' colon",
-	"label colon",
-	"other colon",
-	"comma",
-	"semicolon",
-	"typedef",
-	"modifier",
-	"type_outside_parentheses",
-	"type_in_parentheses",
-	"tag",
-	"case",
-	"default",
 	"sizeof",
 	"offsetof",
+	"postfix_op",
+	"binary_op",
+	"question",
+	"'?:' colon",
+	"comma",
+	"typedef",
+	"modifier",
+	"tag",
+	"type_outside_parentheses",
+	"type_in_parentheses",
 	"word",
 	"funcname",
+	"label colon",
+	"other colon",
+	"semicolon",
+	"case",
+	"default",
 	"do",
 	"else",
 	"for",
