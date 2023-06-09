@@ -1,4 +1,4 @@
-/* $NetBSD: opt_eei.c,v 1.12 2023/05/15 13:33:19 rillig Exp $ */
+/* $NetBSD: opt_eei.c,v 1.13 2023/06/09 07:54:05 rillig Exp $ */
 
 /*
  * Tests for the options '-eei' and '-neei'.
@@ -185,5 +185,64 @@ b)
 	stmt(
 	    arg
 	    );
+}
+//indent end
+
+
+/*
+ * When multi-line expressions are aligned on the parentheses, they may have an
+ * ambiguous indentation as well.
+ */
+//indent input
+{
+	if (fun(
+		1,
+		2,
+		3))
+		stmt;
+}
+//indent end
+
+//indent run-equals-input
+
+//indent run -eei
+{
+	if (fun(
+// $ TODO: Indent one level further.
+		1,
+		2,
+		3))
+		stmt;
+}
+//indent end
+
+
+/*
+ *
+ */
+//indent input
+{
+	if (((
+		3
+	)))
+		stmt;
+	if ((((
+		4
+	))))
+		stmt;
+}
+//indent end
+
+//indent run -ci2 -nlp -eei
+{
+	if (((
+	      3
+	    )))
+		stmt;
+// $ XXX: The indentation of '4' may be considered ambiguous.
+	if ((((
+		4
+	      ))))
+		stmt;
 }
 //indent end
