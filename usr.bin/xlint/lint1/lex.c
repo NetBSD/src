@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.159 2023/06/09 13:03:49 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.160 2023/06/09 15:36:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.159 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.160 2023/06/09 15:36:31 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1115,7 +1115,7 @@ lex_comment(void)
 		}
 	}
 	arg[l] = '\0';
-	a = l != 0 ? atoi(arg) : -1;
+	a = l != 0 ? (int)atoi(arg) : -1;
 
 	/* skip whitespace after the argument */
 	while (isspace(c))

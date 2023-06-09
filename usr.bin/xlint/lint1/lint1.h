@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.164 2023/04/22 17:49:15 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.165 2023/06/09 15:36:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -110,8 +110,8 @@ typedef struct {
 	 */
 	bool	v_unsigned_since_c90;
 	union {
-		int64_t	_v_quad;	/* integers */
-		ldbl_t	_v_ldbl;	/* floats */
+		int64_t		_v_quad;	/* integers */
+		long double	_v_ldbl;	/* floats */
 	} v_u;
 } val_t;
 
@@ -375,7 +375,7 @@ typedef	struct dinfo {
 	bool	d_nonempty_decl:1; /* if at least one tag is declared
 				 * ... in the current function decl. */
 	bool	d_vararg:1;
-	bool	d_proto:1;	/* current function decl. is prototype */
+	bool	d_proto:1;	/* current function decl. is a prototype */
 	bool	d_notyp:1;	/* set if no type specifier was present */
 	bool	d_asm:1;	/* set if d_ctx == AUTO and asm() present */
 	bool	d_packed:1;

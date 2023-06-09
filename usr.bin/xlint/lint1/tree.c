@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.526 2023/06/09 13:03:49 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.527 2023/06/09 15:36:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.526 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.527 2023/06/09 15:36:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -802,7 +802,7 @@ fold(tnode_t *tn)
 	if (is_binary(tn))
 		ur = sr = tn->tn_right->tn_val->v_quad;
 
-	mask = value_bits(size_in_bits(t));
+	mask = (int64_t)value_bits(size_in_bits(t));
 	ovfl = false;
 
 	switch (tn->tn_op) {
@@ -819,7 +819,7 @@ fold(tnode_t *tn)
 		break;
 	case MULT:
 		if (utyp) {
-			q = ul * ur;
+			q = (int64_t)(ul * ur);
 			if (q != (q & mask))
 				ovfl = true;
 			else if ((ul != 0) && ((q / ul) != ur))
@@ -873,7 +873,7 @@ fold(tnode_t *tn)
 		 * shifts of signed values are implementation dependent.
 		 */
 		/* TODO: warn about out-of-bounds 'sr'. */
-		q = ul >> (sr & 63);
+		q = (int64_t)(ul >> (sr & 63));
 		q = convert_integer(q, t, size_in_bits(t) - (int)sr);
 		break;
 	case LT:
@@ -1003,7 +1003,7 @@ subt_size_in_bytes(type_t *tp)
 		break;
 	case STRUCT:
 	case UNION:
-		if ((elsz_in_bits = tp->t_sou->sou_size_in_bits) == 0)
+		if ((elsz_in_bits = (int)tp->t_sou->sou_size_in_bits) == 0)
 			/* cannot do pointer arithmetic on operand of ... */
 			error(136);
 		break;
@@ -1541,8 +1541,8 @@ fold_bool(tnode_t *tn)
 	return build_constant(tn->tn_type, v);
 }
 
-static ldbl_t
-floating_error_value(tspec_t t, ldbl_t lv)
+static long double
+floating_error_value(tspec_t t, long double lv)
 {
 	if (t == FLOAT)
 		return lv < 0 ? -FLT_MAX : FLT_MAX;
@@ -1566,7 +1566,7 @@ floating_error_value(tspec_t t, ldbl_t lv)
 	 * few programs practically use 'long double'.
 	 */
 	/* LINTED 248: floating-point constant out of range */
-	ldbl_t max = LDBL_MAX;
+	long double max = LDBL_MAX;
 	return lv < 0 ? -max : max;
 }
 
@@ -1578,7 +1578,7 @@ fold_float(tnode_t *tn)
 {
 	val_t *v;
 	tspec_t t;
-	ldbl_t lv, rv = 0;
+	long double lv, rv = 0;
 
 	fpe = 0;
 	v = xcalloc(1, sizeof(*v));
@@ -1681,7 +1681,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 
 	/*
 	 * Apply class conversions to the left operand, but only if its
-	 * value is needed or it is compared with zero.
+	 * value is needed or compared with zero.
 	 */
 	if (mp->m_value_context || mp->m_compares_with_zero)
 		ln = cconv(ln);
@@ -3676,7 +3676,7 @@ static void
 convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 			  tspec_t nt, val_t *v, val_t *nv)
 {
-	ldbl_t max = 0.0, min = 0.0;
+	long double max = 0.0, min = 0.0;
 
 	switch (nt) {
 	case CHAR:
@@ -3754,7 +3754,7 @@ convert_constant_to_floating(tspec_t nt, val_t *nv,
 		    (double)(uint64_t)v->v_quad : (double)v->v_quad;
 	} else if (nt == LDOUBLE) {
 		nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
-		    (ldbl_t)(uint64_t)v->v_quad : (ldbl_t)v->v_quad;
+		    (long double)(uint64_t)v->v_quad : (long double)v->v_quad;
 	} else
 		return false;
 	return true;
@@ -3826,7 +3826,7 @@ convert_constant_check_range_signed(op_t op, int arg)
  * of the bits was set in an unsigned type or that at least one but not all
  * of the bits was set in a signed type. Loss of significant bits means that
  * it is not possible, also not with necessary casts, to convert back to the
- * original type. A example for a necessary cast is:
+ * original type. An example for a necessary cast is:
  *	char c;	int	i; c = 128;
  *	i = c;			** yields -128 **
  *	i = (unsigned char)c;	** yields 128 **
@@ -4392,7 +4392,7 @@ constant(tnode_t *tn, bool required)
 			v->v_quad = tn->tn_val->v_quad;
 			return v;
 		}
-		v->v_quad = tn->tn_val->v_ldbl;
+		v->v_quad = (int64_t)tn->tn_val->v_ldbl;
 	} else {
 		v->v_quad = 1;
 	}
@@ -4550,7 +4550,7 @@ check_expr_side_effect(const tnode_t *ln, bool szof)
 	if (ln->tn_op == NAME && (reached || !warn_about_unreachable)) {
 		scl_t sc = ln->tn_sym->s_scl;
 		/*
-		 * Look if there was a asm statement in one of the
+		 * Look if there was an asm statement in one of the
 		 * compound statements we are in. If not, we don't
 		 * print a warning.
 		 */
@@ -4774,7 +4774,7 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 			return true;
 		} else {
 			/*
-			 * If this would be the front end of a compiler we
+			 * If this were the front end of a compiler, we
 			 * would return a label instead of 0, at least if
 			 * 'tn->tn_left->tn_op == STRING'.
 			 */

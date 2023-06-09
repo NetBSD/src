@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.10 2023/01/14 09:21:58 rillig Exp $	*/
+/*	$NetBSD: param.h,v 1.11 2023/06/09 15:36:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -53,12 +53,3 @@
  * Make sure this matches wchar_t.
  */
 #define WCHAR	INT
-
-/*
- * The sparc64 long double code generation is broken in old gcc.
- */
-#if !(defined(__sparc64__) && defined(__GNUC__) && __GNUC__ <= 2)
-typedef	long double ldbl_t;
-#else
-typedef	double	ldbl_t;
-#endif

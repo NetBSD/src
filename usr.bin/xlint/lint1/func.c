@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.155 2023/06/09 13:03:49 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.156 2023/06/09 15:36:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.155 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.156 2023/06/09 15:36:31 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -287,8 +287,7 @@ begin_function(sym_t *fsym)
 
 	/*
 	 * We must also remember the position. s_def_pos is overwritten
-	 * if this is an old-style definition and we had already a
-	 * prototype.
+	 * if this is an old-style definition, and we had already a prototype.
 	 */
 	dcs->d_func_def_pos = fsym->s_def_pos;
 
@@ -380,7 +379,7 @@ end_function(void)
 
 	/*
 	 * This warning is printed only if the return value was implicitly
-	 * declared to be int. Otherwise the wrong return statement
+	 * declared to be int. Otherwise, the wrong return statement
 	 * has already printed a warning.
 	 */
 	if (cstmt->c_had_return_noval && cstmt->c_had_return_value &&
@@ -1363,7 +1362,7 @@ bitfieldtype(int n)
 /*
  * PROTOLIB in conjunction with LINTLIBRARY can be used to handle
  * prototypes like function definitions. This is done if the argument
- * to PROTOLIB is nonzero. Otherwise prototypes are handled normally.
+ * to PROTOLIB is nonzero. Otherwise, prototypes are handled normally.
  */
 void
 protolib(int n)
