@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.33 2023/06/05 08:22:00 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.34 2023/06/09 11:22:31 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -396,8 +396,8 @@ preprocessing_unrecognized_body()
 	    "$indent" code.c
 }
 
-atf_test_case 'unbalanced_parentheses_1'
-unbalanced_parentheses_1_body()
+atf_test_case 'unbalanced_parentheses'
+unbalanced_parentheses_body()
 {
 	cat <<-\EOF > code.c
 		int var =
@@ -415,30 +415,8 @@ unbalanced_parentheses_1_body()
 	    "$indent" code.c
 }
 
-atf_test_case 'unbalanced_parentheses_2'
-unbalanced_parentheses_2_body()
-{
-	# '({...})' is the GCC extension "Statement expression".
-	cat <<-\EOF > code.c
-		int var =
-		(
-		{
-		1
-		}
-		)
-		;
-	EOF
-	cat <<-\EOF > stderr.exp
-		error: code.c:3: Unbalanced parentheses
-		warning: code.c:6: Extra ')'
-	EOF
-
-	atf_check -s 'exit:1' -e 'file:stderr.exp' \
-	    "$indent" code.c
-}
-
-atf_test_case 'unbalanced_parentheses_3'
-unbalanced_parentheses_3_body()
+atf_test_case 'gcc_statement_expression'
+gcc_statement_expression_body()
 {
 	# '({...})' is the GCC extension "Statement expression".
 	cat <<-\EOF > code.c
@@ -508,48 +486,6 @@ EOF
 }
 
 
-atf_test_case 'compound_literal'
-compound_literal_body()
-{
-	# Test handling of compound literals (C99 6.5.2.5), as well as casts.
-
-	cat <<EOF > code.c
-void
-function(void)
-{
-	origin =
-	((int)
-	((-1)*
-	(struct point){0,0}
-	)
-	);
-}
-EOF
-
-	sed '/^#/d' <<EOF > expected.out
-void
-function(void)
-{
-	origin =
-		    ((int)
-		     ((-1) *
-		      (struct point){0, 0}
-# FIXME: the ')' must be aligned with the corresponding '('.
-	)
-		    );
-}
-EOF
-	sed '/^#/d' <<EOF > expected.err
-# FIXME: The parentheses _are_ balanced, the '}' does not end the block.
-error: code.c:7: Unbalanced parentheses
-warning: code.c:8: Extra ')'
-warning: code.c:9: Extra ')'
-EOF
-
-	atf_check -s 'exit:1' -o 'file:expected.out' -e 'file:expected.err' \
-	    "$indent" -nfc1 -ci12 code.c -st
-}
-
 atf_init_test_cases()
 {
 	atf_add_test_case 'option_unknown'
@@ -584,10 +520,8 @@ atf_init_test_cases()
 	atf_add_test_case 'unexpected_closing_brace_decl'
 	atf_add_test_case 'preprocessing_overflow'
 	atf_add_test_case 'preprocessing_unrecognized'
-	atf_add_test_case 'unbalanced_parentheses_1'
-	atf_add_test_case 'unbalanced_parentheses_2'
-	atf_add_test_case 'unbalanced_parentheses_3'
+	atf_add_test_case 'unbalanced_parentheses'
+	atf_add_test_case 'gcc_statement_expression'
 	atf_add_test_case 'crash_comment_after_controlling_expression'
 	atf_add_test_case 'comment_fits_in_one_line'
-	atf_add_test_case 'compound_literal'
 }
