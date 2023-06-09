@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.41 2023/06/09 08:10:58 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.42 2023/06/09 10:24:55 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.41 2023/06/09 08:10:58 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.42 2023/06/09 10:24:55 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -306,6 +306,7 @@ debug_parser_state(void)
 	debug_ps_bool(seen_case);
 	debug_ps_enum(spaced_expr_psym, psym_name);
 	debug_ps_enum(lbrace_kind, psym_name);
+	debug_ps_bool(prev_paren_was_cast);
 
 	debug_println("indentation of statements and declarations");
 	debug_ps_int(ind_level);
