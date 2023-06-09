@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.346 2023/06/09 11:22:31 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.347 2023/06/09 16:23:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.346 2023/06/09 11:22:31 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.347 2023/06/09 16:23:43 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -185,6 +185,23 @@ init_globals(void)
 		backup_suffix = suffix;
 }
 
+static void
+load_profiles(int argc, char **argv)
+{
+	const char *profile_name = NULL;
+
+	for (int i = 1; i < argc; ++i) {
+		const char *arg = argv[i];
+
+		if (strcmp(arg, "-npro") == 0)
+			return;
+		if (arg[0] == '-' && arg[1] == 'P' && arg[2] != '\0')
+			profile_name = arg + 2;
+	}
+
+	load_profile_files(profile_name);
+}
+
 /*
  * Copy the input file to the backup file, then make the backup file the input
  * and the original input file the output.
@@ -224,23 +241,6 @@ bakcopy(void)
 		unlink(bakfile);
 		err(1, "%s", in_name);
 	}
-}
-
-static void
-load_profiles(int argc, char **argv)
-{
-	const char *profile_name = NULL;
-
-	for (int i = 1; i < argc; ++i) {
-		const char *arg = argv[i];
-
-		if (strcmp(arg, "-npro") == 0)
-			return;
-		if (arg[0] == '-' && arg[1] == 'P' && arg[2] != '\0')
-			profile_name = arg + 2;
-	}
-
-	load_profile_files(profile_name);
 }
 
 static void
@@ -308,58 +308,6 @@ set_initial_indentation(void)
 }
 
 static void
-indent_declarator(int decl_ind, bool tabs_to_var)
-{
-	int base = ps.ind_level * opt.indent_size;
-	int ind = base + (int)code.len;
-	int target = base + decl_ind;
-	size_t orig_code_len = code.len;
-
-	if (tabs_to_var)
-		for (int next; (next = next_tab(ind)) <= target; ind = next)
-			buf_add_char(&code, '\t');
-
-	for (; ind < target; ind++)
-		buf_add_char(&code, ' ');
-
-	if (code.len == orig_code_len && ps.want_blank) {
-		buf_add_char(&code, ' ');
-		ps.want_blank = false;
-	}
-	ps.decl_indent_done = true;
-}
-
-static void
-update_ps_lbrace_kind(lexer_symbol lsym)
-{
-	if (lsym == lsym_tag) {
-		ps.lbrace_kind = token.s[0] == 's' ? psym_lbrace_struct :
-		    token.s[0] == 'u' ? psym_lbrace_union :
-		    psym_lbrace_enum;
-	} else if (lsym != lsym_type_outside_parentheses
-	    && lsym != lsym_word
-	    && lsym != lsym_lbrace)
-		ps.lbrace_kind = psym_lbrace_block;
-}
-
-static int
-process_eof(void)
-{
-	if (lab.len > 0 || code.len > 0 || com.len > 0)
-		output_line();
-	if (indent_enabled != indent_on) {
-		indent_enabled = indent_last_off_line;
-		output_line();
-	}
-
-	if (ps.psyms.top > 1)	/* check for balanced braces */
-		diag(1, "Stuff missing from end of file");
-
-	fflush(output);
-	return found_err ? EXIT_FAILURE : EXIT_SUCCESS;
-}
-
-static void
 maybe_break_line(lexer_symbol lsym)
 {
 	if (!ps.force_nl)
@@ -385,6 +333,154 @@ move_com_to_code(lexer_symbol lsym)
 }
 
 static void
+update_ps_lbrace_kind(lexer_symbol lsym)
+{
+	if (lsym == lsym_tag) {
+		ps.lbrace_kind = token.s[0] == 's' ? psym_lbrace_struct :
+		    token.s[0] == 'u' ? psym_lbrace_union :
+		    psym_lbrace_enum;
+	} else if (lsym != lsym_type_outside_parentheses
+	    && lsym != lsym_word
+	    && lsym != lsym_lbrace)
+		ps.lbrace_kind = psym_lbrace_block;
+}
+
+static void
+indent_declarator(int decl_ind, bool tabs_to_var)
+{
+	int base = ps.ind_level * opt.indent_size;
+	int ind = base + (int)code.len;
+	int target = base + decl_ind;
+	size_t orig_code_len = code.len;
+
+	if (tabs_to_var)
+		for (int next; (next = next_tab(ind)) <= target; ind = next)
+			buf_add_char(&code, '\t');
+
+	for (; ind < target; ind++)
+		buf_add_char(&code, ' ');
+
+	if (code.len == orig_code_len && ps.want_blank) {
+		buf_add_char(&code, ' ');
+		ps.want_blank = false;
+	}
+	ps.decl_indent_done = true;
+}
+
+static bool
+is_function_pointer_declaration(void)
+{
+	return ps.in_decl
+	    && !ps.block_init
+	    && !ps.decl_indent_done
+	    && !ps.is_function_definition
+	    && ps.line_start_nparen == 0;
+}
+
+static int
+process_eof(void)
+{
+	if (lab.len > 0 || code.len > 0 || com.len > 0)
+		output_line();
+	if (indent_enabled != indent_on) {
+		indent_enabled = indent_last_off_line;
+		output_line();
+	}
+
+	if (ps.psyms.top > 1)	/* check for balanced braces */
+		diag(1, "Stuff missing from end of file");
+
+	fflush(output);
+	return found_err ? EXIT_FAILURE : EXIT_SUCCESS;
+}
+
+/* move the whole line to the 'label' buffer */
+static void
+read_preprocessing_line(void)
+{
+	enum {
+		PLAIN, STR, CHR, COMM
+	} state = PLAIN;
+
+	buf_add_char(&lab, '#');
+
+	while (inp_p[0] != '\n' || (state == COMM && !had_eof)) {
+		buf_add_char(&lab, inp_next());
+		switch (lab.s[lab.len - 1]) {
+		case '\\':
+			if (state != COMM)
+				buf_add_char(&lab, inp_next());
+			break;
+		case '/':
+			if (inp_p[0] == '*' && state == PLAIN) {
+				state = COMM;
+				buf_add_char(&lab, *inp_p++);
+			}
+			break;
+		case '"':
+			if (state == STR)
+				state = PLAIN;
+			else if (state == PLAIN)
+				state = STR;
+			break;
+		case '\'':
+			if (state == CHR)
+				state = PLAIN;
+			else if (state == PLAIN)
+				state = CHR;
+			break;
+		case '*':
+			if (inp_p[0] == '/' && state == COMM) {
+				state = PLAIN;
+				buf_add_char(&lab, *inp_p++);
+			}
+			break;
+		}
+	}
+
+	while (lab.len > 0 && ch_isblank(lab.s[lab.len - 1]))
+		lab.len--;
+}
+
+static void
+process_preprocessing(void)
+{
+	if (lab.len > 0 || code.len > 0 || com.len > 0)
+		output_line();
+
+	read_preprocessing_line();
+
+	const char *dir = lab.s + 1, *line_end = lab.s + lab.len;
+	while (dir < line_end && ch_isblank(*dir))
+		dir++;
+	size_t dir_len = 0;
+	while (dir + dir_len < line_end && ch_isalpha(dir[dir_len]))
+		dir_len++;
+
+	if (dir_len >= 2 && memcmp(dir, "if", 2) == 0) {
+		if ((size_t)ifdef_level < array_length(state_stack))
+			state_stack[ifdef_level++] = ps;
+		else
+			diag(1, "#if stack overflow");
+		out.line_kind = lk_if;
+
+	} else if (dir_len >= 2 && memcmp(dir, "el", 2) == 0) {
+		if (ifdef_level <= 0)
+			diag(1, dir[2] == 'i'
+			    ? "Unmatched #elif" : "Unmatched #else");
+		else
+			ps = state_stack[ifdef_level - 1];
+
+	} else if (dir_len == 5 && memcmp(dir, "endif", 5) == 0) {
+		if (ifdef_level <= 0)
+			diag(1, "Unmatched #endif");
+		else
+			ifdef_level--;
+		out.line_kind = lk_endif;
+	}
+}
+
+static void
 process_newline(void)
 {
 	if (ps.prev_lsym == lsym_comma
@@ -403,16 +499,6 @@ process_newline(void)
 
 stay_in_line:
 	++line_no;
-}
-
-static bool
-is_function_pointer_declaration(void)
-{
-	return ps.in_decl
-	    && !ps.block_init
-	    && !ps.decl_indent_done
-	    && !ps.is_function_definition
-	    && ps.line_start_nparen == 0;
 }
 
 static bool
@@ -477,28 +563,6 @@ process_lparen(void)
 }
 
 static void
-process_lbracket(void)
-{
-	if (++ps.nparen == array_length(ps.paren)) {
-		diag(0, "Reached internal limit of %zu unclosed parentheses",
-		    array_length(ps.paren));
-		ps.nparen--;
-	}
-
-	if (code.len > 0
-	    && (ps.prev_lsym == lsym_comma || ps.prev_lsym == lsym_binary_op))
-		buf_add_char(&code, ' ');
-	ps.want_blank = false;
-	buf_add_char(&code, token.s[0]);
-
-	int indent = ind_add(0, code.s, code.len);
-
-	ps.paren[ps.nparen - 1].indent = indent;
-	ps.paren[ps.nparen - 1].cast = cast_no;
-	debug_println("paren_indents[%d] is now %d", ps.nparen - 1, indent);
-}
-
-static void
 process_rparen(void)
 {
 	if (ps.nparen == 0) {
@@ -537,6 +601,28 @@ unbalanced:
 }
 
 static void
+process_lbracket(void)
+{
+	if (++ps.nparen == array_length(ps.paren)) {
+		diag(0, "Reached internal limit of %zu unclosed parentheses",
+		    array_length(ps.paren));
+		ps.nparen--;
+	}
+
+	if (code.len > 0
+	    && (ps.prev_lsym == lsym_comma || ps.prev_lsym == lsym_binary_op))
+		buf_add_char(&code, ' ');
+	ps.want_blank = false;
+	buf_add_char(&code, token.s[0]);
+
+	int indent = ind_add(0, code.s, code.len);
+
+	ps.paren[ps.nparen - 1].indent = indent;
+	ps.paren[ps.nparen - 1].cast = cast_no;
+	debug_println("paren_indents[%d] is now %d", ps.nparen - 1, indent);
+}
+
+static void
 process_rbracket(void)
 {
 	if (ps.nparen == 0) {
@@ -551,120 +637,6 @@ process_rbracket(void)
 
 unbalanced:
 	buf_add_char(&code, token.s[0]);
-}
-
-static void
-process_unary_op(void)
-{
-	if (is_function_pointer_declaration()) {
-		int ind = ps.decl_ind - (int)token.len;
-		indent_declarator(ind, ps.tabs_to_var);
-		ps.want_blank = false;
-	} else if ((token.s[0] == '+' || token.s[0] == '-')
-	    && code.len > 0 && code.s[code.len - 1] == token.s[0])
-		ps.want_blank = true;
-
-	if (ps.want_blank)
-		buf_add_char(&code, ' ');
-	buf_add_buf(&code, &token);
-	ps.want_blank = false;
-}
-
-static void
-process_postfix_op(void)
-{
-	buf_add_buf(&code, &token);
-	ps.want_blank = true;
-}
-
-static void
-process_question(void)
-{
-	ps.quest_level++;
-	if (code.len == 0) {
-		ps.in_stmt_cont = true;
-		ps.in_stmt_or_decl = true;
-		ps.in_decl = false;
-	}
-}
-
-static void
-process_colon_question(void)
-{
-	if (code.len == 0) {
-		ps.in_stmt_cont = true;
-		ps.in_stmt_or_decl = true;
-		ps.in_decl = false;
-	}
-}
-
-static void
-process_colon_label(void)
-{
-	buf_add_buf(&lab, &code);
-	buf_add_char(&lab, ':');
-	code.len = 0;
-
-	if (ps.seen_case)
-		out.line_kind = lk_case_or_default;
-	ps.in_stmt_or_decl = false;
-	ps.force_nl = ps.seen_case;
-	ps.seen_case = false;
-	ps.want_blank = false;
-}
-
-static void
-process_colon_other(void)
-{
-	buf_add_char(&code, ':');
-	ps.want_blank = false;
-}
-
-static void
-process_semicolon(void)
-{
-	if (out.line_kind == lk_stmt_head)
-		out.line_kind = lk_other;
-	if (ps.decl_level == 0)
-		ps.init_or_struct = false;
-	ps.seen_case = false;	/* only needs to be reset on error */
-	ps.quest_level = 0;	/* only needs to be reset on error */
-	if (ps.prev_lsym == lsym_rparen)
-		ps.in_func_def_params = false;
-	ps.block_init = false;
-	ps.block_init_level = 0;
-	ps.declaration = ps.declaration == decl_begin ? decl_end : decl_no;
-
-	if (ps.in_decl && code.len == 0 && !ps.block_init &&
-	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
-		/* indent stray semicolons in declarations */
-		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
-	}
-
-	ps.in_decl = ps.decl_level > 0;	/* if we were in a first level
-					 * structure declaration before, we
-					 * aren't anymore */
-
-	if (ps.nparen > 0 && ps.spaced_expr_psym != psym_for_exprs) {
-		/* There were unbalanced parentheses in the statement. It is a
-		 * bit complicated, because the semicolon might be in a for
-		 * statement. */
-		diag(1, "Unbalanced parentheses");
-		ps.nparen = 0;
-		if (ps.spaced_expr_psym != psym_0) {
-			parse(ps.spaced_expr_psym);
-			ps.spaced_expr_psym = psym_0;
-		}
-	}
-	buf_add_char(&code, ';');
-	ps.want_blank = true;
-	ps.in_stmt_or_decl = ps.nparen > 0;
-	ps.decl_ind = 0;
-
-	if (ps.spaced_expr_psym == psym_0) {
-		parse(psym_stmt);
-		ps.force_nl = true;
-	}
 }
 
 static void
@@ -779,29 +751,151 @@ process_rbrace(void)
 }
 
 static void
-process_do(void)
+process_period(void)
 {
-	ps.in_stmt_or_decl = false;
-	ps.in_decl = false;
-
-	if (code.len > 0)
-		output_line();
-
-	ps.force_nl = true;
-	parse(psym_do);
+	if (code.len > 0 && code.s[code.len - 1] == ',')
+		buf_add_char(&code, ' ');
+	buf_add_char(&code, '.');
+	ps.want_blank = false;
 }
 
 static void
-process_else(void)
+process_unary_op(void)
 {
+	if (is_function_pointer_declaration()) {
+		int ind = ps.decl_ind - (int)token.len;
+		indent_declarator(ind, ps.tabs_to_var);
+		ps.want_blank = false;
+	} else if ((token.s[0] == '+' || token.s[0] == '-')
+	    && code.len > 0 && code.s[code.len - 1] == token.s[0])
+		ps.want_blank = true;
+
+	if (ps.want_blank)
+		buf_add_char(&code, ' ');
+	buf_add_buf(&code, &token);
+	ps.want_blank = false;
+}
+
+static void
+process_postfix_op(void)
+{
+	buf_add_buf(&code, &token);
+	ps.want_blank = true;
+}
+
+static void
+process_question(void)
+{
+	ps.quest_level++;
+	if (code.len == 0) {
+		ps.in_stmt_cont = true;
+		ps.in_stmt_or_decl = true;
+		ps.in_decl = false;
+	}
+}
+
+static void
+process_colon_question(void)
+{
+	if (code.len == 0) {
+		ps.in_stmt_cont = true;
+		ps.in_stmt_or_decl = true;
+		ps.in_decl = false;
+	}
+}
+
+static void
+process_comma(void)
+{
+	ps.want_blank = code.len > 0;	/* only put blank after comma if comma
+					 * does not start the line */
+
+	if (ps.in_decl && !ps.is_function_definition && !ps.block_init &&
+	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
+		/* indent leading commas and not the actual identifiers */
+		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
+	}
+
+	buf_add_char(&code, ',');
+
+	if (ps.nparen == 0) {
+		if (ps.block_init_level == 0)
+			ps.block_init = false;
+		int typical_varname_length = 8;
+		if (ps.break_after_comma && (opt.break_after_comma ||
+			ind_add(compute_code_indent(), code.s, code.len)
+			>= opt.max_line_length - typical_varname_length))
+			ps.force_nl = true;
+	}
+}
+
+static void
+process_colon_label(void)
+{
+	buf_add_buf(&lab, &code);
+	buf_add_char(&lab, ':');
+	code.len = 0;
+
+	if (ps.seen_case)
+		out.line_kind = lk_case_or_default;
 	ps.in_stmt_or_decl = false;
+	ps.force_nl = ps.seen_case;
+	ps.seen_case = false;
+	ps.want_blank = false;
+}
 
-	if (code.len > 0
-	    && !(opt.cuddle_else && code.s[code.len - 1] == '}'))
-		output_line();
+static void
+process_colon_other(void)
+{
+	buf_add_char(&code, ':');
+	ps.want_blank = false;
+}
 
-	ps.force_nl = true;
-	parse(psym_else);
+static void
+process_semicolon(void)
+{
+	if (out.line_kind == lk_stmt_head)
+		out.line_kind = lk_other;
+	if (ps.decl_level == 0)
+		ps.init_or_struct = false;
+	ps.seen_case = false;	/* only needs to be reset on error */
+	ps.quest_level = 0;	/* only needs to be reset on error */
+	if (ps.prev_lsym == lsym_rparen)
+		ps.in_func_def_params = false;
+	ps.block_init = false;
+	ps.block_init_level = 0;
+	ps.declaration = ps.declaration == decl_begin ? decl_end : decl_no;
+
+	if (ps.in_decl && code.len == 0 && !ps.block_init &&
+	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
+		/* indent stray semicolons in declarations */
+		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
+	}
+
+	ps.in_decl = ps.decl_level > 0;	/* if we were in a first level
+					 * structure declaration before, we
+					 * aren't anymore */
+
+	if (ps.nparen > 0 && ps.spaced_expr_psym != psym_for_exprs) {
+		/* There were unbalanced parentheses in the statement. It is a
+		 * bit complicated, because the semicolon might be in a for
+		 * statement. */
+		diag(1, "Unbalanced parentheses");
+		ps.nparen = 0;
+		if (ps.spaced_expr_psym != psym_0) {
+			parse(ps.spaced_expr_psym);
+			ps.spaced_expr_psym = psym_0;
+		}
+	}
+	buf_add_char(&code, ';');
+	ps.want_blank = true;
+	ps.in_stmt_or_decl = ps.nparen > 0;
+	ps.decl_ind = 0;
+
+	if (ps.spaced_expr_psym == psym_0) {
+		parse(psym_stmt);
+		ps.force_nl = true;
+	}
 }
 
 static void
@@ -862,130 +956,36 @@ process_ident(lexer_symbol lsym)
 }
 
 static void
-process_period(void)
+process_do(void)
 {
-	if (code.len > 0 && code.s[code.len - 1] == ',')
-		buf_add_char(&code, ' ');
-	buf_add_char(&code, '.');
-	ps.want_blank = false;
-}
+	ps.in_stmt_or_decl = false;
+	ps.in_decl = false;
 
-static void
-process_comma(void)
-{
-	ps.want_blank = code.len > 0;	/* only put blank after comma if comma
-					 * does not start the line */
-
-	if (ps.in_decl && !ps.is_function_definition && !ps.block_init &&
-	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
-		/* indent leading commas and not the actual identifiers */
-		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
-	}
-
-	buf_add_char(&code, ',');
-
-	if (ps.nparen == 0) {
-		if (ps.block_init_level == 0)
-			ps.block_init = false;
-		int typical_varname_length = 8;
-		if (ps.break_after_comma && (opt.break_after_comma ||
-			ind_add(compute_code_indent(), code.s, code.len)
-			>= opt.max_line_length - typical_varname_length))
-			ps.force_nl = true;
-	}
-}
-
-/* move the whole line to the 'label' buffer */
-static void
-read_preprocessing_line(void)
-{
-	enum {
-		PLAIN, STR, CHR, COMM
-	} state = PLAIN;
-
-	buf_add_char(&lab, '#');
-
-	while (inp_p[0] != '\n' || (state == COMM && !had_eof)) {
-		buf_add_char(&lab, inp_next());
-		switch (lab.s[lab.len - 1]) {
-		case '\\':
-			if (state != COMM)
-				buf_add_char(&lab, inp_next());
-			break;
-		case '/':
-			if (inp_p[0] == '*' && state == PLAIN) {
-				state = COMM;
-				buf_add_char(&lab, *inp_p++);
-			}
-			break;
-		case '"':
-			if (state == STR)
-				state = PLAIN;
-			else if (state == PLAIN)
-				state = STR;
-			break;
-		case '\'':
-			if (state == CHR)
-				state = PLAIN;
-			else if (state == PLAIN)
-				state = CHR;
-			break;
-		case '*':
-			if (inp_p[0] == '/' && state == COMM) {
-				state = PLAIN;
-				buf_add_char(&lab, *inp_p++);
-			}
-			break;
-		}
-	}
-
-	while (lab.len > 0 && ch_isblank(lab.s[lab.len - 1]))
-		lab.len--;
-}
-
-static void
-process_preprocessing(void)
-{
-	if (lab.len > 0 || code.len > 0 || com.len > 0)
+	if (code.len > 0)
 		output_line();
 
-	read_preprocessing_line();
+	ps.force_nl = true;
+	parse(psym_do);
+}
 
-	const char *dir = lab.s + 1, *line_end = lab.s + lab.len;
-	while (dir < line_end && ch_isblank(*dir))
-		dir++;
-	size_t dir_len = 0;
-	while (dir + dir_len < line_end && ch_isalpha(dir[dir_len]))
-		dir_len++;
+static void
+process_else(void)
+{
+	ps.in_stmt_or_decl = false;
 
-	if (dir_len >= 2 && memcmp(dir, "if", 2) == 0) {
-		if ((size_t)ifdef_level < array_length(state_stack))
-			state_stack[ifdef_level++] = ps;
-		else
-			diag(1, "#if stack overflow");
-		out.line_kind = lk_if;
+	if (code.len > 0
+	    && !(opt.cuddle_else && code.s[code.len - 1] == '}'))
+		output_line();
 
-	} else if (dir_len >= 2 && memcmp(dir, "el", 2) == 0) {
-		if (ifdef_level <= 0)
-			diag(1, dir[2] == 'i'
-			    ? "Unmatched #elif" : "Unmatched #else");
-		else
-			ps = state_stack[ifdef_level - 1];
-
-	} else if (dir_len == 5 && memcmp(dir, "endif", 5) == 0) {
-		if (ifdef_level <= 0)
-			diag(1, "Unmatched #endif");
-		else
-			ifdef_level--;
-		out.line_kind = lk_endif;
-	}
+	ps.force_nl = true;
+	parse(psym_else);
 }
 
 static void
 process_lsym(lexer_symbol lsym)
 {
 	switch (lsym) {
-	/* INDENT OFF */
+		/* INDENT OFF */
 	case lsym_preprocessing: process_preprocessing(); break;
 	case lsym_newline:	process_newline();	break;
 	case lsym_comment:	process_comment();	break;
@@ -1015,7 +1015,7 @@ process_lsym(lexer_symbol lsym)
 	case lsym_if:		ps.spaced_expr_psym = psym_if_expr; goto copy_token;
 	case lsym_switch:	ps.spaced_expr_psym = psym_switch_expr; goto copy_token;
 	case lsym_while:	ps.spaced_expr_psym = psym_while_expr; goto copy_token;
-	/* INDENT ON */
+		/* INDENT ON */
 
 	case lsym_tag:
 		if (ps.nparen > 0)
