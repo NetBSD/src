@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.30 2022/07/10 10:52:40 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.31 2023/06/09 18:44:16 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,6 +97,7 @@ __dead static void miscsighandler(int);
 static void ttysighandler(int);
 static void cleanup(void);
 static void process_f_flag(char *);
+static bool no_openssl_trust_anchors_available(void);
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
 FILE *logfp;			/* log file */
@@ -263,6 +264,10 @@ main(int argc, char **argv)
 
 	/* Initialize the partitioning subsystem */
 	partitions_init();
+
+	/* do we need to tell ftp(1) to avoid checking certificate chains? */
+	if (no_openssl_trust_anchors_available())
+		setenv("FTPSSLNOVERIFY", "1", 1);
 
 	/* initialize message window */
 	if (menu_init()) {
@@ -634,4 +639,47 @@ process_f_flag(char *f_name)
 	}
 
 	fclose(fp);
+}
+
+/*
+ * return true if we do not have any root certificates installed,
+ * so can not verify any trust chain.
+ * We rely on /etc/openssl being the OPENSSLDIR and test the
+ * "all in one" /etc/openssl/cert.pem first, if that is not found
+ * check if there are multiple regular files or symlinks in
+ * /etc/openssl/certs/.
+ */
+static bool
+no_openssl_trust_anchors_available(void)
+{
+	struct stat sb;
+	DIR *dir;
+	struct dirent *ent;
+	size_t cnt;
+
+	/* check the omnibus single file variant first */
+	if (stat("/etc/openssl/cert.pem", &sb) == 0 &&
+	    S_ISREG(sb.st_mode) && sb.st_size > 0)
+		return false;	/* exists and is a non-empty file */
+
+	/* look for files/symlinks in the certs subdirectory */
+	dir = opendir("/etc/openssl/certs");
+	if (dir == NULL)
+		return true;
+	for (cnt = 0; cnt < 2; ) {
+		ent = readdir(dir);
+		if (ent == NULL)
+			break;
+		switch (ent->d_type) {
+		case DT_REG:
+		case DT_LNK:
+			cnt++;
+			break;
+		default:
+			break;
+		}
+	}
+	closedir(dir);
+
+	return cnt < 2;
 }
