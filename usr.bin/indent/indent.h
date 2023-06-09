@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.181 2023/06/09 10:24:55 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.182 2023/06/09 16:23:43 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -73,36 +73,40 @@ typedef enum lexer_symbol {
 	lsym_preprocessing,	/* the initial '#' of a preprocessing line */
 	lsym_newline,
 	lsym_comment,		/* the initial '/ *' or '//' of a comment */
+
 	lsym_lparen,
-	lsym_lbracket,
 	lsym_rparen,
+	lsym_lbracket,
 	lsym_rbracket,
 	lsym_lbrace,
 	lsym_rbrace,
+
 	lsym_period,
 	lsym_unary_op,		/* e.g. '*', '&', '-' or leading '++' */
+	lsym_sizeof,
+	lsym_offsetof,
 	lsym_postfix_op,	/* trailing '++' or '--' */
 	lsym_binary_op,		/* e.g. '*', '&', '<<', '&&' or '/=' */
 	lsym_question,		/* the '?' from a '?:' expression */
 	lsym_colon_question,	/* the ':' from a '?:' expression */
+	lsym_comma,
+
+	lsym_typedef,
+	lsym_modifier,		/* modifiers for types, functions, variables */
+	lsym_tag,		/* 'struct', 'union' or 'enum' */
+	lsym_type_outside_parentheses,
+	lsym_type_in_parentheses,
+	lsym_word,		/* identifier, constant or string */
+	lsym_funcname,		/* name of a function being defined */
 	lsym_colon_label,	/* the ':' after a label */
 	lsym_colon_other,	/* bit-fields, generic-association (C11),
 				 * enum-type-specifier (C23),
 				 * attribute-prefixed-token (C23),
 				 * pp-prefixed-parameter (C23 6.10) */
-	lsym_comma,
 	lsym_semicolon,
-	lsym_typedef,
-	lsym_modifier,		/* modifiers for types, functions, variables */
-	lsym_type_outside_parentheses,
-	lsym_type_in_parentheses,
-	lsym_tag,		/* 'struct', 'union' or 'enum' */
+
 	lsym_case,
 	lsym_default,
-	lsym_sizeof,
-	lsym_offsetof,
-	lsym_word,		/* identifier, constant or string */
-	lsym_funcname,		/* name of a function being defined */
 	lsym_do,
 	lsym_else,
 	lsym_for,
