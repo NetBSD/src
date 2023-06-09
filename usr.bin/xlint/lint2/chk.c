@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.54 2023/05/22 12:55:04 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.55 2023/06/09 13:03:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.54 2023/05/22 12:55:04 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.55 2023/06/09 13:03:49 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -76,7 +76,7 @@ static	bool	matches_no_arg_function(type_t *, bool *);
 void
 mark_main_as_used(void)
 {
-	hte_t	*hte;
+	hte_t *hte;
 
 	if ((hte = hsearch("main", false)) != NULL)
 		hte->h_used = true;
@@ -88,7 +88,7 @@ mark_main_as_used(void)
 void
 check_name(const hte_t *hte)
 {
-	sym_t	*sym, *def, *pdecl, *decl;
+	sym_t *sym, *def, *pdecl, *decl;
 
 	if (uflag) {
 		check_used_not_defined(hte);
@@ -133,8 +133,8 @@ check_name(const hte_t *hte)
 static void
 check_used_not_defined(const hte_t *hte)
 {
-	fcall_t	*fcall;
-	usym_t	*usym;
+	fcall_t *fcall;
+	usym_t *usym;
 
 	if (!hte->h_used || hte->h_def)
 		return;
@@ -154,7 +154,7 @@ check_used_not_defined(const hte_t *hte)
 static void
 check_defined_not_used(const hte_t *hte)
 {
-	sym_t	*sym;
+	sym_t *sym;
 
 	if (!hte->h_def || hte->h_used)
 		return;
@@ -175,7 +175,7 @@ check_defined_not_used(const hte_t *hte)
 static void
 check_declared_not_used_or_defined(const hte_t *hte)
 {
-	sym_t	*sym;
+	sym_t *sym;
 
 	if (hte->h_syms == NULL || hte->h_used || hte->h_def)
 		return;
@@ -197,8 +197,8 @@ check_declared_not_used_or_defined(const hte_t *hte)
 static void
 check_multiple_definitions(const hte_t *hte)
 {
-	sym_t	*sym, *def1;
-	char	*pos1;
+	sym_t *sym, *def1;
+	char *pos1;
 
 	if (!hte->h_def)
 		return;
@@ -236,11 +236,11 @@ check_multiple_definitions(const hte_t *hte)
 static void
 chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 {
-	fcall_t	*call;
-	char	*pos1;
-	type_t	*tp1, *tp2;
-	bool	dowarn, eq;
-	tspec_t	t1;
+	fcall_t *call;
+	char *pos1;
+	type_t *tp1, *tp2;
+	bool dowarn, eq;
+	tspec_t t1;
 
 	if (hte->h_calls == NULL)
 		return;
@@ -298,10 +298,10 @@ chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 static void
 chkvtdi(const hte_t *hte, sym_t *def, sym_t *decl)
 {
-	sym_t	*sym;
-	type_t	*tp1, *tp2;
-	bool	eq, dowarn;
-	char	*pos1;
+	sym_t *sym;
+	type_t *tp1, *tp2;
+	bool eq, dowarn;
+	char *pos1;
 
 	if (def == NULL)
 		def = decl;
@@ -340,11 +340,11 @@ chkvtdi(const hte_t *hte, sym_t *def, sym_t *decl)
 static void
 chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 {
-	type_t	*tp1, *tp2, **ap1, **ap2;
-	pos_t	*pos1p = NULL;
-	fcall_t	*calls, *call, *call1;
-	int	n, as;
-	char	*pos1;
+	type_t *tp1, *tp2, **ap1, **ap2;
+	pos_t *pos1p = NULL;
+	fcall_t *calls, *call, *call1;
+	int n, as;
+	char *pos1;
 	arginf_t *ai;
 
 	if ((calls = hte->h_calls) == NULL)
@@ -453,10 +453,10 @@ static void
 chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	fcall_t *call1, fcall_t *call, type_t *arg1, type_t *arg2)
 {
-	bool	promote, asgn, dowarn;
-	tspec_t	t1, t2;
+	bool promote, asgn, dowarn;
+	tspec_t t1, t2;
 	arginf_t *ai, *ai1;
-	char	*pos1;
+	char *pos1;
 
 	/*
 	 * If a function definition is available (def != NULL), we compare the
@@ -607,11 +607,11 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 static void
 printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 {
-	const	char *fp;
-	char	fc;
-	bool	fwidth, prec, left, sign, space, alt, zero;
-	tspec_t	sz, t1, t2 = NO_TSPEC;
-	type_t	*tp;
+	const char *fp;
+	char fc;
+	bool fwidth, prec, left, sign, space, alt, zero;
+	tspec_t sz, t1, t2 = NO_TSPEC;
+	type_t *tp;
 
 	fp = fmt;
 	fc = *fp++;
@@ -832,11 +832,11 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 static void
 scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 {
-	const	char *fp;
-	char	fc;
-	bool	noasgn, fwidth;
-	tspec_t	sz, t1 = NO_TSPEC, t2 = NO_TSPEC;
-	type_t	*tp = NULL;
+	const char *fp;
+	char fc;
+	bool noasgn, fwidth;
+	tspec_t sz, t1 = NO_TSPEC, t2 = NO_TSPEC;
+	type_t *tp = NULL;
 
 	fp = fmt;
 	fc = *fp++;
@@ -1073,8 +1073,8 @@ static const char ignorelist[][8] = {
 static void
 check_return_values(const hte_t *hte, sym_t *def)
 {
-	fcall_t	*call;
-	bool	used, ignored;
+	fcall_t *call;
+	bool used, ignored;
 
 	if (def == NULL)
 		/* don't know whether or not the functions returns a value */
@@ -1127,12 +1127,12 @@ check_return_values(const hte_t *hte, sym_t *def)
 static void
 check_argument_declarations(const hte_t *hte, sym_t *def, sym_t *decl)
 {
-	bool	osdef, eq, dowarn;
-	int	n;
-	sym_t	*sym1, *sym;
-	type_t	**ap1, **ap2, *tp1, *tp2;
-	char	*pos1;
-	const	char *pos2;
+	bool osdef, eq, dowarn;
+	int n;
+	sym_t *sym1, *sym;
+	type_t **ap1, **ap2, *tp1, *tp2;
+	char *pos1;
+	const char *pos2;
 
 	osdef = false;
 	if (def != NULL) {
@@ -1210,8 +1210,8 @@ static bool
 types_compatible(type_t *tp1, type_t *tp2,
 		 bool ignqual, bool promot, bool asgn, bool *dowarn)
 {
-	tspec_t	t, to;
-	int	indir;
+	tspec_t t, to;
+	int indir;
 
 	to = NO_TSPEC;
 	indir = 0;
@@ -1336,7 +1336,7 @@ types_compatible(type_t *tp1, type_t *tp2,
 static bool
 prototypes_compatible(type_t *tp1, type_t *tp2, bool *dowarn)
 {
-	type_t	**a1, **a2;
+	type_t **a1, **a2;
 
 	if (tp1->t_vararg != tp2->t_vararg)
 		return false;
@@ -1370,8 +1370,8 @@ prototypes_compatible(type_t *tp1, type_t *tp2, bool *dowarn)
 static bool
 matches_no_arg_function(type_t *tp, bool *dowarn)
 {
-	type_t	**arg;
-	tspec_t	t;
+	type_t **arg;
+	tspec_t t;
 
 	if (tp->t_vararg && dowarn != NULL)
 		*dowarn = true;

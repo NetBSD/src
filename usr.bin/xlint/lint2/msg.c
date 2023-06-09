@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.19 2023/02/19 19:27:01 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.20 2023/06/09 13:03:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: msg.c,v 1.19 2023/02/19 19:27:01 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.20 2023/06/09 13:03:49 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -71,7 +71,7 @@ static	const	char *msgs[] = {
 void
 msg(int n, ...)
 {
-	va_list	ap;
+	va_list ap;
 
 	va_start(ap, n);
 
@@ -104,12 +104,12 @@ lbasename(const char *path)
 const char *
 mkpos(pos_t *posp)
 {
-	size_t	len;
-	const	char *fn;
-	static	char	*buf;
-	static	size_t	blen = 0;
-	bool	qm;
-	int	src, line;
+	size_t len;
+	const char *fn;
+	static char *buf;
+	static size_t blen = 0;
+	bool qm;
+	int src, line;
 
 	if (Hflag && posp->p_src != posp->p_isrc) {
 		src = posp->p_isrc;

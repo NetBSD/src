@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.158 2023/04/11 00:03:42 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.159 2023/06/09 13:03:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.158 2023/04/11 00:03:42 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.159 2023/06/09 13:03:49 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -405,7 +405,7 @@ initscan(void)
 static int
 read_byte(void)
 {
-	int	c;
+	int c;
 
 	if ((c = lex_input()) == EOF)
 		return c;
@@ -847,7 +847,7 @@ get_escaped_char(int delim)
 int
 lex_character_constant(void)
 {
-	size_t	n;
+	size_t n;
 	int val, c;
 
 	n = 0;
@@ -889,10 +889,10 @@ lex_character_constant(void)
 int
 lex_wide_character_constant(void)
 {
-	static	char buf[MB_LEN_MAX + 1];
-	size_t	n, nmax;
+	static char buf[MB_LEN_MAX + 1];
+	size_t n, nmax;
 	int c;
-	wchar_t	wc;
+	wchar_t wc;
 
 	nmax = MB_CUR_MAX;
 
@@ -969,13 +969,13 @@ parse_line_directive_flags(const char *p,
 void
 lex_directive(const char *yytext)
 {
-	const	char *cp, *fn;
-	char	c, *eptr;
-	size_t	fnl;
-	long	ln;
-	bool	is_begin, is_end, is_system;
+	const char *cp, *fn;
+	char c, *eptr;
+	size_t fnl;
+	long ln;
+	bool is_begin, is_end, is_system;
 
-	static	bool first = true;
+	static bool first = true;
 
 	/* Go to first non-whitespace after # */
 	for (cp = yytext + 1; (c = *cp) == ' ' || c == '\t'; cp++)
@@ -1070,10 +1070,10 @@ lex_comment(void)
 		{ "SCANFLIKE",		true,	scanflike	},
 		{ "VARARGS",		true,	varargs		},
 	};
-	char	keywd[32];
-	char	arg[32];
-	size_t	l, i;
-	int	a;
+	char keywd[32];
+	char arg[32];
+	size_t l, i;
+	int a;
 
 	bool seen_end_of_comment = false;
 
@@ -1175,8 +1175,8 @@ int
 lex_string(void)
 {
 	unsigned char *s;
-	int	c;
-	size_t	len, max;
+	int c;
+	size_t len, max;
 
 	s = xmalloc(max = 64);
 
@@ -1204,7 +1204,7 @@ lex_string(void)
 int
 lex_wide_string(void)
 {
-	int	c, n;
+	int c, n;
 
 	size_t len = 0, max = 64;
 	char *s = xmalloc(max);
@@ -1232,7 +1232,7 @@ lex_wide_string(void)
 			n = 1;
 	}
 
-	wchar_t	*ws = xmalloc((wlen + 1) * sizeof(*ws));
+	wchar_t *ws = xmalloc((wlen + 1) * sizeof(*ws));
 	size_t wi = 0;
 	/* convert from multibyte to wide char */
 	(void)mbtowc(NULL, NULL, 0);
@@ -1313,7 +1313,7 @@ getsym(sbuf_t *sb)
 	/* create a new symbol table entry */
 
 	/* labels must always be allocated at level 1 (outermost block) */
-	dinfo_t	*di;
+	dinfo_t *di;
 	if (symtyp == FLABEL) {
 		sym = level_zero_alloc(1, sizeof(*sym));
 		char *s = level_zero_alloc(1, sb->sb_len + 1);
@@ -1403,7 +1403,7 @@ rmsym(sym_t *sym)
 void
 rmsyms(sym_t *syms)
 {
-	sym_t	*sym;
+	sym_t *sym;
 
 	/* Note the use of s_level_next instead of s_symtab_next. */
 	for (sym = syms; sym != NULL; sym = sym->s_level_next) {
@@ -1452,7 +1452,7 @@ clean_up_after_error(void)
 sym_t *
 pushdown(const sym_t *sym)
 {
-	sym_t	*nsym;
+	sym_t *nsym;
 
 	debug_step("pushdown '%s' %s '%s'",
 	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
