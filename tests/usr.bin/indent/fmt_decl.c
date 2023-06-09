@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.50 2023/06/08 21:18:54 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.51 2023/06/09 09:45:55 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -153,6 +153,7 @@ t2(char *x, int y)
 
 //indent input
 const int	int_minimum_size =
+// $ FIXME: Missing indentation.
 MAXALIGN(offsetof(int, test)) + MAXIMUM_ALIGNOF;
 //indent end
 
@@ -1002,3 +1003,49 @@ struct a {
 //indent end
 
 //indent run-equals-input -di0
+
+
+//indent input
+static FILE *ArchFindMember(const char *, const char *,
+			    struct ar_hdr *, const char *);
+
+bool
+Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
+{
+}
+
+static void MAKE_ATTR_PRINTFLIKE(5, 0)
+ParseVErrorInternal(FILE *f, bool useVars, const GNode *gn,
+		    ParseErrorLevel level, const char *fmt, va_list ap)
+{
+}
+
+typedef struct {
+	const char *m_name;
+} mod_t;
+//indent end
+
+//indent run -fbs -di0 -psl
+// $ FIXME: Must be detected as a function declaration, not a definition.
+static FILE *
+ArchFindMember(const char *, const char *,
+	       struct ar_hdr *, const char *);
+
+bool
+Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
+{
+}
+
+static void
+MAKE_ATTR_PRINTFLIKE(5, 0)
+ParseVErrorInternal(FILE *f, bool useVars, const GNode *gn,
+		    ParseErrorLevel level, const char *fmt, va_list ap)
+{
+}
+
+typedef struct {
+	const char *m_name;
+}
+// $ FIXME: Remove this line break.
+mod_t;
+//indent end
