@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.341 2023/06/08 21:18:54 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.342 2023/06/09 07:20:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.341 2023/06/08 21:18:54 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.342 2023/06/09 07:20:30 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -569,7 +569,7 @@ process_unary_op(void)
 		indent_declarator(ind, ps.tabs_to_var);
 		ps.want_blank = false;
 	} else if ((token.s[0] == '+' || token.s[0] == '-')
-	   && code.len > 0 && code.s[code.len - 1] == token.s[0])
+	    && code.len > 0 && code.s[code.len - 1] == token.s[0])
 		ps.want_blank = true;
 
 	if (ps.want_blank)
@@ -682,7 +682,7 @@ process_lbrace(void)
 	if (ps.prev_lsym == lsym_rparen
 	    && ps.psyms.top >= 2
 	    && !(psym == psym_for_exprs || psym == psym_if_expr
-		    || psym == psym_switch_expr || psym == psym_while_expr)) {
+		|| psym == psym_switch_expr || psym == psym_while_expr)) {
 		ps.block_init = true;
 		ps.init_or_struct = true;
 	}
@@ -901,8 +901,8 @@ process_comma(void)
 			ps.block_init = false;
 		int typical_varname_length = 8;
 		if (ps.break_after_comma && (opt.break_after_comma ||
-		    ind_add(compute_code_indent(), code.s, code.len)
-		    >= opt.max_line_length - typical_varname_length))
+			ind_add(compute_code_indent(), code.s, code.len)
+			>= opt.max_line_length - typical_varname_length))
 			ps.force_nl = true;
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.69 2023/06/07 15:46:12 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.70 2023/06/09 07:20:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.69 2023/06/07 15:46:12 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.70 2023/06/09 07:20:30 rillig Exp $");
 
 #include <err.h>
 
@@ -236,7 +236,7 @@ parse(parser_symbol psym)
 	case psym_rbrace:
 		/* stack should have <lbrace> <stmt> or <lbrace> <stmt_list> */
 		if (!(psyms->top > 0
-		    && is_lbrace(psyms->sym[psyms->top - 1]))) {
+			&& is_lbrace(psyms->sym[psyms->top - 1]))) {
 			diag(1, "Statement nesting error");
 			break;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.205 2023/06/09 06:36:57 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.206 2023/06/09 07:20:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.205 2023/06/09 06:36:57 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.206 2023/06/09 07:20:30 rillig Exp $");
 
 #include <stdio.h>
 
@@ -375,7 +375,7 @@ prepare_next_line:
 	if (ps.extra_expr_indent == eei_last)
 		ps.extra_expr_indent = eei_no;
 	if (!(ps.psyms.sym[ps.psyms.top] == psym_if_expr_stmt_else
-	    && ps.nparen > 0))
+		&& ps.nparen > 0))
 		ps.ind_level = ps.ind_level_follow;
 	ps.line_start_nparen = ps.nparen;
 	ps.want_blank = false;
