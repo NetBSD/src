@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.67 2023/06/09 13:03:49 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.68 2023/06/09 15:36:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.67 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.68 2023/06/09 15:36:31 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -193,12 +193,8 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 	/* reset buffer */
 	outclr();
 
-	/*
-	 * line number of .c source, 'd' for declaration, Id of current
-	 * source (.c or .h), and line in current source.
-	 */
 	outint(csrc_pos.p_line);
-	outchar('d');
+	outchar('d');		/* declaration */
 	outint(get_filename_id(sym->s_def_pos.p_file));
 	outchar('.');
 	outint(sym->s_def_pos.p_line);
@@ -239,10 +235,8 @@ outsym(const sym_t *sym, scl_t sc, def_t def)
 }
 
 /*
- * write information about function definition
- *
- * this is also done for static functions so we are able to check if
- * they are called with proper argument types
+ * Write information about a function definition. This is also done for static
+ * functions, to later check if they are called with proper argument types.
  */
 void
 outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
@@ -254,20 +248,12 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 	/* reset the buffer */
 	outclr();
 
-	/*
-	 * line number of .c source, 'd' for declaration, Id of current
-	 * source (.c or .h), and line in current source
-	 *
-	 * we are already at the end of the function. If we are in the
-	 * .c source, posp->p_line is correct, otherwise csrc_pos.p_line
-	 * (for functions defined in header files).
-	 */
 	if (posp->p_file == csrc_pos.p_file) {
 		outint(posp->p_line);
 	} else {
 		outint(csrc_pos.p_line);
 	}
-	outchar('d');
+	outchar('d');		/* declaration */
 	outint(get_filename_id(posp->p_file));
 	outchar('.');
 	outint(posp->p_line);
@@ -359,12 +345,8 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 	/* reset buffer */
 	outclr();
 
-	/*
-	 * line number of .c source, 'c' for function call, Id of current
-	 * source (.c or .h), and line in current source
-	 */
 	outint(csrc_pos.p_line);
-	outchar('c');
+	outchar('c');		/* function call */
 	outint(get_filename_id(curr_pos.p_file));
 	outchar('.');
 	outint(curr_pos.p_line);
@@ -587,18 +569,14 @@ outfstrg(strg_t *strg)
 void
 outusg(const sym_t *sym)
 {
-	if (ch_isdigit(sym->s_name[0]))	/* 00000000_tmp */
+	if (ch_isdigit(sym->s_name[0]))	/* 00000000_tmp, from mktempsym */
 		return;
 
 	/* reset buffer */
 	outclr();
 
-	/*
-	 * line number of .c source, 'u' for used, Id of current
-	 * source (.c or .h), and line in current source
-	 */
 	outint(csrc_pos.p_line);
-	outchar('u');
+	outchar('u');		/* used */
 	outint(get_filename_id(curr_pos.p_file));
 	outchar('.');
 	outint(curr_pos.p_line);

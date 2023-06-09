@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.316 2023/06/09 13:03:49 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.317 2023/06/09 15:36:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.316 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.317 2023/06/09 15:36:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1601,7 +1601,7 @@ declarator_name(sym_t *sym)
 	case DK_AUTO:
 		if ((sc = dcs->d_scl) == NOSCL) {
 			/*
-			 * XXX somewhat ugly because we dont know whether
+			 * XXX somewhat ugly because we don't know whether
 			 * this is AUTO or EXTERN (functions). If we are
 			 * wrong it must be corrected in declare_local(),
 			 * where we have the necessary type information.
@@ -1893,7 +1893,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 				/* redeclaration of '%s' */
 				error(27, sym->s_name);
 				/*
-				 * inside blocks it should not be too
+				 * Inside blocks, it should not be too
 				 * complicated to find the position of the
 				 * previous declaration
 				 */
@@ -2845,7 +2845,7 @@ declare_external_in_block(sym_t *dsym)
 
 	if (compatible) {
 		/*
-		 * Remember the external symbol so we can update usage
+		 * Remember the external symbol, so we can update usage
 		 * information at the end of the block.
 		 */
 		dsym->s_ext_sym = esym;

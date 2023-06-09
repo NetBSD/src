@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.198 2023/06/09 13:03:49 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.199 2023/06/09 15:36:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.198 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.199 2023/06/09 15:36:31 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -435,7 +435,7 @@ suppress_messages(const char *p)
 		if (*end == '\0')
 			return;
 	}
-	errx(1, "invalid message ID '%.*s'", (int)(strcspn(p, ",")), p);
+	errx(1, "invalid message ID '%.*s'", (int)strcspn(p, ","), p);
 }
 
 void
@@ -746,5 +746,5 @@ enable_queries(const char *p)
 		if (*end == '\0')
 			return;
 	}
-	errx(1, "invalid query ID '%.*s'", (int)(strcspn(p, ",")), p);
+	errx(1, "invalid query ID '%.*s'", (int)strcspn(p, ","), p);
 }
