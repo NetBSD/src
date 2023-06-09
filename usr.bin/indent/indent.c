@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.345 2023/06/09 10:24:55 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.346 2023/06/09 11:22:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.345 2023/06/09 10:24:55 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.346 2023/06/09 11:22:31 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -698,7 +698,7 @@ process_lbrace(void)
 		}
 	}
 
-	if (ps.nparen > 0) {
+	if (ps.nparen > 0 && ps.block_init_level == 0) {
 		diag(1, "Unbalanced parentheses");
 		ps.nparen = 0;
 		if (ps.spaced_expr_psym != psym_0) {
@@ -739,7 +739,7 @@ process_lbrace(void)
 static void
 process_rbrace(void)
 {
-	if (ps.nparen > 0) {	/* check for unclosed if, for, else. */
+	if (ps.nparen > 0 && ps.block_init_level == 0) {
 		diag(1, "Unbalanced parentheses");
 		ps.nparen = 0;
 		ps.spaced_expr_psym = psym_0;
