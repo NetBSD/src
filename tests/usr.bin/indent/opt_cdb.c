@@ -1,4 +1,4 @@
-/* $NetBSD: opt_cdb.c,v 1.9 2023/05/19 07:05:26 rillig Exp $ */
+/* $NetBSD: opt_cdb.c,v 1.10 2023/06/09 07:18:52 rillig Exp $ */
 
 /*
  * Tests for the options '-cdb' and '-ncdb'.
@@ -7,8 +7,7 @@
  * a separate line. This only affects block comments, but not comments to the
  * right of the code.
  *
- * The option '-ncdb' compresses multi-line comments to single-line comments,
- * as far as possible.
+ * The option '-ncdb' preserves comments with delimiters.
  */
 
 //indent input
@@ -50,9 +49,13 @@
 
 /* Multiple lines without delimiters. */
 
-/* A single line with delimiters. */
+/*
+ * A single line with delimiters.
+ */
 
-/* Multiple lines with delimiters. */
+/*
+ * Multiple lines with delimiters.
+ */
 //indent end
 
 
@@ -153,10 +156,14 @@ example(void)
 	/* Multiple lines without delimiters. */
 	int local_multi_without;
 
-	/* A single line with delimiters. */
+	/*
+	 * A single line with delimiters.
+	 */
 	int local_single_with;
 
-	/* Multiple lines with delimiters. */
+	/*
+	 * Multiple lines with delimiters.
+	 */
 	int local_multi_with;
 }
 //indent end
@@ -174,11 +181,7 @@ example(void)
  */
 //indent end
 
-/* FIXME: Looks bad. */
-//indent run -ncdb
-/*
- * */
-//indent end
+//indent run-equals-prev-output -ncdb
 
 
 //indent input
@@ -193,18 +196,12 @@ example(void)
  */
 //indent end
 
-/* FIXME: Looks bad. */
-//indent run -ncdb
-/*
- * */
-//indent end
+//indent run-equals-prev-output -ncdb
 
 
 /*
- * Since 2019-04-04, the -ncdb option condenses multi-line comments as well,
- * not only single-line comments.
- *
- * XXX: Is this intended?
+ * Between 2019-04-04 and 2023-06-09, the -ncdb option condensed multi-line
+ * comments as well, not only single-line comments.
  */
 //indent input
 {
@@ -218,10 +215,4 @@ example(void)
 
 //indent run-equals-input -cdb
 
-//indent run -ncdb
-{
-	/* This is the first paragraph.
-	 *
-	 * This is the second paragraph. */
-}
-//indent end
+//indent run-equals-input -ncdb
