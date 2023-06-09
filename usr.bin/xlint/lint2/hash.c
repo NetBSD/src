@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.24 2022/05/20 21:18:55 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.25 2023/06/09 13:03:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: hash.c,v 1.24 2022/05/20 21:18:55 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.25 2023/06/09 13:03:49 rillig Exp $");
 #endif
 
 /*
@@ -88,7 +88,7 @@ hte_t *
 _hsearch(hte_t **table, const char *s, bool mknew)
 {
 	unsigned int h;
-	hte_t	*hte;
+	hte_t *hte;
 
 	if (table == NULL)
 		table = htab;
@@ -159,9 +159,9 @@ symtab_init(void)
 void
 symtab_forall(void (*action)(hte_t *))
 {
-	int	i;
-	hte_t	*hte;
-	hte_t	**table = htab;
+	int i;
+	hte_t *hte;
+	hte_t **table = htab;
 
 	for (i = 0; i < HSHSIZ2; i++) {
 		for (hte = table[i]; hte != NULL; hte = hte->h_link)
@@ -196,8 +196,8 @@ symtab_forall_sorted(void (*action)(hte_t *))
 void
 _destroyhash(hte_t **table)
 {
-	int	i;
-	hte_t	*hte, *nexthte;
+	int i;
+	hte_t *hte, *nexthte;
 
 	if (table == NULL)
 		err(1, "_destroyhash called on main hash table");

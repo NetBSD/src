@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.197 2023/06/03 21:08:06 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.198 2023/06/09 13:03:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.197 2023/06/03 21:08:06 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.198 2023/06/09 13:03:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -519,7 +519,7 @@ lbasename(const char *path)
 static void
 verror_at(int msgid, const pos_t *pos, va_list ap)
 {
-	const	char *fn;
+	const char *fn;
 
 	if (is_suppressed[msgid])
 		return;
@@ -535,7 +535,7 @@ verror_at(int msgid, const pos_t *pos, va_list ap)
 static void
 vwarning_at(int msgid, const pos_t *pos, va_list ap)
 {
-	const	char *fn;
+	const char *fn;
 
 	if (is_suppressed[msgid])
 		return;
@@ -572,7 +572,7 @@ vmessage_at(int msgid, const pos_t *pos, va_list ap)
 void
 (error_at)(int msgid, const pos_t *pos, ...)
 {
-	va_list	ap;
+	va_list ap;
 
 	va_start(ap, pos);
 	verror_at(msgid, pos, ap);
@@ -582,7 +582,7 @@ void
 void
 (error)(int msgid, ...)
 {
-	va_list	ap;
+	va_list ap;
 
 	va_start(ap, msgid);
 	verror_at(msgid, &curr_pos, ap);
@@ -592,7 +592,7 @@ void
 void
 assert_failed(const char *file, int line, const char *func, const char *cond)
 {
-	const	char *fn;
+	const char *fn;
 
 	/*
 	 * After encountering a parse error in the grammar, lint often does
@@ -620,7 +620,7 @@ assert_failed(const char *file, int line, const char *func, const char *cond)
 void
 (warning_at)(int msgid, const pos_t *pos, ...)
 {
-	va_list	ap;
+	va_list ap;
 
 	va_start(ap, pos);
 	vwarning_at(msgid, pos, ap);
@@ -630,7 +630,7 @@ void
 void
 (warning)(int msgid, ...)
 {
-	va_list	ap;
+	va_list ap;
 
 	va_start(ap, msgid);
 	vwarning_at(msgid, &curr_pos, ap);
@@ -650,7 +650,7 @@ void
 void
 (c99ism)(int msgid, ...)
 {
-	va_list	ap;
+	va_list ap;
 
 	if (allow_c99)
 		return;
@@ -667,7 +667,7 @@ void
 void
 (c11ism)(int msgid, ...)
 {
-	va_list	ap;
+	va_list ap;
 
 	/* FIXME: C11 mode has nothing to do with GCC mode. */
 	if (allow_c11 || allow_gcc)
@@ -680,7 +680,7 @@ void
 bool
 (gnuism)(int msgid, ...)
 {
-	va_list	ap;
+	va_list ap;
 	int severity = (!allow_gcc ? 1 : 0) +
 	    (!allow_trad && !allow_c99 ? 1 : 0);
 

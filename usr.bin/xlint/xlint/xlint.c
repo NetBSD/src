@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.109 2023/02/19 19:27:02 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.110 2023/06/09 13:03:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.109 2023/02/19 19:27:02 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.110 2023/06/09 13:03:49 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -629,10 +629,10 @@ main(int argc, char *argv[])
 static void
 handle_filename(const char *name)
 {
-	const	char *bn, *suff;
-	char	*ofn;
-	size_t	len;
-	int	fd;
+	const char *bn, *suff;
+	char *ofn;
+	size_t len;
+	int fd;
 
 	bn = lbasename(name, '/');
 	suff = lbasename(bn, '.');
@@ -716,7 +716,7 @@ needs_quoting:
 static void
 run_child(const char *path, list *args, const char *crfn, int fdout)
 {
-	int	status, rv, signo;
+	int status, rv, signo;
 
 	if (Vflag) {
 		print_sh_quoted(args->items[0]);
@@ -809,7 +809,7 @@ find_libs(const list *l)
 static bool
 file_is_readable(const char *path)
 {
-	struct	stat sbuf;
+	struct stat sbuf;
 
 	if (stat(path, &sbuf) == -1)
 		return false;
@@ -823,9 +823,9 @@ file_is_readable(const char *path)
 static void
 cat(const list *srcs, const char *dest)
 {
-	int	ifd, ofd;
-	ssize_t	rlen;
-	char	buf[0x4000];
+	int ifd, ofd;
+	ssize_t rlen;
+	char buf[0x4000];
 
 	if ((ofd = open(dest, O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
 		warn("cannot open %s", dest);

@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.80 2023/05/22 12:55:04 rillig Exp $ */
+/* $NetBSD: read.c,v 1.81 2023/06/09 13:03:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.80 2023/05/22 12:55:04 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.81 2023/06/09 13:03:49 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -214,9 +214,9 @@ read_ln_line(const char *line)
 void
 readfile(const char *name)
 {
-	FILE	*inp;
-	size_t	len;
-	char	*line;
+	FILE *inp;
+	size_t len;
+	char *line;
 
 	if (inpfns == NULL)
 		inpfns = xcalloc(ninpfns = 128, sizeof(*inpfns));
@@ -316,10 +316,10 @@ static void
 funccall(pos_t pos, const char *cp)
 {
 	arginf_t *ai, **lai;
-	char	c;
-	bool	rused, rdisc;
-	hte_t	*hte;
-	fcall_t	*fcall;
+	char c;
+	bool rused, rdisc;
+	hte_t *hte;
+	fcall_t *fcall;
 	const char *name;
 
 	fcall = xalloc(sizeof(*fcall));
@@ -468,10 +468,10 @@ parse_function_attribute(const char **pp, sym_t *sym, bool *used)
 static void
 decldef(pos_t pos, const char *cp)
 {
-	sym_t	*symp, sym;
-	char	*pos1, *tname;
-	bool	used, renamed;
-	hte_t	*hte, *renamehte = NULL;
+	sym_t *symp, sym;
+	char *pos1, *tname;
+	bool used, renamed;
+	hte_t *hte, *renamehte = NULL;
 	const char *name, *newname;
 
 	(void)memset(&sym, 0, sizeof(sym));
@@ -564,8 +564,8 @@ decldef(pos_t pos, const char *cp)
 static void
 usedsym(pos_t pos, const char *cp)
 {
-	usym_t	*usym;
-	hte_t	*hte;
+	usym_t *usym;
+	hte_t *hte;
 	const char *name;
 
 	usym = xalloc(sizeof(*usym));
@@ -651,14 +651,14 @@ parse_tspec(const char **pp, char c, bool *osdef)
 static unsigned short
 inptype(const char *cp, const char **epp)
 {
-	char	c;
-	const	char *ep;
-	type_t	*tp;
-	int	narg, i;
-	bool	osdef = false;
-	size_t	tlen;
+	char c;
+	const char *ep;
+	type_t *tp;
+	int narg, i;
+	bool osdef = false;
+	size_t tlen;
 	unsigned short tidx;
-	int	h;
+	int h;
 
 	/* If we have this type already, return its index. */
 	tlen = gettlen(cp, &ep);
@@ -753,10 +753,10 @@ inptype(const char *cp, const char **epp)
 static size_t
 gettlen(const char *cp, const char **epp)
 {
-	const	char *cp1;
-	char	c, s;
-	tspec_t	t;
-	int	narg, i;
+	const char *cp1;
+	char c, s;
+	tspec_t t;
+	int narg, i;
 
 	cp1 = cp;
 
@@ -932,7 +932,7 @@ gettlen(const char *cp, const char **epp)
 static unsigned short
 findtype(const char *cp, size_t len, int h)
 {
-	thtab_t	*thte;
+	thtab_t *thte;
 
 	for (thte = thtab[h]; thte != NULL; thte = thte->th_next) {
 		if (strncmp(thte->th_name, cp, len) != 0)
@@ -952,8 +952,8 @@ static unsigned short
 storetyp(type_t *tp, const char *cp, size_t len, int h)
 {
 	static unsigned int tidx = 1;	/* 0 is reserved */
-	thtab_t	*thte;
-	char	*name;
+	thtab_t *thte;
+	char *name;
 
 	if (tidx >= USHRT_MAX)
 		errx(1, "sorry, too many types");
@@ -1002,10 +1002,10 @@ thash(const char *s, size_t len)
 static char *
 inpqstrg(const char *src, const char **epp)
 {
-	char	*strg, *dst;
-	size_t	slen;
-	char	c;
-	int	v;
+	char *strg, *dst;
+	size_t slen;
+	char c;
+	int v;
 
 	dst = strg = xmalloc(slen = 32);
 
@@ -1085,10 +1085,10 @@ inpqstrg(const char *src, const char **epp)
 static const char *
 inpname(const char *cp, const char **epp)
 {
-	static	char	*buf;
-	static	size_t	blen = 0;
-	size_t	len, i;
-	char	c;
+	static char *buf;
+	static size_t blen = 0;
+	size_t len, i;
+	char c;
 
 	len = parse_int(&cp);
 	if (len + 1 > blen)
@@ -1112,7 +1112,7 @@ inpname(const char *cp, const char **epp)
 static int
 getfnidx(const char *fn)
 {
-	size_t	i;
+	size_t i;
 
 	/* 0 is reserved */
 	for (i = 1; fnames[i] != NULL; i++) {
@@ -1140,11 +1140,11 @@ getfnidx(const char *fn)
 void
 mkstatic(hte_t *hte)
 {
-	sym_t	*sym1, **symp, *sym;
-	fcall_t	**callp, *call;
-	usym_t	**usymp, *usym;
-	hte_t	*nhte;
-	bool	ofnd;
+	sym_t *sym1, **symp, *sym;
+	fcall_t **callp, *call;
+	usym_t **usymp, *usym;
+	hte_t *nhte;
+	bool ofnd;
 
 	/* Look for first static definition */
 	for (sym1 = hte->h_syms; sym1 != NULL; sym1 = sym1->s_next) {
