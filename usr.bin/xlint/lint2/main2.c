@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.28 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.29 2023/06/09 13:03:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main2.c,v 1.28 2023/03/28 14:44:35 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.29 2023/06/09 13:03:49 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -97,9 +97,9 @@ check_name_non_const(hte_t *hte)
 int
 main(int argc, char *argv[])
 {
-	int	c, i;
-	size_t	len;
-	char	*lname;
+	int c, i;
+	size_t len;
+	char *lname;
 
 	libs = xcalloc(1, sizeof(*libs));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.525 2023/06/03 20:28:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.526 2023/06/09 13:03:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.525 2023/06/03 20:28:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.526 2023/06/09 13:03:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -315,7 +315,7 @@ ic_expr(const tnode_t *tn)
 type_t *
 block_derive_type(type_t *tp, tspec_t t)
 {
-	type_t	*tp2;
+	type_t *tp2;
 
 	tp2 = block_zero_alloc(sizeof(*tp2));
 	tp2->t_tspec = t;
@@ -330,7 +330,7 @@ block_derive_type(type_t *tp, tspec_t t)
 type_t *
 expr_derive_type(type_t *tp, tspec_t t)
 {
-	type_t	*tp2;
+	type_t *tp2;
 
 	tp2 = expr_zero_alloc(sizeof(*tp2));
 	tp2->t_tspec = t;
@@ -368,7 +368,7 @@ new_tnode(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
 tnode_t *
 build_constant(type_t *tp, val_t *v)
 {
-	tnode_t	*n;
+	tnode_t *n;
 
 	n = expr_alloc_tnode();
 	n->tn_op = CON;
@@ -384,7 +384,7 @@ build_constant(type_t *tp, val_t *v)
 static tnode_t *
 build_integer_constant(tspec_t t, int64_t q)
 {
-	tnode_t	*n;
+	tnode_t *n;
 
 	n = expr_alloc_tnode();
 	n->tn_op = CON;
@@ -489,7 +489,7 @@ build_name_call(sym_t *sym)
 tnode_t *
 build_name(sym_t *sym, bool is_funcname)
 {
-	tnode_t	*n;
+	tnode_t *n;
 
 	if (sym->s_scl == NOSCL && !in_gcc_attribute) {
 		sym->s_scl = EXTERN;
@@ -527,8 +527,8 @@ build_name(sym_t *sym, bool is_funcname)
 tnode_t *
 build_string(strg_t *strg)
 {
-	size_t	len;
-	tnode_t	*n;
+	size_t len;
+	tnode_t *n;
 	type_t *tp;
 
 	len = strg->st_len;
@@ -589,7 +589,7 @@ is_out_of_char_range(const tnode_t *tn)
 static void
 check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 {
-	tspec_t	lt, rt;
+	tspec_t lt, rt;
 
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
@@ -753,7 +753,7 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 static tnode_t *
 build_address(bool sys, tnode_t *tn, bool noign)
 {
-	tspec_t	t;
+	tspec_t t;
 
 	if (!noign && ((t = tn->tn_type->t_tspec) == ARRAY || t == FUNC)) {
 		if (!allow_c90)
@@ -932,8 +932,8 @@ fold(tnode_t *tn)
 static tnode_t *
 build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 {
-	tnode_t	*ntn, *ctn;
-	bool	nolval;
+	tnode_t *ntn, *ctn;
+	bool nolval;
 
 	lint_assert(rn->tn_op == NAME);
 	lint_assert(is_member(rn->tn_sym));
@@ -1041,7 +1041,7 @@ subt_size_in_bytes(type_t *tp)
 static tnode_t *
 build_prepost_incdec(op_t op, bool sys, tnode_t *ln)
 {
-	tnode_t	*cn, *ntn;
+	tnode_t *cn, *ntn;
 
 	lint_assert(ln != NULL);
 
@@ -1213,8 +1213,8 @@ merge_qualifiers(type_t *tp1, const type_t *tp2)
 static tnode_t *
 build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 {
-	tspec_t	lt, rt;
-	type_t	*tp;
+	tspec_t lt, rt;
+	type_t *tp;
 
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
@@ -1328,8 +1328,8 @@ is_assignment(op_t op)
 static tnode_t *
 build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 {
-	tspec_t	lt, rt;
-	tnode_t	*ntn, *ctn;
+	tspec_t lt, rt;
+	tnode_t *ntn, *ctn;
 
 	lt = ln->tn_type->t_tspec;
 	rt = rn->tn_type->t_tspec;
@@ -1400,7 +1400,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 static tnode_t *
 build_real_imag(op_t op, bool sys, tnode_t *ln)
 {
-	tnode_t	*cn, *ntn;
+	tnode_t *cn, *ntn;
 
 	lint_assert(ln != NULL);
 
@@ -1511,8 +1511,8 @@ check_precedence_confusion(tnode_t *tn)
 static tnode_t *
 fold_bool(tnode_t *tn)
 {
-	bool	l, r;
-	val_t	*v;
+	bool l, r;
+	val_t *v;
 
 	v = xcalloc(1, sizeof(*v));
 	v->v_tspec = tn->tn_type->t_tspec;
@@ -1576,9 +1576,9 @@ floating_error_value(tspec_t t, ldbl_t lv)
 static tnode_t *
 fold_float(tnode_t *tn)
 {
-	val_t	*v;
-	tspec_t	t;
-	ldbl_t	lv, rv = 0;
+	val_t *v;
+	tspec_t t;
+	ldbl_t lv, rv = 0;
 
 	fpe = 0;
 	v = xcalloc(1, sizeof(*v));
@@ -1670,8 +1670,8 @@ tnode_t *
 build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 {
 	const mod_t *mp;
-	tnode_t	*ntn;
-	type_t	*rettp;
+	tnode_t *ntn;
+	type_t *rettp;
 
 	mp = &modtab[op];
 
@@ -1896,9 +1896,9 @@ all_members_compatible(const sym_t *msym)
 static sym_t *
 struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 {
-	struct_or_union	*str;
-	type_t	*tp;
-	tspec_t	t;
+	struct_or_union *str;
+	type_t *tp;
+	tspec_t t;
 
 	/*
 	 * Remove the member if it was unknown until now, which means
@@ -2003,7 +2003,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 tnode_t *
 build_member_access(tnode_t *ln, op_t op, bool sys, sbuf_t *member)
 {
-	sym_t	*msym;
+	sym_t *msym;
 
 	if (ln == NULL)
 		return NULL;
@@ -2869,8 +2869,8 @@ static bool
 check_assign_types_compatible(op_t op, int arg,
 			      const tnode_t *ln, const tnode_t *rn)
 {
-	tspec_t	lt, rt, lst = NO_TSPEC, rst = NO_TSPEC;
-	type_t	*ltp, *rtp, *lstp = NULL, *rstp = NULL;
+	tspec_t lt, rt, lst = NO_TSPEC, rst = NO_TSPEC;
+	type_t *ltp, *rtp, *lstp = NULL, *rstp = NULL;
 
 	if ((lt = (ltp = ln->tn_type)->t_tspec) == PTR)
 		lst = (lstp = ltp->t_subt)->t_tspec;
@@ -3188,8 +3188,8 @@ typeok_enum(op_t op, const mod_t *mp, int arg,
 bool
 typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 {
-	tspec_t	lt, rt;
-	type_t	*ltp, *rtp;
+	tspec_t lt, rt;
+	type_t *ltp, *rtp;
 
 	const mod_t *mp = &modtab[op];
 
@@ -4138,7 +4138,7 @@ cast_to_union(tnode_t *otn, type_t *ntp)
 tnode_t *
 cast(tnode_t *tn, type_t *tp)
 {
-	tspec_t	nt, ot;
+	tspec_t nt, ot;
 
 	if (tn == NULL)
 		return NULL;
@@ -4231,7 +4231,7 @@ check_prototype_argument(
 	type_t	*tp,		/* expected type (from prototype) */
 	tnode_t	*tn)		/* argument */
 {
-	tnode_t	*ln = xcalloc(1, sizeof(*ln));
+	tnode_t *ln = xcalloc(1, sizeof(*ln));
 	ln->tn_type = expr_unqualified_type(tp);
 	ln->tn_lvalue = true;
 	if (typeok(FARG, n, ln, tn)) {
@@ -4251,10 +4251,10 @@ check_prototype_argument(
 static tnode_t *
 check_function_arguments(type_t *ftp, tnode_t *args)
 {
-	tnode_t	*arg;
-	sym_t	*asym;
-	tspec_t	at;
-	int	narg, npar, n, i;
+	tnode_t *arg;
+	sym_t *asym;
+	tspec_t at;
+	int narg, npar, n, i;
 
 	/* get # of args in the prototype */
 	npar = 0;
@@ -4324,8 +4324,8 @@ check_function_arguments(type_t *ftp, tnode_t *args)
 tnode_t *
 build_function_call(tnode_t *func, bool sys, tnode_t *args)
 {
-	tnode_t	*ntn;
-	op_t	fcop;
+	tnode_t *ntn;
+	op_t fcop;
 
 	if (func == NULL)
 		return NULL;
@@ -4740,7 +4740,7 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 {
 	const sym_t *sym;
 	ptrdiff_t offs1, offs2;
-	tspec_t	t, ot;
+	tspec_t t, ot;
 
 	switch (tn->tn_op) {
 	case MINUS:

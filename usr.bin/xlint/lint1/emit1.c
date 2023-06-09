@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.66 2023/04/22 17:49:15 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.67 2023/06/09 13:03:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.66 2023/04/22 17:49:15 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.67 2023/06/09 13:03:49 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -100,9 +100,9 @@ outtype(const type_t *tp)
 	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDDVTTTPAF?XXX";
 	static const char ss[NTSPEC] = "???  su u u u us l sue   ?s l";
 #endif
-	int	na;
-	sym_t	*arg;
-	tspec_t	ts;
+	int na;
+	sym_t *arg;
+	tspec_t ts;
 
 	while (tp != NULL) {
 		if ((ts = tp->t_tspec) == INT && tp->t_is_enum)
@@ -351,10 +351,10 @@ outfdef(const sym_t *fsym, const pos_t *posp, bool rval, bool osdef,
 void
 outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 {
-	tnode_t	*args, *arg;
-	int	narg, n, i;
-	int64_t	q;
-	tspec_t	t;
+	tnode_t *args, *arg;
+	int narg, n, i;
+	int64_t q;
+	tspec_t t;
 
 	/* reset buffer */
 	outclr();
@@ -489,7 +489,7 @@ static void
 outfstrg(strg_t *strg)
 {
 	char c, oc;
-	bool	first;
+	bool first;
 	const char *cp;
 
 	lint_assert(strg->st_char);
