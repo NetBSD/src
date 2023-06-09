@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.206 2023/06/09 07:20:30 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.207 2023/06/09 08:10:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.206 2023/06/09 07:20:30 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.207 2023/06/09 08:10:58 rillig Exp $");
 
 #include <stdio.h>
 
@@ -216,16 +216,16 @@ compute_code_indent_lineup(int base_ind)
 {
 	int ind = paren_indent;
 	int overflow = ind_add(ind, code.s, code.len) - opt.max_line_length;
-	if (overflow < 0)
-		return ind;
-
-	if (ind_add(base_ind, code.s, code.len) < opt.max_line_length) {
+	if (overflow >= 0
+	    && ind_add(base_ind, code.s, code.len) < opt.max_line_length) {
 		ind -= overflow + 2;
-		if (ind > base_ind)
-			return ind;
-		return base_ind;
+		if (ind < base_ind)
+			ind = base_ind;
 	}
 
+	if (ps.extra_expr_indent != eei_no
+	    && ind == base_ind + opt.indent_size)
+		ind += opt.continuation_indent;
 	return ind;
 }
 
@@ -249,10 +249,10 @@ compute_code_indent(void)
 		return compute_code_indent_lineup(base_ind);
 	}
 
-	if (ps.extra_expr_indent != eei_no)
-		return base_ind + 2 * opt.continuation_indent;
-
-	return base_ind + opt.continuation_indent * ps.line_start_nparen;
+	int rel_ind = opt.continuation_indent * ps.line_start_nparen;
+	if (ps.extra_expr_indent != eei_no && rel_ind == opt.indent_size)
+		rel_ind += opt.continuation_indent;
+	return base_ind + rel_ind;
 }
 
 static void
