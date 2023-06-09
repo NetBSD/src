@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.218 2023/06/09 07:20:30 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.219 2023/06/09 09:49:07 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.218 2023/06/09 07:20:30 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.219 2023/06/09 09:49:07 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -338,6 +338,9 @@ probably_looking_at_definition(void)
 			else
 				break;	/* func(...) { ... */
 		}
+
+		if (paren_level == 1 && p[0] == '*' && p[1] == ',')
+			return false;
 	}
 
 	/* To further reduce the cases where indent wrongly treats an
