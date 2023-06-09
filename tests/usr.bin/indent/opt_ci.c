@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ci.c,v 1.9 2023/05/18 05:33:27 rillig Exp $ */
+/* $NetBSD: opt_ci.c,v 1.10 2023/06/09 06:36:58 rillig Exp $ */
 
 /*
  * Tests for the option '-ci', which controls the indentation of continuation
@@ -47,17 +47,18 @@ int		top_level = (1 +
 //indent end
 
 /*
- * Since '-ci4' is half an indentation level, indent all continuations using
- * the same level, no matter how many parentheses there are. The rationale for
- * this may have been to prevent that the continuation line has the same
- * indentation as a follow-up statement, such as in 'if' statements.
+ * Between 2019-04-04 and 2023-06-09, there was a special rule that prevented
+ * indentation based on the number of open parentheses, in the case that the
+ * continuation indentation is half an indentation level, maybe to prevent that
+ * the continuation line has the same indentation as a follow-up statement,
+ * such as in 'if' statements. To prevent such ambiguities, see '-eei'.
  */
 //indent run -ci4 -nlp
 int		top_level = 1 +
 2;
 int		top_level = (1 +
     2 + (
-    3));
+	3));
 //indent end
 
 
@@ -165,12 +166,6 @@ sum(int a, int b)
 }
 //indent end
 
-/*
- * Since '-ci4' is half an indentation level, indent all continuations using
- * the same level, no matter how many parentheses there are. The rationale for
- * this may have been to prevent that the continuation line has the same
- * indentation as a follow-up statement, such as in 'if' statements.
- */
 //indent run -ci4 -nlp
 int
 sum(int a, int b)
@@ -179,7 +174,7 @@ sum(int a, int b)
 	    b);
 	return (first +
 	    second + (
-	    third));
+		third));
 }
 //indent end
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.204 2023/06/08 20:36:35 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.205 2023/06/09 06:36:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.204 2023/06/08 20:36:35 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.205 2023/06/09 06:36:57 rillig Exp $");
 
 #include <stdio.h>
 
@@ -252,11 +252,7 @@ compute_code_indent(void)
 	if (ps.extra_expr_indent != eei_no)
 		return base_ind + 2 * opt.continuation_indent;
 
-	if (2 * opt.continuation_indent == opt.indent_size)
-		return base_ind + opt.continuation_indent;
-	else
-		return base_ind +
-		    opt.continuation_indent * ps.line_start_nparen;
+	return base_ind + opt.continuation_indent * ps.line_start_nparen;
 }
 
 static void
