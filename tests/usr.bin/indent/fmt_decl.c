@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.51 2023/06/09 09:45:55 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.52 2023/06/09 09:49:07 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -1026,10 +1026,9 @@ typedef struct {
 //indent end
 
 //indent run -fbs -di0 -psl
-// $ FIXME: Must be detected as a function declaration, not a definition.
-static FILE *
-ArchFindMember(const char *, const char *,
-	       struct ar_hdr *, const char *);
+// $ Must be detected as a function declaration, not a definition.
+static FILE *ArchFindMember(const char *, const char *,
+			    struct ar_hdr *, const char *);
 
 bool
 Job_CheckCommands(GNode *gn, void (*abortProc)(const char *, ...))
