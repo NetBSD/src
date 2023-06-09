@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.219 2023/06/09 09:49:07 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.220 2023/06/09 19:50:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.219 2023/06/09 09:49:07 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.220 2023/06/09 19:50:51 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -260,16 +260,16 @@ probably_typename(void)
 		return false;
 	if (ps.in_stmt_or_decl)	/* XXX: this condition looks incorrect */
 		return false;
-	if (inp_p[0] == '*' && inp_p[1] != '=')
-		goto maybe;
-	/* XXX: is_identifier_start */
-	if (ch_isalpha(inp_p[0]))
-		goto maybe;
+	if (ps.prev_lsym == lsym_semicolon
+	    || ps.prev_lsym == lsym_lbrace
+	    || ps.prev_lsym == lsym_rbrace) {
+		if (inp_p[0] == '*' && inp_p[1] != '=')
+			return true;
+		/* XXX: is_identifier_start */
+		if (ch_isalpha(inp_p[0]))
+			return true;
+	}
 	return false;
-maybe:
-	return ps.prev_lsym == lsym_semicolon ||
-	    ps.prev_lsym == lsym_lbrace ||
-	    ps.prev_lsym == lsym_rbrace;
 }
 
 static int
@@ -558,26 +558,9 @@ lexi(void)
 
 	switch (token.s[token.len - 1]) {
 
-	/* INDENT OFF */
-	case '(':	lsym = lsym_lparen;	next_unary = true;	break;
-	case '[':	lsym = lsym_lbracket;	next_unary = true;	break;
-	case ')':	lsym = lsym_rparen;	next_unary = false;	break;
-	case ']':	lsym = lsym_rbracket;	next_unary = false;	break;
-	case '?':	lsym = lsym_question;	next_unary = true;	break;
-	case ';':	lsym = lsym_semicolon;	next_unary = true;	break;
-	case '{':	lsym = lsym_lbrace;	next_unary = true;	break;
-	case '}':	lsym = lsym_rbrace;	next_unary = true;	break;
-	case ',':	lsym = lsym_comma;	next_unary = true;	break;
-	case '.':	lsym = lsym_period;	next_unary = false;	break;
-	/* INDENT ON */
-
-	case ':':
-		lsym = ps.quest_level > 0
-		    ? (ps.quest_level--, lsym_colon_question)
-		    : ps.init_or_struct
-		    ? lsym_colon_other
-		    : lsym_colon_label;
-		next_unary = true;
+	case '#':
+		lsym = lsym_preprocessing;
+		next_unary = ps.next_unary;
 		break;
 
 	case '\n':
@@ -587,17 +570,18 @@ lexi(void)
 		ps.next_col_1 = true;
 		break;
 
-	case '#':
-		lsym = lsym_preprocessing;
-		next_unary = ps.next_unary;
-		break;
-
-	case '\'':
-	case '"':
-		lex_char_or_string();
-		lsym = lsym_word;
-		next_unary = false;
-		break;
+	/* INDENT OFF */
+	case '(':	lsym = lsym_lparen;	next_unary = true;	break;
+	case ')':	lsym = lsym_rparen;	next_unary = false;	break;
+	case '[':	lsym = lsym_lbracket;	next_unary = true;	break;
+	case ']':	lsym = lsym_rbracket;	next_unary = false;	break;
+	case '{':	lsym = lsym_lbrace;	next_unary = true;	break;
+	case '}':	lsym = lsym_rbrace;	next_unary = true;	break;
+	case '.':	lsym = lsym_period;	next_unary = false;	break;
+	case '?':	lsym = lsym_question;	next_unary = true;	break;
+	case ',':	lsym = lsym_comma;	next_unary = true;	break;
+	case ';':	lsym = lsym_semicolon;	next_unary = true;	break;
+	/* INDENT ON */
 
 	case '-':
 	case '+':
@@ -626,6 +610,27 @@ lexi(void)
 		}
 		break;
 
+	case ':':
+		lsym = ps.quest_level > 0
+		    ? (ps.quest_level--, lsym_colon_question)
+		    : ps.init_or_struct
+		    ? lsym_colon_other
+		    : lsym_colon_label;
+		next_unary = true;
+		break;
+
+	case '*':
+		if (inp_p[0] == '=') {
+			token_add_char(*inp_p++);
+			lsym = lsym_binary_op;
+		} else if (is_asterisk_unary()) {
+			lex_asterisk_unary();
+			lsym = lsym_unary_op;
+		} else
+			lsym = lsym_binary_op;
+		next_unary = true;
+		break;
+
 	case '=':
 		if (ps.init_or_struct)
 			ps.block_init = true;
@@ -646,16 +651,11 @@ lexi(void)
 		next_unary = true;
 		break;
 
-	case '*':
-		if (inp_p[0] == '=') {
-			token_add_char(*inp_p++);
-			lsym = lsym_binary_op;
-		} else if (is_asterisk_unary()) {
-			lex_asterisk_unary();
-			lsym = lsym_unary_op;
-		} else
-			lsym = lsym_binary_op;
-		next_unary = true;
+	case '\'':
+	case '"':
+		lex_char_or_string();
+		lsym = lsym_word;
+		next_unary = false;
 		break;
 
 	default:
