@@ -1,4 +1,4 @@
-/* $NetBSD: psym_stmt.c,v 1.5 2023/06/09 09:45:55 rillig Exp $ */
+/* $NetBSD: psym_stmt.c,v 1.6 2023/06/09 10:24:55 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_stmt, which represents a statement on the
@@ -28,14 +28,12 @@ function(void)
 //indent run-equals-input
 
 
+// Ensure that '(something) {' is not treated as a cast expression.
 //indent input
 {
 	TAILQ_FOREACH(a, b, c) {
 		a =
-// $ FIXME: The 'b' must be indented as a continuation.
-// $ The '{' in line 2 sets ps.block_init though, even though it does not
-// $ follow a '='.
-		b;
+		    b;
 	}
 }
 //indent end
