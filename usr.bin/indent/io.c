@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.207 2023/06/09 08:10:58 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.208 2023/06/09 22:01:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.207 2023/06/09 08:10:58 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.208 2023/06/09 22:01:26 rillig Exp $");
 
 #include <stdio.h>
 
@@ -48,10 +48,12 @@ struct buffer inp;
 const char *inp_p;
 
 struct output_state out;
+enum indent_enabled indent_enabled;
 static int out_ind;		/* width of the line that is being written */
 static unsigned wrote_newlines = 2;	/* 0 in the middle of a line, 1 after a
 					 * single '\n', > 1 means there were (n
 					 * - 1) blank lines above */
+static unsigned buffered_blank_lines;
 static int paren_indent;
 
 
@@ -108,15 +110,24 @@ inp_next(void)
 static void
 output_newline(void)
 {
-	fputc('\n', output);
-	debug_println("output_newline");
+	buffered_blank_lines++;
 	wrote_newlines++;
 	out_ind = 0;
 }
 
 static void
+write_buffered_blank_lines(void)
+{
+	for (; buffered_blank_lines > 0; buffered_blank_lines--) {
+		fputc('\n', output);
+		debug_println("output_newline");
+	}
+}
+
+static void
 output_range(const char *s, size_t len)
 {
+	write_buffered_blank_lines();
 	fwrite(s, 1, len, output);
 	debug_vis_range("output_range \"", s, len, "\"\n");
 	for (size_t i = 0; i < len; i++)
@@ -127,6 +138,8 @@ output_range(const char *s, size_t len)
 static void
 output_indent(int new_ind)
 {
+	write_buffered_blank_lines();
+
 	int ind = out_ind;
 
 	if (opt.use_tabs) {
@@ -146,6 +159,22 @@ output_indent(int new_ind)
 
 	debug_println("output_indent %d", ind);
 	out_ind = ind;
+}
+
+void
+output_finish(void)
+{
+	if (lab.len > 0 || code.len > 0 || com.len > 0)
+		output_line();
+	if (indent_enabled == indent_on) {
+		if (buffered_blank_lines > 1)
+			buffered_blank_lines = 1;
+		write_buffered_blank_lines();
+	} else {
+		indent_enabled = indent_last_off_line;
+		output_line();
+	}
+	fflush(output);
 }
 
 static bool

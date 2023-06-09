@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.347 2023/06/09 16:23:43 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.348 2023/06/09 22:01:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.347 2023/06/09 16:23:43 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.348 2023/06/09 22:01:26 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -83,7 +83,6 @@ struct buffer com;
 bool found_err;
 bool had_eof;
 int line_no = 1;
-enum indent_enabled indent_enabled;
 
 static int ifdef_level;
 static struct parser_state state_stack[5];
@@ -380,17 +379,11 @@ is_function_pointer_declaration(void)
 static int
 process_eof(void)
 {
-	if (lab.len > 0 || code.len > 0 || com.len > 0)
-		output_line();
-	if (indent_enabled != indent_on) {
-		indent_enabled = indent_last_off_line;
-		output_line();
-	}
+	output_finish();
 
 	if (ps.psyms.top > 1)	/* check for balanced braces */
 		diag(1, "Stuff missing from end of file");
 
-	fflush(output);
 	return found_err ? EXIT_FAILURE : EXIT_SUCCESS;
 }
 

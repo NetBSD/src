@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_newline.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: lsym_newline.c,v 1.5 2023/06/09 22:01:26 rillig Exp $ */
 
 /*
  * Tests for the token lsym_newline, which represents a forced line break in
@@ -31,4 +31,16 @@ int		var =
 + 2
 + 3
 + 4;
+//indent end
+
+
+// Trim trailing blank lines.
+//indent input
+int x;
+
+
+//indent end
+
+//indent run -di0
+int x;
 //indent end
