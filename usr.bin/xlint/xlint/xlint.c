@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.110 2023/06/09 13:03:49 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.111 2023/06/09 13:31:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.110 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.111 2023/06/09 13:31:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -127,11 +127,6 @@ static	const	char *currfn;
 #endif
 static const char target_prefix[] = TARGET_PREFIX;
 
-static	void	handle_filename(const char *);
-static	void	run_child(const char *, list *, const char *, int);
-static	void	find_libs(const list *);
-static	bool	file_is_readable(const char *);
-static	void	cat(const list *, const char *);
 
 static void
 list_add_ref(list *l, char *s)
@@ -197,6 +192,17 @@ concat2(const char *s1, const char *s2)
 	return s;
 }
 
+static void
+set_tmpdir(void)
+{
+	const char *tmp;
+	size_t len;
+
+	tmpdir = (tmp = getenv("TMPDIR")) != NULL && (len = strlen(tmp)) != 0
+	    ? concat2(tmp, tmp[len - 1] == '/' ? "" : "/")
+	    : xstrdup(_PATH_TMP);
+}
+
 /* Clean up after a signal or at the regular end. */
 static void __attribute__((__noreturn__))
 terminate(int signo)
@@ -224,32 +230,6 @@ terminate(int signo)
 	if (signo != 0)
 		(void)raise_default_signal(signo);
 	exit(signo != 0 ? 1 : 0);
-}
-
-/*
- * Returns a pointer to the last component of path after delim.
- * Returns path if the string does not contain delim.
- */
-static const char *
-lbasename(const char *path, int delim)
-{
-
-	const char *base = path;
-	for (const char *p = path; *p != '\0'; p++)
-		if (*p == delim)
-			base = p + 1;
-	return base;
-}
-
-static void
-set_tmpdir(void)
-{
-	const char *tmp;
-	size_t len;
-
-	tmpdir = (tmp = getenv("TMPDIR")) != NULL && (len = strlen(tmp)) != 0
-	    ? concat2(tmp, tmp[len - 1] == '/' ? "" : "/")
-	    : xstrdup(_PATH_TMP);
 }
 
 static void __attribute__((__noreturn__, __format__(__printf__, 1, 2)))
@@ -280,6 +260,113 @@ usage(const char *fmt, ...)
 	    "%*s [-Bpath] [-X <id>[,<id>]...] [-R old=new] file ...\n",
 	    name, indent, "", indent, "");
 	terminate(-1);
+}
+
+/*
+ * Returns a pointer to the last component of path after delim.
+ * Returns path if the string does not contain delim.
+ */
+static const char *
+lbasename(const char *path, int delim)
+{
+
+	const char *base = path;
+	for (const char *p = path; *p != '\0'; p++)
+		if (*p == delim)
+			base = p + 1;
+	return base;
+}
+
+static bool
+is_safe_shell(char ch)
+{
+
+	return ch_isalnum(ch) || ch == '%' || ch == '+' || ch == ',' ||
+	       ch == '-' || ch == '.' || ch == '/' || ch == ':' ||
+	       ch == '=' || ch == '@' || ch == '_';
+}
+
+static void
+print_sh_quoted(const char *s)
+{
+
+	if (s[0] == '\0')
+		goto needs_quoting;
+	for (const char *p = s; *p != '\0'; p++)
+		if (!is_safe_shell(*p))
+			goto needs_quoting;
+
+	(void)printf("%s", s);
+	return;
+
+needs_quoting:
+	(void)putchar('\'');
+	for (const char *p = s; *p != '\0'; p++) {
+		if (*p == '\'')
+			(void)printf("'\\''");
+		else
+			(void)putchar(*p);
+	}
+	(void)putchar('\'');
+}
+
+static void
+run_child(const char *path, list *args, const char *crfn, int fdout)
+{
+	int status, rv, signo;
+
+	if (Vflag) {
+		print_sh_quoted(args->items[0]);
+		for (size_t i = 1; i < args->len - 1; i++) {
+			(void)printf(" ");
+			print_sh_quoted(args->items[i]);
+		}
+		(void)printf("\n");
+	}
+
+	currfn = crfn;
+
+	(void)fflush(stdout);
+
+	switch (vfork()) {
+	case -1:
+		warn("cannot fork");
+		terminate(-1);
+		/* NOTREACHED */
+	default:
+		/* parent */
+		break;
+	case 0:
+		/* child */
+
+		/* set up the standard output if necessary */
+		if (fdout != -1) {
+			(void)dup2(fdout, STDOUT_FILENO);
+			(void)close(fdout);
+		}
+		(void)execvp(path, args->items);
+		warn("cannot exec %s", path);
+		_exit(1);
+		/* NOTREACHED */
+	}
+
+	while ((rv = wait(&status)) == -1 && errno == EINTR) ;
+	if (rv == -1) {
+		warn("wait");
+		terminate(-1);
+	}
+	if (WIFSIGNALED(status)) {
+		signo = WTERMSIG(status);
+#if HAVE_DECL_SYS_SIGNAME
+		warnx("%s got SIG%s", path, sys_signame[signo]);
+#else
+		warnx("%s got signal %d", path, signo);
+#endif
+		terminate(-1);
+	}
+	if (WEXITSTATUS(status) != 0)
+		terminate(-1);
+	currfn = NULL;
 }
 
 static void
@@ -338,6 +425,112 @@ run_lint1(const char *out_fname)
 	list_clear(&args);
 }
 
+/*
+ * Read a file name from the command line
+ * and pass it through lint1 if it is a C source.
+ */
+static void
+handle_filename(const char *name)
+{
+	const char *bn, *suff;
+	char *ofn;
+	size_t len;
+	int fd;
+
+	bn = lbasename(name, '/');
+	suff = lbasename(bn, '.');
+
+	if (strcmp(suff, "ln") == 0) {
+		/* only for lint2 */
+		if (!iflag)
+			list_add(&lint2.infiles, name);
+		return;
+	}
+
+	if (strcmp(suff, "c") != 0 &&
+	    (strncmp(bn, "llib-l", 6) != 0 || bn != suff)) {
+		warnx("unknown file type: %s", name);
+		return;
+	}
+
+	if (!iflag || !first)
+		(void)printf("%s:\n", Fflag ? name : bn);
+
+	/* build the name of the output file of lint1 */
+	if (oflag) {
+		ofn = outputfn;
+		outputfn = NULL;
+		oflag = false;
+	} else if (iflag) {
+		len = bn == suff ? strlen(bn) : (size_t)((suff - 1) - bn);
+		ofn = xasprintf("%.*s.ln", (int)len, bn);
+	} else {
+		ofn = xasprintf("%slint1.XXXXXX", tmpdir);
+		fd = mkstemp(ofn);
+		if (fd == -1) {
+			warn("can't make temp");
+			terminate(-1);
+		}
+		(void)close(fd);
+	}
+	if (!iflag)
+		list_add(&lint1.outfiles, ofn);
+
+	run_cpp(name);
+	run_lint1(ofn);
+
+	list_add(&lint2.infiles, ofn);
+	free(ofn);
+}
+
+static bool
+file_is_readable(const char *path)
+{
+	struct stat sbuf;
+
+	if (stat(path, &sbuf) == -1)
+		return false;
+	if (!S_ISREG(sbuf.st_mode))
+		return false;
+	if (access(path, R_OK) == -1)
+		return false;
+	return true;
+}
+
+static void
+find_lib(const char *lib)
+{
+	char *lfn;
+
+	for (size_t i = 0; i < libsrchpath.len; i++) {
+		const char *dir = libsrchpath.items[i];
+		lfn = xasprintf("%s/llib-l%s.ln", dir, lib);
+		if (file_is_readable(lfn))
+			goto found;
+		free(lfn);
+
+		lfn = xasprintf("%s/lint/llib-l%s.ln", dir, lib);
+		if (file_is_readable(lfn))
+			goto found;
+		free(lfn);
+	}
+
+	warnx("cannot find llib-l%s.ln", lib);
+	return;
+
+found:
+	list_add_ref(&lint2.inlibs, concat2("-l", lfn));
+	free(lfn);
+}
+
+static void
+find_libs(const list *l)
+{
+
+	for (size_t i = 0; i < l->len; i++)
+		find_lib(l->items[i]);
+}
+
 static void
 run_lint2(void)
 {
@@ -355,6 +548,39 @@ run_lint2(void)
 
 	run_child(abs_lint2, &args, lint2.outlib, -1);
 	list_clear(&args);
+}
+
+static void
+cat(const list *srcs, const char *dest)
+{
+	int ifd, ofd;
+	ssize_t rlen;
+	char buf[0x4000];
+
+	if ((ofd = open(dest, O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
+		warn("cannot open %s", dest);
+		terminate(-1);
+	}
+
+	for (size_t i = 0; i < srcs->len; i++) {
+		const char *src = srcs->items[i];
+		if ((ifd = open(src, O_RDONLY)) == -1) {
+			warn("cannot open %s", src);
+			terminate(-1);
+		}
+		do {
+			if ((rlen = read(ifd, buf, sizeof(buf))) == -1) {
+				warn("read error on %s", src);
+				terminate(-1);
+			}
+			if (write(ofd, buf, (size_t)rlen) != rlen) {
+				warn("write error on %s", dest);
+				terminate(-1);
+			}
+		} while (rlen == sizeof(buf));
+		(void)close(ifd);
+	}
+	(void)close(ofd);
 }
 
 int
@@ -620,235 +846,4 @@ main(int argc, char *argv[])
 
 	terminate(0);
 	/* NOTREACHED */
-}
-
-/*
- * Read a file name from the command line
- * and pass it through lint1 if it is a C source.
- */
-static void
-handle_filename(const char *name)
-{
-	const char *bn, *suff;
-	char *ofn;
-	size_t len;
-	int fd;
-
-	bn = lbasename(name, '/');
-	suff = lbasename(bn, '.');
-
-	if (strcmp(suff, "ln") == 0) {
-		/* only for lint2 */
-		if (!iflag)
-			list_add(&lint2.infiles, name);
-		return;
-	}
-
-	if (strcmp(suff, "c") != 0 &&
-	    (strncmp(bn, "llib-l", 6) != 0 || bn != suff)) {
-		warnx("unknown file type: %s", name);
-		return;
-	}
-
-	if (!iflag || !first)
-		(void)printf("%s:\n", Fflag ? name : bn);
-
-	/* build the name of the output file of lint1 */
-	if (oflag) {
-		ofn = outputfn;
-		outputfn = NULL;
-		oflag = false;
-	} else if (iflag) {
-		len = bn == suff ? strlen(bn) : (size_t)((suff - 1) - bn);
-		ofn = xasprintf("%.*s.ln", (int)len, bn);
-	} else {
-		ofn = xasprintf("%slint1.XXXXXX", tmpdir);
-		fd = mkstemp(ofn);
-		if (fd == -1) {
-			warn("can't make temp");
-			terminate(-1);
-		}
-		(void)close(fd);
-	}
-	if (!iflag)
-		list_add(&lint1.outfiles, ofn);
-
-	run_cpp(name);
-	run_lint1(ofn);
-
-	list_add(&lint2.infiles, ofn);
-	free(ofn);
-}
-
-static bool
-is_safe_shell(char ch)
-{
-
-	return ch_isalnum(ch) || ch == '%' || ch == '+' || ch == ',' ||
-	       ch == '-' || ch == '.' || ch == '/' || ch == ':' ||
-	       ch == '=' || ch == '@' || ch == '_';
-}
-
-static void
-print_sh_quoted(const char *s)
-{
-
-	if (s[0] == '\0')
-		goto needs_quoting;
-	for (const char *p = s; *p != '\0'; p++)
-		if (!is_safe_shell(*p))
-			goto needs_quoting;
-
-	(void)printf("%s", s);
-	return;
-
-needs_quoting:
-	(void)putchar('\'');
-	for (const char *p = s; *p != '\0'; p++) {
-		if (*p == '\'')
-			(void)printf("'\\''");
-		else
-			(void)putchar(*p);
-	}
-	(void)putchar('\'');
-}
-
-static void
-run_child(const char *path, list *args, const char *crfn, int fdout)
-{
-	int status, rv, signo;
-
-	if (Vflag) {
-		print_sh_quoted(args->items[0]);
-		for (size_t i = 1; i < args->len - 1; i++) {
-			(void)printf(" ");
-			print_sh_quoted(args->items[i]);
-		}
-		(void)printf("\n");
-	}
-
-	currfn = crfn;
-
-	(void)fflush(stdout);
-
-	switch (vfork()) {
-	case -1:
-		warn("cannot fork");
-		terminate(-1);
-		/* NOTREACHED */
-	default:
-		/* parent */
-		break;
-	case 0:
-		/* child */
-
-		/* set up the standard output if necessary */
-		if (fdout != -1) {
-			(void)dup2(fdout, STDOUT_FILENO);
-			(void)close(fdout);
-		}
-		(void)execvp(path, args->items);
-		warn("cannot exec %s", path);
-		_exit(1);
-		/* NOTREACHED */
-	}
-
-	while ((rv = wait(&status)) == -1 && errno == EINTR) ;
-	if (rv == -1) {
-		warn("wait");
-		terminate(-1);
-	}
-	if (WIFSIGNALED(status)) {
-		signo = WTERMSIG(status);
-#if HAVE_DECL_SYS_SIGNAME
-		warnx("%s got SIG%s", path, sys_signame[signo]);
-#else
-		warnx("%s got signal %d", path, signo);
-#endif
-		terminate(-1);
-	}
-	if (WEXITSTATUS(status) != 0)
-		terminate(-1);
-	currfn = NULL;
-}
-
-static void
-find_lib(const char *lib)
-{
-	char *lfn;
-
-	for (size_t i = 0; i < libsrchpath.len; i++) {
-		const char *dir = libsrchpath.items[i];
-		lfn = xasprintf("%s/llib-l%s.ln", dir, lib);
-		if (file_is_readable(lfn))
-			goto found;
-		free(lfn);
-
-		lfn = xasprintf("%s/lint/llib-l%s.ln", dir, lib);
-		if (file_is_readable(lfn))
-			goto found;
-		free(lfn);
-	}
-
-	warnx("cannot find llib-l%s.ln", lib);
-	return;
-
-found:
-	list_add_ref(&lint2.inlibs, concat2("-l", lfn));
-	free(lfn);
-}
-
-static void
-find_libs(const list *l)
-{
-
-	for (size_t i = 0; i < l->len; i++)
-		find_lib(l->items[i]);
-}
-
-static bool
-file_is_readable(const char *path)
-{
-	struct stat sbuf;
-
-	if (stat(path, &sbuf) == -1)
-		return false;
-	if (!S_ISREG(sbuf.st_mode))
-		return false;
-	if (access(path, R_OK) == -1)
-		return false;
-	return true;
-}
-
-static void
-cat(const list *srcs, const char *dest)
-{
-	int ifd, ofd;
-	ssize_t rlen;
-	char buf[0x4000];
-
-	if ((ofd = open(dest, O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
-		warn("cannot open %s", dest);
-		terminate(-1);
-	}
-
-	for (size_t i = 0; i < srcs->len; i++) {
-		const char *src = srcs->items[i];
-		if ((ifd = open(src, O_RDONLY)) == -1) {
-			warn("cannot open %s", src);
-			terminate(-1);
-		}
-		do {
-			if ((rlen = read(ifd, buf, sizeof(buf))) == -1) {
-				warn("read error on %s", src);
-				terminate(-1);
-			}
-			if (write(ofd, buf, (size_t)rlen) != rlen) {
-				warn("write error on %s", dest);
-				terminate(-1);
-			}
-		} while (rlen == sizeof(buf));
-		(void)close(ifd);
-	}
-	(void)close(ofd);
 }
