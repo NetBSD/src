@@ -1,4 +1,4 @@
-/* $NetBSD: opt_eei.c,v 1.13 2023/06/09 07:54:05 rillig Exp $ */
+/* $NetBSD: opt_eei.c,v 1.14 2023/06/09 08:10:58 rillig Exp $ */
 
 /*
  * Tests for the options '-eei' and '-neei'.
@@ -62,18 +62,14 @@ b)
 //indent run -eei
 {
 	if (a <
-/* $ XXX: No extra indentation necessary. */
-			b)
+	    b)
 		stmt();
 	if (a
-/* $ XXX: No extra indentation necessary. */
-			<
-/* $ XXX: No extra indentation necessary. */
-			b)
+	    <
+	    b)
 		stmt();
 	while (a
-/* $ XXX: No extra indentation necessary. */
-			< b)
+	       < b)
 		stmt();
 	switch (
 			a)
@@ -110,8 +106,7 @@ b)
 	    b)
 	stmt();
     while (a
-/* $ XXX: No extra indentation necessary. */
-	    < b)
+	   < b)
 	stmt();
     switch (
 /* $ XXX: No extra indentation necessary. */
@@ -208,10 +203,9 @@ b)
 //indent run -eei
 {
 	if (fun(
-// $ TODO: Indent one level further.
-		1,
-		2,
-		3))
+			1,
+			2,
+			3))
 		stmt;
 }
 //indent end
@@ -239,9 +233,8 @@ b)
 	      3
 	    )))
 		stmt;
-// $ XXX: The indentation of '4' may be considered ambiguous.
 	if ((((
-		4
+		  4
 	      ))))
 		stmt;
 }
