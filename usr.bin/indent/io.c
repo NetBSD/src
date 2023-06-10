@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.209 2023/06/10 06:38:21 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.210 2023/06/10 07:42:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.209 2023/06/10 06:38:21 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.210 2023/06/10 07:42:41 rillig Exp $");
 
 #include <stdio.h>
 
@@ -349,8 +349,6 @@ output_line(void)
 	debug_printf("%s", __func__);
 	debug_buffers();
 
-	ps.in_func_def_line = false;
-
 	if (indent_enabled == indent_on) {
 		if (lab.len == 0 && code.len == 0 && com.len == 0)
 			out.line_kind = lk_blank;
@@ -397,6 +395,7 @@ prepare_next_line:
 	com.len = 0;
 
 	ps.line_has_decl = ps.in_decl;
+	ps.line_has_func_def = false;
 	// XXX: don't reset in_stmt_cont here; see process_colon_question.
 	ps.in_stmt_cont = ps.in_stmt_or_decl
 	    && !ps.in_decl && ps.init_level == 0;

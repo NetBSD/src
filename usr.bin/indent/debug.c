@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.45 2023/06/10 07:05:18 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.46 2023/06/10 07:42:41 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.45 2023/06/10 07:05:18 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.46 2023/06/10 07:42:41 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -299,7 +299,7 @@ debug_parser_state(void)
 	debug_ps_bool(in_var_decl);
 	debug_ps_bool(in_init);
 	debug_ps_int(init_level);
-	debug_ps_bool(in_func_def_line);
+	debug_ps_bool(line_has_func_def);
 	debug_ps_bool(in_func_def_params);
 	debug_ps_bool(line_has_decl);
 	debug_ps_enum(lbrace_kind, psym_name);

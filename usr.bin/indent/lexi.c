@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.221 2023/06/10 06:38:21 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.222 2023/06/10 07:42:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.221 2023/06/10 06:38:21 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.222 2023/06/10 07:42:41 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -419,7 +419,7 @@ found_typename:
 	    !ps.in_func_def_params && !ps.in_init) {
 
 		if (ps.nparen == 0 && probably_looking_at_definition()) {
-			ps.in_func_def_line = true;
+			ps.line_has_func_def = true;
 			if (ps.in_decl)
 				ps.in_func_def_params = true;
 			return lsym_funcname;
@@ -473,7 +473,7 @@ lex_asterisk_unary(void)
 	}
 
 	if (ps.in_decl && probably_in_function_definition())
-		ps.in_func_def_line = true;
+		ps.line_has_func_def = true;
 }
 
 static void
