@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.348 2023/06/09 22:01:26 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.349 2023/06/10 06:38:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.348 2023/06/09 22:01:26 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.349 2023/06/10 06:38:21 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -370,9 +370,9 @@ static bool
 is_function_pointer_declaration(void)
 {
 	return ps.in_decl
-	    && !ps.block_init
+	    && !ps.in_init
 	    && !ps.decl_indent_done
-	    && !ps.is_function_definition
+	    && !ps.in_func_def_line
 	    && ps.line_start_nparen == 0;
 }
 
@@ -477,7 +477,7 @@ static void
 process_newline(void)
 {
 	if (ps.prev_lsym == lsym_comma
-	    && ps.nparen == 0 && !ps.block_init
+	    && ps.nparen == 0 && !ps.in_init
 	    && !opt.break_after_comma && ps.break_after_comma
 	    && lab.len == 0	/* for preprocessing lines */
 	    && com.len == 0)
@@ -531,10 +531,10 @@ process_lparen(void)
 	if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0)
 		ps.extra_expr_indent = eei_maybe;
 
-	if (ps.init_or_struct && ps.psyms.top <= 2) {
+	if (ps.in_var_decl && ps.psyms.top <= 2) {
 		/* A kludge to correctly align function definitions. */
 		parse(psym_stmt);
-		ps.init_or_struct = false;
+		ps.in_var_decl = false;
 	}
 
 	int indent = ind_add(0, code.s, code.len);
@@ -546,7 +546,7 @@ process_lparen(void)
 	    || ps.prev_lsym == lsym_if
 	    || ps.prev_lsym == lsym_switch
 	    || ps.prev_lsym == lsym_while
-	    || ps.is_function_definition)
+	    || ps.in_func_def_line)
 		cast = cast_no;
 
 	ps.paren[ps.nparen - 1].indent = indent;
@@ -564,7 +564,7 @@ process_rparen(void)
 	}
 
 	enum paren_level_cast cast = ps.paren[--ps.nparen].cast;
-	if (ps.in_func_def_params || (ps.decl_on_line && !ps.block_init))
+	if (ps.in_func_def_params || (ps.line_has_decl && !ps.in_init))
 		cast = cast_no;
 
 	ps.prev_paren_was_cast = cast == cast_maybe;
@@ -636,8 +636,8 @@ static void
 process_lbrace(void)
 {
 	if (ps.prev_lsym == lsym_rparen && ps.prev_paren_was_cast) {
-		ps.block_init = true;
-		ps.init_or_struct = true;
+		ps.in_var_decl = true;	// XXX: not really
+		ps.in_init = true;
 	}
 
 	if (out.line_kind == lk_stmt_head)
@@ -645,16 +645,16 @@ process_lbrace(void)
 
 	ps.in_stmt_or_decl = false;	/* don't indent the {} */
 
-	if (!ps.block_init)
+	if (!ps.in_init)
 		ps.force_nl = true;
 	else
-		ps.block_init_level++;
+		ps.init_level++;
 
-	if (code.len > 0 && !ps.block_init) {
+	if (code.len > 0 && !ps.in_init) {
 		if (!opt.brace_same_line ||
 		    (code.len > 0 && code.s[code.len - 1] == '}'))
 			output_line();
-		else if (ps.in_func_def_params && !ps.init_or_struct) {
+		else if (ps.in_func_def_params && !ps.in_var_decl) {
 			ps.ind_level_follow = 0;
 			if (opt.function_brace_split)
 				output_line();
@@ -663,7 +663,7 @@ process_lbrace(void)
 		}
 	}
 
-	if (ps.nparen > 0 && ps.block_init_level == 0) {
+	if (ps.nparen > 0 && ps.init_level == 0) {
 		diag(1, "Unbalanced parentheses");
 		ps.nparen = 0;
 		if (ps.spaced_expr_psym != psym_0) {
@@ -676,15 +676,15 @@ process_lbrace(void)
 	if (code.len == 0)
 		ps.in_stmt_cont = false;	/* don't indent the '{' itself
 						 */
-	if (ps.in_decl && ps.init_or_struct) {
+	if (ps.in_decl && ps.in_var_decl) {
 		ps.di_stack[ps.decl_level] = ps.decl_ind;
 		if (++ps.decl_level == (int)array_length(ps.di_stack)) {
-			diag(0, "Reached internal limit of %d struct levels",
-			    (int)array_length(ps.di_stack));
+			diag(0, "Reached internal limit of %zu struct levels",
+			    array_length(ps.di_stack));
 			ps.decl_level--;
 		}
 	} else {
-		ps.decl_on_line = false;	/* we can't be in the middle of
+		ps.line_has_decl = false;	/* we can't be in the middle of
 						 * a declaration, so don't do
 						 * special indentation of
 						 * comments */
@@ -704,17 +704,17 @@ process_lbrace(void)
 static void
 process_rbrace(void)
 {
-	if (ps.nparen > 0 && ps.block_init_level == 0) {
+	if (ps.nparen > 0 && ps.init_level == 0) {
 		diag(1, "Unbalanced parentheses");
 		ps.nparen = 0;
 		ps.spaced_expr_psym = psym_0;
 	}
 
 	ps.declaration = decl_no;
-	if (ps.block_init_level > 0)
-		ps.block_init_level--;
+	if (ps.init_level > 0)
+		ps.init_level--;
 
-	if (code.len > 0 && !ps.block_init)
+	if (code.len > 0 && !ps.in_init)
 		output_line();
 
 	buf_add_char(&code, '}');
@@ -737,7 +737,7 @@ process_rbrace(void)
 
 	parse(psym_rbrace);
 
-	if (!ps.init_or_struct
+	if (!ps.in_var_decl
 	    && ps.psyms.sym[ps.psyms.top] != psym_do_stmt
 	    && ps.psyms.sym[ps.psyms.top] != psym_if_expr_stmt)
 		ps.force_nl = true;
@@ -803,7 +803,7 @@ process_comma(void)
 	ps.want_blank = code.len > 0;	/* only put blank after comma if comma
 					 * does not start the line */
 
-	if (ps.in_decl && !ps.is_function_definition && !ps.block_init &&
+	if (ps.in_decl && !ps.in_func_def_line && !ps.in_init &&
 	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
 		/* indent leading commas and not the actual identifiers */
 		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
@@ -812,8 +812,8 @@ process_comma(void)
 	buf_add_char(&code, ',');
 
 	if (ps.nparen == 0) {
-		if (ps.block_init_level == 0)
-			ps.block_init = false;
+		if (ps.init_level == 0)
+			ps.in_init = false;
 		int typical_varname_length = 8;
 		if (ps.break_after_comma && (opt.break_after_comma ||
 			ind_add(compute_code_indent(), code.s, code.len)
@@ -850,16 +850,16 @@ process_semicolon(void)
 	if (out.line_kind == lk_stmt_head)
 		out.line_kind = lk_other;
 	if (ps.decl_level == 0)
-		ps.init_or_struct = false;
+		ps.in_var_decl = false;
 	ps.seen_case = false;	/* only needs to be reset on error */
 	ps.quest_level = 0;	/* only needs to be reset on error */
 	if (ps.prev_lsym == lsym_rparen)
 		ps.in_func_def_params = false;
-	ps.block_init = false;
-	ps.block_init_level = 0;
+	ps.in_init = false;
+	ps.init_level = 0;
 	ps.declaration = ps.declaration == decl_begin ? decl_end : decl_no;
 
-	if (ps.in_decl && code.len == 0 && !ps.block_init &&
+	if (ps.in_decl && code.len == 0 && !ps.in_init &&
 	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
 		/* indent stray semicolons in declarations */
 		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
@@ -905,8 +905,8 @@ process_type(void)
 		ps.in_stmt_cont = false;
 	}
 
-	ps.init_or_struct = /* maybe */ true;
-	ps.in_decl = ps.decl_on_line = ps.prev_lsym != lsym_typedef;
+	ps.in_var_decl = /* maybe */ true;
+	ps.in_decl = ps.line_has_decl = ps.prev_lsym != lsym_typedef;
 	if (ps.decl_level <= 0)
 		ps.declaration = decl_begin;
 
@@ -930,7 +930,7 @@ process_ident(lexer_symbol lsym)
 				buf_add_char(&code, ' ');
 			ps.want_blank = false;
 
-		} else if (!ps.block_init && !ps.decl_indent_done &&
+		} else if (!ps.in_init && !ps.decl_indent_done &&
 		    ps.line_start_nparen == 0) {
 			if (opt.decl_indent == 0
 			    && code.len > 0 && code.s[code.len - 1] == '}')
