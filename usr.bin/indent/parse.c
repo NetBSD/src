@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.71 2023/06/10 16:43:56 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.72 2023/06/10 17:35:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.71 2023/06/10 16:43:56 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.72 2023/06/10 17:35:40 rillig Exp $");
 
 #include <err.h>
 
@@ -101,17 +101,13 @@ decl_level(void)
 }
 
 static void
-ps_push(parser_symbol psym)
+ps_push(parser_symbol psym, bool follow)
 {
+	if (ps.psyms.top + 1 >= STACKSIZE)
+		errx(1, "Parser stack overflow");
 	ps.psyms.sym[++ps.psyms.top] = psym;
-	ps.psyms.ind_level[ps.psyms.top] = ps.ind_level;
-}
-
-static void
-ps_push_follow(parser_symbol psym)
-{
-	ps.psyms.sym[++ps.psyms.top] = psym;
-	ps.psyms.ind_level[ps.psyms.top] = ps.ind_level_follow;
+	ps.psyms.ind_level[ps.psyms.top] =
+	    follow ? ps.ind_level_follow : ps.ind_level;
 }
 
 /*
@@ -180,8 +176,8 @@ parse(parser_symbol psym)
 				--ps.ind_level;
 		}
 
-		ps_push(psym);
-		ps_push_follow(psym_stmt);
+		ps_push(psym, false);
+		ps_push(psym_stmt, true);
 		break;
 
 	case psym_rbrace:
@@ -201,7 +197,7 @@ parse(parser_symbol psym)
 			break;	/* only put one declaration onto stack */
 
 		ps.break_after_comma = true;
-		ps_push_follow(psym_decl);
+		ps_push(psym_decl, true);
 
 		if (opt.left_justify_decl)
 			ps.ind_level_follow = ps.ind_level = decl_level();
@@ -209,7 +205,7 @@ parse(parser_symbol psym)
 
 	case psym_stmt:
 		ps.break_after_comma = false;
-		ps_push(psym_stmt);
+		ps_push(psym_stmt, false);
 		break;
 
 	case psym_if_expr:
@@ -220,7 +216,7 @@ parse(parser_symbol psym)
 	case psym_do:
 	case psym_for_exprs:
 		ps.ind_level = ps.ind_level_follow++;
-		ps_push(psym);
+		ps_push(psym, false);
 		break;
 
 	case psym_else:
@@ -234,7 +230,7 @@ parse(parser_symbol psym)
 		break;
 
 	case psym_switch_expr:
-		ps_push_follow(psym_switch_expr);
+		ps_push(psym_switch_expr, true);
 		ps.ind_level_follow += (int)opt.case_indent + 1;
 		break;
 
@@ -242,9 +238,9 @@ parse(parser_symbol psym)
 		if (psyms->sym[psyms->top] == psym_do_stmt) {
 			ps.ind_level = ps.ind_level_follow =
 			    psyms->ind_level[psyms->top];
-			ps_push(psym_while_expr);
+			ps_push(psym_while_expr, false);
 		} else {
-			ps_push_follow(psym_while_expr);
+			ps_push(psym_while_expr, true);
 			++ps.ind_level_follow;
 		}
 		break;
@@ -253,9 +249,6 @@ parse(parser_symbol psym)
 		diag(1, "Unknown code to parser");
 		return;
 	}
-
-	if (psyms->top >= STACKSIZE - 1)
-		errx(1, "Parser stack overflow");
 
 	debug_psyms_stack("before reduction");
 	psyms_reduce(&ps.psyms);
