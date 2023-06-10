@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.16 2023/05/07 12:41:49 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.17 2023/06/10 07:02:26 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.16 2023/05/07 12:41:49 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.17 2023/06/10 07:02:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -170,7 +170,7 @@ pmap_md_xtab_activate(struct pmap *pmap, struct lwp *l)
 //	struct cpu_info * const ci = curcpu();
 	struct pmap_asid_info * const pai = PMAP_PAI(pmap, cpu_tlb_info(ci));
 
-	 uint64_t satp =
+	uint64_t satp =
 #ifdef _LP64
 	    __SHIFTIN(SATP_MODE_SV39, SATP_MODE) |
 #else
