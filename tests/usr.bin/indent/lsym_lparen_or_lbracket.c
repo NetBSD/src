@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.15 2023/06/08 20:55:22 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.16 2023/06/10 08:17:04 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -289,7 +289,7 @@ cover_want_blank_before_lparen(void)
 {
 	/* ps.prev_lsym can never be 'newline'. */
 	int newline =
-	(3);
+		(3);
 
 	int lparen_or_lbracket = a[(3)];
 	int rparen_or_rbracket = a[3](5);

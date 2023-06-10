@@ -1,4 +1,4 @@
-/* $NetBSD: opt_lpl.c,v 1.7 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_lpl.c,v 1.8 2023/06/10 08:17:04 rillig Exp $ */
 
 /*
  * Tests for the options '-lpl' and '-nlpl'.
@@ -46,13 +46,11 @@ example(void)
 	int		sum1 = 1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 + 20 + 21;
 	int		sum2 = (1 + 2 + 3 + 4 + 5 + 6 + 7 + 8 + 9 + 10 + 11 + 12 + 13 + 14 + 15 + 16 + 17 + 18 + 19 + 20 + 21);
 
-/* $ XXX: There should be at least _some_ indentation for the */
-/* $ continuation lines. */
 	int		sum3 = 1 + 2 + 3 + 4 + 5 +
-	6 + 7 + 8 + 9 + 10 +
-	11 + 12 + 13 + 14 + 15 +
-	16 + 17 + 18 + 19 + 20 +
-	21;
+		6 + 7 + 8 + 9 + 10 +
+		11 + 12 + 13 + 14 + 15 +
+		16 + 17 + 18 + 19 + 20 +
+		21;
 	int		sum4 = (1 + 2 + 3 + 4 + 5 +
 				6 + 7 + 8 + 9 + 10 +
 				11 + 12 + 13 + 14 + 15 +
