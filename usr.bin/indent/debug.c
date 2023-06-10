@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.52 2023/06/10 20:37:12 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.53 2023/06/10 21:36:38 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.52 2023/06/10 20:37:12 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.53 2023/06/10 21:36:38 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -360,7 +360,7 @@ debug_parser_state(void)
 	state.heading = "spacing inside a statement or declaration";
 	debug_ps_bool(next_unary);
 	debug_ps_bool(want_blank);
-	debug_ps_int(line_start_nparen);
+	debug_ps_int(ind_paren_level);
 	debug_ps_int(nparen);
 	debug_ps_paren();
 
