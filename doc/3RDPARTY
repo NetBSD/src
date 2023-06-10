@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1929 2023/06/01 01:09:51 gutteridge Exp $
+#	$NetBSD: 3RDPARTY,v 1.1930 2023/06/10 13:16:44 lukem Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -713,7 +713,7 @@ Talk to mrg before importing any new version.
 
 Package:	libarchive
 Version:	3.4.0
-Current Vers:	3.6.1
+Current Vers:	3.6.2
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/releases
 Home Page: 	http://www.libarchive.org
@@ -723,6 +723,7 @@ License:	BSD (2-clause)
 Location:	external/bsd/libarchive/dist
 Notes:
 Distribution is stripped down to the relevant part.
+Local fix for PR bin/56080 sent back to upstream.
 
 Package:	libdevmapper
 Version:	1.02.40
