@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.53 2023/06/10 06:38:21 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.54 2023/06/10 17:56:29 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -1067,5 +1067,21 @@ b[] = {1, 2};
 	int a[] = {1, 2},
 	// $ FIXME: Missing indentation.
 	b[] = {1, 2};
+}
+//indent end
+
+
+/*
+ * When a type occurs at the top level, it forces a line break before.
+ */
+//indent input
+__attribute__((__dead__)) void die(void) {}
+//indent end
+
+//indent run
+__attribute__((__dead__))
+void
+die(void)
+{
 }
 //indent end

@@ -1,4 +1,4 @@
-/* $NetBSD: psym_if_expr.c,v 1.4 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: psym_if_expr.c,v 1.5 2023/06/10 17:56:29 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_if_expr, representing the parser state
@@ -18,5 +18,29 @@ function(void)
 {
 	if (cond)
 		stmt();
+}
+//indent end
+
+
+/*
+ * Indent is forgiving about syntax errors such as an 'if' statement in which
+ * the condition is not parenthesized.
+ */
+//indent input
+{
+	if cond {
+	}
+	if cond && cond {
+	}
+}
+//indent end
+
+//indent run
+{
+	if cond {
+	}
+	if cond
+		&& cond {
+		}
 }
 //indent end
