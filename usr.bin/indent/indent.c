@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.353 2023/06/10 12:59:31 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.354 2023/06/10 16:43:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,22 +38,20 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.353 2023/06/10 12:59:31 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.354 2023/06/10 16:43:55 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
-#include <fcntl.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #include "indent.h"
 
 struct options opt = {
 	.brace_same_line = true,
-	.comment_delimiter_on_blankline = true,
+	.comment_delimiter_on_blank_line = true,
 	.cuddle_else = true,
 	.comment_column = 33,
 	.decl_indent = 16,
@@ -91,8 +89,8 @@ FILE *input;
 FILE *output;
 
 static const char *in_name = "Standard Input";
+static char backup_name[PATH_MAX];
 static const char *backup_suffix = ".BAK";
-static char bakfile[MAXPATHLEN] = "";
 
 
 void *
@@ -218,38 +216,36 @@ load_profiles(int argc, char **argv)
  * and the original input file the output.
  */
 static void
-bakcopy(void)
+copy_to_bak_file(void)
 {
-	ssize_t n;
-	int bak_fd;
-	char buff[8 * 1024];
+	size_t n;
+	char buff[BUFSIZ];
 
 	const char *last_slash = strrchr(in_name, '/');
-	snprintf(bakfile, sizeof(bakfile), "%s%s",
-	    last_slash != NULL ? last_slash + 1 : in_name, backup_suffix);
+	const char *base = last_slash != NULL ? last_slash + 1 : in_name;
+	snprintf(backup_name, sizeof(backup_name), "%s%s", base, backup_suffix);
 
-	/* copy in_name to backup file */
-	bak_fd = creat(bakfile, 0600);
-	if (bak_fd < 0)
-		err(1, "%s", bakfile);
+	/* copy the input file to the backup file */
+	FILE *bak = fopen(backup_name, "w");
+	if (bak == NULL)
+		err(1, "%s", backup_name);
 
-	while ((n = read(fileno(input), buff, sizeof(buff))) > 0)
-		if (write(bak_fd, buff, (size_t)n) != n)
-			err(1, "%s", bakfile);
-	if (n < 0)
+	while ((n = fread(buff, 1, sizeof(buff), input)) > 0)
+		if (fwrite(buff, 1, n, bak) != n)
+			err(1, "%s", backup_name);
+	if (fclose(input) != 0)
 		err(1, "%s", in_name);
+	if (fclose(bak) != 0)
+		err(1, "%s", backup_name);
 
-	close(bak_fd);
-	(void)fclose(input);
-
-	/* re-open backup file as the input file */
-	input = fopen(bakfile, "r");
+	/* re-open the backup file as the input file */
+	input = fopen(backup_name, "r");
 	if (input == NULL)
-		err(1, "%s", bakfile);
+		err(1, "%s", backup_name);
 	/* now the original input file will be the output */
 	output = fopen(in_name, "w");
 	if (output == NULL) {
-		unlink(bakfile);
+		remove(backup_name);
 		err(1, "%s", in_name);
 	}
 }
@@ -283,7 +279,7 @@ parse_command_line(int argc, char **argv)
 		input = stdin;
 		output = stdout;
 	} else if (output == NULL)
-		bakcopy();
+		copy_to_bak_file();
 
 	if (opt.comment_column <= 1)
 		opt.comment_column = 2;	/* don't put normal comments in column
@@ -391,7 +387,7 @@ is_function_pointer_declaration(void)
 static int
 process_eof(void)
 {
-	output_finish();
+	finish_output();
 
 	if (ps.psyms.top > 1)	/* check for balanced braces */
 		diag(1, "Stuff missing from end of file");
@@ -657,10 +653,10 @@ process_lbrace(void)
 
 	ps.in_stmt_or_decl = false;	/* don't indent the {} */
 
-	if (!ps.in_init)
-		ps.force_nl = true;
-	else
+	if (ps.in_init)
 		ps.init_level++;
+	else
+		ps.force_nl = true;
 
 	if (code.len > 0 && !ps.in_init) {
 		if (!opt.brace_same_line ||
@@ -814,7 +810,7 @@ process_comma(void)
 }
 
 static void
-process_colon_label(void)
+process_label_colon(void)
 {
 	buf_add_buf(&lab, &code);
 	buf_add_char(&lab, ':');
@@ -829,7 +825,7 @@ process_colon_label(void)
 }
 
 static void
-process_colon_other(void)
+process_other_colon(void)
 {
 	buf_add_char(&code, ':');
 	ps.want_blank = ps.decl_level == 0;
@@ -902,9 +898,9 @@ process_type_outside_parentheses(void)
 		ps.declaration = decl_begin;
 
 	int len = (int)token.len + 1;
-	int ind = ps.ind_level == 0 || ps.decl_level > 0
-	    ? opt.decl_indent	/* global variable or local member */
-	    : opt.local_decl_indent;	/* local variable */
+	int ind = ps.ind_level > 0 && ps.decl_level == 0
+	    ? opt.local_decl_indent	/* local variable */
+	    : opt.decl_indent;	/* global variable, or member */
 	ps.decl_ind = ind > 0 ? ind : len;
 	ps.tabs_to_var = opt.use_tabs && ind > 0;
 }
@@ -984,9 +980,9 @@ process_lsym(lexer_symbol lsym)
 	case lsym_postfix_op:	process_postfix_op();	break;
 	case lsym_binary_op:				goto copy_token;
 	case lsym_question:	ps.quest_level++;	goto copy_token;
-	case lsym_colon_question:			goto copy_token;
-	case lsym_colon_label:	process_colon_label();	break;
-	case lsym_colon_other:	process_colon_other();	break;
+	case lsym_question_colon:			goto copy_token;
+	case lsym_label_colon:	process_label_colon();	break;
+	case lsym_other_colon:	process_other_colon();	break;
 	case lsym_comma:	process_comma();	break;
 	case lsym_semicolon:	process_semicolon();	break;
 	case lsym_typedef:				goto copy_token;
@@ -1050,7 +1046,7 @@ indent(void)
 		    && opt.else_if_in_same_line)
 			ps.force_nl = false;
 
-		if (lsym == lsym_newline || lsym == lsym_preprocessing)
+		if (lsym == lsym_preprocessing || lsym == lsym_newline)
 			ps.force_nl = false;
 		else if (lsym == lsym_comment) {
 			/* no special processing */
@@ -1066,8 +1062,9 @@ indent(void)
 
 		debug_parser_state();
 
-		if (lsym != lsym_comment && lsym != lsym_newline &&
-		    lsym != lsym_preprocessing)
+		if (lsym != lsym_preprocessing
+		    && lsym != lsym_newline
+		    && lsym != lsym_comment)
 			ps.prev_lsym = lsym;
 	}
 }
