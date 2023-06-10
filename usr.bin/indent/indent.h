@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.185 2023/06/10 07:42:41 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.186 2023/06/10 12:59:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -141,7 +141,7 @@ typedef enum parser_symbol {
 	psym_while_expr,	/* 'while' '(' expr ')' */
 } parser_symbol;
 
-/* A range of characters, not null-terminated. */
+/* A range of characters, only null-terminated in debug mode. */
 struct buffer {
 	char *s;
 	size_t len;
@@ -521,4 +521,17 @@ static inline int
 next_tab(int ind)
 {
 	return ind - ind % opt.tabsize + opt.tabsize;
+}
+
+#ifdef debug
+void buf_terminate(struct buffer *);
+#else
+#define buf_terminate(buf) debug_noop()
+#endif
+
+static inline void
+buf_clear(struct buffer *buf)
+{
+	buf->len = 0;
+	buf_terminate(buf);
 }

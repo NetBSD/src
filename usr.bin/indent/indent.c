@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.352 2023/06/10 08:17:04 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.353 2023/06/10 12:59:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.352 2023/06/10 08:17:04 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.353 2023/06/10 12:59:31 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -110,12 +110,23 @@ buf_expand(struct buffer *buf, size_t add_size)
 	buf->s = nonnull(realloc(buf->s, buf->cap));
 }
 
+#ifdef debug
+void
+buf_terminate(struct buffer *buf)
+{
+	if (buf->len == buf->cap)
+		buf_expand(buf, 1);
+	buf->s[buf->len] = '\0';
+}
+#endif
+
 void
 buf_add_char(struct buffer *buf, char ch)
 {
 	if (buf->len == buf->cap)
 		buf_expand(buf, 1);
 	buf->s[buf->len++] = ch;
+	buf_terminate(buf);
 }
 
 void
@@ -127,6 +138,7 @@ buf_add_chars(struct buffer *buf, const char *s, size_t len)
 		buf_expand(buf, len);
 	memcpy(buf->s + buf->len, s, len);
 	buf->len += len;
+	buf_terminate(buf);
 }
 
 static void
@@ -327,7 +339,7 @@ move_com_to_code(lexer_symbol lsym)
 	if (ps.want_blank)
 		buf_add_char(&code, ' ');
 	buf_add_buf(&code, &com);
-	com.len = 0;
+	buf_clear(&com);
 	ps.want_blank = lsym != lsym_rparen && lsym != lsym_rbracket;
 }
 
@@ -433,6 +445,7 @@ read_preprocessing_line(void)
 
 	while (lab.len > 0 && ch_isblank(lab.s[lab.len - 1]))
 		lab.len--;
+	buf_terminate(&lab);
 }
 
 static void
@@ -805,7 +818,7 @@ process_colon_label(void)
 {
 	buf_add_buf(&lab, &code);
 	buf_add_char(&lab, ':');
-	code.len = 0;
+	buf_clear(&code);
 
 	if (ps.seen_case)
 		out.line_kind = lk_case_or_default;
