@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.44 2023/06/10 06:38:20 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.45 2023/06/10 07:05:18 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.44 2023/06/10 06:38:20 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.45 2023/06/10 07:05:18 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -62,7 +62,7 @@ const char *const lsym_name[] = {
 	"postfix_op",
 	"binary_op",
 	"question",
-	"'?:' colon",
+	"question_colon",
 	"comma",
 	"typedef",
 	"modifier",
@@ -71,8 +71,8 @@ const char *const lsym_name[] = {
 	"type_in_parentheses",
 	"word",
 	"funcname",
-	"label colon",
-	"other colon",
+	"label_colon",
+	"other_colon",
 	"semicolon",
 	"case",
 	"default",
