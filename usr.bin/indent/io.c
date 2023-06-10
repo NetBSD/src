@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.210 2023/06/10 07:42:41 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.211 2023/06/10 07:48:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.210 2023/06/10 07:42:41 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.211 2023/06/10 07:48:55 rillig Exp $");
 
 #include <stdio.h>
 
@@ -108,7 +108,7 @@ inp_next(void)
 
 
 static void
-output_newline(void)
+write_newline(void)
 {
 	buffered_blank_lines++;
 	wrote_newlines++;
@@ -125,7 +125,7 @@ write_buffered_blank_lines(void)
 }
 
 static void
-output_range(const char *s, size_t len)
+write_range(const char *s, size_t len)
 {
 	write_buffered_blank_lines();
 	fwrite(s, 1, len, output);
@@ -136,7 +136,7 @@ output_range(const char *s, size_t len)
 }
 
 static void
-output_indent(int new_ind)
+write_indent(int new_ind)
 {
 	write_buffered_blank_lines();
 
@@ -159,22 +159,6 @@ output_indent(int new_ind)
 
 	debug_println("output_indent %d", ind);
 	out_ind = ind;
-}
-
-void
-output_finish(void)
-{
-	if (lab.len > 0 || code.len > 0 || com.len > 0)
-		output_line();
-	if (indent_enabled == indent_on) {
-		if (buffered_blank_lines > 1)
-			buffered_blank_lines = 1;
-		write_buffered_blank_lines();
-	} else {
-		indent_enabled = indent_last_off_line;
-		output_line();
-	}
-	fflush(output);
 }
 
 static bool
@@ -236,8 +220,8 @@ compute_label_indent(void)
 static void
 output_line_label(void)
 {
-	output_indent(compute_label_indent());
-	output_range(lab.s, lab.len);
+	write_indent(compute_label_indent());
+	write_range(lab.s, lab.len);
 }
 
 static int
@@ -300,9 +284,9 @@ output_line_code(void)
 	}
 
 	if (lab.len > 0 && target_ind <= out_ind)
-		output_range(" ", 1);
-	output_indent(target_ind);
-	output_range(code.s, code.len);
+		write_range(" ", 1);
+	write_indent(target_ind);
+	write_range(code.s, code.len);
 }
 
 static void
@@ -327,13 +311,13 @@ output_line_comment(void)
 	}
 
 	if (out_ind > target_ind)
-		output_newline();
+		write_newline();
 
 	while (com.s + com.len > p && ch_isspace(com.s[com.len - 1]))
 		com.len--;
 
-	output_indent(target_ind);
-	output_range(p, com.len - (size_t)(p - com.s));
+	write_indent(target_ind);
+	write_range(p, com.len - (size_t)(p - com.s));
 
 	ps.comment_delta = ps.n_comment_delta;
 }
@@ -355,7 +339,7 @@ output_line(void)
 
 		if (want_blank_line() && wrote_newlines < 2
 		    && out.line_kind != lk_blank)
-			output_newline();
+			write_newline();
 
 		/* This kludge aligns function definitions correctly. */
 		if (ps.ind_level == 0)
@@ -379,13 +363,13 @@ output_line(void)
 		if (com.len > 0)
 			output_line_comment();
 
-		output_newline();
+		write_newline();
 		out.prev_line_kind = out.line_kind;
 	}
 
 	if (indent_enabled == indent_last_off_line) {
 		indent_enabled = indent_on;
-		output_range(out.indent_off_text.s, out.indent_off_text.len);
+		write_range(out.indent_off_text.s, out.indent_off_text.len);
 		out.indent_off_text.len = 0;
 	}
 
@@ -415,4 +399,20 @@ prepare_next_line:
 	}
 
 	out.line_kind = lk_other;
+}
+
+void
+output_finish(void)
+{
+	if (lab.len > 0 || code.len > 0 || com.len > 0)
+		output_line();
+	if (indent_enabled == indent_on) {
+		if (buffered_blank_lines > 1)
+			buffered_blank_lines = 1;
+		write_buffered_blank_lines();
+	} else {
+		indent_enabled = indent_last_off_line;
+		output_line();
+	}
+	fflush(output);
 }
