@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.50 2023/06/10 16:43:55 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.51 2023/06/10 18:46:42 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.50 2023/06/10 16:43:55 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.51 2023/06/10 18:46:42 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -395,6 +395,6 @@ debug_psyms_stack(const char *situation)
 	for (int i = 0; i <= psyms->top; ++i)
 		debug_printf(" %d %s",
 		    psyms->ind_level[i], psym_name[psyms->sym[i]]);
-	debug_blank_line();
+	debug_println("");
 }
 #endif
