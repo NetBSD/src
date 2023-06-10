@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.48 2023/06/10 11:01:58 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.49 2023/06/10 13:03:17 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.48 2023/06/10 11:01:58 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.49 2023/06/10 13:03:17 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -287,7 +287,7 @@ debug_ps_paren(void)
 	}
 	if (ps.nparen == 0)
 		debug_printf(" none");
-	debug_blank_line();
+	debug_println("");
 }
 
 static bool
@@ -313,7 +313,7 @@ debug_ps_di_stack(void)
 		debug_printf(" %d", ps.di_stack[i]);
 	if (ps.decl_level == 0)
 		debug_printf(" none");
-	debug_blank_line();
+	debug_println("");
 }
 
 #define debug_ps_bool(name) \
