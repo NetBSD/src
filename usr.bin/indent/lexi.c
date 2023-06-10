@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.223 2023/06/10 12:59:31 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.224 2023/06/10 13:03:17 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.223 2023/06/10 12:59:31 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.224 2023/06/10 13:03:17 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -313,7 +313,7 @@ cmp_keyword_by_name(const void *key, const void *elem)
  * this starts a function definition or a declaration.
  */
 static bool
-probably_looking_at_definition(void)
+probably_function_definition(void)
 {
 	int paren_level = 0;
 	for (const char *p = inp_p; *p != '\n'; p++) {
@@ -418,7 +418,7 @@ found_typename:
 	if (inp_p[0] == '(' && ps.psyms.top <= 1 && ps.ind_level == 0 &&
 	    !ps.in_func_def_params && !ps.in_init) {
 
-		if (ps.nparen == 0 && probably_looking_at_definition()) {
+		if (ps.nparen == 0 && probably_function_definition()) {
 			ps.line_has_func_def = true;
 			if (ps.in_decl)
 				ps.in_func_def_params = true;
@@ -434,7 +434,7 @@ found_typename:
 }
 
 static bool
-is_asterisk_unary(void)
+is_asterisk_pointer(void)
 {
 	if (inp_p[strspn(inp_p, "* \t")] == ')')
 		return true;
@@ -464,7 +464,7 @@ probably_in_function_definition(void)
 }
 
 static void
-lex_asterisk_unary(void)
+lex_asterisk_pointer(void)
 {
 	while (inp_p[0] == '*' || ch_isspace(inp_p[0])) {
 		if (inp_p[0] == '*')
@@ -623,8 +623,8 @@ lexi(void)
 		if (inp_p[0] == '=') {
 			token_add_char(*inp_p++);
 			lsym = lsym_binary_op;
-		} else if (is_asterisk_unary()) {
-			lex_asterisk_unary();
+		} else if (is_asterisk_pointer()) {
+			lex_asterisk_pointer();
 			lsym = lsym_unary_op;
 		} else
 			lsym = lsym_binary_op;
