@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.183 2023/06/09 22:01:26 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.184 2023/06/10 06:38:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -303,39 +303,39 @@ extern struct parser_state {
 
 	/* Token classification */
 
-	int quest_level;	/* when this is positive, we have seen a '?'
-				 * without the matching ':' in a '?:'
-				 * expression */
-	bool is_function_definition;	/* starts either at the 'name(' from a
-					 * function definition if it occurs at
-					 * the beginning of a line, or at the
-					 * first '*' from inside a declaration
-					 * when the line starts with words
-					 * followed by a '('; ends at the end
-					 * of that line */
-	bool block_init;	/* whether inside a block initialization */
-	int block_init_level;	/* the level of brace nesting in an
-				 * initialization */
-	bool init_or_struct;	/* whether there has been a type name and no
-				 * left parenthesis since the last semicolon.
-				 * When true, a '{' starts a structure
-				 * definition or an initialization list */
-	bool decl_on_line;	/* whether this line of code has part of a
-				 * declaration on it; used for indenting
-				 * comments */
 	bool in_stmt_or_decl;	/* whether in a statement or a struct
 				 * declaration or a plain declaration */
 	bool in_decl;		/* XXX: double-check the exact meaning */
-	bool in_func_def_params;
-	bool seen_case;		/* whether there was a 'case' or 'default', to
-				 * properly space the following ':' */
+	bool in_var_decl;	/* starts at a type name or a '){' from a
+				 * compound literal; ends at the '(' from a
+				 * function definition or a ';' outside '{}';
+				 * when active, '{}' form struct or union
+				 * declarations, ':' marks a bit-field, and '='
+				 * starts an initializer */
+	bool in_init;		/* whether inside an initializer */
+	int init_level;		/* the number of '{}' in an initializer */
+	bool in_func_def_line;	/* starts either at the 'name(' from a function
+				 * definition if it occurs at the beginning of
+				 * a line, or at the first '*' from inside a
+				 * declaration when the line starts with words
+				 * followed by a '('; ends at the end of that
+				 * line */
+	bool in_func_def_params;	/* for old-style functions */
+	bool line_has_decl;	/* whether this line of code has part of a
+				 * declaration on it; used for indenting
+				 * comments */
+	parser_symbol lbrace_kind;	/* the kind of brace to be pushed to
+					 * the parser symbol stack next */
 	parser_symbol spaced_expr_psym;	/* the parser symbol to be shifted
 					 * after the parenthesized expression
 					 * from a 'for', 'if', 'switch' or
 					 * 'while'; or psym_0 */
-	parser_symbol lbrace_kind;	/* the kind of brace to be pushed to
-					 * the parser symbol stack next */
+	bool seen_case;		/* whether there was a 'case' or 'default', to
+				 * properly space the following ':' */
 	bool prev_paren_was_cast;
+	int quest_level;	/* when this is positive, we have seen a '?'
+				 * without the matching ':' in a '?:'
+				 * expression */
 
 	/* Indentation of statements and declarations */
 

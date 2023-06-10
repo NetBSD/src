@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.18 2023/06/06 07:51:35 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.19 2023/06/10 06:38:21 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -42,7 +42,7 @@
  * - with varying opt.block_comment_max_line_length (-lc60, -lc78, -lc90)
  * - with varying opt.comment_column (-c0, -c1, -c33, -c80)
  * - with varying opt.decl_comment_column (-cd0, -cd1, -cd20, -cd33, -cd80)
- * - with/without ps.decl_on_line
+ * - with/without ps.line_has_decl
  * - with/without ps.next_col_1
  *
  * - very long comments that overflow the buffer 'com'

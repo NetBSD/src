@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.43 2023/06/09 18:09:30 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.44 2023/06/10 06:38:20 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.43 2023/06/09 18:09:30 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.44 2023/06/10 06:38:20 rillig Exp $");
 
 #include <stdarg.h>
 
@@ -294,19 +294,19 @@ debug_parser_state(void)
 	    lsym_name[ps.prev_lsym]);
 
 	debug_println("token classification");
-	debug_ps_int(quest_level);
-	debug_ps_bool(is_function_definition);
-	debug_ps_bool(block_init);
-	debug_ps_int(block_init_level);
-	debug_ps_bool(init_or_struct);
-	debug_ps_bool(decl_on_line);
 	debug_ps_bool(in_stmt_or_decl);
 	debug_ps_bool(in_decl);
+	debug_ps_bool(in_var_decl);
+	debug_ps_bool(in_init);
+	debug_ps_int(init_level);
+	debug_ps_bool(in_func_def_line);
 	debug_ps_bool(in_func_def_params);
-	debug_ps_bool(seen_case);
-	debug_ps_enum(spaced_expr_psym, psym_name);
+	debug_ps_bool(line_has_decl);
 	debug_ps_enum(lbrace_kind, psym_name);
+	debug_ps_enum(spaced_expr_psym, psym_name);
+	debug_ps_bool(seen_case);
 	debug_ps_bool(prev_paren_was_cast);
+	debug_ps_int(quest_level);
 
 	debug_println("indentation of statements and declarations");
 	debug_ps_int(ind_level);
