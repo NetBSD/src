@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.216 2023/06/10 16:43:56 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.217 2023/06/10 21:36:38 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.216 2023/06/10 16:43:56 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.217 2023/06/10 21:36:38 rillig Exp $");
 
 #include <stdio.h>
 
@@ -249,7 +249,7 @@ compute_code_indent(void)
 {
 	int base_ind = ps.ind_level * opt.indent_size;
 
-	if (ps.line_start_nparen == 0) {
+	if (ps.ind_paren_level == 0) {
 		if (ps.psyms.top >= 1
 		    && ps.psyms.sym[ps.psyms.top - 1] == psym_lbrace_enum)
 			return base_ind;
@@ -264,7 +264,7 @@ compute_code_indent(void)
 		return compute_lined_up_code_indent(base_ind);
 	}
 
-	int rel_ind = opt.continuation_indent * ps.line_start_nparen;
+	int rel_ind = opt.continuation_indent * ps.ind_paren_level;
 	if (ps.extra_expr_indent != eei_no && rel_ind == opt.indent_size)
 		rel_ind += opt.continuation_indent;
 	return base_ind + rel_ind;
@@ -397,7 +397,7 @@ output_line(void)
 	if (!(ps.psyms.sym[ps.psyms.top] == psym_if_expr_stmt_else
 		&& ps.nparen > 0))
 		ps.ind_level = ps.ind_level_follow;
-	ps.line_start_nparen = ps.nparen;
+	ps.ind_paren_level = ps.nparen;
 	ps.want_blank = false;
 
 	if (ps.nparen > 0) {

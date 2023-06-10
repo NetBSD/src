@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.356 2023/06/10 20:37:12 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.357 2023/06/10 21:36:38 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.356 2023/06/10 20:37:12 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.357 2023/06/10 21:36:38 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -378,7 +378,7 @@ is_function_pointer_declaration(void)
 	    && !ps.in_init
 	    && !ps.decl_indent_done
 	    && !ps.line_has_func_def
-	    && ps.line_start_nparen == 0;
+	    && ps.ind_paren_level == 0;
 }
 
 static int
@@ -580,7 +580,7 @@ process_rparen(void)
 		ps.want_blank = true;
 
 	if (code.len == 0)
-		ps.line_start_nparen = ps.nparen;
+		ps.ind_paren_level = ps.nparen;
 
 unbalanced:
 	buf_add_char(&code, token.s[0]);
@@ -631,7 +631,7 @@ process_rbracket(void)
 
 	ps.want_blank = true;
 	if (code.len == 0)
-		ps.line_start_nparen = ps.nparen;
+		ps.ind_paren_level = ps.nparen;
 
 unbalanced:
 	buf_add_char(&code, token.s[0]);
@@ -788,7 +788,7 @@ process_comma(void)
 					 * does not start the line */
 
 	if (ps.in_decl && !ps.line_has_func_def && !ps.in_init &&
-	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
+	    !ps.decl_indent_done && ps.ind_paren_level == 0) {
 		/* indent leading commas and not the actual identifiers */
 		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
 	}
@@ -844,7 +844,7 @@ process_semicolon(void)
 	ps.declaration = ps.declaration == decl_begin ? decl_end : decl_no;
 
 	if (ps.in_decl && code.len == 0 && !ps.in_init &&
-	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
+	    !ps.decl_indent_done && ps.ind_paren_level == 0) {
 		/* indent stray semicolons in declarations */
 		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
 	}
@@ -915,7 +915,7 @@ process_word(lexer_symbol lsym)
 			ps.want_blank = false;
 
 		} else if (!ps.in_init && !ps.decl_indent_done &&
-		    ps.line_start_nparen == 0) {
+		    ps.ind_paren_level == 0) {
 			if (opt.decl_indent == 0
 			    && code.len > 0 && code.s[code.len - 1] == '}')
 				ps.decl_ind = ind_add(0, code.s, code.len) + 1;
