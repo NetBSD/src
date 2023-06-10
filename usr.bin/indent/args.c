@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.82 2023/06/05 10:12:21 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.83 2023/06/10 16:43:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: args.c,v 1.82 2023/06/05 10:12:21 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.83 2023/06/10 16:43:55 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 
@@ -73,18 +73,18 @@ static const struct pro {
 	short i_max;
 	void *p_var;		/* the associated variable */
 } pro[] = {
-	bool_options("bacc", blanklines_around_conditional_compilation),
+	bool_options("bacc", blank_line_around_conditional_compilation),
 	bool_options("bad", blank_line_after_decl),
 	bool_options("badp", blank_line_after_decl_at_top),
-	bool_options("bap", blanklines_after_procs),
-	bool_options("bbb", blanklines_before_block_comments),
+	bool_options("bap", blank_line_after_proc),
+	bool_options("bbb", blank_line_before_block_comment),
 	bool_options("bc", break_after_comma),
 	bool_option("bl", false, brace_same_line),
 	bool_option("br", true, brace_same_line),
 	bool_options("bs", blank_after_sizeof),
 	int_option("c", comment_column, 1, 999),
 	int_option("cd", decl_comment_column, 1, 999),
-	bool_options("cdb", comment_delimiter_on_blankline),
+	bool_options("cdb", comment_delimiter_on_blank_line),
 	bool_options("ce", cuddle_else),
 	int_option("ci", continuation_indent, 0, 999),
 	/* "cli" is special */
@@ -109,7 +109,7 @@ static const struct pro {
 	bool_options("pcs", proc_calls_space),
 	bool_options("psl", procnames_start_line),
 	bool_options("sc", star_comment_cont),
-	bool_options("sob", swallow_optional_blanklines),
+	bool_options("sob", swallow_optional_blank_lines),
 	/* "st" is special */
 	bool_option("ta", true, auto_typedefs),
 	/* "T" is special */
