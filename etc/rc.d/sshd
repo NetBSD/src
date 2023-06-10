@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.35 2023/06/05 11:59:12 riastradh Exp $
+# $NetBSD: sshd,v 1.36 2023/06/10 04:02:39 kim Exp $
 #
 
 # PROVIDE: sshd
@@ -26,13 +26,13 @@ sshd_motd_unsafe_keys_warning()
 -- UNSAFE KEYS WARNING:
 
 	The ssh host keys on this machine have been generated with
-	not enough entropy configured, so may be predictable.
+	not enough entropy configured, so they may be predictable.
 
 	To fix, follow the "Adding entropy" section in the entropy(7)
-	man page and after this machine has enough entropy, re-generate
+	man page.  After this machine has enough entropy, re-generate
 	the ssh host keys by running:
 
-		sh /etc/rc.d/sshd keyregen
+		/etc/rc.d/sshd keyregen
 _EOF
 	fi
 	cmp -s $T /etc/motd || cp $T /etc/motd
@@ -66,7 +66,7 @@ ed25519	-1	ssh_host_ed25519_key
 rsa	0	ssh_host_rsa_key
 _EOF
 	if "${new_key_created}"; then
-		sshd_motd_unsafe_keys_warning
+		sysctl -q kern.entropy.needed && sshd_motd_unsafe_keys_warning
 	fi
 )
 }
