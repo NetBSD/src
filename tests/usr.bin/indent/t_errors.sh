@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.34 2023/06/09 11:22:31 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.35 2023/06/10 17:35:41 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -485,6 +485,32 @@ EOF
 	    "$indent" -l34 code.c -st
 }
 
+atf_test_case 'stack_overflow'
+stack_overflow_body()
+{
+	cat <<-EOF > code.c
+		{{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{
+		{{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{
+		{{{{{{{{{{ {{{{{{{{{{ {{{{{{{
+	EOF
+
+	atf_check \
+	    -s 'exit:1' \
+	    -e 'inline:error: code.c:3: Stuff missing from end of file\n' \
+	    "$indent" code.c
+
+	cat <<-EOF > code.c
+		{{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{
+		{{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{ {{{{{{{{{{
+		{{{{{{{{{{ {{{{{{{{{{ {{{{{{{ {
+	EOF
+
+	atf_check \
+	    -s 'exit:1' \
+	    -e 'inline:indent: Parser stack overflow\n' \
+	    "$indent" code.c
+}
+
 
 atf_init_test_cases()
 {
@@ -524,4 +550,5 @@ atf_init_test_cases()
 	atf_add_test_case 'gcc_statement_expression'
 	atf_add_test_case 'crash_comment_after_controlling_expression'
 	atf_add_test_case 'comment_fits_in_one_line'
+	atf_add_test_case 'stack_overflow'
 }
