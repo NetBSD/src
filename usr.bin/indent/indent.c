@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.355 2023/06/10 18:46:42 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.356 2023/06/10 20:37:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.355 2023/06/10 18:46:42 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.356 2023/06/10 20:37:12 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -1060,12 +1060,12 @@ indent(void)
 
 		process_lsym(lsym);
 
-		debug_parser_state();
-
 		if (lsym != lsym_preprocessing
 		    && lsym != lsym_newline
 		    && lsym != lsym_comment)
 			ps.prev_lsym = lsym;
+
+		debug_parser_state();
 	}
 }
 
