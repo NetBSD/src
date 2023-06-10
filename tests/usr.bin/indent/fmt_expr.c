@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_expr.c,v 1.6 2023/06/09 11:22:31 rillig Exp $ */
+/* $NetBSD: fmt_expr.c,v 1.7 2023/06/10 08:17:04 rillig Exp $ */
 
 /*
  * Tests for all kinds of expressions that are not directly related to unary
@@ -18,15 +18,6 @@
 	println((const char[3]){'-', c, '\0'});
 	x = ((struct point){0, 0}).x;
 
-	// XXX: GCC statement expressions are not supported yet.
-	int		var =
-	(
-	 {
-	 1
-	 }
-	)
-		       ;
-
 	for (ln = gnodes->first; ln != NULL; ln = ln->next)
 // $ FIXME: No space after the cast.
 		*(GNode **) Vector_Push(&vec) = ln->datum;
@@ -34,3 +25,36 @@
 //indent end
 
 //indent run-equals-input
+
+
+/*
+ * GCC statement expressions are not supported yet.
+ */
+//indent input
+{
+	int var = ({1});
+	int var = ({
+		1
+	});
+	int var = ({
+		int decl = 1;
+		stmt;
+	});
+}
+//indent end
+
+//indent run -di0
+error: Standard Input:7: Unbalanced parentheses
+warning: Standard Input:9: Extra ')'
+{
+	int var = ({1});
+	int var = ({
+		   1
+		   });
+	int var = ({
+		   int decl = 1;
+		stmt;
+	});
+}
+exit 1
+//indent end

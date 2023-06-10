@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.351 2023/06/10 07:42:41 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.352 2023/06/10 08:17:04 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.351 2023/06/10 07:42:41 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.352 2023/06/10 08:17:04 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -776,21 +776,6 @@ process_postfix_op(void)
 }
 
 static void
-process_question(void)
-{
-	ps.quest_level++;
-	if (code.len == 0)
-		ps.in_stmt_cont = true;	// XXX: should be unnecessary.
-}
-
-static void
-process_colon_question(void)
-{
-	if (code.len == 0)
-		ps.in_stmt_cont = true;	// XXX: should be unnecessary.
-}
-
-static void
 process_comma(void)
 {
 	ps.want_blank = code.len > 0;	/* only put blank after comma if comma
@@ -985,8 +970,8 @@ process_lsym(lexer_symbol lsym)
 	case lsym_unary_op:	process_unary_op();	break;
 	case lsym_postfix_op:	process_postfix_op();	break;
 	case lsym_binary_op:				goto copy_token;
-	case lsym_question:	process_question();	goto copy_token;
-	case lsym_colon_question: process_colon_question(); goto copy_token;
+	case lsym_question:	ps.quest_level++;	goto copy_token;
+	case lsym_colon_question:			goto copy_token;
 	case lsym_colon_label:	process_colon_label();	break;
 	case lsym_colon_other:	process_colon_other();	break;
 	case lsym_comma:	process_comma();	break;

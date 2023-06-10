@@ -1,4 +1,4 @@
-/* $NetBSD: opt_ci.c,v 1.10 2023/06/09 06:36:58 rillig Exp $ */
+/* $NetBSD: opt_ci.c,v 1.11 2023/06/10 08:17:04 rillig Exp $ */
 
 /*
  * Tests for the option '-ci', which controls the indentation of continuation
@@ -238,10 +238,4 @@ function(void)
 }
 //indent end
 
-//indent run -ldi0 -ci4
-{
-	size_t last_word_len = com.len
-/* $ FIXME: The '-' must be indented by 4 spaces. */
-	- (size_t)(last_blank + 1);
-}
-//indent end
+//indent run-equals-input -ldi0 -ci4
