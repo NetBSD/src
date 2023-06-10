@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.220 2023/06/09 19:50:51 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.221 2023/06/10 06:38:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.220 2023/06/09 19:50:51 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.221 2023/06/10 06:38:21 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -256,7 +256,7 @@ probably_typename(void)
 {
 	if (ps.prev_lsym == lsym_modifier)
 		return true;
-	if (ps.block_init)
+	if (ps.in_init)
 		return false;
 	if (ps.in_stmt_or_decl)	/* XXX: this condition looks incorrect */
 		return false;
@@ -416,10 +416,10 @@ found_typename:
 	}
 
 	if (inp_p[0] == '(' && ps.psyms.top <= 1 && ps.ind_level == 0 &&
-	    !ps.in_func_def_params && !ps.block_init) {
+	    !ps.in_func_def_params && !ps.in_init) {
 
 		if (ps.nparen == 0 && probably_looking_at_definition()) {
-			ps.is_function_definition = true;
+			ps.in_func_def_line = true;
 			if (ps.in_decl)
 				ps.in_func_def_params = true;
 			return lsym_funcname;
@@ -473,7 +473,7 @@ lex_asterisk_unary(void)
 	}
 
 	if (ps.in_decl && probably_in_function_definition())
-		ps.is_function_definition = true;
+		ps.in_func_def_line = true;
 }
 
 static void
@@ -613,7 +613,7 @@ lexi(void)
 	case ':':
 		lsym = ps.quest_level > 0
 		    ? (ps.quest_level--, lsym_colon_question)
-		    : ps.init_or_struct
+		    : ps.in_var_decl
 		    ? lsym_colon_other
 		    : lsym_colon_label;
 		next_unary = true;
@@ -632,8 +632,8 @@ lexi(void)
 		break;
 
 	case '=':
-		if (ps.init_or_struct)
-			ps.block_init = true;
+		if (ps.in_var_decl)
+			ps.in_init = true;
 		if (inp_p[0] == '=')
 			token_add_char(*inp_p++);
 		lsym = lsym_binary_op;

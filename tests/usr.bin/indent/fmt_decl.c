@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.52 2023/06/09 09:49:07 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.53 2023/06/10 06:38:21 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -1047,4 +1047,25 @@ typedef struct {
 }
 // $ FIXME: Remove this line break.
 mod_t;
+//indent end
+
+
+//indent input
+int a[] = {1, 2},
+b[] = {1, 2};
+{
+int a[] = {1, 2},
+b[] = {1, 2};
+}
+//indent end
+
+//indent run -di0
+int a[] = {1, 2},
+// $ FIXME: Missing indentation.
+b[] = {1, 2};
+{
+	int a[] = {1, 2},
+	// $ FIXME: Missing indentation.
+	b[] = {1, 2};
+}
 //indent end
