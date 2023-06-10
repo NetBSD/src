@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.350 2023/06/10 06:52:35 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.351 2023/06/10 07:42:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.350 2023/06/10 06:52:35 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.351 2023/06/10 07:42:41 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -372,7 +372,7 @@ is_function_pointer_declaration(void)
 	return ps.in_decl
 	    && !ps.in_init
 	    && !ps.decl_indent_done
-	    && !ps.in_func_def_line
+	    && !ps.line_has_func_def
 	    && ps.line_start_nparen == 0;
 }
 
@@ -545,7 +545,7 @@ process_lparen(void)
 	    || ps.prev_lsym == lsym_if
 	    || ps.prev_lsym == lsym_switch
 	    || ps.prev_lsym == lsym_while
-	    || ps.in_func_def_line)
+	    || ps.line_has_func_def)
 		cast = cast_no;
 
 	ps.paren[ps.nparen - 1].indent = indent;
@@ -779,21 +779,15 @@ static void
 process_question(void)
 {
 	ps.quest_level++;
-	if (code.len == 0) {
-		ps.in_stmt_cont = true;
-		ps.in_stmt_or_decl = true;
-		ps.in_decl = false;
-	}
+	if (code.len == 0)
+		ps.in_stmt_cont = true;	// XXX: should be unnecessary.
 }
 
 static void
 process_colon_question(void)
 {
-	if (code.len == 0) {
-		ps.in_stmt_cont = true;
-		ps.in_stmt_or_decl = true;
-		ps.in_decl = false;
-	}
+	if (code.len == 0)
+		ps.in_stmt_cont = true;	// XXX: should be unnecessary.
 }
 
 static void
@@ -802,7 +796,7 @@ process_comma(void)
 	ps.want_blank = code.len > 0;	/* only put blank after comma if comma
 					 * does not start the line */
 
-	if (ps.in_decl && !ps.in_func_def_line && !ps.in_init &&
+	if (ps.in_decl && !ps.line_has_func_def && !ps.in_init &&
 	    !ps.decl_indent_done && ps.line_start_nparen == 0) {
 		/* indent leading commas and not the actual identifiers */
 		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
@@ -891,7 +885,7 @@ process_semicolon(void)
 }
 
 static void
-process_type(void)
+process_type_outside_parentheses(void)
 {
 	parse(psym_decl);	/* let the parser worry about indentation */
 
@@ -918,7 +912,7 @@ process_type(void)
 }
 
 static void
-process_ident(lexer_symbol lsym)
+process_word(lexer_symbol lsym)
 {
 	if (ps.in_decl) {
 		if (lsym == lsym_funcname) {
@@ -940,8 +934,8 @@ process_ident(lexer_symbol lsym)
 
 	} else if (ps.spaced_expr_psym != psym_0 && ps.nparen == 0) {
 		ps.force_nl = true;
-		ps.next_unary = true;
 		ps.in_stmt_or_decl = false;
+		ps.next_unary = true;
 		parse(ps.spaced_expr_psym);
 		ps.spaced_expr_psym = psym_0;
 	}
@@ -1014,7 +1008,7 @@ process_lsym(lexer_symbol lsym)
 			goto copy_token;
 		/* FALLTHROUGH */
 	case lsym_type_outside_parentheses:
-		process_type();
+		process_type_outside_parentheses();
 		goto copy_token;
 
 	case lsym_type_in_parentheses:
@@ -1023,7 +1017,7 @@ process_lsym(lexer_symbol lsym)
 	case lsym_word:
 	case lsym_funcname:
 	case lsym_return:
-		process_ident(lsym);
+		process_word(lsym);
 copy_token:
 		if (ps.want_blank)
 			buf_add_char(&code, ' ');
