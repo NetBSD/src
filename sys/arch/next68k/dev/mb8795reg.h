@@ -1,4 +1,4 @@
-/*	$NetBSD: mb8795reg.h,v 1.4 2010/04/24 19:58:13 dbj Exp $	*/
+/*	$NetBSD: mb8795reg.h,v 1.5 2023/06/10 17:14:57 dbj Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -75,7 +75,7 @@ struct mb8795_regs {
 #define MB8795_TXMASK_BITS \
 "\20\10READYIE\06TXRXIE\04UNDERFLOWIE\03COLLIE\02COLL16IE\01PARERRIE"
 
-/* cummulative receiver status (address 2) */
+/* cumulative receiver status (address 2) */
 #define MB8795_RXSTAT               2
 
 #define MB8795_RXSTAT_OK		0x80	/* packet received is correct */
