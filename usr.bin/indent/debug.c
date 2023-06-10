@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.49 2023/06/10 13:03:17 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.50 2023/06/10 16:43:55 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.49 2023/06/10 13:03:17 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.50 2023/06/10 16:43:55 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -264,7 +264,7 @@ ps_paren_has_changed(void)
 	if (state.prev_ps.nparen != ps.nparen)
 		return true;
 
-	const paren_level_props *prev = state.prev_ps.paren, *curr = ps.paren;
+	const struct paren_level *prev = state.prev_ps.paren, *curr = ps.paren;
 	for (int i = 0; i < ps.nparen; i++)
 		if (curr[i].indent != prev[i].indent
 		    || curr[i].cast != prev[i].cast)
@@ -356,7 +356,7 @@ debug_parser_state(void)
 	debug_ps_bool(tabs_to_var);
 	debug_ps_enum(extra_expr_indent, extra_expr_indent_name);
 
-	// The parser symbol stack is printed in debug_parse_stack instead.
+	// The parser symbol stack is printed in debug_psyms_stack instead.
 
 	state.heading = "spacing inside a statement or declaration";
 	debug_ps_bool(next_unary);
@@ -388,7 +388,7 @@ debug_parser_state(void)
 }
 
 void
-debug_parse_stack(const char *situation)
+debug_psyms_stack(const char *situation)
 {
 	debug_printf("parse stack %s:", situation);
 	const struct psym_stack *psyms = &ps.psyms;

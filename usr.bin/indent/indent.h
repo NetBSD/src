@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.186 2023/06/10 12:59:31 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.187 2023/06/10 16:43:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -88,7 +88,7 @@ typedef enum lexer_symbol {
 	lsym_postfix_op,	/* trailing '++' or '--' */
 	lsym_binary_op,		/* e.g. '*', '&', '<<', '&&' or '/=' */
 	lsym_question,		/* the '?' from a '?:' expression */
-	lsym_colon_question,	/* the ':' from a '?:' expression */
+	lsym_question_colon,	/* the ':' from a '?:' expression */
 	lsym_comma,
 
 	lsym_typedef,
@@ -98,8 +98,8 @@ typedef enum lexer_symbol {
 	lsym_type_in_parentheses,
 	lsym_word,		/* identifier, constant or string */
 	lsym_funcname,		/* name of a function being defined */
-	lsym_colon_label,	/* the ':' after a label */
-	lsym_colon_other,	/* bit-fields, generic-association (C11),
+	lsym_label_colon,	/* the ':' after a label */
+	lsym_other_colon,	/* bit-fields, generic-association (C11),
 				 * enum-type-specifier (C23),
 				 * attribute-prefixed-token (C23),
 				 * pp-prefixed-parameter (C23 6.10) */
@@ -174,7 +174,7 @@ extern struct buffer com;	/* the trailing comment of the line, or the
 				 * multi-line comment */
 
 extern struct options {
-	bool blanklines_around_conditional_compilation;
+	bool blank_line_around_conditional_compilation;
 	bool blank_line_after_decl_at_top;	/* this is vaguely similar to
 						 * blank_line_after_decl except
 						 * that it only applies to the
@@ -185,21 +185,20 @@ extern struct options {
 						 * even if there are no
 						 * declarations */
 	bool blank_line_after_decl;
-	bool blanklines_after_procs;
-	bool blanklines_before_block_comments;
+	bool blank_line_after_proc;
+	bool blank_line_before_block_comment;
 	bool break_after_comma;	/* whether to add a line break after each
 				 * declarator */
-	bool brace_same_line;	/* whether brace should be on same line as if,
-				 * while, etc */
-	bool blank_after_sizeof;	/* whether a blank should always be
-					 * inserted after sizeof */
-	bool comment_delimiter_on_blankline;
+	bool brace_same_line;	/* whether a brace should be on same line as an
+				 * if, while, etc. */
+	bool blank_after_sizeof;
+	bool comment_delimiter_on_blank_line;
 	int decl_comment_column;	/* the column in which comments after
 					 * declarations should be put */
 	bool cuddle_else;	/* whether 'else' should cuddle up to '}' */
 	int continuation_indent;	/* the indentation between the edge of
 					 * code and continuation lines */
-	float case_indent;	/* The distance (measured in indentation
+	float case_indent;	/* the distance (measured in indentation
 				 * levels) to indent case labels from the
 				 * switch statement */
 	int comment_column;	/* the column in which comments to the right of
@@ -217,12 +216,12 @@ extern struct options {
 	bool else_if_in_same_line;
 	bool function_brace_split;	/* split function declaration and brace
 					 * onto separate lines */
-	bool format_col1_comments;	/* If comments which start in column 1
-					 * are to be reformatted (just like
-					 * comments that begin in later
+	bool format_col1_comments;	/* whether comments that start in
+					 * column 1 are to be reformatted (just
+					 * like comments that begin in later
 					 * columns) */
-	bool format_block_comments;	/* whether comments beginning with '/ *
-					 * \n' are to be reformatted */
+	bool format_block_comments;	/* whether to reformat comments that
+					 * begin with '/ * \n' */
 	bool indent_parameters;
 	int indent_size;	/* the size of one indentation level */
 	int block_comment_max_line_length;
@@ -240,7 +239,7 @@ extern struct options {
 	bool space_after_cast;	/* "b = (int) a" vs. "b = (int)a" */
 	bool star_comment_cont;	/* whether comment continuation lines should
 				 * have stars at the beginning of each line */
-	bool swallow_optional_blanklines;
+	bool swallow_optional_blank_lines;
 	bool auto_typedefs;	/* whether to recognize identifiers ending in
 				 * "_t" like typedefs */
 	int tabsize;		/* the size of a tab */
@@ -252,7 +251,7 @@ extern struct options {
 
 extern bool found_err;
 extern bool had_eof;		/* whether input is exhausted */
-extern int line_no;		/* the current line number. */
+extern int line_no;		/* the current input line number */
 extern enum indent_enabled {
 	indent_on,
 	indent_off,
@@ -262,7 +261,7 @@ extern enum indent_enabled {
 #define	STACKSIZE 256
 
 /* Properties of each level of parentheses or brackets. */
-typedef struct paren_level_props {
+struct paren_level {
 	int indent;		/* indentation of the operand/argument,
 				 * relative to the enclosing statement; if
 				 * negative, reflected at -1 */
@@ -271,7 +270,7 @@ typedef struct paren_level_props {
 		cast_maybe,
 		cast_no,
 	} cast;			/* whether the parentheses form a type cast */
-} paren_level_props;
+};
 
 struct psym_stack {
 	int top;		/* pointer to top of stack */
@@ -377,7 +376,7 @@ extern struct parser_state {
 				 * are currently open; used to indent the
 				 * remaining lines of the statement,
 				 * initializer or declaration */
-	paren_level_props paren[20];
+	struct paren_level paren[20];
 
 	/* Horizontal spacing for comments */
 
@@ -445,7 +444,7 @@ void debug_println(const char *, ...) __printflike(1, 2);
 void debug_blank_line(void);
 void debug_vis_range(const char *, const char *, size_t, const char *);
 void debug_parser_state(void);
-void debug_parse_stack(const char *);
+void debug_psyms_stack(const char *);
 void debug_print_buf(const char *, const struct buffer *);
 void debug_buffers(void);
 extern const char *const lsym_name[];
@@ -459,7 +458,7 @@ extern const char *const line_kind_name[];
 #define debug_blank_line() debug_noop()
 #define	debug_vis_range(prefix, s, e, suffix) debug_noop()
 #define	debug_parser_state() debug_noop()
-#define	debug_parse_stack(situation) debug_noop()
+#define	debug_psyms_stack(situation) debug_noop()
 #define debug_print_buf(name, buf) debug_noop()
 #define	debug_buffers() debug_noop()
 #endif
@@ -471,7 +470,7 @@ int ind_add(int, const char *, size_t);
 
 void inp_skip(void);
 char inp_next(void);
-void output_finish(void);
+void finish_output(void);
 
 lexer_symbol lexi(void);
 void diag(int, const char *, ...) __printflike(2, 3);

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.70 2023/06/09 07:20:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.71 2023/06/10 16:43:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.70 2023/06/09 07:20:30 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.71 2023/06/10 16:43:56 rillig Exp $");
 
 #include <err.h>
 
@@ -141,7 +141,7 @@ is_lbrace(parser_symbol psym)
 }
 
 /*
- * Shift the token onto the parser stack, or reduce it by combining it with
+ * Shift the token onto the parser stack, then try to reduce it by combining it with
  * previous tokens.
  */
 void
@@ -160,77 +160,28 @@ parse(parser_symbol psym)
 
 	switch (psym) {
 
-	case psym_decl:
-		if (psyms->sym[psyms->top] == psym_decl)
-			break;	/* only put one declaration onto stack */
-
-		ps.break_after_comma = true;
-		ps_push_follow(psym_decl);
-
-		if (opt.left_justify_decl)
-			ps.ind_level_follow = ps.ind_level = decl_level();
-		break;
-
-	case psym_if_expr:
-		if (psyms->sym[psyms->top] == psym_if_expr_stmt_else
-		    && opt.else_if_in_same_line)
-			ps.ind_level_follow = psyms->ind_level[psyms->top--];
-		/* FALLTHROUGH */
-	case psym_do:
-	case psym_for_exprs:
-		ps.ind_level = ps.ind_level_follow++;
-		ps_push(psym);
-		break;
-
 	case psym_lbrace_block:
 	case psym_lbrace_struct:
 	case psym_lbrace_union:
 	case psym_lbrace_enum:
 		ps.break_after_comma = false;
-		if (psyms->sym[psyms->top] == psym_stmt
-		    || psyms->sym[psyms->top] == psym_decl
+		if (psyms->sym[psyms->top] == psym_decl
+		    || psyms->sym[psyms->top] == psym_stmt
 		    || psyms->sym[psyms->top] == psym_stmt_list)
-			++ps.ind_level_follow;	/* it is a random, isolated
-						 * stmt group or a declaration
-						 */
-		else {
-			if (code.len == 0) {
-				/* it is a group as part of a while, for, etc.
-				 */
-				--ps.ind_level;
+			++ps.ind_level_follow;
+		else if (code.len == 0) {
+			/* It is part of a while, for, etc. */
+			--ps.ind_level;
 
-				/* for a switch, brace should be two levels out
-				 * from the code */
-				if (psyms->sym[psyms->top] == psym_switch_expr
-				    && opt.case_indent >= 1.0F)
-					--ps.ind_level;
-			}
+			/* for a switch, brace should be two levels out from
+			 * the code */
+			if (psyms->sym[psyms->top] == psym_switch_expr
+			    && opt.case_indent >= 1.0F)
+				--ps.ind_level;
 		}
 
 		ps_push(psym);
 		ps_push_follow(psym_stmt);
-		break;
-
-	case psym_while_expr:
-		if (psyms->sym[psyms->top] == psym_do_stmt) {
-			ps.ind_level =
-			    ps.ind_level_follow = psyms->ind_level[psyms->top];
-			ps_push(psym_while_expr);
-		} else {
-			ps_push_follow(psym_while_expr);
-			++ps.ind_level_follow;
-		}
-
-		break;
-
-	case psym_else:
-		if (psyms->sym[psyms->top] != psym_if_expr_stmt) {
-			diag(1, "Unmatched 'else'");
-			break;
-		}
-		ps.ind_level = psyms->ind_level[psyms->top];
-		ps.ind_level_follow = ps.ind_level + 1;
-		psyms->sym[psyms->top] = psym_if_expr_stmt_else;
 		break;
 
 	case psym_rbrace:
@@ -245,14 +196,57 @@ parse(parser_symbol psym)
 		psyms->sym[psyms->top] = psym_stmt;
 		break;
 
-	case psym_switch_expr:
-		ps_push_follow(psym_switch_expr);
-		ps.ind_level_follow += (int)opt.case_indent + 1;
+	case psym_decl:
+		if (psyms->sym[psyms->top] == psym_decl)
+			break;	/* only put one declaration onto stack */
+
+		ps.break_after_comma = true;
+		ps_push_follow(psym_decl);
+
+		if (opt.left_justify_decl)
+			ps.ind_level_follow = ps.ind_level = decl_level();
 		break;
 
 	case psym_stmt:
 		ps.break_after_comma = false;
 		ps_push(psym_stmt);
+		break;
+
+	case psym_if_expr:
+		if (psyms->sym[psyms->top] == psym_if_expr_stmt_else
+		    && opt.else_if_in_same_line)
+			ps.ind_level_follow = psyms->ind_level[psyms->top--];
+		/* FALLTHROUGH */
+	case psym_do:
+	case psym_for_exprs:
+		ps.ind_level = ps.ind_level_follow++;
+		ps_push(psym);
+		break;
+
+	case psym_else:
+		if (psyms->sym[psyms->top] != psym_if_expr_stmt) {
+			diag(1, "Unmatched 'else'");
+			break;
+		}
+		ps.ind_level = psyms->ind_level[psyms->top];
+		ps.ind_level_follow = ps.ind_level + 1;
+		psyms->sym[psyms->top] = psym_if_expr_stmt_else;
+		break;
+
+	case psym_switch_expr:
+		ps_push_follow(psym_switch_expr);
+		ps.ind_level_follow += (int)opt.case_indent + 1;
+		break;
+
+	case psym_while_expr:
+		if (psyms->sym[psyms->top] == psym_do_stmt) {
+			ps.ind_level = ps.ind_level_follow =
+			    psyms->ind_level[psyms->top];
+			ps_push(psym_while_expr);
+		} else {
+			ps_push_follow(psym_while_expr);
+			++ps.ind_level_follow;
+		}
 		break;
 
 	default:
@@ -263,7 +257,7 @@ parse(parser_symbol psym)
 	if (psyms->top >= STACKSIZE - 1)
 		errx(1, "Parser stack overflow");
 
-	debug_parse_stack("before reduction");
+	debug_psyms_stack("before reduction");
 	psyms_reduce(&ps.psyms);
-	debug_parse_stack("after reduction");
+	debug_psyms_stack("after reduction");
 }

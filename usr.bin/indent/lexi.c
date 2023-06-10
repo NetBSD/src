@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.224 2023/06/10 13:03:17 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.225 2023/06/10 16:43:56 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.224 2023/06/10 13:03:17 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.225 2023/06/10 16:43:56 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -167,6 +167,18 @@ static const unsigned char lex_number_row[] = {
 };
 
 
+static bool
+is_identifier_start(char ch)
+{
+	return ch_isalpha(ch) || ch == '_' || ch == '$';
+}
+
+static bool
+is_identifier_part(char ch)
+{
+	return ch_isalnum(ch) || ch == '_' || ch == '$';
+}
+
 static void
 token_add_char(char ch)
 {
@@ -200,18 +212,6 @@ lex_number(void)
 		s = lex_number_state[row][s - 'A'];
 		token_add_char(inp_next());
 	}
-}
-
-static bool
-is_identifier_start(char ch)
-{
-	return ch_isalpha(ch) || ch == '_' || ch == '$';
-}
-
-static bool
-is_identifier_part(char ch)
-{
-	return ch_isalnum(ch) || ch == '_' || ch == '$';
 }
 
 static void
@@ -276,20 +276,20 @@ static int
 bsearch_typenames(const char *key)
 {
 	const char **arr = typenames.items;
-	int lo = 0;
-	int hi = (int)typenames.len - 1;
+	unsigned lo = 0;
+	unsigned hi = typenames.len;
 
-	while (lo <= hi) {
-		int mid = (int)((unsigned)(lo + hi) >> 1);
+	while (lo < hi) {
+		unsigned mid = (lo + hi) / 2;
 		int cmp = strcmp(arr[mid], key);
 		if (cmp < 0)
 			lo = mid + 1;
 		else if (cmp > 0)
-			hi = mid - 1;
+			hi = mid;
 		else
-			return mid;
+			return (int)mid;
 	}
-	return -(lo + 1);
+	return -1 - (int)lo;
 }
 
 static bool
@@ -300,6 +300,25 @@ is_typename(void)
 		return true;
 
 	return bsearch_typenames(token.s) >= 0;
+}
+
+void
+register_typename(const char *name)
+{
+	if (typenames.len >= typenames.cap) {
+		typenames.cap = 16 + 2 * typenames.cap;
+		typenames.items = nonnull(realloc(typenames.items,
+			sizeof(typenames.items[0]) * typenames.cap));
+	}
+
+	int pos = bsearch_typenames(name);
+	if (pos >= 0)
+		return;		/* already in the list */
+
+	pos = -1 - pos;
+	memmove(typenames.items + pos + 1, typenames.items + pos,
+	    sizeof(typenames.items[0]) * (typenames.len++ - (unsigned)pos));
+	typenames.items[pos] = nonnull(strdup(name));
 }
 
 static int
@@ -353,7 +372,6 @@ probably_function_definition(void)
 	return true;
 }
 
-/* Read an alphanumeric token into 'token', or return lsym_eof. */
 static lexer_symbol
 lexi_alnum(void)
 {
@@ -476,17 +494,12 @@ lex_asterisk_pointer(void)
 		ps.line_has_func_def = true;
 }
 
-static void
-skip_blank(const char **pp)
-{
-	while (ch_isblank(**pp))
-		(*pp)++;
-}
-
 static bool
-skip_string(const char **pp, const char *s)
+skip(const char **pp, const char *s)
 {
 	size_t len = strlen(s);
+	while (ch_isblank(**pp))
+		(*pp)++;
 	if (strncmp(*pp, s, len) == 0) {
 		*pp += len;
 		return true;
@@ -498,31 +511,20 @@ static void
 lex_indent_comment(void)
 {
 	const char *p = inp.s;
-
-	skip_blank(&p);
-	if (!skip_string(&p, "/*"))
-		return;
-	skip_blank(&p);
-	if (!skip_string(&p, "INDENT"))
-		return;
-
-	enum indent_enabled enabled;
-	skip_blank(&p);
-	if (*p == '*' || skip_string(&p, "ON"))
-		enabled = indent_last_off_line;
-	else if (skip_string(&p, "OFF"))
-		enabled = indent_off;
-	else
-		return;
-
-	skip_blank(&p);
-	if (!skip_string(&p, "*/\n"))
-		return;
-
-	if (lab.len > 0 || code.len > 0 || com.len > 0)
-		output_line();
-
-	indent_enabled = enabled;
+	if (skip(&p, "/*") && skip(&p, "INDENT")) {
+		enum indent_enabled enabled;
+		if (skip(&p, "ON") || *p == '*')
+			enabled = indent_last_off_line;
+		else if (skip(&p, "OFF"))
+			enabled = indent_off;
+		else
+			return;
+		if (skip(&p, "*/\n")) {
+			if (lab.len > 0 || code.len > 0 || com.len > 0)
+				output_line();
+			indent_enabled = enabled;
+		}
+	}
 }
 
 /* Reads the next token, placing it in the global variable "token". */
@@ -612,10 +614,8 @@ lexi(void)
 
 	case ':':
 		lsym = ps.quest_level > 0
-		    ? (ps.quest_level--, lsym_colon_question)
-		    : ps.in_var_decl
-		    ? lsym_colon_other
-		    : lsym_colon_label;
+		    ? (ps.quest_level--, lsym_question_colon)
+		    : ps.in_var_decl ? lsym_other_colon : lsym_label_colon;
 		next_unary = true;
 		break;
 
@@ -642,7 +642,7 @@ lexi(void)
 
 	case '>':
 	case '<':
-	case '!':		/* ops like <, <<, <=, !=, etc */
+	case '!':		/* ops like <, <<, <=, !=, etc. */
 		if (inp_p[0] == '>' || inp_p[0] == '<' || inp_p[0] == '=')
 			token_add_char(*inp_p++);
 		if (inp_p[0] == '=')
@@ -671,7 +671,7 @@ lexi(void)
 			break;
 		}
 
-		/* things like '||', '&&', '<<=' */
+		/* punctuation like '%', '&&', '/', '^', '||', '~' */
 		lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 		if (inp_p[0] == token.s[token.len - 1])
 			token_add_char(*inp_p++), lsym = lsym_binary_op;
@@ -684,23 +684,4 @@ lexi(void)
 	ps.next_unary = next_unary;
 
 	return lsym;
-}
-
-void
-register_typename(const char *name)
-{
-	if (typenames.len >= typenames.cap) {
-		typenames.cap = 16 + 2 * typenames.cap;
-		typenames.items = nonnull(realloc(typenames.items,
-			sizeof(typenames.items[0]) * typenames.cap));
-	}
-
-	int pos = bsearch_typenames(name);
-	if (pos >= 0)
-		return;		/* already in the list */
-
-	pos = -(pos + 1);
-	memmove(typenames.items + pos + 1, typenames.items + pos,
-	    sizeof(typenames.items[0]) * (typenames.len++ - (unsigned)pos));
-	typenames.items[pos] = nonnull(strdup(name));
 }

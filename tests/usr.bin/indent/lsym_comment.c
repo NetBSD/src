@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.19 2023/06/10 06:38:21 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.20 2023/06/10 16:43:56 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -32,7 +32,7 @@
  * - block/end-of-line comment to the right of code
  * - block/end-of-line comment to the right of label with code
  *
- * - with/without opt.comment_delimiter_on_blankline (-cdb)
+ * - with/without opt.comment_delimiter_on_blank_line (-cdb)
  * - with/without opt.star_comment_cont (-sc)
  * - with/without opt.format_block_comments (-fbc)
  * - with varying opt.max_line_length (32, 64, 80, 140)
@@ -1110,4 +1110,24 @@ a>b;
 	a /* */ > b;
 	a > b;
 }
+//indent end
+
+
+/*
+ * Line comments are only related to a code snippet if they are on the same
+ * line; they cannot be continued in the next lines.
+ */
+//indent input
+int line;	// comment line 1
+		// comment line 2
+int block;	/* comment line 1
+		 * comment line 2
+		 */
+//indent end
+
+//indent run -di0
+int line;			// comment line 1
+// $ XXX: This comment was probably intended to continue 'comment line 1'.
+// comment line 2
+int block;			/* comment line 1 comment line 2 */
 //indent end
