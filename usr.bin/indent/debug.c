@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.46 2023/06/10 07:42:41 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.47 2023/06/10 09:31:41 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,19 +30,24 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.46 2023/06/10 07:42:41 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.47 2023/06/10 09:31:41 rillig Exp $");
 
 #include <stdarg.h>
+#include <string.h>
 
 #include "indent.h"
 
 #ifdef debug
 
-/*-
- * false	show only the changes to the parser state
- * true		show unchanged parts of the parser state as well
- */
-static bool debug_full_parser_state = true;
+static struct {
+	/*-
+	 * false	show only the changes to the parser state
+	 * true		show unchanged parts of the parser state as well
+	 */
+	bool full_parser_state;
+} config = {
+	.full_parser_state = false,
+};
 
 const char *const lsym_name[] = {
 	"eof",
@@ -135,8 +140,15 @@ static const char *const extra_expr_indent_name[] = {
 	"last",
 };
 
-static unsigned wrote_newlines = 1;
-
+static struct {
+	struct parser_state prev_ps;
+	bool ps_first;
+	const char *heading;
+    	unsigned wrote_newlines;
+} state = {
+	.ps_first = true,
+	.wrote_newlines = 1,
+};
 
 void
 debug_printf(const char *fmt, ...)
@@ -144,10 +156,14 @@ debug_printf(const char *fmt, ...)
 	FILE *f = output == stdout ? stderr : stdout;
 	va_list ap;
 
+	if (state.heading != NULL) {
+		fprintf(f, "%s\n", state.heading);
+		state.heading = NULL;
+	}
 	va_start(ap, fmt);
 	vfprintf(f, fmt, ap);
 	va_end(ap);
-	wrote_newlines = 0;
+	state.wrote_newlines = 0;
 }
 
 void
@@ -156,17 +172,22 @@ debug_println(const char *fmt, ...)
 	FILE *f = output == stdout ? stderr : stdout;
 	va_list ap;
 
+	if (state.heading != NULL) {
+		fprintf(f, "%s\n", state.heading);
+		state.heading = NULL;
+		state.wrote_newlines = 1;
+	}
 	va_start(ap, fmt);
 	vfprintf(f, fmt, ap);
 	va_end(ap);
 	fprintf(f, "\n");
-	wrote_newlines = fmt[0] == '\0' ? wrote_newlines + 1 : 1;
+	state.wrote_newlines = fmt[0] == '\0' ? state.wrote_newlines + 1 : 1;
 }
 
 void
 debug_blank_line(void)
 {
-	while (wrote_newlines < 2)
+	while (state.wrote_newlines < 2)
 		debug_println("");
 }
 
@@ -209,31 +230,41 @@ debug_buffers(void)
 	debug_println("");
 }
 
-#define debug_ps_bool(name) \
-	if (ps.name != prev_ps.name) \
-	    debug_println("        [%c]  ps." #name, \
-		" -+x"[(prev_ps.name ? 1 : 0) + (ps.name ? 2 : 0)]); \
-	else if (debug_full_parser_state) \
-	    debug_println("        [%c]  ps." #name, ps.name ? 'x' : ' ')
-#define debug_ps_int(name) \
-	if (ps.name != prev_ps.name) \
-	    debug_println(" %3d -> %3d  ps." #name, prev_ps.name, ps.name); \
-	else if (debug_full_parser_state) \
-	    debug_println("        %3d  ps." #name, ps.name)
-#define debug_ps_enum(name, names) \
-	if (ps.name != prev_ps.name) \
-	    debug_println(" %3s -> %3s  ps." #name, \
-		(names)[prev_ps.name], (names)[ps.name]); \
-	else if (debug_full_parser_state) \
-	    debug_println(" %10s  ps." #name, (names)[ps.name])
+static void
+write_ps_bool(const char *name, bool prev, bool curr)
+{
+	if (curr != prev) {
+		char diff = " -+x"[(prev ? 1 : 0) + (curr ? 2 : 0)];
+		debug_println("        [%c]  ps.%s", diff, name);
+	} else if (config.full_parser_state || state.ps_first)
+		debug_println("        [%c]  ps.%s", curr ? 'x' : ' ', name);
+}
+
+static void
+write_ps_int(const char *name, int prev, int curr)
+{
+	if (curr != prev)
+		debug_println(" %3d -> %3d  ps.%s", prev, curr, name);
+	else if (config.full_parser_state || state.ps_first)
+		debug_println("        %3d  ps.%s", curr, name);
+}
+
+static void
+write_ps_enum(const char *name, const char *prev, const char *curr)
+{
+	if (strcmp(prev, curr) != 0)
+		debug_println(" %3s -> %3s  ps.%s", prev, curr, name);
+	else if (config.full_parser_state || state.ps_first)
+		debug_println(" %10s  ps.%s", curr, name);
+}
 
 static bool
-ps_paren_has_changed(const struct parser_state *prev_ps)
+ps_paren_has_changed(void)
 {
-	if (prev_ps->nparen != ps.nparen)
+	if (state.prev_ps.nparen != ps.nparen)
 		return true;
 
-	const paren_level_props *prev = prev_ps->paren, *curr = ps.paren;
+	const paren_level_props *prev = state.prev_ps.paren, *curr = ps.paren;
 	for (int i = 0; i < ps.nparen; i++)
 		if (curr[i].indent != prev[i].indent
 		    || curr[i].cast != prev[i].cast)
@@ -242,9 +273,10 @@ ps_paren_has_changed(const struct parser_state *prev_ps)
 }
 
 static void
-debug_ps_paren(const struct parser_state *prev_ps)
+debug_ps_paren(void)
 {
-	if (!debug_full_parser_state && !ps_paren_has_changed(prev_ps))
+	if (!config.full_parser_state && !ps_paren_has_changed()
+	    && !state.ps_first)
 		return;
 
 	debug_printf("             ps.paren:");
@@ -259,21 +291,21 @@ debug_ps_paren(const struct parser_state *prev_ps)
 }
 
 static bool
-ps_di_stack_has_changed(const struct parser_state *prev_ps)
+ps_di_stack_has_changed(void)
 {
-	if (prev_ps->decl_level != ps.decl_level)
+	if (state.prev_ps.decl_level != ps.decl_level)
 		return true;
 	for (int i = 0; i < ps.decl_level; i++)
-		if (prev_ps->di_stack[i] != ps.di_stack[i])
+		if (state.prev_ps.di_stack[i] != ps.di_stack[i])
 			return true;
 	return false;
 }
 
 static void
-debug_ps_di_stack(const struct parser_state *prev_ps)
+debug_ps_di_stack(void)
 {
-	bool changed = ps_di_stack_has_changed(prev_ps);
-	if (!debug_full_parser_state && !changed)
+	bool changed = ps_di_stack_has_changed();
+	if (!config.full_parser_state && !changed && !state.ps_first)
 		return;
 
 	debug_printf("     %s      ps.di_stack:", changed ? "->" : "  ");
@@ -284,16 +316,21 @@ debug_ps_di_stack(const struct parser_state *prev_ps)
 	debug_println("");
 }
 
+#define debug_ps_bool(name) \
+	write_ps_bool(#name, state.prev_ps.name, ps.name)
+#define debug_ps_int(name) \
+	write_ps_int(#name, state.prev_ps.name, ps.name)
+#define debug_ps_enum(name, names) \
+        write_ps_enum(#name, (names)[state.prev_ps.name], (names)[ps.name])
+
 void
 debug_parser_state(void)
 {
-	static struct parser_state prev_ps;
-
 	debug_blank_line();
 	debug_println("             ps.prev_lsym = %s",
 	    lsym_name[ps.prev_lsym]);
 
-	debug_println("token classification");
+	state.heading = "token classification";
 	debug_ps_bool(in_stmt_or_decl);
 	debug_ps_bool(in_decl);
 	debug_ps_bool(in_var_decl);
@@ -308,12 +345,12 @@ debug_parser_state(void)
 	debug_ps_bool(prev_paren_was_cast);
 	debug_ps_int(quest_level);
 
-	debug_println("indentation of statements and declarations");
+	state.heading = "indentation of statements and declarations";
 	debug_ps_int(ind_level);
 	debug_ps_int(ind_level_follow);
 	debug_ps_bool(in_stmt_cont);
 	debug_ps_int(decl_level);
-	debug_ps_di_stack(&prev_ps);
+	debug_ps_di_stack();
 	debug_ps_bool(decl_indent_done);
 	debug_ps_int(decl_ind);
 	debug_ps_bool(tabs_to_var);
@@ -321,31 +358,33 @@ debug_parser_state(void)
 
 	// The parser symbol stack is printed in debug_parse_stack instead.
 
-	debug_println("spacing inside a statement or declaration");
+	state.heading = "spacing inside a statement or declaration";
 	debug_ps_bool(next_unary);
 	debug_ps_bool(want_blank);
 	debug_ps_int(line_start_nparen);
 	debug_ps_int(nparen);
-	debug_ps_paren(&prev_ps);
+	debug_ps_paren();
 
-	debug_println("horizontal spacing for comments");
+	state.heading = "horizontal spacing for comments";
 	debug_ps_int(comment_delta);
 	debug_ps_int(n_comment_delta);
 	debug_ps_int(com_ind);
 
-	debug_println("vertical spacing");
+	state.heading = "vertical spacing";
 	debug_ps_bool(break_after_comma);
 	debug_ps_bool(force_nl);
 	debug_ps_enum(declaration, declaration_name);
 	debug_ps_bool(blank_line_after_decl);
 
-	debug_println("comments");
+	state.heading = "comments";
 	debug_ps_bool(curr_col_1);
 	debug_ps_bool(next_col_1);
 
+	state.heading = NULL;
 	debug_blank_line();
 
-	prev_ps = ps;
+	state.prev_ps = ps;
+	state.ps_first = false;
 }
 
 void
