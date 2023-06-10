@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.184 2023/06/10 06:38:21 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.185 2023/06/10 07:42:41 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -314,12 +314,11 @@ extern struct parser_state {
 				 * starts an initializer */
 	bool in_init;		/* whether inside an initializer */
 	int init_level;		/* the number of '{}' in an initializer */
-	bool in_func_def_line;	/* starts either at the 'name(' from a function
+	bool line_has_func_def;	/* starts either at the 'name(' from a function
 				 * definition if it occurs at the beginning of
 				 * a line, or at the first '*' from inside a
 				 * declaration when the line starts with words
-				 * followed by a '('; ends at the end of that
-				 * line */
+				 * followed by a '(' */
 	bool in_func_def_params;	/* for old-style functions */
 	bool line_has_decl;	/* whether this line of code has part of a
 				 * declaration on it; used for indenting
