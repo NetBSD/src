@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.118 2022/01/22 14:00:45 christos Exp $	*/
+/*	$NetBSD: gzip.c,v 1.119 2023/06/10 04:45:25 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008, 2009, 2010, 2011, 2015, 2017
@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997, 1998, 2003, 2004, 2006, 2008,\
  2009, 2010, 2011, 2015, 2017 Matthew R. Green.  All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.118 2022/01/22 14:00:45 christos Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.119 2023/06/10 04:45:25 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -1400,7 +1400,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	struct stat isb, osb;
 	off_t size;
 	ssize_t rbytes;
-	unsigned char header1[4];
+	unsigned char fourbytes[4];
 	enum filetype method;
 	int fd, ofd, zfd = -1;
 	size_t in_size;
@@ -1434,8 +1434,8 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 		goto lose;
 	}
 
-	rbytes = read(fd, header1, sizeof header1);
-	if (rbytes != sizeof header1) {
+	rbytes = read(fd, fourbytes, sizeof fourbytes);
+	if (rbytes != sizeof fourbytes) {
 		/* we don't want to fail here. */
 #ifndef SMALL
 		if (fflag)
@@ -1449,7 +1449,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 	}
 	infile_newdata(rbytes);
 
-	method = file_gettype(header1);
+	method = file_gettype(fourbytes);
 #ifndef SMALL
 	if (fflag == 0 && method == FT_UNKNOWN) {
 		maybe_warnx("%s: not in gzip format", file);
@@ -1473,7 +1473,7 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 		infile_newdata(rv);
 		timestamp = ts[3] << 24 | ts[2] << 16 | ts[1] << 8 | ts[0];
 
-		if (header1[3] & ORIG_NAME) {
+		if (fourbytes[3] & ORIG_NAME) {
 			rbytes = pread(fd, name, sizeof(name) - 1, GZIP_ORIGNAME);
 			if (rbytes < 0) {
 				maybe_warn("can't read %s", file);
@@ -1787,7 +1787,7 @@ static void
 handle_stdin(void)
 {
 	struct stat isb;
-	unsigned char header1[4];
+	unsigned char fourbytes[4];
 	size_t in_size;
 	off_t usize, gsize;
 	enum filetype method;
@@ -1818,16 +1818,16 @@ handle_stdin(void)
 		goto out;
 	}
 
-	bytes_read = read_retry(STDIN_FILENO, header1, sizeof header1);
+	bytes_read = read_retry(STDIN_FILENO, fourbytes, sizeof fourbytes);
 	if (bytes_read == -1) {
 		maybe_warn("can't read stdin");
 		goto out;
-	} else if (bytes_read != sizeof(header1)) {
+	} else if (bytes_read != sizeof(fourbytes)) {
 		maybe_warnx("(stdin): unexpected end of file");
 		goto out;
 	}
 
-	method = file_gettype(header1);
+	method = file_gettype(fourbytes);
 	switch (method) {
 	default:
 #ifndef SMALL
@@ -1835,17 +1835,17 @@ handle_stdin(void)
 			maybe_warnx("unknown compression format");
 			goto out;
 		}
-		usize = cat_fd(header1, sizeof header1, &gsize, STDIN_FILENO);
+		usize = cat_fd(fourbytes, sizeof fourbytes, &gsize, STDIN_FILENO);
 		break;
 #endif
 	case FT_GZIP:
 		usize = gz_uncompress(STDIN_FILENO, STDOUT_FILENO,
-			      (char *)header1, sizeof header1, &gsize, "(stdin)");
+			      (char *)fourbytes, sizeof fourbytes, &gsize, "(stdin)");
 		break;
 #ifndef NO_BZIP2_SUPPORT
 	case FT_BZIP2:
 		usize = unbzip2(STDIN_FILENO, STDOUT_FILENO,
-				(char *)header1, sizeof header1, &gsize);
+				(char *)fourbytes, sizeof fourbytes, &gsize);
 		break;
 #endif
 #ifndef NO_COMPRESS_SUPPORT
@@ -1855,27 +1855,27 @@ handle_stdin(void)
 			goto out;
 		}
 
-		usize = zuncompress(in, stdout, (char *)header1,
-		    sizeof header1, &gsize);
+		usize = zuncompress(in, stdout, (char *)fourbytes,
+		    sizeof fourbytes, &gsize);
 		fclose(in);
 		break;
 #endif
 #ifndef NO_PACK_SUPPORT
 	case FT_PACK:
 		usize = unpack(STDIN_FILENO, STDOUT_FILENO,
-			       (char *)header1, sizeof header1, &gsize);
+			       (char *)fourbytes, sizeof fourbytes, &gsize);
 		break;
 #endif
 #ifndef NO_XZ_SUPPORT
 	case FT_XZ:
 		usize = unxz(STDIN_FILENO, STDOUT_FILENO,
-			     (char *)header1, sizeof header1, &gsize);
+			     (char *)fourbytes, sizeof fourbytes, &gsize);
 		break;
 #endif
 #ifndef NO_LZ_SUPPORT
 	case FT_LZ:
 		usize = unlz(STDIN_FILENO, STDOUT_FILENO,
-			     (char *)header1, sizeof header1, &gsize);
+			     (char *)fourbytes, sizeof fourbytes, &gsize);
 		break;
 #endif
 	}
