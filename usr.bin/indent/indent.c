@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.354 2023/06/10 16:43:55 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.355 2023/06/10 18:46:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.354 2023/06/10 16:43:55 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.355 2023/06/10 18:46:42 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -314,19 +314,16 @@ set_initial_indentation(void)
 	ps.ind_level = ps.ind_level_follow = ind / opt.indent_size;
 }
 
-static void
-maybe_break_line(lexer_symbol lsym)
+static bool
+should_break_line(lexer_symbol lsym)
 {
-	if (!ps.force_nl)
-		return;
 	if (lsym == lsym_semicolon)
-		return;
-	if (lsym == lsym_lbrace && opt.brace_same_line
-	    && ps.prev_lsym != lsym_lbrace)
-		return;
-
-	output_line();
-	ps.force_nl = false;
+		return false;
+	if (ps.prev_lsym == lsym_lbrace || ps.prev_lsym == lsym_semicolon)
+		return true;
+	if (lsym == lsym_lbrace && opt.brace_same_line)
+		return false;
+	return true;
 }
 
 static void
@@ -1051,7 +1048,10 @@ indent(void)
 		else if (lsym == lsym_comment) {
 			/* no special processing */
 		} else {
-			maybe_break_line(lsym);
+			if (ps.force_nl && should_break_line(lsym)) {
+				ps.force_nl = false;
+				output_line();
+			}
 			ps.in_stmt_or_decl = true;
 			if (com.len > 0)
 				move_com_to_code(lsym);

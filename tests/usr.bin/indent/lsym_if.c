@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_if.c,v 1.5 2023/06/10 16:43:56 rillig Exp $ */
+/* $NetBSD: lsym_if.c,v 1.6 2023/06/10 18:46:42 rillig Exp $ */
 
 /*
  * Tests for the token lsym_if, which represents the keyword 'if' that starts
@@ -38,8 +38,8 @@ function(void)
 	if (0)
 		if (1)
 			if (2)
-// $ FIXME: The '{' must be on a separate line, with indentation 8.
-				stmt(); {
-				}
+				stmt();
+	{
+	}
 }
 //indent end
