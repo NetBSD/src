@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bc.c,v 1.9 2023/06/10 06:38:21 rillig Exp $ */
+/* $NetBSD: opt_bc.c,v 1.10 2023/06/10 06:52:35 rillig Exp $ */
 
 /*
  * Tests for the options '-bc' and '-nbc'.
@@ -105,8 +105,8 @@ int		d;
 
 
 /*
- * A '(' at the top level is taken to start a function definition, leaving
- * variable declaration mode.
+ * Before 2023-06-10, a '(' at the top level started a function definition,
+ * leaving variable declaration mode.
  */
 //indent input
 int a = 1, b = 2;
@@ -116,6 +116,6 @@ int a = (1), b = 2;
 //indent run -bc
 int		a = 1,
 		b = 2;
-// $ FIXME: Missing line break.
-int		a = (1), b = 2;
+int		a = (1),
+		b = 2;
 //indent end

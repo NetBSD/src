@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_case_label.c,v 1.8 2023/06/04 18:58:30 rillig Exp $ */
+/* $NetBSD: lsym_case_label.c,v 1.9 2023/06/10 06:52:35 rillig Exp $ */
 
 /*
  * Tests for the tokens lsym_case and lsym_default, which represent the
@@ -92,22 +92,12 @@ const char *type_name = _Generic(
 // $ XXX: It's strange to align the arguments at the parenthesis even though
 // $ XXX: the first argument is already on a separate line.
 				 ' ',
-// $ TODO: indent the type names
-int:				 "character constants have type 'int'",
-char:				 "character constants have type 'char'",
-default:
-// $ TODO: remove the newline after 'default:'
-				 "character constants have some other type"
+				 int: "character constants have type 'int'",
+// $ FIXME: The indentation is not sensible in any way.
+			       char: "character constants have type 'char'",
+// $ FIXME: The indentation is not sensible in any way.
+			 default: "character constants have some other type"
 );
 //indent end
 
-//indent run -di0 -nlp
-const char *type_name = _Generic(
-	' ',
-// $ TODO: indent the type names
-int:	"character constants have type 'int'",
-char:	"character constants have type 'char'",
-default:
-	"character constants have some other type"
-);
-//indent end
+//indent run-equals-input -di0 -nlp

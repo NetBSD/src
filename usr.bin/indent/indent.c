@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.349 2023/06/10 06:38:21 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.350 2023/06/10 06:52:35 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.349 2023/06/10 06:38:21 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.350 2023/06/10 06:52:35 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -531,9 +531,8 @@ process_lparen(void)
 	if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0)
 		ps.extra_expr_indent = eei_maybe;
 
-	if (ps.in_var_decl && ps.psyms.top <= 2) {
-		/* A kludge to correctly align function definitions. */
-		parse(psym_stmt);
+	if (ps.in_var_decl && ps.psyms.top <= 2 && !ps.in_init) {
+		parse(psym_stmt);	/* prepare for function definition */
 		ps.in_var_decl = false;
 	}
 
@@ -841,7 +840,7 @@ static void
 process_colon_other(void)
 {
 	buf_add_char(&code, ':');
-	ps.want_blank = false;
+	ps.want_blank = ps.decl_level == 0;
 }
 
 static void
