@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.213 2023/06/10 08:17:04 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.214 2023/06/10 11:01:58 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.213 2023/06/10 08:17:04 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.214 2023/06/10 11:01:58 rillig Exp $");
 
 #include <stdio.h>
 
@@ -50,10 +50,11 @@ const char *inp_p;
 struct output_state out;
 enum indent_enabled indent_enabled;
 static int out_ind;		/* width of the line that is being written */
-static unsigned wrote_newlines = 2;	/* 0 in the middle of a line, 1 after a
-					 * single '\n', > 1 means there were (n
-					 * - 1) blank lines above */
-static unsigned buffered_blank_lines;
+static unsigned newlines = 2;	/* the total of written and buffered newlines;
+				 * 0 in the middle of a line, 1 after a single
+				 * finished line, anything > 1 are trailing
+				 * blank lines */
+static unsigned buffered_newlines;	/* not yet written */
 static int paren_indent;
 
 
@@ -108,37 +109,37 @@ inp_next(void)
 
 
 static void
-write_newline(void)
+buffer_newline(void)
 {
-	buffered_blank_lines++;
-	wrote_newlines++;
+	buffered_newlines++;
+	newlines++;
 	out_ind = 0;
 }
 
 static void
-write_buffered_blank_lines(void)
+write_buffered_newlines(void)
 {
-	for (; buffered_blank_lines > 0; buffered_blank_lines--) {
+	for (; buffered_newlines > 0; buffered_newlines--) {
 		fputc('\n', output);
-		debug_println("output_newline");
+		debug_println("write_newline");
 	}
 }
 
 static void
 write_range(const char *s, size_t len)
 {
-	write_buffered_blank_lines();
+	write_buffered_newlines();
 	fwrite(s, 1, len, output);
-	debug_vis_range("output_range \"", s, len, "\"\n");
+	debug_vis_range("write_range \"", s, len, "\"\n");
 	for (size_t i = 0; i < len; i++)
-		wrote_newlines = s[i] == '\n' ? wrote_newlines + 1 : 0;
+		newlines = s[i] == '\n' ? newlines + 1 : 0;
 	out_ind = ind_add(out_ind, s, len);
 }
 
 static void
 write_indent(int new_ind)
 {
-	write_buffered_blank_lines();
+	write_buffered_newlines();
 
 	int ind = out_ind;
 
@@ -148,16 +149,16 @@ write_indent(int new_ind)
 			ind = ind - ind % opt.tabsize + n * opt.tabsize;
 			while (n-- > 0)
 				fputc('\t', output);
-			wrote_newlines = 0;
+			newlines = 0;
 		}
 	}
 
 	for (; ind < new_ind; ind++) {
 		fputc(' ', output);
-		wrote_newlines = 0;
+		newlines = 0;
 	}
 
-	debug_println("output_indent %d", ind);
+	debug_println("write_indent %d", ind);
 	out_ind = ind;
 }
 
@@ -191,10 +192,10 @@ static bool
 is_blank_line_optional(void)
 {
 	if (out.prev_line_kind == lk_stmt_head)
-		return wrote_newlines >= 1;
+		return newlines >= 1;
 	if (ps.psyms.top >= 2)
-		return wrote_newlines >= 2;
-	return wrote_newlines >= 3;
+		return newlines >= 2;
+	return newlines >= 3;
 }
 
 static int
@@ -311,7 +312,7 @@ output_line_comment(void)
 	}
 
 	if (out_ind > target_ind)
-		write_newline();
+		buffer_newline();
 
 	while (com.s + com.len > p && ch_isspace(com.s[com.len - 1]))
 		com.len--;
@@ -328,9 +329,9 @@ output_line_indented(void)
 	if (lab.len == 0 && code.len == 0 && com.len == 0)
 		out.line_kind = lk_blank;
 
-	if (want_blank_line() && wrote_newlines < 2
+	if (want_blank_line() && newlines < 2
 	    && out.line_kind != lk_blank)
-		write_newline();
+		buffer_newline();
 
 	/* This kludge aligns function definitions correctly. */
 	if (ps.ind_level == 0)
@@ -353,8 +354,10 @@ output_line_indented(void)
 		output_line_code();
 	if (com.len > 0)
 		output_line_comment();
+	buffer_newline();
+	if (out.line_kind != lk_blank)
+		write_buffered_newlines();
 
-	write_newline();
 	out.prev_line_kind = out.line_kind;
 }
 
@@ -407,13 +410,8 @@ output_line(void)
 void
 output_finish(void)
 {
-	if (lab.len > 0 || code.len > 0 || com.len > 0)
-		output_line();
-	if (indent_enabled == indent_on) {
-		if (buffered_blank_lines > 1)
-			buffered_blank_lines = 1;
-		write_buffered_blank_lines();
-	} else {
+	output_line();
+	if (indent_enabled != indent_on) {
 		indent_enabled = indent_last_off_line;
 		output_line();
 	}

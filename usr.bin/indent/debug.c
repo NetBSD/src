@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.47 2023/06/10 09:31:41 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.48 2023/06/10 11:01:58 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.47 2023/06/10 09:31:41 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.48 2023/06/10 11:01:58 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -144,7 +144,7 @@ static struct {
 	struct parser_state prev_ps;
 	bool ps_first;
 	const char *heading;
-    	unsigned wrote_newlines;
+	unsigned wrote_newlines;
 } state = {
 	.ps_first = true,
 	.wrote_newlines = 1,
@@ -227,7 +227,7 @@ debug_buffers(void)
 	debug_print_buf("label", &lab);
 	debug_print_buf("code", &code);
 	debug_print_buf("comment", &com);
-	debug_println("");
+	debug_blank_line();
 }
 
 static void
@@ -287,7 +287,7 @@ debug_ps_paren(void)
 	}
 	if (ps.nparen == 0)
 		debug_printf(" none");
-	debug_println("");
+	debug_blank_line();
 }
 
 static bool
@@ -313,7 +313,7 @@ debug_ps_di_stack(void)
 		debug_printf(" %d", ps.di_stack[i]);
 	if (ps.decl_level == 0)
 		debug_printf(" none");
-	debug_println("");
+	debug_blank_line();
 }
 
 #define debug_ps_bool(name) \
@@ -395,6 +395,6 @@ debug_parse_stack(const char *situation)
 	for (int i = 0; i <= psyms->top; ++i)
 		debug_printf(" %d %s",
 		    psyms->ind_level[i], psym_name[psyms->sym[i]]);
-	debug_println("");
+	debug_blank_line();
 }
 #endif
