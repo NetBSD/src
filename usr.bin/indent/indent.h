@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.187 2023/06/10 16:43:56 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.188 2023/06/10 21:36:38 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -368,10 +368,9 @@ extern struct parser_state {
 	bool want_blank;	/* whether the following token should be
 				 * prefixed by a blank. (Said prefixing is
 				 * ignored in some cases.) */
-	int line_start_nparen;	/* the number of parentheses or brackets that
-				 * were open at the beginning of the current
-				 * line; used to indent within statements,
-				 * initializers and declarations */
+	int ind_paren_level;	/* the number of parentheses or brackets that
+				 * is used for indenting a continuation line of
+				 * a declaration, initializer or statement */
 	int nparen;		/* the number of parentheses or brackets that
 				 * are currently open; used to indent the
 				 * remaining lines of the statement,
