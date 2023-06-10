@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.51 2023/06/10 18:46:42 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.52 2023/06/10 20:37:12 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.51 2023/06/10 18:46:42 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.52 2023/06/10 20:37:12 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -233,7 +233,7 @@ debug_buffers(void)
 static void
 write_ps_bool(const char *name, bool prev, bool curr)
 {
-	if (curr != prev) {
+	if (!state.ps_first && curr != prev) {
 		char diff = " -+x"[(prev ? 1 : 0) + (curr ? 2 : 0)];
 		debug_println("        [%c]  ps.%s", diff, name);
 	} else if (config.full_parser_state || state.ps_first)
@@ -243,7 +243,7 @@ write_ps_bool(const char *name, bool prev, bool curr)
 static void
 write_ps_int(const char *name, int prev, int curr)
 {
-	if (curr != prev)
+	if (!state.ps_first && curr != prev)
 		debug_println(" %3d -> %3d  ps.%s", prev, curr, name);
 	else if (config.full_parser_state || state.ps_first)
 		debug_println("        %3d  ps.%s", curr, name);
@@ -252,7 +252,7 @@ write_ps_int(const char *name, int prev, int curr)
 static void
 write_ps_enum(const char *name, const char *prev, const char *curr)
 {
-	if (strcmp(prev, curr) != 0)
+	if (!state.ps_first && strcmp(prev, curr) != 0)
 		debug_println(" %3s -> %3s  ps.%s", prev, curr, name);
 	else if (config.full_parser_state || state.ps_first)
 		debug_println(" %10s  ps.%s", curr, name);
@@ -327,10 +327,9 @@ void
 debug_parser_state(void)
 {
 	debug_blank_line();
-	debug_println("             ps.prev_lsym = %s",
-	    lsym_name[ps.prev_lsym]);
 
 	state.heading = "token classification";
+	debug_ps_enum(prev_lsym, lsym_name);
 	debug_ps_bool(in_stmt_or_decl);
 	debug_ps_bool(in_decl);
 	debug_ps_bool(in_var_decl);
