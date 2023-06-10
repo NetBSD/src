@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.95 2023/06/10 14:11:08 lukem Exp $
+# $NetBSD: maketars,v 1.96 2023/06/10 16:08:41 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -173,6 +173,7 @@ trap cleanup 0 2 3 13		# EXIT INT QUIT PIPE
 #
 
 for setname in ${lists}; do
+	msg "Creating flist.${setname}"
 	${HOST_SH} "${setsdir}/makeflist" -a "${MACHINE_ARCH}" -m "${MACHINE}" \
 	    -s "${setsdir}" "${setname}" > "${SDIR}/flist.${setname}" \
 	    || exit 1
@@ -180,7 +181,7 @@ for setname in ${lists}; do
 		echo >&2 "makeflist output is empty for ${setname}"
 		exit 1
 	fi
-	${setfilesonly} && msg "Creating ${setlistdir}/set.${setname}"
+	msg "Creating set.${setname}"
 	if [ -n "${metalog}" ]; then
 		${AWK} -f "${rundir}/getdirs.awk" "${SDIR}/flist.${setname}" \
 		    > "${SDIR}/flist.${setname}.full" \
