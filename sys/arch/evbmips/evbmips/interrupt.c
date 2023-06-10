@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.24 2016/08/26 15:45:47 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.25 2023/06/10 07:30:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.24 2016/08/26 15:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.25 2023/06/10 07:30:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -84,7 +84,7 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 			KASSERTMSG(ipl == IPL_SCHED,
 			    "%s: ipl (%d) != IPL_SCHED (%d)",
 			     __func__, ipl, IPL_SCHED);
-			/* call the common MIPS3 clock interrupt handler */ 
+			/* call the common MIPS3 clock interrupt handler */
 			mips3_clockintr(&cf);
 			pending ^= MIPS_INT_MASK_5;
 		}
