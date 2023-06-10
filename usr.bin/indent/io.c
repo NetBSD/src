@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.211 2023/06/10 07:48:55 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.212 2023/06/10 07:53:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.211 2023/06/10 07:48:55 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.212 2023/06/10 07:53:00 rillig Exp $");
 
 #include <stdio.h>
 
@@ -322,6 +322,42 @@ output_line_comment(void)
 	ps.comment_delta = ps.n_comment_delta;
 }
 
+static void
+output_line_indented(void)
+{
+	if (lab.len == 0 && code.len == 0 && com.len == 0)
+		out.line_kind = lk_blank;
+
+	if (want_blank_line() && wrote_newlines < 2
+	    && out.line_kind != lk_blank)
+		write_newline();
+
+	/* This kludge aligns function definitions correctly. */
+	if (ps.ind_level == 0)
+		ps.in_stmt_cont = false;
+
+	if (opt.blank_line_after_decl && ps.declaration == decl_end
+	    && ps.psyms.top > 1) {
+		ps.declaration = decl_no;
+		ps.blank_line_after_decl = true;
+	}
+
+	if (opt.swallow_optional_blanklines
+	    && out.line_kind == lk_blank
+	    && is_blank_line_optional())
+		return;
+
+	if (lab.len > 0)
+		output_line_label();
+	if (code.len > 0)
+		output_line_code();
+	if (com.len > 0)
+		output_line_comment();
+
+	write_newline();
+	out.prev_line_kind = out.line_kind;
+}
+
 /*
  * Write a line of formatted source to the output file. The line consists of
  * the label, the code and the comment.
@@ -333,47 +369,14 @@ output_line(void)
 	debug_printf("%s", __func__);
 	debug_buffers();
 
-	if (indent_enabled == indent_on) {
-		if (lab.len == 0 && code.len == 0 && com.len == 0)
-			out.line_kind = lk_blank;
-
-		if (want_blank_line() && wrote_newlines < 2
-		    && out.line_kind != lk_blank)
-			write_newline();
-
-		/* This kludge aligns function definitions correctly. */
-		if (ps.ind_level == 0)
-			ps.in_stmt_cont = false;
-
-		if (opt.blank_line_after_decl && ps.declaration == decl_end
-		    && ps.psyms.top > 1) {
-			ps.declaration = decl_no;
-			ps.blank_line_after_decl = true;
-		}
-
-		if (opt.swallow_optional_blanklines
-		    && out.line_kind == lk_blank
-		    && is_blank_line_optional())
-			goto prepare_next_line;
-
-		if (lab.len > 0)
-			output_line_label();
-		if (code.len > 0)
-			output_line_code();
-		if (com.len > 0)
-			output_line_comment();
-
-		write_newline();
-		out.prev_line_kind = out.line_kind;
-	}
-
-	if (indent_enabled == indent_last_off_line) {
+	if (indent_enabled == indent_on)
+		output_line_indented();
+	else if (indent_enabled == indent_last_off_line) {
 		indent_enabled = indent_on;
 		write_range(out.indent_off_text.s, out.indent_off_text.len);
 		out.indent_off_text.len = 0;
 	}
 
-prepare_next_line:
 	lab.len = 0;
 	code.len = 0;
 	com.len = 0;
