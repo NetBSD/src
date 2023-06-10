@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.214 2023/06/10 11:01:58 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.215 2023/06/10 12:59:31 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.214 2023/06/10 11:01:58 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.215 2023/06/10 12:59:31 rillig Exp $");
 
 #include <stdio.h>
 
@@ -61,7 +61,7 @@ static int paren_indent;
 static void
 inp_read_next_line(FILE *f)
 {
-	inp.len = 0;
+	buf_clear(&inp);
 
 	for (;;) {
 		int ch = getc(f);
@@ -79,6 +79,7 @@ inp_read_next_line(FILE *f)
 		if (ch == '\n')
 			break;
 	}
+	buf_terminate(&inp);
 	inp_p = inp.s;
 }
 
@@ -86,7 +87,7 @@ void
 inp_read_line(void)
 {
 	if (indent_enabled == indent_on)
-		out.indent_off_text.len = 0;
+		buf_clear(&out.indent_off_text);
 	buf_add_chars(&out.indent_off_text, inp.s, inp.len);
 	inp_read_next_line(input);
 }
@@ -316,6 +317,7 @@ output_line_comment(void)
 
 	while (com.s + com.len > p && ch_isspace(com.s[com.len - 1]))
 		com.len--;
+	buf_terminate(&com);
 
 	write_indent(target_ind);
 	write_range(p, com.len - (size_t)(p - com.s));
@@ -377,12 +379,12 @@ output_line(void)
 	else if (indent_enabled == indent_last_off_line) {
 		indent_enabled = indent_on;
 		write_range(out.indent_off_text.s, out.indent_off_text.len);
-		out.indent_off_text.len = 0;
+		buf_clear(&out.indent_off_text);
 	}
 
-	lab.len = 0;
-	code.len = 0;
-	com.len = 0;
+	buf_clear(&lab);
+	buf_clear(&code);
+	buf_clear(&com);
 
 	ps.line_has_decl = ps.in_decl;
 	ps.line_has_func_def = false;
