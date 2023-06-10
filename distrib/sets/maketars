@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.94 2022/08/21 07:10:03 lukem Exp $
+# $NetBSD: maketars,v 1.95 2023/06/10 14:11:08 lukem Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -30,8 +30,11 @@ setlistdir=
 timestamp=
 setfilesonly=false
 quiet=false
-skipkeys=time,md5,sha1,sha384,sha512,rmd160,cksum
 preserve="-pe"
+
+# mtree(8) keys to skip (exclude) in the generated /etc/mtree/sets.* files.
+# Note: sets contain sha256 so that keyword is not listed here.
+skipkeys=cksum,md5,rmd160,sha1,sha384,sha512,time
 
 usage()
 {
