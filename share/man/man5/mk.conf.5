@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.101 2023/06/05 22:35:20 lukem Exp $
+.\"	$NetBSD: mk.conf.5,v 1.102 2023/06/11 10:44:33 lukem Exp $
 .\"
 .\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 5, 2023
+.Dd June 11, 2023
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -41,14 +41,20 @@
 The
 .Nm
 file overrides various parameters used during the build of the system.
-.Pp
+.
+.Sh NETBSD SYSTEM VARIABLES
+.
 Listed below are the
 .Nm
-variables that may be set, the values to which each may be set,
-a brief description of what each variable does, and a reference to
-relevant manual pages.
-.
-.Ss NetBSD System variables
+variables that may be set that affect the
+.Nx NetBSD
+system build,
+the values to which each may be set,
+a brief description of what each variable does,
+references to relevant manual pages,
+notes (including any interaction with
+.Sy build.sh ) ,
+and the default value of each variable.
 .
 .de DFLT
 .Pp
@@ -190,12 +196,15 @@ should never be set in
 .Nm .
 .
 .It Sy CPUFLAGS
-Additional flags passed to the compiler/assembler to select
+Additional options passed to the compiler/assembler to select
 CPU instruction set options, CPU tuning options, etc.
+.Pp
+.Em Note :
 Such options should not be specified in
 .Sy COPTS ,
 because some parts of the build process need to override
 CPU-related compiler options.
+.DFLTu
 .
 .It Sy DESTDIR
 Directory to contain the built
@@ -205,13 +214,15 @@ If set, special options are passed to the compilation tools to
 prevent their default use of the host system's
 .Sy /usr/include , /usr/lib ,
 and so forth.
-This pathname should
+This pathname must be an absolute path, and should
 .Em not
 end with a slash
 .Pq /
-character (for installation into the system's root directory, set
+character.
+(For installation into the system's root directory, set
 .Sy DESTDIR
-to an empty string).
+to an empty string, not to
+.Dq / ) .
 The directory must reside on a file system which supports long file
 names and hard links.
 .Pp
@@ -223,7 +234,7 @@ will provide a default of
 .Sy .OBJDIR )
 unless run in
 .Sq expert
-mode
+mode.
 .DFLT
 Empty string if
 .Sy USETOOLS=yes ;
@@ -257,8 +268,27 @@ Expect the exact semantics of this variable to change in the short
 term as parts of the cross-compile framework continue to be cleaned up.
 .DFLTu
 .
-.It Sy EXTSRCSRCDIR
-Obsolete.
+.It Sy INSTALLBOOT_BOARDS
+A list of
+.Sy evbarm
+boards to create bootable images for.
+If corresponding U-Boot packages are installed,
+bootable images are created as part of a release.
+See the
+.Bk -words
+.Fl o Sy board= Ns Ar name
+.Ek
+option of
+.Xr installboot 8 .
+.DFLTu
+.
+.It Sy INSTALLWORLDDIR
+Location for the top-level
+.Dq make installworld
+target to install to.
+If specified, must be an absolute path.
+.DFLT
+.Dq /
 .
 .It Sy KERNEL_DIR Pq No experimental
 .YorN
@@ -303,17 +333,17 @@ are shown.
 Brief messages are shown describing what is being done,
 but the actual commands executed by
 .Xr make 1
-are not displayed.
+are not shown.
 .It 2
 Descriptive messages are shown as above (prefixed with a
 .Sq # ) ,
 and ordinary commands performed by
 .Xr make 1
-are displayed.
+are shown.
 .It 3
 In addition to the above, all commands performed by
 .Xr make 1
-are displayed, even if they would ordinarily have been hidden
+are shown, even if they would ordinarily have been hidden
 through use of the
 .Dq \&@
 prefix in the relevant makefile.
@@ -370,10 +400,6 @@ test suite will be built and installed,
 as the tests rely on ATF and cannot be built without it.
 .NOVAR MKCXX=no
 .DFLTy
-.
-.It Sy MKBFD
-Obsolete, use
-.Sy MKBINUTILS .
 .
 .It Sy MKBINUTILS
 .YorN
@@ -532,9 +558,6 @@ is compiled with support for
 .YorN
 Create a cross-gdb as a host tool.
 .DFLTn
-.
-.It Sy MKCRYPTO
-Obsolete.
 .
 .It Sy MKCTF
 .YorN
@@ -700,9 +723,6 @@ on
 .Dq yes
 on other platforms.
 .
-.It Sy MKEXTSRC
-Obsolete.
-.
 .It Sy MKFIRMWARE
 .YorN
 Indicates whether to install the
@@ -819,11 +839,12 @@ will be suffixed to the name of the object directory created by
 .Dq make obj .
 (This allows multiple host systems to compile
 .Nx
-for a single target.)
+for a single target architecture.)
 If
 .Dq no ,
 then programs built to be run on the compile host will use the same
-object directory names as programs built to be run on the target.
+object directory names as programs built to be run on the target
+architecture.
 .DFLTn
 .
 .It Sy MKHTML
@@ -878,10 +899,6 @@ on
 .Dq yes
 on other platforms.
 .
-.It Sy MKKDEBUG
-Deprecated, use
-.Sy MKDEBUGKERNEL .
-.
 .It Sy MKKERBEROS
 .YorN
 Indicates whether the Kerberos v5 infrastructure
@@ -896,9 +913,6 @@ files or disabling PAM via
 .Sy MKPAM .
 Otherwise all logins will fail.
 .DFLTy
-.
-.It Sy MKKERBEROS4
-Obsolete.
 .
 .It Sy MKKMOD
 .YorN
@@ -1009,12 +1023,6 @@ installed into
 .NOVAR MKLINKLIB=no
 .DFLTn
 .
-.It Sy MKLLD
-Obsolete.
-.
-.It Sy MKLLDB
-Obsolete.
-.
 .It Sy MKLLVM
 .YorN
 Indicates whether
@@ -1115,9 +1123,6 @@ Only used if
 .Sy MKMAN=yes .
 .DFLTn
 .
-.It Sy MKMCLINKER
-Obsolete.
-.
 .It Sy MKMDNS
 .YorN
 Indicates whether the mDNS (Multicast DNS) infrastructure
@@ -1188,6 +1193,19 @@ Indicates whether object directories will be created automatically
 .Dq make obj
 pass) at the start of a build.
 .NOVAR MKOBJ=no
+.Pp
+.Em Note :
+If using
+.Sy build.sh ,
+the default is
+.Dq yes .
+This may be set back to
+.Dq no
+by giving
+.Sy build.sh
+the
+.Fl o
+option.
 .DFLTn
 .
 .It Sy MKPAM
@@ -1206,9 +1224,6 @@ or any related libraries
 .Pq Sy libpcc , libpccsoftfloat
 will be built and installed.
 .DFLTn
-.
-.It Sy MKPERFUSE
-Obsolete.
 .
 .It Sy MKPF
 .YorN
@@ -1373,6 +1388,15 @@ results.
 .Pp
 Used as the default for
 .Sy MKARZERO .
+.Pp
+.Em Note :
+This may be set to
+.Dq yes
+by giving
+.Sy build.sh
+the
+.Fl P
+option.
 .DFLTn
 .
 .It Sy MKREPRO_TIMESTAMP
@@ -1381,6 +1405,16 @@ When
 .Sy MKREPRO
 is set, the timestamp of all files in the sets will be set
 to this value.
+.Pp
+.Em Note :
+This may be set automatically to the latest source tree timestamp
+using
+.Xr cvslatest 1
+by giving
+.Sy build.sh
+the
+.Fl P
+option.
 .DFLTu
 .
 .It Sy MKRUMP
@@ -1519,10 +1553,6 @@ on
 .Dq no
 on other platforms.
 .
-.It Sy MKTOOLSDEBUG
-Deprecated, use
-.Sy MKDEBUGTOOLS .
-.
 .It Sy MKTPM
 .YorN
 Indicates whether to install the Trusted Platform Module (TPM)
@@ -1545,10 +1575,10 @@ a file called
 .Pa METALOG
 in
 .Sy DESTDIR .
-The contents of
+The
 .Pa METALOG
-is used during the generation of the distribution tar files to ensure
-that the appropriate file ownership is stored.
+contents are used during the generation of the distribution
+tar files to ensure that the appropriate file ownership is stored.
 This allows a non-root
 .Sq "make install" .
 .DFLTn
@@ -1559,6 +1589,19 @@ Indicates whether all install operations intended to write to
 .Sy DESTDIR
 will compare file timestamps before installing, and skip the install
 phase if the destination files are up-to-date.
+.Pp
+For top-level builds this this implies the effects of
+.Sy NOCLEANDIR
+(i.e.,
+.Dq make cleandir
+is avoided).
+.Pp
+.Em Note :
+If using
+.Sy build.sh ,
+this may be set by giving the
+.Fl u
+option.
 .DFLTn
 .
 .It Sy MKX11
@@ -1694,6 +1737,47 @@ builds from real releases.
 .DFLTu
 .Pq Dq no .
 .
+.It Sy NOCLEANDIR
+If set, avoids the
+.Dq make cleandir
+phase of a full build.
+This has the effect of allowing only changed
+files in a source tree to be recompiled.
+This can speed up builds when updating only a few files in the tree.
+.Pp
+See also
+.Sy MKUPDATE .
+.DFLTu
+.
+.It Sy NODISTRIBDIRS
+If set, avoids the
+.Dq make distrib-dirs
+phase of a full build.
+This skips running
+.Xr mtree 8
+on
+.Sy DESTDIR ,
+useful on systems where building as an unprivileged user, or where it is
+known that the system-wide
+.Xr mtree 8
+files have not changed.
+.DFLTu
+.
+.It Sy NOINCLUDES
+If set, avoids the
+.Dq make includes
+phase of a full build.
+This has the effect of preventing
+.Xr make 1
+from thinking that some programs are out-of-date simply because the
+system include files have changed.
+However, this option should not be used when updating the entire
+.Nx
+source tree arbitrarily; it is suggested to use
+.Sy MKUPDATE=yes
+instead in that case.
+.DFLTu
+.
 .It Sy OBJMACHINE
 If defined, creates objdirs of the form
 .Pa obj . Ns Sy MACHINE ,
@@ -1707,6 +1791,7 @@ If set, specifies the directory to which a
 .Xr release 7
 layout will be written at the end of a
 .Dq make release .
+If specified, must be an absolute path.
 .Pp
 .Em Note :
 .Sy build.sh
@@ -1718,9 +1803,6 @@ unless run in
 .Sq expert
 mode.
 .DFLTu
-.
-.It Sy SHAREDSTRINGS
-Obsolete.
 .
 .It Sy TOOLCHAIN_MISSING
 .YorN
@@ -1739,12 +1821,13 @@ acts as
 .
 .It Sy TOOLDIR
 Directory to hold the host tools, once built.
+If specified, must be an absolute path.
 This directory should be unique to a given host system and
 .Nx
 source tree.
-(However, multiple targets may share the same
+(However, multiple target architectures may share the same
 .Sy TOOLDIR ;
-the target-dependent files have unique names.)
+the target-architecture-dependent files have unique names.)
 If unset, a default based
 on the
 .Xr uname 1
@@ -1795,9 +1878,6 @@ source tree (detected automatically) or if
 .Sy TOOLCHAIN_MISSING=yes ;
 .Dq yes
 otherwise.
-.
-.It Sy USE_COMBINE
-Obsolete.
 .
 .It Sy USE_FORT
 .YorN
@@ -2018,7 +2098,7 @@ if that exists; otherwise
 .
 .El
 .
-.Ss pkgsrc system variables
+.Sh PKGSRC SYSTEM VARIABLES
 .
 Please see the pkgsrc guide at
 .Lk http://www.netbsd.org/Documentation/pkgsrc/
@@ -2028,11 +2108,80 @@ for more variables used internally by the package system and
 .Pa ${PKGSRCDIR}/mk/defaults/mk.conf
 for package-specific examples.
 .
+.Sh OBSOLETE VARIABLES
+.
+These variables are obsolete.
+.
+.Bl -tag -width 14n
+.
+.\" These entries are sorted alphabetically.
+.
+.It Sy EXTSRCSRCDIR
+Obsolete.
+.
+.It Sy MKBFD
+Use
+.Sy MKBINUTILS .
+.
+.It Sy MKCRYPTO
+Obsolete.
+.
+.It Sy MKEXTSRC
+Obsolete.
+.
+.It Sy MKKERBEROS4
+Obsolete.
+.
+.It Sy MKKDEBUG
+Use
+.Sy MKDEBUGKERNEL .
+.
+.It Sy MKLLD
+Obsolete.
+.
+.It Sy MKLLDB
+Obsolete.
+.
+.It Sy MKMCLINKER
+Obsolete.
+.
+.It Sy MKPERFUSE
+Obsolete.
+.
+.It Sy MKTOOLSDEBUG
+Use
+.Sy MKDEBUGTOOLS .
+.
+.It Sy NBUILDJOBS
+Use the
+.Nm build.sh
+and
+.Xr make 1
+option
+.Fl j
+instead.
+.
+.It Sy SHAREDSTRINGS
+Obsolete.
+.
+.It Sy USE_COMBINE
+Obsolete.
+.
+.It Sy USE_NEW_TOOLCHAIN
+The new toolchain is now the default.
+To disable, use
+.Sy TOOLCHAIN_MISSING=yes .
+.
+.El
+.
 .Sh FILES
 .Bl -tag -width /etc/mk.conf
 .
 .It Pa /etc/mk.conf
-This file.
+The
+.Nm
+file resides in
+.Pa /etc .
 .
 .It Pa ${PKGSRCDIR}/mk/defaults/mk.conf
 Examples for settings regarding the pkgsrc collection.
@@ -2046,6 +2195,7 @@ Examples for settings regarding the pkgsrc collection.
 .Xr clang++ 1 ,
 .Xr cpio 1 ,
 .Xr cvs 1 ,
+.Xr cvslatest 1 ,
 .Xr dtrace 1 ,
 .Xr g++ 1 ,
 .Xr gcc 1 ,
@@ -2096,12 +2246,15 @@ Examples for settings regarding the pkgsrc collection.
 .Xr Xorg 7 ,
 .Xr dbsym 8 ,
 .Xr getNAME 8 ,
+.Xr installboot 8 ,
 .Xr makemandb 8 ,
 .Xr makewhatis 8 ,
 .Xr mdsetimage 8 ,
+.Xr mtree 8 ,
 .Xr pam 8 ,
 .Xr unbound 8 ,
 .Pa /usr/share/mk/bsd.README ,
+.Pa src/BUILDING ,
 .Pa pkgsrc/doc/pkgsrc.txt ,
 .Lk http://www.netbsd.org/Documentation/pkgsrc/
 .Sh HISTORY
