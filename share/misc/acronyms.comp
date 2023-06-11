@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.353 2023/05/26 03:30:57 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.354 2023/06/11 17:54:18 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -442,6 +442,7 @@ DOM	document object model
 DOS	denial of service
 DOS	disk operating system
 DP	DisplayPort
+DPAA	data path acceleration architecture
 DPC	deferred procedure call
 DPCM	differential pulse code modulation
 DPD	dead peer detection
