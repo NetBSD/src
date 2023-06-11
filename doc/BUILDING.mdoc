@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.141 2023/06/05 22:36:17 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.142 2023/06/11 10:43:51 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd June 5, 2023
+.Dd June 10, 2023
 .Dt BUILDING 8
 .Os NetBSD
 .\" turn off hyphenation
@@ -1168,16 +1168,6 @@ If using
 this may be set by giving the
 .Fl u
 option.
-.
-.It Sy NBUILDJOBS
-Now obsolete.
-Use the
-.Xr make 1
-option
-.Fl j ,
-instead.
-See below.
-.DFLTu
 .
 .It Sy NOCLEANDIR
 If set, avoids the
@@ -2432,6 +2422,8 @@ portion of the release build.
 .
 .It Sy NBUILDJOBS
 Use the
+.Nm build.sh
+and
 .Xr make 1
 option
 .Fl j
