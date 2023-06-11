@@ -676,11 +676,6 @@ CONFIGURATION
                      If using build.sh, this may be set by giving the -u
                      option.
 
-     NBUILDJOBS      Now obsolete.  Use the make(1) option -j, instead.  See
-                     below.
-
-                     Default: Unset.
-
      NOCLEANDIR      If set, avoids the "make cleandir" phase of a full build.
                      This has the effect of allowing only changed files in a
                      source tree to be recompiled.  This can speed up builds
@@ -1293,7 +1288,7 @@ EXAMPLES
           the release build.
 
 OBSOLETE VARIABLES
-     NBUILDJOBS  Use the make(1) option -j instead.
+     NBUILDJOBS  Use the build.sh and make(1) option -j instead.
 
      USE_NEW_TOOLCHAIN
                  The new toolchain is now the default.  To disable, use
@@ -1316,4 +1311,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                           June 5, 2023                           NetBSD
+NetBSD                           June 10, 2023                          NetBSD

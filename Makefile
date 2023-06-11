@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.336 2023/06/02 20:48:09 lukem Exp $
+#	$NetBSD: Makefile,v 1.337 2023/06/11 10:43:51 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -445,9 +445,6 @@ check-tools: .PHONY
 	@echo '*** May result in a failed build or corrupt binaries!'
 .elif defined(EXTERNAL_TOOLCHAIN)
 	@echo '*** Using external toolchain rooted at ${EXTERNAL_TOOLCHAIN}.'
-.endif
-.if defined(NBUILDJOBS)
-	@echo '*** WARNING: NBUILDJOBS is obsolete; use -j directly instead!'
 .endif
 
 # Delete or sanitise a leftover METALOG from a previous build.
