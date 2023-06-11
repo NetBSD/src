@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.102 2023/06/11 10:44:33 lukem Exp $
+.\"	$NetBSD: mk.conf.5,v 1.103 2023/06/11 20:33:46 lukem Exp $
 .\"
 .\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -62,7 +62,7 @@ and the default value of each variable.
 ..
 .de DFLTn
 .DFLT
-.Dq no
+.Dq no .
 ..
 .de DFLTu
 .DFLT
@@ -70,7 +70,7 @@ Unset.
 ..
 .de DFLTy
 .DFLT
-.Dq yes
+.Dq yes .
 ..
 .de NODEF
 .Pp
@@ -107,7 +107,7 @@ The real path to the object directory tree for the
 .Nx
 source tree.
 .DFLT
-.Dq Pa /usr/obj
+.Dq Pa /usr/obj .
 .
 .It Sy BSDSRCDIR
 The real path to the
@@ -116,14 +116,18 @@ source tree, if
 .Sy NETBSDSRCDIR
 isn't defined.
 .DFLT
-.Dq Pa /usr/src
+.Dq Pa /usr/src .
 .
 .It Sy BUILD
 If defined,
 .Sq "make install"
-checks that the targets in the source directories are up-to-date and
+checks that the
+.Xr make 1
+targets in the source directories are up-to-date and
 re-makes them if they are out of date, instead of blindly trying to install
-out of date or non-existent targets.
+out of date or non-existent
+.Xr make 1
+targets.
 .DFLTu
 .
 .It Sy BUILDID
@@ -175,6 +179,33 @@ Additional information is available in the
 .Xr g++ 1
 documentation of
 .Fl frandom-seed .
+.DFLTu
+.
+.It Sy CDEXTRA
+A space-separated list of files or directories that will be
+added to the CD-ROM image that may be create by the
+.Sy build.sh
+.Dq iso-image
+or
+.Dq iso-image-source
+operations.
+Files will be added to the root of the CD-ROM image,
+whereas directories will be copied recursively.
+If relative paths are specified, they will be converted to
+absolute paths before being used.
+.Em Note :
+If using
+.Sy build.sh ,
+multiple paths may be specified via multiple
+.Fl C
+options, or via a single option whose argument contains multiple
+space-separated paths.
+.DFLTu
+.
+.It Sy CONFIGOPTS
+Additional flags to
+.Xr config 1
+when building kernels.
 .DFLTu
 .
 .It Sy COPTS
@@ -234,11 +265,13 @@ will provide a default of
 .Sy .OBJDIR )
 unless run in
 .Sq expert
-mode.
+mode with the
+.Fl E
+option.
 .DFLT
 Empty string if
 .Sy USETOOLS=yes ;
-unset otherwise.
+otherwise unset.
 .
 .It Sy EXTERNAL_TOOLCHAIN
 If defined, this variable indicates the root directory of
@@ -283,12 +316,25 @@ option of
 .DFLTu
 .
 .It Sy INSTALLWORLDDIR
-Location for the top-level
-.Dq make installworld
+Directory for the top-level
+.Xr make 1
+.Dq installworld
 target to install to.
 If specified, must be an absolute path.
 .DFLT
-.Dq /
+.Dq Pa / .
+.
+.It Sy KERNARCHDIR
+Directory under
+.Sy KERNSRCDIR
+containing the machine dependent kernel sources.
+.DFLT
+.Dq Pa arch/ Ns Sy MACHINE .
+.
+.It Sy KERNCONFDIR
+Directory containing the kernel configuration files.
+.DFLT
+.Dq Sy KERNSRCDIR Ns Pa / Ns Sy KERNARCHDIR Ns Pa /conf .
 .
 .It Sy KERNEL_DIR Pq No experimental
 .YorN
@@ -321,6 +367,38 @@ The
 option is a work-in-progress, and is highly experimental.
 It is also subject to change without notice.
 .DFLTn
+.
+.It Sy KERNOBJDIR
+Directory for kernel builds.
+For example, the kernel
+.Sy GENERIC
+will be compiled in
+.Sy KERNOBJDIR Ns Pa /GENERIC .
+.DFLT
+.Dq Sy MAKEOBJDIRPREFIX Ns Pa / Ns Sy KERNSRCDIR Ns Pa / Ns Sy KERNARCHDIR Ns Pa /compile
+if it exists or the
+.Xr make 1
+.Dq obj
+target is being made;
+otherwise
+.Dq Sy KERNSRCDIR Ns Pa / Ns Sy KERNARCHDIR Ns Pa /compile .
+.
+.It Sy KERNSRCDIR
+Directory at the top of the kernel source.
+.DFLT
+.Dq Sy NETBSDSRCDIR Ns Pa /sys .
+.
+.It Sy LOCALTIME
+The name of the
+.Xr tzfile 5
+timezone file in the directory
+.Pa /usr/share/zoneinfo
+to symbolically link
+.Sy DESTDIR Ns Pa /etc/localtime
+to.
+.DFLT
+.Dq UTC .
+.
 .It Sy MAKEVERBOSE
 Level of verbosity of status messages.
 Supported values:
@@ -356,7 +434,7 @@ are traced through use of the
 flag.
 .El
 .DFLT
-2
+.Sy 2 .
 .
 .It Sy MKAMDGPUFIRMWARE
 .YorN
@@ -365,7 +443,8 @@ Indicates whether to install the
 directory, which is necessary for the
 .Xr amdgpu 4
 AMD RADEON GPU video driver.
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy i386
 and
@@ -505,7 +584,8 @@ then file deletions will not be verified.
 Indicates whether support for multiple ABIs is to be built and
 installed.
 .NODEF NOCOMPAT
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy aarch64
 (without gcc),
@@ -522,7 +602,8 @@ on other platforms.
 .YorN
 Indicates whether the compat kernel modules will be built and installed.
 .NOVAR MKCOMPAT=no
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy evbppc-powerpc
 and
@@ -570,7 +651,8 @@ CTF data of ELF binaries during build.
 .Pp
 This is disabled internally for standalone programs in
 .Pa /usr/mdec .
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy aarch64 ,
 .Sy amd64 ,
@@ -602,9 +684,9 @@ and acts as
 Indicates whether debug information should be generated for
 all userland binaries.
 The result is collected as an additional
-.Sy debug.tgz
+.Sy debug
 and
-.Sy xdebug.tgz
+.Sy xdebug
 set and installed in
 .Sy DESTDIR Ns Pa /usr/libdata/debug .
 .NODEF NODEBUG
@@ -669,7 +751,8 @@ will be installed.
 .It Sy MKDTB
 .YorN
 Indicates whether the devicetree blobs will be built and installed.
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy aarch64 ,
 .Sy armv6 ,
@@ -690,7 +773,8 @@ Indicates whether the Device Tree Compiler (dtc) will be built and installed.
 Indicates whether the kernel modules, utilities, and libraries for
 .Xr dtrace 1
 support are to be built and installed.
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy aarch64 ,
 .Sy amd64 ,
@@ -717,7 +801,8 @@ link programs in
 and
 .Pa /sbin
 statically.
-.DFLTn
+.DFLT
+.Dq no
 on
 .Sy ia64 ;
 .Dq yes
@@ -744,7 +829,8 @@ directory, which is necessary for various drivers, including:
 .Xr wpi 4 ,
 .Xr zyd 4 ,
 and the Tegra 124 SoC.
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy amd64 ,
 .Sy cobalt ,
@@ -784,7 +870,8 @@ then
 controls if the
 GCC libraries will be built and installed.
 .NOVAR MKCXX=no
-.DFLTn
+.DFLT
+.Dq no
 on
 .Sy m68000 ;
 .Dq yes
@@ -796,7 +883,8 @@ Indicates whether
 .Xr gdb 1
 will be built and installed.
 .NOVAR MKCXX=no No or Sy TOOLCHAIN_MISSING!=no
-.DFLTn
+.DFLT
+.Dq no
 on
 .Sy ia64
 and
@@ -893,7 +981,8 @@ programs, headers, and other components will be built and installed.
 .YorN
 Indicates whether the iSCSI library and applications are
 built and installed.
-.DFLTn
+.DFLT
+.Dq no
 on
 .Sy m68000 ;
 .Dq yes
@@ -917,7 +1006,8 @@ Otherwise all logins will fail.
 .It Sy MKKMOD
 .YorN
 Indicates whether kernel modules will be built and installed.
-.DFLTn
+.DFLT
+.Dq no
 on
 .Sy or1k ;
 .Dq yes
@@ -936,7 +1026,8 @@ The tests rely on the ATF libraries and therefore their build is controlled
 by the
 .Sy MKATF
 variable.
-.DFLTn
+.DFLT
+.Dq no
 until the import of Kyua is done and validated.
 .
 .It Sy MKLDAP
@@ -959,11 +1050,12 @@ using the sanitizer defined by
 Indicates if libc++ will be built and installed
 (usually for
 .Xr clang++ 1 ) .
-.DFLTy
+.DFLT
+.Dq yes
 if
 .Sy MKLLVM=yes ;
-.Dq no
-otherwise.
+otherwise
+.Dq no .
 .
 .It Sy MKLIBSTDCXX
 .YorN
@@ -1058,8 +1150,8 @@ on
 .Sy amd64 ,
 and
 .Sy i386 ;
-.Dq no
-otherwise.
+otherwise
+.Dq no .
 .
 .It Sy MKLVM
 .YorN
@@ -1107,7 +1199,7 @@ use
 .Xr groff 1
 instead of
 .Xr mandoc 1 .
-.NODEF NOMANDOC No or Sy NOMANDOC . Ns Ar target No (for a given target Ar target )
+.NODEF NOMANDOC No or Sy NOMANDOC . Ns Ar target No (for a given Xr make 1 target Ar target )
 .Pp
 Only used if
 .Sy MKMAN=yes .
@@ -1144,7 +1236,8 @@ Indicates whether to install the
 directory, which is necessary for the
 .Xr nouveau 4
 NVIDIA video driver.
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy aarch64 ,
 .Sy i386 ,
@@ -1199,7 +1292,7 @@ If using
 .Sy build.sh ,
 the default is
 .Dq yes .
-This may be set back to
+This may be set to
 .Dq no
 by giving
 .Sy build.sh
@@ -1245,7 +1338,8 @@ If
 .Dq no ,
 acts as
 .Sy MKPICLIB=no .
-.DFLTn
+.DFLT
+.Dq no
 on
 .Sy m68000 ;
 .Dq yes
@@ -1270,7 +1364,8 @@ format libraries
 .Sy ( lib*_pic.a ) ,
 used to generate shared libraries.
 .NOVAR MKPIC=no
-.DFLTn
+.DFLT
+.Dq no
 on
 .Sy vax ;
 .Dq yes
@@ -1285,7 +1380,8 @@ will be built and installed.
 .Pp
 This is disabled internally for standalone programs in
 .Pa /usr/mdec .
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy aarch64 ,
 .Sy arm ,
@@ -1321,7 +1417,8 @@ Indicates whether profiled libraries
 will be built and installed.
 .NODEF NOPROFILE
 .NOVAR MKLINKLIB=no
-.DFLTn
+.DFLT
+.Dq no
 on
 .Sy or1k ,
 .Sy riscv32 ,
@@ -1338,7 +1435,8 @@ Indicates whether to install the
 directory, which is necessary for the
 .Xr radeon 4
 AMD RADEON GPU video driver.
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy aarch64 ,
 .Sy i386 ,
@@ -1457,7 +1555,8 @@ Indicates whether the S/key infrastructure
 Indicates whether to enable support for sljit
 (stack-less platform-independent Just in Time (JIT) compiler)
 private library and tests.
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy i386 ,
 .Sy sparc ,
@@ -1483,7 +1582,8 @@ without
 .Sy or1k ,
 and
 .Sy sh3 .
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy mips64 ;
 .Dq no
@@ -1503,7 +1603,8 @@ Indicates whether support for static PIE binaries
 will be built and installed.
 These binaries use a special support in crt0.o for
 resolving relative relocations and require linker support.
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy i386
 and
@@ -1547,7 +1648,8 @@ Indicates whether to install the
 .Pa /libdata/firmware/nvidia
 directory, which is necessary for the
 NVIDIA Tegra XHCI driver.
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy evbarm ;
 .Dq no
@@ -1597,9 +1699,11 @@ For top-level builds this this implies the effects of
 is avoided).
 .Pp
 .Em Note :
-If using
-.Sy build.sh ,
-this may be set by giving the
+This may be set to
+.Dq yes
+by giving
+.Sy build.sh
+the
 .Fl u
 option.
 .DFLTn
@@ -1642,7 +1746,8 @@ Requires that Motif can be found via
 Indicates whether the
 .Xr Xorg 7
 X server and drivers will be built and installed.
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy alpha ,
 .Sy amd64 ,
@@ -1692,8 +1797,9 @@ Indicates whether the ZFS kernel module and the utilities and
 libraries used to manage the ZFS system are to be built and installed.
 .Pp
 .Em Note :
-ZFS requires 64-bit atomic operations .
-.DFLTy
+ZFS requires 64-bit atomic operations.
+.DFLT
+.Dq yes
 on
 .Sy aarch64 ,
 .Sy amd64 ,
@@ -1735,7 +1841,7 @@ The auto-build cluster uses this variable to distinguish
 .Sq daily
 builds from real releases.
 .DFLTu
-.Pq Dq no .
+.Pq I.e., Dq no .
 .
 .It Sy NOCLEANDIR
 If set, avoids the
@@ -1785,6 +1891,7 @@ where
 .Sy MACHINE
 is the current architecture (as per
 .Sq "uname -m" ) .
+.DFLTu
 .
 .It Sy RELEASEDIR
 If set, specifies the directory to which a
@@ -1801,7 +1908,9 @@ will provide a default of
 .Sy .OBJDIR )
 unless run in
 .Sq expert
-mode.
+mode with the
+.Fl E
+option.
 .DFLTu
 .
 .It Sy TOOLCHAIN_MISSING
@@ -1869,15 +1978,16 @@ This may cause build or runtime problems when building the whole
 .Nx
 source tree.
 .El
-.DFLTn
+.DFLT
+.Dq no
 when using
 .Aq bsd.*.mk
 outside the
 .Nx
 source tree (detected automatically) or if
 .Sy TOOLCHAIN_MISSING=yes ;
-.Dq yes
-otherwise.
+otherwise
+.Dq yes .
 .
 .It Sy USE_FORT
 .YorN
@@ -2041,7 +2151,8 @@ This is disabled internally for standalone programs in
 .Pa /usr/mdec .
 .NODEF NOSSP
 .NOVAR COVERITY_TOP_CONFIG No is defined
-.DFLTn
+.DFLT
+.Dq no
 on
 .Sy alpha ,
 .Sy hppa ,
@@ -2051,8 +2162,8 @@ and
 .Dq yes
 on other platforms if
 .Sy USE_FORT=yes ;
-.Dq no
-otherwise.
+otherwise
+.Dq no .
 .
 .It Sy USE_XZ_SETS
 .YorN
@@ -2064,7 +2175,8 @@ instead of
 or
 .Xr pigz 1 .
 .NOVAR USE_PIGZGZIP=yes
-.DFLTy
+.DFLT
+.Dq yes
 on
 .Sy aarch64 ,
 .Sy amd64 ,
@@ -2084,7 +2196,7 @@ enabled in the various applications that support it.
 Path of the Motif installation to use if
 .Sy MKX11MOTIF=yes .
 .DFLT
-.Dq Pa /usr/pkg
+.Dq Pa /usr/pkg .
 .
 .It Sy X11SRCDIR
 Directory containing the modular Xorg source.
@@ -2094,7 +2206,7 @@ The main modular Xorg source is found in
 .DFLT
 .Sy NETBSDSRCDIR Ns Pa /../xsrc ,
 if that exists; otherwise
-.Pa /usr/xsrc .
+.Dq Pa /usr/xsrc .
 .
 .El
 .
@@ -2193,6 +2305,7 @@ Examples for settings regarding the pkgsrc collection.
 .Xr as 1 ,
 .Xr clang 1 ,
 .Xr clang++ 1 ,
+.Xr config 1 ,
 .Xr cpio 1 ,
 .Xr cvs 1 ,
 .Xr cvslatest 1 ,
