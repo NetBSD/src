@@ -1,4 +1,4 @@
-/* $NetBSD: cpus.c,v 1.7 2023/05/07 12:41:49 skrll Exp $ */
+/* $NetBSD: cpus.c,v 1.8 2023/06/12 12:58:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.7 2023/05/07 12:41:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.8 2023/06/12 12:58:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,10 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpus.c,v 1.7 2023/05/07 12:41:49 skrll Exp $");
 #include <sys/kmem.h>
 
 #include <dev/fdt/fdtvar.h>
-
-#ifdef __riscv
-#include <machine/machdep.h>
-#endif
 
 static int	cpus_match(device_t, cfdata_t, void *);
 static void	cpus_attach(device_t, device_t, void *);
@@ -68,9 +64,8 @@ cpus_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-#ifdef __riscv
-	cpus_fdt_md_attach(parent, self, faa);
-#endif
+	fdtbus_cpus_md_attach(parent, self, faa);
+
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
 		if (!cpus_cpu_enabled(child))
 			continue;
