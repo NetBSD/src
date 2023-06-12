@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.57 2023/04/22 10:22:43 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.58 2023/06/12 06:36:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.57 2023/04/22 10:22:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.58 2023/06/12 06:36:28 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -557,14 +557,14 @@ pmap_tlb_shootdown_process(void)
 	    __func__, ci->ci_cpl, IPL_SCHED);
 
 	TLBINFO_LOCK(ti);
-	UVMHIST_LOG(maphist, "ti %#jx", ti, 0, 0, 0);
+	UVMHIST_LOG(maphist, "ti %#jx", (uintptr_t)ti, 0, 0, 0);
 
 	switch (ti->ti_tlbinvop) {
 	case TLBINV_ONE: {
 		/*
 		 * We only need to invalidate one user ASID.
 		 */
-		UVMHIST_LOG(maphist, "TLBINV_ONE ti->ti_victim %#jx", ti->ti_victim, 0, 0, 0);
+		UVMHIST_LOG(maphist, "TLBINV_ONE ti->ti_victim %#jx", (uintptr_t)ti->ti_victim, 0, 0, 0);
 		struct pmap_asid_info * const pai = PMAP_PAI(ti->ti_victim, ti);
 		KASSERT(ti->ti_victim != pmap_kernel());
 		if (pmap_tlb_intersecting_onproc_p(ti->ti_victim, ti)) {
@@ -674,7 +674,7 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 		KASSERT(i < pmap_ntlbs);
 		struct pmap_tlb_info * const ti = pmap_tlbs[i];
 		KASSERT(tlbinfo_index(ti) == i);
-		UVMHIST_LOG(maphist, "ti %#jx", ti, 0, 0, 0);
+		UVMHIST_LOG(maphist, "ti %#jx", (uintptr_t)ti, 0, 0, 0);
 		/*
 		 * Skip this TLB if there are no active mappings for it.
 		 */
