@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.7 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.8 2023/06/12 19:04:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -43,7 +43,8 @@ typedef	long		db_expr_t;	/* expression - signed */
 
 typedef struct trapframe db_regs_t;
 
-extern const uint32_t cpu_Debugger_insn[1];
+extern const uint32_t cpu_Debugger_insn[];
+extern const uint32_t cpu_Debugger_ret[];
 extern db_regs_t ddb_regs;
 #define	DDB_REGS	(&ddb_regs)
 
@@ -57,7 +58,7 @@ extern db_regs_t ddb_regs;
 /* Similar to PC_ADVANCE(), except only advance on cpu_Debugger()'s bpt */
 #define	PC_BREAK_ADVANCE(tf) do {				\
 	if ((tf)->tf_pc == (register_t)cpu_Debugger_insn)	\
-		(tf)->tf_pc += BKPT_SIZE;			\
+		(tf)->tf_pc = (register_t)cpu_Debugger_ret;	\
 } while(0)
 
 #define	BKPT_ADDR(addr)		(addr)			/* breakpoint address */

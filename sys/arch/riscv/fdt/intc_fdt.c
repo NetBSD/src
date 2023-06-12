@@ -1,4 +1,4 @@
-/*	$NetBSD: intc_fdt.c,v 1.1 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: intc_fdt.c,v 1.2 2023/06/12 19:04:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.1 2023/05/07 12:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.2 2023/06/12 19:04:13 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -237,42 +239,59 @@ static void
 intc_intr_handler(struct trapframe *tf, register_t epc, register_t status,
     register_t cause)
 {
+	const int ppl = splhigh();
 	struct cpu_info * const ci = curcpu();
-	const int source = CAUSE_CODE(cause);
+	unsigned long pending;
+	int ipl;
 
 	KASSERT(CAUSE_INTERRUPT_P(cause));
 
 	struct intc_fdt_softc * const sc = intc_sc;
 
 	ci->ci_intr_depth++;
-	struct intc_irq *irq = sc->sc_irq[source];
-	KASSERTMSG(irq != NULL, "source %d\n", source);
-	if (irq) {
-		struct intc_irqhandler *iih;
+	ci->ci_data.cpu_nintr++;
 
-		bool mpsafe = (irq->intr_istflags & IST_MPSAFE) != 0;
-		struct clockframe cf = {
-			.cf_epc = epc,
-			.cf_status = status,
-			.cf_intr_depth = ci->ci_intr_depth
-		};
+	while (ppl < (ipl = splintr(&pending))) {
+		if (pending == 0)
+			continue;
 
-		if (!mpsafe) {
-			KERNEL_LOCK(1, NULL);
+		splx(ipl);
+
+		int source = ffs(pending) - 1;
+		struct intc_irq *irq = sc->sc_irq[source];
+		KASSERTMSG(irq != NULL, "source %d\n", source);
+
+		if (irq) {
+			struct intc_irqhandler *iih;
+
+			bool mpsafe =
+			    source != IRQ_SUPERVISOR_EXTERNAL ||
+			    (irq->intr_istflags & IST_MPSAFE) != 0;
+			struct clockframe cf = {
+				.cf_epc = epc,
+				.cf_status = status,
+				.cf_intr_depth = ci->ci_intr_depth
+			};
+
+			if (!mpsafe) {
+				KERNEL_LOCK(1, NULL);
+			}
+
+			TAILQ_FOREACH(iih, &irq->intr_handlers, ih_next) {
+				int handled =
+				    iih->ih_fn(iih->ih_arg ? iih->ih_arg : &cf);
+				if (handled)
+					break;
+			}
+
+			if (!mpsafe) {
+				KERNEL_UNLOCK_ONE(NULL);
+			}
 		}
-
-		TAILQ_FOREACH(iih, &irq->intr_handlers, ih_next) {
-			int handled =
-			    iih->ih_fn(iih->ih_arg ? iih->ih_arg : &cf);
-			if (handled)
-				break;
-		}
-
-		if (!mpsafe) {
-			KERNEL_UNLOCK_ONE(NULL);
-		}
+		splhigh();
 	}
 	ci->ci_intr_depth--;
+	splx(ppl);
 }
 
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.riscv,v 1.12 2023/05/07 12:41:48 skrll Exp $
+#	$NetBSD: files.riscv,v 1.13 2023/06/12 19:04:13 skrll Exp $
 #
 
 maxpartitions	16
@@ -43,6 +43,7 @@ file	arch/riscv/riscv/kobj_machdep.c		modular
 file	arch/riscv/riscv/pmap_machdep.c
 file	arch/riscv/riscv/process_machdep.c
 file	arch/riscv/riscv/procfs_machdep.c	procfs
+file	arch/riscv/riscv/riscv_tlb.c
 file	arch/riscv/riscv/riscv_generic_dma.c
 file	arch/riscv/riscv/riscv_machdep.c
 file	arch/riscv/riscv/sbi.c			# SBI
@@ -63,6 +64,7 @@ file	kern/subr_disk_mbr.c			disk
 file	uvm/pmap/pmap.c
 file	uvm/pmap/pmap_devmap.c
 file	uvm/pmap/pmap_segtab.c
+file	uvm/pmap/pmap_synci.c
 file	uvm/pmap/pmap_tlb.c
 
 device  plic

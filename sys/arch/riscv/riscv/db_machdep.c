@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.10 2022/10/12 07:53:56 simonb Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.11 2023/06/12 19:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: db_machdep.c,v 1.10 2022/10/12 07:53:56 simonb Exp $");
+__RCSID("$NetBSD: db_machdep.c,v 1.11 2023/06/12 19:04:14 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -89,7 +89,6 @@ int
 db_rw_ddbreg(const struct db_variable *vp, db_expr_t *valp, int rw)
 {
 	struct trapframe * const tf = curcpu()->ci_ddb_regs;
-	KASSERT(db_regs <= vp && vp < db_regs + __arraycount(db_regs));
 	const uintptr_t addr = (uintptr_t)tf + (uintptr_t)vp->valuep;
 	if (vp->modif != NULL && vp->modif[0] == 'i') {
 		if (rw == DB_VAR_GET) {

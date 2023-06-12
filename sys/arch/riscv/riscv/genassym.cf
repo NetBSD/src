@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 2023/05/07 12:41:49 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.15 2023/06/12 19:04:14 skrll Exp $
 
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -65,6 +65,10 @@ define	SIE_SEIE	SIE_SEIE
 define	SIE_STIE	SIE_STIE
 define	SIE_SSIE	SIE_SSIE
 
+define	SIP_SEIP	SIP_SEIP
+define	SIP_STIP	SIP_STIP
+define	SIP_SSIP	SIP_SSIP
+
 define	CAUSE_SYSCALL	CAUSE_SYSCALL
 
 ifdef _LP64
@@ -85,7 +89,7 @@ define	IPL_SOFTBIO	IPL_SOFTBIO
 define	IPL_SOFTCLOCK	IPL_SOFTCLOCK
 define	IPL_NONE	IPL_NONE
 
-#define	CPU_MAXNUM	CPU_MAXNUM
+define	MAXCPUS		MAXCPUS
 
 define	TF_LEN		sizeof(struct trapframe)
 define	TF_RA		offsetof(struct trapframe, tf_reg[_X_RA])

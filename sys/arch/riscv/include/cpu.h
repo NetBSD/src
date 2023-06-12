@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.11 2023/05/25 06:17:18 skrll Exp $ */
+/* $NetBSD: cpu.h,v 1.12 2023/06/12 19:04:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -63,13 +63,14 @@ struct cpu_info {
 	struct evcnt ci_ev_timer;
 	struct evcnt ci_ev_timer_missed;
 
+	u_long ci_cpu_freq;		/* CPU frequency */
 	int ci_mtx_oldspl;
 	int ci_mtx_count;
-
-	int ci_want_resched;
 	int ci_cpl;
-	u_int ci_softints;
 	volatile u_int ci_intr_depth;
+
+	int ci_want_resched __aligned(COHERENCY_UNIT);
+	u_int ci_softints;
 
 	tlb_asid_t ci_pmap_asid_cur;
 
@@ -81,6 +82,33 @@ struct cpu_info {
 	struct evcnt ci_ev_fpu_saves;
 	struct evcnt ci_ev_fpu_loads;
 	struct evcnt ci_ev_fpu_reenables;
+
+	struct pmap_tlb_info *ci_tlb_info;
+
+#ifdef MULTIPROCESSOR
+
+	volatile u_long ci_flags;
+	volatile u_long ci_request_ipis;
+					/* bitmask of IPIs requested */
+	u_long ci_active_ipis;	/* bitmask of IPIs being serviced */
+
+	struct evcnt ci_evcnt_all_ipis;	/* aggregated IPI counter */
+	struct evcnt ci_evcnt_per_ipi[NIPIS];	/* individual IPI counters */
+	struct evcnt ci_evcnt_synci_onproc_rqst;
+	struct evcnt ci_evcnt_synci_deferred_rqst;
+	struct evcnt ci_evcnt_synci_ipi_rqst;
+
+#define	CPUF_PRIMARY	__BIT(0)		/* CPU is primary CPU */
+#define	CPUF_PRESENT	__BIT(1)		/* CPU is present */
+#define	CPUF_RUNNING	__BIT(2)		/* CPU is running */
+#define	CPUF_PAUSED	__BIT(3)		/* CPU is paused */
+#define	CPUF_USERPMAP	__BIT(4)		/* CPU has a user pmap activated */
+	kcpuset_t *ci_shootdowncpus;
+	kcpuset_t *ci_multicastcpus;
+	kcpuset_t *ci_watchcpus;
+	kcpuset_t *ci_ddbcpus;
+#endif
+
 #if defined(GPROF) && defined(MULTIPROCESSOR)
 	struct gmonparam *ci_gmon;	/* MI per-cpu GPROF */
 #endif
@@ -90,9 +118,62 @@ struct cpu_info {
 
 #ifdef _KERNEL
 
+extern struct cpu_info *cpu_info[];
 extern struct cpu_info cpu_info_store[];
 
-// This is also in <sys/lwp.h>
+
+#ifdef MULTIPROCESSOR
+extern u_int riscv_cpu_max;
+extern cpuid_t cpu_hartid[];
+
+void cpu_hatch(struct cpu_info *);
+
+void cpu_init_secondary_processor(int);
+void cpu_boot_secondary_processors(void);
+void cpu_mpstart(void);
+bool cpu_hatched_p(u_int);
+
+void cpu_clr_mbox(int);
+void cpu_set_hatched(int);
+
+
+void	cpu_halt(void);
+void	cpu_halt_others(void);
+bool	cpu_is_paused(cpuid_t);
+void	cpu_pause(void);
+void	cpu_pause_others(void);
+void	cpu_resume(cpuid_t);
+void	cpu_resume_others(void);
+void	cpu_debug_dump(void);
+
+extern kcpuset_t *cpus_running;
+extern kcpuset_t *cpus_hatched;
+extern kcpuset_t *cpus_paused;
+extern kcpuset_t *cpus_resumed;
+extern kcpuset_t *cpus_halted;
+
+/*
+ * definitions of cpu-dependent requirements
+ * referenced in generic code
+ */
+
+/*
+ * Send an inter-processor interrupt to each other CPU (excludes curcpu())
+ */
+void cpu_broadcast_ipi(int);
+
+/*
+ * Send an inter-processor interrupt to CPUs in kcpuset (excludes curcpu())
+ */
+void cpu_multicast_ipi(const kcpuset_t *, int);
+
+/*
+ * Send an inter-processor interrupt to another CPU.
+ */
+int cpu_send_ipi(struct cpu_info *, int);
+
+#endif
+
 struct lwp;
 static inline struct cpu_info *lwp_getcpu(struct lwp *);
 
@@ -118,9 +199,14 @@ void	cpu_boot_secondary_processors(void);
 
 #define CPU_INFO_ITERATOR	cpuid_t
 #ifdef MULTIPROCESSOR
-#define CPU_INFO_FOREACH(cii, ci) \
-	(cii) = 0; ((ci) = cpu_infos[cii]) != NULL; (cii)++
+#define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
+#define	CPU_INFO_FOREACH(cii, ci)		\
+    cii = 0, ci = &cpu_info_store[0]; 		\
+    ci != NULL; 				\
+    cii++, ncpu ? (ci = cpu_infos[cii]) 	\
+		: (ci = NULL)
 #else
+#define CPU_IS_PRIMARY(ci)	true
 #define CPU_INFO_FOREACH(cii, ci) \
 	(cii) = 0, (ci) = curcpu(); (cii) == 0; (cii)++
 #endif
