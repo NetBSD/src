@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2023/06/09 21:41:52 gutteridge Exp $
+#	$NetBSD: Makefile,v 1.17 2023/06/12 23:29:32 gutteridge Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -18,7 +18,7 @@ IMAGEENDIAN=	le
 .else
 IMAGEENDIAN=	be
 .endif
-MAKEDEVTARGETS=	ramdisk
+
 IMAGEDEPENDS=	${CRUNCHBIN} \
 		dot.profile \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
