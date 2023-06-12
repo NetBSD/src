@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.41 2023/05/07 12:41:49 skrll Exp $ */
+/* $NetBSD: locore.S,v 1.42 2023/06/12 19:04:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2022 The NetBSD Foundation, Inc.
@@ -30,13 +30,20 @@
  */
 
 #include "opt_console.h"
+#include "opt_multiprocessor.h"
 #include "opt_riscv_debug.h"
 
 #include <machine/asm.h>
 #include "assym.h"
 
-	.globl	_C_LABEL(exception_userexit)
-	.globl	_C_LABEL(cpu_Debugger_insn)
+#define BOOT_AP_STACKSIZE	1024	/* size of temporary stack for APs */
+#define NBBY_SHIFT		3	/* log2(8 bits per byte) */
+
+#define PRINTS(string)		\
+	call	locore_prints	; \
+	.asciz string		; \
+	.align 3		; \
+
 
 #if defined(VERBOSE_INIT_RISCV)
 
@@ -78,18 +85,6 @@ ENTRY_NP(start)
 	li	s0, SR_FS
 	csrc	sstatus, s0		// disable FP
 
-	/*
-	 * atomically swap a non-zero value into hart_boot.  If we see zero
-	 * we won in race to become BP.
-	 */
-	li	s1, 1
-	la	s0, hart_boot
-
-	amoswap.w s0, s1, (s0)
-	bnez	s0, mpentry
-	/*
-	 * The BP only executes from here on.
-	 */
 	mv	s10, a0			// copy hartid
 	mv	s11, a1			// copy dtb PA
 
@@ -375,12 +370,189 @@ vstart:
 END(start)
 
 
-ENTRY(mpentry)
+#if defined(MULTIPROCESSOR)
+
+// a0 is hartid
+// a1 is the cookie from sbi_hart_start
+ENTRY(cpu_mpstart)
+	mv	s10, a0			// copy hartid
+	mv	s11, a1			// copy sbi_hart_start cookie
+
+	/*
+	 * resolve our cpuindex. each hartid is stored in
+	 * extern unsigned long cpu_hartid[MAXCPUS]
+	 */
+	PTR_LA	t0, _C_LABEL(cpu_hartid)
+	li	t6, MAXCPUS
+	li	t1, 0
+1:
+	addi	t1, t1, 1
+	bgeu	t1, t6, toomanyharts	/* cpuindex >= MAXCPUS ? */
+
+	slli	t2, t1, LONG_SCALESHIFT
+	add	t2, t0, t2
+	LONG_L	t3, 0(t2)		/* cpu_hartid[cpuindex] */
+	bne	t3, s10, 1b
+
+	mv	s9, t1			/* s9 = cpuindex */
+
+	/*
+	 * s9 = cpuindex
+	 */
+
+	/* set stack pointer for boot */
+	li	t1, BOOT_AP_STACKSIZE		// XXXNH do a shift
+	mul	t1, s9, t1
+	PTR_LA	t0, _C_LABEL(bootstk)
+	/* sp = bootstk + (BOOT_AP_STACKSIZE * cpuindex) */
+	add	sp, t0, t1
+
+
+	/*
+	 * Calculate the difference between the VA and PA for start and
+	 * keep in s8.
+	 */
+	PTR_LA	t0, start
+	PTR_L	s8, .Lstart
+
+	sub	s8, s8, t0
+
+#ifdef _LP64
+	PTR_LA	s4, _C_LABEL(l2_pte)
+#else
+	PTR_LA	s4, _C_LABEL(l1_pte)
+#endif
+
+	// s4 is satp address....
+	// s8 is kern_vtopdiff
+	//
+
+	/* Set supervisor trap vector base register */
+	PTR_LA	t0, vmpstart
+	add	t0, t0, s8
+	csrw	stvec, t0
+
+	/* Set supervisor address translation and protection register */
+	srli	t1, s4, PGSHIFT
+#ifdef _LP64
+	li	t0, SATP_MODE_SV39
+#else
+	li	t0, SATP_MODE_SV32
+#endif
+	or	t0, t0, t1
+	sfence.vma
+	csrw	satp, t0
+
+	.align 2
+	.global vmpstart
+vmpstart:
+	// MMU is on!
+	csrw	sscratch, zero		// zero in sscratch to mark kernel
+
+	/* Set the global pointer */
+	.option push
+	.option norelax
+	lla	gp, __global_pointer$
+	.option pop
+
+	/* Set SP to VA */
+	add	sp, sp, s8
+
+	/* Set supervisor trap vector base register with ipi_handler */
+	PTR_LA	a0, _C_LABEL(ipi_handler)
+	csrw	stvec, a0
+	csrsi	sie, SIE_SSIE
+	csrsi	sstatus, SR_SIE		// enable interrupts
+
+	li	tp, 0
+	mv	a0, s9
+	call	_C_LABEL(cpu_init_secondary_processor)
+
+	/* t3 = __BIT(cpuindex % (sizeof(u_long) * NBBY)) */
+	li	t3, 1
+	andi	t0, s9, (1U << (LONG_SCALESHIFT + NBBY_SHIFT)) - 1
+	sll	t3, t3, t0
+
+	/* t4 = &riscv_cpu_mbox[cpuindex / (sizeof(u_long) * NBBY)] */
+	PTR_LA	t0, _C_LABEL(riscv_cpu_mbox)
+	srli	t1, s9, LONG_SCALESHIFT + NBBY_SHIFT
+	slli	t1, t1, LONG_SCALESHIFT
+	add	t4, t0, t1
+
+	/* wait for the mailbox start bit to become true */
+1:
+	fence	rw, r		/* matches cpu_boot_secondary_processors */
+	LONG_L	t0, 0(t4)
+	and	t0, t0, t3
+	bne	t0, zero, 9f
+	wfi
+	j	1b
+9:
+
+	/* Set supervisor trap vector base register */
+	PTR_LA	a0, _C_LABEL(cpu_exception_handler)
+	csrw	stvec, a0
+
+	li	t0, CI_SIZE
+	mul	t0, s9, t0
+	PTR_LA	t1, _C_LABEL(cpu_info_store)
+	add	a0, t0, t1		/* a0 = &cpu_info_store[cpuindex] */
+
+	/*
+	 * set curlwp (tp and curcpu()->ci_curlwp) now we know the
+	 * idle lwp from curcpu()->ci_idlelwp
+	 */
+	PTR_L	tp, CI_IDLELWP(a0)	/* tp = curcpu()->ci_idlelwp */
+	PTR_S	tp, CI_CURLWP(a0)	/* curlwp is idlelwp */
+
+	/* get my stack from lwp */
+	PTR_L	t2, L_PCB(tp)		/* t2 = lwp_getpcb(idlelwp) */
+	li	t3, UPAGES * PAGE_SIZE
+	add	t2, t2, t3
+	addi	sp, t2, -TF_LEN		/* sp = pcb + USPACE - TF_LEN */
+
+	li	s0, 0			/* trace back starts here (fp = 0) */
+	PTR_L	a0, L_CPU(tp)		/* curlwp->l_cpu */
+	call	_C_LABEL(cpu_hatch)
+
+	li	s0, 0			// zero frame pointer
+	tail	idle_loop
+	/* No return from idle_loop */
+END(cpu_mpstart)
+
+
+toomanyharts:
+	PRINTS("too many harts, or hart id doens't exist in cpu_hart[]\n")
+1:	wfi
+	j	1b
+
+/*
+ * A very basic exception handler to just return when an IPI comes in during
+ * AP bringup.
+ *
+ * The handler address needs to have bottom two bits as zero.
+ */
+	.align 2
+
+ipi_handler:
+	csrrw	tp, sscratch, tp	// swap scratch and thread pointer
+	bnez	tp, 1f			//   tp != 0, something went wrong.
+
+	csrr	tp, scause		// get cause
+	bgez	tp, 2f			// MSB is set if interrupt
+
+	csrw	sip, zero		// clear all interrupts
+
+	csrrw	tp, sscratch, zero	// get back our thread pointer
+	sret
+
 1:
 	wfi
 	j	1b
-END(mpentry)
-
+2:
+	wfi
+	j	2b
+#endif
 
 	.align 3
 .Lstart:
@@ -435,6 +607,16 @@ ENTRY_NP(clear_bss)
 	ret
 END(clear_bss)
 
+
+	.globl  _C_LABEL(cpu_Debugger_insn)
+	.globl  _C_LABEL(cpu_Debugger_ret)
+
+ENTRY_NP(cpu_Debugger)
+cpu_Debugger_insn:
+	ebreak
+cpu_Debugger_ret:
+	ret
+END(cpu_Debugger)
 
 #if defined(VERBOSE_INIT_RISCV)
 ENTRY_NP(locore_prints)
@@ -533,6 +715,11 @@ END(locore_printxnl)
 hart_boot:
 	.word	0
 
+	/*
+	 * Allocate some memory after the kernel image for stacks and
+	 * bootstrap L1PT
+	 */
+
 	.section "_init_memory", "aw", %nobits
 	.align PGSHIFT
 	.global _C_LABEL(lwp0uspace)
@@ -540,20 +727,9 @@ _C_LABEL(lwp0uspace):
 	.space	UPAGES * PAGE_SIZE
 bootstk:
 
-
-	/*
-	 * Allocate some memory after the kernel image for stacks and
-	 * bootstrap L1PT
-	 */
-	.align PGSHIFT
-#if 0
-.global start_stacks_bottom
-	.global start_stacks_top
-start_stacks_bottom:
-	.space	INIT_ARM_TOTAL_STACK
-start_stacks_top:
+#ifdef MULTIPROCESSOR
+	.space	BOOT_AP_STACKSIZE * (MAXCPUS - 1)
 #endif
-
 
 	.section "_init_memory", "aw", %nobits
 	.align PGSHIFT
@@ -570,9 +746,3 @@ l1_pte:
 	.space PAGE_SIZE
 mmutables_end:
 
-
-ENTRY_NP(cpu_Debugger)
-cpu_Debugger_insn:
-	sbreak
-	ret
-END(cpu_Debugger)

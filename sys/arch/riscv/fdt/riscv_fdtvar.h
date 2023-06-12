@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.h,v 1.5 2023/06/12 19:04:14 skrll Exp $	*/
+/* $NetBSD: riscv_fdtvar.h,v 1.1 2023/06/12 19:04:13 skrll Exp $ */
 
 /*-
- * Copyright (c) 2022 The NetBSD Foundation, Inc.
+ * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,55 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _RISCV_MACHDEP_H_
-#define _RISCV_MACHDEP_H_
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.h,v 1.5 2023/06/12 19:04:14 skrll Exp $");
+#ifndef _RISCV_RISCV_FDTVAR_H
+#define _RISCV_RISCV_FDTVAR_H
 
-#include <sys/proc.h>
-#include <sys/lwp.h>
-#include <sys/siginfo.h>
+void	riscv_fdt_cpu_bootstrap(void);
+int	riscv_fdt_cpu_mpstart(void);
+void	riscv_fdt_cpu_hatch_register(void *, void (*)(void *, struct cpu_info *));
+void	riscv_fdt_cpu_hatch(struct cpu_info *);
 
-static inline paddr_t
-riscv_kern_vtophys(vaddr_t va)
-{
-	extern unsigned long kern_vtopdiff;
-
-	return va - kern_vtopdiff;
-}
-
-static inline vaddr_t
-riscv_kern_phystov(paddr_t pa)
-{
-	extern unsigned long kern_vtopdiff;
-
-	return pa + kern_vtopdiff;
-}
-
-#define KERN_VTOPHYS(va)	riscv_kern_vtophys((vaddr_t)va)
-#define KERN_PHYSTOV(pa)	riscv_kern_phystov((paddr_t)pa)
-
-extern	paddr_t physical_start;
-extern	paddr_t physical_end;
-
-void	uartputc(int);
-int	uartgetc(void);
-
-paddr_t	init_mmu(paddr_t);
-void	init_riscv(register_t, paddr_t);
-
-void	riscv_timer_frequency_set(uint32_t);	// which header?
-uint32_t
-	riscv_timer_frequency_get(void);	// which header?
-void	riscv_timer_register(void (*timerfn)(void));
-void	riscv_intr_set_handler(void (*intr_handler)(struct trapframe *,
-	    register_t, register_t, register_t));
-
-void	riscv_timer_init(void);
-int	riscv_timer_intr(void *arg);
-
-void    pt_dump(void (*)(const char *, ...));
-
-
-#endif	/* _RISCV_MACHDEP_H_ */
+#endif /* !_RISCV_RISCV_FDTVAR_H */

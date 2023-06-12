@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.28 2023/05/28 12:56:56 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.29 2023/06/12 19:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
+#include "opt_multiprocessor.h"
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.28 2023/05/28 12:56:56 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.29 2023/06/12 19:04:14 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -372,13 +373,12 @@ cpu_signotify(struct lwp *l)
 
 	if (l->l_cpu != curcpu()) {
 #ifdef MULTIPROCESSOR
-		cpu_send_ipi(ci, IPI_AST);
+		cpu_send_ipi(l->l_cpu, IPI_AST);
 #endif
 	} else {
 		l->l_md.md_astpending = 1; 	/* force call to ast() */
 	}
 }
-
 
 void
 cpu_need_proftick(struct lwp *l)
@@ -519,6 +519,26 @@ cpu_startup(void)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
+
+#ifdef MULTIPROCESSOR
+	kcpuset_create(&cpus_halted, true);
+	KASSERT(cpus_halted != NULL);
+
+	kcpuset_create(&cpus_hatched, true);
+	KASSERT(cpus_hatched != NULL);
+
+	kcpuset_create(&cpus_paused, true);
+	KASSERT(cpus_paused != NULL);
+
+	kcpuset_create(&cpus_resumed, true);
+	KASSERT(cpus_resumed != NULL);
+
+	kcpuset_create(&cpus_running, true);
+	KASSERT(cpus_running != NULL);
+
+	kcpuset_set(cpus_hatched, cpu_number());
+	kcpuset_set(cpus_running, cpu_number());
+#endif
 
 	fdtbus_intr_init();
 }
@@ -689,7 +709,7 @@ init_riscv(register_t hartid, paddr_t dtb)
 	fdtbus_init(fdt_data);
 
 	/* Lookup platform specific backend */
-	const struct fdt_platform *plat = fdt_platform_find();
+	const struct fdt_platform * const plat = fdt_platform_find();
 	if (plat == NULL)
 		panic("Kernel does not support this device");
 
@@ -871,6 +891,16 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 	/* Finish setting up lwp0 on our end before we call main() */
 	riscv_init_lwp0_uarea();
+
+
+	error = 0;
+	if ((boothowto & RB_MD1) == 0) {
+		VPRINTF("mpstart\n");
+		if (plat->fp_mpstart)
+			error = plat->fp_mpstart();
+	}
+	if (error)
+		printf("AP startup problems\n");
 }
 
 
@@ -930,8 +960,6 @@ dump_ln_table(paddr_t pdp_pa, int topbit, int level, vaddr_t va,
 	}
 }
 
-#endif
-
 void
 pt_dump(void (*pr)(const char *, ...) __printflike(1, 2))
 {
@@ -958,6 +986,7 @@ pt_dump(void (*pr)(const char *, ...) __printflike(1, 2))
 	dump_ln_table(satp_pa, topbit, level, 0, pr);
 #endif
 }
+#endif
 
 void
 consinit(void)

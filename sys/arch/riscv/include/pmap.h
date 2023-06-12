@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.17 2023/05/08 08:07:36 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.18 2023/06/12 19:04:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
 #define	KERNEL_PID	0
 
 #define	PMAP_HWPAGEWALKER		1
-#define	PMAP_TLB_MAX			1
+#define	PMAP_TLB_MAX			MAXCPUS
 #ifdef _LP64
 #define	PMAP_INVALID_PDETAB_ADDRESS	((pmap_pdetab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
 #define	PMAP_INVALID_SEGTAB_ADDRESS	((pmap_segtab_t *)(VM_MIN_KERNEL_ADDRESS - PAGE_SIZE))
@@ -90,6 +90,8 @@
 #endif
 #define	PMAP_TLB_NUM_PIDS		(__SHIFTOUT_MASK(SATP_ASID) + 1)
 #define	PMAP_TLB_BITMAP_LENGTH          PMAP_TLB_NUM_PIDS
+// Should use SBI TLB ops
+#define	PMAP_TLB_NEED_SHOOTDOWN		1
 #define	PMAP_TLB_FLUSH_ASID_ON_RESET	false
 
 #define	pmap_phys_address(x)		(x)
@@ -113,6 +115,7 @@ pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
 #include <uvm/pmap/tlb.h>
 #include <uvm/pmap/pmap_devmap.h>
 #include <uvm/pmap/pmap_tlb.h>
+#include <uvm/pmap/pmap_synci.h>
 
 #define	PMAP_GROWKERNEL
 #define	PMAP_STEAL_MEMORY
@@ -124,21 +127,32 @@ struct pmap_md {
 	paddr_t md_ppn;
 };
 
+static inline void
+pmap_md_icache_sync_all(void)
+{
+}
+
+static inline void
+pmap_md_icache_sync_range_index(vaddr_t va, vsize_t size)
+{
+}
+
 struct vm_page *
-	pmap_md_alloc_poolpage(int flags);
+	pmap_md_alloc_poolpage(int);
 vaddr_t	pmap_md_map_poolpage(paddr_t, vsize_t);
 void	pmap_md_unmap_poolpage(vaddr_t, vsize_t);
+
 bool	pmap_md_direct_mapped_vaddr_p(vaddr_t);
-bool	pmap_md_io_vaddr_p(vaddr_t);
 paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
 vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 void	pmap_md_init(void);
-
-void	pmap_md_xtab_activate(struct pmap *, struct lwp *);
-void	pmap_md_xtab_deactivate(struct pmap *);
+bool	pmap_md_io_vaddr_p(vaddr_t);
+bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
 void	pmap_md_pdetab_init(struct pmap *);
 void	pmap_md_pdetab_fini(struct pmap *);
-bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
+void	pmap_md_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
+void	pmap_md_xtab_activate(struct pmap *, struct lwp *);
+void	pmap_md_xtab_deactivate(struct pmap *);
 
 void	pmap_bootstrap(vaddr_t, vaddr_t);
 

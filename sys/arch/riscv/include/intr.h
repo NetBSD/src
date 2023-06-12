@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.3 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: intr.h,v 1.4 2023/06/12 19:04:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ int	splraise(int);
 void	splx(int);
 void	splx_noprof(int);
 void	spl0(void);
-int	splintr(uint32_t *);
+int	splintr(unsigned long *);
 
 void	softint_deliver(void);
 
@@ -148,7 +148,9 @@ struct cpu_info;
 #define DISABLE_INTERRUPTS()	csr_sstatus_clear(SR_SIE)
 
 void	ipi_init(struct cpu_info *);
-void	ipi_process(struct cpu_info *, uint64_t);
+void	ipi_process(struct cpu_info *, unsigned long);
+
+int	riscv_ipi_intr(void *arg);
 
 /*
  * These make no sense *NOT* to be inlined.
