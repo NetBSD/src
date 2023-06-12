@@ -1,4 +1,4 @@
-/* $NetBSD: riscv_platform.c,v 1.1 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: riscv_platform.c,v 1.2 2023/06/12 19:04:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: riscv_platform.c,v 1.1 2023/05/07 12:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: riscv_platform.c,v 1.2 2023/06/12 19:04:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: riscv_platform.c,v 1.1 2023/05/07 12:41:48 skrll Exp
 #include <uvm/uvm_extern.h>
 #include <uvm/pmap/pmap_devmap.h>
 
+#include <riscv/fdt/riscv_fdtvar.h>
 
 static const struct pmap_devmap *
 riscv_platform_devmap(void)
@@ -74,12 +75,6 @@ riscv_platform_devmap(void)
 }
 
 
-static void
-riscv_platform_bootstrap(void)
-{
-}
-
-
 static u_int
 riscv_platform_uart_freq(void)
 {
@@ -88,8 +83,9 @@ riscv_platform_uart_freq(void)
 
 static const struct fdt_platform riscv_platform = {
 	.fp_devmap = riscv_platform_devmap,
-	.fp_bootstrap = riscv_platform_bootstrap,
+	.fp_bootstrap = riscv_fdt_cpu_bootstrap,
 	.fp_uart_freq = riscv_platform_uart_freq,
+	.fp_mpstart = riscv_fdt_cpu_mpstart,
 };
 
 FDT_PLATFORM(rv, FDT_PLATFORM_DEFAULT, &riscv_platform);

@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.17 2023/06/10 07:02:26 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.18 2023/06/12 19:04:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -31,11 +31,12 @@
  */
 
 #include "opt_riscv_debug.h"
+#include "opt_multiprocessor.h"
 
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.17 2023/06/10 07:02:26 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.18 2023/06/12 19:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -161,13 +162,20 @@ pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
 	return true;
 }
 
+#ifdef MULTIPROCESSOR
+void
+pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
+{
+}
+#endif
+
 
 void
 pmap_md_xtab_activate(struct pmap *pmap, struct lwp *l)
 {
 //	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-//	struct cpu_info * const ci = curcpu();
+	struct cpu_info * const ci = curcpu();
 	struct pmap_asid_info * const pai = PMAP_PAI(pmap, cpu_tlb_info(ci));
 
 	uint64_t satp =
@@ -297,6 +305,12 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	VPRINTF("common ");
 	pmap_bootstrap_common();
 
+#ifdef MULTIPROCESSOR
+	VPRINTF("cpusets ");
+	struct cpu_info * const ci = curcpu();
+	kcpuset_create(&ci->ci_shootdowncpus, true);
+#endif
+
 	VPRINTF("bs_pde %p ", bootstrap_pde);
 
 //	kend = (kend + 0x200000 - 1) & -0x200000;
@@ -416,88 +430,3 @@ pmap_kenter_range(vaddr_t va, paddr_t pa, vsize_t size,
 
 	return 0;
 }
-
-
-/* -------------------------------------------------------------------------- */
-
-tlb_asid_t
-tlb_get_asid(void)
-{
-	return csr_asid_read();
-}
-
-void
-tlb_set_asid(tlb_asid_t asid, struct pmap *pm)
-{
-	csr_asid_write(asid);
-}
-
-#if 0
-void    tlb_invalidate_all(void);
-void    tlb_invalidate_globals(void);
-#endif
-
-void
-tlb_invalidate_asids(tlb_asid_t lo, tlb_asid_t hi)
-{
-	for (; lo <= hi; lo++) {
-		__asm __volatile("sfence.vma zero, %[asid]"
-		    : /* output operands */
-		    : [asid] "r" (lo)
-		    : "memory");
-	}
-}
-void
-tlb_invalidate_addr(vaddr_t va, tlb_asid_t asid)
-{
-	if (asid == KERNEL_PID) {
-		__asm __volatile("sfence.vma %[va]"
-		    : /* output operands */
-		    : [va] "r" (va)
-		    : "memory");
-	} else {
-		__asm __volatile("sfence.vma %[va], %[asid]"
-		    : /* output operands */
-		    : [va] "r" (va), [asid] "r" (asid)
-		    : "memory");
-	}
-}
-
-bool
-tlb_update_addr(vaddr_t va, tlb_asid_t asid, pt_entry_t pte, bool insert_p)
-{
-	if (asid == KERNEL_PID) {
-		__asm __volatile("sfence.vma %[va]"
-		    : /* output operands */
-		    : [va] "r" (va)
-		    : "memory");
-	} else {
-		__asm __volatile("sfence.vma %[va], %[asid]"
-		    : /* output operands */
-		    : [va] "r" (va), [asid] "r" (asid)
-		    : "memory");
-	}
-	return true;
-}
-
-u_int
-tlb_record_asids(u_long *ptr, tlb_asid_t asid_max)
-{
-	memset(ptr, 0xff, PMAP_TLB_NUM_PIDS / NBBY);
-	ptr[0] = -2UL;
-
-	return PMAP_TLB_NUM_PIDS - 1;
-}
-
-void
-tlb_walk(void *ctx, bool (*func)(void *, vaddr_t, tlb_asid_t, pt_entry_t))
-{
-	/* no way to view the TLB */
-}
-
-#if 0
-void    tlb_enter_addr(size_t, const struct tlbmask *);
-void    tlb_read_entry(size_t, struct tlbmask *);
-void    tlb_write_entry(size_t, const struct tlbmask *);
-void    tlb_dump(void (*)(const char *, ...));
-#endif

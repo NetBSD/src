@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.1 2023/05/07 12:41:49 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2 2023/06/12 19:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -29,9 +29,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: interrupt.c,v 1.1 2023/05/07 12:41:49 skrll Exp $");
+__RCSID("$NetBSD: interrupt.c,v 1.2 2023/06/12 19:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -42,6 +44,7 @@ __RCSID("$NetBSD: interrupt.c,v 1.1 2023/05/07 12:41:49 skrll Exp $");
 
 #include <machine/locore.h>
 #include <machine/machdep.h>
+#include <machine/sbi.h>
 
 #include <riscv/dev/plicvar.h>
 
@@ -133,3 +136,59 @@ intr_disestablish(void *ih)
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
 }
+
+
+#ifdef MULTIPROCESSOR
+__CTASSERT(NIPIS < 16);
+
+int
+riscv_ipi_intr(void *arg)
+{
+	struct cpu_info * const ci = curcpu();
+	membar_acquire();
+
+	csr_sip_clear(SIP_SSIP);	/* clean pending interrupt status */
+
+	unsigned long pending;
+	while ((pending = atomic_swap_ulong(&ci->ci_request_ipis, 0)) != 0) {
+		membar_acquire();
+		atomic_or_ulong(&ci->ci_active_ipis, pending);
+
+		ipi_process(ci, pending);
+
+		atomic_and_ulong(&ci->ci_active_ipis, pending);
+	}
+
+	return 1;
+}
+
+int
+cpu_send_ipi(struct cpu_info *ci, int req)
+{
+	KASSERT(req < NIPIS);
+	if (ci == NULL) {
+		CPU_INFO_ITERATOR cii;
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if (ci != curcpu()) {
+				cpu_send_ipi(ci, req);
+			}
+		}
+		return 0;
+	}
+	const uint32_t ipi_mask = __BIT(req);
+
+	membar_release();
+	atomic_or_ulong(&ci->ci_request_ipis, ipi_mask);
+
+	membar_release();
+	unsigned long hartmask = 0;
+	const cpuid_t hartid = ci->ci_cpuid;
+	KASSERT(hartid < sizeof(unsigned long) * NBBY);
+	hartmask |= __BIT(hartid);
+	struct sbiret sbiret = sbi_send_ipi(hartmask, 0);
+
+	KASSERT(sbiret.error == SBI_SUCCESS);
+
+	return 0;
+}
+#endif	/* MULTIPROCESSOR */

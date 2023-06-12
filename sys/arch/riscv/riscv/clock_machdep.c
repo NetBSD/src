@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_machdep.c,v 1.4 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: clock_machdep.c,v 1.5 2023/06/12 19:04:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: clock_machdep.c,v 1.4 2023/05/07 12:41:48 skrll Exp $");
+__RCSID("$NetBSD: clock_machdep.c,v 1.5 2023/06/12 19:04:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -41,8 +41,6 @@ __RCSID("$NetBSD: clock_machdep.c,v 1.4 2023/05/07 12:41:48 skrll Exp $");
 #include <machine/machdep.h>
 #include <machine/sbi.h>
 #include <machine/sysreg.h>
-
-static void riscv_timer_init(void);
 
 static void (*_riscv_timer_init)(void) = riscv_timer_init;
 
@@ -70,6 +68,11 @@ riscv_timer_frequency_set(uint32_t freq)
 	timer_ticks_per_hz = freq / hz;
 }
 
+uint32_t
+riscv_timer_frequency_get(void)
+{
+	return timer_frequency;
+}
 
 void
 riscv_timer_register(void (*timerfn)(void))
@@ -82,22 +85,22 @@ riscv_timer_register(void (*timerfn)(void))
 	_riscv_timer_init = timerfn;
 }
 
-static void
+void
 riscv_timer_init(void)
 {
 	struct cpu_info * const ci = curcpu();
 
-	uint64_t next;
-
 	ci->ci_lastintr = csr_time_read();
-	next = ci->ci_lastintr + timer_ticks_per_hz;
+	uint64_t next = ci->ci_lastintr + timer_ticks_per_hz;
 	ci->ci_lastintr_scheduled = next;
 
 	sbi_set_timer(next);		/* schedule next timer interrupt */
 	csr_sie_set(SIE_STIE);		/* enable supervisor timer intr */
 
-	tc.tc_frequency = timer_frequency;
-	tc_init(&tc);
+	if (cpu_index(ci) == 0) {
+		tc.tc_frequency = timer_frequency;
+		tc_init(&tc);
+	}
 }
 
 
