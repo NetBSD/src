@@ -1,11 +1,11 @@
-# $NetBSD: files.fdt,v 1.1 2023/05/07 12:41:48 skrll Exp $
+# $NetBSD: files.fdt,v 1.2 2023/06/12 12:58:17 skrll Exp $
 
 include	"dev/pckbport/files.pckbport"
 
 file	arch/riscv/fdt/riscv_platform.c
 
+file	arch/riscv/fdt/cpus_fdt.c
 file	arch/riscv/fdt/fdt_dma_machdep.c
-file	arch/riscv/fdt/fdt_cpus_machdep.c
 
 attach	cpu at fdt with cpu_fdt
 file	arch/riscv/fdt/cpu_fdt.c		cpu_fdt
