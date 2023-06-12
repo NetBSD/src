@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.354 2023/06/11 17:54:18 dholland Exp $
+$NetBSD: acronyms.comp,v 1.355 2023/06/12 21:00:38 alnsn Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -446,6 +446,7 @@ DPAA	data path acceleration architecture
 DPC	deferred procedure call
 DPCM	differential pulse code modulation
 DPD	dead peer detection
+DPDK	data plane development kit
 DPI	deep packet inspection
 DPI	dots per inch
 DPL	descriptor privilege level
