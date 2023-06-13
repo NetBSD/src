@@ -1,4 +1,4 @@
-/*	$NetBSD: sx.c,v 1.6 2023/04/13 13:07:48 macallan Exp $	*/
+/*	$NetBSD: sx.c,v 1.7 2023/06/13 10:09:31 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.6 2023/04/13 13:07:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.7 2023/06/13 10:09:31 macallan Exp $");
 
 #include "locators.h"
 
@@ -84,6 +84,7 @@ sx_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_tag = ma->ma_bustag;
 	sc->sc_uregs = ma->ma_paddr + 0x1000;
+	sc->sc_cnt = 0;
 
 	if (bus_space_map(sc->sc_tag, ma->ma_paddr, 0x1000, 0, &sc->sc_regh)) {
 		aprint_error_dev(self, "failed to map registers\n");
