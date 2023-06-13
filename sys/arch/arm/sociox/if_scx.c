@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.40 2023/05/21 00:35:38 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.41 2023/06/13 00:15:52 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.40 2023/05/21 00:35:38 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.41 2023/06/13 00:15:52 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.40 2023/05/21 00:35:38 nisimura Exp $")
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
 
-/* SC2A11 GbE 64-bit paddr descriptor */
+/* SC2A11 GbE has 64-bit paddr descriptor */
 struct tdes {
 	uint32_t t0, t1, t2, t3;
 };
@@ -105,8 +105,9 @@ struct rdes {
 #define R0_TDRID	(12)		/* 15:12 target desc ring id */
 #define R0_FS		(1U<<9)		/* first segment of frame */
 #define R0_LS		(1U<<8)		/* last segment of frame */
-#define R0_CSUM		(3U<<6)		/* 7:6 checksum status */
-#define R0_CERR		(2U<<6)		/* 0: undone, 1: found ok, 2: bad */
+#define R0_CSUM		(3U<<6)		/* 7:6 checksum status, 0: undone */
+#define R0_CERR		(2U<<6)		/* 2: found bad */
+#define R0_COK		(1U<<6)		/* 1: found ok */
 /* R1 frame address 63:32 */
 /* R2 frame address 31:0 */
 /* R3 31:16 received frame length, 15:0 buffer length to receive */
@@ -120,11 +121,11 @@ struct rdes {
 #define  INIT_DB	(1U<<2)		/* ???; self clear when done */
 #define  INIT_CLS	(1U<<1)		/* ???; self clear when done */
 #define PKTCTRL		0x140		/* pkt engine control */
-#define  MODENRM	(1U<<28)	/* change mode to normal */
+#define  MODENRM	(1U<<28)	/* set operational mode to 'normal' */
 #define  ENJUMBO	(1U<<27)	/* allow jumbo frame */
 #define  RPTCSUMERR	(1U<<3)		/* log Rx checksum error */
-#define  RPTHDCOMP	(1U<<2)		/* log HD incomplete condition */
-#define  RPTHDERR	(1U<<1)		/* log HD error */
+#define  RPTHDCOMP	(1U<<2)		/* log header incomplete condition */
+#define  RPTHDERR	(1U<<1)		/* log header error */
 #define  DROPNOMATCH	(1U<<0)		/* drop no match frames */
 #define xINTSR		0x200		/* aggregated interrupt status */
 #define  IRQ_UCODE	(1U<<20)	/* ucode load completed; W1C */
@@ -145,16 +146,16 @@ struct rdes {
 #define TXIE_SET	0x428		/* bit to set */
 #define TXIE_CLR	0x42c		/* bit to clr */
 #define  TXI_NTOWNR	(1U<<17)	/* ??? desc array got empty */
-#define  TXI_TR_ERR	(1U<<16)	/* tx error */
-#define  TXI_TXDONE	(1U<<15)	/* tx completed */
-#define  TXI_TMREXP	(1U<<14)	/* coalesce timer expired */
+#define  TXI_TR_ERR	(1U<<16)	/* xmit error */
+#define  TXI_TXDONE	(1U<<15)	/* xmit completed */
+#define  TXI_TMREXP	(1U<<14)	/* coalesce guard timer expired */
 #define RXISR		0x440		/* receive status; W1C */
 #define RXIEN		0x444		/* rx interrupt enable */
 #define RXIE_SET	0x468		/* bit to set */
 #define RXIE_CLR	0x46c		/* bit to clr */
-#define  RXI_RC_ERR	(1U<<16)	/* rx error */
-#define  RXI_PKTCNT	(1U<<15)	/* rx counter has new value */
-#define  RXI_TMREXP	(1U<<14)	/* coalesce timer expired */
+#define  RXI_RC_ERR	(1U<<16)	/* recv error */
+#define  RXI_PKTCNT	(1U<<15)	/* recv counter has new value */
+#define  RXI_TMREXP	(1U<<14)	/* coalesce guard timer expired */
 /* 13 sets of special purpose desc interrupt handling register exist */
 #define TDBA_LO		0x408		/* tdes array base addr 31:0 */
 #define TDBA_HI		0x434		/* tdes array base addr 63:32 */
@@ -163,33 +164,33 @@ struct rdes {
 /* 13 pairs of special purpose desc array base address register exist */
 #define TXCONF		0x430
 #define RXCONF		0x470
-#define  DESCNF_UP	(1U<<31)	/* up-and-running */
+#define  DESCNF_UP	(1U<<31)	/* 'up-and-running' */
 #define  DESCNF_CHRST	(1U<<30)	/* channel reset */
 #define  DESCNF_TMR	(1U<<4)		/* coalesce timer mode select */
 #define  DESCNF_LE	(1)		/* little endian desc format */
 #define TXSUBMIT	0x410		/* submit frame(s) to transmit */
-#define TXCLSCMAX	0x418		/* tx intr coalesce upper bound */
-#define RXCLSCMAX	0x458		/* rx intr coalesce upper bound */
-#define TXITIMER	0x420		/* coalesce timer usec, MSB to use */
-#define RXITIMER	0x460		/* coalesce timer usec, MSB to use */
+#define TXCOALESC	0x418		/* tx intr coalesce upper bound */
+#define RXCOALESC	0x458		/* rx intr coalesce upper bound */
+#define TCLSCTIME	0x420		/* tintr guard time usec, MSB to on */
+#define RCLSCTIME	0x460		/* rintr guard time usec, MSB to on */
 #define TXDONECNT	0x414		/* tx completed count, auto-zero */
-#define RXDONECNT	0x454		/* rx available count, auto-zero */
+#define RXAVAILCNT	0x454		/* rx available count, auto-zero */
 #define DMACTL_TMR	0x20c		/* engine DMA timer value */
 #define UCODE_H2M	0x210		/* host2media engine ucode port */
 #define UCODE_M2H	0x21c		/* media2host engine ucode port */
 #define CORESTAT	0x218		/* engine run state */
-#define  PKTSTOP	(1U<<2)
-#define  M2HSTOP	(1U<<1)
-#define  H2MSTOP	(1U<<0)
+#define  PKTSTOP	(1U<<2)		/* pkt engine stopped */
+#define  M2HSTOP	(1U<<1)		/* M2H engine stopped */
+#define  H2MSTOP	(1U<<0)		/* H2M engine stopped */
 #define DMACTL_H2M	0x214		/* host2media engine control */
 #define DMACTL_M2H	0x220		/* media2host engine control */
 #define  DMACTL_STOP	(1U<<0)		/* instruct stop; self-clear */
+#define  M2H_MODE_TRANS	(1U<<20)	/* initiate M2H mode change */
 #define UCODE_PKT	0x0d0		/* packet engine ucode port */
 #define CLKEN		0x100		/* clock distribution enable */
-#define  CLK_G		(1U<<5)		/* feed clk domain E */
+#define  CLK_G		(1U<<5)		/* feed clk domain G */
 #define  CLK_C		(1U<<1)		/* feed clk domain C */
 #define  CLK_D		(1U<<0)		/* feed clk domain D */
-#define  CLK_ALL	0x23		/* all above; 0x24 ??? 0x3f ??? */
 
 /* GMAC register indirect access. thru MACCMD/MACDATA operation */
 #define MACDATA		0x11c0		/* gmac register rd/wr data */
@@ -201,7 +202,10 @@ struct rdes {
 
 #define FLOWTHR		0x11cc		/* flow control threshold */
 /* 31:16 pause threshold, 15:0 resume threshold */
-#define INTF_SEL	0x11d4		/* ??? */
+#define INTF_SEL	0x11d4		/* phy interface type */
+#define  INTF_GMII	0
+#define  INTF_RGMII	1
+#define  INTF_RMII	4
 
 #define DESC_INIT	0x11fc		/* write 1 for desc init, SC */
 #define DESC_SRST	0x1204		/* write 1 for desc sw reset, SC */
@@ -218,7 +222,7 @@ struct rdes {
  * Ethernet. These must be handled by indirect access.
  */
 #define GMACMCR		0x0000		/* MAC configuration */
-#define  MCR_IBN	(1U<<30)	/* ??? */
+#define  MCR_IBN	(1U<<30)	/* watch in-band-signal */
 #define  MCR_CST	(1U<<25)	/* strip CRC */
 #define  MCR_TC		(1U<<24)	/* keep RGMII PHY notified */
 #define  MCR_WD		(1U<<23)	/* allow long >2048 tx frame */
@@ -233,7 +237,7 @@ struct rdes {
 #define  MCR_IPCEN	(1U<<10)	/* handle checksum */
 #define  MCR_DR		(1U<<9)		/* attempt no tx retry, send once */
 #define  MCR_LUD	(1U<<8)		/* link condition report when RGMII */
-#define  MCR_ACS	(1U<<7)		/* auto pad strip CRC */
+#define  MCR_ACS	(1U<<7)		/* auto pad auto strip CRC */
 #define  MCR_DC		(1U<<4)		/* report excessive tx deferral */
 #define  MCR_TE		(1U<<3)		/* run Tx MAC engine, 0 to stop */
 #define  MCR_RE		(1U<<2)		/* run Rx MAC engine, 0 to stop */
@@ -404,15 +408,13 @@ struct rdes {
  */
 
 #define  _BMR		0x00412080	/* XXX TBD */
-#define  _BMR0		0x00020181	/* XXX TBD */
-/* NetSec uses local RAM to handle GMAC desc arrays and frame buffers */
+/* NetSec uses local RAM to handle GMAC desc arrays */
 #define  _RDLA		0x18000
 #define  _TDLA		0x1c000
-#define  _MCR_FDX	0x0000280c	/* XXX TBD */
-#define  _MCR_HDX	0x0001a00c	/* XXX TBD */
+/* lower address region is used for intermediate frame data buffers */
 
 /*
- * all below are software constraction.
+ * all below are software construction.
  */
 #define MD_NTXDESC		128
 #define MD_NRXDESC		64
@@ -532,7 +534,7 @@ do {									\
 	bus_addr_t __p = __rxs->rxs_dmamap->dm_segs[0].ds_addr;		\
 	bus_size_t __z = __rxs->rxs_dmamap->dm_segs[0].ds_len;		\
 	__m->m_data = __m->m_ext.ext_buf;				\
-	__rxd->r3 = htole32(__z);					\
+	__rxd->r3 = htole32(__z - 4);					\
 	__rxd->r2 = htole32(BUS_ADDR_LO32(__p));			\
 	__rxd->r1 = htole32(BUS_ADDR_HI32(__p));			\
 	__rxd->r0 &= htole32(R0_LD);					\
@@ -562,15 +564,15 @@ CFATTACH_DECL_NEW(scx_acpi, sizeof(struct scx_softc),
 
 static void scx_attach_i(struct scx_softc *);
 static void scx_reset(struct scx_softc *);
-static int scx_init(struct ifnet *);
 static void scx_stop(struct ifnet *, int);
+static int scx_init(struct ifnet *);
 static int scx_ioctl(struct ifnet *, u_long, void *);
 static void scx_set_rcvfilt(struct scx_softc *);
 static void scx_start(struct ifnet *);
 static void scx_watchdog(struct ifnet *);
 static int scx_intr(void *);
 static void txreap(struct scx_softc *);
-static void rxintr(struct scx_softc *);
+static void rxfill(struct scx_softc *);
 static int add_rxbuf(struct scx_softc *, int);
 static void rxdrain(struct scx_softc *sc);
 static void mii_statchg(struct ifnet *);
@@ -580,17 +582,16 @@ static int mii_writereg(device_t, int, int, uint16_t);
 static void phy_tick(void *);
 static void dump_hwfeature(struct scx_softc *);
 
-static void stopuengine(struct scx_softc *);
-static void startuengine(struct scx_softc *);
+static void resetuengine(struct scx_softc *);
 static void loaducode(struct scx_softc *);
 static void injectucode(struct scx_softc *, int, bus_addr_t, bus_size_t);
 
 static int get_mdioclk(uint32_t);
 
-#define WAIT_FOR_SET(sc, reg, set, fail) \
-	wait_for_bits(sc, reg, set, ~0, fail)
-#define WAIT_FOR_CLR(sc, reg, clr, fail) \
-	wait_for_bits(sc, reg, 0, clr, fail)
+#define WAIT_FOR_SET(sc, reg, set) \
+	wait_for_bits(sc, reg, set, ~0, 0)
+#define WAIT_FOR_CLR(sc, reg, clr) \
+	wait_for_bits(sc, reg, 0, clr, 0)
 
 static int
 wait_for_bits(struct scx_softc *sc, int reg,
@@ -616,7 +617,7 @@ mac_read(struct scx_softc *sc, int reg)
 {
 
 	CSR_WRITE(sc, MACCMD, reg | CMD_BUSY);
-	(void)WAIT_FOR_CLR(sc, MACCMD, CMD_BUSY, 0);
+	(void)WAIT_FOR_CLR(sc, MACCMD, CMD_BUSY);
 	return CSR_READ(sc, MACDATA);
 }
 
@@ -626,7 +627,7 @@ mac_write(struct scx_softc *sc, int reg, int val)
 
 	CSR_WRITE(sc, MACDATA, val);
 	CSR_WRITE(sc, MACCMD, reg | CMD_IOWR | CMD_BUSY);
-	(void)WAIT_FOR_CLR(sc, MACCMD, CMD_BUSY, 0);
+	(void)WAIT_FOR_CLR(sc, MACCMD, CMD_BUSY);
 }
 
 /* dig and decode "clock-frequency" value for a given clkname */
@@ -873,7 +874,7 @@ scx_attach_i(struct scx_softc *sc)
 	uint32_t which, dwimp, dwfea;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
-	paddr_t paddr;
+	paddr_t p, q;
 	uint32_t csr;
 	int i, nseg, error = 0;
 
@@ -1010,21 +1011,29 @@ aprint_normal_dev(sc->sc_dev, "descriptor ds_addr %lx, ds_len %lx, nseg %d\n", s
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 
-	stopuengine(sc);
+	resetuengine(sc);
 	loaducode(sc);
 
 	/* feed NetSec descriptor array base addresses and timer value */
-	paddr = SCX_CDTXADDR(sc, 0);		/* tdes array (ring#0) */
-	CSR_WRITE(sc, TDBA_HI, BUS_ADDR_HI32(paddr));
-	CSR_WRITE(sc, TDBA_LO, BUS_ADDR_LO32(paddr));
-	paddr = SCX_CDRXADDR(sc, 0);		/* rdes array (ring#1) */
-	CSR_WRITE(sc, RDBA_HI, BUS_ADDR_HI32(paddr));
-	CSR_WRITE(sc, RDBA_LO, BUS_ADDR_LO32(paddr));
+	p = SCX_CDTXADDR(sc, 0);		/* tdes array (ring#0) */
+	q = SCX_CDRXADDR(sc, 0);		/* rdes array (ring#1) */
+	CSR_WRITE(sc, TDBA_LO, BUS_ADDR_LO32(p));
+	CSR_WRITE(sc, TDBA_HI, BUS_ADDR_HI32(p));
+	CSR_WRITE(sc, RDBA_LO, BUS_ADDR_LO32(q));
+	CSR_WRITE(sc, RDBA_HI, BUS_ADDR_HI32(q));
 	CSR_WRITE(sc, TXCONF, DESCNF_LE);	/* little endian */
 	CSR_WRITE(sc, RXCONF, DESCNF_LE);	/* little endian */
 	CSR_WRITE(sc, DMACTL_TMR, sc->sc_freq / 1000000 - 1);
 
-	startuengine(sc);
+	CSR_WRITE(sc, DMACTL_M2H, M2H_MODE_TRANS);
+	CSR_WRITE(sc, PKTCTRL, MODENRM);	/* change to use normal mode */
+	WAIT_FOR_SET(sc, MODE_TRANS, T2N_DONE);
+	/* do {
+		csr = CSR_READ(sc, MODE_TRANS);
+	} while ((csr & T2N_DONE) == 0); */
+
+	CSR_WRITE(sc, TXISR, ~0);	/* clear pending emtpry/error irq */
+	CSR_WRITE(sc, xINTAE_CLR, ~0);	/* disable tx / rx interrupts */
 
 	return;
 
@@ -1070,17 +1079,32 @@ scx_reset(struct scx_softc *sc)
 	} while (++loop < 3000 && busy);
 	mac_write(sc, GMACBMR, _BMR);
 	mac_write(sc, GMACAFR, 0);
+}
 
-#if 0
-	CSR_WRITE(sc, CLKEN, CLK_ALL);		/* distribute clock sources */
-	CSR_WRITE(sc, SWRESET, 0);		/* reset operation */
-	CSR_WRITE(sc, SWRESET, SRST_RUN);	/* manifest run */
-	CSR_WRITE(sc, COMINIT, INIT_DB | INIT_CLS);
-	WAIT_FOR_CLR(sc, COMINIT, (INIT_DB | INIT_CLS), 0);
+static void
+scx_stop(struct ifnet *ifp, int disable)
+{
+	struct scx_softc *sc = ifp->if_softc;
+	uint32_t csr;
 
-	CSR_WRITE(sc, TXISR, ~0);
+	/* Stop the one second clock. */
+	callout_stop(&sc->sc_callout);
+
+	/* Down the MII. */
+	mii_down(&sc->sc_mii);
+
+	/* Mark the interface down and cancel the watchdog timer. */
+	ifp->if_flags &= ~IFF_RUNNING;
+	ifp->if_timer = 0;
+
+	CSR_WRITE(sc, RXIE_CLR, ~0);
+	CSR_WRITE(sc, TXIE_CLR, ~0);
 	CSR_WRITE(sc, xINTAE_CLR, ~0);
-#endif
+	CSR_WRITE(sc, TXISR, ~0);
+	CSR_WRITE(sc, RXISR, ~0);
+
+	csr = mac_read(sc, GMACOMR);
+	mac_write(sc, GMACOMR, csr &~ (OMR_SR | OMR_ST));
 }
 
 static int
@@ -1142,10 +1166,10 @@ scx_init(struct ifnet *ifp)
 		goto out;
 
 	CSR_WRITE(sc, DESC_SRST, 01);
-	WAIT_FOR_CLR(sc, DESC_SRST, 01, 0);
+	WAIT_FOR_CLR(sc, DESC_SRST, 01);
 
 	CSR_WRITE(sc, DESC_INIT, 01);
-	WAIT_FOR_CLR(sc, DESC_INIT, 01, 0);
+	WAIT_FOR_CLR(sc, DESC_INIT, 01);
 
 	/* feed local memory descriptor array base addresses */
 	mac_write(sc, GMACRDLA, _RDLA);		/* GMAC rdes store */
@@ -1154,21 +1178,19 @@ scx_init(struct ifnet *ifp)
 	CSR_WRITE(sc, FLOWTHR, (48<<16) | 36);	/* pause|resume threshold */
 	mac_write(sc, GMACFCR, 256 << 16);	/* 31:16 pause value */
 
-	CSR_WRITE(sc, RXIE_CLR, ~0);	/* clear Rx interrupt enable */
-	CSR_WRITE(sc, TXIE_CLR, ~0);	/* clear Tx interrupt enable */
+	CSR_WRITE(sc, INTF_SEL, sc->sc_miigmii ? INTF_GMII : INTF_RGMII);
 
-	CSR_WRITE(sc, RXCLSCMAX, 8);	/* Rx coalesce upper bound */
-	CSR_WRITE(sc, TXCLSCMAX, 8);	/* Tx coalesce upper bound */
-	CSR_WRITE(sc, RXITIMER, 500);	/* Rx co. timer usec */
-	CSR_WRITE(sc, TXITIMER, 500);	/* Tx co. timer usec */
+	CSR_WRITE(sc, RXCOALESC, 8);		/* Rx coalesce bound */
+	CSR_WRITE(sc, TXCOALESC, 8);		/* Tx coalesce bound */
+	CSR_WRITE(sc, RCLSCTIME, 500|(1U<<31));	/* Rx co. guard time usec */
+	CSR_WRITE(sc, TCLSCTIME, 500|(1U<<31));	/* Tx co. guard time usec */
 
 	CSR_WRITE(sc, RXIE_SET, RXI_RC_ERR | RXI_PKTCNT | RXI_TMREXP);
 	CSR_WRITE(sc, TXIE_SET, TXI_TR_ERR | TXI_TXDONE | TXI_TMREXP);
-	
 	CSR_WRITE(sc, xINTAE_SET, IRQ_RX | IRQ_TX);
 #if 1
 	/* clear event counters, auto-zero after every read */
-	mac_write(sc, GMACEVCTL, EVC_CR /* | EVC_ROR */);
+	mac_write(sc, GMACEVCTL, EVC_CR | EVC_ROR);
 #endif
 	/* kick to start GMAC engine */
 	csr = mac_read(sc, GMACOMR);
@@ -1180,26 +1202,6 @@ scx_init(struct ifnet *ifp)
 	callout_schedule(&sc->sc_callout, hz);
  out:
 	return error;
-}
-
-static void
-scx_stop(struct ifnet *ifp, int disable)
-{
-	struct scx_softc *sc = ifp->if_softc;
-
-	/* Stop the one second clock. */
-	callout_stop(&sc->sc_callout);
-
-	/* Down the MII. */
-	mii_down(&sc->sc_mii);
-
-	/* Mark the interface down and cancel the watchdog timer. */
-	ifp->if_flags &= ~IFF_RUNNING;
-	ifp->if_timer = 0;
-
-	CSR_WRITE(sc, xINTAE_CLR, ~0);
-	CSR_WRITE(sc, TXISR, ~0);
-	CSR_WRITE(sc, RXISR, ~0);
 }
 
 static int
@@ -1335,12 +1337,11 @@ aprint_normal_dev(sc->sc_dev, "[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
 	}
 	ETHER_UNLOCK(ec);
 	if (crc)
-		csr |= AFR_MHTE;
-	csr |= AFR_HPF; /* use hash+perfect */
+		csr |= AFR_MHTE; /* use mchash[] */
+	csr |= AFR_HPF; /* use perfect match as well */
+ update:
 	mac_write(sc, GMACMHTH, mchash[1]);
 	mac_write(sc, GMACMHTL, mchash[0]);
- update:
-	/* With PR or PM, MHTE/MHTL/MHTH are never consulted. really? */
 	mac_write(sc, GMACAFR, csr);
 	return;
 }
@@ -1360,7 +1361,6 @@ scx_start(struct ifnet *ifp)
 
 	/* Remember the previous number of free descriptors. */
 	ofree = sc->sc_txfree;
-
 	/*
 	 * Loop through the send queue, setting up transmit descriptors
 	 * until we drain the queue, or use up all available transmit
@@ -1370,7 +1370,6 @@ scx_start(struct ifnet *ifp)
 		IFQ_POLL(&ifp->if_snd, m0);
 		if (m0 == NULL)
 			break;
-
 		if (sc->sc_txsfree < MD_TXQUEUE_GC) {
 			txreap(sc);
 			if (sc->sc_txsfree == 0)
@@ -1378,7 +1377,6 @@ scx_start(struct ifnet *ifp)
 		}
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
 		dmamap = txs->txs_dmamap;
-
 		error = bus_dmamap_load_mbuf(sc->sc_dmat, dmamap, m0,
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error) {
@@ -1394,7 +1392,6 @@ scx_start(struct ifnet *ifp)
 			/* Short on resources, just stop for now. */
 			break;
 		}
-
 		if (dmamap->dm_nsegs > sc->sc_txfree) {
 			/*
 			 * Not enough free descriptors to transmit this
@@ -1407,11 +1404,9 @@ scx_start(struct ifnet *ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
-
 		/*
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
 		 */
-
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
@@ -1421,23 +1416,27 @@ scx_start(struct ifnet *ifp)
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = MD_NEXTTX(nexttx)) {
 			struct tdes *tdes = &sc->sc_txdescs[nexttx];
-			bus_addr_t paddr = dmamap->dm_segs[seg].ds_addr;
+			bus_addr_t p = dmamap->dm_segs[seg].ds_addr;
+			bus_size_t z = dmamap->dm_segs[seg].ds_len;
 			/*
 			 * If this is the first descriptor we're
 			 * enqueueing, don't set the OWN bit just
 			 * yet.	 That could cause a race condition.
 			 * We'll do it below.
 			 */
-			tdes->t3 = htole32(dmamap->dm_segs[seg].ds_len);
-			tdes->t2 = htole32(BUS_ADDR_LO32(paddr));
-			tdes->t1 = htole32(BUS_ADDR_HI32(paddr));
-			tdes->t0 = htole32(tdes0 | (tdes->t0 & T0_LD) |
+			tdes->t3 = htole32(z);
+			tdes->t2 = htole32(BUS_ADDR_LO32(p));
+			tdes->t1 = htole32(BUS_ADDR_HI32(p));
+			tdes->t0 &= htole32(T0_LD);
+			tdes->t0 |= htole32(tdes0 |
 					(15 << T0_TDRID) | T0_PT |
 					sc->sc_t0cotso | T0_TRS);
 			tdes0 = T0_OWN; /* 2nd and other segments */
 			/* NB; t0 DRID field contains zero */
 			lasttx = nexttx;
 		}
+
+		/* HW lacks of per-frame xmit done interrupt control */
 
 		/* Write deferred 1st segment T0_OWN at the final stage */
 		sc->sc_txdescs[lasttx].t0 |= htole32(T0_LS);
@@ -1452,7 +1451,6 @@ scx_start(struct ifnet *ifp)
 		txs->txs_firstdesc = sc->sc_txnext;
 		txs->txs_lastdesc = lasttx;
 		txs->txs_ndesc = dmamap->dm_nsegs;
-
 		sc->sc_txfree -= txs->txs_ndesc;
 		sc->sc_txnext = nexttx;
 		sc->sc_txsfree--;
@@ -1462,7 +1460,6 @@ scx_start(struct ifnet *ifp)
 		 */
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 	}
-
 	if (sc->sc_txfree != ofree) {
 		/* Set a watchdog timer in case the chip flakes out. */
 		ifp->if_timer = 5;
@@ -1489,17 +1486,17 @@ scx_watchdog(struct ifnet *ifp)
 		if_statinc(ifp, if_oerrors);
 #if EVENT_DEBUG == 1
 aprint_error_dev(sc->sc_dev,
-    "rx frames %d, octects %d, bcast %d, mcast %d\n",
-    mac_read(sc, GMACEVCNT(27)),
-    mac_read(sc, GMACEVCNT(28)),
-    mac_read(sc, GMACEVCNT(30)),
-    mac_read(sc, GMACEVCNT(31)));
-aprint_error_dev(sc->sc_dev,
     "tx frames %d, octects %d, bcast %d, mcast %d\n",
     mac_read(sc, GMACEVCNT(1)),
     mac_read(sc, GMACEVCNT(0)),
     mac_read(sc, GMACEVCNT(2)),
     mac_read(sc, GMACEVCNT(3)));
+aprint_error_dev(sc->sc_dev,
+    "rx frames %d, octects %d, bcast %d, mcast %d\n",
+    mac_read(sc, GMACEVCNT(27)),
+    mac_read(sc, GMACEVCNT(28)),
+    mac_read(sc, GMACEVCNT(30)),
+    mac_read(sc, GMACEVCNT(31)));
 aprint_error_dev(sc->sc_dev,
     "current tdes addr %x, buf addr %x\n",
     mac_read(sc, 0x1048), mac_read(sc, 0x1050));
@@ -1532,8 +1529,8 @@ scx_intr(void *arg)
 		if (status & RXI_RC_ERR)
 			aprint_error_dev(sc->sc_dev, "Rx error\n");
 		if (status & (RXI_PKTCNT | RXI_TMREXP)) {
-			rxintr(sc);
-			(void)CSR_READ(sc, RXDONECNT); /* clear RXI_RXDONE */
+			rxfill(sc);
+			(void)CSR_READ(sc, RXAVAILCNT); /* clear RXI_PKTCNT */
 		}
 
 		status = CSR_READ(sc, TXISR);
@@ -1586,17 +1583,15 @@ txreap(struct scx_softc *sc)
 }
 
 static void
-rxintr(struct scx_softc *sc)
+rxfill(struct scx_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct scx_rxsoft *rxs;
 	struct mbuf *m;
-	uint32_t rxstat;
-	int i, len;
+	uint32_t rxstat, rlen;
+	int i;
 
 	for (i = sc->sc_rxptr; /*CONSTCOND*/ 1; i = MD_NEXTRX(i)) {
-		rxs = &sc->sc_rxsoft[i];
-
 		SCX_CDRXSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
@@ -1604,34 +1599,36 @@ rxintr(struct scx_softc *sc)
 		if (rxstat & R0_OWN) /* desc is left empty */
 			break;
 
-		/* R0_FS | R0_LS must have been marked for this desc */
+		/* received frame length in R3 31:16 */
+		rlen = le32toh(sc->sc_rxdescs[i].r3) >> 16;
 
+		/* R0_FS | R0_LS must have been marked for this desc */
+		rxs = &sc->sc_rxsoft[i];
 		bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 		    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-		len = sc->sc_rxdescs[i].r3 >> 16; /* 31:16 received */
-		len -= ETHER_CRC_LEN;	/* Trim CRC off */
+		/* dispense new storage to receive frame */
 		m = rxs->rxs_mbuf;
-
 		if (add_rxbuf(sc, i) != 0) {
-			if_statinc(ifp, if_ierrors);
-			SCX_INIT_RXDESC(sc, i);
+			if_statinc(ifp, if_ierrors);	/* resource shortage */
+			SCX_INIT_RXDESC(sc, i);		/* then reuse */
 			bus_dmamap_sync(sc->sc_dmat,
 			    rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize,
 			    BUS_DMASYNC_PREREAD);
 			continue;
 		}
-
+		/* complete mbuf */
 		m_set_rcvif(m, ifp);
-		m->m_pkthdr.len = m->m_len = len;
-
+		m->m_pkthdr.len = m->m_len = rlen;
+		m->m_flags |= M_HASFCS;
 		if (rxstat & R0_CSUM) {
 			uint32_t csum = M_CSUM_IPv4;
 			if (rxstat & R0_CERR)
 				csum |= M_CSUM_IPv4_BAD;
 			m->m_pkthdr.csum_flags |= csum;
 		}
+		/* and pass to upper layer */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
 	sc->sc_rxptr = i;
@@ -1647,18 +1644,14 @@ add_rxbuf(struct scx_softc *sc, int i)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOBUFS;
-
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
 		return ENOBUFS;
 	}
-
 	if (rxs->rxs_mbuf != NULL)
 		bus_dmamap_unload(sc->sc_dmat, rxs->rxs_dmamap);
-
 	rxs->rxs_mbuf = m;
-
 	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
 	if (error) {
@@ -1666,7 +1659,6 @@ add_rxbuf(struct scx_softc *sc, int i)
 		    "can't load rx DMA map %d, error = %d\n", i, error);
 		panic("add_rxbuf");
 	}
-
 	bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 	    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 	SCX_INIT_RXDESC(sc, i);
@@ -1692,7 +1684,7 @@ rxdrain(struct scx_softc *sc)
 
 #define LINK_DEBUG 0
 
-void
+static void
 mii_statchg(struct ifnet *ifp)
 {
 	struct scx_softc *sc = ifp->if_softc;
@@ -1828,33 +1820,23 @@ phy_tick(void *arg)
 }
 
 static void
-stopuengine(struct scx_softc *sc)
+resetuengine(struct scx_softc *sc)
 {
 
-	if (CSR_READ(sc, CORESTAT) != 0) {
+	if (CSR_READ(sc, CORESTAT) == 0) {
+		/* make sure to stop */
 		CSR_WRITE(sc, DMACTL_H2M, DMACTL_STOP);
 		CSR_WRITE(sc, DMACTL_M2H, DMACTL_STOP);
-		WAIT_FOR_CLR(sc, DMACTL_H2M, DMACTL_STOP, 0);
-		WAIT_FOR_CLR(sc, DMACTL_M2H, DMACTL_STOP, 0);
+		WAIT_FOR_CLR(sc, DMACTL_H2M, DMACTL_STOP);
+		WAIT_FOR_CLR(sc, DMACTL_M2H, DMACTL_STOP);
 	}
 	CSR_WRITE(sc, SWRESET, 0);		/* reset operation */
 	CSR_WRITE(sc, SWRESET, SRST_RUN);	/* manifest run */
 	CSR_WRITE(sc, COMINIT, INIT_DB | INIT_CLS);
-	WAIT_FOR_CLR(sc, COMINIT, (INIT_DB | INIT_CLS), 0);
+	WAIT_FOR_CLR(sc, COMINIT, (INIT_DB | INIT_CLS));
 }
 
-static void
-startuengine(struct scx_softc *sc)
-{
-	int err;
-
-	CSR_WRITE(sc, CORESTAT, 0);
-	err = WAIT_FOR_SET(sc, xINTSR, IRQ_UCODE, 0);
-	if (err) {
-		aprint_error_dev(sc->sc_dev, "uengine start failed\n");
-	}
-	CSR_WRITE(sc, xINTSR, IRQ_UCODE);
-}
+#define UCODE_DEBUG 0
 
 /*
  * 3 independent uengines exist to process host2media, media2host and
@@ -1865,6 +1847,7 @@ loaducode(struct scx_softc *sc)
 {
 	uint32_t up, lo, sz;
 	uint64_t addr;
+	int err;
 
 	CSR_WRITE(sc, xINTSR, IRQ_UCODE);
 
@@ -1873,8 +1856,10 @@ loaducode(struct scx_softc *sc)
 	sz = EE_READ(sc, 0x10); /* H->M ucode size */
 	sz *= 4;
 	addr = ((uint64_t)up << 32) | lo;
-aprint_normal_dev(sc->sc_dev, "0x%x H2M ucode %u\n", lo, sz);
 	injectucode(sc, UCODE_H2M, (bus_addr_t)addr, (bus_size_t)sz);
+#if UCODE_DEBUG == 1
+aprint_normal_dev(sc->sc_dev, "0x%x H2M ucode %u\n", lo, sz);
+#endif
 
 	up = EE_READ(sc, 0x14); /* M->H ucode addr high */
 	lo = EE_READ(sc, 0x18); /* M->H ucode addr low */
@@ -1882,13 +1867,24 @@ aprint_normal_dev(sc->sc_dev, "0x%x H2M ucode %u\n", lo, sz);
 	sz *= 4;
 	addr = ((uint64_t)up << 32) | lo;
 	injectucode(sc, UCODE_M2H, (bus_addr_t)addr, (bus_size_t)sz);
+#if UCODE_DEBUG == 1
 aprint_normal_dev(sc->sc_dev, "0x%x M2H ucode %u\n", lo, sz);
+#endif
 
 	lo = EE_READ(sc, 0x20); /* PKT ucode addr */
 	sz = EE_READ(sc, 0x24); /* PKT ucode size */
 	sz *= 4;
 	injectucode(sc, UCODE_PKT, (bus_addr_t)lo, (bus_size_t)sz);
+#if UCODE_DEBUG == 1
 aprint_normal_dev(sc->sc_dev, "0x%x PKT ucode %u\n", lo, sz);
+#endif
+
+	CSR_WRITE(sc, CORESTAT, 0);
+	err = WAIT_FOR_SET(sc, xINTSR, IRQ_UCODE);
+	if (err) {
+		aprint_error_dev(sc->sc_dev, "uengine start failed\n");
+	}
+	CSR_WRITE(sc, xINTSR, IRQ_UCODE);
 }
 
 static void
@@ -1932,7 +1928,7 @@ get_mdioclk(uint32_t freq)
 
 #define HWFEA_DEBUG 1
 
-void
+static void
 dump_hwfeature(struct scx_softc *sc)
 {
 #if HWFEA_DEBUG == 1
