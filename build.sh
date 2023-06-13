@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.371 2023/06/02 20:48:09 lukem Exp $
+#	$NetBSD: build.sh,v 1.372 2023/06/13 16:56:00 christos Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1613,7 +1613,7 @@ print_tooldir_program()
 		[ -n "${possible_TOP_OBJ}" ] || continue
 		possible_TOOLDIR="${possible_TOP_OBJ}/tooldir.${host_ostype}"
 		possible_program="${possible_TOOLDIR}/bin/${toolprefix}${program}"
-		if [ -x "${possible_make}" ]; then
+		if [ -x "${possible_program}" ]; then
 			echo ${possible_program}
 			return;
 		fi
@@ -2016,7 +2016,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.371 2023/06/02 20:48:09 lukem Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.372 2023/06/13 16:56:00 christos Exp $
 # with these arguments: ${_args}
 #
 
