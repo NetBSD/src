@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourteen.c,v 1.94 2023/05/23 10:20:12 macallan Exp $ */
+/*	$NetBSD: cgfourteen.c,v 1.95 2023/06/13 10:11:17 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -173,7 +173,9 @@ static void cg14_eraserows(void *, int, int, long);
  * issue ALU instruction:
  * sxi(OPCODE, srcA, srcB, dest, count)
  */
-#define sxi(inst, a, b, d, cnt) sx_write(sc->sc_sx, SX_INSTRUCTIONS, inst((a), (b), (d), (cnt)))
+#define sxi(inst, a, b, d, cnt) \
+	sx_wait(sc->sc_sx); \
+	sx_write(sc->sc_sx, SX_INSTRUCTIONS, inst((a), (b), (d), (cnt)))
 
 /*
  * issue memory referencing instruction:
@@ -770,13 +772,13 @@ cg14_setup_wsdisplay(struct cgfourteen_softc *sc, int is_cons)
 		sc->sc_defaultscreen_descr.capabilities = ri->ri_caps;
 		sc->sc_defaultscreen_descr.nrows = ri->ri_rows;
 		sc->sc_defaultscreen_descr.ncols = ri->ri_cols;
-		glyphcache_init(&sc->sc_gc, sc->sc_fb.fb_type.fb_height + 5,
+		glyphcache_init_align(&sc->sc_gc, sc->sc_fb.fb_type.fb_height + 5,
 			(sc->sc_vramsize / sc->sc_fb.fb_type.fb_width) - 
 			 sc->sc_fb.fb_type.fb_height - 5,
 			sc->sc_fb.fb_type.fb_width,
 			ri->ri_font->fontwidth,
 			ri->ri_font->fontheight,
-			defattr);
+			defattr, 4);
 	if (is_cons) {
 		wsdisplay_cnattach(&sc->sc_defaultscreen_descr, ri, 0, 0,
 		    defattr);
