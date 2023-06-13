@@ -1,4 +1,4 @@
-/*	$NetBSD: sxvar.h,v 1.4 2019/03/01 02:30:42 macallan Exp $	*/
+/*	$NetBSD: sxvar.h,v 1.5 2023/06/13 10:09:31 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -32,11 +32,14 @@
 #ifndef SXVAR_H
 #define SXVAR_H
 
+#include <sparc/dev/sxreg.h>
+
 struct sx_softc {
 	device_t		sc_dev;
 	bus_addr_t		sc_uregs;
 	bus_space_tag_t		sc_tag;
 	bus_space_handle_t	sc_regh;
+	int			sc_cnt;
 };
 
 static inline void
@@ -49,6 +52,26 @@ static inline uint32_t
 sx_read(struct sx_softc *sc, int addr)
 {
 	return bus_space_read_4(sc->sc_tag, sc->sc_regh, addr);
+}
+
+/*
+ * to be used before issuing SX instructions
+ * this will periodically allow the instruction queue to drain in order
+ * to avoid excessive MBus relinquish & retry cycles during long SX ops
+ * which may cause us to lose interrupts
+ */
+static inline void
+sx_wait(struct sx_softc *sc)
+{
+	uint32_t reg;
+	if (sc->sc_cnt > 6) {
+		do {
+			reg = bus_space_read_4(sc->sc_tag, sc->sc_regh,
+						 SX_CONTROL_STATUS);
+		} while ((reg & SX_MT) == 0);
+		sc->sc_cnt = 0;
+	} else
+		sc->sc_cnt++;
 }
 
 void sx_dump(void);
