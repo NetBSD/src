@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.194 2023/06/14 14:11:28 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.195 2023/06/14 16:14:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -272,7 +272,10 @@ struct paren_level {
 };
 
 struct psym_stack {
-	int top;		/* pointer to top of stack */
+	size_t len;		/* points to one behind the top of the stack;
+				 * 1 at the top level of the file outside a
+				 * declaration or statement; 2 at the top
+				 * level */
 	parser_symbol sym[STACKSIZE];
 	int ind_level[STACKSIZE];
 };

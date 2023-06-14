@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.364 2023/06/14 14:11:28 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.365 2023/06/14 16:14:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.364 2023/06/14 14:11:28 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.365 2023/06/14 16:14:30 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -187,7 +187,7 @@ ind_add(int ind, const char *s, size_t len)
 static void
 init_globals(void)
 {
-	ps.psyms.sym[0] = psym_stmt;
+	ps.psyms.sym[ps.psyms.len++] = psym_stmt;
 	ps.prev_lsym = lsym_semicolon;
 	ps.lbrace_kind = psym_lbrace_block;
 
@@ -388,7 +388,7 @@ process_eof(void)
 {
 	finish_output();
 
-	if (ps.psyms.top > 1)	/* check for balanced braces */
+	if (ps.psyms.len > 2)	/* check for balanced braces */
 		diag(1, "Stuff missing from end of file");
 
 	return found_err ? EXIT_FAILURE : EXIT_SUCCESS;
@@ -534,7 +534,7 @@ process_newline(void)
 	    && lab.len == 0	/* for preprocessing lines */
 	    && com.len == 0)
 		goto stay_in_line;
-	if (ps.psyms.sym[ps.psyms.top] == psym_switch_expr
+	if (ps.psyms.sym[ps.psyms.len - 1] == psym_switch_expr
 	    && opt.brace_same_line
 	    && com.len == 0) {
 		ps.force_nl = true;
@@ -577,7 +577,7 @@ process_lparen(void)
 	if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0)
 		ps.extra_expr_indent = eei_maybe;
 
-	if (ps.in_var_decl && ps.psyms.top <= 2 && !ps.in_init) {
+	if (ps.in_var_decl && ps.psyms.len <= 3 && !ps.in_init) {
 		parse(psym_stmt);	/* prepare for function definition */
 		ps.in_var_decl = false;
 	}
@@ -762,14 +762,14 @@ process_rbrace(void)
 		ps.in_decl = true;
 	}
 
-	if (ps.psyms.top == 2)
+	if (ps.psyms.len == 3)
 		out.line_kind = lk_func_end;
 
 	parse(psym_rbrace);
 
 	if (!ps.in_var_decl
-	    && ps.psyms.sym[ps.psyms.top] != psym_do_stmt
-	    && ps.psyms.sym[ps.psyms.top] != psym_if_expr_stmt)
+	    && ps.psyms.sym[ps.psyms.len - 1] != psym_do_stmt
+	    && ps.psyms.sym[ps.psyms.len - 1] != psym_if_expr_stmt)
 		ps.force_nl = true;
 }
 
@@ -905,7 +905,7 @@ process_type_outside_parentheses(void)
 {
 	parse(psym_decl);	/* let the parser worry about indentation */
 
-	if (ps.prev_lsym == lsym_rparen && ps.psyms.top <= 1 && code.len > 0)
+	if (ps.prev_lsym == lsym_rparen && ps.psyms.len <= 2 && code.len > 0)
 		output_line();
 
 	if (ps.in_func_def_params && opt.indent_parameters &&

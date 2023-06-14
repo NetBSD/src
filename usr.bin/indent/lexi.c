@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.228 2023/06/14 14:11:28 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.229 2023/06/14 16:14:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.228 2023/06/14 14:11:28 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.229 2023/06/14 16:14:30 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -435,7 +435,7 @@ found_typename:
 		}
 	}
 
-	if (inp_p[0] == '(' && ps.psyms.top <= 1 && ps.ind_level == 0 &&
+	if (inp_p[0] == '(' && ps.psyms.len <= 2 && ps.ind_level == 0 &&
 	    !ps.in_func_def_params && !ps.in_init) {
 
 		if (ps.paren.len == 0 && probably_function_definition()) {
