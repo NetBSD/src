@@ -1,4 +1,4 @@
-/* $NetBSD: psym_else.c,v 1.5 2023/06/10 17:35:41 rillig Exp $ */
+/* $NetBSD: psym_else.c,v 1.6 2023/06/14 17:07:32 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_else, which represents the keyword 'else'
@@ -80,9 +80,9 @@ function(void)
 //indent end
 
 //indent run
-error: Standard Input:2: Unmatched 'else'
 {
 	else
 }
 exit 1
+error: Standard Input:2: Unmatched 'else'
 //indent end

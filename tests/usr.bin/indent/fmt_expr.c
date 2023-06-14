@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_expr.c,v 1.7 2023/06/10 08:17:04 rillig Exp $ */
+/* $NetBSD: fmt_expr.c,v 1.8 2023/06/14 17:07:32 rillig Exp $ */
 
 /*
  * Tests for all kinds of expressions that are not directly related to unary
@@ -44,8 +44,6 @@
 //indent end
 
 //indent run -di0
-error: Standard Input:7: Unbalanced parentheses
-warning: Standard Input:9: Extra ')'
 {
 	int var = ({1});
 	int var = ({
@@ -57,4 +55,6 @@ warning: Standard Input:9: Extra ')'
 	});
 }
 exit 1
+error: Standard Input:7: Unbalanced parentheses
+warning: Standard Input:9: Extra ')'
 //indent end
