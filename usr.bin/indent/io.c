@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.218 2023/06/14 09:31:05 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.219 2023/06/14 09:57:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.218 2023/06/14 09:31:05 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.219 2023/06/14 09:57:02 rillig Exp $");
 
 #include <stdio.h>
 
@@ -131,7 +131,9 @@ write_range(const char *s, size_t len)
 {
 	write_buffered_newlines();
 	fwrite(s, 1, len, output);
-	debug_vis_range("write_range \"", s, len, "\"\n");
+	debug_printf("write_range ");
+	debug_vis_range(s, len);
+	debug_println("");
 	for (size_t i = 0; i < len; i++)
 		newlines = s[i] == '\n' ? newlines + 1 : 0;
 	out_ind = ind_add(out_ind, s, len);
