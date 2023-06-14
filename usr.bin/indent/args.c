@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.83 2023/06/10 16:43:55 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.84 2023/06/14 21:35:01 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,12 +38,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: args.c,v 1.83 2023/06/10 16:43:55 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.84 2023/06/14 21:35:01 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 
 #include <err.h>
 #include <limits.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,17 +52,18 @@ __RCSID("$NetBSD: args.c,v 1.83 2023/06/10 16:43:55 rillig Exp $");
 #include "indent.h"
 
 #if __STDC_VERSION__ >= 201112L
-#define assert_type(expr, type) _Generic((expr), type : (expr))
+#define get_offset(name, type) \
+	_Generic((&opt.name), type *: offsetof(struct options, name))
 #else
-#define assert_type(expr, type) (expr)
+#define get_offset(name, type) (offsetof(struct options, name))
 #endif
 
 #define bool_option(name, value, var) \
-	{name, true, false, value, 0, 0, assert_type(&(opt.var), bool *)}
+	{name, true, false, value, 0, 0, get_offset(var, bool)}
 #define bool_options(name, var) \
-	{name, true, true, false, 0, 0, assert_type(&(opt.var), bool *)}
+	{name, true, true, false, 0, 0, get_offset(var, bool)}
 #define int_option(name, var, min, max) \
-	{name, false, false, false, min, max, assert_type(&(opt.var), int *)}
+	{name, false, false, false, min, max, get_offset(var, int)}
 
 /* See set_special_option for special options. */
 static const struct pro {
@@ -71,7 +73,7 @@ static const struct pro {
 	bool p_bool_value;	/* only relevant if !p_may_negate */
 	short i_min;
 	short i_max;
-	void *p_var;		/* the associated variable */
+	unsigned short opt_offset;	/* the associated variable */
 } pro[] = {
 	bool_options("bacc", blank_line_around_conditional_compilation),
 	bool_options("bad", blank_line_after_decl),
@@ -232,7 +234,7 @@ found:
 			errx(1, "%s: unknown option \"-%s\"",
 			    option_source, arg);
 
-		*(bool *)p->p_var =
+		*(bool *)((unsigned char *)(void *)&opt + p->opt_offset) =
 		    p->p_may_negate ? arg[0] != 'n' : p->p_bool_value;
 		return;
 	}
@@ -250,7 +252,7 @@ found:
 		    "must be between %d and %d",
 		    option_source, arg_arg, p->p_name, p->i_min, p->i_max);
 
-	*(int *)p->p_var = (int)num;
+	*(int *)((unsigned char *)(void *)&opt + p->opt_offset) = (int)num;
 }
 
 static void
