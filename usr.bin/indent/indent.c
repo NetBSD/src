@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.359 2023/06/14 08:36:51 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.360 2023/06/14 10:26:00 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.359 2023/06/14 08:36:51 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.360 2023/06/14 10:26:00 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -82,8 +82,11 @@ bool found_err;
 bool had_eof;
 int line_no = 1;
 
-static int ifdef_level;
-static struct parser_state state_stack[5];
+static struct {
+	struct parser_state *item;
+	size_t len;
+	size_t cap;
+} ifdef;
 
 FILE *input;
 FILE *output;
@@ -456,24 +459,26 @@ process_preprocessing(void)
 		dir_len++;
 
 	if (dir_len >= 2 && memcmp(dir, "if", 2) == 0) {
-		if ((size_t)ifdef_level < array_length(state_stack))
-			state_stack[ifdef_level++] = ps;
-		else
-			diag(1, "#if stack overflow");
+		if (ifdef.len >= ifdef.cap) {
+			ifdef.cap += 5;
+			ifdef.item = nonnull(realloc(ifdef.item,
+				sizeof(ifdef.item[0]) * ifdef.cap));
+		}
+		ifdef.item[ifdef.len++] = ps;
 		out.line_kind = lk_if;
 
 	} else if (dir_len >= 2 && memcmp(dir, "el", 2) == 0) {
-		if (ifdef_level <= 0)
+		if (ifdef.len == 0)
 			diag(1, dir[2] == 'i'
 			    ? "Unmatched #elif" : "Unmatched #else");
 		else
-			ps = state_stack[ifdef_level - 1];
+			ps = ifdef.item[ifdef.len - 1];
 
 	} else if (dir_len == 5 && memcmp(dir, "endif", 5) == 0) {
-		if (ifdef_level <= 0)
+		if (ifdef.len == 0)
 			diag(1, "Unmatched #endif");
 		else
-			ifdef_level--;
+			ifdef.len--;
 		out.line_kind = lk_endif;
 	}
 }

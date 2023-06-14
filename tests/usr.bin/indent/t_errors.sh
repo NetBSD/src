@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.35 2023/06/10 17:35:41 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.36 2023/06/14 10:26:00 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -348,54 +348,6 @@ unexpected_closing_brace_decl_body()
 	    cat code.c
 }
 
-atf_test_case 'preprocessing_overflow'
-preprocessing_overflow_body()
-{
-	cat <<-\EOF > code.c
-		#if 1
-		#if 2
-		#if 3
-		#if 4
-		#if 5
-		#if 6
-		#endif 6
-		#endif 5
-		#endif 4
-		#endif 3
-		#endif 2
-		#endif 1
-		#endif too much
-	EOF
-	cat <<-\EOF > stderr.exp
-		error: code.c:6: #if stack overflow
-		error: code.c:12: Unmatched #endif
-		error: code.c:13: Unmatched #endif
-	EOF
-
-	atf_check -s 'exit:1' \
-	    -e 'file:stderr.exp' \
-	    "$indent" code.c
-}
-
-atf_test_case 'preprocessing_unrecognized'
-preprocessing_unrecognized_body()
-{
-	cat <<-\EOF > code.c
-		#unknown
-		# 3 "file.c"
-		#elif 3
-		#else
-	EOF
-	cat <<-\EOF > stderr.exp
-		error: code.c:3: Unmatched #elif
-		error: code.c:4: Unmatched #else
-	EOF
-
-	atf_check -s 'exit:1' \
-	    -e 'file:stderr.exp' \
-	    "$indent" code.c
-}
-
 atf_test_case 'unbalanced_parentheses'
 unbalanced_parentheses_body()
 {
@@ -544,8 +496,6 @@ atf_init_test_cases()
 	atf_add_test_case 'unexpected_end_of_file'
 	atf_add_test_case 'unexpected_closing_brace_top_level'
 	atf_add_test_case 'unexpected_closing_brace_decl'
-	atf_add_test_case 'preprocessing_overflow'
-	atf_add_test_case 'preprocessing_unrecognized'
 	atf_add_test_case 'unbalanced_parentheses'
 	atf_add_test_case 'gcc_statement_expression'
 	atf_add_test_case 'crash_comment_after_controlling_expression'
