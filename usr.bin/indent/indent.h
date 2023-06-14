@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.195 2023/06/14 16:14:30 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.196 2023/06/14 19:05:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -257,8 +257,6 @@ extern enum indent_enabled {
 	indent_last_off_line,
 } indent_enabled;
 
-#define	STACKSIZE 256
-
 /* Properties of each level of parentheses or brackets. */
 struct paren_level {
 	int indent;		/* indentation of the operand/argument,
@@ -272,12 +270,13 @@ struct paren_level {
 };
 
 struct psym_stack {
+	parser_symbol *sym;
+	int *ind_level;
 	size_t len;		/* points to one behind the top of the stack;
 				 * 1 at the top level of the file outside a
 				 * declaration or statement; 2 at the top
 				 * level */
-	parser_symbol sym[STACKSIZE];
-	int ind_level[STACKSIZE];
+	size_t cap;
 };
 
 /*
@@ -475,6 +474,7 @@ void parse(parser_symbol);
 void process_comment(void);
 void set_option(const char *, const char *);
 void load_profile_files(const char *);
+void ps_push(parser_symbol, bool);
 
 void *nonnull(void *);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.75 2023/06/14 17:52:45 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.76 2023/06/14 19:05:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,9 +38,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.75 2023/06/14 17:52:45 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.76 2023/06/14 19:05:40 rillig Exp $");
 
 #include <err.h>
+#include <stdlib.h>
 
 #include "indent.h"
 
@@ -98,12 +99,18 @@ decl_level(void)
 	return level;
 }
 
-static void
+void
 ps_push(parser_symbol psym, bool follow)
 {
-	if (ps.psyms.len >= STACKSIZE)
-		errx(1, "Parser stack overflow");
-	ps.psyms.sym[++ps.psyms.len - 1] = psym;
+	if (ps.psyms.len == ps.psyms.cap) {
+		ps.psyms.cap += 16;
+		ps.psyms.sym = nonnull(realloc(ps.psyms.sym,
+		    sizeof(ps.psyms.sym[0]) * ps.psyms.cap));
+		ps.psyms.ind_level = nonnull(realloc(ps.psyms.ind_level,
+		    sizeof(ps.psyms.ind_level[0]) * ps.psyms.cap));
+	}
+	ps.psyms.len++;
+	ps.psyms.sym[ps.psyms.len - 1] = psym;
 	ps.psyms.ind_level[ps.psyms.len - 1] =
 	    follow ? ps.ind_level_follow : ps.ind_level;
 }
