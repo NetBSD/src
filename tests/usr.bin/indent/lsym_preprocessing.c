@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_preprocessing.c,v 1.13 2023/06/14 17:07:32 rillig Exp $ */
+/* $NetBSD: lsym_preprocessing.c,v 1.14 2023/06/14 20:46:08 rillig Exp $ */
 
 /*
  * Tests for the token lsym_preprocessing, which represents a '#' that starts
@@ -306,4 +306,39 @@ error: Standard Input:1: Unmatched #else
 error: Standard Input:2: Unmatched #elif
 error: Standard Input:3: Unmatched #elifdef
 error: Standard Input:4: Unmatched #endif
+//indent end
+
+
+/*
+ * The '#' can only occur at the beginning of a line, therefore indent does not
+ * care when it occurs in the middle of a line.
+ */
+//indent input
+int no = #;
+//indent end
+
+//indent run -di0
+int no =
+#;
+//indent end
+
+
+/*
+ * Preprocessing directives may be indented; indent moves them to the beginning
+ * of a line.
+ */
+//indent input
+#if 0
+	#if 1 \
+	 || 2
+	#endif
+#endif
+//indent end
+
+//indent run
+#if 0
+#if 1 \
+	 || 2
+#endif
+#endif
 //indent end

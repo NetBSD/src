@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.54 2023/06/10 17:56:29 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.55 2023/06/14 20:46:08 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -1083,5 +1083,106 @@ __attribute__((__dead__))
 void
 die(void)
 {
+}
+//indent end
+
+
+/*
+ * In very rare cases, the type of a declarator might include literal tab
+ * characters. This tab might affect the indentation of the declarator, but
+ * only if it occurs before the declarator, and that is hard to achieve.
+ */
+//indent input
+int		arr[sizeof "	"];
+//indent end
+
+//indent run-equals-input
+
+
+/*
+ * The '}' of an initializer is not supposed to end the statement, it only ends
+ * the brace level of the initializer expression.
+ */
+//indent input
+int multi_line[1][1][1] = {
+{
+{
+1
+},
+},
+};
+int single_line[2][1][1] = {{{1},},{{2}}};
+//indent end
+
+//indent run -di0
+int multi_line[1][1][1] = {
+	{
+		{
+			1
+		},
+	},
+};
+int single_line[2][1][1] = {{{1},}, {{2}}};
+//indent end
+
+
+/*
+ * The '}' of an initializer is not supposed to end the statement, it only ends
+ * the brace level of the initializer expression.
+ */
+//indent input
+{
+int multi_line = {
+{
+{
+b
+},
+},
+};
+int single_line = {{{b},},{}};
+}
+//indent end
+
+//indent run -di0
+{
+	int multi_line = {
+		{
+			{
+				b
+			},
+		},
+	};
+	int single_line = {{{b},}, {}};
+}
+//indent end
+
+
+/*
+ * In initializers, multi-line expressions don't have their second line
+ * indented, even though they should.
+ */
+//indent input
+{
+multi_line = (int[]){
+{1
++1},
+{1
++1},
+{1
++1},
+};
+}
+//indent end
+
+//indent run
+{
+	multi_line = (int[]){
+		{1
+		+ 1},
+		{1
+		+ 1},
+		{1
+		+ 1},
+	};
 }
 //indent end

@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bc.c,v 1.11 2023/06/14 14:11:28 rillig Exp $ */
+/* $NetBSD: opt_bc.c,v 1.12 2023/06/14 20:46:08 rillig Exp $ */
 
 /*
  * Tests for the options '-bc' and '-nbc'.
@@ -118,6 +118,17 @@ int		a = 1,
 		b = 2;
 int		a = (1),
 		b = 2;
+//indent end
+
+
+//indent input
+int a,
+b,
+c;
+//indent end
+
+//indent run -nbc -di0
+int a, b, c;
 //indent end
 
 
