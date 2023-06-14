@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.366 2023/06/14 19:05:40 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.367 2023/06/14 20:46:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.366 2023/06/14 19:05:40 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.367 2023/06/14 20:46:08 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -187,7 +187,7 @@ ind_add(int ind, const char *s, size_t len)
 static void
 init_globals(void)
 {
-	ps_push(psym_stmt, false);
+	ps_push(psym_stmt, false);	/* as a stop symbol */
 	ps.prev_lsym = lsym_semicolon;
 	ps.lbrace_kind = psym_lbrace_block;
 
@@ -345,9 +345,11 @@ update_ps_lbrace_kind(lexer_symbol lsym)
 		ps.lbrace_kind = token.s[0] == 's' ? psym_lbrace_struct :
 		    token.s[0] == 'u' ? psym_lbrace_union :
 		    psym_lbrace_enum;
-	} else if (lsym != lsym_type_outside_parentheses
-	    && lsym != lsym_word
-	    && lsym != lsym_lbrace)
+	} else if (lsym == lsym_type_outside_parentheses
+	    || lsym == lsym_word
+	    || lsym == lsym_lbrace) {
+		/* Keep the current '{' kind. */
+	} else
 		ps.lbrace_kind = psym_lbrace_block;
 }
 
@@ -355,21 +357,19 @@ static void
 indent_declarator(int decl_ind, bool tabs_to_var)
 {
 	int base = ps.ind_level * opt.indent_size;
-	int ind = base + (int)code.len;
+	int ind = ind_add(base, code.s, code.len);
 	int target = base + decl_ind;
 	size_t orig_code_len = code.len;
 
 	if (tabs_to_var)
 		for (int next; (next = next_tab(ind)) <= target; ind = next)
 			buf_add_char(&code, '\t');
-
 	for (; ind < target; ind++)
 		buf_add_char(&code, ' ');
-
-	if (code.len == orig_code_len && ps.want_blank) {
+	if (code.len == orig_code_len && ps.want_blank)
 		buf_add_char(&code, ' ');
-		ps.want_blank = false;
-	}
+
+	ps.want_blank = false;
 	ps.decl_indent_done = true;
 }
 
@@ -556,7 +556,7 @@ process_newline(void)
 	if (ps.psyms.sym[ps.psyms.len - 1] == psym_switch_expr
 	    && opt.brace_same_line
 	    && com.len == 0) {
-		ps.force_nl = true;
+		ps.want_newline = true;
 		goto stay_in_line;
 	}
 
@@ -591,7 +591,7 @@ process_lparen(void)
 	else if (ps.want_blank && want_blank_before_lparen())
 		buf_add_char(&code, ' ');
 	ps.want_blank = false;
-	buf_add_char(&code, token.s[0]);
+	buf_add_buf(&code, &token);
 
 	if (opt.extra_expr_indent && ps.spaced_expr_psym != psym_0)
 		ps.extra_expr_indent = eei_maybe;
@@ -617,17 +617,14 @@ process_lparen(void)
 static void
 process_rparen(void)
 {
-	if (ps.paren.len == 0) {
+	if (ps.paren.len == 0)
 		diag(0, "Extra '%c'", *token.s);
-		goto unbalanced;
-	}
 
-	enum paren_level_cast cast = ps.paren.item[--ps.paren.len].cast;
-	if (ps.in_func_def_params || (ps.line_has_decl && !ps.in_init))
-		cast = cast_no;
-
-	ps.prev_paren_was_cast = cast == cast_maybe;
-	if (cast == cast_maybe) {
+	ps.prev_paren_was_cast = ps.paren.len > 0
+	    && ps.paren.item[--ps.paren.len].cast == cast_maybe
+	    && !ps.in_func_def_params
+	    && !(ps.line_has_decl && !ps.in_init);
+	if (ps.prev_paren_was_cast) {
 		ps.next_unary = true;
 		ps.want_blank = opt.space_after_cast;
 	} else
@@ -636,19 +633,19 @@ process_rparen(void)
 	if (code.len == 0)
 		ps.ind_paren_level = (int)ps.paren.len;
 
-unbalanced:
-	buf_add_char(&code, token.s[0]);
+	buf_add_buf(&code, &token);
 
 	if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0) {
-		if (ps.extra_expr_indent == eei_maybe)
-			ps.extra_expr_indent = eei_last;
-		ps.force_nl = true;
-		ps.next_unary = true;
-		ps.in_stmt_or_decl = false;
 		parse(ps.spaced_expr_psym);
 		ps.spaced_expr_psym = psym_0;
+
+		ps.want_newline = true;
+		ps.next_unary = true;
+		ps.in_stmt_or_decl = false;
 		ps.want_blank = true;
 		out.line_kind = lk_stmt_head;
+		if (ps.extra_expr_indent == eei_maybe)
+			ps.extra_expr_indent = eei_last;
 	}
 }
 
@@ -658,8 +655,8 @@ process_lbracket(void)
 	if (code.len > 0
 	    && (ps.prev_lsym == lsym_comma || ps.prev_lsym == lsym_binary_op))
 		buf_add_char(&code, ' ');
+	buf_add_buf(&code, &token);
 	ps.want_blank = false;
-	buf_add_char(&code, token.s[0]);
 
 	paren_stack_push(&ps.paren, ind_add(0, code.s, code.len), cast_no);
 }
@@ -667,18 +664,16 @@ process_lbracket(void)
 static void
 process_rbracket(void)
 {
-	if (ps.paren.len == 0) {
+	if (ps.paren.len == 0)
 		diag(0, "Extra '%c'", *token.s);
-		goto unbalanced;
-	}
-	ps.paren.len--;
+	if (ps.paren.len > 0)
+		ps.paren.len--;
 
-	ps.want_blank = true;
 	if (code.len == 0)
 		ps.ind_paren_level = (int)ps.paren.len;
 
-unbalanced:
-	buf_add_char(&code, token.s[0]);
+	buf_add_buf(&code, &token);
+	ps.want_blank = true;
 }
 
 static void
@@ -697,7 +692,7 @@ process_lbrace(void)
 	if (ps.in_init)
 		ps.init_level++;
 	else
-		ps.force_nl = true;
+		ps.want_newline = true;
 
 	if (code.len > 0 && !ps.in_init) {
 		if (!opt.brace_same_line ||
@@ -789,7 +784,7 @@ process_rbrace(void)
 	if (!ps.in_var_decl
 	    && ps.psyms.sym[ps.psyms.len - 1] != psym_do_stmt
 	    && ps.psyms.sym[ps.psyms.len - 1] != psym_if_expr_stmt)
-		ps.force_nl = true;
+		ps.want_newline = true;
 }
 
 static void
@@ -846,7 +841,7 @@ process_comma(void)
 		if (ps.break_after_comma && (opt.break_after_comma ||
 			ind_add(compute_code_indent(), code.s, code.len)
 			>= opt.max_line_length - typical_varname_length))
-			ps.force_nl = true;
+			ps.want_newline = true;
 	}
 }
 
@@ -860,7 +855,7 @@ process_label_colon(void)
 	if (ps.seen_case)
 		out.line_kind = lk_case_or_default;
 	ps.in_stmt_or_decl = false;
-	ps.force_nl = ps.seen_case;
+	ps.want_newline = ps.seen_case;
 	ps.seen_case = false;
 	ps.want_blank = false;
 }
@@ -915,7 +910,7 @@ process_semicolon(void)
 
 	if (ps.spaced_expr_psym == psym_0) {
 		parse(psym_stmt);
-		ps.force_nl = true;
+		ps.want_newline = true;
 	}
 }
 
@@ -968,7 +963,7 @@ process_word(lexer_symbol lsym)
 		}
 
 	} else if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0) {
-		ps.force_nl = true;
+		ps.want_newline = true;
 		ps.in_stmt_or_decl = false;
 		ps.next_unary = true;
 		parse(ps.spaced_expr_psym);
@@ -985,7 +980,7 @@ process_do(void)
 	if (code.len > 0)
 		output_line();
 
-	ps.force_nl = true;
+	ps.want_newline = true;
 	parse(psym_do);
 }
 
@@ -998,7 +993,7 @@ process_else(void)
 	    && !(opt.cuddle_else && code.s[code.len - 1] == '}'))
 		output_line();
 
-	ps.force_nl = true;
+	ps.want_newline = true;
 	parse(psym_else);
 }
 
@@ -1085,15 +1080,15 @@ indent(void)
 
 		if (lsym == lsym_if && ps.prev_lsym == lsym_else
 		    && opt.else_if_in_same_line)
-			ps.force_nl = false;
+			ps.want_newline = false;
 
 		if (lsym == lsym_preprocessing || lsym == lsym_newline)
-			ps.force_nl = false;
+			ps.want_newline = false;
 		else if (lsym == lsym_comment) {
 			/* no special processing */
 		} else {
-			if (ps.force_nl && should_break_line(lsym)) {
-				ps.force_nl = false;
+			if (ps.want_newline && should_break_line(lsym)) {
+				ps.want_newline = false;
 				output_line();
 			}
 			ps.in_stmt_or_decl = true;

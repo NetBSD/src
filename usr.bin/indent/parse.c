@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.76 2023/06/14 19:05:40 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.77 2023/06/14 20:46:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,9 +38,8 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.76 2023/06/14 19:05:40 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.77 2023/06/14 20:46:08 rillig Exp $");
 
-#include <err.h>
 #include <stdlib.h>
 
 #include "indent.h"
@@ -50,8 +49,9 @@ __RCSID("$NetBSD: parse.c,v 1.76 2023/06/14 19:05:40 rillig Exp $");
  * directly below it, replacing these two symbols with a single symbol.
  */
 static bool
-psyms_reduce_stmt(struct psym_stack *psyms)
+psyms_reduce_stmt(void)
 {
+	struct psym_stack *psyms = &ps.psyms;
 	switch (psyms->sym[psyms->len - 2]) {
 
 	case psym_stmt:
@@ -105,9 +105,9 @@ ps_push(parser_symbol psym, bool follow)
 	if (ps.psyms.len == ps.psyms.cap) {
 		ps.psyms.cap += 16;
 		ps.psyms.sym = nonnull(realloc(ps.psyms.sym,
-		    sizeof(ps.psyms.sym[0]) * ps.psyms.cap));
+			sizeof(ps.psyms.sym[0]) * ps.psyms.cap));
 		ps.psyms.ind_level = nonnull(realloc(ps.psyms.ind_level,
-		    sizeof(ps.psyms.ind_level[0]) * ps.psyms.cap));
+			sizeof(ps.psyms.ind_level[0]) * ps.psyms.cap));
 	}
 	ps.psyms.len++;
 	ps.psyms.sym[ps.psyms.len - 1] = psym;
@@ -120,11 +120,12 @@ ps_push(parser_symbol psym, bool follow)
  * symbol, until no more reductions are possible.
  */
 static void
-psyms_reduce(struct psym_stack *psyms)
+psyms_reduce(void)
 {
+	struct psym_stack *psyms = &ps.psyms;
 again:
 	if (psyms->len >= 2 && psyms->sym[psyms->len - 1] == psym_stmt
-	    && psyms_reduce_stmt(psyms))
+	    && psyms_reduce_stmt())
 		goto again;
 	if (psyms->sym[psyms->len - 1] == psym_while_expr &&
 	    psyms->sym[psyms->len - 2] == psym_do_stmt) {
@@ -156,7 +157,7 @@ parse(parser_symbol psym)
 	if (psym != psym_else) {
 		while (psyms->sym[psyms->len - 1] == psym_if_expr_stmt) {
 			psyms->sym[psyms->len - 1] = psym_stmt;
-			psyms_reduce(&ps.psyms);
+			psyms_reduce();
 		}
 	}
 
@@ -186,7 +187,7 @@ parse(parser_symbol psym)
 		break;
 
 	case psym_rbrace:
-		/* stack should have <lbrace> <stmt> or <lbrace> <stmt_list> */
+		/* stack should have <lbrace> <stmt> or <lbrace> <decl> */
 		if (!(psyms->len >= 2
 			&& is_lbrace(psyms->sym[psyms->len - 2]))) {
 			diag(1, "Statement nesting error");
@@ -257,6 +258,6 @@ parse(parser_symbol psym)
 	}
 
 	debug_psyms_stack("before reduction");
-	psyms_reduce(&ps.psyms);
+	psyms_reduce();
 	debug_psyms_stack("after reduction");
 }

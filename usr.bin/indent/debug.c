@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.60 2023/06/14 16:14:30 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.61 2023/06/14 20:46:08 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.60 2023/06/14 16:14:30 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.61 2023/06/14 20:46:08 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -367,7 +367,7 @@ debug_parser_state(void)
 
 	state.heading = "vertical spacing";
 	debug_ps_bool(break_after_comma);
-	debug_ps_bool(force_nl);
+	debug_ps_bool(want_newline);
 	debug_ps_enum(declaration, declaration_name);
 	debug_ps_bool(blank_line_after_decl);
 
