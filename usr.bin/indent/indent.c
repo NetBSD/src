@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.360 2023/06/14 10:26:00 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.361 2023/06/14 10:29:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.360 2023/06/14 10:26:00 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.361 2023/06/14 10:29:52 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -469,8 +469,7 @@ process_preprocessing(void)
 
 	} else if (dir_len >= 2 && memcmp(dir, "el", 2) == 0) {
 		if (ifdef.len == 0)
-			diag(1, dir[2] == 'i'
-			    ? "Unmatched #elif" : "Unmatched #else");
+			diag(1, "Unmatched #%.*s", (int)dir_len, dir);
 		else
 			ps = ifdef.item[ifdef.len - 1];
 
