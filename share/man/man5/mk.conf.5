@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.104 2023/06/14 01:16:28 rin Exp $
+.\"	$NetBSD: mk.conf.5,v 1.105 2023/06/14 02:28:41 rin Exp $
 .\"
 .\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -747,12 +747,6 @@ will be installed.
 .NODEF NODOC
 .NOVAR MKSHARE=no
 .DFLTy
-.Pp
-.Em Note :
-see also
-.Pa src/sys/rump/README.compileopts
-for variables used during the build of the
-.Xr rump 3 .
 .
 .It Sy MKDTB
 .YorN
@@ -773,12 +767,6 @@ on other platforms.
 .YorN
 Indicates whether the Device Tree Compiler (dtc) will be built and installed.
 .DFLTy
-.Pp
-.Em Note :
-see also
-.Pa src/sys/rump/README.compileopts
-for variables used during the build of the
-.Xr rump 3 .
 .
 .It Sy MKDTRACE
 .YorN
@@ -1534,6 +1522,12 @@ Indicates whether the
 headers, libraries, and programs are to be installed.
 .NOVAR COVERITY_TOP_CONFIG No is defined
 .DFLTy
+.Pp
+.Em Note :
+see also
+.Pa src/sys/rump/README.compileopts
+for variables used during the build of the
+.Xr rump 3 .
 .
 .It Sy MKSANITIZER
 .YorN
