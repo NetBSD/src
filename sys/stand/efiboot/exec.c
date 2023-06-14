@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.23 2021/10/06 10:13:19 jmcneill Exp $ */
+/* $NetBSD: exec.c,v 1.24 2023/06/14 10:26:45 rin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -109,7 +109,7 @@ load_file(const char *path, u_long extra, bool quiet_errors,
 		if (len < 0) {
 			printf(": %s\n", strerror(errno));
 		} else {
-			printf(": returned %ld (expected %ld)\n", len,
+			printf(": returned %zd (expected %zd)\n", len,
 			    expectedlen);
 		}
 		return EIO;
