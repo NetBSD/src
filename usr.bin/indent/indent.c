@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.365 2023/06/14 16:14:30 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.366 2023/06/14 19:05:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.365 2023/06/14 16:14:30 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.366 2023/06/14 19:05:40 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -187,7 +187,7 @@ ind_add(int ind, const char *s, size_t len)
 static void
 init_globals(void)
 {
-	ps.psyms.sym[ps.psyms.len++] = psym_stmt;
+	ps_push(psym_stmt, false);
 	ps.prev_lsym = lsym_semicolon;
 	ps.lbrace_kind = psym_lbrace_block;
 
@@ -454,36 +454,55 @@ paren_stack_push(struct paren_stack *s, int indent, enum paren_level_cast cast)
 	s->item[s->len++] = (struct paren_level){indent, cast};
 }
 
+static void *
+dup_mem(const void *src, size_t size)
+{
+	return memcpy(nonnull(malloc(size)), src, size);
+}
+
+#define dup_array(src, len) \
+    dup_mem((src), sizeof((src)[0]) * (len))
+#define copy_array(dst, src, len) \
+    memcpy((dst), (src), sizeof((dst)[0]) * (len))
+
 static void
-parser_state_backup(struct parser_state *dst)
+parser_state_back_up(struct parser_state *dst)
 {
 	*dst = ps;
 
-	dst->paren.item = nonnull(
-	    malloc(sizeof(dst->paren.item[0]) * ps.paren.cap));
-	dst->paren.len = ps.paren.len;
-	dst->paren.cap = ps.paren.cap;
-	memcpy(dst->paren.item, ps.paren.item,
-	    sizeof(dst->paren.item[0]) * ps.paren.len);
+	dst->paren.item = dup_array(ps.paren.item, ps.paren.len);
+	dst->psyms.sym = dup_array(ps.psyms.sym, ps.psyms.len);
+	dst->psyms.ind_level = dup_array(ps.psyms.ind_level, ps.psyms.len);
 }
 
 static void
 parser_state_restore(const struct parser_state *src)
 {
-	struct paren_stack dst_paren = ps.paren;
-	ps = *src;
-	ps.paren = dst_paren;
+	struct paren_level *ps_paren_item = ps.paren.item;
+	size_t ps_paren_cap = ps.paren.cap;
+	enum parser_symbol *ps_psyms_sym = ps.psyms.sym;
+	int *ps_psyms_ind_level = ps.psyms.ind_level;
+	size_t ps_psyms_cap = ps.psyms.cap;
 
-	ps.paren.len = 0;
-	for (size_t i = 0; i < src->paren.len; i++)
-		paren_stack_push(&ps.paren,
-		    src->paren.item[i].indent, src->paren.item[i].cast);
+	ps = *src;
+
+	ps.paren.item = ps_paren_item;
+	ps.paren.cap = ps_paren_cap;
+	ps.psyms.sym = ps_psyms_sym;
+	ps.psyms.ind_level = ps_psyms_ind_level;
+	ps.psyms.cap = ps_psyms_cap;
+
+	copy_array(ps.paren.item, src->paren.item, src->paren.len);
+	copy_array(ps.psyms.sym, src->psyms.sym, src->psyms.len);
+	copy_array(ps.psyms.ind_level, src->psyms.ind_level, src->psyms.len);
 }
 
 static void
 parser_state_free(struct parser_state *pst)
 {
 	free(pst->paren.item);
+	free(pst->psyms.sym);
+	free(pst->psyms.ind_level);
 }
 
 static void
@@ -507,7 +526,7 @@ process_preprocessing(void)
 			ifdef.item = nonnull(realloc(ifdef.item,
 				sizeof(ifdef.item[0]) * ifdef.cap));
 		}
-		parser_state_backup(ifdef.item + ifdef.len++);
+		parser_state_back_up(ifdef.item + ifdef.len++);
 		out.line_kind = lk_if;
 
 	} else if (dir_len >= 2 && memcmp(dir, "el", 2) == 0) {
