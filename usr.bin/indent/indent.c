@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.363 2023/06/14 13:15:30 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.364 2023/06/14 14:11:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.363 2023/06/14 13:15:30 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.364 2023/06/14 14:11:28 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -444,6 +444,49 @@ read_preprocessing_line(void)
 }
 
 static void
+paren_stack_push(struct paren_stack *s, int indent, enum paren_level_cast cast)
+{
+	if (s->len == s->cap) {
+		s->cap = 10 + s->cap;
+		s->item = nonnull(realloc(s->item,
+			sizeof(s->item[0]) * s->cap));
+	}
+	s->item[s->len++] = (struct paren_level){indent, cast};
+}
+
+static void
+parser_state_backup(struct parser_state *dst)
+{
+	*dst = ps;
+
+	dst->paren.item = nonnull(
+	    malloc(sizeof(dst->paren.item[0]) * ps.paren.cap));
+	dst->paren.len = ps.paren.len;
+	dst->paren.cap = ps.paren.cap;
+	memcpy(dst->paren.item, ps.paren.item,
+	    sizeof(dst->paren.item[0]) * ps.paren.len);
+}
+
+static void
+parser_state_restore(const struct parser_state *src)
+{
+	struct paren_stack dst_paren = ps.paren;
+	ps = *src;
+	ps.paren = dst_paren;
+
+	ps.paren.len = 0;
+	for (size_t i = 0; i < src->paren.len; i++)
+		paren_stack_push(&ps.paren,
+		    src->paren.item[i].indent, src->paren.item[i].cast);
+}
+
+static void
+parser_state_free(struct parser_state *pst)
+{
+	free(pst->paren.item);
+}
+
+static void
 process_preprocessing(void)
 {
 	if (lab.len > 0 || code.len > 0 || com.len > 0)
@@ -464,20 +507,20 @@ process_preprocessing(void)
 			ifdef.item = nonnull(realloc(ifdef.item,
 				sizeof(ifdef.item[0]) * ifdef.cap));
 		}
-		ifdef.item[ifdef.len++] = ps;
+		parser_state_backup(ifdef.item + ifdef.len++);
 		out.line_kind = lk_if;
 
 	} else if (dir_len >= 2 && memcmp(dir, "el", 2) == 0) {
 		if (ifdef.len == 0)
 			diag(1, "Unmatched #%.*s", (int)dir_len, dir);
 		else
-			ps = ifdef.item[ifdef.len - 1];
+			parser_state_restore(ifdef.item + ifdef.len - 1);
 
 	} else if (dir_len == 5 && memcmp(dir, "endif", 5) == 0) {
 		if (ifdef.len == 0)
 			diag(1, "Unmatched #endif");
 		else
-			ifdef.len--;
+			parser_state_free(ifdef.item + --ifdef.len);
 		out.line_kind = lk_endif;
 	}
 }
@@ -486,7 +529,7 @@ static void
 process_newline(void)
 {
 	if (ps.prev_lsym == lsym_comma
-	    && ps.nparen == 0 && !ps.in_init
+	    && ps.paren.len == 0 && !ps.in_init
 	    && !opt.break_after_comma && ps.break_after_comma
 	    && lab.len == 0	/* for preprocessing lines */
 	    && com.len == 0)
@@ -507,8 +550,6 @@ stay_in_line:
 static bool
 want_blank_before_lparen(void)
 {
-	if (!ps.want_blank)
-		return false;
 	if (opt.proc_calls_space)
 		return true;
 	if (ps.prev_lsym == lsym_rparen || ps.prev_lsym == lsym_rbracket)
@@ -523,24 +564,12 @@ want_blank_before_lparen(void)
 }
 
 static void
-ps_paren_push(int indent, enum paren_level_cast cast)
-{
-	if (++ps.nparen == array_length(ps.paren)) {
-		diag(0, "Reached internal limit of %zu unclosed parentheses",
-		     array_length(ps.paren));
-		ps.nparen--;
-	}
-	ps.paren[ps.nparen - 1].indent = indent;
-	ps.paren[ps.nparen - 1].cast = cast;
-}
-
-static void
 process_lparen(void)
 {
 
 	if (is_function_pointer_declaration())
 		indent_declarator(ps.decl_ind, ps.tabs_to_var);
-	else if (want_blank_before_lparen())
+	else if (ps.want_blank && want_blank_before_lparen())
 		buf_add_char(&code, ' ');
 	ps.want_blank = false;
 	buf_add_char(&code, token.s[0]);
@@ -553,8 +582,6 @@ process_lparen(void)
 		ps.in_var_decl = false;
 	}
 
-	int indent = ind_add(0, code.s, code.len);
-
 	enum paren_level_cast cast = cast_unknown;
 	if (ps.prev_lsym == lsym_offsetof
 	    || ps.prev_lsym == lsym_sizeof
@@ -565,20 +592,18 @@ process_lparen(void)
 	    || ps.line_has_func_def)
 		cast = cast_no;
 
-	ps_paren_push(indent, cast);
-	debug_println("paren_indents[%d] is now %s%d",
-	    ps.nparen - 1, paren_level_cast_name[cast], indent);
+	paren_stack_push(&ps.paren, ind_add(0, code.s, code.len), cast);
 }
 
 static void
 process_rparen(void)
 {
-	if (ps.nparen == 0) {
+	if (ps.paren.len == 0) {
 		diag(0, "Extra '%c'", *token.s);
 		goto unbalanced;
 	}
 
-	enum paren_level_cast cast = ps.paren[--ps.nparen].cast;
+	enum paren_level_cast cast = ps.paren.item[--ps.paren.len].cast;
 	if (ps.in_func_def_params || (ps.line_has_decl && !ps.in_init))
 		cast = cast_no;
 
@@ -590,12 +615,12 @@ process_rparen(void)
 		ps.want_blank = true;
 
 	if (code.len == 0)
-		ps.ind_paren_level = ps.nparen;
+		ps.ind_paren_level = (int)ps.paren.len;
 
 unbalanced:
 	buf_add_char(&code, token.s[0]);
 
-	if (ps.spaced_expr_psym != psym_0 && ps.nparen == 0) {
+	if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0) {
 		if (ps.extra_expr_indent == eei_maybe)
 			ps.extra_expr_indent = eei_last;
 		ps.force_nl = true;
@@ -617,23 +642,21 @@ process_lbracket(void)
 	ps.want_blank = false;
 	buf_add_char(&code, token.s[0]);
 
-	int indent = ind_add(0, code.s, code.len);
-	ps_paren_push(indent, cast_no);
-	debug_println("paren_indents[%d] is now %d", ps.nparen - 1, indent);
+	paren_stack_push(&ps.paren, ind_add(0, code.s, code.len), cast_no);
 }
 
 static void
 process_rbracket(void)
 {
-	if (ps.nparen == 0) {
+	if (ps.paren.len == 0) {
 		diag(0, "Extra '%c'", *token.s);
 		goto unbalanced;
 	}
-	--ps.nparen;
+	ps.paren.len--;
 
 	ps.want_blank = true;
 	if (code.len == 0)
-		ps.ind_paren_level = ps.nparen;
+		ps.ind_paren_level = (int)ps.paren.len;
 
 unbalanced:
 	buf_add_char(&code, token.s[0]);
@@ -670,9 +693,9 @@ process_lbrace(void)
 		}
 	}
 
-	if (ps.nparen > 0 && ps.init_level == 0) {
+	if (ps.paren.len > 0 && ps.init_level == 0) {
 		diag(1, "Unbalanced parentheses");
-		ps.nparen = 0;
+		ps.paren.len = 0;
 		if (ps.spaced_expr_psym != psym_0) {
 			parse(ps.spaced_expr_psym);
 			ps.spaced_expr_psym = psym_0;
@@ -711,9 +734,9 @@ process_lbrace(void)
 static void
 process_rbrace(void)
 {
-	if (ps.nparen > 0 && ps.init_level == 0) {
+	if (ps.paren.len > 0 && ps.init_level == 0) {
 		diag(1, "Unbalanced parentheses");
-		ps.nparen = 0;
+		ps.paren.len = 0;
 		ps.spaced_expr_psym = psym_0;
 	}
 
@@ -797,7 +820,7 @@ process_comma(void)
 
 	buf_add_char(&code, ',');
 
-	if (ps.nparen == 0) {
+	if (ps.paren.len == 0) {
 		if (ps.init_level == 0)
 			ps.in_init = false;
 		int typical_varname_length = 8;
@@ -855,12 +878,12 @@ process_semicolon(void)
 					 * structure declaration before, we
 					 * aren't anymore */
 
-	if (ps.nparen > 0 && ps.spaced_expr_psym != psym_for_exprs) {
+	if (ps.paren.len > 0 && ps.spaced_expr_psym != psym_for_exprs) {
 		/* There were unbalanced parentheses in the statement. It is a
 		 * bit complicated, because the semicolon might be in a for
 		 * statement. */
 		diag(1, "Unbalanced parentheses");
-		ps.nparen = 0;
+		ps.paren.len = 0;
 		if (ps.spaced_expr_psym != psym_0) {
 			parse(ps.spaced_expr_psym);
 			ps.spaced_expr_psym = psym_0;
@@ -868,7 +891,7 @@ process_semicolon(void)
 	}
 	buf_add_char(&code, ';');
 	ps.want_blank = true;
-	ps.in_stmt_or_decl = ps.nparen > 0;
+	ps.in_stmt_or_decl = ps.paren.len > 0;
 	ps.decl_ind = 0;
 
 	if (ps.spaced_expr_psym == psym_0) {
@@ -925,7 +948,7 @@ process_word(lexer_symbol lsym)
 			ps.want_blank = false;
 		}
 
-	} else if (ps.spaced_expr_psym != psym_0 && ps.nparen == 0) {
+	} else if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0) {
 		ps.force_nl = true;
 		ps.in_stmt_or_decl = false;
 		ps.next_unary = true;
@@ -997,7 +1020,7 @@ process_lsym(lexer_symbol lsym)
 		/* INDENT ON */
 
 	case lsym_tag:
-		if (ps.nparen > 0)
+		if (ps.paren.len > 0)
 			goto copy_token;
 		/* FALLTHROUGH */
 	case lsym_type_outside_parentheses:

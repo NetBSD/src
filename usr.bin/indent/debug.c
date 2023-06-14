@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.58 2023/06/14 09:57:02 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.59 2023/06/14 14:11:28 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.58 2023/06/14 09:57:02 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.59 2023/06/14 14:11:28 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -255,15 +255,14 @@ debug_ps_enum_member(const char *name, const char *prev, const char *curr)
 }
 
 static bool
-ps_paren_has_changed(void)
+paren_stack_equal(const struct paren_stack *a, const struct paren_stack *b)
 {
-	if (state.prev_ps.nparen != ps.nparen)
-		return true;
+	if (a->len != b->len)
+		return false;
 
-	const struct paren_level *prev = state.prev_ps.paren, *curr = ps.paren;
-	for (int i = 0; i < ps.nparen; i++)
-		if (curr[i].indent != prev[i].indent
-		    || curr[i].cast != prev[i].cast)
+	for (size_t i = 0, n = a->len; i < n; i++)
+		if (a->item[i].indent != b->item[i].indent
+		    || a->item[i].cast != b->item[i].cast)
 			return true;
 	return false;
 }
@@ -271,17 +270,18 @@ ps_paren_has_changed(void)
 static void
 debug_ps_paren(void)
 {
-	if (!config.full_parser_state && !ps_paren_has_changed()
+	if (!config.full_parser_state
+	    && paren_stack_equal(&state.prev_ps.paren, &ps.paren)
 	    && !state.ps_first)
 		return;
 
 	debug_printf("             ps.paren:");
-	for (int i = 0; i < ps.nparen; i++) {
+	for (size_t i = 0; i < ps.paren.len; i++) {
 		debug_printf(" %s%d",
-		    paren_level_cast_name[ps.paren[i].cast],
-		    ps.paren[i].indent);
+		    paren_level_cast_name[ps.paren.item[i].cast],
+		    ps.paren.item[i].indent);
 	}
-	if (ps.nparen == 0)
+	if (ps.paren.len == 0)
 		debug_printf(" none");
 	debug_println("");
 }
@@ -358,7 +358,6 @@ debug_parser_state(void)
 	debug_ps_bool(next_unary);
 	debug_ps_bool(want_blank);
 	debug_ps_int(ind_paren_level);
-	debug_ps_int(nparen);
 	debug_ps_paren();
 
 	state.heading = "indentation of comments";

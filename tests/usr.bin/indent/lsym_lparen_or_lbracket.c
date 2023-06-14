@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.16 2023/06/10 08:17:04 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.17 2023/06/14 14:11:28 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -144,9 +144,9 @@ function(void)
 //indent run-equals-input
 
 
-/* This is the maximum supported number of parentheses. */
 //indent input
 int zero = (((((((((((((((((((0)))))))))))))))))));
+int many = ((((((((((((((((((((((((((((((((0))))))))))))))))))))))))))))))));
 //indent end
 
 //indent run-equals-input -di0

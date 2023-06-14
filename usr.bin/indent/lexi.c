@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.227 2023/06/14 08:36:51 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.228 2023/06/14 14:11:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.227 2023/06/14 08:36:51 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.228 2023/06/14 14:11:28 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -397,7 +397,7 @@ lexi_alnum(void)
 	ps.next_unary = ps.prev_lsym == lsym_tag
 	    || ps.prev_lsym == lsym_typedef;
 
-	if (ps.prev_lsym == lsym_tag && ps.nparen == 0)
+	if (ps.prev_lsym == lsym_tag && ps.paren.len == 0)
 		return lsym_type_outside_parentheses;
 
 	token_add_char('\0');
@@ -418,17 +418,19 @@ lexi_alnum(void)
 		lsym = lsym_type_in_parentheses;
 		ps.next_unary = true;
 found_typename:
-		if (ps.nparen > 0) {
+		if (ps.paren.len > 0) {
 			/* inside parentheses: cast, param list, offsetof or
 			 * sizeof */
-			if (ps.paren[ps.nparen - 1].cast == cast_unknown)
-				ps.paren[ps.nparen - 1].cast = cast_maybe;
+			struct paren_level *paren_level =
+			    ps.paren.item + ps.paren.len - 1;
+			if (paren_level->cast == cast_unknown)
+				paren_level->cast = cast_maybe;
 		}
 		if (ps.prev_lsym != lsym_period
 		    && ps.prev_lsym != lsym_unary_op) {
 			if (kw != NULL && kw->lsym == lsym_tag)
 				return lsym_tag;
-			if (ps.nparen == 0)
+			if (ps.paren.len == 0)
 				return lsym_type_outside_parentheses;
 		}
 	}
@@ -436,14 +438,14 @@ found_typename:
 	if (inp_p[0] == '(' && ps.psyms.top <= 1 && ps.ind_level == 0 &&
 	    !ps.in_func_def_params && !ps.in_init) {
 
-		if (ps.nparen == 0 && probably_function_definition()) {
+		if (ps.paren.len == 0 && probably_function_definition()) {
 			ps.line_has_func_def = true;
 			if (ps.in_decl)
 				ps.in_func_def_params = true;
 			return lsym_funcname;
 		}
 
-	} else if (ps.nparen == 0 && probably_typename()) {
+	} else if (ps.paren.len == 0 && probably_typename()) {
 		ps.next_unary = true;
 		return lsym_type_outside_parentheses;
 	}
@@ -462,7 +464,7 @@ is_asterisk_pointer(void)
 	    ps.prev_lsym == lsym_rparen ||
 	    ps.prev_lsym == lsym_rbracket)
 		return false;
-	return ps.in_decl && ps.nparen > 0;
+	return ps.in_decl && ps.paren.len > 0;
 }
 
 static bool

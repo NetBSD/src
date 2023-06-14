@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.219 2023/06/14 09:57:02 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.220 2023/06/14 14:11:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.219 2023/06/14 09:57:02 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.220 2023/06/14 14:11:28 rillig Exp $");
 
 #include <stdio.h>
 
@@ -276,14 +276,16 @@ static void
 output_line_code(void)
 {
 	int target_ind = compute_code_indent();
-	for (int i = 0; i < ps.nparen; i++) {
-		int paren_ind = ps.paren[i].indent;
+	for (size_t i = 0; i < ps.paren.len; i++) {
+		int paren_ind = ps.paren.item[i].indent;
 		if (paren_ind >= 0) {
-			ps.paren[i].indent = -1 - (paren_ind + target_ind);
+			ps.paren.item[i].indent =
+			    -1 - (paren_ind + target_ind);
 			debug_println(
-			    "setting paren_indents[%d] from %d to %d "
+			    "setting paren_indents[%zu] from %d to %d "
 			    "for column %d",
-			    i, paren_ind, ps.paren[i].indent, target_ind + 1);
+			    i, paren_ind,
+			    ps.paren.item[i].indent, target_ind + 1);
 		}
 	}
 
@@ -399,14 +401,14 @@ output_line(void)
 	if (ps.extra_expr_indent == eei_last)
 		ps.extra_expr_indent = eei_no;
 	if (!(ps.psyms.sym[ps.psyms.top] == psym_if_expr_stmt_else
-		&& ps.nparen > 0))
+		&& ps.paren.len > 0))
 		ps.ind_level = ps.ind_level_follow;
-	ps.ind_paren_level = ps.nparen;
+	ps.ind_paren_level = (int)ps.paren.len;
 	ps.want_blank = false;
 
-	if (ps.nparen > 0) {
+	if (ps.paren.len > 0) {
 		/* TODO: explain what negative indentation means */
-		paren_indent = -1 - ps.paren[ps.nparen - 1].indent;
+		paren_indent = -1 - ps.paren.item[ps.paren.len - 1].indent;
 		debug_println("paren_indent is now %d", paren_indent);
 	}
 
