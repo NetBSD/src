@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.362 2023/06/14 11:18:09 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.363 2023/06/14 13:15:30 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.362 2023/06/14 11:18:09 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.363 2023/06/14 13:15:30 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -523,13 +523,20 @@ want_blank_before_lparen(void)
 }
 
 static void
-process_lparen(void)
+ps_paren_push(int indent, enum paren_level_cast cast)
 {
 	if (++ps.nparen == array_length(ps.paren)) {
 		diag(0, "Reached internal limit of %zu unclosed parentheses",
-		    array_length(ps.paren));
+		     array_length(ps.paren));
 		ps.nparen--;
 	}
+	ps.paren[ps.nparen - 1].indent = indent;
+	ps.paren[ps.nparen - 1].cast = cast;
+}
+
+static void
+process_lparen(void)
+{
 
 	if (is_function_pointer_declaration())
 		indent_declarator(ps.decl_ind, ps.tabs_to_var);
@@ -558,8 +565,7 @@ process_lparen(void)
 	    || ps.line_has_func_def)
 		cast = cast_no;
 
-	ps.paren[ps.nparen - 1].indent = indent;
-	ps.paren[ps.nparen - 1].cast = cast;
+	ps_paren_push(indent, cast);
 	debug_println("paren_indents[%d] is now %s%d",
 	    ps.nparen - 1, paren_level_cast_name[cast], indent);
 }
@@ -605,12 +611,6 @@ unbalanced:
 static void
 process_lbracket(void)
 {
-	if (++ps.nparen == array_length(ps.paren)) {
-		diag(0, "Reached internal limit of %zu unclosed parentheses",
-		    array_length(ps.paren));
-		ps.nparen--;
-	}
-
 	if (code.len > 0
 	    && (ps.prev_lsym == lsym_comma || ps.prev_lsym == lsym_binary_op))
 		buf_add_char(&code, ' ');
@@ -618,9 +618,7 @@ process_lbracket(void)
 	buf_add_char(&code, token.s[0]);
 
 	int indent = ind_add(0, code.s, code.len);
-
-	ps.paren[ps.nparen - 1].indent = indent;
-	ps.paren[ps.nparen - 1].cast = cast_no;
+	ps_paren_push(indent, cast_no);
 	debug_println("paren_indents[%d] is now %d", ps.nparen - 1, indent);
 }
 
