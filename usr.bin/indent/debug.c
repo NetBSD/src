@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.59 2023/06/14 14:11:28 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.60 2023/06/14 16:14:30 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.59 2023/06/14 14:11:28 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.60 2023/06/14 16:14:30 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -383,7 +383,7 @@ debug_psyms_stack(const char *situation)
 {
 	debug_printf("parse stack %s:", situation);
 	const struct psym_stack *psyms = &ps.psyms;
-	for (int i = 0; i <= psyms->top; ++i)
+	for (size_t i = 0; i < psyms->len; ++i)
 		debug_printf(" %d %s",
 		    psyms->ind_level[i], psym_name[psyms->sym[i]]);
 	debug_println("");
