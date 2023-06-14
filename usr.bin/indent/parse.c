@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.72 2023/06/10 17:35:40 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.73 2023/06/14 07:20:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.72 2023/06/10 17:35:40 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.73 2023/06/14 07:20:55 rillig Exp $");
 
 #include <err.h>
 
@@ -54,8 +54,7 @@ psyms_reduce_stmt(struct psym_stack *psyms)
 	switch (psyms->sym[psyms->top - 1]) {
 
 	case psym_stmt:
-	case psym_stmt_list:
-		psyms->sym[--psyms->top] = psym_stmt_list;
+		psyms->sym[--psyms->top] = psym_stmt;
 		return true;
 
 	case psym_do:
@@ -67,7 +66,6 @@ psyms_reduce_stmt(struct psym_stack *psyms)
 		psyms->sym[--psyms->top] = psym_if_expr_stmt;
 		int i = psyms->top - 1;
 		while (psyms->sym[i] != psym_stmt &&
-		    psyms->sym[i] != psym_stmt_list &&
 		    psyms->sym[i] != psym_lbrace_block)
 			--i;
 		ps.ind_level_follow = psyms->ind_level[i];
@@ -162,8 +160,7 @@ parse(parser_symbol psym)
 	case psym_lbrace_enum:
 		ps.break_after_comma = false;
 		if (psyms->sym[psyms->top] == psym_decl
-		    || psyms->sym[psyms->top] == psym_stmt
-		    || psyms->sym[psyms->top] == psym_stmt_list)
+		    || psyms->sym[psyms->top] == psym_stmt)
 			++ps.ind_level_follow;
 		else if (code.len == 0) {
 			/* It is part of a while, for, etc. */

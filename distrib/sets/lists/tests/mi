@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1266 2023/06/01 07:27:30 rillig Exp $
+# $NetBSD: mi,v 1.1267 2023/06/14 07:20:54 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5252,7 +5252,7 @@
 ./usr/tests/usr.bin/indent/psym_rbrace.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/psym_semicolon.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/psym_stmt.c					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/psym_stmt_list.c				tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/psym_stmt_list.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/psym_switch_expr.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/psym_while_expr.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/struct.0					tests-obsolete		obsolete,atf
