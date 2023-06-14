@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.56 2023/06/14 08:36:51 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.57 2023/06/14 09:31:05 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.56 2023/06/14 08:36:51 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.57 2023/06/14 09:31:05 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -363,10 +363,10 @@ debug_parser_state(void)
 	debug_ps_int(nparen);
 	debug_ps_paren();
 
-	state.heading = "horizontal spacing for comments";
-	debug_ps_int(comment_delta);
-	debug_ps_int(n_comment_delta);
-	debug_ps_int(com_ind);
+	state.heading = "indentation of comments";
+	debug_ps_int(comment_ind);
+	debug_ps_int(comment_shift);
+	debug_ps_bool(comment_in_first_line);
 
 	state.heading = "vertical spacing";
 	debug_ps_bool(break_after_comma);

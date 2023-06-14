@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.191 2023/06/14 08:36:51 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.192 2023/06/14 09:31:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -71,7 +71,7 @@
 typedef enum lexer_symbol {
 	lsym_eof,
 	lsym_preprocessing,	/* the initial '#' of a preprocessing line */
-	lsym_newline,
+	lsym_newline,		/* outside block comments */
 	lsym_comment,		/* the initial '/ *' or '//' of a comment */
 
 	lsym_lparen,
@@ -229,8 +229,8 @@ extern struct options {
 					 * lined-up code within the margin */
 	bool lineup_to_parens;	/* whether continued code within parens will be
 				 * lined up to the open paren */
-	bool proc_calls_space;	/* whether function calls look like: foo (bar)
-				 * rather than foo(bar) */
+	bool proc_calls_space;	/* whether function calls look like 'foo (bar)'
+				 * rather than 'foo(bar)' */
 	bool procnames_start_line;	/* whether the names of functions being
 					 * defined get placed in column 1 (i.e.
 					 * a newline is placed between the type
@@ -376,15 +376,12 @@ extern struct parser_state {
 				 * initializer or declaration */
 	struct paren_level paren[20];
 
-	/* Horizontal spacing for comments */
+	/* Indentation of comments */
 
-	int comment_delta;	/* used to set up indentation for all lines of
-				 * a boxed comment after the first one */
-	int n_comment_delta;	/* remembers how many columns there were before
-				 * the start of a box comment so that
-				 * forthcoming lines of the comment are
-				 * indented properly */
-	int com_ind;		/* indentation of the current comment */
+	int comment_ind;	/* indentation of the current comment */
+	int comment_shift;	/* all but the first line of a boxed comment
+				 * are shifted this much to the right */
+	bool comment_in_first_line;
 
 	/* Vertical spacing */
 

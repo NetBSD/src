@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.163 2023/06/14 08:36:51 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.164 2023/06/14 09:31:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.163 2023/06/14 08:36:51 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.164 2023/06/14 09:31:05 rillig Exp $");
 
 #include <string.h>
 
@@ -58,7 +58,7 @@ com_add_delim(void)
 }
 
 static bool
-fits_in_one_line(int com_ind, int max_line_length)
+fits_in_one_line(int max_line_length)
 {
 	for (const char *start = inp_p, *p = start; *p != '\n'; p++) {
 		if (p[0] == '*' && p[1] == '/') {
@@ -66,18 +66,17 @@ fits_in_one_line(int com_ind, int max_line_length)
 			    && ch_isblank(p[-1])
 			    && ch_isblank(p[-2]))
 				p--;
-			int len = ind_add(com_ind + 3,
+			int ind = ind_add(ps.comment_ind + 3,
 			    start, (size_t)(p - start));
-			len += p == start || ch_isblank(p[-1]) ? 2 : 3;
-			return len <= max_line_length;
+			ind += p == start || ch_isblank(p[-1]) ? 2 : 3;
+			return ind <= max_line_length;
 		}
 	}
 	return false;
 }
 
 static void
-analyze_comment(bool *p_may_wrap, bool *p_delim,
-    int *p_ind, int *p_line_length)
+analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 {
 	bool may_wrap = true;
 	bool delim = false;
@@ -122,30 +121,28 @@ analyze_comment(bool *p_may_wrap, bool *p_delim,
 		}
 	}
 
-	ps.com_ind = ind;
-
 	if (!may_wrap) {
 		/* Find out how much indentation there was originally, because
 		 * that much will have to be ignored by output_line. */
 		size_t len = (size_t)(inp_p - 2 - inp.s);
-		ps.n_comment_delta = -ind_add(0, inp.s, len);
+		ps.comment_shift = -ind_add(0, inp.s, len);
 	} else {
-		ps.n_comment_delta = 0;
+		ps.comment_shift = 0;
 		if (!(inp_p[0] == '\t' && !ch_isblank(inp_p[1])))
 			while (ch_isblank(inp_p[0]))
 				inp_p++;
 	}
 
+	ps.comment_ind = ind;
 	*p_may_wrap = may_wrap;
 	*p_delim = delim;
-	*p_ind = ind;
 	*p_line_length = line_length;
 }
 
 static void
-copy_comment_start(bool may_wrap, bool *delim, int ind, int line_length)
+copy_comment_start(bool may_wrap, bool *delim, int line_length)
 {
-	ps.comment_delta = 0;
+	ps.comment_in_first_line = true;
 	com_add_char('/');
 	com_add_char(token.s[token.len - 1]);	/* either '*' or '/' */
 
@@ -153,7 +150,7 @@ copy_comment_start(bool may_wrap, bool *delim, int ind, int line_length)
 		if (!ch_isblank(inp_p[0]))
 			com_add_char(' ');
 
-		if (*delim && fits_in_one_line(ind, line_length))
+		if (*delim && fits_in_one_line(line_length))
 			*delim = false;
 		if (*delim) {
 			output_line();
@@ -165,7 +162,7 @@ copy_comment_start(bool may_wrap, bool *delim, int ind, int line_length)
 static void
 copy_comment_wrap_text(int line_length, ssize_t *last_blank)
 {
-	int now_len = ind_add(ps.com_ind, com.s, com.len);
+	int now_len = ind_add(ps.comment_ind, com.s, com.len);
 	for (;;) {
 		char ch = inp_next();
 		if (ch_isblank(ch))
@@ -204,10 +201,10 @@ copy_comment_wrap_text(int line_length, ssize_t *last_blank)
 }
 
 static bool
-copy_comment_wrap_newline(ssize_t *last_blank, bool *seen_newline)
+copy_comment_wrap_newline(ssize_t *last_blank, bool seen_newline)
 {
 	*last_blank = -1;
-	if (*seen_newline) {
+	if (seen_newline) {
 		if (com.len == 0)
 			com_add_char(' ');	/* force empty output line */
 		if (com.len > 3) {
@@ -217,7 +214,6 @@ copy_comment_wrap_newline(ssize_t *last_blank, bool *seen_newline)
 		output_line();
 		com_add_delim();
 	} else {
-		*seen_newline = true;
 		if (!(com.len > 0 && ch_isblank(com.s[com.len - 1])))
 			com_add_char(' ');
 		*last_blank = (int)com.len - 1;
@@ -252,7 +248,7 @@ copy_comment_wrap_finish(int line_length, bool delim)
 		size_t len = com.len;
 		while (ch_isblank(com.s[len - 1]))
 			len--;
-		int end_ind = ind_add(ps.com_ind, com.s, len);
+		int end_ind = ind_add(ps.comment_ind, com.s, len);
 		if (end_ind + 3 > line_length)
 			output_line();
 	}
@@ -287,17 +283,17 @@ copy_comment_wrap(int line_length, bool delim)
 			if (had_eof)
 				goto unterminated_comment;
 			if (!copy_comment_wrap_newline(&last_blank,
-			    &seen_newline))
-				goto end_of_comment;
+			    seen_newline))
+				break;
+			seen_newline = true;
 		} else if (inp_p[0] == '*' && inp_p[1] == '/')
-			goto end_of_comment;
+			break;
 		else {
 			copy_comment_wrap_text(line_length, &last_blank);
 			seen_newline = false;
 		}
 	}
 
-end_of_comment:
 	copy_comment_wrap_finish(line_length, delim);
 	return;
 
@@ -348,10 +344,10 @@ void
 process_comment(void)
 {
 	bool may_wrap, delim;
-	int ind, line_length;
+	int line_length;
 
-	analyze_comment(&may_wrap, &delim, &ind, &line_length);
-	copy_comment_start(may_wrap, &delim, ind, line_length);
+	analyze_comment(&may_wrap, &delim, &line_length);
+	copy_comment_start(may_wrap, &delim, line_length);
 	if (may_wrap)
 		copy_comment_wrap(line_length, delim);
 	else

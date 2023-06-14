@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.20 2023/06/10 16:43:56 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.21 2023/06/14 09:31:05 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -43,7 +43,6 @@
  * - with varying opt.comment_column (-c0, -c1, -c33, -c80)
  * - with varying opt.decl_comment_column (-cd0, -cd1, -cd20, -cd33, -cd80)
  * - with/without ps.line_has_decl
- * - with/without ps.next_col_1
  *
  * - very long comments that overflow the buffer 'com'
  * - comments that come from save_com
@@ -1020,8 +1019,8 @@ f(void)
 
 
 /*
- * Test two completely empty lines in a wrap comment. The second empty line
- * covers the condition ps.next_col_1 in copy_comment_wrap.
+ * In a comment that is wrapped, one or more empty lines separate paragraphs.
+ * All of these empty lines are preserved.
  */
 //indent input
 /* line 1
@@ -1130,4 +1129,18 @@ int line;			// comment line 1
 // $ XXX: This comment was probably intended to continue 'comment line 1'.
 // comment line 2
 int block;			/* comment line 1 comment line 2 */
+//indent end
+
+
+//indent input
+/*/ comment? or:not; /* */
+//indent end
+
+//indent run
+/* / comment? or:not; /* */
+//indent end
+
+//indent run -nfc1
+// $ FIXME: It's a comment, not code.
+/*/ comment ? or : not;		/* */
 //indent end
