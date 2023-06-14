@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.44 2022/08/14 11:26:41 jmcneill Exp $	*/
+/*	$NetBSD: boot.c,v 1.45 2023/06/14 00:42:21 rin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -148,7 +148,7 @@ const struct boot_command commands[] = {
 	{ "help",	command_help,		"help|?" },
 	{ "?",		command_help,		NULL },
 	{ "quit",	command_quit,		"quit" },
-	{ NULL,		NULL },
+	{ NULL,		NULL,			NULL },
 };
 
 static int
