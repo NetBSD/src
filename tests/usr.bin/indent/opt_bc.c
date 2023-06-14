@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bc.c,v 1.10 2023/06/10 06:52:35 rillig Exp $ */
+/* $NetBSD: opt_bc.c,v 1.11 2023/06/14 14:11:28 rillig Exp $ */
 
 /*
  * Tests for the options '-bc' and '-nbc'.
@@ -118,4 +118,23 @@ int		a = 1,
 		b = 2;
 int		a = (1),
 		b = 2;
+//indent end
+
+
+/*
+ * When declarations are too long to fit in a single line, they should not be
+ * joined.
+ */
+//indent input
+{
+	const struct paren_level *prev = state.prev_ps.paren.item,
+	    *curr = ps.paren.item;
+}
+//indent end
+
+//indent run
+// $ FIXME: The line becomes too long.
+{
+	const struct paren_level *prev = state.prev_ps.paren.item, *curr = ps.paren.item;
+}
 //indent end

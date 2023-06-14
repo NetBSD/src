@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.164 2023/06/14 09:31:05 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.165 2023/06/14 14:11:28 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.164 2023/06/14 09:31:05 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.165 2023/06/14 14:11:28 rillig Exp $");
 
 #include <string.h>
 
@@ -283,7 +283,7 @@ copy_comment_wrap(int line_length, bool delim)
 			if (had_eof)
 				goto unterminated_comment;
 			if (!copy_comment_wrap_newline(&last_blank,
-			    seen_newline))
+				seen_newline))
 				break;
 			seen_newline = true;
 		} else if (inp_p[0] == '*' && inp_p[1] == '/')
