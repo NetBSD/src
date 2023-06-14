@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_dictionary.c,v 1.45 2022/08/03 21:13:46 riastradh Exp $	*/
+/*	$NetBSD: prop_dictionary.c,v 1.46 2023/06/14 00:35:18 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2020 The NetBSD Foundation, Inc.
@@ -915,15 +915,17 @@ _prop_dictionary_get(prop_dictionary_t pd, const char *key, bool locked)
 	if (! prop_object_is_dictionary(pd))
 		return (NULL);
 
-	if (!locked)
+	if (!locked) {
 		_PROP_RWLOCK_RDLOCK(pd->pd_rwlock);
+	}
 	pde = _prop_dict_lookup(pd, key, NULL);
 	if (pde != NULL) {
 		_PROP_ASSERT(pde->pde_objref != NULL);
 		po = pde->pde_objref;
 	}
-	if (!locked)
+	if (!locked) {
 		_PROP_RWLOCK_UNLOCK(pd->pd_rwlock);
+	}
 	return (po);
 }
 /*
