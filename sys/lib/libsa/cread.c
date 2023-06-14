@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.28 2016/01/17 04:35:42 tsutsui Exp $	*/
+/*	$NetBSD: cread.c,v 1.29 2023/06/14 00:28:55 rin Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -453,6 +453,7 @@ lseek(int fd, off_t offset, int where)
 	switch(where) {
 	case SEEK_CUR:
 		offset += s->stream.total_out;
+		/* FALLTHROUGH */
 	case SEEK_SET:
 		/* if seek backwards, simply start from the beginning */
 		if (offset < s->stream.total_out) {
