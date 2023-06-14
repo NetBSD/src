@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.125 2022/10/28 07:16:34 skrll Exp $
+#	$NetBSD: files.x86,v 1.126 2023/06/14 01:27:47 rin Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPDEBUG MPBIOS_SCANPCI
@@ -11,8 +11,8 @@ defflag                 MTRR
 defflag opt_intrdebug.h	INTRDEBUG
 
 # PCI fixup options
-defflag opt_pcifixup.h	PCI_ADDR_FIXUP PCI_BUS_FIXUP
-			PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
+defflag opt_pcifixup.h	PCI_BUS_FIXUP PCI_INTR_FIXUP PCI_INTR_FIXUP_FORCE
+defflag opt_pcifixup.h	PCI_ADDR_FIXUP : PCI_BUS_FIXUP
 defflag opt_pci.h	NO_PCI_MSI_MSIX
 
 # To be able to test for NetBSD/xen in shared files
