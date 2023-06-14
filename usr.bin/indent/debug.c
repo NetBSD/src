@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.57 2023/06/14 09:31:05 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.58 2023/06/14 09:57:02 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.57 2023/06/14 09:31:05 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.58 2023/06/14 09:57:02 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -40,10 +40,8 @@ __RCSID("$NetBSD: debug.c,v 1.57 2023/06/14 09:31:05 rillig Exp $");
 #ifdef debug
 
 static struct {
-	/*-
-	 * false	show only the changes to the parser state
-	 * true		show unchanged parts of the parser state as well
-	 */
+	// false	show only the changes to the parser state
+	// true		show unchanged parts of the parser state as well
 	bool full_parser_state;
 } config = {
 	.full_parser_state = false,
@@ -191,10 +189,9 @@ debug_blank_line(void)
 }
 
 void
-debug_vis_range(const char *prefix, const char *s, size_t len,
-    const char *suffix)
+debug_vis_range(const char *s, size_t len)
 {
-	debug_printf("%s", prefix);
+	debug_printf("\"");
 	for (size_t i = 0; i < len; i++) {
 		const char *p = s + i;
 		if (*p == '\\' || *p == '"')
@@ -208,7 +205,7 @@ debug_vis_range(const char *prefix, const char *s, size_t len,
 		else
 			debug_printf("\\x%02x", (unsigned char)*p);
 	}
-	debug_printf("%s", suffix);
+	debug_printf("\"");
 }
 
 void
@@ -216,7 +213,7 @@ debug_print_buf(const char *name, const struct buffer *buf)
 {
 	if (buf->len > 0) {
 		debug_printf(" %s ", name);
-		debug_vis_range("\"", buf->s, buf->len, "\"");
+		debug_vis_range(buf->s, buf->len);
 	}
 }
 
@@ -230,7 +227,7 @@ debug_buffers(void)
 }
 
 static void
-write_ps_bool(const char *name, bool prev, bool curr)
+debug_ps_bool_member(const char *name, bool prev, bool curr)
 {
 	if (!state.ps_first && curr != prev) {
 		char diff = " -+x"[(prev ? 1 : 0) + (curr ? 2 : 0)];
@@ -240,7 +237,7 @@ write_ps_bool(const char *name, bool prev, bool curr)
 }
 
 static void
-write_ps_int(const char *name, int prev, int curr)
+debug_ps_int_member(const char *name, int prev, int curr)
 {
 	if (!state.ps_first && curr != prev)
 		debug_println(" %3d -> %3d  ps.%s", prev, curr, name);
@@ -249,7 +246,7 @@ write_ps_int(const char *name, int prev, int curr)
 }
 
 static void
-write_ps_enum(const char *name, const char *prev, const char *curr)
+debug_ps_enum_member(const char *name, const char *prev, const char *curr)
 {
 	if (!state.ps_first && strcmp(prev, curr) != 0)
 		debug_println(" %3s -> %3s  ps.%s", prev, curr, name);
@@ -316,11 +313,12 @@ debug_ps_di_stack(void)
 }
 
 #define debug_ps_bool(name) \
-	write_ps_bool(#name, state.prev_ps.name, ps.name)
+	debug_ps_bool_member(#name, state.prev_ps.name, ps.name)
 #define debug_ps_int(name) \
-	write_ps_int(#name, state.prev_ps.name, ps.name)
+	debug_ps_int_member(#name, state.prev_ps.name, ps.name)
 #define debug_ps_enum(name, names) \
-        write_ps_enum(#name, (names)[state.prev_ps.name], (names)[ps.name])
+        debug_ps_enum_member(#name, (names)[state.prev_ps.name], \
+	    (names)[ps.name])
 
 void
 debug_parser_state(void)

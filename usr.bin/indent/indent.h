@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.192 2023/06/14 09:31:05 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.193 2023/06/14 09:57:02 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -431,7 +431,7 @@ extern struct output_state {
 void debug_printf(const char *, ...) __printflike(1, 2);
 void debug_println(const char *, ...) __printflike(1, 2);
 void debug_blank_line(void);
-void debug_vis_range(const char *, const char *, size_t, const char *);
+void debug_vis_range(const char *, size_t);
 void debug_parser_state(void);
 void debug_psyms_stack(const char *);
 void debug_print_buf(const char *, const struct buffer *);
@@ -445,7 +445,7 @@ extern const char *const line_kind_name[];
 #define	debug_printf(fmt, ...) debug_noop()
 #define	debug_println(fmt, ...) debug_noop()
 #define debug_blank_line() debug_noop()
-#define	debug_vis_range(prefix, s, e, suffix) debug_noop()
+#define	debug_vis_range(s, len) debug_noop()
 #define	debug_parser_state() debug_noop()
 #define	debug_psyms_stack(situation) debug_noop()
 #define debug_print_buf(name, buf) debug_noop()
