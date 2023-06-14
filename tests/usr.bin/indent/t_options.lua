@@ -1,4 +1,4 @@
--- $NetBSD: t_options.lua,v 1.4 2023/05/22 06:35:56 rillig Exp $
+-- $NetBSD: t_options.lua,v 1.5 2023/06/14 17:07:32 rillig Exp $
 --
 -- Copyright (c) 2023 The NetBSD Foundation, Inc.
 -- All rights reserved.
@@ -126,13 +126,16 @@ end
 
 local function run_indent(inp, args)
 	local indent = os.getenv("INDENT") or "indent"
-	local cmd = indent .. " " .. args .. " 2>&1"
+	local cmd = indent .. " " .. args .. " 2>t_options.err"
 
 	local indent_in = assert(io.popen(cmd, "w"))
 	indent_in:write(inp)
 	local ok, kind, info = indent_in:close()
 	if not ok then
 		print(kind .. " " .. info)
+	end
+	for line in io.lines("t_options.err") do
+		print(line)
 	end
 end
 
