@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.196 2023/06/14 19:05:40 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.197 2023/06/14 20:46:08 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -272,10 +272,10 @@ struct paren_level {
 struct psym_stack {
 	parser_symbol *sym;
 	int *ind_level;
-	size_t len;		/* points to one behind the top of the stack;
-				 * 1 at the top level of the file outside a
-				 * declaration or statement; 2 at the top
-				 * level */
+	size_t len;		/* points to one behind the top of the stack; 1
+				 * at the top level of the file outside a
+				 * declaration or statement; 2 at the top level
+				 */
 	size_t cap;
 };
 
@@ -393,9 +393,9 @@ extern struct parser_state {
 	bool break_after_comma;	/* whether to add a newline after the next
 				 * comma; used in declarations but not in
 				 * initializer lists */
-	bool force_nl;		/* whether the next token is forced to go to a
-				 * new line; used after 'if (expr)' and in
-				 * similar situations; tokens like '{' may
+	bool want_newline;	/* whether the next token should go to a new
+				 * line; used after 'if (expr)' and in similar
+				 * situations; tokens like '{' or ';' may
 				 * ignore this */
 
 	enum declaration {

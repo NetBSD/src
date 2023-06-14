@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_block.c,v 1.7 2023/05/22 23:03:16 rillig Exp $ */
+/* $NetBSD: fmt_block.c,v 1.8 2023/06/14 20:46:08 rillig Exp $ */
 
 /*
  * Tests for formatting blocks of statements and declarations.
@@ -6,7 +6,6 @@
  * See also:
  *	lsym_lbrace.c
  *	psym_stmt.c
- *	psym_stmt_list.c
  */
 
 //indent input

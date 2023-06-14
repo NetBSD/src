@@ -1,10 +1,13 @@
-/* $NetBSD: ps_ind_level.c,v 1.7 2023/05/15 14:55:47 rillig Exp $ */
+/* $NetBSD: ps_ind_level.c,v 1.8 2023/06/14 20:46:08 rillig Exp $ */
 
 /*
  * The indentation of the very first line of a file determines the
- * indentation of the remaining code. Even if later code has a smaller
- * indentation, it is nevertheless indented to the level given by the first
- * line of code.
+ * indentation of the remaining code. This mode is meant for code snippets from
+ * function bodies. At this level, function definitions are not recognized
+ * properly.
+ *
+ * Even if later code has a smaller indentation, it is nevertheless indented to
+ * the level given by the first line of code.
  *
  * In this particular test, the indentation is set to 5 and the tabulator
  * width is set to 8, to demonstrate an off-by-one error in
@@ -18,6 +21,9 @@
 			int indented_by_24;
 
 void function_in_column_1(void){}
+
+			#if indented
+#endif
 //indent end
 
 /* 5 spaces indentation, 8 spaces per tabulator */
@@ -26,6 +32,9 @@ void function_in_column_1(void){}
 
 		    void	    function_in_column_1(void) {
 		    }
+
+#if indented
+#endif
 //indent end
 
 
