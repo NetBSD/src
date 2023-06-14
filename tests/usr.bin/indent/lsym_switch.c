@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_switch.c,v 1.4 2023/06/10 16:43:56 rillig Exp $ */
+/* $NetBSD: lsym_switch.c,v 1.5 2023/06/14 11:18:09 rillig Exp $ */
 
 /*
  * Tests for the token lsym_switch, which represents the keyword 'switch' that
@@ -16,16 +16,10 @@
  */
 //indent input
 {
-	switch (expr) // comment
+	switch (expr)		// comment
 	{
 	}
 }
 //indent end
 
-//indent run
-{
-// $ FIXME: The '{' has moved to the comment.
-	switch (expr) // comment {
-	}
-}
-//indent end
+//indent run-equals-input
