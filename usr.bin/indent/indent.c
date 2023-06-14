@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.357 2023/06/10 21:36:38 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.358 2023/06/14 07:20:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.357 2023/06/10 21:36:38 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.358 2023/06/14 07:20:55 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -184,7 +184,7 @@ ind_add(int ind, const char *s, size_t len)
 static void
 init_globals(void)
 {
-	ps.psyms.sym[0] = psym_stmt_list;
+	ps.psyms.sym[0] = psym_stmt;
 	ps.prev_lsym = lsym_semicolon;
 	ps.next_col_1 = true;
 	ps.lbrace_kind = psym_lbrace_block;

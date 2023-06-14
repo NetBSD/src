@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.53 2023/06/10 21:36:38 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.54 2023/06/14 07:20:55 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.53 2023/06/10 21:36:38 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.54 2023/06/14 07:20:55 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -99,7 +99,6 @@ const char *const psym_name[] = {
 	"}",
 	"decl",
 	"stmt",
-	"stmt_list",
 	"for_exprs",
 	"if_expr",
 	"if_expr_stmt",

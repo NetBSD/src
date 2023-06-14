@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.188 2023/06/10 21:36:38 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.189 2023/06/14 07:20:55 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -129,7 +129,6 @@ typedef enum parser_symbol {
 	psym_rbrace,		/* not stored on the stack */
 	psym_decl,
 	psym_stmt,
-	psym_stmt_list,
 	psym_for_exprs,		/* 'for' '(' ... ')' */
 	psym_if_expr,		/* 'if' '(' expr ')' */
 	psym_if_expr_stmt,	/* 'if' '(' expr ')' stmt */
