@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.190 2023/06/14 08:25:15 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.191 2023/06/14 08:36:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -402,11 +402,6 @@ extern struct parser_state {
 		decl_end,	/* finished a declaration */
 	} declaration;
 	bool blank_line_after_decl;
-
-	/* Comments */
-
-	bool next_col_1;	/* whether the next token starts in column 1 of
-				 * the original input */
 } ps;
 
 extern struct output_state {

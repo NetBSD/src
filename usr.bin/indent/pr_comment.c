@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.162 2023/06/14 08:25:15 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.163 2023/06/14 08:36:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.162 2023/06/14 08:25:15 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.163 2023/06/14 08:36:51 rillig Exp $");
 
 #include <string.h>
 
@@ -178,8 +178,6 @@ copy_comment_wrap_text(int line_length, ssize_t *last_blank)
 			break;
 	}
 
-	ps.next_col_1 = false;
-
 	if (now_len <= line_length)
 		return;
 	if (ch_isspace(com.s[com.len - 1]))
@@ -206,10 +204,10 @@ copy_comment_wrap_text(int line_length, ssize_t *last_blank)
 }
 
 static bool
-copy_comment_wrap_newline(ssize_t *last_blank)
+copy_comment_wrap_newline(ssize_t *last_blank, bool *seen_newline)
 {
 	*last_blank = -1;
-	if (ps.next_col_1) {
+	if (*seen_newline) {
 		if (com.len == 0)
 			com_add_char(' ');	/* force empty output line */
 		if (com.len > 3) {
@@ -219,7 +217,7 @@ copy_comment_wrap_newline(ssize_t *last_blank)
 		output_line();
 		com_add_delim();
 	} else {
-		ps.next_col_1 = true;
+		*seen_newline = true;
 		if (!(com.len > 0 && ch_isblank(com.s[com.len - 1])))
 			com_add_char(' ');
 		*last_blank = (int)com.len - 1;
@@ -282,17 +280,21 @@ static void
 copy_comment_wrap(int line_length, bool delim)
 {
 	ssize_t last_blank = -1;	/* index of the last blank in 'com' */
+	bool seen_newline = false;
 
 	for (;;) {
 		if (inp_p[0] == '\n') {
 			if (had_eof)
 				goto unterminated_comment;
-			if (!copy_comment_wrap_newline(&last_blank))
+			if (!copy_comment_wrap_newline(&last_blank,
+			    &seen_newline))
 				goto end_of_comment;
 		} else if (inp_p[0] == '*' && inp_p[1] == '/')
 			goto end_of_comment;
-		else
+		else {
 			copy_comment_wrap_text(line_length, &last_blank);
+			seen_newline = false;
+		}
 	}
 
 end_of_comment:
