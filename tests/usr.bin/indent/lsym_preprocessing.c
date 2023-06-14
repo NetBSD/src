@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_preprocessing.c,v 1.11 2023/06/14 10:26:00 rillig Exp $ */
+/* $NetBSD: lsym_preprocessing.c,v 1.12 2023/06/14 10:29:52 rillig Exp $ */
 
 /*
  * Tests for the token lsym_preprocessing, which represents a '#' that starts
@@ -296,8 +296,7 @@ int before;
 //indent run
 error: Standard Input:1: Unmatched #else
 error: Standard Input:2: Unmatched #elif
-// $ TODO: '#elifdef' instead of '#elif'
-error: Standard Input:3: Unmatched #elif
+error: Standard Input:3: Unmatched #elifdef
 error: Standard Input:4: Unmatched #endif
 #else
 #elif 0
