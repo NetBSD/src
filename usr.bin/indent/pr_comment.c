@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.161 2023/06/10 16:43:56 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.162 2023/06/14 08:25:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.161 2023/06/10 16:43:56 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.162 2023/06/14 08:25:15 rillig Exp $");
 
 #include <string.h>
 
@@ -84,7 +84,7 @@ analyze_comment(bool *p_may_wrap, bool *p_delim,
 	int ind;
 	int line_length = opt.max_line_length;
 
-	if (ps.curr_col_1 && !opt.format_col1_comments) {
+	if (inp_p - inp.s == 2 && !opt.format_col1_comments) {
 		may_wrap = false;
 		ind = 0;
 	} else {

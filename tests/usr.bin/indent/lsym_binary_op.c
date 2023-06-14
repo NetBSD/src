@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_binary_op.c,v 1.11 2023/06/04 22:57:18 rillig Exp $ */
+/* $NetBSD: lsym_binary_op.c,v 1.12 2023/06/14 08:25:15 rillig Exp $ */
 
 /*
  * Tests for the token lsym_binary_op, which represents a binary operator in
@@ -147,7 +147,7 @@ joined_unary_and_binary_operators(void)
  * Ensure that the result of the indentation does not depend on whether a
  * token from the input starts in column 1 or 9.
  *
- * See process_binary_op, ps.curr_col_1.
+ * See process_binary_op.
  */
 //indent input
 int col_1 //

@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.225 2023/06/10 16:43:56 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.226 2023/06/14 08:25:15 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.225 2023/06/10 16:43:56 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.226 2023/06/14 08:25:15 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -532,14 +532,12 @@ lexer_symbol
 lexi(void)
 {
 	buf_clear(&token);
-	ps.curr_col_1 = ps.next_col_1;
 	ps.next_col_1 = false;
 
 	for (;;) {
-		if (ch_isblank(inp_p[0])) {
-			ps.curr_col_1 = false;
+		if (ch_isblank(inp_p[0]))
 			inp_p++;
-		} else if (inp_p[0] == '\\' && inp_p[1] == '\n') {
+		else if (inp_p[0] == '\\' && inp_p[1] == '\n') {
 			inp_p++;
 			inp_skip();
 			line_no++;
