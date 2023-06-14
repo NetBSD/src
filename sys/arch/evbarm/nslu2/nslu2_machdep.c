@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.36 2023/04/20 08:28:05 skrll Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.37 2023/06/14 10:30:34 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.36 2023/04/20 08:28:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.37 2023/06/14 10:30:34 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -482,8 +482,9 @@ initarm(void *arg)
 
 	/* Tell the user about the memory */
 #ifdef VERBOSE_INIT_ARM
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
-	    physical_start, physical_end - 1);
+	printf("physmemory: %" PRIuPSIZE " pages at "
+	    "0x%08" PRIxPADDR " -> 0x%08" PRIxPADDR "\n",
+	    physmem, physical_start, physical_end - 1);
 
 	printf("Allocating page tables\n");
 #endif
