@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.358 2023/06/14 07:20:55 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.359 2023/06/14 08:36:51 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.358 2023/06/14 07:20:55 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.359 2023/06/14 08:36:51 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -186,7 +186,6 @@ init_globals(void)
 {
 	ps.psyms.sym[0] = psym_stmt;
 	ps.prev_lsym = lsym_semicolon;
-	ps.next_col_1 = true;
 	ps.lbrace_kind = psym_lbrace_block;
 
 	const char *suffix = getenv("SIMPLE_BACKUP_SUFFIX");
