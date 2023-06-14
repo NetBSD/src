@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.41 2023/06/13 00:15:52 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.42 2023/06/14 00:07:22 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.41 2023/06/13 00:15:52 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.42 2023/06/14 00:07:22 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -156,14 +156,12 @@ struct rdes {
 #define  RXI_RC_ERR	(1U<<16)	/* recv error */
 #define  RXI_PKTCNT	(1U<<15)	/* recv counter has new value */
 #define  RXI_TMREXP	(1U<<14)	/* coalesce guard timer expired */
-/* 13 sets of special purpose desc interrupt handling register exist */
 #define TDBA_LO		0x408		/* tdes array base addr 31:0 */
 #define TDBA_HI		0x434		/* tdes array base addr 63:32 */
 #define RDBA_LO		0x448		/* rdes array base addr 31:0 */
 #define RDBA_HI		0x474		/* rdes array base addr 63:32 */
-/* 13 pairs of special purpose desc array base address register exist */
-#define TXCONF		0x430
-#define RXCONF		0x470
+#define TXCONF		0x430		/* tdes config */
+#define RXCONF		0x470		/* rdes config */
 #define  DESCNF_UP	(1U<<31)	/* 'up-and-running' */
 #define  DESCNF_CHRST	(1U<<30)	/* channel reset */
 #define  DESCNF_TMR	(1U<<4)		/* coalesce timer mode select */
@@ -197,8 +195,8 @@ struct rdes {
 #define MACCMD		0x11c4		/* gmac register operation */
 #define  CMD_IOWR	(1U<<28)	/* write op */
 #define  CMD_BUSY	(1U<<31)	/* busy bit */
-#define MACSTAT		0x1024		/* gmac status; ??? */
-#define MACINTE		0x1028		/* interrupt enable; ??? */
+#define MACSTAT		0x1024		/* mac interrupt status (unused) */
+#define MACINTE		0x1028		/* mac interrupt enable (unused) */
 
 #define FLOWTHR		0x11cc		/* flow control threshold */
 /* 31:16 pause threshold, 15:0 resume threshold */
@@ -212,8 +210,6 @@ struct rdes {
 #define MODE_TRANS	0x500		/* mode change completion status */
 #define  N2T_DONE	(1U<<20)	/* normal->taiki change completed */
 #define  T2N_DONE	(1U<<19)	/* taiki->normal change completed */
-#define MACADRH		0x10c		/* ??? */
-#define MACADRL		0x110		/* ??? */
 #define MCVER		0x22c		/* micro controller version */
 #define HWVER		0x230		/* hardware version */
 
@@ -247,7 +243,7 @@ struct rdes {
 #define  AFR_HPF	(1U<<10)	/* hash+perfect filter, or hash only */
 #define  AFR_SAF	(1U<<9)		/* source address filter */
 #define  AFR_SAIF	(1U<<8)		/* SA inverse filtering */
-#define  AFR_PCF	(2U<<6)		/* ??? */
+#define  AFR_PCF	(2U<<6)		/* 7:6 accept pause frame 0~3 */
 #define  AFR_DBF	(1U<<5)		/* reject broadcast frame */
 #define  AFR_PM		(1U<<4)		/* accept all multicast frame */
 #define  AFR_DAIF	(1U<<3)		/* DA inverse filtering */
@@ -585,6 +581,8 @@ static void dump_hwfeature(struct scx_softc *);
 static void resetuengine(struct scx_softc *);
 static void loaducode(struct scx_softc *);
 static void injectucode(struct scx_softc *, int, bus_addr_t, bus_size_t);
+static void forcephyloopback(struct scx_softc *);
+static void resetphytonormal(struct scx_softc *);
 
 static int get_mdioclk(uint32_t);
 
@@ -997,7 +995,7 @@ aprint_normal_dev(sc->sc_dev, "descriptor ds_addr %lx, ds_len %lx, nseg %d\n", s
 
 	/* 802.1Q VLAN-sized frames, and 9000 jumbo frame are supported */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
-	sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
+	/* sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU; not yet */
 
 	sc->sc_flowflags = 0; /* track PAUSE flow caps */
 
@@ -1025,12 +1023,24 @@ aprint_normal_dev(sc->sc_dev, "descriptor ds_addr %lx, ds_len %lx, nseg %d\n", s
 	CSR_WRITE(sc, RXCONF, DESCNF_LE);	/* little endian */
 	CSR_WRITE(sc, DMACTL_TMR, sc->sc_freq / 1000000 - 1);
 
+	forcephyloopback(sc);/* make PHY loopback mode for uengine init */
+
+	CSR_WRITE(sc, xINTSR, IRQ_UCODE); /* pre-cautional W1C */
+	CSR_WRITE(sc, CORESTAT, 0);	  /* start uengine to reprogram */
+	error = WAIT_FOR_SET(sc, xINTSR, IRQ_UCODE);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "uengine start failed\n");
+	}
+	CSR_WRITE(sc, xINTSR, IRQ_UCODE); /* W1C load complete report */
+
+	resetphytonormal(sc); /* take back PHY to normal mode */
+
 	CSR_WRITE(sc, DMACTL_M2H, M2H_MODE_TRANS);
-	CSR_WRITE(sc, PKTCTRL, MODENRM);	/* change to use normal mode */
-	WAIT_FOR_SET(sc, MODE_TRANS, T2N_DONE);
-	/* do {
-		csr = CSR_READ(sc, MODE_TRANS);
-	} while ((csr & T2N_DONE) == 0); */
+	CSR_WRITE(sc, PKTCTRL, MODENRM); /* change to use normal mode */
+	error = WAIT_FOR_SET(sc, MODE_TRANS, T2N_DONE);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "uengine mode change failed\n");
+	}
 
 	CSR_WRITE(sc, TXISR, ~0);	/* clear pending emtpry/error irq */
 	CSR_WRITE(sc, xINTAE_CLR, ~0);	/* disable tx / rx interrupts */
@@ -1847,9 +1857,6 @@ loaducode(struct scx_softc *sc)
 {
 	uint32_t up, lo, sz;
 	uint64_t addr;
-	int err;
-
-	CSR_WRITE(sc, xINTSR, IRQ_UCODE);
 
 	up = EE_READ(sc, 0x08); /* H->M ucode addr high */
 	lo = EE_READ(sc, 0x0c); /* H->M ucode addr low */
@@ -1878,13 +1885,6 @@ aprint_normal_dev(sc->sc_dev, "0x%x M2H ucode %u\n", lo, sz);
 #if UCODE_DEBUG == 1
 aprint_normal_dev(sc->sc_dev, "0x%x PKT ucode %u\n", lo, sz);
 #endif
-
-	CSR_WRITE(sc, CORESTAT, 0);
-	err = WAIT_FOR_SET(sc, xINTSR, IRQ_UCODE);
-	if (err) {
-		aprint_error_dev(sc->sc_dev, "uengine start failed\n");
-	}
-	CSR_WRITE(sc, xINTSR, IRQ_UCODE);
 }
 
 static void
@@ -1905,6 +1905,57 @@ injectucode(struct scx_softc *sc, int port,
 		CSR_WRITE(sc, port, ucode);
 	}
 	bus_space_unmap(sc->sc_st, bsh, size);
+}
+
+static void
+forcephyloopback(struct scx_softc *sc)
+{
+	struct device *d = sc->sc_dev;
+	uint16_t val;
+	int loop, err;
+
+	err = mii_readreg(d, sc->sc_phy_id, MII_BMCR, &val);
+	if (err) {
+		aprint_error_dev(d, "forcephyloopback() failed\n");
+		return;
+	}
+	if (val & BMCR_PDOWN)
+		val &=  ~BMCR_PDOWN;
+	val |= BMCR_ISO;
+	(void)mii_writereg(d, sc->sc_phy_id, MII_BMCR, val);
+	loop = 100;
+	do {
+		(void)mii_readreg(d, sc->sc_phy_id, MII_BMCR, &val);
+	} while (loop-- > 0 && (val & (BMCR_PDOWN | BMCR_ISO)) != 0);
+	(void)mii_writereg(d, sc->sc_phy_id, MII_BMCR, val | BMCR_LOOP);
+	loop = 100;
+	do {
+		(void)mii_readreg(d, sc->sc_phy_id, MII_BMSR, &val);
+	} while (loop-- > 0 && (val & BMSR_LINK) != 0);
+}
+
+static void
+resetphytonormal(struct scx_softc *sc)
+{
+	struct device *d = sc->sc_dev;
+	uint16_t val;
+	int loop, err;
+
+	err = mii_readreg(d, sc->sc_phy_id, MII_BMCR, &val);
+	if (err) {
+		aprint_error_dev(d, "resetphytonormal() failed\n");
+	}
+	val &= ~BMCR_LOOP;
+	(void)mii_writereg(d, sc->sc_phy_id, MII_BMCR, val);
+	loop = 100;
+	do {
+		(void)mii_readreg(d, sc->sc_phy_id, MII_BMCR, &val);
+	} while (loop-- > 0 && (val & BMCR_LOOP) != 0);
+	(void)mii_writereg(d, sc->sc_phy_id, MII_BMCR, val | BMCR_RESET);
+	loop = 100;
+	do {
+		(void)mii_readreg(d, sc->sc_phy_id, MII_BMCR, &val);
+	} while (loop-- > 0 && (val & BMCR_RESET) != 0);
 }
 
 /* GAR 5:2 MDIO frequency selection */
