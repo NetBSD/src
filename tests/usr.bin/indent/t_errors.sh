@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: t_errors.sh,v 1.36 2023/06/14 10:26:00 rillig Exp $
+# $NetBSD: t_errors.sh,v 1.37 2023/06/14 19:05:40 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -459,7 +459,7 @@ stack_overflow_body()
 
 	atf_check \
 	    -s 'exit:1' \
-	    -e 'inline:indent: Parser stack overflow\n' \
+	    -e 'inline:error: code.c:3: Stuff missing from end of file\n' \
 	    "$indent" code.c
 }
 
