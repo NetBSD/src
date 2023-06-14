@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.74 2023/06/14 16:14:30 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.75 2023/06/14 17:52:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.74 2023/06/14 16:14:30 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.75 2023/06/14 17:52:45 rillig Exp $");
 
 #include <err.h>
 
@@ -116,7 +116,7 @@ static void
 psyms_reduce(struct psym_stack *psyms)
 {
 again:
-	if (psyms->sym[psyms->len - 1] == psym_stmt
+	if (psyms->len >= 2 && psyms->sym[psyms->len - 1] == psym_stmt
 	    && psyms_reduce_stmt(psyms))
 		goto again;
 	if (psyms->sym[psyms->len - 1] == psym_while_expr &&
