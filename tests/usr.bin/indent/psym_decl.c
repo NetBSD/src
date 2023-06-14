@@ -1,19 +1,16 @@
-/* $NetBSD: psym_decl.c,v 1.4 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: psym_decl.c,v 1.5 2023/06/14 09:31:05 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_decl, which represents a declaration.
  *
  * Since C99, declarations and statements can be mixed in blocks.
  *
- * A label can be followed by a statement but not by a declaration.
+ * In C, a label can be followed by a statement but not by a declaration.
  *
  * Indent distinguishes global and local declarations.
  *
  * Declarations can be for functions or for variables.
  */
-
-// TODO: prove that psym_decl can only ever occur at the top of the stack.
-// TODO: delete decl_level if the above is proven.
 
 //indent input
 int global_var;
@@ -36,3 +33,23 @@ int global_array = [
 		    4,
 ];
 //indent end
+
+
+// Declarations can be nested.
+//indent input
+struct level_1 {
+	union level_2 {
+		enum level_3 {
+			level_3_c_1,
+			level_3_c_2,
+		}		level_3;
+	}		level_2;
+} level_1;
+//indent end
+
+// The outermost declarator 'level_1' is indented as a global variable.
+// The inner declarators 'level_2' and 'level_3' are indented as local
+// variables.
+// XXX: This is inconsistent, as in practice, struct members are usually
+// aligned, while local variables aren't.
+//indent run-equals-input -ldi0

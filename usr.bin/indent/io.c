@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.217 2023/06/10 21:36:38 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.218 2023/06/14 09:31:05 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.217 2023/06/10 21:36:38 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.218 2023/06/14 09:31:05 rillig Exp $");
 
 #include <stdio.h>
 
@@ -294,10 +294,14 @@ output_line_code(void)
 static void
 output_comment(void)
 {
-	int target_ind = ps.com_ind + ps.comment_delta;
+	int target_ind = ps.comment_ind;
 	const char *p;
 
-	/* consider original indentation in case this is a box comment */
+	if (!ps.comment_in_first_line)
+		target_ind += ps.comment_shift;
+	ps.comment_in_first_line = false;
+
+	/* consider the original indentation in case this is a box comment */
 	for (p = com.s; *p == '\t'; p++)
 		target_ind += opt.tabsize;
 
@@ -321,8 +325,6 @@ output_comment(void)
 
 	write_indent(target_ind);
 	write_range(p, com.len - (size_t)(p - com.s));
-
-	ps.comment_delta = ps.n_comment_delta;
 }
 
 static void
