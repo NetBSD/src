@@ -1,4 +1,4 @@
-/* $NetBSD: psym_stmt.c,v 1.6 2023/06/09 10:24:55 rillig Exp $ */
+/* $NetBSD: psym_stmt.c,v 1.7 2023/06/14 07:20:55 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_stmt, which represents a statement on the
@@ -39,3 +39,40 @@ function(void)
 //indent end
 
 //indent run-equals-input -di0 -nlp -ci4
+
+
+//indent input
+void
+function(void)
+{
+	stmt();
+	int var;
+	stmt();
+	{
+		stmt();
+		int var;
+		stmt();
+	}
+}
+//indent end
+
+//indent run-equals-input -ldi0
+
+
+//indent input
+void
+return_after_rbrace(void)
+{
+	{}return;
+}
+//indent end
+
+//indent run
+void
+return_after_rbrace(void)
+{
+	{
+	}
+	return;
+}
+//indent end
