@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.55 2023/06/14 20:46:08 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.56 2023/06/15 08:40:20 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -295,36 +295,33 @@ struct s01234567890123 a,b;
 struct s a, b;
 /* $ XXX: See process_comma, varname_len for why this line is broken. */
 struct s0 a,
-   b;
-/* $ XXX: The indentation of the second line is wrong. The variable names */
-/* $ XXX: 'a' and 'b' should be in the same column; the word 'struct' is */
-/* $ XXX: missing in the calculation for the indentation. */
-struct s01 a,
-    b;
-struct s012 a,
-     b;
-struct s0123 a,
-      b;
-struct s01234 a,
-       b;
-struct s012345 a,
-        b;
-struct s0123456 a,
-         b;
-struct s01234567 a,
           b;
-struct s012345678 a,
+struct s01 a,
            b;
-struct s0123456789 a,
+struct s012 a,
             b;
-struct s01234567890 a,
+struct s0123 a,
              b;
-struct s012345678901 a,
+struct s01234 a,
               b;
-struct s0123456789012 a,
+struct s012345 a,
                b;
-struct s01234567890123 a,
+struct s0123456 a,
                 b;
+struct s01234567 a,
+                 b;
+struct s012345678 a,
+                  b;
+struct s0123456789 a,
+                   b;
+struct s01234567890 a,
+                    b;
+struct s012345678901 a,
+                     b;
+struct s0123456789012 a,
+                      b;
+struct s01234567890123 a,
+                       b;
 //indent end
 
 

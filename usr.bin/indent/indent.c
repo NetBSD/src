@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.367 2023/06/14 20:46:08 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.368 2023/06/15 08:40:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.367 2023/06/14 20:46:08 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.368 2023/06/15 08:40:20 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -933,7 +933,8 @@ process_type_outside_parentheses(void)
 	if (ps.decl_level <= 0)
 		ps.declaration = decl_begin;
 
-	int len = (int)token.len + 1;
+	int len = (code.len > 0 ? ind_add(0, code.s, code.len) + 1 : 0)
+	    + (int)token.len + 1;
 	int ind = ps.ind_level > 0 && ps.decl_level == 0
 	    ? opt.local_decl_indent	/* local variable */
 	    : opt.decl_indent;	/* global variable, or member */
