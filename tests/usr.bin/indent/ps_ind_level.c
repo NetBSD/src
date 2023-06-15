@@ -1,4 +1,4 @@
-/* $NetBSD: ps_ind_level.c,v 1.8 2023/06/14 20:46:08 rillig Exp $ */
+/* $NetBSD: ps_ind_level.c,v 1.9 2023/06/15 09:19:07 rillig Exp $ */
 
 /*
  * The indentation of the very first line of a file determines the
@@ -116,3 +116,18 @@ int    level_0;
      }
 }
 //indent end
+
+
+/*
+ * Having function definitions indented to the right is not supported. In that
+ * case, indent does not recognize it as a function definition, and it doesn't
+ * indent the old-style parameter declarations one level further to the right.
+ */
+//indent input
+			int		old_style(a)
+			int		a;
+			{
+			}
+//indent end
+
+//indent run-equals-input

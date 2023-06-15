@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_tag.c,v 1.7 2023/05/15 14:12:03 rillig Exp $ */
+/* $NetBSD: lsym_tag.c,v 1.8 2023/06/15 09:19:07 rillig Exp $ */
 
 /*
  * Tests for the token lsym_tag, which represents one of the keywords
@@ -134,3 +134,20 @@ struct outer {
 //indent end
 
 //indent run-equals-input -di0
+
+
+/*
+ * The initializer of an enum constant needs to be indented like any other
+ * initializer, especially the continuation lines.
+ */
+//indent input
+enum multi_line {
+	constant = 1
+// $ TODO: Indent the continuation line.
+	+ 2
+// $ TODO: Indent the continuation line.
+	+ 3,
+};
+//indent end
+
+//indent run-equals-input

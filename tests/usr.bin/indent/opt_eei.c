@@ -1,4 +1,4 @@
-/* $NetBSD: opt_eei.c,v 1.14 2023/06/09 08:10:58 rillig Exp $ */
+/* $NetBSD: opt_eei.c,v 1.15 2023/06/15 09:19:07 rillig Exp $ */
 
 /*
  * Tests for the options '-eei' and '-neei'.
@@ -211,9 +211,6 @@ b)
 //indent end
 
 
-/*
- *
- */
 //indent input
 {
 	if (((

@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.368 2023/06/15 08:40:20 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.369 2023/06/15 09:19:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.368 2023/06/15 08:40:20 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.369 2023/06/15 09:19:06 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -728,10 +728,8 @@ process_lbrace(void)
 			ps.decl_level--;
 		}
 	} else {
-		ps.line_has_decl = false;	/* we can't be in the middle of
-						 * a declaration, so don't do
-						 * special indentation of
-						 * comments */
+		ps.line_has_decl = false;	/* don't do special indentation
+						 * of comments */
 		ps.in_func_def_params = false;
 		ps.in_decl = false;
 	}
@@ -802,7 +800,6 @@ process_unary_op(void)
 	if (is_function_pointer_declaration()) {
 		int ind = ps.decl_ind - (int)token.len;
 		indent_declarator(ind, ps.tabs_to_var);
-		ps.want_blank = false;
 	} else if ((token.s[0] == '+' || token.s[0] == '-')
 	    && code.len > 0 && code.s[code.len - 1] == token.s[0])
 		ps.want_blank = true;
@@ -826,8 +823,8 @@ process_comma(void)
 	ps.want_blank = code.len > 0;	/* only put blank after comma if comma
 					 * does not start the line */
 
-	if (ps.in_decl && !ps.line_has_func_def && !ps.in_init &&
-	    !ps.decl_indent_done && ps.ind_paren_level == 0) {
+	if (ps.in_decl && ps.ind_paren_level == 0
+	    && !ps.line_has_func_def && !ps.in_init && !ps.decl_indent_done) {
 		/* indent leading commas and not the actual identifiers */
 		indent_declarator(ps.decl_ind - 1, ps.tabs_to_var);
 	}
@@ -893,9 +890,6 @@ process_semicolon(void)
 					 * aren't anymore */
 
 	if (ps.paren.len > 0 && ps.spaced_expr_psym != psym_for_exprs) {
-		/* There were unbalanced parentheses in the statement. It is a
-		 * bit complicated, because the semicolon might be in a for
-		 * statement. */
 		diag(1, "Unbalanced parentheses");
 		ps.paren.len = 0;
 		if (ps.spaced_expr_psym != psym_0) {
@@ -929,16 +923,19 @@ process_type_outside_parentheses(void)
 	}
 
 	ps.in_var_decl = /* maybe */ true;
-	ps.in_decl = ps.line_has_decl = ps.prev_lsym != lsym_typedef;
-	if (ps.decl_level <= 0)
+	ps.in_decl = ps.prev_lsym != lsym_typedef;
+	ps.line_has_decl = ps.in_decl;
+	if (ps.decl_level == 0)
 		ps.declaration = decl_begin;
 
-	int len = (code.len > 0 ? ind_add(0, code.s, code.len) + 1 : 0)
-	    + (int)token.len + 1;
 	int ind = ps.ind_level > 0 && ps.decl_level == 0
 	    ? opt.local_decl_indent	/* local variable */
 	    : opt.decl_indent;	/* global variable, or member */
-	ps.decl_ind = ind > 0 ? ind : len;
+	if (ind == 0) {
+		int ind0 = code.len > 0 ? ind_add(0, code.s, code.len) + 1 : 0;
+		ps.decl_ind = ind_add(ind0, token.s, token.len) + 1;
+	} else
+		ps.decl_ind = ind;
 	ps.tabs_to_var = opt.use_tabs && ind > 0;
 }
 
@@ -960,15 +957,14 @@ process_word(lexer_symbol lsym)
 			    && code.len > 0 && code.s[code.len - 1] == '}')
 				ps.decl_ind = ind_add(0, code.s, code.len) + 1;
 			indent_declarator(ps.decl_ind, ps.tabs_to_var);
-			ps.want_blank = false;
 		}
 
 	} else if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0) {
+		parse(ps.spaced_expr_psym);
+		ps.spaced_expr_psym = psym_0;
 		ps.want_newline = true;
 		ps.in_stmt_or_decl = false;
 		ps.next_unary = true;
-		parse(ps.spaced_expr_psym);
-		ps.spaced_expr_psym = psym_0;
 	}
 }
 
@@ -981,21 +977,22 @@ process_do(void)
 	if (code.len > 0)
 		output_line();
 
-	ps.want_newline = true;
 	parse(psym_do);
+	ps.want_newline = true;
 }
 
 static void
 process_else(void)
 {
 	ps.in_stmt_or_decl = false;
+	ps.in_decl = false;
 
 	if (code.len > 0
 	    && !(opt.cuddle_else && code.s[code.len - 1] == '}'))
 		output_line();
 
-	ps.want_newline = true;
 	parse(psym_else);
+	ps.want_newline = true;
 }
 
 static void
@@ -1079,15 +1076,15 @@ indent(void)
 		if (lsym == lsym_eof)
 			return process_eof();
 
-		if (lsym == lsym_if && ps.prev_lsym == lsym_else
-		    && opt.else_if_in_same_line)
-			ps.want_newline = false;
-
 		if (lsym == lsym_preprocessing || lsym == lsym_newline)
 			ps.want_newline = false;
 		else if (lsym == lsym_comment) {
 			/* no special processing */
 		} else {
+			if (lsym == lsym_if && ps.prev_lsym == lsym_else
+			    && opt.else_if_in_same_line)
+				ps.want_newline = false;
+
 			if (ps.want_newline && should_break_line(lsym)) {
 				ps.want_newline = false;
 				output_line();
