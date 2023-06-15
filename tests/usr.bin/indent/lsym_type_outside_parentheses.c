@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_type_outside_parentheses.c,v 1.6 2023/06/04 22:20:04 rillig Exp $ */
+/* $NetBSD: lsym_type_outside_parentheses.c,v 1.7 2023/06/15 09:19:07 rillig Exp $ */
 
 /*
  * Tests for the token lsym_type_outside_parentheses, which represents a type
@@ -45,3 +45,13 @@ size_t hello;
 	size_t		hello;
 }
 //indent end
+
+
+/*
+ * In a sizeof expression, a type argument must be enclosed in parentheses.
+ */
+//indent input
+int sizeof_int = sizeof int;
+//indent end
+
+//indent run-equals-input -di0

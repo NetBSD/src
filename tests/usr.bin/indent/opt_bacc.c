@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bacc.c,v 1.12 2023/05/20 10:09:03 rillig Exp $ */
+/* $NetBSD: opt_bacc.c,v 1.13 2023/06/15 09:19:07 rillig Exp $ */
 
 /*
  * Tests for the options '-bacc' and '-nbacc' ("blank line around conditional
@@ -128,3 +128,33 @@ int outer_below;
 //indent end
 
 //indent run-equals-input -di0 -nbacc
+
+
+//indent input
+/* before */
+#if 0
+/* between if and else */
+#else
+#if 1
+#endif
+#endif
+/* after */
+//indent end
+
+//indent run -bacc
+/* before */
+// $ XXX: The 'before' comment may refer to the '#if', so it is not obvious
+// $ XXX: that this blank line is useful.
+
+#if 0
+/* between if and else */
+#else
+// $ XXX: This blank line looks unintended, as both lines are preprocessing
+// $ XXX: directives.
+
+#if 1
+#endif
+#endif
+
+/* after */
+//indent end

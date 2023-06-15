@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_funcname.c,v 1.5 2023/05/22 23:01:27 rillig Exp $ */
+/* $NetBSD: lsym_funcname.c,v 1.6 2023/06/15 09:19:07 rillig Exp $ */
 
 /*
  * Tests for the token lsym_funcname, which is the name of a function, but only
@@ -15,6 +15,20 @@ function(void)
 	func();
 	(func)();
 	func(1, 2, 3);
+}
+//indent end
+
+//indent run-equals-input
+
+
+/*
+ * The comment after the return type of a function definition is a code
+ * comment, not a declaration comment.
+ */
+//indent input
+void				// comment
+function_with_comment(void)
+{
 }
 //indent end
 
