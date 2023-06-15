@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.411 2023/03/30 11:02:15 riastradh Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.412 2023/06/15 09:15:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.411 2023/03/30 11:02:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.412 2023/06/15 09:15:54 hannken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -2956,7 +2956,6 @@ rf_find_raid_components(void)
 				continue;
 			}
 
-			VOP_UNLOCK(vp);
 			error = getdisksize(vp, &numsecs, &secsize);
 			if (error) {
 				/*
@@ -2968,7 +2967,6 @@ rf_find_raid_components(void)
 					printf("RAIDframe: can't get disk size"
 					    " for dev %s (%d)\n",
 					    device_xname(dv), error);
-				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 				vput(vp);
 				continue;
@@ -2980,19 +2978,18 @@ rf_find_raid_components(void)
 				if (error) {
 					printf("RAIDframe: can't get wedge info for "
 					    "dev %s (%d)\n", device_xname(dv), error);
-					vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 					VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 					vput(vp);
 					continue;
 				}
 
 				if (strcmp(dkw.dkw_ptype, DKW_PTYPE_RAIDFRAME) != 0) {
-					vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 					VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 					vput(vp);
 					continue;
 				}
 
+				VOP_UNLOCK(vp);
 				ac_list = rf_get_component(ac_list, dev, vp,
 				    device_xname(dv), dkw.dkw_size, numsecs, secsize);
 				rf_part_found = 1; /*There is a raid component on this disk*/
@@ -3013,7 +3010,6 @@ rf_find_raid_components(void)
 
 			/* don't need this any more.  We'll allocate it again
 			   a little later if we really do... */
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 			vput(vp);
 
