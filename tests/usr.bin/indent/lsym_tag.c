@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_tag.c,v 1.8 2023/06/15 09:19:07 rillig Exp $ */
+/* $NetBSD: lsym_tag.c,v 1.9 2023/06/15 10:34:12 rillig Exp $ */
 
 /*
  * Tests for the token lsym_tag, which represents one of the keywords
@@ -142,12 +142,17 @@ struct outer {
  */
 //indent input
 enum multi_line {
-	constant = 1
-// $ TODO: Indent the continuation line.
-	+ 2
-// $ TODO: Indent the continuation line.
-	+ 3,
+	ml1 = 1
+	    + 2
+	    + offsetof(struct s, member)
+	    + 3,
+	ml2 = 1
+	    + 2
+	    + offsetof(struct s, member)
+	    + 3,
 };
 //indent end
 
-//indent run-equals-input
+//indent run-equals-input -ci4
+
+//indent run-equals-input -ci4 -nlp
