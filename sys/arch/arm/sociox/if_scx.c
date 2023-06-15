@@ -1,4 +1,4 @@
-/*	$NetBSD: if_scx.c,v 1.42 2023/06/14 00:07:22 nisimura Exp $	*/
+/*	$NetBSD: if_scx.c,v 1.43 2023/06/15 07:21:45 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.42 2023/06/14 00:07:22 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_scx.c,v 1.43 2023/06/15 07:21:45 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -120,13 +120,6 @@ struct rdes {
 #define COMINIT		0x120
 #define  INIT_DB	(1U<<2)		/* ???; self clear when done */
 #define  INIT_CLS	(1U<<1)		/* ???; self clear when done */
-#define PKTCTRL		0x140		/* pkt engine control */
-#define  MODENRM	(1U<<28)	/* set operational mode to 'normal' */
-#define  ENJUMBO	(1U<<27)	/* allow jumbo frame */
-#define  RPTCSUMERR	(1U<<3)		/* log Rx checksum error */
-#define  RPTHDCOMP	(1U<<2)		/* log header incomplete condition */
-#define  RPTHDERR	(1U<<1)		/* log header error */
-#define  DROPNOMATCH	(1U<<0)		/* drop no match frames */
 #define xINTSR		0x200		/* aggregated interrupt status */
 #define  IRQ_UCODE	(1U<<20)	/* ucode load completed; W1C */
 #define  IRQ_MAC	(1U<<19)	/* ??? */
@@ -146,14 +139,14 @@ struct rdes {
 #define TXIE_SET	0x428		/* bit to set */
 #define TXIE_CLR	0x42c		/* bit to clr */
 #define  TXI_NTOWNR	(1U<<17)	/* ??? desc array got empty */
-#define  TXI_TR_ERR	(1U<<16)	/* xmit error */
+#define  TXI_TR_ERR	(1U<<16)	/* xmit error detected */
 #define  TXI_TXDONE	(1U<<15)	/* xmit completed */
 #define  TXI_TMREXP	(1U<<14)	/* coalesce guard timer expired */
 #define RXISR		0x440		/* receive status; W1C */
 #define RXIEN		0x444		/* rx interrupt enable */
 #define RXIE_SET	0x468		/* bit to set */
 #define RXIE_CLR	0x46c		/* bit to clr */
-#define  RXI_RC_ERR	(1U<<16)	/* recv error */
+#define  RXI_RC_ERR	(1U<<16)	/* recv error detected */
 #define  RXI_PKTCNT	(1U<<15)	/* recv counter has new value */
 #define  RXI_TMREXP	(1U<<14)	/* coalesce guard timer expired */
 #define TDBA_LO		0x408		/* tdes array base addr 31:0 */
@@ -164,16 +157,24 @@ struct rdes {
 #define RXCONF		0x470		/* rdes config */
 #define  DESCNF_UP	(1U<<31)	/* 'up-and-running' */
 #define  DESCNF_CHRST	(1U<<30)	/* channel reset */
-#define  DESCNF_TMR	(1U<<4)		/* coalesce timer mode select */
+#define  DESCNF_TMR	(1U<<4)		/* coalesce timer unit select */
 #define  DESCNF_LE	(1)		/* little endian desc format */
 #define TXSUBMIT	0x410		/* submit frame(s) to transmit */
 #define TXCOALESC	0x418		/* tx intr coalesce upper bound */
 #define RXCOALESC	0x458		/* rx intr coalesce upper bound */
-#define TCLSCTIME	0x420		/* tintr guard time usec, MSB to on */
-#define RCLSCTIME	0x460		/* rintr guard time usec, MSB to on */
+#define TCLSCTIME	0x420		/* tintr guard time usec */
+#define RCLSCTIME	0x460		/* rintr guard time usec */
 #define TXDONECNT	0x414		/* tx completed count, auto-zero */
 #define RXAVAILCNT	0x454		/* rx available count, auto-zero */
-#define DMACTL_TMR	0x20c		/* engine DMA timer value */
+#define DMACTL_TMR	0x20c		/* DMA cycle tick value */
+#define PKTCTRL		0x140		/* pkt engine control */
+#define  MODENRM	(1U<<28)	/* set operational mode to 'normal' */
+#define  ENJUMBO	(1U<<27)	/* allow jumbo frame */
+#define  RPTCSUMERR	(1U<<3)		/* log Rx checksum error */
+#define  RPTHDCOMP	(1U<<2)		/* log header incomplete condition */
+#define  RPTHDERR	(1U<<1)		/* log header error */
+#define  DROPNOMATCH	(1U<<0)		/* drop no match frames */
+#define UCODE_PKT	0x0d0		/* packet engine ucode port */
 #define UCODE_H2M	0x210		/* host2media engine ucode port */
 #define UCODE_M2H	0x21c		/* media2host engine ucode port */
 #define CORESTAT	0x218		/* engine run state */
@@ -184,11 +185,15 @@ struct rdes {
 #define DMACTL_M2H	0x220		/* media2host engine control */
 #define  DMACTL_STOP	(1U<<0)		/* instruct stop; self-clear */
 #define  M2H_MODE_TRANS	(1U<<20)	/* initiate M2H mode change */
-#define UCODE_PKT	0x0d0		/* packet engine ucode port */
+#define MODE_TRANS	0x500		/* mode change completion status */
+#define  N2T_DONE	(1U<<20)	/* normal->taiki change completed */
+#define  T2N_DONE	(1U<<19)	/* taiki->normal change completed */
 #define CLKEN		0x100		/* clock distribution enable */
 #define  CLK_G		(1U<<5)		/* feed clk domain G */
 #define  CLK_C		(1U<<1)		/* feed clk domain C */
 #define  CLK_D		(1U<<0)		/* feed clk domain D */
+#define DESC_INIT	0x11fc		/* write 1 for desc init, SC */
+#define DESC_SRST	0x1204		/* write 1 for desc sw reset, SC */
 
 /* GMAC register indirect access. thru MACCMD/MACDATA operation */
 #define MACDATA		0x11c0		/* gmac register rd/wr data */
@@ -205,11 +210,6 @@ struct rdes {
 #define  INTF_RGMII	1
 #define  INTF_RMII	4
 
-#define DESC_INIT	0x11fc		/* write 1 for desc init, SC */
-#define DESC_SRST	0x1204		/* write 1 for desc sw reset, SC */
-#define MODE_TRANS	0x500		/* mode change completion status */
-#define  N2T_DONE	(1U<<20)	/* normal->taiki change completed */
-#define  T2N_DONE	(1U<<19)	/* taiki->normal change completed */
 #define MCVER		0x22c		/* micro controller version */
 #define HWVER		0x230		/* hardware version */
 
@@ -354,8 +354,11 @@ struct rdes {
 #define  DMAI_TPS	(1U<<1)		/* transmission is stopped */
 #define  DMAI_TI	(1U<<0)		/* frame Tx completed by T0_IC */
 #define GMACOMR		0x1018		/* DMA operation mode */
+#define  OMR_DT		(1U<<26)	/* don't drop error frames */
 #define  OMR_RSF	(1U<<25)	/* 1: Rx store&forward, 0: immed. */
+#define  OMR_DFF	(1U<<24)	/* don't flush rx frames on shortage */
 #define  OMR_TSF	(1U<<21)	/* 1: Tx store&forward, 0: immed. */
+#define  OMR_FTF	(1U<<20)	/* initiate tx FIFO reset, SC */
 #define  OMR_TTC	(14)		/* 16:14 Tx threshold */
 #define  OMR_ST		(1U<<13)	/* run Tx DMA engine, 0 to stop */
 #define  OMR_RFD	(11)		/* 12:11 Rx FIFO fill level */
@@ -403,7 +406,7 @@ struct rdes {
  * above ucode are loaded via mapped reg 0x210, 0x21c and 0x0c0.
  */
 
-#define  _BMR		0x00412080	/* XXX TBD */
+#define  _BMR		0x00412080	/* NetSec BMR value, magic spell */
 /* NetSec uses local RAM to handle GMAC desc arrays */
 #define  _RDLA		0x18000
 #define  _TDLA		0x1c000
@@ -1133,7 +1136,7 @@ scx_init(struct ifnet *ifp)
 
 	/* build sane Tx */
 	memset(sc->sc_txdescs, 0, sizeof(struct tdes) * MD_NTXDESC);
-	sc->sc_txdescs[MD_NTXDESC - 1].t0 = T0_LD; /* tie off the ring */
+	sc->sc_txdescs[MD_NTXDESC - 1].t0 = htole32(T0_LD); /* tie off */
 	SCX_CDTXSYNC(sc, 0, MD_NTXDESC,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	sc->sc_txfree = MD_NTXDESC;
@@ -1159,7 +1162,7 @@ scx_init(struct ifnet *ifp)
 		else
 			SCX_INIT_RXDESC(sc, i);
 	}
-	sc->sc_rxdescs[MD_NRXDESC - 1].r0 = R0_LD; /* tie off the ring */
+	sc->sc_rxdescs[MD_NRXDESC - 1].r0 = htole32(R0_LD); /* tie off */
 	sc->sc_rxptr = 0;
 
 	/* set my address in perfect match slot 0. little endian order */
@@ -1192,8 +1195,8 @@ scx_init(struct ifnet *ifp)
 
 	CSR_WRITE(sc, RXCOALESC, 8);		/* Rx coalesce bound */
 	CSR_WRITE(sc, TXCOALESC, 8);		/* Tx coalesce bound */
-	CSR_WRITE(sc, RCLSCTIME, 500|(1U<<31));	/* Rx co. guard time usec */
-	CSR_WRITE(sc, TCLSCTIME, 500|(1U<<31));	/* Tx co. guard time usec */
+	CSR_WRITE(sc, RCLSCTIME, 500);		/* Rx co. guard time usec */
+	CSR_WRITE(sc, TCLSCTIME, 500);		/* Tx co. guard time usec */
 
 	CSR_WRITE(sc, RXIE_SET, RXI_RC_ERR | RXI_PKTCNT | RXI_TMREXP);
 	CSR_WRITE(sc, TXIE_SET, TXI_TR_ERR | TXI_TXDONE | TXI_TMREXP);
@@ -1540,7 +1543,7 @@ scx_intr(void *arg)
 			aprint_error_dev(sc->sc_dev, "Rx error\n");
 		if (status & (RXI_PKTCNT | RXI_TMREXP)) {
 			rxfill(sc);
-			(void)CSR_READ(sc, RXAVAILCNT); /* clear RXI_PKTCNT */
+			(void)CSR_READ(sc, RXAVAILCNT); /* clear IRQ_RX ? */
 		}
 
 		status = CSR_READ(sc, TXISR);
@@ -1549,7 +1552,7 @@ scx_intr(void *arg)
 			aprint_error_dev(sc->sc_dev, "Tx error\n");
 		if (status & (TXI_TXDONE | TXI_TMREXP)) {
 			txreap(sc);
-			(void)CSR_READ(sc, TXDONECNT); /* clear TXI_TXDONE */
+			(void)CSR_READ(sc, TXDONECNT); /* clear IRQ_TX ? */
 		}
 
 		CSR_WRITE(sc, xINTAE_SET, (IRQ_TX | IRQ_RX));
