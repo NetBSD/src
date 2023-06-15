@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.371 2023/06/15 10:59:06 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.372 2023/06/15 11:27:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.371 2023/06/15 10:59:06 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.372 2023/06/15 11:27:36 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -561,12 +561,6 @@ process_newline(void)
 	}
 
 	output_line();
-
-	if (ps.psyms.len >= 2
-	    && ps.psyms.sym[ps.psyms.len - 2] == psym_lbrace_enum
-	    && ps.paren.len == 0
-	    && ps.prev_lsym == lsym_comma)
-		ps.line_is_stmt_cont = false;
 
 stay_in_line:
 	++line_no;

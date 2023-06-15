@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.224 2023/06/15 10:59:06 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.225 2023/06/15 11:27:36 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.224 2023/06/15 10:59:06 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.225 2023/06/15 11:27:36 rillig Exp $");
 
 #include <stdio.h>
 
@@ -55,7 +55,7 @@ static unsigned newlines = 2;	/* the total of written and buffered newlines;
 				 * finished line, anything > 1 are trailing
 				 * blank lines */
 static unsigned buffered_newlines;	/* not yet written */
-static int paren_indent;
+static int paren_indent;	/* total indentation when parenthesized */
 
 
 static void
@@ -368,6 +368,19 @@ output_indented_line(void)
 	out.prev_line_kind = out.line_kind;
 }
 
+static bool
+is_stmt_cont(void)
+{
+	if (ps.psyms.len >= 2
+	    && ps.psyms.sym[ps.psyms.len - 2] == psym_lbrace_enum
+	    && ps.prev_lsym == lsym_comma
+	    && ps.paren.len == 0)
+		return false;
+	return ps.in_stmt_or_decl
+	    && (!ps.in_decl || ps.in_init)
+	    && ps.init_level == 0;
+}
+
 /*
  * Write a line of formatted source to the output file. The line consists of
  * the label, the code and the comment.
@@ -393,9 +406,7 @@ output_line(void)
 
 	ps.line_has_decl = ps.in_decl;
 	ps.line_has_func_def = false;
-	ps.line_is_stmt_cont = ps.in_stmt_or_decl
-	    && (!ps.in_decl || ps.in_init)
-	    && ps.init_level == 0;
+	ps.line_is_stmt_cont = is_stmt_cont();
 	ps.decl_indent_done = false;
 	if (ps.extra_expr_indent == eei_last)
 		ps.extra_expr_indent = eei_no;
