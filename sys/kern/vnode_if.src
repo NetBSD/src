@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.84 2022/05/03 08:33:59 hannken Exp $
+#	$NetBSD: vnode_if.src,v 1.85 2023/06/15 09:13:36 hannken Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -217,11 +217,11 @@ vop_fdiscard {
 };
 
 #
-#% ioctl      vp      U U U
+#% ioctl      vp      = = =
 #
 vop_ioctl {
 	FSTRANS=NO
-	IN LOCKED=NO struct vnode *vp;
+	IN struct vnode *vp;
 	IN u_long command;
 	IN void *data;
 	IN int fflag;
