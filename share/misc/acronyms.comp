@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.355 2023/06/12 21:00:38 alnsn Exp $
+$NetBSD: acronyms.comp,v 1.356 2023/06/15 13:11:20 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -280,6 +280,7 @@ CMP	chip multi-processing
 CMS	content management system
 CMYK	cyan magenta yellow black
 CN	{common,canonical} name
+CNA	CVE Numbering Authority
 CNC	computer numerical control
 CNR	carrier-to-noise ratio
 COA	change of authority
