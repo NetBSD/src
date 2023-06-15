@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.380 2023/06/05 04:59:46 rin Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.381 2023/06/15 09:15:54 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.380 2023/06/05 04:59:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.381 2023/06/15 09:15:54 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2523,9 +2523,7 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 		 * contains no dirty buffers that could be in the log.
 		 */
 		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
-			VOP_UNLOCK(vp);
 			error = wapbl_flush(mp->mnt_wapbl, 0);
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			if (error)
 				return error;
 		}
@@ -2544,10 +2542,8 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 	error = vflushbuf(vp, flags);
 	if (error == 0 && (flags & FSYNC_CACHE) != 0) {
 		i = 1;
-		VOP_UNLOCK(vp);
 		(void)VOP_IOCTL(vp, DIOCCACHESYNC, &i, FWRITE,
 		    kauth_cred_get());
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
 	return error;
