@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.222 2023/06/15 09:19:06 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.223 2023/06/15 10:34:12 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.222 2023/06/15 09:19:06 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.223 2023/06/15 10:34:12 rillig Exp $");
 
 #include <stdio.h>
 
@@ -254,9 +254,6 @@ compute_code_indent(void)
 	int base_ind = ps.ind_level * opt.indent_size;
 
 	if (ps.ind_paren_level == 0) {
-		if (ps.psyms.len >= 2
-		    && ps.psyms.sym[ps.psyms.len - 2] == psym_lbrace_enum)
-			return base_ind;
 		if (ps.in_stmt_cont)
 			return base_ind + opt.continuation_indent;
 		return base_ind;
