@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_case_label.c,v 1.10 2023/06/10 07:05:18 rillig Exp $ */
+/* $NetBSD: lsym_case_label.c,v 1.11 2023/06/15 09:19:07 rillig Exp $ */
 
 /*
  * Tests for the tokens lsym_case and lsym_default, which represent the
@@ -103,3 +103,23 @@ const char *type_name = _Generic(
 //indent end
 
 //indent run-equals-input -di0 -nlp
+
+
+/*
+ * Multi-line case expressions are rare but still should be processed in a
+ * sensible way.
+ */
+//indent input
+{
+	switch (expr) {
+// $ FIXME: The line containing the 'case' must be indented like a 'case'.
+		case 1
+		    + 2
+// $ FIXME: This continuation line must be indented by 4 columns.
+	+ 3:
+		stmt;
+	}
+}
+//indent end
+
+//indent run-equals-input -ci4

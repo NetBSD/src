@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.84 2023/06/14 21:35:01 rillig Exp $	*/
+/*	$NetBSD: args.c,v 1.85 2023/06/15 09:19:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: args.c,v 1.84 2023/06/14 21:35:01 rillig Exp $");
+__RCSID("$NetBSD: args.c,v 1.85 2023/06/15 09:19:06 rillig Exp $");
 
 /* Read options from profile files and from the command line. */
 
@@ -68,9 +68,9 @@ __RCSID("$NetBSD: args.c,v 1.84 2023/06/14 21:35:01 rillig Exp $");
 /* See set_special_option for special options. */
 static const struct pro {
 	const char p_name[5];	/* e.g. "bl", "cli" */
-	bool p_is_bool;
-	bool p_may_negate;
-	bool p_bool_value;	/* only relevant if !p_may_negate */
+	bool p_is_bool:1;
+	bool p_may_negate:1;
+	bool p_bool_value:1;	/* only relevant if !p_may_negate */
 	short i_min;
 	short i_max;
 	unsigned short opt_offset;	/* the associated variable */

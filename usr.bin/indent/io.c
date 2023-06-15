@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.221 2023/06/14 16:14:30 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.222 2023/06/15 09:19:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.221 2023/06/14 16:14:30 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.222 2023/06/15 09:19:06 rillig Exp $");
 
 #include <stdio.h>
 
@@ -59,12 +59,12 @@ static int paren_indent;
 
 
 static void
-inp_read_next_line(FILE *f)
+inp_read_next_line(void)
 {
 	buf_clear(&inp);
 
 	for (;;) {
-		int ch = getc(f);
+		int ch = getc(input);
 		if (ch == EOF) {
 			if (indent_enabled == indent_on) {
 				buf_add_char(&inp, ' ');
@@ -89,7 +89,7 @@ inp_read_line(void)
 	if (indent_enabled == indent_on)
 		buf_clear(&out.indent_off_text);
 	buf_add_chars(&out.indent_off_text, inp.s, inp.len);
-	inp_read_next_line(input);
+	inp_read_next_line();
 }
 
 void
@@ -208,6 +208,7 @@ compute_case_label_indent(void)
 	while (i > 0 && ps.psyms.sym[i] != psym_switch_expr)
 		i--;
 	float case_ind = (float)ps.psyms.ind_level[i] + opt.case_indent;
+	// TODO: case_ind may become negative here.
 	return (int)(case_ind * (float)opt.indent_size);
 }
 
@@ -218,6 +219,7 @@ compute_label_indent(void)
 		return compute_case_label_indent();
 	if (lab.s[0] == '#')
 		return 0;
+	// TODO: the indentation may become negative here.
 	return opt.indent_size * (ps.ind_level - 2);
 }
 
@@ -235,7 +237,7 @@ compute_lined_up_code_indent(int base_ind)
 	int overflow = ind_add(ind, code.s, code.len) - opt.max_line_length;
 	if (overflow >= 0
 	    && ind_add(base_ind, code.s, code.len) < opt.max_line_length) {
-		ind -= overflow + 2;
+		ind -= 2 + overflow;
 		if (ind < base_ind)
 			ind = base_ind;
 	}

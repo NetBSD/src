@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.56 2023/06/15 08:40:20 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.57 2023/06/15 09:19:07 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -1183,3 +1183,20 @@ multi_line = (int[]){
 	};
 }
 //indent end
+
+
+/*
+ *
+ */
+//indent input
+int
+old_style(a)
+	struct {
+		int		member;
+	}		a;
+{
+	stmt;
+}
+//indent end
+
+//indent run-equals-input
