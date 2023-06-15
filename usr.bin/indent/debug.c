@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.61 2023/06/14 20:46:08 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.62 2023/06/15 10:59:06 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.61 2023/06/14 20:46:08 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.62 2023/06/15 10:59:06 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -344,7 +344,7 @@ debug_parser_state(void)
 	state.heading = "indentation of statements and declarations";
 	debug_ps_int(ind_level);
 	debug_ps_int(ind_level_follow);
-	debug_ps_bool(in_stmt_cont);
+	debug_ps_bool(line_is_stmt_cont);
 	debug_ps_int(decl_level);
 	debug_ps_di_stack();
 	debug_ps_bool(decl_indent_done);

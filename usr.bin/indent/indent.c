@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.370 2023/06/15 10:34:12 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.371 2023/06/15 10:59:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.370 2023/06/15 10:34:12 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.371 2023/06/15 10:59:06 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -566,7 +566,7 @@ process_newline(void)
 	    && ps.psyms.sym[ps.psyms.len - 2] == psym_lbrace_enum
 	    && ps.paren.len == 0
 	    && ps.prev_lsym == lsym_comma)
-		ps.in_stmt_cont = false;
+		ps.line_is_stmt_cont = false;
 
 stay_in_line:
 	++line_no;
@@ -724,8 +724,7 @@ process_lbrace(void)
 	}
 
 	if (code.len == 0)
-		ps.in_stmt_cont = false;	/* don't indent the '{' itself
-						 */
+		ps.line_is_stmt_cont = false;
 	if (ps.in_decl && ps.in_var_decl) {
 		ps.di_stack[ps.decl_level] = ps.decl_ind;
 		if (++ps.decl_level == (int)array_length(ps.di_stack)) {
@@ -768,7 +767,7 @@ process_rbrace(void)
 	buf_add_char(&code, '}');
 	ps.want_blank = true;
 	ps.in_stmt_or_decl = false;	// XXX: Initializers don't end a stmt
-	ps.in_stmt_cont = false;
+	ps.line_is_stmt_cont = false;
 
 	if (ps.decl_level > 0) {	/* multi-level structure declaration */
 		ps.decl_ind = ps.di_stack[--ps.decl_level];
@@ -925,7 +924,7 @@ process_type_outside_parentheses(void)
 	if (ps.in_func_def_params && opt.indent_parameters &&
 	    ps.decl_level == 0) {
 		ps.ind_level = ps.ind_level_follow = 1;
-		ps.in_stmt_cont = false;
+		ps.line_is_stmt_cont = false;
 	}
 
 	ps.in_var_decl = /* maybe */ true;
