@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.223 2023/06/15 10:34:12 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.224 2023/06/15 10:59:06 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.223 2023/06/15 10:34:12 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.224 2023/06/15 10:59:06 rillig Exp $");
 
 #include <stdio.h>
 
@@ -254,7 +254,7 @@ compute_code_indent(void)
 	int base_ind = ps.ind_level * opt.indent_size;
 
 	if (ps.ind_paren_level == 0) {
-		if (ps.in_stmt_cont)
+		if (ps.line_is_stmt_cont)
 			return base_ind + opt.continuation_indent;
 		return base_ind;
 	}
@@ -342,7 +342,7 @@ output_indented_line(void)
 
 	/* This kludge aligns function definitions correctly. */
 	if (ps.ind_level == 0)
-		ps.in_stmt_cont = false;
+		ps.line_is_stmt_cont = false;
 
 	if (opt.blank_line_after_decl && ps.declaration == decl_end
 	    && ps.psyms.len > 2) {
@@ -393,7 +393,7 @@ output_line(void)
 
 	ps.line_has_decl = ps.in_decl;
 	ps.line_has_func_def = false;
-	ps.in_stmt_cont = ps.in_stmt_or_decl
+	ps.line_is_stmt_cont = ps.in_stmt_or_decl
 	    && (!ps.in_decl || ps.in_init)
 	    && ps.init_level == 0;
 	ps.decl_indent_done = false;
