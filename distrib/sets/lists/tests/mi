@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1267 2023/06/14 07:20:54 rillig Exp $
+# $NetBSD: mi,v 1.1268 2023/06/16 07:20:45 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5864,8 +5864,8 @@
 ./usr/tests/usr.bin/make/unit-tests/misc.mk					tests-obsolete		obsolete
 ./usr/tests/usr.bin/make/unit-tests/moderrs.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/moderrs.mk					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/modmatch.exp				tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/make/unit-tests/modmatch.mk					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/modmatch.exp				tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/make/unit-tests/modmatch.mk					tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/make/unit-tests/modmisc.exp					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modmisc.mk					tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/modorder.exp				tests-obsolete		obsolete
