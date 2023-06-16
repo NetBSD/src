@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.133 2023/06/16 02:46:23 rin Exp $	*/
+/*	$NetBSD: route.h,v 1.134 2023/06/16 02:48:07 rin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -579,7 +579,7 @@ struct rtentry *
 	    int (*)(struct rtentry *, void *), void *);
 void	rtbl_init(void);
 
-void sysctl_net_route_setup(struct sysctllog **, int, const char *);
+void	sysctl_net_route_setup(struct sysctllog **, int, const char *);
 
 #endif /* _KERNEL */
 
