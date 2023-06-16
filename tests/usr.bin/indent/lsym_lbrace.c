@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lbrace.c,v 1.9 2023/06/15 09:19:07 rillig Exp $ */
+/* $NetBSD: lsym_lbrace.c,v 1.10 2023/06/16 23:19:01 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lbrace, which represents a '{' in these contexts:
@@ -99,9 +99,9 @@ origin(void)
 		switch (expr rparen {
 		}
 }
-exit 1
-error: Standard Input:2: Unbalanced parentheses
-error: Standard Input:4: Unbalanced parentheses
+// exit 1
+// error: Standard Input:2: Unbalanced parentheses
+// error: Standard Input:4: Unbalanced parentheses
 //indent end
 
 

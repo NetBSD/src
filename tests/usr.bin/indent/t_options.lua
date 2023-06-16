@@ -1,4 +1,4 @@
--- $NetBSD: t_options.lua,v 1.5 2023/06/14 17:07:32 rillig Exp $
+-- $NetBSD: t_options.lua,v 1.6 2023/06/16 23:19:01 rillig Exp $
 --
 -- Copyright (c) 2023 The NetBSD Foundation, Inc.
 -- All rights reserved.
@@ -132,10 +132,10 @@ local function run_indent(inp, args)
 	indent_in:write(inp)
 	local ok, kind, info = indent_in:close()
 	if not ok then
-		print(kind .. " " .. info)
+		print("// " .. kind .. " " .. info)
 	end
 	for line in io.lines("t_options.err") do
-		print(line)
+		print("// " .. line)
 	end
 end
 

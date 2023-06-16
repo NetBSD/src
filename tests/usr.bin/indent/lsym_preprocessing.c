@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_preprocessing.c,v 1.14 2023/06/14 20:46:08 rillig Exp $ */
+/* $NetBSD: lsym_preprocessing.c,v 1.15 2023/06/16 23:19:01 rillig Exp $ */
 
 /*
  * Tests for the token lsym_preprocessing, which represents a '#' that starts
@@ -301,11 +301,11 @@ int before;
 
 #unknown
 # 3 "file.c"
-exit 1
-error: Standard Input:1: Unmatched #else
-error: Standard Input:2: Unmatched #elif
-error: Standard Input:3: Unmatched #elifdef
-error: Standard Input:4: Unmatched #endif
+// exit 1
+// error: Standard Input:1: Unmatched #else
+// error: Standard Input:2: Unmatched #elif
+// error: Standard Input:3: Unmatched #elifdef
+// error: Standard Input:4: Unmatched #endif
 //indent end
 
 

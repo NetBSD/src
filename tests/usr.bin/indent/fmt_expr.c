@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_expr.c,v 1.9 2023/06/16 12:55:57 rillig Exp $ */
+/* $NetBSD: fmt_expr.c,v 1.10 2023/06/16 23:19:01 rillig Exp $ */
 
 /*
  * Tests for all kinds of expressions that are not directly related to unary
@@ -53,7 +53,7 @@
 		stmt;
 	});
 }
-exit 1
-error: Standard Input:7: Unbalanced parentheses
-warning: Standard Input:9: Extra ')'
+// exit 1
+// error: Standard Input:7: Unbalanced parentheses
+// warning: Standard Input:9: Extra ')'
 //indent end
