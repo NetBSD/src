@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.17 2023/06/14 14:11:28 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.18 2023/06/16 23:07:52 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -295,7 +295,7 @@ cover_want_blank_before_lparen(void)
 	int rparen_or_rbracket = a[3](5);
 	+(unary_op);
 	3 + (binary_op);
-	a++ (postfix_op);	/* unlikely to be seen in practice */
+	a++(postfix_op);	/* unlikely to be seen in practice */
 	cond ? (question) : (5);
 	switch (expr) {
 	case (case_label): ;

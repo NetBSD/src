@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.377 2023/06/16 14:26:26 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.378 2023/06/16 23:07:52 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.377 2023/06/16 14:26:26 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.378 2023/06/16 23:07:52 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -574,13 +574,14 @@ want_blank_before_lparen(void)
 {
 	if (opt.proc_calls_space)
 		return true;
-	if (ps.prev_lsym == lsym_rparen || ps.prev_lsym == lsym_rbracket)
-		return false;
-	if (ps.prev_lsym == lsym_offsetof)
-		return false;
 	if (ps.prev_lsym == lsym_sizeof)
 		return opt.blank_after_sizeof;
-	if (ps.prev_lsym == lsym_word || ps.prev_lsym == lsym_funcname)
+	if (ps.prev_lsym == lsym_rparen
+	    || ps.prev_lsym == lsym_rbracket
+	    || ps.prev_lsym == lsym_postfix_op
+	    || ps.prev_lsym == lsym_offsetof
+	    || ps.prev_lsym == lsym_word
+	    || ps.prev_lsym == lsym_funcname)
 		return false;
 	return true;
 }
