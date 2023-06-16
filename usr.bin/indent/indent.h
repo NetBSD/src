@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.200 2023/06/16 11:48:32 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.201 2023/06/16 12:30:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -306,6 +306,7 @@ extern struct parser_state {
 	bool in_stmt_or_decl;	/* whether in a statement or a struct
 				 * declaration or a plain declaration */
 	bool in_decl;		/* XXX: double-check the exact meaning */
+	bool in_typedef_decl;
 	bool in_var_decl;	/* starts at a type name or a '){' from a
 				 * compound literal; ends at the '(' from a
 				 * function definition or a ';' outside '{}';
