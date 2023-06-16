@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2431 2023/06/16 20:38:18 wiz Exp $
+#	$NetBSD: mi,v 1.2432 2023/06/16 22:18:02 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3030,7 +3030,7 @@
 ./usr/include/openssl/provider.h		comp-c-include		openssl=30
 ./usr/include/openssl/rand.h			comp-c-include
 ./usr/include/openssl/rand_drbg.h		comp-c-include	openssl=11
-./usr/include/openssl/rand_drbg.h		comp-obsolete	openssl=30
+./usr/include/openssl/rand_drbg.h		comp-obsolete	obsolete,openssl=30
 ./usr/include/openssl/randerr.h			comp-c-include
 ./usr/include/openssl/rc2.h			comp-c-include
 ./usr/include/openssl/rc4.h			comp-c-include
