@@ -1,6 +1,6 @@
 .\"	$OpenBSD: patch.1,v 1.22 2008/06/06 20:44:00 jmc Exp $
 .\"	$DragonFly: src/usr.bin/patch/patch.1,v 1.10 2008/08/18 19:15:55 joerg Exp $
-.\"	$NetBSD: patch.1,v 1.21 2017/07/03 21:34:20 wiz Exp $
+.\"	$NetBSD: patch.1,v 1.22 2023/06/16 11:27:00 wiz Exp $
 .\" Copyright 1986, Larry Wall
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 7, 2015
+.Dd June 16, 2023
 .Dt PATCH 1
 .Os
 .Sh NAME
@@ -41,6 +41,8 @@
 .Op Fl V Cm t | nil | never | none
 .Op Fl x Ar number
 .Op Fl z Ar backup-ext
+.Op Fl Fl backup-if-mismatch
+.Op Fl Fl no-backup-if-mismatch
 .Op Fl Fl posix
 .Op Ar origfile Op Ar patchfile
 .Nm
@@ -100,8 +102,15 @@ backup is made.
 This is equivalent to specifying
 .Qo Fl V Cm existing Qc .
 This option is currently the default, unless
-.Fl -posix
+.Fl Fl posix
 is specified.
+.It Fl Fl backup-if-mismatch
+Create a backup file if the patch doesn't apply cleanly.
+This option only makes sense when
+.Fl Fl backup
+is disabled, i.e. when in
+.Fl Fl posix
+mode.
 .It Fl C , Fl Fl check
 Checks that the patch would apply cleanly, but does not modify anything.
 .It Fl c , Fl Fl context
@@ -177,6 +186,10 @@ See also
 Forces
 .Nm
 to interpret the patch file as a normal diff.
+.It Fl Fl no-backup-if-mismatch
+Turn off
+.Fl Fl backup-if-mismatch .
+This option exists mostly for compatibility with GNU patch.
 .It Fl o Ar out-file , Fl Fl output Ar out-file
 Causes the next argument to be interpreted as the output file name.
 .It Fl p Ar strip-count , Fl Fl strip Ar strip-count
@@ -604,7 +617,7 @@ utility is compliant with the
 .St -p1003.1-2004
 specification
 (except as detailed above for the
-.Fl -posix
+.Fl Fl posix
 option),
 though the presence of
 .Nm
@@ -613,7 +626,7 @@ itself is optional.
 The flags
 .Op Fl CEfstuvBFVxz
 and
-.Op Fl -posix
+.Op Fl Fl posix
 are extensions to that specification.
 .Sh AUTHORS
 .An Larry Wall
