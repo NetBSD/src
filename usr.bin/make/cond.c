@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.345 2023/06/01 07:44:10 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.346 2023/06/16 07:12:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.345 2023/06/01 07:44:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.346 2023/06/16 07:12:46 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -173,7 +173,7 @@ typedef struct CondParser {
 	bool printedError;
 } CondParser;
 
-static CondResult CondParser_Or(CondParser *par, bool);
+static CondResult CondParser_Or(CondParser *, bool);
 
 unsigned int cond_depth = 0;	/* current .if nesting level */
 
