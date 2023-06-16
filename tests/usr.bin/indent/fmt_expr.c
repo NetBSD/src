@@ -1,4 +1,4 @@
-/* $NetBSD: fmt_expr.c,v 1.8 2023/06/14 17:07:32 rillig Exp $ */
+/* $NetBSD: fmt_expr.c,v 1.9 2023/06/16 12:55:57 rillig Exp $ */
 
 /*
  * Tests for all kinds of expressions that are not directly related to unary
@@ -19,8 +19,7 @@
 	x = ((struct point){0, 0}).x;
 
 	for (ln = gnodes->first; ln != NULL; ln = ln->next)
-// $ FIXME: No space after the cast.
-		*(GNode **) Vector_Push(&vec) = ln->datum;
+		*(GNode **)Vector_Push(&vec) = ln->datum;
 }
 //indent end
 

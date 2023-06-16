@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.374 2023/06/16 12:30:45 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.375 2023/06/16 12:55:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.374 2023/06/16 12:30:45 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.375 2023/06/16 12:55:57 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -627,6 +627,8 @@ process_rparen(void)
 	    && ps.paren.item[--ps.paren.len].cast == cast_maybe
 	    && !ps.in_func_def_params
 	    && !(ps.line_has_decl && !ps.in_init);
+	if (ps.prev_lsym == lsym_unary_op)
+		ps.prev_paren_was_cast = true;
 	if (ps.prev_paren_was_cast) {
 		ps.next_unary = true;
 		ps.want_blank = opt.space_after_cast;
