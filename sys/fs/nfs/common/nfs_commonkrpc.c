@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_commonkrpc.c,v 1.2 2016/12/13 22:31:51 pgoyette Exp $	*/
+/*	$NetBSD: nfs_commonkrpc.c,v 1.3 2023/06/16 19:40:46 andvar Exp $	*/
 /*-
  * Copyright (c) 1989, 1991, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfs/nfs_commonkrpc.c 304026 2016-08-12 22:44:59Z rmacklem "); */
-__RCSID("$NetBSD: nfs_commonkrpc.c,v 1.2 2016/12/13 22:31:51 pgoyette Exp $");
+__RCSID("$NetBSD: nfs_commonkrpc.c,v 1.3 2023/06/16 19:40:46 andvar Exp $");
 
 /*
  * Socket operations for use by nfs
@@ -181,7 +181,7 @@ newnfs_connect(struct nfsmount *nmp, struct nfssockreq *nrp,
 	/*
 	 * We need to establish the socket using the credentials of
 	 * the mountpoint.  Some parts of this process (such as
-	 * sobind() and soconnect()) will use the curent thread's
+	 * sobind() and soconnect()) will use the current thread's
 	 * credential instead of the socket credential.  To work
 	 * around this, temporarily change the current thread's
 	 * credential to that of the mountpoint.
