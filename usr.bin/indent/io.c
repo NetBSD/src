@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.225 2023/06/15 11:27:36 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.226 2023/06/16 11:27:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.225 2023/06/15 11:27:36 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.226 2023/06/16 11:27:49 rillig Exp $");
 
 #include <stdio.h>
 
@@ -300,9 +300,9 @@ output_comment(void)
 	int target_ind = ps.comment_ind;
 	const char *p;
 
-	if (!ps.comment_in_first_line)
+	if (ps.comment_cont)
 		target_ind += ps.comment_shift;
-	ps.comment_in_first_line = false;
+	ps.comment_cont = true;
 
 	/* consider the original indentation in case this is a box comment */
 	for (p = com.s; *p == '\t'; p++)
