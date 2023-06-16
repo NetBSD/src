@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.320 2023/06/01 07:44:10 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.321 2023/06/16 07:12:46 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -778,8 +778,8 @@ void Arch_End(void);
 bool Arch_ParseArchive(char **, GNodeList *, GNode *);
 void Arch_Touch(GNode *);
 void Arch_TouchLib(GNode *);
-void Arch_UpdateMTime(GNode *gn);
-void Arch_UpdateMemberMTime(GNode *gn);
+void Arch_UpdateMTime(GNode *);
+void Arch_UpdateMemberMTime(GNode *);
 void Arch_FindLib(GNode *, SearchPath *);
 bool Arch_LibOODate(GNode *) MAKE_ATTR_USE;
 bool Arch_IsLib(GNode *) MAKE_ATTR_USE;
