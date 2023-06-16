@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_rec.c,v 1.38 2021/08/21 23:00:30 andvar Exp $	*/
+/*	$NetBSD: xdr_rec.c,v 1.39 2023/06/16 20:01:20 andvar Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_rec.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_rec.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_rec.c,v 1.38 2021/08/21 23:00:30 andvar Exp $");
+__RCSID("$NetBSD: xdr_rec.c,v 1.39 2023/06/16 20:01:20 andvar Exp $");
 #endif
 #endif
 
@@ -132,7 +132,7 @@ typedef struct rec_strm {
 	char *out_base;	/* output buffer (points to frag header) */
 	char *out_finger;	/* next output position */
 	char *out_boundry;	/* data cannot up to this address */
-	uint32_t *frag_header;	/* beginning of curren fragment */
+	uint32_t *frag_header;	/* beginning of current fragment */
 	bool_t frag_sent;	/* true if buffer sent in middle of record */
 	/*
 	 * in-coming bits
