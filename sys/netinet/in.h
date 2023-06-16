@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.114 2021/02/03 18:13:13 roy Exp $	*/
+/*	$NetBSD: in.h,v 1.115 2023/06/16 03:02:30 rin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -107,7 +107,7 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_CARP		112		/* Common Address Resolution Protocol */
 #define	IPPROTO_L2TP		115		/* L2TPv3 */
 #define	IPPROTO_SCTP		132		/* SCTP */
-#define IPPROTO_PFSYNC      240     /* PFSYNC */
+#define IPPROTO_PFSYNC		240		/* PFSYNC */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256
 
@@ -353,22 +353,22 @@ struct ip_mreq {
 #define	IPCTL_ALLOWSRCRT	7	/* allow/drop all source-routed pkts */
 #define	IPCTL_SUBNETSARELOCAL	8	/* treat subnets as local addresses */
 #define	IPCTL_MTUDISC		9	/* allow path MTU discovery */
-#define	IPCTL_ANONPORTMIN      10	/* minimum ephemeral port */
-#define	IPCTL_ANONPORTMAX      11	/* maximum ephemeral port */
-#define	IPCTL_MTUDISCTIMEOUT   12	/* allow path MTU discovery */
-#define	IPCTL_MAXFLOWS         13	/* maximum ip flows allowed */
-#define	IPCTL_HOSTZEROBROADCAST 14	/* is host zero a broadcast addr? */
-#define	IPCTL_GIF_TTL 	       15	/* default TTL for gif encap packet */
-#define	IPCTL_LOWPORTMIN       16	/* minimum reserved port */
-#define	IPCTL_LOWPORTMAX       17	/* maximum reserved port */
-#define	IPCTL_MAXFRAGPACKETS   18	/* max packets reassembly queue */
-#define	IPCTL_GRE_TTL          19	/* default TTL for gre encap packet */
-#define	IPCTL_CHECKINTERFACE   20	/* drop pkts in from 'wrong' iface */
-#define	IPCTL_IFQ	       21	/* IP packet input queue */
-#define	IPCTL_RANDOMID	       22	/* use random IP ids (if configured) */
-#define	IPCTL_LOOPBACKCKSUM    23	/* do IP checksum on loopback */
+#define	IPCTL_ANONPORTMIN	10	/* minimum ephemeral port */
+#define	IPCTL_ANONPORTMAX	11	/* maximum ephemeral port */
+#define	IPCTL_MTUDISCTIMEOUT	12	/* allow path MTU discovery */
+#define	IPCTL_MAXFLOWS		13	/* maximum ip flows allowed */
+#define	IPCTL_HOSTZEROBROADCAST	14	/* is host zero a broadcast addr? */
+#define	IPCTL_GIF_TTL		15	/* default TTL for gif encap packet */
+#define	IPCTL_LOWPORTMIN	16	/* minimum reserved port */
+#define	IPCTL_LOWPORTMAX	17	/* maximum reserved port */
+#define	IPCTL_MAXFRAGPACKETS	18	/* max packets reassembly queue */
+#define	IPCTL_GRE_TTL		19	/* default TTL for gre encap packet */
+#define	IPCTL_CHECKINTERFACE	20	/* drop pkts in from 'wrong' iface */
+#define	IPCTL_IFQ		21	/* IP packet input queue */
+#define	IPCTL_RANDOMID		22	/* use random IP ids (if configured) */
+#define	IPCTL_LOOPBACKCKSUM	23	/* do IP checksum on loopback */
 #define	IPCTL_STATS		24	/* IP statistics */
-#define	IPCTL_DAD_COUNT        25	/* DAD packets to send */
+#define	IPCTL_DAD_COUNT		25	/* DAD packets to send */
 
 #endif /* _NETBSD_SOURCE */
 
