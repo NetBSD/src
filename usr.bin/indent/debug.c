@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.63 2023/06/16 11:27:49 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.64 2023/06/16 11:48:32 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.63 2023/06/16 11:27:49 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.64 2023/06/16 11:48:32 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -125,6 +125,7 @@ const char *const line_kind_name[] = {
 	"blank",
 	"#if",
 	"#endif",
+	"#other",
 	"stmt head",
 	"}",
 	"block comment",

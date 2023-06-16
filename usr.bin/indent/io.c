@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.226 2023/06/16 11:27:49 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.227 2023/06/16 11:48:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.226 2023/06/16 11:27:49 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.227 2023/06/16 11:48:32 rillig Exp $");
 
 #include <stdio.h>
 
@@ -176,14 +176,15 @@ want_blank_line(void)
 		return true;
 	}
 	if (opt.blank_line_around_conditional_compilation) {
-		if (out.prev_line_kind != lk_if && out.line_kind == lk_if)
+		if (out.prev_line_kind != lk_pre_if
+		    && out.line_kind == lk_pre_if)
 			return true;
-		if (out.prev_line_kind == lk_endif
-		    && out.line_kind != lk_endif)
+		if (out.prev_line_kind == lk_pre_endif
+		    && out.line_kind != lk_pre_endif)
 			return true;
 	}
 	if (opt.blank_line_after_proc && out.prev_line_kind == lk_func_end
-	    && out.line_kind != lk_endif)
+	    && out.line_kind != lk_pre_endif && out.line_kind != lk_pre_other)
 		return true;
 	if (opt.blank_line_before_block_comment
 	    && out.line_kind == lk_block_comment)

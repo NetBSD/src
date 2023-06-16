@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.372 2023/06/15 11:27:36 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.373 2023/06/16 11:48:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.372 2023/06/15 11:27:36 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.373 2023/06/16 11:48:32 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -527,21 +527,23 @@ process_preprocessing(void)
 				sizeof(ifdef.item[0]) * ifdef.cap));
 		}
 		parser_state_back_up(ifdef.item + ifdef.len++);
-		out.line_kind = lk_if;
+		out.line_kind = lk_pre_if;
 
 	} else if (dir_len >= 2 && memcmp(dir, "el", 2) == 0) {
 		if (ifdef.len == 0)
 			diag(1, "Unmatched #%.*s", (int)dir_len, dir);
 		else
 			parser_state_restore(ifdef.item + ifdef.len - 1);
+		out.line_kind = lk_pre_other;
 
 	} else if (dir_len == 5 && memcmp(dir, "endif", 5) == 0) {
 		if (ifdef.len == 0)
 			diag(1, "Unmatched #endif");
 		else
 			parser_state_free(ifdef.item + --ifdef.len);
-		out.line_kind = lk_endif;
-	}
+		out.line_kind = lk_pre_endif;
+	} else
+		out.line_kind = lk_pre_other;
 }
 
 static void

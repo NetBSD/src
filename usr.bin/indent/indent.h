@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.199 2023/06/16 11:27:49 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.200 2023/06/16 11:48:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -410,8 +410,9 @@ extern struct output_state {
 	enum line_kind {
 		lk_other,
 		lk_blank,
-		lk_if,		/* #if, #ifdef, #ifndef */
-		lk_endif,	/* #endif */
+		lk_pre_if,	/* #if, #ifdef, #ifndef */
+		lk_pre_endif,	/* #endif */
+		lk_pre_other,	/* #else, #elif, #define, #undef */
 		lk_stmt_head,	/* the ')' of an incomplete statement such as
 				 * 'if (expr)' or 'for (expr; expr; expr)' */
 		lk_func_end,	/* the last '}' of a function body */
