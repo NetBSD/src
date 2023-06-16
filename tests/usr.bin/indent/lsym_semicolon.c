@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_semicolon.c,v 1.5 2023/06/15 09:19:07 rillig Exp $ */
+/* $NetBSD: lsym_semicolon.c,v 1.6 2023/06/16 23:19:01 rillig Exp $ */
 
 /*
  * Tests for the token lsym_semicolon, which represents ';' in these contexts:
@@ -84,8 +84,8 @@ int b = 3;
 //indent run -di0
 int a = {{;
 		int b = 3;
-exit 1
-error: Standard Input:2: Stuff missing from end of file
+// exit 1
+// error: Standard Input:2: Stuff missing from end of file
 //indent end
 
 
@@ -101,6 +101,6 @@ error: Standard Input:2: Stuff missing from end of file
 	int a = {{;
 			int b = 3;
 	}
-exit 1
-error: Standard Input:4: Stuff missing from end of file
+// exit 1
+// error: Standard Input:4: Stuff missing from end of file
 //indent end
