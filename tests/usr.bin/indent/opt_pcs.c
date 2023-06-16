@@ -1,4 +1,4 @@
-/* $NetBSD: opt_pcs.c,v 1.17 2023/06/14 14:11:28 rillig Exp $ */
+/* $NetBSD: opt_pcs.c,v 1.18 2023/06/16 23:07:52 rillig Exp $ */
 
 /*
  * Tests for the options '-pcs' and '-npcs'.
@@ -114,8 +114,7 @@ int offset = offsetof(struct s, member);
 
 //indent input
 int unary = +call();
-// $ FIXME: Unusual, but there should be no space.
-int postfix = step++ ();
+int postfix = step++();
 int binary = 1 + call();
 //indent end
 
