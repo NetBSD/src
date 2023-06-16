@@ -1,19 +1,19 @@
 /*
  * $OpenBSD: inp.c,v 1.34 2006/03/11 19:41:30 otto Exp $
  * $DragonFly: src/usr.bin/patch/inp.c,v 1.6 2007/09/29 23:11:10 swildner Exp $
- * $NetBSD: inp.c,v 1.28 2021/05/26 07:57:05 cjep Exp $
+ * $NetBSD: inp.c,v 1.29 2023/06/16 23:32:37 wiz Exp $
  */
 
 /*
  * patch - a program to apply diffs to original files
- * 
+ *
  * Copyright 1986, Larry Wall
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following condition is met:
  * 1. Redistributions of source code must retain the above copyright notice,
  * this condition and the following disclaimer.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,13 +25,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * -C option added in 1998, original code by Marc Espie, based on FreeBSD
  * behaviour
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inp.c,v 1.28 2021/05/26 07:57:05 cjep Exp $");
+__RCSID("$NetBSD: inp.c,v 1.29 2023/06/16 23:32:37 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/file.h>
@@ -142,7 +142,7 @@ static bool
 plan_a(const char *filename)
 {
 	int		ifd, statfailed, devnull, pstat;
-	char		*p, *s, *lbuf; 
+	char		*p, *s, *lbuf;
 	struct stat	filestat;
 	off_t		i;
 	ptrdiff_t	sz;
@@ -190,7 +190,7 @@ plan_a(const char *filename)
 		tmp_filename2 = strdup(filename);
 		if (tmp_filename1 == NULL || tmp_filename2 == NULL)
 			fatal("strdupping filename");
- 
+
  		filebase = basename(tmp_filename1);
  		filedir = dirname(tmp_filename2);
 
@@ -198,7 +198,7 @@ plan_a(const char *filename)
 		if ((lbuf = malloc(bufsz)) == NULL)
 			pfatal("allocating line buffer");
 		lbuf[0] = '\0';
- 
+
 #define try(f, a1, a2, a3) \
 	(snprintf(lbuf, lbufsz, f, a1, a2, a3), stat(lbuf, &cstat) == 0)
 
