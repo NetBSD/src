@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1268 2023/06/16 07:20:45 rillig Exp $
+# $NetBSD: mi,v 1.1269 2023/06/16 09:25:13 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5779,6 +5779,8 @@
 ./usr/tests/usr.bin/make/unit-tests/directive-ifnmake.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-include-fatal.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-include-fatal.mk			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/directive-include-guard.exp			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/make/unit-tests/directive-include-guard.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-include.exp			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-include.mk			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/make/unit-tests/directive-info.exp				tests-usr.bin-tests	compattestfile,atf
