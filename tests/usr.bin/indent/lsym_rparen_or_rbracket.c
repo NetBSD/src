@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_rparen_or_rbracket.c,v 1.5 2023/06/15 09:19:07 rillig Exp $ */
+/* $NetBSD: lsym_rparen_or_rbracket.c,v 1.6 2023/06/16 13:43:30 rillig Exp $ */
 
 /*
  * Tests for the token lsym_rparen_or_lbracket, which represents ')' or ']',
@@ -52,5 +52,26 @@ int a = array[
 		3
 // $ FIXME: Should be one level to the left since it is the outermost bracket.
 		];
+}
+//indent end
+
+
+//indent input
+{
+	dcs_align((u_int)dcs);
+	mpools.pools[i] = (memory_pool){NULL, 0, 0};
+	list_add(l, (const char[3]){'-', (char)c, '\0'});
+}
+//indent end
+
+//indent run -ci4 -di0 -nlp
+{
+// $ FIXME: No space after cast.
+	dcs_align((u_int) dcs);
+// $ FIXME: Don't add newlines.
+	mpools.pools[i] = (memory_pool) {
+		NULL, 0, 0
+	};
+	list_add(l, (const char[3]){'-', (char)c, '\0'});
 }
 //indent end
