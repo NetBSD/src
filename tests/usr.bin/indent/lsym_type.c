@@ -1,14 +1,20 @@
-/* $NetBSD: lsym_type_outside_parentheses.c,v 1.7 2023/06/15 09:19:07 rillig Exp $ */
+/* $NetBSD: lsym_type.c,v 1.1 2023/06/16 23:51:32 rillig Exp $ */
 
 /*
- * Tests for the token lsym_type_outside_parentheses, which represents a type
- * name outside parentheses, such as in a declaration that is not for a
- * function.
+ * Tests for the token lsym_type, which represents a type name in the following
+ * contexts:
+ *
+ * In a declaration that is not for a function.
+ *
+ * As part of a parameter list of a function prototype.
+ *
+ * In a cast expression.
+ *
+ * In a compound expression (since C99).
  *
  * See also:
  *	fmt_decl
  *	lex_ident
- *	lsym_type_in_parentheses
  *	lsym_word
  *	opt_ta
  *	opt_T

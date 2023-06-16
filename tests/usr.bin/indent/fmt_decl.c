@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.58 2023/06/16 12:30:45 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.59 2023/06/16 23:51:32 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -926,10 +926,6 @@ ch_isalpha(char ch)
 
 //indent run -i4 -di0
 // $ FIXME: 'buffer' is classified as 'word'.
-// $
-// $ XXX: 'char' is classified as 'type_in_parentheses'; check whether
-// $ XXX: lsym_type_in_parentheses should only be used for types in cast
-// $ XXX: expressions.
 // $
 // $ FIXME: 'size_t' is classified as 'word'.
 void buf_add_chars(struct buffer *, const char *, size_t);

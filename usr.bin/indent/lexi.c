@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.229 2023/06/14 16:14:30 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.230 2023/06/16 23:51:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,15 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.229 2023/06/14 16:14:30 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.230 2023/06/16 23:51:32 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
 
 #include "indent.h"
-
-/* In lexi_alnum, this constant marks a type, independent of parentheses. */
-#define lsym_type lsym_type_outside_parentheses
 
 /* must be sorted alphabetically, is used in binary search */
 static const struct keyword {
@@ -398,7 +395,7 @@ lexi_alnum(void)
 	    || ps.prev_lsym == lsym_typedef;
 
 	if (ps.prev_lsym == lsym_tag && ps.paren.len == 0)
-		return lsym_type_outside_parentheses;
+		return lsym_type;
 
 	token_add_char('\0');
 	token.len--;
@@ -407,7 +404,7 @@ lexi_alnum(void)
 	lexer_symbol lsym = lsym_word;
 	if (kw != NULL) {
 		if (kw->lsym == lsym_type)
-			lsym = lsym_type_in_parentheses;
+			lsym = lsym_type;
 		ps.next_unary = true;
 		if (kw->lsym == lsym_tag || kw->lsym == lsym_type)
 			goto found_typename;
@@ -415,7 +412,7 @@ lexi_alnum(void)
 	}
 
 	if (is_typename()) {
-		lsym = lsym_type_in_parentheses;
+		lsym = lsym_type;
 		ps.next_unary = true;
 found_typename:
 		if (ps.paren.len > 0) {
@@ -431,7 +428,7 @@ found_typename:
 			if (kw != NULL && kw->lsym == lsym_tag)
 				return lsym_tag;
 			if (ps.paren.len == 0)
-				return lsym_type_outside_parentheses;
+				return lsym_type;
 		}
 	}
 
@@ -447,7 +444,7 @@ found_typename:
 
 	} else if (ps.paren.len == 0 && probably_typename()) {
 		ps.next_unary = true;
-		return lsym_type_outside_parentheses;
+		return lsym_type;
 	}
 
 	return lsym;

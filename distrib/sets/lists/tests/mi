@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1270 2023/06/16 20:38:19 wiz Exp $
+# $NetBSD: mi,v 1.1271 2023/06/16 23:51:31 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4973,8 +4973,9 @@
 ./usr/tests/usr.bin/indent/lsym_string_prefix.c				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/lsym_switch.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/lsym_tag.c					tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/lsym_type_in_parentheses.c			tests-usr.bin-tests	compattestfile,atf
-./usr/tests/usr.bin/indent/lsym_type_outside_parentheses.c		tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_type.c					tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/indent/lsym_type_in_parentheses.c			tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/indent/lsym_type_outside_parentheses.c		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/indent/lsym_typedef.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/lsym_unary_op.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/indent/lsym_while.c					tests-usr.bin-tests	compattestfile,atf

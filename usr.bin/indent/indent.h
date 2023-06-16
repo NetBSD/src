@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.201 2023/06/16 12:30:45 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.202 2023/06/16 23:51:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -94,8 +94,7 @@ typedef enum lexer_symbol {
 	lsym_typedef,
 	lsym_modifier,		/* modifiers for types, functions, variables */
 	lsym_tag,		/* 'struct', 'union' or 'enum' */
-	lsym_type_outside_parentheses,
-	lsym_type_in_parentheses,
+	lsym_type,
 	lsym_word,		/* identifier, constant or string */
 	lsym_funcname,		/* name of a function being defined */
 	lsym_label_colon,	/* the ':' after a label */
