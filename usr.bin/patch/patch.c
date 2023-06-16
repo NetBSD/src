@@ -1,7 +1,7 @@
 /*
  * $OpenBSD: patch.c,v 1.45 2007/04/18 21:52:24 sobrado Exp $
  * $DragonFly: src/usr.bin/patch/patch.c,v 1.10 2008/08/10 23:39:56 joerg Exp $
- * $NetBSD: patch.c,v 1.33 2021/09/20 23:22:36 dholland Exp $
+ * $NetBSD: patch.c,v 1.34 2023/06/16 11:27:00 wiz Exp $
  */
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: patch.c,v 1.33 2021/09/20 23:22:36 dholland Exp $");
+__RCSID("$NetBSD: patch.c,v 1.34 2023/06/16 11:27:00 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -91,6 +91,7 @@ int		diff_type = 0;
 char		*revision = NULL;	/* prerequisite revision, if any */
 LINENUM		input_lines = 0;	/* how long is input file in lines */
 int		posix = 0;		/* strict POSIX mode? */
+int		backup_if_mismatch = -1;/* create backup file when patch doesn't apply cleanly */
 
 static void	reinitialize_almost_everything(void);
 static void	get_some_switches(void);
@@ -374,12 +375,17 @@ main(int argc, char *argv[])
 			char	*realout = outname;
 
 			if (!check_only) {
+				/* handle --backup-if-mismatch */
+				enum backup_type saved = backup_type;
+				if (failed > 0 && backup_if_mismatch > 0 && backup_type == none)
+					backup_type = simple;
 				if (move_file(TMPOUTNAME, outname) < 0) {
 					toutkeep = true;
 					realout = TMPOUTNAME;
 					chmod(TMPOUTNAME, filemode);
 				} else
 					chmod(outname, filemode);
+				backup_type = saved;
 
 				if (remove_empty_files &&
 				    stat(realout, &statbuf) == 0 &&
@@ -410,7 +416,7 @@ main(int argc, char *argv[])
 				say("%d out of %d hunks ignored--saving rejects to %s\n",
 				    failed, hunk, rejname);
 			} else {
-				say("%d out of %d hunks failed--saving rejects to %s\n",
+				say("%d out of %d hunks FAILED -- saving rejects to %s\n",
 				    failed, hunk, rejname);
 			}
 			if (!check_only && move_file(TMPREJNAME, rejname) < 0)
@@ -462,6 +468,7 @@ get_some_switches(void)
 	const char *options = "b::B:cCd:D:eEfF:i:lnNo:p:r:RstuvV:x:z:";
 	static struct option longopts[] = {
 		{"backup",		no_argument,		0,	'b'},
+		{"backup-if-mismatch",	no_argument,		&backup_if_mismatch, 1},
 		{"batch",		no_argument,		0,	't'},
 		{"check",		no_argument,		0,	'C'},
 		{"context",		no_argument,		0,	'c'},
@@ -474,6 +481,7 @@ get_some_switches(void)
 		{"ifdef",		required_argument,	0,	'D'},
 		{"input",		required_argument,	0,	'i'},
 		{"ignore-whitespace",	no_argument,		0,	'l'},
+		{"no-backup-if-mismatch",	no_argument,	&backup_if_mismatch, 0},
 		{"normal",		no_argument,		0,	'n'},
 		{"output",		required_argument,	0,	'o'},
 		{"prefix",		required_argument,	0,	'B'},
@@ -620,6 +628,10 @@ get_some_switches(void)
 
 	if (getenv("POSIXLY_CORRECT") != NULL)
 		posix = 1;
+
+	if (backup_if_mismatch == -1) {
+		backup_if_mismatch = posix ? 0 : 1;
+	}
 }
 
 static void
@@ -629,7 +641,8 @@ usage(void)
 "usage: patch [-bCcEeflNnRstuv] [-B backup-prefix] [-D symbol] [-d directory]\n"
 "             [-F max-fuzz] [-i patchfile] [-o out-file] [-p strip-count]\n"
 "             [-r rej-name] [-V t | nil | never] [-x number] [-z backup-ext]\n"
-"             [--posix] [origfile [patchfile]]\n"
+"             [--backup-if-mismatch] [--no-backup-if-mismatch] [--posix]\n"
+"             [origfile [patchfile]]\n"
 "       patch <patchfile\n");
 	my_exit(EXIT_FAILURE);
 }
