@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_rparen_or_rbracket.c,v 1.7 2023/06/16 14:12:10 rillig Exp $ */
+/* $NetBSD: lsym_rparen_or_rbracket.c,v 1.8 2023/06/16 14:26:27 rillig Exp $ */
 
 /*
  * Tests for the token lsym_rparen_or_lbracket, which represents ')' or ']',
@@ -56,7 +56,13 @@ int a = array[
 //indent end
 
 
+/*
+ * Cast expressions and compound expressions, taken from lint and make.
+ */
 //indent input
+// This ')' is not a cast.
+char *Buf_DoneData(Buffer *) MAKE_ATTR_USE;
+
 {
 	dcs_align((u_int)dcs);
 	mpools.pools[i] = (memory_pool){NULL, 0, 0};
@@ -64,13 +70,4 @@ int a = array[
 }
 //indent end
 
-//indent run -ci4 -di0 -nlp
-{
-	dcs_align((u_int)dcs);
-// $ FIXME: Don't add newlines.
-	mpools.pools[i] = (memory_pool) {
-		NULL, 0, 0
-	};
-	list_add(l, (const char[3]){'-', (char)c, '\0'});
-}
-//indent end
+//indent run-equals-input -ci4 -di0 -nlp
