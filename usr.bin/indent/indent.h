@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.198 2023/06/15 10:59:06 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.199 2023/06/16 11:27:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -383,10 +383,10 @@ extern struct parser_state {
 
 	/* Indentation of comments */
 
-	int comment_ind;	/* indentation of the current comment */
+	int comment_ind;	/* total indentation of the current comment */
 	int comment_shift;	/* all but the first line of a boxed comment
 				 * are shifted this much to the right */
-	bool comment_in_first_line;
+	bool comment_cont;	/* after the first line of a comment */
 
 	/* Vertical spacing */
 
