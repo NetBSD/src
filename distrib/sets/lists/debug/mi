@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.403 2023/06/06 08:27:44 martin Exp $
+# $NetBSD: mi,v 1.404 2023/06/16 20:38:19 wiz Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1624,7 +1624,9 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_divtest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_dsatest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ecdhtest.debug		tests-crypto-debug	debug,atf,compattestfile,openssl=11
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ecdhtest.debug		tests-obsolete		obsolete,openssl=30
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ecdsatest.debug	tests-crypto-debug	debug,atf,compattestfile,openssl=11
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ecdsatest.debug	tests-obsolete		obsolete,openssl=30
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ectest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_enginetest.debug	tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_evp_test.debug		tests-crypto-debug	debug,atf,compattestfile
@@ -1633,6 +1635,7 @@
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_ideatest.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_lhashtest.debug	tests-crypto-debug	debug,atf,compattestfile,openssl=10
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md2test.debug		tests-crypto-debug	debug,atf,compattestfile,openssl=11
+./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md2test.debug		tests-obsolete		obsolete,openssl=30
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md4test.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_md5test.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/crypto/libcrypto/h_mdc2test.debug		tests-crypto-debug	debug,atf,compattestfile

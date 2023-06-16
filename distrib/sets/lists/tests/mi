@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1269 2023/06/16 09:25:13 rillig Exp $
+# $NetBSD: mi,v 1.1270 2023/06/16 20:38:19 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1336,7 +1336,9 @@
 ./usr/tests/crypto/libcrypto/d_server.pem		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/default.cnf		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpcase.txt		tests-crypto-tests	compattestfile,atf,openssl=11
+./usr/tests/crypto/libcrypto/evpcase.txt		tests-obsolete		obsolete,openssl=30
 ./usr/tests/crypto/libcrypto/evpciph.txt		tests-crypto-tests	compattestfile,atf,openssl=11
+./usr/tests/crypto/libcrypto/evpciph.txt		tests-obsolete		obsolete,openssl=30
 ./usr/tests/crypto/libcrypto/evpciph_aes_ccm_cavs.txt	tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpciph_aes_common.txt	tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpciph_aes_cts.txt	tests-crypto-tests	atf,compattestfile,openssl=30
@@ -1360,9 +1362,11 @@
 ./usr/tests/crypto/libcrypto/evpciph_seed.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpciph_sm4.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpdigest.txt		tests-crypto-tests	compattestfile,atf,openssl=11
+./usr/tests/crypto/libcrypto/evpdigest.txt		tests-obsolete		obsolete,openssl=30
 ./usr/tests/crypto/libcrypto/evpencod.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpencod.txt		tests-crypto-tests	compattestfile,atf,openssl=11
 ./usr/tests/crypto/libcrypto/evpkdf.txt			tests-crypto-tests	compattestfile,atf,openssl=11
+./usr/tests/crypto/libcrypto/evpkdf.txt			tests-obsolete		obsolete,openssl=30
 ./usr/tests/crypto/libcrypto/evpkdf_hkdf.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpkdf_krb5.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpkdf_pbkdf1.txt		tests-crypto-tests	atf,compattestfile,openssl=30
@@ -1377,6 +1381,7 @@
 ./usr/tests/crypto/libcrypto/evpkdf_x942_des.txt	tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpkdf_x963.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpmac.txt			tests-crypto-tests	compattestfile,atf,openssl=11
+./usr/tests/crypto/libcrypto/evpmac.txt			tests-obsolete		obsolete,openssl=30
 ./usr/tests/crypto/libcrypto/evpmac_blake.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpmac_cmac_des.txt	tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpmac_common.txt		tests-crypto-tests	atf,compattestfile,openssl=30
@@ -1391,10 +1396,12 @@
 ./usr/tests/crypto/libcrypto/evpmd_sm3.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evpmd_whirlpool.txt	tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evppbe.txt			tests-crypto-tests	compattestfile,atf,openssl=11
+./usr/tests/crypto/libcrypto/evppbe.txt			tests-obsolete		obsolete,openssl=30
 ./usr/tests/crypto/libcrypto/evppbe_pbkdf2.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evppbe_pkcs12.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evppbe_scrypt.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evppkey.txt		tests-crypto-tests	compattestfile,atf,openssl=11
+./usr/tests/crypto/libcrypto/evppkey.txt		tests-obsolete		obsolete,openssl=30
 ./usr/tests/crypto/libcrypto/evppkey_brainpool.txt	tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evppkey_dh.txt		tests-crypto-tests	atf,compattestfile,openssl=30
 ./usr/tests/crypto/libcrypto/evppkey_dsa.txt		tests-crypto-tests	atf,compattestfile,openssl=30
@@ -1422,7 +1429,9 @@
 ./usr/tests/crypto/libcrypto/h_divtest			tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_dsatest			tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_ecdhtest			tests-crypto-tests	compattestfile,atf,openssl=11
+./usr/tests/crypto/libcrypto/h_ecdhtest			tests-obsolete		obsolete,openssl=30
 ./usr/tests/crypto/libcrypto/h_ecdsatest		tests-crypto-tests	compattestfile,atf,openssl=11
+./usr/tests/crypto/libcrypto/h_ecdsatest		tests-obsolete		obsolete,openssl=30
 ./usr/tests/crypto/libcrypto/h_ectest			tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_enginetest		tests-crypto-tests	compattestfile,atf
 ./usr/tests/crypto/libcrypto/h_evp_test			tests-crypto-tests	compattestfile,atf
@@ -1432,6 +1441,7 @@
 ./usr/tests/crypto/libcrypto/h_lhashtest		comp-obsolete		obsolete
 ./usr/tests/crypto/libcrypto/h_lhashtest		tests-crypto-tests	compattestfile,atf,openssl=10
 ./usr/tests/crypto/libcrypto/h_md2test			tests-crypto-tests	compattestfile,atf,openssl=11
+./usr/tests/crypto/libcrypto/h_md2test			tests-obsolete		obsolete,openssl=30
 ./usr/tests/crypto/libcrypto/h_md4test			tests-obsolete		obsolete
 ./usr/tests/crypto/libcrypto/h_md5test			tests-obsolete		obsolete
 ./usr/tests/crypto/libcrypto/h_mdc2test			tests-crypto-tests	compattestfile,atf
