@@ -1,4 +1,4 @@
-/* $NetBSD: psym_rbrace.c,v 1.4 2023/06/14 20:46:08 rillig Exp $ */
+/* $NetBSD: psym_rbrace.c,v 1.5 2023/06/16 23:19:01 rillig Exp $ */
 
 /*
  * Tests for the parser symbol psym_rbrace, which represents '}' and finishes
@@ -23,9 +23,9 @@
 {
 	int
 	}
-exit 1
-error: Standard Input:3: Statement nesting error
-error: Standard Input:3: Stuff missing from end of file
+// exit 1
+// error: Standard Input:3: Statement nesting error
+// error: Standard Input:3: Stuff missing from end of file
 //indent end
 
 
@@ -50,9 +50,9 @@ error: Standard Input:3: Stuff missing from end of file
 {
 	if (cond)
 		}
-exit 1
-error: Standard Input:3: Statement nesting error
-error: Standard Input:3: Stuff missing from end of file
+// exit 1
+// error: Standard Input:3: Statement nesting error
+// error: Standard Input:3: Stuff missing from end of file
 //indent end
 
 
@@ -66,9 +66,9 @@ error: Standard Input:3: Stuff missing from end of file
 {
 	switch (expr)
 		}
-exit 1
-error: Standard Input:3: Statement nesting error
-error: Standard Input:3: Stuff missing from end of file
+// exit 1
+// error: Standard Input:3: Statement nesting error
+// error: Standard Input:3: Stuff missing from end of file
 //indent end
 
 
@@ -82,7 +82,7 @@ error: Standard Input:3: Stuff missing from end of file
 {
 	while (cond)
 		}
-exit 1
-error: Standard Input:3: Statement nesting error
-error: Standard Input:3: Stuff missing from end of file
+// exit 1
+// error: Standard Input:3: Statement nesting error
+// error: Standard Input:3: Stuff missing from end of file
 //indent end
