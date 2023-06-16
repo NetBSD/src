@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.375 2023/06/16 12:55:57 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.376 2023/06/16 14:12:10 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.375 2023/06/16 12:55:57 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.376 2023/06/16 14:12:10 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -617,18 +617,27 @@ process_lparen(void)
 	paren_stack_push(&ps.paren, ind_add(0, code.s, code.len), cast);
 }
 
+static bool
+rparen_is_cast(bool paren_cast)
+{
+	if (ps.in_func_def_params)
+		return false;
+	if (ps.prev_lsym == lsym_unary_op)
+		return true;
+	if (ps.line_has_decl && !ps.in_init)
+		return false;
+	return paren_cast || ch_isalpha(inp_p[0]);
+}
+
 static void
 process_rparen(void)
 {
 	if (ps.paren.len == 0)
 		diag(0, "Extra '%c'", *token.s);
 
-	ps.prev_paren_was_cast = ps.paren.len > 0
-	    && ps.paren.item[--ps.paren.len].cast == cast_maybe
-	    && !ps.in_func_def_params
-	    && !(ps.line_has_decl && !ps.in_init);
-	if (ps.prev_lsym == lsym_unary_op)
-		ps.prev_paren_was_cast = true;
+	bool paren_cast = ps.paren.len > 0
+	    && ps.paren.item[--ps.paren.len].cast == cast_maybe;
+	ps.prev_paren_was_cast = rparen_is_cast(paren_cast);
 	if (ps.prev_paren_was_cast) {
 		ps.next_unary = true;
 		ps.want_blank = opt.space_after_cast;
