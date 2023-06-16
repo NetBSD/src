@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_typedef.c,v 1.6 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: lsym_typedef.c,v 1.7 2023/06/16 11:58:33 rillig Exp $ */
 
 /*
  * Tests for the token lsym_typedef, which represents the keyword 'typedef'
@@ -59,3 +59,25 @@ typedef int number;
 //indent end
 
 //indent run-equals-input
+
+
+/*
+ * Ensure that a typedef declaration does not introduce an unnecessary line
+ * break after the '}'.
+ */
+//indent input
+typedef struct {
+	int member;
+	bool bit:1;
+} typedef_name;
+//indent end
+
+//indent run -di0
+typedef struct {
+	int member;
+// $ FIXME: No space after the ':' here.
+	bool bit: 1;
+}
+// $ FIXME: No linebreak here.
+typedef_name;
+//indent end
