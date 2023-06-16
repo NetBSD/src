@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_rparen_or_rbracket.c,v 1.6 2023/06/16 13:43:30 rillig Exp $ */
+/* $NetBSD: lsym_rparen_or_rbracket.c,v 1.7 2023/06/16 14:12:10 rillig Exp $ */
 
 /*
  * Tests for the token lsym_rparen_or_lbracket, which represents ')' or ']',
@@ -66,8 +66,7 @@ int a = array[
 
 //indent run -ci4 -di0 -nlp
 {
-// $ FIXME: No space after cast.
-	dcs_align((u_int) dcs);
+	dcs_align((u_int)dcs);
 // $ FIXME: Don't add newlines.
 	mpools.pools[i] = (memory_pool) {
 		NULL, 0, 0
