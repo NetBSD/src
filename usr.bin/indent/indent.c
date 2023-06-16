@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.376 2023/06/16 14:12:10 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.377 2023/06/16 14:26:26 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.376 2023/06/16 14:12:10 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.377 2023/06/16 14:26:26 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -622,11 +622,13 @@ rparen_is_cast(bool paren_cast)
 {
 	if (ps.in_func_def_params)
 		return false;
-	if (ps.prev_lsym == lsym_unary_op)
-		return true;
 	if (ps.line_has_decl && !ps.in_init)
 		return false;
-	return paren_cast || ch_isalpha(inp_p[0]);
+	if (ps.prev_lsym == lsym_unary_op)
+		return true;
+	if (ps.spaced_expr_psym != psym_0 && ps.paren.len == 0)
+		return false;
+	return paren_cast || ch_isalpha(inp_p[0]) || inp_p[0] == '{';
 }
 
 static void
