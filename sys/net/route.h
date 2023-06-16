@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.132 2022/09/20 02:23:37 knakahara Exp $	*/
+/*	$NetBSD: route.h,v 1.133 2023/06/16 02:46:23 rin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -525,14 +525,14 @@ void	rtcache_unref(struct rtentry *, struct route *);
 percpu_t *
 	rtcache_percpu_alloc(void);
 
-static inline struct route *
+static __inline struct route *
 rtcache_percpu_getref(percpu_t *pc)
 {
 
 	return *(struct route **)percpu_getref(pc);
 }
 
-static inline void
+static __inline void
 rtcache_percpu_putref(percpu_t *pc)
 {
 
