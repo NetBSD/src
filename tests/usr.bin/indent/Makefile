@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2023/06/14 07:20:55 rillig Exp $
+#	$NetBSD: Makefile,v 1.49 2023/06/16 23:51:32 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -48,8 +48,7 @@ FILES+=		lsym_sizeof.c
 FILES+=		lsym_storage_class.c
 FILES+=		lsym_switch.c
 FILES+=		lsym_tag.c
-FILES+=		lsym_type_in_parentheses.c
-FILES+=		lsym_type_outside_parentheses.c
+FILES+=		lsym_type.c
 FILES+=		lsym_typedef.c
 FILES+=		lsym_unary_op.c
 FILES+=		lsym_while.c

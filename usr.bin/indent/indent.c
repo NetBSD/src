@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.378 2023/06/16 23:07:52 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.379 2023/06/16 23:51:32 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.378 2023/06/16 23:07:52 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.379 2023/06/16 23:51:32 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -345,7 +345,7 @@ update_ps_lbrace_kind(lexer_symbol lsym)
 		ps.lbrace_kind = token.s[0] == 's' ? psym_lbrace_struct :
 		    token.s[0] == 'u' ? psym_lbrace_union :
 		    psym_lbrace_enum;
-	} else if (lsym == lsym_type_outside_parentheses
+	} else if ((lsym == lsym_type && ps.paren.len == 0)
 	    || lsym == lsym_word
 	    || lsym == lsym_lbrace) {
 		/* Keep the current '{' kind. */
@@ -1054,11 +1054,12 @@ process_lsym(lexer_symbol lsym)
 		if (ps.paren.len > 0)
 			goto copy_token;
 		/* FALLTHROUGH */
-	case lsym_type_outside_parentheses:
-		process_type_outside_parentheses();
-		goto copy_token;
-
-	case lsym_type_in_parentheses:
+	case lsym_type:
+		if (ps.paren.len == 0) {
+			process_type_outside_parentheses();
+			goto copy_token;
+		}
+		/* FALLTHROUGH */
 	case lsym_sizeof:
 	case lsym_offsetof:
 	case lsym_word:
