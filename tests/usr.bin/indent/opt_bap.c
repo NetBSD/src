@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bap.c,v 1.9 2023/05/23 06:18:00 rillig Exp $ */
+/* $NetBSD: opt_bap.c,v 1.10 2023/06/16 11:48:32 rillig Exp $ */
 
 /*
  * Tests for the options '-bap' and '-nbap' ("blank line after procedure
@@ -113,6 +113,10 @@ example(void)
 //indent run-equals-input -bap
 
 
+/*
+ * A preprocessing line after the end of a function body does not force a blank
+ * line, as these lines are not a different syntactic layer.
+ */
 //indent input
 #if 0
 void
@@ -123,17 +127,20 @@ f(void)
 #endif
 //indent end
 
-//indent run -bacc -bap
-#if 0
-void
-f(void)
+//indent run-equals-input -bacc -bap
+
+
+/*
+ * Do not add a blank line between the end of a function body and an '#undef',
+ * as this is a common way to undefine a function-local macro.
+ */
+//indent input
+#define replace
 {
 }
-// $ The following blank line may be considered optional, as it precedes a
-// $ preprocessing line.  In that case, the -bap option would only apply to
-// $ elements on the same syntactic level, such as function definitions and
-// $ other declarations.
-
-#else
-#endif
+#undef replace
 //indent end
+
+//indent run-equals-input -bap
+
+//indent run-equals-input -bap -bacc
