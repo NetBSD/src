@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.57 2023/06/15 09:19:07 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.58 2023/06/16 12:30:45 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -83,7 +83,7 @@ typedef struct Complex
 {
 	double		x;
 	double		y;
-}		Complex;
+} Complex;
 //indent end
 
 
@@ -606,7 +606,7 @@ ToToken(bool cond)
 typedef struct OpenDirs {
 	CachedDirList	list;
 	HashTable /* of CachedDirListNode */ table;
-}		OpenDirs;
+} OpenDirs;
 //indent end
 
 //indent run-equals-input -THashTable
@@ -1041,9 +1041,7 @@ ParseVErrorInternal(FILE *f, bool useVars, const GNode *gn,
 
 typedef struct {
 	const char *m_name;
-}
-// $ FIXME: Remove this line break.
-mod_t;
+} mod_t;
 //indent end
 
 

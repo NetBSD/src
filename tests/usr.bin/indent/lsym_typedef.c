@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_typedef.c,v 1.7 2023/06/16 11:58:33 rillig Exp $ */
+/* $NetBSD: lsym_typedef.c,v 1.8 2023/06/16 12:30:45 rillig Exp $ */
 
 /*
  * Tests for the token lsym_typedef, which represents the keyword 'typedef'
@@ -70,14 +70,23 @@ typedef struct {
 	int member;
 	bool bit:1;
 } typedef_name;
+
+struct {
+	int member;
+	bool bit:1;
+} var_name;
 //indent end
 
-//indent run -di0
+//indent run
 typedef struct {
-	int member;
-// $ FIXME: No space after the ':' here.
-	bool bit: 1;
-}
-// $ FIXME: No linebreak here.
-typedef_name;
+	int		member;
+	bool		bit:1;
+} typedef_name;
+
+struct {
+	int		member;
+	bool		bit:1;
+}		var_name;
 //indent end
+
+//indent run-equals-input -di0

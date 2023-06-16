@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.373 2023/06/16 11:48:32 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.374 2023/06/16 12:30:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.373 2023/06/16 11:48:32 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.374 2023/06/16 12:30:45 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -377,6 +377,7 @@ static bool
 is_function_pointer_declaration(void)
 {
 	return ps.in_decl
+	    && !ps.in_typedef_decl
 	    && !ps.in_init
 	    && !ps.decl_indent_done
 	    && !ps.line_has_func_def
@@ -870,8 +871,10 @@ process_semicolon(void)
 {
 	if (out.line_kind == lk_stmt_head)
 		out.line_kind = lk_other;
-	if (ps.decl_level == 0)
+	if (ps.decl_level == 0) {
 		ps.in_var_decl = false;
+		ps.in_typedef_decl = false;
+	}
 	ps.seen_case = false;	/* only needs to be reset on error */
 	ps.quest_level = 0;	/* only needs to be reset on error */
 	if (ps.prev_lsym == lsym_rparen)
@@ -924,7 +927,7 @@ process_type_outside_parentheses(void)
 	}
 
 	ps.in_var_decl = /* maybe */ true;
-	ps.in_decl = ps.prev_lsym != lsym_typedef;
+	ps.in_decl = true;
 	ps.line_has_decl = ps.in_decl;
 	if (ps.decl_level == 0)
 		ps.declaration = decl_begin;
@@ -951,7 +954,8 @@ process_word(lexer_symbol lsym)
 			else if (ps.want_blank)
 				buf_add_char(&code, ' ');
 			ps.want_blank = false;
-
+		} else if (ps.in_typedef_decl && ps.decl_level == 0) {
+			/* Do not indent typedef declarators. */
 		} else if (!ps.in_init && !ps.decl_indent_done &&
 		    ps.ind_paren_level == 0) {
 			if (opt.decl_indent == 0
@@ -1020,7 +1024,7 @@ process_lsym(lexer_symbol lsym)
 	case lsym_other_colon:	process_other_colon();	break;
 	case lsym_comma:	process_comma();	break;
 	case lsym_semicolon:	process_semicolon();	break;
-	case lsym_typedef:				goto copy_token;
+	case lsym_typedef:	ps.in_typedef_decl = true; goto copy_token;
 	case lsym_modifier:				goto copy_token;
 	case lsym_case:		ps.seen_case = true;	goto copy_token;
 	case lsym_default:	ps.seen_case = true;	goto copy_token;
