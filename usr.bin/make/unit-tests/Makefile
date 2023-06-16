@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.337 2023/06/16 07:20:45 rillig Exp $
+# $NetBSD: Makefile,v 1.338 2023/06/16 09:25:13 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -196,6 +196,7 @@ TESTS+=		directive-ifndef
 TESTS+=		directive-ifnmake
 TESTS+=		directive-include
 TESTS+=		directive-include-fatal
+TESTS+=		directive-include-guard
 TESTS+=		directive-info
 TESTS+=		directive-misspellings
 TESTS+=		directive-sinclude
@@ -504,6 +505,11 @@ FLAGS.varname-empty=		-dv '$${:U}=cmdline-u' '=cmdline-plain'
 # Some tests need extra postprocessing.
 SED_CMDS.deptgt-phony=	${STD_SED_CMDS.dd}
 SED_CMDS.dir=		${STD_SED_CMDS.dd}
+SED_CMDS.directive-include-guard= \
+	-e '/\.MAKEFLAGS/d' \
+	-e '/^Parsing line/d' \
+	-e '/^SetFilenameVars:/d' \
+	-e '/^ParseEOF:/d'
 SED_CMDS.export=	-e '/^[^=_A-Za-z0-9]*=/d'
 SED_CMDS.export-all=	${SED_CMDS.export}
 SED_CMDS.export-env=	${SED_CMDS.export}
