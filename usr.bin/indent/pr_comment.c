@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.165 2023/06/14 14:11:28 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.166 2023/06/16 11:27:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.165 2023/06/14 14:11:28 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.166 2023/06/16 11:27:49 rillig Exp $");
 
 #include <string.h>
 
@@ -142,7 +142,7 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 static void
 copy_comment_start(bool may_wrap, bool *delim, int line_length)
 {
-	ps.comment_in_first_line = true;
+	ps.comment_cont = false;
 	com_add_char('/');
 	com_add_char(token.s[token.len - 1]);	/* either '*' or '/' */
 
