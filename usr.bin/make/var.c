@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1055 2023/06/01 07:44:10 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1056 2023/06/16 22:30:35 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1055 2023/06/01 07:44:10 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1056 2023/06/16 22:30:35 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -513,6 +513,11 @@ Var_Delete(GNode *scope, const char *varname)
 
 	DEBUG2(VAR, "%s: delete %s\n", scope->name, varname);
 	v = he->value;
+	if (v->readOnly) {
+		DEBUG2(VAR, "%s: delete %s (readOnly)\n",
+		    scope->name, varname);
+		return;
+	}
 	if (v->inUse) {
 		Parse_Error(PARSE_FATAL,
 		    "Cannot delete variable \"%s\" while it is used",
