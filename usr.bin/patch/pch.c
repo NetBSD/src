@@ -1,19 +1,19 @@
 /*
  * $OpenBSD: pch.c,v 1.37 2007/09/02 15:19:33 deraadt Exp $
  * $DragonFly: src/usr.bin/patch/pch.c,v 1.6 2008/08/10 23:35:40 joerg Exp $
- * $NetBSD: pch.c,v 1.32 2021/05/25 11:25:59 cjep Exp $
+ * $NetBSD: pch.c,v 1.33 2023/06/16 23:31:53 wiz Exp $
  */
 
 /*
  * patch - a program to apply diffs to original files
- * 
+ *
  * Copyright 1986, Larry Wall
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following condition is met:
  * 1. Redistributions of source code must retain the above copyright notice,
  * this condition and the following disclaimer.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND ANY
  * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -25,13 +25,13 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * 
+ *
  * -C option added in 1998, original code by Marc Espie, based on FreeBSD
  * behaviour
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pch.c,v 1.32 2021/05/25 11:25:59 cjep Exp $");
+__RCSID("$NetBSD: pch.c,v 1.33 2023/06/16 23:31:53 wiz Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -553,7 +553,7 @@ another_hunk(void)
 		p_context = 100;
 		p_hunk_beg = p_input_line + 1;
 		while (p_end < p_max) {
-			line_beginning = ftell(pfp);
+			// line_beginning = ftell(pfp);
 			ret = pgetline(&buf, &bufsz, pfp);
 			p_input_line++;
 			if (ret == -1) {
@@ -935,7 +935,7 @@ hunk_done:
 		context = 0;
 		p_hunk_beg = p_input_line + 1;
 		while (fillold <= p_ptrn_lines || fillnew <= p_end) {
-			line_beginning = ftell(pfp);
+			// line_beginning = ftell(pfp);
 			ret = pgetline(&buf, &bufsz, pfp);
 			p_input_line++;
 			if (ret == -1) {
