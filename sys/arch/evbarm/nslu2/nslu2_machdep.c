@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.39 2023/06/17 11:24:20 rin Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.40 2023/06/17 11:28:13 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.39 2023/06/17 11:24:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.40 2023/06/17 11:28:13 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -630,6 +630,9 @@ initarm(void *arg)
 		logical += pmap_map_chunk(l1pagetable, KERNEL_BASE + logical,
 		    physical_start + logical, totalsize - textsize,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+
+		if (KERNEL_BASE + logical >= KERNEL_VM_BASE)
+			panic("VA for kernel image exhausted.");
 	}
 
 #ifdef VERBOSE_INIT_ARM
