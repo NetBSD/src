@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bbb.c,v 1.8 2023/05/20 11:19:17 rillig Exp $ */
+/* $NetBSD: opt_bbb.c,v 1.9 2023/06/17 22:09:24 rillig Exp $ */
 
 /*
  * Tests for the options '-bbb' and '-nbbb'.
@@ -65,3 +65,25 @@ function_definition(void)
 //indent end
 
 //indent run-equals-input -nbbb
+
+
+//indent input
+{
+label:				/* not a block comment */
+	stmt;			/* not a block comment */
+	/**
+	 * block comment
+	 */
+}
+//indent end
+
+//indent run -bbb
+{
+label:				/* not a block comment */
+	stmt;			/* not a block comment */
+
+	/**
+	 * block comment
+	 */
+}
+//indent end

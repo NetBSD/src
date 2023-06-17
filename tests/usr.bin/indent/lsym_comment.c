@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.21 2023/06/14 09:31:05 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.22 2023/06/17 22:09:24 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -1144,3 +1144,54 @@ int block;			/* comment line 1 comment line 2 */
 // $ FIXME: It's a comment, not code.
 /*/ comment ? or : not;		/* */
 //indent end
+
+
+/*
+ * The tokens '/' and '*' do not form a comment when they are separated by a
+ * space.
+ */
+//indent input
+int a = b / *c;
+// $ Indent can be tricked into treating '/' as a unary operator, thus turning
+// $ some operators into the start of a comment. This only works in
+// $ syntactically invalid text.
+int a = b + / * c;
+//indent end
+
+//indent run -di0
+int a = b / *c;
+// $ FIXME: Don't merge the two operators; there are enough situations where
+// $ indent has to guess whether an operator is unary or binary, and these
+// $ heuristics can go wrong.
+int a = b + /*c;
+//indent end
+
+
+/*
+ * Ensure that tab characters that are broken into separate lines are replaced
+ * with spaces; other tabs are preserved.
+ */
+//indent input
+/* word	word	word	word	word	word	word	word	word */
+//indent end
+
+//indent run -l38
+/*
+ * word	word	word	word	word
+ * word	word	word	word
+ */
+//indent end
+
+
+/* In no-wrap comments, every single newline is preserved. */
+//indent input
+/*-
+paragraph 1
+
+
+
+paragraph 2
+ */
+//indent end
+
+//indent run-equals-input

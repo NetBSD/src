@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bc.c,v 1.12 2023/06/14 20:46:08 rillig Exp $ */
+/* $NetBSD: opt_bc.c,v 1.13 2023/06/17 22:09:24 rillig Exp $ */
 
 /*
  * Tests for the options '-bc' and '-nbc'.
@@ -148,4 +148,58 @@ int a, b, c;
 {
 	const struct paren_level *prev = state.prev_ps.paren.item, *curr = ps.paren.item;
 }
+//indent end
+
+
+/*
+ * In struct or union declarations, the declarators are split onto separate
+ * lines, just like in ordinary declarations.
+ *
+ * In enum declarations and in initializers, no line breaks are added or
+ * removed.
+ */
+//indent input
+struct triple_struct {
+	int a, b, c;
+};
+union triple_union {
+	int a, b, c;
+};
+enum triple_enum {
+	triple_a, triple_b,
+
+	triple_c,
+};
+//indent end
+
+//indent run -bc
+struct triple_struct {
+	int		a,
+			b,
+			c;
+};
+union triple_union {
+	int		a,
+			b,
+			c;
+};
+enum triple_enum {
+	triple_a, triple_b,
+
+	triple_c,
+};
+//indent end
+
+//indent run -nbc
+struct triple_struct {
+	int		a, b, c;
+};
+union triple_union {
+	int		a, b, c;
+};
+enum triple_enum {
+	triple_a, triple_b,
+
+	triple_c,
+};
 //indent end
