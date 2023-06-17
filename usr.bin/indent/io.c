@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.227 2023/06/16 11:48:32 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.228 2023/06/17 22:28:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.227 2023/06/16 11:48:32 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.228 2023/06/17 22:28:49 rillig Exp $");
 
 #include <stdio.h>
 
@@ -331,6 +331,10 @@ output_comment(void)
 	write_range(p, com.len - (size_t)(p - com.s));
 }
 
+/*
+ * Write a line of formatted source to the output file. The line consists of
+ * the label, the code and the comment.
+ */
 static void
 output_indented_line(void)
 {
@@ -382,29 +386,9 @@ is_stmt_cont(void)
 	    && ps.init_level == 0;
 }
 
-/*
- * Write a line of formatted source to the output file. The line consists of
- * the label, the code and the comment.
- */
-void
-output_line(void)
+static void
+prepare_next_line(void)
 {
-	debug_blank_line();
-	debug_printf("%s", __func__);
-	debug_buffers();
-
-	if (indent_enabled == indent_on)
-		output_indented_line();
-	else if (indent_enabled == indent_last_off_line) {
-		indent_enabled = indent_on;
-		write_range(out.indent_off_text.s, out.indent_off_text.len);
-		buf_clear(&out.indent_off_text);
-	}
-
-	buf_clear(&lab);
-	buf_clear(&code);
-	buf_clear(&com);
-
 	ps.line_has_decl = ps.in_decl;
 	ps.line_has_func_def = false;
 	ps.line_is_stmt_cont = is_stmt_cont();
@@ -424,6 +408,28 @@ output_line(void)
 	}
 
 	out.line_kind = lk_other;
+}
+
+void
+output_line(void)
+{
+	debug_blank_line();
+	debug_printf("%s", __func__);
+	debug_buffers();
+
+	if (indent_enabled == indent_on)
+		output_indented_line();
+	else if (indent_enabled == indent_last_off_line) {
+		indent_enabled = indent_on;
+		write_range(out.indent_off_text.s, out.indent_off_text.len);
+		buf_clear(&out.indent_off_text);
+	}
+
+	buf_clear(&lab);
+	buf_clear(&code);
+	buf_clear(&com);
+
+	prepare_next_line();
 }
 
 void
