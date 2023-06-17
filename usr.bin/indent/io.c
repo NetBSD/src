@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.228 2023/06/17 22:28:49 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.229 2023/06/17 23:03:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.228 2023/06/17 22:28:49 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.229 2023/06/17 23:03:20 rillig Exp $");
 
 #include <stdio.h>
 
@@ -341,8 +341,7 @@ output_indented_line(void)
 	if (lab.len == 0 && code.len == 0 && com.len == 0)
 		out.line_kind = lk_blank;
 
-	if (want_blank_line() && newlines < 2
-	    && out.line_kind != lk_blank)
+	if (want_blank_line() && newlines < 2 && out.line_kind != lk_blank)
 		add_buffered_newline();
 
 	/* This kludge aligns function definitions correctly. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.231 2023/06/17 22:28:49 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.232 2023/06/17 23:03:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.231 2023/06/17 22:28:49 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.232 2023/06/17 23:03:20 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -182,17 +182,25 @@ token_add_char(char ch)
 	buf_add_char(&token, ch);
 }
 
+static bool
+skip_line_continuation(void)
+{
+	if (inp_p[0] == '\\' && inp_p[1] == '\n') {
+		inp_p++;
+		inp_skip();
+		line_no++;
+		return true;
+	}
+	return false;
+}
+
 static void
 lex_number(void)
 {
 	for (unsigned char s = 'A'; s != 'f' && s != 'i' && s != 'u';) {
 		unsigned char ch = (unsigned char)*inp_p;
-		if (ch == '\\' && inp_p[1] == '\n') {
-			inp_p++;
-			inp_skip();
-			line_no++;
+		if (skip_line_continuation())
 			continue;
-		}
 		if (ch >= array_length(lex_number_row)
 		    || lex_number_row[ch] == 0)
 			break;
@@ -213,13 +221,11 @@ static void
 lex_word(void)
 {
 	for (;;) {
-		if (is_identifier_part(inp_p[0]))
+		if (is_identifier_part(*inp_p))
 			token_add_char(*inp_p++);
-		else if (inp_p[0] == '\\' && inp_p[1] == '\n') {
-			inp_p++;
-			inp_skip();
-			line_no++;
-		} else
+		else if (skip_line_continuation())
+			continue;
+		else
 			return;
 	}
 }
@@ -533,13 +539,11 @@ lexi(void)
 	buf_clear(&token);
 
 	for (;;) {
-		if (ch_isblank(inp_p[0]))
+		if (ch_isblank(*inp_p))
 			inp_p++;
-		else if (inp_p[0] == '\\' && inp_p[1] == '\n') {
-			inp_p++;
-			inp_skip();
-			line_no++;
-		} else
+		else if (skip_line_continuation())
+			continue;
+		else
 			break;
 	}
 
