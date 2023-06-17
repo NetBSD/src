@@ -1,4 +1,4 @@
-#	$NetBSD: ixp425-fw.mk,v 1.2 2010/03/26 15:55:33 jakllsch Exp $
+#	$NetBSD: ixp425-fw.mk,v 1.3 2023/06/17 11:57:49 rin Exp $
 
 #
 # For IXP425 NE support, this file must be included by the board-specific
@@ -10,12 +10,7 @@
 # a suitable microcode image for IXP425 Ethernet support.
 #
 
-.if exists($S/arch/arm/xscale/IxNpeMicrocode.dat)
-MD_OBJS+=	ixp425_fw.o
-CPPFLAGS+=	-DIXP425_NPE_MICROCODE
-
-ixp425_fw.o:	$S/arch/arm/xscale/IxNpeMicrocode.dat
-	-rm -f ${.OBJDIR}/IxNpeMicrocode.dat
-	-ln -s $S/arch/arm/xscale/IxNpeMicrocode.dat ${.OBJDIR}
-	${OBJCOPY} -I binary -O default -B arm IxNpeMicrocode.dat ${.TARGET}
+NPE_MICROCODE=	$S/arch/arm/xscale/IxNpeMicrocode.dat
+.if exists(${MICROCODE})
+CPPFLAGS+=	-DIXP425_NPE_MICROCODE=\"${NPE_MICROCODE}\"
 .endif
