@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.167 2023/06/17 22:28:49 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.168 2023/06/17 23:03:20 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.167 2023/06/17 22:28:49 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.168 2023/06/17 23:03:20 rillig Exp $");
 
 #include <string.h>
 
@@ -75,6 +75,15 @@ fits_in_one_line(int max_line_length)
 	return false;
 }
 
+static bool
+is_block_comment(void)
+{
+	const char *p = inp_p;
+	while (*p == '*')
+		p++;
+	return *p == '\n';
+}
+
 static void
 analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 {
@@ -91,7 +100,7 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 		    token.s[token.len - 1] == '/' ||
 		    (inp_p[0] == '\n' && !opt.format_block_comments))
 			may_wrap = false;
-		if (code.len == 0 && inp_p[strspn(inp_p, "*")] == '\n')
+		if (is_block_comment())
 			out.line_kind = lk_block_comment;
 
 		if (com.len > 0)
@@ -143,8 +152,7 @@ static void
 copy_comment_start(bool may_wrap, bool *delim, int line_length)
 {
 	ps.comment_cont = false;
-	com_add_char('/');
-	com_add_char(token.s[token.len - 1]);	/* either '*' or '/' */
+	buf_add_chars(&com, token.s, token.len);	// "/*" or "//"
 
 	if (may_wrap) {
 		if (!ch_isblank(inp_p[0]))
@@ -180,8 +188,7 @@ copy_comment_wrap_text(int line_length, ssize_t *last_blank)
 	if (ch_isspace(com.s[com.len - 1]))
 		return;
 
-	if (*last_blank == -1) {
-		/* only a single word in this line */
+	if (*last_blank == -1) {	/* only a single word in this line */
 		output_line();
 		com_add_star();
 		return;
@@ -209,8 +216,6 @@ copy_comment_wrap_newline(ssize_t *last_blank, bool seen_newline)
 {
 	*last_blank = -1;
 	if (seen_newline) {
-		if (com.len == 0)
-			com_add_char(' ');	/* force empty output line */
 		if (com.len > 3) {
 			output_line();
 			com_add_star();
@@ -245,9 +250,7 @@ copy_comment_wrap_finish(int line_length, bool delim)
 	if (delim) {
 		if (com.len > 3)
 			output_line();
-		else
-			buf_clear(&com);
-		com_add_char(' ');
+		buf_clear(&com);
 	} else {
 		size_t len = com.len;
 		// XXX: This loop differs from the one below.
@@ -316,9 +319,6 @@ copy_comment_nowrap(void)
 				return;
 			}
 
-			if (com.len == 0)
-				com_add_char(' ');	/* force output of an
-							 * empty line */
 			output_line();
 			line_no++;
 			inp_skip();
