@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.230 2023/06/16 23:51:32 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.231 2023/06/17 22:28:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.230 2023/06/16 23:51:32 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.231 2023/06/17 22:28:49 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -186,7 +186,7 @@ static void
 lex_number(void)
 {
 	for (unsigned char s = 'A'; s != 'f' && s != 'i' && s != 'u';) {
-		unsigned char ch = (unsigned char)inp_p[0];
+		unsigned char ch = (unsigned char)*inp_p;
 		if (ch == '\\' && inp_p[1] == '\n') {
 			inp_p++;
 			inp_skip();
@@ -199,10 +199,8 @@ lex_number(void)
 
 		unsigned char row = lex_number_row[ch];
 		if (lex_number_state[row][s - 'A'] == ' ') {
-			/*-
-		         * lex_number_state[0][s - 'A'] now indicates the type:
-		         * f = floating, i = integer, u = unknown
-		         */
+		        // lex_number_state[0][s - 'A'] now indicates the type:
+		        // f = floating, i = integer, u = unknown
 			return;
 		}
 
@@ -230,7 +228,7 @@ static void
 lex_char_or_string(void)
 {
 	for (char delim = token.s[token.len - 1];;) {
-		if (inp_p[0] == '\n') {
+		if (*inp_p == '\n') {
 			diag(1, "Unterminated literal");
 			return;
 		}
@@ -240,8 +238,8 @@ lex_char_or_string(void)
 			return;
 
 		if (token.s[token.len - 1] == '\\') {
-			if (inp_p[0] == '\n')
-				++line_no;
+			if (*inp_p == '\n')
+				line_no++;
 			token_add_char(inp_next());
 		}
 	}
@@ -325,8 +323,8 @@ cmp_keyword_by_name(const void *key, const void *elem)
 }
 
 /*
- * Looking at something like 'function_name(...)' in a line, guess whether
- * this starts a function definition or a declaration.
+ * Looking at the '(', guess whether this starts a function definition or a
+ * function declaration.
  */
 static bool
 probably_function_definition(void)
@@ -359,13 +357,15 @@ probably_function_definition(void)
 			return false;
 	}
 
-	/* To further reduce the cases where indent wrongly treats an
+	/*
+	 * To further reduce the cases where indent wrongly treats an
 	 * incomplete function declaration as a function definition, thus
 	 * adding a newline before the function name, it may be worth looking
 	 * for parameter names, as these are often omitted in function
 	 * declarations and only included in function definitions. Or just
 	 * increase the lookahead to more than just the current line of input,
-	 * until the next '{'. */
+	 * until the next '{'.
+	 */
 	return true;
 }
 
@@ -388,7 +388,7 @@ lexi_alnum(void)
 	} else
 		return lsym_eof;	/* just as a placeholder */
 
-	while (ch_isblank(inp_p[0]))
+	while (ch_isblank(*inp_p))
 		inp_p++;
 
 	ps.next_unary = ps.prev_lsym == lsym_tag
@@ -397,7 +397,7 @@ lexi_alnum(void)
 	if (ps.prev_lsym == lsym_tag && ps.paren.len == 0)
 		return lsym_type;
 
-	token_add_char('\0');
+	token_add_char('\0');		// Terminate in non-debug mode as well.
 	token.len--;
 	const struct keyword *kw = bsearch(token.s, keywords,
 	    array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
@@ -432,7 +432,7 @@ found_typename:
 		}
 	}
 
-	if (inp_p[0] == '(' && ps.psyms.len <= 2 && ps.ind_level == 0 &&
+	if (*inp_p == '(' && ps.psyms.len < 3 && ps.ind_level == 0 &&
 	    !ps.in_func_def_params && !ps.in_init) {
 
 		if (ps.paren.len == 0 && probably_function_definition()) {
@@ -467,15 +467,15 @@ is_asterisk_pointer(void)
 static bool
 probably_in_function_definition(void)
 {
-	for (const char *tp = inp_p; *tp != '\n';) {
-		if (ch_isspace(*tp))
-			tp++;
-		else if (is_identifier_start(*tp)) {
-			tp++;
-			while (is_identifier_part(*tp))
-				tp++;
+	for (const char *p = inp_p; *p != '\n';) {
+		if (ch_isspace(*p))
+			p++;
+		else if (is_identifier_start(*p)) {
+			p++;
+			while (is_identifier_part(*p))
+				p++;
 		} else
-			return *tp == '(';
+			return *p == '(';
 	}
 	return false;
 }
@@ -483,8 +483,8 @@ probably_in_function_definition(void)
 static void
 lex_asterisk_pointer(void)
 {
-	while (inp_p[0] == '*' || ch_isspace(inp_p[0])) {
-		if (inp_p[0] == '*')
+	while (*inp_p == '*' || ch_isspace(*inp_p)) {
+		if (*inp_p == '*')
 			token_add_char('*');
 		inp_skip();
 	}
@@ -580,13 +580,13 @@ lexi(void)
 	case ';':	lsym = lsym_semicolon;	next_unary = true;	break;
 	/* INDENT ON */
 
-	case '-':
 	case '+':
+	case '-':
 		lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 		next_unary = true;
 
 		/* '++' or '--' */
-		if (inp_p[0] == token.s[token.len - 1]) {
+		if (*inp_p == token.s[token.len - 1]) {
 			token_add_char(*inp_p++);
 			if (ps.prev_lsym == lsym_word ||
 			    ps.prev_lsym == lsym_rparen ||
@@ -596,10 +596,10 @@ lexi(void)
 				next_unary = false;
 			}
 
-		} else if (inp_p[0] == '=') {	/* '+=' or '-=' */
+		} else if (*inp_p == '=') {	/* '+=' or '-=' */
 			token_add_char(*inp_p++);
 
-		} else if (inp_p[0] == '>') {	/* '->' */
+		} else if (*inp_p == '>') {	/* '->' */
 			token_add_char(*inp_p++);
 			lsym = lsym_unary_op;
 			next_unary = false;
@@ -615,7 +615,7 @@ lexi(void)
 		break;
 
 	case '*':
-		if (inp_p[0] == '=') {
+		if (*inp_p == '=') {
 			token_add_char(*inp_p++);
 			lsym = lsym_binary_op;
 		} else if (is_asterisk_pointer()) {
@@ -629,7 +629,7 @@ lexi(void)
 	case '=':
 		if (ps.in_var_decl)
 			ps.in_init = true;
-		if (inp_p[0] == '=')
+		if (*inp_p == '=')
 			token_add_char(*inp_p++);
 		lsym = lsym_binary_op;
 		next_unary = true;
@@ -638,9 +638,9 @@ lexi(void)
 	case '>':
 	case '<':
 	case '!':		/* ops like <, <<, <=, !=, etc. */
-		if (inp_p[0] == '>' || inp_p[0] == '<' || inp_p[0] == '=')
+		if (*inp_p == '>' || *inp_p == '<' || *inp_p == '=')
 			token_add_char(*inp_p++);
-		if (inp_p[0] == '=')
+		if (*inp_p == '=')
 			token_add_char(*inp_p++);
 		lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
 		next_unary = true;
@@ -655,7 +655,7 @@ lexi(void)
 
 	default:
 		if (token.s[token.len - 1] == '/'
-		    && (inp_p[0] == '*' || inp_p[0] == '/')) {
+		    && (*inp_p == '*' || *inp_p == '/')) {
 			enum indent_enabled prev = indent_enabled;
 			lex_indent_comment();
 			if (prev == indent_on && indent_enabled == indent_off)
@@ -668,9 +668,9 @@ lexi(void)
 
 		/* punctuation like '%', '&&', '/', '^', '||', '~' */
 		lsym = ps.next_unary ? lsym_unary_op : lsym_binary_op;
-		if (inp_p[0] == token.s[token.len - 1])
+		if (*inp_p == token.s[token.len - 1])
 			token_add_char(*inp_p++), lsym = lsym_binary_op;
-		if (inp_p[0] == '=')
+		if (*inp_p == '=')
 			token_add_char(*inp_p++), lsym = lsym_binary_op;
 
 		next_unary = true;

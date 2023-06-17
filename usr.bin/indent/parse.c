@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.77 2023/06/14 20:46:08 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.78 2023/06/17 22:28:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.77 2023/06/14 20:46:08 rillig Exp $");
+__RCSID("$NetBSD: parse.c,v 1.78 2023/06/17 22:28:49 rillig Exp $");
 
 #include <stdlib.h>
 
@@ -68,7 +68,7 @@ psyms_reduce_stmt(void)
 		size_t i = psyms->len - 2;
 		while (psyms->sym[i] != psym_stmt &&
 		    psyms->sym[i] != psym_lbrace_block)
-			--i;
+			i--;
 		ps.ind_level_follow = psyms->ind_level[i];
 		/* For the time being, assume that there is no 'else' on this
 		 * 'if', and set the indentation level accordingly. If an
@@ -170,16 +170,16 @@ parse(parser_symbol psym)
 		ps.break_after_comma = false;
 		if (psyms->sym[psyms->len - 1] == psym_decl
 		    || psyms->sym[psyms->len - 1] == psym_stmt)
-			++ps.ind_level_follow;
+			ps.ind_level_follow++;
 		else if (code.len == 0) {
 			/* It is part of a while, for, etc. */
-			--ps.ind_level;
+			ps.ind_level--;
 
 			/* for a switch, brace should be two levels out from
 			 * the code */
 			if (psyms->sym[psyms->len - 1] == psym_switch_expr
 			    && opt.case_indent >= 1.0F)
-				--ps.ind_level;
+				ps.ind_level--;
 		}
 
 		ps_push(psym, false);
@@ -248,7 +248,7 @@ parse(parser_symbol psym)
 			ps_push(psym_while_expr, false);
 		} else {
 			ps_push(psym_while_expr, true);
-			++ps.ind_level_follow;
+			ps.ind_level_follow++;
 		}
 		break;
 

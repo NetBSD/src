@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.379 2023/06/16 23:51:32 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.380 2023/06/17 22:28:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.379 2023/06/16 23:51:32 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.380 2023/06/17 22:28:49 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -177,9 +177,9 @@ ind_add(int ind, const char *s, size_t len)
 		else if (*p == '\t')
 			ind = next_tab(ind);
 		else if (*p == '\b')
-			--ind;
+			ind--;
 		else
-			++ind;
+			ind++;
 	}
 	return ind;
 }
@@ -201,7 +201,7 @@ load_profiles(int argc, char **argv)
 {
 	const char *profile_name = NULL;
 
-	for (int i = 1; i < argc; ++i) {
+	for (int i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
 		if (strcmp(arg, "-npro") == 0)
@@ -255,7 +255,7 @@ copy_to_bak_file(void)
 static void
 parse_command_line(int argc, char **argv)
 {
-	for (int i = 1; i < argc; ++i) {
+	for (int i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 
 		if (arg[0] == '-') {
@@ -566,7 +566,7 @@ process_newline(void)
 	output_line();
 
 stay_in_line:
-	++line_no;
+	line_no++;
 }
 
 static bool

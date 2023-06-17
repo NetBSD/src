@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.166 2023/06/16 11:27:49 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.167 2023/06/17 22:28:49 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.166 2023/06/16 11:27:49 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.167 2023/06/17 22:28:49 rillig Exp $");
 
 #include <string.h>
 
@@ -51,7 +51,7 @@ com_add_char(char ch)
 }
 
 static void
-com_add_delim(void)
+com_add_star(void)
 {
 	if (opt.star_comment_cont)
 		buf_add_chars(&com, " * ", 3);
@@ -79,7 +79,7 @@ static void
 analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 {
 	bool may_wrap = true;
-	bool delim = false;
+	bool delim = false;	// only relevant if may_wrap
 	int ind;
 	int line_length = opt.max_line_length;
 
@@ -107,15 +107,15 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 			if (may_wrap && opt.comment_delimiter_on_blank_line)
 				delim = true;
 		} else {
-			int target_ind = code.len > 0
+			int min_ind = code.len > 0
 			    ? ind_add(compute_code_indent(), code.s, code.len)
 			    : ind_add(compute_label_indent(), lab.s, lab.len);
 
 			ind = ps.line_has_decl || ps.ind_level == 0
 			    ? opt.decl_comment_column - 1
 			    : opt.comment_column - 1;
-			if (ind <= target_ind)
-				ind = next_tab(target_ind);
+			if (ind <= min_ind)
+				ind = next_tab(min_ind);
 			if (ind + 25 > line_length)
 				line_length = ind + 25;
 		}
@@ -154,7 +154,7 @@ copy_comment_start(bool may_wrap, bool *delim, int line_length)
 			*delim = false;
 		if (*delim) {
 			output_line();
-			com_add_delim();
+			com_add_star();
 		}
 	}
 }
@@ -162,20 +162,20 @@ copy_comment_start(bool may_wrap, bool *delim, int line_length)
 static void
 copy_comment_wrap_text(int line_length, ssize_t *last_blank)
 {
-	int now_len = ind_add(ps.comment_ind, com.s, com.len);
+	int ind = ind_add(ps.comment_ind, com.s, com.len);
 	for (;;) {
 		char ch = inp_next();
 		if (ch_isblank(ch))
 			*last_blank = (ssize_t)com.len;
 		com_add_char(ch);
-		now_len++;
+		ind++;
 		if (memchr("*\n\r\b\t", inp_p[0], 6) != NULL)
 			break;
-		if (now_len >= line_length && *last_blank != -1)
+		if (ind >= line_length && *last_blank != -1)
 			break;
 	}
 
-	if (now_len <= line_length)
+	if (ind <= line_length)
 		return;
 	if (ch_isspace(com.s[com.len - 1]))
 		return;
@@ -183,23 +183,27 @@ copy_comment_wrap_text(int line_length, ssize_t *last_blank)
 	if (*last_blank == -1) {
 		/* only a single word in this line */
 		output_line();
-		com_add_delim();
+		com_add_star();
 		return;
 	}
 
-	const char *last_word_s = com.s + *last_blank + 1;
+	// Move the overlong word to the next line.
+	const char *last_word = com.s + *last_blank + 1;
 	size_t last_word_len = com.len - (size_t)(*last_blank + 1);
 	com.len = (size_t)*last_blank;
+	buf_terminate(&com);
 	output_line();
-	com_add_delim();
+	com_add_star();
 
-	/* Assume that output_line and com_add_delim don't invalidate the
-	 * "unused" part of the buffer beyond com.s + com.len. */
-	memmove(com.s + com.len, last_word_s, last_word_len);
+	/* Assume that output_line and com_add_delim left the "unused" part of
+	 * the now truncated buffer beyond com.s + com.len as-is. */
+	memmove(com.s + com.len, last_word, last_word_len);
 	com.len += last_word_len;
+	buf_terminate(&com);
 	*last_blank = -1;
 }
 
+/* In a comment that is re-wrapped, handle a single newline character. */
 static bool
 copy_comment_wrap_newline(ssize_t *last_blank, bool seen_newline)
 {
@@ -209,16 +213,16 @@ copy_comment_wrap_newline(ssize_t *last_blank, bool seen_newline)
 			com_add_char(' ');	/* force empty output line */
 		if (com.len > 3) {
 			output_line();
-			com_add_delim();
+			com_add_star();
 		}
 		output_line();
-		com_add_delim();
+		com_add_star();
 	} else {
 		if (!(com.len > 0 && ch_isblank(com.s[com.len - 1])))
 			com_add_char(' ');
 		*last_blank = (int)com.len - 1;
 	}
-	++line_no;
+	line_no++;
 
 	/* flush any blanks and/or tabs at start of next line */
 	inp_skip();		/* '\n' */
@@ -246,10 +250,10 @@ copy_comment_wrap_finish(int line_length, bool delim)
 		com_add_char(' ');
 	} else {
 		size_t len = com.len;
+		// XXX: This loop differs from the one below.
 		while (ch_isblank(com.s[len - 1]))
 			len--;
-		int end_ind = ind_add(ps.comment_ind, com.s, len);
-		if (end_ind + 3 > line_length)
+		if (ind_add(ps.comment_ind, com.s, len) + 3 > line_length)
 			output_line();
 	}
 
@@ -266,12 +270,6 @@ copy_comment_wrap_finish(int line_length, bool delim)
 		buf_add_chars(&com, " */", 3);
 }
 
-/*
- * Copy characters from 'inp' to 'com'. Try to keep comments from going over
- * the maximum line length. To do that, remember where the last blank, tab, or
- * newline was. When a line is filled, print up to the last blank and continue
- * copying.
- */
 static void
 copy_comment_wrap(int line_length, bool delim)
 {
@@ -322,7 +320,7 @@ copy_comment_nowrap(void)
 				com_add_char(' ');	/* force output of an
 							 * empty line */
 			output_line();
-			++line_no;
+			line_no++;
 			inp_skip();
 			continue;
 		}
@@ -336,10 +334,6 @@ copy_comment_nowrap(void)
 	}
 }
 
-/*
- * Scan, reformat and output a single comment, which is either a block comment
- * starting with '/' '*' or an end-of-line comment starting with '//'.
- */
 void
 process_comment(void)
 {
