@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_machdep.c,v 1.38 2023/06/17 11:22:20 rin Exp $	*/
+/*	$NetBSD: nslu2_machdep.c,v 1.39 2023/06/17 11:24:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.38 2023/06/17 11:22:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslu2_machdep.c,v 1.39 2023/06/17 11:24:20 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -391,6 +391,7 @@ static const struct pmap_devmap nslu2_devmap[] = {
 		NSLU2_FLASH_HWBASE,
 		NSLU2_FLASH_SIZE
 	),
+#endif
 
 	DEVMAP_ENTRY_END
 };
