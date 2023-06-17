@@ -1,4 +1,4 @@
-/* $NetBSD: opt_sc.c,v 1.7 2022/04/24 09:04:12 rillig Exp $ */
+/* $NetBSD: opt_sc.c,v 1.8 2023/06/17 22:09:24 rillig Exp $ */
 
 /*
  * Tests for the options '-sc' and '-nsc'.
@@ -35,16 +35,16 @@ comment without asterisks
 */
 //indent end
 
-/* XXX: The additional '*' is debatable. */
 //indent run -sc
 /*
+// $ XXX: The additional '*' is debatable.
  * * This comment style is used by Lua.
  */
 //indent end
 
-/* This comment, as rewritten by indent, is not actually used by Lua. */
 //indent run -nsc
 /*
+// $ This comment, as rewritten by indent, is not actually used by Lua.
  * This comment style is used by Lua.
  */
 //indent end
@@ -62,3 +62,36 @@ comment without asterisks
 //indent run-equals-input -sc
 
 //indent run-equals-input -nsc
+
+
+/*
+ * Ensure that blank lines in comments are preserved. Multiple adjacent blank
+ * lines are preserved as well.
+ */
+//indent input
+/*
+paragraph 1
+
+
+paragraph 2
+*/
+//indent end
+
+//indent run -sc
+/*
+ * paragraph 1
+ *
+ *
+ * paragraph 2
+ */
+//indent end
+
+//indent run -nsc
+/*
+// $ XXX: paragraph 1 is indented, paragraph 2 isn't.
+ paragraph 1
+
+
+paragraph 2
+ */
+//indent end

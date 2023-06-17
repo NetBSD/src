@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_typedef.c,v 1.8 2023/06/16 12:30:45 rillig Exp $ */
+/* $NetBSD: lsym_typedef.c,v 1.9 2023/06/17 22:09:24 rillig Exp $ */
 
 /*
  * Tests for the token lsym_typedef, which represents the keyword 'typedef'
@@ -90,3 +90,24 @@ struct {
 //indent end
 
 //indent run-equals-input -di0
+
+
+/*
+ * When 'typedef' or a tag is followed by a name, that name marks a type and a
+ * following '*' marks a pointer type.
+ */
+//indent input
+{
+	// $ Syntactically invalid but shows that '*' is not multiplication.
+	a = typedef name * y;
+	a = (typedef x * y)z;
+}
+//indent end
+
+//indent run
+{
+	// $ Everything before the '*' is treated as a declaration.
+	a = typedef name *y;
+	a = (typedef x *y)z;
+}
+//indent end

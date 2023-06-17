@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_tag.c,v 1.9 2023/06/15 10:34:12 rillig Exp $ */
+/* $NetBSD: lsym_tag.c,v 1.10 2023/06/17 22:09:24 rillig Exp $ */
 
 /*
  * Tests for the token lsym_tag, which represents one of the keywords
@@ -156,3 +156,24 @@ enum multi_line {
 //indent run-equals-input -ci4
 
 //indent run-equals-input -ci4 -nlp
+
+
+/*
+ * When 'typedef' or a tag is followed by a name, that name marks a type and a
+ * following '*' marks a pointer type.
+ */
+//indent input
+{
+	// $ Syntactically invalid but shows that '*' is not multiplication.
+	a = struct x * y;
+	a = (struct x * y)z;
+}
+//indent end
+
+//indent run
+{
+	// $ Everything before the '*' is treated as a declaration.
+	a = struct x   *y;
+	a = (struct x *y)z;
+}
+//indent end

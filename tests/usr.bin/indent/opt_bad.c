@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bad.c,v 1.10 2023/05/14 16:47:06 rillig Exp $ */
+/* $NetBSD: opt_bad.c,v 1.11 2023/06/17 22:09:24 rillig Exp $ */
 
 /*
  * Tests for the options '-bad' and '-nbad'.
@@ -165,3 +165,24 @@ initializer_with_blank(void)
 //indent end
 
 //indent run-equals-input -ldi0 -nbad
+
+
+//indent input
+{
+	int decl;
+	/* comment */
+	int decl;
+}
+//indent end
+
+//indent run -bad -di0
+{
+	int decl;
+// $ FIXME: This blank line is _between_ the declarations, not _after_ them.
+
+	/* comment */
+	int decl;
+// $ XXX: This blank line is unnecessary, it doesn't occur in practice, though.
+
+}
+//indent end
