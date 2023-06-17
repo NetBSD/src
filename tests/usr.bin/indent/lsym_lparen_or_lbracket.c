@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.18 2023/06/16 23:07:52 rillig Exp $ */
+/* $NetBSD: lsym_lparen_or_lbracket.c,v 1.19 2023/06/17 22:09:24 rillig Exp $ */
 
 /*
  * Tests for the token lsym_lparen_or_lbracket, which represents a '(' or '['
@@ -354,4 +354,25 @@ int arr[] = {
 	['0'] = 1,
 	['1'] = 2,
 };
+//indent end
+
+
+/* In an initializer, a '(' does not start a function definition. */
+//indent input
+{
+type var = {
+.CONCAT(a, b)
+= init,
+};
+}
+
+//indent end
+
+//indent run
+{
+	type		var = {
+		.CONCAT(a, b)
+		= init,
+	};
+}
 //indent end

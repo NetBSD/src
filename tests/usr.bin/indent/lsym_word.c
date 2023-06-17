@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_word.c,v 1.6 2022/04/24 10:36:37 rillig Exp $ */
+/* $NetBSD: lsym_word.c,v 1.7 2023/06/17 22:09:24 rillig Exp $ */
 
 /*
  * Tests for the token lsym_word, which represents a constant, a string
@@ -13,6 +13,10 @@
 // TODO: Would the output of the above depend on -pcs/-npcs?
 // TODO: Add more systematic tests.
 // TODO: Completely cover each state transition in lex_number_state.
+
+// TODO: Consider splitting this token into lsym_name and lsym_value, to
+// TODO: make it easier to skip tokens during lookahead, for example since
+// TODO: L"" is not an identifier but a string literal.
 
 //indent input
 // TODO: add input
