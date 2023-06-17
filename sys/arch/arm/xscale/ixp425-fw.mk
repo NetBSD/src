@@ -1,4 +1,4 @@
-#	$NetBSD: ixp425-fw.mk,v 1.3 2023/06/17 11:57:49 rin Exp $
+#	$NetBSD: ixp425-fw.mk,v 1.4 2023/06/17 12:09:36 rin Exp $
 
 #
 # For IXP425 NE support, this file must be included by the board-specific
@@ -11,6 +11,6 @@
 #
 
 NPE_MICROCODE=	$S/arch/arm/xscale/IxNpeMicrocode.dat
-.if exists(${MICROCODE})
+.if exists(${NPE_MICROCODE})
 CPPFLAGS+=	-DIXP425_NPE_MICROCODE=\"${NPE_MICROCODE}\"
 .endif
