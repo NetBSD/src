@@ -1,4 +1,4 @@
-$NetBSD: ixp425-fw.README,v 1.6 2021/09/19 10:34:08 andvar Exp $
+$NetBSD: ixp425-fw.README,v 1.7 2023/06/18 19:08:18 gutteridge Exp $
 
 IXP425 NPE Microcode
 ~~~~~~~~~~~~~~~~~~~~
@@ -29,7 +29,7 @@ or the older version which is archived here:
 SHA1 (IPL_ixp400NpeLibrary-2_4.zip) = abf1562e750e16e6f9baf9892a59640f863a693e
 
 Select the "Download (without Crypto)" link in the "NPE Microcode"
-section. Note that there is no benefit in selecting the "with Cypto"
+section. Note that there is no benefit in selecting the "with Crypto"
 microcode at this time since NetBSD does not support it.
 
 For reference, the "with Crypto" version is available here:
