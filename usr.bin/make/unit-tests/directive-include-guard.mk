@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.2 2023/06/18 19:16:51 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.3 2023/06/18 19:30:31 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -30,9 +30,9 @@ INCS+=	comments
 LINES.comments= \
 	'\# comment' \
 	'' \
-	'.ifndef GUARD' \
+	'.ifndef COMMENTS' \
 	'\# comment' \
-	'GUARD=\#comment' \
+	'COMMENTS=\#comment' \
 	'.endif' \
 	'\# comment'
 
