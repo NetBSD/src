@@ -22,4 +22,14 @@ Parse_PushInput: file directive-include-guard-reuse.tmp, line 1
 Parse_PushInput: file directive-include-guard-reuse.tmp, line 1
 Parse_PushInput: file directive-include-guard-swapped.tmp, line 1
 Parse_PushInput: file directive-include-guard-swapped.tmp, line 1
+Parse_PushInput: file directive-include-guard-undef-between.tmp, line 1
+Parse_PushInput: file directive-include-guard-undef-between.tmp, line 1
+Parse_PushInput: file directive-include-guard-undef-inside.tmp, line 1
+Parse_PushInput: file directive-include-guard-undef-inside.tmp, line 1
+Parse_PushInput: file directive-include-guard-if-elif.tmp, line 1
+Parse_PushInput: file directive-include-guard-if-elif.tmp, line 1
+Parse_PushInput: file directive-include-guard-if-else.tmp, line 1
+Parse_PushInput: file directive-include-guard-if-else.tmp, line 1
+Parse_PushInput: file directive-include-guard-inner-if-elif-else.tmp, line 1
+Parse_PushInput: file directive-include-guard-inner-if-elif-else.tmp, line 1
 exit status 0
