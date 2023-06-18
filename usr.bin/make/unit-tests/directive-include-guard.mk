@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.3 2023/06/18 19:30:31 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.4 2023/06/18 20:43:52 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -24,6 +24,8 @@ LINES.guarded-ifndef= \
 	'.ifndef GUARDED_IFNDEF' \
 	'GUARDED_IFNDEF=' \
 	'.endif'
+# expect: Parse_PushInput: file guarded-ifndef.tmp, line 1
+# expect: Parse_PushInput: file guarded-ifndef.tmp, line 1
 
 # Comments and empty lines have no influence on the multiple-inclusion guard.
 INCS+=	comments
@@ -35,6 +37,8 @@ LINES.comments= \
 	'COMMENTS=\#comment' \
 	'.endif' \
 	'\# comment'
+# expect: Parse_PushInput: file comments.tmp, line 1
+# expect: Parse_PushInput: file comments.tmp, line 1
 
 # An alternative form uses the 'defined' function.  It is more verbose than
 # the canonical form.  There are other possible forms as well, such as with a
@@ -44,6 +48,8 @@ LINES.guarded-if= \
 	'.if !defined(GUARDED_IF)' \
 	'GUARDED_IF=' \
 	'.endif'
+# expect: Parse_PushInput: file guarded-if.tmp, line 1
+# expect: Parse_PushInput: file guarded-if.tmp, line 1
 
 # Triple negation is so uncommon that it's not recognized.
 INCS+=	triple-negation
@@ -51,6 +57,8 @@ LINES.triple-negation= \
 	'.if !!!defined(TRIPLE_NEGATION)' \
 	'TRIPLE_NEGATION=' \
 	'.endif'
+# expect: Parse_PushInput: file triple-negation.tmp, line 1
+# expect: Parse_PushInput: file triple-negation.tmp, line 1
 
 # The variable names in the '.if' and the assignment must be the same.
 INCS+=	varname-mismatch
@@ -58,6 +66,8 @@ LINES.varname-mismatch= \
 	'.ifndef VARNAME_MISMATCH' \
 	'OTHER_NAME=' \
 	'.endif'
+# expect: Parse_PushInput: file varname-mismatch.tmp, line 1
+# expect: Parse_PushInput: file varname-mismatch.tmp, line 1
 
 # The variable name in the assignment must only contain alphanumeric
 # characters and underscores, in particular, it must not be a dynamically
@@ -67,6 +77,8 @@ LINES.varname-indirect= \
 	'.ifndef VARNAME_INDIRECT' \
 	'VARNAME_$${:UINDIRECT}=' \
 	'.endif'
+# expect: Parse_PushInput: file varname-indirect.tmp, line 1
+# expect: Parse_PushInput: file varname-indirect.tmp, line 1
 
 # The variable assignment for the guard must directly follow the conditional.
 #
@@ -80,6 +92,8 @@ LINES.late-assignment= \
 	'OTHER=' \
 	'LATE_ASSIGNMENT=' \
 	'.endif'
+# expect: Parse_PushInput: file late-assignment.tmp, line 1
+# expect: Parse_PushInput: file late-assignment.tmp, line 1
 
 # There must be no other condition between the guard condition and the
 # variable assignment.
@@ -90,6 +104,8 @@ LINES.two-conditions= \
 	'TWO_CONDITIONS=' \
 	'.  endif' \
 	'.endif'
+# expect: Parse_PushInput: file two-conditions.tmp, line 1
+# expect: Parse_PushInput: file two-conditions.tmp, line 1
 
 # If the guard variable is already set before the file is included for the
 # first time, that file is not considered to be guarded.  It's a situation
@@ -100,6 +116,8 @@ LINES.already-set= \
 	'ALREADY_SET=' \
 	'.endif'
 ALREADY_SET=
+# expect: Parse_PushInput: file already-set.tmp, line 1
+# expect: Parse_PushInput: file already-set.tmp, line 1
 
 # The whole file content must be guarded by a single '.if' conditional, not by
 # several, even if they have the same effect.
@@ -111,6 +129,8 @@ LINES.twice= \
 	'.ifndef TWICE' \
 	'TWICE=' \
 	'.endif'
+# expect: Parse_PushInput: file twice.tmp, line 1
+# expect: Parse_PushInput: file twice.tmp, line 1
 
 # When multiple files use the same guard variable name, they exclude each
 # other.  It's the responsibility of the makefile authors to choose suitable
@@ -118,6 +138,8 @@ LINES.twice= \
 INCS+=	reuse
 LINES.reuse= \
 	${LINES.guarded-if}
+# expect: Parse_PushInput: file reuse.tmp, line 1
+# expect: Parse_PushInput: file reuse.tmp, line 1
 
 # The conditional must come before the assignment, otherwise the conditional
 # is useless, as it always evaluates to false.
@@ -126,6 +148,8 @@ LINES.swapped= \
 	'SWAPPED=' \
 	'.ifndef SWAPPED' \
 	'.endif'
+# expect: Parse_PushInput: file swapped.tmp, line 1
+# expect: Parse_PushInput: file swapped.tmp, line 1
 
 # If the guard variable is undefined at some later point, the guarded file is
 # included again.
@@ -134,6 +158,8 @@ LINES.undef-between= \
 	'.ifndef UNDEF_BETWEEN' \
 	'UNDEF_BETWEEN=' \
 	'.endif'
+# expect: Parse_PushInput: file undef-between.tmp, line 1
+# expect: Parse_PushInput: file undef-between.tmp, line 1
 
 # If the guarded file undefines the guard variable, the guarded file is
 # included again.
@@ -143,6 +169,8 @@ LINES.undef-inside= \
 	'UNDEF_INSIDE=' \
 	'.undef UNDEF_INSIDE' \
 	'.endif'
+# expect: Parse_PushInput: file undef-inside.tmp, line 1
+# expect: Parse_PushInput: file undef-inside.tmp, line 1
 
 # The outermost '.if' must not have an '.elif' branch.
 INCS+=	if-elif
@@ -151,6 +179,8 @@ LINES.if-elif = \
 	'IF_ELIF=' \
 	'.elif 1' \
 	'.endif'
+# expect: Parse_PushInput: file if-elif.tmp, line 1
+# expect: Parse_PushInput: file if-elif.tmp, line 1
 
 # The outermost '.if' must not have an '.else' branch.
 INCS+=	if-else
@@ -159,6 +189,8 @@ LINES.if-else = \
 	'IF_ELSE=' \
 	'.else' \
 	'.endif'
+# expect: Parse_PushInput: file if-else.tmp, line 1
+# expect: Parse_PushInput: file if-else.tmp, line 1
 
 # The inner '.if' directives may have an '.elif' or '.else'.
 INCS+=	inner-if-elif-else
@@ -178,6 +210,8 @@ LINES.inner-if-elif-else = \
 	'.  else' \
 	'.  endif' \
 	'.endif'
+# expect: Parse_PushInput: file inner-if-elif-else.tmp, line 1
+# expect: Parse_PushInput: file inner-if-elif-else.tmp, line 1
 
 # Include each of the files twice.  The directive-include-guard.exp file
 # contains a single entry for the files whose multiple-inclusion guard works,
@@ -186,7 +220,7 @@ LINES.inner-if-elif-else = \
 #
 # Some debug output lines are suppressed in the .exp file, see ./Makefile.
 .for i in ${INCS}
-.  for fname in directive-include-guard-$i.tmp
+.  for fname in $i.tmp
 _!=	printf '%s\n' ${LINES.$i} > ${fname}
 .MAKEFLAGS: -dp
 .include "${.CURDIR}/${fname}"
