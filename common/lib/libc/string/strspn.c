@@ -1,4 +1,4 @@
-/*	$NetBSD: strspn.c,v 1.2 2018/02/04 01:13:45 mrg Exp $	*/
+/*	$NetBSD: strspn.c,v 1.3 2023/06/18 22:18:13 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strspn.c,v 1.2 2018/02/04 01:13:45 mrg Exp $");
+__RCSID("$NetBSD: strspn.c,v 1.3 2023/06/18 22:18:13 rillig Exp $");
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <assert.h>
@@ -114,7 +114,7 @@ strspn_x(const char *s_s, const char *charset_s, unsigned long invert)
 	/*
 	 * We could do remove the lsb from m_0 to terminate at the
 	 * end of the input string.
-	 * However prefetching the next char is benifitial and we must
+	 * However prefetching the next char is beneficial and we must
 	 * not read the byte after the \0 - as it might fault!
 	 * So we take the 'hit' of the compare against 0.
 	 */
