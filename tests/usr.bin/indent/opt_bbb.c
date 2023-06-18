@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bbb.c,v 1.9 2023/06/17 22:09:24 rillig Exp $ */
+/* $NetBSD: opt_bbb.c,v 1.10 2023/06/18 07:29:36 rillig Exp $ */
 
 /*
  * Tests for the options '-bbb' and '-nbbb'.
@@ -71,8 +71,15 @@ function_definition(void)
 {
 label:				/* not a block comment */
 	stmt;			/* not a block comment */
+label:	/*
+	 * This is not a block comment, as it goes to the right.
+	 */
+	stmt;			/*
+				 * This is not a block comment, as it goes to
+				 * the right.
+				 */
 	/**
-	 * block comment
+	 * This is a block comment.
 	 */
 }
 //indent end
@@ -82,8 +89,16 @@ label:				/* not a block comment */
 label:				/* not a block comment */
 	stmt;			/* not a block comment */
 
+// $ TODO: No blank line before this comment.
+label:				/* This is not a block comment, as it goes to
+				 * the right. */
+
+// $ TODO: No blank line before this comment.
+	stmt;			/* This is not a block comment, as it goes to
+				 * the right. */
+
 	/**
-	 * block comment
+	 * This is a block comment.
 	 */
 }
 //indent end
