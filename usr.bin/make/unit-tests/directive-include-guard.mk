@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.1 2023/06/16 09:25:13 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.2 2023/06/18 19:16:51 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -9,8 +9,11 @@
 #	...
 #	.endif
 #
-# When such a file is included for the second time, it has no effect as all
+# When such a file is included for the second time, it has no effect, as all
 # its content is skipped.
+#
+# See also:
+#	https://gcc.gnu.org/onlinedocs/cppinternals/Guard-Macros.html
 #
 # TODO: In these cases, do not include the file, to increase performance.
 
@@ -66,6 +69,11 @@ LINES.varname-indirect= \
 	'.endif'
 
 # The variable assignment for the guard must directly follow the conditional.
+#
+# This requirement may be dropped entirely later, as the guard variable could
+# also be undefined while reading the file or at a later point, and as long as
+# the implementation checks the guard variable before skipping the file, the
+# optimization is still valid.
 INCS+=	late-assignment
 LINES.late-assignment= \
 	'.ifndef LATE_ASSIGNMENT' \
@@ -78,7 +86,7 @@ LINES.late-assignment= \
 INCS+=	two-conditions
 LINES.two-conditions= \
 	'.ifndef TWO_CONDITIONS' \
-	'.  if 0' \
+	'.  if 1' \
 	'TWO_CONDITIONS=' \
 	'.  endif' \
 	'.endif'
@@ -119,6 +127,57 @@ LINES.swapped= \
 	'.ifndef SWAPPED' \
 	'.endif'
 
+# If the guard variable is undefined at some later point, the guarded file is
+# included again.
+INCS+=	undef-between
+LINES.undef-between= \
+	'.ifndef UNDEF_BETWEEN' \
+	'UNDEF_BETWEEN=' \
+	'.endif'
+
+# If the guarded file undefines the guard variable, the guarded file is
+# included again.
+INCS+=	undef-inside
+LINES.undef-inside= \
+	'.ifndef UNDEF_INSIDE' \
+	'UNDEF_INSIDE=' \
+	'.undef UNDEF_INSIDE' \
+	'.endif'
+
+# The outermost '.if' must not have an '.elif' branch.
+INCS+=	if-elif
+LINES.if-elif = \
+	'.ifndef IF_ELIF' \
+	'IF_ELIF=' \
+	'.elif 1' \
+	'.endif'
+
+# The outermost '.if' must not have an '.else' branch.
+INCS+=	if-else
+LINES.if-else = \
+	'.ifndef IF_ELSE' \
+	'IF_ELSE=' \
+	'.else' \
+	'.endif'
+
+# The inner '.if' directives may have an '.elif' or '.else'.
+INCS+=	inner-if-elif-else
+LINES.inner-if-elif-else = \
+	'.ifndef INNER_IF_ELIF_ELSE' \
+	'INNER_IF_ELIF_ELSE=' \
+	'.  if 0' \
+	'.  elif 0' \
+	'.  else' \
+	'.  endif' \
+	'.  if 0' \
+	'.  elif 1' \
+	'.  else' \
+	'.  endif' \
+	'.  if 1' \
+	'.  elif 1' \
+	'.  else' \
+	'.  endif' \
+	'.endif'
 
 # Include each of the files twice.  The directive-include-guard.exp file
 # contains a single entry for the files whose multiple-inclusion guard works,
@@ -131,6 +190,7 @@ LINES.swapped= \
 _!=	printf '%s\n' ${LINES.$i} > ${fname}
 .MAKEFLAGS: -dp
 .include "${.CURDIR}/${fname}"
+.undef ${i:Mundef-between:%=UNDEF_BETWEEN}
 .include "${.CURDIR}/${fname}"
 .MAKEFLAGS: -d0
 _!=	rm ${fname}
