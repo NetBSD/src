@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bbb.c,v 1.10 2023/06/18 07:29:36 rillig Exp $ */
+/* $NetBSD: opt_bbb.c,v 1.11 2023/06/18 07:32:33 rillig Exp $ */
 
 /*
  * Tests for the options '-bbb' and '-nbbb'.
@@ -88,12 +88,8 @@ label:	/*
 {
 label:				/* not a block comment */
 	stmt;			/* not a block comment */
-
-// $ TODO: No blank line before this comment.
 label:				/* This is not a block comment, as it goes to
 				 * the right. */
-
-// $ TODO: No blank line before this comment.
 	stmt;			/* This is not a block comment, as it goes to
 				 * the right. */
 

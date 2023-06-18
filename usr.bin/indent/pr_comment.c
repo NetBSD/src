@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.169 2023/06/18 07:10:24 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.170 2023/06/18 07:32:33 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.169 2023/06/18 07:10:24 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.170 2023/06/18 07:32:33 rillig Exp $");
 
 #include <string.h>
 
@@ -100,12 +100,12 @@ analyze_comment(bool *p_may_wrap, bool *p_delim, int *p_line_length)
 		    token.s[token.len - 1] == '/' ||
 		    (inp_p[0] == '\n' && !opt.format_block_comments))
 			may_wrap = false;
-		if (is_block_comment())
-			out.line_kind = lk_block_comment;
 
 		if (com.len > 0)
 			output_line();
 		if (lab.len == 0 && code.len == 0) {
+			if (is_block_comment())
+				out.line_kind = lk_block_comment;
 			ind = (ps.ind_level - opt.unindent_displace)
 			    * opt.indent_size;
 			if (ind <= 0)
