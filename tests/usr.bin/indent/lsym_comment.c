@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.22 2023/06/17 22:09:24 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.23 2023/06/18 07:10:24 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -50,7 +50,6 @@
  * - wrap/nowrap comment containing '\n'
  * - wrap/nowrap comment containing '\f'
  * - wrap/nowrap comment containing '\t'
- * - wrap/nowrap comment containing '\b'
  */
 
 //indent input
