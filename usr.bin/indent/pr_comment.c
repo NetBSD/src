@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.168 2023/06/17 23:03:20 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.169 2023/06/18 07:10:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.168 2023/06/17 23:03:20 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.169 2023/06/18 07:10:24 rillig Exp $");
 
 #include <string.h>
 
@@ -177,7 +177,7 @@ copy_comment_wrap_text(int line_length, ssize_t *last_blank)
 			*last_blank = (ssize_t)com.len;
 		com_add_char(ch);
 		ind++;
-		if (memchr("*\n\r\b\t", inp_p[0], 6) != NULL)
+		if (memchr("*\n\r\t", inp_p[0], 5) != NULL)
 			break;
 		if (ind >= line_length && *last_blank != -1)
 			break;

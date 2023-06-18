@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.380 2023/06/17 22:28:49 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.381 2023/06/18 07:10:24 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.380 2023/06/17 22:28:49 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.381 2023/06/18 07:10:24 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -176,8 +176,6 @@ ind_add(int ind, const char *s, size_t len)
 			ind = 0;
 		else if (*p == '\t')
 			ind = next_tab(ind);
-		else if (*p == '\b')
-			ind--;
 		else
 			ind++;
 	}
