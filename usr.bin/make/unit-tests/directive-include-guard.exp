@@ -6,10 +6,20 @@ Parse_PushInput: file guarded-if.tmp, line 1
 Skipping 'guarded-if.tmp' because 'GUARDED_IF' is already set
 Parse_PushInput: file triple-negation.tmp, line 1
 Parse_PushInput: file triple-negation.tmp, line 1
+Parse_PushInput: file ifdef-negated.tmp, line 1
+Parse_PushInput: file ifdef-negated.tmp, line 1
 Parse_PushInput: file varname-mismatch.tmp, line 1
 Parse_PushInput: file varname-mismatch.tmp, line 1
-Parse_PushInput: file varname-indirect.tmp, line 1
-Skipping 'varname-indirect.tmp' because 'VARNAME_INDIRECT' is already set
+Parse_PushInput: file ifndef-plus.tmp, line 1
+Parse_PushInput: file ifndef-plus.tmp, line 1
+Parse_PushInput: file if-plus.tmp, line 1
+Parse_PushInput: file if-plus.tmp, line 1
+Parse_PushInput: file ifndef-indirect.tmp, line 1
+Parse_PushInput: file ifndef-indirect.tmp, line 1
+Parse_PushInput: file if-indirect.tmp, line 1
+Parse_PushInput: file if-indirect.tmp, line 1
+Parse_PushInput: file varassign-indirect.tmp, line 1
+Skipping 'varassign-indirect.tmp' because 'VARASSIGN_INDIRECT' is already set
 Parse_PushInput: file late-assignment.tmp, line 1
 Skipping 'late-assignment.tmp' because 'LATE_ASSIGNMENT' is already set
 Parse_PushInput: file two-conditions.tmp, line 1

@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.5 2023/06/19 12:53:57 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.6 2023/06/19 20:07:35 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -59,6 +59,16 @@ LINES.triple-negation= \
 # expect: Parse_PushInput: file triple-negation.tmp, line 1
 # expect: Parse_PushInput: file triple-negation.tmp, line 1
 
+# A conditional other than '.if' or '.ifndef' marks the file as non-guarded,
+# even if it would actually work as a multiple-inclusion guard.
+INCS+=	ifdef-negated
+LINES.ifdef-negated= \
+	'.ifdef !IFDEF_NEGATED' \
+	'IFDEF_NEGATED=' \
+	'.endif'
+# expect: Parse_PushInput: file ifdef-negated.tmp, line 1
+# expect: Parse_PushInput: file ifdef-negated.tmp, line 1
+
 # The variable names in the '.if' and the assignment must be the same.
 INCS+=	varname-mismatch
 LINES.varname-mismatch= \
@@ -68,16 +78,56 @@ LINES.varname-mismatch= \
 # expect: Parse_PushInput: file varname-mismatch.tmp, line 1
 # expect: Parse_PushInput: file varname-mismatch.tmp, line 1
 
+# The guard condition must consist of only the guard variable, nothing else.
+INCS+=	ifndef-plus
+LINES.ifndef-plus= \
+	'.ifndef IFNDEF_PLUS && IFNDEF_SECOND' \
+	'IFNDEF_PLUS=' \
+	'IFNDEF_SECOND=' \
+	'.endif'
+# expect: Parse_PushInput: file ifndef-plus.tmp, line 1
+# expect: Parse_PushInput: file ifndef-plus.tmp, line 1
+
+# The guard condition must consist of only the guard variable, nothing else.
+INCS+=	if-plus
+LINES.if-plus= \
+	'.if !defined(IF_PLUS) && !defined(IF_SECOND)' \
+	'IF_PLUS=' \
+	'IF_SECOND=' \
+	'.endif'
+# expect: Parse_PushInput: file if-plus.tmp, line 1
+# expect: Parse_PushInput: file if-plus.tmp, line 1
+
+# The variable name in an '.ifndef' guard must be given directly, it must not
+# contain any '$' expression.
+INCS+=	ifndef-indirect
+LINES.ifndef-indirect= \
+	'.ifndef $${IFNDEF_INDIRECT:L}' \
+	'IFNDEF_INDIRECT=' \
+	'.endif'
+# expect: Parse_PushInput: file ifndef-indirect.tmp, line 1
+# expect: Parse_PushInput: file ifndef-indirect.tmp, line 1
+
+# The variable name in an '.if' guard must be given directly, it must not contain
+# any '$' expression.
+INCS+=	if-indirect
+LINES.if-indirect= \
+	'.if !defined($${IF_INDIRECT:L})' \
+	'IF_INDIRECT=' \
+	'.endif'
+# expect: Parse_PushInput: file if-indirect.tmp, line 1
+# expect: Parse_PushInput: file if-indirect.tmp, line 1
+
 # The variable name in the guard condition must only contain alphanumeric
 # characters and underscores.  The guard variable is more flexible, it can be
 # set anywhere, as long as it is set when the guarded file is included next.
-INCS+=	varname-indirect
-LINES.varname-indirect= \
-	'.ifndef VARNAME_INDIRECT' \
-	'VARNAME_$${:UINDIRECT}=' \
+INCS+=	varassign-indirect
+LINES.varassign-indirect= \
+	'.ifndef VARASSIGN_INDIRECT' \
+	'$${VARASSIGN_INDIRECT:L}=' \
 	'.endif'
-# expect: Parse_PushInput: file varname-indirect.tmp, line 1
-# expect: Skipping 'varname-indirect.tmp' because 'VARNAME_INDIRECT' is already set
+# expect: Parse_PushInput: file varassign-indirect.tmp, line 1
+# expect: Skipping 'varassign-indirect.tmp' because 'VARASSIGN_INDIRECT' is already set
 
 # The time at which the guard variable is set doesn't matter, as long as it is
 # set when the file is included the next time.
