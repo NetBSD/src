@@ -1,4 +1,4 @@
-/*	$NetBSD: display_status.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: display_status.c,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 - 2006 Kungliga Tekniska Högskolan
@@ -66,8 +66,7 @@ routine_error(OM_uint32 v)
 	"Incorrect channel bindings were supplied",
 	"An invalid status code was supplied",
 	"A token had an invalid MIC",
-	"No credentials were supplied, "
-	"or the credentials were unavailable or inaccessible.",
+	"No credentials were supplied, or the credentials were unavailable or inaccessible.",
 	"No context has been established",
 	"A token was invalid",
 	"A credential was invalid",

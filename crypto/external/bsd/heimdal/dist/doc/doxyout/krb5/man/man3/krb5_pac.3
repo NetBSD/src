@@ -1,10 +1,10 @@
-.\"	$NetBSD: krb5_pac.3,v 1.2 2019/12/15 22:50:45 christos Exp $
+.\"	$NetBSD: krb5_pac.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "krb5_pac" 3 "Fri Jun 7 2019" "Version 7.7.0" "HeimdalKerberos5library" \" -*- nroff -*-
+.TH "krb5_pac" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal Kerberos 5 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-krb5_pac
+krb5_pac \- Heimdal Kerberos 5 PAC handling functions
 .SH SYNOPSIS
 .br
 .PP
@@ -26,7 +26,7 @@ krb5_pac
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_pac_get_buffer (krb5_context context, krb5_pac p, uint32_t type, krb5_data * data)"
 Get the PAC buffer of specific type from the pac\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos 5 context\&. 
 .br
@@ -37,7 +37,7 @@ Get the PAC buffer of specific type from the pac\&.
 \fIdata\fP return data, free with \fBkrb5_data_free()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Returns 0 to indicate success\&. Otherwise an kerberos et error code is returned, see \fBkrb5_get_error_message()\fP\&. 
 .RE
@@ -46,7 +46,7 @@ Returns 0 to indicate success\&. Otherwise an kerberos et error code is returned
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_pac_verify (krb5_context context, const krb5_pac pac, time_t authtime, krb5_const_principal principal, const krb5_keyblock * server, const krb5_keyblock * privsvr)"
 Verify the PAC\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos 5 context\&. 
 .br
@@ -61,7 +61,7 @@ Verify the PAC\&.
 \fIprivsvr\fP The KDC key, may be given\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Returns 0 to indicate success\&. Otherwise an kerberos et error code is returned, see \fBkrb5_get_error_message()\fP\&. 
 .RE
@@ -69,4 +69,4 @@ Returns 0 to indicate success\&. Otherwise an kerberos et error code is returned
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for HeimdalKerberos5library from the source code\&.
+Generated automatically by Doxygen for Heimdal Kerberos 5 library from the source code\&.

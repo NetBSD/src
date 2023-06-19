@@ -1,4 +1,4 @@
-/*	$NetBSD: principal.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: principal.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -1260,19 +1260,43 @@ krb5_principal_is_anonymous(krb5_context context,
 			     krb5_const_principal p,
 			     unsigned int flags)
 {
-    int anon_realm;
+    /*
+     * Heimdal versions 7.5 and below left the name-type at KRB5_NT_PRINCIPAL
+     * even with anonymous pkinit responses.  To retain interoperability with
+     * legacy KDCs, the name-type is not checked by the client after requesting
+     * a fully anonymous ticket.
+     */
+    if (!(flags & KRB5_ANON_IGNORE_NAME_TYPE) &&
+        p->name.name_type != KRB5_NT_WELLKNOWN &&
+        p->name.name_type != KRB5_NT_UNKNOWN)
+        return FALSE;
 
-    if ((p->name.name_type != KRB5_NT_WELLKNOWN &&
-         p->name.name_type != KRB5_NT_UNKNOWN) ||
-        p->name.name_string.len != 2 ||
+    if (p->name.name_string.len != 2 ||
         strcmp(p->name.name_string.val[0], KRB5_WELLKNOWN_NAME) != 0 ||
         strcmp(p->name.name_string.val[1], KRB5_ANON_NAME) != 0)
         return FALSE;
 
-    anon_realm = strcmp(p->realm, KRB5_ANON_REALM) == 0;
+    /*
+     * While unauthenticated clients SHOULD get "WELLKNOWN:ANONYMOUS" as their
+     * realm, Heimdal KDCs prior to 7.0 returned the requested realm.  While
+     * such tickets might lead *servers* to unwittingly grant access to fully
+     * anonymous clients, trusting that the client was authenticated to the
+     * realm in question, doing it right is the KDC's job, the client should
+     * not refuse such a ticket.
+     *
+     * If we ever do decide to enforce WELLKNOWN:ANONYMOUS for unauthenticated
+     * clients, it is essential that calls that pass KRB5_ANON_MATCH_ANY still
+     * ignore the realm, as in that case either case matches one of the two
+     * possible conditions.
+     */
+    if (flags & KRB5_ANON_MATCH_UNAUTHENTICATED)
+        return TRUE;
 
-    return ((flags & KRB5_ANON_MATCH_AUTHENTICATED) && !anon_realm) ||
-	   ((flags & KRB5_ANON_MATCH_UNAUTHENTICATED) && anon_realm);
+    /*
+     * Finally, authenticated clients that asked to be only anonymized do
+     * legitimately expect a non-anon realm.
+     */
+    return strcmp(p->realm, KRB5_ANON_REALM) != 0;
 }
 
 static int

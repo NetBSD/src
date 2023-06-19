@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_copy.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: gen_copy.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "gen_locl.h"
 
-__RCSID("$NetBSD: gen_copy.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
+__RCSID("$NetBSD: gen_copy.c,v 1.3 2023/06/19 21:41:42 christos Exp $");
 
 static int used_fail;
 
@@ -64,6 +64,7 @@ copy_type (const char *from, const char *to, const Type *t, int preserve)
 	    copy_primitive ("heim_integer", from, to);
 	    break;
 	}
+        /* fallthrough */
     case TBoolean:
     case TEnumerated :
 	fprintf(codefile, "*(%s) = *(%s);\n", to, from);

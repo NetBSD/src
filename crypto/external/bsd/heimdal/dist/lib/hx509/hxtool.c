@@ -1,4 +1,4 @@
-/*	$NetBSD: hxtool.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: hxtool.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2016 Kungliga Tekniska Högskolan
@@ -1329,6 +1329,7 @@ request_create(struct request_create_options *opt, int argc, char **argv)
     const char *outfile = argv[0];
 
     memset(&key, 0, sizeof(key));
+    memset(&signer, 0, sizeof(signer));
 
     get_key(opt->key_string,
 	    opt->generate_key_string,

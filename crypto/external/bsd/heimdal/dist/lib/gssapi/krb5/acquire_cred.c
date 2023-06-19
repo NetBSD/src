@@ -1,4 +1,4 @@
-/*	$NetBSD: acquire_cred.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: acquire_cred.c,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -102,6 +102,7 @@ acquire_cred_with_password(OM_uint32 *minor_status,
     krb5_error_code kret;
     time_t now;
     OM_uint32 left;
+    const char *realm;
 
     if (cred_usage == GSS_C_ACCEPT) {
         /*
@@ -127,6 +128,10 @@ acquire_cred_with_password(OM_uint32 *minor_status,
     kret = krb5_get_init_creds_opt_alloc(context, &opt);
     if (kret)
         goto end;
+
+    realm = krb5_principal_get_realm(context, handle->principal);
+
+    krb5_get_init_creds_opt_set_default_flags(context, "gss_krb5", realm, opt);
 
     /*
      * Get the current time before the AS exchange so we don't

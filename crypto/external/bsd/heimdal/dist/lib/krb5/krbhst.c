@@ -1,4 +1,4 @@
-/*	$NetBSD: krbhst.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: krbhst.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 - 2003 Kungliga Tekniska Högskolan
@@ -107,6 +107,12 @@ srv_find_realm(krb5_context context, krb5_krbhst_info ***res, int *count,
     for(num_srv = 0, rr = r->head; rr; rr = rr->next)
 	if(rr->type == rk_ns_t_srv)
 	    num_srv++;
+
+    if (num_srv == 0) {
+	_krb5_debug(context, 0,
+		    "DNS SRV RR lookup domain nodata: %s", domain);
+	return KRB5_KDC_UNREACH;
+    }
 
     *res = malloc(num_srv * sizeof(**res));
     if(*res == NULL) {

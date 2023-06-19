@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.3 2017/09/08 15:29:43 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.4 2023/06/19 21:41:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.

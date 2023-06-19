@@ -1,4 +1,4 @@
-/*	$NetBSD: salt-aes-sha2.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: salt-aes-sha2.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -94,8 +94,9 @@ AES_SHA2_string_to_key(krb5_context context,
 	goto cleanup;
     }
     memcpy(saltp.data, et->name, enctypesz);
-    memcpy((unsigned char *)saltp.data + enctypesz,
-	   salt.saltvalue.data, salt.saltvalue.length);
+    if (salt.saltvalue.length)
+        memcpy((unsigned char *)saltp.data + enctypesz,
+               salt.saltvalue.data, salt.saltvalue.length);
 
     ret = _krb5_aes_sha2_md_for_enctype(context, enctype, &md);
     if (ret)

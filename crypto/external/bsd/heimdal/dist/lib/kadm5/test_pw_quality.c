@@ -1,4 +1,4 @@
-/*	$NetBSD: test_pw_quality.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: test_pw_quality.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, 2005 Kungliga Tekniska Högskolan
@@ -33,10 +33,14 @@
  * SUCH DAMAGE.
  */
 
-#include "kadm5_locl.h"
+#include <string.h>
+#include <stdlib.h>
 #include <krb5/getarg.h>
 
-__RCSID("$NetBSD: test_pw_quality.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
+#include <krb5/roken.h>
+#include <krb5/krb5.h>
+
+#include "admin.h"
 
 static int version_flag;
 static int help_flag;

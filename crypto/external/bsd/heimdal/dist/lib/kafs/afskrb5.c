@@ -1,4 +1,4 @@
-/*	$NetBSD: afskrb5.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: afskrb5.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1995-2003 Kungliga Tekniska Högskolan
@@ -87,8 +87,6 @@ v5_to_kt(krb5_creds *cred, uid_t uid, struct kafs_token *kt, int local524)
 	    return ENOMEM;
 	kt->ticket_len = cred->ticket.length;
 	memcpy(kt->ticket, cred->ticket.data, kt->ticket_len);
-
-	ret = 0;
     }
 
 

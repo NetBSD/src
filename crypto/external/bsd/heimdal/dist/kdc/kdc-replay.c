@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc-replay.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: kdc-replay.c,v 1.3 2023/06/19 21:41:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2007 Kungliga Tekniska Högskolan
@@ -186,6 +186,8 @@ main(int argc, char **argv)
 	    unsigned int tag2;
 	    ret = der_get_tag (r.data, r.length,
 			       &cl, &ty, &tag2, NULL);
+            if (ret)
+                krb5_err(context, 1, ret, "Could not decode replay data");
 	    if (MAKE_TAG(cl, ty, 0) != clty)
 		krb5_errx(context, 1, "class|type mismatch: %d != %d",
 			  (int)MAKE_TAG(cl, ty, 0), (int)clty);

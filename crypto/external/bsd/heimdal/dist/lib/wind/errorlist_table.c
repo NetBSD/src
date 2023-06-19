@@ -1,7 +1,7 @@
-/*	$NetBSD: errorlist_table.c,v 1.2 2019/12/15 22:50:51 christos Exp $	*/
+/*	$NetBSD: errorlist_table.c,v 1.3 2023/06/19 21:41:45 christos Exp $	*/
 
 /* ./errorlist_table.c */
-/* Automatically generated at 2019-06-07T02:26:41.399027 */
+/* Automatically generated at 2022-11-15T13:59:51.730725 */
 
 
 #include "errorlist_table.h"

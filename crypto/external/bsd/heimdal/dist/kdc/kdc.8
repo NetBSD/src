@@ -1,4 +1,4 @@
-.\"	$NetBSD: kdc.8,v 1.5 2017/01/28 21:31:44 christos Exp $
+.\"	$NetBSD: kdc.8,v 1.6 2023/06/19 21:41:41 christos Exp $
 .\"
 .\" Copyright (c) 2003 - 2004 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -157,6 +157,19 @@ Permit tickets with no addresses.
 This option is only relevant when check-ticket-addresses is TRUE.
 .It Li allow-anonymous = Va boolean
 Permit anonymous tickets with no addresses.
+.It Li historical_anon_realm = Va boolean
+Enables pre-7.0 non-RFC-comformant KDC behavior.
+With this option set to
+.Li true
+the client realm in anonymous pkinit AS replies will be the requested realm,
+rather than the RFC-conformant
+.Li WELLKNOWN:ANONYMOUS
+realm.
+This can have a security impact on servers that expect to grant access to
+anonymous-but-authenticated to the KDC users of the realm in question:
+they would also grant access to unauthenticated anonymous users.
+As such, it is not recommend to set this option to
+.Li true.
 .It Li max-kdc-datagram-reply-length = Va number
 Maximum packet size the UDP rely that the KDC will transmit, instead
 the KDC sends back a reply telling the client to use TCP instead.

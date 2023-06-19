@@ -1,4 +1,4 @@
-/*	$NetBSD: get_default_principal.c,v 1.3 2017/09/08 15:29:43 christos Exp $	*/
+/*	$NetBSD: get_default_principal.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan

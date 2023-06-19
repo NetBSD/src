@@ -1,10 +1,10 @@
-.\"	$NetBSD: hx509_error.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hx509_error.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "hx509_error" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalx509library" \" -*- nroff -*-
+.TH "hx509_error" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal x509 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hx509_error
+hx509_error \- hx509 error functions
 .SH SYNOPSIS
 .br
 .PP
@@ -38,7 +38,7 @@ See the \fBHx509 error reporting functions\fP for description and examples\&.
 .SS "void hx509_clear_error_string (hx509_context context)"
 Resets the error strings the hx509 context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .RE
@@ -47,7 +47,7 @@ Resets the error strings the hx509 context\&.
 .SS "void hx509_err (hx509_context context, int exit_code, int error_code, const char * fmt,  \&.\&.\&.)"
 Print error message and fatally exit from error code
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -64,7 +64,7 @@ Print error message and fatally exit from error code
 .SS "void hx509_free_error_string (char * str)"
 Free error string returned by \fBhx509_get_error_string()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIstr\fP error string to free\&. 
 .RE
@@ -73,14 +73,14 @@ Free error string returned by \fBhx509_get_error_string()\fP\&.
 .SS "char* hx509_get_error_string (hx509_context context, int error_code)"
 Get an error string from context associated with error_code\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
 \fIerror_code\fP Get error message for this error code\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 error string, free with \fBhx509_free_error_string()\fP\&. 
 .RE
@@ -89,7 +89,7 @@ error string, free with \fBhx509_free_error_string()\fP\&.
 .SS "void hx509_set_error_string (hx509_context context, int flags, int code, const char * fmt,  \&.\&.\&.)"
 See \fBhx509_set_error_stringv()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -109,7 +109,7 @@ HX509_ERROR_APPEND appends the error string to the old messages (code is updated
 .SS "void hx509_set_error_stringv (hx509_context context, int flags, int code, const char * fmt, va_list ap)"
 Add an error message to the hx509 context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -128,4 +128,4 @@ HX509_ERROR_APPEND appends the error string to the old messages (code is updated
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalx509library from the source code\&.
+Generated automatically by Doxygen for Heimdal x509 library from the source code\&.

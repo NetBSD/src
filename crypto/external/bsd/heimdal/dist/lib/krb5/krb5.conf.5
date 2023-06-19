@@ -1,4 +1,4 @@
-.\"	$NetBSD: krb5.conf.5,v 1.6 2017/01/28 21:31:49 christos Exp $
+.\"	$NetBSD: krb5.conf.5,v 1.7 2023/06/19 21:41:44 christos Exp $
 .\"
 .\" Copyright (c) 1999 - 2005 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -137,6 +137,19 @@ Forward credentials to remote host (for
 .Xr rsh 1 ,
 .Xr telnet 1 ,
 etc).
+.It Li historical_anon_pkinit = Va boolean
+Enable legacy anonymous pkinit command-line syntax.
+With this option set to
+.Li true,
+the
+.Xr kinit 1
+.Fl Fl anonymous
+command with no principal argument specified will request an anonymous pkinit
+ticket from the default realm.
+If a principal argument is specified, it is used as an explicit realm name for
+anonymous pkinit even without an
+.Li @
+prefix.
 .El
 .It Li [libdefaults]
 .Bl -tag -width "xxx" -offset indent
@@ -643,8 +656,21 @@ Allow address-less tickets.
 .\" XXX
 .It Li allow-anonymous = Va BOOL
 If the kdc is allowed to hand out anonymous tickets.
+.It Li historical_anon_realm = Va boolean
+Enables pre-7.0 non-RFC-comformant KDC behavior.
+With this option set to
+.Li true
+the client realm in anonymous pkinit AS replies will be the requested realm,
+rather than the RFC-conformant
+.Li WELLKNOWN:ANONYMOUS
+realm.
+This can have a security impact on servers that expect to grant access to
+anonymous-but-authenticated to the KDC users of the realm in question:
+they would also grant access to unauthenticated anonymous users.
+As such, it is not recommend to set this option to
+.Li true.
 .It Li encode_as_rep_as_tgs_rep = Va BOOL
-Encode as-rep as tgs-rep tobe compatible with mistakes older DCE secd did.
+Encode as-rep as tgs-rep to be compatible with mistakes older DCE secd did.
 .\" XXX
 .It Li kdc_warn_pwexpire = Va TIME
 The time before expiration that the user should be warned that her

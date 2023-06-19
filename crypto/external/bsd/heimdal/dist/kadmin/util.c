@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.5 2023/06/19 21:41:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan

@@ -1,4 +1,4 @@
-/*	$NetBSD: sl.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
+/*	$NetBSD: sl.c,v 1.3 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2006 Kungliga Tekniska Högskolan
@@ -462,6 +462,8 @@ sl_did_you_mean(SL_cmd *cmds, const char *match)
 
     for (n = 0, c = cmds; c->name; c++, n++)
         ;
+    if (n == 0)
+        return;
     metrics = calloc(n, sizeof(metrics[0]));
     if (metrics == NULL)
         return;

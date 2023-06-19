@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.5 2017/01/29 01:46:37 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.6 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -38,7 +38,7 @@
 #include "gen_locl.h"
 #include <libgen.h>
 
-__RCSID("$NetBSD: gen.c,v 1.5 2017/01/29 01:46:37 christos Exp $");
+__RCSID("$NetBSD: gen.c,v 1.6 2023/06/19 21:41:42 christos Exp $");
 
 FILE *privheaderfile, *headerfile, *codefile, *logfile, *templatefile;
 

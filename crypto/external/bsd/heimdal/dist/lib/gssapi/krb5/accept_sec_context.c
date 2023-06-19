@@ -1,4 +1,4 @@
-/*	$NetBSD: accept_sec_context.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: accept_sec_context.c,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -445,6 +445,7 @@ gsskrb5_acceptor_start(OM_uint32 * minor_status,
 	     * lets only send the error token on clock skew, that
 	     * limit when send error token for non-MUTUAL.
 	     */
+            free_Authenticator(ctx->auth_context->authenticator);
 	    return send_error_token(minor_status, context, kret,
 				    server, &indata, output_token);
 	} else if (kret) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_mic.c,v 1.6 2023/06/01 20:40:18 christos Exp $	*/
+/*	$NetBSD: verify_mic.c,v 1.7 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan

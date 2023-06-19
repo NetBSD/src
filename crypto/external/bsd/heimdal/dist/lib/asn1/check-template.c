@@ -1,4 +1,4 @@
-/*	$NetBSD: check-template.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: check-template.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2005 Kungliga Tekniska Högskolan
@@ -374,7 +374,7 @@ test_seqof4(void)
     b2val[3].u2 = -1LL;
     b2val[3].s3.data = "\x00\x01\x02\x03";
     b2val[3].s3.length = 4;
-    b2val[3].u3 = 1LL<<63;
+    b2val[3].u3 = 1ULL<<63;
 
     b3val[3].s1.data = "";
     b3val[3].s1.length = 0;
@@ -384,7 +384,7 @@ test_seqof4(void)
     b3val[3].u2 = -1LL;
     b3val[3].s3.data = "\x00\x01\x02\x03";
     b3val[3].s3.length = 4;
-    b3val[3].u3 = 1LL<<63;
+    b3val[3].u3 = 1ULL<<63;
     b3val[3].s4.data = "\x00";
     b3val[3].s4.length = 1;
     b3val[3].u4 = 1LL<<32;

@@ -1,4 +1,4 @@
-/*	$NetBSD: afssysdefs.h,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: afssysdefs.h,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2003 Kungliga Tekniska Högskolan
@@ -104,10 +104,6 @@
 
 #if defined(__NetBSD__)
 #define AFS_SYSCALL 210
-#endif
-
-#ifdef __APPLE__		/* MacOS X */
-#define AFS_SYSCALL 230
 #endif
 
 #ifdef SYS_afs_syscall

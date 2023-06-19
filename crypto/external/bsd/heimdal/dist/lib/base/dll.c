@@ -1,4 +1,4 @@
-/*	$NetBSD: dll.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: dll.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /***********************************************************************
  * Copyright (c) 2016 Kungliga Tekniska Högskolan
@@ -85,7 +85,8 @@ struct tls_values {
 
 static HEIMDAL_THREAD_LOCAL struct tls_values values;
 
-#define DEAD_KEY ((void *)8)
+static char dead_key[1];
+static void no_dtor(void *d) { (void)d; }
 
 void
 heim_w32_service_thread_detach(void *unused)
@@ -113,7 +114,7 @@ heim_w32_service_thread_detach(void *unused)
             assert(i < key_defs->keys_start_idx + key_defs->keys_num);
         }
         dtor = key_defs->keys_dtors[i - key_defs->keys_start_idx];
-        if (values.values[i] != NULL && dtor != NULL && dtor != DEAD_KEY)
+        if (values.values[i] != NULL && dtor != NULL && dtor != no_dtor)
             dtor(values.values[i]);
         values.values[i] = NULL;
     }
@@ -152,7 +153,7 @@ heim_w32_key_create(HEIM_PRIV_thread_key *key, void (*dtor)(void *))
 
 #if !defined(WIN32)
     (void) pthread_once(&pt_once, create_pt_key);
-    (void) pthread_setspecific(pt_key, DEAD_KEY);
+    (void) pthread_setspecific(pt_key, dead_key);
 #endif
 
     HEIMDAL_MUTEX_lock(&tls_key_defs_lock);
@@ -268,7 +269,7 @@ heim_w32_delete_key(HEIM_PRIV_thread_key key)
     key_lookup(key, &key_defs, &dtor_idx, NULL);
     if (key_defs == NULL)
         return EINVAL;
-    key_defs->keys_dtors[dtor_idx] = DEAD_KEY;
+    key_defs->keys_dtors[dtor_idx] = no_dtor;
     return 0;
 }
 
@@ -281,7 +282,7 @@ heim_w32_setspecific(HEIM_PRIV_thread_key key, void *value)
     size_t i;
 
 #if !defined(WIN32)
-    (void) pthread_setspecific(pt_key, DEAD_KEY);
+    (void) pthread_setspecific(pt_key, dead_key);
 #endif
 
     key_lookup(key, NULL, NULL, &dtor);
@@ -306,7 +307,7 @@ heim_w32_setspecific(HEIM_PRIV_thread_key key, void *value)
 
     assert(key < values.values_num);
 
-    if (values.values[key] != NULL && dtor != NULL && dtor != DEAD_KEY)
+    if (values.values[key] != NULL && dtor != NULL && dtor != no_dtor)
         dtor(values.values[key]);
 
     values.values[key] = value;

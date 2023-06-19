@@ -1,3 +1,70 @@
+Release Notes - Heimdal - Version Heimdal 7.8
+
+ Bug fixes
+
+ - CVE-2022-42898 PAC parse integer overflows
+
+ - CVE-2022-3437 Overflows and non-constant time leaks in DES{,3} and arcfour
+
+ - CVE-2021-44758 Heimdal KDC: invalid free in ASN.1 codec
+
+    This is a 10.0 on the Common Vulnerability Scoring System (CVSS) v3.
+
+    Heimdal's ASN.1 compiler generates code that allows specially
+    crafted DER encodings of CHOICEs to invoke the wrong free function
+    on the decoded structure upon decode error.  This is known to impact
+    the Heimdal KDC, leading to an invalid free() of an address partly
+    or wholly under the control of the attacker, in turn leading to a
+    potential remote code execution (RCE) vulnerability.
+
+    This error affects the DER codec for all CHOICE types used in
+    Heimdal, though not all cases will be exploitable.  We have not
+    completed a thorough analysis of all the Heimdal components
+    affected, thus the Kerberos client, the X.509 library, and other
+    parts, may be affected as well.
+
+    This bug has been in Heimdal since 2005.  It was first reported by
+    Douglas Bagnall, though it had been found independently by the
+    Heimdal maintainers via fuzzing.
+
+    While no zero-day exploit is known, such an exploit will likely be
+    available soon after public disclosure.
+
+ - Bugs found by UBSAN (including the incorrect encoding of unconstrained
+   INTEGER value -1).
+
+ - Errors found by the LLVM scan-build static analyzer.
+
+ - Errors found by the valgrind memory debugger.
+
+ - Work around GCC Bug 95189 (memcmp wrongly stripped like strcmp).
+
+ - Fix Unicode normalization read of 1 bytes past end of array.
+
+ - Correct ASN.1 OID typo for SHA-384
+
+ - Fix a deadlock in in the MEMORY ccache type.
+
+ - TGS: strip forwardable and proxiable flags if the server is
+   disallowed.
+
+ - CVE-2019-14870: Validate client attributes in protocol-transition
+ - CVE-2019-14870: Apply forwardable policy in protocol-transition
+ - CVE-2019-14870: Always lookup impersonate client in DB
+
+ - Incremental HDB propagation improvements
+
+    - Refactor send_diffs making it progressive
+    - Handle partial writes on non-blocking sockets
+    - Disable Nagle in iprop master and slave
+    - Use async I/O
+    - Don't send I_HAVE in response to AYT
+    - Do not recover log in kadm5_get_principal()
+    - Don't send diffs to slaves with not yet known version
+    - Don't stutter in send_diffs
+
+ - Optional backwards-compatible anon-pkinit behaviour
+
 Release Notes - Heimdal - Version Heimdal 7.7
 
  Bug fixes

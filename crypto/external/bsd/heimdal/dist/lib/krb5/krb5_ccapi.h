@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5_ccapi.h,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: krb5_ccapi.h,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -40,7 +40,7 @@
 
 #include <krb5/krb5-types.h>
 
- #ifdef __APPLE__
+#ifdef __APPLE__
 #pragma pack(push,2)
 #endif
 
@@ -233,7 +233,7 @@ struct cc_context_t {
 typedef cc_int32
 (*cc_initialize_func)(cc_context_t*, cc_int32, cc_int32 *, char const **);
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #pragma pack(pop)
 #endif
 

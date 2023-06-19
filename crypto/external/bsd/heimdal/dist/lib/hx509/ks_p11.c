@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_p11.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: ks_p11.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2008 Kungliga Tekniska Högskolan

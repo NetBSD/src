@@ -1,4 +1,4 @@
-/*	$NetBSD: des.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: des.c,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -227,8 +227,8 @@ DES_set_key_unchecked(DES_cblock *key, DES_key_schedule *ks)
     uint32_t *k = &ks->ks[0];
     int i;
 
-    t1 = (*key)[0] << 24 | (*key)[1] << 16 | (*key)[2] << 8 | (*key)[3];
-    t2 = (*key)[4] << 24 | (*key)[5] << 16 | (*key)[6] << 8 | (*key)[7];
+    t1 = (uint32_t)(*key)[0] << 24 | (*key)[1] << 16 | (*key)[2] << 8 | (*key)[3];
+    t2 = (uint32_t)(*key)[4] << 24 | (*key)[5] << 16 | (*key)[6] << 8 | (*key)[7];
 
     c =   (pc1_c_3[(t1 >> (5            )) & 0x7] << 3)
 	| (pc1_c_3[(t1 >> (5 + 8        )) & 0x7] << 2)
@@ -327,27 +327,27 @@ DES_key_sched(DES_cblock *key, DES_key_schedule *ks)
 static void
 load(const unsigned char *b, uint32_t v[2])
 {
-    v[0] =  b[0] << 24;
-    v[0] |= b[1] << 16;
-    v[0] |= b[2] << 8;
-    v[0] |= b[3] << 0;
-    v[1] =  b[4] << 24;
-    v[1] |= b[5] << 16;
-    v[1] |= b[6] << 8;
-    v[1] |= b[7] << 0;
+    v[0] =  (uint32_t)b[0] << 24U;
+    v[0] |= b[1] << 16U;
+    v[0] |= b[2] << 8U;
+    v[0] |= b[3] << 0U;
+    v[1] =  (uint32_t)b[4] << 24U;
+    v[1] |= b[5] << 16U;
+    v[1] |= b[6] << 8U;
+    v[1] |= b[7] << 0U;
 }
 
 static void
 store(const uint32_t v[2], unsigned char *b)
 {
-    b[0] = (v[0] >> 24) & 0xff;
-    b[1] = (v[0] >> 16) & 0xff;
-    b[2] = (v[0] >>  8) & 0xff;
-    b[3] = (v[0] >>  0) & 0xff;
-    b[4] = (v[1] >> 24) & 0xff;
-    b[5] = (v[1] >> 16) & 0xff;
-    b[6] = (v[1] >>  8) & 0xff;
-    b[7] = (v[1] >>  0) & 0xff;
+    b[0] = (v[0] >> 24) & 0xffU;
+    b[1] = (v[0] >> 16) & 0xffU;
+    b[2] = (v[0] >>  8) & 0xffU;
+    b[3] = (v[0] >>  0) & 0xffU;
+    b[4] = (v[1] >> 24) & 0xffU;
+    b[5] = (v[1] >> 16) & 0xffU;
+    b[6] = (v[1] >>  8) & 0xffU;
+    b[7] = (v[1] >>  0) & 0xffU;
 }
 
 /**

@@ -1,4 +1,4 @@
-/*	$NetBSD: sp800-108-kdf.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
+/*	$NetBSD: sp800-108-kdf.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2015, Secure Endpoints Inc.

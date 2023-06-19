@@ -1,4 +1,4 @@
-/*	$NetBSD: gsskrb5-private.h,v 1.2 2019/12/15 22:50:47 christos Exp $	*/
+/*	$NetBSD: gsskrb5-private.h,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /* This is a generated file */
 #ifndef __gsskrb5_private_h__
@@ -44,7 +44,8 @@ _gk_verify_buffers (
 	const gsskrb5_ctx /*ctx*/,
 	const gss_iov_buffer_desc */*header*/,
 	const gss_iov_buffer_desc */*padding*/,
-	const gss_iov_buffer_desc */*trailer*/);
+	const gss_iov_buffer_desc */*trailer*/,
+	int /*block_cipher*/);
 
 OM_uint32 GSSAPI_CALLCONV
 _gk_wrap_iov (

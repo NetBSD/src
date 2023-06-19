@@ -1,4 +1,4 @@
-/*	$NetBSD: evp.h,v 1.3 2019/12/15 22:50:48 christos Exp $	*/
+/*	$NetBSD: evp.h,v 1.4 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2016 Kungliga Tekniska Högskolan
@@ -83,7 +83,6 @@
 #define EVP_des_cbc hc_EVP_des_cbc
 #define EVP_des_ede3_cbc hc_EVP_des_ede3_cbc
 #define EVP_enc_null hc_EVP_enc_null
-#define EVP_md2 hc_EVP_md2
 #define EVP_md4 hc_EVP_md4
 #define EVP_md5 hc_EVP_md5
 #define EVP_md_null hc_EVP_md_null
@@ -252,7 +251,6 @@ HC_CPP_BEGIN
  */
 
 const EVP_MD *EVP_md_null(void);
-HC_DEPRECATED_CRYPTO const EVP_MD *EVP_md2(void);
 HC_DEPRECATED_CRYPTO const EVP_MD *EVP_md4(void);
 HC_DEPRECATED_CRYPTO const EVP_MD *EVP_md5(void);
 const EVP_MD *EVP_sha(void);

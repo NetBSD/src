@@ -1,4 +1,4 @@
-/*	$NetBSD: rxkad_kdf.c,v 1.3 2018/02/05 16:00:53 christos Exp $	*/
+/*	$NetBSD: rxkad_kdf.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1995-2003 Kungliga Tekniska Högskolan
@@ -39,6 +39,7 @@
  * SUCH DAMAGE.
  */
 
+#define HC_DEPRECATED_CRYPTO
 #include "kafs_locl.h"
 
 static int rxkad_derive_des_key(const void *, size_t, char[8]);

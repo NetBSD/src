@@ -1,4 +1,4 @@
-/*	$NetBSD: salt.c,v 1.4 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: salt.c,v 1.5 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan

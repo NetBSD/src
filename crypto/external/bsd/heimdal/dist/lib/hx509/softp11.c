@@ -1,4 +1,4 @@
-/*	$NetBSD: softp11.c,v 1.4 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: softp11.c,v 1.5 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2008 Kungliga Tekniska Högskolan
@@ -344,6 +344,9 @@ add_object_attribute(struct st_object *o,
     struct st_attr *a;
     int i;
 
+    if (pValue == NULL && ulValueLen)
+        return CKR_ARGUMENTS_BAD;
+
     i = o->num_attributes;
     a = realloc(o->attrs, (i + 1) * sizeof(o->attrs[0]));
     if (a == NULL)
@@ -354,7 +357,8 @@ add_object_attribute(struct st_object *o,
     o->attrs[i].attribute.pValue = malloc(ulValueLen);
     if (o->attrs[i].attribute.pValue == NULL && ulValueLen != 0)
 	return CKR_DEVICE_MEMORY;
-    memcpy(o->attrs[i].attribute.pValue, pValue, ulValueLen);
+    if (ulValueLen)
+        memcpy(o->attrs[i].attribute.pValue, pValue, ulValueLen);
     o->attrs[i].attribute.ulValueLen = ulValueLen;
     o->num_attributes++;
 

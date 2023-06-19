@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.3 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
@@ -190,7 +190,7 @@ get_null (const struct addrinfo *hints,
     struct addrinfo *first = NULL;
     struct addrinfo **current = &first;
     int family = PF_UNSPEC;
-    int ret;
+    int ret = 0;
 
     if (hints != NULL)
 	family = hints->ai_family;
@@ -211,6 +211,8 @@ get_null (const struct addrinfo *hints,
     if (family == PF_INET6 || family == PF_UNSPEC) {
 	ret = add_one (port, protocol, socktype,
 		       &current, const_v6, &v6_addr, NULL);
+        if (ret)
+            return ret;
     }
 #endif
     if (family == PF_INET || family == PF_UNSPEC) {
@@ -218,7 +220,7 @@ get_null (const struct addrinfo *hints,
 		       &current, const_v4, &v4_addr, NULL);
     }
     *res = first;
-    return 0;
+    return ret;
 }
 
 static int

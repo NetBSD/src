@@ -1,4 +1,4 @@
-/*	$NetBSD: ntlm.c,v 1.4 2023/06/01 20:40:19 christos Exp $	*/
+/*	$NetBSD: ntlm.c,v 1.5 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan

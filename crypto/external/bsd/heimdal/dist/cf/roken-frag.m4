@@ -490,13 +490,13 @@ dnl
 AC_HAVE_STRUCT_FIELD(struct sockaddr, sa_len, [#include <sys/types.h>
 #include <sys/socket.h>])
 
-if test "$ac_cv_func_getaddrinfo" = "yes"; then
-  rk_BROKEN_GETADDRINFO
-  if test "$ac_cv_func_getaddrinfo_numserv" = no; then
-	AC_LIBOBJ(getaddrinfo)
-	AC_LIBOBJ(freeaddrinfo)
-  fi
-fi
+#if test "$ac_cv_func_getaddrinfo" = "yes"; then
+#  rk_BROKEN_GETADDRINFO
+#  if test "$ac_cv_func_getaddrinfo_numserv" = no; then
+#	AC_LIBOBJ(getaddrinfo)
+#	AC_LIBOBJ(freeaddrinfo)
+#  fi
+#fi
 
 AC_NEED_PROTO([#include <stdlib.h>], setenv)
 AC_NEED_PROTO([#include <stdlib.h>], unsetenv)

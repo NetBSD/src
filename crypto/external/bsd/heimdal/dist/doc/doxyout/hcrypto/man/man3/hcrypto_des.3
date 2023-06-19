@@ -1,10 +1,10 @@
-.\"	$NetBSD: hcrypto_des.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hcrypto_des.3,v 1.3 2023/06/19 21:41:39 christos Exp $
 .\"
-.TH "hcrypto_des" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdal crypto library" \" -*- nroff -*-
+.TH "hcrypto_des" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal crypto library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hcrypto_des
+hcrypto_des \- DES crypto functions
 .SH SYNOPSIS
 .br
 .PP
@@ -79,7 +79,7 @@ Crete a checksum using DES in CBC encryption mode\&. This mode is only used for 
 .PP
 The IV must always be diffrent for diffrent input data blocks\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP data to checksum 
 .br
@@ -98,7 +98,7 @@ Encrypt/decrypt a block using DES in Chain Block Cipher mode (cbc)\&.
 .PP
 The IV must always be diffrent for diffrent input data blocks\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP data to encrypt 
 .br
@@ -119,7 +119,7 @@ Encrypt/decrypt using DES in cipher feedback mode with 64 bit feedback\&.
 .PP
 The IV must always be diffrent for diffrent input data blocks\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP data to encrypt 
 .br
@@ -140,12 +140,12 @@ The IV must always be diffrent for diffrent input data blocks\&.
 .SS "int HC_DEPRECATED DES_check_key_parity (DES_cblock * key)"
 Check if the key have correct parity\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIkey\fP key to check the parity\&. 
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success, 0 on failure\&. 
 .RE
@@ -154,7 +154,7 @@ Check if the key have correct parity\&.
 .SS "void DES_ecb3_encrypt (DES_cblock * input, DES_cblock * output, DES_key_schedule * ks1, DES_key_schedule * ks2, DES_key_schedule * ks3, int encp)"
 Encrypt/decrypt a block using triple DES using EDE mode, encrypt/decrypt/encrypt\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIinput\fP data to encrypt 
 .br
@@ -173,7 +173,7 @@ Encrypt/decrypt a block using triple DES using EDE mode, encrypt/decrypt/encrypt
 .SS "void DES_ecb_encrypt (DES_cblock * input, DES_cblock * output, DES_key_schedule * ks, int encp)"
 Encrypt/decrypt a block using DES\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIinput\fP data to encrypt 
 .br
@@ -190,7 +190,7 @@ Encrypt/decrypt using Triple DES in Chain Block Cipher mode (cbc)\&.
 .PP
 The IV must always be diffrent for diffrent input data blocks\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP data to encrypt 
 .br
@@ -213,7 +213,7 @@ The IV must always be diffrent for diffrent input data blocks\&.
 .SS "void DES_encrypt (uint32_t u[2], DES_key_schedule * ks, int encp)"
 Encrypt/decrypt a block using DES\&. Also called ECB mode
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIu\fP data to encrypt 
 .br
@@ -226,7 +226,7 @@ Encrypt/decrypt a block using DES\&. Also called ECB mode
 .SS "void HC_DEPRECATED DES_init_random_number_generator (DES_cblock * seed)"
 Seed the random number generator\&. Deprecated, use \fBRAND - random number\fP
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIseed\fP a seed to seed that random number generate with\&. 
 .RE
@@ -235,12 +235,12 @@ Seed the random number generator\&. Deprecated, use \fBRAND - random number\fP
 .SS "int DES_is_weak_key (DES_cblock * key)"
 Checks if the key is any of the weaks keys that makes DES attacks trival\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIkey\fP key to check\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 if the key is weak, 0 otherwise\&. 
 .RE
@@ -249,14 +249,14 @@ Checks if the key is any of the weaks keys that makes DES attacks trival\&.
 .SS "int DES_key_sched (DES_cblock * key, DES_key_schedule * ks)"
 Compatibility function for eay libdes, works just like \fBDES_set_key_checked()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIkey\fP a key to initialize the key schedule with\&. 
 .br
 \fIks\fP a key schedule to initialize\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 0 on success, -1 on invalid parity, -2 on weak key\&. 
 .RE
@@ -265,12 +265,12 @@ Compatibility function for eay libdes, works just like \fBDES_set_key_checked()\
 .SS "int HC_DEPRECATED DES_new_random_key (DES_cblock * key)"
 Generate a random des key using a random block, fixup parity and skip weak keys\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIkey\fP is set to a random key\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 0 on success, non zero on random number generator failure\&. 
 .RE
@@ -281,7 +281,7 @@ Encrypt/decrypt a block using DES in Propagating Cipher Block Chaining mode\&. T
 .PP
 The IV must always be diffrent for diffrent input data blocks\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP data to encrypt 
 .br
@@ -300,7 +300,7 @@ The IV must always be diffrent for diffrent input data blocks\&.
 .SS "void HC_DEPRECATED DES_random_key (DES_cblock * key)"
 Generate a random key, deprecated since it doesn't return an error code, use \fBDES_new_random_key()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIkey\fP is set to a random key\&. 
 .RE
@@ -309,14 +309,14 @@ Generate a random key, deprecated since it doesn't return an error code, use \fB
 .SS "int HC_DEPRECATED DES_set_key (DES_cblock * key, DES_key_schedule * ks)"
 Setup a des key schedule from a key\&. Deprecated function, use \fBDES_set_key_unchecked()\fP or \fBDES_set_key_checked()\fP instead\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIkey\fP a key to initialize the key schedule with\&. 
 .br
 \fIks\fP a key schedule to initialize\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 0 on success 
 .RE
@@ -325,14 +325,14 @@ Setup a des key schedule from a key\&. Deprecated function, use \fBDES_set_key_u
 .SS "int DES_set_key_checked (DES_cblock * key, DES_key_schedule * ks)"
 Just like \fBDES_set_key_unchecked()\fP except checking that the key is not weak for or have correct parity\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIkey\fP a key to initialize the key schedule with\&. 
 .br
 \fIks\fP a key schedule to initialize\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 0 on success, -1 on invalid parity, -2 on weak key\&. 
 .RE
@@ -343,14 +343,14 @@ Setup a des key schedule from a key\&. The key is no longer needed after this tr
 .PP
 Does NOT check that the key is weak for or have wrong parity\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIkey\fP a key to initialize the key schedule with\&. 
 .br
 \fIks\fP a key schedule to initialize\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 0 on success 
 .RE
@@ -359,7 +359,7 @@ Does NOT check that the key is weak for or have wrong parity\&.
 .SS "void DES_set_odd_parity (DES_cblock * key)"
 Set the parity of the key block, used to generate a des key from a random key\&. See \fBDES key generation\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIkey\fP key to fixup the parity for\&. 
 .RE
@@ -368,7 +368,7 @@ Set the parity of the key block, used to generate a des key from a random key\&.
 .SS "void DES_string_to_key (const char * str, DES_cblock * key)"
 Convert a string to a DES key\&. Use something like \fBPKCS5_PBKDF2_HMAC_SHA1()\fP to create key from passwords\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIstr\fP The string to convert to a key 
 .br

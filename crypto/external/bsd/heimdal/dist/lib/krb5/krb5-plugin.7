@@ -1,4 +1,4 @@
-.\"	$NetBSD: krb5-plugin.7,v 1.2 2017/01/28 21:31:49 christos Exp $
+.\"	$NetBSD: krb5-plugin.7,v 1.3 2023/06/19 21:41:44 christos Exp $
 .\"
 .\" Copyright (c) 1999 - 2005 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -171,16 +171,16 @@ follows:
 .Bd -literal -offset indent
 #include <krb5/an2ln_plugin.h>
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 nouser_plug_init(krb5_context context, void **ctx)
 {
     *ctx = NULL;
     return 0;
 }
 
-static void nouser_plug_fini(void *ctx) { }
+static void KRB5_CALLCONV nouser_plug_fini(void *ctx) { }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 nouser_plug_an2ln(void *plug_ctx, krb5_context context,
                   const char *rule,
                   krb5_const_principal aname,
@@ -212,16 +212,16 @@ there exists a built-in plugin with this functionality; see
 .Bd -literal -offset indent
 #include <krb5/kuserok_plugin.h>
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV 
 reject_plug_init(krb5_context context, void **ctx)
 {
     *ctx = NULL;
     return 0;
 }
 
-static void reject_plug_fini(void *ctx) { }
+static void KRB5_CALLCONV reject_plug_fini(void *ctx) { }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 reject_plug_kuserok(void *plug_ctx, krb5_context context, const char *rule,
                     unsigned int flags, const char *k5login_dir,
                     const char *luser, krb5_const_principal principal,

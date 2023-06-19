@@ -1,10 +1,10 @@
-.\"	$NetBSD: hx509_crypto.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hx509_crypto.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "hx509_crypto" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalx509library" \" -*- nroff -*-
+.TH "hx509_crypto" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal x509 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hx509_crypto
+hx509_crypto \- hx509 crypto functions
 .SH SYNOPSIS
 .br
 .PP
@@ -23,7 +23,7 @@ hx509_crypto
 .SS "int hx509_verify_signature (hx509_context context, const hx509_cert signer, const AlgorithmIdentifier * alg, const heim_octet_string * data, const heim_octet_string * sig)"
 Verify a signature made using the private key of an certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -36,7 +36,7 @@ Verify a signature made using the private key of an certificate\&.
 \fIsig\fP the sigature to verify\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -44,4 +44,4 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalx509library from the source code\&.
+Generated automatically by Doxygen for Heimdal x509 library from the source code\&.

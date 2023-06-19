@@ -1,4 +1,4 @@
-/*	$NetBSD: unwrap.c,v 1.4 2023/06/01 20:40:18 christos Exp $	*/
+/*	$NetBSD: unwrap.c,v 1.5 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -66,6 +66,8 @@ unwrap_des
 
   if (IS_DCE_STYLE(context_handle)) {
      token_len = 22 + 8 + 15; /* 45 */
+     if (input_message_buffer->length < token_len)
+	  return GSS_S_BAD_MECH;
   } else {
      token_len = input_message_buffer->length;
   }
@@ -77,6 +79,11 @@ unwrap_des
 				   GSS_KRB5_MECHANISM);
   if (ret)
       return ret;
+
+  len = (p - (u_char *)input_message_buffer->value)
+      + 22 + 8;
+  if (input_message_buffer->length < len)
+      return GSS_S_BAD_MECH;
 
   if (memcmp (p, "\x00\x00", 2) != 0)
     return GSS_S_BAD_SIG;
@@ -132,7 +139,7 @@ unwrap_des
   } else {
     /* check pad */
     ret = _gssapi_verify_pad(input_message_buffer,
-			     input_message_buffer->length - len,
+			     input_message_buffer->length - len - 8,
 			     &padlength);
     if (ret)
         return ret;
@@ -209,9 +216,10 @@ unwrap_des
   output_message_buffer->value  = malloc(output_message_buffer->length);
   if(output_message_buffer->length != 0 && output_message_buffer->value == NULL)
       return GSS_S_FAILURE;
-  memcpy (output_message_buffer->value,
-	  p + 24,
-	  output_message_buffer->length);
+  if (output_message_buffer->value != NULL)
+      memcpy (output_message_buffer->value,
+	      p + 24,
+	      output_message_buffer->length);
   return GSS_S_COMPLETE;
 }
 #endif
@@ -244,6 +252,8 @@ unwrap_des3
 
   if (IS_DCE_STYLE(context_handle)) {
      token_len = 34 + 8 + 15; /* 57 */
+     if (input_message_buffer->length < token_len)
+	  return GSS_S_BAD_MECH;
   } else {
      token_len = input_message_buffer->length;
   }
@@ -256,7 +266,12 @@ unwrap_des3
   if (ret)
       return ret;
 
-  if (memcmp (p, "\x04\x00", 2) != 0) /* HMAC SHA1 DES3_KD */
+  len = (p - (u_char *)input_message_buffer->value)
+      + 34 + 8;
+  if (input_message_buffer->length < len)
+      return GSS_S_BAD_MECH;
+
+  if (ct_memcmp (p, "\x04\x00", 2) != 0) /* HMAC SHA1 DES3_KD */
     return GSS_S_BAD_SIG;
   p += 2;
   if (ct_memcmp (p, "\x02\x00", 2) == 0) {
@@ -303,7 +318,7 @@ unwrap_des3
   } else {
     /* check pad */
     ret = _gssapi_verify_pad(input_message_buffer,
-			     input_message_buffer->length - len,
+			     input_message_buffer->length - len - 8,
 			     &padlength);
     if (ret)
         return ret;
@@ -403,9 +418,10 @@ unwrap_des3
   output_message_buffer->value  = malloc(output_message_buffer->length);
   if(output_message_buffer->length != 0 && output_message_buffer->value == NULL)
       return GSS_S_FAILURE;
-  memcpy (output_message_buffer->value,
-	  p + 36,
-	  output_message_buffer->length);
+  if (output_message_buffer->value != NULL)
+      memcpy (output_message_buffer->value,
+	      p + 36,
+	      output_message_buffer->length);
   return GSS_S_COMPLETE;
 }
 

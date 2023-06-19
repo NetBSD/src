@@ -1,4 +1,4 @@
-/*	$NetBSD: kpasswdd.c,v 1.4 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: kpasswdd.c,v 1.5 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 #include "kpasswd_locl.h"
-__RCSID("$NetBSD: kpasswdd.c,v 1.4 2017/01/28 21:31:45 christos Exp $");
+__RCSID("$NetBSD: kpasswdd.c,v 1.5 2023/06/19 21:41:42 christos Exp $");
 
 #include <kadm5/admin.h>
 #ifdef HAVE_SYS_UN_H

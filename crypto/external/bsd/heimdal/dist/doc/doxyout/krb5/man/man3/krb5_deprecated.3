@@ -1,10 +1,10 @@
-.\"	$NetBSD: krb5_deprecated.3,v 1.2 2019/12/15 22:50:45 christos Exp $
+.\"	$NetBSD: krb5_deprecated.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "krb5_deprecated" 3 "Fri Jun 7 2019" "Version 7.7.0" "HeimdalKerberos5library" \" -*- nroff -*-
+.TH "krb5_deprecated" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal Kerberos 5 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-krb5_deprecated
+krb5_deprecated \- Heimdal Kerberos 5 deprecated functions
 .SH SYNOPSIS
 .br
 .PP
@@ -108,7 +108,7 @@ Deprecated: keytypes doesn't exists, they are really enctypes\&.
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_change_password (krb5_context context, krb5_creds * creds, const char * newpw, int * result_code, krb5_data * result_code_string, krb5_data * result_string)"
 Deprecated: \fBkrb5_change_password()\fP is deprecated, use \fBkrb5_set_password()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a Keberos context 
 .br
@@ -123,7 +123,7 @@ Deprecated: \fBkrb5_change_password()\fP is deprecated, use \fBkrb5_set_password
 \fIresult_string\fP 
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 On sucess password is changed\&.
 .RE
@@ -134,7 +134,7 @@ Clear the error message returned by \fBkrb5_get_error_string()\fP\&.
 .PP
 Deprecated: use \fBkrb5_clear_error_message()\fP
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos context 
 .RE
@@ -151,7 +151,7 @@ Same as \fBkrb5_data_free()\fP\&. MIT compat\&.
 .PP
 Deprecated: use \fBkrb5_data_free()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos 5 context\&. 
 .br
@@ -164,7 +164,7 @@ Free the error message returned by \fBkrb5_get_error_string()\fP\&.
 .PP
 Deprecated: use \fBkrb5_free_error_message()\fP
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos context 
 .br
@@ -211,14 +211,14 @@ Set the error message returned by \fBkrb5_get_error_string()\fP\&.
 .PP
 Deprecated: use \fBkrb5_get_error_message()\fP
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos context 
 .br
 \fIfmt\fP error message to free
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Return an error code or 0\&. 
 .RE
@@ -231,7 +231,7 @@ Set the error message returned by \fBkrb5_get_error_string()\fP, deprecated, use
 .PP
 Deprecated: use \fBkrb5_vset_error_message()\fP
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos context 
 .br
@@ -240,7 +240,7 @@ Deprecated: use \fBkrb5_vset_error_message()\fP
 \fIargs\fP variable argument list vector
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Return an error code or 0\&. 
 .RE
@@ -248,4 +248,4 @@ Return an error code or 0\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for HeimdalKerberos5library from the source code\&.
+Generated automatically by Doxygen for Heimdal Kerberos 5 library from the source code\&.

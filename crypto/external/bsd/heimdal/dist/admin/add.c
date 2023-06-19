@@ -1,4 +1,4 @@
-/*	$NetBSD: add.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: add.c,v 1.3 2023/06/19 21:41:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "ktutil_locl.h"
 
-__RCSID("$NetBSD: add.c,v 1.2 2017/01/28 21:31:44 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.3 2023/06/19 21:41:38 christos Exp $");
 
 static char *
 readstring(const char *prompt, char *buf, size_t len)
@@ -96,7 +96,8 @@ kt_add(struct add_options *opt, int argc, char **argv)
 	    goto out;
     }
     if(opt->password_string == NULL && opt->random_flag == 0) {
-	if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Password: ", 1)) {
+	if(UI_UTIL_read_pw_string(buf, sizeof(buf), "Password: ",
+				  UI_UTIL_FLAG_VERIFY)) {
 	    ret = 1;
 	    goto out;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: store_emem.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: store_emem.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -72,7 +72,8 @@ emem_store(krb5_storage *sp, const void *data, size_t size)
 	s->base = base;
 	s->ptr = (unsigned char*)base + off;
     }
-    memmove(s->ptr, data, size);
+    if (size)
+        memmove(s->ptr, data, size);
     sp->seek(sp, size, SEEK_CUR);
     return size;
 }

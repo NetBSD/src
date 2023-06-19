@@ -1,4 +1,4 @@
-/*	$NetBSD: change.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: change.c,v 1.3 2023/06/19 21:41:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "ktutil_locl.h"
 
-__RCSID("$NetBSD: change.c,v 1.2 2017/01/28 21:31:44 christos Exp $");
+__RCSID("$NetBSD: change.c,v 1.3 2023/06/19 21:41:38 christos Exp $");
 
 static krb5_error_code
 change_entry (krb5_keytab keytab,
@@ -219,7 +219,6 @@ kt_change (struct change_options *opt, int argc, char **argv)
     krb5_kt_end_seq_get(context, keytab, &cursor);
 
     if (ret == KRB5_KT_END) {
-	ret = 0;
 	for (i = 0; i < j; i++) {
 	    if (verbose_flag) {
 		char *client_name;

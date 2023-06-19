@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-headers.h,v 1.4 2023/06/01 20:40:18 christos Exp $	*/
+/*	$NetBSD: crypto-headers.h,v 1.5 2023/06/19 21:41:41 christos Exp $	*/
 
 #ifndef __crypto_header__
 #define __crypto_header__

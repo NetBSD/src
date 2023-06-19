@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_decode.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: gen_decode.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "gen_locl.h"
 #include "lex.h"
 
-__RCSID("$NetBSD: gen_decode.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
+__RCSID("$NetBSD: gen_decode.c,v 1.3 2023/06/19 21:41:42 christos Exp $");
 
 static void
 decode_primitive (const char *typename, const char *name, const char *forwstr)
@@ -596,14 +596,14 @@ decode_type (const char *name, const Type *t, int optional,
 		    classname(cl),
 		    ty ? "CONS" : "PRIM",
 		    valuename(cl, tag));
+	    fprintf(codefile,
+		    "(%s)->element = %s;\n",
+		    name, m->label);
 	    if (asprintf (&s, "%s(%s)->u.%s", m->optional ? "" : "&",
 			  name, m->gen_name) < 0 || s == NULL)
 		errx(1, "malloc");
 	    decode_type (s, m->type, m->optional, forwstr, m->gen_name, NULL,
 		depth + 1);
-	    fprintf(codefile,
-		    "(%s)->element = %s;\n",
-		    name, m->label);
 	    free(s);
 	    fprintf(codefile,
 		    "}\n");
@@ -612,23 +612,23 @@ decode_type (const char *name, const Type *t, int optional,
 	if (have_ellipsis) {
 	    fprintf(codefile,
 		    "else {\n"
+		    "(%s)->element = %s;\n"
 		    "(%s)->u.%s.data = calloc(1, len);\n"
 		    "if ((%s)->u.%s.data == NULL) {\n"
 		    "e = ENOMEM; %s;\n"
 		    "}\n"
 		    "(%s)->u.%s.length = len;\n"
 		    "memcpy((%s)->u.%s.data, p, len);\n"
-		    "(%s)->element = %s;\n"
 		    "p += len;\n"
 		    "ret += len;\n"
 		    "len = 0;\n"
 		    "}\n",
+		    name, have_ellipsis->label,
 		    name, have_ellipsis->gen_name,
 		    name, have_ellipsis->gen_name,
 		    forwstr,
 		    name, have_ellipsis->gen_name,
-		    name, have_ellipsis->gen_name,
-		    name, have_ellipsis->label);
+		    name, have_ellipsis->gen_name);
 	} else {
 	    fprintf(codefile,
 		    "else {\n"

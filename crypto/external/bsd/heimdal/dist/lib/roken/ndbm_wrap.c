@@ -1,4 +1,4 @@
-/*	$NetBSD: ndbm_wrap.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
+/*	$NetBSD: ndbm_wrap.c,v 1.3 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 Kungliga Tekniska Högskolan
@@ -38,6 +38,8 @@
 #include "ndbm_wrap.h"
 #if defined(HAVE_DBHEADER)
 #include <db.h>
+#elif defined(HAVE_DB6_DB_H)
+#include <db6/db.h>
 #elif defined(HAVE_DB5_DB_H)
 #include <db5/db.h>
 #elif defined(HAVE_DB4_DB_H)

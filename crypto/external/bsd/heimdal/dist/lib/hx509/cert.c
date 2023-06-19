@@ -1,4 +1,4 @@
-/*	$NetBSD: cert.c,v 1.5 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: cert.c,v 1.6 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
@@ -2202,9 +2202,9 @@ hx509_verify_path(hx509_context context,
 		 * EE checking below.
 		 */
 		type = EE_CERT;
-		/* FALLTHOUGH */
 	    }
 	}
+            /* FALLTHROUGH */
 	case EE_CERT:
 	    /*
 	     * If there where any proxy certificates in the chain

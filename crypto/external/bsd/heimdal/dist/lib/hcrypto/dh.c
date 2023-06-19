@@ -1,4 +1,4 @@
-/*	$NetBSD: dh.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: dh.c,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -307,7 +307,7 @@ DH_check_pubkey(const DH *dh, const BIGNUM *pub_key, int *codes)
 	unsigned i, n = BN_num_bits(pub_key);
 	unsigned bits = 0;
 
-	for (i = 0; i <= n; i++)
+	for (i = 0; i < n; i++)
 	    if (BN_is_bit_set(pub_key, i))
 		bits++;
 

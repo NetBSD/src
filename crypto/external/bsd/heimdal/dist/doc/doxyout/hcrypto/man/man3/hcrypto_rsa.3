@@ -1,10 +1,10 @@
-.\"	$NetBSD: hcrypto_rsa.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hcrypto_rsa.3,v 1.3 2023/06/19 21:41:39 christos Exp $
 .\"
-.TH "hcrypto_rsa" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdal crypto library" \" -*- nroff -*-
+.TH "hcrypto_rsa" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal crypto library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hcrypto_rsa
+hcrypto_rsa \- RSA functions
 .SH SYNOPSIS
 .br
 .PP
@@ -44,7 +44,7 @@ See the \fBRSA - public-key cryptography\fP for description and examples\&.
 .SS "void RSA_free (RSA * rsa)"
 Free an allocation RSA object\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIrsa\fP the RSA object to free\&. 
 .RE
@@ -53,12 +53,12 @@ Free an allocation RSA object\&.
 .SS "void* RSA_get_app_data (const RSA * rsa)"
 Get the application data for the RSA object\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIrsa\fP the rsa object to get the parameter for
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the data object 
 .RE
@@ -67,12 +67,12 @@ the data object
 .SS "const RSA_METHOD* RSA_get_method (const RSA * rsa)"
 Return the RSA_METHOD used for this RSA object\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIrsa\fP the object to get the method from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the method used for this RSA object\&. 
 .RE
@@ -81,7 +81,7 @@ the method used for this RSA object\&.
 .SS "RSA* RSA_new (void)"
 Same as \fBRSA_new_method()\fP using NULL as engine\&.
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a newly allocated RSA object\&. Free with \fBRSA_free()\fP\&. 
 .RE
@@ -90,12 +90,12 @@ a newly allocated RSA object\&. Free with \fBRSA_free()\fP\&.
 .SS "RSA* RSA_new_method (ENGINE * engine)"
 Allocate a new RSA object using the engine, if NULL is specified as the engine, use the default RSA engine as returned by ENGINE_get_default_RSA()\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIengine\fP Specific what ENGINE RSA provider should be used\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a newly allocated RSA object\&. Free with \fBRSA_free()\fP\&. 
 .RE
@@ -104,14 +104,14 @@ a newly allocated RSA object\&. Free with \fBRSA_free()\fP\&.
 .SS "int RSA_set_app_data (RSA * rsa, void * arg)"
 Set the application data for the RSA object\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIrsa\fP the rsa object to set the parameter for 
 .br
 \fIarg\fP the data object to store
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -120,14 +120,14 @@ Set the application data for the RSA object\&.
 .SS "int RSA_set_method (RSA * rsa, const RSA_METHOD * method)"
 Set a new method for the RSA keypair\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIrsa\fP rsa parameter\&. 
 .br
 \fImethod\fP the new method for the RSA parameter\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -136,12 +136,12 @@ Set a new method for the RSA keypair\&.
 .SS "int RSA_up_ref (RSA * rsa)"
 Add an extra reference to the RSA object\&. The object should be free with \fBRSA_free()\fP to drop the reference\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIrsa\fP the object to add reference counting too\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the current reference count, can't safely be used except for debug printing\&. 
 .RE

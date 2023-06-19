@@ -1,11 +1,11 @@
-.\"	$NetBSD: internal_v_smechname.3,v 1.2 2019/12/15 22:50:43 christos Exp $
+.\"	$NetBSD: internal_v_smechname.3,v 1.3 2023/06/19 21:41:39 christos Exp $
 .\"
-.TH "internal_v_smechname" 3 "Fri Jun 7 2019" "Version 7.7.0" "HeimdalGSS-APIlibrary" \" -*- nroff -*-
+.TH "internal_v_smechname" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal GSS-API library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-internal_v_smechnameInternal names and mechanism names 
- \- 
+internal_v_smechname \- Internal names and mechanism names 
+
 .SH "Name forms"
 .PP
 There are two name representations in GSS-API: Internal form and Contiguous string ('flat') form\&. Functions \fBgss_export_name()\fP and \fBgss_import_name()\fP can be used to convert between the two forms\&.
@@ -18,5 +18,5 @@ The Internal form is opaque to the application programmer and is implementation-
 There is also a special form of the Internal Name (IN), and that is the Mechanism Name (MN)\&. In the mechanism name all the generic information is stripped of and only contain the information for one mechanism\&. In GSS-API some function return MN and some require MN as input\&. Each of these function is marked up as such\&.
 .PP
 .PP
-Describe relationship between import_name, canonicalize_name, export_name and friends\&. Also, update for RFC2743 language ('contiguous' and 'flat' are gone, leaving just 'exported name
+@FIXME Describe relationship between import_name, canonicalize_name, export_name and friends\&. Also, update for RFC2743 language ('contiguous' and 'flat' are gone, leaving just 'exported name
 token', 'internal', and 'MN')\&. 

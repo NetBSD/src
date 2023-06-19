@@ -1,4 +1,4 @@
-/*	$NetBSD: ad.c,v 1.5 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: ad.c,v 1.6 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -49,7 +49,7 @@
 #include <krb5/base64.h>
 #endif
 
-__RCSID("$NetBSD: ad.c,v 1.5 2019/12/15 22:50:50 christos Exp $");
+__RCSID("$NetBSD: ad.c,v 1.6 2023/06/19 21:41:44 christos Exp $");
 
 #ifdef OPENLDAP
 

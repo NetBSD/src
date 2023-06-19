@@ -1,7 +1,7 @@
-/*	$NetBSD: combining_table.h,v 1.2 2019/12/15 22:50:51 christos Exp $	*/
+/*	$NetBSD: combining_table.h,v 1.3 2023/06/19 21:41:45 christos Exp $	*/
 
 /* ./combining_table.h */
-/* Automatically generated at 2019-06-07T02:26:41.530328 */
+/* Automatically generated at 2022-11-15T13:59:51.697168 */
 
 #ifndef COMBINING_TABLE_H
 #define COMBINING_TABLE_H 1

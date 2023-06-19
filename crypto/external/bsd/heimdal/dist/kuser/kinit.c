@@ -1,4 +1,4 @@
-/*	$NetBSD: kinit.c,v 1.4 2019/12/15 22:50:46 christos Exp $	*/
+/*	$NetBSD: kinit.c,v 1.5 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -670,7 +670,7 @@ get_new_tickets(krb5_context context,
 	}
     } else if (pk_user_id || ent_user_id ||
 	       krb5_principal_is_anonymous(context, principal, KRB5_ANON_MATCH_ANY)) {
-
+        /* nop */;
     } else if (!interactive && passwd[0] == '\0') {
 	static int already_warned = 0;
 
@@ -1273,6 +1273,7 @@ main(int argc, char **argv)
     struct sigaction sa;
 #endif
     krb5_boolean unique_ccache = FALSE;
+    krb5_boolean historical_anon_pkinit = FALSE;
     int anonymous_pkinit = FALSE;
 
     setprogname(argv[0]);
@@ -1300,6 +1301,9 @@ main(int argc, char **argv)
 
     argc -= optidx;
     argv += optidx;
+
+    krb5_appdefault_boolean(context, "kinit", NULL, "historical_anon_pkinit",
+                            FALSE, &historical_anon_pkinit);
 
     /*
      * Open the keytab now, we use the keytab to determine the principal's
@@ -1329,6 +1333,16 @@ main(int argc, char **argv)
 	ret = krb5_make_principal(context, &principal, &argv[0][1],
 				  KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME,
 				  NULL);
+	if (ret)
+	    krb5_err(context, 1, ret, "krb5_make_principal");
+	krb5_principal_set_type(context, principal, KRB5_NT_WELLKNOWN);
+	anonymous_pkinit = TRUE;
+    } else if (anonymous_flag && historical_anon_pkinit) {
+        char *realm = argc == 0 ? get_default_realm(context) :
+                      argv[0][0] == '@' ? &argv[0][1] : argv[0];
+
+	ret = krb5_make_principal(context, &principal, realm,
+				  KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME, NULL);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_make_principal");
 	krb5_principal_set_type(context, principal, KRB5_NT_WELLKNOWN);

@@ -1,4 +1,4 @@
-/*	$NetBSD: der_length.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: der_length.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #include "der_locl.h"
 
-__RCSID("$NetBSD: der_length.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
+__RCSID("$NetBSD: der_length.c,v 1.3 2023/06/19 21:41:42 christos Exp $");
 
 size_t
 _heim_len_unsigned (unsigned val)
@@ -258,7 +258,9 @@ der_length_heim_integer (const heim_integer *k)
 {
     if (k->length == 0)
 	return 1;
-    if (k->negative)
+    if (k->negative && k->length == 1 && ((unsigned char *)k->data)[0] == 1)
+        return 1;
+    else if (k->negative)
 	return k->length + (((~(((unsigned char *)k->data)[0])) & 0x80) ? 0 : 1);
     else
 	return k->length + ((((unsigned char *)k->data)[0] & 0x80) ? 1 : 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -36,7 +36,7 @@
 #include "kadm5_locl.h"
 #include "heim_threads.h"
 
-__RCSID("$NetBSD: log.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
+__RCSID("$NetBSD: log.c,v 1.3 2023/06/19 21:41:44 christos Exp $");
 
 /*
  * A log consists of a sequence of records of this form:
@@ -466,7 +466,6 @@ get_max_log_size(krb5_context context)
 }
 
 static kadm5_ret_t truncate_if_needed(kadm5_server_context *);
-static krb5_storage *log_goto_first(kadm5_server_context *, int);
 
 /*
  * Get the version and timestamp metadata of either the first, or last
@@ -476,7 +475,7 @@ static krb5_storage *log_goto_first(kadm5_server_context *, int);
  * uber record which must be 0, or else we need to upgrade the log.
  *
  * If `which' is LOG_VERSION_FIRST, then this gets the metadata for the
- * logically first entry past the uberblock, or returns HEIM_EOF if
+ * logically first entry past the uberblock, or returns HEIM_ERR_EOF if
  * only the uber record is present.
  *
  * If `which' is LOG_VERSION_LAST, then this gets metadata for the last
@@ -506,37 +505,35 @@ kadm5_log_get_version_fd(kadm5_server_context *server_context, int fd,
     *ver = 0;
     *tstamp = 0;
 
+    sp = krb5_storage_from_fd(fd);
+    if (sp == NULL)
+        return errno ? errno : ENOMEM;
+
     switch (which) {
     case LOG_VERSION_LAST:
-        sp = kadm5_log_goto_end(server_context, fd);
-        if (sp == NULL)
-            return errno;
-        ret = get_version_prev(sp, ver, tstamp);
-        krb5_storage_free(sp);
+        ret = kadm5_log_goto_end(server_context, sp);
+        if (ret == 0)
+            ret = get_version_prev(sp, ver, tstamp);
         break;
     case LOG_VERSION_FIRST:
-        sp = log_goto_first(server_context, fd);
-        if (sp == NULL)
-            return errno;
-        ret = get_header(sp, LOG_DOPEEK, ver, tstamp, NULL, NULL);
-        krb5_storage_free(sp);
+        ret = kadm5_log_goto_first(server_context, sp);
+        if (ret == 0)
+            ret = get_header(sp, LOG_DOPEEK, ver, tstamp, NULL, NULL);
         break;
     case LOG_VERSION_UBER:
-        sp = krb5_storage_from_fd(server_context->log_context.log_fd);
-        if (sp == NULL)
-            return errno;
         if (krb5_storage_seek(sp, 0, SEEK_SET) == 0)
             ret = get_header(sp, LOG_DOPEEK, ver, tstamp, &op, &len);
         else
             ret = errno;
         if (ret == 0 && (op != kadm_nop || len != LOG_UBER_LEN || *ver != 0))
             ret = KADM5_LOG_NEEDS_UPGRADE;
-        krb5_storage_free(sp);
         break;
     default:
-        return ENOTSUP;
+        ret = ENOTSUP;
+        break;
     }
 
+    krb5_storage_free(sp);
     return ret;
 }
 
@@ -1830,12 +1827,14 @@ kadm5_log_recover(kadm5_server_context *context, enum kadm_recover_mode mode)
     replay_data.ver = 0;
     replay_data.mode = mode;
 
-    sp = kadm5_log_goto_end(context, context->log_context.log_fd);
+    sp = krb5_storage_from_fd(context->log_context.log_fd);
     if (sp == NULL)
         return errno ? errno : EIO;
+    ret = kadm5_log_goto_end(context, sp);
 
-    ret = kadm5_log_foreach(context, kadm_forward | kadm_unconfirmed,
-                            NULL, recover_replay, &replay_data);
+    if (ret == 0)
+        ret = kadm5_log_foreach(context, kadm_forward | kadm_unconfirmed,
+                                NULL, recover_replay, &replay_data);
     if (ret == 0 && mode == kadm_recover_commit && replay_data.count != 1)
         ret = KADM5_LOG_CORRUPT;
     krb5_storage_free(sp);
@@ -1887,7 +1886,7 @@ kadm5_log_foreach(kadm5_server_context *context,
          */
         sp = krb5_storage_from_fd(fd);
         if (sp == NULL)
-            return errno;
+            return errno ? errno : ENOMEM;
 
         log_end = krb5_storage_seek(sp, 0, SEEK_END);
         if (log_end == -1 ||
@@ -1898,9 +1897,12 @@ kadm5_log_foreach(kadm5_server_context *context,
         }
     } else {
         /* Get the end of the log based on the uber entry */
-        sp = kadm5_log_goto_end(context, fd);
+        sp = krb5_storage_from_fd(fd);
         if (sp == NULL)
-            return errno;
+            return errno ? errno : ENOMEM;
+        ret = kadm5_log_goto_end(context, sp);
+        if (ret != 0)
+            return ret;
         log_end = krb5_storage_seek(sp, 0, SEEK_CUR);
     }
 
@@ -2049,81 +2051,50 @@ kadm5_log_foreach(kadm5_server_context *context,
 }
 
 /*
- * Go to the second record, which, if we have an uber record, will be
- * the first record.
+ * Go to the first record, which, if we have an uber record, will be
+ * the second record.
  */
-static krb5_storage *
-log_goto_first(kadm5_server_context *server_context, int fd)
+kadm5_ret_t
+kadm5_log_goto_first(kadm5_server_context *server_context, krb5_storage *sp)
 {
-    krb5_storage *sp;
     enum kadm_ops op;
     uint32_t ver, len;
     kadm5_ret_t ret;
 
-    if (fd == -1) {
-        errno = EINVAL;
-        return NULL;
-    }
-
-    sp = krb5_storage_from_fd(fd);
-    if (sp == NULL)
-        return NULL;
-
     if (krb5_storage_seek(sp, 0, SEEK_SET) == -1)
-        return NULL;
+        return KADM5_LOG_CORRUPT;
 
     ret = get_header(sp, LOG_DOPEEK, &ver, NULL, &op, &len);
-    if (ret) {
-        krb5_storage_free(sp);
-        errno = ret;
-        return NULL;
-    }
-    if (op == kadm_nop && len == LOG_UBER_LEN && seek_next(sp) == -1) {
-        krb5_storage_free(sp);
-        return NULL;
-    }
-    return sp;
+    if (ret)
+        return ret;
+    if (op == kadm_nop && len == LOG_UBER_LEN && seek_next(sp) == -1)
+        return KADM5_LOG_CORRUPT;
+    return 0;
 }
 
 /*
  * Go to end of log.
- *
- * XXX This really needs to return a kadm5_ret_t and either output a
- * krb5_storage * via an argument, or take one as input.
  */
-
-krb5_storage *
-kadm5_log_goto_end(kadm5_server_context *server_context, int fd)
+kadm5_ret_t
+kadm5_log_goto_end(kadm5_server_context *server_context, krb5_storage *sp)
 {
     krb5_error_code ret = 0;
-    krb5_storage *sp;
     enum kadm_ops op;
     uint32_t ver, len;
     uint32_t tstamp;
     uint64_t off;
 
-    if (fd == -1) {
-        errno = EINVAL;
-        return NULL;
-    }
-
-    sp = krb5_storage_from_fd(fd);
-    if (sp == NULL)
-        return NULL;
-
-    if (krb5_storage_seek(sp, 0, SEEK_SET) == -1) {
-        ret = errno;
-        goto fail;
-    }
+    if (krb5_storage_seek(sp, 0, SEEK_SET) == -1)
+        return errno;
     ret = get_header(sp, LOG_NOPEEK, &ver, &tstamp, &op, &len);
     if (ret == HEIM_ERR_EOF) {
         (void) krb5_storage_seek(sp, 0, SEEK_SET);
-        return sp;
+        return 0;
     }
     if (ret == KADM5_LOG_CORRUPT)
         goto truncate;
     if (ret)
-        goto fail;
+        return ret;
 
     if (op == kadm_nop && len == LOG_UBER_LEN) {
         /* New style log */
@@ -2132,12 +2103,12 @@ kadm5_log_goto_end(kadm5_server_context *server_context, int fd)
             goto truncate;
 
         if (krb5_storage_seek(sp, off, SEEK_SET) == -1)
-            goto fail;
+            return ret;
 
         if (off >= LOG_UBER_SZ) {
             ret = get_version_prev(sp, &ver, NULL);
             if (ret == 0)
-                return sp;
+                return 0;
         }
         /* Invalid offset in uber entry */
         goto truncate;
@@ -2155,7 +2126,7 @@ kadm5_log_goto_end(kadm5_server_context *server_context, int fd)
     ret = get_version_prev(sp, &ver, NULL);
     if (ret)
         goto truncate;
-    return sp;
+    return 0;
 
 truncate:
     /* If we can, truncate */
@@ -2164,18 +2135,64 @@ truncate:
         if (ret == 0) {
             krb5_warn(server_context->context, ret,
                       "Invalid log; truncating to recover");
-            if (krb5_storage_seek(sp, 0, SEEK_END) == -1)
-                return NULL;
-            return sp;
+            if (krb5_storage_seek(sp, 0, SEEK_END) >= 0)
+                return 0;
         }
     }
+    ret = KADM5_LOG_CORRUPT;
     krb5_warn(server_context->context, ret,
               "Invalid log; truncate to recover");
+    return ret;
+}
 
-fail:
-    errno = ret;
-    krb5_storage_free(sp);
-    return NULL;
+/*
+ * Return the next log entry.
+ *
+ * The pointer in `sp' is assumed to be at the end of an entry.  On success,
+ * the `sp' pointer is set to the next entry (not the data portion).  In case
+ * of error, it's not changed at all.
+ */
+kadm5_ret_t
+kadm5_log_next(krb5_context context,
+               krb5_storage *sp,
+               uint32_t *verp,
+               time_t *tstampp,
+               enum kadm_ops *opp,
+               uint32_t *lenp)
+{
+    uint32_t len = 0;
+    uint32_t len2 = 0;
+    uint32_t ver = verp ? *verp : 0;
+    uint32_t ver2;
+    uint32_t tstamp = tstampp ? *tstampp : 0;
+    enum kadm_ops op = kadm_nop;
+    off_t off = krb5_storage_seek(sp, 0, SEEK_CUR);
+    kadm5_ret_t ret = get_header(sp, LOG_NOPEEK, &ver, &tstamp, &op, &len);
+
+    /* Validate the trailer */
+    if (ret == 0 && krb5_storage_seek(sp, len, SEEK_CUR) == -1)
+        ret = errno;
+
+    if (ret == 0)
+        ret = krb5_ret_uint32(sp, &len2);
+    if (ret == 0)
+        ret = krb5_ret_uint32(sp, &ver2);
+    if (ret == 0 && (len != len2 || ver != ver2))
+        ret = KADM5_LOG_CORRUPT;
+    if (ret != 0) {
+        (void) krb5_storage_seek(sp, off, SEEK_SET);
+        return ret;
+    }
+
+    if (verp)
+        *verp = ver;
+    if (tstampp)
+        *tstampp = tstamp;
+    if (opp)
+        *opp = op;
+    if (lenp)
+        *lenp = len;
+    return 0;
 }
 
 /*
@@ -2549,11 +2566,15 @@ kadm5_log_truncate(kadm5_server_context *context, size_t keep, size_t maxbytes)
 
     /* Done.  Now rebuild the log_context state. */
     (void) lseek(context->log_context.log_fd, off, SEEK_SET);
-    sp = kadm5_log_goto_end(context, context->log_context.log_fd);
+    sp = krb5_storage_from_fd(context->log_context.log_fd);
     if (sp == NULL)
-        return ENOMEM;
-    ret = get_version_prev(sp, &context->log_context.version, &last_tstamp);
-    context->log_context.last_time = last_tstamp;
+	return errno ? errno : krb5_enomem(context->context);
+    ret = kadm5_log_goto_end(context, sp);
+    if (ret == 0) {
+        ret = get_version_prev(sp, &context->log_context.version, &last_tstamp);
+        if (ret == 0)
+            context->log_context.last_time = last_tstamp;
+    }
     krb5_storage_free(sp);
     return ret;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: protocol.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: protocol.c,v 1.3 2023/06/19 21:41:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -425,7 +425,7 @@ kcm_op_get_principal(krb5_context context,
     free(name);
     kcm_release_ccache(context, ccache);
 
-    return 0;
+    return ret;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: keys.c,v 1.5 2019/12/15 22:50:49 christos Exp $	*/
+/*	$NetBSD: keys.c,v 1.6 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2011 Kungliga Tekniska Högskolan

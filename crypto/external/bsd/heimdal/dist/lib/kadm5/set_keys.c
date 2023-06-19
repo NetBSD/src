@@ -1,4 +1,4 @@
-/*	$NetBSD: set_keys.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: set_keys.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001, 2003 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$NetBSD: set_keys.c,v 1.3 2019/12/15 22:50:50 christos Exp $");
+__RCSID("$NetBSD: set_keys.c,v 1.4 2023/06/19 21:41:44 christos Exp $");
 
 /*
  * Set the keys of `ent' to the string-to-key of `password'
@@ -179,6 +179,8 @@ _kadm5_set_keys2(kadm5_server_context *context,
 	    /* A current key; add to current key set */
 	    setup_Key(&key, &salt, key_data, i);
 	    ret = add_Keys(&keys, &key);
+            if (ret)
+                goto out;
 	    continue;
 	}
 

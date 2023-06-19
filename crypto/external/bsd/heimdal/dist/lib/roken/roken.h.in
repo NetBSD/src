@@ -318,18 +318,22 @@ ROKEN_CPP_START
 
 #define fsync   _commit
 
-/* The MSVC implementation of snprintf is not C99 compliant.  */
+#define timezone    _timezone
+
+#define tzname  _tzname
+
+#define _PIPE_BUFFER_SZ 8192
+#define pipe(fds) _pipe((fds), _PIPE_BUFFER_SZ, O_BINARY);
+
+#define ftruncate(fd, sz) _chsize((fd), (sz))
+
+#if !defined(HAVE_UCRT)
 #define snprintf    rk_snprintf
 #define vsnprintf   rk_vsnprintf
 #define vasnprintf  rk_vasnprintf
 #define vasprintf   rk_vasprintf
 #define asnprintf   rk_asnprintf
 #define asprintf    rk_asprintf
-
-#define _PIPE_BUFFER_SZ 8192
-#define pipe(fds) _pipe((fds), _PIPE_BUFFER_SZ, O_BINARY);
-
-#define ftruncate(fd, sz) _chsize((fd), (sz))
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_snprintf (char *str, size_t sz, const char *format, ...);
@@ -348,6 +352,7 @@ rk_vasnprintf (char **ret, size_t max_sz, const char *format, va_list args);
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_vsnprintf (char *str, size_t sz, const char *format, va_list args);
+#endif /* !defined(HAVE_UCRT) */
 
 /* missing stat.h predicates */
 

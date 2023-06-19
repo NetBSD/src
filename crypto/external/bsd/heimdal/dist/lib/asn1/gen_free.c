@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_free.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: gen_free.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "gen_locl.h"
 
-__RCSID("$NetBSD: gen_free.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
+__RCSID("$NetBSD: gen_free.c,v 1.3 2023/06/19 21:41:42 christos Exp $");
 
 static void
 free_primitive (const char *typename, const char *name)
@@ -58,11 +58,19 @@ free_type (const char *name, const Type *t, int preserve)
 	    free_primitive ("heim_integer", name);
 	    break;
 	}
+        /* fallthrough */
     case TBoolean:
     case TEnumerated :
     case TNull:
     case TGeneralizedTime:
     case TUTCTime:
+        /*
+         * This doesn't do much, but it leaves zeros where garbage might
+         * otherwise have been found.  Gets us closer to having the equivalent
+         * of a memset()-to-zero data structure after calling the free
+         * functions.
+         */
+        fprintf(codefile, "*%s = 0;\n", name);
 	break;
     case TBitString:
 	if (ASN1_TAILQ_EMPTY(t->members))

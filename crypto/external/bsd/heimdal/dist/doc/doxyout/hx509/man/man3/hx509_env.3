@@ -1,10 +1,10 @@
-.\"	$NetBSD: hx509_env.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hx509_env.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "hx509_env" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalx509library" \" -*- nroff -*-
+.TH "hx509_env" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal x509 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hx509_env
+hx509_env \- hx509 environment functions
 .SH SYNOPSIS
 .br
 .PP
@@ -38,7 +38,7 @@ hx509_env
 .SS "int hx509_env_add (hx509_context context, hx509_env * env, const char * key, const char * value)"
 Add a new key/value pair to the hx509_env\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -49,7 +49,7 @@ Add a new key/value pair to the hx509_env\&.
 \fIvalue\fP value to add
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -58,7 +58,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_env_add_binding (hx509_context context, hx509_env * env, const char * key, hx509_env list)"
 Add a new key/binding pair to the hx509_env\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -69,7 +69,7 @@ Add a new key/binding pair to the hx509_env\&.
 \fIlist\fP binding list to add
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -78,7 +78,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "const char* hx509_env_find (hx509_context context, hx509_env env, const char * key)"
 Search the hx509_env for a key\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -87,7 +87,7 @@ Search the hx509_env for a key\&.
 \fIkey\fP key to search for\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the value if the key is found, NULL otherwise\&. 
 .RE
@@ -96,7 +96,7 @@ the value if the key is found, NULL otherwise\&.
 .SS "hx509_env hx509_env_find_binding (hx509_context context, hx509_env env, const char * key)"
 Search the hx509_env for a binding\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -105,7 +105,7 @@ Search the hx509_env for a binding\&.
 \fIkey\fP key to search for\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the binding if the key is found, NULL if not found\&. 
 .RE
@@ -114,7 +114,7 @@ the binding if the key is found, NULL if not found\&.
 .SS "void hx509_env_free (hx509_env * env)"
 Free an hx509_env environment context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIenv\fP the environment to free\&. 
 .RE
@@ -123,7 +123,7 @@ Free an hx509_env environment context\&.
 .SS "const char* hx509_env_lfind (hx509_context context, hx509_env env, const char * key, size_t len)"
 Search the hx509_env for a length based key\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -134,7 +134,7 @@ Search the hx509_env for a length based key\&.
 \fIlen\fP length of key\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the value if the key is found, NULL otherwise\&. 
 .RE
@@ -142,4 +142,4 @@ the value if the key is found, NULL otherwise\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalx509library from the source code\&.
+Generated automatically by Doxygen for Heimdal x509 library from the source code\&.
