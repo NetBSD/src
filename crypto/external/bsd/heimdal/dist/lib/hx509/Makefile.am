@@ -164,7 +164,7 @@ hxtool-commands.c hxtool-commands.h: hxtool-commands.in $(SLC)
 dist_hxtool_SOURCES = hxtool.c
 nodist_hxtool_SOURCES = hxtool-commands.c hxtool-commands.h
 
-$(hxtool_OBJECTS): hxtool-commands.h hx509_err.h
+$(hxtool_OBJECTS): hxtool-commands.h $(nodist_include_HEADERS)
 
 hxtool_LDADD = \
 	libhx509.la \

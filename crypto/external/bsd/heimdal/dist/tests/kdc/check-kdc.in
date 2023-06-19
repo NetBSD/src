@@ -217,6 +217,8 @@ ${kadmin} add -p kaka --use-defaults kt-des3@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults foo/des3-only@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults bar/des3-only@${R} || exit 1
 ${kadmin} add -p kaka --use-defaults foo/aes-only@${R} || exit 1
+
+${kadmin} add -p sens --use-defaults --attributes=disallow-forwardable sensitive@${R} || exit 1
 ${kadmin} add -p foo --use-defaults ${ps} || exit 1
 ${kadmin} modify --attributes=+trusted-for-delegation ${ps} || exit 1
 ${kadmin} modify --constrained-delegation=${server} ${ps} || exit 1
@@ -458,6 +460,10 @@ ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 ${klist} -f | grep ${server} | grep FRA > /dev/null || \
 	{ ec=1 ; eval "${testfailed}"; }
 
+echo "Testing strip of forwardable when the server is disallowed in TGS-REQ"
+${kgetcred} sensitive@${R} || { ec=1 ; eval "${testfailed}"; }
+${klist} -f | grep sensitive | grep FRA > /dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
 
 echo "Specific enctype"; > messages.log
 ${kinit} --password-file=${objdir}/foopassword \
@@ -803,6 +809,27 @@ ${test_ap_req} ${ps} ${keytab} ${ocache} || \
 	{ ec=1 ; eval "${testfailed}"; }
 echo "  negative check"
 ${kgetcred_imp} --impersonate=bar@${R} foo@${R} 2>/dev/null && \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "test impersonate unknown client"; > messages.log
+${kgetcred_imp} --forward --impersonate=unknown@${R} ${ps} && \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "test impersonate account-expired client"; > messages.log
+${kgetcred_imp} --forward --impersonate=account-expired@${R} ${ps} && \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "test impersonate pw-expired client"; > messages.log
+${kgetcred_imp} --forward --impersonate=pw-expired@${R} ${ps} || \
+	{ ec=1 ; eval "${testfailed}"; }
+
+echo "test delegate sensitive client"; > messages.log
+${kgetcred_imp} --forward --impersonate=sensitive@${R} ${ps} || \
+	{ ec=1 ; eval "${testfailed}"; }
+${kgetcred} \
+	--out-cache=${o2cache} \
+	--delegation-credential-cache=${ocache} \
+	${server}@${R} && \
 	{ ec=1 ; eval "${testfailed}"; }
 
 echo "test constrained delegation"; > messages.log
