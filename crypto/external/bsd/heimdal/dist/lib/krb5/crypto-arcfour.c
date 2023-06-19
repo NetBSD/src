@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-arcfour.c,v 1.1.1.5 2023/06/19 21:33:18 christos Exp $	*/
+/*	$NetBSD: crypto-arcfour.c,v 1.1.1.6 2023/06/19 21:37:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -129,7 +129,7 @@ ARCFOUR_subencrypt(krb5_context context,
 		   unsigned usage,
 		   void *ivec)
 {
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX ctx;
     struct _krb5_checksum_type *c = _krb5_find_checksum (CKSUMTYPE_RSA_MD5);
     Checksum k1_c, k2_c, k3_c, cksum;
     struct _krb5_key_data ke;
@@ -176,22 +176,11 @@ ARCFOUR_subencrypt(krb5_context context,
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX ctxst;
-    ctx = &ctxst;
-    EVP_CIPHER_CTX_init(ctx);
-#else
-    ctx = EVP_CIPHER_CTX_new();
-#endif
+    EVP_CIPHER_CTX_init(&ctx);
 
-    if (!EVP_CipherInit_ex(ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 1))
-	krb5_abortx(context, "rc4 cipher not supported");
-    EVP_Cipher(ctx, cdata + 16, cdata + 16, len - 16);
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX_cleanup(ctx);
-#else
-    EVP_CIPHER_CTX_free(ctx);
-#endif
+    EVP_CipherInit_ex(&ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 1);
+    EVP_Cipher(&ctx, cdata + 16, cdata + 16, len - 16);
+    EVP_CIPHER_CTX_cleanup(&ctx);
 
     memset_s(k1_c_data, sizeof(k1_c_data), 0, sizeof(k1_c_data));
     memset_s(k2_c_data, sizeof(k2_c_data), 0, sizeof(k2_c_data));
@@ -207,7 +196,7 @@ ARCFOUR_subdecrypt(krb5_context context,
 		   unsigned usage,
 		   void *ivec)
 {
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX ctx;
     struct _krb5_checksum_type *c = _krb5_find_checksum (CKSUMTYPE_RSA_MD5);
     Checksum k1_c, k2_c, k3_c, cksum;
     struct _krb5_key_data ke;
@@ -245,21 +234,10 @@ ARCFOUR_subdecrypt(krb5_context context,
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX ctxst;
-    ctx = &ctxst;
-    EVP_CIPHER_CTX_init(ctx);
-#else
-    ctx = EVP_CIPHER_CTX_new();
-#endif
-    if (!EVP_CipherInit_ex(ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 0))
-	krb5_abortx(context, "rc4 cipher not supported");
-    EVP_Cipher(ctx, cdata + 16, cdata + 16, len - 16);
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX_cleanup(ctx);
-#else
-    EVP_CIPHER_CTX_free(ctx);
-#endif
+    EVP_CIPHER_CTX_init(&ctx);
+    EVP_CipherInit_ex(&ctx, EVP_rc4(), NULL, k3_c.checksum.data, NULL, 0);
+    EVP_Cipher(&ctx, cdata + 16, cdata + 16, len - 16);
+    EVP_CIPHER_CTX_cleanup(&ctx);
 
     ke.key = &kb;
     kb.keyvalue = k2_c.checksum;

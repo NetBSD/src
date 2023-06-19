@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.1.1.4 2023/06/19 21:33:14 christos Exp $	*/
+/*	$NetBSD: crypto.c,v 1.1.1.5 2023/06/19 21:37:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2016 Kungliga Tekniska Högskolan
@@ -552,21 +552,9 @@ rsa_get_internal(hx509_context context,
 		 const char *type)
 {
     if (strcasecmp(type, "rsa-modulus") == 0) {
-	const BIGNUM *n;
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	n = key->private_key.rsa->n;
-#else
-	RSA_get0_key(key->private_key.rsa, &n, NULL, NULL);
-#endif
-	return BN_dup(n);
+	return BN_dup(key->private_key.rsa->n);
     } else if (strcasecmp(type, "rsa-exponent") == 0) {
-	const BIGNUM *e;
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	e = key->private_key.rsa->e;
-#else
-	RSA_get0_key(key->private_key.rsa, NULL, &e, NULL);
-#endif
-	return BN_dup(e);
+	return BN_dup(key->private_key.rsa->e);
     } else
 	return NULL;
 }
@@ -617,16 +605,11 @@ dsa_verify_signature(hx509_context context,
     if (ret)
 	goto out;
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
     dsa->pub_key = heim_int2BN(&pk);
-    ret = dsa->pub_key == NULL;
-#else
-    ret = !DSA_set0_key(dsa, heim_int2BN(&pk), NULL);
-#endif
 
     free_DSAPublicKey(&pk);
 
-    if (ret) {
+    if (dsa->pub_key == NULL) {
 	ret = ENOMEM;
 	hx509_set_error_string(context, 0, ret, "out of memory");
 	goto out;
@@ -647,21 +630,13 @@ dsa_verify_signature(hx509_context context,
 	goto out;
     }
 
-    BIGNUM *p = heim_int2BN(&param.p);
-    BIGNUM *q = heim_int2BN(&param.q);
-    BIGNUM *g = heim_int2BN(&param.g);
+    dsa->p = heim_int2BN(&param.p);
+    dsa->q = heim_int2BN(&param.q);
+    dsa->g = heim_int2BN(&param.g);
 
     free_DSAParams(&param);
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    dsa->p = p;
-    dsa->q = q;
-    dsa->g = g;
-#else
-    ret = DSA_set0_pqg(dsa, p, q, g);
-#endif
-    ret |= p == NULL || q == NULL || g == NULL;
 
-    if (ret) {
+    if (dsa->p == NULL || dsa->q == NULL || dsa->g == NULL) {
 	ret = ENOMEM;
 	hx509_set_error_string(context, 0, ret, "out of memory");
 	goto out;
@@ -2094,17 +2069,9 @@ hx509_crypto_encrypt(hx509_crypto crypto,
 		     const heim_octet_string *ivec,
 		     heim_octet_string **ciphertext)
 {
-    EVP_CIPHER_CTX *evp;
+    EVP_CIPHER_CTX evp;
     size_t padsize, bsize;
     int ret;
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX ectx;
-    evp = &ectx;
-    EVP_CIPHER_CTX_init(evp);
-#else
-    evp = EVP_CIPHER_CTX_new();
-#endif
 
     *ciphertext = NULL;
 
@@ -2114,15 +2081,12 @@ hx509_crypto_encrypt(hx509_crypto crypto,
 
     assert(EVP_CIPHER_iv_length(crypto->c) == (int)ivec->length);
 
+    EVP_CIPHER_CTX_init(&evp);
 
-    ret = EVP_CipherInit_ex(evp, crypto->c, NULL,
+    ret = EVP_CipherInit_ex(&evp, crypto->c, NULL,
 			    crypto->key.data, ivec->data, 1);
     if (ret != 1) {
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	EVP_CIPHER_CTX_cleanup(evp);
-#else
-	EVP_CIPHER_CTX_free(evp);
-#endif
+	EVP_CIPHER_CTX_cleanup(&evp);
 	ret = HX509_CRYPTO_INTERNAL_ERROR;
 	goto out;
     }
@@ -2162,7 +2126,7 @@ hx509_crypto_encrypt(hx509_crypto crypto,
 	    *p++ = padsize;
     }
 
-    ret = EVP_Cipher(evp, (*ciphertext)->data,
+    ret = EVP_Cipher(&evp, (*ciphertext)->data,
 		     (*ciphertext)->data,
 		     length + padsize);
     if (ret != 1) {
@@ -2181,11 +2145,7 @@ hx509_crypto_encrypt(hx509_crypto crypto,
 	    *ciphertext = NULL;
 	}
     }
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX_cleanup(evp);
-#else
-    EVP_CIPHER_CTX_free(evp);
-#endif
+    EVP_CIPHER_CTX_cleanup(&evp);
 
     return ret;
 }
@@ -2197,7 +2157,7 @@ hx509_crypto_decrypt(hx509_crypto crypto,
 		     heim_octet_string *ivec,
 		     heim_octet_string *clear)
 {
-    EVP_CIPHER_CTX *evp;
+    EVP_CIPHER_CTX evp;
     void *idata = NULL;
     int ret;
 
@@ -2217,45 +2177,27 @@ hx509_crypto_decrypt(hx509_crypto crypto,
     if (ivec)
 	idata = ivec->data;
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX ectx;
-    evp = &ectx;
-    EVP_CIPHER_CTX_init(evp);
-#else
-    evp = EVP_CIPHER_CTX_new();
-#endif
+    EVP_CIPHER_CTX_init(&evp);
 
-    ret = EVP_CipherInit_ex(evp, crypto->c, NULL,
+    ret = EVP_CipherInit_ex(&evp, crypto->c, NULL,
 			    crypto->key.data, idata, 0);
     if (ret != 1) {
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	EVP_CIPHER_CTX_cleanup(evp);
-#else
-	EVP_CIPHER_CTX_free(evp);
-#endif
+	EVP_CIPHER_CTX_cleanup(&evp);
 	return HX509_CRYPTO_INTERNAL_ERROR;
     }
 
     clear->length = length;
     clear->data = malloc(length);
     if (clear->data == NULL) {
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	EVP_CIPHER_CTX_cleanup(evp);
-#else
-	EVP_CIPHER_CTX_free(evp);
-#endif
+	EVP_CIPHER_CTX_cleanup(&evp);
 	clear->length = 0;
 	return ENOMEM;
     }
 
-    if (EVP_Cipher(evp, clear->data, data, length) != 1) {
+    if (EVP_Cipher(&evp, clear->data, data, length) != 1) {
 	return HX509_CRYPTO_INTERNAL_ERROR;
     }
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX_cleanup(evp);
-#else
-    EVP_CIPHER_CTX_free(evp);
-#endif
+    EVP_CIPHER_CTX_cleanup(&evp);
 
     if ((crypto->flags & PADDING_PKCS7) && EVP_CIPHER_block_size(crypto->c) > 1) {
 	int padsize;
@@ -2534,9 +2476,6 @@ match_keys_rsa(hx509_cert c, hx509_private_key private_key)
     const SubjectPublicKeyInfo *spi;
     RSAPublicKey pk;
     RSA *rsa;
-    BIGNUM *n, *e;
-    const BIGNUM *d, *p, *q;
-    const BIGNUM *dmp1, *dmq1, *iqmp;
     size_t size;
     int ret;
 
@@ -2544,16 +2483,7 @@ match_keys_rsa(hx509_cert c, hx509_private_key private_key)
 	return 0;
 
     rsa = private_key->private_key.rsa;
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    d = rsa->d;
-    p = rsa->p;
-    q = rsa->q;
-#else
-    RSA_get0_key(rsa, NULL, NULL, &d);
-    RSA_get0_factors(rsa, &p, &q);
-#endif
-    
-    if (d == NULL || p == NULL || q == NULL)
+    if (rsa->d == NULL || rsa->p == NULL || rsa->q == NULL)
 	return 0;
 
     cert = _hx509_get_cert(c);
@@ -2570,52 +2500,24 @@ match_keys_rsa(hx509_cert c, hx509_private_key private_key)
 	RSA_free(rsa);
 	return 0;
     }
-    n = heim_int2BN(&pk.modulus);
-    e = heim_int2BN(&pk.publicExponent);
+    rsa->n = heim_int2BN(&pk.modulus);
+    rsa->e = heim_int2BN(&pk.publicExponent);
 
     free_RSAPublicKey(&pk);
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    d = private_key->private_key.rsa->d;
-    p = private_key->private_key.rsa->p;
-    q = private_key->private_key.rsa->q;
-    dmp1 = private_key->private_key.rsa->dmp1;
-    dmq1 = private_key->private_key.rsa->dmq1;
-    iqmp = private_key->private_key.rsa->iqmp;
-#else
-    RSA_get0_key(private_key->private_key.rsa, NULL, NULL, &d);
-    RSA_get0_factors(private_key->private_key.rsa, &p, &q);
-    RSA_get0_crt_params(private_key->private_key.rsa, &dmp1, &dmq1, &iqmp);
-#endif
+    rsa->d = BN_dup(private_key->private_key.rsa->d);
+    rsa->p = BN_dup(private_key->private_key.rsa->p);
+    rsa->q = BN_dup(private_key->private_key.rsa->q);
+    rsa->dmp1 = BN_dup(private_key->private_key.rsa->dmp1);
+    rsa->dmq1 = BN_dup(private_key->private_key.rsa->dmq1);
+    rsa->iqmp = BN_dup(private_key->private_key.rsa->iqmp);
 
-    BIGNUM *c_n = n;
-    BIGNUM *c_e = e;
-    BIGNUM *c_d = BN_dup(d);
-    BIGNUM *c_p = BN_dup(p);
-    BIGNUM *c_q = BN_dup(q);
-    BIGNUM *c_dmp1 = BN_dup(dmp1);
-    BIGNUM *c_dmq1 = BN_dup(dmq1);
-    BIGNUM *c_iqmp = BN_dup(iqmp);
-
-    if (c_n == NULL || c_e == NULL || c_d == NULL || c_p == NULL ||
-	c_q == NULL || c_dmp1 == NULL || c_dmq1 == NULL) {
+    if (rsa->n == NULL || rsa->e == NULL ||
+	rsa->d == NULL || rsa->p == NULL|| rsa->q == NULL ||
+	rsa->dmp1 == NULL || rsa->dmq1 == NULL) {
 	RSA_free(rsa);
 	return 0;
     }
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    rsa->n = n;
-    rsa->e = e;
-    rsa->d = c_d;
-    rsa->p = c_p;
-    rsa->q = c_q;
-    rsa->dmp1 = c_dmp1;
-    rsa->dmq1 = c_dmq1;
-    rsa->iqmp = c_iqmp;
-#else
-    RSA_set0_key(rsa, n, e, c_d);
-    RSA_set0_factors(rsa, c_p, c_q);
-    RSA_set0_crt_params(rsa, c_dmp1, c_dmq1, c_iqmp);
-#endif
 
     ret = RSA_check_key(rsa);
     RSA_free(rsa);

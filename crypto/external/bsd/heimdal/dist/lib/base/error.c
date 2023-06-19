@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.1.1.2 2023/06/19 21:33:11 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.1.1.3 2023/06/19 21:37:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Kungliga Tekniska Högskolan

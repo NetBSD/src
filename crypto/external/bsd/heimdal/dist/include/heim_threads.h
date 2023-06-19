@@ -1,4 +1,4 @@
-/*	$NetBSD: heim_threads.h,v 1.1.1.6 2023/06/19 21:33:10 christos Exp $	*/
+/*	$NetBSD: heim_threads.h,v 1.1.1.7 2023/06/19 21:37:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2016 Kungliga Tekniska Högskolan
@@ -54,7 +54,7 @@
 
 #else
 
-#if defined(__clang__) || defined(__GNUC__) || defined(__SUNPRO_C) || defined(__lint__)
+#if defined(__clang__) || defined(__GNUC__) || defined(__SUNPRO_C)
 #define HEIMDAL_THREAD_LOCAL __thread
 #else
 #error "thread-local attribute not defined for your compiler"

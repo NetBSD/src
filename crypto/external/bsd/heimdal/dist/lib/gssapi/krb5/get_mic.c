@@ -1,4 +1,4 @@
-/*	$NetBSD: get_mic.c,v 1.1.1.4 2023/06/19 21:33:12 christos Exp $	*/
+/*	$NetBSD: get_mic.c,v 1.1.1.5 2023/06/19 21:37:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -52,7 +52,7 @@ mic_des
   EVP_MD_CTX *md5;
   u_char hash[16];
   DES_key_schedule schedule;
-  EVP_CIPHER_CTX* des_ctx;
+  EVP_CIPHER_CTX des_ctx;
   DES_cblock deskey;
   DES_cblock zero;
   int32_t seq_number;
@@ -113,26 +113,10 @@ mic_des
 	  (ctx->more_flags & LOCAL) ? 0 : 0xFF,
 	  4);
 
-
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-  EVP_CIPHER_CTX des_ctxs;
-  des_ctx = &des_ctxs;
-  EVP_CIPHER_CTX_init(des_ctx);
-#else
-  des_ctx = EVP_CIPHER_CTX_new();
-#endif
-  EVP_CIPHER_CTX_init(des_ctx);
-  if (!EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data,
-      p + 8, 1)) {
-      *minor_status = EINVAL;
-      return GSS_S_FAILURE;
-  }
-  EVP_Cipher(des_ctx, p, p, 8);
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-  EVP_CIPHER_CTX_cleanup(des_ctx);
-#else
-  EVP_CIPHER_CTX_free(des_ctx);
-#endif
+  EVP_CIPHER_CTX_init(&des_ctx);
+  EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, p + 8, 1);
+  EVP_Cipher(&des_ctx, p, p, 8);
+  EVP_CIPHER_CTX_cleanup(&des_ctx);
 
   krb5_auth_con_setlocalseqnumber (context,
 			       ctx->auth_context,

@@ -1,4 +1,4 @@
-/*	$NetBSD: getxxyyy.c,v 1.1.1.2 2023/06/19 21:33:20 christos Exp $	*/
+/*	$NetBSD: getxxyyy.c,v 1.1.1.3 2023/06/19 21:37:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2011 Kungliga Tekniska Högskolan
@@ -39,17 +39,20 @@
 
 #ifdef TEST_GETXXYYY
 #undef rk_getpwnam_r
-#undef rk_getpwuid_r
 
 ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
 rk_getpwnam_r(const char *, struct passwd *, char *, size_t, struct passwd **);
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-rk_getpwuid_r(uid_t, struct passwd *, char *, size_t, struct passwd **);
 #endif
 
-#if !defined(POSIX_GETPWUID_R) || !defined(POSIX_GETPWNAM_R) || defined(TEST_GETXXYYY)
-static void
-copypw(struct passwd *pwd, char *buffer, size_t bufsize, const struct passwd *p)
+#if !defined(POSIX_GETPWNAM_R) || defined(TEST_GETXXYYY)
+
+/*
+ * At least limit the race between threads
+ */
+
+ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
+rk_getpwnam_r(const char *name, struct passwd *pwd, char *buffer,
+	      size_t bufsize, struct passwd **result)
 {
      struct passwd *p;
      size_t slen;
@@ -80,53 +83,6 @@ do {							\
      APPEND(pw_gecos);
      APPEND(pw_dir);
      APPEND(pw_shell);
-}
-
-#if !defined(POSIX_GETPWUID_R) || defined(TEST_GETXXYYY)
-/*
- * At least limit the race between threads
- */
-
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-rk_getpwnam_r(const char *name, struct passwd *pwd, char *buffer,
-	      size_t bufsize, struct passwd **result)
-{
-     struct passwd *p;
-     size_t slen, n = 0;
-     
-     *result = NULL;
-
-     p = getpwnam(name);
-     if(p == NULL)
-	 return (errno = ENOENT);
-	 
-     copypw(pwd, buffer, bufsize, p);
-
-     *result = pwd;
-
-     return 0;
-}
-
-#if !defined(POSIX_GETPWNAM_R) || defined(TEST_GETXXYYY)
-
-/*
- * At least limit the race between threads
- */
-
-ROKEN_LIB_FUNCTION int ROKEN_LIB_CALL
-rk_getpwnam_r(const char *name, struct passwd *pwd, char *buffer,
-	      size_t bufsize, struct passwd **result)
-{
-     struct passwd *p;
-     size_t slen, n = 0;
-     
-     *result = NULL;
-
-     p = getpwnam(name);
-     if(p == NULL)
-	 return (errno = ENOENT);
-	 
-     copypw(pwd, buffer, bufsize, p);
 
      *result = pwd;
 
@@ -177,18 +133,6 @@ main(int argc, char **argv)
     if (ret == 0)
 	errx(1, "rk_getpwnam_r no user");
 
-    ret = rk_getpwuid_r(0, &pwd, buf, sizeof(buf), &result);
-    if (ret)
-	errx(1, "rk_getpwuid_r");
-    print_result(result);
-
-    ret = rk_getpwuid_r(0, &pwd, buf, 1, &result);
-    if (ret == 0)
-	errx(1, "rk_getpwuid_r too small buf");
-
-    ret = rk_getpwuid_r(-1234, &pwd, buf, sizeof(buf), &result);
-    if (ret == 0)
-	errx(1, "rk_getpwuid_r no user");
     return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.1.1.4 2023/06/19 21:33:10 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.1.1.5 2023/06/19 21:37:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -159,33 +159,28 @@ static int parse_owners(kcm_ccache ccache)
 {
     uid_t uid = 0;
     gid_t gid = 0;
+    struct passwd *pw;
     struct group *gr;
     int uid_p = 0;
     int gid_p = 0;
-    struct passwd pw, *pwd = NULL;
-    char pwbuf[2048];
 
     if (system_user != NULL) {
 	if (isdigit((unsigned char)system_user[0])) {
-	    if (rk_getpwuid_r(atoi(system_user), &pw, pwbuf, sizeof(pwbuf),
-		&pwd) != 0)
-		    pwd = NULL;
+	    pw = getpwuid(atoi(system_user));
 	} else {
-	    if (rk_getpwnam_r(system_user, &pw, pwbuf, sizeof(pwbuf),
-		&pwd) != 0)
-		    pwd = NULL;
+	    pw = getpwnam(system_user);
 	}
-	if (pwd == NULL) {
+	if (pw == NULL) {
 	    return errno;
 	}
 
-	system_user = strdup(pwd->pw_name);
+	system_user = strdup(pw->pw_name);
 	if (system_user == NULL) {
 	    return ENOMEM;
 	}
 
-	uid = pwd->pw_uid; uid_p = 1;
-	gid = pwd->pw_gid; gid_p = 1;
+	uid = pw->pw_uid; uid_p = 1;
+	gid = pw->pw_gid; gid_p = 1;
     }
 
     if (system_group != NULL) {

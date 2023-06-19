@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.1.1.4 2023/06/19 21:33:10 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.1.1.5 2023/06/19 21:37:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -174,10 +174,8 @@ kcm_ccache_new_client(krb5_context context,
 	if (matches == 0)
 	    matches = sscanf(name,"%ld",&uid);
 	if (matches == 1) {
-	    struct passwd pw, *pwd = NULL;
-	    char pwbuf[2048];
-
-	    if (rk_getpwuid_r(getuid(), &pw, pwbuf, sizeof(pwbuf), &pwd) == 0) {
+	    struct passwd *pwd = getpwuid(uid);
+	    if (pwd != NULL) {
 		gid_t gid = pwd->pw_gid;
 		kcm_chown(context, client, ccache, uid, gid);
 	    }

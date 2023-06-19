@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_REVISION($Revision: 1.1.1.5 $)
+AC_REVISION(Revision)
 AC_PREREQ(2.62)
 test -z "$CFLAGS" && CFLAGS="-g"
 AC_INIT([Heimdal],[7.8.0],[https://github.com/heimdal/heimdal/issues])
@@ -291,12 +291,6 @@ AC_SUBST(ENABLE_AFS_STRING_TO_KEY)dnl
 
 rk_CHECK_MAN
 
-AC_CHECK_HEADERS([\
-	readline/readline.h	\
-	readline.h		\
-	editline/readline.h	\
-])
-
 rk_TEST_PACKAGE(readline,
 [#include <stdio.h>
 #if defined(HAVE_READLINE_READLINE_H)
@@ -519,7 +513,6 @@ KRB_CAPABILITIES
 rk_DLADDR
 
 AC_CHECK_GETPWNAM_R_POSIX
-AC_CHECK_GETPWUID_R_POSIX
 
 dnl detect doors on solaris
 if test "$enable_pthread_support" != no; then

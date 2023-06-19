@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit-ec.c,v 1.1.1.2 2023/06/19 21:33:10 christos Exp $	*/
+/*	$NetBSD: pkinit-ec.c,v 1.1.1.3 2023/06/19 21:37:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2016 Kungliga Tekniska Högskolan
@@ -59,13 +59,12 @@
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #define HEIM_NO_CRYPTO_HDRS
-#else
-#include <hcrypto/des.h>
 #endif /* HAVE_HCRYPTO_W_OPENSSL */
 
 #define NO_HCRYPTO_POLLUTION
 
 #include "kdc_locl.h"
+#include <hcrypto/des.h>
 #include <krb5/heim_asn1.h>
 #include <krb5/rfc2459_asn1.h>
 #include <krb5/cms_asn1.h>

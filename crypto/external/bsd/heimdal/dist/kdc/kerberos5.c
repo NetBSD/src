@@ -1,4 +1,4 @@
-/*	$NetBSD: kerberos5.c,v 1.1.1.5 2023/06/19 21:33:10 christos Exp $	*/
+/*	$NetBSD: kerberos5.c,v 1.1.1.6 2023/06/19 21:37:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan

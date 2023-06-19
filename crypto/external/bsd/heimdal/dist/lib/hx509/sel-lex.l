@@ -1,4 +1,4 @@
-/*	$NetBSD: sel-lex.l,v 1.1.1.6 2023/06/19 21:33:15 christos Exp $	*/
+/*	$NetBSD: sel-lex.l,v 1.1.1.7 2023/06/19 21:37:14 christos Exp $	*/
 
 %{
 /*
@@ -72,8 +72,6 @@ struct hx_expr_input _hx509_expr_input;
 #undef ECHO
 
 %}
-
-%option noyywrap
 %%
 
 TRUE			{ return kw_TRUE; }
@@ -84,12 +82,12 @@ IN			{ return kw_IN; }
 TAILMATCH		{ return kw_TAILMATCH; }
 
 [A-Za-z][-A-Za-z0-9_]*	{
-			  _hx509_sel_yylval.string = strdup ((const char *)_hx509_sel_yytext);
+			  yylval.string = strdup ((const char *)yytext);
 			  return IDENTIFIER;
 			}
-"\""			{ _hx509_sel_yylval.string = handle_string(); return STRING; }
+"\""			{ yylval.string = handle_string(); return STRING; }
 \n			{ ++lineno; }
-[,.!={}()%]		{ return *_hx509_sel_yytext; }
+[,.!={}()%]		{ return *yytext; }
 [ \t]			;
 %%
 
@@ -122,6 +120,16 @@ handle_string(void)
     }
     x[i] = '\0';
     return strdup(x);
+}
+
+#if !defined(yywrap)
+#define yywrap  _hx509_sel_yywrap
+#endif
+
+int
+yywrap ()
+{
+     return 1;
 }
 
 static int

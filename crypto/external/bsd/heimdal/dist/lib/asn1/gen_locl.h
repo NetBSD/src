@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_locl.h,v 1.1.1.4 2023/06/19 21:33:11 christos Exp $	*/
+/*	$NetBSD: gen_locl.h,v 1.1.1.5 2023/06/19 21:37:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -52,8 +52,8 @@
 #include <krb5/roken.h>
 #include "hash.h"
 #include "symbol.h"
-#include "asn1-common.h"
-#include "der.h"
+#include <krb5/asn1-common.h>
+#include <krb5/der.h>
 #include "der-private.h"
 
 void generate_type (const Symbol *);

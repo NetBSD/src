@@ -1,4 +1,4 @@
-/*	$NetBSD: pac.c,v 1.1.1.4 2023/06/19 21:33:19 christos Exp $	*/
+/*	$NetBSD: pac.c,v 1.1.1.5 2023/06/19 21:37:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan

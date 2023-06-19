@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit.c,v 1.1.1.5 2023/06/19 21:33:10 christos Exp $	*/
+/*	$NetBSD: pkinit.c,v 1.1.1.6 2023/06/19 21:37:07 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2016 Kungliga Tekniska Högskolan
@@ -344,29 +344,19 @@ get_dh_param(krb5_context context,
 	goto out;
     }
     ret = KRB5_BADMSGTYPE;
-    BIGNUM *p, *q, *g;
-    p = integer_to_BN(context, "DH prime", &dhparam.p);
-    if (p == NULL)
+    dh->p = integer_to_BN(context, "DH prime", &dhparam.p);
+    if (dh->p == NULL)
 	goto out;
-    g = integer_to_BN(context, "DH base", &dhparam.g);
-    if (g == NULL)
+    dh->g = integer_to_BN(context, "DH base", &dhparam.g);
+    if (dh->g == NULL)
 	goto out;
 
     if (dhparam.q) {
-	q = integer_to_BN(context, "DH p-1 factor", dhparam.q);
-	if (q == NULL)
+	dh->q = integer_to_BN(context, "DH p-1 factor", dhparam.q);
+	if (dh->g == NULL)
 	    goto out;
-    } else
-	q = NULL;
+    }
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    dh->p = p;
-    if (q)
-	    dh->q = q;
-    dh->g = g;
-#else
-    DH_set0_pqg(dh, p, q, g);
-#endif
     {
 	heim_integer glue;
 	size_t size;
@@ -812,7 +802,7 @@ out:
  */
 
 static krb5_error_code
-BN_to_integer(krb5_context context, const BIGNUM *bn, heim_integer *integer)
+BN_to_integer(krb5_context context, BIGNUM *bn, heim_integer *integer)
 {
     integer->length = BN_num_bytes(bn);
     integer->data = malloc(integer->length);
@@ -1031,13 +1021,7 @@ pk_mk_pa_reply_dh(krb5_context context,
 	DH *kdc_dh = cp->u.dh.key;
 	heim_integer i;
 
-	const BIGNUM *pub_key;
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	pub_key = kdc_dh->pub_key;
-#else
-	DH_get0_key(kdc_dh, &pub_key, NULL);
-#endif
-	ret = BN_to_integer(context, pub_key, &i);
+	ret = BN_to_integer(context, kdc_dh->pub_key, &i);
 	if (ret)
 	    return ret;
 

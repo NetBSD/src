@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.1.1.4 2023/06/19 21:33:18 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.1.1.5 2023/06/19 21:37:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2010 Kungliga Tekniska Högskolan
@@ -678,7 +678,7 @@ krb5_set_config_files(krb5_context context, char **filenames)
 	}
 	filenames++;
     }
-#if 1
+#if 0
     /* with this enabled and if there are no config files, Kerberos is
        considererd disabled */
     if(tmp == NULL)

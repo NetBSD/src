@@ -1,4 +1,4 @@
-/*	$NetBSD: softp11.c,v 1.1.1.5 2023/06/19 21:33:15 christos Exp $	*/
+/*	$NetBSD: softp11.c,v 1.1.1.6 2023/06/19 21:37:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2008 Kungliga Tekniska Högskolan
@@ -837,11 +837,9 @@ get_config_file_for_user(void)
         home = getenv("HOME");
     }
     if (fn == NULL && home == NULL) {
-	struct passwd pw, *pwd = NULL;
-	char pwbuf[2048];
-
-	if (rk_getpwuid_r(getuid(), &pw, pwbuf, sizeof(pwbuf), &pwd) == 0)
-            home = pwd->pw_dir;
+        struct passwd *pw = getpwuid(getuid());
+        if(pw != NULL)
+            home = pw->pw_dir;
     }
     if (fn == NULL) {
         if (home) {

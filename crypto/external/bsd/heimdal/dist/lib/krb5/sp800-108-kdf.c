@@ -1,4 +1,4 @@
-/*	$NetBSD: sp800-108-kdf.c,v 1.1.1.2 2023/06/19 21:33:19 christos Exp $	*/
+/*	$NetBSD: sp800-108-kdf.c,v 1.1.1.3 2023/06/19 21:37:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2015, Secure Endpoints Inc.
@@ -58,7 +58,7 @@ _krb5_SP800_108_HMAC_KDF(krb5_context context,
 			 const EVP_MD *md,
 			 krb5_data *kdf_K0)
 {
-    HMAC_CTX *c;
+    HMAC_CTX c;
     unsigned char *p = kdf_K0->data;
     size_t i, n, left = kdf_K0->length;
     unsigned char hmac[EVP_MAX_MD_SIZE];
@@ -67,13 +67,7 @@ _krb5_SP800_108_HMAC_KDF(krb5_context context,
 
     heim_assert(md != NULL, "SP800-108 KDF internal error");
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    HMAC_CTX cs;
-    c = &cs;
-    HMAC_CTX_init(c);
-#else
-    c = HMAC_CTX_new();
-#endif
+    HMAC_CTX_init(&c);
 
     n = L / h;
 
@@ -81,29 +75,25 @@ _krb5_SP800_108_HMAC_KDF(krb5_context context,
 	unsigned char tmp[4];
 	size_t len;
 
-	HMAC_Init_ex(c, kdf_K1->data, kdf_K1->length, md, NULL);
+	HMAC_Init_ex(&c, kdf_K1->data, kdf_K1->length, md, NULL);
 
 	_krb5_put_int(tmp, i + 1, 4);
-	HMAC_Update(c, tmp, 4);
-	HMAC_Update(c, kdf_label->data, kdf_label->length);
-	HMAC_Update(c, (unsigned char *)"", 1);
+	HMAC_Update(&c, tmp, 4);
+	HMAC_Update(&c, kdf_label->data, kdf_label->length);
+	HMAC_Update(&c, (unsigned char *)"", 1);
 	if (kdf_context)
-	    HMAC_Update(c, kdf_context->data, kdf_context->length);
+	    HMAC_Update(&c, kdf_context->data, kdf_context->length);
 	_krb5_put_int(tmp, L * 8, 4);
-	HMAC_Update(c, tmp, 4);
+	HMAC_Update(&c, tmp, 4);
 
-	HMAC_Final(c, hmac, &h);
+	HMAC_Final(&c, hmac, &h);
 	len = h > left ? left : h;
 	memcpy(p, hmac, len);
 	p += len;
 	left -= len;
     }
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    HMAC_CTX_cleanup(c);
-#else
-    HMAC_CTX_free(c);
-#endif
+    HMAC_CTX_cleanup(&c);
 
     return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.h,v 1.1.1.4 2023/06/19 21:33:18 christos Exp $	*/
+/*	$NetBSD: crypto.h,v 1.1.1.5 2023/06/19 21:37:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2016 Kungliga Tekniska Högskolan
@@ -197,7 +197,7 @@ struct _krb5_evp_schedule {
      * Normally we'd say EVP_CIPHER_CTX here, but!  this header gets
      * included in lib/krb5/pkinit-ec.ck
      */
-    EVP_CIPHER_CTX *ectx;
-    EVP_CIPHER_CTX *dctx;
+    EVP_CIPHER_CTX ectx;
+    EVP_CIPHER_CTX dctx;
 };
 #endif

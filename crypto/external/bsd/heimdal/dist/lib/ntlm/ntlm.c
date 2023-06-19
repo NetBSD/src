@@ -1,4 +1,4 @@
-/*	$NetBSD: ntlm.c,v 1.1.1.5 2023/06/19 21:33:19 christos Exp $	*/
+/*	$NetBSD: ntlm.c,v 1.1.1.6 2023/06/19 21:37:18 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -1177,7 +1177,7 @@ splitandenc(unsigned char *hash,
 	    unsigned char *challenge,
 	    unsigned char *answer)
 {
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX ctx;
     unsigned char key[8];
 
     key[0] =  hash[0];
@@ -1189,22 +1189,11 @@ splitandenc(unsigned char *hash,
     key[6] = (hash[5] << 2) | (hash[6] >> 6);
     key[7] = (hash[6] << 1);
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX ctxst;
-    ctx = &ctxst;
-    EVP_CIPHER_CTX_init(ctx);
-#else
-    ctx = EVP_CIPHER_CTX_new();
-#endif
+    EVP_CIPHER_CTX_init(&ctx);
 
-    if (!EVP_CipherInit_ex(ctx, EVP_des_cbc(), NULL, key, NULL, 1))
-	abort();
-    EVP_Cipher(ctx, answer, challenge, 8);
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX_cleanup(ctx);
-#else
-    EVP_CIPHER_CTX_free(ctx);
-#endif
+    EVP_CipherInit_ex(&ctx, EVP_des_cbc(), NULL, key, NULL, 1);
+    EVP_Cipher(&ctx, answer, challenge, 8);
+    EVP_CIPHER_CTX_cleanup(&ctx);
     memset_s(key, sizeof(key), 0, sizeof(key));
 }
 
@@ -1325,7 +1314,7 @@ heim_ntlm_v2_base_session(void *key, size_t len,
 			  struct ntlm_buf *session)
 {
     unsigned int hmaclen;
-    HMAC_CTX *c;
+    HMAC_CTX c;
 
     if (ntlmResponse->length <= 16)
         return HNTLM_ERR_INVALID_LENGTH;
@@ -1336,21 +1325,11 @@ heim_ntlm_v2_base_session(void *key, size_t len,
     session->length = 16;
 
     /* Note: key is the NTLMv2 key */
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    HMAC_CTX cs;
-    c = &cs;
-    HMAC_CTX_init(c);
-#else
-    c = HMAC_CTX_new();
-#endif
-    HMAC_Init_ex(c, key, len, EVP_md5(), NULL);
-    HMAC_Update(c, ntlmResponse->data, 16);
-    HMAC_Final(c, session->data, &hmaclen);
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    HMAC_CTX_cleanup(c);
-#else
-    HMAC_CTX_free(c);
-#endif
+    HMAC_CTX_init(&c);
+    HMAC_Init_ex(&c, key, len, EVP_md5(), NULL);
+    HMAC_Update(&c, ntlmResponse->data, 16);
+    HMAC_Final(&c, session->data, &hmaclen);
+    HMAC_CTX_cleanup(&c);
 
     return 0;
 }
@@ -1361,7 +1340,7 @@ heim_ntlm_keyex_wrap(struct ntlm_buf *base_session,
 		     struct ntlm_buf *session,
 		     struct ntlm_buf *encryptedSession)
 {
-    EVP_CIPHER_CTX *c;
+    EVP_CIPHER_CTX c;
     int ret;
 
     if (base_session->length != MD4_DIGEST_LENGTH)
@@ -1381,33 +1360,25 @@ heim_ntlm_keyex_wrap(struct ntlm_buf *base_session,
 	return ENOMEM;
     }
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	EVP_CIPHER_CTX cs;
-	c = &cs;
-	EVP_CIPHER_CTX_init(c);
-#else
-	c = EVP_CIPHER_CTX_new();
-#endif
+    EVP_CIPHER_CTX_init(&c);
 
-    ret = EVP_CipherInit_ex(c, EVP_rc4(), NULL, base_session->data, NULL, 1);
+    ret = EVP_CipherInit_ex(&c, EVP_rc4(), NULL, base_session->data, NULL, 1);
+    if (ret != 1) {
+	EVP_CIPHER_CTX_cleanup(&c);
+	heim_ntlm_free_buf(encryptedSession);
+	heim_ntlm_free_buf(session);
+	return HNTLM_ERR_CRYPTO;
+    }
 
-    if (ret != -1 || RAND_bytes(session->data, session->length) != 1) {
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	EVP_CIPHER_CTX_cleanup(c);
-#else
-	EVP_CIPHER_CTX_free(c);
-#endif
+    if (RAND_bytes(session->data, session->length) != 1) {
+	EVP_CIPHER_CTX_cleanup(&c);
 	heim_ntlm_free_buf(encryptedSession);
 	heim_ntlm_free_buf(session);
 	return HNTLM_ERR_RAND;
     }
 
-    EVP_Cipher(c, encryptedSession->data, session->data, encryptedSession->length);
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX_cleanup(c);
-#else
-    EVP_CIPHER_CTX_free(c);
-#endif
+    EVP_Cipher(&c, encryptedSession->data, session->data, encryptedSession->length);
+    EVP_CIPHER_CTX_cleanup(&c);
 
     return 0;
 
@@ -1500,7 +1471,7 @@ heim_ntlm_keyex_unwrap(struct ntlm_buf *baseKey,
 		       struct ntlm_buf *encryptedSession,
 		       struct ntlm_buf *session)
 {
-    EVP_CIPHER_CTX *c;
+    EVP_CIPHER_CTX c;
 
     memset(session, 0, sizeof(*session));
 
@@ -1515,30 +1486,16 @@ heim_ntlm_keyex_unwrap(struct ntlm_buf *baseKey,
 	session->length = 0;
 	return ENOMEM;
     }
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX cs;
-    c = &cs;
-    EVP_CIPHER_CTX_init(c);
-#else
-    c = EVP_CIPHER_CTX_new();
-#endif
+    EVP_CIPHER_CTX_init(&c);
 
-    if (EVP_CipherInit_ex(c, EVP_rc4(), NULL, baseKey->data, NULL, 0) != 1) {
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	EVP_CIPHER_CTX_cleanup(c);
-#else
-	EVP_CIPHER_CTX_free(c);
-#endif
+    if (EVP_CipherInit_ex(&c, EVP_rc4(), NULL, baseKey->data, NULL, 0) != 1) {
+	EVP_CIPHER_CTX_cleanup(&c);
 	heim_ntlm_free_buf(session);
 	return HNTLM_ERR_CRYPTO;
     }
 
-    EVP_Cipher(c, session->data, encryptedSession->data, session->length);
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX_cleanup(c);
-#else
-    EVP_CIPHER_CTX_free(c);
-#endif
+    EVP_Cipher(&c, session->data, encryptedSession->data, session->length);
+    EVP_CIPHER_CTX_cleanup(&c);
 
     return 0;
 }
@@ -1568,38 +1525,29 @@ heim_ntlm_ntlmv2_key(const void *key, size_t len,
 {
     int ret;
     unsigned int hmaclen;
-    HMAC_CTX* c;
+    HMAC_CTX c;
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    HMAC_CTX cs;
-    c = &cs;
-    HMAC_CTX_init(c);
-#else
-    c = HMAC_CTX_new();
-#endif
-    HMAC_Init_ex(c, key, len, EVP_md5(), NULL);
+    HMAC_CTX_init(&c);
+    HMAC_Init_ex(&c, key, len, EVP_md5(), NULL);
     {
 	struct ntlm_buf buf;
 	/* uppercase username and turn it into ucs2-le */
 	ret = ascii2ucs2le(username, 1, &buf);
 	if (ret)
 	    goto out;
-	HMAC_Update(c, buf.data, buf.length);
+	HMAC_Update(&c, buf.data, buf.length);
 	free(buf.data);
 	/* turn target into ucs2-le */
 	ret = ascii2ucs2le(target, upper_case_target, &buf);
 	if (ret)
 	    goto out;
-	HMAC_Update(c, buf.data, buf.length);
+	HMAC_Update(&c, buf.data, buf.length);
 	free(buf.data);
     }
-    HMAC_Final(c, ntlmv2, &hmaclen);
+    HMAC_Final(&c, ntlmv2, &hmaclen);
  out:
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    HMAC_CTX_cleanup(c);
-#else
-    HMAC_CTX_free(c);
-#endif
+    HMAC_CTX_cleanup(&c);
+    memset(&c, 0, sizeof(c));
 
     return ret;
 }
@@ -2056,23 +2004,14 @@ heim_ntlm_derive_ntlm2_sess(const unsigned char sessionkey[16],
 			    unsigned char derivedkey[16])
 {
     unsigned int hmaclen;
-    HMAC_CTX *c;
+    HMAC_CTX c;
 
     /* HMAC(Ksession, serverchallenge || clientchallenge) */
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    HMAC_CTX cs;
-    c = &cs;
-    HMAC_CTX_init(c);
-#else
-    c = HMAC_CTX_new();
-#endif
-    HMAC_Init_ex(c, sessionkey, 16, EVP_md5(), NULL);
-    HMAC_Update(c, svr_chal, 8);
-    HMAC_Update(c, clnt_nonce, clnt_nonce_length);
-    HMAC_Final(c, derivedkey, &hmaclen);
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    HMAC_CTX_cleanup(c);
-#else
-    HMAC_CTX_free(c);
-#endif
+    HMAC_CTX_init(&c);
+    HMAC_Init_ex(&c, sessionkey, 16, EVP_md5(), NULL);
+    HMAC_Update(&c, svr_chal, 8);
+    HMAC_Update(&c, clnt_nonce, clnt_nonce_length);
+    HMAC_Final(&c, derivedkey, &hmaclen);
+    HMAC_CTX_cleanup(&c);
+    memset(&c, 0, sizeof(c));
 }

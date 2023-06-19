@@ -1,4 +1,4 @@
-/*	$NetBSD: getarg.c,v 1.1.1.4 2023/06/19 21:33:20 christos Exp $	*/
+/*	$NetBSD: getarg.c,v 1.1.1.5 2023/06/19 21:37:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <krb5/roken.h>
-#include <getarg.h>
+#include <krb5/getarg.h>
 
 #define ISFLAG(X) ((X).type == arg_flag || (X).type == arg_negative_flag)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.h,v 1.1.1.3 2023/06/19 21:33:11 christos Exp $	*/
+/*	$NetBSD: lex.h,v 1.1.1.4 2023/06/19 21:37:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -38,7 +38,7 @@
 #include <krb5/roken.h>
 
 void lex_error_message (const char *, ...)
-__attribute__ ((__format__ (__printf__, 1, 2)));
+__attribute__ ((format (printf, 1, 2)));
 extern int error_flag;
 
 int yylex(void);

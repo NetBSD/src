@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-evp.c,v 1.1.1.4 2023/06/19 21:33:18 christos Exp $	*/
+/*	$NetBSD: crypto-evp.c,v 1.1.1.5 2023/06/19 21:37:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -43,35 +43,19 @@ _krb5_evp_schedule(krb5_context context,
     struct _krb5_evp_schedule *key = kd->schedule->data;
     const EVP_CIPHER *c = (*kt->evp)();
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    key->ectx = malloc(sizeof(*key->ectx));
-    key->dctx = malloc(sizeof(*key->dctx));
-    EVP_CIPHER_CTX_init(key->ectx);
-    EVP_CIPHER_CTX_init(key->dctx);
-#else
-    key->ectx = EVP_CIPHER_CTX_new();
-    key->dctx = EVP_CIPHER_CTX_new();
-#endif
+    EVP_CIPHER_CTX_init(&key->ectx);
+    EVP_CIPHER_CTX_init(&key->dctx);
 
-    if (!EVP_CipherInit_ex(key->ectx, c, NULL, kd->key->keyvalue.data, NULL, 1))
-	krb5_abortx(context, "can't initialize cipher");
-    if (!EVP_CipherInit_ex(key->dctx, c, NULL, kd->key->keyvalue.data, NULL, 0))
-	krb5_abortx(context, "can't initialize cipher");
+    EVP_CipherInit_ex(&key->ectx, c, NULL, kd->key->keyvalue.data, NULL, 1);
+    EVP_CipherInit_ex(&key->dctx, c, NULL, kd->key->keyvalue.data, NULL, 0);
 }
 
 void
 _krb5_evp_cleanup(krb5_context context, struct _krb5_key_data *kd)
 {
     struct _krb5_evp_schedule *key = kd->schedule->data;
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-    EVP_CIPHER_CTX_cleanup(key->ectx);
-    EVP_CIPHER_CTX_cleanup(key->dctx);
-    free(key->ectx);
-    free(key->dctx);
-#else
-    EVP_CIPHER_CTX_free(key->ectx);
-    EVP_CIPHER_CTX_free(key->dctx);
-#endif
+    EVP_CIPHER_CTX_cleanup(&key->ectx);
+    EVP_CIPHER_CTX_cleanup(&key->dctx);
 }
 
 krb5_error_code
@@ -85,7 +69,7 @@ _krb5_evp_encrypt(krb5_context context,
 {
     struct _krb5_evp_schedule *ctx = key->schedule->data;
     EVP_CIPHER_CTX *c;
-    c = encryptp ? ctx->ectx : ctx->dctx;
+    c = encryptp ? &ctx->ectx : &ctx->dctx;
     if (ivec == NULL) {
 	/* alloca ? */
 	size_t len2 = EVP_CIPHER_CTX_iv_length(c);
@@ -93,12 +77,10 @@ _krb5_evp_encrypt(krb5_context context,
 	if (loiv == NULL)
 	    return krb5_enomem(context);
 	memset(loiv, 0, len2);
-	if (!EVP_CipherInit_ex(c, NULL, NULL, NULL, loiv, -1))
-	    krb5_abortx(context, "can't initialize cipher");
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, loiv, -1);
 	free(loiv);
-    } else if (!EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1))
-	krb5_abortx(context, "can't initialize cipher");
-	
+    } else
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
     EVP_Cipher(c, data, data, len);
     return 0;
 }
@@ -115,13 +97,12 @@ _krb5_evp_encrypt_cts(krb5_context context,
 		      void *ivec)
 {
     size_t i, blocksize;
-    int ret;
     struct _krb5_evp_schedule *ctx = key->schedule->data;
     unsigned char tmp[EVP_MAX_BLOCK_LENGTH], ivec2[EVP_MAX_BLOCK_LENGTH];
     EVP_CIPHER_CTX *c;
     unsigned char *p;
 
-    c = encryptp ? ctx->ectx : ctx->dctx;
+    c = encryptp ? &ctx->ectx : &ctx->dctx;
 
     blocksize = EVP_CIPHER_CTX_block_size(c);
 
@@ -130,18 +111,15 @@ _krb5_evp_encrypt_cts(krb5_context context,
 			       "message block too short");
 	return EINVAL;
     } else if (len == blocksize) {
-	if (!EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1))
-	    krb5_abortx(context, "can't initialize cipher");
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
 	EVP_Cipher(c, data, data, len);
 	return 0;
     }
 
     if (ivec)
-	ret = EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, ivec, -1);
     else
-	ret = EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
-    if (!ret)
-	krb5_abortx(context, "can't initialize cipher");
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
 
     if (encryptp) {
 
@@ -157,8 +135,7 @@ _krb5_evp_encrypt_cts(krb5_context context,
 	for (; i < blocksize; i++)
 	    tmp[i] = 0 ^ ivec2[i];
 
-	if (!EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1))
-	    krb5_abortx(context, "can't initialize cipher");
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
 	EVP_Cipher(c, p, tmp, blocksize);
 
 	memcpy(p + blocksize, ivec2, len);
@@ -184,8 +161,7 @@ _krb5_evp_encrypt_cts(krb5_context context,
 	}
 
 	memcpy(tmp, p, blocksize);
-	if (!EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1))
-	    krb5_abortx(context, "can't initialize cipher");
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
 	EVP_Cipher(c, tmp2, p, blocksize);
 
 	memcpy(tmp3, p + blocksize, len);
@@ -194,8 +170,7 @@ _krb5_evp_encrypt_cts(krb5_context context,
 	for (i = 0; i < len; i++)
 	    p[i + blocksize] = tmp2[i] ^ tmp3[i];
 
-	if (!EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1))
-	    krb5_abortx(context, "can't initialize cipher");
+	EVP_CipherInit_ex(c, NULL, NULL, NULL, zero_ivec, -1);
 	EVP_Cipher(c, p, tmp3, blocksize);
 
 	for (i = 0; i < blocksize; i++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ks_file.c,v 1.1.1.5 2023/06/19 21:33:15 christos Exp $	*/
+/*	$NetBSD: ks_file.c,v 1.1.1.6 2023/06/19 21:37:14 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2007 Kungliga Tekniska Högskolan
@@ -114,26 +114,11 @@ try_decrypt(hx509_context context,
     clear.length = len;
 
     {
-	EVP_CIPHER_CTX *ctx;
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	EVP_CIPHER_CTX ctxst;
-	ctx = &ctxst;
-	EVP_CIPHER_CTX_init(ctx);
-#else
-	ctx = EVP_CIPHER_CTX_new();
-#endif
-	if (!EVP_CipherInit_ex(ctx, c, NULL, key, ivdata, 0)) {
-	    hx509_set_error_string(context, 0, EINVAL,
-				   "Cannot initialize cipher");
-	    ret = EINVAL;
-	    goto out;
-	}
-	EVP_Cipher(ctx, clear.data, cipher, len);
-#if OPENSSL_VERSION_NUMBER < 0x10100000UL
-	EVP_CIPHER_CTX_cleanup(ctx);
-#else
-	EVP_CIPHER_CTX_free(ctx);
-#endif
+	EVP_CIPHER_CTX ctx;
+	EVP_CIPHER_CTX_init(&ctx);
+	EVP_CipherInit_ex(&ctx, c, NULL, key, ivdata, 0);
+	EVP_Cipher(&ctx, clear.data, cipher, len);
+	EVP_CIPHER_CTX_cleanup(&ctx);
     }
 
     ret = _hx509_collector_private_key_add(context,

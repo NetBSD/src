@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.1.1.4 2023/06/19 21:33:11 christos Exp $	*/
+/*	$NetBSD: gen.c,v 1.1.1.5 2023/06/19 21:37:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -36,9 +36,8 @@
  */
 
 #include "gen_locl.h"
-#include <libgen.h>
 
-__RCSID("$NetBSD: gen.c,v 1.1.1.4 2023/06/19 21:33:11 christos Exp $");
+__RCSID("$NetBSD: gen.c,v 1.1.1.5 2023/06/19 21:37:12 christos Exp $");
 
 FILE *privheaderfile, *headerfile, *codefile, *logfile, *templatefile;
 
@@ -153,12 +152,10 @@ init_generate (const char *filename, const char *base)
     /* template file */
     if (asprintf(&template, "%s-template.x", headerbase) < 0 || template == NULL)
 	errx(1, "malloc");
-    char *copy = estrdup(filename);
-    char *bn = basename(copy);
     fprintf (headerfile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n",
-	     bn);
+	     filename);
     fprintf (headerfile,
 	     "#ifndef __%s_h__\n"
 	     "#define __%s_h__\n\n", headerbase, headerbase);
@@ -274,10 +271,9 @@ init_generate (const char *filename, const char *base)
 	     "#include <string.h>\n"
 	     "#include <errno.h>\n"
 	     "#include <limits.h>\n"
-	     "#include <krb5/%s.h>\n",
-	     bn,
+	     "#include <%s>\n",
+	     filename,
 	     type_file_string);
-    free(copy);
 
     fprintf (templatefile,
 	     "#include <%s>\n"
@@ -367,8 +363,6 @@ generate_header_of_codefile(const char *name)
         fprintf(logfile, "%s ", filename);
     free(filename);
     filename = NULL;
-    char *copy = estrdup(orig_filename);
-    char *bn = basename(copy);
     fprintf (codefile,
 	     "/* Generated from %s */\n"
 	     "/* Do not edit */\n\n"
@@ -379,10 +373,9 @@ generate_header_of_codefile(const char *name)
 	     "#include <string.h>\n"
 	     "#include <errno.h>\n"
 	     "#include <limits.h>\n"
-	     "#include <krb5/%s>\n",
-	     bn,
+	     "#include <%s>\n",
+	     orig_filename,
 	     type_file_string);
-    free(copy);
 
     fprintf (codefile,
 	     "#include \"%s\"\n"
