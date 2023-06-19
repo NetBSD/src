@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.43 2023/04/20 08:28:05 skrll Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.44 2023/06/19 03:59:24 nisimura Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.43 2023/04/20 08:28:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.44 2023/06/19 03:59:24 nisimura Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -348,36 +348,36 @@ read_ttb(void)
  */
 
 static const struct pmap_devmap lubbock_devmap[] = {
-    DEVMAP_ENTRY{
+    DEVMAP_ENTRY(
 	    LUBBOCK_OBIO_VBASE,
 	    LUBBOCK_OBIO_PBASE,
 	    LUBBOCK_OBIO_SIZE
-    },
-    DEVMAP_ENTRY{
+    ),
+    DEVMAP_ENTRY(
 	    LUBBOCK_GPIO_VBASE,
 	    PXA2X0_GPIO_BASE,
 	    PXA250_GPIO_SIZE
-    },
-    DEVMAP_ENTRY{
+    ),
+    DEVMAP_ENTRY(
 	    LUBBOCK_CLKMAN_VBASE,
 	    PXA2X0_CLKMAN_BASE,
 	    PXA2X0_CLKMAN_SIZE
-    },
-    DEVMAP_ENTRY{
+    ),
+    DEVMAP_ENTRY(
 	    LUBBOCK_INTCTL_VBASE,
 	    PXA2X0_INTCTL_BASE,
 	    PXA2X0_INTCTL_SIZE
-    },
-    DEVMAP_ENTRY{
+    ),
+    DEVMAP_ENTRY(
 	    LUBBOCK_FFUART_VBASE,
 	    PXA2X0_FFUART_BASE,
 	    4 * COM_NPORTS
-    },
-    DEVMAP_ENTRY{
+    ),
+    DEVMAP_ENTRY(
 	    LUBBOCK_BTUART_VBASE,
 	    PXA2X0_BTUART_BASE,
 	    4 * COM_NPORTS
-    },
+    ),
 
     DEVMAP_ENTRY_END
 };
