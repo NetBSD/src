@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_ah_keys.sh,v 1.3 2023/06/04 22:18:47 chs Exp $
+#	$NetBSD: t_ipsec_ah_keys.sh,v 1.4 2023/06/19 08:28:09 knakahara Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -152,7 +152,7 @@ add_test_invalid_keys()
 atf_init_test_cases()
 {
 
-	for aalgo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
+	for aalgo in $AH_AUTHENTICATION_ALGORITHMS; do
 		add_test_valid_keys $aalgo
 		add_test_invalid_keys $aalgo
 	done
