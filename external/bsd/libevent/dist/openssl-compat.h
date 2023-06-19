@@ -1,4 +1,4 @@
-/*	$NetBSD: openssl-compat.h,v 1.1.1.2 2021/04/07 02:43:14 christos Exp $	*/
+/*	$NetBSD: openssl-compat.h,v 1.2 2023/06/19 03:21:14 rin Exp $	*/
 #ifndef OPENSSL_COMPAT_H
 #define OPENSSL_COMPAT_H
 
@@ -41,7 +41,8 @@ static inline BIO_METHOD *BIO_meth_new(int type, const char *name)
 #endif /* (OPENSSL_VERSION_NUMBER < 0x10100000L) || \
 	(defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER < 0x20700000L) */
 
-#if defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER >= 0x20700000L
+#if defined(LIBRESSL_VERSION_NUMBER) && LIBRESSL_VERSION_NUMBER >= 0x20700000L && \
+	LIBRESSL_VERSION_NUMBER < 0x30500000L
 #define BIO_get_init(b) (b)->init
 #endif
 
