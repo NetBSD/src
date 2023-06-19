@@ -1,10 +1,10 @@
-.\"	$NetBSD: hx509_verify.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hx509_verify.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "hx509_verify" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalx509library" \" -*- nroff -*-
+.TH "hx509_verify" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal x509 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hx509_verify
+hx509_verify \- hx509 verification functions
 .SH SYNOPSIS
 .br
 .PP
@@ -68,7 +68,7 @@ hx509_verify
 .SS "void hx509_context_set_missing_revoke (hx509_context context, int flag)"
 Selects if the \fBhx509_revoke_verify()\fP function is going to require the existans of a revokation method (OCSP, CRL) or not\&. Note that \fBhx509_verify_path()\fP, \fBhx509_cms_verify_signed()\fP, and other function call \fBhx509_revoke_verify()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP hx509 context to change the flag for\&. 
 .br
@@ -79,7 +79,7 @@ Selects if the \fBhx509_revoke_verify()\fP function is going to require the exis
 .SS "int hx509_crl_add_revoked_certs (hx509_context context, hx509_crl crl, hx509_certs certs)"
 Add revoked certificate to an CRL context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context\&. 
 .br
@@ -88,7 +88,7 @@ Add revoked certificate to an CRL context\&.
 \fIcerts\fP keyset of certificate to revoke\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -97,14 +97,14 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_crl_alloc (hx509_context context, hx509_crl * crl)"
 Create a CRL context\&. Use \fBhx509_crl_free()\fP to free the CRL context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context\&. 
 .br
 \fIcrl\fP return pointer to a newly allocated CRL context\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -113,7 +113,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_crl_free (hx509_context context, hx509_crl * crl)"
 Free a CRL context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context\&. 
 .br
@@ -124,7 +124,7 @@ Free a CRL context\&.
 .SS "int hx509_crl_lifetime (hx509_context context, hx509_crl crl, int delta)"
 Set the lifetime of a CRL context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context\&. 
 .br
@@ -133,7 +133,7 @@ Set the lifetime of a CRL context\&.
 \fIdelta\fP delta time the certificate is valid, library adds the current time to this\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -142,7 +142,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_crl_sign (hx509_context context, hx509_cert signer, hx509_crl crl, heim_octet_string * os)"
 Sign a CRL and return an encode certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context\&. 
 .br
@@ -153,7 +153,7 @@ Sign a CRL and return an encode certificate\&.
 \fIos\fP return the signed and encoded CRL, free with free_heim_octet_string()
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -162,7 +162,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_ocsp_verify (hx509_context context, time_t now, hx509_cert cert, int flags, const void * data, size_t length, time_t * expiration)"
 Verify that the certificate is part of the OCSP reply and it's not expired\&. Doesn't verify signature the OCSP reply or it's done by a authorized sender, that is assumed to be already done\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context 
 .br
@@ -179,7 +179,7 @@ Verify that the certificate is part of the OCSP reply and it's not expired\&. Do
 \fIexpiration\fP return the time the OCSP will expire and need to be rechecked\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -188,7 +188,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_verify_attach_anchors (hx509_verify_ctx ctx, hx509_certs set)"
 Set the trust anchors in the verification context, makes an reference to the keyset, so the consumer can free the keyset independent of the destruction of the verification context (ctx)\&. If there already is a keyset attached, it's released\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP a verification context 
 .br
@@ -199,7 +199,7 @@ Set the trust anchors in the verification context, makes an reference to the key
 .SS "void hx509_verify_attach_revoke (hx509_verify_ctx ctx, hx509_revoke_ctx revoke_ctx)"
 Attach an revocation context to the verfication context, , makes an reference to the revoke context, so the consumer can free the revoke context independent of the destruction of the verification context\&. If there is no revoke context, the verification process is NOT going to check any verification status\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP a verification context\&. 
 .br
@@ -210,7 +210,7 @@ Attach an revocation context to the verfication context, , makes an reference to
 .SS "void hx509_verify_destroy_ctx (hx509_verify_ctx ctx)"
 Free an hx509 verification context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the context to be freed\&. 
 .RE
@@ -219,14 +219,14 @@ Free an hx509 verification context\&.
 .SS "int hx509_verify_init_ctx (hx509_context context, hx509_verify_ctx * ctx)"
 Allocate an verification context that is used fo control the verification process\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
 \fIctx\fP returns a pointer to a hx509_verify_ctx object\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -235,7 +235,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_verify_path (hx509_context context, hx509_verify_ctx ctx, hx509_cert cert, hx509_certs pool)"
 Build and verify the path for the certificate to the trust anchor specified in the verify context\&. The path is constructed from the certificate, the pool and the trust anchors\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -246,7 +246,7 @@ Build and verify the path for the certificate to the trust anchor specified in t
 \fIpool\fP A keyset of certificates to build the chain from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -255,7 +255,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_verify_set_max_depth (hx509_verify_ctx ctx, unsigned int max_depth)"
 Set the maximum depth of the certificate chain that the path builder is going to try\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP a verification context 
 .br
@@ -266,7 +266,7 @@ Set the maximum depth of the certificate chain that the path builder is going to
 .SS "void hx509_verify_set_proxy_certificate (hx509_verify_ctx ctx, int boolean)"
 Allow or deny the use of proxy certificates
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP a verification context 
 .br
@@ -277,7 +277,7 @@ Allow or deny the use of proxy certificates
 .SS "void hx509_verify_set_strict_rfc3280_verification (hx509_verify_ctx ctx, int boolean)"
 Select strict RFC3280 verification of certificiates\&. This means checking key usage on CA certificates, this will make version 1 certificiates unuseable\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP a verification context 
 .br
@@ -288,7 +288,7 @@ Select strict RFC3280 verification of certificiates\&. This means checking key u
 .SS "void hx509_verify_set_time (hx509_verify_ctx ctx, time_t t)"
 Set the clock time the the verification process is going to use\&. Used to check certificate in the past and future time\&. If not set the current time will be used\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP a verification context\&. 
 .br
@@ -298,4 +298,4 @@ Set the clock time the the verification process is going to use\&. Used to check
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalx509library from the source code\&.
+Generated automatically by Doxygen for Heimdal x509 library from the source code\&.

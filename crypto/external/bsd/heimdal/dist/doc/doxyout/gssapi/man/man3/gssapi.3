@@ -1,10 +1,10 @@
-.\"	$NetBSD: gssapi.3,v 1.2 2019/12/15 22:50:43 christos Exp $
+.\"	$NetBSD: gssapi.3,v 1.3 2023/06/19 21:41:39 christos Exp $
 .\"
-.TH "gssapi" 3 "Fri Jun 7 2019" "Version 7.7.0" "HeimdalGSS-APIlibrary" \" -*- nroff -*-
+.TH "gssapi" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal GSS-API library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-gssapi
+gssapi \- Heimdal GSS-API functions
 .SH SYNOPSIS
 .br
 .PP
@@ -77,7 +77,7 @@ Add a oid to the oid set, function does not make a copy of the oid, so the point
 .PP
 If there is a duplicate member of the oid, the new member is not added to to the set\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status code\&. 
 .br
@@ -86,7 +86,7 @@ If there is a duplicate member of the oid, the new member is not added to to the
 \fIoid_set\fP oid set to add the member too
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a gss_error code, see \fBgss_display_status()\fP about printing the error code\&. 
 .RE
@@ -101,7 +101,7 @@ If the input_name if of the GSS_C_NT_USER_NAME, and the Kerberos mechanism is sp
 .PP
 For more information about \fBInternal names and mechanism names\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status code\&. 
 .br
@@ -112,7 +112,7 @@ For more information about \fBInternal names and mechanism names\fP\&.
 \fIoutput_name\fP the resulting type, release with \fBgss_release_name()\fP, independent of input_name\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a gss_error code, see \fBgss_display_status()\fP about printing the error code\&. 
 .RE
@@ -121,7 +121,7 @@ a gss_error code, see \fBgss_display_status()\fP about printing the error code\&
 .SS "GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_display_status (OM_uint32 * minor_status, OM_uint32 status_value, int status_type, const gss_OID mech_type, OM_uint32 * message_context, gss_buffer_t status_string)"
 Convert a GSS-API status code to text
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status code 
 .br
@@ -136,7 +136,7 @@ Convert a GSS-API status code to text
 \fIstatus_string\fP the allocated text representation\&. Release with gss_release_buffer()
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a gss_error code\&. 
 .RE
@@ -145,12 +145,12 @@ a gss_error code\&.
 .SS "GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_export_name (OM_uint32 * minor_status, gss_const_name_t input_name, gss_buffer_t exported_name)"
 Convert a GGS-API name from internal form to contiguous string\&.
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBgss_import_name()\fP, \fBInternal names and mechanism names\fP\&.
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status code 
 .br
@@ -159,7 +159,7 @@ Convert a GGS-API name from internal form to contiguous string\&.
 \fIexported_name\fP output name in contiguos string form
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a gss_error code, see \fBgss_display_status()\fP about printing the error code\&. 
 .RE
@@ -183,12 +183,12 @@ GSS_C_NT_ANONYMOUS
 GSS_KRB5_NT_PRINCIPAL_NAME
 .PP
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBgss_export_name()\fP, \fBInternal names and mechanism names\fP\&.
 .RE
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status code 
 .br
@@ -199,7 +199,7 @@ GSS_KRB5_NT_PRINCIPAL_NAME
 \fIoutput_name\fP the resulting type, release with \fBgss_release_name()\fP, independent of input_name
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a gss_error code, see \fBgss_display_status()\fP about printing the error code\&. 
 .RE
@@ -217,7 +217,7 @@ GSS_S_CONTINUE_NEEDED - if the caller needs to continue another round of gss_i n
 error code - any other error code
 .PP
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status code\&.
 .br
@@ -246,7 +246,7 @@ error code - any other error code
 \fItime_rec\fP amount of time this context is valid for
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a gss_error code, see \fBgss_display_status()\fP about printing the error code\&. 
 .RE
@@ -255,7 +255,7 @@ a gss_error code, see \fBgss_display_status()\fP about printing the error code\&
 .SS "GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_inquire_attrs_for_mech (OM_uint32 * minor_status, gss_const_OID mech, gss_OID_set * mech_attr, gss_OID_set * known_mech_attrs)"
 List support attributes for a mech and/or all mechanisms\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status code 
 .br
@@ -270,7 +270,7 @@ List support attributes for a mech and/or all mechanisms\&.
 .SS "GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_inquire_saslname_for_mech (OM_uint32 * minor_status, const gss_OID desired_mech, gss_buffer_t sasl_mech_name, gss_buffer_t mech_name, gss_buffer_t mech_description)"
 Returns different protocol names and description of the mechanism\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status code 
 .br
@@ -283,7 +283,7 @@ Returns different protocol names and description of the mechanism\&.
 \fImech_description\fP description of gssapi mech
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns GSS_S_COMPLETE or a error code\&. 
 .RE
@@ -294,14 +294,14 @@ Compare two GSS-API OIDs with each other\&.
 .PP
 GSS_C_NO_OID matches nothing, not even it-self\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIa\fP first oid to compare 
 .br
 \fIb\fP second oid to compare
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 non-zero when both oid are the same OID, zero when they are not the same\&. 
 .RE
@@ -321,14 +321,14 @@ major = gss_release_cred(&minor, &cred);
 .fi
 .PP
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status return code, mech specific 
 .br
 \fIcred_handle\fP a pointer to the credential too release
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 an gssapi error code 
 .RE
@@ -341,14 +341,14 @@ Free a name
 .PP
 import_name can point to NULL or be NULL, or a pointer to a gss_name_t structure\&. If it was a pointer to gss_name_t, the pointer will be set to NULL on success and failure\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status code 
 .br
 \fIinput_name\fP name to free
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a gss_error code, see \fBgss_display_status()\fP about printing the error code\&. 
 .RE
@@ -359,7 +359,7 @@ Decrypt or verifies the signature on the data\&.
 .SS "GSSAPI_LIB_FUNCTION OM_uint32 GSSAPI_LIB_CALL gss_wrap (OM_uint32 * minor_status, gss_const_ctx_id_t context_handle, int conf_req_flag, gss_qop_t qop_req, const gss_buffer_t input_message_buffer, int * conf_state, gss_buffer_t output_message_buffer)"
 Wrap a message using either confidentiality (encryption + signature) or sealing (signature)\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIminor_status\fP minor status code\&. 
 .br
@@ -433,4 +433,4 @@ GSS_C_ATTR_STREAM_SIZES data is a gss_context_stream_sizes\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for HeimdalGSS-APIlibrary from the source code\&.
+Generated automatically by Doxygen for Heimdal GSS-API library from the source code\&.

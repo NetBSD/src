@@ -1,4 +1,4 @@
-/*	$NetBSD: addr_families.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: addr_families.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -527,7 +527,7 @@ arange_parse_addr (krb5_context context,
 	    return ret;
 	}
 
-	if(high.len != 1 && high.val[0].addr_type != low.val[0].addr_type) {
+	if(high.len != 1 || high.val[0].addr_type != low.val[0].addr_type) {
 	    krb5_free_addresses(context, &low);
 	    krb5_free_addresses(context, &high);
 	    return -1;

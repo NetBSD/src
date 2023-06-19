@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoll.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
+/*	$NetBSD: strtoll.c,v 1.3 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,6 +39,8 @@
 #include <string.h>
 
 #include <krb5/roken.h>
+
+#ifndef HAVE_STRTOLL
 
 /* #include <sys/cdefs.h> */
 
@@ -148,4 +150,4 @@ noconv:
 	*endptr = (char *)(any ? s - 1 : nptr);
     return (acc);
 }
-
+#endif /* !HAVE_STRTOLL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: test-normalize.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
+/*	$NetBSD: test-normalize.c,v 1.3 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -157,9 +157,13 @@ main(int argc, char **argv)
     if (f == NULL) {
 	const char *srcdir = getenv("srcdir");
 	if (srcdir != NULL) {
-	    char longname[256];
-	    snprintf(longname, sizeof(longname), "%s/%s", srcdir, filename);
+	    char *longname = NULL;
+
+	    if (asprintf(&longname, "%s/%s", srcdir, filename) == -1 ||
+                longname == NULL)
+                errx(1, "Out of memory");
 	    f = fopen(longname, "r");
+            free(longname);
 	}
 	if (f == NULL)
 	    err(1, "open %s", filename);

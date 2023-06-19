@@ -1,4 +1,4 @@
-/*	$NetBSD: resolve.c,v 1.5 2017/01/28 21:31:50 christos Exp $	*/
+/*	$NetBSD: resolve.c,v 1.6 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2006 Kungliga Tekniska Högskolan

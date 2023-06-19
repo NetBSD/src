@@ -1,4 +1,4 @@
-/*	$NetBSD: cfx.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: cfx.c,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2003, PADL Software Pty Ltd.
@@ -208,11 +208,36 @@ gss_iov_buffer_desc *
 _gk_find_buffer(gss_iov_buffer_desc *iov, int iov_count, OM_uint32 type)
 {
     int i;
+    gss_iov_buffer_t iovp = GSS_C_NO_IOV_BUFFER;
 
-    for (i = 0; i < iov_count; i++)
-	if (type == GSS_IOV_BUFFER_TYPE(iov[i].type))
-	    return &iov[i];
-    return NULL;
+    if (iov == GSS_C_NO_IOV_BUFFER)
+	return GSS_C_NO_IOV_BUFFER;
+
+    /*
+     * This function is used to find header, padding or trailer buffers
+     * which are singletons; return NULL if multiple instances are found.
+     */
+    for (i = 0; i < iov_count; i++) {
+	if (type == GSS_IOV_BUFFER_TYPE(iov[i].type)) {
+	    if (iovp == GSS_C_NO_IOV_BUFFER)
+		iovp = &iov[i];
+	    else
+		return GSS_C_NO_IOV_BUFFER;
+	}
+    }
+
+    /*
+     * For compatibility with SSPI, an empty padding buffer is treated
+     * equivalent to an absent padding buffer (unless the caller is
+     * requesting that a padding buffer be allocated).
+     */
+    if (iovp &&
+	iovp->buffer.length == 0 &&
+	type == GSS_IOV_BUFFER_TYPE_PADDING &&
+	(GSS_IOV_BUFFER_FLAGS(iovp->type) & GSS_IOV_BUFFER_FLAG_ALLOCATE) == 0)
+	iovp = NULL;
+
+    return iovp;
 }
 
 OM_uint32
@@ -241,7 +266,8 @@ _gk_verify_buffers(OM_uint32 *minor_status,
 		   const gsskrb5_ctx ctx,
 		   const gss_iov_buffer_desc *header,
 		   const gss_iov_buffer_desc *padding,
-		   const gss_iov_buffer_desc *trailer)
+		   const gss_iov_buffer_desc *trailer,
+		   int block_cipher)
 {
     if (header == NULL) {
 	*minor_status = EINVAL;
@@ -262,9 +288,12 @@ _gk_verify_buffers(OM_uint32 *minor_status,
 	}
     } else {
 	/*
-	 * In non-DCE style mode we require having a padding buffer
+	 * In non-DCE style mode we require having a padding buffer for
+	 * encryption types that do not behave as stream ciphers. This
+	 * check is superfluous for now, as only RC4 and RFC4121 enctypes
+	 * are presently implemented for the IOV APIs; be defensive.
 	 */
-	if (padding == NULL) {
+	if (block_cipher && padding == NULL) {
 	    *minor_status = EINVAL;
 	    return GSS_S_FAILURE;
 	}
@@ -308,7 +337,8 @@ _gssapi_wrap_cfx_iov(OM_uint32 *minor_status,
 
     trailer = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_TRAILER);
 
-    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    major_status = _gk_verify_buffers(minor_status, ctx, header,
+				      padding, trailer, FALSE);
     if (major_status != GSS_S_COMPLETE) {
 	    return major_status;
     }
@@ -749,7 +779,8 @@ _gssapi_unwrap_cfx_iov(OM_uint32 *minor_status,
 
     trailer = _gk_find_buffer(iov, iov_count, GSS_IOV_BUFFER_TYPE_TRAILER);
 
-    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    major_status = _gk_verify_buffers(minor_status, ctx, header,
+				      padding, trailer, FALSE);
     if (major_status != GSS_S_COMPLETE) {
 	    return major_status;
     }
@@ -1071,7 +1102,8 @@ _gssapi_wrap_iov_length_cfx(OM_uint32 *minor_status,
 	}
     }
 
-    major_status = _gk_verify_buffers(minor_status, ctx, header, padding, trailer);
+    major_status = _gk_verify_buffers(minor_status, ctx, header,
+				      padding, trailer, FALSE);
     if (major_status != GSS_S_COMPLETE) {
 	    return major_status;
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: check-der.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: check-der.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2007 Kungliga Tekniska Högskolan
@@ -45,7 +45,7 @@
 
 #include "check-common.h"
 
-__RCSID("$NetBSD: check-der.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
+__RCSID("$NetBSD: check-der.c,v 1.3 2023/06/19 21:41:42 christos Exp $");
 
 static int
 cmp_integer (void *a, void *b)
@@ -69,11 +69,12 @@ test_integer (void)
 	{NULL, 1, "\xff", 		NULL },
 	{NULL, 2, "\xff\x01", 		NULL },
 	{NULL, 2, "\x00\xff", 		NULL },
+	{NULL, 2, "\xfe\x01", 		NULL },
 	{NULL, 4, "\x7f\xff\xff\xff", 	NULL }
     };
 
     int values[] = {0, 127, 128, 256, -128, -129, -1, -255, 255,
-		    0x7fffffff};
+		    -511, 0x7fffffff};
     int i, ret;
     int ntests = sizeof(tests) / sizeof(*tests);
 
@@ -155,16 +156,16 @@ test_one_int(int val)
 static int
 test_integer_more (void)
 {
-    int i, n1, n2, n3, n4, n5, n6;
+    int64_t i, n1, n2, n3, n4, n5, n6;
 
     n2 = 0;
     for (i = 0; i < (sizeof(int) * 8); i++) {
-	n1 = 0x01 << i;
+	n1 = 0x01LL << i;
 	n2 = n2 | n1;
 	n3 = ~n1;
 	n4 = ~n2;
-	n5 = (-1) & ~(0x3f << i);
-	n6 = (-1) & ~(0x7f << i);
+	n5 = (-1LL) & ~(0x3fLL << i);
+	n6 = (-1LL) & ~(0x7fLL << i);
 
 	test_one_int(n1);
 	test_one_int(n2);
@@ -524,23 +525,27 @@ static int
 test_heim_integer (void)
 {
     struct test_case tests[] = {
+	{NULL, 1, "\xff", 		NULL },
+	{NULL, 2, "\xff\x01", 		NULL },
 	{NULL, 2, "\xfe\x01", 		NULL },
 	{NULL, 2, "\xef\x01", 		NULL },
 	{NULL, 3, "\xff\x00\xff", 	NULL },
 	{NULL, 3, "\xff\x01\x00", 	NULL },
 	{NULL, 1, "\x00", 		NULL },
 	{NULL, 1, "\x01", 		NULL },
-	{NULL, 2, "\x00\x80", 		NULL }
+	{NULL, 2, "\x00\x80", 		NULL },
     };
 
     heim_integer values[] = {
+	{ 1, "\x01", 1 },
+	{ 1, "\xff", 1 },
 	{ 2, "\x01\xff", 1 },
 	{ 2, "\x10\xff", 1 },
 	{ 2, "\xff\x01", 1 },
 	{ 2, "\xff\x00", 1 },
 	{ 0, "", 0 },
 	{ 1, "\x01", 0 },
-	{ 1, "\x80", 0 }
+	{ 1, "\x80", 0 },
     };
     int i, ret;
     int ntests = sizeof(tests) / sizeof(tests[0]);

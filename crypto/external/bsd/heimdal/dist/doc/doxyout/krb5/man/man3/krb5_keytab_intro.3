@@ -1,11 +1,11 @@
-.\"	$NetBSD: krb5_keytab_intro.3,v 1.2 2019/12/15 22:50:45 christos Exp $
+.\"	$NetBSD: krb5_keytab_intro.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "krb5_keytab_intro" 3 "Fri Jun 7 2019" "Version 7.7.0" "HeimdalKerberos5library" \" -*- nroff -*-
+.TH "krb5_keytab_intro" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal Kerberos 5 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-krb5_keytab_introThe keytab handing functions 
- \- 
+krb5_keytab_intro \- The keytab handing functions 
+
 .SH "Kerberos Keytabs"
 .PP
 See the library functions here: \fBHeimdal Kerberos 5 keytab handling functions\fP
@@ -29,11 +29,7 @@ keytab store the keytab in a AFS keyfile (usually /usr/afs/etc/KeyFile ), the ty
 memory The keytab is stored in a memory segment\&. This allows sensitive and/or temporary data not to be stored on disk\&. The type's name is MEMORY\&. Each MEMORY keytab is referenced counted by and opened by the residual name, so two handles can point to the same memory area\&. When the last user closes using \fBkrb5_kt_close()\fP the keytab, the keys in they keytab is memset() to zero and freed and can no longer be looked up by name\&.
 .PP
 .SS "Keytab example"
-.PP
-.nf
-This is a minimalistic version of ktutil.
-.fi
-.PP
+This is a minimalistic version of ktutil\&.
 .PP
 .PP
 .nf

@@ -1,4 +1,4 @@
-/*	$NetBSD: kuserok.c,v 1.3 2017/09/08 14:52:50 christos Exp $	*/
+/*	$NetBSD: kuserok.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan

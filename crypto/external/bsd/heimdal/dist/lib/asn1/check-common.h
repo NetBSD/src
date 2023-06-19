@@ -1,4 +1,4 @@
-/*	$NetBSD: check-common.h,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: check-common.h,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2005 Kungliga Tekniska Högskolan
@@ -36,7 +36,8 @@
  */
 
 #define IF_OPT_COMPARE(ac,bc,e) \
-	if (((ac)->e == NULL && (bc)->e != NULL) || (((ac)->e != NULL && (bc)->e == NULL))) return 1; if ((ac)->e)
+	if (((ac)->e == NULL && (bc)->e != NULL) || (((ac)->e != NULL && (bc)->e == NULL))) return 1; \
+        if ((ac)->e)
 #define COMPARE_OPT_STRING(ac,bc,e) \
 	do { if (strcmp(*(ac)->e, *(bc)->e) != 0) return 1; } while(0)
 #define COMPARE_OPT_OCTET_STRING(ac,bc,e) \
@@ -60,21 +61,21 @@ struct test_case {
 };
 
 typedef int (ASN1CALL *generic_encode)(unsigned char *, size_t, void *, size_t *);
-typedef int (ASN1CALL *generic_length)(void *);
+typedef size_t (ASN1CALL *generic_length)(void *);
 typedef int (ASN1CALL *generic_decode)(unsigned char *, size_t, void *, size_t *);
-typedef int (ASN1CALL *generic_free)(void *);
+typedef void (ASN1CALL *generic_free)(void *);
 typedef int (ASN1CALL *generic_copy)(const void *, void *);
 
 int
-generic_test (const struct test_case *tests,
-	      unsigned ntests,
-	      size_t data_size,
-	      int (ASN1CALL *encode)(unsigned char *, size_t, void *, size_t *),
-	      int (ASN1CALL *length)(void *),
-	      int (ASN1CALL *decode)(unsigned char *, size_t, void *, size_t *),
-	      int (ASN1CALL *free_data)(void *),
-	      int (*cmp)(void *a, void *b),
-	      int (ASN1CALL *copy)(const void *a, void *b));
+generic_test (const struct test_case *,
+	      unsigned,
+	      size_t,
+              generic_encode,
+              generic_length,
+              generic_decode,
+              generic_free,
+	      int (*)(void *a, void *b),
+              generic_copy);
 
 int
 generic_decode_fail(const struct test_case *tests,

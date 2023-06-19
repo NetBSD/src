@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: crypto.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2016 Kungliga Tekniska Högskolan
@@ -931,7 +931,7 @@ static const struct signature_alg sha512_alg = {
 
 static const struct signature_alg sha384_alg = {
     "sha-384",
-    ASN1_OID_ID_SHA512,
+    ASN1_OID_ID_SHA384,
     &_hx509_signature_sha384_data,
     NULL,
     NULL,

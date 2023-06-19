@@ -1,4 +1,4 @@
-/*	$NetBSD: test_store.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: test_store.c,v 1.3 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -66,7 +66,7 @@ test_int16(krb5_context context, krb5_storage *sp)
     krb5_error_code ret;
     int i;
     int16_t val[] = {
-	0, 1, -1, 32768, -32767
+	0, 1, -1, 32767, -32768
     }, v;
 
     krb5_storage_truncate(sp, 0);

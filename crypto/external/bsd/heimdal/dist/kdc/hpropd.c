@@ -1,4 +1,4 @@
-/*	$NetBSD: hpropd.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: hpropd.c,v 1.3 2023/06/19 21:41:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -109,7 +109,9 @@ main(int argc, char **argv)
     }
 
     argc -= optidx;
+#ifndef __clang_analyzer__
     argv += optidx;
+#endif
 
     if (argc != 0)
 	usage(1);
@@ -127,6 +129,7 @@ main(int argc, char **argv)
 	krb5_ticket *ticket;
 	char *server;
 
+        memset(&ss, 0, sizeof(ss));
 	sock = STDIN_FILENO;
 #ifdef SUPPORT_INETD
 	if (inetd_flag == -1) {
@@ -147,7 +150,7 @@ main(int argc, char **argv)
 	if (getpeername(sock, sa, &sin_len) < 0)
 	    krb5_err(context, 1, errno, "getpeername");
 
-	if (inet_ntop(ss.ss_family,
+	if (inet_ntop(sa->sa_family,
 		      socket_get_address (sa),
 		      addr_name,
 		      sizeof(addr_name)) == NULL)

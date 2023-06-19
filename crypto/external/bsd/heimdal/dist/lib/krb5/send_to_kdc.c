@@ -1,4 +1,4 @@
-/*	$NetBSD: send_to_kdc.c,v 1.8 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: send_to_kdc.c,v 1.9 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -1163,7 +1163,7 @@ krb5_sendto_context(krb5_context context,
 		break;
 	    }
 	    action = KRB5_SENDTO_KRBHST;
-	    /* FALLTHOUGH */
+	    /* FALLTHROUGH */
 	case KRB5_SENDTO_KRBHST:
 	    if (ctx->krbhst == NULL) {
 		ret = krb5_krbhst_init_flags(context, realm, type,
@@ -1181,7 +1181,7 @@ krb5_sendto_context(krb5_context context,
 		handle = heim_retain(ctx->krbhst);
 	    }
 	    action = KRB5_SENDTO_TIMEOUT;
-	    /* FALLTHOUGH */
+	    /* FALLTHROUGH */
 	case KRB5_SENDTO_TIMEOUT:
 
 	    /*

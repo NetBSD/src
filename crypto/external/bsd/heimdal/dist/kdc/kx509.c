@@ -1,4 +1,4 @@
-/*	$NetBSD: kx509.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: kx509.c,v 1.4 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan

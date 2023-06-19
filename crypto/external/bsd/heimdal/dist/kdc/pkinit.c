@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit.c,v 1.5 2019/12/15 22:50:46 christos Exp $	*/
+/*	$NetBSD: pkinit.c,v 1.6 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2016 Kungliga Tekniska Högskolan
@@ -243,8 +243,6 @@ generate_dh_keyblock(krb5_context context,
 	    memmove(dh_gen_key + size, dh_gen_key, dh_gen_keylen);
 	    memset(dh_gen_key, 0, size);
 	}
-
-	ret = 0;
     } else if (client_params->keyex == USE_ECDH) {
 	if (client_params->u.ecdh.public_key == NULL) {
 	    ret = KRB5KRB_ERR_GENERIC;
@@ -635,7 +633,8 @@ _kdc_pk_rd_padata(krb5_context context,
 	hx509_certs signer_certs;
 	int flags = HX509_CMS_VS_ALLOW_DATA_OID_MISMATCH; /* BTMM */
 
-	if (_kdc_is_anonymous(context, client->entry.principal))
+	if (_kdc_is_anonymous(context, client->entry.principal)
+	    || (config->historical_anon_realm && _kdc_is_anon_request(req)))
 	    flags |= HX509_CMS_VS_ALLOW_ZERO_SIGNER;
 
 	ret = hx509_cms_verify_signed(context->hx509ctx,
@@ -1694,7 +1693,8 @@ _kdc_pk_check_client(krb5_context context,
     size_t i;
 
     if (cp->cert == NULL) {
-	if (!_kdc_is_anonymous(context, client->entry.principal))
+	if (!_kdc_is_anonymous(context, client->entry.principal)
+	    && !config->historical_anon_realm)
 	    return KRB5KDC_ERR_BADOPTION;
 
 	*subject_name = strdup("<unauthenticated anonymous client>");

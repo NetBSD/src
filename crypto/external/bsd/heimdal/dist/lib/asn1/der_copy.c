@@ -1,4 +1,4 @@
-/*	$NetBSD: der_copy.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: der_copy.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #include "der_locl.h"
 
-__RCSID("$NetBSD: der_copy.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
+__RCSID("$NetBSD: der_copy.c,v 1.3 2023/06/19 21:41:42 christos Exp $");
 
 int
 der_copy_general_string (const heim_general_string *from,
@@ -151,8 +151,12 @@ int
 der_copy_octet_string (const heim_octet_string *from, heim_octet_string *to)
 {
     to->length = from->length;
-    to->data   = malloc(to->length);
-    if(to->length != 0 && to->data == NULL)
+    if (from->data == NULL) {
+        to->data = NULL;
+        return 0;
+    }
+    to->data = malloc(to->length);
+    if (to->length != 0 && to->data == NULL)
 	return ENOMEM;
     memcpy(to->data, from->data, to->length);
     return 0;

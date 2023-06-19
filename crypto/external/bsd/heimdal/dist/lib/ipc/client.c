@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Kungliga Tekniska Högskolan
@@ -334,10 +334,8 @@ connect_unix(struct path_ctx *s)
 	return errno;
     rk_cloexec(s->fd);
 
-    if (connect(s->fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
-	close(s->fd);
+    if (connect(s->fd, (struct sockaddr *)&addr, sizeof(addr)) != 0)
 	return errno;
-    }
 
     return 0;
 }

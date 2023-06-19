@@ -1,10 +1,10 @@
-.\"	$NetBSD: krb5_v4compat.3,v 1.2 2019/12/15 22:50:45 christos Exp $
+.\"	$NetBSD: krb5_v4compat.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "krb5_v4compat" 3 "Fri Jun 7 2019" "Version 7.7.0" "HeimdalKerberos5library" \" -*- nroff -*-
+.TH "krb5_v4compat" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal Kerberos 5 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-krb5_v4compat
+krb5_v4compat \- Heimdal Kerberos 4 compatiblity functions
 .SH SYNOPSIS
 .br
 .PP
@@ -26,7 +26,7 @@ krb5_v4compat
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb524_convert_creds_kdc (krb5_context context, krb5_creds * in_cred, struct credentials * v4creds)"
 Convert the v5 credentials in in_cred to v4-dito in v4creds\&. This is done by sending them to the 524 function in the KDC\&. If `in_cred' doesn't contain a DES session key, then a new one is gotten from the KDC and stored in the cred cache `ccache'\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos 5 context\&. 
 .br
@@ -35,7 +35,7 @@ Convert the v5 credentials in in_cred to v4-dito in v4creds\&. This is done by s
 \fIv4creds\fP the converted credential
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Returns 0 to indicate success\&. Otherwise an kerberos et error code is returned, see \fBkrb5_get_error_message()\fP\&. 
 .RE
@@ -44,7 +44,7 @@ Returns 0 to indicate success\&. Otherwise an kerberos et error code is returned
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb524_convert_creds_kdc_ccache (krb5_context context, krb5_ccache ccache, krb5_creds * in_cred, struct credentials * v4creds)"
 Convert the v5 credentials in in_cred to v4-dito in v4creds, check the credential cache ccache before checking with the KDC\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos 5 context\&. 
 .br
@@ -55,7 +55,7 @@ Convert the v5 credentials in in_cred to v4-dito in v4creds, check the credentia
 \fIv4creds\fP the converted credential
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Returns 0 to indicate success\&. Otherwise an kerberos et error code is returned, see \fBkrb5_get_error_message()\fP\&. 
 .RE
@@ -63,4 +63,4 @@ Returns 0 to indicate success\&. Otherwise an kerberos et error code is returned
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for HeimdalKerberos5library from the source code\&.
+Generated automatically by Doxygen for Heimdal Kerberos 5 library from the source code\&.

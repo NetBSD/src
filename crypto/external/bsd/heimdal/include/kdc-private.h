@@ -180,6 +180,9 @@ _kdc_get_preferred_key (
 	Key **/*key*/);
 
 krb5_boolean
+_kdc_is_anon_request (const KDC_REQ */*req*/);
+
+krb5_boolean
 _kdc_is_anonymous (
 	krb5_context /*context*/,
 	krb5_const_principal /*principal*/);

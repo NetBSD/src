@@ -1,10 +1,10 @@
-.\"	$NetBSD: hx509.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hx509.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "hx509" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalx509library" \" -*- nroff -*-
+.TH "hx509" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal x509 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hx509
+hx509 \- hx509 library
 .SH SYNOPSIS
 .br
 .PP
@@ -26,7 +26,7 @@ hx509
 .SS "void hx509_context_free (hx509_context * context)"
 Free the context allocated by \fBhx509_context_init()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP context to be freed\&. 
 .RE
@@ -35,12 +35,12 @@ Free the context allocated by \fBhx509_context_init()\fP\&.
 .SS "int hx509_context_init (hx509_context * context)"
 Creates a hx509 context that most functions in the library uses\&. The context is only allowed to be used by one thread at each moment\&. Free the context with \fBhx509_context_free()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Returns a pointer to new hx509 context\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Returns an hx509 error code\&. 
 .RE
@@ -48,4 +48,4 @@ Returns an hx509 error code\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalx509library from the source code\&.
+Generated automatically by Doxygen for Heimdal x509 library from the source code\&.

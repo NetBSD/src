@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sec_context.c,v 1.4 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: init_sec_context.c,v 1.5 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -602,7 +602,19 @@ init_auth_restart
     if (ret == 0) {
 	if (timedata.length == 4) {
 	    const u_char *p = timedata.data;
-	    offset = (p[0] <<24) | (p[1] << 16) | (p[2] << 8) | (p[3] << 0);
+            if (p[0] < 128) {
+                offset = (p[0] <<24) | (p[1] << 16) | (p[2] << 8) | (p[3] << 0);
+            } else {
+                /*
+                 * (p[0] << 24), if p[0] > 127 -> offset is negative, but *p is
+                 * positive, so this is overflow -- overflow we want, but UBSAN
+                 * flags it.
+                 *
+                 * NOTE: We assume the platform is a twos-complement platform.
+                 */
+                offset = INT32_MIN;
+                offset |= ((p[0] & 0x7f) <<24) | (p[1] << 16) | (p[2] << 8) | (p[3] << 0);
+            }
 	}
 	krb5_data_free(&timedata);
     }
@@ -923,7 +935,7 @@ OM_uint32 GSSAPI_CALLCONV _gsskrb5_init_sec_context
 			time_rec);
 	if (ret != GSS_S_COMPLETE)
 	    break;
-	/* FALL THOUGH */
+	/* FALLTHROUGH */
     case INITIATOR_RESTART:
 	ret = init_auth_restart(minor_status,
 				cred,

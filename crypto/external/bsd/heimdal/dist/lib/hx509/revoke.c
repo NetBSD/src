@@ -1,4 +1,4 @@
-/*	$NetBSD: revoke.c,v 1.4 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: revoke.c,v 1.5 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan

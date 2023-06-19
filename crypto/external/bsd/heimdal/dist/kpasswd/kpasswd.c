@@ -1,4 +1,4 @@
-/*	$NetBSD: kpasswd.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: kpasswd.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 #include "kpasswd_locl.h"
-__RCSID("$NetBSD: kpasswd.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
+__RCSID("$NetBSD: kpasswd.c,v 1.3 2023/06/19 21:41:42 christos Exp $");
 
 static int version_flag;
 static int help_flag;
@@ -85,7 +85,8 @@ change_password(krb5_context context,
     if (aret == -1 || msg == NULL)
 	krb5_errx (context, 1, "out of memory");
 
-    ret = UI_UTIL_read_pw_string (pwbuf, sizeof(pwbuf), msg, 1);
+    ret = UI_UTIL_read_pw_string (pwbuf, sizeof(pwbuf), msg,
+				  UI_UTIL_FLAG_VERIFY);
     free(msg);
     if (name)
 	free(name);

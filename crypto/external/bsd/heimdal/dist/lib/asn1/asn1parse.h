@@ -1,16 +1,16 @@
-/*	$NetBSD: asn1parse.h,v 1.2 2019/12/15 22:50:47 christos Exp $	*/
+/*	$NetBSD: asn1parse.h,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
-/* A Bison parser, made by GNU Bison 2.3.  */
+/* A Bison parser, made by GNU Bison 3.8.2.  */
 
-/* Skeleton interface for Bison's Yacc-like parsers in C
+/* Bison interface for Yacc-like parsers in C
 
-   Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002, 2003, 2004, 2005, 2006
-   Free Software Foundation, Inc.
+   Copyright (C) 1984, 1989-1990, 2000-2015, 2018-2021 Free Software Foundation,
+   Inc.
 
-   This program is free software; you can redistribute it and/or modify
+   This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
-   the Free Software Foundation; either version 2, or (at your option)
-   any later version.
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
 
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -18,9 +18,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program; if not, write to the Free Software
-   Foundation, Inc., 51 Franklin Street, Fifth Floor,
-   Boston, MA 02110-1301, USA.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 /* As a special exception, you may create a larger work that contains
    part or all of the Bison parser skeleton and distribute that work
@@ -35,102 +33,124 @@
    This special exception was added by the Free Software Foundation in
    version 2.2 of Bison.  */
 
-/* Tokens.  */
+/* DO NOT RELY ON FEATURES THAT ARE NOT DOCUMENTED in the manual,
+   especially those whose name start with YY_ or yy_.  They are
+   private implementation details that can be changed or removed.  */
+
+#ifndef YY_YY_ASN_PARSE_H_INCLUDED
+# define YY_YY_ASN_PARSE_H_INCLUDED
+/* Debug traces.  */
+#ifndef YYDEBUG
+# define YYDEBUG 1
+#endif
+#if YYDEBUG
+extern int yydebug;
+#endif
+
+/* Token kinds.  */
 #ifndef YYTOKENTYPE
 # define YYTOKENTYPE
-   /* Put the tokens into the symbol table, so that GDB and other debuggers
-      know about them.  */
-   enum yytokentype {
-     kw_ABSENT = 258,
-     kw_ABSTRACT_SYNTAX = 259,
-     kw_ALL = 260,
-     kw_APPLICATION = 261,
-     kw_AUTOMATIC = 262,
-     kw_BEGIN = 263,
-     kw_BIT = 264,
-     kw_BMPString = 265,
-     kw_BOOLEAN = 266,
-     kw_BY = 267,
-     kw_CHARACTER = 268,
-     kw_CHOICE = 269,
-     kw_CLASS = 270,
-     kw_COMPONENT = 271,
-     kw_COMPONENTS = 272,
-     kw_CONSTRAINED = 273,
-     kw_CONTAINING = 274,
-     kw_DEFAULT = 275,
-     kw_DEFINITIONS = 276,
-     kw_EMBEDDED = 277,
-     kw_ENCODED = 278,
-     kw_END = 279,
-     kw_ENUMERATED = 280,
-     kw_EXCEPT = 281,
-     kw_EXPLICIT = 282,
-     kw_EXPORTS = 283,
-     kw_EXTENSIBILITY = 284,
-     kw_EXTERNAL = 285,
-     kw_FALSE = 286,
-     kw_FROM = 287,
-     kw_GeneralString = 288,
-     kw_GeneralizedTime = 289,
-     kw_GraphicString = 290,
-     kw_IA5String = 291,
-     kw_IDENTIFIER = 292,
-     kw_IMPLICIT = 293,
-     kw_IMPLIED = 294,
-     kw_IMPORTS = 295,
-     kw_INCLUDES = 296,
-     kw_INSTANCE = 297,
-     kw_INTEGER = 298,
-     kw_INTERSECTION = 299,
-     kw_ISO646String = 300,
-     kw_MAX = 301,
-     kw_MIN = 302,
-     kw_MINUS_INFINITY = 303,
-     kw_NULL = 304,
-     kw_NumericString = 305,
-     kw_OBJECT = 306,
-     kw_OCTET = 307,
-     kw_OF = 308,
-     kw_OPTIONAL = 309,
-     kw_ObjectDescriptor = 310,
-     kw_PATTERN = 311,
-     kw_PDV = 312,
-     kw_PLUS_INFINITY = 313,
-     kw_PRESENT = 314,
-     kw_PRIVATE = 315,
-     kw_PrintableString = 316,
-     kw_REAL = 317,
-     kw_RELATIVE_OID = 318,
-     kw_SEQUENCE = 319,
-     kw_SET = 320,
-     kw_SIZE = 321,
-     kw_STRING = 322,
-     kw_SYNTAX = 323,
-     kw_T61String = 324,
-     kw_TAGS = 325,
-     kw_TRUE = 326,
-     kw_TYPE_IDENTIFIER = 327,
-     kw_TeletexString = 328,
-     kw_UNION = 329,
-     kw_UNIQUE = 330,
-     kw_UNIVERSAL = 331,
-     kw_UTCTime = 332,
-     kw_UTF8String = 333,
-     kw_UniversalString = 334,
-     kw_VideotexString = 335,
-     kw_VisibleString = 336,
-     kw_WITH = 337,
-     RANGE = 338,
-     EEQUAL = 339,
-     ELLIPSIS = 340,
-     IDENTIFIER = 341,
-     referencename = 342,
-     STRING = 343,
-     NUMBER = 344
-   };
+  enum yytokentype
+  {
+    YYEMPTY = -2,
+    YYEOF = 0,                     /* "end of file"  */
+    YYerror = 256,                 /* error  */
+    YYUNDEF = 257,                 /* "invalid token"  */
+    kw_ABSENT = 258,               /* kw_ABSENT  */
+    kw_ABSTRACT_SYNTAX = 259,      /* kw_ABSTRACT_SYNTAX  */
+    kw_ALL = 260,                  /* kw_ALL  */
+    kw_APPLICATION = 261,          /* kw_APPLICATION  */
+    kw_AUTOMATIC = 262,            /* kw_AUTOMATIC  */
+    kw_BEGIN = 263,                /* kw_BEGIN  */
+    kw_BIT = 264,                  /* kw_BIT  */
+    kw_BMPString = 265,            /* kw_BMPString  */
+    kw_BOOLEAN = 266,              /* kw_BOOLEAN  */
+    kw_BY = 267,                   /* kw_BY  */
+    kw_CHARACTER = 268,            /* kw_CHARACTER  */
+    kw_CHOICE = 269,               /* kw_CHOICE  */
+    kw_CLASS = 270,                /* kw_CLASS  */
+    kw_COMPONENT = 271,            /* kw_COMPONENT  */
+    kw_COMPONENTS = 272,           /* kw_COMPONENTS  */
+    kw_CONSTRAINED = 273,          /* kw_CONSTRAINED  */
+    kw_CONTAINING = 274,           /* kw_CONTAINING  */
+    kw_DEFAULT = 275,              /* kw_DEFAULT  */
+    kw_DEFINITIONS = 276,          /* kw_DEFINITIONS  */
+    kw_EMBEDDED = 277,             /* kw_EMBEDDED  */
+    kw_ENCODED = 278,              /* kw_ENCODED  */
+    kw_END = 279,                  /* kw_END  */
+    kw_ENUMERATED = 280,           /* kw_ENUMERATED  */
+    kw_EXCEPT = 281,               /* kw_EXCEPT  */
+    kw_EXPLICIT = 282,             /* kw_EXPLICIT  */
+    kw_EXPORTS = 283,              /* kw_EXPORTS  */
+    kw_EXTENSIBILITY = 284,        /* kw_EXTENSIBILITY  */
+    kw_EXTERNAL = 285,             /* kw_EXTERNAL  */
+    kw_FALSE = 286,                /* kw_FALSE  */
+    kw_FROM = 287,                 /* kw_FROM  */
+    kw_GeneralString = 288,        /* kw_GeneralString  */
+    kw_GeneralizedTime = 289,      /* kw_GeneralizedTime  */
+    kw_GraphicString = 290,        /* kw_GraphicString  */
+    kw_IA5String = 291,            /* kw_IA5String  */
+    kw_IDENTIFIER = 292,           /* kw_IDENTIFIER  */
+    kw_IMPLICIT = 293,             /* kw_IMPLICIT  */
+    kw_IMPLIED = 294,              /* kw_IMPLIED  */
+    kw_IMPORTS = 295,              /* kw_IMPORTS  */
+    kw_INCLUDES = 296,             /* kw_INCLUDES  */
+    kw_INSTANCE = 297,             /* kw_INSTANCE  */
+    kw_INTEGER = 298,              /* kw_INTEGER  */
+    kw_INTERSECTION = 299,         /* kw_INTERSECTION  */
+    kw_ISO646String = 300,         /* kw_ISO646String  */
+    kw_MAX = 301,                  /* kw_MAX  */
+    kw_MIN = 302,                  /* kw_MIN  */
+    kw_MINUS_INFINITY = 303,       /* kw_MINUS_INFINITY  */
+    kw_NULL = 304,                 /* kw_NULL  */
+    kw_NumericString = 305,        /* kw_NumericString  */
+    kw_OBJECT = 306,               /* kw_OBJECT  */
+    kw_OCTET = 307,                /* kw_OCTET  */
+    kw_OF = 308,                   /* kw_OF  */
+    kw_OPTIONAL = 309,             /* kw_OPTIONAL  */
+    kw_ObjectDescriptor = 310,     /* kw_ObjectDescriptor  */
+    kw_PATTERN = 311,              /* kw_PATTERN  */
+    kw_PDV = 312,                  /* kw_PDV  */
+    kw_PLUS_INFINITY = 313,        /* kw_PLUS_INFINITY  */
+    kw_PRESENT = 314,              /* kw_PRESENT  */
+    kw_PRIVATE = 315,              /* kw_PRIVATE  */
+    kw_PrintableString = 316,      /* kw_PrintableString  */
+    kw_REAL = 317,                 /* kw_REAL  */
+    kw_RELATIVE_OID = 318,         /* kw_RELATIVE_OID  */
+    kw_SEQUENCE = 319,             /* kw_SEQUENCE  */
+    kw_SET = 320,                  /* kw_SET  */
+    kw_SIZE = 321,                 /* kw_SIZE  */
+    kw_STRING = 322,               /* kw_STRING  */
+    kw_SYNTAX = 323,               /* kw_SYNTAX  */
+    kw_T61String = 324,            /* kw_T61String  */
+    kw_TAGS = 325,                 /* kw_TAGS  */
+    kw_TRUE = 326,                 /* kw_TRUE  */
+    kw_TYPE_IDENTIFIER = 327,      /* kw_TYPE_IDENTIFIER  */
+    kw_TeletexString = 328,        /* kw_TeletexString  */
+    kw_UNION = 329,                /* kw_UNION  */
+    kw_UNIQUE = 330,               /* kw_UNIQUE  */
+    kw_UNIVERSAL = 331,            /* kw_UNIVERSAL  */
+    kw_UTCTime = 332,              /* kw_UTCTime  */
+    kw_UTF8String = 333,           /* kw_UTF8String  */
+    kw_UniversalString = 334,      /* kw_UniversalString  */
+    kw_VideotexString = 335,       /* kw_VideotexString  */
+    kw_VisibleString = 336,        /* kw_VisibleString  */
+    kw_WITH = 337,                 /* kw_WITH  */
+    RANGE = 338,                   /* RANGE  */
+    EEQUAL = 339,                  /* EEQUAL  */
+    ELLIPSIS = 340,                /* ELLIPSIS  */
+    IDENTIFIER = 341,              /* IDENTIFIER  */
+    referencename = 342,           /* referencename  */
+    STRING = 343,                  /* STRING  */
+    NUMBER = 344                   /* NUMBER  */
+  };
+  typedef enum yytokentype yytoken_kind_t;
 #endif
-/* Tokens.  */
+/* Token kinds.  */
+#define YYEMPTY -2
+#define YYEOF 0
+#define YYerror 256
+#define YYUNDEF 257
 #define kw_ABSENT 258
 #define kw_ABSTRACT_SYNTAX 259
 #define kw_ALL 260
@@ -219,13 +239,12 @@
 #define STRING 343
 #define NUMBER 344
 
-
-
-
+/* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
-typedef union YYSTYPE
-#line 72 "asn1parse.y"
+union YYSTYPE
 {
+#line 72 "asn1parse.y"
+
     int64_t constant;
     struct value *value;
     struct range *range;
@@ -238,14 +257,20 @@ typedef union YYSTYPE
     struct tagtype tag;
     struct memhead *members;
     struct constraint_spec *constraint_spec;
-}
-/* Line 1529 of yacc.c.  */
-#line 242 "asn1parse.h"
-	YYSTYPE;
-# define yystype YYSTYPE /* obsolescent; will be withdrawn */
-# define YYSTYPE_IS_DECLARED 1
+
+#line 260 "asn1parse.h"
+
+};
+typedef union YYSTYPE YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
+# define YYSTYPE_IS_DECLARED 1
 #endif
+
 
 extern YYSTYPE yylval;
 
+
+int yyparse (void);
+
+
+#endif /* !YY_YY_ASN_PARSE_H_INCLUDED  */

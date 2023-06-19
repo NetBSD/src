@@ -1,4 +1,4 @@
-/*	$NetBSD: engine.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: engine.h,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2006-2016 Kungliga Tekniska Högskolan
@@ -72,7 +72,7 @@
 
 typedef struct hc_engine ENGINE;
 
-#define NID_md2			0
+/*#define NID_md2			0 */
 #define NID_md4			1
 #define NID_md5			2
 #define NID_sha1		4

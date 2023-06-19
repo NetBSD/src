@@ -1,4 +1,4 @@
-/*	$NetBSD: plugin.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: plugin.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -545,7 +545,7 @@ _krb5_plugin_run_f(krb5_context context,
     struct krb5_plugin *p;
 
     /* Get registered plugins */
-    (void) _krb5_plugin_find(context, SYMBOL, name, &registered_plugins);
+    (void) _krb5_plugin_find(context, PLUGIN_TYPE_DATA, name, &registered_plugins);
 
     HEIMDAL_MUTEX_lock(&plugin_mutex);
 

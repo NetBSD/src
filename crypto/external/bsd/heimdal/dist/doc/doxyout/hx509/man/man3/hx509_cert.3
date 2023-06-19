@@ -1,10 +1,10 @@
-.\"	$NetBSD: hx509_cert.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hx509_cert.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "hx509_cert" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalx509library" \" -*- nroff -*-
+.TH "hx509_cert" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal x509 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hx509_cert
+hx509_cert \- hx509 certificate functions
 .SH SYNOPSIS
 .br
 .PP
@@ -119,7 +119,7 @@ See the \fBThe basic certificate\fP for description and examples\&.
 .SS "int hx509_cert_binary (hx509_context context, hx509_cert c, heim_octet_string * os)"
 Encodes the hx509 certificate as a DER encode binary\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -128,7 +128,7 @@ Encodes the hx509 certificate as a DER encode binary\&.
 \fIos\fP the encode certificate, set to NULL, 0 on case of error\&. Free the os->data with \fBhx509_xfree()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -137,7 +137,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_cert_check_eku (hx509_context context, hx509_cert cert, const heim_oid * eku, int allow_any_eku)"
 Check the extended key usage on the hx509 certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -148,7 +148,7 @@ Check the extended key usage on the hx509 certificate\&.
 \fIallow_any_eku\fP if the any EKU is set, allow that to be a substitute\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -157,14 +157,14 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_cert_cmp (hx509_cert p, hx509_cert q)"
 Compare to hx509 certificate object, useful for sorting\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIp\fP a hx509 certificate object\&. 
 .br
 \fIq\fP a hx509 certificate object\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 0 the objects are the same, returns > 0 is p is 'larger' then q, < 0 if p is 'smaller' then q\&. 
 .RE
@@ -175,7 +175,7 @@ Return a list of subjectAltNames specified by oid in the certificate\&. On error
 .PP
 The returned list of octet string should be freed with \fBhx509_free_octet_string_list()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -186,7 +186,7 @@ The returned list of octet string should be freed with \fBhx509_free_octet_strin
 \fIlist\fP list of matching SubjectAltName\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -195,7 +195,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_cert_free (hx509_cert cert)"
 Free reference to the hx509 certificate object, if the refcounter reaches 0, the object if freed\&. Its allowed to pass in NULL\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcert\fP the cert to free\&. 
 .RE
@@ -204,14 +204,14 @@ Free reference to the hx509 certificate object, if the refcounter reaches 0, the
 .SS "hx509_cert_attribute hx509_cert_get_attribute (hx509_cert cert, const heim_oid * oid)"
 Get an external attribute for the certificate, examples are friendly name and id\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcert\fP hx509 certificate object to search 
 .br
 \fIoid\fP an oid to search for\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 an hx509_cert_attribute, only valid as long as the certificate is referenced\&. 
 .RE
@@ -220,7 +220,7 @@ an hx509_cert_attribute, only valid as long as the certificate is referenced\&.
 .SS "int hx509_cert_get_base_subject (hx509_context context, hx509_cert c, hx509_name * name)"
 Return the name of the base subject of the hx509 certificate\&. If the certiicate is a verified proxy certificate, the this function return the base certificate (root of the proxy chain)\&. If the proxy certificate is not verified with the base certificate HX509_PROXY_CERTIFICATE_NOT_CANONICALIZED is returned\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context\&. 
 .br
@@ -229,7 +229,7 @@ Return the name of the base subject of the hx509 certificate\&. If the certiicat
 \fIname\fP a pointer to a hx509 name, should be freed by \fBhx509_name_free()\fP\&. See also \fBhx509_cert_get_subject()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -238,12 +238,12 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "const char* hx509_cert_get_friendly_name (hx509_cert cert)"
 Get friendly name of the certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcert\fP cert to get the friendly name from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 an friendly name or NULL if there is\&. The friendly name is only valid as long as the certificate is referenced\&. 
 .RE
@@ -252,14 +252,14 @@ an friendly name or NULL if there is\&. The friendly name is only valid as long 
 .SS "int hx509_cert_get_issuer (hx509_cert p, hx509_name * name)"
 Return the name of the issuer of the hx509 certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIp\fP a hx509 certificate object\&. 
 .br
 \fIname\fP a pointer to a hx509 name, should be freed by \fBhx509_name_free()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -268,7 +268,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_cert_get_issuer_unique_id (hx509_context context, hx509_cert p, heim_bit_string * issuer)"
 Get a copy of the Issuer Unique ID
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509_context 
 .br
@@ -277,7 +277,7 @@ Get a copy of the Issuer Unique ID
 \fIissuer\fP the issuer id returned, free with der_free_bit_string()
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. The error code HX509_EXTENSION_NOT_FOUND is returned if the certificate doesn't have a issuerUniqueID 
 .RE
@@ -286,12 +286,12 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&. The error code HX509_
 .SS "time_t hx509_cert_get_notAfter (hx509_cert p)"
 Get notAfter time of the certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIp\fP a hx509 certificate object\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 return not after time\&. 
 .RE
@@ -300,12 +300,12 @@ return not after time\&.
 .SS "time_t hx509_cert_get_notBefore (hx509_cert p)"
 Get notBefore time of the certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIp\fP a hx509 certificate object\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 return not before time 
 .RE
@@ -314,14 +314,14 @@ return not before time
 .SS "int hx509_cert_get_serialnumber (hx509_cert p, heim_integer * i)"
 Get serial number of the certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIp\fP a hx509 certificate object\&. 
 .br
 \fIi\fP serial number, should be freed ith der_free_heim_integer()\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -330,7 +330,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_cert_get_SPKI (hx509_context context, hx509_cert p, SubjectPublicKeyInfo * spki)"
 Get the SubjectPublicKeyInfo structure from the hx509 certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context\&. 
 .br
@@ -339,7 +339,7 @@ Get the SubjectPublicKeyInfo structure from the hx509 certificate\&.
 \fIspki\fP SubjectPublicKeyInfo, should be freed with free_SubjectPublicKeyInfo()\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -348,7 +348,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_cert_get_SPKI_AlgorithmIdentifier (hx509_context context, hx509_cert p, AlgorithmIdentifier * alg)"
 Get the AlgorithmIdentifier from the hx509 certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context\&. 
 .br
@@ -357,7 +357,7 @@ Get the AlgorithmIdentifier from the hx509 certificate\&.
 \fIalg\fP AlgorithmIdentifier, should be freed with free_AlgorithmIdentifier()\&. The algorithmidentifier is typicly rsaEncryption, or id-ecPublicKey, or some other public key mechanism\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -366,14 +366,14 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_cert_get_subject (hx509_cert p, hx509_name * name)"
 Return the name of the subject of the hx509 certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIp\fP a hx509 certificate object\&. 
 .br
 \fIname\fP a pointer to a hx509 name, should be freed by \fBhx509_name_free()\fP\&. See also \fBhx509_cert_get_base_subject()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -382,7 +382,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_cert_get_subject_unique_id (hx509_context context, hx509_cert p, heim_bit_string * subject)"
 Get a copy of the Subect Unique ID
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509_context 
 .br
@@ -391,7 +391,7 @@ Get a copy of the Subect Unique ID
 \fIsubject\fP the subject id returned, free with der_free_bit_string()
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. The error code HX509_EXTENSION_NOT_FOUND is returned if the certificate doesn't have a subjectUniqueID 
 .RE
@@ -400,7 +400,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&. The error code HX509_
 .SS "hx509_cert hx509_cert_init (hx509_context context, const Certificate * c, heim_error_t * error)"
 Allocate and init an hx509 certificate object from the decoded certificate `c´\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -409,7 +409,7 @@ Allocate and init an hx509 certificate object from the decoded certificate `c´\
 \fIerror\fP 
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Returns an hx509 certificate 
 .RE
@@ -420,7 +420,7 @@ Just like \fBhx509_cert_init()\fP, but instead of a decode certificate takes an 
 .PP
 If the memory region doesn't contain just the certificate and nothing more the function will fail with HX509_EXTRA_DATA_AFTER_STRUCTURE\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -431,7 +431,7 @@ If the memory region doesn't contain just the certificate and nothing more the f
 \fIerror\fP possibly returns an error
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 certificate 
 .RE
@@ -440,12 +440,12 @@ An hx509 certificate
 .SS "hx509_cert hx509_cert_ref (hx509_cert cert)"
 Add a reference to a hx509 certificate object\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcert\fP a pointer to an hx509 certificate object\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the same object as is passed in\&. 
 .RE
@@ -454,14 +454,14 @@ the same object as is passed in\&.
 .SS "int hx509_cert_set_friendly_name (hx509_cert cert, const char * name)"
 Set the friendly name on the certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcert\fP The certificate to set the friendly name on 
 .br
 \fIname\fP Friendly name\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -470,7 +470,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_print_cert (hx509_context context, hx509_cert cert, FILE * out)"
 Print a simple representation of a certificate
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context, can be NULL 
 .br
@@ -479,7 +479,7 @@ Print a simple representation of a certificate
 \fIout\fP the stdio output stream, if NULL, stdout is used
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code 
 .RE
@@ -488,14 +488,14 @@ An hx509 error code
 .SS "int hx509_query_alloc (hx509_context context, hx509_query ** q)"
 Allocate an query controller\&. Free using \fBhx509_query_free()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
 \fIq\fP return pointer to a hx509_query\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -504,7 +504,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_query_free (hx509_context context, hx509_query * q)"
 Free the query controller\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -515,7 +515,7 @@ Free the query controller\&.
 .SS "int hx509_query_match_cmp_func (hx509_query * q, int(*)(hx509_context, hx509_cert, void *) func, void * ctx)"
 Set the query controller to match using a specific match function\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIq\fP a hx509 query controller\&. 
 .br
@@ -524,7 +524,7 @@ Set the query controller to match using a specific match function\&.
 \fIctx\fP context passed to the function\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -533,14 +533,14 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_query_match_eku (hx509_query * q, const heim_oid * eku)"
 Set the query controller to require an one specific EKU (extended key usage)\&. Any previous EKU matching is overwitten\&. If NULL is passed in as the eku, the EKU requirement is reset\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIq\fP a hx509 query controller\&. 
 .br
 \fIeku\fP an EKU to match on\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -549,14 +549,14 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_query_match_friendly_name (hx509_query * q, const char * name)"
 Set the query controller to match on a friendly name
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIq\fP a hx509 query controller\&. 
 .br
 \fIname\fP a friendly name to match on
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -565,7 +565,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_query_match_issuer_serial (hx509_query * q, const Name * issuer, const heim_integer * serialNumber)"
 Set the issuer and serial number of match in the query controller\&. The function make copies of the isser and serial number\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIq\fP a hx509 query controller 
 .br
@@ -574,7 +574,7 @@ Set the issuer and serial number of match in the query controller\&. The functio
 \fIserialNumber\fP the serialNumber of the issuer\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -583,14 +583,14 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_query_match_option (hx509_query * q, hx509_query_option option)"
 Set match options for the hx509 query controller\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIq\fP query controller\&. 
 .br
 \fIoption\fP options to control the query controller\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -599,7 +599,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_query_statistic_file (hx509_context context, const char * fn)"
 Set a statistic file for the query statistics\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -610,7 +610,7 @@ Set a statistic file for the query statistics\&.
 .SS "void hx509_query_unparse_stats (hx509_context context, int printtype, FILE * out)"
 Unparse the statistics file and print the result on a FILE descriptor\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -623,14 +623,14 @@ Unparse the statistics file and print the result on a FILE descriptor\&.
 .SS "void hx509_verify_ctx_f_allow_default_trustanchors (hx509_verify_ctx ctx, int boolean)"
 Allow using the operating system builtin trust anchors if no other trust anchors are configured\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP a verification context 
 .br
 \fIboolean\fP if non zero, useing the operating systems builtin trust anchors\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -639,7 +639,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_verify_hostname (hx509_context context, const hx509_cert cert, int flags, hx509_hostname_type type, const char * hostname, const struct sockaddr * sa, int sa_size)"
 Verify that the certificate is allowed to be used for the hostname and address\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -664,7 +664,7 @@ HX509_HN_DNSSRV for DNS SRV names\&.
 \fIsa_size\fP length of address
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -672,4 +672,4 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalx509library from the source code\&.
+Generated automatically by Doxygen for Heimdal x509 library from the source code\&.

@@ -1,10 +1,10 @@
-.\"	$NetBSD: hcrypto_core.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hcrypto_core.3,v 1.3 2023/06/19 21:41:39 christos Exp $
 .\"
-.TH "hcrypto_core" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdal crypto library" \" -*- nroff -*-
+.TH "hcrypto_core" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal crypto library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hcrypto_core
+hcrypto_core \- hcrypto function controlling behavior
 .SH SYNOPSIS
 .br
 .PP
@@ -35,7 +35,7 @@ hcrypto_core
 .SS "int EVP_CIPHER_CTX_ctrl (EVP_CIPHER_CTX * ctx, int type, int arg, void * data)"
 Perform a operation on a ctx
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP context to perform operation on\&. 
 .br
@@ -46,7 +46,7 @@ Perform a operation on a ctx
 \fIdata\fP addition data to operation\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 for success, 0 for failure\&. 
 .RE
@@ -55,14 +55,14 @@ Perform a operation on a ctx
 .SS "int EVP_CIPHER_CTX_rand_key (EVP_CIPHER_CTX * ctx, void * key)"
 Generate a random key for the specificed EVP_CIPHER\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP EVP_CIPHER_CTX type to build the key for\&. 
 .br
 \fIkey\fP return key, must be at least \fBEVP_CIPHER_key_length()\fP byte long\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 for success, 0 for failure\&. 
 .RE

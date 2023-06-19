@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_locl.h,v 1.3 2017/01/29 19:23:28 christos Exp $	*/
+/*	$NetBSD: gen_locl.h,v 1.4 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan

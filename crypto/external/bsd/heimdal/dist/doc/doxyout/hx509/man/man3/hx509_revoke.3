@@ -1,10 +1,10 @@
-.\"	$NetBSD: hx509_revoke.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hx509_revoke.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "hx509_revoke" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalx509library" \" -*- nroff -*-
+.TH "hx509_revoke" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal x509 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hx509_revoke
+hx509_revoke \- hx509 revokation checking functions
 .SH SYNOPSIS
 .br
 .PP
@@ -41,7 +41,7 @@ See the \fBRevocation methods\fP for description and examples\&.
 .SS "int hx509_ocsp_request (hx509_context context, hx509_certs reqcerts, hx509_certs pool, hx509_cert signer, const AlgorithmIdentifier * digest, heim_octet_string * request, heim_octet_string * nonce)"
 Create an OCSP request for a set of certificates\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context 
 .br
@@ -58,7 +58,7 @@ Create an OCSP request for a set of certificates\&.
 \fInonce\fP nonce in the request, free with free_heim_octet_string()\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -67,7 +67,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_revoke_add_crl (hx509_context context, hx509_revoke_ctx ctx, const char * path)"
 Add a CRL file to the revokation context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP hx509 context 
 .br
@@ -76,7 +76,7 @@ Add a CRL file to the revokation context\&.
 \fIpath\fP path to file that is going to be added to the context\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -85,7 +85,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_revoke_add_ocsp (hx509_context context, hx509_revoke_ctx ctx, const char * path)"
 Add a OCSP file to the revokation context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP hx509 context 
 .br
@@ -94,7 +94,7 @@ Add a OCSP file to the revokation context\&.
 \fIpath\fP path to file that is going to be added to the context\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -103,7 +103,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_revoke_free (hx509_revoke_ctx * ctx)"
 Free a hx509 revokation context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP context to be freed 
 .RE
@@ -112,14 +112,14 @@ Free a hx509 revokation context\&.
 .SS "int hx509_revoke_init (hx509_context context, hx509_revoke_ctx * ctx)"
 Allocate a revokation context\&. Free with \fBhx509_revoke_free()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
 \fIctx\fP returns a newly allocated revokation context\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -128,7 +128,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_revoke_ocsp_print (hx509_context context, const char * path, FILE * out)"
 Print the OCSP reply stored in a file\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP a hx509 context 
 .br
@@ -137,7 +137,7 @@ Print the OCSP reply stored in a file\&.
 \fIout\fP the out FILE descriptor to print the reply on
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -146,7 +146,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_revoke_verify (hx509_context context, hx509_revoke_ctx ctx, hx509_certs certs, time_t now, hx509_cert cert, hx509_cert parent_cert)"
 Check that a certificate is not expired according to a revokation context\&. Also need the parent certificte to the check OCSP parent identifier\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP hx509 context 
 .br
@@ -161,7 +161,7 @@ Check that a certificate is not expired according to a revokation context\&. Als
 \fIparent_cert\fP 
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -169,4 +169,4 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalx509library from the source code\&.
+Generated automatically by Doxygen for Heimdal x509 library from the source code\&.

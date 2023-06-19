@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_REVISION($Revision: 1.4 $)
+AC_REVISION($Revision: 1.5 $)
 AC_PREREQ(2.62)
 test -z "$CFLAGS" && CFLAGS="-g"
-AC_INIT([Heimdal],[7.7.0],[https://github.com/heimdal/heimdal/issues])
+AC_INIT([Heimdal],[7.8.0],[https://github.com/heimdal/heimdal/issues])
 AC_CONFIG_SRCDIR([kuser/kinit.c])
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_MACRO_DIR([cf])
@@ -18,6 +18,8 @@ dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CPP
+AM_PATH_PYTHON
+AC_CHECK_PROG(CLANG_FORMAT, clang-format, [clang-format], [no])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -351,6 +353,7 @@ AC_CHECK_HEADERS([\
 	maillock.h				\
 	netgroup.h				\
 	netinet/in6_machtypes.h			\
+	netinet/tcp.h				\
 	pthread.h				\
 	pty.h					\
 	sac.h					\

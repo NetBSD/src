@@ -1,10 +1,10 @@
-.\"	$NetBSD: hx509_print.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hx509_print.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "hx509_print" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalx509library" \" -*- nroff -*-
+.TH "hx509_print" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal x509 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hx509_print
+hx509_print \- hx509 printing functions
 .SH SYNOPSIS
 .br
 .PP
@@ -50,7 +50,7 @@ hx509_print
 .SS "void hx509_bitstring_print (const heim_bit_string * b, hx509_vprint_func func, void * ctx)"
 Print a bitstring using a hx509_vprint_func function\&. To print to stdout use \fBhx509_print_stdout()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIb\fP bit string to print\&. 
 .br
@@ -63,7 +63,7 @@ Print a bitstring using a hx509_vprint_func function\&. To print to stdout use \
 .SS "int hx509_cert_keyusage_print (hx509_context context, hx509_cert c, char ** s)"
 Print certificate usage for a certificate to a string\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -72,7 +72,7 @@ Print certificate usage for a certificate to a string\&.
 \fIs\fP the return string with the keysage printed in to, free with \fBhx509_xfree()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -81,7 +81,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_oid_print (const heim_oid * oid, hx509_vprint_func func, void * ctx)"
 Print a oid using a hx509_vprint_func function\&. To print to stdout use \fBhx509_print_stdout()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIoid\fP oid to print 
 .br
@@ -94,14 +94,14 @@ Print a oid using a hx509_vprint_func function\&. To print to stdout use \fBhx50
 .SS "int hx509_oid_sprint (const heim_oid * oid, char ** str)"
 Print a oid to a string\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIoid\fP oid to print 
 .br
 \fIstr\fP allocated string, free with \fBhx509_xfree()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -117,7 +117,7 @@ Helper function to print on stdout for:
 \fBhx509_validate_ctx_set_print()\fP\&.
 .PP
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the context to the print function\&. If the ctx is NULL, stdout is used\&. 
 .br
@@ -130,7 +130,7 @@ Helper function to print on stdout for:
 .SS "int hx509_validate_cert (hx509_context context, hx509_validate_ctx ctx, hx509_cert cert)"
 Validate/Print the status of the certificate\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -139,7 +139,7 @@ Validate/Print the status of the certificate\&.
 \fIcert\fP the cerificate to validate/print\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -148,14 +148,14 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_validate_ctx_add_flags (hx509_validate_ctx ctx, int flags)"
 Add flags to control the behaivor of the \fBhx509_validate_cert()\fP function\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP A hx509 validation context\&. 
 .br
 \fIflags\fP flags to add to the validation context\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -164,7 +164,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_validate_ctx_free (hx509_validate_ctx ctx)"
 Free an hx509 validate context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the hx509 validate context to free\&. 
 .RE
@@ -173,14 +173,14 @@ Free an hx509 validate context\&.
 .SS "int hx509_validate_ctx_init (hx509_context context, hx509_validate_ctx * ctx)"
 Allocate a hx509 validation/printing context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
 \fIctx\fP a new allocated hx509 validation context, free with \fBhx509_validate_ctx_free()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -189,7 +189,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_validate_ctx_set_print (hx509_validate_ctx ctx, hx509_vprint_func func, void * c)"
 Set the printing functions for the validation context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP a hx509 valication context\&. 
 .br
@@ -198,7 +198,7 @@ Set the printing functions for the validation context\&.
 \fIc\fP the context variable to the printing function\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -206,4 +206,4 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalx509library from the source code\&.
+Generated automatically by Doxygen for Heimdal x509 library from the source code\&.

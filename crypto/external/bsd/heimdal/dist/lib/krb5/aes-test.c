@@ -1,4 +1,4 @@
-/*	$NetBSD: aes-test.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: aes-test.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2016 Kungliga Tekniska Högskolan
@@ -330,7 +330,8 @@ krb_enc(krb5_context context,
     }
 
     if (decrypt.length != clear->length ||
-	memcmp(decrypt.data, clear->data, decrypt.length) != 0) {
+        (decrypt.length &&
+	 memcmp(decrypt.data, clear->data, decrypt.length) != 0)) {
 	krb5_warnx(context, "clear text not same");
 	return EINVAL;
     }
@@ -570,7 +571,8 @@ krb_enc_mit(krb5_context context,
 	return ret;
 
     if (decrypt.length != clear->length ||
-	memcmp(decrypt.data, clear->data, decrypt.length) != 0) {
+        (decrypt.length &&
+         memcmp(decrypt.data, clear->data, decrypt.length) != 0)) {
 	krb5_warnx(context, "clear text not same");
 	return EINVAL;
     }

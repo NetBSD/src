@@ -1,4 +1,4 @@
-/*	$NetBSD: get_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: get_s.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 #include "kadm5_locl.h"
 #include <assert.h>
 
-__RCSID("$NetBSD: get_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
+__RCSID("$NetBSD: get_s.c,v 1.3 2023/06/19 21:41:44 christos Exp $");
 
 static kadm5_ret_t
 add_tl_data(kadm5_principal_ent_t ent, int16_t type,
@@ -125,31 +125,26 @@ kadm5_s_get_principal(void *server_handle,
     kadm5_server_context *context = server_handle;
     kadm5_ret_t ret;
     hdb_entry_ex ent;
-    int hdb_is_rw = 1;
 
     memset(&ent, 0, sizeof(ent));
     memset(out, 0, sizeof(*out));
 
     if (!context->keep_open) {
-	ret = context->db->hdb_open(context->context, context->db, O_RDWR, 0);
-        if (ret == EPERM || ret == EACCES) {
-            ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
-            hdb_is_rw = 0;
-        }
+        ret = context->db->hdb_open(context->context, context->db, O_RDONLY, 0);
 	if (ret)
 	    return ret;
     }
 
     /*
-     * Attempt to recover the log.  This will generally fail on slaves,
-     * and we can't tell if we're on a slave here.
+     * We may want to attempt to recover the log on read operations, but we
+     * because the HDB/log lock order is reversed on slaves, in order to avoid
+     * lock contention from kadm5srv apps we need to make sure that the the HDB
+     * open for read-write is optimistic and attempts only a non-blocking lock,
+     * and if it doesn't get it then it should fallback to read-only.  But we
+     * don't have that option in the hdb_open() interface at this time.
      *
-     * Perhaps we could set a flag in the kadm5_server_context to
-     * indicate whether a read has been done without recovering the log,
-     * in which case we could fail any subsequent writes.
+     * For now we won't attempt to recover the log.
      */
-    if (hdb_is_rw && kadm5_log_init_nb(context) == 0)
-        (void) kadm5_log_end(context);
 
     ret = context->db->hdb_fetch_kvno(context->context, context->db, princ,
 				      HDB_F_DECRYPT|HDB_F_ALL_KVNOS|
@@ -321,7 +316,7 @@ kadm5_s_get_principal(void *server_handle,
 	    ret = hdb_entry_get_password(context->context,
 					 context->db, &ent.entry, &pw);
 	    if (ret == 0) {
-		ret = add_tl_data(out, KRB5_TL_PASSWORD, pw, strlen(pw) + 1);
+		(void) add_tl_data(out, KRB5_TL_PASSWORD, pw, strlen(pw) + 1);
 		free(pw);
 	    }
 	    krb5_clear_error_message(context->context);
