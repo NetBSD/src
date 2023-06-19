@@ -1,17 +1,18 @@
-# $NetBSD: Makefile,v 1.3 2017/01/28 21:31:53 christos Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/19 23:11:45 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
 USE_FORT?= yes	# network client
 
-.PATH: ${HEIMDIST}/admin
+.PATH: ${HEIMDIST}/admin ${HEIMDIST}/lib/hcrypto
 
 PROG= ktutil
 
 MAN= ktutil.8
 
 HEIMSRCS= ktutil-commands.in
+CPPFLAGS+=-I${HEIMDIST}/lib
 
 SRCS=			\
 	add.c		\
@@ -24,7 +25,8 @@ SRCS=			\
 	list.c		\
 	purge.c		\
 	remove.c	\
-	rename.c
+	rename.c	\
+	ui.c
 
 LDADD+= -lkadm5clnt -lsl -ledit -lterminfo -lutil
 DPADD+= ${LIBKADM5CLNT} ${LIBSL} ${LIBEDIT} ${LIBTERMINFO} ${LIBUTIL}
