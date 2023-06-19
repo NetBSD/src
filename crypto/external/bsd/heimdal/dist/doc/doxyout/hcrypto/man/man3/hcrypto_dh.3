@@ -1,10 +1,10 @@
-.\"	$NetBSD: hcrypto_dh.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hcrypto_dh.3,v 1.3 2023/06/19 21:41:39 christos Exp $
 .\"
-.TH "hcrypto_dh" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdal crypto library" \" -*- nroff -*-
+.TH "hcrypto_dh" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal crypto library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hcrypto_dh
+hcrypto_dh \- Diffie-Hellman functions
 .SH SYNOPSIS
 .br
 .PP
@@ -68,7 +68,7 @@ See the \fBDH - Diffie-Hellman key exchange\fP for description and examples\&.
 .SS "int DH_check_pubkey (const DH * dh, const BIGNUM * pub_key, int * codes)"
 Check that the public key is sane\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIdh\fP the local peer DH parameters\&. 
 .br
@@ -77,7 +77,7 @@ Check that the public key is sane\&.
 \fIcodes\fP return that the failures of the pub_key are\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success, 0 on failure and *codes is set the the combined fail check for the public key 
 .RE
@@ -94,7 +94,7 @@ if g == 2, pub_key have more then one bit set, if bits set is 1, log_2(pub_key) 
 .SS "int DH_compute_key (unsigned char * shared_key, const BIGNUM * peer_pub_key, DH * dh)"
 Complute the shared secret key\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIshared_key\fP the resulting shared key, need to be at least \fBDH_size()\fP large\&. 
 .br
@@ -103,7 +103,7 @@ Complute the shared secret key\&.
 \fIdh\fP the dh key pair\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -112,7 +112,7 @@ Checks that the pubkey passed in is valid using \fBDH_check_pubkey()\fP\&.
 .SS "void DH_free (DH * dh)"
 Free a DH object and release related resources, like ENGINE, that the object was using\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIdh\fP object to be freed\&. 
 .RE
@@ -121,12 +121,12 @@ Free a DH object and release related resources, like ENGINE, that the object was
 .SS "int DH_generate_key (DH * dh)"
 Generate a new DH private-public key pair\&. The dh parameter must be allocted first with \fBDH_new()\fP\&. dh->p and dp->g must be set\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIdh\fP dh parameter\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -135,7 +135,7 @@ Generate a new DH private-public key pair\&. The dh parameter must be allocted f
 .SS "int DH_generate_parameters_ex (DH * dh, int prime_len, int generator, BN_GENCB * cb)"
 Generate DH parameters for the DH object give parameters\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIdh\fP The DH object to generate parameters for\&. 
 .br
@@ -146,7 +146,7 @@ Generate DH parameters for the DH object give parameters\&.
 \fIcb\fP Callback parameters to show progress, can be NULL\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the maximum size in bytes of the out data\&. 
 .RE
@@ -155,7 +155,7 @@ the maximum size in bytes of the out data\&.
 .SS "const DH_METHOD* DH_get_default_method (void)"
 Return the default DH implementation\&.
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 pointer to a DH_METHOD\&. 
 .RE
@@ -164,14 +164,14 @@ pointer to a DH_METHOD\&.
 .SS "void* DH_get_ex_data (DH * dh, int idx)"
 Get the data for index idx in the DH object\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIdh\fP DH object\&. 
 .br
 \fIidx\fP index to get the data for\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the object store in index idx 
 .RE
@@ -180,7 +180,7 @@ the object store in index idx
 .SS "const DH_METHOD* DH_ltm_method (void)"
 DH implementation using libtommath\&.
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the DH_METHOD for the DH implementation using libtommath\&. 
 .RE
@@ -189,7 +189,7 @@ the DH_METHOD for the DH implementation using libtommath\&.
 .SS "DH* DH_new (void)"
 Create a new DH object using DH_new_method(NULL), see \fBDH_new_method()\fP\&.
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a newly allocated DH object\&. 
 .RE
@@ -198,12 +198,12 @@ a newly allocated DH object\&.
 .SS "DH* DH_new_method (ENGINE * engine)"
 Create a new DH object from the given engine, if the NULL is used, the default engine is used\&. Free the DH object with \fBDH_free()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIengine\fP The engine to use to allocate the DH object\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a newly allocated DH object\&. 
 .RE
@@ -212,7 +212,7 @@ a newly allocated DH object\&.
 .SS "const DH_METHOD* DH_null_method (void)"
 Return the dummy DH implementation\&.
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 pointer to a DH_METHOD\&. 
 .RE
@@ -221,7 +221,7 @@ pointer to a DH_METHOD\&.
 .SS "void DH_set_default_method (const DH_METHOD * meth)"
 Set the default DH implementation\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fImeth\fP pointer to a DH_METHOD\&. 
 .RE
@@ -230,7 +230,7 @@ Set the default DH implementation\&.
 .SS "int DH_set_ex_data (DH * dh, int idx, void * data)"
 Set the data index idx in the DH object to data\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIdh\fP DH object\&. 
 .br
@@ -239,7 +239,7 @@ Set the data index idx in the DH object to data\&.
 \fIdata\fP data to store for the index idx\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -248,14 +248,14 @@ Set the data index idx in the DH object to data\&.
 .SS "int DH_set_method (DH * dh, const DH_METHOD * method)"
 Set a new method for the DH keypair\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIdh\fP dh parameter\&. 
 .br
 \fImethod\fP the new method for the DH parameter\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -264,12 +264,12 @@ Set a new method for the DH keypair\&.
 .SS "int DH_size (const DH * dh)"
 The maximum output size of the \fBDH_compute_key()\fP function\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIdh\fP The DH object to get the size from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the maximum size in bytes of the out data\&. 
 .RE
@@ -278,12 +278,12 @@ the maximum size in bytes of the out data\&.
 .SS "int DH_up_ref (DH * dh)"
 Add a reference to the DH object\&. The object should be free with \fBDH_free()\fP to drop the reference\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIdh\fP the object to increase the reference count too\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the updated reference count, can't safely be used except for debug printing\&. 
 .RE

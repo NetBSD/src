@@ -1,10 +1,10 @@
-.\"	$NetBSD: krb5_error.3,v 1.2 2019/12/15 22:50:45 christos Exp $
+.\"	$NetBSD: krb5_error.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "krb5_error" 3 "Fri Jun 7 2019" "Version 7.7.0" "HeimdalKerberos5library" \" -*- nroff -*-
+.TH "krb5_error" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal Kerberos 5 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-krb5_error
+krb5_error \- Heimdal Kerberos 5 error reporting functions
 .SH SYNOPSIS
 .br
 .PP
@@ -28,6 +28,9 @@ krb5_error
 .br
 .ti -1c
 .RI "KRB5_LIB_FUNCTION void KRB5_LIB_CALL \fBkrb5_vset_error_message\fP (krb5_context context, krb5_error_code ret, const char *fmt, va_list args) __attribute__((__format__(__printf__"
+.br
+.ti -1c
+.RI "KRB5_LIB_FUNCTION void KRB5_LIB_CALL \fBkrb5_prepend_error_message\fP (krb5_context context, krb5_error_code ret, const char *fmt,\&.\&.\&.) __attribute__((__format__(__printf__"
 .br
 .ti -1c
 .RI "KRB5_LIB_FUNCTION void KRB5_LIB_CALL \fBkrb5_vprepend_error_message\fP (krb5_context context, krb5_error_code ret, const char *fmt, va_list args) __attribute__((__format__(__printf__"
@@ -86,7 +89,7 @@ krb5_error
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_abort (krb5_context context, krb5_error_code code, const char * fmt,  \&.\&.\&.)"
 Log a warning to the log, default stderr, include the error from the last failure and then abort\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context 
 .br
@@ -101,7 +104,7 @@ Log a warning to the log, default stderr, include the error from the last failur
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_abortx (krb5_context context, const char * fmt,  \&.\&.\&.)"
 Log a warning to the log, default stderr, and then abort\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context 
 .br
@@ -114,7 +117,7 @@ Log a warning to the log, default stderr, and then abort\&.
 .SS "KRB5_LIB_FUNCTION void KRB5_LIB_CALL krb5_clear_error_message (krb5_context context)"
 Clears the error message from the Kerberos 5 context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP The Kerberos 5 context to clear 
 .RE
@@ -123,14 +126,14 @@ Clears the error message from the Kerberos 5 context\&.
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_eai_to_heim_errno (int eai_errno, int system_error)"
 Convert the getaddrinfo() error code to a Kerberos et error code\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIeai_errno\fP contains the error code from getaddrinfo()\&. 
 .br
 \fIsystem_error\fP should have the value of errno after the failed getaddrinfo()\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Kerberos error code representing the EAI errors\&. 
 .RE
@@ -139,7 +142,7 @@ Kerberos error code representing the EAI errors\&.
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_err (krb5_context context, int eval, krb5_error_code code, const char * fmt,  \&.\&.\&.)"
 Log a warning to the log, default stderr, include bthe error from the last failure and then exit\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context 
 .br
@@ -154,7 +157,7 @@ Log a warning to the log, default stderr, include bthe error from the last failu
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_errx (krb5_context context, int eval, const char * fmt,  \&.\&.\&.)"
 Log a warning to the log, default stderr, and then exit\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context 
 .br
@@ -167,7 +170,7 @@ Log a warning to the log, default stderr, and then exit\&.
 .SS "KRB5_LIB_FUNCTION void KRB5_LIB_CALL krb5_free_error_message (krb5_context context, const char * msg)"
 Free the error message returned by \fBkrb5_get_error_message()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos context 
 .br
@@ -178,14 +181,14 @@ Free the error message returned by \fBkrb5_get_error_message()\fP\&.
 .SS "KRB5_LIB_FUNCTION const char* KRB5_LIB_CALL krb5_get_error_message (krb5_context context, krb5_error_code code)"
 Return the error message for `code' in context\&. On memory allocation error the function returns NULL\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos 5 context 
 .br
 \fIcode\fP Error code related to the error
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 an error string, needs to be freed with \fBkrb5_free_error_message()\fP\&. The functions return NULL on error\&. 
 .RE
@@ -194,12 +197,12 @@ an error string, needs to be freed with \fBkrb5_free_error_message()\fP\&. The f
 .SS "KRB5_LIB_FUNCTION char* KRB5_LIB_CALL krb5_get_error_string (krb5_context context)"
 Return the error message in context\&. On error or no error string, the function returns NULL\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos 5 context
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 an error string, needs to be freed with \fBkrb5_free_error_message()\fP\&. The functions return NULL on error\&. 
 .RE
@@ -208,7 +211,7 @@ an error string, needs to be freed with \fBkrb5_free_error_message()\fP\&. The f
 .SS "KRB5_LIB_FUNCTION krb5_log_facility* KRB5_LIB_CALL krb5_get_warn_dest (krb5_context context)"
 Get the default logging facility\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context 
 .RE
@@ -217,14 +220,31 @@ Get the default logging facility\&.
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_h_errno_to_heim_errno (int eai_errno)"
 Convert the gethostname() error code (h_error) to a Kerberos et error code\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIeai_errno\fP contains the error code from gethostname()\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Kerberos error code representing the gethostname errors\&. 
+.RE
+.PP
+
+.SS "KRB5_LIB_FUNCTION void KRB5_LIB_CALL krb5_prepend_error_message (krb5_context context, krb5_error_code ret, const char * fmt,  \&.\&.\&.)"
+Prepend the context full error string for a specific error code\&. The error that is stored should be internationalized\&.
+.PP
+The if context is NULL, no error string is stored\&.
+.PP
+\fBParameters\fP
+.RS 4
+\fIcontext\fP Kerberos 5 context 
+.br
+\fIret\fP The error code 
+.br
+\fIfmt\fP Error string for the error code 
+.br
+\fI\&.\&.\&.\fP printf(3) style parameters\&. 
 .RE
 .PP
 
@@ -233,7 +253,7 @@ Set the context full error string for a specific error code\&. The error that is
 .PP
 The if context is NULL, no error string is stored\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos 5 context 
 .br
@@ -248,7 +268,7 @@ The if context is NULL, no error string is stored\&.
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_set_warn_dest (krb5_context context, krb5_log_facility * fac)"
 Set the default logging facility\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context 
 .br
@@ -259,7 +279,7 @@ Set the default logging facility\&.
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_vabort (krb5_context context, krb5_error_code code, const char * fmt, va_list ap)"
 Log a warning to the log, default stderr, include bthe error from the last failure and then abort\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context 
 .br
@@ -274,7 +294,7 @@ Log a warning to the log, default stderr, include bthe error from the last failu
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_verr (krb5_context context, int eval, krb5_error_code code, const char * fmt, va_list ap)"
 Log a warning to the log, default stderr, include bthe error from the last failure and then exit\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context 
 .br
@@ -291,7 +311,7 @@ Log a warning to the log, default stderr, include bthe error from the last failu
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_verrx (krb5_context context, int eval, const char * fmt, va_list ap)"
 Log a warning to the log, default stderr, and then exit\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context 
 .br
@@ -308,7 +328,7 @@ Prepend the contexts's full error string for a specific error code\&.
 .PP
 The if context is NULL, no error string is stored\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos 5 context 
 .br
@@ -325,7 +345,7 @@ Set the context full error string for a specific error code\&.
 .PP
 The if context is NULL, no error string is stored\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP Kerberos 5 context 
 .br
@@ -340,7 +360,7 @@ The if context is NULL, no error string is stored\&.
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_vwarn (krb5_context context, krb5_error_code code, const char * fmt, va_list ap)"
 Log a warning to the log, default stderr, include the error from the last failure\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context\&. 
 .br
@@ -355,7 +375,7 @@ Log a warning to the log, default stderr, include the error from the last failur
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_vwarnx (krb5_context context, const char * fmt, va_list ap)"
 Log a warning to the log, default stderr\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context\&. 
 .br
@@ -368,7 +388,7 @@ Log a warning to the log, default stderr\&.
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_warn (krb5_context context, krb5_error_code code, const char * fmt,  \&.\&.\&.)"
 Log a warning to the log, default stderr, include the error from the last failure\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context\&. 
 .br
@@ -381,7 +401,7 @@ Log a warning to the log, default stderr, include the error from the last failur
 .SS "KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL krb5_warnx (krb5_context context, const char * fmt,  \&.\&.\&.)"
 Log a warning to the log, default stderr\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A Kerberos 5 context\&. 
 .br
@@ -391,4 +411,4 @@ Log a warning to the log, default stderr\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for HeimdalKerberos5library from the source code\&.
+Generated automatically by Doxygen for Heimdal Kerberos 5 library from the source code\&.

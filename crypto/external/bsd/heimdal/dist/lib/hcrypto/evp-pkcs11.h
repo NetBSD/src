@@ -1,4 +1,4 @@
-/*	$NetBSD: evp-pkcs11.h,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: evp-pkcs11.h,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2015, Secure Endpoints Inc.
@@ -37,7 +37,6 @@
 
 /* symbol renaming */
 
-#define EVP_pkcs11_md2() hc_EVP_pkcs11_md2()
 #define EVP_pkcs11_md4() hc_EVP_pkcs11_md4()
 #define EVP_pkcs11_md5() hc_EVP_pkcs11_md5()
 #define EVP_pkcs11_sha1() hc_EVP_pkcs11_sha1()
@@ -61,7 +60,6 @@
 #define EVP_pkcs11_camellia_192_cbc() hc_EVP_pkcs11_camellia_192_cbc()
 #define EVP_pkcs11_camellia_256_cbc() hc_EVP_pkcs11_camellia_256_cbc()
 
-#define EVP_pkcs11_hcrypto_md2() hc_EVP_pkcs11_hcrypto_md2()
 #define EVP_pkcs11_hcrypto_md4() hc_EVP_pkcs11_hcrypto_md4()
 #define EVP_pkcs11_hcrypto_md5() hc_EVP_pkcs11_hcrypto_md5()
 #define EVP_pkcs11_hcrypto_sha1() hc_EVP_pkcs11_hcrypto_sha1()
@@ -91,7 +89,6 @@ HC_CPP_BEGIN
  * Strict PKCS#11 implementations (these will return NULL if the underlying
  * PKCS#11 implementation does not implement the cipher or hash).
  */
-const EVP_MD * hc_EVP_pkcs11_md2(void);
 const EVP_MD * hc_EVP_pkcs11_md4(void);
 const EVP_MD * hc_EVP_pkcs11_md5(void);
 const EVP_MD * hc_EVP_pkcs11_sha1(void);
@@ -124,7 +121,6 @@ const EVP_CIPHER * hc_EVP_pkcs11_camellia_256_cbc(void);
 /*
  * PKCS#11 implementations with fallback to hcrypto.
  */
-const EVP_MD * hc_EVP_pkcs11_hcrypto_md2(void);
 const EVP_MD * hc_EVP_pkcs11_hcrypto_md4(void);
 const EVP_MD * hc_EVP_pkcs11_hcrypto_md5(void);
 const EVP_MD * hc_EVP_pkcs11_hcrypto_sha1(void);

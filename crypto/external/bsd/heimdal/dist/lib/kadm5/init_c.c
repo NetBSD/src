@@ -1,4 +1,4 @@
-/*	$NetBSD: init_c.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: init_c.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -45,7 +45,7 @@
 #include <netdb.h>
 #endif
 
-__RCSID("$NetBSD: init_c.c,v 1.2 2017/01/28 21:31:49 christos Exp $");
+__RCSID("$NetBSD: init_c.c,v 1.3 2023/06/19 21:41:44 christos Exp $");
 
 static kadm5_ret_t
 kadm5_c_lock(void *server_handle)
@@ -586,7 +586,7 @@ kadm5_c_init_with_context(krb5_context context,
 			  void **server_handle)
 {
     kadm5_ret_t ret;
-    kadm5_client_context *ctx;
+    kadm5_client_context *ctx = NULL;
     krb5_ccache cc;
 
     ret = _kadm5_c_init_context(&ctx, realm_params, context);

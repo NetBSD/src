@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc.h,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: kdc.h,v 1.3 2023/06/19 21:41:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2003 Kungliga Tekniska Högskolan
@@ -71,6 +71,7 @@ typedef struct krb5_kdc_configuration {
     krb5_boolean check_ticket_addresses;
     krb5_boolean allow_null_ticket_addresses;
     krb5_boolean allow_anonymous;
+    krb5_boolean historical_anon_realm;
     krb5_boolean strict_nametypes;
     enum krb5_kdc_trpolicy trpolicy;
 

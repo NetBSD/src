@@ -1,4 +1,4 @@
-/*	$NetBSD: mcache.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: mcache.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -250,27 +250,28 @@ mcc_destroy(krb5_context context,
 {
     krb5_mcache **n, *m = MCACHE(id);
 
+    HEIMDAL_MUTEX_lock(&mcc_mutex);
     HEIMDAL_MUTEX_lock(&(m->mutex));
     if (m->refcnt == 0)
     {
     	HEIMDAL_MUTEX_unlock(&(m->mutex));
+	HEIMDAL_MUTEX_unlock(&mcc_mutex);
     	krb5_abortx(context, "mcc_destroy: refcnt already 0");
     }
 
     if (!MISDEAD(m)) {
 	/* if this is an active mcache, remove it from the linked
            list, and free all data */
-	HEIMDAL_MUTEX_lock(&mcc_mutex);
 	for(n = &mcc_head; n && *n; n = &(*n)->next) {
 	    if(m == *n) {
 		*n = m->next;
 		break;
 	    }
 	}
-	HEIMDAL_MUTEX_unlock(&mcc_mutex);
 	mcc_destroy_internal(context, m);
     }
     HEIMDAL_MUTEX_unlock(&(m->mutex));
+    HEIMDAL_MUTEX_unlock(&mcc_mutex);
     return 0;
 }
 

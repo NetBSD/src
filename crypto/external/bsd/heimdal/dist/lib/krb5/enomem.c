@@ -1,4 +1,4 @@
-/*	$NetBSD: enomem.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: enomem.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Kungliga Tekniska Högskolan
@@ -35,10 +35,10 @@
 
 #include "krb5_locl.h"
 
+#undef krb5_enomem
 krb5_error_code
 krb5_enomem(krb5_context context)
 {
     krb5_set_error_message(context, ENOMEM, N_("malloc: out of memory", ""));
     return ENOMEM;
 }
-

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_creds_pw.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: init_creds_pw.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -1543,15 +1543,13 @@ keytab_key_proc(krb5_context context, krb5_enctype enctype,
 
     ret = krb5_kt_get_entry (context, real_keytab, principal,
 			     0, enctype, &entry);
+    if (ret == 0) {
+        ret = krb5_copy_keyblock(context, &entry.keyblock, key);
+        krb5_kt_free_entry(context, &entry);
+    }
 
     if (keytab == NULL)
 	krb5_kt_close (context, real_keytab);
-
-    if (ret)
-	return ret;
-
-    ret = krb5_copy_keyblock (context, &entry.keyblock, key);
-    krb5_kt_free_entry(context, &entry);
     return ret;
 }
 

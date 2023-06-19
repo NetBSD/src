@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5tgs.c,v 1.3 2019/12/15 22:50:46 christos Exp $	*/
+/*	$NetBSD: krb5tgs.c,v 1.4 2023/06/19 21:41:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 Kungliga Tekniska Högskolan
@@ -914,6 +914,12 @@ tgs_make_reply(krb5_context context,
     et.flags.hw_authent  = tgt->flags.hw_authent;
     et.flags.ok_as_delegate = server->entry.flags.ok_as_delegate;
 
+    /* See MS-KILE 3.3.5.1 */
+    if (!server->entry.flags.forwardable)
+	et.flags.forwardable = 0;
+    if (!server->entry.flags.proxiable)
+	et.flags.proxiable = 0;
+
     /*
      * For anonymous tickets, we should filter out positive authorization data
      * that could reveal the client's identity, and return a policy error for
@@ -1662,6 +1668,10 @@ tgs_build_reply(krb5_context context,
 
 	s = &adtkt.cname;
 	r = adtkt.crealm;
+    } else if (s == NULL) {
+	ret = KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN;
+	kdc_log(context, config, 0, "No server in request");
+	goto out;
     }
 
     _krb5_principalname2krb5_principal(context, &sp, *s, r);
@@ -2105,30 +2115,43 @@ server_lookup:
 	    if (ret)
 		goto out;
 
+	    ret = _kdc_db_fetch(context, config, tp, HDB_F_GET_CLIENT | flags,
+				NULL, &s4u2self_impersonated_clientdb,
+				&s4u2self_impersonated_client);
+	    if (ret) {
+		const char *msg;
+
+		/*
+		 * If the client belongs to the same realm as our krbtgt, it
+		 * should exist in the local database.
+		 *
+		 */
+
+		if (ret == HDB_ERR_NOENTRY)
+		    ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
+		msg = krb5_get_error_message(context, ret);
+		kdc_log(context, config, 2,
+			"S4U2Self principal to impersonate %s not found in database: %s",
+			tpn, msg);
+		krb5_free_error_message(context, msg);
+		goto out;
+	    }
+
+	    /* Ignore require_pwchange and pw_end attributes (as Windows does),
+	     * since S4U2Self is not password authentication. */
+	    s4u2self_impersonated_client->entry.flags.require_pwchange = FALSE;
+	    free(s4u2self_impersonated_client->entry.pw_end);
+	    s4u2self_impersonated_client->entry.pw_end = NULL;
+
+	    ret = kdc_check_flags(context, config, s4u2self_impersonated_client, tpn,
+				  NULL, NULL, FALSE);
+	    if (ret)
+		goto out;
+
 	    /* If we were about to put a PAC into the ticket, we better fix it to be the right PAC */
 	    if(rspac.data) {
 		krb5_pac p = NULL;
 		krb5_data_free(&rspac);
-		ret = _kdc_db_fetch(context, config, tp, HDB_F_GET_CLIENT | flags,
-				    NULL, &s4u2self_impersonated_clientdb, &s4u2self_impersonated_client);
-		if (ret) {
-		    const char *msg;
-
-		    /*
-		     * If the client belongs to the same realm as our krbtgt, it
-		     * should exist in the local database.
-		     *
-		     */
-
-		    if (ret == HDB_ERR_NOENTRY)
-			ret = KRB5KDC_ERR_C_PRINCIPAL_UNKNOWN;
-		    msg = krb5_get_error_message(context, ret);
-		    kdc_log(context, config, 1,
-			    "S2U4Self principal to impersonate %s not found in database: %s",
-			    tpn, msg);
-		    krb5_free_error_message(context, msg);
-		    goto out;
-		}
 		ret = _kdc_pac_generate(context, s4u2self_impersonated_client, &p);
 		if (ret) {
 		    kdc_log(context, config, 0, "PAC generation failed for -- %s",
@@ -2164,10 +2187,12 @@ server_lookup:
 
 	    /*
 	     * If the service isn't trusted for authentication to
-	     * delegation, remove the forward flag.
+	     * delegation or if the impersonate client is disallowed
+	     * forwardable, remove the forwardable flag.
 	     */
 
-	    if (client->entry.flags.trusted_for_delegation) {
+	    if (client->entry.flags.trusted_for_delegation &&
+		s4u2self_impersonated_client->entry.flags.forwardable) {
 		str = "[forwardable]";
 	    } else {
 		b->kdc_options.forwardable = 0;

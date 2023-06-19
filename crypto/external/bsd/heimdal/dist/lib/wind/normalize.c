@@ -1,4 +1,4 @@
-/*	$NetBSD: normalize.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
+/*	$NetBSD: normalize.c,v 1.3 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 Kungliga Tekniska Högskolan
@@ -229,9 +229,9 @@ find_composition(const uint32_t *in, unsigned in_len)
 	unsigned i;
 
 	if (n % 5 == 0) {
-	    cur = *in++;
 	    if (in_len-- == 0)
 		return c->val;
+	    cur = *in++;
 	}
 
 	i = cur >> 16;

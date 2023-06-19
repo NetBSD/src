@@ -1,4 +1,4 @@
-/*	$NetBSD: accept_sec_context.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: accept_sec_context.c,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -621,13 +621,15 @@ acceptor_start
 	    if (ret == 0)
 		break;
 	}
-	if (preferred_mech_type == GSS_C_NO_OID) {
-	    HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
-	    free_NegotiationToken(&nt);
-	    return ret;
-	}
+    }
 
-	ctx->preferred_mech_type = preferred_mech_type;
+    ctx->preferred_mech_type = preferred_mech_type;
+
+    if (preferred_mech_type == GSS_C_NO_OID) {
+        send_reject(minor_status, output_token);
+        HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
+        free_NegotiationToken(&nt);
+        return ret;
     }
 
     /*

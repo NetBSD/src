@@ -1,4 +1,4 @@
-/*	$NetBSD: keytab.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: keytab.c,v 1.3 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
@@ -361,10 +361,11 @@ krb5_kt_read_service_key(krb5_context context,
 			 krb5_enctype enctype,
 			 krb5_keyblock **key)
 {
-    krb5_keytab keytab;
+    krb5_keytab keytab = NULL; /* Quiet lint */
     krb5_keytab_entry entry;
     krb5_error_code ret;
 
+    memset(&entry, 0, sizeof(entry));
     if (keyprocarg)
 	ret = krb5_kt_resolve (context, keyprocarg, &keytab);
     else
@@ -374,11 +375,11 @@ krb5_kt_read_service_key(krb5_context context,
 	return ret;
 
     ret = krb5_kt_get_entry (context, keytab, principal, vno, enctype, &entry);
+    if (ret == 0) {
+        ret = krb5_copy_keyblock (context, &entry.keyblock, key);
+        krb5_kt_free_entry(context, &entry);
+    }
     krb5_kt_close (context, keytab);
-    if (ret)
-	return ret;
-    ret = krb5_copy_keyblock (context, &entry.keyblock, key);
-    krb5_kt_free_entry(context, &entry);
     return ret;
 }
 
@@ -485,11 +486,13 @@ KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_kt_close(krb5_context context,
 	      krb5_keytab id)
 {
-    krb5_error_code ret;
+    krb5_error_code ret = 0;
 
-    ret = (*id->close)(context, id);
-    memset(id, 0, sizeof(*id));
-    free(id);
+    if (id) {
+        ret = (id->close)(context, id);
+        memset(id, 0, sizeof(*id));
+        free(id);
+    }
     return ret;
 }
 
@@ -623,6 +626,7 @@ krb5_kt_get_entry_wrapped(krb5_context context,
     if(id->get)
 	return (*id->get)(context, id, principal, kvno, enctype, entry);
 
+    memset(&tmp, 0, sizeof(tmp));
     ret = krb5_kt_start_seq_get (context, id, &cursor);
     if (ret) {
 	/* This is needed for krb5_verify_init_creds, but keep error
@@ -734,21 +738,21 @@ krb5_kt_copy_entry_contents(krb5_context context,
     krb5_error_code ret;
 
     memset(out, 0, sizeof(*out));
-    out->vno = in->vno;
 
     ret = krb5_copy_principal (context, in->principal, &out->principal);
     if (ret)
-	goto fail;
+	return ret;
     ret = krb5_copy_keyblock_contents (context,
 				       &in->keyblock,
 				       &out->keyblock);
-    if (ret)
-	goto fail;
+    if (ret) {
+        krb5_free_principal(context, out->principal);
+        memset(out, 0, sizeof(*out));
+        return ret;
+    }
+    out->vno = in->vno;
     out->timestamp = in->timestamp;
     return 0;
-fail:
-    krb5_kt_free_entry (context, out);
-    return ret;
 }
 
 /**
@@ -929,6 +933,7 @@ krb5_kt_have_content(krb5_context context,
     krb5_error_code ret;
     char *name;
 
+    memset(&entry, 0, sizeof(entry));
     ret = krb5_kt_start_seq_get(context, id, &cursor);
     if (ret)
 	goto notfound;

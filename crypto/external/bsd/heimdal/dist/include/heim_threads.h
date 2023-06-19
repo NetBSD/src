@@ -1,4 +1,4 @@
-/*	$NetBSD: heim_threads.h,v 1.3 2019/12/15 22:50:46 christos Exp $	*/
+/*	$NetBSD: heim_threads.h,v 1.4 2023/06/19 21:41:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2016 Kungliga Tekniska Högskolan

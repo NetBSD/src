@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des3.c,v 1.6 2023/06/01 20:40:18 christos Exp $	*/
+/*	$NetBSD: crypto-des3.c,v 1.7 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan

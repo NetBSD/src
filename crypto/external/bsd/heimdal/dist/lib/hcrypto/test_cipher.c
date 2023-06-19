@@ -1,4 +1,4 @@
-/*	$NetBSD: test_cipher.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: test_cipher.c,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2006-2016 Kungliga Tekniska Högskolan
@@ -297,8 +297,10 @@ test_cipher(int i, const EVP_CIPHER *c, struct tests *t)
 	hex_encode(d, t->datasize, &s);
 	errx(1, "%s: %d decrypt not the same: %s", t->name, i, s);
     }
-    if (t->outiv)
-	/* XXXX check  */;
+    if (t->outiv) {
+	/* XXXX check  */
+        ;
+    }
 
     EVP_CIPHER_CTX_cleanup(&ectx);
     EVP_CIPHER_CTX_cleanup(&dctx);

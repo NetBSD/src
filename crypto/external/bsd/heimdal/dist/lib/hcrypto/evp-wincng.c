@@ -1,4 +1,4 @@
-/*	$NetBSD: evp-wincng.c,v 1.3 2019/12/15 22:50:48 christos Exp $	*/
+/*	$NetBSD: evp-wincng.c,v 1.4 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2015, Secure Endpoints Inc.
@@ -690,7 +690,6 @@ wincng_md_cleanup(EVP_MD_CTX *ctx)
 	}								\
     } while (0)
 
-WINCNG_MD_ALGORITHM(md2,    BCRYPT_MD2_ALGORITHM);
 WINCNG_MD_ALGORITHM(md4,    BCRYPT_MD4_ALGORITHM);
 WINCNG_MD_ALGORITHM(md5,    BCRYPT_MD5_ALGORITHM);
 WINCNG_MD_ALGORITHM(sha1,   BCRYPT_SHA1_ALGORITHM);
@@ -701,7 +700,6 @@ WINCNG_MD_ALGORITHM(sha512, BCRYPT_SHA512_ALGORITHM);
 static void
 wincng_md_algorithm_cleanup(void)
 {
-    WINCNG_MD_ALGORITHM_CLEANUP(md2);
     WINCNG_MD_ALGORITHM_CLEANUP(md4);
     WINCNG_MD_ALGORITHM_CLEANUP(md5);
     WINCNG_MD_ALGORITHM_CLEANUP(sha1);

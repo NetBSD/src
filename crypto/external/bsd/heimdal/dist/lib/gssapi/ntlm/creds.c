@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.4 2019/12/15 22:50:48 christos Exp $	*/
+/*	$NetBSD: creds.c,v 1.5 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan

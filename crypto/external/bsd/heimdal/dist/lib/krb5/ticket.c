@@ -1,4 +1,4 @@
-/*	$NetBSD: ticket.c,v 1.5 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: ticket.c,v 1.6 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -543,10 +543,22 @@ check_client_anonymous(krb5_context context,
     if (!rep->enc_part.flags.anonymous)
 	return KRB5KDC_ERR_BADOPTION;
 
+    /*
+     * Here we must validate that the AS returned a ticket of the expected type
+     * for either a fully anonymous request, or authenticated request for an
+     * anonymous ticket.  If this is a TGS request, we're done.  Then if the
+     * 'requested' principal was anonymous, we'll check the 'mapped' principal
+     * accordingly (without enforcing the name type and perhaps the realm).
+     * Finally, if the 'requested' principal was not anonymous, well check
+     * that the 'mapped' principal has an anonymous name and type, in a
+     * non-anonymous realm.  (Should we also be checking for a realm match
+     * between the request and the mapped name in this case?)
+     */
     if (is_tgs_rep)
-	flags = KRB5_ANON_MATCH_ANY;
-    else if (krb5_principal_is_anonymous(context, requested, KRB5_ANON_MATCH_ANY))
-	flags = KRB5_ANON_MATCH_UNAUTHENTICATED;
+	flags = KRB5_ANON_MATCH_ANY_NONT;
+    else if (krb5_principal_is_anonymous(context, requested,
+                                         KRB5_ANON_MATCH_ANY_NONT))
+	flags = KRB5_ANON_MATCH_UNAUTHENTICATED | KRB5_ANON_IGNORE_NAME_TYPE;
     else
 	flags = KRB5_ANON_MATCH_AUTHENTICATED;
 
@@ -568,7 +580,8 @@ check_client_mismatch(krb5_context context,
 		      krb5_keyblock const * key)
 {
     if (rep->enc_part.flags.anonymous) {
-	if (!krb5_principal_is_anonymous(context, mapped, KRB5_ANON_MATCH_ANY)) {
+	if (!krb5_principal_is_anonymous(context, mapped,
+                                         KRB5_ANON_MATCH_ANY_NONT)) {
 	    krb5_set_error_message(context, KRB5KRB_AP_ERR_MODIFIED,
 				   N_("Anonymous ticket does not contain anonymous "
 				      "principal", ""));

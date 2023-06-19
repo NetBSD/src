@@ -1,4 +1,4 @@
-/*	$NetBSD: ipropd_slave.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
+/*	$NetBSD: ipropd_slave.c,v 1.4 2023/06/19 21:41:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "iprop.h"
 
-__RCSID("$NetBSD: ipropd_slave.c,v 1.3 2019/12/15 22:50:50 christos Exp $");
+__RCSID("$NetBSD: ipropd_slave.c,v 1.4 2023/06/19 21:41:44 christos Exp $");
 
 static const char *config_name = "ipropd-slave";
 
@@ -100,6 +100,15 @@ connect_to_master (krb5_context context, const char *master,
 
     if (setsockopt(s, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) < 0)
         krb5_warn(context, errno, "setsockopt(SO_KEEPALIVE) failed");
+
+    /*
+     * We write message lengths separately from the payload, avoid Nagle
+     * delays.
+     */
+#if defined(IPPROTO_TCP) && defined(TCP_NODELAY)
+    (void) setsockopt(s, IPPROTO_TCP, TCP_NODELAY,
+                      (void *)&one, sizeof(one));
+#endif
 
     return s;
 }
@@ -1005,11 +1014,14 @@ main(int argc, char **argv)
                 if (verbose)
                     krb5_warnx(context, "master sent us a ping");
 		is_up_to_date(context, status_file, server_context);
-                ret = ihave(context, auth_context, master_fd,
-                            server_context->log_context.version);
-                if (ret)
-                    connected = FALSE;
-
+                /*
+                 * We used to send an I_HAVE here.  But the master may send
+                 * ARE_YOU_THERE messages in response to local, possibly-
+                 * transient errors, and if that happens and we respond with an
+                 * I_HAVE then we'll loop hard if the error was not transient.
+                 *
+                 * So we don't ihave() here.
+                 */
 		send_im_here(context, master_fd, auth_context);
 		break;
 	    case YOU_HAVE_LAST_VERSION:

@@ -1,4 +1,4 @@
-.\"	$NetBSD: kinit.1,v 1.5 2019/12/15 22:50:46 christos Exp $
+.\"	$NetBSD: kinit.1,v 1.6 2023/06/19 21:41:42 christos Exp $
 .\"
 .\" Copyright (c) 1998 - 2003, 2006 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -168,11 +168,21 @@ in
 .It Fl A , Fl Fl no-addresses
 Request a ticket with no addresses.
 .It Fl n , Fl Fl anonymous
-Request an anonymous ticket. If the principal is specified as @REALM, then
+Request an anonymous ticket.
+With the default (false) setting of the
+.Ar historical_anon_pkinit
+configuration parameter, if the principal is specified as @REALM, then
 anonymous PKINIT will be used to acquire an unauthenticated anonymous ticket
-and both the client name and realm in the returned ticket will be anonymized.
+and both the client name and (with fully RFC-comformant KDCs) realm in the
+returned ticket will be anonymized.
 Otherwise, authentication proceeds as normal and the anonymous ticket will have
 only the client name anonymized.
+With
+.Ar historical_anon_pkinit
+set to
+.Li true ,
+the principal is interpreted as a realm even without an at-sign prefix, and it
+is not possible to obtain authenticated anonymized tickets.
 .It Fl Fl enterprise
 Parse principal as a enterprise (KRB5-NT-ENTERPRISE) name. Enterprise
 names are email like principals that are stored in the name part of

@@ -1,10 +1,10 @@
-.\"	$NetBSD: hx509_cms.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hx509_cms.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "hx509_cms" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalx509library" \" -*- nroff -*-
+.TH "hx509_cms" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal x509 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hx509_cms
+hx509_cms \- hx509 CMS/pkcs7 functions
 .SH SYNOPSIS
 .br
 .PP
@@ -38,7 +38,7 @@ See the \fBCMS/PKCS7 message functions\&.\fP for description and examples\&.
 .SS "int hx509_cms_create_signed_1 (hx509_context context, int flags, const heim_oid * eContentType, const void * data, size_t length, const AlgorithmIdentifier * digest_alg, hx509_cert cert, hx509_peer_info peer, hx509_certs anchors, hx509_certs pool, heim_octet_string * signed_data)"
 Decode SignedData and verify that the signature is correct\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -63,7 +63,7 @@ Decode SignedData and verify that the signature is correct\&.
 \fIsigned_data\fP the output of the function, free with der_free_octet_string()\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Returns an hx509 error code\&. 
 .RE
@@ -74,7 +74,7 @@ Encrypt end encode EnvelopedData\&.
 .PP
 Encrypt and encode EnvelopedData\&. The data is encrypted with a random key and the the random key is encrypted with the certificates private key\&. This limits what private key type can be used to RSA\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -100,7 +100,7 @@ HX509_CMS_EV_ID_NAME - prefer issuer name and serial number
 \fIcontent\fP the output of the function, free with der_free_octet_string()\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 an hx509 error code\&. 
 .RE
@@ -111,7 +111,7 @@ Decode and unencrypt EnvelopedData\&.
 .PP
 Extract data and parameteres from from the EnvelopedData\&. Also supports using detached EnvelopedData\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -132,7 +132,7 @@ Extract data and parameteres from from the EnvelopedData\&. Also supports using 
 \fIcontent\fP the data, free with der_free_octet_string()\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 an hx509 error code\&. 
 .RE
@@ -141,7 +141,7 @@ an hx509 error code\&.
 .SS "int hx509_cms_unwrap_ContentInfo (const heim_octet_string * in, heim_oid * oid, heim_octet_string * out, int * have_data)"
 Decode an ContentInfo and unwrap data and oid it\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP the encoded buffer\&. 
 .br
@@ -152,7 +152,7 @@ Decode an ContentInfo and unwrap data and oid it\&.
 \fIhave_data\fP since the data is optional, this flags show dthe diffrence between no data and the zero length data\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Returns an hx509 error code\&. 
 .RE
@@ -161,7 +161,7 @@ Returns an hx509 error code\&.
 .SS "int hx509_cms_verify_signed (hx509_context context, hx509_verify_ctx ctx, unsigned int flags, const void * data, size_t length, const heim_octet_string * signedContent, hx509_certs pool, heim_oid * contentType, heim_octet_string * content, hx509_certs * signer_certs)"
 Decode SignedData and verify that the signature is correct\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -191,7 +191,7 @@ HX509_CMS_VS_ALLOW_ZERO_SIGNER - no signer, see below\&.
 \fIsigner_certs\fP list of the cerficates used to sign this request, free with \fBhx509_certs_free()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 an hx509 error code\&. 
 .RE
@@ -206,7 +206,7 @@ If HX509_CMS_VS_ALLOW_ZERO_SIGNER is set, allow empty SignerInfo (no signatures)
 .SS "int hx509_cms_wrap_ContentInfo (const heim_oid * oid, const heim_octet_string * buf, heim_octet_string * res)"
 Wrap data and oid in a ContentInfo and encode it\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIoid\fP type of the content\&. 
 .br
@@ -215,7 +215,7 @@ Wrap data and oid in a ContentInfo and encode it\&.
 \fIres\fP the encoded buffer, the result should be freed with der_free_octet_string()\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 Returns an hx509 error code\&. 
 .RE
@@ -223,4 +223,4 @@ Returns an hx509 error code\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalx509library from the source code\&.
+Generated automatically by Doxygen for Heimdal x509 library from the source code\&.

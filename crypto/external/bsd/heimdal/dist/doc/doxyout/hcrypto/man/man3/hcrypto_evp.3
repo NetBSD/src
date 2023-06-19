@@ -1,10 +1,10 @@
-.\"	$NetBSD: hcrypto_evp.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hcrypto_evp.3,v 1.3 2023/06/19 21:41:39 christos Exp $
 .\"
-.TH "hcrypto_evp" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdal crypto library" \" -*- nroff -*-
+.TH "hcrypto_evp" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal crypto library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hcrypto_evp
+hcrypto_evp \- EVP generic crypto functions
 .SH SYNOPSIS
 .br
 .PP
@@ -49,9 +49,6 @@ hcrypto_evp
 .br
 .ti -1c
 .RI "const EVP_MD * \fBEVP_hcrypto_md4\fP (void)"
-.br
-.ti -1c
-.RI "const EVP_MD * \fBEVP_hcrypto_md2\fP (void)"
 .br
 .ti -1c
 .RI "const EVP_CIPHER * \fBEVP_hcrypto_des_cbc\fP (void)"
@@ -192,9 +189,6 @@ hcrypto_evp
 .RI "const EVP_MD * \fBEVP_md4\fP (void)"
 .br
 .ti -1c
-.RI "const EVP_MD * \fBEVP_md2\fP (void)"
-.br
-.ti -1c
 .RI "const EVP_MD * \fBEVP_md_null\fP (void)"
 .br
 .ti -1c
@@ -314,20 +308,20 @@ See the \fBEVP - generic crypto interface\fP for description and examples\&.
 .SS "const EVP_CIPHER* EVP_aes_128_cbc (void)"
 The AES-128 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-128 EVP_CIPHER pointer\&. 
 .RE
 .PP
 
 .PP
-\fBExamples: \fP
+\fBExamples\fP
 .in +1c
 \fBexample_evp_cipher\&.c\fP\&.
 .SS "const EVP_CIPHER* EVP_aes_128_cfb8 (void)"
 The AES-128 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-128 EVP_CIPHER pointer\&. 
 .RE
@@ -336,7 +330,7 @@ the AES-128 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_aes_192_cbc (void)"
 The AES-192 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-192 EVP_CIPHER pointer\&. 
 .RE
@@ -345,7 +339,7 @@ the AES-192 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_aes_192_cfb8 (void)"
 The AES-192 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-192 EVP_CIPHER pointer\&. 
 .RE
@@ -354,7 +348,7 @@ the AES-192 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_aes_256_cbc (void)"
 The AES-256 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-256 EVP_CIPHER pointer\&. 
 .RE
@@ -363,7 +357,7 @@ the AES-256 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_aes_256_cfb8 (void)"
 The AES-256 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-256 EVP_CIPHER pointer\&. 
 .RE
@@ -374,7 +368,7 @@ Provides a legancy string to key function, used in PEM files\&.
 .PP
 New protocols should use new string to key functions like NIST SP56-800A or PKCS#5 v2\&.0 (see \fBPKCS5_PBKDF2_HMAC_SHA1()\fP)\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fItype\fP type of cipher to use 
 .br
@@ -393,7 +387,7 @@ New protocols should use new string to key functions like NIST SP56-800A or PKCS
 \fIivdata\fP output ivdata, needs to of the size \fBEVP_CIPHER_block_size()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the size of derived key\&. 
 .RE
@@ -402,7 +396,7 @@ the size of derived key\&.
 .SS "const EVP_CIPHER* EVP_camellia_128_cbc (void)"
 The Camellia-128 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the Camellia-128 EVP_CIPHER pointer\&. 
 .RE
@@ -411,7 +405,7 @@ the Camellia-128 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_camellia_192_cbc (void)"
 The Camellia-198 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the Camellia-198 EVP_CIPHER pointer\&. 
 .RE
@@ -420,7 +414,7 @@ the Camellia-198 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_camellia_256_cbc (void)"
 The Camellia-256 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the Camellia-256 EVP_CIPHER pointer\&. 
 .RE
@@ -429,30 +423,30 @@ the Camellia-256 EVP_CIPHER pointer\&.
 .SS "size_t EVP_CIPHER_block_size (const EVP_CIPHER * c)"
 Return the block size of the cipher\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIc\fP cipher to get the block size from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the block size of the cipher\&. 
 .RE
 .PP
 
 .PP
-\fBExamples: \fP
+\fBExamples\fP
 .in +1c
 \fBexample_evp_cipher\&.c\fP\&.
 .SS "size_t EVP_CIPHER_CTX_block_size (const EVP_CIPHER_CTX * ctx)"
 Return the block size of the cipher context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP cipher context to get the block size from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the block size of the cipher context\&. 
 .RE
@@ -461,12 +455,12 @@ the block size of the cipher context\&.
 .SS "const EVP_CIPHER* EVP_CIPHER_CTX_cipher (EVP_CIPHER_CTX * ctx)"
 Return the EVP_CIPHER for a EVP_CIPHER_CTX context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the context to get the cipher type from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the EVP_CIPHER pointer\&. 
 .RE
@@ -475,30 +469,30 @@ the EVP_CIPHER pointer\&.
 .SS "int EVP_CIPHER_CTX_cleanup (EVP_CIPHER_CTX * c)"
 Clean up the EVP_CIPHER_CTX context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIc\fP the cipher to clean up\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
 .PP
 
 .PP
-\fBExamples: \fP
+\fBExamples\fP
 .in +1c
 \fBexample_evp_cipher\&.c\fP\&.
 .SS "unsigned long EVP_CIPHER_CTX_flags (const EVP_CIPHER_CTX * ctx)"
 Get the flags for an EVP_CIPHER_CTX context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the EVP_CIPHER_CTX to get the flags from
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the flags for an EVP_CIPHER_CTX\&. 
 .RE
@@ -507,12 +501,12 @@ the flags for an EVP_CIPHER_CTX\&.
 .SS "void* EVP_CIPHER_CTX_get_app_data (EVP_CIPHER_CTX * ctx)"
 Get the app data for an EVP_CIPHER_CTX context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the EVP_CIPHER_CTX to get the app data from
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the app data for an EVP_CIPHER_CTX\&. 
 .RE
@@ -521,25 +515,25 @@ the app data for an EVP_CIPHER_CTX\&.
 .SS "void EVP_CIPHER_CTX_init (EVP_CIPHER_CTX * c)"
 Initiate a EVP_CIPHER_CTX context\&. Clean up with \fBEVP_CIPHER_CTX_cleanup()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIc\fP the cipher initiate\&. 
 .RE
 .PP
 
 .PP
-\fBExamples: \fP
+\fBExamples\fP
 .in +1c
 \fBexample_evp_cipher\&.c\fP\&.
 .SS "size_t EVP_CIPHER_CTX_iv_length (const EVP_CIPHER_CTX * ctx)"
 Return the IV size of the cipher context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP cipher context to get the IV size from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the IV size of the cipher context\&. 
 .RE
@@ -548,12 +542,12 @@ the IV size of the cipher context\&.
 .SS "size_t EVP_CIPHER_CTX_key_length (const EVP_CIPHER_CTX * ctx)"
 Return the key size of the cipher context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP cipher context to get the key size from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the key size of the cipher context\&. 
 .RE
@@ -562,12 +556,12 @@ the key size of the cipher context\&.
 .SS "int EVP_CIPHER_CTX_mode (const EVP_CIPHER_CTX * ctx)"
 Get the mode for an EVP_CIPHER_CTX context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the EVP_CIPHER_CTX to get the mode from
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the mode for an EVP_CIPHER_CTX\&. 
 .RE
@@ -576,7 +570,7 @@ the mode for an EVP_CIPHER_CTX\&.
 .SS "void EVP_CIPHER_CTX_set_app_data (EVP_CIPHER_CTX * ctx, void * data)"
 Set the app data for an EVP_CIPHER_CTX context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the EVP_CIPHER_CTX to set the app data for 
 .br
@@ -587,14 +581,14 @@ Set the app data for an EVP_CIPHER_CTX context\&.
 .SS "int EVP_CIPHER_CTX_set_key_length (EVP_CIPHER_CTX * c, int length)"
 If the cipher type supports it, change the key length
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIc\fP the cipher context to change the key length for 
 .br
 \fIlength\fP new key length
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -603,43 +597,43 @@ If the cipher type supports it, change the key length
 .SS "size_t EVP_CIPHER_iv_length (const EVP_CIPHER * c)"
 Return the IV size of the cipher\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIc\fP cipher to get the IV size from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the IV size of the cipher\&. 
 .RE
 .PP
 
 .PP
-\fBExamples: \fP
+\fBExamples\fP
 .in +1c
 \fBexample_evp_cipher\&.c\fP\&.
 .SS "size_t EVP_CIPHER_key_length (const EVP_CIPHER * c)"
 Return the key size of the cipher\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIc\fP cipher to get the key size from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the key size of the cipher\&. 
 .RE
 .PP
 
 .PP
-\fBExamples: \fP
+\fBExamples\fP
 .in +1c
 \fBexample_evp_cipher\&.c\fP\&.
 .SS "int EVP_CipherFinal_ex (EVP_CIPHER_CTX * ctx, void * out, int * outlen)"
 Encipher/decipher final data
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the cipher context\&. 
 .br
@@ -652,20 +646,20 @@ The input length needs to be at least \fBEVP_CIPHER_block_size()\fP bytes long\&
 .PP
 See \fBEVP Cipher\fP for an example how to use this function\&.
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
 .PP
 
 .PP
-\fBExamples: \fP
+\fBExamples\fP
 .in +1c
 \fBexample_evp_cipher\&.c\fP\&.
 .SS "int EVP_CipherInit_ex (EVP_CIPHER_CTX * ctx, const EVP_CIPHER * c, ENGINE * engine, const void * key, const void * iv, int encp)"
 Initiate the EVP_CIPHER_CTX context to encrypt or decrypt data\&. Clean up with \fBEVP_CIPHER_CTX_cleanup()\fP\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP context to initiate 
 .br
@@ -680,20 +674,20 @@ Initiate the EVP_CIPHER_CTX context to encrypt or decrypt data\&. Clean up with 
 \fIencp\fP non zero will encrypt, -1 use the previous value\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
 .PP
 
 .PP
-\fBExamples: \fP
+\fBExamples\fP
 .in +1c
 \fBexample_evp_cipher\&.c\fP\&.
 .SS "int EVP_CipherUpdate (EVP_CIPHER_CTX * ctx, void * out, int * outlen, void * in, size_t inlen)"
 Encipher/decipher partial data
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the cipher context\&. 
 .br
@@ -710,20 +704,20 @@ The output buffer length should at least be \fBEVP_CIPHER_block_size()\fP byte l
 .PP
 See \fBEVP Cipher\fP for an example how to use this function\&.
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
 .PP
 If there in no spare bytes in the left from last Update and the input length is on the block boundery, the \fBEVP_CipherUpdate()\fP function can take a shortcut (and preformance gain) and directly encrypt the data, otherwise we hav to fix it up and store extra it the EVP_CIPHER_CTX\&.
 .PP
-\fBExamples: \fP
+\fBExamples\fP
 .in +1c
 \fBexample_evp_cipher\&.c\fP\&.
 .SS "const EVP_CIPHER* EVP_des_cbc (void)"
 The DES cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the DES-CBC EVP_CIPHER pointer\&. 
 .RE
@@ -732,7 +726,7 @@ the DES-CBC EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_des_ede3_cbc (void)"
 The triple DES cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the DES-EDE3-CBC EVP_CIPHER pointer\&. 
 .RE
@@ -741,7 +735,7 @@ the DES-EDE3-CBC EVP_CIPHER pointer\&.
 .SS "int EVP_Digest (const void * data, size_t dsize, void * hash, unsigned int * hsize, const EVP_MD * md, ENGINE * engine)"
 Do the whole \fBEVP_MD_CTX_create()\fP, \fBEVP_DigestInit_ex()\fP, \fBEVP_DigestUpdate()\fP, \fBEVP_DigestFinal_ex()\fP, \fBEVP_MD_CTX_destroy()\fP dance in one call\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIdata\fP the data to update the context with 
 .br
@@ -756,7 +750,7 @@ Do the whole \fBEVP_MD_CTX_create()\fP, \fBEVP_DigestInit_ex()\fP, \fBEVP_Digest
 \fIengine\fP engine to use, NULL for default engine\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -765,7 +759,7 @@ Do the whole \fBEVP_MD_CTX_create()\fP, \fBEVP_DigestInit_ex()\fP, \fBEVP_Digest
 .SS "int EVP_DigestFinal_ex (EVP_MD_CTX * ctx, void * hash, unsigned int * size)"
 Complete the message digest\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the context to complete\&. 
 .br
@@ -774,7 +768,7 @@ Complete the message digest\&.
 \fIsize\fP the output size of hash\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -783,7 +777,7 @@ Complete the message digest\&.
 .SS "int EVP_DigestInit_ex (EVP_MD_CTX * ctx, const EVP_MD * md, ENGINE * engine)"
 Init a EVP_MD_CTX for use a specific message digest and engine\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the message digest context to init\&. 
 .br
@@ -792,7 +786,7 @@ Init a EVP_MD_CTX for use a specific message digest and engine\&.
 \fIengine\fP the engine to use, NULL to use the default engine\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -801,7 +795,7 @@ Init a EVP_MD_CTX for use a specific message digest and engine\&.
 .SS "int EVP_DigestUpdate (EVP_MD_CTX * ctx, const void * data, size_t size)"
 Update the digest with some data\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the context to update 
 .br
@@ -810,7 +804,7 @@ Update the digest with some data\&.
 \fIsize\fP length of data
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -819,7 +813,7 @@ Update the digest with some data\&.
 .SS "const EVP_CIPHER* EVP_enc_null (void)"
 The NULL cipher type, does no encryption/decryption\&.
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the null EVP_CIPHER pointer\&. 
 .RE
@@ -828,12 +822,12 @@ the null EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_get_cipherbyname (const char * name)"
 Get the cipher type using their name\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIname\fP the name of the cipher\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the selected EVP_CIPHER pointer or NULL if not found\&. 
 .RE
@@ -842,7 +836,7 @@ the selected EVP_CIPHER pointer or NULL if not found\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_aes_128_cbc (void)"
 The AES-128 cipher type (hcrypto)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-128 EVP_CIPHER pointer\&. 
 .RE
@@ -851,7 +845,7 @@ the AES-128 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_aes_128_cfb8 (void)"
 The AES-128 CFB8 cipher type (hcrypto)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-128 EVP_CIPHER pointer\&. 
 .RE
@@ -860,7 +854,7 @@ the AES-128 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_aes_192_cbc (void)"
 The AES-192 cipher type (hcrypto)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-192 EVP_CIPHER pointer\&. 
 .RE
@@ -869,7 +863,7 @@ the AES-192 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_aes_192_cfb8 (void)"
 The AES-192 CFB8 cipher type (hcrypto)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-192 EVP_CIPHER pointer\&. 
 .RE
@@ -878,7 +872,7 @@ the AES-192 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_aes_256_cbc (void)"
 The AES-256 cipher type (hcrypto)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-256 EVP_CIPHER pointer\&. 
 .RE
@@ -887,7 +881,7 @@ the AES-256 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_aes_256_cfb8 (void)"
 The AES-256 CFB8 cipher type (hcrypto)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-256 EVP_CIPHER pointer\&. 
 .RE
@@ -896,7 +890,7 @@ the AES-256 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_camellia_128_cbc (void)"
 The Camellia-128 cipher type - hcrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the Camellia-128 EVP_CIPHER pointer\&. 
 .RE
@@ -905,7 +899,7 @@ the Camellia-128 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_camellia_192_cbc (void)"
 The Camellia-198 cipher type - hcrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the Camellia-198 EVP_CIPHER pointer\&. 
 .RE
@@ -914,7 +908,7 @@ the Camellia-198 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_camellia_256_cbc (void)"
 The Camellia-256 cipher type - hcrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the Camellia-256 EVP_CIPHER pointer\&. 
 .RE
@@ -923,7 +917,7 @@ the Camellia-256 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_des_cbc (void)"
 The DES cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the DES-CBC EVP_CIPHER pointer\&. 
 .RE
@@ -932,25 +926,16 @@ the DES-CBC EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_des_ede3_cbc (void)"
 The triple DES cipher type - hcrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the DES-EDE3-CBC EVP_CIPHER pointer\&. 
-.RE
-.PP
-
-.SS "const EVP_MD* EVP_hcrypto_md2 (void)"
-The message digest MD2 - hcrypto
-.PP
-\fBReturns:\fP
-.RS 4
-the message digest type\&. 
 .RE
 .PP
 
 .SS "const EVP_MD* EVP_hcrypto_md4 (void)"
 The message digest MD4 - hcrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -959,7 +944,7 @@ the message digest type\&.
 .SS "const EVP_MD* EVP_hcrypto_md5 (void)"
 The message digest MD5 - hcrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -968,7 +953,7 @@ the message digest type\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_rc2_40_cbc (void)"
 The RC2-40 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC2-40 EVP_CIPHER pointer\&. 
 .RE
@@ -977,7 +962,7 @@ the RC2-40 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_rc2_64_cbc (void)"
 The RC2-64 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC2-64 EVP_CIPHER pointer\&. 
 .RE
@@ -986,7 +971,7 @@ the RC2-64 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_hcrypto_rc2_cbc (void)"
 The RC2 cipher type - hcrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC2 EVP_CIPHER pointer\&. 
 .RE
@@ -995,7 +980,7 @@ the RC2 EVP_CIPHER pointer\&.
 .SS "const EVP_MD* EVP_hcrypto_sha1 (void)"
 The message digest SHA1 - hcrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1004,7 +989,7 @@ the message digest type\&.
 .SS "const EVP_MD* EVP_hcrypto_sha256 (void)"
 The message digest SHA256 - hcrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1013,7 +998,7 @@ the message digest type\&.
 .SS "const EVP_MD* EVP_hcrypto_sha384 (void)"
 The message digest SHA384 - hcrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1022,16 +1007,7 @@ the message digest type\&.
 .SS "const EVP_MD* EVP_hcrypto_sha512 (void)"
 The message digest SHA512 - hcrypto
 .PP
-\fBReturns:\fP
-.RS 4
-the message digest type\&. 
-.RE
-.PP
-
-.SS "const EVP_MD* EVP_md2 (void)"
-The message digest MD2
-.PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1040,7 +1016,7 @@ the message digest type\&.
 .SS "const EVP_MD* EVP_md4 (void)"
 The message digest MD4
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1049,7 +1025,7 @@ the message digest type\&.
 .SS "const EVP_MD* EVP_md5 (void)"
 The message digest MD5
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1058,12 +1034,12 @@ the message digest type\&.
 .SS "size_t EVP_MD_block_size (const EVP_MD * md)"
 Return the blocksize of the message digest function\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fImd\fP the evp message
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 size size of the message digest block size 
 .RE
@@ -1072,12 +1048,12 @@ size size of the message digest block size
 .SS "size_t EVP_MD_CTX_block_size (EVP_MD_CTX * ctx)"
 Return the blocksize of the message digest function\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the evp message digest context
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 size size of the message digest block size 
 .RE
@@ -1086,12 +1062,12 @@ size size of the message digest block size
 .SS "int EVP_MD_CTX_cleanup (EVP_MD_CTX * ctx)"
 Free the resources used by the EVP_MD context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the context to free the resources from\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 1 on success\&. 
 .RE
@@ -1100,7 +1076,7 @@ Free the resources used by the EVP_MD context\&.
 .SS "EVP_MD_CTX* EVP_MD_CTX_create (void)"
 Allocate a messsage digest context object\&. Free with \fBEVP_MD_CTX_destroy()\fP\&.
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 a newly allocated message digest context object\&. 
 .RE
@@ -1109,7 +1085,7 @@ a newly allocated message digest context object\&.
 .SS "void EVP_MD_CTX_destroy (EVP_MD_CTX * ctx)"
 Free a messsage digest context object\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP context to free\&. 
 .RE
@@ -1118,7 +1094,7 @@ Free a messsage digest context object\&.
 .SS "void EVP_MD_CTX_init (EVP_MD_CTX * ctx)"
 Initiate a messsage digest context object\&. Deallocate with \fBEVP_MD_CTX_cleanup()\fP\&. Please use \fBEVP_MD_CTX_create()\fP instead\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP variable to initiate\&. 
 .RE
@@ -1127,12 +1103,12 @@ Initiate a messsage digest context object\&. Deallocate with \fBEVP_MD_CTX_clean
 .SS "const EVP_MD* EVP_MD_CTX_md (EVP_MD_CTX * ctx)"
 Get the EVP_MD use for a specified context\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the EVP_MD context to get the EVP_MD for\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the EVP_MD used for the context\&. 
 .RE
@@ -1141,12 +1117,12 @@ the EVP_MD used for the context\&.
 .SS "size_t EVP_MD_CTX_size (EVP_MD_CTX * ctx)"
 Return the output size of the message digest function\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIctx\fP the evp message digest context
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 size output size of the message digest function\&. 
 .RE
@@ -1155,7 +1131,7 @@ size output size of the message digest function\&.
 .SS "const EVP_MD* EVP_md_null (void)"
 The null message digest
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1164,12 +1140,12 @@ the message digest type\&.
 .SS "size_t EVP_MD_size (const EVP_MD * md)"
 Return the output size of the message digest function\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fImd\fP the evp message
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 size output size of the message digest function\&. 
 .RE
@@ -1178,7 +1154,7 @@ size output size of the message digest function\&.
 .SS "const EVP_CIPHER* EVP_rc2_40_cbc (void)"
 The RC2 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC2 EVP_CIPHER pointer\&. 
 .RE
@@ -1187,7 +1163,7 @@ the RC2 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_rc2_64_cbc (void)"
 The RC2 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC2 EVP_CIPHER pointer\&. 
 .RE
@@ -1196,7 +1172,7 @@ the RC2 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_rc2_cbc (void)"
 The RC2 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC2 EVP_CIPHER pointer\&. 
 .RE
@@ -1205,7 +1181,7 @@ the RC2 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_rc4 (void)"
 The RC4 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC4 EVP_CIPHER pointer\&. 
 .RE
@@ -1214,7 +1190,7 @@ the RC4 EVP_CIPHER pointer\&.
 .SS "const EVP_CIPHER* EVP_rc4_40 (void)"
 The RC4-40 cipher type
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC4-40 EVP_CIPHER pointer\&. 
 .RE
@@ -1223,7 +1199,7 @@ the RC4-40 EVP_CIPHER pointer\&.
 .SS "const EVP_MD* EVP_sha (void)"
 The message digest SHA1
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1232,7 +1208,7 @@ the message digest type\&.
 .SS "const EVP_MD* EVP_sha1 (void)"
 The message digest SHA1
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1241,7 +1217,7 @@ the message digest type\&.
 .SS "const EVP_MD* EVP_sha256 (void)"
 The message digest SHA256
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1250,7 +1226,7 @@ the message digest type\&.
 .SS "const EVP_MD* EVP_sha384 (void)"
 The message digest SHA384
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1259,7 +1235,7 @@ the message digest type\&.
 .SS "const EVP_MD* EVP_sha512 (void)"
 The message digest SHA512
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the message digest type\&. 
 .RE
@@ -1268,16 +1244,33 @@ the message digest type\&.
 .SS "const EVP_CIPHER* EVP_wincrypt_des_ede3_cbc (void)"
 The triple DES cipher type (Micrsoft crypt provider)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the DES-EDE3-CBC EVP_CIPHER pointer\&. 
+.RE
+.PP
+
+.SS "hc_EVP_CIPH_CBC_MODE OSSL_CIPHER_ALGORITHM (rc2_64_cbc, hc_EVP_CIPH_CBC_MODE| hc_EVP_CIPH_VARIABLE_LENGTH)"
+The RC2-64 cipher type - OpenSSL
+.PP
+\fBReturns\fP
+.RS 4
+the RC2-64 EVP_CIPHER pointer\&. The Camellia-128 cipher type - OpenSSL
+.PP
+the Camellia-128 EVP_CIPHER pointer\&. The Camellia-198 cipher type - OpenSSL
+.PP
+the Camellia-198 EVP_CIPHER pointer\&. The Camellia-256 cipher type - OpenSSL
+.PP
+the Camellia-256 EVP_CIPHER pointer\&. The RC4 cipher type (OpenSSL provider)
+.PP
+the RC4 EVP_CIPHER pointer\&. 
 .RE
 .PP
 
 .SS "OSSL_CIPHER_ALGORITHM (rc2_cbc, hc_EVP_CIPH_CBC_MODE| hc_EVP_CIPH_VARIABLE_LENGTH)"
 The triple DES cipher type (OpenSSL provider)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the DES-EDE3-CBC EVP_CIPHER pointer\&. The DES cipher type (OpenSSL provider)
 .PP
@@ -1301,108 +1294,82 @@ the RC2-40 EVP_CIPHER pointer\&.
 .RE
 .PP
 
-.SS "hc_EVP_CIPH_CBC_MODE OSSL_CIPHER_ALGORITHM (rc2_64_cbc, hc_EVP_CIPH_CBC_MODE| hc_EVP_CIPH_VARIABLE_LENGTH)"
-The RC2-64 cipher type - OpenSSL
-.PP
-\fBReturns:\fP
-.RS 4
-the RC2-64 EVP_CIPHER pointer\&. The Camellia-128 cipher type - OpenSSL
-.PP
-the Camellia-128 EVP_CIPHER pointer\&. The Camellia-198 cipher type - OpenSSL
-.PP
-the Camellia-198 EVP_CIPHER pointer\&. The Camellia-256 cipher type - OpenSSL
-.PP
-the Camellia-256 EVP_CIPHER pointer\&. The RC4 cipher type (OpenSSL provider)
-.PP
-the RC4 EVP_CIPHER pointer\&. 
-.RE
-.PP
-
-.SS "WINCNG_CIPHER_ALGORITHM (des_ede3_cbc, BCRYPT_3DES_ALGORITHM, 8, 24, 8, EVP_CIPH_CBC_MODE)"
-The triple DES cipher type (Windows CNG provider)
-.PP
-\fBReturns:\fP
-.RS 4
-the DES-EDE3-CBC EVP_CIPHER pointer\&. 
-.RE
-.PP
-
-.SS "WINCNG_CIPHER_ALGORITHM (des_cbc, BCRYPT_DES_ALGORITHM, 8, 8, 8, EVP_CIPH_CBC_MODE)"
-The DES cipher type (Windows CNG provider)
-.PP
-\fBReturns:\fP
-.RS 4
-the DES-CBC EVP_CIPHER pointer\&. 
-.RE
-.PP
-
 .SS "WINCNG_CIPHER_ALGORITHM (aes_128_cbc, BCRYPT_AES_ALGORITHM, 16, 16, 16, EVP_CIPH_CBC_MODE)"
 The AES-128 cipher type (Windows CNG provider)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-128-CBC EVP_CIPHER pointer\&. 
-.RE
-.PP
-
-.SS "WINCNG_CIPHER_ALGORITHM (aes_192_cbc, BCRYPT_AES_ALGORITHM, 16, 24, 16, EVP_CIPH_CBC_MODE)"
-The AES-192 cipher type (Windows CNG provider)
-.PP
-\fBReturns:\fP
-.RS 4
-the AES-192-CBC EVP_CIPHER pointer\&. 
-.RE
-.PP
-
-.SS "WINCNG_CIPHER_ALGORITHM (aes_256_cbc, BCRYPT_AES_ALGORITHM, 16, 32, 16, EVP_CIPH_CBC_MODE)"
-The AES-256 cipher type (Windows CNG provider)
-.PP
-\fBReturns:\fP
-.RS 4
-the AES-256-CBC EVP_CIPHER pointer\&. 
 .RE
 .PP
 
 .SS "WINCNG_CIPHER_ALGORITHM (aes_128_cfb8, BCRYPT_AES_ALGORITHM, 16, 16, 16, EVP_CIPH_CFB8_MODE)"
 The AES-128 CFB8 cipher type (Windows CNG provider)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-128-CFB8 EVP_CIPHER pointer\&. 
+.RE
+.PP
+
+.SS "WINCNG_CIPHER_ALGORITHM (aes_192_cbc, BCRYPT_AES_ALGORITHM, 16, 24, 16, EVP_CIPH_CBC_MODE)"
+The AES-192 cipher type (Windows CNG provider)
+.PP
+\fBReturns\fP
+.RS 4
+the AES-192-CBC EVP_CIPHER pointer\&. 
 .RE
 .PP
 
 .SS "WINCNG_CIPHER_ALGORITHM (aes_192_cfb8, BCRYPT_AES_ALGORITHM, 16, 24, 16, EVP_CIPH_CFB8_MODE)"
 The AES-192 CFB8 cipher type (Windows CNG provider)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-192-CFB8 EVP_CIPHER pointer\&. 
+.RE
+.PP
+
+.SS "WINCNG_CIPHER_ALGORITHM (aes_256_cbc, BCRYPT_AES_ALGORITHM, 16, 32, 16, EVP_CIPH_CBC_MODE)"
+The AES-256 cipher type (Windows CNG provider)
+.PP
+\fBReturns\fP
+.RS 4
+the AES-256-CBC EVP_CIPHER pointer\&. 
 .RE
 .PP
 
 .SS "WINCNG_CIPHER_ALGORITHM (aes_256_cfb8, BCRYPT_AES_ALGORITHM, 16, 32, 16, EVP_CIPH_CFB8_MODE)"
 The AES-256 CFB8 cipher type (Windows CNG provider)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the AES-256-CFB8 EVP_CIPHER pointer\&. 
 .RE
 .PP
 
-.SS "WINCNG_CIPHER_ALGORITHM (rc2_cbc, BCRYPT_RC2_ALGORITHM, 8, 16, 8, EVP_CIPH_CBC_MODE)"
-The RC2 cipher type - Windows CNG
+.SS "WINCNG_CIPHER_ALGORITHM (des_cbc, BCRYPT_DES_ALGORITHM, 8, 8, 8, EVP_CIPH_CBC_MODE)"
+The DES cipher type (Windows CNG provider)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
-the RC2 EVP_CIPHER pointer\&. 
+the DES-CBC EVP_CIPHER pointer\&. 
+.RE
+.PP
+
+.SS "WINCNG_CIPHER_ALGORITHM (des_ede3_cbc, BCRYPT_3DES_ALGORITHM, 8, 24, 8, EVP_CIPH_CBC_MODE)"
+The triple DES cipher type (Windows CNG provider)
+.PP
+\fBReturns\fP
+.RS 4
+the DES-EDE3-CBC EVP_CIPHER pointer\&. 
 .RE
 .PP
 
 .SS "WINCNG_CIPHER_ALGORITHM (rc2_40_cbc, BCRYPT_RC2_ALGORITHM, 8, 5, 8, EVP_CIPH_CBC_MODE)"
 The RC2-40 cipher type - Windows CNG
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC2-40 EVP_CIPHER pointer\&. 
 .RE
@@ -1411,16 +1378,25 @@ the RC2-40 EVP_CIPHER pointer\&.
 .SS "WINCNG_CIPHER_ALGORITHM (rc2_64_cbc, BCRYPT_RC2_ALGORITHM, 8, 8, 8, EVP_CIPH_CBC_MODE)"
 The RC2-64 cipher type - Windows CNG
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC2-64 EVP_CIPHER pointer\&. 
+.RE
+.PP
+
+.SS "WINCNG_CIPHER_ALGORITHM (rc2_cbc, BCRYPT_RC2_ALGORITHM, 8, 16, 8, EVP_CIPH_CBC_MODE)"
+The RC2 cipher type - Windows CNG
+.PP
+\fBReturns\fP
+.RS 4
+the RC2 EVP_CIPHER pointer\&. 
 .RE
 .PP
 
 .SS "WINCNG_CIPHER_ALGORITHM (rc4, BCRYPT_RC4_ALGORITHM, 1, 16, 0, EVP_CIPH_STREAM_CIPHER| EVP_CIPH_VARIABLE_LENGTH)"
 The RC4 cipher type (Windows CNG provider)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC4 EVP_CIPHER pointer\&. 
 .RE
@@ -1429,7 +1405,7 @@ the RC4 EVP_CIPHER pointer\&.
 .SS "WINCNG_CIPHER_ALGORITHM (rc4_40, BCRYPT_RC4_ALGORITHM, 1, 5, 0, EVP_CIPH_STREAM_CIPHER| EVP_CIPH_VARIABLE_LENGTH)"
 The RC4-40 cipher type (Windows CNG provider)
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the RC4 EVP_CIPHER pointer\&. 
 .RE
@@ -1438,7 +1414,7 @@ the RC4 EVP_CIPHER pointer\&.
 .SS "WINCNG_CIPHER_ALGORITHM_UNAVAILABLE (camellia_128_cbc)"
 The Camellia-128 cipher type - CommonCrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the Camellia-128 EVP_CIPHER pointer\&. 
 .RE
@@ -1447,7 +1423,7 @@ the Camellia-128 EVP_CIPHER pointer\&.
 .SS "WINCNG_CIPHER_ALGORITHM_UNAVAILABLE (camellia_192_cbc)"
 The Camellia-198 cipher type - CommonCrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the Camellia-198 EVP_CIPHER pointer\&. 
 .RE
@@ -1456,7 +1432,7 @@ the Camellia-198 EVP_CIPHER pointer\&.
 .SS "WINCNG_CIPHER_ALGORITHM_UNAVAILABLE (camellia_256_cbc)"
 The Camellia-256 cipher type - CommonCrypto
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 the Camellia-256 EVP_CIPHER pointer\&. 
 .RE

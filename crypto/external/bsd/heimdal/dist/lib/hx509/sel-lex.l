@@ -1,4 +1,4 @@
-/*	$NetBSD: sel-lex.l,v 1.4 2021/06/20 12:01:07 christos Exp $	*/
+/*	$NetBSD: sel-lex.l,v 1.5 2023/06/19 21:41:44 christos Exp $	*/
 
 %{
 /*

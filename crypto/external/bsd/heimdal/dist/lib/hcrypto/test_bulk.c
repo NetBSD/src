@@ -1,4 +1,4 @@
-/*	$NetBSD: test_bulk.c,v 1.2 2017/01/28 21:31:47 christos Exp $	*/
+/*	$NetBSD: test_bulk.c,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -203,7 +203,6 @@ test_bulk_provider_hcrypto(void)
     test_bulk_cipher("hcrypto_aes_256_cfb8",	EVP_hcrypto_aes_256_cfb8());
 #endif
     test_bulk_cipher("hcrypto_rc4",		EVP_hcrypto_rc4());
-    test_bulk_digest("hcrypto_md2",		EVP_hcrypto_md2());
     test_bulk_digest("hcrypto_md4",		EVP_hcrypto_md4());
     test_bulk_digest("hcrypto_md5",		EVP_hcrypto_md5());
     test_bulk_digest("hcrypto_sha1",		EVP_hcrypto_sha1());
@@ -221,7 +220,6 @@ test_bulk_provider_cc(void)
     test_bulk_cipher("cc_aes_256_cfb8",		EVP_cc_aes_256_cfb8());
 #endif
     test_bulk_cipher("cc_rc4",			EVP_cc_rc4());
-    test_bulk_digest("cc_md2",			EVP_cc_md2());
     test_bulk_digest("cc_md4",			EVP_cc_md4());
     test_bulk_digest("cc_md5",			EVP_cc_md5());
     test_bulk_digest("cc_sha1",			EVP_cc_sha1());
@@ -240,7 +238,6 @@ test_bulk_provider_w32crypto(void)
     test_bulk_cipher("w32crypto_aes_256_cfb8",	EVP_w32crypto_aes_256_cfb8());
 #endif
     test_bulk_cipher("w32crypto_rc4",		EVP_w32crypto_rc4());
-    test_bulk_digest("w32crypto_md2",		EVP_w32crypto_md2());
     test_bulk_digest("w32crypto_md4",		EVP_w32crypto_md4());
     test_bulk_digest("w32crypto_md5",		EVP_w32crypto_md5());
     test_bulk_digest("w32crypto_sha1",		EVP_w32crypto_sha1());

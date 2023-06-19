@@ -1,4 +1,4 @@
-/*	$NetBSD: der_cmp.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: der_cmp.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2005 Kungliga Tekniska Högskolan
@@ -76,8 +76,11 @@ der_heim_bit_string_cmp(const heim_bit_string *p,
     size_t i;
     if (p->length != q->length)
 	return (int)(p->length - q->length);
-    i = memcmp(p->data, q->data, p->length / 8);
-    if (i)
+    if (q->length)
+        i = memcmp(p->data, q->data, p->length / 8);
+    else
+        i = 0;
+    if (i != 0)
 	return (int)i;
     if ((p->length % 8) == 0)
 	return 0;

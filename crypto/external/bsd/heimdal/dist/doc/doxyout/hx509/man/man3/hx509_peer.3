@@ -1,10 +1,10 @@
-.\"	$NetBSD: hx509_peer.3,v 1.2 2019/12/15 22:50:44 christos Exp $
+.\"	$NetBSD: hx509_peer.3,v 1.3 2023/06/19 21:41:40 christos Exp $
 .\"
-.TH "hx509_peer" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalx509library" \" -*- nroff -*-
+.TH "hx509_peer" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal x509 library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-hx509_peer
+hx509_peer \- hx509 certificate selecting functions
 .SH SYNOPSIS
 .br
 .PP
@@ -35,7 +35,7 @@ hx509_peer
 .SS "int hx509_peer_info_add_cms_alg (hx509_context context, hx509_peer_info peer, const AlgorithmIdentifier * val)"
 Add an additional algorithm that the peer supports\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -44,7 +44,7 @@ Add an additional algorithm that the peer supports\&.
 \fIval\fP an AlgorithmsIdentier to add
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -53,14 +53,14 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_peer_info_alloc (hx509_context context, hx509_peer_info * peer)"
 Allocate a new peer info structure an init it to default values\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
 \fIpeer\fP return an allocated peer, free with \fBhx509_peer_info_free()\fP\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -69,7 +69,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "void hx509_peer_info_free (hx509_peer_info peer)"
 Free a peer info structure\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIpeer\fP peer info to be freed\&. 
 .RE
@@ -78,14 +78,14 @@ Free a peer info structure\&.
 .SS "int hx509_peer_info_set_cert (hx509_peer_info peer, hx509_cert cert)"
 Set the certificate that remote peer is using\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIpeer\fP peer info to update 
 .br
 \fIcert\fP cerificate of the remote peer\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -94,7 +94,7 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 .SS "int hx509_peer_info_set_cms_algs (hx509_context context, hx509_peer_info peer, const AlgorithmIdentifier * val, size_t len)"
 Set the algorithms that the peer supports\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIcontext\fP A hx509 context\&. 
 .br
@@ -105,7 +105,7 @@ Set the algorithms that the peer supports\&.
 \fIlen\fP length of array val\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 An hx509 error code, see \fBhx509_get_error_string()\fP\&. 
 .RE
@@ -113,4 +113,4 @@ An hx509 error code, see \fBhx509_get_error_string()\fP\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalx509library from the source code\&.
+Generated automatically by Doxygen for Heimdal x509 library from the source code\&.

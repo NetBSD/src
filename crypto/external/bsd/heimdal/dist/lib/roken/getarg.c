@@ -1,4 +1,4 @@
-/*	$NetBSD: getarg.c,v 1.5 2017/01/29 19:23:28 christos Exp $	*/
+/*	$NetBSD: getarg.c,v 1.6 2023/06/19 21:41:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan

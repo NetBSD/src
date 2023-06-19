@@ -1,4 +1,4 @@
-/*	$NetBSD: der_put.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: der_put.c,v 1.3 2023/06/19 21:41:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -35,7 +35,7 @@
 
 #include "der_locl.h"
 
-__RCSID("$NetBSD: der_put.c,v 1.2 2017/01/28 21:31:45 christos Exp $");
+__RCSID("$NetBSD: der_put.c,v 1.3 2023/06/19 21:41:42 christos Exp $");
 
 /*
  * All encoding functions take a pointer `p' to first position in
@@ -315,7 +315,8 @@ der_put_octet_string (unsigned char *p, size_t len,
     if (len < data->length)
 	return ASN1_OVERFLOW;
     p -= data->length;
-    memcpy (p+1, data->data, data->length);
+    if (data->length)
+        memcpy(p+1, data->data, data->length);
     *size = data->length;
     return 0;
 }
@@ -343,19 +344,30 @@ der_put_heim_integer (unsigned char *p, size_t len,
     if (data->negative) {
 	ssize_t i;
 	int carry;
-	for (i = data->length - 1, carry = 1; i >= 0; i--) {
-	    *p = buf[i] ^ 0xff;
-	    if (carry)
-		carry = !++*p;
-	    p--;
-	}
-	if (p[1] < 128) {
-	    if (len < 1)
-		return ASN1_OVERFLOW;
-	    *p-- = 0xff;
-	    len--;
-	    hibitset = 1;
-	}
+
+        /*
+         * We represent the parsed integer as a positive value with a
+         * negativity flag.  But we need to put it on the wire as the shortest
+         * twos-complement byte sequence possible.  So we're going to negate
+         * the number as go.
+         */
+        if (data->length == 1 && *(unsigned char *)data->data == 1) {
+            *(p--) = 0xff;
+        } else {
+            for (i = data->length - 1, carry = 1; i >= 0; i--) {
+                *p = buf[i] ^ 0xff;
+                if (carry)
+                    carry = !++*p;
+                p--;
+            }
+            if (p[1] < 128) {
+                if (len < 1)
+                    return ASN1_OVERFLOW;
+                *p-- = 0xff;
+                len--;
+                hibitset = 1;
+            }
+        }
     } else {
 	p -= data->length;
 	memcpy(p + 1, buf, data->length);

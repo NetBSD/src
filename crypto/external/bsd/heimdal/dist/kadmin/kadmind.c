@@ -1,4 +1,4 @@
-/*	$NetBSD: kadmind.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: kadmind.c,v 1.3 2023/06/19 21:41:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
@@ -132,7 +132,11 @@ main(int argc, char **argv)
 	errx (1, "krb5_init_context failed: %d", ret);
 
     argc -= optidx;
+#ifndef __clang_analyzer__
     argv += optidx;
+#endif
+    if (argc != 0)
+        usage(1);
 
     if (config_file == NULL) {
 	int aret;

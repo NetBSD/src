@@ -1,4 +1,4 @@
-/*	$NetBSD: delete_sec_context.c,v 1.2 2017/01/28 21:31:46 christos Exp $	*/
+/*	$NetBSD: delete_sec_context.c,v 1.3 2023/06/19 21:41:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -77,6 +77,8 @@ _gsskrb5_delete_sec_context(OM_uint32 * minor_status,
     krb5_data_free(&ctx->fwd_data);
     if (ctx->crypto)
     	krb5_crypto_destroy(context, ctx->crypto);
+    if (ctx->ccache && (ctx->more_flags & CLOSE_CCACHE))
+	krb5_cc_close(context, ctx->ccache);
 
     HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
     HEIMDAL_MUTEX_destroy(&ctx->ctx_id_mutex);

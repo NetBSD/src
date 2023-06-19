@@ -1,10 +1,10 @@
-.\"	$NetBSD: wind.3,v 1.2 2019/12/15 22:50:46 christos Exp $
+.\"	$NetBSD: wind.3,v 1.3 2023/06/19 21:41:41 christos Exp $
 .\"
-.TH "wind" 3 "Fri Jun 7 2019" "Version 7.7.0" "Heimdalwindlibrary" \" -*- nroff -*-
+.TH "wind" 3 "Tue Nov 15 2022" "Version 7.8.0" "Heimdal wind library" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
-wind
+wind \- Heimdal wind library
 .SH SYNOPSIS
 .br
 .PP
@@ -59,14 +59,14 @@ wind
 .SS "int wind_profile (const char * name, wind_profile_flags * flags)"
 Try to find the profile given a name\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIname\fP name of the profile\&. 
 .br
 \fIflags\fP the resulting profile\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -75,7 +75,7 @@ returns 0 on success, an wind error code otherwise
 .SS "int wind_punycode_label_toascii (const uint32_t * in, size_t in_len, char * out, size_t * out_len)"
 Convert an UCS4 string to a puny-coded DNS label string suitable when combined with delimiters and other labels for DNS lookup\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP an UCS4 string to convert 
 .br
@@ -86,7 +86,7 @@ Convert an UCS4 string to a puny-coded DNS label string suitable when combined w
 \fIout_len\fP before processing out_len should be the length of the out variable, after processing it will be the length of the out string\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -95,7 +95,7 @@ returns 0 on success, an wind error code otherwise
 .SS "int wind_stringprep (const uint32_t * in, size_t in_len, uint32_t * out, size_t * out_len, wind_profile_flags flags)"
 Process a input UCS4 string according a string-prep profile\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP input UCS4 string to process 
 .br
@@ -108,7 +108,7 @@ Process a input UCS4 string according a string-prep profile\&.
 \fIflags\fP stringprep profile\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -117,7 +117,7 @@ returns 0 on success, an wind error code otherwise
 .SS "int wind_ucs2read (const void * ptr, size_t len, unsigned int * flags, uint16_t * out, size_t * out_len)"
 Read in an UCS2 from a buffer\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIptr\fP The input buffer to read from\&. 
 .br
@@ -130,7 +130,7 @@ Read in an UCS2 from a buffer\&.
 \fIout_len\fP the output length
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise\&. 
 .RE
@@ -143,7 +143,7 @@ If the flags WIND_RW_BOM is set, check for BOM\&. If not BOM is found, check is 
 .SS "int wind_ucs2utf8 (const uint16_t * in, size_t in_len, char * out, size_t * out_len)"
 Convert an UCS2 string to a UTF-8 string\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP an UCS2 string to convert\&. 
 .br
@@ -154,7 +154,7 @@ Convert an UCS2 string to a UTF-8 string\&.
 \fIout_len\fP before processing out_len should be the length of the out variable, after processing it will be the length of the out string\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -163,7 +163,7 @@ returns 0 on success, an wind error code otherwise
 .SS "int wind_ucs2utf8_length (const uint16_t * in, size_t in_len, size_t * out_len)"
 Calculate the length of from converting a UCS2 string to an UTF-8 string\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP an UCS2 string to convert\&. 
 .br
@@ -172,7 +172,7 @@ Calculate the length of from converting a UCS2 string to an UTF-8 string\&.
 \fIout_len\fP the length of the resulting UTF-8 string\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -181,7 +181,7 @@ returns 0 on success, an wind error code otherwise
 .SS "int wind_ucs2write (const uint16_t * in, size_t in_len, unsigned int * flags, void * ptr, size_t * out_len)"
 Write an UCS2 string to a buffer\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP The input UCS2 string\&. 
 .br
@@ -194,7 +194,7 @@ Write an UCS2 string to a buffer\&.
 \fIout_len\fP the output length
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise\&. 
 .RE
@@ -205,11 +205,11 @@ On zero input length, flags are preserved
 .PP
 If flags have WIND_RW_BOM set, the byte order mark is written first to the output data
 .PP
-If the output wont fit into out_len, WIND_ERR_OVERRUN is returned 
+If the output wont fit into out_len, WIND_ERR_OVERRUN is returned
 .SS "int wind_ucs4utf8 (const uint32_t * in, size_t in_len, char * out, size_t * out_len)"
 Convert an UCS4 string to a UTF-8 string\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP an UCS4 string to convert\&. 
 .br
@@ -220,7 +220,7 @@ Convert an UCS4 string to a UTF-8 string\&.
 \fIout_len\fP before processing out_len should be the length of the out variable, after processing it will be the length of the out string\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -229,7 +229,7 @@ returns 0 on success, an wind error code otherwise
 .SS "int wind_ucs4utf8_length (const uint32_t * in, size_t in_len, size_t * out_len)"
 Calculate the length of from converting a UCS4 string to an UTF-8 string\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP an UCS4 string to convert\&. 
 .br
@@ -238,7 +238,7 @@ Calculate the length of from converting a UCS4 string to an UTF-8 string\&.
 \fIout_len\fP the length of the resulting UTF-8 string\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -247,7 +247,7 @@ returns 0 on success, an wind error code otherwise
 .SS "int wind_utf8ucs2 (const char * in, uint16_t * out, size_t * out_len)"
 Convert an UTF-8 string to an UCS2 string\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP an UTF-8 string to convert\&. 
 .br
@@ -256,7 +256,7 @@ Convert an UTF-8 string to an UCS2 string\&.
 \fIout_len\fP before processing out_len should be the length of the out variable, after processing it will be the length of the out string\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -265,14 +265,14 @@ returns 0 on success, an wind error code otherwise
 .SS "int wind_utf8ucs2_length (const char * in, size_t * out_len)"
 Calculate the length of from converting a UTF-8 string to a UCS2 string\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP an UTF-8 string to convert\&. 
 .br
 \fIout_len\fP the length of the resulting UCS4 string\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -281,7 +281,7 @@ returns 0 on success, an wind error code otherwise
 .SS "int wind_utf8ucs4 (const char * in, uint32_t * out, size_t * out_len)"
 Convert an UTF-8 string to an UCS4 string\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP an UTF-8 string to convert\&. 
 .br
@@ -290,7 +290,7 @@ Convert an UTF-8 string to an UCS4 string\&.
 \fIout_len\fP before processing out_len should be the length of the out variable, after processing it will be the length of the out string\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -299,14 +299,14 @@ returns 0 on success, an wind error code otherwise
 .SS "int wind_utf8ucs4_length (const char * in, size_t * out_len)"
 Calculate the length of from converting a UTF-8 string to a UCS4 string\&.
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIin\fP an UTF-8 string to convert\&. 
 .br
 \fIout_len\fP the length of the resulting UCS4 string\&.
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 returns 0 on success, an wind error code otherwise 
 .RE
@@ -314,4 +314,4 @@ returns 0 on success, an wind error code otherwise
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for Heimdalwindlibrary from the source code\&.
+Generated automatically by Doxygen for Heimdal wind library from the source code\&.
