@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc.c,v 1.32 2021/08/30 00:04:30 rin Exp $	*/
+/*	$NetBSD: mvsoc.c,v 1.33 2023/06/19 08:40:29 msaitoh Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013, 2014, 2016 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.32 2021/08/30 00:04:30 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsoc.c,v 1.33 2023/06/19 08:40:29 msaitoh Exp $");
 
 #include "opt_cputypes.h"
 #include "opt_mvsoc.h"
@@ -1308,7 +1308,7 @@ mvsoc_target_ddr(uint32_t attr, uint32_t *base, uint32_t *size)
 		cs = 3;
 		break;
 	default:
-		aprint_error("unknwon ATTR: 0x%x", attr);
+		aprint_error("unknown ATTR: 0x%x", attr);
 		return -1;
 	}
 	sizereg = le32toh(*(volatile uint32_t *)(dsc_base +
@@ -1355,7 +1355,7 @@ mvsoc_target_ddr3(uint32_t attr, uint32_t *base, uint32_t *size)
 		cs = 3;
 		break;
 	default:
-		aprint_error("unknwon ATTR: 0x%x", attr);
+		aprint_error("unknown ATTR: 0x%x", attr);
 		return -1;
 	}
 	for (i = 0; i < MVSOC_MLMB_NWIN; i++) {
@@ -1399,7 +1399,7 @@ mvsoc_target_axi(int tag, uint32_t *base, uint32_t *size)
 		cs = 1;
 		break;
 	default:
-		aprint_error("unknwon TAG: 0x%x", tag);
+		aprint_error("unknown TAG: 0x%x", tag);
 		return -1;
 	}
 	val = le32toh(*(volatile uint32_t *)(regbase + MVSOC_AXI_MMAP1(cs)));

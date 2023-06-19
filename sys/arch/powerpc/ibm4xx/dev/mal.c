@@ -1,4 +1,4 @@
-/* $NetBSD: mal.c,v 1.4 2021/02/27 20:43:58 rin Exp $ */
+/* $NetBSD: mal.c,v 1.5 2023/06/19 08:40:30 msaitoh Exp $ */
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mal.c,v 1.4 2021/02/27 20:43:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mal.c,v 1.5 2023/06/19 08:40:30 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,7 +73,7 @@ mal_attach(int pvr)
 		if (maltbl[i].pvr == pvr)
 			break;
 	if (i == __arraycount(maltbl)) {
-		aprint_error("%s: unknwon pvr 0x%x\n", __func__, pvr);
+		aprint_error("%s: unknown pvr 0x%x\n", __func__, pvr);
 		return;
 	}
 

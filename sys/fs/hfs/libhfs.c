@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.17 2023/03/01 16:21:26 riastradh Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.18 2023/06/19 08:40:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.17 2023/03/01 16:21:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.18 2023/06/19 08:40:30 msaitoh Exp $");
 
 #include "libhfs.h"
 
@@ -759,7 +759,7 @@ hfslib_find_extent_record_with_key(hfs_volume* in_vol,
 		else if (nd.kind == HFS_LEAFNODE)
 			break;
 		else
-		    HFS_LIBERR("unknwon node type for extents overflow node #%i",curnode);
+		    HFS_LIBERR("unknown node type for extents overflow node #%i",curnode);
 	} while (nd.kind != HFS_LEAFNODE);
 
 	result = 0;

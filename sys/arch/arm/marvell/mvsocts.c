@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocts.c,v 1.2 2015/11/06 12:50:30 kiyohara Exp $	*/
+/*	$NetBSD: mvsocts.c,v 1.3 2023/06/19 08:40:29 msaitoh Exp $	*/
 /*
  * Copyright (c) 2012, 2015 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocts.c,v 1.2 2015/11/06 12:50:30 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocts.c,v 1.3 2023/06/19 08:40:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -116,7 +116,7 @@ mvsocts_attach(device_t parent, device_t self, void *aux)
 		break;
 
 	default:
-		aprint_error_dev(self, "unknwon model: 0x%x", mva->mva_model);
+		aprint_error_dev(self, "unknown model: 0x%x", mva->mva_model);
 		return;
 	}
 

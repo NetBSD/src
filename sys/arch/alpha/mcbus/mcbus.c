@@ -1,4 +1,4 @@
-/* $NetBSD: mcbus.c,v 1.25 2021/08/07 16:18:40 thorpej Exp $ */
+/* $NetBSD: mcbus.c,v 1.26 2023/06/19 08:40:29 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.25 2021/08/07 16:18:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcbus.c,v 1.26 2023/06/19 08:40:29 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,7 +228,7 @@ mcbus_node_type_str(uint8_t type)
 	case MCBUS_TYPE_PCI:
 		return ("PCI Bridge");
 	default:
-		panic("REALLY UNKNWON (%x) TYPE IN MCBUS_NODE_TYPE_STR", type);
+		panic("REALLY UNKNOWN (%x) TYPE IN MCBUS_NODE_TYPE_STR", type);
 		break;
 	}
 }
