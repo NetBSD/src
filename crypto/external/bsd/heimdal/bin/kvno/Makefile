@@ -1,21 +1,21 @@
-# $NetBSD: Makefile,v 1.1 2014/04/01 21:38:44 christos Exp $
+# $NetBSD: Makefile,v 1.2 2023/06/19 23:11:43 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
 USE_FORT?= yes	# cryptographic software
 
-.PATH: ${HEIMDIST}/kuser
+.PATH: ${HEIMDIST}/kuser ${HEIMDIST}/lib/hcrypto
 
 PROG= kvno
 
 
 #HEIMSRCS= kcc-commands.in
 
-SRCS=	kvno.c
+SRCS=	kvno.c ui.c
 MAN= kvno.1
 
-CPPFLAGS+= -I${DESTDIR}/usr/include/krb5
+CPPFLAGS+= -I${DESTDIR}/usr/include/krb5 -I${HEIMDIST}/lib
 COPTS.kvno.c+= -Wno-deprecated-declarations
 
 LDADD+= -lkafs -lsl

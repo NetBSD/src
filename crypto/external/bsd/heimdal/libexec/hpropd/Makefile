@@ -1,18 +1,19 @@
-# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:18 he Exp $
+# $NetBSD: Makefile,v 1.3 2023/06/19 23:11:44 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
-.PATH:		${HEIMDIST}/kdc
+.PATH:		${HEIMDIST}/kdc ${HEIMDIST}/lib/hcrypto
 
 PROG=	hpropd
-SRCS=	hpropd.c
+SRCS=	hpropd.c ui.c
 MAN=	hpropd.8
 
 CPPFLAGS+= 				\
 	-I${HEIMBASE}/include/krb5	\
 	-I${HEIMDIST}/lib/asn1		\
-	-I${HEIMDIST}/lib/krb5
+	-I${HEIMDIST}/lib/krb5		\
+	-I${HEIMDIST}/lib
 
 LDADD+= -lhdb
 DPADD+= ${LIBHDB}
