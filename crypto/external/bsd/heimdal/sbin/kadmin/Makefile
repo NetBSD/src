@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.3 2017/01/28 21:31:53 christos Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/19 23:11:45 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
 USE_FORT?= yes	# network client
 
-.PATH: ${HEIMDIST}/kadmin
+.PATH: ${HEIMDIST}/kadmin ${HEIMDIST}/lib/hcrypto
 
 PROG=	kadmin
 MAN=	kadmin.8
@@ -29,10 +29,12 @@ SRCS=	add_enctype.c				\
 	random_password.c			\
 	rename.c				\
 	stash.c					\
+	ui.c					\
 	util.c
 
 CPPFLAGS+= 				\
 	-I${HEIMDIST}/base		\
+	-I${HEIMDIST}/lib		\
 	-I${HEIMDIST}/lib/krb5		\
 	-I${HEIMDIST}/lib/asn1		\
 	-I${HEIMDIST}/lib/wind		\

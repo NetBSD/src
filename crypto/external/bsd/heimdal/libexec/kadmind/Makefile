@@ -1,9 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:18 he Exp $
+# $NetBSD: Makefile,v 1.3 2023/06/19 23:11:44 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
-.PATH:		${HEIMDIST}/kadmin
+.PATH:		${HEIMDIST}/kadmin ${HEIMDIST}/lib/hcrypto
 
 PROG=	kadmind
 MAN=	kadmind.8
@@ -11,7 +11,8 @@ MAN=	kadmind.8
 SRCS+= 	kadmind.c	\
 	rpc.c		\
 	server.c	\
-	kadm_conn.c
+	kadm_conn.c	\
+	ui.c
 
 CPPFLAGS+= 				\
 	-I${HEIMDIST}/lib/krb5		\
@@ -23,3 +24,8 @@ DPADD+= ${LIBGSSAPI} ${LIBKADM5SRV} ${LIBHDB} ${LIBUTIL}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
+
+CLEANFILES+=hcrypto
+
+.BEGIN:
+	@ln -sf ${HEIMDIST}/lib/hcrypto .

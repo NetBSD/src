@@ -1,14 +1,16 @@
-# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:17 he Exp $
+# $NetBSD: Makefile,v 1.3 2023/06/19 23:11:44 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
 USE_FORT?= yes	# cryptographic software
 
-.PATH: ${HEIMDIST}/kdc
+.PATH: ${HEIMDIST}/kdc ${HEIMDIST}/lib/hcrypto
+
+CPPFLAGS+=-I${HEIMDIST}/lib
 
 PROG= string2key
-SRCS= string2key.c
+SRCS= string2key.c ui.c
 MAN=  string2key.8
 
 CPPFLAGS+= 				\
