@@ -1,4 +1,4 @@
-# $NetBSD: var-readonly.mk,v 1.2 2023/06/01 20:56:35 rillig Exp $
+# $NetBSD: var-readonly.mk,v 1.3 2023/06/19 15:37:48 sjg Exp $
 
 # the answer
 N = 42
@@ -7,6 +7,12 @@ N = 42
 N = 666
 .if ${N} != 42
 .error N ($N) should be 42
+.endif
+
+# undef should fail
+.undef N
+.ifndef N
+.error N should not be undef'd
 .endif
 
 .NOREADONLY: N
