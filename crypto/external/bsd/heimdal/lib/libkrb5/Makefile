@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2023/05/08 22:17:37 christos Exp $
+# $NetBSD: Makefile,v 1.13 2023/06/19 23:56:56 mrg Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -519,7 +519,9 @@ MLINKS=	\
 	krb5_verify_user.3		krb5_verify_user_lrealm.3	\
 	krb5_verify_user.3		krb5_verify_user_opt.3
 
-CPPFLAGS+= -I${HEIMDIST}/lib/ipc
+CPPFLAGS+= 			\
+	-I${HEIMDIST}/lib/ipc	\
+	-I${HEIMDIST}/lib
 
 # Prevent collision with old MIT Kerberos includes -- require manual
 # intervention of the operator.

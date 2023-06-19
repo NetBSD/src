@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2023/05/08 22:17:36 christos Exp $
+# $NetBSD: Makefile,v 1.5 2023/06/19 23:56:55 mrg Exp $
 
 USE_FORT?= yes	# cryptographic software
 
@@ -19,6 +19,9 @@ LIBDPLIBS+=	asn1	${.CURDIR}/../libasn1 \
 		wind	${.CURDIR}/../libwind
 
 HEIMSRCS= ntlm_err.et ntlm.c
+
+CPPFLAGS+=				\
+	-I${HEIMDIST}/lib
 
 INCS=		heimntlm.h heimntlm-protos.h ${COMPILE_ET_INCS}
 

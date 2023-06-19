@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2023/05/08 22:17:36 christos Exp $
+# $NetBSD: Makefile,v 1.9 2023/06/19 23:56:55 mrg Exp $
 
 NOLINT=		# defined
 
@@ -61,7 +61,8 @@ SRCS=				\
 
 CPPFLAGS+=				\
 	-I${HEIMDIST}/lib/hx509/ref	\
-	-I${HEIMDIST}/lib/asn1
+	-I${HEIMDIST}/lib/asn1		\
+	-I${HEIMDIST}/lib
 
 sel-gram.c: ${ASN1_INCS} ${COMPILE_ET_INCS}
 
