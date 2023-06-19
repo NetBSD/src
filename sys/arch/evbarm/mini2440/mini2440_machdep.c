@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.20 2023/04/20 08:28:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.21 2023/06/19 03:52:50 nisimura Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -371,25 +371,25 @@ cpu_reboot(int howto, char *bootstr)
 
 static const struct pmap_devmap mini2440_devmap[] = {
 	/* GPIO registers */
-	DEVMAP_ENTRY{
+	DEVMAP_ENTRY(
 		GPIO_VBASE,
 		S3C2440_GPIO_BASE,
 		S3C2440_GPIO_SIZE
 	),
-	DEVMAP_ENTRY({
+	DEVMAP_ENTRY(
 		INTCTL_VBASE,
 		S3C2440_INTCTL_BASE,
 		S3C2440_INTCTL_SIZE
 	),
-	DEVMAP_ENTRY({
+	DEVMAP_ENTRY(
 		CLKMAN_VBASE,
-		S3C2440_CLKMAN_BASE),
+		S3C2440_CLKMAN_BASE,
 		S3C24X0_CLKMAN_SIZE
 	),
 	/* UART registers for UART0, 1, 2. */
-	DEVMAP_ENTRY({
+	DEVMAP_ENTRY(
 		UART_VBASE,
-		S3C2440_UART0_BASE),
+		S3C2440_UART0_BASE,
 		S3C2440_UART_BASE(3) - S3C2440_UART0_BASE
 	),
 	DEVMAP_ENTRY_END
