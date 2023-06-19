@@ -1,21 +1,20 @@
-# $NetBSD: directive-include-guard.mk,v 1.4 2023/06/18 20:43:52 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.5 2023/06/19 12:53:57 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
 # A file that is guarded by a multiple-inclusion guard has the following form:
 #
 #	.ifndef GUARD_NAME
-#	GUARD_NAME=	# any value
+#	...
+#	GUARD_NAME=	# any value, may also be empty
 #	...
 #	.endif
 #
-# When such a file is included for the second time, it has no effect, as all
-# its content is skipped.
+# When such a file is included later and the guard variable is set, including
+# the file has no effect, as all its content is skipped.
 #
 # See also:
 #	https://gcc.gnu.org/onlinedocs/cppinternals/Guard-Macros.html
-#
-# TODO: In these cases, do not include the file, to increase performance.
 
 
 # This is the canonical form of a multiple-inclusion guard.
@@ -25,7 +24,7 @@ LINES.guarded-ifndef= \
 	'GUARDED_IFNDEF=' \
 	'.endif'
 # expect: Parse_PushInput: file guarded-ifndef.tmp, line 1
-# expect: Parse_PushInput: file guarded-ifndef.tmp, line 1
+# expect: Skipping 'guarded-ifndef.tmp' because 'GUARDED_IFNDEF' is already set
 
 # Comments and empty lines have no influence on the multiple-inclusion guard.
 INCS+=	comments
@@ -38,7 +37,7 @@ LINES.comments= \
 	'.endif' \
 	'\# comment'
 # expect: Parse_PushInput: file comments.tmp, line 1
-# expect: Parse_PushInput: file comments.tmp, line 1
+# expect: Skipping 'comments.tmp' because 'COMMENTS' is already set
 
 # An alternative form uses the 'defined' function.  It is more verbose than
 # the canonical form.  There are other possible forms as well, such as with a
@@ -49,7 +48,7 @@ LINES.guarded-if= \
 	'GUARDED_IF=' \
 	'.endif'
 # expect: Parse_PushInput: file guarded-if.tmp, line 1
-# expect: Parse_PushInput: file guarded-if.tmp, line 1
+# expect: Skipping 'guarded-if.tmp' because 'GUARDED_IF' is already set
 
 # Triple negation is so uncommon that it's not recognized.
 INCS+=	triple-negation
@@ -69,23 +68,19 @@ LINES.varname-mismatch= \
 # expect: Parse_PushInput: file varname-mismatch.tmp, line 1
 # expect: Parse_PushInput: file varname-mismatch.tmp, line 1
 
-# The variable name in the assignment must only contain alphanumeric
-# characters and underscores, in particular, it must not be a dynamically
-# computed name.
+# The variable name in the guard condition must only contain alphanumeric
+# characters and underscores.  The guard variable is more flexible, it can be
+# set anywhere, as long as it is set when the guarded file is included next.
 INCS+=	varname-indirect
 LINES.varname-indirect= \
 	'.ifndef VARNAME_INDIRECT' \
 	'VARNAME_$${:UINDIRECT}=' \
 	'.endif'
 # expect: Parse_PushInput: file varname-indirect.tmp, line 1
-# expect: Parse_PushInput: file varname-indirect.tmp, line 1
+# expect: Skipping 'varname-indirect.tmp' because 'VARNAME_INDIRECT' is already set
 
-# The variable assignment for the guard must directly follow the conditional.
-#
-# This requirement may be dropped entirely later, as the guard variable could
-# also be undefined while reading the file or at a later point, and as long as
-# the implementation checks the guard variable before skipping the file, the
-# optimization is still valid.
+# The time at which the guard variable is set doesn't matter, as long as it is
+# set when the file is included the next time.
 INCS+=	late-assignment
 LINES.late-assignment= \
 	'.ifndef LATE_ASSIGNMENT' \
@@ -93,10 +88,10 @@ LINES.late-assignment= \
 	'LATE_ASSIGNMENT=' \
 	'.endif'
 # expect: Parse_PushInput: file late-assignment.tmp, line 1
-# expect: Parse_PushInput: file late-assignment.tmp, line 1
+# expect: Skipping 'late-assignment.tmp' because 'LATE_ASSIGNMENT' is already set
 
-# There must be no other condition between the guard condition and the
-# variable assignment.
+# The time at which the guard variable is set doesn't matter, as long as it is
+# set when the file is included the next time.
 INCS+=	two-conditions
 LINES.two-conditions= \
 	'.ifndef TWO_CONDITIONS' \
@@ -105,11 +100,11 @@ LINES.two-conditions= \
 	'.  endif' \
 	'.endif'
 # expect: Parse_PushInput: file two-conditions.tmp, line 1
-# expect: Parse_PushInput: file two-conditions.tmp, line 1
+# expect: Skipping 'two-conditions.tmp' because 'TWO_CONDITIONS' is already set
 
 # If the guard variable is already set before the file is included for the
-# first time, that file is not considered to be guarded.  It's a situation
-# that is uncommon in practice.
+# first time, the file is not considered guarded, as the makefile parser skips
+# all lines in the inactive part between the '.ifndef' and the '.endif'.
 INCS+=	already-set
 LINES.already-set= \
 	'.ifndef ALREADY_SET' \
@@ -123,18 +118,20 @@ ALREADY_SET=
 # several, even if they have the same effect.
 INCS+=	twice
 LINES.twice= \
-	'.ifndef TWICE' \
-	'TWICE=' \
+	'.ifndef TWICE_FIRST' \
+	'TWICE_FIRST=' \
 	'.endif' \
-	'.ifndef TWICE' \
-	'TWICE=' \
+	'.ifndef TWICE_SECOND' \
+	'TWICE_SECOND=' \
 	'.endif'
 # expect: Parse_PushInput: file twice.tmp, line 1
 # expect: Parse_PushInput: file twice.tmp, line 1
 
 # When multiple files use the same guard variable name, they exclude each
-# other.  It's the responsibility of the makefile authors to choose suitable
-# variable names.  Typical choices are ${PROJECT}_${DIR}_${FILE}_MK.
+# other.  It's the responsibility of the makefile authors to choose unique
+# variable names.  Typical choices are ${PROJECT}_${DIR}_${FILE}_MK.  This is
+# the same situation as in the 'already-set' test, and the file is not
+# considered guarded.
 INCS+=	reuse
 LINES.reuse= \
 	${LINES.guarded-if}
@@ -211,7 +208,8 @@ LINES.inner-if-elif-else = \
 	'.  endif' \
 	'.endif'
 # expect: Parse_PushInput: file inner-if-elif-else.tmp, line 1
-# expect: Parse_PushInput: file inner-if-elif-else.tmp, line 1
+# expect: Skipping 'inner-if-elif-else.tmp' because 'INNER_IF_ELIF_ELSE' is already set
+
 
 # Include each of the files twice.  The directive-include-guard.exp file
 # contains a single entry for the files whose multiple-inclusion guard works,

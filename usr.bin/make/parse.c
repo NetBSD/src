@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.699 2023/06/01 06:25:34 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.700 2023/06/19 12:53:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,15 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.699 2023/06/01 06:25:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.700 2023/06/19 12:53:57 rillig Exp $");
+
+/* Detects a multiple-inclusion guard in a makefile. */
+typedef enum {
+	GS_START,		/* at the beginning of the file */
+	GS_COND,		/* after the guard condition */
+	GS_DONE,		/* after the closing .endif */
+	GS_NO			/* the file is not guarded */
+} GuardState;
 
 /*
  * A file being read.
@@ -127,6 +135,9 @@ typedef struct IncludedFile {
 				 * loop; either empty or ends with '\n' */
 	char *buf_ptr;		/* next char to be read */
 	char *buf_end;		/* buf_end[-1] == '\n' */
+
+	GuardState guard;
+	char *guardVarname;
 
 	struct ForLoop *forLoop;
 } IncludedFile;
@@ -298,6 +309,8 @@ static const struct {
 };
 
 enum PosixState posix_state = PS_NOT_YET;
+
+static HashTable guards;
 
 static IncludedFile *
 GetInclude(size_t i)
@@ -1212,6 +1225,7 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 {
 	Buffer buf;
 	char *fullname;		/* full pathname of file */
+	char *guardVarname;
 	int fd;
 
 	fullname = file[0] == '/' ? bmake_strdup(file) : NULL;
@@ -1228,6 +1242,14 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 	if (fullname == NULL) {
 		if (!silent)
 			Parse_Error(PARSE_FATAL, "Could not find %s", file);
+		return;
+	}
+
+	guardVarname = HashTable_FindValue(&guards, fullname);
+	if (guardVarname != NULL
+	    && GNode_ValueDirect(SCOPE_GLOBAL, guardVarname) != NULL) {
+		DEBUG2(PARSE, "Skipping '%s' because '%s' is already set\n",
+		    fullname, guardVarname);
 		return;
 	}
 
@@ -2174,6 +2196,8 @@ Parse_PushInput(const char *name, unsigned lineno, unsigned readLines,
 	curFile->forBodyReadLines = readLines;
 	curFile->buf = buf;
 	curFile->depending = doing_depend;	/* restore this on EOF */
+	curFile->guard = forLoop == NULL ? GS_START : GS_NO;
+	curFile->guardVarname = NULL;
 	curFile->forLoop = forLoop;
 
 	if (forLoop != NULL && !For_NextIteration(forLoop, &curFile->buf))
@@ -2316,8 +2340,15 @@ ParseEOF(void)
 
 	Cond_EndFile();
 
+	if (curFile->guard == GS_DONE) {
+		HashTable_Set(&guards,
+		    curFile->name.str, curFile->guardVarname);
+		curFile->guardVarname = NULL;
+	}
+
 	FStr_Done(&curFile->name);
 	Buf_Done(&curFile->buf);
+	free(curFile->guardVarname);
 	if (curFile->forLoop != NULL)
 		ForLoop_Free(curFile->forLoop);
 	Vector_Pop(&includes);
@@ -2616,8 +2647,10 @@ static char *
 ReadHighLevelLine(void)
 {
 	char *line;
+	CondResult condResult;
 
 	for (;;) {
+		IncludedFile *curFile = CurFile();
 		line = ReadLowLevelLine(LK_NONEMPTY);
 		if (posix_state == PS_MAYBE_NEXT_LINE)
 			posix_state = PS_NOW_OR_NEVER;
@@ -2626,10 +2659,24 @@ ReadHighLevelLine(void)
 		if (line == NULL)
 			return NULL;
 
+		if (curFile->guard != GS_NO
+		    && ((curFile->guard == GS_START && line[0] != '.')
+			|| curFile->guard == GS_DONE))
+			curFile->guard = GS_NO;
 		if (line[0] != '.')
 			return line;
 
-		switch (Cond_EvalLine(line)) {
+		condResult = Cond_EvalLine(line);
+		if (curFile->guard == GS_START) {
+			char *varname;
+			if (condResult == CR_TRUE
+			    && (varname = Cond_ExtractGuard(line)) != NULL) {
+				curFile->guard = GS_COND;
+				curFile->guardVarname = varname;
+			} else
+				curFile->guard = GS_NO;
+		}
+		switch (condResult) {
 		case CR_FALSE:	/* May also mean a syntax error. */
 			if (!SkipIrrelevantBranches())
 				return NULL;
@@ -2782,6 +2829,22 @@ Parse_VarAssign(const char *line, bool finishDependencyGroup, GNode *scope)
 	Parse_Var(&var, scope);
 	free(var.varname);
 	return true;
+}
+
+void
+Parse_GuardElse(void)
+{
+	IncludedFile *curFile = CurFile();
+	if (cond_depth == curFile->condMinDepth + 1)
+		curFile->guard = GS_NO;
+}
+
+void
+Parse_GuardEndif(void)
+{
+	IncludedFile *curFile = CurFile();
+	if (cond_depth == curFile->condMinDepth && curFile->guard == GS_COND)
+		curFile->guard = GS_DONE;
 }
 
 static char *
@@ -2974,6 +3037,7 @@ Parse_Init(void)
 	sysIncPath = SearchPath_New();
 	defSysIncPath = SearchPath_New();
 	Vector_Init(&includes, sizeof(IncludedFile));
+	HashTable_Init(&guards);
 }
 
 /* Clean up the parsing module. */
@@ -2981,6 +3045,8 @@ void
 Parse_End(void)
 {
 #ifdef CLEANUP
+	HashIter hi;
+
 	Lst_DoneCall(&targCmds, free);
 	assert(targets == NULL);
 	SearchPath_Free(defSysIncPath);
@@ -2988,6 +3054,10 @@ Parse_End(void)
 	SearchPath_Free(parseIncPath);
 	assert(includes.len == 0);
 	Vector_Done(&includes);
+	HashIter_Init(&hi, &guards);
+	while (HashIter_Next(&hi) != NULL)
+		free(hi.entry->value);
+	HashTable_Done(&guards);
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.321 2023/06/16 07:12:46 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.322 2023/06/19 12:53:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -793,6 +793,7 @@ void Compat_Make(GNode *, GNode *);
 extern unsigned int cond_depth;
 CondResult Cond_EvalCondition(const char *) MAKE_ATTR_USE;
 CondResult Cond_EvalLine(const char *) MAKE_ATTR_USE;
+char *Cond_ExtractGuard(const char *) MAKE_ATTR_USE;
 void Cond_EndFile(void);
 
 /* dir.c; see also dir.h */
@@ -857,6 +858,8 @@ void Parse_PushInput(const char *, unsigned, unsigned, Buffer,
 void Parse_MainName(GNodeList *);
 int Parse_NumErrors(void) MAKE_ATTR_USE;
 unsigned int CurFile_CondMinDepth(void) MAKE_ATTR_USE;
+void Parse_GuardElse(void);
+void Parse_GuardEndif(void);
 
 
 /* suff.c */

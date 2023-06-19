@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.346 2023/06/16 07:12:46 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.347 2023/06/19 12:53:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.346 2023/06/16 07:12:46 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.347 2023/06/19 12:53:57 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -1123,6 +1123,7 @@ Cond_EvalLine(const char *line)
 
 		/* Return state for previous conditional */
 		cond_depth--;
+		Parse_GuardEndif();
 		return cond_states[cond_depth] & IFS_ACTIVE
 		    ? CR_TRUE : CR_FALSE;
 	}
@@ -1150,6 +1151,7 @@ Cond_EvalLine(const char *line)
 				Parse_Error(PARSE_FATAL, "if-less else");
 				return CR_TRUE;
 			}
+			Parse_GuardElse();
 
 			state = cond_states[cond_depth];
 			if (state == IFS_INITIAL) {
@@ -1185,6 +1187,7 @@ Cond_EvalLine(const char *line)
 			Parse_Error(PARSE_FATAL, "if-less elif");
 			return CR_TRUE;
 		}
+		Parse_GuardElse();
 		state = cond_states[cond_depth];
 		if (state & IFS_SEEN_ELSE) {
 			Parse_Error(PARSE_WARNING, "extra elif");
@@ -1232,6 +1235,57 @@ Cond_EvalLine(const char *line)
 
 	cond_states[cond_depth] = res == CR_TRUE ? IFS_ACTIVE : IFS_INITIAL;
 	return res;
+}
+
+static bool
+skip_identifier(const char **pp)
+{
+	const char *p = *pp;
+
+	if (ch_isalpha(*p) || *p == '_') {
+		while (ch_isalnum(*p) || *p == '_')
+			p++;
+		*pp = p;
+		return true;
+	}
+	return false;
+}
+
+/*
+ * Tests whether the line is a conditional that forms a multiple-inclusion
+ * guard, and if so, extracts the guard variable name.
+ */
+char *
+Cond_ExtractGuard(const char *line)
+{
+	const char *p = line, *dir, *varname;
+	size_t dir_len;
+
+	if (!skip_string(&p, "."))
+		return NULL;
+	cpp_skip_hspace(&p);
+
+	dir = p;
+	while (ch_isalpha(*p))
+		p++;
+	dir_len = (size_t)(p - dir);
+	cpp_skip_hspace(&p);
+
+	if (dir_len == 2 && memcmp(dir, "if", 2) == 0) {
+		if (!skip_string(&p, "!defined("))
+			return NULL;
+		varname = p;
+		skip_identifier(&p);
+		if (p > varname && strcmp(p, ")") == 0)
+			return bmake_strsedup(varname, p);
+	}
+	if (dir_len == 6 && memcmp(dir, "ifndef", 6) == 0) {
+		varname = p;
+		skip_identifier(&p);
+		if (p > varname && *p == '\0')
+			return bmake_strsedup(varname, p);
+	}
+	return NULL;
 }
 
 void
