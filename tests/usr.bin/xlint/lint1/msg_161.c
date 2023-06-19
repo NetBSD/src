@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_161.c,v 1.10 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_161.c,v 1.11 2023/06/19 12:33:43 rillig Exp $	*/
 # 3 "msg_161.c"
 
 // Test for message: constant in conditional context [161]
@@ -77,4 +77,8 @@ const _Bool conditions[] = {
 	/* expect+2: warning: constant in conditional context [161] */
 	/* expect+1: error: non-constant initializer [177] */
 	""[0] == '\0' && 0 == 0,
+	/* C99 6.6p3: Constant expressions shall not contain [...] comma */
+	/* expect+2: warning: expression has null effect [129] */
+	/* expect+1: error: non-constant initializer [177] */
+	(0 == 0, 1 == 0),
 };
