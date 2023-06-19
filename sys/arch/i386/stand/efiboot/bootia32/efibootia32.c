@@ -1,4 +1,4 @@
-/*	$NetBSD: efibootia32.c,v 1.7 2023/05/14 09:07:54 riastradh Exp $	*/
+/*	$NetBSD: efibootia32.c,v 1.8 2023/06/19 04:30:27 rin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -57,16 +57,15 @@ efi_md_init(void)
 	startprog32 = (void *)(u_long)addr;
 	CopyMem(startprog32, startprog32_start, startprog32_size);
 
-        addr = EFI_ALLOCATE_MAX_ADDRESS;
-        sz = EFI_SIZE_TO_PAGES(multiboot32_size);
-        status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
-            EfiLoaderData, sz, &addr);
-        if (EFI_ERROR(status))
-                panic("%s: AllocatePages() failed: %d page(s): %" PRIxMAX,
-                    __func__, sz, (uintmax_t)status);
-        multiboot32 = (void *)(u_long)addr;
-        CopyMem(multiboot32, multiboot32_start, multiboot32_size);
-
+	addr = EFI_ALLOCATE_MAX_ADDRESS;
+	sz = EFI_SIZE_TO_PAGES(multiboot32_size);
+	status = uefi_call_wrapper(BS->AllocatePages, 4, AllocateMaxAddress,
+	    EfiLoaderData, sz, &addr);
+	if (EFI_ERROR(status))
+		panic("%s: AllocatePages() failed: %d page(s): %" PRIxMAX,
+		    __func__, sz, (uintmax_t)status);
+	multiboot32 = (void *)(u_long)addr;
+	CopyMem(multiboot32, multiboot32_start, multiboot32_size);
 }
 
 /* ARGSUSED */
