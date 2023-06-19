@@ -1,19 +1,19 @@
 Parse_PushInput: file guarded-ifndef.tmp, line 1
-Parse_PushInput: file guarded-ifndef.tmp, line 1
+Skipping 'guarded-ifndef.tmp' because 'GUARDED_IFNDEF' is already set
 Parse_PushInput: file comments.tmp, line 1
-Parse_PushInput: file comments.tmp, line 1
+Skipping 'comments.tmp' because 'COMMENTS' is already set
 Parse_PushInput: file guarded-if.tmp, line 1
-Parse_PushInput: file guarded-if.tmp, line 1
+Skipping 'guarded-if.tmp' because 'GUARDED_IF' is already set
 Parse_PushInput: file triple-negation.tmp, line 1
 Parse_PushInput: file triple-negation.tmp, line 1
 Parse_PushInput: file varname-mismatch.tmp, line 1
 Parse_PushInput: file varname-mismatch.tmp, line 1
 Parse_PushInput: file varname-indirect.tmp, line 1
-Parse_PushInput: file varname-indirect.tmp, line 1
+Skipping 'varname-indirect.tmp' because 'VARNAME_INDIRECT' is already set
 Parse_PushInput: file late-assignment.tmp, line 1
-Parse_PushInput: file late-assignment.tmp, line 1
+Skipping 'late-assignment.tmp' because 'LATE_ASSIGNMENT' is already set
 Parse_PushInput: file two-conditions.tmp, line 1
-Parse_PushInput: file two-conditions.tmp, line 1
+Skipping 'two-conditions.tmp' because 'TWO_CONDITIONS' is already set
 Parse_PushInput: file already-set.tmp, line 1
 Parse_PushInput: file already-set.tmp, line 1
 Parse_PushInput: file twice.tmp, line 1
@@ -31,5 +31,5 @@ Parse_PushInput: file if-elif.tmp, line 1
 Parse_PushInput: file if-else.tmp, line 1
 Parse_PushInput: file if-else.tmp, line 1
 Parse_PushInput: file inner-if-elif-else.tmp, line 1
-Parse_PushInput: file inner-if-elif-else.tmp, line 1
+Skipping 'inner-if-elif-else.tmp' because 'INNER_IF_ELIF_ELSE' is already set
 exit status 0
