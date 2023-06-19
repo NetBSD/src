@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-headers.h,v 1.5 2023/06/19 21:41:41 christos Exp $	*/
+/*	$NetBSD: crypto-headers.h,v 1.6 2023/06/19 23:10:48 christos Exp $	*/
 
 #ifndef __crypto_header__
 #define __crypto_header__
@@ -37,6 +37,8 @@
 # define EVP_rc4() EVP_CIPHER_fetch(NULL, "rc4", "provider=legacy")
 #endif
 #endif
+
+#include <hcrypto/ui.h>
 
 #else /* !HAVE_HCRYPTO_W_OPENSSL */
 
