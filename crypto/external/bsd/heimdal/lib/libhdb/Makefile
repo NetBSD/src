@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2017/01/28 21:31:52 christos Exp $
+# $NetBSD: Makefile,v 1.5 2023/06/19 23:56:55 mrg Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -48,7 +48,8 @@ CPPFLAGS+=				\
 	-I${HEIMBASE}/include/krb5	\
 	-I${HEIMDIST}/lib/asn1		\
 	-I${HEIMDIST}/lib/krb5		\
-	-DHDB_DB_DIR=\"/var/heimdal\"	\
+	-I${HEIMDIST}/lib		\
+	-DHDB_DB_DIR=\"/var/heimdal\"
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>
