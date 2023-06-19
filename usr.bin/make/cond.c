@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.348 2023/06/19 17:30:56 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.349 2023/06/19 20:07:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.348 2023/06/19 17:30:56 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.349 2023/06/19 20:07:35 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -1259,11 +1259,10 @@ ParseVarnameGuard(const char **pp, const char **varname)
 char *
 Cond_ExtractGuard(const char *line)
 {
-	const char *p = line, *varname;
+	const char *p, *varname;
 	Substring dir;
 
-	if (!skip_string(&p, "."))
-		return NULL;
+	p = line + 1;		/* skip the '.' */
 	cpp_skip_hspace(&p);
 
 	dir.start = p;
