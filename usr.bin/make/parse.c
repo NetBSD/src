@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.700 2023/06/19 12:53:57 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.701 2023/06/19 17:30:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.700 2023/06/19 12:53:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.701 2023/06/19 17:30:56 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -1210,6 +1210,18 @@ FindInQuotPath(const char *file)
 	return fullname;
 }
 
+static bool
+SkipGuarded(const char *fullname)
+{
+	char *guard = HashTable_FindValue(&guards, fullname);
+	if (guard != NULL && GNode_ValueDirect(SCOPE_GLOBAL, guard) != NULL) {
+		DEBUG2(PARSE, "Skipping '%s' because '%s' is already set\n",
+		    fullname, guard);
+		return true;
+	}
+	return false;
+}
+
 /*
  * Handle one of the .[-ds]include directives by remembering the current file
  * and pushing the included file on the stack.  After the included file has
@@ -1225,7 +1237,6 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 {
 	Buffer buf;
 	char *fullname;		/* full pathname of file */
-	char *guardVarname;
 	int fd;
 
 	fullname = file[0] == '/' ? bmake_strdup(file) : NULL;
@@ -1245,13 +1256,8 @@ IncludeFile(const char *file, bool isSystem, bool depinc, bool silent)
 		return;
 	}
 
-	guardVarname = HashTable_FindValue(&guards, fullname);
-	if (guardVarname != NULL
-	    && GNode_ValueDirect(SCOPE_GLOBAL, guardVarname) != NULL) {
-		DEBUG2(PARSE, "Skipping '%s' because '%s' is already set\n",
-		    fullname, guardVarname);
+	if (SkipGuarded(fullname))
 		return;
-	}
 
 	if ((fd = open(fullname, O_RDONLY)) == -1) {
 		if (!silent)

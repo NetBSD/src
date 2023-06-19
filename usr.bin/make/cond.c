@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.347 2023/06/19 12:53:57 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.348 2023/06/19 17:30:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.347 2023/06/19 12:53:57 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.348 2023/06/19 17:30:56 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -1238,13 +1238,14 @@ Cond_EvalLine(const char *line)
 }
 
 static bool
-skip_identifier(const char **pp)
+ParseVarnameGuard(const char **pp, const char **varname)
 {
 	const char *p = *pp;
 
 	if (ch_isalpha(*p) || *p == '_') {
 		while (ch_isalnum(*p) || *p == '_')
 			p++;
+		*varname = *pp;
 		*pp = p;
 		return true;
 	}
@@ -1258,33 +1259,26 @@ skip_identifier(const char **pp)
 char *
 Cond_ExtractGuard(const char *line)
 {
-	const char *p = line, *dir, *varname;
-	size_t dir_len;
+	const char *p = line, *varname;
+	Substring dir;
 
 	if (!skip_string(&p, "."))
 		return NULL;
 	cpp_skip_hspace(&p);
 
-	dir = p;
+	dir.start = p;
 	while (ch_isalpha(*p))
 		p++;
-	dir_len = (size_t)(p - dir);
+	dir.end = p;
 	cpp_skip_hspace(&p);
 
-	if (dir_len == 2 && memcmp(dir, "if", 2) == 0) {
-		if (!skip_string(&p, "!defined("))
-			return NULL;
-		varname = p;
-		skip_identifier(&p);
-		if (p > varname && strcmp(p, ")") == 0)
-			return bmake_strsedup(varname, p);
-	}
-	if (dir_len == 6 && memcmp(dir, "ifndef", 6) == 0) {
-		varname = p;
-		skip_identifier(&p);
-		if (p > varname && *p == '\0')
-			return bmake_strsedup(varname, p);
-	}
+	if (Substring_Equals(dir, "if"))
+		return skip_string(&p, "!defined(")
+		    && ParseVarnameGuard(&p, &varname) && strcmp(p, ")") == 0
+		    ? bmake_strsedup(varname, p) : NULL;
+	if (Substring_Equals(dir, "ifndef"))
+		return ParseVarnameGuard(&p, &varname) && *p == '\0'
+		    ? bmake_strsedup(varname, p) : NULL;
 	return NULL;
 }
 
