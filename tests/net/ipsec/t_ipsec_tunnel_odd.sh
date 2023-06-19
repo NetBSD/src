@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipsec_tunnel_odd.sh,v 1.4 2023/06/04 22:18:47 chs Exp $
+#	$NetBSD: t_ipsec_tunnel_odd.sh,v 1.5 2023/06/19 08:28:09 knakahara Exp $
 #
 # Copyright (c) 2017 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -324,12 +324,12 @@ atf_init_test_cases()
 {
 	local algo=
 
-	for algo in $ESP_ENCRYPTION_ALGORITHMS_MINIMUM; do
+	for algo in $ESP_ENCRYPTION_ALGORITHMS; do
 		add_test_tunnel_mode v4v6 esp $algo
 		add_test_tunnel_mode v6v4 esp $algo
 	done
 
-	for algo in $AH_AUTHENTICATION_ALGORITHMS_MINIMUM; do
+	for algo in $AH_AUTHENTICATION_ALGORITHMS; do
 		add_test_tunnel_mode v4v6 ah $algo
 		add_test_tunnel_mode v6v4 ah $algo
 	done
