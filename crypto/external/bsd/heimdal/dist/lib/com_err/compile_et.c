@@ -1,4 +1,4 @@
-/*	$NetBSD: compile_et.c,v 1.1.1.3 2017/01/28 20:46:43 christos Exp $	*/
+/*	$NetBSD: compile_et.c,v 1.1.1.4 2023/06/19 21:33:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Kungliga Tekniska Högskolan
@@ -39,6 +39,7 @@
 
 #include "compile_et.h"
 #include <getarg.h>
+#include <libgen.h>
 
 #include <roken.h>
 #include <err.h>
@@ -78,7 +79,7 @@ generate_c(void)
     if(c_file == NULL)
 	return 1;
 
-    fprintf(c_file, "/* Generated from %s */\n", filename);
+    fprintf(c_file, "/* Generated from %s */\n", basename(filename));
     if(id_str)
 	fprintf(c_file, "/* %s */\n", id_str);
     fprintf(c_file, "\n");
@@ -143,7 +144,7 @@ generate_h(void)
 	if(!isalnum((unsigned char)*p))
 	    *p = '_';
 
-    fprintf(h_file, "/* Generated from %s */\n", filename);
+    fprintf(h_file, "/* Generated from %s */\n", basename(filename));
     if(id_str)
 	fprintf(h_file, "/* %s */\n", id_str);
     fprintf(h_file, "\n");

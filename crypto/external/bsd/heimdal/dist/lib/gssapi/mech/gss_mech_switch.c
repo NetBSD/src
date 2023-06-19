@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_mech_switch.c,v 1.1.1.3 2017/01/28 20:46:44 christos Exp $	*/
+/*	$NetBSD: gss_mech_switch.c,v 1.1.1.4 2023/06/19 21:33:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -139,6 +139,8 @@ _gss_string_to_oid(const char* s, gss_OID oid)
 				}
 			}
 		}
+                if (byte_count == 0)
+                    return EINVAL;
 		if (!res) {
 			res = malloc(byte_count);
 			if (!res)

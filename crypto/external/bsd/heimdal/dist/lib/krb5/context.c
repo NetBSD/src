@@ -1,4 +1,4 @@
-/*	$NetBSD: context.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: context.c,v 1.1.1.4 2023/06/19 21:33:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2010 Kungliga Tekniska Högskolan
@@ -103,7 +103,7 @@ init_context_from_config_file(krb5_context context)
     krb5_error_code ret;
     const char * tmp;
     char **s;
-    krb5_enctype *tmptypes;
+    krb5_enctype *tmptypes = NULL;
 
     INIT_FIELD(context, time, max_skew, 5 * 60, "clockskew");
     INIT_FIELD(context, time, kdc_timeout, 30, "kdc_timeout");
@@ -678,7 +678,7 @@ krb5_set_config_files(krb5_context context, char **filenames)
 	}
 	filenames++;
     }
-#if 0
+#if 1
     /* with this enabled and if there are no config files, Kerberos is
        considererd disabled */
     if(tmp == NULL)

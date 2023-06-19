@@ -1,4 +1,4 @@
-/*	$NetBSD: kdestroy.c,v 1.1.1.2 2014/04/24 12:45:28 pettai Exp $	*/
+/*	$NetBSD: kdestroy.c,v 1.1.1.3 2023/06/19 21:33:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000, 2003 Kungliga Tekniska Högskolan
@@ -92,7 +92,9 @@ main (int argc, char **argv)
     }
 
     argc -= optidx;
+#ifndef __clang_analyzer__
     argv += optidx;
+#endif
 
     if (argc != 0)
 	usage (1);

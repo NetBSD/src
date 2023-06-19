@@ -1,4 +1,4 @@
-/*	$NetBSD: digest.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $	*/
+/*	$NetBSD: digest.c,v 1.1.1.4 2023/06/19 21:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2007 Kungliga Tekniska Högskolan
@@ -377,8 +377,8 @@ _kdc_do_digest(krb5_context context,
     case choice_DigestReqInner_init: {
 	unsigned char server_nonce[16], identifier;
 
-	RAND_pseudo_bytes(&identifier, sizeof(identifier));
-	RAND_pseudo_bytes(server_nonce, sizeof(server_nonce));
+	RAND_bytes(&identifier, sizeof(identifier));
+	RAND_bytes(server_nonce, sizeof(server_nonce));
 
 	server_nonce[0] = kdc_time & 0xff;
 	server_nonce[1] = (kdc_time >> 8) & 0xff;
@@ -1340,7 +1340,7 @@ _kdc_do_digest(krb5_context context,
 
 	if (ireq.u.ntlmRequest.sessionkey) {
 	    unsigned char masterkey[MD4_DIGEST_LENGTH];
-	    EVP_CIPHER_CTX rc4;
+	    EVP_CIPHER_CTX *rc4;
 	    size_t len;
 
 	    if ((flags & NTLM_NEG_KEYEX) == 0) {
@@ -1361,13 +1361,24 @@ _kdc_do_digest(krb5_context context,
 	    }
 
 
-	    EVP_CIPHER_CTX_init(&rc4);
-	    EVP_CipherInit_ex(&rc4, EVP_rc4(), NULL, sessionkey, NULL, 1);
-	    EVP_Cipher(&rc4,
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	    EVP_CIPHER_CTX rc4s;
+	    rc4 = &rc4s;
+	    EVP_CIPHER_CTX_init(rc4);
+#else
+	    rc4 = EVP_CIPHER_CTX_new();
+#endif
+	    if (!EVP_CipherInit_ex(rc4, EVP_rc4(), NULL, sessionkey, NULL, 1))
+		krb5_set_error_message(context, EINVAL,
+				       "RC4 cipher not supported");
+	    EVP_Cipher(rc4,
 		       masterkey, ireq.u.ntlmRequest.sessionkey->data,
 		       sizeof(masterkey));
-	    EVP_CIPHER_CTX_cleanup(&rc4);
-
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	    EVP_CIPHER_CTX_cleanup(rc4);
+#else
+	    EVP_CIPHER_CTX_free(rc4);
+#endif
 	    r.u.ntlmResponse.sessionkey =
 		malloc(sizeof(*r.u.ntlmResponse.sessionkey));
 	    if (r.u.ntlmResponse.sessionkey == NULL) {
@@ -1468,6 +1479,10 @@ _kdc_do_digest(krb5_context context,
     ret = krb5_encrypt_EncryptedData(context, crypto, KRB5_KU_DIGEST_ENCRYPT,
 				     buf.data, buf.length, 0,
 				     &rep.innerRep);
+    if (ret) {
+        krb5_prepend_error_message(context, ret, "Failed to encrypt digest: ");
+        goto out;
+    }
 
     ASN1_MALLOC_ENCODE(DigestREP, reply->data, reply->length, &rep, &size, ret);
     if (ret) {

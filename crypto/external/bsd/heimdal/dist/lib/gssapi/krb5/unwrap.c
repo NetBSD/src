@@ -1,4 +1,4 @@
-/*	$NetBSD: unwrap.c,v 1.1.1.3 2017/01/28 20:46:44 christos Exp $	*/
+/*	$NetBSD: unwrap.c,v 1.1.1.4 2023/06/19 21:33:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -52,7 +52,7 @@ unwrap_des
   size_t len;
   EVP_MD_CTX *md5;
   u_char hash[16];
-  EVP_CIPHER_CTX des_ctx;
+  EVP_CIPHER_CTX *des_ctx;
   DES_key_schedule schedule;
   DES_cblock deskey;
   DES_cblock zero;
@@ -66,6 +66,8 @@ unwrap_des
 
   if (IS_DCE_STYLE(context_handle)) {
      token_len = 22 + 8 + 15; /* 45 */
+     if (input_message_buffer->length < token_len)
+	  return GSS_S_BAD_MECH;
   } else {
      token_len = input_message_buffer->length;
   }
@@ -77,6 +79,11 @@ unwrap_des
 				   GSS_KRB5_MECHANISM);
   if (ret)
       return ret;
+
+  len = (p - (u_char *)input_message_buffer->value)
+      + 22 + 8;
+  if (input_message_buffer->length < len)
+      return GSS_S_BAD_MECH;
 
   if (memcmp (p, "\x00\x00", 2) != 0)
     return GSS_S_BAD_SIG;
@@ -106,10 +113,23 @@ unwrap_des
 	  deskey[i] ^= 0xf0;
 
 
-      EVP_CIPHER_CTX_init(&des_ctx);
-      EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, deskey, zero, 0);
-      EVP_Cipher(&des_ctx, p, p, input_message_buffer->length - len);
-      EVP_CIPHER_CTX_cleanup(&des_ctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+      EVP_CIPHER_CTX des_ctxs;
+      des_ctx = &des_ctxs;
+      EVP_CIPHER_CTX_init(des_ctx);
+#else
+      des_ctx = EVP_CIPHER_CTX_new();
+#endif
+      if (!EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, deskey, zero, 0)) {
+	*minor_status = EINVAL;
+	return GSS_S_FAILURE;
+      }
+      EVP_Cipher(des_ctx, p, p, input_message_buffer->length - len);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+      EVP_CIPHER_CTX_cleanup(des_ctx);
+#else
+      EVP_CIPHER_CTX_free(des_ctx);
+#endif
 
       memset (&schedule, 0, sizeof(schedule));
   }
@@ -119,7 +139,7 @@ unwrap_des
   } else {
     /* check pad */
     ret = _gssapi_verify_pad(input_message_buffer,
-			     input_message_buffer->length - len,
+			     input_message_buffer->length - len - 8,
 			     &padlength);
     if (ret)
         return ret;
@@ -146,10 +166,24 @@ unwrap_des
 
   p -= 16;
 
-  EVP_CIPHER_CTX_init(&des_ctx);
-  EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash, 0);
-  EVP_Cipher(&des_ctx, p, p, 8);
-  EVP_CIPHER_CTX_cleanup(&des_ctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+  EVP_CIPHER_CTX des_ctxs;
+  des_ctx = &des_ctxs;
+  EVP_CIPHER_CTX_init(des_ctx);
+#else
+  des_ctx = EVP_CIPHER_CTX_new();
+#endif
+  if (!EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash,
+      0)) {
+    *minor_status = EINVAL;
+    return GSS_S_FAILURE;
+  }
+  EVP_Cipher(des_ctx, p, p, 8);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+  EVP_CIPHER_CTX_cleanup(des_ctx);
+#else
+  EVP_CIPHER_CTX_free(des_ctx);
+#endif
 
   memset (deskey, 0, sizeof(deskey));
   memset (&schedule, 0, sizeof(schedule));
@@ -182,9 +216,10 @@ unwrap_des
   output_message_buffer->value  = malloc(output_message_buffer->length);
   if(output_message_buffer->length != 0 && output_message_buffer->value == NULL)
       return GSS_S_FAILURE;
-  memcpy (output_message_buffer->value,
-	  p + 24,
-	  output_message_buffer->length);
+  if (output_message_buffer->value != NULL)
+      memcpy (output_message_buffer->value,
+	      p + 24,
+	      output_message_buffer->length);
   return GSS_S_COMPLETE;
 }
 #endif
@@ -217,6 +252,8 @@ unwrap_des3
 
   if (IS_DCE_STYLE(context_handle)) {
      token_len = 34 + 8 + 15; /* 57 */
+     if (input_message_buffer->length < token_len)
+	  return GSS_S_BAD_MECH;
   } else {
      token_len = input_message_buffer->length;
   }
@@ -229,7 +266,12 @@ unwrap_des3
   if (ret)
       return ret;
 
-  if (memcmp (p, "\x04\x00", 2) != 0) /* HMAC SHA1 DES3_KD */
+  len = (p - (u_char *)input_message_buffer->value)
+      + 34 + 8;
+  if (input_message_buffer->length < len)
+      return GSS_S_BAD_MECH;
+
+  if (ct_memcmp (p, "\x04\x00", 2) != 0) /* HMAC SHA1 DES3_KD */
     return GSS_S_BAD_SIG;
   p += 2;
   if (ct_memcmp (p, "\x02\x00", 2) == 0) {
@@ -276,7 +318,7 @@ unwrap_des3
   } else {
     /* check pad */
     ret = _gssapi_verify_pad(input_message_buffer,
-			     input_message_buffer->length - len,
+			     input_message_buffer->length - len - 8,
 			     &padlength);
     if (ret)
         return ret;
@@ -376,9 +418,10 @@ unwrap_des3
   output_message_buffer->value  = malloc(output_message_buffer->length);
   if(output_message_buffer->length != 0 && output_message_buffer->value == NULL)
       return GSS_S_FAILURE;
-  memcpy (output_message_buffer->value,
-	  p + 36,
-	  output_message_buffer->length);
+  if (output_message_buffer->value != NULL)
+      memcpy (output_message_buffer->value,
+	      p + 36,
+	      output_message_buffer->length);
   return GSS_S_COMPLETE;
 }
 

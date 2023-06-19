@@ -1,4 +1,4 @@
-/*	$NetBSD: default_config.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $	*/
+/*	$NetBSD: default_config.c,v 1.1.1.4 2023/06/19 21:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -61,6 +61,7 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
     c->check_ticket_addresses = TRUE;
     c->allow_null_ticket_addresses = TRUE;
     c->allow_anonymous = FALSE;
+    c->historical_anon_realm = FALSE;
     c->strict_nametypes = FALSE;
     c->trpolicy = TRPOLICY_ALWAYS_CHECK;
     c->enable_pkinit = FALSE;
@@ -165,6 +166,12 @@ krb5_kdc_get_config(krb5_context context, krb5_kdc_configuration **config)
 				     c->allow_anonymous,
 				     "kdc",
 				     "allow-anonymous", NULL);
+
+    c->historical_anon_realm =
+	krb5_config_get_bool_default(context, NULL,
+				     c->historical_anon_realm,
+				     "kdc",
+				     "historical_anon_realm", NULL);
 
     c->strict_nametypes =
 	krb5_config_get_bool_default(context, NULL,

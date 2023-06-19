@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sec_context.c,v 1.1.1.4 2019/12/15 22:45:44 christos Exp $	*/
+/*	$NetBSD: init_sec_context.c,v 1.1.1.5 2023/06/19 21:33:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -58,6 +58,8 @@ from_file(const char *fn, const char *target_domain,
 	d = strtok_r(buf, ":", &str);
         free(*domainp);
 	*domainp = NULL;
+        if (!d)
+            continue;
 	if (d && target_domain != NULL && strcasecmp(target_domain, d) != 0)
 	    continue;
         *domainp = strdup(d);

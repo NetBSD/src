@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit.c,v 1.1.1.4 2019/12/15 22:45:39 christos Exp $	*/
+/*	$NetBSD: pkinit.c,v 1.1.1.5 2023/06/19 21:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2016 Kungliga Tekniska Högskolan
@@ -243,8 +243,6 @@ generate_dh_keyblock(krb5_context context,
 	    memmove(dh_gen_key + size, dh_gen_key, dh_gen_keylen);
 	    memset(dh_gen_key, 0, size);
 	}
-
-	ret = 0;
     } else if (client_params->keyex == USE_ECDH) {
 	if (client_params->u.ecdh.public_key == NULL) {
 	    ret = KRB5KRB_ERR_GENERIC;
@@ -346,19 +344,29 @@ get_dh_param(krb5_context context,
 	goto out;
     }
     ret = KRB5_BADMSGTYPE;
-    dh->p = integer_to_BN(context, "DH prime", &dhparam.p);
-    if (dh->p == NULL)
+    BIGNUM *p, *q, *g;
+    p = integer_to_BN(context, "DH prime", &dhparam.p);
+    if (p == NULL)
 	goto out;
-    dh->g = integer_to_BN(context, "DH base", &dhparam.g);
-    if (dh->g == NULL)
+    g = integer_to_BN(context, "DH base", &dhparam.g);
+    if (g == NULL)
 	goto out;
 
     if (dhparam.q) {
-	dh->q = integer_to_BN(context, "DH p-1 factor", dhparam.q);
-	if (dh->g == NULL)
+	q = integer_to_BN(context, "DH p-1 factor", dhparam.q);
+	if (q == NULL)
 	    goto out;
-    }
+    } else
+	q = NULL;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    dh->p = p;
+    if (q)
+	    dh->q = q;
+    dh->g = g;
+#else
+    DH_set0_pqg(dh, p, q, g);
+#endif
     {
 	heim_integer glue;
 	size_t size;
@@ -625,7 +633,8 @@ _kdc_pk_rd_padata(krb5_context context,
 	hx509_certs signer_certs;
 	int flags = HX509_CMS_VS_ALLOW_DATA_OID_MISMATCH; /* BTMM */
 
-	if (_kdc_is_anonymous(context, client->entry.principal))
+	if (_kdc_is_anonymous(context, client->entry.principal)
+	    || (config->historical_anon_realm && _kdc_is_anon_request(req)))
 	    flags |= HX509_CMS_VS_ALLOW_ZERO_SIGNER;
 
 	ret = hx509_cms_verify_signed(context->hx509ctx,
@@ -803,7 +812,7 @@ out:
  */
 
 static krb5_error_code
-BN_to_integer(krb5_context context, BIGNUM *bn, heim_integer *integer)
+BN_to_integer(krb5_context context, const BIGNUM *bn, heim_integer *integer)
 {
     integer->length = BN_num_bytes(bn);
     integer->data = malloc(integer->length);
@@ -1022,7 +1031,13 @@ pk_mk_pa_reply_dh(krb5_context context,
 	DH *kdc_dh = cp->u.dh.key;
 	heim_integer i;
 
-	ret = BN_to_integer(context, kdc_dh->pub_key, &i);
+	const BIGNUM *pub_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	pub_key = kdc_dh->pub_key;
+#else
+	DH_get0_key(kdc_dh, &pub_key, NULL);
+#endif
+	ret = BN_to_integer(context, pub_key, &i);
 	if (ret)
 	    return ret;
 
@@ -1678,7 +1693,8 @@ _kdc_pk_check_client(krb5_context context,
     size_t i;
 
     if (cp->cert == NULL) {
-	if (!_kdc_is_anonymous(context, client->entry.principal))
+	if (!_kdc_is_anonymous(context, client->entry.principal)
+	    && !config->historical_anon_realm)
 	    return KRB5KDC_ERR_BADOPTION;
 
 	*subject_name = strdup("<unauthenticated anonymous client>");

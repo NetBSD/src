@@ -1,4 +1,4 @@
-/*	$NetBSD: pkinit.c,v 1.1.1.4 2019/12/15 22:45:42 christos Exp $	*/
+/*	$NetBSD: pkinit.c,v 1.1.1.5 2023/06/19 21:33:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2016 Kungliga Tekniska Högskolan
@@ -82,7 +82,7 @@ _krb5_pk_cert_free(struct krb5_pk_cert *cert)
 }
 
 static krb5_error_code
-BN_to_integer(krb5_context context, BIGNUM *bn, heim_integer *integer)
+BN_to_integer(krb5_context context, const BIGNUM *bn, heim_integer *integer)
 {
     integer->length = BN_num_bytes(bn);
     integer->data = malloc(integer->length);
@@ -136,15 +136,22 @@ select_dh_group(krb5_context context, DH *dh, unsigned long bits,
 	m = moduli[i];
     }
 
-    dh->p = integer_to_BN(context, "p", &m->p);
-    if (dh->p == NULL)
+    BIGNUM *p = integer_to_BN(context, "p", &m->p);
+    if (p == NULL)
 	return ENOMEM;
-    dh->g = integer_to_BN(context, "g", &m->g);
-    if (dh->g == NULL)
+    BIGNUM *g = integer_to_BN(context, "g", &m->g);
+    if (g == NULL)
 	return ENOMEM;
-    dh->q = integer_to_BN(context, "q", &m->q);
-    if (dh->q == NULL)
+    BIGNUM *q = integer_to_BN(context, "q", &m->q);
+    if (q == NULL)
 	return ENOMEM;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    dh->p = p;
+    dh->q = q;
+    dh->g = g;
+#else
+    DH_set0_pqg(dh, p, q, g);
+#endif
 
     return 0;
 }
@@ -455,6 +462,7 @@ build_auth_pack(krb5_context context,
 
 	if (ctx->keyex == USE_DH) {
 	    DH *dh = ctx->u.dh;
+	    const BIGNUM *p, *q, *g;
 	    DomainParameters dp;
 	    heim_integer dh_pub_key;
 
@@ -464,13 +472,21 @@ build_auth_pack(krb5_context context,
 		return ret;
 
 	    memset(&dp, 0, sizeof(dp));
+		
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	    p = dh->p;
+	    q = dh->q;
+	    g = dh->g;
+#else
+	    DH_get0_pqg(dh, &p, &q, &g);
+#endif
 
-	    ret = BN_to_integer(context, dh->p, &dp.p);
+	    ret = BN_to_integer(context, p, &dp.p);
 	    if (ret) {
 		free_DomainParameters(&dp);
 		return ret;
 	    }
-	    ret = BN_to_integer(context, dh->g, &dp.g);
+	    ret = BN_to_integer(context, g, &dp.g);
 	    if (ret) {
 		free_DomainParameters(&dp);
 		return ret;
@@ -480,7 +496,7 @@ build_auth_pack(krb5_context context,
 		free_DomainParameters(&dp);
 		return ENOMEM;
 	    }
-	    ret = BN_to_integer(context, dh->q, dp.q);
+	    ret = BN_to_integer(context, q, dp.q);
 	    if (ret) {
 		free_DomainParameters(&dp);
 		return ret;
@@ -505,7 +521,13 @@ build_auth_pack(krb5_context context,
 	    if (size != a->clientPublicValue->algorithm.parameters->length)
 		krb5_abortx(context, "Internal ASN1 encoder error");
 
-	    ret = BN_to_integer(context, dh->pub_key, &dh_pub_key);
+	    const BIGNUM *pub_key;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	    pub_key = dh->pub_key;
+#else
+	    DH_get0_key(dh, &pub_key, NULL);
+#endif
+	    ret = BN_to_integer(context, pub_key, &dh_pub_key);
 	    if (ret)
 		return ret;
 

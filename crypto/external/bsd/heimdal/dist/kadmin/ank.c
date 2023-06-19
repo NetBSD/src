@@ -1,4 +1,4 @@
-/*	$NetBSD: ank.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $	*/
+/*	$NetBSD: ank.c,v 1.1.1.4 2023/06/19 21:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2006 Kungliga Tekniska Högskolan
@@ -139,7 +139,9 @@ add_one_principal (const char *name,
 	    krb5_set_error_message(context, ret, "out of memory");
 	    goto out;
 	}
-	ret = UI_UTIL_read_pw_string (pwbuf, sizeof(pwbuf), prompt, 1);
+	ret = UI_UTIL_read_pw_string (pwbuf, sizeof(pwbuf), prompt,
+				      UI_UTIL_FLAG_VERIFY |
+				      UI_UTIL_FLAG_VERIFY_SILENT);
 	free (prompt);
 	if (ret) {
 	    ret = KRB5_LIBOS_BADPWDMATCH;

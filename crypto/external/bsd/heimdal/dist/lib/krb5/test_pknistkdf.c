@@ -1,4 +1,4 @@
-/*	$NetBSD: test_pknistkdf.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: test_pknistkdf.c,v 1.1.1.4 2023/06/19 21:33:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Kungliga Tekniska Högskolan

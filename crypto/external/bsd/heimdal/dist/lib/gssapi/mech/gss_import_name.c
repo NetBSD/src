@@ -1,4 +1,4 @@
-/*	$NetBSD: gss_import_name.c,v 1.1.1.3 2017/01/28 20:46:44 christos Exp $	*/
+/*	$NetBSD: gss_import_name.c,v 1.1.1.4 2023/06/19 21:33:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Doug Rabson
@@ -115,7 +115,7 @@ _gss_import_export_name(OM_uint32 *minor_status,
 	len -= t;
 
 	t = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
-	p += 4;
+	/* p += 4; */
 	len -= 4;
 
 	if (!composite && len != t)

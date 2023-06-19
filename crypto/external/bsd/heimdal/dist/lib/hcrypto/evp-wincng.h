@@ -1,4 +1,4 @@
-/*	$NetBSD: evp-wincng.h,v 1.1.1.1 2017/01/28 20:46:45 christos Exp $	*/
+/*	$NetBSD: evp-wincng.h,v 1.1.1.2 2023/06/19 21:33:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2015, Secure Endpoints Inc.
@@ -36,7 +36,6 @@
 #define HEIM_EVP_WINCNG_H 1
 
 /* symbol renaming */
-#define EVP_wincng_md2() EVP_wincng_md2()
 #define EVP_wincng_md4() EVP_wincng_md4()
 #define EVP_wincng_md5() EVP_wincng_md5()
 #define EVP_wincng_sha1() EVP_wincng_sha1()
@@ -66,7 +65,6 @@
 
 HC_CPP_BEGIN
 
-const EVP_MD * hc_EVP_wincng_md2(void);
 const EVP_MD * hc_EVP_wincng_md4(void);
 const EVP_MD * hc_EVP_wincng_md5(void);
 const EVP_MD * hc_EVP_wincng_sha1(void);

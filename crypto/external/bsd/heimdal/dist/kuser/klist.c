@@ -1,4 +1,4 @@
-/*	$NetBSD: klist.c,v 1.1.1.4 2019/12/15 22:45:39 christos Exp $	*/
+/*	$NetBSD: klist.c,v 1.1.1.5 2023/06/19 21:33:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2008 Kungliga Tekniska Högskolan

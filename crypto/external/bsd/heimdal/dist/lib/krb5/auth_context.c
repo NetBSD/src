@@ -1,4 +1,4 @@
-/*	$NetBSD: auth_context.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: auth_context.c,v 1.1.1.4 2023/06/19 21:33:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan

@@ -1,4 +1,4 @@
-/*	$NetBSD: keytab.c,v 1.1.1.3 2017/01/28 20:46:43 christos Exp $	*/
+/*	$NetBSD: keytab.c,v 1.1.1.4 2023/06/19 21:33:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2002 Kungliga Tekniska Högskolan
@@ -161,8 +161,12 @@ find_db (krb5_context context,
 	}
     }
     hdb_free_dbinfo(context, &head);
-    if (*dbname == NULL)
-	*dbname = strdup(HDB_DEFAULT_DB);
+    if (*dbname == NULL &&
+	(*dbname = strdup(HDB_DEFAULT_DB)) == NULL) {
+        free(*mkey);
+        *mkey = NULL;
+        return krb5_enomem(context);
+    }
     return 0;
 }
 

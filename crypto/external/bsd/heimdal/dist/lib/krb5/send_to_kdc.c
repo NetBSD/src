@@ -1,4 +1,4 @@
-/*	$NetBSD: send_to_kdc.c,v 1.1.1.4 2019/12/15 22:45:43 christos Exp $	*/
+/*	$NetBSD: send_to_kdc.c,v 1.1.1.5 2023/06/19 21:33:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -1163,7 +1163,7 @@ krb5_sendto_context(krb5_context context,
 		break;
 	    }
 	    action = KRB5_SENDTO_KRBHST;
-	    /* FALLTHOUGH */
+	    /* FALLTHROUGH */
 	case KRB5_SENDTO_KRBHST:
 	    if (ctx->krbhst == NULL) {
 		ret = krb5_krbhst_init_flags(context, realm, type,
@@ -1181,7 +1181,7 @@ krb5_sendto_context(krb5_context context,
 		handle = heim_retain(ctx->krbhst);
 	    }
 	    action = KRB5_SENDTO_TIMEOUT;
-	    /* FALLTHOUGH */
+	    /* FALLTHROUGH */
 	case KRB5_SENDTO_TIMEOUT:
 
 	    /*
@@ -1282,17 +1282,16 @@ out:
     }
 
     _krb5_debug(context, 1,
-		"%s %s done: %d hosts: %lu packets: %lu"
-		" wc: %lld.%06lu nr: %lld.%06lu kh: %lld.%06lu tid: %08x",
+		"%s %s done: %d hosts %lu packets %lu:"
+		" wc: %jd.%06lu nr: %jd.%06lu kh: %jd.%06lu tid: %08x",
 		__func__, realm, ret,
 		ctx->stats.num_hosts, ctx->stats.sent_packets,
-		(long long)stop_time.tv_sec,
+		(intmax_t)stop_time.tv_sec,
 		(unsigned long)stop_time.tv_usec,
-		(long long)ctx->stats.name_resolution.tv_sec,
+		(intmax_t)ctx->stats.name_resolution.tv_sec,
 		(unsigned long)ctx->stats.name_resolution.tv_usec,
-		(long long)ctx->stats.krbhst.tv_sec,
+		(intmax_t)ctx->stats.krbhst.tv_sec,
 		(unsigned long)ctx->stats.krbhst.tv_usec, ctx->stid);
-
 
     if (freectx)
 	krb5_sendto_ctx_free(context, ctx);

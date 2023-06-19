@@ -1,4 +1,4 @@
-/*	$NetBSD: transited.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: transited.c,v 1.1.1.4 2023/06/19 21:33:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001, 2003 Kungliga Tekniska Högskolan
@@ -283,6 +283,7 @@ decode_realms(krb5_context context,
 	    r = make_realm(tmp);
 	    if(r == NULL){
 		free_realms(*realms);
+                *realms = NULL;
 		return krb5_enomem(context);
 	    }
 	    *realms = append_realm(*realms, r);
@@ -291,7 +292,8 @@ decode_realms(krb5_context context,
     }
     tmp = malloc(tr + i - start + 1);
     if(tmp == NULL){
-	free(*realms);
+        free_realms(*realms);
+        *realms = NULL;
 	return krb5_enomem(context);
     }
     memcpy(tmp, start, tr + i - start);
@@ -299,6 +301,7 @@ decode_realms(krb5_context context,
     r = make_realm(tmp);
     if(r == NULL){
 	free_realms(*realms);
+        *realms = NULL;
 	return krb5_enomem(context);
     }
     *realms = append_realm(*realms, r);

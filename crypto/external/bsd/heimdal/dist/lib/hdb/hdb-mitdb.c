@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb-mitdb.c,v 1.1.1.4 2019/12/15 22:45:41 christos Exp $	*/
+/*	$NetBSD: hdb-mitdb.c,v 1.1.1.5 2023/06/19 21:33:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -1040,6 +1040,9 @@ mdb_remove(krb5_context context, HDB *db,
     krb5_data key;
     krb5_data value = { 0, 0 };
 
+    code = mdb_principal2key(context, principal, &key);
+    if (code)
+        return code;
     if ((flags & HDB_F_PRECHECK)) {
         code = db->hdb__get(context, db, key, &value);
         krb5_data_free(&key);
@@ -1050,7 +1053,6 @@ mdb_remove(krb5_context context, HDB *db,
         return code;
     }
 
-    mdb_principal2key(context, principal, &key);
     code = db->hdb__del(context, db, key);
     krb5_data_free(&key);
     return code;
@@ -1118,7 +1120,7 @@ krb5_error_code
 hdb_mitdb_create(krb5_context context, HDB **db,
 		 const char *filename)
 {
-    MITDB **mdb (MITDB **)db;
+    MITDB **mdb = (MITDB **)db;
     *mdb = calloc(1, sizeof(**mdb));
     if (*mdb == NULL) {
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");

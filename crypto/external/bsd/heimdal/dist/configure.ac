@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_REVISION(Revision)
+AC_REVISION($Revision: 1.1.1.5 $)
 AC_PREREQ(2.62)
 test -z "$CFLAGS" && CFLAGS="-g"
-AC_INIT([Heimdal],[7.7.0],[https://github.com/heimdal/heimdal/issues])
+AC_INIT([Heimdal],[7.8.0],[https://github.com/heimdal/heimdal/issues])
 AC_CONFIG_SRCDIR([kuser/kinit.c])
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_MACRO_DIR([cf])
@@ -18,6 +18,8 @@ dnl Checks for programs.
 AC_PROG_CC
 AM_PROG_CC_C_O
 AC_PROG_CPP
+AM_PATH_PYTHON
+AC_CHECK_PROG(CLANG_FORMAT, clang-format, [clang-format], [no])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 
@@ -289,6 +291,12 @@ AC_SUBST(ENABLE_AFS_STRING_TO_KEY)dnl
 
 rk_CHECK_MAN
 
+AC_CHECK_HEADERS([\
+	readline/readline.h	\
+	readline.h		\
+	editline/readline.h	\
+])
+
 rk_TEST_PACKAGE(readline,
 [#include <stdio.h>
 #if defined(HAVE_READLINE_READLINE_H)
@@ -345,6 +353,7 @@ AC_CHECK_HEADERS([\
 	maillock.h				\
 	netgroup.h				\
 	netinet/in6_machtypes.h			\
+	netinet/tcp.h				\
 	pthread.h				\
 	pty.h					\
 	sac.h					\
@@ -510,6 +519,7 @@ KRB_CAPABILITIES
 rk_DLADDR
 
 AC_CHECK_GETPWNAM_R_POSIX
+AC_CHECK_GETPWUID_R_POSIX
 
 dnl detect doors on solaris
 if test "$enable_pthread_support" != no; then

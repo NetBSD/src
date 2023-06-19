@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.3 2017/01/28 20:46:43 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.1.1.4 2023/06/19 21:33:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2005 Kungliga Tekniska Högskolan
@@ -34,7 +34,7 @@
  */
 
 #include "gen_locl.h"
-#include <krb5/getarg.h>
+#include "getarg.h"
 #include "lex.h"
 
 extern FILE *yyin;

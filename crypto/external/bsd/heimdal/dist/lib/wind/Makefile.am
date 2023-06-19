@@ -89,8 +89,6 @@ idn_lookup_SOURCES = idn-lookup.c
 
 LDADD = libwind.la $(LIB_roken)
 
-PYTHON = python
-
 if !MAINTAINER_MODE
 skip_python = test -f $@ ||
 endif

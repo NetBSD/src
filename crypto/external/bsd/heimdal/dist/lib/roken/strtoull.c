@@ -1,4 +1,4 @@
-/*	$NetBSD: strtoull.c,v 1.1.1.1 2017/01/28 20:46:53 christos Exp $	*/
+/*	$NetBSD: strtoull.c,v 1.1.1.2 2023/06/19 21:33:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -39,6 +39,8 @@
 #include <string.h>
 
 #include <krb5/roken.h>
+
+#ifndef HAVE_STRTOULL
 
 /* #include <sys/cdefs.h> */
 
@@ -126,4 +128,4 @@ noconv:
 	*endptr = (char *)(any ? s - 1 : nptr);
     return (acc);
 }
-
+#endif /* !HAVE_STRTOULL */

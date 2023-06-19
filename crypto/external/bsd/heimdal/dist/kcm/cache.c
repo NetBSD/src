@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.1.1.4 2019/12/15 22:45:39 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.1.1.5 2023/06/19 21:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -107,7 +107,7 @@ kcm_ccache_resolve_by_uuid(krb5_context context,
     for (p = ccache_head; p != NULL; p = p->next) {
 	if ((p->flags & KCM_FLAGS_VALID) == 0)
 	    continue;
-	if (memcmp(p->uuid, uuid, sizeof(*uuid)) == 0) {
+	if (memcmp(p->uuid, uuid, sizeof(kcmuuid_t)) == 0) {
 	    ret = 0;
 	    break;
 	}
@@ -324,6 +324,7 @@ kcm_ccache_alloc(krb5_context context,
     slot->key.keytab = NULL;
     slot->tkt_life = 0;
     slot->renew_life = 0;
+    slot->kdc_offset = 0;
 
     if (new_slot)
 	ccache_head = slot;

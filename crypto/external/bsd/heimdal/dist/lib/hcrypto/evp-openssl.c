@@ -1,4 +1,4 @@
-/*	$NetBSD: evp-openssl.c,v 1.1.1.1 2017/01/28 20:46:45 christos Exp $	*/
+/*	$NetBSD: evp-openssl.c,v 1.1.1.2 2023/06/19 21:33:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2016, Kungliga Tekniska Högskolan
@@ -581,15 +581,6 @@ OSSL_CIPHER_ALGORITHM(rc4,
 OSSL_CIPHER_ALGORITHM(rc4_40,
                       hc_EVP_CIPH_STREAM_CIPHER |
                       hc_EVP_CIPH_VARIABLE_LENGTH)
-
-/**
- * The MD2 hash algorithm (OpenSSL provider)
- *
- * @return the MD2 EVP_MD pointer.
- *
- * @ingroup hcrypto_evp
- */
-OSSL_MD_ALGORITHM(md2)
 
 /**
  * The MD4 hash algorithm (OpenSSL provider)

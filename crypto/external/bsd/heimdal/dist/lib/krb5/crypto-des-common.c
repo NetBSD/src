@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-des-common.c,v 1.1.1.3 2019/12/15 22:45:43 christos Exp $	*/
+/*	$NetBSD: crypto-des-common.c,v 1.1.1.4 2023/06/19 21:33:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -79,9 +79,18 @@ _krb5_des_checksum(krb5_context context,
     EVP_DigestUpdate(m, data, len);
     EVP_DigestFinal_ex (m, p + 8, NULL);
     EVP_MD_CTX_destroy(m);
-    memset_s(&ivec, sizeof(ivec), 0, sizeof(ivec));
-    EVP_CipherInit_ex(&ctx->ectx, NULL, NULL, NULL, (void *)&ivec, -1);
-    EVP_Cipher(&ctx->ectx, p, p, 24);
+    memset_s (&ivec, sizeof(ivec), 0, sizeof(ivec));
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    ctx->ectx = malloc(sizeof(*ctx->ectx));
+    EVP_CIPHER_CTX_init(ctx->ectx);
+#else
+    ctx->ectx = EVP_CIPHER_CTX_new();
+#endif
+
+    if (!EVP_CipherInit_ex(ctx->ectx, NULL, NULL, NULL, (void *)&ivec, -1))
+	krb5_abortx(context, "can't initialize cipher");
+    EVP_Cipher(ctx->ectx, p, p, 24);
 
     return 0;
 }
@@ -105,9 +114,16 @@ _krb5_des_verify(krb5_context context,
     if (m == NULL)
 	return krb5_enomem(context);
 
-    memset_s(&ivec, sizeof(ivec), 0, sizeof(ivec));
-    EVP_CipherInit_ex(&ctx->dctx, NULL, NULL, NULL, (void *)&ivec, -1);
-    EVP_Cipher(&ctx->dctx, tmp, C->checksum.data, 24);
+    memset_s (&ivec, sizeof(ivec), 0, sizeof(ivec));
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+    ctx->dctx = malloc(sizeof(*ctx->dctx));
+    EVP_CIPHER_CTX_init(ctx->dctx);
+#else
+    ctx->dctx = EVP_CIPHER_CTX_new();
+#endif
+    if (!EVP_CipherInit_ex(ctx->dctx, NULL, NULL, NULL, (void *)&ivec, -1))
+	krb5_abortx(context, "can't initialize cipher");
+    EVP_Cipher(ctx->dctx, tmp, C->checksum.data, 24);
 
     EVP_DigestInit_ex(m, evp_md, NULL);
     EVP_DigestUpdate(m, tmp, 8); /* confounder */
@@ -118,8 +134,8 @@ _krb5_des_verify(krb5_context context,
 	krb5_clear_error_message (context);
 	ret = KRB5KRB_AP_ERR_BAD_INTEGRITY;
     }
-    memset_s(tmp, sizeof(tmp), 0, sizeof(tmp));
-    memset_s(res, sizeof(res), 0, sizeof(res));
+    memset_s (tmp, sizeof(tmp), 0, sizeof(tmp));
+    memset_s (res, sizeof(res), 0, sizeof(res));
     return ret;
 }
 

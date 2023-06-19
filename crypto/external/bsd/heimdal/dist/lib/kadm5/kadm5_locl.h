@@ -1,4 +1,4 @@
-/*	$NetBSD: kadm5_locl.h,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: kadm5_locl.h,v 1.1.1.4 2023/06/19 21:33:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Kungliga Tekniska Högskolan
@@ -69,6 +69,12 @@
 #ifdef HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
 #endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_TCP_H
+#include <netinet/tcp.h>
+#endif
 #ifdef HAVE_SYS_UN_H
 #include <sys/un.h>
 #endif
@@ -76,6 +82,7 @@
 #include <netdb.h>
 #endif
 #include <fnmatch.h>
+#include <krb5_locl.h>
 #include "admin.h"
 #include "kadm5_err.h"
 #include <krb5/hdb.h>

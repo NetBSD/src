@@ -1,7 +1,7 @@
-/*	$NetBSD: bidi_table.h,v 1.1.1.1 2019/12/15 22:45:42 christos Exp $	*/
+/*	$NetBSD: bidi_table.h,v 1.1.1.2 2023/06/19 21:33:23 christos Exp $	*/
 
 /* ./bidi_table.h */
-/* Automatically generated at 2019-06-07T02:26:41.396770 */
+/* Automatically generated at 2022-11-15T13:59:51.646310 */
 
 #ifndef BIDI_TABLE_H
 #define BIDI_TABLE_H 1

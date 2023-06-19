@@ -619,6 +619,9 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define to 1 if you have the <netinet/in.h> header file. */
 /* #define HAVE_NETINET_IN_H 1 */
 
+/* Define to 1 if you have the <netinet/tcp.h> header file. */
+/* #define HAVE_NETINET_TCP_H 1 */
+
 /* Define to 1 if you have the <netinet/in_systm.h> header file. */
 /* #define HAVE_NETINET_IN_SYSTM_H 1 */
 
@@ -887,6 +890,17 @@ static const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define if you have the function `strtok_r'. */
 /* #define HAVE_STRTOK_R 1 */
+
+#if defined(__has_include)
+# if __has_include(<corecrt.h>)
+#  define HAVE_UCRT 1
+# endif
+#endif
+
+#ifdef HAVE_UCRT
+#define HAVE_STRTOLL 1
+#define HAVE_STRTOULL 1
+#endif
 
 /* Define to 1 if the system has the type `struct addrinfo'. */
 #define HAVE_STRUCT_ADDRINFO 1

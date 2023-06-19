@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_mic.c,v 1.1.1.4 2019/12/15 22:45:45 christos Exp $	*/
+/*	$NetBSD: verify_mic.c,v 1.1.1.5 2023/06/19 21:33:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -53,7 +53,7 @@ verify_mic_des
   EVP_MD_CTX *md5;
   u_char hash[16], *seq;
   DES_key_schedule schedule;
-  EVP_CIPHER_CTX des_ctx;
+  EVP_CIPHER_CTX *des_ctx;
   DES_cblock zero;
   DES_cblock deskey;
   uint32_t seq_number;
@@ -102,10 +102,24 @@ verify_mic_des
 
   p -= 16;
 
-  EVP_CIPHER_CTX_init(&des_ctx);
-  EVP_CipherInit_ex(&des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data, hash, 0);
-  EVP_Cipher(&des_ctx, p, p, 8);
-  EVP_CIPHER_CTX_cleanup(&des_ctx);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+  EVP_CIPHER_CTX des_ctxs;
+  des_ctx = &des_ctxs;
+  EVP_CIPHER_CTX_init(des_ctx);
+#else
+  des_ctx = EVP_CIPHER_CTX_new();
+#endif
+  if (!EVP_CipherInit_ex(des_ctx, EVP_des_cbc(), NULL, key->keyvalue.data,
+      hash, 0)) {
+    *minor_status = EINVAL;
+    return GSS_S_FAILURE;
+  }
+  EVP_Cipher(des_ctx, p, p, 8);
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+  EVP_CIPHER_CTX_cleanup(des_ctx);
+#else
+  EVP_CIPHER_CTX_free(des_ctx);
+#endif
 
   memset_s(deskey, sizeof(deskey), 0, sizeof(deskey));
   memset_s(&schedule, sizeof(schedule), 0, sizeof(schedule));
@@ -256,11 +270,16 @@ retry:
   krb5_crypto_destroy (context, crypto);
   ret = krb5_crypto_init(context, key,
 			 ETYPE_DES3_CBC_SHA1, &crypto);
-  if (ret == 0)
-      ret = krb5_verify_checksum(context, crypto,
-                                 KRB5_KU_USAGE_SIGN,
-                                 tmp, message_buffer->length + 8,
-                                 &csum);
+  if (ret) {
+      free (tmp);
+      *minor_status = ret;
+      return GSS_S_FAILURE;
+  }
+
+  ret = krb5_verify_checksum (context, crypto,
+			      KRB5_KU_USAGE_SIGN,
+			      tmp, message_buffer->length + 8,
+			      &csum);
   free (tmp);
   if (ret) {
       krb5_crypto_destroy (context, crypto);

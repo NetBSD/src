@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-aes-sha1.c,v 1.1.1.1 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: crypto-aes-sha1.c,v 1.1.1.2 2023/06/19 21:33:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -126,13 +126,25 @@ AES_SHA1_PRF(krb5_context context,
 
     {
 	const EVP_CIPHER *c = (*crypto->et->keytype->evp)();
-	EVP_CIPHER_CTX ctx;
-
-	EVP_CIPHER_CTX_init(&ctx); /* ivec all zero */
-	EVP_CipherInit_ex(&ctx, c, NULL, derived->keyvalue.data, NULL, 1);
-	EVP_Cipher(&ctx, out->data, result.checksum.data,
-		   crypto->et->blocksize);
-	EVP_CIPHER_CTX_cleanup(&ctx);
+	EVP_CIPHER_CTX *ctx;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX ctxst;
+	ctx = &ctxst;
+	EVP_CIPHER_CTX_init(ctx); /* ivec all zero */
+#else
+	ctx = EVP_CIPHER_CTX_new(); /* ivec all zero */
+#endif
+	if (EVP_CipherInit_ex(ctx, c, NULL, derived->keyvalue.data, NULL, 1)) {
+	    EVP_Cipher(ctx, out->data, result.checksum.data,
+		       crypto->et->blocksize);
+	    ret = EINVAL;
+	    krb5_set_error_message(context, ret, "Cannot initialize cipher");
+	}
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	EVP_CIPHER_CTX_cleanup(ctx);
+#else
+	EVP_CIPHER_CTX_free(ctx);
+#endif
     }
 
     krb5_data_free(&result.checksum);

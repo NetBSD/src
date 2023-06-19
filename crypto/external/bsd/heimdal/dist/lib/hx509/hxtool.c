@@ -1,4 +1,4 @@
-/*	$NetBSD: hxtool.c,v 1.1.1.3 2017/01/28 20:46:48 christos Exp $	*/
+/*	$NetBSD: hxtool.c,v 1.1.1.4 2023/06/19 21:33:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2016 Kungliga Tekniska Högskolan
@@ -1329,6 +1329,7 @@ request_create(struct request_create_options *opt, int argc, char **argv)
     const char *outfile = argv[0];
 
     memset(&key, 0, sizeof(key));
+    memset(&signer, 0, sizeof(signer));
 
     get_key(opt->key_string,
 	    opt->generate_key_string,
@@ -1427,13 +1428,27 @@ info(void *opt, int argc, char **argv)
 
     {
 	const RSA_METHOD *m = RSA_get_default_method();
-	if (m != NULL)
-	    printf("rsa: %s\n", m->name);
+	if (m != NULL) {
+	    const char *name;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	    name = m->name;
+#else
+	    name = RSA_meth_get0_name(m);
+#endif
+	    printf("rsa: %s\n", name);
+	}
     }
     {
 	const DH_METHOD *m = DH_get_default_method();
-	if (m != NULL)
-	    printf("dh: %s\n", m->name);
+	if (m != NULL) {
+	    const char *name;
+#if OPENSSL_VERSION_NUMBER < 0x10100000UL
+	    name = m->name;
+#else
+	    name = DH_meth_get0_name(m);
+#endif
+	    printf("dh: %s\n", name);
+	}
     }
 #ifdef HAVE_HCRYPTO_W_OPENSSL
     {

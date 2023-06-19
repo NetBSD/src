@@ -1,4 +1,4 @@
-/*	$NetBSD: bits.c,v 1.1.1.5 2019/12/15 22:45:39 christos Exp $	*/
+/*	$NetBSD: bits.c,v 1.1.1.6 2023/06/19 21:33:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$NetBSD: bits.c,v 1.1.1.5 2019/12/15 22:45:39 christos Exp $");
+__RCSID("$NetBSD: bits.c,v 1.1.1.6 2023/06/19 21:33:10 christos Exp $");
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: bits.c,v 1.1.1.5 2019/12/15 22:45:39 christos Exp $");
 #define BITSIZE(TYPE)						\
 {								\
     int b = 0; TYPE x = 1, zero = 0; const char *pre = "u";	\
-    char tmp[128], tmp2[128];					\
+    char tmp[128], tmp2[192];					\
     while(x){ x <<= 1; b++; if(x < zero) pre=""; }		\
     if(b >= len){						\
         size_t tabs;						\

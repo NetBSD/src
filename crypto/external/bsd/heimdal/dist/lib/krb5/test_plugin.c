@@ -1,4 +1,4 @@
-/*	$NetBSD: test_plugin.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: test_plugin.c,v 1.1.1.4 2023/06/19 21:33:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -36,19 +36,19 @@
 #include <krb5_locl.h>
 #include "locate_plugin.h"
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 resolve_init(krb5_context context, void **ctx)
 {
     *ctx = NULL;
     return 0;
 }
 
-static void
+static void KRB5_CALLCONV
 resolve_fini(void *ctx)
 {
 }
 
-static krb5_error_code
+static krb5_error_code KRB5_CALLCONV
 resolve_lookup(void *ctx,
 	       enum locate_service_type service,
 	       const char *realm,

@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.1.1.3 2017/01/28 20:46:48 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.1.1.4 2023/06/19 21:33:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2009 Kungliga Tekniska Högskolan
@@ -954,6 +954,7 @@ int
 hx509_general_name_unparse(GeneralName *name, char **str)
 {
     struct rk_strpool *strpool = NULL;
+    int ret = 0;
 
     *str = NULL;
 
@@ -980,7 +981,6 @@ hx509_general_name_unparse(GeneralName *name, char **str)
     case choice_GeneralName_directoryName: {
 	Name dir;
 	char *s;
-	int ret;
 	memset(&dir, 0, sizeof(dir));
 	dir.element = (enum Name_enum)name->u.directoryName.element;
 	dir.u.rdnSequence = name->u.directoryName.u.rdnSequence;
@@ -1033,10 +1033,9 @@ hx509_general_name_unparse(GeneralName *name, char **str)
     default:
 	return EINVAL;
     }
-    if (strpool == NULL)
+    if (ret)
+        rk_strpoolfree(strpool);
+    else if (strpool == NULL || (*str = rk_strpoolcollect(strpool)) == NULL)
 	return ENOMEM;
-
-    *str = rk_strpoolcollect(strpool);
-
-    return 0;
+    return ret;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: check-gen.c,v 1.1.1.3 2017/01/28 20:46:43 christos Exp $	*/
+/*	$NetBSD: check-gen.c,v 1.1.1.4 2023/06/19 21:33:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2005 Kungliga Tekniska Högskolan
@@ -1358,7 +1358,7 @@ static int
 check_seq(void)
 {
     TESTSeqOf seq;
-    TESTInteger i;
+    TESTInteger i = 0;
     int ret;
 
     seq.val = NULL;
