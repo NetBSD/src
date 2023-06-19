@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsocgpp.c,v 1.8 2021/08/07 16:18:44 thorpej Exp $	*/
+/*	$NetBSD: mvsocgpp.c,v 1.9 2023/06/19 08:40:29 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.8 2021/08/07 16:18:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsocgpp.c,v 1.9 2023/06/19 08:40:29 msaitoh Exp $");
 
 #include "gpio.h"
 
@@ -320,7 +320,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		break;
 
 	default:
-		panic("unknwon interrupt type %d for pin %d.\n", type, pin);
+		panic("unknown interrupt type %d for pin %d.\n", type, pin);
 	}
 
 	im = MVSOCGPP_READ(sc, MVSOCGPP_GPIOIM(pin));

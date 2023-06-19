@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.12 2019/09/04 12:14:09 christos Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.13 2023/06/19 08:40:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_name.c,v 1.11 2009/01/23 19:59:16 each Exp";
 #else
-__RCSID("$NetBSD: ns_name.c,v 1.12 2019/09/04 12:14:09 christos Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.13 2023/06/19 08:40:29 msaitoh Exp $");
 #endif
 #endif
 
@@ -1167,7 +1167,7 @@ labellen(const u_char *lp)
 				bitlen = 256;
 			return ((bitlen + 7 ) / 8 + 1);
 		}
-		return (-1);	/*%< unknwon ELT */
+		return (-1);	/*%< unknown ELT */
 	}
 	return (l);
 }
