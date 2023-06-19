@@ -16,6 +16,8 @@ AM_CPPFLAGS += $(ROKEN_RENAME)
 lib_LTLIBRARIES = libheimbase.la
 check_PROGRAMS = test_base
 
+test_base_CFLAGS = -Wno-string-concatenation
+
 libheimbase_la_LDFLAGS = -version-info 1:0:0
 
 TESTS = test_base
