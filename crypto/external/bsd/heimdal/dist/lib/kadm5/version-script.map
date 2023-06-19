@@ -65,6 +65,7 @@ HEIMDAL_KAMD5_SERVER_1.0 {
 		kadm5_log_signal_master;
 		kadm5_log_signal_socket;
 		kadm5_log_previous;
+		kadm5_log_goto_first;
 		kadm5_log_goto_end;
 		kadm5_log_foreach;
 		kadm5_log_get_version_fd;
@@ -77,6 +78,7 @@ HEIMDAL_KAMD5_SERVER_1.0 {
 		kadm5_log_init_nb;
 		kadm5_log_init_nolock;
 		kadm5_log_init_sharedlock;
+		kadm5_log_next;
 		kadm5_log_nop;
 		kadm5_log_truncate;
 		kadm5_log_modify;
