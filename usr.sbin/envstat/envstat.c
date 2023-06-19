@@ -1,4 +1,4 @@
-/* $NetBSD: envstat.c,v 1.103 2022/11/21 21:24:02 brad Exp $ */
+/* $NetBSD: envstat.c,v 1.104 2023/06/19 03:03:11 rin Exp $ */
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: envstat.c,v 1.103 2022/11/21 21:24:02 brad Exp $");
+__RCSID("$NetBSD: envstat.c,v 1.104 2023/06/19 03:03:11 rin Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -236,7 +236,8 @@ int main(int argc, char **argv)
 					err(EXIT_FAILURE, "add_sensors");
 			}
 			if (sensors) {
-				char *dvstring, *sstring, *p, *last, *s;
+				char *sstring, *p, *last, *s;
+				char *dvstring = NULL; /* XXXGCC */
 				unsigned count = 0;
 
 				s = strdup(sensors);
