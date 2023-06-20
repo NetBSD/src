@@ -1,4 +1,4 @@
-/*	$NetBSD: ui.h,v 1.1 2023/06/20 16:49:46 christos Exp $	*/
+/*	$NetBSD: ui.h,v 1.2 2023/06/20 17:22:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Kungliga Tekniska Högskolan
@@ -39,7 +39,10 @@
 #define _HEIM_UI_H 1
 
 /* symbol renaming */
+#if 0
+/* use the OpenSSL symbol, not worth it for a "Verify failed" printf */
 #define UI_UTIL_read_pw_string hc_UI_UTIL_read_pw_string
+#endif
 
 /* OpenSSL API extensions */
 #define UI_UTIL_FLAG_VERIFY	    0x1 /* ask to verify password */
