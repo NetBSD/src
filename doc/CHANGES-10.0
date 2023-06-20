@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.69 2023/06/08 11:16:40 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.70 2023/06/20 23:46:41 snj Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2056,4 +2056,60 @@ sys/net/route.c					1.237
 	route: run workqueue kthreads with KERNEL_LOCK unless NET_MPSAFE
 	to avoid use-after-free of deleted routes.
 	[ozaki-r, ticket #195]
+
+xsrc/external/mit/libX11/dist/ChangeLog		up to 1.5
+xsrc/external/mit/libX11/dist/Makefile.in	up to 1.1.1.26
+xsrc/external/mit/libX11/dist/README.md		up to 1.4	
+xsrc/external/mit/libX11/dist/aclocal.m4	up to 1.5
+xsrc/external/mit/libX11/dist/compile		up to 1.1.1.13
+xsrc/external/mit/libX11/dist/config.guess	up to 1.1.1.18
+xsrc/external/mit/libX11/dist/config.sub	up to 1.1.1.17
+xsrc/external/mit/libX11/dist/configure		up to 1.5
+xsrc/external/mit/libX11/dist/configure.ac	up to 1.5
+xsrc/external/mit/libX11/dist/depcomp		up to 1.1.1.16
+xsrc/external/mit/libX11/dist/install-sh	up to 1.1.1.15
+xsrc/external/mit/libX11/dist/ltmain.sh		up to 1.1.1.19
+xsrc/external/mit/libX11/dist/missing		up to 1.1.1.15
+xsrc/external/mit/libX11/dist/test-driver	up to 1.1.1.13
+xsrc/external/mit/libX11/dist/include/Makefile.in up to 1.1.1.27
+xsrc/external/mit/libX11/dist/m4/libtool.m4	up to 1.14
+xsrc/external/mit/libX11/dist/m4/ltoptions.m4	up to 1.8
+xsrc/external/mit/libX11/dist/m4/ltsugar.m4	up to 1.8
+xsrc/external/mit/libX11/dist/m4/ltversion.m4	up to 1.8
+xsrc/external/mit/libX11/dist/m4/lt~obsolete.m4	up to 1.8
+xsrc/external/mit/libX11/dist/man/Makefile.in	up to 1.1.1.26
+xsrc/external/mit/libX11/dist/man/XSetScreenSaver.man up to 1.1.1.6
+xsrc/external/mit/libX11/dist/man/xkb/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/modules/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/modules/im/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/modules/im/ximcp/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/modules/lc/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/modules/lc/Utf8/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/modules/lc/def/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/modules/lc/gen/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/modules/om/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/modules/om/generic/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/nls/Makefile.in	up to 1.1.1.26
+xsrc/external/mit/libX11/dist/nls/am_ET.UTF-8/Compose.pre up to 1.1.1.4
+xsrc/external/mit/libX11/dist/nls/en_US.UTF-8/Compose.pre up to 1.12
+xsrc/external/mit/libX11/dist/nls/pt_BR.UTF-8/Compose.pre up to 1.1.1.7
+xsrc/external/mit/libX11/dist/specs/Makefile.in	up to 1.1.1.23
+xsrc/external/mit/libX11/dist/specs/XIM/Makefile.in up to 1.1.1.23
+xsrc/external/mit/libX11/dist/specs/XKB/Makefile.in up to 1.1.1.19
+xsrc/external/mit/libX11/dist/specs/i18n/Makefile.in up to 1.1.1.23
+xsrc/external/mit/libX11/dist/specs/i18n/compose/Makefile.in up to 1.1.1.16
+xsrc/external/mit/libX11/dist/specs/i18n/framework/Makefile.in up to 1.1.1.19
+xsrc/external/mit/libX11/dist/specs/i18n/localedb/Makefile.in up to 1.1.1.19
+xsrc/external/mit/libX11/dist/specs/i18n/trans/Makefile.in up to 1.1.1.19
+xsrc/external/mit/libX11/dist/specs/libX11/Makefile.in up to 1.1.1.23
+xsrc/external/mit/libX11/dist/src/InitExt.c	up to 1.1.1.8
+xsrc/external/mit/libX11/dist/src/Makefile.in	up to 1.1.1.26
+xsrc/external/mit/libX11/dist/src/config.h.in	up to 1.1.1.17
+xsrc/external/mit/libX11/dist/src/util/Makefile.in up to 1.1.1.27
+xsrc/external/mit/libX11/dist/src/xcms/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/src/xkb/Makefile.in up to 1.1.1.26
+xsrc/external/mit/libX11/dist/src/xlibi18n/Makefile.in up to 1.1.1.26
+
+	update to libX11 1.8.6.  fixes CVE-2023-3138.
+	[mrg, ticket #199]
 
