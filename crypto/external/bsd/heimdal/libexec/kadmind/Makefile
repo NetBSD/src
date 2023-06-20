@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2023/06/19 23:11:44 christos Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/20 05:06:04 mrg Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -25,7 +25,7 @@ DPADD+= ${LIBGSSAPI} ${LIBKADM5SRV} ${LIBHDB} ${LIBUTIL}
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
 
+# XXX
 CLEANFILES+=hcrypto
-
-.BEGIN:
+${OBJS}:
 	@ln -sf ${HEIMDIST}/lib/hcrypto .
