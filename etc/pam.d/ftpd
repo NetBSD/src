@@ -1,4 +1,4 @@
-# $NetBSD: ftpd,v 1.7 2008/03/26 11:31:17 lukem Exp $
+# $NetBSD: ftpd,v 1.8 2023/06/20 22:00:00 riastradh Exp $
 #
 # PAM configuration for the "ftpd" service
 #
@@ -8,14 +8,14 @@
 # pam_unix.
 auth		required	pam_nologin.so		no_warn
 auth		sufficient	pam_skey.so		no_warn try_first_pass
-auth		sufficient	pam_krb5.so		no_warn try_first_pass
+#auth		sufficient	pam_krb5.so		no_warn try_first_pass
 auth		optional	pam_afslog.so		no_warn try_first_pass
 auth		required	pam_unix.so		no_warn try_first_pass
 
 # account
 # Even though this is identical to "system", we open code it here because
 # we open code the auth stack.
-account		required	pam_krb5.so
+#account	required	pam_krb5.so
 account		required	pam_unix.so
 
 # session
