@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.21 2022/07/17 05:51:29 mrg Exp $
+# $NetBSD: md.cats,v 1.22 2023/06/20 11:00:29 martin Exp $
 ./usr/X11R7/lib/modules/extensions/libcfb32_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libcfb_g.a		xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -34,7 +34,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ark_drv.so.0.debug	xdebug-xf86-video-ark-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ast_drv.so.1.debug	xdebug-xf86-video-ast-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.6.debug	xdebug-obsolete		obsolete
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.19.debug	xdebug-xf86-video-ati-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.19.debug	xdebug-obsolete		obsolete
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ati_drv.so.22.debug	xdebug-xf86-video-ati-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/chips_drv.so.1.debug	xdebug-xf86-video-chips-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-obsolete	obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	xdebug-xf86-video-cirrus-debug		xorg,debug

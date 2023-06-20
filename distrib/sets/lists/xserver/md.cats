@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.70 2022/07/15 04:47:56 mrg Exp $
+# $NetBSD: md.cats,v 1.71 2023/06/20 11:00:29 martin Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/gtf					xserver-xorg-server-bin	xorg
@@ -22,7 +22,8 @@
 ./usr/X11R7/lib/modules/drivers/ast_drv.so.1		xserver-xf86-video-ast-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		xserver-xf86-video-ati-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.6		xserver-obsolete	obsolete
-./usr/X11R7/lib/modules/drivers/ati_drv.so.19		xserver-xf86-video-ati-drivers	xorg
+./usr/X11R7/lib/modules/drivers/ati_drv.so.19		xserver-obsolete	obsolete
+./usr/X11R7/lib/modules/drivers/ati_drv.so.22		xserver-xf86-video-ati-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		xserver-xf86-video-chips-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		xserver-xf86-video-chips-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/cirrus_alpine.so	xserver-obsolete	obsolete
