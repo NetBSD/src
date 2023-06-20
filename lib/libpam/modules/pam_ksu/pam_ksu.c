@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_ksu.c,v 1.9 2014/02/27 18:09:38 joerg Exp $	*/
+/*	$NetBSD: pam_ksu.c,v 1.10 2023/06/20 22:17:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Jacques A. Vidrine <nectar@FreeBSD.org>
@@ -29,7 +29,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_ksu/pam_ksu.c,v 1.5 2004/02/10 10:13:21 des Exp $");
 #else
-__RCSID("$NetBSD: pam_ksu.c,v 1.9 2014/02/27 18:09:38 joerg Exp $");
+__RCSID("$NetBSD: pam_ksu.c,v 1.10 2023/06/20 22:17:09 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
@@ -62,6 +62,7 @@ PAM_EXTERN int
 pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
     int argc __unused, const char *argv[] __unused)
 {
+	krb5_boolean	 allow_homedir;
 	krb5_context	 context;
 	krb5_principal	 su_principal;
 	const char	*user;
@@ -78,20 +79,25 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	if (pamret != PAM_SUCCESS)
 		return (pamret);
 	PAM_LOG("Got ruser: %s", (const char *)ruser);
+	allow_homedir = krb5_set_home_dir_access(NULL, FALSE);
 	rv = krb5_init_context(&context);
 	if (rv != 0) {
 		log_krb5(context, rv, "krb5_init_context failed");
-		return (PAM_SERVICE_ERR);
+		pamret = PAM_SERVICE_ERR;
+		goto out;
 	}
 	rv = get_su_principal(context, user, ruser, &su_principal_name, &su_principal);
-	if (rv != 0)
-		return (PAM_AUTH_ERR);
+	if (rv != 0) {
+		pamret = PAM_AUTH_ERR;
+		goto out;
+	}
 	PAM_LOG("kuserok: %s -> %s", su_principal_name, user);
 	rv = krb5_kuserok(context, su_principal, user);
 	pamret = rv ? auth_krb5(pamh, context, su_principal_name, su_principal) : PAM_AUTH_ERR;
 	free(su_principal_name);
 	krb5_free_principal(context, su_principal);
 	krb5_free_context(context);
+out:	(void)krb5_set_home_dir_access(NULL, allow_homedir);
 	return (pamret);
 }
 
