@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.4 2023/06/19 23:11:45 christos Exp $
+# $NetBSD: Makefile,v 1.5 2023/06/20 17:23:04 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
 USE_FORT?= yes	# network client
 
-.PATH: ${HEIMDIST}/kadmin ${HEIMDIST}/lib/hcrypto
+.PATH: ${HEIMDIST}/kadmin
 
 PROG=	kadmin
 MAN=	kadmin.8
@@ -29,22 +29,20 @@ SRCS=	add_enctype.c				\
 	random_password.c			\
 	rename.c				\
 	stash.c					\
-	ui.c					\
 	util.c
 
 CPPFLAGS+= 				\
 	-I${HEIMDIST}/base		\
-	-I${HEIMDIST}/lib		\
 	-I${HEIMDIST}/lib/krb5		\
 	-I${HEIMDIST}/lib/asn1		\
 	-I${HEIMDIST}/lib/wind		\
 	-I${HEIMBASE}/lib/libwind	\
 	-I${DESTDIR}/usr/include/kadm5
 
-LDADD+=	-lkadm5srv -lhdb -lkadm5clnt -lsl
-LDADD+= -lutil -ledit -lterminfo
-DPADD+=	${LIBKADM5SRV} ${LIBHDB} ${LIBKADM5CLNT} ${LIBSL}
-DPADD+= ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO}
+PROGDPLIBS+= ${DPLIBASN1} ${DPLIBKADM5SRV} ${DPLIBHDB} ${DPLIBKADM5CLNT}
+PROGDPLIBS+= ${DPLIBSL}
+LDADD+= -lcrypto -lutil -ledit -lterminfo
+DPADD+= ${LIBCRYPTO} ${LIBUTIL} ${LIBEDIT} ${LIBTERMINFO}
 
 kadmin.8: kadmin.1
 	@${TOOL_SED} -e 's/KADMIN 1/KADMIN 8/' < ${.ALLSRC} > ${.TARGET}

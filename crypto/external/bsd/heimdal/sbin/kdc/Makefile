@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2023/06/20 00:30:17 mrg Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/20 17:23:04 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -19,16 +19,11 @@ CPPFLAGS+= 				\
 	-I${HEIMBASE}/include/krb5	\
 	-I${HEIMDIST}/lib
 
-LDADD+=	-lkdc -lhdb -lheimntlm -lutil
-DPADD+=	${LIBKDC} ${LIBHDB} ${LIBHEIMNTLM} ${LIBUTIL}
+PROGDPLIBS+=	${DPLIBKDC} ${DPLIBHDB} ${DPLIBHEIMNTLM}
+LDADD+=	-lutil
+DPADD+=	${LIBUTIL}
 
 MAN=	kdc.8
-
-# XXX: Pull this in from hcrypto.  Be sure to be last!
-SRCS+=	ui.c
-.PATH:	${HEIMDIST}/lib/hcrypto
-CPPFLAGS.ui.c+= 		\
-	-I${HEIMDIST}/lib/hcrypto
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>

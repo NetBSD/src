@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2023/06/20 00:30:17 mrg Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/20 17:23:05 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -9,17 +9,7 @@ PROG=	kimpersonate
 SRCS=	kimpersonate.c
 MAN=	kimpersonate.8
 
-CPPFLAGS+=				\
-	-I${HEIMDIST}/lib
-
-LDADD+= -lkafs -lheimntlm
-DPADD+= ${LIBKAFS} ${LIBHEIMNTLM}
-
-# XXX: Pull this in from hcrypto.  Be sure to be last!
-SRCS+=	ui.c
-.PATH:	${HEIMDIST}/lib/hcrypto
-CPPFLAGS.ui.c+= 		\
-	-I${HEIMDIST}/lib/hcrypto
+PROGDPLIBS+= ${DPLIBASN1} ${DPLIBKAFS} ${DPLIBHEIMNTLM}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>

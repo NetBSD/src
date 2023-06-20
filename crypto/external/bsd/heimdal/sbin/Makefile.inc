@@ -1,9 +1,5 @@
-# $NetBSD: Makefile.inc,v 1.5 2018/02/25 00:16:48 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.6 2023/06/20 17:23:04 christos Exp $
 
 BINDIR=/usr/sbin
 
-LDADD+= ${LIBKRB5_LDADD}
-DPADD+= ${LIBKRB5_DPADD}
-
-LDADD+= -lheimbase ${LIBVERS}
-DPADD+= ${LIBHEIMBASE} ${LIBVERS}
+PROGDPLIBS += ${DPLIBKRB5} ${DPLIBHEIMBASE} ${DPLIBROKEN} ${DPLIBVERS}

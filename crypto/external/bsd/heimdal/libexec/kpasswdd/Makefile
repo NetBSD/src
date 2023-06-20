@@ -1,19 +1,20 @@
-# $NetBSD: Makefile,v 1.3 2023/06/19 23:11:44 christos Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/20 17:23:03 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
-.PATH:		${HEIMDIST}/kpasswd ${HEIMDIST}/lib/hcrypto
+.PATH:		${HEIMDIST}/kpasswd
 
 PROG=	kpasswdd
-SRCS=	kpasswdd.c ui.c
+SRCS=	kpasswdd.c
 MAN=	kpasswdd.8
 
 CPPFLAGS+= -DINETD_SUPPORT
 CPPFLAGS+= -I${HEIMDIST}/lib
 
-LDADD+= -lkadm5srv -lhdb -lutil
-DPADD+= ${LIBKADM5SRV} ${LIBHDB} ${LIBUTIL}
+PROGDPLIBS+= ${DPLIBASN1} ${DPLIBKADM5SRV} ${DPLIBHDB}
+LDADD+= -lcrypto -lutil
+DPADD+= ${LIBCRYPTO} ${LIBUTIL}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
