@@ -1,20 +1,27 @@
-# $NetBSD: Makefile.inc,v 1.6 2020/07/23 07:53:35 mrg Exp $
+# $NetBSD: Makefile.inc,v 1.7 2023/06/20 17:23:01 christos Exp $
 
 HEIMBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/heimdal
 HEIMDIST=	${HEIMBASE}/dist
 
 SSLBASE?=	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}
 
-LIBVERSDIR!=	cd ${HEIMBASE}/lib/libvers && ${PRINTOBJDIR}
-LIBVERS=	${LIBVERSDIR}/libvers.a
-
-LIBIPCDIR!=	cd ${HEIMBASE}/lib/libipc && ${PRINTOBJDIR}
-LIBIPC=		${LIBIPCDIR}/libipc.a
-.if ${MKPICLIB} != "yes"
-LIBIPC_PIC=	${LIBIPCDIR}/libipc.a
-.else
-LIBIPC_PIC=	${LIBIPCDIR}/libipc_pic.a
-.endif
+DPLIBASN1=	asn1 ${HEIMBASE}/lib/libasn1
+DPLIBCOM_ERR=	com_err ${HEIMBASE}/lib/libcom_err
+DPLIBGSSAPI=	gssapi ${HEIMBASE}/lib/libgssapi
+DPLIBHDB=	hdb ${HEIMBASE}/lib/libhdb
+DPLIBHEIMBASE=	heimbase ${HEIMBASE}/lib/libheimbase
+DPLIBHEIMNTLM=	heimntlm ${HEIMBASE}/lib/libheimntlm
+DPLIBHX509=	hx509 ${HEIMBASE}/lib/libhx509
+DPLIBIPC=	ipc ${HEIMBASE}/lib/libipc
+DPLIBKADM5CLNT=	kadm5clnt ${HEIMBASE}/lib/libkadm5clnt
+DPLIBKADM5SRV=	kadm5srv ${HEIMBASE}/lib/libkadm5srv
+DPLIBKAFS=	kafs ${HEIMBASE}/lib/libkafs
+DPLIBKDC=	kdc ${HEIMBASE}/lib/libkdc
+DPLIBKRB5=	krb5 ${HEIMBASE}/lib/libkrb5
+DPLIBROKEN=	roken ${HEIMBASE}/lib/libroken
+DPLIBSL=	sl ${HEIMBASE}/lib/libsl
+DPLIBVERS=	vers ${HEIMBASE}/lib/libvers
+DPLIBWIND=	wind ${HEIMBASE}/lib/libwind
 
 .if ${USETOOLS} != "yes"
 COMPILEETOBJ!=     cd ${HEIMBASE}/lib/libcom_err/compile_et && ${PRINTOBJDIR}

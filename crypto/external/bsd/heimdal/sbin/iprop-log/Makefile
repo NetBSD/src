@@ -1,22 +1,19 @@
-# $NetBSD: Makefile,v 1.3 2023/06/19 23:11:45 christos Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/20 17:23:04 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
-.PATH: ${HEIMDIST}/lib/kadm5 ${HEIMDIST}/lib/hcrypto
+.PATH: ${HEIMDIST}/lib/kadm5
 
 PROG= iprop-log
 MAN=  iprop-log.8
 
-CPPFLAGS+=-I${HEIMDIST}/lib
-
-HEIMSRCS= iprop-log.c iprop-commands.in ui.c
+HEIMSRCS= iprop-log.c iprop-commands.in
 
 CPPFLAGS+= -I${DESTDIR}/usr/include/kadm5 -I${HEIMDIST}/lib/krb5
 
-LDADD+= -lkadm5srv -lhdb -lsl
+PROGDPLIBS += ${DPLIBKADM5SRV} ${DPLIBHDB} ${DPLIBSL}
 LDADD+= -ledit -lterminfo
-DPADD+= ${LIBKADM5SRV} ${LIBHDB} ${LIBSL}
 DPADD+= ${LIBEDIT} ${LIBTERMINFO}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
