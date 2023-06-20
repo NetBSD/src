@@ -1,17 +1,22 @@
-# $NetBSD: directive-include-guard.mk,v 1.6 2023/06/19 20:07:35 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.7 2023/06/20 09:25:34 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
-# A file that is guarded by a multiple-inclusion guard has the following form:
+# A file that is guarded by a multiple-inclusion guard has one of the
+# following forms:
 #
-#	.ifndef GUARD_NAME
-#	...
-#	GUARD_NAME=	# any value, may also be empty
-#	...
+#	.ifndef GUARD_VARIABLE
 #	.endif
 #
-# When such a file is included later and the guard variable is set, including
-# the file has no effect, as all its content is skipped.
+#	.if !defined(GUARD_VARIABLE)
+#	.endif
+#
+#	.if !target(guard-target)
+#	.endif
+#
+# When such a file is included for the second or later time, and the guard
+# variable is set or the guard target defined, including the file has no
+# effect, as all its content is skipped.
 #
 # See also:
 #	https://gcc.gnu.org/onlinedocs/cppinternals/Guard-Macros.html
@@ -24,7 +29,7 @@ LINES.guarded-ifndef= \
 	'GUARDED_IFNDEF=' \
 	'.endif'
 # expect: Parse_PushInput: file guarded-ifndef.tmp, line 1
-# expect: Skipping 'guarded-ifndef.tmp' because 'GUARDED_IFNDEF' is already set
+# expect: Skipping 'guarded-ifndef.tmp' because 'GUARDED_IFNDEF' is defined
 
 # Comments and empty lines have no influence on the multiple-inclusion guard.
 INCS+=	comments
@@ -37,7 +42,7 @@ LINES.comments= \
 	'.endif' \
 	'\# comment'
 # expect: Parse_PushInput: file comments.tmp, line 1
-# expect: Skipping 'comments.tmp' because 'COMMENTS' is already set
+# expect: Skipping 'comments.tmp' because 'COMMENTS' is defined
 
 # An alternative form uses the 'defined' function.  It is more verbose than
 # the canonical form.  There are other possible forms as well, such as with a
@@ -48,7 +53,7 @@ LINES.guarded-if= \
 	'GUARDED_IF=' \
 	'.endif'
 # expect: Parse_PushInput: file guarded-if.tmp, line 1
-# expect: Skipping 'guarded-if.tmp' because 'GUARDED_IF' is already set
+# expect: Skipping 'guarded-if.tmp' because 'GUARDED_IF' is defined
 
 # Triple negation is so uncommon that it's not recognized.
 INCS+=	triple-negation
@@ -127,7 +132,7 @@ LINES.varassign-indirect= \
 	'$${VARASSIGN_INDIRECT:L}=' \
 	'.endif'
 # expect: Parse_PushInput: file varassign-indirect.tmp, line 1
-# expect: Skipping 'varassign-indirect.tmp' because 'VARASSIGN_INDIRECT' is already set
+# expect: Skipping 'varassign-indirect.tmp' because 'VARASSIGN_INDIRECT' is defined
 
 # The time at which the guard variable is set doesn't matter, as long as it is
 # set when the file is included the next time.
@@ -138,7 +143,7 @@ LINES.late-assignment= \
 	'LATE_ASSIGNMENT=' \
 	'.endif'
 # expect: Parse_PushInput: file late-assignment.tmp, line 1
-# expect: Skipping 'late-assignment.tmp' because 'LATE_ASSIGNMENT' is already set
+# expect: Skipping 'late-assignment.tmp' because 'LATE_ASSIGNMENT' is defined
 
 # The time at which the guard variable is set doesn't matter, as long as it is
 # set when the file is included the next time.
@@ -150,11 +155,10 @@ LINES.two-conditions= \
 	'.  endif' \
 	'.endif'
 # expect: Parse_PushInput: file two-conditions.tmp, line 1
-# expect: Skipping 'two-conditions.tmp' because 'TWO_CONDITIONS' is already set
+# expect: Skipping 'two-conditions.tmp' because 'TWO_CONDITIONS' is defined
 
-# If the guard variable is already set before the file is included for the
-# first time, the file is not considered guarded, as the makefile parser skips
-# all lines in the inactive part between the '.ifndef' and the '.endif'.
+# If the guard variable is defined before the file is included for the first
+# time, the file is not considered guarded.
 INCS+=	already-set
 LINES.already-set= \
 	'.ifndef ALREADY_SET' \
@@ -258,7 +262,63 @@ LINES.inner-if-elif-else = \
 	'.  endif' \
 	'.endif'
 # expect: Parse_PushInput: file inner-if-elif-else.tmp, line 1
-# expect: Skipping 'inner-if-elif-else.tmp' because 'INNER_IF_ELIF_ELSE' is already set
+# expect: Skipping 'inner-if-elif-else.tmp' because 'INNER_IF_ELIF_ELSE' is defined
+
+# The guard can not only be a variable, it can also be a target.
+INCS+=	target
+LINES.target= \
+	'.if !target(__target.tmp__)' \
+	'__target.tmp__: .PHONY' \
+	'.endif'
+# expect: Parse_PushInput: file target.tmp, line 1
+# expect: Skipping 'target.tmp' because '__target.tmp__' is defined
+
+# When used for system files, the target name may include '<' and '>'.
+INCS+=	target-sys
+LINES.target-sys= \
+	'.if !target(__<target-sys.tmp>__)' \
+	'__<target-sys.tmp>__: .PHONY' \
+	'.endif'
+# expect: Parse_PushInput: file target-sys.tmp, line 1
+# expect: Skipping 'target-sys.tmp' because '__<target-sys.tmp>__' is defined
+
+# The target name must not include '$' or other special characters.
+INCS+=	target-indirect
+LINES.target-indirect= \
+	'.if !target($${target-indirect.tmp:L})' \
+	'target-indirect.tmp: .PHONY' \
+	'.endif'
+# expect: Parse_PushInput: file target-indirect.tmp, line 1
+# expect: Parse_PushInput: file target-indirect.tmp, line 1
+
+# If the target is not defined when including the file the next time, the file
+# is not guarded.
+INCS+=	target-unguarded
+LINES.target-unguarded= \
+	'.if !target(target-unguarded)' \
+	'.endif'
+# expect: Parse_PushInput: file target-unguarded.tmp, line 1
+# expect: Parse_PushInput: file target-unguarded.tmp, line 1
+
+# The guard condition must consist of only the guard target, nothing else.
+INCS+=	target-plus
+LINES.target-plus= \
+	'.if !target(target-plus) && 1' \
+	'target-plus: .PHONY' \
+	'.endif'
+# expect: Parse_PushInput: file target-plus.tmp, line 1
+# expect: Parse_PushInput: file target-plus.tmp, line 1
+
+# If the guard target is defined before the file is included for the first
+# time, the file is not considered guarded.
+INCS+=	target-already-set
+LINES.target-already-set= \
+	'.if !target(target-already-set)' \
+	'target-already-set: .PHONY' \
+	'.endif'
+target-already-set: .PHONY
+# expect: Parse_PushInput: file target-already-set.tmp, line 1
+# expect: Parse_PushInput: file target-already-set.tmp, line 1
 
 
 # Include each of the files twice.  The directive-include-guard.exp file

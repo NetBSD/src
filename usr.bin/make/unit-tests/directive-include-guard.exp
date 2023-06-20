@@ -1,9 +1,9 @@
 Parse_PushInput: file guarded-ifndef.tmp, line 1
-Skipping 'guarded-ifndef.tmp' because 'GUARDED_IFNDEF' is already set
+Skipping 'guarded-ifndef.tmp' because 'GUARDED_IFNDEF' is defined
 Parse_PushInput: file comments.tmp, line 1
-Skipping 'comments.tmp' because 'COMMENTS' is already set
+Skipping 'comments.tmp' because 'COMMENTS' is defined
 Parse_PushInput: file guarded-if.tmp, line 1
-Skipping 'guarded-if.tmp' because 'GUARDED_IF' is already set
+Skipping 'guarded-if.tmp' because 'GUARDED_IF' is defined
 Parse_PushInput: file triple-negation.tmp, line 1
 Parse_PushInput: file triple-negation.tmp, line 1
 Parse_PushInput: file ifdef-negated.tmp, line 1
@@ -19,11 +19,11 @@ Parse_PushInput: file ifndef-indirect.tmp, line 1
 Parse_PushInput: file if-indirect.tmp, line 1
 Parse_PushInput: file if-indirect.tmp, line 1
 Parse_PushInput: file varassign-indirect.tmp, line 1
-Skipping 'varassign-indirect.tmp' because 'VARASSIGN_INDIRECT' is already set
+Skipping 'varassign-indirect.tmp' because 'VARASSIGN_INDIRECT' is defined
 Parse_PushInput: file late-assignment.tmp, line 1
-Skipping 'late-assignment.tmp' because 'LATE_ASSIGNMENT' is already set
+Skipping 'late-assignment.tmp' because 'LATE_ASSIGNMENT' is defined
 Parse_PushInput: file two-conditions.tmp, line 1
-Skipping 'two-conditions.tmp' because 'TWO_CONDITIONS' is already set
+Skipping 'two-conditions.tmp' because 'TWO_CONDITIONS' is defined
 Parse_PushInput: file already-set.tmp, line 1
 Parse_PushInput: file already-set.tmp, line 1
 Parse_PushInput: file twice.tmp, line 1
@@ -41,5 +41,17 @@ Parse_PushInput: file if-elif.tmp, line 1
 Parse_PushInput: file if-else.tmp, line 1
 Parse_PushInput: file if-else.tmp, line 1
 Parse_PushInput: file inner-if-elif-else.tmp, line 1
-Skipping 'inner-if-elif-else.tmp' because 'INNER_IF_ELIF_ELSE' is already set
+Skipping 'inner-if-elif-else.tmp' because 'INNER_IF_ELIF_ELSE' is defined
+Parse_PushInput: file target.tmp, line 1
+Skipping 'target.tmp' because '__target.tmp__' is defined
+Parse_PushInput: file target-sys.tmp, line 1
+Skipping 'target-sys.tmp' because '__<target-sys.tmp>__' is defined
+Parse_PushInput: file target-indirect.tmp, line 1
+Parse_PushInput: file target-indirect.tmp, line 1
+Parse_PushInput: file target-unguarded.tmp, line 1
+Parse_PushInput: file target-unguarded.tmp, line 1
+Parse_PushInput: file target-plus.tmp, line 1
+Parse_PushInput: file target-plus.tmp, line 1
+Parse_PushInput: file target-already-set.tmp, line 1
+Parse_PushInput: file target-already-set.tmp, line 1
 exit status 0
