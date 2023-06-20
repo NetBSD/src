@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netcat.c,v 1.6 2019/10/03 01:15:19 sevan Exp $");
+__RCSID("$NetBSD: netcat.c,v 1.7 2023/06/20 08:51:24 rin Exp $");
 
 /*
  * Re-written nc(1) for OpenBSD. Original implementation by
@@ -915,6 +915,9 @@ remote_connect(const char *host, const char *port, struct addrinfo hints)
 {
 	struct addrinfo *res, *res0;
 	int s = -1, error, save_errno;
+#ifdef SO_BINDANY
+	int on = 1;
+#endif
 
 	if ((error = getaddrinfo(host, port, &hints, &res0)))
 		errx(1, "getaddrinfo: %s", gai_strerror(error));
