@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2023/06/20 00:30:16 mrg Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/20 17:23:02 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -10,10 +10,7 @@ USE_FORT?= yes	# cryptographic software
 PROG= kgetcred
 SRCS= kgetcred.c
 
-LDADD+= -lkafs -lsl -lheimntlm
-DPADD+= ${LIBKAFS} ${LIBSL} ${LIBHEIMNTLM}
-
-CPPFLAGS+= -I${HEIMDIST}/lib
+PROGDPLIBS+= ${DPLIBASN1} ${DPLIBKAFS} ${DPLIBSL} ${DPLIBHEIMNTLM}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>

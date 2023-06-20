@@ -1,5 +1,6 @@
-# $NetBSD: Makefile,v 1.2 2011/08/28 11:20:16 elric Exp $
+# $NetBSD: Makefile,v 1.3 2023/06/20 17:23:03 christos Exp $
 
+LIBISPRIVATE=	yes
 NOLINKLIB=	# defined
 NOPIC=		# defined
 NOPROFILE=	# defined

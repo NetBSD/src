@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2023/06/19 23:11:45 christos Exp $
+# $NetBSD: Makefile,v 1.5 2023/06/20 17:23:05 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -12,7 +12,6 @@ PROG= ktutil
 MAN= ktutil.8
 
 HEIMSRCS= ktutil-commands.in
-CPPFLAGS+=-I${HEIMDIST}/lib
 
 SRCS=			\
 	add.c		\
@@ -25,11 +24,11 @@ SRCS=			\
 	list.c		\
 	purge.c		\
 	remove.c	\
-	rename.c	\
-	ui.c
+	rename.c
 
-LDADD+= -lkadm5clnt -lsl -ledit -lterminfo -lutil
-DPADD+= ${LIBKADM5CLNT} ${LIBSL} ${LIBEDIT} ${LIBTERMINFO} ${LIBUTIL}
+PROGDPLIBS+= ${DPLIBKADM5CLNT} ${DPLIBSL}
+LDADD+= -lcrypto -ledit -lterminfo -lutil
+DPADD+= ${LIBCRYPTO} ${LIBEDIT} ${LIBTERMINFO} ${LIBUTIL}
 
 ktutil.8: ktutil.1
 	@${TOOL_SED} -e 's/KTUTIL 1/KTUTIL 8/' < ${.ALLSRC} > ${.TARGET}

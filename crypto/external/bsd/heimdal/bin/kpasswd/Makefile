@@ -1,19 +1,18 @@
-# $NetBSD: Makefile,v 1.3 2023/06/19 23:11:43 christos Exp $
+# $NetBSD: Makefile,v 1.4 2023/06/20 17:23:02 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
 USE_FORT?= yes	# cryptographic software
 
-.PATH: ${HEIMDIST}/kpasswd ${HEIMDIST}/lib/hcrypto
-
-CPPFLAGS+=-I${HEIMDIST}/lib
+.PATH: ${HEIMDIST}/kpasswd
 
 PROG= kpasswd
-SRCS= kpasswd.c ui.c
+SRCS= kpasswd.c
 
-LDADD+= -lkafs -lsl -lheimntlm
-DPADD+= ${LIBKAFS} ${LIBSL} ${LIBHEIMNTLM}
+PROGDPLIBS+= ${DPLIBKAFS} ${DPLIBSL} ${DPLIBHEIMNTLM}
+LDADD+= -lcrypto
+DPADD+= ${LIBCRYPTO}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>

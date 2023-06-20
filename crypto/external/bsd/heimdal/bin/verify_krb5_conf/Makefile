@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2023/06/19 23:11:44 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2023/06/20 17:23:02 christos Exp $
 
 WARNS?=	2	# XXX -Wextra
 
@@ -7,14 +7,12 @@ NOLINT= # defined
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
 
-.PATH: ${HEIMDIST}/lib/krb5 ${HEIMDIST}/lib/hcrypto
-
-CPPFLAGS+=-I${HEIMDIST}/lib
+.PATH: ${HEIMDIST}/lib/krb5
 
 PROG= verify_krb5_conf
 MAN= verify_krb5_conf.8
 
-SRCS= verify_krb5_conf.c ui.c
+SRCS= verify_krb5_conf.c
 
 #CPPFLAGS+= -I.					\
 #	-I${DIST}/heimdal/lib/asn1		\
