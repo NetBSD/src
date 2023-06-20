@@ -1,4 +1,4 @@
-.\"	$NetBSD: bta2dpd.8,v 1.6 2021/12/02 21:59:22 andvar Exp $
+.\"	$NetBSD: bta2dpd.8,v 1.7 2023/06/20 03:24:08 nat Exp $
 .\"
 .\" Copyright (c) 2015 - 2016  Nathanial Sloss <nathanialsloss@yahoo.com.au>
 .\" All rights reserved.
@@ -267,7 +267,7 @@ Encode and send audio
 to address
 .Sq spkr .
 .Pp
-.Dl bta2dpd -a spkr /dev/pad
+.Dl bta2dpd -n -a spkr /dev/pad
 Encode and send audio from
 .Xr pad 4
 to address
@@ -278,7 +278,7 @@ Decode stream from any connected address
 and write it to
 .Pa out.pcm .
 .Pp
-.Dl bta2dpd -K -a phone | audioplay -f -e linear -P 16 -s 44100 -c 2 --
+.Dl bta2dpd -K -a phone | audioplay -f -e slinear_le -P 16 -s 44100 -c 2 --
 Decode stream from address
 .Sq phone
 and send to speakers.
