@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.176 2023/06/08 11:20:02 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.177 2023/06/20 23:03:39 snj Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3328,4 +3328,10 @@ sys/net/route.c					1.237
 	route: run workqueue kthreads with KERNEL_LOCK unless NET_MPSAFE
 	to avoid use-after-free of deleted routes.
 	[ozaki-r, ticket #1824]
+
+xsrc/external/mit/libX11/dist/src/InitExt.c	patch
+
+	Add bounds checks for extension request, event, & error codes.
+	Fixes CVE-2023-3138.
+	[mrg, ticket #1826]
 
