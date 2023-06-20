@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.322 2023/06/19 12:53:57 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.323 2023/06/20 09:25:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -539,6 +539,14 @@ typedef enum CondResult {
 	CR_ERROR		/* Unknown directive or parse error */
 } CondResult;
 
+typedef struct {
+	enum GuardKind {
+		GK_VARIABLE,
+		GK_TARGET
+	} kind;
+	char *name;
+} Guard;
+
 /* Names of the variables that are "local" to a specific target. */
 #define TARGET	"@"		/* Target of dependency */
 #define OODATE	"?"		/* All out-of-date sources */
@@ -793,7 +801,7 @@ void Compat_Make(GNode *, GNode *);
 extern unsigned int cond_depth;
 CondResult Cond_EvalCondition(const char *) MAKE_ATTR_USE;
 CondResult Cond_EvalLine(const char *) MAKE_ATTR_USE;
-char *Cond_ExtractGuard(const char *) MAKE_ATTR_USE;
+Guard *Cond_ExtractGuard(const char *) MAKE_ATTR_USE;
 void Cond_EndFile(void);
 
 /* dir.c; see also dir.h */
