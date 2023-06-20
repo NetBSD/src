@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2011/05/25 19:21:19 he Exp $
+# $NetBSD: Makefile,v 1.3 2023/06/20 00:30:17 mrg Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -25,10 +25,18 @@ SRCS= \
 	renew.c		\
 	sessions.c
 
-CPPFLAGS+= -I${HEIMDIST}/lib/ipc
+CPPFLAGS+=				\
+	-I${HEIMDIST}/lib/ipc		\
+	-I${HEIMDIST}/lib
 
 LDADD+=	-lkafs -lheimntlm -lutil
 DPADD+=	${LIBKAFS} ${LIBHEIMNTLM} ${LIBUTIL}
+
+# XXX: Pull this in from hcrypto.  Be sure to be last!
+SRCS+=	ui.c
+.PATH:	${HEIMDIST}/lib/hcrypto
+CPPFLAGS.ui.c+= 		\
+	-I${HEIMDIST}/lib/hcrypto
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>

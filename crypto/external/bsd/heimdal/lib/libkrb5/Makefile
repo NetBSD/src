@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2023/06/19 23:56:56 mrg Exp $
+# $NetBSD: Makefile,v 1.14 2023/06/20 00:30:17 mrg Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -559,6 +559,15 @@ COPTS.pkinit-ec.c+= -Wno-error=deprecated-declarations
 COPTS.salt-des.c+= -Wno-error=deprecated-declarations
 COPTS.salt-des3.c+= -Wno-error=deprecated-declarations
 COPTS.sp800-108-kdf.c+= -Wno-error=deprecated-declarations
+
+# XXX: Pull this in from hcrypto.  Be sure to be last!  This subdir
+# XXX: also has a "doxygen.c" in it, but the .PATH ordering ensures
+# XXX: that the lib/krb5 version is used here, not the lib/hcrypto
+# XXX: version.
+SRCS+=	ui.c
+.PATH:	${HEIMDIST}/lib/hcrypto
+CPPFLAGS.ui.c+= 		\
+	-I${HEIMDIST}/lib/hcrypto
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.lib.mk>
