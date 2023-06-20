@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2023/06/03 09:09:10 lukem Exp $
+#	$NetBSD: Makefile,v 1.68 2023/06/20 23:09:14 wiz Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -20,6 +20,12 @@ SRCS =	chared.c chartype.c common.c el.c eln.c emacs.c filecomplete.c \
 	terminal.c tokenizer.c tokenizern.c tty.c vi.c
 
 MAN=	editline.3 editrc.5 editline.7
+
+FILES+=			libedit.pc
+FILESOWN_libedit.pc=	${BINOWN}
+FILESGRP_libedit.pc=	${BINGRP}
+FILESMODE_libedit.pc=	${NONBINMODE}
+FILESDIR_libedit.pc=	/usr/lib/pkgconfig
 
 MLINKS= \
 editline.3 el_deletestr.3 \
