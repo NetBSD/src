@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2023/01/28 05:25:17 mrg Exp $
+#	$NetBSD: Makefile,v 1.12 2023/06/20 02:25:19 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,7 +12,7 @@ CONFIGFILES= \
 	10-hinting-none.conf \
 	10-hinting-slight.conf \
 	10-no-antialias.conf \
-	10-no-sub-pixel.conf \
+	10-sub-pixel-none.conf \
 	10-sub-pixel-bgr.conf \
 	10-sub-pixel-rgb.conf \
 	10-sub-pixel-vbgr.conf \
