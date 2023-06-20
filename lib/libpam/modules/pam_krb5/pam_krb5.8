@@ -1,4 +1,4 @@
-.\" $NetBSD: pam_krb5.8,v 1.12 2017/07/03 21:32:51 wiz Exp $
+.\" $NetBSD: pam_krb5.8,v 1.13 2023/06/20 22:17:18 riastradh Exp $
 .\" $FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.8,v 1.6 2001/11/24 23:41:32 dd Exp $
 .\"
 .\" Copyright (c) Frank Cusack, 1999-2001. All rights reserved.
@@ -142,6 +142,21 @@ and
 .Ql %p ,
 to designate the current process ID; can be used in
 .Ar name .
+.It Cm allow_kdc_spoof
+Allow
+.Nm
+to succeed even if there is no host or service key available in a
+keytab to authenticate the Kerberos KDC's ticket.
+If there is no such key, for example on a host with no keytabs,
+.Nm
+will fail immediately without prompting the user.
+.Pp
+.Sy Warning :
+If the host has not been configured with a keytab from the KDC, setting
+this option makes it vulnerable to malicious KDCs, e.g. via DNS
+flooding, because
+.Nm
+has no way to distinguish the legitimate KDC from a spoofed KDC.
 .El
 .Ss Kerberos 5 Account Management Module
 The Kerberos 5 account management component
