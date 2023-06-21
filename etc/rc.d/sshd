@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.32 2022/05/15 11:47:42 martin Exp $
+# $NetBSD: sshd,v 1.32.2.1 2023/06/21 15:16:17 martin Exp $
 #
 
 # PROVIDE: sshd
@@ -13,7 +13,7 @@ rcvar=$name
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/etc/ssh/sshd_config"
-extra_commands="keygen keyregen reload"
+extra_commands="check keygen keyregen reload"
 
 sshd_motd_unsafe_keys_warning()
 {
@@ -26,13 +26,13 @@ sshd_motd_unsafe_keys_warning()
 -- UNSAFE KEYS WARNING:
 
 	The ssh host keys on this machine have been generated with
-	not enough entropy configured, so may be predictable.
+	not enough entropy configured, so they may be predictable.
 
 	To fix, follow the "Adding entropy" section in the entropy(7)
-	man page and after this machine has enough entropy, re-generate
+	man page.  After this machine has enough entropy, re-generate
 	the ssh host keys by running:
 
-		sh /etc/rc.d/sshd keyregen
+		/etc/rc.d/sshd keyregen
 _EOF
 	fi
 	cmp -s $T /etc/motd || cp $T /etc/motd
@@ -61,13 +61,12 @@ sshd_keygen()
 		    printf "ssh-keygen: " && "${keygen}" -f "${f}" -l
 		new_key_created=true
 	done << _EOF
-dsa	1024	ssh_host_dsa_key
-ecdsa	521	ssh_host_ecdsa_key
+ecdsa	-1	ssh_host_ecdsa_key
 ed25519	-1	ssh_host_ed25519_key
 rsa	0	ssh_host_rsa_key
 _EOF
 	if "${new_key_created}"; then
-		sshd_motd_unsafe_keys_warning
+		sysctl -q kern.entropy.needed && sshd_motd_unsafe_keys_warning
 	fi
 )
 }
@@ -77,8 +76,20 @@ sshd_precmd()
 	run_rc_command keygen
 }
 
+sshd_check()
+{
+	sshd -t
+}
+
+sshd_reload_precmd()
+{
+	run_rc_command check
+}
+
+check_cmd=sshd_check
 keygen_cmd=sshd_keygen
 keyregen_cmd="sshd_keygen force"
+reload_precmd=sshd_reload_precmd
 start_precmd=sshd_precmd
 
 load_rc_config $name
