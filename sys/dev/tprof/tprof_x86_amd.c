@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86_amd.c,v 1.7 2022/12/08 05:29:27 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86_amd.c,v 1.7.2.1 2023/06/21 22:34:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.7 2022/12/08 05:29:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_x86_amd.c,v 1.7.2.1 2023/06/21 22:34:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ tprof_amd_configure_event(u_int counter, const tprof_param_t *param)
 	    __SHIFTIN(param->p_unit, PESR_UNIT_MASK);
 	wrmsr(PERFEVTSEL(counter), pesr);
 
-	/* reset the counter */
+	/* Reset the counter */
 	tprof_amd_counter_write(counter, param->p_value);
 }
 
@@ -202,13 +202,13 @@ tprof_amd_nmi(const struct trapframe *tf, void *arg)
 			continue;	/* not overflowed */
 
 		if (ISSET(sc->sc_ctr_prof_mask, __BIT(bit))) {
-			/* account for the counter, and reset */
+			/* Account for the counter, and reset */
 			tprof_amd_counter_write(bit,
 			    sc->sc_count[bit].ctr_counter_reset_val);
 			counters_offset[bit] +=
 			    sc->sc_count[bit].ctr_counter_val + ctr;
 
-			/* record a sample */
+			/* Record a sample */
 #if defined(__x86_64__)
 			tfi.tfi_pc = tf->tf_rip;
 #else
@@ -218,7 +218,7 @@ tprof_amd_nmi(const struct trapframe *tf, void *arg)
 			tfi.tfi_inkernel = tfi.tfi_pc >= VM_MIN_KERNEL_ADDRESS;
 			tprof_sample(NULL, &tfi);
 		} else {
-			/* not profiled, but require to consider overflow */
+			/* Not profiled, but require to consider overflow */
 			counters_offset[bit] += __BIT(COUNTER_BITWIDTH);
 		}
 	}
@@ -237,9 +237,8 @@ tprof_amd_ident(void)
 {
 	struct cpu_info *ci = curcpu();
 
-	if (cpu_vendor != CPUVENDOR_AMD) {
+	if (cpu_vendor != CPUVENDOR_AMD)
 		return TPROF_IDENT_NONE;
-	}
 
 	switch (CPUID_TO_FAMILY(ci->ci_signature)) {
 	case 0x10:
@@ -274,9 +273,8 @@ tprof_amd_establish(tprof_backend_softc_t *sc)
 {
 	uint64_t xc;
 
-	if (tprof_amd_ident() == TPROF_IDENT_NONE) {
+	if (tprof_amd_ident() == TPROF_IDENT_NONE)
 		return ENOTSUP;
-	}
 
 	KASSERT(amd_nmi_handle == NULL);
 	amd_nmi_handle = nmi_establish(tprof_amd_nmi, sc);

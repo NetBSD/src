@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.18.2.1 2022/12/26 11:23:56 martin Exp $	*/
+/*	$NetBSD: tprof.c,v 1.18.2.2 2023/06/21 22:34:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tprof.c,v 1.18.2.1 2022/12/26 11:23:56 martin Exp $");
+__RCSID("$NetBSD: tprof.c,v 1.18.2.2 2023/06/21 22:34:51 martin Exp $");
 #endif /* not lint */
 
 #include <sys/atomic.h>
@@ -260,7 +260,12 @@ process_stat(void *arg)
 static void
 tprof_list(int argc, char **argv)
 {
-	printf("%u events can be counted at the same time\n", ncounters);
+	const char *defaultevent = tprof_cycle_event_name();
+
+	printf("%u events can be counted at the same time.\n", ncounters);
+	if (defaultevent != NULL)
+		printf("The default counter for monitor and top command is "
+		    "\"%s\".\n", defaultevent);
 	tprof_event_list();
 }
 
@@ -356,6 +361,29 @@ tprof_parse_event(tprof_param_t *param, const char *str, uint32_t flags,
 	return error;
 }
 
+const char *
+tprof_cycle_event_name(void)
+{
+	const char *cycleevent;
+
+	switch (tprof_info.ti_ident) {
+	case TPROF_IDENT_INTEL_GENERIC:
+		cycleevent = "unhalted-core-cycles";
+		break;
+	case TPROF_IDENT_AMD_GENERIC:
+		cycleevent = "LsNotHaltedCyc";
+		break;
+	case TPROF_IDENT_ARMV8_GENERIC:
+	case TPROF_IDENT_ARMV7_GENERIC:
+		cycleevent = "CPU_CYCLES";
+		break;
+	default:
+		cycleevent = NULL;
+		break;
+	}
+	return cycleevent;
+}
+
 static void
 tprof_monitor_common(bool do_profile, int argc, char **argv)
 {
@@ -404,8 +432,17 @@ tprof_monitor_common(bool do_profile, int argc, char **argv)
 	}
 	argc -= optind;
 	argv += optind;
-	if (argc == 0 || nevent == 0) {
+	if (argc == 0)
 		usage();
+	if (nevent == 0) {
+		const char *defaultevent = tprof_cycle_event_name();
+		if (defaultevent == NULL)
+			errx(EXIT_FAILURE, "cpu not supported");
+
+		tprof_event_lookup(defaultevent, &params[nevent]);
+		eventname[nevent] = defaultevent;
+		params[nevent].p_flags |= TPROF_PARAM_KERN;
+		nevent++;
 	}
 
 	if (do_profile) {
