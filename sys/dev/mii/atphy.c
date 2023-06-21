@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.30 2020/03/15 23:04:50 thorpej Exp $ */
+/*	$NetBSD: atphy.c,v 1.30.22.1 2023/06/21 22:11:29 martin Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.30 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.30.22.1 2023/06/21 22:11:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,7 +323,7 @@ done:
 			break;
 
 		/* Only retry autonegotiation every mii_anegticks seconds. */
-		if (sc->mii_ticks <= sc->mii_anegticks)
+		if (sc->mii_ticks < sc->mii_anegticks)
 			break;
 
 		atphy_mii_phy_auto(sc);

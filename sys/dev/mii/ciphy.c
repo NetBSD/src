@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.41 2020/08/24 04:23:41 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.41.20.1 2023/06/21 22:11:29 martin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.41 2020/08/24 04:23:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.41.20.1 2023/06/21 22:11:29 martin Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -270,7 +270,7 @@ setit:
 			break;
 
 		/* Only retry autonegotiation every N seconds. */
-		if (sc->mii_ticks <= sc->mii_anegticks)
+		if (sc->mii_ticks < sc->mii_anegticks)
 			break;
 
 		mii_phy_auto_restart(sc);

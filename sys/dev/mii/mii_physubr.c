@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.101 2022/08/23 01:05:50 riastradh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.101.4.1 2023/06/21 22:11:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.101 2022/08/23 01:05:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.101.4.1 2023/06/21 22:11:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -390,7 +390,7 @@ mii_phy_tick(struct mii_softc *sc)
 	 * Only retry autonegotiation every N seconds.
 	 */
 	KASSERT(sc->mii_anegticks != 0);
-	if (sc->mii_ticks <= sc->mii_anegticks)
+	if (sc->mii_ticks < sc->mii_anegticks)
 		return EJUSTRETURN;
 
 	if (mii_phy_auto_restart(sc) == EJUSTRETURN)
