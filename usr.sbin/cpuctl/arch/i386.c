@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74.6.16 2023/01/23 13:13:08 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.74.6.17 2023/06/21 19:06:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74.6.16 2023/01/23 13:13:08 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.74.6.17 2023/06/21 19:06:15 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2200,7 +2200,7 @@ identifycpu(int fd, const char *cpuname)
 			    CPUID_AMD_ENCMEM_FLAGS, descs[0]);
 		}
 		if (ci->ci_max_ext_cpuid >= 0x80000022) {
-			uint8_t ncore, nnb, nlbrs;
+			uint8_t ncore, nnb, numc, nlbrs;
 
 			x86_cpuid(0x80000022, descs);
 			print_bits(cpuname, "Perfmon:",
@@ -2208,10 +2208,11 @@ identifycpu(int fd, const char *cpuname)
 
 			ncore = __SHIFTOUT(descs[1], CPUID_AXPERF_NCPC);
 			nnb = __SHIFTOUT(descs[1], CPUID_AXPERF_NNBPC);
+			numc = __SHIFTOUT(descs[1], CPUID_AXPERF_NUMCPC);
 			nlbrs = __SHIFTOUT(descs[1], CPUID_AXPERF_NLBRSTACK);
 			aprint_verbose("%s: Perfmon: counters: "
-			    "Core %hhu, Northbridge %hhu\n", cpuname,
-			    ncore, nnb);
+			    "Core %hhu, Northbridge %hhu, UMC %hhu\n", cpuname,
+			    ncore, nnb, numc);
 			aprint_verbose("%s: Perfmon: LBR Stack %hhu entries\n",
 			    cpuname, nlbrs);
 		}
