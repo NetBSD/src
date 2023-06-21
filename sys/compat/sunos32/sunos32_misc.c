@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.79.4.1 2022/08/03 11:11:33 martin Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.79.4.2 2023/06/21 21:24:37 martin Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.79.4.1 2022/08/03 11:11:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.79.4.2 2023/06/21 21:24:37 martin Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -242,6 +242,7 @@ static inline void sunos32_from___stat13(struct stat *, struct netbsd32_stat43 *
 static inline void
 sunos32_from___stat13(struct stat *sbp, struct netbsd32_stat43 *sb32p)
 {
+	memset(sb32p, 0, sizeof(*sb32p));
 	sb32p->st_dev = sbp->st_dev;
 	sb32p->st_ino = sbp->st_ino;
 	sb32p->st_mode = sbp->st_mode;
