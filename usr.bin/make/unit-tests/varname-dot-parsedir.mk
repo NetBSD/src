@@ -1,7 +1,15 @@
-# $NetBSD: varname-dot-parsedir.mk,v 1.7 2023/06/01 20:56:35 rillig Exp $
+# $NetBSD: varname-dot-parsedir.mk,v 1.8 2023/06/21 07:30:50 rillig Exp $
 #
 # Tests for the special .PARSEDIR variable, which contains the directory part
 # of the file that is currently parsed.
+#
+# See also
+#	varname-dot-includedfromdir.mk
+#	varname-dot-includedfromfile.mk
+#	varname-dot-parsefile.mk
+#
+# History
+#	.PARSEDIR and .PARSEFILE were added on 1999-08-09.
 
 # The .PARSEDIR may be absolute or relative, therefore there is not much that
 # can be tested here.
