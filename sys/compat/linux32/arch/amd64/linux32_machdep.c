@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.c,v 1.38.6.3 2023/06/21 21:04:03 martin Exp $ */
+/*	$NetBSD: linux32_machdep.c,v 1.38.6.4 2023/06/21 21:26:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.38.6.3 2023/06/21 21:04:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_machdep.c,v 1.38.6.4 2023/06/21 21:26:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -191,6 +191,7 @@ linux32_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	fp--;
 
 	/* Build stack frame for signal trampoline. */
+	memset(&frame, 0, sizeof(frame));
 	NETBSD32PTR32(frame.sf_handler, catcher);
 	frame.sf_sig = native_to_linux32_signo[sig];
 	NETBSD32PTR32(frame.sf_sip, &fp->sf_si);
