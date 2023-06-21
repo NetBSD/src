@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.185 2017/05/22 16:53:05 ragge Exp $	   */
+/*	$NetBSD: pmap.c,v 1.185.2.1 2023/06/21 19:12:09 martin Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.185 2017/05/22 16:53:05 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.185.2.1 2023/06/21 19:12:09 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -307,6 +307,15 @@ pmap_bootstrap(void)
 		usrptsize = (avail_end/(20 * PPTESZ)) * VAX_NBPG;
 		
 	kvmsize = calc_kvmsize(usrptsize);
+	/*
+	 * Ensure that not more than 1G is allocated, since that is 
+	 * max size of S0 space.
+	 * Also note that for full S0 space the SLR should be 0x200000,
+	 * since the comparison in the vax microcode is >= SLR.
+	 */
+#define	S0SPACE	(1*1024*1024*1024)
+	if (kvmsize > S0SPACE)
+		kvmsize = S0SPACE;
 	sysptsize = kvmsize >> VAX_PGSHIFT;
 	/*
 	 * Virtual_* and avail_* is used for mapping of system page table.
