@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.206.2.2 2018/12/27 12:04:09 martin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.206.2.3 2023/06/21 20:38:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.206.2.2 2018/12/27 12:04:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.206.2.3 2023/06/21 20:38:35 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -198,6 +198,9 @@ netbsd32_read(struct lwp *l, const struct netbsd32_read_args *uap, register_t *r
 	} */
 	struct sys_read_args ua;
 
+	if (SCARG(uap, nbyte) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
+
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void *);
 	NETBSD32TOX_UAP(nbyte, size_t);
@@ -213,6 +216,9 @@ netbsd32_write(struct lwp *l, const struct netbsd32_write_args *uap, register_t 
 		syscallarg(netbsd32_size_t) nbyte;
 	} */
 	struct sys_write_args ua;
+
+	if (SCARG(uap, nbyte) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void *);
@@ -1341,6 +1347,9 @@ netbsd32_pread(struct lwp *l, const struct netbsd32_pread_args *uap, register_t 
 	} */
 	struct sys_pread_args ua;
 
+	if (SCARG(uap, nbyte) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
+
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void);
 	NETBSD32TOX_UAP(nbyte, size_t);
@@ -1360,6 +1369,9 @@ netbsd32_pwrite(struct lwp *l, const struct netbsd32_pwrite_args *uap, register_
 		syscallarg(netbsd32_off_t) offset;
 	} */
 	struct sys_pwrite_args ua;
+
+	if (SCARG(uap, nbyte) > NETBSD32_SSIZE_MAX)
+		return EINVAL;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void);

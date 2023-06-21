@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.114.8.3 2018/08/25 11:13:05 martin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.114.8.4 2023/06/21 20:38:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -54,7 +54,7 @@
 #include <nfs/rpcv2.h>
 
 /*
- * first, define the basic types we need.
+ * first define the basic types we need, and any applicable limits.
  */
 
 typedef int32_t netbsd32_long;
@@ -68,6 +68,9 @@ typedef int32_t netbsd32_clockid_t;
 typedef int32_t netbsd32_key_t;
 typedef int32_t netbsd32_intptr_t;
 typedef uint32_t netbsd32_uintptr_t;
+
+/* Note: 32-bit sparc defines ssize_t as long but still has same size as int. */
+#define	NETBSD32_SSIZE_MAX	INT32_MAX
 
 /* netbsd32_[u]int64 are machine dependent and defined below */
 
