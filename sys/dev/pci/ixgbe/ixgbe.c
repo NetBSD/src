@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.25 2023/01/23 14:04:42 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.26 2023/06/21 19:20:50 martin Exp $ */
 
 /******************************************************************************
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.25 2023/01/23 14:04:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixgbe.c,v 1.199.2.26 2023/06/21 19:20:50 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1635,6 +1635,8 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_MLFC, mlfc);
 		IXGBE_EVC_REGADD(hw, stats, IXGBE_MRFC, mrfc);
 	}
+	if (hw->mac.type == ixgbe_mac_X550EM_a)
+		IXGBE_EVC_REGADD(hw, stats, IXGBE_LINK_DN_CNT, link_dn_cnt);
 	IXGBE_EVC_REGADD2(hw, stats, IXGBE_RLEC, rlec);
 
 	/* Hardware workaround, gprc counts missed packets */
@@ -1985,6 +1987,9 @@ ixgbe_add_hw_stats(struct adapter *adapter)
 	    stats->namebuf, "MAC Local Faults");
 	evcnt_attach_dynamic(&stats->mrfc, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "MAC Remote Faults");
+	if (hw->mac.type == ixgbe_mac_X550EM_a)
+		evcnt_attach_dynamic(&stats->link_dn_cnt, EVCNT_TYPE_MISC,
+		    NULL, stats->namebuf, "Link down event in the MAC");
 	evcnt_attach_dynamic(&stats->rlec, EVCNT_TYPE_MISC, NULL,
 	    stats->namebuf, "Receive Length Errors");
 	evcnt_attach_dynamic(&stats->lxontxc, EVCNT_TYPE_MISC, NULL,
@@ -2153,6 +2158,8 @@ ixgbe_clear_evcnt(struct adapter *adapter)
 	IXGBE_EVC_STORE(&stats->mpctotal, 0);
 	IXGBE_EVC_STORE(&stats->mlfc, 0);
 	IXGBE_EVC_STORE(&stats->mrfc, 0);
+	if (hw->mac.type == ixgbe_mac_X550EM_a)
+		IXGBE_EVC_STORE(&stats->link_dn_cnt, 0);
 	IXGBE_EVC_STORE(&stats->rlec, 0);
 	IXGBE_EVC_STORE(&stats->lxontxc, 0);
 	IXGBE_EVC_STORE(&stats->lxonrxc, 0);
@@ -3471,7 +3478,8 @@ ixgbe_add_device_sysctls(struct adapter *adapter)
 	}
 
 	/* for X552/X557-AT devices */
-	if (hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T) {
+	if ((hw->device_id == IXGBE_DEV_ID_X550EM_X_10G_T) ||
+	    (hw->device_id == IXGBE_DEV_ID_X550EM_A_10G_T)) {
 		const struct sysctlnode *phy_node;
 
 		if (sysctl_createv(log, 0, &rnode, &phy_node, 0, CTLTYPE_NODE,
@@ -3767,6 +3775,8 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&stats->mpctotal);
 	evcnt_detach(&stats->mlfc);
 	evcnt_detach(&stats->mrfc);
+	if (hw->mac.type == ixgbe_mac_X550EM_a)
+		evcnt_detach(&stats->link_dn_cnt);
 	evcnt_detach(&stats->rlec);
 	evcnt_detach(&stats->lxontxc);
 	evcnt_detach(&stats->lxonrxc);
@@ -5813,7 +5823,8 @@ ixgbe_sysctl_phy_temp(SYSCTLFN_ARGS)
 	if (ixgbe_fw_recovery_mode_swflag(adapter))
 		return (EPERM);
 
-	if (hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) {
+	if ((hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) &&
+	    (hw->device_id != IXGBE_DEV_ID_X550EM_A_10G_T)) {
 		device_printf(adapter->dev,
 		    "Device has no supported external thermal sensor.\n");
 		return (ENODEV);
@@ -5856,7 +5867,8 @@ ixgbe_sysctl_phy_overtemp_occurred(SYSCTLFN_ARGS)
 	if (ixgbe_fw_recovery_mode_swflag(adapter))
 		return (EPERM);
 
-	if (hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) {
+	if ((hw->device_id != IXGBE_DEV_ID_X550EM_X_10G_T) &&
+	    (hw->device_id != IXGBE_DEV_ID_X550EM_A_10G_T)) {
 		device_printf(adapter->dev,
 		    "Device has no supported external thermal sensor.\n");
 		return (ENODEV);
