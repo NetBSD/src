@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.70 2023/06/20 23:46:41 snj Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.71 2023/06/21 22:39:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2112,4 +2112,133 @@ xsrc/external/mit/libX11/dist/src/xlibi18n/Makefile.in up to 1.1.1.26
 
 	update to libX11 1.8.6.  fixes CVE-2023-3138.
 	[mrg, ticket #199]
+
+etc/rc.d/sshd					1.33-1.36
+
+	- Add check cmd to run `sshd -t' and use it as reload precmd.
+	- Use default curve for ECDSA keygen.               
+	- Stop generating DSA host keys.
+	- Adjust grammar.
+	[kim, ticket #196]
+
+share/man/man9/vnodeops.9			1.101
+sys/dev/raidframe/rf_netbsdkintf.c		1.412
+sys/kern/vnode_if.src				1.85
+sys/ufs/ffs/ffs_vfsops.c			1.381
+sys/kern/vnode_if.c				(regen)
+sys/rump/include/rump/rumpvnode_if.h		(regen)
+sys/rump/librump/rumpvfs/rumpvnode_if.c		(regen)
+sys/sys/vnode_if.h				(regen)
+
+	PR 57450: fix locking for VOP_IOCTL(.
+	[hannken, ticket #197]
+
+sys/arch/x86/pci/amdsmn.c			1.16
+sys/arch/x86/pci/amdzentemp.c			1.17,1.18
+
+	amdsmn(4),amdzentemp(4): Add Zen3+ Rembrandt(19h/4xh) &
+	Zen4 Genoa(19h/1xh).
+	[msaitoh, ticket #198]
+
+sys/arch/x86/include/specialreg.h		1.202,1.203
+usr.sbin/cpuctl/arch/i386.c			1.136
+
+	Add some CPUID bits for AMD.
+	[msaitoh, ticket #200]
+
+sys/arch/vax/include/trap.h			1.25
+sys/arch/vax/vax/pmap.c				1.196
+
+	vax: handle 512MB RAM machines.
+	[abs, ticket #201]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.325,1.326
+sys/dev/pci/ixgbe/ixgbe_common.c		1.44
+sys/dev/pci/ixgbe/ixgbe_type.h			1.56
+
+	- PCI device ID 0x15c8 also uses X557-AT PHY, so create the thermal
+	  sensor sysctl for it, too.
+	- Count the number of link down events in the MAC using with
+	  LINK_DN_CNT register.
+	[msaitoh, ticket #202]
+
+sys/arch/x86/x86/procfs_machdep.c		1.47
+
+	x86 procfs: add Intel lam and AMD vnmi.
+	[msaitoh, ticket #203]
+
+sys/compat/linux32/arch/amd64/linux32_machdep.c	1.48
+sys/compat/ossaudio/ossaudio.c			1.85
+sys/compat/sunos32/sunos32_misc.c		1.86
+
+	compat_sunos32, compat_ossaudio, linux32_rt_sendsig:
+	memset zero before copyout.
+	[riastradh, ticket #204]
+
+etc/pam.d/display_manager			1.6
+etc/pam.d/ftpd					1.8
+etc/pam.d/sshd					1.10
+etc/pam.d/su					1.9
+etc/pam.d/system				1.9
+
+	pam: Disable pam_krb5, pam_ksu by default.
+	[riastradh, ticket #205]
+
+lib/libpam/modules/pam_krb5/pam_krb5.8		1.13
+lib/libpam/modules/pam_krb5/pam_krb5.c		1.31
+
+	pam_krb5: Refuse to operate without a key to verify tickets.
+	[riastradh, ticket #206]
+
+lib/libpam/modules/pam_ksu/pam_ksu.c		1.10
+
+	pam_ksu: No need for homedir access.
+	[riastradh, ticket #207]
+
+sys/dev/mii/atphy.c				1.31
+sys/dev/mii/brgphy.c				1.91
+sys/dev/mii/ciphy.c				1.42
+sys/dev/mii/ipgphy.c				1.11
+sys/dev/mii/jmphy.c				1.5
+sys/dev/mii/mii_physubr.c			1.102
+sys/dev/mii/tlphy.c				1.72
+sys/dev/mii/urlphy.c				1.40
+
+	mii(4): retry autonegotiation every mii_anegticks seconds
+	instead of mii_anegticks+1.
+	[msaitoh, ticket #208]
+
+sys/dev/pci/pcidevs				1.1478-1.1480
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add Samsung SM990.
+	Add devices from PPR for AMD Family 19h Model 61h Revision B1
+	processors.
+	The SATA device ID for Apollo Lake is not 0x5ae0 but 0x5ae3.
+	[msaitoh, ticket #209]
+
+sys/dev/tprof/tprof.c				1.23
+sys/dev/tprof/tprof_armv7.c			1.13
+sys/dev/tprof/tprof_armv8.c			1.20
+sys/dev/tprof/tprof_types.h			1.7
+sys/dev/tprof/tprof_x86_amd.c			1.8
+sys/dev/tprof/tprof_x86_intel.c			1.6-1.8
+usr.sbin/tprof/arch/tprof_x86.c			1.16,1.17
+usr.sbin/tprof/tprof.8				1.25-1.30
+usr.sbin/tprof/tprof.c				1.21
+usr.sbin/tprof/tprof.h				1.5
+usr.sbin/tprof/tprof_top.c			1.9
+
+	tprof(8):
+	- Add Cometlake support.
+	- Get the number of general counters from CPUID 0xa on Intel.
+	- Use the default counter if -e argument is not specified.
+	[msaitoh, ticket #210]
+
+sys/dev/mii/mii_physubr.c			1.103
+
+	Fix a bug that changing a media from IFM_1000_T to IFM_AUTO doesn't
+	work correctly on a interface which has no MIIF_DOPAUSE flag.
+	[msaitoh, ticket #211]
 
