@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.70.6.4 2023/06/21 21:04:02 martin Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.70.6.5 2023/06/21 21:26:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.70.6.4 2023/06/21 21:04:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.70.6.5 2023/06/21 21:26:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1041,7 +1041,7 @@ oss_ioctl_mixer(struct lwp *lwp, const struct oss_sys_ioctl_args *uap, register_
 	mixer_ctrl_t mc;
 	struct oss_mixer_info omi;
 	struct audio_device adev;
-	int idat;
+	int idat = 0;
 	int i;
 	int error;
 	int l, r, n, e;
