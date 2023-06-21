@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_nfssvc.c,v 1.5.8.1 2023/06/21 21:04:01 martin Exp $	*/
+/*	$NetBSD: netbsd32_nfssvc.c,v 1.5.8.2 2023/06/21 21:19:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2015 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.5.8.1 2023/06/21 21:04:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_nfssvc.c,v 1.5.8.2 2023/06/21 21:19:38 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -137,7 +137,7 @@ nfssvc32_nsd_out(void *argp, const struct nfsd_srvargs *nsd)
 	args32.nsd_key[0] = nsd->nsd_key[0];
 	args32.nsd_key[1] = nsd->nsd_key[1];
 
-	return copyout(nsd, argp, sizeof *nsd);
+	return copyout(&args32, argp, sizeof args32);
 }
 
 static int
