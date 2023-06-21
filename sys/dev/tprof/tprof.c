@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof.c,v 1.21.2.1 2022/12/23 08:09:48 martin Exp $	*/
+/*	$NetBSD: tprof.c,v 1.21.2.2 2023/06/21 22:34:51 martin Exp $	*/
 
 /*-
  * Copyright (c)2008,2009,2010 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.21.2.1 2022/12/23 08:09:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof.c,v 1.21.2.2 2023/06/21 22:34:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ tprof_worker(struct work *wk, void *dummy)
 	KASSERT(dummy == NULL);
 
 	/*
-	 * get a per cpu buffer.
+	 * Get a per cpu buffer.
 	 */
 	buf = tprof_buf_refresh();
 
@@ -245,12 +245,11 @@ tprof_worker(struct work *wk, void *dummy)
 		tprof_stat.ts_dropbuf++;
 	}
 	mutex_exit(&tprof_lock);
-	if (buf) {
+	if (buf)
 		tprof_buf_free(buf);
-	}
-	if (!shouldstop) {
+
+	if (!shouldstop)
 		callout_schedule(&c->c_callout, hz / 8);
-	}
 }
 
 static void
@@ -276,9 +275,9 @@ tprof_stop1(void)
 		tprof_buf_t *old;
 
 		old = tprof_buf_switch(c, NULL);
-		if (old != NULL) {
+		if (old != NULL)
 			tprof_buf_free(old);
-		}
+
 		callout_destroy(&c->c_callout);
 	}
 	workqueue_destroy(tprof_wq);
@@ -293,9 +292,8 @@ tprof_getinfo(struct tprof_info *info)
 
 	memset(info, 0, sizeof(*info));
 	info->ti_version = TPROF_VERSION;
-	if ((tb = tprof_backend) != NULL) {
+	if ((tb = tprof_backend) != NULL)
 		info->ti_ident = tb->tb_ops->tbo_ident();
-	}
 }
 
 static int
@@ -351,8 +349,8 @@ tprof_start(tprof_countermask_t runmask)
 	runmask &= tb->tb_softc.sc_ctr_configured_mask;
 	if (runmask == 0) {
 		/*
-		 * targets are already running.
-		 * unconfigured counters are ignored.
+		 * Targets are already running.
+		 * Unconfigured counters are ignored.
 		 */
 		error = 0;
 		goto done;
@@ -427,7 +425,7 @@ tprof_stop(tprof_countermask_t stopmask)
 	KASSERT(mutex_owned(&tprof_startstop_lock));
 	stopmask &= tb->tb_softc.sc_ctr_running_mask;
 	if (stopmask == 0) {
-		/* targets are not running */
+		/* Targets are not running */
 		goto done;
 	}
 
@@ -437,13 +435,13 @@ tprof_stop(tprof_countermask_t stopmask)
 	tb->tb_softc.sc_ctr_running_mask &= ~stopmask;
 	mutex_exit(&tprof_lock);
 
-	/* all counters have stopped? */
+	/* All counters have stopped? */
 	if (tb->tb_softc.sc_ctr_running_mask == 0) {
 		mutex_enter(&tprof_lock);
 		cv_broadcast(&tprof_reader_cv);
-		while (tprof_nworker > 0) {
+		while (tprof_nworker > 0)
 			cv_wait(&tprof_cv, &tprof_lock);
-		}
+
 		mutex_exit(&tprof_lock);
 
 		tprof_stop1();
@@ -516,7 +514,7 @@ tprof_configure_event(const tprof_param_t *param)
 	    tb->tb_ops->tbo_counter_bitwidth(param->p_counter);
 
 	sc_param = &sc->sc_count[c].ctr_param;
-	memcpy(sc_param, param, sizeof(*sc_param));	/* save copy of param */
+	memcpy(sc_param, param, sizeof(*sc_param)); /* save copy of param */
 
 	if (ISSET(param->p_flags, TPROF_PARAM_PROFILE)) {
 		uint64_t freq, inum, dnum;
@@ -618,9 +616,8 @@ tprof_getcounts_cpu(void *arg1, void *arg2)
 			counters[c] = counters_offset[c] +
 			    ((ctr - sc->sc_count[c].ctr_counter_reset_val) &
 			    __BITS(sc->sc_count[c].ctr_bitwidth - 1, 0));
-		} else {
+		} else
 			counters[c] = 0;
-		}
 	}
 	percpu_putref(sc->sc_ctr_offset_percpu);
 }
@@ -741,9 +738,8 @@ tprof_backend_register(const char *name, const tprof_backend_ops_t *ops,
 {
 	tprof_backend_t *tb;
 
-	if (vers != TPROF_BACKEND_VERSION) {
+	if (vers != TPROF_BACKEND_VERSION)
 		return EINVAL;
-	}
 
 	mutex_enter(&tprof_startstop_lock);
 	tb = tprof_backend_lookup(name);
@@ -768,7 +764,7 @@ tprof_backend_register(const char *name, const tprof_backend_ops_t *ops,
 #endif
 	mutex_exit(&tprof_startstop_lock);
 
-	/* init backend softc */
+	/* Init backend softc */
 	tb->tb_softc.sc_ncounters = tb->tb_ops->tbo_ncounters();
 	tb->tb_softc.sc_ctr_offset_percpu_size =
 	    sizeof(uint64_t) * tb->tb_softc.sc_ncounters;
@@ -800,9 +796,8 @@ tprof_backend_unregister(const char *name)
 		return EBUSY;
 	}
 #if 1 /* XXX for now */
-	if (tprof_backend == tb) {
+	if (tprof_backend == tb)
 		tprof_backend = NULL;
-	}
 #endif
 	LIST_REMOVE(tb, tb_list);
 	mutex_exit(&tprof_startstop_lock);
@@ -811,7 +806,7 @@ tprof_backend_unregister(const char *name)
 	percpu_free(tb->tb_softc.sc_ctr_offset_percpu,
 	    tb->tb_softc.sc_ctr_offset_percpu_size);
 
-	/* free backend */
+	/* Free backend */
 	kmem_free(tb, sizeof(*tb));
 
 	return 0;
@@ -823,9 +818,9 @@ static int
 tprof_open(dev_t dev, int flags, int type, struct lwp *l)
 {
 
-	if (minor(dev) != 0) {
+	if (minor(dev) != 0)
 		return EXDEV;
-	}
+
 	mutex_enter(&tprof_lock);
 	if (tprof_owner != NULL) {
 		mutex_exit(&tprof_lock);
@@ -953,7 +948,7 @@ tprof_read(dev_t dev, struct uio *uio, int flags)
 	mutex_enter(&tprof_reader_lock);
 	while (uio->uio_resid > 0 && error == 0) {
 		/*
-		 * take the first buffer from the list.
+		 * Take the first buffer from the list.
 		 */
 		mutex_enter(&tprof_lock);
 		buf = STAILQ_FIRST(&tprof_list);
@@ -975,7 +970,7 @@ tprof_read(dev_t dev, struct uio *uio, int flags)
 		mutex_exit(&tprof_lock);
 
 		/*
-		 * copy it out.
+		 * Copy it out.
 		 */
 		bytes = MIN(buf->b_used * sizeof(tprof_sample_t) -
 		    tprof_reader_offset, uio->uio_resid);
@@ -986,7 +981,7 @@ tprof_read(dev_t dev, struct uio *uio, int flags)
 		tprof_reader_offset += done;
 
 		/*
-		 * if we didn't consume the whole buffer,
+		 * If we didn't consume the whole buffer,
 		 * put it back to the list.
 		 */
 		if (tprof_reader_offset <
@@ -1080,7 +1075,7 @@ void
 tprofattach(int nunits)
 {
 
-	/* nothing */
+	/* Nothing */
 }
 
 MODULE(MODULE_CLASS_DRIVER, tprof, NULL);

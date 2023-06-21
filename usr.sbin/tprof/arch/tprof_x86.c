@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.15 2022/12/08 05:29:27 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.15.2.1 2023/06/21 22:34:51 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,8 @@ struct event_table {
 
 static struct event_table *cpuevents = NULL;
 
-static void x86_cpuid(unsigned int *eax, unsigned int *ebx,
+static void
+x86_cpuid(unsigned int *eax, unsigned int *ebx,
     unsigned int *ecx, unsigned int *edx)
 {
 	asm volatile("cpuid"
@@ -429,7 +430,7 @@ static struct name_to_event intel_skylake_kabylake_names[] = {
 	{ "OFFCORE_REQUESTS_OUTSTANDING.DEMAND_RFO",	0x60, 0x04, true },
 	{ "OFFCORE_REQUESTS_OUTSTANDING.ALL_DATA_RD",	0x60, 0x08, true },
 	{ "OFFCORE_REQUESTS_OUTSTANDING.L3_MISS_DEMAND_DATA_RD",
-	  						0x60, 0x10, true },
+							0x60, 0x10, true },
 	{ "IDQ.MITE_UOPS",				0x79, 0x04, true },
 	{ "IDQ.DSB_UOPS",				0x79, 0x08, true },
 	{ "IDQ.MS_MITE_UOPS",				0x79, 0x20, true },
@@ -571,6 +572,8 @@ init_intel_generic(void)
 		case 0x5e: /* Skylake */
 		case 0x8e: /* Kabylake */
 		case 0x9e: /* Kabylake */
+		case 0xa5: /* Cometlake */
+		case 0xa6: /* Cometlake */
 			table->next = init_intel_skylake_kabylake();
 			break;
 		}

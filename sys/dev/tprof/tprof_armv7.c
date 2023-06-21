@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.11.2.1 2022/12/23 08:09:48 martin Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.11.2.2 2023/06/21 22:34:51 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.11.2.1 2022/12/23 08:09:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.11.2.2 2023/06/21 22:34:51 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -117,7 +117,7 @@ armv7_pmu_get_pmevcntr(u_int counter)
 	return armreg_pmxevcntr_read();
 }
 
-/* read and write at once */
+/* Read and write at once */
 static inline uint64_t
 armv7_pmu_getset_pmevcntr(u_int counter, uint64_t val)
 {
@@ -190,7 +190,7 @@ armv7_pmu_configure_event(u_int counter, const tprof_param_t *param)
 	/* Clear overflow flag */
 	armreg_pmovsr_write(__BIT(counter) & PMOVS_P);
 
-	/* reset the counter */
+	/* Reset the counter */
 	armv7_pmu_set_pmevcntr(counter, param->p_value);
 }
 
@@ -235,13 +235,13 @@ armv7_pmu_intr(void *priv)
 		CLR(mask, __BIT(bit));
 
 		if (ISSET(sc->sc_ctr_prof_mask, __BIT(bit))) {
-			/* account for the counter, and reset */
+			/* Account for the counter, and reset */
 			uint64_t ctr = armv7_pmu_getset_pmevcntr(bit,
 			    sc->sc_count[bit].ctr_counter_reset_val);
 			counters_offset[bit] +=
 			    sc->sc_count[bit].ctr_counter_val + ctr;
 
-			/* record a sample */
+			/* Record a sample */
 			tfi.tfi_pc = tf->tf_pc;
 			tfi.tfi_counter = bit;
 			tfi.tfi_inkernel =
@@ -249,7 +249,7 @@ armv7_pmu_intr(void *priv)
 			    tfi.tfi_pc < VM_MAX_KERNEL_ADDRESS;
 			tprof_sample(NULL, &tfi);
 		} else if (ISSET(sc->sc_ctr_ovf_mask, __BIT(bit))) {
-			/* counter has overflowed */
+			/* Counter has overflowed */
 			counters_offset[bit] += __BIT(32);
 		}
 	}
