@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.138.6.6 2020/07/17 15:28:08 martin Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.138.6.7 2023/06/21 21:04:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.138.6.6 2020/07/17 15:28:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.138.6.7 2023/06/21 21:04:02 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -455,6 +455,7 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 static void
 linux_to_bsd_msghdr(const struct linux_msghdr *lmsg, struct msghdr *bmsg)
 {
+	memset(bmsg, 0, sizeof(*bmsg));
 	bmsg->msg_name = lmsg->msg_name;
 	bmsg->msg_namelen = lmsg->msg_namelen;
 	bmsg->msg_iov = lmsg->msg_iov;
@@ -467,6 +468,7 @@ linux_to_bsd_msghdr(const struct linux_msghdr *lmsg, struct msghdr *bmsg)
 static void
 bsd_to_linux_msghdr(const struct msghdr *bmsg, struct linux_msghdr *lmsg)
 {
+	memset(lmsg, 0, sizeof(*lmsg));
 	lmsg->msg_name = bmsg->msg_name;
 	lmsg->msg_namelen = bmsg->msg_namelen;
 	lmsg->msg_iov = bmsg->msg_iov;
@@ -715,6 +717,7 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 		 * 1. different values for level/type on some archs
 		 * 2. different alignment of CMSG_DATA on some archs
 		 */
+		memset(&linux_cmsg, 0, sizeof(linux_cmsg));
 		linux_cmsg.cmsg_len = cmsg->cmsg_len - LINUX_CMSG_ALIGN_DELTA;
 		linux_cmsg.cmsg_level = cmsg->cmsg_level;
 		linux_cmsg.cmsg_type = cmsg->cmsg_type;

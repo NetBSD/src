@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_12.c,v 1.33 2012/12/10 02:21:58 chs Exp $	*/
+/*	$NetBSD: netbsd32_compat_12.c,v 1.33.30.1 2023/06/21 21:04:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.33 2012/12/10 02:21:58 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_12.c,v 1.33.30.1 2023/06/21 21:04:01 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -59,6 +59,7 @@ static void
 netbsd32_stat12_to_netbsd32(struct stat12 *sp12, struct netbsd32_stat12 *sp32)
 {
 
+	memset(sp32, 0, sizeof(*sp32));
 	sp32->st_dev = sp12->st_dev;
 	sp32->st_ino = sp12->st_ino;
 	sp32->st_mode = sp12->st_mode;

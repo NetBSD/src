@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.35 2014/03/24 20:08:08 christos Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.35.22.1 2023/06/21 21:04:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.35 2014/03/24 20:08:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.35.22.1 2023/06/21 21:04:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,6 +232,8 @@ compat_43_sys_getkerninfo(struct lwp *l, const struct compat_43_sys_getkerninfo_
 				error = 0;
 				break;
 			}
+
+			memset(&ksi, 0, sizeof(ksi));
 
 #define COPY(fld)							\
 			ksi.fld = us - (u_long) usi;			\
