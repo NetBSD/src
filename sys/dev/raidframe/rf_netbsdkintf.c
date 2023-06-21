@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.350 2017/06/01 02:45:11 chs Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.350.2.1 2023/06/21 20:48:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.350 2017/06/01 02:45:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.350.2.1 2023/06/21 20:48:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1622,6 +1622,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return (0);
 	case RAIDFRAME_CHECK_RECON_STATUS_EXT:
 		progressInfoPtr = (RF_ProgressInfo_t **) data;
+		memset(&progressInfo, 0, sizeof(progressInfo));
 		if (raidPtr->status != rf_rs_reconstructing) {
 			progressInfo.remaining = 0;
 			progressInfo.completed = 100;
@@ -1656,6 +1657,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case RAIDFRAME_CHECK_PARITYREWRITE_STATUS_EXT:
 		progressInfoPtr = (RF_ProgressInfo_t **) data;
+		memset(&progressInfo, 0, sizeof(progressInfo));
 		if (raidPtr->parity_rewrite_in_progress == 1) {
 			progressInfo.total = raidPtr->Layout.numStripe;
 			progressInfo.completed =
@@ -1687,6 +1689,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case RAIDFRAME_CHECK_COPYBACK_STATUS_EXT:
 		progressInfoPtr = (RF_ProgressInfo_t **) data;
+		memset(&progressInfo, 0, sizeof(progressInfo));
 		if (raidPtr->copyback_in_progress == 1) {
 			progressInfo.total = raidPtr->Layout.numStripe;
 			progressInfo.completed =

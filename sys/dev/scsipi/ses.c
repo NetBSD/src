@@ -1,4 +1,4 @@
-/*	$NetBSD: ses.c,v 1.50 2016/11/20 15:37:19 mlelstv Exp $ */
+/*	$NetBSD: ses.c,v 1.50.8.1 2023/06/21 20:48:07 martin Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.50 2016/11/20 15:37:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ses.c,v 1.50.8.1 2023/06/21 20:48:07 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -415,6 +415,7 @@ sesioctl(dev_t dev, u_long cmd, void *arg_addr, int flag, struct lwp *l)
 	case SESIOC_GETOBJMAP:
 		if (addr == NULL)
 			return EINVAL;
+		memset(&obj, 0, sizeof(obj));
 		for (uobj = addr, i = 0; i != ssc->ses_nobjects; i++, uobj++) {
 			obj.obj_id = i;
 			obj.subencid = ssc->ses_objmap[i].subenclosure;
