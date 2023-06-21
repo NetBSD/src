@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.39 2022/01/08 17:35:05 riastradh Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.39.4.1 2023/06/21 22:11:29 martin Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.39 2022/01/08 17:35:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.39.4.1 2023/06/21 22:11:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		/* Only retry autonegotiation every N seconds. */
 		KASSERT(sc->mii_anegticks != 0);
-		if (sc->mii_ticks <= sc->mii_anegticks)
+		if (sc->mii_ticks < sc->mii_anegticks)
 			return 0;
 
 		if (mii_phy_auto_restart(sc) == EJUSTRETURN)

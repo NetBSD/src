@@ -1,4 +1,4 @@
-/*	$NetBSD: jmphy.c,v 1.4 2020/03/15 23:04:50 thorpej Exp $ */
+/*	$NetBSD: jmphy.c,v 1.4.24.1 2023/06/21 22:11:29 martin Exp $ */
 /*	$OpenBSD: jmphy.c,v 1.6 2015/03/14 03:38:48 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -174,7 +174,7 @@ jmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		/* Announce link loss right after it happens. */
 		if (sc->mii_ticks++ == 0)
 			break;
-		if (sc->mii_ticks <= sc->mii_anegticks)
+		if (sc->mii_ticks < sc->mii_anegticks)
 			return 0;
 
 		sc->mii_ticks = 0;

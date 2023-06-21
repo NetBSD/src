@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.90 2020/05/25 19:48:38 jmcneill Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.90.20.1 2023/06/21 22:11:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.90 2020/05/25 19:48:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.90.20.1 2023/06/21 22:11:29 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,7 +424,7 @@ setit:
 
 		/* Only retry autonegotiation every mii_anegticks seconds. */
 		KASSERT(sc->mii_anegticks != 0);
-		if (sc->mii_ticks <= sc->mii_anegticks)
+		if (sc->mii_ticks < sc->mii_anegticks)
 			break;
 
 		brgphy_mii_phy_auto(sc);
