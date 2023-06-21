@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.7 2023/06/20 09:25:34 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.8 2023/06/21 04:20:21 sjg Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -282,14 +282,45 @@ LINES.target-sys= \
 # expect: Parse_PushInput: file target-sys.tmp, line 1
 # expect: Skipping 'target-sys.tmp' because '__<target-sys.tmp>__' is defined
 
-# The target name must not include '$' or other special characters.
+# The target name may include variable references - which will be expanded.
 INCS+=	target-indirect
 LINES.target-indirect= \
 	'.if !target($${target-indirect.tmp:L})' \
 	'target-indirect.tmp: .PHONY' \
 	'.endif'
 # expect: Parse_PushInput: file target-indirect.tmp, line 1
-# expect: Parse_PushInput: file target-indirect.tmp, line 1
+# expect: Skipping 'target-indirect.tmp' because 'target-indirect.tmp' is defined
+
+# A common form of guard target is __${.PARSEFILE}__.
+# This is only useful of course if basename is unique.
+INCS+=	target-indirect-PARSEFILE
+LINES.target-indirect-PARSEFILE= \
+	'.if !target(__$${.PARSEFILE}__)' \
+	'__$${.PARSEFILE}__: .NOTMAIN' \
+	'.endif'
+# expect: Parse_PushInput: file target-indirect-PARSEFILE.tmp, line 1
+# expect: Skipping 'target-indirect-PARSEFILE.tmp' because '__target-indirect-PARSEFILE.tmp__' is defined
+
+# Confirm that two such guards do not conflict
+# again, assuming the basenames are unique.
+INCS+=	target-indirect-PARSEFILE2
+LINES.target-indirect-PARSEFILE2= \
+	'.if !target(__$${.PARSEFILE}__)' \
+	'__$${.PARSEFILE}__: .NOTMAIN' \
+	'.endif'
+# expect: Parse_PushInput: file target-indirect-PARSEFILE2.tmp, line 1
+# expect: Skipping 'target-indirect-PARSEFILE2.tmp' because '__target-indirect-PARSEFILE2.tmp__' is defined
+
+# Another common form of guard target is __${.PARSEFILE:tA}__.
+INCS+=	target-indirect-PARSEFILE-tA
+LINES.target-indirect-PARSEFILE-tA= \
+	'.if !target(__$${.PARSEFILE:tA}__)' \
+	'__$${.PARSEFILE:tA}__: .NOTMAIN' \
+	'.endif'
+# expect: Parse_PushInput: file target-indirect-PARSEFILE-tA.tmp, line 1
+# expect: Skipping 'target-indirect-PARSEFILE-tA.tmp' because '__target-indirect-PARSEFILE-tA.tmp__' is defined
+# The actual target is __${.OBJDIR}/target-indirect-PARSEFILE-tA.tmp__ but
+# ${.OBJDIR}/ gets stripped in post processing.
 
 # If the target is not defined when including the file the next time, the file
 # is not guarded.
