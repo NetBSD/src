@@ -1,7 +1,15 @@
-# $NetBSD: varname-dot-parsefile.mk,v 1.6 2023/06/01 20:56:35 rillig Exp $
+# $NetBSD: varname-dot-parsefile.mk,v 1.7 2023/06/21 07:30:50 rillig Exp $
 #
 # Tests for the special .PARSEFILE variable, which contains the basename part
 # of the file that is currently parsed.
+#
+# See also
+#	varname-dot-includedfromdir.mk
+#	varname-dot-includedfromfile.mk
+#	varname-dot-parsedir.mk
+#
+# History
+#	.PARSEDIR and .PARSEFILE were added on 1999-08-09.
 
 .if ${.PARSEFILE} != "varname-dot-parsefile.mk"
 .  error
