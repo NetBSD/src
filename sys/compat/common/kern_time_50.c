@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.31.10.1 2023/06/21 21:04:01 martin Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.31.10.2 2023/06/21 21:13:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.31.10.1 2023/06/21 21:04:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.31.10.2 2023/06/21 21:13:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -528,6 +528,7 @@ compat_50_sys___ntp_gettime30(struct lwp *l,
 
 	if (SCARG(uap, ntvp)) {
 		ntp_gettime(&ntv);
+		memset(&ntv50, 0, sizeof(ntv50));
 		timespec_to_timespec50(&ntv.time, &ntv50.time);
 		ntv50.maxerror = ntv.maxerror;
 		ntv50.esterror = ntv.esterror;
