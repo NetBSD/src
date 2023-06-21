@@ -1,4 +1,4 @@
-/*	$NetBSD: route6d.c,v 1.68.8.1 2023/04/01 16:46:33 martin Exp $	*/
+/*	$NetBSD: route6d.c,v 1.68.8.2 2023/06/21 20:35:46 martin Exp $	*/
 /*	$KAME: route6d.c,v 1.94 2002/10/26 20:08:55 itojun Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef	lint
-__RCSID("$NetBSD: route6d.c,v 1.68.8.1 2023/04/01 16:46:33 martin Exp $");
+__RCSID("$NetBSD: route6d.c,v 1.68.8.2 2023/06/21 20:35:46 martin Exp $");
 #endif
 
 #include <stdbool.h>
@@ -625,6 +625,7 @@ init(void)
 	}
 #endif 
 
+	freeaddrinfo(res);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = PF_INET6;
 	hints.ai_socktype = SOCK_DGRAM;
