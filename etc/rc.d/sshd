@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: sshd,v 1.29 2018/05/26 19:18:11 riastradh Exp $
+# $NetBSD: sshd,v 1.29.4.1 2023/06/21 16:06:14 martin Exp $
 #
 
 # PROVIDE: sshd
@@ -13,14 +13,14 @@ rcvar=$name
 command="/usr/sbin/${name}"
 pidfile="/var/run/${name}.pid"
 required_files="/etc/ssh/sshd_config"
-extra_commands="keygen reload"
+extra_commands="check keygen reload"
 
 sshd_keygen()
 {
 (
 	keygen="/usr/bin/ssh-keygen"
 	umask 022
-	while read type bits filename version name;  do
+	while read type bits filename;  do
 		f="/etc/ssh/$filename"
 		if [ -f "$f" ]; then
 			continue
@@ -33,10 +33,9 @@ sshd_keygen()
 		"${keygen}" -t "${type}" ${bitarg} -f "${f}" -N '' -q && \
 		    printf "ssh-keygen: " && "${keygen}" -f "${f}" -l
 	done << _EOF
-dsa	1024	ssh_host_dsa_key	2	DSA
-ecdsa	521	ssh_host_ecdsa_key	1	ECDSA
-ed25519	-1	ssh_host_ed25519_key	1	ED25519
-rsa	0	ssh_host_rsa_key	2	RSA
+ecdsa	-1	ssh_host_ecdsa_key
+ed25519	-1	ssh_host_ed25519_key
+rsa	0	ssh_host_rsa_key
 _EOF
 )
 }
@@ -46,7 +45,19 @@ sshd_precmd()
 	run_rc_command keygen
 }
 
+sshd_check()
+{
+	sshd -t
+}
+
+sshd_reload_precmd()
+{
+	run_rc_command check
+}
+
+check_cmd=sshd_check
 keygen_cmd=sshd_keygen
+reload_precmd=sshd_reload_precmd
 start_precmd=sshd_precmd
 
 load_rc_config $name
