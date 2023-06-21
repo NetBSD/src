@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.350 2023/06/20 09:25:33 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.351 2023/06/21 04:20:20 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.350 2023/06/20 09:25:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.351 2023/06/21 04:20:20 sjg Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -1252,22 +1252,6 @@ ParseVarnameGuard(const char **pp, const char **varname)
 	return false;
 }
 
-static bool
-ParseTargetGuard(const char **pp, const char **target)
-{
-	const char *p = *pp;
-
-	if (ch_isalpha(*p) || *p == '_') {
-		while (ch_isalnum(*p) || *p == '_' || *p == '-'
-		    || *p == '<' || *p == '>' || *p == '.' || *p == '/')
-			p++;
-		*target = *pp;
-		*pp = p;
-		return true;
-	}
-	return false;
-}
-
 /* Extracts the multiple-inclusion guard from a conditional, if any. */
 Guard *
 Cond_ExtractGuard(const char *line)
@@ -1292,9 +1276,17 @@ Cond_ExtractGuard(const char *line)
 			    && strcmp(p, ")") == 0)
 				goto found_variable;
 		} else if (skip_string(&p, "!target(")) {
-			if (ParseTargetGuard(&p, &name)
-			    && strcmp(p, ")") == 0)
-				goto found_target;
+			name = p;
+			free(ParseWord(&p, false));
+			if (strcmp(p, ")") == 0) {
+				char *target;
+				p = name;
+				target = ParseWord(&p, true);
+				guard = bmake_malloc(sizeof(*guard));
+				guard->kind = GK_TARGET;
+				guard->name = target;
+				return guard;
+			}
 		}
 	} else if (Substring_Equals(dir, "ifndef")) {
 		if (ParseVarnameGuard(&p, &name) && *p == '\0')
@@ -1304,10 +1296,6 @@ Cond_ExtractGuard(const char *line)
 
 found_variable:
 	kind = GK_VARIABLE;
-	goto found;
-found_target:
-	kind = GK_TARGET;
-found:
 	guard = bmake_malloc(sizeof(*guard));
 	guard->kind = kind;
 	guard->name = bmake_strsedup(name, p);
