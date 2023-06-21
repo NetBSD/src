@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.51 2022/05/29 10:47:40 andvar Exp $
+# $NetBSD: postinstall.in,v 1.52 2023/06/21 18:46:06 mrg Exp $
 #
 # Copyright (c) 2002-2022 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1318,9 +1318,9 @@ do_fontconfig()
 	fi
 	local regular_fonts="
 10-autohint.conf
-10-no-sub-pixel.conf
 10-scale-bitmap-fonts.conf
 10-sub-pixel-bgr.conf
+10-sub-pixel-none.conf
 10-sub-pixel-rgb.conf
 10-sub-pixel-vbgr.conf
 10-sub-pixel-vrgb.conf
