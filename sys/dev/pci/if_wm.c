@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.48 2023/01/23 14:01:25 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.49 2023/06/21 21:29:57 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.48 2023/01/23 14:01:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.49 2023/06/21 21:29:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9809,7 +9809,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 		if (wm_phy_need_linkdown_discard(sc)) {
 			DPRINTF(sc, WM_DEBUG_LINK,
 			    ("%s: linkintr: Clear linkdown discard flag\n",
-				device_xname(dev)));
+				device_xname(sc->sc_dev)));
 			wm_clear_linkdown_discard(sc);
 		}
 	} else {
@@ -9818,7 +9818,7 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 		if (wm_phy_need_linkdown_discard(sc)) {
 			DPRINTF(sc, WM_DEBUG_LINK,
 			    ("%s: linkintr: Set linkdown discard flag\n",
-				device_xname(dev)));
+				device_xname(sc->sc_dev)));
 			wm_set_linkdown_discard(sc);
 		}
 	}
