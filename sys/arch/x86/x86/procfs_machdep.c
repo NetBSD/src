@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_machdep.c,v 1.15.2.15 2023/01/23 12:25:06 martin Exp $ */
+/*	$NetBSD: procfs_machdep.c,v 1.15.2.16 2023/06/21 19:54:02 martin Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.15 2023/01/23 12:25:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_machdep.c,v 1.15.2.16 2023/06/21 19:54:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ static const char * const x86_features[][32] = {
 	"avx_vnni", "avx512_bf16", NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+	NULL, NULL, "lam", NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (13) AMD 0x80000008 ebx */
 	"clzero", "irperf", "xsaveerptr", NULL, "rdpru", NULL, NULL, NULL,
@@ -172,7 +172,7 @@ static const char * const x86_features[][32] = {
 	NULL, NULL, "pausefilter", NULL, "pfthreshold", "avic", NULL,
 	"v_vmsave_vmload",
 	"vgif", NULL, "x2avic", NULL, "v_spec_ctrl", NULL, NULL, NULL,
-	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL},
+	NULL, "vnmi", NULL, NULL, NULL, NULL, NULL, NULL},
 
 	{ /* (16) 0x00000007:0 ecx */
 	NULL, "avx512vbmi", "umip", "pku",
