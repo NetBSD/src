@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.43.12.1 2017/08/09 05:12:18 snj Exp $ */
+/* $NetBSD: osf1_file.c,v 1.43.12.2 2023/06/21 21:09:28 martin Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.43.12.1 2017/08/09 05:12:18 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.43.12.2 2023/06/21 21:09:28 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -218,6 +218,7 @@ again:
 			inp += reclen;  /* it is a hole; squish it out */
 			continue;
 		}
+		memset(&idb, 0, sizeof(idb));
 		osf1_reclen = OSF1_RECLEN(&idb, bdp->d_namlen);
 		if (reclen > len || resid < osf1_reclen) {
 			/* entry too big for buffer, so just stop */

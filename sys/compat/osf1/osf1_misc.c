@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_misc.c,v 1.87 2016/11/10 17:00:51 christos Exp $ */
+/* $NetBSD: osf1_misc.c,v 1.87.8.1 2023/06/21 21:09:28 martin Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.87 2016/11/10 17:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_misc.c,v 1.87.8.1 2023/06/21 21:09:28 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -338,6 +338,7 @@ osf1_sys_uname(struct lwp *l, const struct osf1_sys_uname_args *uap, register_t 
         const char *cp;
         char *dp, *ep;
 
+	memset(&u, 0, sizeof(u));
         strncpy(u.sysname, ostype, sizeof(u.sysname));
         strncpy(u.nodename, hostname, sizeof(u.nodename));
         strncpy(u.release, osrelease, sizeof(u.release));
@@ -383,6 +384,7 @@ osf1_sys_usleep_thread(struct lwp *l, const struct osf1_sys_usleep_thread_args *
 		if (endtv.tv_sec < 0 || endtv.tv_usec < 0)
 			endtv.tv_sec = endtv.tv_usec = 0;
 
+		memset(&endotv, 0, sizeof(endotv));
 		endotv.tv_sec = endtv.tv_sec;
 		endotv.tv_usec = endtv.tv_usec;
 		error = copyout(&endotv, SCARG(uap, slept), sizeof endotv);
