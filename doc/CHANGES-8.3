@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.177 2023/06/20 23:03:39 snj Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.178 2023/06/21 22:30:39 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3334,4 +3334,190 @@ xsrc/external/mit/libX11/dist/src/InitExt.c	patch
 	Add bounds checks for extension request, event, & error codes.
 	Fixes CVE-2023-3138.
 	[mrg, ticket #1826]
+
+sys/arch/x86/pci/amdsmn.c			1.16
+sys/arch/x86/pci/amdzentemp.c			1.17,1.18
+
+	amdsmn(4),amdzentemp(4): Add Zen3+ Rembrandt(19h/4xh) &
+	Zen4 Genoa(19h/1xh).
+	[msaitoh, ticket #1825]
+
+sys/arch/x86/include/specialreg.h		1.202,1.203
+usr.sbin/cpuctl/arch/i386.c			1.136
+
+	Add some CPUID bits for AMD.
+	[msaitoh, ticket #1827]
+
+sys/arch/vax/include/trap.h			1.25
+sys/arch/vax/vax/pmap.c				1.196
+
+	vax: handle 512MB RAM machines.
+	[abs, ticket #1829]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.325,1.326
+sys/dev/pci/ixgbe/ixgbe_common.c		1.44
+sys/dev/pci/ixgbe/ixgbe_type.h			1.56
+
+	- PCI device ID 0x15c8 also uses X557-AT PHY, so create the thermal
+	  sensor sysctl for it, too.
+	- Count the number of link down events in the MAC using with
+	  LINK_DN_CNT register.
+	[msaitoh, ticket #1828]
+
+sys/arch/x86/x86/procfs_machdep.c		1.47
+
+	x86 procfs: add Intel lam and AMD vnmi.
+	[msaitoh, ticket #1830]
+
+sys/altq/altq_hfsc.c				1.29
+sys/altq/altq_priq.c				1.27
+
+	sys/altq: memset zero before copyout.
+	[riastradh, ticket #1831]
+
+sys/compat/netbsd32/netbsd32.h			1.137
+sys/compat/netbsd32/netbsd32_conv.h		1.45
+sys/compat/netbsd32/netbsd32_fs.c		1.92
+sys/compat/netbsd32/netbsd32_netbsd.c		1.232
+sys/compat/netbsd32/netbsd32_socket.c		1.56
+
+	compat_netbsd32: clamp buffer sizes to NETBSD32_SSIZE_MAX.
+	Fixes ATF lib/libc/sys/t_write:write_err.
+	[riastradh, ticket #1833]
+
+sys/dev/isa/mcd.c				1.121 (patch)
+sys/dev/pci/if_iwi.c				1.117 (patch)
+sys/dev/raidframe/rf_netbsdkintf.c		1.401 (patch)
+sys/dev/scsipi/ses.c				1.52 (patch)
+
+	sys/dev: memset zero before copyout.
+	[riastradh, ticket #1835]
+
+sys/compat/common/kern_info_09.c		1.22
+sys/compat/common/kern_info_43.c		1.40
+sys/compat/common/kern_resource_43.c		1.23
+sys/compat/common/kern_sig_13.c			1.22
+sys/compat/common/kern_sig_43.c			1.37
+sys/compat/common/kern_time_50.c		1.37
+sys/compat/common/vfs_syscalls_12.c		1.38
+sys/compat/common/vfs_syscalls_30.c		1.43
+sys/compat/common/vfs_syscalls_43.c		1.68
+sys/compat/freebsd/freebsd_misc.c		1.34
+sys/compat/freebsd/freebsd_sched.c		1.23
+sys/compat/linux/arch/alpha/linux_machdep.c	1.52
+sys/compat/linux/arch/amd64/linux_machdep.c	1.60
+sys/compat/linux/arch/arm/linux_machdep.c	1.34
+sys/compat/linux/arch/arm/linux_ptrace.c	1.23
+sys/compat/linux/arch/i386/linux_machdep.c	1.168
+sys/compat/linux/arch/i386/linux_ptrace.c	1.35
+sys/compat/linux/arch/m68k/linux_machdep.c	1.43
+sys/compat/linux/arch/mips/linux_machdep.c	1.44
+sys/compat/linux/arch/powerpc/linux_exec_powerpc.c 1.25
+sys/compat/linux/arch/powerpc/linux_machdep.c	1.51
+sys/compat/linux/arch/powerpc/linux_ptrace.c	1.33
+sys/compat/linux/common/linux_cdrom.c		1.28
+sys/compat/linux/common/linux_fdio.c		1.14
+sys/compat/linux/common/linux_file.c		1.119
+sys/compat/linux/common/linux_hdio.c		1.19
+sys/compat/linux/common/linux_misc.c		1.252
+sys/compat/linux/common/linux_mtio.c		1.8
+sys/compat/linux/common/linux_oldolduname.c	1.67
+sys/compat/linux/common/linux_olduname.c	1.67
+sys/compat/linux/common/linux_sched.c		1.79
+sys/compat/linux/common/linux_signal.c		1.84
+sys/compat/linux/common/linux_socket.c		1.153
+sys/compat/linux/common/linux_time.c		1.40
+sys/compat/linux32/arch/amd64/linux32_machdep.c	1.46
+sys/compat/linux32/common/linux32_exec_elf32.c	1.20
+sys/compat/linux32/common/linux32_resource.c	1.12
+sys/compat/linux32/common/linux32_signal.c	1.21
+sys/compat/linux32/common/linux32_time.c	1.38
+sys/compat/netbsd32/netbsd32_compat_12.c	1.36
+sys/compat/netbsd32/netbsd32_compat_20.c	1.42
+sys/compat/netbsd32/netbsd32_compat_43.c	1.62
+sys/compat/netbsd32/netbsd32_compat_50.c	1.52
+sys/compat/netbsd32/netbsd32_conv.h		1.46
+sys/compat/netbsd32/netbsd32_nfssvc.c		1.8
+sys/compat/netbsd32/netbsd32_ptrace.c		1.9
+sys/compat/netbsd32/netbsd32_signal.c		1.52
+sys/compat/netbsd32/netbsd32_time.c		1.56
+sys/compat/netbsd32/netbsd32_wait.c		1.25
+sys/compat/ossaudio/ossaudio.c			1.84
+sys/compat/sunos/sunos_ioctl.c			1.71
+sys/compat/sunos/sunos_misc.c			1.177
+sys/compat/sunos32/sunos32_ioctl.c		1.36
+sys/compat/sunos32/sunos32_misc.c		1.85
+sys/compat/sys/time_types.h			1.6
+sys/compat/ultrix/ultrix_ioctl.c		1.39
+sys/compat/ultrix/ultrix_misc.c			1.126
+						(all via patch)
+
+	sys/compat: memset zero before copyout.
+	[riastradh, ticket #1836]
+
+sys/compat/osf1/osf1_cvt.c			(apply patch)
+sys/compat/osf1/osf1_file.c			(apply patch)
+sys/compat/osf1/osf1_misc.c			(apply patch)
+
+	compat_osf1: memset zero before copyout.
+	[riastradh, ticket #1837]
+
+sys/compat/common/kern_time_50.c		1.32
+
+	Zero ntptimeval50 to prevent 4-byte kernel stack disclosure.
+	[riastradh, ticket #1838]
+
+sys/compat/common/kern_time_30.c		1.6
+sys/compat/netbsd32/netbsd32_time.c		1.50
+
+	Paranoia: zero COMPAT_30 ntptimeval and 32-bit ntptimeval too.
+	[riastradh, ticket #1839]
+
+sys/compat/netbsd32/netbsd32_nfssvc.c		1.7
+
+	compat_netbsd32: Copy out 32-bit version in nfssvc32_nsd_out.
+	[riastradh, ticket #1840]
+
+sys/compat/linux32/arch/amd64/linux32_machdep.c	1.48
+sys/compat/ossaudio/ossaudio.c			1.85
+sys/compat/sunos32/sunos32_misc.c		1.86
+
+	compat_sunos32, compat_ossaudio, linux32_rt_sendsig:
+	memset zero before copyout.
+	[riastradh, ticket #1841]
+
+sys/dev/pci/if_wm.c				(apply patch)
+
+	Fix a bug introduced in ticket #1795.
+	[riastradh, ticket #1842]
+
+etc/pam.d/display_manager			1.6
+etc/pam.d/ftpd					1.8
+etc/pam.d/sshd					1.10
+etc/pam.d/su					1.9
+etc/pam.d/system				1.9
+
+	pam: Disable pam_krb5, pam_ksu by default.
+	[riastradh, ticket #1843]
+
+lib/libpam/modules/pam_krb5/pam_krb5.8		1.13
+lib/libpam/modules/pam_krb5/pam_krb5.c		1.31
+
+	pam_krb5: Refuse to operate without a key to verify tickets.
+	[riastradh, ticket #1844]
+
+lib/libpam/modules/pam_ksu/pam_ksu.c		1.10
+
+	pam_ksu: No need for homedir access.
+	[riastradh, ticket #1845]
+
+sys/dev/pci/pcidevs				1.1478-1.1480
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add Samsung SM990.
+	Add devices from PPR for AMD Family 19h Model 61h Revision B1
+	processors.
+	The SATA device ID for Apollo Lake is not 0x5ae0 but 0x5ae3.
+	[msaitoh, ticket #1846]
 
