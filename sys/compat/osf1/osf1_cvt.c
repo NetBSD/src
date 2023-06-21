@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.28 2013/11/04 16:52:08 christos Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.28.22.1 2023/06/21 21:09:28 martin Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.28 2013/11/04 16:52:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.28.22.1 2023/06/21 21:09:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,6 +463,8 @@ void
 osf1_cvt_rusage_from_native(const struct rusage *ru, struct osf1_rusage *oru)
 {
 
+	memset(oru, 0, sizeof(*oru));
+
 	oru->ru_utime.tv_sec = ru->ru_utime.tv_sec;
 	oru->ru_utime.tv_usec = ru->ru_utime.tv_usec;
 
@@ -491,6 +493,8 @@ osf1_cvt_rusage_from_native(const struct rusage *ru, struct osf1_rusage *oru)
 void
 osf1_cvt_sigaction_from_native(const struct sigaction *bsa, struct osf1_sigaction *osa)
 {
+
+	memset(osa, 0, sizeof(*osa));
 
 	osa->osf1_sa_handler = bsa->sa_handler;
 	osf1_cvt_sigset_from_native(&bsa->sa_mask, &osa->osf1_sa_mask);
@@ -553,6 +557,7 @@ void
 osf1_cvt_stat_from_native(const struct stat *st, struct osf1_stat *ost)
 {
 
+	memset(ost, 0, sizeof(*ost));
 	ost->st_dev = osf1_cvt_dev_from_native(st->st_dev);
 	ost->st_ino = st->st_ino;
 	ost->st_mode = st->st_mode;
@@ -602,7 +607,7 @@ void
 osf1_cvt_statfs_from_native(const struct statvfs *bsfs, struct osf1_statfs *osfs)
 {
 
-	memset(osfs, 0, sizeof (struct osf1_statfs));
+	memset(osfs, 0, sizeof(*osfs));
 	if (!strncmp(MOUNT_FFS, bsfs->f_fstypename, sizeof(bsfs->f_fstypename)))
 		osfs->f_type = OSF1_MOUNT_UFS;
 	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, sizeof(bsfs->f_fstypename)))
