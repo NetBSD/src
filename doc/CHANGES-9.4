@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.69 2023/06/08 11:18:12 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.70 2023/06/21 22:24:25 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1486,4 +1486,83 @@ sys/net/route.c					1.237
 	route: run workqueue kthreads with KERNEL_LOCK unless NET_MPSAFE
 	to avoid use-after-free of deleted routes.
 	[ozaki-r, ticket #1642]
+
+etc/rc.d/sshd					1.30,1.33-1.35
+
+	- Add check cmd to run `sshd -t' and use it as reload precmd.
+	- Use default curve for ECDSA keygen.    
+	- Stop generating DSA host keys.         
+	[kim, ticket #1643]
+
+sys/arch/x86/pci/amdsmn.c			1.16
+sys/arch/x86/pci/amdzentemp.c			1.17,1.18
+
+	amdsmn(4),amdzentemp(4): Add Zen3+ Rembrandt(19h/4xh) &
+	Zen4 Genoa(19h/1xh).
+	[msaitoh, ticket #1644]
+
+sys/arch/x86/include/specialreg.h		1.202,1.203
+usr.sbin/cpuctl/arch/i386.c			1.136
+
+	Add some CPUID bits for AMD.
+	[msaitoh, ticket #1646]
+
+sys/arch/vax/include/trap.h			1.25
+sys/arch/vax/vax/pmap.c				1.196
+
+	vax: handle 512MB RAM machines.
+	[abs, ticket #1648]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.325,1.326
+sys/dev/pci/ixgbe/ixgbe_common.c		1.44
+sys/dev/pci/ixgbe/ixgbe_type.h			1.56
+
+	- PCI device ID 0x15c8 also uses X557-AT PHY, so create the thermal
+	  sensor sysctl for it, too.
+	- Count the number of link down events in the MAC using with
+	  LINK_DN_CNT register.
+	[msaitoh, ticket #1647]
+
+sys/arch/x86/x86/procfs_machdep.c		1.47
+
+	x86 procfs: add Intel lam and AMD vnmi.
+	[msaitoh, ticket #1649]
+
+sys/compat/linux32/arch/amd64/linux32_machdep.c	1.48
+sys/compat/ossaudio/ossaudio.c			1.85
+sys/compat/sunos32/sunos32_misc.c		1.86
+
+	compat_sunos32, compat_ossaudio, linux32_rt_sendsig:
+	memset zero before copyout.
+	[riastradh, ticket #1650]
+
+etc/pam.d/display_manager			1.6
+etc/pam.d/ftpd					1.8
+etc/pam.d/sshd					1.10
+etc/pam.d/su					1.9
+etc/pam.d/system				1.9
+
+	pam: Disable pam_krb5, pam_ksu by default.
+	[riastradh, ticket #1651]
+
+lib/libpam/modules/pam_krb5/pam_krb5.8		1.13
+lib/libpam/modules/pam_krb5/pam_krb5.c		1.31
+
+	pam_krb5: Refuse to operate without a key to verify tickets.
+	[riastradh, ticket #1652]
+
+lib/libpam/modules/pam_ksu/pam_ksu.c		1.10
+
+	pam_ksu: No need for homedir access.
+	[riastradh, ticket #1653]
+
+sys/dev/pci/pcidevs				1.1478-1.1480
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Add Samsung SM990.
+	Add devices from PPR for AMD Family 19h Model 61h Revision B1
+	processors.
+	The SATA device ID for Apollo Lake is not 0x5ae0 but 0x5ae3.
+	[msaitoh, ticket #1654]
 
