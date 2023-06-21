@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.70.6.3 2020/04/22 18:15:12 martin Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.70.6.4 2023/06/21 21:04:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.70.6.3 2020/04/22 18:15:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.70.6.4 2023/06/21 21:04:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -618,6 +618,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			goto out;
 		}
 		setblocksize(fp, &tmpinfo);
+		memset(&bufinfo, 0, sizeof(bufinfo));
 		bufinfo.fragsize = tmpinfo.blocksize;
 		bufinfo.fragments = tmpinfo.hiwat -
 		    (tmpinfo.play.seek + tmpinfo.blocksize - 1) /
@@ -640,6 +641,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			goto out;
 		}
 		setblocksize(fp, &tmpinfo);
+		memset(&bufinfo, 0, sizeof(bufinfo));
 		bufinfo.fragsize = tmpinfo.blocksize;
 		bufinfo.fragments = tmpinfo.record.seek / tmpinfo.blocksize;
 		bufinfo.fragstotal = tmpinfo.hiwat;
@@ -748,6 +750,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
+		memset(&cntinfo, 0, sizeof(cntinfo));
 		cntinfo.bytes = tmpoffs.samples;
 		cntinfo.blocks = tmpoffs.deltablks;
 		cntinfo.ptr = tmpoffs.offset;
@@ -765,6 +768,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
+		memset(&cntinfo, 0, sizeof(cntinfo));
 		cntinfo.bytes = tmpoffs.samples;
 		cntinfo.blocks = tmpoffs.deltablks;
 		cntinfo.ptr = tmpoffs.offset;

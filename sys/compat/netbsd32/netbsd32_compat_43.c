@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.54.8.1 2020/01/21 18:12:54 martin Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.54.8.2 2023/06/21 21:04:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.54.8.1 2020/01/21 18:12:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.54.8.2 2023/06/21 21:04:01 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -644,6 +644,7 @@ compat_43_netbsd32_osigvec(struct lwp *l, const struct compat_43_netbsd32_osigve
 		return error;
 
 	if (SCARG_P32(uap, osv)) {
+		memset(&sv32, 0, sizeof(sv32));
 		NETBSD32PTR32(sv32.sv_handler, osa.sa_handler);
 		sv32.sv_mask = osa.sa_mask.__bits[0];
 		sv32.sv_flags = osa.sa_flags ^ SA_RESTART;
@@ -702,6 +703,7 @@ compat_43_netbsd32_osigstack(struct lwp *l, const struct compat_43_netbsd32_osig
 		return error;
 
 	if (SCARG_P32(uap, oss)) {
+		memset(&ss32, 0, sizeof(ss32));
 		NETBSD32PTR32(ss32.ss_sp, osa.ss_sp);
 		ss32.ss_onstack = (osa.ss_flags & SS_ONSTACK) != 0;
 		error = copyout(&ss32, SCARG_P32(uap, oss), sizeof(ss32));

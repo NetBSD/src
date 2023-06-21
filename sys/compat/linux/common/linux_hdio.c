@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.17 2015/12/08 20:36:14 christos Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.17.10.1 2023/06/21 21:04:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.17 2015/12/08 20:36:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.17.10.1 2023/06/21 21:04:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,7 @@ linux_ioctl_hdio(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 			error = error1;
 			break;
 		}
+		memset(&hdg, 0, sizeof(hdg));
 		hdg.start = error1 != 0 ? pi.pi_offset : 0;
 		hdg.heads = label.d_ntracks;
 		hdg.cylinders = label.d_ncylinders;
@@ -130,6 +131,7 @@ linux_ioctl_hdio(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 			error = error1;
 			break;
 		}
+		memset(&hdg_big, 0, sizeof(hdg_big));
 		hdg_big.start = error1 != 0 ? pi.pi_offset : 0;
 		hdg_big.heads = label.d_ntracks;
 		hdg_big.cylinders = label.d_ncylinders;

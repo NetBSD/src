@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ptrace.c,v 1.4.6.1 2018/04/12 13:42:49 martin Exp $	*/
+/*	$NetBSD: netbsd32_ptrace.c,v 1.4.6.2 2023/06/21 21:04:01 martin Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.4.6.1 2018/04/12 13:42:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.4.6.2 2023/06/21 21:04:01 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -81,6 +81,7 @@ netbsd32_copyout_piod(const struct ptrace_io_desc *piod, void *addr, size_t len)
 	if (len != 0 && sizeof(piod32) != len)
 		return EINVAL;
 
+	memset(&piod32, 0, sizeof(piod32));
 	piod32.piod_op = piod->piod_op;
 	NETBSD32PTR32(piod32.piod_offs, piod->piod_offs);
 	NETBSD32PTR32(piod32.piod_addr, piod->piod_addr);
@@ -112,6 +113,7 @@ netbsd32_copyout_siginfo(const struct ptrace_siginfo *psi, void *addr, size_t le
 	if (sizeof(psi32) != len)
 		return EINVAL;
 
+	memset(&psi32, 0, sizeof(psi32));
 	psi32.psi_lwpid = psi->psi_lwpid;
 	netbsd32_si_to_si32(&psi32.psi_siginfo, &psi->psi_siginfo);
 	return copyout(&psi32, addr, sizeof(psi32));

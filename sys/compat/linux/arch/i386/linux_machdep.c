@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.163 2017/02/05 10:42:22 maxv Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.163.6.1 2023/06/21 21:04:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.163 2017/02/05 10:42:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.163.6.1 2023/06/21 21:04:01 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -264,6 +264,8 @@ linux_rt_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	    onstack, fp, sig, tf->tf_eip,
 	    ((struct pcb *)lwp_getpcb(l))->pcb_cr2));
 
+	memset(&frame, 0, sizeof(frame));
+
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
 	frame.sf_sig = native_to_linux_signo[sig];
@@ -340,6 +342,8 @@ linux_old_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 	DPRINTF(("old: onstack = %d, fp = %p sig = %d eip = 0x%x cr2 = 0x%x\n",
 	    onstack, fp, sig, tf->tf_eip,
 	    ((struct pcb *)lwp_getpcb(l))->pcb_cr2));
+
+	memset(&frame, 0, sizeof(frame));
 
 	/* Build stack frame for signal trampoline. */
 	frame.sf_handler = catcher;
@@ -866,6 +870,7 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		com = VT_OPENQRY;
 		break;
 	case LINUX_VT_GETMODE:
+		memset(&lvt, 0, sizeof(lvt));
 		error = fp->f_ops->fo_ioctl(fp, VT_GETMODE, &lvt);
 		if (error != 0)
 			goto out;
@@ -961,6 +966,7 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 			sectors = label.d_nsectors;
 		}
 		if (com == LINUX_HDIO_GETGEO) {
+			memset(&hdg, 0, sizeof(hdg));
 			hdg.start = start;
 			hdg.heads = heads;
 			hdg.cylinders = cylinders;
@@ -968,6 +974,7 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 			error = copyout(&hdg, SCARG(uap, data), sizeof hdg);
 			goto out;
 		} else {
+			memset(&hdg_big, 0, sizeof(hdg_big));
 			hdg_big.start = start;
 			hdg_big.heads = heads;
 			hdg_big.cylinders = cylinders;

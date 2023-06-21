@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.33.8.2 2017/12/10 09:36:36 snj Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.33.8.3 2023/06/21 21:04:01 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.33.8.2 2017/12/10 09:36:36 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.33.8.3 2023/06/21 21:04:01 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,6 +65,7 @@ void
 compat_12_stat_conv(const struct stat *st, struct stat12 *ost)
 {
 
+	memset(ost, 0, sizeof(*ost));
 	ost->st_dev = st->st_dev;
 	ost->st_ino = st->st_ino;
 	ost->st_mode = st->st_mode & 0xffff;
@@ -183,6 +184,7 @@ again:
 				off += reclen;
 			continue;
 		}
+		memset(&idb, 0, sizeof(idb));
 		if (bdp->d_namlen >= sizeof(idb.d_name))
 			idb.d_namlen = sizeof(idb.d_name) - 1;
 		else

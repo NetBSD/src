@@ -1,4 +1,4 @@
-/*	$NetBSD: time_types.h,v 1.1.58.1 2019/01/03 09:00:01 martin Exp $	*/
+/*	$NetBSD: time_types.h,v 1.1.58.2 2023/06/21 21:04:02 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -72,58 +72,68 @@ struct	itimerspec50 {
 	struct	timespec50 it_value;
 };
 
-static __inline void timeval50_to_timeval(const struct timeval50 *ts50,
-    struct timeval *ts)
+static __inline void
+timeval50_to_timeval(const struct timeval50 *ts50, struct timeval *ts)
 {
+	memset(ts, 0, sizeof(*ts));
 	ts->tv_sec = ts50->tv_sec;
 	ts->tv_usec = (suseconds_t)ts50->tv_usec;
 }
 
-static __inline void timeval_to_timeval50(const struct timeval *ts,
-    struct timeval50 *ts50)
+static __inline void
+timeval_to_timeval50(const struct timeval *ts, struct timeval50 *ts50)
 {
+	memset(ts50, 0, sizeof(*ts50));
 	ts50->tv_sec = (long)ts->tv_sec;
 	ts50->tv_usec = ts->tv_usec;
 }
 
-static __inline void timespec50_to_timespec(const struct timespec50 *ts50,
-    struct timespec *ts)
+static __inline void
+timespec50_to_timespec(const struct timespec50 *ts50, struct timespec *ts)
 {
+	memset(ts, 0, sizeof(*ts));
 	ts->tv_sec = ts50->tv_sec;
 	ts->tv_nsec = ts50->tv_nsec;
 }
 
-static __inline void timespec_to_timespec50(const struct timespec *ts,
-    struct timespec50 *ts50)
+static __inline void
+timespec_to_timespec50(const struct timespec *ts, struct timespec50 *ts50)
 {
+	memset(ts50, 0, sizeof(*ts50));
 	ts50->tv_sec = (int32_t)ts->tv_sec;
 	ts50->tv_nsec = ts->tv_nsec;
 }
 
-static __inline void itimerval50_to_itimerval(const struct itimerval50 *ts50,
-    struct itimerval *ts)
+static __inline void
+itimerval50_to_itimerval(const struct itimerval50 *ts50, struct itimerval *ts)
 {
+	memset(ts, 0, sizeof(*ts));
 	timeval50_to_timeval(&ts50->it_interval, &ts->it_interval);
 	timeval50_to_timeval(&ts50->it_value, &ts->it_value);
 }
 
-static __inline void itimerval_to_itimerval50(const struct itimerval *ts,
-    struct itimerval50 *ts50)
+static __inline void
+itimerval_to_itimerval50(const struct itimerval *ts, struct itimerval50 *ts50)
 {
+	memset(ts50, 0, sizeof(*ts50));
 	timeval_to_timeval50(&ts->it_interval, &ts50->it_interval);
 	timeval_to_timeval50(&ts->it_value, &ts50->it_value);
 }
 
-static __inline void itimerspec50_to_itimerspec(const struct itimerspec50 *ts50,
+static __inline void
+itimerspec50_to_itimerspec(const struct itimerspec50 *ts50,
     struct itimerspec *ts)
 {
+	memset(ts, 0, sizeof(*ts));
 	timespec50_to_timespec(&ts50->it_interval, &ts->it_interval);
 	timespec50_to_timespec(&ts50->it_value, &ts->it_value);
 }
 
-static __inline void itimerspec_to_itimerspec50(const struct itimerspec *ts,
+static __inline void
+itimerspec_to_itimerspec50(const struct itimerspec *ts,
     struct itimerspec50 *ts50)
 {
+	memset(ts50, 0, sizeof(*ts50));
 	timespec_to_timespec50(&ts->it_interval, &ts50->it_interval);
 	timespec_to_timespec50(&ts->it_value, &ts50->it_value);
 }
