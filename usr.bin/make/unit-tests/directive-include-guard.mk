@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.9 2023/06/21 12:16:31 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.10 2023/06/21 14:33:36 rillig Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -15,8 +15,8 @@
 #	.endif
 #
 # When such a file is included for the second or later time, and the guard
-# variable is set or the guard target defined, including the file has no
-# effect, as all its content is skipped.
+# variable or the guard target is defined, including the file has no effect,
+# as all its content is skipped.
 #
 # See also:
 #	https://gcc.gnu.org/onlinedocs/cppinternals/Guard-Macros.html
@@ -34,6 +34,17 @@ LINES.variable-ifndef= \
 	'.endif'
 # expect: Parse_PushInput: file variable-ifndef.tmp, line 1
 # expect: Skipping 'variable-ifndef.tmp' because 'VARIABLE_IFNDEF' is defined
+
+# A file that reuses a guard from a previous file (or whose guard is defined
+# for any other reason) is only processed once, to see whether it is guarded.
+# Its content is skipped, therefore the syntax error is not detected.
+INCS+=	variable-ifndef-reuse
+LINES.variable-ifndef-reuse= \
+	'.ifndef VARIABLE_IFNDEF' \
+	'syntax error' \
+	'.endif'
+# expect: Parse_PushInput: file variable-ifndef-reuse.tmp, line 1
+# expect: Skipping 'variable-ifndef-reuse.tmp' because 'VARIABLE_IFNDEF' is defined
 
 # Comments and empty lines do not affect the multiple-inclusion guard.
 INCS+=	comments
@@ -58,6 +69,17 @@ LINES.variable-if= \
 	'.endif'
 # expect: Parse_PushInput: file variable-if.tmp, line 1
 # expect: Skipping 'variable-if.tmp' because 'VARIABLE_IF' is defined
+
+# A file that reuses a guard from a previous file (or whose guard is defined
+# for any other reason) is only processed once, to see whether it is guarded.
+# Its content is skipped, therefore the syntax error is not detected.
+INCS+=	variable-if-reuse
+LINES.variable-if-reuse= \
+	'.if !defined(VARIABLE_IF)' \
+	'syntax error' \
+	'.endif'
+# expect: Parse_PushInput: file variable-if-reuse.tmp, line 1
+# expect: Skipping 'variable-if-reuse.tmp' because 'VARIABLE_IF' is defined
 
 # Triple negation is so uncommon that it's not recognized, even though it has
 # the same effect as a single negation.
@@ -168,7 +190,8 @@ LINES.variable-if-indirect= \
 
 # The variable name in the guard condition must only contain alphanumeric
 # characters and underscores.  The guard variable is more flexible, it can be
-# set anywhere, as long as it is set when the guarded file is included next.
+# defined anywhere, as long as it is defined at the point where the file is
+# included the next time.
 INCS+=	variable-assign-indirect
 LINES.variable-assign-indirect= \
 	'.ifndef VARIABLE_ASSIGN_INDIRECT' \
@@ -177,8 +200,8 @@ LINES.variable-assign-indirect= \
 # expect: Parse_PushInput: file variable-assign-indirect.tmp, line 1
 # expect: Skipping 'variable-assign-indirect.tmp' because 'VARIABLE_ASSIGN_INDIRECT' is defined
 
-# The time at which the guard variable is set doesn't matter, as long as it is
-# set when the file is included the next time.
+# The time at which the guard variable is defined doesn't matter, as long as
+# it is defined at the point where the file is included the next time.
 INCS+=	variable-assign-late
 LINES.variable-assign-late= \
 	'.ifndef VARIABLE_ASSIGN_LATE' \
@@ -188,8 +211,8 @@ LINES.variable-assign-late= \
 # expect: Parse_PushInput: file variable-assign-late.tmp, line 1
 # expect: Skipping 'variable-assign-late.tmp' because 'VARIABLE_ASSIGN_LATE' is defined
 
-# The time at which the guard variable is set doesn't matter, as long as it is
-# set when the file is included the next time.
+# The time at which the guard variable is defined doesn't matter, as long as
+# it is defined at the point where the file is included the next time.
 INCS+=	variable-assign-nested
 LINES.variable-assign-nested= \
 	'.ifndef VARIABLE_ASSIGN_NESTED' \
@@ -203,8 +226,10 @@ LINES.variable-assign-nested= \
 # expect: Skipping 'variable-assign-nested.tmp' because 'VARIABLE_ASSIGN_NESTED' is defined
 
 # If the guard variable is defined before the file is included for the first
-# time, the file is not considered guarded.  This behavior is not finally
-# decided yet, as it is only a consequence of the current implementation.
+# time, the file is considered guarded as well.  In such a case, the parser
+# skips almost all lines, as they are irrelevant, but the structure of the
+# top-level '.if/.endif' conditional can be determined reliably enough to
+# decide whether the file is guarded.
 INCS+=	variable-already-defined
 LINES.variable-already-defined= \
 	'.ifndef VARIABLE_ALREADY_DEFINED' \
@@ -212,7 +237,21 @@ LINES.variable-already-defined= \
 	'.endif'
 VARIABLE_ALREADY_DEFINED=
 # expect: Parse_PushInput: file variable-already-defined.tmp, line 1
-# expect: Parse_PushInput: file variable-already-defined.tmp, line 1
+# expect: Skipping 'variable-already-defined.tmp' because 'VARIABLE_ALREADY_DEFINED' is defined
+
+# If the guard variable is defined before the file is included the first time,
+# the file is processed but its content is skipped.  If that same guard
+# variable is undefined when the file is included the second time, the file is
+# processed as usual.
+INCS+=	variable-defined-then-undefined
+LINES.variable-defined-then-undefined= \
+	'.ifndef VARIABLE_DEFINED_THEN_UNDEFINED' \
+	'.endif'
+VARIABLE_DEFINED_THEN_UNDEFINED=
+UNDEF_BETWEEN.variable-defined-then-undefined= \
+	VARIABLE_DEFINED_THEN_UNDEFINED
+# expect: Parse_PushInput: file variable-defined-then-undefined.tmp, line 1
+# expect: Parse_PushInput: file variable-defined-then-undefined.tmp, line 1
 
 # The whole file content must be guarded by a single '.if' conditional, not by
 # several, even if they have the same effect.  This case is not expected to
@@ -230,8 +269,8 @@ LINES.variable-two-times= \
 # expect: Parse_PushInput: file variable-two-times.tmp, line 1
 
 # When multiple files use the same guard variable name, the optimization of
-# skipping the file only affects the file that is included first.  The content
-# of the other files is still read but skipped, these files are not optimized.
+# skipping the file affects each of these files.
+#
 # Choosing unique guard names is the responsibility of the makefile authors.
 # A typical pattern of guard variable names is '${PROJECT}_${DIR}_${FILE}_MK'.
 # System-provided files typically start the guard names with '_'.
@@ -239,7 +278,7 @@ INCS+=	variable-clash
 LINES.variable-clash= \
 	${LINES.variable-if}
 # expect: Parse_PushInput: file variable-clash.tmp, line 1
-# expect: Parse_PushInput: file variable-clash.tmp, line 1
+# expect: Skipping 'variable-clash.tmp' because 'VARIABLE_IF' is defined
 
 # The conditional must come before the assignment, otherwise the conditional
 # is useless, as it always evaluates to false.
@@ -286,7 +325,7 @@ LINES.variable-not-defined= \
 
 # The outermost '.if' must not have an '.elif' branch.
 INCS+=	if-elif
-LINES.if-elif = \
+LINES.if-elif= \
 	'.ifndef IF_ELIF' \
 	'IF_ELIF=' \
 	'.elif 1' \
@@ -294,9 +333,20 @@ LINES.if-elif = \
 # expect: Parse_PushInput: file if-elif.tmp, line 1
 # expect: Parse_PushInput: file if-elif.tmp, line 1
 
+# When a file with an '.if/.elif/.endif' conditional at the top level is
+# included, it is never optimized, as one of its branches is taken.
+INCS+=	if-elif-reuse
+LINES.if-elif-reuse= \
+	'.ifndef IF_ELIF' \
+	'syntax error' \
+	'.elif 1' \
+	'.endif'
+# expect: Parse_PushInput: file if-elif-reuse.tmp, line 1
+# expect: Parse_PushInput: file if-elif-reuse.tmp, line 1
+
 # The outermost '.if' must not have an '.else' branch.
 INCS+=	if-else
-LINES.if-else = \
+LINES.if-else= \
 	'.ifndef IF_ELSE' \
 	'IF_ELSE=' \
 	'.else' \
@@ -304,10 +354,21 @@ LINES.if-else = \
 # expect: Parse_PushInput: file if-else.tmp, line 1
 # expect: Parse_PushInput: file if-else.tmp, line 1
 
+# When a file with an '.if/.else/.endif' conditional at the top level is
+# included, it is never optimized, as one of its branches is taken.
+INCS+=	if-else-reuse
+LINES.if-else-reuse= \
+	'.ifndef IF_ELSE' \
+	'syntax error' \
+	'.else' \
+	'.endif'
+# expect: Parse_PushInput: file if-else-reuse.tmp, line 1
+# expect: Parse_PushInput: file if-else-reuse.tmp, line 1
+
 # The inner '.if' directives may have an '.elif' or '.else', and it doesn't
 # matter which of their branches are taken.
 INCS+=	inner-if-elif-else
-LINES.inner-if-elif-else = \
+LINES.inner-if-elif-else= \
 	'.ifndef INNER_IF_ELIF_ELSE' \
 	'INNER_IF_ELIF_ELSE=' \
 	'.  if 0' \
@@ -389,15 +450,15 @@ LINES.target-indirect-PARSEFILE2= \
 # expect: Skipping 'target-indirect-PARSEFILE2.tmp' because '__target-indirect-PARSEFILE2.tmp__' is defined
 
 # Using plain .PARSEFILE without .PARSEDIR leads to name clashes.  The include
-# guard doesn't step in here because the test case 'target-indirect-PARSEFILE'
-# already took the same guard name.
+# guard is the same as in the test case 'target-indirect-PARSEFILE', as the
+# guard name only contains the basename but not the directory name.
 INCS+=	subdir/target-indirect-PARSEFILE
 LINES.subdir/target-indirect-PARSEFILE= \
 	'.if !target(__$${.PARSEFILE}__)' \
 	'__$${.PARSEFILE}__: .NOTMAIN' \
 	'.endif'
 # expect: Parse_PushInput: file subdir/target-indirect-PARSEFILE.tmp, line 1
-# expect: Parse_PushInput: file subdir/target-indirect-PARSEFILE.tmp, line 1
+# expect: Skipping 'subdir/target-indirect-PARSEFILE.tmp' because '__target-indirect-PARSEFILE.tmp__' is defined
 
 # Another common form of guard target is __${.PARSEFILE:tA}__.  This form only
 # works for files that are in the current working directory, it does not work
@@ -438,7 +499,7 @@ LINES.subdir2/target-indirect-PARSEFILE-tA= \
 	'__$${.PARSEFILE:tA}__: .NOTMAIN' \
 	'.endif'
 # expect: Parse_PushInput: file subdir2/target-indirect-PARSEFILE-tA.tmp, line 1
-# expect: Parse_PushInput: file subdir2/target-indirect-PARSEFILE-tA.tmp, line 1
+# expect: Skipping 'subdir2/target-indirect-PARSEFILE-tA.tmp' because '__target-indirect-PARSEFILE-tA.tmp__' is defined
 
 # Using both '.PARSEDIR' and '.PARSEFILE' to form the guard target name is a
 # robust approach.
@@ -484,14 +545,14 @@ LINES.target-plus= \
 
 # If the guard target is defined before the file is included the first time,
 # the file is not considered guarded.
-INCS+=	target-already-set
-LINES.target-already-set= \
-	'.if !target(target-already-set)' \
-	'target-already-set: .NOTMAIN' \
+INCS+=	target-already-defined
+LINES.target-already-defined= \
+	'.if !target(target-already-defined)' \
+	'target-already-defined: .NOTMAIN' \
 	'.endif'
-target-already-set: .NOTMAIN
-# expect: Parse_PushInput: file target-already-set.tmp, line 1
-# expect: Parse_PushInput: file target-already-set.tmp, line 1
+target-already-defined: .NOTMAIN
+# expect: Parse_PushInput: file target-already-defined.tmp, line 1
+# expect: Skipping 'target-already-defined.tmp' because 'target-already-defined' is defined
 
 # A target name cannot contain the character '!'.  In the condition, the '!'
 # is syntactically valid, but in the dependency declaration line, the '!' is
