@@ -1,4 +1,4 @@
-# $NetBSD: directive-include-guard.mk,v 1.10 2023/06/21 14:33:36 rillig Exp $
+# $NetBSD: directive-include-guard.mk,v 1.11 2023/06/21 21:21:52 sjg Exp $
 #
 # Tests for multiple-inclusion guards in makefiles.
 #
@@ -460,49 +460,8 @@ LINES.subdir/target-indirect-PARSEFILE= \
 # expect: Parse_PushInput: file subdir/target-indirect-PARSEFILE.tmp, line 1
 # expect: Skipping 'subdir/target-indirect-PARSEFILE.tmp' because '__target-indirect-PARSEFILE.tmp__' is defined
 
-# Another common form of guard target is __${.PARSEFILE:tA}__.  This form only
-# works for files that are in the current working directory, it does not work
-# for files from other directories, as the modifier ':tA' resolves a file
-# relative to the current working directory ('.OBJDIR').  To get a robust
-# pattern, use __${.PARSEDIR}/.${.PARSEFILE}__ instead.
-INCS+=	target-indirect-PARSEFILE-tA
-LINES.target-indirect-PARSEFILE-tA= \
-	'.if !target(__$${.PARSEFILE:tA}__)' \
-	'__$${.PARSEFILE:tA}__: .NOTMAIN' \
-	'.endif'
-# expect: Parse_PushInput: file target-indirect-PARSEFILE-tA.tmp, line 1
-# expect: Skipping 'target-indirect-PARSEFILE-tA.tmp' because '__target-indirect-PARSEFILE-tA.tmp__' is defined
-# The actual target starts with '__${.OBJDIR}/', see the .rawout file, but the
-# string '${.OBJDIR}/' gets stripped in post processing.
-
-# Using the ':tA' modifier to construct guard target names is generally wrong,
-# as the ':tA' modifier only works for files in the current working directory.
-# For files from subdirectories that are not also found in the current working
-# directory, applying the modifier ':tA' has no effect.
-INCS+=	subdir/target-indirect-PARSEFILE-tA
-LINES.subdir/target-indirect-PARSEFILE-tA= \
-	'.if !target(__$${.PARSEFILE:tA}__)' \
-	'__$${.PARSEFILE:tA}__: .NOTMAIN' \
-	'.endif'
-# expect: Parse_PushInput: file subdir/target-indirect-PARSEFILE-tA.tmp, line 1
-# expect: Skipping 'subdir/target-indirect-PARSEFILE-tA.tmp' because '__target-indirect-PARSEFILE-tA.tmp__' is defined
-# The guard target name does not include any directory since the ':tA'
-# modifier file cannot resolve the file in the current working directory.
-
-# If there are two subdirectories that both have a file with the same basename
-# that uses '${.PARSEFILE:tA}' as its guard target, the second file reuses the
-# guard name from the first file.  To get a robust scheme of guard target
-# names, use __${.PARSEDIR}/.${.PARSEFILE}__ instead.
-INCS+=	subdir2/target-indirect-PARSEFILE-tA
-LINES.subdir2/target-indirect-PARSEFILE-tA= \
-	'.if !target(__$${.PARSEFILE:tA}__)' \
-	'__$${.PARSEFILE:tA}__: .NOTMAIN' \
-	'.endif'
-# expect: Parse_PushInput: file subdir2/target-indirect-PARSEFILE-tA.tmp, line 1
-# expect: Skipping 'subdir2/target-indirect-PARSEFILE-tA.tmp' because '__target-indirect-PARSEFILE-tA.tmp__' is defined
-
-# Using both '.PARSEDIR' and '.PARSEFILE' to form the guard target name is a
-# robust approach.
+# Another common form of guard target is __${.PARSEDIR}/${.PARSEFILE}__
+# or __${.PARSEDIR:tA}/${.PARSEFILE}__ to be truely unique.
 INCS+=	target-indirect-PARSEDIR-PARSEFILE
 LINES.target-indirect-PARSEDIR-PARSEFILE= \
 	'.if !target(__$${.PARSEDIR}/$${.PARSEFILE}__)' \
