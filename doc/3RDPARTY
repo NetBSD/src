@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1931 2023/06/19 21:44:37 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1932 2023/06/21 22:30:52 gutteridge Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -152,11 +152,11 @@ Notes:
 
 Package:	libuv
 Version:	1.44.2
-Current Vers:	1.44.2
+Current Vers:	1.45.0
 Maintainer:	libuv
 Archive Site:	https://dist.libuv.org/dist/
 Home Page:	https://libuv.org
-Date:		2022-09-22
+Date:		2023-06-21
 Mailing List:	https://groups.google.com/forum/#!forum/libuv
 Responsible:	christos
 License:	mit
@@ -165,11 +165,11 @@ Notes:
 
 Package:	unbound
 Version:	1.16.3
-Current Vers:	1.16.3
+Current Vers:	1.17.1
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2022-09-24
+Date:		2023-06-21
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
@@ -180,11 +180,11 @@ run configure and update config files in include
 
 Package:	nsd
 Version:	4.6.0
-Current Vers:	4.6.0
+Current Vers:	4.7.0
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
-Date:		2022-09-24
+Date:		2023-06-21
 Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/
 Responsible:	christos
 License:	BSD-like
