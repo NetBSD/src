@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.80.2.1 2018/08/25 11:13:05 martin Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.80.2.2 2023/06/21 20:38:35 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.80.2.1 2018/08/25 11:13:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.80.2.2 2023/06/21 20:38:35 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -175,7 +175,8 @@ dofilereadv32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt, 
 		 * Therefore we must restrict the length to SSIZE_MAX to
 		 * avoid garbage return values.
 		 */
-		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
+		if (iov->iov_len > NETBSD32_SSIZE_MAX ||
+		    auio.uio_resid > NETBSD32_SSIZE_MAX) {
 			error = EINVAL;
 			goto done;
 		}
@@ -279,7 +280,8 @@ dofilewritev32(int fd, struct file *fp, struct netbsd32_iovec *iovp, int iovcnt,
 		 * Therefore we must restrict the length to SSIZE_MAX to
 		 * avoid garbage return values.
 		 */
-		if (iov->iov_len > SSIZE_MAX || auio.uio_resid > SSIZE_MAX) {
+		if (iov->iov_len > NETBSD32_SSIZE_MAX ||
+		    auio.uio_resid > NETBSD32_SSIZE_MAX) {
 			error = EINVAL;
 			goto done;
 		}
