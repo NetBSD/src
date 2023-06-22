@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.13 2023/06/22 09:09:08 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.14 2023/06/22 12:59:54 rillig Exp $
 #
 # Tests for the :M variable modifier, which filters words that match the
 # given pattern.
@@ -33,11 +33,12 @@ NUMBERS=	One Two Three Four five six seven
 .if ${:U****************:M****************b}
 .endif
 
-# As of 2023-06-22, this expression calls Str_Match 2,621,112 times.
-# Adding another '*?' to the pattern calls Str_Match 20,630,572 times.
-# Adding another '*?' to the pattern calls Str_Match 136,405,672 times.
-# Adding another '*?' to the pattern calls Str_Match 773,168,722 times.
-# Adding another '*?' to the pattern calls Str_Match 3,815,481,072 times.
+# Before 2023-06-22, this expression called Str_Match 2,621,112 times.
+# Adding another '*?' to the pattern called Str_Match 20,630,572 times.
+# Adding another '*?' to the pattern called Str_Match 136,405,672 times.
+# Adding another '*?' to the pattern called Str_Match 773,168,722 times.
+# Adding another '*?' to the pattern called Str_Match 3,815,481,072 times.
+# Since 2023-06-22, Str_Match no longer backtracks.
 .if ${:U..................................................b:M*?*?*?*?*?a}
 .endif
 
@@ -215,6 +216,13 @@ WORDS=		a a[ aX
 WORDS=		- + x xx 0 1 2 3 4 [x1-3
 .if ${WORDS:M[-x1-3} != "- x 1 2 3"
 .  error
+.endif
+
+#	*[-x1-3	Incomplete character list after a wildcard, matches those
+#		words that end with one of the characters from the list.
+WORDS=		- + x xx 0 1 2 3 4 00 01 10 11 000 001 010 011 100 101 110 111 [x1-3
+.if ${WORDS:M*[-x1-3} != "- x xx 1 2 3 01 11 001 011 101 111 [x1-3"
+.  warning ${WORDS:M*[-x1-3}
 .endif
 
 #	[^-x1-3
