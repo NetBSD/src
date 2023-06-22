@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.70 2023/06/21 22:24:25 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.71 2023/06/22 06:06:52 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -6,7 +6,7 @@ release:
 external/gpl2/groff/tmac/mdoc.local		patched by hand
 sys/sys/param.h 				patched by hand
 doc/README.files				patched by hand
-doc/CHANGES-9.4					added
+doc/CHANGES-9.4 				added
 
 	Welcome to 9.3_STABLE.
 	[martin]
@@ -68,7 +68,7 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.409
 	ioctls when RAIDframe is not initialized.
 	[oster, ticket #1506]
 
-bin/test/test.c					1.45
+bin/test/test.c 				1.45
 
 	PR 56983: fix confusing message in test(1).
 	[dholland, ticket #1507]
@@ -113,7 +113,7 @@ distrib/amiga/floppies/inst-common/dot.commonutils 1.9
 distrib/amiga/miniroot/dot.profile		1.11
 distrib/atari/floppies/common/dot.profile	1.9
 distrib/utils/script-installer/dot.commonutils	1.8
-distrib/vax/inst-common/dot.commonutils		1.6
+distrib/vax/inst-common/dot.commonutils 	1.6
 
 	PRs 54835, 54835, 56983: adapt install scripts to the shell
 	being compiled without support for depracated test expressions.
@@ -158,7 +158,7 @@ sys/arch/atari/dev/itevar.h			1.15
 
 sys/arch/atari/atari/atari_init.c		1.105
 sys/arch/atari/conf/GENERIC.in			1.123
-sys/arch/atari/conf/files.atari			1.124
+sys/arch/atari/conf/files.atari 		1.124
 sys/arch/atari/conf/ATARITT			(regen)
 sys/arch/atari/conf/FALCON			(regen)
 sys/arch/atari/conf/HADES			(regen)
@@ -188,20 +188,20 @@ sys/arch/atari/conf/SMALL030			(regen)
 	Improve VGA console settings for Milan, especially for sysinst.
 	[tsutsui, ticket #1521]
 
-usr.bin/netstat/atalk.c		1.18,1.20-1.21
+usr.bin/netstat/atalk.c 	1.18,1.20-1.21
 usr.bin/netstat/bpf.c		1.16 via patch
 usr.bin/netstat/fast_ipsec.c	1.24
 usr.bin/netstat/if.c		1.97-1.99,1.101-1.104 via patch
 usr.bin/netstat/inet.c		1.111,1.115-1.116 via patch
-usr.bin/netstat/inet6.c		1.74-1.75,1.80-1.81 via patch
+usr.bin/netstat/inet6.c 	1.74-1.75,1.80-1.81 via patch
 usr.bin/netstat/main.c		1.100-1.103
 usr.bin/netstat/mbuf.c		1.35
 usr.bin/netstat/mroute.c	1.26-1.27
 usr.bin/netstat/mroute6.c	1.16
 usr.bin/netstat/netstat.h	1.52-1.53
-usr.bin/netstat/pfkey.c		1.4-1.5 via patch
+usr.bin/netstat/pfkey.c 	1.4-1.5 via patch
 usr.bin/netstat/pfsync.c	1.4-1.5 via patch
-usr.bin/netstat/route.c		1.86-1.88
+usr.bin/netstat/route.c 	1.86-1.88
 usr.bin/netstat/unix.c		1.36-1.37
 usr.bin/netstat/vtw.c		1.11,1.13
 
@@ -218,14 +218,14 @@ usr.bin/netstat/vtw.c		1.11,1.13
 	- KNF. Style fixes.
 	[msaitoh, ticket #1522]
 
-usr.bin/ftp/Makefile                            up to 1.39
-usr.bin/ftp/fetch.c                             up to 1.235
-usr.bin/ftp/ftp.1                               up to 1.147
-usr.bin/ftp/ftp_var.h                           up to 1.86
-usr.bin/ftp/main.c                              up to 1.128
-usr.bin/ftp/ssl.c                               up to 1.12
-usr.bin/ftp/util.c                              up to 1.164
-usr.bin/ftp/version.h                           up to 1.94
+usr.bin/ftp/Makefile				up to 1.39
+usr.bin/ftp/fetch.c				up to 1.235
+usr.bin/ftp/ftp.1				up to 1.147
+usr.bin/ftp/ftp_var.h				up to 1.86
+usr.bin/ftp/main.c				up to 1.128
+usr.bin/ftp/ssl.c				up to 1.12
+usr.bin/ftp/util.c				up to 1.164
+usr.bin/ftp/version.h				up to 1.94
 
 	ftp(1): PR 57003: Support relative redirects.
 	[christos, #1523]
@@ -385,32 +385,32 @@ sys/dev/pci/ichsmb.c				1.76-1.77 (via patch)
 	Add Intel 600 Series PCH support.
 	[msaitoh, ticket #1544]
 
-external/public-domain/tz/dist/SECURITY         up to 1.1.1.1
-external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.7
-external/public-domain/tz/dist/Makefile         up to 1.1.1.33
-external/public-domain/tz/dist/NEWS             up to 1.1.1.38
-external/public-domain/tz/dist/README           up to 1.1.1.10
-external/public-domain/tz/dist/TZDATA_VERSION   up to 1.30
-external/public-domain/tz/dist/africa           up to 1.1.1.28
-external/public-domain/tz/dist/antarctica       up to 1.1.1.15
-external/public-domain/tz/dist/asia             up to 1.5
-external/public-domain/tz/dist/australasia      up to 1.5
-external/public-domain/tz/dist/backward         up to 1.5
-external/public-domain/tz/dist/backzone         up to 1.1.1.23
-external/public-domain/tz/dist/calendars        up to 1.1.1.2
-external/public-domain/tz/dist/checktab.awk     up to 1.1.1.11
-external/public-domain/tz/dist/etcetera         up to 1.1.1.6
-external/public-domain/tz/dist/europe           up to 1.1.1.34
+external/public-domain/tz/dist/SECURITY 	up to 1.1.1.1
+external/public-domain/tz/dist/CONTRIBUTING	up to 1.1.1.7
+external/public-domain/tz/dist/Makefile 	up to 1.1.1.33
+external/public-domain/tz/dist/NEWS		up to 1.1.1.38
+external/public-domain/tz/dist/README		up to 1.1.1.10
+external/public-domain/tz/dist/TZDATA_VERSION	up to 1.30
+external/public-domain/tz/dist/africa		up to 1.1.1.28
+external/public-domain/tz/dist/antarctica	up to 1.1.1.15
+external/public-domain/tz/dist/asia		up to 1.5
+external/public-domain/tz/dist/australasia	up to 1.5
+external/public-domain/tz/dist/backward 	up to 1.5
+external/public-domain/tz/dist/backzone 	up to 1.1.1.23
+external/public-domain/tz/dist/calendars	up to 1.1.1.2
+external/public-domain/tz/dist/checktab.awk	up to 1.1.1.11
+external/public-domain/tz/dist/etcetera 	up to 1.1.1.6
+external/public-domain/tz/dist/europe		up to 1.1.1.34
 external/public-domain/tz/dist/leap-seconds.list up to 1.4
-external/public-domain/tz/dist/leapseconds      up to 1.4
-external/public-domain/tz/dist/northamerica     up to 1.1.1.30
-external/public-domain/tz/dist/southamerica     up to 1.1.1.20
-external/public-domain/tz/dist/theory.html      up to 1.1.1.15
-external/public-domain/tz/dist/version          up to 1.5
-external/public-domain/tz/dist/ziguard.awk      up to 1.1.1.9
-external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.8
-external/public-domain/tz/dist/zone.tab         up to 1.1.1.22
-external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.23
+external/public-domain/tz/dist/leapseconds	up to 1.4
+external/public-domain/tz/dist/northamerica	up to 1.1.1.30
+external/public-domain/tz/dist/southamerica	up to 1.1.1.20
+external/public-domain/tz/dist/theory.html	up to 1.1.1.15
+external/public-domain/tz/dist/version		up to 1.5
+external/public-domain/tz/dist/ziguard.awk	up to 1.1.1.9
+external/public-domain/tz/dist/zishrink.awk	up to 1.1.1.8
+external/public-domain/tz/dist/zone.tab 	up to 1.1.1.22
+external/public-domain/tz/dist/zone1970.tab	up to 1.1.1.23
 distrib/sets/lists/base/mi			(apply patch)
 doc/3RDPARTY					(apply patch)
 
@@ -445,7 +445,7 @@ sys/arch/hp300/dev/topcat.c			1.6
 	HP320 and HP360.
 	[tsutsui, ticket #1551]
 
-sys/arch/hp300/dev/rd.c				1.111-1.124
+sys/arch/hp300/dev/rd.c 			1.111-1.124
 sys/arch/hp300/dev/rdreg.h			1.19,1.20
 sys/arch/hp300/dev/rdvar.h			1.27
 sys/arch/hp300/stand/common/rd.c		1.12-1.15
@@ -457,7 +457,7 @@ sys/arch/hp300/stand/common/rd.c		1.12-1.15
 	- Make MI raid(4) work on HP-IB rd(4) disks.
 	[tsutsui, ticket #1552]
 
-usr.sbin/sysinst/bsddisklabel.c			1.67
+usr.sbin/sysinst/bsddisklabel.c 		1.67
 
 	sysinst: avoid confusion when adding a /usr partition after
 	manually sizing the / partition.
@@ -473,7 +473,7 @@ usr.sbin/sysinst/arch/sparc64/md.c		1.8
 	architectures.
 	[martin, ticket #1554]
 
-sys/nfs/nfs_srvsocket.c				1.5
+sys/nfs/nfs_srvsocket.c 			1.5
 
 	NFS: avoid mbuf leaks and corruption.
 	[hannken, ticket #1555]
@@ -510,8 +510,8 @@ usr.sbin/sysinst/label.c			1.40-1.41
 
 usr.sbin/sysinst/arch/amiga/md.c		1.8
 usr.sbin/sysinst/arch/amiga/md.c		1.9
-usr.sbin/sysinst/arch/x68k/md.c			1.13
-usr.sbin/sysinst/defs.h				1.85
+usr.sbin/sysinst/arch/x68k/md.c 		1.13
+usr.sbin/sysinst/defs.h 			1.85
 usr.sbin/sysinst/disklabel.c			1.49
 
 	PR 56890: check on-disk disklabel properly even on ports without
@@ -659,8 +659,8 @@ xsrc/external/mit/libXpm/dist/src/WrFFrI.c			(apply patch)
 xsrc/external/mit/libXpm/dist/src/create.c			(apply patch)
 xsrc/external/mit/libXpm/dist/src/data.c			(apply patch)
 xsrc/external/mit/libXpm/dist/src/parse.c			(apply patch)
-xsrc/external/mit/xorg-server/dist/Xext/saver.c			(apply patch)
-xsrc/external/mit/xorg-server/dist/Xext/xtest.c			(apply patch)
+xsrc/external/mit/xorg-server/dist/Xext/saver.c 		(apply patch)
+xsrc/external/mit/xorg-server/dist/Xext/xtest.c 		(apply patch)
 xsrc/external/mit/xorg-server/dist/Xext/xvmain.c		(apply patch)
 xsrc/external/mit/xorg-server/dist/Xi/xipassivegrab.c		(apply patch)
 xsrc/external/mit/xorg-server/dist/Xi/xiproperty.c		(apply patch)
@@ -753,7 +753,7 @@ etc/etc.next68k/MAKEDEV.conf			1.6
 	[tsutsui, ticket #1586]
 
 sys/fs/union/union_vfsops.c			1.86
-sys/miscfs/nullfs/null_vfsops.c			1.101 (via patch)
+sys/miscfs/nullfs/null_vfsops.c 		1.101 (via patch)
 
 	Set IMNT_MPSAFE only if all lower layers are MPSAFE.
 	[hannken, ticket #1587]
@@ -827,8 +827,8 @@ sys/arch/next68k/conf/GENERIC			1.155 (patch)
 	[tsutsui, ticket #1597]
 
 sys/arch/next68k/dev/intio.c			1.17-1.19 (patch)
-sys/arch/next68k/dev/intiovar.h			1.8
-sys/arch/next68k/dev/nextcons.c			1.12-1.14
+sys/arch/next68k/dev/intiovar.h 		1.8
+sys/arch/next68k/dev/nextcons.c 		1.12-1.14
 sys/arch/next68k/dev/nextdisplay.c		1.26-1.30
 sys/arch/next68k/dev/nextdisplayvar.h		1.6
 sys/arch/next68k/include/bus_space.h		1.18-1.23
@@ -843,8 +843,8 @@ sys/arch/next68k/stand/boot/version		1.6
 	next68k: various NeXT Turbo fixes.
 	[tsutsui, ticket #1598]
 
-share/man/man4/urndis.4				1.11
-sys/dev/usb/if_urndis.c				1.48
+share/man/man4/urndis.4 			1.11
+sys/dev/usb/if_urndis.c 			1.48
 sys/dev/usb/usbdevs				1.807
 sys/dev/usb/usbdevs.h				(regen)
 sys/dev/usb/usbdevs_data.h			(regen)
@@ -858,7 +858,7 @@ sys/arch/next68k/stand/boot/devopen.c		1.8
 sys/arch/next68k/stand/boot/en.c		1.20
 sys/arch/next68k/stand/boot/machdep.c		1.9
 sys/arch/next68k/stand/boot/rtc.c		1.8
-sys/arch/next68k/stand/boot/samachdep.h		1.1,1.2
+sys/arch/next68k/stand/boot/samachdep.h 	1.1,1.2
 sys/arch/next68k/stand/boot/scsi.c		1.13,1.14
 sys/arch/next68k/stand/boot/scsivar.h		1.2
 sys/arch/next68k/stand/boot/sd.c		1.17
@@ -873,7 +873,7 @@ tests/lib/libc/string/t_swab.c			1.3
 	swab(3): PR 57141: fix swab(3) and ensure it is properly tested.
 	[riastradh, ticket #1601]
 
-sys/net/route.c					1.236
+sys/net/route.c 				1.236
 
 	route(4): PR 56844: work around deadlock in rt_free wait path.
 	[riastradh, ticket #1602]
@@ -905,7 +905,7 @@ external/bsd/nvi/dist/common/search.c		1.5
 	vi(1): PR 57106: correctly handle escaped backslashes.
 	[gutteridge, ticket #1606]
 
-distrib/amiga/stand/loadbsd.uue			1.3
+distrib/amiga/stand/loadbsd.uue 		1.3
 sys/arch/amiga/stand/loadbsd/Makefile		1.4
 sys/arch/amiga/stand/loadbsd/README		1.5
 sys/arch/amiga/stand/loadbsd/loadbsd.c		1.37
@@ -923,46 +923,46 @@ crypto/external/bsd/openssl/dist/test/smime-certs/badrsa.pem up to 1.1.1.1
 crypto/external/bsd/openssl/dist/test/ssl-tests/30-supported-groups.conf up to 1.1.1.1
 crypto/external/bsd/openssl/dist/test/ssl-tests/30-supported-groups.conf.in up to 1.1.1.1
 crypto/external/bsd/openssl/dist/test/dane-cross.in up to 1.1.1.1
-crypto/external/bsd/openssl/dist/test/data.bin  up to 1.1.1.1
+crypto/external/bsd/openssl/dist/test/data.bin	up to 1.1.1.1
 crypto/external/bsd/openssl/dist/test/testrsa_withattrs.der up to 1.1.1.1
 crypto/external/bsd/openssl/dist/test/testrsa_withattrs.pem up to 1.1.1.1
 crypto/external/bsd/openssl/dist/util/perl/OpenSSL/copyright.pm up to 1.1.1.1
 crypto/external/bsd/openssl/dist/test/ssl-tests/16-certstatus.conf delete
-crypto/external/bsd/openssl/dist/CHANGES        up to 1.30
-crypto/external/bsd/openssl/dist/Configure      up to 1.31
-crypto/external/bsd/openssl/dist/NEWS           up to 1.30
-crypto/external/bsd/openssl/dist/README         up to 1.30
-crypto/external/bsd/openssl/dist/config         up to 1.1.1.14
+crypto/external/bsd/openssl/dist/CHANGES	up to 1.30
+crypto/external/bsd/openssl/dist/Configure	up to 1.31
+crypto/external/bsd/openssl/dist/NEWS		up to 1.30
+crypto/external/bsd/openssl/dist/README 	up to 1.30
+crypto/external/bsd/openssl/dist/config 	up to 1.1.1.14
 crypto/external/bsd/openssl/dist/Configurations/10-main.conf up to 1.1.1.12
 crypto/external/bsd/openssl/dist/Configurations/15-android.conf up to 1.1.1.5
 crypto/external/bsd/openssl/dist/Configurations/descrip.mms.tmpl up to 1.1.1.8
 crypto/external/bsd/openssl/dist/Configurations/unix-Makefile.tmpl up to 1.1.1.12
 crypto/external/bsd/openssl/dist/Configurations/windows-makefile.tmpl up to 1.1.1.8
-crypto/external/bsd/openssl/dist/apps/apps.c    up to 1.1.1.23
-crypto/external/bsd/openssl/dist/apps/apps.h    up to 1.1.1.16
-crypto/external/bsd/openssl/dist/apps/ca.c      up to 1.22
+crypto/external/bsd/openssl/dist/apps/apps.c	up to 1.1.1.23
+crypto/external/bsd/openssl/dist/apps/apps.h	up to 1.1.1.16
+crypto/external/bsd/openssl/dist/apps/ca.c	up to 1.22
 crypto/external/bsd/openssl/dist/apps/ciphers.c up to 1.1.1.9
-crypto/external/bsd/openssl/dist/apps/crl2p7.c  up to 1.1.1.7
-crypto/external/bsd/openssl/dist/apps/dgst.c    up to 1.1.1.16
-crypto/external/bsd/openssl/dist/apps/enc.c     up to 1.1.1.17
-crypto/external/bsd/openssl/dist/apps/ocsp.c    up to 1.23
+crypto/external/bsd/openssl/dist/apps/crl2p7.c	up to 1.1.1.7
+crypto/external/bsd/openssl/dist/apps/dgst.c	up to 1.1.1.16
+crypto/external/bsd/openssl/dist/apps/enc.c	up to 1.1.1.17
+crypto/external/bsd/openssl/dist/apps/ocsp.c	up to 1.23
 crypto/external/bsd/openssl/dist/apps/openssl.c up to 1.7
 crypto/external/bsd/openssl/dist/apps/openssl.cnf up to 1.9
-crypto/external/bsd/openssl/dist/apps/passwd.c  up to 1.1.1.8
-crypto/external/bsd/openssl/dist/apps/s_cb.c    up to 1.1.1.21
+crypto/external/bsd/openssl/dist/apps/passwd.c	up to 1.1.1.8
+crypto/external/bsd/openssl/dist/apps/s_cb.c	up to 1.1.1.21
 crypto/external/bsd/openssl/dist/apps/s_client.c up to 1.25
 crypto/external/bsd/openssl/dist/apps/s_server.c up to 1.25
 crypto/external/bsd/openssl/dist/apps/s_socket.c up to 1.1.1.11
-crypto/external/bsd/openssl/dist/apps/speed.c   up to 1.21
+crypto/external/bsd/openssl/dist/apps/speed.c	up to 1.21
 crypto/external/bsd/openssl/dist/apps/vms_decc_init.c up to 1.1.1.4
-crypto/external/bsd/openssl/dist/apps/x509.c    up to 1.1.1.17
+crypto/external/bsd/openssl/dist/apps/x509.c	up to 1.1.1.17
 crypto/external/bsd/openssl/dist/crypto/armcap.c up to 1.14
-crypto/external/bsd/openssl/dist/crypto/init.c  up to 1.1.1.9
+crypto/external/bsd/openssl/dist/crypto/init.c	up to 1.1.1.9
 crypto/external/bsd/openssl/dist/crypto/ppccap.c up to 1.20
 crypto/external/bsd/openssl/dist/crypto/s390x_arch.h up to 1.1.1.3
 crypto/external/bsd/openssl/dist/crypto/s390xcap.c up to 1.1.1.8
 crypto/external/bsd/openssl/dist/crypto/sparcv9cap.c up to 1.1.1.9
-crypto/external/bsd/openssl/dist/crypto/uid.c   up to 1.8
+crypto/external/bsd/openssl/dist/crypto/uid.c	up to 1.8
 crypto/external/bsd/openssl/dist/crypto/aes/asm/aesni-x86.pl up to 1.1.1.9
 crypto/external/bsd/openssl/dist/crypto/aes/asm/aesv8-armx.pl up to 1.1.1.7
 crypto/external/bsd/openssl/dist/crypto/asn1/a_object.c up to 1.1.1.13
@@ -1141,25 +1141,25 @@ crypto/external/bsd/openssl/dist/include/openssl/ssl.h up to 1.1.1.10
 crypto/external/bsd/openssl/dist/include/openssl/sslerr.h up to 1.1.1.6
 crypto/external/bsd/openssl/dist/include/openssl/x509v3.h up to 1.1.1.7
 crypto/external/bsd/openssl/dist/include/openssl/x509v3err.h up to 1.1.1.3
-crypto/external/bsd/openssl/dist/ssl/bio_ssl.c  up to 1.1.1.11
-crypto/external/bsd/openssl/dist/ssl/d1_lib.c   up to 1.12
-crypto/external/bsd/openssl/dist/ssl/packet.c   up to 1.1.1.3
+crypto/external/bsd/openssl/dist/ssl/bio_ssl.c	up to 1.1.1.11
+crypto/external/bsd/openssl/dist/ssl/d1_lib.c	up to 1.12
+crypto/external/bsd/openssl/dist/ssl/packet.c	up to 1.1.1.3
 crypto/external/bsd/openssl/dist/ssl/packet_local.h up to 1.1.1.2
-crypto/external/bsd/openssl/dist/ssl/s3_cbc.c   up to 1.11
-crypto/external/bsd/openssl/dist/ssl/s3_enc.c   up to 1.17
-crypto/external/bsd/openssl/dist/ssl/s3_lib.c   up to 1.30
-crypto/external/bsd/openssl/dist/ssl/s3_msg.c   up to 1.1.1.5
+crypto/external/bsd/openssl/dist/ssl/s3_cbc.c	up to 1.11
+crypto/external/bsd/openssl/dist/ssl/s3_enc.c	up to 1.17
+crypto/external/bsd/openssl/dist/ssl/s3_lib.c	up to 1.30
+crypto/external/bsd/openssl/dist/ssl/s3_msg.c	up to 1.1.1.5
 crypto/external/bsd/openssl/dist/ssl/ssl_asn1.c up to 1.1.1.12
 crypto/external/bsd/openssl/dist/ssl/ssl_cert.c up to 1.1.1.17
 crypto/external/bsd/openssl/dist/ssl/ssl_ciph.c up to 1.23
-crypto/external/bsd/openssl/dist/ssl/ssl_err.c  up to 1.19
+crypto/external/bsd/openssl/dist/ssl/ssl_err.c	up to 1.19
 crypto/external/bsd/openssl/dist/ssl/ssl_init.c up to 1.1.1.7
-crypto/external/bsd/openssl/dist/ssl/ssl_lib.c  up to 1.22
+crypto/external/bsd/openssl/dist/ssl/ssl_lib.c	up to 1.22
 crypto/external/bsd/openssl/dist/ssl/ssl_local.h up to 1.1.1.4
-crypto/external/bsd/openssl/dist/ssl/ssl_rsa.c  up to 1.1.1.11
-crypto/external/bsd/openssl/dist/ssl/ssl_txt.c  up to 1.1.1.10
-crypto/external/bsd/openssl/dist/ssl/t1_enc.c   up to 1.22
-crypto/external/bsd/openssl/dist/ssl/t1_lib.c   up to 1.35
+crypto/external/bsd/openssl/dist/ssl/ssl_rsa.c	up to 1.1.1.11
+crypto/external/bsd/openssl/dist/ssl/ssl_txt.c	up to 1.1.1.10
+crypto/external/bsd/openssl/dist/ssl/t1_enc.c	up to 1.22
+crypto/external/bsd/openssl/dist/ssl/t1_lib.c	up to 1.35
 crypto/external/bsd/openssl/dist/ssl/tls13_enc.c up to 1.1.1.7
 crypto/external/bsd/openssl/dist/ssl/record/rec_layer_s3.c up to 1.1.1.9
 crypto/external/bsd/openssl/dist/ssl/record/ssl3_buffer.c up to 1.1.1.6
@@ -1178,7 +1178,7 @@ crypto/external/bsd/openssl/dist/test/afalgtest.c up to 1.1.1.3
 crypto/external/bsd/openssl/dist/test/asn1_decode_test.c up to 1.1.1.3
 crypto/external/bsd/openssl/dist/test/asn1_internal_test.c up to 1.1.1.3
 crypto/external/bsd/openssl/dist/test/bio_memleak_test.c up to 1.1.1.4
-crypto/external/bsd/openssl/dist/test/bntest.c  up to 1.10
+crypto/external/bsd/openssl/dist/test/bntest.c	up to 1.10
 crypto/external/bsd/openssl/dist/test/build.info up to 1.1.1.13
 crypto/external/bsd/openssl/dist/test/clienthellotest.c up to 1.1.1.6
 crypto/external/bsd/openssl/dist/test/ct_test.c up to 1.1.1.6
@@ -1186,7 +1186,7 @@ crypto/external/bsd/openssl/dist/test/danetest.c up to 1.1.1.3
 crypto/external/bsd/openssl/dist/test/dtls_mtu_test.c up to 1.1.1.3
 crypto/external/bsd/openssl/dist/test/dtlstest.c up to 1.1.1.8
 crypto/external/bsd/openssl/dist/test/ec_internal_test.c up to 1.1.1.5
-crypto/external/bsd/openssl/dist/test/ectest.c  up to 1.9
+crypto/external/bsd/openssl/dist/test/ectest.c	up to 1.9
 crypto/external/bsd/openssl/dist/test/evp_extra_test.c up to 1.11
 crypto/external/bsd/openssl/dist/test/evp_test.c up to 1.9
 crypto/external/bsd/openssl/dist/test/exptest.c up to 1.5
@@ -1199,7 +1199,7 @@ crypto/external/bsd/openssl/dist/test/ssltest_old.c up to 1.1.1.7
 crypto/external/bsd/openssl/dist/test/ssltestlib.c up to 1.1.1.8
 crypto/external/bsd/openssl/dist/test/ssltestlib.h up to 1.1.1.9
 crypto/external/bsd/openssl/dist/test/test_test.c up to 1.1.1.3
-crypto/external/bsd/openssl/dist/test/v3ext.c   up to 1.1.1.3
+crypto/external/bsd/openssl/dist/test/v3ext.c	up to 1.1.1.3
 crypto/external/bsd/openssl/dist/test/v3nametest.c up to 1.1.1.5
 crypto/external/bsd/openssl/dist/test/verify_extra_test.c up to 1.1.1.6
 crypto/external/bsd/openssl/dist/test/x509_internal_test.c up to 1.1.1.2
@@ -1254,7 +1254,7 @@ crypto/external/bsd/openssl/dist/util/private.num up to 1.1.1.4
 crypto/external/bsd/openssl/lib/libcrypto/shlib_version up to 1.15
 crypto/external/bsd/openssl/lib/libcrypto/bn.inc up to 1.8 (patch)
 distrib/sets/lists/base/shl.mi				1.944 (patch)
-distrib/sets/lists/debug/shl.mi				1.302 (patch)
+distrib/sets/lists/debug/shl.mi 			1.302 (patch)
 doc/3RDPARTY						1.1912 (manual edit)
 
 	Import OpenSSL 1.1.1t.
@@ -1266,7 +1266,7 @@ sys/arch/arm/ti/if_cpsw.c			1.17
 	debugging is requested.
 	[sekiya, ticket #1609]
 
-sys/kern/vfs_syscalls.c				1.557
+sys/kern/vfs_syscalls.c 			1.557
 
 	open(2): PR 57260: don't map ERESTART to EINTR.
 	[riastradh, ticket #1610]
@@ -1308,7 +1308,7 @@ distrib/amiga/stand/device-streams-2.2.1-src.tar.gz.uue 1.1
 distrib/amiga/stand/device-streams-2.2.1.lha.uue 1.1
 distrib/amiga/stand/device-streams.README.md	1.1
 distrib/amiga/stand/device-streams.tar.gz.uue	delete
-distrib/amiga/stand/rdbinfo.uue			1.2
+distrib/amiga/stand/rdbinfo.uue 		1.2
 distrib/amiga/stand/update			1.1
 distrib/amiga/stand/xdevtostream.uue		1.1
 distrib/amiga/stand/xstreamtodev.uue		1.2
@@ -1378,7 +1378,7 @@ sys/arch/luna68k/conf/Makefile.luna68k		1.30
 sys/arch/dreamcast/dev/microcode/Makefile	1.6
 sys/arch/dreamcast/dev/microcode/aica_arm.c	1.7,1.8
 sys/arch/dreamcast/dev/microcode/aica_arm_locore.S 1.4,1.5
-sys/arch/dreamcast/dev/microcode/aica_armcode.h	1.5
+sys/arch/dreamcast/dev/microcode/aica_armcode.h 1.5
 
 	dreamcast: aica(4): audio fix.
 	[tsutsui, ticket #1628]
@@ -1403,7 +1403,7 @@ share/man/man8/man8.x86/boot.8			1.27-1.29 (via patch)
 share/man/man8/man8.x86/dosboot.8		1.4
 share/man/man8/man8.x86/pxeboot.8		1.6
 sys/arch/amd64/amd64/locore.S			1.219,1.220
-sys/arch/amd64/conf/files.amd64			1.121
+sys/arch/amd64/conf/files.amd64 		1.121
 sys/arch/amd64/conf/std.amd64			1.13
 sys/arch/i386/stand/efiboot/boot.c		1.22
 sys/arch/i386/stand/efiboot/bootia32/efibootia32.c 1.6
@@ -1436,7 +1436,7 @@ external/gpl3/gcc/usr.bin/common-target/Makefile 1.12
 external/gpl3/gcc/usr.bin/common/Makefile	1.12
 external/gpl3/gcc/usr.bin/frontend/Makefile	1.15
 external/gpl3/gcc/usr.bin/libcpp/Makefile	1.10
-external/gpl3/gcc/usr.bin/libdecnumber/Makefile	1.9
+external/gpl3/gcc/usr.bin/libdecnumber/Makefile 1.9
 
 	PR 57014: gcc: fix build with clang++ HOST_CXX.
 	[lukem, ticket #1635]
@@ -1451,7 +1451,7 @@ sys/dev/pci/if_aq.c				1.45
 	aq(4): if_transmit: invoke softint_schedule(9) with kpreempt disabled.
 	[rin, ticket #1637]
 
-distrib/amiga/stand/loadbsd.uue			1.4
+distrib/amiga/stand/loadbsd.uue 		1.4
 sys/arch/amiga/stand/loadbsd/Makefile		1.5
 sys/arch/amiga/stand/loadbsd/README		1.6
 sys/arch/amiga/stand/loadbsd/loadbsd.c		1.38
@@ -1467,9 +1467,9 @@ sys/dev/ipmi.c					1.10
 	the warning limits. These are usually invalid.
 	[sborrill, ticket #1639]
 
-bin/date/Makefile                               up to 1.16
-bin/date/date.1                                 up to 1.54
-bin/date/date.c                                 up to 1.65
+bin/date/Makefile				up to 1.16
+bin/date/date.1 				up to 1.54
+bin/date/date.c 				up to 1.65
 
 	date(1): add -R option for displaying time in RFC 5322 format
 	and -f option to set the time.
@@ -1481,17 +1481,24 @@ external/apache2/mDNSResponder/dist/mDNSShared/PlatformCommon.c 1.7
 	mdnsd(8): restore fixes for PR 46758.
 	[andvar, ticket #1641]
 
-sys/net/route.c					1.237
+sys/net/route.c 				1.237
 
 	route: run workqueue kthreads with KERNEL_LOCK unless NET_MPSAFE
 	to avoid use-after-free of deleted routes.
 	[ozaki-r, ticket #1642]
 
+xsrc/external/mit/libX11/dist/src/InitExt.c	patch
+
+	Add bounds checks for extension request, event, & error codes.
+	Fixes CVE-2023-3138.
+
+	[mrg, ticket #1645]
+
 etc/rc.d/sshd					1.30,1.33-1.35
 
 	- Add check cmd to run `sshd -t' and use it as reload precmd.
-	- Use default curve for ECDSA keygen.    
-	- Stop generating DSA host keys.         
+	- Use default curve for ECDSA keygen.	 
+	- Stop generating DSA host keys.	 
 	[kim, ticket #1643]
 
 sys/arch/x86/pci/amdsmn.c			1.16
@@ -1508,7 +1515,7 @@ usr.sbin/cpuctl/arch/i386.c			1.136
 	[msaitoh, ticket #1646]
 
 sys/arch/vax/include/trap.h			1.25
-sys/arch/vax/vax/pmap.c				1.196
+sys/arch/vax/vax/pmap.c 			1.196
 
 	vax: handle 512MB RAM machines.
 	[abs, ticket #1648]
@@ -1528,7 +1535,7 @@ sys/arch/x86/x86/procfs_machdep.c		1.47
 	x86 procfs: add Intel lam and AMD vnmi.
 	[msaitoh, ticket #1649]
 
-sys/compat/linux32/arch/amd64/linux32_machdep.c	1.48
+sys/compat/linux32/arch/amd64/linux32_machdep.c 1.48
 sys/compat/ossaudio/ossaudio.c			1.85
 sys/compat/sunos32/sunos32_misc.c		1.86
 
