@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2023/06/20 17:23:05 christos Exp $
+# $NetBSD: Makefile,v 1.5 2023/06/22 22:39:38 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -9,7 +9,10 @@ PROG=	kimpersonate
 SRCS=	kimpersonate.c
 MAN=	kimpersonate.8
 
-PROGDPLIBS+= ${DPLIBASN1} ${DPLIBKAFS} ${DPLIBHEIMNTLM}
+PROGDPLIBS+= ${DPLIBKAFS} ${DPLIBHEIMNTLM}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
+
+LDADD+= ${KRB5LDADD}
+DPADD+= ${KRB5DPADD}

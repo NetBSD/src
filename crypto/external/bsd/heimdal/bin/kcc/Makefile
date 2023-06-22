@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2023/06/20 17:23:01 christos Exp $
+# $NetBSD: Makefile,v 1.6 2023/06/22 22:39:22 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -22,9 +22,10 @@ SRCS=	copy_cred_cache.c	\
 CPPFLAGS+= -I${DESTDIR}/usr/include/krb5
 CPPFLAGS+= -I${HEIMDIST}/kuser
 
-PROGDPLIBS+= ${DPLIBASN1} ${DPLIBKAFS} ${DPLIBSL}
-LDADD+= -ledit -lterminfo
-DPADD+= ${LIBEDIT} ${LIBTERMINFO}
+PROGDPLIBS+= ${DPLIBKAFS} ${DPLIBSL}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
+
+LDADD+= -ledit -lterminfo ${KRB5LDADD}
+DPADD+= ${LIBEDIT} ${LIBTERMINFO} ${KRB5DPADD}
