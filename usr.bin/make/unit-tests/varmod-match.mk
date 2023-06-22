@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match.mk,v 1.12 2022/08/24 21:03:57 rillig Exp $
+# $NetBSD: varmod-match.mk,v 1.13 2023/06/22 09:09:08 rillig Exp $
 #
 # Tests for the :M variable modifier, which filters words that match the
 # given pattern.
@@ -33,8 +33,11 @@ NUMBERS=	One Two Three Four five six seven
 .if ${:U****************:M****************b}
 .endif
 
-# As of 2022-06-11, this expression calls Str_Match 5,242,223 times.
-# Adding another '*?' to the pattern calls Str_Match 41,261,143 times.
+# As of 2023-06-22, this expression calls Str_Match 2,621,112 times.
+# Adding another '*?' to the pattern calls Str_Match 20,630,572 times.
+# Adding another '*?' to the pattern calls Str_Match 136,405,672 times.
+# Adding another '*?' to the pattern calls Str_Match 773,168,722 times.
+# Adding another '*?' to the pattern calls Str_Match 3,815,481,072 times.
 .if ${:U..................................................b:M*?*?*?*?*?a}
 .endif
 
