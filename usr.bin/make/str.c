@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.95 2023/06/22 12:59:54 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.96 2023/06/22 16:32:09 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.95 2023/06/22 12:59:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.96 2023/06/22 16:32:09 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -323,16 +323,17 @@ in_range(char e1, char c, char e2)
 bool
 Str_Match(const char *str, const char *pat)
 {
-	enum { MFL_START, MFL_MIDDLE, MFL_END } mfl;
-	const char *str1, *pat1;
+	enum { START, SEEN_ASTERISK, END } state;
+	const char *fixed_str, *fixed_pat;
 	bool matched;
 
-	mfl = MFL_START;
-	str1 = str;
-	pat1 = pat;
+	state = START;
+	fixed_str = str;
+	fixed_pat = pat;
+
 match_fixed_length:
-	str = str1;
-	pat = pat1;
+	str = fixed_str;
+	pat = fixed_pat;
 	matched = false;
 	for (; *pat != '\0' && *pat != '*'; str++, pat++) {
 		if (*str == '\0')
@@ -379,26 +380,27 @@ match_fixed_length:
 	matched = true;
 
 match_done:
-	switch (mfl) {
-	case MFL_START:
+	switch (state) {
+	case START:
 		if (!matched)
 			return false;
 		if (*pat == '\0')
 			return *str == '\0';
-		mfl = MFL_MIDDLE;
+		state = SEEN_ASTERISK;
 		break;
 	default:
 		if (!matched) {
-			str1++;
+			fixed_str++;
 			goto match_fixed_length;
 		}
 		if (*pat == '\0') {
-			mfl = MFL_END;
-			str1 = str + strlen(str) - (str - str1);
+			size_t match_len = (size_t)(str - fixed_str);
+			fixed_str = str + strlen(str) - match_len;
+			state = END;
 			goto match_fixed_length;
 		}
 		break;
-	case MFL_END:
+	case END:
 		return matched;
 	}
 
@@ -406,9 +408,8 @@ match_done:
 		pat++;
 	if (*pat == '\0')
 		return true;
-	if (*str == '\0')
-		return false;
-	str1 = str, pat1 = pat;
+	fixed_str = str;
+	fixed_pat = pat;
 	goto match_fixed_length;
 }
 
