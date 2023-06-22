@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.96 2023/06/22 16:32:09 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.97 2023/06/22 16:59:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.96 2023/06/22 16:32:09 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.97 2023/06/22 16:59:17 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -323,11 +323,10 @@ in_range(char e1, char c, char e2)
 bool
 Str_Match(const char *str, const char *pat)
 {
-	enum { START, SEEN_ASTERISK, END } state;
 	const char *fixed_str, *fixed_pat;
-	bool matched;
+	bool asterisk, matched;
 
-	state = START;
+	asterisk = false;
 	fixed_str = str;
 	fixed_pat = pat;
 
@@ -380,28 +379,23 @@ match_fixed_length:
 	matched = true;
 
 match_done:
-	switch (state) {
-	case START:
+	if (!asterisk) {
 		if (!matched)
 			return false;
 		if (*pat == '\0')
 			return *str == '\0';
-		state = SEEN_ASTERISK;
-		break;
-	default:
+		asterisk = true;
+	} else {
 		if (!matched) {
 			fixed_str++;
 			goto match_fixed_length;
 		}
 		if (*pat == '\0') {
-			size_t match_len = (size_t)(str - fixed_str);
-			fixed_str = str + strlen(str) - match_len;
-			state = END;
+			if (*str == '\0')
+				return true;
+			fixed_str += strlen(str);
 			goto match_fixed_length;
 		}
-		break;
-	case END:
-		return matched;
 	}
 
 	while (*pat == '*')
