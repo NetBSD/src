@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1056 2023/06/16 22:30:35 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.1057 2023/06/22 08:55:33 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1056 2023/06/16 22:30:35 sjg Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1057 2023/06/22 08:55:33 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -1406,34 +1406,6 @@ ModifyWord_Root(Substring word, SepBuf *buf, void *dummy MAKE_ATTR_UNUSED)
 	lastDot = Substring_LastIndex(word, '.');
 	end = lastDot != NULL ? lastDot : word.end;
 	SepBuf_AddRange(buf, word.start, end);
-}
-
-/*
- * Callback for ModifyWords to implement the :M modifier.
- * Place the word in the buffer if it matches the given pattern.
- */
-static void
-ModifyWord_Match(Substring word, SepBuf *buf, void *data)
-{
-	const char *pattern = data;
-
-	assert(word.end[0] == '\0');	/* assume null-terminated word */
-	if (Str_Match(word.start, pattern))
-		SepBuf_AddSubstring(buf, word);
-}
-
-/*
- * Callback for ModifyWords to implement the :N modifier.
- * Place the word in the buffer if it doesn't match the given pattern.
- */
-static void
-ModifyWord_NoMatch(Substring word, SepBuf *buf, void *data)
-{
-	const char *pattern = data;
-
-	assert(word.end[0] == '\0');	/* assume null-terminated word */
-	if (!Str_Match(word.start, pattern))
-		SepBuf_AddSubstring(buf, word);
 }
 
 #ifdef SYSVVARSUB
@@ -2818,6 +2790,20 @@ ParseModifier_Match(const char **pp, const ModChain *ch)
 	return pattern;
 }
 
+struct ModifyWord_MatchArgs {
+	const char *pattern;
+	bool neg;
+};
+
+static void
+ModifyWord_Match(Substring word, SepBuf *buf, void *data)
+{
+	struct ModifyWord_MatchArgs *args = data;
+	assert(word.end[0] == '\0');	/* assume null-terminated word */
+	if (Str_Match(word.start, args->pattern) != args->neg)
+		SepBuf_AddSubstring(buf, word);
+}
+
 /* :Mpattern or :Npattern */
 static ApplyModifierResult
 ApplyModifier_Match(const char **pp, ModChain *ch)
@@ -2828,9 +2814,10 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 	pattern = ParseModifier_Match(pp, ch);
 
 	if (ModChain_ShouldEval(ch)) {
-		ModifyWordProc modifyWord =
-		    mod == 'M' ? ModifyWord_Match : ModifyWord_NoMatch;
-		ModifyWords(ch, modifyWord, pattern, ch->oneBigWord);
+		struct ModifyWord_MatchArgs args;
+		args.pattern = pattern;
+		args.neg = mod == 'N';
+		ModifyWords(ch, ModifyWord_Match, &args, ch->oneBigWord);
 	}
 
 	free(pattern);
