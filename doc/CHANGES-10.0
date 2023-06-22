@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.71 2023/06/21 22:39:15 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.72 2023/06/22 08:16:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2241,4 +2241,39 @@ sys/dev/mii/mii_physubr.c			1.103
 	Fix a bug that changing a media from IFM_1000_T to IFM_AUTO doesn't
 	work correctly on a interface which has no MIIF_DOPAUSE flag.
 	[msaitoh, ticket #211]
+
+sys/dev/pci/if_wm.c				1.768-1.781
+sys/dev/pci/if_wmreg.h				1.129,1.130
+sys/dev/pci/if_wmvar.h				1.49
+
+	wm(4):
+	- Rework for event counters:
+	  - Fix calculation of GORC, GOTC, TOR and TOT counters correctly.
+	  - Rearrange the order of the registers so that they are roughly
+	    in ascending order.
+	  - Reorder evcnt_attach_dynamic(), WM_EVCNT_ADD() and evcnt_detach()
+	    to match.
+	  - IC{TX,RX}*C registers are for older than 82575.
+	  - Fix a bug that the transmit underrun counter is incorrectly
+	    counted.
+	  - Don't add "Count" for event counter's description.
+	  - Some statistics registers were replaced with new counters on newer
+	    chips. Treat 0x403c(CEXTERR->HTDPMC), 0x40fc(TSCTFC->CBRMPC),
+	    0x4124(ICRXOC->HTCBDPC) and from 0x4104 to 0x4124.
+	  - Add some new counters:
+	    - Circuit Breaker TX Manageability Packet
+	    - Circuit Breaker RX Dropped Packet
+	    - Host Good Octets RX
+	    - Host Good Octets TX 
+	    - Length Errors
+	    - SerDes/SGMII Code Violation Packet
+	    - Header Redirection Missed Packet
+	    - EEE TX LPI
+	    - EEE RX LPI
+	  - Fix prc511's comment and description.
+	- Add SOICZIFDATA (ifconfig -z) support for evcnt(9).
+	- Use WM_IS_ICHPCH(). No functional change.
+	- Fix typo. s/ictxact/ictxatc/. No functional change.
+	- Add comment.
+	[msaitoh, ticket #213]
 
