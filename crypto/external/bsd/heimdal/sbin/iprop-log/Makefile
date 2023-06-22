@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2023/06/20 17:23:04 christos Exp $
+# $NetBSD: Makefile,v 1.5 2023/06/22 22:39:38 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -13,8 +13,9 @@ HEIMSRCS= iprop-log.c iprop-commands.in
 CPPFLAGS+= -I${DESTDIR}/usr/include/kadm5 -I${HEIMDIST}/lib/krb5
 
 PROGDPLIBS += ${DPLIBKADM5SRV} ${DPLIBHDB} ${DPLIBSL}
-LDADD+= -ledit -lterminfo
-DPADD+= ${LIBEDIT} ${LIBTERMINFO}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
+
+LDADD+= -ledit -lterminfo ${KRB5LDADD}
+DPADD+= ${LIBEDIT} ${LIBTERMINFO} ${KRB5DPADD}

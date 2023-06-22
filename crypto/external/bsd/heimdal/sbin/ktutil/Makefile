@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2023/06/20 17:23:05 christos Exp $
+# $NetBSD: Makefile,v 1.6 2023/06/22 22:39:39 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -27,8 +27,6 @@ SRCS=			\
 	rename.c
 
 PROGDPLIBS+= ${DPLIBKADM5CLNT} ${DPLIBSL}
-LDADD+= -lcrypto -ledit -lterminfo -lutil
-DPADD+= ${LIBCRYPTO} ${LIBEDIT} ${LIBTERMINFO} ${LIBUTIL}
 
 ktutil.8: ktutil.1
 	@${TOOL_SED} -e 's/KTUTIL 1/KTUTIL 8/' < ${.ALLSRC} > ${.TARGET}
@@ -37,3 +35,6 @@ CLEANFILES+=ktutil.8
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
+
+LDADD+= -ledit -lterminfo -lutil ${KRB5LDADD}
+DPADD+= ${LIBEDIT} ${LIBTERMINFO} ${LIBUTIL} ${KRB5DPADD}

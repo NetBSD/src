@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2023/06/20 17:23:03 christos Exp $
+# $NetBSD: Makefile,v 1.5 2023/06/22 22:39:37 christos Exp $
 
 .include <bsd.own.mk>
 .include <${.CURDIR}/../../Makefile.inc>
@@ -21,8 +21,9 @@ CPPFLAGS+= 				\
 	-I${DESTDIR}/usr/include/kadm5
 
 PROGDPLIBS+= ${DPLIBKADM5SRV} ${DPLIBHDB}
-LDADD+= -lutil
-DPADD+= ${LIBUTIL}
 
 .include <${HEIMBASE}/Makefile.rules.inc>
 .include <bsd.prog.mk>
+
+LDADD+= -lutil ${KRB5LDADD}
+DPADD+= ${LIBUTIL} ${KRB5DPADD}
