@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.527 2023/06/09 15:36:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.528 2023/06/22 13:57:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.527 2023/06/09 15:36:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.528 2023/06/22 13:57:44 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1783,6 +1783,12 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 		ntn = build_assignment(op, sys, ln, rn);
 		break;
 	case COMMA:
+		if (any_query_enabled) {
+			/* comma operator with types '%s' and '%s' */
+			query_message(12,
+			    type_name(ln->tn_type), type_name(rn->tn_type));
+		}
+		/* FALLTHROUGH */
 	case QUEST:
 		ntn = new_tnode(op, sys, rn->tn_type, ln, rn);
 		break;

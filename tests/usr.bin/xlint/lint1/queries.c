@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.14 2023/06/03 21:08:06 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.15 2023/06/22 13:57:44 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -15,7 +15,7 @@
  * 	such as casts between arithmetic types.
  */
 
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11 -X 351 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12 -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
@@ -324,12 +324,15 @@ Q9(int x)
 	case 3:
 		return -(13);
 	case 4:
+		/* expect+2: comma operator with types 'int' and 'int' [Q12] */
 		/* expect+1: parenthesized return value [Q9] */
 		return (0), (1);
 	case 5:
+		/* expect+2: comma operator with types 'int' and 'int' [Q12] */
 		/* expect+1: parenthesized return value [Q9] */
 		return (0, 1);
 	case 6:
+		/* expect+1: comma operator with types 'int' and 'int' [Q12] */
 		return 0, 1;
 	case 7:
 		/* expect+1: implicit conversion from floating point 'double' to integer 'int' [Q1] */
@@ -340,9 +343,9 @@ Q9(int x)
 		return (0.0);
 	case 9:
 		return
-# 344 "queries.c" 3 4
+# 347 "queries.c" 3 4
 		((void *)0)
-# 346 "queries.c"
+# 349 "queries.c"
 		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
 		;
 	case 10:
@@ -377,6 +380,21 @@ Q11(void)
 
 	static_var_no_init++;
 	static_var_init++;
+}
+
+void
+Q12(void)
+{
+	/* expect+1: comma operator with types 'void' and '_Bool' [Q12] */
+	if (Q11(), cond)
+		return;
+
+	/* expect+5: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
+	/* expect+4: implicit conversion changes sign from 'int' to 'unsigned short' [Q3] */
+	/* expect+3: implicit conversion changes sign from 'unsigned short' to 'int' [Q3] */
+	/* expect+2: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
+	/* expect+1: comma operator with types 'unsigned short' and 'unsigned int' [Q12] */
+	u16 += u8, u32 += u16;
 }
 
 /*
