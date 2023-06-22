@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.94 2022/12/07 10:28:48 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.95 2023/06/22 12:59:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.94 2022/12/07 10:28:48 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.95 2023/06/22 12:59:54 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -323,19 +323,18 @@ in_range(char e1, char c, char e2)
 bool
 Str_Match(const char *str, const char *pat)
 {
-	for (; *pat != '\0'; pat++, str++) {
-		if (*pat == '*') {	/* match any substring */
-			pat++;
-			while (*pat == '*')
-				pat++;
-			if (*pat == '\0')
-				return true;
-			for (; *str != '\0'; str++)
-				if (Str_Match(str, pat))
-					return true;
-			return false;
-		}
+	enum { MFL_START, MFL_MIDDLE, MFL_END } mfl;
+	const char *str1, *pat1;
+	bool matched;
 
+	mfl = MFL_START;
+	str1 = str;
+	pat1 = pat;
+match_fixed_length:
+	str = str1;
+	pat = pat1;
+	matched = false;
+	for (; *pat != '\0' && *pat != '*'; str++, pat++) {
 		if (*str == '\0')
 			return false;
 
@@ -350,7 +349,7 @@ Str_Match(const char *str, const char *pat)
 				if (*pat == ']' || *pat == '\0') {
 					if (neg)
 						break;
-					return false;
+					goto match_done;
 				}
 				if (*pat == *str)
 					break;
@@ -364,7 +363,7 @@ Str_Match(const char *str, const char *pat)
 				pat++;
 			}
 			if (neg && *pat != ']' && *pat != '\0')
-				return false;
+				goto match_done;
 			while (*pat != ']' && *pat != '\0')
 				pat++;
 			if (*pat == '\0')
@@ -374,11 +373,43 @@ Str_Match(const char *str, const char *pat)
 
 		if (*pat == '\\')	/* match the next character exactly */
 			pat++;
-
 		if (*pat != *str)
-			return false;
+			goto match_done;
 	}
-	return *str == '\0';
+	matched = true;
+
+match_done:
+	switch (mfl) {
+	case MFL_START:
+		if (!matched)
+			return false;
+		if (*pat == '\0')
+			return *str == '\0';
+		mfl = MFL_MIDDLE;
+		break;
+	default:
+		if (!matched) {
+			str1++;
+			goto match_fixed_length;
+		}
+		if (*pat == '\0') {
+			mfl = MFL_END;
+			str1 = str + strlen(str) - (str - str1);
+			goto match_fixed_length;
+		}
+		break;
+	case MFL_END:
+		return matched;
+	}
+
+	while (*pat == '*')
+		pat++;
+	if (*pat == '\0')
+		return true;
+	if (*str == '\0')
+		return false;
+	str1 = str, pat1 = pat;
+	goto match_fixed_length;
 }
 
 void
