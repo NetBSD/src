@@ -1,4 +1,4 @@
-# $NetBSD: varmod-match-escape.mk,v 1.9 2023/06/22 20:36:24 rillig Exp $
+# $NetBSD: varmod-match-escape.mk,v 1.10 2023/06/23 04:56:54 rillig Exp $
 #
 # As of 2020-08-01, the :M and :N modifiers interpret backslashes differently,
 # depending on whether there was a variable expression somewhere before the
@@ -105,6 +105,8 @@ EXP.[^A-]]=	a
 EXP.[^A-]]]=	a]
 
 .for pattern in [A-] [A-]] [A-]]] [^A-] [^A-]] [^A-]]]
+# expect+2: warning: Unfinished character list in pattern '[A-]' of modifier ':M'
+# expect+1: warning: Unfinished character list in pattern '[^A-]' of modifier ':M'
 .  if ${WORDS:M${pattern}} != ${EXP.${pattern}}
 .    warning ${pattern}: ${WORDS:M${pattern}} != ${EXP.${pattern}}
 .  endif

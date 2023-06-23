@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1057 2023/06/22 08:55:33 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1058 2023/06/23 04:56:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -139,7 +139,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1057 2023/06/22 08:55:33 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1058 2023/06/23 04:56:54 rillig Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -2793,14 +2793,23 @@ ParseModifier_Match(const char **pp, const ModChain *ch)
 struct ModifyWord_MatchArgs {
 	const char *pattern;
 	bool neg;
+	bool error_reported;
 };
 
 static void
 ModifyWord_Match(Substring word, SepBuf *buf, void *data)
 {
 	struct ModifyWord_MatchArgs *args = data;
+	StrMatchResult res;
 	assert(word.end[0] == '\0');	/* assume null-terminated word */
-	if (Str_Match(word.start, args->pattern) != args->neg)
+	res = Str_Match(word.start, args->pattern);
+	if (res.error != NULL && !args->error_reported) {
+		args->error_reported = true;
+		Parse_Error(PARSE_WARNING,
+		    "%s in pattern '%s' of modifier '%s'",
+		    res.error, args->pattern, args->neg ? ":N" : ":M");
+	}
+	if (res.matched != args->neg)
 		SepBuf_AddSubstring(buf, word);
 }
 
@@ -2817,6 +2826,7 @@ ApplyModifier_Match(const char **pp, ModChain *ch)
 		struct ModifyWord_MatchArgs args;
 		args.pattern = pattern;
 		args.neg = mod == 'N';
+		args.error_reported = false;
 		ModifyWords(ch, ModifyWord_Match, &args, ch->oneBigWord);
 	}
 
