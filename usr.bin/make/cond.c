@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.351 2023/06/21 04:20:20 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.352 2023/06/23 04:56:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.351 2023/06/21 04:20:20 sjg Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.352 2023/06/23 04:56:54 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -295,10 +295,19 @@ static bool
 FuncMake(const char *targetPattern)
 {
 	StringListNode *ln;
+	bool warned = false;
 
-	for (ln = opts.create.first; ln != NULL; ln = ln->next)
-		if (Str_Match(ln->datum, targetPattern))
+	for (ln = opts.create.first; ln != NULL; ln = ln->next) {
+		StrMatchResult res = Str_Match(ln->datum, targetPattern);
+		if (res.error != NULL && !warned) {
+			warned = true;
+			Parse_Error(PARSE_WARNING,
+			    "%s in pattern argument '%s' to function 'make'",
+			    res.error, targetPattern);
+		}
+		if (res.matched)
 			return true;
+	}
 	return false;
 }
 

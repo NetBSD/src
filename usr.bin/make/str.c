@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.97 2023/06/22 16:59:17 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.98 2023/06/23 04:56:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.97 2023/06/22 16:59:17 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.98 2023/06/23 04:56:54 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -316,13 +316,12 @@ in_range(char e1, char c, char e2)
  * Test if a string matches a pattern like "*.[ch]". The pattern matching
  * characters are '*', '?' and '[]', as in fnmatch(3).
  *
- * XXX: this function does not detect or report malformed patterns.
- *
  * See varmod-match.mk for examples and edge cases.
  */
-bool
+StrMatchResult
 Str_Match(const char *str, const char *pat)
 {
+	StrMatchResult res = { NULL, false };
 	const char *fixed_str, *fixed_pat;
 	bool asterisk, matched;
 
@@ -336,7 +335,7 @@ match_fixed_length:
 	matched = false;
 	for (; *pat != '\0' && *pat != '*'; str++, pat++) {
 		if (*str == '\0')
-			return false;
+			return res;
 
 		if (*pat == '?')	/* match any single character */
 			continue;
@@ -346,6 +345,9 @@ match_fixed_length:
 			pat += neg ? 2 : 1;
 
 			for (;;) {
+				if (*pat == '\0')
+					res.error =
+					    "Unfinished character list";
 				if (*pat == ']' || *pat == '\0') {
 					if (neg)
 						break;
@@ -354,8 +356,13 @@ match_fixed_length:
 				if (*pat == *str)
 					break;
 				if (pat[1] == '-') {
-					if (pat[2] == '\0')
-						return neg;
+					if (pat[2] == '\0') {
+						res.error =
+						    "Unfinished character "
+						    "range";
+						res.matched = neg;
+						return res;
+					}
 					if (in_range(pat[0], *str, pat[2]))
 						break;
 					pat += 2;
@@ -381,9 +388,11 @@ match_fixed_length:
 match_done:
 	if (!asterisk) {
 		if (!matched)
-			return false;
-		if (*pat == '\0')
-			return *str == '\0';
+			return res;
+		if (*pat == '\0') {
+			res.matched = *str == '\0';
+			return res;
+		}
 		asterisk = true;
 	} else {
 		if (!matched) {
@@ -391,8 +400,10 @@ match_done:
 			goto match_fixed_length;
 		}
 		if (*pat == '\0') {
-			if (*str == '\0')
-				return true;
+			if (*str == '\0') {
+				res.matched = true;
+				return res;
+			}
 			fixed_str += strlen(str);
 			goto match_fixed_length;
 		}
@@ -400,8 +411,10 @@ match_done:
 
 	while (*pat == '*')
 		pat++;
-	if (*pat == '\0')
-		return true;
+	if (*pat == '\0') {
+		res.matched = true;
+		return res;
+	}
 	fixed_str = str;
 	fixed_pat = pat;
 	goto match_fixed_length;
