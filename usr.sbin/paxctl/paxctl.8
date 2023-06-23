@@ -1,4 +1,4 @@
-.\"	$NetBSD: paxctl.8,v 1.18 2023/06/23 06:32:27 wiz Exp $
+.\"	$NetBSD: paxctl.8,v 1.19 2023/06/23 10:12:33 uwe Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2008 Christos Zoulas <christos@NetBSD.org>
@@ -31,7 +31,7 @@
 .Nd list and modify PaX flags associated with an ELF program
 .Sh SYNOPSIS
 .Nm
-.Op Fl 0 | Cm flags
+.Op Fl 0 | Ar flags
 .Ar program ...
 .Sh DESCRIPTION
 The
@@ -48,33 +48,33 @@ If
 .Fl 0
 option is specified, all PaX flags (including reserved bits) are cleared.
 Otherwise, each flag can be prefixed either with a
-.Dq +
+.Sq Cm +
 or a
-.Dq -
+.Sq Fl
 sign to add or remove the flag, respectively.
 .Pp
 The following flags are available:
-.Bl -tag -width flag
-.It a
+.Bl -tag -width Fl
+.It Cm a
 Explicitly disable PaX ASLR (Address Space Layout Randomization) for
 .Ar program .
-.It A
+.It Cm A
 Explicitly enable PaX ASLR for
 .Ar program .
-.It g
+.It Cm g
 Explicitly disable PaX Segvguard for
 .Ar program .
-.It G
+.It Cm G
 Explicitly enable PaX Segvguard for
 .Ar program .
-.It m
+.It Cm m
 Explicitly disable PaX MPROTECT
 .Po Xr mprotect 2
 restrictions
 .Pc
 for
 .Ar program .
-.It M
+.It Cm M
 Explicitly enable PaX MPROTECT
 .Po Xr mprotect 2
 restrictions
@@ -112,11 +112,12 @@ The
 .Nm
 utility currently uses
 .Xr elf 5
-.Dq note
-sections to mark executables as having PaX flags enabled.
+note sections to mark executables as having PaX flags enabled.
 This will be done using
 .Xr fileassoc 9
 in the future so that we can control who does the marking and
 not altering the binary file signature.
-(Note this also means that
-at present any flags set do not survive binary file upgrades.)
+.Po
+Note this also means that
+at present any flags set do not survive binary file upgrades
+.Pc .
