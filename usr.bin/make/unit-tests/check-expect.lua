@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.6 2023/06/01 20:56:35 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.7 2023/06/23 04:41:24 rillig Exp $
 
 --[[
 
@@ -68,6 +68,33 @@ local function collect_lineno_diagnostics(exp_lines)
 end
 
 
+local function missing(by_location)
+  ---@type {filename: string, lineno: number, location: string, message: string}[]
+  local missing_expectations = {}
+
+  for location, messages in pairs(by_location) do
+    for _, message in ipairs(messages) do
+      if message ~= "" and location:find(".mk:") then
+        local filename, lineno = location:match("^(%S+):(%d+)$")
+        table.insert(missing_expectations, {
+          filename = filename,
+          lineno = tonumber(lineno),
+          location = location,
+          message = message
+        })
+      end
+    end
+  end
+  table.sort(missing_expectations, function(a, b)
+    if a.filename ~= b.filename then
+      return a.filename < b.filename
+    end
+    return a.lineno < b.lineno
+  end)
+  return missing_expectations
+end
+
+
 local function check_mk(mk_fname)
   local exp_fname = mk_fname:gsub("%.mk$", ".exp")
   local mk_lines = load_lines(mk_fname)
@@ -119,13 +146,8 @@ local function check_mk(mk_fname)
     end
   end
 
-  -- XXX: The messages are not sorted in any meaningful way.
-  for location, messages in pairs(by_location) do
-    for _, message in ipairs(messages) do
-      if message ~= "" and location:find(".mk:") then
-        print_error("missing: %s: # expect+1: %s", location, message)
-      end
-    end
+  for _, m in ipairs(missing(by_location)) do
+    print_error("missing: %s: # expect+1: %s", m.location, m.message)
   end
 end
 
