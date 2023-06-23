@@ -1,4 +1,4 @@
-/* $NetBSD: frame.h,v 1.5 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: frame.h,v 1.6 2023/06/23 12:11:22 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@ struct trapframe {
 	register_t tf_tval;		// supervisor trap value
 	register_t tf_cause;		// supervisor cause register
 	register_t tf_sr;		// supervisor status register
+	register_t tf_pad;		// For 16-byte alignment
 #define tf_reg		tf_regs.r_reg
 #define tf_pc		tf_regs.r_pc
 #define tf_ra		tf_reg[_X_RA]
@@ -74,6 +75,12 @@ struct trapframe {
 #define tf_t6		tf_reg[_X_T6]
 };
 
+/*
+ * Ensure the trapframe is a multiple of 16bytes so that stack
+ * alignment is preserved.
+ */
+__CTASSERT((sizeof(struct trapframe) & (16 - 1)) == 0);
+
 #ifdef _LP64
 // For COMPAT_NETBSD32 coredumps
 struct trapframe32 {
@@ -81,9 +88,9 @@ struct trapframe32 {
 	register32_t tf_tval;
 	register32_t tf_cause;
 	register32_t tf_sr;
+	register32_t tf_pad;
 };
 #endif
-
 
 
 #define lwp_trapframe(l) ((l)->l_md.md_utf)
