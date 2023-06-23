@@ -1,4 +1,4 @@
-/* $NetBSD: paxctl.c,v 1.12 2009/10/27 16:27:47 christos Exp $ */
+/* $NetBSD: paxctl.c,v 1.13 2023/06/23 01:56:21 rin Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 #ifndef lint
 #ifdef __RCSID
-__RCSID("$NetBSD: paxctl.c,v 1.12 2009/10/27 16:27:47 christos Exp $");
+__RCSID("$NetBSD: paxctl.c,v 1.13 2023/06/23 01:56:21 rin Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,8 @@ static const struct paxflag {
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [ <-|+><A|a|G|g|M|m> ] <file> ...\n",
+	(void)fprintf(stderr,
+	    "Usage: %s [ -0 | <-|+><A|a|G|g|M|m> ] <file> ...\n",
 #if HAVE_NBTOOL_CONFIG_H
 	    "paxctl"
 #else
@@ -165,7 +166,7 @@ pax_printflags(const char *name, int many, uint32_t f)
 
 static int
 process_one(const char *name, uint32_t add_flags, uint32_t del_flags,
-    int list, int many)
+    int clear, int list, int many)
 {
 	union {
 	    Elf32_Ehdr h32;
@@ -279,8 +280,12 @@ process_one(const char *name, uint32_t add_flags, uint32_t del_flags,
 			break;
 		}
 
-		pax_tag.flags |= SWAP(add_flags);
-		pax_tag.flags &= SWAP(~del_flags);
+		if (clear) {
+			pax_tag.flags = 0;
+		} else {
+			pax_tag.flags |= SWAP(add_flags);
+			pax_tag.flags &= SWAP(~del_flags);
+		}
 
 		if (!pax_flags_sane(SWAP(pax_tag.flags))) {
 			warnx("New flags 0x%x don't make sense",
@@ -315,7 +320,7 @@ int
 main(int argc, char **argv)
 {
 	char *opt;
-	int i, list = 0, bad = 0, many, minus;
+	int i, clear = 0, list = 0, bad = 0, many, minus;
 	uint32_t add_flags = 0, del_flags = 0;
 
 	setprogname(argv[0]);
@@ -325,6 +330,11 @@ main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++) {
 		opt = argv[i];
+
+		if (strcmp(opt, "-0") == 0) {
+			clear = 1;
+			continue;
+		}
 
 		if (*opt == '-' || *opt == '+') {
 			uint32_t t;
@@ -361,15 +371,21 @@ main(int argc, char **argv)
 	if (i == argc)
 		usage();
 
-	if (add_flags || del_flags) {
-		if (list)
-			usage();
-	} else
+	switch ((add_flags != 0 || del_flags != 0) + clear) {
+	case 0:
 		list = 1;
+		break;
+	case 1:
+		break;
+	default:
+		usage();
+	}
 
 	many = i != argc - 1;
-	for (; i < argc; i++)
-		bad |= process_one(argv[i], add_flags, del_flags, list, many);
+	for (; i < argc; i++) {
+		bad |= process_one(argv[i], add_flags, del_flags,
+		    clear, list, many);
+	}
 
 	return bad ? EXIT_FAILURE : 0;
 }
