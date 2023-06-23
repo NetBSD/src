@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.72 2023/06/22 08:16:37 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.73 2023/06/23 05:42:34 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2277,3 +2277,9 @@ sys/dev/pci/if_wmvar.h				1.49
 	- Add comment.
 	[msaitoh, ticket #213]
 
+usr.sbin/sysinst/main.c				1.31
+
+	If the install medium does not come with any openssl trusted root
+	certs, tell ftp(1) not to verify trust chains when doing https
+	downloads.
+	[martin, ticket #212]
