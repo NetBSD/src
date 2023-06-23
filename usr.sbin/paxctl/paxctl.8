@@ -1,4 +1,4 @@
-.\"	$NetBSD: paxctl.8,v 1.19 2023/06/23 10:12:33 uwe Exp $
+.\"	$NetBSD: paxctl.8,v 1.20 2023/06/23 10:27:12 uwe Exp $
 .\"
 .\" Copyright 2006 Elad Efrat <elad@NetBSD.org>
 .\" Copyright 2008 Christos Zoulas <christos@NetBSD.org>
@@ -44,9 +44,17 @@ can be found in the
 .Xr security 7
 manpage.
 .Pp
+To view existing flags on a
+.Ar program ,
+execute
+.Nm
+without any flags.
+.Pp
 If
 .Fl 0
-option is specified, all PaX flags (including reserved bits) are cleared.
+option is specified, all PaX flags
+.Pq including reserved bits
+are cleared.
 Otherwise, each flag can be prefixed either with a
 .Sq Cm +
 or a
@@ -54,38 +62,27 @@ or a
 sign to add or remove the flag, respectively.
 .Pp
 The following flags are available:
-.Bl -tag -width Fl
+.Pp
+.Bl -tag -width Ds -compact
 .It Cm a
-Explicitly disable PaX ASLR (Address Space Layout Randomization) for
-.Ar program .
+Explicitly disable PaX ASLR (Address Space Layout Randomization).
 .It Cm A
-Explicitly enable PaX ASLR for
-.Ar program .
+Explicitly enable PaX ASLR.
+.Pp
 .It Cm g
-Explicitly disable PaX Segvguard for
-.Ar program .
+Explicitly disable PaX Segvguard.
 .It Cm G
-Explicitly enable PaX Segvguard for
-.Ar program .
+Explicitly enable PaX Segvguard.
+.Pp
 .It Cm m
 Explicitly disable PaX MPROTECT
 .Po Xr mprotect 2
 restrictions
-.Pc
-for
-.Ar program .
+.Pc .
 .It Cm M
-Explicitly enable PaX MPROTECT
-.Po Xr mprotect 2
-restrictions
-.Pc
-for
-.Ar program .
+Explicitly enable PaX MPROTECT.
 .El
-.Pp
-To view existing flags on a file, execute
-.Nm
-without any flags.
+.
 .Sh SEE ALSO
 .Xr mprotect 2 ,
 .Xr sysctl 3 ,
