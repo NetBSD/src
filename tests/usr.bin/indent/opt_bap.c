@@ -1,4 +1,4 @@
-/* $NetBSD: opt_bap.c,v 1.10 2023/06/16 11:48:32 rillig Exp $ */
+/* $NetBSD: opt_bap.c,v 1.11 2023/06/23 20:44:51 rillig Exp $ */
 
 /*
  * Tests for the options '-bap' and '-nbap' ("blank line after procedure
@@ -115,7 +115,7 @@ example(void)
 
 /*
  * A preprocessing line after the end of a function body does not force a blank
- * line, as these lines are not a different syntactic layer.
+ * line, as these lines are from a different syntactic layer.
  */
 //indent input
 #if 0
