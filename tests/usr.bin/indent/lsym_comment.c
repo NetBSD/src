@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_comment.c,v 1.23 2023/06/18 07:10:24 rillig Exp $ */
+/* $NetBSD: lsym_comment.c,v 1.24 2023/06/23 20:59:04 rillig Exp $ */
 
 /*
  * Tests for the token lsym_comment, which starts a comment.
@@ -1131,6 +1131,7 @@ int block;			/* comment line 1 comment line 2 */
 //indent end
 
 
+// Ensure that '/*/' is not interpreted as a complete comment.
 //indent input
 /*/ comment? or:not; /* */
 //indent end
@@ -1139,10 +1140,7 @@ int block;			/* comment line 1 comment line 2 */
 /* / comment? or:not; /* */
 //indent end
 
-//indent run -nfc1
-// $ FIXME: It's a comment, not code.
-/*/ comment ? or : not;		/* */
-//indent end
+//indent run-equals-input -nfc1
 
 
 /*
