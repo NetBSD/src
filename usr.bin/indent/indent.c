@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.381 2023/06/18 07:10:24 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.382 2023/06/23 20:43:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.381 2023/06/18 07:10:24 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.382 2023/06/23 20:43:21 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -464,7 +464,7 @@ dup_mem(const void *src, size_t size)
 #define copy_array(dst, src, len) \
     memcpy((dst), (src), sizeof((dst)[0]) * (len))
 
-static void
+static_unless_debug void
 parser_state_back_up(struct parser_state *dst)
 {
 	*dst = ps;
@@ -496,7 +496,7 @@ parser_state_restore(const struct parser_state *src)
 	copy_array(ps.psyms.ind_level, src->psyms.ind_level, src->psyms.len);
 }
 
-static void
+static_unless_debug void
 parser_state_free(struct parser_state *pst)
 {
 	free(pst->paren.item);

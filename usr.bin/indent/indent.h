@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.202 2023/06/16 23:51:32 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.203 2023/06/23 20:43:21 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -442,10 +442,13 @@ void debug_parser_state(void);
 void debug_psyms_stack(const char *);
 void debug_print_buf(const char *, const struct buffer *);
 void debug_buffers(void);
+void parser_state_back_up(struct parser_state *);
+void parser_state_free(struct parser_state *);
 extern const char *const lsym_name[];
 extern const char *const psym_name[];
 extern const char *const paren_level_cast_name[];
 extern const char *const line_kind_name[];
+#define static_unless_debug /* nothing */
 #else
 #define debug_noop() do { } while (false)
 #define	debug_printf(fmt, ...) debug_noop()
@@ -456,6 +459,7 @@ extern const char *const line_kind_name[];
 #define	debug_psyms_stack(situation) debug_noop()
 #define debug_print_buf(name, buf) debug_noop()
 #define	debug_buffers() debug_noop()
+#define static_unless_debug static
 #endif
 
 void register_typename(const char *);

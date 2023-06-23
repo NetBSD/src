@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.67 2023/06/17 22:28:49 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.68 2023/06/23 20:43:21 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.67 2023/06/17 22:28:49 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.68 2023/06/23 20:43:21 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -263,8 +263,8 @@ paren_stack_equal(const struct paren_stack *a, const struct paren_stack *b)
 	for (size_t i = 0, n = a->len; i < n; i++)
 		if (a->item[i].indent != b->item[i].indent
 		    || a->item[i].cast != b->item[i].cast)
-			return true;
-	return false;
+			return false;
+	return true;
 }
 
 static void
@@ -375,7 +375,8 @@ debug_parser_state(void)
 	state.heading = NULL;
 	debug_blank_line();
 
-	state.prev_ps = ps;
+	parser_state_free(&state.prev_ps);
+	parser_state_back_up(&state.prev_ps);
 	state.ps_first = false;
 }
 
