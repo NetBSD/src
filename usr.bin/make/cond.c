@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.352 2023/06/23 04:56:54 rillig Exp $	*/
+/*	$NetBSD: cond.c,v 1.353 2023/06/23 05:21:10 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -92,7 +92,7 @@
 #include "dir.h"
 
 /*	"@(#)cond.c	8.2 (Berkeley) 1/2/94"	*/
-MAKE_RCSID("$NetBSD: cond.c,v 1.352 2023/06/23 04:56:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: cond.c,v 1.353 2023/06/23 05:21:10 rillig Exp $");
 
 /*
  * Conditional expressions conform to this grammar:
@@ -1265,7 +1265,7 @@ ParseVarnameGuard(const char **pp, const char **varname)
 Guard *
 Cond_ExtractGuard(const char *line)
 {
-	const char *p, *name;
+	const char *p, *varname;
 	Substring dir;
 	enum GuardKind kind;
 	Guard *guard;
@@ -1281,16 +1281,14 @@ Cond_ExtractGuard(const char *line)
 
 	if (Substring_Equals(dir, "if")) {
 		if (skip_string(&p, "!defined(")) {
-			if (ParseVarnameGuard(&p, &name)
+			if (ParseVarnameGuard(&p, &varname)
 			    && strcmp(p, ")") == 0)
 				goto found_variable;
 		} else if (skip_string(&p, "!target(")) {
-			name = p;
+			const char *arg_p = p;
 			free(ParseWord(&p, false));
 			if (strcmp(p, ")") == 0) {
-				char *target;
-				p = name;
-				target = ParseWord(&p, true);
+				char *target = ParseWord(&arg_p, true);
 				guard = bmake_malloc(sizeof(*guard));
 				guard->kind = GK_TARGET;
 				guard->name = target;
@@ -1298,7 +1296,7 @@ Cond_ExtractGuard(const char *line)
 			}
 		}
 	} else if (Substring_Equals(dir, "ifndef")) {
-		if (ParseVarnameGuard(&p, &name) && *p == '\0')
+		if (ParseVarnameGuard(&p, &varname) && *p == '\0')
 			goto found_variable;
 	}
 	return NULL;
@@ -1307,7 +1305,7 @@ found_variable:
 	kind = GK_VARIABLE;
 	guard = bmake_malloc(sizeof(*guard));
 	guard->kind = kind;
-	guard->name = bmake_strsedup(name, p);
+	guard->name = bmake_strsedup(varname, p);
 	return guard;
 }
 
