@@ -1,4 +1,4 @@
-/*	$NetBSD: pr_comment.c,v 1.170 2023/06/18 07:32:33 rillig Exp $	*/
+/*	$NetBSD: pr_comment.c,v 1.171 2023/06/23 20:59:04 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pr_comment.c,v 1.170 2023/06/18 07:32:33 rillig Exp $");
+__RCSID("$NetBSD: pr_comment.c,v 1.171 2023/06/23 20:59:04 rillig Exp $");
 
 #include <string.h>
 
@@ -325,12 +325,13 @@ copy_comment_nowrap(void)
 			continue;
 		}
 
-		com_add_char(*inp_p++);
-		if (com.len >= 2
-		    && com.s[com.len - 2] == '*'
-		    && com.s[com.len - 1] == '/'
-		    && kind == '*')
+		if (kind == '*' && inp_p[0] == '*' && inp_p[1] == '/') {
+			com_add_char(*inp_p++);
+			com_add_char(*inp_p++);
 			return;
+		}
+
+		com_add_char(*inp_p++);
 	}
 }
 
