@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.33 2023/06/03 20:58:00 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.34 2023/06/23 20:37:02 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.33 2023/06/03 20:58:00 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.34 2023/06/23 20:37:02 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -62,7 +62,7 @@ debug_file(void)
 	return stdout;
 }
 
-void __printflike(1, 2)
+void
 debug_printf(const char *fmt, ...)
 {
 	va_list va;
@@ -100,7 +100,7 @@ debug_enter_func(const char *func)
 	fprintf(debug_file(), "%*s+ %s\n", 2 * debug_indentation++, "", func);
 }
 
-void __printflike(1, 2)
+void
 debug_step(const char *fmt, ...)
 {
 	va_list va;
