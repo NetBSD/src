@@ -1,10 +1,11 @@
-/*	$NetBSD: fmt_else_comment.c,v 1.5 2023/05/11 09:28:53 rillig Exp $	*/
+/*	$NetBSD: fmt_else_comment.c,v 1.6 2023/06/23 20:44:51 rillig Exp $	*/
 
 /*
- * Tests for comments after 'if (expr)' and 'else'. If the option '-br' is
- * given (or rather, if '-bl' is not given), indent looks ahead to the
- * following significant token to see whether it is a '{', it then moves the
- * comments after the '{'.
+ * Tests for comments after 'if (expr)' and 'else'. Before 2023-05-11, if the
+ * option '-br' was given (or rather, if '-bl' was not given), indent looked
+ * ahead to the following significant token to see whether it was a '{', it
+ * then moved the comments after the '{'. This token swapping was error-prone
+ * and thus removed.
  *
  * See also:
  *	FreeBSD r303484
@@ -12,8 +13,8 @@
  */
 
 /*
- * The two 'if' statements below exercise two different code paths, even
- * though they look very similar.
+ * Before 2023-05-11, the two 'if' statements below exercised two different
+ * code paths, even though they look very similar.
  */
 //indent input
 void t(void) {
@@ -52,6 +53,7 @@ void t(void) {
 
 
 	/* Old indent would remove the 3 blank lines above, awaiting "else". */
+	// $ 'Old' means something before 2019.
 
 	if (1) {
 		int a;
@@ -68,6 +70,7 @@ void t(void) {
 	if (1)
 		;
 	else /* Old indent would get very confused here */
+	// $ 'Old' means something before 2019.
 	/* We also mustn't assume that there's only one comment */
 	/* before the left brace. */
 	{
