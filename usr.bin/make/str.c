@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.98 2023/06/23 04:56:54 rillig Exp $	*/
+/*	$NetBSD: str.c,v 1.99 2023/06/23 05:03:04 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.98 2023/06/23 04:56:54 rillig Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.99 2023/06/23 05:03:04 rillig Exp $");
 
 
 static HashTable interned_strings;
@@ -344,31 +344,30 @@ match_fixed_length:
 			bool neg = pat[1] == '^';
 			pat += neg ? 2 : 1;
 
-			for (;;) {
-				if (*pat == '\0')
-					res.error =
-					    "Unfinished character list";
-				if (*pat == ']' || *pat == '\0') {
-					if (neg)
-						break;
-					goto match_done;
-				}
-				if (*pat == *str)
-					break;
-				if (pat[1] == '-') {
-					if (pat[2] == '\0') {
-						res.error =
-						    "Unfinished character "
-						    "range";
-						res.matched = neg;
-						return res;
-					}
-					if (in_range(pat[0], *str, pat[2]))
-						break;
-					pat += 2;
-				}
-				pat++;
+		next_char_in_list:
+			if (*pat == '\0')
+				res.error = "Unfinished character list";
+			if (*pat == ']' || *pat == '\0') {
+				if (neg)
+					goto end_of_char_list;
+				goto match_done;
 			}
+			if (*pat == *str)
+				goto end_of_char_list;
+			if (pat[1] == '-' && pat[2] == '\0') {
+				res.error = "Unfinished character range";
+				res.matched = neg;
+				return res;
+			}
+			if (pat[1] == '-') {
+				if (in_range(pat[0], *str, pat[2]))
+					goto end_of_char_list;
+				pat += 2;
+			}
+			pat++;
+			goto next_char_in_list;
+
+		end_of_char_list:
 			if (neg && *pat != ']' && *pat != '\0')
 				goto match_done;
 			while (*pat != ']' && *pat != '\0')
