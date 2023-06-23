@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.94 2019/12/29 18:26:16 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.95 2023/06/23 02:13:03 rin Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.94 2019/12/29 18:26:16 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.95 2023/06/23 02:13:03 rin Exp $");
 #endif
 
 #include <stdlib.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: crunchgen.c,v 1.94 2019/12/29 18:26:16 christos Exp $");
 #include <sys/param.h>
 #include <sys/utsname.h>
 
-#define CRUNCH_VERSION	"20191223"
+#define CRUNCH_VERSION	"20230623"
 
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
@@ -991,7 +991,7 @@ top_makefile_rules(FILE *outmk)
 
     fprintf(outmk, "PROG=%s\n\n", execfname);
 
-    fprintf(outmk, "OBJCOPY_REMOVE_FLAGS=-R .eh_frame_hdr -R .note -R .note.netbsd.pax -R .ident -R .comment -R .copyright\n\n");
+    fprintf(outmk, "OBJCOPY_REMOVE_FLAGS=-R .eh_frame_hdr -R .note -R .ident -R .comment -R .copyright\n\n");
 
     fprintf(outmk, "OBJCOPY_REMOVE_FLAGS+=-R .eh_frame\n");
     fprintf(outmk, ".if ${MACHINE} != \"sparc64\"\n");
@@ -1003,9 +1003,10 @@ top_makefile_rules(FILE *outmk)
     fprintf(outmk, "${PROG}.strip:\n");
     fprintf(outmk, "\t${MAKE} -f ${PROG}.mk ${PROG}\n");
     fprintf(outmk, "\t@[ -f ${PROG}.unstripped -a ! ${PROG} -nt ${PROG}.unstripped ] || { \\\n");
-    fprintf(outmk, "\t\t${_MKSHMSG:Uecho} \"  strip \" ${PROG}; \\\n");
+    fprintf(outmk, "\t\t${_MKSHMSG:Uecho} \"  strip and clear PaX flags \" ${PROG}; \\\n");
     fprintf(outmk, "\t\tcp ${PROG} ${PROG}.unstripped && \\\n");
     fprintf(outmk, "\t\t${OBJCOPY} -S ${OBJCOPY_REMOVE_FLAGS} ${PROG} && \\\n");
+    fprintf(outmk, "\t\t${PAXCTL} -0 ${PROG} && \\\n");
     fprintf(outmk, "\t\ttouch ${PROG}.unstripped; \\\n");
     fprintf(outmk, "\t}\n");
     fprintf(outmk, "objs: $(SUBMAKE_TARGETS)\n");
