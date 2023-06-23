@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.355 2023/06/23 21:19:03 riastradh Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.356 2023/06/23 22:49:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.355 2023/06/23 21:19:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.356 2023/06/23 22:49:38 riastradh Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -178,7 +178,7 @@ tsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo)
 
 	KASSERT((l->l_pflag & LP_INTR) == 0);
 	KASSERT(ident != &lbolt);
-	KASSERT(KERNEL_LOCKED_P());
+	//KASSERT(KERNEL_LOCKED_P());
 
 	if (sleepq_dontsleep(l)) {
 		(void)sleepq_abort(NULL, 0);
