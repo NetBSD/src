@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.34 2023/06/23 20:37:02 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.35 2023/06/24 08:11:12 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.34 2023/06/23 20:37:02 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.35 2023/06/24 08:11:12 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -198,6 +198,8 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 		}
 		if (tn->tn_val->v_unsigned_since_c90)
 			debug_printf(", unsigned_since_c90");
+		if (tn->tn_val->v_char_constant)
+			debug_printf(", char_constant");
 		debug_printf("\n");
 		break;
 	case STRING:
