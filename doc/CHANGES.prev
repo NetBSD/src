@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.170 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.171 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -3789,7 +3789,7 @@ Changes from NetBSD 1.2 to NetBSD 1.3:
 		[sakamoto 19971014]
 	arm32:	major restructure of the kernel arm32 source files to remove
 		lots of RiscPC/IOMD/VIDC inter-dependancies, making it easier
-		to port to mutliple ARM hardware architectures [mark 19971014]
+		to port to multiple ARM hardware architectures [mark 19971014]
 	ethernet: Split NE2000 support out of the ISA "ed" driver, and create
 		an "ne" driver to handle multiple attachments for NE2000
 		compatible cards.  Add front-ends for ISA and PCI.

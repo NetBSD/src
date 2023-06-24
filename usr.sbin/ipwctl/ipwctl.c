@@ -1,4 +1,4 @@
-/*	$NetBSD: ipwctl.c,v 1.9 2007/12/15 19:44:55 perry Exp $	*/
+/*	$NetBSD: ipwctl.c,v 1.10 2023/06/24 05:26:01 msaitoh Exp $	*/
 /*	Id: ipwctl.c,v 1.1.2.1 2004/08/19 16:24:50 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipwctl.c,v 1.9 2007/12/15 19:44:55 perry Exp $");
+__RCSID("$NetBSD: ipwctl.c,v 1.10 2023/06/24 05:26:01 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -184,7 +184,7 @@ static const struct statistic tbl[] = {
 	{ 27, "Number of reassociation requests transmitted", INT },
 	{ 28, "Number of reassociation responses transmitted", INT },
 	{ 29, "Number of probe requests transmitted", INT },
-	{ 30, "Number of probe reponses transmitted", INT },
+	{ 30, "Number of probe responses transmitted", INT },
 	{ 31, "Number of beacons transmitted", INT },
 	{ 32, "Number of ATIM frames transmitted", INT },
 	{ 33, "Number of disassociation requests transmitted", INT },
@@ -232,7 +232,7 @@ static const struct statistic tbl[] = {
 	{ 89, "Number of reassociation requests received", INT },
 	{ 90, "Number of reassociation responses received", INT },
 	{ 91, "Number of probe requests received", INT },
-	{ 92, "Number of probe reponses received", INT },
+	{ 92, "Number of probe responses received", INT },
 	{ 93, "Number of beacons received", INT },
 	{ 94, "Number of ATIM frames received", INT },
 	{ 95, "Number of disassociation requests received", INT },
