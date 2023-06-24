@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.323 2023/06/20 09:25:33 rillig Exp $	*/
+/*	$NetBSD: make.h,v 1.324 2023/06/24 07:02:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1192,7 +1192,7 @@ pp_skip_hspace(char **pp)
 }
 
 #if defined(lint)
-extern void do_not_define_rcsid(void); /* for lint */
+void do_not_define_rcsid(void); /* for lint */
 # define MAKE_RCSID(id) extern void do_not_define_rcsid(void)
 #elif defined(MAKE_NATIVE)
 # include <sys/cdefs.h>
