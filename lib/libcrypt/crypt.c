@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.38 2020/02/22 10:29:17 kamil Exp $	*/
+/*	$NetBSD: crypt.c,v 1.39 2023/06/24 05:18:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.38 2020/02/22 10:29:17 kamil Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.39 2023/06/24 05:18:12 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -503,7 +503,7 @@ ascii_is_unsafe(char ch)
  * full scheme name comparison
  * Updated to reflect alc suggestion(s) 
  *
- * retuns boolean 0 on failure, 1 on success, 
+ * returns boolean 0 on failure, 1 on success, 
  */
 static int 
 nondes_scheme_substr(const char * setting,char * scheme, unsigned int len)
