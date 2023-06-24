@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.68 2023/06/09 15:36:31 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.69 2023/06/24 20:50:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.68 2023/06/09 15:36:31 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.69 2023/06/24 20:50:54 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -372,7 +372,7 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 				 * XXX it would probably be better to
 				 * explicitly test the sign
 				 */
-				if ((q = arg->tn_val->v_quad) == 0) {
+				if ((q = arg->tn_val.v_quad) == 0) {
 					/* zero constant */
 					outchar('z');
 				} else if (!msb(q, t)) {

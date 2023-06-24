@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.156 2023/06/09 15:36:31 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.157 2023/06/24 20:50:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.156 2023/06/09 15:36:31 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.157 2023/06/24 20:50:54 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -454,8 +454,8 @@ check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 		return;
 
 	lint_assert(case_expr->tn_op == CON);
-	case_value = case_expr->tn_val->v_quad;
-	mask = switch_expr->tn_right->tn_val->v_quad;
+	case_value = case_expr->tn_val.v_quad;
+	mask = switch_expr->tn_right->tn_val.v_quad;
 
 	if ((case_value & ~mask) != 0) {
 		/* statement not reached */
