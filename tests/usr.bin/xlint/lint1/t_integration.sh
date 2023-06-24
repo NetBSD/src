@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.80 2023/05/22 20:11:24 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.81 2023/06/24 07:45:36 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-lint1=/usr/libexec/lint1
+: "${lint1:=/usr/libexec/lint1}"
 : "${archsubdir:=archsubdir_must_be_set}"
 
 
