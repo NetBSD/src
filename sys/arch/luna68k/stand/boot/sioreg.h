@@ -1,4 +1,4 @@
-/*	$NetBSD: sioreg.h,v 1.5 2023/03/28 20:01:57 andvar Exp $	*/
+/*	$NetBSD: sioreg.h,v 1.6 2023/06/24 08:00:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -98,17 +98,14 @@ struct siodevice {
 #define WR6		0x06
 #define WR7		0x07
 
-#define WR2A		0x02
-#define WR2B		0x12
+#define WR2A		0x02	/* on channel A */
+#define WR2B		0x12	/* on channel B */
 
 #define RR0		0x08
 #define RR1		0x09
 #define RR2		0x0A
-#define RR3		0x0B
-#define RR4		0x0C
 
-#define RR2A		0x0A
-#define RR2B		0x1A
+#define RR2B		0x1A	/* only on channel B */
 
 #define WR0_NOP		0x00	/* No Operation */
 #define WR0_SNDABRT	0x08	/* Send Abort (HDLC) */
