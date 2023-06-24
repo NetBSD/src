@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2 2023/06/12 19:04:14 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3 2023/06/24 07:23:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2023/06/12 19:04:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3 2023/06/24 07:23:07 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -103,8 +103,8 @@ struct cpu_info cpu_info_store[NCPUINFO] = {
 		.ci_cpl = IPL_HIGH,
 		.ci_curlwp = &lwp0,
 		.ci_cpl = IPL_HIGH,
-#ifdef MULTIPROCESSOR
 		.ci_tlb_info = &pmap_tlb0_info,
+#ifdef MULTIPROCESSOR
 		.ci_flags = CPUF_PRIMARY | CPUF_PRESENT | CPUF_RUNNING,
 #endif
 	}
