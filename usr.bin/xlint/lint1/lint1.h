@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.166 2023/06/24 08:11:12 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.167 2023/06/24 20:50:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -315,7 +315,7 @@ typedef	struct tnode {
 			struct	tnode *_tn_right;	/* right operand */
 		} tn_s;
 		sym_t	*_tn_sym;	/* symbol if op == NAME */
-		val_t	*_tn_val;	/* value if op == CON */
+		val_t	_tn_val;	/* value if op == CON */
 		strg_t	*_tn_string;	/* string if op == STRING */
 	} tn_u;
 } tnode_t;
@@ -528,20 +528,20 @@ static inline bool
 constant_is_nonzero(const tnode_t *tn)
 {
 	lint_assert(tn->tn_op == CON);
-	lint_assert(tn->tn_type->t_tspec == tn->tn_val->v_tspec);
-	return is_nonzero_val(tn->tn_val);
+	lint_assert(tn->tn_type->t_tspec == tn->tn_val.v_tspec);
+	return is_nonzero_val(&tn->tn_val);
 }
 
 static inline bool
 is_zero(const tnode_t *tn)
 {
-	return tn != NULL && tn->tn_op == CON && !is_nonzero_val(tn->tn_val);
+	return tn != NULL && tn->tn_op == CON && !is_nonzero_val(&tn->tn_val);
 }
 
 static inline bool
 is_nonzero(const tnode_t *tn)
 {
-	return tn != NULL && tn->tn_op == CON && is_nonzero_val(tn->tn_val);
+	return tn != NULL && tn->tn_op == CON && is_nonzero_val(&tn->tn_val);
 }
 
 static inline bool
