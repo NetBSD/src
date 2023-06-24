@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.25 2023/01/13 19:41:50 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.26 2023/06/24 07:15:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -34,33 +34,33 @@
 /*
  * inittyp.c
  */
-extern	void	inittyp(void);
+void	inittyp(void);
 
 /*
  * tyname.c
  */
-extern	const char *type_name(const type_t *);
-extern	const	char *tspec_name(tspec_t);
+const char *type_name(const type_t *);
+const	char *tspec_name(tspec_t);
 
 /*
  * mem.c
  */
-extern	void	*xmalloc(size_t);
-extern	void	*xcalloc(size_t, size_t);
-extern	void	*xrealloc(void *, size_t);
-extern	char	*xstrdup(const char *);
-extern  char	*xasprintf(const char *, ...) __printflike(1, 2);
+void	*xmalloc(size_t);
+void	*xcalloc(size_t, size_t);
+void	*xrealloc(void *, size_t);
+char	*xstrdup(const char *);
+char	*xasprintf(const char *, ...) __printflike(1, 2);
 
 /*
  * emit.c
  */
 #if defined(IS_LINT1) || defined(IS_LINT2)
-extern	void	outopen(const char *);
-extern	void	outclose(void);
-extern	void	outclr(void);
-extern	void	outchar(char);
-extern	void	outstrg(const char *);
-extern	void	outint(int);
-extern	void	outname(const char *);
-extern	void	outsrc(const char *);
+void	outopen(const char *);
+void	outclose(void);
+void	outclr(void);
+void	outchar(char);
+void	outstrg(const char *);
+void	outint(int);
+void	outname(const char *);
+void	outsrc(const char *);
 #endif
