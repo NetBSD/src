@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.127 2023/04/28 07:12:39 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.128 2023/06/24 05:18:13 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.127 2023/04/28 07:12:39 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.128 2023/06/24 05:18:13 msaitoh Exp $");
 #endif
 #endif				/* not lint */
 
@@ -694,7 +694,7 @@ doupdate(void)
 			    *wlp->firstchp, *wlp->lastchp);
 			/*
 			 * We have just cleared so don't force an update
-			 * otherwise we spray neeedless blanks to a cleared
+			 * otherwise we spray needless blanks to a cleared
 			 * screen.  That is, unless, we are using color,
 			 * in this case we need to force the background
 			 * color to default.
