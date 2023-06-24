@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_dev.c,v 1.4 2019/10/03 17:10:16 christos Exp $	*/
+/*	$NetBSD: bt_dev.c,v 1.5 2023/06/24 05:18:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_dev.c,v 1.4 2019/10/03 17:10:16 christos Exp $");
+__RCSID("$NetBSD: bt_dev.c,v 1.5 2023/06/24 05:18:12 msaitoh Exp $");
 
 #include <sys/event.h>
 #include <sys/ioctl.h>
@@ -614,7 +614,7 @@ bt_devinquiry(const char *name, time_t to, int max_rsp,
 	}
 
 	/*
-	 * silently adjust number of reponses to fit in uint8_t
+	 * silently adjust number of responses to fit in uint8_t
 	 */
 	if (max_rsp < 1)
 		max_rsp = 8;

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.71 2022/12/15 20:34:46 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.72 2023/06/24 05:25:04 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2130,7 +2130,7 @@ set_menu_select(menudesc *m, void *arg)
 }
 
 /*
- * check wether a binary is available somewhere in PATH,
+ * check whether a binary is available somewhere in PATH,
  * return 1 if found, 0 if not.
  */
 static int

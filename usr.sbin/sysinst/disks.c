@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.94 2022/12/10 20:58:37 reinoud Exp $ */
+/*	$NetBSD: disks.c,v 1.95 2023/06/24 05:25:04 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -129,7 +129,7 @@ getfslabelname(uint f, uint f_version)
 }
 
 /*
- * Decide wether we want to mount a tmpfs on /var/shm: we do this always
+ * Decide whether we want to mount a tmpfs on /var/shm: we do this always
  * when the machine has more than 16 MB of user memory. On smaller machines,
  * shm_open() and friends will not perform well anyway.
  */

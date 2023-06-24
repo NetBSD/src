@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.91 2022/07/06 12:33:41 andvar Exp $ */
+/*  $NetBSD: ops.c,v 1.92 2023/06/24 05:18:13 msaitoh Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -1230,7 +1230,7 @@ perfuse_node_create(struct puffs_usermount *pu, puffs_cookie_t opc,
 	len = sizeof(*feo) + sizeof(*foo);
 	if ((error = xchg_msg(pu, opc, pm, len, wait_reply)) != 0) {
 		/*
-		 * create is unimplmented, remember it for later,
+		 * create is unimplemented, remember it for later,
 		 * and start over using mknod and open instead.
 		 */
 		if (error == ENOSYS) {
