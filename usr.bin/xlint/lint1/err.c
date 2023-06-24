@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.200 2023/06/22 13:57:44 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.201 2023/06/24 06:55:34 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.200 2023/06/22 13:57:44 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.201 2023/06/24 06:55:34 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -708,6 +708,7 @@ static const char *queries[] = {
 	"chained assignment with '%s' and '%s'",		      /* Q10 */
 	"static variable '%s' in function",			      /* Q11 */
 	"comma operator with types '%s' and '%s'",		      /* Q12 */
+	"redundant 'extern' in function declaration of '%s'",	      /* Q13 */
 };
 
 bool any_query_enabled;		/* for optimizing non-query scenarios */
