@@ -1,4 +1,4 @@
-/*	$NetBSD: startprog64.S,v 1.4 2023/04/20 00:42:24 manu Exp $	*/
+/*	$NetBSD: startprog64.S,v 1.5 2023/06/24 05:31:04 msaitoh Exp $	*/
 /*	NetBSD: startprog.S,v 1.3 2003/02/01 14:48:18 dsl Exp	*/
 
 /* starts program in protected mode / flat space
@@ -78,7 +78,7 @@ _C_LABEL(startprog64_size):
 	.p2align 4,,15
 
 /*
- * startprog64(loadddr,entry,stack,kern_load,kern_start,kern_size)
+ * startprog64(loaddr,entry,stack,kern_load,kern_start,kern_size)
  */
 ENTRY(startprog64_start)
 start:

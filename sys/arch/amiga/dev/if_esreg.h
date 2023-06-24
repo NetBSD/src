@@ -1,4 +1,4 @@
-/*	$NetBSD: if_esreg.h,v 1.9 2023/02/19 21:35:07 andvar Exp $	*/
+/*	$NetBSD: if_esreg.h,v 1.10 2023/06/24 05:31:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -148,7 +148,7 @@ union smcregs {
 #define	IST_TX		0x02		/* TX complete */
 #define	IST_RX		0x01		/* RX complete */
 
-/* Interrupt Acknowlege Register */
+/* Interrupt Acknowledge Register */
 #define	ACK_RX_OVRN	IST_RX_OVRN
 #define	ACK_TX_EMPTY	IST_TX_EMPTY
 #define	ACK_TX		IST_TX
