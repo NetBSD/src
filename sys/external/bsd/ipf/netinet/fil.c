@@ -1,4 +1,4 @@
-/*	$NetBSD: fil.c,v 1.36 2023/02/03 19:01:08 christos Exp $	*/
+/*	$NetBSD: fil.c,v 1.37 2023/06/24 05:16:15 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -141,7 +141,7 @@ extern struct timeout ipf_slowtimer_ch;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.36 2023/02/03 19:01:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fil.c,v 1.37 2023/06/24 05:16:15 msaitoh Exp $");
 #else
 static const char sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: fil.c,v 1.1.1.2 2012/07/22 13:45:07 darrenr Exp $";
@@ -5943,7 +5943,7 @@ ipf_movequeue(u_long ticks, ipftqent_t *tqe, ipftq_t *oifq, ipftq_t *nifq)
 
 /* ------------------------------------------------------------------------ */
 /* Function:    ipf_updateipid                                              */
-/* Returns:     int - 0 == success, -1 == error (packet should be droppped) */
+/* Returns:     int - 0 == success, -1 == error (packet should be dropped)  */
 /* Parameters:  fin(I) - pointer to packet information                      */
 /*                                                                          */
 /* When we are doing NAT, change the IP of every packet to represent a      */
