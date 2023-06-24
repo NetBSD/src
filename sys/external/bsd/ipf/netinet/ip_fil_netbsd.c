@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.37 2022/03/28 12:33:21 riastradh Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.38 2023/06/24 05:16:15 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.37 2022/03/28 12:33:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.38 2023/06/24 05:16:15 msaitoh Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1680,8 +1680,8 @@ ipf_newisn(fr_info_t *fin)
 
 
 /* ------------------------------------------------------------------------ */
-/* Function:    ipf_nextipid                                                 */
-/* Returns:     int - 0 == success, -1 == error (packet should be droppped) */
+/* Function:    ipf_nextipid                                                */
+/* Returns:     int - 0 == success, -1 == error (packet should be dropped)  */
 /* Parameters:  fin(I) - pointer to packet information                      */
 /*                                                                          */
 /* Returns the next IPv4 ID to use for this packet.                         */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.15 2016/07/20 23:19:18 christos Exp $	*/
+/*	$NetBSD: mld6.c,v 1.16 2023/06/24 05:15:42 msaitoh Exp $	*/
 /*	$KAME: mld6.c,v 1.9 2000/12/04 06:29:37 itojun Exp $	*/
 
 /*
@@ -216,7 +216,7 @@ make_msg(int idx, struct in6_addr *addr, u_int type)
 	pi = (struct in6_pktinfo *)CMSG_DATA(cmsgp);
 	pi->ipi6_ifindex = idx;
 	memset(&pi->ipi6_addr, 0, sizeof(pi->ipi6_addr));
-	/* specifiy to insert router alert option in a hop-by-hop opt hdr. */
+	/* specify to insert router alert option in a hop-by-hop opt hdr. */
 	cmsgp = CMSG_NXTHDR(&m, cmsgp);
 #ifdef USE_RFC2292BIS
 	cmsgp->cmsg_len = CMSG_LEN(hbhlen);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_wep.c,v 1.13 2020/11/03 15:06:50 mlelstv Exp $	*/
+/*	$NetBSD: ieee80211_crypto_wep.c,v 1.14 2023/06/24 05:12:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_wep.c,v 1.7 2005/06/10 16:11:24 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.13 2020/11/03 15:06:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_wep.c,v 1.14 2023/06/24 05:12:03 msaitoh Exp $");
 #endif
 
 /*
@@ -178,7 +178,7 @@ wep_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
 	ivp[3] = keyid;
 
 	/*
-	 * Finally, do software encrypt if neeed.
+	 * Finally, do software encrypt if need.
 	 */
 	if ((k->wk_flags & IEEE80211_KEY_SWCRYPT) &&
 	    !wep_encrypt(k, m, hdrlen))
