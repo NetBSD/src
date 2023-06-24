@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.81 2023/04/20 08:28:04 skrll Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.82 2023/06/24 05:43:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.81 2023/04/20 08:28:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.82 2023/06/24 05:43:26 msaitoh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -464,7 +464,7 @@ integrator_sdram_bounds(paddr_t *memstart, psize_t *memsize)
 		*memsize = 256 * 1024 * 1024 - *memstart;
 		break;
 	default:
-		printf("CM_SDRAM retuns unknown value, using 16M\n");
+		printf("CM_SDRAM returns unknown value, using 16M\n");
 		*memsize = 16 * 1024 * 1024;
 		break;
 	}
