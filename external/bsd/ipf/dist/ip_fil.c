@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.c,v 1.5 2018/02/04 08:19:42 mrg Exp $	*/
+/*	$NetBSD: ip_fil.c,v 1.6 2023/06/24 05:31:51 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -610,7 +610,7 @@ ipf_newisn(fin)
 
 /* ------------------------------------------------------------------------ */
 /* Function:    ipf_nextipid                                                */
-/* Returns:     int - 0 == success, -1 == error (packet should be droppped) */
+/* Returns:     int - 0 == success, -1 == error (packet should be dropped)  */
 /* Parameters:  fin(I) - pointer to packet information                      */
 /*                                                                          */
 /* Returns the next IPv4 ID to use for this packet.                         */

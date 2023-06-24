@@ -1,5 +1,5 @@
 /*	$KAME: sctp_structs.h,v 1.13 2005/03/06 16:04:18 itojun Exp $	*/
-/*	$NetBSD: sctp_structs.h,v 1.2 2016/04/25 21:21:02 rjs Exp $ */
+/*	$NetBSD: sctp_structs.h,v 1.3 2023/06/24 05:35:00 msaitoh Exp $ */
 
 #ifndef __SCTP_STRUCTS_H__
 #define __SCTP_STRUCTS_H__
@@ -390,7 +390,7 @@ struct sctp_association {
 				 * The tag to be used. if assoc is
 				 * re-initited by remote end, and
 				 * I have unlocked this will be
-				 * regenrated to a new random value.
+				 * regenerated to a new random value.
 				 */
 	u_int32_t peer_vtag;	/* The peers last tag */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.221 2023/05/14 09:05:39 riastradh Exp $	*/
+/*	$NetBSD: locore.S,v 1.222 2023/06/24 05:31:04 msaitoh Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1771,7 +1771,7 @@ LABEL(nomds_leave_end)
 
 #ifdef SELFRELOC
 /*
- * selfreloc(loadddr edi)
+ * selfreloc(loadaddr edi)
  * This is adapted from sys/arch/i386/i386/locore.S
  */
 	.code32

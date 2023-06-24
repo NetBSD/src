@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.29 2023/04/23 16:49:38 mlelstv Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.30 2023/06/24 05:27:13 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.29 2023/04/23 16:49:38 mlelstv Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.30 2023/06/24 05:27:13 msaitoh Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -4655,7 +4655,7 @@ DEF(AUDIO_SETFD_RDWR)
 		XP_SYS_EQ(0, r);
 	}
 
-	/* When obtains it, it retuns half/full-duplex as is */
+	/* When obtains it, it returns half/full-duplex as is */
 	n = 0;
 	r = IOCTL(fd, AUDIO_GETFD, &n, "");
 	XP_SYS_EQ(0, r);

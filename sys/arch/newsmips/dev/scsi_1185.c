@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_1185.c,v 1.23 2016/07/21 19:49:58 christos Exp $	*/
+/*	$NetBSD: scsi_1185.c,v 1.24 2023/06/24 05:31:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.23 2016/07/21 19:49:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsi_1185.c,v 1.24 2023/06/24 05:31:04 msaitoh Exp $");
 
 #define	__INTR_PRIVATE
 #include <sys/param.h>
@@ -1646,7 +1646,7 @@ print_scsi_stat(struct sc_softc *sc)
 }
 
 /*
- *	return 0 if it was done.  Or retun TRUE if it is busy.
+ *	return 0 if it was done.  Or return TRUE if it is busy.
  */
 int
 sc_busy(struct sc_softc *sc, int chan)

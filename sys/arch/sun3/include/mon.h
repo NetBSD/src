@@ -1,4 +1,4 @@
-/*	$NetBSD: mon.h,v 1.29 2008/04/28 20:23:38 martin Exp $	*/
+/*	$NetBSD: mon.h,v 1.30 2023/06/24 05:31:05 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  * In particular, this file came out of the Walnut Creek cdrom collection
  * which contained no warnings about any possible copyright infringement.
- * It was also indentical to a file in the sprite kernel tar file found on
+ * It was also identical to a file in the sprite kernel tar file found on
  * allspice.berkeley.edu.
  * It also written in the annoying sprite coding style.  I've made
  * efforts not to heavily edit their file, just ifdef parts out. -- glass

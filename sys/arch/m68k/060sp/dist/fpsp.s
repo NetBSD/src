@@ -1,5 +1,5 @@
 #
-# $NetBSD: fpsp.s,v 1.6 2021/11/10 16:47:41 msaitoh Exp $
+# $NetBSD: fpsp.s,v 1.7 2023/06/24 05:31:04 msaitoh Exp $
 #
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -8394,7 +8394,7 @@ LP1CONT1:
 	fmul.x		LOGOF2(%pc),%fp1	# GET K*LOG2 WHILE FP0 IS NOT READY
 	fmov.x		%fp0,%fp2
 	fmul.x		%fp2,%fp2		# FP2 IS V=U*U
-	fmov.x		%fp1,KLOG2(%a6)		# PUT K*LOG2 IN MEMEORY, FREE FP1
+	fmov.x		%fp1,KLOG2(%a6)		# PUT K*LOG2 IN MEMORY, FREE FP1
 
 #--LOG(1+U) IS APPROXIMATED BY
 #--U + V*(A1+U*(A2+U*(A3+U*(A4+U*(A5+U*A6))))) WHICH IS
