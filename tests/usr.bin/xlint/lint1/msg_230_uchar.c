@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_230_uchar.c,v 1.11 2023/02/27 21:59:14 rillig Exp $	*/
+/*	$NetBSD: msg_230_uchar.c,v 1.12 2023/06/24 17:50:31 rillig Exp $	*/
 # 3 "msg_230_uchar.c"
 
 // Test for message: nonportable character comparison '%s' [230]
@@ -117,18 +117,12 @@ compare_greater(char c)
 		return;
 }
 
+/* Comparing a char expression with a character constant is always valid. */
 void
 compare_with_character_literal(char ch)
 {
-	/*
-	 * FIXME: These comparisons are portable since the character constant
-	 *  is interpreted using the type 'char' on the exact same platform
-	 *  as where the comparison takes place.
-	 */
-	/* expect+1: warning: nonportable character comparison '== 128' [230] */
 	if (ch == '\200')
 		return;
-	/* expect+1: warning: nonportable character comparison '== 255' [230] */
 	if (ch == '\377')
 		return;
 	if (ch == '\000')
