@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.189 2023/04/07 10:34:13 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.190 2023/06/24 05:17:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.189 2023/04/07 10:34:13 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.190 2023/06/24 05:17:02 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -1002,7 +1002,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		 */
 		cmdentry.cmdtype = CMDBUILTIN;
 		cmdentry.u.bltin = bltincmd;
-		VTRACE(DBG_CMDS, ("No command name, assume \"comamnd\"\n"));
+		VTRACE(DBG_CMDS, ("No command name, assume \"command\"\n"));
 	} else {
 		static const char PATH[] = "PATH=";
 
