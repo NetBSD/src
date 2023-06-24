@@ -1,4 +1,4 @@
-/* $NetBSD: bta2dpd.c,v 1.8 2021/03/07 13:09:43 nat Exp $ */
+/* $NetBSD: bta2dpd.c,v 1.9 2023/06/24 05:26:01 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -625,7 +625,7 @@ usage(void)
 	    "\t\tS  Signal to Noise Ratio (SNR) bit allocation\n"
 	    "\t\tL  Loudness bit allocation (this is the default)\n"
 	    "\n"
-	    "\tWithout specifiying any mode rate enoding and allocation\n"
+	    "\tWithout specifying any mode rate enoding and allocation\n"
 	    "\tthe channel the default is stereo, 16 blocks, 8 subbands,\n"
 	    "\tloudness bit allocation, 441000 Hz.\n"
 	    , getprogname(), getprogname(), getprogname());
