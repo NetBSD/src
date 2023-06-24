@@ -1,4 +1,4 @@
-/* $NetBSD: gpiopps.c,v 1.4 2022/03/31 19:30:16 pgoyette Exp $ */
+/* $NetBSD: gpiopps.c,v 1.5 2023/06/24 05:34:59 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2016 Brad Spencer <brad@anduin.eldar.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiopps.c,v 1.4 2022/03/31 19:30:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiopps.c,v 1.5 2023/06/24 05:34:59 msaitoh Exp $");
 
 /*
  * GPIO interface to the pps subsystem for ntp support.
@@ -132,7 +132,7 @@ gpiopps_attach(device_t parent, device_t self, void *aux)
 	sc->sc_gpio = ga->ga_gpio;
 	sc->sc_map.pm_map = sc->_map;
 
-	/* Determine our pin configuation. */
+	/* Determine our pin configuration. */
 	npins = gpio_npins(mask);
 	if (npins == 0) {
 		npins = 1;

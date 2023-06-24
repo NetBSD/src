@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.230 2023/03/01 08:18:03 riastradh Exp $	*/
+/*	$NetBSD: locore.S,v 1.231 2023/06/24 05:31:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.230 2023/03/01 08:18:03 riastradh Exp $")
+RCSID("$NetBSD: locore.S,v 1.231 2023/06/24 05:31:04 msaitoh Exp $")
 
 #include "assym.h"
 
@@ -668,7 +668,7 @@ END(mips_cp0_status_write)
  * mips_fpu_trap --
  *
  *	Handle a floating point interrupt (r3k) or trap (r4k).
- *	the handlers are indentical, only the reporting mechanisms differ.
+ *	the handlers are identical, only the reporting mechanisms differ.
  *
  *	mips_fpu_intr(vaddr_t pc, struct trapframe *tf)
  *

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.h,v 1.13 2016/07/07 06:55:38 msaitoh Exp $	*/
+/*	$NetBSD: arcemu.h,v 1.14 2023/06/24 05:31:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -74,7 +74,7 @@ static struct arcbios_component arcemu_component_tree[] = {
 	{	-1, -1, -1, -1, -1, -1, -1, -1, -1, 0		}
 };
 
-/* Unimplmented Vector */
+/* Unimplemented Vector */
 #define ARCEMU_UNIMPL ((int32_t)(intptr_t)arcemu_unimpl)
 static void	arcemu_unimpl(void);
 

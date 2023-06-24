@@ -1,4 +1,4 @@
-/*	$NetBSD: lancereg.h,v 1.15 2022/05/22 11:27:35 andvar Exp $	*/
+/*	$NetBSD: lancereg.h,v 1.16 2023/06/24 05:35:00 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
 #define	LE_CSR36	0x0024		/* Next Next Rx Desc addr lower */
 #define	LE_CSR37	0x0025		/* Next Next Rx Desc addr upper */
 #define	LE_CSR38	0x0026		/* Next Next Tx Desc addr lower */
-#define	LE_CSR39	0x0027		/* Next Next Tx Desc adddr upper */
+#define	LE_CSR39	0x0027		/* Next Next Tx Desc addr upper */
 #define	LE_CSR40	0x0028		/* Current Rx Byte Count */
 #define	LE_CSR41	0x0029		/* Current Rx Status */
 #define	LE_CSR42	0x002a		/* Current Tx Byte Count */

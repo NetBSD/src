@@ -1,4 +1,4 @@
-/*	$NetBSD: pcicreg.h,v 1.1 2002/08/13 04:57:49 simonb Exp $	*/
+/*	$NetBSD: pcicreg.h,v 1.2 2023/06/24 05:31:05 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #ifndef _IBM4XX_PCICREG_H_
 #define	_IBM4XX_PCICREG_H_
 
-/* PCI Configuaration Registers */
+/* PCI Configuration Registers */
 #define	PCIC_CFGADDR		0x00
 #define	PCIC_CFGDATA		0x04
 
@@ -85,7 +85,7 @@
 #define	PCIC_PMSCRR		0x64
 
 
-/* PCI Bridge Local Configuation Registers (0xef400000 0xef40003f - 64 bytes) */
+/* PCI Bridge Local Configuration Registers (0xef400000 0xef40003f - 64 bytes) */
 #define	PCIL_PMM0LA		0x00	/* PCI Master Map 0: Local Address */
 #define	PCIL_PMM0MA		0x04	/*		     Mask/Attribute */
 #define	PCIL_PMM0PCILA		0x08	/*		     PCI Low Address */
