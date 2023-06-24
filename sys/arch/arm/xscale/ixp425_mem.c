@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_mem.c,v 1.2 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: ixp425_mem.c,v 1.3 2023/06/24 05:43:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_mem.c,v 1.2 2005/12/11 12:16:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_mem.c,v 1.3 2023/06/24 05:43:25 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ ixp425_sdram_size(void)
 		size = sdram_other[MCU_SDR_CONFIG_MCONF(sdr_config)];
 
 	if (size == 0) {
-		printf("** SDR_CONFIG retuns unknown value, using 32M\n");
+		printf("** SDR_CONFIG returns unknown value, using 32M\n");
 		size = 32 * 1024 * 1024;
 	}
 

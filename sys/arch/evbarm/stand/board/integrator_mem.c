@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_mem.c,v 1.4 2006/01/16 19:34:53 he Exp $	*/
+/*	$NetBSD: integrator_mem.c,v 1.5 2023/06/24 05:43:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@ mem_init(void)
 		break;
 
 	default:
-		printf("** CM_SDRAM retuns unknown value, using 16M\n");
+		printf("** CM_SDRAM returns unknown value, using 16M\n");
 		size = 16 * 1024 * 1024;
 		break;
 	}
