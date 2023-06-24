@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.12 2015/02/14 13:07:39 tsutsui Exp $	*/
+/*	$NetBSD: sd.c,v 1.13 2023/06/24 07:02:11 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -215,7 +215,7 @@ static struct scsi_generic_cdb cdb_read = {
 };
 
 static struct scsi_generic_cdb cdb_write = {
-	6,
+	10,
 	{ CMD_WRITE_EXT, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
 };
 
