@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.528 2023/06/22 13:57:44 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.529 2023/06/24 08:11:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.528 2023/06/22 13:57:44 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.529 2023/06/24 08:11:12 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -376,6 +376,7 @@ build_constant(type_t *tp, val_t *v)
 	n->tn_val = expr_zero_alloc(sizeof(*n->tn_val));
 	n->tn_val->v_tspec = tp->t_tspec;
 	n->tn_val->v_unsigned_since_c90 = v->v_unsigned_since_c90;
+	n->tn_val->v_char_constant = v->v_char_constant;
 	n->tn_val->v_u = v->v_u;
 	free(v);
 	return n;
@@ -583,9 +584,6 @@ is_out_of_char_range(const tnode_t *tn)
 		 tn->tn_val->v_quad < 1 << (CHAR_SIZE - 1));
 }
 
-/*
- * Check for ordered comparisons of unsigned values with 0.
- */
 static void
 check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 {
@@ -599,6 +597,21 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 
 	if (!is_integer(lt) || !is_integer(rt))
 		return;
+
+	if (any_query_enabled && !in_system_header) {
+		if (lt == CHAR && rn->tn_op == CON &&
+		    !rn->tn_val->v_char_constant) {
+			/* comparison '%s' of 'char' with plain integer %d */
+			query_message(14,
+			    op_name(op), (int)rn->tn_val->v_quad);
+		}
+		if (rt == CHAR && ln->tn_op == CON &&
+		    !ln->tn_val->v_char_constant) {
+			/* comparison '%s' of 'char' with plain integer %d */
+			query_message(14,
+			    op_name(op), (int)ln->tn_val->v_quad);
+		}
+	}
 
 	if (hflag || pflag) {
 		if (lt == CHAR && is_out_of_char_range(rn)) {

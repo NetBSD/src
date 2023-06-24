@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.160 2023/06/09 15:36:31 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.161 2023/06/24 08:11:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.160 2023/06/09 15:36:31 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.161 2023/06/24 08:11:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -878,6 +878,7 @@ lex_character_constant(void)
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = INT;
+	yylval.y_val->v_char_constant = true;
 	yylval.y_val->v_quad = val;
 
 	return T_CON;
@@ -925,6 +926,7 @@ lex_wide_character_constant(void)
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = WCHAR;
+	yylval.y_val->v_char_constant = true;
 	yylval.y_val->v_quad = wc;
 
 	return T_CON;

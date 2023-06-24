@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.165 2023/06/09 15:36:31 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.166 2023/06/24 08:11:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -109,6 +109,7 @@ typedef struct {
 	 * See the operators table in ops.def, columns "l r".
 	 */
 	bool	v_unsigned_since_c90;
+	bool	v_char_constant;
 	union {
 		int64_t		_v_quad;	/* integers */
 		long double	_v_ldbl;	/* floats */
