@@ -1,4 +1,4 @@
-/*	$NetBSD: lpr.c,v 1.46 2012/06/02 03:32:53 jnemeth Exp $	*/
+/*	$NetBSD: lpr.c,v 1.47 2023/06/24 05:15:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lpr.c,v 1.46 2012/06/02 03:32:53 jnemeth Exp $");
+__RCSID("$NetBSD: lpr.c,v 1.47 2023/06/24 05:15:42 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ main(int argc, char *argv[])
 			jobname = optarg;
 			break;
 
-		case 'P':		/* specifiy printer name */
+		case 'P':		/* specify printer name */
 			printer = optarg;
 			break;
 

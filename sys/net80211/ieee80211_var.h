@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_var.h,v 1.34 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: ieee80211_var.h,v 1.35 2023/06/24 05:12:03 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -363,7 +363,7 @@ ieee80211_anyhdrspace(struct ieee80211com *ic, const void *data)
 
 /* Flags set in ic_debug, used to print debug messages */
 #define	IEEE80211_MSG_DEBUG	0x40000000	/* IFF_DEBUG equivalent */
-#define	IEEE80211_MSG_DUMPPKTS	0x20000000	/* IFF_LINK2 equivalant */
+#define	IEEE80211_MSG_DUMPPKTS	0x20000000	/* IFF_LINK2 equivalent */
 #define	IEEE80211_MSG_CRYPTO	0x10000000	/* crypto work */
 #define	IEEE80211_MSG_INPUT	0x08000000	/* input handling */
 #define	IEEE80211_MSG_XRATE	0x04000000	/* rate set handling */
