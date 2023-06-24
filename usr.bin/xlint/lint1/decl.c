@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.317 2023/06/09 15:36:31 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.318 2023/06/24 06:55:34 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.317 2023/06/09 15:36:31 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.318 2023/06/24 06:55:34 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1941,6 +1941,14 @@ check_extern_declaration(const sym_t *sym)
 		/* missing%s header declaration for '%s' */
 		warning(351, sym->s_type->t_tspec == FUNC ? "" : " 'extern'",
 		    sym->s_name);
+	}
+	if (any_query_enabled &&
+	    sym->s_type->t_tspec == FUNC &&
+	    sym->s_scl == EXTERN &&
+	    sym->s_def == DECL &&
+	    !in_system_header) {
+		/* redundant 'extern' in function declaration of '%s' */
+		query_message(13, sym->s_name);
 	}
 }
 

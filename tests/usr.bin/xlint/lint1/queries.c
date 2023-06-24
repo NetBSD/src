@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.15 2023/06/22 13:57:44 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.16 2023/06/24 06:55:34 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -15,7 +15,7 @@
  * 	such as casts between arithmetic types.
  */
 
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12 -X 351 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12,13 -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
@@ -156,7 +156,7 @@ Q6(int i)
 	i = (int)i + 1;
 }
 
-extern void *allocate(void);
+void *allocate(void);
 
 void
 Q7(void)
@@ -396,6 +396,12 @@ Q12(void)
 	/* expect+1: comma operator with types 'unsigned short' and 'unsigned int' [Q12] */
 	u16 += u8, u32 += u16;
 }
+
+/* expect+1: redundant 'extern' in function declaration of 'extern_Q13' [Q13] */
+extern void extern_Q13(void);
+void extern_Q13(void);
+/* expect+1: redundant 'extern' in function declaration of 'extern_Q13' [Q13] */
+extern void extern_Q13(void), *extern_ptr;
 
 /*
  * Since queries do not affect the exit status, force a warning to make this
