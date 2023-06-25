@@ -1,7 +1,7 @@
 /* nbtool_config.h.  Generated from nbtool_config.h.in by configure.  */
 /* nbtool_config.h.in.  Generated from configure.ac by autoheader.  */
 
-/*      $NetBSD: nbtool_config.h.in,v 1.55 2023/05/30 19:04:42 lukem Exp $    */
+/*      $NetBSD: nbtool_config.h.in,v 1.53 2021/02/25 13:41:58 christos Exp $    */
  
 #ifndef __NETBSD_NBTOOL_CONFIG_H__
 #define __NETBSD_NBTOOL_CONFIG_H__
@@ -9,7 +9,7 @@
 /* Define if building universal (internal helper macro) */
 /* #undef AC_APPLE_UNIVERSAL_BUILD */
 
-/* Define to 1 if your 'fparseln' function is broken. */
+/* Define to 1 if your `fparseln' function is broken. */
 #define BROKEN_FPARSELN 1
 
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
@@ -437,9 +437,6 @@
 
 /* Define to 1 if `__dd_fd' is a member of `DIR'. */
 #define HAVE_DIR___DD_FD 1
-
-/* Define to 1 if you have the `dispatch_semaphore_create' function. */
-#define HAVE_DISPATCH_SEMAPHORE_CREATE 1
 
 /* Define to 1 if you have the `dprintf' function. */
 #define HAVE_DPRINTF 1

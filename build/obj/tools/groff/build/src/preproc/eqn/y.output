@@ -1,0 +1,3494 @@
+   0  $accept : top $end
+
+   1  top :
+   2      | equation
+
+   3  equation : mark
+   4           | equation mark
+
+   5  mark : from_to
+   6       | MARK mark
+   7       | LINEUP mark
+
+   8  from_to : sqrt_over
+   9          | sqrt_over TO from_to
+  10          | sqrt_over FROM sqrt_over
+  11          | sqrt_over FROM sqrt_over TO from_to
+  12          | sqrt_over FROM sqrt_over FROM from_to
+
+  13  sqrt_over : script
+  14            | SQRT sqrt_over
+  15            | sqrt_over OVER sqrt_over
+  16            | sqrt_over SMALLOVER sqrt_over
+
+  17  script : nonsup
+  18         | simple SUP script
+
+  19  nonsup : simple
+  20         | simple SUB nonsup
+  21         | simple SUB simple SUP script
+
+  22  simple : TEXT
+  23         | QUOTED_TEXT
+  24         | SPLIT QUOTED_TEXT
+  25         | NOSPLIT TEXT
+  26         | '^'
+  27         | '~'
+  28         | '\t'
+  29         | '{' equation '}'
+  30         | PILE pile_arg
+  31         | LPILE pile_arg
+  32         | RPILE pile_arg
+  33         | CPILE pile_arg
+  34         | MATRIX '{' column_list '}'
+  35         | LEFT delim equation RIGHT delim
+  36         | LEFT delim equation
+  37         | simple BAR
+  38         | simple UNDER
+  39         | simple PRIME
+  40         | simple ACCENT simple
+  41         | simple UACCENT simple
+  42         | ROMAN simple
+  43         | BOLD simple
+  44         | ITALIC simple
+  45         | FAT simple
+  46         | FONT text simple
+  47         | SIZE text simple
+  48         | FWD number simple
+  49         | BACK number simple
+  50         | UP number simple
+  51         | DOWN number simple
+  52         | TYPE text simple
+  53         | VCENTER simple
+  54         | SPECIAL text simple
+
+  55  number : text
+
+  56  pile_element_list : equation
+  57                    | pile_element_list ABOVE equation
+
+  58  pile_arg : '{' pile_element_list '}'
+  59           | number '{' pile_element_list '}'
+
+  60  column_list : column
+  61              | column_list column
+
+  62  column_element_list : equation
+  63                      | column_element_list ABOVE equation
+
+  64  column_arg : '{' column_element_list '}'
+  65             | number '{' column_element_list '}'
+
+  66  column : COL column_arg
+  67         | LCOL column_arg
+  68         | RCOL column_arg
+  69         | CCOL column_arg
+
+  70  text : TEXT
+  71       | QUOTED_TEXT
+
+  72  delim : text
+  73        | '{'
+  74        | '}'
+
+state 0
+	$accept : . top $end  (0)
+	top : .  (1)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	$end  reduce 1
+
+	top  goto 31
+	mark  goto 32
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	equation  goto 37
+	nonsup  goto 38
+
+
+state 1
+	sqrt_over : SQRT . sqrt_over  (14)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	sqrt_over  goto 39
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 2
+	simple : LPILE . pile_arg  (31)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	'{'  shift 42
+	.  error
+
+	number  goto 43
+	text  goto 44
+	pile_arg  goto 45
+
+
+state 3
+	simple : RPILE . pile_arg  (32)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	'{'  shift 42
+	.  error
+
+	number  goto 43
+	text  goto 44
+	pile_arg  goto 46
+
+
+state 4
+	simple : CPILE . pile_arg  (33)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	'{'  shift 42
+	.  error
+
+	number  goto 43
+	text  goto 44
+	pile_arg  goto 47
+
+
+state 5
+	simple : PILE . pile_arg  (30)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	'{'  shift 42
+	.  error
+
+	number  goto 43
+	text  goto 44
+	pile_arg  goto 48
+
+
+state 6
+	simple : LEFT . delim equation RIGHT delim  (35)
+	simple : LEFT . delim equation  (36)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	'{'  shift 49
+	'}'  shift 50
+	.  error
+
+	text  goto 51
+	delim  goto 52
+
+
+state 7
+	simple : SIZE . text simple  (47)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	.  error
+
+	text  goto 53
+
+
+state 8
+	simple : FONT . text simple  (46)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	.  error
+
+	text  goto 54
+
+
+state 9
+	simple : ROMAN . simple  (42)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 55
+
+
+state 10
+	simple : BOLD . simple  (43)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 56
+
+
+state 11
+	simple : ITALIC . simple  (44)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 57
+
+
+state 12
+	simple : FAT . simple  (45)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 58
+
+
+state 13
+	simple : TEXT .  (22)
+
+	.  reduce 22
+
+
+state 14
+	simple : QUOTED_TEXT .  (23)
+
+	.  reduce 23
+
+
+state 15
+	simple : FWD . number simple  (48)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	.  error
+
+	number  goto 59
+	text  goto 44
+
+
+state 16
+	simple : BACK . number simple  (49)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	.  error
+
+	number  goto 60
+	text  goto 44
+
+
+state 17
+	simple : DOWN . number simple  (51)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	.  error
+
+	number  goto 61
+	text  goto 44
+
+
+state 18
+	simple : UP . number simple  (50)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	.  error
+
+	number  goto 62
+	text  goto 44
+
+
+state 19
+	simple : MATRIX . '{' column_list '}'  (34)
+
+	'{'  shift 63
+	.  error
+
+
+state 20
+	mark : MARK . mark  (6)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	mark  goto 64
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 21
+	mark : LINEUP . mark  (7)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	mark  goto 65
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 22
+	simple : TYPE . text simple  (52)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	.  error
+
+	text  goto 66
+
+
+state 23
+	simple : VCENTER . simple  (53)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 67
+
+
+state 24
+	simple : SPLIT . QUOTED_TEXT  (24)
+
+	QUOTED_TEXT  shift 68
+	.  error
+
+
+state 25
+	simple : NOSPLIT . TEXT  (25)
+
+	TEXT  shift 69
+	.  error
+
+
+state 26
+	simple : SPECIAL . text simple  (54)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	.  error
+
+	text  goto 70
+
+
+state 27
+	simple : '^' .  (26)
+
+	.  reduce 26
+
+
+state 28
+	simple : '~' .  (27)
+
+	.  reduce 27
+
+
+state 29
+	simple : '\t' .  (28)
+
+	.  reduce 28
+
+
+state 30
+	simple : '{' . equation '}'  (29)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	mark  goto 32
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	equation  goto 71
+	nonsup  goto 38
+
+
+state 31
+	$accept : top . $end  (0)
+
+	$end  accept
+
+
+state 32
+	equation : mark .  (3)
+
+	.  reduce 3
+
+
+state 33
+	mark : from_to .  (5)
+
+	.  reduce 5
+
+
+state 34
+	from_to : sqrt_over .  (8)
+	from_to : sqrt_over . TO from_to  (9)
+	from_to : sqrt_over . FROM sqrt_over  (10)
+	from_to : sqrt_over . FROM sqrt_over TO from_to  (11)
+	from_to : sqrt_over . FROM sqrt_over FROM from_to  (12)
+	sqrt_over : sqrt_over . OVER sqrt_over  (15)
+	sqrt_over : sqrt_over . SMALLOVER sqrt_over  (16)
+
+	OVER  shift 72
+	SMALLOVER  shift 73
+	TO  shift 74
+	FROM  shift 75
+	$end  reduce 8
+	SQRT  reduce 8
+	SUB  reduce 8
+	SUP  reduce 8
+	LPILE  reduce 8
+	RPILE  reduce 8
+	CPILE  reduce 8
+	PILE  reduce 8
+	LEFT  reduce 8
+	RIGHT  reduce 8
+	SIZE  reduce 8
+	FONT  reduce 8
+	ROMAN  reduce 8
+	BOLD  reduce 8
+	ITALIC  reduce 8
+	FAT  reduce 8
+	ACCENT  reduce 8
+	BAR  reduce 8
+	UNDER  reduce 8
+	ABOVE  reduce 8
+	TEXT  reduce 8
+	QUOTED_TEXT  reduce 8
+	FWD  reduce 8
+	BACK  reduce 8
+	DOWN  reduce 8
+	UP  reduce 8
+	MATRIX  reduce 8
+	MARK  reduce 8
+	LINEUP  reduce 8
+	TYPE  reduce 8
+	VCENTER  reduce 8
+	PRIME  reduce 8
+	SPLIT  reduce 8
+	NOSPLIT  reduce 8
+	UACCENT  reduce 8
+	SPECIAL  reduce 8
+	'^'  reduce 8
+	'~'  reduce 8
+	'\t'  reduce 8
+	'{'  reduce 8
+	'}'  reduce 8
+
+
+state 35
+	sqrt_over : script .  (13)
+
+	.  reduce 13
+
+
+state 36
+	script : simple . SUP script  (18)
+	nonsup : simple .  (19)
+	nonsup : simple . SUB nonsup  (20)
+	nonsup : simple . SUB simple SUP script  (21)
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+
+	SUB  shift 76
+	SUP  shift 77
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 19
+	OVER  reduce 19
+	SMALLOVER  reduce 19
+	SQRT  reduce 19
+	LPILE  reduce 19
+	RPILE  reduce 19
+	CPILE  reduce 19
+	PILE  reduce 19
+	LEFT  reduce 19
+	RIGHT  reduce 19
+	TO  reduce 19
+	FROM  reduce 19
+	SIZE  reduce 19
+	FONT  reduce 19
+	ROMAN  reduce 19
+	BOLD  reduce 19
+	ITALIC  reduce 19
+	FAT  reduce 19
+	ABOVE  reduce 19
+	TEXT  reduce 19
+	QUOTED_TEXT  reduce 19
+	FWD  reduce 19
+	BACK  reduce 19
+	DOWN  reduce 19
+	UP  reduce 19
+	MATRIX  reduce 19
+	MARK  reduce 19
+	LINEUP  reduce 19
+	TYPE  reduce 19
+	VCENTER  reduce 19
+	SPLIT  reduce 19
+	NOSPLIT  reduce 19
+	SPECIAL  reduce 19
+	'^'  reduce 19
+	'~'  reduce 19
+	'\t'  reduce 19
+	'{'  reduce 19
+	'}'  reduce 19
+
+
+state 37
+	top : equation .  (2)
+	equation : equation . mark  (4)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	$end  reduce 2
+
+	mark  goto 83
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 38
+	script : nonsup .  (17)
+
+	.  reduce 17
+
+
+state 39
+	sqrt_over : SQRT sqrt_over .  (14)
+	sqrt_over : sqrt_over . OVER sqrt_over  (15)
+	sqrt_over : sqrt_over . SMALLOVER sqrt_over  (16)
+
+	.  reduce 14
+
+
+state 40
+	text : TEXT .  (70)
+
+	.  reduce 70
+
+
+state 41
+	text : QUOTED_TEXT .  (71)
+
+	.  reduce 71
+
+
+state 42
+	pile_arg : '{' . pile_element_list '}'  (58)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	mark  goto 32
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	equation  goto 84
+	nonsup  goto 38
+	pile_element_list  goto 85
+
+
+state 43
+	pile_arg : number . '{' pile_element_list '}'  (59)
+
+	'{'  shift 86
+	.  error
+
+
+state 44
+	number : text .  (55)
+
+	.  reduce 55
+
+
+state 45
+	simple : LPILE pile_arg .  (31)
+
+	.  reduce 31
+
+
+state 46
+	simple : RPILE pile_arg .  (32)
+
+	.  reduce 32
+
+
+state 47
+	simple : CPILE pile_arg .  (33)
+
+	.  reduce 33
+
+
+state 48
+	simple : PILE pile_arg .  (30)
+
+	.  reduce 30
+
+
+state 49
+	delim : '{' .  (73)
+
+	.  reduce 73
+
+
+state 50
+	delim : '}' .  (74)
+
+	.  reduce 74
+
+
+state 51
+	delim : text .  (72)
+
+	.  reduce 72
+
+
+state 52
+	simple : LEFT delim . equation RIGHT delim  (35)
+	simple : LEFT delim . equation  (36)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	mark  goto 32
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	equation  goto 87
+	nonsup  goto 38
+
+
+state 53
+	simple : SIZE text . simple  (47)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 88
+
+
+state 54
+	simple : FONT text . simple  (46)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 89
+
+
+state 55
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : ROMAN simple .  (42)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 42
+	OVER  reduce 42
+	SMALLOVER  reduce 42
+	SQRT  reduce 42
+	SUB  reduce 42
+	SUP  reduce 42
+	LPILE  reduce 42
+	RPILE  reduce 42
+	CPILE  reduce 42
+	PILE  reduce 42
+	LEFT  reduce 42
+	RIGHT  reduce 42
+	TO  reduce 42
+	FROM  reduce 42
+	SIZE  reduce 42
+	FONT  reduce 42
+	ROMAN  reduce 42
+	BOLD  reduce 42
+	ITALIC  reduce 42
+	FAT  reduce 42
+	ABOVE  reduce 42
+	TEXT  reduce 42
+	QUOTED_TEXT  reduce 42
+	FWD  reduce 42
+	BACK  reduce 42
+	DOWN  reduce 42
+	UP  reduce 42
+	MATRIX  reduce 42
+	MARK  reduce 42
+	LINEUP  reduce 42
+	TYPE  reduce 42
+	VCENTER  reduce 42
+	SPLIT  reduce 42
+	NOSPLIT  reduce 42
+	SPECIAL  reduce 42
+	'^'  reduce 42
+	'~'  reduce 42
+	'\t'  reduce 42
+	'{'  reduce 42
+	'}'  reduce 42
+
+
+state 56
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : BOLD simple .  (43)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 43
+	OVER  reduce 43
+	SMALLOVER  reduce 43
+	SQRT  reduce 43
+	SUB  reduce 43
+	SUP  reduce 43
+	LPILE  reduce 43
+	RPILE  reduce 43
+	CPILE  reduce 43
+	PILE  reduce 43
+	LEFT  reduce 43
+	RIGHT  reduce 43
+	TO  reduce 43
+	FROM  reduce 43
+	SIZE  reduce 43
+	FONT  reduce 43
+	ROMAN  reduce 43
+	BOLD  reduce 43
+	ITALIC  reduce 43
+	FAT  reduce 43
+	ABOVE  reduce 43
+	TEXT  reduce 43
+	QUOTED_TEXT  reduce 43
+	FWD  reduce 43
+	BACK  reduce 43
+	DOWN  reduce 43
+	UP  reduce 43
+	MATRIX  reduce 43
+	MARK  reduce 43
+	LINEUP  reduce 43
+	TYPE  reduce 43
+	VCENTER  reduce 43
+	SPLIT  reduce 43
+	NOSPLIT  reduce 43
+	SPECIAL  reduce 43
+	'^'  reduce 43
+	'~'  reduce 43
+	'\t'  reduce 43
+	'{'  reduce 43
+	'}'  reduce 43
+
+
+state 57
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : ITALIC simple .  (44)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 44
+	OVER  reduce 44
+	SMALLOVER  reduce 44
+	SQRT  reduce 44
+	SUB  reduce 44
+	SUP  reduce 44
+	LPILE  reduce 44
+	RPILE  reduce 44
+	CPILE  reduce 44
+	PILE  reduce 44
+	LEFT  reduce 44
+	RIGHT  reduce 44
+	TO  reduce 44
+	FROM  reduce 44
+	SIZE  reduce 44
+	FONT  reduce 44
+	ROMAN  reduce 44
+	BOLD  reduce 44
+	ITALIC  reduce 44
+	FAT  reduce 44
+	ABOVE  reduce 44
+	TEXT  reduce 44
+	QUOTED_TEXT  reduce 44
+	FWD  reduce 44
+	BACK  reduce 44
+	DOWN  reduce 44
+	UP  reduce 44
+	MATRIX  reduce 44
+	MARK  reduce 44
+	LINEUP  reduce 44
+	TYPE  reduce 44
+	VCENTER  reduce 44
+	SPLIT  reduce 44
+	NOSPLIT  reduce 44
+	SPECIAL  reduce 44
+	'^'  reduce 44
+	'~'  reduce 44
+	'\t'  reduce 44
+	'{'  reduce 44
+	'}'  reduce 44
+
+
+state 58
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : FAT simple .  (45)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 45
+	OVER  reduce 45
+	SMALLOVER  reduce 45
+	SQRT  reduce 45
+	SUB  reduce 45
+	SUP  reduce 45
+	LPILE  reduce 45
+	RPILE  reduce 45
+	CPILE  reduce 45
+	PILE  reduce 45
+	LEFT  reduce 45
+	RIGHT  reduce 45
+	TO  reduce 45
+	FROM  reduce 45
+	SIZE  reduce 45
+	FONT  reduce 45
+	ROMAN  reduce 45
+	BOLD  reduce 45
+	ITALIC  reduce 45
+	FAT  reduce 45
+	ABOVE  reduce 45
+	TEXT  reduce 45
+	QUOTED_TEXT  reduce 45
+	FWD  reduce 45
+	BACK  reduce 45
+	DOWN  reduce 45
+	UP  reduce 45
+	MATRIX  reduce 45
+	MARK  reduce 45
+	LINEUP  reduce 45
+	TYPE  reduce 45
+	VCENTER  reduce 45
+	SPLIT  reduce 45
+	NOSPLIT  reduce 45
+	SPECIAL  reduce 45
+	'^'  reduce 45
+	'~'  reduce 45
+	'\t'  reduce 45
+	'{'  reduce 45
+	'}'  reduce 45
+
+
+state 59
+	simple : FWD number . simple  (48)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 90
+
+
+state 60
+	simple : BACK number . simple  (49)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 91
+
+
+state 61
+	simple : DOWN number . simple  (51)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 92
+
+
+state 62
+	simple : UP number . simple  (50)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 93
+
+
+state 63
+	simple : MATRIX '{' . column_list '}'  (34)
+
+	COL  shift 94
+	LCOL  shift 95
+	RCOL  shift 96
+	CCOL  shift 97
+	.  error
+
+	column_list  goto 98
+	column  goto 99
+
+
+state 64
+	mark : MARK mark .  (6)
+
+	.  reduce 6
+
+
+state 65
+	mark : LINEUP mark .  (7)
+
+	.  reduce 7
+
+
+state 66
+	simple : TYPE text . simple  (52)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 100
+
+
+state 67
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : VCENTER simple .  (53)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 53
+	OVER  reduce 53
+	SMALLOVER  reduce 53
+	SQRT  reduce 53
+	SUB  reduce 53
+	SUP  reduce 53
+	LPILE  reduce 53
+	RPILE  reduce 53
+	CPILE  reduce 53
+	PILE  reduce 53
+	LEFT  reduce 53
+	RIGHT  reduce 53
+	TO  reduce 53
+	FROM  reduce 53
+	SIZE  reduce 53
+	FONT  reduce 53
+	ROMAN  reduce 53
+	BOLD  reduce 53
+	ITALIC  reduce 53
+	FAT  reduce 53
+	ABOVE  reduce 53
+	TEXT  reduce 53
+	QUOTED_TEXT  reduce 53
+	FWD  reduce 53
+	BACK  reduce 53
+	DOWN  reduce 53
+	UP  reduce 53
+	MATRIX  reduce 53
+	MARK  reduce 53
+	LINEUP  reduce 53
+	TYPE  reduce 53
+	VCENTER  reduce 53
+	SPLIT  reduce 53
+	NOSPLIT  reduce 53
+	SPECIAL  reduce 53
+	'^'  reduce 53
+	'~'  reduce 53
+	'\t'  reduce 53
+	'{'  reduce 53
+	'}'  reduce 53
+
+
+state 68
+	simple : SPLIT QUOTED_TEXT .  (24)
+
+	.  reduce 24
+
+
+state 69
+	simple : NOSPLIT TEXT .  (25)
+
+	.  reduce 25
+
+
+state 70
+	simple : SPECIAL text . simple  (54)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 101
+
+
+state 71
+	equation : equation . mark  (4)
+	simple : '{' equation . '}'  (29)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	'}'  shift 102
+	.  error
+
+	mark  goto 83
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 72
+	sqrt_over : sqrt_over OVER . sqrt_over  (15)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	sqrt_over  goto 103
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 73
+	sqrt_over : sqrt_over SMALLOVER . sqrt_over  (16)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	sqrt_over  goto 104
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 74
+	from_to : sqrt_over TO . from_to  (9)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	from_to  goto 105
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 75
+	from_to : sqrt_over FROM . sqrt_over  (10)
+	from_to : sqrt_over FROM . sqrt_over TO from_to  (11)
+	from_to : sqrt_over FROM . sqrt_over FROM from_to  (12)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	sqrt_over  goto 106
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 76
+	nonsup : simple SUB . nonsup  (20)
+	nonsup : simple SUB . simple SUP script  (21)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 107
+	nonsup  goto 108
+
+
+state 77
+	script : simple SUP . script  (18)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	script  goto 109
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 78
+	simple : simple ACCENT . simple  (40)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 110
+
+
+state 79
+	simple : simple BAR .  (37)
+
+	.  reduce 37
+
+
+state 80
+	simple : simple UNDER .  (38)
+
+	.  reduce 38
+
+
+state 81
+	simple : simple PRIME .  (39)
+
+	.  reduce 39
+
+
+state 82
+	simple : simple UACCENT . simple  (41)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	simple  goto 111
+
+
+state 83
+	equation : equation mark .  (4)
+
+	.  reduce 4
+
+
+state 84
+	equation : equation . mark  (4)
+	pile_element_list : equation .  (56)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	ABOVE  reduce 56
+	'}'  reduce 56
+
+	mark  goto 83
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 85
+	pile_element_list : pile_element_list . ABOVE equation  (57)
+	pile_arg : '{' pile_element_list . '}'  (58)
+
+	ABOVE  shift 112
+	'}'  shift 113
+	.  error
+
+
+state 86
+	pile_arg : number '{' . pile_element_list '}'  (59)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	mark  goto 32
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	equation  goto 84
+	nonsup  goto 38
+	pile_element_list  goto 114
+
+
+state 87
+	equation : equation . mark  (4)
+	simple : LEFT delim equation . RIGHT delim  (35)
+	simple : LEFT delim equation .  (36)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	RIGHT  shift 115
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	$end  reduce 36
+	OVER  reduce 36
+	SMALLOVER  reduce 36
+	SUB  reduce 36
+	SUP  reduce 36
+	TO  reduce 36
+	FROM  reduce 36
+	ACCENT  reduce 36
+	BAR  reduce 36
+	UNDER  reduce 36
+	ABOVE  reduce 36
+	PRIME  reduce 36
+	UACCENT  reduce 36
+	'}'  reduce 36
+
+	mark  goto 83
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 88
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : SIZE text simple .  (47)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 47
+	OVER  reduce 47
+	SMALLOVER  reduce 47
+	SQRT  reduce 47
+	SUB  reduce 47
+	SUP  reduce 47
+	LPILE  reduce 47
+	RPILE  reduce 47
+	CPILE  reduce 47
+	PILE  reduce 47
+	LEFT  reduce 47
+	RIGHT  reduce 47
+	TO  reduce 47
+	FROM  reduce 47
+	SIZE  reduce 47
+	FONT  reduce 47
+	ROMAN  reduce 47
+	BOLD  reduce 47
+	ITALIC  reduce 47
+	FAT  reduce 47
+	ABOVE  reduce 47
+	TEXT  reduce 47
+	QUOTED_TEXT  reduce 47
+	FWD  reduce 47
+	BACK  reduce 47
+	DOWN  reduce 47
+	UP  reduce 47
+	MATRIX  reduce 47
+	MARK  reduce 47
+	LINEUP  reduce 47
+	TYPE  reduce 47
+	VCENTER  reduce 47
+	SPLIT  reduce 47
+	NOSPLIT  reduce 47
+	SPECIAL  reduce 47
+	'^'  reduce 47
+	'~'  reduce 47
+	'\t'  reduce 47
+	'{'  reduce 47
+	'}'  reduce 47
+
+
+state 89
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : FONT text simple .  (46)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 46
+	OVER  reduce 46
+	SMALLOVER  reduce 46
+	SQRT  reduce 46
+	SUB  reduce 46
+	SUP  reduce 46
+	LPILE  reduce 46
+	RPILE  reduce 46
+	CPILE  reduce 46
+	PILE  reduce 46
+	LEFT  reduce 46
+	RIGHT  reduce 46
+	TO  reduce 46
+	FROM  reduce 46
+	SIZE  reduce 46
+	FONT  reduce 46
+	ROMAN  reduce 46
+	BOLD  reduce 46
+	ITALIC  reduce 46
+	FAT  reduce 46
+	ABOVE  reduce 46
+	TEXT  reduce 46
+	QUOTED_TEXT  reduce 46
+	FWD  reduce 46
+	BACK  reduce 46
+	DOWN  reduce 46
+	UP  reduce 46
+	MATRIX  reduce 46
+	MARK  reduce 46
+	LINEUP  reduce 46
+	TYPE  reduce 46
+	VCENTER  reduce 46
+	SPLIT  reduce 46
+	NOSPLIT  reduce 46
+	SPECIAL  reduce 46
+	'^'  reduce 46
+	'~'  reduce 46
+	'\t'  reduce 46
+	'{'  reduce 46
+	'}'  reduce 46
+
+
+state 90
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : FWD number simple .  (48)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 48
+	OVER  reduce 48
+	SMALLOVER  reduce 48
+	SQRT  reduce 48
+	SUB  reduce 48
+	SUP  reduce 48
+	LPILE  reduce 48
+	RPILE  reduce 48
+	CPILE  reduce 48
+	PILE  reduce 48
+	LEFT  reduce 48
+	RIGHT  reduce 48
+	TO  reduce 48
+	FROM  reduce 48
+	SIZE  reduce 48
+	FONT  reduce 48
+	ROMAN  reduce 48
+	BOLD  reduce 48
+	ITALIC  reduce 48
+	FAT  reduce 48
+	ABOVE  reduce 48
+	TEXT  reduce 48
+	QUOTED_TEXT  reduce 48
+	FWD  reduce 48
+	BACK  reduce 48
+	DOWN  reduce 48
+	UP  reduce 48
+	MATRIX  reduce 48
+	MARK  reduce 48
+	LINEUP  reduce 48
+	TYPE  reduce 48
+	VCENTER  reduce 48
+	SPLIT  reduce 48
+	NOSPLIT  reduce 48
+	SPECIAL  reduce 48
+	'^'  reduce 48
+	'~'  reduce 48
+	'\t'  reduce 48
+	'{'  reduce 48
+	'}'  reduce 48
+
+
+state 91
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : BACK number simple .  (49)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 49
+	OVER  reduce 49
+	SMALLOVER  reduce 49
+	SQRT  reduce 49
+	SUB  reduce 49
+	SUP  reduce 49
+	LPILE  reduce 49
+	RPILE  reduce 49
+	CPILE  reduce 49
+	PILE  reduce 49
+	LEFT  reduce 49
+	RIGHT  reduce 49
+	TO  reduce 49
+	FROM  reduce 49
+	SIZE  reduce 49
+	FONT  reduce 49
+	ROMAN  reduce 49
+	BOLD  reduce 49
+	ITALIC  reduce 49
+	FAT  reduce 49
+	ABOVE  reduce 49
+	TEXT  reduce 49
+	QUOTED_TEXT  reduce 49
+	FWD  reduce 49
+	BACK  reduce 49
+	DOWN  reduce 49
+	UP  reduce 49
+	MATRIX  reduce 49
+	MARK  reduce 49
+	LINEUP  reduce 49
+	TYPE  reduce 49
+	VCENTER  reduce 49
+	SPLIT  reduce 49
+	NOSPLIT  reduce 49
+	SPECIAL  reduce 49
+	'^'  reduce 49
+	'~'  reduce 49
+	'\t'  reduce 49
+	'{'  reduce 49
+	'}'  reduce 49
+
+
+state 92
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : DOWN number simple .  (51)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 51
+	OVER  reduce 51
+	SMALLOVER  reduce 51
+	SQRT  reduce 51
+	SUB  reduce 51
+	SUP  reduce 51
+	LPILE  reduce 51
+	RPILE  reduce 51
+	CPILE  reduce 51
+	PILE  reduce 51
+	LEFT  reduce 51
+	RIGHT  reduce 51
+	TO  reduce 51
+	FROM  reduce 51
+	SIZE  reduce 51
+	FONT  reduce 51
+	ROMAN  reduce 51
+	BOLD  reduce 51
+	ITALIC  reduce 51
+	FAT  reduce 51
+	ABOVE  reduce 51
+	TEXT  reduce 51
+	QUOTED_TEXT  reduce 51
+	FWD  reduce 51
+	BACK  reduce 51
+	DOWN  reduce 51
+	UP  reduce 51
+	MATRIX  reduce 51
+	MARK  reduce 51
+	LINEUP  reduce 51
+	TYPE  reduce 51
+	VCENTER  reduce 51
+	SPLIT  reduce 51
+	NOSPLIT  reduce 51
+	SPECIAL  reduce 51
+	'^'  reduce 51
+	'~'  reduce 51
+	'\t'  reduce 51
+	'{'  reduce 51
+	'}'  reduce 51
+
+
+state 93
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : UP number simple .  (50)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 50
+	OVER  reduce 50
+	SMALLOVER  reduce 50
+	SQRT  reduce 50
+	SUB  reduce 50
+	SUP  reduce 50
+	LPILE  reduce 50
+	RPILE  reduce 50
+	CPILE  reduce 50
+	PILE  reduce 50
+	LEFT  reduce 50
+	RIGHT  reduce 50
+	TO  reduce 50
+	FROM  reduce 50
+	SIZE  reduce 50
+	FONT  reduce 50
+	ROMAN  reduce 50
+	BOLD  reduce 50
+	ITALIC  reduce 50
+	FAT  reduce 50
+	ABOVE  reduce 50
+	TEXT  reduce 50
+	QUOTED_TEXT  reduce 50
+	FWD  reduce 50
+	BACK  reduce 50
+	DOWN  reduce 50
+	UP  reduce 50
+	MATRIX  reduce 50
+	MARK  reduce 50
+	LINEUP  reduce 50
+	TYPE  reduce 50
+	VCENTER  reduce 50
+	SPLIT  reduce 50
+	NOSPLIT  reduce 50
+	SPECIAL  reduce 50
+	'^'  reduce 50
+	'~'  reduce 50
+	'\t'  reduce 50
+	'{'  reduce 50
+	'}'  reduce 50
+
+
+state 94
+	column : COL . column_arg  (66)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	'{'  shift 116
+	.  error
+
+	number  goto 117
+	text  goto 44
+	column_arg  goto 118
+
+
+state 95
+	column : LCOL . column_arg  (67)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	'{'  shift 116
+	.  error
+
+	number  goto 117
+	text  goto 44
+	column_arg  goto 119
+
+
+state 96
+	column : RCOL . column_arg  (68)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	'{'  shift 116
+	.  error
+
+	number  goto 117
+	text  goto 44
+	column_arg  goto 120
+
+
+state 97
+	column : CCOL . column_arg  (69)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	'{'  shift 116
+	.  error
+
+	number  goto 117
+	text  goto 44
+	column_arg  goto 121
+
+
+state 98
+	simple : MATRIX '{' column_list . '}'  (34)
+	column_list : column_list . column  (61)
+
+	COL  shift 94
+	LCOL  shift 95
+	RCOL  shift 96
+	CCOL  shift 97
+	'}'  shift 122
+	.  error
+
+	column  goto 123
+
+
+state 99
+	column_list : column .  (60)
+
+	.  reduce 60
+
+
+state 100
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : TYPE text simple .  (52)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 52
+	OVER  reduce 52
+	SMALLOVER  reduce 52
+	SQRT  reduce 52
+	SUB  reduce 52
+	SUP  reduce 52
+	LPILE  reduce 52
+	RPILE  reduce 52
+	CPILE  reduce 52
+	PILE  reduce 52
+	LEFT  reduce 52
+	RIGHT  reduce 52
+	TO  reduce 52
+	FROM  reduce 52
+	SIZE  reduce 52
+	FONT  reduce 52
+	ROMAN  reduce 52
+	BOLD  reduce 52
+	ITALIC  reduce 52
+	FAT  reduce 52
+	ABOVE  reduce 52
+	TEXT  reduce 52
+	QUOTED_TEXT  reduce 52
+	FWD  reduce 52
+	BACK  reduce 52
+	DOWN  reduce 52
+	UP  reduce 52
+	MATRIX  reduce 52
+	MARK  reduce 52
+	LINEUP  reduce 52
+	TYPE  reduce 52
+	VCENTER  reduce 52
+	SPLIT  reduce 52
+	NOSPLIT  reduce 52
+	SPECIAL  reduce 52
+	'^'  reduce 52
+	'~'  reduce 52
+	'\t'  reduce 52
+	'{'  reduce 52
+	'}'  reduce 52
+
+
+state 101
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : SPECIAL text simple .  (54)
+
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 54
+	OVER  reduce 54
+	SMALLOVER  reduce 54
+	SQRT  reduce 54
+	SUB  reduce 54
+	SUP  reduce 54
+	LPILE  reduce 54
+	RPILE  reduce 54
+	CPILE  reduce 54
+	PILE  reduce 54
+	LEFT  reduce 54
+	RIGHT  reduce 54
+	TO  reduce 54
+	FROM  reduce 54
+	SIZE  reduce 54
+	FONT  reduce 54
+	ROMAN  reduce 54
+	BOLD  reduce 54
+	ITALIC  reduce 54
+	FAT  reduce 54
+	ABOVE  reduce 54
+	TEXT  reduce 54
+	QUOTED_TEXT  reduce 54
+	FWD  reduce 54
+	BACK  reduce 54
+	DOWN  reduce 54
+	UP  reduce 54
+	MATRIX  reduce 54
+	MARK  reduce 54
+	LINEUP  reduce 54
+	TYPE  reduce 54
+	VCENTER  reduce 54
+	SPLIT  reduce 54
+	NOSPLIT  reduce 54
+	SPECIAL  reduce 54
+	'^'  reduce 54
+	'~'  reduce 54
+	'\t'  reduce 54
+	'{'  reduce 54
+	'}'  reduce 54
+
+
+state 102
+	simple : '{' equation '}' .  (29)
+
+	.  reduce 29
+
+
+state 103
+	sqrt_over : sqrt_over . OVER sqrt_over  (15)
+	sqrt_over : sqrt_over OVER sqrt_over .  (15)
+	sqrt_over : sqrt_over . SMALLOVER sqrt_over  (16)
+
+	.  reduce 15
+
+
+state 104
+	sqrt_over : sqrt_over . OVER sqrt_over  (15)
+	sqrt_over : sqrt_over . SMALLOVER sqrt_over  (16)
+	sqrt_over : sqrt_over SMALLOVER sqrt_over .  (16)
+
+	.  reduce 16
+
+
+state 105
+	from_to : sqrt_over TO from_to .  (9)
+
+	.  reduce 9
+
+
+state 106
+	from_to : sqrt_over FROM sqrt_over .  (10)
+	from_to : sqrt_over FROM sqrt_over . TO from_to  (11)
+	from_to : sqrt_over FROM sqrt_over . FROM from_to  (12)
+	sqrt_over : sqrt_over . OVER sqrt_over  (15)
+	sqrt_over : sqrt_over . SMALLOVER sqrt_over  (16)
+
+	OVER  shift 72
+	SMALLOVER  shift 73
+	TO  shift 124
+	FROM  shift 125
+	$end  reduce 10
+	SQRT  reduce 10
+	SUB  reduce 10
+	SUP  reduce 10
+	LPILE  reduce 10
+	RPILE  reduce 10
+	CPILE  reduce 10
+	PILE  reduce 10
+	LEFT  reduce 10
+	RIGHT  reduce 10
+	SIZE  reduce 10
+	FONT  reduce 10
+	ROMAN  reduce 10
+	BOLD  reduce 10
+	ITALIC  reduce 10
+	FAT  reduce 10
+	ACCENT  reduce 10
+	BAR  reduce 10
+	UNDER  reduce 10
+	ABOVE  reduce 10
+	TEXT  reduce 10
+	QUOTED_TEXT  reduce 10
+	FWD  reduce 10
+	BACK  reduce 10
+	DOWN  reduce 10
+	UP  reduce 10
+	MATRIX  reduce 10
+	MARK  reduce 10
+	LINEUP  reduce 10
+	TYPE  reduce 10
+	VCENTER  reduce 10
+	PRIME  reduce 10
+	SPLIT  reduce 10
+	NOSPLIT  reduce 10
+	UACCENT  reduce 10
+	SPECIAL  reduce 10
+	'^'  reduce 10
+	'~'  reduce 10
+	'\t'  reduce 10
+	'{'  reduce 10
+	'}'  reduce 10
+
+
+state 107
+	nonsup : simple .  (19)
+	nonsup : simple . SUB nonsup  (20)
+	nonsup : simple . SUB simple SUP script  (21)
+	nonsup : simple SUB simple . SUP script  (21)
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+
+	SUB  shift 76
+	SUP  shift 126
+	ACCENT  shift 78
+	BAR  shift 79
+	UNDER  shift 80
+	PRIME  shift 81
+	UACCENT  shift 82
+	$end  reduce 19
+	OVER  reduce 19
+	SMALLOVER  reduce 19
+	SQRT  reduce 19
+	LPILE  reduce 19
+	RPILE  reduce 19
+	CPILE  reduce 19
+	PILE  reduce 19
+	LEFT  reduce 19
+	RIGHT  reduce 19
+	TO  reduce 19
+	FROM  reduce 19
+	SIZE  reduce 19
+	FONT  reduce 19
+	ROMAN  reduce 19
+	BOLD  reduce 19
+	ITALIC  reduce 19
+	FAT  reduce 19
+	ABOVE  reduce 19
+	TEXT  reduce 19
+	QUOTED_TEXT  reduce 19
+	FWD  reduce 19
+	BACK  reduce 19
+	DOWN  reduce 19
+	UP  reduce 19
+	MATRIX  reduce 19
+	MARK  reduce 19
+	LINEUP  reduce 19
+	TYPE  reduce 19
+	VCENTER  reduce 19
+	SPLIT  reduce 19
+	NOSPLIT  reduce 19
+	SPECIAL  reduce 19
+	'^'  reduce 19
+	'~'  reduce 19
+	'\t'  reduce 19
+	'{'  reduce 19
+	'}'  reduce 19
+
+
+state 108
+	nonsup : simple SUB nonsup .  (20)
+
+	.  reduce 20
+
+
+state 109
+	script : simple SUP script .  (18)
+
+	.  reduce 18
+
+
+state 110
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple ACCENT simple .  (40)
+	simple : simple . UACCENT simple  (41)
+
+	.  reduce 40
+
+
+state 111
+	simple : simple . BAR  (37)
+	simple : simple . UNDER  (38)
+	simple : simple . PRIME  (39)
+	simple : simple . ACCENT simple  (40)
+	simple : simple . UACCENT simple  (41)
+	simple : simple UACCENT simple .  (41)
+
+	.  reduce 41
+
+
+state 112
+	pile_element_list : pile_element_list ABOVE . equation  (57)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	mark  goto 32
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	equation  goto 127
+	nonsup  goto 38
+
+
+state 113
+	pile_arg : '{' pile_element_list '}' .  (58)
+
+	.  reduce 58
+
+
+state 114
+	pile_element_list : pile_element_list . ABOVE equation  (57)
+	pile_arg : number '{' pile_element_list . '}'  (59)
+
+	ABOVE  shift 112
+	'}'  shift 128
+	.  error
+
+
+state 115
+	simple : LEFT delim equation RIGHT . delim  (35)
+
+	TEXT  shift 40
+	QUOTED_TEXT  shift 41
+	'{'  shift 49
+	'}'  shift 50
+	.  error
+
+	text  goto 51
+	delim  goto 129
+
+
+state 116
+	column_arg : '{' . column_element_list '}'  (64)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	mark  goto 32
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	equation  goto 130
+	nonsup  goto 38
+	column_element_list  goto 131
+
+
+state 117
+	column_arg : number . '{' column_element_list '}'  (65)
+
+	'{'  shift 132
+	.  error
+
+
+state 118
+	column : COL column_arg .  (66)
+
+	.  reduce 66
+
+
+state 119
+	column : LCOL column_arg .  (67)
+
+	.  reduce 67
+
+
+state 120
+	column : RCOL column_arg .  (68)
+
+	.  reduce 68
+
+
+state 121
+	column : CCOL column_arg .  (69)
+
+	.  reduce 69
+
+
+state 122
+	simple : MATRIX '{' column_list '}' .  (34)
+
+	.  reduce 34
+
+
+state 123
+	column_list : column_list column .  (61)
+
+	.  reduce 61
+
+
+state 124
+	from_to : sqrt_over FROM sqrt_over TO . from_to  (11)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	from_to  goto 133
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 125
+	from_to : sqrt_over FROM sqrt_over FROM . from_to  (12)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	from_to  goto 134
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 126
+	nonsup : simple SUB simple SUP . script  (21)
+
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	script  goto 135
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 127
+	equation : equation . mark  (4)
+	pile_element_list : pile_element_list ABOVE equation .  (57)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	ABOVE  reduce 57
+	'}'  reduce 57
+
+	mark  goto 83
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 128
+	pile_arg : number '{' pile_element_list '}' .  (59)
+
+	.  reduce 59
+
+
+state 129
+	simple : LEFT delim equation RIGHT delim .  (35)
+
+	.  reduce 35
+
+
+state 130
+	equation : equation . mark  (4)
+	column_element_list : equation .  (62)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	ABOVE  reduce 62
+	'}'  reduce 62
+
+	mark  goto 83
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 131
+	column_element_list : column_element_list . ABOVE equation  (63)
+	column_arg : '{' column_element_list . '}'  (64)
+
+	ABOVE  shift 136
+	'}'  shift 137
+	.  error
+
+
+state 132
+	column_arg : number '{' . column_element_list '}'  (65)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	mark  goto 32
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	equation  goto 130
+	nonsup  goto 38
+	column_element_list  goto 138
+
+
+state 133
+	from_to : sqrt_over FROM sqrt_over TO from_to .  (11)
+
+	.  reduce 11
+
+
+state 134
+	from_to : sqrt_over FROM sqrt_over FROM from_to .  (12)
+
+	.  reduce 12
+
+
+state 135
+	nonsup : simple SUB simple SUP script .  (21)
+
+	.  reduce 21
+
+
+state 136
+	column_element_list : column_element_list ABOVE . equation  (63)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	.  error
+
+	mark  goto 32
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	equation  goto 139
+	nonsup  goto 38
+
+
+state 137
+	column_arg : '{' column_element_list '}' .  (64)
+
+	.  reduce 64
+
+
+state 138
+	column_element_list : column_element_list . ABOVE equation  (63)
+	column_arg : number '{' column_element_list . '}'  (65)
+
+	ABOVE  shift 136
+	'}'  shift 140
+	.  error
+
+
+state 139
+	equation : equation . mark  (4)
+	column_element_list : column_element_list ABOVE equation .  (63)
+
+	SQRT  shift 1
+	LPILE  shift 2
+	RPILE  shift 3
+	CPILE  shift 4
+	PILE  shift 5
+	LEFT  shift 6
+	SIZE  shift 7
+	FONT  shift 8
+	ROMAN  shift 9
+	BOLD  shift 10
+	ITALIC  shift 11
+	FAT  shift 12
+	TEXT  shift 13
+	QUOTED_TEXT  shift 14
+	FWD  shift 15
+	BACK  shift 16
+	DOWN  shift 17
+	UP  shift 18
+	MATRIX  shift 19
+	MARK  shift 20
+	LINEUP  shift 21
+	TYPE  shift 22
+	VCENTER  shift 23
+	SPLIT  shift 24
+	NOSPLIT  shift 25
+	SPECIAL  shift 26
+	'^'  shift 27
+	'~'  shift 28
+	'\t'  shift 29
+	'{'  shift 30
+	ABOVE  reduce 63
+	'}'  reduce 63
+
+	mark  goto 83
+	from_to  goto 33
+	sqrt_over  goto 34
+	script  goto 35
+	simple  goto 36
+	nonsup  goto 38
+
+
+state 140
+	column_arg : number '{' column_element_list '}' .  (65)
+
+	.  reduce 65
+
+
+65 terminals, 18 nonterminals
+75 grammar rules, 141 states
+
+grammar parser grammar
+symbol# value# symbol
+     0      0  $end
+     1    256  error
+     2    257  OVER
+     3    258  SMALLOVER
+     4    259  SQRT
+     5    260  SUB
+     6    261  SUP
+     7    262  LPILE
+     8    263  RPILE
+     9    264  CPILE
+    10    265  PILE
+    11    266  LEFT
+    12    267  RIGHT
+    13    268  TO
+    14    269  FROM
+    15    270  SIZE
+    16    271  FONT
+    17    272  ROMAN
+    18    273  BOLD
+    19    274  ITALIC
+    20    275  FAT
+    21    276  ACCENT
+    22    277  BAR
+    23    278  UNDER
+    24    279  ABOVE
+    25    280  TEXT
+    26    281  QUOTED_TEXT
+    27    282  FWD
+    28    283  BACK
+    29    284  DOWN
+    30    285  UP
+    31    286  MATRIX
+    32    287  COL
+    33    288  LCOL
+    34    289  RCOL
+    35    290  CCOL
+    36    291  MARK
+    37    292  LINEUP
+    38    293  TYPE
+    39    294  VCENTER
+    40    295  PRIME
+    41    296  SPLIT
+    42    297  NOSPLIT
+    43    298  UACCENT
+    44    299  SPECIAL
+    45    300  SPACE
+    46    301  GFONT
+    47    302  GSIZE
+    48    303  DEFINE
+    49    304  NDEFINE
+    50    305  TDEFINE
+    51    306  SDEFINE
+    52    307  UNDEF
+    53    308  IFDEF
+    54    309  INCLUDE
+    55    310  DELIM
+    56    311  CHARTYPE
+    57    312  SET
+    58    313  GRFONT
+    59    314  GBFONT
+    60     94  '^'
+    61    126  '~'
+    62      9  '\t'
+    63    123  '{'
+    64    125  '}'
+    65    315  $accept
+    66    316  top
+    67    317  mark
+    68    318  from_to
+    69    319  sqrt_over
+    70    320  script
+    71    321  simple
+    72    322  equation
+    73    323  nonsup
+    74    324  number
+    75    325  text
+    76    326  delim
+    77    327  pile_element_list
+    78    328  pile_arg
+    79    329  column_list
+    80    330  column
+    81    331  column_arg
+    82    332  column_element_list

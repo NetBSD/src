@@ -536,7 +536,7 @@ LIMITS_H_TEST = [ -f $(BUILD_SYSTEM_HEADER_DIR)/limits.h ]
 
 # Directory for prefix to system directories, for
 # each of $(system_prefix)/usr/include, $(system_prefix)/usr/lib, etc.
-TARGET_SYSTEM_ROOT = /Users/sidqian/Downloads/summer/L2S/netbsd-src/build/obj/destdir.soft68k
+TARGET_SYSTEM_ROOT = /Users/sidqian/Downloads/summer/L2S/netbsd-src/build/obj/destdir.luna68k
 TARGET_SYSTEM_ROOT_DEFINE = -DTARGET_SYSTEM_ROOT=\"$(TARGET_SYSTEM_ROOT)\"
 
 xmake_file= $(srcdir)/config/x-darwin $(srcdir)/config/i386/x-darwin

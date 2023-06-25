@@ -40,7 +40,6 @@ ac_cv_func_basename=${ac_cv_func_basename=yes}
 ac_cv_func_devname=${ac_cv_func_devname=yes}
 ac_cv_func_dirfd=${ac_cv_func_dirfd=yes}
 ac_cv_func_dirname=${ac_cv_func_dirname=yes}
-ac_cv_func_dispatch_semaphore_create=${ac_cv_func_dispatch_semaphore_create=yes}
 ac_cv_func_dprintf=${ac_cv_func_dprintf=yes}
 ac_cv_func_esetfunc=${ac_cv_func_esetfunc=no}
 ac_cv_func_fgetln=${ac_cv_func_fgetln=yes}
@@ -291,15 +290,3 @@ ac_cv_type_uint_t=${ac_cv_type_uint_t=no}
 ac_cv_type_ulong_t=${ac_cv_type_ulong_t=no}
 ac_cv_type_ushort_t=${ac_cv_type_ushort_t=no}
 ac_cv_working_alloca_h=${ac_cv_working_alloca_h=yes}
-ax_cv_check_cflags__Waddress_of_packed_member=${ax_cv_check_cflags__Waddress_of_packed_member=yes}
-ax_cv_check_cflags__Wcast_function_type=${ax_cv_check_cflags__Wcast_function_type=yes}
-ax_cv_check_cflags__Werror_address_of_packed_member=${ax_cv_check_cflags__Werror_address_of_packed_member=yes}
-ax_cv_check_cflags__Wformat_overflow=${ax_cv_check_cflags__Wformat_overflow=no}
-ax_cv_check_cflags__Wformat_truncation=${ax_cv_check_cflags__Wformat_truncation=no}
-ax_cv_check_cflags__Wimplicit_fallthrough=${ax_cv_check_cflags__Wimplicit_fallthrough=yes}
-ax_cv_check_cflags__Wmaybe_uninitialized=${ax_cv_check_cflags__Wmaybe_uninitialized=no}
-ax_cv_check_cflags__Wreturn_local_addr=${ax_cv_check_cflags__Wreturn_local_addr=no}
-ax_cv_check_cflags__Wstringop_overflow=${ax_cv_check_cflags__Wstringop_overflow=no}
-ax_cv_check_cflags__Wstringop_truncation=${ax_cv_check_cflags__Wstringop_truncation=no}
-ax_cv_check_cflags___Werror_unknown_warning_option=${ax_cv_check_cflags___Werror_unknown_warning_option=yes}
-ax_cv_check_cflags__no_cpp_precomp=${ax_cv_check_cflags__no_cpp_precomp=yes}

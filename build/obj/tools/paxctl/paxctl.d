@@ -162,6 +162,8 @@ paxctl.o: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/D
 paxctl.o: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/dirent.h
 paxctl.o: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/dirent.h
 paxctl.o: /Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/paxctl/../../usr.sbin/paxctl/../../sys/sys/exec_elf.h
+paxctl.o: /Users/sidqian/Downloads/summer/L2S/netbsd-src/build/obj/tooldir.Darwin-22.1.0-x86_64/include/nbinclude/machine/elf_machdep.h
+paxctl.o: /Users/sidqian/Downloads/summer/L2S/netbsd-src/build/obj/tooldir.Darwin-22.1.0-x86_64/include/nbinclude/m68k/elf_machdep.h
 paxctl.o: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/unistd.h
 paxctl.o: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/unistd.h
 paxctl.o: /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sys/_types/_posix_vdisable.h

@@ -30,8 +30,8 @@ Kernel configured for up to 8 processors.
 Processor type: x86_64h (Intel x86-64h Haswell)
 Processors active: 0 1 2 3 4 5 6 7
 Primary memory available: 16.00 gigabytes
-Default processor set: 676 tasks, 3069 threads, 8 processors
-Load average: 4.60, Mach factor: 3.44
+Default processor set: 644 tasks, 3156 threads, 8 processors
+Load average: 4.35, Mach factor: 3.64
 /bin/machine           = unknown
 /usr/bin/oslevel       = unknown
 /bin/universe          = unknown
@@ -940,7 +940,7 @@ configure:5578: checking for fgets_unlocked
 configure:5578: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_fgets_unlocked", referenced from:
-      _main in conftest-3a381a.o
+      _main in conftest-6181d5.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:5578: $? = 1
@@ -1062,7 +1062,7 @@ conftest.c:75:6: note: 'mempcpy' is a builtin with type 'void *(void *, const vo
 1 warning generated.
 Undefined symbols for architecture x86_64:
   "_mempcpy", referenced from:
-      _main in conftest-d21a11.o
+      _main in conftest-4320a0.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:5578: $? = 1
@@ -1217,7 +1217,7 @@ configure:5578: checking for __argz_count
 configure:5578: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "___argz_count", referenced from:
-      _main in conftest-32702e.o
+      _main in conftest-d6292b.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:5578: $? = 1
@@ -1325,7 +1325,7 @@ configure:5578: checking for __argz_stringify
 configure:5578: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "___argz_stringify", referenced from:
-      _main in conftest-4e0450.o
+      _main in conftest-6f129e.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:5578: $? = 1
@@ -1433,7 +1433,7 @@ configure:5578: checking for __argz_next
 configure:5578: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "___argz_next", referenced from:
-      _main in conftest-ea9851.o
+      _main in conftest-b088cf.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:5578: $? = 1
@@ -1541,7 +1541,7 @@ configure:5578: checking for __fsetlocking
 configure:5578: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "___fsetlocking", referenced from:
-      _main in conftest-c2f4c1.o
+      _main in conftest-48fee2.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:5578: $? = 1
@@ -1649,11 +1649,11 @@ configure:5593: checking for iconv
 configure:5617: cc -o conftest -O -O2 -no-cpp-precomp        conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_iconv", referenced from:
-      _main in conftest-f67d04.o
+      _main in conftest-1b232f.o
   "_iconv_close", referenced from:
-      _main in conftest-f67d04.o
+      _main in conftest-1b232f.o
   "_iconv_open", referenced from:
-      _main in conftest-f67d04.o
+      _main in conftest-1b232f.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:5617: $? = 1
