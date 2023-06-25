@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.232 2023/06/17 23:03:20 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.233 2023/06/25 18:41:03 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.232 2023/06/17 23:03:20 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.233 2023/06/25 18:41:03 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -459,7 +459,10 @@ found_typename:
 static bool
 is_asterisk_pointer(void)
 {
-	if (inp_p[strspn(inp_p, "* \t")] == ')')
+	const char *p = inp_p;
+	while (*p == '*' || ch_isblank(*p))
+		p++;
+	if (*p == ')')
 		return true;
 	if (ps.next_unary || ps.in_func_def_params)
 		return true;
