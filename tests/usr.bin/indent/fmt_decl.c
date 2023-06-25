@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt_decl.c,v 1.59 2023/06/16 23:51:32 rillig Exp $	*/
+/*	$NetBSD: fmt_decl.c,v 1.60 2023/06/25 19:19:42 rillig Exp $	*/
 
 /*
  * Tests for declarations of global variables, external functions, and local
@@ -963,6 +963,12 @@ debug_printf(const char *fmt, ...)
 //indent end
 
 
+/*
+ * When a name is defined both as a function and as a macro, the name in the
+ * function definition must be enclosed in parentheses, to prevent the macro
+ * from being expanded. It is also possible to undefine the macro, but that is
+ * often not done in practice.
+ */
 //indent input
 void
 (error_at)(int msgid, const pos_t *pos, ...)
@@ -970,14 +976,7 @@ void
 }
 //indent end
 
-//indent run -ci4 -di0 -ndj -nlp
-void
-// $ FIXME: Wrong indentation, should be 0 instead.
-// $ FIXME: There should be no space after the '*'.
-     (error_at)(int msgid, const pos_t * pos, ...)
-{
-}
-//indent end
+//indent run-equals-input
 
 
 //indent input

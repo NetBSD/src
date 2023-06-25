@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.382 2023/06/23 20:43:21 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.383 2023/06/25 19:19:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.382 2023/06/23 20:43:21 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.383 2023/06/25 19:19:42 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -961,7 +961,8 @@ process_word(lexer_symbol lsym)
 	if (ps.in_decl) {
 		if (lsym == lsym_funcname) {
 			ps.in_decl = false;
-			if (opt.procnames_start_line && code.len > 0)
+			if (opt.procnames_start_line
+			    && code.len > (*inp_p == ')' ? 1 : 0))
 				output_line();
 			else if (ps.want_blank)
 				buf_add_char(&code, ' ');

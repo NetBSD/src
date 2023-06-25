@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.233 2023/06/25 18:41:03 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.234 2023/06/25 19:19:42 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.233 2023/06/25 18:41:03 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.234 2023/06/25 19:19:42 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -333,10 +333,10 @@ cmp_keyword_by_name(const void *key, const void *elem)
  * function declaration.
  */
 static bool
-probably_function_definition(void)
+probably_function_definition(const char *p)
 {
 	int paren_level = 0;
-	for (const char *p = inp_p; *p != '\n'; p++) {
+	for (; *p != '\n'; p++) {
 		if (*p == '(')
 			paren_level++;
 		if (*p == ')' && --paren_level == 0) {
@@ -438,10 +438,17 @@ found_typename:
 		}
 	}
 
-	if (*inp_p == '(' && ps.psyms.len < 3 && ps.ind_level == 0 &&
+	const char *p = inp_p;
+	if (*p == ')')
+		p++;
+	if (*p == '(' && ps.psyms.len < 3 && ps.ind_level == 0 &&
 	    !ps.in_func_def_params && !ps.in_init) {
 
-		if (ps.paren.len == 0 && probably_function_definition()) {
+		bool maybe_function_definition = *inp_p == ')'
+		    ? ps.paren.len == 1 && ps.prev_lsym != lsym_unary_op
+		    : ps.paren.len == 0;
+		if (maybe_function_definition
+		    && probably_function_definition(p)) {
 			ps.line_has_func_def = true;
 			if (ps.in_decl)
 				ps.in_func_def_params = true;
@@ -456,8 +463,28 @@ found_typename:
 	return lsym;
 }
 
+static void
+check_parenthesized_function_definition(void)
+{
+	const char *p = inp_p;
+	while (ch_isblank(*p))
+		p++;
+	if (is_identifier_start(*p))
+		while (is_identifier_part(*p))
+			p++;
+	while (ch_isblank(*p))
+		p++;
+	if (*p == ')') {
+		p++;
+		while (ch_isblank(*p))
+			p++;
+		if (*p == '(' && probably_function_definition(p))
+			ps.line_has_func_def = true;
+	}
+}
+
 static bool
-is_asterisk_pointer(void)
+is_asterisk_unary(void)
 {
 	const char *p = inp_p;
 	while (*p == '*' || ch_isblank(*p))
@@ -490,7 +517,7 @@ probably_in_function_definition(void)
 }
 
 static void
-lex_asterisk_pointer(void)
+lex_asterisk_unary(void)
 {
 	while (*inp_p == '*' || ch_isspace(*inp_p)) {
 		if (*inp_p == '*')
@@ -575,7 +602,6 @@ lexi(void)
 		break;
 
 	/* INDENT OFF */
-	case '(':	lsym = lsym_lparen;	next_unary = true;	break;
 	case ')':	lsym = lsym_rparen;	next_unary = false;	break;
 	case '[':	lsym = lsym_lbracket;	next_unary = true;	break;
 	case ']':	lsym = lsym_rbracket;	next_unary = false;	break;
@@ -586,6 +612,13 @@ lexi(void)
 	case ',':	lsym = lsym_comma;	next_unary = true;	break;
 	case ';':	lsym = lsym_semicolon;	next_unary = true;	break;
 	/* INDENT ON */
+
+	case '(':
+		if (inp_p == inp.s + 1)
+			check_parenthesized_function_definition();
+		lsym = lsym_lparen;
+		next_unary = true;
+		break;
 
 	case '+':
 	case '-':
@@ -625,8 +658,8 @@ lexi(void)
 		if (*inp_p == '=') {
 			token_add_char(*inp_p++);
 			lsym = lsym_binary_op;
-		} else if (is_asterisk_pointer()) {
-			lex_asterisk_pointer();
+		} else if (is_asterisk_unary()) {
+			lex_asterisk_unary();
 			lsym = lsym_unary_op;
 		} else
 			lsym = lsym_binary_op;
