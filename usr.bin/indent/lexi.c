@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.235 2023/06/25 19:29:57 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.236 2023/06/25 19:35:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.235 2023/06/25 19:29:57 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.236 2023/06/25 19:35:45 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -296,6 +296,8 @@ bsearch_typenames(const char *key)
 static bool
 is_typename(void)
 {
+	if (ps.prev_lsym == lsym_tag)
+		return true;
 	if (opt.auto_typedefs &&
 	    token.len >= 2 && memcmp(token.s + token.len - 2, "_t", 2) == 0)
 		return true;
@@ -335,6 +337,7 @@ cmp_keyword_by_name(const void *key, const void *elem)
 static bool
 probably_function_definition(const char *p)
 {
+	// TODO: Don't look at characters in comments, see lsym_funcname.c.
 	int paren_level = 0;
 	for (; *p != '\n'; p++) {
 		if (*p == '(')
@@ -409,29 +412,20 @@ lexi_alnum(void)
 	    array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
 	lexer_symbol lsym = lsym_word;
 	if (kw != NULL) {
-		if (kw->lsym == lsym_type)
-			lsym = lsym_type;
+		lsym = kw->lsym;
 		ps.next_unary = true;
-		if (kw->lsym == lsym_tag || kw->lsym == lsym_type)
+		if (lsym == lsym_tag || lsym == lsym_type)
 			goto found_typename;
-		return kw->lsym;
+		return lsym;
 	}
 
 	if (is_typename()) {
 		lsym = lsym_type;
 		ps.next_unary = true;
 found_typename:
-		if (ps.paren.len > 0) {
-			/* inside parentheses: cast, param list, offsetof or
-			 * sizeof */
-			struct paren_level *paren_level =
-			    ps.paren.item + ps.paren.len - 1;
-			if (paren_level->cast == cast_unknown)
-				paren_level->cast = cast_maybe;
-		}
 		if (ps.prev_lsym != lsym_period
 		    && ps.prev_lsym != lsym_unary_op) {
-			if (kw != NULL && kw->lsym == lsym_tag)
+			if (lsym == lsym_tag)
 				return lsym_tag;
 			if (ps.paren.len == 0)
 				return lsym_type;
