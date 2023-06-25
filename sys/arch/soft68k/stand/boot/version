@@ -1,0 +1,20 @@
+$NetBSD: version,v 1.13 2021/06/15 17:16:16 tsutsui Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+1.0:	Initial revision, based on 4.4BSD-Lite2/soft68k and NetBSD/hp300
+1.1:	Add netboot support.
+1.2:	Add support for secondary SPC SCSI on LUNA-II.
+1.3:	Add UFS2 support.
+1.4:	Add support for "awaiting key" to abort autoboot and get boot menu.
+1.5:	Check netboot and set proper default boot device.
+1.6:	Accept empty unit, partition, and filename. (defaults: 0, 0, "netbsd")
+1.7:	Check boot device on PROM and set proper default boot device and unit.
+1.8:	Probe SCSI devices at any IDs and change boot command to use SCSI
+	controller number and target ID to specify the boot disk.
+1.9:	Parse boot flags and pass boothowto and bootdev info to kernel.
+1.10:	Use booted device unit by default if no unit number is specified.
+1.11:	Disable slow gunzip CRC32 calculation.
+1.12:	Fix off-by-one of a number of blocks of probed disks.
