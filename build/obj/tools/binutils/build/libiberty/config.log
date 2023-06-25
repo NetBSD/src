@@ -30,8 +30,8 @@ Kernel configured for up to 8 processors.
 Processor type: x86_64h (Intel x86-64h Haswell)
 Processors active: 0 1 2 3 4 5 6 7
 Primary memory available: 16.00 gigabytes
-Default processor set: 643 tasks, 3075 threads, 8 processors
-Load average: 4.56, Mach factor: 3.43
+Default processor set: 669 tasks, 3046 threads, 8 processors
+Load average: 2.80, Mach factor: 5.19
 /bin/machine           = unknown
 /usr/bin/oslevel       = unknown
 /bin/universe          = unknown
@@ -1630,7 +1630,7 @@ conftest.c:94:6: note: 'mempcpy' is a builtin with type 'void *(void *, const vo
 1 warning generated.
 Undefined symbols for architecture x86_64:
   "_mempcpy", referenced from:
-      _main in conftest-ca433d.o
+      _main in conftest-14e8ed.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:6856: $? = 1
@@ -1929,7 +1929,7 @@ configure:6856: checking for strverscmp
 configure:6856: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_strverscmp", referenced from:
-      _main in conftest-b784a4.o
+      _main in conftest-7e1560.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:6856: $? = 1
@@ -2122,7 +2122,7 @@ configure:6856: checking for setproctitle
 configure:6856: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_setproctitle", referenced from:
-      _main in conftest-d2957d.o
+      _main in conftest-1d0f07.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:6856: $? = 1
@@ -2540,7 +2540,7 @@ configure:7198: checking for _doprnt
 configure:7198: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "__doprnt", referenced from:
-      _main in conftest-022923.o
+      _main in conftest-80cba8.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7198: $? = 1
@@ -2832,7 +2832,7 @@ configure:7282: checking for __fsetlocking
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "___fsetlocking", referenced from:
-      _main in conftest-7f2e87.o
+      _main in conftest-955f7a.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -2989,7 +2989,7 @@ configure:7282: checking for canonicalize_file_name
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_canonicalize_file_name", referenced from:
-      _main in conftest-cab2ad.o
+      _main in conftest-2775eb.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -3146,7 +3146,7 @@ configure:7282: checking for dup3
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_dup3", referenced from:
-      _main in conftest-68ac7a.o
+      _main in conftest-bfbfdd.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -3311,7 +3311,7 @@ configure:7282: checking for getsysinfo
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_getsysinfo", referenced from:
-      _main in conftest-eaf067.o
+      _main in conftest-07eb82.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -3472,7 +3472,7 @@ configure:7282: checking for on_exit
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_on_exit", referenced from:
-      _main in conftest-9ef7bb.o
+      _main in conftest-f9ce75.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -3632,7 +3632,7 @@ configure:7282: checking for pipe2
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_pipe2", referenced from:
-      _main in conftest-2bd158.o
+      _main in conftest-4a5c1d.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -3796,7 +3796,7 @@ configure:7282: checking for pstat_getdynamic
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_pstat_getdynamic", referenced from:
-      _main in conftest-3c4a97.o
+      _main in conftest-11f694.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -3957,7 +3957,7 @@ configure:7282: checking for pstat_getstatic
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_pstat_getstatic", referenced from:
-      _main in conftest-00fbfe.o
+      _main in conftest-ee1d4d.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -4126,7 +4126,7 @@ configure:7282: checking for spawnve
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_spawnve", referenced from:
-      _main in conftest-a0e1a7.o
+      _main in conftest-267275.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -4289,7 +4289,7 @@ configure:7282: checking for spawnvpe
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_spawnvpe", referenced from:
-      _main in conftest-a04e51.o
+      _main in conftest-4aab4e.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -4473,7 +4473,7 @@ configure:7282: checking for sysmp
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_sysmp", referenced from:
-      _main in conftest-4a0ebe.o
+      _main in conftest-a5cc30.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
@@ -4640,7 +4640,7 @@ configure:7282: checking for table
 configure:7282: cc -o conftest -O -O2 -no-cpp-precomp       conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_table", referenced from:
-      _main in conftest-c68c69.o
+      _main in conftest-54af77.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:7282: $? = 1
