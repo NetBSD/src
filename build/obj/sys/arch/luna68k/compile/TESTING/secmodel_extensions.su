@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions.c:308:1:secmodel_extensions_process_cb	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions.c:73:1:sysctl_security_extensions_setup	96	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions.c:369:1:secmodel_extensions_network_cb	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions.c:268:1:extensions_modcmd	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions.c:189:1:sysctl_extensions_user_handler	172	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions.c:154:1:sysctl_extensions_curtain_handler	172	dynamic,bounded

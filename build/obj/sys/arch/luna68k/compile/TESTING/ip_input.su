@@ -1,0 +1,14 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:1170:1:ip_rtaddr	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:1325:1:ip_forward	96	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:1610:1:sysctl_net_inet_ip_stats	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:1583:1:sysctl_net_inet_ip_pmtudto	164	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:1556:1:sysctl_net_inet_ip_forwsrcrt	176	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:392:1:ipintr	220	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:269:1:ip_init	112	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:823:1:ip_slowtimo	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:837:1:ip_drain	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:1227:1:ip_srcroute	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:1296:1:ip_fasttimo	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:1305:1:ip_drainstub	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:1499:1:ip_savecontrol	104	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_input.c:1805:1:ip_statinc	12	dynamic,bounded

@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_core.c:354:1:coredump_offset	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_core.c:77:1:coredump_modcmd	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_core.c:332:1:coredump_write	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_core.c:119:1:coredump	272	dynamic,bounded

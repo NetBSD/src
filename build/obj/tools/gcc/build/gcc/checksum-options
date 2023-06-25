@@ -1,0 +1,1 @@
+c++ -no-pie   -O -DIN_GCC  -DCROSS_DIRECTORY_STRUCTURE  -fno-strict-aliasing -fno-exceptions -fno-rtti -fasynchronous-unwind-tables -W -Wall -Wno-narrowing -Wwrite-strings -Wcast-qual -Wno-error=format-diag -Wmissing-format-attribute -Woverloaded-virtual -pedantic -Wno-long-long -Wno-variadic-macros -Wno-overlength-strings   -DHAVE_CONFIG_H 

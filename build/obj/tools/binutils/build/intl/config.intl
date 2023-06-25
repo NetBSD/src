@@ -1,0 +1,12 @@
+# This file records the configuration of libintl in a form that
+# can be read back in by a configure script in a sister directory.
+# See config/gettext.m4 for its use.
+
+USE_NLS='no'
+LIBINTL=''
+LIBINTL_DEP=''
+INCINTL=''
+
+XGETTEXT='/usr/local/bin/xgettext'
+GMSGFMT='/usr/local/bin/msgfmt'
+POSUB=''

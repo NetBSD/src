@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uvm_13.c:58:1:swapent13_cvt	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uvm_13.c:71:1:compat_uvm_swap_stats13	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uvm_13.c:79:1:uvm_13_init	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uvm_13.c:85:1:uvm_13_fini	0	static

@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_vt100_subr.c:848:1:vt100_decmode.isra	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_vt100_subr.c:57:1:wsemul_vt100_scrollup	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_vt100_subr.c:87:1:wsemul_vt100_scrolldown	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_vt100_subr.c:117:1:wsemul_vt100_ed	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_vt100_subr.c:163:1:wsemul_vt100_el	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_vt100_subr.c:189:1:wsemul_vt100_handle_csi	88	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_vt100_subr.c:761:1:wsemul_vt100_handle_dcs	24	dynamic,bounded

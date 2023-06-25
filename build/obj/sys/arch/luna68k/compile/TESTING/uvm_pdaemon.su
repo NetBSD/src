@@ -1,0 +1,12 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:1011:1:uvmpd_pool_drain_thread	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:208:1:uvmpd_tune	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:545:1:swapcluster_flush	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:137:1:uvm_wait	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:187:1:uvm_kick_pdaemon	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:350:1:uvm_pageout_start	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:357:1:uvm_pageout_done	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:417:1:uvmpd_trylockowner	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:608:1:uvmpd_dropswap	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:244:1:uvm_pageout	196	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:955:1:uvm_reclaimable	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pdaemon.c:997:1:uvm_estimatepageable	0	static

@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_uuid.c:66:1:sys_uuidgen	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_uuid.c:94:1:uuidgen	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_uuid.c:103:1:uuid_snprintf	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_uuid.c:115:1:uuid_printf	100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_uuid.c:142:1:uuid_enc_le	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_uuid.c:157:1:uuid_dec_le	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_uuid.c:172:1:uuid_enc_be	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_uuid.c:187:1:uuid_dec_be	8	static

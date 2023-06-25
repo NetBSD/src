@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rpst.c:269:1:rpst_remove_node_at	40	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rpst.c:71:1:rpst_init_tree	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rpst.c:231:1:rpst_insert_node	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rpst.c:350:1:rpst_remove_node	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rpst.c:429:1:rpst_iterate_next	84	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/rpst.c:376:1:rpst_iterate_first	40	static

@@ -1,0 +1,482 @@
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. [Deleted.  See
+.\"     ftp://ftp.cs.berkeley.edu/pub/4bsd/README.Impt.License.Change]
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)doc-syms	8.1 (Berkeley) 06/08/93
+.\"
+.eo
+.de Ux
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ds str-Ux \f[\n[curr-font]]\s[\n[curr-size]u]
+.if !\n[arg-limit] \
+.if \n[.$] \{\
+.ds macro-name Ux
+.parse-args \$@
+.\}
+.ds arg\n[arg-ptr] \*[Tn-font-size]UNIX\*[str-Ux]
+.nr type\n[arg-ptr] 2
+.ds space\n[arg-ptr] "\*[space]
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.if \n[num-args] \
+.parse-space-vector
+.print-recursive
+..
+.ds str-Bx-Reno  \-Reno
+.ds str-Bx-reno  \-Reno
+.ds str-Bx-Tahoe \-Tahoe
+.ds str-Bx-tahoe \-Tahoe
+.ds str-Bx-Lite  \-Lite
+.ds str-Bx-lite  \-Lite
+.ds str-Bx-Lite2 \-Lite2
+.ds str-Bx-lite2 \-Lite2
+.de Bx
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ds str-Bx \f[\n[curr-font]]\s[\n[curr-size]u]
+.ds str-Bx1 \*[Tn-font-size]BSD\*[str-Bx]
+.if !\n[arg-limit] \
+.if \n[.$] \{\
+.ds macro-name Bx
+.parse-args \$@
+.\}
+.if (\n[arg-limit] > \n[arg-ptr]) \{\
+.nr arg-ptr +1
+.ie (\n[type\n[arg-ptr]] == 2) \{\
+.ie        "\*[arg\n[arg-ptr]]"-alpha" \
+.as str-Bx1 " (currently in alpha test)
+.el \{ .ie "\*[arg\n[arg-ptr]]"-beta" \
+.as str-Bx1 " (currently in beta test)
+.el \{ .ie "\*[arg\n[arg-ptr]]"-devel" \
+.as str-Bx1 " (currently under development)
+.el \{\
+.ds str-Bx1 \&\*[arg\n[arg-ptr]]\^\*[Tn-font-size]
+.as str-Bx1 BSD\*[str-Bx]
+.if (\n[arg-limit] > \n[arg-ptr]) \{\
+.nr arg-ptr +1
+.ie (\n[type\n[arg-ptr]] == 2) \{\
+.ie (\n[type\n[arg-ptr]] == 2) \{\
+.ie d str-Bx-\*[arg\n[arg-ptr]] \
+.as str-Bx1 "\*[str-Bx-\*[arg\n[arg-ptr]]]
+.el \
+.nr arg-ptr -1
+.\}
+.el \
+.nr arg-ptr -1
+.\}
+.el \
+.nr arg-ptr -1
+.\}\}\}\}\}
+.el \
+.nr arg-ptr -1
+.\}
+.ds arg\n[arg-ptr] "\*[str-Bx1]
+.nr type\n[arg-ptr] 2
+.ds space\n[arg-ptr] "\*[space]
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.if \n[num-args] \
+.parse-space-vector
+.print-recursive
+..
+.de Ud
+.nop \&currently under development.
+..
+.ds str-At-32v \&Version\~32V
+.as str-At-32v " \*[Tn-font-size]AT&T UNIX\*[str-At]
+.ds str-At-v1  \&Version\~1
+.as str-At-v1  " \*[Tn-font-size]AT&T UNIX\*[str-At]
+.ds str-At-v2  \&Version\~2
+.as str-At-v2  " \*[Tn-font-size]AT&T UNIX\*[str-At]
+.ds str-At-v3  \&Version\~3
+.as str-At-v3  " \*[Tn-font-size]AT&T UNIX\*[str-At]
+.ds str-At-v4  \&Version\~4
+.as str-At-v4  " \*[Tn-font-size]AT&T UNIX\*[str-At]
+.ds str-At-v5  \&Version\~5
+.as str-At-v5  " \*[Tn-font-size]AT&T UNIX\*[str-At]
+.ds str-At-v6  \&Version\~6
+.as str-At-v6  " \*[Tn-font-size]AT&T UNIX\*[str-At]
+.ds str-At-v7  \&Version\~7
+.as str-At-v7  " \*[Tn-font-size]AT&T UNIX\*[str-At]
+.ds str-At-V   \*[Tn-font-size]AT&T\*[str-At] System\~V
+.as str-At-V   " \*[Tn-font-size]UNIX\*[str-At]
+.ds str-At-V.1 \*[Tn-font-size]AT&T\*[str-At] System\~V.1
+.as str-At-V.1 " \*[Tn-font-size]UNIX\*[str-At]
+.ds str-At-V.2 \*[Tn-font-size]AT&T\*[str-At] System\~V.2
+.as str-At-V.2 " \*[Tn-font-size]UNIX\*[str-At]
+.ds str-At-V.3 \*[Tn-font-size]AT&T\*[str-At] System\~V.3
+.as str-At-V.3 " \*[Tn-font-size]UNIX\*[str-At]
+.ds str-At-V.4 \*[Tn-font-size]AT&T\*[str-At] System\~V.4
+.as str-At-V.4 " \*[Tn-font-size]UNIX\*[str-At]
+.de At
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ds str-At \f[\n[curr-font]]\s[\n[curr-size]u]
+.ds str-At1 \*[Tn-font-size]AT&T UNIX\*[str-At]
+.if !\n[arg-limit] \
+.if \n[.$] \{\
+.ds macro-name At
+.parse-args \$@
+.\}
+.if (\n[arg-limit] > \n[arg-ptr]) \{\
+.nr arg-ptr +1
+.ie (\n[type\n[arg-ptr]] == 2) \{\
+.ie \A\*[arg\n[arg-ptr]] \{\
+.ie d str-At-\*[arg\n[arg-ptr]] \
+.ds str-At1 "\*[str-At-\*[arg\n[arg-ptr]]]
+.el \{\
+.tmc mdoc warning: .At: Unknown AT&T UNIX version
+.tm1 " `\*[arg\n[arg-ptr]]' (#\n[.c])
+.nr arg-ptr -1
+.\}\}
+.el \
+.nr arg-ptr -1
+.\}
+.el \
+.nr arg-ptr -1
+.\}
+.ds arg\n[arg-ptr] "\*[str-At1]
+.nr type\n[arg-ptr] 2
+.ds space\n[arg-ptr] "\*[space]
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.if \n[num-args] \
+.parse-space-vector
+.print-recursive
+..
+.de Fx
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ds str-Fx \f[\n[curr-font]]\s[\n[curr-size]u]
+.ds str-Fx1 \*[Tn-font-size]\%FreeBSD\*[str-Fx]
+.if !\n[arg-limit] \
+.if \n[.$] \{\
+.ds macro-name Fx
+.parse-args \$@
+.\}
+.if (\n[arg-limit] > \n[arg-ptr]) \{\
+.nr arg-ptr +1
+.ie (\n[type\n[arg-ptr]] == 2) \{\
+.ie \A\*[arg\n[arg-ptr]] \{\
+.ie d operating-system-FreeBSD-\*[arg\n[arg-ptr]] \
+.as str-Fx1 \~\*[operating-system-FreeBSD-\*[arg\n[arg-ptr]]]
+.el \{\
+.tmc mdoc warning: .Fx: Unknown FreeBSD version
+.tm1 " `\*[arg\n[arg-ptr]]' (#\n[.c])
+.as str-Fx1 \~\*[arg\n[arg-ptr]]
+.\}\}
+.el \
+.as str-Fx1 \~\*[arg\n[arg-ptr]]
+.\}
+.el \
+.nr arg-ptr -1
+.\}
+.ds arg\n[arg-ptr] "\*[str-Fx1]
+.nr type\n[arg-ptr] 2
+.ds space\n[arg-ptr] "\*[space]
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.if \n[num-args] \
+.parse-space-vector
+.print-recursive
+..
+.de Nx
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ds str-Nx \f[\n[curr-font]]\s[\n[curr-size]u]
+.ds str-Nx1 \*[Tn-font-size]\%N\s[\n[curr-size]u]et
+.as str-Nx1 \*[Tn-font-size]BSD\*[str-Nx]
+.if !\n[arg-limit] \
+.if \n[.$] \{\
+.ds macro-name Nx
+.parse-args \$@
+.\}
+.if (\n[arg-limit] > \n[arg-ptr]) \{\
+.nr arg-ptr +1
+.ie (\n[type\n[arg-ptr]] == 2) \{\
+.ie \A\*[arg\n[arg-ptr]] \{\
+.ie d operating-system-NetBSD-\*[arg\n[arg-ptr]] \
+.as str-Nx1 \~\*[operating-system-NetBSD-\*[arg\n[arg-ptr]]]
+.el \{\
+.tmc mdoc warning: .Nx: Unknown NetBSD version
+.tm1 " `\*[arg\n[arg-ptr]]' (#\n[.c])
+.as str-Nx1 \~\*[arg\n[arg-ptr]]
+.\}\}
+.el \
+.as str-Nx1 \~\*[arg\n[arg-ptr]]
+.\}
+.el \
+.nr arg-ptr -1
+.\}
+.ds arg\n[arg-ptr] "\*[str-Nx1]
+.nr type\n[arg-ptr] 2
+.ds space\n[arg-ptr] "\*[space]
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.if \n[num-args] \
+.parse-space-vector
+.print-recursive
+..
+.de Ox
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ds str-Ox \f[\n[curr-font]]\s[\n[curr-size]u]
+.ds str-Ox1 \*[Tn-font-size]\%OpenBSD\*[str-Ox]
+.if !\n[arg-limit] \
+.if \n[.$] \{\
+.ds macro-name Ox
+.parse-args \$@
+.\}
+.if (\n[arg-limit] > \n[arg-ptr]) \{\
+.nr arg-ptr +1
+.ie (\n[type\n[arg-ptr]] == 2) \
+.as str-Ox1 \~\*[arg\n[arg-ptr]]
+.el \
+.nr arg-ptr -1
+.\}
+.ds arg\n[arg-ptr] "\*[str-Ox1]
+.nr type\n[arg-ptr] 2
+.ds space\n[arg-ptr] "\*[space]
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.if \n[num-args] \
+.parse-space-vector
+.print-recursive
+..
+.de Bsx
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ds str-Bsx \f[\n[curr-font]]\s[\n[curr-size]u]
+.ds str-Bsx1 \*[Tn-font-size]BSD/OS\*[str-Bsx]
+.if !\n[arg-limit] \
+.if \n[.$] \{\
+.ds macro-name Bsx
+.parse-args \$@
+.\}
+.if (\n[arg-limit] > \n[arg-ptr]) \{\
+.nr arg-ptr +1
+.ie (\n[type\n[arg-ptr]] == 2) \
+.as str-Bsx1 \~\*[arg\n[arg-ptr]]
+.el \
+.nr arg-ptr -1
+.\}
+.ds arg\n[arg-ptr] "\*[str-Bsx1]
+.nr type\n[arg-ptr] 2
+.ds space\n[arg-ptr] "\*[space]
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.if \n[num-args] \
+.parse-space-vector
+.print-recursive
+..
+.de Bt
+.nop \&is currently in beta test.
+..
+.ds Px \*[Tn-font-size]\%POSIX
+.ds Ai \*[Tn-font-size]\%ANSI
+.ds str-St--ansiC-89       \*[Ai] \*[str-St]X\^3.159-1989
+.as str-St--ansiC-89       " (\*[Lq]\)\*[Ai]\~C89\*[str-St]\*[Rq])
+.als str-St--ansiC str-St--ansiC-89
+.ds str-St--isoC           \*[Tn-font-size]ISO/IEC\*[str-St] 9899:1990
+.as str-St--isoC           " (\*[Lq]\*[Tn-font-size]ISO\~C\^90\*[str-St]\*[Rq])
+.als str-St--isoC-90 str-St--isoC
+.ds str-St--isoC-99        \*[Tn-font-size]ISO/IEC\*[str-St] 9899:1999
+.as str-St--isoC-99        " (\*[Lq]\*[Tn-font-size]ISO\~C\^99\*[str-St]\*[Rq])
+.ds str-St--isoC-2011      \*[Tn-font-size]ISO/IEC\*[str-St] 9899:2011
+.as str-St--isoC-2011      " (\*[Lq]\*[Tn-font-size]ISO\~C\^11\*[str-St]\*[Rq])
+.ds str-St--isoC-2018      \*[Tn-font-size]ISO/IEC\*[str-St] 9899:2018
+.as str-St--isoC-2018      " (\*[Lq]\*[Tn-font-size]ISO\~C\^18\*[str-St]\*[Rq])
+.ds str-St--p1003.1        \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.1
+.as str-St--p1003.1        " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.ds str-St--p1003.1-88     \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.1-1988
+.as str-St--p1003.1-88     " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.ds str-St--p1003.1-90     \*[Tn-font-size]ISO/IEC\*[str-St] 9945-1:1990
+.as str-St--p1003.1-90     " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.als str-St--iso9945-1-90 str-St--p1003.1-90
+.ds str-St--p1003.1b-93    \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.1b-1993
+.as str-St--p1003.1b-93    " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.ds str-St--p1003.1c-95    \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.1c-1995
+.as str-St--p1003.1c-95    " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.ds str-St--p1003.1i-95    \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.1i-1995
+.as str-St--p1003.1i-95    " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.ds str-St--p1003.1-96     \*[Tn-font-size]ISO/IEC\*[str-St] 9945-1:1996
+.as str-St--p1003.1-96     " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.als str-St--iso9945-1-96 str-St--p1003.1-96
+.ds str-St--p1003.1g-2000  \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.1g-2000
+.as str-St--p1003.1g-2000  " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.ds str-St--p1003.1-2001   \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.1-2001
+.as str-St--p1003.1-2001   " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.ds str-St--p1003.1-2004   \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.1-2004
+.as str-St--p1003.1-2004   " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.ds str-St--p1003.1-2008   \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.1-2008
+.as str-St--p1003.1-2008   " (\*[Lq]\)\*[Px]\*[str-St].1\*[Rq])
+.ds str-St--p1003.2        \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.2
+.as str-St--p1003.2        " (\*[Lq]\)\*[Px]\*[str-St].2\*[Rq])
+.ds str-St--p1003.2-92     \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.2-1992
+.as str-St--p1003.2-92     " (\*[Lq]\)\*[Px]\*[str-St].2\*[Rq])
+.ds str-St--p1003.2a-92    \*[Tn-font-size]\%IEEE\*[str-St] Std 1003.2a-1992
+.as str-St--p1003.2a-92    " (\*[Lq]\)\*[Px]\*[str-St].2\*[Rq])
+.ds str-St--iso9945-2-93   \*[Tn-font-size]ISO/IEC\*[str-St] 9945-2:1993
+.as str-St--iso9945-2-93   " (\*[Lq]\)\*[Px]\*[str-St].2\*[Rq])
+.ds str-St--susv2          Version\~2 of the Single \*[Tn-font-size]UNIX\*[str-St] Specification
+.as str-St--susv2          " (\*[Lq]\*[Tn-font-size]SUSv2\*[str-St]\*[Rq])
+.ds str-St--svid4          System\~V Interface Definition, Fourth Edition
+.as str-St--svid4          " (\*[Lq]\*[Tn-font-size]SVID\*[str-St]\^4\*[Rq])
+.ds str-St--xbd5           \*[Tn-font-size]X/Open\*[str-St] System Interface Definitions Issue\~5
+.as str-St--xbd5           " (\*[Lq]\*[Tn-font-size]XBD\*[str-St]\^5\*[Rq])
+.ds str-St--xcu5           \*[Tn-font-size]X/Open\*[str-St] Commands and Utilities Issue\~5
+.as str-St--xcu5           " (\*[Lq]\*[Tn-font-size]XCU\*[str-St]\^5\*[Rq])
+.ds str-St--xcurses4.2     \*[Tn-font-size]X/Open\*[str-St] Curses Issue\~4, Version\~2
+.as str-St--xcurses4.2     " (\*[Lq]\*[Tn-font-size]XCURSES\*[str-St]\^4.2\*[Rq])
+.ds str-St--xns5           \*[Tn-font-size]X/Open\*[str-St] Networking Services Issue\~5
+.as str-St--xns5           " (\*[Lq]\*[Tn-font-size]XNS\*[str-St]\^5\*[Rq])
+.ds str-St--xns5.2         \*[Tn-font-size]X/Open\*[str-St] Networking Services Issue\~5.2
+.as str-St--xns5.2         " (\*[Lq]\*[Tn-font-size]XNS\*[str-St]\^5.2\*[Rq])
+.ds str-St--xpg3           \*[Tn-font-size]X/Open\*[str-St] Portability Guide Issue\~3
+.as str-St--xpg3           " (\*[Lq]\*[Tn-font-size]XPG\*[str-St]\^3\*[Rq])
+.ds str-St--xpg4           \*[Tn-font-size]X/Open\*[str-St] Portability Guide Issue\~4
+.as str-St--xpg4           " (\*[Lq]\*[Tn-font-size]XPG\*[str-St]\^4\*[Rq])
+.ds str-St--xpg4.2         \*[Tn-font-size]X/Open\*[str-St] Portability Guide Issue\~4, Version\~2
+.as str-St--xpg4.2         " (\*[Lq]\*[Tn-font-size]XPG\*[str-St]\^4.2\*[Rq])
+.ds str-St--xsh5           \*[Tn-font-size]X/Open\*[str-St] System Interfaces and Headers Issue\~5
+.as str-St--xsh5           " (\*[Lq]\*[Tn-font-size]XSH\*[str-St]\^5\*[Rq])
+.ds str-St--ieee754        \*[Tn-font-size]\%IEEE\*[str-St] Std 754-1985
+.ds str-St--iso8802-3      \*[Tn-font-size]ISO/IEC\*[str-St] 8802-3:1989
+.de St
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name St
+.parse-args \$@
+.\}
+.el \
+.St-usage
+.\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ds str-St \f[\n[curr-font]]\s[\n[curr-size]u]
+.ds str-St1
+.ie \A\*[arg\n[arg-ptr]] \{\
+.ie d str-St-\*[arg\n[arg-ptr]] \
+.ds str-St1 "\*[str-St-\*[arg\n[arg-ptr]]]
+.el \{\
+.tmc "mdoc warning: .St: Unknown standard abbreviation
+.tm1 " `\*[arg\n[arg-ptr]]' (#\n[.c])
+.tm1 "              Please refer to the groff_mdoc(7) manpage for a
+.tm1 "              list of available standard abbreviations.
+.\}\}
+.el \
+.St-usage
+.ds arg\n[arg-ptr] "\*[str-St1]
+.print-recursive
+.\}
+.el \{\
+.St-usage
+.reset-args
+.\}
+..
+.de St-usage
+.tm1 "Usage: .St standard (#\n[.c])
+.tm1 "       Please refer to the groff_mdoc(7) manpage for a list of
+.tm1 "       available standard abbreviations.
+..
+.ds str-Lb-libarm         ARM Architecture Library (libarm, \-larm)
+.ds str-Lb-libarm32       ARM32 Architecture Library (libarm32, \-larm32)
+.ds str-Lb-libc           Standard C\~Library (libc, \-lc)
+.ds str-Lb-libcdk         Curses Development Kit Library (libcdk, \-lcdk)
+.ds str-Lb-libcompat      Compatibility Library (libcompat, \-lcompat)
+.ds str-Lb-libcrypt       Crypt Library (libcrypt, \-lcrypt)
+.ds str-Lb-libcurses      Curses Library (libcurses, \-lcurses)
+.ds str-Lb-libedit        Command Line Editor Library (libedit, \-ledit)
+.ds str-Lb-libelf         ELF Object Manipulation Library (libelf, \-lelf)
+.ds str-Lb-libevent       Event Notification Library (libevent, \-levent)
+.ds str-Lb-libform        Curses Form Library (libform, \-lform)
+.ds str-Lb-libi386        i386 Architecture Library (libi386, \-li386)
+.ds str-Lb-libintl        Internationalized Message Handling Library (libintl, \-lintl)
+.ds str-Lb-libipsec       IPsec Policy Control Library (libipsec, \-lipsec)
+.ds str-Lb-libkvm         Kernel Data Access Library (libkvm, \-lkvm)
+.ds str-Lb-libm           Math Library (libm, \-lm)
+.ds str-Lb-libm68k        m68k Architecture Library (libm68k, \-lm68k)
+.ds str-Lb-libmagic       Magic Number Recognition Library (libmagic, \-lmagic)
+.ds str-Lb-libmenu        Curses Menu Library (libmenu, \-lmenu)
+.ds str-Lb-libossaudio    OSS Audio Emulation Library (libossaudio, \-lossaudio)
+.ds str-Lb-libpam         Pluggable Authentication Module Library (libpam, \-lpam)
+.ds str-Lb-libpanel       Z-order for curses windows (libpanel, \-lpanel)
+.ds str-Lb-libpcap        Packet Capture Library (libpcap, \-lpcap)
+.ds str-Lb-libpci         PCI Bus Access Library (libpci, \-lpci)
+.ds str-Lb-libpmc         Performance Counters Library (libpmc, \-lpmc)
+.ds str-Lb-libposix       \*[Px] \*[str-Lb]Compatibility Library (libposix, \-lposix)
+.ds str-Lb-libpthread     \*[Px] \*[str-Lb]Threads Library (libpthread, \-lpthread)
+.ds str-Lb-libpthread_dbg \*[Px] \*[str-Lb]Threads Debug Library (libpthread_dbg, \-lpthread_dbg)
+.ds str-Lb-libresolv      DNS Resolver Library (libresolv, \-lresolv)
+.ds str-Lb-librt          \*[Px] \*[str-Lb]Real-time Library (librt, \-lrt)
+.ds str-Lb-libtermcap     Termcap Access Library (libtermcap, \-ltermcap)
+.ds str-Lb-libusbhid      USB Human Interface Devices Library (libusbhid, \-lusbhid)
+.ds str-Lb-libutil        System Utilities Library (libutil, \-lutil)
+.ds str-Lb-libx86_64      x86_64 Architecture Library (libx86_64, \-lx86_64)
+.ds str-Lb-libz           Compression Library (libz, \-lz)
+.de Lb
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Lb
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .Lb library_name ... (#\n[.c])
+.\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ds str-Lb \f[\n[curr-font]]\s[\n[curr-size]u]
+.ie d str-Lb-\*[arg\n[arg-ptr]] \
+.ds str-Lb1 "\*[str-Lb-\*[arg\n[arg-ptr]]]
+.el \{\
+.tmc "mdoc warning: .Lb: no description for library
+.tm1 " `\*[arg\n[arg-ptr]]' available (#\n[.c])
+.ds str-Lb1 library \*[Lq]\*[arg\n[arg-ptr]]\*[Rq]
+.\}
+.ds arg\n[arg-ptr] "\*[str-Lb1]
+.if \n[in-library-section] \
+.br
+.print-recursive
+.if \n[in-library-section] \
+.br
+.\}
+.el \{\
+.tm Usage: .Lb library_name ... (#\n[.c])
+.reset-args
+.\}
+..
+.ec

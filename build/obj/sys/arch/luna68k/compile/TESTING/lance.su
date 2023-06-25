@@ -1,0 +1,16 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:269:1:lance_stop	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:488:1:lance_mediachange	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:498:1:lance_mediastatus	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:281:1:lance_init	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:547:1:lance_shutdown	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:477:1:lance_watchdog	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:517:1:lance_ioctl	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:165:1:lance_config	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:259:1:lance_reset	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:335:1:lance_put	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:365:1:lance_get	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:419:1:lance_read	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:561:1:lance_setladrf	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:633:1:lance_copytobuf_contig	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:644:1:lance_copyfrombuf_contig	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/lance.c:655:1:lance_zerobuf_contig	0	static

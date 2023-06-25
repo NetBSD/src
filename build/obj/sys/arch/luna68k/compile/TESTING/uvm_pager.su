@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pager.c:88:1:uvm_pager_realloc_emerg	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pager.c:131:1:uvm_pager_init	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pager.c:183:1:uvm_pagermapin	92	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pager.c:278:1:uvm_pagermapout	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pager.c:327:1:uvm_aio_aiodone_pages	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pager.c:504:1:uvm_aio_aiodone	140	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pager.c:542:1:uvm_pageratop	20	dynamic,bounded

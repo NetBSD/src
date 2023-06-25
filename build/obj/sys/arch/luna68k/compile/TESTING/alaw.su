@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/alaw.c:113:1:audio_alaw_to_internal	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/alaw.c:144:1:audio_internal_to_alaw	12	static

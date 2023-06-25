@@ -1,0 +1,2 @@
+not-ranlib.o: \
+  /Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/binutils/../../external/gpl3/binutils/dist/binutils/not-ranlib.c

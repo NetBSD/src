@@ -1,0 +1,128 @@
+# This file is a shell script that caches the results of configure
+# tests run on this system so they can be shared between configure
+# scripts and configure runs, see configure's option --config-cache.
+# It is not useful on other systems.  If it contains results you don't
+# want to keep, you may remove or edit it.
+#
+# config.status only pays attention to the cache file if you give it
+# the --recheck option to rerun configure.
+#
+# `ac_cv_env_foo' variables (set or unset) will be overridden when
+# loading this file, other *unset* `ac_cv_foo' will be assigned the
+# following values.
+
+ac_cv_build=${ac_cv_build=x86_64-apple-darwin22.1.0}
+ac_cv_c_compiler_gnu=${ac_cv_c_compiler_gnu=yes}
+ac_cv_c_const=${ac_cv_c_const=yes}
+ac_cv_c_inline=${ac_cv_c_inline=inline}
+ac_cv_env_CC_set=set
+ac_cv_env_CC_value=cc
+ac_cv_env_CFLAGS_set=set
+ac_cv_env_CFLAGS_value='-O -O2 -no-cpp-precomp'
+ac_cv_env_CPPFLAGS_set=set
+ac_cv_env_CPPFLAGS_value='-DNETBSD_TOOLS -DTARGET_SYSTEM_ROOT=0  -DTARGET_SYSTEM_ROOT_RELOCATABLE'
+ac_cv_env_CPP_set=
+ac_cv_env_CPP_value=
+ac_cv_env_LDFLAGS_set=set
+ac_cv_env_LDFLAGS_value=' '
+ac_cv_env_LIBS_set=
+ac_cv_env_LIBS_value=
+ac_cv_env_build_alias_set=set
+ac_cv_env_build_alias_value=x86_64-apple-darwin22.1.0
+ac_cv_env_host_alias_set=set
+ac_cv_env_host_alias_value=x86_64-apple-darwin22.1.0
+ac_cv_env_target_alias_set=set
+ac_cv_env_target_alias_value=m68k--netbsdelf
+ac_cv_func___argz_count=${ac_cv_func___argz_count=no}
+ac_cv_func___argz_next=${ac_cv_func___argz_next=no}
+ac_cv_func___argz_stringify=${ac_cv_func___argz_stringify=no}
+ac_cv_func___fsetlocking=${ac_cv_func___fsetlocking=no}
+ac_cv_func_alloca_works=${ac_cv_func_alloca_works=yes}
+ac_cv_func_feof_unlocked=${ac_cv_func_feof_unlocked=yes}
+ac_cv_func_fgets_unlocked=${ac_cv_func_fgets_unlocked=no}
+ac_cv_func_getc_unlocked=${ac_cv_func_getc_unlocked=yes}
+ac_cv_func_getcwd=${ac_cv_func_getcwd=yes}
+ac_cv_func_getegid=${ac_cv_func_getegid=yes}
+ac_cv_func_geteuid=${ac_cv_func_geteuid=yes}
+ac_cv_func_getgid=${ac_cv_func_getgid=yes}
+ac_cv_func_getpagesize=${ac_cv_func_getpagesize=yes}
+ac_cv_func_getuid=${ac_cv_func_getuid=yes}
+ac_cv_func_mempcpy=${ac_cv_func_mempcpy=no}
+ac_cv_func_mmap_fixed_mapped=${ac_cv_func_mmap_fixed_mapped=yes}
+ac_cv_func_munmap=${ac_cv_func_munmap=yes}
+ac_cv_func_putenv=${ac_cv_func_putenv=yes}
+ac_cv_func_setenv=${ac_cv_func_setenv=yes}
+ac_cv_func_setlocale=${ac_cv_func_setlocale=yes}
+ac_cv_func_stpcpy=${ac_cv_func_stpcpy=yes}
+ac_cv_func_strcasecmp=${ac_cv_func_strcasecmp=yes}
+ac_cv_func_strdup=${ac_cv_func_strdup=yes}
+ac_cv_func_strtoul=${ac_cv_func_strtoul=yes}
+ac_cv_func_tsearch=${ac_cv_func_tsearch=yes}
+ac_cv_gnu_library_2_1=${ac_cv_gnu_library_2_1=no}
+ac_cv_header_argz_h=${ac_cv_header_argz_h=no}
+ac_cv_header_inttypes_h=${ac_cv_header_inttypes_h=yes}
+ac_cv_header_limits_h=${ac_cv_header_limits_h=yes}
+ac_cv_header_locale_h=${ac_cv_header_locale_h=yes}
+ac_cv_header_malloc_h=${ac_cv_header_malloc_h=no}
+ac_cv_header_memory_h=${ac_cv_header_memory_h=yes}
+ac_cv_header_minix_config_h=${ac_cv_header_minix_config_h=no}
+ac_cv_header_nl_types_h=${ac_cv_header_nl_types_h=yes}
+ac_cv_header_stdc=${ac_cv_header_stdc=yes}
+ac_cv_header_stddef_h=${ac_cv_header_stddef_h=yes}
+ac_cv_header_stdint_h=${ac_cv_header_stdint_h=yes}
+ac_cv_header_stdlib_h=${ac_cv_header_stdlib_h=yes}
+ac_cv_header_string_h=${ac_cv_header_string_h=yes}
+ac_cv_header_strings_h=${ac_cv_header_strings_h=yes}
+ac_cv_header_sys_param_h=${ac_cv_header_sys_param_h=yes}
+ac_cv_header_sys_stat_h=${ac_cv_header_sys_stat_h=yes}
+ac_cv_header_sys_types_h=${ac_cv_header_sys_types_h=yes}
+ac_cv_header_unistd_h=${ac_cv_header_unistd_h=yes}
+ac_cv_host=${ac_cv_host=x86_64-apple-darwin22.1.0}
+ac_cv_objext=${ac_cv_objext=o}
+ac_cv_path_EGREP=${ac_cv_path_EGREP='/usr/bin/grep -E'}
+ac_cv_path_GMSGFMT=${ac_cv_path_GMSGFMT=/usr/local/bin/msgfmt}
+ac_cv_path_GREP=${ac_cv_path_GREP=/usr/bin/grep}
+ac_cv_path_MSGFMT=${ac_cv_path_MSGFMT=/usr/local/bin/msgfmt}
+ac_cv_path_MSGMERGE=${ac_cv_path_MSGMERGE=/usr/local/bin/msgmerge}
+ac_cv_path_XGETTEXT=${ac_cv_path_XGETTEXT=/usr/local/bin/xgettext}
+ac_cv_prog_ACLOCAL=${ac_cv_prog_ACLOCAL=aclocal}
+ac_cv_prog_AUTOCONF=${ac_cv_prog_AUTOCONF=autoconf}
+ac_cv_prog_AUTOHEADER=${ac_cv_prog_AUTOHEADER=autoheader}
+ac_cv_prog_CC=${ac_cv_prog_CC=cc}
+ac_cv_prog_CPP=${ac_cv_prog_CPP='cc -E'}
+ac_cv_prog_INTLBISON=${ac_cv_prog_INTLBISON=bison}
+ac_cv_prog_RANLIB=${ac_cv_prog_RANLIB=ranlib}
+ac_cv_prog_cc_c89=${ac_cv_prog_cc_c89=}
+ac_cv_prog_cc_g=${ac_cv_prog_cc_g=yes}
+ac_cv_prog_make__Users_sidqian_Downloads_summer_L2S_netbsd_src_build_obj_tooldir_Darwin_22_1_0_x86_64_bin_nbgmake_set=${ac_cv_prog_make__Users_sidqian_Downloads_summer_L2S_netbsd_src_build_obj_tooldir_Darwin_22_1_0_x86_64_bin_nbgmake_set=yes}
+ac_cv_safe_to_define___extensions__=${ac_cv_safe_to_define___extensions__=yes}
+ac_cv_search_strerror=${ac_cv_search_strerror='none required'}
+ac_cv_type_off_t=${ac_cv_type_off_t=yes}
+ac_cv_type_size_t=${ac_cv_type_size_t=yes}
+ac_cv_type_unsigned_long_long=${ac_cv_type_unsigned_long_long=yes}
+ac_cv_working_alloca_h=${ac_cv_working_alloca_h=yes}
+acl_cv_hardcode_direct=${acl_cv_hardcode_direct=no}
+acl_cv_hardcode_libdir_flag_spec=${acl_cv_hardcode_libdir_flag_spec=}
+acl_cv_hardcode_libdir_separator=${acl_cv_hardcode_libdir_separator=}
+acl_cv_hardcode_minus_L=${acl_cv_hardcode_minus_L=no}
+acl_cv_libext=${acl_cv_libext=a}
+acl_cv_path_LD=${acl_cv_path_LD=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ld}
+acl_cv_prog_gnu_ld=${acl_cv_prog_gnu_ld=no}
+acl_cv_rpath=${acl_cv_rpath=done}
+acl_cv_shlibext=${acl_cv_shlibext=dylib}
+acl_cv_wl=${acl_cv_wl=-Wl,}
+am_cv_func_iconv=${am_cv_func_iconv=yes}
+am_cv_langinfo_codeset=${am_cv_langinfo_codeset=yes}
+am_cv_lib_iconv=${am_cv_lib_iconv=yes}
+am_cv_proto_iconv=${am_cv_proto_iconv='extern size_t iconv (iconv_t cd, char * *inbuf, size_t *inbytesleft, char * *outbuf, size_t *outbytesleft);'}
+am_cv_proto_iconv_arg1=${am_cv_proto_iconv_arg1=}
+am_cv_val_LC_MESSAGES=${am_cv_val_LC_MESSAGES=yes}
+gcc_cv_as_sparc_gotdata_op=${gcc_cv_as_sparc_gotdata_op=no}
+gcc_cv_libc_provides_ssp=${gcc_cv_libc_provides_ssp=yes}
+gt_cv_header_inttypes_h=${gt_cv_header_inttypes_h=yes}
+gt_cv_int_divbyzero_sigfpe=${gt_cv_int_divbyzero_sigfpe=no}
+gt_cv_inttypes_pri_broken=${gt_cv_inttypes_pri_broken=no}
+jm_ac_cv_header_inttypes_h=${jm_ac_cv_header_inttypes_h=yes}
+jm_ac_cv_header_stdint_h=${jm_ac_cv_header_stdint_h=yes}
+nls_cv_header_intl=${nls_cv_header_intl=}
+nls_cv_header_libgt=${nls_cv_header_libgt=}

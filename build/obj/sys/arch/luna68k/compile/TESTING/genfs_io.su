@@ -1,0 +1,12 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:1435:1:genfs_do_io	224	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:69:1:genfs_rel_pages	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:1831:1:genfs_dio_iodone	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:93:1:genfs_getpages	444	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:863:1:genfs_do_putpages	352	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:849:1:genfs_putpages	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:1366:1:genfs_gop_putrange	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:1374:1:genfs_gop_write	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:1405:1:genfs_gop_write_rwmap	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:1591:1:genfs_compat_getpages	148	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:1683:1:genfs_compat_gop_write	108	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/genfs_io.c:1733:1:genfs_directio	188	dynamic,bounded

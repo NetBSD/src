@@ -1,0 +1,16 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:168:1:rw_dump	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:793:1:rw_owner	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:184:1:rw_abort.constprop	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:199:1:_rw_init	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:214:1:rw_init	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:226:1:rw_destroy	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:275:1:rw_vector_enter	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:429:1:rw_vector_exit	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:542:1:rw_vector_tryenter	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:586:1:rw_downgrade	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:687:1:rw_tryupgrade	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:728:1:rw_read_held	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:746:1:rw_write_held	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:763:1:rw_lock_held	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:778:1:rw_lock_op	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock.c:811:1:rw_owner_running	0	static

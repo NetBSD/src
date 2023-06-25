@@ -1,0 +1,15 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:98:1:layerfs_modcmd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:350:1:sysctl_vfs_layerfs_setup	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:117:1:layerfs_start	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:128:1:layerfs_root	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:147:1:layerfs_quotactl	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:161:1:layerfs_statvfs	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:196:1:layerfs_sync	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:207:1:layerfs_loadvnode	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:243:1:layerfs_vget	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:274:1:layerfs_fhtovp	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:306:1:layerfs_vptofh	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:326:1:layerfs_snapshot	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:344:1:layerfs_suspendctl	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:386:1:layerfs_renamelock_enter	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/genfs/layer_vfsops.c:393:1:layerfs_renamelock_exit	0	static

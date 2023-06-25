@@ -1,0 +1,753 @@
+   0  $accept : expr $end
+
+   1  expr : optional_conditional
+
+   2  conditional : alternative
+   3              | alternative '?' optional_conditional ':' conditional
+
+   4  optional_conditional :
+   5                       | conditional
+
+   6  alternative : list
+   7              | alternative '|' list
+   8              | alternative '&' list
+
+   9  list : substitute
+  10       | list substitute
+
+  11  substitute : string
+  12             | substitute '~' string
+
+  13  string : '@'
+  14         | TOKEN_LITERAL
+  15         | TOKEN_LETTER
+  16         | TOKEN_LETTER number
+  17         | '%' TOKEN_LETTER
+  18         | '%' digits
+  19         | string '.' flag TOKEN_LETTER optional_number
+  20         | string '+' number
+  21         | string '-' number
+  22         | string '*'
+  23         | '(' optional_conditional ')'
+  24         | '<' optional_conditional '>'
+
+  25  optional_number :
+  26                  | number
+
+  27  number : TOKEN_DIGIT
+  28         | number TOKEN_DIGIT
+
+  29  digits : TOKEN_DIGIT
+  30         | digits TOKEN_DIGIT
+
+  31  flag :
+  32       | '+'
+  33       | '-'
+
+state 0
+	$accept : . expr $end  (0)
+	optional_conditional : .  (4)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	$end  reduce 4
+
+	expr  goto 7
+	conditional  goto 8
+	alternative  goto 9
+	list  goto 10
+	string  goto 11
+	substitute  goto 12
+	optional_conditional  goto 13
+
+
+state 1
+	string : TOKEN_LETTER .  (15)
+	string : TOKEN_LETTER . number  (16)
+
+	TOKEN_DIGIT  shift 14
+	$end  reduce 15
+	TOKEN_LETTER  reduce 15
+	TOKEN_LITERAL  reduce 15
+	'?'  reduce 15
+	':'  reduce 15
+	'|'  reduce 15
+	'&'  reduce 15
+	'~'  reduce 15
+	'@'  reduce 15
+	'%'  reduce 15
+	'.'  reduce 15
+	'+'  reduce 15
+	'-'  reduce 15
+	'*'  reduce 15
+	'('  reduce 15
+	')'  reduce 15
+	'<'  reduce 15
+	'>'  reduce 15
+
+	number  goto 15
+
+
+state 2
+	string : TOKEN_LITERAL .  (14)
+
+	.  reduce 14
+
+
+state 3
+	string : '@' .  (13)
+
+	.  reduce 13
+
+
+state 4
+	string : '%' . TOKEN_LETTER  (17)
+	string : '%' . digits  (18)
+
+	TOKEN_LETTER  shift 16
+	TOKEN_DIGIT  shift 17
+	.  error
+
+	digits  goto 18
+
+
+state 5
+	string : '(' . optional_conditional ')'  (23)
+	optional_conditional : .  (4)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	')'  reduce 4
+
+	conditional  goto 8
+	alternative  goto 9
+	list  goto 10
+	string  goto 11
+	substitute  goto 12
+	optional_conditional  goto 19
+
+
+state 6
+	string : '<' . optional_conditional '>'  (24)
+	optional_conditional : .  (4)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	'>'  reduce 4
+
+	conditional  goto 8
+	alternative  goto 9
+	list  goto 10
+	string  goto 11
+	substitute  goto 12
+	optional_conditional  goto 20
+
+
+state 7
+	$accept : expr . $end  (0)
+
+	$end  accept
+
+
+state 8
+	optional_conditional : conditional .  (5)
+
+	.  reduce 5
+
+
+state 9
+	conditional : alternative .  (2)
+	conditional : alternative . '?' optional_conditional ':' conditional  (3)
+	alternative : alternative . '|' list  (7)
+	alternative : alternative . '&' list  (8)
+
+	'?'  shift 21
+	'|'  shift 22
+	'&'  shift 23
+	$end  reduce 2
+	':'  reduce 2
+	')'  reduce 2
+	'>'  reduce 2
+
+
+state 10
+	alternative : list .  (6)
+	list : list . substitute  (10)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	$end  reduce 6
+	'?'  reduce 6
+	':'  reduce 6
+	'|'  reduce 6
+	'&'  reduce 6
+	')'  reduce 6
+	'>'  reduce 6
+
+	string  goto 11
+	substitute  goto 24
+
+
+state 11
+	substitute : string .  (11)
+	string : string . '.' flag TOKEN_LETTER optional_number  (19)
+	string : string . '+' number  (20)
+	string : string . '-' number  (21)
+	string : string . '*'  (22)
+
+	'.'  shift 25
+	'+'  shift 26
+	'-'  shift 27
+	'*'  shift 28
+	$end  reduce 11
+	TOKEN_LETTER  reduce 11
+	TOKEN_LITERAL  reduce 11
+	'?'  reduce 11
+	':'  reduce 11
+	'|'  reduce 11
+	'&'  reduce 11
+	'~'  reduce 11
+	'@'  reduce 11
+	'%'  reduce 11
+	'('  reduce 11
+	')'  reduce 11
+	'<'  reduce 11
+	'>'  reduce 11
+
+
+state 12
+	list : substitute .  (9)
+	substitute : substitute . '~' string  (12)
+
+	'~'  shift 29
+	$end  reduce 9
+	TOKEN_LETTER  reduce 9
+	TOKEN_LITERAL  reduce 9
+	'?'  reduce 9
+	':'  reduce 9
+	'|'  reduce 9
+	'&'  reduce 9
+	'@'  reduce 9
+	'%'  reduce 9
+	'('  reduce 9
+	')'  reduce 9
+	'<'  reduce 9
+	'>'  reduce 9
+
+
+state 13
+	expr : optional_conditional .  (1)
+
+	.  reduce 1
+
+
+state 14
+	number : TOKEN_DIGIT .  (27)
+
+	.  reduce 27
+
+
+state 15
+	string : TOKEN_LETTER number .  (16)
+	number : number . TOKEN_DIGIT  (28)
+
+	TOKEN_DIGIT  shift 30
+	$end  reduce 16
+	TOKEN_LETTER  reduce 16
+	TOKEN_LITERAL  reduce 16
+	'?'  reduce 16
+	':'  reduce 16
+	'|'  reduce 16
+	'&'  reduce 16
+	'~'  reduce 16
+	'@'  reduce 16
+	'%'  reduce 16
+	'.'  reduce 16
+	'+'  reduce 16
+	'-'  reduce 16
+	'*'  reduce 16
+	'('  reduce 16
+	')'  reduce 16
+	'<'  reduce 16
+	'>'  reduce 16
+
+
+state 16
+	string : '%' TOKEN_LETTER .  (17)
+
+	.  reduce 17
+
+
+state 17
+	digits : TOKEN_DIGIT .  (29)
+
+	.  reduce 29
+
+
+state 18
+	string : '%' digits .  (18)
+	digits : digits . TOKEN_DIGIT  (30)
+
+	TOKEN_DIGIT  shift 31
+	$end  reduce 18
+	TOKEN_LETTER  reduce 18
+	TOKEN_LITERAL  reduce 18
+	'?'  reduce 18
+	':'  reduce 18
+	'|'  reduce 18
+	'&'  reduce 18
+	'~'  reduce 18
+	'@'  reduce 18
+	'%'  reduce 18
+	'.'  reduce 18
+	'+'  reduce 18
+	'-'  reduce 18
+	'*'  reduce 18
+	'('  reduce 18
+	')'  reduce 18
+	'<'  reduce 18
+	'>'  reduce 18
+
+
+state 19
+	string : '(' optional_conditional . ')'  (23)
+
+	')'  shift 32
+	.  error
+
+
+state 20
+	string : '<' optional_conditional . '>'  (24)
+
+	'>'  shift 33
+	.  error
+
+
+state 21
+	conditional : alternative '?' . optional_conditional ':' conditional  (3)
+	optional_conditional : .  (4)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	':'  reduce 4
+
+	conditional  goto 8
+	alternative  goto 9
+	list  goto 10
+	string  goto 11
+	substitute  goto 12
+	optional_conditional  goto 34
+
+
+state 22
+	alternative : alternative '|' . list  (7)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	.  error
+
+	list  goto 35
+	string  goto 11
+	substitute  goto 12
+
+
+state 23
+	alternative : alternative '&' . list  (8)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	.  error
+
+	list  goto 36
+	string  goto 11
+	substitute  goto 12
+
+
+state 24
+	list : list substitute .  (10)
+	substitute : substitute . '~' string  (12)
+
+	'~'  shift 29
+	$end  reduce 10
+	TOKEN_LETTER  reduce 10
+	TOKEN_LITERAL  reduce 10
+	'?'  reduce 10
+	':'  reduce 10
+	'|'  reduce 10
+	'&'  reduce 10
+	'@'  reduce 10
+	'%'  reduce 10
+	'('  reduce 10
+	')'  reduce 10
+	'<'  reduce 10
+	'>'  reduce 10
+
+
+state 25
+	string : string '.' . flag TOKEN_LETTER optional_number  (19)
+	flag : .  (31)
+
+	'+'  shift 37
+	'-'  shift 38
+	TOKEN_LETTER  reduce 31
+
+	flag  goto 39
+
+
+state 26
+	string : string '+' . number  (20)
+
+	TOKEN_DIGIT  shift 14
+	.  error
+
+	number  goto 40
+
+
+state 27
+	string : string '-' . number  (21)
+
+	TOKEN_DIGIT  shift 14
+	.  error
+
+	number  goto 41
+
+
+state 28
+	string : string '*' .  (22)
+
+	.  reduce 22
+
+
+state 29
+	substitute : substitute '~' . string  (12)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	.  error
+
+	string  goto 42
+
+
+state 30
+	number : number TOKEN_DIGIT .  (28)
+
+	.  reduce 28
+
+
+state 31
+	digits : digits TOKEN_DIGIT .  (30)
+
+	.  reduce 30
+
+
+state 32
+	string : '(' optional_conditional ')' .  (23)
+
+	.  reduce 23
+
+
+state 33
+	string : '<' optional_conditional '>' .  (24)
+
+	.  reduce 24
+
+
+state 34
+	conditional : alternative '?' optional_conditional . ':' conditional  (3)
+
+	':'  shift 43
+	.  error
+
+
+state 35
+	alternative : alternative '|' list .  (7)
+	list : list . substitute  (10)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	$end  reduce 7
+	'?'  reduce 7
+	':'  reduce 7
+	'|'  reduce 7
+	'&'  reduce 7
+	')'  reduce 7
+	'>'  reduce 7
+
+	string  goto 11
+	substitute  goto 24
+
+
+state 36
+	alternative : alternative '&' list .  (8)
+	list : list . substitute  (10)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	$end  reduce 8
+	'?'  reduce 8
+	':'  reduce 8
+	'|'  reduce 8
+	'&'  reduce 8
+	')'  reduce 8
+	'>'  reduce 8
+
+	string  goto 11
+	substitute  goto 24
+
+
+state 37
+	flag : '+' .  (32)
+
+	.  reduce 32
+
+
+state 38
+	flag : '-' .  (33)
+
+	.  reduce 33
+
+
+state 39
+	string : string '.' flag . TOKEN_LETTER optional_number  (19)
+
+	TOKEN_LETTER  shift 44
+	.  error
+
+
+state 40
+	string : string '+' number .  (20)
+	number : number . TOKEN_DIGIT  (28)
+
+	TOKEN_DIGIT  shift 30
+	$end  reduce 20
+	TOKEN_LETTER  reduce 20
+	TOKEN_LITERAL  reduce 20
+	'?'  reduce 20
+	':'  reduce 20
+	'|'  reduce 20
+	'&'  reduce 20
+	'~'  reduce 20
+	'@'  reduce 20
+	'%'  reduce 20
+	'.'  reduce 20
+	'+'  reduce 20
+	'-'  reduce 20
+	'*'  reduce 20
+	'('  reduce 20
+	')'  reduce 20
+	'<'  reduce 20
+	'>'  reduce 20
+
+
+state 41
+	string : string '-' number .  (21)
+	number : number . TOKEN_DIGIT  (28)
+
+	TOKEN_DIGIT  shift 30
+	$end  reduce 21
+	TOKEN_LETTER  reduce 21
+	TOKEN_LITERAL  reduce 21
+	'?'  reduce 21
+	':'  reduce 21
+	'|'  reduce 21
+	'&'  reduce 21
+	'~'  reduce 21
+	'@'  reduce 21
+	'%'  reduce 21
+	'.'  reduce 21
+	'+'  reduce 21
+	'-'  reduce 21
+	'*'  reduce 21
+	'('  reduce 21
+	')'  reduce 21
+	'<'  reduce 21
+	'>'  reduce 21
+
+
+state 42
+	substitute : substitute '~' string .  (12)
+	string : string . '.' flag TOKEN_LETTER optional_number  (19)
+	string : string . '+' number  (20)
+	string : string . '-' number  (21)
+	string : string . '*'  (22)
+
+	'.'  shift 25
+	'+'  shift 26
+	'-'  shift 27
+	'*'  shift 28
+	$end  reduce 12
+	TOKEN_LETTER  reduce 12
+	TOKEN_LITERAL  reduce 12
+	'?'  reduce 12
+	':'  reduce 12
+	'|'  reduce 12
+	'&'  reduce 12
+	'~'  reduce 12
+	'@'  reduce 12
+	'%'  reduce 12
+	'('  reduce 12
+	')'  reduce 12
+	'<'  reduce 12
+	'>'  reduce 12
+
+
+state 43
+	conditional : alternative '?' optional_conditional ':' . conditional  (3)
+
+	TOKEN_LETTER  shift 1
+	TOKEN_LITERAL  shift 2
+	'@'  shift 3
+	'%'  shift 4
+	'('  shift 5
+	'<'  shift 6
+	.  error
+
+	conditional  goto 45
+	alternative  goto 9
+	list  goto 10
+	string  goto 11
+	substitute  goto 12
+
+
+state 44
+	string : string '.' flag TOKEN_LETTER . optional_number  (19)
+	optional_number : .  (25)
+
+	TOKEN_DIGIT  shift 14
+	$end  reduce 25
+	TOKEN_LETTER  reduce 25
+	TOKEN_LITERAL  reduce 25
+	'?'  reduce 25
+	':'  reduce 25
+	'|'  reduce 25
+	'&'  reduce 25
+	'~'  reduce 25
+	'@'  reduce 25
+	'%'  reduce 25
+	'.'  reduce 25
+	'+'  reduce 25
+	'-'  reduce 25
+	'*'  reduce 25
+	'('  reduce 25
+	')'  reduce 25
+	'<'  reduce 25
+	'>'  reduce 25
+
+	number  goto 46
+	optional_number  goto 47
+
+
+state 45
+	conditional : alternative '?' optional_conditional ':' conditional .  (3)
+
+	.  reduce 3
+
+
+state 46
+	optional_number : number .  (26)
+	number : number . TOKEN_DIGIT  (28)
+
+	TOKEN_DIGIT  shift 30
+	$end  reduce 26
+	TOKEN_LETTER  reduce 26
+	TOKEN_LITERAL  reduce 26
+	'?'  reduce 26
+	':'  reduce 26
+	'|'  reduce 26
+	'&'  reduce 26
+	'~'  reduce 26
+	'@'  reduce 26
+	'%'  reduce 26
+	'.'  reduce 26
+	'+'  reduce 26
+	'-'  reduce 26
+	'*'  reduce 26
+	'('  reduce 26
+	')'  reduce 26
+	'<'  reduce 26
+	'>'  reduce 26
+
+
+state 47
+	string : string '.' flag TOKEN_LETTER optional_number .  (19)
+
+	.  reduce 19
+
+
+20 terminals, 12 nonterminals
+34 grammar rules, 48 states
+
+grammar parser grammar
+symbol# value# symbol
+     0      0  $end
+     1    256  error
+     2    257  TOKEN_LETTER
+     3    258  TOKEN_LITERAL
+     4    259  TOKEN_DIGIT
+     5     63  '?'
+     6     58  ':'
+     7    124  '|'
+     8     38  '&'
+     9    126  '~'
+    10     64  '@'
+    11     37  '%'
+    12     46  '.'
+    13     43  '+'
+    14     45  '-'
+    15     42  '*'
+    16     40  '('
+    17     41  ')'
+    18     60  '<'
+    19     62  '>'
+    20    260  $accept
+    21    261  expr
+    22    262  conditional
+    23    263  alternative
+    24    264  list
+    25    265  string
+    26    266  substitute
+    27    267  optional_conditional
+    28    268  number
+    29    269  digits
+    30    270  optional_number
+    31    271  flag

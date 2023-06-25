@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_variables.c:152:1:db_rw_internal_variable	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_variables.c:166:1:sysctl_ddb_setup	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_variables.c:240:1:db_find_variable	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_variables.c:268:1:db_get_variable	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_variables.c:281:1:db_set_variable	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_variables.c:295:1:db_read_variable	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_variables.c:306:1:db_write_variable	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_variables.c:318:1:db_set_cmd	52	dynamic,bounded

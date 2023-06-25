@@ -1,0 +1,12 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:566:1:nfs_boot_delroute_matcher	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:204:1:nfs_boot_ifupdown	216	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:294:1:nfs_boot_setaddress	104	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:252:1:nfs_boot_setmtu	212	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:351:1:nfs_boot_deladdress	220	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:195:1:nfs_boot_cleanup	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:115:1:nfs_boot_init	140	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:387:1:nfs_boot_setrecvtimo	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:399:1:nfs_boot_enbroadcast	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:409:1:nfs_boot_sobind_ipport	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:432:1:nfs_boot_sendrecv	124	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_boot.c:576:1:nfs_boot_flushrt	16	dynamic,bounded

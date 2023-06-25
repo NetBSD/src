@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/if_media_80.c:96:1:compat_ifmediareq_pre	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/if_media_80.c:126:1:compat_ifmediareq_post	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/if_media_80.c:179:1:ifmedia_80_init	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/if_media_80.c:187:1:ifmedia_80_fini	20	dynamic,bounded

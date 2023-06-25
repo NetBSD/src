@@ -1,0 +1,3 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uipc_usrreq_70.c:51:1:compat_70_unp_addsockcred	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uipc_usrreq_70.c:77:1:uipc_usrreq_70_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uipc_usrreq_70.c:84:1:uipc_usrreq_70_fini	8	dynamic,bounded

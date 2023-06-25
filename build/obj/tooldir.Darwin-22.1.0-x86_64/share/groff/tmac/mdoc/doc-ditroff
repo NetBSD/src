@@ -1,0 +1,206 @@
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. [Deleted.  See
+.\"     ftp://ftp.cs.berkeley.edu/pub/4bsd/README.Impt.License.Change]
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)doc-ditroff	8.1 (Berkeley) 06/08/93
+.\"
+.eo
+.if !r D .nr D 0
+.if !r cR .nr cR 0
+.if !r S .nr S 10
+.ec
+.ie        (\n[S] == 11) \{\
+.ps 10.95z
+.vs 13.6p
+.\}
+.el \{ .ie (\n[S] == 12) \{\
+.ps 12z
+.vs 14.5p
+.\}
+.el \{\
+.ps 10z
+.vs 12p
+.\}\}
+.ds caption-font \f[R]\s[\n[.ps]u]
+.ds caption-font2 \f[R]\s[\n[.ps]u]
+.ds Ad-font \f[I]\s[\n[.ps]u]
+.ds Ar-font \f[CO]\s[\n[.ps]u]
+.ds Cm-font \f[CB]\s[\n[.ps]u]
+.ds Em-font \f[I]\s[\n[.ps]u]
+.ds Er-font \f[C]\s[\n[.ps]u]
+.ds Ev-font \f[C]\s[\n[.ps]u]
+.ds Fa-font \f[CO]\s[\n[.ps]u]
+.ds Fd-font \f[CB]\s[\n[.ps]u]
+.ds Fl-font \f[CB]\s[\n[.ps]u]
+.ds Fn-font \f[CB]\s[\n[.ps]u]
+.ds Ft-font \f[CO]\s[\n[.ps]u]
+.ds Ic-font \f[CB]\s[\n[.ps]u]
+.ds Li-font \f[C]
+.ds Me-font \f[B]\s[\n[.ps]u]
+.ds Nm-font \f[CB]\s[\n[.ps]u]
+.ds No-font \f[R]\s[\n[.ps]u]
+.ds Pa-font \f[C]\s[\n[.ps]u]
+.ds Sh-font \f[B]\s[\n[.ps]u]
+.ds Sy-font \f[B]\s[\n[.ps]u]
+.ds Sx-font \f[B]\s[\n[.ps]u]
+.ds Tn-font-shape \f[R]
+\# XXX: adapt to discrete LaTeX font sizes
+.ds Tn-font-size \s[(\n[.ps]u - 1z)]
+.ds Va-font \f[I]\s[\n[.ps]u]
+.ds Xr-font \f[C]\s[\n[.ps]u]
+.ds left-parenthesis \f[R]\|(\|\f[]\s[\n[.ps]u]
+.ds right-parenthesis \f[R]\|)\|\f[]\s[\n[.ps]u]
+.ds lp \f[R](\f[]\s[\n[.ps]u]
+.ds rp \f[R])\f[]\s[\n[.ps]u]
+.ds left-bracket \f[R]\^[\^\f[]\s[\n[.ps]u]
+.ds right-bracket \f[R]\^]\f[]\s[\n[.ps]u]
+.tr *\[**]
+.nr subheader-indent (\w\f[C],u * 5u)
+.nr paragraph-space .5v
+.nr digit-width \w'\0'u
+.nr fixed-width \w\f[C]0
+.eo
+.nr header-space .5i
+.nr footer-space .5i
+.nr display-vertical 0
+.de setup-page-layout
+.ie r LL \
+.ll \n[LL]u
+.el \
+.ll 6.5i
+.ie r LT \
+.lt \n[LT]u
+.el \
+.lt 6.5i
+.po 1i
+.nr display-vertical .5v
+..
+.ds left-singlequote \[oq]
+.ds right-singlequote \[cq]
+.ds <= \[<=]
+.ds >= \[>=]
+.ds Lq \[lq]
+.ds Rq \[rq]
+.ds ua \[ua]
+.ds aa \[aa]
+.ds ga \[ga]
+.ds q \[dq]
+.ds Pi \[*p]
+.ds Ne \[!=]
+.ds Le \[<=]
+.ds Ge \[>=]
+.ds Lt <
+.ds Gt >
+.ds Pm \[+-]
+.ds If \[if]
+.ds Na \f[I]NaN\f[]
+.ds Ba \f[R]|\f[]
+.ds Am &
+.ds header-string
+.de setup-header
+.ds header-string "\*[document-title]
+.if !"\*[section]"Null" \
+.as header-string \|(\*[section])
+.wh 0 header
+.wh -1.25i footer
+.br
+.e@ end-macro
+..
+.de get-width
+.nr width \w\f[C]\$1
+.ie (\n[width] >= \n[fixed-width]) \{\
+.ie (\n[width] % \n[fixed-width]) \
+.nr width ((\n[width] / \n[fixed-width]) + 1)
+.el \
+.nr width (\n[width] / \n[fixed-width])
+.\}
+.el \{\
+.ie \n[width] \
+.nr width 1
+.el \
+.nr width 0
+.\}
+..
+.de get-arg-width
+.nr width \w\f[C]\*[arg\$1]
+.ie (\n[width] >= \n[fixed-width]) \{\
+.ie (\n[width] % \n[fixed-width]) \
+.nr width ((\n[width] / \n[fixed-width]) + 1)
+.el \
+.nr width (\n[width] / \n[fixed-width])
+.\}
+.el \{\
+.ie \n[width] \
+.nr width 1
+.el \
+.nr width 0
+.\}
+..
+.de Ql
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Ql
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .Ql argument ... (#\n[.c])
+.\}
+.nr reg-Ql (\n[arg-ptr] + 1)
+.get-arg-width \n[reg-Ql]
+.nr reg-Ql +1
+.if (\n[arg-limit] >= \n[reg-Ql]) \
+.if (\n[type\n[reg-Ql]] == 2) \
+.nr width 3
+.ie (\n[width] > 2) \
+.Li
+.el \{\
+.ie \n[arg-ptr] \{\
+.ds arg\n[arg-ptr] Li
+.nr arg-ptr -1
+.\}
+.el \{\
+.nr reg-Ql \n[arg-limit]
+.nr reg-Ql1 (\n[arg-limit] + 1)
+.while \n[reg-Ql] \{\
+.rn arg\n[reg-Ql] arg\n[reg-Ql1]
+.rnn type\n[reg-Ql] type\n[reg-Ql1]
+.rn space\n[reg-Ql] space\n[reg-Ql1]
+.nr reg-Ql -1
+.nr reg-Ql1 -1
+.\}
+.ds arg1 Li
+.nr type1 1
+.ds space1
+.nr arg-limit +1
+.\}
+.ds quote-left "\*[left-singlequote]
+.ds quote-right "\*[right-singlequote]
+.enclose-string
+.\}
+..
+.ec

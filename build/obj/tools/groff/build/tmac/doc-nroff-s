@@ -1,0 +1,169 @@
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. [Deleted.  See
+.\"     ftp://ftp.cs.berkeley.edu/pub/4bsd/README.Impt.License.Change]
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)doc-nroff	8.1 (Berkeley) 06/08/93
+.\"
+.eo
+.if !r D .nr D 0
+.if !r cR .nr cR 1
+.nr S 10
+.ds caption-font \f[R]
+.ds caption-font2 \f[R]
+.ds Ad-font \f[I]
+.ds Ar-font \f[I]
+.ds Cm-font \f[B]
+.ds Em-font \f[I]
+.ds Er-font \f[R]
+.ds Ev-font \f[R]
+.ds Fa-font \f[I]
+.ds Fd-font \f[B]
+.ds Fl-font \f[B]
+.ds Fn-font \f[B]
+.ds Ft-font \f[I]
+.ds Ic-font \f[B]
+.ds Li-font \f[R]
+.ds Me-font \f[B]
+.ds Nm-font \f[B]
+.ds No-font \f[R]
+.ds Pa-font \f[I]
+.ds Sh-font \f[B]
+.ds Sy-font \f[B]
+.ds Sx-font \f[I]
+.ds Tn-font-shape \f[R]
+.ds Tn-font-size
+.ds Va-font \f[I]
+.ds Xr-font \f[R]
+.ds left-parenthesis \f[R](\f[]
+.ds right-parenthesis \f[R])\f[]
+.ds lp \f[R](\f[]
+.ds rp \f[R])\f[]
+.ds left-bracket \f[R][\f[]
+.ds right-bracket \f[R]]\f[]
+.nr subheader-indent .5i
+.nr paragraph-space 1v
+.ec
+.nr digit-width \w'\0\0'u
+.nr fixed-width \w'0'
+.eo
+.nr header-space 0.5i
+.nr footer-space 0.5i
+.nr display-vertical 0
+.de setup-page-layout
+.ie r LL \
+.ll \n[LL]u
+.el \
+.ll 78n
+.ie r LT \
+.lt \n[LT]u
+.el \
+.lt 78n
+.po 0i
+.nr display-vertical 1v
+.ad l
+.na
+..
+.ec
+.ds left-singlequote \[oq]
+.ds right-singlequote \[cq]
+.ds <= \[<=]
+.ds >= \[>=]
+.ds aa \[aa]
+.ds ga \[ga]
+.ds q \[dq]
+.ds Ne \[!=]
+.ds Le \[<=]
+.ds Ge \[>=]
+.ds Lt <
+.ds Gt >
+.ds Pm \[+-]
+.ds Na \f[I]NaN\f[]
+.ds Ba \f[R]|\f[]
+.ds Am &
+.ie '\*[.T]'utf8' \{\
+.ds Rq \[rq]
+.ds Lq \[lq]
+.ds ua \[ua]
+.ds Pi \[*p]
+.ds If \[if]
+.\}
+.el \{\
+.ds Rq ''
+.ds Lq ``
+.ds ua ^
+.ds Pi pi
+.ds If infinity
+.\}
+.eo
+.ds header-string
+.de setup-header
+.ds header-string "\*[document-title]
+.if !"\*[section]"Null" \
+.as header-string (\*[section])
+.ie \n[cR] \
+.header
+.el \{\
+.wh 0 header
+.wh -1.167i footer
+.\}
+.e@ end-macro
+..
+.de get-width
+.nr width \w\$1
+.ie (\n[width] >= \n[fixed-width]) \{\
+.ie (\n[width] % \n[fixed-width]) \
+.nr width ((\n[width] / \n[fixed-width]) + 1)
+.el \
+.nr width (\n[width] / \n[fixed-width])
+.\}
+.el \
+.nr width 0
+..
+.de get-arg-width
+.nr width \w\*[arg\$1]
+.ie (\n[width] >= \n[fixed-width]) \{\
+.ie (\n[width] % \n[fixed-width]) \
+.nr width ((\n[width] / \n[fixed-width]) + 1)
+.el \
+.nr width (\n[width] / \n[fixed-width])
+.\}
+.el \
+.nr width 0
+..
+.de Ql
+.if !\n[arg-limit] \{\
+.ie \n[.$] \
+.ds macro-name Ql
+.el \
+.tm Usage: .Ql argument ... (#\n[.c])
+.\}
+.ds quote-left "\*[left-singlequote]
+.ds quote-right "\*[right-singlequote]
+.enclose-string \$@
+..
+.ec

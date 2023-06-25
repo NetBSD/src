@@ -1,0 +1,5 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions_vfs.c:122:1:secmodel_extensions_system_cb	204	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions_vfs.c:200:1:secmodel_extensions_vnode_cb	196	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions_vfs.c:55:1:secmodel_extensions_vfs_start	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions_vfs.c:65:1:secmodel_extensions_vfs_stop	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/extensions/secmodel_extensions_vfs.c:73:1:secmodel_extensions_vfs_sysctl	88	dynamic,bounded

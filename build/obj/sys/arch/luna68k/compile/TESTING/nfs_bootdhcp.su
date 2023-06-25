@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bootdhcp.c:308:1:bootpset	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bootdhcp.c:321:1:bootpcheck	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bootdhcp.c:454:1:bootp_addvend	116	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_bootdhcp.c:240:1:nfs_bootdhcp	180	dynamic,bounded

@@ -1,0 +1,99 @@
+/* option `ISP_TARGET_MODE' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_TARGET_MODE
+ .global _KERNEL_OPT_ISP_TARGET_MODE
+ .equiv _KERNEL_OPT_ISP_TARGET_MODE,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_TARGET_MODE\n .global _KERNEL_OPT_ISP_TARGET_MODE\n .equiv _KERNEL_OPT_ISP_TARGET_MODE,0x6e074def\n .endif");
+#endif
+/* option `ISP_DISABLE_FW' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_DISABLE_FW
+ .global _KERNEL_OPT_ISP_DISABLE_FW
+ .equiv _KERNEL_OPT_ISP_DISABLE_FW,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_DISABLE_FW\n .global _KERNEL_OPT_ISP_DISABLE_FW\n .equiv _KERNEL_OPT_ISP_DISABLE_FW,0x6e074def\n .endif");
+#endif
+/* option `ISP_DISABLE_2400_SUPPORT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_DISABLE_2400_SUPPORT
+ .global _KERNEL_OPT_ISP_DISABLE_2400_SUPPORT
+ .equiv _KERNEL_OPT_ISP_DISABLE_2400_SUPPORT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_DISABLE_2400_SUPPORT\n .global _KERNEL_OPT_ISP_DISABLE_2400_SUPPORT\n .equiv _KERNEL_OPT_ISP_DISABLE_2400_SUPPORT,0x6e074def\n .endif");
+#endif
+/* option `ISP_DISABLE_2322_SUPPORT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_DISABLE_2322_SUPPORT
+ .global _KERNEL_OPT_ISP_DISABLE_2322_SUPPORT
+ .equiv _KERNEL_OPT_ISP_DISABLE_2322_SUPPORT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_DISABLE_2322_SUPPORT\n .global _KERNEL_OPT_ISP_DISABLE_2322_SUPPORT\n .equiv _KERNEL_OPT_ISP_DISABLE_2322_SUPPORT,0x6e074def\n .endif");
+#endif
+/* option `ISP_DISABLE_2300_SUPPORT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_DISABLE_2300_SUPPORT
+ .global _KERNEL_OPT_ISP_DISABLE_2300_SUPPORT
+ .equiv _KERNEL_OPT_ISP_DISABLE_2300_SUPPORT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_DISABLE_2300_SUPPORT\n .global _KERNEL_OPT_ISP_DISABLE_2300_SUPPORT\n .equiv _KERNEL_OPT_ISP_DISABLE_2300_SUPPORT,0x6e074def\n .endif");
+#endif
+/* option `ISP_DISABLE_2200_SUPPORT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_DISABLE_2200_SUPPORT
+ .global _KERNEL_OPT_ISP_DISABLE_2200_SUPPORT
+ .equiv _KERNEL_OPT_ISP_DISABLE_2200_SUPPORT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_DISABLE_2200_SUPPORT\n .global _KERNEL_OPT_ISP_DISABLE_2200_SUPPORT\n .equiv _KERNEL_OPT_ISP_DISABLE_2200_SUPPORT,0x6e074def\n .endif");
+#endif
+/* option `ISP_DISABLE_2100_SUPPORT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_DISABLE_2100_SUPPORT
+ .global _KERNEL_OPT_ISP_DISABLE_2100_SUPPORT
+ .equiv _KERNEL_OPT_ISP_DISABLE_2100_SUPPORT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_DISABLE_2100_SUPPORT\n .global _KERNEL_OPT_ISP_DISABLE_2100_SUPPORT\n .equiv _KERNEL_OPT_ISP_DISABLE_2100_SUPPORT,0x6e074def\n .endif");
+#endif
+/* option `ISP_DISABLE_1080_SUPPORT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_DISABLE_1080_SUPPORT
+ .global _KERNEL_OPT_ISP_DISABLE_1080_SUPPORT
+ .equiv _KERNEL_OPT_ISP_DISABLE_1080_SUPPORT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_DISABLE_1080_SUPPORT\n .global _KERNEL_OPT_ISP_DISABLE_1080_SUPPORT\n .equiv _KERNEL_OPT_ISP_DISABLE_1080_SUPPORT,0x6e074def\n .endif");
+#endif
+/* option `ISP_DISABLE_1020_SUPPORT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_DISABLE_1020_SUPPORT
+ .global _KERNEL_OPT_ISP_DISABLE_1020_SUPPORT
+ .equiv _KERNEL_OPT_ISP_DISABLE_1020_SUPPORT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_DISABLE_1020_SUPPORT\n .global _KERNEL_OPT_ISP_DISABLE_1020_SUPPORT\n .equiv _KERNEL_OPT_ISP_DISABLE_1020_SUPPORT,0x6e074def\n .endif");
+#endif
+/* option `ISP_VPORTS' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_VPORTS
+ .global _KERNEL_OPT_ISP_VPORTS
+ .equiv _KERNEL_OPT_ISP_VPORTS,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_VPORTS\n .global _KERNEL_OPT_ISP_VPORTS\n .equiv _KERNEL_OPT_ISP_VPORTS,0x6e074def\n .endif");
+#endif
+/* option `ISP_LOGDEFAULT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_ISP_LOGDEFAULT
+ .global _KERNEL_OPT_ISP_LOGDEFAULT
+ .equiv _KERNEL_OPT_ISP_LOGDEFAULT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_ISP_LOGDEFAULT\n .global _KERNEL_OPT_ISP_LOGDEFAULT\n .equiv _KERNEL_OPT_ISP_LOGDEFAULT,0x6e074def\n .endif");
+#endif

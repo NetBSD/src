@@ -1,0 +1,10 @@
+prefix=/Users/sidqian/Downloads/summer/L2S/netbsd-src/build/obj/tooldir.Darwin-22.1.0-x86_64
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+
+Name: libmagic
+Description: Magic number recognition library
+Version: 5.43
+Libs: -L${libdir} -lmagic
+Libs.private: -lzstd -llzma -lbz2 -lz 

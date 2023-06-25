@@ -1,0 +1,10 @@
+graphite-scop-detection.o: \
+  /Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/gcc/../../external/gpl3/gcc.old/dist/gcc/graphite-scop-detection.c \
+  config.h auto-host.h \
+  /Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/gcc/../../external/gpl3/gcc.old/dist/gcc/../include/ansidecl.h
+
+config.h:
+
+auto-host.h:
+
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/gcc/../../external/gpl3/gcc.old/dist/gcc/../include/ansidecl.h:

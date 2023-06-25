@@ -1,0 +1,14 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:38:1:vfs_quotactl_stat	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:48:1:vfs_quotactl_idtypestat	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:60:1:vfs_quotactl_objtypestat	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:72:1:vfs_quotactl_get	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:84:1:vfs_quotactl_put	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:96:1:vfs_quotactl_del	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:106:1:vfs_quotactl_cursoropen	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:116:1:vfs_quotactl_cursorclose	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:126:1:vfs_quotactl_cursorskipidtype	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:138:1:vfs_quotactl_cursorget	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:154:1:vfs_quotactl_cursoratend	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:166:1:vfs_quotactl_cursorrewind	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:176:1:vfs_quotactl_quotaon	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_quotactl.c:187:1:vfs_quotactl_quotaoff	32	dynamic,bounded

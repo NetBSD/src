@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_sack.c:188:1:sack_inserthole	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_sack.c:161:1:tcp_sack_init	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_sack.c:226:1:tcp_new_dsack	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_sack.c:241:1:tcp_sack_option	92	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_sack.c:403:1:tcp_del_sackholes	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_sack.c:428:1:tcp_free_sackholes	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_sack.c:444:1:tcp_sack_output	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_sack.c:473:1:tcp_sack_adjust	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_sack.c:510:1:tcp_sack_numblks	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_sack.c:536:1:sack_dump	40	dynamic,bounded

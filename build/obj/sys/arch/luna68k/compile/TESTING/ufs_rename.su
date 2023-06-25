@@ -1,0 +1,12 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:93:1:ufs_sane_rename	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:123:1:ufs_gro_directory_empty_p	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:145:1:ufs_gro_rename_check_possible	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:183:1:ufs_gro_rename_check_permitted	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:221:1:ufs_gro_remove_check_possible	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:247:1:ufs_gro_remove_check_permitted	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:798:1:ufs_gro_lookup	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:1010:1:ufs_gro_lock_directory	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:281:1:ufs_gro_rename	104	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:760:1:ufs_gro_remove	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:915:1:ufs_gro_genealogy	132	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_rename.c:110:1:ufs_rename	8	dynamic,bounded

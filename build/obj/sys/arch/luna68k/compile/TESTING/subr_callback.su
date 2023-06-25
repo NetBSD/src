@@ -1,0 +1,5 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_callback.c:38:1:callback_head_init	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_callback.c:54:1:callback_head_destroy	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_callback.c:62:1:callback_register	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_callback.c:76:1:callback_unregister	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_callback.c:132:1:callback_run_roundrobin	44	dynamic,bounded

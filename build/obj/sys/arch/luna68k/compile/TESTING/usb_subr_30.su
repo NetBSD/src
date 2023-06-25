@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/usb_subr_30.c:200:1:usb_copy_to_old30	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/usb_subr_30.c:127:1:usbd_fill_deviceinfo_old	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/usb_subr_30.c:233:1:usb_30_init	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/usb_subr_30.c:241:1:usb_30_fini	20	dynamic,bounded

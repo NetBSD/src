@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_ipc.c:506:1:sysctl_ipc_setup	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_ipc.c:355:1:sysctl_kern_sysvipc	88	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_ipc.c:257:1:sysvipc_listener_cb	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_ipc.c:160:1:sysv_ipc_modcmd	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_ipc.c:313:1:ipcperm	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_ipc.c:330:1:sysvipcfini	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_ipc.c:339:1:sysvipcinit	12	dynamic,bounded

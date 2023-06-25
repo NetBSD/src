@@ -1,0 +1,3413 @@
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. [Deleted.  See
+.\"     ftp://ftp.cs.berkeley.edu/pub/4bsd/README.Impt.License.Change]
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)doc	8.1 (Berkeley) 06/08/93
+.\"
+.\" Modified by jjc@jclark.com as follows: the doc-* files are assumed to be
+.\" installed as mdoc/doc-* rather than tmac.doc-* (the filename
+.\" `tmac.doc-common' would be too long); when using groff, the doc-* files
+.\" are loaded using the `mso' request.
+.\"
+.\" Modified by
+.\"
+.\"   Werner LEMBERG <wl@gnu.org>      and
+.\"   Ruslan Ermilov <ru@freebsd.org>
+.\"
+.\" to make it more readable: using long names and many groff features,
+.\" updating and extending documentation, etc.
+.\"
+.if !\n(.g \
+.ab This version of mdoc can be run with GNU troff only!
+.do if d Dd .nx
+.cp 0
+.if (\n[.x]\n[.y] < 118) \
+.ab You need GNU troff version 1.18 or higher to run this version of mdoc!
+.ie t \
+.mso mdoc/doc-ditroff
+.el \
+.mso mdoc/doc-nroff
+.mso mdoc/doc-common
+.mso mdoc/doc-syms
+.eo
+.ds macro-name
+.als arg0 macro-name
+.nr arg-limit 0
+.nr num-args 0
+.nr arg-ptr 0
+.ds arg1
+.nr type1 0
+.ds space1
+.de parse-args
+.if !\n[arg-limit] \
+.set-spacing-1
+.nr have-space 0
+.if !\n[.$] \
+.return
+.nr arg-limit +1
+.ie        "\$1"|" \
+.ds arg\n[arg-limit] \f[R]|\f[]
+.el \{ .ie "\$1"..." \
+.ds arg\n[arg-limit] \|.\|.\|.
+.el \
+.ds arg\n[arg-limit] "\$1
+.\}
+.get-arg-type* \n[arg-limit]
+.nr type\n[arg-limit] \n[arg-type]
+.set-spacing-\n[arg-type]
+.ie (\n[.$] == 1) \
+.nr arg-ptr 0
+.el \{\
+.shift
+.parse-args \$@
+.\}
+.nh
+..
+.de parse-arg-vector
+.if !\n[arg-limit] \
+.set-spacing-1
+.nr arg-limit +1
+.ie        "\*[arg\n[arg-limit]]"|" \
+.ds arg\n[arg-limit] \f[R]|\f[]
+.el \{ .if "\*[arg\n[arg-limit]]"..." \
+.ds arg\n[arg-limit] \|.\|.\|.
+.\}
+.get-arg-type* \n[arg-limit]
+.nr type\n[arg-limit] \n[arg-type]
+.set-spacing-\n[arg-type]
+.ie (\n[num-args] == 1) \{\
+.nr arg-ptr 0
+.nr num-args 0
+.\}
+.el \{\
+.nr num-args -1
+.parse-arg-vector
+.\}
+.nh
+..
+.de parse-space-vector
+.nr arg-limit +1
+.set-spacing-\n[type\n[arg-limit]]
+.ie (\n[num-args] == 1) \
+.nr num-args 0
+.el \{\
+.nr num-args -1
+.parse-space-vector
+.\}
+..
+.de remaining-args
+.nr arg-ptr +1
+.nop \)\*[arg\n[arg-ptr]]\c
+.ie (\n[num-args] == 1) \{\
+.nr arg-ptr 0
+.nr num-args 0
+.\}
+.el \{\
+.nop \)\*[space]\c
+.nr num-args -1
+.remaining-args
+.\}
+..
+.de append-arg
+.nr arg-limit +1
+.ds arg\n[arg-limit] "\$1
+.nr type\n[arg-limit] \$2
+.set-spacing-\$2
+..
+.de print-and-reset
+.if \n[space-mode] \
+.nop \)
+.reset-args
+..
+.de reset-args
+.nr arg-limit 0
+.nr arg-ptr 0
+.nr have-slot 0
+.hy \n[hyphen-flags]
+..
+.ec
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.eo
+.de Fl
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Fl-font]\c
+.if !\n[arg-limit] \{\
+.ds macro-name Fl
+.parse-args \$@
+.if !\n[.$] \{\
+.nop \|\-\|\f[]\s[0]
+.\}\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.ie (\n[arg-limit] < \n[arg-ptr]) \{\
+.nop \|\-\f[]\s[0]\c
+.print-and-reset
+.\}
+.el \{\
+.ie (\n[type\n[arg-ptr]] == 1) \{\
+.nop \|\-\f[]\s[0]\c
+.\*[arg\n[arg-ptr]]
+.\}
+.el \{\
+.if (\n[type\n[arg-ptr]] == 3) \
+.nop \|\-\|\c
+.nr reg-Fl 1
+.flag-recursion
+.\}\}
+..
+.de flag-recursion
+.nr reg-dfr1 \n[type\n[arg-ptr]]
+.ds str-dfr "\*[arg\n[arg-ptr]]
+.ie (\n[reg-dfr1] == 1) \{\
+.nop \f[]\s[0]\c
+.\*[str-dfr]
+.\}
+.el \{\
+.nr reg-dfr \n[arg-ptr]
+.ie (\n[reg-dfr1] == 2) \{\
+.ie "\*[str-dfr]"\*[Ba]" \{\
+.if \n[reg-Fl] \
+.nop \|\-\*[space]\c
+.nop \)\*[Ba]\c
+.\}
+.el \{\
+.ie "\*[str-dfr]"\f[R]|\f[]" \{\
+.if \n[reg-Fl] \
+.nop \|\-\*[space]\c
+.nop \f[R]|\f[]\c
+.\}
+.el \{\
+.ie "\*[str-dfr]"-" \
+.nop \|\-\^\-\|\c
+.el \
+.nop \|\%\-\*[str-dfr]\&\c
+.\}\}\}
+.el \{\
+.nop \f[\n[curr-font]]\s[\n[curr-size]u]\c
+.nop \)\*[str-dfr]\f[]\s[0]\c
+.\}
+.ie (\n[arg-limit] == \n[arg-ptr]) \{\
+.if (\n[reg-dfr1] == 4) \
+.nop \|\-\c
+.nop \f[]\s[0]\c
+.print-and-reset
+.\}
+.el \{\
+.nr arg-ptr +1
+.ie (\n[type\n[arg-ptr]] == 3) \{\
+.ie (\n[type\n[reg-dfr]] == 4) \
+.nop \|\-\c
+.el \
+.nop \)\*[space\n[reg-dfr]]\c
+.\}
+.el \
+.nop \)\*[space\n[reg-dfr]]\c
+.shift
+.nr reg-Fl 0
+.flag-recursion \$@
+.\}\}
+..
+.de print-recursive
+.nr reg-dpr1 \n[type\n[arg-ptr]]
+.ds str-dpr "\*[arg\n[arg-ptr]]
+.ie (\n[reg-dpr1] == 1) \{\
+.nop \f[\n[curr-font]]\s[\n[curr-size]u]\c
+.\*[str-dpr]
+.\}
+.el \{\
+.nr reg-dpr \n[arg-ptr]
+.ie (\n[reg-dpr1] == 2) \
+.nop \%\*[str-dpr]\&\c
+.el \{\
+.nop \f[\n[curr-font]]\s[\n[curr-size]u]\c
+.nop \)\*[str-dpr]\f[]\s[0]\c
+.\}
+.nr arg-ptr +1
+.ie (\n[arg-limit] < \n[arg-ptr]) \{\
+.nop \f[\n[curr-font]]\s[\n[curr-size]u]\c
+.print-and-reset
+.\}
+.el \{\
+.nop \)\*[space\n[reg-dpr]]\c
+.print-recursive
+.\}\}
+..
+.de print-prefixes
+.while (\n[arg-limit] >= \n[arg-ptr]) \{\
+.if !(\n[type\n[arg-ptr]] == 4) \
+.break
+.nop \f[\n[curr-font]]\s[\n[curr-size]u]\c
+.nop \)\*[arg\n[arg-ptr]]\f[]\s[0]\c
+.nr arg-ptr +1
+.\}
+..
+.de generic-macro
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name \$0
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .\$0 \*[\$0-usage] ... (#\n[.c])
+.\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.if (\n[type\n[arg-ptr]] == 1) \{\
+.tmc mdoc warning: Using a macro as first argument
+.tm1 " cancels effect of .\$0 (#\n[.c])
+.\}
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[\$0-font]\c
+.print-recursive
+.\}
+.el \{\
+.tm Usage: .\$0 \*[\$0-usage] ... (#\n[.c])
+.reset-args
+.\}
+..
+.ds str-Ar-default "file\ .\|.\|.
+.de Ar
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Ar-font]\c
+.if !\n[arg-limit] \{\
+.ds macro-name Ar
+.parse-args \$@
+.if !\n[.$] \{\
+.nop \)\*[str-Ar-default]\&\f[]\s[0]
+.\}\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.print-prefixes
+.ie (\n[arg-limit] < \n[arg-ptr]) \{\
+.nop \)\*[str-Ar-default]\&\f[]\s[0]\c
+.print-and-reset
+.\}
+.el \{\
+.if !(\n[type\n[arg-ptr]] == 2) \{\
+.nr arg-ptr -1
+.ds arg\n[arg-ptr] "\*[str-Ar-default]
+.nr type\n[arg-ptr] 2
+.ds space\n[arg-ptr] "\*[space]
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.parse-space-vector
+.\}
+.print-recursive
+.\}
+..
+.als Ad generic-macro
+.ds Ad-usage address
+.nr indent-synopsis 0
+.nr indent-synopsis-active 0
+.de Cd
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Cd
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .Cd configuration_file_declaration ... (#\n[.c])
+.\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ie \n[in-synopsis-section] \{\
+.ie "\*[macro-name]"Cd" \{\
+.br
+.if !\n[indent-synopsis] \
+.nr indent-synopsis \n[display-indent]u
+.if !\n[indent-synopsis-active] \
+.in +\n[indent-synopsis]u
+.ti -\n[indent-synopsis]u
+.nop \*[Nm-font]\c
+.print-recursive
+.if !\n[indent-synopsis-active] \
+.in -\n[indent-synopsis]u
+.\}
+.el \{\
+.nop \*[Nm-font]\c
+.print-recursive
+.\}\}
+.el \{\
+.nop \*[Nm-font]\c
+.print-recursive
+.\}\}
+.el \{\
+.tm Usage: .Cd configuration_file_declaration ... (#\n[.c])
+.reset-args
+.\}
+..
+.als Cm generic-macro
+.ds Cm-usage interactive_command_modifier
+.als Dv generic-macro
+.ds Dv-usage defined_variable
+.als Dv-font Er-font
+.als Em generic-macro
+.ds Em-usage text
+.als Er generic-macro
+.ds Er-usage text
+.als Ev generic-macro
+.ds Ev-usage text
+.nr have-decl 0
+.nr have-var 0
+.de do-func-decl
+.if \n[in-synopsis-section] \{\
+.if \n[have-var] \{\
+.paragraph
+.nr have-var 0
+.\}
+.if \n[have-func] \{\
+.ie \n[have-decl] \
+.br
+.el \
+.paragraph
+.\}
+.nr have-decl 1
+.\}
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+..
+.de Fd
+.ie ((\n[.$] >= 1) & (\n[arg-limit] == 0)) \{\
+.do-func-decl
+.nop \*[Fd-font]\$*
+.br
+.ft \n[curr-font]
+.ps \n[curr-size]u
+.\}
+.el \{\
+.tm Usage: .Fd function_declaration -- Fd is not callable (#\n[.c])
+.reset-args
+.\}
+..
+.de In
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name In
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .In include_file ... (#\n[.c])
+.\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.print-prefixes
+.ie ((\n[arg-limit] >= \n[arg-ptr]) & (\n[type\n[arg-ptr]] == 2)) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ie \n[in-synopsis-section] \{\
+.ie "\*[macro-name]"In" \{\
+.do-func-decl
+.nop \*[Fd-font]#include <\*[arg\n[arg-ptr]]>
+.ft \n[curr-font]
+.ps \n[curr-size]u
+.br
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \
+.print-recursive
+.el \
+.reset-args
+.\}
+.el \{\
+.ds arg\n[arg-ptr] "<\*[Pa-font]\*[arg\n[arg-ptr]]
+.as arg\n[arg-ptr] \f[\n[curr-font]]\s[\n[curr-size]u]>
+.print-recursive
+.\}\}
+.el \{\
+.ds arg\n[arg-ptr] "<\*[Pa-font]\*[arg\n[arg-ptr]]
+.as arg\n[arg-ptr] \f[\n[curr-font]]\s[\n[curr-size]u]>
+.print-recursive
+.\}\}
+.el \{\
+.tm Usage: .In include_file ... (#\n[.c])
+.reset-args
+.\}
+..
+.als Fr generic-macro
+.ds Fr-usage function_return_value
+.als Fr-font Ar-font
+.als Ic generic-macro
+.ds Ic-usage interactive_command
+.als Li generic-macro
+.ds Li-usage argument
+.als Ms generic-macro
+.ds Ms-usage math_symbol
+.als Ms-font Sy-font
+.ds command-name
+.de Nm
+.if !\n[arg-limit] \{\
+.ds macro-name Nm
+.ie \n[.$] \
+.parse-args \$@
+.el \{\
+.ie "\*[command-name]"" \
+.tm Usage: .Nm name ... (#\n[.c])
+.el \
+.parse-args \*[command-name]
+.\}\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.print-prefixes
+.ie (\n[arg-limit] < \n[arg-ptr]) \{\
+.ie "\*[command-name]"" \{\
+.tm Usage: .Nm name ... (#\n[.c])
+.reset-args
+.\}
+.el \{\
+.nop \*[Nm-font]\*[command-name]\f[]\s[0]\c
+.print-and-reset
+.\}\}
+.el \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ie !(\n[type\n[arg-ptr]] == 2) \{\
+.ie "\*[command-name]"" \
+.tm Usage: .Nm name ... (#\n[.c])
+.el \{\
+.nr arg-ptr -1
+.ds arg\n[arg-ptr] "\*[Nm-font]\*[command-name]\f[]\s[0]
+.nr type\n[arg-ptr] 2
+.ds space\n[arg-ptr] "\*[space]
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.parse-space-vector
+.\}\}
+.el \{\
+.if \n[in-synopsis-section] \{\
+.if "\*[macro-name]"Nm" \{\
+.br
+.if !\n[indent-synopsis] \{\
+.get-width "\*[arg\n[arg-ptr]]"
+.nr indent-synopsis ((\n[width]u + 1u) * \n[fixed-width]u)
+.\}
+.if !\n[indent-synopsis-active] \{\
+.in +\n[indent-synopsis]u
+.nr indent-synopsis-active 1
+.\}
+.ti -\n[indent-synopsis]u
+.\}\}
+.if "\*[command-name]"" \
+.ds command-name "\*[arg\n[arg-ptr]]
+.nop \*[Nm-font]\c
+.\}
+.print-recursive
+.\}
+..
+.de Pa
+.if !\n[arg-limit] \{\
+.ds macro-name Pa
+.parse-args \$@
+.if !\n[.$] \{\
+.nop \*[Pa-font]~\f[]\s[0]
+.\}\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.print-prefixes
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Pa-font]\c
+.if !(\n[type\n[arg-ptr]] == 2) \{\
+.nr arg-ptr -1
+.ds arg\n[arg-ptr] ~
+.nr type\n[arg-ptr] 2
+.ds space\n[arg-ptr] "\*[space]
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.parse-space-vector
+.\}
+.print-recursive
+.\}
+.el \{\
+.nop \*[Pa-font]~\f[]\s[0]\c
+.print-and-reset
+.\}
+..
+.als Sy generic-macro
+.ds Sy-usage symbolic_text
+.als Me generic-macro
+.ds Me-usage menu_entry
+.de Tn
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Tn
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .Tn trade_name ... (#\n[.c])
+.\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \)\*[Tn-font-size]\c
+.ie !\n[is-reference] \{\
+.nop \)\*[Tn-font-shape]\c
+.print-recursive
+.\}
+.el \
+.do-references
+.\}
+.el \{\
+.tm Usage: .Tn trade_name ... (#\n[.c])
+.reset-args
+.\}
+..
+.als Va generic-macro
+.ds Va-usage variable_name
+.als No generic-macro
+.ds No-usage normal_text
+.ds quote-left
+.ds quote-right
+.de Op
+.if !\n[arg-limit] \
+.ds macro-name Op
+.ds quote-left "\*[left-bracket]
+.ds quote-right "\*[right-bracket]
+.enclose-string \$@
+..
+.de Aq
+.if !\n[arg-limit] \
+.ds macro-name Aq
+.ds quote-left \[la]
+.ds quote-right \[ra]
+.enclose-string \$@
+..
+.de Bq
+.if !\n[arg-limit] \
+.ds macro-name Bq
+.ds quote-left "\*[left-bracket]
+.ds quote-right "\*[right-bracket]
+.enclose-string \$@
+..
+.de Brq
+.if !\n[arg-limit] \
+.ds macro-name Brq
+.ds quote-left {
+.ds quote-right }
+.enclose-string \$@
+..
+.de Dq
+.if !\n[arg-limit] \
+.ds macro-name Dq
+.ds quote-left "\*[Lq]
+.ds quote-right "\*[Rq]
+.enclose-string \$@
+..
+.de Eq
+.if !\n[arg-limit] \
+.ds macro-name Eq
+.ds quote-left "\$1
+.ds quote-right "\$2
+.shift 2
+.enclose-string \$@
+..
+.de Pq
+.if !\n[arg-limit] \
+.ds macro-name Pq
+.ds quote-left "\*[left-parenthesis]
+.ds quote-right "\*[right-parenthesis]
+.enclose-string \$@
+..
+.de Qq
+.if !\n[arg-limit] \
+.ds macro-name Qq
+.ds quote-left "\*[q]
+.ds quote-right "\*[q]
+.enclose-string \$@
+..
+.de Sq
+.if !\n[arg-limit] \
+.ds macro-name Sq
+.ds quote-left "\*[left-singlequote]
+.ds quote-right "\*[right-singlequote]
+.enclose-string \$@
+..
+.de Es
+.if !\n[arg-limit] \{\
+.ie (\n[.$] > 2) \{\
+.ds macro-name Es
+.parse-args \$@
+.\}
+.el \{\
+.ds quote-left "\$1
+.ds quote-right "\$2
+.\}\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.ds quote-left "\*[arg\n[arg-ptr]]
+.nr arg-ptr +1
+.ds quote-right "\*[arg\n[arg-ptr]]
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \
+.do-\n[type\n[arg-ptr]]
+.el \
+.print-and-reset
+..
+.nr have-slot 0
+.de enclose-string
+.if \n[in-synopsis-section] \
+.set-hard-space
+.if !\n[arg-limit] \{\
+.ie \n[.$] \
+.parse-args \$@
+.el \{\
+.nop \)\*[quote-left]\*[quote-right]
+.\}\}
+.if !\n[arg-limit] \
+.return
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nr arg-ptr +1
+.print-prefixes
+.nop \)\*[quote-left]\)\c
+.ie (\n[arg-limit] < \n[arg-ptr]) \{\
+.nop \)\*[quote-right]\)\c
+.print-and-reset
+.\}
+.el \{\
+.ie (\n[type\n[arg-limit]] == 3) \{\
+.nr reg-des (\n[arg-limit] - 1)
+.while (\n[type\n[reg-des]] == 3) \
+.nr reg-des -1
+.nr reg-des +1
+.ds arg\n[reg-des] "\*[quote-right]\)\*[arg\n[reg-des]]
+.\}
+.el \{\
+.nr reg-des \n[arg-limit]
+.while (\n[reg-des] >= \n[arg-ptr]) \{\
+.if !\A\*[arg\n[reg-des]] \
+.break
+.if !d after-\*[arg\n[reg-des]] \
+.break
+.nr reg-des -1
+.\}
+.ie (\n[reg-des] == \n[arg-limit]) \
+.append-arg "\)\*[quote-right]\)" 3
+.el \{\
+.ie \n[have-slot] \
+.ds arg\n[reg-des] "\*[quote-right]\)\*[arg\n[reg-des]]
+.el \{\
+.nr reg-des +1
+.nr reg-des1 \n[arg-limit]
+.nr reg-des2 (\n[arg-limit] + 1)
+.while (\n[reg-des1] >= \n[reg-des]) \{\
+.rn arg\n[reg-des1] arg\n[reg-des2]
+.rnn type\n[reg-des1] type\n[reg-des2]
+.rn space\n[reg-des1] space\n[reg-des2]
+.nr reg-des1 -1
+.nr reg-des2 -1
+.\}
+.nr arg-limit +1
+.ds arg\n[reg-des] "\)\*[quote-right]\)
+.nr type\n[reg-des] 3
+.nr num-args (\n[arg-limit] - \n[reg-des] + 1)
+.nr arg-limit (\n[reg-des] - 1)
+.parse-space-vector
+.nr have-slot 1
+.\}\}\}
+.do-\n[type\n[arg-ptr]]
+.\}
+.if \n[in-synopsis-section] \
+.set-soft-space
+..
+.als En enclose-string
+.de Ao
+.if !\n[arg-limit] \
+.ds macro-name Ao
+.ds quote-left \[la]
+.enclose-open \$@
+..
+.de Ac
+.if !\n[arg-limit] \
+.ds macro-name Ac
+.ds quote-right \[ra]
+.enclose-close \$@
+..
+.de Bo
+.if !\n[arg-limit] \
+.ds macro-name Bo
+.ds quote-left "\*[left-bracket]
+.enclose-open \$@
+..
+.de Bc
+.if !\n[arg-limit] \
+.ds macro-name Bc
+.ds quote-right "\*[right-bracket]
+.enclose-close \$@
+..
+.de Bro
+.if !\n[arg-limit] \
+.ds macro-name Bo
+.ds quote-left {
+.enclose-open \$@
+..
+.de Brc
+.if !\n[arg-limit] \
+.ds macro-name Bc
+.ds quote-right }
+.enclose-close \$@
+..
+.de Do
+.if !\n[arg-limit] \
+.ds macro-name Do
+.ds quote-left "\*[Lq]
+.enclose-open \$@
+..
+.de Dc
+.if !\n[arg-limit] \
+.ds macro-name Dc
+.ds quote-right "\*[Rq]
+.enclose-close \$@
+..
+.de Eo
+.if !\n[arg-limit] \
+.ds macro-name Eo
+.ds quote-left "\$1
+.shift
+.enclose-open \$@
+..
+.de Ec
+.if !\n[arg-limit] \
+.ds macro-name Ec
+.ds quote-right "\$1
+.shift
+.enclose-close \$@
+..
+.de Oo
+.if !\n[arg-limit] \
+.ds macro-name Oo
+.ds quote-left [
+.enclose-open \$@
+..
+.de Oc
+.if !\n[arg-limit] \
+.ds macro-name Oc
+.ds quote-right ]
+.enclose-close \$@
+..
+.de Po
+.if !\n[arg-limit] \
+.ds macro-name Po
+.ds quote-left "\*[left-parenthesis]
+.enclose-open \$@
+..
+.de Pc
+.if !\n[arg-limit] \
+.ds macro-name Pc
+.ds quote-right "\*[right-parenthesis]
+.enclose-close \$@
+..
+.de Qo
+.if !\n[arg-limit] \
+.ds macro-name Qo
+.ds quote-left "\*[q]
+.enclose-open \$@
+..
+.de Qc
+.if !\n[arg-limit] \
+.ds macro-name Qc
+.ds quote-right "\*[q]
+.enclose-close \$@
+..
+.de So
+.if !\n[arg-limit] \
+.ds macro-name So
+.ds quote-left "\*[left-singlequote]
+.enclose-open \$@
+..
+.de Sc
+.if !\n[arg-limit] \
+.ds macro-name Sc
+.ds quote-right "\*[right-singlequote]
+.enclose-close \$@
+..
+.de Xo
+.if !\n[arg-limit] \
+.ds macro-name Xo
+.ds quote-left
+.enclose-open \$@
+..
+.de Xc
+.if !\n[arg-limit] \
+.ds macro-name Xc
+.ds quote-right
+.enclose-close \$@
+..
+.nr nesting-level 0
+.nr in-list 0
+.de enclose-open
+.if !\n[arg-limit] \
+.parse-args \$@
+.nr arg-ptr +1
+.print-prefixes
+.nr arg-ptr -1
+.nop \)\*[quote-left]\)\c
+.box enclosure-box\n[nesting-level]
+.ev enclosure-env\n[nesting-level]
+.evc 0
+.in 0
+.nf
+.nop \&\c
+.nr nesting-level +1
+.if \n[arg-limit] \{\
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \
+.print-recursive
+.el \
+.reset-args
+.\}
+..
+.de enclose-close
+.nr nesting-level -1
+.br
+.ev
+.box
+.chop enclosure-box\n[nesting-level]
+.unformat enclosure-box\n[nesting-level]
+.nh
+.nop \*[enclosure-box\n[nesting-level]]\c
+.nop \)\*[quote-right]\)\c
+.if !\n[arg-limit] \{\
+.parse-args \$@
+.if !\n[.$] \
+.print-and-reset
+.\}
+.if \n[arg-limit] \{\
+.ie (\n[arg-limit] > \n[arg-ptr]) \{\
+.nop \)\*[space\n[arg-ptr]]\c
+.nr arg-ptr +1
+.print-recursive
+.\}
+.el \
+.print-and-reset
+.\}
+.if !"\*[macro-name]"It" \
+.if \n[in-list] \
+.if !\n[nesting-level] \
+.\*[list-type-stack\n[list-depth]]
+..
+.de Pf
+.if !\n[arg-limit] \
+.ds macro-name Pf
+.ie \n[arg-limit] \{\
+.ie ((\n[arg-limit] - \n[arg-ptr]) > 1) \{\
+.nr arg-ptr +1
+.nop \)\*[arg\n[arg-ptr]]\c
+.\}
+.el \
+.tm mdoc warning: .Pf: trailing prefix (#\n[.c])
+.\}
+.el \{\
+.nop \)\$1\)\c
+.shift
+.ie \n[.$] \
+.parse-args \$@
+.el \{\
+.tm mdoc warning: .Pf: missing arguments (#\n[.c])
+.nop \)
+.\}\}
+.if \n[arg-limit] \{\
+.nr arg-ptr +1
+.ie (\n[arg-limit] < \n[arg-ptr]) \
+.print-and-reset
+.el \
+.do-\n[type\n[arg-ptr]]
+.\}
+..
+.de Ns
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Ns
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .Ns must be called with arguments (#\n[.c])
+.\}
+.if \n[arg-limit] \{\
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \
+.print-recursive
+.el \
+.reset-args
+.\}
+..
+.de Ap
+.ie !\n[arg-limit] \
+.tm Usage: `Ap' cannot be first macro on a line (no `.Ap') (#\n[.c])
+.el \{\
+.nop \)'\)\c
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \
+.print-recursive
+.el \
+.reset-args
+.\}
+..
+.ds space "\*[soft-space]
+.de set-hard-space
+.ie "\*[space]"" \
+.ds saved-space "\*[hard-space]
+.el \
+.ds space "\*[hard-space]
+..
+.de set-soft-space
+.ie "\*[space]"" \
+.ds saved-space "\*[soft-space]
+.el \
+.ds space "\*[soft-space]
+..
+.nr space-mode 1
+.ds saved-space "\*[space]
+.nr have-space 0
+.de Sm
+.ie \n[have-space] \
+.nr reg-Sm 0
+.el \
+.nr reg-Sm 1
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Sm
+.parse-args \$@
+.\}
+.el \{\
+.ie \n[space-mode] \{\
+.ds saved-space "\*[space]
+.ds space
+.nr space-mode 0
+.\}
+.el \{\
+.ds space "\*[saved-space]
+.nr space-mode 1
+.if \n[reg-Sm] \
+.if \n[.int] \
+.nop \)
+.\}
+.\}\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.if !d arg\n[arg-ptr] \
+.ds arg\n[arg-ptr]
+.ie "\*[arg\n[arg-ptr]]"on" \{\
+.ds space "\*[saved-space]
+.nr space-mode 1
+.\}
+.el \{\
+.ie "\*[arg\n[arg-ptr]]"off" \{\
+.ds saved-space "\*[space]
+.ds space
+.nr space-mode 0
+.\}
+.el \{\
+.nr arg-ptr -1
+.ie \n[space-mode] \{\
+.ds saved-space "\*[space]
+.ds space
+.nr space-mode 0
+.\}
+.el \{\
+.ds space "\*[saved-space]
+.nr space-mode 1
+.\}
+.\}\}
+.ie \n[space-mode] \{\
+.nr num-args (\n[arg-limit] - \n[arg-ptr])
+.nr arg-limit \n[arg-ptr]
+.if \n[num-args] \
+.parse-space-vector
+.if \n[reg-Sm] \
+.if \n[.int] \
+.nop \)
+.\}
+.el \{\
+.nr reg-Sm (\n[arg-ptr] + 1)
+.while (\n[reg-Sm] <= \n[arg-limit]) \{\
+.ds space\n[reg-Sm]
+.nr reg-Sm +1
+.\}
+.\}
+.ie (\n[arg-limit] > \n[arg-ptr]) \{\
+.nr arg-ptr +1
+.print-recursive
+.\}
+.el \
+.reset-args
+..
+.nr arg-type 0
+.de get-arg-type
+.nr arg-type 2
+.if ((\n[width] < 4) & \A\$1) \{\
+.ie (\n[width] == 1) \{\
+.if r punct\$1 \
+.nr arg-type \n[punct\$1]
+.\}
+.el \
+.if r \$1 \
+.if d \$1 \
+.nr arg-type 1
+.\}
+..
+.de get-arg-type*
+.nr arg-type 2
+.length width "\*[arg\$1]
+.if ((\n[width] < 4) & \A\*[arg\$1]) \{\
+.ie (\n[width] == 1) \{\
+.if r punct\*[arg\$1] \
+.nr arg-type \n[punct\*[arg\$1]]
+.\}
+.el \
+.if r \*[arg\$1] \
+.if d \*[arg\$1] \
+.nr arg-type 1
+.\}
+..
+.de set-spacing-1
+.nr reg-dssfm1 \n[\*[arg\n[arg-limit]]]
+.ie (\n[reg-dssfm1] == 3) \{\
+.if \n[arg-limit] \{\
+.nr reg-dssfm (\n[arg-limit] - 1)
+.ds space\n[reg-dssfm]
+.\}
+.ds space\n[arg-limit] "\*[space]
+.\}
+.el \{\
+.ie (\n[reg-dssfm1] == 2) \{\
+.if \n[arg-limit] \{\
+.nr reg-dssfm (\n[arg-limit] - 1)
+.ds space\n[reg-dssfm]
+.\}
+.ds space\n[arg-limit]
+.\}
+.el \
+.ds space\n[arg-limit]
+.\}
+..
+.de set-spacing-2
+.ds space\n[arg-limit] "\*[space]
+..
+.de set-spacing-3
+.if \n[arg-limit] \{\
+.nr reg-dssfps (\n[arg-limit] - 1)
+.ds space\n[reg-dssfps]
+.\}
+.ds space\n[arg-limit] "\*[space]
+..
+.de set-spacing-4
+.ds space\n[arg-limit]
+..
+.de do-1
+.\*[arg\n[arg-ptr]]
+..
+.als do-2 print-recursive
+.als do-3 print-recursive
+.als do-4 print-recursive
+.nr fontmode-depth 0
+.nr fontmode-font-stack0 0
+.nr fontmode-size-stack0 0
+.de Bf
+.ds macro-name Bf
+.ie \n[.$] \{\
+.nr fontmode-depth +1
+.nr fontmode-font-stack\n[fontmode-depth] \n[.f]
+.nr fontmode-size-stack\n[fontmode-depth] \n[.ps]
+.ie        "\$1"Em" \
+.nop \*[Em-font]\c
+.el \{ .ie "\$1"Li" \
+.nop \*[Li-font]\c
+.el \{ .ie "\$1"Sy" \
+.nop \*[Sy-font]\c
+.el \{ .ie "\$1"-emphasis" \
+.nop \*[Em-font]\c
+.el \{ .ie "\$1"-literal" \
+.nop \*[Li-font]\c
+.el \{ .ie "\$1"-symbolic" \
+.nop \*[Sy-font]\c
+.el \{\
+.tmc mdoc warning: Unknown keyword `\$1' in .Bf macro
+.tm1 " (#\n[.c])
+.\}\}\}\}\}\}\}
+.el \
+.tm Usage: .Bf [Em | -emphasis | Li | -literal | Sy | -symbolic] (#\n[.c])
+..
+.de Ef
+.ds macro-name Ef
+.ie \n[fontmode-depth] \{\
+.nop \)\f[\n[fontmode-font-stack\n[fontmode-depth]]]\c
+.nop \)\s[\n[fontmode-size-stack\n[fontmode-depth]]u]\c
+.nr fontmode-font-stack\n[fontmode-depth] 0
+.nr curr-font \n[.f]
+.nr fontmode-size-stack\n[fontmode-depth] 0
+.nr curr-size \n[.ps]
+.nr fontmode-depth -1
+.\}
+.el \
+.tm mdoc warning: Extraneous .Ef (#\n[.c])
+..
+.nr keep-type 0
+.de Bk
+.ds macro-name Bk
+.if \n[keep-type] \
+.tm .Bk: nesting keeps not implemented yet. (#\n[.c])
+.ie        "\$1"-lines" \{\
+.nr keep-type 2
+.tm .Bk -lines: Not implemented yet. (#\n[.c])
+.\}
+.el \{ .ie "\$1"-words" \{\
+.nr keep-type 1
+.set-hard-space
+.\}
+.el \{ .ie "\$1"" \{\
+.nr keep-type 1
+.set-hard-space
+.\}
+.el \{\
+.tm mdoc warning: Unknown keyword `\$1' in .Bk macro (#\n[.c])
+.nr keep-type 3
+.\}\}\}
+\#.  nr nesting-level +1
+..
+.de Ek
+.ds macro-name Ek
+\#.  nr nesting-level -1
+.ie \n[.$] \
+.tm Usage: .Ek (does not take arguments) (#\n[.c])
+.el \{\
+.if !\n[keep-type] \
+.tm mdoc warning: .Ek found without .Bk before (#\n[.c])
+.ie        (\n[keep-type] == 1) \
+.set-soft-space
+.el \{ .if (\n[keep-type] == 2) \
+.tm .Bk -lines: Not implemented yet. (#\n[.c])
+.\}\}
+.nr keep-type 0
+\#.  if !"\*[out-string]"" \
+\#.    print-out-string
+..
+.nr display-depth 0
+.nr is-compact 0
+.ds display-type-stack0
+.nr display-indent-stack0 0
+.nr display-ad-stack0 0
+.nr display-fi-stack0 0
+.nr display-ft-stack0 0
+.nr display-ps-stack0 0
+.de Bd
+.ds macro-name Bd
+.if !\n[.$] \{\
+.tm1 "Usage: .Bd {-literal | -filled | -ragged | -centered | -unfilled}
+.tm1 "           [-offset [string]] [-compact] [-file name] (#\n[.c])
+.return
+.\}
+.nr is-compact 0
+.ds display-file
+.nr reg-Bd 1
+.nr display-depth +1
+.nr display-ad-stack\n[display-depth] \n[.j]
+.nr display-fi-stack\n[display-depth] \n[.u]
+.ie        "\$1"-literal" \{\
+.ds display-type-stack\n[display-depth] literal
+.nr display-ft-stack\n[display-depth] \n[.f]
+.nr display-ps-stack\n[display-depth] \n[.ps]
+.ie t \
+.ta T 9n
+.el \
+.ta T 8n
+.nf
+.\}
+.el \{ .ie "\$1"-filled" \{\
+.ds display-type-stack\n[display-depth] filled
+.ad b
+.fi
+.\}
+.el \{ .ie "\$1"-ragged" \{\
+.ds display-type-stack\n[display-depth] ragged
+.na
+.fi
+.\}
+.el \{ .ie "\$1"-centered" \{\
+.ds display-type-stack\n[display-depth] centered
+.ad c
+.fi
+.\}
+.el \{ .ie "\$1"-unfilled" \{\
+.ds display-type-stack\n[display-depth] unfilled
+.nf
+.\}
+.el \{\
+.tm1 "mdoc warning: Unknown keyword `\$1' (or missing display type)
+.tm1 "              in .Bd macro (#\n[.c])
+.nr reg-Bd 0
+.\}\}\}\}\}
+.if \n[reg-Bd] \{\
+.shift
+.if \n[.$] \
+.do-Bd-args \$@
+.\}
+.if !r display-indent-stack\n[display-depth] \
+.nr display-indent-stack\n[display-depth] 0
+.if \n[display-indent-stack\n[display-depth]] \
+.in +\n[display-indent-stack\n[display-depth]]u
+.if !\n[is-compact] \
+.sp \n[display-vertical]u
+.if "\*[display-type-stack\n[display-depth]]"literal" \
+.if t \
+.nop \*[Li-font]\c
+.if !\n[cR] \
+.ne 2v
+.if !"\*[display-file]"" \
+.so \*[display-file]
+.nr is-compact 0
+.ds display-file
+..
+.de do-Bd-args
+.nr reg-ddBa 1
+.ie        "\$1"-offset" \{\
+.nr reg-ddBa 2
+.ie        "\$2"left" \
+.nr display-indent-stack\n[display-depth] 0
+.el \{ .ie "\$2"right" \
+.nr display-indent-stack\n[display-depth] (\n[.l]u / 3u)
+.el \{ .ie "\$2"center" \
+.nr display-indent-stack\n[display-depth] ((\n[.l]u - \n[.i]u) / 4u)
+.el \{ .ie "\$2"indent" \
+.nr display-indent-stack\n[display-depth] \n[display-indent]u
+.el \{ .ie "\$2"indent-two" \
+.nr display-indent-stack\n[display-depth] (\n[display-indent]u + \n[display-indent]u)
+.el \
+.nr reg-ddBa 1
+.\}\}\}\}
+.if (\n[reg-ddBa] == 1) \{\
+.nr reg-ddBa 2
+.nr reg-ddBa1 0
+.if \B(\$2) \{\
+.nr reg-ddBa2 \n[.warn]
+.warn (\n[.warn] - (\n[.warn] / 32 % 2 * 32))
+.ds str-ddBa "\$2
+.substring str-ddBa 0 -2
+.if \B(\*[str-ddBa]) \{\
+.nr reg-ddBa3 (;(\$2))
+.nr reg-ddBa4 (\*[str-ddBa])
+.if (\n[reg-ddBa3] == \n[reg-ddBa4]) \
+.nr reg-ddBa1 1
+.\}
+.warn \n[reg-ddBa2]
+.\}
+.ie \n[reg-ddBa1] \
+.nr display-indent-stack\n[display-depth] \$2
+.el \{\
+.get-width "\$2"
+.ie (\n[width] <= 3) \{\
+.get-arg-type "\$2"
+.ie (\n[arg-type] == 1) \
+.nr display-indent-stack\n[display-depth] \n[\$2]
+.el \
+.nr display-indent-stack\n[display-depth] (\n[width]u * \n[fixed-width]u)
+.\}
+.el \
+.nr display-indent-stack\n[display-depth] (\n[width]u * \n[fixed-width]u)
+.\}\}
+.\}
+.el \{ .ie "\$1"-compact" \
+.nr is-compact 1
+.el \{ .ie "\$1"-file" \{\
+.ie !"\$2"" \{\
+.ds display-file "\$2
+.nr reg-ddBa 2
+.\}
+.el \
+.tm mdoc warning: .Bd `-file' keyword requires argument (#\n[.c])
+.\}
+.el \
+.tm mdoc warning: Unknown keyword `\$1' in .Bd macro (#\n[.c])
+.\}\}
+.if (\n[reg-ddBa] < \n[.$]) \{\
+.shift \n[reg-ddBa]
+.do-Bd-args \$@
+.\}
+..
+.de Ed
+.ds macro-name Ed
+.br
+.if !\n[display-depth] \{\
+.tm mdoc warning: Extraneous .Ed (#\n[.c])
+.nr display-depth 1
+.\}
+.if "\*[display-type-stack\n[display-depth]]"literal" \{\
+.ft \n[display-ft-stack\n[display-depth]]
+.ps \n[display-ps-stack\n[display-depth]]u
+.\}
+.in -\n[display-indent-stack\n[display-depth]]u
+.ie \n[display-fi-stack\n[display-depth]] \
+.fi
+.el \
+.nf
+.ad \n[display-ad-stack\n[display-depth]]
+.nr display-indent-stack\n[display-depth] 0
+.ds display-type-stack\n[display-depth]
+.nr display-depth -1
+..
+.ds list-type-stack1
+.nr list-indent-stack1 0
+.nr list-have-indent-stack1 0
+.de Bl
+.if !\n[.$] \{\
+.Bl-usage
+.return
+.\}
+.ds macro-name Bl
+.nr list-depth +1
+.nr arg-ptr 1
+.ie        "\$1"-hang" \{\
+.ds list-type-stack\n[list-depth] hang-list
+.nr list-indent-stack\n[list-depth] 6n
+.nr list-have-indent-stack\n[list-depth] 1
+.\}
+.el \{ .ie "\$1"-tag" \{\
+.ds list-type-stack\n[list-depth] tag-list
+.nr list-have-indent-stack\n[list-depth] 1
+.\}
+.el \{ .ie "\$1"-item" \{\
+.ds list-type-stack\n[list-depth] item-list
+.nr list-have-indent-stack\n[list-depth] 1
+.\}
+.el \{ .ie "\$1"-enum" \{\
+.ds list-type-stack\n[list-depth] enum-list
+.nr list-indent-stack\n[list-depth] 3n
+.nr list-have-indent-stack\n[list-depth] 1
+.\}
+.el \{ .ie "\$1"-bullet" \{\
+.ds list-type-stack\n[list-depth] bullet-list
+.nr list-indent-stack\n[list-depth] 2n
+.nr list-have-indent-stack\n[list-depth] 1
+.\}
+.el \{ .ie "\$1"-dash" \{\
+.ds list-type-stack\n[list-depth] dash-list
+.nr list-indent-stack\n[list-depth] 2n
+.nr list-have-indent-stack\n[list-depth] 1
+.\}
+.el \{ .ie "\$1"-hyphen" \{\
+.ds list-type-stack\n[list-depth] dash-list
+.nr list-indent-stack\n[list-depth] 2n
+.nr list-have-indent-stack\n[list-depth] 1
+.\}
+.el \{ .ie "\$1"-inset" \{\
+.ds list-type-stack\n[list-depth] inset-list
+.nr list-have-indent-stack\n[list-depth] 1
+.\}
+.el \{ .ie "\$1"-diag" \{\
+.ds list-type-stack\n[list-depth] diag-list
+.\}
+.el \{ .ie "\$1"-ohang" \{\
+.ds list-type-stack\n[list-depth] ohang-list
+.nr list-have-indent-stack\n[list-depth] 1
+.\}
+.el \{ .ie "\$1"-column" \{\
+.ds list-type-stack\n[list-depth] column-list
+.linetabs 1
+.\}
+.el \{\
+.tm1 "mdoc warning: Unknown list type `\$1' (or missing list type)
+.tm1 "              in .Bl macro
+.tm
+.nr arg-ptr 0
+.\}\}\}\}\}\}\}\}\}\}\}
+.if !\n[arg-ptr] \{\
+.Bl-usage
+.reset-args
+.nr list-depth -1
+.return
+.\}
+.shift
+.nr reg-Bl 1
+.while (\n[reg-Bl] <= \n[.$]) \{\
+.ds arg\n[reg-Bl] "\$[\n[reg-Bl]]
+.nr type\n[reg-Bl] 0
+.ds space\n[reg-Bl]
+.nr reg-Bl +1
+.\}
+.increment-list-stack
+.if \n[.$] \{\
+.nr arg-limit \n[.$]
+.nr arg-ptr 0
+.do-Bl-args
+.in +\n[list-offset-stack\n[list-depth]]u
+.if "\*[list-type-stack\n[list-depth]]"column-list" \{\
+.set-column-tab \n[num-columns]
+'      in -\n[column-indent-width]u
+.if !\n[compact-list-stack\n[list-depth]] \
+.sp \n[display-vertical]u
+.nf
+.nr num-columns 0
+.\}\}
+.reset-args
+..
+.de Bl-usage
+.tm1 "Usage: .Bl {-hang | -ohang | -tag | -diag | -inset}
+.tm1 "             [-width <string>]
+.tm1 "             [-offset <string>] [-compact]
+.tm1 "       .Bl -column [-offset <string>] <string1> <string2> ...
+.tm1 "       .Bl {-item | -enum [-nested] | -bullet | -hyphen | -dash}
+.tm1 "             [-offset <string>] [-compact] (#\n[.c])
+..
+.de do-Bl-args
+.nr arg-ptr +1
+.if (\n[arg-limit] < \n[arg-ptr]) \
+.return
+.nr reg-dBla (\n[arg-ptr] + 1)
+.if !d arg\n[reg-dBla] \
+.ds arg\n[reg-dBla]
+.nr reg-dBla 1
+.ie        "\*[arg\n[arg-ptr]]"-compact" \
+.nr compact-list-stack\n[list-depth] 1
+.el \{ .ie "\*[arg\n[arg-ptr]]"-nested" \{\
+.ie (\n[list-depth] > 1) \{\
+.nr reg-dBla1 (\n[list-depth] - 1)
+.ds tag-prefix-stack\n[list-depth] "\*[tag-prefix-stack\n[reg-dBla1]]
+.as tag-prefix-stack\n[list-depth] \n[enum-list-count-stack\n[reg-dBla1]].
+.length reg-dBla1 "\*[tag-prefix-stack\n[list-depth]]
+.nr list-indent-stack\n[list-depth] +\n[reg-dBla1]n
+.\}
+.el \
+.tm mdoc warning: `-nested' allowed with nested .Bl macros only (#\n[.c])
+.\}
+.el \{ .ie "\*[arg\n[arg-ptr]]"-width" \{\
+.nr arg-ptr +1
+.ds tag-width-stack\n[list-depth] TagwidtH
+.ds str-dBla "\*[arg\n[arg-ptr]]
+.substring str-dBla 0 0
+.ie .\*[str-dBla] \{\
+.ds str-dBla "\*[arg\n[arg-ptr]]
+.substring str-dBla 1
+.first-parameter \*[str-dBla]
+.get-width "\*[str-dfp]
+.get-arg-type "\*[str-dfp]
+.ie (\n[arg-type] == 1) \
+.nr reg-dBla1 1
+.el \
+.nr reg-dBla1 0
+.\}
+.el \
+.nr reg-dBla1 0
+.ds str-dBla "\*[arg\n[arg-ptr]]
+.ie \n[reg-dBla1] \{\
+.ds str-dBla \*[arg\n[arg-ptr]]
+.save-global-vars
+.reset-args
+.box box-dBla
+.ev env-dBla
+.evc 0
+.in 0
+.nf
+.nop \*[str-dBla]
+.br
+.ev
+.box
+.restore-global-vars
+.get-width \h'\n[dl]u'
+.nr list-indent-stack\n[list-depth] (\n[width]u * \n[fixed-width]u)
+.\}
+.el \{\
+.nr reg-dBla1 0
+.if \B(\*[str-dBla]) \{\
+.nr reg-dBla2 \n[.warn]
+.warn (\n[.warn] - (\n[.warn] / 32 % 2 * 32))
+.ds str-dBla1 "\*[str-dBla]
+.substring str-dBla1 0 -2
+.if \B(\*[str-dBla1]) \{\
+.nr reg-dBla3 (;(\*[str-dBla]))
+.nr reg-dBla4 (\*[str-dBla1])
+.if (\n[reg-dBla3] == \n[reg-dBla4]) \
+.nr reg-dBla1 1
+.\}
+.warn \n[reg-dBla2]
+.\}
+.ie \n[reg-dBla1] \
+.nr list-indent-stack\n[list-depth] (\*[str-dBla])
+.el \{\
+.get-arg-width \n[arg-ptr]
+.ie (\n[width] == 2) \{\
+.get-arg-type \*[str-dBla]
+.ie (\n[arg-type] == 1) \
+.nr list-indent-stack\n[list-depth] \n[\*[str-dBla]]
+.el \
+.nr list-indent-stack\n[list-depth] (\n[width]u * \n[fixed-width]u)
+.\}
+.el \
+.nr list-indent-stack\n[list-depth] (\n[width]u * \n[fixed-width]u)
+.\}\}\}
+.el \{ .ie "\*[arg\n[arg-ptr]]"-offset" \{\
+.nr arg-ptr +1
+.ie "\*[arg\n[arg-ptr]]"indent" \
+.nr list-offset-stack\n[list-depth] \n[display-indent]u
+.el \{\
+.ds str-dBla "\*[arg\n[arg-ptr]]
+.nr reg-dBla1 0
+.if \B(\*[str-dBla]) \{\
+.nr reg-dBla2 \n[.warn]
+.warn (\n[.warn] - (\n[.warn] / 32 % 2 * 32))
+.ds str-dBla1 "\*[str-dBla]
+.substring str-dBla1 0 -2
+.if \B(\*[str-dBla1]) \{\
+.nr reg-dBla3 (;(\*[str-dBla]))
+.nr reg-dBla4 (\*[str-dBla1])
+.if (\n[reg-dBla3] == \n[reg-dBla4]) \
+.nr reg-dBla1 1
+.\}
+.warn \n[reg-dBla2]
+.\}
+.ie \n[reg-dBla1] \
+.nr list-offset-stack\n[list-depth] \*[str-dBla]
+.el \{\
+.get-arg-width \n[arg-ptr]
+.ie (\n[width] <= 3) \{\
+.get-arg-type \*[str-dBla]
+.ie (\n[arg-type] == 1) \
+.nr list-offset-stack\n[list-depth] \n[\*[str-dBla]]
+.el \
+.nr list-offset-stack\n[list-depth] (\n[width]u * \n[fixed-width]u)
+.\}
+.el \
+.nr list-offset-stack\n[list-depth] (\n[width]u * \n[fixed-width]u)
+.\}\}\}
+.el \
+.nr reg-dBla 0
+.\}\}\}
+.if !\n[reg-dBla] \{\
+.ie "\*[list-type-stack\n[list-depth]]"column-list" \{\
+.nr num-columns +1
+.ds str-dBla \*[arg\n[arg-ptr]]
+.substring str-dBla 0 0
+.ie .\*[str-dBla] \{\
+.ds str-dBla "\*[arg\n[arg-ptr]]
+.substring str-dBla 1
+.first-parameter \*[str-dBla]
+.get-width "\*[str-dfp]
+.get-arg-type "\*[str-dfp]
+.ie (\n[arg-type] == 1) \
+.nr reg-dBla1 1
+.el \
+.nr reg-dBla1 0
+.\}
+.el \
+.nr reg-dBla1 0
+.ds str-dBla "\*[arg\n[arg-ptr]]
+.ie \n[reg-dBla1] \{\
+.ds str-dBla \*[arg\n[arg-ptr]]
+.save-global-vars
+.reset-args
+.box box-dBla
+.ev env-dBla
+.evc 0
+.in 0
+.nf
+.nop \*[str-dBla]
+.br
+.ev
+.box
+.restore-global-vars
+.ds arg\n[num-columns] "\h'\n[dl]u'
+.\}
+.el \
+.ds arg\n[num-columns] "\*[arg\n[arg-ptr]]
+.\}
+.el \{\
+.tmc mdoc warning: Unknown keyword `\*[arg\n[arg-ptr]]'
+.tm1 " in .Bl macro (#\n[.c])
+.\}\}
+.if (\n[arg-limit] > \n[arg-ptr]) \
+.do-Bl-args
+..
+.de save-global-vars
+.ds macro-name-saved "\*[macro-name]
+.nr arg-limit-saved \n[arg-limit]
+.nr num-args-saved \n[num-args]
+.nr arg-ptr-saved \n[arg-ptr]
+.nr reg-dsgv 1
+.while (\n[reg-dsgv] <= \n[arg-limit]) \{\
+.ds arg\n[reg-dsgv]-saved "\*[arg\n[reg-dsgv]]
+.nr type\n[reg-dsgv]-saved \n[type\n[reg-dsgv]]
+.ds space\n[reg-dsgv]-saved "\*[space\n[reg-dsgv]]
+.nr reg-dsgv +1
+.\}
+.nr curr-font-saved \n[curr-font]
+.nr curr-size-saved \n[curr-size]
+.nr in-synopsis-section-saved \n[in-synopsis-section]
+.nr in-library-section-saved \n[in-library-section]
+.nr indent-synopsis-saved \n[indent-synopsis]
+.nr indent-synopsis-active-saved \n[indent-synopsis-active]
+.nr have-decl-saved \n[have-decl]
+.nr have-var-saved \n[have-var]
+.ds command-name-saved "\*[command-name]
+.ds quote-left-saved "\*[quote-left]
+.ds quote-right-saved "\*[quote-right]
+.nr nesting-level-saved \n[nesting-level]
+.nr in-list-saved \n[in-list]
+.ds space-saved "\*[space]
+.ds saved-space-saved "\*[saved-space]
+.nr space-mode-saved \n[space-mode]
+.nr have-space-saved \n[have-space]
+.nr have-slot-saved \n[have-slot]
+.nr keep-type-saved \n[keep-type]
+.nr display-depth-saved \n[display-depth]
+.nr is-compact-saved \n[is-compact]
+.nr reg-dsgv 0
+.while (\n[reg-dsgv] <= \n[display-depth]) \{\
+.ds display-type-stack\n[reg-dsgv]-saved "\*[display-type-stack\n[reg-dsgv]]
+.nr display-indent-stack\n[reg-dsgv]-saved \n[display-indent-stack\n[reg-dsgv]]
+.nr display-ad-stack\n[reg-dsgv]-saved \n[display-ad-stack\n[reg-dsgv]]
+.nr display-fi-stack\n[reg-dsgv]-saved \n[display-fi-stack\n[reg-dsgv]]
+.nr display-ft-stack\n[reg-dsgv]-saved \n[display-ft-stack\n[reg-dsgv]]
+.nr display-ps-stack\n[reg-dsgv]-saved \n[display-ps-stack\n[reg-dsgv]]
+.nr reg-dsgv +1
+.\}
+.nr fontmode-depth-saved \n[fontmode-depth]
+.nr reg-dsgv 1
+.while (\n[reg-dsgv] <= \n[fontmode-depth]) \{\
+.nr fontmode-font-stack\n[reg-dsgv]-saved \n[fontmode-font-stack\n[reg-dsgv]]
+.nr fontmode-size-stack\n[reg-dsgv]-saved \n[fontmode-size-stack\n[reg-dsgv]]
+.nr reg-dsgv +1
+.\}
+.nr list-depth-saved \n[list-depth]
+.nr reg-dsgv 1
+.while (\n[reg-dsgv] <= \n[list-depth]) \{\
+.ds list-type-stack\n[reg-dsgv]-saved "\*[list-type-stack\n[reg-dsgv]]
+.nr list-have-indent-stack\n[reg-dsgv]-saved \n[list-have-indent-stack\n[reg-dsgv]]
+.nr list-indent-stack\n[reg-dsgv]-saved \n[list-indent-stack\n[reg-dsgv]]
+.nr compact-list-stack\n[reg-dsgv]-saved \n[compact-list-stack\n[reg-dsgv]]
+.ds tag-prefix-stack\n[reg-dsgv]-saved "\*[tag-prefix-stack\n[reg-dsgv]]
+.ds tag-width-stack\n[reg-dsgv]-saved "\*[tag-width-stack\n[reg-dsgv]]
+.nr list-offset-stack\n[reg-dsgv]-saved \n[list-offset-stack\n[reg-dsgv]]
+.nr enum-list-count-stack\n[reg-dsgv]-saved \n[enum-list-count-stack\n[reg-dsgv]]
+.nr reg-dsgv +1
+.\}
+.ds saved-Pa-font-saved "\*[saved-Pa-font]
+.nr curr-type-saved \n[curr-type]
+.ds curr-arg-saved "\*[curr-arg]
+.nr diag-list-input-line-count-saved \n[diag-list-input-line-count]
+.nr num-columns-saved \n[num-columns]
+.nr column-indent-width-saved \n[column-indent-width]
+.nr is-func-saved \n[is-func]
+.nr have-old-func-saved \n[have-old-func]
+.nr func-arg-count-saved \n[func-arg-count]
+.ds func-arg-saved "\*[func-arg]
+.nr num-func-args-saved \n[num-func-args]
+.nr func-args-processed-saved \n[func-args-processed]
+.nr have-func-saved \n[have-func]
+.nr is-reference-saved \n[is-reference]
+.nr reference-count-saved \n[reference-count]
+.nr author-count-saved \n[author-count]
+.nr reg-dsgv 0
+.while (\n[reg-dsgv] <= \n[author-count]) \{\
+.ds author-name\n[reg-dsgv]-saved "\*[author-name\n[reg-dsgv]]
+.nr reg-dsgv +1
+.\}
+.nr book-count-saved \n[book-count]
+.ds book-name-saved "\*[book-name]
+.nr date-count-saved \n[date-count]
+.ds date-saved "\*[date]
+.nr publisher-count-saved \n[publisher-count]
+.ds publisher-name-saved "\*[publisher-name]
+.nr journal-count-saved \n[journal-count]
+.ds journal-name-saved "\*[journal-name]
+.nr issue-count-saved \n[issue-count]
+.ds issue-name-saved "\*[issue-name]
+.nr optional-count-saved \n[optional-count]
+.ds optional-string-saved "\*[optional-string]
+.nr page-number-count-saved \n[page-number-count]
+.ds page-number-string-saved "\*[page-number-string]
+.nr corporate-count-saved \n[corporate-count]
+.ds corporate-name-saved "\*[corporate-name]
+.nr report-count-saved \n[report-count]
+.ds report-name-saved "\*[report-name]
+.nr reference-title-count-saved \n[reference-title-count]
+.ds reference-title-name-saved "\*[reference-title-name]
+.ds reference-title-name-for-book-saved "\*[reference-title-name-for-book]
+.nr url-count-saved \n[url-count]
+.ds url-name-saved "\*[url-name]
+.nr volume-count-saved \n[volume-count]
+.ds volume-name-saved "\*[volume-name]
+.nr have-author-saved \n[have-author]
+.ds document-title-saved "\*[document-title]
+.ds volume-saved "\*[volume]
+.ds section-saved "\*[section]
+.ds operating-system-saved "\*[operating-system]
+.ds date-string-saved "\*[date-string]
+.nr header-space-saved \n[header-space]
+.nr footer-space-saved \n[footer-space]
+.nr display-vertical-saved \n[display-vertical]
+.ds header-string-saved "\*[header-string]
+.nr in-see-also-section-saved \n[in-see-also-section]
+.nr in-files-section-saved \n[in-files-section]
+.nr in-authors-section-saved \n[in-authors-section]
+..
+.de restore-global-vars
+.ds macro-name "\*[macro-name-saved]
+.nr arg-limit \n[arg-limit-saved]
+.nr num-args \n[num-args-saved]
+.nr arg-ptr \n[arg-ptr-saved]
+.nr reg-drgv 1
+.while (\n[reg-drgv] <= \n[arg-limit]) \{\
+.ds arg\n[reg-drgv] "\*[arg\n[reg-drgv]-saved]
+.nr type\n[reg-drgv] \n[type\n[reg-drgv]-saved]
+.ds space\n[reg-drgv] "\*[space\n[reg-drgv]-saved]
+.nr reg-drgv +1
+.\}
+.nr curr-font \n[curr-font-saved]
+.nr curr-size \n[curr-size-saved]
+.nr in-synopsis-section \n[in-synopsis-section-saved]
+.nr in-library-section \n[in-library-section-saved]
+.nr indent-synopsis \n[indent-synopsis-saved]
+.nr indent-synopsis-active \n[indent-synopsis-active-saved]
+.nr have-decl \n[have-decl-saved]
+.nr have-var \n[have-var-saved]
+.ds command-name "\*[command-name-saved]
+.ds quote-left "\*[quote-left-saved]
+.ds quote-right "\*[quote-right-saved]
+.nr nesting-level \n[nesting-level-saved]
+.nr in-list \n[in-list-saved]
+.ds space "\*[space-saved]
+.ds saved-space "\*[saved-space-saved]
+.nr space-mode \n[space-mode-saved]
+.nr have-space \n[have-space-saved]
+.nr have-slot \n[have-slot-saved]
+.nr keep-type \n[keep-type-saved]
+.nr display-depth \n[display-depth-saved]
+.nr is-compact \n[is-compact-saved]
+.nr reg-drgv 0
+.while (\n[reg-drgv] <= \n[display-depth]) \{\
+.ds display-type-stack\n[reg-drgv] "\*[display-type-stack\n[reg-drgv]-saved]
+.nr display-indent-stack\n[reg-drgv] \n[display-indent-stack\n[reg-drgv]-saved]
+.nr display-ad-stack\n[reg-drgv] \n[display-ad-stack\n[reg-drgv]-saved]
+.nr display-fi-stack\n[reg-drgv] \n[display-fi-stack\n[reg-drgv]-saved]
+.nr display-ft-stack\n[reg-drgv] \n[display-ft-stack\n[reg-drgv]-saved]
+.nr display-ps-stack\n[reg-drgv] \n[display-ps-stack\n[reg-drgv]-saved]
+.nr reg-drgv +1
+.\}
+.nr fontmode-depth \n[fontmode-depth-saved]
+.nr reg-drgv 1
+.while (\n[reg-drgv] <= \n[fontmode-depth]) \{\
+.nr fontmode-font-stack\n[reg-drgv] \n[fontmode-font-stack\n[reg-drgv]]-saved
+.nr fontmode-size-stack\n[reg-drgv] \n[fontmode-size-stack\n[reg-drgv]]-saved
+.nr reg-drgv +1
+.\}
+.nr list-depth \n[list-depth-saved]
+.nr reg-drgv 1
+.while (\n[reg-drgv] <= \n[list-depth]) \{\
+.ds list-type-stack\n[reg-drgv] "\*[list-type-stack\n[reg-drgv]-saved]
+.nr list-have-indent-stack\n[reg-drgv] \n[list-have-indent-stack\n[reg-drgv]-saved]
+.nr list-indent-stack\n[reg-drgv] \n[list-indent-stack\n[reg-drgv]-saved]
+.nr compact-list-stack\n[reg-drgv] \n[compact-list-stack\n[reg-drgv]-saved]
+.ds tag-prefix-stack\n[reg-drgv] "\*[tag-prefix-stack\n[reg-drgv]-saved]
+.ds tag-width-stack\n[reg-drgv] "\*[tag-width-stack\n[reg-drgv]-saved]
+.nr list-offset-stack\n[reg-drgv] \n[list-offset-stack\n[reg-drgv]-saved]
+.nr enum-list-count-stack\n[reg-drgv] \n[enum-list-count-stack\n[reg-drgv]-saved]
+.nr reg-drgv +1
+.\}
+.ds saved-Pa-font "\*[saved-Pa-font-saved]
+.nr curr-type \n[curr-type-saved]
+.ds curr-arg "\*[curr-arg-saved]
+.nr diag-list-input-line-count \n[diag-list-input-line-count-saved]
+.nr num-columns \n[num-columns-saved]
+.nr column-indent-width \n[column-indent-width-saved]
+.nr is-func \n[is-func-saved]
+.nr have-old-func \n[have-old-func-saved]
+.nr func-arg-count \n[func-arg-count-saved]
+.ds func-arg "\*[func-arg-saved]
+.nr num-func-args \n[num-func-args-saved]
+.nr func-args-processed \n[func-args-processed-saved]
+.nr have-func \n[have-func-saved]
+.nr is-reference \n[is-reference-saved]
+.nr reference-count \n[reference-count-saved]
+.nr author-count \n[author-count-saved]
+.nr reg-drgv 0
+.while (\n[reg-drgv] <= \n[author-count]) \{\
+.ds author-name\n[reg-drgv] "\*[author-name\n[reg-drgv]-saved]
+.nr reg-drgv +1
+.\}
+.nr book-count \n[book-count-saved]
+.ds book-name "\*[book-name-saved]
+.nr date-count \n[date-count-saved]
+.ds date "\*[date-saved]
+.nr publisher-count \n[publisher-count-saved]
+.ds publisher-name "\*[publisher-name-saved]
+.nr journal-count \n[journal-count-saved]
+.ds journal-name "\*[journal-name-saved]
+.nr issue-count \n[issue-count-saved]
+.ds issue-name "\*[issue-name-saved]
+.nr optional-count \n[optional-count-saved]
+.ds optional-string "\*[optional-string-saved]
+.nr page-number-count \n[page-number-count-saved]
+.ds page-number-string "\*[page-number-string-saved]
+.nr corporate-count \n[corporate-count-saved]
+.ds corporate-name "\*[corporate-name-saved]
+.nr report-count \n[report-count-saved]
+.ds report-name "\*[report-name-saved]
+.nr reference-title-count \n[reference-title-count-saved]
+.ds reference-title-name "\*[reference-title-name-saved]
+.ds reference-title-name-for-book "\*[reference-title-name-for-book-saved]
+.nr url-count \n[url-count-saved]
+.ds url-name "\*[url-name-saved]
+.nr volume-count \n[volume-count-saved]
+.ds volume-name "\*[volume-name-saved]
+.nr have-author \n[have-author-saved]
+.ds document-title "\*[document-title-saved]
+.ds volume "\*[volume-saved]
+.ds section "\*[section-saved]
+.ds operating-system "\*[operating-system-saved]
+.ds date-string "\*[date-string-saved]
+.nr header-space \n[header-space-saved]
+.nr footer-space \n[footer-space-saved]
+.nr display-vertical \n[display-vertical-saved]
+.ds header-string "\*[header-string-saved]
+.nr in-see-also-section \n[in-see-also-section-saved]
+.nr in-files-section \n[in-files-section-saved]
+.nr in-authors-section \n[in-authors-section-saved]
+..
+.de El
+.if \n[.$] \{\
+.tm Usage: .El (does not take arguments) (#\n[.c])
+.return
+.\}
+.ds macro-name El
+.ds str-El \*[list-type-stack\n[list-depth]]
+.ie        "\*[str-El]"diag-list" \
+.end-list 0
+.el \{ .ie "\*[str-El]"column-list" \
+.end-column-list
+.el \{ .ie "\*[str-El]"item-list" \
+.end-list 0
+.el \{ .ie "\*[str-El]"ohang-list" \
+.end-list 0
+.el \{ .ie "\*[str-El]"inset-list" \
+.end-list 0
+.el \
+.end-list 1
+.\}\}\}\}
+.br
+..
+.ds saved-Pa-font
+.nr curr-type 0
+.ds curr-arg
+.nr bullet-list-type 1
+.nr column-list-type 0
+.nr dash-list-type 1
+.nr diag-list-type 0
+.nr enum-list-type 1
+.nr hang-list-type 2
+.nr inset-list-type 2
+.nr item-list-type 1
+.nr ohang-list-type 2
+.nr tag-list-type 2
+.de It
+.ds str-It \*[list-type-stack\n[list-depth]]
+.if "\*[str-It]"" \
+.tm mdoc error: .It without preceding .Bl (#\n[.c])
+.if \n[nesting-level] \{\
+.tmc "mdoc error: .It found in enclosing (e.g. .Ac ... .It ... .Ao)
+.tm1 " (#\n[.c])
+.\}
+.br
+.if !\n[cR] \
+.ne 3v
+.if \n[.$] \{\
+.ds macro-name It
+.nr reg-It 1
+.while (\n[reg-It] <= \n[.$]) \{\
+.ds arg\n[reg-It] "\$[\n[reg-It]]
+.nr reg-It +1
+.\}
+.nr num-args \n[.$]
+.nr arg-ptr 0
+.\}
+.nr reg-It \n[\*[str-It]-type]
+.if \n[reg-It] \{\
+.box item-box\n[list-depth]
+.ev item-env\n[list-depth]
+.evc 0
+.in 0
+.nf
+.\}
+.ie (\n[reg-It] == 1) \{\
+.if \n[.$] \{\
+.tm1 "mdoc warning: .It macros in lists of type `\*[str-It]'
+.tm1 "              don't take arguments (#\n[.c])
+.\}\}
+.el \{\
+.ie \n[.$] \{\
+.if (\n[reg-It] == 2) \{\
+.parse-arg-vector
+.nr in-list 1
+.nr arg-ptr 1
+.nr curr-type \n[type1]
+.ds curr-arg "\*[arg1]
+.if \n[in-files-section] \{\
+.ds saved-Pa-font "\*[Pa-font]
+.if n \
+.ds Pa-font "\*[No-font]
+.\}
+.ie (\n[type1] == 1) \
+.\*[arg1]
+.el \{\
+.nr arg-ptr 1
+.print-recursive
+.\}\}\}
+.el \{\
+.tm1 "mdoc warning: .It macros in lists of type `\*[str-It]'
+.tm1 "              require arguments (#\n[.c])
+.\}
+.\}
+.if !\n[nesting-level] \
+.\*[str-It]
+..
+.de inset-list
+.br
+.ev
+.box
+.unformat item-box\n[list-depth]
+.set-vertical-and-indent 0
+.br
+.nh
+.item-box\n[list-depth]
+.if \n[in-files-section] \
+.if n \
+.ds Pa-font "\*[saved-Pa-font]
+.nr in-list 0
+.reset-args
+..
+.de hang-list
+.br
+.ev
+.box
+.unformat item-box\n[list-depth]
+.set-vertical-and-indent 1
+.nr reg-dhl (\n[list-indent-stack\n[list-depth]]u + \n[digit-width]u)
+.ti -\n[reg-dhl]u
+.nh
+.ie (\n[dl]u > \n[list-indent-stack\n[list-depth]]u) \
+.item-box\n[list-depth]
+.el \{\
+.chop item-box\n[list-depth]
+.nr reg-dhl1 \n[.k]u
+.nop \*[item-box\n[list-depth]]\c
+.nop \h'|(\n[reg-dhl1]u - \n[.k]u + \n[reg-dhl]u)'\c
+.nr have-space 1
+.\}
+.if \n[in-files-section] \
+.if n \
+.ds Pa-font "\*[saved-Pa-font]
+.nr in-list 0
+.reset-args
+..
+.de ohang-list
+.br
+.ev
+.box
+.unformat item-box\n[list-depth]
+.set-vertical-and-indent 0
+.nh
+.item-box\n[list-depth]
+.br
+.if \n[in-files-section] \
+.if n \
+.ds Pa-font "\*[saved-Pa-font]
+.nr in-list 0
+.reset-args
+..
+.de item-list
+.br
+.ev
+.box
+.set-vertical-and-indent 0
+.br
+.reset-args
+..
+.nr enum-list-count-stack1 0
+.de enum-list
+.nr in-list 1
+.nr enum-list-count-stack\n[list-depth] +1
+\# XXX
+\#.ll \n[list-indent-stack\n[list-depth]]u
+\#.rj
+.nop \*[tag-prefix-stack\n[list-depth]]\c
+.nop \n[enum-list-count-stack\n[list-depth]].\&
+.do-list
+..
+.de bullet-list
+.nr in-list 1
+.nop \)\*[Sy-font]\[bu]\f[]
+.do-list
+..
+.de dash-list
+.nr in-list 1
+.nop \)\*[Sy-font]\-\f[]
+.do-list
+..
+.als do-list hang-list
+.nr diag-list-input-line-count 0
+.de diag-list
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ie ((\n[.c] - \n[diag-list-input-line-count]) > 1) \{\
+.ie !\n[compact-list-stack\n[list-depth]] \
+.paragraph
+.el \
+.br
+.\}
+.el \
+.br
+.nr diag-list-input-line-count \n[.c]
+.nh
+.nop \*[Sy-font]\c
+.if \n[num-args] \
+.remaining-args
+.nop \f[\n[curr-font]]\s[\n[curr-size]u]\*[hard-space]\c
+.print-and-reset
+..
+.de tag-list
+.br
+.ev
+.box
+.unformat item-box\n[list-depth]
+.box box-dtl
+.ev env-dtl
+.evc 0
+.fi
+.ad 0
+.in 0
+.item-box\n[list-depth]
+.br
+.ev
+.box
+.if !"TagwidtH"\*[tag-width-stack\n[list-depth]]" \{\
+.if !\n[list-have-indent-stack\n[list-depth]] \{\
+.in -(\n[list-indent-stack\n[list-depth]]u + \n[digit-width]u)
+.nr list-have-indent-stack\n[list-depth] 1
+.\}
+.get-tag-width
+.\}
+.set-vertical-and-indent 1
+.nr reg-dtl (\n[list-indent-stack\n[list-depth]]u + \n[digit-width]u)
+.ti -\n[reg-dtl]u
+.nh
+.item-box\n[list-depth]
+.ie (\n[dl]u > \n[list-indent-stack\n[list-depth]]u) \
+.br
+.el \{\
+.vpt 0
+.br
+.sp -1
+.vpt 1
+.nop \&\c
+.nr have-space 1
+.\}
+.if \n[in-files-section] \
+.if n \
+.ds Pa-font "\*[saved-Pa-font]
+.nr in-list 0
+.reset-args
+..
+.de get-tag-width
+.ie (\n[curr-type] == 1) \{\
+.ds tag-width-stack\n[list-depth] \*[curr-arg]
+.nr list-indent-stack\n[list-depth] \n[\*[curr-arg]]
+.\}
+.el \{\
+.ds tag-width-stack\n[list-depth] No
+.nr list-indent-stack\n[list-depth] \n[No]
+.\}
+..
+.de set-vertical-and-indent
+.if !\n[compact-list-stack\n[list-depth]] \
+.sp \n[display-vertical]u
+.if \n[list-have-indent-stack\n[list-depth]] \{\
+.nr list-have-indent-stack\n[list-depth] 0
+.if \$1 \
+.in +(\n[list-indent-stack\n[list-depth]]u + \n[digit-width]u)
+.\}
+.if !\n[cR] \
+.ne 2v
+..
+.nr list-depth 0
+.nr num-columns 0
+.nr compact-list-stack1 0
+.ds tag-prefix-stack1
+.ds tag-width-stack0
+.ds tag-width-stack1
+.nr list-offset-stack1 0
+.de end-list
+.if \$1 \
+'    in -(\n[list-indent-stack\n[list-depth]]u + \n[digit-width]u)
+'  in -\n[list-offset-stack\n[list-depth]]u
+.if (\n[list-depth] <= 0) \
+.tm mdoc warning: extraneous .El call (#\n[.c])
+.decrement-list-stack
+.nr list-depth -1
+..
+.de increment-list-stack
+.nr reg-dils (\n[list-depth] + 1)
+.nr list-have-indent-stack\n[reg-dils] 0
+.nr list-indent-stack\n[reg-dils] 0
+.nr list-offset-stack\n[reg-dils] 0
+.ds tag-prefix-stack\n[reg-dils]
+.ds tag-width-stack\n[reg-dils] \*[tag-width-stack\n[list-depth]]
+.ds list-type-stack\n[reg-dils]
+.nr compact-list-stack\n[reg-dils] 0
+.nr enum-list-count-stack\n[reg-dils] 0
+..
+.de decrement-list-stack
+.ds list-type-stack\n[list-depth]
+.nr list-have-indent-stack\n[list-depth] 0
+.nr list-indent-stack\n[list-depth] 0
+.nr list-offset-stack\n[list-depth] 0
+.ds tag-prefix-stack\n[list-depth]
+.ds tag-width-stack\n[list-depth]
+.nr compact-list-stack\n[list-depth] 0
+.nr enum-list-count-stack\n[list-depth] 0
+..
+.de Xr
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Xr
+.parse-args \$@
+.\}
+.el \
+.Xr-usage
+.\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.print-prefixes
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.ie (\n[type\n[arg-ptr]] == 2) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ds arg\n[arg-ptr] \*[Xr-font]\*[arg\n[arg-ptr]]\f[]\s[0]
+.if (\n[arg-limit] > \n[arg-ptr]) \{\
+.nr reg-Xr (\n[arg-ptr] + 1)
+.if (\n[type\n[reg-Xr]] == 2) \{\
+.ds arg\n[reg-Xr] \*[lp]\*[arg\n[reg-Xr]]\*[rp]
+.ds space\n[arg-ptr]
+.\}
+.\}
+.print-recursive
+.\}
+.el \
+.Xr-usage
+.\}
+.el \
+.Xr-usage
+..
+.de Xr-usage
+.tm Usage: .Xr manpage_name [section#] ... (#\n[.c])
+.reset-args
+..
+.als Sx generic-macro
+.ds Sx-usage section_header
+.de end-column-list
+.linetabs 0
+'  in -(\n[list-offset-stack\n[list-depth]]u + \n[list-indent-stack\n[list-depth]]u)
+.ta T .5i
+.fi
+.decrement-list-stack
+.nr list-depth -1
+..
+.nr column-indent-width 0
+.de set-column-tab
+.ds str-dsct
+.nr reg-dsct 1
+.nr column-indent-width 0
+.ie (\$1 < 5) \
+.ds str-dsct1 "    
+.el \{\
+.ie (\$1 == 5) \
+.ds str-dsct1 "   
+.el \{\
+.ds str-dsct1 " 
+.\}\}
+.while (\n[reg-dsct] <= \$1) \{\
+.as str-dsct " +\w\*[arg\n[reg-dsct]]\*[str-dsct1]u
+.nr column-indent-width +\w\*[arg\n[reg-dsct]]\*[str-dsct1]u
+.nr reg-dsct +1
+.\}
+.ta \*[str-dsct]
+'  in +\n[column-indent-width]u
+..
+.de column-list
+.if \n[num-args] \
+.parse-arg-vector
+.nr arg-ptr +1
+.if (\n[arg-limit] < \n[arg-ptr]) \{\
+.tm Usage: .It column_string [Ta [column_string ...] ] (#\n[.c])
+.return
+.\}
+.if "\*[arg\n[arg-ptr]]"Ta" \{\
+.nr reg-dcl (\n[arg-ptr] - 1)
+.ds space\n[reg-dcl]
+.\}
+.if !\n[list-indent-stack\n[list-depth]] \
+.nr list-indent-stack\n[list-depth] \n[column-indent-width]u
+.if !\n[.u] \{\
+.fi
+.in +\n[column-indent-width]u
+.\}
+.ti -\n[column-indent-width]u
+.do-\n[type\n[arg-ptr]]
+..
+.de Ta
+.ie \n[arg-limit] \{\
+.nr arg-ptr +1
+.nop \*[tab]\c
+.ie (\n[arg-limit] >= \n[arg-ptr]) \
+.do-\n[type\n[arg-ptr]]
+.el \
+.reset-args
+.\}
+.el \{\
+.tm1 "Usage: Ta must follow column entry: e.g.
+.tm1 "         .It column_string [Ta [column_string ...]] (#\n[.c])
+.\}
+..
+.de Dl
+.ta T .5i
+.in +\n[display-indent]u
+.ie \n[arg-limit] \{\
+.tm Usage: .Dl not callable by other macros (#\n[.c])
+.reset-args
+.\}
+.el \{\
+.ie \n[.$] \{\
+.ds macro-name Dl
+.parse-args \$@
+.nr arg-ptr 1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Li-font]\c
+.print-recursive
+.\}
+.el \
+.tm Usage: .Dl argument ... (#\n[.c])
+.\}
+.in -\n[display-indent]u
+..
+.de D1
+.ta T .5i
+.in +\n[display-indent]u
+.ie \n[arg-limit] \{\
+.tm Usage: .D1 not callable by other macros (#\n[.c])
+.reset-args
+.\}
+.el \{\
+.ie \n[.$] \{\
+.ds macro-name D1
+.parse-args \$@
+.nr arg-ptr 1
+.print-recursive
+.\}
+.el \
+.tm Usage: .D1 argument ... (#\n[.c])
+.\}
+.in -\n[display-indent]u
+..
+.de Vt
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Vt
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .Vt variable_type ... (#\n[.c])
+.\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.if (\n[arg-limit] < \n[arg-ptr]) \{\
+.tm Usage: .Vt variable_type ... (#\n[.c])
+.reset-args
+.return
+.\}
+.if \n[in-synopsis-section] \{\
+.if \n[have-decl] \{\
+.paragraph
+.nr have-decl 0
+.\}
+.if \n[have-func] \{\
+.ie \n[have-var] \
+.br
+.el \
+.paragraph
+.\}
+.nr have-var 1
+.\}
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Ft-font]\c
+.print-recursive
+.if \n[in-synopsis-section] \{\
+.ie \n[have-old-func] \
+.nop \*[soft-space]\c
+.el \
+.br
+.\}
+..
+.nr is-func 0
+.de Ft
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Ft
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .Ft function_type ... (#\n[.c])
+.\}
+.if !\n[arg-limit] \
+.return
+.nr arg-ptr +1
+.if (\n[arg-limit] < \n[arg-ptr]) \{\
+.tm Usage: .Ft function_type ... (#\n[.c])
+.reset-args
+.return
+.\}
+.if \n[in-synopsis-section] \{\
+.if (\n[have-func] : \n[have-decl]) \{\
+.paragraph
+.nr have-decl 0
+.nr have-var 0
+.\}
+.if \n[have-var] \{\
+.paragraph
+.nr have-var 0
+.\}
+.nr is-func 1
+.\}
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Ft-font]\c
+.print-recursive
+..
+.nr have-old-func 0
+.de Ot
+.nr have-old-func 1
+.if \n[in-synopsis-section] \{\
+.if (\n[have-func] : \n[have-decl]) \{\
+.paragraph
+.nr have-decl 0
+.nr have-var 0
+.\}
+.if \n[have-var] \{\
+.paragraph
+.nr have-var 0
+.\}
+.nr is-func 1
+.\}
+.if \n[.$] \
+.nop \*[Ft-font]\$*\c
+.nop \ \f[]\c
+..
+.de Fa
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Fa
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .Fa function_arguments ... (#\n[.c])
+.\}
+.ie \n[func-arg-count] \
+.do-func
+.el \{\
+.nr arg-ptr +1
+.if (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Fa-font]\c
+.print-recursive
+.if \n[in-synopsis-section] \
+.if \n[have-func] \
+.br
+.\}\}
+..
+.nr func-arg-count 0
+.ds func-arg
+.nr num-func-args 0
+.nr func-args-processed 0
+.de do-func
+.if (\n[arg-limit] <= \n[arg-ptr]) \{\
+.reset-args
+.return
+.\}
+.nr arg-ptr +1
+.ds func-arg
+.nr num-func-args 0
+.nr func-args-processed 0
+.build-func-string \*[arg\n[arg-ptr]]
+.if (\n[num-func-args] > 1) \
+.ds arg\n[arg-ptr] "\*[func-arg]
+.if (\n[func-arg-count] > 1) \{\
+.nop \f[\n[curr-font]]\s[\n[curr-size]u]\|\c
+.if !"\*[arg\n[arg-ptr]]"/*" \
+.if !"\*[arg\n[arg-ptr]]"*/" \
+.nop ,\)\c
+.nop \)\*[space\n[arg-ptr]]\*[Fa-font]\c
+.nop \)\*[arg\n[arg-ptr]]\f[]\s[0]\c
+.\}
+.if (\n[func-arg-count] == 1) \{\
+.nop \)\*[Fa-font]\*[arg\n[arg-ptr]]\c
+.nop \f[]\s[0]\c
+.\}
+.nr func-arg-count +1
+.do-func
+..
+.nr have-func 0
+.de Fn
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Fn
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .Fn function_name [function_arg] ... (#\n[.c])
+.\}
+.if !\n[arg-limit] \
+.return
+.if \n[in-synopsis-section] \{\
+.ie \n[is-func] \{\
+.br
+.nr have-var 0
+.nr have-decl 0
+.nr is-func 0
+.\}
+.el \{\
+.if \n[have-func] \{\
+.paragraph
+.nr have-var 0
+.nr have-decl 0
+.\}\}
+.if \n[have-decl] \{\
+.paragraph
+.nr have-var 0
+.\}
+.if \n[have-var] \{\
+.paragraph
+.nr have-decl 0
+.\}
+.nr have-func 1
+.nr is-func 0
+.br
+.if !\n[indent-synopsis] \
+.nr indent-synopsis (4u * \n[fixed-width]u)
+.if !\n[indent-synopsis-active] \
+.in +\n[indent-synopsis]u
+.ti -\n[indent-synopsis]u
+.\}
+.nr arg-ptr +1
+.print-prefixes
+.if (\n[arg-limit] < \n[arg-ptr]) \{\
+.tm Usage: .Fn function_name [function_arg] ... (#\n[.c])
+.reset-args
+.return
+.\}
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Fn-font]\*[arg\n[arg-ptr]]\c
+.nop \f[]\s[0]\*[lp]\)\c
+.nr arg-ptr +1
+.if (\n[arg-limit] >= \n[arg-ptr]) \{\
+.if (\n[type\n[arg-ptr]] == 2) \{\
+.nop \*[Fa-font]\c
+.do-func-args
+.nop \f[\n[curr-font]]\s[\n[curr-size]u]\c
+.\}\}
+.nop \)\*[rp]\)\c
+.if \n[in-synopsis-section] \
+.nop \);\)\c
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr arg-ptr -1
+.nop \)\*[space\n[arg-ptr]]\c
+.nr arg-ptr +1
+.print-recursive
+.\}
+.el \
+.print-and-reset
+.if \n[in-synopsis-section] \
+.if !\n[indent-synopsis-active] \
+.in -\n[indent-synopsis]u
+..
+.de do-func-args
+.if \n[in-synopsis-section] \{\
+.ds func-arg
+.nr num-func-args 0
+.nr func-args-processed 0
+.build-func-string \*[arg\n[arg-ptr]]
+.if (\n[num-func-args] > 1) \
+.ds arg\n[arg-ptr] "\*[func-arg]
+.\}
+.nop \)\*[arg\n[arg-ptr]]\c
+.nr arg-ptr +1
+.if (\n[arg-limit] >= \n[arg-ptr]) \{\
+.if (\n[type\n[arg-ptr]] == 2) \{\
+.nr reg-ddfa (\n[arg-ptr] - 1)
+.nop \f[\n[curr-font]]\s[\n[curr-size]u]\|\c
+.if !"\*[arg\n[arg-ptr]]"/*" \
+.if !"\*[arg\n[arg-ptr]]"*/" \
+.nop ,\)\c
+.nop \)\*[space\n[reg-ddfa]]\f[]\s[0]\|\c
+.do-func-args
+.\}\}
+..
+.nr saved-nesting-level 0
+.nr in-func-enclosure 0
+.de Fo
+.if (\n[in-func-enclosure]) \{\
+.tm mdoc error: .Fo/.Fc can't be nested (#\n[.c])
+.return
+.\}
+.nr saved-nesting-level \n[nesting-level]
+.nr in-func-enclosure 1
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ds macro-name Fo
+.parse-args \$@
+.\}
+.el \
+.tm Usage: .Fo function_name (#\n[.c])
+.\}
+.if \n[in-synopsis-section] \{\
+.ie \n[is-func] \{\
+.br
+.nr have-var 0
+.nr have-decl 0
+.nr is-func 0
+.\}
+.el \{\
+.if \n[have-func] \{\
+.paragraph
+.nr have-var 0
+.nr have-decl 0
+.\}\}
+.if \n[have-decl] \{\
+.paragraph
+.nr have-var 0
+.\}
+.if \n[have-var] \{\
+.paragraph
+.nr have-decl 0
+.\}
+.nr have-func 1
+.nr is-func 0
+.br
+.if !\n[indent-synopsis] \
+.nr indent-synopsis (4u * \n[fixed-width]u)
+.\}
+.box func-box
+.ev func-env
+.evc 0
+.in 0
+.nf
+.nr arg-ptr +1
+.print-prefixes
+.if (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr func-arg-count 1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Fn-font]\*[arg\n[arg-ptr]]\c
+.nop \f[]\s[0]\*[lp]\)\c
+.reset-args
+.\}
+..
+.de Fc
+.if !\n[in-func-enclosure] \{\
+.tm mdoc warning: Extraneous .Fc (#\n[.c])
+.return
+.\}
+.if \n[.$] \{\
+.ds macro-name Fc
+.parse-args \) \$@
+.\}
+.if !(\n[saved-nesting-level] == \n[nesting-level]) \
+.tm mdoc warning: Unbalanced enclosure commands within .Fo/.Fc
+.nr func-arg-count 0
+.nr in-func-enclosure 0
+.ie \n[in-synopsis-section] \
+.nop \|\*[rp];\)
+.el \
+.nop \|\*[rp]\)
+.br
+.ev
+.box
+.chop func-box
+.unformat func-box
+.if \n[in-synopsis-section] \{\
+.if !\n[indent-synopsis-active] \
+.in +\n[indent-synopsis]u
+.ti -\n[indent-synopsis]u
+.\}
+.nh
+.nop \*[func-box]\c
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.print-recursive
+.\}
+.el \
+.print-and-reset
+.if \n[in-synopsis-section] \
+.if !\n[indent-synopsis-active] \
+.in -\n[indent-synopsis]u
+..
+.de build-func-string
+.if !\n[num-func-args] \{\
+.nr num-func-args \n[.$]
+.nr func-args-processed 0
+.ds func-arg
+.\}
+.nr func-args-processed +1
+.as func-arg "\$1
+.if (\n[func-args-processed] < \n[num-func-args]) \{\
+.as func-arg "\*[hard-space]
+.shift
+.build-func-string \$@
+.\}
+..
+.nr is-reference 0
+.nr reference-count 0
+.de Rs
+.ie \n[.$] \
+.tm Usage: .Rs (does not take arguments) (#\n[.c])
+.el \{\
+.nr is-reference 1
+.reset-reference
+.if \n[in-see-also-section] \
+.paragraph
+.nr reference-count 0
+.\}
+..
+.de Re
+.ie \n[.$] \
+.tm Usage: .Re (does not take arguments) (#\n[.c])
+.el \{\
+.if !\n[is-reference] \{\
+.tm mdoc warning: Extraneous .Re (#\n[.c])
+.return
+.\}
+.print-reference
+.reset-reference
+.nr is-reference 0
+.\}
+..
+.de reset-reference
+.while (\n[author-count]) \{\
+.ds author-name\n[author-count]
+.nr author-count -1
+.\}
+.nr journal-count 0
+.nr issue-count 0
+.nr optional-count 0
+.nr corporate-count 0
+.nr report-count 0
+.nr reference-title-count 0
+.nr url-count 0
+.nr volume-count 0
+.nr date-count 0
+.nr page-number-count 0
+.nr book-count 0
+.nr publisher-count 0
+.nr reference-count 0
+.ds journal-name
+.ds issue-name
+.ds optional-string
+.ds corporate-name
+.ds report-name
+.ds reference-title-name
+.ds reference-title-name-for-book
+.ds url-name
+.ds volume-name
+.ds date
+.ds page-number-string
+.ds book-name
+.ds publisher-name
+..
+.de finish-reference
+.nr reference-count -\$1
+.ie \n[reference-count] \
+.nop \),
+.el \
+.nop \).
+..
+.de print-reference
+.nh
+.if \n[author-count] \{\
+.print-reference-authors
+.nr reference-count -\n[author-count]
+.\}
+.if \n[reference-title-count] \{\
+.unformat reference-title-name
+.chop reference-title-name
+.unformat reference-title-name-for-book
+.chop reference-title-name-for-book
+.ie ((\n[journal-count] == 1) : (\n[book-count] == 1)) \{\
+.nop \)\*[q]\)\*[reference-title-name-for-book]\)\*[q]\c
+.finish-reference \n[reference-title-count]
+.\}
+.el \{\
+.nop \*[reference-title-name]\c
+.finish-reference \n[reference-title-count]
+.\}\}
+.if \n[book-count] \{\
+.unformat book-name
+.chop book-name
+.nop \*[book-name]\c
+.finish-reference \n[book-count]
+.\}
+.if \n[publisher-count] \{\
+.unformat publisher-name
+.chop publisher-name
+.nop \*[publisher-name]\c
+.finish-reference \n[publisher-count]
+.\}
+.if \n[journal-count] \{\
+.unformat journal-name
+.chop journal-name
+.nop \*[journal-name]\c
+.finish-reference \n[journal-count]
+.\}
+.if \n[report-count] \{\
+.unformat report-name
+.chop report-name
+.nop \*[report-name]\c
+.finish-reference \n[report-count]
+.\}
+.if \n[issue-count] \{\
+.unformat issue-name
+.chop issue-name
+.nop \*[issue-name]\c
+.finish-reference \n[issue-count]
+.\}
+.if \n[volume-count] \{\
+.unformat volume-name
+.chop volume-name
+.nop \*[volume-name]\c
+.finish-reference \n[volume-count]
+.\}
+.if \n[url-count] \{\
+.unformat url-name
+.chop url-name
+.nop \*[url-name]\c
+.finish-reference \n[url-count]
+.\}
+.if \n[page-number-count] \{\
+.unformat page-number-string
+.chop page-number-string
+.nop \*[page-number-string]\c
+.finish-reference \n[page-number-count]
+.\}
+.if \n[corporate-count] \{\
+.unformat corporate-name
+.chop corporate-name
+.nop \*[corporate-name]\c
+.finish-reference \n[corporate-count]
+.\}
+.if \n[date-count] \{\
+.unformat date
+.chop date
+.nop \*[date]\c
+.finish-reference \n[date-count]
+.\}
+.if \n[optional-count] \{\
+.unformat optional-string
+.chop optional-string
+.nop \*[optional-string]\c
+.finish-reference \n[optional-count]
+.\}
+.if \n[reference-count] \
+.tm mdoc warning: unresolved reference problem
+.hy \n[hyphen-flags]
+..
+.ds str-dpra "and
+.de print-reference-authors
+.nr reg-dpra 1
+.while (\n[reg-dpra] < \n[author-count]) \{\
+.unformat author-name\n[reg-dpra]
+.chop author-name\n[reg-dpra]
+.ie (\n[author-count] > 2) \
+.nop \)\*[author-name\n[reg-dpra]],
+.el \
+.nop \)\*[author-name\n[reg-dpra]]
+.nr reg-dpra +1
+.\}
+.unformat author-name\n[reg-dpra]
+.chop author-name\n[reg-dpra]
+.if (\n[author-count] > 1) \
+.nop \)\*[str-dpra]
+.nop \)\*[author-name\n[reg-dpra]],
+..
+.nr author-count 0
+.ds author-name0
+.de %A
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%A author_name ... (#\n[.c])
+.return
+.\}
+.nr author-count +1
+.nr reference-count +1
+.ds macro-name %A
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.box author-name\n[author-count]
+.ev env-%A
+.evc 0
+.in 0
+.nf
+.do-references
+..
+.nr book-count 0
+.ds book-name
+.de %B
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%B book_name ... (#\n[.c])
+.return
+.\}
+.if \n[is-reference] \{\
+.nr book-count +1
+.nr reference-count +1
+.\}
+.ds macro-name %B
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ie \n[is-reference] \{\
+.boxa book-name
+.ev env-%B
+.evc 0
+.in 0
+.nf
+.nop \*[Em-font]\c
+.do-references
+.\}
+.el \{\
+.nop \*[Em-font]\c
+.print-recursive
+.\}
+..
+.nr date-count 0
+.ds date
+.de %D
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%D date ... (#\n[.c])
+.return
+.\}
+.nr date-count +1
+.nr reference-count +1
+.ds macro-name %D
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa date
+.ev env-%D
+.evc 0
+.in 0
+.nf
+.do-references
+..
+.nr publisher-count 0
+.ds publisher-name
+.de %I
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%I issuer/publisher_name ... (#\n[.c])
+.return
+.\}
+.nr publisher-count +1
+.nr reference-count +1
+.ds macro-name %I
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa publisher-name
+.ev env-%I
+.evc 0
+.in 0
+.nf
+.nop \*[Em-font]\c
+.do-references
+..
+.nr journal-count 0
+.ds journal-name
+.de %J
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%J journal_name ... (#\n[.c])
+.return
+.\}
+.nr journal-count +1
+.nr reference-count +1
+.ds macro-name %J
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa journal-name
+.ev env-%J
+.evc 0
+.in 0
+.nf
+.nop \*[Em-font]\c
+.do-references
+..
+.nr issue-count 0
+.ds issue-name
+.de %N
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%N issue_number ... (#\n[.c])
+.return
+.\}
+.nr issue-count +1
+.nr reference-count +1
+.ds macro-name %N
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa issue-name
+.ev env-%N
+.evc 0
+.in 0
+.nf
+.do-references
+..
+.nr optional-count 0
+.ds optional-string
+.de %O
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%O optional_information ... (#\n[.c])
+.return
+.\}
+.nr optional-count +1
+.nr reference-count +1
+.ds macro-name %O
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa optional-string
+.ev env-%O
+.evc 0
+.in 0
+.nf
+.do-references
+..
+.nr page-number-count 0
+.ds page-number-string
+.de %P
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%P page_number ... (#\n[.c])
+.return
+.\}
+.nr page-number-count +1
+.nr reference-count +1
+.ds macro-name %P
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa page-number-string
+.ev env-%P
+.evc 0
+.in 0
+.nf
+.do-references
+..
+.nr corporate-count 0
+.ds corporate-name
+.de %Q
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%Q corporate_or_foreign_author ... (#\n[.c])
+.return
+.\}
+.nr corporate-count +1
+.nr reference-count +1
+.ds macro-name %Q
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa corporate-name
+.ev env-%Q
+.evc 0
+.in 0
+.nf
+.do-references
+..
+.nr report-count 0
+.ds report-name
+.de %R
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%R reference_report ... (#\n[.c])
+.return
+.\}
+.nr report-count +1
+.nr reference-count +1
+.ds macro-name %R
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa report-name
+.ev env-%R
+.evc 0
+.in 0
+.nf
+.do-references
+..
+.nr reference-title-count 0
+.ds reference-title-name
+.ds reference-title-name-for-book
+.de %T
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%T reference_title ... (#\n[.c])
+.return
+.\}
+.if \n[is-reference] \{\
+.nr reference-title-count +1
+.nr reference-count +1
+.\}
+.ds macro-name %T
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.ie \n[is-reference] \{\
+.boxa reference-title-name-for-book
+.ev env-%T
+.evc 0
+.in 0
+.nf
+.nop \*[No-font]\c
+.do-references
+.ds macro-name %T
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa reference-title-name
+.ev env-%T
+.evc 0
+.in 0
+.nf
+.nop \*[Em-font]\c
+.do-references
+.\}
+.el \{\
+.nop \*[Em-font]\c
+.print-recursive
+.\}
+..
+.nr url-count 0
+.nr volume-count 0
+.ds volume-name
+.de %U
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%U URL ... (#\n[.c])
+.return
+.\}
+.nr url-count +1
+.nr reference-count +1
+.ds macro-name %U
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa url-name
+.ev env-%U
+.evc 0
+.in 0
+.nf
+.do-references
+..
+.de %V
+.if (\n[arg-limit] : (\n[.$] == 0)) \{\
+.tm Usage: .%V volume ... (#\n[.c])
+.return
+.\}
+.nr volume-count +1
+.nr reference-count +1
+.ds macro-name %V
+.parse-args \$@
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.boxa volume-name
+.ev env-%V
+.evc 0
+.in 0
+.nf
+.do-references
+..
+.de do-references
+.if !\n[is-reference] \
+.tm mdoc error: .\*[macro-name] found outside of .Rs ... .Re (#\n[.c])
+.nr reg-ddr1 \n[type\n[arg-ptr]]
+.ie (\n[reg-ddr1] == 1) \{\
+.append-arg \c 3
+.\*[arg\n[arg-ptr]]
+.\}
+.el \{\
+.nop \)\*[arg\n[arg-ptr]]\c
+.ie (\n[arg-limit] == \n[arg-ptr]) \{\
+.br
+.ev
+.boxa
+.reset-args
+.\}
+.el \{\
+.nr reg-ddr \n[arg-ptr]
+.nr arg-ptr +1
+.nop \)\*[space\n[reg-ddr]]\c
+.do-references
+.\}\}
+..
+.de Hf
+.ie ((\n[.$] == 1) & (\n[arg-limit] == 0)) \{\
+.paragraph
+.nop File:
+.Pa \$1
+.Bd -literal
+.so \$1
+.Ed
+.paragraph
+.\}
+.el \
+.Usage: .Hf file (#\n[.c])
+..
+.nr have-author 0
+.de An
+.if !\n[arg-limit] \{\
+.ie \n[.$] \{\
+.ie        "\$1"-nosplit" \
+.nr in-authors-section 0
+.el \{ .ie "\$1"-split" \
+.nr in-authors-section 1
+.el \{\
+.ds macro-name An
+.parse-args \$@
+.\}\}\}
+.el \{\
+.tm1 "Usage: .An {-nosplit | -split}
+.tm1 "       .An author_name ... (#\n[.c])
+.\}\}
+.if \n[in-authors-section] \{\
+.ie \n[have-author] \
+.br
+.el \
+.nr have-author 1
+.\}
+.if \n[arg-limit] \{\
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.print-recursive
+.\}
+.el \{\
+.tm Usage: .An author_name ... (#\n[.c])
+.reset-args
+.\}\}
+..
+.ds str-Rv-std-prefix "The
+.ds str-Rv-std-suffix "function returns the value\~0 if successful;
+.as str-Rv-std-suffix " otherwise the value\~\-1 is returned and
+.as str-Rv-std-suffix " the global variable \*[Va-font]errno\f[]
+.as str-Rv-std-suffix " is set to indicate the error.
+.ds str-Rv-stds-prefix "The
+.ds str-Rv-stds-and    "and
+.ds str-Rv-stds-suffix "functions return the value\~0 if successful;
+.as str-Rv-stds-suffix " otherwise the value\~\-1 is returned and
+.as str-Rv-stds-suffix " the global variable \*[Va-font]errno\f[]
+.as str-Rv-stds-suffix " is set to indicate the error.
+.ds str-Rv-std0 "Upon successful completion, the value\~0 is returned;
+.as str-Rv-std0 " otherwise the value\~\-1 is returned and
+.as str-Rv-std0 " the global variable \*[Va-font]errno\f[]
+.as str-Rv-std0 " is set to indicate the error.
+.de Rv
+.if \n[arg-limit] \{\
+.tm Usage: .Rv not callable by other macros (#\n[.c])
+.reset-args
+.return
+.\}
+.if !\n[.$] \{\
+.tm Usage: .Rv [-std] [<function> ...] (#\n[.c])
+.return
+.\}
+.if "\$1"-std" \{\
+.nr reg-Rv \*[section]
+.if ((\n[reg-Rv] < 2) : (\n[reg-Rv] > 3)) \
+.tm Usage: .Rv -std in sections 2 and 3 only (#\n[.c])
+.br
+.shift
+.ie (\n[.$] > 1) \{\
+.nop \)\*[str-Rv-stds-prefix]
+.nr reg-Rv 1
+.while (\n[reg-Rv] < \n[.$]) \{\
+.ie (\n[.$] > 2) \
+.Fn \$\n[reg-Rv] ,
+.el \
+.Fn \$\n[reg-Rv]
+.nr reg-Rv +1
+.\}
+.nop \)\*[str-Rv-stds-and]
+.Fn \$\n[.$]
+.nop \)\*[str-Rv-stds-suffix]
+.\}
+.el \{ .ie (\n[.$] == 1) \{\
+.nop \)\*[str-Rv-std-prefix]
+.Fn \$1
+.nop \)\*[str-Rv-std-suffix]
+.\}
+.el \{\
+.nop \)\*[str-Rv-std0]
+.\}\}\}
+..
+.ds str-Ex-std-prefix "The
+.ds str-Ex-std-suffix "utility exits\~0 on success,
+.as str-Ex-std-suffix " and\~>0 if an error occurs.
+.ds str-Ex-stds-prefix "The
+.als str-Ex-stds-and str-Rv-stds-and
+.ds str-Ex-stds-suffix "utilities exit\~0 on success,
+.as str-Ex-stds-suffix " and\~>0 if an error occurs.
+.de Ex
+.if \n[arg-limit] \{\
+.tm Usage: .Ex not callable by other macros (#\n[.c])
+.reset-args
+.return
+.\}
+.if !\n[.$] \{\
+.tm Usage: .Ex [-std] [<utility> ...] (#\n[.c])
+.return
+.\}
+.if "\$1"-std" \{\
+.nr reg-Ex \*[section]
+.if !((\n[reg-Ex] == 1) : (\n[reg-Ex] == 6) : (\n[reg-Ex] == 8)) \
+.tm Usage: .Ex -std in sections 1, 6 and 8 only (#\n[.c])
+.br
+.shift
+.ie (\n[.$] > 1) \{\
+.nop \)\*[str-Ex-stds-prefix]
+.nr reg-Ex 1
+.while (\n[reg-Ex] < \n[.$]) \{\
+.ie (\n[.$] > 2) \
+.Nm \$\n[reg-Ex] ,
+.el \
+.Nm \$\n[reg-Ex]
+.nr reg-Ex +1
+.\}
+.nop \)\*[str-Ex-stds-and]
+.Nm \$\n[.$]
+.nop \)\*[str-Ex-stds-suffix]
+.\}
+.el \{\
+.nop \)\*[str-Ex-std-prefix]
+.Nm \$1
+.nop \)\*[str-Ex-std-suffix]
+.\}\}
+..
+.de Mt
+.Pa \$@
+..
+.de Lk
+.ds str-Lk Sy \$@
+.ie (\n[.$] > 1) \{\
+.get-arg-type \$2
+.ie (\n[arg-type] < 3) \{\
+.Em \)\$2:
+.ds str-Lk Sy "\$1"
+.get-width "\$1"
+.shift 2
+.if \n[.$] \
+.as str-Lk " \$@
+.\}
+.el \
+.get-width "\$1"
+.\}
+.el \
+.get-width "\$1"
+.ie n \
+.nr reg-Lk 26
+.el \
+.nr reg-Lk 38
+.ie (\n[width] >= \n[reg-Lk]) \
+.D1 \*[str-Lk]
+.el \
+.\*[str-Lk]
+..
+.de defunct-macro
+.tmc mdoc error: .\$0 defunct
+.if d \$0-usage \
+.tmc , \*[\$0-usage]
+.tm1 " (#\n[.c])
+..
+.als Db defunct-macro
+.als Ds defunct-macro
+.als Or defunct-macro
+.ds Or-usage use `|'
+.als Sf defunct-macro
+.ds Sf-usage use .Pf or .Ns
+.rn em e@
+.de em
+.tm1 "mdoc error: end-macro (.em) respecification is not allowed. (#\n[.c])
+.tm1 "            Should this have been `.Em ...'?
+.ab
+..
+.de empty-line
+.if !\n[display-depth] \
+.tm mdoc warning: Empty input line #\n[.c]
+.sp
+..
+.blm empty-line
+.ec
+.mso mdoc.local

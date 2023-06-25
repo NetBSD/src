@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vm_43.c:78:1:compat_43_sys_getpagesize	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vm_43.c:86:1:compat_43_sys_mmap	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vm_43.c:153:1:vm_43_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vm_43.c:160:1:vm_43_fini	8	dynamic,bounded

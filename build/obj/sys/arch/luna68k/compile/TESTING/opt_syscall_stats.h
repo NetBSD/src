@@ -1,0 +1,27 @@
+/* option `SYSCALL_STATS' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_SYSCALL_STATS
+ .global _KERNEL_OPT_SYSCALL_STATS
+ .equiv _KERNEL_OPT_SYSCALL_STATS,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_SYSCALL_STATS\n .global _KERNEL_OPT_SYSCALL_STATS\n .equiv _KERNEL_OPT_SYSCALL_STATS,0x6e074def\n .endif");
+#endif
+/* option `SYSCALL_TIMES' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_SYSCALL_TIMES
+ .global _KERNEL_OPT_SYSCALL_TIMES
+ .equiv _KERNEL_OPT_SYSCALL_TIMES,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_SYSCALL_TIMES\n .global _KERNEL_OPT_SYSCALL_TIMES\n .equiv _KERNEL_OPT_SYSCALL_TIMES,0x6e074def\n .endif");
+#endif
+/* option `SYSCALL_TIMES_HASCOUNTER' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_SYSCALL_TIMES_HASCOUNTER
+ .global _KERNEL_OPT_SYSCALL_TIMES_HASCOUNTER
+ .equiv _KERNEL_OPT_SYSCALL_TIMES_HASCOUNTER,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_SYSCALL_TIMES_HASCOUNTER\n .global _KERNEL_OPT_SYSCALL_TIMES_HASCOUNTER\n .equiv _KERNEL_OPT_SYSCALL_TIMES_HASCOUNTER,0x6e074def\n .endif");
+#endif

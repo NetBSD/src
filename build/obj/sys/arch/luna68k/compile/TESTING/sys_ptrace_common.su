@@ -1,0 +1,5 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_ptrace_common.c:1010:1:ptrace_doio	152	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_ptrace_common.c:761:1:ptrace_lwpstatus.part.0	100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_ptrace_common.c:200:1:ptrace_listener_cb	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_ptrace_common.c:1578:1:ptrace_common_modcmd	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_ptrace_common.c:1078:1:do_ptrace	260	dynamic,bounded

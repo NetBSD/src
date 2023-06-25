@@ -1,0 +1,3 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uipc_syscalls_40.c:37:1:compat_ifconf	168	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uipc_syscalls_40.c:171:1:uipc_syscalls_40_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/uipc_syscalls_40.c:178:1:uipc_syscalls_40_fini	8	dynamic,bounded

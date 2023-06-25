@@ -1,0 +1,278 @@
+file configure.local: no (fully automatic configuration)
+
+tested operating system: Darwin -> OSENUM=MANDOC_OS_OTHER
+
+-n testing cc -W: 
+testing noop ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-noop test-noop.c  
+partial result of noop: cc succeeded
+result of running noop: yes
+
+CFLAGS specified manually:
+selected CFLAGS="-g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter"
+
+testing noop-static ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-noop test-noop.c -static 
+ld: library not found for -lcrt0.o
+clang: error: linker command failed with exit code 1 (use -v to see invocation)
+result of noop-static: cc failed with exit status 1
+result of compiling noop-static: no
+
+selected STATIC=""
+
+testing dirent-namlen ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-dirent-namlen test-dirent-namlen.c  
+partial result of dirent-namlen: cc succeeded
+result of running dirent-namlen: yes
+
+testing be32toh ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-be32toh test-be32toh.c  
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-be32toh.c:4:10: fatal error: 'endian.h' file not found
+#include <endian.h>
+         ^~~~~~~~~~
+1 error generated.
+result of be32toh: cc failed with exit status 1
+result of compiling be32toh: no
+
+testing be32toh-DSYS_ENDIAN ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-be32toh test-be32toh.c -DSYS_ENDIAN 
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-be32toh.c:2:10: fatal error: 'sys/endian.h' file not found
+#include <sys/endian.h>
+         ^~~~~~~~~~~~~~
+1 error generated.
+result of be32toh-DSYS_ENDIAN: cc failed with exit status 1
+result of compiling be32toh-DSYS_ENDIAN: no
+
+testing EFTYPE ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-EFTYPE test-EFTYPE.c  
+partial result of EFTYPE: cc succeeded
+result of running EFTYPE: yes
+
+testing err ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-err test-err.c  
+partial result of err: cc succeeded
+test-err: 1. warnx
+test-err: 2. warn: Undefined error: 0
+test-err: 3. err: Undefined error: 0
+result of running err: yes
+
+testing getline ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-getline test-getline.c  
+partial result of getline: cc succeeded
+result of running getline: yes
+
+testing getsubopt ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-getsubopt test-getsubopt.c  
+partial result of getsubopt: cc succeeded
+result of running getsubopt: yes
+
+testing isblank ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-isblank test-isblank.c  
+partial result of isblank: cc succeeded
+result of running isblank: yes
+
+testing mkdtemp ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-mkdtemp test-mkdtemp.c  
+partial result of mkdtemp: cc succeeded
+result of running mkdtemp: yes
+
+testing ntohl ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-ntohl test-ntohl.c  
+partial result of ntohl: cc succeeded
+result of running ntohl: yes
+
+testing O_DIRECTORY ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-O_DIRECTORY test-O_DIRECTORY.c  
+partial result of O_DIRECTORY: cc succeeded
+result of running O_DIRECTORY: yes
+
+testing PATH_MAX ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-PATH_MAX test-PATH_MAX.c  
+partial result of PATH_MAX: cc succeeded
+PATH_MAX is defined to be 1024
+result of running PATH_MAX: yes
+
+testing pledge ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-pledge test-pledge.c  
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-pledge.c:6:11: error: call to undeclared function 'pledge'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+        return !!pledge("stdio", NULL);
+                 ^
+1 error generated.
+result of pledge: cc failed with exit status 1
+result of compiling pledge: no
+
+testing sandbox_init ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-sandbox_init test-sandbox_init.c  
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-sandbox_init.c:9:7: error: 'sandbox_init' is deprecated: first deprecated in macOS 10.8 - No longer supported [-Werror,-Wdeprecated-declarations]
+        rc = sandbox_init(kSBXProfileNoInternet, SANDBOX_NAMED, &ep);
+             ^
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sandbox.h:48:5: note: 'sandbox_init' has been explicitly marked deprecated here
+int sandbox_init(const char *profile, uint64_t flags, char **errorbuf);
+    ^
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-sandbox_init.c:9:20: error: 'kSBXProfileNoInternet' is deprecated: first deprecated in macOS 10.8 - No longer supported [-Werror,-Wdeprecated-declarations]
+        rc = sandbox_init(kSBXProfileNoInternet, SANDBOX_NAMED, &ep);
+                          ^
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sandbox.h:63:19: note: 'kSBXProfileNoInternet' has been explicitly marked deprecated here
+extern const char kSBXProfileNoInternet[];
+                  ^
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-sandbox_init.c:11:3: error: 'sandbox_free_error' is deprecated: first deprecated in macOS 10.8 - No longer supported [-Werror,-Wdeprecated-declarations]
+                sandbox_free_error(ep);
+                ^
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/sandbox.h:98:6: note: 'sandbox_free_error' has been explicitly marked deprecated here
+void sandbox_free_error(char *errorbuf);
+     ^
+3 errors generated.
+result of sandbox_init: cc failed with exit status 1
+result of compiling sandbox_init: no
+
+testing progname ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-progname test-progname.c  
+partial result of progname: cc succeeded
+result of running progname: yes
+
+testing reallocarray ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-reallocarray test-reallocarray.c  
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-reallocarray.c:6:10: error: call to undeclared function 'reallocarray'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+        return !reallocarray(NULL, 2, 2);
+                ^
+1 error generated.
+result of reallocarray: cc failed with exit status 1
+result of compiling reallocarray: no
+
+testing reallocarray-D_OPENBSD_SOURCE ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-reallocarray test-reallocarray.c -D_OPENBSD_SOURCE 
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-reallocarray.c:6:10: error: call to undeclared function 'reallocarray'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+        return !reallocarray(NULL, 2, 2);
+                ^
+1 error generated.
+result of reallocarray-D_OPENBSD_SOURCE: cc failed with exit status 1
+result of compiling reallocarray-D_OPENBSD_SOURCE: no
+
+testing recallocarray ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-recallocarray test-recallocarray.c  
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-recallocarray.c:10:10: error: call to undeclared function 'recallocarray'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+        return !recallocarray(p, 2, 3, 2);
+                ^
+1 error generated.
+result of recallocarray: cc failed with exit status 1
+result of compiling recallocarray: no
+
+testing recallocarray-D_OPENBSD_SOURCE ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-recallocarray test-recallocarray.c -D_OPENBSD_SOURCE 
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-recallocarray.c:10:10: error: call to undeclared function 'recallocarray'; ISO C99 and later do not support implicit function declarations [-Wimplicit-function-declaration]
+        return !recallocarray(p, 2, 3, 2);
+                ^
+1 error generated.
+result of recallocarray-D_OPENBSD_SOURCE: cc failed with exit status 1
+result of compiling recallocarray-D_OPENBSD_SOURCE: no
+
+testing rewb-bsd ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-rewb-bsd test-rewb-bsd.c  
+partial result of rewb-bsd: cc succeeded
+result of running rewb-bsd: yes
+
+testing rewb-sysv ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-rewb-sysv test-rewb-sysv.c  
+partial result of rewb-sysv: cc succeeded
+result of rewb-sysv: execution failed with exit status 2
+result of running rewb-sysv: no
+
+testing strcasestr ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-strcasestr test-strcasestr.c  
+partial result of strcasestr: cc succeeded
+result of running strcasestr: yes
+
+testing stringlist ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-stringlist test-stringlist.c  
+partial result of stringlist: cc succeeded
+result of running stringlist: yes
+
+testing strlcat ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-strlcat test-strlcat.c  
+partial result of strlcat: cc succeeded
+result of running strlcat: yes
+
+testing strlcpy ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-strlcpy test-strlcpy.c  
+partial result of strlcpy: cc succeeded
+result of running strlcpy: yes
+
+testing strndup ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-strndup test-strndup.c  
+partial result of strndup: cc succeeded
+result of running strndup: yes
+
+testing strptime ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-strptime test-strptime.c  
+partial result of strptime: cc succeeded
+result of running strptime: yes
+
+testing strsep ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-strsep test-strsep.c  
+partial result of strsep: cc succeeded
+result of running strsep: yes
+
+testing strtonum ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-strtonum test-strtonum.c  
+partial result of strtonum: cc succeeded
+result of running strtonum: yes
+
+testing vasprintf ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-vasprintf test-vasprintf.c  
+partial result of vasprintf: cc succeeded
+result of running vasprintf: yes
+
+testing fts-DFTS_COMPARE_CONST ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-fts test-fts.c -DFTS_COMPARE_CONST 
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-fts.c:24:34: error: incompatible function pointer types passing 'int (const FTSENT *const *, const FTSENT *const *)' (aka 'int (const struct _ftsent *const *, const struct _ftsent *const *)') to parameter of type 'int (*)(const FTSENT **, const FTSENT **)' (aka 'int (*)(const struct _ftsent **, const struct _ftsent **)') [-Werror,-Wincompatible-function-pointer-types]
+            FTS_PHYSICAL | FTS_NOCHDIR, fts_compare);
+                                        ^~~~~~~~~~~
+/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/fts.h:174:12: note: passing argument to parameter here
+            int (*)(const FTSENT **, const FTSENT **)) __DARWIN_INODE64(fts_open);
+                  ^
+1 error generated.
+result of fts-DFTS_COMPARE_CONST: cc failed with exit status 1
+result of compiling fts-DFTS_COMPARE_CONST: no
+
+testing fts ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-fts test-fts.c  
+partial result of fts: cc succeeded
+result of running fts: yes
+
+tested less -T: yes
+
+testing UTF8_LOCALE ...
+selected UTF8_LOCALE=en_US.UTF-8
+
+testing wchar-DUTF8_LOCALE="en_US.UTF-8" ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-wchar test-wchar.c -DUTF8_LOCALE="en_US.UTF-8" 
+partial result of wchar-DUTF8_LOCALE="en_US.UTF-8": cc succeeded
+*result of running wchar-DUTF8_LOCALE="en_US.UTF-8": yes
+
+testing nanosleep ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-nanosleep test-nanosleep.c  
+partial result of nanosleep: cc succeeded
+result of running nanosleep: yes
+
+testing ohash ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-ohash test-ohash.c  
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-ohash.c:4:10: fatal error: 'ohash.h' file not found
+#include <ohash.h>
+         ^~~~~~~~~
+1 error generated.
+result of ohash: cc failed with exit status 1
+result of compiling ohash: no
+
+testing ohash-lutil ...
+cc -g -W -Wall -Wmissing-prototypes -Wstrict-prototypes -Wwrite-strings -Wno-unused-parameter -Wno-unused -Werror -o test-ohash test-ohash.c -lutil 
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/tools/mandoc/../../external/bsd/mdocml/bin/mandoc/../../dist/test-ohash.c:4:10: fatal error: 'ohash.h' file not found
+#include <ohash.h>
+         ^~~~~~~~~
+1 error generated.
+result of ohash-lutil: cc failed with exit status 1
+result of compiling ohash-lutil: no
+
+selected LDADD="    -lz"
+
+file config.h: written
+file Makefile.local: written

@@ -1,0 +1,15 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:54:1:psgpam_init_context	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:138:1:psgpam_aint_to_pam2a	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:139:1:psgpam_aint_to_pam2b	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:140:1:psgpam_aint_to_pam3a	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:141:1:psgpam_aint_to_pam3b	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:142:1:psgpam_aint_to_pcm1	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:143:1:psgpam_aint_to_pcm2	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:144:1:psgpam_aint_to_pcm3	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:146:1:psgpam_aint_to_pam2a_d	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:147:1:psgpam_aint_to_pam2b_d	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:148:1:psgpam_aint_to_pam3a_d	24	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:149:1:psgpam_aint_to_pam3b_d	24	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:150:1:psgpam_aint_to_pcm1_d	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:151:1:psgpam_aint_to_pcm2_d	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/psgpam_enc.c:152:1:psgpam_aint_to_pcm3_d	20	static

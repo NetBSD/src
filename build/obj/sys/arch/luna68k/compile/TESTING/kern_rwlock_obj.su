@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock_obj.c:72:1:rw_obj_ctor	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock_obj.c:58:1:rw_obj_init	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock_obj.c:87:1:rw_obj_alloc	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock_obj.c:104:1:rw_obj_tryalloc	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock_obj.c:124:1:rw_obj_hold	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock_obj.c:141:1:rw_obj_free	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_rwlock_obj.c:164:1:rw_obj_refcnt	0	static

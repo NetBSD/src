@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rtsock_70.c:50:1:compat_70_rt_newaddrmsg1	116	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rtsock_70.c:97:1:compat_70_iflist_addr	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rtsock_70.c:119:1:rtsock_70_init	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rtsock_70.c:127:1:rtsock_70_fini	20	dynamic,bounded

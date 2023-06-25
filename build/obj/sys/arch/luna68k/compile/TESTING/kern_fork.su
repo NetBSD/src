@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_fork.c:640:1:child_return	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_fork.c:244:1:fork1	120	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_fork.c:117:1:sys_fork	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_fork.c:128:1:sys_vfork	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_fork.c:140:1:sys___vfork14	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_fork.c:151:1:sys___clone	36	dynamic,bounded

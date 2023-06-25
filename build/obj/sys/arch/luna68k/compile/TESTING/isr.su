@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/isr.c:62:1:isrinit	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/isr.c:77:1:isrlink_autovec	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/isr.c:143:1:isrlink_vectored	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/isr.c:170:1:isrunlink_vectored	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/isr.c:188:1:isrdispatch_autovec	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/isr.c:232:1:isrdispatch_vectored	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/isr.c:264:1:cpu_intr_p	0	static

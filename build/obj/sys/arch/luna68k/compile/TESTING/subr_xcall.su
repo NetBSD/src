@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_xcall.c:278:1:xc_nop	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_xcall.c:420:1:xc_thread	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_xcall.c:478:1:xc__highpri_intr	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_xcall.c:194:1:xc_encode_ipl	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_xcall.c:235:1:xc_init_cpu	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_xcall.c:257:1:xc_broadcast	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_xcall.c:304:1:xc_unicast	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_xcall.c:336:1:xc_wait	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_xcall.c:290:1:xc_barrier	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_xcall.c:461:1:xc_ipi_handler	4	dynamic,bounded

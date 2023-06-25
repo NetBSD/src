@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_xxx.c:81:1:db_kill_proc	180	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_xxx.c:152:1:db_show_files_cmd	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_xxx.c:202:1:db_show_aio_jobs	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_xxx.c:212:1:db_show_mqueue_cmd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_xxx.c:223:1:db_show_module_cmd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_xxx.c:233:1:db_show_all_pools	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_xxx.c:243:1:db_show_all_vmems	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_xxx.c:253:1:db_dmesg	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_xxx.c:306:1:db_show_sched_qs	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_xxx.c:316:1:db_show_panic	12	dynamic,bounded

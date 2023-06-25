@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_sym.c:64:1:ddb_init	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_sym.c:76:1:db_eqname	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_sym.c:87:1:db_value_of_name	164	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_sym.c:183:1:db_sifting	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_sym.c:213:1:db_search_symbol	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_sym.c:257:1:db_symbol_values	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_sym.c:308:1:db_symstr	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_sym.c:383:1:db_printsym	96	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_sym.c:480:1:db_sym_numargs	0	static

@@ -1,0 +1,12 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:71:1:clalloc	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:89:1:clfree	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:102:1:getc	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:136:1:q_to_b	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:169:1:ndqb	28	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:211:1:ndflush	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:245:1:putc	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:330:1:b_to_q	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:392:1:nextc	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:431:1:firstc	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:456:1:unputc	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_subr.c:492:1:catq	24	dynamic,bounded

@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_examine.c:57:1:db_examine_cmd	120	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_examine.c:240:1:db_print_cmd	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_examine.c:292:1:db_print_loc_and_inst	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_examine.c:306:1:db_search_cmd	56	dynamic,bounded

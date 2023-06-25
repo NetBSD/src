@@ -1,0 +1,14 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:270:1:filt_logread	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:189:1:logclose	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:159:1:logopen	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:455:1:sysctl_msgbuf	176	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:333:1:logsoftintr	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:261:1:filt_logrdetach	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:244:1:logpoll	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:343:1:logioctl	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:203:1:logread	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:300:1:logkqfilter	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:103:1:initmsgbuf	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:134:1:loginit	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:319:1:logwakeup	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_log.c:416:1:logputchar	8	dynamic,bounded

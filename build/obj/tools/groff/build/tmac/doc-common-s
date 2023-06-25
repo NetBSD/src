@@ -1,0 +1,819 @@
+.\" Copyright (c) 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. [Deleted.  See
+.\"     ftp://ftp.cs.berkeley.edu/pub/4bsd/README.Impt.License.Change]
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)doc-common	8.1 (Berkeley) 06/08/93
+.\"
+.nr %A 1
+.nr %B 1
+.nr %D 1
+.nr %I 1
+.nr %J 1
+.nr %N 1
+.nr %O 1
+.nr %P 1
+.nr %Q 1
+.nr %R 1
+.nr %T 1
+.nr %U 1
+.nr %V 1
+.nr Ac 3
+.nr Ad 12n
+.nr An 12n
+.nr Ao 12n
+.nr Ap 2
+.nr Aq 12n
+.nr Ar 12n
+.nr At 1
+.nr Bc 3
+.nr Bf 8n
+.nr Bk 8n
+.nr Bl 1
+.nr Bo 12n
+.nr Bq 12n
+.nr Brc 3
+.nr Bro 12n
+.nr Brq 12n
+.nr Bsx 1
+.nr Bt 8n
+.nr Bx 1
+.nr Cd 12n
+.nr Cm 10n
+.nr D1 8n
+.nr Dc 3
+.nr Dl 8n
+.nr Dt 8n
+.nr Do 12n
+.nr Dq 12n
+.nr Ds 6n
+.nr Dv 12n
+.nr Ec 3
+.nr Ef 8n
+.nr Ek 8n
+.nr El 1
+.nr Em 10n
+.nr En 12n
+.nr Eo 12n
+.nr Eq 12n
+.nr Er 17n
+.nr Es 12n
+.nr Ev 15n
+.nr Ex 1
+.nr Fa 12n
+.nr Fc 3
+.nr Fd 12n
+.nr Fl 10n
+.nr Fn 16n
+.nr Fo 16n
+.nr Fr 12n
+.nr Ft 8n
+.nr Fx 1
+.nr Ic 10n
+.nr In 12n
+.nr It 8n
+.nr Lb 11n
+.nr Li 16n
+.nr Lk 6n
+.nr Lp 8n
+.nr Me 6n
+.nr Ms 6n
+.nr Mt 6n
+.nr Nd 8n
+.nr Nm 10n
+.nr No 12n
+.nr Ns 2
+.nr Nx 1
+.nr Oc 3
+.nr Oo 10n
+.nr Op 14n
+.nr Os 6n
+.nr Ox 1
+.nr Pa 32n
+.nr Pc 3
+.nr Pf 12n
+.nr Po 12n
+.nr Pp 8n
+.nr Pq 12n
+.nr Qc 3
+.nr Ql 16n
+.nr Qo 12n
+.nr Qq 12n
+.nr Rv 1
+.nr Sc 3
+.nr Sh 8n
+.nr Sm 8n
+.nr So 12n
+.nr Sq 12n
+.nr Ss 8n
+.nr St 8n
+.nr Sx 16n
+.nr Sy 6n
+.nr Ta 2
+.nr Tn 10n
+.nr Ud 8n
+.nr Ux 1
+.nr Va 12n
+.nr Vt 8n
+.nr Xc 3
+.nr Xo 1
+.nr Xr 10n
+.ds after-Ao
+.ds after-Bo
+.ds after-Bro
+.ds after-Do
+.ds after-Eo
+.ds after-Fo
+.ds after-Ns
+.ds after-Oo
+.ds after-Po
+.ds after-Qo
+.ds after-So
+.ds after-Xo
+.nr display-indent 6n
+.ds soft-space " 
+.ds hard-space \~
+.ds tab \t
+.eo
+.nr punct. 3
+.nr punct, 3
+.nr punct: 3
+.nr punct; 3
+.nr punct( 4
+.nr punct) 3
+.nr punct[ 4
+.nr punct] 3
+.nr punct? 3
+.nr punct! 3
+.ds document-title UNTITLED
+.ds volume LOCAL
+.ds section Null
+.ds volume-operating-system BSD
+.nr volume-operating-system-ateol 0
+.ds volume-ds-1 General Commands Manual
+.ds volume-ds-2 System Calls Manual
+.ds volume-ds-3 Library Functions Manual
+.ds volume-ds-4 Kernel Interfaces Manual
+.ds volume-ds-5 File Formats Manual
+.ds volume-ds-6 Games Manual
+.ds volume-ds-7 Miscellaneous Information Manual
+.ds volume-ds-8 System Manager's Manual
+.ds volume-ds-9 Kernel Developer's Manual
+.ds volume-ds-USD   User's Supplementary Documents
+.ds volume-ds-PS1   Programmer's Supplementary Documents
+.ds volume-ds-AMD   Ancestral Manual Documents
+.ds volume-ds-SMM   System Manager's Manual
+.ds volume-ds-URM   User's Reference Manual
+.ds volume-ds-PRM   Programmer's Manual
+.ds volume-ds-KM    Kernel Manual
+.ds volume-ds-IND   Manual Master Index
+.ds volume-ds-LOCAL Local Manual
+.ds volume-ds-CON   Contributed Software Manual
+.als volume-ds-MMI volume-ds-IND
+.als volume-ds-LOC volume-ds-LOCAL
+.ds volume-as-alpha        alpha
+.als volume-as-Alpha volume-as-alpha
+.ds volume-as-acorn32      acorn32
+.ds volume-as-algor        algor
+.ds volume-as-amd64        amd64
+.ds volume-as-amiga        amiga
+.ds volume-as-arc          arc
+.ds volume-as-arm26        arm26
+.ds volume-as-arm32        arm32
+.ds volume-as-atari        atari
+.ds volume-as-bebox        bebox
+.ds volume-as-cats         cats
+.ds volume-as-cesfic       cesfic
+.ds volume-as-cobalt       cobalt
+.ds volume-as-dreamcast    dreamcast
+.ds volume-as-evbarm       evbarm
+.ds volume-as-evbmips      evbmips
+.ds volume-as-evbppc       evbppc
+.ds volume-as-evbsh3       evbsh3
+.ds volume-as-hp300        hp300
+.ds volume-as-hpcarm       hpcarm
+.ds volume-as-hpcmips      hpcmips
+.ds volume-as-hpcsh        hpcsh
+.ds volume-as-hppa         hppa
+.ds volume-as-i386         i386
+.ds volume-as-luna68k      luna68k
+.ds volume-as-m68k         m68k
+.ds volume-as-mac68k       mac68k
+.ds volume-as-macppc       macppc
+.ds volume-as-mips         mips
+.ds volume-as-mipsco       mipsco
+.ds volume-as-mmeye        mmeye
+.ds volume-as-mvme68k      mvme68k
+.ds volume-as-mvmeppc      mvmeppc
+.ds volume-as-netwinder    netwinder
+.ds volume-as-news68k      news68k
+.ds volume-as-newsmips     newsmips
+.ds volume-as-next68k      next68k
+.ds volume-as-ofppc        ofppc
+.ds volume-as-pc532        pc532
+.ds volume-as-playstation2 playstation2
+.ds volume-as-pmax         pmax
+.ds volume-as-pmppc        pmppc
+.ds volume-as-powerpc      powerpc
+.ds volume-as-prep         prep
+.ds volume-as-sandpoint    sandpoint
+.ds volume-as-sbmips       sbmips
+.ds volume-as-sgimips      sgimips
+.ds volume-as-sh3          sh3
+.ds volume-as-shark        shark
+.ds volume-as-sparc        sparc
+.ds volume-as-sparc64      sparc64
+.ds volume-as-sun2         sun2
+.ds volume-as-sun3         sun3
+.ds volume-as-tahoe        tahoe
+.ds volume-as-vax          vax
+.ds volume-as-x68k         x68k
+.ds volume-as-x86_64       x86_64
+.de Dt
+.ds document-title UNTITLED
+.ds volume LOCAL
+.ds section Null
+.if !"\$1"" \
+.ds document-title "\$1
+.if !"\$2"" \{\
+.ds section \$2
+.ie \B\$2 \{\
+.if ((\$2 >= 1) & (\$2 <= 9)) \{\
+.ie \n[volume-operating-system-ateol] \{\
+.ds volume "\*[volume-ds-\$2] \*[volume-operating-system]
+.if \A\$3 \{\
+.if d volume-as-\$3 \
+.as volume "/\*[volume-as-\$3]
+.\}\}
+.el \{\
+.ds volume "\*[volume-operating-system]
+.if \A\$3 \{\
+.if d volume-as-\$3 \
+.as volume "/\*[volume-as-\$3]
+.\}
+.as volume " \*[volume-ds-\$2]
+.\}\}\}
+.el \{\
+.ie "\$2"unass" \
+.ds volume DRAFT
+.el \{ .ie "\$2"draft" \
+.ds volume DRAFT
+.el .if "\$2"paper" \
+.ds volume UNTITLED
+.\}\}
+.if \A\$3 \{\
+.if d volume-ds-\$3 \
+.ds volume "\*[volume-ds-\$3]
+.\}\}\}
+.if !"\$3"" \
+.if "\*[volume]"LOCAL" \
+.ds volume \$3
+..
+.ds default-operating-system BSD
+.ds operating-system
+.ds operating-system-ATT-7   7th\~Edition
+.als operating-system-ATT-7th operating-system-ATT-7
+.ds operating-system-ATT-3   System\~III
+.als operating-system-ATT-III operating-system-ATT-3
+.ds operating-system-ATT-V   System\~V
+.ds operating-system-ATT-V.2 System\~V Release\~2
+.ds operating-system-ATT-V.3 System\~V Release\~3
+.ds operating-system-ATT-V.4 System\~V Release\~4
+.ds operating-system-BSD-3    3rd\~Berkeley Distribution
+.ds operating-system-BSD-4    4th\~Berkeley Distribution
+.ds operating-system-BSD-4.1  4.1\~Berkeley Distribution
+.ds operating-system-BSD-4.2  4.2\~Berkeley Distribution
+.ds operating-system-BSD-4.3  4.3\~Berkeley Distribution
+.ds operating-system-BSD-4.3T 4.3-Tahoe Berkeley Distribution
+.ds operating-system-BSD-4.3R 4.3-Reno Berkeley Distribution
+.als operating-system-BSD-4.3t operating-system-BSD-4.3T
+.als operating-system-BSD-4.3r operating-system-BSD-4.3R
+.ds operating-system-BSD-4.4  4.4BSD
+.ds operating-system-NetBSD-0.8   0.8
+.ds operating-system-NetBSD-0.8a  0.8A
+.ds operating-system-NetBSD-0.9   0.9
+.ds operating-system-NetBSD-0.9a  0.9A
+.ds operating-system-NetBSD-1.0   1.0
+.ds operating-system-NetBSD-1.0a  1.0A
+.ds operating-system-NetBSD-1.1   1.1
+.ds operating-system-NetBSD-1.2   1.2
+.ds operating-system-NetBSD-1.2a  1.2A
+.ds operating-system-NetBSD-1.2b  1.2B
+.ds operating-system-NetBSD-1.2c  1.2C
+.ds operating-system-NetBSD-1.2d  1.2D
+.ds operating-system-NetBSD-1.2e  1.2E
+.ds operating-system-NetBSD-1.3   1.3
+.ds operating-system-NetBSD-1.3a  1.3A
+.ds operating-system-NetBSD-1.4   1.4
+.ds operating-system-NetBSD-1.4.1 1.4.1
+.ds operating-system-NetBSD-1.4.2 1.4.2
+.ds operating-system-NetBSD-1.4.3 1.4.3
+.ds operating-system-NetBSD-1.5   1.5
+.ds operating-system-NetBSD-1.5.1 1.5.1
+.ds operating-system-NetBSD-1.5.2 1.5.2
+.ds operating-system-NetBSD-1.5.3 1.5.3
+.ds operating-system-NetBSD-1.6   1.6
+.ds operating-system-NetBSD-1.6.1 1.6.1
+.ds operating-system-NetBSD-1.6.2 1.6.2
+.ds operating-system-NetBSD-2.0   2.0
+.ds operating-system-NetBSD-2.0.1 2.0.1
+.ds operating-system-NetBSD-2.0.2 2.0.2
+.ds operating-system-NetBSD-2.1   2.1
+.ds operating-system-FreeBSD-1.0     1.0
+.ds operating-system-FreeBSD-1.1     1.1
+.ds operating-system-FreeBSD-1.1.5   1.1.5
+.ds operating-system-FreeBSD-1.1.5.1 1.1.5.1
+.ds operating-system-FreeBSD-2.0     2.0
+.ds operating-system-FreeBSD-2.0.5   2.0.5
+.ds operating-system-FreeBSD-2.1     2.1
+.ds operating-system-FreeBSD-2.1.5   2.1.5
+.ds operating-system-FreeBSD-2.1.6   2.1.6
+.ds operating-system-FreeBSD-2.1.7   2.1.7
+.ds operating-system-FreeBSD-2.2     2.2
+.ds operating-system-FreeBSD-2.2.1   2.2.1
+.ds operating-system-FreeBSD-2.2.2   2.2.2
+.ds operating-system-FreeBSD-2.2.5   2.2.5
+.ds operating-system-FreeBSD-2.2.6   2.2.6
+.ds operating-system-FreeBSD-2.2.7   2.2.7
+.ds operating-system-FreeBSD-2.2.8   2.2.8
+.ds operating-system-FreeBSD-3.0     3.0
+.ds operating-system-FreeBSD-3.1     3.1
+.ds operating-system-FreeBSD-3.2     3.2
+.ds operating-system-FreeBSD-3.3     3.3
+.ds operating-system-FreeBSD-3.4     3.4
+.ds operating-system-FreeBSD-3.5     3.5
+.ds operating-system-FreeBSD-4.0     4.0
+.ds operating-system-FreeBSD-4.1     4.1
+.ds operating-system-FreeBSD-4.1.1   4.1.1
+.ds operating-system-FreeBSD-4.2     4.2
+.ds operating-system-FreeBSD-4.3     4.3
+.ds operating-system-FreeBSD-4.4     4.4
+.ds operating-system-FreeBSD-4.5     4.5
+.ds operating-system-FreeBSD-4.6     4.6
+.ds operating-system-FreeBSD-4.6.2   4.6.2
+.ds operating-system-FreeBSD-4.7     4.7
+.ds operating-system-FreeBSD-4.8     4.8
+.ds operating-system-FreeBSD-4.9     4.9
+.ds operating-system-FreeBSD-4.10    4.10
+.ds operating-system-FreeBSD-5.0     5.0
+.ds operating-system-FreeBSD-5.1     5.1
+.ds operating-system-FreeBSD-5.2     5.2
+.ds operating-system-FreeBSD-5.2.1   5.2.1
+.ds operating-system-FreeBSD-5.3     5.3
+.de Os
+.ie "\$1"" \
+.ds operating-system "\*[default-operating-system]
+.el \{ .ie "\$1"ATT" \{\
+.ds operating-system AT&T
+.if \A\$2 \{\
+.ie d operating-system-ATT-\$2 \
+.as operating-system " \*[operating-system-ATT-\$2]
+.el \
+.as operating-system " UNIX
+.\}\}
+.el \{ .ie "\$1"BSD" \{\
+.if \A\$2 \{\
+.ie d operating-system-BSD-\$2 \
+.ds operating-system "\*[operating-system-BSD-\$2]
+.el \
+.tm mdoc warning: .Os: Unknown BSD version `\$2' (#\n[.c])
+.\}\}
+.el \{ .ie "\$1"FreeBSD" \{\
+.ds operating-system FreeBSD
+.if \A\$2 \{\
+.ie d operating-system-FreeBSD-\$2 \
+.as operating-system \~\*[operating-system-FreeBSD-\$2]
+.el \
+.tm mdoc warning: .Os: Unknown FreeBSD version `\$2' (#\n[.c])
+.\}\}
+.el \{ .ie "\$1"NetBSD" \{\
+.ds operating-system NetBSD
+.if \A\$2 \{\
+.ie d operating-system-NetBSD-\$2 \
+.as operating-system \~\*[operating-system-NetBSD-\$2]
+.el \
+.tm mdoc warning: .Os: Unknown NetBSD version `\$2' (#\n[.c])
+.\}\}
+.el \{\
+.ds operating-system \$1
+.if !"\$2"" \
+.as operating-system " \$2
+.\}\}\}\}\}
+..
+.ds date-string
+.ds date-1  January
+.ds date-2  February
+.ds date-3  March
+.ds date-4  April
+.ds date-5  May
+.ds date-6  June
+.ds date-7  July
+.ds date-8  August
+.ds date-9  September
+.ds date-10 October
+.ds date-11 November
+.ds date-12 December
+.de Dd
+.ie \n[.$] \{\
+.ie (\n[.$] == 3) \
+.ds date-string \$1\~\$2 \$3
+.el \{\
+.ds date-string "\*[date-\n[mo]]
+.as date-string \~\n[dy], \n[year]
+.\}
+.\}
+.el \
+.ds date-string Epoch
+..
+.nr hyphen-flags 12
+.de header
+.ev env-dh
+.setup-page-layout
+.if !\n[cR] \
+.sp \n[header-space]u
+.nr reg-dh \w'\*[caption-font]\*[header-string]\f[]'
+.nr reg-dh1 \w'\*[caption-font2]\*[volume]\f[]'
+.if (\n[reg-dh] + \n[reg-dh1] + \n[reg-dh] >= \n[.lt]) \{\
+.while (\n[reg-dh] + \n[reg-dh1] + \n[reg-dh] >= \n[.lt]) \{\
+.substring header-string 0 -2
+.nr reg-dh \w'\*[caption-font]\*[header-string]\|.\|.\|.\f[]'
+.\}
+.as header-string "\|.\|.\|.
+.\}
+.tl \*[caption-font]\*[header-string]\f[]\*[caption-font2]\*[volume]\f[]\*[caption-font]\*[header-string]\f[]
+.ie !\n[cR] \
+.sp \n[header-space]u
+.el \
+.sp 1v
+.ev
+.ns
+..
+.de footer
+.ie \n[cR] \
+.br
+.el \{\
+.ev caption-enviroment
+.setup-page-layout
+.sp \n[footer-space]u
+.ie \n[D] \{\
+.ie o \
+.tl %\*[caption-font2]\*[date-string]\f[]\*[caption-font]\*[operating-system]\f[]
+.el \
+.tl \*[caption-font]\*[operating-system]\f[]\*[caption-font2]\*[date-string]\f[]%
+.\}
+.el \
+.tl \*[caption-font]\*[operating-system]\f[]\*[caption-font2]\*[date-string]\f[]%
+.bp
+.ev
+.\}
+..
+.de check-depth
+.if \n[list-depth] \{\
+.tm mdoc warning: A .Bl directive has no matching .El (#\n[.c])
+.nr list-depth 0
+.\}
+.if \n[display-depth] \{\
+.tm mdoc warning: A .Bd directive has no matching .Ed (#\n[.c])
+.nr display-depth 0
+.\}
+.if \n[fontmode-depth] \{\
+.tm mdoc warning: A .Bf directive has no matching .Ef (#\n[.c])
+.nr fontmode-depth 0
+.\}
+..
+.de end-macro
+.if \n[cR] \
+.pl +3v
+.fl
+.check-depth
+.if \n[cR] \{\
+.sp
+.tl \*[caption-font]\*[operating-system]\f[]\*[caption-font2]\*[date-string]\f[]\*[caption-font]\*[operating-system]\f[]
+.pl \n[nl]u
+.\}
+..
+.de paragraph
+.sp \n[paragraph-space]u
+.if !\n[cR] \
+.ne 2
+.ns
+..
+.als Pp paragraph
+.als Lp paragraph
+.de LP
+.tm Not a \-mdoc command: .LP (#\n[.c])
+..
+.de PP
+.tm Not a \-mdoc command: .PP (#\n[.c])
+..
+.de pp
+.tm Not a \-mdoc command: .pp (#\n[.c])
+..
+.de SH
+.tm Not a \-mdoc command: .SH (#\n[.c])
+..
+.de Nd
+.nop \[em] \$*
+..
+.nr in-synopsis-section 0
+.nr in-library-section 0
+.nr in-see-also-section 0
+.nr in-files-section 0
+.nr in-authors-section 0
+.de first-parameter
+.ds str-dfp "\$1
+..
+.ds section-name        NAME
+.ds section-synopsis    SYNOPSIS
+.ds section-library     LIBRARY
+.ds section-description DESCRIPTION
+.ds section-see-also    SEE
+.ds section-files       FILES
+.ds section-authors     AUTHORS
+.de Sh
+.ie \n[arg-limit] \{\
+.ie "\*[macro-name]"Sh" \{\
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Sh-font]\c
+.print-recursive
+.\}
+.el \{\
+.tm Usage: .Sh section_name ... (#\n[.c])
+.reset-args
+.\}\}
+.el \{\
+.tm Usage: .Sh not callable by other macros (#\n[.c])
+.reset-args
+.\}\}
+.el \{\
+.if !\n[.$] \{\
+.tm Usage: .Sh section_name ... (#\n[.c])
+.return
+.\}
+.ds macro-name Sh
+.parse-args \$@
+.if t \
+.ad
+.first-parameter \$*
+.ie "\*[str-dfp]"\*[section-name]" \{\
+.setup-header
+.in 0
+.\}
+.el \{\
+.nr in-synopsis-section 0
+.nr in-library-section 0
+.nr in-see-also-section 0
+.nr in-files-section 0
+.nr in-authors-section 0
+.ie        "\*[str-dfp]"\*[section-synopsis]" \{\
+.if t \
+.na
+.nr in-synopsis-section 1
+.nr indent-synopsis 0
+.nr indent-synopsis-active 0
+.\}
+.el \{ .ie "\*[str-dfp]"\*[section-library]" \{\
+.nr in-library-section 1
+.\}
+.el \{ .ie "\*[str-dfp]"\*[section-description]" \{\
+.nr is-func 0
+.nr func-count 0
+.nr func-args-processed 0
+.nr num-func-args 0
+.\}
+.el \{ .ie "\*[str-dfp]"\*[section-see-also]" \{\
+.if t \
+.na
+.nr in-see-also-section 1
+.\}
+.el \{ .ie "\*[str-dfp]"\*[section-files]" \
+.nr in-files-section 1
+.el .if    "\*[str-dfp]"\*[section-authors]" \
+.nr in-authors-section 1
+.\}\}\}\}
+.in 0
+.nr have-author 0
+.\}
+.setup-page-layout
+.sp
+.ns
+.ta T .5i
+.if !\n[cR] \
+.ne 3
+.fi
+.if t \{\
+.nr reg-Sh \n[.ss]
+.nr reg-Sh1 \n[.sss]
+.ss (\n[.ss] * 5 / 3) (\n[.sss] * 5 / 3)
+.\}
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Sh-font]\c
+.print-recursive
+.if t \
+.ss \n[reg-Sh] \n[reg-Sh1]
+.in +\n[subheader-indent]u
+.ns
+.check-depth
+.\}
+..
+.de Ss
+.ie \n[arg-limit] \{\
+.ie "\*[macro-name]"Ss" \{\
+.nr arg-ptr +1
+.ie (\n[arg-limit] >= \n[arg-ptr]) \{\
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Sh-font]\c
+.print-recursive
+.\}
+.el \{\
+.tm Usage: .Ss subsection_name ... (#\n[.c])
+.reset-args
+.\}\}
+.el \{\
+.tm Usage: .Ss not callable by other macros (#\n[.c])
+.reset-args
+.\}\}
+.el \{\
+.if !\n[.$] \{\
+.tm Usage: .Ss subsection_name ... (#\n[.c])
+.return
+.\}
+.ds macro-name Ss
+.parse-args \$@
+.sp
+.if !\n[cR] \
+.ne 3
+.ti -.25i
+.nr reg-Ss \n[.ss]
+.nr reg-Ss1 \n[.sss]
+.ss (\n[.ss] * 5 / 4) (\n[.sss] * 5 / 4)
+.nr arg-ptr +1
+.nr curr-font \n[.f]
+.nr curr-size \n[.ps]
+.nop \*[Sh-font]\c
+.print-recursive
+.ss \n[reg-Ss] \n[reg-Ss1]
+.ta T .5i
+.if !\n[cR] \
+.ne 2
+.br
+.ns
+.check-depth
+.\}
+..
+.de Rd
+.tm MDOC GLOBAL REGISTER DUMP
+.tm macro-name == `\*[macro-name]'
+.tm arg-limit == \n[arg-limit]
+.tm num-args == \n[num-args]
+.tm arg-ptr == \n[arg-ptr]
+.nr reg-Rd 1
+.while (\n[reg-Rd] <= \n[arg-limit]) \{\
+.tm arg\n[reg-Rd] == `\*[arg\n[reg-Rd]]'
+.tm type\n[reg-Rd] == \n[type\n[reg-Rd]]
+.tm space\n[reg-Rd] == `\*[space\n[reg-Rd]]'
+.nr reg-Rd +1
+.\}
+.tm curr-font == \n[curr-font]
+.tm curr-size == \n[curr-size]
+.tm indent-synopsis == \n[indent-synopsis]
+.tm indent-synopsis-active == \n[indent-synopsis-active]
+.tm have-decl == \n[have-decl]
+.tm have-var == \n[have-var]
+.tm command-name == `\*[command-name]'
+.tm quote-left == `\*[quote-left]'
+.tm quote-right == `\*[quote-right]'
+.tm nesting-level == \n[nesting-level]
+.tm in-list == \n[in-list]
+.tm space == `\*[space]'
+.tm saved-space == `\*[saved-space]'
+.tm space-mode == \n[space-mode]
+.tm have-space == \n[have-space]
+.tm have-slot == \n[have-slot]
+.tm keep-type == \n[keep-type]
+.tm display-depth == \n[display-depth]
+.tm is-compact == \n[is-compact]
+.nr reg-Rd 0
+.while (\n[reg-Rd] <= \n[display-depth]) \{\
+.tm display-type-stack\n[reg-Rd] == `\*[display-type-stack\n[reg-Rd]]'
+.tm display-indent-stack\n[reg-Rd] == \n[display-indent-stack\n[reg-Rd]]
+.tm display-ad-stack\n[reg-Rd] == \n[display-ad-stack\n[reg-Rd]]
+.tm display-fi-stack\n[reg-Rd] == \n[display-fi-stack\n[reg-Rd]]
+.tm display-ft-stack\n[reg-Rd] == \n[display-ft-stack\n[reg-Rd]]
+.tm display-ps-stack\n[reg-Rd] == \n[display-ps-stack\n[reg-Rd]]
+.nr reg-Rd +1
+.\}
+.tm fontmode-depth == \n[fontmode-depth]
+.nr reg-Rd 1
+.while (\n[reg-Rd] <= \n[fontmode-depth]) \{\
+.tm fontmode-font-stack\n[reg-Rd] == `\n[fontmode-font-stack\n[reg-Rd]]'
+.tm fontmode-size-stack\n[reg-Rd] == `\n[fontmode-size-stack\n[reg-Rd]]'
+.nr reg-Rd +1
+.\}
+.tm list-depth == \n[list-depth]
+.nr reg-Rd 1
+.while (\n[reg-Rd] <= \n[list-depth]) \{\
+.tm list-type-stack\n[reg-Rd] == `\*[list-type-stack\n[reg-Rd]]'
+.tm list-have-indent-stack\n[reg-Rd] == \n[list-have-indent-stack\n[reg-Rd]]
+.tm list-indent-stack\n[reg-Rd] == \n[list-indent-stack\n[reg-Rd]]
+.tm compact-list-stack\n[reg-Rd] == \n[compact-list-stack\n[reg-Rd]]
+.tm tag-prefix-stack\n[reg-Rd] == `\*[tag-prefix-stack\n[reg-Rd]]'
+.tm tag-width-stack\n[reg-Rd] == `\*[tag-width-stack\n[reg-Rd]]'
+.tm list-offset-stack\n[reg-Rd] == \n[list-offset-stack\n[reg-Rd]]
+.tm enum-list-count-stack\n[reg-Rd] == \n[enum-list-count-stack\n[reg-Rd]]
+.nr reg-Rd +1
+.\}
+.tm saved-Pa-font == `\*[saved-Pa-font]'
+.tm curr-type == \n[curr-type]
+.tm curr-arg == `\*[curr-arg]'
+.tm diag-list-input-line-count == \n[diag-list-input-line-count]
+.tm num-columns == \n[num-columns]
+.tm column-indent-width == \n[column-indent-width]
+.tm is-func == \n[is-func]
+.tm have-old-func == \n[have-old-func]
+.tm func-arg-count == \n[func-arg-count]
+.tm func-arg == `\*[func-arg]'
+.tm num-func-args == \n[num-func-args]
+.tm func-args-processed == \n[func-args-processed]
+.tm have-func == \n[have-func]
+.tm is-reference == \n[is-reference]
+.tm reference-count == \n[reference-count]
+.tm author-count == \n[author-count]
+.nr reg-Rd 0
+.while (\n[reg-Rd] <= \n[author-count]) \{\
+.tm author-name\n[reg-Rd] == `\*[author-name\n[reg-Rd]]'
+.nr reg-Rd +1
+.\}
+.tm book-count == \n[book-count]
+.tm book-name == `\*[book-name]'
+.tm date-count == \n[date-count]
+.tm date == `\*[date]'
+.tm publisher-count == \n[publisher-count]
+.tm publisher-name == `\*[publisher-name]'
+.tm journal-count == \n[journal-count]
+.tm journal-name == `\*[journal-name]'
+.tm issue-count == \n[issue-count]
+.tm issue-name == `\*[issue-name]'
+.tm optional-count == \n[optional-count]
+.tm optional-string == `\*[optional-string]'
+.tm page-number-count == \n[page-number-count]
+.tm page-number-string == `\*[page-number-string]'
+.tm corporate-count == \n[corporate-count]
+.tm corporate-name == `\*[corporate-name]'
+.tm report-count == \n[report-count]
+.tm report-name == `\*[report-name]'
+.tm reference-title-count == \n[reference-title-count]
+.tm reference-title-name == `\*[reference-title-name]'
+.tm reference-title-name-for-book == `\*[reference-title-name-for-book]'
+.tm url-count == \n[url-count]
+.tm url-name == `\*[url-name]'
+.tm volume-count == \n[volume-count]
+.tm volume-name == `\*[volume-name]'
+.tm have-author == \n[have-author]
+.tm document-title == `\*[document-title]'
+.tm volume == `\*[volume]'
+.tm section == `\*[section]'
+.tm operating-system == `\*[operating-system]'
+.tm date-string == `\*[date-string]'
+.tm header-space == \n[header-space]
+.tm footer-space == \n[footer-space]
+.tm display-vertical == \n[display-vertical]
+.tm header-string == `\*[header-string]'
+.tm in-synopsis-section == \n[in-synopsis-section]
+.tm in-library-section == \n[in-library-section]
+.tm in-see-also-section == \n[in-see-also-section]
+.tm in-files-section == \n[in-files-section]
+.tm in-authors-section == \n[in-authors-section]
+.tm END OF GLOBAL REGISTER DUMP
+..
+.ec

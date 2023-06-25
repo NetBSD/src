@@ -1,0 +1,5 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/core_elf32.c:550:1:save_note_bytes	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/core_elf32.c:304:1:coredump_getseghdrs_elf32	1088	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/core_elf32.c:495:1:coredump_note_elf32	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/core_elf32.c:112:1:real_coredump_elf32	356	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/core_elf32.c:583:1:coredump_savenote_elf32	64	dynamic,bounded

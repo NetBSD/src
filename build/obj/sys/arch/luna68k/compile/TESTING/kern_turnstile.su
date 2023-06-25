@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_turnstile.c:97:1:turnstile_init	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_turnstile.c:118:1:turnstile_ctor	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_turnstile.c:167:1:turnstile_lookup	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_turnstile.c:194:1:turnstile_exit	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_turnstile.c:372:1:turnstile_block	104	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_turnstile.c:451:1:turnstile_wakeup	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_turnstile.c:505:1:turnstile_unsleep	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_turnstile.c:518:1:turnstile_changepri	0	static

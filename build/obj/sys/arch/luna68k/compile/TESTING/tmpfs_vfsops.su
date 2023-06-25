@@ -1,0 +1,13 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:239:1:tmpfs_start	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:322:1:tmpfs_vget	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:430:1:tmpfs_sync	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:437:1:tmpfs_snapshot	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:68:1:tmpfs_init	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:78:1:tmpfs_done	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:246:1:tmpfs_unmount	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:329:1:tmpfs_fhtovp	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:400:1:tmpfs_statvfs	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:485:1:tmpfs_modcmd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:86:1:tmpfs_mount	276	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:303:1:tmpfs_root	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_vfsops.c:378:1:tmpfs_vptofh	36	dynamic,bounded

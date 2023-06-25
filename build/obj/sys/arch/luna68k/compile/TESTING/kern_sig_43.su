@@ -1,0 +1,13 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:146:1:compat_43_sys_sigblock	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:169:1:compat_43_sys_sigsetmask	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:261:1:compat_43_sys_killpg	180	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:193:1:compat_43_sys_sigstack	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:227:1:compat_43_sys_sigvec	100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:86:1:compat_43_sigmask_to_sigset	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:97:1:compat_43_sigset_to_sigmask	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:104:1:compat_43_sigvec_to_sigaction	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:114:1:compat_43_sigaction_to_sigvec	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:124:1:compat_43_sigstack_to_sigaltstack	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:135:1:compat_43_sigaltstack_to_sigstack	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:283:1:kern_sig_43_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sig_43.c:290:1:kern_sig_43_fini	8	dynamic,bounded

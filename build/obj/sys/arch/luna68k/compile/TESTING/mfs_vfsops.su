@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vfsops.c:117:1:mfs_sysctl_setup	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vfsops.c:172:1:mfs_reinit	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vfsops.c:243:1:mfs_mount	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vfsops.c:135:1:mfs_modcmd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vfsops.c:162:1:mfs_init	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vfsops.c:179:1:mfs_done	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vfsops.c:365:1:mfs_start	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vfsops.c:436:1:mfs_statvfs	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/mfs/mfs_vfsops.c:193:1:mfs_mountroot	56	dynamic,bounded

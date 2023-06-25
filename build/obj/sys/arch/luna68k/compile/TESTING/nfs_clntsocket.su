@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_clntsocket.c:975:1:nfs_sndlock	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_clntsocket.c:503:1:nfs_request	272	dynamic,bounded

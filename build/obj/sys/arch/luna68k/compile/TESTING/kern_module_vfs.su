@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_module_vfs.c:63:1:module_load_vfs	272	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_module_vfs.c:56:1:module_load_vfs_init	8	dynamic,bounded

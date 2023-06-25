@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/ether_sw_offload.c:78:1:ether_sw_offload_tx	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/ether_sw_offload.c:162:1:ether_sw_offload_rx	56	dynamic,bounded

@@ -1,0 +1,9 @@
+/* option `CISS_NO_INTERRUPT_HACK' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_CISS_NO_INTERRUPT_HACK
+ .global _KERNEL_OPT_CISS_NO_INTERRUPT_HACK
+ .equiv _KERNEL_OPT_CISS_NO_INTERRUPT_HACK,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_CISS_NO_INTERRUPT_HACK\n .global _KERNEL_OPT_CISS_NO_INTERRUPT_HACK\n .equiv _KERNEL_OPT_CISS_NO_INTERRUPT_HACK,0x6e074def\n .endif");
+#endif

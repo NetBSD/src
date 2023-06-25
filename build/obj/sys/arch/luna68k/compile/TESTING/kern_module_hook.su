@@ -1,0 +1,5 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_module_hook.c:66:1:module_hook_set	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_module_hook.c:82:1:module_hook_unset	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_module_hook.c:106:1:module_hook_tryenter	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_module_hook.c:121:1:module_hook_exit	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_module_hook.c:128:1:module_hook_init	20	dynamic,bounded

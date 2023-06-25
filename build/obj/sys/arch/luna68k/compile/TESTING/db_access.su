@@ -1,0 +1,5 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_access.c:59:1:db_get_value	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_access.c:86:1:db_get_qvalue	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_access.c:106:1:db_put_value	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_access.c:129:1:db_read_ptr	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_access.c:144:1:db_read_int	20	dynamic,bounded

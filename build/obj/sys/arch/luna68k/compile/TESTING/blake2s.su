@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/blake2/blake2s.c:91:1:blake2s_compress	212	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/blake2/blake2s.c:194:1:blake2s_update	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/blake2/blake2s.c:153:1:blake2s_init	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/blake2/blake2s.c:232:1:blake2s_final	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/blake2/blake2s.c:265:1:blake2s	160	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/blake2/blake2s.c:294:1:blake2s_selftest	1488	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/blake2/blake2s.c:334:1:blake2s_modcmd	8	dynamic,bounded

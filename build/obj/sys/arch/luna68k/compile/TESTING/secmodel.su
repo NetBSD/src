@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/secmodel.c:52:1:secmodel_nsecmodels	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/secmodel.c:59:1:secmodel_init	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/secmodel.c:71:1:secmodel_register	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/secmodel.c:102:1:secmodel_deregister	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/secmodel.c:230:1:secmodel_setinfo	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/secmodel.c:237:1:secmodel_eval	28	dynamic,bounded

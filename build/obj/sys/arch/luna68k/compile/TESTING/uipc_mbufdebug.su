@@ -1,0 +1,14 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:132:1:m_peek_len	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:101:1:m_peek_data.part.0	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:952:1:m_examine_hex	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:444:1:m_examine_arp	100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:603:1:m_examine_icmp	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:716:1:m_examine_icmp6	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:792:1:m_examine_tcp	100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:925:1:m_examine_udp	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:544:1:m_examine_ip	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:649:1:m_examine_ip6	108	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:353:1:m_examine_ppp	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:271:1:m_examine_pppoe	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:222:1:m_examine_ether	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/uipc_mbufdebug.c:988:1:m_examine	20	dynamic,bounded

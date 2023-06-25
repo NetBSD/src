@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_kthread.c:53:1:kthread_sysinit	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_kthread.c:65:1:kthread_create	112	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_kthread.c:160:1:kthread_exit	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_kthread.c:198:1:kthread_join	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_kthread.c:233:1:kthread_fpu_enter	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_kthread.c:269:1:kthread_fpu_exit	40	dynamic,bounded

@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_loan.c:950:1:uvm_unloanpage	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_loan.c:449:1:uvm_loanpage	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_loan.c:1033:1:ulz_put	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_loan.c:238:1:uvm_loan	164	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_loan.c:563:1:uvm_loanuobjpages	96	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_loan.c:1016:1:uvm_unloan	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_loan.c:1077:1:uvm_loan_init	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_loan.c:1096:1:uvm_loanbreak	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_loan.c:1161:1:uvm_loanbreak_anon	56	dynamic,bounded

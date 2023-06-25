@@ -1,0 +1,15 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:204:1:wsmatch	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:535:1:ws_cngetc	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:547:1:ws_cnpollc	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:593:1:omkbd_enable	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:697:1:omms_ioctl	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:314:1:wssoftintr	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:277:1:wsintr	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:386:1:omkbd_send	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:214:1:wsattach	136	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:600:1:omkbd_set_leds	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:641:1:omkbd_ioctl	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:555:1:ws_cnbell	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:708:1:omms_disable	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:685:1:omms_enable	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lunaws.c:580:1:ws_cnattach	12	dynamic,bounded

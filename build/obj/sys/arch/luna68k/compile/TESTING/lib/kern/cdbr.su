@@ -1,0 +1,5 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/common/lib/libc/cdb/cdbr.c:159:1:cdbr_open_mem	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/common/lib/libc/cdb/cdbr.c:240:1:cdbr_entries	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/common/lib/libc/cdb/cdbr.c:247:1:cdbr_get	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/common/lib/libc/cdb/cdbr.c:276:1:cdbr_find	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/common/lib/libc/cdb/cdbr.c:308:1:cdbr_close	16	dynamic,bounded
