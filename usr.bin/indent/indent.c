@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.383 2023/06/25 19:19:42 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.384 2023/06/25 19:35:45 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.383 2023/06/25 19:19:42 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.384 2023/06/25 19:35:45 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -958,6 +958,10 @@ process_type_outside_parentheses(void)
 static void
 process_word(lexer_symbol lsym)
 {
+	if (lsym == lsym_type	/* in parentheses */
+	    && ps.paren.item[ps.paren.len - 1].cast == cast_unknown)
+		ps.paren.item[ps.paren.len - 1].cast = cast_maybe;
+
 	if (ps.in_decl) {
 		if (lsym == lsym_funcname) {
 			ps.in_decl = false;
