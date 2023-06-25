@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.234 2023/06/25 19:19:42 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.235 2023/06/25 19:29:57 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.234 2023/06/25 19:19:42 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.235 2023/06/25 19:29:57 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -51,14 +51,14 @@ static const struct keyword {
 	lexer_symbol lsym;
 } keywords[] = {
 	{"_Bool", lsym_type},
-	{"_Complex", lsym_type},
-	{"_Imaginary", lsym_type},
+	{"_Complex", lsym_modifier},
+	{"_Imaginary", lsym_modifier},
 	{"auto", lsym_modifier},
 	{"bool", lsym_type},
 	{"break", lsym_word},
 	{"case", lsym_case},
 	{"char", lsym_type},
-	{"complex", lsym_type},
+	{"complex", lsym_modifier},
 	{"const", lsym_modifier},
 	{"continue", lsym_word},
 	{"default", lsym_default},
@@ -71,7 +71,7 @@ static const struct keyword {
 	{"for", lsym_for},
 	{"goto", lsym_word},
 	{"if", lsym_if},
-	{"imaginary", lsym_type},
+	{"imaginary", lsym_modifier},
 	{"inline", lsym_modifier},
 	{"int", lsym_type},
 	{"long", lsym_type},
