@@ -1,4 +1,4 @@
-/*	$NetBSD: fuzz.h,v 1.5 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: fuzz.h,v 1.6 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,17 +31,5 @@ extern bool debug;
 
 int
 LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
-
-static isc_mem_t *mctx = NULL;
-
-static void __attribute__((constructor)) init(void) {
-	isc_mem_create(&mctx);
-	RUNTIME_CHECK(dst_lib_init(mctx, NULL) == ISC_R_SUCCESS);
-}
-
-static void __attribute__((destructor)) deinit(void) {
-	dst_lib_destroy();
-	isc_mem_destroy(&mctx);
-}
 
 ISC_LANG_ENDDECLS

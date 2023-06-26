@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.16 2023/01/25 21:43:32 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.17 2023/06/26 22:03:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -5726,6 +5726,7 @@ query_refresh_rrset(query_ctx_t *orig_qctx) {
 	qctx.client->query.dboptions &= ~(DNS_DBFIND_STALETIMEOUT |
 					  DNS_DBFIND_STALEOK |
 					  DNS_DBFIND_STALEENABLED);
+	qctx.client->nodetach = false;
 
 	/*
 	 * We'll need some resources...
@@ -5749,6 +5750,27 @@ query_refresh_rrset(query_ctx_t *orig_qctx) {
 	}
 
 	qctx_destroy(&qctx);
+}
+
+/*%
+ * Depending on the db lookup result, we can respond to the
+ * client this stale answer.
+ */
+static bool
+stale_client_answer(isc_result_t result) {
+	switch (result) {
+	case ISC_R_SUCCESS:
+	case DNS_R_EMPTYNAME:
+	case DNS_R_NXRRSET:
+	case DNS_R_NCACHENXRRSET:
+	case DNS_R_CNAME:
+	case DNS_R_DNAME:
+		return (true);
+	default:
+		return (false);
+	}
+
+	UNREACHABLE();
 }
 
 /*%
@@ -5880,7 +5902,6 @@ query_lookup(query_ctx_t *qctx) {
 	{
 		/* Found non-stale usable rdataset. */
 		answer_found = true;
-		goto gotanswer;
 	}
 
 	if (dbfind_stale || stale_refresh_window || stale_timeout) {
@@ -5906,7 +5927,7 @@ query_lookup(query_ctx_t *qctx) {
 			      NS_LOGMODULE_QUERY, ISC_LOG_INFO,
 			      "%s resolver failure, stale answer %s", namebuf,
 			      stale_found ? "used" : "unavailable");
-		if (!stale_found) {
+		if (!stale_found && !answer_found) {
 			/*
 			 * Resolver failure, no stale data, nothing more we
 			 * can do, return SERVFAIL.
@@ -5925,7 +5946,7 @@ query_lookup(query_ctx_t *qctx) {
 			      "answer %s",
 			      namebuf, stale_found ? "used" : "unavailable");
 
-		if (!stale_found) {
+		if (!stale_found && !answer_found) {
 			/*
 			 * During the stale refresh window explicitly do not try
 			 * to refresh the data, because a recent lookup failed.
@@ -5935,7 +5956,7 @@ query_lookup(query_ctx_t *qctx) {
 		}
 	} else if (stale_timeout) {
 		if ((qctx->options & DNS_GETDB_STALEFIRST) != 0) {
-			if (!stale_found) {
+			if (!stale_found && !answer_found) {
 				/*
 				 * We have nothing useful in cache to return
 				 * immediately.
@@ -5952,7 +5973,7 @@ query_lookup(query_ctx_t *qctx) {
 						&qctx->client->query.fetch);
 				}
 				return (query_lookup(qctx));
-			} else {
+			} else if (stale_client_answer(result)) {
 				/*
 				 * Immediately return the stale answer, start a
 				 * resolver fetch to refresh the data in cache.
@@ -5963,7 +5984,14 @@ query_lookup(query_ctx_t *qctx) {
 					"%s stale answer used, an attempt to "
 					"refresh the RRset will still be made",
 					namebuf);
+
 				qctx->refresh_rrset = STALE(qctx->rdataset);
+
+				/*
+				 * If we are refreshing the RRSet, we must not
+				 * detach from the client in query_send().
+				 */
+				qctx->client->nodetach = qctx->refresh_rrset;
 			}
 		} else {
 			/*
@@ -5976,7 +6004,11 @@ query_lookup(query_ctx_t *qctx) {
 				      "%s client timeout, stale answer %s",
 				      namebuf,
 				      stale_found ? "used" : "unavailable");
-			if (!stale_found) {
+			if (!stale_found && !answer_found) {
+				return (result);
+			}
+
+			if (!stale_client_answer(result)) {
 				return (result);
 			}
 
@@ -5989,7 +6021,6 @@ query_lookup(query_ctx_t *qctx) {
 		}
 	}
 
-gotanswer:
 	if (stale_timeout && (answer_found || stale_found)) {
 		/*
 		 * Mark RRsets that we are adding to the client message on a
@@ -6308,7 +6339,7 @@ ns_query_recurse(ns_client_t *client, dns_rdatatype_t qtype, dns_name_t *qname,
 	if (recparam_match(&client->query.recparam, qtype, qname, qdomain)) {
 		ns_client_log(client, NS_LOGCATEGORY_CLIENT, NS_LOGMODULE_QUERY,
 			      ISC_LOG_INFO, "recursion loop detected");
-		return (ISC_R_FAILURE);
+		return (ISC_R_ALREADYRUNNING);
 	}
 
 	recparam_update(&client->query.recparam, qtype, qname, qdomain);
@@ -7272,10 +7303,21 @@ query_usestale(query_ctx_t *qctx, isc_result_t result) {
 		return (false);
 	}
 
-	if (result == DNS_R_DUPLICATE || result == DNS_R_DROP) {
+	if (qctx->refresh_rrset) {
+		/*
+		 * This is a refreshing query, we have already prioritized
+		 * stale data, so don't enable serve-stale again.
+		 */
+		return (false);
+	}
+
+	if (result == DNS_R_DUPLICATE || result == DNS_R_DROP ||
+	    result == ISC_R_ALREADYRUNNING)
+	{
 		/*
 		 * Don't enable serve-stale if the result signals a duplicate
-		 * query or query that is being dropped.
+		 * query or a query that is being dropped or can't proceed
+		 * because of a recursion loop.
 		 */
 		return (false);
 	}
@@ -11538,12 +11580,7 @@ ns_query_done(query_ctx_t *qctx) {
 	/*
 	 * Client may have been detached after query_send(), so
 	 * we test and store the flag state here, for safety.
-	 * If we are refreshing the RRSet, we must not detach from the client
-	 * in the query_send(), so we need to override the flag.
 	 */
-	if (qctx->refresh_rrset) {
-		qctx->client->nodetach = true;
-	}
 	nodetach = qctx->client->nodetach;
 	query_send(qctx->client);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.c,v 1.12 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: rpz.c,v 1.13 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2232,7 +2232,7 @@ rpz_detach(dns_rpz_zone_t **rpzp) {
 
 		isc_timer_reset(rpz->updatetimer, isc_timertype_inactive, NULL,
 				NULL, true);
-		isc_timer_detach(&rpz->updatetimer);
+		isc_timer_destroy(&rpz->updatetimer);
 
 		isc_ht_destroy(&rpz->nodes);
 

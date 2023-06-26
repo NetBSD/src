@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.c,v 1.11 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.12 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1445,7 +1445,7 @@ dns_nsec3_delnsec3(dns_db_t *db, dns_dbversion_t *version,
 
 	result = dns_dbiterator_seek(dbit, hashname);
 	if (result == ISC_R_NOTFOUND || result == DNS_R_PARTIALMATCH) {
-		goto success;
+		goto cleanup_orphaned_ents;
 	}
 	if (result != ISC_R_SUCCESS) {
 		goto failure;
@@ -1457,7 +1457,7 @@ dns_nsec3_delnsec3(dns_db_t *db, dns_dbversion_t *version,
 				     (isc_stdtime_t)0, &rdataset, NULL);
 	dns_db_detachnode(db, &node);
 	if (result == ISC_R_NOTFOUND) {
-		goto success;
+		goto cleanup_orphaned_ents;
 	}
 	if (result != ISC_R_SUCCESS) {
 		goto failure;
@@ -1542,6 +1542,7 @@ dns_nsec3_delnsec3(dns_db_t *db, dns_dbversion_t *version,
 	/*
 	 *  Delete NSEC3 records for now non active nodes.
 	 */
+cleanup_orphaned_ents:
 	dns_name_init(&empty, NULL);
 	dns_name_clone(name, &empty);
 	do {

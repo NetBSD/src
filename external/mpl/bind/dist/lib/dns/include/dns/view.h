@@ -1,4 +1,4 @@
-/*	$NetBSD: view.h,v 1.8 2022/09/23 12:15:30 christos Exp $	*/
+/*	$NetBSD: view.h,v 1.9 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1199,7 +1199,7 @@ dns_view_ntacovers(dns_view_t *view, isc_stdtime_t now, const dns_name_t *name,
 
 void
 dns_view_untrust(dns_view_t *view, const dns_name_t *keyname,
-		 dns_rdata_dnskey_t *dnskey);
+		 const dns_rdata_dnskey_t *dnskey);
 /*%<
  * Remove keys that match 'keyname' and 'dnskey' from the views trust
  * anchors.
@@ -1209,6 +1209,19 @@ dns_view_untrust(dns_view_t *view, const dns_name_t *keyname,
  * operation, that is an error.  We fail closed, inserting a NULL
  * key so as to prevent validation until a legimitate key has been
  * provided.)
+ *
+ * Requires:
+ * \li	'view' is valid.
+ * \li	'keyname' is valid.
+ * \li	'dnskey' is valid.
+ */
+
+bool
+dns_view_istrusted(dns_view_t *view, const dns_name_t *keyname,
+		   const dns_rdata_dnskey_t *dnskey);
+/*%<
+ * Determine if the key defined by 'keyname' and 'dnskey' is
+ * trusted by 'view'.
  *
  * Requires:
  * \li	'view' is valid.

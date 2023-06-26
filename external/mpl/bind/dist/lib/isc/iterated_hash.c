@@ -1,4 +1,4 @@
-/*	$NetBSD: iterated_hash.c,v 1.6 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: iterated_hash.c,v 1.7 2023/06/26 22:03:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,11 @@
 
 #include <stdio.h>
 
+#include <openssl/opensslv.h>
+#include <openssl/sha.h>
+
 #include <isc/iterated_hash.h>
-#include <isc/md.h>
+#include <isc/thread.h>
 #include <isc/util.h>
 
 int
@@ -24,55 +27,40 @@ isc_iterated_hash(unsigned char *out, const unsigned int hashalg,
 		  const int iterations, const unsigned char *salt,
 		  const int saltlength, const unsigned char *in,
 		  const int inlength) {
-	isc_md_t *md;
-	isc_result_t result;
+	REQUIRE(out != NULL);
+
 	int n = 0;
-	unsigned int outlength = 0;
 	size_t len;
 	const unsigned char *buf;
-
-	REQUIRE(out != NULL);
+	SHA_CTX ctx;
 
 	if (hashalg != 1) {
 		return (0);
 	}
 
-	if ((md = isc_md_new()) == NULL) {
-		return (0);
-	}
-
-	len = inlength;
 	buf = in;
+	len = inlength;
+
 	do {
-		result = isc_md_init(md, ISC_MD_SHA1);
-		if (result != ISC_R_SUCCESS) {
-			goto md_fail;
+		if (SHA1_Init(&ctx) != 1) {
+			return (0);
 		}
-		result = isc_md_update(md, buf, len);
-		if (result != ISC_R_SUCCESS) {
-			goto md_fail;
+
+		if (SHA1_Update(&ctx, buf, len) != 1) {
+			return (0);
 		}
-		result = isc_md_update(md, salt, saltlength);
-		if (result != ISC_R_SUCCESS) {
-			goto md_fail;
+
+		if (SHA1_Update(&ctx, salt, saltlength) != 1) {
+			return (0);
 		}
-		result = isc_md_final(md, out, &outlength);
-		if (result != ISC_R_SUCCESS) {
-			goto md_fail;
+
+		if (SHA1_Final(out, &ctx) != 1) {
+			return (0);
 		}
-		result = isc_md_reset(md);
-		if (result != ISC_R_SUCCESS) {
-			goto md_fail;
-		}
+
 		buf = out;
-		len = outlength;
+		len = SHA_DIGEST_LENGTH;
 	} while (n++ < iterations);
 
-	isc_md_free(md);
-
-	return (outlength);
-md_fail:
-	isc_md_free(md);
-	return (0);
+	return (SHA_DIGEST_LENGTH);
 }
-#undef RETERR

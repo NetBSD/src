@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.13 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.14 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1994,26 +1994,28 @@ dns_view_issecuredomain(dns_view_t *view, const dns_name_t *name,
 
 void
 dns_view_untrust(dns_view_t *view, const dns_name_t *keyname,
-		 dns_rdata_dnskey_t *dnskey) {
+		 const dns_rdata_dnskey_t *dnskey) {
 	isc_result_t result;
 	dns_keytable_t *sr = NULL;
+	dns_rdata_dnskey_t tmpkey;
 
 	REQUIRE(DNS_VIEW_VALID(view));
 	REQUIRE(keyname != NULL);
 	REQUIRE(dnskey != NULL);
-
-	/*
-	 * Clear the revoke bit, if set, so that the key will match what's
-	 * in secroots now.
-	 */
-	dnskey->flags &= ~DNS_KEYFLAG_REVOKE;
 
 	result = dns_view_getsecroots(view, &sr);
 	if (result != ISC_R_SUCCESS) {
 		return;
 	}
 
-	result = dns_keytable_deletekey(sr, keyname, dnskey);
+	/*
+	 * Clear the revoke bit, if set, so that the key will match what's
+	 * in secroots now.
+	 */
+	tmpkey = *dnskey;
+	tmpkey.flags &= ~DNS_KEYFLAG_REVOKE;
+
+	result = dns_keytable_deletekey(sr, keyname, &tmpkey);
 	if (result == ISC_R_SUCCESS) {
 		/*
 		 * If key was found in secroots, then it was a
@@ -2026,6 +2028,88 @@ dns_view_untrust(dns_view_t *view, const dns_name_t *keyname,
 	}
 
 	dns_keytable_detach(&sr);
+}
+
+bool
+dns_view_istrusted(dns_view_t *view, const dns_name_t *keyname,
+		   const dns_rdata_dnskey_t *dnskey) {
+	isc_result_t result;
+	dns_keytable_t *sr = NULL;
+	dns_keynode_t *knode = NULL;
+	bool answer = false;
+	dns_rdataset_t dsset;
+
+	REQUIRE(DNS_VIEW_VALID(view));
+	REQUIRE(keyname != NULL);
+	REQUIRE(dnskey != NULL);
+
+	result = dns_view_getsecroots(view, &sr);
+	if (result != ISC_R_SUCCESS) {
+		return (false);
+	}
+
+	dns_rdataset_init(&dsset);
+	result = dns_keytable_find(sr, keyname, &knode);
+	if (result == ISC_R_SUCCESS) {
+		if (dns_keynode_dsset(knode, &dsset)) {
+			dns_rdata_t rdata = DNS_RDATA_INIT;
+			unsigned char data[4096], digest[DNS_DS_BUFFERSIZE];
+			dns_rdata_dnskey_t tmpkey = *dnskey;
+			dns_rdata_ds_t ds;
+			isc_buffer_t b;
+			dns_rdataclass_t rdclass = tmpkey.common.rdclass;
+
+			/*
+			 * Clear the revoke bit, if set, so that the key
+			 * will match what's in secroots now.
+			 */
+			tmpkey.flags &= ~DNS_KEYFLAG_REVOKE;
+
+			isc_buffer_init(&b, data, sizeof(data));
+			result = dns_rdata_fromstruct(&rdata, rdclass,
+						      dns_rdatatype_dnskey,
+						      &tmpkey, &b);
+			if (result != ISC_R_SUCCESS) {
+				goto finish;
+			}
+
+			result = dns_ds_fromkeyrdata(keyname, &rdata,
+						     DNS_DSDIGEST_SHA256,
+						     digest, &ds);
+			if (result != ISC_R_SUCCESS) {
+				goto finish;
+			}
+
+			dns_rdata_reset(&rdata);
+			isc_buffer_init(&b, data, sizeof(data));
+			result = dns_rdata_fromstruct(
+				&rdata, rdclass, dns_rdatatype_ds, &ds, &b);
+			if (result != ISC_R_SUCCESS) {
+				goto finish;
+			}
+
+			result = dns_rdataset_first(&dsset);
+			while (result == ISC_R_SUCCESS) {
+				dns_rdata_t this = DNS_RDATA_INIT;
+				dns_rdataset_current(&dsset, &this);
+				if (dns_rdata_compare(&rdata, &this) == 0) {
+					answer = true;
+					break;
+				}
+				result = dns_rdataset_next(&dsset);
+			}
+		}
+	}
+
+finish:
+	if (dns_rdataset_isassociated(&dsset)) {
+		dns_rdataset_disassociate(&dsset);
+	}
+	if (knode != NULL) {
+		dns_keytable_detachkeynode(sr, &knode);
+	}
+	dns_keytable_detach(&sr);
+	return (answer);
 }
 
 /*

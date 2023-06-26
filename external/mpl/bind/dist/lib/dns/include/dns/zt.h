@@ -1,4 +1,4 @@
-/*	$NetBSD: zt.h,v 1.7 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: zt.h,v 1.8 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,7 @@
 #include <stdbool.h>
 
 #include <isc/lang.h>
+#include <isc/rwlock.h>
 
 #include <dns/types.h>
 

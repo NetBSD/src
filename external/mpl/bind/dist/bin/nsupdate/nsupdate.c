@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.12 2023/01/25 21:43:23 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.13 2023/06/26 22:02:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2707,8 +2707,8 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 		dns_request_destroy(&request);
 		dns_message_detach(&soaquery);
 		ddebug("Out of recvsoa");
-		done_update();
 		seenerror = true;
+		done_update();
 		return;
 	}
 
@@ -2815,7 +2815,14 @@ lookforsoa:
 		master_total = get_addresses(serverstr, dnsport, master_servers,
 					     master_alloc);
 		if (master_total == 0) {
-			exit(1);
+			seenerror = true;
+			dns_rdata_freestruct(&soa);
+			dns_message_detach(&soaquery);
+			dns_request_destroy(&request);
+			dns_message_detach(&rcvmsg);
+			ddebug("Out of recvsoa");
+			done_update();
+			return;
 		}
 		master_inuse = 0;
 	} else {

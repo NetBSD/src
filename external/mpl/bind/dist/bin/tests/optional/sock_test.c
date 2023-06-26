@@ -1,4 +1,4 @@
-/*	$NetBSD: sock_test.c,v 1.6 2022/09/23 12:15:23 christos Exp $	*/
+/*	$NetBSD: sock_test.c,v 1.7 2023/06/26 22:02:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -247,7 +247,7 @@ timeout(isc_task_t *task, isc_event_t *event) {
 	printf("Timeout, canceling IO on socket %p (task %p)\n", sock, task);
 
 	isc_socket_cancel(sock, NULL, ISC_SOCKCANCEL_ALL);
-	isc_timer_detach((isc_timer_t **)&event->ev_sender);
+	isc_timer_destroy((isc_timer_t **)&event->ev_sender);
 	isc_event_free(&event);
 }
 
