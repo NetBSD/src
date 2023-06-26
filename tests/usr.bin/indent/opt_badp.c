@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.13 2023/06/26 11:01:08 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.14 2023/06/26 20:03:09 rillig Exp $ */
 
 /*
  * Tests for the options '-badp' and '-nbadp'.
@@ -65,8 +65,14 @@ statement(void)
 }
 //indent end
 
-/* TODO: add blank line */
-//indent run-equals-input -badp
+//indent run -badp
+void
+statement(void)
+{
+
+	stmt();
+}
+//indent end
 
 //indent run-equals-input -nbadp
 
@@ -89,7 +95,7 @@ void
 declaration_statement(void)
 {
 	int		decl;
-	/* $ FIXME: missing empty line */
+
 	stmt();
 }
 //indent end
@@ -146,7 +152,17 @@ nested(void)
 }
 //indent end
 
-//indent run-equals-input -badp
+//indent run -badp
+static void
+nested(void)
+{
+
+	{
+		int		decl;
+		stmt();
+	}
+}
+//indent end
 
 //indent run-equals-input -nbadp
 
@@ -169,3 +185,28 @@ struct {
 //indent run-equals-input -di0 -badp
 
 //indent run-equals-input -di0 -nbadp
+
+
+/* Single-line function definitions must be handled correctly as well. */
+//indent input
+void f(void) { int decl; stmt; }
+//indent end
+
+//indent run -badp
+void
+f(void)
+{
+	int		decl;
+
+	stmt;
+}
+//indent end
+
+//indent run -nfbs -badp
+void
+f(void) {
+	int		decl;
+
+	stmt;
+}
+//indent end
