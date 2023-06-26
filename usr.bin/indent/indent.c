@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.384 2023/06/25 19:35:45 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.385 2023/06/26 14:54:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.384 2023/06/25 19:35:45 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.385 2023/06/26 14:54:40 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -767,6 +767,8 @@ process_rbrace(void)
 	}
 
 	ps.declaration = decl_no;
+	if (ps.decl_level == 0)
+		ps.blank_line_after_decl = false;
 	if (ps.init_level > 0)
 		ps.init_level--;
 
