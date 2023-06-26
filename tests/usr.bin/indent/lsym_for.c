@@ -1,4 +1,4 @@
-/* $NetBSD: lsym_for.c,v 1.7 2023/06/08 21:18:54 rillig Exp $ */
+/* $NetBSD: lsym_for.c,v 1.8 2023/06/26 20:10:23 rillig Exp $ */
 
 /*
  * Tests for the token lsym_for, which represents the keyword 'for' that
@@ -105,8 +105,7 @@ function(void)
 
 //indent run
 {
-// $ FIXME: There should be no space after the '*'.
-	for (const list_item * i = first; i != NULL; i = i->next) {
+	for (const list_item *i = first; i != NULL; i = i->next) {
 	}
 // $ FIXME: There should be no space after the '*'.
 	for (list_item * *i = first; i != NULL; i = i->next) {
