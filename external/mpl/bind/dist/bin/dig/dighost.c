@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.14 2023/01/25 21:43:23 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.15 2023/06/26 22:02:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1586,7 +1586,7 @@ clear_query(dig_query_t *query) {
 	debug("clear_query(%p)", query);
 
 	if (query->timer != NULL) {
-		isc_timer_detach(&query->timer);
+		isc_timer_destroy(&query->timer);
 	}
 	lookup = query->lookup;
 
@@ -2702,7 +2702,7 @@ bringup_timer(dig_query_t *query, unsigned int default_timeout) {
 	debug("have local timeout of %d", local_timeout);
 	isc_interval_set(&l->interval, local_timeout, 0);
 	if (query->timer != NULL) {
-		isc_timer_detach(&query->timer);
+		isc_timer_destroy(&query->timer);
 	}
 	result = isc_timer_create(timermgr, isc_timertype_once, NULL,
 				  &l->interval, global_task, connect_timeout,
@@ -2726,7 +2726,7 @@ force_timeout(dig_query_t *query) {
 	 * ourselves due to the duplicate events.
 	 */
 	if (query->timer != NULL) {
-		isc_timer_detach(&query->timer);
+		isc_timer_destroy(&query->timer);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: controlconf.c,v 1.10 2023/01/25 21:43:23 christos Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.11 2023/06/26 22:02:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -179,7 +179,7 @@ maybe_free_connection(controlconnection_t *conn) {
 	}
 
 	if (conn->timer != NULL) {
-		isc_timer_detach(&conn->timer);
+		isc_timer_destroy(&conn->timer);
 	}
 
 	if (conn->ccmsg_valid) {
@@ -572,10 +572,10 @@ control_timeout(isc_task_t *task, isc_event_t *event) {
 
 	UNUSED(task);
 
-	isc_timer_detach(&conn->timer);
-	maybe_free_connection(conn);
-
 	isc_event_free(&event);
+
+	isc_timer_destroy(&conn->timer);
+	maybe_free_connection(conn);
 }
 
 static isc_result_t
@@ -623,7 +623,7 @@ cleanup:
 	}
 	isccc_ccmsg_invalidate(&conn->ccmsg);
 	if (conn->timer != NULL) {
-		isc_timer_detach(&conn->timer);
+		isc_timer_destroy(&conn->timer);
 	}
 	isc_mem_put(listener->mctx, conn, sizeof(*conn));
 #ifdef ENABLE_AFL

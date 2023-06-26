@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.19 2023/01/25 21:43:23 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.20 2023/06/26 22:02:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2673,6 +2673,7 @@ configure_rpz(dns_view_t *view, dns_view_t *pview, const cfg_obj_t **maps,
 	if (*old_rpz_okp) {
 		dns_rpz_detach_rpzs(&view->rpzs);
 		dns_rpz_attach_rpzs(pview->rpzs, &view->rpzs);
+		dns_rpz_detach_rpzs(&pview->rpzs);
 	} else if (old != NULL && pview != NULL) {
 		++pview->rpzs->rpz_ver;
 		view->rpzs->rpz_ver = pview->rpzs->rpz_ver;
@@ -3175,6 +3176,7 @@ configure_catz(dns_view_t *view, dns_view_t *pview, const cfg_obj_t *config,
 	if (old != NULL) {
 		dns_catz_catzs_detach(&view->catzs);
 		dns_catz_catzs_attach(pview->catzs, &view->catzs);
+		dns_catz_catzs_detach(&pview->catzs);
 		dns_catz_prereconfig(view->catzs);
 	}
 
@@ -3979,7 +3981,8 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	const cfg_obj_t *dyndb_list, *plugin_list;
 	const cfg_obj_t *disabled;
 	const cfg_obj_t *obj, *obj2;
-	const cfg_listelt_t *element;
+	const cfg_listelt_t *element = NULL;
+	const cfg_listelt_t *zone_element_latest = NULL;
 	in_port_t port;
 	dns_cache_t *cache = NULL;
 	isc_result_t result;
@@ -3996,7 +3999,6 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	dns_dispatch_t *dispatch6 = NULL;
 	bool rpz_configured = false;
 	bool catz_configured = false;
-	bool zones_configured = false;
 	bool reused_cache = false;
 	bool shared_cache = false;
 	int i = 0, j = 0, k = 0;
@@ -4100,8 +4102,8 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 		CHECK(configure_zone(config, zconfig, vconfig, mctx, view,
 				     viewlist, kasplist, actx, false,
 				     old_rpz_ok, false));
+		zone_element_latest = element;
 	}
-	zones_configured = true;
 
 	/*
 	 * Check that a master or slave zone was found for each
@@ -5880,9 +5882,6 @@ cleanup:
 			    named_config_get(maps, "catalog-zones", &obj) ==
 				    ISC_R_SUCCESS)
 			{
-				if (pview->catzs != NULL) {
-					dns_catz_catzs_detach(&pview->catzs);
-				}
 				/*
 				 * We are swapping the places of the `view` and
 				 * `pview` in the function's parameters list
@@ -5910,7 +5909,7 @@ cleanup:
 			dns_view_detach(&pview);
 		}
 
-		if (zones_configured) {
+		if (zone_element_latest != NULL) {
 			for (element = cfg_list_first(zonelist);
 			     element != NULL; element = cfg_list_next(element))
 			{
@@ -5918,6 +5917,13 @@ cleanup:
 					cfg_listelt_value(element);
 				configure_zone_setviewcommit(result, zconfig,
 							     view);
+				if (element == zone_element_latest) {
+					/*
+					 * This was the latest element that was
+					 * successfully configured earlier.
+					 */
+					break;
+				}
 			}
 		}
 	}
@@ -6772,6 +6778,7 @@ add_keydata_zone(dns_view_t *view, const char *directory, isc_mem_t *mctx) {
 			dns_zone_attach(pview->managed_keys,
 					&view->managed_keys);
 			dns_zone_setview(pview->managed_keys, view);
+			dns_zone_setviewcommit(pview->managed_keys);
 			dns_view_detach(&pview);
 			dns_zone_synckeyzone(view->managed_keys);
 			return (ISC_R_SUCCESS);
@@ -9291,8 +9298,8 @@ load_configuration(const char *filename, named_server_t *server,
 		logobj = NULL;
 		(void)cfg_map_get(config, "logging", &logobj);
 		if (logobj != NULL) {
-			CHECKM(named_logconfig(logc, logobj), "configuring "
-							      "logging");
+			CHECKM(named_logconfig(logc, logobj),
+			       "configuring logging");
 		} else {
 			named_log_setdefaultchannels(logc);
 			CHECKM(named_log_setunmatchedcategory(logc),
@@ -9663,6 +9670,7 @@ view_loaded(void *arg) {
 	if (isc_refcount_decrement(&zl->refs) == 1) {
 		named_server_t *server = zl->server;
 		bool reconfig = zl->reconfig;
+		dns_view_t *view = NULL;
 
 		isc_refcount_destroy(&zl->refs);
 		isc_mem_put(server->mctx, zl, sizeof(*zl));
@@ -9681,6 +9689,28 @@ view_loaded(void *arg) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_NOTICE,
 				      "all zones loaded");
+		}
+
+		for (view = ISC_LIST_HEAD(server->viewlist); view != NULL;
+		     view = ISC_LIST_NEXT(view, link))
+		{
+			if (view->managed_keys != NULL) {
+				result = dns_zone_synckeyzone(
+					view->managed_keys);
+				if (result != ISC_R_SUCCESS) {
+					isc_log_write(
+						named_g_lctx,
+						DNS_LOGCATEGORY_DNSSEC,
+						DNS_LOGMODULE_DNSSEC,
+						ISC_LOG_ERROR,
+						"failed to initialize "
+						"managed-keys for view %s "
+						"(%s): DNSSEC validation is "
+						"at risk",
+						view->name,
+						isc_result_totext(result));
+				}
+			}
 		}
 
 		CHECKFATAL(dns_zonemgr_forcemaint(server->zonemgr),
@@ -9931,10 +9961,10 @@ shutdown_server(isc_task_t *task, isc_event_t *event) {
 		isc_mem_put(server->mctx, nsc, sizeof(*nsc));
 	}
 
-	isc_timer_detach(&server->interface_timer);
-	isc_timer_detach(&server->heartbeat_timer);
-	isc_timer_detach(&server->pps_timer);
-	isc_timer_detach(&server->tat_timer);
+	isc_timer_destroy(&server->interface_timer);
+	isc_timer_destroy(&server->heartbeat_timer);
+	isc_timer_destroy(&server->pps_timer);
+	isc_timer_destroy(&server->tat_timer);
 
 	ns_interfacemgr_detach(&server->interfacemgr);
 

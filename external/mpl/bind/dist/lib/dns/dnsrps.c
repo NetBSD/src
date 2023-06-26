@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.10 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -640,6 +640,7 @@ rpsdb_allrdatasets(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	rpsdb_iter->common.magic = DNS_RDATASETITER_MAGIC;
 	rpsdb_iter->common.methods = &rpsdb_rdatasetiter_methods;
 	rpsdb_iter->common.db = db;
+	rpsdb_iter->common.options = options;
 	rpsdb_attachnode(db, node, &rpsdb_iter->common.node);
 
 	*iteratorp = &rpsdb_iter->common;

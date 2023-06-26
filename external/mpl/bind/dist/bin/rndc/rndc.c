@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.9 2023/01/25 21:43:24 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.10 2023/06/26 22:02:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -123,7 +123,7 @@ command is one of the following:\n\
 		Requires the zone to have a dnssec-policy.\n\
   dnstap -reopen\n\
 		Close, truncate and re-open the DNSTAP output file.\n\
-  dnstap -roll count\n\
+  dnstap -roll [count]\n\
 		Close, rename and re-open the DNSTAP output file(s).\n\
   dumpdb [-all|-cache|-zones|-adb|-bad|-expired|-fail] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\

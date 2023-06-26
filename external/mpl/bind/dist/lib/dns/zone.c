@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.17 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.18 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1259,18 +1259,14 @@ zone_free(dns_zone_t *zone) {
 	INSIST(zone->readio == NULL);
 	INSIST(zone->statelist == NULL);
 	INSIST(zone->writeio == NULL);
+	INSIST(zone->view == NULL);
+	INSIST(zone->prev_view == NULL);
 
 	if (zone->task != NULL) {
 		isc_task_detach(&zone->task);
 	}
 	if (zone->loadtask != NULL) {
 		isc_task_detach(&zone->loadtask);
-	}
-	if (zone->view != NULL) {
-		dns_view_weakdetach(&zone->view);
-	}
-	if (zone->prev_view != NULL) {
-		dns_view_weakdetach(&zone->prev_view);
 	}
 
 	/* Unmanaged objects */
@@ -2420,6 +2416,9 @@ zone_asyncload(isc_task_t *task, isc_event_t *event) {
 	if (asl->loaded != NULL) {
 		(asl->loaded)(asl->loaded_arg, zone, task);
 	}
+
+	/* Reduce the quantum */
+	isc_task_setquantum(zone->loadtask, 1);
 
 	isc_mem_put(zone->mctx, asl, sizeof(*asl));
 	dns_zone_idetach(&zone);
@@ -4744,8 +4743,7 @@ sync_keyzone(dns_zone_t *zone, dns_db_t *db) {
 	}
 
 failure:
-	if (result != ISC_R_SUCCESS && !DNS_ZONE_FLAG(zone, DNS_ZONEFLG_LOADED))
-	{
+	if (result != ISC_R_SUCCESS) {
 		dnssec_log(zone, ISC_LOG_ERROR,
 			   "unable to synchronize managed keys: %s",
 			   dns_result_totext(result));
@@ -5210,10 +5208,7 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 		break;
 
 	case dns_zone_key:
-		result = sync_keyzone(zone, db);
-		if (result != ISC_R_SUCCESS) {
-			goto cleanup;
-		}
+		/* Nothing needs to be done now */
 		break;
 
 	default:
@@ -5371,13 +5366,6 @@ zone_postload(dns_zone_t *zone, dns_db_t *db, isc_time_t loadtime,
 	goto done;
 
 cleanup:
-	if (zone->type == dns_zone_key && result != ISC_R_SUCCESS) {
-		dnssec_log(zone, ISC_LOG_ERROR,
-			   "failed to initialize managed-keys (%s): "
-			   "DNSSEC validation is at risk",
-			   isc_result_totext(result));
-	}
-
 	if (result != ISC_R_SUCCESS) {
 		dns_zone_rpz_disable_db(zone, db);
 		dns_zone_catz_disable_db(zone, db);
@@ -5866,11 +5854,11 @@ dns_zone_setkasp(dns_zone_t *zone, dns_kasp_t *kasp) {
 
 	LOCK_ZONE(zone);
 	if (zone->kasp != NULL) {
-		dns_kasp_t *oldkasp = zone->kasp;
-		zone->kasp = NULL;
-		dns_kasp_detach(&oldkasp);
+		dns_kasp_detach(&zone->kasp);
 	}
-	zone->kasp = kasp;
+	if (kasp != NULL) {
+		dns_kasp_attach(kasp, &zone->kasp);
+	}
 	UNLOCK_ZONE(zone);
 }
 
@@ -7361,8 +7349,14 @@ zone_resigninc(dns_zone_t *zone) {
 	}
 
 	ZONEDB_LOCK(&zone->dblock, isc_rwlocktype_read);
-	dns_db_attach(zone->db, &db);
+	if (zone->db != NULL) {
+		dns_db_attach(zone->db, &db);
+	}
 	ZONEDB_UNLOCK(&zone->dblock, isc_rwlocktype_read);
+	if (db == NULL) {
+		result = ISC_R_FAILURE;
+		goto failure;
+	}
 
 	result = dns_db_newversion(db, &version);
 	if (result != ISC_R_SUCCESS) {
@@ -9624,14 +9618,14 @@ zone_sign(dns_zone_t *zone) {
 		   use_kasp ? "yes" : "no");
 
 	/* Determine which type of chain to build */
-	if (use_kasp) {
-		build_nsec3 = dns_kasp_nsec3(kasp);
-		build_nsec = !build_nsec3;
-	} else {
-		CHECK(dns_private_chains(db, version, zone->privatetype,
-					 &build_nsec, &build_nsec3));
-		/* If neither chain is found, default to NSEC */
-		if (!build_nsec && !build_nsec3) {
+	CHECK(dns_private_chains(db, version, zone->privatetype, &build_nsec,
+				 &build_nsec3));
+	if (!build_nsec && !build_nsec3) {
+		if (use_kasp) {
+			build_nsec3 = dns_kasp_nsec3(kasp);
+			build_nsec = !build_nsec3;
+		} else {
+			/* If neither chain is found, default to NSEC */
 			build_nsec = true;
 		}
 	}
@@ -11064,6 +11058,11 @@ retry_keyfetch(dns_keyfetch_t *kfetch, dns_name_t *kname) {
 	isc_time_t timenow, timethen;
 	dns_zone_t *zone = kfetch->zone;
 	bool free_needed;
+	char namebuf[DNS_NAME_FORMATSIZE];
+
+	dns_name_format(kname, namebuf, sizeof(namebuf));
+	dnssec_log(zone, ISC_LOG_WARNING,
+		   "Failed to create fetch for %s DNSKEY update", namebuf);
 
 	/*
 	 * Error during a key fetch; cancel and retry in an hour.
@@ -11075,8 +11074,6 @@ retry_keyfetch(dns_keyfetch_t *kfetch, dns_name_t *kname) {
 	dns_rdataset_disassociate(&kfetch->keydataset);
 	dns_name_free(kname, zone->mctx);
 	isc_mem_putanddetach(&kfetch->mctx, kfetch, sizeof(*kfetch));
-	dnssec_log(zone, ISC_LOG_WARNING,
-		   "Failed to create fetch for DNSKEY update");
 
 	if (!DNS_ZONE_FLAG(zone, DNS_ZONEFLG_EXITING)) {
 		/* Don't really retry if we are exiting */
@@ -14939,6 +14936,7 @@ zone_shutdown(isc_task_t *task, isc_event_t *event) {
 	dns_zone_t *zone = (dns_zone_t *)event->ev_arg;
 	bool free_needed, linked = false;
 	dns_zone_t *raw = NULL, *secure = NULL;
+	dns_view_t *view = NULL, *prev_view = NULL;
 
 	UNUSED(task);
 	REQUIRE(DNS_ZONE_VALID(zone));
@@ -14984,6 +14982,17 @@ zone_shutdown(isc_task_t *task, isc_event_t *event) {
 
 	LOCK_ZONE(zone);
 	INSIST(zone != zone->raw);
+
+	/*
+	 * Detach the views early, we don't need them anymore.  However, we need
+	 * to detach them outside of the zone lock to break the lock loop
+	 * between view, adb and zone locks.
+	 */
+	view = zone->view;
+	zone->view = NULL;
+	prev_view = zone->prev_view;
+	zone->prev_view = NULL;
+
 	if (linked) {
 		isc_refcount_decrement(&zone->irefs);
 	}
@@ -15018,7 +15027,7 @@ zone_shutdown(isc_task_t *task, isc_event_t *event) {
 	forward_cancel(zone);
 
 	if (zone->timer != NULL) {
-		isc_timer_detach(&zone->timer);
+		isc_timer_destroy(&zone->timer);
 		isc_refcount_decrement(&zone->irefs);
 	}
 
@@ -15044,6 +15053,14 @@ zone_shutdown(isc_task_t *task, isc_event_t *event) {
 		zone->secure = NULL;
 	}
 	UNLOCK_ZONE(zone);
+
+	if (view != NULL) {
+		dns_view_weakdetach(&view);
+	}
+	if (prev_view != NULL) {
+		dns_view_weakdetach(&prev_view);
+	}
+
 	if (raw != NULL) {
 		dns_zone_detach(&raw);
 	}
@@ -19075,7 +19092,7 @@ dns_zonemgr_setsize(dns_zonemgr_t *zmgr, int num_zones) {
 	pool = NULL;
 	if (zmgr->loadtasks == NULL) {
 		result = isc_taskpool_create(zmgr->taskmgr, zmgr->mctx, ntasks,
-					     2, true, &pool);
+					     UINT_MAX, true, &pool);
 	} else {
 		result = isc_taskpool_expand(&zmgr->loadtasks, ntasks, true,
 					     &pool);

@@ -1,4 +1,4 @@
-/*	$NetBSD: task.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: task.h,v 1.8 2023/06/26 22:03:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -375,27 +375,27 @@ isc_task_unsend(isc_task_t *task, void *sender, isc_eventtype_t type, void *tag,
  *
  * Notes:
  *
- *\li	This function is equivalent to
+ *\li  This function is equivalent to
  *
  *\code
- *		isc_task_unsendrange(task, sender, type, type, tag, events);
+ *             isc_task_unsendrange(task, sender, type, type, tag, events);
  *\endcode
  *
  * Requires:
  *
- *\li	'task' is a valid task.
+ *\li  'task' is a valid task.
  *
- *\li	*events is a valid list.
+ *\li  *events is a valid list.
  *
  * Ensures:
  *
- *\li	Events in the event queue of 'task' whose sender is 'sender', whose
- *	type is 'type', and whose tag is 'tag' will be dequeued and appended
- *	to *events.
+ *\li  Events in the event queue of 'task' whose sender is 'sender', whose
+ *     type is 'type', and whose tag is 'tag' will be dequeued and appended
+ *     to *events.
  *
  * Returns:
  *
- *\li	The number of events unsent.
+ *\li  The number of events unsent.
  */
 
 isc_result_t
@@ -528,6 +528,15 @@ isc_task_gettag(isc_task_t *task);
  *
  * Requires:
  *\li	'task' is a valid task.
+ */
+
+void
+isc_task_setquantum(isc_task_t *task, unsigned int quantum);
+/*%<
+ * Set future 'task' quantum to 'quantum'.  The current 'task' quantum will be
+ * kept for the current isc_task_run() loop, and will be changed for the next
+ * run.  Therefore, the function is safe to use from the event callback as it
+ * will not affect the current event loop processing.
  */
 
 isc_result_t

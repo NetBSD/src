@@ -686,6 +686,7 @@ PDFTARGET
 HTMLTARGET
 PDFLATEX
 RELEASE_DATE
+BUILD_MANPAGES
 HAVE_XELATEX_FALSE
 HAVE_XELATEX_TRUE
 LATEXMK
@@ -16140,23 +16141,21 @@ done
 
 
 # libuv
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libuv" >&5
-$as_echo_n "checking for libuv... " >&6; }
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for libuv >= 1.0.0" >&5
-$as_echo_n "checking for libuv >= 1.0.0... " >&6; }
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libuv >= 1.37.0" >&5
+printf %s "checking for libuv >= 1.37.0... " >&6; }
 
 if test -n "$LIBUV_CFLAGS"; then
     pkg_cv_LIBUV_CFLAGS="$LIBUV_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libuv >= 1.0.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libuv >= 1.0.0") 2>&5
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libuv >= 1.37.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libuv >= 1.37.0") 2>&5
   ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_LIBUV_CFLAGS=`$PKG_CONFIG --cflags "libuv >= 1.0.0" 2>/dev/null`
+  pkg_cv_LIBUV_CFLAGS=`$PKG_CONFIG --cflags "libuv >= 1.37.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -16168,12 +16167,12 @@ if test -n "$LIBUV_LIBS"; then
     pkg_cv_LIBUV_LIBS="$LIBUV_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libuv >= 1.0.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "libuv >= 1.0.0") 2>&5
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libuv >= 1.37.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libuv >= 1.37.0") 2>&5
   ac_status=$?
-  $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_LIBUV_LIBS=`$PKG_CONFIG --libs "libuv >= 1.0.0" 2>/dev/null`
+  pkg_cv_LIBUV_LIBS=`$PKG_CONFIG --libs "libuv >= 1.37.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -16185,8 +16184,8 @@ fi
 
 
 if test $pkg_failed = yes; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
 
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
@@ -16194,23 +16193,163 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        LIBUV_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libuv >= 1.0.0" 2>&1`
+	        LIBUV_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libuv >= 1.37.0" 2>&1`
         else
-	        LIBUV_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libuv >= 1.0.0" 2>&1`
+	        LIBUV_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libuv >= 1.37.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$LIBUV_PKG_ERRORS" >&5
 
-	as_fn_error $? "libuv not found" "$LINENO" 5
+
+pkg_failed=no
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libuv >= 1.0.0 libuv < 1.35.0" >&5
+printf %s "checking for libuv >= 1.0.0 libuv < 1.35.0... " >&6; }
+
+if test -n "$LIBUV_CFLAGS"; then
+    pkg_cv_LIBUV_CFLAGS="$LIBUV_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libuv >= 1.0.0 libuv < 1.35.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libuv >= 1.0.0 libuv < 1.35.0") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBUV_CFLAGS=`$PKG_CONFIG --cflags "libuv >= 1.0.0 libuv < 1.35.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBUV_LIBS"; then
+    pkg_cv_LIBUV_LIBS="$LIBUV_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libuv >= 1.0.0 libuv < 1.35.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libuv >= 1.0.0 libuv < 1.35.0") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBUV_LIBS=`$PKG_CONFIG --libs "libuv >= 1.0.0 libuv < 1.35.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBUV_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libuv >= 1.0.0 libuv < 1.35.0" 2>&1`
+        else
+	        LIBUV_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libuv >= 1.0.0 libuv < 1.35.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBUV_PKG_ERRORS" >&5
+
+	as_fn_error $? "libuv >= 1.0.0 (except 1.35.0 and 1.36.0) not found" "$LINENO" 5
 elif test $pkg_failed = untried; then
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	as_fn_error $? "libuv not found" "$LINENO" 5
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+	as_fn_error $? "libuv >= 1.0.0 (except 1.35.0 and 1.36.0) not found" "$LINENO" 5
 else
 	LIBUV_CFLAGS=$pkg_cv_LIBUV_CFLAGS
 	LIBUV_LIBS=$pkg_cv_LIBUV_LIBS
-        { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+fi
+elif test $pkg_failed = untried; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+pkg_failed=no
+{ printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for libuv >= 1.0.0 libuv < 1.35.0" >&5
+printf %s "checking for libuv >= 1.0.0 libuv < 1.35.0... " >&6; }
+
+if test -n "$LIBUV_CFLAGS"; then
+    pkg_cv_LIBUV_CFLAGS="$LIBUV_CFLAGS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libuv >= 1.0.0 libuv < 1.35.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libuv >= 1.0.0 libuv < 1.35.0") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBUV_CFLAGS=`$PKG_CONFIG --cflags "libuv >= 1.0.0 libuv < 1.35.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+if test -n "$LIBUV_LIBS"; then
+    pkg_cv_LIBUV_LIBS="$LIBUV_LIBS"
+ elif test -n "$PKG_CONFIG"; then
+    if test -n "$PKG_CONFIG" && \
+    { { printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"libuv >= 1.0.0 libuv < 1.35.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "libuv >= 1.0.0 libuv < 1.35.0") 2>&5
+  ac_status=$?
+  printf "%s\n" "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
+  test $ac_status = 0; }; then
+  pkg_cv_LIBUV_LIBS=`$PKG_CONFIG --libs "libuv >= 1.0.0 libuv < 1.35.0" 2>/dev/null`
+		      test "x$?" != "x0" && pkg_failed=yes
+else
+  pkg_failed=yes
+fi
+ else
+    pkg_failed=untried
+fi
+
+
+
+if test $pkg_failed = yes; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+
+if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
+        _pkg_short_errors_supported=yes
+else
+        _pkg_short_errors_supported=no
+fi
+        if test $_pkg_short_errors_supported = yes; then
+	        LIBUV_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "libuv >= 1.0.0 libuv < 1.35.0" 2>&1`
+        else
+	        LIBUV_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "libuv >= 1.0.0 libuv < 1.35.0" 2>&1`
+        fi
+	# Put the nasty error message in config.log where it belongs
+	echo "$LIBUV_PKG_ERRORS" >&5
+
+	as_fn_error $? "libuv >= 1.0.0 (except 1.35.0 and 1.36.0) not found" "$LINENO" 5
+elif test $pkg_failed = untried; then
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: no" >&5
+printf "%s\n" "no" >&6; }
+	as_fn_error $? "libuv >= 1.0.0 (except 1.35.0 and 1.36.0) not found" "$LINENO" 5
+else
+	LIBUV_CFLAGS=$pkg_cv_LIBUV_CFLAGS
+	LIBUV_LIBS=$pkg_cv_LIBUV_LIBS
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
+
+fi
+else
+	LIBUV_CFLAGS=$pkg_cv_LIBUV_CFLAGS
+	LIBUV_LIBS=$pkg_cv_LIBUV_LIBS
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+printf "%s\n" "yes" >&6; }
 
 fi
 
@@ -17511,7 +17650,12 @@ PKCS11_MANS=
 #
 # was --enable-native-pkcs11 specified?
 #
-# [pairwise: --enable-native-pkcs11 --with-dlopen, --disable-native-pkcs11 --with-dlopen, --disable-native-pkcs11 --without-dlopen]
+# DNSRPS builds are included in pairwise testing here and not later because both
+# --enable-native-pkcs11 and --enable-dnsrps-dl require --with-dlopen and the
+# ordering of the set of ./configure arguments generated during pairwise testing
+# is random.
+#
+# [pairwise: --enable-native-pkcs11 --enable-dnsrps --enable-dnsrps-dl --with-dlopen, --disable-native-pkcs11 --enable-dnsrps --enable-dnsrps-dl --with-dlopen, --disable-native-pkcs11 --enable-dnsrps --enable-dnsrps-dl --with-dlopen, --disable-native-pkcs11 --disable-dnsrps --without-dlopen]
 # Check whether --enable-native-pkcs11 was given.
 if test "${enable_native_pkcs11+set}" = set; then :
   enableval=$enable_native_pkcs11; :
@@ -21462,6 +21606,16 @@ fi
 
 
 #
+# Build the man pages only if we have prebuilt manpages or we can build them from RST sources
+#
+BUILD_MANPAGES=
+if test -e doc/man/named.conf.5in || test "$SPHINX_BUILD" != ":"
+then :
+  BUILD_MANPAGES=man
+fi
+
+
+#
 # Pull release date from CHANGES file last modification date
 # for reproducible builds
 #
@@ -22935,8 +23089,9 @@ $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
-# DNSRPS is not included in pairwise testing as the librpz library is not
-# present in the relevant Docker image.
+# DNSRPS builds are included in pairwise testing along --enable-native-pkcs11
+# tests above as both of these features require --with-dlopen (see also the
+# relevant comment there).
 #
 # [pairwise: skip]
 # Check whether --enable-dnsrps-dl was given.

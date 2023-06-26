@@ -1,4 +1,4 @@
-/*	$NetBSD: task_test.c,v 1.6 2022/09/23 12:15:23 christos Exp $	*/
+/*	$NetBSD: task_test.c,v 1.7 2023/06/26 22:02:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -196,8 +196,8 @@ main(int argc, char *argv[]) {
 	Sleep(10000);
 #endif /* ifndef WIN32 */
 	printf("destroy\n");
-	isc_timer_detach(&ti1);
-	isc_timer_detach(&ti2);
+	isc_timer_destroy(&ti1);
+	isc_timer_destroy(&ti2);
 	isc_timermgr_destroy(&timgr);
 	isc_managers_destroy(&netmgr, &taskmgr);
 	printf("destroyed\n");

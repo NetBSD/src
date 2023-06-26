@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable.c,v 1.8 2022/09/23 12:15:29 christos Exp $	*/
+/*	$NetBSD: keytable.c,v 1.9 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -461,10 +461,6 @@ dns_keytable_deletekey(dns_keytable_t *keytable, const dns_name_t *keyname,
 	REQUIRE(VALID_KEYTABLE(keytable));
 	REQUIRE(dnskey != NULL);
 
-	isc_buffer_init(&b, data, sizeof(data));
-	dns_rdata_fromstruct(&rdata, dnskey->common.rdclass,
-			     dns_rdatatype_dnskey, dnskey, &b);
-
 	RWLOCK(&keytable->rwlock, isc_rwlocktype_write);
 	result = dns_rbt_findnode(keytable->table, keyname, NULL, &node, NULL,
 				  DNS_RBTFIND_NOOPTIONS, NULL, NULL);
@@ -490,6 +486,13 @@ dns_keytable_deletekey(dns_keytable_t *keytable, const dns_name_t *keyname,
 		goto finish;
 	}
 	RWUNLOCK(&knode->rwlock, isc_rwlocktype_read);
+
+	isc_buffer_init(&b, data, sizeof(data));
+	result = dns_rdata_fromstruct(&rdata, dnskey->common.rdclass,
+				      dns_rdatatype_dnskey, dnskey, &b);
+	if (result != ISC_R_SUCCESS) {
+		goto finish;
+	}
 
 	result = dns_ds_fromkeyrdata(keyname, &rdata, DNS_DSDIGEST_SHA256,
 				     digest, &ds);

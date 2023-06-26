@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.16 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.17 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -607,7 +607,7 @@ static void
 expire_header(dns_rbtdb_t *rbtdb, rdatasetheader_t *header, bool tree_locked,
 	      expire_t reason);
 static void
-overmem_purge(dns_rbtdb_t *rbtdb, unsigned int locknum_start, isc_stdtime_t now,
+overmem_purge(dns_rbtdb_t *rbtdb, unsigned int locknum_start, size_t purgesize,
 	      bool tree_locked);
 static void
 resign_insert(dns_rbtdb_t *rbtdb, int idx, rdatasetheader_t *newheader);
@@ -2787,7 +2787,7 @@ end:
  * tree_lock(write) must be held.
  */
 static isc_result_t
-add_wildcard_magic(dns_rbtdb_t *rbtdb, const dns_name_t *name) {
+add_wildcard_magic(dns_rbtdb_t *rbtdb, const dns_name_t *name, bool lock) {
 	isc_result_t result;
 	dns_name_t foundname;
 	dns_offsets_t offsets;
@@ -2807,7 +2807,15 @@ add_wildcard_magic(dns_rbtdb_t *rbtdb, const dns_name_t *name) {
 		node->nsec = DNS_RBT_NSEC_NORMAL;
 	}
 	node->find_callback = 1;
+	if (lock) {
+		NODE_LOCK(&rbtdb->node_locks[node->locknum].lock,
+			  isc_rwlocktype_write);
+	}
 	node->wild = 1;
+	if (lock) {
+		NODE_UNLOCK(&rbtdb->node_locks[node->locknum].lock,
+			    isc_rwlocktype_write);
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -2815,7 +2823,7 @@ add_wildcard_magic(dns_rbtdb_t *rbtdb, const dns_name_t *name) {
  * tree_lock(write) must be held.
  */
 static isc_result_t
-add_empty_wildcards(dns_rbtdb_t *rbtdb, const dns_name_t *name) {
+add_empty_wildcards(dns_rbtdb_t *rbtdb, const dns_name_t *name, bool lock) {
 	isc_result_t result;
 	dns_name_t foundname;
 	dns_offsets_t offsets;
@@ -2829,7 +2837,7 @@ add_empty_wildcards(dns_rbtdb_t *rbtdb, const dns_name_t *name) {
 		dns_rbtnode_t *node = NULL; /* dummy */
 		dns_name_getlabelsequence(name, n - i, i, &foundname);
 		if (dns_name_iswildcard(&foundname)) {
-			result = add_wildcard_magic(rbtdb, &foundname);
+			result = add_wildcard_magic(rbtdb, &foundname, lock);
 			if (result != ISC_R_SUCCESS) {
 				return (result);
 			}
@@ -2881,11 +2889,11 @@ findnodeintree(dns_rbtdb_t *rbtdb, dns_rbt_t *tree, const dns_name_t *name,
 			dns_rbt_namefromnode(node, &nodename);
 			node->locknum = node->hashval % rbtdb->node_lock_count;
 			if (tree == rbtdb->tree) {
-				add_empty_wildcards(rbtdb, name);
+				add_empty_wildcards(rbtdb, name, true);
 
 				if (dns_name_iswildcard(name)) {
-					result = add_wildcard_magic(rbtdb,
-								    name);
+					result = add_wildcard_magic(rbtdb, name,
+								    true);
 					if (result != ISC_R_SUCCESS) {
 						RWUNLOCK(&rbtdb->tree_lock,
 							 locktype);
@@ -6817,6 +6825,16 @@ cleanup:
 
 static dns_dbmethods_t zone_methods;
 
+static size_t
+rdataset_size(rdatasetheader_t *header) {
+	if (!NONEXISTENT(header)) {
+		return (dns_rdataslab_size((unsigned char *)header,
+					   sizeof(*header)));
+	}
+
+	return (sizeof(*header));
+}
+
 static isc_result_t
 addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	    isc_stdtime_t now, dns_rdataset_t *rdataset, unsigned int options,
@@ -6981,7 +6999,8 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	}
 
 	if (cache_is_overmem) {
-		overmem_purge(rbtdb, rbtnode->locknum, now, tree_locked);
+		overmem_purge(rbtdb, rbtnode->locknum, rdataset_size(newheader),
+			      tree_locked);
 	}
 
 	NODE_LOCK(&rbtdb->node_locks[rbtnode->locknum].lock,
@@ -7000,10 +7019,18 @@ addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 		}
 
 		header = isc_heap_element(rbtdb->heaps[rbtnode->locknum], 1);
-		if (header != NULL && header->rdh_ttl + rbtdb->serve_stale_ttl <
-					      now - RBTDB_VIRTUAL)
-		{
-			expire_header(rbtdb, header, tree_locked, expire_ttl);
+		if (header != NULL) {
+			dns_ttl_t rdh_ttl = header->rdh_ttl;
+
+			/* Only account for stale TTL if cache is not overmem */
+			if (!cache_is_overmem) {
+				rdh_ttl += rbtdb->serve_stale_ttl;
+			}
+
+			if (rdh_ttl < now - RBTDB_VIRTUAL) {
+				expire_header(rbtdb, header, tree_locked,
+					      expire_ttl);
+			}
 		}
 
 		/*
@@ -7451,7 +7478,7 @@ loading_addrdataset(void *arg, const dns_name_t *name,
 	if (rdataset->type != dns_rdatatype_nsec3 &&
 	    rdataset->covers != dns_rdatatype_nsec3)
 	{
-		add_empty_wildcards(rbtdb, name);
+		add_empty_wildcards(rbtdb, name, false);
 	}
 
 	if (dns_name_iswildcard(name)) {
@@ -7467,7 +7494,7 @@ loading_addrdataset(void *arg, const dns_name_t *name,
 		if (rdataset->type == dns_rdatatype_nsec3) {
 			return (DNS_R_INVALIDNSEC3);
 		}
-		result = add_wildcard_magic(rbtdb, name);
+		result = add_wildcard_magic(rbtdb, name, false);
 		if (result != ISC_R_SUCCESS) {
 			return (result);
 		}
@@ -10541,52 +10568,58 @@ update_header(dns_rbtdb_t *rbtdb, rdatasetheader_t *header, isc_stdtime_t now) {
 	ISC_LIST_PREPEND(rbtdb->rdatasets[header->node->locknum], header, link);
 }
 
+static size_t
+expire_lru_headers(dns_rbtdb_t *rbtdb, unsigned int locknum, size_t purgesize,
+		   bool tree_locked) {
+	rdatasetheader_t *header, *header_prev;
+	size_t purged = 0;
+
+	for (header = ISC_LIST_TAIL(rbtdb->rdatasets[locknum]);
+	     header != NULL && purged <= purgesize; header = header_prev)
+	{
+		header_prev = ISC_LIST_PREV(header, link);
+		/*
+		 * Unlink the entry at this point to avoid checking it
+		 * again even if it's currently used someone else and
+		 * cannot be purged at this moment.  This entry won't be
+		 * referenced any more (so unlinking is safe) since the
+		 * TTL was reset to 0.
+		 */
+		ISC_LIST_UNLINK(rbtdb->rdatasets[locknum], header, link);
+		size_t header_size = rdataset_size(header);
+		expire_header(rbtdb, header, tree_locked, expire_lru);
+		purged += header_size;
+	}
+
+	return (purged);
+}
+
 /*%
- * Purge some expired and/or stale (i.e. unused for some period) cache entries
- * under an overmem condition.  To recover from this condition quickly, up to
- * 2 entries will be purged.  This process is triggered while adding a new
- * entry, and we specifically avoid purging entries in the same LRU bucket as
- * the one to which the new entry will belong.  Otherwise, we might purge
- * entries of the same name of different RR types while adding RRsets from a
- * single response (consider the case where we're adding A and AAAA glue records
- * of the same NS name).
+ * Purge some stale (i.e. unused for some period - LRU based cleaning) cache
+ * entries under the overmem condition.  To recover from this condition quickly,
+ * we cleanup entries up to the size of newly added rdata (passed as purgesize).
+ *
+ * This process is triggered while adding a new entry, and we specifically avoid
+ * purging entries in the same LRU bucket as the one to which the new entry will
+ * belong.  Otherwise, we might purge entries of the same name of different RR
+ * types while adding RRsets from a single response (consider the case where
+ * we're adding A and AAAA glue records of the same NS name).
  */
 static void
-overmem_purge(dns_rbtdb_t *rbtdb, unsigned int locknum_start, isc_stdtime_t now,
+overmem_purge(dns_rbtdb_t *rbtdb, unsigned int locknum_start, size_t purgesize,
 	      bool tree_locked) {
-	rdatasetheader_t *header, *header_prev;
 	unsigned int locknum;
-	int purgecount = 2;
+	size_t purged = 0;
 
 	for (locknum = (locknum_start + 1) % rbtdb->node_lock_count;
-	     locknum != locknum_start && purgecount > 0;
+	     locknum != locknum_start && purged <= purgesize;
 	     locknum = (locknum + 1) % rbtdb->node_lock_count)
 	{
 		NODE_LOCK(&rbtdb->node_locks[locknum].lock,
 			  isc_rwlocktype_write);
 
-		header = isc_heap_element(rbtdb->heaps[locknum], 1);
-		if (header && header->rdh_ttl < now - RBTDB_VIRTUAL) {
-			expire_header(rbtdb, header, tree_locked, expire_ttl);
-			purgecount--;
-		}
-
-		for (header = ISC_LIST_TAIL(rbtdb->rdatasets[locknum]);
-		     header != NULL && purgecount > 0; header = header_prev)
-		{
-			header_prev = ISC_LIST_PREV(header, link);
-			/*
-			 * Unlink the entry at this point to avoid checking it
-			 * again even if it's currently used someone else and
-			 * cannot be purged at this moment.  This entry won't be
-			 * referenced any more (so unlinking is safe) since the
-			 * TTL was reset to 0.
-			 */
-			ISC_LIST_UNLINK(rbtdb->rdatasets[locknum], header,
-					link);
-			expire_header(rbtdb, header, tree_locked, expire_lru);
-			purgecount--;
-		}
+		purged += expire_lru_headers(rbtdb, locknum, purgesize - purged,
+					     tree_locked);
 
 		NODE_UNLOCK(&rbtdb->node_locks[locknum].lock,
 			    isc_rwlocktype_write);

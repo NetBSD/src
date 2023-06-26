@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: catz.c,v 1.10 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -632,7 +632,7 @@ cleanup_ht:
 	isc_ht_destroy(&new_zones->zones);
 	isc_refcount_destroy(&new_zones->refs);
 	isc_mutex_destroy(&new_zones->lock);
-	isc_mem_put(mctx, new_zones, sizeof(*new_zones));
+	isc_mem_putanddetach(&new_zones->mctx, new_zones, sizeof(*new_zones));
 
 	return (result);
 }
@@ -754,8 +754,10 @@ dns_catz_get_zone(dns_catz_zones_t *catzs, const dns_name_t *name) {
 	REQUIRE(DNS_CATZ_ZONES_VALID(catzs));
 	REQUIRE(ISC_MAGIC_VALID(name, DNS_NAME_MAGIC));
 
+	LOCK(&catzs->lock);
 	result = isc_ht_find(catzs->zones, name->ndata, name->length,
 			     (void **)&found);
+	UNLOCK(&catzs->lock);
 	if (result != ISC_R_SUCCESS) {
 		return (NULL);
 	}
@@ -810,7 +812,7 @@ dns_catz_zone_detach(dns_catz_zone_t **zonep) {
 			isc_ht_destroy(&zone->entries);
 		}
 		zone->magic = 0;
-		isc_timer_detach(&zone->updatetimer);
+		isc_timer_destroy(&zone->updatetimer);
 		if (zone->db_registered) {
 			dns_db_updatenotify_unregister(
 				zone->db, dns_catz_dbupdate_callback,
@@ -1763,6 +1765,8 @@ dns_catz_dbupdate_callback(dns_db_t *db, void *fn_arg) {
 		if (zone->dbversion != NULL) {
 			dns_db_closeversion(zone->db, &zone->dbversion, false);
 		}
+		dns_db_updatenotify_unregister(
+			zone->db, dns_catz_dbupdate_callback, zone->catzs);
 		dns_db_detach(&zone->db);
 		/*
 		 * We're not registering db update callback, it will be
@@ -1857,6 +1861,14 @@ dns_catz_update_from_db(dns_db_t *db, dns_catz_zones_t *catzs) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
 			      DNS_LOGMODULE_MASTER, ISC_LOG_ERROR,
 			      "catz: zone '%s' not in config", bname);
+		return;
+	}
+
+	if (!oldzone->active) {
+		/* This can happen during a reconfiguration. */
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,
+			      DNS_LOGMODULE_MASTER, ISC_LOG_INFO,
+			      "catz: zone '%s' is no longer active", bname);
 		return;
 	}
 
@@ -2028,6 +2040,7 @@ dns_catz_prereconfig(dns_catz_zones_t *catzs) {
 
 	REQUIRE(DNS_CATZ_ZONES_VALID(catzs));
 
+	LOCK(&catzs->lock);
 	isc_ht_iter_create(catzs->zones, &iter);
 	for (result = isc_ht_iter_first(iter); result == ISC_R_SUCCESS;
 	     result = isc_ht_iter_next(iter))
@@ -2036,6 +2049,7 @@ dns_catz_prereconfig(dns_catz_zones_t *catzs) {
 		isc_ht_iter_current(iter, (void **)&zone);
 		zone->active = false;
 	}
+	UNLOCK(&catzs->lock);
 	INSIST(result == ISC_R_NOMORE);
 	isc_ht_iter_destroy(&iter);
 }

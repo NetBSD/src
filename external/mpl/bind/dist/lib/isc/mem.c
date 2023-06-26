@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.13 2023/01/25 21:43:31 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.14 2023/06/26 22:03:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,9 +60,10 @@ LIBISC_EXTERNAL_DATA unsigned int isc_mem_defaultflags = ISC_MEMFLAG_DEFAULT;
  * Constants.
  */
 
-#define DEF_MAX_SIZE	  1100
-#define DEF_MEM_TARGET	  4096
-#define ALIGNMENT_SIZE	  8U /*%< must be a power of 2 */
+#define DEF_MAX_SIZE   1100
+#define DEF_MEM_TARGET 4096
+#define ALIGNMENT_SIZE \
+	8U /*%< must be a power of 2, also update lib/dns/rbt.c */
 #define NUM_BASIC_BLOCKS  64 /*%< must be > 1 */
 #define TABLE_INCREMENT	  1024
 #define DEBUG_TABLE_COUNT 512U
