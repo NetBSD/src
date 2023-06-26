@@ -112,8 +112,6 @@ confirm that it is in fact validating DNS responses.
 
 -  `Internet.nl <https://en.conn.internet.nl/connection/>`__
 
--  `DNSSEC Resolver Test (uni-due.de) <https://dnssec.vs.uni-due.de/>`__
-
 -  `DNSSEC or Not (VeriSign) <https://www.dnssec-or-not.com/>`__
 
 .. _using_dig_to_verify:

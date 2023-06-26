@@ -58,7 +58,7 @@ be used from a remote system.
 This option specifies the algorithm to use for the TSIG key. Available
 choices are: hmac\-md5, hmac\-sha1, hmac\-sha224, hmac\-sha256, hmac\-sha384,
 and hmac\-sha512. The default is hmac\-sha256. Options are
-case\-insensitive, and the "hmac\-" prefix may be omitted.
+case\-insensitive, and the \(dqhmac\-\(dq prefix may be omitted.
 .TP
 .B \fB\-h\fP
 This option prints a short summary of options and arguments.
@@ -79,15 +79,15 @@ explanatory text or usage examples. This is essentially identical to
 .B \fB\-s name\fP
 This option generates a configuration example to allow dynamic updates
 of a single hostname. The example \fBnamed.conf\fP text shows how to set
-an update policy for the specified name using the "name" nametype. The
-default key name is \fBddns\-key.name\fP\&. Note that the "self" nametype
+an update policy for the specified name using the \(dqname\(dq nametype. The
+default key name is \fBddns\-key.name\fP\&. Note that the \(dqself\(dq nametype
 cannot be used, since the name to be updated may differ from the key
 name. This option cannot be used with the \fB\-z\fP option.
 .TP
 .B \fB\-z zone\fP
 This option generates a configuration example to allow
 dynamic updates of a zone. The example \fBnamed.conf\fP text shows how
-to set an update policy for the specified zone using the "zonesub"
+to set an update policy for the specified zone using the \(dqzonesub\(dq
 nametype, allowing updates to all subdomain names within that zone.
 This option cannot be used with the \fB\-s\fP option.
 .UNINDENT

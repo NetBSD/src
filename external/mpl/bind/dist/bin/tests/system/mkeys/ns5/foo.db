@@ -1,0 +1,23 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 20
+foo.                   IN SOA  marka.isc.org. ns.foo. (
+                               2000042100      ; serial
+                               600             ; refresh
+                               600             ; retry
+                               1200            ; expire
+                               2               ; minimum
+                               )
+foo.		       NS      ns.foo.
+ns.foo.		       A       10.53.0.5
+sub.foo.	       NS      ns.sub.foo.
+ns.sub.foo.	       A       10.53.0.4

@@ -24,7 +24,6 @@ requests = pytest.importorskip("requests")
 
 # JSON helper functions
 def fetch_zones_json(statsip, statsport):
-
     r = requests.get(
         "http://{}:{}/json/v1/zones".format(statsip, statsport), timeout=600
     )
@@ -35,7 +34,6 @@ def fetch_zones_json(statsip, statsport):
 
 
 def fetch_traffic_json(statsip, statsport):
-
     r = requests.get(
         "http://{}:{}/json/v1/traffic".format(statsip, statsport), timeout=600
     )
@@ -47,7 +45,6 @@ def fetch_traffic_json(statsip, statsport):
 
 
 def load_timers_json(zone, primary=True):
-
     name = zone["name"]
 
     # Check if the primary zone timer exists

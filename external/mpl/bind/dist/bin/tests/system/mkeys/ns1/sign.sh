@@ -14,6 +14,24 @@
 SYSTEMTESTTOP=../..
 . $SYSTEMTESTTOP/conf.sh
 
+zone=sub.tld
+zonefile=sub.tld.db
+
+keyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk $zone)
+zskkeyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -q $zone)
+
+$SIGNER -Sg -o $zone $zonefile > /dev/null 2>/dev/null
+keyfile_to_initial_ds $keyname > island.conf
+cp island.conf ../ns5/island.conf
+
+zone=tld
+zonefile=tld.db
+
+keyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -qfk $zone)
+zskkeyname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -q $zone)
+
+$SIGNER -Sg -o $zone $zonefile > /dev/null 2>/dev/null
+
 zone=.
 zonefile=root.db
 
