@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.230 2023/06/26 14:54:40 rillig Exp $	*/
+/*	$NetBSD: io.c,v 1.231 2023/06/26 20:03:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: io.c,v 1.230 2023/06/26 14:54:40 rillig Exp $");
+__RCSID("$NetBSD: io.c,v 1.231 2023/06/26 20:03:09 rillig Exp $");
 
 #include <stdio.h>
 
@@ -176,6 +176,11 @@ want_blank_line(void)
 		ps.blank_line_after_decl = false;
 		return true;
 	}
+	if (ps.badp == badp_yes) {
+		ps.badp = badp_none;
+		return true;
+	}
+
 	if (opt.blank_line_around_conditional_compilation) {
 		if (out.prev_line_kind != lk_pre_if
 		    && out.line_kind == lk_pre_if)
@@ -400,6 +405,9 @@ prepare_next_line(void)
 		ps.ind_level = ps.ind_level_follow;
 	ps.ind_paren_level = (int)ps.paren.len;
 	ps.want_blank = false;
+	if ((ps.badp == badp_seen_lbrace || ps.badp == badp_seen_decl)
+	    && !ps.in_decl)
+		ps.badp = badp_yes;
 
 	if (ps.paren.len > 0) {
 		/* TODO: explain what negative indentation means */

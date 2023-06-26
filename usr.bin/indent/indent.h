@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.h,v 1.203 2023/06/23 20:43:21 rillig Exp $	*/
+/*	$NetBSD: indent.h,v 1.204 2023/06/26 20:03:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -404,6 +404,20 @@ extern struct parser_state {
 		decl_end,	/* finished a declaration */
 	} declaration;
 	bool blank_line_after_decl;
+
+	enum {
+		badp_none,
+		badp_seen_lbrace,
+		badp_decl,	/* in an unfinished declaration in the first
+				 * block of declarations in a function body */
+		badp_seen_decl,	/* seen the semicolon of a declaration; the
+				 * next line is a candidate for inserting a
+				 * blank line above */
+		badp_yes,	/* this line is a candidate for inserting a
+				 * blank line above, unless the line turns out
+				 * to start a declaration */
+	} badp;			/* insert a blank line before the first
+				 * statement in a function body */
 } ps;
 
 extern struct output_state {

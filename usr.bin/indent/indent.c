@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.385 2023/06/26 14:54:40 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.386 2023/06/26 20:03:09 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.385 2023/06/26 14:54:40 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.386 2023/06/26 20:03:09 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -349,6 +349,22 @@ update_ps_lbrace_kind(lexer_symbol lsym)
 		/* Keep the current '{' kind. */
 	} else
 		ps.lbrace_kind = psym_lbrace_block;
+}
+
+static void
+update_ps_badp(lexer_symbol lsym)
+{
+	if (lsym == lsym_lbrace && ps.lbrace_kind == psym_lbrace_block
+	    && ps.psyms.len == 3)
+		ps.badp = badp_seen_lbrace;
+	if (lsym == lsym_rbrace && ps.decl_level == 0)
+		ps.badp = badp_none;
+	if (lsym == lsym_type && ps.paren.len == 0
+	    && (ps.badp == badp_seen_lbrace || ps.badp == badp_yes))
+		ps.badp = badp_decl;
+	if (lsym == lsym_semicolon && ps.badp == badp_decl
+	    && ps.decl_level == 0)
+		ps.badp = badp_seen_decl;
 }
 
 static void
@@ -1122,6 +1138,8 @@ indent(void)
 
 		process_lsym(lsym);
 
+		if (opt.blank_line_after_decl_at_top)
+			update_ps_badp(lsym);
 		if (lsym != lsym_preprocessing
 		    && lsym != lsym_newline
 		    && lsym != lsym_comment)
