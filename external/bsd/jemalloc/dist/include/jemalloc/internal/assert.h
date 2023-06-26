@@ -13,7 +13,7 @@
 		    __FILE__, __LINE__, #e);				\
 		abort();						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif
 
 #ifndef not_reached
@@ -25,7 +25,7 @@
 		abort();						\
 	}								\
 	unreachable();							\
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif
 
 #ifndef not_implemented
@@ -35,7 +35,7 @@
 		    __FILE__, __LINE__);				\
 		abort();						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif
 
 #ifndef assert_not_implemented
@@ -43,7 +43,7 @@
 	if (unlikely(config_debug && !(e))) {				\
 		not_implemented();					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif
 
 /* Use to assert a particular configuration, e.g., cassert(config_debug). */
@@ -52,5 +52,5 @@
 	if (unlikely(!(c))) {						\
 		not_reached();						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif

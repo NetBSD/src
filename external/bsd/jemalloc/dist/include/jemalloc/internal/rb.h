@@ -53,7 +53,7 @@ struct {								\
     ((a_node)->a_field.rbn_left)
 #define rbtn_left_set(a_type, a_field, a_node, a_left) do {		\
     (a_node)->a_field.rbn_left = a_left;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #ifdef RB_COMPACT
 /* Right accessors. */
@@ -63,7 +63,7 @@ struct {								\
 #define rbtn_right_set(a_type, a_field, a_node, a_right) do {		\
     (a_node)->a_field.rbn_right_red = (a_type *) (((uintptr_t) a_right)	\
       | (((uintptr_t) (a_node)->a_field.rbn_right_red) & ((size_t)1)));	\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* Color accessors. */
 #define rbtn_red_get(a_type, a_field, a_node)				\
@@ -73,15 +73,15 @@ struct {								\
     (a_node)->a_field.rbn_right_red = (a_type *) ((((intptr_t)		\
       (a_node)->a_field.rbn_right_red) & ((ssize_t)-2))			\
       | ((ssize_t)a_red));						\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define rbtn_red_set(a_type, a_field, a_node) do {			\
     (a_node)->a_field.rbn_right_red = (a_type *) (((uintptr_t)		\
       (a_node)->a_field.rbn_right_red) | ((size_t)1));			\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define rbtn_black_set(a_type, a_field, a_node) do {			\
     (a_node)->a_field.rbn_right_red = (a_type *) (((intptr_t)		\
       (a_node)->a_field.rbn_right_red) & ((ssize_t)-2));		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* Node initializer. */
 #define rbt_node_new(a_type, a_field, a_rbt, a_node) do {		\
@@ -90,40 +90,40 @@ struct {								\
     rbtn_left_set(a_type, a_field, (a_node), NULL);	\
     rbtn_right_set(a_type, a_field, (a_node), NULL);	\
     rbtn_red_set(a_type, a_field, (a_node));				\
-} while (/*CONSTCOND*/0)
+} while (0)
 #else
 /* Right accessors. */
 #define rbtn_right_get(a_type, a_field, a_node)				\
     ((a_node)->a_field.rbn_right)
 #define rbtn_right_set(a_type, a_field, a_node, a_right) do {		\
     (a_node)->a_field.rbn_right = a_right;				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* Color accessors. */
 #define rbtn_red_get(a_type, a_field, a_node)				\
     ((a_node)->a_field.rbn_red)
 #define rbtn_color_set(a_type, a_field, a_node, a_red) do {		\
     (a_node)->a_field.rbn_red = (a_red);				\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define rbtn_red_set(a_type, a_field, a_node) do {			\
     (a_node)->a_field.rbn_red = true;					\
-} while (/*CONSTCOND*/0)
+} while (0)
 #define rbtn_black_set(a_type, a_field, a_node) do {			\
     (a_node)->a_field.rbn_red = false;					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* Node initializer. */
 #define rbt_node_new(a_type, a_field, a_rbt, a_node) do {		\
     rbtn_left_set(a_type, a_field, (a_node), NULL);	\
     rbtn_right_set(a_type, a_field, (a_node), NULL);	\
     rbtn_red_set(a_type, a_field, (a_node));				\
-} while (/*CONSTCOND*/0)
+} while (0)
 #endif
 
 /* Tree initializer. */
 #define rb_new(a_type, a_field, a_rbt) do {				\
     (a_rbt)->rbt_root = NULL;						\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /* Internal utility macros. */
 #define rbtn_first(a_type, a_field, a_rbt, a_root, r_node) do {		\
@@ -134,7 +134,7 @@ struct {								\
 	  (r_node) = rbtn_left_get(a_type, a_field, (r_node))) {	\
 	}								\
     }									\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define rbtn_last(a_type, a_field, a_rbt, a_root, r_node) do {		\
     (r_node) = (a_root);						\
@@ -143,21 +143,21 @@ struct {								\
 	  (r_node) = rbtn_right_get(a_type, a_field, (r_node))) {	\
 	}								\
     }									\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define rbtn_rotate_left(a_type, a_field, a_node, r_node) do {		\
     (r_node) = rbtn_right_get(a_type, a_field, (a_node));		\
     rbtn_right_set(a_type, a_field, (a_node),				\
       rbtn_left_get(a_type, a_field, (r_node)));			\
     rbtn_left_set(a_type, a_field, (r_node), (a_node));			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define rbtn_rotate_right(a_type, a_field, a_node, r_node) do {		\
     (r_node) = rbtn_left_get(a_type, a_field, (a_node));		\
     rbtn_left_set(a_type, a_field, (a_node),				\
       rbtn_right_get(a_type, a_field, (r_node)));			\
     rbtn_right_set(a_type, a_field, (r_node), (a_node));		\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * The rb_proto() macro generates function prototypes that correspond to the
