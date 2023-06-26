@@ -852,7 +852,14 @@ fi
 n=$((n + 1))
 ret=0
 echo_i "check TSIG key algorithms (nsupdate -k) ($n)"
-for alg in md5 sha1 sha224 sha256 sha384 sha512; do
+if $FEATURETEST --md5
+then
+	ALGS="md5 sha1 sha224 sha256 sha384 sha512"
+else
+	ALGS="sha1 sha224 sha256 sha384 sha512"
+	echo_i "skipping disabled md5 algorithm"
+fi
+for alg in $ALGS; do
     $NSUPDATE -k ns1/${alg}.key <<END > /dev/null || ret=1
 server 10.53.0.1 ${PORT}
 update add ${alg}.keytests.nil. 600 A 10.10.10.3
@@ -860,7 +867,7 @@ send
 END
 done
 sleep 2
-for alg in md5 sha1 sha224 sha256 sha384 sha512; do
+for alg in $ALGS; do
     $DIG $DIGOPTS +short @10.53.0.1 ${alg}.keytests.nil | grep 10.10.10.3 > /dev/null 2>&1 || ret=1
 done
 if [ $ret -ne 0 ]; then
@@ -1302,19 +1309,22 @@ END
 grep 'failed: REFUSED' nsupdate.out.test$n > /dev/null || ret=1
 [ $ret = 0 ] || { echo_i "failed"; status=1; }
 
-n=$((n + 1))
-ret=0
-echo_i "check that update is rejected if quota is exceeded ($n)"
-for loop in 1 2 3 4 5 6 7 8 9 10; do
-{
-  $NSUPDATE -4 -l -p ${PORT} -k ns1/session.key > /dev/null 2>&1 <<END
-  update add txt-$loop.other.nil 3600 IN TXT Whatever
-  send
+# This check is unstable on Windows.
+if [ ! "$CYGWIN" ]; then
+  n=$((n + 1))
+  ret=0
+  echo_i "check that update is rejected if quota is exceeded ($n)"
+  for loop in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+  {
+    $NSUPDATE -4 -l -p ${PORT} -k ns1/session.key > /dev/null 2>&1 <<END
+    update add txt-$loop.other.nil 3600 IN TXT Whatever
+    send
 END
-} &
-done
-wait_for_log 10 "too many DNS UPDATEs queued" ns1/named.run || ret=1
-[ $ret = 0 ] || { echo_i "failed"; status=1; }
+  } &
+  done
+  wait_for_log 10 "too many DNS UPDATEs queued" ns1/named.run || ret=1
+  [ $ret = 0 ] || { echo_i "failed"; status=1; }
+fi
 
 if ! $FEATURETEST --gssapi ; then
   echo_i "SKIPPED: GSSAPI tests"

@@ -182,8 +182,8 @@ less congestion than if all validators need to refetch at around the
 same time.
 .TP
 .B \fB\-L serial\fP
-When writing a signed zone to "raw" or "map" format, this option sets the "source
-serial" value in the header to the specified \fBserial\fP number. (This is
+When writing a signed zone to \(dqraw\(dq or \(dqmap\(dq format, this option sets the \(dqsource
+serial\(dq value in the header to the specified \fBserial\fP number. (This is
 expected to be used primarily for testing purposes.)
 .TP
 .B \fB\-n ncpus\fP
@@ -248,7 +248,7 @@ period are retained. This allows the zone to continue to validate
 with cached copies of the old DNSKEY RRset. The \fB\-Q\fP option forces
 \fBdnssec\-signzone\fP to remove signatures from keys that are no longer
 active. This enables ZSK rollover using the procedure described in
-\fI\%RFC 4641#4.2.1.1\fP ("Pre\-Publish Key Rollover").
+\fI\%RFC 4641#4.2.1.1\fP (\(dqPre\-Publish Key Rollover\(dq).
 .TP
 .B \fB\-q\fP
 This option enables quiet mode, which suppresses unnecessary output. Without this option, when
@@ -263,8 +263,8 @@ This option removes signatures from keys that are no longer published.
 This option is similar to \fB\-Q\fP, except it forces
 \fBdnssec\-signzone\fP to remove signatures from keys that are no longer
 published. This enables ZSK rollover using the procedure described in
-\fI\%RFC 4641#4.2.1.2\fP ("Double Signature Zone Signing Key
-Rollover").
+\fI\%RFC 4641#4.2.1.2\fP (\(dqDouble Signature Zone Signing Key
+Rollover\(dq).
 .TP
 .B \fB\-S\fP
 This option enables smart signing, which instructs \fBdnssec\-signzone\fP to search the key

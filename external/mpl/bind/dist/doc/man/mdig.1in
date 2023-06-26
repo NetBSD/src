@@ -45,9 +45,9 @@ all queries. Responses are displayed in the order in which they are
 received, not in the order the corresponding queries were sent.
 .sp
 \fBmdig\fP options are a subset of the \fBdig\fP options, and are divided
-into "anywhere options," which can occur anywhere, "global options," which
+into \(dqanywhere options,\(dq which can occur anywhere, \(dqglobal options,\(dq which
 must occur before the query name (or they are ignored with a warning),
-and "local options," which apply to the next query on the command line.
+and \(dqlocal options,\(dq which apply to the next query on the command line.
 .sp
 The \fB@server\fP option is a mandatory global option. It is the name or IP
 address of the name server to query. (Unlike \fBdig\fP, this value is not
@@ -96,8 +96,8 @@ This option forces \fBmdig\fP to only use IPv6 query transport.
 .B \fB\-b address\fP
 This option sets the source IP address of the query to
 \fBaddress\fP\&. This must be a valid address on one of the host\(aqs network
-interfaces or "0.0.0.0" or "::". An optional port may be specified by
-appending "#<port>"
+interfaces or \(dq0.0.0.0\(dq or \(dq::\(dq. An optional port may be specified by
+appending \(dq#<port>\(dq
 .TP
 .B \fB\-m\fP
 This option enables memory usage debugging.
@@ -150,7 +150,7 @@ This option toggles the display of cryptographic fields in DNSSEC records. The
 contents of these fields are unnecessary to debug most DNSSEC
 validation failures and removing them makes it easier to see the
 common failures. The default is to display the fields. When omitted,
-they are replaced by the string "[omitted]"; in the DNSKEY case, the
+they are replaced by the string \(dq[omitted]\(dq; in the DNSKEY case, the
 key ID is displayed as the replacement, e.g., \fB[ key id = value ]\fP\&.
 .TP
 .B \fB+dscp[=value]\fP
@@ -193,13 +193,13 @@ This option displays [or does not display] the TTL when printing the record.
 .TP
 .B \fB+[no]ttlunits\fP
 This option displays [or does not display] the TTL in friendly human\-readable time
-units of "s", "m", "h", "d", and "w", representing seconds, minutes,
+units of \(dqs\(dq, \(dqm\(dq, \(dqh\(dq, \(dqd\(dq, and \(dqw\(dq, representing seconds, minutes,
 hours, days, and weeks. This implies +ttlid.
 .TP
 .B \fB+[no]vc\fP
 This option uses [or does not use] TCP when querying name servers. This alternate
 syntax to \fB+[no]tcp\fP is provided for backwards compatibility. The
-\fBvc\fP stands for "virtual circuit".
+\fBvc\fP stands for \(dqvirtual circuit\(dq.
 .UNINDENT
 .SH LOCAL OPTIONS
 .INDENT 0.0
@@ -207,13 +207,13 @@ syntax to \fB+[no]tcp\fP is provided for backwards compatibility. The
 .B \fB\-c class\fP
 This option sets the query class to \fBclass\fP\&. It can be any valid
 query class which is supported in BIND 9. The default query class is
-"IN".
+\(dqIN\(dq.
 .TP
 .B \fB\-t type\fP
 This option sets the query type to \fBtype\fP\&. It can be any valid
-query type which is supported in BIND 9. The default query type is "A",
+query type which is supported in BIND 9. The default query type is \(dqA\(dq,
 unless the \fB\-x\fP option is supplied to indicate a reverse lookup with
-the "PTR" query type.
+the \(dqPTR\(dq query type.
 .TP
 .B \fB\-x addr\fP
 Reverse lookups \- mapping addresses to names \- are simplified by

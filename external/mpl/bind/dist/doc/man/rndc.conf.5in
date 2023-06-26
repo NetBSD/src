@@ -136,7 +136,7 @@ server testserver {
 .ft C
 key samplekey {
   algorithm       hmac\-sha256;
-  secret          "6FMfj43Osz4lyb24OIe2iGEz9lf1llJO+lz";
+  secret          \(dq6FMfj43Osz4lyb24OIe2iGEz9lf1llJO+lz\(dq;
 };
 .ft P
 .fi
@@ -149,7 +149,7 @@ key samplekey {
 .ft C
 key testkey {
   algorithm   hmac\-sha256;
-  secret      "R3HI8P6BKw9ZwXwN3VZKuQ==";
+  secret      \(dqR3HI8P6BKw9ZwXwN3VZKuQ==\(dq;
 };
 .ft P
 .fi
@@ -157,15 +157,15 @@ key testkey {
 .UNINDENT
 .sp
 In the above example, \fBrndc\fP by default uses the server at
-localhost (127.0.0.1) and the key called "samplekey". Commands to the
-localhost server use the "samplekey" key, which must also be defined
+localhost (127.0.0.1) and the key called \(dqsamplekey\(dq. Commands to the
+localhost server use the \(dqsamplekey\(dq key, which must also be defined
 in the server\(aqs configuration file with the same name and secret. The
-key statement indicates that "samplekey" uses the HMAC\-SHA256 algorithm
+key statement indicates that \(dqsamplekey\(dq uses the HMAC\-SHA256 algorithm
 and its secret clause contains the base\-64 encoding of the HMAC\-SHA256
 secret enclosed in double quotes.
 .sp
 If \fBrndc \-s testserver\fP is used, then \fBrndc\fP connects to the server
-on localhost port 5353 using the key "testkey".
+on localhost port 5353 using the key \(dqtestkey\(dq.
 .sp
 To generate a random secret with \fBrndc\-confgen\fP:
 .sp
@@ -177,7 +177,7 @@ is written to the standard output. Commented\-out \fBkey\fP and
 .sp
 To generate a base\-64 secret with \fBmmencode\fP:
 .sp
-\fBecho "known plaintext for a secret" | mmencode\fP
+\fBecho \(dqknown plaintext for a secret\(dq | mmencode\fP
 .SH NAME SERVER CONFIGURATION
 .sp
 The name server must be configured to accept rndc connections and to

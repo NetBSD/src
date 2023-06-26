@@ -153,7 +153,7 @@ do
 		$DIG $DIGOPTS $z @10.53.0.1 nsec > dig.out.ns1.test$n || ret=1
 		grep "NS SOA" dig.out.ns1.test$n > /dev/null || ret=1
 	done
-	for z in bar. example. private.secure.example.
+	for z in bar. example. private.secure.example. optout-with-ent.
 	do
 		$DIG $DIGOPTS $z @10.53.0.2 nsec > dig.out.ns2.test$n || ret=1
 		grep "NS SOA" dig.out.ns2.test$n > /dev/null || ret=1
@@ -172,6 +172,9 @@ done
 n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "done"; fi
 status=$((status + ret))
+
+echo_i "Convert optout-with-ent from nsec to nsec3"
+($RNDCCMD 10.53.0.2 signing -nsec3param 1 1 1 - optout-with-ent 2>&1 | sed 's/^/ns2 /' | cat_i) || ret=1
 
 echo_i "Initial counts of RRSIG expiry fields values for auto signed zones"
 for z in .
@@ -1740,6 +1743,46 @@ retry_quiet 1 _cds_delete_nx cdnskey-delete.example. || ret=1
 n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
+
+echo_i "check removal of ENT NSEC3 records when opt out delegations are removed ($n)"
+ret=0
+zone=optout-with-ent
+hash=JTR8R6AVFULU0DQH9I6HNN2KUK5956EL
+# check that NSEC3 for ENT is present
+$DIG $DIGOPTS @10.53.0.2 a "ent.${zone}" > dig.out.pre.ns2.test$n
+grep "status: NOERROR" dig.out.pre.ns2.test$n >/dev/null || ret=1
+grep "ANSWER: 0, AUTHORITY: 4, " dig.out.pre.ns2.test$n > /dev/null || ret=1
+grep "^${hash}.${zone}." dig.out.pre.ns2.test$n > /dev/null || ret=1
+# remove first delegation of two delegations, NSEC3 for ENT should remain.
+(
+echo zone $zone
+echo server 10.53.0.2 "$PORT"
+echo update del sub1.ent.$zone NS
+echo send
+) | $NSUPDATE
+# check that NSEC3 for ENT is still present
+$DIG $DIGOPTS @10.53.0.2 a "ent.${zone}" > dig.out.pre.ns2.test$n
+$DIG $DIGOPTS @10.53.0.2 a "ent.${zone}" > dig.out.mid.ns2.test$n
+grep "status: NOERROR" dig.out.mid.ns2.test$n >/dev/null || ret=1
+grep "ANSWER: 0, AUTHORITY: 4, " dig.out.mid.ns2.test$n > /dev/null || ret=1
+grep "^${hash}.${zone}." dig.out.mid.ns2.test$n > /dev/null || ret=1
+# remove second delegation of two delegations, NSEC3 for ENT should be deleted.
+(
+echo zone $zone
+echo server 10.53.0.2 "$PORT"
+echo update del sub2.ent.$zone NS
+echo send
+) | $NSUPDATE
+# check that NSEC3 for ENT is gone present
+$DIG $DIGOPTS @10.53.0.2 a "ent.${zone}" > dig.out.post.ns2.test$n
+grep "status: NXDOMAIN" dig.out.post.ns2.test$n >/dev/null || ret=1
+grep "ANSWER: 0, AUTHORITY: 4, " dig.out.post.ns2.test$n > /dev/null || ret=1
+grep "^${hash}.${zone}." dig.out.post.ns2.test$n > /dev/null && ret=1
+$DIG $DIGOPTS @10.53.0.2 axfr "${zone}" > dig.out.axfr.ns2.test$n
+grep "^${hash}.${zone}." dig.out.axfr.ns2.test$n > /dev/null && ret=1
+n=$((n+1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

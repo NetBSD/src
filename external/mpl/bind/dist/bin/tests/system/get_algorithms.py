@@ -111,7 +111,10 @@ def is_supported(alg: Algorithm) -> bool:
             f"{TESTCRYPTO} -q {alg.name}",
             shell=True,
             check=True,
-            env={"KEYGEN": KEYGEN},
+            env={
+                "KEYGEN": KEYGEN,
+                "TMPDIR": os.getenv("TMPDIR", "/tmp"),
+            },
             stdout=subprocess.DEVNULL,
         )
     except subprocess.CalledProcessError as exc:
@@ -232,9 +235,8 @@ def main():
         # later by run.sh
         print("export ALGORITHM_SET=error")
         raise
-    else:
-        for name, value in algs_env.items():
-            print(f"export {name}={value}")
+    for name, value in algs_env.items():
+        print(f"export {name}={value}")
 
 
 if __name__ == "__main__":

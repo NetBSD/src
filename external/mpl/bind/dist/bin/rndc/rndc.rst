@@ -173,9 +173,13 @@ Currently supported commands are:
    notation.
 
 ``dnstap`` ( **-reopen** | **-roll** [*number*] )
-   This command closes and re-opens DNSTAP output files. ``rndc dnstap -reopen`` allows
+   This command closes and re-opens DNSTAP output files.
+
+   ``rndc dnstap -reopen`` allows
    the output file to be renamed externally, so that ``named`` can
-   truncate and re-open it. ``rndc dnstap -roll`` causes the output file
+   truncate and re-open it.
+
+   ``rndc dnstap -roll`` causes the output file
    to be rolled automatically, similar to log files. The most recent
    output file has ".0" appended to its name; the previous most recent
    output file is moved to ".1", and so on. If ``number`` is specified, then

@@ -139,7 +139,7 @@ This option sets the directory in which the key files are to be written.
 .B \fB\-k policy\fP
 This option creates keys for a specific \fBdnssec\-policy\fP\&. If a policy uses multiple keys,
 \fBdnssec\-keygen\fP generates multiple keys. This also
-creates a ".state" file to keep track of the key state.
+creates a \(dq.state\(dq file to keep track of the key state.
 .sp
 This option creates keys according to the \fBdnssec\-policy\fP configuration, hence
 it cannot be used at the same time as many of the other options that

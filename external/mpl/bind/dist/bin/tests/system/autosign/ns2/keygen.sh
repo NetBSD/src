@@ -56,3 +56,11 @@ do
 done
 $KEYGEN -a ECDSAP256SHA256 -q $zone > /dev/null
 $DSFROMKEY Kbar.+013+60101.key > dsset-bar$TP
+
+# a zone with empty non-terminals.
+zone=optout-with-ent
+zonefile=optout-with-ent.db
+infile=optout-with-ent.db.in
+cat $infile > $zonefile
+kskname=$($KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q -fk $zone)
+$KEYGEN -a ${DEFAULT_ALGORITHM} -3 -q $zone > /dev/null

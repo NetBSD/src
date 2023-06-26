@@ -1639,6 +1639,24 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
 n=$((n+1))
+echo_i "delay responses from authoritative server ($n)"
+ret=0
+$DIG -p ${PORT} @10.53.0.2 txt slowdown  > dig.out.test$n
+grep "ANSWER: 1," dig.out.test$n > /dev/null || ret=1
+grep "TXT.\"1\"" dig.out.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
+echo_i "prime cache data.slow TXT (stale-answer-client-timeout) ($n)"
+ret=0
+$DIG -p ${PORT} @10.53.0.3 data.slow TXT > dig.out.test$n
+grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
 echo_i "disable responses from authoritative server ($n)"
 ret=0
 $DIG -p ${PORT} @10.53.0.2 txt disable  > dig.out.test$n
@@ -1652,10 +1670,11 @@ sleep 2
 
 nextpart ns3/named.run > /dev/null
 
-echo_i "sending queries for tests $((n+1))-$((n+2))..."
+echo_i "sending queries for tests $((n+1))-$((n+3))..."
 t1=`$PERL -e 'print time()'`
 $DIG -p ${PORT} +tries=1 +timeout=10  @10.53.0.3 data.example TXT > dig.out.test$((n+1)) &
 $DIG -p ${PORT} +tries=1 +timeout=10  @10.53.0.3 nodata.example TXT > dig.out.test$((n+2))
+$DIG -p ${PORT} +tries=1 +timeout=10  @10.53.0.3 data.slow TXT > dig.out.test$((n+3)) &
 wait
 t2=`$PERL -e 'print time()'`
 
@@ -1677,9 +1696,19 @@ status=$((status+ret))
 
 n=$((n+1))
 echo_i "check stale nodata.example TXT comes from cache (stale-answer-client-timeout 1.8) ($n)"
+ret=0
 grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
 grep "ANSWER: 0," dig.out.test$n > /dev/null || ret=1
 grep "example\..*3.*IN.*SOA" dig.out.test$n > /dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
+echo_i "check stale data.slow TXT comes from cache (stale-answer-client-timeout 1.8) ($n)"
+ret=0
+grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
+grep "ANSWER: 1," dig.out.test$n > /dev/null || ret=1
+grep "data\.slow\..*3.*IN.*TXT.*A slow text record with a 2 second ttl" dig.out.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
@@ -1689,9 +1718,10 @@ status=$((status+ret))
 
 nextpart ns3/named.run > /dev/null
 
-echo_i "sending queries for tests $((n+2))-$((n+3))..."
+echo_i "sending queries for tests $((n+2))-$((n+4))..."
 $DIG -p ${PORT} +tries=1 +timeout=3   @10.53.0.3 longttl.example TXT > dig.out.test$((n+2)) &
 $DIG -p ${PORT} +tries=1 +timeout=10  @10.53.0.3 longttl.example TXT > dig.out.test$((n+3)) &
+$DIG -p ${PORT} +tries=1 +timeout=3   @10.53.0.3 longttl.example RRSIG > dig.out.test$((n+4)) &
 
 # Enable the authoritative name server after stale-answer-client-timeout.
 n=$((n+1))
@@ -1727,6 +1757,37 @@ check_results() {
     return 0
 }
 retry_quiet 8 check_results dig.out.test$n || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
+echo_i "check not in cache longttl.example RRSIG times out (stale-answer-client-timeout 1.8) ($n)"
+ret=0
+check_results() {
+    [ -s "$1" ] || return 1
+    grep "connection timed out" "$1" > /dev/null || return 1
+    return 0
+}
+retry_quiet 8 check_results dig.out.test$n || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+# CVE-2022-3924, GL #3619
+n=$((n+1))
+echo_i "check that named survives reaching recursive-clients quota (stale-answer-client-timeout 1.8) ($n)"
+ret=0
+num=0
+# Make sure to exceed the configured value of 'recursive-clients 10;' by running
+# 20 parallel queries with simulated network latency.
+while [ $num -lt 20 ]; do
+    $DIG +tries=1 -p ${PORT} @10.53.0.3 "latency${num}.data.example" TXT >/dev/null 2>&1 &
+    num=$((num+1))
+done;
+_dig_data() {
+    $DIG -p ${PORT} @10.53.0.3 data.example TXT >dig.out.test$n || return 1
+    grep "status: NOERROR" dig.out.test$n > /dev/null || return 1
+}
+retry_quiet 5 _dig_data || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
@@ -1930,8 +1991,10 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
 wait_for_rrset_refresh() {
-	nextpart ns3/named.run | grep 'data.example.*2.*TXT.*"A text record with a 2 second ttl"' > /dev/null && return 0
-	return 1
+	$DIG -p ${PORT} @10.53.0.3 data.example TXT > dig.out.test$n
+	grep "status: NOERROR" dig.out.test$n > /dev/null || return 1
+	grep "ANSWER: 1," dig.out.test$n > /dev/null || return 1
+	grep "data\.example\..*[12].*IN.*TXT.*A text record with a 2 second ttl" dig.out.test$n > /dev/null || return 1
 }
 
 # This test ensures that after we get stale data due to
@@ -1941,10 +2004,6 @@ n=$((n+1))
 ret=0
 echo_i "check stale data.example TXT was refreshed (stale-answer-client-timeout 0) ($n)"
 retry_quiet 10 wait_for_rrset_refresh || ret=1
-$DIG -p ${PORT} @10.53.0.3 data.example TXT > dig.out.test$n
-grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
-grep "ANSWER: 1," dig.out.test$n > /dev/null || ret=1
-grep "data\.example\..*[12].*IN.*TXT.*A text record with a 2 second ttl" dig.out.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 
@@ -2124,10 +2183,6 @@ n=$((n+1))
 ret=0
 echo_i "check stale data.example TXT was refreshed (stale-answer-client-timeout 0 stale-refresh-time 4) ($n)"
 retry_quiet 10 wait_for_rrset_refresh || ret=1
-$DIG -p ${PORT} @10.53.0.3 data.example TXT > dig.out.test$n
-grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
-grep "ANSWER: 1," dig.out.test$n > /dev/null || ret=1
-grep "data\.example\..*[12].*IN.*TXT.*A text record with a 2 second ttl" dig.out.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status+ret))
 

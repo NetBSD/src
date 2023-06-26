@@ -276,11 +276,8 @@ get_core_dumps() {
 }
 
 core_dumps=$(get_core_dumps | tr '\n' ' ')
-assertion_failures=$(find "$systest/" -name named.run -exec grep "assertion failure" {} + | wc -l)
-sanitizer_summaries=$(find "$systest/" -name 'tsan.*' | wc -l)
 if [ -n "$core_dumps" ]; then
     echoinfo "I:$systest:Core dump(s) found: $core_dumps"
-    echofail "R:$systest:FAIL"
     get_core_dumps | while read -r coredump; do
         SYSTESTDIR="$systest"
         echoinfo "D:$systest:backtrace from $coredump:"
@@ -308,17 +305,23 @@ if [ -n "$core_dumps" ]; then
         gzip -1 "${coredump}"
     done
     status=$((status+1))
-elif [ "$assertion_failures" -ne 0 ]; then
+fi
+
+assertion_failures=$(find "$systest/" -name named.run -exec grep "assertion failure" {} + | wc -l)
+if [ "$assertion_failures" -ne 0 ]; then
     SYSTESTDIR="$systest"
     echoinfo "I:$systest:$assertion_failures assertion failure(s) found"
+    status=$((status+1))
+fi
+
+tsan_failures=$(find "$systest/" -name 'tsan.*' | wc -l)
+if [ "$tsan_failures" -ne 0 ]; then
+    echoinfo "I:$systest:$tsan_failures sanitizer report(s) found"
     find "$systest/" -name 'tsan.*' -exec grep "SUMMARY: " {} + | sort -u | cat_d
-    echofail "R:$systest:FAIL"
     status=$((status+1))
-elif [ "$sanitizer_summaries" -ne 0 ]; then
-    echoinfo "I:$systest:$sanitizer_summaries sanitizer report(s) found"
-    echofail "R:$systest:FAIL"
-    status=$((status+1))
-elif [ "$status" -ne 0 ]; then
+fi
+
+if [ "$status" -ne 0 ]; then
     echofail "R:$systest:FAIL"
 else
     echopass "R:$systest:PASS"

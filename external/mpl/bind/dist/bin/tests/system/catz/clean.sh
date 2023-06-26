@@ -23,6 +23,7 @@ rm -f ns1/*dom*example.db
 rm -f ns2/__catz__*db
 rm -f ns2/named.conf.tmp
 rm -f ns3/dom13.example.db ns3/dom14.example.db
+rm -f ns4/catalog-self.example.db
 rm -f nsupdate.out.*
 rm -f ns[123]/catalog[1234].example.db
 rm -rf ns2/zonedir

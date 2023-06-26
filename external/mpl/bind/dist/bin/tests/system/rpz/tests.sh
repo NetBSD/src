@@ -846,6 +846,16 @@ EOF
     stop_server --use-rndc --port ${CONTROLPORT} ns3
     restart 3 "rebuild-bl-rpz"
 
+    t=`expr $t + 1`
+    echo_i "checking if rpz survives a certain class of failed reconfiguration attempts (${t})"
+    sed -e "s/^#BAD//" < ns3/named.conf.in > ns3/named.conf.tmp
+    copy_setports ns3/named.conf.tmp ns3/named.conf
+    rm ns3/named.conf.tmp
+    $RNDCCMD $ns3 reconfig > /dev/null 2>&1 && setret "failed"
+    sleep 1
+    copy_setports ns3/named.conf.in ns3/named.conf
+    $RNDCCMD $ns3 reconfig || setret "failed"
+
     # reload a RPZ zone that is now deliberately broken.
     t=`expr $t + 1`
     echo_i "checking rpz failed update will keep previous rpz rules (${t})"

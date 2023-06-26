@@ -34,9 +34,9 @@ def feature_test(feature):
 
 
 have_libxml2 = pytest.mark.skipif(
-    feature_test("--have-libxml2"), reason="libxml2 support disabled in the build"
+    not feature_test("--have-libxml2"), reason="libxml2 support disabled in the build"
 )
 
 have_json_c = pytest.mark.skipif(
-    feature_test("--have-json-c"), reason="json-c support disabled in the build"
+    not feature_test("--have-json-c"), reason="json-c support disabled in the build"
 )

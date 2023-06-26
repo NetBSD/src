@@ -35,6 +35,7 @@ from dns.rdataclass import *
 from dns.rdatatype import *
 from dns.tsig import *
 
+
 # Log query to file
 def logquery(type, qname):
     with open("qlog", "a") as f:
@@ -53,6 +54,7 @@ except:
     keyring = dns.tsigkeyring.from_text({"foo": "aaaaaaaaaaaa", "fake": "aaaaaaaaaaaa"})
 
 dopass2 = False
+
 
 ############################################################################
 #

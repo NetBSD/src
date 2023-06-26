@@ -136,7 +136,7 @@ after a restart.
 This sample \fBaddzone\fP command adds the zone \fBexample.com\fP to
 the default view:
 .sp
-\fBrndc addzone example.com \(aq{ type master; file "example.com.db"; };\(aq\fP
+\fBrndc addzone example.com \(aq{ type master; file \(dqexample.com.db\(dq; };\(aq\fP
 .sp
 (Note the brackets around and semi\-colon after the zone configuration
 text.)
@@ -162,7 +162,7 @@ recreated. To remove it permanently, it must also be removed from
 See also \fBrndc addzone\fP and \fBrndc modzone\fP\&.
 .TP
 \fBdnssec\fP ( \fB\-status\fP | \fB\-rollover\fP \fB\-key\fP id [\fB\-alg\fP \fIalgorithm\fP] [\fB\-when\fP \fItime\fP] | \fB\-checkds\fP [\fB\-key\fP \fIid\fP [\fB\-alg\fP \fIalgorithm\fP]] [\fB\-when\fP \fItime\fP] ( \fIpublished\fP | \fIwithdrawn\fP )) \fIzone\fP [\fIclass\fP [\fIview\fP]]
-This command allows you to interact with the "dnssec\-policy" of a given
+This command allows you to interact with the \(dqdnssec\-policy\(dq of a given
 zone.
 .sp
 \fBrndc dnssec \-status\fP show the DNSSEC signing state for the specified
@@ -183,12 +183,16 @@ argument \fB\-when time\fP, where \fBtime\fP is expressed in YYYYMMDDHHMMSS
 notation.
 .TP
 \fBdnstap\fP ( \fB\-reopen\fP | \fB\-roll\fP [\fInumber\fP] )
-This command closes and re\-opens DNSTAP output files. \fBrndc dnstap \-reopen\fP allows
+This command closes and re\-opens DNSTAP output files.
+.sp
+\fBrndc dnstap \-reopen\fP allows
 the output file to be renamed externally, so that \fBnamed\fP can
-truncate and re\-open it. \fBrndc dnstap \-roll\fP causes the output file
+truncate and re\-open it.
+.sp
+\fBrndc dnstap \-roll\fP causes the output file
 to be rolled automatically, similar to log files. The most recent
-output file has ".0" appended to its name; the previous most recent
-output file is moved to ".1", and so on. If \fBnumber\fP is specified, then
+output file has \(dq.0\(dq appended to its name; the previous most recent
+output file is moved to \(dq.1\(dq, and so on. If \fBnumber\fP is specified, then
 the number of backup log files is limited to that number.
 .TP
 \fBdumpdb\fP [\fB\-all\fP | \fB\-cache\fP | \fB\-zones\fP | \fB\-adb\fP | \fB\-bad\fP | \fB\-expired\fP | \fB\-fail\fP] [\fIview ...\fP]
@@ -237,11 +241,11 @@ incrementally re\-sign over time.
 .sp
 This command requires that the zone be configured with a \fBdnssec\-policy\fP, or
 that the \fBauto\-dnssec\fP zone option be set to \fBmaintain\fP, and also requires the
-zone to be configured to allow dynamic DNS. (See "Dynamic Update Policies" in
+zone to be configured to allow dynamic DNS. (See \(dqDynamic Update Policies\(dq in
 the Administrator Reference Manual for more details.)
 .TP
 .B \fBmanaged\-keys\fP (\fIstatus\fP | \fIrefresh\fP | \fIsync\fP | \fIdestroy\fP) [\fIclass\fP [\fIview\fP]]
-This command inspects and controls the "managed\-keys" database which handles
+This command inspects and controls the \(dqmanaged\-keys\(dq database which handles
 \fI\%RFC 5011\fP DNSSEC trust anchor maintenance. If a view is specified, these
 commands are applied to that view; otherwise, they are applied to all
 views.
@@ -461,7 +465,7 @@ zone is automatically re\-signed with the new key set.
 This command requires that the zone be configured with a \fBdnssec\-policy\fP, or
 that the \fBauto\-dnssec\fP zone option be set to \fBallow\fP or \fBmaintain\fP,
 and also requires the zone to be configured to allow dynamic DNS. (See
-"Dynamic Update Policies" in the BIND 9 Administrator Reference Manual for more
+\(dqDynamic Update Policies\(dq in the BIND 9 Administrator Reference Manual for more
 details.)
 .sp
 See also \fBrndc loadkeys\fP\&.
@@ -538,7 +542,7 @@ See also \fBrndc halt\fP\&.
 .TP
 \fBsync\fP \fB\-clean\fP [\fIzone\fP [\fIclass\fP [\fIview\fP]]]
 This command syncs changes in the journal file for a dynamic zone to the master
-file. If the "\-clean" option is specified, the journal file is also
+file. If the \(dq\-clean\(dq option is specified, the journal file is also
 removed. If no zone is specified, then all zones are synced.
 .TP
 .B \fBtcp\-timeouts\fP [\fIinitial\fP \fIidle\fP \fIkeepalive\fP \fIadvertised\fP]
@@ -603,7 +607,7 @@ of type \fBredirect\fP\&. Redirect zones are always called \fB\&.\fP, and can be
 confused with zones of type \fBhint\fP or with secondary copies of the root
 zone. To specify a redirect zone, use the special zone name
 \fB\-redirect\fP, without a trailing period. (With a trailing period, this
-would specify a zone called "\-redirect".)
+would specify a zone called \(dq\-redirect\(dq.)
 .SH LIMITATIONS
 .sp
 There is currently no way to provide the shared secret for a \fBkey_id\fP

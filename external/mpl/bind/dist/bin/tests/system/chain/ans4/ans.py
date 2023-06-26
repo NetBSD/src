@@ -265,7 +265,7 @@ def create_response(msg):
         if wantsigs:
             r.answer.append(sigs[-1])
     else:
-        for (i, sig) in rrs:
+        for i, sig in rrs:
             if sig and not wantsigs:
                 continue
             elif sig:

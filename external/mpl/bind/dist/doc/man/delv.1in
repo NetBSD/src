@@ -53,7 +53,7 @@ simulates the behavior of a name server configured for DNSSEC validating
 and forwarding.
 .sp
 By default, responses are validated using the built\-in DNSSEC trust anchor
-for the root zone ("."). Records returned by \fBdelv\fP are either fully
+for the root zone (\(dq.\(dq). Records returned by \fBdelv\fP are either fully
 validated or were not signed. If validation fails, an explanation of the
 failure is included in the output; the validation process can be traced
 in detail. Because \fBdelv\fP does not rely on an external server to carry
@@ -66,7 +66,7 @@ addresses are found, \fBdelv\fP sends queries to the localhost
 addresses (127.0.0.1 for IPv4, ::1 for IPv6).
 .sp
 When no command\-line arguments or options are given, \fBdelv\fP
-performs an NS query for "." (the root zone).
+performs an NS query for \(dq.\(dq (the root zone).
 .SH SIMPLE USAGE
 .sp
 A typical invocation of \fBdelv\fP looks like:
@@ -114,7 +114,7 @@ supplied, \fBdelv\fP performs a lookup for an A record.
 .B \fB\-a anchor\-file\fP
 This option specifies a file from which to read DNSSEC trust anchors. The default
 is \fB/etc/bind.keys\fP, which is included with BIND 9 and contains one
-or more trust anchors for the root zone (".").
+or more trust anchors for the root zone (\(dq.\(dq).
 .sp
 Keys that do not match the root zone name are ignored. An alternate
 key name can be specified using the \fB+root=NAME\fP options.
@@ -135,7 +135,7 @@ or \fB::\fP\&. An optional source port may be specified by appending
 .TP
 .B \fB\-c class\fP
 This option sets the query class for the requested data. Currently, only class
-"IN" is supported in \fBdelv\fP and any other value is ignored.
+\(dqIN\(dq is supported in \fBdelv\fP and any other value is ignored.
 .TP
 .B \fB\-d level\fP
 This option sets the systemwide debug level to \fBlevel\fP\&. The allowed range is
@@ -168,8 +168,8 @@ non\-standard port number.
 This option sets the query name to \fBname\fP\&. While the query name can be
 specified without using the \fB\-q\fP option, it is sometimes necessary to
 disambiguate names from types or classes (for example, when looking
-up the name "ns", which could be misinterpreted as the type NS, or
-"ch", which could be misinterpreted as class CH).
+up the name \(dqns\(dq, which could be misinterpreted as the type NS, or
+\(dqch\(dq, which could be misinterpreted as class CH).
 .TP
 .B \fB\-t type\fP
 This option sets the query type to \fBtype\fP, which can be any valid query type
@@ -178,8 +178,8 @@ with \fB\-q\fP, this is useful to distinguish query\-name types or classes
 when they are ambiguous. It is sometimes necessary to disambiguate
 names from types.
 .sp
-The default query type is "A", unless the \fB\-x\fP option is supplied
-to indicate a reverse lookup, in which case it is "PTR".
+The default query type is \(dqA\(dq, unless the \fB\-x\fP option is supplied
+to indicate a reverse lookup, in which case it is \(dqPTR\(dq.
 .TP
 .B \fB\-v\fP
 This option prints the \fBdelv\fP version and exits.
@@ -235,7 +235,7 @@ and validation process, including the original query
 and all subsequent queries to follow CNAMEs and to establish a chain
 of trust for DNSSEC validation.
 .sp
-This is equivalent to setting the debug level to 1 in the "resolver"
+This is equivalent to setting the debug level to 1 in the \(dqresolver\(dq
 logging category. Setting the systemwide debug level to 1 using the
 \fB\-d\fP option produces the same output, but affects other
 logging categories as well.
@@ -245,8 +245,8 @@ This option toggles message logging. This produces a detailed dump of the
 responses received by \fBdelv\fP in the process of carrying out the
 resolution and validation process.
 .sp
-This is equivalent to setting the debug level to 10 for the "packets"
-module of the "resolver" logging category. Setting the systemwide
+This is equivalent to setting the debug level to 10 for the \(dqpackets\(dq
+module of the \(dqresolver\(dq logging category. Setting the systemwide
 debug level to 10 using the \fB\-d\fP option produces the same
 output, but affects other logging categories as well.
 .TP
@@ -256,7 +256,7 @@ validator as it determines whether an answer is validly signed,
 unsigned, or invalid.
 .sp
 This is equivalent to setting the debug level to 3 for the
-"validator" module of the "dnssec" logging category. Setting the
+\(dqvalidator\(dq module of the \(dqdnssec\(dq logging category. Setting the
 systemwide debug level to 3 using the \fB\-d\fP option produces the
 same output, but affects other logging categories as well.
 .TP
@@ -313,7 +313,7 @@ always occurs unless suppressed by the use of \fB\-i\fP or
 .B \fB+[no]root[=ROOT]\fP
 This option indicates whether to perform conventional DNSSEC validation, and if so,
 specifies the name of a trust anchor. The default is to validate using a
-trust anchor of "." (the root zone), for which there is a built\-in key. If
+trust anchor of \(dq.\(dq (the root zone), for which there is a built\-in key. If
 specifying a different trust anchor, then \fB\-a\fP must be used to specify a
 file containing the key.
 .TP

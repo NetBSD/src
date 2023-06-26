@@ -15,6 +15,7 @@ SYSTEMTESTTOP=${SYSTEMTESTTOP:=..}
 prog=$0
 args=""
 quiet=0
+dir=""
 msg="cryptography"
 
 if test -z "$KEYGEN"; then
@@ -75,9 +76,18 @@ if test -z "$alg"; then
     exit 1
 fi
 
+if test -n "$TMPDIR"; then
+    dir=$(mktemp -d "$TMPDIR/XXXXXX")
+    args="$args -K $dir"
+fi
+
 if $KEYGEN $args $alg foo > /dev/null 2>&1
 then
-    rm -f Kfoo*
+    if test -z "$dir"; then
+        rm -f Kfoo*
+    else
+        rm -rf "$dir"
+    fi
 else
     if test $quiet -eq 0; then
         echo_i "This test requires support for $msg" >&2

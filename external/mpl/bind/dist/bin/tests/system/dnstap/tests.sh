@@ -670,6 +670,7 @@ EOF
 	$FSTRM_CAPTURE -t protobuf:dnstap.Dnstap -u ns4/dnstap.out \
 		-w dnstap.out > fstrm_capture.out 2>&1 &
 	fstrm_capture_pid=$!
+	sleep 1
 	$RNDCCMD -s 10.53.0.4 dnstap -reopen | sed 's/^/ns4 /' | cat_i
 	$DIG $DIGOPTS @10.53.0.4 a.example > dig.out
 
