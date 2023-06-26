@@ -1299,14 +1299,14 @@ ctl_postfork_child(tsdn_t *tsdn) {
 		ret = EPERM;						\
 		goto label_return;					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define WRITEONLY()	do {						\
 	if (oldp != NULL || oldlenp != NULL) {				\
 		ret = EPERM;						\
 		goto label_return;					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define READ_XOR_WRITE()	do {					\
 	if ((oldp != NULL && oldlenp != NULL) && (newp != NULL ||	\
@@ -1314,7 +1314,7 @@ ctl_postfork_child(tsdn_t *tsdn) {
 		ret = EPERM;						\
 		goto label_return;					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define READ(v, t)	do {						\
 	if (oldp != NULL && oldlenp != NULL) {				\
@@ -1327,7 +1327,7 @@ ctl_postfork_child(tsdn_t *tsdn) {
 		}							\
 		*(t *)oldp = (v);					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define WRITE(v, t)	do {						\
 	if (newp != NULL) {						\
@@ -1337,7 +1337,7 @@ ctl_postfork_child(tsdn_t *tsdn) {
 		}							\
 		(v) = *(t *)newp;					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define MIB_UNSIGNED(v, i) do {						\
 	if (mib[i] > UINT_MAX) {					\
@@ -1345,7 +1345,7 @@ ctl_postfork_child(tsdn_t *tsdn) {
 		goto label_return;					\
 	}								\
 	v = (unsigned)mib[i];						\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 /*
  * There's a lot of code duplication in the following macros due to limitations

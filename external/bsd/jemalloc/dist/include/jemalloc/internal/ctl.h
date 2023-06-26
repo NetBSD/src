@@ -109,7 +109,7 @@ void ctl_postfork_child(tsdn_t *tsdn);
 		    name);						\
 		abort();						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define xmallctlnametomib(name, mibp, miblenp) do {			\
 	if (je_mallctlnametomib(name, mibp, miblenp) != 0) {		\
@@ -117,7 +117,7 @@ void ctl_postfork_child(tsdn_t *tsdn);
 		    "xmallctlnametomib(\"%s\", ...)\n", name);		\
 		abort();						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define xmallctlbymib(mib, miblen, oldp, oldlenp, newp, newlen) do {	\
 	if (je_mallctlbymib(mib, miblen, oldp, oldlenp, newp,		\
@@ -126,6 +126,6 @@ void ctl_postfork_child(tsdn_t *tsdn);
 		    "<jemalloc>: Failure in xmallctlbymib()\n");	\
 		abort();						\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #endif /* JEMALLOC_INTERNAL_CTL_H */

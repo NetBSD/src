@@ -16,7 +16,7 @@ struct {								\
 /* List functions. */
 #define ql_new(a_head) do {						\
 	(a_head)->qlh_first = NULL;					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ql_elm_new(a_elm, a_field) qr_new((a_elm), a_field)
 
@@ -39,7 +39,7 @@ struct {								\
 	if (ql_first(a_head) == (a_qlelm)) {				\
 		ql_first(a_head) = (a_elm);				\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ql_after_insert(a_qlelm, a_elm, a_field)			\
 	qr_after_insert((a_qlelm), (a_elm), a_field)
@@ -49,14 +49,14 @@ struct {								\
 		qr_before_insert(ql_first(a_head), (a_elm), a_field);	\
 	}								\
 	ql_first(a_head) = (a_elm);					\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ql_tail_insert(a_head, a_elm, a_field) do {			\
 	if (ql_first(a_head) != NULL) {					\
 		qr_before_insert(ql_first(a_head), (a_elm), a_field);	\
 	}								\
 	ql_first(a_head) = qr_next((a_elm), a_field);			\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ql_remove(a_head, a_elm, a_field) do {				\
 	if (ql_first(a_head) == (a_elm)) {				\
@@ -67,17 +67,17 @@ struct {								\
 	} else {							\
 		ql_first(a_head) = NULL;				\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ql_head_remove(a_head, a_type, a_field) do {			\
 	a_type *t = ql_first(a_head);					\
 	ql_remove((a_head), t, a_field);				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ql_tail_remove(a_head, a_type, a_field) do {			\
 	a_type *t = ql_last(a_head, a_field);				\
 	ql_remove((a_head), t, a_field);				\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #define ql_foreach(a_var, a_head, a_field)				\
 	qr_foreach((a_var), ql_first(a_head), a_field)

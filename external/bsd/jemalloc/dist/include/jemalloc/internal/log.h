@@ -110,6 +110,6 @@ do {									\
 	log_do_begin(log_var)						\
 		log_impl_varargs((log_var).name, __VA_ARGS__);		\
 	log_do_end(log_var)						\
-} while (/*CONSTCOND*/0)
+} while (0)
 
 #endif /* JEMALLOC_INTERNAL_LOG_H */
