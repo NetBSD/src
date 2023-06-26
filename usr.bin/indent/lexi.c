@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.236 2023/06/25 19:35:45 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.237 2023/06/26 10:23:59 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.236 2023/06/25 19:35:45 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.237 2023/06/26 10:23:59 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -207,8 +207,8 @@ lex_number(void)
 
 		unsigned char row = lex_number_row[ch];
 		if (lex_number_state[row][s - 'A'] == ' ') {
-		        // lex_number_state[0][s - 'A'] now indicates the type:
-		        // f = floating, i = integer, u = unknown
+			// lex_number_state[0][s - 'A'] now indicates the type:
+			// f = floating, i = integer, u = unknown
 			return;
 		}
 
@@ -406,7 +406,7 @@ lexi_alnum(void)
 	if (ps.prev_lsym == lsym_tag && ps.paren.len == 0)
 		return lsym_type;
 
-	token_add_char('\0');		// Terminate in non-debug mode as well.
+	token_add_char('\0');	// Terminate in non-debug mode as well.
 	token.len--;
 	const struct keyword *kw = bsearch(token.s, keywords,
 	    array_length(keywords), sizeof(keywords[0]), cmp_keyword_by_name);
