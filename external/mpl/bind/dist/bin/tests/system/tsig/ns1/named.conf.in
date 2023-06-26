@@ -23,10 +23,7 @@ options {
 	notify no;
 };
 
-key "md5" {
-	secret "97rnFx24Tfna4mHPfgnerA==";
-	algorithm hmac-md5;
-};
+# md5 key appended by setup.sh at the end
 
 key "sha1" {
 	secret "FrSt77yPTFx6hTs4i2tKLB9LmE0=";
@@ -53,10 +50,7 @@ key "sha512" {
 	algorithm hmac-sha512;
 };
 
-key "md5-trunc" {
-	secret "97rnFx24Tfna4mHPfgnerA==";
-	algorithm hmac-md5-80;
-};
+# md5-trunc key appended by setup.sh at the end
 
 key "sha1-trunc" {
 	secret "FrSt77yPTFx6hTs4i2tKLB9LmE0=";

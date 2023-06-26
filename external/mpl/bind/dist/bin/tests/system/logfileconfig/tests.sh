@@ -16,30 +16,6 @@ SYSTEMTESTTOP=..
 THISDIR=`pwd`
 CONFDIR="ns1"
 
-PLAINCONF="${THISDIR}/${CONFDIR}/named.plainconf"
-PLAINFILE="named_log"
-DIRCONF="${THISDIR}/${CONFDIR}/named.dirconf"
-DIRFILE="named_dir"
-PIPECONF="${THISDIR}/${CONFDIR}/named.pipeconf"
-PIPEFILE="named_pipe"
-SYMCONF="${THISDIR}/${CONFDIR}/named.symconf"
-SYMFILE="named_sym"
-VERSCONF="${THISDIR}/${CONFDIR}/named.versconf"
-VERSFILE="named_vers"
-TSCONF="${THISDIR}/${CONFDIR}/named.tsconf"
-TSFILE="named_ts"
-UNLIMITEDCONF="${THISDIR}/${CONFDIR}/named.unlimited"
-UNLIMITEDFILE="named_unlimited"
-ISOCONF="${THISDIR}/${CONFDIR}/named.iso8601"
-ISOFILE="named_iso8601"
-ISOCONFUTC="${THISDIR}/${CONFDIR}/named.iso8601-utc"
-ISOUTCFILE="named_iso8601_utc"
-DLFILE="named_deflog"
-
-PIDFILE="${THISDIR}/${CONFDIR}/named.pid"
-myRNDC="$RNDC -c ${THISDIR}/${CONFDIR}/rndc.conf"
-myNAMED="$NAMED -c ${THISDIR}/${CONFDIR}/named.conf -m record,size,mctx -T nosyslog -d 99 -D logfileconfig-ns1 -X named.lock -U 4"
-
 # Test given condition.  If true, test again after a second.  Used for testing
 # filesystem-dependent conditions in order to prevent false negatives caused by
 # directory contents not being synchronized immediately after rename() returns.
@@ -53,367 +29,216 @@ test_with_retry() {
 	return 1
 }
 
-waitforpidfile() {
-	for _w in 1 2 3 4 5 6 7 8 9 10
-	do
-		test -f $PIDFILE && break
-		sleep 1
-	done
-}
-
 status=0
 n=0
 
-cd $CONFDIR
-export SYSTEMTESTTOP=../..
-
 echo_i "testing log file validity (named -g + only plain files allowed)"
 
-n=`expr $n + 1`
-echo_i "testing plain file (named -g) ($n)"
 # First run with a known good config.
-echo > $PLAINFILE
-copy_setports $PLAINCONF named.conf
-$myRNDC reconfig > rndc.out.test$n 2>&1
-grep "reloading configuration failed" named.run > /dev/null 2>&1
-if [ $? -ne 0 ]
-then
-	echo_i "testing plain file succeeded"
-else
-	echo_i "testing plain file failed (unexpected)"
-	echo_i "exit status: 1"
-	exit 1
-fi
+n=$((n+1))
+echo_i "testing log file validity (only plain files allowed) ($n)"
+ret=0
+cat /dev/null > ns1/named_log
+copy_setports ns1/named.plainconf.in ns1/named.conf
+nextpart ns1/named.run > /dev/null
+rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+wait_for_log 5 "reloading configuration succeeded" ns1/named.run || ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 # Now try directory, expect failure
-n=`expr $n + 1`
-echo_i "testing directory as log file (named -g) ($n)"
-echo > named.run
-rm -rf $DIRFILE
-mkdir -p $DIRFILE >/dev/null 2>&1
-if [ $? -eq 0 ]
-then
-	copy_setports $DIRCONF named.conf
-	echo > named.run
-	$myRNDC reconfig > rndc.out.test$n 2>&1
-	grep "checking logging configuration failed: invalid file" named.run > /dev/null 2>&1
-	if [ $? -ne 0 ]
-	then
-		echo_i "testing directory as file succeeded (UNEXPECTED)"
-		echo_i "exit status: 1"
-		exit 1
-	else
-		echo_i "testing directory as log file failed (expected)"
-	fi
-else
-	echo_i "skipping directory test (unable to create directory)"
-fi
-
-# Now try pipe file, expect failure
-n=`expr $n + 1`
-echo_i "testing pipe file as log file (named -g) ($n)"
-echo > named.run
-rm -f $PIPEFILE
-mkfifo $PIPEFILE >/dev/null 2>&1
-if [ $? -eq 0 ]
-then
-	copy_setports $PIPECONF named.conf
-	echo > named.run
-	$myRNDC reconfig > rndc.out.test$n 2>&1
-	grep "checking logging configuration failed: invalid file" named.run  > /dev/null 2>&1
-	if [ $? -ne 0 ]
-	then
-		echo_i "testing pipe file as log file succeeded (UNEXPECTED)"
-		echo_i "exit status: 1"
-		exit 1
-	else
-		echo_i "testing pipe file as log file failed (expected)"
-	fi
-else
-	echo_i "skipping pipe test (unable to create pipe)"
-fi
-
-# Now try symlink file to plain file, expect success
-n=`expr $n + 1`
-echo_i "testing symlink to plain file as log file (named -g) ($n)"
-# Assume success
-echo > named.run
-echo > $PLAINFILE
-rm -f  $SYMFILE  $SYMFILE
-ln -s $PLAINFILE $SYMFILE >/dev/null 2>&1
-if [ $? -eq 0 ]
-then
-	copy_setports $SYMCONF named.conf
-	$myRNDC reconfig > rndc.out.test$n 2>&1
-	echo > named.run
-	grep "reloading configuration failed" named.run > /dev/null 2>&1
-	if [ $? -ne 0 ]
-	then
-		echo_i "testing symlink to plain file succeeded"
-	else
-		echo_i "testing symlink to plain file failed (unexpected)"
-		echo_i "exit status: 1"
-		exit 1
-	fi
-else
-	echo_i "skipping symlink test (unable to create symlink)"
-fi
-# Stop the server and run through a series of tests with various config
-# files while controlling the stop/start of the server.
-# Have to stop the stock server because it uses "-g"
-#
-stop_server ns1
-
-$myNAMED > /dev/null 2>&1
-
-if [ $? -ne 0 ]
-then
-	echo_i "failed to start $myNAMED"
-	echo_i "exit status: $status"
-	exit $status
-fi
-
-status=0
-
-echo_i "testing log file validity (only plain files allowed)"
-
-n=`expr $n + 1`
-echo_i "testing plain file (named -g) ($n)"
-# First run with a known good config.
-echo > $PLAINFILE
-copy_setports $PLAINCONF named.conf
-$myRNDC reconfig > rndc.out.test$n 2>&1
-grep "reloading configuration failed" named.run > /dev/null 2>&1
-if [ $? -ne 0 ]
-then
-	echo_i "testing plain file succeeded"
-else
-	echo_i "testing plain file failed (unexpected)"
-	echo_i "exit status: 1"
-	exit 1
-fi
-
-# Now try directory, expect failure
-n=`expr $n + 1`
+n=$((n+1))
 echo_i "testing directory as log file ($n)"
-echo > named.run
-rm -rf $DIRFILE
-mkdir -p $DIRFILE >/dev/null 2>&1
-if [ $? -eq 0 ]
-then
-	copy_setports $DIRCONF named.conf
-	echo > named.run
-	$myRNDC reconfig > rndc.out.test$n 2>&1
-	grep "configuring logging: invalid file" named.run > /dev/null 2>&1
-	if [ $? -ne 0 ]
-	then
-		echo_i "testing directory as file succeeded (UNEXPECTED)"
-		echo_i "exit status: 1"
-		exit 1
-	else
-		echo_i "testing directory as log file failed (expected)"
-	fi
-else
-	echo_i "skipping directory test (unable to create directory)"
-fi
+ret=0
+nextpart ns1/named.run > /dev/null
+copy_setports ns1/named.dirconf.in ns1/named.conf
+rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+wait_for_log 5 "reloading configuration failed: invalid file" ns1/named.run || ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 # Now try pipe file, expect failure
-n=`expr $n + 1`
+n=$((n+1))
 echo_i "testing pipe file as log file ($n)"
-echo > named.run
-rm -f $PIPEFILE
-mkfifo $PIPEFILE >/dev/null 2>&1
-if [ $? -eq 0 ]
-then
-	copy_setports $PIPECONF named.conf
-	echo > named.run
-	$myRNDC reconfig > rndc.out.test$n 2>&1
-	grep "configuring logging: invalid file" named.run  > /dev/null 2>&1
-	if [ $? -ne 0 ]
-	then
-		echo_i "testing pipe file as log file succeeded (UNEXPECTED)"
-		echo_i "exit status: 1"
-		exit 1
-	else
-		echo_i "testing pipe file as log file failed (expected)"
-	fi
+ret=0
+nextpart ns1/named.run > /dev/null
+rm -f ns1/named_pipe
+if mkfifo ns1/named_pipe >/dev/null 2>&1; then
+    copy_setports ns1/named.pipeconf.in ns1/named.conf
+    rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+    wait_for_log 5 "reloading configuration failed: invalid file" ns1/named.run || ret=1
+    if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+    status=$((status+ret))
 else
-	echo_i "skipping pipe test (unable to create pipe)"
+    echo_i "skipping pipe test (unable to create pipe)"
 fi
 
 # Now try symlink file to plain file, expect success
-n=`expr $n + 1`
+n=$((n+1))
 echo_i "testing symlink to plain file as log file ($n)"
-# Assume success
-status=0
-echo > named.run
-echo > $PLAINFILE
-rm -f $SYMFILE
-ln -s $PLAINFILE $SYMFILE >/dev/null 2>&1
-if [ $? -eq 0 ]
-then
-	copy_setports $SYMCONF named.conf
-	$myRNDC reconfig > rndc.out.test$n 2>&1
-	echo > named.run
-	grep "reloading configuration failed" named.run > /dev/null 2>&1
-	if [ $? -ne 0 ]
-	then
-		echo_i "testing symlink to plain file succeeded"
-	else
-		echo_i "testing symlink to plain file failed (unexpected)"
-		echo_i "exit status: 1"
-		exit 1
-	fi
+ret=0
+rm -f ns1/named_log ns1/named_sym
+touch ns1/named_log
+if ln -s $(pwd)/ns1/named_log $(pwd)/ns1/named_sym >/dev/null 2>&1; then
+    nextpart ns1/named.run > /dev/null
+    copy_setports ns1/named.symconf.in ns1/named.conf
+    rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+    wait_for_log 5 "reloading configuration succeeded" ns1/named.run || ret=1
+    if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+    status=$((status+ret))
 else
 	echo_i "skipping symlink test (unable to create symlink)"
 fi
 
-n=`expr $n + 1`
-echo_i "testing default logfile using named -L file ($n)"
-# Now stop the server again and test the -L option
-rm -f $DLFILE
-stop_server --use-rndc --port ${CONTROLPORT} ns1
-if ! test -f $PIDFILE; then
-	copy_setports $PLAINCONF named.conf
-	$myNAMED -L $DLFILE > /dev/null 2>&1
-	if [ $? -ne 0 ]; then
-		echo_i "failed to start $myNAMED"
-		echo_i "exit status: $status"
-		exit $status
-	fi
+echo_i "repeat previous tests without named -g"
+copy_setports ns1/named.plain.in ns1/named.conf
+$PERL ../stop.pl --use-rndc --port ${CONTROLPORT} logfileconfig ns1
+cp named1.args ns1/named.args
+start_server --noclean --restart --port ${PORT} ns1
 
-	waitforpidfile
+n=$((n+1))
+echo_i "testing log file validity (only plain files allowed) ($n)"
+ret=0
+cat /dev/null > ns1/named_log
+copy_setports ns1/named.plainconf.in ns1/named.conf
+nextpart ns1/named.run > /dev/null
+rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+wait_for_log 5 "reloading configuration succeeded" ns1/named.run || ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-	sleep 1
-	if [ -f "$DLFILE" ]; then
-		echo_i "testing default logfile using named -L succeeded"
-	else
-		echo_i "testing default logfile using named -L failed"
-		echo_i "exit status: 1"
-		exit 1
-	fi
+# Now try directory, expect failure
+n=$((n+1))
+echo_i "testing directory as log file ($n)"
+ret=0
+nextpart ns1/named.run > /dev/null
+copy_setports ns1/named.dirconf.in ns1/named.conf
+rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+wait_for_log 5 "reloading configuration failed: invalid file" ns1/named.run || ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+# Now try pipe file, expect failure
+n=$((n+1))
+echo_i "testing pipe file as log file ($n)"
+ret=0
+nextpart ns1/named.run > /dev/null
+rm -f ns1/named_pipe
+if mkfifo ns1/named_pipe >/dev/null 2>&1; then
+    copy_setports ns1/named.pipeconf.in ns1/named.conf
+    rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+    wait_for_log 5 "reloading configuration failed: invalid file" ns1/named.run || ret=1
+    if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+    status=$((status+ret))
 else
-	echo_i "failed to cleanly stop $myNAMED"
-	echo_i "exit status: 1"
-	exit 1
+    echo_i "skipping pipe test (unable to create pipe)"
+fi
+
+# Now try symlink file to plain file, expect success
+n=$((n+1))
+echo_i "testing symlink to plain file as log file ($n)"
+ret=0
+rm -f ns1/named_log ns1/named_sym
+touch ns1/named_log
+if ln -s $(pwd)/ns1/named_log $(pwd)/ns1/named_sym >/dev/null 2>&1; then
+    nextpart ns1/named.run > /dev/null
+    copy_setports ns1/named.symconf.in ns1/named.conf
+    rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+    wait_for_log 5 "reloading configuration succeeded" ns1/named.run || ret=1
+    if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+    status=$((status+ret))
+else
+	echo_i "skipping symlink test (unable to create symlink)"
 fi
 
 echo_i "testing logging functionality"
-
-n=`expr $n + 1`
+n=$((n+1))
+ret=0
 echo_i "testing iso8601 timestamp ($n)"
-copy_setports $ISOCONF named.conf
-$myRNDC reconfig > rndc.out.test$n 2>&1
-if grep '^....-..-..T..:..:..\.... ' $ISOFILE > /dev/null; then
-	echo_i "testing iso8601 timestamp succeeded"
-else
-	echo_i "testing iso8601 timestamp failed"
-	status=`expr $status + 1`
-fi
+copy_setports ns1/named.iso8601.in ns1/named.conf
+rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+grep '^....-..-..T..:..:..\.... ' ns1/named_iso8601 > /dev/null || ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-n=`expr $n + 1`
+n=$((n+1))
 echo_i "testing iso8601-utc timestamp ($n)"
-copy_setports $ISOCONFUTC named.conf
-$myRNDC reconfig > rndc.out.test$n 2>&1
-if grep '^....-..-..T..:..:..\....Z' $ISOUTCFILE > /dev/null; then
-	echo_i "testing iso8601-utc timestamp succeeded"
-else
-	echo_i "testing iso8601-utc timestamp failed"
-	status=`expr $status + 1`
-fi
+ret=0
+copy_setports ns1/named.iso8601-utc.in ns1/named.conf
+rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+grep '^....-..-..T..:..:..\....Z' ns1/named_iso8601_utc > /dev/null || ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-n=`expr $n + 1`
+n=$((n+1))
 echo_i "testing explicit versions ($n)"
-copy_setports $VERSCONF named.conf
+ret=0
+copy_setports ns1/named.versconf.in ns1/named.conf
 # a seconds since epoch version number
-touch $VERSFILE.1480039317
-t1=`$PERL -e 'print time()."\n";'`
-$myRNDC reconfig > rndc.out.test$n 2>&1
+touch ns1/named_vers.1480039317
+rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
 $DIG version.bind txt ch @10.53.0.1 -p ${PORT} > dig.out.test$n
-t2=`$PERL -e 'print time()."\n";'`
-t=`expr ${t2:-0} - ${t1:-0}`
-if test ${t:-1000} -gt 5
-then
-        echo_i "testing explicit versions failed: cleanup of old entries took too long ($t secs)"
-	status=`expr $status + 1`
-fi
-if ! grep "status: NOERROR" dig.out.test$n > /dev/null
-then
-	echo_i "testing explicit versions failed: DiG lookup failed"
-	status=`expr $status + 1`
-fi
-if test_with_retry -f $VERSFILE.1480039317
-then
-	echo_i "testing explicit versions failed: $VERSFILE.1480039317 not removed"
-	status=`expr $status + 1`
-fi
-if test_with_retry -f $VERSFILE.5
-then
-	echo_i "testing explicit versions failed: $VERSFILE.5 exists"
-	status=`expr $status + 1`
-fi
-if test_with_retry ! -f $VERSFILE.4
-then
-	echo_i "testing explicit versions failed: $VERSFILE.4 does not exist"
-	status=`expr $status + 1`
-fi
+grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
+# we are configured to retain five logfiles (a current file
+# and 4 backups). so files with version number 5 or higher
+# should be removed.
+test_with_retry -f ns1/named_vers.1480039317 && ret=1
+test_with_retry -f ns1/named_vers.5 && ret=1
+test_with_retry -f ns1/named_vers.4 || ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
-n=`expr $n + 1`
+n=$((n+1))
 echo_i "testing timestamped versions ($n)"
-copy_setports $TSCONF named.conf
+ret=0
+copy_setports ns1/named.tsconf.in ns1/named.conf
 # a seconds since epoch version number
-touch $TSFILE.2015010112000012
-t1=`$PERL -e 'print time()."\n";'`
-$myRNDC reconfig > rndc.out.test$n 2>&1
-$DIG version.bind txt ch @10.53.0.1 -p ${PORT} > dig.out.test$n
-t2=`$PERL -e 'print time()."\n";'`
-t=`expr ${t2:-0} - ${t1:-0}`
-if test ${t:-1000} -gt 5
-then
-        echo_i "testing timestamped versions failed: cleanup of old entries took too long ($t secs)"
-	status=`expr $status + 1`
-fi
-if ! grep "status: NOERROR" dig.out.test$n > /dev/null
-then
-	echo_i "testing timestamped versions failed: DiG lookup failed"
-	status=`expr $status + 1`
-fi
-if test_with_retry -f $TSFILE.1480039317
-then
-	echo_i "testing timestamped versions failed: $TSFILE.1480039317 not removed"
-	status=`expr $status + 1`
-fi
+touch ns1/named_ts.1480039317
+# a timestamp version number
+touch ns1/named_ts.20150101120000120
+rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
+_found2() (
+        $DIG version.bind txt ch @10.53.0.1 -p ${PORT} > dig.out.test$n
+        grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
 
-n=`expr $n + 1`
+        # we are configured to keep three versions, so the oldest
+        # timestamped versions should be gone, and there should
+        # be two or three backup ones.
+        [ -f ns1/named_ts.1480039317 ] && return 1
+        [ -f ns1/named_ts.20150101120000120 ] && return 1
+        set -- ns1/named_ts.*
+        [ "$#" -eq 2 -o "$#" -eq 3 ] || return 1
+)
+retry_quiet 5 _found2 || ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
 echo_i "testing unlimited versions ($n)"
-copy_setports $UNLIMITEDCONF named.conf
+ret=0
+copy_setports ns1/named.unlimited.in ns1/named.conf
 # a seconds since epoch version number
-touch $UNLIMITEDFILE.1480039317
-t1=`$PERL -e 'print time()."\n";'`
-$myRNDC reconfig > rndc.out.test$n 2>&1
+touch ns1/named_unlimited.1480039317
+rndc_reconfig ns1 10.53.0.1 > rndc.out.test$n
 $DIG version.bind txt ch @10.53.0.1 -p ${PORT} > dig.out.test$n
-t2=`$PERL -e 'print time()."\n";'`
-t=`expr ${t2:-0} - ${t1:-0}`
-if test ${t:-1000} -gt 5
-then
-        echo_i "testing unlimited versions failed: took too long ($t secs)"
-	status=`expr $status + 1`
-fi
-if ! grep "status: NOERROR" dig.out.test$n > /dev/null
-then
-	echo_i "testing unlimited versions failed: DiG lookup failed"
-	status=`expr $status + 1`
-fi
-if test_with_retry ! -f $UNLIMITEDFILE.1480039317
-then
-	echo_i "testing unlimited versions failed: $UNLIMITEDFILE.1480039317 removed"
-	status=`expr $status + 1`
-fi
-if test_with_retry ! -f $UNLIMITEDFILE.4
-then
-	echo_i "testing unlimited versions failed: $UNLIMITEDFILE.4 does not exist"
-	status=`expr $status + 1`
-fi
+grep "status: NOERROR" dig.out.test$n > /dev/null || ret=1
+test_with_retry -f ns1/named_unlimited.1480039317 || ret=1
+test_with_retry -f ns1/named_unlimited.4 || ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
+
+n=$((n+1))
+echo_i "testing default logfile using named -L file ($n)"
+ret=0
+$PERL ../stop.pl logfileconfig ns1
+cp named2.args ns1/named.args
+test -f ns1/named.pid && ret=1
+rm -f ns1/named_deflog
+copy_setports ns1/named.plainconf.in ns1/named.conf
+start_server --noclean --restart --port ${PORT} ns1
+[ -f "ns1/named_deflog" ] || ret=1
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
+status=$((status+ret))
 
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

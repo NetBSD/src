@@ -47,3 +47,13 @@ zone "." {
 	allow-update { any; };
 	auto-dnssec maintain;
 };
+
+zone "tld" {
+	type primary;
+	file "tld.db.signed";
+};
+
+zone "sub.tld" {
+	type primary;
+	file "sub.tld.db.signed";
+};

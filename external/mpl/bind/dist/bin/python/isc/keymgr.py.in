@@ -17,6 +17,7 @@ prog = "dnssec-keymgr"
 
 from isc import dnskey, keydict, keyseries, policy, parsetab, utils
 
+
 ############################################################################
 # print a fatal error and exit
 ############################################################################

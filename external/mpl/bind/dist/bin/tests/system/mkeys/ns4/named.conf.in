@@ -41,3 +41,8 @@ zone "." {
 	type hint;
 	file "../../common/root.hint";
 };
+
+zone "sub.foo" {
+	type primary;
+	file "sub.foo.db.signed";
+};

@@ -23,14 +23,13 @@ rm -f active.key inact.key del.key delzsk.key unpub.key standby.key rev.key
 rm -f delayksk.key delayzsk.key autoksk.key autozsk.key
 rm -f dig.out.*
 rm -f digcomp.out.test*
-rm -f digcomp.out.test*
 rm -f noksk-ksk.key nozsk-ksk.key nozsk-zsk.key inaczsk-zsk.key inaczsk-ksk.key
 rm -f nopriv.key vanishing.key del1.key del2.key
 rm -f ns*/managed-keys.bind*
 rm -f ns*/named.lock
-rm -f ns*/named.lock
 rm -f ns1/root.db
 rm -f ns2/example.db
+rm -f ns2/optout-with-ent.db
 rm -f ns2/private.secure.example.db ns2/bar.db
 rm -f ns3/*.nzd ns3/*.nzd-lock ns3/*.nzf
 rm -f ns3/*.nzf

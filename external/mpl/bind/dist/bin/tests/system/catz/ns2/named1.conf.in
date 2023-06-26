@@ -47,7 +47,7 @@ options {
 };
 
 # A faulty dlz configuration to check if named and catz survive a certain class
-# of failed configuration attempts (see GL#3060).
+# of failed configuration attempts (see GL #3060).
 # We use "dlz" because the dlz processing code is located in an ideal place in
 # the view configuration function for the test to cover the view reverting code.
 #T3dlz "bad-dlz" {
@@ -77,6 +77,15 @@ zone "catalog4.example" {
 	file "catalog4.example.db";
 	primaries { 10.53.0.1; };
 };
+
+# When the following zone configuration is enabled, "dom3.example" should
+# already exist as a member of "catalog1.example", and named should be able
+# to deal with that situation (see GL #3911). Make sure that this duplicate
+# zone comes after the the "catalog1.example" zone in the configuration file.
+#T4zone "dom3.example" {
+#T4    type secondary;
+#T4    file "dom2.example.db";
+#T4};
 
 key tsig_key. {
 	secret "LSAnCU+Z";

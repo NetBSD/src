@@ -58,7 +58,6 @@ def check_manykeys(name, zone=None):
 
 
 def zone_mtime(zonedir, name):
-
     try:
         si = os.stat(os.path.join(zonedir, "{}.db".format(name)))
     except FileNotFoundError:
@@ -70,7 +69,6 @@ def zone_mtime(zonedir, name):
 
 
 def test_zone_timers_primary(fetch_zones, load_timers, **kwargs):
-
     statsip = kwargs["statsip"]
     statsport = kwargs["statsport"]
     zonedir = kwargs["zonedir"]
@@ -84,7 +82,6 @@ def test_zone_timers_primary(fetch_zones, load_timers, **kwargs):
 
 
 def test_zone_timers_secondary(fetch_zones, load_timers, **kwargs):
-
     statsip = kwargs["statsip"]
     statsport = kwargs["statsport"]
     zonedir = kwargs["zonedir"]
@@ -98,7 +95,6 @@ def test_zone_timers_secondary(fetch_zones, load_timers, **kwargs):
 
 
 def test_zone_with_many_keys(fetch_zones, load_zone, **kwargs):
-
     statsip = kwargs["statsip"]
     statsport = kwargs["statsport"]
 

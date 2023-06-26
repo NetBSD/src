@@ -43,7 +43,6 @@ def create_socket(host, port):
 # Regression test for CVE-2022-0396
 def test_close_wait(named_port):
     with create_socket("10.53.0.7", named_port) as sock:
-
         msg = create_msg("a.example.", "A")
         (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
         (response, rtime) = dns.query.receive_tcp(sock, timeout())
@@ -66,7 +65,6 @@ def test_close_wait(named_port):
     # request. If it gets stuck in CLOSE_WAIT state, there is no connection
     # available for the query below and it will time out.
     with create_socket("10.53.0.7", named_port) as sock:
-
         msg = create_msg("a.example.", "A")
         (sbytes, stime) = dns.query.send_tcp(sock, msg, timeout())
         (response, rtime) = dns.query.receive_tcp(sock, timeout())

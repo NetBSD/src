@@ -59,7 +59,7 @@ This option lists all the configured zones. Each line of output contains the zon
 name, class (e.g. IN), view, and type (e.g. primary or secondary).
 .TP
 .B \fB\-c\fP
-This option specifies that only the "core" configuration should be checked. This suppresses the loading of
+This option specifies that only the \(dqcore\(dq configuration should be checked. This suppresses the loading of
 plugin modules, and causes all parameters to \fBplugin\fP statements to
 be ignored.
 .TP
