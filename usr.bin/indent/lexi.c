@@ -1,4 +1,4 @@
-/*	$NetBSD: lexi.c,v 1.238 2023/06/26 20:10:23 rillig Exp $	*/
+/*	$NetBSD: lexi.c,v 1.239 2023/06/26 20:23:40 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lexi.c,v 1.238 2023/06/26 20:10:23 rillig Exp $");
+__RCSID("$NetBSD: lexi.c,v 1.239 2023/06/26 20:23:40 rillig Exp $");
 
 #include <stdlib.h>
 #include <string.h>
@@ -406,6 +406,12 @@ lexi_alnum(void)
 
 	if (ps.prev_lsym == lsym_tag && ps.paren.len == 0)
 		return lsym_type;
+	if (ps.spaced_expr_psym == psym_for_exprs
+	    && ps.prev_lsym == lsym_lparen && ps.paren.len == 1
+	    && *inp_p == '*') {
+		ps.next_unary = true;
+		return lsym_type;
+	}
 
 	token_add_char('\0');	// Terminate in non-debug mode as well.
 	token.len--;
