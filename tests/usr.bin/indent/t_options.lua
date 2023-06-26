@@ -1,4 +1,4 @@
--- $NetBSD: t_options.lua,v 1.6 2023/06/16 23:19:01 rillig Exp $
+-- $NetBSD: t_options.lua,v 1.7 2023/06/26 12:21:18 rillig Exp $
 --
 -- Copyright (c) 2023 The NetBSD Foundation, Inc.
 -- All rights reserved.
@@ -199,9 +199,15 @@ local function handle_indent_run_equals_input(args)
 	expected_out:write(input_excl_comm)
 	unused_input_lineno = 0
 	max_empty_lines = 0
+	output_incl_comm = ""
+	output_excl_comm = ""
 end
 
 local function handle_indent_run_equals_prev_output(args)
+	if output_incl_comm == "" then
+		warn(lineno,
+		    "no previous output; use run-equals-input instead")
+	end
 	check_empty_lines_block(1)
 	run_indent(input_excl_comm, args)
 	expected_out:write(output_excl_comm)
