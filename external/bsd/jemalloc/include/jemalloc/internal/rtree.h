@@ -369,7 +369,7 @@ rtree_leaf_elm_lookup(tsdn_t *tsdn, rtree_t *rtree, rtree_ctx_t *rtree_ctx,
 		uintptr_t subkey = rtree_subkey(key, RTREE_HEIGHT-1);	\
 		return &leaf[subkey];					\
 	}								\
-} while (/*CONSTCOND*/0)
+} while (0)
 	/* Check the first cache entry. */
 	RTREE_CACHE_CHECK_L2(0);
 	/* Search the remaining cache elements. */
