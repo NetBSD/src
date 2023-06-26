@@ -1,4 +1,4 @@
-/*	$NetBSD: keymgr.c,v 1.9 2023/01/25 21:43:30 christos Exp $	*/
+/*	$NetBSD: keymgr.c,v 1.10 2023/06/26 22:03:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2278,9 +2278,19 @@ keymgr_checkds(dns_kasp_t *kasp, dns_dnsseckeylist_t *keyring,
 	}
 
 	if (dspublish) {
+		dst_key_state_t s;
 		dst_key_settime(ksk_key->key, DST_TIME_DSPUBLISH, when);
+		result = dst_key_getstate(ksk_key->key, DST_KEY_DS, &s);
+		if (result != ISC_R_SUCCESS || s != RUMOURED) {
+			dst_key_setstate(ksk_key->key, DST_KEY_DS, RUMOURED);
+		}
 	} else {
+		dst_key_state_t s;
 		dst_key_settime(ksk_key->key, DST_TIME_DSDELETE, when);
+		result = dst_key_getstate(ksk_key->key, DST_KEY_DS, &s);
+		if (result != ISC_R_SUCCESS || s != UNRETENTIVE) {
+			dst_key_setstate(ksk_key->key, DST_KEY_DS, UNRETENTIVE);
+		}
 	}
 
 	if (isc_log_wouldlog(dns_lctx, ISC_LOG_NOTICE)) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: resconf.c,v 1.6 2022/09/23 12:15:32 christos Exp $	*/
+/*	$NetBSD: resconf.c,v 1.7 2023/06/26 22:03:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -290,10 +290,6 @@ resconf_parsenameserver(irs_resconf_t *conf, FILE *fp) {
 	int cp;
 	isc_result_t result;
 
-	if (conf->numns == RESCONFMAXNAMESERVERS) {
-		return (ISC_R_SUCCESS);
-	}
-
 	cp = getword(fp, word, sizeof(word));
 	if (strlen(word) == 0U) {
 		return (ISC_R_UNEXPECTEDEND); /* Nothing on line. */
@@ -303,6 +299,10 @@ resconf_parsenameserver(irs_resconf_t *conf, FILE *fp) {
 
 	if (cp != EOF && cp != '\n') {
 		return (ISC_R_UNEXPECTEDTOKEN); /* Extra junk on line. */
+	}
+
+	if (conf->numns == RESCONFMAXNAMESERVERS) {
+		return (ISC_R_SUCCESS);
 	}
 
 	result = add_server(conf->mctx, word, &conf->nameservers);

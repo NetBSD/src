@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.h,v 1.7 2022/09/23 12:15:33 christos Exp $	*/
+/*	$NetBSD: timer.h,v 1.8 2023/06/26 22:03:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -90,10 +90,13 @@ typedef enum {
 	isc_timertype_inactive = 3    /*%< Inactive */
 } isc_timertype_t;
 
-typedef struct isc_timerevent {
+typedef struct isc_timerevent isc_timerevent_t;
+
+struct isc_timerevent {
 	struct isc_event common;
 	isc_time_t	 due;
-} isc_timerevent_t;
+	ISC_LINK(isc_timerevent_t) ev_timerlink;
+};
 
 #define ISC_TIMEREVENT_FIRSTEVENT (ISC_EVENTCLASS_TIMER + 0)
 #define ISC_TIMEREVENT_TICK	  (ISC_EVENTCLASS_TIMER + 1)
@@ -225,25 +228,9 @@ isc_timer_touch(isc_timer_t *timer);
  */
 
 void
-isc_timer_attach(isc_timer_t *timer, isc_timer_t **timerp);
+isc_timer_destroy(isc_timer_t **timerp);
 /*%<
- * Attach *timerp to timer.
- *
- * Requires:
- *
- *\li	'timer' is a valid timer.
- *
- *\li	'timerp' points to a NULL timer.
- *
- * Ensures:
- *
- *\li	*timerp is attached to timer.
- */
-
-void
-isc_timer_detach(isc_timer_t **timerp);
-/*%<
- * Detach *timerp from its timer.
+ * Destroy *timerp.
  *
  * Requires:
  *
@@ -253,9 +240,6 @@ isc_timer_detach(isc_timer_t **timerp);
  *
  *\li	*timerp is NULL.
  *
- *\li	If '*timerp' is the last reference to the timer,
- *	then:
- *
  *\code
  *		The timer will be shutdown
  *
@@ -264,9 +248,13 @@ isc_timer_detach(isc_timer_t **timerp);
  *		All resources used by the timer have been freed
  *
  *		Any events already posted by the timer will be purged.
- *		Therefore, if isc_timer_detach() is called in the context
+ *		Therefore, if isc_timer_destroy() is called in the context
  *		of the timer's task, it is guaranteed that no more
  *		timer event callbacks will run after the call.
+ *
+ *		If this function is called from the timer event callback
+ *		the event itself must be destroyed before the timer
+ *		itself.
  *\endcode
  */
 

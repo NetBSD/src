@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimiter_test.c,v 1.6 2022/09/23 12:15:23 christos Exp $	*/
+/*	$NetBSD: ratelimiter_test.c,v 1.7 2023/06/26 22:02:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -88,7 +88,7 @@ shutdown_all(isc_task_t *task, isc_event_t *event) {
 	UNUSED(event);
 	printf("shutdown all\n");
 	for (i = 0; i < NEVENTS; i++) {
-		isc_timer_detach(&timers[i]);
+		isc_timer_destroy(&timers[i]);
 	}
 
 	isc_app_shutdown();
