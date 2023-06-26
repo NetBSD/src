@@ -1,4 +1,4 @@
-/* $NetBSD: opt_dj.c,v 1.8 2023/06/05 15:02:54 rillig Exp $ */
+/* $NetBSD: opt_dj.c,v 1.9 2023/06/26 12:21:18 rillig Exp $ */
 
 /*
  * Tests for the options '-dj' and '-ndj'.
@@ -108,9 +108,9 @@ struct a {
 };
 //indent end
 
-//indent run-equals-input -di0
-
 //indent run-equals-prev-output -dj
+
+//indent run-equals-input -di0
 
 
 //indent input
