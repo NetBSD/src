@@ -647,6 +647,7 @@ isc_task_sendto
 isc_task_sendtoanddetach
 isc_task_setname
 isc_task_setprivilege
+isc_task_setquantum
 isc_task_shutdown
 isc_task_unpause
 isc_task_unsend
@@ -699,9 +700,8 @@ isc_time_seconds
 isc_time_set
 isc_time_settoepoch
 isc_time_subtract
-isc_timer_attach
 isc_timer_create
-isc_timer_detach
+isc_timer_destroy
 isc_timer_gettype
 isc_timer_reset
 isc_timer_touch

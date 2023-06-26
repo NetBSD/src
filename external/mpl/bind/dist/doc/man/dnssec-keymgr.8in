@@ -44,7 +44,7 @@ DNSSEC policy can be read from a configuration file (default
 /etc/dnssec\-policy.conf), from which the key parameters, publication and
 rollover schedule, and desired coverage duration for any given zone can
 be determined. This file may be used to define individual DNSSEC
-policies on a per\-zone basis, or to set a "default" policy used for all
+policies on a per\-zone basis, or to set a \(dqdefault\(dq policy used for all
 zones.
 .sp
 When \fBdnssec\-keymgr\fP runs, it examines the DNSSEC keys for one or more
@@ -181,7 +181,7 @@ sizes would then be used for any key of type RSASHA256.
 single zone by name. A zone policy can inherit a policy class by
 including a \fBpolicy\fP option. Zone names beginning with digits
 (i.e., 0\-9) must be quoted. If a zone does not have its own policy
-then the "default" policy applies.
+then the \(dqdefault\(dq policy applies.
 .UNINDENT
 .UNINDENT
 .sp
@@ -200,7 +200,7 @@ The key algorithm. If no policy is defined, the default is RSASHA256.
 The length of time to ensure that keys will be correct; no action
 will be taken to create new keys to be activated after this time.
 This can be represented as a number of seconds, or as a duration
-using human\-readable units (examples: "1y" or "6 months"). A default
+using human\-readable units (examples: \(dq1y\(dq or \(dq6 months\(dq). A default
 value for this option can be set in algorithm policies as well as in
 policy classes or zone policies. If no policy is configured, the
 default is six months.
@@ -218,7 +218,7 @@ Specifies the directory in which keys should be stored.
 .INDENT 0.0
 .INDENT 3.5
 Specifies the number of bits to use in creating keys. The keytype is
-either "zsk" or "ksk". A default value for this option can be set in
+either \(dqzsk\(dq or \(dqksk\(dq. A default value for this option can be set in
 algorithm policies as well as in policy classes or zone policies. If
 no policy is configured, the default is 2048 bits for RSA keys.
 .UNINDENT
@@ -236,7 +236,7 @@ The key TTL. If no policy is defined, the default is one hour.
 .INDENT 3.5
 How long after inactivation a key should be deleted from the zone.
 Note: If \fBroll\-period\fP is not set, this value is ignored. The
-keytype is either "zsk" or "ksk". A default duration for this option
+keytype is either \(dqzsk\(dq or \(dqksk\(dq. A default duration for this option
 can be set in algorithm policies as well as in policy classes or zone
 policies. The default is one month.
 .UNINDENT
@@ -247,7 +247,7 @@ policies. The default is one month.
 .INDENT 3.5
 How long before activation a key should be published. Note: If
 \fBroll\-period\fP is not set, this value is ignored. The keytype is
-either "zsk" or "ksk". A default duration for this option can be set
+either \(dqzsk\(dq or \(dqksk\(dq. A default duration for this option can be set
 in algorithm policies as well as in policy classes or zone policies.
 The default is one month.
 .UNINDENT
@@ -257,7 +257,7 @@ The default is one month.
 .INDENT 0.0
 .INDENT 3.5
 How frequently keys should be rolled over. The keytype is either
-"zsk" or "ksk". A default duration for this option can be set in
+\(dqzsk\(dq or \(dqksk\(dq. A default duration for this option can be set in
 algorithm policies as well as in policy classes or zone policies. If
 no policy is configured, the default is one year for ZSKs. KSKs do
 not roll over by default.

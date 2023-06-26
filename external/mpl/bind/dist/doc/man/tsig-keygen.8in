@@ -48,7 +48,7 @@ of the generated key. If no name is specified, the default is \fBtsig\-key\fP\&.
 This option specifies the algorithm to use for the TSIG key. Available
 choices are: hmac\-md5, hmac\-sha1, hmac\-sha224, hmac\-sha256, hmac\-sha384,
 and hmac\-sha512. The default is hmac\-sha256. Options are
-case\-insensitive, and the "hmac\-" prefix may be omitted.
+case\-insensitive, and the \(dqhmac\-\(dq prefix may be omitted.
 .TP
 .B \fB\-h\fP
 This option prints a short summary of options and arguments.

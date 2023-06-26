@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.1.1.7 2023/01/25 20:36:48 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.1.1.8 2023/06/26 21:46:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1358,7 +1358,8 @@ ai_concat(struct addrinfo *ai1, struct addrinfo *ai2) {
 
 	for (ai_tmp = ai1; ai_tmp != NULL && ai_tmp->ai_next != NULL;
 	     ai_tmp = ai_tmp->ai_next)
-	{}
+	{
+	}
 
 	ai_tmp->ai_next = ai2;
 

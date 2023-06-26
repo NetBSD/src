@@ -73,7 +73,11 @@ EOF
 
 $DDNSCONFGEN -q -z example.nil > ns1/ddns.key
 
-$DDNSCONFGEN -q -a hmac-md5 -k md5-key -z keytests.nil > ns1/md5.key
+if $FEATURETEST --md5; then
+	$DDNSCONFGEN -q -a hmac-md5 -k md5-key -z keytests.nil > ns1/md5.key
+else
+	echo -n > ns1/md5.key
+fi
 $DDNSCONFGEN -q -a hmac-sha1 -k sha1-key -z keytests.nil > ns1/sha1.key
 $DDNSCONFGEN -q -a hmac-sha224 -k sha224-key -z keytests.nil > ns1/sha224.key
 $DDNSCONFGEN -q -a hmac-sha256 -k sha256-key -z keytests.nil > ns1/sha256.key

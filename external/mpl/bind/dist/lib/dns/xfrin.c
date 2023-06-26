@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.1.1.10 2023/01/25 20:36:46 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.1.1.11 2023/06/26 21:46:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -952,7 +952,7 @@ xfrin_create(isc_mem_t *mctx, dns_zone_t *zone, dns_db_t *db, isc_task_t *task,
 
 failure:
 	if (xfr->timer != NULL) {
-		isc_timer_detach(&xfr->timer);
+		isc_timer_destroy(&xfr->timer);
 	}
 	if (dns_name_dynamic(&xfr->name)) {
 		dns_name_free(&xfr->name, xfr->mctx);
@@ -1582,7 +1582,7 @@ maybe_free(dns_xfrin_ctx_t *xfr) {
 	}
 
 	if (xfr->timer != NULL) {
-		isc_timer_detach(&xfr->timer);
+		isc_timer_destroy(&xfr->timer);
 	}
 
 	if (xfr->task != NULL) {

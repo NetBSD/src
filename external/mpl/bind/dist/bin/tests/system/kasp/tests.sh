@@ -551,15 +551,23 @@ _wait_for_metadata() {
 
 n=$((n+1))
 echo_i "checkds publish correctly sets DSPublish for zone $ZONE ($n)"
-rndc_checkds "$SERVER" "$DIR" "-" "20190102121314" "published" "$ZONE"
-retry_quiet 3 _wait_for_metadata "DSPublish: 20190102121314" "${basefile}.state" || log_error "bad DSPublish in ${basefile}.state"
+now=$(date +%Y%m%d%H%M%S)
+rndc_checkds "$SERVER" "$DIR" "-" "$now" "published" "$ZONE"
+retry_quiet 3 _wait_for_metadata "DSPublish: $now" "${basefile}.state" || log_error "bad DSPublish in ${basefile}.state"
+# DS State should be forced into RUMOURED.
+set_keystate "KEY1" "STATE_DS"     "rumoured"
+check_keys
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
 
 n=$((n+1))
 echo_i "checkds withdraw correctly sets DSRemoved for zone $ZONE ($n)"
-rndc_checkds "$SERVER" "$DIR" "-" "20200102121314" "withdrawn" "$ZONE"
-retry_quiet 3 _wait_for_metadata "DSRemoved: 20200102121314" "${basefile}.state" || log_error "bad DSRemoved in ${basefile}.state"
+now=$(date +%Y%m%d%H%M%S)
+rndc_checkds "$SERVER" "$DIR" "-" "$now" "withdrawn" "$ZONE"
+retry_quiet 3 _wait_for_metadata "DSRemoved: $now" "${basefile}.state" || log_error "bad DSRemoved in ${basefile}.state"
+# DS State should be forced into UNRETENTIVE.
+set_keystate "KEY1" "STATE_DS"     "unretentive"
+check_keys
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
 

@@ -119,8 +119,8 @@ TTL higher than this value causes the zone to be rejected. This
 is similar to using the \fBmax\-zone\-ttl\fP option in \fBnamed.conf\fP\&.
 .TP
 .B \fB\-L serial\fP
-When compiling a zone to \fBraw\fP or \fBmap\fP format, this option sets the "source
-serial" value in the header to the specified serial number. This is
+When compiling a zone to \fBraw\fP or \fBmap\fP format, this option sets the \(dqsource
+serial\(dq value in the header to the specified serial number. This is
 expected to be used primarily for testing purposes.
 .TP
 .B \fB\-m mode\fP

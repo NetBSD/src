@@ -99,7 +99,7 @@ grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $tt failed" ; status=1
 # and other values? right out
 t=`expr $t + 1`
 $DIG $DIGOPTS tsigzone. \
-	@10.53.0.2 -b 127.0.0.1 axfr -y three:1234abcd8765 > dig.out.${t}
+	@10.53.0.2 -b 127.0.0.1 axfr -y "${DEFAULT_HMAC}:three:1234abcd8765" > dig.out.${t}
 grep "^;" dig.out.${t} > /dev/null 2>&1 || { echo_i "test $t failed" ; status=1; }
 
 # now we only allow 10.53.0.1 *and* key one, or 10.53.0.2 *and* key two

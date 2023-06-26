@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_test.c,v 1.1.1.6 2023/01/25 20:36:36 christos Exp $	*/
+/*	$NetBSD: rbt_test.c,v 1.1.1.7 2023/06/26 21:46:02 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -186,8 +186,8 @@ iterate(dns_rbt_t *rbt, bool forward) {
 	dns_rbtnodechain_t chain;
 	dns_fixedname_t fixedorigin;
 	isc_result_t result;
-	isc_result_t (*move)(dns_rbtnodechain_t * chain, dns_name_t * name,
-			     dns_name_t * origin);
+	isc_result_t (*move)(dns_rbtnodechain_t *chain, dns_name_t *name,
+			     dns_name_t *origin);
 
 	dns_rbtnodechain_init(&chain);
 

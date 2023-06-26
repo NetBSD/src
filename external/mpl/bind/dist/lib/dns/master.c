@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.1.1.8 2023/01/25 20:36:44 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.1.1.9 2023/06/26 21:46:10 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1103,7 +1103,7 @@ load_text(dns_loadctx_t *lctx) {
 	char *lhs = NULL;
 	char *gtype = NULL;
 	char *rhs = NULL;
-	const char *source = "";
+	const char *source;
 	unsigned long line = 0;
 	bool explicit_ttl;
 	char classname1[DNS_RDATACLASS_FORMATSIZE];
