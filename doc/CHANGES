@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2973 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2974 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -133,3 +133,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		Bumped shlib minor because of API/ABI changes.
 		[nikita 20230608]
 	kerberos(8): Update to Heimdal-7.8.0 [christos 20230619]
+	bind: Import version 9.16.42. [christos 20230626]
