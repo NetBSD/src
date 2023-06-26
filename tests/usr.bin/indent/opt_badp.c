@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.12 2023/06/04 19:28:54 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.13 2023/06/26 11:01:08 rillig Exp $ */
 
 /*
  * Tests for the options '-badp' and '-nbadp'.
@@ -8,6 +8,8 @@
  * even if there are no declarations.
  */
 
+
+/* An empty function body does not need a blank line. */
 //indent input
 void
 empty(void)
@@ -20,6 +22,7 @@ empty(void)
 //indent run-equals-input -nbadp
 
 
+/* If an empty function body already has a blank line, it is kept. */
 //indent input
 void
 blank(void)
@@ -33,6 +36,10 @@ blank(void)
 //indent run-equals-input -nbadp
 
 
+/*
+ * If a function body has only declarations (doesn't occur in practice), it
+ * does not need an empty line.
+ */
 //indent input
 void
 declaration(void)
@@ -46,6 +53,10 @@ declaration(void)
 //indent run-equals-input -nbadp
 
 
+/*
+ * A function body without declarations gets an empty line above the first
+ * statement.
+ */
 //indent input
 void
 statement(void)
@@ -60,6 +71,10 @@ statement(void)
 //indent run-equals-input -nbadp
 
 
+/*
+ * A function body with a declaration and a statement gets a blank line between
+ * those.
+ */
 //indent input
 void
 declaration_statement(void)
@@ -82,6 +97,7 @@ declaration_statement(void)
 //indent run-equals-input -nbadp
 
 
+/* If there already is a blank line in the right place, it is kept. */
 //indent input
 static void
 declaration_blank_statement(void)
@@ -97,6 +113,7 @@ declaration_blank_statement(void)
 //indent run-equals-input -nbadp
 
 
+/* Additional blank lines are kept. To remove them, see the '-sob' option. */
 //indent input
 static void
 declaration_blank_blank_statement(void)
@@ -106,6 +123,26 @@ declaration_blank_blank_statement(void)
 
 
 	stmt();
+}
+//indent end
+
+//indent run-equals-input -badp
+
+//indent run-equals-input -nbadp
+
+
+/*
+ * The blank line is only inserted at the top of a function body, not in nested
+ * block statements.
+ */
+//indent input
+static void
+nested(void)
+{
+	{
+		int		decl;
+		stmt();
+	}
 }
 //indent end
 
