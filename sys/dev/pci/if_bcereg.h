@@ -1,4 +1,4 @@
-/* $NetBSD: if_bcereg.h,v 1.5 2019/10/18 23:08:29 msaitoh Exp $	 */
+/* $NetBSD: if_bcereg.h,v 1.6 2023/06/27 21:43:58 nisimura Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -76,7 +76,7 @@
 #define BCE_EMC_EDET			0x00000008	/* PHY energy detect */
 #define BCE_EMC_LED			0x000000e0	/* PHY LED control */
 
-/* DMA Interrupt control */
+/* recv coalesce; 31:24 frame upper bound, 23:0 guard period */
 #define BCE_DMAI_CTL			0x0100
 
 /* DMA registers */
