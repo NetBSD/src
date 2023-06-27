@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.73 2022/10/29 00:19:21 riastradh Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.74 2023/06/27 01:15:22 pho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.73 2022/10/29 00:19:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.74 2023/06/27 01:15:22 pho Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -542,7 +542,7 @@ callout_halt(callout_t *cs, void *interlock)
 {
 	callout_impl_t *c = (callout_impl_t *)cs;
 	kmutex_t *lock;
-	int flags;
+	struct callout_cpu *cc;
 
 	KASSERT(c->c_magic == CALLOUT_MAGIC);
 	KASSERT(!cpu_intr_p());
@@ -552,11 +552,11 @@ callout_halt(callout_t *cs, void *interlock)
 	lock = callout_lock(c);
 	SDT_PROBE4(sdt, kernel, callout, halt,
 	    c, c->c_func, c->c_arg, c->c_flags);
-	flags = c->c_flags;
-	if ((flags & CALLOUT_PENDING) != 0)
+	if ((c->c_flags & CALLOUT_PENDING) != 0)
 		CIRCQ_REMOVE(&c->c_list);
-	c->c_flags = flags & ~(CALLOUT_PENDING|CALLOUT_FIRED);
-	if (__predict_false(flags & CALLOUT_FIRED)) {
+	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
+	cc = c->c_cpu;
+	if (__predict_false(cc->cc_active == c && cc->cc_lwp != curlwp)) {
 		callout_wait(c, interlock, lock);
 		return true;
 	}
