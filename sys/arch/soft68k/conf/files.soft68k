@@ -1,0 +1,99 @@
+#
+#	$NetBSD: files.soft68k,v 1.30 2022/06/10 21:42:23 tsutsui Exp $
+#
+maxpartitions 8
+maxusers 2 8 64
+
+# machine-specific options
+defflag			PANICBUTTON
+
+file arch/soft68k/soft68k/autoconf.c
+file arch/soft68k/soft68k/clock.c
+file arch/soft68k/soft68k/disksubr.c
+file arch/soft68k/soft68k/isr.c
+file arch/soft68k/soft68k/machdep.c
+file arch/soft68k/soft68k/pmap_bootstrap.c
+file arch/soft68k/soft68k/trap.c
+file arch/m68k/m68k/cacheops.c
+file arch/m68k/m68k/db_memrw.c		ddb | kgdb
+file arch/m68k/m68k/fpu.c		compile-with "${M68K_KERN_FPU}"
+file arch/m68k/m68k/m68k_trap.c
+file arch/m68k/m68k/pmap_motorola.c
+file arch/m68k/m68k/procfs_machdep.c	procfs
+file arch/m68k/m68k/sys_machdep.c
+file arch/m68k/m68k/vm_machdep.c
+file dev/cons.c
+
+device mainbus {}
+attach mainbus at root
+file arch/soft68k/soft68k/mainbus.c
+
+device clock
+attach clock at mainbus
+file arch/soft68k/dev/timekeeper.c	clock
+
+device lcd
+attach lcd at mainbus
+file	arch/soft68k/dev/lcd.c		lcd needs-flag
+
+attach le at mainbus: le24
+file arch/soft68k/dev/if_le.c		le
+
+device sio { [channel = -1] }
+attach sio at mainbus
+file arch/soft68k/dev/sio.c 		sio
+
+device siotty: tty
+attach siotty at sio
+file arch/soft68k/dev/siotty.c		siotty needs-flag
+
+# HD647180X I/O processor
+device xpbus {}
+attach xpbus at mainbus
+file arch/soft68k/dev/xpbus.c		xpbus
+file arch/soft68k/dev/xpcmd.c		xpbus
+file arch/soft68k/dev/xplxfirm.c	xpbus
+
+device xp
+attach xp at xpbus
+file arch/soft68k/dev/xp.c		xp
+
+device psgpam: audiobus
+attach psgpam at xpbus
+file arch/soft68k/dev/psgpam.c		psgpam
+file arch/soft68k/dev/psgpam_enc.c	psgpam
+file arch/soft68k/dev/psgpam_table.c	psgpam
+
+device ws: wskbddev,wsmousedev
+attach ws at sio
+file arch/soft68k/dev/softws.c		ws
+file arch/soft68k/dev/omkbdmap.c	ws
+
+device fb: wsemuldisplaydev
+attach fb at mainbus
+file arch/soft68k/dev/softfb.c		fb
+file arch/soft68k/dev/omrasops.c	fb
+
+attach spc at mainbus
+file arch/soft68k/dev/spc.c		spc
+
+# Machine-independent SCSI driver.
+include "dev/scsipi/files.scsipi"
+
+# Memory Disk for boot tape
+file	dev/md_root.c			memory_disk_hooks
+
+
+# Compatibility modules
+
+# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
+include "compat/aoutm68k/files.aoutm68k"
+
+# SunOS binary compatibility (COMPAT_SUNOS)
+include "compat/sunos/files.sunos"
+file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
+
+# OSS audio driver compatibility
+include "compat/ossaudio/files.ossaudio"
+
+include "arch/soft68k/conf/majors.soft68k"
