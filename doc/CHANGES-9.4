@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.71 2023/06/22 06:06:52 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.72 2023/06/27 18:48:20 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1572,4 +1572,52 @@ sys/dev/pci/pcidevs_data.h			(regen)
 	processors.
 	The SATA device ID for Apollo Lake is not 0x5ae0 but 0x5ae3.
 	[msaitoh, ticket #1654]
+
+usr.bin/vacation/vacation.1			1.33
+usr.bin/vacation/vacation.c			1.38
+
+	vacation(1): check 'Auto-Submitted:' (RFC 3834) in addition to
+	'Precedence:' (RFC 2076), and set 'Precedence:' in addition to
+	'Auto-Submitted:'.
+	[hauke, ticket #1655]
+
+sys/dev/pci/if_wm.c				1.768-1.782 via patch
+sys/dev/pci/if_wmreg.h				1.129-1.130
+sys/dev/pci/if_wmvar.h				1.49
+
+	wm(4):
+	- Rework for event counters:
+	  - Fix calculation of GORC, GOTC, TOR and TOT counters correctly.
+	  - Rearrange the order of the registers so that they are roughly
+	    in ascending order.
+	  - Reorder evcnt_attach_dynamic(), WM_EVCNT_ADD() and evcnt_detach()
+	    to match.
+	  - IC{TX,RX}*C registers are for older than 82575.
+	  - Fix a bug that the transmit underrun counter is incorrectly
+	    counted.
+	  - Don't add "Count" for event counter's description.
+	  - Some statistics registers were replaced with new counters on newer
+	    chips. Treat 0x403c(CEXTERR->HTDPMC), 0x40fc(TSCTFC->CBRMPC),
+	    0x4124(ICRXOC->HTCBDPC) and from 0x4104 to 0x4124.
+	  - Add some new counters:
+	    - Circuit Breaker TX Manageability Packet
+	    - Circuit Breaker RX Dropped Packet
+	    - Host Good Octets RX
+	    - Host Good Octets TX 
+	    - Length Errors
+	    - SerDes/SGMII Code Violation Packet
+	    - Header Redirection Missed Packet
+	    - EEE TX LPI
+	    - EEE RX LPI
+	  - Fix prc511's comment and description.
+	- Add SOICZIFDATA (ifconfig -z) support for evcnt(9).
+	- Use WM_IS_ICHPCH(). No functional change.
+	- Fix typo. s/ictxact/ictxatc/. No functional change.
+	- Add comment.
+	[msaitoh, ticket #1656]
+
+sys/fs/nilfs/nilfs_subr.h			1.5
+
+	Remove dead code.
+	[reinoud, ticket #1657]
 
