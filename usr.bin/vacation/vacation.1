@@ -1,4 +1,4 @@
-.\"	$NetBSD: vacation.1,v 1.32 2019/05/06 06:56:07 wiz Exp $
+.\"	$NetBSD: vacation.1,v 1.32.10.1 2023/06/27 18:09:43 martin Exp $
 .\"
 .\" Copyright (c) 1985, 1987, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -172,6 +172,7 @@ option) is part of either the
 or
 .Dq Cc:
 headers of the mail.
+.Pp
 No messages from
 .Dq ???-REQUEST ,
 .Dq Postmaster ,
@@ -180,12 +181,20 @@ No messages from
 or
 .Dq MAILER-DAEMON
 will be replied to (where these strings are
-case insensitive) nor is a notification sent if a
+case insensitive).
+.Pp
+No notification is sent if a
 .Dq Precedence: bulk
 .Dq Precedence: list
-or
 .Dq Precedence: junk
-line is included in the mail headers.
+line or an
+.Dq Auto-Submitted:
+line with any qualifier except
+.Dq no
+are included in the mail headers.
+.Nm
+will include these headers in its response to avoid auto-responder loops.
+.Pp
 The people who have sent you messages are maintained as a
 .Xr db 3
 database in the file
@@ -195,7 +204,7 @@ in your home directory.
 .Nm
 expects a file
 .Pa .vacation.msg ,
-in your home directory, containing a message to be sent back to each
+in your home directory containing a message to be sent back to each
 sender.
 It should be an entire message (including headers).
 If the message contains the string
@@ -207,7 +216,6 @@ For example, it might contain:
 From: eric@CS.Berkeley.EDU (Eric Allman)
 Subject: I am on vacation
 Delivered-By-The-Graces-Of: The Vacation program
-Precedence: bulk
 
 I am on vacation until July 22.
 Your mail regarding "$SUBJECT" will be read when I return.
@@ -242,6 +250,9 @@ message to send
 .Sh SEE ALSO
 .Xr sendmail 1 ,
 .Xr syslog 3
+.Pp
+RFC 2076 ,
+RFC 3834
 .Sh HISTORY
 The
 .Nm
