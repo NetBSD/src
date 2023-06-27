@@ -1,4 +1,4 @@
 GCC_CFLAGS = -g -O2 -DIN_GCC  -DCROSS_DIRECTORY_STRUCTURE  -W -Wall -Wno-narrowing -Wwrite-strings -Wcast-qual -Wno-error=format-diag -Wstrict-prototypes -Wmissing-prototypes -Wno-error=format-diag -Wold-style-definition  -isystem ./include 
 INHIBIT_LIBC_CFLAGS = 
-TARGET_SYSTEM_ROOT = /Users/sidqian/Downloads/summer/L2S/netbsd-src/build/obj/destdir.luna68k
+TARGET_SYSTEM_ROOT = /Users/sidqian/Downloads/summer/L2S/netbsd-src/build/obj/destdir.soft68k
 NO_PIE_CFLAGS = 

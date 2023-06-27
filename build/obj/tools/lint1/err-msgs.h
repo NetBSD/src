@@ -353,3 +353,7 @@
 #define MSG_Q8 "octal number '%.*s'"
 #define MSG_Q9 "parenthesized return value"
 #define MSG_Q10 "chained assignment with '%s' and '%s'"
+#define MSG_Q11 "static variable '%s' in function"
+#define MSG_Q12 "comma operator with types '%s' and '%s'"
+#define MSG_Q13 "redundant 'extern' in function declaration of '%s'"
+#define MSG_Q14 "comparison '%s' of 'char' with plain integer %d"
