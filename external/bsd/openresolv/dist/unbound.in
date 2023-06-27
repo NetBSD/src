@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2009-2020 Roy Marples
+# Copyright (c) 2009-2023 Roy Marples
 # All rights reserved
 
 # unbound subscriber for resolvconf
@@ -49,6 +49,9 @@ for d in $DOMAINS; do
 		;;
 	esac
 	newconf="$newconf${NL}forward-zone:$NL	name: \"$dn\"$NL"
+	if [ -n "$unbound_forward_zone_options" ]; then
+		newconf="$newconf	$unbound_forward_zone_options${NL}"
+	fi
 	while [ -n "$ns" ]; do
 		newconf="$newconf	forward-addr: ${ns%%,*}$NL"
 		[ "$ns" = "${ns#*,}" ] && break
@@ -58,13 +61,16 @@ done
 
 if [ -n "$NAMESERVERS" ]; then
 	newconf="$newconf${NL}forward-zone:$NL	name: \".\"$NL"
+	if [ -n "$unbound_forward_zone_options" ]; then
+		newconf="$newconf	$unbound_forward_zone_options${NL}"
+	fi
 	for n in $NAMESERVERS; do
 		newconf="$newconf	forward-addr: $n$NL"
 	done
 fi
 
 # Try to ensure that config dirs exist
-if type config_mkdirs >/dev/null 2>&1; then
+if command -v config_mkdirs >/dev/null 2>&1; then
 	config_mkdirs "$unbound_conf"
 else
 	@SBINDIR@/resolvconf -D "$unbound_conf"

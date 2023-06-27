@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2020 Roy Marples
+# Copyright (c) 2007-2023 Roy Marples
 # All rights reserved
 
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RESOLVCONF="$0"
-OPENRESOLV_VERSION="3.12.0"
+OPENRESOLV_VERSION="3.13.2"
 SYSCONFDIR=@SYSCONFDIR@
 LIBEXECDIR=@LIBEXECDIR@
 VARDIR=@VARDIR@
@@ -158,7 +158,7 @@ private_iface()
 	if [ -e "$PRIVATEDIR/$iface" ]; then
 		return 0
 	fi
-	
+
 	for p in $private_interfaces; do
 		case "$iface" in
 		"$p"|"$p":*) return 0;;
@@ -290,9 +290,9 @@ config_mkdirs()
 
 # With the advent of alternative init systems, it's possible to have
 # more than one installed. So we need to try and guess what one we're
-# using unless overriden by configure.
+# using unless overridden by configure.
 # Note that restarting a service is a last resort - the subscribers
-# should make a reasonable attempt to reconfigre the service via some
+# should make a reasonable attempt to reconfigure the service via some
 # method, normally SIGHUP.
 detect_init()
 {
@@ -326,6 +326,12 @@ detect_init()
 		   if /usr/sbin/invoke-rc.d --quiet $1 status >/dev/null 2>&1
 		   then
 			/usr/sbin/invoke-rc.d $1 restart
+		   fi'
+	elif [ -x /usr/bin/s6-rc ] && [ -x /usr/bin/s6-svc ]; then
+		RESTARTCMD='
+		   if s6-rc -a list | grep -qFx $1-srv
+		   then
+			s6-svc -r /run/service/$1-srv
 		   fi'
 	elif [ -x /sbin/service ]; then
 		# Old RedHat
@@ -367,6 +373,8 @@ detect_init()
 			then
 				/etc/rc.d/$1 restart
 			fi'
+	elif [ -d /etc/dinit.d ] && command -v dinitctl >/dev/null 2>&1; then
+		RESTARTCMD='dinitctl --quiet restart --ignore-unstarted $1'
 	else
 		for x in /etc/init.d/rc.d /etc/rc.d /etc/init.d; do
 			[ -d $x ] || continue
@@ -432,6 +440,8 @@ list_resolv()
 
 	cmd="$1"
 	shift
+	pattern_specified="$1"
+
 	excl=false
 	list=
 	report=false
@@ -462,7 +472,7 @@ list_resolv()
 
 	# If we have an interface ordering list, then use that.
 	# It works by just using pathname expansion in the interface directory.
-	if [ -n "$1" ]; then
+	if [ -n "$pattern_specified" ]; then
 		list="$*"
 		$force || report=true
 	elif ! $excl; then
@@ -515,7 +525,11 @@ list_resolv()
 	fi
 
 	cd "$IFACEDIR"
-	retval=1
+	if $excl || [ -n "$pattern_specified" ]; then
+		retval=1
+	else
+		retval=0
+	fi
 	for i in $(uniqify $list); do
 		# Only list interfaces which we really have
 		if ! [ -f "$i" ]; then
@@ -542,7 +556,7 @@ list_resolv()
 				fi
 			done
 		fi
-		
+
 		if [ "$cmd" = i ] || [ "$cmd" = "-i" ]; then
 			printf %s "$i "
 		else

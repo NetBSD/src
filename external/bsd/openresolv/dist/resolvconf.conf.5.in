@@ -1,4 +1,4 @@
-.\" Copyright (c) 2009-2020 Roy Marples
+.\" Copyright (c) 2009-2023 Roy Marples
 .\" All rights reserved
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 1, 2020
+.Dd May 23, 2023
 .Dt RESOLVCONF.CONF 5
 .Os
 .Sh NAME
@@ -134,7 +134,7 @@ search foo.org dead.beef
 nameserver 1.2.3.4
 nameserver 2.3.4.5
 .Ed
-and this configuaration:
+and this configuration:
 .Bd -compact -literal -offset indent
 replace="search/foo*/bar.com"
 replace="$replace nameserver/1.2.3.4/5.6.7.8"
@@ -210,6 +210,12 @@ Prepend name servers to the dynamically generated list.
 Append search domains to the dynamically generated list.
 .It Sy prepend_search
 Prepend search domains to the dynamically generated list.
+.It Sy resolv_conf_mv
+Defaults to NO.
+Defines if
+.Pa /etc/resolv.conf
+is updated by writing to a temporary file and then moving it
+vs writing directly to it.
 .El
 .Sh SUBSCRIBER OPTIONS
 openresolv ships with subscribers for the name servers
@@ -222,7 +228,7 @@ and
 Each subscriber can create configuration files which should be included in
 the subscribers main configuration file.
 .Pp
-To disable a subscriber, simply set it's name to NO.
+To disable a subscriber, simply set its name to NO.
 For example, to disable the libc subscriber you would set:
 .Bd -compact -literal -offset indent
 libc=NO
@@ -322,6 +328,9 @@ forward-zones-file=/etc/pdns/recursor-zones.conf
 This file tells unbound about specific and global name servers.
 .It Sy unbound_insecure
 When set to YES, unbound marks the domains as insecure, thus ignoring DNSSEC.
+.It Sy unbound_forward_zone_options
+Options appended to each forward zone.
+Each option should be separated by an embedded new line.
 .Pp
 Example resolvconf.conf for unbound:
 .Bd -compact -literal -offset indent
@@ -385,4 +394,4 @@ Each distribution is a special snowflake and likes to name the same thing
 differently, namely the named service script.
 .Pp
 Please report them to
-.Lk http://roy.marples.name/projects/openresolv
+.Lk https://roy.marples.name/projects/openresolv
