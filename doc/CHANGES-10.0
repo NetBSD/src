@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.73 2023/06/23 05:42:34 msaitoh Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.74 2023/06/27 18:56:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2283,3 +2283,42 @@ usr.sbin/sysinst/main.c				1.31
 	certs, tell ftp(1) not to verify trust chains when doing https
 	downloads.
 	[martin, ticket #212]
+
+usr.bin/vacation/vacation.1			1.33
+usr.bin/vacation/vacation.c			1.38
+
+	vacation(1): check 'Auto-Submitted:' (RFC 3834) in addition to
+	'Precedence:' (RFC 2076), and set 'Precedence:' in addition to
+	'Auto-Submitted:'.
+	[hauke, ticket #214]
+
+usr.bin/crunch/crunchgen/crunchgen.c		1.95
+usr.sbin/paxctl/paxctl.8			1.17,1.18
+usr.sbin/paxctl/paxctl.c			1.13
+
+	PR 52675:
+	paxctl(8): Introduce -0 option to clear all PaX flag bits in ELF note.
+	crunchgen(1): Clear PaX flags instead of removing its ELF note section.
+	[rin, ticket #215]
+
+sys/dev/pci/if_wm.c				1.782
+
+	wm(4): add missing read to count Circuit Breaker Rx Dropped Packet
+	correctly.
+	[msaitoh, ticket #216]
+
+etc/root/dot.profile				1.35
+
+	As with normal users, include /usr/games in the default PATH of root.
+	[nia, ticket #217]
+
+sys/fs/nilfs/nilfs_subr.h			1.5
+
+	Remove dead code.
+	[reinoud, ticket #218]
+
+sys/kern/kern_timeout.c				1.74-1.76
+
+	PR 57226: callout(9): fix panic() in callout_destroy().
+	[pho, ticket #219]
+
