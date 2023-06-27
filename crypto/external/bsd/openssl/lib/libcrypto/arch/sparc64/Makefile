@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2018/02/18 23:38:47 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2023/06/27 07:25:55 martin Exp $
 
 .include "bsd.own.mk"
 
@@ -12,6 +12,7 @@ regen:
 		j=$$(basename $$i .pl).S; \
 		case $$j in \
 		sparc*_modes.pl|sha1-*) perl $$i $$j;; \
+		sha512-*) perl $$i $$j; perl $$i $${j:S/512/256/};; \
 		*) perl $$i > $$j;; \
 		esac; \
 	done
