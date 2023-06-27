@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.33.6.9 2022/07/11 14:15:58 martin Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.33.6.10 2023/06/27 18:36:53 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -212,5 +212,8 @@ typedef enum {
 #define	WM_ICH8_LAN_INIT_TIMEOUT 1500
 #define	WM_MDIO_OWNERSHIP_TIMEOUT 10
 #define	WM_MAX_PLL_TRIES	5
+
+/* For 80003, ICHs and PCHs */
+#define	WM_IS_ICHPCH(x)	((x)->sc_type >= WM_T_80003)
 
 #endif /* _DEV_PCI_IF_WMVAR_H_ */
