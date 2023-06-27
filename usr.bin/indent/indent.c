@@ -1,4 +1,4 @@
-/*	$NetBSD: indent.c,v 1.386 2023/06/26 20:03:09 rillig Exp $	*/
+/*	$NetBSD: indent.c,v 1.387 2023/06/27 04:41:23 rillig Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-4-Clause
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: indent.c,v 1.386 2023/06/26 20:03:09 rillig Exp $");
+__RCSID("$NetBSD: indent.c,v 1.387 2023/06/27 04:41:23 rillig Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -357,7 +357,7 @@ update_ps_badp(lexer_symbol lsym)
 	if (lsym == lsym_lbrace && ps.lbrace_kind == psym_lbrace_block
 	    && ps.psyms.len == 3)
 		ps.badp = badp_seen_lbrace;
-	if (lsym == lsym_rbrace && ps.decl_level == 0)
+	if (lsym == lsym_rbrace && !ps.in_decl)
 		ps.badp = badp_none;
 	if (lsym == lsym_type && ps.paren.len == 0
 	    && (ps.badp == badp_seen_lbrace || ps.badp == badp_yes))

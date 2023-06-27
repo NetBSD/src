@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.15 2023/06/27 04:28:16 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.16 2023/06/27 04:41:23 rillig Exp $ */
 
 /*
  * Tests for the options '-badp' and '-nbadp'.
@@ -226,7 +226,7 @@ f(void)
 }
 //indent end
 
-//indent run -di0
+//indent run -di0 -badp
 void
 f(void)
 {
@@ -235,7 +235,7 @@ f(void)
 		{3, 4},
 	};
 	int decl2 = 5;
-// $ FIXME: Add blank line here.
+
 	stmt;
 }
 //indent end
@@ -243,7 +243,8 @@ f(void)
 
 /*
  * Due to its limited lookahead, indent cannot know whether the comment is
- * followed by a declaration or a statement.
+ * followed by a declaration or a statement, so it assumes that the comment is
+ * part of the declaration block.
  */
 //indent input
 void f(void) {
@@ -259,11 +260,9 @@ void
 f(void)
 {
 	int		decl1;
-// $ FIXME: No blank line here.
-
 	/* comment */
 	int		decl2;
-// $ FIXME: Add blank line here.
+
 	stmt;
 }
 //indent end
@@ -281,8 +280,6 @@ f(void)
 	int		decl;
 
 	stmt1;
-// $ FIXME: Remove this blank line.
-
 	stmt2;
 }
 //indent end
