@@ -1,4 +1,4 @@
-/*	$NetBSD: vacation.c,v 1.37 2019/05/05 23:08:37 pgoyette Exp $	*/
+/*	$NetBSD: vacation.c,v 1.37.10.1 2023/06/27 18:09:43 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1987, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1987, 1993\
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-__RCSID("$NetBSD: vacation.c,v 1.37 2019/05/05 23:08:37 pgoyette Exp $");
+__RCSID("$NetBSD: vacation.c,v 1.37.10.1 2023/06/27 18:09:43 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -325,7 +325,7 @@ readheaders(void)
 			    COMPARE(buf, "From:") == 0)
 				getfrom(buf + sizeof("From:") - 1);
 			break;
-		case 'P':		/* "Precedence:" */
+		case 'P':		/* "Precedence:" rfc 2076 ch 3.9 */
 			cont = 0;
 			if (CASECOMPARE(buf, "Precedence") != 0 ||
 			    (buf[10] != ':' && buf[10] != ' ' &&
@@ -352,12 +352,26 @@ readheaders(void)
 				break;
 			cont = 1;
 			goto findme;
-		case 'A':		/* "Apparently-To:" */
-			if ((tflag & APPARENTLY_TO) == 0 ||
-			    COMPARE(buf, "Apparently-To:") != 0)
+		case 'A':
+                        /* "Apparently-To:" */
+			if ((tflag & APPARENTLY_TO) != 0 &&
+			    COMPARE(buf, "Apparently-To:") == 0) {
+				cont = 1;
+				goto findme;
+			}
+			/* "Auto-Submitted:" rfc 3834 ch 5 */
+			cont = 0;
+			if (CASECOMPARE(buf, "Auto-Submitted") != 0 ||
+			    (buf[14] != ':' && buf[14] != ' ' &&
+			    buf[14] != '\t'))
 				break;
-			cont = 1;
-			goto findme;
+			if ((p = strchr(buf, ':')) == NULL)
+				break;
+			while (*++p && isspace((unsigned char)*p))
+				continue;
+			if (CASECOMPARE(p, "no") != 0 )
+				exit(0);
+			break;
 		case 'D':		/* "Delivered-To:" */
 			if ((tflag & DELIVERED_TO) == 0 ||
 			    COMPARE(buf, "Delivered-To:") != 0)
@@ -628,6 +642,7 @@ sendmessage(const char *myname)
 	} 
 	(void)fprintf(sfp, "To: %s\n", from);
 	(void)fputs("Auto-Submitted: auto-replied\n", sfp);
+	(void)fputs("Precedence: bulk\n", sfp);
 	while (fgets(buf, sizeof buf, mfp) != NULL) {
 		char *p;
 		if ((p = strstr(buf, "$SUBJECT")) != NULL) {
