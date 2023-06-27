@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.75 2023/06/27 01:17:43 pho Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.76 2023/06/27 01:19:44 pho Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.75 2023/06/27 01:17:43 pho Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.76 2023/06/27 01:19:44 pho Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -174,7 +174,6 @@ struct callout_cpu {
 	u_int		cc_ticks;
 	lwp_t		*cc_lwp;
 	callout_impl_t	*cc_active;
-	callout_impl_t	*cc_cancel;
 	struct evcnt	cc_ev_late;
 	struct evcnt	cc_ev_block;
 	struct callout_circq cc_todo;		/* Worklist */
@@ -507,7 +506,6 @@ bool
 callout_stop(callout_t *cs)
 {
 	callout_impl_t *c = (callout_impl_t *)cs;
-	struct callout_cpu *cc;
 	kmutex_t *lock;
 	bool expired;
 
@@ -519,16 +517,6 @@ callout_stop(callout_t *cs)
 		CIRCQ_REMOVE(&c->c_list);
 	expired = ((c->c_flags & CALLOUT_FIRED) != 0);
 	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
-
-	cc = c->c_cpu;
-	if (cc->cc_active == c) {
-		/*
-		 * This is for non-MPSAFE callouts only.  To synchronize
-		 * effectively we must be called with kernel_lock held.
-		 * It's also taken in callout_softclock.
-		 */
-		cc->cc_cancel = c;
-	}
 
 	SDT_PROBE5(sdt, kernel, callout, stop,
 	    c, c->c_func, c->c_arg, c->c_flags, expired);
