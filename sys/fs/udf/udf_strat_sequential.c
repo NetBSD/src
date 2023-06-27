@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_sequential.c,v 1.19 2022/08/27 05:32:41 skrll Exp $ */
+/* $NetBSD: udf_strat_sequential.c,v 1.20 2023/06/27 09:58:50 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.19 2022/08/27 05:32:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_sequential.c,v 1.20 2023/06/27 09:58:50 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -85,7 +85,10 @@ struct strat_private {
 	kcondvar_t		 discstrat_cv;		/* to wait on       */
 	kmutex_t		 discstrat_mutex;	/* disc strategy    */
 
+	int			 thread_running;	/* thread control */
 	int			 run_thread;		/* thread control */
+	int			 thread_finished;	/* thread control */
+
 	int			 sync_req;		/* thread control */
 	int			 cur_queue;
 
@@ -127,7 +130,7 @@ udf_wr_nodedscr_callback(struct buf *buf)
 	if (udf_node->outstanding_nodedscr == 0) {
 		/* first unlock the node */
 		UDF_UNLOCK_NODE(udf_node, 0);
-		wakeup(&udf_node->outstanding_nodedscr);
+		cv_broadcast(&udf_node->node_lock);
 	}
 
 	putiobuf(buf);
@@ -234,7 +237,7 @@ out:
 	udf_node->outstanding_nodedscr--;
 	if (udf_node->outstanding_nodedscr == 0) {
 		UDF_UNLOCK_NODE(udf_node, 0);
-		wakeup(&udf_node->outstanding_nodedscr);
+		cv_broadcast(&udf_node->node_lock);
 	}
 
 	return error;
@@ -565,6 +568,10 @@ udf_discstrat_thread(void *arg)
 	int empty;
 
 	empty = 1;
+
+	priv->thread_running = 1;
+	cv_broadcast(&priv->discstrat_cv);
+
 	mutex_enter(&priv->discstrat_mutex);
 	while (priv->run_thread || !empty || priv->sync_req) {
 		/* process the current selected queue */
@@ -587,7 +594,10 @@ udf_discstrat_thread(void *arg)
 	}
 	mutex_exit(&priv->discstrat_mutex);
 
-	wakeup(&priv->run_thread);
+	priv->thread_running  = 0;
+	priv->thread_finished = 1;
+	cv_broadcast(&priv->discstrat_cv);
+
 	kthread_exit(0);
 	/* not reached */
 }
@@ -654,13 +664,22 @@ udf_discstrat_init_seq(struct udf_strat_args *args)
 	vfs_timestamp(&priv->last_queued[UDF_SHED_SEQWRITING]);
 
 	/* create our disk strategy thread */
-	priv->run_thread = 1;
-	priv->sync_req   = 0;
+	priv->thread_finished = 0;
+	priv->thread_running  = 0;
+	priv->run_thread      = 1;
+	priv->sync_req        = 0;
 	if (kthread_create(PRI_NONE, 0 /* KTHREAD_MPSAFE*/, NULL /* cpu_info*/,
 		udf_discstrat_thread, ump, &priv->queue_lwp,
 		"%s", "udf_rw")) {
 		panic("fork udf_rw");
 	}
+
+	/* wait for thread to spin up */
+	mutex_enter(&priv->discstrat_mutex);
+	while (!priv->thread_running) {
+		cv_timedwait(&priv->discstrat_cv, &priv->discstrat_mutex, hz);
+	}
+	mutex_exit(&priv->discstrat_mutex);
 }
 
 
@@ -669,7 +688,6 @@ udf_discstrat_finish_seq(struct udf_strat_args *args)
 {
 	struct udf_mount *ump = args->ump;
 	struct strat_private *priv = PRIV(ump);
-	int error;
 
 	if (ump == NULL)
 		return;
@@ -677,11 +695,14 @@ udf_discstrat_finish_seq(struct udf_strat_args *args)
 	/* stop our scheduling thread */
 	KASSERT(priv->run_thread == 1);
 	priv->run_thread = 0;
-	wakeup(priv->queue_lwp);
-	do {
-		error = tsleep(&priv->run_thread, PRIBIO+1,
-			"udfshedfin", hz);
-	} while (error);
+
+	mutex_enter(&priv->discstrat_mutex);
+	while (!priv->thread_finished) {
+		cv_broadcast(&priv->discstrat_cv);
+		cv_timedwait(&priv->discstrat_cv, &priv->discstrat_mutex, hz);
+	}
+	mutex_exit(&priv->discstrat_mutex);
+
 	/* kthread should be finished now */
 
 	/* set back old device strategy method */

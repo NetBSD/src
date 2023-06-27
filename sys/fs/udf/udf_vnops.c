@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.126 2022/05/28 21:14:57 andvar Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.127 2023/06/27 09:58:50 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.126 2022/05/28 21:14:57 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.127 2023/06/27 09:58:50 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -163,10 +163,12 @@ udf_reclaim(void *v)
 	udf_update(vp, NULL, NULL, NULL, UPDATE_CLOSE);
 
 	/* async check to see if all node descriptors are written out */
+	mutex_enter(&udf_node->node_mutex);
 	while ((volatile int) udf_node->outstanding_nodedscr > 0) {
 		vprint("udf_reclaim(): waiting for writeout\n", vp);
-		tsleep(&udf_node->outstanding_nodedscr, PRIBIO, "recl wait", hz/8);
+		cv_timedwait(&udf_node->node_lock, &udf_node->node_mutex, hz/8);
 	}
+	mutex_exit(&udf_node->node_mutex);
 
 	/* dispose all node knowledge */
 	udf_dispose_node(udf_node);
