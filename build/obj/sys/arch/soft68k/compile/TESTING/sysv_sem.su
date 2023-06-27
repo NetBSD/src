@@ -1,0 +1,17 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:152:1:seminit_exithook	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:1223:1:sysctl_ipc_sem_setup	88	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:1090:1:semexit	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:200:1:semrealloc.part.0	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:1192:1:sysctl_ipc_semmns	164	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:1208:1:sysctl_ipc_semmnu	164	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:1176:1:sysctl_ipc_semmni	164	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:105:1:seminit	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:160:1:semfini	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:346:1:sys_semconfig	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:360:1:semu_alloc	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:408:1:semundo_adjust	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:467:1:semundo_clear	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:535:1:semctl1	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:494:1:sys_____semctl50	108	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:702:1:sys_semget	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_sem.c:804:1:sys_semop	148	dynamic,bounded

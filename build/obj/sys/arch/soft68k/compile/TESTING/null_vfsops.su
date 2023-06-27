@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/nullfs/null_vfsops.c:189:1:nullfs_unmount	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/nullfs/null_vfsops.c:245:1:nullfs_sysctl_setup	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/nullfs/null_vfsops.c:262:1:null_modcmd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/nullfs/null_vfsops.c:97:1:nullfs_mount	132	dynamic,bounded

@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_syncache.c:1075:1:syn_cache_respond	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_syncache.c:505:1:syn_cache_lookup	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_syncache.c:419:1:syn_cache_timer	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_syncache.c:304:1:syn_cache_init	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_syncache.c:317:1:syn_cache_insert	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_syncache.c:478:1:syn_cache_cleanup	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_syncache.c:555:1:syn_cache_get	112	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_syncache.c:803:1:syn_cache_reset	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_syncache.c:825:1:syn_cache_unreach	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_syncache.c:877:1:syn_cache_add	600	dynamic,bounded

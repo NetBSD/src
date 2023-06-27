@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/linear.c:44:1:audio_linear8_to_internal	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/linear.c:77:1:audio_internal_to_linear8	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/linear.c:111:1:audio_linear16_to_internal	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/linear.c:169:1:audio_internal_to_linear16	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/linear.c:228:1:audio_linear24_to_internal	28	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/linear.c:276:1:audio_internal_to_linear24	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/linear.c:328:1:audio_linear32_to_internal	24	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/linear.c:368:1:audio_internal_to_linear32	20	static

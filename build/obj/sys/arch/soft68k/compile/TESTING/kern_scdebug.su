@@ -1,0 +1,3 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_syscall.c:61:1:sys_syscall	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_syscall.c:61:1:sys___syscall	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_scdebug.c:297:1:scdebug_init	0	static

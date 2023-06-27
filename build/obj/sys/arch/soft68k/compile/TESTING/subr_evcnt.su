@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_evcnt.c:369:1:sysctl_evcnt_setup	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_evcnt.c:246:1:sysctl_doevcnt	108	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_evcnt.c:126:1:evcnt_init	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_evcnt.c:149:1:evcnt_attach_static	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_evcnt.c:181:1:evcnt_attach_dynamic_nozero	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_evcnt.c:196:1:evcnt_attach_dynamic	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_evcnt.c:208:1:evcnt_detach	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_evcnt.c:389:1:evcnt_attach_legacy_intrcnt	52	dynamic,bounded

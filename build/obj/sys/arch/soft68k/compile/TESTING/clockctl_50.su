@@ -1,0 +1,3 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/clockctl_50.c:59:1:compat50_clockctlioctl	104	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/clockctl_50.c:130:1:clockctl_50_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/clockctl_50.c:137:1:clockctl_50_fini	8	dynamic,bounded

@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_loop.c:437:1:loop_rtrequest	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_loop.c:219:1:loop_clone_destroy	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_loop.c:175:1:loop_clone_create	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_loop.c:450:1:loioctl	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_loop.c:241:1:looutput	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_loop.c:510:1:if_loop_modcmd	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_loop.c:146:1:loopattach	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_loop.c:155:1:loopinit	4	dynamic,bounded

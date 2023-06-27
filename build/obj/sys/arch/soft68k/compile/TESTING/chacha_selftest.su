@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/chacha/chacha_selftest.c:159:1:xchacha_stream_selftest	680	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/chacha/chacha_selftest.c:454:1:chacha_selftest	116	dynamic,bounded

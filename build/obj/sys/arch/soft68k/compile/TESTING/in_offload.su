@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_offload.c:49:1:tcp4_segment	96	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_offload.c:175:1:ip_tso_output	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_offload.c:200:1:in_undefer_cksum	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_offload.c:274:1:in_undefer_cksum_tcpudp	28	dynamic,bounded

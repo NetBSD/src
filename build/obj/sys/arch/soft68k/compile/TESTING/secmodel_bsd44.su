@@ -1,0 +1,5 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/bsd44/secmodel_bsd44.c:50:1:sysctl_security_bsd44_setup	88	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/bsd44/secmodel_bsd44.c:93:1:secmodel_bsd44_modcmd	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/bsd44/secmodel_bsd44.c:75:1:secmodel_bsd44_init	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/bsd44/secmodel_bsd44.c:81:1:secmodel_bsd44_start	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/secmodel/bsd44/secmodel_bsd44.c:87:1:secmodel_bsd44_stop	0	static

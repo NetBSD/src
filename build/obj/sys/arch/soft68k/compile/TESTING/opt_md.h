@@ -1,0 +1,63 @@
+/* option `MEMORY_RBFLAGS' is obsolete */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_MEMORY_RBFLAGS
+ .global _KERNEL_OPT_MEMORY_RBFLAGS
+ .equiv _KERNEL_OPT_MEMORY_RBFLAGS,0xdeadbeef
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_MEMORY_RBFLAGS\n .global _KERNEL_OPT_MEMORY_RBFLAGS\n .equiv _KERNEL_OPT_MEMORY_RBFLAGS,0xdeadbeef\n .endif");
+#endif
+/* option `MEMORY_DISK_DYNAMIC' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_MEMORY_DISK_DYNAMIC
+ .global _KERNEL_OPT_MEMORY_DISK_DYNAMIC
+ .equiv _KERNEL_OPT_MEMORY_DISK_DYNAMIC,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_MEMORY_DISK_DYNAMIC\n .global _KERNEL_OPT_MEMORY_DISK_DYNAMIC\n .equiv _KERNEL_OPT_MEMORY_DISK_DYNAMIC,0x6e074def\n .endif");
+#endif
+/* option `MEMORY_DISK_IS_ROOT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_MEMORY_DISK_IS_ROOT
+ .global _KERNEL_OPT_MEMORY_DISK_IS_ROOT
+ .equiv _KERNEL_OPT_MEMORY_DISK_IS_ROOT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_MEMORY_DISK_IS_ROOT\n .global _KERNEL_OPT_MEMORY_DISK_IS_ROOT\n .equiv _KERNEL_OPT_MEMORY_DISK_IS_ROOT,0x6e074def\n .endif");
+#endif
+/* option `MEMORY_DISK_HOOKS' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_MEMORY_DISK_HOOKS
+ .global _KERNEL_OPT_MEMORY_DISK_HOOKS
+ .equiv _KERNEL_OPT_MEMORY_DISK_HOOKS,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_MEMORY_DISK_HOOKS\n .global _KERNEL_OPT_MEMORY_DISK_HOOKS\n .equiv _KERNEL_OPT_MEMORY_DISK_HOOKS,0x6e074def\n .endif");
+#endif
+/* option `MEMORY_DISK_RBFLAGS' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_MEMORY_DISK_RBFLAGS
+ .global _KERNEL_OPT_MEMORY_DISK_RBFLAGS
+ .equiv _KERNEL_OPT_MEMORY_DISK_RBFLAGS,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_MEMORY_DISK_RBFLAGS\n .global _KERNEL_OPT_MEMORY_DISK_RBFLAGS\n .equiv _KERNEL_OPT_MEMORY_DISK_RBFLAGS,0x6e074def\n .endif");
+#endif
+/* option `MEMORY_DISK_ROOT_SIZE' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_MEMORY_DISK_ROOT_SIZE
+ .global _KERNEL_OPT_MEMORY_DISK_ROOT_SIZE
+ .equiv _KERNEL_OPT_MEMORY_DISK_ROOT_SIZE,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_MEMORY_DISK_ROOT_SIZE\n .global _KERNEL_OPT_MEMORY_DISK_ROOT_SIZE\n .equiv _KERNEL_OPT_MEMORY_DISK_ROOT_SIZE,0x6e074def\n .endif");
+#endif
+#define	MEMORY_DISK_SERVER	1
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_MEMORY_DISK_SERVER
+ .global _KERNEL_OPT_MEMORY_DISK_SERVER
+ .equiv _KERNEL_OPT_MEMORY_DISK_SERVER,0x1
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_MEMORY_DISK_SERVER\n .global _KERNEL_OPT_MEMORY_DISK_SERVER\n .equiv _KERNEL_OPT_MEMORY_DISK_SERVER,0x1\n .endif");
+#endif

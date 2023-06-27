@@ -1,0 +1,13 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:1105:1:nd6_dad_find	116	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:1477:1:nd6_dad_input	180	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:609:1:nd6_na_input	376	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:1055:1:nd6_ifptomac	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:403:1:nd6_ns_output.part.0	224	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:403:1:nd6_ns_output	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:1448:1:nd6_dad_ns_output	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:1308:1:nd6_dad_timer	100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:895:1:nd6_na_output	220	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:101:1:nd6_ns_input	400	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:1097:1:nd6_nbr_init	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:1208:1:nd6_dad_start	100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/nd6_nbr.c:1286:1:nd6_dad_stop	36	dynamic,bounded

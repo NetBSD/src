@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_stub.c:147:1:bpf_stub_null	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_stub.c:110:1:bpf_stub_detach	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_stub.c:76:1:bpf_stub_attach	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_stub.c:153:1:bpf_stub_warn	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_stub.c:165:1:bpf_setops	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_stub.c:182:1:bpf_ops_handover_enter	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_stub.c:202:1:bpf_ops_handover_exit	12	dynamic,bounded

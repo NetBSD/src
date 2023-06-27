@@ -1,0 +1,12 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:183:1:rt_walktree_visitor	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:123:1:rt_inithead	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:134:1:rt_matchaddr	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:146:1:rt_addaddr	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:157:1:rt_lookup	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:169:1:rt_deladdr	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:191:1:rtbl_walktree	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:206:1:rtbl_search_matched_entry	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:223:1:rt_gettable	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:231:1:rtbl_init	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:241:1:rt_assert_inactive	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/rtbl.c:248:1:rt_refines	0	static

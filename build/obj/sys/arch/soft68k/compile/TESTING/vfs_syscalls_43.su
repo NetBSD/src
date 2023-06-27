@@ -1,0 +1,12 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:317:1:compat_43_sys_quota	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:224:1:compat_43_sys_ftruncate	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:268:1:compat_43_sys_lseek	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:297:1:compat_43_sys_creat	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:328:1:compat_43_sys_getdirentries	624	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:120:1:cvtstat	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:150:1:compat_43_sys_stat	252	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:172:1:compat_43_sys_lstat	252	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:200:1:compat_43_sys_fstat	252	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:246:1:compat_43_sys_truncate	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:482:1:vfs_syscalls_43_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/vfs_syscalls_43.c:489:1:vfs_syscalls_43_fini	8	dynamic,bounded

@@ -1,0 +1,15 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:454:1:kmem_create_caches.constprop	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:286:1:kmem_intr_alloc	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:344:1:kmem_intr_zalloc	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:359:1:kmem_intr_free	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:405:1:kmem_alloc	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:426:1:kmem_zalloc	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:443:1:kmem_free	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:522:1:kmem_init	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:533:1:kmem_roundup_size	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:542:1:kmem_asprintf	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:564:1:kmem_strdupsize	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:578:1:kmem_strndup	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:595:1:kmem_strfree	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:608:1:kmem_tmpbuf_alloc	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_kmem.c:619:1:kmem_tmpbuf_free	8	static

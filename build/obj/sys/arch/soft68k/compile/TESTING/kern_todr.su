@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_todr.c:101:1:todr_init	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_todr.c:113:1:todr_lock	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_todr.c:124:1:todr_unlock	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_todr.c:136:1:todr_lock_owned	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_todr.c:147:1:todr_attach	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_todr.c:176:1:todr_set_systime	132	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_todr.c:285:1:todr_save_systime	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_todr.c:314:1:inittodr	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_todr.c:327:1:resettodr	4	dynamic,bounded

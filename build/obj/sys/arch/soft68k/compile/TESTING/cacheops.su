@@ -1,0 +1,11 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:45:1:_TBIA	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:79:1:_TBIAS	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:113:1:_TBIAU	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:147:1:_ICIA	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:176:1:_ICPA	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:205:1:_DCIA	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:239:1:_DCIS	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:273:1:_DCIU	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:307:1:_PCIA	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:341:1:_TBIS	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/cacheops.c:375:1:_DCIAS	0	static

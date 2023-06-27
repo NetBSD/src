@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_idle.c:45:1:idle_loop	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_idle.c:101:1:create_idle_lwp	68	dynamic,bounded

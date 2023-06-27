@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/am7990.c:137:1:am7990_meminit	88	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/am7990.c:463:1:am7990_start	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/am7990.c:106:1:am7990_config	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/ic/am7990.c:365:1:am7990_intr	76	dynamic,bounded

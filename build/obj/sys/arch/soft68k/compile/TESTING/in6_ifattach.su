@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_ifattach.c:169:1:in6_get_hw_ifid	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_ifattach.c:501:1:in6_nigroup	232	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_ifattach.c:555:1:in6_ifattach	368	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet6/in6_ifattach.c:656:1:in6_ifdetach	32	dynamic,bounded

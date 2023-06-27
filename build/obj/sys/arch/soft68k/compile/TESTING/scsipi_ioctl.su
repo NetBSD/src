@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipi_ioctl.c:232:1:scsistrategy	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipi_ioctl.c:78:1:scsipi_ioctl_init	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipi_ioctl.c:130:1:scsipi_user_done	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsipi_ioctl.c:302:1:scsipi_do_ioctl	80	dynamic,bounded

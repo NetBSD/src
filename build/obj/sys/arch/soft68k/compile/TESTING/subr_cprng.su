@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cprng.c:256:1:cprng_fini_cpu	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cprng.c:212:1:cprng_init_cpu	176	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cprng.c:107:1:cprng_init	100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cprng.c:191:1:cprng_strong_create	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cprng.c:204:1:cprng_strong_destroy	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cprng.c:269:1:cprng_strong	120	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cprng.c:163:1:sysctl_kern_arandom	424	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cprng.c:139:1:sysctl_kern_urandom	180	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cprng.c:329:1:cprng_strong32	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_cprng.c:337:1:cprng_strong64	36	dynamic,bounded

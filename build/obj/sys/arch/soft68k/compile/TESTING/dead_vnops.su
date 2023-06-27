@@ -1,0 +1,17 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:134:1:dead_lookup	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:148:1:dead_open	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:162:1:dead_read	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:180:1:dead_write	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:195:1:dead_ioctl	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:212:1:dead_poll	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:293:1:dead_inactive	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:227:1:dead_remove	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:279:1:dead_rmdir	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:256:1:dead_rename	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:306:1:dead_strategy	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:323:1:dead_print	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:350:1:dead_putpages	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:330:1:dead_getpages	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:242:1:dead_link	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:111:1:dead_default_error	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vnops.c:118:1:dead_bmap	0	static

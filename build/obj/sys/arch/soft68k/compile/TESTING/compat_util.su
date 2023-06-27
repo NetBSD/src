@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_util.c:167:1:compat_util_modcmd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_util.c:90:1:emul_flags_translate	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_util.c:107:1:compat_offseterr	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_util.c:125:1:compat_elf_check_interp	52	dynamic,bounded

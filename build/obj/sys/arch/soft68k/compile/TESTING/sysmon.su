@@ -1,0 +1,11 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:182:1:sysmonclose	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:214:1:sysmonioctl	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:141:1:sysmonopen	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:313:1:sm_init_once	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:241:1:sysmonread	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:266:1:sysmonpoll	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:291:1:sysmonkqfilter	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:368:1:sysmon_modcmd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:111:1:sysmon_attach_minor	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:322:1:sysmon_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/sysmon/sysmon.c:346:1:sysmon_fini	0	static

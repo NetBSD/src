@@ -1,0 +1,72 @@
+/* option `WSEMUL_DEFAULT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_WSEMUL_DEFAULT
+ .global _KERNEL_OPT_WSEMUL_DEFAULT
+ .equiv _KERNEL_OPT_WSEMUL_DEFAULT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_WSEMUL_DEFAULT\n .global _KERNEL_OPT_WSEMUL_DEFAULT\n .equiv _KERNEL_OPT_WSEMUL_DEFAULT,0x6e074def\n .endif");
+#endif
+#define	WSEMUL_VT100	1
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_WSEMUL_VT100
+ .global _KERNEL_OPT_WSEMUL_VT100
+ .equiv _KERNEL_OPT_WSEMUL_VT100,0x1
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_WSEMUL_VT100\n .global _KERNEL_OPT_WSEMUL_VT100\n .equiv _KERNEL_OPT_WSEMUL_VT100,0x1\n .endif");
+#endif
+/* option `WSEMUL_SUN' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_WSEMUL_SUN
+ .global _KERNEL_OPT_WSEMUL_SUN
+ .equiv _KERNEL_OPT_WSEMUL_SUN,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_WSEMUL_SUN\n .global _KERNEL_OPT_WSEMUL_SUN\n .equiv _KERNEL_OPT_WSEMUL_SUN,0x6e074def\n .endif");
+#endif
+/* option `WSEMUL_NO_DUMB' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_WSEMUL_NO_DUMB
+ .global _KERNEL_OPT_WSEMUL_NO_DUMB
+ .equiv _KERNEL_OPT_WSEMUL_NO_DUMB,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_WSEMUL_NO_DUMB\n .global _KERNEL_OPT_WSEMUL_NO_DUMB\n .equiv _KERNEL_OPT_WSEMUL_NO_DUMB,0x6e074def\n .endif");
+#endif
+/* option `WSEMUL_VT100_UNDERLINE_BG' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_BG
+ .global _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_BG
+ .equiv _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_BG,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_BG\n .global _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_BG\n .equiv _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_BG,0x6e074def\n .endif");
+#endif
+/* option `WSEMUL_VT100_HILIT_BG' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_WSEMUL_VT100_HILIT_BG
+ .global _KERNEL_OPT_WSEMUL_VT100_HILIT_BG
+ .equiv _KERNEL_OPT_WSEMUL_VT100_HILIT_BG,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_WSEMUL_VT100_HILIT_BG\n .global _KERNEL_OPT_WSEMUL_VT100_HILIT_BG\n .equiv _KERNEL_OPT_WSEMUL_VT100_HILIT_BG,0x6e074def\n .endif");
+#endif
+/* option `WSEMUL_VT100_UNDERLINE_FG' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_FG
+ .global _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_FG
+ .equiv _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_FG,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_FG\n .global _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_FG\n .equiv _KERNEL_OPT_WSEMUL_VT100_UNDERLINE_FG,0x6e074def\n .endif");
+#endif
+/* option `WSEMUL_VT100_HILIT_FG' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_WSEMUL_VT100_HILIT_FG
+ .global _KERNEL_OPT_WSEMUL_VT100_HILIT_FG
+ .equiv _KERNEL_OPT_WSEMUL_VT100_HILIT_FG,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_WSEMUL_VT100_HILIT_FG\n .global _KERNEL_OPT_WSEMUL_VT100_HILIT_FG\n .equiv _KERNEL_OPT_WSEMUL_VT100_HILIT_FG,0x6e074def\n .endif");
+#endif

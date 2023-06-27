@@ -1,0 +1,5 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/nd.c:246:1:nd_set_timer	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/nd.c:52:1:nd_timer	380	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/nd.c:306:1:nd_resolve	116	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/nd.c:416:1:nd_nud_hint	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/nd.c:457:1:nd_attach_domain	0	static

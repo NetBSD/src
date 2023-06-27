@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lcd.c:320:1:lcdctrl	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lcd.c:169:1:lcdclose	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lcd.c:152:1:lcdopen	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lcd.c:127:1:lcd_match	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lcd.c:346:1:greeting	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lcd.c:205:1:lcdioctl	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lcd.c:139:1:lcd_attach	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/lcd.c:182:1:lcdwrite	120	dynamic,bounded

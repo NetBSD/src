@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/disksubr.c:177:1:readdisklabel	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/luna68k/disksubr.c:244:1:writedisklabel	64	dynamic,bounded

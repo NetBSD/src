@@ -1,0 +1,17 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:180:1:_prop_data_equals	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:88:1:_prop_data_free	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:104:1:_prop_data_externalize	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:459:1:_prop_data_internalize_decode.isra	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:238:1:prop_data_create_data	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:261:1:prop_data_create_data_nocopy	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:271:1:prop_data_create_copy	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:300:1:prop_data_create_nocopy	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:318:1:prop_data_copy	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:346:1:prop_data_size	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:361:1:prop_data_value	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:375:1:prop_data_copy_value	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:397:1:prop_data_data	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:422:1:prop_data_data_nocopy	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:432:1:prop_data_equals	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:446:1:prop_data_equals_data	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_data.c:617:1:_prop_data_internalize	40	dynamic,bounded

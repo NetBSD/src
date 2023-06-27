@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/process_machdep.c:87:1:process_read_regs	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/process_machdep.c:99:1:process_read_fpregs	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/process_machdep.c:112:1:process_write_regs	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/process_machdep.c:140:1:process_write_fpregs	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/process_machdep.c:153:1:process_sstep	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/process_machdep.c:166:1:process_set_pc	0	static

@@ -1,0 +1,9 @@
+/* option `HDAUDIOVERBOSE' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_HDAUDIOVERBOSE
+ .global _KERNEL_OPT_HDAUDIOVERBOSE
+ .equiv _KERNEL_OPT_HDAUDIOVERBOSE,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_HDAUDIOVERBOSE\n .global _KERNEL_OPT_HDAUDIOVERBOSE\n .equiv _KERNEL_OPT_HDAUDIOVERBOSE,0x6e074def\n .endif");
+#endif

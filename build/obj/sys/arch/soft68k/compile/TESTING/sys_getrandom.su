@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_getrandom.c:59:1:dogetrandom	256	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_getrandom.c:197:1:sys_getrandom	68	dynamic,bounded

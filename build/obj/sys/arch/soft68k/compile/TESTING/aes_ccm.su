@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ccm.c:307:1:aes_ccm_tag	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ccm.c:51:1:xor	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ccm.c:77:1:aes_ccm_zero_ctr	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ccm.c:86:1:aes_ccm_init	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ccm.c:184:1:aes_ccm_enc	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ccm.c:244:1:aes_ccm_dec	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ccm.c:331:1:aes_ccm_verify	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ccm.c:513:1:aes_ccm_selftest	572	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/aes/aes_ccm.c:607:1:aes_ccm_modcmd	8	dynamic,bounded

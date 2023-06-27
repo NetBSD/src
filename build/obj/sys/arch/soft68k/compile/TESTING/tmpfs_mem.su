@@ -1,0 +1,15 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:52:1:tmpfs_mntmem_init	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:61:1:tmpfs_mntmem_destroy	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:69:1:tmpfs_mntmem_set	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:94:1:tmpfs_mem_info	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:113:1:tmpfs_bytes_max	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:129:1:tmpfs_pages_avail	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:136:1:tmpfs_mem_incr	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:152:1:tmpfs_mem_decr	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:162:1:tmpfs_dirent_get	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:172:1:tmpfs_dirent_put	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:180:1:tmpfs_node_get	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:195:1:tmpfs_node_put	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:210:1:tmpfs_strname_alloc	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:222:1:tmpfs_strname_free	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_mem.c:232:1:tmpfs_strname_neqlen	12	dynamic,bounded

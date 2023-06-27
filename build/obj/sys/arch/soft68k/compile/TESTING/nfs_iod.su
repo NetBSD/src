@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_iod.c:97:1:nfssvc_iod	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_iod.c:186:1:nfs_iodinit	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_iod.c:205:1:nfs_iodbusy	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_iod.c:221:1:nfs_set_niothreads	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_iod.c:195:1:nfs_iodfini	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_iod.c:280:1:nfs_getauth	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_iod.c:335:1:nfs_getnickauth	88	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_iod.c:403:1:nfs_savenickauth	100	dynamic,bounded

@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/mulaw.c:164:1:audio_mulaw_to_internal	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/audio/mulaw.c:215:1:audio_internal_to_mulaw	20	static

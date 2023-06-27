@@ -1,0 +1,12 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:363:1:blst_leaf_alloc	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:876:1:blst_radix_init	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:439:1:blst_meta_alloc	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:791:1:blst_meta_fill	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:569:1:blst_meta_free	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:184:1:blist_create	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:228:1:blist_destroy	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:242:1:blist_alloc	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:264:1:blist_free	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:668:13:blst_copy	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:283:1:blist_fill	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_blist.c:308:1:blist_resize	48	dynamic,bounded

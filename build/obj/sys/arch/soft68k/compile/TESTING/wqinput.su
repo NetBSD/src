@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/wqinput.c:82:1:wqinput_drops	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/wqinput.c:169:1:wqinput_percpu_init_cpu	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/wqinput.c:226:1:wqinput_work	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/wqinput.c:92:1:wqinput_sysctl_drops_handler	160	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/wqinput.c:177:1:wqinput_create	144	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/wqinput.c:269:1:wqinput_input	32	dynamic,bounded

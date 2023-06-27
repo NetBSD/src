@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_select_50.c:74:1:compat_50_sys_kevent	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_select_50.c:99:1:compat_50_sys_select	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_select_50.c:131:1:compat_50_sys_pselect	92	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_select_50.c:59:1:compat_50_kevent_fetch_timeout	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_select_50.c:166:1:compat_50_sys_pollts	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_select_50.c:198:1:kern_select_50_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_select_50.c:205:1:kern_select_50_fini	8	dynamic,bounded

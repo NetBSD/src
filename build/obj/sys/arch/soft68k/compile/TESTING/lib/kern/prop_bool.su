@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_bool.c:65:1:_prop_bool_free	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_bool.c:88:1:_prop_bool_equals	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_bool.c:112:1:_prop_bool_init	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_bool.c:77:1:_prop_bool_externalize	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_bool.c:144:1:prop_bool_create	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_bool.c:155:1:prop_bool_copy	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_bool.c:174:1:prop_bool_value	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_bool.c:188:1:prop_bool_true	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_bool.c:198:1:prop_bool_equals	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_bool.c:214:1:_prop_bool_internalize	20	dynamic,bounded

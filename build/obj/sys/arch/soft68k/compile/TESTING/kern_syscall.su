@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_syscall.c:60:1:sys_nomodule	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_syscall.c:107:1:syscall_establish	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_syscall.c:145:1:syscall_disestablish	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_syscall.c:213:1:trace_is_enabled	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_syscall.c:236:1:trace_enter	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_syscall.c:279:1:trace_exit	24	dynamic,bounded

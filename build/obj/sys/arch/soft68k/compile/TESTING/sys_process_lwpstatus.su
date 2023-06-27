@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_process_lwpstatus.c:146:1:proc_regio	1068	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_process_lwpstatus.c:56:1:ptrace_read_lwpstatus	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_process_lwpstatus.c:78:1:process_read_lwpstatus	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_process_lwpstatus.c:85:1:ptrace_update_lwp	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_process_lwpstatus.c:112:1:process_validfpregs	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_process_lwpstatus.c:123:1:process_validregs	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_process_lwpstatus.c:134:1:process_validdbregs	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_process_lwpstatus.c:182:1:process_doregs	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_process_lwpstatus.c:216:1:process_dofpregs	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_process_lwpstatus.c:251:1:process_dodbregs	0	static

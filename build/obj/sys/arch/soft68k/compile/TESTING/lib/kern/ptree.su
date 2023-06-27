@@ -1,0 +1,13 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:294:1:ptree_insert_mask_before_node	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:329:1:ptree_insert_branch_at_node	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:451:1:ptree_insert_node_common	88	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:360:1:ptree_insert_leaf	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:227:1:ptree_insert_leaf_after_mask	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:170:1:ptree_init	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:600:1:ptree_insert_node	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:610:1:ptree_insert_mask_node	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:631:1:ptree_find_filtered_node	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:719:1:ptree_iterate	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:815:1:ptree_remove_node	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:1196:1:ptree_check	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/gen/ptree.c:1219:1:ptree_mask_node_p	0	static

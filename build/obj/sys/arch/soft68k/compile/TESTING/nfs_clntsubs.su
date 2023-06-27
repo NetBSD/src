@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_clntsubs.c:150:1:nfs_loadattrcache	136	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_clntsubs.c:133:1:nfsm_loadattrcache	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_clntsubs.c:317:1:nfs_getattrcache	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_clntsubs.c:355:1:nfs_delayedtruncate	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_clntsubs.c:383:1:nfs_check_wccdata	96	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_clntsubs.c:474:1:nfs_cookieheuristic	108	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/nfs/nfs_clntsubs.c:532:1:nfs_attrtimeo	28	dynamic,bounded

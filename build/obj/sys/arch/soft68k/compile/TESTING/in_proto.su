@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_proto.c:514:1:sockaddr_in_const_addr	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_proto.c:161:1:tcp_ctloutput_wrapper	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_proto.c:153:1:tcp_ctlinput_wrapper	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_proto.c:160:1:udp_ctloutput_wrapper	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_proto.c:152:1:udp_ctlinput_wrapper	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_proto.c:159:1:rip_ctloutput_wrapper	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_proto.c:151:1:rip_ctlinput_wrapper	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_proto.c:524:1:sockaddr_in_addr	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/in_proto.c:534:1:sockaddr_in_cmp	24	dynamic,bounded

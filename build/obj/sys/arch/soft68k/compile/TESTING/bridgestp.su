@@ -1,0 +1,11 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:408:1:bstp_root_selection	28	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:466:1:bstp_designated_port_selection	24	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:358:1:bstp_transmit_tcn	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:179:1:bstp_transmit_config.part.0	128	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:337:1:bstp_config_bpdu_generation	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:505:1:bstp_port_state_selection	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:932:1:bstp_disable_port	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:1051:1:bstp_tick	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:588:1:bstp_input	96	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:890:1:bstp_stop	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bridgestp.c:813:1:bstp_initialization	56	dynamic,bounded

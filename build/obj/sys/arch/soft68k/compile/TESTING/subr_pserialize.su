@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pserialize.c:63:1:pserialize_init	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pserialize.c:75:1:pserialize_create	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pserialize.c:89:1:pserialize_destroy	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pserialize.c:101:1:pserialize_perform	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pserialize.c:127:1:pserialize_read_enter	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pserialize.c:138:1:pserialize_read_exit	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pserialize.c:159:1:pserialize_in_read_section	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_pserialize.c:175:1:pserialize_not_in_read_section	24	static

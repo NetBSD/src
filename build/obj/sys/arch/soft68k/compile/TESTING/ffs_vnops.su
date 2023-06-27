@@ -1,0 +1,11 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_readwrite.c:553:1:ufs_post_write_update	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_vnops.c:505:1:ffs_reclaim	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_vnops.c:238:1:ffs_spec_fsync	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_readwrite.c:205:1:ufs_post_read_update	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_readwrite.c:232:1:ffs_write	192	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_readwrite.c:123:1:ffs_bufrd	164	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_readwrite.c:60:1:ffs_read	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_readwrite.c:459:1:ffs_bufwr	128	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_vnops.c:415:1:ffs_full_fsync	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_vnops.c:290:1:ffs_fsync	160	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_vnops.c:565:1:ffs_gop_size	32	static

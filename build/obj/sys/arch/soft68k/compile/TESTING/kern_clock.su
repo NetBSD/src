@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_clock.c:152:1:clockrnd_get	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_clock.c:212:1:get_intr_timecount	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_clock.c:530:1:sysctl_kern_clockrate	176	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_clock.c:219:1:getticks	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_clock.c:228:1:initclocks	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_clock.c:349:1:startprofclock	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_clock.c:369:1:stopprofclock	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_clock.c:386:1:schedclock	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_clock.c:399:1:statclock	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_clock.c:300:1:hardclock	28	dynamic,bounded

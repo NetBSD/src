@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vfsops.c:83:1:dead_panic	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/deadfs/dead_vfsops.c:93:1:dead_newvnode	40	dynamic,bounded

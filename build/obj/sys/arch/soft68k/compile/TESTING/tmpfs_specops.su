@@ -1,0 +1,3 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_specops.c:80:1:tmpfs_spec_close	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_specops.c:92:1:tmpfs_spec_read	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/tmpfs/tmpfs_specops.c:107:1:tmpfs_spec_write	12	dynamic,bounded

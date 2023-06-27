@@ -1,0 +1,14 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:124:1:ifmedia_lock_for_legacy	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:153:1:ifmedia_unlock_for_legacy	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:175:1:ifmedia_init_with_lock	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:212:1:ifmedia_init	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:237:1:ifmedia_change	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:289:1:ifmedia_add	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:304:1:ifmedia_list_add	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:321:1:ifmedia_set	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:417:1:ifmedia_ioctl	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:570:1:ifmedia_match	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:589:1:ifmedia_delete_instance	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:223:1:ifmedia_fini	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:617:1:ifmedia_removeall	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/if_media.c:631:1:ifmedia_baudrate	16	static

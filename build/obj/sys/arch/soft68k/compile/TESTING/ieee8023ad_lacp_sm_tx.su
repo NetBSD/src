@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_sm_tx.c:51:1:lacp_sm_tx	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/ieee8023ad_lacp_sm_tx.c:88:1:lacp_sm_assert_ntt	0	static

@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/db_interface.c:79:1:kdb_trap.part.0	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/db_interface.c:65:1:kdb_kintr	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/db_interface.c:79:1:kdb_trap	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/m68k/m68k/db_interface.c:154:1:cpu_Debugger	0	static

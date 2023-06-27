@@ -1,0 +1,11 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:377:1:ptmclose	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:132:1:pty_vn_open.constprop	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:159:1:pty_alloc_master	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:95:1:pty_getmp	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:104:1:pty_makedev	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:219:1:pty_grant_slave	216	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:338:1:ptmopen	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:295:1:pty_sethandler	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:303:1:pty_fill_ptmget	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:385:1:ptmioctl	108	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_ptm.c:323:1:ptmattach	12	dynamic,bounded

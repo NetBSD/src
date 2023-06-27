@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_humanize.c:52:1:humanize_number	88	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_humanize.c:104:1:format_bytes	40	dynamic,bounded
