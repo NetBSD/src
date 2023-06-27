@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.62 2022/09/25 12:41:46 andvar Exp $	 */
+/* $NetBSD: if_bce.c,v 1.63 2023/06/27 21:43:58 nisimura Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.62 2022/09/25 12:41:46 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.63 2023/06/27 21:43:58 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -928,7 +928,7 @@ bce_init(struct ifnet *ifp)
 	    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL) &
 	    ~BCE_EMC_PDOWN);
 
-	/* setup DMA interrupt control */
+	/* recv coalesce; 31:24 frame upper bound, 23:0 guard period */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMAI_CTL, 1 << 24);	/* MAGIC */
 
 	/* setup packet filter */
