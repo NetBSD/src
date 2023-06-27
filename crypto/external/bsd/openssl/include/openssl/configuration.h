@@ -120,7 +120,7 @@ extern "C" {
 #  undef BN_LLONG
 /* Only one for the following should be defined */
 #  undef SIXTY_FOUR_BIT
-#  ifdef __LP64__
+#  if defined(__LP64__) && !defined(__sparc64__)	/* sparc64 asm needs 32bit BN limbs */
 #   define SIXTY_FOUR_BIT_LONG
 #   undef THIRTY_TWO_BIT
 #  else
@@ -128,6 +128,9 @@ extern "C" {
 #   define THIRTY_TWO_BIT
 #  endif
 # endif
+#ifdef __sparc64__
+# define BN_LLONG
+#endif
 
 # define RC4_INT unsigned int
 
