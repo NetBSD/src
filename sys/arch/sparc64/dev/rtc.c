@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.8 2011/07/01 18:48:37 dyoung Exp $	*/
+/*	$NetBSD: rtc.c,v 1.9 2023/06/27 19:30:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.8 2011/07/01 18:48:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.9 2023/06/27 19:30:27 andvar Exp $");
 
 /*
  * Clock driver for 'rtc' - mc146818 driver.
@@ -185,7 +185,7 @@ rtc_ebus_attach(device_t parent, device_t self, void *aux)
  * MD mc146818 RTC todr routines.
  */
 
-/* Loooks like Sun stores the century info somewhere in CMOS RAM */
+/* Looks like Sun stores the century info somewhere in CMOS RAM */
 #define MC_CENT 0x32
 
 u_int

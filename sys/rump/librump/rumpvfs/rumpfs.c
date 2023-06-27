@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.166 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.167 2023/06/27 19:30:27 andvar Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.166 2021/10/20 03:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.167 2023/06/27 19:30:27 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1517,7 +1517,7 @@ rump_vop_write(void *v)
 		uvm_vnp_setsize(vp, newlen);
 	}
 
-	/* ok, we have enough stooorage.  write */
+	/* ok, we have enough storage.  write */
 	while (uio->uio_resid > 0) {
 		chunk = MIN(uio->uio_resid, (off_t)rn->rn_dlen-uio->uio_offset);
 		if (chunk == 0)
