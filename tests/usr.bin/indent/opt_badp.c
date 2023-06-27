@@ -1,4 +1,4 @@
-/* $NetBSD: opt_badp.c,v 1.14 2023/06/26 20:03:09 rillig Exp $ */
+/* $NetBSD: opt_badp.c,v 1.15 2023/06/27 04:28:16 rillig Exp $ */
 
 /*
  * Tests for the options '-badp' and '-nbadp'.
@@ -208,5 +208,81 @@ f(void) {
 	int		decl;
 
 	stmt;
+}
+//indent end
+
+
+/* The '}' of an initializer does not end a block. */
+//indent input
+void
+f(void)
+{
+	int decl1[2][2] = {
+		{1, 2},
+		{3, 4},
+	};
+	int decl2 = 5;
+	stmt;
+}
+//indent end
+
+//indent run -di0
+void
+f(void)
+{
+	int decl1[2][2] = {
+		{1, 2},
+		{3, 4},
+	};
+	int decl2 = 5;
+// $ FIXME: Add blank line here.
+	stmt;
+}
+//indent end
+
+
+/*
+ * Due to its limited lookahead, indent cannot know whether the comment is
+ * followed by a declaration or a statement.
+ */
+//indent input
+void f(void) {
+	int		decl1;
+	/* comment */
+	int		decl2;
+	stmt;
+}
+//indent end
+
+//indent run -badp
+void
+f(void)
+{
+	int		decl1;
+// $ FIXME: No blank line here.
+
+	/* comment */
+	int		decl2;
+// $ FIXME: Add blank line here.
+	stmt;
+}
+//indent end
+
+
+/* Combining -bad and -badp only adds a single blank line. */
+//indent input
+void f(void) { int decl; stmt1; stmt2; }
+//indent end
+
+//indent run -bad -badp
+void
+f(void)
+{
+	int		decl;
+
+	stmt1;
+// $ FIXME: Remove this blank line.
+
+	stmt2;
 }
 //indent end
