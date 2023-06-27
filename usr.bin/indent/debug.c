@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.c,v 1.69 2023/06/26 20:03:09 rillig Exp $	*/
+/*	$NetBSD: debug.c,v 1.70 2023/06/27 04:41:23 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: debug.c,v 1.69 2023/06/26 20:03:09 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.70 2023/06/27 04:41:23 rillig Exp $");
 
 #include <stdarg.h>
 #include <string.h>
@@ -378,8 +378,8 @@ debug_parser_state(void)
 	debug_ps_bool(break_after_comma);
 	debug_ps_bool(want_newline);
 	debug_ps_enum(declaration, declaration_name);
-	debug_ps_enum(badp, badp_name);
 	debug_ps_bool(blank_line_after_decl);
+	debug_ps_enum(badp, badp_name);
 
 	state.heading = NULL;
 	debug_blank_line();
