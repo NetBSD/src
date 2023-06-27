@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2020 Roy Marples
+# Copyright (c) 2007-2023 Roy Marples
 # All rights reserved
 
 # mdnsd notifier for resolvconf libc subscriber
