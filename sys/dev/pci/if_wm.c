@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.767.2.1 2023/06/22 08:14:35 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.767.2.2 2023/06/27 18:24:18 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767.2.1 2023/06/22 08:14:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.767.2.2 2023/06/27 18:24:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
@@ -6588,6 +6588,8 @@ wm_update_stats(struct wm_softc *sc)
 			WM_EVCNT_ADD(&sc->sc_ev_tsctfc,
 			    CSR_READ(sc, WMREG_TSCTFC));
 		else {
+			WM_EVCNT_ADD(&sc->sc_ev_cbrdpc,
+			    CSR_READ(sc, WMREG_CBRDPC));
 			WM_EVCNT_ADD(&sc->sc_ev_cbrmpc,
 			    CSR_READ(sc, WMREG_CBRMPC));
 		}
