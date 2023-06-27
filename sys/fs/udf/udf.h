@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.54 2022/08/07 11:06:19 andvar Exp $ */
+/* $NetBSD: udf.h,v 1.55 2023/06/27 09:58:50 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -76,7 +76,9 @@ extern int udf_verbose;
 #define UDF_DEBUG_RESERVE	0x1000000
 
 /* initial value of udf_verbose */
-#define UDF_DEBUGGING		(0)
+#define UDF_DEBUGGING		(0x0000000)
+//#define UDF_DEBUGGING		(0x02fffff)
+
 
 #ifdef UDF_DEBUG
 #define DPRINTF(name, arg) { \

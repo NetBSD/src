@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.30 2022/01/15 10:55:53 msaitoh Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.31 2023/06/27 09:58:50 reinoud Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.30 2022/01/15 10:55:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.31 2023/06/27 09:58:50 reinoud Exp $");
 #endif /* not lint */
 
 
@@ -756,7 +756,7 @@ udf_write_nodedscr_rmw(struct udf_strat_args *args)
 	if (udf_node->outstanding_nodedscr == 0) {
 		/* XXX still using wakeup! */
 		UDF_UNLOCK_NODE(udf_node, 0);
-		wakeup(&udf_node->outstanding_nodedscr);
+		cv_broadcast(&udf_node->node_lock);
 	}
 	udf_puteccline(eccline);
 
@@ -1205,6 +1205,8 @@ udf_discstrat_thread(void *arg)
 
 	work = 1;
 	priv->thread_running = 1;
+	cv_broadcast(&priv->discstrat_cv);
+
 	mutex_enter(&priv->discstrat_mutex);
 	priv->num_floating = 0;
 	while (priv->run_thread || work || priv->num_floating) {
@@ -1356,7 +1358,8 @@ udf_discstrat_thread(void *arg)
 
 	priv->thread_running  = 0;
 	priv->thread_finished = 1;
-	wakeup(&priv->run_thread);
+	cv_broadcast(&priv->discstrat_cv);
+
 	kthread_exit(0);
 	/* not reached */
 }
@@ -1459,9 +1462,11 @@ udf_discstrat_init_rmw(struct udf_strat_args *args)
 	}
 
 	/* wait for thread to spin up */
+	mutex_enter(&priv->discstrat_mutex);
 	while (!priv->thread_running) {
-		tsleep(&priv->thread_running, PRIBIO+1, "udfshedstart", hz);
+		cv_timedwait(&priv->discstrat_cv, &priv->discstrat_mutex, hz);
 	}
+	mutex_exit(&priv->discstrat_mutex);
 }
 
 
@@ -1477,19 +1482,22 @@ udf_discstrat_finish_rmw(struct udf_strat_args *args)
 	/* stop our sheduling thread */
 	KASSERT(priv->run_thread == 1);
 	priv->run_thread = 0;
-	wakeup(priv->queue_lwp);
+
+	mutex_enter(&priv->discstrat_mutex);
 	while (!priv->thread_finished) {
-		tsleep(&priv->run_thread, PRIBIO + 1, "udfshedfin", hz);
+		cv_broadcast(&priv->discstrat_cv);
+		cv_timedwait(&priv->discstrat_cv, &priv->discstrat_mutex, hz);
 	}
+	mutex_exit(&priv->discstrat_mutex);
+
 	/* kthread should be finished now */
+	cv_destroy(&priv->discstrat_cv);
+	mutex_destroy(&priv->discstrat_mutex);
+	mutex_destroy(&priv->seqwrite_mutex);
 
 	/* cleanup our pools */
 	pool_destroy(&priv->eccline_pool);
 	pool_destroy(&priv->ecclineblob_pool);
-
-	cv_destroy(&priv->discstrat_cv);
-	mutex_destroy(&priv->discstrat_mutex);
-	mutex_destroy(&priv->seqwrite_mutex);
 
 	/* free our private space */
 	free(ump->strategy_private, M_UDFTEMP);
