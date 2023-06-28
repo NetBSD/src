@@ -281,7 +281,7 @@ window_client_get_key(void *modedata, void *itemdata, u_int line)
 	key = key_string_lookup_string(expanded);
 	free(expanded);
 	format_free(ft);
-	return key;
+	return (key);
 }
 
 static struct screen *
@@ -303,10 +303,10 @@ window_client_init(struct window_mode_entry *wme,
 		data->key_format = xstrdup(WINDOW_CLIENT_DEFAULT_KEY_FORMAT);
 	else
 		data->key_format = xstrdup(args_get(args, 'K'));
-	if (args == NULL || args->argc == 0)
+	if (args == NULL || args_count(args) == 0)
 		data->command = xstrdup(WINDOW_CLIENT_DEFAULT_COMMAND);
 	else
-		data->command = xstrdup(args->argv[0]);
+		data->command = xstrdup(args_string(args, 0));
 
 	data->data = mode_tree_start(wp, args, window_client_build,
 	    window_client_draw, NULL, window_client_menu, NULL,
