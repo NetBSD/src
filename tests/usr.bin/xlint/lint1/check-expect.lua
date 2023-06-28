@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.2 2022/06/19 11:50:42 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.3 2023/06/28 17:53:21 rillig Exp $
 
 --[[
 
@@ -58,7 +58,7 @@ end
 --   },
 --   { "file.c(18)", "file.c(23)" }
 local function load_c(fname)
-
+  local basename = fname:match("([^/]+)$") or fname
   local lines = load_lines(fname)
   if lines == nil then return nil, nil end
 
@@ -87,7 +87,7 @@ local function load_c(fname)
 
     local ppl_lineno, ppl_fname = line:match("^#%s*(%d+)%s+\"([^\"]+)\"")
     if ppl_lineno ~= nil then
-      if ppl_fname == fname and tonumber(ppl_lineno) ~= phys_lineno + 1 then
+      if ppl_fname == basename and tonumber(ppl_lineno) ~= phys_lineno + 1 then
         print_error("error: %s:%d: preprocessor line number must be %d",
           fname, phys_lineno, phys_lineno + 1)
       end
