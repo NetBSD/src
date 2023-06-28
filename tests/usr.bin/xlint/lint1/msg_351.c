@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_351.c,v 1.4 2023/04/25 19:00:57 rillig Exp $	*/
+/*	$NetBSD: msg_351.c,v 1.5 2023/06/28 17:53:21 rillig Exp $	*/
 # 3 "msg_351.c"
 
 // Test for message 351: missing%s header declaration for '%s' [351]
@@ -39,7 +39,7 @@ static int static_func_def(void);
 int extern_func_decl(void);
 extern int extern_func_decl_verbose(void);
 
-# 29 "msg_351.c" 2
+# 43 "msg_351.c" 2
 /* expect+1: warning: static variable 'static_def' unused [226] */
 static int static_def;
 int external_def;
