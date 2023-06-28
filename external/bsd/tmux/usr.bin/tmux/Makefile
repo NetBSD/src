@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2023/06/28 22:21:48 wiz Exp $
+# $NetBSD: Makefile,v 1.31 2023/06/28 22:47:39 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -163,7 +163,7 @@ CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}
 # Would be nicer to stick this in a config.h file, but the upstream code
 # does not use one at this moment.
 
-# HAVE_VIS and HAVE_TREE_H added manually; HAVE_BSD_GETOPT_H necessary due to local patches
+# HAVE_REALLOCARRAY, HAVE_TREE_H, HAVE_VIS added manually; HAVE_BSD_GETOPT_H necessary due to local patches
 CPPFLAGS+=	\
 -DHAVE_ASPRINTF=1 \
 -DHAVE_B64_NTOP=1 \
@@ -193,6 +193,7 @@ CPPFLAGS+=	\
 -DHAVE_PATHS_H=1 \
 -DHAVE_PROC_PID=1 \
 -DHAVE_QUEUE_H=1 \
+-DHAVE_REALLOCARRAY=1 \
 -DHAVE_SETENV=1 \
 -DHAVE_SETPROCTITLE=1 \
 -DHAVE_STDINT_H=1 \
