@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2975 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2976 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -135,3 +135,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 	kerberos(8): Update to Heimdal-7.8.0 [christos 20230619]
 	bind: Import version 9.16.42. [christos 20230626]
 	openresolv: Import version 3.13.2 [roy 20230627]
+	tmux(1): Import version 3.3a [wiz 20230628]
