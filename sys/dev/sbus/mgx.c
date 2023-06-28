@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.21 2023/06/28 08:11:52 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.22 2023/06/28 08:53:43 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.21 2023/06/28 08:11:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.22 2023/06/28 08:53:43 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -666,7 +666,8 @@ mgx_rectfill(void *cookie, int x, int y, int wi, int he, long fg)
 	dec = sc->sc_dec;
 	dec |= (DEC_COMMAND_RECT << DEC_COMMAND_SHIFT) |
 	       (DEC_START_DIMX << DEC_START_SHIFT);
-	mgx_wait_fifo(sc, 5);
+	//mgx_wait_fifo(sc, 5);
+	mgx_wait_engine(sc);
 	mgx_write_1(sc, ATR_ROP, ROP_SRC);
 	mgx_write_4(sc, ATR_FG, col);
 	mgx_write_4(sc, ATR_DEC, dec);
