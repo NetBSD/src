@@ -124,8 +124,6 @@ load_cfg(const char *path, struct client *c, struct cmdq_item *item, int flags,
 
 	pr = cmd_parse_from_file(f, &pi);
 	fclose(f);
-	if (pr->status == CMD_PARSE_EMPTY)
-		return (0);
 	if (pr->status == CMD_PARSE_ERROR) {
 		cfg_add_cause("%s", pr->error);
 		free(pr->error);
@@ -178,8 +176,6 @@ load_cfg_from_buffer(const void *buf, size_t len, const char *path,
 	pi.c = c;
 
 	pr = cmd_parse_from_buffer(buf, len, &pi);
-	if (pr->status == CMD_PARSE_EMPTY)
-		return (0);
 	if (pr->status == CMD_PARSE_ERROR) {
 		cfg_add_cause("%s", pr->error);
 		free(pr->error);
@@ -254,7 +250,7 @@ cfg_show_causes(struct session *s)
 	if (wme == NULL || wme->mode != &window_view_mode)
 		window_pane_set_mode(wp, NULL, &window_view_mode, NULL, NULL);
 	for (i = 0; i < cfg_ncauses; i++) {
-		window_copy_add(wp, "%s", cfg_causes[i]);
+		window_copy_add(wp, 0, "%s", cfg_causes[i]);
 		free(cfg_causes[i]);
 	}
 

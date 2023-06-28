@@ -105,30 +105,34 @@ bin_PROGRAMS = tmux$(EXEEXT)
 @IS_DEBUG_TRUE@@IS_GCC_TRUE@	-Wdeclaration-after-statement \
 @IS_DEBUG_TRUE@@IS_GCC_TRUE@	-Wno-pointer-sign -Wno-attributes \
 @IS_DEBUG_TRUE@@IS_GCC_TRUE@	-Wno-unused-result -Wno-format-y2k
-@IS_DEBUG_TRUE@@IS_GCC_TRUE@am__append_3 = -DDEBUG
-@IS_GCC_TRUE@am__append_4 = -iquote.
+@IS_DARWIN_TRUE@@IS_DEBUG_TRUE@@IS_GCC_TRUE@am__append_3 = -Wno-deprecated-declarations -Wno-cast-align
+@IS_DEBUG_TRUE@@IS_GCC_TRUE@am__append_4 = -DDEBUG
+@IS_GCC_TRUE@am__append_5 = -iquote.
 
 # Set flags for Solaris.
-@IS_GCC_TRUE@@IS_SUNOS_TRUE@am__append_5 = -D_XPG6
-@IS_GCC_FALSE@@IS_SUNOS_TRUE@am__append_6 = -D_XPG4_2
+@IS_GCC_TRUE@@IS_SUNOS_TRUE@am__append_6 = -D_XPG6
+@IS_GCC_FALSE@@IS_SUNOS_TRUE@am__append_7 = -D_XPG4_2
 
 # Set flags for Sun CC.
-@IS_SUNCC_TRUE@am__append_7 = -erroff=E_EMPTY_DECLARATION
+@IS_SUNCC_TRUE@am__append_8 = -erroff=E_EMPTY_DECLARATION
 
 # Set _LINUX_SOURCE_COMPAT for AIX for malloc(0).
-@IS_AIX_TRUE@am__append_8 = -D_LINUX_SOURCE_COMPAT=1
+@IS_AIX_TRUE@am__append_9 = -D_LINUX_SOURCE_COMPAT=1
 
 # Set flags for NetBSD.
-@IS_NETBSD_TRUE@am__append_9 = -D_OPENBSD_SOURCE
+@IS_NETBSD_TRUE@am__append_10 = -D_OPENBSD_SOURCE
 
 # Set flags for Haiku.
-@IS_HAIKU_TRUE@am__append_10 = -D_BSD_SOURCE
+@IS_HAIKU_TRUE@am__append_11 = -D_BSD_SOURCE
 
 # Add compat file for forkpty.
-@NEED_FORKPTY_TRUE@am__append_11 = compat/forkpty-@PLATFORM@.c
+@NEED_FORKPTY_TRUE@am__append_12 = compat/forkpty-@PLATFORM@.c
+
+# Add compat file for systemd.
+@HAVE_SYSTEMD_TRUE@am__append_13 = compat/systemd.c
 
 # Add compat file for utf8proc.
-@HAVE_UTF8PROC_TRUE@am__append_12 = compat/utf8proc.c
+@HAVE_UTF8PROC_TRUE@am__append_14 = compat/utf8proc.c
 @NEED_FUZZING_TRUE@check_PROGRAMS = fuzz/input-fuzzer$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -177,10 +181,11 @@ dist_tmux_OBJECTS = alerts.$(OBJEXT) arguments.$(OBJEXT) \
 	cmd-rotate-window.$(OBJEXT) cmd-run-shell.$(OBJEXT) \
 	cmd-save-buffer.$(OBJEXT) cmd-select-layout.$(OBJEXT) \
 	cmd-select-pane.$(OBJEXT) cmd-select-window.$(OBJEXT) \
-	cmd-send-keys.$(OBJEXT) cmd-set-buffer.$(OBJEXT) \
-	cmd-set-environment.$(OBJEXT) cmd-set-option.$(OBJEXT) \
-	cmd-show-environment.$(OBJEXT) cmd-show-messages.$(OBJEXT) \
-	cmd-show-options.$(OBJEXT) cmd-source-file.$(OBJEXT) \
+	cmd-send-keys.$(OBJEXT) cmd-server-access.$(OBJEXT) \
+	cmd-set-buffer.$(OBJEXT) cmd-set-environment.$(OBJEXT) \
+	cmd-set-option.$(OBJEXT) cmd-show-environment.$(OBJEXT) \
+	cmd-show-messages.$(OBJEXT) cmd-show-options.$(OBJEXT) \
+	cmd-show-prompt-history.$(OBJEXT) cmd-source-file.$(OBJEXT) \
 	cmd-split-window.$(OBJEXT) cmd-swap-pane.$(OBJEXT) \
 	cmd-swap-window.$(OBJEXT) cmd-switch-client.$(OBJEXT) \
 	cmd-unbind-key.$(OBJEXT) cmd-wait-for.$(OBJEXT) cmd.$(OBJEXT) \
@@ -195,7 +200,7 @@ dist_tmux_OBJECTS = alerts.$(OBJEXT) arguments.$(OBJEXT) \
 	notify.$(OBJEXT) options-table.$(OBJEXT) options.$(OBJEXT) \
 	paste.$(OBJEXT) popup.$(OBJEXT) proc.$(OBJEXT) \
 	regsub.$(OBJEXT) resize.$(OBJEXT) screen-redraw.$(OBJEXT) \
-	screen-write.$(OBJEXT) screen.$(OBJEXT) \
+	screen-write.$(OBJEXT) screen.$(OBJEXT) server-acl.$(OBJEXT) \
 	server-client.$(OBJEXT) server-fn.$(OBJEXT) server.$(OBJEXT) \
 	session.$(OBJEXT) spawn.$(OBJEXT) status.$(OBJEXT) \
 	style.$(OBJEXT) tmux.$(OBJEXT) tty-acs.$(OBJEXT) \
@@ -206,9 +211,10 @@ dist_tmux_OBJECTS = alerts.$(OBJEXT) arguments.$(OBJEXT) \
 	window-tree.$(OBJEXT) window.$(OBJEXT) xmalloc.$(OBJEXT)
 @NEED_FORKPTY_TRUE@am__objects_1 =  \
 @NEED_FORKPTY_TRUE@	compat/forkpty-@PLATFORM@.$(OBJEXT)
-@HAVE_UTF8PROC_TRUE@am__objects_2 = compat/utf8proc.$(OBJEXT)
+@HAVE_SYSTEMD_TRUE@am__objects_2 = compat/systemd.$(OBJEXT)
+@HAVE_UTF8PROC_TRUE@am__objects_3 = compat/utf8proc.$(OBJEXT)
 nodist_tmux_OBJECTS = osdep-@PLATFORM@.$(OBJEXT) $(am__objects_1) \
-	$(am__objects_2)
+	$(am__objects_2) $(am__objects_3)
 tmux_OBJECTS = $(dist_tmux_OBJECTS) $(nodist_tmux_OBJECTS)
 tmux_LDADD = $(LDADD)
 tmux_DEPENDENCIES = $(LIBOBJS)
@@ -291,6 +297,7 @@ am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/compat/getdtablecount.c \
 	$(top_srcdir)/compat/getdtablesize.c \
 	$(top_srcdir)/compat/getline.c $(top_srcdir)/compat/getopt.c \
+	$(top_srcdir)/compat/getpeereid.c \
 	$(top_srcdir)/compat/getprogname.c \
 	$(top_srcdir)/compat/imsg-buffer.c $(top_srcdir)/compat/imsg.c \
 	$(top_srcdir)/compat/memmem.c \
@@ -329,15 +336,15 @@ distcleancheck_listfiles = find . -type f -print
 ACLOCAL = @ACLOCAL@
 AMTAR = @AMTAR@
 AM_CFLAGS = @AM_CFLAGS@ $(am__append_1) $(am__append_2) \
-	$(am__append_7)
+	$(am__append_3) $(am__append_8)
 
 # Preprocessor flags.
 AM_CPPFLAGS = @AM_CPPFLAGS@ @XOPEN_DEFINES@ \
 	-DTMUX_VERSION='"@VERSION@"' \
 	-DTMUX_CONF='"$(sysconfdir)/tmux.conf:~/.tmux.conf:$$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
-	$(am__append_3) $(am__append_4) $(am__append_5) \
-	$(am__append_6) $(am__append_8) $(am__append_9) \
-	$(am__append_10)
+	-DTMUX_TERM='"@DEFAULT_TERM@"' $(am__append_4) $(am__append_5) \
+	$(am__append_6) $(am__append_7) $(am__append_9) \
+	$(am__append_10) $(am__append_11)
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AM_LDFLAGS = @AM_LDFLAGS@
 AUTOCONF = @AUTOCONF@
@@ -350,6 +357,7 @@ CFLAGS = @CFLAGS@
 CPP = @CPP@
 CPPFLAGS = @CPPFLAGS@
 CYGPATH_W = @CYGPATH_W@
+DEFAULT_TERM = @DEFAULT_TERM@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
 ECHO_C = @ECHO_C@
@@ -397,6 +405,8 @@ PLATFORM = @PLATFORM@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
+SYSTEMD_CFLAGS = @SYSTEMD_CFLAGS@
+SYSTEMD_LIBS = @SYSTEMD_LIBS@
 VERSION = @VERSION@
 XOPEN_DEFINES = @XOPEN_DEFINES@
 YACC = @YACC@
@@ -520,12 +530,14 @@ dist_tmux_SOURCES = \
 	cmd-select-pane.c \
 	cmd-select-window.c \
 	cmd-send-keys.c \
+	cmd-server-access.c \
 	cmd-set-buffer.c \
 	cmd-set-environment.c \
 	cmd-set-option.c \
 	cmd-show-environment.c \
 	cmd-show-messages.c \
 	cmd-show-options.c \
+	cmd-show-prompt-history.c \
 	cmd-source-file.c \
 	cmd-split-window.c \
 	cmd-swap-pane.c \
@@ -568,6 +580,7 @@ dist_tmux_SOURCES = \
 	screen-redraw.c \
 	screen-write.c \
 	screen.c \
+	server-acl.c \
 	server-client.c \
 	server-fn.c \
 	server.c \
@@ -577,6 +590,7 @@ dist_tmux_SOURCES = \
 	style.c \
 	tmux.c \
 	tmux.h \
+	tmux-protocol.h \
 	tty-acs.c \
 	tty-features.c \
 	tty-keys.c \
@@ -593,8 +607,8 @@ dist_tmux_SOURCES = \
 	xmalloc.c \
 	xmalloc.h
 
-nodist_tmux_SOURCES = osdep-@PLATFORM@.c $(am__append_11) \
-	$(am__append_12)
+nodist_tmux_SOURCES = osdep-@PLATFORM@.c $(am__append_12) \
+	$(am__append_13) $(am__append_14)
 @NEED_FUZZING_TRUE@fuzz_input_fuzzer_LDFLAGS = $(FUZZING_LIBS)
 @NEED_FUZZING_TRUE@fuzz_input_fuzzer_LDADD = $(LDADD) $(tmux_OBJECTS)
 all: all-am
@@ -699,6 +713,8 @@ compat/$(DEPDIR)/$(am__dirstamp):
 	@: > compat/$(DEPDIR)/$(am__dirstamp)
 compat/forkpty-@PLATFORM@.$(OBJEXT): compat/$(am__dirstamp) \
 	compat/$(DEPDIR)/$(am__dirstamp)
+compat/systemd.$(OBJEXT): compat/$(am__dirstamp) \
+	compat/$(DEPDIR)/$(am__dirstamp)
 compat/utf8proc.$(OBJEXT): compat/$(am__dirstamp) \
 	compat/$(DEPDIR)/$(am__dirstamp)
 
@@ -768,12 +784,14 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-select-pane.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-select-window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-send-keys.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-server-access.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-set-buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-set-environment.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-set-option.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-show-environment.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-show-messages.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-show-options.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-show-prompt-history.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-source-file.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-split-window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-swap-pane.Po@am__quote@
@@ -816,6 +834,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screen-redraw.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screen-write.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/screen.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server-acl.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server-client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server-fn.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/server.Po@am__quote@
@@ -855,6 +874,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getdtablesize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getline.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getopt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getpeereid.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getprogname.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/imsg-buffer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/imsg.Po@am__quote@
@@ -870,6 +890,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/strnlen.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/strsep.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/strtonum.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/systemd.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/unvis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/utf8proc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/vis.Po@am__quote@
