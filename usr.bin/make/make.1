@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.366 2023/05/10 18:22:33 sjg Exp $
+.\"	$NetBSD: make.1,v 1.367 2023/06/28 06:15:07 rillig Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd May 10, 2023
+.Dd June 28, 2023
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -2068,7 +2068,7 @@ only evaluates a conditional as far as is necessary to determine its value.
 Parentheses can be used to override the operator precedence.
 The boolean operator
 .Sq Ic \&!
-may be used to logically negate an entire conditional.
+may be used to logically negate an expression, typically a function call.
 It is of higher precedence than
 .Sq Ic \&&& .
 .Pp
@@ -2118,9 +2118,9 @@ may also be an arithmetic or string comparison.
 Variable expansion is performed on both sides of the comparison.
 If both sides are numeric and neither is enclosed in quotes,
 the comparison is done numerically, otherwise lexicographically.
-A string is interpreted as hexadecimal integer if it is preceded by
+A string is interpreted as a hexadecimal integer if it is preceded by
 .Li 0x ,
-otherwise it is a decimal floating-point number;
+otherwise it is interpreted as a decimal floating-point number;
 octal numbers are not supported.
 .Pp
 All comparisons may use the operators
@@ -2141,7 +2141,7 @@ and its numeric value (if any) is not zero.
 When
 .Nm
 is evaluating one of these conditional expressions, and it encounters
-a (whitespace separated) word it doesn't recognize, either the
+a (whitespace-separated) word it doesn't recognize, either the
 .Dq make
 or
 .Dq defined
@@ -2164,12 +2164,13 @@ function is applied.
 .Pp
 If the conditional evaluates to true,
 parsing of the makefile continues as before.
-If it evaluates to false, the following lines are skipped.
-In both cases, this continues until the corresponding
+If it evaluates to false, the following lines until the corresponding
+.Sq Ic .elif
+variant,
 .Sq Ic .else
 or
 .Sq Ic .endif
-is found.
+are skipped.
 .Ss For loops
 For loops are typically used to apply a set of rules to a list of files.
 The syntax of a for loop is:
