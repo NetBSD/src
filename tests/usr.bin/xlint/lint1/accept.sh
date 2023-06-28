@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.11 2022/06/19 11:50:42 rillig Exp $
+# $NetBSD: accept.sh,v 1.12 2023/06/28 20:51:31 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -43,6 +43,7 @@ for pattern in "$@"; do
 	for cfile in *$pattern*.c; do
 		base=${cfile%.*}
 		expfile="$base.exp"
+		ln_tmp_file="$base.exp-ln.tmp"
 		ln_file="$base.exp-ln"
 
 		configure_test_case "$cfile"
@@ -57,7 +58,7 @@ for pattern in "$@"; do
 
 		# shellcheck disable=SC2154
 		# shellcheck disable=SC2086
-		if "$lint1" $flags "$base.c" "$ln_file" > "$expfile"; then
+		if "$lint1" $flags "$base.c" "$ln_tmp_file" > "$expfile"; then
 			if [ -s "$expfile" ]; then
 				echo "$base produces output but exits successfully"
 				sed 's,^,| ,' "$expfile"
@@ -65,6 +66,22 @@ for pattern in "$@"; do
 		elif [ $? -ge 128 ]; then
 			echo "$base crashed"
 			continue
+		fi
+
+		if [ ! -f "$ln_tmp_file" ]; then
+			: 'No cleanup necessary.'
+		elif [ "$ln_file" = '/dev/null' ]; then
+			rm "$ln_tmp_file"
+		else
+			if tr -d ' \t' < "$ln_file" > "$ln_file.trimmed.tmp" &&
+			    tr -d ' \t' < "$ln_tmp_file" > "$ln_tmp_file.trimmed.tmp" &&
+			    cmp -s "$ln_file.trimmed.tmp" "$ln_tmp_file.trimmed.tmp"; then
+				rm "$ln_tmp_file"
+			else
+				echo "Replacing $ln_file"
+				mv "$ln_tmp_file" "$ln_file"
+			fi
+			rm -f "$ln_file.trimmed.tmp" "$ln_tmp_file.trimmed.tmp"
 		fi
 
 		case "$base" in (msg_*)
