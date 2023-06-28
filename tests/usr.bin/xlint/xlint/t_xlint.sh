@@ -1,4 +1,4 @@
-# $NetBSD: t_xlint.sh,v 1.1 2023/01/15 23:18:05 rillig Exp $
+# $NetBSD: t_xlint.sh,v 1.2 2023/06/28 09:35:43 rillig Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -25,13 +25,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
-: ${lint:='/usr/bin/lint'}
+: "${lint:=/usr/bin/lint}"
 
-run_lint1_error_head()
-{
-	:
-}
-
+atf_test_case 'run_lint1_error'
 run_lint1_error_body()
 {
 	cat <<-EOF >input.c || atf_fail 'prepare input.c'
@@ -43,24 +39,22 @@ run_lint1_error_body()
 			return 1;
 		}
 	EOF
+	echo 'previous content' > input.ln
 
 	atf_check \
 	    -s 'exit:1' \
 	    -o "inline:input.c(6): error: function has return type '_Bool' but returns 'int' [211]\n" \
 	    "$lint" -aabceghiprSTxz input.c
 
-	# In case of an error, no output file is written.
+	# In case of an error, any previous output file is overwritten, and the
+	# (possibly unfinished) output file is removed.
 	atf_check \
 	    -s 'exit:1' \
 	    test -f input.ln
 }
 
 
-run_lint1_warning_head()
-{
-	:
-}
-
+atf_test_case 'run_lint1_warning'
 run_lint1_warning_body()
 {
 	cat <<-EOF >input.c || atf_fail 'prepare input.c'
@@ -88,11 +82,8 @@ run_lint1_warning_body()
 	    cat input.ln
 }
 
-run_lint2_head()
-{
-	:
-}
 
+atf_test_case 'run_lint2'
 run_lint2_body()
 {
 	cat <<-EOF >input.ln || atf_fail 'prepare input.ln'
