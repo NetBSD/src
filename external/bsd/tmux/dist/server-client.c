@@ -30,7 +30,6 @@
 #include "tmux.h"
 
 static void	server_client_free(int, short, void *);
-static void	server_client_check_pane_focus(struct window_pane *);
 static void	server_client_check_pane_resize(struct window_pane *);
 static void	server_client_check_pane_buffer(struct window_pane *);
 static void	server_client_check_window_resize(struct window *);
@@ -41,6 +40,7 @@ static void	server_client_check_exit(struct client *);
 static void	server_client_check_redraw(struct client *);
 static void	server_client_check_modes(struct client *);
 static void	server_client_set_title(struct client *);
+static void	server_client_set_path(struct client *);
 static void	server_client_reset_state(struct client *);
 static int	server_client_assume_paste(struct session *);
 static void	server_client_update_latest(struct client *);
@@ -90,7 +90,7 @@ void
 server_client_set_overlay(struct client *c, u_int delay,
     overlay_check_cb checkcb, overlay_mode_cb modecb,
     overlay_draw_cb drawcb, overlay_key_cb keycb, overlay_free_cb freecb,
-    void *data)
+    overlay_resize_cb resizecb, void *data)
 {
 	struct timeval	tv;
 
@@ -111,9 +111,11 @@ server_client_set_overlay(struct client *c, u_int delay,
 	c->overlay_draw = drawcb;
 	c->overlay_key = keycb;
 	c->overlay_free = freecb;
+	c->overlay_resize = resizecb;
 	c->overlay_data = data;
 
-	c->tty.flags |= TTY_FREEZE;
+	if (c->overlay_check == NULL)
+		c->tty.flags |= TTY_FREEZE;
 	if (c->overlay_mode == NULL)
 		c->tty.flags |= TTY_NOCURSOR;
 	server_redraw_client(c);
@@ -130,7 +132,7 @@ server_client_clear_overlay(struct client *c)
 		evtimer_del(&c->overlay_timer);
 
 	if (c->overlay_free != NULL)
-		c->overlay_free(c);
+		c->overlay_free(c, c->overlay_data);
 
 	c->overlay_check = NULL;
 	c->overlay_mode = NULL;
@@ -141,6 +143,54 @@ server_client_clear_overlay(struct client *c)
 
 	c->tty.flags &= ~(TTY_FREEZE|TTY_NOCURSOR);
 	server_redraw_client(c);
+}
+
+/*
+ * Given overlay position and dimensions, return parts of the input range which
+ * are visible.
+ */
+void
+server_client_overlay_range(u_int x, u_int y, u_int sx, u_int sy, u_int px,
+    u_int py, u_int nx, struct overlay_ranges *r)
+{
+	u_int	ox, onx;
+
+	/* Return up to 2 ranges. */
+	r->px[2] = 0;
+	r->nx[2] = 0;
+
+	/* Trivial case of no overlap in the y direction. */
+	if (py < y || py > y + sy - 1) {
+		r->px[0] = px;
+		r->nx[0] = nx;
+		r->px[1] = 0;
+		r->nx[1] = 0;
+		return;
+	}
+
+	/* Visible bit to the left of the popup. */
+	if (px < x) {
+		r->px[0] = px;
+		r->nx[0] = x - px;
+		if (r->nx[0] > nx)
+			r->nx[0] = nx;
+	} else {
+		r->px[0] = 0;
+		r->nx[0] = 0;
+	}
+
+	/* Visible bit to the right of the popup. */
+	ox = x + sx;
+	if (px > ox)
+		ox = px;
+	onx = px + nx;
+	if (onx > ox) {
+		r->px[1] = ox;
+		r->nx[1] = onx - ox;
+	} else {
+		r->px[1] = 0;
+		r->nx[1] = 0;
+	}
 }
 
 /* Check if this client is inside this server. */
@@ -276,7 +326,7 @@ server_client_open(struct client *c, char **cause)
 static void
 server_client_attached_lost(struct client *c)
 {
-	struct session	*s = c->session;
+	struct session	*s;
 	struct window	*w;
 	struct client	*loop;
 	struct client	*found;
@@ -296,14 +346,46 @@ server_client_attached_lost(struct client *c)
 			s = loop->session;
 			if (loop == c || s == NULL || s->curw->window != w)
 				continue;
-			if (found == NULL ||
-			    timercmp(&loop->activity_time, &found->activity_time,
-			    >))
+			if (found == NULL || timercmp(&loop->activity_time,
+			    &found->activity_time, >))
 				found = loop;
 		}
 		if (found != NULL)
 			server_client_update_latest(found);
 	}
+}
+
+/* Set client session. */
+void
+server_client_set_session(struct client *c, struct session *s)
+{
+	struct session	*old = c->session;
+
+	if (s != NULL && c->session != NULL && c->session != s)
+		c->last_session = c->session;
+	else if (s == NULL)
+		c->last_session = NULL;
+	c->session = s;
+	c->flags |= CLIENT_FOCUSED;
+
+	if (old != NULL && old->curw != NULL)
+		window_update_focus(old->curw->window);
+	if (s != NULL) {
+		recalculate_sizes();
+		window_update_focus(s->curw->window);
+		session_update_activity(s, NULL);
+		gettimeofday(&s->last_attached_time, NULL);
+		s->curw->flags &= ~WINLINK_ALERTFLAGS;
+		s->curw->window->latest = c;
+		alerts_check_session(s);
+		tty_update_client_offset(c);
+		status_timer_start(c);
+		notify_client("client-session-changed", c);
+		server_redraw_client(c);
+	}
+
+	server_check_unattached();
+	server_update_socket();
 }
 
 /* Lost a client. */
@@ -341,6 +423,7 @@ server_client_lost(struct client *c)
 	if (c->flags & CLIENT_TERMINAL)
 		tty_free(&c->tty);
 	free(c->ttyname);
+	free(c->clipboard_panes);
 
 	free(c->term_name);
 	free(c->term_type);
@@ -432,7 +515,7 @@ server_client_detach(struct client *c, enum msgtype msgtype)
 {
 	struct session	*s = c->session;
 
-	if (s == NULL || (c->flags & CLIENT_UNATTACHEDFLAGS))
+	if (s == NULL || (c->flags & CLIENT_NODETACHFLAGS))
 		return;
 
 	c->flags |= CLIENT_EXIT;
@@ -512,11 +595,11 @@ server_client_check_mouse(struct client *c, struct key_event *event)
 		log_debug("double-click at %u,%u", x, y);
 	} else if ((m->sgr_type != ' ' &&
 	    MOUSE_DRAG(m->sgr_b) &&
-	    MOUSE_BUTTONS(m->sgr_b) == 3) ||
+	    MOUSE_RELEASE(m->sgr_b)) ||
 	    (m->sgr_type == ' ' &&
 	    MOUSE_DRAG(m->b) &&
-	    MOUSE_BUTTONS(m->b) == 3 &&
-	    MOUSE_BUTTONS(m->lb) == 3)) {
+	    MOUSE_RELEASE(m->b) &&
+	    MOUSE_RELEASE(m->lb))) {
 		type = MOVE;
 		x = m->x, y = m->y, b = 0;
 		log_debug("move at %u,%u", x, y);
@@ -669,7 +752,7 @@ have_event:
 		m->wp = -1;
 
 	/* Stop dragging if needed. */
-	if (type != DRAG && type != WHEEL && c->tty.mouse_drag_flag) {
+	if (type != DRAG && type != WHEEL && c->tty.mouse_drag_flag != 0) {
 		if (c->tty.mouse_drag_release != NULL)
 			c->tty.mouse_drag_release(c, m);
 
@@ -680,8 +763,8 @@ have_event:
 		 * End a mouse drag by passing a MouseDragEnd key corresponding
 		 * to the button that started the drag.
 		 */
-		switch (c->tty.mouse_drag_flag) {
-		case 1:
+		switch (c->tty.mouse_drag_flag - 1) {
+		case MOUSE_BUTTON_1:
 			if (where == PANE)
 				key = KEYC_MOUSEDRAGEND1_PANE;
 			if (where == STATUS)
@@ -695,7 +778,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_MOUSEDRAGEND1_BORDER;
 			break;
-		case 2:
+		case MOUSE_BUTTON_2:
 			if (where == PANE)
 				key = KEYC_MOUSEDRAGEND2_PANE;
 			if (where == STATUS)
@@ -709,7 +792,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_MOUSEDRAGEND2_BORDER;
 			break;
-		case 3:
+		case MOUSE_BUTTON_3:
 			if (where == PANE)
 				key = KEYC_MOUSEDRAGEND3_PANE;
 			if (where == STATUS)
@@ -722,6 +805,90 @@ have_event:
 				key = KEYC_MOUSEDRAGEND3_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_MOUSEDRAGEND3_BORDER;
+			break;
+		case MOUSE_BUTTON_6:
+			if (where == PANE)
+				key = KEYC_MOUSEDRAGEND6_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDRAGEND6_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDRAGEND6_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDRAGEND6_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDRAGEND6_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDRAGEND6_BORDER;
+			break;
+		case MOUSE_BUTTON_7:
+			if (where == PANE)
+				key = KEYC_MOUSEDRAGEND7_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDRAGEND7_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDRAGEND7_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDRAGEND7_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDRAGEND7_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDRAGEND7_BORDER;
+			break;
+		case MOUSE_BUTTON_8:
+			if (where == PANE)
+				key = KEYC_MOUSEDRAGEND8_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDRAGEND8_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDRAGEND8_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDRAGEND8_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDRAGEND8_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDRAGEND8_BORDER;
+			break;
+		case MOUSE_BUTTON_9:
+			if (where == PANE)
+				key = KEYC_MOUSEDRAGEND9_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDRAGEND9_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDRAGEND9_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDRAGEND9_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDRAGEND9_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDRAGEND9_BORDER;
+			break;
+		case MOUSE_BUTTON_10:
+			if (where == PANE)
+				key = KEYC_MOUSEDRAGEND10_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDRAGEND10_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDRAGEND10_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDRAGEND10_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDRAGEND10_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDRAGEND10_BORDER;
+			break;
+		case MOUSE_BUTTON_11:
+			if (where == PANE)
+				key = KEYC_MOUSEDRAGEND11_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDRAGEND11_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDRAGEND11_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDRAGEND11_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDRAGEND11_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDRAGEND11_BORDER;
 			break;
 		default:
 			key = KEYC_MOUSE;
@@ -755,7 +922,7 @@ have_event:
 			key = KEYC_DRAGGING;
 		else {
 			switch (MOUSE_BUTTONS(b)) {
-			case 0:
+			case MOUSE_BUTTON_1:
 				if (where == PANE)
 					key = KEYC_MOUSEDRAG1_PANE;
 				if (where == STATUS)
@@ -769,7 +936,7 @@ have_event:
 				if (where == BORDER)
 					key = KEYC_MOUSEDRAG1_BORDER;
 				break;
-			case 1:
+			case MOUSE_BUTTON_2:
 				if (where == PANE)
 					key = KEYC_MOUSEDRAG2_PANE;
 				if (where == STATUS)
@@ -783,7 +950,7 @@ have_event:
 				if (where == BORDER)
 					key = KEYC_MOUSEDRAG2_BORDER;
 				break;
-			case 2:
+			case MOUSE_BUTTON_3:
 				if (where == PANE)
 					key = KEYC_MOUSEDRAG3_PANE;
 				if (where == STATUS)
@@ -796,6 +963,90 @@ have_event:
 					key = KEYC_MOUSEDRAG3_STATUS_DEFAULT;
 				if (where == BORDER)
 					key = KEYC_MOUSEDRAG3_BORDER;
+				break;
+			case MOUSE_BUTTON_6:
+				if (where == PANE)
+					key = KEYC_MOUSEDRAG6_PANE;
+				if (where == STATUS)
+					key = KEYC_MOUSEDRAG6_STATUS;
+				if (where == STATUS_LEFT)
+					key = KEYC_MOUSEDRAG6_STATUS_LEFT;
+				if (where == STATUS_RIGHT)
+					key = KEYC_MOUSEDRAG6_STATUS_RIGHT;
+				if (where == STATUS_DEFAULT)
+					key = KEYC_MOUSEDRAG6_STATUS_DEFAULT;
+				if (where == BORDER)
+					key = KEYC_MOUSEDRAG6_BORDER;
+				break;
+			case MOUSE_BUTTON_7:
+				if (where == PANE)
+					key = KEYC_MOUSEDRAG7_PANE;
+				if (where == STATUS)
+					key = KEYC_MOUSEDRAG7_STATUS;
+				if (where == STATUS_LEFT)
+					key = KEYC_MOUSEDRAG7_STATUS_LEFT;
+				if (where == STATUS_RIGHT)
+					key = KEYC_MOUSEDRAG7_STATUS_RIGHT;
+				if (where == STATUS_DEFAULT)
+					key = KEYC_MOUSEDRAG7_STATUS_DEFAULT;
+				if (where == BORDER)
+					key = KEYC_MOUSEDRAG7_BORDER;
+				break;
+			case MOUSE_BUTTON_8:
+				if (where == PANE)
+					key = KEYC_MOUSEDRAG8_PANE;
+				if (where == STATUS)
+					key = KEYC_MOUSEDRAG8_STATUS;
+				if (where == STATUS_LEFT)
+					key = KEYC_MOUSEDRAG8_STATUS_LEFT;
+				if (where == STATUS_RIGHT)
+					key = KEYC_MOUSEDRAG8_STATUS_RIGHT;
+				if (where == STATUS_DEFAULT)
+					key = KEYC_MOUSEDRAG8_STATUS_DEFAULT;
+				if (where == BORDER)
+					key = KEYC_MOUSEDRAG8_BORDER;
+				break;
+			case MOUSE_BUTTON_9:
+				if (where == PANE)
+					key = KEYC_MOUSEDRAG9_PANE;
+				if (where == STATUS)
+					key = KEYC_MOUSEDRAG9_STATUS;
+				if (where == STATUS_LEFT)
+					key = KEYC_MOUSEDRAG9_STATUS_LEFT;
+				if (where == STATUS_RIGHT)
+					key = KEYC_MOUSEDRAG9_STATUS_RIGHT;
+				if (where == STATUS_DEFAULT)
+					key = KEYC_MOUSEDRAG9_STATUS_DEFAULT;
+				if (where == BORDER)
+					key = KEYC_MOUSEDRAG9_BORDER;
+				break;
+			case MOUSE_BUTTON_10:
+				if (where == PANE)
+					key = KEYC_MOUSEDRAG10_PANE;
+				if (where == STATUS)
+					key = KEYC_MOUSEDRAG10_STATUS;
+				if (where == STATUS_LEFT)
+					key = KEYC_MOUSEDRAG10_STATUS_LEFT;
+				if (where == STATUS_RIGHT)
+					key = KEYC_MOUSEDRAG10_STATUS_RIGHT;
+				if (where == STATUS_DEFAULT)
+					key = KEYC_MOUSEDRAG10_STATUS_DEFAULT;
+				if (where == BORDER)
+					key = KEYC_MOUSEDRAG10_BORDER;
+				break;
+			case MOUSE_BUTTON_11:
+				if (where == PANE)
+					key = KEYC_MOUSEDRAG11_PANE;
+				if (where == STATUS)
+					key = KEYC_MOUSEDRAG11_STATUS;
+				if (where == STATUS_LEFT)
+					key = KEYC_MOUSEDRAG11_STATUS_LEFT;
+				if (where == STATUS_RIGHT)
+					key = KEYC_MOUSEDRAG11_STATUS_RIGHT;
+				if (where == STATUS_DEFAULT)
+					key = KEYC_MOUSEDRAG11_STATUS_DEFAULT;
+				if (where == BORDER)
+					key = KEYC_MOUSEDRAG11_BORDER;
 				break;
 			}
 		}
@@ -837,7 +1088,7 @@ have_event:
 		break;
 	case UP:
 		switch (MOUSE_BUTTONS(b)) {
-		case 0:
+		case MOUSE_BUTTON_1:
 			if (where == PANE)
 				key = KEYC_MOUSEUP1_PANE;
 			if (where == STATUS)
@@ -851,7 +1102,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_MOUSEUP1_BORDER;
 			break;
-		case 1:
+		case MOUSE_BUTTON_2:
 			if (where == PANE)
 				key = KEYC_MOUSEUP2_PANE;
 			if (where == STATUS)
@@ -865,7 +1116,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_MOUSEUP2_BORDER;
 			break;
-		case 2:
+		case MOUSE_BUTTON_3:
 			if (where == PANE)
 				key = KEYC_MOUSEUP3_PANE;
 			if (where == STATUS)
@@ -879,11 +1130,95 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_MOUSEUP3_BORDER;
 			break;
+		case MOUSE_BUTTON_6:
+			if (where == PANE)
+				key = KEYC_MOUSEUP6_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEUP6_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEUP6_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEUP6_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEUP6_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEUP6_BORDER;
+			break;
+		case MOUSE_BUTTON_7:
+			if (where == PANE)
+				key = KEYC_MOUSEUP7_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEUP7_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEUP7_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEUP7_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEUP7_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEUP7_BORDER;
+			break;
+		case MOUSE_BUTTON_8:
+			if (where == PANE)
+				key = KEYC_MOUSEUP8_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEUP8_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEUP8_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEUP8_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEUP8_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEUP8_BORDER;
+			break;
+		case MOUSE_BUTTON_9:
+			if (where == PANE)
+				key = KEYC_MOUSEUP9_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEUP9_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEUP9_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEUP9_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEUP9_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEUP9_BORDER;
+			break;
+		case MOUSE_BUTTON_10:
+			if (where == PANE)
+				key = KEYC_MOUSEUP1_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEUP1_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEUP1_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEUP1_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEUP1_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEUP1_BORDER;
+			break;
+		case MOUSE_BUTTON_11:
+			if (where == PANE)
+				key = KEYC_MOUSEUP11_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEUP11_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEUP11_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEUP11_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEUP11_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEUP11_BORDER;
+			break;
 		}
 		break;
 	case DOWN:
 		switch (MOUSE_BUTTONS(b)) {
-		case 0:
+		case MOUSE_BUTTON_1:
 			if (where == PANE)
 				key = KEYC_MOUSEDOWN1_PANE;
 			if (where == STATUS)
@@ -897,7 +1232,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_MOUSEDOWN1_BORDER;
 			break;
-		case 1:
+		case MOUSE_BUTTON_2:
 			if (where == PANE)
 				key = KEYC_MOUSEDOWN2_PANE;
 			if (where == STATUS)
@@ -911,7 +1246,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_MOUSEDOWN2_BORDER;
 			break;
-		case 2:
+		case MOUSE_BUTTON_3:
 			if (where == PANE)
 				key = KEYC_MOUSEDOWN3_PANE;
 			if (where == STATUS)
@@ -925,11 +1260,95 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_MOUSEDOWN3_BORDER;
 			break;
+		case MOUSE_BUTTON_6:
+			if (where == PANE)
+				key = KEYC_MOUSEDOWN6_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDOWN6_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDOWN6_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDOWN6_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDOWN6_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDOWN6_BORDER;
+			break;
+		case MOUSE_BUTTON_7:
+			if (where == PANE)
+				key = KEYC_MOUSEDOWN7_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDOWN7_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDOWN7_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDOWN7_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDOWN7_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDOWN7_BORDER;
+			break;
+		case MOUSE_BUTTON_8:
+			if (where == PANE)
+				key = KEYC_MOUSEDOWN8_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDOWN8_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDOWN8_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDOWN8_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDOWN8_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDOWN8_BORDER;
+			break;
+		case MOUSE_BUTTON_9:
+			if (where == PANE)
+				key = KEYC_MOUSEDOWN9_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDOWN9_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDOWN9_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDOWN9_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDOWN9_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDOWN9_BORDER;
+			break;
+		case MOUSE_BUTTON_10:
+			if (where == PANE)
+				key = KEYC_MOUSEDOWN10_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDOWN10_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDOWN10_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDOWN10_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDOWN10_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDOWN10_BORDER;
+			break;
+		case MOUSE_BUTTON_11:
+			if (where == PANE)
+				key = KEYC_MOUSEDOWN11_PANE;
+			if (where == STATUS)
+				key = KEYC_MOUSEDOWN11_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_MOUSEDOWN11_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_MOUSEDOWN11_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_MOUSEDOWN11_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_MOUSEDOWN11_BORDER;
+			break;
 		}
 		break;
 	case SECOND:
 		switch (MOUSE_BUTTONS(b)) {
-		case 0:
+		case MOUSE_BUTTON_1:
 			if (where == PANE)
 				key = KEYC_SECONDCLICK1_PANE;
 			if (where == STATUS)
@@ -943,7 +1362,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_SECONDCLICK1_BORDER;
 			break;
-		case 1:
+		case MOUSE_BUTTON_2:
 			if (where == PANE)
 				key = KEYC_SECONDCLICK2_PANE;
 			if (where == STATUS)
@@ -957,7 +1376,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_SECONDCLICK2_BORDER;
 			break;
-		case 2:
+		case MOUSE_BUTTON_3:
 			if (where == PANE)
 				key = KEYC_SECONDCLICK3_PANE;
 			if (where == STATUS)
@@ -971,11 +1390,95 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_SECONDCLICK3_BORDER;
 			break;
+		case MOUSE_BUTTON_6:
+			if (where == PANE)
+				key = KEYC_SECONDCLICK6_PANE;
+			if (where == STATUS)
+				key = KEYC_SECONDCLICK6_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_SECONDCLICK6_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_SECONDCLICK6_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_SECONDCLICK6_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_SECONDCLICK6_BORDER;
+			break;
+		case MOUSE_BUTTON_7:
+			if (where == PANE)
+				key = KEYC_SECONDCLICK7_PANE;
+			if (where == STATUS)
+				key = KEYC_SECONDCLICK7_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_SECONDCLICK7_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_SECONDCLICK7_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_SECONDCLICK7_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_SECONDCLICK7_BORDER;
+			break;
+		case MOUSE_BUTTON_8:
+			if (where == PANE)
+				key = KEYC_SECONDCLICK8_PANE;
+			if (where == STATUS)
+				key = KEYC_SECONDCLICK8_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_SECONDCLICK8_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_SECONDCLICK8_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_SECONDCLICK8_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_SECONDCLICK8_BORDER;
+			break;
+		case MOUSE_BUTTON_9:
+			if (where == PANE)
+				key = KEYC_SECONDCLICK9_PANE;
+			if (where == STATUS)
+				key = KEYC_SECONDCLICK9_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_SECONDCLICK9_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_SECONDCLICK9_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_SECONDCLICK9_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_SECONDCLICK9_BORDER;
+			break;
+		case MOUSE_BUTTON_10:
+			if (where == PANE)
+				key = KEYC_SECONDCLICK10_PANE;
+			if (where == STATUS)
+				key = KEYC_SECONDCLICK10_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_SECONDCLICK10_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_SECONDCLICK10_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_SECONDCLICK10_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_SECONDCLICK10_BORDER;
+			break;
+		case MOUSE_BUTTON_11:
+			if (where == PANE)
+				key = KEYC_SECONDCLICK11_PANE;
+			if (where == STATUS)
+				key = KEYC_SECONDCLICK11_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_SECONDCLICK11_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_SECONDCLICK11_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_SECONDCLICK11_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_SECONDCLICK11_BORDER;
+			break;
 		}
 		break;
 	case DOUBLE:
 		switch (MOUSE_BUTTONS(b)) {
-		case 0:
+		case MOUSE_BUTTON_1:
 			if (where == PANE)
 				key = KEYC_DOUBLECLICK1_PANE;
 			if (where == STATUS)
@@ -989,7 +1492,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_DOUBLECLICK1_BORDER;
 			break;
-		case 1:
+		case MOUSE_BUTTON_2:
 			if (where == PANE)
 				key = KEYC_DOUBLECLICK2_PANE;
 			if (where == STATUS)
@@ -1003,7 +1506,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_DOUBLECLICK2_BORDER;
 			break;
-		case 2:
+		case MOUSE_BUTTON_3:
 			if (where == PANE)
 				key = KEYC_DOUBLECLICK3_PANE;
 			if (where == STATUS)
@@ -1017,11 +1520,95 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_DOUBLECLICK3_BORDER;
 			break;
+		case MOUSE_BUTTON_6:
+			if (where == PANE)
+				key = KEYC_DOUBLECLICK6_PANE;
+			if (where == STATUS)
+				key = KEYC_DOUBLECLICK6_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_DOUBLECLICK6_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_DOUBLECLICK6_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_DOUBLECLICK6_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_DOUBLECLICK6_BORDER;
+			break;
+		case MOUSE_BUTTON_7:
+			if (where == PANE)
+				key = KEYC_DOUBLECLICK7_PANE;
+			if (where == STATUS)
+				key = KEYC_DOUBLECLICK7_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_DOUBLECLICK7_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_DOUBLECLICK7_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_DOUBLECLICK7_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_DOUBLECLICK7_BORDER;
+			break;
+		case MOUSE_BUTTON_8:
+			if (where == PANE)
+				key = KEYC_DOUBLECLICK8_PANE;
+			if (where == STATUS)
+				key = KEYC_DOUBLECLICK8_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_DOUBLECLICK8_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_DOUBLECLICK8_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_DOUBLECLICK8_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_DOUBLECLICK8_BORDER;
+			break;
+		case MOUSE_BUTTON_9:
+			if (where == PANE)
+				key = KEYC_DOUBLECLICK9_PANE;
+			if (where == STATUS)
+				key = KEYC_DOUBLECLICK9_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_DOUBLECLICK9_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_DOUBLECLICK9_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_DOUBLECLICK9_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_DOUBLECLICK9_BORDER;
+			break;
+		case MOUSE_BUTTON_10:
+			if (where == PANE)
+				key = KEYC_DOUBLECLICK10_PANE;
+			if (where == STATUS)
+				key = KEYC_DOUBLECLICK10_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_DOUBLECLICK10_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_DOUBLECLICK10_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_DOUBLECLICK10_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_DOUBLECLICK10_BORDER;
+			break;
+		case MOUSE_BUTTON_11:
+			if (where == PANE)
+				key = KEYC_DOUBLECLICK11_PANE;
+			if (where == STATUS)
+				key = KEYC_DOUBLECLICK11_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_DOUBLECLICK11_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_DOUBLECLICK11_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_DOUBLECLICK11_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_DOUBLECLICK11_BORDER;
+			break;
 		}
 		break;
 	case TRIPLE:
 		switch (MOUSE_BUTTONS(b)) {
-		case 0:
+		case MOUSE_BUTTON_1:
 			if (where == PANE)
 				key = KEYC_TRIPLECLICK1_PANE;
 			if (where == STATUS)
@@ -1035,7 +1622,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_TRIPLECLICK1_BORDER;
 			break;
-		case 1:
+		case MOUSE_BUTTON_2:
 			if (where == PANE)
 				key = KEYC_TRIPLECLICK2_PANE;
 			if (where == STATUS)
@@ -1049,7 +1636,7 @@ have_event:
 			if (where == BORDER)
 				key = KEYC_TRIPLECLICK2_BORDER;
 			break;
-		case 2:
+		case MOUSE_BUTTON_3:
 			if (where == PANE)
 				key = KEYC_TRIPLECLICK3_PANE;
 			if (where == STATUS)
@@ -1062,6 +1649,90 @@ have_event:
 				key = KEYC_TRIPLECLICK3_STATUS_DEFAULT;
 			if (where == BORDER)
 				key = KEYC_TRIPLECLICK3_BORDER;
+			break;
+		case MOUSE_BUTTON_6:
+			if (where == PANE)
+				key = KEYC_TRIPLECLICK6_PANE;
+			if (where == STATUS)
+				key = KEYC_TRIPLECLICK6_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_TRIPLECLICK6_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_TRIPLECLICK6_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_TRIPLECLICK6_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_TRIPLECLICK6_BORDER;
+			break;
+		case MOUSE_BUTTON_7:
+			if (where == PANE)
+				key = KEYC_TRIPLECLICK7_PANE;
+			if (where == STATUS)
+				key = KEYC_TRIPLECLICK7_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_TRIPLECLICK7_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_TRIPLECLICK7_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_TRIPLECLICK7_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_TRIPLECLICK7_BORDER;
+			break;
+		case MOUSE_BUTTON_8:
+			if (where == PANE)
+				key = KEYC_TRIPLECLICK8_PANE;
+			if (where == STATUS)
+				key = KEYC_TRIPLECLICK8_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_TRIPLECLICK8_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_TRIPLECLICK8_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_TRIPLECLICK8_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_TRIPLECLICK8_BORDER;
+			break;
+		case MOUSE_BUTTON_9:
+			if (where == PANE)
+				key = KEYC_TRIPLECLICK9_PANE;
+			if (where == STATUS)
+				key = KEYC_TRIPLECLICK9_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_TRIPLECLICK9_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_TRIPLECLICK9_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_TRIPLECLICK9_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_TRIPLECLICK9_BORDER;
+			break;
+		case MOUSE_BUTTON_10:
+			if (where == PANE)
+				key = KEYC_TRIPLECLICK10_PANE;
+			if (where == STATUS)
+				key = KEYC_TRIPLECLICK10_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_TRIPLECLICK10_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_TRIPLECLICK10_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_TRIPLECLICK10_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_TRIPLECLICK10_BORDER;
+			break;
+		case MOUSE_BUTTON_11:
+			if (where == PANE)
+				key = KEYC_TRIPLECLICK11_PANE;
+			if (where == STATUS)
+				key = KEYC_TRIPLECLICK11_STATUS;
+			if (where == STATUS_LEFT)
+				key = KEYC_TRIPLECLICK11_STATUS_LEFT;
+			if (where == STATUS_RIGHT)
+				key = KEYC_TRIPLECLICK11_STATUS_RIGHT;
+			if (where == STATUS_DEFAULT)
+				key = KEYC_TRIPLECLICK11_STATUS_DEFAULT;
+			if (where == BORDER)
+				key = KEYC_TRIPLECLICK11_BORDER;
 			break;
 		}
 		break;
@@ -1123,6 +1794,8 @@ server_client_update_latest(struct client *c)
 
 	if (options_get_number(w->options, "window-size") == WINDOW_SIZE_LATEST)
 		recalculate_size(w, 0);
+
+	notify_client("client-active", c);
 }
 
 /*
@@ -1351,7 +2024,7 @@ server_client_handle_key(struct client *c, struct key_event *event)
 			status_message_clear(c);
 		}
 		if (c->overlay_key != NULL) {
-			switch (c->overlay_key(c, event)) {
+			switch (c->overlay_key(c, c->overlay_data, event)) {
 			case 0:
 				return (0);
 			case 1:
@@ -1382,7 +2055,6 @@ server_client_loop(void)
 	struct client		*c;
 	struct window		*w;
 	struct window_pane	*wp;
-	int			 focus;
 
 	/* Check for window resize. This is done before redrawing. */
 	RB_FOREACH(w, windows, &windows)
@@ -1400,14 +2072,11 @@ server_client_loop(void)
 
 	/*
 	 * Any windows will have been redrawn as part of clients, so clear
-	 * their flags now. Also check pane focus and resize.
+	 * their flags now.
 	 */
-	focus = options_get_number(global_options, "focus-events");
 	RB_FOREACH(w, windows, &windows) {
 		TAILQ_FOREACH(wp, &w->panes, entry) {
 			if (wp->fd != -1) {
-				if (focus)
-					server_client_check_pane_focus(wp);
 				server_client_check_pane_resize(wp);
 				server_client_check_pane_buffer(wp);
 			}
@@ -1519,7 +2188,6 @@ server_client_check_pane_resize(struct window_pane *wp)
 	evtimer_add(&wp->resize_timer, &tv);
 }
 
-
 /* Check pane buffer size. */
 static void
 server_client_check_pane_buffer(struct window_pane *wp)
@@ -1608,54 +2276,6 @@ out:
 		bufferevent_enable(wp->event, EV_READ);
 }
 
-/* Check whether pane should be focused. */
-static void
-server_client_check_pane_focus(struct window_pane *wp)
-{
-	struct client	*c;
-	int		 push;
-
-	/* Do we need to push the focus state? */
-	push = wp->flags & PANE_FOCUSPUSH;
-	wp->flags &= ~PANE_FOCUSPUSH;
-
-	/* If we're not the active pane in our window, we're not focused. */
-	if (wp->window->active != wp)
-		goto not_focused;
-
-	/*
-	 * If our window is the current window in any focused clients with an
-	 * attached session, we're focused.
-	 */
-	TAILQ_FOREACH(c, &clients, entry) {
-		if (c->session == NULL || !(c->flags & CLIENT_FOCUSED))
-			continue;
-		if (c->session->attached == 0)
-			continue;
-
-		if (c->session->curw->window == wp->window)
-			goto focused;
-	}
-
-not_focused:
-	if (push || (wp->flags & PANE_FOCUSED)) {
-		if (wp->base.mode & MODE_FOCUSON)
-			bufferevent_write(wp->event, "\033[O", 3);
-		notify_pane("pane-focus-out", wp);
-	}
-	wp->flags &= ~PANE_FOCUSED;
-	return;
-
-focused:
-	if (push || !(wp->flags & PANE_FOCUSED)) {
-		if (wp->base.mode & MODE_FOCUSON)
-			bufferevent_write(wp->event, "\033[I", 3);
-		notify_pane("pane-focus-in", wp);
-		session_update_activity(c->session, NULL);
-	}
-	wp->flags |= PANE_FOCUSED;
-}
-
 /*
  * Update cursor position and mode settings. The scroll region and attributes
  * are cleared when idle (waiting for an event) as this is the most likely time
@@ -1673,7 +2293,7 @@ server_client_reset_state(struct client *c)
 	struct window_pane	*wp = server_client_get_pane(c), *loop;
 	struct screen		*s = NULL;
 	struct options		*oo = c->session->options;
-	int			 mode = 0, cursor, flags;
+	int			 mode = 0, cursor, flags, n;
 	u_int			 cx = 0, cy = 0, ox, oy, sx, sy;
 
 	if (c->flags & (CLIENT_CONTROL|CLIENT_SUSPENDED))
@@ -1686,19 +2306,35 @@ server_client_reset_state(struct client *c)
 	/* Get mode from overlay if any, else from screen. */
 	if (c->overlay_draw != NULL) {
 		if (c->overlay_mode != NULL)
-			s = c->overlay_mode(c, &cx, &cy);
+			s = c->overlay_mode(c, c->overlay_data, &cx, &cy);
 	} else
 		s = wp->screen;
 	if (s != NULL)
 		mode = s->mode;
-	log_debug("%s: client %s mode %x", __func__, c->name, mode);
+	if (log_get_level() != 0) {
+		log_debug("%s: client %s mode %s", __func__, c->name,
+		    screen_mode_to_string(mode));
+	}
 
 	/* Reset region and margin. */
 	tty_region_off(tty);
 	tty_margin_off(tty);
 
 	/* Move cursor to pane cursor and offset. */
-	if (c->overlay_draw == NULL) {
+	if (c->prompt_string != NULL) {
+		n = options_get_number(c->session->options, "status-position");
+		if (n == 0)
+			cy = 0;
+		else {
+			n = status_line_size(c);
+			if (n == 0)
+				cy = tty->sy - 1;
+			else
+				cy = tty->sy - n;
+		}
+		cx = c->prompt_cursor;
+		mode &= ~MODE_CURSOR;
+	} else if (c->overlay_draw == NULL) {
 		cursor = 0;
 		tty_window_offset(tty, &ox, &oy, &sx, &sy);
 		if (wp->xoff + s->cx >= ox && wp->xoff + s->cx <= ox + sx &&
@@ -1965,8 +2601,10 @@ server_client_check_redraw(struct client *c)
 	}
 
 	if (c->flags & CLIENT_ALLREDRAWFLAGS) {
-		if (options_get_number(s->options, "set-titles"))
+		if (options_get_number(s->options, "set-titles")) {
 			server_client_set_title(c);
+			server_client_set_path(c);
+		}
 		screen_redraw_screen(c);
 	}
 
@@ -2012,6 +2650,26 @@ server_client_set_title(struct client *c)
 	format_free(ft);
 }
 
+/* Set client path. */
+static void
+server_client_set_path(struct client *c)
+{
+	struct session	*s = c->session;
+	const char	*path;
+
+	if (s->curw == NULL)
+		return;
+	if (s->curw->window->active->base.path == NULL)
+		path = "";
+	else
+		path = s->curw->window->active->base.path;
+	if (c->path == NULL || strcmp(path, c->path) != 0) {
+		free(c->path);
+		c->path = xstrdup(path);
+		tty_set_path(&c->tty, c->path);
+	}
+}
+
 /* Dispatch message from client. */
 static void
 server_client_dispatch(struct imsg *imsg, void *arg)
@@ -2055,9 +2713,12 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 		if (c->flags & CLIENT_CONTROL)
 			break;
 		server_client_update_latest(c);
-		server_client_clear_overlay(c);
 		tty_resize(&c->tty);
 		recalculate_sizes();
+		if (c->overlay_resize == NULL)
+			server_client_clear_overlay(c);
+		else
+			c->overlay_resize(c, c->overlay_data);
 		server_redraw_client(c);
 		if (c->session != NULL)
 			notify_client("client-resized", c);
@@ -2065,7 +2726,8 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 	case MSG_EXITING:
 		if (datalen != 0)
 			fatalx("bad MSG_EXITING size");
-		c->session = NULL;
+		server_client_set_session(c, NULL);
+		recalculate_sizes();
 		tty_close(&c->tty);
 		proc_send(c->peer, MSG_EXITED, -1, NULL, 0);
 		break;
@@ -2110,6 +2772,14 @@ server_client_dispatch(struct imsg *imsg, void *arg)
 	}
 }
 
+/* Callback when command is not allowed. */
+static enum cmd_retval
+server_client_read_only(struct cmdq_item *item, __unused void *data)
+{
+	cmdq_error(item, "client is read-only");
+	return (CMD_RETURN_ERROR);
+}
+
 /* Callback when command is done. */
 static enum cmd_retval
 server_client_command_done(struct cmdq_item *item, __unused void *data)
@@ -2133,6 +2803,8 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 	int			  argc;
 	char			**argv, *cause;
 	struct cmd_parse_result	 *pr;
+	struct args_value	 *values;
+	struct cmdq_item	 *new_item;
 
 	if (c->flags & CLIENT_EXIT)
 		return;
@@ -2158,20 +2830,25 @@ server_client_dispatch_command(struct client *c, struct imsg *imsg)
 		*argv = xstrdup("new-session");
 	}
 
-	pr = cmd_parse_from_arguments(argc, argv, NULL);
+	values = args_from_vector(argc, argv);
+	pr = cmd_parse_from_arguments(values, argc, NULL);
 	switch (pr->status) {
-	case CMD_PARSE_EMPTY:
-		cause = xstrdup("empty command");
-		goto error;
 	case CMD_PARSE_ERROR:
 		cause = pr->error;
 		goto error;
 	case CMD_PARSE_SUCCESS:
 		break;
 	}
+	args_free_values(values, argc);
+	free(values);
 	cmd_free_argv(argc, argv);
 
-	cmdq_append(c, cmdq_get_command(pr->cmdlist, NULL));
+	if ((c->flags & CLIENT_READONLY) &&
+	    !cmd_list_all_have(pr->cmdlist, CMD_READONLY))
+		new_item = cmdq_get_callback(server_client_read_only, NULL);
+	else
+		new_item = cmdq_get_command(pr->cmdlist, NULL);
+	cmdq_append(c, new_item);
 	cmdq_append(c, cmdq_get_callback(server_client_command_done, NULL));
 
 	cmd_list_free(pr->cmdlist);
@@ -2389,7 +3066,7 @@ server_client_set_flags(struct client *c, const char *flags)
 	uint64_t flag;
 	int	 not;
 
-	s = copy = xstrdup (flags);
+	s = copy = xstrdup(flags);
 	while ((next = strsep(&s, ",")) != NULL) {
 		not = (*next == '!');
 		if (not)
@@ -2409,9 +3086,11 @@ server_client_set_flags(struct client *c, const char *flags)
 			continue;
 
 		log_debug("client %s set flag %s", c->name, next);
-		if (not)
+		if (not) {
+			if (c->flags & CLIENT_READONLY)
+				flag &= ~CLIENT_READONLY;
 			c->flags &= ~flag;
-		else
+		} else
 			c->flags |= flag;
 		if (flag == CLIENT_CONTROL_NOOUTPUT)
 			control_reset_offsets(c);
@@ -2459,12 +3138,27 @@ server_client_get_flags(struct client *c)
 }
 
 /* Get client window. */
-static struct client_window *
+struct client_window *
 server_client_get_client_window(struct client *c, u_int id)
 {
 	struct client_window	cw = { .window = id };
 
 	return (RB_FIND(client_windows, &c->windows, &cw));
+}
+
+/* Add client window. */
+struct client_window *
+server_client_add_client_window(struct client *c, u_int id)
+{
+	struct client_window	*cw;
+
+	cw = server_client_get_client_window(c, id);
+	if (cw == NULL) {
+		cw = xcalloc(1, sizeof *cw);
+		cw->window = id;
+		RB_INSERT(client_windows, &c->windows, cw);
+	}
+	return (cw);
 }
 
 /* Get client active pane. */
@@ -2495,12 +3189,7 @@ server_client_set_pane(struct client *c, struct window_pane *wp)
 	if (s == NULL)
 		return;
 
-	cw = server_client_get_client_window(c, s->curw->window->id);
-	if (cw == NULL) {
-		cw = xcalloc(1, sizeof *cw);
-		cw->window = s->curw->window->id;
-		RB_INSERT(client_windows, &c->windows, cw);
-	}
+	cw = server_client_add_client_window(c, s->curw->window->id);
 	cw->pane = wp;
 	log_debug("%s pane now %%%u", c->name, wp->id);
 }

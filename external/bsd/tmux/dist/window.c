@@ -316,6 +316,8 @@ window_create(u_int sx, u_int sy, u_int xpixel, u_int ypixel)
 
 	w->sx = sx;
 	w->sy = sy;
+	w->manual_sx = sx;
+	w->manual_sy = sy;
 	w->xpixel = xpixel;
 	w->ypixel = ypixel;
 
@@ -327,6 +329,7 @@ window_create(u_int sx, u_int sy, u_int xpixel, u_int ypixel)
 	w->id = next_window_id++;
 	RB_INSERT(windows, &windows, w);
 
+	window_set_fill_character(w);
 	window_update_activity(w);
 
 	log_debug("%s: @%u create %ux%u (%ux%u)", __func__, w->id, sx, sy,
@@ -358,6 +361,7 @@ window_destroy(struct window *w)
 		event_del(&w->offset_timer);
 
 	options_free(w->options);
+	free(w->fill_character);
 
 	free(w->name);
 	free(w);
@@ -465,6 +469,52 @@ window_has_pane(struct window *w, struct window_pane *wp)
 	return (0);
 }
 
+void
+window_update_focus(struct window *w)
+{
+	if (w != NULL) {
+		log_debug("%s: @%u", __func__, w->id);
+		window_pane_update_focus(w->active);
+	}
+}
+
+void
+window_pane_update_focus(struct window_pane *wp)
+{
+	struct client	*c;
+	int		 focused = 0;
+
+	if (wp != NULL) {
+		if (wp != wp->window->active)
+			focused = 0;
+		else {
+			TAILQ_FOREACH(c, &clients, entry) {
+				if (c->session != NULL &&
+				    c->session->attached != 0 &&
+				    (c->flags & CLIENT_FOCUSED) &&
+				    c->session->curw->window == wp->window) {
+					focused = 1;
+					break;
+				}
+			}
+		}
+		if (!focused && (wp->flags & PANE_FOCUSED)) {
+			log_debug("%s: %%%u focus out", __func__, wp->id);
+			if (wp->base.mode & MODE_FOCUSON)
+				bufferevent_write(wp->event, "\033[O", 3);
+			notify_pane("pane-focus-out", wp);
+			wp->flags &= ~PANE_FOCUSED;
+		} else if (focused && (~wp->flags & PANE_FOCUSED)) {
+			log_debug("%s: %%%u focus in", __func__, wp->id);
+			if (wp->base.mode & MODE_FOCUSON)
+				bufferevent_write(wp->event, "\033[I", 3);
+			notify_pane("pane-focus-in", wp);
+			wp->flags |= PANE_FOCUSED;
+		} else
+			log_debug("%s: %%%u focus unchanged", __func__, wp->id);
+	}
+}
+
 int
 window_set_active_pane(struct window *w, struct window_pane *wp, int notify)
 {
@@ -478,11 +528,24 @@ window_set_active_pane(struct window *w, struct window_pane *wp, int notify)
 	w->active->active_point = next_active_point++;
 	w->active->flags |= PANE_CHANGED;
 
+	if (options_get_number(global_options, "focus-events")) {
+		window_pane_update_focus(w->last);
+		window_pane_update_focus(w->active);
+	}
+
 	tty_update_window_offset(w);
 
 	if (notify)
 		notify_window("window-pane-changed", w);
 	return (1);
+}
+
+static int
+window_pane_get_palette(struct window_pane *wp, int c)
+{
+	if (wp == NULL)
+		return (-1);
+	return (colour_palette_get(&wp->palette, c));
 }
 
 void
@@ -700,6 +763,7 @@ window_lost_pane(struct window *w, struct window_pane *wp)
 		if (w->active != NULL) {
 			w->active->flags |= PANE_CHANGED;
 			notify_window("window-pane-changed", w);
+			window_update_focus(w);
 		}
 	} else if (wp == w->last)
 		w->last = NULL;
@@ -862,9 +926,6 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 
 	wp->fd = -1;
 
-	wp->fg = 8;
-	wp->bg = 8;
-
 	TAILQ_INIT(&wp->modes);
 
 	TAILQ_INIT (&wp->resize_queue);
@@ -873,6 +934,9 @@ window_pane_create(struct window *w, u_int sx, u_int sy, u_int hlimit)
 	wp->sy = sy;
 
 	wp->pipe_fd = -1;
+
+	colour_palette_init(&wp->palette);
+	colour_palette_from_option(&wp->palette, wp->options);
 
 	screen_init(&wp->base, sx, sy, hlimit);
 	wp->screen = &wp->base;
@@ -926,7 +990,7 @@ window_pane_destroy(struct window_pane *wp)
 	free(__UNCONST(wp->cwd));
 	free(wp->shell);
 	cmd_free_argv(wp->argc, wp->argv);
-	free(wp->palette);
+	colour_palette_free(&wp->palette);
 	free(wp);
 }
 
@@ -978,7 +1042,7 @@ window_pane_set_event(struct window_pane *wp)
 
 	wp->event = bufferevent_new(wp->fd, window_pane_read_callback,
 	    NULL, window_pane_error_callback, wp);
-	wp->ictx = input_init(wp, wp->event);
+	wp->ictx = input_init(wp, wp->event, &wp->palette);
 
 	bufferevent_enable(wp->event, EV_READ|EV_WRITE);
 }
@@ -992,7 +1056,7 @@ window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 	if (sx == wp->sx && sy == wp->sy)
 		return;
 
-	r = xmalloc (sizeof *r);
+	r = xmalloc(sizeof *r);
 	r->sx = sx;
 	r->sy = sy;
 	r->osx = wp->sx;
@@ -1008,60 +1072,6 @@ window_pane_resize(struct window_pane *wp, u_int sx, u_int sy)
 	wme = TAILQ_FIRST(&wp->modes);
 	if (wme != NULL && wme->mode->resize != NULL)
 		wme->mode->resize(wme, sx, sy);
-}
-
-void
-window_pane_set_palette(struct window_pane *wp, u_int n, int colour)
-{
-	if (n > 0xff)
-		return;
-
-	if (wp->palette == NULL)
-		wp->palette = xcalloc(0x100, sizeof *wp->palette);
-
-	wp->palette[n] = colour;
-	wp->flags |= PANE_REDRAW;
-}
-
-void
-window_pane_unset_palette(struct window_pane *wp, u_int n)
-{
-	if (n > 0xff || wp->palette == NULL)
-		return;
-
-	wp->palette[n] = 0;
-	wp->flags |= PANE_REDRAW;
-}
-
-void
-window_pane_reset_palette(struct window_pane *wp)
-{
-	if (wp->palette == NULL)
-		return;
-
-	free(wp->palette);
-	wp->palette = NULL;
-	wp->flags |= PANE_REDRAW;
-}
-
-int
-window_pane_get_palette(struct window_pane *wp, int c)
-{
-	int	new;
-
-	if (wp == NULL || wp->palette == NULL)
-		return (-1);
-
-	new = -1;
-	if (c < 8)
-		new = wp->palette[c];
-	else if (c >= 90 && c <= 97)
-		new = wp->palette[8 + c - 90];
-	else if (c & COLOUR_FLAG_256)
-		new = wp->palette[c & ~COLOUR_FLAG_256];
-	if (new == 0)
-		return (-1);
-	return (new);
 }
 
 int
@@ -1530,7 +1540,7 @@ window_pane_input_callback(struct client *c, __unused const char *path,
 	size_t				 len = EVBUFFER_LENGTH(buffer);
 
 	wp = window_pane_find_by_id(cdata->wp);
-	if (wp == NULL || closed || error != 0 || c->flags & CLIENT_DEAD) {
+	if (wp == NULL || closed || error != 0 || (c->flags & CLIENT_DEAD)) {
 		if (wp == NULL)
 			c->flags |= CLIENT_EXIT;
 
@@ -1556,6 +1566,10 @@ window_pane_start_input(struct window_pane *wp, struct cmdq_item *item,
 		*cause = xstrdup("pane is not empty");
 		return (-1);
 	}
+	if (c->flags & (CLIENT_DEAD|CLIENT_EXITED))
+		return (1);
+	if (c->session != NULL)
+		return (1);
 
 	cdata = xmalloc(sizeof *cdata);
 	cdata->item = item;
@@ -1586,4 +1600,21 @@ window_pane_update_used_data(struct window_pane *wp,
 	if (size > EVBUFFER_LENGTH(wp->event->input) - used)
 		size = EVBUFFER_LENGTH(wp->event->input) - used;
 	wpo->used += size;
+}
+
+void
+window_set_fill_character(struct window *w)
+{
+	const char		*value;
+	struct utf8_data	*ud;
+
+	free(w->fill_character);
+	w->fill_character = NULL;
+
+	value = options_get_string(w->options, "fill-character");
+	if (*value != '\0' && utf8_isvalid(value)) {
+		ud = utf8_fromcstr(value);
+		if (ud != NULL && ud[0].width == 1)
+			w->fill_character = ud;
+	}
 }

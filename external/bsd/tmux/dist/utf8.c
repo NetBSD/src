@@ -64,7 +64,7 @@ static struct utf8_index_tree utf8_index_tree = RB_INITIALIZER(utf8_index_tree);
 static u_int utf8_next_index;
 
 #define UTF8_GET_SIZE(uc) (((uc) >> 24) & 0x1f)
-#define UTF8_GET_WIDTH(flags) (((uc) >> 29) - 1)
+#define UTF8_GET_WIDTH(uc) (((uc) >> 29) - 1)
 
 #define UTF8_SET_SIZE(size) (((utf8_char)(size)) << 24)
 #define UTF8_SET_WIDTH(width) ((((utf8_char)(width)) + 1) << 29)
@@ -237,21 +237,6 @@ utf8_width(struct utf8_data *ud, int *width)
 	if (*width >= 0 && *width <= 0xff)
 		return (UTF8_DONE);
 	log_debug("UTF-8 %.*s, wcwidth() %d", (int)ud->size, ud->data, *width);
-
-#ifndef __OpenBSD__
-	/*
-	 * Many platforms (particularly and inevitably OS X) have no width for
-	 * relatively common characters (wcwidth() returns -1); assume width 1
-	 * in this case. This will be wrong for genuinely nonprintable
-	 * characters, but they should be rare. We may pass through stuff that
-	 * ideally we would block, but this is no worse than sending the same
-	 * to the terminal without tmux.
-	 */
-	if (*width < 0) {
-		*width = 1;
-		return (UTF8_DONE);
-	}
-#endif
 	return (UTF8_ERROR);
 }
 

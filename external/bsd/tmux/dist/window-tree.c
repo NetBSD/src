@@ -519,7 +519,8 @@ window_tree_draw_label(struct screen_write_ctx *ctx, u_int px, u_int py,
 
 	if (ox > 1 && ox + len < sx - 1 && sy >= 3) {
 		screen_write_cursormove(ctx, px + ox - 1, py + oy - 1, 0);
-		screen_write_box(ctx, len + 2, 3);
+		screen_write_box(ctx, len + 2, 3, BOX_LINES_DEFAULT, NULL,
+		    NULL);
 	}
 	screen_write_cursormove(ctx, px + ox, py + oy, 0);
 	screen_write_puts(ctx, gc, "%s", label);
@@ -895,7 +896,7 @@ window_tree_get_key(void *modedata, void *itemdata, u_int line)
 	key = key_string_lookup_string(expanded);
 	free(expanded);
 	format_free(ft);
-	return key;
+	return (key);
 }
 
 static struct screen *
@@ -926,10 +927,10 @@ window_tree_init(struct window_mode_entry *wme, struct cmd_find_state *fs,
 		data->key_format = xstrdup(WINDOW_TREE_DEFAULT_KEY_FORMAT);
 	else
 		data->key_format = xstrdup(args_get(args, 'K'));
-	if (args == NULL || args->argc == 0)
+	if (args == NULL || args_count(args) == 0)
 		data->command = xstrdup(WINDOW_TREE_DEFAULT_COMMAND);
 	else
-		data->command = xstrdup(args->argv[0]);
+		data->command = xstrdup(args_string(args, 0));
 	data->squash_groups = !args_has(args, 'G');
 
 	data->data = mode_tree_start(wp, args, window_tree_build,
@@ -1297,7 +1298,7 @@ window_tree_key(struct window_mode_entry *wme, struct client *c,
 		data->references++;
 		status_prompt_set(c, NULL, prompt, "",
 		    window_tree_kill_current_callback, window_tree_command_free,
-		    data, PROMPT_SINGLE|PROMPT_NOFORMAT);
+		    data, PROMPT_SINGLE|PROMPT_NOFORMAT, PROMPT_TYPE_COMMAND);
 		free(prompt);
 		break;
 	case 'X':
@@ -1308,7 +1309,7 @@ window_tree_key(struct window_mode_entry *wme, struct client *c,
 		data->references++;
 		status_prompt_set(c, NULL, prompt, "",
 		    window_tree_kill_tagged_callback, window_tree_command_free,
-		    data, PROMPT_SINGLE|PROMPT_NOFORMAT);
+		    data, PROMPT_SINGLE|PROMPT_NOFORMAT, PROMPT_TYPE_COMMAND);
 		free(prompt);
 		break;
 	case ':':
@@ -1320,7 +1321,7 @@ window_tree_key(struct window_mode_entry *wme, struct client *c,
 		data->references++;
 		status_prompt_set(c, NULL, prompt, "",
 		    window_tree_command_callback, window_tree_command_free,
-		    data, PROMPT_NOFORMAT);
+		    data, PROMPT_NOFORMAT, PROMPT_TYPE_COMMAND);
 		free(prompt);
 		break;
 	case '\r':

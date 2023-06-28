@@ -58,6 +58,17 @@ static int	tty_keys_device_attributes(struct tty *, const char *, size_t,
 static int	tty_keys_extended_device_attributes(struct tty *, const char *,
 		    size_t, size_t *);
 
+/* A key tree entry. */
+struct tty_key {
+	char		 ch;
+	key_code	 key;
+
+	struct tty_key	*left;
+	struct tty_key	*right;
+
+	struct tty_key	*next;
+};
+
 /* Default raw keys. */
 struct tty_default_key_raw {
 	const char	       *string;
@@ -820,10 +831,15 @@ complete_key:
 	tty->flags &= ~TTY_TIMER;
 
 	/* Check for focus events. */
-	if (key == KEYC_FOCUS_OUT)
-		tty->client->flags &= ~CLIENT_FOCUSED;
-	else if (key == KEYC_FOCUS_IN)
-		tty->client->flags |= CLIENT_FOCUSED;
+	if (key == KEYC_FOCUS_OUT) {
+		c->flags &= ~CLIENT_FOCUSED;
+		window_update_focus(c->session->curw->window);
+		notify_client("client-focus-out", c);
+	} else if (key == KEYC_FOCUS_IN) {
+		c->flags |= CLIENT_FOCUSED;
+		notify_client("client-focus-in", c);
+		window_update_focus(c->session->curw->window);
+	}
 
 	/* Fire the key. */
 	if (key != KEYC_UNKNOWN) {
@@ -1045,17 +1061,13 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 		log_debug("%s: mouse input: %.*s", c->name, (int)*size, buf);
 
 		/* Check and return the mouse input. */
-		if (b < 32)
+		if (b < MOUSE_PARAM_BTN_OFF ||
+		    x < MOUSE_PARAM_POS_OFF ||
+		    y < MOUSE_PARAM_POS_OFF)
 			return (-1);
-		b -= 32;
-		if (x >= 33)
-			x -= 33;
-		else
-			x = 256 - x;
-		if (y >= 33)
-			y -= 33;
-		else
-			y = 256 - y;
+		b -= MOUSE_PARAM_BTN_OFF;
+		x -= MOUSE_PARAM_POS_OFF;
+		y -= MOUSE_PARAM_POS_OFF;
 	} else if (buf[2] == '<') {
 		/* Read the three inputs. */
 		*size = 3;
@@ -1102,7 +1114,7 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 		/* Type is M for press, m for release. */
 		sgr_type = ch;
 		if (sgr_type == 'm')
-			b |= 3;
+			b = 3;
 
 		/*
 		 * Some terminals (like PuTTY 0.63) mistakenly send
@@ -1110,7 +1122,7 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 		 * Discard it before it reaches any program running inside
 		 * tmux.
 		 */
-		if (sgr_type == 'm' && (sgr_b & 64))
+		if (sgr_type == 'm' && MOUSE_WHEEL(sgr_b))
 		    return (-2);
 	} else
 		return (-1);
@@ -1138,12 +1150,14 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
  * partial.
  */
 static int
-tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
-    size_t *size)
+tty_keys_clipboard(struct tty *tty, const char *buf, size_t len, size_t *size)
 {
-	size_t	 end, terminator, needed;
-	char	*copy, *out;
-	int	 outlen;
+	struct client		*c = tty->client;
+	struct window_pane	*wp;
+	size_t			 end, terminator, needed;
+	char			*copy, *out;
+	int			 outlen;
+	u_int			 i;
 
 	*size = 0;
 
@@ -1189,6 +1203,9 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
 	buf += 5;
 	end -= 5;
 
+	/* Adjust end so that it points to the start of the terminator. */
+	end -= terminator - 1;
+
 	/* Get the second argument. */
 	while (end != 0 && *buf != ';') {
 		buf++;
@@ -1198,6 +1215,12 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
 		return (0);
 	buf++;
 	end--;
+
+	/* If we did not request this, ignore it. */
+	if (~tty->flags & TTY_OSC52QUERY)
+		return (0);
+	tty->flags &= ~TTY_OSC52QUERY;
+	evtimer_del(&tty->clipboard_timer);
 
 	/* It has to be a string so copy it. */
 	copy = xmalloc(end + 1);
@@ -1214,9 +1237,20 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
 	}
 	free(copy);
 
-	/* Create a new paste buffer. */
+	/* Create a new paste buffer and forward to panes. */
 	log_debug("%s: %.*s", __func__, outlen, out);
-	paste_add(NULL, out, outlen);
+	if (c->flags & CLIENT_CLIPBOARDBUFFER) {
+		paste_add(NULL, out, outlen);
+		c->flags &= ~CLIENT_CLIPBOARDBUFFER;
+	}
+	for (i = 0; i < c->clipboard_npanes; i++) {
+		wp = window_pane_find_by_id(c->clipboard_panes[i]);
+		if (wp != NULL)
+			input_reply_clipboard(wp->event, out, outlen, "\033\\");
+	}
+	free(c->clipboard_panes);
+	c->clipboard_panes = NULL;
+	c->clipboard_npanes = 0;
 
 	return (0);
 }
