@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.111 2023/06/09 13:31:11 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.112 2023/06/28 13:50:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.111 2023/06/09 13:31:11 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.112 2023/06/28 13:50:47 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -211,7 +211,10 @@ terminate(int signo)
 	if (cpp.outfd != -1)
 		(void)close(cpp.outfd);
 	if (cpp.outfile != NULL) {
-		if (signo != 0 && getenv("LINT_KEEP_CPPOUT_ON_ERROR") != NULL)
+		const char *keep_env = getenv("LINT_KEEP_CPPOUT");
+		bool keep = keep_env != NULL && (strcmp(keep_env, "yes") == 0
+		    || (strcmp(keep_env, "on-error") == 0 && signo != 0));
+		if (keep)
 			(void)printf("lint: preprocessor output kept in %s\n",
 			    cpp.outfile);
 		else
