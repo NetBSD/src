@@ -19,9 +19,11 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "tmux.h"
 
@@ -124,7 +126,7 @@ cmdq_new(void)
 {
 	struct cmdq_list	*queue;
 
-	queue = xcalloc (1, sizeof *queue);
+	queue = xcalloc(1, sizeof *queue);
 	TAILQ_INIT (&queue->list);
 	return (queue);
 }
@@ -269,6 +271,15 @@ cmdq_add_format(struct cmdq_state *state, const char *key, const char *fmt, ...)
 	free(value);
 }
 
+/* Add formats to command queue. */
+void
+cmdq_add_formats(struct cmdq_state *state, struct format_tree *ft)
+{
+	if (state->formats == NULL)
+		state->formats = format_create(NULL, NULL, FORMAT_NONE, 0);
+	format_merge(state->formats, ft);
+}
+
 /* Merge formats from item. */
 void
 cmdq_merge_formats(struct cmdq_item *item, struct format_tree *ft)
@@ -343,12 +354,12 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
 	struct cmdq_state		*state = item->state;
 	struct cmd			*cmd = item->cmd;
 	struct args			*args = cmd_get_args(cmd);
-	struct args_entry		*entryp;
-	struct args_value		*valuep;
+	struct args_entry		*ae;
+	struct args_value		*av;
 	struct options			*oo;
 	va_list				 ap;
 	char				*name, tmp[32], flag, *arguments;
-	int				 i;
+	u_int				 i;
 	const char			*value;
 	struct cmdq_item		*new_item;
 	struct cmdq_state		*new_state;
@@ -385,11 +396,11 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
 	cmdq_add_format(new_state, "hook_arguments", "%s", arguments);
 	free(arguments);
 
-	for (i = 0; i < args->argc; i++) {
+	for (i = 0; i < args_count(args); i++) {
 		xsnprintf(tmp, sizeof tmp, "hook_argument_%d", i);
-		cmdq_add_format(new_state, tmp, "%s", args->argv[i]);
+		cmdq_add_format(new_state, tmp, "%s", args_string(args, i));
 	}
-	flag = args_first(args, &entryp);
+	flag = args_first(args, &ae);
 	while (flag != 0) {
 		value = args_get(args, flag);
 		if (value == NULL) {
@@ -401,15 +412,15 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
 		}
 
 		i = 0;
-		value = args_first_value(args, flag, &valuep);
-		while (value != NULL) {
+		av = args_first_value(args, flag);
+		while (av != NULL) {
 			xsnprintf(tmp, sizeof tmp, "hook_flag_%c_%d", flag, i);
-			cmdq_add_format(new_state, tmp, "%s", value);
+			cmdq_add_format(new_state, tmp, "%s", av->string);
 			i++;
-			value = args_next_value(&valuep);
+			av = args_next_value(av);
 		}
 
-		flag = args_next(&entryp);
+		flag = args_next(&ae);
 	}
 
 	a = options_array_first(o);
@@ -469,6 +480,13 @@ cmdq_remove_group(struct cmdq_item *item)
 	}
 }
 
+/* Empty command callback. */
+static enum cmd_retval
+cmdq_empty_command(__unused struct cmdq_item *item, __unused void *data)
+{
+	return (CMD_RETURN_NORMAL);
+}
+
 /* Get a command for the command queue. */
 struct cmdq_item *
 cmdq_get_command(struct cmd_list *cmdlist, struct cmdq_state *state)
@@ -478,12 +496,14 @@ cmdq_get_command(struct cmd_list *cmdlist, struct cmdq_state *state)
 	const struct cmd_entry	*entry;
 	int			 created = 0;
 
+	if ((cmd = cmd_list_first(cmdlist)) == NULL)
+		return (cmdq_get_callback(cmdq_empty_command, NULL));
+
 	if (state == NULL) {
 		state = cmdq_new_state(NULL, NULL, 0);
 		created = 1;
 	}
 
-	cmd = cmd_list_first(cmdlist);
 	while (cmd != NULL) {
 		entry = cmd_get_entry(cmd);
 
@@ -540,17 +560,31 @@ cmdq_add_message(struct cmdq_item *item)
 {
 	struct client		*c = item->client;
 	struct cmdq_state	*state = item->state;
-	const char		*name, *key;
+	const char		*key;
 	char			*tmp;
+	uid_t                    uid;
+	struct passwd		*pw;
+	char                    *user = NULL;
 
 	tmp = cmd_print(item->cmd);
 	if (c != NULL) {
-		name = c->name;
+		uid = proc_get_peer_uid(c->peer);
+		if (uid != (uid_t)-1 && uid != getuid()) {
+			if ((pw = getpwuid(uid)) != NULL)
+				xasprintf(&user, "[%s]", pw->pw_name);
+			else
+				user = xstrdup("[unknown]");
+		} else
+			user = xstrdup("");
 		if (c->session != NULL && state->event.key != KEYC_NONE) {
 			key = key_string_lookup_key(state->event.key, 0);
-			server_add_message("%s key %s: %s", name, key, tmp);
-		} else
-			server_add_message("%s command: %s", name, tmp);
+			server_add_message("%s%s key %s: %s", c->name, user,
+			    key, tmp);
+		} else {
+			server_add_message("%s%s command: %s", c->name, user,
+			    tmp);
+		}
+		free(user);
 	} else
 		server_add_message("command: %s", tmp);
 	free(tmp);
@@ -822,7 +856,7 @@ cmdq_print(struct cmdq_item *item, const char *fmt, ...)
 			window_pane_set_mode(wp, NULL, &window_view_mode, NULL,
 			    NULL);
 		}
-		window_copy_add(wp, "%s", msg);
+		window_copy_add(wp, 0, "%s", msg);
 	}
 
 	free(msg);

@@ -24,6 +24,7 @@
 #include <fnmatch.h>
 #include <libgen.h>
 #include <math.h>
+#include <pwd.h>
 #include <regex.h>
 #include <stdarg.h>
 #include <stdlib.h>
@@ -101,6 +102,7 @@ format_job_cmp(struct format_job *fj1, struct format_job *fj2)
 #define FORMAT_WINDOW_NAME 0x4000
 #define FORMAT_SESSION_NAME 0x8000
 #define FORMAT_CHARACTER 0x10000
+#define FORMAT_COLOUR 0x20000
 
 /* Limit on recursion. */
 #define FORMAT_LOOP_LIMIT 100
@@ -371,9 +373,6 @@ format_job_get(struct format_expand_state *es, const char *cmd)
 		fj->client = ft->client;
 		fj->tag = ft->tag;
 		fj->cmd = xstrdup(cmd);
-		fj->expanded = NULL;
-
-		xasprintf(&fj->out, "<'%s' not ready>", fj->cmd);
 
 		RB_INSERT(format_job_tree, jobs, fj);
 	}
@@ -393,7 +392,7 @@ format_job_get(struct format_expand_state *es, const char *cmd)
 	if (force && fj->job != NULL)
 	       job_free(fj->job);
 	if (force || (fj->job == NULL && fj->last != t)) {
-		fj->job = job_run(expanded, 0, NULL, NULL,
+		fj->job = job_run(expanded, 0, NULL, NULL, NULL,
 		    server_client_get_cwd(ft->client, NULL), format_job_update,
 		    format_job_complete, NULL, fj, JOB_NOWAIT, -1, -1);
 		if (fj->job == NULL) {
@@ -402,11 +401,14 @@ format_job_get(struct format_expand_state *es, const char *cmd)
 		}
 		fj->last = t;
 		fj->updated = 0;
-	}
+	} else if (fj->job != NULL && (t - fj->last) > 1 && fj->out == NULL)
+		xasprintf(&fj->out, "<'%s' not ready>", fj->cmd);
 	free(expanded);
 
 	if (ft->flags & FORMAT_STATUS)
 		fj->status = 1;
+	if (fj->out == NULL)
+		return (xstrdup(""));
 	return (format_expand1(&next, fj->out));
 }
 
@@ -799,6 +801,20 @@ format_cb_start_command(struct format_tree *ft)
 	return (cmd_stringify_argv(wp->argc, wp->argv));
 }
 
+/* Callback for pane_start_path. */
+static void *
+format_cb_start_path(struct format_tree *ft)
+{
+	struct window_pane	*wp = ft->wp;
+
+	if (wp == NULL)
+		return (NULL);
+
+	if (wp->cwd == NULL)
+		return (xstrdup(""));
+	return (xstrdup(wp->cwd));
+}
+
 /* Callback for pane_current_command. */
 static void *
 format_cb_current_command(struct format_tree *ft)
@@ -929,6 +945,9 @@ format_cb_pane_fg(struct format_tree *ft)
 	struct window_pane	*wp = ft->wp;
 	struct grid_cell	 gc;
 
+	if (wp == NULL)
+		return (NULL);
+
 	tty_default_colours(&gc, wp);
 	return (xstrdup(colour_tostring(gc.fg)));
 }
@@ -939,6 +958,9 @@ format_cb_pane_bg(struct format_tree *ft)
 {
 	struct window_pane	*wp = ft->wp;
 	struct grid_cell	 gc;
+
+	if (wp == NULL)
+		return (NULL);
 
 	tty_default_colours(&gc, wp);
 	return (xstrdup(colour_tostring(gc.bg)));
@@ -1380,6 +1402,35 @@ format_cb_client_tty(struct format_tree *ft)
 	return (NULL);
 }
 
+/* Callback for client_uid. */
+static void *
+format_cb_client_uid(struct format_tree *ft)
+{
+	uid_t	uid;
+
+	if (ft->c != NULL) {
+		uid = proc_get_peer_uid(ft->c->peer);
+		if (uid != (uid_t)-1)
+			return (format_printf("%ld", (long)uid));
+	}
+	return (NULL);
+}
+
+/* Callback for client_user. */
+static void *
+format_cb_client_user(struct format_tree *ft)
+{
+	uid_t		 uid;
+	struct passwd	*pw;
+
+	if (ft->c != NULL) {
+		uid = proc_get_peer_uid(ft->c->peer);
+		if (uid != (uid_t)-1 && (pw = getpwuid(uid)) != NULL)
+			return (xstrdup(pw->pw_name));
+	}
+	return (NULL);
+}
+
 /* Callback for client_utf8. */
 static void *
 format_cb_client_utf8(struct format_tree *ft)
@@ -1608,11 +1659,16 @@ format_cb_mouse_x(struct format_tree *ft)
 	struct window_pane	*wp;
 	u_int			 x, y;
 
-	if (ft->m.valid) {
-		wp = cmd_mouse_pane(&ft->m, NULL, NULL);
-		if (wp != NULL && cmd_mouse_at(wp, &ft->m, &x, &y, 0) == 0)
-			return (format_printf("%u", x));
+	if (!ft->m.valid)
 		return (NULL);
+	wp = cmd_mouse_pane(&ft->m, NULL, NULL);
+	if (wp != NULL && cmd_mouse_at(wp, &ft->m, &x, &y, 0) == 0)
+		return (format_printf("%u", x));
+	if (ft->c != NULL && (ft->c->tty.flags & TTY_STARTED)) {
+		if (ft->m.statusat == 0 && ft->m.y < ft->m.statuslines)
+			return (format_printf("%u", ft->m.x));
+		if (ft->m.statusat > 0 && ft->m.y >= (u_int)ft->m.statusat)
+			return (format_printf("%u", ft->m.x));
 	}
 	return (NULL);
 }
@@ -1624,13 +1680,25 @@ format_cb_mouse_y(struct format_tree *ft)
 	struct window_pane	*wp;
 	u_int			 x, y;
 
-	if (ft->m.valid) {
-		wp = cmd_mouse_pane(&ft->m, NULL, NULL);
-		if (wp != NULL && cmd_mouse_at(wp, &ft->m, &x, &y, 0) == 0)
-			return (format_printf("%u", y));
+	if (!ft->m.valid)
 		return (NULL);
+	wp = cmd_mouse_pane(&ft->m, NULL, NULL);
+	if (wp != NULL && cmd_mouse_at(wp, &ft->m, &x, &y, 0) == 0)
+		return (format_printf("%u", y));
+	if (ft->c != NULL && (ft->c->tty.flags & TTY_STARTED)) {
+		if (ft->m.statusat == 0 && ft->m.y < ft->m.statuslines)
+			return (format_printf("%u", ft->m.y));
+		if (ft->m.statusat > 0 && ft->m.y >= (u_int)ft->m.statusat)
+			return (format_printf("%u", ft->m.y - ft->m.statusat));
 	}
 	return (NULL);
+}
+
+/* Callback for next_session_id. */
+static void *
+format_cb_next_session_id(__unused struct format_tree *ft)
+{
+	return (format_printf("$%u", next_session_id));
 }
 
 /* Callback for origin_flag. */
@@ -1702,6 +1770,23 @@ format_cb_pane_dead(struct format_tree *ft)
 	return (NULL);
 }
 
+/* Callback for pane_dead_signal. */
+static void *
+format_cb_pane_dead_signal(struct format_tree *ft)
+{
+	struct window_pane	*wp = ft->wp;
+	const char		*name;
+
+	if (wp != NULL) {
+		if ((wp->flags & PANE_STATUSREADY) && WIFSIGNALED(wp->status)) {
+			name = sig2name(WTERMSIG(wp->status));
+			return (format_printf("%s", name));
+		}
+		return (NULL);
+	}
+	return (NULL);
+}
+
 /* Callback for pane_dead_status. */
 static void *
 format_cb_pane_dead_status(struct format_tree *ft)
@@ -1711,6 +1796,20 @@ format_cb_pane_dead_status(struct format_tree *ft)
 	if (wp != NULL) {
 		if ((wp->flags & PANE_STATUSREADY) && WIFEXITED(wp->status))
 			return (format_printf("%d", WEXITSTATUS(wp->status)));
+		return (NULL);
+	}
+	return (NULL);
+}
+
+/* Callback for pane_dead_time. */
+static void *
+format_cb_pane_dead_time(struct format_tree *ft)
+{
+	struct window_pane	*wp = ft->wp;
+
+	if (wp != NULL) {
+		if (wp->flags & PANE_STATUSDRAWN)
+			return (&wp->dead_time);
 		return (NULL);
 	}
 	return (NULL);
@@ -2079,7 +2178,7 @@ static void *
 format_cb_session_windows(struct format_tree *ft)
 {
 	if (ft->s != NULL)
-		return (format_printf ("%u", winlink_count(&ft->s->windows)));
+		return (format_printf("%u", winlink_count(&ft->s->windows)));
 	return (NULL);
 }
 
@@ -2497,6 +2596,24 @@ format_cb_tree_mode_format(__unused struct format_tree *ft)
 	return (xstrdup(window_tree_mode.default_format));
 }
 
+/* Callback for uid. */
+static void *
+format_cb_uid(__unused struct format_tree *ft)
+{
+	return (format_printf("%ld", (long)getuid()));
+}
+
+/* Callback for user. */
+static void *
+format_cb_user(__unused struct format_tree *ft)
+{
+	struct passwd	*pw;
+
+	if ((pw = getpwuid(getuid())) != NULL)
+		return (xstrdup(pw->pw_name));
+	return (NULL);
+}
+
 /* Format table type. */
 enum format_table_type {
 	FORMAT_TABLE_STRING,
@@ -2603,6 +2720,12 @@ static const struct format_table_entry format_table[] = {
 	{ "client_tty", FORMAT_TABLE_STRING,
 	  format_cb_client_tty
 	},
+	{ "client_uid", FORMAT_TABLE_STRING,
+	  format_cb_client_uid
+	},
+	{ "client_user", FORMAT_TABLE_STRING,
+	  format_cb_client_user
+	},
 	{ "client_utf8", FORMAT_TABLE_STRING,
 	  format_cb_client_utf8
 	},
@@ -2690,6 +2813,9 @@ static const struct format_table_entry format_table[] = {
 	{ "mouse_y", FORMAT_TABLE_STRING,
 	  format_cb_mouse_y
 	},
+	{ "next_session_id", FORMAT_TABLE_STRING,
+	  format_cb_next_session_id
+	},
 	{ "origin_flag", FORMAT_TABLE_STRING,
 	  format_cb_origin_flag
 	},
@@ -2723,8 +2849,14 @@ static const struct format_table_entry format_table[] = {
 	{ "pane_dead", FORMAT_TABLE_STRING,
 	  format_cb_pane_dead
 	},
+	{ "pane_dead_signal", FORMAT_TABLE_STRING,
+	  format_cb_pane_dead_signal
+	},
 	{ "pane_dead_status", FORMAT_TABLE_STRING,
 	  format_cb_pane_dead_status
+	},
+	{ "pane_dead_time", FORMAT_TABLE_TIME,
+	  format_cb_pane_dead_time
 	},
 	{ "pane_fg", FORMAT_TABLE_STRING,
 	  format_cb_pane_fg
@@ -2779,6 +2911,9 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "pane_start_command", FORMAT_TABLE_STRING,
 	  format_cb_start_command
+	},
+	{ "pane_start_path", FORMAT_TABLE_STRING,
+	  format_cb_start_path
 	},
 	{ "pane_synchronized", FORMAT_TABLE_STRING,
 	  format_cb_pane_synchronized
@@ -2878,6 +3013,12 @@ static const struct format_table_entry format_table[] = {
 	},
 	{ "tree_mode_format", FORMAT_TABLE_STRING,
 	  format_cb_tree_mode_format
+	},
+	{ "uid", FORMAT_TABLE_STRING,
+	  format_cb_uid
+	},
+	{ "user", FORMAT_TABLE_STRING,
+	  format_cb_user
 	},
 	{ "version", FORMAT_TABLE_STRING,
 	  format_cb_version
@@ -3077,6 +3218,22 @@ format_free(struct format_tree *ft)
 	if (ft->client != NULL)
 		server_client_unref(ft->client);
 	free(ft);
+}
+
+/* Log each format. */
+static void
+format_log_debug_cb(const char *key, const char *value, void *arg)
+{
+	const char	*prefix = arg;
+
+	log_debug("%s: %s=%s", prefix, key, value);
+}
+
+/* Log a format tree. */
+void
+format_log_debug(struct format_tree *ft, const char *prefix)
+{
+	format_each(ft, format_log_debug_cb, __UNCONST(prefix));
 }
 
 /* Walk each format. */
@@ -3305,7 +3462,7 @@ format_find(struct format_tree *ft, const char *key, int modifiers,
 	fte = format_table_get(key);
 	if (fte != NULL) {
 		value = fte->cb(ft);
-		if (fte->type == FORMAT_TABLE_TIME)
+		if (fte->type == FORMAT_TABLE_TIME && value != NULL)
 			t = ((struct timeval *)value)->tv_sec;
 		else
 			found = value;
@@ -3523,7 +3680,7 @@ format_build_modifiers(struct format_expand_state *es, const char **s,
 
 	/*
 	 * Modifiers are a ; separated list of the forms:
-	 *      l,m,C,a,b,d,n,t,w,q,E,T,S,W,P,<,>
+	 *      l,m,C,a,b,c,d,n,t,w,q,E,T,S,W,P,<,>
 	 *	=a
 	 *	=/a
 	 *      =/a/
@@ -3540,7 +3697,7 @@ format_build_modifiers(struct format_expand_state *es, const char **s,
 			cp++;
 
 		/* Check single character modifiers with no arguments. */
-		if (strchr("labdnwETSWP<>", cp[0]) != NULL &&
+		if (strchr("labcdnwETSWP<>", cp[0]) != NULL &&
 		    format_is_end(cp[1])) {
 			format_add_modifier(&list, count, cp, 1, NULL, 0);
 			cp++;
@@ -3604,7 +3761,7 @@ format_build_modifiers(struct format_expand_state *es, const char **s,
 				break;
 			cp++;
 
-			argv = xreallocarray (argv, argc + 1, sizeof *argv);
+			argv = xreallocarray(argv, argc + 1, sizeof *argv);
 			value = xstrndup(cp, end - cp);
 			argv[argc++] = format_expand1(es, value);
 			free(value);
@@ -4020,10 +4177,10 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 	const char			 *errstr, *copy, *cp, *marker = NULL;
 	const char			 *time_format = NULL;
 	char				 *copy0, *condition, *found, *new;
-	char				 *value, *left, *right, c;
+	char				 *value, *left, *right;
 	size_t				  valuelen;
 	int				  modifiers = 0, limit = 0, width = 0;
-	int				  j;
+	int				  j, c;
 	struct format_modifier		 *list, *cmp = NULL, *search = NULL;
 	struct format_modifier		**sub = NULL, *mexp = NULL, *fm = NULL;
 	u_int				  i, count, nsub = 0;
@@ -4056,8 +4213,7 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 			case 's':
 				if (fm->argc < 2)
 					break;
-				sub = xreallocarray (sub, nsub + 1,
-				    sizeof *sub);
+				sub = xreallocarray(sub, nsub + 1, sizeof *sub);
 				sub[nsub++] = fm;
 				break;
 			case '=':
@@ -4094,6 +4250,9 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 				break;
 			case 'b':
 				modifiers |= FORMAT_BASENAME;
+				break;
+			case 'c':
+				modifiers |= FORMAT_COLOUR;
 				break;
 			case 'd':
 				modifiers |= FORMAT_DIRNAME;
@@ -4166,7 +4325,19 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 			value = xstrdup("");
 		else
 			xasprintf(&value, "%c", c);
-		free (new);
+		free(new);
+		goto done;
+	}
+
+	/* Is this a colour? */
+	if (modifiers & FORMAT_COLOUR) {
+		new = format_expand1(es, copy);
+		c = colour_fromstring(new);
+		if (c == -1 || (c = colour_force_rgb(c)) == -1)
+			value = xstrdup("");
+		else
+			xasprintf(&value, "%06x", c & 0xffffff);
+		free(new);
 		goto done;
 	}
 
@@ -4278,15 +4449,14 @@ format_replace(struct format_expand_state *es, const char *key, size_t keylen,
 			if (strcmp(found, condition) == 0) {
 				free(found);
 				found = xstrdup("");
-				format_log(es, "condition '%s' found: %s",
-				    condition, found);
-			} else {
 				format_log(es,
 				    "condition '%s' not found; assuming false",
 				    condition);
 			}
-		} else
-			format_log(es, "condition '%s' found", condition);
+		} else {
+			format_log(es, "condition '%s' found: %s", condition,
+			    found);
+		}
 
 		if (format_choose(es, cp + 1, &left, &right, 0) != 0) {
 			format_log(es, "condition '%s' syntax error: %s",
@@ -4731,7 +4901,7 @@ format_defaults(struct format_tree *ft, struct client *c, struct session *s,
 	if (wp != NULL)
 		format_defaults_pane(ft, wp);
 
-	pb = paste_get_top (NULL);
+	pb = paste_get_top(NULL);
 	if (pb != NULL)
 		format_defaults_paste_buffer(ft, pb);
 }
@@ -4809,7 +4979,8 @@ format_grid_word(struct grid *gd, u_int x, u_int y)
 		grid_get_cell(gd, x, y, &gc);
 		if (gc.flags & GRID_FLAG_PADDING)
 			break;
-		if (utf8_cstrhas(ws, &gc.data)) {
+		if (utf8_cstrhas(ws, &gc.data) ||
+		    (gc.data.size == 1 && *gc.data.data == ' ')) {
 			found = 1;
 			break;
 		}
@@ -4846,7 +5017,8 @@ format_grid_word(struct grid *gd, u_int x, u_int y)
 		grid_get_cell(gd, x, y, &gc);
 		if (gc.flags & GRID_FLAG_PADDING)
 			break;
-		if (utf8_cstrhas(ws, &gc.data))
+		if (utf8_cstrhas(ws, &gc.data) ||
+		    (gc.data.size == 1 && *gc.data.data == ' '))
 			break;
 
 		ud = xreallocarray(ud, size + 2, sizeof *ud);
