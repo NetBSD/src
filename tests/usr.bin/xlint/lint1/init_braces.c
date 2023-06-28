@@ -1,4 +1,4 @@
-/*	$NetBSD: init_braces.c,v 1.2 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: init_braces.c,v 1.3 2023/06/28 15:04:07 rillig Exp $	*/
 # 3 "init_braces.c"
 
 /*
@@ -12,8 +12,8 @@
 void
 init_int(void)
 {
-	/* gcc-expect+2: error: invalid initializer */
-	/* clang-expect+1: error: array initializer must be an initializer list */
+	/* gcc-expect+4: error: invalid initializer */
+	/* clang-expect+3: error: array initializer must be an initializer list */
 	/* expect+2: error: {}-enclosed initializer required [181] */
 	/* expect+1: error: empty array declaration for 'num0' [190] */
 	int num0[] = 0;
@@ -60,4 +60,40 @@ init_string(void)
 	/* clang-expect+2: warning: incompatible pointer to integer conversion initializing 'char' with an expression of type 'char [1]' */
 	/* expect+1: warning: illegal combination of integer 'char' and pointer 'pointer to char' [183] */
 	char name4[] = {{{{ "" }}}};
+}
+
+unsigned long
+init_nested_struct_and_union(void)
+{
+	struct time {
+		unsigned long ns;
+	};
+
+	struct times {
+		struct time t0;
+		struct time t1;
+	};
+
+	struct outer {
+		union {
+			struct {
+				struct times times;
+			};
+		};
+	};
+
+	struct outer var = {	/* struct outer */
+		{		/* unnamed union */
+			{	/* unnamed struct */
+/* FIXME: GCC and Clang both compile this initializer. */
+/* expect+1: error: type 'struct time' does not have member 'times' [101] */
+				.times = {
+					.t0 = { .ns = 0, },
+					.t1 = { .ns = 0, },
+				},
+			},
+		},
+	};
+
+	return var.times.t0.ns;
 }
