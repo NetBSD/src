@@ -1,4 +1,4 @@
-# $NetBSD: t_usage.sh,v 1.7 2023/06/24 08:11:12 rillig Exp $
+# $NetBSD: t_usage.sh,v 1.8 2023/06/28 09:35:42 rillig Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,11 +28,7 @@
 : "${lint1:=/usr/libexec/lint1}"
 
 
-suppress_messages_head()
-{
-	:
-}
-
+atf_test_case 'suppress_messages'
 suppress_messages_body()
 {
 	printf 'typedef int dummy;\n' > code.c
@@ -80,11 +76,7 @@ suppress_messages_body()
 	    "$lint1" -X '1,,,,,,,' code.c /dev/null
 }
 
-enable_queries_head()
-{
-	:
-}
-
+atf_test_case 'enable_queries'
 enable_queries_body()
 {
 	printf 'typedef int dummy;\n' > code.c
