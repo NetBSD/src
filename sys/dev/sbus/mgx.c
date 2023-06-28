@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.20 2021/11/11 19:37:30 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.21 2023/06/28 08:11:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.20 2021/11/11 19:37:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.21 2023/06/28 08:11:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,7 +342,7 @@ mgx_attach(device_t parent, device_t self, void *args)
 	 * leave some room between visible screen and glyph cache for upload
 	 * buffers used by putchar_mono()
 	 */
-	bsize = (32 * 1024 * sc->sc_stride - 1) / sc->sc_stride;
+	bsize = (32 * 1024 + sc->sc_stride - 1) / sc->sc_stride;
 	glyphcache_init(&sc->sc_gc,
 	    sc->sc_height + bsize,
 	    (0x400000 / sc->sc_stride) - (sc->sc_height + bsize),
