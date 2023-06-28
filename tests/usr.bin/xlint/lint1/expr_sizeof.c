@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.5 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.6 2023/06/28 21:41:27 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -72,4 +72,31 @@ variable_length_array(int n)
 	 */
 	/* expect+1: error: negative array dimension (-4) [20] */
 	typedef int sizeof_local_arr[-(int)sizeof(local_arr)];
+}
+
+/*
+ * Ensure that anonymous structs and unions are handled correctly.  They were
+ * added in C11, and lint did not properly support them until 2023.
+ */
+void
+anonymous_struct_and_union(void)
+{
+	struct {
+		union {
+			unsigned char uc16[16];
+			unsigned char uc32[32];
+		};
+	} su_16_32;
+	/* FIXME: Must be 32, not 48. */
+	/* expect+1: error: negative array dimension (-48) [20] */
+	typedef int sizeof_su_16_32[-(int)sizeof(su_16_32)];
+
+	union {
+		struct {
+			unsigned char uc16[16];
+			unsigned char uc32[32];
+		};
+	} us_16_32;
+	/* expect+1: error: negative array dimension (-48) [20] */
+	typedef int sizeof_us_16_32[-(int)sizeof(us_16_32)];
 }
