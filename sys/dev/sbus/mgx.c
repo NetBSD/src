@@ -1,4 +1,4 @@
-/*	$NetBSD: mgx.c,v 1.22 2023/06/28 08:53:43 macallan Exp $ */
+/*	$NetBSD: mgx.c,v 1.23 2023/06/28 11:08:47 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the SSB 4096V-MGX graphics card */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.22 2023/06/28 08:53:43 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgx.c,v 1.23 2023/06/28 11:08:47 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ struct mgx_softc {
 	int		sc_fbsize;
 	int		sc_mode;
 	char		sc_name[8];
-	uint32_t	sc_dec;
+	uint32_t	sc_dec, sc_r_dec, sc_r_fg;
 	u_char		sc_cmap_red[256];
 	u_char		sc_cmap_green[256];
 	u_char		sc_cmap_blue[256];
@@ -214,6 +214,24 @@ static inline void
 mgx_write_4(struct mgx_softc *sc, uint32_t reg, uint32_t val)
 {
 	bus_space_write_4(sc->sc_tag, sc->sc_blith, reg, val);
+}
+
+static inline void
+mgx_set_dec(struct mgx_softc *sc, uint32_t dec)
+{
+	if (dec == sc->sc_r_dec) return;
+	sc->sc_r_dec = dec;
+	mgx_wait_engine(sc);
+	mgx_write_4(sc, ATR_DEC, dec);
+}
+
+static inline void
+mgx_set_fg(struct mgx_softc *sc, uint32_t fg)
+{
+	if (fg == sc->sc_r_fg) return;
+	sc->sc_r_fg = fg;
+	mgx_wait_fifo(sc, 1);	
+	mgx_write_4(sc, ATR_FG, fg);
 }
 
 static int
@@ -531,6 +549,8 @@ mgx_setup(struct mgx_softc *sc, int depth)
 	int i;
 	uint8_t reg;
 
+	sc->sc_r_dec = 0xffffffff;
+	sc->sc_r_fg = 0x12345678;
 	/* wait for everything to go idle */
 	if (mgx_wait_engine(sc) == 0)
 		return;
@@ -643,9 +663,9 @@ mgx_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi, int he,
 		yd += he - 1;
 		dec |= DEC_DIR_Y_REVERSE;
 	}
-	mgx_wait_fifo(sc, 5);
+	mgx_set_dec(sc, dec);
+	mgx_wait_fifo(sc, 4);
 	mgx_write_1(sc, ATR_ROP, rop);
-	mgx_write_4(sc, ATR_DEC, dec);
 	mgx_write_4(sc, ATR_SRC_XY, (ys << 16) | xs);
 	mgx_write_4(sc, ATR_DST_XY, (yd << 16) | xd);
 	mgx_write_4(sc, ATR_WH, (he << 16) | wi);
@@ -666,11 +686,10 @@ mgx_rectfill(void *cookie, int x, int y, int wi, int he, long fg)
 	dec = sc->sc_dec;
 	dec |= (DEC_COMMAND_RECT << DEC_COMMAND_SHIFT) |
 	       (DEC_START_DIMX << DEC_START_SHIFT);
-	//mgx_wait_fifo(sc, 5);
-	mgx_wait_engine(sc);
+	mgx_set_dec(sc, dec);
+	mgx_set_fg(sc, col);
+	mgx_wait_fifo(sc, 3);
 	mgx_write_1(sc, ATR_ROP, ROP_SRC);
-	mgx_write_4(sc, ATR_FG, col);
-	mgx_write_4(sc, ATR_DEC, dec);
 	mgx_write_4(sc, ATR_DST_XY, (y << 16) | x);
 	mgx_write_4(sc, ATR_WH, (he << 16) | wi);
 }
@@ -754,8 +773,8 @@ mgx_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 		return;
 	}
 
-	mgx_wait_fifo(sc, 3);
-	mgx_write_4(sc, ATR_FG, ri->ri_devcmap[fg]);
+	mgx_set_fg(sc, ri->ri_devcmap[fg]);
+	mgx_wait_fifo(sc, 2);
 	mgx_write_4(sc, ATR_BG, ri->ri_devcmap[bg]);
 	mgx_write_1(sc, ATR_ROP, ROP_SRC);
 
@@ -790,10 +809,10 @@ mgx_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 		for (i = 0; i < ri->ri_fontscale; i++)
 			d[i] = s[i];
 	}
-	mgx_wait_fifo(sc, 5);
-	mgx_write_4(sc, ATR_DEC, sc->sc_dec | (DEC_COMMAND_BLT << DEC_COMMAND_SHIFT) |
+	mgx_set_dec(sc, sc->sc_dec | (DEC_COMMAND_BLT << DEC_COMMAND_SHIFT) |
 	       (DEC_START_DIMX << DEC_START_SHIFT) |
 	       DEC_SRC_LINEAR | DEC_SRC_CONTIGUOUS | DEC_MONOCHROME);
+	mgx_wait_fifo(sc, 3);
 	mgx_write_4(sc, ATR_SRC_XY, ((scratch & 0xfff000) << 4) | (scratch & 0xfff));
 	mgx_write_4(sc, ATR_DST_XY, (y << 16) | x);
 	mgx_write_4(sc, ATR_WH, (he << 16) | wi);
