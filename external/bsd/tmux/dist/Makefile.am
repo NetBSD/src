@@ -13,7 +13,8 @@ dist_EXTRA_tmux_SOURCES = compat/*.[ch]
 # Preprocessor flags.
 AM_CPPFLAGS += @XOPEN_DEFINES@ \
 	-DTMUX_VERSION='"@VERSION@"' \
-	-DTMUX_CONF='"$(sysconfdir)/tmux.conf:~/.tmux.conf:$$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"'
+	-DTMUX_CONF='"$(sysconfdir)/tmux.conf:~/.tmux.conf:$$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
+	-DTMUX_TERM='"@DEFAULT_TERM@"'
 
 # Additional object files.
 LDADD = $(LIBOBJS)
@@ -29,6 +30,9 @@ AM_CFLAGS += -Wwrite-strings -Wshadow -Wpointer-arith -Wsign-compare
 AM_CFLAGS += -Wundef -Wbad-function-cast -Winline -Wcast-align
 AM_CFLAGS += -Wdeclaration-after-statement -Wno-pointer-sign -Wno-attributes
 AM_CFLAGS += -Wno-unused-result -Wno-format-y2k
+if IS_DARWIN
+AM_CFLAGS += -Wno-deprecated-declarations -Wno-cast-align
+endif
 AM_CPPFLAGS += -DDEBUG
 endif
 AM_CPPFLAGS += -iquote.
@@ -119,12 +123,14 @@ dist_tmux_SOURCES = \
 	cmd-select-pane.c \
 	cmd-select-window.c \
 	cmd-send-keys.c \
+	cmd-server-access.c \
 	cmd-set-buffer.c \
 	cmd-set-environment.c \
 	cmd-set-option.c \
 	cmd-show-environment.c \
 	cmd-show-messages.c \
 	cmd-show-options.c \
+	cmd-show-prompt-history.c \
 	cmd-source-file.c \
 	cmd-split-window.c \
 	cmd-swap-pane.c \
@@ -167,6 +173,7 @@ dist_tmux_SOURCES = \
 	screen-redraw.c \
 	screen-write.c \
 	screen.c \
+	server-acl.c \
 	server-client.c \
 	server-fn.c \
 	server.c \
@@ -176,6 +183,7 @@ dist_tmux_SOURCES = \
 	style.c \
 	tmux.c \
 	tmux.h \
+	tmux-protocol.h \
 	tty-acs.c \
 	tty-features.c \
 	tty-keys.c \
@@ -196,6 +204,11 @@ nodist_tmux_SOURCES = osdep-@PLATFORM@.c
 # Add compat file for forkpty.
 if NEED_FORKPTY
 nodist_tmux_SOURCES += compat/forkpty-@PLATFORM@.c
+endif
+
+# Add compat file for systemd.
+if HAVE_SYSTEMD
+nodist_tmux_SOURCES += compat/systemd.c
 endif
 
 # Add compat file for utf8proc.
