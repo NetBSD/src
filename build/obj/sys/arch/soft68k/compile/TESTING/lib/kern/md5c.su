@@ -1,0 +1,5 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/md/md5c.c:97:1:Encode	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/md/md5c.c:270:1:MD5Transform	116	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/md/md5c.c:178:1:MD5Init	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/md/md5c.c:198:1:MD5Update	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/md/md5c.c:239:1:MD5Final	60	dynamic,bounded

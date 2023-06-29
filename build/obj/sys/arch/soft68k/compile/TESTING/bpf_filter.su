@@ -1,0 +1,12 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:823:1:bpf_filter_modcmd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:64:1:bpf_create	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:70:1:bpf_destroy	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:76:1:bpf_set_cop	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:84:1:bpf_set_extmem	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:122:1:m_xword	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:152:1:m_xhalf	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:173:1:m_xbyte	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:212:1:bpf_filter_ext	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:196:1:bpf_filter	96	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:610:1:bpf_validate_ext	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/bpf_filter.c:604:1:bpf_validate	12	dynamic,bounded

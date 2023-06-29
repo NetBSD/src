@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_ingest.c:47:1:prop_ingest_context_alloc	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_ingest.c:66:1:prop_ingest_context_free	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_ingest.c:77:1:prop_ingest_context_error	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_ingest.c:88:1:prop_ingest_context_type	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_ingest.c:99:1:prop_ingest_context_key	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_ingest.c:110:1:prop_ingest_context_private	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_ingest.c:122:1:prop_dictionary_ingest	36	dynamic,bounded

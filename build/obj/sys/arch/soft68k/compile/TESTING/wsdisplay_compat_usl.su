@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsdisplay_compat_usl.c:127:1:usl_sync_done	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsdisplay_compat_usl.c:298:1:usl_sync_destroy	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsdisplay_compat_usl.c:142:1:usl_sync_check_sig	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsdisplay_compat_usl.c:161:1:usl_sync_check	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsdisplay_compat_usl.c:222:1:usl_detachtimeout	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsdisplay_compat_usl.c:278:1:usl_attachtimeout	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsdisplay_compat_usl.c:242:1:usl_attachproc	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsdisplay_compat_usl.c:179:1:usl_detachproc	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsdisplay_compat_usl.c:306:1:wsdisplay_usl_ioctl1	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsdisplay_compat_usl.c:377:1:wsdisplay_usl_ioctl2	76	dynamic,bounded

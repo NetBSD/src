@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_lock.c:173:1:_kernel_lock_dump	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_lock.c:68:1:assert_sleepable	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_lock.c:160:1:kernel_lock_init	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_lock.c:192:1:_kernel_lock	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_lock.c:328:1:_kernel_unlock	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_lock.c:377:1:_kernel_locked_p	0	static

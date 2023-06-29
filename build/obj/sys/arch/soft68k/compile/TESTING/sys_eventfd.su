@@ -1,0 +1,15 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:527:1:eventfd_fop_restart	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:469:1:eventfd_filt_write	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:430:1:eventfd_filt_read	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:313:1:eventfd_ioctl	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:497:1:eventfd_fop_kqfilter	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:458:1:eventfd_filt_write_detach	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:419:1:eventfd_filt_read_detach	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:408:1:eventfd_fop_close	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:386:1:eventfd_fop_stat	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:346:1:eventfd_fop_poll	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:262:1:eventfd_fop_write	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:570:1:do_eventfd.part.0	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:222:1:eventfd_fop_read	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:570:1:do_eventfd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sys_eventfd.c:599:1:sys_eventfd	16	dynamic,bounded

@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_resource_43.c:68:1:compat_43_sys_getrlimit	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_resource_43.c:92:1:compat_43_sys_setrlimit	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_resource_43.c:112:1:kern_resource_43_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_resource_43.c:119:1:kern_resource_43_fini	8	dynamic,bounded

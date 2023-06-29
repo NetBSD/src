@@ -1,0 +1,13 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:348:1:sysctl_kern_bufq_strategies	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:93:1:bufq_init	92	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:101:1:bufq_register	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:113:1:bufq_unregister	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:131:1:bufq_alloc	1100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:222:1:bufq_put	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:229:1:bufq_get	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:236:1:bufq_peek	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:243:1:bufq_cancel	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:253:1:bufq_drain	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:268:1:bufq_free	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:286:1:bufq_getstrategyname	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_bufq.c:296:1:bufq_move	16	dynamic,bounded

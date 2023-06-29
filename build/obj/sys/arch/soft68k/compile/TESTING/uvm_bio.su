@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_bio.c:643:1:ubc_release	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_bio.c:1115:1:ubchash_stats	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_bio.c:482:1:ubc_alloc.constprop	128	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_bio.c:308:1:ubc_fault	120	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_bio.c:166:1:ubc_init	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_bio.c:225:1:ubchist_init	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_bio.c:740:1:ubc_uiomove	120	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_bio.c:807:1:ubc_zerorange	96	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_bio.c:1085:1:ubc_purge	20	dynamic,bounded

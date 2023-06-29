@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_vfsops.c:79:1:ufs_start	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_vfsops.c:89:1:ufs_root	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_vfsops.c:104:1:ufs_vget	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_vfsops.c:124:1:ufs_quotactl	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_vfsops.c:236:1:ufs_fhtovp	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_vfsops.c:264:1:ufs_init	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_vfsops.c:323:1:ufs_modcmd	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_vfsops.c:284:1:ufs_reinit	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_vfsops.c:295:1:ufs_done	4	dynamic,bounded

@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_wapbl.c:173:1:ffs_wapbl_sync_metadata	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_wapbl.c:200:1:ffs_wapbl_abort_sync_metadata	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_wapbl.c:643:1:wapbl_create_infs_log.constprop	468	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_wapbl.c:536:1:wapbl_log_position	124	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_wapbl.c:113:1:ffs_wapbl_replay_finish	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_wapbl.c:432:1:ffs_wapbl_stop	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_wapbl.c:307:1:ffs_wapbl_start	108	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_wapbl.c:481:1:ffs_wapbl_replay_start	64	dynamic,bounded

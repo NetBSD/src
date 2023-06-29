@@ -1,4 +1,4 @@
-#	$NetBSD: defs.mk.in,v 1.12 2012/12/02 13:05:14 apb Exp $
+#	$NetBSD: defs.mk.in,v 1.17 2023/06/03 09:10:13 lukem Exp $
 #
 # Makefile fragment for building with libnbcompat and associated
 # include files.  It can also be used for building just with
@@ -71,10 +71,19 @@ HOST_BSHELL=	/bin/sh
 
 BUILD_OSTYPE!=  uname -s
 
-# Disable use of pre-compiled headers on Darwin.
-.if ${BUILD_OSTYPE} == "Darwin"
-HOST_CPPFLAGS+=	-no-cpp-precomp
-.endif
+HOST_CFLAGS+=	-no-cpp-precomp
+
+# Override HOST_CC support for <bsd.own.mk> CC_* warnings
+#
+CC_WNO_ADDRESS_OF_PACKED_MEMBER=-Wno-address-of-packed-member -Wno-error=address-of-packed-member
+CC_WNO_CAST_FUNCTION_TYPE=-Wno-cast-function-type
+CC_WNO_FORMAT_OVERFLOW=
+CC_WNO_FORMAT_TRUNCATION=
+CC_WNO_IMPLICIT_FALLTHROUGH=-Wno-implicit-fallthrough
+CC_WNO_MAYBE_UNINITIALIZED=
+CC_WNO_RETURN_LOCAL_ADDR=
+CC_WNO_STRINGOP_OVERFLOW=
+CC_WNO_STRINGOP_TRUNCATION=
 
 HOST_CPPFLAGS+=	${COMPATINCFLAGS} -I${NETBSDSRCDIR}/tools/compat \
 		-DHAVE_NBTOOL_CONFIG_H=1 -D_FILE_OFFSET_BITS=64
@@ -83,5 +92,3 @@ HOST_CPPFLAGS+=	${COMPATINCFLAGS} -I${NETBSDSRCDIR}/tools/compat \
 DPADD+=		${COMPATLIBDIR}/libnbcompat.a
 LDADD+=		-L${COMPATLIBDIR} -lnbcompat -lz 
 .endif # ! COMPATLIB_NO_LIB
-
-HAVE_PTHREAD_H=	yes

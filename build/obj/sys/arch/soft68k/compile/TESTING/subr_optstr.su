@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_optstr.c:49:1:optstr_get_pointer	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_optstr.c:90:1:optstr_get	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_optstr.c:108:1:optstr_get_string	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_optstr.c:121:1:optstr_get_number	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_optstr.c:139:1:optstr_get_number_hex	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_optstr.c:158:1:optstr_get_number_binary	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_optstr.c:179:1:optstr_get_macaddr	32	dynamic,bounded

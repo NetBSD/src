@@ -1,0 +1,3 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_stack.c:36:1:_prop_stack_init	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_stack.c:43:1:_prop_stack_push	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_stack.c:80:1:_prop_stack_pop	4	dynamic,bounded

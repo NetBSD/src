@@ -1,0 +1,11 @@
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/bdump
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/cpus
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/devs
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/kernhist
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/lwps
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/module
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/msgbuf
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/pgrpdump
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/procs
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/vchain
+source /Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/gdbscripts/vdump

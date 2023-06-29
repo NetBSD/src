@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_tty.c:148:1:cttykqfilter	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_tty.c:138:1:cttypoll	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_tty.c:114:1:cttyioctl	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_tty.c:99:1:cttywrite	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_tty.c:84:1:cttyread	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_tty.c:56:1:cttyopen	32	dynamic,bounded

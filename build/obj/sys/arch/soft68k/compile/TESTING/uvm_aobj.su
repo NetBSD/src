@@ -1,0 +1,15 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:572:1:uao_reference	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:204:1:uao_find_swhash_elt.isra	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:248:1:uao_find_swslot	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:288:1:uao_set_swslot	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:805:1:uao_get	188	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:670:1:uao_put	172	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:1242:1:uao_pagein_page	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:416:1:uao_create	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:521:1:uao_set_pgfl	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:555:1:uao_init	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:1084:1:uao_dropswap	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:1308:1:uao_dropswap_range	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:585:1:uao_detach.part.0	172	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:585:1:uao_detach	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_aobj.c:1104:1:uao_swap_off	52	dynamic,bounded

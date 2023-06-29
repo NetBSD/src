@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/procfs/procfs_map.c:108:1:procfs_domap	340	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/miscfs/procfs/procfs_map.c:234:1:procfs_validmap	0	static

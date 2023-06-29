@@ -1,0 +1,14 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:1709:1:ip_getoptval	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:1679:1:ip_multicast_if	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:1743:1:ip_get_membership	100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:1429:1:ip_pktinfo_prepare	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:197:1:ip_if_output	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:980:1:ip_optlen	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:1040:1:ip_optcopy	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:825:1:ip_fragment	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:229:1:ip_output	272	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:1492:1:ip_setpktopts	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:1946:1:ip_setmoptions	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:2058:1:ip_getmoptions	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:1083:1:ip_ctloutput	100	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_output.c:2113:1:ip_freemoptions	24	dynamic,bounded

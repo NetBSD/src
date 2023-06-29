@@ -1,0 +1,14 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:73:1:tvtohz	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:59:1:tvhzto	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:133:1:tshzto	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:144:1:tshztoup	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:158:1:tstohz	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:179:1:itimerfix	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:192:1:itimespecfix	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:205:1:inittimeleft	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:217:1:gettimeleft	84	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:268:1:clock_gettime1	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:241:1:clock_timeleft	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:336:1:ts2timo	88	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:373:1:timespecaddok	24	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_time.c:480:1:timespecsubok	20	static

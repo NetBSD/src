@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/if_le.c:143:1:lesrcsr	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/if_le.c:152:1:lerdcsr	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/if_le.c:174:1:le_attach	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/if_le.c:163:1:le_match	8	dynamic,bounded

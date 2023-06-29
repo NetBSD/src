@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_extattr.c:382:1:ffs_findextattr	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_extattr.c:460:1:ffs_open_ea.constprop	240	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_extattr.c:494:1:ffs_close_ea	176	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_extattr.c:557:1:ffsext_strategy	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_extattr.c:580:1:ffs_openextattr	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_extattr.c:605:1:ffs_closeextattr	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_extattr.c:634:1:ffs_getextattr	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_extattr.c:698:1:ffs_setextattr	108	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_extattr.c:827:1:ffs_listextattr	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ffs/ffs_extattr.c:892:1:ffs_deleteextattr	76	dynamic,bounded

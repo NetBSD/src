@@ -1,0 +1,9 @@
+/* option `TCP_CONGCTL_DEFAULT' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_TCP_CONGCTL_DEFAULT
+ .global _KERNEL_OPT_TCP_CONGCTL_DEFAULT
+ .equiv _KERNEL_OPT_TCP_CONGCTL_DEFAULT,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_TCP_CONGCTL_DEFAULT\n .global _KERNEL_OPT_TCP_CONGCTL_DEFAULT\n .equiv _KERNEL_OPT_TCP_CONGCTL_DEFAULT,0x6e074def\n .endif");
+#endif

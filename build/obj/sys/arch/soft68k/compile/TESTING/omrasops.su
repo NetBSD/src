@@ -1,0 +1,15 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:1105:1:om1_copyrows	40	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:1282:1:om1_copycols	80	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:1415:1:om4_copycols	76	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:1685:1:om_allocattr	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:333:1:om_fill_color	32	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:1593:1:om_mapchar	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:1144:1:om4_copyrows	132	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:441:1:om_putchar	64	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:266:1:om_fill.constprop	32	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:597:1:om_eraserows	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:1619:1:om_cursor	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:1812:1:omrasops_init.isra	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:557:1:om_erasecols	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:1768:1:omrasops1_init	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/arch/luna68k/dev/omrasops.c:1790:1:omrasops4_init	16	dynamic,bounded

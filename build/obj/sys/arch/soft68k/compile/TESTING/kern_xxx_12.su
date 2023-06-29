@@ -1,0 +1,3 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_xxx_12.c:60:1:compat_12_sys_reboot	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_xxx_12.c:76:1:kern_xxx_12_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_xxx_12.c:83:1:kern_xxx_12_fini	8	dynamic,bounded

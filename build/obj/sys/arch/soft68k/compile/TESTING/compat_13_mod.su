@@ -1,0 +1,3 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_13_mod.c:84:1:compat_13_modcmd	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_13_mod.c:54:1:compat_13_init	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/compat_13_mod.c:67:1:compat_13_fini	4	static

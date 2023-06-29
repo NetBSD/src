@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsi_subr.c:124:12:scsi_subr_modcmd	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/scsipi/scsi_subr.c:106:1:scsiprint	16	dynamic,bounded

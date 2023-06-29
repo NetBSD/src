@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pglist.c:84:1:uvm_pglist_add	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pglist.c:689:1:uvm_pglistalloc	156	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pglist.c:736:1:uvm_pglistfree	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/uvm/uvm_pglist.c:751:1:uvm_pglistalloc_init	12	dynamic,bounded

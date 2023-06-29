@@ -1,0 +1,14 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:181:1:sleepq_insert.isra	12	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:77:1:sleeptab_init	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:98:1:sleepq_init	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:110:1:sleepq_remove	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:221:1:sleepq_enqueue	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:258:1:sleepq_transfer	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:291:1:sleepq_uncatch	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:306:1:sleepq_block	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:414:1:sleepq_wake	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:442:1:sleepq_unsleep	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:463:1:sleepq_timeout	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:516:1:sleepq_abort	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:563:1:sleepq_changepri	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_sleepq.c:579:1:sleepq_lendpri	20	dynamic,bounded

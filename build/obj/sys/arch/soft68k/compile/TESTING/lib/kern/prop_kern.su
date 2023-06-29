@@ -1,0 +1,14 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:536:1:_prop_object_copyout	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:392:1:prop_kern_init	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:463:1:prop_array_copyin_size	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:471:1:prop_array_copyin	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:481:1:prop_dictionary_copyin_size	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:489:1:prop_dictionary_copyin	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:500:1:prop_array_copyin_ioctl_size	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:508:1:prop_array_copyin_ioctl	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:520:1:prop_dictionary_copyin_ioctl_size	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:528:1:prop_dictionary_copyin_ioctl	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:580:1:prop_array_copyout	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:590:1:prop_dictionary_copyout	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:610:1:prop_array_copyout_ioctl	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libprop/prop_kern.c:621:1:prop_dictionary_copyout_ioctl	0	static

@@ -1,0 +1,14 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:419:1:msg_freehdr	20	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:1309:1:sysctl_ipc_msg_setup	88	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:209:1:msgrealloc.part.0	104	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:1272:1:sysctl_ipc_msgmni	168	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:1291:1:sysctl_ipc_msgseg	168	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:97:1:msginit	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:174:1:msgfini	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:474:1:msgctl1	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:445:1:sys___msgctl50	124	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:594:1:sys_msgget	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:705:1:msgsnd1	68	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:691:1:sys_msgsnd	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:1014:1:msgrcv1	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/sysv_msg.c:998:1:sys_msgrcv	36	dynamic,bounded

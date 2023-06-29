@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/inet/inet_addr.c:126:1:inet_aton	36	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/lib/libkern/../../../common/lib/libc/inet/inet_addr.c:110:1:inet_addr	12	dynamic,bounded

@@ -1,0 +1,15 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:824:1:agr_ioctl_filter	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:323:1:agr_clone_destroy	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:278:1:agr_clone_create	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:1142:1:agrport_config_promisc	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:745:1:agrport_cleanup	280	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:1168:1:if_agr_modcmd	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:1124:1:agrport_config_promisc_callback	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:1011:1:agr_ioctl	124	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:114:1:agrattach	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:148:1:agr_input	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:186:1:agr_lock	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:193:1:agr_unlock	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:204:1:agr_xmit_frame	196	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:379:1:agr_start	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/net/agr/if_agr.c:235:1:agrport_ioctl	0	static

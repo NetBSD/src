@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_reboot.c:52:1:kern_reboot	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/kern_reboot.c:78:1:sys_reboot	168	dynamic,bounded

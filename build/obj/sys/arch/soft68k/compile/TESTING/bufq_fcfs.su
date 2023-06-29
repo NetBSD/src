@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/bufq_fcfs.c:98:1:bufq_fcfs_put	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/bufq_fcfs.c:106:1:bufq_fcfs_get	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/bufq_fcfs.c:120:1:bufq_fcfs_cancel	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/bufq_fcfs.c:143:1:bufq_fcfs_init	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/bufq_fcfs.c:135:1:bufq_fcfs_fini	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/bufq_fcfs.c:159:1:bufq_fcfs_modcmd	0	static

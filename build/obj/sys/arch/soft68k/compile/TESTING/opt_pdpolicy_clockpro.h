@@ -1,0 +1,9 @@
+/* option `PDPOLICY_CLOCKPRO' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_PDPOLICY_CLOCKPRO
+ .global _KERNEL_OPT_PDPOLICY_CLOCKPRO
+ .equiv _KERNEL_OPT_PDPOLICY_CLOCKPRO,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_PDPOLICY_CLOCKPRO\n .global _KERNEL_OPT_PDPOLICY_CLOCKPRO\n .equiv _KERNEL_OPT_PDPOLICY_CLOCKPRO,0x6e074def\n .endif");
+#endif

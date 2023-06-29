@@ -1,0 +1,9 @@
+/* option `MVSATA_WITHOUTDMA' not defined */
+#ifdef _LOCORE
+ .ifndef _KERNEL_OPT_MVSATA_WITHOUTDMA
+ .global _KERNEL_OPT_MVSATA_WITHOUTDMA
+ .equiv _KERNEL_OPT_MVSATA_WITHOUTDMA,0x6e074def
+ .endif
+#else
+__asm(" .ifndef _KERNEL_OPT_MVSATA_WITHOUTDMA\n .global _KERNEL_OPT_MVSATA_WITHOUTDMA\n .equiv _KERNEL_OPT_MVSATA_WITHOUTDMA,0x6e074def\n .endif");
+#endif

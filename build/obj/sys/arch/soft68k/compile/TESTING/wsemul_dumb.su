@@ -1,0 +1,6 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_dumb.c:81:1:wsemul_dumb_cnattach	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_dumb.c:101:1:wsemul_dumb_attach	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_dumb.c:126:1:wsemul_dumb_output	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_dumb.c:220:1:wsemul_dumb_detach	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_dumb.c:205:1:wsemul_dumb_translate	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsemul_dumb.c:231:1:wsemul_dumb_resetop	36	dynamic,bounded

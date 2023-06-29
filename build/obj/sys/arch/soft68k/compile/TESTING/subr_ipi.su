@@ -1,0 +1,13 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:321:1:ipi_msg_cpu_handler	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:94:1:ipi_sysinit	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:113:1:ipi_percpu_init	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:134:1:ipi_register	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:157:1:ipi_unregister	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:203:1:ipi_trigger	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:289:1:ipi_cpu_handler	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:258:1:ipi_trigger_broadcast	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:248:1:ipi_trigger_multi	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:352:1:ipi_unicast	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:373:1:ipi_multicast	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:411:1:ipi_broadcast	8	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_ipi.c:445:1:ipi_wait	28	dynamic,bounded

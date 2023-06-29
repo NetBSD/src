@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_lookup.c:744:1:ufs_dirbad	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_lookup.c:764:1:ufs_dirbadentry	16	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_lookup.c:838:1:ufs_makedirentry	36	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_lookup.c:1297:1:ufs_dirempty	120	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_lookup.c:1356:1:ufs_blkatoff	152	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_lookup.c:323:1:ufs_lookup	240	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_lookup.c:1149:1:ufs_dirremove	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_lookup.c:1255:1:ufs_dirrewrite	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_lookup.c:917:1:ufs_dircompact.constprop	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ufs/ufs/ufs_lookup.c:1103:1:ufs_direnter	104	dynamic,bounded

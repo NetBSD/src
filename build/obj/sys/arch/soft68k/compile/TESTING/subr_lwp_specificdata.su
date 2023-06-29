@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_lwp_specificdata.c:41:1:lwpinit_specificdata	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_lwp_specificdata.c:53:1:lwp_specific_key_create	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_lwp_specificdata.c:64:1:lwp_specific_key_delete	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_lwp_specificdata.c:75:1:lwp_initspecific	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_lwp_specificdata.c:88:1:lwp_finispecific	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_lwp_specificdata.c:106:1:lwp_getspecific	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_lwp_specificdata.c:114:1:_lwp_getspecific_by_lwp	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_lwp_specificdata.c:126:1:lwp_setspecific	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_lwp_specificdata.c:134:1:lwp_setspecific_by_lwp	16	dynamic,bounded

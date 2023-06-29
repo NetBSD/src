@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_workqueue.c:205:1:workqueue_initqueue	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_workqueue.c:240:1:workqueue_exit	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_workqueue.c:328:1:workqueue_q_wait.isra	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_workqueue.c:152:1:workqueue_worker	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_workqueue.c:364:1:workqueue_wait	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_workqueue.c:389:1:workqueue_destroy	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_workqueue.c:282:1:workqueue_create	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_workqueue.c:423:1:workqueue_enqueue	20	dynamic,bounded

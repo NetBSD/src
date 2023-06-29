@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/nist_hash_drbg/nist_hash_drbg.c:355:1:hash_df_block	160	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/nist_hash_drbg/nist_hash_drbg.c:301:1:add8.constprop	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/nist_hash_drbg/nist_hash_drbg.c:327:1:hash_df.constprop	96	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/nist_hash_drbg/nist_hash_drbg.c:105:1:nist_sha256_hash_drbg_destroy	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/nist_hash_drbg/nist_hash_drbg.c:118:1:nist_sha256_hash_drbg_instantiate	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/nist_hash_drbg/nist_hash_drbg.c:157:1:nist_sha256_hash_drbg_reseed	156	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/nist_hash_drbg/nist_hash_drbg.c:196:1:nist_sha256_hash_drbg_generate	400	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/crypto/nist_hash_drbg/nist_hash_drbg.c:1050:1:nist_sha256_hash_drbg_initialize	316	dynamic,bounded

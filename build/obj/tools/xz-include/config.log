@@ -30,8 +30,8 @@ Kernel configured for up to 8 processors.
 Processor type: x86_64h (Intel x86-64h Haswell)
 Processors active: 0 1 2 3 4 5 6 7
 Primary memory available: 16.00 gigabytes
-Default processor set: 642 tasks, 3018 threads, 8 processors
-Load average: 7.18, Mach factor: 2.68
+Default processor set: 673 tasks, 3058 threads, 8 processors
+Load average: 5.92, Mach factor: 2.27
 /bin/machine           = unknown
 /usr/bin/oslevel       = unknown
 /bin/universe          = unknown
@@ -2340,7 +2340,7 @@ configure:18252: checking for posix_fadvise
 configure:18252: cc -o conftest -g -O2   conftest.c  >&5
 Undefined symbols for architecture x86_64:
   "_posix_fadvise", referenced from:
-      _main in conftest-eacfce.o
+      _main in conftest-071e64.o
 ld: symbol(s) not found for architecture x86_64
 clang: error: linker command failed with exit code 1 (use -v to see invocation)
 configure:18252: $? = 1

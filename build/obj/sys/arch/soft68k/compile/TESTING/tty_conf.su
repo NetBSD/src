@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_conf.c:149:1:ttynullioctl	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_conf.c:161:1:ttyerrpoll	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_conf.c:195:1:ttyldisc_lookup	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_conf.c:213:1:ttyldisc_lookup_bynum	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_conf.c:236:1:ttyldisc_release	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_conf.c:290:1:ttyldisc_attach	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_conf.c:168:1:ttyldisc_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_conf.c:327:1:ttyldisc_detach	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/tty_conf.c:355:1:ttyldisc_default	0	static

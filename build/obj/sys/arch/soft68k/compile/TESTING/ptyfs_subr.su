@@ -1,0 +1,7 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/ptyfs/ptyfs_subr.c:110:1:ptyfs_allocvp	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/ptyfs/ptyfs_subr.c:124:1:ptyfs_hashinit	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/ptyfs/ptyfs_subr.c:135:1:ptyfs_hashdone	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/ptyfs/ptyfs_subr.c:146:1:ptyfs_get_node	48	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/ptyfs/ptyfs_subr.c:195:1:ptyfs_set_active	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/ptyfs/ptyfs_subr.c:234:1:ptyfs_clr_active	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/fs/ptyfs/ptyfs_subr.c:250:1:ptyfs_next_active	20	dynamic,bounded

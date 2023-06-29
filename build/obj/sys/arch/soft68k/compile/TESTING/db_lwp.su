@@ -1,0 +1,3 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_lwp.c:49:1:db_lwp_first	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_lwp.c:56:1:db_lwp_next	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/ddb/db_lwp.c:64:1:db_lwp_whatis	744	dynamic,bounded

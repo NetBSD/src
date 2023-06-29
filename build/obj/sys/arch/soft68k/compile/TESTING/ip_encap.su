@@ -1,0 +1,12 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:356:1:encap6_lookup	228	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:151:1:encapinit	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:168:1:encap_init	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:325:1:encap4_input	220	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:477:1:encap6_input	76	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:549:1:encap_attach_func	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:637:1:encap_attach_addr	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:708:1:encap6_ctlinput	92	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:862:1:encap_detach	112	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:894:1:encap_lock_enter	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:914:1:encap_lock_exit	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/ip_encap.c:925:1:encap_lock_held	0	static

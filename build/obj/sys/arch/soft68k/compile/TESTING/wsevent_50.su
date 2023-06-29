@@ -1,0 +1,3 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsevent_50.c:125:1:wsevent_copyout_events50	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsevent_50.c:148:1:wsevent_50_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/dev/wscons/wsevent_50.c:156:1:wsevent_50_fini	8	dynamic,bounded

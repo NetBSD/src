@@ -1,0 +1,15 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:90:1:percpu_cpu_swap	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:527:1:percpu_xcfunc	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:169:1:percpu_backend_alloc	60	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:218:1:percpu_init	64	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:242:1:percpu_init_cpu	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:294:1:percpu_alloc	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:311:1:percpu_create	72	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:387:1:percpu_free	52	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:437:1:percpu_getref	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:452:1:percpu_putref	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:476:1:percpu_traverse_enter	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:484:1:percpu_traverse_exit	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:491:1:percpu_getptr_remote	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:509:1:percpu_foreach	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_percpu.c:549:1:percpu_foreach_xcall	44	dynamic,bounded

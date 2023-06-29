@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sa_60.c:58:1:compat_60_sys_sa_register	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sa_60.c:98:1:compat_60_sys_sa_preempt	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sa_60.c:66:1:compat_60_sys_sa_stacks	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sa_60.c:74:1:compat_60_sys_sa_enable	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sa_60.c:82:1:compat_60_sys_sa_setconcurrency	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sa_60.c:90:1:compat_60_sys_sa_yield	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sa_60.c:106:1:kern_sa_60_init	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/kern_sa_60.c:113:1:kern_sa_60_fini	8	dynamic,bounded

@@ -1,0 +1,4 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rtsock_14.c:99:1:compat_14_rt_oifmsg	340	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rtsock_14.c:141:1:compat_14_iflist	192	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rtsock_14.c:181:1:rtsock_14_init	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/compat/common/rtsock_14.c:189:1:rtsock_14_fini	20	dynamic,bounded

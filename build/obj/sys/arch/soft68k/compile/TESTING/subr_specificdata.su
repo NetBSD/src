@@ -1,0 +1,10 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_specificdata.c:140:1:specificdata_noop_dtor	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_specificdata.c:151:1:specificdata_domain_create	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_specificdata.c:167:1:specificdata_domain_delete	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_specificdata.c:180:1:specificdata_key_create	44	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_specificdata.c:229:1:specificdata_key_delete	28	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_specificdata.c:258:1:specificdata_init	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_specificdata.c:277:1:specificdata_fini	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_specificdata.c:308:1:specificdata_getspecific	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_specificdata.c:335:1:specificdata_getspecific_unlocked	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_specificdata.c:353:1:specificdata_setspecific	52	dynamic,bounded

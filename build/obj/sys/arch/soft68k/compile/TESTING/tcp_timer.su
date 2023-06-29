@@ -1,0 +1,9 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_timer.c:301:1:tcp_timer_rexmt	80	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_timer.c:448:1:tcp_timer_persist	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_timer.c:512:1:tcp_timer_keep	56	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_timer.c:591:1:tcp_timer_2msl	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_timer.c:269:1:tcp_slowtimo	16	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_timer.c:183:1:tcp_timer_init	4	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_timer.c:206:1:tcp_slowtimo_init	24	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_timer.c:224:1:tcp_delack	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/netinet/tcp_timer.c:283:1:tcp_canceltimers	20	dynamic,bounded

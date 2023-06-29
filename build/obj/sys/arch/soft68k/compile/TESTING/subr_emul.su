@@ -1,0 +1,2 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_emul.c:75:1:emul_find_root	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/subr_emul.c:101:1:emul_find_interp	88	dynamic,bounded

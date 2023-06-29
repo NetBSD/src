@@ -1,0 +1,8 @@
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_cwd.c:97:1:cwdi_dtor	0	static
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_cwd.c:87:1:cwdi_ctor	4	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_cwd.c:48:1:cwd_sys_init	40	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_cwd.c:61:1:cwdinit	32	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_cwd.c:108:1:cwdshare	8	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_cwd.c:138:1:cwdfree	20	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_cwd.c:123:1:cwdunshare	12	dynamic,bounded
+/Users/sidqian/Downloads/summer/L2S/netbsd-src/sys/kern/vfs_cwd.c:155:1:cwdexec	12	dynamic,bounded
