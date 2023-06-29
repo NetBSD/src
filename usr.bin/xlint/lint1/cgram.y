@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.436 2023/05/22 17:47:27 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.437 2023/06/29 05:03:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.436 2023/05/22 17:47:27 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.437 2023/06/29 05:03:03 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -888,12 +888,12 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 	| struct_or_union identifier_sym {
 		dcs->d_tagtyp = make_tag_type($2, $1, true, false);
 	  } braced_struct_declaration_list {
-		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $4);
+		$$ = complete_struct_or_union($4);
 	  }
 	| struct_or_union {
 		dcs->d_tagtyp = make_tag_type(NULL, $1, true, false);
 	  } braced_struct_declaration_list {
-		$$ = complete_tag_struct_or_union(dcs->d_tagtyp, $3);
+		$$ = complete_struct_or_union($3);
 	  }
 	| struct_or_union error {
 		symtyp = FVFT;
@@ -1040,12 +1040,12 @@ enum_specifier:			/* C99 6.7.2.2 */
 	| enum gcc_attribute_specifier_list_opt identifier_sym {
 		dcs->d_tagtyp = make_tag_type($3, ENUM, true, false);
 	  } enum_declaration /*gcc_attribute_specifier_list_opt*/ {
-		$$ = complete_tag_enum(dcs->d_tagtyp, $5);
+		$$ = complete_enum($5);
 	  }
 	| enum gcc_attribute_specifier_list_opt {
 		dcs->d_tagtyp = make_tag_type(NULL, ENUM, true, false);
 	  } enum_declaration /*gcc_attribute_specifier_list_opt*/ {
-		$$ = complete_tag_enum(dcs->d_tagtyp, $4);
+		$$ = complete_enum($4);
 	  }
 	| enum error {
 		symtyp = FVFT;

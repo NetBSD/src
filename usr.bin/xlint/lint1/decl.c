@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.318 2023/06/24 06:55:34 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.319 2023/06/29 05:03:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.318 2023/06/24 06:55:34 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.319 2023/06/29 05:03:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1182,7 +1182,7 @@ declarator_1_struct_union(sym_t *dsym)
 }
 
 /*
- * Aligns next structure element as required.
+ * Aligns the next structure element as required.
  *
  * al contains the required alignment, len the length of a bit-field.
  */
@@ -1559,7 +1559,6 @@ declarator_name(sym_t *sym)
 		/* Set parent */
 		sym->u.s_member.sm_sou_type = dcs->d_tagtyp->t_sou;
 		sym->s_def = DEF;
-		/* XXX: Where is sym->u.s_member.sm_offset_in_bits set? */
 		sc = dcs->d_kind == DK_STRUCT_MEMBER
 		    ? STRUCT_MEMBER
 		    : UNION_MEMBER;
@@ -1808,27 +1807,20 @@ storage_class_name(scl_t sc)
 	/* NOTREACHED */
 }
 
-/*
- * tp points to the type of the tag, fmem to the list of members.
- */
 type_t *
-complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
+complete_struct_or_union(sym_t *first_member)
 {
 
+	type_t *tp = dcs->d_tagtyp;
 	if (tp == NULL)		/* in case of syntax errors */
 		return gettyp(INT);
 
-	if (tp->t_tspec == ENUM)
-		tp->t_enum->en_incomplete = false;
-	else
-		tp->t_sou->sou_incomplete = false;
-
-	tspec_t t = tp->t_tspec;
 	dcs_align((u_int)dcs->d_sou_align_in_bits, 0);
 
 	struct_or_union *sp = tp->t_sou;
 	sp->sou_align_in_bits = dcs->d_sou_align_in_bits;
-	sp->sou_first_member = fmem;
+	sp->sou_incomplete = false;
+	sp->sou_first_member = first_member;
 	if (tp->t_packed)
 		set_packed_size(tp);
 	else
@@ -1836,11 +1828,11 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 
 	if (sp->sou_size_in_bits == 0) {
 		/* zero sized %s is a C99 feature */
-		c99ism(47, ttab[t].tt_name);
+		c99ism(47, tspec_name(tp->t_tspec));
 	}
 
 	int n = 0;
-	for (sym_t *mem = fmem; mem != NULL; mem = mem->s_next) {
+	for (sym_t *mem = first_member; mem != NULL; mem = mem->s_next) {
 		/* bind anonymous members to the structure */
 		if (mem->u.s_member.sm_sou_type == NULL) {
 			mem->u.s_member.sm_sou_type = sp;
@@ -1864,9 +1856,10 @@ complete_tag_struct_or_union(type_t *tp, sym_t *fmem)
 }
 
 type_t *
-complete_tag_enum(type_t *tp, sym_t *first_enumerator)
+complete_enum(sym_t *first_enumerator)
 {
 
+	type_t *tp = dcs->d_tagtyp;
 	tp->t_enum->en_incomplete = false;
 	tp->t_enum->en_first_enumerator = first_enumerator;
 	return tp;
