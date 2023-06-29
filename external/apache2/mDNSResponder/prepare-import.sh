@@ -1,12 +1,12 @@
 #!/bin/sh
-# $NetBSD: prepare-import.sh,v 1.5 2018/02/25 20:04:55 christos Exp $
+# $NetBSD: prepare-import.sh,v 1.6 2023/06/29 23:59:43 gutteridge Exp $
 #
 # Extract the new tarball and run this script with the first argument
 # the mDNSResponder-X.Y directory that was created. cd to that directory
 # and import:
 # cvs -d cvs.netbsd.org:/cvsroot import \
 #	 src/external/apache2/mDNSResponder/dist APPLE mdnsresponder-x-y-z
-# This scripts deletes extra content.
+# This script deletes extra content.
 
 set -e
 cd "$1"
