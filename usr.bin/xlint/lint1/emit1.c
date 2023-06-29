@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.69 2023/06/24 20:50:54 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.70 2023/06/29 10:31:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.69 2023/06/24 20:50:54 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.70 2023/06/29 10:31:33 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -94,11 +94,11 @@ outtype(const type_t *tp)
 {
 	/* Available letters: ------GH--K-MNO--R--U-W-YZ */
 #ifdef INT128_SIZE
-	static const char tt[NTSPEC] = "???BCCCSSIILLQQJJDDDVTTTPAF?XXX";
-	static const char ss[NTSPEC] = "???  su u u u u us l sue   ?s l";
+	static const char tt[NTSPEC] = "???BCCCSSIILLQQJJDDD?XXXVTTTPAF";
+	static const char ss[NTSPEC] = "???  su u u u u us l?s l sue   ";
 #else
-	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDDVTTTPAF?XXX";
-	static const char ss[NTSPEC] = "???  su u u u us l sue   ?s l";
+	static const char tt[NTSPEC] = "???BCCCSSIILLQQDDD?XXXVTTTPAF";
+	static const char ss[NTSPEC] = "???  su u u u us l?s l sue   ";
 #endif
 	int na;
 	sym_t *arg;
