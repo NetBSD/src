@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.26 2023/06/24 07:15:08 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.27 2023/06/29 10:31:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -30,11 +30,6 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- * inittyp.c
- */
-void	inittyp(void);
 
 /*
  * tyname.c
