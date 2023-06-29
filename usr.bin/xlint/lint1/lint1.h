@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.168 2023/06/29 05:47:41 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.169 2023/06/29 12:52:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -179,21 +179,17 @@ struct lint1_type {
 		enumeration	*_t_enum;
 		struct	sym *_t_args;	/* arguments (if t_proto) */
 	} t_u;
-	struct {
-		unsigned int	_t_flen:8;	/* length of bit-field */
-		unsigned int	_t_foffs:24;	/* offset of bit-field */
-	} t_b;
-	struct	lint1_type *t_subt; /* element type (if ARRAY),
-				 * return value (if FUNC),
-				 * target type (if PTR) */
+	unsigned int	t_bit_field_width:8;
+	unsigned int	t_bit_field_offset:24;
+	struct	lint1_type *t_subt;	/* element type (if ARRAY),
+					 * return value (if FUNC),
+					 * target type (if PTR) */
 };
 
 #define	t_dim	t_u._t_dim
 #define	t_sou	t_u._t_sou
 #define	t_enum	t_u._t_enum
 #define	t_args	t_u._t_args
-#define	t_flen	t_b._t_flen
-#define	t_foffs	t_b._t_foffs
 
 /*
  * types of symbols

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.531 2023/06/24 20:50:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.532 2023/06/29 12:52:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.531 2023/06/24 20:50:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.532 2023/06/29 12:52:06 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -93,7 +93,9 @@ width_in_bits(const type_t *tp)
 {
 
 	lint_assert(is_integer(tp->t_tspec));
-	return tp->t_bitfield ? tp->t_flen : size_in_bits(tp->t_tspec);
+	return tp->t_bitfield
+	    ? tp->t_bit_field_width
+	    : size_in_bits(tp->t_tspec);
 }
 
 static bool
@@ -1899,11 +1901,11 @@ all_members_compatible(const sym_t *msym)
 			if (csym->s_bitfield != sym->s_bitfield)
 				return false;
 			if (csym->s_bitfield) {
-				type_t *tp1 = csym->s_type;
-				type_t *tp2 = sym->s_type;
-				if (tp1->t_flen != tp2->t_flen)
+				if (csym->s_type->t_bit_field_width
+				    != sym->s_type->t_bit_field_width)
 					return false;
-				if (tp1->t_foffs != tp2->t_foffs)
+				if (csym->s_type->t_bit_field_offset
+				    != sym->s_type->t_bit_field_offset)
 					return false;
 			}
 		}
@@ -3264,10 +3266,12 @@ static tspec_t
 promote_c90(const tnode_t *tn, tspec_t t, bool farg)
 {
 	if (tn->tn_type->t_bitfield) {
-		unsigned int len = tn->tn_type->t_flen;
-		if (len < size_in_bits(INT))
+		unsigned int width = tn->tn_type->t_bit_field_width;
+		unsigned int int_width = size_in_bits(INT);
+		// XXX: What about _Bool bit-fields, since C99?
+		if (width < int_width)
 			return INT;
-		if (len == size_in_bits(INT))
+		if (width == int_width)
 			return is_uinteger(t) ? UINT : INT;
 		return t;
 	}
@@ -3912,7 +3916,7 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 	uint64_t xmask, xmsk1;
 
 	obitsz = size_in_bits(ot);
-	nbitsz = tp->t_bitfield ? tp->t_flen : size_in_bits(nt);
+	nbitsz = tp->t_bitfield ? tp->t_bit_field_width : size_in_bits(nt);
 	xmask = value_bits(nbitsz) ^ value_bits(obitsz);
 	xmsk1 = value_bits(nbitsz) ^ value_bits(obitsz - 1);
 	/*
@@ -3982,7 +3986,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 
 	if (is_integer(nt)) {
 		nv->v_quad = convert_integer(nv->v_quad, nt,
-		    tp->t_bitfield ? tp->t_flen : size_in_bits(nt));
+		    tp->t_bitfield ? tp->t_bit_field_width : size_in_bits(nt));
 	}
 
 	if (range_check && op != CVT)

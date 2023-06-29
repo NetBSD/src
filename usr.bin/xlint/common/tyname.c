@@ -1,4 +1,4 @@
-/*	$NetBSD: tyname.c,v 1.55 2023/04/22 17:49:14 rillig Exp $	*/
+/*	$NetBSD: tyname.c,v 1.56 2023/06/29 12:52:06 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tyname.c,v 1.55 2023/04/22 17:49:14 rillig Exp $");
+__RCSID("$NetBSD: tyname.c,v 1.56 2023/06/29 12:52:06 rillig Exp $");
 #endif
 
 #include <assert.h>
@@ -263,7 +263,7 @@ type_name(const type_t *tp)
 #ifdef IS_LINT1
 	if (tp->t_bitfield) {
 		buf_add(&buf, ":");
-		buf_add_int(&buf, (int)tp->t_flen);
+		buf_add_int(&buf, (int)tp->t_bit_field_width);
 	}
 #endif
 
