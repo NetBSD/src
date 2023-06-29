@@ -1,0 +1,100 @@
+#	$NetBSD: Makefile.soft68k,v 1.30 2023/04/11 13:26:19 tsutsui Exp $
+
+# Makefile for NetBSD
+#
+# This makefile is constructed from a machine description:
+#	config machineid
+# Most changes should be made in the machine description
+#	/sys/arch/soft68k/conf/``machineid''
+# after which you should do
+#	config machineid
+# Machine generic makefile changes should be made in
+#	/sys/arch/soft68k/conf/Makefile.soft68k
+# after which config should be rerun for all machines of that type.
+# To specify debugging, add the config line: makeoptions DEBUG="-g"
+# A better way is to specify -g only for a few files.
+#
+#	makeoptions DEBUGLIST="uvm* trap if_*"
+
+MACHINE_ARCH=m68k
+USETOOLS?=	no
+NEED_OWN_INSTALL_TARGET?=no
+.include <bsd.own.mk>
+
+##
+## (1) port identification
+##
+LUNA68K=	$S/arch/soft68k
+GENASSYM_CONF=	${LUNA68K}/soft68k/genassym.cf
+
+##
+## (2) compile settings
+##
+CPPFLAGS+=	-Dsoft68k
+CFLAGS+=	-msoft-float
+AFLAGS+=	-x assembler-with-cpp
+
+##
+## (3) libkern and compat
+##
+OPT_MODULAR=	%MODULAR%
+
+##
+## (4) local objects, compile rules, and dependencies
+##
+# for the Motorola 68040 Floating Point Software Product
+.include "$S/arch/m68k/fpsp/Makefile.inc"
+
+MD_OBJS=	locore.o
+MD_LIBS=	${FPSP}
+MD_CFILES=
+MD_SFILES=	${LUNA68K}/soft68k/locore.s
+
+locore.o: ${LUNA68K}/soft68k/locore.s assym.h
+	${NORMAL_S}
+
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
+
+##
+## (5) link settings
+##
+LINKFORMAT=	-N
+TEXTADDR?=	0xc000
+
+##
+## (6) port specific target dependencies
+##
+
+# depend on CPU configuration
+machdep.c trap.o: Makefile
+
+copy.o copypage.o lock_stubs.o: assym.h
+
+##
+## (7) misc settings
+##
+
+##
+## (8) config(8) generated machinery
+##
+%INCLUDES
+
+%OBJS
+
+%CFILES
+
+%SFILES
+
+%LOAD
+
+%RULES
+
+##
+## (9) port independent kernel machinery
+##
+.include "$S/conf/Makefile.kern.inc"
+
+##
+## (10) Appending make options.
+##
+%MAKEOPTIONSAPPEND
