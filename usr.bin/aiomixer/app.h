@@ -1,4 +1,4 @@
-/* $NetBSD: app.h,v 1.1 2021/05/07 16:29:24 nia Exp $ */
+/* $NetBSD: app.h,v 1.2 2023/06/29 19:06:54 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,6 +70,7 @@ struct aiomixer {
 	bool widgets_resized;
 	WINDOW *header;
 	WINDOW *classbar;
+	bool use_colour;
 };
 
 #define COLOR_CONTROL_SELECTED	1

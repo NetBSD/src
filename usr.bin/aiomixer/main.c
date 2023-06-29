@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.4 2021/07/18 11:45:31 nia Exp $ */
+/* $NetBSD: main.c,v 1.5 2023/06/29 19:06:54 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -501,6 +501,7 @@ main(int argc, char **argv)
 	unsigned int mixer_count = 0;
 	int i, fd;
 	int ch;
+	char *no_color = getenv("NO_COLOR");
 
 	if ((aio = malloc(sizeof(struct aiomixer))) == NULL) {
 		err(EXIT_FAILURE, "malloc failed");
@@ -535,7 +536,15 @@ main(int argc, char **argv)
 	cbreak();
 	noecho();
 
-	if (has_colors()) {
+	aio->use_colour = true;
+
+	if (!has_colors())
+		aio->use_colour = false;
+
+	if (no_color != NULL && no_color[0] != '\0')
+		aio->use_colour = false;
+
+	if (aio->use_colour) {
 		start_color();
 		use_default_colors();
 		init_pair(COLOR_CONTROL_SELECTED, COLOR_BLUE, COLOR_BLACK);
