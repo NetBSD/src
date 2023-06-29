@@ -1,4 +1,5 @@
-.\" $NetBSD: npflog.4,v 1.1 2023/06/20 01:02:46 gutteridge Exp $
+.\" $NetBSD: npflog.4,v 1.2 2023/06/29 23:20:02 gutteridge Exp $
+.\" $OpenBSD: pflog.4,v 1.10 2007/05/31 19:19:51 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Tobias Weingartner
 .\" All rights reserved.
@@ -29,7 +30,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 19, 2023
+.Dd June 29, 2023
 .Dt NPFLOG 4
 .Os
 .Sh NAME
@@ -44,8 +45,7 @@ interface is a pseudo-device which makes visible all packets logged by
 the
 .Xr npf 7
 packet filter.
-Logged packets can easily be monitored in real
-time by invoking
+Logged packets can be monitored in real time by invoking
 .Xr tcpdump 8
 on the
 .Nm
@@ -61,8 +61,27 @@ further instances can be created using
 Each packet retrieved on this interface has a header associated
 that presently matches the format used by
 .Xr pf 4 .
-However, this is intentionally not exposed to userland, and is also
-possibly subject to change in future.
+This header documents the address family, interface name, rule
+number, reason, action, and direction of the packet that was logged.
+This structure looks like:
+.Bd -literal -offset indent
+struct npfloghdr {
+	uint8_t		length;
+	sa_family_t	af;
+	uint8_t		action;
+	uint8_t		reason;
+	char		ifname[IFNAMSIZ];
+	char		ruleset[NPFLOG_RULESET_NAME_SIZE];
+	uint32_t	rulenr;
+	uint32_t	subrulenr;
+	uint32_t	uid;
+	uint32_t	pid;
+	uint32_t	rule_uid;
+	uint32_t	rule_pid;
+	uint8_t		dir;
+	uint8_t		pad[3];
+};
+.Ed
 .Sh EXAMPLES
 Monitor all packets logged on the default interface:
 .Bd -literal -offset indent
