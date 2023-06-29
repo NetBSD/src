@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.157 2023/06/24 20:50:54 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.158 2023/06/29 09:58:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.157 2023/06/24 20:50:54 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.158 2023/06/29 09:58:36 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -64,8 +64,8 @@ bool	warn_about_unreachable;
 /*
  * In conjunction with 'reached', controls printing of "fallthrough on ..."
  * warnings.
- * Reset by each statement and set by FALLTHROUGH, switch (switch1())
- * and case (label()).
+ * Reset by each statement and set by FALLTHROUGH, stmt_switch_expr and
+ * case_label.
  *
  * Control statements if, for, while and switch do not reset seen_fallthrough
  * because this must be done by the controlled statement. At least for if this
@@ -629,11 +629,8 @@ check_controlling_expression(tnode_t *tn)
 	return tn;
 }
 
-/*
- * T_IF T_LPAREN expr T_RPAREN
- */
 void
-if1(tnode_t *tn)
+stmt_if_expr(tnode_t *tn)
 {
 
 	if (tn != NULL)
@@ -650,12 +647,8 @@ if1(tnode_t *tn)
 	}
 }
 
-/*
- * if_without_else
- * if_without_else T_ELSE
- */
 void
-if2(void)
+stmt_if_then_stmt(void)
 {
 
 	cstmt->c_reached_end_of_then = reached;
@@ -663,12 +656,8 @@ if2(void)
 	set_reached(!cstmt->c_always_then);
 }
 
-/*
- * if_without_else
- * if_without_else T_ELSE statement
- */
 void
-if3(bool els)
+stmt_if_else_stmt(bool els)
 {
 	if (cstmt->c_reached_end_of_then)
 		set_reached(true);
@@ -680,11 +669,8 @@ if3(bool els)
 	end_control_statement(CS_IF);
 }
 
-/*
- * T_SWITCH T_LPAREN expr T_RPAREN
- */
 void
-switch1(tnode_t *tn)
+stmt_switch_expr(tnode_t *tn)
 {
 	tspec_t t;
 	type_t *tp;
@@ -736,11 +722,8 @@ switch1(tnode_t *tn)
 	seen_fallthrough = true;
 }
 
-/*
- * switch_expr statement
- */
 void
-switch2(void)
+stmt_switch_expr_stmt(void)
 {
 	int nenum = 0, nclab = 0;
 	sym_t *esym;
@@ -794,11 +777,8 @@ switch2(void)
 	end_control_statement(CS_SWITCH);
 }
 
-/*
- * T_WHILE T_LPAREN expr T_RPAREN
- */
 void
-while1(tnode_t *tn)
+stmt_while_expr(tnode_t *tn)
 {
 	bool body_reached;
 
@@ -823,12 +803,8 @@ while1(tnode_t *tn)
 	set_reached(body_reached);
 }
 
-/*
- * while_expr statement
- * while_expr error
- */
 void
-while2(void)
+stmt_while_expr_stmt(void)
 {
 
 	/*
@@ -841,11 +817,8 @@ while2(void)
 	end_control_statement(CS_WHILE);
 }
 
-/*
- * T_DO
- */
 void
-do1(void)
+stmt_do(void)
 {
 
 	if (!reached) {
@@ -858,12 +831,8 @@ do1(void)
 	cstmt->c_loop = true;
 }
 
-/*
- * do statement do_while_expr
- * do error
- */
 void
-do2(tnode_t *tn)
+stmt_do_while_expr(tnode_t *tn)
 {
 
 	/*
@@ -893,11 +862,8 @@ do2(tnode_t *tn)
 	end_control_statement(CS_DO_WHILE);
 }
 
-/*
- * T_FOR T_LPAREN opt_expr T_SEMI opt_expr T_SEMI opt_expr T_RPAREN
- */
 void
-for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
+stmt_for_exprs(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 {
 
 	/*
@@ -933,17 +899,13 @@ for1(tnode_t *tn1, tnode_t *tn2, tnode_t *tn3)
 
 	cstmt->c_maybe_endless = tn2 == NULL || is_nonzero(tn2);
 
-	/* Checking the reinitialization expression is done in for2() */
+	/* The tn3 expression is checked in stmt_for_exprs_stmt. */
 
 	set_reached(!is_zero(tn2));
 }
 
-/*
- * for_exprs statement
- * for_exprs error
- */
 void
-for2(void)
+stmt_for_exprs_stmt(void)
 {
 	pos_t cpos, cspos;
 	tnode_t *tn3;
@@ -983,11 +945,8 @@ for2(void)
 	end_control_statement(CS_FOR);
 }
 
-/*
- * T_GOTO identifier T_SEMI
- */
 void
-do_goto(sym_t *lab)
+stmt_goto(sym_t *lab)
 {
 
 	mark_as_used(lab, false, false);
@@ -997,11 +956,8 @@ do_goto(sym_t *lab)
 	set_reached(false);
 }
 
-/*
- * T_BREAK T_SEMI
- */
 void
-do_break(void)
+stmt_break(void)
 {
 	control_statement *cs;
 
@@ -1023,11 +979,8 @@ do_break(void)
 	set_reached(false);
 }
 
-/*
- * T_CONTINUE T_SEMI
- */
 void
-do_continue(void)
+stmt_continue(void)
 {
 	control_statement *cs;
 
@@ -1088,12 +1041,8 @@ check_return_value(bool sys, tnode_t *tn)
 	expr(retn, true, false, true, false);
 }
 
-/*
- * T_RETURN T_SEMI
- * T_RETURN expr T_SEMI
- */
 void
-do_return(bool sys, tnode_t *tn)
+stmt_return(bool sys, tnode_t *tn)
 {
 	control_statement *cs = cstmt;
 

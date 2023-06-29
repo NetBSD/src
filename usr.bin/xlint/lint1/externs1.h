@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.179 2023/06/29 05:03:03 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.180 2023/06/29 09:58:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -203,7 +203,7 @@ int	length_in_bits(const type_t *, const char *);
 unsigned int alignment_in_bits(const type_t *);
 sym_t	*concat_lists(sym_t *, sym_t *);
 void	check_type(sym_t *);
-sym_t	*declarator_1_struct_union(sym_t *);
+sym_t	*declare_member(sym_t *);
 sym_t	*set_bit_field_width(sym_t *, int);
 qual_ptr *merge_qualified_pointer(qual_ptr *, qual_ptr *);
 sym_t	*add_pointer(sym_t *, qual_ptr *);
@@ -230,7 +230,7 @@ void	check_func_old_style_arguments(void);
 void	declare_local(sym_t *, bool);
 sym_t	*abstract_name(void);
 void	global_clean_up(void);
-sym_t	*declare_1_abstract(sym_t *);
+sym_t	*declare_abstract_type(sym_t *);
 void	check_size(sym_t *);
 void	mark_as_set(sym_t *);
 void	mark_as_used(sym_t *, bool, bool);
@@ -309,21 +309,21 @@ void	end_function(void);
 void	named_label(sym_t *);
 void	case_label(tnode_t *);
 void	default_label(void);
-void	if1(tnode_t *);
-void	if2(void);
-void	if3(bool);
-void	switch1(tnode_t *);
-void	switch2(void);
-void	while1(tnode_t *);
-void	while2(void);
-void	do1(void);
-void	do2(tnode_t *);
-void	for1(tnode_t *, tnode_t *, tnode_t *);
-void	for2(void);
-void	do_goto(sym_t *);
-void	do_continue(void);
-void	do_break(void);
-void	do_return(bool, tnode_t *);
+void	stmt_if_expr(tnode_t *);
+void	stmt_if_then_stmt(void);
+void	stmt_if_else_stmt(bool);
+void	stmt_switch_expr(tnode_t *);
+void	stmt_switch_expr_stmt(void);
+void	stmt_while_expr(tnode_t *);
+void	stmt_while_expr_stmt(void);
+void	stmt_do(void);
+void	stmt_do_while_expr(tnode_t *);
+void	stmt_for_exprs(tnode_t *, tnode_t *, tnode_t *);
+void	stmt_for_exprs_stmt(void);
+void	stmt_goto(sym_t *);
+void	stmt_continue(void);
+void	stmt_break(void);
+void	stmt_return(bool, tnode_t *);
 void	global_clean_up_decl(bool);
 void	argsused(int);
 void	constcond(int);
