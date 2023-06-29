@@ -165,6 +165,7 @@ MACHINE_ARCH.hpcmips=	mipsel
 MACHINE_ARCH.hpcsh=	sh3el
 MACHINE_ARCH.iyonix=	arm
 MACHINE_ARCH.luna68k=	m68k
+MACHINE_ARCH.soft68k=	m68k
 MACHINE_ARCH.mac68k=	m68k
 MACHINE_ARCH.macppc=	powerpc
 MACHINE_ARCH.mipsco=	mipseb
