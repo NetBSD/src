@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.321 2023/06/29 10:31:33 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.322 2023/06/29 12:52:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.321 2023/06/29 10:31:33 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.322 2023/06/29 12:52:06 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -456,14 +456,16 @@ set_first_typedef(type_t *tp, sym_t *sym)
 }
 
 static unsigned int
-bit_field_size(sym_t **mem)
+bit_field_width(sym_t **mem)
 {
-	unsigned int len = (*mem)->s_type->t_flen;
+	unsigned int width = (*mem)->s_type->t_bit_field_width;
 	while (*mem != NULL && (*mem)->s_type->t_bitfield) {
-		len += (*mem)->s_type->t_flen;
+		width += (*mem)->s_type->t_bit_field_width;
 		*mem = (*mem)->s_next;
 	}
-	return len - len % INT_SIZE;
+	// XXX: Why INT_SIZE? C99 6.7.2.1p4 allows bit-fields to have type
+	// XXX: _Bool or another implementation-defined type.
+	return width - width % INT_SIZE;
 }
 
 static void
@@ -482,7 +484,7 @@ set_packed_size(type_t *tp)
 			unsigned int x;
 
 			if (mem->s_type->t_bitfield) {
-				sp->sou_size_in_bits += bit_field_size(&mem);
+				sp->sou_size_in_bits += bit_field_width(&mem);
 				if (mem == NULL)
 					break;
 			}
@@ -1047,10 +1049,11 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 		/* illegal bit-field type '%s' */
 		warning(35, type_name(btp));
 
-		unsigned int sz = tp->t_flen;
+		// XXX: What about _Bool bit-fields since C99 6.7.2.1?
+		unsigned int width = tp->t_bit_field_width;
 		dsym->s_type = tp = block_dup_type(gettyp(t = INT));
-		if ((tp->t_flen = sz) > size_in_bits(t))
-			tp->t_flen = size_in_bits(t);
+		if ((tp->t_bit_field_width = width) > size_in_bits(t))
+			tp->t_bit_field_width = size_in_bits(t);
 		*inout_t = t;
 		*inout_tp = tp;
 	}
@@ -1059,21 +1062,20 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 static void
 declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 {
-	type_t *tp;
-	tspec_t t;
 
 	check_bit_field_type(dsym, inout_tp, inout_t);
 
-	tp = *inout_tp;
-	t = *inout_t;
-	if (tp->t_flen > size_in_bits(t)) {
+	type_t *tp = *inout_tp;
+	tspec_t t = *inout_t;
+	unsigned int t_width = size_in_bits(t);
+	if (tp->t_bit_field_width > t_width) {
 		/* illegal bit-field size: %d */
-		error(36, tp->t_flen);
-		tp->t_flen = size_in_bits(t);
-	} else if (tp->t_flen == 0 && dsym->s_name != unnamed) {
+		error(36, (int)tp->t_bit_field_width);
+		tp->t_bit_field_width = t_width;
+	} else if (tp->t_bit_field_width == 0 && dsym->s_name != unnamed) {
 		/* zero size bit-field */
 		error(37);
-		tp->t_flen = size_in_bits(t);
+		tp->t_bit_field_width = t_width;
 	}
 	if (dsym->s_scl == UNION_MEMBER) {
 		/* bit-field in union is very unusual */
@@ -1133,12 +1135,12 @@ declare_member(sym_t *dsym)
 		dcs->d_offset_in_bits = 0;
 	}
 	if (dsym->s_bitfield) {
-		dcs_align(alignment_in_bits(tp), tp->t_flen);
+		dcs_align(alignment_in_bits(tp), tp->t_bit_field_width);
 		dsym->u.s_member.sm_offset_in_bits = dcs->d_offset_in_bits -
 		    dcs->d_offset_in_bits % size_in_bits(t);
-		tp->t_foffs = dcs->d_offset_in_bits -
+		tp->t_bit_field_offset = dcs->d_offset_in_bits -
 		    dsym->u.s_member.sm_offset_in_bits;
-		dcs->d_offset_in_bits += tp->t_flen;
+		dcs->d_offset_in_bits += tp->t_bit_field_width;
 	} else {
 		dcs_align(alignment_in_bits(tp), 0);
 		dsym->u.s_member.sm_offset_in_bits = dcs->d_offset_in_bits;
@@ -1158,34 +1160,23 @@ declare_member(sym_t *dsym)
 	return dsym;
 }
 
-/*
- * Aligns the next structure element as required.
- *
- * al contains the required alignment, len the length of a bit-field.
- */
+/* Aligns the next structure element as required. */
 static void
-dcs_align(unsigned int al, unsigned int len)
+dcs_align(unsigned int member_alignment, unsigned int bit_field_width)
 {
-	unsigned int no;
 
-	/*
-	 * The alignment of the current element becomes the alignment of
-	 * the struct/union if it is larger than the current alignment
-	 * of the struct/union.
-	 */
-	if (al > dcs->d_sou_align_in_bits)
-		dcs->d_sou_align_in_bits = al;
+	if (member_alignment > dcs->d_sou_align_in_bits)
+		dcs->d_sou_align_in_bits = member_alignment;
 
-	no = (dcs->d_offset_in_bits + (al - 1)) & ~(al - 1);
-	if (len == 0 || dcs->d_offset_in_bits + len > no)
-		dcs->d_offset_in_bits = no;
+	unsigned int offset = (dcs->d_offset_in_bits + member_alignment - 1)
+	    & ~(member_alignment - 1);
+	if (bit_field_width == 0
+	    || dcs->d_offset_in_bits + bit_field_width > offset)
+		dcs->d_offset_in_bits = offset;
 }
 
-/*
- * Remember the width of the field in its type structure.
- */
 sym_t *
-set_bit_field_width(sym_t *dsym, int len)
+set_bit_field_width(sym_t *dsym, int bit_field_width)
 {
 
 	if (dsym == NULL) {
@@ -1198,7 +1189,7 @@ set_bit_field_width(sym_t *dsym, int len)
 	}
 	dsym->s_type = block_dup_type(dsym->s_type);
 	dsym->s_type->t_bitfield = true;
-	dsym->s_type->t_flen = len;
+	dsym->s_type->t_bit_field_width = bit_field_width;
 	dsym->s_bitfield = true;
 	return dsym;
 }
@@ -1814,7 +1805,7 @@ complete_struct_or_union(sym_t *first_member)
 		if (mem->u.s_member.sm_sou_type == NULL) {
 			mem->u.s_member.sm_sou_type = sp;
 			if (mem->s_type->t_bitfield) {
-				sp->sou_size_in_bits += bit_field_size(&mem);
+				sp->sou_size_in_bits += bit_field_width(&mem);
 				if (mem == NULL)
 					break;
 			}
