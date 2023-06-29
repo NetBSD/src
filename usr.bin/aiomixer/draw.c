@@ -1,4 +1,4 @@
-/* $NetBSD: draw.c,v 1.9 2021/07/15 07:03:14 nia Exp $ */
+/* $NetBSD: draw.c,v 1.10 2023/06/29 19:06:54 nia Exp $ */
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,10 +37,10 @@
 #include "draw.h"
 
 static int get_enum_color(const char *);
-static void draw_enum(struct aiomixer_control *, int, bool);
-static void draw_set(struct aiomixer_control *, int);
+static void draw_enum(struct aiomixer_control *, int, bool, bool);
+static void draw_set(struct aiomixer_control *, int, bool);
 static void draw_levels(struct aiomixer_control *,
-    const struct mixer_level *, bool, bool);
+    const struct mixer_level *, bool, bool, bool);
 
 void
 draw_mixer_select(unsigned int num_mixers, unsigned int selected_mixer)
@@ -103,14 +103,14 @@ draw_control(struct aiomixer *aio,
 
 	switch (value.type) {
 	case AUDIO_MIXER_ENUM:
-		draw_enum(control, value.un.ord, selected);
+		draw_enum(control, value.un.ord, selected, aio->use_colour);
 		break;
 	case AUDIO_MIXER_SET:
-		draw_set(control, value.un.mask);
+		draw_set(control, value.un.mask, aio->use_colour);
 		break;
 	case AUDIO_MIXER_VALUE:
 		draw_levels(control, &value.un.value,
-		    aio->channels_unlocked, selected);
+		    aio->channels_unlocked, selected, aio->use_colour);
 		break;
 	}
 
@@ -159,7 +159,8 @@ get_enum_color(const char *name)
 }
 
 static void
-draw_enum(struct aiomixer_control *control, int ord, bool selected)
+draw_enum(struct aiomixer_control *control, int ord,
+    bool selected, bool colour)
 {
 	struct audio_mixer_enum *e;
 	int color = COLOR_ENUM_MISC;
@@ -175,7 +176,7 @@ draw_enum(struct aiomixer_control *control, int ord, bool selected)
 		}
 		waddch(control->widgetpad, '[');
 		if (ord == e->member[i].ord) {
-			if (has_colors()) {
+			if (colour) {
 				color = get_enum_color(e->member[i].label.name);
 				wattron(control->widgetpad,
 					COLOR_PAIR(color));
@@ -185,7 +186,7 @@ draw_enum(struct aiomixer_control *control, int ord, bool selected)
 		}
 		wprintw(control->widgetpad, "%s", e->member[i].label.name);
 		if (ord == control->info.un.e.member[i].ord) {
-			if (has_colors()) {
+			if (colour) {
 				wattroff(control->widgetpad,
 					COLOR_PAIR(color));
 			}
@@ -204,19 +205,19 @@ draw_enum(struct aiomixer_control *control, int ord, bool selected)
 }
 
 static void
-draw_set(struct aiomixer_control *control, int mask)
+draw_set(struct aiomixer_control *control, int mask, bool colour)
 {
 	int i;
 
 	for (i = 0; i < control->info.un.s.num_mem; ++i) {
 		waddch(control->widgetpad, '[');
 		if (mask & control->info.un.s.member[i].mask) {
-			if (has_colors()) {
+			if (colour) {
 				wattron(control->widgetpad,
 					COLOR_PAIR(COLOR_SET_SELECTED));
 			}
 			waddch(control->widgetpad, '*');
-			if (has_colors()) {
+			if (colour) {
 				wattroff(control->widgetpad,
 					COLOR_PAIR(COLOR_SET_SELECTED));
 			}
@@ -245,7 +246,8 @@ draw_set(struct aiomixer_control *control, int mask)
 
 static void
 draw_levels(struct aiomixer_control *control,
-    const struct mixer_level *levels, bool channels_unlocked, bool selected)
+    const struct mixer_level *levels, bool channels_unlocked,
+    bool selected, bool colour)
 {
 	int i;
 	int j, nchars;
@@ -260,7 +262,7 @@ draw_levels(struct aiomixer_control *control,
 		}
 		wprintw(control->widgetpad, "[%3u/%3u ",
 		    levels->level[i], AUDIO_MAX_GAIN);
-		if (has_colors()) {
+		if (colour) {
 			wattron(control->widgetpad,
 				COLOR_PAIR(COLOR_LEVELS));
 		}
@@ -268,7 +270,7 @@ draw_levels(struct aiomixer_control *control,
 		    (getmaxx(control->widgetpad) - 11)) / AUDIO_MAX_GAIN;
 		for (j = 0; j < nchars; ++j)
 			waddch(control->widgetpad, '*');
-		if (has_colors()) {
+		if (colour) {
 			wattroff(control->widgetpad,
 				COLOR_PAIR(COLOR_LEVELS));
 		}
