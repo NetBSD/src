@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.319 2023/06/29 05:03:03 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.320 2023/06/29 09:58:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.319 2023/06/29 05:03:03 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.320 2023/06/29 09:58:36 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1103,11 +1103,8 @@ declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 	}
 }
 
-/*
- * Process the declarator of a struct/union element.
- */
 sym_t *
-declarator_1_struct_union(sym_t *dsym)
+declare_member(sym_t *dsym)
 {
 	type_t *tp;
 	tspec_t t;
@@ -2945,11 +2942,8 @@ global_clean_up(void)
 	global_clean_up_decl(true);
 }
 
-/*
- * Process an abstract type declaration
- */
 sym_t *
-declare_1_abstract(sym_t *sym)
+declare_abstract_type(sym_t *sym)
 {
 
 	check_function_definition(sym, true);
