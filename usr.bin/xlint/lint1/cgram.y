@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.438 2023/06/29 09:58:36 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.439 2023/06/29 22:52:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.438 2023/06/29 09:58:36 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.439 2023/06/29 22:52:44 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -886,12 +886,12 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 		$$ = make_tag_type($2, $1, false, yychar == T_SEMI);
 	  }
 	| struct_or_union identifier_sym {
-		dcs->d_tagtyp = make_tag_type($2, $1, true, false);
+		dcs->d_tag_type = make_tag_type($2, $1, true, false);
 	  } braced_struct_declaration_list {
 		$$ = complete_struct_or_union($4);
 	  }
 	| struct_or_union {
-		dcs->d_tagtyp = make_tag_type(NULL, $1, true, false);
+		dcs->d_tag_type = make_tag_type(NULL, $1, true, false);
 	  } braced_struct_declaration_list {
 		$$ = complete_struct_or_union($3);
 	  }
@@ -1038,12 +1038,12 @@ enum_specifier:			/* C99 6.7.2.2 */
 		$$ = make_tag_type($3, ENUM, false, false);
 	  }
 	| enum gcc_attribute_specifier_list_opt identifier_sym {
-		dcs->d_tagtyp = make_tag_type($3, ENUM, true, false);
+		dcs->d_tag_type = make_tag_type($3, ENUM, true, false);
 	  } enum_declaration /*gcc_attribute_specifier_list_opt*/ {
 		$$ = complete_enum($5);
 	  }
 	| enum gcc_attribute_specifier_list_opt {
-		dcs->d_tagtyp = make_tag_type(NULL, ENUM, true, false);
+		dcs->d_tag_type = make_tag_type(NULL, ENUM, true, false);
 	  } enum_declaration /*gcc_attribute_specifier_list_opt*/ {
 		$$ = complete_enum($4);
 	  }
@@ -1450,7 +1450,7 @@ abstract_decl_param_list:	/* specific to lint */
 	  }
 	| abstract_decl_lparen vararg_parameter_type_list T_RPAREN
 	    type_attribute_opt {
-		dcs->d_proto = true;
+		dcs->d_prototype = true;
 		$$ = $2;
 	  }
 	| abstract_decl_lparen error T_RPAREN type_attribute_opt {
