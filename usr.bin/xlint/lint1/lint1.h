@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.167 2023/06/24 20:50:54 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.168 2023/06/29 05:47:41 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -486,25 +486,30 @@ check_printf(const char *fmt, ...)
 #  define message_at(msgid, pos, args...) \
 	wrap_check_printf_at(message_at, msgid, pos, ##args)
 
-#  define wrap_check_printf(func, msgid, args...)			\
+#  define wrap_check_printf(func, cond, msgid, args...)			\
 	({								\
-		debug_step("%s:%d: %s", __FILE__, __LINE__, __func__);	\
+		if (/* CONSTCOND */cond)				\
+			debug_step("%s:%d: %s %d '%s' in %s",		\
+			    __FILE__, __LINE__,	#func, msgid,		\
+			    __CONCAT(MSG_, msgid), __func__);		\
 		check_printf(__CONCAT(MSG_, msgid), ##args);		\
 		(func)(msgid, ##args);					\
 		/* LINTED 129 */					\
 	})
 
-#  define error(msgid, args...) wrap_check_printf(error, msgid, ##args)
-#  define warning(msgid, args...) wrap_check_printf(warning, msgid, ##args)
-#  define gnuism(msgid, args...) wrap_check_printf(gnuism, msgid, ##args)
-#  define c99ism(msgid, args...) wrap_check_printf(c99ism, msgid, ##args)
-#  define c11ism(msgid, args...) wrap_check_printf(c11ism, msgid, ##args)
+#  define error(msgid, args...) wrap_check_printf(error, true, msgid, ##args)
+#  define warning(msgid, args...) wrap_check_printf(warning, true, msgid, ##args)
+#  define gnuism(msgid, args...) wrap_check_printf(gnuism, !allow_gcc || (!allow_trad && !allow_c99), msgid, ##args)
+#  define c99ism(msgid, args...) wrap_check_printf(c99ism, !allow_c99 && (!allow_gcc || !allow_trad), msgid, ##args)
+#  define c11ism(msgid, args...) wrap_check_printf(c11ism, !allow_c11 && !allow_gcc, msgid, ##args)
 #endif
 
 #ifdef DEBUG
 #  define query_message(query_id, args...)				\
 	do {								\
-		debug_step("%s:%d: %s", __FILE__, __LINE__, __func__);	\
+		debug_step("%s:%d: query %d '%s' in %s",		\
+		    __FILE__, __LINE__,					\
+		    query_id, __CONCAT(MSG_Q, query_id), __func__);	\
 		check_printf(__CONCAT(MSG_Q, query_id), ##args);	\
 		(query_message)(query_id, ##args);			\
 	} while (false)
