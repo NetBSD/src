@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.158 2023/06/29 09:58:36 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.159 2023/06/29 22:52:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.158 2023/06/29 09:58:36 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.159 2023/06/29 22:52:44 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -341,7 +341,7 @@ begin_function(sym_t *fsym)
 			warning(286);
 	}
 
-	if (dcs->d_notyp)
+	if (dcs->d_no_type_specifier)
 		fsym->s_return_type_implicit_int = true;
 
 	set_reached(true);

@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.36 2023/06/24 20:50:54 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.37 2023/06/29 22:52:44 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.36 2023/06/24 20:50:54 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.37 2023/06/29 22:52:44 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -422,14 +422,14 @@ debug_dinfo(const dinfo_t *d) // NOLINT(misc-no-recursion)
 	debug_word(d->d_invalid_type_combination, "invalid_type_combination");
 	debug_word(d->d_nonempty_decl, "nonempty_decl");
 	debug_word(d->d_vararg, "vararg");
-	debug_word(d->d_proto, "prototype");
-	debug_word(d->d_notyp, "no_type_specifier");
+	debug_word(d->d_prototype, "prototype");
+	debug_word(d->d_no_type_specifier, "no_type_specifier");
 	debug_word(d->d_asm, "asm");
 	debug_word(d->d_packed, "packed");
 	debug_word(d->d_used, "used");
 
-	if (d->d_tagtyp != NULL)
-		debug_printf(" tagtyp='%s'", type_name(d->d_tagtyp));
+	if (d->d_tag_type != NULL)
+		debug_printf(" tag_type='%s'", type_name(d->d_tag_type));
 	for (const sym_t *arg = d->d_func_args;
 	     arg != NULL; arg = arg->s_next)
 		debug_sym(" arg(", arg, ")");
