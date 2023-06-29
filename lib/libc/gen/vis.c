@@ -1,4 +1,4 @@
-/*	$NetBSD: vis.c,v 1.75 2021/06/18 10:57:14 christos Exp $	*/
+/*	$NetBSD: vis.c,v 1.76 2023/06/29 16:11:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: vis.c,v 1.75 2021/06/18 10:57:14 christos Exp $");
+__RCSID("$NetBSD: vis.c,v 1.76 2023/06/29 16:11:31 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 #ifdef __FBSDID
 __FBSDID("$FreeBSD$");
@@ -466,7 +466,10 @@ istrsenvisx(char **mbdstp, size_t *dlen, const char *mbsrc, size_t mblength,
 	while (mbslength > 0) {
 		/* Convert one multibyte character to wchar_t. */
 		if (!cerr)
-			clen = mbrtowc(src, mbsrc, MIN(mbslength, MB_LEN_MAX),
+			clen = mbrtowc(src, mbsrc,
+			    (mbslength < MB_LEN_MAX
+				? mbslength
+				: MB_LEN_MAX),
 			    &mbstate);
 		if (cerr || clen < 0) {
 			/* Conversion error, process as a byte instead. */
