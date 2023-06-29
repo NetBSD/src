@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.35 2022/04/08 10:17:54 andvar Exp $	*/
+/*	$NetBSD: scr.c,v 1.36 2023/06/29 21:01:21 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.35 2022/04/08 10:17:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.36 2023/06/29 21:01:21 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -2298,7 +2298,7 @@ static void   coldResetSM(struct scr_softc * sc,int cmd)
 **      checked to see if it is 1/2 speed, and if so, the clock is changed
 **      and the state adjustes
 **
-**      At the end of the first byte we have to determin the logic being
+**      At the end of the first byte we have to determine the logic being
 **      used by the card, ie is it active high/low and msb/lsb.  
 **
 **
