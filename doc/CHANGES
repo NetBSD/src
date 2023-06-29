@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2976 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2977 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -133,6 +133,29 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		Bumped shlib minor because of API/ABI changes.
 		[nikita 20230608]
 	kerberos(8): Update to Heimdal-7.8.0 [christos 20230619]
+	patch(1): Add --backup-if-mismatch and --no-backup-if-mismatch for
+		GNU patch compatibility. These options only make sense in
+		POSIX mode, patch(1) has --backup enabled by default and
+		GNU patch doesn't. [wiz 20230616]
+	indent(1): Remove support for handling ASCII backspace characters
+		in C code. [rillig 20230618]
+	make(1): Recognize include guards. [rilling 20230619]
+	pam(8): Disable pam_krb5, pam_ksu by default. [riastradh 20230620]
+	editline(3): Install pkg-config files, same as the portable version.
+		[wiz 20230620]
+	make(1): Speed up pattern matching in the ':M' and ':N' modifiers.
+		[reinoud 20230622]
+	paxctl(8): Introduce -0 option to clear all PaX flag bits in ELF note.
+		[rin 20230623]
+	crunchgen(1): Clear PaX flags instead of removing its ELF note section.
+		[rin 20230623]
+	make(1): Warn about malformed patterns in ':M', ':N' and
+		'.if make(...)'  [rillig 20230623]
 	bind: Import version 9.16.42. [christos 20230626]
 	openresolv: Import version 3.13.2 [roy 20230627]
 	tmux(1): Import version 3.3a [wiz 20230628]
+	x86: Primary bootstrap is now enable to read a GPT
+		partition table inside a software raid(4).
+		[manu 20230629]
+	aiomixer(1): Support for the NO_COLOR environment variable.
+		[nia 20230629]
