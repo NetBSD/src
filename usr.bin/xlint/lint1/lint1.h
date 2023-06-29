@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.169 2023/06/29 12:52:06 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.170 2023/06/29 22:52:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -372,16 +372,16 @@ typedef	struct dinfo {
 	bool	d_nonempty_decl:1; /* if at least one tag is declared
 				 * ... in the current function decl. */
 	bool	d_vararg:1;
-	bool	d_proto:1;	/* current function decl. is a prototype */
-	bool	d_notyp:1;	/* set if no type specifier was present */
+	bool	d_prototype:1;	/* current function decl. is a prototype */
+	bool	d_no_type_specifier:1;
 	bool	d_asm:1;	/* set if d_ctx == AUTO and asm() present */
 	bool	d_packed:1;
 	bool	d_used:1;
-	type_t	*d_tagtyp;	/* tag during member declaration */
+	type_t	*d_tag_type;	/* tag during member declaration */
 	sym_t	*d_func_args;	/* list of arguments during function def. */
 	pos_t	d_func_def_pos;	/* position of function definition */
-	sym_t	*d_dlsyms;	/* first symbol declared at this level */
-	sym_t	**d_ldlsym;	/* points to s_level_next in the last symbol
+	sym_t	*d_first_dlsym;	/* first symbol declared at this level */
+	sym_t	**d_last_dlsym;	/* points to s_level_next in the last symbol
 				   declaration at this level */
 	sym_t	*d_func_proto_syms; /* symbols defined in prototype */
 	struct dinfo *d_enclosing; /* the enclosing declaration level */
@@ -389,9 +389,9 @@ typedef	struct dinfo {
 
 /* One level of pointer indirection in declarators, including qualifiers. */
 typedef	struct qual_ptr {
-	bool	p_const: 1;
-	bool	p_volatile: 1;
-	bool	p_pointer: 1;
+	bool	p_const:1;
+	bool	p_volatile:1;
+	bool	p_pointer:1;
 	struct	qual_ptr *p_next;
 } qual_ptr;
 

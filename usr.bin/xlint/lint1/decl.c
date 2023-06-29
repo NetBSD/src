@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.322 2023/06/29 12:52:06 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.323 2023/06/29 22:52:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.322 2023/06/29 12:52:06 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.323 2023/06/29 22:52:44 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -95,7 +95,7 @@ initdecl(void)
 	/* declaration stack */
 	dcs = xcalloc(1, sizeof(*dcs));
 	dcs->d_kind = DK_EXTERN;
-	dcs->d_ldlsym = &dcs->d_dlsyms;
+	dcs->d_last_dlsym = &dcs->d_first_dlsym;
 
 	if (!pflag) {
 		for (size_t i = 0; i < NTSPEC; i++)
@@ -561,7 +561,7 @@ begin_declaration_level(declaration_kind dk)
 	di->d_enclosing = dcs;
 	dcs = di;
 	di->d_kind = dk;
-	di->d_ldlsym = &di->d_dlsyms;
+	di->d_last_dlsym = &di->d_first_dlsym;
 	debug_step("%s(%s)", __func__, declaration_kind_name(dk));
 }
 
@@ -589,20 +589,20 @@ end_declaration_level(void)
 		 * symbol table if the symbols of the outer level are
 		 * removed).
 		 */
-		if ((*dcs->d_ldlsym = di->d_dlsyms) != NULL)
-			dcs->d_ldlsym = di->d_ldlsym;
+		if ((*dcs->d_last_dlsym = di->d_first_dlsym) != NULL)
+			dcs->d_last_dlsym = di->d_last_dlsym;
 		break;
 	case DK_OLD_STYLE_ARG:
 		/*
-		 * All symbols in dcs->d_dlsyms are introduced in old-style
-		 * argument declarations (it's not clean, but possible).
-		 * They are appended to the list of symbols declared in
-		 * an old-style argument identifier list or a new style
+		 * All symbols in dcs->d_first_dlsym are introduced in
+		 * old-style argument declarations (it's not clean, but
+		 * possible). They are appended to the list of symbols declared
+		 * in an old-style argument identifier list or a new-style
 		 * parameter type list.
 		 */
-		if (di->d_dlsyms != NULL) {
-			*di->d_ldlsym = dcs->d_func_proto_syms;
-			dcs->d_func_proto_syms = di->d_dlsyms;
+		if (di->d_first_dlsym != NULL) {
+			*di->d_last_dlsym = dcs->d_func_proto_syms;
+			dcs->d_func_proto_syms = di->d_first_dlsym;
 		}
 		break;
 	case DK_ABSTRACT:	/* casts and sizeof */
@@ -613,8 +613,8 @@ end_declaration_level(void)
 		 * XXX I'm not sure whether they should be removed from the
 		 * symbol table now or later.
 		 */
-		if ((*dcs->d_ldlsym = di->d_dlsyms) != NULL)
-			dcs->d_ldlsym = di->d_ldlsym;
+		if ((*dcs->d_last_dlsym = di->d_first_dlsym) != NULL)
+			dcs->d_last_dlsym = di->d_last_dlsym;
 		break;
 	case DK_AUTO:
 		/* check usage of local vars */
@@ -622,7 +622,7 @@ end_declaration_level(void)
 		/* FALLTHROUGH */
 	case DK_PROTO_ARG:
 		/* usage of arguments will be checked by end_function() */
-		rmsyms(di->d_dlsyms);
+		rmsyms(di->d_first_dlsym);
 		break;
 	case DK_EXTERN:
 		/* there is nothing around an external declarations */
@@ -678,7 +678,7 @@ dcs_begin_type(void)
 	dcs->d_multiple_storage_classes = false;
 	dcs->d_invalid_type_combination = false;
 	dcs->d_nonempty_decl = false;
-	dcs->d_notyp = false;
+	dcs->d_no_type_specifier = false;
 }
 
 static void
@@ -720,7 +720,7 @@ dcs_merge_declaration_specifiers(void)
 	debug_step("%s: %s", __func__, type_name(tp));
 	if (t == NO_TSPEC && s == NO_TSPEC && l == NO_TSPEC && c == NO_TSPEC &&
 	    tp == NULL)
-		dcs->d_notyp = true;
+		dcs->d_no_type_specifier = true;
 	if (t == NO_TSPEC && s == NO_TSPEC && (l == NO_TSPEC || l == LONG) &&
 	    tp == NULL)
 		t = c;
@@ -1369,7 +1369,7 @@ add_function(sym_t *decl, sym_t *args)
 		debug_sym("arg: ", arg, "\n");
 #endif
 
-	if (dcs->d_proto) {
+	if (dcs->d_prototype) {
 		if (!allow_c90)
 			/* function prototypes are illegal in traditional C */
 			warning(270);
@@ -1390,7 +1390,7 @@ add_function(sym_t *decl, sym_t *args)
 	 */
 	if (dcs->d_enclosing->d_kind == DK_EXTERN &&
 	    decl->s_type == dcs->d_enclosing->d_type) {
-		dcs->d_enclosing->d_func_proto_syms = dcs->d_dlsyms;
+		dcs->d_enclosing->d_func_proto_syms = dcs->d_first_dlsym;
 		dcs->d_enclosing->d_func_args = args;
 	}
 
@@ -1415,7 +1415,7 @@ add_function(sym_t *decl, sym_t *args)
 	}
 
 	*tpp = block_derive_function(dcs->d_enclosing->d_type,
-	    dcs->d_proto, args, dcs->d_vararg);
+	    dcs->d_prototype, args, dcs->d_vararg);
 
 	debug_step("add_function: '%s'", type_name(decl->s_type));
 	debug_leave();
@@ -1432,7 +1432,7 @@ new_style_function(sym_t *args)
 	 * Declarations of structs/unions/enums in param lists are legal,
 	 * but senseless.
 	 */
-	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_level_next) {
+	for (sym = dcs->d_first_dlsym; sym != NULL; sym = sym->s_level_next) {
 		sc = sym->s_scl;
 		if (sc == STRUCT_TAG || sc == UNION_TAG || sc == ENUM_TAG) {
 			/* dubious tag declaration '%s %s' */
@@ -1525,7 +1525,7 @@ declarator_name(sym_t *sym)
 	case DK_STRUCT_MEMBER:
 	case DK_UNION_MEMBER:
 		/* Set parent */
-		sym->u.s_member.sm_sou_type = dcs->d_tagtyp->t_sou;
+		sym->u.s_member.sm_sou_type = dcs->d_tag_type->t_sou;
 		sym->s_def = DEF;
 		sc = dcs->d_kind == DK_STRUCT_MEMBER
 		    ? STRUCT_MEMBER
@@ -1779,7 +1779,7 @@ type_t *
 complete_struct_or_union(sym_t *first_member)
 {
 
-	type_t *tp = dcs->d_tagtyp;
+	type_t *tp = dcs->d_tag_type;
 	if (tp == NULL)		/* in case of syntax errors */
 		return gettyp(INT);
 
@@ -1827,7 +1827,7 @@ type_t *
 complete_enum(sym_t *first_enumerator)
 {
 
-	type_t *tp = dcs->d_tagtyp;
+	type_t *tp = dcs->d_tag_type;
 	tp->t_enum->en_incomplete = false;
 	tp->t_enum->en_first_enumerator = first_enumerator;
 	return tp;
@@ -1870,7 +1870,7 @@ enumeration_constant(sym_t *sym, int val, bool impl)
 	}
 
 	sym->s_scl = ENUM_CONST;
-	sym->s_type = dcs->d_tagtyp;
+	sym->s_type = dcs->d_tag_type;
 	sym->u.s_enum_constant = val;
 
 	if (impl && val == TARG_INT_MIN) {
@@ -2992,7 +2992,8 @@ check_usage(dinfo_t *di)
 	lwarn = LWARN_ALL;
 
 	debug_step("begin lwarn %d", lwarn);
-	for (sym_t *sym = di->d_dlsyms; sym != NULL; sym = sym->s_level_next)
+	for (sym_t *sym = di->d_first_dlsym;
+	     sym != NULL; sym = sym->s_level_next)
 		check_usage_sym(di->d_asm, sym);
 	lwarn = saved_lwarn;
 	debug_step("end lwarn %d", lwarn);
@@ -3167,7 +3168,7 @@ check_global_symbols(void)
 	if (block_level != 0 || dcs->d_enclosing != NULL)
 		norecover();
 
-	for (sym = dcs->d_dlsyms; sym != NULL; sym = sym->s_level_next) {
+	for (sym = dcs->d_first_dlsym; sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level == -1)
 			continue;
 		if (sym->s_kind == FVFT)

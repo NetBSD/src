@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.161 2023/06/24 08:11:12 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.162 2023/06/29 22:52:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.161 2023/06/24 08:11:12 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.162 2023/06/29 22:52:44 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1343,8 +1343,8 @@ getsym(sbuf_t *sb)
 	if (!in_gcc_attribute) {
 		symtab_add(sym);
 
-		*di->d_ldlsym = sym;
-		di->d_ldlsym = &sym->s_level_next;
+		*di->d_last_dlsym = sym;
+		di->d_last_dlsym = &sym->s_level_next;
 	}
 
 	free(sb);
@@ -1379,8 +1379,8 @@ mktempsym(type_t *tp)
 
 	symtab_add(sym);
 
-	*dcs->d_ldlsym = sym;
-	dcs->d_ldlsym = &sym->s_level_next;
+	*dcs->d_last_dlsym = sym;
+	dcs->d_last_dlsym = &sym->s_level_next;
 
 	return sym;
 }
@@ -1467,8 +1467,8 @@ pushdown(const sym_t *sym)
 
 	symtab_add(nsym);
 
-	*dcs->d_ldlsym = nsym;
-	dcs->d_ldlsym = &nsym->s_level_next;
+	*dcs->d_last_dlsym = nsym;
+	dcs->d_last_dlsym = &nsym->s_level_next;
 
 	return nsym;
 }
