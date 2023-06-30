@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.75 2023/06/30 17:21:33 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.76 2023/06/30 18:10:44 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2338,4 +2338,10 @@ sys/arch/i386/stand/bootxx/boot1.c		1.22
 
 	x86: primary bootstrap is now able to read a GPT inside RAIDframe.
 	[manu, ticket #222]
+
+usr.bin/dc/bcode.c				1.4
+
+	Make this compile when BIGNUM limbs (BN_ULONG) are not the same
+	size as "unsigned long" (e.g. in bn(64/32) configurations of openssl).
+	[martin, ticket #220]
 
