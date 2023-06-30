@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.181 2023/06/30 19:10:49 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.182 2023/06/30 21:06:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -203,6 +203,7 @@ int	length_in_bits(const type_t *, const char *);
 unsigned int alignment_in_bits(const type_t *);
 sym_t	*concat_symbols(sym_t *, sym_t *);
 void	check_type(sym_t *);
+sym_t	*declare_unnamed_member(void);
 sym_t	*declare_member(sym_t *);
 sym_t	*set_bit_field_width(sym_t *, int);
 qual_ptr *merge_qualified_pointer(qual_ptr *, qual_ptr *);

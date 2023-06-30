@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_102.c,v 1.5 2023/06/30 09:21:52 rillig Exp $	*/
+/*	$NetBSD: msg_102.c,v 1.6 2023/06/30 21:06:18 rillig Exp $	*/
 # 3 "msg_102.c"
 
 // Test for message: illegal use of member '%s' [102]
@@ -31,14 +31,8 @@ static struct bit_fields_and_bits *b1, *b2;
 static inline _Bool
 eq(int x)
 {
-	/*
-	 * TODO: Once this is fixed, enable lint in
-	 * external/mit/xorg/lib/dri.old/Makefile again.
-	 */
-
 	if (x == 0)
-		/* expect+2: error: illegal use of member 'bits' [102] */
-		/* expect+1: error: illegal use of member 'bits' [102] */
+		/* Accessing a member from an unnamed struct member. */
 		return u1->bits == u2->bits;
 
 	/*
