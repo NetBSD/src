@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.439 2023/06/29 22:52:44 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.440 2023/06/30 08:03:01 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.439 2023/06/29 22:52:44 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.440 2023/06/30 08:03:01 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -405,6 +405,7 @@ primary_expression:
 	  }
 	| generic_selection
 	/* GCC primary-expression, see c_parser_postfix_expression */
+	/* TODO: C99 7.17p3 allows not only an identifier but a designator. */
 	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
 		symtyp = FMEMBER;
 		$$ = build_offsetof($3, getsym($5));
