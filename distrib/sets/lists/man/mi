@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1761 2023/05/31 19:44:42 christos Exp $
+# $NetBSD: mi,v 1.1762 2023/06/30 00:48:03 gutteridge Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1554,6 +1554,7 @@
 ./usr/share/man/cat4/nfsmbc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/njata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/njs.0			man-sys-catman		.cat
+./usr/share/man/cat4/npflog.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ns.0			man-obsolete		obsolete
 ./usr/share/man/cat4/nsclpcsio.0		man-sys-catman		.cat
 ./usr/share/man/cat4/nside.0			man-sys-catman		.cat
@@ -4903,6 +4904,7 @@
 ./usr/share/man/html4/nfsmbc.html		man-sys-htmlman		html
 ./usr/share/man/html4/njata.html		man-sys-htmlman		html
 ./usr/share/man/html4/njs.html			man-sys-htmlman		html
+./usr/share/man/html4/npflog.html		man-sys-htmlman		html
 ./usr/share/man/html4/nsclpcsio.html		man-sys-htmlman		html
 ./usr/share/man/html4/nside.html		man-sys-htmlman		html
 ./usr/share/man/html4/nsmb.html			man-obsolete		obsolete
@@ -8106,6 +8108,7 @@
 ./usr/share/man/man4/nfsmbc.4			man-sys-man		.man
 ./usr/share/man/man4/njata.4			man-sys-man		.man
 ./usr/share/man/man4/njs.4			man-sys-man		.man
+./usr/share/man/man4/npflog.4			man-sys-man		.man
 ./usr/share/man/man4/ns.4			man-obsolete		obsolete
 ./usr/share/man/man4/nsclpcsio.4		man-sys-man		.man
 ./usr/share/man/man4/nside.4			man-sys-man		.man
