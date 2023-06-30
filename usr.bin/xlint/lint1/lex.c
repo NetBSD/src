@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.163 2023/06/30 19:43:00 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.164 2023/06/30 21:39:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.163 2023/06/30 19:43:00 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.164 2023/06/30 21:39:54 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1315,23 +1315,23 @@ getsym(sbuf_t *sb)
 	/* create a new symbol table entry */
 
 	/* labels must always be allocated at level 1 (outermost block) */
-	dinfo_t *di;
+	decl_level *dl;
 	if (symtyp == FLABEL) {
 		sym = level_zero_alloc(1, sizeof(*sym));
 		char *s = level_zero_alloc(1, sb->sb_len + 1);
 		(void)memcpy(s, sb->sb_name, sb->sb_len + 1);
 		sym->s_name = s;
 		sym->s_block_level = 1;
-		di = dcs;
-		while (di->d_enclosing != NULL &&
-		    di->d_enclosing->d_enclosing != NULL)
-			di = di->d_enclosing;
-		lint_assert(di->d_kind == DK_AUTO);
+		dl = dcs;
+		while (dl->d_enclosing != NULL &&
+		    dl->d_enclosing->d_enclosing != NULL)
+			dl = dl->d_enclosing;
+		lint_assert(dl->d_kind == DLK_AUTO);
 	} else {
 		sym = block_zero_alloc(sizeof(*sym));
 		sym->s_name = sb->sb_name;
 		sym->s_block_level = block_level;
-		di = dcs;
+		dl = dcs;
 	}
 
 	sym->s_def_pos = unique_curr_pos();
@@ -1343,8 +1343,8 @@ getsym(sbuf_t *sb)
 	if (!in_gcc_attribute) {
 		symtab_add(sym);
 
-		*di->d_last_dlsym = sym;
-		di->d_last_dlsym = &sym->s_level_next;
+		*dl->d_last_dlsym = sym;
+		dl->d_last_dlsym = &sym->s_level_next;
 	}
 
 	free(sb);

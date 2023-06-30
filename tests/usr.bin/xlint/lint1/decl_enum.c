@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_enum.c,v 1.3 2022/04/16 09:22:25 rillig Exp $	*/
+/*	$NetBSD: decl_enum.c,v 1.4 2023/06/30 21:39:54 rillig Exp $	*/
 # 3 "decl_enum.c"
 
 /*
@@ -39,7 +39,7 @@ enum outer {
 	 * enum constant would become the value of the last seen inner enum
 	 * constant.  This is because 'enumval' is a simple scalar variable,
 	 * not a stack.  If it should ever become necessary to account for
-	 * nested enum declarations, a field should be added in dinfo_t.
+	 * nested enum declarations, a field should be added in decl_level.
 	 */
 	o2 __attribute__((__deprecated__)),
 	o3 = i3

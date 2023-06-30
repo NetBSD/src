@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.182 2023/06/30 21:06:18 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.183 2023/06/30 21:39:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -118,11 +118,11 @@ void	expr_restore_memory(memory_pool);
  */
 
 #ifdef DEBUG
-const char *declaration_kind_name(declaration_kind);
+const char *decl_level_kind_name(decl_level_kind);
 const char *scl_name(scl_t);
 const char *symt_name(symt_t);
 const char *tqual_name(tqual_t);
-void	debug_dinfo(const dinfo_t *);
+void	debug_dinfo(const decl_level *);
 void	debug_node(const tnode_t *);
 void	debug_type(const type_t *);
 void	debug_sym(const char *, const sym_t *, const char *);
@@ -179,7 +179,7 @@ void	enable_queries(const char *);
 /*
  * decl.c
  */
-extern	dinfo_t	*dcs;
+extern	decl_level *dcs;
 extern	const char unnamed[];
 extern	int	enumval;
 
@@ -194,7 +194,7 @@ void	dcs_add_type(type_t *);
 void	dcs_add_qualifier(tqual_t);
 void	dcs_add_packed(void);
 void	dcs_set_used(void);
-void	begin_declaration_level(declaration_kind);
+void	begin_declaration_level(decl_level_kind);
 void	end_declaration_level(void);
 void	dcs_set_asm(void);
 void	dcs_begin_type(void);
@@ -235,7 +235,7 @@ sym_t	*declare_abstract_type(sym_t *);
 void	check_size(sym_t *);
 void	mark_as_set(sym_t *);
 void	mark_as_used(sym_t *, bool, bool);
-void	check_usage(dinfo_t *);
+void	check_usage(decl_level *);
 void	check_usage_sym(bool, sym_t *);
 void	check_global_symbols(void);
 void	print_previous_declaration(const sym_t *);

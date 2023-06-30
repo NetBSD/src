@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.172 2023/06/30 19:43:00 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.173 2023/06/30 21:39:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -324,18 +324,19 @@ struct array_size {
 	int dim;
 };
 
-typedef enum declaration_kind {
-	DK_EXTERN,		/* global variable or function */
-	DK_STRUCT_MEMBER,
-	DK_UNION_MEMBER,
-	DK_ENUM_CONSTANT,
-	DK_OLD_STYLE_ARG,	/* argument in an old-style function
+typedef enum decl_level_kind {
+	DLK_EXTERN,		/* global types, variables or functions */
+	DLK_STRUCT,		/* members */
+	DLK_UNION,		/* members */
+	DLK_ENUM,		/* constants */
+	DLK_OLD_STYLE_ARGS,	/* arguments in an old-style function
 				 * definition */
-	DK_PROTO_ARG,		/* argument in a prototype function
+	DLK_PROTO_PARAMS,	/* parameters in a prototype function
 				 * definition */
-	DK_AUTO,		/* local symbol */
-	DK_ABSTRACT		/* abstract declaration; type name */
-} declaration_kind;
+	DLK_AUTO,		/* local types or variables */
+	DLK_ABSTRACT		/* abstract (unnamed) declaration; type name;
+				 * used in casts and sizeof */
+} decl_level_kind;
 
 /*
  * A declaration level describes a struct, union, enum, block, argument
@@ -344,8 +345,8 @@ typedef enum declaration_kind {
  * For nested declarations, the global 'dcs' holds all information needed for
  * the current level, the outer levels are available via 'd_enclosing'.
  */
-typedef	struct dinfo {
-	declaration_kind d_kind;
+typedef	struct decl_level {
+	decl_level_kind d_kind;
 	tspec_t	d_abstract_type;/* VOID, BOOL, CHAR, INT or COMPLEX */
 	tspec_t	d_complex_mod;	/* FLOAT or DOUBLE */
 	tspec_t	d_sign_mod;	/* SIGNED or UNSIGN */
@@ -377,8 +378,8 @@ typedef	struct dinfo {
 	sym_t	**d_last_dlsym;	/* points to s_level_next in the last symbol
 				   declaration at this level */
 	sym_t	*d_func_proto_syms; /* symbols defined in prototype */
-	struct dinfo *d_enclosing; /* the enclosing declaration level */
-} dinfo_t;
+	struct decl_level *d_enclosing; /* the enclosing declaration level */
+} decl_level;
 
 /* One level of pointer indirection in declarators, including qualifiers. */
 typedef	struct qual_ptr {
