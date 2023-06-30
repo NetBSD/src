@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.10 2023/06/30 15:19:09 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.11 2023/06/30 16:39:17 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -11,6 +11,7 @@
 /*
  * A sizeof expression can either take a type name or an expression.
  */
+
 void sink(unsigned long);
 
 struct {
@@ -164,3 +165,39 @@ anonymous_struct_and_union(void)
 	/* expect+1: error: negative array dimension (-48) [20] */
 	typedef int sizeof_us_16_32[-(int)sizeof(us_16_32)];
 }
+
+
+void
+sizeof_errors(void)
+{
+	/* expect+1: error: cannot take size/alignment of void [146] */
+	typedef int sizeof_void[-(int)sizeof(void)];
+
+	/*
+	 * A 'void array' gets replaced with an 'int array' before
+	 * type_size_in_bits gets to see it, thus the 256 * 4 = 1024.
+	 */
+	/* expect+2: error: illegal use of 'void' [18] */
+	/* expect+1: error: negative array dimension (-1024) [20] */
+	typedef int sizeof_void_array[-(int)sizeof(void[256])];
+
+	/* expect+1: warning: enum 'incomplete_enum' never defined [235] */
+	enum incomplete_enum;
+	/* expect+2: warning: cannot take size/alignment of incomplete type [143] */
+	/* expect+1: error: negative array dimension (-4) [20] */
+	typedef int sizeof_incomplete_enum[-(int)sizeof(enum incomplete_enum)];
+}
+
+
+/*
+ * Due to the 'double' member, the alignment of this struct is 8, so the size
+ * has to be 24 (or at least divisible by 8), otherwise the 'double' member
+ * would not get the correct alignment in an array of this struct.
+ */
+struct s24 {
+	char c0;
+	double d8;
+	char c16;
+};
+/* expect+1: error: negative array dimension (-24) [20] */
+typedef int sizeof_s24[-(int)sizeof(struct s24)];
