@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.65 2023/04/11 19:02:19 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.66 2023/06/30 12:21:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.65 2023/04/11 19:02:19 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.66 2023/06/30 12:21:25 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -247,7 +247,7 @@ expr_zero_alloc(size_t s)
 }
 
 static bool
-str_endswith(const char *haystack, const char *needle)
+str_ends_with(const char *haystack, const char *needle)
 {
 	size_t hlen = strlen(haystack);
 	size_t nlen = strlen(needle);
@@ -274,7 +274,7 @@ expr_alloc_tnode(void)
 	 */
 	tn->tn_sys = in_system_header ||
 		     (curr_pos.p_file != csrc_pos.p_file &&
-		      str_endswith(curr_pos.p_file, ".c"));
+		      str_ends_with(curr_pos.p_file, ".c"));
 	return tn;
 }
 
