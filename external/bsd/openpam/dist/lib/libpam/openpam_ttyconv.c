@@ -31,8 +31,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $OpenPAM: openpam_ttyconv.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -94,12 +92,6 @@ prompt_tty(int ifd, int ofd, const char *message, char *response, int echo)
 	int pos, ret;
 	char ch;
 
-	/* write prompt */
-	if (write(ofd, message, strlen(message)) < 0) {
-		openpam_log(PAM_LOG_ERROR, "write(): %m");
-		return (-1);
-	}
-
 	/* turn echo off if requested */
 	slflag = 0; /* prevent bogus uninitialized variable warning */
 	if (!echo) {
@@ -113,6 +105,12 @@ prompt_tty(int ifd, int ofd, const char *message, char *response, int echo)
 			openpam_log(PAM_LOG_ERROR, "tcsetattr(): %m");
 			return (-1);
 		}
+	}
+
+	/* write prompt */
+	if (write(ofd, message, strlen(message)) < 0) {
+		openpam_log(PAM_LOG_ERROR, "write(): %m");
+		return (-1);
 	}
 
 	/* install signal handlers */
