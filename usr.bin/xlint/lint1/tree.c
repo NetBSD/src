@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.536 2023/06/30 12:21:25 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.537 2023/06/30 21:06:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.536 2023/06/30 12:21:25 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.537 2023/06/30 21:06:18 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1882,6 +1882,26 @@ all_members_compatible(const sym_t *msym)
 	return true;
 }
 
+static sym_t *
+find_member(const type_t *tp, const char *name)
+{
+	for (sym_t *mem = tp->t_sou->sou_first_member;
+	     mem != NULL; mem = mem->s_next) {
+		if (strcmp(mem->s_name, name) == 0)
+			return mem;
+	}
+	for (sym_t *mem = tp->t_sou->sou_first_member;
+	     mem != NULL; mem = mem->s_next) {
+		if (is_struct_or_union(mem->s_type->t_tspec) &&
+		    mem->s_name == unnamed) {
+			sym_t *nested_mem = find_member(mem->s_type, name);
+			if (nested_mem != NULL)
+				return nested_mem;
+		}
+	}
+	return NULL;
+}
+
 /*
  * Returns a symbol which has the same name as the msym argument and is a
  * member of the struct or union specified by the tn argument.
@@ -1913,13 +1933,14 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		return msym;
 	}
 
-	/* Set str to the tag of which msym is expected to be a member. */
-	struct_or_union *str = NULL;
+	/* Determine the tag type of which msym is expected to be a member. */
+	const type_t *tp = NULL;
 	if (op == POINT && is_struct_or_union(tn->tn_type->t_tspec))
-		str = tn->tn_type->t_sou;
+		tp = tn->tn_type;
 	if (op == ARROW && tn->tn_type->t_tspec == PTR
 	    && is_struct_or_union(tn->tn_type->t_subt->t_tspec))
-		str = tn->tn_type->t_subt->t_sou;
+		tp = tn->tn_type->t_subt;
+	struct_or_union *str = tp != NULL ? tp->t_sou : NULL;
 
 	/*
 	 * If this struct/union has a member with the name of msym, return it.
@@ -1932,6 +1953,12 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 			    strcmp(sym->s_name, msym->s_name) == 0)
 				return sym;
 		}
+	}
+
+	if (tp != NULL) {
+		sym_t *nested_mem = find_member(tp, msym->s_name);
+		if (nested_mem != NULL)
+			return nested_mem;
 	}
 
 	bool eq = all_members_compatible(msym);

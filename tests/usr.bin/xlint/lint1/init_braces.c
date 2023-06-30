@@ -1,4 +1,4 @@
-/*	$NetBSD: init_braces.c,v 1.4 2023/06/30 09:21:52 rillig Exp $	*/
+/*	$NetBSD: init_braces.c,v 1.5 2023/06/30 21:06:18 rillig Exp $	*/
 # 3 "init_braces.c"
 
 /*
@@ -86,8 +86,6 @@ init_anonymous_struct_and_union(void)
 	struct outer var = {	/* struct outer */
 		{		/* anonymous union */
 			{	/* anonymous struct */
-/* FIXME: GCC and Clang both compile this initializer. */
-/* expect+1: error: type 'struct time' does not have member 'times' [101] */
 				.times = {
 					.t0 = { .ns = 0, },
 					.t1 = { .ns = 0, },
