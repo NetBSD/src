@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.324 2023/06/30 07:18:02 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.325 2023/06/30 14:39:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.324 2023/06/30 07:18:02 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.325 2023/06/30 14:39:23 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -471,37 +471,31 @@ bit_field_width(sym_t **mem)
 }
 
 static void
-set_packed_size(type_t *tp)
+pack_struct_or_union(type_t *tp)
 {
-	struct_or_union *sp;
-	sym_t *mem;
 
-	switch (tp->t_tspec) {
-	case STRUCT:
-	case UNION:
-		sp = tp->t_sou;
-		sp->sou_size_in_bits = 0;
-		for (mem = sp->sou_first_member;
-		     mem != NULL; mem = mem->s_next) {
-			unsigned int x;
-
-			if (mem->s_type->t_bitfield) {
-				sp->sou_size_in_bits += bit_field_width(&mem);
-				if (mem == NULL)
-					break;
-			}
-			x = type_size_in_bits(mem->s_type);
-			if (tp->t_tspec == STRUCT)
-				sp->sou_size_in_bits += x;
-			else if (x > sp->sou_size_in_bits)
-				sp->sou_size_in_bits = x;
-		}
-		break;
-	default:
+	if (!is_struct_or_union(tp->t_tspec)) {
 		/* attribute '%s' ignored for '%s' */
 		warning(326, "packed", type_name(tp));
-		break;
+		return;
 	}
+
+	unsigned int bits = 0;
+	for (sym_t *mem = tp->t_sou->sou_first_member;
+	     mem != NULL; mem = mem->s_next) {
+		// TODO: Maybe update mem->u.s_member.sm_offset_in_bits.
+		if (mem->s_type->t_bitfield) {
+			bits += bit_field_width(&mem);
+			if (mem == NULL)
+				break;
+		}
+		unsigned int mem_bits = type_size_in_bits(mem->s_type);
+		if (tp->t_tspec == STRUCT)
+			bits += mem_bits;
+		else if (mem_bits > bits)
+			bits = mem_bits;
+	}
+	tp->t_sou->sou_size_in_bits = bits;
 }
 
 void
@@ -510,7 +504,7 @@ dcs_add_packed(void)
 	if (dcs->d_type == NULL)
 		dcs->d_packed = true;
 	else
-		set_packed_size(dcs->d_type);
+		pack_struct_or_union(dcs->d_type);
 }
 
 void
@@ -1792,7 +1786,7 @@ complete_struct_or_union(sym_t *first_member)
 	sp->sou_incomplete = false;
 	sp->sou_first_member = first_member;
 	if (tp->t_packed)
-		set_packed_size(tp);
+		pack_struct_or_union(tp);
 	else
 		sp->sou_size_in_bits = dcs->d_offset_in_bits;
 

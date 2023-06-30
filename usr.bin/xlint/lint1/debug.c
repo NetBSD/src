@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.37 2023/06/29 22:52:44 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.38 2023/06/30 14:39:23 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.37 2023/06/29 22:52:44 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.38 2023/06/30 14:39:23 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -125,6 +125,11 @@ debug_type_details(const type_t *tp)
 
 	if (is_struct_or_union(tp->t_tspec)) {
 		debug_indent_inc();
+		debug_step("size %u bits, align %u bits, %s",
+		    tp->t_sou->sou_size_in_bits,
+		    (unsigned int)tp->t_sou->sou_align_in_bits,
+		    tp->t_sou->sou_incomplete ? "incomplete" : "complete");
+
 		for (const sym_t *mem = tp->t_sou->sou_first_member;
 		     mem != NULL; mem = mem->s_next) {
 			debug_sym("", mem, "\n");
