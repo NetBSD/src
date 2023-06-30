@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.533 2023/06/30 08:45:22 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.534 2023/06/30 08:48:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.533 2023/06/30 08:45:22 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.534 2023/06/30 08:48:38 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4102,14 +4102,14 @@ build_alignof(const type_t *tp)
 	case FUNC:
 		/* cannot take size/alignment of function type '%s' */
 		error(144, type_name(tp));
-		return 0;
+		return NULL;
 
 	case STRUCT:
 	case UNION:
 		if (is_incomplete(tp)) {
 			/* cannot take size/alignment of incomplete type */
 			error(143);
-			return 0;
+			return NULL;
 		}
 		break;
 	case ENUM:
@@ -4118,12 +4118,12 @@ build_alignof(const type_t *tp)
 		if (tp->t_bitfield) {
 			/* cannot take size/alignment of bit-field */
 			error(145);
-			return 0;
+			return NULL;
 		}
 		if (tp->t_tspec == VOID) {
 			/* cannot take size/alignment of void */
 			error(146);
-			return 0;
+			return NULL;
 		}
 		break;
 	}
