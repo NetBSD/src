@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.441 2023/06/30 19:10:49 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.442 2023/06/30 21:06:18 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.441 2023/06/30 19:10:49 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.442 2023/06/30 21:06:18 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -119,14 +119,6 @@ restore_warning_flags_loc(const char *file, size_t line)
 #define clear_warning_flags()	clear_warning_flags_loc(__FILE__, __LINE__)
 #define save_warning_flags()	save_warning_flags_loc(__FILE__, __LINE__)
 #define restore_warning_flags()	restore_warning_flags_loc(__FILE__, __LINE__)
-
-/* unbind the anonymous struct members from the struct */
-static void
-anonymize(sym_t *s)
-{
-	for ( ; s != NULL; s = s->s_next)
-		s->u.s_member.sm_sou_type = NULL;
-}
 
 static bool
 is_either(const char *s, const char *a, const char *b)
@@ -968,11 +960,9 @@ struct_declaration:		/* C99 6.7.2.1 */
 		if (!allow_c11 && !allow_gcc)
 			/* anonymous struct/union members is a C11 feature */
 			warning(49);
-		if (is_struct_or_union(dcs->d_type->t_tspec)) {
-			$$ = dcs->d_type->t_sou->sou_first_member;
-			/* add all the members of the anonymous struct/union */
-			anonymize($$);
-		} else {
+		if (is_struct_or_union(dcs->d_type->t_tspec))
+			$$ = declare_unnamed_member();
+		else {
 			/* syntax error '%s' */
 			error(249, "unnamed member");
 			$$ = NULL;

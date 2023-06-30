@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.11 2023/06/30 16:39:17 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.12 2023/06/30 21:06:18 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -152,8 +152,7 @@ anonymous_struct_and_union(void)
 			unsigned char uc32[32];
 		};
 	} su_16_32;
-	/* FIXME: Must be 32, not 48. */
-	/* expect+1: error: negative array dimension (-48) [20] */
+	/* expect+1: error: negative array dimension (-32) [20] */
 	typedef int sizeof_su_16_32[-(int)sizeof(su_16_32)];
 
 	union {

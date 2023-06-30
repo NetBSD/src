@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.242 2023/05/22 17:53:27 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.243 2023/06/30 21:06:18 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.242 2023/05/22 17:53:27 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.243 2023/06/30 21:06:18 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -209,12 +209,19 @@ can_init_character_array(const type_t *ltp, const tnode_t *rn)
 	    : lst == WCHAR;
 }
 
-/* C99 6.7.8p9 */
+/*
+ * C11 6.7.9p9 seems to say that all unnamed members are skipped. C11 6.7.2.1p8
+ * suggests an exception to that rule, and together with C11 6.7.2.1p13, it
+ * says that the members from an anonymous struct/union member are "considered
+ * to be members of the containing structure or union", thereby preventing that
+ * the containing structure or union has only unnamed members.
+ */
 static const sym_t *
 skip_unnamed(const sym_t *m)
 {
 
-	while (m != NULL && m->s_name == unnamed)
+	while (m != NULL && m->s_name == unnamed
+	    && !is_struct_or_union(m->s_type->t_tspec))
 		m = m->s_next;
 	return m;
 }
