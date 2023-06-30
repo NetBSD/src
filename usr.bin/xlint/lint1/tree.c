@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.532 2023/06/29 12:52:06 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.533 2023/06/30 08:45:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.532 2023/06/29 12:52:06 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.533 2023/06/30 08:45:22 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2912,8 +2912,12 @@ check_assign_types_compatible(op_t op, int arg,
 		return ltp->t_sou == rtp->t_sou;
 
 	/* a null pointer may be assigned to any pointer */
-	if (lt == PTR && is_null_pointer(rn))
+	if (lt == PTR && is_null_pointer(rn)) {
+		if (is_integer(rn->tn_type->t_tspec))
+			/* implicit conversion from integer 0 to pointer ... */
+			query_message(15, type_name(ltp));
 		return true;
+	}
 
 	check_assign_void_pointer(op, arg, lt, lst, rt, rst);
 

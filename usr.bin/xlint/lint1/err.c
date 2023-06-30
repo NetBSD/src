@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.202 2023/06/24 08:11:12 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.203 2023/06/30 08:45:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.202 2023/06/24 08:11:12 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.203 2023/06/30 08:45:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -710,6 +710,7 @@ static const char *queries[] = {
 	"comma operator with types '%s' and '%s'",		      /* Q12 */
 	"redundant 'extern' in function declaration of '%s'",	      /* Q13 */
 	"comparison '%s' of 'char' with plain integer %d",	      /* Q14 */
+	"implicit conversion from integer 0 to pointer '%s'",	      /* Q15 */
 };
 
 bool any_query_enabled;		/* for optimizing non-query scenarios */

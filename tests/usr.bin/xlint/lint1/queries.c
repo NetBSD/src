@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.17 2023/06/24 08:11:12 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.18 2023/06/30 08:45:22 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -15,7 +15,7 @@
  * 	such as casts between arithmetic types.
  */
 
-/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12,13,14 -X 351 */
+/* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 -X 351 */
 
 typedef unsigned char u8_t;
 typedef unsigned short u16_t;
@@ -421,6 +421,24 @@ Q14(char c, signed char sc, unsigned char uc, int wc)
 	if (wc == 'c' || wc == L'w' || wc == 92 || wc == 0)
 		return 4;
 	return 5;
+}
+
+void *
+Q15(void)
+{
+	/* expect+1: implicit conversion from integer 0 to pointer 'pointer to void' [Q15] */
+	void *ptr_from_int = 0;
+	/* expect+1: implicit conversion from integer 0 to pointer 'pointer to void' [Q15] */
+	void *ptr_from_uint = 0U;
+	/* expect+1: implicit conversion from integer 0 to pointer 'pointer to void' [Q15] */
+	void *ptr_from_long = 0L;
+
+	ptr_from_int = &ptr_from_int;
+	ptr_from_uint = &ptr_from_uint;
+	ptr_from_long = &ptr_from_long;
+
+	/* expect+1: implicit conversion from integer 0 to pointer 'pointer to void' [Q15] */
+	return 0;
 }
 
 /*
