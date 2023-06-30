@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2019 Dag-Erling Smørgrav
+ * Copyright (c) 2023 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,11 @@
 # include "config.h"
 #endif
 
+#include <err.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <cryb/test.h>
@@ -41,21 +45,61 @@
 
 #include "openpam_impl.h"
 
-#include "t_pam_err.h"
+#define T_FUNC(n, d)							\
+	static const char *t_ ## n ## _desc = d;			\
+	static int t_ ## n ## _func(OPENPAM_UNUSED(char **desc),	\
+	    OPENPAM_UNUSED(void *arg))
 
-int
-t_compare_pam_err(int expected, int received)
+#define T(n)								\
+	t_add_test(&t_ ## n ## _func, NULL, "%s", t_ ## n ## _desc)
+
+const char *pam_return_so;
+
+T_FUNC(final_percent, "template ends with %")
+{
+	char template[] = "test%\0deadbeef";
+	char buf[] = "Squeamish Ossifrage";
+	size_t bufsize = sizeof(buf);
+	int pam_err, ret;
+
+	pam_err = openpam_subst(NULL, buf, &bufsize, template);
+	ret = (pam_err == PAM_SUCCESS);
+	ret &= t_compare_sz(sizeof("test%"), bufsize);
+	ret &= t_compare_str("test%", buf);
+	return (ret);
+}
+
+
+/***************************************************************************
+ * Boilerplate
+ */
+
+static int
+t_prepare(int argc, char *argv[])
 {
 
-	if (expected == received)
-		return (1);
-	if (expected >= 0 && expected < PAM_NUM_ERRORS)
-		t_printv("expected %s, ", pam_err_name[expected]);
-	else
-		t_printv("expected %d, ", expected);
-	if (received >= 0 && received < PAM_NUM_ERRORS)
-		t_printv("received %s\n", pam_err_name[received]);
-	else
-		t_printv("received %d\n", received);
+	(void)argc;
+	(void)argv;
+
+	if ((pam_return_so = getenv("PAM_RETURN_SO")) == NULL) {
+		t_printv("define PAM_RETURN_SO before running these tests\n");
+		return (0);
+	}
+
+	openpam_set_feature(OPENPAM_RESTRICT_MODULE_NAME, 0);
+	openpam_set_feature(OPENPAM_VERIFY_MODULE_FILE, 0);
+	openpam_set_feature(OPENPAM_RESTRICT_SERVICE_NAME, 0);
+	openpam_set_feature(OPENPAM_VERIFY_POLICY_FILE, 0);
+	openpam_set_feature(OPENPAM_FALLBACK_TO_OTHER, 0);
+
+	T(final_percent);
+
 	return (0);
+}
+
+int
+main(int argc, char *argv[])
+{
+
+	t_main(t_prepare, NULL, argc, argv);
 }
