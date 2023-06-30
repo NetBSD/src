@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_ttyconv.c,v 1.4 2021/03/08 19:38:10 christos Exp $	*/
+/*	$NetBSD: openpam_ttyconv.c,v 1.5 2023/06/30 21:46:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -33,8 +33,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $OpenPAM: openpam_ttyconv.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_ttyconv.c,v 1.4 2021/03/08 19:38:10 christos Exp $");
+__RCSID("$NetBSD: openpam_ttyconv.c,v 1.5 2023/06/30 21:46:21 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/poll.h>
@@ -118,12 +116,6 @@ prompt_tty(int ifd, int ofd, const char *message, char *response, int echo)
 	int pos, ret;
 	char ch;
 
-	/* write prompt */
-	if (write(ofd, message, strlen(message)) < 0) {
-		openpam_log(PAM_LOG_ERROR, "write(): %m");
-		return (-1);
-	}
-
 	/* turn echo off if requested */
 	slflag = 0; /* prevent bogus uninitialized variable warning */
 	if (!echo) {
@@ -137,6 +129,12 @@ prompt_tty(int ifd, int ofd, const char *message, char *response, int echo)
 			openpam_log(PAM_LOG_ERROR, "tcsetattr(): %m");
 			return (-1);
 		}
+	}
+
+	/* write prompt */
+	if (write(ofd, message, strlen(message)) < 0) {
+		openpam_log(PAM_LOG_ERROR, "write(): %m");
+		return (-1);
 	}
 
 	/* install signal handlers */

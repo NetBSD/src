@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_configure.c,v 1.4 2018/05/16 13:54:03 joerg Exp $	*/
+/*	$NetBSD: openpam_configure.c,v 1.5 2023/06/30 21:46:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001-2003 Networks Associates Technology, Inc.
@@ -33,8 +33,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $OpenPAM: openpam_configure.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_configure.c,v 1.4 2018/05/16 13:54:03 joerg Exp $");
+__RCSID("$NetBSD: openpam_configure.c,v 1.5 2023/06/30 21:46:20 christos Exp $");
 
 #include <sys/param.h>
 

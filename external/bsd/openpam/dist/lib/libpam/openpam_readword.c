@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_readword.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: openpam_readword.c,v 1.4 2023/06/30 21:46:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012-2017 Dag-Erling Smørgrav
@@ -27,8 +27,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $OpenPAM: openpam_readword.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -36,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_readword.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
+__RCSID("$NetBSD: openpam_readword.c,v 1.4 2023/06/30 21:46:20 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -139,7 +137,6 @@ openpam_readword(FILE *f, int *lineno, size_t *lenp)
 	}
 	if (ch == EOF && (escape || quote)) {
 		/* Missing escaped character or closing quote. */
-		openpam_log(PAM_LOG_DEBUG, "unexpected end of file");
 		free(word);
 		errno = EINVAL;
 		return (NULL);
