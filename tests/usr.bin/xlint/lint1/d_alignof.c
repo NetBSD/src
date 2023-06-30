@@ -1,4 +1,4 @@
-/*	$NetBSD: d_alignof.c,v 1.10 2023/06/30 09:26:03 rillig Exp $	*/
+/*	$NetBSD: d_alignof.c,v 1.11 2023/06/30 16:39:17 rillig Exp $	*/
 # 3 "d_alignof.c"
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Alignment.html */
@@ -108,6 +108,9 @@ alignof_variants(void)
 	/* expect+1: error: cannot take size/alignment of incomplete type [143] */
 	typedef int incomplete_enum[-(int)__alignof(enum incomplete_enum)];
 
+	/* expect+1: error: cannot take size/alignment of incomplete type [143] */
+	typedef int incomplete_array[-(int)__alignof(int[])];
+
 	struct bit_fields {
 		_Bool bit_field:1;
 	};
@@ -117,7 +120,11 @@ alignof_variants(void)
 	 */
 	/* expect+2: error: cannot initialize typedef '00000000_tmp' [25] */
 	/* expect+1: error: cannot take size/alignment of bit-field [145] */
-	typedef int bit_field[-(int)__alignof((struct bit_fields){0}.bit_field)];
+	typedef int bit_field_1[-(int)__alignof((struct bit_fields){0}.bit_field)];
+
+	struct bit_fields bit_fields;
+	/* expect+1: error: cannot take size/alignment of bit-field [145] */
+	typedef int bit_field_2[-(int)__alignof(bit_fields.bit_field)];
 
 	/* expect+1: error: cannot take size/alignment of void [146] */
 	typedef int plain_void[-(int)__alignof(void)];
