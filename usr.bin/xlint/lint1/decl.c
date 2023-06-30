@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.327 2023/06/30 19:10:49 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.328 2023/06/30 19:43:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.327 2023/06/30 19:10:49 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.328 2023/06/30 19:43:00 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1579,7 +1579,7 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	} else {
 		tag = block_zero_alloc(sizeof(*tag));
 		tag->s_name = unnamed;
-		UNIQUE_CURR_POS(tag->s_def_pos);
+		tag->s_def_pos = unique_curr_pos();
 		tag->s_kind = FTAG;
 		tag->s_scl = scl;
 		tag->s_block_level = -1;
@@ -2834,7 +2834,7 @@ mark_as_set(sym_t *sym)
 
 	if (!sym->s_set) {
 		sym->s_set = true;
-		UNIQUE_CURR_POS(sym->s_set_pos);
+		sym->s_set_pos = unique_curr_pos();
 	}
 }
 
@@ -2845,7 +2845,7 @@ mark_as_used(sym_t *sym, bool fcall, bool szof)
 
 	if (!sym->s_used) {
 		sym->s_used = true;
-		UNIQUE_CURR_POS(sym->s_use_pos);
+		sym->s_use_pos = unique_curr_pos();
 	}
 	/*
 	 * For function calls, another record is written.
