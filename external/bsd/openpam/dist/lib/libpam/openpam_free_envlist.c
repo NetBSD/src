@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_free_envlist.c,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: openpam_free_envlist.c,v 1.4 2023/06/30 21:46:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005-2011 Dag-Erling Smørgrav
@@ -25,8 +25,6 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * $OpenPAM: openpam_free_envlist.c 938 2017-04-30 21:34:42Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -34,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openpam_free_envlist.c,v 1.3 2017/05/06 19:50:09 christos Exp $");
+__RCSID("$NetBSD: openpam_free_envlist.c,v 1.4 2023/06/30 21:46:20 christos Exp $");
 
 #include <stdlib.h>
 

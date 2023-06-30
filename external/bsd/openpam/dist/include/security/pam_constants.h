@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_constants.h,v 1.7 2021/03/08 19:38:10 christos Exp $	*/
+/*	$NetBSD: pam_constants.h,v 1.8 2023/06/30 21:46:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
@@ -33,8 +33,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $OpenPAM: pam_constants.h 938 2017-04-30 21:34:42Z des $
  */
 
 #ifndef SECURITY_PAM_CONSTANTS_H_INCLUDED
