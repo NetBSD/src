@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.537 2023/06/30 21:06:18 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.538 2023/06/30 21:39:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.537 2023/06/30 21:06:18 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.538 2023/06/30 21:39:54 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4399,7 +4399,7 @@ expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while)
 	}
 
 	/* expr() is also called in global initializations */
-	if (dcs->d_kind != DK_EXTERN && !is_do_while)
+	if (dcs->d_kind != DLK_EXTERN && !is_do_while)
 		check_statement_reachable();
 
 	check_expr_misc(tn, vctx, cond, !cond, false, false, false);
@@ -4512,8 +4512,8 @@ check_expr_load(const tnode_t *ln)
 static bool
 is_asm_around(void)
 {
-	for (dinfo_t *di = dcs; di != NULL; di = di->d_enclosing)
-		if (di->d_asm)
+	for (decl_level *dl = dcs; dl != NULL; dl = dl->d_enclosing)
+		if (dl->d_asm)
 			return true;
 	return false;
 }

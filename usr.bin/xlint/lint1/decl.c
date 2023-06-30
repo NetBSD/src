@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.329 2023/06/30 21:06:18 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.330 2023/06/30 21:39:54 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.329 2023/06/30 21:06:18 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.330 2023/06/30 21:39:54 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -57,10 +57,11 @@ static	type_t	typetab[NTSPEC];
 int	enumval;
 
 /*
- * pointer to innermost element of a stack which contains information local
- * to nested declarations
+ * Points to the innermost element of a stack that contains information about
+ * nested declarations, such as struct declarations, function prototypes,
+ * local variables.
  */
-dinfo_t	*dcs;
+decl_level	*dcs;
 
 static	type_t	*typedef_error(type_t *, tspec_t);
 static	void	set_first_typedef(type_t *, sym_t *);
@@ -94,7 +95,7 @@ initdecl(void)
 
 	/* declaration stack */
 	dcs = xcalloc(1, sizeof(*dcs));
-	dcs->d_kind = DK_EXTERN;
+	dcs->d_kind = DLK_EXTERN;
 	dcs->d_last_dlsym = &dcs->d_first_dlsym;
 
 	if (!pflag) {
@@ -511,41 +512,41 @@ dcs_add_qualifier(tqual_t q)
 }
 
 void
-begin_declaration_level(declaration_kind dk)
+begin_declaration_level(decl_level_kind kind)
 {
 
-	dinfo_t *di = xcalloc(1, sizeof(*di));
-	di->d_enclosing = dcs;
-	di->d_kind = dk;
-	di->d_last_dlsym = &di->d_first_dlsym;
-	dcs = di;
-	debug_step("%s(%s)", __func__, declaration_kind_name(dk));
+	decl_level *dl = xcalloc(1, sizeof(*dl));
+	dl->d_enclosing = dcs;
+	dl->d_kind = kind;
+	dl->d_last_dlsym = &dl->d_first_dlsym;
+	dcs = dl;
+	debug_step("%s(%s)", __func__, decl_level_kind_name(kind));
 }
 
 void
 end_declaration_level(void)
 {
-	dinfo_t *di;
+	decl_level *dl;
 
-	debug_step("%s(%s)", __func__, declaration_kind_name(dcs->d_kind));
+	debug_step("%s(%s)", __func__, decl_level_kind_name(dcs->d_kind));
 
 	lint_assert(dcs->d_enclosing != NULL);
-	di = dcs;
-	dcs = di->d_enclosing;
+	dl = dcs;
+	dcs = dl->d_enclosing;
 
-	switch (di->d_kind) {
-	case DK_STRUCT_MEMBER:
-	case DK_UNION_MEMBER:
-	case DK_ENUM_CONSTANT:
+	switch (dl->d_kind) {
+	case DLK_STRUCT:
+	case DLK_UNION:
+	case DLK_ENUM:
 		/*
 		 * Symbols declared in (nested) structs or enums are part of
 		 * the next level (they are removed from the symbol table if
 		 * the symbols of the outer level are removed).
 		 */
-		if ((*dcs->d_last_dlsym = di->d_first_dlsym) != NULL)
-			dcs->d_last_dlsym = di->d_last_dlsym;
+		if ((*dcs->d_last_dlsym = dl->d_first_dlsym) != NULL)
+			dcs->d_last_dlsym = dl->d_last_dlsym;
 		break;
-	case DK_OLD_STYLE_ARG:
+	case DLK_OLD_STYLE_ARGS:
 		/*
 		 * All symbols in dcs->d_first_dlsym are introduced in
 		 * old-style argument declarations (it's not clean, but
@@ -553,12 +554,12 @@ end_declaration_level(void)
 		 * in an old-style argument identifier list or a new-style
 		 * parameter type list.
 		 */
-		if (di->d_first_dlsym != NULL) {
-			*di->d_last_dlsym = dcs->d_func_proto_syms;
-			dcs->d_func_proto_syms = di->d_first_dlsym;
+		if (dl->d_first_dlsym != NULL) {
+			*dl->d_last_dlsym = dcs->d_func_proto_syms;
+			dcs->d_func_proto_syms = dl->d_first_dlsym;
 		}
 		break;
-	case DK_ABSTRACT:	/* casts and sizeof */
+	case DLK_ABSTRACT:
 		/*
 		 * Append all symbols declared in the abstract declaration to
 		 * the list of symbols declared in the surrounding declaration
@@ -567,23 +568,23 @@ end_declaration_level(void)
 		 * XXX I'm not sure whether they should be removed from the
 		 * symbol table now or later.
 		 */
-		if ((*dcs->d_last_dlsym = di->d_first_dlsym) != NULL)
-			dcs->d_last_dlsym = di->d_last_dlsym;
+		if ((*dcs->d_last_dlsym = dl->d_first_dlsym) != NULL)
+			dcs->d_last_dlsym = dl->d_last_dlsym;
 		break;
-	case DK_AUTO:
-		check_usage(di);
+	case DLK_AUTO:
+		check_usage(dl);
 		/* FALLTHROUGH */
-	case DK_PROTO_ARG:
+	case DLK_PROTO_PARAMS:
 		/* usage of arguments will be checked by end_function() */
-		rmsyms(di->d_first_dlsym);
+		rmsyms(dl->d_first_dlsym);
 		break;
-	case DK_EXTERN:
+	case DLK_EXTERN:
 		/* there is nothing around an external declarations */
 		/* FALLTHROUGH */
 	default:
 		lint_assert(/*CONSTCOND*/false);
 	}
-	free(di);
+	free(dl);
 }
 
 /*
@@ -593,19 +594,19 @@ end_declaration_level(void)
  * compound statements, asm statements. For these compound statements, no
  * warnings about unused or uninitialized variables are printed.
  *
- * There is no need to clear d_asm in dinfo structs with context AUTO, because
+ * There is no need to clear d_asm in decl_level structs with context AUTO, as
  * these structs are freed at the end of the compound statement. But it must be
- * cleared in the outermost dinfo struct, which has context EXTERN. This could
- * be done in dcs_begin_type and would work for C90, but not for C99 or C++
- * (due to mixed statements and declarations). Thus, we clear it in
+ * cleared in the outermost decl_level struct, which has context EXTERN. This
+ * could be done in dcs_begin_type and would work for C90, but not for C99 or
+ * C++ (due to mixed statements and declarations). Thus, we clear it in
  * global_clean_up_decl.
  */
 void
 dcs_set_asm(void)
 {
 
-	for (dinfo_t *di = dcs; di != NULL; di = di->d_enclosing)
-		di->d_asm = true;
+	for (decl_level *dl = dcs; dl != NULL; dl = dl->d_enclosing)
+		dl->d_asm = true;
 }
 
 void
@@ -630,14 +631,14 @@ dcs_begin_type(void)
 static void
 dcs_adjust_storage_class(void)
 {
-	if (dcs->d_kind == DK_EXTERN) {
+	if (dcs->d_kind == DLK_EXTERN) {
 		if (dcs->d_scl == REG || dcs->d_scl == AUTO) {
 			/* illegal storage class */
 			error(8);
 			dcs->d_scl = NOSCL;
 		}
-	} else if (dcs->d_kind == DK_OLD_STYLE_ARG ||
-		   dcs->d_kind == DK_PROTO_ARG) {
+	} else if (dcs->d_kind == DLK_OLD_STYLE_ARGS ||
+		   dcs->d_kind == DLK_PROTO_PARAMS) {
 		if (dcs->d_scl != NOSCL && dcs->d_scl != REG) {
 			/* only register valid as formal parameter ... */
 			error(9);
@@ -907,14 +908,14 @@ check_type(sym_t *sym)
 			 * length_in_bits already does this.
 			 */
 		} else if (to == NO_TSPEC && t == VOID) {
-			if (dcs->d_kind == DK_PROTO_ARG) {
+			if (dcs->d_kind == DLK_PROTO_PARAMS) {
 				if (sym->s_scl != ABSTRACT) {
 					lint_assert(sym->s_name != unnamed);
 					/* void parameter '%s' cannot ... */
 					error(61, sym->s_name);
 					*tpp = gettyp(INT);
 				}
-			} else if (dcs->d_kind == DK_ABSTRACT) {
+			} else if (dcs->d_kind == DLK_ABSTRACT) {
 				/* ok */
 			} else if (sym->s_scl != TYPEDEF) {
 				/* void type for '%s' */
@@ -1023,7 +1024,7 @@ dcs_add_member(sym_t *mem)
 	type_t *tp = mem->s_type;
 
 	unsigned int union_offset = 0;
-	if (dcs->d_kind == DK_UNION_MEMBER) {
+	if (dcs->d_kind == DLK_UNION) {
 		union_offset = dcs->d_offset_in_bits;
 		dcs->d_offset_in_bits = 0;
 	}
@@ -1338,7 +1339,7 @@ add_function(sym_t *decl, sym_t *args)
 	 * because *dcs is the declaration stack element created for the list
 	 * of params and is removed after add_function.)
 	 */
-	if (dcs->d_enclosing->d_kind == DK_EXTERN &&
+	if (dcs->d_enclosing->d_kind == DLK_EXTERN &&
 	    decl->s_type == dcs->d_enclosing->d_type) {
 		dcs->d_enclosing->d_func_proto_syms = dcs->d_first_dlsym;
 		dcs->d_enclosing->d_func_args = args;
@@ -1407,7 +1408,7 @@ old_style_function(sym_t *decl, sym_t *args)
 	 * Remember the list of parameters only if this really seems to be a
 	 * function definition.
 	 */
-	if (dcs->d_enclosing->d_kind == DK_EXTERN &&
+	if (dcs->d_enclosing->d_kind == DLK_EXTERN &&
 	    decl->s_type == dcs->d_enclosing->d_type) {
 		/*
 		 * Assume that this becomes a function definition. If not, it
@@ -1462,16 +1463,14 @@ declarator_name(sym_t *sym)
 	}
 
 	switch (dcs->d_kind) {
-	case DK_STRUCT_MEMBER:
-	case DK_UNION_MEMBER:
+	case DLK_STRUCT:
+	case DLK_UNION:
 		/* Set parent */
 		sym->u.s_member.sm_sou_type = dcs->d_tag_type->t_sou;
 		sym->s_def = DEF;
-		sc = dcs->d_kind == DK_STRUCT_MEMBER
-		    ? STRUCT_MEMBER
-		    : UNION_MEMBER;
+		sc = dcs->d_kind == DLK_STRUCT ? STRUCT_MEMBER : UNION_MEMBER;
 		break;
-	case DK_EXTERN:
+	case DLK_EXTERN:
 		/*
 		 * static and external symbols without "extern" are considered
 		 * to be tentatively defined, external symbols with "extern"
@@ -1491,10 +1490,10 @@ declarator_name(sym_t *sym)
 			sym->s_def = DECL;
 		}
 		break;
-	case DK_PROTO_ARG:
+	case DLK_PROTO_PARAMS:
 		sym->s_arg = true;
 		/* FALLTHROUGH */
-	case DK_OLD_STYLE_ARG:
+	case DLK_OLD_STYLE_ARGS:
 		if ((sc = dcs->d_scl) == NOSCL)
 			sc = AUTO;
 		else {
@@ -1504,7 +1503,7 @@ declarator_name(sym_t *sym)
 		}
 		sym->s_def = DEF;
 		break;
-	case DK_AUTO:
+	case DLK_AUTO:
 		if ((sc = dcs->d_scl) == NOSCL) {
 			/*
 			 * XXX somewhat ugly because we don't know whether this
@@ -1526,7 +1525,7 @@ declarator_name(sym_t *sym)
 		}
 		break;
 	default:
-		lint_assert(dcs->d_kind == DK_ABSTRACT);
+		lint_assert(dcs->d_kind == DLK_ABSTRACT);
 		/* try to continue after syntax errors */
 		sc = NOSCL;
 	}
@@ -1962,17 +1961,17 @@ void
 declare(sym_t *decl, bool has_initializer, sbuf_t *renaming)
 {
 
-	if (dcs->d_kind == DK_EXTERN)
+	if (dcs->d_kind == DLK_EXTERN)
 		declare_extern(decl, has_initializer, renaming);
-	else if (dcs->d_kind == DK_OLD_STYLE_ARG ||
-		 dcs->d_kind == DK_PROTO_ARG) {
+	else if (dcs->d_kind == DLK_OLD_STYLE_ARGS ||
+		 dcs->d_kind == DLK_PROTO_PARAMS) {
 		if (renaming != NULL) {
 			/* symbol renaming can't be used on function arguments */
 			error(310);
 		} else
 			(void)declare_argument(decl, has_initializer);
 	} else {
-		lint_assert(dcs->d_kind == DK_AUTO);
+		lint_assert(dcs->d_kind == DLK_AUTO);
 		if (renaming != NULL) {
 			/* symbol renaming can't be used on automatic variables */
 			error(311);
@@ -2759,7 +2758,7 @@ check_init(sym_t *sym)
 		return true;
 	}
 	if (sym->s_scl == EXTERN && sym->s_def == DECL) {
-		if (dcs->d_kind == DK_EXTERN) {
+		if (dcs->d_kind == DLK_EXTERN) {
 			/* cannot initialize extern declaration '%s' */
 			warning(26, sym->s_name);
 		} else {
@@ -2777,14 +2776,15 @@ sym_t *
 abstract_name(void)
 {
 
-	lint_assert(dcs->d_kind == DK_ABSTRACT || dcs->d_kind == DK_PROTO_ARG);
+	lint_assert(dcs->d_kind == DLK_ABSTRACT
+	    || dcs->d_kind == DLK_PROTO_PARAMS);
 
 	sym_t *sym = block_zero_alloc(sizeof(*sym));
 	sym->s_name = unnamed;
 	sym->s_def = DEF;
 	sym->s_scl = ABSTRACT;
 	sym->s_block_level = -1;
-	sym->s_arg = dcs->d_kind == DK_PROTO_ARG;
+	sym->s_arg = dcs->d_kind == DLK_PROTO_PARAMS;
 
 	/*
 	 * At this point, dcs->d_type contains only the basic type.  That
@@ -2879,16 +2879,16 @@ mark_as_used(sym_t *sym, bool fcall, bool szof)
 
 /* Warns about variables and labels that are not used or only set. */
 void
-check_usage(dinfo_t *di)
+check_usage(decl_level *dl)
 {
 	/* for this warning LINTED has no effect */
 	int saved_lwarn = lwarn;
 	lwarn = LWARN_ALL;
 
 	debug_step("begin lwarn %d", lwarn);
-	for (sym_t *sym = di->d_first_dlsym;
+	for (sym_t *sym = dl->d_first_dlsym;
 	     sym != NULL; sym = sym->s_level_next)
-		check_usage_sym(di->d_asm, sym);
+		check_usage_sym(dl->d_asm, sym);
 	lwarn = saved_lwarn;
 	debug_step("end lwarn %d", lwarn);
 }
@@ -3020,7 +3020,7 @@ check_tag_usage(sym_t *sym)
 		return;
 
 	/* always complain about incomplete tags declared inside blocks */
-	if (!zflag || dcs->d_kind != DK_EXTERN)
+	if (!zflag || dcs->d_kind != DLK_EXTERN)
 		return;
 
 	switch (sym->s_type->t_tspec) {
@@ -3203,7 +3203,7 @@ to_int_constant(tnode_t *tn, bool required)
 	 * We don't free blocks that are inside casts because these
 	 * will be used later to match types.
 	 */
-	if (tn->tn_op != CON && dcs->d_kind != DK_ABSTRACT)
+	if (tn->tn_op != CON && dcs->d_kind != DLK_ABSTRACT)
 		expr_free_all();
 
 	tspec_t t = v->v_tspec;
