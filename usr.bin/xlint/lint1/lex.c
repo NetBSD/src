@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.162 2023/06/29 22:52:44 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.163 2023/06/30 19:43:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.162 2023/06/29 22:52:44 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.163 2023/06/30 19:43:00 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1334,7 +1334,7 @@ getsym(sbuf_t *sb)
 		di = dcs;
 	}
 
-	UNIQUE_CURR_POS(sym->s_def_pos);
+	sym->s_def_pos = unique_curr_pos();
 	if ((sym->s_kind = symtyp) != FLABEL)
 		sym->s_type = gettyp(INT);
 
@@ -1461,7 +1461,7 @@ pushdown(const sym_t *sym)
 	nsym = block_zero_alloc(sizeof(*nsym));
 	lint_assert(sym->s_block_level <= block_level);
 	nsym->s_name = sym->s_name;
-	UNIQUE_CURR_POS(nsym->s_def_pos);
+	nsym->s_def_pos = unique_curr_pos();
 	nsym->s_kind = sym->s_kind;
 	nsym->s_block_level = block_level;
 
