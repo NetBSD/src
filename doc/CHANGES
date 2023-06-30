@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2977 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2978 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -159,3 +159,4 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		[manu 20230629]
 	aiomixer(1): Support for the NO_COLOR environment variable.
 		[nia 20230629]
+	openpam(3): update to 20230627 (ximenia) [christos 20230630]
