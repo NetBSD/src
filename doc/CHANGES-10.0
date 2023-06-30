@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.74 2023/06/27 18:56:25 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.75 2023/06/30 17:21:33 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2321,4 +2321,21 @@ sys/kern/kern_timeout.c				1.74-1.76
 
 	PR 57226: callout(9): fix panic() in callout_destroy().
 	[pho, ticket #219]
+
+external/cddl/osnet/dist/tools/ctf/cvt/barrier.c 1.6-1.8
+external/cddl/osnet/dist/tools/ctf/cvt/barrier.h 1.4
+external/cddl/osnet/dist/tools/ctf/cvt/ctfmerge.c 1.18
+external/cddl/osnet/dist/tools/ctf/cvt/tdata.c	1.10
+external/cddl/osnet/sys/sys/opentypes.h		1.7
+tools/compat/configure				1.100
+tools/compat/configure.ac			1.100
+tools/compat/nbtool_config.h.in			1.54
+
+	Fix the ctfmerge tool on macOS.
+	[riastradh, ticket #221]
+
+sys/arch/i386/stand/bootxx/boot1.c		1.22
+
+	x86: primary bootstrap is now able to read a GPT inside RAIDframe.
+	[manu, ticket #222]
 
