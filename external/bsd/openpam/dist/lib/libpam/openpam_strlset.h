@@ -1,4 +1,4 @@
-/*	$NetBSD: openpam_strlset.h,v 1.3 2017/05/06 19:50:09 christos Exp $	*/
+/*	$NetBSD: openpam_strlset.h,v 1.4 2023/06/30 21:46:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 Dag-Erling Smørgrav
@@ -27,8 +27,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $OpenPAM: openpam_strlset.h 938 2017-04-30 21:34:42Z des $
  */
 
 #ifndef OPENPAM_STRLSET_H_INCLUDED
