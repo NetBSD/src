@@ -128,7 +128,7 @@ mDNSlocal void ParseCmdLinArgs(int argc, char **argv)
 mDNSlocal void DumpStateLog()
 // Dump a little log of what we've been up to.
 {
-	LogMsg("---- BEGIN STATE LOG ----");
+    LogMsg("---- BEGIN STATE LOG ----");
     udsserver_info();
     LogMsg("----  END STATE LOG  ----");
 }
@@ -196,10 +196,10 @@ int main(int argc, char **argv)
     {
         const struct passwd *pw = getpwnam(MDNSD_USER);
         if (pw != NULL)
-	{
+        {
             setgid(pw->pw_gid);
             setuid(pw->pw_uid);
-	}
+        }
         else
 #ifdef MDNSD_NOROOT
         {
