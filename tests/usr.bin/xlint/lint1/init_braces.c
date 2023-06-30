@@ -1,4 +1,4 @@
-/*	$NetBSD: init_braces.c,v 1.3 2023/06/28 15:04:07 rillig Exp $	*/
+/*	$NetBSD: init_braces.c,v 1.4 2023/06/30 09:21:52 rillig Exp $	*/
 # 3 "init_braces.c"
 
 /*
@@ -62,8 +62,9 @@ init_string(void)
 	char name4[] = {{{{ "" }}}};
 }
 
+/* C11 6.7.2.1p13 */
 unsigned long
-init_nested_struct_and_union(void)
+init_anonymous_struct_and_union(void)
 {
 	struct time {
 		unsigned long ns;
@@ -83,8 +84,8 @@ init_nested_struct_and_union(void)
 	};
 
 	struct outer var = {	/* struct outer */
-		{		/* unnamed union */
-			{	/* unnamed struct */
+		{		/* anonymous union */
+			{	/* anonymous struct */
 /* FIXME: GCC and Clang both compile this initializer. */
 /* expect+1: error: type 'struct time' does not have member 'times' [101] */
 				.times = {

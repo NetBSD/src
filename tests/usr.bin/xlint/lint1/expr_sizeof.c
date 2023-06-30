@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.8 2023/06/30 08:03:01 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.9 2023/06/30 09:21:52 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -116,22 +116,23 @@ bit_fields(void)
 	/*
 	 * The bit-fields in a struct may be merged into the same storage
 	 * units, even if their types differ. GCC 10, Clang 15 and lint all
-	 * agree in packing the bit-fields and the char into 4 bytes, even
-	 * though their underlying types
+	 * agree in packing the first group of bit-fields and the char into
+	 * 4 bytes, even though their underlying types differ.  The second
+	 * group of bit-fields gets its own storage unit.
 	 */
 	struct mixed {
 		_Bool flag0:1;
 		signed int signed0:1;
 		unsigned int unsigned0:1;
-		char ch;
+		char ch[3];
 		_Bool flag1:1;
 		signed int signed1:1;
 		unsigned int unsigned1:1;
 	} mixed;
-	/* expect+1: error: negative array dimension (-4) [20] */
+	/* expect+1: error: negative array dimension (-8) [20] */
 	typedef int sizeof_mixed[-(int)sizeof(mixed)];
 	/* FIXME: Implement build_offsetof correctly. */
-	/* expect+3: error: negative array dimension (-4) [20] */
+	/* expect+3: error: negative array dimension (-8) [20] */
 	typedef int offsetof_mixed_ch[
 	    -(int)__builtin_offsetof(struct mixed, ch)
 	];
