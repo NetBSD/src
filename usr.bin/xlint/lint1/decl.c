@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.323 2023/06/29 22:52:44 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.324 2023/06/30 07:18:02 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.323 2023/06/29 22:52:44 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.324 2023/06/30 07:18:02 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -463,8 +463,10 @@ bit_field_width(sym_t **mem)
 		width += (*mem)->s_type->t_bit_field_width;
 		*mem = (*mem)->s_next;
 	}
+
 	// XXX: Why INT_SIZE? C99 6.7.2.1p4 allows bit-fields to have type
 	// XXX: _Bool or another implementation-defined type.
+	// XXX: Why round down instead of up? See expr_sizeof.c, anonymous_flags.
 	return width - width % INT_SIZE;
 }
 
