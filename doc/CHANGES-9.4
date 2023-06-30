@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.72 2023/06/27 18:48:20 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.73 2023/06/30 17:23:13 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1620,4 +1620,9 @@ sys/fs/nilfs/nilfs_subr.h			1.5
 
 	Remove dead code.
 	[reinoud, ticket #1657]
+
+sys/arch/i386/stand/bootxx/boot1.c		1.22
+
+	x86: primary bootstrap is now able to read a GPT inside RAIDframe.
+	[manu, ticket #1658]
 
