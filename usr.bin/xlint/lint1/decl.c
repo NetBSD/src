@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.326 2023/06/30 15:19:09 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.327 2023/06/30 19:10:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.326 2023/06/30 15:19:09 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.327 2023/06/30 19:10:49 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -132,9 +132,8 @@ gettyp(tspec_t t)
 type_t *
 block_dup_type(const type_t *tp)
 {
-	type_t *ntp;
 
-	ntp = block_zero_alloc(sizeof(*ntp));
+	type_t *ntp = block_zero_alloc(sizeof(*ntp));
 	*ntp = *tp;
 	return ntp;
 }
@@ -143,9 +142,8 @@ block_dup_type(const type_t *tp)
 type_t *
 expr_dup_type(const type_t *tp)
 {
-	type_t *ntp;
 
-	ntp = expr_zero_alloc(sizeof(*ntp));
+	type_t *ntp = expr_zero_alloc(sizeof(*ntp));
 	*ntp = *tp;
 	return ntp;
 }
@@ -159,9 +157,8 @@ expr_dup_type(const type_t *tp)
 type_t *
 expr_unqualified_type(const type_t *tp)
 {
-	type_t *ntp;
 
-	ntp = expr_zero_alloc(sizeof(*ntp));
+	type_t *ntp = expr_zero_alloc(sizeof(*ntp));
 	*ntp = *tp;
 	ntp->t_const = false;
 	ntp->t_volatile = false;
@@ -178,15 +175,15 @@ expr_unqualified_type(const type_t *tp)
 }
 
 /*
- * Returns whether the argument is void or an incomplete array,
- * struct, union or enum type.
+ * Returns whether the argument is void or an incomplete array, struct, union
+ * or enum type.
  */
 bool
 is_incomplete(const type_t *tp)
 {
-	tspec_t t;
+	tspec_t t = tp->t_tspec;
 
-	if ((t = tp->t_tspec) == VOID)
+	if (t == VOID)
 		return true;
 	if (t == ARRAY)
 		return tp->t_incomplete_array;
@@ -194,7 +191,6 @@ is_incomplete(const type_t *tp)
 		return tp->t_sou->sou_incomplete;
 	if (t == ENUM)
 		return tp->t_enum->en_incomplete;
-
 	return false;
 }
 
@@ -227,19 +223,17 @@ dcs_add_storage_class(scl_t sc)
 }
 
 /*
- * Remember the type, modifier or typedef name returned by the parser
- * in *dcs (top element of decl stack). This information is used in
- * dcs_end_type to build the type used for all declarators in this
- * declaration.
+ * Remember the type, modifier or typedef name returned by the parser in the
+ * top element of the declaration stack. This information is used in
+ * dcs_end_type to build the type used for all declarators in this declaration.
  *
- * If tp->t_typedef is true, the type comes from a previously defined
- * typename. Otherwise, it comes from a type specifier (int, long, ...) or a
+ * If tp->t_typedef is true, the type comes from a previously defined typename.
+ * Otherwise, it comes from a type specifier (int, long, ...) or a
  * struct/union/enum tag.
  */
 void
 dcs_add_type(type_t *tp)
 {
-	tspec_t t;
 
 	debug_step("%s: %s", __func__, type_name(tp));
 	if (tp->t_typedef) {
@@ -256,8 +250,7 @@ dcs_add_type(type_t *tp)
 		return;
 	}
 
-	t = tp->t_tspec;
-
+	tspec_t t = tp->t_tspec;
 	if (is_struct_or_union(t) || t == ENUM) {
 		/*
 		 * something like "int struct a ..."
@@ -313,19 +306,10 @@ dcs_add_type(type_t *tp)
 
 	/* now it can be only a combination of arithmetic types and void */
 	if (t == SIGNED || t == UNSIGN) {
-		/*
-		 * remember specifiers "signed" & "unsigned" in
-		 * dcs->d_sign_mod
-		 */
 		if (dcs->d_sign_mod != NO_TSPEC)
-			/* more than one "signed" and/or "unsigned" */
 			dcs->d_invalid_type_combination = true;
 		dcs->d_sign_mod = t;
 	} else if (t == SHORT || t == LONG || t == QUAD) {
-		/*
-		 * remember specifiers "short", "long" and "long long" in
-		 * dcs->d_rank_mod
-		 */
 		if (dcs->d_rank_mod != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_rank_mod = t;
@@ -343,10 +327,6 @@ dcs_add_type(type_t *tp)
 	} else if (t == PTR) {
 		dcs->d_type = tp;
 	} else {
-		/*
-		 * remember specifiers "void", "char", "int",
-		 * or "_Complex" in dcs->d_abstract_type
-		 */
 		if (dcs->d_abstract_type != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_abstract_type = t;
@@ -371,15 +351,14 @@ merge_signedness(tspec_t t, tspec_t s)
 }
 
 /*
- * called if a list of declaration specifiers contains a typedef name
- * and other specifiers (except struct, union, enum, typedef name)
+ * Called if a list of declaration specifiers contains a typedef name
+ * and other specifiers (except struct, union, enum, typedef name).
  */
 static type_t *
 typedef_error(type_t *td, tspec_t t)
 {
-	tspec_t t2;
 
-	t2 = td->t_tspec;
+	tspec_t t2 = td->t_tspec;
 
 	if ((t == SIGNED || t == UNSIGN) &&
 	    (t2 == CHAR || t2 == SHORT || t2 == INT ||
@@ -432,31 +411,19 @@ invalid:
 	return td;
 }
 
-/*
- * Remember the symbol of a typedef name (2nd arg) in a struct, union
- * or enum tag if the typedef name is the first defined for this tag.
- *
- * If the tag is unnamed, the typedef name is used for identification
- * of this tag in lint2. Although it's possible that more than one typedef
- * name is defined for one tag, the first name defined should be unique
- * if the tag is unnamed.
- */
 static void
 set_first_typedef(type_t *tp, sym_t *sym)
 {
-	tspec_t t;
 
-	if (is_struct_or_union(t = tp->t_tspec)) {
-		if (tp->t_sou->sou_first_typedef == NULL)
-			tp->t_sou->sou_first_typedef = sym;
-	} else if (t == ENUM) {
-		if (tp->t_enum->en_first_typedef == NULL)
-			tp->t_enum->en_first_typedef = sym;
-	}
+	tspec_t t = tp->t_tspec;
+	if (is_struct_or_union(t) && tp->t_sou->sou_first_typedef == NULL)
+		tp->t_sou->sou_first_typedef = sym;
+	if (t == ENUM && tp->t_enum->en_first_typedef == NULL)
+		tp->t_enum->en_first_typedef = sym;
 }
 
 static unsigned int
-bit_field_width(sym_t **mem, bool *named)
+bit_fields_width(sym_t **mem, bool *named)
 {
 	unsigned int width = 0;
 	unsigned int align = 0;
@@ -488,7 +455,7 @@ pack_struct_or_union(type_t *tp)
 	     mem != NULL; mem = mem->s_next) {
 		// TODO: Maybe update mem->u.s_member.sm_offset_in_bits.
 		if (mem->s_type->t_bitfield) {
-			bits += bit_field_width(&mem, &named);
+			bits += bit_fields_width(&mem, &named);
 			if (mem == NULL)
 				break;
 		}
@@ -517,12 +484,9 @@ dcs_set_used(void)
 }
 
 /*
- * Remember a qualifier which is part of the declaration specifiers
- * (and not the declarator).
- * Also detect multiple qualifiers of the same kind.
-
- * The remembered qualifier is used by dcs_end_type to construct the type
- * for all declarators.
+ * Remember a qualifier that is part of the declaration specifiers (and not the
+ * declarator). The remembered qualifier is used by dcs_end_type for all
+ * declarators.
  */
 void
 dcs_add_qualifier(tqual_t q)
@@ -546,27 +510,18 @@ dcs_add_qualifier(tqual_t q)
 	}
 }
 
-/*
- * Go to the next declaration level (structs, nested structs, blocks,
- * argument declaration lists ...)
- */
 void
 begin_declaration_level(declaration_kind dk)
 {
-	dinfo_t *di;
 
-	/* put a new element on the declaration stack */
-	di = xcalloc(1, sizeof(*di));
+	dinfo_t *di = xcalloc(1, sizeof(*di));
 	di->d_enclosing = dcs;
-	dcs = di;
 	di->d_kind = dk;
 	di->d_last_dlsym = &di->d_first_dlsym;
+	dcs = di;
 	debug_step("%s(%s)", __func__, declaration_kind_name(dk));
 }
 
-/*
- * Go back to previous declaration level
- */
 void
 end_declaration_level(void)
 {
@@ -583,10 +538,9 @@ end_declaration_level(void)
 	case DK_UNION_MEMBER:
 	case DK_ENUM_CONSTANT:
 		/*
-		 * Symbols declared in (nested) structs or enums are
-		 * part of the next level (they are removed from the
-		 * symbol table if the symbols of the outer level are
-		 * removed).
+		 * Symbols declared in (nested) structs or enums are part of
+		 * the next level (they are removed from the symbol table if
+		 * the symbols of the outer level are removed).
 		 */
 		if ((*dcs->d_last_dlsym = di->d_first_dlsym) != NULL)
 			dcs->d_last_dlsym = di->d_last_dlsym;
@@ -606,9 +560,10 @@ end_declaration_level(void)
 		break;
 	case DK_ABSTRACT:	/* casts and sizeof */
 		/*
-		 * Append all symbols declared in the abstract declaration
-		 * to the list of symbols declared in the surrounding
-		 * declaration or block.
+		 * Append all symbols declared in the abstract declaration to
+		 * the list of symbols declared in the surrounding declaration
+		 * or block.
+		 *
 		 * XXX I'm not sure whether they should be removed from the
 		 * symbol table now or later.
 		 */
@@ -616,7 +571,6 @@ end_declaration_level(void)
 			dcs->d_last_dlsym = di->d_last_dlsym;
 		break;
 	case DK_AUTO:
-		/* check usage of local vars */
 		check_usage(di);
 		/* FALLTHROUGH */
 	case DK_PROTO_ARG:
@@ -633,21 +587,18 @@ end_declaration_level(void)
 }
 
 /*
- * Set flag d_asm in all declaration stack elements up to the
- * outermost one.
+ * Set flag d_asm in all declaration stack elements up to the outermost one.
  *
- * This is used to mark compound statements which have, possibly in
- * nested compound statements, asm statements. For these compound
- * statements no warnings about unused or uninitialized variables are
- * printed.
+ * This is used to mark compound statements which have, possibly in nested
+ * compound statements, asm statements. For these compound statements, no
+ * warnings about unused or uninitialized variables are printed.
  *
- * There is no need to clear d_asm in dinfo structs with context AUTO,
- * because these structs are freed at the end of the compound statement.
- * But it must be cleared in the outermost dinfo struct, which has
- * context EXTERN. This could be done in dcs_begin_type and would work for
- * C90, but not for C99 or C++ (due to mixed statements and declarations).
- * Thus we clear it in global_clean_up_decl(), which is used to do some
- * cleanup after global declarations/definitions.
+ * There is no need to clear d_asm in dinfo structs with context AUTO, because
+ * these structs are freed at the end of the compound statement. But it must be
+ * cleared in the outermost dinfo struct, which has context EXTERN. This could
+ * be done in dcs_begin_type and would work for C90, but not for C99 or C++
+ * (due to mixed statements and declarations). Thus, we clear it in
+ * global_clean_up_decl.
  */
 void
 dcs_set_asm(void)
@@ -657,10 +608,6 @@ dcs_set_asm(void)
 		di->d_asm = true;
 }
 
-/*
- * Clean all elements of the top element of declaration stack which
- * will be used by the next declaration
- */
 void
 dcs_begin_type(void)
 {
@@ -692,7 +639,7 @@ dcs_adjust_storage_class(void)
 	} else if (dcs->d_kind == DK_OLD_STYLE_ARG ||
 		   dcs->d_kind == DK_PROTO_ARG) {
 		if (dcs->d_scl != NOSCL && dcs->d_scl != REG) {
-			/* only register valid as formal parameter storage... */
+			/* only register valid as formal parameter ... */
 			error(9);
 			dcs->d_scl = NOSCL;
 		}
@@ -768,11 +715,7 @@ dcs_merge_declaration_specifiers(void)
 	dcs->d_type = gettyp(merge_signedness(t, s));
 }
 
-/*
- * Create a type structure from the information gathered in the declaration
- * stack.
- * Complain about storage classes which are not possible in current context.
- */
+/* Create a type in 'dcs->d_type' from the information gathered in 'dcs'. */
 void
 dcs_end_type(void)
 {
@@ -810,7 +753,8 @@ dcs_end_type(void)
 }
 
 /*
- * Return the length of a type in bits.
+ * Return the length of a type in bits. For bit-fields, return the length of
+ * the underlying storage type.
  *
  * Printing a message if the outermost dimension of an array is 0 must
  * be done by the caller. All other problems are reported by this function
@@ -819,56 +763,45 @@ dcs_end_type(void)
 int
 length_in_bits(const type_t *tp, const char *name)
 {
-	unsigned int elem, elsz;
 
-	elem = 1;
-	while (tp != NULL && tp->t_tspec == ARRAY) {
-		elem *= tp->t_dim;
-		tp = tp->t_subt;
-	}
 	if (tp == NULL)
 		return -1;
 
-	switch (tp->t_tspec) {
-	case FUNC:
-		lint_assert(/*CONSTCOND*/ false);
-		break;		/* GCC 10 thinks this were reachable */
-		/* NOTREACHED */
-	case STRUCT:
-	case UNION:
+	unsigned int elem = 1;
+	while (tp->t_tspec == ARRAY) {
+		elem *= tp->t_dim;
+		tp = tp->t_subt;
+	}
+
+	if (is_struct_or_union(tp->t_tspec)) {
 		if (is_incomplete(tp) && name != NULL) {
 			/* '%s' has incomplete type '%s' */
 			error(31, name, type_name(tp));
 		}
-		elsz = tp->t_sou->sou_size_in_bits;
-		break;
-	case ENUM:
-		if (is_incomplete(tp) && name != NULL) {
-			/* incomplete enum type '%s' */
-			warning(13, name);
-		}
-		/* FALLTHROUGH */
-	default:
-		elsz = size_in_bits(tp->t_tspec);
-		/*
-		 * Workaround until the type parser (see add_function,
-		 * add_array, add_pointer) does not construct the invalid
-		 * intermediate declaration 'void b[4]' for the legitimate
-		 * declaration 'void *b[4]'.
-		 */
-		if (sytxerr > 0 && elsz == 0)
-			elsz = CHAR_SIZE;
-		lint_assert(elsz > 0);
-		break;
+		return (int)(elem * tp->t_sou->sou_size_in_bits);
 	}
+
+	if (tp->t_tspec == ENUM && is_incomplete(tp) && name != NULL)
+		/* incomplete enum type '%s' */
+		warning(13, name);
+
+	lint_assert(tp->t_tspec != FUNC);
+
+	unsigned int elsz = size_in_bits(tp->t_tspec);
+	/*
+	 * Workaround until the type parser (see add_function, add_array,
+	 * add_pointer) does not construct the invalid intermediate declaration
+	 * 'void b[4]' for the legitimate declaration 'void *b[4]'.
+	 */
+	if (sytxerr > 0 && elsz == 0)
+		elsz = CHAR_SIZE;
+	lint_assert(elsz > 0);
 	return (int)(elem * elsz);
 }
 
 unsigned int
 alignment_in_bits(const type_t *tp)
 {
-	unsigned int a;
-	tspec_t t;
 
 	/* Super conservative so that it works for most systems. */
 	unsigned int worst_align_in_bits = 2 * LONG_SIZE;
@@ -876,7 +809,9 @@ alignment_in_bits(const type_t *tp)
 	while (tp->t_tspec == ARRAY)
 		tp = tp->t_subt;
 
-	if (is_struct_or_union(t = tp->t_tspec))
+	tspec_t t = tp->t_tspec;
+	unsigned int a;
+	if (is_struct_or_union(t))
 		a = tp->t_sou->sou_align_in_bits;
 	else {
 		lint_assert(t != FUNC);
@@ -884,7 +819,6 @@ alignment_in_bits(const type_t *tp)
 			a = CHAR_SIZE;
 		else if (a > worst_align_in_bits)
 			a = worst_align_in_bits;
-
 	}
 	lint_assert(a >= CHAR_SIZE);
 	lint_assert(a <= worst_align_in_bits);
@@ -896,21 +830,20 @@ alignment_in_bits(const type_t *tp)
  * struct/union/enum elements and parameters.
  */
 sym_t *
-concat_lists(sym_t *l1, sym_t *l2)
+concat_symbols(sym_t *l1, sym_t *l2)
 {
-	sym_t *l;
 
-	if ((l = l1) == NULL)
+	if (l1 == NULL)
 		return l2;
-	while (l1->s_next != NULL)
-		l1 = l1->s_next;
-	l1->s_next = l2;
-	return l;
+	sym_t *l = l1;
+	while (l->s_next != NULL)
+		l = l->s_next;
+	l->s_next = l2;
+	return l1;
 }
 
 /*
- * Check if the type of the given symbol is valid and print an error
- * message if it is not.
+ * Check if the type of the given symbol is valid.
  *
  * Invalid types are:
  * - arrays of incomplete types or functions
@@ -920,13 +853,12 @@ concat_lists(sym_t *l1, sym_t *l2)
 void
 check_type(sym_t *sym)
 {
-	tspec_t to, t;
-	type_t **tpp, *tp;
 
-	tpp = &sym->s_type;
-	to = NO_TSPEC;
-	while ((tp = *tpp) != NULL) {
-		t = tp->t_tspec;
+	type_t **tpp = &sym->s_type;
+	tspec_t to = NO_TSPEC;
+	while (*tpp != NULL) {
+		type_t *tp = *tpp;
+		tspec_t t = tp->t_tspec;
 		/*
 		 * If this is the type of an old-style function definition,
 		 * a better warning is printed in begin_function().
@@ -1059,7 +991,7 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 }
 
 static void
-declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
+check_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 {
 
 	check_bit_field_type(dsym, inout_tp, inout_t);
@@ -1087,10 +1019,6 @@ declare_bit_field(sym_t *dsym, tspec_t *inout_t, type_t **const inout_tp)
 sym_t *
 declare_member(sym_t *dsym)
 {
-	type_t *tp;
-	tspec_t t;
-	int sz;
-	unsigned int o = 0;	/* Appease GCC */
 
 	lint_assert(is_member(dsym));
 
@@ -1107,10 +1035,10 @@ declare_member(sym_t *dsym)
 
 	check_type(dsym);
 
-	t = (tp = dsym->s_type)->t_tspec;
-
+	type_t *tp = dsym->s_type;
+	tspec_t t = tp->t_tspec;
 	if (dsym->s_bitfield)
-		declare_bit_field(dsym, &t, &tp);
+		check_bit_field(dsym, &t, &tp);
 	else if (t == FUNC) {
 		/* function illegal in structure or union */
 		error(38);
@@ -1122,15 +1050,15 @@ declare_member(sym_t *dsym)
 	 * does not return the length of the bit-field but the length
 	 * of the type the bit-field is packed in (it's ok)
 	 */
-	if ((sz = length_in_bits(dsym->s_type, dsym->s_name)) == 0) {
-		if (t == ARRAY && dsym->s_type->t_dim == 0) {
-			/* zero-sized array '%s' in struct is a C99 extension */
-			c99ism(39, dsym->s_name);
-		}
+	int sz = length_in_bits(dsym->s_type, dsym->s_name);
+	if (sz == 0 && t == ARRAY && dsym->s_type->t_dim == 0) {
+		/* zero-sized array '%s' in struct is a C99 extension */
+		c99ism(39, dsym->s_name);
 	}
 
+	unsigned int union_offset = 0;
 	if (dcs->d_kind == DK_UNION_MEMBER) {
-		o = dcs->d_offset_in_bits;
+		union_offset = dcs->d_offset_in_bits;
 		dcs->d_offset_in_bits = 0;
 	}
 	if (dsym->s_bitfield) {
@@ -1145,8 +1073,8 @@ declare_member(sym_t *dsym)
 		dsym->u.s_member.sm_offset_in_bits = dcs->d_offset_in_bits;
 		dcs->d_offset_in_bits += sz;
 	}
-	if (dcs->d_kind == DK_UNION_MEMBER && o > dcs->d_offset_in_bits)
-		dcs->d_offset_in_bits = o;
+	if (union_offset > dcs->d_offset_in_bits)
+		dcs->d_offset_in_bits = union_offset;
 
 	check_function_definition(dsym, false);
 
@@ -1202,15 +1130,15 @@ set_bit_field_width(sym_t *dsym, int bit_field_width)
 qual_ptr *
 merge_qualified_pointer(qual_ptr *p1, qual_ptr *p2)
 {
-	qual_ptr *tail;
 
 	if (p2 == NULL)
 		return p1;	/* for optional qualifiers */
 
 	if (p2->p_pointer) {
 		/* append p1 to p2, keeping p2 */
-		for (tail = p2; tail->p_next != NULL; tail = tail->p_next)
-			continue;
+		qual_ptr *tail = p2;
+		while (tail->p_next != NULL)
+			tail = tail->p_next;
 		tail->p_next = p1;
 		return p2;
 	}
@@ -1237,9 +1165,8 @@ merge_qualified_pointer(qual_ptr *p1, qual_ptr *p2)
 static type_t *
 block_derive_pointer(type_t *stp, bool is_const, bool is_volatile)
 {
-	type_t *tp;
 
-	tp = block_derive_type(stp, PTR);
+	type_t *tp = block_derive_type(stp, PTR);
 	tp->t_const = is_const;
 	tp->t_volatile = is_volatile;
 	return tp;
@@ -1373,15 +1300,14 @@ add_function(sym_t *decl, sym_t *args)
 			/* function prototypes are illegal in traditional C */
 			warning(270);
 		args = new_style_function(args);
-	} else {
+	} else
 		old_style_function(decl, args);
-	}
 
 	/*
 	 * The symbols are removed from the symbol table by
 	 * end_declaration_level after add_function. To be able to restore
 	 * them if this is a function definition, a pointer to the list of
-	 * all symbols is stored in dcs->d_enclosing->d_func_proto_syms. Also
+	 * all symbols is stored in dcs->d_enclosing->d_func_proto_syms. Also,
 	 * a list of the arguments (concatenated by s_next) is stored in
 	 * dcs->d_enclosing->d_func_args. (dcs->d_enclosing must be used
 	 * because *dcs is the declaration stack element created for the list
@@ -1424,22 +1350,17 @@ add_function(sym_t *decl, sym_t *args)
 static sym_t *
 new_style_function(sym_t *args)
 {
-	sym_t *arg, *sym;
-	scl_t sc;
 
-	/*
-	 * Declarations of structs/unions/enums in param lists are legal,
-	 * but senseless.
-	 */
-	for (sym = dcs->d_first_dlsym; sym != NULL; sym = sym->s_level_next) {
-		sc = sym->s_scl;
+	for (sym_t *sym = dcs->d_first_dlsym;
+	     sym != NULL; sym = sym->s_level_next) {
+		scl_t sc = sym->s_scl;
 		if (sc == STRUCT_TAG || sc == UNION_TAG || sc == ENUM_TAG) {
 			/* dubious tag declaration '%s %s' */
 			warning(85, storage_class_name(sc), sym->s_name);
 		}
 	}
 
-	for (arg = args; arg != NULL; arg = arg->s_next) {
+	for (sym_t *arg = args; arg != NULL; arg = arg->s_next) {
 		if (arg->s_type->t_tspec == VOID &&
 		    !(arg == args && arg->s_next == NULL)) {
 			/* void must be sole parameter */
@@ -1453,22 +1374,19 @@ new_style_function(sym_t *args)
 	return args;
 }
 
-/*
- * Called for old-style function declarations.
- */
 static void
 old_style_function(sym_t *decl, sym_t *args)
 {
 
 	/*
-	 * Remember list of parameters only if this really seems to be a
+	 * Remember the list of parameters only if this really seems to be a
 	 * function definition.
 	 */
 	if (dcs->d_enclosing->d_kind == DK_EXTERN &&
 	    decl->s_type == dcs->d_enclosing->d_type) {
 		/*
-		 * We assume that this becomes a function definition. If
-		 * we are wrong, it's corrected in check_function_definition.
+		 * Assume that this becomes a function definition. If not, it
+		 * will be corrected in check_function_definition.
 		 */
 		if (args != NULL) {
 			decl->s_osdef = true;
@@ -1500,10 +1418,8 @@ check_function_definition(sym_t *sym, bool msg)
 }
 
 /*
- * Process the name in a declarator.
- * The symbol gets one of the storage classes EXTERN, STATIC, AUTO or
- * TYPEDEF.
- * s_def and s_register are valid after declarator_name().
+ * Process the name in a declarator. The symbol gets one of the storage classes
+ * EXTERN, STATIC, AUTO or TYPEDEF, as well as a definedness in 's_def'.
  */
 sym_t *
 declarator_name(sym_t *sym)
@@ -1532,12 +1448,11 @@ declarator_name(sym_t *sym)
 		break;
 	case DK_EXTERN:
 		/*
-		 * static and external symbols without "extern" are
-		 * considered to be tentatively defined, external
-		 * symbols with "extern" are declared, and typedef names
-		 * are defined. Tentatively defined and declared symbols
-		 * may become defined if an initializer is present or
-		 * this is a function definition.
+		 * static and external symbols without "extern" are considered
+		 * to be tentatively defined, external symbols with "extern"
+		 * are declared, and typedef names are defined. Tentatively
+		 * defined and declared symbols may become defined if an
+		 * initializer is present or this is a function definition.
 		 */
 		if ((sc = dcs->d_scl) == NOSCL) {
 			sc = EXTERN;
@@ -1567,10 +1482,10 @@ declarator_name(sym_t *sym)
 	case DK_AUTO:
 		if ((sc = dcs->d_scl) == NOSCL) {
 			/*
-			 * XXX somewhat ugly because we don't know whether
-			 * this is AUTO or EXTERN (functions). If we are
-			 * wrong it must be corrected in declare_local(),
-			 * where we have the necessary type information.
+			 * XXX somewhat ugly because we don't know whether this
+			 * is AUTO or EXTERN (functions). If we are wrong, it
+			 * must be corrected in declare_local, when the
+			 * necessary type information is available.
 			 */
 			sc = AUTO;
 			sym->s_def = DEF;
@@ -1585,11 +1500,10 @@ declarator_name(sym_t *sym)
 			sym->s_def = DECL;
 		}
 		break;
-	case DK_ABSTRACT:	/* try to continue after syntax errors */
-		sc = NOSCL;
-		break;
 	default:
-		lint_assert(/*CONSTCOND*/false);
+		lint_assert(dcs->d_kind == DK_ABSTRACT);
+		/* try to continue after syntax errors */
+		sc = NOSCL;
 	}
 	sym->s_scl = sc;
 
@@ -1600,12 +1514,8 @@ declarator_name(sym_t *sym)
 	return sym;
 }
 
-/*
- * Process a name in the list of formal parameters in an old-style function
- * definition.
- */
 sym_t *
-old_style_function_name(sym_t *sym)
+old_style_function_parameter_name(sym_t *sym)
 {
 
 	if (sym->s_scl != NOSCL) {
@@ -1623,14 +1533,12 @@ old_style_function_name(sym_t *sym)
 	return sym;
 }
 
-/*
- * Create the type of a tag.
- *
- * tag points to the symbol table entry of the tag
- * kind is the kind of the tag (STRUCT/UNION/ENUM)
- * decl is true if the type of the tag will be completed in this declaration
- * (the following token is T_LBRACE)
- * semi is true if the following token is T_SEMI
+/*-
+ * tag		the symbol table entry of the tag
+ * kind		the kind of the tag (STRUCT/UNION/ENUM)
+ * decl		whether the tag type will be completed in this declaration
+ *		(when the following token is T_LBRACE)
+ * semi		whether the following token is T_SEMI
  */
 type_t *
 make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
@@ -1697,10 +1605,11 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	return tp;
 }
 
-/*
+/*-
  * Checks all possible cases of tag redeclarations.
- * decl is true if T_LBRACE follows
- * semi is true if T_SEMI follows
+ *
+ * decl		whether T_LBRACE follows
+ * semi		whether T_SEMI follows
  */
 static sym_t *
 new_tag(sym_t *tag, scl_t scl, bool decl, bool semi)
@@ -1807,7 +1716,7 @@ complete_struct_or_union(sym_t *first_member)
 			mem->u.s_member.sm_sou_type = sp;
 			if (mem->s_type->t_bitfield) {
 				sp->sou_size_in_bits +=
-				    bit_field_width(&mem, &has_named_member);
+				    bit_fields_width(&mem, &has_named_member);
 				if (mem == NULL)
 					break;
 			}
@@ -2101,7 +2010,8 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		print_previous_declaration(rdsym);
 		return true;
 	}
-	if (!types_compatible(rdsym->s_type, dsym->s_type, false, false, dowarn)) {
+	if (!types_compatible(rdsym->s_type, dsym->s_type,
+	    false, false, dowarn)) {
 		/* redeclaration of '%s' with type '%s', expected '%s' */
 		error(347, dsym->s_name,
 		    type_name(dsym->s_type), type_name(rdsym->s_type));
@@ -2163,8 +2073,8 @@ pointer_types_are_compatible(const type_t *tp1, const type_t *tp2, bool ignqual)
 	       qualifiers_correspond(tp1, tp2, ignqual);
 }
 
-/*
- * ignqual	ignore qualifiers of type; used for function parameters
+/*-
+ * ignqual	ignore type qualifiers; used for function parameters
  * promot	promote the left type; used for comparison of parameters of
  *		old-style function definitions with parameters of prototypes.
  * *dowarn	is set to true if an old-style function declaration is not
@@ -2263,13 +2173,12 @@ prototypes_compatible(const type_t *tp1, const type_t *tp2, bool *dowarn)
 static bool
 matches_no_arg_function(const type_t *tp, bool *dowarn)
 {
-	sym_t *arg;
-	tspec_t t;
 
 	if (tp->t_vararg && dowarn != NULL)
 		*dowarn = true;
-	for (arg = tp->t_args; arg != NULL; arg = arg->s_next) {
-		if ((t = arg->s_type->t_tspec) == FLOAT ||
+	for (sym_t *arg = tp->t_args; arg != NULL; arg = arg->s_next) {
+		tspec_t t = arg->s_type->t_tspec;
+		if (t == FLOAT ||
 		    t == CHAR || t == SCHAR || t == UCHAR ||
 		    t == SHORT || t == USHORT) {
 			if (dowarn != NULL)
@@ -2281,25 +2190,23 @@ matches_no_arg_function(const type_t *tp, bool *dowarn)
 }
 
 /*
- * Compares a prototype declaration with the remembered arguments of
- * a previous old-style function definition.
+ * Compares a prototype declaration with the remembered arguments of a previous
+ * old-style function definition.
  */
 static bool
 check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 {
-	sym_t *args, *pargs, *arg, *parg;
-	int narg, nparg, n;
-	bool dowarn, msg;
 
-	args = rdsym->u.s_old_style_args;
-	pargs = dsym->s_type->t_args;
+	sym_t *args = rdsym->u.s_old_style_args;
+	sym_t *pargs = dsym->s_type->t_args;
 
-	msg = false;
+	bool msg = false;
 
-	narg = nparg = 0;
-	for (arg = args; arg != NULL; arg = arg->s_next)
+	int narg = 0;
+	for (sym_t *arg = args; arg != NULL; arg = arg->s_next)
 		narg++;
-	for (parg = pargs; parg != NULL; parg = parg->s_next)
+	int nparg = 0;
+	for (sym_t *parg = pargs; parg != NULL; parg = parg->s_next)
 		nparg++;
 	if (narg != nparg) {
 		/* prototype does not match old-style definition */
@@ -2308,11 +2215,11 @@ check_old_style_definition(sym_t *rdsym, sym_t *dsym)
 		goto end;
 	}
 
-	arg = args;
-	parg = pargs;
-	n = 1;
+	sym_t *arg = args;
+	sym_t *parg = pargs;
+	int n = 1;
 	while (narg-- > 0) {
-		dowarn = false;
+		bool dowarn = false;
 		/*
 		 * If it does not match due to promotion and lint runs in
 		 * "traditional to C90" migration mode, print only a warning.
@@ -2341,25 +2248,23 @@ end:
 }
 
 /*
- * Completes a type by copying the dimension and prototype information
- * from a second compatible type.
+ * Completes a type by copying the dimension and prototype information from a
+ * second compatible type.
  *
  * Following lines are legal:
  *  "typedef a[]; a b; a b[10]; a c; a c[20];"
  *  "typedef ft(); ft f; f(int); ft g; g(long);"
- * This means that, if a type is completed, the type structure must
- * be duplicated.
+ * This means that, if a type is completed, the type structure must be
+ * duplicated.
  */
 void
 complete_type(sym_t *dsym, sym_t *ssym)
 {
-	type_t **dstp, *src;
-	type_t *dst;
+	type_t **dstp = &dsym->s_type;
+	type_t *src = ssym->s_type;
 
-	dstp = &dsym->s_type;
-	src = ssym->s_type;
-
-	while ((dst = *dstp) != NULL) {
+	while (*dstp != NULL) {
+		type_t *dst = *dstp;
 		lint_assert(src != NULL);
 		lint_assert(dst->t_tspec == src->t_tspec);
 		if (dst->t_tspec == ARRAY) {
@@ -2386,7 +2291,6 @@ complete_type(sym_t *dsym, sym_t *ssym)
 sym_t *
 declare_argument(sym_t *sym, bool has_initializer)
 {
-	tspec_t t;
 
 	check_function_definition(sym, true);
 
@@ -2414,17 +2318,17 @@ declare_argument(sym_t *sym, bool has_initializer)
 	if (sym->s_type == NULL)	/* for c(void()) */
 		sym->s_type = gettyp(VOID);
 
-	if ((t = sym->s_type->t_tspec) == ARRAY)
+	tspec_t t = sym->s_type->t_tspec;
+	if (t == ARRAY)
 		sym->s_type = block_derive_type(sym->s_type->t_subt, PTR);
-	else if (t == FUNC) {
+	if (t == FUNC) {
 		if (!allow_c90)
 			/* argument '%s' has function type, should be ... */
 			warning(50, sym->s_name);
 		sym->s_type = block_derive_type(sym->s_type, PTR);
-	} else if (t == FLOAT) {
-		if (!allow_c90)
-			sym->s_type = gettyp(DOUBLE);
 	}
+	if (t == FLOAT && !allow_c90)
+		sym->s_type = gettyp(DOUBLE);
 
 	if (dcs->d_inline)
 		/* argument '%s' declared inline */
@@ -2525,18 +2429,18 @@ check_func_lint_directives(void)
 void
 check_func_old_style_arguments(void)
 {
-	sym_t *args, *arg, *pargs, *parg;
-	int narg, nparg;
+	int narg;
+	int nparg;
 	bool msg;
 
-	args = funcsym->u.s_old_style_args;
-	pargs = funcsym->s_type->t_args;
+	sym_t *args = funcsym->u.s_old_style_args;
+	sym_t *pargs = funcsym->s_type->t_args;
 
 	/*
 	 * print a warning for each argument of an old-style function
 	 * definition which defaults to int
 	 */
-	for (arg = args; arg != NULL; arg = arg->s_next) {
+	for (sym_t *arg = args; arg != NULL; arg = arg->s_next) {
 		if (arg->s_defarg) {
 			/* type of argument '%s' defaults to 'int' */
 			warning(32, arg->s_name);
@@ -2556,17 +2460,17 @@ check_func_old_style_arguments(void)
 		 */
 		narg = nparg = 0;
 		msg = false;
-		for (parg = pargs; parg != NULL; parg = parg->s_next)
+		for (sym_t *parg = pargs; parg != NULL; parg = parg->s_next)
 			nparg++;
-		for (arg = args; arg != NULL; arg = arg->s_next)
+		for (sym_t *arg = args; arg != NULL; arg = arg->s_next)
 			narg++;
 		if (narg != nparg) {
 			/* parameter mismatch: %d declared, %d defined */
 			error(51, nparg, narg);
 			msg = true;
 		} else {
-			parg = pargs;
-			arg = args;
+			sym_t *parg = pargs;
+			sym_t *arg = args;
 			while (narg-- > 0) {
 				msg |= check_prototype_declaration(arg, parg);
 				parg = parg->s_next;
@@ -2592,13 +2496,9 @@ check_func_old_style_arguments(void)
 static bool
 check_prototype_declaration(sym_t *arg, sym_t *parg)
 {
-	type_t *tp, *ptp;
-	bool dowarn;
-
-	tp = arg->s_type;
-	ptp = parg->s_type;
-
-	dowarn = false;
+	type_t *tp = arg->s_type;
+	type_t *ptp = parg->s_type;
+	bool dowarn = false;
 
 	if (!types_compatible(tp, ptp, true, true, &dowarn)) {
 		if (types_compatible(tp, ptp, true, false, &dowarn)) {
@@ -2822,58 +2722,50 @@ declare_external_in_block(sym_t *dsym)
 }
 
 /*
- * Print an error or a warning if the symbol cannot be initialized due
- * to type/storage class. Return whether an error has been detected.
+ * Check whether the symbol cannot be initialized due to type/storage class.
+ * Return whether an error has been detected.
  */
 static bool
 check_init(sym_t *sym)
 {
-	bool erred;
-
-	erred = false;
 
 	if (sym->s_type->t_tspec == FUNC) {
 		/* cannot initialize function '%s' */
 		error(24, sym->s_name);
-		erred = true;
-	} else if (sym->s_scl == TYPEDEF) {
+		return true;
+	}
+	if (sym->s_scl == TYPEDEF) {
 		/* cannot initialize typedef '%s' */
 		error(25, sym->s_name);
-		erred = true;
-	} else if (sym->s_scl == EXTERN && sym->s_def == DECL) {
+		return true;
+	}
+	if (sym->s_scl == EXTERN && sym->s_def == DECL) {
 		if (dcs->d_kind == DK_EXTERN) {
 			/* cannot initialize extern declaration '%s' */
 			warning(26, sym->s_name);
 		} else {
 			/* cannot initialize extern declaration '%s' */
 			error(26, sym->s_name);
-			erred = true;
+			return true;
 		}
 	}
 
-	return erred;
+	return false;
 }
 
-/*
- * Create a symbol for an abstract declaration.
- */
+/* Create a symbol for an abstract declaration. */
 sym_t *
 abstract_name(void)
 {
-	sym_t *sym;
 
-	lint_assert(dcs->d_kind == DK_ABSTRACT ||
-	    dcs->d_kind == DK_PROTO_ARG);
+	lint_assert(dcs->d_kind == DK_ABSTRACT || dcs->d_kind == DK_PROTO_ARG);
 
-	sym = block_zero_alloc(sizeof(*sym));
-
+	sym_t *sym = block_zero_alloc(sizeof(*sym));
 	sym->s_name = unnamed;
 	sym->s_def = DEF;
 	sym->s_scl = ABSTRACT;
 	sym->s_block_level = -1;
-
-	if (dcs->d_kind == DK_PROTO_ARG)
-		sym->s_arg = true;
+	sym->s_arg = dcs->d_kind == DK_PROTO_ARG;
 
 	/*
 	 * At this point, dcs->d_type contains only the basic type.  That
@@ -2892,9 +2784,7 @@ abstract_name(void)
 	return sym;
 }
 
-/*
- * Removes anything which has nothing to do on global level.
- */
+/* Removes anything which has nothing to do on global level. */
 void
 global_clean_up(void)
 {
@@ -2905,11 +2795,6 @@ global_clean_up(void)
 	clean_up_after_error();
 	block_level = 0;
 	mem_block_level = 0;
-
-	/*
-	 * remove all information about pending lint directives without
-	 * warnings.
-	 */
 	global_clean_up_decl(true);
 }
 
@@ -2922,9 +2807,7 @@ declare_abstract_type(sym_t *sym)
 	return sym;
 }
 
-/*
- * Checks size after declarations of variables and their initialization.
- */
+/* Checks size after declarations of variables and their initialization. */
 void
 check_size(sym_t *dsym)
 {
@@ -2935,19 +2818,16 @@ check_size(sym_t *dsym)
 	    length_in_bits(dsym->s_type, dsym->s_name) == 0 &&
 	    dsym->s_type->t_tspec == ARRAY &&
 	    dsym->s_type->t_dim == 0) {
-		if (!allow_c90) {
+		if (!allow_c90)
 			/* empty array declaration for '%s' */
 			warning(190, dsym->s_name);
-		} else {
+		else
 			/* empty array declaration for '%s' */
 			error(190, dsym->s_name);
-		}
 	}
 }
 
-/*
- * Mark an object as set if it is not already
- */
+/* Mark an object as set if it is not already. */
 void
 mark_as_set(sym_t *sym)
 {
@@ -2958,9 +2838,7 @@ mark_as_set(sym_t *sym)
 	}
 }
 
-/*
- * Mark an object as used if it is not already
- */
+/* Mark an object as used if it is not already. */
 void
 mark_as_used(sym_t *sym, bool fcall, bool szof)
 {
@@ -2980,10 +2858,7 @@ mark_as_used(sym_t *sym, bool fcall, bool szof)
 		outusg(sym);
 }
 
-/*
- * Prints warnings for a list of variables and labels (concatenated
- * with s_level_next) if these are not used or only set.
- */
+/* Warns about variables and labels that are not used or only set. */
 void
 check_usage(dinfo_t *di)
 {
@@ -2999,10 +2874,7 @@ check_usage(dinfo_t *di)
 	debug_step("end lwarn %d", lwarn);
 }
 
-/*
- * Prints a warning for a single variable or label if it is not used or
- * only set.
- */
+/* Warns about a variable or a label that is not used or only set. */
 void
 check_usage_sym(bool novar, sym_t *sym)
 {
@@ -3038,8 +2910,6 @@ check_argument_usage(bool novar, sym_t *arg)
 static void
 check_variable_usage(bool novar, sym_t *sym)
 {
-	scl_t sc;
-	sym_t *xsym;
 
 	lint_assert(block_level != 0);
 
@@ -3055,7 +2925,7 @@ check_variable_usage(bool novar, sym_t *sym)
 	 * XXX Only variables are checked, although types should
 	 * probably also be checked
 	 */
-	sc = sym->s_scl;
+	scl_t sc = sym->s_scl;
 	if (sc != EXTERN && sc != STATIC && sc != AUTO && sc != REG)
 		return;
 
@@ -3091,7 +2961,8 @@ check_variable_usage(bool novar, sym_t *sym)
 		 * because symbols at level 0 only used in sizeof() are
 		 * considered to not be used.
 		 */
-		if ((xsym = sym->s_ext_sym) != NULL) {
+		sym_t *xsym = sym->s_ext_sym;
+		if (xsym != NULL) {
 			if (sym->s_used && !xsym->s_used) {
 				xsym->s_used = true;
 				xsym->s_use_pos = sym->s_use_pos;
@@ -3111,16 +2982,15 @@ check_label_usage(sym_t *lab)
 	lint_assert(block_level == 1);
 	lint_assert(lab->s_block_level == 1);
 
-	if (funcsym == NULL) {
+	if (funcsym == NULL)
 		/* syntax error '%s' */
 		error(249, "labels are only valid inside a function");
-	} else if (lab->s_set && !lab->s_used) {
+	else if (lab->s_set && !lab->s_used)
 		/* label '%s' unused in function '%s' */
 		warning_at(232, &lab->s_set_pos, lab->s_name, funcsym->s_name);
-	} else if (!lab->s_set) {
+	else if (!lab->s_set)
 		/* undefined label '%s' */
 		warning_at(23, &lab->s_use_pos, lab->s_name);
-	}
 }
 
 static void
@@ -3143,12 +3013,11 @@ check_tag_usage(sym_t *sym)
 		/* union '%s' never defined */
 		warning_at(234, &sym->s_def_pos, sym->s_name);
 		break;
-	case ENUM:
+	default:
+		lint_assert(sym->s_type->t_tspec == ENUM);
 		/* enum '%s' never defined */
 		warning_at(235, &sym->s_def_pos, sym->s_name);
 		break;
-	default:
-		lint_assert(/*CONSTCOND*/false);
 	}
 }
 
@@ -3240,8 +3109,6 @@ check_global_variable(const sym_t *sym)
 static void
 check_global_variable_size(const sym_t *sym)
 {
-	pos_t cpos;
-	int len_in_bits;
 
 	if (sym->s_def != TDEF)
 		return;
@@ -3254,9 +3121,9 @@ check_global_variable_size(const sym_t *sym)
 		return;
 	}
 
-	cpos = curr_pos;
+	pos_t cpos = curr_pos;
 	curr_pos = sym->s_def_pos;
-	len_in_bits = length_in_bits(sym->s_type, sym->s_name);
+	int len_in_bits = length_in_bits(sym->s_type, sym->s_name);
 	curr_pos = cpos;
 
 	if (len_in_bits == 0 &&
@@ -3305,8 +3172,6 @@ print_previous_declaration(const sym_t *psym)
 int
 to_int_constant(tnode_t *tn, bool required)
 {
-	int i;
-	tspec_t t;
 
 	if (tn == NULL)
 		return 1;
@@ -3322,7 +3187,9 @@ to_int_constant(tnode_t *tn, bool required)
 	if (tn->tn_op != CON && dcs->d_kind != DK_ABSTRACT)
 		expr_free_all();
 
-	if ((t = v->v_tspec) == FLOAT || t == DOUBLE || t == LDOUBLE) {
+	tspec_t t = v->v_tspec;
+	int i;
+	if (t == FLOAT || t == DOUBLE || t == LDOUBLE) {
 		i = (int)v->v_ldbl;
 		/* integral constant expression expected */
 		error(55);
