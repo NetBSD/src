@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.6 2023/06/28 21:41:27 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.7 2023/06/30 07:18:02 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -72,6 +72,46 @@ variable_length_array(int n)
 	 */
 	/* expect+1: error: negative array dimension (-4) [20] */
 	typedef int sizeof_local_arr[-(int)sizeof(local_arr)];
+}
+
+void
+bit_fields(void)
+{
+	struct {
+		_Bool flag0:1;
+		_Bool flag1:1;
+		_Bool flag2:1;
+	} flags;
+	/* expect+1: error: negative array dimension (-1) [20] */
+	typedef int sizeof_flags[-(int)sizeof(flags)];
+
+	struct {
+		struct {
+			_Bool flag0:1;
+			_Bool flag1:1;
+			_Bool flag2:1;
+		};
+	} anonymous_flags;
+	/* FIXME: sizeof must be 1, not 0. */
+	typedef int sizeof_anonymous_flags[-(int)sizeof(anonymous_flags)];
+
+	struct {
+		unsigned int bits0:16;
+		unsigned int bits1:16;
+	} same_storage_unit;
+	/* expect+1: error: negative array dimension (-4) [20] */
+	typedef int sizeof_same_storage_unit[-(int)sizeof(same_storage_unit)];
+
+	// Detect whether a bit-field can span multiple storage units.
+	// If so, the size is 12, if not, the size is 16.
+	struct {
+		unsigned int bits0:24;
+		unsigned int bits1:24;
+		unsigned int bits2:24;
+		unsigned int bits3:24;
+	} cross_storage_unit;
+	/* expect+1: error: negative array dimension (-16) [20] */
+	typedef int sizeof_cross_storage_unit[-(int)sizeof(cross_storage_unit)];
 }
 
 /*
