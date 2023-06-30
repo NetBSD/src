@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.39 2023/06/30 21:06:18 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.40 2023/06/30 21:39:54 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.39 2023/06/30 21:06:18 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.40 2023/06/30 21:39:54 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -250,20 +250,20 @@ def_name(def_t def)
 }
 
 const char *
-declaration_kind_name(declaration_kind dk)
+decl_level_kind_name(decl_level_kind kind)
 {
 	static const char *const name[] = {
 		"extern",
-		"member-of-struct",
-		"member-of-union",
-		"enum-constant",
-		"old-style-function-argument",
-		"prototype-argument",
+		"struct",
+		"union",
+		"enum",
+		"old-style-function-arguments",
+		"prototype-parameters",
 		"auto",
 		"abstract",
 	};
 
-	return name[dk];
+	return name[kind];
 }
 
 const char *
@@ -395,62 +395,62 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 }
 
 void
-debug_dinfo(const dinfo_t *d) // NOLINT(misc-no-recursion)
+debug_dinfo(const decl_level *dl)
 {
 
 	debug_print_indent();
-	debug_printf("dinfo: %s", declaration_kind_name(d->d_kind));
-	if (d->d_scl != NOSCL)
-		debug_printf(" %s", scl_name(d->d_scl));
-	if (d->d_type != NULL) {
-		debug_printf(" '%s'", type_name(d->d_type));
-	} else {
-		if (d->d_abstract_type != NO_TSPEC)
-			debug_printf(" %s", tspec_name(d->d_abstract_type));
-		if (d->d_complex_mod != NO_TSPEC)
-			debug_printf(" %s", tspec_name(d->d_complex_mod));
-		if (d->d_sign_mod != NO_TSPEC)
-			debug_printf(" %s", tspec_name(d->d_sign_mod));
-		if (d->d_rank_mod != NO_TSPEC)
-			debug_printf(" %s", tspec_name(d->d_rank_mod));
+	debug_printf("decl_level: %s", decl_level_kind_name(dl->d_kind));
+	if (dl->d_scl != NOSCL)
+		debug_printf(" %s", scl_name(dl->d_scl));
+	if (dl->d_type != NULL)
+		debug_printf(" '%s'", type_name(dl->d_type));
+	else {
+		if (dl->d_abstract_type != NO_TSPEC)
+			debug_printf(" %s", tspec_name(dl->d_abstract_type));
+		if (dl->d_complex_mod != NO_TSPEC)
+			debug_printf(" %s", tspec_name(dl->d_complex_mod));
+		if (dl->d_sign_mod != NO_TSPEC)
+			debug_printf(" %s", tspec_name(dl->d_sign_mod));
+		if (dl->d_rank_mod != NO_TSPEC)
+			debug_printf(" %s", tspec_name(dl->d_rank_mod));
 	}
-	if (d->d_redeclared_symbol != NULL)
-		debug_sym(" redeclared=(", d->d_redeclared_symbol, ")");
-	if (d->d_offset_in_bits != 0)
-		debug_printf(" offset=%u", d->d_offset_in_bits);
-	if (d->d_sou_align_in_bits != 0)
-		debug_printf(" align=%u", (unsigned)d->d_sou_align_in_bits);
+	if (dl->d_redeclared_symbol != NULL)
+		debug_sym(" redeclared=(", dl->d_redeclared_symbol, ")");
+	if (dl->d_offset_in_bits != 0)
+		debug_printf(" offset=%u", dl->d_offset_in_bits);
+	if (dl->d_sou_align_in_bits != 0)
+		debug_printf(" align=%u", (unsigned)dl->d_sou_align_in_bits);
 
-	debug_word(d->d_const, "const");
-	debug_word(d->d_volatile, "volatile");
-	debug_word(d->d_inline, "inline");
-	debug_word(d->d_multiple_storage_classes, "multiple_storage_classes");
-	debug_word(d->d_invalid_type_combination, "invalid_type_combination");
-	debug_word(d->d_nonempty_decl, "nonempty_decl");
-	debug_word(d->d_vararg, "vararg");
-	debug_word(d->d_prototype, "prototype");
-	debug_word(d->d_no_type_specifier, "no_type_specifier");
-	debug_word(d->d_asm, "asm");
-	debug_word(d->d_packed, "packed");
-	debug_word(d->d_used, "used");
+	debug_word(dl->d_const, "const");
+	debug_word(dl->d_volatile, "volatile");
+	debug_word(dl->d_inline, "inline");
+	debug_word(dl->d_multiple_storage_classes, "multiple_storage_classes");
+	debug_word(dl->d_invalid_type_combination, "invalid_type_combination");
+	debug_word(dl->d_nonempty_decl, "nonempty_decl");
+	debug_word(dl->d_vararg, "vararg");
+	debug_word(dl->d_prototype, "prototype");
+	debug_word(dl->d_no_type_specifier, "no_type_specifier");
+	debug_word(dl->d_asm, "asm");
+	debug_word(dl->d_packed, "packed");
+	debug_word(dl->d_used, "used");
 
-	if (d->d_tag_type != NULL)
-		debug_printf(" tag_type='%s'", type_name(d->d_tag_type));
-	for (const sym_t *arg = d->d_func_args;
+	if (dl->d_tag_type != NULL)
+		debug_printf(" tag_type='%s'", type_name(dl->d_tag_type));
+	for (const sym_t *arg = dl->d_func_args;
 	     arg != NULL; arg = arg->s_next)
 		debug_sym(" arg(", arg, ")");
-	if (d->d_func_def_pos.p_file != NULL)
-		debug_printf(" func_def_pos=%s:%d:%d",
-		    d->d_func_def_pos.p_file, d->d_func_def_pos.p_line,
-		    d->d_func_def_pos.p_uniq);
-	for (const sym_t *sym = d->d_func_proto_syms;
+	if (dl->d_func_def_pos.p_file != NULL)
+		debug_printf(" func_def_pos=%s:%dl:%dl",
+		    dl->d_func_def_pos.p_file, dl->d_func_def_pos.p_line,
+		    dl->d_func_def_pos.p_uniq);
+	for (const sym_t *sym = dl->d_func_proto_syms;
 	     sym != NULL; sym = sym->s_next)
 		debug_sym(" func_proto_sym(", sym, ")");
 	debug_printf("\n");
 
-	if (d->d_enclosing != NULL) {
+	if (dl->d_enclosing != NULL) {
 		debug_indent_inc();
-		debug_dinfo(d->d_enclosing);
+		debug_dinfo(dl->d_enclosing);
 		debug_indent_dec();
 	}
 }
