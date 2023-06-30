@@ -373,22 +373,31 @@ init_phase_two(workqueue_t *wq)
 static void
 wip_save_work(workqueue_t *wq, wip_t *slot, int slotnum)
 {
-	pthread_mutex_lock(&wq->wq_donequeue_lock);
+	if ((errno = pthread_mutex_lock(&wq->wq_donequeue_lock)) != 0)
+		terminate("%s: pthread_mutex_lock(wq_donequeue_lock)",
+		    __func__);
 
-	while (wq->wq_lastdonebatch + 1 < slot->wip_batchid)
-		pthread_cond_wait(&slot->wip_cv, &wq->wq_donequeue_lock);
+	while (wq->wq_lastdonebatch + 1 < slot->wip_batchid) {
+		if ((errno = pthread_cond_wait(&slot->wip_cv, &wq->wq_donequeue_lock)) != 0)
+			terminate("%s: pthread_cond_wait(wip_cv,wq_donequeue_lock)",
+			    __func__);
+	}
 	assert(wq->wq_lastdonebatch + 1 == slot->wip_batchid);
 
 	fifo_add(wq->wq_donequeue, slot->wip_td);
 	wq->wq_lastdonebatch++;
-	pthread_cond_signal(&wq->wq_wip[(slotnum + 1) %
-	    wq->wq_nwipslots].wip_cv);
+	const int nextslot = (slotnum + 1) % wq->wq_nwipslots;
+	if ((errno = pthread_cond_signal(&wq->wq_wip[nextslot].wip_cv)) != 0)
+		terminate("%s: pthread_cond_signal(wq_wip[%d].wip_cv)",
+		    __func__, nextslot);
 
 	/* reset the slot for next use */
 	slot->wip_td = NULL;
 	slot->wip_batchid = wq->wq_next_batchid++;
 
-	pthread_mutex_unlock(&wq->wq_donequeue_lock);
+	if ((errno = pthread_mutex_unlock(&wq->wq_donequeue_lock)) != 0)
+		terminate("%s: pthread_mutex_unlock(wq_donequeue_lock)",
+		    __func__);
 }
 
 static void
@@ -417,25 +426,35 @@ worker_runphase1(workqueue_t *wq)
 	int wipslotnum, pownum;
 
 	for (;;) {
-		pthread_mutex_lock(&wq->wq_queue_lock);
+		if ((errno = pthread_mutex_lock(&wq->wq_queue_lock)) != 0)
+			terminate("%s: pthread_mutex_lock(wq_queue_lock)",
+			    __func__);
 
 		while (fifo_empty(wq->wq_queue)) {
 			if (wq->wq_nomorefiles == 1) {
-				pthread_cond_broadcast(&wq->wq_work_avail);
-				pthread_mutex_unlock(&wq->wq_queue_lock);
+				if ((errno = pthread_cond_broadcast(&wq->wq_work_avail)) != 0)
+					terminate("%s: pthread_cond_broadcast(wq_work_avail)",
+					    __func__);
+				if ((errno = pthread_mutex_unlock(&wq->wq_queue_lock)) != 0)
+					terminate("%s: pthread_mutex_unlock(wq_queue_lock)",
+					    __func__);
 
 				/* on to phase 2 ... */
 				return;
 			}
 
-			pthread_cond_wait(&wq->wq_work_avail,
-			    &wq->wq_queue_lock);
+			if ((errno = pthread_cond_wait(&wq->wq_work_avail,
+			    &wq->wq_queue_lock)) != 0)
+				terminate("%s: pthread_cond_wait(wq_work_avail,wq_queue_lock)",
+				    __func__);
 		}
 
 		/* there's work to be done! */
 		pow = fifo_remove(wq->wq_queue);
 		pownum = wq->wq_nextpownum++;
-		pthread_cond_broadcast(&wq->wq_work_removed);
+		if ((errno = pthread_cond_broadcast(&wq->wq_work_removed)) != 0)
+			terminate("%s: pthread_cond_broadcast(wq_work_removed)",
+			    __func__);
 
 		assert(pow != NULL);
 
@@ -443,16 +462,21 @@ worker_runphase1(workqueue_t *wq)
 		wipslotnum = pownum % wq->wq_nwipslots;
 		wipslot = &wq->wq_wip[wipslotnum];
 
-		pthread_mutex_lock(&wipslot->wip_lock);
+		if ((errno = pthread_mutex_lock(&wipslot->wip_lock)) != 0)
+			terminate("%s: pthread_mutex_lock(wip_lock)", __func__);
 
-		pthread_mutex_unlock(&wq->wq_queue_lock);
+		if ((errno = pthread_mutex_unlock(&wq->wq_queue_lock)) != 0)
+			terminate("%s: pthread_mutex_unlock(wq_queue_lock)",
+			    __func__);
 
 		wip_add_work(wipslot, pow);
 
 		if (wipslot->wip_nmerged == wq->wq_maxbatchsz)
 			wip_save_work(wq, wipslot, wipslotnum);
 
-		pthread_mutex_unlock(&wipslot->wip_lock);
+		if ((errno = pthread_mutex_unlock(&wipslot->wip_lock)) != 0)
+			terminate("%s: pthread_mutex_unlock(wip_lock)",
+			    __func__);
 	}
 }
 
@@ -463,28 +487,44 @@ worker_runphase2(workqueue_t *wq)
 	int batchid;
 
 	for (;;) {
-		pthread_mutex_lock(&wq->wq_queue_lock);
+		if ((errno = pthread_mutex_lock(&wq->wq_queue_lock)) != 0)
+			terminate("%s: pthread_mutex_lock(wq_queue_lock)",
+			    __func__);
 
 		if (wq->wq_ninqueue == 1) {
-			pthread_cond_broadcast(&wq->wq_work_avail);
-			pthread_mutex_unlock(&wq->wq_queue_lock);
+			if ((errno = pthread_cond_broadcast(&wq->wq_work_avail)) != 0)
+			    terminate("%s: pthread_cond_broadcast(wq_work_avail)",
+				__func__);
+			if ((errno = pthread_mutex_unlock(&wq->wq_queue_lock)) != 0)
+				terminate("%s: pthread_mutex_unlock(wq_queue_lock)",
+				    __func__);
 
 			debug(2, "0x%jx: entering p2 completion barrier\n",
 			    (uintmax_t)(uintptr_t)pthread_self());
 			if (barrier_wait(&wq->wq_bar1)) {
-				pthread_mutex_lock(&wq->wq_queue_lock);
+				if ((errno = pthread_mutex_lock(&wq->wq_queue_lock)) != 0)
+					terminate("%s: pthread_mutex_lock(wq_queue_lock)",
+					    __func__);
 				wq->wq_alldone = 1;
-				pthread_cond_signal(&wq->wq_alldone_cv);
-				pthread_mutex_unlock(&wq->wq_queue_lock);
+				if ((errno = pthread_cond_signal(&wq->wq_alldone_cv)) != 0)
+					terminate("%s: pthread_cond_signal(wq_alldone_cv)",
+					    __func__);
+				if ((errno = pthread_mutex_unlock(&wq->wq_queue_lock)) != 0)
+					terminate("%s: pthread_mutex_unlock(wq_queue_lock)",
+					    __func__);
 			}
 
 			return;
 		}
 
 		if (fifo_len(wq->wq_queue) < 2) {
-			pthread_cond_wait(&wq->wq_work_avail,
-			    &wq->wq_queue_lock);
-			pthread_mutex_unlock(&wq->wq_queue_lock);
+			if ((errno = pthread_cond_wait(&wq->wq_work_avail,
+			    &wq->wq_queue_lock)) != 0)
+				terminate("%s: pthread_cond_wait(wq_work_avail,wq_queue_lock)",
+				    __func__);
+			if ((errno = pthread_mutex_unlock(&wq->wq_queue_lock)) != 0)
+				terminate("%s: pthread_mutex_unlock(wq_queue_lock)",
+				    __func__);
 			continue;
 		}
 
@@ -495,7 +535,9 @@ worker_runphase2(workqueue_t *wq)
 
 		batchid = wq->wq_next_batchid++;
 
-		pthread_mutex_unlock(&wq->wq_queue_lock);
+		if ((errno = pthread_mutex_unlock(&wq->wq_queue_lock)) != 0)
+			terminate("%s: pthread_mutex_unlock(wq_queue_lock)",
+			    __func__);
 
 		debug(2, "0x%jx: merging %p into %p\n",
 		    (uintmax_t)(uintptr_t)pthread_self(),
@@ -507,10 +549,14 @@ worker_runphase2(workqueue_t *wq)
 		 * merging is complete.  place at the tail of the queue in
 		 * proper order.
 		 */
-		pthread_mutex_lock(&wq->wq_queue_lock);
+		if ((errno = pthread_mutex_lock(&wq->wq_queue_lock)) != 0)
+			terminate("%s: pthread_mutex_lock(wq_queue_lock)",
+			    __func__);
 		while (wq->wq_lastdonebatch + 1 != batchid) {
-			pthread_cond_wait(&wq->wq_done_cv,
-			    &wq->wq_queue_lock);
+			if ((errno = pthread_cond_wait(&wq->wq_done_cv,
+			    &wq->wq_queue_lock)) != 0)
+				terminate("%s: pthread_cond_wait(wq_done_cv,wq_queue_lock)",
+				    __func__);
 		}
 
 		wq->wq_lastdonebatch = batchid;
@@ -519,9 +565,15 @@ worker_runphase2(workqueue_t *wq)
 		debug(2, "0x%jx: added %p to queue, len now %d, ninqueue %d\n",
 		    (uintmax_t)(uintptr_t)pthread_self(), (void *)pow2,
 		    fifo_len(wq->wq_queue), wq->wq_ninqueue);
-		pthread_cond_broadcast(&wq->wq_done_cv);
-		pthread_cond_signal(&wq->wq_work_avail);
-		pthread_mutex_unlock(&wq->wq_queue_lock);
+		if ((errno = pthread_cond_broadcast(&wq->wq_done_cv)) != 0)
+			terminate("%s: pthread_cond_broadcast(wq_done_cv)",
+			    __func__);
+		if ((errno = pthread_cond_signal(&wq->wq_work_avail)) != 0)
+			terminate("%s: pthread_cond_signal(wq_work_avail)",
+			    __func__);
+		if ((errno = pthread_mutex_unlock(&wq->wq_queue_lock)) != 0)
+			terminate("%s: pthread_mutex_unlock(wq_queue_lock)",
+			    __func__);
 	}
 }
 
@@ -574,18 +626,23 @@ merge_ctf_cb(tdata_t *td, char *name, void *arg)
 
 	debug(3, "Adding tdata %p for processing\n", (void *)td);
 
-	pthread_mutex_lock(&wq->wq_queue_lock);
+	if ((errno = pthread_mutex_lock(&wq->wq_queue_lock)) != 0)
+		terminate("%s: pthread_mutex_lock(wq_queue_lock)", __func__);
 	while (fifo_len(wq->wq_queue) > wq->wq_ithrottle) {
 		debug(2, "Throttling input (len = %d, throttle = %d)\n",
 		    fifo_len(wq->wq_queue), wq->wq_ithrottle);
-		pthread_cond_wait(&wq->wq_work_removed, &wq->wq_queue_lock);
+		if ((errno = pthread_cond_wait(&wq->wq_work_removed, &wq->wq_queue_lock)) != 0)
+			terminate("%s: pthread_cond_wait(wq_work_removed,wq_queue_lock)",
+			    __func__);
 	}
 
 	fifo_add(wq->wq_queue, td);
 	debug(1, "Thread 0x%jx announcing %s\n",
 	    (uintmax_t)(uintptr_t)pthread_self(), name);
-	pthread_cond_broadcast(&wq->wq_work_avail);
-	pthread_mutex_unlock(&wq->wq_queue_lock);
+	if ((errno = pthread_cond_broadcast(&wq->wq_work_avail)) != 0)
+		terminate("%s: pthread_cond_broadcast(wq_work_avail)", __func__);
+	if ((errno = pthread_mutex_unlock(&wq->wq_queue_lock)) != 0)
+		terminate("%s: pthread_mutex_unlock(wq_queue_lock)", __func__);
 
 	return (1);
 }
@@ -690,25 +747,35 @@ wq_init(workqueue_t *wq, int nfiles)
 	wq->wq_next_batchid = 0;
 
 	for (i = 0; i < nslots; i++) {
-		pthread_mutex_init(&wq->wq_wip[i].wip_lock, NULL);
-		pthread_cond_init(&wq->wq_wip[i].wip_cv, NULL);
+		if ((errno = pthread_mutex_init(&wq->wq_wip[i].wip_lock, NULL)) != 0)
+			terminate("%s: pthread_mutex_init(wip[%d].wip_lock",
+			    __func__, i);
+		if ((errno = pthread_cond_init(&wq->wq_wip[i].wip_cv, NULL)) != 0)
+			terminate("%s: pthread_cond_init(wip[%d].wip_cv",
+			    __func__, i);
 		wq->wq_wip[i].wip_batchid = wq->wq_next_batchid++;
 	}
 
-	pthread_mutex_init(&wq->wq_queue_lock, NULL);
+	if ((errno = pthread_mutex_init(&wq->wq_queue_lock, NULL)) != 0)
+		terminate("%s: pthread_mutex_init(wq_queue_lock)", __func__);
 	wq->wq_queue = fifo_new();
-	pthread_cond_init(&wq->wq_work_avail, NULL);
-	pthread_cond_init(&wq->wq_work_removed, NULL);
+	if ((errno = pthread_cond_init(&wq->wq_work_avail, NULL)) != 0)
+		terminate("%s: pthread_cond_init(wq_work_avail)", __func__);
+	if ((errno = pthread_cond_init(&wq->wq_work_removed, NULL)) != 0)
+		terminate("%s: pthread_cond_init(wq_work_removed", __func__);
 	wq->wq_ninqueue = nfiles;
 	wq->wq_nextpownum = 0;
 
-	pthread_mutex_init(&wq->wq_donequeue_lock, NULL);
+	if ((errno = pthread_mutex_init(&wq->wq_donequeue_lock, NULL)) != 0)
+		terminate("%s: pthread_mutex_init(wq_donequeue_lock)", __func__);
 	wq->wq_donequeue = fifo_new();
 	wq->wq_lastdonebatch = -1;
 
-	pthread_cond_init(&wq->wq_done_cv, NULL);
+	if ((errno = pthread_cond_init(&wq->wq_done_cv, NULL)) != 0)
+		terminate("%s: pthread_cond_init(wq_done_cv)", __func__);
 
-	pthread_cond_init(&wq->wq_alldone_cv, NULL);
+	if ((errno = pthread_cond_init(&wq->wq_alldone_cv, NULL)) != 0)
+		terminate("%s: pthread_cond_init(wq_alldone_cv)", __func__);
 	wq->wq_alldone = 0;
 
 	barrier_init(&wq->wq_bar1, wq->wq_nthreads);
@@ -727,10 +794,13 @@ start_threads(workqueue_t *wq)
 	sigaddset(&sets, SIGINT);
 	sigaddset(&sets, SIGQUIT);
 	sigaddset(&sets, SIGTERM);
-	pthread_sigmask(SIG_BLOCK, &sets, NULL);
+	if ((errno = pthread_sigmask(SIG_BLOCK, &sets, NULL)) != 0)
+		terminate("%s: pthread_sigmask(SIG_BLOCK)", __func__);
 
 	for (i = 0; i < wq->wq_nthreads; i++) {
-		pthread_create(&wq->wq_thread[i], NULL, worker_thread, wq);
+		if ((errno = pthread_create(&wq->wq_thread[i], NULL, worker_thread, wq)) != 0)
+			terminate("%s: pthread_create(wq_thread[%d]",
+			    __func__, i);
 	}
 
 #ifdef illumos
@@ -742,7 +812,8 @@ start_threads(workqueue_t *wq)
 	signal(SIGQUIT, handle_sig);
 	signal(SIGTERM, handle_sig);
 #endif
-	pthread_sigmask(SIG_UNBLOCK, &sets, NULL);
+	if ((errno = pthread_sigmask(SIG_UNBLOCK, &sets, NULL)) != 0)
+		terminate("%s: pthread_sigmask(SIG_UNBLOCK)", __func__);
 }
 
 static void
@@ -751,7 +822,9 @@ join_threads(workqueue_t *wq)
 	int i;
 
 	for (i = 0; i < wq->wq_nthreads; i++) {
-		pthread_join(wq->wq_thread[i], NULL);
+		if ((errno = pthread_join(wq->wq_thread[i], NULL)) != 0)
+			terminate("%s: pthread_join(wq_thread[%d]",
+			    __func__, i);
 	}
 }
 
@@ -947,15 +1020,23 @@ main(int argc, char **argv)
 		terminate("No ctf sections found to merge\n");
 	}
 
-	pthread_mutex_lock(&wq.wq_queue_lock);
+	if ((errno = pthread_mutex_lock(&wq.wq_queue_lock)) != 0)
+		terminate("%s: pthread_mutex_lock(wq_queue_lock)", __func__);
 	wq.wq_nomorefiles = 1;
-	pthread_cond_broadcast(&wq.wq_work_avail);
-	pthread_mutex_unlock(&wq.wq_queue_lock);
+	if ((errno = pthread_cond_broadcast(&wq.wq_work_avail)) != 0)
+		terminate("%s: pthread_cond_broadcast(wq_work_avail)", __func__);
+	if ((errno = pthread_mutex_unlock(&wq.wq_queue_lock)) != 0)
+		terminate("%s: pthread_mutex_unlock(wq_queue_lock)", __func__);
 
-	pthread_mutex_lock(&wq.wq_queue_lock);
-	while (wq.wq_alldone == 0)
-		pthread_cond_wait(&wq.wq_alldone_cv, &wq.wq_queue_lock);
-	pthread_mutex_unlock(&wq.wq_queue_lock);
+	if ((errno = pthread_mutex_lock(&wq.wq_queue_lock)) != 0)
+		terminate("%s: pthread_mutex_lock(wq_queue_lock)", __func__);
+	while (wq.wq_alldone == 0) {
+		if ((errno = pthread_cond_wait(&wq.wq_alldone_cv, &wq.wq_queue_lock)) != 0)
+			terminate("%s: pthread_cond_wait(wq_alldone_cv,wq_queue_lock)",
+			    __func__);
+	}
+	if ((errno = pthread_mutex_unlock(&wq.wq_queue_lock)) != 0)
+		terminate("%s: pthread_mutex_unlock(wq_queue_lock)", __func__);
 
 	join_threads(&wq);
 
