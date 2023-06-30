@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.325 2023/06/30 14:39:23 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.326 2023/06/30 15:19:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.325 2023/06/30 14:39:23 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.326 2023/06/30 15:19:09 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -456,18 +456,20 @@ set_first_typedef(type_t *tp, sym_t *sym)
 }
 
 static unsigned int
-bit_field_width(sym_t **mem)
+bit_field_width(sym_t **mem, bool *named)
 {
-	unsigned int width = (*mem)->s_type->t_bit_field_width;
+	unsigned int width = 0;
+	unsigned int align = 0;
 	while (*mem != NULL && (*mem)->s_type->t_bitfield) {
+		if ((*mem)->s_name != unnamed)
+			*named = true;
 		width += (*mem)->s_type->t_bit_field_width;
+		unsigned int mem_align = alignment_in_bits((*mem)->s_type);
+		if (mem_align > align)
+			align = mem_align;
 		*mem = (*mem)->s_next;
 	}
-
-	// XXX: Why INT_SIZE? C99 6.7.2.1p4 allows bit-fields to have type
-	// XXX: _Bool or another implementation-defined type.
-	// XXX: Why round down instead of up? See expr_sizeof.c, anonymous_flags.
-	return width - width % INT_SIZE;
+	return (width + align - 1) & -align;
 }
 
 static void
@@ -481,11 +483,12 @@ pack_struct_or_union(type_t *tp)
 	}
 
 	unsigned int bits = 0;
+	bool named = false;
 	for (sym_t *mem = tp->t_sou->sou_first_member;
 	     mem != NULL; mem = mem->s_next) {
 		// TODO: Maybe update mem->u.s_member.sm_offset_in_bits.
 		if (mem->s_type->t_bitfield) {
-			bits += bit_field_width(&mem);
+			bits += bit_field_width(&mem, &named);
 			if (mem == NULL)
 				break;
 		}
@@ -1795,24 +1798,25 @@ complete_struct_or_union(sym_t *first_member)
 		c99ism(47, tspec_name(tp->t_tspec));
 	}
 
-	int n = 0;
+	bool has_named_member = false;
 	for (sym_t *mem = first_member; mem != NULL; mem = mem->s_next) {
+		if (mem->s_name != unnamed)
+			has_named_member = true;
 		/* bind anonymous members to the structure */
 		if (mem->u.s_member.sm_sou_type == NULL) {
 			mem->u.s_member.sm_sou_type = sp;
 			if (mem->s_type->t_bitfield) {
-				sp->sou_size_in_bits += bit_field_width(&mem);
+				sp->sou_size_in_bits +=
+				    bit_field_width(&mem, &has_named_member);
 				if (mem == NULL)
 					break;
 			}
 			sp->sou_size_in_bits +=
 			    type_size_in_bits(mem->s_type);
 		}
-		if (mem->s_name != unnamed)
-			n++;
 	}
 
-	if (n == 0 && sp->sou_size_in_bits != 0) {
+	if (!has_named_member && sp->sou_size_in_bits != 0) {
 		/* '%s' has no named members */
 		warning(65, type_name(tp));
 	}
