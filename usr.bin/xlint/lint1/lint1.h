@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.171 2023/06/30 19:10:49 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.172 2023/06/30 19:43:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -65,15 +65,6 @@ typedef struct {
 	int	p_line;
 	int	p_uniq;			/* uniquifier */
 } pos_t;
-
-/* Copies curr_pos, keeping things unique. */
-#define	UNIQUE_CURR_POS(pos)						\
-	do {								\
-		(pos) = curr_pos;					\
-		curr_pos.p_uniq++;					\
-		if (curr_pos.p_file == csrc_pos.p_file)			\
-			csrc_pos.p_uniq++;				\
-	} while (false)
 
 /*
  * Strings cannot be referenced simply by a pointer to their first
@@ -518,6 +509,17 @@ check_printf(const char *fmt, ...)
 			(query_message)(__VA_ARGS__);			\
 	} while (false)
 #endif
+
+/* Copies curr_pos, keeping things unique. */
+static inline pos_t
+unique_curr_pos(void)
+{
+	pos_t curr = curr_pos;
+	curr_pos.p_uniq++;
+	if (curr_pos.p_file == csrc_pos.p_file)
+		csrc_pos.p_uniq++;
+	return curr;
+}
 
 static inline bool
 is_nonzero_val(const val_t *val)
