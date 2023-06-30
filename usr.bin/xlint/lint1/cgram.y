@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.440 2023/06/30 08:03:01 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.441 2023/06/30 19:10:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.440 2023/06/30 08:03:01 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.441 2023/06/30 19:10:49 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -938,7 +938,7 @@ struct_declaration_list_with_rbrace:	/* see C99 6.7.2.1 */
 struct_declaration_list:	/* C99 6.7.2.1 */
 	  struct_declaration
 	| struct_declaration_list struct_declaration {
-		$$ = concat_lists($1, $2);
+		$$ = concat_symbols($1, $2);
 	  }
 	;
 
@@ -994,7 +994,7 @@ notype_struct_declarators:
 	| notype_struct_declarators {
 		symtyp = FMEMBER;
 	  } T_COMMA type_struct_declarator {
-		$$ = concat_lists($1, declare_member($4));
+		$$ = concat_symbols($1, declare_member($4));
 	  }
 	;
 
@@ -1005,7 +1005,7 @@ type_struct_declarators:
 	| type_struct_declarators {
 		symtyp = FMEMBER;
 	  } T_COMMA type_struct_declarator {
-		$$ = concat_lists($1, declare_member($4));
+		$$ = concat_symbols($1, declare_member($4));
 	  }
 	;
 
@@ -1091,7 +1091,7 @@ enums_with_opt_comma:		/* helper for C99 6.7.2.2 */
 enumerator_list:		/* C99 6.7.2.2 */
 	  enumerator
 	| enumerator_list T_COMMA enumerator {
-		$$ = concat_lists($1, $3);
+		$$ = concat_symbols($1, $3);
 	  }
 	| error {
 		$$ = NULL;
@@ -1368,10 +1368,11 @@ array_size:
 
 identifier_list:		/* C99 6.7.5 */
 	  T_NAME {
-		$$ = old_style_function_name(getsym($1));
+		$$ = old_style_function_parameter_name(getsym($1));
 	  }
 	| identifier_list T_COMMA T_NAME {
-		$$ = concat_lists($1, old_style_function_name(getsym($3)));
+		$$ = concat_symbols($1,
+		    old_style_function_parameter_name(getsym($3)));
 	  }
 	| identifier_list error
 	;
@@ -1490,7 +1491,7 @@ vararg_parameter_type_list:	/* specific to lint */
 parameter_type_list:
 	  parameter_declaration
 	| parameter_type_list T_COMMA parameter_declaration {
-		$$ = concat_lists($1, $3);
+		$$ = concat_symbols($1, $3);
 	  }
 	;
 

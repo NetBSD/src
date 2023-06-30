@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.170 2023/06/29 22:52:44 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.171 2023/06/30 19:10:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -347,9 +347,11 @@ typedef enum declaration_kind {
 } declaration_kind;
 
 /*
- * For nested declarations there is a stack that holds all information
- * needed for the current level. dcs points to the innermost element of this
- * stack.
+ * A declaration level describes a struct, union, enum, block, argument
+ * declaration list or an abstract (unnamed) type.
+ *
+ * For nested declarations, the global 'dcs' holds all information needed for
+ * the current level, the outer levels are available via 'd_enclosing'.
  */
 typedef	struct dinfo {
 	declaration_kind d_kind;
