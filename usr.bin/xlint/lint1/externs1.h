@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.180 2023/06/29 09:58:36 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.181 2023/06/30 19:10:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -201,7 +201,7 @@ void	dcs_begin_type(void);
 void	dcs_end_type(void);
 int	length_in_bits(const type_t *, const char *);
 unsigned int alignment_in_bits(const type_t *);
-sym_t	*concat_lists(sym_t *, sym_t *);
+sym_t	*concat_symbols(sym_t *, sym_t *);
 void	check_type(sym_t *);
 sym_t	*declare_member(sym_t *);
 sym_t	*set_bit_field_width(sym_t *, int);
@@ -211,7 +211,7 @@ sym_t	*add_array(sym_t *, bool, int);
 sym_t	*add_function(sym_t *, sym_t *);
 void	check_function_definition(sym_t *, bool);
 sym_t	*declarator_name(sym_t *);
-sym_t	*old_style_function_name(sym_t *);
+sym_t	*old_style_function_parameter_name(sym_t *);
 type_t	*make_tag_type(sym_t *, tspec_t, bool, bool);
 const	char *storage_class_name(scl_t);
 type_t	*complete_struct_or_union(sym_t *);
