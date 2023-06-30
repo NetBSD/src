@@ -1,4 +1,4 @@
-/*	$NetBSD: d_alignof.c,v 1.9 2023/06/30 09:21:52 rillig Exp $	*/
+/*	$NetBSD: d_alignof.c,v 1.10 2023/06/30 09:26:03 rillig Exp $	*/
 # 3 "d_alignof.c"
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Alignment.html */
@@ -105,7 +105,7 @@ alignof_variants(void)
 
 	/* expect+1: warning: enum 'incomplete_enum' never defined [235] */
 	enum incomplete_enum;
-	/* expect+1: error: negative array dimension (-4) [20] */
+	/* expect+1: error: cannot take size/alignment of incomplete type [143] */
 	typedef int incomplete_enum[-(int)__alignof(enum incomplete_enum)];
 
 	struct bit_fields {
