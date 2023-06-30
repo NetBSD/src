@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.534 2023/06/30 08:48:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.535 2023/06/30 09:26:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.534 2023/06/30 08:48:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.535 2023/06/30 09:26:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4095,39 +4095,26 @@ type_size_in_bits(const type_t *tp)
 tnode_t *
 build_alignof(const type_t *tp)
 {
-	switch (tp->t_tspec) {
-	case ARRAY:
-		break;
-
-	case FUNC:
+	if (tp->t_tspec == FUNC) {
 		/* cannot take size/alignment of function type '%s' */
 		error(144, type_name(tp));
 		return NULL;
-
-	case STRUCT:
-	case UNION:
-		if (is_incomplete(tp)) {
-			/* cannot take size/alignment of incomplete type */
-			error(143);
-			return NULL;
-		}
-		break;
-	case ENUM:
-		break;
-	default:
-		if (tp->t_bitfield) {
-			/* cannot take size/alignment of bit-field */
-			error(145);
-			return NULL;
-		}
-		if (tp->t_tspec == VOID) {
-			/* cannot take size/alignment of void */
-			error(146);
-			return NULL;
-		}
-		break;
 	}
-
+	if (tp->t_tspec == VOID) {
+		/* cannot take size/alignment of void */
+		error(146);
+		return NULL;
+	}
+	if (is_incomplete(tp)) {
+		/* cannot take size/alignment of incomplete type */
+		error(143);
+		return NULL;
+	}
+	if (tp->t_bitfield) {
+		/* cannot take size/alignment of bit-field */
+		error(145);
+		return NULL;
+	}
 	return build_integer_constant(SIZEOF_TSPEC,
 	    (int64_t)alignment_in_bits(tp) / CHAR_SIZE);
 }
