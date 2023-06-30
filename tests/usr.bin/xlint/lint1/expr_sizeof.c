@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.9 2023/06/30 09:21:52 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.10 2023/06/30 15:19:09 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -92,7 +92,7 @@ bit_fields(void)
 			_Bool flag2:1;
 		};
 	} anonymous_flags;
-	/* FIXME: sizeof must be 1, not 0. */
+	/* expect+1: error: negative array dimension (-1) [20] */
 	typedef int sizeof_anonymous_flags[-(int)sizeof(anonymous_flags)];
 
 	struct {
