@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.539 2023/07/01 06:09:24 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.540 2023/07/01 09:21:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.539 2023/07/01 06:09:24 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.540 2023/07/01 09:21:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1066,8 +1066,8 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 		return;
 
 	const type_t *rtp = rn->tn_left->tn_type;
-	const struct sym *ec = rtp->t_enum->en_first_enumerator;
-	const struct sym *max_ec = ec;
+	const sym_t *ec = rtp->t_enum->en_first_enumerator;
+	const sym_t *max_ec = ec;
 	lint_assert(ec != NULL);
 	for (ec = ec->s_next; ec != NULL; ec = ec->s_next)
 		if (ec->u.s_enum_constant > max_ec->u.s_enum_constant)
