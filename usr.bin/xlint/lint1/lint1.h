@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.173 2023/06/30 21:39:54 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.174 2023/07/01 09:59:51 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -112,13 +112,12 @@ typedef struct {
 
 /*
  * Structures of type struct_or_union uniquely identify structures. This can't
- * be done in structures of type type_t, because these are copied
- * if they must be modified. So it would not be possible to check
- * if two structures are identical by comparing the pointers to
- * the type structures.
+ * be done in structures of type type_t, because these are copied if they must
+ * be modified. So it would not be possible to check if two structures are
+ * identical by comparing the pointers to the type structures.
  *
- * The typename is used if the structure is unnamed to identify
- * the structure type in pass 2.
+ * If the structure has no tag name, its first typedef name is used to identify
+ * the structure in lint2.
  */
 typedef	struct {
 	unsigned int sou_size_in_bits;
@@ -241,7 +240,7 @@ typedef	struct sym {
 				 * pointer to the external symbol with the
 				 * same name */
 	def_t	s_def;		/* declared, tentative defined, defined */
-	scl_t	s_scl;		/* storage class */
+	scl_t	s_scl;		/* storage class, more or less */
 	int	s_block_level;	/* level of declaration, -1 if not in symbol
 				   table */
 	type_t	*s_type;
@@ -352,8 +351,8 @@ typedef	struct decl_level {
 	tspec_t	d_sign_mod;	/* SIGNED or UNSIGN */
 	tspec_t	d_rank_mod;	/* SHORT, LONG or QUAD */
 	scl_t	d_scl;		/* storage class */
-	type_t	*d_type;	/* after dcs_end_type pointer to the type used
-				   for all declarators */
+	type_t	*d_type;	/* after dcs_end_type, the pointer to the type
+				 * used for all declarators */
 	sym_t	*d_redeclared_symbol;
 	unsigned int d_offset_in_bits; /* offset of next structure member */
 	unsigned short d_sou_align_in_bits; /* alignment required for current
@@ -363,17 +362,20 @@ typedef	struct decl_level {
 	bool	d_inline:1;	/* inline in declaration specifiers */
 	bool	d_multiple_storage_classes:1; /* reported in dcs_end_type */
 	bool	d_invalid_type_combination:1;
-	bool	d_nonempty_decl:1; /* if at least one tag is declared
-				 * ... in the current function decl. */
+	bool	d_nonempty_decl:1; /* in a function declaration, whether at
+				 * least one tag was declared */
 	bool	d_vararg:1;
-	bool	d_prototype:1;	/* current function decl. is a prototype */
+	bool	d_prototype:1;	/* in a function declaration, whether the
+				 * function has a prototype */
 	bool	d_no_type_specifier:1;
 	bool	d_asm:1;	/* set if d_ctx == AUTO and asm() present */
 	bool	d_packed:1;
 	bool	d_used:1;
-	type_t	*d_tag_type;	/* tag during member declaration */
-	sym_t	*d_func_args;	/* list of arguments during function def. */
-	pos_t	d_func_def_pos;	/* position of function definition */
+	type_t	*d_tag_type;	/* during a member declaration, the tag type to
+				 * which the member belongs */
+	sym_t	*d_func_args;	/* during a function declaration, the list of
+				 * arguments */
+	pos_t	d_func_def_pos;	/* position of the function definition */
 	sym_t	*d_first_dlsym;	/* first symbol declared at this level */
 	sym_t	**d_last_dlsym;	/* points to s_level_next in the last symbol
 				   declaration at this level */
