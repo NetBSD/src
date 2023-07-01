@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.331 2023/07/01 09:31:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.332 2023/07/01 10:04:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.331 2023/07/01 09:31:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.332 2023/07/01 10:04:27 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -424,7 +424,7 @@ set_first_typedef(type_t *tp, sym_t *sym)
 }
 
 static unsigned int
-bit_fields_width(sym_t **mem, bool *named)
+bit_fields_width(const sym_t **mem, bool *named)
 {
 	unsigned int width = 0;
 	unsigned int align = 0;
@@ -452,7 +452,7 @@ pack_struct_or_union(type_t *tp)
 
 	unsigned int bits = 0;
 	bool named = false;
-	for (sym_t *mem = tp->t_sou->sou_first_member;
+	for (const sym_t *mem = tp->t_sou->sou_first_member;
 	     mem != NULL; mem = mem->s_next) {
 		// TODO: Maybe update mem->u.s_member.sm_offset_in_bits.
 		if (mem->s_type->t_bitfield) {
