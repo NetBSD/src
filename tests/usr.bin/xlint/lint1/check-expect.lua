@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.3 2023/06/28 17:53:21 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.4 2023/07/01 09:21:31 rillig Exp $
 
 --[[
 
@@ -58,7 +58,7 @@ end
 --   },
 --   { "file.c(18)", "file.c(23)" }
 local function load_c(fname)
-  local basename = fname:match("([^/]+)$") or fname
+  local basename = fname:match("([^/]+)$")
   local lines = load_lines(fname)
   if lines == nil then return nil, nil end
 

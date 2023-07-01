@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.40 2023/06/30 21:39:54 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.41 2023/07/01 09:21:31 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.40 2023/06/30 21:39:54 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.41 2023/07/01 09:21:31 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -440,7 +440,7 @@ debug_dinfo(const decl_level *dl)
 	     arg != NULL; arg = arg->s_next)
 		debug_sym(" arg(", arg, ")");
 	if (dl->d_func_def_pos.p_file != NULL)
-		debug_printf(" func_def_pos=%s:%dl:%dl",
+		debug_printf(" func_def_pos=%s:%d:%d",
 		    dl->d_func_def_pos.p_file, dl->d_func_def_pos.p_line,
 		    dl->d_func_def_pos.p_uniq);
 	for (const sym_t *sym = dl->d_func_proto_syms;
