@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.538 2023/06/30 21:39:54 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.539 2023/07/01 06:09:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.538 2023/06/30 21:39:54 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.539 2023/07/01 06:09:24 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1882,7 +1882,7 @@ all_members_compatible(const sym_t *msym)
 	return true;
 }
 
-static sym_t *
+sym_t *
 find_member(const type_t *tp, const char *name)
 {
 	for (sym_t *mem = tp->t_sou->sou_first_member;

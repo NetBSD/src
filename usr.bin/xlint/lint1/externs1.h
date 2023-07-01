@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.183 2023/06/30 21:39:54 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.184 2023/07/01 06:09:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -275,6 +275,7 @@ void	check_expr_misc(const tnode_t *, bool, bool, bool, bool, bool, bool);
 bool	constant_addr(const tnode_t *, const sym_t **, ptrdiff_t *);
 strg_t	*cat_strings(strg_t *, strg_t *);
 unsigned int type_size_in_bits(const type_t *);
+sym_t	*find_member(const type_t *, const char *);
 
 void begin_statement_expr(void);
 void do_statement_expr(tnode_t *);
