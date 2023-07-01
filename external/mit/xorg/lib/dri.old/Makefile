@@ -1,9 +1,12 @@
-# $NetBSD: Makefile,v 1.4 2022/09/29 18:58:04 rjs Exp $
+# $NetBSD: Makefile,v 1.5 2023/07/01 15:16:46 rillig Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
-# XXX: anonymous structs inside anonymous unions don't work.
-NOLINT=yes
+# When build_id.c expands the macro invocation 'ElfW(Nhdr)', the result is
+# 'Elf64 /* MD native binary size */ _Nhdr'. The comment prevents the two
+# identifiers from being concatenated.
+build_id.ln:
+	touch $@
 
 .include <bsd.own.mk>
 
