@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.330 2023/06/30 21:39:54 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.331 2023/07/01 09:31:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.330 2023/06/30 21:39:54 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.331 2023/07/01 09:31:55 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -3195,7 +3195,10 @@ to_int_constant(tnode_t *tn, bool required)
 	if (tn == NULL)
 		return 1;
 
-	val_t *v = constant(tn, required);
+	val_t *v = integer_constant(tn, required);
+	bool is_unsigned = is_uinteger(v->v_tspec);
+	int64_t val = v->v_quad;
+	free(v);
 
 	/*
 	 * Abstract declarations are used inside expression. To free
@@ -3206,28 +3209,11 @@ to_int_constant(tnode_t *tn, bool required)
 	if (tn->tn_op != CON && dcs->d_kind != DLK_ABSTRACT)
 		expr_free_all();
 
-	tspec_t t = v->v_tspec;
-	int i;
-	if (t == FLOAT || t == DOUBLE || t == LDOUBLE) {
-		i = (int)v->v_ldbl;
-		/* integral constant expression expected */
-		error(55);
-	} else {
-		i = (int)v->v_quad;
-		if (is_uinteger(t)) {
-			if ((uint64_t)v->v_quad > (uint64_t)TARG_INT_MAX) {
-				/* integral constant too large */
-				warning(56);
-			}
-		} else {
-			if (v->v_quad > (int64_t)TARG_INT_MAX ||
-			    v->v_quad < (int64_t)TARG_INT_MIN) {
-				/* integral constant too large */
-				warning(56);
-			}
-		}
-	}
-
-	free(v);
-	return i;
+	bool out_of_bounds = is_unsigned
+	    ? (uint64_t)val > (uint64_t)TARG_INT_MAX
+	    : val > (int64_t)TARG_INT_MAX || val < (int64_t)TARG_INT_MIN;
+	if (out_of_bounds)
+		/* integral constant too large */
+		warning(56);
+	return (int)val;
 }

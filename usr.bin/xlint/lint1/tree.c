@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.540 2023/07/01 09:21:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.541 2023/07/01 09:31:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.540 2023/07/01 09:21:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.541 2023/07/01 09:31:55 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4328,7 +4328,7 @@ build_function_call(tnode_t *func, bool sys, tnode_t *args)
  * type, an error message is printed.
  */
 val_t *
-constant(tnode_t *tn, bool required)
+integer_constant(tnode_t *tn, bool required)
 {
 
 	if (tn != NULL)
