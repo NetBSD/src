@@ -1,4 +1,4 @@
-$NetBSD: hdaudiodevs,v 1.6 2022/04/16 12:24:06 nia Exp $
+$NetBSD: hdaudiodevs,v 1.7 2023/07/01 13:37:36 nia Exp $
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -83,6 +83,7 @@ product	REALTEK		ALC660_VD	0x0660	ALC660-VD
 product	REALTEK		ALC662		0x0662	ALC662
 product	REALTEK		ALC663		0x0663	ALC663
 product	REALTEK		ALC670		0x0670	ALC670
+product REALTEK		ALC671		0x0671	ALC671
 product	REALTEK		ALC861		0x0861	ALC861
 product	REALTEK		ALC861_VD	0x0862	ALC861-VD
 product	REALTEK		ALC880		0x0880	ALC880
