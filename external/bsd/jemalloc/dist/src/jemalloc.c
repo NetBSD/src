@@ -189,12 +189,7 @@ static const void (WINAPI *init_init_lock)(void) = _init_init_lock;
 #endif
 #endif
 #else
-#ifndef __lint__
-// Broken lint
 static malloc_mutex_t	init_lock = MALLOC_MUTEX_INITIALIZER;
-#else
-static malloc_mutex_t	init_lock;
-#endif
 #endif
 
 typedef struct {
