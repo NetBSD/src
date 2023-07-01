@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.541 2023/07/01 09:31:55 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.542 2023/07/01 10:04:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.541 2023/07/01 09:31:55 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.542 2023/07/01 10:04:27 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4014,6 +4014,11 @@ type_size_in_bits(const type_t *tp)
 
 	unsigned int elsz;
 	switch (tp->t_tspec) {
+	case VOID:
+		/* cannot take size/alignment of void */
+		error(146);
+		elsz = 1;
+		break;
 	case FUNC:
 		/* cannot take size/alignment of function type '%s' */
 		error(144, type_name(tp));
@@ -4040,14 +4045,8 @@ type_size_in_bits(const type_t *tp)
 			/* cannot take size/alignment of bit-field */
 			error(145);
 		}
-		if (tp->t_tspec == VOID) {
-			/* cannot take size/alignment of void */
-			error(146);
-			elsz = 1;
-		} else {
-			elsz = size_in_bits(tp->t_tspec);
-			lint_assert(elsz > 0);
-		}
+		elsz = size_in_bits(tp->t_tspec);
+		lint_assert(elsz > 0);
 		break;
 	}
 
