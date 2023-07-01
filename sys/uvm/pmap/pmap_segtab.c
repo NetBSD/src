@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.31 2022/12/21 11:39:46 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.32 2023/07/01 07:10:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.31 2022/12/21 11:39:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.32 2023/07/01 07:10:13 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -557,7 +557,7 @@ pmap_pdetab_alloc(struct pmap *pmap)
 	UVMHIST_CALLARGS(pmapxtabhist, "pm %#jx", (uintptr_t)pmap, 0, 0, 0);
 
 	pmap_pdetab_t *ptb;
-#ifdef KERNHIST
+#ifdef UVMHIST
 	bool found_on_freelist = false;
 #endif
 
@@ -573,7 +573,7 @@ pmap_pdetab_alloc(struct pmap *pmap)
 
 		PDETAB_ADD(nget, 1);
 		ptb->pde_next = NULL;
-#ifdef KERNHIST
+#ifdef UVMHIST
 		found_on_freelist = true;
 #endif
 	}
