@@ -1,4 +1,4 @@
-/*	$NetBSD: init_braces.c,v 1.6 2023/06/30 22:27:47 rillig Exp $	*/
+/*	$NetBSD: init_braces.c,v 1.7 2023/07/01 06:09:24 rillig Exp $	*/
 # 3 "init_braces.c"
 
 /*
@@ -97,7 +97,8 @@ init_anonymous_struct_and_union(void)
 	return var.times.t0.ns;
 }
 
-// Minimized example taken from jemalloc.c, init_lock.
+// Initializers may designate members from unnamed struct/union members.
+// Example code adapted from jemalloc 5.1.0, jemalloc.c, init_lock.
 unsigned char
 init_unnamed_union(void)
 {
@@ -121,8 +122,6 @@ init_unnamed_union(void)
 			{
 				.padded_union = {
 					.pad1 = { 0, 0, 0 },
-/* FIXME: Allow access to unnamed struct/union members. */
-/* expect+1: error: type 'struct padded_union' does not have member 'u1' [101] */
 					.u1 = 0,
 					.pad2 = { 0, 0, 0 },
 				},
