@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.184 2023/07/01 06:09:24 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.185 2023/07/01 09:31:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -269,7 +269,7 @@ tnode_t	*build_alignof(const type_t *);
 tnode_t	*cast(tnode_t *, type_t *);
 tnode_t	*build_function_argument(tnode_t *, tnode_t *);
 tnode_t	*build_function_call(tnode_t *, bool, tnode_t *);
-val_t	*constant(tnode_t *, bool);
+val_t	*integer_constant(tnode_t *, bool);
 void	expr(tnode_t *, bool, bool, bool, bool);
 void	check_expr_misc(const tnode_t *, bool, bool, bool, bool, bool, bool);
 bool	constant_addr(const tnode_t *, const sym_t **, ptrdiff_t *);
