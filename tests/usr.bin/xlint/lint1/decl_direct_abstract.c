@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_direct_abstract.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: decl_direct_abstract.c,v 1.9 2023/07/01 20:57:37 rillig Exp $	*/
 # 3 "decl_direct_abstract.c"
 
 /*
@@ -11,58 +11,67 @@
 
 /* lint1-extra-flags: -X 351 */
 
-/*
- * The following tests do not use int, to avoid confusion with the implicit
- * return type.
- */
-
-char func0001(short (*)(long));
-
-/* GCC says 'char (*)(short int (*)(long int))' */
-/* Clang says 'char (short (*)(long))' */
-/* cdecl says 'function (pointer to function (long) returning short) returning char' */
-/* expect+1: error: cannot initialize 'double' from 'pointer to function(pointer to function(long) returning short) returning char' [185] */
-double type_of_func0001 = func0001;
-
-char func0002(short *(long));
-
-/* GCC says 'char (*)(short int * (*)(long int))' */
-/* Clang says 'char (short *(*)(long))' */
-/* cdecl says 'syntax error' */
-/* FIXME: lint is wrong, it discards the 'short *' */
-/* expect+1: error: cannot initialize 'double' from 'pointer to function(long) returning char' [185] */
-double type_of_func0002 = func0002;
-
-void c99_6_7_6_example_a(int);
-void c99_6_7_6_example_b(int *);
-void c99_6_7_6_example_c(int *[3]);
-void c99_6_7_6_example_d(int (*)[3]);
-void c99_6_7_6_example_e(int (*)[*]);
-void c99_6_7_6_example_f(int *());
-void c99_6_7_6_example_g(int (*)(void));
-void c99_6_7_6_example_h(int (*const[])(unsigned int, ...));
-
 struct incompatible {
 	int member;
 } x;
 
-/* expect+1: ... 'pointer to function(int) returning void' ... */
-double type_of_c99_6_7_6_example_a = c99_6_7_6_example_a;
-/* expect+1: ... 'pointer to function(pointer to int) returning void' ... */
-double type_of_c99_6_7_6_example_b = c99_6_7_6_example_b;
-/* expect+1: ... 'pointer to function(pointer to pointer to int) returning void' ... */
-double type_of_c99_6_7_6_example_c = c99_6_7_6_example_c;
-/* expect+1: ... 'pointer to function(pointer to array[3] of int) returning void' ... */
-double type_of_c99_6_7_6_example_d = c99_6_7_6_example_d;
-/* expect+1: ... 'pointer to function(pointer to array[unknown_size] of int) returning void' ... */
-double type_of_c99_6_7_6_example_e = c99_6_7_6_example_e;
-/* Wrong type before decl.c 1.256 from 2022-04-01. */
-/* expect+1: ... 'pointer to function(pointer to function() returning pointer to int) returning void' ... */
-double type_of_c99_6_7_6_example_f = c99_6_7_6_example_f;
-/* expect+1: ... 'pointer to function(pointer to function(void) returning int) returning void' ... */
-double type_of_c99_6_7_6_example_g = c99_6_7_6_example_g;
-/* expect+1: ... 'pointer to function(pointer to const pointer to function(unsigned int, ...) returning int) returning void' ... */
-double type_of_c99_6_7_6_example_h = c99_6_7_6_example_h;
+void
+c99_6_7_6_examples(void)
+{
+	/* expect+1: ... 'int' ... */
+	x = (int)x;
+	/* expect+1: ... 'pointer to int' ... */
+	x = (int *)x;
+	/* expect+1: ... 'array[3] of pointer to int' ... */
+	x = (int *[3])x;
+	/* expect+1: ... 'pointer to array[3] of int' ... */
+	x = (int (*)[3])x;
+	/* expect+1: ... 'pointer to array[unknown_size] of int' ... */
+	x = (int (*)[*])x;
+	/* expect+1: ... 'function() returning pointer to int' ... */
+	x = (int *())x;
+	/* expect+1: ... 'pointer to function(void) returning int' ... */
+	x = (int (*)(void))x;
+	/* expect+1: ... 'array[unknown_size] of const pointer to function(unsigned int, ...) returning int' ... */
+	x = (int (*const[])(unsigned int, ...))x;
+}
+
+void
+function_returning_char(void)
+{
+	// GCC adds a pointer, then says 'char (*)(short int (*)(long int))'.
+	// Clang says 'char (short (*)(long))'.
+	/* cdecl says 'function (pointer to function (long) returning short) returning char' */
+	/* FIXME: It's a function type, not only 'short'. */
+	/* expect+1: ... 'short' ... */
+	x = (char(short (*)(long)))x;
+
+	/* expect+1: warning: nested 'extern' declaration of 'f1' [352] */
+	char f1(short (*)(long));
+
+	/* expect+1: ... 'pointer to function(pointer to function(long) returning short) returning char' ... */
+	x = f1;
+}
+
+void
+function_returning_pointer(void)
+{
+	// GCC says 'error: cast specifies function type'.
+	// Clang says 'char (short *(*)(long))'.
+	/* expect+1: error: invalid cast from 'struct incompatible' to 'short' [147] */
+	x = (char(short *(long)))x;
+
+	/* expect+1: warning: nested 'extern' declaration of 'f2' [352] */
+	char f2(short *(long));
+
+	// GCC adds two pointers, saying 'char (*)(short int * (*)(long int))'.
+	// Clang says 'char (short *(*)(long))' */
+	/* cdecl says 'syntax error' */
+	/* FIXME: lint is wrong, it discards the 'short *' */
+	/* expect+1: ... 'pointer to function(long) returning char' ... */
+	x = f2;
+}
+
 
 void int_array(int[]);
 void int_array_3(int[3]);
