@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.33 2020/07/21 02:42:05 nia Exp $	*/
+/*	$NetBSD: tetris.c,v 1.34 2023/07/01 10:51:35 nia Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -135,6 +135,7 @@ main(int argc, char *argv[])
 	int level = 2;
 #define NUMKEYS 7
 	char key_write[NUMKEYS][10];
+	char *nocolor_env;
 	int ch, i, j;
 	int fd;
 
@@ -181,6 +182,11 @@ main(int argc, char *argv[])
 
 	if (argc)
 		usage();
+
+	nocolor_env = getenv("NO_COLOR");
+
+	if (nocolor_env != NULL && nocolor_env[0] != '\0')
+		nocolor = 1;
 
 	fallrate = 1000000 / level;
 
