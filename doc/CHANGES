@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2978 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2979 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -139,12 +139,12 @@ Changes from NetBSD 10.0 to NetBSD 11.0:
 		GNU patch doesn't. [wiz 20230616]
 	indent(1): Remove support for handling ASCII backspace characters
 		in C code. [rillig 20230618]
-	make(1): Recognize include guards. [rilling 20230619]
+	make(1): Recognize include guards. [rillig 20230619]
 	pam(8): Disable pam_krb5, pam_ksu by default. [riastradh 20230620]
 	editline(3): Install pkg-config files, same as the portable version.
 		[wiz 20230620]
 	make(1): Speed up pattern matching in the ':M' and ':N' modifiers.
-		[reinoud 20230622]
+		[rillig 20230622]
 	paxctl(8): Introduce -0 option to clear all PaX flag bits in ELF note.
 		[rin 20230623]
 	crunchgen(1): Clear PaX flags instead of removing its ELF note section.
