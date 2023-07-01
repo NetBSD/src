@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.243 2023/06/30 21:06:18 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.244 2023/07/01 06:09:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.243 2023/06/30 21:06:18 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.244 2023/07/01 06:09:24 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -232,18 +232,6 @@ first_named_member(const type_t *tp)
 
 	lint_assert(is_struct_or_union(tp->t_tspec));
 	return skip_unnamed(tp->t_sou->sou_first_member);
-}
-
-static const sym_t *
-look_up_member(const type_t *tp, const char *name)
-{
-	const sym_t *m;
-
-	lint_assert(is_struct_or_union(tp->t_tspec));
-	for (m = tp->t_sou->sou_first_member; m != NULL; m = m->s_next)
-		if (strcmp(m->s_name, name) == 0)
-			return m;
-	return NULL;
 }
 
 /*
@@ -862,7 +850,7 @@ initialization_add_designator_member(initialization *in, const char *name)
 	}
 
 proceed:;
-	const sym_t *member = look_up_member(tp, name);
+	const sym_t *member = find_member(tp, name);
 	if (member == NULL) {
 		/* type '%s' does not have member '%s' */
 		error(101, type_name(tp), name);
