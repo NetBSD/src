@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.335 2023/07/02 10:20:45 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.336 2023/07/02 17:41:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.335 2023/07/02 10:20:45 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.336 2023/07/02 17:41:30 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1731,7 +1731,7 @@ complete_struct_or_union(sym_t *first_member)
 	if (tp == NULL)		/* in case of syntax errors */
 		return gettyp(INT);
 
-	dcs_align((u_int)dcs->d_sou_align_in_bits, 0);
+	dcs_align(dcs->d_sou_align_in_bits, 0);
 
 	struct_or_union *sp = tp->t_sou;
 	sp->sou_align_in_bits = dcs->d_sou_align_in_bits;
