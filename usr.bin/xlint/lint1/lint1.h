@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.177 2023/07/02 18:14:44 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.178 2023/07/02 18:28:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -350,9 +350,11 @@ typedef	struct decl_level {
 	type_t	*d_type;	/* after dcs_end_type, the pointer to the type
 				 * used for all declarators */
 	sym_t	*d_redeclared_symbol;
-	unsigned int d_offset_in_bits; /* offset of next structure member */
-	unsigned int d_sou_align_in_bits; /* alignment required for current
-				 * structure */
+	unsigned int d_sou_size_in_bits;	/* size of the structure or
+						 * union being built, without
+						 * trailing padding */
+	unsigned int d_sou_align_in_bits;	/* alignment of the structure
+						 * or union being built */
 	bool	d_const:1;	/* const in declaration specifiers */
 	bool	d_volatile:1;	/* volatile in declaration specifiers */
 	bool	d_inline:1;	/* inline in declaration specifiers */
