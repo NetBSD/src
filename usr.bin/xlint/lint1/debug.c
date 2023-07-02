@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.42 2023/07/02 08:16:19 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.43 2023/07/02 10:20:45 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.42 2023/07/02 08:16:19 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.43 2023/07/02 10:20:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -393,8 +393,8 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 	debug_printf("%s", suffix);
 }
 
-void
-debug_dinfo(const decl_level *dl)
+static void
+debug_decl_level(const decl_level *dl)
 {
 
 	debug_print_indent();
@@ -446,11 +446,18 @@ debug_dinfo(const decl_level *dl)
 	     sym != NULL; sym = sym->s_next)
 		debug_sym(" func_proto_sym(", sym, ")");
 	debug_printf("\n");
+}
 
-	if (dl->d_enclosing != NULL) {
-		debug_indent_inc();
-		debug_dinfo(dl->d_enclosing);
-		debug_indent_dec();
+void
+debug_dcs(bool all)
+{
+	int prev_indentation = debug_indentation;
+	for (const decl_level *dl = dcs; dl != NULL; dl = dl->d_enclosing) {
+		debug_decl_level(dl);
+		if (!all)
+			return;
+		debug_indentation++;
 	}
+	debug_indentation = prev_indentation;
 }
 #endif

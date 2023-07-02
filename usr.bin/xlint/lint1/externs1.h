@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.185 2023/07/01 09:31:55 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.186 2023/07/02 10:20:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -90,7 +90,7 @@ void	clean_up_after_error(void);
 sym_t	*pushdown(const sym_t *);
 sym_t	*mktempsym(type_t *);
 void	rmsym(sym_t *);
-void	rmsyms(sym_t *);
+void	symtab_remove_level(sym_t *);
 void	inssym(int, sym_t *);
 void	freeyyv(void *, int);
 int	yylex(void);
@@ -122,7 +122,7 @@ const char *decl_level_kind_name(decl_level_kind);
 const char *scl_name(scl_t);
 const char *symt_name(symt_t);
 const char *tqual_name(tqual_t);
-void	debug_dinfo(const decl_level *);
+void	debug_dcs(bool);
 void	debug_node(const tnode_t *);
 void	debug_type(const type_t *);
 void	debug_sym(const char *, const sym_t *, const char *);
@@ -138,7 +138,7 @@ void	debug_leave_func(const char *);
 #define	debug_leave()		debug_leave_func(__func__)
 #else
 #define	debug_noop()		do { } while (false)
-#define	debug_dinfo(d)		debug_noop()
+#define	debug_dcs(all)		debug_noop()
 #define	debug_sym(p, sym, s)	debug_noop()
 #define	debug_symtab()		debug_noop()
 #define	debug_node(tn)		debug_noop()

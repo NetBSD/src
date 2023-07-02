@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.161 2023/07/01 09:31:55 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.162 2023/07/02 10:20:45 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.161 2023/07/01 09:31:55 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.162 2023/07/02 10:20:45 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -421,7 +421,7 @@ end_function(void)
 	 */
 	lint_assert(dcs->d_enclosing == NULL);
 	lint_assert(dcs->d_kind == DLK_EXTERN);
-	rmsyms(dcs->d_func_proto_syms);
+	symtab_remove_level(dcs->d_func_proto_syms);
 
 	/* must be set on level 0 */
 	set_reached(true);
