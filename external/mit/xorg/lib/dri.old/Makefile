@@ -1,6 +1,14 @@
-# $NetBSD: Makefile,v 1.5 2023/07/01 15:16:46 rillig Exp $
+# $NetBSD: Makefile,v 1.6 2023/07/02 23:56:12 rillig Exp $
 
 # Link the mesa_dri_drivers mega driver.
+
+# Uses 'assert(cond)' in a comma expression, leading to a syntax error because
+# in lint mode, 'assert(cond)' expands to an empty string, and '(, expr)' is
+# not an expression.
+NOLINT=
+
+LINTFLAGS+=	-X 213		# void function '%s' cannot return value
+LINTFLAGS+=	-Ac23		# allow C23, for empty initializer braces
 
 # When build_id.c expands the macro invocation 'ElfW(Nhdr)', the result is
 # 'Elf64 /* MD native binary size */ _Nhdr'. The comment prevents the two
