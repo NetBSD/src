@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.41 2023/07/01 09:21:31 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.42 2023/07/02 08:16:19 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.41 2023/07/01 09:21:31 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.42 2023/07/02 08:16:19 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -368,14 +368,13 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 		    sym->u.s_bool_constant ? "true" : "false");
 
 	if (is_member(sym)) {
-		struct_or_union *sou_type = sym->u.s_member.sm_sou_type;
-		lint_assert(sou_type != NULL);
-		const char *tag = sou_type->sou_tag->s_name;
-		const sym_t *def = sou_type->sou_first_typedef;
+		struct_or_union *sou = sym->u.s_member.sm_containing_type;
+		const char *tag = sou->sou_tag->s_name;
+		const sym_t *def = sou->sou_first_typedef;
 		if (tag == unnamed && def != NULL)
 			debug_printf(" sou='typedef %s'", def->s_name);
 		else
-			debug_printf(" sou=%s", tag);
+			debug_printf(" sou='%s'", tag);
 	}
 
 	if (sym->s_keyword != NULL) {
@@ -383,7 +382,7 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 		if (t == T_TYPE || t == T_STRUCT_OR_UNION)
 			debug_printf(" %s",
 			    tspec_name(sym->u.s_keyword.sk_tspec));
-		else if (t == T_QUAL)
+		if (t == T_QUAL)
 			debug_printf(" %s",
 			    tqual_name(sym->u.s_keyword.sk_qualifier));
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.332 2023/07/01 10:04:27 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.333 2023/07/02 08:16:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.332 2023/07/01 10:04:27 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.333 2023/07/02 08:16:19 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1069,8 +1069,8 @@ declare_member(sym_t *dsym)
 	if (dcs->d_redeclared_symbol != NULL) {
 		lint_assert(is_member(dcs->d_redeclared_symbol));
 
-		if (dsym->u.s_member.sm_sou_type ==
-		    dcs->d_redeclared_symbol->u.s_member.sm_sou_type) {
+		if (dsym->u.s_member.sm_containing_type ==
+		    dcs->d_redeclared_symbol->u.s_member.sm_containing_type) {
 			/* duplicate member name '%s' */
 			error(33, dsym->s_name);
 			rmsym(dcs->d_redeclared_symbol);
@@ -1465,8 +1465,7 @@ declarator_name(sym_t *sym)
 	switch (dcs->d_kind) {
 	case DLK_STRUCT:
 	case DLK_UNION:
-		/* Set parent */
-		sym->u.s_member.sm_sou_type = dcs->d_tag_type->t_sou;
+		sym->u.s_member.sm_containing_type = dcs->d_tag_type->t_sou;
 		sym->s_def = DEF;
 		sc = dcs->d_kind == DLK_STRUCT ? STRUCT_MEMBER : UNION_MEMBER;
 		break;
