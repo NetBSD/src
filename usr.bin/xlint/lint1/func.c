@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.162 2023/07/02 10:20:45 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.163 2023/07/02 18:14:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.162 2023/07/02 10:20:45 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.163 2023/07/02 18:14:44 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -148,7 +148,7 @@ bool	bitfieldtype_ok;
  * Whether complaints about use of "long long" are suppressed in
  * the next statement or declaration.
  */
-bool	quadflg;
+bool	long_long_flag;
 
 void
 begin_control_statement(control_statement_kind kind)
@@ -454,8 +454,8 @@ check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 		return;
 
 	lint_assert(case_expr->tn_op == CON);
-	case_value = case_expr->tn_val.v_quad;
-	mask = switch_expr->tn_right->tn_val.v_quad;
+	case_value = case_expr->tn_val.u.integer;
+	mask = switch_expr->tn_right->tn_val.u.integer;
 
 	if ((case_value & ~mask) != 0) {
 		/* statement not reached */
@@ -540,17 +540,17 @@ check_case_label(tnode_t *tn, control_statement *cs)
 
 	/* look if we had this value already */
 	for (cl = cs->c_case_labels; cl != NULL; cl = cl->cl_next) {
-		if (cl->cl_val.v_quad == nv.v_quad)
+		if (cl->cl_val.u.integer == nv.u.integer)
 			break;
 	}
 	if (cl != NULL && is_uinteger(nv.v_tspec)) {
 		/* duplicate case in switch: %lu */
-		error(200, (unsigned long)nv.v_quad);
+		error(200, (unsigned long)nv.u.integer);
 	} else if (cl != NULL) {
 		/* duplicate case in switch: %ld */
-		error(199, (long)nv.v_quad);
+		error(199, (long)nv.u.integer);
 	} else {
-		check_getopt_case_label(nv.v_quad);
+		check_getopt_case_label(nv.u.integer);
 
 		/* append the value to the list of case values */
 		cl = xcalloc(1, sizeof(*cl));
@@ -1331,5 +1331,5 @@ void
 longlong(int n)
 {
 
-	quadflg = true;
+	long_long_flag = true;
 }

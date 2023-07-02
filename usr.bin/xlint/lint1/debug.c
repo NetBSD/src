@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.44 2023/07/02 17:41:30 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.45 2023/07/02 18:14:44 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.44 2023/07/02 17:41:30 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.45 2023/07/02 18:14:44 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -188,17 +188,17 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 		break;
 	case CON:
 		if (is_floating(tn->tn_type->t_tspec))
-			debug_printf(", value %Lg", tn->tn_val.v_ldbl);
+			debug_printf(", value %Lg", tn->tn_val.u.floating);
 		else if (is_uinteger(tn->tn_type->t_tspec))
 			debug_printf(", value %llu",
-			    (unsigned long long)tn->tn_val.v_quad);
+			    (unsigned long long)tn->tn_val.u.integer);
 		else if (is_integer(tn->tn_type->t_tspec))
 			debug_printf(", value %lld",
-			    (long long)tn->tn_val.v_quad);
+			    (long long)tn->tn_val.u.integer);
 		else {
 			lint_assert(tn->tn_type->t_tspec == BOOL);
 			debug_printf(", value %s",
-			    tn->tn_val.v_quad != 0 ? "true" : "false");
+			    tn->tn_val.u.integer != 0 ? "true" : "false");
 		}
 		if (tn->tn_val.v_unsigned_since_c90)
 			debug_printf(", unsigned_since_c90");

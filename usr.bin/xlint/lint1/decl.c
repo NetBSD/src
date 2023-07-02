@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.336 2023/07/02 17:41:30 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.337 2023/07/02 18:14:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.336 2023/07/02 17:41:30 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.337 2023/07/02 18:14:44 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -294,7 +294,7 @@ dcs_add_type(type_t *tp)
 		/* "long long" or "long ... long" */
 		t = QUAD;
 		dcs->d_rank_mod = NO_TSPEC;
-		if (!quadflg)
+		if (!long_long_flag)
 			/* %s does not support 'long long' */
 			c99ism(265, allow_c90 ? "C90" : "traditional C");
 	}
@@ -3199,7 +3199,7 @@ to_int_constant(tnode_t *tn, bool required)
 
 	val_t *v = integer_constant(tn, required);
 	bool is_unsigned = is_uinteger(v->v_tspec);
-	int64_t val = v->v_quad;
+	int64_t val = v->u.integer;
 	free(v);
 
 	/*

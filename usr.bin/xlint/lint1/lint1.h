@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.176 2023/07/02 17:41:30 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.177 2023/07/02 18:14:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -102,13 +102,10 @@ typedef struct {
 	bool	v_unsigned_since_c90;
 	bool	v_char_constant;
 	union {
-		int64_t		_v_quad;	/* integers */
-		long double	_v_ldbl;	/* floats */
-	} v_u;
+		int64_t		integer;
+		long double	floating;
+	} u;
 } val_t;
-
-#define v_quad	v_u._v_quad
-#define v_ldbl	v_u._v_ldbl
 
 /*
  * Structures of type struct_or_union uniquely identify structures. This can't
@@ -527,8 +524,8 @@ static inline bool
 is_nonzero_val(const val_t *val)
 {
 	return is_floating(val->v_tspec)
-	    ? val->v_ldbl != 0.0
-	    : val->v_quad != 0;
+	    ? val->u.floating != 0.0
+	    : val->u.integer != 0;
 }
 
 static inline bool
@@ -572,9 +569,9 @@ bit(unsigned i)
 }
 
 static inline bool
-msb(int64_t q, tspec_t t)
+msb(int64_t si, tspec_t t)
 {
-	return (q & bit((unsigned int)size_in_bits(t) - 1)) != 0;
+	return (si & bit((unsigned int)size_in_bits(t) - 1)) != 0;
 }
 
 static inline uint64_t

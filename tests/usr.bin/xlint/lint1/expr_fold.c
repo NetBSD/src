@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_fold.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: expr_fold.c,v 1.9 2023/07/02 18:14:44 rillig Exp $	*/
 # 3 "expr_fold.c"
 
 /*
@@ -291,7 +291,7 @@ struct ctassert5_struct {
 /*
  * Since Makefile.inc 1.21 from 2022-04-08 (which added -ftrapv) and before
  * tree.c 1.436 from 2022-04-20, lint crashed with an integer overflow when
- * calculating '-(uint64_t)INT64_MIN' in val_t.v_quad.
+ * calculating '-(uint64_t)INT64_MIN' in val_t.u.integer.
  */
 void
 unary_minus_overflow(unsigned long long val)

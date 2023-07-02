@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.165 2023/07/02 10:20:45 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.166 2023/07/02 18:14:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.165 2023/07/02 10:20:45 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.166 2023/07/02 18:14:44 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -506,7 +506,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	bool warned = false;
 	errno = 0;
 	char *eptr;
-	uint64_t uq = (uint64_t)strtoull(cp, &eptr, base);
+	uint64_t ui = (uint64_t)strtoull(cp, &eptr, base);
 	lint_assert(eptr == cp + len);
 	if (errno != 0) {
 		/* integer constant out of range */
@@ -514,7 +514,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		warned = true;
 	}
 
-	if (any_query_enabled && base == 8 && uq != 0) {
+	if (any_query_enabled && base == 8 && ui != 0) {
 		/* octal number '%.*s' */
 		query_message(8, (int)len, cp);
 	}
@@ -526,15 +526,15 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 	bool ansiu = false;
 	switch (typ) {
 	case INT:
-		if (uq <= TARG_INT_MAX) {
+		if (ui <= TARG_INT_MAX) {
 			/* ok */
-		} else if (uq <= TARG_UINT_MAX && base != 10) {
+		} else if (ui <= TARG_UINT_MAX && base != 10) {
 			typ = UINT;
-		} else if (uq <= TARG_LONG_MAX) {
+		} else if (ui <= TARG_LONG_MAX) {
 			typ = LONG;
 		} else {
 			typ = ULONG;
-			if (uq > TARG_ULONG_MAX && !warned) {
+			if (ui > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
 				warning(252);
 			}
@@ -552,37 +552,37 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		}
 		break;
 	case UINT:
-		if (uq > TARG_UINT_MAX) {
+		if (ui > TARG_UINT_MAX) {
 			typ = ULONG;
-			if (uq > TARG_ULONG_MAX && !warned) {
+			if (ui > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
 				warning(252);
 			}
 		}
 		break;
 	case LONG:
-		if (uq > TARG_LONG_MAX && allow_c90) {
+		if (ui > TARG_LONG_MAX && allow_c90) {
 			typ = ULONG;
 			if (allow_trad)
 				ansiu = true;
-			if (uq > TARG_ULONG_MAX && !warned) {
+			if (ui > TARG_ULONG_MAX && !warned) {
 				/* integer constant out of range */
 				warning(252);
 			}
 		}
 		break;
 	case ULONG:
-		if (uq > TARG_ULONG_MAX && !warned) {
+		if (ui > TARG_ULONG_MAX && !warned) {
 			/* integer constant out of range */
 			warning(252);
 		}
 		break;
 	case QUAD:
-		if (uq > TARG_QUAD_MAX && allow_c90)
+		if (ui > TARG_QUAD_MAX && allow_c90)
 			typ = UQUAD;
 		break;
 	case UQUAD:
-		if (uq > TARG_UQUAD_MAX && !warned) {
+		if (ui > TARG_UQUAD_MAX && !warned) {
 			/* integer constant out of range */
 			warning(252);
 		}
@@ -591,33 +591,33 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 		break;
 	}
 
-	uq = (uint64_t)convert_integer((int64_t)uq, typ, 0);
+	ui = (uint64_t)convert_integer((int64_t)ui, typ, 0);
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = typ;
 	yylval.y_val->v_unsigned_since_c90 = ansiu;
-	yylval.y_val->v_quad = (int64_t)uq;
+	yylval.y_val->u.integer = (int64_t)ui;
 
 	return T_CON;
 }
 
 /*
- * Extend or truncate q to match t.  If t is signed, sign-extend.
+ * Extend or truncate si to match t.  If t is signed, sign-extend.
  *
  * len is the number of significant bits. If len is 0, len is set
  * to the width of type t.
  */
 int64_t
-convert_integer(int64_t q, tspec_t t, unsigned int len)
+convert_integer(int64_t si, tspec_t t, unsigned int len)
 {
 
 	if (len == 0)
 		len = size_in_bits(t);
 
 	uint64_t vbits = value_bits(len);
-	return t == PTR || is_uinteger(t) || ((q & bit(len - 1)) == 0)
-	    ? (int64_t)(q & vbits)
-	    : (int64_t)(q | ~vbits);
+	return t == PTR || is_uinteger(t) || ((si & bit(len - 1)) == 0)
+	    ? (int64_t)(si & vbits)
+	    : (int64_t)(si | ~vbits);
 }
 
 int
@@ -671,7 +671,7 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = typ;
-	yylval.y_val->v_ldbl = ld;
+	yylval.y_val->u.floating = ld;
 
 	return T_CON;
 }
@@ -879,7 +879,7 @@ lex_character_constant(void)
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = INT;
 	yylval.y_val->v_char_constant = true;
-	yylval.y_val->v_quad = val;
+	yylval.y_val->u.integer = val;
 
 	return T_CON;
 }
@@ -927,7 +927,7 @@ lex_wide_character_constant(void)
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
 	yylval.y_val->v_tspec = WCHAR;
 	yylval.y_val->v_char_constant = true;
-	yylval.y_val->v_quad = wc;
+	yylval.y_val->u.integer = wc;
 
 	return T_CON;
 }
@@ -1169,7 +1169,7 @@ clear_warn_flags(void)
 {
 
 	lwarn = LWARN_ALL;
-	quadflg = false;
+	long_long_flag = false;
 	constcond_flag = false;
 }
 
