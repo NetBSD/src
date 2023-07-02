@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.444 2023/07/02 18:28:15 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.445 2023/07/02 22:56:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.444 2023/07/02 18:28:15 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.445 2023/07/02 22:56:13 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -498,6 +498,10 @@ gcc_statement_expr_item:
 		$$ = NULL;
 	  }
 	| non_expr_statement {
+		$$ = expr_alloc_tnode();
+		$$->tn_type = gettyp(VOID);
+	  }
+	| T_SEMI {
 		$$ = expr_alloc_tnode();
 		$$->tn_type = gettyp(VOID);
 	  }
