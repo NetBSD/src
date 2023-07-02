@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.45 2023/07/02 18:14:44 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.46 2023/07/02 18:28:15 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.45 2023/07/02 18:14:44 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.46 2023/07/02 18:28:15 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -414,8 +414,8 @@ debug_decl_level(const decl_level *dl)
 	}
 	if (dl->d_redeclared_symbol != NULL)
 		debug_sym(" redeclared=(", dl->d_redeclared_symbol, ")");
-	if (dl->d_offset_in_bits != 0)
-		debug_printf(" offset=%u", dl->d_offset_in_bits);
+	if (dl->d_sou_size_in_bits != 0)
+		debug_printf(" size=%u", dl->d_sou_size_in_bits);
 	if (dl->d_sou_align_in_bits != 0)
 		debug_printf(" align=%u", dl->d_sou_align_in_bits);
 

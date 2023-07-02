@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.337 2023/07/02 18:14:44 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.338 2023/07/02 18:28:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.337 2023/07/02 18:14:44 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.338 2023/07/02 18:28:15 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1024,28 +1024,28 @@ dcs_add_member(sym_t *mem)
 {
 	type_t *tp = mem->s_type;
 
-	unsigned int union_offset = 0;
+	unsigned int union_size = 0;
 	if (dcs->d_kind == DLK_UNION) {
-		union_offset = dcs->d_offset_in_bits;
-		dcs->d_offset_in_bits = 0;
+		union_size = dcs->d_sou_size_in_bits;
+		dcs->d_sou_size_in_bits = 0;
 	}
 
 	if (mem->s_bitfield) {
 		dcs_align(alignment_in_bits(tp), tp->t_bit_field_width);
 		// XXX: Why round down?
-		mem->u.s_member.sm_offset_in_bits = dcs->d_offset_in_bits
-		    - dcs->d_offset_in_bits % size_in_bits(tp->t_tspec);
-		tp->t_bit_field_offset = dcs->d_offset_in_bits
+		mem->u.s_member.sm_offset_in_bits = dcs->d_sou_size_in_bits
+		    - dcs->d_sou_size_in_bits % size_in_bits(tp->t_tspec);
+		tp->t_bit_field_offset = dcs->d_sou_size_in_bits
 		    - mem->u.s_member.sm_offset_in_bits;
-		dcs->d_offset_in_bits += tp->t_bit_field_width;
+		dcs->d_sou_size_in_bits += tp->t_bit_field_width;
 	} else {
 		dcs_align(alignment_in_bits(tp), 0);
-		mem->u.s_member.sm_offset_in_bits = dcs->d_offset_in_bits;
-		dcs->d_offset_in_bits += type_size_in_bits(tp);
+		mem->u.s_member.sm_offset_in_bits = dcs->d_sou_size_in_bits;
+		dcs->d_sou_size_in_bits += type_size_in_bits(tp);
 	}
 
-	if (union_offset > dcs->d_offset_in_bits)
-		dcs->d_offset_in_bits = union_offset;
+	if (union_size > dcs->d_sou_size_in_bits)
+		dcs->d_sou_size_in_bits = union_size;
 }
 
 sym_t *
@@ -1125,11 +1125,11 @@ dcs_align(unsigned int member_alignment, unsigned int bit_field_width)
 	if (member_alignment > dcs->d_sou_align_in_bits)
 		dcs->d_sou_align_in_bits = member_alignment;
 
-	unsigned int offset = (dcs->d_offset_in_bits + member_alignment - 1)
+	unsigned int offset = (dcs->d_sou_size_in_bits + member_alignment - 1)
 	    & ~(member_alignment - 1);
 	if (bit_field_width == 0
-	    || dcs->d_offset_in_bits + bit_field_width > offset)
-		dcs->d_offset_in_bits = offset;
+	    || dcs->d_sou_size_in_bits + bit_field_width > offset)
+		dcs->d_sou_size_in_bits = offset;
 }
 
 sym_t *
@@ -1733,16 +1733,16 @@ complete_struct_or_union(sym_t *first_member)
 
 	dcs_align(dcs->d_sou_align_in_bits, 0);
 
-	struct_or_union *sp = tp->t_sou;
-	sp->sou_align_in_bits = dcs->d_sou_align_in_bits;
-	sp->sou_incomplete = false;
-	sp->sou_first_member = first_member;
+	struct_or_union *sou = tp->t_sou;
+	sou->sou_align_in_bits = dcs->d_sou_align_in_bits;
+	sou->sou_incomplete = false;
+	sou->sou_first_member = first_member;
 	if (tp->t_packed)
 		pack_struct_or_union(tp);
 	else
-		sp->sou_size_in_bits = dcs->d_offset_in_bits;
+		sou->sou_size_in_bits = dcs->d_sou_size_in_bits;
 
-	if (sp->sou_size_in_bits == 0) {
+	if (sou->sou_size_in_bits == 0) {
 		/* zero sized %s is a C99 feature */
 		c99ism(47, tspec_name(tp->t_tspec));
 	} else if (!has_named_member(tp)) {
