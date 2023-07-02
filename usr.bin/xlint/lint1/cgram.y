@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.445 2023/07/02 22:56:13 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.446 2023/07/02 23:40:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.445 2023/07/02 22:56:13 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.446 2023/07/02 23:40:23 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -459,7 +459,7 @@ postfix_expression:
 		sym_t *tmp = mktempsym($2);
 		begin_initialization(tmp);
 		cgram_declare(tmp, true, NULL);
-	  } init_lbrace initializer_list comma_opt init_rbrace {
+	  } braced_initializer {
 		if (!allow_c99)
 			 /* compound literals are a C99/GCC extension */
 			 gnuism(319);
@@ -1517,6 +1517,16 @@ parameter_declaration:
 	| begin_type_declaration_specifiers end_type abstract_declarator {
 		$$ = declare_argument($3, false);
 	  }
+	;
+
+braced_initializer:
+	/* K&R ---, C90 ---, C99 ---, C11 ---, C23 6.7.10 */
+	  init_lbrace init_rbrace {
+		/* empty initializer braces require C23 or later */
+		c23ism(353);
+	}
+	/* K&R ---, C90 ---, C99 6.7.8, C11 6.7.9, C23 6.7.10 */
+	| init_lbrace initializer_list comma_opt init_rbrace
 	;
 
 initializer:			/* C99 6.7.8 "Initialization" */
