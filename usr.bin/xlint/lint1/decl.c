@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.338 2023/07/02 18:28:15 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.339 2023/07/02 21:37:49 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.338 2023/07/02 18:28:15 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.339 2023/07/02 21:37:49 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -656,22 +656,11 @@ dcs_adjust_storage_class(void)
 static void
 dcs_merge_declaration_specifiers(void)
 {
-	tspec_t t, s, l, c;
-	type_t *tp;
-
-	t = dcs->d_abstract_type; /* VOID, BOOL, CHAR, INT or COMPLEX */
-	c = dcs->d_complex_mod;	/* FLOAT or DOUBLE */
-	s = dcs->d_sign_mod;	/* SIGNED or UNSIGN */
-	l = dcs->d_rank_mod;	/* SHORT, LONG or QUAD */
-	tp = dcs->d_type;
-
-	debug_step("%s: %s", __func__, type_name(tp));
-	if (t == NO_TSPEC && s == NO_TSPEC && l == NO_TSPEC && c == NO_TSPEC &&
-	    tp == NULL)
-		dcs->d_no_type_specifier = true;
-	if (t == NO_TSPEC && s == NO_TSPEC && (l == NO_TSPEC || l == LONG) &&
-	    tp == NULL)
-		t = c;
+	tspec_t t = dcs->d_abstract_type;
+	tspec_t c = dcs->d_complex_mod;
+	tspec_t s = dcs->d_sign_mod;
+	tspec_t l = dcs->d_rank_mod;
+	type_t *tp = dcs->d_type;
 
 	if (tp != NULL) {
 		lint_assert(t == NO_TSPEC);
@@ -679,6 +668,13 @@ dcs_merge_declaration_specifiers(void)
 		lint_assert(l == NO_TSPEC);
 		return;
 	}
+
+	debug_step("%s: %s", __func__, type_name(tp));
+
+	if (t == NO_TSPEC && s == NO_TSPEC && l == NO_TSPEC && c == NO_TSPEC)
+		dcs->d_no_type_specifier = true;
+	if (t == NO_TSPEC && s == NO_TSPEC && (l == NO_TSPEC || l == LONG))
+		t = c;
 
 	if (t == NO_TSPEC)
 		t = INT;
