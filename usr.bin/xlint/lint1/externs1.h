@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.187 2023/07/02 18:14:44 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.188 2023/07/02 23:40:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -56,6 +56,7 @@ extern	bool	allow_trad;
 extern	bool	allow_c90;
 extern	bool	allow_c99;
 extern	bool	allow_c11;
+extern	bool	allow_c23;
 extern	bool	allow_gcc;
 
 extern sig_atomic_t fpe;
@@ -168,6 +169,7 @@ void	warning(int, ...);
 bool	gnuism(int, ...);
 void	c99ism(int, ...);
 void	c11ism(int, ...);
+void	c23ism(int, ...);
 void	assert_failed(const char *, int, const char *, const char *)
 		__attribute__((__noreturn__));
 void	update_location(const char *, int, bool, bool);

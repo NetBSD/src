@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.66 2023/01/13 19:41:50 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.67 2023/07/02 23:40:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.66 2023/01/13 19:41:50 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.67 2023/07/02 23:40:23 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -116,6 +116,7 @@ bool	allow_trad = true;
 bool	allow_c90 = true;
 bool	allow_c99;
 bool	allow_c11;
+bool	allow_c23;
 bool	allow_gcc;
 
 sig_atomic_t fpe;
@@ -195,12 +196,14 @@ main(int argc, char *argv[])
 			allow_c90 = true;
 			allow_c99 = false;
 			allow_c11 = false;
+			allow_c23 = false;
 			break;
 		case 'S':
 			allow_trad = false;
 			allow_c90 = true;
 			allow_c99 = true;
 			allow_c11 = false;
+			allow_c23 = false;
 			break;
 		case 'T':	Tflag = true;	break;
 		case 't':
@@ -208,6 +211,7 @@ main(int argc, char *argv[])
 			allow_c90 = false;
 			allow_c99 = false;
 			allow_c11 = false;
+			allow_c23 = false;
 			break;
 		case 'u':	uflag = false;	break;
 		case 'w':	wflag = true;	break;
@@ -216,11 +220,18 @@ main(int argc, char *argv[])
 		case 'z':	zflag = false;	break;
 
 		case 'A':
-			if (strcmp(optarg, "c11") == 0) {
+			if (strcmp(optarg, "c23") == 0) {
 				allow_trad = false;
 				allow_c90 = true;
 				allow_c99 = true;
 				allow_c11 = true;
+				allow_c23 = true;
+			} else if (strcmp(optarg, "c11") == 0) {
+				allow_trad = false;
+				allow_c90 = true;
+				allow_c99 = true;
+				allow_c11 = true;
+				allow_c23 = true;
 			} else
 				usage();
 			break;

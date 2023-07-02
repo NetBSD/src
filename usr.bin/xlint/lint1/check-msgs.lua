@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-msgs.lua,v 1.17 2022/07/05 22:50:41 rillig Exp $
+-- $NetBSD: check-msgs.lua,v 1.18 2023/07/02 23:40:23 rillig Exp $
 
 --[[
 
@@ -69,6 +69,7 @@ local message_prefix = {
   query_message = "Q",
   c99ism = "",
   c11ism = "",
+  c23ism = "",
   gnuism = "",
 }
 

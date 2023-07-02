@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1271 2023/06/16 23:51:31 rillig Exp $
+# $NetBSD: mi,v 1.1272 2023/07/02 23:40:23 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6509,6 +6509,7 @@
 ./usr/tests/usr.bin/xlint/lint1/c11_atomic.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c11_generic_expression.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c11_generic_expression.exp	tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/c23.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c90.c				tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/c90.exp				tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/c99_atomic.c			tests-usr.bin-tests	compattestfile,atf
@@ -7432,6 +7433,7 @@
 ./usr/tests/usr.bin/xlint/lint1/msg_350.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_351.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/msg_352.c			tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/xlint/lint1/msg_353.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/op_colon.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/op_colon.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/op_shl_lp64.c			tests-usr.bin-tests	compattestfile,atf
