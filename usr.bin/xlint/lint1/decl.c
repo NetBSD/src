@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.334 2023/07/02 09:40:25 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.335 2023/07/02 10:20:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.334 2023/07/02 09:40:25 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.335 2023/07/02 10:20:45 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ static	bool	prototypes_compatible(const type_t *, const type_t *, bool *);
 static	bool	matches_no_arg_function(const type_t *, bool *);
 static	bool	check_old_style_definition(sym_t *, sym_t *);
 static	bool	check_prototype_declaration(sym_t *, sym_t *);
-static	sym_t	*new_style_function(sym_t *);
+static	void	check_prototype_parameters(sym_t *);
 static	void	old_style_function(sym_t *, sym_t *);
 static	void	declare_external_in_block(sym_t *);
 static	bool	check_init(sym_t *);
@@ -520,19 +520,20 @@ begin_declaration_level(decl_level_kind kind)
 	dl->d_kind = kind;
 	dl->d_last_dlsym = &dl->d_first_dlsym;
 	dcs = dl;
-	debug_step("%s(%s)", __func__, decl_level_kind_name(kind));
+	debug_enter();
+	debug_dcs(true);
 }
 
 void
 end_declaration_level(void)
 {
-	decl_level *dl;
 
-	debug_step("%s(%s)", __func__, decl_level_kind_name(dcs->d_kind));
+	debug_dcs(true);
+	debug_leave();
 
-	lint_assert(dcs->d_enclosing != NULL);
-	dl = dcs;
+	decl_level *dl = dcs;
 	dcs = dl->d_enclosing;
+	lint_assert(dcs != NULL);
 
 	switch (dl->d_kind) {
 	case DLK_STRUCT:
@@ -576,7 +577,7 @@ end_declaration_level(void)
 		/* FALLTHROUGH */
 	case DLK_PROTO_PARAMS:
 		/* usage of arguments will be checked by end_function() */
-		rmsyms(dl->d_first_dlsym);
+		symtab_remove_level(dl->d_first_dlsym);
 		break;
 	case DLK_EXTERN:
 		/* there is nothing around an external declarations */
@@ -1213,7 +1214,7 @@ sym_t *
 add_pointer(sym_t *decl, qual_ptr *p)
 {
 
-	debug_dinfo(dcs);
+	debug_dcs(false);
 
 	type_t **tpp = &decl->s_type;
 	while (*tpp != NULL && *tpp != dcs->d_type)
@@ -1283,7 +1284,7 @@ sym_t *
 add_array(sym_t *decl, bool dim, int n)
 {
 
-	debug_dinfo(dcs);
+	debug_dcs(false);
 
 	type_t **tpp = &decl->s_type;
 	while (*tpp != NULL && *tpp != dcs->d_type)
@@ -1317,7 +1318,7 @@ add_function(sym_t *decl, sym_t *args)
 {
 
 	debug_enter();
-	debug_dinfo(dcs);
+	debug_dcs(true);
 	debug_sym("decl: ", decl, "\n");
 #ifdef DEBUG
 	for (const sym_t *arg = args; arg != NULL; arg = arg->s_next)
@@ -1328,7 +1329,9 @@ add_function(sym_t *decl, sym_t *args)
 		if (!allow_c90)
 			/* function prototypes are illegal in traditional C */
 			warning(270);
-		args = new_style_function(args);
+		check_prototype_parameters(args);
+		if (args != NULL && args->s_type->t_tspec == VOID)
+			args = NULL;
 	} else
 		old_style_function(decl, args);
 
@@ -1372,12 +1375,13 @@ add_function(sym_t *decl, sym_t *args)
 	    dcs->d_prototype, args, dcs->d_vararg);
 
 	debug_step("add_function: '%s'", type_name(decl->s_type));
+	debug_dcs(true);
 	debug_leave();
 	return decl;
 }
 
-static sym_t *
-new_style_function(sym_t *args)
+static void
+check_prototype_parameters(sym_t *args)
 {
 
 	for (sym_t *sym = dcs->d_first_dlsym;
@@ -1397,10 +1401,6 @@ new_style_function(sym_t *args)
 			arg->s_type = gettyp(INT);
 		}
 	}
-
-	if (args == NULL || args->s_type->t_tspec == VOID)
-		return NULL;
-	return args;
 }
 
 static void
