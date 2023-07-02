@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.164 2023/06/30 21:39:54 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.165 2023/07/02 10:20:45 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.164 2023/06/30 21:39:54 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.165 2023/07/02 10:20:45 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1403,14 +1403,13 @@ rmsym(sym_t *sym)
  * given symbol.
  */
 void
-rmsyms(sym_t *syms)
+symtab_remove_level(sym_t *syms)
 {
-	sym_t *sym;
 
 	/* Note the use of s_level_next instead of s_symtab_next. */
-	for (sym = syms; sym != NULL; sym = sym->s_level_next) {
+	for (sym_t *sym = syms; sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level != -1) {
-			debug_step("rmsyms '%s' %s '%s'",
+			debug_step("symtab_remove_level '%s' %s '%s'",
 			    sym->s_name, symt_name(sym->s_kind),
 			    type_name(sym->s_type));
 			symtab_remove(sym);
