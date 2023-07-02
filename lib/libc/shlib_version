@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.293 2021/11/01 05:53:45 thorpej Exp $
+#	$NetBSD: shlib_version,v 1.294 2023/07/02 00:52:04 dholland Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -53,5 +53,6 @@
 # - move statfs() to libcompat since we have statvfs()
 # - the syscall stubs for the (obsolete) lfs syscalls should be removed
 # - remove tzsetwall(3), upstream has removed it
+# - move *rand48* to libcompat
 major=12
 minor=220
