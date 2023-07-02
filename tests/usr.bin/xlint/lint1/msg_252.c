@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_252.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_252.c,v 1.6 2023/07/02 18:14:44 rillig Exp $	*/
 # 3 "msg_252.c"
 
 // Test for message: integer constant out of range [252]
@@ -13,8 +13,8 @@
  * This number is passed to convert_constant, which calls convert_integer,
  * which sign-extends the number to 'INT 0xffff_ffff_ffff_ffff'.  This
  * converted number is passed to convert_constant_check_range, and at this
- * point, v->v_quad != nv->v_quad, due to the sign extension.  This triggers
- * an additional warning 119.
+ * point, v->u.integer != nv->u.integer, due to the sign extension.  This
+ * triggers an additional warning 119.
  *
  * On a 64-bit platform, lex_integer_constant stores the number as
  * 'ULONG 0xffff_ffff_ffff_ffff', which has the same representation as the

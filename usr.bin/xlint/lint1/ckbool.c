@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.22 2023/06/24 20:50:54 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.23 2023/07/02 18:14:44 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.22 2023/06/24 20:50:54 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.23 2023/07/02 18:14:44 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -79,7 +79,7 @@ is_symmetric_bool_or_other(op_t op)
 static bool
 is_int_constant_zero(const tnode_t *tn, tspec_t t)
 {
-	return t == INT && tn->tn_op == CON && tn->tn_val.v_quad == 0;
+	return t == INT && tn->tn_op == CON && tn->tn_val.u.integer == 0;
 }
 
 static bool

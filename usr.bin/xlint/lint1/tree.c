@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.543 2023/07/02 08:16:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.544 2023/07/02 18:14:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.543 2023/07/02 08:16:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.544 2023/07/02 18:14:44 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -134,14 +134,14 @@ ic_con(const type_t *tp, const val_t *v)
 	integer_constraints c;
 
 	lint_assert(is_integer(tp->t_tspec));
-	int64_t s = v->v_quad;
-	uint64_t u = (uint64_t)s;
-	c.smin = s;
-	c.smax = s;
-	c.umin = u;
-	c.umax = u;
-	c.bset = u;
-	c.bclr = ~u;
+	int64_t si = v->u.integer;
+	uint64_t ui = (uint64_t)si;
+	c.smin = si;
+	c.smax = si;
+	c.umin = ui;
+	c.umax = ui;
+	c.bset = ui;
+	c.bclr = ~ui;
 	return c;
 }
 
@@ -374,16 +374,14 @@ build_constant(type_t *tp, val_t *v)
 	tnode_t *n = expr_alloc_tnode();
 	n->tn_op = CON;
 	n->tn_type = tp;
+	n->tn_val = *v;
 	n->tn_val.v_tspec = tp->t_tspec;
-	n->tn_val.v_unsigned_since_c90 = v->v_unsigned_since_c90;
-	n->tn_val.v_char_constant = v->v_char_constant;
-	n->tn_val.v_u = v->v_u;
 	free(v);
 	return n;
 }
 
 static tnode_t *
-build_integer_constant(tspec_t t, int64_t q)
+build_integer_constant(tspec_t t, int64_t si)
 {
 
 	tnode_t *n = expr_alloc_tnode();
@@ -392,7 +390,7 @@ build_integer_constant(tspec_t t, int64_t q)
 	n->tn_val.v_tspec = t;
 	n->tn_val.v_unsigned_since_c90 = false;
 	n->tn_val.v_char_constant = false;
-	n->tn_val.v_quad = q;
+	n->tn_val.u.integer = si;
 	return n;
 }
 
@@ -508,13 +506,13 @@ build_name(sym_t *sym, bool is_funcname)
 		n->tn_val.v_tspec = BOOL;
 		n->tn_val.v_unsigned_since_c90 = false;
 		n->tn_val.v_char_constant = false;
-		n->tn_val.v_quad = sym->u.s_bool_constant ? 1 : 0;
+		n->tn_val.u.integer = sym->u.s_bool_constant ? 1 : 0;
 	} else if (sym->s_scl == ENUM_CONST) {
 		n->tn_op = CON;
 		n->tn_val.v_tspec = INT;	/* ENUM is in n->tn_type */
 		n->tn_val.v_unsigned_since_c90 = false;
 		n->tn_val.v_char_constant = false;
-		n->tn_val.v_quad = sym->u.s_enum_constant;
+		n->tn_val.u.integer = sym->u.s_enum_constant;
 	} else {
 		n->tn_op = NAME;
 		n->tn_sym = sym;
@@ -576,8 +574,8 @@ is_out_of_char_range(const tnode_t *tn)
 {
 	return tn->tn_op == CON &&
 	       !tn->tn_val.v_char_constant &&
-	       !(0 <= tn->tn_val.v_quad &&
-		 tn->tn_val.v_quad < 1 << (CHAR_SIZE - 1));
+	       !(0 <= tn->tn_val.u.integer &&
+		 tn->tn_val.u.integer < 1 << (CHAR_SIZE - 1));
 }
 
 static void
@@ -598,13 +596,13 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 		    !rn->tn_val.v_char_constant) {
 			/* comparison '%s' of 'char' with plain integer %d */
 			query_message(14,
-			    op_name(op), (int)rn->tn_val.v_quad);
+			    op_name(op), (int)rn->tn_val.u.integer);
 		}
 		if (rt == CHAR && ln->tn_op == CON &&
 		    !ln->tn_val.v_char_constant) {
 			/* comparison '%s' of 'char' with plain integer %d */
 			query_message(14,
-			    op_name(op), (int)ln->tn_val.v_quad);
+			    op_name(op), (int)ln->tn_val.u.integer);
 		}
 	}
 
@@ -612,7 +610,7 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 		if (lt == CHAR && is_out_of_char_range(rn)) {
 			char buf[128];
 			(void)snprintf(buf, sizeof(buf), "%s %d",
-			    op_name(op), (int)rn->tn_val.v_quad);
+			    op_name(op), (int)rn->tn_val.u.integer);
 			/* nonportable character comparison '%s' */
 			warning(230, buf);
 			return;
@@ -620,7 +618,7 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 		if (rt == CHAR && is_out_of_char_range(ln)) {
 			char buf[128];
 			(void)snprintf(buf, sizeof(buf), "%d %s ?",
-			    (int)ln->tn_val.v_quad, op_name(op));
+			    (int)ln->tn_val.u.integer, op_name(op));
 			/* nonportable character comparison '%s' */
 			warning(230, buf);
 			return;
@@ -628,8 +626,8 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 	}
 
 	if (is_uinteger(lt) && !is_uinteger(rt) &&
-	    rn->tn_op == CON && rn->tn_val.v_quad <= 0) {
-		if (rn->tn_val.v_quad < 0) {
+	    rn->tn_op == CON && rn->tn_val.u.integer <= 0) {
+		if (rn->tn_val.u.integer < 0) {
 			/* operator '%s' compares '%s' with '%s' */
 			warning(162, op_name(op),
 			    type_name(ln->tn_type), "negative constant");
@@ -640,8 +638,8 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 		return;
 	}
 	if (is_uinteger(rt) && !is_uinteger(lt) &&
-	    ln->tn_op == CON && ln->tn_val.v_quad <= 0) {
-		if (ln->tn_val.v_quad < 0) {
+	    ln->tn_op == CON && ln->tn_val.u.integer <= 0) {
+		if (ln->tn_val.u.integer < 0) {
 			/* operator '%s' compares '%s' with '%s' */
 			warning(162, op_name(op),
 			    "negative constant", type_name(rn->tn_type));
@@ -800,37 +798,37 @@ fold(tnode_t *tn)
 
 	tspec_t t = tn->tn_left->tn_type->t_tspec;
 	bool utyp = !is_integer(t) || is_uinteger(t);
-	int64_t sl = tn->tn_left->tn_val.v_quad, sr = 0;
+	int64_t sl = tn->tn_left->tn_val.u.integer, sr = 0;
 	uint64_t ul = sl, ur = 0;
 	if (is_binary(tn))
-		ur = sr = tn->tn_right->tn_val.v_quad;
+		ur = sr = tn->tn_right->tn_val.u.integer;
 
 	int64_t mask = (int64_t)value_bits(size_in_bits(t));
 	bool ovfl = false;
 
-	int64_t q;
+	int64_t si;
 	switch (tn->tn_op) {
 	case UPLUS:
-		q = sl;
+		si = sl;
 		break;
 	case UMINUS:
-		q = sl == INT64_MIN ? sl : -sl;
-		if (sl != 0 && msb(q, t) == msb(sl, t))
+		si = sl == INT64_MIN ? sl : -sl;
+		if (sl != 0 && msb(si, t) == msb(sl, t))
 			ovfl = true;
 		break;
 	case COMPL:
-		q = ~sl;
+		si = ~sl;
 		break;
 	case MULT:
 		if (utyp) {
-			q = (int64_t)(ul * ur);
-			if (q != (q & mask))
+			si = (int64_t)(ul * ur);
+			if (si != (si & mask))
 				ovfl = true;
-			else if ((ul != 0) && ((q / ul) != ur))
+			else if ((ul != 0) && ((si / ul) != ur))
 				ovfl = true;
 		} else {
-			q = sl * sr;
-			if (msb(q, t) != (msb(sl, t) ^ msb(sr, t)))
+			si = sl * sr;
+			if (msb(si, t) != (msb(sl, t) ^ msb(sr, t)))
 				ovfl = true;
 		}
 		break;
@@ -838,38 +836,38 @@ fold(tnode_t *tn)
 		if (sr == 0) {
 			/* division by 0 */
 			error(139);
-			q = utyp ? -1 : INT64_MAX;
+			si = utyp ? -1 : INT64_MAX;
 		} else {
-			q = utyp ? (int64_t)(ul / ur) : sl / sr;
+			si = utyp ? (int64_t)(ul / ur) : sl / sr;
 		}
 		break;
 	case MOD:
 		if (sr == 0) {
 			/* modulus by 0 */
 			error(140);
-			q = 0;
+			si = 0;
 		} else {
-			q = utyp ? (int64_t)(ul % ur) : sl % sr;
+			si = utyp ? (int64_t)(ul % ur) : sl % sr;
 		}
 		break;
 	case PLUS:
-		q = utyp ? (int64_t)(ul + ur) : sl + sr;
-		if (msb(sl, t) && msb(sr, t) && !msb(q, t))
+		si = utyp ? (int64_t)(ul + ur) : sl + sr;
+		if (msb(sl, t) && msb(sr, t) && !msb(si, t))
 			ovfl = true;
-		if (!utyp && !msb(sl, t) && !msb(sr, t) && msb(q, t))
+		if (!utyp && !msb(sl, t) && !msb(sr, t) && msb(si, t))
 			ovfl = true;
 		break;
 	case MINUS:
-		q = utyp ? (int64_t)(ul - ur) : sl - sr;
-		if (!utyp && msb(sl, t) && !msb(sr, t) && !msb(q, t))
+		si = utyp ? (int64_t)(ul - ur) : sl - sr;
+		if (!utyp && msb(sl, t) && !msb(sr, t) && !msb(si, t))
 			ovfl = true;
-		if (!msb(sl, t) && msb(sr, t) && msb(q, t))
+		if (!msb(sl, t) && msb(sr, t) && msb(si, t))
 			ovfl = true;
 		break;
 	case SHL:
 		/* TODO: warn about out-of-bounds 'sr'. */
 		/* TODO: warn about overflow in signed '<<'. */
-		q = utyp ? (int64_t)(ul << (sr & 63)) : sl << (sr & 63);
+		si = utyp ? (int64_t)(ul << (sr & 63)) : sl << (sr & 63);
 		break;
 	case SHR:
 		/*
@@ -877,35 +875,35 @@ fold(tnode_t *tn)
 		 * shifts of signed values are implementation dependent.
 		 */
 		/* TODO: warn about out-of-bounds 'sr'. */
-		q = (int64_t)(ul >> (sr & 63));
-		q = convert_integer(q, t, size_in_bits(t) - (int)sr);
+		si = (int64_t)(ul >> (sr & 63));
+		si = convert_integer(si, t, size_in_bits(t) - (int)sr);
 		break;
 	case LT:
-		q = (utyp ? ul < ur : sl < sr) ? 1 : 0;
+		si = (utyp ? ul < ur : sl < sr) ? 1 : 0;
 		break;
 	case LE:
-		q = (utyp ? ul <= ur : sl <= sr) ? 1 : 0;
+		si = (utyp ? ul <= ur : sl <= sr) ? 1 : 0;
 		break;
 	case GE:
-		q = (utyp ? ul >= ur : sl >= sr) ? 1 : 0;
+		si = (utyp ? ul >= ur : sl >= sr) ? 1 : 0;
 		break;
 	case GT:
-		q = (utyp ? ul > ur : sl > sr) ? 1 : 0;
+		si = (utyp ? ul > ur : sl > sr) ? 1 : 0;
 		break;
 	case EQ:
-		q = (utyp ? ul == ur : sl == sr) ? 1 : 0;
+		si = (utyp ? ul == ur : sl == sr) ? 1 : 0;
 		break;
 	case NE:
-		q = (utyp ? ul != ur : sl != sr) ? 1 : 0;
+		si = (utyp ? ul != ur : sl != sr) ? 1 : 0;
 		break;
 	case BITAND:
-		q = utyp ? (int64_t)(ul & ur) : sl & sr;
+		si = utyp ? (int64_t)(ul & ur) : sl & sr;
 		break;
 	case BITXOR:
-		q = utyp ? (int64_t)(ul ^ ur) : sl ^ sr;
+		si = utyp ? (int64_t)(ul ^ ur) : sl ^ sr;
 		break;
 	case BITOR:
-		q = utyp ? (int64_t)(ul | ur) : sl | sr;
+		si = utyp ? (int64_t)(ul | ur) : sl | sr;
 		break;
 	default:
 		lint_assert(/*CONSTCOND*/false);
@@ -913,13 +911,13 @@ fold(tnode_t *tn)
 
 	/* XXX: The overflow check does not work for 64-bit integers. */
 	if (ovfl ||
-	    ((uint64_t)(q | mask) != ~(uint64_t)0 && (q & ~mask) != 0)) {
+	    ((uint64_t)(si | mask) != ~(uint64_t)0 && (si & ~mask) != 0)) {
 		if (hflag)
 			/* integer overflow detected, op '%s' */
 			warning(141, op_name(tn->tn_op));
 	}
 
-	v->v_quad = convert_integer(q, t, 0);
+	v->u.integer = convert_integer(si, t, 0);
 
 	tnode_t *cn = build_constant(tn->tn_type, v);
 	if (tn->tn_left->tn_system_dependent)
@@ -1169,7 +1167,7 @@ is_null_pointer(const tnode_t *tn)
 
 	return ((t == PTR && tn->tn_type->t_subt->t_tspec == VOID) ||
 		is_integer(t))
-	       && (tn->tn_op == CON && tn->tn_val.v_quad == 0);
+	       && (tn->tn_op == CON && tn->tn_val.u.integer == 0);
 }
 
 /* Return a type based on tp1, with added qualifiers from tp2. */
@@ -1506,13 +1504,13 @@ fold_bool(tnode_t *tn)
 		if (hflag && !constcond_flag)
 			/* constant argument to '!' */
 			warning(239);
-		v->v_quad = !l ? 1 : 0;
+		v->u.integer = !l ? 1 : 0;
 		break;
 	case LOGAND:
-		v->v_quad = l && r ? 1 : 0;
+		v->u.integer = l && r ? 1 : 0;
 		break;
 	case LOGOR:
-		v->v_quad = l || r ? 1 : 0;
+		v->u.integer = l || r ? 1 : 0;
 		break;
 	default:
 		lint_assert(/*CONSTCOND*/false);
@@ -1580,67 +1578,67 @@ fold_float(tnode_t *tn)
 	lint_assert(t == tn->tn_left->tn_type->t_tspec);
 	lint_assert(!is_binary(tn) || t == tn->tn_right->tn_type->t_tspec);
 
-	long double lv = tn->tn_left->tn_val.v_ldbl;
-	long double rv = is_binary(tn) ? tn->tn_right->tn_val.v_ldbl : 0.0;
+	long double lv = tn->tn_left->tn_val.u.floating;
+	long double rv = is_binary(tn) ? tn->tn_right->tn_val.u.floating : 0.0;
 
 	switch (tn->tn_op) {
 	case UPLUS:
-		v->v_ldbl = lv;
+		v->u.floating = lv;
 		break;
 	case UMINUS:
-		v->v_ldbl = -lv;
+		v->u.floating = -lv;
 		break;
 	case MULT:
-		v->v_ldbl = lv * rv;
+		v->u.floating = lv * rv;
 		break;
 	case DIV:
 		if (rv == 0.0) {
 			/* division by 0 */
 			error(139);
-			v->v_ldbl = floating_error_value(t, lv);
+			v->u.floating = floating_error_value(t, lv);
 		} else {
-			v->v_ldbl = lv / rv;
+			v->u.floating = lv / rv;
 		}
 		break;
 	case PLUS:
-		v->v_ldbl = lv + rv;
+		v->u.floating = lv + rv;
 		break;
 	case MINUS:
-		v->v_ldbl = lv - rv;
+		v->u.floating = lv - rv;
 		break;
 	case LT:
-		v->v_quad = lv < rv ? 1 : 0;
+		v->u.integer = lv < rv ? 1 : 0;
 		break;
 	case LE:
-		v->v_quad = lv <= rv ? 1 : 0;
+		v->u.integer = lv <= rv ? 1 : 0;
 		break;
 	case GE:
-		v->v_quad = lv >= rv ? 1 : 0;
+		v->u.integer = lv >= rv ? 1 : 0;
 		break;
 	case GT:
-		v->v_quad = lv > rv ? 1 : 0;
+		v->u.integer = lv > rv ? 1 : 0;
 		break;
 	case EQ:
-		v->v_quad = lv == rv ? 1 : 0;
+		v->u.integer = lv == rv ? 1 : 0;
 		break;
 	case NE:
-		v->v_quad = lv != rv ? 1 : 0;
+		v->u.integer = lv != rv ? 1 : 0;
 		break;
 	default:
 		lint_assert(/*CONSTCOND*/false);
 	}
 
-	lint_assert(fpe != 0 || isnan(v->v_ldbl) == 0);
+	lint_assert(fpe != 0 || isnan(v->u.floating) == 0);
 	if (is_complex(v->v_tspec)) {
 		/*
 		 * Don't warn, as lint doesn't model the imaginary part of
 		 * complex numbers.
 		 */
 		fpe = 0;
-	} else if (is_floating_overflow(t, v->v_ldbl)) {
+	} else if (is_floating_overflow(t, v->u.floating)) {
 		/* floating point overflow on operator '%s' */
 		warning(142, op_name(tn->tn_op));
-		v->v_ldbl = floating_error_value(t, v->v_ldbl);
+		v->u.floating = floating_error_value(t, v->u.floating);
 		fpe = 0;
 	}
 
@@ -1821,7 +1819,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 				ntn = fold(ntn);
 			}
 		} else if (op == QUEST && ln->tn_op == CON) {
-			ntn = ln->tn_val.v_quad != 0
+			ntn = ln->tn_val.u.integer != 0
 			    ? rn->tn_left : rn->tn_right;
 		}
 	}
@@ -2277,14 +2275,14 @@ typeok_shr(const mod_t *mp,
 		if (ln->tn_op != CON) {
 			/* bitwise '%s' on signed value possibly nonportable */
 			warning(117, mp->m_name);
-		} else if (ln->tn_val.v_quad < 0) {
+		} else if (ln->tn_val.u.integer < 0) {
 			/* bitwise '%s' on signed value nonportable */
 			warning(120, mp->m_name);
 		}
 	} else if (allow_trad && allow_c90 &&
 		   !is_uinteger(olt) && is_uinteger(ort)) {
 		/* The left operand would become unsigned in traditional C. */
-		if (hflag && (ln->tn_op != CON || ln->tn_val.v_quad < 0)) {
+		if (hflag && (ln->tn_op != CON || ln->tn_val.u.integer < 0)) {
 			/* semantics of '%s' change in ANSI C; use ... */
 			warning(118, mp->m_name);
 		}
@@ -2295,7 +2293,7 @@ typeok_shr(const mod_t *mp,
 		 * In traditional C the left operand would be extended
 		 * (possibly sign-extended) and then shifted.
 		 */
-		if (hflag && (ln->tn_op != CON || ln->tn_val.v_quad < 0)) {
+		if (hflag && (ln->tn_op != CON || ln->tn_val.u.integer < 0)) {
 			/* semantics of '%s' change in ANSI C; use ... */
 			warning(118, mp->m_name);
 		}
@@ -2331,16 +2329,17 @@ typeok_shift(const type_t *ltp, tspec_t lt, const tnode_t *rn, tspec_t rt)
 	if (rn->tn_op != CON)
 		return;
 
-	if (!is_uinteger(rt) && rn->tn_val.v_quad < 0) {
+	if (!is_uinteger(rt) && rn->tn_val.u.integer < 0) {
 		/* negative shift */
 		warning(121);
-	} else if ((uint64_t)rn->tn_val.v_quad ==
+	} else if ((uint64_t)rn->tn_val.u.integer ==
 		   (uint64_t)size_in_bits(lt)) {
 		/* shift amount %u equals bit-size of '%s' */
-		warning(267, (unsigned)rn->tn_val.v_quad, type_name(ltp));
-	} else if ((uint64_t)rn->tn_val.v_quad > (uint64_t)size_in_bits(lt)) {
+		warning(267, (unsigned)rn->tn_val.u.integer, type_name(ltp));
+	} else if ((uint64_t)rn->tn_val.u.integer
+	    > (uint64_t)size_in_bits(lt)) {
 		/* shift amount %llu is greater than bit-size %llu of '%s' */
-		warning(122, (unsigned long long)rn->tn_val.v_quad,
+		warning(122, (unsigned long long)rn->tn_val.u.integer,
 		    (unsigned long long)size_in_bits(lt),
 		    tspec_name(lt));
 	}
@@ -2971,7 +2970,7 @@ is_int_constant_zero(const tnode_t *tn)
 
 	return tn->tn_op == CON &&
 	       tn->tn_type->t_tspec == INT &&
-	       tn->tn_val.v_quad == 0;
+	       tn->tn_val.u.integer == 0;
 }
 
 static void
@@ -3153,7 +3152,7 @@ check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 		 */
 		if (!rn->tn_type->t_is_enum && rn->tn_op == CON &&
 		    is_integer(rn->tn_type->t_tspec) &&
-		    rn->tn_val.v_quad == 0) {
+		    rn->tn_val.u.integer == 0) {
 			return;
 		}
 		/* initialization of '%s' with '%s' */
@@ -3342,7 +3341,7 @@ should_warn_about_prototype_conversion(tspec_t nt,
 	 */
 	if (ptn->tn_op == CON && is_integer(nt) &&
 	    signed_type(nt) == signed_type(ot) &&
-	    !msb(ptn->tn_val.v_quad, ot))
+	    !msb(ptn->tn_val.u.integer, ot))
 		return false;
 
 	return true;
@@ -3718,7 +3717,7 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 	default:
 		lint_assert(/*CONSTCOND*/false);
 	}
-	if (v->v_ldbl > max || v->v_ldbl < min) {
+	if (v->u.floating > max || v->u.floating < min) {
 		lint_assert(nt != LDOUBLE);
 		if (op == FARG) {
 			/* conversion of '%s' to '%s' is out of range, ... */
@@ -3728,17 +3727,17 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 			/* conversion of '%s' to '%s' is out of range */
 			warning(119, type_name(gettyp(ot)), type_name(tp));
 		}
-		v->v_ldbl = v->v_ldbl > 0 ? max : min;
+		v->u.floating = v->u.floating > 0 ? max : min;
 	}
 
 	if (nt == FLOAT || nt == FCOMPLEX)
-		nv->v_ldbl = (float)v->v_ldbl;
+		nv->u.floating = (float)v->u.floating;
 	else if (nt == DOUBLE || nt == DCOMPLEX)
-		nv->v_ldbl = (double)v->v_ldbl;
+		nv->u.floating = (double)v->u.floating;
 	else if (nt == LDOUBLE || nt == LCOMPLEX)
-		nv->v_ldbl = v->v_ldbl;
+		nv->u.floating = v->u.floating;
 	else
-		nv->v_quad = (int64_t)v->v_ldbl;
+		nv->u.integer = (int64_t)v->u.floating;
 }
 
 static bool
@@ -3746,14 +3745,15 @@ convert_constant_to_floating(tspec_t nt, val_t *nv,
 			     tspec_t ot, const val_t *v)
 {
 	if (nt == FLOAT) {
-		nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
-		    (float)(uint64_t)v->v_quad : (float)v->v_quad;
+		nv->u.floating = (ot == PTR || is_uinteger(ot)) ?
+		    (float)(uint64_t)v->u.integer : (float)v->u.integer;
 	} else if (nt == DOUBLE) {
-		nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
-		    (double)(uint64_t)v->v_quad : (double)v->v_quad;
+		nv->u.floating = (ot == PTR || is_uinteger(ot)) ?
+		    (double)(uint64_t)v->u.integer : (double)v->u.integer;
 	} else if (nt == LDOUBLE) {
-		nv->v_ldbl = (ot == PTR || is_uinteger(ot)) ?
-		    (long double)(uint64_t)v->v_quad : (long double)v->v_quad;
+		nv->u.floating = (ot == PTR || is_uinteger(ot))
+		    ? (long double)(uint64_t)v->u.integer
+		    : (long double)v->u.integer;
 	} else
 		return false;
 	return true;
@@ -3767,7 +3767,7 @@ static void
 convert_constant_check_range_bitor(size_t nsz, size_t osz, const val_t *v,
 				   uint64_t xmask, op_t op)
 {
-	if (nsz < osz && (v->v_quad & xmask) != 0) {
+	if (nsz < osz && (v->u.integer & xmask) != 0) {
 		/* constant truncated by conversion, op '%s' */
 		warning(306, op_name(op));
 	}
@@ -3785,14 +3785,14 @@ convert_constant_check_range_bitand(size_t nsz, size_t osz,
 				    const type_t *tp, op_t op)
 {
 	if (nsz > osz &&
-	    (nv->v_quad & bit((unsigned int)(osz - 1))) != 0 &&
-	    (nv->v_quad & xmask) != xmask) {
+	    (nv->u.integer & bit((unsigned int)(osz - 1))) != 0 &&
+	    (nv->u.integer & xmask) != xmask) {
 		/* extra bits set to 0 in conversion of '%s' to '%s', ... */
 		warning(309, type_name(gettyp(ot)),
 		    type_name(tp), op_name(op));
 	} else if (nsz < osz &&
-		   (v->v_quad & xmask) != xmask &&
-		   (v->v_quad & xmask) != 0) {
+		   (v->u.integer & xmask) != xmask &&
+		   (v->u.integer & xmask) != 0) {
 		/* constant truncated by conversion, op '%s' */
 		warning(306, op_name(op));
 	}
@@ -3901,13 +3901,13 @@ convert_constant_check_range(tspec_t ot, const type_t *tp, tspec_t nt,
 		    nbitsz, obitsz, xmask, nv, ot, v, tp, op);
 	} else if ((nt != PTR && is_uinteger(nt)) &&
 		   (ot != PTR && !is_uinteger(ot)) &&
-		   v->v_quad < 0)
+		   v->u.integer < 0)
 		convert_constant_check_range_signed(op, arg);
-	else if (nv->v_quad != v->v_quad && nbitsz <= obitsz &&
-		 (v->v_quad & xmask) != 0 &&
-		 (is_uinteger(ot) || (v->v_quad & xmsk1) != xmsk1))
+	else if (nv->u.integer != v->u.integer && nbitsz <= obitsz &&
+		 (v->u.integer & xmask) != 0 &&
+		 (is_uinteger(ot) || (v->u.integer & xmsk1) != xmsk1))
 		warn_constant_check_range_truncated(op, arg, tp, ot);
-	else if (nv->v_quad != v->v_quad)
+	else if (nv->u.integer != v->u.integer)
 		warn_constant_check_range_loss(op, arg, tp, ot);
 }
 
@@ -3933,7 +3933,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 
 	if (nt == BOOL) {	/* C99 6.3.1.2 */
 		nv->v_unsigned_since_c90 = false;
-		nv->v_quad = is_nonzero_val(v) ? 1 : 0;
+		nv->u.integer = is_nonzero_val(v) ? 1 : 0;
 		return;
 	}
 
@@ -3941,7 +3941,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 		convert_constant_floating(op, arg, ot, tp, nt, v, nv);
 	else if (!convert_constant_to_floating(nt, nv, ot, v)) {
 		range_check = true;	/* Check for lost precision. */
-		nv->v_quad = v->v_quad;
+		nv->u.integer = v->u.integer;
 	}
 
 	if (allow_trad && allow_c90 && v->v_unsigned_since_c90 &&
@@ -3954,7 +3954,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 	}
 
 	if (is_integer(nt)) {
-		nv->v_quad = convert_integer(nv->v_quad, nt,
+		nv->u.integer = convert_integer(nv->u.integer, nt,
 		    tp->t_bitfield ? tp->t_bit_field_width : size_in_bits(nt));
 	}
 
@@ -4341,7 +4341,7 @@ integer_constant(tnode_t *tn, bool required)
 		lint_assert(nerr != 0);
 		debug_step("constant node is null; returning 1 instead");
 		v->v_tspec = INT;
-		v->v_quad = 1;
+		v->u.integer = 1;
 		return v;
 	}
 
@@ -4352,12 +4352,12 @@ integer_constant(tnode_t *tn, bool required)
 		if (is_integer(tn->tn_val.v_tspec)) {
 			v->v_unsigned_since_c90 =
 			    tn->tn_val.v_unsigned_since_c90;
-			v->v_quad = tn->tn_val.v_quad;
+			v->u.integer = tn->tn_val.u.integer;
 			return v;
 		}
-		v->v_quad = (int64_t)tn->tn_val.v_ldbl;
+		v->u.integer = (int64_t)tn->tn_val.u.floating;
 	} else {
-		v->v_quad = 1;
+		v->u.integer = 1;
 	}
 
 	if (required)
@@ -4377,7 +4377,7 @@ static bool
 is_constcond_false(const tnode_t *tn, tspec_t t)
 {
 	return (t == BOOL || t == INT) &&
-	       tn->tn_op == CON && tn->tn_val.v_quad == 0;
+	       tn->tn_op == CON && tn->tn_val.u.integer == 0;
 }
 
 /*
@@ -4457,7 +4457,7 @@ check_array_index(tnode_t *tn, bool amper)
 	 * For incomplete array types, we can print a warning only if
 	 * the index is negative.
 	 */
-	if (is_incomplete(ln->tn_left->tn_type) && rn->tn_val.v_quad >= 0)
+	if (is_incomplete(ln->tn_left->tn_type) && rn->tn_val.u.integer >= 0)
 		return;
 
 	/* Get the size of one array element */
@@ -4468,8 +4468,8 @@ check_array_index(tnode_t *tn, bool amper)
 
 	/* Change the unit of the index from bytes to element size. */
 	int64_t con = is_uinteger(rn->tn_type->t_tspec)
-	    ? (int64_t)((uint64_t)rn->tn_val.v_quad / elsz)
-	    : rn->tn_val.v_quad / elsz;
+	    ? (int64_t)((uint64_t)rn->tn_val.u.integer / elsz)
+	    : rn->tn_val.u.integer / elsz;
 
 	int dim = ln->tn_left->tn_type->t_dim + (amper ? 1 : 0);
 
@@ -4714,11 +4714,11 @@ constant_addr(const tnode_t *tn, const sym_t **symp, ptrdiff_t *offsp)
 	case PLUS:
 		offs1 = offs2 = 0;
 		if (tn->tn_left->tn_op == CON) {
-			offs1 = (ptrdiff_t)tn->tn_left->tn_val.v_quad;
+			offs1 = (ptrdiff_t)tn->tn_left->tn_val.u.integer;
 			if (!constant_addr(tn->tn_right, &sym, &offs2))
 				return false;
 		} else if (tn->tn_right->tn_op == CON) {
-			offs2 = (ptrdiff_t)tn->tn_right->tn_val.v_quad;
+			offs2 = (ptrdiff_t)tn->tn_right->tn_val.u.integer;
 			if (tn->tn_op == MINUS)
 				offs2 = -offs2;
 			if (!constant_addr(tn->tn_left, &sym, &offs1))

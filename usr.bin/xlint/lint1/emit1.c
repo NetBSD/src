@@ -1,4 +1,4 @@
-/* $NetBSD: emit1.c,v 1.70 2023/06/29 10:31:33 rillig Exp $ */
+/* $NetBSD: emit1.c,v 1.71 2023/07/02 18:14:44 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit1.c,v 1.70 2023/06/29 10:31:33 rillig Exp $");
+__RCSID("$NetBSD: emit1.c,v 1.71 2023/07/02 18:14:44 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -339,7 +339,6 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 {
 	tnode_t *args, *arg;
 	int narg, n, i;
-	int64_t q;
 	tspec_t t;
 
 	/* reset buffer */
@@ -372,10 +371,11 @@ outcall(const tnode_t *tn, bool retval_used, bool retval_discarded)
 				 * XXX it would probably be better to
 				 * explicitly test the sign
 				 */
-				if ((q = arg->tn_val.v_quad) == 0) {
+				int64_t si = arg->tn_val.u.integer;
+				if (si == 0) {
 					/* zero constant */
 					outchar('z');
-				} else if (!msb(q, t)) {
+				} else if (!msb(si, t)) {
 					/* positive if cast to signed */
 					outchar('p');
 				} else {
