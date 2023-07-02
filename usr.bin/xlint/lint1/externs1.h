@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.186 2023/07/02 10:20:45 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.187 2023/07/02 18:14:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -301,7 +301,7 @@ extern	bool	llibflg;
 extern	int	lwarn;
 extern	bool	bitfieldtype_ok;
 extern	bool	plibflg;
-extern	bool	quadflg;
+extern	bool	long_long_flag;
 
 void	begin_control_statement(control_statement_kind);
 void	end_control_statement(control_statement_kind);
