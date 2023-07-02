@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.236 2023/02/25 12:07:25 mlelstv Exp $	*/
+/*	$NetBSD: fetch.c,v 1.237 2023/07/02 10:02:09 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.236 2023/02/25 12:07:25 mlelstv Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.237 2023/07/02 10:02:09 mlelstv Exp $");
 #endif /* not lint */
 
 /*
@@ -801,7 +801,12 @@ handle_proxy(const char *url, const char *penv, struct urlinfo *ui,
 	}
 
 	FREEPTR(pui.path);
-	pui.path = ftp_strdup(url);
+#ifdef WITH_SSL
+	if (ui->utype == HTTPS_URL_T)
+		pui.path = ftp_strdup(ui->path);
+	else
+#endif
+		pui.path = ftp_strdup(url);
 
 	freeurlinfo(ui);
 	*ui = pui;
