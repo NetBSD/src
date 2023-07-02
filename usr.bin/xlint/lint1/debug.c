@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.43 2023/07/02 10:20:45 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.44 2023/07/02 17:41:30 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.43 2023/07/02 10:20:45 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.44 2023/07/02 17:41:30 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -126,8 +126,7 @@ debug_type_details(const type_t *tp)
 	if (is_struct_or_union(tp->t_tspec)) {
 		debug_indent_inc();
 		debug_step("size %u bits, align %u bits, %s",
-		    tp->t_sou->sou_size_in_bits,
-		    (unsigned int)tp->t_sou->sou_align_in_bits,
+		    tp->t_sou->sou_size_in_bits, tp->t_sou->sou_align_in_bits,
 		    tp->t_sou->sou_incomplete ? "incomplete" : "complete");
 
 		for (const sym_t *mem = tp->t_sou->sou_first_member;
@@ -418,7 +417,7 @@ debug_decl_level(const decl_level *dl)
 	if (dl->d_offset_in_bits != 0)
 		debug_printf(" offset=%u", dl->d_offset_in_bits);
 	if (dl->d_sou_align_in_bits != 0)
-		debug_printf(" align=%u", (unsigned)dl->d_sou_align_in_bits);
+		debug_printf(" align=%u", dl->d_sou_align_in_bits);
 
 	debug_word(dl->d_const, "const");
 	debug_word(dl->d_volatile, "volatile");

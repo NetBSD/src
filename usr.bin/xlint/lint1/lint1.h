@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.175 2023/07/02 08:16:19 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.176 2023/07/02 17:41:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -121,7 +121,7 @@ typedef struct {
  */
 typedef	struct {
 	unsigned int sou_size_in_bits;
-	unsigned short sou_align_in_bits;
+	unsigned int sou_align_in_bits;
 	bool	sou_incomplete:1;
 	struct	sym *sou_first_member;
 	struct	sym *sou_tag;
@@ -354,7 +354,7 @@ typedef	struct decl_level {
 				 * used for all declarators */
 	sym_t	*d_redeclared_symbol;
 	unsigned int d_offset_in_bits; /* offset of next structure member */
-	unsigned short d_sou_align_in_bits; /* alignment required for current
+	unsigned int d_sou_align_in_bits; /* alignment required for current
 				 * structure */
 	bool	d_const:1;	/* const in declaration specifiers */
 	bool	d_volatile:1;	/* volatile in declaration specifiers */
