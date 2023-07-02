@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.542 2023/07/01 10:04:27 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.543 2023/07/02 08:16:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.542 2023/07/01 10:04:27 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.543 2023/07/02 08:16:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1925,7 +1925,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		sou->sou_tag = expr_zero_alloc(sizeof(*sou->sou_tag));
 		sou->sou_tag->s_name = unnamed;
 
-		msym->u.s_member.sm_sou_type = sou;
+		msym->u.s_member.sm_containing_type = sou;
 		/*
 		 * The member sm_offset_in_bits is not needed here since this
 		 * symbol can only be used for error reporting.
@@ -1940,16 +1940,16 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	if (op == ARROW && tn->tn_type->t_tspec == PTR
 	    && is_struct_or_union(tn->tn_type->t_subt->t_tspec))
 		tp = tn->tn_type->t_subt;
-	struct_or_union *str = tp != NULL ? tp->t_sou : NULL;
+	struct_or_union *sou = tp != NULL ? tp->t_sou : NULL;
 
 	/*
 	 * If this struct/union has a member with the name of msym, return it.
 	 */
-	if (str != NULL) {
+	if (sou != NULL) {
 		for (sym_t *sym = msym;
 		     sym != NULL; sym = sym->s_symtab_next) {
 			if (is_member(sym) &&
-			    sym->u.s_member.sm_sou_type == str &&
+			    sym->u.s_member.sm_containing_type == sou &&
 			    strcmp(sym->s_name, msym->s_name) == 0)
 				return sym;
 		}
@@ -1967,7 +1967,7 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 	 * Now handle the case in which the left operand refers really
 	 * to a struct/union, but the right operand is not member of it.
 	 */
-	if (str != NULL) {
+	if (sou != NULL) {
 		if (eq && !allow_c90) {
 			/* illegal use of member '%s' */
 			warning(102, msym->s_name);

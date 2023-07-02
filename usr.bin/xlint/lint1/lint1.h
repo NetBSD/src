@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.174 2023/07/01 09:59:51 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.175 2023/07/02 08:16:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -248,8 +248,7 @@ typedef	struct sym {
 		bool s_bool_constant;
 		int s_enum_constant;	/* XXX: should be TARG_INT */
 		struct {
-			/* XXX: what is the difference to s_type->t_sou? */
-			struct_or_union	*sm_sou_type;
+			struct_or_union	*sm_containing_type;
 			unsigned int sm_offset_in_bits;
 		} s_member;
 		struct {
