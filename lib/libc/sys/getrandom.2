@@ -1,4 +1,4 @@
-.\"	$NetBSD: getrandom.2,v 1.2 2023/06/30 21:44:22 riastradh Exp $
+.\"	$NetBSD: getrandom.2,v 1.3 2023/07/02 13:25:52 riastradh Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -124,7 +124,7 @@ since
 never blocks.
 The combination
 .Dv GRND_INSECURE Ns Li "|" Ns Li GRND_RANDOM
-is nonsensical and fails with
+always fails with
 .Er EINVAL .
 .Sh RETURN VALUES
 If successful,
@@ -240,5 +240,5 @@ see
 .Pp
 The
 .Nm
-interface is unnecessarily complicated for no real value to
-applications, because of hysterical raisins.
+interface has more options than real-world applications need, with
+confusing and unclear semantics inherited from Linux.
