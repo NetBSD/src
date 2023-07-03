@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.18 2023/06/30 08:45:22 rillig Exp $	*/
+/*	$NetBSD: queries.c,v 1.19 2023/07/03 15:29:42 rillig Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -82,6 +82,7 @@ Q2(double dbl)
 	return (int)dbl;
 }
 
+// The Q3 query triggers so often that it also occurs outside this function.
 void
 Q3(int i, unsigned u)
 {
@@ -90,6 +91,13 @@ Q3(int i, unsigned u)
 
 	/* expect+1: implicit conversion changes sign from 'unsigned int' to 'int' [Q3] */
 	i = u;
+
+	/* expect+2: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
+	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned short' [Q3] */
+	u16 += u8;
+	/* expect+2: implicit conversion changes sign from 'unsigned short' to 'int' [Q3] */
+	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
+	u32 += u16;
 }
 
 unsigned long long
@@ -343,9 +351,9 @@ Q9(int x)
 		return (0.0);
 	case 9:
 		return
-# 347 "queries.c" 3 4
+# 355 "queries.c" 3 4
 		((void *)0)
-# 349 "queries.c"
+# 357 "queries.c"
 		/* expect+1: warning: illegal combination of integer 'int' and pointer 'pointer to void' [183] */
 		;
 	case 10:
@@ -404,12 +412,10 @@ void extern_Q13(void);
 extern void extern_Q13(void), *extern_ptr;
 
 int
-Q14(char c, signed char sc, unsigned char uc, int wc)
+Q14(signed char sc, unsigned char uc, int wc)
 {
-	/* expect+2: comparison '==' of 'char' with plain integer 92 [Q14] */
-	/* expect+1: comparison '==' of 'char' with plain integer 0 [Q14] */
-	if (c == 'c' || c == L'w' || c == 92 || c == 0)
-		return 1;
+	// Plain 'char' is platform-dependent, see queries-{schar,uchar}.c.
+
 	if (sc == 'c' || sc == L'w' || sc == 92 || sc == 0)
 		return 2;
 	/* expect+4: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
