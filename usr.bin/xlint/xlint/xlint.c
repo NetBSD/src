@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.112 2023/06/28 13:50:47 rillig Exp $ */
+/* $NetBSD: xlint.c,v 1.113 2023/07/03 11:16:32 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: xlint.c,v 1.112 2023/06/28 13:50:47 rillig Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.113 2023/07/03 11:16:32 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -238,30 +238,27 @@ terminate(int signo)
 static void __attribute__((__noreturn__, __format__(__printf__, 1, 2)))
 usage(const char *fmt, ...)
 {
-	const char *name;
-	int indent;
 	va_list ap;
 
-	name = getprogname();
-	(void)fprintf(stderr, "%s: ", name);
 	va_start(ap, fmt);
 	(void)vfprintf(stderr, fmt, ap);
 	va_end(ap);
 	if (fmt[0] != '\0')
 		(void)fprintf(stderr, "\n");
 
-	indent = (int)(strlen("usage: ") + strlen(name));
+	const char *name = getprogname();
+	int indent = (int)(strlen("usage: ") + strlen(name));
 	(void)fprintf(stderr,
-	    "usage: %s [-abceghprvwxzHFST] [-s|-t] [-i|-nu]\n"
-	    "%*s [-Dname[=def]] [-Uname] [-Idirectory] [-Z <cpparg>]\n"
-	    "%*s [-Ldirectory] [-llibrary] [-ooutputfile]\n"
-	    "%*s [-X <id>[,<id>]...] [-Ac11] file ...\n",
+	    "usage: %s [-abceghprstvwxzFHPSTV] [-Alevel] [-i|-nu]\n"
+	    "%*s [-Dname[=def]] [-Uname] [-Idirectory] "
+	    "[-M...] [-W...] [-Z ...]\n"
+	    "%*s [-ddirectory] [-Ldirectory] [-llibrary] [-ooutputfile]\n"
+	    "%*s [-Bpath] [-X id,...] [-q id,...] [-R old=new] file ...\n",
 	    name, indent, "", indent, "", indent, "");
 	(void)fprintf(stderr,
-	    "       %s [-abceghprvwzHFST] [-s|-t] -Clibrary\n"
-	    "%*s [-Dname[=def]] [-Uname] [-Idirectory] [-Z <cpparg>]\n"
-	    "%*s [-Bpath] [-X <id>[,<id>]...] [-R old=new] file ...\n",
-	    name, indent, "", indent, "");
+	    "       %s [-abceghprstvwzFHPSTV] [-Alevel] -Clibrary\n"
+	    "%*s [-Bpath] [-R old=new] file ...\n",
+	    name, indent, "");
 	terminate(-1);
 }
 
