@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.545 2023/07/03 07:03:19 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.546 2023/07/03 07:19:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.545 2023/07/03 07:03:19 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.546 2023/07/03 07:19:57 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2332,12 +2332,10 @@ typeok_shift(const type_t *ltp, tspec_t lt, const tnode_t *rn, tspec_t rt)
 	if (!is_uinteger(rt) && rn->tn_val.u.integer < 0) {
 		/* negative shift */
 		warning(121);
-	} else if ((uint64_t)rn->tn_val.u.integer ==
-		   (uint64_t)size_in_bits(lt)) {
+	} else if ((uint64_t)rn->tn_val.u.integer == size_in_bits(lt)) {
 		/* shift amount %u equals bit-size of '%s' */
 		warning(267, (unsigned)rn->tn_val.u.integer, type_name(ltp));
-	} else if ((uint64_t)rn->tn_val.u.integer
-	    > (uint64_t)size_in_bits(lt)) {
+	} else if ((uint64_t)rn->tn_val.u.integer > size_in_bits(lt)) {
 		/* shift amount %llu is greater than bit-size %llu of '%s' */
 		warning(122, (unsigned long long)rn->tn_val.u.integer,
 		    (unsigned long long)size_in_bits(lt),
