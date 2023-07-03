@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_ilp32_long.c,v 1.2 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: platform_ilp32_long.c,v 1.3 2023/07/03 21:36:16 rillig Exp $	*/
 # 3 "platform_ilp32_long.c"
 
 /*
@@ -30,6 +30,7 @@ convert_between_int_and_long(void)
 	/* expect+1: warning: conversion from 'long' to 'int' may lose accuracy [132] */
 	s32 = sl32;
 	sl32 = s32;
+	/* expect+1: warning: conversion from 'unsigned long' to 'unsigned int' may lose accuracy [132] */
 	u32 = ul32;
 	ul32 = u32;
 }
