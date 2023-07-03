@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.29 2023/06/09 13:03:49 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.30 2023/07/03 10:23:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main2.c,v 1.29 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.30 2023/07/03 10:23:12 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -50,11 +50,7 @@ __RCSID("$NetBSD: main2.c,v 1.29 2023/06/09 13:03:49 rillig Exp $");
 /* warnings for symbols which are declared but not defined or used */
 bool	xflag;
 
-/*
- * warnings for symbols which are used and not defined or defined
- * and not used
- */
-bool	uflag = true;
+bool	uflag;
 
 /* Create a lint library in the current directory with name libname. */
 bool	Cflag;
@@ -113,7 +109,7 @@ main(int argc, char *argv[])
 			tflag = true;
 			break;
 		case 'u':
-			uflag = false;
+			uflag = true;
 			break;
 		case 'x':
 			xflag = true;
@@ -124,7 +120,7 @@ main(int argc, char *argv[])
 			(void)sprintf(lname, "llib-l%s.ln", optarg);
 			libname = lname;
 			Cflag = true;
-			uflag = false;
+			uflag = true;
 			break;
 		case 'H':
 			Hflag = true;
