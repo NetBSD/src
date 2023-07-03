@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.69 2023/07/03 10:14:31 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.70 2023/07/03 10:23:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.69 2023/07/03 10:14:31 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.70 2023/07/03 10:23:12 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -59,11 +59,11 @@ bool	Pflag;
 bool	pflag;
 bool	rflag;
 bool	Tflag;
-bool	uflag = true;
-bool	vflag = true;
+bool	uflag;
+bool	vflag;
 bool	wflag;
 bool	yflag;
-bool	zflag = true;
+bool	zflag;
 
 /*
  * The default language level is the one that checks for compatibility
@@ -171,11 +171,11 @@ main(int argc, char *argv[])
 			allow_c11 = false;
 			allow_c23 = false;
 			break;
-		case 'u':	uflag = false;	break;
+		case 'u':	uflag = true;	break;
 		case 'w':	wflag = true;	break;
-		case 'v':	vflag = false;	break;
+		case 'v':	vflag = true;	break;
 		case 'y':	yflag = true;	break;
-		case 'z':	zflag = false;	break;
+		case 'z':	zflag = true;	break;
 
 		case 'A':
 			if (strcmp(optarg, "c23") == 0) {

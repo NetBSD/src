@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.340 2023/07/03 07:03:19 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.341 2023/07/03 10:23:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.340 2023/07/03 07:03:19 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.341 2023/07/03 10:23:12 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2918,7 +2918,7 @@ check_argument_usage(bool novar, sym_t *arg)
 	if (novar)
 		return;
 
-	if (!arg->s_used && vflag) {
+	if (!arg->s_used && !vflag) {
 		/* argument '%s' unused in function '%s' */
 		warning_at(231, &arg->s_def_pos, arg->s_name, funcsym->s_name);
 	}
@@ -3018,7 +3018,7 @@ check_tag_usage(sym_t *sym)
 		return;
 
 	/* always complain about incomplete tags declared inside blocks */
-	if (!zflag || dcs->d_kind != DLK_EXTERN)
+	if (zflag || dcs->d_kind != DLK_EXTERN)
 		return;
 
 	switch (sym->s_type->t_tspec) {
