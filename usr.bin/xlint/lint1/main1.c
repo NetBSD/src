@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.68 2023/07/03 09:33:07 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.69 2023/07/03 10:14:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.68 2023/07/03 09:33:07 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.69 2023/07/03 10:14:31 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,62 +49,20 @@ __RCSID("$NetBSD: main1.c,v 1.68 2023/07/03 09:33:07 rillig Exp $");
 
 #include "lint1.h"
 
-/* set yydebug to 1*/
-bool	yflag;
-
-/*
- * Print warnings if an assignment of an integer type to another integer type
- * causes an implicit narrowing conversion. If aflag is 1, these warnings
- * are printed only if the source type is at least as wide as long. If aflag
- * is greater than 1, they are always printed.
- */
 int	aflag;
-
-/* Print a warning if a break statement cannot be reached. */
 bool	bflag;
-
-/* Print warnings for pointer casts. */
 bool	cflag;
-
-/* Perform stricter checking of enum types and operations on enum types. */
 bool	eflag;
-
-/* Print complete pathnames, not only the basename. */
 bool	Fflag;
-
-/* Treat warnings as errors */
-bool	wflag;
-
-/*
- * Apply a number of heuristic tests to attempt to intuit bugs, improve
- * style, and reduce waste.
- */
 bool	hflag;
-
-/* Attempt to check portability to other dialects of C. */
-bool	pflag;
-
-/*
- * In case of redeclarations/redefinitions print the location of the
- * previous declaration/definition.
- */
-bool	rflag;
-
-bool	Tflag;
-
-/* Picky flag */
 bool	Pflag;
-
-/*
- * Complain about functions and external variables used and not defined,
- * or defined and not used.
- */
+bool	pflag;
+bool	rflag;
+bool	Tflag;
 bool	uflag = true;
-
-/* Complain about unused function arguments. */
 bool	vflag = true;
-
-/* Complain about structures which are never defined. */
+bool	wflag;
+bool	yflag;
 bool	zflag = true;
 
 /*
