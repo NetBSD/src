@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.67 2023/07/02 23:40:23 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.68 2023/07/03 09:33:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.67 2023/07/02 23:40:23 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.68 2023/07/03 09:33:07 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -231,7 +231,7 @@ main(int argc, char *argv[])
 				allow_c90 = true;
 				allow_c99 = true;
 				allow_c11 = true;
-				allow_c23 = true;
+				allow_c23 = false;
 			} else
 				usage();
 			break;
