@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.180 2023/07/03 07:03:19 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.181 2023/07/03 07:19:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -574,7 +574,7 @@ bit(unsigned i)
 static inline bool
 msb(int64_t si, tspec_t t)
 {
-	return (si & bit((unsigned int)size_in_bits(t) - 1)) != 0;
+	return (si & bit(size_in_bits(t) - 1)) != 0;
 }
 
 static inline uint64_t
