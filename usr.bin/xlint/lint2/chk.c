@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.55 2023/06/09 13:03:49 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.56 2023/07/03 07:03:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.55 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.56 2023/07/03 07:03:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -700,7 +700,7 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		} else if (fc == 'l') {
 			sz = LONG;
 		} else if (fc == 'q') {
-			sz = QUAD;
+			sz = LLONG;
 		} else if (fc == 'L') {
 			sz = LDOUBLE;
 		}
@@ -738,8 +738,8 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			if (sz == LONG) {
 				if (t1 != LONG && (hflag || t1 != ULONG))
 					inconsistent_arguments(hte, call, n);
-			} else if (sz == QUAD) {
-				if (t1 != QUAD && (hflag || t1 != UQUAD))
+			} else if (sz == LLONG) {
+				if (t1 != LLONG && (hflag || t1 != ULLONG))
 					inconsistent_arguments(hte, call, n);
 			} else {
 				/*
@@ -756,8 +756,8 @@ printflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 			if (sz == LONG) {
 				if (t1 != ULONG && (hflag || t1 != LONG))
 					inconsistent_arguments(hte, call, n);
-			} else if (sz == QUAD) {
-				if (t1 != UQUAD && (hflag || t1 != QUAD))
+			} else if (sz == LLONG) {
+				if (t1 != ULLONG && (hflag || t1 != LLONG))
 					inconsistent_arguments(hte, call, n);
 			} else if (sz == SHORT) {
 				/* USHORT was promoted to INT or UINT */
@@ -871,7 +871,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		} else if (fc == 'l') {
 			sz = LONG;
 		} else if (fc == 'q') {
-			sz = QUAD;
+			sz = LLONG;
 		} else if (fc == 'L') {
 			sz = LDOUBLE;
 		}
@@ -898,7 +898,7 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 		if (fc == 'd' || fc == 'i' || fc == 'n') {
 			if (sz == LDOUBLE)
 				bad_format_string(hte, call);
-			if (sz != SHORT && sz != LONG && sz != QUAD)
+			if (sz != SHORT && sz != LONG && sz != LLONG)
 				sz = INT;
 		conv:
 			if (!noasgn) {
@@ -919,8 +919,8 @@ scanflike(const hte_t *hte, fcall_t *call, int n, const char *fmt, type_t **ap)
 				sz = USHORT;
 			} else if (sz == LONG) {
 				sz = ULONG;
-			} else if (sz == QUAD) {
-				sz = UQUAD;
+			} else if (sz == LLONG) {
+				sz = ULLONG;
 			} else {
 				sz = UINT;
 			}
