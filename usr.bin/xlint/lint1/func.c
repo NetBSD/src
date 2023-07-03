@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.163 2023/07/02 18:14:44 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.164 2023/07/03 07:03:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.163 2023/07/02 18:14:44 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.164 2023/07/03 07:03:19 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -523,7 +523,7 @@ check_case_label(tnode_t *tn, control_statement *cs)
 
 	t = tn->tn_type->t_tspec;
 	if (t == LONG || t == ULONG ||
-	    t == QUAD || t == UQUAD) {
+	    t == LLONG || t == ULLONG) {
 		if (!allow_c90)
 			/* case label must be of type 'int' in traditional C */
 			warning(203);
@@ -686,7 +686,7 @@ stmt_switch_expr(tnode_t *tn)
 	}
 	if (tn != NULL && !allow_c90) {
 		t = tn->tn_type->t_tspec;
-		if (t == LONG || t == ULONG || t == QUAD || t == UQUAD) {
+		if (t == LONG || t == ULONG || t == LLONG || t == ULLONG) {
 			/* switch expression must be of type 'int' in ... */
 			warning(271);
 		}

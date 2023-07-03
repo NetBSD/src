@@ -1,4 +1,4 @@
-/*	$NetBSD: ilp32.h,v 1.5 2021/01/09 14:10:15 rillig Exp $	*/
+/*	$NetBSD: ilp32.h,v 1.6 2023/07/03 07:03:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #define	SHORT_SIZE	16
 #define	INT_SIZE	32
 #define	LONG_SIZE	32
-#define	QUAD_SIZE	64
+#define	LLONG_SIZE	64
 #define	PTR_SIZE	32
 
 #define	TARG_SCHAR_MAX	((int8_t) (((uint8_t) -1) >> 1))
@@ -62,6 +62,6 @@
 #define	TARG_LONG_MIN	TARG_INT_MIN
 #define	TARG_ULONG_MAX	TARG_UINT_MAX
 
-#define	TARG_QUAD_MAX	((int64_t) (((uint64_t) -1) >> 1))
-#define	TARG_QUAD_MIN	((-TARG_QUAD_MAX) - 1)
-#define	TARG_UQUAD_MAX	((uint64_t) -1)
+#define	TARG_LLONG_MAX	((int64_t) (((uint64_t) -1) >> 1))
+#define	TARG_LLONG_MIN	((-TARG_LLONG_MAX) - 1)
+#define	TARG_ULLONG_MAX	((uint64_t) -1)

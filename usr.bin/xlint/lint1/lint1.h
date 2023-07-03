@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.179 2023/07/02 23:40:23 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.180 2023/07/03 07:03:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -345,7 +345,7 @@ typedef	struct decl_level {
 	tspec_t	d_abstract_type;/* VOID, BOOL, CHAR, INT or COMPLEX */
 	tspec_t	d_complex_mod;	/* FLOAT or DOUBLE */
 	tspec_t	d_sign_mod;	/* SIGNED or UNSIGN */
-	tspec_t	d_rank_mod;	/* SHORT, LONG or QUAD */
+	tspec_t	d_rank_mod;	/* SHORT, LONG or LLONG */
 	scl_t	d_scl;		/* storage class */
 	type_t	*d_type;	/* after dcs_end_type, the pointer to the type
 				 * used for all declarators */

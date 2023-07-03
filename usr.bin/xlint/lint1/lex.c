@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.166 2023/07/02 18:14:44 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.167 2023/07/03 07:03:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.166 2023/07/02 18:14:44 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.167 2023/07/03 07:03:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -465,8 +465,8 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 {
 	/* C11 6.4.4.1p5 */
 	static const tspec_t suffix_type[2][3] = {
-		{ INT,  LONG,  QUAD, },
-		{ UINT, ULONG, UQUAD, }
+		{ INT,  LONG,  LLONG, },
+		{ UINT, ULONG, ULLONG, }
 	};
 
 	const char *cp = yytext;
@@ -577,12 +577,12 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 			warning(252);
 		}
 		break;
-	case QUAD:
-		if (ui > TARG_QUAD_MAX && allow_c90)
-			typ = UQUAD;
+	case LLONG:
+		if (ui > TARG_LLONG_MAX && allow_c90)
+			typ = ULLONG;
 		break;
-	case UQUAD:
-		if (ui > TARG_UQUAD_MAX && !warned) {
+	case ULLONG:
+		if (ui > TARG_ULLONG_MAX && !warned) {
 			/* integer constant out of range */
 			warning(252);
 		}
