@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.56 2023/07/03 07:03:19 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.57 2023/07/03 10:23:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.56 2023/07/03 07:03:19 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.57 2023/07/03 10:23:12 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -90,7 +90,7 @@ check_name(const hte_t *hte)
 {
 	sym_t *sym, *def, *pdecl, *decl;
 
-	if (uflag) {
+	if (!uflag) {
 		check_used_not_defined(hte);
 		check_defined_not_used(hte);
 		if (xflag)
