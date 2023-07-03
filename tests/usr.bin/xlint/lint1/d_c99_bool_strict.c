@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.40 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.41 2023/07/03 09:37:14 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -1065,3 +1065,8 @@ controlling_expression(FILE *f, const char *a, const char *b)
 	    ))
 		return;
 }
+
+// In strict bool mode, the identifiers '__lint_false' and '__lint_true' are
+// predefined, but not any others.
+/* expect+1: error: '__lint_unknown' undefined [99] */
+int unknown = sizeof __lint_unknown;
