@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.544 2023/07/02 18:14:44 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.545 2023/07/03 07:03:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.544 2023/07/02 18:14:44 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.545 2023/07/03 07:03:19 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -656,7 +656,7 @@ static const tspec_t arith_rank[] = {
 #ifdef INT128_SIZE
 	UINT128, INT128,
 #endif
-	UQUAD, QUAD,
+	ULLONG, LLONG,
 	ULONG, LONG,
 	UINT, INT,
 };
@@ -3444,7 +3444,7 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 
 	if (aflag > 0 &&
 	    portable_size_in_bits(nt) < portable_size_in_bits(ot) &&
-	    (ot == LONG || ot == ULONG || ot == QUAD || ot == UQUAD ||
+	    (ot == LONG || ot == ULONG || ot == LLONG || ot == ULLONG ||
 	     aflag > 1) &&
 	    !can_represent(tp, tn)) {
 		if (op == FARG) {
@@ -3698,10 +3698,10 @@ convert_constant_floating(op_t op, int arg, tspec_t ot, const type_t *tp,
 		max = TARG_LONG_MAX;	min = TARG_LONG_MIN;	break;
 	case ULONG:
 		max = TARG_ULONG_MAX;	min = 0;		break;
-	case QUAD:
-		max = QUAD_MAX;		min = QUAD_MIN;		break;
-	case UQUAD:
-		max = UQUAD_MAX;	min = 0;		break;
+	case LLONG:
+		max = LLONG_MAX;	min = LLONG_MIN;	break;
+	case ULLONG:
+		max = ULLONG_MAX;	min = 0;		break;
 	case FLOAT:
 	case FCOMPLEX:
 		max = FLT_MAX;		min = -FLT_MAX;		break;

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.339 2023/07/02 21:37:49 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.340 2023/07/03 07:03:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.339 2023/07/02 21:37:49 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.340 2023/07/03 07:03:19 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -292,7 +292,7 @@ dcs_add_type(type_t *tp)
 
 	if (t == LONG && dcs->d_rank_mod == LONG) {
 		/* "long long" or "long ... long" */
-		t = QUAD;
+		t = LLONG;
 		dcs->d_rank_mod = NO_TSPEC;
 		if (!long_long_flag)
 			/* %s does not support 'long long' */
@@ -310,7 +310,7 @@ dcs_add_type(type_t *tp)
 		if (dcs->d_sign_mod != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_sign_mod = t;
-	} else if (t == SHORT || t == LONG || t == QUAD) {
+	} else if (t == SHORT || t == LONG || t == LLONG) {
 		if (dcs->d_rank_mod != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_rank_mod = t;
@@ -347,7 +347,7 @@ merge_signedness(tspec_t t, tspec_t s)
 	    : t == SHORT ? USHORT
 	    : t == INT ? UINT
 	    : t == LONG ? ULONG
-	    : t == QUAD ? UQUAD
+	    : t == LLONG ? ULLONG
 	    : t;
 }
 
@@ -363,7 +363,7 @@ typedef_error(type_t *td, tspec_t t)
 
 	if ((t == SIGNED || t == UNSIGN) &&
 	    (t2 == CHAR || t2 == SHORT || t2 == INT ||
-	     t2 == LONG || t2 == QUAD)) {
+	     t2 == LONG || t2 == LLONG)) {
 		if (allow_c90)
 			/* modifying typedef with '%s'; only qualifiers... */
 			warning(5, tspec_name(t));
@@ -388,9 +388,9 @@ typedef_error(type_t *td, tspec_t t)
 	else if (t2 == UINT)
 		td = gettyp(ULONG);
 	else if (t2 == LONG)
-		td = gettyp(QUAD);
+		td = gettyp(LLONG);
 	else if (t2 == ULONG)
-		td = gettyp(UQUAD);
+		td = gettyp(ULLONG);
 	else if (t2 == FLOAT)
 		td = gettyp(DOUBLE);
 	else if (t2 == DOUBLE)

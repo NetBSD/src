@@ -1,4 +1,4 @@
-/*	$NetBSD: lp64.h,v 1.10 2021/01/09 14:10:15 rillig Exp $	*/
+/*	$NetBSD: lp64.h,v 1.11 2023/07/03 07:03:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -43,7 +43,7 @@
 #define	SHORT_SIZE	16
 #define	INT_SIZE	32
 #define	LONG_SIZE	64
-#define	QUAD_SIZE	64
+#define	LLONG_SIZE	64
 #define	PTR_SIZE	64
 #ifdef _LP64
 #define	INT128_SIZE	128
@@ -61,13 +61,13 @@
 #define	TARG_INT_MIN	((-TARG_INT_MAX) - 1)
 #define	TARG_UINT_MAX	((uint32_t) -1)
 
-#define	TARG_LONG_MAX	TARG_QUAD_MAX
-#define	TARG_LONG_MIN	TARG_QUAD_MIN
-#define	TARG_ULONG_MAX	TARG_UQUAD_MAX
+#define	TARG_LONG_MAX	TARG_LLONG_MAX
+#define	TARG_LONG_MIN	TARG_LLONG_MIN
+#define	TARG_ULONG_MAX	TARG_ULLONG_MAX
 
-#define	TARG_QUAD_MAX	((int64_t) (((uint64_t) -1) >> 1))
-#define	TARG_QUAD_MIN	((-TARG_QUAD_MAX) - 1)
-#define	TARG_UQUAD_MAX	((uint64_t) -1)
+#define	TARG_LLONG_MAX	((int64_t) (((uint64_t) -1) >> 1))
+#define	TARG_LLONG_MIN	((-TARG_LLONG_MAX) - 1)
+#define	TARG_ULLONG_MAX	((uint64_t) -1)
 
 #ifdef _LP64
 /* XXX on a 32 build for a 64 build host we skip these */
