@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.546 2023/07/03 07:19:57 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.547 2023/07/03 21:36:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.546 2023/07/03 07:19:57 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.547 2023/07/03 21:36:16 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -95,7 +95,7 @@ width_in_bits(const type_t *tp)
 	lint_assert(is_integer(tp->t_tspec));
 	return tp->t_bitfield
 	    ? tp->t_bit_field_width
-	    : size_in_bits(tp->t_tspec);
+	    : portable_size_in_bits(tp->t_tspec);
 }
 
 static bool
