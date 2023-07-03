@@ -1,4 +1,4 @@
-#	$NetBSD: std.generic,v 1.10 2021/09/03 21:58:36 andvar Exp $
+#	$NetBSD: std.generic,v 1.11 2023/07/03 17:05:10 jakllsch Exp $
 #
 # 	generic NetBSD/evbarm with FDT support
 
@@ -33,6 +33,11 @@ options 	__HAVE_PCI_CONF_HOOK
 options 	__HAVE_PCI_MSI_MSIX
 
 makeoptions	BOARDMKFRAG="${THISARM}/conf/mk.generic"
+
+# initrd support
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_DYNAMIC
+pseudo-device 	md
 
 # Prevent the addition of a command line -DKERNEL_BASE_VOFFSET= as it
 # is done at runtime.
