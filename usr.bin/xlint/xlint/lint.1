@@ -1,4 +1,4 @@
-.\" $NetBSD: lint.1,v 1.61 2023/07/03 10:14:31 rillig Exp $
+.\" $NetBSD: lint.1,v 1.62 2023/07/03 11:16:32 rillig Exp $
 .\"
 .\" Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
 .\" Copyright (c) 1994, 1995 Jochen Pohl
@@ -49,10 +49,10 @@
 .Op Fl MD
 .Op Fl l Ar library
 .Op Fl o Ar outputfile
-.Op Fl q Ar id Ns Op ,id ...
+.Op Fl q Ar id Ns Oo Ic , Ns Ar id Oc Ns ...
 .Op Fl U Ar name
 .Op Fl W Ar cppwarnarg
-.Op Fl X Ar id Ns Op ,id ...
+.Op Fl X Ar id Ns Oo Ic , Ns Ar id Oc Ns ...
 .Op Fl Z Ar cpparg
 .Ar
 .Nm lint
@@ -67,7 +67,7 @@
 .Op Fl R Ar old=new
 .Op Fl U Ar name
 .Op Fl W Ar cppwarnarg
-.Op Fl X Ar id Ns Op ,id ...
+.Op Fl X Ar id Ns Oo Ic , Ns Ar id Oc Ns ...
 .Op Fl Z Ar cpparg
 .Ar
 .Sh DESCRIPTION
@@ -345,7 +345,7 @@ when assigning to wider integer types, overflow warnings when assigning
 to wider types.
 .It Fl p
 Attempt to check portability of code to other platforms of C.
-.It Fl q Ar id Ns Op ,id ...
+.It Fl q Ar id Ns Oo Ic , Ns Ar id Oc Ns ...
 In addition to the usual warnings and errors, run the selected queries,
 which are listed in
 .Xr lint 7 Ns .
@@ -426,7 +426,7 @@ Pass the warning directive to
 .Xr cpp 1 .
 .It Fl w
 Treat warnings as errors.
-.It Fl X Ar id Ns Op ,id ...
+.It Fl X Ar id Ns Oo Ic , Ns Ar id Oc Ns ...
 Suppress error messages identified by the list of ids.
 A list of messages and ids can be found in
 .Xr lint 7 .

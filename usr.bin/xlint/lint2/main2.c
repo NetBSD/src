@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.30 2023/07/03 10:23:12 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.31 2023/07/03 11:16:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main2.c,v 1.30 2023/07/03 10:23:12 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.31 2023/07/03 11:16:32 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -100,7 +100,7 @@ main(int argc, char *argv[])
 	libs = xcalloc(1, sizeof(*libs));
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "hstxuC:HFl:")) != -1) {
+	while ((c = getopt(argc, argv, "hl:stuxC:HF")) != -1) {
 		switch (c) {
 		case 's':
 			sflag = true;
@@ -178,6 +178,6 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-		      "usage: lint2 -hpstxuHFT -Clib -l lib ... src1 ...\n");
+	    "usage: %s [-hstuxHF] -Clib -l lib ... src1 ...\n", getprogname());
 	exit(1);
 }
