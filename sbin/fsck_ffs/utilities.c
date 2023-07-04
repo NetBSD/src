@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.68 2023/01/14 12:12:50 christos Exp $	*/
+/*	$NetBSD: utilities.c,v 1.69 2023/07/04 20:40:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.68 2023/01/14 12:12:50 christos Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.69 2023/07/04 20:40:22 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -135,12 +135,15 @@ bufinit(void)
 	char *bufp;
 
 	pbp = pdirbp = (struct bufarea *)0;
-	bufp = aligned_alloc(DEV_BSIZE, (unsigned int)sblock->fs_bsize);
+	__CTASSERT(powerof2(DEV_BSIZE));
+	bufp = aligned_alloc(DEV_BSIZE,
+	    roundup2((unsigned int)sblock->fs_bsize, DEV_BSIZE));
 	if (bufp == 0)
 		errexit("cannot allocate buffer pool");
 	cgblk.b_un.b_buf = bufp;
 	initbarea(&cgblk);
 #ifndef NO_APPLE_UFS
+	__CTASSERT((APPLEUFS_LABEL_SIZE % DEV_BSIZE) == 0);
 	bufp = aligned_alloc(DEV_BSIZE, (unsigned int)APPLEUFS_LABEL_SIZE);
 	if (bufp == 0)
 		errexit("cannot allocate buffer pool");
@@ -153,7 +156,9 @@ bufinit(void)
 		bufcnt = MINBUFS;
 	for (i = 0; i < bufcnt; i++) {
 		bp = malloc(sizeof(struct bufarea));
-		bufp = aligned_alloc(DEV_BSIZE, (unsigned int)sblock->fs_bsize);
+		__CTASSERT(powerof2(DEV_BSIZE));
+		bufp = aligned_alloc(DEV_BSIZE,
+		    roundup2((unsigned int)sblock->fs_bsize, DEV_BSIZE));
 		if (bp == NULL || bufp == NULL) {
 			if (i >= MINBUFS) {
 				if (bp)
