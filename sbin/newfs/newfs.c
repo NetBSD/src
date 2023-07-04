@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.118 2022/11/17 06:40:39 chs Exp $	*/
+/*	$NetBSD: newfs.c,v 1.119 2023/07/04 20:40:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.118 2022/11/17 06:40:39 chs Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.119 2023/07/04 20:40:34 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -624,7 +624,9 @@ main(int argc, char *argv[])
 		} else
 			bufsize = sfs.f_iosize;
 
-		if ((buf = aligned_alloc(DEV_BSIZE, bufsize)) == NULL)
+		__CTASSERT(powerof2(DEV_BSIZE));
+		if ((buf = aligned_alloc(DEV_BSIZE,
+			    roundup2(bufsize, DEV_BSIZE))) == NULL)
 			err(1, "can't malloc buffer of %d",
 			bufsize);
 		memset(buf, 0, bufsize);
