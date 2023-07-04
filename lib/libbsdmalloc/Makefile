@@ -1,6 +1,6 @@
-# $NetBSD: Makefile,v 1.6 2023/07/04 16:23:15 riastradh Exp $
+# $NetBSD: Makefile,v 1.7 2023/07/04 18:40:14 riastradh Exp $
 
-WARNS=	2
+WARNS=	3
 
 .include <bsd.own.mk>
 

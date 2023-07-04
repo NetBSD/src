@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.4 2023/07/04 15:09:04 riastradh Exp $	*/
+/*	$NetBSD: malloc.c,v 1.5 2023/07/04 18:40:14 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.4 2023/07/04 15:09:04 riastradh Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.5 2023/07/04 18:40:14 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -176,8 +176,7 @@ botch(s)
 #endif
 
 void *
-malloc(nbytes)
-	size_t nbytes;
+malloc(size_t nbytes)
 {
   	union overhead *op;
 	int bucket;
@@ -270,8 +269,7 @@ malloc(nbytes)
  * Allocate more memory to the indicated bucket.
  */
 static void
-morecore(bucket)
-	int bucket;
+morecore(int bucket)
 {
   	union overhead *op;
 	long sz;		/* size of desired block */
@@ -313,8 +311,7 @@ morecore(bucket)
 }
 
 void
-free(cp)
-	void *cp;
+free(void *cp)
 {
 	long size;
 	union overhead *op;
@@ -357,9 +354,7 @@ free(cp)
 int __realloc_srchlen = 4;	/* 4 should be plenty, -1 =>'s whole list */
 
 void *
-realloc(cp, nbytes)
-	void *cp;
-	size_t nbytes;
+realloc(void *cp, size_t nbytes)
 {
   	u_long onb;
 	long i;
@@ -448,9 +443,7 @@ realloc(cp, nbytes)
  * Return bucket number, or -1 if not found.
  */
 static int
-findbucket(freep, srchlen)
-	union overhead *freep;
-	int srchlen;
+findbucket(union overhead *freep, int srchlen)
 {
 	union overhead *p;
 	int i, j;
@@ -475,8 +468,7 @@ findbucket(freep, srchlen)
  * frees for each size category.
  */
 void
-mstats(s)
-	char *s;
+mstats(char *s)
 {
   	int i, j;
   	union overhead *p;
