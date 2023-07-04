@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.951 2023/06/08 22:56:14 kre Exp $
+# $NetBSD: shl.mi,v 1.952 2023/07/04 16:22:10 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -250,7 +250,7 @@
 ./usr/lib/libbozohttpd.so.0.0			base-sys-shlib		compatfile
 ./usr/lib/libbsdmalloc.so			base-sys-shlib		compatfile
 ./usr/lib/libbsdmalloc.so.0			base-sys-shlib		compatfile
-./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib		compatfile
+./usr/lib/libbsdmalloc.so.0.1			base-sys-shlib		compatfile
 ./usr/lib/libbz2.so				base-sys-shlib		compatfile
 ./usr/lib/libbz2.so.1				base-sys-shlib		compatfile
 ./usr/lib/libbz2.so.1.1				base-sys-shlib		compatfile

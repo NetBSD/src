@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.312 2023/06/08 21:14:09 nikita Exp $
+# $NetBSD: shl.mi,v 1.313 2023/07/04 16:22:10 riastradh Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -84,7 +84,7 @@
 ./usr/libdata/debug/usr/lib/libblocklist.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbozohttpd.so.0.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.0.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libbsdmalloc.so.0.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbz2.so.1.1.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libc++.so.1.0.debug			comp-sys-debug	debug,compatfile,libcxx
 ./usr/libdata/debug/usr/lib/libc.so.12.220.debug		comp-sys-debug	debug,compatfile
