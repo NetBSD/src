@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.107 2023/07/04 20:40:22 riastradh Exp $	*/
+/*	$NetBSD: setup.c,v 1.108 2023/07/04 20:40:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.107 2023/07/04 20:40:22 riastradh Exp $");
+__RCSID("$NetBSD: setup.c,v 1.108 2023/07/04 20:40:53 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -182,7 +182,7 @@ setup(const char *dev, const char *origdev)
 
 	if (!quota2_check_doquota())
 		doskipclean = 0;
-		
+
 	/* ffs_superblock_layout() == 2 */
 	if (sblock->fs_magic != FS_UFS1_MAGIC ||
 	    (sblock->fs_old_flags & FS_FLAGS_UPDATED) != 0) {
@@ -209,7 +209,7 @@ setup(const char *dev, const char *origdev)
 			 * so we don't bother to re-read the superblock from
 			 * the journal.
 			 * XXX, instead we could re-read the superblock and
-			 * then not force doskipclean = 0 
+			 * then not force doskipclean = 0
 			 */
 		}
 	}
@@ -297,7 +297,7 @@ setup(const char *dev, const char *origdev)
 		}
 	}
 	if (!is_ufs2 && sblock->fs_old_postblformat != FS_42POSTBLFMT &&
-	    (sblock->fs_old_interleave < 1 || 
+	    (sblock->fs_old_interleave < 1 ||
 	    sblock->fs_old_interleave > sblock->fs_old_nsect)) {
 		pwarn("IMPOSSIBLE INTERLEAVE=%d IN SUPERBLOCK",
 			sblock->fs_old_interleave);
@@ -310,7 +310,7 @@ setup(const char *dev, const char *origdev)
 		}
 	}
 	if (!is_ufs2 && sblock->fs_old_postblformat != FS_42POSTBLFMT &&
-	    (sblock->fs_old_npsect < sblock->fs_old_nsect || 
+	    (sblock->fs_old_npsect < sblock->fs_old_nsect ||
 	    sblock->fs_old_npsect > sblock->fs_old_nsect*2)) {
 		pwarn("IMPOSSIBLE NPSECT=%d IN SUPERBLOCK",
 			sblock->fs_old_npsect);
@@ -465,7 +465,7 @@ setup(const char *dev, const char *origdev)
 	    roundup2(sblock->fs_cssize, DEV_BSIZE));
 	if (sblock->fs_csp == NULL) {
 		pwarn("cannot alloc %u bytes for summary info\n",
-		    sblock->fs_cssize);	
+		    sblock->fs_cssize);
 		goto badsblabel;
 	}
 	memset(sblock->fs_csp, 0, sblock->fs_cssize);
@@ -530,7 +530,7 @@ setup(const char *dev, const char *origdev)
 	inpsort = calloc((unsigned)listmax, sizeof(*inpsort));
 	inphead = calloc((unsigned)numdirs, sizeof(*inphead));
 	if (inpsort == NULL || inphead == NULL) {
-		pwarn("cannot alloc %u bytes for inphead\n", 
+		pwarn("cannot alloc %u bytes for inphead\n",
 		    (unsigned)(numdirs * sizeof(struct inoinfo *)));
 		goto badsblabel;
 	}
@@ -549,7 +549,7 @@ setup(const char *dev, const char *origdev)
 		usedsoftdep = 0;
 
 #ifndef NO_APPLE_UFS
-	if (!forceimage && dkw.dkw_parent[0]) 
+	if (!forceimage && dkw.dkw_parent[0])
 		if (strcmp(dkw.dkw_ptype, DKW_PTYPE_APPLEUFS) == 0)
 			isappleufs = 1;
 
@@ -1067,7 +1067,6 @@ cmpsblks44(const struct fs *sb, struct fs *asb)
 	return memcmp(sb, asb, sb->fs_sbsize);
 }
 
-
 static void
 badsb(int listerr, const char *s)
 {
@@ -1160,7 +1159,7 @@ check_snapinum(void)
 	uint32_t *snapinum = &sblock->fs_snapinum[0];
 
 	res = 0;
- 
+
 	if (isappleufs)
 		return 0;
 

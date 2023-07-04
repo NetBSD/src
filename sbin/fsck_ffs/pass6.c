@@ -1,4 +1,5 @@
-/* $NetBSD: pass6.c,v 1.4 2012/08/26 09:34:17 dholland Exp $ */
+/* $NetBSD: pass6.c,v 1.5 2023/07/04 20:40:53 riastradh Exp $ */
+
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -52,7 +53,7 @@ pass6(void)
 	if ((sblock->fs_flags & FS_DOQUOTA2) == 0)
 		return;
 
-	for (i = 0; i < MAXQUOTAS; i++) {	
+	for (i = 0; i < MAXQUOTAS; i++) {
 		if ((sblock->fs_quota_flags & FS_Q2_DO_TYPE(i)) == 0 &&
 		    sblock->fs_quotafile[i] != 0) {
 			if (preen || reply(
@@ -87,4 +88,3 @@ pass6(void)
 	if (ret2 == 0)
 		quota2_check_usage(GRPQUOTA);
 }
-

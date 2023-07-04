@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.91 2023/01/07 19:41:29 chs Exp $	*/
+/*	$NetBSD: main.c,v 1.92 2023/07/04 20:40:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.91 2023/01/07 19:41:29 chs Exp $");
+__RCSID("$NetBSD: main.c,v 1.92 2023/07/04 20:40:53 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -284,7 +284,6 @@ main(int argc, char *argv[])
 			snap_internal = 0;
 		}
 	}
-			
 
 	argc -= optind;
 	argv += optind;
@@ -318,7 +317,7 @@ main(int argc, char *argv[])
 
 		if (path == NULL)
 			pfatal("Can't check %s\n", *argv);
-		
+
 		if (snap_backup || snap_internal) {
 			char *snap_dev;
 			int snapfd;

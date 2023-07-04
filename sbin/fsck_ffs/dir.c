@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.61 2019/05/05 14:59:06 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.62 2023/07/04 20:40:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.61 2019/05/05 14:59:06 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.62 2023/07/04 20:40:53 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,7 @@ dirscan(struct inodesc *idesc)
 			dirty(bp);
 			sbdirty();
 		}
-		if (n & STOP) 
+		if (n & STOP)
 			return (n);
 	}
 	return (idesc->id_filesize > 0 ? KEEPON : STOP);
@@ -265,7 +265,7 @@ fsck_readdir(struct inodesc *idesc)
 		dp->d_name[0] = '\0';
 		if (fix)
 			dirty(bp);
-		else 
+		else
 			markclean = 0;
 		idesc->id_loc += dirblksiz;
 		idesc->id_filesize -= dirblksiz;
@@ -294,7 +294,7 @@ dpok:
 		dp->d_reclen = iswap16(iswap16(dp->d_reclen) + size);
 		if (fix)
 			dirty(bp);
-		else 
+		else
 			markclean = 0;
 	}
 	return (dp);
@@ -308,7 +308,7 @@ dpok:
  *	0: bad
  */
 static int
-dircheck(struct inodesc *idesc, struct direct *dp, struct bufarea *bp) 
+dircheck(struct inodesc *idesc, struct direct *dp, struct bufarea *bp)
 {
 	uint8_t namlen, type;
 	uint16_t reclen;
@@ -497,7 +497,7 @@ adjust(struct inodesc *idesc, int lcnt)
 		if (preen || reply("ADJUST") == 1) {
 			DIP_SET(dp, nlink, iswap16(nlink - lcnt));
 			inodirty();
-		} else 
+		} else
 			markclean = 0;
 	}
 }
@@ -715,7 +715,7 @@ makeentry(ino_t parent, ino_t ino, const char *name)
 	union dinode *dp;
 	struct inodesc idesc;
 	char pathbuf[MAXPATHLEN + 1];
-	
+
 	if (parent < UFS_ROOTINO || parent >= maxino ||
 	    ino < UFS_ROOTINO || ino >= maxino)
 		return (0);

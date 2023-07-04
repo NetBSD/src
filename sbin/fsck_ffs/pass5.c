@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.57 2023/01/08 05:25:24 chs Exp $	*/
+/*	$NetBSD: pass5.c,v 1.58 2023/07/04 20:40:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.57 2023/01/08 05:25:24 chs Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.58 2023/07/04 20:40:53 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -507,7 +507,7 @@ pass5(void)
 #endif /* PROGRESS */
 }
 
-void 
+void
 print_bmap(u_char *map, uint32_t size)
 {
 	uint32_t i, j;

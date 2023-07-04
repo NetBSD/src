@@ -1,4 +1,5 @@
-/* $NetBSD: quota2.c,v 1.7 2019/02/03 03:19:26 mrg Exp $ */
+/* $NetBSD: quota2.c,v 1.8 2023/07/04 20:40:53 riastradh Exp $ */
+
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -122,7 +123,7 @@ quota2_alloc_quota(union dinode * dp, struct bufarea *hbp,
 	q2h->q2h_entries[uid & q2h_hash_mask] = iswap64(off);
 	dirty(bp);
 	dirty(hbp);
-	
+
 	if (bp != hbp)
 		bp->b_flags &= ~B_INUSE;
 	return 0;
@@ -247,7 +248,7 @@ quota2_check_inode(int type)
 	const int quota2_hash_size = 1 << q2h_hash_shift;
 	const int quota2_full_header_size = sizeof(struct quota2_header) +
 	    sizeof(q2h->q2h_entries[0]) * quota2_hash_size;
-	
+
 	if ((sblock->fs_quota_flags & FS_Q2_DO_TYPE(type)) == 0)
 		return 0;
 	if (sblock->fs_quotafile[type] != 0) {
@@ -361,7 +362,7 @@ alloc:
 		for (j = 0; j < nq2e; j++)
 			setbit(quotamap[i], j);
 	}
-		
+
 	/* check that all entries are in the lists (and only once) */
 	i = -1;
 	ret = quota2_walk_list(dp, hbp, &q2h->q2h_free, &i, quota2_list_check);
@@ -417,7 +418,7 @@ struct qcheck_arg {
 	const char *capstrtype;
 	struct uquot_hash *uquot_hash;
 };
-	
+
 static int quota2_list_qcheck(uint64_t *, struct quota2_entry *, uint64_t,
     void *);
 static int
@@ -437,8 +438,8 @@ quota2_list_qcheck(uint64_t *offp, struct quota2_entry *q2e, uint64_t off,
 		uq = &uq_null;
 	else
 		remove_uquot(a->uquot_hash, uq);
-		
-	if (iswap64(q2e->q2e_val[QL_BLOCK].q2v_cur) == uq->uq_b && 
+
+	if (iswap64(q2e->q2e_val[QL_BLOCK].q2v_cur) == uq->uq_b &&
 	    iswap64(q2e->q2e_val[QL_FILE].q2v_cur) == uq->uq_i)
 		return 0;
 	pwarn("%s QUOTA MISMATCH FOR ID %d: %" PRIu64 "/%" PRIu64 " SHOULD BE "
@@ -461,7 +462,7 @@ quota2_check_usage(int type)
 {
 	const char *strtype = (type == USRQUOTA) ? "user" : "group";
 	const char *capstrtype = (type == USRQUOTA) ? "USER" : "GROUP";
-	
+
 	struct bufarea *hbp;
 	union dinode *dp;
 	struct quota2_header *q2h;
@@ -488,7 +489,7 @@ quota2_check_usage(int type)
 		if (ret)
 			return ret;
 	}
-	
+
 	for (i = 0; i < quota2_hash_size; i++) {
 		struct uquot *uq;
 		SLIST_FOREACH(uq, &a.uquot_hash[i], uq_entries) {
