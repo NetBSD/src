@@ -1,4 +1,4 @@
-/*	$NetBSD: dlfcn_elf.c,v 1.16 2018/07/13 19:49:47 joerg Exp $	*/
+/*	$NetBSD: dlfcn_elf.c,v 1.17 2023/07/04 19:24:25 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 Takuya SHIOZAKI
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: dlfcn_elf.c,v 1.16 2018/07/13 19:49:47 joerg Exp $");
+__RCSID("$NetBSD: dlfcn_elf.c,v 1.17 2023/07/04 19:24:25 riastradh Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -207,6 +207,7 @@ dl_iterate_phdr(int (*callback)(struct dl_phdr_info *, size_t, void *),
 		membar_producer();
 		setup_done = true;
 	}
+	membar_consumer();
 
 	memset(&phdr_info, 0, sizeof(phdr_info));
 	phdr_info.dlpi_addr = dlpi_addr;
