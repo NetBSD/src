@@ -1,4 +1,4 @@
-/*	$NetBSD: firmware.c,v 1.4 2018/04/18 10:11:44 nonaka Exp $	*/
+/*	$NetBSD: firmware.c,v 1.5 2023/07/04 20:40:43 riastradh Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: firmware.c,v 1.4 2018/04/18 10:11:44 nonaka Exp $");
+__RCSID("$NetBSD: firmware.c,v 1.5 2023/07/04 20:40:43 riastradh Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/firmware.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -123,6 +123,7 @@ update_firmware(int fd, uint8_t *payload, int32_t payload_size)
 	off = 0;
 	resid = payload_size;
 
+	__CTASSERT((NVME_MAX_XFER_SIZE % PAGE_SIZE) == 0);
 	if ((chunk = aligned_alloc(PAGE_SIZE, NVME_MAX_XFER_SIZE)) == NULL)
 		errx(1, "unable to malloc %d bytes", NVME_MAX_XFER_SIZE);
 
