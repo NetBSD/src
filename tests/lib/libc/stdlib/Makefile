@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.33 2020/07/01 07:16:37 jruoho Exp $
+# $NetBSD: Makefile,v 1.34 2023/07/04 15:06:36 riastradh Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,9 @@ BINDIR=		${TESTSDIR}
 
 PROGS+=		h_atexit
 PROGS+=		h_getopt h_getopt_long
+
+CFLAGS.t_posix_memalign.c+=	-fno-builtin-posix_memalign
+CFLAGS.t_posix_memalign.c+=	-fno-builtin-aligned_alloc
 
 CPPFLAGS.t_strtod.c+=  -D__TEST_FENV
 LDADD.t_strtod=			-lm
