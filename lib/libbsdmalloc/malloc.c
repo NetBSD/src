@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.2 2003/08/07 16:42:01 agc Exp $	*/
+/*	$NetBSD: malloc.c,v 1.3 2023/07/04 15:08:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.2 2003/08/07 16:42:01 agc Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.3 2023/07/04 15:08:55 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,12 +53,18 @@ __RCSID("$NetBSD: malloc.c,v 1.2 2003/08/07 16:42:01 agc Exp $");
 #if defined(DEBUG) || defined(RCHECK)
 #include <sys/uio.h>
 #endif
+
+#include <errno.h>
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
 #if defined(RCHECK) || defined(MSTATS)
 #include <stdio.h>
 #endif
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "reentrant.h"
 
 
@@ -166,7 +172,7 @@ botch(s)
 	abort();
 }
 #else
-#define	ASSERT(p)
+#define	ASSERT(p)	((void)sizeof((long)(p)))
 #endif
 
 void *
@@ -493,3 +499,115 @@ mstats(s)
 	    totused, totfree);
 }
 #endif
+
+/*
+ * Additional front ends:
+ * - aligned_alloc (C11)
+ * - calloc(n,m) = malloc(n*m) without overflow
+ * - posix_memalign (POSIX)
+ *
+ * These must all be in the same compilation unit as malloc, realloc,
+ * and free (or -lbsdmalloc must be surrounded by -Wl,--whole-archive
+ * -lbsdmalloc -Wl,--no-whole-archive) in order to override the libc
+ * built-in malloc implementation.
+ *
+ * Allocations of size n, up to and including the page size, are
+ * already aligned by malloc on multiples of n.  Larger alignment is
+ * not supported.
+ */
+
+static long __constfunc
+cachedpagesize(void)
+{
+	long n;
+
+	/* XXX atomic_load_relaxed, but that's not defined in userland atm */
+	if (__predict_false((n = pagesz) == 0)) {
+		mutex_lock(&malloc_mutex);
+		if ((n = pagesz) == 0)
+			n = pagesz = getpagesize();
+		mutex_unlock(&malloc_mutex);
+	}
+
+	return n;
+}
+
+void *
+aligned_alloc(size_t alignment, size_t size)
+{
+	char *p;
+
+	if (alignment == 0 ||
+	    (alignment & (alignment - 1)) != 0 ||
+	    alignment > cachedpagesize() ||
+	    (size & (alignment - 1)) != 0) {
+		errno = EINVAL;
+		return NULL;
+	}
+	p = malloc(size);
+	if (__predict_false(p == NULL))
+		ASSERT((uintptr_t)p % alignment == 0);
+	return p;
+}
+
+void *
+calloc(size_t nmemb, size_t size)
+{
+	void *p;
+	size_t n;
+
+	if (__builtin_mul_overflow_p(nmemb, size, (size_t)0)) {
+		errno = ENOMEM;
+		return NULL;
+	}
+	n = nmemb * size;
+	p = malloc(n);
+	if (__predict_false(p == NULL))
+		return NULL;
+	memset(p, 0, n);
+	return p;
+}
+
+int
+posix_memalign(void **memptr, size_t alignment, size_t size)
+{
+	char *p;
+
+	if (alignment < sizeof(void *) ||
+	    (alignment & (alignment - 1)) != 0 ||
+	    alignment > cachedpagesize())
+		return EINVAL;
+	p = malloc(size < alignment ? alignment : size);
+	if (__predict_false(p == NULL))
+		return ENOMEM;
+	ASSERT((uintptr_t)p % alignment == 0);
+	*memptr = p;
+	return 0;
+}
+
+/*
+ * libc hooks required by fork
+ */
+
+#include "../libc/include/extern.h"
+
+void
+_malloc_prefork(void)
+{
+
+	mutex_lock(&malloc_mutex);
+}
+
+void
+_malloc_postfork(void)
+{
+
+	mutex_unlock(&malloc_mutex);
+}
+
+void
+_malloc_postfork_child(void)
+{
+
+	mutex_unlock(&malloc_mutex);
+}
