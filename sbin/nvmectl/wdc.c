@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.4 2018/04/18 10:11:44 nonaka Exp $	*/
+/*	$NetBSD: wdc.c,v 1.5 2023/07/04 20:40:43 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 Netflix, Inc
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: wdc.c,v 1.4 2018/04/18 10:11:44 nonaka Exp $");
+__RCSID("$NetBSD: wdc.c,v 1.5 2023/07/04 20:40:43 riastradh Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/wdc.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -125,7 +125,7 @@ wdc_do_dump(int fd, char *tmpl, const char *suffix, uint32_t opcode,
 	fd2 = open(tmpl, O_WRONLY | O_CREAT | O_TRUNC, 0644);
 	if (fd2 < 0)
 		err(1, "open %s", tmpl);
-	buf = aligned_alloc(page_size, NVME_MAX_XFER_SIZE);
+	buf = aligned_alloc(page_size, roundup(NVME_MAX_XFER_SIZE, page_size));
 	if (buf == NULL)
 		errx(1, "Can't get buffer to read dump");
 	offset = 0;
