@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.27 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: tpm.c,v 1.28 2023/07/04 01:02:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.27 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.28 2023/07/04 01:02:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,7 +113,8 @@ tpm_getburst(struct tpm_softc *sc)
 		if (burst)
 			return burst;
 
-		rv = tsleep(sc, PCATCH, "tpm_getburst", 1);
+		rv = kpause("tpm_getburst", /*intr*/true, /*timo*/1,
+		    /*lock*/NULL);
 		if (rv && rv != EWOULDBLOCK) {
 			return 0;
 		}
@@ -359,7 +360,7 @@ tpm_poll(struct tpm_softc *sc, uint8_t mask, int to, wchan_t chan)
 	int rv;
 
 	while (((sc->sc_status = tpm_status(sc)) & mask) != mask && to--) {
-		rv = tsleep(chan, PCATCH, "tpm_poll", 1);
+		rv = kpause("tpm_poll", /*intr*/true, /*timo*/1, /*lock*/NULL);
 		if (rv && rv != EWOULDBLOCK) {
 			return rv;
 		}
@@ -432,7 +433,8 @@ tpm12_request_locality(struct tpm_softc *sc, int l)
 	while ((r = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
 	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
 	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY) && to--) {
-		rv = tsleep(sc->sc_intf->init, PCATCH, "tpm_locality", 1);
+		rv = kpause("tpm_locality", /*intr*/true, /*timo*/1,
+		    /*lock*/NULL);
 		if (rv && rv != EWOULDBLOCK) {
 			return rv;
 		}
