@@ -1,6 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2023/07/04 15:08:55 riastradh Exp $
-
-NOMAN=1
+# $NetBSD: Makefile,v 1.6 2023/07/04 16:23:15 riastradh Exp $
 
 WARNS=	2
 
@@ -8,6 +6,7 @@ WARNS=	2
 
 LIB=	bsdmalloc
 SRCS=	malloc.c
+MAN=	bsdmalloc.3
 
 CFLAGS+=	-fno-builtin-aligned_alloc
 CFLAGS+=	-fno-builtin-calloc
