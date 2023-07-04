@@ -1,4 +1,4 @@
-/*	$NetBSD: pass2.c,v 1.52 2023/03/27 22:53:37 chs Exp $	*/
+/*	$NetBSD: pass2.c,v 1.53 2023/07/04 20:40:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass2.c,v 1.52 2023/03/27 22:53:37 chs Exp $");
+__RCSID("$NetBSD: pass2.c,v 1.53 2023/07/04 20:40:53 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,7 +150,7 @@ pass2(void)
 		if (got_siginfo) {
 			fprintf(stderr,
 			    "%s: phase 2: dir %ld of %d (%d%%)\n", cdevname(),
-			    (long)(inpp - inpsort), (int)inplast, 
+			    (long)(inpp - inpsort), (int)inplast,
 			    (int)((inpp - inpsort) * 100 / inplast));
 			got_siginfo = 0;
 		}
@@ -230,7 +230,7 @@ pass2(void)
 	 * Byte swapping in directory entries, if needed, has been done.
 	 * Now rescan dirs for pass2check()
 	 */
-	if (do_dirswap) { 
+	if (do_dirswap) {
 		do_dirswap = 0;
 		for (inpp = inpsort; inpp < inpend; inpp++) {
 			inp = *inpp;
@@ -341,7 +341,7 @@ pass2check(struct inodesc *idesc)
 		dirp->d_type = inoinfo(iswap32(dirp->d_ino))->ino_type;
 		ret |= ALTERED;
 	}
-	/* 
+	/*
 	 * check for "."
 	 */
 	if (idesc->id_entryno != 0)

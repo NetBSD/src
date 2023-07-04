@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.63 2023/01/07 19:41:29 chs Exp $	*/
+/*	$NetBSD: pass1.c,v 1.64 2023/07/04 20:40:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.63 2023/01/07 19:41:29 chs Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.64 2023/07/04 20:40:53 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -243,13 +243,13 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 	mode = iswap16(DIP(dp, mode)) & IFMT;
 	size = iswap64(DIP(dp, size));
 	if (mode == 0) {
-		if ((is_ufs2 && 
+		if ((is_ufs2 &&
 		    (memcmp(dp->dp2.di_db, ufs2_zino.di_db,
 			UFS_NDADDR * sizeof(int64_t)) ||
 		    memcmp(dp->dp2.di_ib, ufs2_zino.di_ib,
 			UFS_NIADDR * sizeof(int64_t))))
 		    ||
-		    (!is_ufs2 && 
+		    (!is_ufs2 &&
 		    (memcmp(dp->dp1.di_db, ufs1_zino.di_db,
 			UFS_NDADDR * sizeof(int32_t)) ||
 		    memcmp(dp->dp1.di_ib, ufs1_zino.di_ib,
@@ -333,7 +333,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 		    (sblock->fs_maxsymlinklen == 0 && DIP(dp, blocks) == 0)) {
 			if (is_ufs2)
 				ndb = howmany(size, sizeof(int64_t));
-			else	
+			else
 				ndb = howmany(size, sizeof(int32_t));
 			if (ndb > UFS_NDADDR) {
 				j = ndb - UFS_NDADDR;
