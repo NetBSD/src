@@ -1,4 +1,4 @@
-/*	$NetBSD: mkfs.c,v 1.133 2023/01/07 19:41:29 chs Exp $	*/
+/*	$NetBSD: mkfs.c,v 1.134 2023/07/04 20:40:34 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1989, 1993
@@ -73,7 +73,7 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.11 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: mkfs.c,v 1.133 2023/01/07 19:41:29 chs Exp $");
+__RCSID("$NetBSD: mkfs.c,v 1.134 2023/07/04 20:40:34 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,9 +201,11 @@ mkfs(const char *fsys, int fi, int fo,
 			exit(12);
 	}
 #endif
+	__CTASSERT((sizeof(*fsun) % DEV_BSIZE) == 0);
 	if ((fsun = aligned_alloc(DEV_BSIZE, sizeof(*fsun))) == NULL)
 		exit(12);
 	memset(fsun, 0, sizeof(*fsun));
+	__CTASSERT((sizeof(*cgun) % DEV_BSIZE) == 0);
 	if ((cgun = aligned_alloc(DEV_BSIZE, sizeof(*cgun))) == NULL)
 		exit(12);
 	memset(cgun, 0, sizeof(*cgun));
