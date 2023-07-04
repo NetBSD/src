@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.106 2023/01/08 05:25:24 chs Exp $	*/
+/*	$NetBSD: setup.c,v 1.107 2023/07/04 20:40:22 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.106 2023/01/08 05:25:24 chs Exp $");
+__RCSID("$NetBSD: setup.c,v 1.107 2023/07/04 20:40:22 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,6 +127,7 @@ setup(const char *dev, const char *origdev)
 	lfdir = 0;
 	initbarea(&sblk);
 	initbarea(&asblk);
+	__CTASSERT((SBLOCKSIZE % DEV_BSIZE) == 0);
 	sblk.b_un.b_buf = aligned_alloc(DEV_BSIZE, SBLOCKSIZE);
 	sblock = aligned_alloc(DEV_BSIZE, SBLOCKSIZE);
 	asblk.b_un.b_buf = aligned_alloc(DEV_BSIZE, SBLOCKSIZE);
@@ -459,8 +460,9 @@ setup(const char *dev, const char *origdev)
 	 * read in the summary info.
 	 */
 	asked = 0;
+	__CTASSERT(powerof2(DEV_BSIZE));
 	sblock->fs_csp = (struct csum *)aligned_alloc(DEV_BSIZE,
-	    sblock->fs_cssize);
+	    roundup2(sblock->fs_cssize, DEV_BSIZE));
 	if (sblock->fs_csp == NULL) {
 		pwarn("cannot alloc %u bytes for summary info\n",
 		    sblock->fs_cssize);	
@@ -495,7 +497,9 @@ setup(const char *dev, const char *origdev)
 	 * allocate and initialize the necessary maps
 	 */
 	bmapsize = roundup(howmany(maxfsblock, NBBY), sizeof(int16_t));
-	blockmap = aligned_alloc(DEV_BSIZE, (unsigned)bmapsize);
+	__CTASSERT(powerof2(DEV_BSIZE));
+	blockmap = aligned_alloc(DEV_BSIZE,
+	    roundup2((unsigned)bmapsize, DEV_BSIZE));
 	if (blockmap == NULL) {
 		pwarn("cannot alloc %u bytes for blockmap\n",
 		    (unsigned)bmapsize);
@@ -530,7 +534,9 @@ setup(const char *dev, const char *origdev)
 		    (unsigned)(numdirs * sizeof(struct inoinfo *)));
 		goto badsblabel;
 	}
-	cgrp = aligned_alloc(DEV_BSIZE, sblock->fs_cgsize);
+	__CTASSERT(powerof2(DEV_BSIZE));
+	cgrp = aligned_alloc(DEV_BSIZE,
+	    roundup2(sblock->fs_cgsize, DEV_BSIZE));
 	if (cgrp == NULL) {
 		pwarn("cannot alloc %u bytes for cylinder group\n",
 		    sblock->fs_cgsize);
