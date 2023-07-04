@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.3 2023/07/04 15:08:55 riastradh Exp $	*/
+/*	$NetBSD: malloc.c,v 1.4 2023/07/04 15:09:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.3 2023/07/04 15:08:55 riastradh Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.4 2023/07/04 15:09:04 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -42,9 +42,9 @@ __RCSID("$NetBSD: malloc.c,v 1.3 2023/07/04 15:08:55 riastradh Exp $");
  * malloc.c (Caltech) 2/21/82
  * Chris Kingsley, kingsley@cit-20.
  *
- * This is a very fast storage allocator.  It allocates blocks of a small 
+ * This is a very fast storage allocator.  It allocates blocks of a small
  * number of different sizes, and keeps free lists of each size.  Blocks that
- * don't exactly fit are passed up to the next larger size.  In this 
+ * don't exactly fit are passed up to the next larger size.  In this
  * implementation, the available sizes are 2^n-4 (or 2^n-10) bytes long.
  * This is designed for use in a virtual memory environment.
  */
@@ -164,7 +164,7 @@ botch(s)
 	 * might, depending on the implementation, result in another malloc()
 	 * to be executed, and ii) it is really not desirable to let execution
 	 * continue.  `Fix me.'
-	 * 
+	 *
 	 * Note that holding mutex_lock during abort() is safe.
 	 */
 
@@ -315,7 +315,7 @@ morecore(bucket)
 void
 free(cp)
 	void *cp;
-{   
+{
 	long size;
 	union overhead *op;
 
@@ -358,9 +358,9 @@ int __realloc_srchlen = 4;	/* 4 should be plenty, -1 =>'s whole list */
 
 void *
 realloc(cp, nbytes)
-	void *cp; 
+	void *cp;
 	size_t nbytes;
-{   
+{
   	u_long onb;
 	long i;
 	union overhead *op;
@@ -418,7 +418,7 @@ realloc(cp, nbytes)
 #endif
 			mutex_unlock(&malloc_mutex);
 			return (cp);
-			
+
 		}
 #ifndef _REENT
 		else
@@ -469,7 +469,7 @@ findbucket(freep, srchlen)
 #ifdef MSTATS
 /*
  * mstats - print out statistics about malloc
- * 
+ *
  * Prints two lines of numbers, one showing the length of the free list
  * for each size category, the second showing the number of mallocs -
  * frees for each size category.
