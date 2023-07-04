@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.28 2022/11/17 06:40:38 chs Exp $	*/
+/*	$NetBSD: extern.h,v 1.29 2023/07/04 20:40:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -87,7 +87,6 @@ struct uquot *	find_uquot(struct uquot_hash *, uint32_t, int);
 void		remove_uquot(struct uquot_hash *,struct uquot *);
 void		update_uquot(ino_t, uid_t, gid_t, int64_t, int64_t);
 int		is_quota_inode(ino_t);
-
 
 int		check_wapbl(void);
 void		replay_wapbl(void);
