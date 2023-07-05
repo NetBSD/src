@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_vconsvar.h,v 1.33 2022/07/17 20:23:17 riastradh Exp $ */
+/*	$NetBSD: wsdisplay_vconsvar.h,v 1.33.4.1 2023/07/05 16:09:50 martin Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Michael Lorenz
@@ -70,6 +70,11 @@ struct vcons_screen {
 #define VCONS_LOADFONT		0x40	/* driver can load_font() */
 #define VCONS_NO_CURSOR		0x80	/* use putchar() based cursor(), to
 					 * avoid fb reads */
+#define VCONS_FONT_BITS_R2L	0x100	/* request right-to-left bitorder in
+					 * wsfont_find() */
+#define VCONS_FONT_BYTES_R2L	0x200	/* request right-to-left byteorder in
+					 * wsfont_find() */
+					 
 	/* status flags used by vcons */
 	uint32_t scr_status;
 #define VCONS_IS_VISIBLE	1	/* this screen is currently visible */
