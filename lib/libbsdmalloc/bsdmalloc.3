@@ -1,4 +1,4 @@
-.\"	$NetBSD: bsdmalloc.3,v 1.1 2023/07/04 16:23:15 riastradh Exp $
+.\"	$NetBSD: bsdmalloc.3,v 1.2 2023/07/05 07:13:56 rillig Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,7 @@
 .Sh SYNOPSIS
 .In stdlib.h
 .Ft void *
-.Fn malloc "void *size"
+.Fn malloc "size_t *size"
 .Ft void *
 .Fn calloc "size_t nmemb" "size_t size"
 .Ft void *
@@ -47,11 +47,11 @@
 .Ft void
 .Fn free "void *ptr"
 .Ft void
-.Fn _malloc_prefork
+.Fn _malloc_prefork "void"
 .Ft void
-.Fn _malloc_postfork
+.Fn _malloc_postfork "void"
 .Ft void
-.Fn _malloc_postfork_child
+.Fn _malloc_postfork_child "void"
 .\"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .Sh DESCRIPTION
 The
