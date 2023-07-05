@@ -1,4 +1,4 @@
-/*	$NetBSD: sx.c,v 1.5 2021/09/11 20:28:05 andvar Exp $	*/
+/*	$NetBSD: sx.c,v 1.5.4.1 2023/07/05 16:09:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.5 2021/09/11 20:28:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sx.c,v 1.5.4.1 2023/07/05 16:09:50 martin Exp $");
 
 #include "locators.h"
 
@@ -84,6 +84,7 @@ sx_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_tag = ma->ma_bustag;
 	sc->sc_uregs = ma->ma_paddr + 0x1000;
+	sc->sc_cnt = 0;
 
 	if (bus_space_map(sc->sc_tag, ma->ma_paddr, 0x1000, 0, &sc->sc_regh)) {
 		aprint_error_dev(self, "failed to map registers\n");
@@ -104,7 +105,7 @@ sx_attach(device_t parent, device_t self, void *aux)
 	sx_write(sc, SX_PAGE_BOUND_LOWER, 0xfc000000);
 	/* cg14 takes up the whole 64MB chunk */
 	sx_write(sc, SX_PAGE_BOUND_UPPER, 0xffffffff);
-	sx_write(sc, SX_DIAGNOSTICS, 0);
+	sx_write(sc, SX_DIAGNOSTICS, SX_DIAG_INIT);
 	sx_write(sc, SX_PLANEMASK, 0xffffffff);
 
 	/*
