@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.5 2023/07/04 18:40:14 riastradh Exp $	*/
+/*	$NetBSD: malloc.c,v 1.6 2023/07/05 01:15:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.5 2023/07/04 18:40:14 riastradh Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.6 2023/07/05 01:15:47 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -128,32 +128,31 @@ static	u_int nmalloc[NBUCKETS];
 static	mutex_t malloc_mutex = MUTEX_INITIALIZER;
 #endif
 
-static void morecore __P((int));
-static int findbucket __P((union overhead *, int));
+static void morecore(int);
+static int findbucket(union overhead *, int);
 #ifdef MSTATS
-void mstats __P((const char *));
+void mstats(const char *);
 #endif
 
 #if defined(DEBUG) || defined(RCHECK)
 #define	ASSERT(p)   if (!(p)) botch(__STRING(p))
 
-static void botch __P((const char *));
+static void botch(const char *);
 
 /*
  * NOTE: since this may be called while malloc_mutex is locked, stdio must not
  *       be used in this function.
  */
 static void
-botch(s)
-	const char *s;
+botch(const char *s)
 {
 	struct iovec iov[3];
 
-	iov[0].iov_base	= "\nassertion botched: ";
+	iov[0].iov_base	= __UNCONST("\nassertion botched: ");
 	iov[0].iov_len	= 20;
-	iov[1].iov_base	= (void *)s;
+	iov[1].iov_base	= __UNCONST(s);
 	iov[1].iov_len	= strlen(s);
-	iov[2].iov_base	= "\n";
+	iov[2].iov_base	= __UNCONST("\n");
 	iov[2].iov_len	= 1;
 
 	/*
