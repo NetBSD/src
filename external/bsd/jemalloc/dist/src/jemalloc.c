@@ -1635,9 +1635,6 @@ struct static_opts_s {
 	/* Whether to set errno when we encounter an error condition. */
 	bool set_errno_on_error;
 
-	/* Whether the alignment must divide the size. */
-	bool alignment_must_divide_size;
-
 	/*
 	 * The minimum valid alignment for functions requesting aligned storage.
 	 */
@@ -1665,7 +1662,6 @@ static_opts_init(static_opts_t *static_opts) {
 	static_opts->assert_nonempty_alloc = false;
 	static_opts->null_out_result_on_error = false;
 	static_opts->set_errno_on_error = false;
-	static_opts->alignment_must_divide_size = false;
 	static_opts->min_alignment = 0;
 	static_opts->oom_string = "";
 	static_opts->invalid_alignment_string = "";
@@ -1860,11 +1856,6 @@ imalloc_body(static_opts_t *sopts, dynamic_opts_t *dopts, tsd_t *tsd) {
 	if (unlikely(dopts->alignment < sopts->min_alignment
 	    || (dopts->alignment & (dopts->alignment - 1)) != 0)) {
 		goto label_invalid_alignment;
-	}
-	if (sopts->alignment_must_divide_size) {
-		if (unlikely(dopts->item_size % dopts->alignment)) {
-			goto label_invalid_alignment;
-		}
 	}
 
 	/* This is the beginning of the "core" algorithm. */
@@ -2134,7 +2125,6 @@ je_aligned_alloc(size_t alignment, size_t size) {
 	sopts.bump_empty_alloc = true;
 	sopts.null_out_result_on_error = true;
 	sopts.set_errno_on_error = true;
-	sopts.alignment_must_divide_size = true;
 	sopts.min_alignment = 1;
 	sopts.oom_string =
 	    "<jemalloc>: Error allocating aligned memory: out of memory\n";
