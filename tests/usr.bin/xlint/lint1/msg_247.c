@@ -1,7 +1,16 @@
-/*	$NetBSD: msg_247.c,v 1.29 2023/04/22 17:42:29 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.30 2023/07/05 11:36:56 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
+
+/*
+ * The word 'may' in the message text means that the trouble is not necessarily
+ * on this platform with its specific type sizes, but on other platforms.
+ *
+ * See also:
+ *	msg_247_portable.c
+ *	msg_247_lp64.c
+ */
 
 /* lint1-extra-flags: -c -X 351 */
 
@@ -166,7 +175,7 @@ lh_OPENSSL_STRING_new(void)
 	 */
 	return (struct lhash_st_OPENSSL_STRING *)OPENSSL_LH_new();
 }
-# 170 "msg_247.c" 2
+# 179 "msg_247.c" 2
 
 void sink(const void *);
 
@@ -355,9 +364,9 @@ static anything *p_anything;
 void
 conversions_from_and_to_union(void)
 {
-	/* Self-assignment, disguided by a cast to its own type. */
+	/* Self-assignment, disguised by a cast to its own type. */
 	p_int = (int *)p_int;
-	/* Self-assignment, disguided by a cast to a pointer. */
+	/* Self-assignment, disguised by a cast to a pointer. */
 	p_int = (void *)p_int;
 
 	/* expect+1: warning: illegal combination of 'pointer to int' and 'pointer to double', op '=' [124] */
