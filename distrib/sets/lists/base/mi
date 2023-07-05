@@ -4218,6 +4218,7 @@
 ./usr/share/man/cat4/hppa			base-man-share
 ./usr/share/man/cat4/i386			base-man-share
 ./usr/share/man/cat4/luna68k			base-man-share
+./usr/share/man/cat4/soft68k			base-man-share
 ./usr/share/man/cat4/mac68k			base-man-share
 ./usr/share/man/cat4/macppc			base-man-share
 ./usr/share/man/cat4/mvme68k			base-man-share
@@ -4269,6 +4270,7 @@
 ./usr/share/man/cat8/i386			base-man-share
 ./usr/share/man/cat8/ibmnws			base-man-share
 ./usr/share/man/cat8/luna68k			base-man-share
+./usr/share/man/cat8/soft68k			base-man-share
 ./usr/share/man/cat8/mac68k			base-man-share
 ./usr/share/man/cat8/macppc			base-man-share
 ./usr/share/man/cat8/mipsco			base-man-share
@@ -4349,6 +4351,7 @@
 ./usr/share/man/html4/hppa			base-man-share
 ./usr/share/man/html4/i386			base-man-share
 ./usr/share/man/html4/luna68k			base-man-share
+./usr/share/man/html4/soft68k			base-man-share
 ./usr/share/man/html4/mac68k			base-man-share
 ./usr/share/man/html4/macppc			base-man-share
 ./usr/share/man/html4/mvme68k			base-man-share
@@ -4399,6 +4402,7 @@
 ./usr/share/man/html8/i386			base-man-share
 ./usr/share/man/html8/ibmnws			base-man-share
 ./usr/share/man/html8/luna68k			base-man-share
+./usr/share/man/html8/soft68k			base-man-share
 ./usr/share/man/html8/mac68k			base-man-share
 ./usr/share/man/html8/macppc			base-man-share
 ./usr/share/man/html8/mipsco			base-man-share
@@ -4481,6 +4485,7 @@
 ./usr/share/man/man4/hppa			base-man-share
 ./usr/share/man/man4/i386			base-man-share
 ./usr/share/man/man4/luna68k			base-man-share
+./usr/share/man/man4/soft68k			base-man-share
 ./usr/share/man/man4/mac68k			base-man-share
 ./usr/share/man/man4/macppc			base-man-share
 ./usr/share/man/man4/mvme68k			base-man-share
@@ -4532,6 +4537,7 @@
 ./usr/share/man/man8/i386			base-man-share
 ./usr/share/man/man8/ibmnws			base-man-share
 ./usr/share/man/man8/luna68k			base-man-share
+./usr/share/man/man8/soft68k			base-man-share
 ./usr/share/man/man8/mac68k			base-man-share
 ./usr/share/man/man8/macppc			base-man-share
 ./usr/share/man/man8/mipsco			base-man-share

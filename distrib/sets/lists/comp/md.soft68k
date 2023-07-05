@@ -1,0 +1,56 @@
+# $NetBSD: md.soft68k,v 1.23 2018/07/12 10:46:40 maxv Exp $
+./usr/include/ieeefp.h				comp-c-include
+./usr/include/soft68k				comp-c-include
+./usr/include/soft68k/_G_config.h		comp-obsolete		obsolete
+./usr/include/soft68k/ansi.h			comp-c-include
+./usr/include/soft68k/aout_machdep.h		comp-c-include
+./usr/include/soft68k/asm.h			comp-c-include
+./usr/include/soft68k/autoconf.h		comp-c-include
+./usr/include/soft68k/bswap.h			comp-c-include
+./usr/include/soft68k/bus.h			comp-c-include
+./usr/include/soft68k/cdefs.h			comp-c-include
+./usr/include/soft68k/cpu.h			comp-c-include
+./usr/include/soft68k/db_machdep.h		comp-obsolete		obsolete
+./usr/include/soft68k/disklabel.h		comp-c-include
+./usr/include/soft68k/elf_machdep.h		comp-c-include
+./usr/include/soft68k/endian.h			comp-c-include
+./usr/include/soft68k/endian_machdep.h		comp-c-include
+./usr/include/soft68k/fenv.h			comp-c-include
+./usr/include/soft68k/float.h			comp-c-include
+./usr/include/soft68k/frame.h			comp-c-include
+./usr/include/soft68k/ieee.h			comp-c-include
+./usr/include/soft68k/ieeefp.h			comp-c-include
+./usr/include/soft68k/int_const.h		comp-c-include
+./usr/include/soft68k/int_fmtio.h		comp-c-include
+./usr/include/soft68k/int_limits.h		comp-c-include
+./usr/include/soft68k/int_mwgwtypes.h		comp-c-include
+./usr/include/soft68k/int_types.h		comp-c-include
+./usr/include/soft68k/intr.h			comp-c-include
+./usr/include/soft68k/kcore.h			comp-c-include
+./usr/include/soft68k/lcd.h			comp-c-include
+./usr/include/soft68k/limits.h			comp-c-include
+./usr/include/soft68k/lock.h			comp-c-include
+./usr/include/soft68k/math.h			comp-c-include
+./usr/include/soft68k/mcontext.h		comp-c-include
+./usr/include/soft68k/mutex.h			comp-c-include
+./usr/include/soft68k/param.h			comp-c-include
+./usr/include/soft68k/pcb.h			comp-c-include
+./usr/include/soft68k/pmap.h			comp-c-include
+./usr/include/soft68k/pmc.h			comp-obsolete		obsolete
+./usr/include/soft68k/proc.h			comp-c-include
+./usr/include/soft68k/profile.h			comp-c-include
+./usr/include/soft68k/psl.h			comp-c-include
+./usr/include/soft68k/pte.h			comp-c-include
+./usr/include/soft68k/ptrace.h			comp-c-include
+./usr/include/soft68k/reg.h			comp-c-include
+./usr/include/soft68k/rwlock.h			comp-c-include
+./usr/include/soft68k/setjmp.h			comp-c-include
+./usr/include/soft68k/signal.h			comp-c-include
+./usr/include/soft68k/stdarg.h			comp-obsolete		obsolete
+./usr/include/soft68k/svr4_machdep.h		comp-obsolete		obsolete
+./usr/include/soft68k/trap.h			comp-c-include
+./usr/include/soft68k/types.h			comp-c-include
+./usr/include/soft68k/varargs.h			comp-obsolete		obsolete
+./usr/include/soft68k/vmparam.h			comp-c-include
+./usr/include/soft68k/wchar_limits.h		comp-c-include
+./usr/include/soft68k/xpio.h			comp-c-include
