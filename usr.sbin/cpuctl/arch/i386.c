@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.136 2023/02/14 15:46:06 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.137 2023/07/05 02:54:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.136 2023/02/14 15:46:06 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.137 2023/07/05 02:54:37 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -335,7 +335,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x55] = "Xeon Scalable (Skylake, Cascade Lake, Copper Lake)",
 				[0x56] = "Xeon D-1500 (Broadwell)",
 				[0x57] = "Xeon Phi [357]200 (Knights Landing)",
-				[0x5a] = "Atom E3500",
+				[0x5a] = "Atom Z3500",
 				[0x5c] = "Atom (Goldmont)",
 				[0x5d] = "Atom X3-C3000 (Silvermont)",
 				[0x5e] = "6th gen Core, Xeon E3-1[25]00 v5 (Skylake)",
