@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247_portable.c,v 1.1 2023/07/05 11:36:56 rillig Exp $	*/
+/*	$NetBSD: msg_247_portable.c,v 1.2 2023/07/05 11:42:14 rillig Exp $	*/
 # 3 "msg_247_portable.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -8,8 +8,8 @@
 // Analogous for the floating point types and the complex types.
 //
 // See also:
-//	msg_247_ilp32.c
-//	msg_247_lp64.c
+//	msg_247_ilp32_ldbl64.c
+//	msg_247_lp64_ldbl128.c
 
 /* lint1-extra-flags: -c -p -X 351 */
 

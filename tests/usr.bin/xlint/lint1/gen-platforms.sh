@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: gen-platforms.sh,v 1.1 2021/10/10 18:16:12 rillig Exp $
+# $NetBSD: gen-platforms.sh,v 1.2 2023/07/05 11:42:14 rillig Exp $
 
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@ for file in ../../../../usr.bin/xlint/arch/*/targparam.h; do
 	char=$(sed -n -E 's,.*"([su]char)\.h".*,\1,p' "$file")
 	ilp=$(sed -n -E 's,.*"(ilp32|lp64)\.h".*,\1,p' "$file")
 	size=$(awk '/#.*LONG$/ { l = "long" } /#.*INT$/ { i = "int" } END { print(i "" l) }' "$file")
-	ldbl=$(sed -n -E 's,^#.*LDOUBLE[^0-9]+([0-9]+)$,ldbl-\1,p' "$file")
+	ldbl=$(sed -n -E 's,^#.*LDOUBLE[^0-9]+([0-9]+)$,ldbl\1,p' "$file")
 
 	if [ "$size" != "int" ] && [ "$size" != "long" ]; then
 		size="????"	# mips

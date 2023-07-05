@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.81 2023/06/24 07:45:36 rillig Exp $
+# $NetBSD: t_integration.sh,v 1.82 2023/07/05 11:42:14 rillig Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,34 +37,34 @@ configure_test_case()
 	awk='
 		BEGIN {
 			# see ./gen-platforms.sh
-			platform["aarch64"]	= "uchar lp64  long ldbl-128"
-			platform["alpha"]	= "schar lp64  long ldbl-64"
-			platform["arm"]		= "uchar ilp32 long ldbl-64"
-			platform["coldfire"]	= "schar ilp32 int  ldbl-64"
-			platform["hppa"]	= "schar ilp32 long ldbl-64"
-			platform["i386"]	= "schar ilp32 int  ldbl-96"
-			platform["ia64"]	= "schar lp64  long ldbl-128"
-			platform["m68000"]	= "schar ilp32 int  ldbl-64"
-			platform["m68k"]	= "schar ilp32 int  ldbl-96"
-			platform["mips"]	= "schar ilp32 ???? ldbl-64"
-			platform["mips64"]	= "schar ilp32 long ldbl-128"
-			platform["mipsn64"]	= "schar lp64  long ldbl-128"
-			platform["or1k"]	= "schar ilp32 int  ldbl-64"
-			platform["powerpc"]	= "uchar ilp32 int  ldbl-64"
-			platform["powerpc64"]	= "uchar lp64  long ldbl-64"
-			platform["riscv32"]	= "schar ilp32 int  ldbl-64"
-			platform["riscv64"]	= "schar lp64  long ldbl-64"
-			platform["sh3"]		= "schar ilp32 int  ldbl-64"
-			platform["sparc"]	= "schar ilp32 long ldbl-64"
-			platform["sparc64"]	= "schar lp64  long ldbl-128"
-			platform["vax"]		= "schar ilp32 long ldbl-64"
-			platform["x86_64"]	= "schar lp64  long ldbl-128"
+			platform["aarch64"]	= "uchar lp64  long ldbl128"
+			platform["alpha"]	= "schar lp64  long ldbl64"
+			platform["arm"]		= "uchar ilp32 long ldbl64"
+			platform["coldfire"]	= "schar ilp32 int  ldbl64"
+			platform["hppa"]	= "schar ilp32 long ldbl64"
+			platform["i386"]	= "schar ilp32 int  ldbl96"
+			platform["ia64"]	= "schar lp64  long ldbl128"
+			platform["m68000"]	= "schar ilp32 int  ldbl64"
+			platform["m68k"]	= "schar ilp32 int  ldbl96"
+			platform["mips"]	= "schar ilp32 ???? ldbl64"
+			platform["mips64"]	= "schar ilp32 long ldbl128"
+			platform["mipsn64"]	= "schar lp64  long ldbl128"
+			platform["or1k"]	= "schar ilp32 int  ldbl64"
+			platform["powerpc"]	= "uchar ilp32 int  ldbl64"
+			platform["powerpc64"]	= "uchar lp64  long ldbl64"
+			platform["riscv32"]	= "schar ilp32 int  ldbl64"
+			platform["riscv64"]	= "schar lp64  long ldbl64"
+			platform["sh3"]		= "schar ilp32 int  ldbl64"
+			platform["sparc"]	= "schar ilp32 long ldbl64"
+			platform["sparc64"]	= "schar lp64  long ldbl128"
+			platform["vax"]		= "schar ilp32 long ldbl64"
+			platform["x86_64"]	= "schar lp64  long ldbl128"
 		}
 
 		function platform_has(prop) {
 			if (platform[prop] != "")
 				return prop == archsubdir
-			if (!match(prop, /^(schar|uchar|ilp32|lp64|int|long|ldbl-64|ldbl-96|ldbl-128)$/)) {
+			if (!match(prop, /^(schar|uchar|ilp32|lp64|int|long|ldbl64|ldbl96|ldbl128)$/)) {
 				printf("bad property '\''%s'\''\n", prop) > "/dev/stderr"
 				exit(1)
 			}
