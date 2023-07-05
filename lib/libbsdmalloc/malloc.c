@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.6 2023/07/05 01:15:47 riastradh Exp $	*/
+/*	$NetBSD: malloc.c,v 1.7 2023/07/05 10:57:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.6 2023/07/05 01:15:47 riastradh Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.7 2023/07/05 10:57:44 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -530,8 +530,7 @@ aligned_alloc(size_t alignment, size_t size)
 
 	if (alignment == 0 ||
 	    (alignment & (alignment - 1)) != 0 ||
-	    alignment > cachedpagesize() ||
-	    (size & (alignment - 1)) != 0) {
+	    alignment > cachedpagesize()) {
 		errno = EINVAL;
 		return NULL;
 	}
