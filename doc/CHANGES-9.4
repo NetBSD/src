@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.4,v 1.1.2.74 2023/07/05 11:55:46 martin Exp $
+# $NetBSD: CHANGES-9.4,v 1.1.2.75 2023/07/05 16:14:56 martin Exp $
 
 A complete list of changes from the NetBSD 9.3 release to the NetBSD 9.4
 release:
@@ -1630,4 +1630,9 @@ external/bsd/mdocml/dist/st.c			1.2
 
 	mandoc(1): add ISO C 2018 standard.
 	[wiz, ticket #1661]
+
+lib/libc/dlfcn/dlfcn_elf.c			1.17
+
+	libc: Fix missing membar_consumer in dl_iterate_phdr.
+	[riastradh, ticket #1662]
 
