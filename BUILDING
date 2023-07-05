@@ -93,9 +93,9 @@ FILES
                     during the build.
 
    Build tree layout
-     The NetBSD build tree is described in hier(7) (mdoc(7) source in
+     The NetBSD build tree is described in hier(7) (whose mdoc(7) source is in
      share/man/man7/hier.7), and the release layout is described in release(7)
-     (mdoc(7) source in share/man/man7/release.7).
+     (whose mdoc(7) source is in share/man/man7/release.7).
 
 CONFIGURATION
    Environment variables
@@ -218,8 +218,8 @@ CONFIGURATION
                      Default: "/tmp".
 
    "make" variables
-     Variables control the behavior of NetBSD builds are documented in
-     mk.conf(5) (mdoc(7) source in share/man/man5/mk.conf.5).
+     Variables that control the behavior of NetBSD builds are documented in
+     mk.conf(5) (whose mdoc(7) source is in share/man/man5/mk.conf.5).
 
      Unless otherwise specified, these variables may be set in either the
      process environment or the make(1) configuration file mk.conf(5)
@@ -819,4 +819,4 @@ CAVEATS
      in object directories.  Instead, one may have to manually remove the
      files.  Consult the UPDATING file for notices concerning this.
 
-NetBSD                           June 11, 2023                          NetBSD
+NetBSD                           July 5, 2023                           NetBSD
