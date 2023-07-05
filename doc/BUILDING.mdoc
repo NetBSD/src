@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.144 2023/06/11 20:34:14 lukem Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.145 2023/07/05 16:41:12 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd June 11, 2023
+.Dd July 5, 2023
 .Dt BUILDING 8
 .Os NetBSD
 .\" turn off hyphenation
@@ -222,13 +222,15 @@ The
 .Nx
 build tree is described in
 .Xr hier 7
-.Xr ( mdoc 7
-source in
+(whose
+.Xr mdoc 7
+source is in
 .Pa share/man/man7/hier.7 ) ,
 and the release layout is described in
 .Xr release 7
-.Xr ( mdoc 7
-source in
+(whose
+.Xr mdoc 7
+source is in
 .Pa share/man/man7/release.7 ) .
 .
 .Sh CONFIGURATION
@@ -487,12 +489,13 @@ option.
 .
 .Ss \*qmake\*q variables
 .
-Variables control the behavior of
+Variables that control the behavior of
 .Nx
 builds are documented in
 .Xr mk.conf 5
-.Xr ( mdoc 7
-source in
+(whose
+.Xr mdoc 7
+source is in
 .Pa share/man/man5/mk.conf.5 ) .
 .Pp
 Unless otherwise specified, these variables may be set in
