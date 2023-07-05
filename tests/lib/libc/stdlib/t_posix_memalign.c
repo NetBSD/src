@@ -1,4 +1,4 @@
-/*	$NetBSD: t_posix_memalign.c,v 1.6 2023/07/04 15:06:36 riastradh Exp $ */
+/*	$NetBSD: t_posix_memalign.c,v 1.7 2023/07/05 11:43:05 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_memalign.c,v 1.6 2023/07/04 15:06:36 riastradh Exp $");
+__RCSID("$NetBSD: t_posix_memalign.c,v 1.7 2023/07/05 11:43:05 riastradh Exp $");
 
 #include <atf-c.h>
 
@@ -152,20 +152,19 @@ ATF_TC_BODY(aligned_alloc_basic, tc)
 			void *const p = aligned_alloc(align[i], size[j]);
 
 			/*
-			 * C11, 6.2.8 Alignment of objects, paragraph
-			 * 4, p. 48:
+			 * C17, 6.2.8 Alignment of objects, paragraph
+			 * 4, p. 37:
 			 *
 			 *	Every valid alignment value shall be a
 			 *	nonnegative integral power of two.
 			 *
-			 * C11, 7.22.3.1 The aligned_alloc function,
+			 * C17, 7.22.3.1 The aligned_alloc function,
 			 * paragraph 2, p. 348:
 			 *
-			 *	The value of alignment shall be a valid
-			 *	alignment supported by the
-			 *	implementation and the value of size
-			 *	shall be an integral multiple of
-			 *	alignment.
+			 *	If the value of alignment is not a
+			 *	valid alignment supported by the
+			 *	implementation the function shall fail
+			 *	by returning a null pointer.
 			 *
 			 * Setting errno to EINVAL is a NetBSD
 			 * extension.  The last clause appears to rule
@@ -173,8 +172,7 @@ ATF_TC_BODY(aligned_alloc_basic, tc)
 			 * not clear.
 			 */
 			if (align[i] == 0 ||
-			    (align[i] & (align[i] - 1)) != 0 ||
-			    (size[j] != 0 && size[j] % align[i] != 0)) {
+			    (align[i] & (align[i] - 1)) != 0) {
 				if (p != NULL) {
 					ATF_CHECK_EQ_MSG(p, NULL,
 					    "aligned_alloc(%zu, %zu): %p",
