@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.105 2023/06/14 02:28:41 rin Exp $
+.\"	$NetBSD: mk.conf.5,v 1.106 2023/07/05 16:40:34 lukem Exp $
 .\"
 .\"  Copyright (c) 1999-2023 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 14, 2023
+.Dd July 5, 2023
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -47,7 +47,7 @@ file overrides various parameters used during the build of the system.
 Listed below are the
 .Nm
 variables that may be set that affect the
-.Nx NetBSD
+.Nx
 system build,
 the values to which each may be set,
 a brief description of what each variable does,
@@ -1521,13 +1521,13 @@ Indicates whether the
 .Xr rump 3
 headers, libraries, and programs are to be installed.
 .NOVAR COVERITY_TOP_CONFIG No is defined
-.DFLTy
 .Pp
-.Em Note :
-see also
-.Pa src/sys/rump/README.compileopts
-for variables used during the build of the
-.Xr rump 3 .
+See also
+variables that start with
+.Sy RUMPUSER_
+or
+.Sy RUMP_ .
+.DFLTy
 .
 .It Sy MKSANITIZER
 .YorN
@@ -1644,7 +1644,9 @@ option of
 .Xr ld 1 .
 Keeping non-temporary local symbols
 such as static function names is useful on using DTrace for
-userland libraries and getting a backtrace from a rump kernel
+userland libraries and getting a backtrace from a
+.Xr rumpkernel 7
+kernel
 loading shared libraries.
 .DFLTy
 .
@@ -1917,6 +1919,179 @@ unless run in
 mode with the
 .Fl E
 option.
+.DFLTu
+.
+.It Sy RUMPUSER_THREADS
+Defines the threading implementation used by the
+.Xr rumpuser 3
+hypercall implementation.
+Supported values:
+.Bl -tag -width pthread
+.It fiber
+Use a fiber interface, with cooperatively scheduled contexts.
+.It none
+Do not support kernel threads.
+.It pthread
+Use
+.Xr pthread 3
+to implement threads.
+.El
+.DFLT
+.Dq pthread .
+.
+.It Sy RUMP_CURLWP
+Defines how
+.Va curlwp
+is obtained in the
+.Xr rumpkernel 7
+kernel.
+.Va curlwp
+is
+a very frequently accessed thread-local variable, and optimizing
+access has a significant performance impact.
+Note that all options are not available on hosts/machine architectures.
+Supported values:
+.Bl -tag -width hypercall
+.It hypercall
+Use a hypercall to fetch the value.
+.It register
+Use a dedicated register.
+(Implies compiling with
+.Fl ffixed- Ns Ar reg ) .
+.It __thread
+Use the __thread feature to fetch value via
+thread local storage (TLS).
+.El
+.DFLT
+.Dq hypercall .
+.
+.It Sy RUMP_DEBUG
+If defined,
+indicates whether
+.Xr rumpkernel 7
+kernels are built with
+.Fl DDEBUG .
+.DFLTu
+.
+.It Sy RUMP_DIAGNOSTIC
+.YorN
+Indicates whether
+.Xr rumpkernel 7
+kernels are built with
+.Fl DDIAGNOSTIC .
+.DFLTy
+.
+.It Sy RUMP_KTRACE
+.YorN
+Indicates whether
+.Xr rumpkernel 7
+kernels are built with
+.Fl DKTRACE .
+.DFLTy
+.
+.It Sy RUMP_LOCKDEBUG
+If defined,
+indicates whether
+.Xr rumpkernel 7
+kernels are built with
+.Fl DLOCKDEBUG .
+.DFLTu
+.
+.It Sy RUMP_LOCKS_UP
+.YorN
+Indicates whether
+.Xr rumpkernel 7
+kernels are built with
+uniprocess-optimized locking or not.
+.Pp
+If
+.Dq yes ,
+build with uniprocess-optimized locking, which requires
+.Ev RUMP_NCPU=1
+in the environment at runtime.
+.Pp
+If
+.Dq no ,
+build with multiprocessor-capable locking.
+.DFLTn
+.
+.It Sy RUMP_NBCOMPAT
+Selects which
+.Nx
+userland binary compatibility
+.Dv COMPAT_ Ns Ar ver
+kernel options are enabled in the
+.Xr rumpkernel 7
+kernels.
+This option is useful only when building
+.Xr rumpkernel 7 kernels
+for
+.Nx
+userspace, and an empty value may be supplied elsewhere.
+Supported (one or more, comma-separated) values:
+.Bl -tag -width default
+.It all
+All supported release versions.
+Equivalent to
+.Dq 50,60,70,80,90 .
+.It default
+Default value.
+Equivalent to
+.Dq all ,
+although this default may change in the future.
+.It none
+No compatibility options are enabled.
+.It 50
+.Nx
+5.x compatibility, via
+.Dv COMPAT_50
+kernel option.
+.It 60
+.Nx
+6.x compatibility, via
+.Dv COMPAT_60
+kernel option.
+.It 70
+.Nx
+7.x compatibility, via
+.Dv COMPAT_70
+kernel option.
+.It 80
+.Nx
+8.x compatibility, via
+.Dv COMPAT_80
+kernel option.
+.It 90
+.Nx
+9.x compatibility, via
+.Dv COMPAT_90
+kernel option.
+.El
+.DFLT
+.Dq all .
+.
+.It Sy RUMP_VIRTIF
+.YorN
+Indicates whether
+.Xr rumpkernel 7
+kernels are built with support for the
+.Xr virt 4
+network interface.
+.Pp
+If
+.Dq no ,
+don't build with
+.Xr virt 4
+support, which may be necessary on systems that lack the
+necessary headers, such as musl libc based Linux.
+.DFLTy
+.
+.It Sy RUMP_VNODE_LOCKDEBUG
+If defined,
+indicates whether
+.Xr rumpkernel 7
+kernels are built with
+.Fl DVNODE_LOCKDEBUG .
 .DFLTu
 .
 .It Sy TOOLCHAIN_MISSING
@@ -2337,6 +2512,7 @@ Examples for settings regarding the pkgsrc collection.
 .Xr whatis 1 ,
 .Xr xz 1 ,
 .Xr rump 3 ,
+.Xr rumpuser 3 ,
 .Xr ssp 3 ,
 .Xr amdgpu 4 ,
 .Xr athn 4 ,
@@ -2357,10 +2533,12 @@ Examples for settings regarding the pkgsrc collection.
 .Xr rum 4 ,
 .Xr run 4 ,
 .Xr urtwn 4 ,
+.Xr virt 4 ,
 .Xr wpi 4 ,
 .Xr zyd 4 ,
 .Xr pam.conf 5 ,
 .Xr release 7 ,
+.Xr rumpkernel 7 ,
 .Xr security 7 ,
 .Xr Xorg 7 ,
 .Xr dbsym 8 ,
