@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.77 2023/07/04 20:40:53 riastradh Exp $	*/
+/*	$NetBSD: inode.c,v 1.78 2023/07/05 10:59:08 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.77 2023/07/04 20:40:53 riastradh Exp $");
+__RCSID("$NetBSD: inode.c,v 1.78 2023/07/05 10:59:08 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -462,10 +462,8 @@ setinodebuf(ino_t inum)
 		partialcnt = fullcnt;
 		partialsize = inobufsize;
 	}
-	__CTASSERT(powerof2(DEV_BSIZE));
 	if (inodebuf == NULL &&
-	    (inodebuf = aligned_alloc(DEV_BSIZE,
-		roundup2((unsigned)inobufsize, DEV_BSIZE))) == NULL)
+	    (inodebuf = aligned_alloc(DEV_BSIZE, (unsigned)inobufsize)) == NULL)
 		errexit("Cannot allocate space for inode buffer");
 }
 
