@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.77 2023/07/03 09:40:29 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.78 2023/07/05 16:12:51 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2351,4 +2351,21 @@ tools/llvm-lib/libLLVMSupport/Makefile		1.2
 	Fix LLVM build with host compilers defaulting to newer
 	C/C++ standards.
 	[hgutch, ticket #223]
+
+sys/arch/sparc/dev/cgfourteen.c			1.94,1.95
+sys/arch/sparc/dev/sx.c				1.6,1.7
+sys/arch/sparc/dev/sxvar.h			1.5
+sys/dev/sbus/mgx.c				1.21-1.23
+sys/dev/wscons/wsdisplay_glyphcache.c		1.12
+sys/dev/wscons/wsdisplay_glyphcachevar.h	1.6
+sys/dev/wscons/wsdisplay_vcons.c		1.65,1.66
+sys/dev/wscons/wsdisplay_vconsvar.h		1.34
+
+	Various wscons/vcons performance improvements.
+	[abs, ticket #224]
+
+lib/libc/dlfcn/dlfcn_elf.c			1.17
+
+	libc: Fix missing membar_consumer in dl_iterate_phdr.
+	[riastradh, ticket #225]
 
