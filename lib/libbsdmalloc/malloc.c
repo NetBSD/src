@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.8 2023/07/05 12:08:49 riastradh Exp $	*/
+/*	$NetBSD: malloc.c,v 1.9 2023/07/05 22:13:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.8 2023/07/05 12:08:49 riastradh Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.9 2023/07/05 22:13:20 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -546,11 +546,10 @@ calloc(size_t nmemb, size_t size)
 	void *p;
 	size_t n;
 
-	if (__builtin_mul_overflow_p(nmemb, size, (size_t)0)) {
+	if (__builtin_mul_overflow(nmemb, size, &n)) {
 		errno = ENOMEM;
 		return NULL;
 	}
-	n = nmemb * size;
 	p = malloc(n);
 	if (__predict_false(p == NULL))
 		return NULL;
