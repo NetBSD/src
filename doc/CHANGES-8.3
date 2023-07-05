@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.180 2023/06/27 18:47:31 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.181 2023/07/05 16:16:49 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3561,4 +3561,9 @@ sys/fs/nilfs/nilfs_subr.h			1.5
 
 	Remove dead code.
 	[reinoud, ticket #1848]
+
+lib/libc/dlfcn/dlfcn_elf.c			1.17
+
+	libc: Fix missing membar_consumer in dl_iterate_phdr.
+	[riastradh, ticket #1849]
 
