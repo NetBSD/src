@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.38 2023/07/03 07:03:19 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.39 2023/07/06 07:59:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -47,6 +47,7 @@
 
 #include "param.h"
 
+#if defined(IS_LINT1) || defined(IS_LINT2)
 /*
  * Type specifiers, used in type structures (type_t) and elsewhere.
  */
@@ -110,20 +111,23 @@ typedef	struct {
 	const char *tt_name;		/* name of the type */
 } ttab_t;
 
-#define size_in_bits(t)		(ttab[t].tt_size_in_bits)
-#define portable_size_in_bits(t) (ttab[t].tt_portable_size_in_bits)
-#define signed_type(t)		(ttab[t].tt_signed_counterpart)
-#define unsigned_type(t)	(ttab[t].tt_unsigned_counterpart)
-#define is_integer(t)		(ttab[t].tt_is_integer)
-#define is_uinteger(t)		(ttab[t].tt_is_uinteger)
-#define is_floating(t)		(ttab[t].tt_is_floating)
-#define is_arithmetic(t)	(ttab[t].tt_is_arithmetic)
-#define is_complex(t)		(ttab[t].tt_is_complex)
-#define is_scalar(t)		(ttab[t].tt_is_scalar)
-
-#if defined(IS_LINT1) || defined(IS_LINT2)
 extern	ttab_t	ttab[];
-#endif
+
+static inline const ttab_t *
+type_properties(tspec_t t) {
+	return ttab + t;
+}
+
+#define size_in_bits(t)		(type_properties(t)->tt_size_in_bits)
+#define portable_size_in_bits(t) (type_properties(t)->tt_portable_size_in_bits)
+#define signed_type(t)		(type_properties(t)->tt_signed_counterpart)
+#define unsigned_type(t)	(type_properties(t)->tt_unsigned_counterpart)
+#define is_integer(t)		(type_properties(t)->tt_is_integer)
+#define is_uinteger(t)		(type_properties(t)->tt_is_uinteger)
+#define is_floating(t)		(type_properties(t)->tt_is_floating)
+#define is_arithmetic(t)	(type_properties(t)->tt_is_arithmetic)
+#define is_complex(t)		(type_properties(t)->tt_is_complex)
+#define is_scalar(t)		(type_properties(t)->tt_is_scalar)
 
 
 typedef	enum {
@@ -145,6 +149,7 @@ typedef	struct	ob {
 typedef struct lint1_type type_t;
 #else
 typedef struct lint2_type type_t;
+#endif
 #endif
 
 #include "externs.h"
