@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.4 2023/07/01 09:21:31 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.5 2023/07/06 07:33:36 rillig Exp $
 
 --[[
 
@@ -91,6 +91,10 @@ local function load_c(fname)
         print_error("error: %s:%d: preprocessor line number must be %d",
           fname, phys_lineno, phys_lineno + 1)
       end
+      if ppl_fname:match("%.c$") and ppl_fname ~= basename then
+        print_error("error: %s:%d: preprocessor filename must be '%s'",
+          fname, phys_lineno, basename)
+      end
       pp_fname = ppl_fname
       pp_lineno = ppl_lineno
     end
@@ -104,7 +108,7 @@ end
 --
 -- example return value: {
 --   {
---     exp_lineno = "18",
+--     exp_lineno = 18,
 --     location = "file.c(18)",
 --     message = "not a constant expression [123]",
 --   }
