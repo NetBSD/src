@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.27 2023/06/29 10:31:32 rillig Exp $	*/
+/*	$NetBSD: externs.h,v 1.28 2023/07/06 07:59:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -34,8 +34,10 @@
 /*
  * tyname.c
  */
+#if defined(IS_LINT1) || defined(IS_LINT2)
 const char *type_name(const type_t *);
-const	char *tspec_name(tspec_t);
+const char *tspec_name(tspec_t);
+#endif
 
 /*
  * mem.c
