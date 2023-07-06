@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sig_backtrace.c,v 1.6 2022/07/25 22:43:01 riastradh Exp $	*/
+/*	$NetBSD: t_sig_backtrace.c,v 1.7 2023/07/06 20:44:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sig_backtrace.c,v 1.6 2022/07/25 22:43:01 riastradh Exp $");
+__RCSID("$NetBSD: t_sig_backtrace.c,v 1.7 2023/07/06 20:44:55 riastradh Exp $");
 
 #include <sys/mman.h>
 #include <execinfo.h>
@@ -132,6 +132,7 @@ handler(int s)
 	ATF_REQUIRE(size != 0);
 
 	printf("Backtrace %zd stack frames.\n", size);
+	fflush(stdout);
 	backtrace_symbols_fd(array, size, STDOUT_FILENO);
 
 	char **strings = backtrace_symbols_fmt(array, size, "%n");
