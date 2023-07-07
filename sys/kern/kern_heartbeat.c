@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.1 2023/07/07 12:34:50 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.2 2023/07/07 17:05:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.1 2023/07/07 12:34:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.2 2023/07/07 17:05:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -103,6 +103,16 @@ __KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.1 2023/07/07 12:34:50 riastradh
 #ifdef DDB
 #include <ddb/ddb.h>
 #endif
+
+static inline bool
+curcpu_stable(void)
+{
+
+	return kpreempt_disabled() ||
+	    (curlwp->l_pflag & LP_BOUND) ||
+	    cpu_intr_p() ||
+	    cpu_softintr_p();
+}
 
 /*
  * Global state.
@@ -132,7 +142,7 @@ void
 heartbeat_suspend(void)
 {
 
-	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu_stable());
 
 	/*
 	 * Nothing to do -- we just check the SPCF_OFFLINE flag.
@@ -155,7 +165,7 @@ heartbeat_resume(void)
 	struct cpu_info *ci = curcpu();
 	int s;
 
-	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu_stable());
 
 	/*
 	 * Block heartbeats while we reset the state so we don't
@@ -398,7 +408,7 @@ defibrillate(struct cpu_info *ci, unsigned d)
 	};
 	unsigned countdown = 1000; /* 1sec */
 
-	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu_stable());
 
 	/*
 	 * First notify the console that the patient CPU's heart seems
@@ -449,7 +459,7 @@ select_patient(void)
 	struct cpu_info *first = NULL, *patient = NULL, *ci;
 	bool passedcur = false;
 
-	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu_stable());
 
 	/*
 	 * In the iteration order of all CPUs, find the next online CPU
@@ -528,7 +538,7 @@ heartbeat(void)
 	unsigned count, uptime, cache, stamp, d;
 	struct cpu_info *patient;
 
-	KASSERT(kpreempt_disabled());
+	KASSERT(curcpu_stable());
 
 	period_ticks = atomic_load_relaxed(&heartbeat_max_period_ticks);
 	period_secs = atomic_load_relaxed(&heartbeat_max_period_secs);
