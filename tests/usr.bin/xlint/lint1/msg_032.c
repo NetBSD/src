@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_032.c,v 1.6 2022/10/01 09:42:40 rillig Exp $	*/
+/*	$NetBSD: msg_032.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_032.c"
 
 // Test for message: type of argument '%s' defaults to 'int' [32]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+5: error: old-style declaration; add 'int' [1] */
 add(a, b, c)

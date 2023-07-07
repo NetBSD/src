@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_057.c,v 1.6 2022/06/20 21:13:36 rillig Exp $	*/
+/*	$NetBSD: msg_057.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_057.c"
 
 // Test for message: enumeration constant '%s' hides parameter [57]
+
+/* lint1-extra-flags: -X 351 */
 
 long
 /* expect+3: warning: argument 'red' unused in function 'rgb' [231] */

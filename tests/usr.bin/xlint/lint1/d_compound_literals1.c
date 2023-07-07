@@ -1,7 +1,9 @@
-/*	$NetBSD: d_compound_literals1.c,v 1.4 2022/04/24 20:08:23 rillig Exp $	*/
+/*	$NetBSD: d_compound_literals1.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "d_compound_literals1.c"
 
 /* compound literals */
+
+/* lint1-extra-flags: -X 351 */
 
 struct p {
 	short a, b, c, d;

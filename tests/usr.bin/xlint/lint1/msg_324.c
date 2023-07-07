@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_324.c,v 1.8 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: msg_324.c,v 1.9 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_324.c"
 
 // Test for message: suggest cast from '%s' to '%s' on op '%s' to avoid overflow [324]
@@ -14,7 +14,7 @@
  * have been lost.
  */
 
-/* lint1-flags: -g -S -w -P */
+/* lint1-flags: -g -S -w -P -X 351 */
 
 void
 example(char c, int i, unsigned u)

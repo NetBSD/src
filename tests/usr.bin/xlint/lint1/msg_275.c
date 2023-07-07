@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_275.c,v 1.5 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_275.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_275.c"
 
 // Test for message: cast discards 'const' from type '%s' [275]
 
-/* lint1-extra-flags: -h */
+/* lint1-extra-flags: -h -X 351 */
 
 char *
 unconst_string(const char *s)

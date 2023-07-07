@@ -1,5 +1,7 @@
-/*	$NetBSD: d_cast_fun_array_param.c,v 1.3 2021/01/31 14:57:28 rillig Exp $	*/
+/*	$NetBSD: d_cast_fun_array_param.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "d_cast_fun_array_param.c"
+
+/* lint1-extra-flags: -X 351 */
 
 static void
 f(void *b[4])

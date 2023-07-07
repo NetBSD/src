@@ -1,4 +1,4 @@
-/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.5 2022/06/19 12:14:34 rillig Exp $	*/
+/*	$NetBSD: c99_bool_strict_suppressed.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "c99_bool_strict_suppressed.c"
 
 /*
@@ -18,7 +18,7 @@
  * tree.c 1.305 from 2021-07-04.
  */
 
-/* lint1-extra-flags: -T -X 107,330,331,332,333 */
+/* lint1-extra-flags: -T -X 107,330,331,332,333 -X 351 */
 
 /* ARGSUSED */
 void

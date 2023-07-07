@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_143.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_143.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_143.c"
 
 // Test for message: cannot take size/alignment of incomplete type [143]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: struct 'incomplete' never defined [233] */
 struct incomplete;

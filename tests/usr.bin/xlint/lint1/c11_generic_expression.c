@@ -1,5 +1,7 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.16 2023/07/07 00:20:39 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.17 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * C99 added support for type-generic macros, but these were limited to the
@@ -101,7 +103,6 @@ primary_expression(void)
  * which is then silently ignored by init_expr.  This situation is already
  * covered by the compilers, so there is no need for lint to double-check it.
  */
-/* expect+1: warning: missing 'extern' header declaration for 'x' [351] */
 const char *x = _Generic(
     1ULL + 1.0f,
     int: 1

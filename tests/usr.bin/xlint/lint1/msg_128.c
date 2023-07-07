@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_128.c,v 1.6 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: msg_128.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_128.c"
 
 // Test for message: operands of '%s' have incompatible pointer types to '%s' and '%s' [128]
+
+/* lint1-extra-flags: -X 351 */
 
 void
 conversion_to_unconst(const char *cstr)

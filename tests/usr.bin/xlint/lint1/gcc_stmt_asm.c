@@ -1,9 +1,11 @@
-/*	$NetBSD: gcc_stmt_asm.c,v 1.4 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: gcc_stmt_asm.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "gcc_stmt_asm.c"
 
 /*
  * Tests for the GCC 'asm' statement.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void
 function(void)

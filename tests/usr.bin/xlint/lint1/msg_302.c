@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_302.c,v 1.7 2023/04/15 12:59:02 rillig Exp $	*/
+/*	$NetBSD: msg_302.c,v 1.8 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_302.c"
 
 // Test for message: '%s' returns pointer to automatic object [302]
+
+/* lint1-extra-flags: -X 351 */
 
 void *
 return_arg(int arg)

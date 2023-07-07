@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_300.c,v 1.4 2022/10/01 09:42:40 rillig Exp $	*/
+/*	$NetBSD: msg_300.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_300.c"
 
 /* Test for message: old-style definition [300] */
 
-/* lint1-flags: -wr */
+/* lint1-flags: -wr -X 351 */
 
 /* expect+1: old-style definition [300] */
 old_style(x)

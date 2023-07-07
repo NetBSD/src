@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_350.c,v 1.2 2023/07/07 00:20:39 rillig Exp $	*/
+/*	$NetBSD: msg_350.c,v 1.3 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_350.c"
 
 // Test for message 350: '_Atomic' requires C11 or later [350]
@@ -10,6 +10,8 @@
  * See also:
  *	c11_atomic.c
  */
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: error: '_Atomic' requires C11 or later [350] */
 typedef _Atomic int atomic_int;
