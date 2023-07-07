@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.341 2023/07/03 10:23:12 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.342 2023/07/07 06:03:31 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.341 2023/07/03 10:23:12 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.342 2023/07/07 06:03:31 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2935,7 +2935,7 @@ check_variable_usage(bool novar, sym_t *sym)
 		return;
 
 	/* errors in expressions easily cause lots of these warnings */
-	if (nerr != 0)
+	if (seen_error)
 		return;
 
 	/*

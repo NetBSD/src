@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_327.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_327.c,v 1.8 2023/07/07 06:03:31 rillig Exp $	*/
 # 3 "msg_327.c"
 
 /* Test for message: declarations after statements is a C99 feature [327] */
 
-/* lint1-flags: -w -X 351 */
+/* lint1-flags: -w -X 192,351 */
 
 void statement(void);
 

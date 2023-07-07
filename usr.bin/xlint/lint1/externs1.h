@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.188 2023/07/02 23:40:23 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.189 2023/07/07 06:03:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -156,7 +156,8 @@ void	debug_leave_func(const char *);
 /*
  * err.c
  */
-extern	int	nerr;
+extern	bool	seen_error;
+extern	bool	seen_warning;
 extern	int	sytxerr;
 extern	bool	any_query_enabled;
 
