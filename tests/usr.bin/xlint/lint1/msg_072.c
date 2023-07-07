@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_072.c,v 1.7 2022/10/01 09:42:40 rillig Exp $	*/
+/*	$NetBSD: msg_072.c,v 1.8 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_072.c"
 
 // Test for message: typedef declares no type name [72]
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: warning: typedef declares no type name [72] */
 typedef int;

@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_138.c,v 1.5 2022/07/01 20:53:13 rillig Exp $	*/
+/*	$NetBSD: msg_138.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_138.c"
 
 // Test for message: unknown operand size, op '%s' [138]
 
-/* lint1-extra-flags: -z */
+/* lint1-extra-flags: -z -X 351 */
 
 struct incomplete;
 

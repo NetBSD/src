@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_118.c,v 1.6 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_118.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_118.c"
 
 /* Test for message: semantics of '%s' change in ANSI C; use explicit cast [118] */
 
-/* lint1-flags: -hw */
+/* lint1-flags: -hw -X 351 */
 
 int
 int_shl_uint(int left, unsigned int right)

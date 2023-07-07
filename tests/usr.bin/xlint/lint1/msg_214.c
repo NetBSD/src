@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_214.c,v 1.4 2021/08/03 18:44:33 rillig Exp $	*/
+/*	$NetBSD: msg_214.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_214.c"
 
 // Test for message: function '%s' expects to return value [214]
+
+/* lint1-extra-flags: -X 351 */
 
 int
 int_function(void)

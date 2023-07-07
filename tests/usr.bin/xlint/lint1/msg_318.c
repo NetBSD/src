@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_318.c,v 1.3 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_318.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_318.c"
 
 // Test for message: variable array dimension is a C99/GCC extension [318]
 
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 unsigned long
 example(int n)

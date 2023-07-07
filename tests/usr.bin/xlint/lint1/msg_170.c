@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_170.c,v 1.5 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_170.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_170.c"
 
 // Test for message: first operand must have scalar type, op ? : [170]
+
+/* lint1-extra-flags: -X 351 */
 
 struct number {
 	int value;

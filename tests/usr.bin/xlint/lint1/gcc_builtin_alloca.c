@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_builtin_alloca.c,v 1.3 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: gcc_builtin_alloca.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "gcc_builtin_alloca.c"
 
 /*
@@ -7,6 +7,8 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Other-Builtins.html
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void
 example(void)

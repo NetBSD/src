@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_232.c,v 1.6 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_232.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_232.c"
 
 // Test for message: label '%s' unused in function '%s' [232]
+
+/* lint1-extra-flags: -X 351 */
 
 void
 example(void)

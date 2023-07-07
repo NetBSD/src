@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_351.c,v 1.6 2023/07/07 00:25:23 rillig Exp $	*/
+/*	$NetBSD: msg_351.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_351.c"
 
 // Test for message 351: missing%s header declaration for '%s' [351]
@@ -23,13 +23,13 @@ void func_decl(void);
 extern void extern_func_decl(void);
 static int static_func_decl(void);
 
-// TODO: missing header declaration
+/* expect+3: warning: missing header declaration for 'func_def' [351] */
 void
 func_def(void)
 {
 }
 
-// TODO: missing header declaration
+/* expect+3: warning: missing header declaration for 'extern_func_def' [351] */
 extern void
 extern_func_def(void)
 {

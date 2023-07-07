@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.189 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.190 2023/07/07 19:45:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -213,6 +213,7 @@ qual_ptr *merge_qualified_pointer(qual_ptr *, qual_ptr *);
 sym_t	*add_pointer(sym_t *, qual_ptr *);
 sym_t	*add_array(sym_t *, bool, int);
 sym_t	*add_function(sym_t *, sym_t *);
+void	check_extern_declaration(const sym_t *);
 void	check_function_definition(sym_t *, bool);
 sym_t	*declarator_name(sym_t *);
 sym_t	*old_style_function_parameter_name(sym_t *);

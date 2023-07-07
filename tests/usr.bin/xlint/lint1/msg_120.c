@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_120.c,v 1.6 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_120.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_120.c"
 
 // Test for message: bitwise '%s' on signed value nonportable [120]
 
-/* lint1-extra-flags: -p */
+/* lint1-extra-flags: -p -X 351 */
 
 int
 shr(int a, int b)
