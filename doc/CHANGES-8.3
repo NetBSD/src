@@ -1,4 +1,4 @@
- $NetBSD: CHANGES-8.3,v 1.1.2.181 2023/07/05 16:16:49 martin Exp $
+ $NetBSD: CHANGES-8.3,v 1.1.2.182 2023/07/07 18:50:36 martin Exp $
 
 A complete list of changes from the NetBSD 8.2 release to the NetBSD 8.3
 release:
@@ -3566,4 +3566,11 @@ lib/libc/dlfcn/dlfcn_elf.c			1.17
 
 	libc: Fix missing membar_consumer in dl_iterate_phdr.
 	[riastradh, ticket #1849]
+
+distrib/sets/lists/misc/mi			1.225
+external/bsd/dhcpcd/examples/Makefile		1.2
+external/bsd/dhcpcd/examples/conf/Makefile	1.1
+
+	PR 57487: install a copy of dhcpcd.conf under /usr/share/examples.
+	[gutteridge, ticket #1850]
 
