@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.30 2023/07/05 11:36:56 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.31 2023/07/07 06:03:31 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -308,6 +308,7 @@ void *
 cast_between_first_member_struct(void *ptr)
 {
 	/* Before tree.c 1.462 from 2022-06-24, lint warned about this cast. */
+	/* expect+1: warning: 't1' set but not used in function 'cast_between_first_member_struct' [191] */
 	void *t1 = (ctl_node_t *)(ctl_named_node_t *)ptr;
 
 	void *t2 = (ctl_named_node_t *)(ctl_node_t *)ptr;
