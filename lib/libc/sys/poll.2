@@ -1,4 +1,4 @@
-.\"	$NetBSD: poll.2,v 1.37 2021/02/09 09:01:29 wiz Exp $
+.\"	$NetBSD: poll.2,v 1.38 2023/07/07 01:31:25 riastradh Exp $
 .\"
 .\" Copyright (c) 1998, 2005, 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -210,8 +210,10 @@ Sockets produce POLLIN rather than POLLHUP when the remote
 end is closed.
 .Sh RETURN VALUES
 .Fn poll
-returns the number of descriptors that are ready for I/O, or \-1 if an
-error occurred.
+returns the number of descriptors that are ready for I/O, or returns
+\-1 and sets
+.Dv errno
+if an error occurred.
 If the time limit expires,
 .Fn poll
 returns 0.
