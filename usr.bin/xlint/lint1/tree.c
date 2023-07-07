@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.548 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.549 2023/07/07 20:19:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.548 2023/07/07 06:03:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.549 2023/07/07 20:19:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1348,20 +1348,16 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		}
 	}
 
-	if (op == SHLASS) {
-		if (portable_size_in_bits(lt) < portable_size_in_bits(rt)) {
-			if (hflag)
-				/* semantics of '%s' change in ANSI C; ... */
-				warning(118, "<<=");
-		}
-	} else if (op != SHRASS) {
-		if (op == ASSIGN || lt != PTR) {
-			if (lt != rt ||
-			    (ln->tn_type->t_bitfield && rn->tn_op == CON)) {
-				rn = convert(op, 0, ln->tn_type, rn);
-				rt = lt;
-			}
-		}
+	if (op == SHLASS && hflag && allow_trad && allow_c90
+	    && portable_size_in_bits(lt) < portable_size_in_bits(rt))
+		/* semantics of '%s' change in ANSI C; ... */
+		warning(118, "<<=");
+
+	if (op != SHLASS && op != SHRASS
+	    && (op == ASSIGN || lt != PTR)
+	    && (lt != rt || (ln->tn_type->t_bitfield && rn->tn_op == CON))) {
+		rn = convert(op, 0, ln->tn_type, rn);
+		rt = lt;
 	}
 
 	if (any_query_enabled && rn->tn_op == CVT && rn->tn_cast &&
@@ -2317,7 +2313,7 @@ typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt)
 		 * that there is really a difference between
 		 * ANSI C and traditional C.
 		 */
-		if (hflag && !allow_c99)
+		if (hflag && allow_trad && allow_c90)
 			/* semantics of '%s' change in ANSI C; use ... */
 			warning(118, mp->m_name);
 	}
