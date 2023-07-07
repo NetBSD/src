@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.15 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.16 2023/07/07 00:20:39 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /*
@@ -11,7 +11,7 @@
  * C11 6.5.1.1 "Generic selection"
  */
 
-/* lint1-extra-flags: -Ac11 -X 351 */
+/* lint1-extra-flags: -Ac11 */
 
 /*
  * The type of 'var' is not compatible with any of the types from the
@@ -101,6 +101,7 @@ primary_expression(void)
  * which is then silently ignored by init_expr.  This situation is already
  * covered by the compilers, so there is no need for lint to double-check it.
  */
+/* expect+1: warning: missing 'extern' header declaration for 'x' [351] */
 const char *x = _Generic(
     1ULL + 1.0f,
     int: 1
