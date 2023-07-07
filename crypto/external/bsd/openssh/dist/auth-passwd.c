@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-passwd.c,v 1.12 2021/03/05 17:47:15 christos Exp $	*/
+/*	$NetBSD: auth-passwd.c,v 1.13 2023/07/07 07:04:17 rin Exp $	*/
 /* $OpenBSD: auth-passwd.c,v 1.48 2020/10/18 11:32:01 djm Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-passwd.c,v 1.12 2021/03/05 17:47:15 christos Exp $");
+__RCSID("$NetBSD: auth-passwd.c,v 1.13 2023/07/07 07:04:17 rin Exp $");
 #include <sys/types.h>
 
 #include <login_cap.h>
@@ -94,9 +94,9 @@ auth_password(struct ssh *ssh, const char *password)
 #ifdef KRB5
 	if (options.kerberos_authentication == 1) {
 		int ret = auth_krb5_password(authctxt, password);
- 		if (ret == 1 || ret == 0)
- 			return ret && ok;
- 		/* Fall back to ordinary passwd authentication. */
+		if (ret == 1 || ret == 0)
+			return ret && ok;
+		/* Fall back to ordinary passwd authentication. */
 	}
 #endif
 
