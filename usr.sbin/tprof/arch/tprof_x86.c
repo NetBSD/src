@@ -1,4 +1,4 @@
-/*	$NetBSD: tprof_x86.c,v 1.17 2023/04/12 02:15:51 msaitoh Exp $	*/
+/*	$NetBSD: tprof_x86.c,v 1.18 2023/07/07 04:37:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -570,10 +570,10 @@ init_intel_generic(void)
 			break;
 		case 0x4e: /* Skylake */
 		case 0x5e: /* Skylake */
-		case 0x8e: /* Kabylake */
-		case 0x9e: /* Kabylake */
-		case 0xa5: /* Cometlake */
-		case 0xa6: /* Cometlake */
+		case 0x8e: /* Kaby Lake */
+		case 0x9e: /* Kaby Lake */
+		case 0xa5: /* Comet Lake */
+		case 0xa6: /* Comet Lake */
 			table->next = init_intel_skylake_kabylake();
 			break;
 		}
