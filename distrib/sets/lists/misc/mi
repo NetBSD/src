@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.205 2017/05/21 15:28:38 riastradh Exp $
+# $NetBSD: mi,v 1.205.2.1 2023/07/07 18:49:27 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1363,6 +1363,7 @@
 ./usr/share/examples/atf/tests-results.css	misc-atf-examples	share,atf,!kyua
 ./usr/share/examples/atf/tests-results.css	misc-obsolete		share,kyua,obsolete
 ./usr/share/examples/dhcp/dhcpd.conf		misc-dhcpd-examples	share
+./usr/share/examples/dhcpcd/dhcpcd.conf		misc-dhcpcd-examples	share
 ./usr/share/examples/dhcpcd/hooks/10-wpa_supplicant	misc-dhcpcd-examples	share
 ./usr/share/examples/dhcpcd/hooks/15-timezone	misc-dhcpcd-examples	share
 ./usr/share/examples/dhcpcd/hooks/29-lookup-hostname	misc-dhcpcd-examples	share
