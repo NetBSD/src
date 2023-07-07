@@ -1,4 +1,4 @@
-.\"	$NetBSD: heartbeat.9,v 1.2 2023/07/07 12:59:45 wiz Exp $
+.\"	$NetBSD: heartbeat.9,v 1.3 2023/07/07 13:15:00 wiz Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -143,7 +143,9 @@ marked online.
 Start monitoring heartbeats systemwide.
 .Pp
 Called by
-.Xr main 9
+.Fn main
+in
+.Pa sys/kern/init_main.c
 as soon as soft interrupts can be established.
 .It Fn heartbeat_suspend
 Suspend heartbeat monitoring of the current CPU.
