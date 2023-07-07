@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_166.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_166.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_166.c"
 
 // Test for message: precision lost in bit-field assignment [166]
 
-/* lint1-extra-flags: -hp */
+/* lint1-extra-flags: -hp -X 351 */
 
 struct bit_set {
 

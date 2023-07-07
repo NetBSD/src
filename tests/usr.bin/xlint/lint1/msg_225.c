@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_225.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_225.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_225.c"
 
 // Test for message: static function '%s' called but not defined [225]
+
+/* lint1-extra-flags: -X 351 */
 
 static void undefined(void);
 

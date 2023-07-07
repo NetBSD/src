@@ -5,6 +5,8 @@
  * truthiness, such as in the condition of an if statement.
  */
 
+/* lint1-extra-flags: -X 351 */
+
 struct s {
 	int member;
 };

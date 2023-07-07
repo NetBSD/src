@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_104.c,v 1.4 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_104.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_104.c"
 
 // Test for message: left operand of '->' must be pointer to struct or union, not '%s' [104]
+
+/* lint1-extra-flags: -X 351 */
 
 struct point {
 	int x, y;

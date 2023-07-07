@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_atomic.c,v 1.4 2023/07/07 00:20:39 rillig Exp $	*/
+/*	$NetBSD: c11_atomic.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "c11_atomic.c"
 
 /*
@@ -11,7 +11,7 @@
  *	msg_350.c
  */
 
-/* lint1-extra-flags: -Ac11 */
+/* lint1-extra-flags: -Ac11 -X 351 */
 
 /* C11 6.7.3 "Type qualifiers" */
 typedef _Atomic int atomic_int;

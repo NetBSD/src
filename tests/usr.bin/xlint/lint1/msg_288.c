@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_288.c,v 1.3 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_288.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_288.c"
 
 // Test for message: dubious use of /* VARARGS */ with /* %s */ [288]
+
+/* lint1-extra-flags: -X 351 */
 
 /* VARARGS */
 int

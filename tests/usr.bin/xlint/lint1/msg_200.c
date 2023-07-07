@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_200.c,v 1.3 2021/08/27 20:16:50 rillig Exp $	*/
+/*	$NetBSD: msg_200.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_200.c"
 
 // Test for message: duplicate case in switch: %lu [200]
+
+/* lint1-extra-flags: -X 351 */
 
 void
 example(unsigned x)

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_202.c,v 1.3 2022/06/16 21:24:41 rillig Exp $	*/
+/*	$NetBSD: msg_202.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_202.c"
 
 // Test for message: duplicate default in switch [202]
+
+/* lint1-extra-flags: -X 351 */
 
 void
 example(int x)

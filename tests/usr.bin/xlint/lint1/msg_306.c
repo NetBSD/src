@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_306.c,v 1.4 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_306.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_306.c"
 
 // Test for message: constant truncated by conversion, op '%s' [306]
+
+/* lint1-extra-flags: -X 351 */
 
 unsigned char
 to_u8(void)

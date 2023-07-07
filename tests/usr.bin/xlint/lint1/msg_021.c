@@ -1,9 +1,11 @@
-/*	$NetBSD: msg_021.c,v 1.4 2022/06/20 21:13:36 rillig Exp $	*/
+/*	$NetBSD: msg_021.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_021.c"
 
 // Test for message: redeclaration of formal parameter '%s' [21]
 
 /* See also message 237, which has the same text. */
+
+/* lint1-extra-flags: -X 351 */
 
 /*ARGSUSED*/
 void

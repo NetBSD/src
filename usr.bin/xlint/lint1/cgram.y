@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.446 2023/07/02 23:40:23 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.447 2023/07/07 19:45:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.446 2023/07/02 23:40:23 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.447 2023/07/07 19:45:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1970,6 +1970,7 @@ function_definition:		/* C99 6.9.1 */
 			error(64);
 			YYERROR;
 		}
+		check_extern_declaration($1);
 		begin_function($1);
 		block_level++;
 		begin_declaration_level(DLK_OLD_STYLE_ARGS);

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_191.c,v 1.4 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_191.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_191.c"
 
 // Test for message: '%s' set but not used in function '%s' [191]
+
+/* lint1-extra-flags: -X 351 */
 
 void
 example(void)

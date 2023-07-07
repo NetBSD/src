@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_195.c,v 1.3 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_195.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_195.c"
 
 // Test for message: case not in switch [195]
+
+/* lint1-extra-flags: -X 351 */
 
 int
 example(int x)

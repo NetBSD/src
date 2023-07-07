@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_340.c,v 1.4 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_340.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_340.c"
 
 // Test for message: initialization with '[a...b]' is a GCC extension [340]
@@ -7,7 +7,7 @@
  * In strict C mode, GCC extensions are flagged as such.
  */
 
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 int
 example(void)

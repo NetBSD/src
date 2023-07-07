@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_217.c,v 1.11 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_217.c,v 1.12 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_217.c"
 
 // Test for message: function '%s' falls off bottom without returning value [217]
+
+/* lint1-extra-flags: -X 351 */
 
 int
 random(int n)

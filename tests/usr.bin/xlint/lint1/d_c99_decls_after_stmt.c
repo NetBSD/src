@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_decls_after_stmt.c,v 1.5 2023/01/22 17:17:25 rillig Exp $	*/
+/*	$NetBSD: d_c99_decls_after_stmt.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "d_c99_decls_after_stmt.c"
 
 /*
@@ -7,6 +7,8 @@
  *
  * https://gnats.netbsd.org/45417
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void
 two_groups_of_decl_plus_stmt(void)

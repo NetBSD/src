@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_165.c,v 1.5 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: msg_165.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_165.c"
 
 // Test for message: constant truncated by assignment [165]
+
+/* lint1-extra-flags: -X 351 */
 
 void
 example(void)

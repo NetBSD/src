@@ -1,4 +1,4 @@
-/*	$NetBSD: init_braces.c,v 1.7 2023/07/01 06:09:24 rillig Exp $	*/
+/*	$NetBSD: init_braces.c,v 1.8 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "init_braces.c"
 
 /*
@@ -8,6 +8,8 @@
  *	C99 6.7.8
  *	C11 6.7.9
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void
 init_int(void)

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_011.c,v 1.6 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: msg_011.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_011.c"
 
 // Test for message: bit-field initializer out of range [11]
+
+/* lint1-extra-flags: -X 351 */
 
 void
 example(void)

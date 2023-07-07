@@ -1,9 +1,11 @@
-/*	$NetBSD: stmt_goto.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: stmt_goto.c,v 1.3 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "stmt_goto.c"
 
 /*
  * Tests for the 'goto' statement.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 /* expect+1: error: syntax error 'goto' [249] */
 goto invalid_at_top_level;

@@ -1,9 +1,9 @@
-/*	$NetBSD: d_c99_union_cast.c,v 1.7 2021/08/03 20:57:06 rillig Exp $	*/
+/*	$NetBSD: d_c99_union_cast.c,v 1.8 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "d_c99_union_cast.c"
 
 /* C99 does not define union cast, it is a GCC extension. */
 
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 struct bar {
 	int a;

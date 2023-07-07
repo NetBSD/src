@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_274.c,v 1.3 2021/08/22 13:45:56 rillig Exp $	*/
+/*	$NetBSD: msg_274.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_274.c"
 
 /* Test for message: ANSI C forbids comparison of %s with %s [274] */
 
-/* lint1-flags: -sw */
+/* lint1-flags: -sw -X 351 */
 
 void
 example(void (*function_pointer)(void), void *void_pointer)

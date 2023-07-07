@@ -1,4 +1,4 @@
-/*	$NetBSD: d_pr_22119.c,v 1.4 2022/04/01 22:28:21 rillig Exp $	*/
+/*	$NetBSD: d_pr_22119.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "d_pr_22119.c"
 
 /*
@@ -7,6 +7,8 @@
  * Before 2021-02-28, lint crashed in cast() since the target type of the
  * cast is NULL.
 */
+
+/* lint1-extra-flags: -X 351 */
 
 void
 func1(void)

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_215.c,v 1.12 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_215.c,v 1.13 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_215.c"
 
 // Test for message: function '%s' implicitly declared to return int [215]
@@ -8,6 +8,8 @@
  * by just calling it, without defining a prototype first.  Such a function
  * would then be defined as taking unspecified parameters and returning int.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 struct str {
 	int dummy;

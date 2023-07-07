@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_cast.c,v 1.3 2021/08/03 18:44:33 rillig Exp $	*/
+/*	$NetBSD: expr_cast.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "expr_cast.c"
 
 /*
@@ -12,7 +12,7 @@
  * c-typeck.c, function build_c_cast, RECORD_OR_UNION_TYPE_P.
  */
 
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 struct S {
 	int member;

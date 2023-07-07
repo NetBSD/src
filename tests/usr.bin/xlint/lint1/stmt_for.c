@@ -1,4 +1,4 @@
-/*	$NetBSD: stmt_for.c,v 1.3 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: stmt_for.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "stmt_for.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * "dcs->d_next == NULL" failed in funcend at func.c:422
  */
+
+/* lint1-extra-flags: -X 351 */
 
 void
 test(void)

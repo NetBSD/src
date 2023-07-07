@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_280.c,v 1.6 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_280.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_280.c"
 
 // Test for message: comment /* %s */ must be outside function [280]
+
+/* lint1-extra-flags: -X 351 */
 
 /* VARARGS */
 void

@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_283.c,v 1.5 2022/06/22 19:23:18 rillig Exp $	*/
+/*	$NetBSD: msg_283.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_283.c"
 
 // Test for message: argument number mismatch with directive /* %s */ [283]
 
 /* Do not warn about unused parameters. */
-/* lint1-extra-flags: -X 231 */
+/* lint1-extra-flags: -X 231,351 */
 
 /* PRINTFLIKE */
 void

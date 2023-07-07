@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_320.c,v 1.3 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_320.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_320.c"
 
 // Test for message: ({ }) is a GCC extension [320]
 
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 int
 example(void)

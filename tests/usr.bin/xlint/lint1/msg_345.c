@@ -1,10 +1,10 @@
-/*	$NetBSD: msg_345.c,v 1.3 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: msg_345.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_345.c"
 
 // Test for message: generic selection requires C11 or later [345]
 
 /* Omit flag -g since it silences c11ism. */
-/* lint1-flags: -Sw */
+/* lint1-flags: -Sw -X 351 */
 
 int
 test(int x)

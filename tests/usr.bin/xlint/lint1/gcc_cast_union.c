@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_cast_union.c,v 1.3 2021/08/03 21:18:24 rillig Exp $	*/
+/*	$NetBSD: gcc_cast_union.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "gcc_cast_union.c"
 
 /*
@@ -11,7 +11,7 @@
  * https://gcc.gnu.org/onlinedocs/gcc/Cast-to-Union.html
  */
 
-/* lint1-extra-flags: -e */
+/* lint1-extra-flags: -e -X 351 */
 
 union anything {
 	_Bool m_bool;

@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_099.c,v 1.5 2022/04/03 09:34:45 rillig Exp $	*/
+/*	$NetBSD: msg_099.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_099.c"
 
 // Test for message: '%s' undefined [99]
+
+/* lint1-extra-flags: -X 351 */
 
 void
 example(int defined_variable)

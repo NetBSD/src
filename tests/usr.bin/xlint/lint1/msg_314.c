@@ -1,8 +1,10 @@
-/*	$NetBSD: msg_314.c,v 1.4 2022/06/11 11:52:13 rillig Exp $	*/
+/*	$NetBSD: msg_314.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_314.c"
 
 // Test for message: '%s' is not a structure or a union [314]
 /* This message is not used. */
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * Added in err.c 1.20 from 2002-10-21 when adding support for C99's

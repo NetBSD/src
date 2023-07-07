@@ -1,9 +1,11 @@
-/*	$NetBSD: gcc_attribute_aligned.c,v 1.5 2022/08/27 23:24:37 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_aligned.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "gcc_attribute_aligned.c"
 
 /*
  * Test size computations on aligned and packed structs.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 typedef unsigned short uint16_t;
 typedef unsigned int uint32_t;

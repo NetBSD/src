@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_121.c,v 1.6 2022/06/19 12:14:34 rillig Exp $	*/
+/*	$NetBSD: msg_121.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_121.c"
 
 // Test for message: negative shift [121]
+
+/* lint1-extra-flags: -X 351 */
 
 int
 example(int x)

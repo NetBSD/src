@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_329.c,v 1.4 2022/06/17 06:59:16 rillig Exp $	*/
+/*	$NetBSD: msg_329.c,v 1.5 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_329.c"
 
 // Test for message: type '%s' is not a member of '%s' [329]
+
+/* lint1-extra-flags: -X 351 */
 
 union u {
 	int i1;

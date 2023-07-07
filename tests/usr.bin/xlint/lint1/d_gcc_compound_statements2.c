@@ -1,4 +1,4 @@
-/*	$NetBSD: d_gcc_compound_statements2.c,v 1.5 2022/02/26 20:36:11 rillig Exp $	*/
+/*	$NetBSD: d_gcc_compound_statements2.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "d_gcc_compound_statements2.c"
 
 /*
@@ -6,6 +6,8 @@
  *
  * https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html
  */
+
+/* lint1-extra-flags: -X 351 */
 
 struct cpu_info {
 	int bar;

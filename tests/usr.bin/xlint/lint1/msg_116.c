@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_116.c,v 1.5 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_116.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_116.c"
 
 // Test for message: illegal pointer subtraction [116]
+
+/* lint1-extra-flags: -X 351 */
 
 /*
  * Subtracting an int pointer from a double pointer does not make sense.

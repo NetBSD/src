@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_096.c,v 1.6 2022/06/21 21:18:30 rillig Exp $	*/
+/*	$NetBSD: msg_096.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_096.c"
 
 // Test for message: cannot dereference non-pointer type '%s' [96]
+
+/* lint1-extra-flags: -X 351 */
 
 int
 unary_plus(int i)

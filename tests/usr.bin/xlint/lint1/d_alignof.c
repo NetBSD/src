@@ -1,7 +1,9 @@
-/*	$NetBSD: d_alignof.c,v 1.11 2023/06/30 16:39:17 rillig Exp $	*/
+/*	$NetBSD: d_alignof.c,v 1.12 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "d_alignof.c"
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Alignment.html */
+
+/* lint1-extra-flags: -X 351 */
 
 unsigned long
 leading_and_trailing_alignof_type(void)

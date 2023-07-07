@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_352.c,v 1.1 2023/03/28 20:04:52 rillig Exp $	*/
+/*	$NetBSD: msg_352.c,v 1.2 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "msg_352.c"
 
 // Test for message 352: nested 'extern' declaration of '%s' [352]
@@ -9,6 +9,8 @@
  *
  * Instead, any external functions or objects should be declared in headers.
  */
+
+/* lint1-extra-flags: -X 351 */
 
 int
 function(void)

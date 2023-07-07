@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_builtin_overflow.c,v 1.2 2021/09/03 22:48:49 rillig Exp $	*/
+/*	$NetBSD: gcc_builtin_overflow.c,v 1.3 2023/07/07 19:45:22 rillig Exp $	*/
 # 3 "gcc_builtin_overflow.c"
 
 /*
@@ -8,7 +8,7 @@
  * https://gcc.gnu.org/onlinedocs/gcc/Integer-Overflow-Builtins.html
  */
 
-/* lint1-extra-flags: -T */
+/* lint1-extra-flags: -T -X 351 */
 
 void
 is_overflow(void)

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.342 2023/07/07 06:03:31 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.343 2023/07/07 19:45:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.342 2023/07/07 06:03:31 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.343 2023/07/07 19:45:22 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1816,14 +1816,16 @@ ends_with(const char *s, const char *suffix)
 	       memcmp(s + s_len - suffix_len, suffix, suffix_len) == 0;
 }
 
-static void
+void
 check_extern_declaration(const sym_t *sym)
 {
 
 	if (sym->s_scl == EXTERN &&
 	    dcs->d_redeclared_symbol == NULL &&
 	    ends_with(curr_pos.p_file, ".c") &&
-	    !ch_isdigit(sym->s_name[0])) {	/* see mktempsym */
+	    allow_c90 &&
+	    !ch_isdigit(sym->s_name[0]) &&	/* see mktempsym */
+	    strcmp(sym->s_name, "main") != 0) {
 		/* missing%s header declaration for '%s' */
 		warning(351, sym->s_type->t_tspec == FUNC ? "" : " 'extern'",
 		    sym->s_name);
