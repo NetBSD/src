@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.541 2022/10/26 23:20:47 riastradh Exp $	*/
+/*	$NetBSD: init_main.c,v 1.542 2023/07/07 12:34:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,10 +97,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.541 2022/10/26 23:20:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.542 2023/07/07 12:34:50 riastradh Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
+#include "opt_heartbeat.h"
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_modular.h"
@@ -199,6 +200,7 @@ extern void *_binary_splash_image_end;
 #include <sys/cprng.h>
 #include <sys/psref.h>
 #include <sys/radixtree.h>
+#include <sys/heartbeat.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -556,6 +558,14 @@ main(void)
 
 	/* Once all CPUs are detected, initialize the per-CPU cprng_fast.  */
 	cprng_fast_init();
+
+#ifdef HEARTBEAT
+	/*
+	 * Now that softints can be established, start monitoring
+	 * system heartbeat on all CPUs.
+	 */
+	heartbeat_start();
+#endif
 
 	ssp_init();
 

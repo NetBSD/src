@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.94 2023/02/26 07:13:55 skrll Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.95 2023/07/07 12:34:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,10 +60,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.94 2023/02/26 07:13:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.95 2023/07/07 12:34:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
+#include "opt_heartbeat.h"
 #endif
 
 #include <sys/param.h>
@@ -85,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.94 2023/02/26 07:13:55 skrll Exp $");
 #include <sys/namei.h>
 #include <sys/callout.h>
 #include <sys/pcu.h>
+#include <sys/heartbeat.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -377,6 +379,10 @@ fail:
 	s = splsched();
 	spc->spc_flags &= ~SPCF_OFFLINE;
 	splx(s);
+
+#ifdef HEARTBEAT
+	heartbeat_suspend();
+#endif
 }
 
 static void
@@ -384,6 +390,10 @@ cpu_xc_online(struct cpu_info *ci, void *unused)
 {
 	struct schedstate_percpu *spc;
 	int s;
+
+#ifdef HEARTBEAT
+	heartbeat_resume();
+#endif
 
 	spc = &ci->ci_schedstate;
 	s = splsched();

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.52 2020/06/14 21:41:42 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.53 2023/07/07 12:34:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -188,6 +188,11 @@ struct cpu_data {
 	kcpuset_t	*cpu_kcpuset;		/* kcpuset_t of this cpu only */
 	struct lwp * volatile cpu_pcu_curlwp[PCU_UNIT_COUNT];
 	int64_t		cpu_counts[CPU_COUNT_MAX];/* per-CPU counts */
+
+	unsigned	cpu_heartbeat_count;		/* # of heartbeats */
+	unsigned	cpu_heartbeat_uptime_cache;	/* last time_uptime */
+	unsigned	cpu_heartbeat_uptime_stamp;	/* heartbeats since
+							 * uptime changed */
 };
 
 #define	ci_schedstate		ci_data.cpu_schedstate
@@ -215,6 +220,10 @@ struct cpu_data {
 #define	ci_package1st		ci_data.cpu_package1st
 #define	ci_faultrng		ci_data.cpu_faultrng
 #define	ci_counts		ci_data.cpu_counts
+
+#define	ci_heartbeat_count		ci_data.cpu_heartbeat_count
+#define	ci_heartbeat_uptime_cache	ci_data.cpu_heartbeat_uptime_cache
+#define	ci_heartbeat_uptime_stamp	ci_data.cpu_heartbeat_uptime_stamp
 
 #define	cpu_nsyscall		cpu_counts[CPU_COUNT_NSYSCALL]
 #define	cpu_ntrap		cpu_counts[CPU_COUNT_NTRAP]
