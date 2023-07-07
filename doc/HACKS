@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.236 2023/05/07 12:43:32 martin Exp $
+# $NetBSD: HACKS,v 1.237 2023/07/07 08:39:23 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1089,4 +1089,15 @@ file	sys/arch/powerpc/ibm4xx/trap.c: 1.99
 descr
 	clang 13.0.0 miscompiles copy{in,out}() with -O[12]. As a result,
 	kernel cannot execute /sbin/init.
+kcah
+
+hack	Disable secure PLT for alpha
+cdate	Fri Jul  7 08:33:25 UTC 2023
+who	rin
+port	alpha
+file	src/external/gpl3/binutils/dist/bfd/elf64-alpha.c: 1.11
+pr	port-alpha/57511
+descr
+	Temporally disable secure PLT support, introduced by
+	binutils 2.39 for us. We need its support to ld.elf_so(1).
 kcah
