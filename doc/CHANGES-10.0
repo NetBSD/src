@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.78 2023/07/05 16:12:51 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.79 2023/07/07 19:04:02 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2368,4 +2368,22 @@ lib/libc/dlfcn/dlfcn_elf.c			1.17
 
 	libc: Fix missing membar_consumer in dl_iterate_phdr.
 	[riastradh, ticket #225]
+
+distrib/sets/lists/misc/mi			1.225
+external/bsd/dhcpcd/examples/Makefile		1.2
+external/bsd/dhcpcd/examples/conf/Makefile	1.1
+
+	PR 57487: install a copy of dhcpcd.conf under /usr/share/examples.
+	[gutteridge, ticket #226]
+
+sys/arch/evbarm/conf/std.generic		1.11
+
+	evbarm: enable MEMORY_DISK_DYNAMIC & co. to match aarch64.
+	Allows loading of ramdisk.fs via u-boot initrd (to run sysinst)
+	[jakllsch, ticket #227]
+
+sys/net/if_wg.c					1.76
+
+	wg(4): improve diagnostic messages.
+	[jakllsch, ticket #228]
 
