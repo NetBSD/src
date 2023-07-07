@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.1 2017/04/02 20:18:37 roy Exp $
+#	$NetBSD: Makefile,v 1.1.28.1 2023/07/07 18:43:09 martin Exp $
 
-SUBDIR=		hooks
+SUBDIR=		conf hooks
 
 .include <bsd.subdir.mk>
