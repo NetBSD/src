@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.547 2023/07/03 21:36:16 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.548 2023/07/07 06:03:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.547 2023/07/03 21:36:16 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.548 2023/07/07 06:03:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4336,7 +4336,7 @@ integer_constant(tnode_t *tn, bool required)
 	val_t *v = xcalloc(1, sizeof(*v));
 
 	if (tn == NULL) {
-		lint_assert(nerr != 0);
+		lint_assert(seen_error);
 		debug_step("constant node is null; returning 1 instead");
 		v->v_tspec = INT;
 		v->u.integer = 1;

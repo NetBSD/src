@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_var.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_var.c,v 1.9 2023/07/07 06:03:31 rillig Exp $	*/
 # 3 "gcc_attribute_var.c"
 
 /*
@@ -52,6 +52,7 @@ void println(void);
 void
 ambiguity_for_attribute(void)
 {
+	/* expect+1: warning: 'var1' unused in function 'ambiguity_for_attribute' [192] */
 	__attribute__((unused)) _Bool var1;
 
 	switch (1) {

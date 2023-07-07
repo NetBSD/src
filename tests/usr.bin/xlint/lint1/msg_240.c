@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_240.c,v 1.4 2022/07/01 20:53:13 rillig Exp $	*/
+/*	$NetBSD: msg_240.c,v 1.5 2023/07/07 06:03:31 rillig Exp $	*/
 # 3 "msg_240.c"
 
 // Test for message: assignment of different structures (%s != %s) [240]
@@ -32,6 +32,7 @@ return_other_struct(struct s_arg s_arg)
 void
 assign_other_struct(struct s_arg s_arg)
 {
+	/* expect+1: warning: 's_local' unused in function 'assign_other_struct' [192] */
 	static struct s_local s_local;
 	/* XXX: No warning? */
 	s_local = s_arg;

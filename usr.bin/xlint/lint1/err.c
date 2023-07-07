@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.204 2023/07/02 23:40:23 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.205 2023/07/07 06:03:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.204 2023/07/02 23:40:23 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.205 2023/07/07 06:03:31 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -47,8 +47,8 @@ __RCSID("$NetBSD: err.c,v 1.204 2023/07/02 23:40:23 rillig Exp $");
 
 #include "lint1.h"
 
-/* number of errors found */
-int	nerr;
+bool	seen_error;
+bool	seen_warning;
 
 /* number of syntax errors */
 int	sytxerr;
@@ -529,7 +529,7 @@ verror_at(int msgid, const pos_t *pos, va_list ap)
 	(void)printf("%s(%d): error: ", fn, pos->p_line);
 	(void)vprintf(msgs[msgid], ap);
 	(void)printf(" [%d]\n", msgid);
-	nerr++;
+	seen_error = true;
 	print_stack_trace();
 }
 
@@ -550,8 +550,7 @@ vwarning_at(int msgid, const pos_t *pos, va_list ap)
 	(void)printf("%s(%d): warning: ", fn, pos->p_line);
 	(void)vprintf(msgs[msgid], ap);
 	(void)printf(" [%d]\n", msgid);
-	if (wflag)
-		nerr++;
+	seen_warning = true;
 	print_stack_trace();
 }
 

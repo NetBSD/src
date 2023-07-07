@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.21 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.22 2023/07/07 06:03:31 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -6,7 +6,7 @@
  * declaration-specifiers and the declarators.
  */
 
-/* lint1-extra-flags: -X 351 */
+/* lint1-extra-flags: -X 191,351 */
 
 /*
  * Even though 'const' comes after 'char' and is therefore quite close to the
