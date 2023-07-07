@@ -83,7 +83,7 @@
 
 /* Set by ld emulation.  Putting this into the link_info or hash structure
    is simply working too hard.  */
-#ifdef USE_SECUREPLT
+#if defined(USE_SECUREPLT) && 0 /* XXX port-alpha/57511 */
 bool elf64_alpha_use_secureplt = true;
 #else
 bool elf64_alpha_use_secureplt = false;
