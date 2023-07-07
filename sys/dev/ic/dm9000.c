@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.35 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.36 2023/07/07 07:22:18 martin Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -446,7 +446,7 @@ dme_set_rcvfilt(struct dme_softc *sc)
 			memset(mchash, 0xff, sizeof(mchash)); /* necessary? */
 			/* accept all mulicast frame */
 			rcr |= DM9000_RCR_ALL;
-			break;
+			goto update;
 		}
 		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) & 0x3f;
 		/* 3(5:3) and 3(2:0) sampling to have uint8_t[8] */
