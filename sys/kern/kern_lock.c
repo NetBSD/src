@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.184 2023/04/09 08:17:36 riastradh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.185 2023/07/07 17:05:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,9 +31,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.184 2023/04/09 08:17:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.185 2023/07/07 17:05:13 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
+#include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #endif
 
@@ -51,6 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.184 2023/04/09 08:17:36 riastradh Ex
 
 #if defined(DIAGNOSTIC) && !defined(LOCKDEBUG)
 #include <sys/ksyms.h>
+#endif
+
+#ifdef DDB
+#include <ddb/ddb.h>
 #endif
 
 #include <machine/lock.h>
@@ -116,17 +121,17 @@ panic:	panic("%s: %s caller=%p", __func__, reason, (void *)RETURN_ADDRESS);
  * so that they show up in profiles.
  */
 
+#ifdef LOCKDEBUG
 #define	_KERNEL_LOCK_ABORT(msg)						\
     LOCKDEBUG_ABORT(__func__, __LINE__, kernel_lock, &_kernel_lock_ops, msg)
-
-#ifdef LOCKDEBUG
 #define	_KERNEL_LOCK_ASSERT(cond)					\
 do {									\
 	if (!(cond))							\
 		_KERNEL_LOCK_ABORT("assertion failed: " #cond);		\
 } while (/* CONSTCOND */ 0)
 #else
-#define	_KERNEL_LOCK_ASSERT(cond)	/* nothing */
+#define	_KERNEL_LOCK_ABORT(cond)	__nothing
+#define	_KERNEL_LOCK_ASSERT(cond)	__nothing
 #endif
 
 static void	_kernel_lock_dump(const volatile void *, lockop_printer_t);
@@ -137,10 +142,6 @@ lockops_t _kernel_lock_ops = {
 	.lo_dump = _kernel_lock_dump,
 };
 
-#ifdef LOCKDEBUG
-
-#include <ddb/ddb.h>
-
 static void
 kernel_lock_trace_ipi(void *cookie)
 {
@@ -148,10 +149,10 @@ kernel_lock_trace_ipi(void *cookie)
 	printf("%s[%d %s]: hogging kernel lock\n", cpu_name(curcpu()),
 	    curlwp->l_lid,
 	    curlwp->l_name ? curlwp->l_name : curproc->p_comm);
+#ifdef DDB
 	db_stacktrace();
-}
-
 #endif
+}
 
 /*
  * Initialize the kernel lock.
@@ -195,11 +196,9 @@ _kernel_lock(int nlocks)
 	LOCKSTAT_TIMER(spintime);
 	LOCKSTAT_FLAG(lsflag);
 	struct lwp *owant;
-#ifdef LOCKDEBUG
 	static struct cpu_info *kernel_lock_holder;
 	u_int spins = 0;
 	u_int starttime = getticks();
-#endif
 	int s;
 	struct lwp *l = curlwp;
 
