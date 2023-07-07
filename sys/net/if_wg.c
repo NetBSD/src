@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.71.2.1 2023/01/13 19:14:13 martin Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.71.2.2 2023/07/07 19:02:22 martin Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.71.2.1 2023/01/13 19:14:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.71.2.2 2023/07/07 19:02:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1477,7 +1477,8 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	    wgmi->wgmi_static, sizeof(wgmi->wgmi_static), hash, sizeof(hash));
 	if (error != 0) {
 		WG_LOG_RATECHECK(&wg->wg_ppsratecheck, LOG_DEBUG,
-		    "wg_algo_aead_dec for secret key failed\n");
+		    "%s: wg_algo_aead_dec for secret key failed\n",
+		    if_name(&wg->wg_if));
 		return;
 	}
 	/* Hi := HASH(Hi || msg.static) */
@@ -1542,7 +1543,8 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	    hash, sizeof(hash));
 	if (error != 0) {
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
-		    "wg_algo_aead_dec for timestamp failed\n");
+		    "%s: peer %s: wg_algo_aead_dec for timestamp failed\n",
+		    if_name(&wg->wg_if), wgp->wgp_name);
 		goto out;
 	}
 	/* Hi := HASH(Hi || msg.timestamp) */
@@ -1557,7 +1559,8 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	    sizeof(timestamp));
 	if (ret <= 0) {
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
-		    "invalid init msg: timestamp is old\n");
+		    "%s: peer %s: invalid init msg: timestamp is old\n",
+		    if_name(&wg->wg_if), wgp->wgp_name);
 		goto out;
 	}
 	memcpy(wgp->wgp_timestamp_latest_init, timestamp, sizeof(timestamp));
@@ -1975,7 +1978,8 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	WG_DUMP_HASH("wgmr_empty", wgmr->wgmr_empty);
 	if (error != 0) {
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
-		    "wg_algo_aead_dec for empty message failed\n");
+		    "%s: peer %s: wg_algo_aead_dec for empty message failed\n",
+		    if_name(&wg->wg_if), wgp->wgp_name);
 		goto out;
 	}
 	/* Hr := HASH(Hr || msg.empty) */
@@ -2020,7 +2024,8 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 		const uint32_t h = curcpu()->ci_index; // pktq_rps_hash(m)
 		M_SETCTX(m, wgp);
 		if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
-			WGLOG(LOG_ERR, "pktq full, dropping\n");
+			WGLOG(LOG_ERR, "%s: pktq full, dropping\n",
+			    if_name(&wg->wg_if));
 			m_freem(m);
 		}
 		kpreempt_enable();
@@ -2575,7 +2580,8 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	    le64toh(wgmd->wgmd_counter));
 	if (error) {
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
-		    "out-of-window packet: %"PRIu64"\n",
+		    "%s: peer %s: out-of-window packet: %"PRIu64"\n",
+		    if_name(&wg->wg_if), wgp->wgp_name,
 		    le64toh(wgmd->wgmd_counter));
 		goto out;
 	}
@@ -2629,7 +2635,8 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	    encrypted_len, NULL, 0);
 	if (error != 0) {
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
-		    "failed to wg_algo_aead_dec\n");
+		    "%s: peer %s: failed to wg_algo_aead_dec\n",
+		    if_name(&wg->wg_if), wgp->wgp_name);
 		m_freem(n);
 		goto out;
 	}
@@ -2642,7 +2649,8 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	mutex_exit(&wgs->wgs_recvwin->lock);
 	if (error) {
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
-		    "replay or out-of-window packet: %"PRIu64"\n",
+		    "%s: peer %s: replay or out-of-window packet: %"PRIu64"\n",
+		    if_name(&wg->wg_if), wgp->wgp_name,
 		    le64toh(wgmd->wgmd_counter));
 		m_freem(n);
 		goto out;
@@ -2677,8 +2685,21 @@ wg_handle_msg_data(struct wg_softc *wg, struct mbuf *m,
 	if (ok) {
 		wg->wg_ops->input(&wg->wg_if, n, af);
 	} else {
+		char addrstr[INET6_ADDRSTRLEN];
+		memset(addrstr, 0, sizeof(addrstr));
+		if (af == AF_INET) {
+			const struct ip *ip = (const struct ip *)decrypted_buf;
+			IN_PRINT(addrstr, &ip->ip_src);
+#ifdef INET6
+		} else if (af == AF_INET6) {
+			const struct ip6_hdr *ip6 =
+			    (const struct ip6_hdr *)decrypted_buf;
+			IN6_PRINT(addrstr, &ip6->ip6_src);
+#endif
+		}
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
-		    "invalid source address\n");
+		    "%s: peer %s: invalid source address (%s)\n",
+		    if_name(&wg->wg_if), wgp->wgp_name, addrstr);
 		m_freem(n);
 		/*
 		 * The inner address is invalid however the session is valid
@@ -2766,7 +2787,8 @@ wg_handle_msg_cookie(struct wg_softc *wg, const struct wg_msg_cookie *wgmc)
 	    wgmc->wgmc_salt);
 	if (error != 0) {
 		WG_LOG_RATECHECK(&wgp->wgp_ppsratecheck, LOG_DEBUG,
-		    "wg_algo_aead_dec for cookie failed: error=%d\n", error);
+		    "%s: peer %s: wg_algo_aead_dec for cookie failed: "
+		    "error=%d\n", if_name(&wg->wg_if), wgp->wgp_name, error);
 		goto out;
 	}
 	/*
@@ -2816,7 +2838,8 @@ wg_validate_msg_header(struct wg_softc *wg, struct mbuf *m)
 		break;
 	default:
 		WG_LOG_RATECHECK(&wg->wg_ppsratecheck, LOG_DEBUG,
-		    "Unexpected msg type: %u\n", le32toh(wgm.wgm_type));
+		    "%s: Unexpected msg type: %u\n", if_name(&wg->wg_if),
+		    le32toh(wgm.wgm_type));
 		goto error;
 	}
 
@@ -2929,7 +2952,8 @@ wg_task_send_init_message(struct wg_softc *wg, struct wg_peer *wgp)
 	KASSERT(mutex_owned(wgp->wgp_lock));
 
 	if (!atomic_load_acquire(&wgp->wgp_endpoint_available)) {
-		WGLOG(LOG_DEBUG, "No endpoint available\n");
+		WGLOG(LOG_DEBUG, "%s: No endpoint available\n",
+		    if_name(&wg->wg_if));
 		/* XXX should do something? */
 		return;
 	}
@@ -3018,7 +3042,8 @@ wg_task_establish_session(struct wg_softc *wg, struct wg_peer *wgp)
 		const uint32_t h = curcpu()->ci_index; // pktq_rps_hash(m)
 		M_SETCTX(m, wgp);
 		if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
-			WGLOG(LOG_ERR, "pktq full, dropping\n");
+			WGLOG(LOG_ERR, "%s: pktq full, dropping\n",
+			    if_name(&wg->wg_if));
 			m_freem(m);
 		}
 		kpreempt_enable();
@@ -3432,7 +3457,8 @@ wg_destroy_peer(struct wg_peer *wgp)
 			char addrstr[128];
 			sockaddr_format(&wga->wga_sa_addr, addrstr,
 			    sizeof(addrstr));
-			WGLOG(LOG_WARNING, "Couldn't delete %s", addrstr);
+			WGLOG(LOG_WARNING, "%s: Couldn't delete %s",
+			    if_name(&wg->wg_if), addrstr);
 		}
 	}
 	rw_exit(wg->wg_rwlock);
@@ -3818,7 +3844,9 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	/* TODO make the nest limit configurable via sysctl */
 	error = if_tunnel_check_nesting(ifp, m, 1);
 	if (error) {
-		WGLOG(LOG_ERR, "tunneling loop detected and packet dropped\n");
+		WGLOG(LOG_ERR,
+		    "%s: tunneling loop detected and packet dropped\n",
+		    if_name(&wg->wg_if));
 		goto out0;
 	}
 
@@ -3885,7 +3913,8 @@ wg_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	const uint32_t h = curcpu()->ci_index;	// pktq_rps_hash(m)
 	M_SETCTX(m, wgp);
 	if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
-		WGLOG(LOG_ERR, "pktq full, dropping\n");
+		WGLOG(LOG_ERR, "%s: pktq full, dropping\n",
+		    if_name(&wg->wg_if));
 		error = ENOBUFS;
 		goto out3;
 	}
@@ -4788,7 +4817,8 @@ wg_start(struct ifnet *ifp)
 		kpreempt_disable();
 		const uint32_t h = curcpu()->ci_index;	// pktq_rps_hash(m)
 		if (__predict_false(!pktq_enqueue(wg_pktq, m, h))) {
-			WGLOG(LOG_ERR, "pktq full, dropping\n");
+			WGLOG(LOG_ERR, "%s: pktq full, dropping\n",
+			    if_name(ifp));
 			m_freem(m);
 		}
 		kpreempt_enable();
