@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.551 2023/07/08 12:07:21 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.552 2023/07/08 12:45:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.551 2023/07/08 12:07:21 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.552 2023/07/08 12:45:43 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3447,8 +3447,7 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 
 	if (aflag > 0 &&
 	    portable_rank_cmp(nt, ot) < 0 &&
-	    (ot == LONG || ot == ULONG || ot == LLONG || ot == ULLONG ||
-	     aflag > 1) &&
+	    (portable_rank_cmp(ot, LONG) >= 0 || aflag > 1) &&
 	     // XXX: The portable_rank_cmp above aims at portable mode,
 	     // independent of the current platform, while can_represent acts
 	     // on the actual types from the current platform.  This mix is
