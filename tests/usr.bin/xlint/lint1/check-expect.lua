@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.5 2023/07/06 07:33:36 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.6 2023/07/08 10:01:17 rillig Exp $
 
 --[[
 
@@ -46,6 +46,15 @@ local function load_lines(fname)
   f:close()
 
   return lines
+end
+
+
+local function save_lines(fname, lines)
+  local f = io.open(fname, "w")
+  for _, line in ipairs(lines) do
+    f:write(line .. "\n")
+  end
+  f:close()
 end
 
 
@@ -136,9 +145,6 @@ local function load_exp(exp_fname)
 end
 
 
----@param comment string
----@param pattern string
----@return boolean
 local function matches(comment, pattern)
   if comment == "" then return false end
 
@@ -182,13 +188,32 @@ test(function()
 end)
 
 
-local function check_test(c_fname)
+-- Inserts the '/* expect */' lines to the .c file, so that the .c file matches
+-- the .exp file.  Multiple 'expect' comments for a single line of code are not
+-- handled correctly, but it's still better than doing the same work manually.
+local function insert_missing(missing)
+  for fname, items in pairs(missing) do
+    table.sort(items, function(a, b) return a.lineno > b.lineno end)
+    local lines = load_lines(fname)
+    for _, item in ipairs(items) do
+      local lineno, message = item.lineno, item.message
+      local indent = (lines[lineno] or ""):match("^([ \t]*)")
+      local line = ("%s/* expect+1: %s */"):format(indent, message)
+      table.insert(lines, lineno, line)
+    end
+    save_lines(fname, lines)
+  end
+end
+
+
+local function check_test(c_fname, update)
   local exp_fname = c_fname:gsub("%.c$", ".exp"):gsub(".+/", "")
 
   local c_comment_locations, c_comments_by_location = load_c(c_fname)
   if c_comment_locations == nil then return end
 
   local exp_messages = load_exp(exp_fname) or {}
+  local missing = {}
 
   for _, exp_message in ipairs(exp_messages) do
     local c_comments = c_comments_by_location[exp_message.location] or {}
@@ -207,6 +232,16 @@ local function check_test(c_fname)
     if not found then
       print_error("error: %s: missing /* expect+1: %s */",
         exp_message.location, expected_message)
+
+      if update then
+        local fname = exp_message.location:match("^([^(]+)")
+        local lineno = tonumber(exp_message.location:match("%((%d+)%)$"))
+        if not missing[fname] then missing[fname] = {} end
+        table.insert(missing[fname], {
+          lineno = lineno,
+          message = expected_message,
+        })
+      end
     end
   end
 
@@ -219,12 +254,21 @@ local function check_test(c_fname)
       end
     end
   end
+
+  if missing then
+    insert_missing(missing)
+  end
 end
 
 
 local function main(args)
+  local update = args[1] == "-u"
+  if update then
+    table.remove(args, 1)
+  end
+
   for _, name in ipairs(args) do
-    check_test(name)
+    check_test(name, update)
   end
 end
 
