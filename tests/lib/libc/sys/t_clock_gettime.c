@@ -1,4 +1,4 @@
-/* $NetBSD: t_clock_gettime.c,v 1.4 2023/07/08 14:05:51 riastradh Exp $ */
+/* $NetBSD: t_clock_gettime.c,v 1.5 2023/07/08 20:02:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clock_gettime.c,v 1.4 2023/07/08 14:05:51 riastradh Exp $");
+__RCSID("$NetBSD: t_clock_gettime.c,v 1.5 2023/07/08 20:02:10 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -281,8 +281,6 @@ ATF_TC_HEAD(clock_gettime_thread_cputime_is_monotonic, tc)
 }
 ATF_TC_BODY(clock_gettime_thread_cputime_is_monotonic, tc)
 {
-	atf_tc_expect_fail("PR kern/57512: clock_gettime"
-	    "(CLOCK_THREAD_CPUTIME_ID) sometimes goes backwards");
 	check_monotonicity("CLOCK_THREAD_CPUTIME_ID",
 	    CLOCK_THREAD_CPUTIME_ID, &waste_user_time);
 }
