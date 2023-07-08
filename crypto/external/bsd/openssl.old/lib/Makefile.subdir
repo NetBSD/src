@@ -1,0 +1,5 @@
+#	$NetBSD: Makefile.subdir,v 1.1 2023/07/08 23:41:27 rin Exp $
+
+# OpenSSL libraries.
+SUBDIR+= ${OSSL}libcrypto ${OSSL}libcryptotest ${OSSL}libdes
+SUBDIR+= .WAIT	${OSSL}libssl		# depends on libcrypto
