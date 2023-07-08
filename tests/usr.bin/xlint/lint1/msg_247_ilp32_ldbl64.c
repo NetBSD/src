@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247_ilp32_ldbl64.c,v 1.3 2023/07/08 11:03:00 rillig Exp $	*/
+/*	$NetBSD: msg_247_ilp32_ldbl64.c,v 1.4 2023/07/08 16:13:00 rillig Exp $	*/
 # 3 "msg_247_ilp32_ldbl64.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -63,6 +63,7 @@ all_casts(void)
 {
 	bool_ptr = (typeof(bool_ptr))bool_ptr;
 	bool_ptr = (typeof(bool_ptr))char_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to signed char' to 'pointer to _Bool' may be troublesome [247] */
 	bool_ptr = (typeof(bool_ptr))schar_ptr;
 	bool_ptr = (typeof(bool_ptr))uchar_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to short' to 'pointer to _Bool' may be troublesome [247] */
@@ -137,6 +138,7 @@ all_casts(void)
 	/* expect+1: warning: converting 'pointer to function(void) returning void' to 'pointer to char' is questionable [229] */
 	char_ptr = (typeof(char_ptr))func_ptr;
 
+	/* expect+1: warning: pointer cast from 'pointer to _Bool' to 'pointer to signed char' may be troublesome [247] */
 	schar_ptr = (typeof(schar_ptr))bool_ptr;
 	schar_ptr = (typeof(schar_ptr))char_ptr;
 	schar_ptr = (typeof(schar_ptr))schar_ptr;
@@ -327,6 +329,7 @@ all_casts(void)
 	int_ptr = (typeof(int_ptr))llong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned long long' to 'pointer to int' may be troublesome [247] */
 	int_ptr = (typeof(int_ptr))ullong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to int' may be troublesome [247] */
 	int_ptr = (typeof(int_ptr))float_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to int' may be troublesome [247] */
 	int_ptr = (typeof(int_ptr))double_ptr;
@@ -371,6 +374,7 @@ all_casts(void)
 	uint_ptr = (typeof(uint_ptr))llong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned long long' to 'pointer to unsigned int' may be troublesome [247] */
 	uint_ptr = (typeof(uint_ptr))ullong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to unsigned int' may be troublesome [247] */
 	uint_ptr = (typeof(uint_ptr))float_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to unsigned int' may be troublesome [247] */
 	uint_ptr = (typeof(uint_ptr))double_ptr;
@@ -415,6 +419,7 @@ all_casts(void)
 	long_ptr = (typeof(long_ptr))llong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned long long' to 'pointer to long' may be troublesome [247] */
 	long_ptr = (typeof(long_ptr))ullong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to long' may be troublesome [247] */
 	long_ptr = (typeof(long_ptr))float_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to long' may be troublesome [247] */
 	long_ptr = (typeof(long_ptr))double_ptr;
@@ -459,6 +464,7 @@ all_casts(void)
 	ulong_ptr = (typeof(ulong_ptr))llong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned long long' to 'pointer to unsigned long' may be troublesome [247] */
 	ulong_ptr = (typeof(ulong_ptr))ullong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to unsigned long' may be troublesome [247] */
 	ulong_ptr = (typeof(ulong_ptr))float_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to unsigned long' may be troublesome [247] */
 	ulong_ptr = (typeof(ulong_ptr))double_ptr;
@@ -507,8 +513,11 @@ all_casts(void)
 	llong_ptr = (typeof(llong_ptr))ullong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to long long' may be troublesome [247] */
 	llong_ptr = (typeof(llong_ptr))float_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to long long' may be troublesome [247] */
 	llong_ptr = (typeof(llong_ptr))double_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to long double' to 'pointer to long long' may be troublesome [247] */
 	llong_ptr = (typeof(llong_ptr))ldouble_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to float _Complex' to 'pointer to long long' may be troublesome [247] */
 	llong_ptr = (typeof(llong_ptr))fcomplex_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double _Complex' to 'pointer to long long' may be troublesome [247] */
 	llong_ptr = (typeof(llong_ptr))dcomplex_ptr;
@@ -525,6 +534,7 @@ all_casts(void)
 	llong_ptr = (typeof(llong_ptr))double_union_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to enum typedef int_enum' to 'pointer to long long' may be troublesome [247] */
 	llong_ptr = (typeof(llong_ptr))enum_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to array[5] of double' to 'pointer to long long' may be troublesome [247] */
 	llong_ptr = (typeof(llong_ptr))double_array_ptr;
 	/* expect+1: warning: converting 'pointer to function(void) returning void' to 'pointer to long long' is questionable [229] */
 	llong_ptr = (typeof(llong_ptr))func_ptr;
@@ -551,8 +561,11 @@ all_casts(void)
 	ullong_ptr = (typeof(ullong_ptr))ullong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to unsigned long long' may be troublesome [247] */
 	ullong_ptr = (typeof(ullong_ptr))float_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to unsigned long long' may be troublesome [247] */
 	ullong_ptr = (typeof(ullong_ptr))double_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to long double' to 'pointer to unsigned long long' may be troublesome [247] */
 	ullong_ptr = (typeof(ullong_ptr))ldouble_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to float _Complex' to 'pointer to unsigned long long' may be troublesome [247] */
 	ullong_ptr = (typeof(ullong_ptr))fcomplex_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double _Complex' to 'pointer to unsigned long long' may be troublesome [247] */
 	ullong_ptr = (typeof(ullong_ptr))dcomplex_ptr;
@@ -569,6 +582,7 @@ all_casts(void)
 	ullong_ptr = (typeof(ullong_ptr))double_union_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to enum typedef int_enum' to 'pointer to unsigned long long' may be troublesome [247] */
 	ullong_ptr = (typeof(ullong_ptr))enum_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to array[5] of double' to 'pointer to unsigned long long' may be troublesome [247] */
 	ullong_ptr = (typeof(ullong_ptr))double_array_ptr;
 	/* expect+1: warning: converting 'pointer to function(void) returning void' to 'pointer to unsigned long long' is questionable [229] */
 	ullong_ptr = (typeof(ullong_ptr))func_ptr;
@@ -583,9 +597,13 @@ all_casts(void)
 	float_ptr = (typeof(float_ptr))short_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned short' to 'pointer to float' may be troublesome [247] */
 	float_ptr = (typeof(float_ptr))ushort_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to int' to 'pointer to float' may be troublesome [247] */
 	float_ptr = (typeof(float_ptr))int_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to unsigned int' to 'pointer to float' may be troublesome [247] */
 	float_ptr = (typeof(float_ptr))uint_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to long' to 'pointer to float' may be troublesome [247] */
 	float_ptr = (typeof(float_ptr))long_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to float' may be troublesome [247] */
 	float_ptr = (typeof(float_ptr))ulong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to long long' to 'pointer to float' may be troublesome [247] */
 	float_ptr = (typeof(float_ptr))llong_ptr;
@@ -611,6 +629,7 @@ all_casts(void)
 	float_ptr = (typeof(float_ptr))char_union_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to union typedef double_union' to 'pointer to float' may be troublesome [247] */
 	float_ptr = (typeof(float_ptr))double_union_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to enum typedef int_enum' to 'pointer to float' may be troublesome [247] */
 	float_ptr = (typeof(float_ptr))enum_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to array[5] of double' to 'pointer to float' may be troublesome [247] */
 	float_ptr = (typeof(float_ptr))double_array_ptr;
@@ -635,12 +654,15 @@ all_casts(void)
 	double_ptr = (typeof(double_ptr))long_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to double' may be troublesome [247] */
 	double_ptr = (typeof(double_ptr))ulong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to long long' to 'pointer to double' may be troublesome [247] */
 	double_ptr = (typeof(double_ptr))llong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to unsigned long long' to 'pointer to double' may be troublesome [247] */
 	double_ptr = (typeof(double_ptr))ullong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to double' may be troublesome [247] */
 	double_ptr = (typeof(double_ptr))float_ptr;
 	double_ptr = (typeof(double_ptr))double_ptr;
 	double_ptr = (typeof(double_ptr))ldouble_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to float _Complex' to 'pointer to double' may be troublesome [247] */
 	double_ptr = (typeof(double_ptr))fcomplex_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double _Complex' to 'pointer to double' may be troublesome [247] */
 	double_ptr = (typeof(double_ptr))dcomplex_ptr;
@@ -678,12 +700,15 @@ all_casts(void)
 	ldouble_ptr = (typeof(ldouble_ptr))long_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to long double' may be troublesome [247] */
 	ldouble_ptr = (typeof(ldouble_ptr))ulong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to long long' to 'pointer to long double' may be troublesome [247] */
 	ldouble_ptr = (typeof(ldouble_ptr))llong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to unsigned long long' to 'pointer to long double' may be troublesome [247] */
 	ldouble_ptr = (typeof(ldouble_ptr))ullong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to long double' may be troublesome [247] */
 	ldouble_ptr = (typeof(ldouble_ptr))float_ptr;
 	ldouble_ptr = (typeof(ldouble_ptr))double_ptr;
 	ldouble_ptr = (typeof(ldouble_ptr))ldouble_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to float _Complex' to 'pointer to long double' may be troublesome [247] */
 	ldouble_ptr = (typeof(ldouble_ptr))fcomplex_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double _Complex' to 'pointer to long double' may be troublesome [247] */
 	ldouble_ptr = (typeof(ldouble_ptr))dcomplex_ptr;
@@ -722,11 +747,15 @@ all_casts(void)
 	fcomplex_ptr = (typeof(fcomplex_ptr))long_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to float _Complex' may be troublesome [247] */
 	fcomplex_ptr = (typeof(fcomplex_ptr))ulong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to long long' to 'pointer to float _Complex' may be troublesome [247] */
 	fcomplex_ptr = (typeof(fcomplex_ptr))llong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to unsigned long long' to 'pointer to float _Complex' may be troublesome [247] */
 	fcomplex_ptr = (typeof(fcomplex_ptr))ullong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to float _Complex' may be troublesome [247] */
 	fcomplex_ptr = (typeof(fcomplex_ptr))float_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to float _Complex' may be troublesome [247] */
 	fcomplex_ptr = (typeof(fcomplex_ptr))double_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to long double' to 'pointer to float _Complex' may be troublesome [247] */
 	fcomplex_ptr = (typeof(fcomplex_ptr))ldouble_ptr;
 	fcomplex_ptr = (typeof(fcomplex_ptr))fcomplex_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double _Complex' to 'pointer to float _Complex' may be troublesome [247] */
@@ -744,6 +773,7 @@ all_casts(void)
 	fcomplex_ptr = (typeof(fcomplex_ptr))double_union_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to enum typedef int_enum' to 'pointer to float _Complex' may be troublesome [247] */
 	fcomplex_ptr = (typeof(fcomplex_ptr))enum_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to array[5] of double' to 'pointer to float _Complex' may be troublesome [247] */
 	fcomplex_ptr = (typeof(fcomplex_ptr))double_array_ptr;
 	/* expect+1: warning: converting 'pointer to function(void) returning void' to 'pointer to float _Complex' is questionable [229] */
 	fcomplex_ptr = (typeof(fcomplex_ptr))func_ptr;
@@ -1083,6 +1113,7 @@ all_casts(void)
 	enum_ptr = (typeof(enum_ptr))llong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned long long' to 'pointer to enum typedef int_enum' may be troublesome [247] */
 	enum_ptr = (typeof(enum_ptr))ullong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to enum typedef int_enum' may be troublesome [247] */
 	enum_ptr = (typeof(enum_ptr))float_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double' to 'pointer to enum typedef int_enum' may be troublesome [247] */
 	enum_ptr = (typeof(enum_ptr))double_ptr;
@@ -1127,12 +1158,15 @@ all_casts(void)
 	double_array_ptr = (typeof(double_array_ptr))long_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to unsigned long' to 'pointer to array[5] of double' may be troublesome [247] */
 	double_array_ptr = (typeof(double_array_ptr))ulong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to long long' to 'pointer to array[5] of double' may be troublesome [247] */
 	double_array_ptr = (typeof(double_array_ptr))llong_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to unsigned long long' to 'pointer to array[5] of double' may be troublesome [247] */
 	double_array_ptr = (typeof(double_array_ptr))ullong_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to float' to 'pointer to array[5] of double' may be troublesome [247] */
 	double_array_ptr = (typeof(double_array_ptr))float_ptr;
 	double_array_ptr = (typeof(double_array_ptr))double_ptr;
 	double_array_ptr = (typeof(double_array_ptr))ldouble_ptr;
+	/* expect+1: warning: pointer cast from 'pointer to float _Complex' to 'pointer to array[5] of double' may be troublesome [247] */
 	double_array_ptr = (typeof(double_array_ptr))fcomplex_ptr;
 	/* expect+1: warning: pointer cast from 'pointer to double _Complex' to 'pointer to array[5] of double' may be troublesome [247] */
 	double_array_ptr = (typeof(double_array_ptr))dcomplex_ptr;
