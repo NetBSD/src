@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.552 2023/07/08 12:45:43 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.553 2023/07/08 15:26:25 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.552 2023/07/08 12:45:43 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.553 2023/07/08 15:26:25 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -95,9 +95,7 @@ width_in_bits(const type_t *tp)
 	lint_assert(is_integer(tp->t_tspec));
 	return tp->t_bitfield
 	    ? tp->t_bit_field_width
-	    // FIXME: The rank of a type is only intended as a relative size,
-	    // its value is not to be taken literally.
-	    : type_properties(tp->t_tspec)->tt_rank;
+	    : size_in_bits(tp->t_tspec);
 }
 
 static int
@@ -3450,8 +3448,9 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 	    (portable_rank_cmp(ot, LONG) >= 0 || aflag > 1) &&
 	     // XXX: The portable_rank_cmp above aims at portable mode,
 	     // independent of the current platform, while can_represent acts
-	     // on the actual types from the current platform.  This mix is
-	     // inconsistent.
+	     // on the actual type sizes from the current platform.  This mix
+	     // is inconsistent, but anything else would make the exact
+	     // conditions too complicated to grasp.
 	    !can_represent(tp, tn)) {
 		if (op == FARG) {
 			/* conversion from '%s' to '%s' may lose ... */
