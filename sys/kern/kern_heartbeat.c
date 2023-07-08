@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.2 2023/07/07 17:05:13 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.3 2023/07/08 13:59:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.2 2023/07/07 17:05:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.3 2023/07/08 13:59:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -103,16 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.2 2023/07/07 17:05:13 riastradh
 #ifdef DDB
 #include <ddb/ddb.h>
 #endif
-
-static inline bool
-curcpu_stable(void)
-{
-
-	return kpreempt_disabled() ||
-	    (curlwp->l_pflag & LP_BOUND) ||
-	    cpu_intr_p() ||
-	    cpu_softintr_p();
-}
 
 /*
  * Global state.

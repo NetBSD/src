@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.18 2022/01/24 09:42:14 andvar Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.19 2023/07/08 13:59:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.18 2022/01/24 09:42:14 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.19 2023/07/08 13:59:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -135,6 +135,34 @@ cpu_softintr_p(void)
 {
 
 	return (curlwp->l_pflag & LP_INTR) != 0;
+}
+
+bool
+curcpu_stable(void)
+{
+	struct lwp *const l = curlwp;
+	const int pflag = l->l_pflag;
+	const int nopreempt = l->l_nopreempt;
+
+	/*
+	 * - Softints (LP_INTR) never migrate between CPUs.
+	 * - Bound lwps (LP_BOUND), either kthreads created bound to
+	 *   a CPU or any lwps bound with curlwp_bind, never migrate.
+	 * - If kpreemption is disabled, the lwp can't migrate.
+	 * - If we're in interrupt context, preemption is blocked.
+	 *
+	 * We combine the LP_INTR, LP_BOUND, and l_nopreempt test into
+	 * a single predicted-true branch so this is cheap to assert in
+	 * most contexts where it will be used, then fall back to
+	 * calling the full kpreempt_disabled() and cpu_intr_p() as
+	 * subroutines.
+	 *
+	 * XXX Is cpu_intr_p redundant with kpreempt_disabled?
+	 */
+	return __predict_true(((pflag & (LP_INTR|LP_BOUND)) | nopreempt)
+		!= 0) ||
+	    kpreempt_disabled() ||
+	    cpu_intr_p();
 }
 
 /*
