@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.550 2023/07/08 09:35:35 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.551 2023/07/08 12:07:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.550 2023/07/08 09:35:35 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.551 2023/07/08 12:07:21 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3465,7 +3465,7 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 		}
 	}
 
-	if (is_uinteger(nt) != is_uinteger(ot))
+	if (any_query_enabled && is_uinteger(nt) != is_uinteger(ot))
 		/* implicit conversion changes sign from '%s' to '%s' */
 		query_message(3, type_name(tn->tn_type), type_name(tp));
 }
