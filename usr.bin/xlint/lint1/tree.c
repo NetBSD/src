@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.549 2023/07/07 20:19:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.550 2023/07/08 09:35:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.549 2023/07/07 20:19:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.550 2023/07/08 09:35:35 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -95,7 +95,16 @@ width_in_bits(const type_t *tp)
 	lint_assert(is_integer(tp->t_tspec));
 	return tp->t_bitfield
 	    ? tp->t_bit_field_width
-	    : portable_size_in_bits(tp->t_tspec);
+	    // FIXME: The rank of a type is only intended as a relative size,
+	    // its value is not to be taken literally.
+	    : type_properties(tp->t_tspec)->tt_rank;
+}
+
+static int
+portable_rank_cmp(tspec_t t1, tspec_t t2) {
+	unsigned int r1 = type_properties(t1)->tt_rank;
+	unsigned int r2 = type_properties(t2)->tt_rank;
+	return (int)r1 - (int)r2;
 }
 
 static bool
@@ -1349,7 +1358,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	}
 
 	if (op == SHLASS && hflag && allow_trad && allow_c90
-	    && portable_size_in_bits(lt) < portable_size_in_bits(rt))
+	    && portable_rank_cmp(lt, rt) < 0)
 		/* semantics of '%s' change in ANSI C; ... */
 		warning(118, "<<=");
 
@@ -2284,7 +2293,7 @@ typeok_shr(const mod_t *mp,
 		}
 	} else if (allow_trad && allow_c90 &&
 		   !is_uinteger(olt) && !is_uinteger(ort) &&
-		   portable_size_in_bits(lt) < portable_size_in_bits(rt)) {
+	    portable_rank_cmp(lt, rt) < 0) {
 		/*
 		 * In traditional C the left operand would be extended
 		 * (possibly sign-extended) and then shifted.
@@ -2307,7 +2316,7 @@ typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt)
 	 * width of the right operand. For SHL this may result in
 	 * different results.
 	 */
-	if (portable_size_in_bits(lt) < portable_size_in_bits(rt)) {
+	if (portable_rank_cmp(lt, rt) < 0) {
 		/*
 		 * XXX If both operands are constant, make sure
 		 * that there is really a difference between
@@ -3315,7 +3324,7 @@ should_warn_about_prototype_conversion(tspec_t nt,
 		return false;
 
 	if (is_floating(nt) != is_floating(ot) ||
-	    portable_size_in_bits(nt) != portable_size_in_bits(ot)) {
+	    portable_rank_cmp(nt, ot) != 0) {
 		/* representation and/or width change */
 		if (!is_integer(ot))
 			return true;
@@ -3323,7 +3332,7 @@ should_warn_about_prototype_conversion(tspec_t nt,
 		 * XXX: Investigate whether this rule makes sense; see
 		 * tests/usr.bin/xlint/lint1/platform_long.c.
 		 */
-		return portable_size_in_bits(ot) > portable_size_in_bits(INT);
+		return portable_rank_cmp(ot, INT) > 0;
 	}
 
 	if (!hflag)
@@ -3417,7 +3426,7 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 		return;
 
 	if (Pflag && pflag && aflag > 0 &&
-	    portable_size_in_bits(nt) > portable_size_in_bits(ot) &&
+	    portable_rank_cmp(nt, ot) > 0 &&
 	    is_uinteger(nt) != is_uinteger(ot)) {
 		if (op == FARG) {
 			/* conversion to '%s' may sign-extend ... */
@@ -3428,7 +3437,7 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 		}
 	}
 
-	if (Pflag && portable_size_in_bits(nt) > portable_size_in_bits(ot) &&
+	if (Pflag && portable_rank_cmp(nt, ot) > 0 &&
 	    (tn->tn_op == PLUS || tn->tn_op == MINUS || tn->tn_op == MULT ||
 	     tn->tn_op == SHL)) {
 		/* suggest cast from '%s' to '%s' on op '%s' to ... */
@@ -3437,9 +3446,13 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 	}
 
 	if (aflag > 0 &&
-	    portable_size_in_bits(nt) < portable_size_in_bits(ot) &&
+	    portable_rank_cmp(nt, ot) < 0 &&
 	    (ot == LONG || ot == ULONG || ot == LLONG || ot == ULLONG ||
 	     aflag > 1) &&
+	     // XXX: The portable_rank_cmp above aims at portable mode,
+	     // independent of the current platform, while can_represent acts
+	     // on the actual types from the current platform.  This mix is
+	     // inconsistent.
 	    !can_represent(tp, tn)) {
 		if (op == FARG) {
 			/* conversion from '%s' to '%s' may lose ... */
@@ -3465,7 +3478,7 @@ convert_integer_from_pointer(op_t op, tspec_t nt, type_t *tp, tnode_t *tn)
 		return;
 	if (op != CVT)
 		return;		/* We already got an error. */
-	if (portable_size_in_bits(nt) >= portable_size_in_bits(PTR))
+	if (portable_rank_cmp(nt, PTR) >= 0)
 		return;
 
 	if (pflag && size_in_bits(nt) >= size_in_bits(PTR)) {
@@ -3556,7 +3569,7 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 	if (is_struct_or_union(nst) && nstp->t_sou != ostp->t_sou)
 		return true;
 
-	return portable_size_in_bits(nst) != portable_size_in_bits(ost);
+	return portable_rank_cmp(nst, ost) != 0;
 }
 
 static void
@@ -3941,7 +3954,7 @@ convert_constant(op_t op, int arg, const type_t *tp, val_t *nv, val_t *v)
 	if (allow_trad && allow_c90 && v->v_unsigned_since_c90 &&
 	    (is_floating(nt) || (
 		(is_integer(nt) && !is_uinteger(nt) &&
-		 portable_size_in_bits(nt) > portable_size_in_bits(ot))))) {
+		    portable_rank_cmp(nt, ot) > 0)))) {
 		/* ANSI C treats constant as unsigned */
 		warning(157);
 		v->v_unsigned_since_c90 = false;
