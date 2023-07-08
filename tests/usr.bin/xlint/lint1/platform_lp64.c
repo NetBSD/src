@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.6 2023/07/08 12:42:11 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -13,6 +13,8 @@ int s32;
 unsigned int u32;
 long sl32;
 unsigned long ul32;
+__int128_t s128;
+__uint128_t u128;
 
 void
 convert_between_int_and_long(void)
@@ -32,4 +34,12 @@ convert_unsigned_char_to_size_t(unsigned char uc)
 {
 	/* no warning, unlike platform_int */
 	to_size_t(uc);
+}
+
+void
+convert_128(void)
+{
+	/* TODO: Warn about 128-bit types as well. */
+	s32 = s128;
+	u32 = u128;
 }
