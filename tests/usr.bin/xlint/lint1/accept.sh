@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.12 2023/06/28 20:51:31 rillig Exp $
+# $NetBSD: accept.sh,v 1.13 2023/07/08 08:02:45 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -42,7 +42,8 @@ for pattern in "$@"; do
 	# shellcheck disable=SC2231
 	for cfile in *$pattern*.c; do
 		base=${cfile%.*}
-		expfile="$base.exp"
+		exp_tmp_file="$base.exp.tmp"
+		exp_file="$base.exp"
 		ln_tmp_file="$base.exp-ln.tmp"
 		ln_file="$base.exp-ln"
 
@@ -58,14 +59,20 @@ for pattern in "$@"; do
 
 		# shellcheck disable=SC2154
 		# shellcheck disable=SC2086
-		if "$lint1" $flags "$base.c" "$ln_tmp_file" > "$expfile"; then
-			if [ -s "$expfile" ]; then
+		if "$lint1" $flags "$base.c" "$ln_tmp_file" > "$exp_tmp_file"; then
+			if [ -s "$exp_tmp_file" ]; then
 				echo "$base produces output but exits successfully"
-				sed 's,^,| ,' "$expfile"
+				sed 's,^,| ,' "$exp_tmp_file"
 			fi
 		elif [ $? -ge 128 ]; then
 			echo "$base crashed"
 			continue
+		fi
+
+		if [ -f "$exp_file" ] && cmp -s "$exp_tmp_file"  "$exp_file"; then
+			rm "$exp_tmp_file"
+		else
+			mv "$exp_tmp_file" "$exp_file"
 		fi
 
 		if [ ! -f "$ln_tmp_file" ]; then
@@ -87,7 +94,7 @@ for pattern in "$@"; do
 		case "$base" in (msg_*)
 			if grep 'This message is not used\.' "$cfile" >/dev/null; then
 				: 'Skip further checks.'
-			elif [ ! -s "$expfile" ]; then
+			elif [ ! -s "$exp_file" ]; then
 				echo "$base should produce warnings"
 			elif grep '^TODO: "Add example code' "$cfile" >/dev/null; then
 				: 'ok, this test is not yet written'
@@ -97,7 +104,7 @@ for pattern in "$@"; do
 				msgid=${msgid#msg_0}
 				msgid=${msgid#msg_}
 				msgid=${msgid%%_*}
-				if ! grep "\\[$msgid\\]\$" "$expfile" >/dev/null; then
+				if ! grep "\\[$msgid\\]\$" "$exp_file" >/dev/null; then
 					echo "$base should trigger the message '$msgid'"
 				fi
 			fi
