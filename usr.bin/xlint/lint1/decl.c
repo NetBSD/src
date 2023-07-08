@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.344 2023/07/08 09:35:35 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.345 2023/07/08 16:13:00 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.344 2023/07/08 09:35:35 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.345 2023/07/08 16:13:00 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -99,8 +99,13 @@ initdecl(void)
 	dcs->d_last_dlsym = &dcs->d_first_dlsym;
 
 	if (!pflag) {
-		for (size_t i = 0; i < NTSPEC; i++)
-			ttab[i].tt_rank = ttab[i].tt_size_in_bits;
+		for (size_t i = 0; i < NTSPEC; i++) {
+			if (ttab[i].tt_rank_kind != RK_NONE)
+				ttab[i].tt_rank_value =
+				    ttab[i].tt_size_in_bits;
+		}
+		ttab[BOOL].tt_rank_kind = RK_INTEGER;
+		ttab[BOOL].tt_rank_value = 1;
 	}
 
 	if (Tflag) {

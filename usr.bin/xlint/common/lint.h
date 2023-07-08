@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.40 2023/07/08 09:35:35 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.41 2023/07/08 16:13:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -95,9 +95,14 @@ typedef enum {
 typedef	struct {
 #ifdef IS_LINT1
 	unsigned int tt_size_in_bits;
-	unsigned int tt_rank;	/* relative size of the type; depends on
-				 * portable mode, as well as on whether sizeof
-				 * has type 'int' or 'long' */
+	enum rank_kind {
+		RK_NONE,
+		RK_INTEGER,
+		RK_FLOATING,
+		RK_COMPLEX,
+	} tt_rank_kind;
+	unsigned int tt_rank_value;	/* relative size of the type; depends
+					 * on pflag and PTRDIFF_TSPEC */
 #endif
 	tspec_t	tt_signed_counterpart;
 	tspec_t	tt_unsigned_counterpart;

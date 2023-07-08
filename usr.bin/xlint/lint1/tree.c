@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.553 2023/07/08 15:26:25 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.554 2023/07/08 16:13:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.553 2023/07/08 15:26:25 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.554 2023/07/08 16:13:00 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -100,9 +100,11 @@ width_in_bits(const type_t *tp)
 
 static int
 portable_rank_cmp(tspec_t t1, tspec_t t2) {
-	unsigned int r1 = type_properties(t1)->tt_rank;
-	unsigned int r2 = type_properties(t2)->tt_rank;
-	return (int)r1 - (int)r2;
+	const ttab_t *p1 = type_properties(t1), *p2 = type_properties(t2);
+	lint_assert(p1->tt_rank_kind == p2->tt_rank_kind);
+	lint_assert(p1->tt_rank_value > 0);
+	lint_assert(p2->tt_rank_value > 0);
+	return (int)p1->tt_rank_value - (int)p2->tt_rank_value;
 }
 
 static bool
@@ -3541,8 +3543,6 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 
 	/* Allow cast between pointers to sockaddr variants. */
 	if (nst == STRUCT && ost == STRUCT) {
-		debug_type(nstp);
-		debug_type(ostp);
 		const sym_t *nmem = nstp->t_sou->sou_first_member;
 		const sym_t *omem = ostp->t_sou->sou_first_member;
 		while (nmem != NULL && omem != NULL &&
@@ -3564,7 +3564,12 @@ should_warn_about_pointer_cast(const type_t *nstp, tspec_t nst,
 			return false;
 	}
 
-	if (is_struct_or_union(nst) && nstp->t_sou != ostp->t_sou)
+	if (is_struct_or_union(nst) && is_struct_or_union(ost))
+		return nstp->t_sou != ostp->t_sou;
+
+	enum rank_kind rk1 = type_properties(nst)->tt_rank_kind;
+	enum rank_kind rk2 = type_properties(ost)->tt_rank_kind;
+	if (rk1 != rk2 || rk1 == RK_NONE)
 		return true;
 
 	return portable_rank_cmp(nst, ost) != 0;
