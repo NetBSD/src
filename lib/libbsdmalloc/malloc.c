@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.9 2023/07/05 22:13:20 riastradh Exp $	*/
+/*	$NetBSD: malloc.c,v 1.10 2023/07/08 04:09:26 simonb Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.9 2023/07/05 22:13:20 riastradh Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.10 2023/07/08 04:09:26 simonb Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -467,7 +467,7 @@ findbucket(union overhead *freep, int srchlen)
  * frees for each size category.
  */
 void
-mstats(char *s)
+mstats(const char *s)
 {
   	int i, j;
   	union overhead *p;
