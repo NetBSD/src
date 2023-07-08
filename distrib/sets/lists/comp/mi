@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2435 2023/07/08 16:14:11 christos Exp $
+#	$NetBSD: mi,v 1.2436 2023/07/08 17:43:13 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -21215,7 +21215,7 @@
 ./usr/share/man/html9/vdead_check.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vdevgone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/veriexec.html		comp-sys-htmlman	html
-./usr/share/man/html9/versigoningsyscalls.html	comp-sys-htmlman	html
+./usr/share/man/html9/versioningsyscalls.html	comp-sys-htmlman	html
 ./usr/share/man/html9/vfinddev.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vflush.html		comp-sys-htmlman	html
 ./usr/share/man/html9/vflushbuf.html		comp-sys-htmlman	html
