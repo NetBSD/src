@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.39 2023/07/06 07:59:00 rillig Exp $	*/
+/*	$NetBSD: lint.h,v 1.40 2023/07/08 09:35:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -95,8 +95,9 @@ typedef enum {
 typedef	struct {
 #ifdef IS_LINT1
 	unsigned int tt_size_in_bits;
-	unsigned int tt_portable_size_in_bits; /* different from
-					 * tt_size_in_bits if pflag is set */
+	unsigned int tt_rank;	/* relative size of the type; depends on
+				 * portable mode, as well as on whether sizeof
+				 * has type 'int' or 'long' */
 #endif
 	tspec_t	tt_signed_counterpart;
 	tspec_t	tt_unsigned_counterpart;
@@ -119,7 +120,6 @@ type_properties(tspec_t t) {
 }
 
 #define size_in_bits(t)		(type_properties(t)->tt_size_in_bits)
-#define portable_size_in_bits(t) (type_properties(t)->tt_portable_size_in_bits)
 #define signed_type(t)		(type_properties(t)->tt_signed_counterpart)
 #define unsigned_type(t)	(type_properties(t)->tt_unsigned_counterpart)
 #define is_integer(t)		(type_properties(t)->tt_is_integer)

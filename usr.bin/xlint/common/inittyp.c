@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.37 2023/07/03 07:03:19 rillig Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.38 2023/07/08 09:35:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: inittyp.c,v 1.37 2023/07/03 07:03:19 rillig Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.38 2023/07/08 09:35:35 rillig Exp $");
 #endif
 
 #if defined(IS_LINT1)
@@ -49,12 +49,9 @@ __RCSID("$NetBSD: inittyp.c,v 1.37 2023/07/03 07:03:19 rillig Exp $");
 #define INT_RSIZE	(/*CONSTCOND*/INTPTR_TSPEC == LONG ? 3 : 4)
 
 #ifdef IS_LINT1
-#define typeinfo( \
-	    name, signed_type, unsigned_type, \
-	    size_in_bits, portable_size_in_bits, \
-	    c) \
+#define typeinfo(name, signed_type, unsigned_type, size_in_bits, rank, c) \
 	{ /*CONSTCOND*/ \
-		size_in_bits, portable_size_in_bits, \
+		size_in_bits, rank, \
 		signed_type, unsigned_type, \
 		(c) == 's' || (c) == 'u', \
 		(c) == 'u' || (c) == 'p', \
@@ -67,10 +64,7 @@ __RCSID("$NetBSD: inittyp.c,v 1.37 2023/07/03 07:03:19 rillig Exp $");
 		name, \
 	}
 #else
-#define typeinfo( \
-	    name, signed_type, unsigned_type, \
-	    size_in_bits, portable_size_in_bits, \
-	    c) \
+#define typeinfo(name, signed_type, unsigned_type, size_in_bits, rank, c) \
 	{ /*CONSTCOND*/ \
 		signed_type, unsigned_type, \
 		(c) == 's' || (c) == 'u', \
