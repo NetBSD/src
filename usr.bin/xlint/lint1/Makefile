@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 2023/07/05 11:42:14 rillig Exp $
+#	$NetBSD: Makefile,v 1.97 2023/07/08 11:18:16 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,6 @@ YHEADER=
 #LFLAGS+=	-d
 
 CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
-LINTFLAGS+=		-T
 LOBJS.${PROG}+=		${SRCS:M*.y:.y=.ln}
 LOBJS.${PROG}+=		${SRCS:M*.l:.l=.ln}
 LINTFLAGS.cgram.c+=	-X 351		# 'extern' declaration in .c file
