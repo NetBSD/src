@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.189 2022/04/09 23:38:33 riastradh Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.190 2023/07/08 11:42:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.189 2022/04/09 23:38:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.190 2023/07/08 11:42:03 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,7 +601,8 @@ sys___getrusage50(struct lwp *l, const struct sys___getrusage50_args *uap,
 }
 
 int
-getrusage1(struct proc *p, int who, struct rusage *ru) {
+getrusage1(struct proc *p, int who, struct rusage *ru)
+{
 
 	switch (who) {
 	case RUSAGE_SELF:
