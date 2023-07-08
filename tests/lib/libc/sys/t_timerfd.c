@@ -1,4 +1,4 @@
-/* $NetBSD: t_timerfd.c,v 1.4 2022/02/20 15:21:14 thorpej Exp $ */
+/* $NetBSD: t_timerfd.c,v 1.5 2023/07/08 15:32:58 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2020\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_timerfd.c,v 1.4 2022/02/20 15:21:14 thorpej Exp $");
+__RCSID("$NetBSD: t_timerfd.c,v 1.5 2023/07/08 15:32:58 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/event.h>
@@ -195,7 +195,11 @@ ATF_TC_BODY(timerfd_block, tc)
 	ATF_REQUIRE(check_value_against_bounds(val, 1, 1));
 
 	timespecsub(&now, &then, &delta);
-	ATF_REQUIRE(check_value_against_bounds(delta.tv_sec, 1, 1));
+	ATF_REQUIRE_MSG(check_value_against_bounds(delta.tv_sec, 1, 1),
+	    "then=%jd.%09lu now=%jd.%09lu delta=%jd.%09lu",
+	    (intmax_t)then.tv_sec, then.tv_nsec,
+	    (intmax_t)now.tv_sec, now.tv_nsec,
+	    (intmax_t)delta.tv_sec, delta.tv_nsec);
 
 	(void) close(fd);
 }
@@ -230,7 +234,11 @@ ATF_TC_BODY(timerfd_repeating, tc)
 	ATF_REQUIRE(check_value_against_bounds(val, 3, 5));
 
 	timespecsub(&now, &then, &delta);
-	ATF_REQUIRE(check_value_against_bounds(delta.tv_sec, 1, 1));
+	ATF_REQUIRE_MSG(check_value_against_bounds(delta.tv_sec, 1, 1),
+	    "then=%jd.%09lu now=%jd.%09lu delta=%jd.%09lu",
+	    (intmax_t)then.tv_sec, then.tv_nsec,
+	    (intmax_t)now.tv_sec, now.tv_nsec,
+	    (intmax_t)delta.tv_sec, delta.tv_nsec);
 
 	(void) close(fd);
 }
@@ -264,7 +272,11 @@ ATF_TC_BODY(timerfd_abstime, tc)
 	ATF_REQUIRE(check_value_against_bounds(val, 1, 1));
 
 	timespecsub(&now, &then, &delta);
-	ATF_REQUIRE(check_value_against_bounds(delta.tv_sec, 1, 1));
+	ATF_REQUIRE_MSG(check_value_against_bounds(delta.tv_sec, 1, 1),
+	    "then=%jd.%09lu now=%jd.%09lu delta=%jd.%09lu",
+	    (intmax_t)then.tv_sec, then.tv_nsec,
+	    (intmax_t)now.tv_sec, now.tv_nsec,
+	    (intmax_t)delta.tv_sec, delta.tv_nsec);
 
 	(void) close(fd);
 }
