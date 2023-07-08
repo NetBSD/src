@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_230_uchar.c,v 1.12 2023/06/24 17:50:31 rillig Exp $	*/
+/*	$NetBSD: msg_230_uchar.c,v 1.13 2023/07/08 11:03:00 rillig Exp $	*/
 # 3 "msg_230_uchar.c"
 
 // Test for message: nonportable character comparison '%s' [230]
 
-/* lint1-flags: -S -g -p -w */
+/* lint1-flags: -S -g -p -w -X 351 */
 /* lint1-only-if: uchar */
 
 /*
