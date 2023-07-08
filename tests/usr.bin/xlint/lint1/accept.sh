@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: accept.sh,v 1.13 2023/07/08 08:02:45 rillig Exp $
+# $NetBSD: accept.sh,v 1.14 2023/07/08 10:01:17 rillig Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -36,6 +36,16 @@ set -eu
 
 : "${archsubdir:=$(make -v ARCHSUBDIR)}"
 . './t_integration.sh'		# for configure_test_case
+
+update_flags=''
+while getopts 'u' opt; do
+	case $opt in
+	u)	update_flags='-u';;
+	*)	echo "usage: $0 [-u] pattern..." 1>&2
+		exit 1;;
+	esac
+done
+shift $((OPTIND - 1))
 
 done_tests=''
 for pattern in "$@"; do
@@ -115,4 +125,4 @@ for pattern in "$@"; do
 done
 
 # shellcheck disable=SC2086
-lua './check-expect.lua' $done_tests
+lua './check-expect.lua' $update_flags $done_tests
