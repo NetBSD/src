@@ -1,4 +1,4 @@
-/*	$NetBSD: main1.c,v 1.72 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: main1.c,v 1.73 2023/07/08 09:08:20 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main1.c,v 1.72 2023/07/07 06:03:31 rillig Exp $");
+__RCSID("$NetBSD: main1.c,v 1.73 2023/07/08 09:08:20 rillig Exp $");
 #endif
 
 #include <sys/types.h>
@@ -222,7 +222,7 @@ main(int argc, char *argv[])
 #ifdef DEBUG
 	setvbuf(stdout, NULL, _IONBF, 0);
 #endif
-#ifdef YYDEBUG
+#if YYDEBUG
 	if (yflag)
 		yydebug = 1;
 #endif
