@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.82 2023/07/03 07:03:19 rillig Exp $ */
+/* $NetBSD: read.c,v 1.83 2023/07/08 11:18:16 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.82 2023/07/03 07:03:19 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.83 2023/07/08 11:18:16 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -732,7 +732,7 @@ inptype(const char *cp, const char **epp)
 			tp->t_uniqpos.p_line = parse_int(&cp);
 			cp++;
 			/* xlate to 'global' file name. */
-			tp->t_uniqpos.p_file =
+			tp->t_uniqpos.p_file = (short)
 			    addoutfile(inpfns[parse_int(&cp)]);
 			cp++;
 			tp->t_uniqpos.p_uniq = parse_int(&cp);
@@ -973,7 +973,7 @@ storetyp(type_t *tp, const char *cp, size_t len, int h)
 
 	thte = xalloc(sizeof(*thte));
 	thte->th_name = name;
-	thte->th_idx = tidx;
+	thte->th_idx = (unsigned short)tidx;
 	thte->th_next = thtab[h];
 	thtab[h] = thte;
 
