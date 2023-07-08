@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247_portable.c,v 1.2 2023/07/05 11:42:14 rillig Exp $	*/
+/*	$NetBSD: msg_247_portable.c,v 1.3 2023/07/08 15:26:25 rillig Exp $	*/
 # 3 "msg_247_portable.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -11,6 +11,7 @@
 //	msg_247_ilp32_ldbl64.c
 //	msg_247_lp64_ldbl128.c
 
+/* lint1-only-if: long */
 /* lint1-extra-flags: -c -p -X 351 */
 
 typedef double double_array[5];
