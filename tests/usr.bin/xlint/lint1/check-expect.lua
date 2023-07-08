@@ -1,5 +1,5 @@
 #!  /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.6 2023/07/08 10:01:17 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.7 2023/07/08 11:03:00 rillig Exp $
 
 --[[
 
@@ -37,8 +37,8 @@ end
 local function load_lines(fname)
   local lines = {}
 
-  local f = io.open(fname, "r")
-  if f == nil then return nil end
+  local f, err, errno = io.open(fname, "r")
+  if f == nil then return nil, err, errno end
 
   for line in f:lines() do
     table.insert(lines, line)
@@ -194,7 +194,7 @@ end)
 local function insert_missing(missing)
   for fname, items in pairs(missing) do
     table.sort(items, function(a, b) return a.lineno > b.lineno end)
-    local lines = load_lines(fname)
+    local lines = assert(load_lines(fname))
     for _, item in ipairs(items) do
       local lineno, message = item.lineno, item.message
       local indent = (lines[lineno] or ""):match("^([ \t]*)")

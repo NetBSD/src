@@ -1,5 +1,5 @@
-/*	$NetBSD: msg_247_ilp32_ldbl64.c,v 1.2 2023/07/05 11:42:14 rillig Exp $	*/
-# 3 "msg_247_ilp32.c"
+/*	$NetBSD: msg_247_ilp32_ldbl64.c,v 1.3 2023/07/08 11:03:00 rillig Exp $	*/
+# 3 "msg_247_ilp32_ldbl64.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
 
