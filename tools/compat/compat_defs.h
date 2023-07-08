@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_defs.h,v 1.120 2021/05/30 10:39:41 cjep Exp $	*/
+/*	$NetBSD: compat_defs.h,v 1.121 2023/07/08 19:10:00 palle Exp $	*/
 
 #ifndef	__NETBSD_COMPAT_DEFS_H__
 #define	__NETBSD_COMPAT_DEFS_H__
@@ -29,6 +29,17 @@
 #undef _POSIX_C_SOURCE
 #define __USE_ISOC99 1
 #endif	/* __linux__ && HAVE_FEATURES_H */
+
+/*
+ * Solaris:
+ * No NAME_MAX define is available (as documented in the Solaris
+ * limits.h file), so use the XOPEN defined constant.
+ */
+
+#if defined(__sun__)
+#define NAME_MAX _XOPEN_NAME_MAX
+#endif
+
 
 /*
  * Type substitutes.
