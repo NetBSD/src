@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_lp64.c,v 1.6 2023/07/08 12:42:11 rillig Exp $	*/
+/*	$NetBSD: platform_lp64.c,v 1.7 2023/07/08 12:45:43 rillig Exp $	*/
 # 3 "platform_lp64.c"
 
 /*
@@ -39,7 +39,8 @@ convert_unsigned_char_to_size_t(unsigned char uc)
 void
 convert_128(void)
 {
-	/* TODO: Warn about 128-bit types as well. */
+	/* expect+1: warning: conversion from '__int128_t' to 'int' may lose accuracy [132] */
 	s32 = s128;
+	/* expect+1: warning: conversion from '__uint128_t' to 'unsigned int' may lose accuracy [132] */
 	u32 = u128;
 }
