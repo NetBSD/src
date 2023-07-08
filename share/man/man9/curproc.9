@@ -1,4 +1,4 @@
-.\"     $NetBSD: curproc.9,v 1.6 2022/09/22 14:02:24 riastradh Exp $
+.\"     $NetBSD: curproc.9,v 1.7 2023/07/08 13:59:05 riastradh Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,24 +27,25 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 1, 2010
+.Dd July 8, 2023
 .Dt CURPROC 9
 .Os
 .Sh NAME
-.Nm curproc ,
 .Nm curcpu ,
-.Nm curlwp
-.Nd current process, processor, and
-.Tn LWP
+.Nm curlwp ,
+.Nm curproc
+.Nd current processor, thread, and process
 .Sh SYNOPSIS
 .In sys/proc.h
 .Ft struct cpu_info *
 .Fn curcpu "void"
 .Vt struct proc *curproc ;
 .Vt struct lwp *curlwp ;
+.In sys/cpu.h
+.Ft bool
+.Fn curcpu_stable "void"
 .Sh DESCRIPTION
-The following macros retrieve
-the current CPU, process, and thread
+The following retrieve the current CPU, process, and thread
 .Pq lightweight process, or Tn LWP ,
 respectively:
 .Bl -tag -width Dv
@@ -62,6 +63,17 @@ by disabling preemption
 .Pq Xr kpreempt_disable 9 ,
 or by binding the thread to its CPU
 .Pq Xr curlwp_bind 9 .
+.Pp
+The function
+.Fn curcpu_stable
+can be used in assertions
+.Pq Xr KASSERT 9
+to verify that
+.Fn curcpu
+is stable in the current context.
+.Fn curcpu_stable
+MUST NOT be used to make dynamic decisions about whether to query
+.Fn curcpu .
 .It Dv curproc
 Yields a pointer to the
 .Vt "struct proc"
@@ -102,6 +114,11 @@ but it may be overridden by
 .Pa machine/cpu.h ,
 and must be overridden on architectures supporting multiprocessing and
 kernel preemption.
+.Pp
+The
+.Fn curcpu_stable
+function is defined in
+.Pa kern/subr_cpu.c .
 .Sh SEE ALSO
 .Xr cpu_number 9 ,
 .Xr proc_find 9
