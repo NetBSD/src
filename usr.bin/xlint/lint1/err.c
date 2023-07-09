@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.205 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.206 2023/07/09 10:42:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.205 2023/07/07 06:03:31 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.206 2023/07/09 10:42:07 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -314,7 +314,7 @@ static const char *const msgs[] = {
 	"unterminated comment",					      /* 256 */
 	"extra characters in lint comment",			      /* 257 */
 	"unterminated string constant",				      /* 258 */
-	"argument #%d is converted from '%s' to '%s' due to prototype", /* 259 */
+	"argument %d is converted from '%s' to '%s' due to prototype", /* 259 */
 	"previous declaration of '%s'",				      /* 260 */
 	"previous definition of '%s'",				      /* 261 */
 	"\\\" inside character constants undefined in traditional C", /* 262 */
@@ -389,7 +389,7 @@ static const char *const msgs[] = {
 	"left operand of '%s' must be bool, not '%s'",		      /* 331 */
 	"right operand of '%s' must be bool, not '%s'",		      /* 332 */
 	"controlling expression must be bool, not '%s'",	      /* 333 */
-	"argument #%d expects '%s', gets passed '%s'",		      /* 334 */
+	"argument %d expects '%s', gets passed '%s'",		      /* 334 */
 	"operand of '%s' must not be bool",			      /* 335 */
 	"left operand of '%s' must not be bool",		      /* 336 */
 	"right operand of '%s' must not be bool",		      /* 337 */
