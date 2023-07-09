@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.207 2023/07/09 11:01:27 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.208 2023/07/09 11:18:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.207 2023/07/09 11:01:27 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.208 2023/07/09 11:18:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -105,7 +105,7 @@ static const char *const msgs[] = {
 	"zero sized %s is a C99 feature",			      /* 47 */
 	"enumeration value '%s' overflows",			      /* 48 */
 	"anonymous struct/union members is a C11 feature",	      /* 49 */
-	"argument '%s' has function type, should be pointer",	      /* 50 */
+	"parameter '%s' has function type, should be pointer",	      /* 50 */
 	"parameter mismatch: %d declared, %d defined",		      /* 51 */
 	"cannot initialize parameter '%s'",			      /* 52 */
 	"declared argument '%s' is missing",			      /* 53 */
@@ -152,8 +152,8 @@ static const char *const msgs[] = {
 	"function '%s' has illegal storage class",		      /* 94 */
 	"declaration of '%s' hides earlier one",		      /* 95 */
 	"cannot dereference non-pointer type '%s'",		      /* 96 */
-	"suffix U is illegal in traditional C",			      /* 97 */
-	"suffixes F and L are illegal in traditional C",	      /* 98 */
+	"suffix 'U' is illegal in traditional C",		      /* 97 */
+	"suffixes 'F' and 'L' are illegal in traditional C",	      /* 98 */
 	"'%s' undefined",					      /* 99 */
 	"unary '+' is illegal in traditional C",		      /* 100 */
 	"type '%s' does not have member '%s'",			      /* 101 */
@@ -225,7 +225,7 @@ static const char *const msgs[] = {
 	"array subscript cannot be negative: %ld",		      /* 167 */
 	"array subscript cannot be > %d: %ld",			      /* 168 */
 	"precedence confusion possible: parenthesize!",		      /* 169 */
-	"first operand must have scalar type, op ? :",		      /* 170 */
+	"first operand of '?' must have scalar type",		      /* 170 */
 	"cannot assign to '%s' from '%s'",			      /* 171 */
 	"too many struct/union initializers",			      /* 172 */
 	"too many array initializers, expected %d",		      /* 173 */
@@ -286,7 +286,7 @@ static const char *const msgs[] = {
 	"function cannot return const or volatile object",	      /* 228 */
 	"converting '%s' to '%s' is questionable",		      /* 229 */
 	"nonportable character comparison '%s'",		      /* 230 */
-	"argument '%s' unused in function '%s'",		      /* 231 */
+	"parameter '%s' unused in function '%s'",		      /* 231 */
 	"label '%s' unused in function '%s'",			      /* 232 */
 	"struct '%s' never defined",				      /* 233 */
 	"union '%s' never defined",				      /* 234 */
@@ -324,7 +324,7 @@ static const char *const msgs[] = {
 	"'long double' is illegal in traditional C",		      /* 266 */
 	"shift amount %u equals bit-size of '%s'",		      /* 267 */
 	"variable '%s' declared inline",			      /* 268 */
-	"argument '%s' declared inline",			      /* 269 */
+	"parameter '%s' declared inline",			      /* 269 */
 	"function prototypes are illegal in traditional C",	      /* 270 */
 	"switch expression must be of type 'int' in traditional C",   /* 271 */
 	"empty translation unit",				      /* 272 */

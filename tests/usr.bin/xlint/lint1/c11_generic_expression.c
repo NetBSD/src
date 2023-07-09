@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.17 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.18 2023/07/09 11:18:55 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -22,7 +22,7 @@
 const char *
 classify_type_without_default(double var)
 {
-	/* expect-2: warning: argument 'var' unused in function 'classify_type_without_default' [231] */
+	/* expect-2: warning: parameter 'var' unused in function 'classify_type_without_default' [231] */
 
 	return _Generic(var,
 	    long double: "long double",
@@ -38,7 +38,7 @@ classify_type_without_default(double var)
 const char *
 classify_type_with_default(double var)
 {
-	/* expect-2: warning: argument 'var' unused in function 'classify_type_with_default' [231] */
+	/* expect-2: warning: parameter 'var' unused in function 'classify_type_with_default' [231] */
 
 	return _Generic(var,
 	    long double: "long double",
@@ -54,7 +54,7 @@ classify_type_with_default(double var)
 const char *
 classify_char(char c)
 {
-	/* expect-2: warning: argument 'c' unused in function 'classify_char' [231] */
+	/* expect-2: warning: parameter 'c' unused in function 'classify_char' [231] */
 
 	return _Generic(c,
 	    char: "yes",

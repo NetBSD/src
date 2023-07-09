@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.556 2023/07/09 11:01:27 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.557 2023/07/09 11:18:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.556 2023/07/09 11:01:27 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.557 2023/07/09 11:18:55 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -2454,7 +2454,7 @@ static bool
 typeok_quest(tspec_t lt, const tnode_t *rn)
 {
 	if (!is_scalar(lt)) {
-		/* first operand must have scalar type, op ? : */
+		/* first operand of '?' must have scalar type */
 		error(170);
 		return false;
 	}

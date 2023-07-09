@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_204.c,v 1.8 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_204.c,v 1.9 2023/07/09 11:18:55 rillig Exp $	*/
 # 3 "msg_204.c"
 
 // Test for message: controlling expressions must have scalar type [204]
@@ -107,6 +107,6 @@ void do_while_struct(struct s s)	{ do { return; } while (s); }
  * C99 6.5.15 for the '?:' operator does not explicitly mention that the
  * controlling expression must have a scalar type, curiously.
  */
-/* expect+2: error: first operand must have scalar type, op ? : [170] */
+/* expect+2: error: first operand of '?' must have scalar type [170] */
 /* expect+1: warning: function 'conditional_struct' expects to return value [214] */
 int conditional_struct(struct s s)	{ return s ? 1 : 2; }

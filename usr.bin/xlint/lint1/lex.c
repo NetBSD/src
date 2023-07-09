@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.170 2023/07/09 11:01:27 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.171 2023/07/09 11:18:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.170 2023/07/09 11:01:27 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.171 2023/07/09 11:18:55 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -498,7 +498,7 @@ lex_integer_constant(const char *yytext, size_t yyleng, int base)
 			u_suffix = 1;
 	}
 	if (!allow_c90 && u_suffix > 0) {
-		/* suffix U is illegal in traditional C */
+		/* suffix 'U' is illegal in traditional C */
 		warning(97);
 	}
 	tspec_t typ = suffix_type[u_suffix][l_suffix];
@@ -642,7 +642,7 @@ lex_floating_constant(const char *yytext, size_t yyleng)
 		typ = imaginary ? DCOMPLEX : DOUBLE;
 
 	if (!allow_c90 && typ != DOUBLE) {
-		/* suffixes F and L are illegal in traditional C */
+		/* suffixes 'F' and 'L' are illegal in traditional C */
 		warning(98);
 	}
 

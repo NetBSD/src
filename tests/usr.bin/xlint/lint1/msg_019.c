@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_019.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: msg_019.c,v 1.8 2023/07/09 11:18:55 rillig Exp $	*/
 # 3 "msg_019.c"
 
 // Test for message: void type for '%s' [19]
@@ -12,7 +12,7 @@ void global_variable;
 /* expect+1: warning: static variable 'unit_variable' unused [226] */
 static void unit_variable;
 
-/* expect+3: warning: argument 'parameter' unused in function 'function' [231] */
+/* expect+3: warning: parameter 'parameter' unused in function 'function' [231] */
 /* expect+2: error: void parameter 'parameter' cannot have name [61] */
 void
 function(void parameter)
