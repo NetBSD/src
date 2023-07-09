@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.171 2023/07/09 11:18:55 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.172 2023/07/09 12:15:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.171 2023/07/09 11:18:55 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.172 2023/07/09 12:15:07 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -615,9 +615,10 @@ convert_integer(int64_t si, tspec_t t, unsigned int len)
 		len = size_in_bits(t);
 
 	uint64_t vbits = value_bits(len);
-	return t == PTR || is_uinteger(t) || ((si & bit(len - 1)) == 0)
-	    ? (int64_t)(si & vbits)
-	    : (int64_t)(si | ~vbits);
+	uint64_t ui = (uint64_t)si;
+	return t == PTR || is_uinteger(t) || ((ui & bit(len - 1)) == 0)
+	    ? (int64_t)(ui & vbits)
+	    : (int64_t)(ui | ~vbits);
 }
 
 int
