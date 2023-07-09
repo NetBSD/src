@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_241.c,v 1.10 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_241.c,v 1.11 2023/07/09 11:01:27 rillig Exp $	*/
 # 3 "msg_241.c"
 
-// Test for message: dubious operation on enum, op '%s' [241]
+// Test for message: dubious operation '%s' on enum [241]
 //
 // As of February 2021, the option -e is not enabled by default in
 // share/mk/sys.mk, therefore this message is neither well-known nor
@@ -27,35 +27,35 @@ example(void)
 {
 	enum color c = RED;
 
-	/* expect+1: warning: dubious operation on enum, op '!' [241] */
+	/* expect+1: warning: dubious operation '!' on enum [241] */
 	sink_bool(!c);
-	/* expect+1: warning: dubious operation on enum, op '~' [241] */
+	/* expect+1: warning: dubious operation '~' on enum [241] */
 	sink_color(~c);
-	/* expect+1: warning: dubious operation on enum, op '++x' [241] */
+	/* expect+1: warning: dubious operation '++x' on enum [241] */
 	++c;
-	/* expect+1: warning: dubious operation on enum, op '--x' [241] */
+	/* expect+1: warning: dubious operation '--x' on enum [241] */
 	--c;
-	/* expect+1: warning: dubious operation on enum, op 'x++' [241] */
+	/* expect+1: warning: dubious operation 'x++' on enum [241] */
 	c++;
-	/* expect+1: warning: dubious operation on enum, op 'x--' [241] */
+	/* expect+1: warning: dubious operation 'x--' on enum [241] */
 	c--;
-	/* expect+1: warning: dubious operation on enum, op '+' [241] */
+	/* expect+1: warning: dubious operation '+' on enum [241] */
 	sink_color(+c);
-	/* expect+1: warning: dubious operation on enum, op '-' [241] */
+	/* expect+1: warning: dubious operation '-' on enum [241] */
 	sink_color(-c);
-	/* expect+1: warning: dubious operation on enum, op '*' [241] */
+	/* expect+1: warning: dubious operation '*' on enum [241] */
 	sink_color(c * c);
-	/* expect+1: warning: dubious operation on enum, op '/' [241] */
+	/* expect+1: warning: dubious operation '/' on enum [241] */
 	sink_color(c / c);
-	/* expect+1: warning: dubious operation on enum, op '%' [241] */
+	/* expect+1: warning: dubious operation '%' on enum [241] */
 	sink_color(c % c);
-	/* expect+1: warning: dubious operation on enum, op '+' [241] */
+	/* expect+1: warning: dubious operation '+' on enum [241] */
 	sink_color(c + c);
-	/* expect+1: warning: dubious operation on enum, op '-' [241] */
+	/* expect+1: warning: dubious operation '-' on enum [241] */
 	sink_color(c - c);
-	/* expect+1: warning: dubious operation on enum, op '<<' [241] */
+	/* expect+1: warning: dubious operation '<<' on enum [241] */
 	sink_color(c << c);
-	/* expect+1: warning: dubious operation on enum, op '>>' [241] */
+	/* expect+1: warning: dubious operation '>>' on enum [241] */
 	sink_color(c >> c);
 
 	sink_bool(c < c);
@@ -65,50 +65,50 @@ example(void)
 	sink_bool(c == c);
 	sink_bool(c != c);
 
-	/* expect+1: warning: dubious operation on enum, op '&' [241] */
+	/* expect+1: warning: dubious operation '&' on enum [241] */
 	sink_color(c & c);
-	/* expect+1: warning: dubious operation on enum, op '^' [241] */
+	/* expect+1: warning: dubious operation '^' on enum [241] */
 	sink_color(c ^ c);
-	/* expect+1: warning: dubious operation on enum, op '|' [241] */
+	/* expect+1: warning: dubious operation '|' on enum [241] */
 	sink_color(c | c);
 
-	/* expect+1: warning: dubious operation on enum, op '&&' [241] */
+	/* expect+1: warning: dubious operation '&&' on enum [241] */
 	sink_bool(c && c);
-	/* expect+1: warning: dubious operation on enum, op '||' [241] */
+	/* expect+1: warning: dubious operation '||' on enum [241] */
 	sink_bool(c || c);
 	sink_color(c ? c : BLUE);
 
 	c = GREEN;
-	/* expect+1: warning: dubious operation on enum, op '*=' [241] */
+	/* expect+1: warning: dubious operation '*=' on enum [241] */
 	c *= c;
-	/* expect+1: warning: dubious operation on enum, op '/=' [241] */
+	/* expect+1: warning: dubious operation '/=' on enum [241] */
 	c /= c;
-	/* expect+1: warning: dubious operation on enum, op '%=' [241] */
+	/* expect+1: warning: dubious operation '%=' on enum [241] */
 	c %= c;
-	/* expect+1: warning: dubious operation on enum, op '+=' [241] */
+	/* expect+1: warning: dubious operation '+=' on enum [241] */
 	c += c;
-	/* expect+1: warning: dubious operation on enum, op '-=' [241] */
+	/* expect+1: warning: dubious operation '-=' on enum [241] */
 	c -= c;
-	/* expect+1: warning: dubious operation on enum, op '<<=' [241] */
+	/* expect+1: warning: dubious operation '<<=' on enum [241] */
 	c <<= c;
-	/* expect+1: warning: dubious operation on enum, op '>>=' [241] */
+	/* expect+1: warning: dubious operation '>>=' on enum [241] */
 	c >>= c;
-	/* expect+1: warning: dubious operation on enum, op '&=' [241] */
+	/* expect+1: warning: dubious operation '&=' on enum [241] */
 	c &= c;
-	/* expect+1: warning: dubious operation on enum, op '^=' [241] */
+	/* expect+1: warning: dubious operation '^=' on enum [241] */
 	c ^= c;
-	/* expect+1: warning: dubious operation on enum, op '|=' [241] */
+	/* expect+1: warning: dubious operation '|=' on enum [241] */
 	c |= c;
 
 	/* The cast to unsigned is required by GCC at WARNS=6. */
-	/* expect+1: warning: dubious operation on enum, op '&=' [241] */
+	/* expect+1: warning: dubious operation '&=' on enum [241] */
 	c &= ~(unsigned)GREEN;
 }
 
 void
 cover_typeok_enum(enum color c, int i)
 {
-	/* expect+2: warning: dubious operation on enum, op '*' [241] */
+	/* expect+2: warning: dubious operation '*' on enum [241] */
 	/* expect+1: warning: combination of 'enum color' and 'int', op '>' [242] */
 	if (c * i > 5)
 		return;

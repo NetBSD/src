@@ -1,11 +1,11 @@
-/*	$NetBSD: msg_077.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: msg_077.c,v 1.8 2023/07/09 11:01:27 rillig Exp $	*/
 # 3 "msg_077.c"
 
-/* Test for message: bad octal digit %c [77] */
+/* Test for message: bad octal digit '%c' [77] */
 
 /* lint1-flags: -tw -X 351 */
 
-/* expect+1: warning: bad octal digit 8 [77] */
+/* expect+1: warning: bad octal digit '8' [77] */
 char single_digit = '\8';
 
 /*

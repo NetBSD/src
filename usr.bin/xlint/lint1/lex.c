@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.169 2023/07/08 10:59:38 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.170 2023/07/09 11:01:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.169 2023/07/08 10:59:38 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.170 2023/07/09 11:01:27 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -777,7 +777,7 @@ read_escaped_backslash(int delim)
 			warning(264);
 		return '\v';
 	case '8': case '9':
-		/* bad octal digit %c */
+		/* bad octal digit '%c' */
 		warning(77, c);
 		/* FALLTHROUGH */
 	case '0': case '1': case '2': case '3':
@@ -988,7 +988,7 @@ lex_directive(const char *yytext)
 		if (strncmp(cp, "pragma", 6) == 0 && ch_isspace(cp[6]))
 			return;
 	error:
-		/* undefined or invalid # directive */
+		/* undefined or invalid '#' directive */
 		warning(255);
 		return;
 	}
@@ -1151,7 +1151,7 @@ lex_slash_slash_comment(void)
 	int c;
 
 	if (!allow_c99 && !allow_gcc)
-		/* %s does not support // comments */
+		/* %s does not support '//' comments */
 		gnuism(312, allow_c90 ? "C90" : "traditional C");
 
 	while ((c = read_byte()) != EOF && c != '\n')

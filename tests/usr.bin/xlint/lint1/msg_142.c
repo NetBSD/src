@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_142.c,v 1.10 2023/04/11 00:03:42 rillig Exp $	*/
+/*	$NetBSD: msg_142.c,v 1.11 2023/07/09 11:01:27 rillig Exp $	*/
 # 3 "msg_142.c"
 
-// Test for message: floating point overflow on operator '%s' [142]
+// Test for message: operator '%s' produces floating point overflow [142]
 
 /* lint1-extra-flags: -X 351 */
 
@@ -16,8 +16,8 @@
  * multipliers is needed to produce an overflow.
  */
 
-/* expect+2: warning: floating point overflow on operator '*' [142] */
-/* expect+1: warning: floating point overflow on operator '*' [142] */
+/* expect+2: warning: operator '*' produces floating point overflow [142] */
+/* expect+1: warning: operator '*' produces floating point overflow [142] */
 double dbl = 1e100 * 1e100 * 1e100 * 1e100 * 1e100;
 
 /*
