@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_242.c,v 1.7 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_242.c,v 1.8 2023/07/09 11:01:27 rillig Exp $	*/
 # 3 "msg_242.c"
 
 // Test for message: combination of '%s' and '%s', op '%s' [242]
@@ -49,7 +49,7 @@ unnamed_enum(void)
 
 	unsigned i = 3;
 
-	/* expect+3: warning: dubious operation on enum, op '*' [241] */
+	/* expect+3: warning: dubious operation '*' on enum [241] */
 	/* FIXME: Combining 'unsigned int' with 'unsigned int' is OK. */
 	/* expect+1: warning: combination of 'unsigned int' and 'unsigned int', op '=' [242] */
 	i = compile_time_constant * i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.206 2023/07/09 10:42:07 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.207 2023/07/09 11:01:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.206 2023/07/09 10:42:07 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.207 2023/07/09 11:01:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -64,7 +64,7 @@ static const char *const msgs[] = {
 	"use 'double' instead of 'long float'",			      /* 6 */
 	"only one storage class allowed",			      /* 7 */
 	"illegal storage class",				      /* 8 */
-	"only register valid as formal parameter storage class",      /* 9 */
+	"only 'register' is valid as storage class in parameter",     /* 9 */
 	"duplicate '%s'",					      /* 10 */
 	"bit-field initializer out of range",			      /* 11 */
 	"compiler takes size of function",			      /* 12 */
@@ -132,7 +132,7 @@ static const char *const msgs[] = {
 	"no hex digits follow \\x",				      /* 74 */
 	"overflow in hex escape",				      /* 75 */
 	"character escape does not fit in character",		      /* 76 */
-	"bad octal digit %c",					      /* 77 */
+	"bad octal digit '%c'",					      /* 77 */
 	"",			/* unused */			      /* 78 */
 	"dubious escape \\%c",					      /* 79 */
 	"dubious escape \\%o",					      /* 80 */
@@ -196,8 +196,8 @@ static const char *const msgs[] = {
 	"unknown operand size, op '%s'",			      /* 138 */
 	"division by 0",					      /* 139 */
 	"modulus by 0",						      /* 140 */
-	"integer overflow detected, op '%s'",			      /* 141 */
-	"floating point overflow on operator '%s'",		      /* 142 */
+	"operator '%s' produces integer overflow",		      /* 141 */
+	"operator '%s' produces floating point overflow",	      /* 142 */
 	"cannot take size/alignment of incomplete type",	      /* 143 */
 	"cannot take size/alignment of function type '%s'",	      /* 144 */
 	"cannot take size/alignment of bit-field",		      /* 145 */
@@ -254,8 +254,8 @@ static const char *const msgs[] = {
 	"case label affected by conversion",			      /* 196 */
 	"non-constant case expression",				      /* 197 */
 	"non-integral case expression",				      /* 198 */
-	"duplicate case in switch: %ld",			      /* 199 */
-	"duplicate case in switch: %lu",			      /* 200 */
+	"duplicate case '%ld' in switch",			      /* 199 */
+	"duplicate case '%lu' in switch",			      /* 200 */
 	"default outside switch",				      /* 201 */
 	"duplicate default in switch",				      /* 202 */
 	"case label must be of type 'int' in traditional C",	      /* 203 */
@@ -296,7 +296,7 @@ static const char *const msgs[] = {
 	"initialization of union is illegal in traditional C",	      /* 238 */
 	"constant argument to '!'",				      /* 239 */
 	"",			/* unused */			      /* 240 */
-	"dubious operation on enum, op '%s'",			      /* 241 */
+	"dubious operation '%s' on enum",			      /* 241 */
 	"combination of '%s' and '%s', op '%s'",		      /* 242 */
 	"dubious comparison of enums, op '%s'",			      /* 243 */
 	"illegal structure pointer combination",		      /* 244 */
@@ -310,7 +310,7 @@ static const char *const msgs[] = {
 	"integer constant out of range",			      /* 252 */
 	"unterminated character constant",			      /* 253 */
 	"newline in string or char constant",			      /* 254 */
-	"undefined or invalid # directive",			      /* 255 */
+	"undefined or invalid '#' directive",			      /* 255 */
 	"unterminated comment",					      /* 256 */
 	"extra characters in lint comment",			      /* 257 */
 	"unterminated string constant",				      /* 258 */
@@ -338,13 +338,13 @@ static const char *const msgs[] = {
 	"comment /* %s */ must be outside function",		      /* 280 */
 	"duplicate comment /* %s */",				      /* 281 */
 	"comment /* %s */ must precede function definition",	      /* 282 */
-	"argument number mismatch with directive /* %s */",	      /* 283 */
+	"argument number mismatch in comment /* %s */",		      /* 283 */
 	"fallthrough on default statement",			      /* 284 */
 	"prototype declaration",				      /* 285 */
 	"function definition is not a prototype",		      /* 286 */
 	"function declaration is not a prototype",		      /* 287 */
 	"dubious use of /* VARARGS */ with /* %s */",		      /* 288 */
-	"can't be used together: /* PRINTFLIKE */ /* SCANFLIKE */",   /* 289 */
+	"/* PRINTFLIKE */ and /* SCANFLIKE */ cannot be combined",    /* 289 */
 	"static function '%s' declared but not defined",	      /* 290 */
 	"invalid multibyte character",				      /* 291 */
 	"cannot concatenate wide and regular string literals",	      /* 292 */
@@ -367,7 +367,7 @@ static const char *const msgs[] = {
 	"extra bits set to 0 in conversion of '%s' to '%s', op '%s'", /* 309 */
 	"symbol renaming can't be used on function arguments",	      /* 310 */
 	"symbol renaming can't be used on automatic variables",	      /* 311 */
-	"%s does not support // comments",			      /* 312 */
+	"%s does not support '//' comments",			      /* 312 */
 	"struct or union member name in initializer is a C99 feature",/* 313 */
 	"",		/* never used */			      /* 314 */
 	"GCC style struct or union member name in initializer",	      /* 315 */
@@ -375,7 +375,7 @@ static const char *const msgs[] = {
 	"__func__ is a C99 feature",				      /* 317 */
 	"variable array dimension is a C99/GCC extension",	      /* 318 */
 	"compound literals are a C99/GCC extension",		      /* 319 */
-	"({ }) is a GCC extension",				      /* 320 */
+	"'({ ... })' is a GCC extension",			      /* 320 */
 	"array initializer with designators is a C99 feature",	      /* 321 */
 	"zero sized array is a C99 extension",			      /* 322 */
 	"continue in 'do ... while (0)' loop",			      /* 323 */
