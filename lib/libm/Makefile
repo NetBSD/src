@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.219 2023/04/10 19:23:02 rillig Exp $
+#  $NetBSD: Makefile,v 1.220 2023/07/09 03:57:09 rin Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -212,6 +212,7 @@ COMMON_SRCS+= s_nexttoward.c
 .if ${MKSOFTFLOAT} == "no"
 COMMON_SRCS += fenv.c
 .endif
+COMMON_SRCS+= s_fma.c s_fmaf.c s_fmal.c
 .endif
 # End of list of CPU tests
 
