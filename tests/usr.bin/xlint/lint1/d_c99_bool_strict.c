@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict.c,v 1.42 2023/07/09 10:42:07 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict.c,v 1.43 2023/07/09 11:18:55 rillig Exp $	*/
 # 3 "d_c99_bool_strict.c"
 
 /*
@@ -297,7 +297,7 @@ strict_bool_conversion_return_2(void)
 	return 2;
 }
 
-/* expect+2: warning: argument 'p' unused in function 'strict_bool_conversion_return_pointer' [231] */
+/* expect+2: warning: parameter 'p' unused in function 'strict_bool_conversion_return_pointer' [231] */
 bool
 strict_bool_conversion_return_pointer(const void *p)
 {
@@ -393,7 +393,7 @@ strict_bool_conversion_between_bool_and_int(void)
 	b = i;
 }
 
-/* expect+2: warning: argument 'b' unused in function 'strict_bool_conversion_from_bool_to_scalar' [231] */
+/* expect+2: warning: parameter 'b' unused in function 'strict_bool_conversion_from_bool_to_scalar' [231] */
 void
 strict_bool_conversion_from_bool_to_scalar(bool b)
 {
@@ -815,7 +815,7 @@ enum Flags {
 	FLAG28 = 1 << 28
 };
 
-/* expect+2: warning: argument 'flags' unused in function 'strict_bool_bitwise_and_enum' [231] */
+/* expect+2: warning: parameter 'flags' unused in function 'strict_bool_bitwise_and_enum' [231] */
 void
 strict_bool_bitwise_and_enum(enum Flags flags)
 {

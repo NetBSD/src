@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_280.c,v 1.7 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_280.c,v 1.8 2023/07/09 11:18:55 rillig Exp $	*/
 # 3 "msg_280.c"
 
 // Test for message: comment /* %s */ must be outside function [280]
@@ -53,7 +53,7 @@ varargs_bad_body(const char *str, ...)
 }
 
 void
-/* expect+1: warning: argument 'str' unused in function 'argsused_bad_body' [231] */
+/* expect+1: warning: parameter 'str' unused in function 'argsused_bad_body' [231] */
 argsused_bad_body(const char *str)
 {
 	/* expect+1: warning: comment ** ARGSUSED ** must be outside function [280] */
