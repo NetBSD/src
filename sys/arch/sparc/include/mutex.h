@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.11 2019/11/29 22:55:34 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.12 2023/07/09 17:03:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -33,6 +33,9 @@
 #define	_SPARC_MUTEX_H_
 
 #ifdef __MUTEX_PRIVATE
+#include <machine/intr.h>
+#include <machine/lock.h>
+
 #include "psl.h"
 #endif
 
