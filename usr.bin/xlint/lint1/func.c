@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.166 2023/07/09 11:01:27 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.167 2023/07/09 12:15:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.166 2023/07/09 11:01:27 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.167 2023/07/09 12:15:07 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -447,15 +447,14 @@ named_label(sym_t *sym)
 static void
 check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 {
-	uint64_t case_value, mask;
 
 	if (switch_expr->tn_op != BITAND ||
 	    switch_expr->tn_right->tn_op != CON)
 		return;
 
 	lint_assert(case_expr->tn_op == CON);
-	case_value = case_expr->tn_val.u.integer;
-	mask = switch_expr->tn_right->tn_val.u.integer;
+	uint64_t case_value = (uint64_t)case_expr->tn_val.u.integer;
+	uint64_t mask = (uint64_t)switch_expr->tn_right->tn_val.u.integer;
 
 	if ((case_value & ~mask) != 0) {
 		/* statement not reached */
