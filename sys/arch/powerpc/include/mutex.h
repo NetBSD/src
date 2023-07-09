@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.6 2019/11/29 22:55:34 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.7 2023/07/09 17:03:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -33,6 +33,8 @@
 #define	_POWERPC_MUTEX_H_
 
 #ifdef __MUTEX_PRIVATE
+#include <sys/intr.h>
+#include <machine/intr.h>
 #include <machine/lock.h>
 #endif
 
