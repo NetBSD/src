@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_243.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_243.c,v 1.6 2023/07/09 12:04:08 rillig Exp $	*/
 # 3 "msg_243.c"
 
-// Test for message: dubious comparison of enums, op '%s' [243]
+// Test for message: operator '%s' assumes that '%s' is ordered [243]
 
 /* lint1-extra-flags: -eP -X 351 */
 
@@ -16,13 +16,13 @@ void eval(_Bool);
 void
 example(enum color a, enum color b)
 {
-	/* expect+1: warning: dubious comparison of enums, op '<' [243] */
+	/* expect+1: warning: operator '<' assumes that 'enum color' is ordered [243] */
 	eval(a < b);
-	/* expect+1: warning: dubious comparison of enums, op '<=' [243] */
+	/* expect+1: warning: operator '<=' assumes that 'enum color' is ordered [243] */
 	eval(a <= b);
-	/* expect+1: warning: dubious comparison of enums, op '>' [243] */
+	/* expect+1: warning: operator '>' assumes that 'enum color' is ordered [243] */
 	eval(a > b);
-	/* expect+1: warning: dubious comparison of enums, op '>=' [243] */
+	/* expect+1: warning: operator '>=' assumes that 'enum color' is ordered [243] */
 	eval(a >= b);
 	eval(a == b);
 	eval(a != b);

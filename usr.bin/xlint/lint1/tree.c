@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.557 2023/07/09 11:18:55 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.558 2023/07/09 12:04:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.557 2023/07/09 11:18:55 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.558 2023/07/09 12:04:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3132,11 +3132,9 @@ check_enum_type_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 			    type_name(rn->tn_type));
 			break;
 		}
-	} else if (Pflag && mp->m_comparison && op != EQ && op != NE) {
-		if (eflag)
-			/* dubious comparison of enums, op '%s' */
-			warning(243, mp->m_name);
-	}
+	} else if (Pflag && eflag && mp->m_comparison && op != EQ && op != NE)
+		/* operator '%s' assumes that '%s' is ordered */
+		warning(243, mp->m_name, type_name(ln->tn_type));
 }
 
 /* Prints a warning if the operands mix between enum and integer. */

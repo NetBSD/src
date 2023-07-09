@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.208 2023/07/09 11:18:55 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.209 2023/07/09 12:04:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.208 2023/07/09 11:18:55 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.209 2023/07/09 12:04:08 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -298,7 +298,7 @@ static const char *const msgs[] = {
 	"",			/* unused */			      /* 240 */
 	"dubious operation '%s' on enum",			      /* 241 */
 	"combination of '%s' and '%s', op '%s'",		      /* 242 */
-	"dubious comparison of enums, op '%s'",			      /* 243 */
+	"operator '%s' assumes that '%s' is ordered",		      /* 243 */
 	"illegal structure pointer combination",		      /* 244 */
 	"incompatible structure pointers: '%s' '%s' '%s'",	      /* 245 */
 	"dubious conversion of enum to '%s'",			      /* 246 */
