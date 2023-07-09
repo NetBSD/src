@@ -1,4 +1,4 @@
-/* $NetBSD: t_clock_gettime.c,v 1.5 2023/07/08 20:02:10 riastradh Exp $ */
+/* $NetBSD: t_clock_gettime.c,v 1.6 2023/07/09 19:19:40 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_clock_gettime.c,v 1.5 2023/07/08 20:02:10 riastradh Exp $");
+__RCSID("$NetBSD: t_clock_gettime.c,v 1.6 2023/07/09 19:19:40 riastradh Exp $");
 
 #include <sys/param.h>
 
@@ -223,7 +223,7 @@ waste_system_time(void)
 
 	RL(pipe2(fd, O_NONBLOCK));
 	RL(n = ioctl(fd[1], FIONSPACE));
-	n = MIN(MAX(0, n), sizeof(buf));
+	n = MIN((unsigned)MAX(0, n), sizeof(buf));
 	for (i = 0; i < 16; i++) {
 		RL(write(fd[1], buf, n));
 		RL(read(fd[0], buf, n));
