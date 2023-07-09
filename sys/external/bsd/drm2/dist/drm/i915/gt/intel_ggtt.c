@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ggtt.c,v 1.15 2021/12/19 12:35:13 riastradh Exp $	*/
+/*	$NetBSD: intel_ggtt.c,v 1.16 2023/07/09 20:24:06 riastradh Exp $	*/
 
 // SPDX-License-Identifier: MIT
 /*
@@ -6,7 +6,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.15 2021/12/19 12:35:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ggtt.c,v 1.16 2023/07/09 20:24:06 riastradh Exp $");
 
 #include <linux/stop_machine.h>
 
@@ -1772,17 +1772,23 @@ i915_get_ggtt_vma_pages(struct i915_vma *vma)
 		vma->pages = vma->obj->mm.pages;
 		return 0;
 
-#ifndef __NetBSD__
 	case I915_GGTT_VIEW_ROTATED:
+#ifdef __NetBSD__
+		vma->pages = ERR_PTR(-ENODEV);
+#else
 		vma->pages =
 			intel_rotate_pages(&vma->ggtt_view.rotated, vma->obj);
+#endif
 		break;
 
 	case I915_GGTT_VIEW_REMAPPED:
+#ifdef __NetBSD__
+		vma->pages = ERR_PTR(-ENODEV);
+#else
 		vma->pages =
 			intel_remap_pages(&vma->ggtt_view.remapped, vma->obj);
-		break;
 #endif
+		break;
 
 	case I915_GGTT_VIEW_PARTIAL:
 		vma->pages = intel_partial_pages(&vma->ggtt_view, vma->obj);
