@@ -1,8 +1,17 @@
-/*	$NetBSD: msg_199.c,v 1.3 2022/06/16 16:58:36 rillig Exp $	*/
+/*	$NetBSD: msg_199.c,v 1.4 2023/07/09 11:01:27 rillig Exp $	*/
 # 3 "msg_199.c"
 
-// Test for message: duplicate case in switch: %ld [199]
+// Test for message: duplicate case '%ld' in switch [199]
 
-/* expect+1: error: syntax error ':' [249] */
-TODO: "Add example code that triggers the above message."
-TODO: "Add example code that almost triggers the above message."
+/* lint1-extra-flags: -X 351 */
+
+void
+example(int x)
+{
+	switch (x) {
+	case 3:
+		/* expect+1: error: duplicate case '3' in switch [199] */
+	case 3:
+		break;
+	}
+}

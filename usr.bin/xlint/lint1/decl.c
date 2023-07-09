@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.345 2023/07/08 16:13:00 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.346 2023/07/09 11:01:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.345 2023/07/08 16:13:00 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.346 2023/07/09 11:01:27 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -645,7 +645,7 @@ dcs_adjust_storage_class(void)
 	} else if (dcs->d_kind == DLK_OLD_STYLE_ARGS ||
 		   dcs->d_kind == DLK_PROTO_PARAMS) {
 		if (dcs->d_scl != NOSCL && dcs->d_scl != REG) {
-			/* only register valid as formal parameter ... */
+			/* only 'register' is valid as storage class ... */
 			error(9);
 			dcs->d_scl = NOSCL;
 		}
@@ -2386,7 +2386,7 @@ check_func_lint_directives(void)
 
 	/* check for illegal combinations of lint directives */
 	if (printflike_argnum != -1 && scanflike_argnum != -1) {
-		/* can't be used together: ** PRINTFLIKE ** ** SCANFLIKE ** */
+		/* ** PRINTFLIKE ** and ** SCANFLIKE ** cannot be combined */
 		warning(289);
 		printflike_argnum = scanflike_argnum = -1;
 	}
@@ -2406,24 +2406,24 @@ check_func_lint_directives(void)
 	for (sym_t *arg = dcs->d_func_args; arg != NULL; arg = arg->s_next)
 		narg++;
 	if (nargusg > narg) {
-		/* argument number mismatch with directive ** %s ** */
+		/* argument number mismatch in comment ** %s ** */
 		warning(283, "ARGSUSED");
 		nargusg = 0;
 	}
 	if (nvararg > narg) {
-		/* argument number mismatch with directive ** %s ** */
+		/* argument number mismatch in comment ** %s ** */
 		warning(283, "VARARGS");
 		nvararg = 0;
 	}
 	if (printflike_argnum > narg) {
-		/* argument number mismatch with directive ** %s ** */
+		/* argument number mismatch in comment ** %s ** */
 		warning(283, "PRINTFLIKE");
 		printflike_argnum = -1;
 	} else if (printflike_argnum == 0) {
 		printflike_argnum = -1;
 	}
 	if (scanflike_argnum > narg) {
-		/* argument number mismatch with directive ** %s ** */
+		/* argument number mismatch in comment ** %s ** */
 		warning(283, "SCANFLIKE");
 		scanflike_argnum = -1;
 	} else if (scanflike_argnum == 0) {

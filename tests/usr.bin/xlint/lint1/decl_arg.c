@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.8 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.9 2023/07/09 11:01:27 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -31,7 +31,7 @@ void type_qualifier_pointer(const number *const);
 extern void
 old_style(an_int, a_const_int, a_number, a_function, a_struct)
 /* expect+2: warning: empty declaration [2] */
-/* expect+1: error: only register valid as formal parameter storage class [9] */
+/* expect+1: error: only 'register' is valid as storage class in parameter [9] */
 static;
 /* expect+1: error: syntax error '"' [249] */
 static "error";
@@ -115,7 +115,7 @@ void cover_direct_notype_param_decl(
 /*
  * Just some unrealistic code to cover the grammar rule parameter_declaration.
  */
-/* expect+4: error: only register valid as formal parameter storage class [9] */
+/* expect+4: error: only 'register' is valid as storage class in parameter [9] */
 void cover_parameter_declaration(
     volatile,			/* 1 */
     double,			/* 2 */

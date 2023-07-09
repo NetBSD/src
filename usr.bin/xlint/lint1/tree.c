@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.555 2023/07/09 10:42:07 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.556 2023/07/09 11:01:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.555 2023/07/09 10:42:07 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.556 2023/07/09 11:01:27 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -922,7 +922,7 @@ fold(tnode_t *tn)
 	if (ovfl ||
 	    ((uint64_t)(si | mask) != ~(uint64_t)0 && (si & ~mask) != 0)) {
 		if (hflag)
-			/* integer overflow detected, op '%s' */
+			/* operator '%s' produces integer overflow */
 			warning(141, op_name(tn->tn_op));
 	}
 
@@ -1641,7 +1641,7 @@ fold_float(tnode_t *tn)
 		 */
 		fpe = 0;
 	} else if (is_floating_overflow(t, v->u.floating)) {
-		/* floating point overflow on operator '%s' */
+		/* operator '%s' produces floating point overflow */
 		warning(142, op_name(tn->tn_op));
 		v->u.floating = floating_error_value(t, v->u.floating);
 		fpe = 0;
@@ -3098,7 +3098,7 @@ check_bad_enum_operation(op_t op, const tnode_t *ln, const tnode_t *rn)
 		return;
 	}
 
-	/* dubious operation on enum, op '%s' */
+	/* dubious operation '%s' on enum */
 	warning(241, op_name(op));
 }
 
@@ -4837,7 +4837,7 @@ do_statement_expr(tnode_t *tn)
 	    : NULL;		/* after a syntax error */
 	mem_block_level++;
 	block_level++;
-	/* ({ }) is a GCC extension */
+	/* '({ ... })' is a GCC extension */
 	gnuism(320);
 }
 

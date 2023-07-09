@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_320.c,v 1.4 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_320.c,v 1.5 2023/07/09 11:01:27 rillig Exp $	*/
 # 3 "msg_320.c"
 
-// Test for message: ({ }) is a GCC extension [320]
+// Test for message: '({ ... })' is a GCC extension [320]
 
 /* lint1-flags: -Sw -X 351 */
 
@@ -13,5 +13,5 @@ example(void)
 		int square = base * base;
 		square * base;
 	});
-	/* expect-1: warning: ({ }) is a GCC extension [320] */
+	/* expect-1: warning: '({ ... })' is a GCC extension [320] */
 }
