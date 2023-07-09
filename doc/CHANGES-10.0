@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.0,v 1.1.2.79 2023/07/07 19:04:02 martin Exp $
+# $NetBSD: CHANGES-10.0,v 1.1.2.80 2023/07/09 13:40:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 10.0 branch on 2022-12-16
 until the 10.0 release:
@@ -2386,4 +2386,11 @@ sys/net/if_wg.c					1.76
 
 	wg(4): improve diagnostic messages.
 	[jakllsch, ticket #228]
+
+sys/dev/pci/virtio_pci.c			1.43
+sys/dev/virtio/virtio_mmio.c			1.11
+
+	virtio(4): Fix byte order of DMA data for armeb in the same manner as
+	aarch64eb.
+	[rin, ticket #229]
 
