@@ -1,4 +1,4 @@
-/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.19 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: d_c99_bool_strict_syshdr.c,v 1.20 2023/07/09 10:42:07 rillig Exp $	*/
 # 3 "d_c99_bool_strict_syshdr.c"
 
 /*
@@ -221,7 +221,7 @@ void
 pass_bool_to_function(void)
 {
 
-	/* expect+5: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+5: error: argument 1 expects '_Bool', gets passed 'int' [334] */
 	take_bool(
 # 227 "d_c99_bool_strict_syshdr.c" 3 4
 	    (/*CONSTCOND*/1)
@@ -234,7 +234,7 @@ pass_bool_to_function(void)
 # 235 "d_c99_bool_strict_syshdr.c"
 	);
 
-	/* expect+5: error: argument #1 expects '_Bool', gets passed 'int' [334] */
+	/* expect+5: error: argument 1 expects '_Bool', gets passed 'int' [334] */
 	take_bool(
 # 240 "d_c99_bool_strict_syshdr.c" 3 4
 	    (/*CONSTCOND*/0)
