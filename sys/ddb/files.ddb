@@ -1,4 +1,4 @@
-#	$NetBSD: files.ddb,v 1.15 2021/10/06 12:14:51 uwe Exp $
+#	$NetBSD: files.ddb,v 1.16 2023/07/09 17:10:47 riastradh Exp $
 
 #
 # DDB options
@@ -36,6 +36,7 @@ file	ddb/db_proc.c			ddb
 file	ddb/db_print.c			ddb
 file	ddb/db_run.c			ddb | kgdb	# XXX kgdb reference
 file	ddb/db_sym.c			ddb
+file	ddb/db_syncobj.c		ddb
 file	ddb/db_trap.c                   ddb
 file	ddb/db_variables.c		ddb
 file	ddb/db_watch.c			ddb
