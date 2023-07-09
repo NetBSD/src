@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_259_c90.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_259_c90.c,v 1.6 2023/07/09 10:42:07 rillig Exp $	*/
 # 3 "msg_259_c90.c"
 
-/* Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259] */
+/* Test for message: argument %d is converted from '%s' to '%s' due to prototype [259] */
 
 /*
  * This warning detects function calls that are translated in very different
@@ -135,10 +135,10 @@ small_integer_types(char c, signed char sc, unsigned char uc,
 void
 signed_to_unsigned(int si, long sl)
 {
-	/* expect+1: warning: argument #1 is converted from 'int' to 'unsigned int' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'int' to 'unsigned int' due to prototype [259] */
 	unsigned_int(si);
 
-	/* expect+1: warning: argument #1 is converted from 'long' to 'unsigned int' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'long' to 'unsigned int' due to prototype [259] */
 	unsigned_int(sl);
 
 	/*
@@ -148,19 +148,19 @@ signed_to_unsigned(int si, long sl)
 	 */
 	unsigned_long(si);
 
-	/* expect+1: warning: argument #1 is converted from 'long' to 'unsigned long' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'long' to 'unsigned long' due to prototype [259] */
 	unsigned_long(sl);
 }
 
 void
 unsigned_to_signed(unsigned int ui, unsigned long ul)
 {
-	/* expect+1: warning: argument #1 is converted from 'unsigned int' to 'int' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'unsigned int' to 'int' due to prototype [259] */
 	signed_int(ui);
-	/* expect+1: warning: argument #1 is converted from 'unsigned long' to 'int' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'unsigned long' to 'int' due to prototype [259] */
 	signed_int(ul);
 	signed_long(ui);
-	/* expect+1: warning: argument #1 is converted from 'unsigned long' to 'long' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'unsigned long' to 'long' due to prototype [259] */
 	signed_long(ul);
 }
 
@@ -168,7 +168,7 @@ void
 signed_to_signed(signed int si, signed long sl)
 {
 	signed_int(si);
-	/* expect+1: warning: argument #1 is converted from 'long' to 'int' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'long' to 'int' due to prototype [259] */
 	signed_int(sl);
 	signed_long(si);
 	signed_long(sl);
@@ -178,7 +178,7 @@ void
 unsigned_to_unsigned(unsigned int ui, unsigned long ul)
 {
 	unsigned_int(ui);
-	/* expect+1: warning: argument #1 is converted from 'unsigned long' to 'unsigned int' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'unsigned long' to 'unsigned int' due to prototype [259] */
 	unsigned_int(ul);
 	unsigned_long(ui);
 	unsigned_long(ul);
@@ -199,6 +199,6 @@ pass_sizeof_as_smaller_type(void)
 	 * constant, even though its value would fit in an unsigned int, is
 	 * still passed as size_t.
 	 */
-	/* expect+1: warning: argument #1 is converted from 'unsigned long' to 'unsigned int' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'unsigned long' to 'unsigned int' due to prototype [259] */
 	unsigned_int(sizeof(int));
 }

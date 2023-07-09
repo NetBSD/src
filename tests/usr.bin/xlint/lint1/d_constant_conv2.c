@@ -1,4 +1,4 @@
-/*	$NetBSD: d_constant_conv2.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: d_constant_conv2.c,v 1.7 2023/07/09 10:42:07 rillig Exp $	*/
 # 3 "d_constant_conv2.c"
 
 /* Flag information-losing constant conversion in argument lists */
@@ -16,6 +16,6 @@ int f(unsigned int);
 void
 should_fail(void)
 {
-	/* expect+1: warning: argument #1 is converted from 'double' to 'unsigned int' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'double' to 'unsigned int' due to prototype [259] */
 	f(2.1);
 }

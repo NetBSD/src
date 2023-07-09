@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.554 2023/07/08 16:13:00 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.555 2023/07/09 10:42:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.554 2023/07/08 16:13:00 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.555 2023/07/09 10:42:07 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3380,7 +3380,7 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 	ot = ptn->tn_type->t_tspec;
 
 	if (should_warn_about_prototype_conversion(nt, ot, ptn)) {
-		/* argument #%d is converted from '%s' to '%s' ... */
+		/* argument %d is converted from '%s' to '%s' ... */
 		warning(259, arg, type_name(tn->tn_type), type_name(tp));
 	}
 }

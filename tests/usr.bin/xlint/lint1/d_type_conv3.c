@@ -1,4 +1,4 @@
-/*	$NetBSD: d_type_conv3.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: d_type_conv3.c,v 1.8 2023/07/09 10:42:07 rillig Exp $	*/
 # 3 "d_type_conv3.c"
 
 /* Flag information-losing type conversion in argument lists */
@@ -17,7 +17,7 @@ void
 should_fail(void)
 {
 
-	/* expect+2: warning: argument #1 is converted from 'long long' to 'unsigned int' due to prototype [259] */
+	/* expect+2: warning: argument 1 is converted from 'long long' to 'unsigned int' due to prototype [259] */
 	/* expect+1: warning: conversion of 'long long' to 'unsigned int' is out of range, arg #1 [295] */
 	f(0x7fffffffffffffffLL);
 }

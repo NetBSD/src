@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_int.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: platform_int.c,v 1.6 2023/07/09 10:42:07 rillig Exp $	*/
 # 3 "platform_int.c"
 
 /*
@@ -21,6 +21,6 @@ convert_unsigned_char_to_size(unsigned char uc)
 	 * and UINT is the same, 32, but the signedness changes, therefore
 	 * the warning.
 	 */
-	/* expect+1: warning: argument #1 is converted from 'unsigned char' to 'unsigned int' due to prototype [259] */
+	/* expect+1: warning: argument 1 is converted from 'unsigned char' to 'unsigned int' due to prototype [259] */
 	to_size(uc);
 }

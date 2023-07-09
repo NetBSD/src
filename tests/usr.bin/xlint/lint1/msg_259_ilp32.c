@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_259_ilp32.c,v 1.9 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_259_ilp32.c,v 1.10 2023/07/09 10:42:07 rillig Exp $	*/
 # 3 "msg_259_ilp32.c"
 
-/* Test for message: argument #%d is converted from '%s' to '%s' due to prototype [259] */
+/* Test for message: argument %d is converted from '%s' to '%s' due to prototype [259] */
 
 /*
  * See also msg_259, which contains more examples for this warning.
