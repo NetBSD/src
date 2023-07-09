@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.237 2023/07/07 08:39:23 rin Exp $
+# $NetBSD: HACKS,v 1.238 2023/07/09 00:01:55 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -1100,4 +1100,16 @@ pr	port-alpha/57511
 descr
 	Temporally disable secure PLT support, introduced by
 	binutils 2.39 for us. We need its support to ld.elf_so(1).
+kcah
+
+hack	openssl: Disable ec_nistp_64_gcc_128 on aarch64eb
+cdate	Sat Jul  8 23:54:27 UTC 2023
+who	rin
+port	aarch64eb
+file	src/crypto/external/bsd/openssl/lib/libcrypto/arch/aarch64/ec.inc : 1.4
+descr
+	As described in upstream document:
+	https://github.com/openssl/openssl/blob/master/INSTALL.md#enable-ec_nistp_64_gcc_128
+	This feature (for LP64) does not support big-endian machines.
+	Note that sparc64 does not use this (port-sparc64/57472).
 kcah
