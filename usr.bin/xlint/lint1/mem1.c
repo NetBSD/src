@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.66 2023/06/30 12:21:25 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.67 2023/07/09 12:15:07 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.66 2023/06/30 12:21:25 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.67 2023/07/09 12:15:07 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -93,7 +93,7 @@ add_directory_replacement(char *arg)
 	*sep = '\0';
 
 	r->orig = arg;
-	r->orig_len = sep - arg;
+	r->orig_len = (size_t)(sep - arg);
 	r->repl = sep + 1;
 	r->next = filename_replacements;
 	filename_replacements = r;

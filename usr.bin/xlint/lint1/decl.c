@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.347 2023/07/09 11:18:55 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.348 2023/07/09 12:15:07 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.347 2023/07/09 11:18:55 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.348 2023/07/09 12:15:07 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -130,6 +130,7 @@ type_t *
 gettyp(tspec_t t)
 {
 
+	lint_assert((int)t < (int)STRUCT);
 	/* TODO: make the return type 'const' */
 	return &typetab[t];
 }
@@ -584,7 +585,7 @@ end_declaration_level(void)
 		symtab_remove_level(dl->d_first_dlsym);
 		break;
 	case DLK_EXTERN:
-		/* there is nothing around an external declarations */
+		/* there is nothing around an external declaration */
 		/* FALLTHROUGH */
 	default:
 		lint_assert(/*CONSTCOND*/false);
