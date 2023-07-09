@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.346 2023/07/09 11:01:27 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.347 2023/07/09 11:18:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.346 2023/07/09 11:01:27 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.347 2023/07/09 11:18:55 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2345,7 +2345,7 @@ declare_argument(sym_t *sym, bool has_initializer)
 		sym->s_type = block_derive_type(sym->s_type->t_subt, PTR);
 	if (t == FUNC) {
 		if (!allow_c90)
-			/* argument '%s' has function type, should be ... */
+			/* parameter '%s' has function type, should be ... */
 			warning(50, sym->s_name);
 		sym->s_type = block_derive_type(sym->s_type, PTR);
 	}
@@ -2353,7 +2353,7 @@ declare_argument(sym_t *sym, bool has_initializer)
 		sym->s_type = gettyp(DOUBLE);
 
 	if (dcs->d_inline)
-		/* argument '%s' declared inline */
+		/* parameter '%s' declared inline */
 		warning(269, sym->s_name);
 
 	/*
@@ -2925,7 +2925,7 @@ check_argument_usage(bool novar, sym_t *arg)
 		return;
 
 	if (!arg->s_used && !vflag) {
-		/* argument '%s' unused in function '%s' */
+		/* parameter '%s' unused in function '%s' */
 		warning_at(231, &arg->s_def_pos, arg->s_name, funcsym->s_name);
 	}
 }

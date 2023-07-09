@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_269.c,v 1.5 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_269.c,v 1.6 2023/07/09 11:18:55 rillig Exp $	*/
 # 3 "msg_269.c"
 
-// Test for message: argument '%s' declared inline [269]
+// Test for message: parameter '%s' declared inline [269]
 
 /* lint1-extra-flags: -X 351 */
 
-/* expect+1: warning: argument 'x' declared inline [269] */
+/* expect+1: warning: parameter 'x' declared inline [269] */
 void example(inline int x);
