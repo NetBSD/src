@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.202 2022/04/28 07:17:52 msaitoh Exp $
+.\"	$NetBSD: ddb.4,v 1.203 2023/07/09 17:10:47 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -615,6 +615,14 @@ process flags, kernel virtual address of LWP structure,
 LWP name and wait channel message.
 LWPs currently running on a CPU are marked with the '\&>' sign.
 This is the default.
+.El
+.It Ic show all tstiles Ns Oo Cm /t Oc
+Display all lwps that are currently waiting in turnstiles to acquire
+locks, which locks they are waiting for, and who currently holds them.
+Valid modifiers:
+.Bl -tag -width 3n
+.It Cm /t
+show a stack trace of the lwp that currently holds each lock
 .El
 .It Ic show routes
 Dump the entire

@@ -1,11 +1,8 @@
-/*	$NetBSD: ddb.h,v 1.6 2023/07/09 17:10:47 riastradh Exp $	*/
+/*	$NetBSD: db_syncobj.h,v 1.1 2023/07/09 17:10:47 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,27 +26,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DDB_DDB_H_
-#define	_DDB_DDB_H_
+#ifndef	_DDB_DB_SYNCOBJ_H
+#define	_DDB_DB_SYNCOBJ_H
 
-#include <machine/db_machdep.h>		/* type definitions */
+#include <sys/syncobj.h>
 
-#include <ddb/db_user.h>
-#include <ddb/db_lex.h>
-#include <ddb/db_output.h>
-#include <ddb/db_command.h>
-#include <ddb/db_break.h>
-#include <ddb/db_watch.h>
-#include <ddb/db_run.h>
-#include <ddb/db_variables.h>
-#include <ddb/db_interface.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_lwp.h>
-#include <ddb/db_access.h>
-#include <ddb/db_proc.h>
-#include <ddb/db_cpu.h>
-#include <ddb/db_autoconf.h>
-#include <ddb/db_syncobj.h>
+struct lwp;
+struct syncobj;
 
-#endif	/* _DDB_DDB_H_ */
+struct lwp *db_syncobj_owner(struct syncobj *, wchan_t);
+
+#endif	/* _DDB_DB_SYNCOBJ_H */

@@ -1,11 +1,8 @@
-/*	$NetBSD: ddb.h,v 1.6 2023/07/09 17:10:47 riastradh Exp $	*/
+/*	$NetBSD: db_syncobj.c,v 1.1 2023/07/09 17:10:47 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2023 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,27 +26,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DDB_DDB_H_
-#define	_DDB_DDB_H_
+#define	__MUTEX_PRIVATE
+#define	__RWLOCK_PRIVATE
 
-#include <machine/db_machdep.h>		/* type definitions */
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: db_syncobj.c,v 1.1 2023/07/09 17:10:47 riastradh Exp $");
 
-#include <ddb/db_user.h>
-#include <ddb/db_lex.h>
-#include <ddb/db_output.h>
-#include <ddb/db_command.h>
-#include <ddb/db_break.h>
-#include <ddb/db_watch.h>
-#include <ddb/db_run.h>
-#include <ddb/db_variables.h>
-#include <ddb/db_interface.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_extern.h>
-#include <ddb/db_lwp.h>
-#include <ddb/db_access.h>
-#include <ddb/db_proc.h>
-#include <ddb/db_cpu.h>
-#include <ddb/db_autoconf.h>
-#include <ddb/db_syncobj.h>
+#include <sys/types.h>
 
-#endif	/* _DDB_DDB_H_ */
+#include <sys/mutex.h>
+#include <sys/null.h>
+#include <sys/rwlock.h>
+#include <sys/syncobj.h>
+
+#include <ddb/ddb.h>
+
+struct lwp *
+db_syncobj_owner(struct syncobj *sobj, wchan_t wchan)
+{
+	db_expr_t mutex_syncobj_;
+	db_expr_t rw_syncobj_;
+
+	if (db_value_of_name("mutex_syncobj", &mutex_syncobj_) &&
+	    (db_expr_t)sobj == mutex_syncobj_) {
+		volatile const struct kmutex *mtx = wchan;
+		uintptr_t owner;
+
+		db_read_bytes((db_addr_t)&mtx->mtx_owner, sizeof(owner),
+		    (char *)&owner);
+		return (struct lwp *)(owner & MUTEX_THREAD);
+
+	} else if (db_value_of_name("rw_syncobj", &rw_syncobj_) &&
+	    (db_expr_t)sobj == rw_syncobj_) {
+		volatile const struct krwlock *rw = wchan;
+		uintptr_t owner;
+
+		db_read_bytes((db_addr_t)&rw->rw_owner, sizeof(owner),
+		    (char *)&owner);
+		if (owner & RW_WRITE_LOCKED)
+			return (struct lwp *)(owner & RW_THREAD);
+		return NULL;
+
+	} else {
+		return NULL;
+	}
+}
