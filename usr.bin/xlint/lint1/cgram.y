@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.451 2023/07/10 19:47:12 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.452 2023/07/10 19:58:47 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.451 2023/07/10 19:47:12 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.452 2023/07/10 19:58:47 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -160,7 +160,7 @@ is_either(const char *s, const char *a, const char *b)
 	else
 		fprintf(yyo, "%Lg", $$->u.floating);
 } <y_val>
-%printer { fprintf(yyo, "'%s'", $$->sb_name); } <y_name>
+%printer { fprintf(yyo, "'%s'", $$ != NULL ? $$->sb_name : "<null>"); } <y_name>
 %printer { debug_sym("", $$, ""); } <y_sym>
 %printer { fprintf(yyo, "%s", op_name($$)); } <y_op>
 %printer { fprintf(yyo, "%s", scl_name($$)); } <y_scl>
@@ -168,7 +168,11 @@ is_either(const char *s, const char *a, const char *b)
 %printer { fprintf(yyo, "%s", tqual_name($$)); } <y_tqual>
 %printer { fprintf(yyo, "%s", type_name($$)); } <y_type>
 %printer {
-	fprintf(yyo, "%s '%s'", op_name($$->tn_op), type_name($$->tn_type));
+	if ($$ == NULL)
+		fprintf(yyo, "<null>");
+	else
+		fprintf(yyo, "%s '%s'",
+		    op_name($$->tn_op), type_name($$->tn_type));
 } <y_tnode>
 %printer { fprintf(yyo, "%zu to %zu", $$.lo, $$.hi); } <y_range>
 %printer { fprintf(yyo, "length %zu", $$->st_len); } <y_string>
