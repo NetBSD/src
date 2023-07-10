@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.20 2023/07/09 12:15:07 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.21 2023/07/10 13:55:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: emit.c,v 1.20 2023/07/09 12:15:07 rillig Exp $");
+__RCSID("$NetBSD: emit.c,v 1.21 2023/07/10 13:55:55 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -153,7 +153,7 @@ outint(int i)
 
 	if ((size_t)(ob.o_end - ob.o_next) < 3 * sizeof(int))
 		outxbuf();
-	ob.o_next += sprintf(ob.o_next, "%d", i);
+	ob.o_next += snprintf(ob.o_next, ob.o_end - ob.o_next, "%d", i);
 }
 
 /* write a name to the output buffer, preceded by its length */
