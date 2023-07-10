@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.172 2023/07/09 12:15:07 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.173 2023/07/10 09:51:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.172 2023/07/09 12:15:07 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.173 2023/07/10 09:51:30 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -182,7 +182,7 @@ static const struct keyword {
  * The symbol table containing all keywords, identifiers and labels. The hash
  * entries are linked via sym_t.s_symtab_next.
  */
-static sym_t *symtab[HSHSIZ1];
+static sym_t *symtab[503];
 
 /*
  * The kind of the next expected symbol, to distinguish the namespaces of
@@ -202,7 +202,7 @@ hash(const char *s)
 		v = (v << 4) + (unsigned char)*p;
 		v ^= v >> 28;
 	}
-	return v % HSHSIZ1;
+	return v % (sizeof(symtab) / sizeof(symtab[0]));
 }
 
 static void
@@ -247,7 +247,7 @@ static void
 symtab_remove_locals(void)
 {
 
-	for (size_t i = 0; i < HSHSIZ1; i++) {
+	for (size_t i = 0; i < sizeof(symtab) / sizeof(symtab[0]); i++) {
 		for (sym_t *sym = symtab[i]; sym != NULL; ) {
 			sym_t *next = sym->s_symtab_next;
 			if (sym->s_block_level >= 1)
@@ -927,7 +927,7 @@ lex_wide_character_constant(void)
 	}
 
 	yylval.y_val = xcalloc(1, sizeof(*yylval.y_val));
-	yylval.y_val->v_tspec = WCHAR;
+	yylval.y_val->v_tspec = WCHAR_TSPEC;
 	yylval.y_val->v_char_constant = true;
 	yylval.y_val->u.integer = wc;
 
