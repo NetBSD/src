@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.32 2023/07/10 12:40:22 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.33 2023/07/10 13:55:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main2.c,v 1.32 2023/07/10 12:40:22 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.33 2023/07/10 13:55:55 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 		case 'C':
 			len = strlen(optarg);
 			lname = xmalloc(len + 10);
-			(void)sprintf(lname, "llib-l%s.ln", optarg);
+			(void)snprintf(lname, len + 10, "llib-l%s.ln", optarg);
 			libname = lname;
 			Cflag = true;
 			uflag = true;

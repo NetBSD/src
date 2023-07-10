@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.21 2023/07/10 12:40:22 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.22 2023/07/10 13:55:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: msg.c,v 1.21 2023/07/10 12:40:22 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.22 2023/07/10 13:55:55 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -104,31 +104,30 @@ lbasename(const char *path)
 const char *
 mkpos(const pos_t *posp)
 {
-	size_t len;
-	const char *fn;
 	static char *buf;
-	static size_t blen = 0;
-	bool qm;
-	int src, line;
+	static size_t buf_size;
 
+	int filename;
+	int lineno;
 	if (Hflag && posp->p_src != posp->p_isrc) {
-		src = posp->p_isrc;
-		line = posp->p_iline;
+		filename = posp->p_isrc;
+		lineno = posp->p_iline;
 	} else {
-		src = posp->p_src;
-		line = posp->p_line;
+		filename = posp->p_src;
+		lineno = posp->p_line;
 	}
-	qm = !Hflag && posp->p_src != posp->p_isrc;
 
-	len = strlen(fn = lbasename(fnames[src]));
-	len += 3 * sizeof(unsigned short) + 4;
+	bool qm = !Hflag && posp->p_src != posp->p_isrc;
+	const char *fn = lbasename(fnames[filename]);
+	size_t len = strlen(fn) + 1 + 1 + 3 * sizeof(int) + 1 + 1;
 
-	if (len > blen)
-		buf = xrealloc(buf, blen = len);
-	if (line != 0)
-		(void)sprintf(buf, "%s%s(%d)", fn, qm ? "?" : "", line);
+	if (len > buf_size)
+		buf = xrealloc(buf, buf_size = len);
+	if (lineno != 0)
+		(void)snprintf(buf, buf_size, "%s%s(%d)",
+		    fn, qm ? "?" : "", lineno);
 	else
-		(void)sprintf(buf, "%s", fn);
+		(void)snprintf(buf, buf_size, "%s", fn);
 
 	return buf;
 }
