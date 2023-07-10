@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_boot.c,v 1.2 2023/07/10 07:00:12 rin Exp $	*/
+/*	$NetBSD: fdt_boot.c,v 1.3 2023/07/10 07:01:48 rin Exp $	*/
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.2 2023/07/10 07:00:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.3 2023/07/10 07:01:48 rin Exp $");
 
 #include "opt_efi.h"
 #include "opt_md.h"
@@ -86,6 +86,11 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.2 2023/07/10 07:00:12 rin Exp $");
 #include <dev/fdt/fdt_ddb.h>
 #endif
 #include <dev/fdt/fdt_memory.h>
+
+#ifndef FDT_MAX_BOOT_STRING
+#define	FDT_MAX_BOOT_STRING	1024
+#endif
+static char bootargs[FDT_MAX_BOOT_STRING] = "";
 
 #ifdef EFI_RUNTIME
 #include <machine/efirt.h>
@@ -184,6 +189,16 @@ fdt_unmap_range(void *ptr, uint64_t size)
 	pmap_update(pmap_kernel());
 
 	uvm_km_free(kernel_map, startva, sz, UVM_KMF_VAONLY);
+}
+
+char *
+fdt_get_bootargs(void)
+{
+	const int chosen = OF_finddevice("/chosen");
+
+	if (chosen >= 0)
+		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
+	return bootargs;
 }
 
 void

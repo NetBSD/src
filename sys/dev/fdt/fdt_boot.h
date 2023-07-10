@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_boot.h,v 1.2 2023/07/10 07:00:12 rin Exp $ */
+/* $NetBSD: fdt_boot.h,v 1.3 2023/07/10 07:01:48 rin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -37,6 +37,8 @@
 
 void fdt_map_efi_runtime(const char *prop, enum cpu_efirt_mem_type type);
 #endif
+
+char *fdt_get_bootargs(void);
 
 void fdt_probe_initrd(void);
 void fdt_setup_initrd(void);
