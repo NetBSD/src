@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.104 2023/07/10 07:00:12 rin Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.105 2023/07/10 07:01:48 rin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.104 2023/07/10 07:00:12 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.105 2023/07/10 07:01:48 rin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -110,12 +110,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.104 2023/07/10 07:00:12 rin Exp $"
 #include <dev/wscons/wsdisplayvar.h>
 #endif
 
-#ifndef FDT_MAX_BOOT_STRING
-#define FDT_MAX_BOOT_STRING 1024
-#endif
-
 BootConfig bootconfig;
-char bootargs[FDT_MAX_BOOT_STRING] = "";
 char *boot_args = NULL;
 
 /* filled in before cleaning bss. keep in .data */
@@ -282,10 +277,7 @@ initarm(void *arg)
 	/* Early console may be available, announce ourselves. */
 	VPRINTF("FDT<%p>\n", fdt_addr_r);
 
-	const int chosen = OF_finddevice("/chosen");
-	if (chosen >= 0)
-		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
-	boot_args = bootargs;
+	boot_args = fdt_get_bootargs();
 
 	/* Heads up ... Setup the CPU / MMU / TLB functions. */
 	VPRINTF("cpufunc\n");
@@ -383,7 +375,7 @@ initarm(void *arg)
 	/* Perform PT build and VM init */
 	cpu_kernel_vm_init(memory_start, memory_size);
 
-	VPRINTF("bootargs: %s\n", bootargs);
+	VPRINTF("bootargs: %s\n", boot_args);
 
 	parse_mi_bootargs(boot_args);
 
