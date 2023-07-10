@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2436 2023/07/08 17:43:13 christos Exp $
+#	$NetBSD: mi,v 1.2437 2023/07/10 02:31:54 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4826,6 +4826,7 @@
 ./usr/share/man/cat2/lutimes.0			comp-c-catman		.cat
 ./usr/share/man/cat2/m68k_sync_icache.0		comp-c-catman		.cat
 ./usr/share/man/cat2/madvise.0			comp-c-catman		.cat
+./usr/share/man/cat2/memfd_create.0		comp-c-catman		.cat
 ./usr/share/man/cat2/mincore.0			comp-c-catman		.cat
 ./usr/share/man/cat2/minherit.0			comp-c-catman		.cat
 ./usr/share/man/cat2/mkdir.0			comp-c-catman		.cat
@@ -13315,6 +13316,7 @@
 ./usr/share/man/html2/lutimes.html		comp-c-htmlman		html
 ./usr/share/man/html2/m68k_sync_icache.html	comp-c-htmlman		html
 ./usr/share/man/html2/madvise.html		comp-c-htmlman		html
+./usr/share/man/html2/memfd_create.html		comp-c-htmlman		html
 ./usr/share/man/html2/mincore.html		comp-c-htmlman		html
 ./usr/share/man/html2/minherit.html		comp-c-htmlman		html
 ./usr/share/man/html2/mkdir.html		comp-c-htmlman		html
@@ -21632,6 +21634,7 @@
 ./usr/share/man/man2/lutimes.2			comp-c-man		.man
 ./usr/share/man/man2/m68k_sync_icache.2		comp-c-man		.man
 ./usr/share/man/man2/madvise.2			comp-c-man		.man
+./usr/share/man/man2/memfd_create.2		comp-c-man		.man
 ./usr/share/man/man2/mincore.2			comp-c-man		.man
 ./usr/share/man/man2/minherit.2			comp-c-man		.man
 ./usr/share/man/man2/mkdir.2			comp-c-man		.man

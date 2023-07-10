@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.309 2021/11/01 05:07:17 thorpej Exp $
+	$NetBSD: syscalls.master,v 1.310 2023/07/10 02:33:04 christos Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -1049,3 +1049,5 @@
 498	STD		{ int|sys||__acl_aclcheck_fd(int filedes, \
 			    acl_type_t type, struct acl *aclp); }
 499	STD	RUMP	{ long|sys||lpathconf(const char *path, int name); }
+500	STD		{ int|sys||memfd_create(const char *name, \
+			    unsigned int flags); }

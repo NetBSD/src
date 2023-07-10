@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.49 2022/12/04 19:01:19 uwe Exp $
+.\"	$NetBSD: fcntl.2,v 1.50 2023/07/10 02:31:54 christos Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)fcntl.2	8.2 (Berkeley) 1/12/94
 .\"
-.Dd September 26, 2019
+.Dd July 5, 2023
 .Dt FCNTL 2
 .Os
 .Sh NAME
@@ -162,6 +162,24 @@ in the buffer pointed to by
 .Fa arg
 should be pointing to a buffer of at least
 .Dv MAXPATHLEN .
+.It Dv F_ADD_SEALS
+Add seals specified in
+.Fa arg
+to
+.Fa fd
+to restrict possible operations on
+.Fa fd
+as described below.
+Like flags, multiple seals can be specified at once.
+Additionally, specifying seals that are already associated with
+.Fa fd
+is a no-op.
+.It Dv F_GET_SEALS
+Get the seals currently associated with
+.Fa fd
+as described below
+.Fa ( arg
+is ignored).
 .El
 .Pp
 The set of valid flags for the
@@ -324,13 +342,44 @@ or an
 request fails or blocks respectively when another process has existing
 locks on bytes in the specified region and the type of any of those
 locks conflicts with the type specified in the request.
+.Pp
+Possible seals are:
+.Bl -tag -width F_SEAL_FUTURE_WRITE
+.It Dv F_SEAL_SEAL
+Prevent any further seals from being added to
+.Fa fd .
+.It Dv F_SEAL_SHRINK
+Prevent the size of
+.Fa fd
+from decreasing.
+.It Dv F_SEAL_GROW
+Prevent the size of
+.Fa fd
+from increasing.
+.It Dv F_SEAL_WRITE
+Prevent any write operations to
+.Fa fd .
+.Dv F_SEAL_WRITE
+cannot be applied if
+.Fa fd
+has any memory mappings.
+.It Dv F_SEAL_FUTURE_WRITE
+Like
+.Dv F_SEAL_WRITE
+but allow any current memory mappings of
+.Fa fd
+to remain open, including those with
+.Dv PROT_WRITE .
+.El
 .Sh NOTES
-The
-.Dv F_GETPATH
-functionality is implemented using the reverse
+For
+.Dv F_GETPATH :
+.Bl -bullet -compact
+.It
+For vnodes, functionality is implemented using the reverse
 .Xr namei 9
 cache.
-The implications of this are:
+The implications of this are
 .Bl -bullet -compact
 .It
 For hard links where the file descriptor can resolve to multiple pathnames,
@@ -341,16 +390,25 @@ may fail if the corresponding entry has been evicted from the LRU
 .Xr namei 9
 cache and return
 .Er ENOENT .
+.El
 .It
-File descriptors that don't point to vnodes are not handled, as
-well as symbolic links since there is currently no way to obtain
-a file descriptor pointing to a symbolic link.
+For a file descriptor created by
+.Xr memfd_create 2 ,
+the name provided at
+.Fa fd
+creation, with the prefix
+.Dq memfd:
+is used.
+.It
+Other types of file descriptors are not handled, as well as symbolic
+links since there is currently no way to obtain a file descriptor
+pointing to a symbolic link.
 .El
 .Sh RETURN VALUES
 Upon successful completion, the value returned depends on
 .Fa cmd
 as follows:
-.Bl -tag -width F_GETOWNX -offset indent
+.Bl -tag -width F_GET_SEALS -offset indent
 .It Dv F_DUPFD
 A new file descriptor.
 .It Dv F_GETFD
@@ -361,6 +419,9 @@ Value of flags.
 Value of file descriptor owner.
 .It Dv F_MAXFD
 Value of the highest file descriptor open by the process.
+.It Dv F_GET_SEALS
+Value of the seals currently associated with
+.Fa fd .
 .It other
 Value other than \-1.
 .El
@@ -473,6 +534,18 @@ is an exclusive lock
 and
 .Fa fildes
 is not a valid file descriptor open for writing.
+.It Bq Er EBUSY
+The argument
+.Fa cmd
+is
+.Dv F_ADD_SEALS ,
+.Fa arg
+contains
+.Dv F_SEAL_WRITE
+and
+.Fa fd
+is currently mapped by
+.Xr mmap 2 .
 .It Bq Er EDEADLK
 The argument
 .Fa cmd
@@ -512,6 +585,24 @@ and the data to which
 points is not valid, or
 .Fa fildes
 refers to a file that does not support locking.
+.Pp
+The argument
+.Fa cmd
+is
+.Dv F_ADD_SEALS
+or
+.Dv F_GET_SEALS
+and
+.Fa fd
+does not support seals.
+.Pp
+The argument
+.Fa cmd
+is
+.Dv F_ADD_SEALS
+and
+.Fa arg
+contains set bits for unsupported seals.
 .It Bq Er EMFILE
 The argument
 .Fa cmd
@@ -562,6 +653,15 @@ has been reached.
 It can be modified using the
 .Li kern.maxfiles
 .Xr sysctl 7 .
+.It Bq Er EPERM
+The argument
+.Fa cmd
+is
+.Dv F_ADD_SEALS
+and
+.Fa fd
+already has
+.Dv F_SEAL_SEAL .
 .It Bq Er ERANGE
 The argument
 .Fa cmd

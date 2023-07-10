@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.559 2023/04/29 06:34:20 riastradh Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.560 2023/07/10 02:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.559 2023/04/29 06:34:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.560 2023/07/10 02:31:55 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -4149,34 +4149,19 @@ sys_ftruncate(struct lwp *l, const struct sys_ftruncate_args *uap, register_t *r
 		syscallarg(int) pad;
 		syscallarg(off_t) length;
 	} */
-	struct vattr vattr;
-	struct vnode *vp;
 	file_t *fp;
-	int error;
+	int error, fd = SCARG(uap, fd);
 
-	if (SCARG(uap, length) < 0)
-		return EINVAL;
+	fp = fd_getfile(fd);
+	if (fp == NULL)
+		return EBADF;
+	if (fp->f_ops->fo_truncate == NULL)
+		error = EOPNOTSUPP;
+	else
+		error = (*fp->f_ops->fo_truncate)(fp, SCARG(uap, length));
 
-	/* fd_getvnode() will use the descriptor for us */
-	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
-		return (error);
-	if ((fp->f_flag & FWRITE) == 0) {
-		error = EINVAL;
-		goto out;
-	}
-	vp = fp->f_vnode;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (vp->v_type == VDIR)
-		error = EISDIR;
-	else if ((error = vn_writechk(vp)) == 0) {
-		vattr_null(&vattr);
-		vattr.va_size = SCARG(uap, length);
-		error = VOP_SETATTR(vp, &vattr, fp->f_cred);
-	}
-	VOP_UNLOCK(vp);
- out:
-	fd_putfile(SCARG(uap, fd));
-	return (error);
+	fd_putfile(fd);
+	return error;
 }
 
 /*

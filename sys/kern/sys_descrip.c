@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.47 2023/05/14 09:29:58 riastradh Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.48 2023/07/10 02:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.47 2023/05/14 09:29:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.48 2023/07/10 02:31:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,26 +315,6 @@ out:	if (fp)
 	return error;
 }
 
-static int
-do_fcntl_getpath(struct lwp *l, file_t *fp, char *upath)
-{
-	char *kpath;
-	int error;
-
-	if (fp->f_type != DTYPE_VNODE)
-		return EOPNOTSUPP;
-
-	kpath = PNBUF_GET();
-
-	error = vnode_to_path(kpath, MAXPATHLEN, fp->f_vnode, l, l->l_proc);
-	if (!error)
-		error = copyoutstr(kpath, upath, MAXPATHLEN, NULL);
-
-	PNBUF_PUT(kpath);
-
-	return error;
-}
-
 /*
  * The file control system call.
  */
@@ -350,6 +330,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	filedesc_t *fdp;
 	fdtab_t *dt;
 	file_t *fp;
+	char *kpath;
 	struct flock fl;
 	bool cloexec = false;
 
@@ -486,7 +467,30 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		break;
 
 	case F_GETPATH:
-		error = do_fcntl_getpath(l, fp, SCARG(uap, arg));
+		kpath = PNBUF_GET();
+
+		/* vnodes need extra context, so are handled separately */
+		if (fp->f_type == DTYPE_VNODE)
+			error = vnode_to_path(kpath, MAXPATHLEN, fp->f_vnode,
+			    l, l->l_proc);
+		else
+			error = (*fp->f_ops->fo_fcntl)(fp, F_GETPATH, kpath);
+
+		if (error == 0)
+			error = copyoutstr(kpath, SCARG(uap, arg), MAXPATHLEN,
+			    NULL);
+
+		PNBUF_PUT(kpath);
+		break;
+
+	case F_ADD_SEALS:
+		tmp = (int)(uintptr_t) SCARG(uap, arg);
+		error = (*fp->f_ops->fo_fcntl)(fp, F_ADD_SEALS, &tmp);
+		break;
+
+	case F_GET_SEALS:
+		error = (*fp->f_ops->fo_fcntl)(fp, F_GET_SEALS, &tmp);
+		*retval = tmp;
 		break;
 
 	default:

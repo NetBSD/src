@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.117 2022/10/28 05:27:16 ozaki-r Exp $	*/
+/*	$NetBSD: fstat.c,v 1.118 2023/07/10 02:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.117 2022/10/28 05:27:16 ozaki-r Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.118 2023/07/10 02:31:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -548,6 +548,7 @@ ftrans(fdfile_t *fp, int i)
 	case DTYPE_CRYPTO:
 	case DTYPE_MQUEUE:
 	case DTYPE_SEM:
+	case DTYPE_MEMFD:
 		if (checkfile == 0)
 			misctrans(&file, i);
 		break;

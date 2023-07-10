@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.67 2021/12/02 04:29:48 ryo Exp $
+	$NetBSD: syscalls.master,v 1.68 2023/07/10 02:31:55 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -567,6 +567,145 @@
 311	UNIMPL		process_vm_writev
 312	UNIMPL		kcmp
 313	UNIMPL		finit_module
+314	UNIMPL		sched_setattr
+315	UNIMPL		sched_getattr
+316	UNIMPL		renameat2
+317	UNIMPL		seccomp
+318	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
+			    unsigned int flags); }
+319	STD		{ int|linux_sys||memfd_create(const char *name, \
+			    unsigned int flags); }
+320	UNIMPL		kexec_file_load
+321	UNIMPL		bpf
+322	UNIMPL		execveat
+323	UNIMPL		userfaultfd
+324	UNIMPL		membarrier
+325	UNIMPL		mlock2
+326	UNIMPL		copy_file_range
+327	UNIMPL		preadv2
+328	UNIMPL		pwritev2
+329	UNIMPL		pkey_mprotect
+330	UNIMPL		pkey_alloc
+331	UNIMPL		pkey_free
+332	UNIMPL		statx
+333	UNIMPL		io_pgetevents
+334	UNIMPL		rseq
+335	UNIMPL
+336	UNIMPL
+337	UNIMPL
+338	UNIMPL
+339	UNIMPL
+340	UNIMPL
+341	UNIMPL
+342	UNIMPL
+343	UNIMPL
+344	UNIMPL
+345	UNIMPL
+346	UNIMPL
+347	UNIMPL
+348	UNIMPL
+349	UNIMPL
+350	UNIMPL
+351	UNIMPL
+352	UNIMPL
+353	UNIMPL
+354	UNIMPL
+355	UNIMPL
+356	UNIMPL
+357	UNIMPL
+358	UNIMPL
+359	UNIMPL
+360	UNIMPL
+361	UNIMPL
+362	UNIMPL
+363	UNIMPL
+364	UNIMPL
+365	UNIMPL
+366	UNIMPL
+367	UNIMPL
+368	UNIMPL
+369	UNIMPL
+370	UNIMPL
+371	UNIMPL
+372	UNIMPL
+373	UNIMPL
+374	UNIMPL
+375	UNIMPL
+376	UNIMPL
+377	UNIMPL
+378	UNIMPL
+379	UNIMPL
+380	UNIMPL
+381	UNIMPL
+382	UNIMPL
+383	UNIMPL
+384	UNIMPL
+385	UNIMPL
+386	UNIMPL
+387	UNIMPL
+388	UNIMPL
+389	UNIMPL
+390	UNIMPL
+391	UNIMPL
+392	UNIMPL
+393	UNIMPL
+394	UNIMPL
+395	UNIMPL
+396	UNIMPL
+397	UNIMPL
+398	UNIMPL
+399	UNIMPL
+400	UNIMPL
+401	UNIMPL
+402	UNIMPL
+403	UNIMPL
+404	UNIMPL
+405	UNIMPL
+406	UNIMPL
+407	UNIMPL
+408	UNIMPL
+409	UNIMPL
+410	UNIMPL
+411	UNIMPL
+412	UNIMPL
+413	UNIMPL
+414	UNIMPL
+415	UNIMPL
+416	UNIMPL
+417	UNIMPL
+418	UNIMPL
+419	UNIMPL
+420	UNIMPL
+421	UNIMPL
+422	UNIMPL
+423	UNIMPL
+424	UNIMPL		pidfd_send_signal
+425	UNIMPL		io_uring_setup
+426	UNIMPL		io_uring_enter
+427	UNIMPL		io_uring_register
+428	UNIMPL		open_tree
+429	UNIMPL		move_mount
+430	UNIMPL		fsopen
+431	UNIMPL		fsconfig
+432	UNIMPL		fsmount
+433	UNIMPL		fspick
+434	UNIMPL		pidfd_open
+435	UNIMPL		clone3
+436	UNIMPL		close_range
+437	UNIMPL		openat2
+438	UNIMPL		pidfd_getfd
+439	UNIMPL		faccessat2
+440	UNIMPL		process_madvise
+441	UNIMPL		epoll_pwait2
+442	UNIMPL		mount_setattr
+443	UNIMPL		quotactl_fd
+444	UNIMPL		landlock_create_ruleset
+445	UNIMPL		landlock_add_rule
+446	UNIMPL		landlock_restrict_self
+447	UNIMPL		memfd_secret
+448	UNIMPL		process_mrelease
+449	UNIMPL		futex_waitv
+450	UNIMPL		set_mempolicy_home_node
 
 ; we want a "nosys" syscall, we'll just add an extra entry for it.
-314	STD		{ int|linux_sys||nosys(void); }
+451	STD		{ int|linux_sys||nosys(void); }

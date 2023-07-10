@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.20 2021/11/25 02:27:08 ryo Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.21 2023/07/10 02:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -100,6 +100,8 @@ struct linux_flock64 {
 #define	LINUX_F_DUPFD_CLOEXEC 	(LINUX_F_SPECIFIC_BASE + 6)
 #define	LINUX_F_SETPIPE_SZ 	(LINUX_F_SPECIFIC_BASE + 7)
 #define	LINUX_F_GETPIPE_SZ 	(LINUX_F_SPECIFIC_BASE + 8)
+#define	LINUX_F_ADD_SEALS	(LINUX_F_SPECIFIC_BASE + 9)
+#define	LINUX_F_GET_SEALS	(LINUX_F_SPECIFIC_BASE + 10)
 
 /*
  * We have to have 4 copies of the code that converts linux fcntl() file

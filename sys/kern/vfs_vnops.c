@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.241 2023/04/22 13:53:02 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.242 2023/07/10 02:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.241 2023/04/22 13:53:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.242 2023/07/10 02:31:55 christos Exp $");
 
 #include "veriexec.h"
 
@@ -125,6 +125,7 @@ static int vn_seek(struct file *, off_t, int, off_t *, int);
 static int vn_advlock(struct file *, void *, int, struct flock *, int);
 static int vn_fpathconf(struct file *, int, register_t *);
 static int vn_posix_fadvise(struct file *, off_t, off_t, int);
+static int vn_truncate(file_t *, off_t);
 
 const struct fileops vnops = {
 	.fo_name = "vn",
@@ -142,6 +143,7 @@ const struct fileops vnops = {
 	.fo_advlock = vn_advlock,
 	.fo_fpathconf = vn_fpathconf,
 	.fo_posix_fadvise = vn_posix_fadvise,
+	.fo_truncate = vn_truncate,
 };
 
 /*
@@ -1330,6 +1332,33 @@ vn_posix_fadvise(struct file *fp, off_t offset, off_t len, int advice)
 
 	return error;
 }
+
+static int
+vn_truncate(file_t *fp, off_t length)
+{
+	struct vattr vattr;
+	struct vnode *vp;
+	int error = 0;
+
+	if (length < 0)
+		return EINVAL;
+
+	if ((fp->f_flag & FWRITE) == 0)
+		return EINVAL;
+	vp = fp->f_vnode;
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (vp->v_type == VDIR)
+		error = EISDIR;
+	else if ((error = vn_writechk(vp)) == 0) {
+		vattr_null(&vattr);
+		vattr.va_size = length;
+		error = VOP_SETATTR(vp, &vattr, fp->f_cred);
+	}
+	VOP_UNLOCK(vp);
+
+	return error;
+}
+
 
 /*
  * Check that the vnode is still valid, and if so
