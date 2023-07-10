@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.448 2023/07/10 11:46:14 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.449 2023/07/10 19:00:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.448 2023/07/10 11:46:14 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.449 2023/07/10 19:00:33 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -469,7 +469,7 @@ primary_expression:
 	/* GCC primary-expression, see c_parser_postfix_expression */
 	/* TODO: C99 7.17p3 allows not only an identifier but a designator. */
 	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
-		symtyp = FMEMBER;
+		set_symtyp(FMEMBER);
 		$$ = build_offsetof($3, getsym($5));
 	  }
 	;
@@ -592,11 +592,11 @@ gcc_statement_expr_item:
 
 point_or_arrow:			/* helper for 'postfix_expression' */
 	  T_POINT {
-		symtyp = FMEMBER;
+		set_symtyp(FMEMBER);
 		$$ = POINT;
 	  }
 	| T_ARROW {
-		symtyp = FMEMBER;
+		set_symtyp(FMEMBER);
 		$$ = ARROW;
 	  }
 	;
@@ -963,14 +963,14 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 		$$ = complete_struct_or_union($3);
 	  }
 	| struct_or_union error {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 		$$ = gettyp(INT);
 	  }
 	;
 
 struct_or_union:		/* C99 6.7.2.1 */
 	  T_STRUCT_OR_UNION {
-		symtyp = FTAG;
+		set_symtyp(FTAG);
 		begin_declaration_level($1 == STRUCT ? DLK_STRUCT : DLK_UNION);
 		dcs->d_sou_size_in_bits = 0;
 		dcs->d_sou_align_in_bits = CHAR_SIZE;
@@ -987,7 +987,7 @@ braced_struct_declaration_list:	/* see C99 6.7.2.1 */
 
 struct_declaration_lbrace:	/* see C99 6.7.2.1 */
 	  T_LBRACE {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 	  }
 	;
 
@@ -1010,15 +1010,15 @@ struct_declaration:		/* C99 6.7.2.1 */
 	  begin_type_qualifier_list end_type {
 		/* ^^ There is no check for the missing type-specifier. */
 		/* too late, i know, but getsym() compensates it */
-		symtyp = FMEMBER;
+		set_symtyp(FMEMBER);
 	  } notype_struct_declarators type_attribute_opt T_SEMI {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 		$$ = $4;
 	  }
 	| begin_type_specifier_qualifier_list end_type {
-		symtyp = FMEMBER;
+		set_symtyp(FMEMBER);
 	  } type_struct_declarators type_attribute_opt T_SEMI {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 		$$ = $4;
 	  }
 	| begin_type_qualifier_list end_type type_attribute_opt T_SEMI {
@@ -1028,7 +1028,7 @@ struct_declaration:		/* C99 6.7.2.1 */
 	  }
 	| begin_type_specifier_qualifier_list end_type type_attribute_opt
 	    T_SEMI {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 		if (!allow_c11 && !allow_gcc)
 			/* anonymous struct/union members is a C11 feature */
 			warning(49);
@@ -1044,7 +1044,7 @@ struct_declaration:		/* C99 6.7.2.1 */
 		$$ = NULL;
 	  }
 	| error T_SEMI {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 		$$ = NULL;
 	  }
 	;
@@ -1054,7 +1054,7 @@ notype_struct_declarators:
 		$$ = declare_member($1);
 	  }
 	| notype_struct_declarators {
-		symtyp = FMEMBER;
+		set_symtyp(FMEMBER);
 	  } T_COMMA type_struct_declarator {
 		$$ = concat_symbols($1, declare_member($4));
 	  }
@@ -1065,7 +1065,7 @@ type_struct_declarators:
 		$$ = declare_member($1);
 	  }
 	| type_struct_declarators {
-		symtyp = FMEMBER;
+		set_symtyp(FMEMBER);
 	  } T_COMMA type_struct_declarator {
 		$$ = concat_symbols($1, declare_member($4));
 	  }
@@ -1077,7 +1077,7 @@ notype_struct_declarator:
 		$$ = set_bit_field_width($1, to_int_constant($3, true));
 	  }
 	| {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 	  } T_COLON constant_expr {			/* C99 6.7.2.1 */
 		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
 	  }
@@ -1089,7 +1089,7 @@ type_struct_declarator:
 		$$ = set_bit_field_width($1, to_int_constant($3, true));
 	  }
 	| {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 	  } T_COLON constant_expr {
 		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
 	  }
@@ -1111,14 +1111,14 @@ enum_specifier:			/* C99 6.7.2.2 */
 		$$ = complete_enum($4);
 	  }
 	| enum error {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 		$$ = gettyp(INT);
 	  }
 	;
 
 enum:				/* helper for C99 6.7.2.2 */
 	  T_ENUM {
-		symtyp = FTAG;
+		set_symtyp(FTAG);
 		begin_declaration_level(DLK_ENUM);
 	  }
 	;
@@ -1131,7 +1131,7 @@ enum_declaration:		/* helper for C99 6.7.2.2 */
 
 enum_decl_lbrace:		/* helper for C99 6.7.2.2 */
 	  T_LBRACE {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 		enumval = 0;
 	  }
 	;
@@ -1724,7 +1724,7 @@ labeled_statement:		/* C99 6.8.1 */
 
 label:
 	  T_NAME T_COLON {
-		symtyp = FLABEL;
+		set_symtyp(FLABEL);
 		named_label(getsym($1));
 	  }
 	| T_CASE constant_expr T_COLON {
@@ -1931,7 +1931,7 @@ jump_statement:			/* C99 6.8.6 */
 		stmt_goto(getsym($2));
 	  }
 	| goto error T_SEMI {
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 	  }
 	| T_CONTINUE T_SEMI {
 		stmt_continue();
@@ -1949,7 +1949,7 @@ jump_statement:			/* C99 6.8.6 */
 
 goto:				/* see C99 6.8.6 */
 	  T_GOTO {
-		symtyp = FLABEL;
+		set_symtyp(FLABEL);
 	  }
 	;
 
