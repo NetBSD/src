@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.209 2023/07/09 12:04:08 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.210 2023/07/10 19:58:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.209 2023/07/09 12:04:08 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.210 2023/07/10 19:58:47 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -517,18 +517,24 @@ lbasename(const char *path)
 	return base;
 }
 
+static FILE *
+output_channel(void)
+{
+	return yflag ? stderr : stdout;
+}
+
 static void
 verror_at(int msgid, const pos_t *pos, va_list ap)
 {
-	const char *fn;
 
 	if (is_suppressed[msgid])
 		return;
 
-	fn = lbasename(pos->p_file);
-	(void)printf("%s(%d): error: ", fn, pos->p_line);
-	(void)vprintf(msgs[msgid], ap);
-	(void)printf(" [%d]\n", msgid);
+	FILE *out = output_channel();
+	(void)fprintf(out, "%s(%d): error: ",
+	    lbasename(pos->p_file), pos->p_line);
+	(void)vfprintf(out, msgs[msgid], ap);
+	(void)fprintf(out, " [%d]\n", msgid);
 	seen_error = true;
 	print_stack_trace();
 }
@@ -536,7 +542,6 @@ verror_at(int msgid, const pos_t *pos, va_list ap)
 static void
 vwarning_at(int msgid, const pos_t *pos, va_list ap)
 {
-	const char *fn;
 
 	if (is_suppressed[msgid])
 		return;
@@ -546,10 +551,11 @@ vwarning_at(int msgid, const pos_t *pos, va_list ap)
 		/* this warning is suppressed by a LINTED comment */
 		return;
 
-	fn = lbasename(pos->p_file);
-	(void)printf("%s(%d): warning: ", fn, pos->p_line);
-	(void)vprintf(msgs[msgid], ap);
-	(void)printf(" [%d]\n", msgid);
+	FILE *out = output_channel();
+	(void)fprintf(out, "%s(%d): warning: ",
+	    lbasename(pos->p_file), pos->p_line);
+	(void)vfprintf(out, msgs[msgid], ap);
+	(void)fprintf(out, " [%d]\n", msgid);
 	seen_warning = true;
 	print_stack_trace();
 }
@@ -557,15 +563,15 @@ vwarning_at(int msgid, const pos_t *pos, va_list ap)
 static void
 vmessage_at(int msgid, const pos_t *pos, va_list ap)
 {
-	const char *fn;
 
 	if (is_suppressed[msgid])
 		return;
 
-	fn = lbasename(pos->p_file);
-	(void)printf("%s(%d): ", fn, pos->p_line);
-	(void)vprintf(msgs[msgid], ap);
-	(void)printf(" [%d]\n", msgid);
+	FILE *out = output_channel();
+	(void)fprintf(out, "%s(%d): ",
+	    lbasename(pos->p_file), pos->p_line);
+	(void)vfprintf(out, msgs[msgid], ap);
+	(void)fprintf(out, " [%d]\n", msgid);
 	print_stack_trace();
 }
 
@@ -592,7 +598,6 @@ void
 void
 assert_failed(const char *file, int line, const char *func, const char *cond)
 {
-	const char *fn;
 
 	/*
 	 * After encountering a parse error in the grammar, lint often does
@@ -607,11 +612,11 @@ assert_failed(const char *file, int line, const char *func, const char *cond)
 	if (sytxerr > 0)
 		norecover();
 
-	fn = lbasename(curr_pos.p_file);
 	(void)fflush(stdout);
 	(void)fprintf(stderr,
 	    "lint: assertion \"%s\" failed in %s at %s:%d near %s:%d\n",
-	    cond, func, file, line, fn, curr_pos.p_line);
+	    cond, func, file, line,
+	    lbasename(curr_pos.p_file), curr_pos.p_line);
 	print_stack_trace();
 	(void)fflush(stdout);
 	abort();
@@ -731,16 +736,18 @@ static bool is_query_enabled[sizeof(queries) / sizeof(queries[0])];
 void
 (query_message)(int query_id, ...)
 {
-	va_list ap;
 
 	if (!is_query_enabled[query_id])
 		return;
 
-	(void)printf("%s(%d): ", lbasename(curr_pos.p_file), curr_pos.p_line);
+	va_list ap;
+	FILE *out = output_channel();
+	(void)fprintf(out, "%s(%d): ",
+	    lbasename(curr_pos.p_file), curr_pos.p_line);
 	va_start(ap, query_id);
-	(void)vprintf(queries[query_id], ap);
+	(void)vfprintf(out, queries[query_id], ap);
 	va_end(ap);
-	(void)printf(" [Q%d]\n", query_id);
+	(void)fprintf(out, " [Q%d]\n", query_id);
 	print_stack_trace();
 }
 
