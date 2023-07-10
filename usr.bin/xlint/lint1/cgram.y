@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.450 2023/07/10 19:04:52 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.451 2023/07/10 19:47:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.450 2023/07/10 19:04:52 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.451 2023/07/10 19:47:12 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -2223,7 +2223,7 @@ cgram_to_string(int token, YYSTYPE val)
 	case T_RELATIONAL:
 	case T_EQUALITY:
 	case T_OPASSIGN:
-		return modtab[val.y_op].m_name;
+		return op_name(val.y_op);
 	case T_SCLASS:
 		return scl_name(val.y_scl);
 	case T_TYPE:
