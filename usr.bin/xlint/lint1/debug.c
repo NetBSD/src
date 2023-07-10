@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.47 2023/07/08 12:07:21 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.48 2023/07/10 16:20:52 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.47 2023/07/08 12:07:21 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.48 2023/07/10 16:20:52 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -55,11 +55,8 @@ debug_file(void)
 	/*
 	 * Using stdout preserves the order between the debug messages and
 	 * lint's diagnostics.
-	 *
-	 * Using stderr preserves the order between lint's debug messages and
-	 * yacc's debug messages (see the -y option).
 	 */
-	return stdout;
+	return yflag ? stderr : stdout;
 }
 
 void
@@ -76,7 +73,7 @@ void
 debug_print_indent(void)
 {
 
-	debug_printf("%*s", 2 * debug_indentation, "");
+	debug_printf("%s%*s", yflag ? "| " : "", 2 * debug_indentation, "");
 }
 
 void
@@ -94,13 +91,6 @@ debug_indent_dec(void)
 }
 
 void
-debug_enter_func(const char *func)
-{
-
-	fprintf(debug_file(), "%*s+ %s\n", 2 * debug_indentation++, "", func);
-}
-
-void
 debug_step(const char *fmt, ...)
 {
 	va_list va;
@@ -113,10 +103,19 @@ debug_step(const char *fmt, ...)
 }
 
 void
+debug_enter_func(const char *func)
+{
+
+	debug_step("+ %s", func);
+	debug_indent_inc();
+}
+
+void
 debug_leave_func(const char *func)
 {
 
-	fprintf(debug_file(), "%*s- %s\n", 2 * --debug_indentation, "", func);
+	debug_indent_dec();
+	debug_step("- %s", func);
 }
 
 static void
