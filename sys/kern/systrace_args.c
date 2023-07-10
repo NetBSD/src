@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.49 2021/11/01 05:26:27 thorpej Exp $ */
+/* $NetBSD: systrace_args.c,v 1.50 2023/07/10 02:37:05 christos Exp $ */
 
 /*
  * System call argument to DTrace register array conversion.
@@ -3884,6 +3884,14 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		const struct sys_lpathconf_args *p = params;
 		uarg[0] = (intptr_t) SCARG(p, path); /* const char * */
 		iarg[1] = SCARG(p, name); /* int */
+		*n_args = 2;
+		break;
+	}
+	/* sys_memfd_create */
+	case 500: {
+		const struct sys_memfd_create_args *p = params;
+		uarg[0] = (intptr_t) SCARG(p, name); /* const char * */
+		uarg[1] = SCARG(p, flags); /* unsigned int */
 		*n_args = 2;
 		break;
 	}
@@ -10492,6 +10500,19 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
+	/* sys_memfd_create */
+	case 500:
+		switch(ndx) {
+		case 0:
+			p = "const char *";
+			break;
+		case 1:
+			p = "unsigned int";
+			break;
+		default:
+			break;
+		};
+		break;
 	default:
 		break;
 	};
@@ -12693,6 +12714,11 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	case 499:
 		if (ndx == 0 || ndx == 1)
 			p = "long";
+		break;
+	/* sys_memfd_create */
+	case 500:
+		if (ndx == 0 || ndx == 1)
+			p = "int";
 		break;
 	default:
 		break;
