@@ -1,4 +1,4 @@
-.\"	$NetBSD: versioningsyscalls.9,v 1.2 2023/07/09 00:29:49 uwe Exp $
+.\"	$NetBSD: versioningsyscalls.9,v 1.3 2023/07/10 15:54:18 christos Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -301,9 +301,37 @@ constant or a
 .Li #define .
 .
 .Ss libc
-A userland version of any old and current versions of the syscall should be
-implemented in terms of the next syscall in
-.Pa lib/libc/compat/sys
-and should contain an appropriate call to
+A userland version of any old and current versions of the syscall must be
+implemented.
+For the current syscall with stub
+.Fn my_syscall struct\ my_struct\ *ms
+in
+.Pa sys/sys/my_header.h ,
+an implementation of
+.Fn my_syscall
+must be written in
+.Pa lib/libc/compat/sys/compat_my_syscall.c .
+.Pp
+Additionally, a call to
 .Fn __warn_references
-for old and current versions of the syscall.
+must be added in
+.Pa lib/libc/compat/sys/compat_my_syscall.c
+to warn of any uses of the compat syscall and mention how to use the next
+version of the syscall.
+In almost all cases the instructions on how to use the next version of the
+syscall will be
+.Dq include <sys/my_header.h> to generate correct reference .
+.Pp
+Overall,
+.Pa lib/libc/compat/sys/compat_my_syscall.c
+must at the minimum include
+.Bd -literal
+#include <sys/compat/my_header.h>
+
+__warn_references(my_syscall,
+    "warning: reference to compatibility my_syscall(); message on how to use the next my_syscall()");
+
+int
+my_syscall()
+{ /* Compat implementation goes here. */ }
+.Ed
