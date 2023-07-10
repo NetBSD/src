@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.25 2023/07/10 02:31:55 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.26 2023/07/10 15:49:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.25 2023/07/10 02:31:55 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.26 2023/07/10 15:49:19 christos Exp $");
 
 #include <stdbool.h>
 #include <sys/param.h>
@@ -56,9 +56,7 @@ __RCSID("$NetBSD: misc.c,v 1.25 2023/07/10 02:31:55 christos Exp $");
 #undef _KERNEL
 #include <sys/cprng.h>
 #include <sys/vnode.h>
-#define _KERNEL
-#include <sys/mman.h>
-#undef _KERNEL
+#include <sys/miscfd.h>
 #include <sys/mount.h>
 
 #include <net/bpfdesc.h>
