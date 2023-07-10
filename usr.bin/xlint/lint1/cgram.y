@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.449 2023/07/10 19:00:33 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.450 2023/07/10 19:04:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.449 2023/07/10 19:00:33 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.450 2023/07/10 19:04:52 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -126,11 +126,8 @@ is_either(const char *s, const char *a, const char *b)
 	return strcmp(s, a) == 0 || strcmp(s, b) == 0;
 }
 
-#if YYDEBUG && (YYBYACC || YYBISON)
+#if YYDEBUG && YYBYACC
 #define YYSTYPE_TOSTRING cgram_to_string
-#endif
-#if YYDEBUG && YYBISON
-#define YYPRINT cgram_print
 #endif
 
 %}
@@ -155,6 +152,37 @@ is_either(const char *s, const char *a, const char *b)
 	struct array_size y_array_size;
 	bool	y_in_system_header;
 };
+
+/* for Bison:
+%printer {
+	if (is_integer($$->v_tspec))
+		fprintf(yyo, "%lld", (unsigned long long)$$->u.integer);
+	else
+		fprintf(yyo, "%Lg", $$->u.floating);
+} <y_val>
+%printer { fprintf(yyo, "'%s'", $$->sb_name); } <y_name>
+%printer { debug_sym("", $$, ""); } <y_sym>
+%printer { fprintf(yyo, "%s", op_name($$)); } <y_op>
+%printer { fprintf(yyo, "%s", scl_name($$)); } <y_scl>
+%printer { fprintf(yyo, "%s", tspec_name($$)); } <y_tspec>
+%printer { fprintf(yyo, "%s", tqual_name($$)); } <y_tqual>
+%printer { fprintf(yyo, "%s", type_name($$)); } <y_type>
+%printer {
+	fprintf(yyo, "%s '%s'", op_name($$->tn_op), type_name($$->tn_type));
+} <y_tnode>
+%printer { fprintf(yyo, "%zu to %zu", $$.lo, $$.hi); } <y_range>
+%printer { fprintf(yyo, "length %zu", $$->st_len); } <y_string>
+%printer {
+	fprintf(yyo, "%s%s%s",
+	    $$->p_const ? "const " : "",
+	    $$->p_volatile ? "volatile " : "",
+	    $$->p_pointer ? "*" : "");
+} <y_qual_ptr>
+%printer { fprintf(yyo, "%s", $$ ? "yes" : "no"); } <y_seen_statement>
+%printer { fprintf(yyo, "%s", type_name($$->ga_arg)); } <y_generic>
+%printer { fprintf(yyo, "%d", $$.dim); } <y_array_size>
+%printer { fprintf(yyo, "%s", $$ ? "yes" : "no"); } <y_in_system_header>
+*/
 
 %token			T_LBRACE T_RBRACE T_LBRACK T_RBRACK T_LPAREN T_RPAREN
 %token			T_POINT T_ARROW
@@ -389,12 +417,6 @@ is_either(const char *s, const char *a, const char *b)
 /* No type for gcc_attribute. */
 /* No type for gcc_attribute_parameters. */
 %type	<y_in_system_header> sys
-
-%{
-#if YYDEBUG && YYBISON
-static inline void cgram_print(FILE *, int, YYSTYPE);
-#endif
-%}
 
 %%
 
@@ -2188,7 +2210,7 @@ yyerror(const char *msg)
 	return 0;
 }
 
-#if YYDEBUG && (YYBYACC || YYBISON)
+#if YYDEBUG && YYBYACC
 static const char *
 cgram_to_string(int token, YYSTYPE val)
 {
@@ -2214,14 +2236,6 @@ cgram_to_string(int token, YYSTYPE val)
 	default:
 		return "<none>";
 	}
-}
-#endif
-
-#if YYDEBUG && YYBISON
-static inline void
-cgram_print(FILE *output, int token, YYSTYPE val)
-{
-	(void)fprintf(output, "%s", cgram_to_string(token, val));
 }
 #endif
 
