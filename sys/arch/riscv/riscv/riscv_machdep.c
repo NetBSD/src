@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.30 2023/07/10 07:01:48 rin Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.31 2023/07/10 07:04:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.30 2023/07/10 07:01:48 rin Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.31 2023/07/10 07:04:20 rin Exp $");
 
 #include <sys/param.h>
 
@@ -537,6 +537,9 @@ cpu_startup(void)
 #endif
 
 	fdtbus_intr_init();
+
+	fdt_setup_rndseed();
+	fdt_setup_efirng();
 }
 
 static void
@@ -769,9 +772,17 @@ init_riscv(register_t hartid, paddr_t dtb)
 	VPRINTF("%s: memory start %" PRIx64 " end %" PRIx64 " (len %"
 	    PRIx64 ")\n", __func__, memory_start, memory_end, memory_size);
 
+	/* Parse ramdisk, rndseed, and firmware's RNG from EFI */
+	fdt_probe_initrd();
+	fdt_probe_rndseed();
+	fdt_probe_efirng();
+
 	fdt_memory_remove_reserved(memory_start, memory_end);
 
 	fdt_memory_remove_range(dtb, dtbsize);
+	fdt_reserve_initrd();
+	fdt_reserve_rndseed();
+	fdt_reserve_efirng();
 
 	/* Perform PT build and VM init */
 	cpu_kernel_vm_init(memory_start, memory_end);
