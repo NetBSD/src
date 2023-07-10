@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.25 2023/06/09 13:03:49 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.26 2023/07/10 09:51:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,12 +37,8 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: hash.c,v 1.25 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.26 2023/07/10 09:51:30 rillig Exp $");
 #endif
-
-/*
- * XXX Really need a generalized hash table package
- */
 
 #include <limits.h>
 #include <stddef.h>
@@ -51,21 +47,16 @@ __RCSID("$NetBSD: hash.c,v 1.25 2023/06/09 13:03:49 rillig Exp $");
 
 #include "lint2.h"
 
-/* pointer to hash table, initialized in inithash() */
+#define HTAB_BUCKETS		1009
+
 static	hte_t	**htab;
 
-/*
- * Initialize hash table.
- */
 hte_t **
 htab_new(void)
 {
-	return xcalloc(HSHSIZ2, sizeof(*htab_new()));
+	return xcalloc(HTAB_BUCKETS, sizeof(*htab_new()));
 }
 
-/*
- * Compute hash value from a string.
- */
 static unsigned int
 hash(const char *s)
 {
@@ -77,7 +68,7 @@ hash(const char *s)
 		v = (v << 4) + (unsigned char)*p;
 		v ^= v >> 28;
 	}
-	return v % HSHSIZ2;
+	return v % HTAB_BUCKETS;
 }
 
 /*
@@ -163,7 +154,7 @@ symtab_forall(void (*action)(hte_t *))
 	hte_t *hte;
 	hte_t **table = htab;
 
-	for (i = 0; i < HSHSIZ2; i++) {
+	for (i = 0; i < HTAB_BUCKETS; i++) {
 		for (hte = table[i]; hte != NULL; hte = hte->h_link)
 			action(hte);
 	}
@@ -178,7 +169,7 @@ symtab_forall_sorted(void (*action)(hte_t *))
 	size_t i;
 	hte_t **table = htab;
 
-	for (i = 0; i < HSHSIZ2; i++)
+	for (i = 0; i < HTAB_BUCKETS; i++)
 		for (hte = table[i]; hte != NULL; hte = hte->h_link)
 			hte_list_add(&sorted, hte);
 
@@ -202,7 +193,7 @@ _destroyhash(hte_t **table)
 	if (table == NULL)
 		err(1, "_destroyhash called on main hash table");
 
-	for (i = 0; i < HSHSIZ2; i++) {
+	for (i = 0; i < HTAB_BUCKETS; i++) {
 		for (hte = table[i]; hte != NULL; hte = nexthte) {
 			free(__UNCONST(hte->h_name));
 			nexthte = hte->h_link;

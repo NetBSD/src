@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.558 2023/07/09 12:04:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.559 2023/07/10 09:51:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.558 2023/07/09 12:04:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.559 2023/07/10 09:51:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -539,7 +539,7 @@ build_string(strg_t *strg)
 
 	type_t *tp = expr_zero_alloc(sizeof(*tp));
 	tp->t_tspec = ARRAY;
-	tp->t_subt = gettyp(strg->st_char ? CHAR : WCHAR);
+	tp->t_subt = gettyp(strg->st_char ? CHAR : WCHAR_TSPEC);
 	tp->t_dim = (int)(len + 1);
 
 	tnode_t *n = expr_alloc_tnode();
