@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.4 2021/12/02 04:29:47 ryo Exp $
+	$NetBSD: syscalls.master,v 1.5 2023/07/10 21:08:26 christos Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -512,7 +512,8 @@
 277	UNIMPL		seccomp
 278	NOARGS		{ ssize_t|sys||getrandom(void *buf, size_t buflen, \
 			    unsigned int flags); }
-279	UNIMPL		memfd_create
+279	STD		{ int|linux_sys||memfd_create(const char *name, \
+			    unsigned int flags); }
 280	UNIMPL		bpf
 281	UNIMPL		execveat
 282	UNIMPL		userfaultfd
