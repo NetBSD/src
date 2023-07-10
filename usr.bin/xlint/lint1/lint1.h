@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.182 2023/07/09 12:15:07 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.183 2023/07/10 19:00:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -605,4 +605,13 @@ static inline bool
 is_member(const sym_t *sym)
 {
 	return sym->s_scl == STRUCT_MEMBER || sym->s_scl == UNION_MEMBER;
+}
+
+static inline void
+set_symtyp(symt_t symt)
+{
+	if (yflag)
+		debug_step("%s: %s -> %s", __func__,
+		    symt_name(symtyp), symt_name(symt));
+	symtyp = symt;
 }

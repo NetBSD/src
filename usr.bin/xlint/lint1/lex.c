@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.173 2023/07/10 09:51:30 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.174 2023/07/10 19:00:33 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.173 2023/07/10 09:51:30 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.174 2023/07/10 19:00:33 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1309,7 +1309,7 @@ getsym(sbuf_t *sb)
 
 	if (sym != NULL) {
 		lint_assert(sym->s_kind == symtyp);
-		symtyp = FVFT;
+		set_symtyp(FVFT);
 		free(sb);
 		return sym;
 	}
@@ -1340,7 +1340,7 @@ getsym(sbuf_t *sb)
 	if ((sym->s_kind = symtyp) != FLABEL)
 		sym->s_type = gettyp(INT);
 
-	symtyp = FVFT;
+	set_symtyp(FVFT);
 
 	if (!in_gcc_attribute) {
 		symtab_add(sym);
