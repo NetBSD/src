@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.4 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5 2023/07/10 07:04:20 rin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: autoconf.c,v 1.4 2023/05/07 12:41:48 skrll Exp $");
+__RCSID("$NetBSD: autoconf.c,v 1.5 2023/07/10 07:04:20 rin Exp $");
 
 #include <sys/param.h>
 
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: autoconf.c,v 1.4 2023/05/07 12:41:48 skrll Exp $");
 #include <sys/systm.h>
 
 #include <machine/sysreg.h>
+
+#include <dev/fdt/fdt_boot.h>
 
 void
 cpu_configure(void)
@@ -63,6 +65,10 @@ cpu_rootconf(void)
 }
 
 void
-device_register(device_t dv, void *aux)
+device_register(device_t self, void *aux)
 {
+
+	if (device_is_a(self, "mainbus")) {
+		fdt_setup_initrd();
+	}
 }
