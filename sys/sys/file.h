@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.92 2023/04/22 13:53:02 riastradh Exp $	*/
+/*	$NetBSD: file.h,v 1.93 2023/07/10 02:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ struct fileops {
 	int	(*fo_fpathconf)	(struct file *, int, register_t *);
 	int	(*fo_posix_fadvise)
 				(struct file *, off_t, off_t, int);
+	int	(*fo_truncate)	(struct file *, off_t);
 };
 
 union file_data {
@@ -121,6 +122,7 @@ union file_data {
 	struct mqueue *fd_mq;		// DTYPE_MQUEUE
 	struct ksem *fd_ks;		// DTYPE_SEM
 	struct iscsifd *fd_iscsi;	// DTYPE_MISC (iscsi)
+	struct memfd *fd_memfd;		// DTYPE_MEMFD
 };
 
 /*
@@ -160,6 +162,7 @@ struct file {
 #define f_ksem		f_undata.fd_ks
 #define f_eventfd	f_undata.fd_eventfd
 #define f_timerfd	f_undata.fd_timerfd
+#define f_memfd		f_undata.fd_memfd
 
 #define f_rndctx	f_undata.fd_rndctx
 #define f_audioctx	f_undata.fd_audioctx
@@ -184,10 +187,11 @@ struct file {
 #define	DTYPE_SEM	8		/* semaphore */
 #define	DTYPE_EVENTFD	9		/* eventfd */
 #define	DTYPE_TIMERFD	10		/* timerfd */
+#define	DTYPE_MEMFD	11		/* memfd */
 
 #define DTYPE_NAMES	\
     "0", "file", "socket", "pipe", "kqueue", "misc", "crypto", "mqueue", \
-    "semaphore", "eventfd", "timerfd"
+    "semaphore", "eventfd", "timerfd", "memfd"
 
 #ifdef _KERNEL
 
