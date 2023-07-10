@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.63 2023/07/10 02:31:55 christos Exp $	*/
+/*	$NetBSD: mman.h,v 1.64 2023/07/10 18:22:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -246,24 +246,6 @@ int	posix_madvise(void *, size_t, int);
 int	shm_open(const char *, int, mode_t);
 int	shm_unlink(const char *);
 __END_DECLS
-
-#else
-
-#include <sys/syslimits.h>	/* for NAME_MAX */
-#include <sys/timespec.h>	/* for struct timespec */
-#include <sys/mutex.h>		/* for kmutex_t */
-
-struct memfd {
-	char			mfd_name[NAME_MAX+1];
-	struct uvm_object	*mfd_uobj;
-	size_t			mfd_size;
-	int			mfd_seals;
-	kmutex_t		mfd_lock;	/* for truncate */
-
-	struct timespec		mfd_btime;
-	struct timespec		mfd_atime;
-	struct timespec		mfd_mtime;
-};
 
 #endif /* !_KERNEL */
 
