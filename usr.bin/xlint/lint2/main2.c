@@ -1,4 +1,4 @@
-/*	$NetBSD: main2.c,v 1.31 2023/07/03 11:16:32 rillig Exp $	*/
+/*	$NetBSD: main2.c,v 1.32 2023/07/10 12:40:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: main2.c,v 1.31 2023/07/03 11:16:32 rillig Exp $");
+__RCSID("$NetBSD: main2.c,v 1.32 2023/07/10 12:40:22 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -47,33 +47,15 @@ __RCSID("$NetBSD: main2.c,v 1.31 2023/07/03 11:16:32 rillig Exp $");
 
 #include "lint2.h"
 
-/* warnings for symbols which are declared but not defined or used */
-bool	xflag;
-
-bool	uflag;
-
-/* Create a lint library in the current directory with name libname. */
 bool	Cflag;
-const char *libname;
-
-/*
- * warnings for (tentative) definitions of the same name in more than
- * one translation unit
- */
-bool	sflag;
-
-bool	tflag;
-
-/*
- * If a complaint stems from a included file, print the name of the included
- * file instead of the name specified at the command line followed by '?'
- */
-bool	Hflag;
-
-bool	hflag;
-
-/* Print full path names, not only the last component */
 bool	Fflag;
+bool	Hflag;
+bool	hflag;
+bool	sflag;
+bool	tflag;
+bool	uflag;
+bool	xflag;
+const char *libname;
 
 /*
  * List of libraries (from -l flag). These libraries are read after all

@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.84 2023/07/10 09:51:30 rillig Exp $ */
+/* $NetBSD: read.c,v 1.85 2023/07/10 12:40:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.84 2023/07/10 09:51:30 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.85 2023/07/10 12:40:22 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -246,7 +246,7 @@ readfile(const char *name)
 		readfile_line = NULL;
 	}
 
-	_destroyhash(renametab);
+	hash_free(renametab);
 
 	if (ferror(inp) != 0)
 		err(1, "read error on %s", name);
@@ -374,11 +374,11 @@ again:
 	name = inpname(cp, &cp);
 
 	/* first look it up in the renaming table, then in the normal table */
-	hte = _hsearch(renametab, name, false);
+	hte = hash_search(renametab, name, false);
 	if (hte != NULL)
 		hte = hte->h_hte;
 	else
-		hte = hsearch(name, true);
+		hte = htab_search(name, true);
 	hte->h_used = true;
 
 	fcall->f_type = inptype(cp, &cp);
@@ -490,9 +490,9 @@ decldef(pos_t pos, const char *cp)
 		newname = inpname(cp, &cp);
 
 		/* enter it and see if it's already been renamed */
-		renamehte = _hsearch(renametab, tname, true);
+		renamehte = hash_search(renametab, tname, true);
 		if (renamehte->h_hte == NULL) {
-			hte = hsearch(newname, true);
+			hte = htab_search(newname, true);
 			renamehte->h_hte = hte;
 			renamed = true;
 		} else if (hte = renamehte->h_hte,
@@ -505,11 +505,11 @@ decldef(pos_t pos, const char *cp)
 		free(tname);
 	} else {
 		/* it might be a previously-done rename */
-		hte = _hsearch(renametab, name, false);
+		hte = hash_search(renametab, name, false);
 		if (hte != NULL)
 			hte = hte->h_hte;
 		else
-			hte = hsearch(name, true);
+			hte = htab_search(name, true);
 	}
 	hte->h_used |= used;
 	if (sym.s_def == DEF || sym.s_def == TDEF)
@@ -574,11 +574,11 @@ usedsym(pos_t pos, const char *cp)
 		inperr("bad delim %c", cp[-1]);
 
 	name = inpname(cp, &cp);
-	hte = _hsearch(renametab, name, false);
+	hte = hash_search(renametab, name, false);
 	if (hte != NULL)
 		hte = hte->h_hte;
 	else
-		hte = hsearch(name, true);
+		hte = htab_search(name, true);
 	hte->h_used = true;
 
 	*hte->h_lusym = usym;
@@ -719,11 +719,11 @@ inptype(const char *cp, const char **epp)
 		switch (*cp++) {
 		case '1':
 			tp->t_istag = true;
-			tp->t_tag = hsearch(inpname(cp, &cp), true);
+			tp->t_tag = htab_search(inpname(cp, &cp), true);
 			break;
 		case '2':
 			tp->t_istynam = true;
-			tp->t_tynam = hsearch(inpname(cp, &cp), true);
+			tp->t_tynam = htab_search(inpname(cp, &cp), true);
 			break;
 		case '3':
 			tp->t_isuniqpos = true;

@@ -1,4 +1,4 @@
-/* $NetBSD: lint2.h,v 1.22 2022/02/07 21:57:47 rillig Exp $ */
+/* $NetBSD: lint2.h,v 1.23 2023/07/10 12:40:22 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -120,7 +120,6 @@ typedef	struct sym {
 		bool	s_printflike:1;
 		bool	s_scanflike:1;
 		unsigned short s_type;
-		/* XXX: gap of 4 bytes on LP64 platforms */
 		struct	sym *s_next;	/* next symbol with same name */
 	} s_s;
 	/*

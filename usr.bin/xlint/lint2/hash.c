@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.26 2023/07/10 09:51:30 rillig Exp $	*/
+/*	$NetBSD: hash.c,v 1.27 2023/07/10 12:40:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: hash.c,v 1.26 2023/07/10 09:51:30 rillig Exp $");
+__RCSID("$NetBSD: hash.c,v 1.27 2023/07/10 12:40:22 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -76,7 +76,7 @@ hash(const char *s)
  * given name exists and mknew is set, create a new one.
  */
 hte_t *
-_hsearch(hte_t **table, const char *s, bool mknew)
+hash_search(hte_t **table, const char *s, bool mknew)
 {
 	unsigned int h;
 	hte_t *hte;
@@ -185,13 +185,10 @@ symtab_forall_sorted(void (*action)(hte_t *))
  * Free all contents of the hash table that this module allocated.
  */
 void
-_destroyhash(hte_t **table)
+hash_free(hte_t **table)
 {
 	int i;
 	hte_t *hte, *nexthte;
-
-	if (table == NULL)
-		err(1, "_destroyhash called on main hash table");
 
 	for (i = 0; i < HTAB_BUCKETS; i++) {
 		for (hte = table[i]; hte != NULL; hte = nexthte) {
