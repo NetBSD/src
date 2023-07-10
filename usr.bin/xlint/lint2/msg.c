@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.22 2023/07/10 13:55:55 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.23 2023/07/10 14:13:19 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: msg.c,v 1.22 2023/07/10 13:55:55 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.23 2023/07/10 14:13:19 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -104,8 +104,14 @@ lbasename(const char *path)
 const char *
 mkpos(const pos_t *posp)
 {
-	static char *buf;
-	static size_t buf_size;
+	static struct buffer {
+		char *buf;
+		size_t cap;
+	} buffers[2];
+	static unsigned int buf_index;
+
+	struct buffer *buf = buffers + buf_index;
+	buf_index ^= 1;
 
 	int filename;
 	int lineno;
@@ -121,13 +127,13 @@ mkpos(const pos_t *posp)
 	const char *fn = lbasename(fnames[filename]);
 	size_t len = strlen(fn) + 1 + 1 + 3 * sizeof(int) + 1 + 1;
 
-	if (len > buf_size)
-		buf = xrealloc(buf, buf_size = len);
+	if (len > buf->cap)
+		buf->buf = xrealloc(buf->buf, buf->cap = len);
 	if (lineno != 0)
-		(void)snprintf(buf, buf_size, "%s%s(%d)",
+		(void)snprintf(buf->buf, buf->cap, "%s%s(%d)",
 		    fn, qm ? "?" : "", lineno);
 	else
-		(void)snprintf(buf, buf_size, "%s", fn);
+		(void)snprintf(buf->buf, buf->cap, "%s", fn);
 
-	return buf;
+	return buf->buf;
 }
