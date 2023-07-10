@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.183 2023/07/10 19:00:33 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.184 2023/07/10 19:47:12 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -549,6 +549,12 @@ static inline bool
 is_nonzero(const tnode_t *tn)
 {
 	return tn != NULL && tn->tn_op == CON && is_nonzero_val(&tn->tn_val);
+}
+
+static inline const char *
+op_name(op_t op)
+{
+	return modtab[op].m_name;
 }
 
 static inline bool

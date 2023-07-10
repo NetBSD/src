@@ -1,4 +1,4 @@
-/* $NetBSD: ckbool.c,v 1.24 2023/07/09 10:42:07 rillig Exp $ */
+/* $NetBSD: ckbool.c,v 1.25 2023/07/10 19:47:12 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID)
-__RCSID("$NetBSD: ckbool.c,v 1.24 2023/07/09 10:42:07 rillig Exp $");
+__RCSID("$NetBSD: ckbool.c,v 1.25 2023/07/10 19:47:12 rillig Exp $");
 #endif
 
 #include <string.h>
@@ -49,12 +49,6 @@ __RCSID("$NetBSD: ckbool.c,v 1.24 2023/07/09 10:42:07 rillig Exp $");
  * See d_c99_bool_strict.c for the exact rules and for examples.
  */
 
-
-static const char *
-op_name(op_t op)
-{
-	return modtab[op].m_name;
-}
 
 /*
  * See if in strict bool mode, the operator takes either two bool operands

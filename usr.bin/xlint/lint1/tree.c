@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.559 2023/07/10 09:51:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.560 2023/07/10 19:47:12 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.559 2023/07/10 09:51:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.560 2023/07/10 19:47:12 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -80,12 +80,6 @@ str_ends_with(const char *haystack, const char *needle)
 
 	return nlen <= hlen &&
 	       memcmp(haystack + hlen - nlen, needle, nlen) == 0;
-}
-
-static const char *
-op_name(op_t op)
-{
-	return modtab[op].m_name;
 }
 
 static unsigned
@@ -1703,13 +1697,13 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	if (mp->m_warn_if_left_unsigned_in_c90 &&
 	    ln->tn_op == CON && ln->tn_val.v_unsigned_since_c90) {
 		/* ANSI C treats constant as unsigned, op '%s' */
-		warning(218, mp->m_name);
+		warning(218, op_name(op));
 		ln->tn_val.v_unsigned_since_c90 = false;
 	}
 	if (mp->m_warn_if_right_unsigned_in_c90 &&
 	    rn->tn_op == CON && rn->tn_val.v_unsigned_since_c90) {
 		/* ANSI C treats constant as unsigned, op '%s' */
-		warning(218, mp->m_name);
+		warning(218, op_name(op));
 		rn->tn_val.v_unsigned_since_c90 = false;
 	}
 
@@ -2159,8 +2153,7 @@ typeok_incdec(op_t op, const tnode_t *tn, const type_t *tp)
 }
 
 static bool
-typeok_address(const mod_t *mp,
-	       const tnode_t *tn, const type_t *tp, tspec_t t)
+typeok_address(op_t op, const tnode_t *tn, const type_t *tp, tspec_t t)
 {
 	if (t == ARRAY || t == FUNC) {
 		/* ok, a warning comes later (in build_address()) */
@@ -2171,7 +2164,7 @@ typeok_address(const mod_t *mp,
 			error(163);
 		}
 		/* %soperand of '%s' must be lvalue */
-		error(114, "", mp->m_name);
+		error(114, "", op_name(op));
 		return false;
 	} else if (is_scalar(t)) {
 		if (tp->t_bitfield) {
@@ -2181,7 +2174,7 @@ typeok_address(const mod_t *mp,
 		}
 	} else if (t != STRUCT && t != UNION) {
 		/* unacceptable operand of '%s' */
-		error(111, mp->m_name);
+		error(111, op_name(op));
 		return false;
 	}
 	if (tn->tn_op == NAME && tn->tn_sym->s_register) {
@@ -2209,21 +2202,21 @@ warn_incompatible_types(op_t op,
 			const type_t *ltp, tspec_t lt,
 			const type_t *rtp, tspec_t rt)
 {
-	const mod_t *mp = &modtab[op];
+	bool binary = modtab[op].m_binary;
 
-	if (lt == VOID || (mp->m_binary && rt == VOID)) {
+	if (lt == VOID || (binary && rt == VOID)) {
 		/* void type illegal in expression */
 		error(109);
 	} else if (op == ASSIGN) {
 		/* cannot assign to '%s' from '%s' */
 		error(171, type_name(ltp), type_name(rtp));
-	} else if (mp->m_binary) {
+	} else if (binary) {
 		/* operands of '%s' have incompatible types '%s' and '%s' */
-		error(107, mp->m_name, type_name(ltp), type_name(rtp));
+		error(107, op_name(op), type_name(ltp), type_name(rtp));
 	} else {
 		lint_assert(rt == NO_TSPEC);
 		/* operand of '%s' has invalid type '%s' */
-		error(108, mp->m_name, type_name(ltp));
+		error(108, op_name(op), type_name(ltp));
 	}
 }
 
@@ -2260,7 +2253,7 @@ typeok_minus(op_t op,
 }
 
 static void
-typeok_shr(const mod_t *mp,
+typeok_shr(op_t op,
 	   const tnode_t *ln, tspec_t lt,
 	   const tnode_t *rn, tspec_t rt)
 {
@@ -2279,17 +2272,17 @@ typeok_shr(const mod_t *mp,
 		 */
 		if (ln->tn_op != CON) {
 			/* bitwise '%s' on signed value possibly nonportable */
-			warning(117, mp->m_name);
+			warning(117, op_name(op));
 		} else if (ln->tn_val.u.integer < 0) {
 			/* bitwise '%s' on signed value nonportable */
-			warning(120, mp->m_name);
+			warning(120, op_name(op));
 		}
 	} else if (allow_trad && allow_c90 &&
 		   !is_uinteger(olt) && is_uinteger(ort)) {
 		/* The left operand would become unsigned in traditional C. */
 		if (hflag && (ln->tn_op != CON || ln->tn_val.u.integer < 0)) {
 			/* semantics of '%s' change in ANSI C; use ... */
-			warning(118, mp->m_name);
+			warning(118, op_name(op));
 		}
 	} else if (allow_trad && allow_c90 &&
 		   !is_uinteger(olt) && !is_uinteger(ort) &&
@@ -2300,13 +2293,13 @@ typeok_shr(const mod_t *mp,
 		 */
 		if (hflag && (ln->tn_op != CON || ln->tn_val.u.integer < 0)) {
 			/* semantics of '%s' change in ANSI C; use ... */
-			warning(118, mp->m_name);
+			warning(118, op_name(op));
 		}
 	}
 }
 
 static void
-typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt)
+typeok_shl(op_t op, tspec_t lt, tspec_t rt)
 {
 	/*
 	 * C90 does not perform balancing for shift operations,
@@ -2324,7 +2317,7 @@ typeok_shl(const mod_t *mp, tspec_t lt, tspec_t rt)
 		 */
 		if (hflag && allow_trad && allow_c90)
 			/* semantics of '%s' change in ANSI C; use ... */
-			warning(118, mp->m_name);
+			warning(118, op_name(op));
 	}
 }
 
@@ -2363,8 +2356,7 @@ is_typeok_eq(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
  * Print an appropriate warning.
  */
 static void
-warn_incompatible_pointers(const mod_t *mp,
-			   const type_t *ltp, const type_t *rtp)
+warn_incompatible_pointers(op_t op, const type_t *ltp, const type_t *rtp)
 {
 	lint_assert(ltp->t_tspec == PTR);
 	lint_assert(rtp->t_tspec == PTR);
@@ -2373,21 +2365,22 @@ warn_incompatible_pointers(const mod_t *mp,
 	tspec_t rt = rtp->t_subt->t_tspec;
 
 	if (is_struct_or_union(lt) && is_struct_or_union(rt)) {
-		if (mp == NULL) {
+		if (op == RETURN) {
 			/* illegal structure pointer combination */
 			warning(244);
 		} else {
 			/* incompatible structure pointers: '%s' '%s' '%s' */
-			warning(245, type_name(ltp), mp->m_name, type_name(rtp));
+			warning(245, type_name(ltp),
+			    op_name(op), type_name(rtp));
 		}
 	} else {
-		if (mp == NULL) {
+		if (op == RETURN) {
 			/* illegal combination of '%s' and '%s' */
 			warning(184, type_name(ltp), type_name(rtp));
 		} else {
 			/* illegal combination of '%s' and '%s', op '%s' */
 			warning(124,
-			    type_name(ltp), type_name(rtp), mp->m_name);
+			    type_name(ltp), type_name(rtp), op_name(op));
 		}
 	}
 }
@@ -2413,7 +2406,7 @@ check_pointer_comparison(op_t op, const tnode_t *ln, const tnode_t *rn)
 	}
 
 	if (!types_compatible(ltp->t_subt, rtp->t_subt, true, false, NULL)) {
-		warn_incompatible_pointers(&modtab[op], ltp, rtp);
+		warn_incompatible_pointers(op, ltp, rtp);
 		return;
 	}
 
@@ -2463,7 +2456,7 @@ typeok_quest(tspec_t lt, const tnode_t *rn)
 }
 
 static void
-typeok_colon_pointer(const mod_t *mp, const type_t *ltp, const type_t *rtp)
+typeok_colon_pointer(const type_t *ltp, const type_t *rtp)
 {
 	type_t *lstp = ltp->t_subt;
 	type_t *rstp = rtp->t_subt;
@@ -2476,19 +2469,18 @@ typeok_colon_pointer(const mod_t *mp, const type_t *ltp, const type_t *rtp)
 		if (!allow_trad && !allow_c99)
 			/* ANSI C forbids conversion of %s to %s, op %s */
 			warning(305, "function pointer", "'void *'",
-			    mp->m_name);
+			    op_name(COLON));
 		return;
 	}
 
 	if (pointer_types_are_compatible(lstp, rstp, true))
 		return;
 	if (!types_compatible(lstp, rstp, true, false, NULL))
-		warn_incompatible_pointers(mp, ltp, rtp);
+		warn_incompatible_pointers(COLON, ltp, rtp);
 }
 
 static bool
-typeok_colon(const mod_t *mp,
-	     const tnode_t *ln, const type_t *ltp, tspec_t lt,
+typeok_colon(const tnode_t *ln, const type_t *ltp, tspec_t lt,
 	     const tnode_t *rn, const type_t *rtp, tspec_t rt)
 {
 
@@ -2512,7 +2504,7 @@ typeok_colon(const mod_t *mp,
 		const char *rx = rt == PTR ? "pointer" : "integer";
 		/* illegal combination of %s '%s' and %s '%s', op '%s' */
 		warning(123, lx, type_name(ltp),
-		    rx, type_name(rtp), mp->m_name);
+		    rx, type_name(rtp), op_name(COLON));
 		return true;
 	}
 
@@ -2524,7 +2516,7 @@ typeok_colon(const mod_t *mp,
 	}
 
 	if (lt == PTR && rt == PTR) {
-		typeok_colon_pointer(mp, ltp, rtp);
+		typeok_colon_pointer(ltp, rtp);
 		return true;
 	}
 
@@ -2833,18 +2825,11 @@ check_assign_pointer(op_t op, int arg,
 	if (!(lt == PTR && rt == PTR))
 		return false;
 
-	switch (op) {
-	case RETURN:
-		warn_incompatible_pointers(NULL, ltp, rtp);
-		break;
-	case FARG:
+	if (op == FARG)
 		/* converting '%s' to incompatible '%s' for ... */
 		warning(153, type_name(rtp), type_name(ltp), arg);
-		break;
-	default:
-		warn_incompatible_pointers(&modtab[op], ltp, rtp);
-		break;
-	}
+	else
+		warn_incompatible_pointers(op, ltp, rtp);
 	return true;
 }
 
@@ -2996,7 +2981,7 @@ check_null_effect(const tnode_t *tn)
  * the operator, such as being integer, floating or scalar.
  */
 static bool
-typeok_op(op_t op, const mod_t *mp, int arg,
+typeok_op(op_t op, int arg,
 	  const tnode_t *ln, const type_t *ltp, tspec_t lt,
 	  const tnode_t *rn, const type_t *rtp, tspec_t rt)
 {
@@ -3013,16 +2998,16 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case INDIR:
 		return typeok_indir(ltp, lt);
 	case ADDR:
-		return typeok_address(mp, ln, ltp, lt);
+		return typeok_address(op, ln, ltp, lt);
 	case PLUS:
 		return typeok_plus(op, ltp, lt, rtp, rt);
 	case MINUS:
 		return typeok_minus(op, ltp, lt, rtp, rt);
 	case SHL:
-		typeok_shl(mp, lt, rt);
+		typeok_shl(op, lt, rt);
 		goto shift;
 	case SHR:
-		typeok_shr(mp, ln, lt, rn, rt);
+		typeok_shr(op, ln, lt, rn, rt);
 	shift:
 		typeok_shift(ltp, lt, rn, rt);
 		break;
@@ -3040,7 +3025,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 	case QUEST:
 		return typeok_quest(lt, rn);
 	case COLON:
-		return typeok_colon(mp, ln, ltp, lt, rn, rtp, rt);
+		return typeok_colon(ln, ltp, lt, rn, rtp, rt);
 	case ASSIGN:
 	case INIT:
 	case FARG:
@@ -3065,7 +3050,7 @@ typeok_op(op_t op, const mod_t *mp, int arg,
 		if (pflag && !is_uinteger(lt) &&
 		    !(!allow_c90 && is_uinteger(rt))) {
 			/* bitwise '%s' on signed value possibly nonportable */
-			warning(117, mp->m_name);
+			warning(117, op_name(op));
 		}
 		goto assign;
 	case ANDASS:
@@ -3128,13 +3113,13 @@ check_enum_type_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 			break;
 		default:
 			/* enum type mismatch: '%s' '%s' '%s' */
-			warning(130, type_name(ln->tn_type), mp->m_name,
+			warning(130, type_name(ln->tn_type), op_name(op),
 			    type_name(rn->tn_type));
 			break;
 		}
 	} else if (Pflag && eflag && mp->m_comparison && op != EQ && op != NE)
 		/* operator '%s' assumes that '%s' is ordered */
-		warning(243, mp->m_name, type_name(ln->tn_type));
+		warning(243, op_name(op), type_name(ln->tn_type));
 }
 
 /* Prints a warning if the operands mix between enum and integer. */
@@ -3211,7 +3196,7 @@ typeok(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 	if (!typeok_scalar(op, mp, ltp, lt, rtp, rt))
 		return false;
 
-	if (!typeok_op(op, mp, arg, ln, ltp, lt, rn, rtp, rt))
+	if (!typeok_op(op, arg, ln, ltp, lt, rn, rtp, rt))
 		return false;
 
 	typeok_enum(op, mp, arg, ln, ltp, rn, rtp);
