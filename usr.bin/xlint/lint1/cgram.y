@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.447 2023/07/07 19:45:22 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.448 2023/07/10 11:46:14 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.447 2023/07/07 19:45:22 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.448 2023/07/10 11:46:14 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -245,34 +245,49 @@ is_either(const char *s, const char *a, const char *b)
 %token	<y_val>		T_CON
 %token	<y_string>	T_STRING
 
+/* No type for program. */
 %type	<y_sym>		identifier_sym
 %type	<y_name>	identifier
 %type	<y_string>	string
-
 %type	<y_tnode>	primary_expression
 %type	<y_tnode>	generic_selection
 %type	<y_generic>	generic_assoc_list
 %type	<y_generic>	generic_association
 %type	<y_tnode>	postfix_expression
+/* No type for comma_opt. */
 %type	<y_tnode>	gcc_statement_expr_list
 %type	<y_tnode>	gcc_statement_expr_item
 %type	<y_op>		point_or_arrow
 %type	<y_tnode>	argument_expression_list
 %type	<y_tnode>	unary_expression
 %type	<y_tnode>	cast_expression
+%type	<y_tnode>	expression_opt
 %type	<y_tnode>	conditional_expression
 %type	<y_tnode>	assignment_expression
-%type	<y_tnode>	expression_opt
 %type	<y_tnode>	expression
 %type	<y_tnode>	constant_expr
-
+/* No type for declaration_or_error. */
+/* No type for declaration. */
+/* No type for begin_type_declaration_specifiers. */
+/* No type for begin_type_declmods. */
+/* No type for begin_type_specifier_qualifier_list. */
+/* No type for begin_type_specifier_qualifier_list_postfix. */
 %type	<y_type>	begin_type_typespec
+/* No type for begin_type_qualifier_list. */
+/* No type for declmod. */
+/* No type for type_attribute_list_opt. */
+/* No type for type_attribute_list. */
+/* No type for type_attribute_opt. */
+/* No type for type_attribute. */
+/* No type for begin_type. */
+/* No type for end_type. */
 %type	<y_type>	type_specifier
 %type	<y_type>	notype_type_specifier
 %type	<y_type>	atomic_type_specifier
 %type	<y_type>	struct_or_union_specifier
 %type	<y_tspec>	struct_or_union
 %type	<y_sym>		braced_struct_declaration_list
+/* No type for struct_declaration_lbrace. */
 %type	<y_sym>		struct_declaration_list_with_rbrace
 %type	<y_sym>		struct_declaration_list
 %type	<y_sym>		struct_declaration
@@ -281,16 +296,23 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_sym>		notype_struct_declarator
 %type	<y_sym>		type_struct_declarator
 %type	<y_type>	enum_specifier
+/* No type for enum. */
 %type	<y_sym>		enum_declaration
+/* No type for enum_decl_lbrace. */
 %type	<y_sym>		enums_with_opt_comma
 %type	<y_sym>		enumerator_list
 %type	<y_sym>		enumerator
 %type	<y_tqual>	type_qualifier
+/* No type for atomic. */
 %type	<y_qual_ptr>	pointer
 %type	<y_qual_ptr>	asterisk
 %type	<y_qual_ptr>	type_qualifier_list_opt
 %type	<y_qual_ptr>	type_qualifier_list
 %type	<y_qual_ptr>	type_qualifier_list_elem
+/* No type for notype_init_declarators. */
+/* No type for type_init_declarators. */
+/* No type for notype_init_declarator. */
+/* No type for type_init_declarator. */
 %type	<y_sym>		notype_declarator
 %type	<y_sym>		type_declarator
 %type	<y_sym>		notype_direct_declarator
@@ -300,6 +322,8 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_sym>		direct_param_declarator
 %type	<y_sym>		direct_notype_param_declarator
 %type	<y_sym>		param_list
+/* No type for id_list_lparen. */
+/* No type for abstract_decl_lparen. */
 %type	<y_array_size>	array_size_opt
 %type	<y_tnode>	array_size
 %type	<y_sym>		identifier_list
@@ -308,16 +332,62 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_sym>		abstract_declarator
 %type	<y_sym>		direct_abstract_declarator
 %type	<y_sym>		abstract_decl_param_list
+/* No type for abstract_decl_lparen. */
 %type	<y_sym>		vararg_parameter_type_list
 %type	<y_sym>		parameter_type_list
 %type	<y_sym>		parameter_declaration
+/* No type for braced_initializer. */
+/* No type for initializer. */
+/* No type for initializer_list. */
+/* No type for initializer_list_item. */
+/* No type for designation. */
+/* No type for begin_designation. */
+/* No type for designator_list. */
+/* No type for designator. */
+/* No type for static_assert_declaration. */
 %type	<y_range>	range
+/* No type for init_lbrace. */
+/* No type for init_rbrace. */
 %type	<y_name>	asm_or_symbolrename_opt
-
+/* No type for statement. */
+/* No type for non_expr_statement. */
+/* No type for labeled_statement. */
+/* No type for label. */
+/* No type for compound_statement. */
+/* No type for compound_statement_lbrace. */
+/* No type for compound_statement_rbrace. */
 %type	<y_seen_statement> block_item_list
 %type	<y_seen_statement> block_item
+/* No type for expression_statement. */
+/* No type for selection_statement. */
+/* No type for if_without_else. */
+/* No type for if_expr. */
+/* No type for switch_expr. */
+/* No type for iteration_statement. */
+/* No type for while_expr. */
+/* No type for do_statement. */
+/* No type for do. */
 %type	<y_tnode>	do_while_expr
+/* No type for for_start. */
+/* No type for for_exprs. */
+/* No type for jump_statement. */
+/* No type for goto. */
+/* No type for asm_statement. */
+/* No type for read_until_rparen. */
+/* No type for translation_unit. */
+/* No type for external_declaration. */
+/* No type for top_level_declaration. */
+/* No type for function_definition. */
 %type	<y_sym>		func_declarator
+/* No type for arg_declaration_list_opt. */
+/* No type for arg_declaration_list. */
+/* No type for arg_declaration. */
+/* No type for gcc_attribute_specifier_list_opt. */
+/* No type for gcc_attribute_specifier_list. */
+/* No type for gcc_attribute_specifier. */
+/* No type for gcc_attribute_list. */
+/* No type for gcc_attribute. */
+/* No type for gcc_attribute_parameters. */
 %type	<y_in_system_header> sys
 
 %{
