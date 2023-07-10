@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.244 2023/07/01 06:09:24 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.245 2023/07/10 09:51:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.244 2023/07/01 06:09:24 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.245 2023/07/10 09:51:30 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -206,7 +206,7 @@ can_init_character_array(const type_t *ltp, const tnode_t *rn)
 
 	return rst == CHAR
 	    ? lst == CHAR || lst == UCHAR || lst == SCHAR
-	    : lst == WCHAR;
+	    : lst == WCHAR_TSPEC;
 }
 
 /*

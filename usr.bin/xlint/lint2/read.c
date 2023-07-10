@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.83 2023/07/08 11:18:16 rillig Exp $ */
+/* $NetBSD: read.c,v 1.84 2023/07/10 09:51:30 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.83 2023/07/08 11:18:16 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.84 2023/07/10 09:51:30 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -81,7 +81,7 @@ typedef struct thtab {
 	unsigned short th_idx;
 	struct thtab *th_next;
 } thtab_t;
-static	thtab_t	**thtab;		/* hash table */
+static	thtab_t	*thtab[1009];		/* hash table */
 type_t	**tlst;				/* array for indexed access */
 static	size_t	tlstlen;		/* length of tlst */
 
@@ -226,8 +226,6 @@ readfile(const char *name)
 		flines = xcalloc(nfnames, sizeof(*flines));
 	if (tlstlen == 0)
 		tlst = xcalloc(tlstlen = 256, sizeof(*tlst));
-	if (thtab == NULL)
-		thtab = xcalloc(THSHSIZ2, sizeof(*thtab));
 
 	renametab = htab_new();
 
@@ -993,7 +991,7 @@ thash(const char *s, size_t len)
 		v = (v << sizeof(v)) + (unsigned char)*s++;
 		v ^= v >> (sizeof(v) * CHAR_BIT - sizeof(v));
 	}
-	return v % THSHSIZ2;
+	return v % (sizeof(thtab) / sizeof(thtab[0]));
 }
 
 /*
