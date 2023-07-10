@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.250 2021/11/01 05:53:45 thorpej Exp $
+#	$NetBSD: Makefile.inc,v 1.251 2023/07/10 02:31:54 christos Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -134,7 +134,8 @@ ASM=\
 		_lwp_unpark_all.S _lwp_suspend.S _lwp_continue.S \
 		_lwp_wakeup.S _lwp_detach.S _lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
-	madvise.S mincore.S minherit.S mkdir.S mkdirat.S mkfifo.S mkfifoat.S \
+	madvise.S memfd_create.S mincore.S minherit.S mkdir.S mkdirat.S \
+		mkfifo.S mkfifoat.S \
 		__mknod50.S mlock.S mlockall.S modctl.S __mount50.S \
 		mprotect.S __msgctl50.S msgget.S munlock.S munlockall.S \
 		munmap.S \
@@ -275,7 +276,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	_lwp_suspend.2 _lwp_wakeup.2 _lwp_wait.2 _lwp_kill.2 \
 	_lwp_getname.2 _lwp_getprivate.2 \
 	_lwp_park.2 _lwp_unpark.2 _lwp_unpark_all.2 \
-	mkdir.2 mkfifo.2 mknod.2 \
+	memfd_create.2 mkdir.2 mkfifo.2 mknod.2 \
 	madvise.2 mincore.2 minherit.2 mlock.2 mlockall.2 mmap.2 modctl.2 \
 	mount.2 \
 	mprotect.2 mremap.2 msgctl.2 msgget.2 msgrcv.2 msgsnd.2 msync.2 \

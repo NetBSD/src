@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.256 2021/12/02 04:29:48 ryo Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.257 2023/07/10 02:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.256 2021/12/02 04:29:48 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.257 2023/07/10 02:31:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,9 +169,9 @@ const struct linux_mnttypes linux_fstypes[] = {
 const int linux_fstypes_cnt = sizeof(linux_fstypes) / sizeof(linux_fstypes[0]);
 
 # ifdef DEBUG_LINUX
-#define DPRINTF(a)	uprintf a
+#define	DPRINTF(a)	uprintf a
 # else
-#define DPRINTF(a)
+#define	DPRINTF(a)
 # endif
 
 /* Local linux_misc.c functions: */
@@ -1680,4 +1680,67 @@ linux_sys_eventfd2(struct lwp *l, const struct linux_sys_eventfd2_args *uap,
 
 	return linux_do_eventfd2(l, SCARG(uap, initval), SCARG(uap, flags),
 				 retval);
+}
+
+#define	LINUX_MFD_CLOEXEC	0x0001U
+#define	LINUX_MFD_ALLOW_SEALING	0x0002U
+#define	LINUX_MFD_HUGETLB	0x0004U
+#define	LINUX_MFD_NOEXEC_SEAL	0x0008U
+#define	LINUX_MFD_EXEC		0x0010U
+#define	LINUX_MFD_HUGE_FLAGS	(0x3f << 26)
+
+#define	LINUX_MFD_ALL_FLAGS	(LINUX_MFD_CLOEXEC|LINUX_MFD_ALLOW_SEALING \
+				|LINUX_MFD_HUGETLB|LINUX_MFD_NOEXEC_SEAL \
+				|LINUX_MFD_EXEC|LINUX_MFD_HUGE_FLAGS)
+#define	LINUX_MFD_KNOWN_FLAGS	(LINUX_MFD_CLOEXEC|LINUX_MFD_ALLOW_SEALING)
+
+#define LINUX_MFD_NAME_MAX	249
+
+/*
+ * memfd_create(2).  Do some error checking and then call NetBSD's
+ * version.
+ */
+int
+linux_sys_memfd_create(struct lwp *l,
+    const struct linux_sys_memfd_create_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(const char *) name;
+		syscallarg(unsigned int) flags;
+	} */
+	int error;
+	char *pbuf;
+	struct sys_memfd_create_args muap;
+	const unsigned int lflags = SCARG(uap, flags);
+
+	KASSERT(LINUX_MFD_NAME_MAX < NAME_MAX); /* sanity check */
+
+	if (lflags & ~LINUX_MFD_ALL_FLAGS)
+		return EINVAL;
+	if ((lflags & LINUX_MFD_HUGE_FLAGS) != 0 &&
+	    (lflags & LINUX_MFD_HUGETLB) == 0)
+		return EINVAL;
+	if ((lflags & LINUX_MFD_HUGETLB) && (lflags & LINUX_MFD_ALLOW_SEALING))
+		return EINVAL;
+
+	/* Linux has a stricter limit for name size */
+	pbuf = PNBUF_GET();
+	error = copyinstr(SCARG(uap, name), pbuf, LINUX_MFD_NAME_MAX+1, NULL);
+	PNBUF_PUT(pbuf);
+	pbuf = NULL;
+	if (error != 0) {
+		if (error == ENAMETOOLONG)
+			error = EINVAL;
+		return error;
+	}
+
+	if (lflags & ~LINUX_MFD_KNOWN_FLAGS) {
+		DPRINTF(("linux_sys_memfd_create: ignored flags %x\n",
+		    lflags & ~LINUX_MFD_KNOWN_FLAGS));
+	}
+
+	SCARG(&muap, name) = SCARG(uap, name);
+	SCARG(&muap, flags) = lflags & LINUX_MFD_KNOWN_FLAGS;
+
+	return sys_memfd_create(l, &muap, retval);
 }
