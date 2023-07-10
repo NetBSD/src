@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.c,v 1.20 2023/06/09 13:03:49 rillig Exp $	*/
+/*	$NetBSD: msg.c,v 1.21 2023/07/10 12:40:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: msg.c,v 1.20 2023/06/09 13:03:49 rillig Exp $");
+__RCSID("$NetBSD: msg.c,v 1.21 2023/07/10 12:40:22 rillig Exp $");
 #endif
 
 #include <stdarg.h>
@@ -102,7 +102,7 @@ lbasename(const char *path)
  * Create a string which describes a position in a source file.
  */
 const char *
-mkpos(pos_t *posp)
+mkpos(const pos_t *posp)
 {
 	size_t len;
 	const char *fn;
@@ -125,12 +125,10 @@ mkpos(pos_t *posp)
 
 	if (len > blen)
 		buf = xrealloc(buf, blen = len);
-	if (line != 0) {
-		(void)sprintf(buf, "%s%s(%d)",
-			      fn, qm ? "?" : "", line);
-	} else {
+	if (line != 0)
+		(void)sprintf(buf, "%s%s(%d)", fn, qm ? "?" : "", line);
+	else
 		(void)sprintf(buf, "%s", fn);
-	}
 
 	return buf;
 }
