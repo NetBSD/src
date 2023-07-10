@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.58 2023/07/07 12:34:50 riastradh Exp $
+#	$NetBSD: files.kern,v 1.59 2023/07/10 06:42:33 mrg Exp $
 
 #
 # kernel sources
@@ -165,6 +165,7 @@ file	kern/sys_eventfd.c		kern
 file	kern/sys_futex.c		kern
 file	kern/sys_generic.c		kern
 file	kern/sys_getrandom.c		kern
+file	kern/sys_memfd.c		kern
 file	kern/sys_module.c		kern
 file	kern/sys_mqueue.c		mqueue
 file	kern/sys_lwp.c			kern
