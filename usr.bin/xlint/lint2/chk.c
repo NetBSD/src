@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.58 2023/07/10 12:40:22 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.59 2023/07/10 14:13:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.58 2023/07/10 12:40:22 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.59 2023/07/10 14:13:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -198,7 +198,6 @@ static void
 check_multiple_definitions(const hte_t *hte)
 {
 	sym_t *sym, *def1;
-	char *pos1;
 
 	if (!hte->h_def)
 		return;
@@ -217,10 +216,8 @@ check_multiple_definitions(const hte_t *hte)
 			def1 = sym;
 			continue;
 		}
-		pos1 = xstrdup(mkpos(&def1->s_pos));
 		/* %s multiply defined  \t%s  ::  %s */
-		msg(3, hte->h_name, pos1, mkpos(&sym->s_pos));
-		free(pos1);
+		msg(3, hte->h_name, mkpos(&def1->s_pos), mkpos(&sym->s_pos));
 	}
 }
 
@@ -237,7 +234,6 @@ static void
 chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 {
 	fcall_t *call;
-	char *pos1;
 	type_t *tp1, *tp2;
 	bool dowarn, eq;
 	tspec_t t1;
@@ -273,19 +269,16 @@ chkvtui(const hte_t *hte, sym_t *def, sym_t *decl)
 				 * behavior matches pcc-based lint, so it is
 				 * accepted for now.
 				 */
-				pos1 = xstrdup(mkpos(&def->s_pos));
 				/* %s function value must be declared ... */
 				msg(17, hte->h_name,
-				    pos1, mkpos(&call->f_pos));
-				free(pos1);
+				    mkpos(&def->s_pos), mkpos(&call->f_pos));
 			}
 			continue;
 		}
 		if (!eq || (sflag && dowarn)) {
-			pos1 = xstrdup(mkpos(&def->s_pos));
 			/* %s value used inconsistently  \t%s  ::  %s */
-			msg(4, hte->h_name, pos1, mkpos(&call->f_pos));
-			free(pos1);
+			msg(4, hte->h_name,
+			    mkpos(&def->s_pos), mkpos(&call->f_pos));
 		}
 	}
 }
@@ -301,7 +294,6 @@ chkvtdi(const hte_t *hte, sym_t *def, sym_t *decl)
 	sym_t *sym;
 	type_t *tp1, *tp2;
 	bool eq, dowarn;
-	char *pos1;
 
 	if (def == NULL)
 		def = decl;
@@ -323,11 +315,9 @@ chkvtdi(const hte_t *hte, sym_t *def, sym_t *decl)
 			    false, false, false, &dowarn);
 		}
 		if (!eq || (sflag && dowarn)) {
-			pos1 = xstrdup(mkpos(&def->s_pos));
 			/* %s value declared inconsistently (%s != %s) \t... */
 			msg(5, hte->h_name, type_name(xt1), type_name(xt2),
-			    pos1, mkpos(&sym->s_pos));
-			free(pos1);
+			    mkpos(&def->s_pos), mkpos(&sym->s_pos));
 		}
 	}
 }
@@ -344,7 +334,6 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 	pos_t *pos1p = NULL;
 	fcall_t *calls, *call, *call1;
 	int n, as;
-	char *pos1;
 	arginf_t *ai;
 
 	if ((calls = hte->h_calls) == NULL)
@@ -408,10 +397,8 @@ chkfaui(const hte_t *hte, sym_t *def, sym_t *decl)
 			 * in the prototype.
 			 */
 		} else {
-			pos1 = xstrdup(mkpos(pos1p));
 			/* %s: variable # of args  \t%s  ::  %s */
-			msg(7, hte->h_name, pos1, mkpos(&call->f_pos));
-			free(pos1);
+			msg(7, hte->h_name, mkpos(pos1p), mkpos(&call->f_pos));
 			continue;
 		}
 
@@ -456,7 +443,6 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 	bool promote, asgn, dowarn;
 	tspec_t t1, t2;
 	arginf_t *ai, *ai1;
-	char *pos1;
 
 	/*
 	 * If a function definition is available (def != NULL), we compare the
@@ -593,11 +579,9 @@ chkau(const hte_t *hte, int n, sym_t *def, sym_t *decl, pos_t *pos1p,
 			return;
 	}
 
-	pos1 = xstrdup(mkpos(pos1p));
 	/* %s, arg %d used inconsistently  \t%s[%s]  ::  %s[%s] */
-	msg(6, hte->h_name, n, pos1, type_name(arg1),
+	msg(6, hte->h_name, n, mkpos(pos1p), type_name(arg1),
 	    mkpos(&call->f_pos), type_name(arg2));
-	free(pos1);
 }
 
 /*
@@ -1131,8 +1115,6 @@ check_argument_declarations(const hte_t *hte, sym_t *def, sym_t *decl)
 	int n;
 	sym_t *sym1, *sym;
 	type_t **ap1, **ap2, *tp1, *tp2;
-	char *pos1;
-	const char *pos2;
 
 	osdef = false;
 	if (def != NULL) {
@@ -1163,12 +1145,10 @@ check_argument_declarations(const hte_t *hte, sym_t *def, sym_t *decl)
 			eq = types_compatible(xt1 = *ap1, xt2 = *ap2,
 			    true, osdef, false, &dowarn);
 			if (!eq || dowarn) {
-				pos1 = xstrdup(mkpos(&sym1->s_pos));
-				pos2 = mkpos(&sym->s_pos);
 				/* %s, arg %d declared inconsistently ... */
 				msg(11, hte->h_name, n + 1,
-				    type_name(xt1), type_name(xt2), pos1, pos2);
-				free(pos1);
+				    type_name(xt1), type_name(xt2),
+				    mkpos(&sym1->s_pos), mkpos(&sym->s_pos));
 			}
 			n++;
 			ap1++;
@@ -1184,10 +1164,8 @@ check_argument_declarations(const hte_t *hte, sym_t *def, sym_t *decl)
 				continue;
 			}
 		}
-		pos1 = xstrdup(mkpos(&sym1->s_pos));
 		/* %s: variable # of args declared  \t%s  ::  %s */
-		msg(12, hte->h_name, pos1, mkpos(&sym->s_pos));
-		free(pos1);
+		msg(12, hte->h_name, mkpos(&sym1->s_pos), mkpos(&sym->s_pos));
 	}
 }
 

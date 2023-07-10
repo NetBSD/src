@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.85 2023/07/10 12:40:22 rillig Exp $ */
+/* $NetBSD: read.c,v 1.86 2023/07/10 14:13:19 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.85 2023/07/10 12:40:22 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.86 2023/07/10 14:13:19 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -467,7 +467,7 @@ static void
 decldef(pos_t pos, const char *cp)
 {
 	sym_t *symp, sym;
-	char *pos1, *tname;
+	char *tname;
 	bool used, renamed;
 	hte_t *hte, *renamehte = NULL;
 	const char *name, *newname;
@@ -497,10 +497,9 @@ decldef(pos_t pos, const char *cp)
 			renamed = true;
 		} else if (hte = renamehte->h_hte,
 		    strcmp(hte->h_name, newname) != 0) {
-			pos1 = xstrdup(mkpos(&renamehte->h_syms->s_pos));
 			/* %s renamed multiple times  \t%s  ::  %s */
-			msg(18, tname, pos1, mkpos(&sym.s_pos));
-			free(pos1);
+			msg(18, tname, mkpos(&renamehte->h_syms->s_pos),
+			    mkpos(&sym.s_pos));
 		}
 		free(tname);
 	} else {
