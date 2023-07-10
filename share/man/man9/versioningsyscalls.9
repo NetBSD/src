@@ -1,4 +1,4 @@
-.\"	$NetBSD: versioningsyscalls.9,v 1.3 2023/07/10 15:54:18 christos Exp $
+.\"	$NetBSD: versioningsyscalls.9,v 1.4 2023/07/10 23:55:13 uwe Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -325,11 +325,12 @@ syscall will be
 Overall,
 .Pa lib/libc/compat/sys/compat_my_syscall.c
 must at the minimum include
-.Bd -literal
+.Bd -literal -offset indent
 #include <sys/compat/my_header.h>
 
 __warn_references(my_syscall,
-    "warning: reference to compatibility my_syscall(); message on how to use the next my_syscall()");
+    "warning: reference to compatibility my_syscall();"
+    " message on how to use the next my_syscall()");
 
 int
 my_syscall()
