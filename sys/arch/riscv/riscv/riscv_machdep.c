@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.29 2023/06/12 19:04:14 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.30 2023/07/10 07:01:48 rin Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.29 2023/06/12 19:04:14 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.30 2023/07/10 07:01:48 rin Exp $");
 
 #include <sys/param.h>
 
@@ -81,13 +81,9 @@ char machine_arch[] = MACHINE_ARCH;
 #define	VPRINTF(...)	__nothing
 #endif
 
-#ifndef FDT_MAX_BOOT_STRING
-#define	FDT_MAX_BOOT_STRING 1024
-#endif
 /* 64 should be enough, even for a ZFS UUID */
 #define	MAX_BOOT_DEV_STR	64
 
-char bootargs[FDT_MAX_BOOT_STRING] = "";
 char bootdevstr[MAX_BOOT_DEV_STR] = "";
 char *boot_args = NULL;
 
@@ -716,10 +712,7 @@ init_riscv(register_t hartid, paddr_t dtb)
 	/* Early console may be available, announce ourselves. */
 	VPRINTF("FDT<%p>\n", fdt_data);
 
-	const int chosen = OF_finddevice("/chosen");
-	if (chosen >= 0)
-		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
-	boot_args = bootargs;
+	boot_args = fdt_get_bootargs();
 
 	VPRINTF("devmap %p\n", plat->fp_devmap());
 	pmap_devmap_bootstrap(0, plat->fp_devmap());
@@ -783,7 +776,7 @@ init_riscv(register_t hartid, paddr_t dtb)
 	/* Perform PT build and VM init */
 	cpu_kernel_vm_init(memory_start, memory_end);
 
-	VPRINTF("bootargs: %s\n", bootargs);
+	VPRINTF("bootargs: %s\n", boot_args);
 
 	parse_mi_bootargs(boot_args);
 
