@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.97 2023/07/08 11:18:16 rillig Exp $
+#	$NetBSD: Makefile,v 1.98 2023/07/11 17:33:45 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -81,7 +81,7 @@ DPADD+=		${LIBL}
 err-msgs.h: err.c
 	${_MKTARGET_CREATE}
 	sp='[[:space:]]*'; \
-	from="^$$sp\(\".*\"\)\,$$sp/\*$$sp\(Q*[0-9][0-9]*\)$$sp\*/\$$"; \
+	from="^$$sp\(\"[^\"].*\"\)\,$$sp/\*$$sp\(Q*[0-9][0-9]*\)$$sp\*/\$$"; \
 	${TOOL_SED} -n -e "s,$$from,#define MSG_\2 \1,p" < ${.ALLSRC:M*err.c} > ${.TARGET}.tmp
 	mv -f ${.TARGET}.tmp ${.TARGET}
 
