@@ -1959,7 +1959,7 @@
 
 /* Define to 1 if you have the `vfork' function. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_VFORK */
+#define HAVE_VFORK 1
 #endif
 
 
@@ -1996,7 +1996,7 @@
 
 /* Define to 1 if `vfork' works. */
 #ifndef USED_FOR_TARGET
-/* #undef HAVE_WORKING_VFORK */
+#define HAVE_WORKING_VFORK 1
 #endif
 
 
@@ -2522,6 +2522,6 @@
 
 /* Define as `fork' if `vfork' does not work. */
 #ifndef USED_FOR_TARGET
-#define vfork fork
+/* #undef vfork */
 #endif
 
