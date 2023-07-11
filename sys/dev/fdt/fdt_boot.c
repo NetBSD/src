@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_boot.c,v 1.3 2023/07/10 07:01:48 rin Exp $	*/
+/*	$NetBSD: fdt_boot.c,v 1.4 2023/07/11 05:57:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.3 2023/07/10 07:01:48 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.4 2023/07/11 05:57:44 skrll Exp $");
 
 #include "opt_efi.h"
 #include "opt_md.h"
@@ -82,9 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_boot.c,v 1.3 2023/07/10 07:01:48 rin Exp $");
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_boot.h>
-#if 0
-#include <dev/fdt/fdt_ddb.h>
-#endif
 #include <dev/fdt/fdt_memory.h>
 
 #ifndef FDT_MAX_BOOT_STRING
