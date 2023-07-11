@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.453 2023/07/11 20:54:23 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.454 2023/07/11 21:13:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.453 2023/07/11 20:54:23 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.454 2023/07/11 21:13:36 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -297,7 +297,7 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_tnode>	conditional_expression
 %type	<y_tnode>	assignment_expression
 %type	<y_tnode>	expression
-%type	<y_tnode>	constant_expr
+%type	<y_tnode>	constant_expression
 /* No type for declaration_or_error. */
 /* No type for declaration. */
 /* No type for begin_type_declaration_specifiers. */
@@ -318,15 +318,15 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_type>	atomic_type_specifier
 %type	<y_type>	struct_or_union_specifier
 %type	<y_tspec>	struct_or_union
-%type	<y_sym>		braced_struct_declaration_list
-/* No type for struct_declaration_lbrace. */
-%type	<y_sym>		struct_declaration_list_with_rbrace
-%type	<y_sym>		struct_declaration_list
-%type	<y_sym>		struct_declaration
-%type	<y_sym>		notype_struct_declarators
-%type	<y_sym>		type_struct_declarators
-%type	<y_sym>		notype_struct_declarator
-%type	<y_sym>		type_struct_declarator
+%type	<y_sym>		braced_member_declaration_list
+/* No type for member_declaration_lbrace. */
+%type	<y_sym>		member_declaration_list_with_rbrace
+%type	<y_sym>		member_declaration_list
+%type	<y_sym>		member_declaration
+%type	<y_sym>		notype_member_declarators
+%type	<y_sym>		type_member_declarators
+%type	<y_sym>		notype_member_declarator
+%type	<y_sym>		type_member_declarator
 %type	<y_type>	enum_specifier
 /* No type for enum. */
 %type	<y_sym>		enum_declaration
@@ -533,7 +533,7 @@ generic_association:
 	  }
 	;
 
-/* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2 */
+/* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2, C23 6.5.2 */
 postfix_expression:
 	  primary_expression
 	| postfix_expression T_LBRACK sys expression T_RBRACK {
@@ -782,7 +782,8 @@ expression:
 	  }
 	;
 
-constant_expr:			/* C99 6.6 */
+/* K&R ???, C90 ???, C99 6.6, C11 ???, C23 6.6 */
+constant_expression:
 	  conditional_expression
 	;
 
@@ -791,7 +792,8 @@ declaration_or_error:
 	| error T_SEMI
 	;
 
-declaration:			/* C99 6.7 */
+/* K&R ???, C90 ???, C99 6.7, C11 ???, C23 6.7 */
+declaration:
 	  begin_type_declmods end_type T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
@@ -915,7 +917,7 @@ type_attribute_opt:
 type_attribute:			/* See C11 6.7 declaration-specifiers */
 	  gcc_attribute_specifier
 	| T_ALIGNAS T_LPAREN type_specifier T_RPAREN	/* C11 6.7.5 */
-	| T_ALIGNAS T_LPAREN constant_expr T_RPAREN	/* C11 6.7.5 */
+	| T_ALIGNAS T_LPAREN constant_expression T_RPAREN	/* C11 6.7.5 */
 	| T_PACKED {
 		dcs_add_packed();
 	  }
@@ -967,7 +969,8 @@ atomic_type_specifier:
 	  }
 	;
 
-struct_or_union_specifier:	/* C99 6.7.2.1 */
+/* K&R ---, C90 ---, C99 6.7.2.1, C11 ???, C23 6.7.2.1 */
+struct_or_union_specifier:
 	  struct_or_union identifier_sym {
 		/*
 		 * STDC requires that "struct a;" always introduces
@@ -980,12 +983,12 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 	  }
 	| struct_or_union identifier_sym {
 		dcs->d_tag_type = make_tag_type($2, $1, true, false);
-	  } braced_struct_declaration_list {
+	  } braced_member_declaration_list {
 		$$ = complete_struct_or_union($4);
 	  }
 	| struct_or_union {
 		dcs->d_tag_type = make_tag_type(NULL, $1, true, false);
-	  } braced_struct_declaration_list {
+	  } braced_member_declaration_list {
 		$$ = complete_struct_or_union($3);
 	  }
 	| struct_or_union error {
@@ -994,7 +997,8 @@ struct_or_union_specifier:	/* C99 6.7.2.1 */
 	  }
 	;
 
-struct_or_union:		/* C99 6.7.2.1 */
+/* K&R ---, C90 ---, C99 6.7.2.1, C11 ???, C23 6.7.2.1 */
+struct_or_union:
 	  T_STRUCT_OR_UNION {
 		set_symtyp(FTAG);
 		begin_declaration_level($1 == STRUCT ? DLK_STRUCT : DLK_UNION);
@@ -1005,45 +1009,49 @@ struct_or_union:		/* C99 6.7.2.1 */
 	| struct_or_union type_attribute
 	;
 
-braced_struct_declaration_list:	/* see C99 6.7.2.1 */
-	  struct_declaration_lbrace struct_declaration_list_with_rbrace {
+braced_member_declaration_list:	/* see C99 6.7.2.1 */
+	  member_declaration_lbrace member_declaration_list_with_rbrace {
 		$$ = $2;
 	  }
 	;
 
-struct_declaration_lbrace:	/* see C99 6.7.2.1 */
+member_declaration_lbrace:	/* see C99 6.7.2.1 */
 	  T_LBRACE {
 		set_symtyp(FVFT);
 	  }
 	;
 
-struct_declaration_list_with_rbrace:	/* see C99 6.7.2.1 */
-	  struct_declaration_list T_RBRACE
+member_declaration_list_with_rbrace:	/* see C99 6.7.2.1 */
+	  member_declaration_list T_RBRACE
 	| T_RBRACE {
 		/* XXX: This is not allowed by any C standard. */
 		$$ = NULL;
 	  }
 	;
 
-struct_declaration_list:	/* C99 6.7.2.1 */
-	  struct_declaration
-	| struct_declaration_list struct_declaration {
+/* K&R ???, C90 ???, C99 6.7.2.1, C11 6.7.2.1, C23 6.7.2.1 */
+/* Was named struct_declaration_list until C11. */
+member_declaration_list:
+	  member_declaration
+	| member_declaration_list member_declaration {
 		$$ = concat_symbols($1, $2);
 	  }
 	;
 
-struct_declaration:		/* C99 6.7.2.1 */
+/* Was named struct_declaration until C11. */
+/* K&R ???, C90 ???, C99 6.7.2.1, C11 6.7.2.1, C23 6.7.2.1 */
+member_declaration:
 	  begin_type_qualifier_list end_type {
 		/* ^^ There is no check for the missing type-specifier. */
 		/* too late, i know, but getsym() compensates it */
 		set_symtyp(FMEMBER);
-	  } notype_struct_declarators type_attribute_opt T_SEMI {
+	  } notype_member_declarators type_attribute_opt T_SEMI {
 		set_symtyp(FVFT);
 		$$ = $4;
 	  }
 	| begin_type_specifier_qualifier_list end_type {
 		set_symtyp(FMEMBER);
-	  } type_struct_declarators type_attribute_opt T_SEMI {
+	  } type_member_declarators type_attribute_opt T_SEMI {
 		set_symtyp(FVFT);
 		$$ = $4;
 	  }
@@ -1075,54 +1083,60 @@ struct_declaration:		/* C99 6.7.2.1 */
 	  }
 	;
 
-notype_struct_declarators:
-	  notype_struct_declarator {
+/* Was named struct_declarators until C11. */
+notype_member_declarators:
+	  notype_member_declarator {
 		$$ = declare_member($1);
 	  }
-	| notype_struct_declarators {
+	| notype_member_declarators {
 		set_symtyp(FMEMBER);
-	  } T_COMMA type_struct_declarator {
+	  } T_COMMA type_member_declarator {
 		$$ = concat_symbols($1, declare_member($4));
 	  }
 	;
 
-type_struct_declarators:
-	  type_struct_declarator {
+/* Was named struct_declarators until C11. */
+type_member_declarators:
+	  type_member_declarator {
 		$$ = declare_member($1);
 	  }
-	| type_struct_declarators {
+	| type_member_declarators {
 		set_symtyp(FMEMBER);
-	  } T_COMMA type_struct_declarator {
+	  } T_COMMA type_member_declarator {
 		$$ = concat_symbols($1, declare_member($4));
 	  }
 	;
 
-notype_struct_declarator:
+/* Was named struct_declarator until C11. */
+notype_member_declarator:
 	  notype_declarator
-	| notype_declarator T_COLON constant_expr {	/* C99 6.7.2.1 */
+	/* C99 6.7.2.1 */
+	| notype_declarator T_COLON constant_expression {
 		$$ = set_bit_field_width($1, to_int_constant($3, true));
 	  }
+	/* C99 6.7.2.1 */
 	| {
 		set_symtyp(FVFT);
-	  } T_COLON constant_expr {			/* C99 6.7.2.1 */
+	  } T_COLON constant_expression {
 		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
 	  }
 	;
 
-type_struct_declarator:
+/* Was named struct_declarator until C11. */
+type_member_declarator:
 	  type_declarator
-	| type_declarator T_COLON constant_expr {
+	| type_declarator T_COLON constant_expression {
 		$$ = set_bit_field_width($1, to_int_constant($3, true));
 	  }
 	| {
 		set_symtyp(FVFT);
-	  } T_COLON constant_expr {
+	  } T_COLON constant_expression {
 		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
 	  }
 	;
 
 /* K&R ---, C90 6.5.2.2, C99 6.7.2.2, C11 6.7.2.2 */
-enum_specifier:			/* C99 6.7.2.2 */
+enum_specifier:
 	  enum gcc_attribute_specifier_list_opt identifier_sym {
 		$$ = make_tag_type($3, ENUM, false, false);
 	  }
@@ -1191,7 +1205,7 @@ enumerator:			/* C99 6.7.2.2 */
 		$$ = enumeration_constant($1, enumval, true);
 	  }
 	| identifier_sym gcc_attribute_specifier_list_opt
-	    T_ASSIGN constant_expr {
+	    T_ASSIGN constant_expression {
 		$$ = enumeration_constant($1, to_int_constant($4, true),
 		    false);
 	  }
@@ -1437,7 +1451,7 @@ array_size_opt:
 	;
 
 array_size:
-	  type_qualifier_list_opt T_SCLASS constant_expr {
+	  type_qualifier_list_opt T_SCLASS constant_expression {
 		/* C11 6.7.6.3p7 */
 		if ($2 != STATIC)
 			yyerror("Bad attribute");
@@ -1451,7 +1465,7 @@ array_size:
 			yyerror("Bad attribute");
 		$$ = NULL;
 	  }
-	| constant_expr
+	| constant_expression
 	;
 
 identifier_list:		/* C99 6.7.5 */
@@ -1684,16 +1698,17 @@ designator:			/* C99 6.7.8 "Initialization" */
 	;
 
 static_assert_declaration:
-	  T_STATIC_ASSERT T_LPAREN constant_expr T_COMMA T_STRING T_RPAREN T_SEMI /* C11 */
-	| T_STATIC_ASSERT T_LPAREN constant_expr T_RPAREN T_SEMI /* C23 */
+	  T_STATIC_ASSERT T_LPAREN
+	    constant_expression T_COMMA T_STRING T_RPAREN T_SEMI /* C11 */
+	| T_STATIC_ASSERT T_LPAREN constant_expression T_RPAREN T_SEMI /* C23 */
 	;
 
 range:
-	  constant_expr {
+	  constant_expression {
 		$$.lo = to_int_constant($1, true);
 		$$.hi = $$.lo;
 	  }
-	| constant_expr T_ELLIPSIS constant_expr {
+	| constant_expression T_ELLIPSIS constant_expression {
 		$$.lo = to_int_constant($1, true);
 		$$.hi = to_int_constant($3, true);
 		/* initialization with '[a...b]' is a GCC extension */
@@ -1727,7 +1742,8 @@ asm_or_symbolrename_opt:	/* GCC extensions */
 	  }
 	;
 
-statement:			/* C99 6.8 */
+/* K&R ???, C90 ???, C99 6.8, C11 ???, C23 6.8 */
+statement:
 	  expression_statement
 	| non_expr_statement
 	;
@@ -1753,11 +1769,11 @@ label:
 		set_symtyp(FLABEL);
 		named_label(getsym($1));
 	  }
-	| T_CASE constant_expr T_COLON {
+	| T_CASE constant_expression T_COLON {
 		case_label($2);
 		seen_fallthrough = true;
 	  }
-	| T_CASE constant_expr T_ELLIPSIS constant_expr T_COLON {
+	| T_CASE constant_expression T_ELLIPSIS constant_expression T_COLON {
 		/* XXX: We don't fill all cases */
 		case_label($2);
 		seen_fallthrough = true;
@@ -2191,8 +2207,8 @@ gcc_attribute:
 	;
 
 gcc_attribute_parameters:
-	  constant_expr
-	| gcc_attribute_parameters T_COMMA constant_expr
+	  constant_expression
+	| gcc_attribute_parameters T_COMMA constant_expression
 	;
 
 sys:
