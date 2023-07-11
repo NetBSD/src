@@ -7920,8 +7920,10 @@ cp_finish_decl (tree decl, tree init, bool init_const_expr_p,
 
       if (var_definition_p
 	  /* With -fmerge-all-constants, gimplify_init_constructor
-	     might add TREE_STATIC to the variable.  */
-	  && (TREE_STATIC (decl) || flag_merge_constants >= 2))
+	     might add TREE_STATIC to aggregate variables.  */
+	  && (TREE_STATIC (decl)
+	      || (flag_merge_constants >= 2
+		  && AGGREGATE_TYPE_P (type))))
 	{
 	  /* If a TREE_READONLY variable needs initialization
 	     at runtime, it is no longer readonly and we need to
@@ -7938,6 +7940,18 @@ cp_finish_decl (tree decl, tree init, bool init_const_expr_p,
 	  /* Likewise if it needs destruction.  */
 	  if (!decl_maybe_constant_destruction (decl, type))
 	    TREE_READONLY (decl) = 0;
+	}
+      else if (VAR_P (decl)
+	       && CP_DECL_THREAD_LOCAL_P (decl)
+	       && (!DECL_EXTERNAL (decl) || flag_extern_tls_init)
+	       && (was_readonly || TREE_READONLY (decl))
+	       && var_needs_tls_wrapper (decl))
+	{
+	  /* TLS variables need dynamic initialization by the TLS wrapper
+	     function, we don't want to hoist accesses to it before the
+	     wrapper.  */
+	  was_readonly = 0;
+	  TREE_READONLY (decl) = 0;
 	}
 
       make_rtl_for_nonlocal_decl (decl, init, asmspec);
@@ -12275,7 +12289,7 @@ grokdeclarator (const cp_declarator *declarator,
 			  "an array", name);
 		return error_mark_node;
 	      }
-	    if (constinit_p)
+	    if (constinit_p && funcdecl_p)
 	      {
 		error_at (declspecs->locations[ds_constinit],
 			  "%<constinit%> on function return type is not "
@@ -13467,7 +13481,8 @@ grokdeclarator (const cp_declarator *declarator,
 		      return error_mark_node;
 		  }
 
-		decl = do_friend (ctype, unqualified_id, decl,
+		tree scope = ctype ? ctype : in_namespace;
+		decl = do_friend (scope, unqualified_id, decl,
 				  *attrlist, flags,
 				  funcdef_flag);
 		return decl;

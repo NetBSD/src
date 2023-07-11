@@ -17001,7 +17001,7 @@ performance of the code.  Permissible values for this option are:
 @samp{cortex-a65}, @samp{cortex-a65ae}, @samp{cortex-a34},
 @samp{ares}, @samp{exynos-m1}, @samp{emag}, @samp{falkor},
 @samp{neoverse-e1}, @samp{neoverse-n1}, @samp{neoverse-n2},
-@samp{neoverse-v1}, @samp{neoverse-512tvb}, @samp{qdf24xx},
+@samp{neoverse-v1}, @samp{neoverse-v2}, @samp{neoverse-512tvb}, @samp{qdf24xx},
 @samp{saphira}, @samp{phecda}, @samp{xgene1}, @samp{vulcan}, @samp{octeontx},
 @samp{octeontx81},  @samp{octeontx83},
 @samp{octeontx2}, @samp{octeontx2t98}, @samp{octeontx2t96}
@@ -17013,8 +17013,8 @@ performance of the code.  Permissible values for this option are:
 @samp{thunderxt83}, @samp{thunderx2t99}, @samp{thunderx3t110}, @samp{zeus},
 @samp{cortex-a57.cortex-a53}, @samp{cortex-a72.cortex-a53},
 @samp{cortex-a73.cortex-a35}, @samp{cortex-a73.cortex-a53},
-@samp{cortex-a75.cortex-a55}, @samp{cortex-a76.cortex-a55}
-@samp{native}.
+@samp{cortex-a75.cortex-a55}, @samp{cortex-a76.cortex-a55},
+@samp{ampere1}, @samp{ampere1a}, @samp{native}.
 
 The values @samp{cortex-a57.cortex-a53}, @samp{cortex-a72.cortex-a53},
 @samp{cortex-a73.cortex-a35}, @samp{cortex-a73.cortex-a53},
@@ -30280,7 +30280,7 @@ on x86-64 processors in 64-bit environments.
 Generate code for a 16-bit, 32-bit or 64-bit environment.
 The @option{-m32} option sets @code{int}, @code{long}, and pointer types
 to 32 bits, and
-generates code that runs on any i386 system.
+generates code that runs in 32-bit mode.
 
 The @option{-m64} option sets @code{int} to 32 bits and @code{long} and pointer
 types to 64 bits, and generates code for the x86-64 architecture.

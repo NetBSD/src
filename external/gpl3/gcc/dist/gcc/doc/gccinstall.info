@@ -1,4 +1,4 @@
-This is gccinstall.info, produced by makeinfo version 6.8 from
+This is gccinstall.info, produced by makeinfo version 6.5 from
 install.texi.
 
 Copyright (C) 1988-2020 Free Software Foundation, Inc.
@@ -4823,7 +4823,7 @@ Concept Index
 * Menu:
 
 * Binaries:                              Binaries.           (line    6)
-* build_configargs:                      Configuration.      (line 1702)
+* build_configargs:                      Configuration.      (line 1703)
 * Configuration:                         Configuration.      (line    6)
 * configurations supported by GCC:       Configurations.     (line    6)
 * Downloading GCC:                       Downloading the source.
@@ -4833,7 +4833,7 @@ Concept Index
 * FDL, GNU Free Documentation License:   GNU Free Documentation License.
                                                              (line    6)
 * Host specific installation:            Specific.           (line    6)
-* host_configargs:                       Configuration.      (line 1706)
+* host_configargs:                       Configuration.      (line 1707)
 * Installing GCC: Binaries:              Binaries.           (line    6)
 * Installing GCC: Building:              Building.           (line    6)
 * Installing GCC: Configuration:         Configuration.      (line    6)
@@ -4843,7 +4843,7 @@ Concept Index
 * Specific installation notes:           Specific.           (line    6)
 * Target specific installation:          Specific.           (line    6)
 * Target specific installation notes:    Specific.           (line    6)
-* target_configargs:                     Configuration.      (line 1710)
+* target_configargs:                     Configuration.      (line 1711)
 * Testing:                               Testing.            (line    6)
 * Testsuite:                             Testing.            (line    6)
 
@@ -4954,8 +4954,3 @@ Node: GNU Free Documentation License187106
 Node: Concept Index212234
 
 End Tag Table
-
-
-Local Variables:
-coding: utf-8
-End:
