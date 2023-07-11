@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.184 2023/07/10 19:47:12 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.185 2023/07/11 20:54:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -487,12 +487,18 @@ check_printf(const char *fmt, ...)
 		/* LINTED 129 */					\
 	})
 
-#  define error(msgid, args...) wrap_check_printf(error, true, msgid, ##args)
-#  define warning(msgid, args...) wrap_check_printf(warning, true, msgid, ##args)
-#  define gnuism(msgid, args...) wrap_check_printf(gnuism, !allow_gcc || (!allow_trad && !allow_c99), msgid, ##args)
-#  define c99ism(msgid, args...) wrap_check_printf(c99ism, !allow_c99 && (!allow_gcc || !allow_trad), msgid, ##args)
-#  define c11ism(msgid, args...) wrap_check_printf(c11ism, !allow_c11 && !allow_gcc, msgid, ##args)
-#  define c23ism(msgid, args...) wrap_check_printf(c23ism, !allow_c23, msgid, ##args)
+#  define error(msgid, args...) wrap_check_printf(error, \
+    true, msgid, ##args)
+#  define warning(msgid, args...) wrap_check_printf(warning, \
+    true, msgid, ##args)
+#  define gnuism(msgid, args...) wrap_check_printf(gnuism, \
+    !allow_gcc || (!allow_trad && !allow_c99), msgid, ##args)
+#  define c99ism(msgid, args...) wrap_check_printf(c99ism, \
+    !allow_c99 && (!allow_gcc || !allow_trad), msgid, ##args)
+#  define c11ism(msgid, args...) wrap_check_printf(c11ism, \
+    !allow_c11 && !allow_gcc, msgid, ##args)
+#  define c23ism(msgid, args...) wrap_check_printf(c23ism, \
+    !allow_c23, msgid, ##args)
 #endif
 
 #ifdef DEBUG
