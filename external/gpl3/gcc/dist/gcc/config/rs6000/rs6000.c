@@ -7420,7 +7420,8 @@ darwin_rs6000_special_round_type_align (tree type, unsigned int computed,
       type = TREE_TYPE (type);
   } while (AGGREGATE_TYPE_P (type));
 
-  if (! AGGREGATE_TYPE_P (type) && type != error_mark_node)
+  if (type != error_mark_node && ! AGGREGATE_TYPE_P (type)
+      && ! TYPE_PACKED (type) && maximum_field_alignment == 0)
     align = MAX (align, TYPE_ALIGN (type));
 
   return align;
@@ -16649,7 +16650,7 @@ output_toc (FILE *file, rtx x, int labelno, machine_mode mode)
       if (DECIMAL_FLOAT_MODE_P (GET_MODE (x)))
 	REAL_VALUE_TO_TARGET_DECIMAL128 (*CONST_DOUBLE_REAL_VALUE (x), k);
       else
-	REAL_VALUE_TO_TARGET_LONG_DOUBLE (*CONST_DOUBLE_REAL_VALUE (x), k);
+	real_to_target (k, CONST_DOUBLE_REAL_VALUE (x), GET_MODE (x));
 
       if (TARGET_64BIT)
 	{
@@ -26892,31 +26893,91 @@ rs6000_invalid_conversion (const_tree fromtype, const_tree totype)
       if (tomode == POImode)
 	return N_("invalid conversion to type %<__vector_pair%>");
     }
-  else if (POINTER_TYPE_P (fromtype) && POINTER_TYPE_P (totype))
-    {
-      /* We really care about the modes of the base types.  */
-      frommode = TYPE_MODE (TREE_TYPE (fromtype));
-      tomode = TYPE_MODE (TREE_TYPE (totype));
-
-      /* Do not allow conversions to/from PXImode and POImode pointer
-	 types, except to/from void pointers.  */
-      if (frommode != tomode
-	  && frommode != VOIDmode
-	  && tomode != VOIDmode)
-	{
-	  if (frommode == PXImode)
-	    return N_("invalid conversion from type %<* __vector_quad%>");
-	  if (tomode == PXImode)
-	    return N_("invalid conversion to type %<* __vector_quad%>");
-	  if (frommode == POImode)
-	    return N_("invalid conversion from type %<* __vector_pair%>");
-	  if (tomode == POImode)
-	    return N_("invalid conversion to type %<* __vector_pair%>");
-	}
-    }
 
   /* Conversion allowed.  */
   return NULL;
+}
+
+/* If the given TYPE is one MMA opaque type, emit the corresponding
+   error messages and return true, otherwise return false.  */
+
+static inline bool
+check_and_error_invalid_use (tree type)
+{
+  tree mv = TYPE_MAIN_VARIANT (type);
+  if (mv == vector_quad_type_node)
+    {
+      error ("type %<__vector_quad%> requires the %qs option", "-mmma");
+      return true;
+    }
+  else if (mv == vector_pair_type_node)
+    {
+      error ("type %<__vector_pair%> requires the %qs option", "-mmma");
+      return true;
+    }
+  return false;
+}
+
+/* Now we have only two opaque types, they are __vector_quad and
+   __vector_pair built-in types.  They are target specific and
+   only available when MMA is supported.  With MMA supported, it
+   simply returns true, otherwise it checks if the given gimple
+   STMT is an assignment, asm or call stmt and uses either of
+   these two opaque types unexpectedly, if yes, it would raise
+   an error message and returns true, otherwise it returns false.  */
+
+bool
+rs6000_opaque_type_invalid_use_p (gimple *stmt)
+{
+  if (TARGET_MMA)
+    return false;
+
+  if (stmt)
+    {
+      /* The usage of MMA opaque types is very limited for now,
+	 to check with gassign, gasm and gcall is enough so far.  */
+      if (gassign *ga = dyn_cast<gassign *> (stmt))
+	{
+	  tree lhs = gimple_assign_lhs (ga);
+	  tree type = TREE_TYPE (lhs);
+	  if (check_and_error_invalid_use (type))
+	    return true;
+	}
+      else if (gasm *gs = dyn_cast<gasm *> (stmt))
+	{
+	  unsigned ninputs = gimple_asm_ninputs (gs);
+	  for (unsigned i = 0; i < ninputs; i++)
+	    {
+	      tree op = gimple_asm_input_op (gs, i);
+	      tree val = TREE_VALUE (op);
+	      tree type = TREE_TYPE (val);
+	      if (check_and_error_invalid_use (type))
+		return true;
+	    }
+	  unsigned noutputs = gimple_asm_noutputs (gs);
+	  for (unsigned i = 0; i < noutputs; i++)
+	    {
+	      tree op = gimple_asm_output_op (gs, i);
+	      tree val = TREE_VALUE (op);
+	      tree type = TREE_TYPE (val);
+	      if (check_and_error_invalid_use (type))
+		return true;
+	    }
+	}
+      else if (gcall *gc = dyn_cast<gcall *> (stmt))
+	{
+	  unsigned nargs = gimple_call_num_args (gc);
+	  for (unsigned i = 0; i < nargs; i++)
+	    {
+	      tree arg = gimple_call_arg (gc, i);
+	      tree type = TREE_TYPE (arg);
+	      if (check_and_error_invalid_use (type))
+		return true;
+	    }
+	}
+    }
+
+  return false;
 }
 
 struct gcc_target targetm = TARGET_INITIALIZER;
