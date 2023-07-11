@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.28 2023/07/11 11:09:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,9 +32,14 @@
 #ifndef _NEWS68K_INTR_H_
 #define	_NEWS68K_INTR_H_
 
+#include <sys/types.h>
+
 #include <sys/evcnt.h>
 #include <sys/queue.h>
+#include <sys/stdbool.h>
+
 #include <machine/psl.h>
+
 #include <m68k/asm_single.h>
 
 #define	IPL_NONE	0
@@ -62,6 +67,8 @@ typedef int ipl_t;
 typedef struct {
 	uint16_t _psl;
 } ipl_cookie_t;
+
+#ifdef _KERNEL
 
 static __inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
@@ -97,5 +104,7 @@ splx(int sr)
 #define	splvm()		splraise5()
 #define	splhigh()	spl7()
 #define	splsched()	spl7()
+
+#endif
 
 #endif /* _NEWS68K_INTR_H_ */
