@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.50 2022/05/22 11:40:29 riastradh Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.51 2023/07/11 10:42:16 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -85,8 +85,9 @@
 #ifndef _CRYPTO_CRYPTO_H_
 #define _CRYPTO_CRYPTO_H_
 
+#include <sys/types.h>
+
 #include <sys/ioccom.h>
-#include <sys/condvar.h>
 #include <sys/time.h>
 
 #if defined(_KERNEL_OPT)
@@ -409,6 +410,16 @@ struct cryptostats {
 };
 
 #ifdef _KERNEL
+
+#include <sys/condvar.h>
+#include <sys/malloc.h>
+#include <sys/mutex.h>
+#include <sys/queue.h>
+#include <sys/systm.h>
+
+struct cpu_info;
+struct uio;
+
 /* Standard initialization structure beginning */
 struct cryptoini {
 	int		cri_alg;	/* Algorithm to use */
