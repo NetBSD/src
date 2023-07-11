@@ -4779,7 +4779,12 @@ cp_build_binary_op (const op_location_t &location,
 		 it was unsigned.  */
 	      tree stripped_op1 = tree_strip_any_location_wrapper (op1);
 	      shorten = ((TREE_CODE (op0) == NOP_EXPR
-			  && TYPE_UNSIGNED (TREE_TYPE (TREE_OPERAND (op0, 0))))
+			  && INTEGRAL_TYPE_P (TREE_TYPE (TREE_OPERAND (op0,
+								       0)))
+			  && TYPE_UNSIGNED (TREE_TYPE (TREE_OPERAND (op0, 0)))
+			  && (TYPE_PRECISION (TREE_TYPE (TREE_OPERAND (op0,
+								       0)))
+			      < TYPE_PRECISION (type0)))
 			 || (TREE_CODE (stripped_op1) == INTEGER_CST
 			     && ! integer_all_onesp (stripped_op1)));
 	    }
@@ -4815,7 +4820,10 @@ cp_build_binary_op (const op_location_t &location,
 	     only if unsigned or if dividing by something we know != -1.  */
 	  tree stripped_op1 = tree_strip_any_location_wrapper (op1);
 	  shorten = ((TREE_CODE (op0) == NOP_EXPR
-		      && TYPE_UNSIGNED (TREE_TYPE (TREE_OPERAND (op0, 0))))
+		      && INTEGRAL_TYPE_P (TREE_TYPE (TREE_OPERAND (op0, 0)))
+		      && TYPE_UNSIGNED (TREE_TYPE (TREE_OPERAND (op0, 0)))
+		      && (TYPE_PRECISION (TREE_TYPE (TREE_OPERAND (op0, 0)))
+			  < TYPE_PRECISION (type0)))
 		     || (TREE_CODE (stripped_op1) == INTEGER_CST
 			 && ! integer_all_onesp (stripped_op1)));
 	  common = 1;
@@ -6582,9 +6590,13 @@ cp_build_unary_op (enum tree_code code, tree xarg, bool noconvert,
 				   build_zero_cst (TREE_TYPE (arg)), complain);
       arg = perform_implicit_conversion (boolean_type_node, arg,
 					 complain);
-      val = invert_truthvalue_loc (location, arg);
       if (arg != error_mark_node)
-	return val;
+	{
+	  val = invert_truthvalue_loc (location, arg);
+	  if (obvalue_p (val))
+	    val = non_lvalue_loc (location, val);
+	  return val;
+	}
       errstring = _("in argument to unary !");
       break;
 
@@ -8600,10 +8612,14 @@ cp_build_modify_expr (location_t loc, tree lhs, enum tree_code modifycode,
 
 	  /* An expression of the form E1 op= E2.  [expr.ass] says:
 	     "Such expressions are deprecated if E1 has volatile-qualified
-	     type."  We warn here rather than in cp_genericize_r because
+	     type and op is not one of the bitwise operators |, &, ^."
+	     We warn here rather than in cp_genericize_r because
 	     for compound assignments we are supposed to warn even if the
 	     assignment is a discarded-value expression.  */
-	  if (TREE_THIS_VOLATILE (lhs) || CP_TYPE_VOLATILE_P (lhstype))
+	  if (modifycode != BIT_AND_EXPR
+	      && modifycode != BIT_IOR_EXPR
+	      && modifycode != BIT_XOR_EXPR
+	      && (TREE_THIS_VOLATILE (lhs) || CP_TYPE_VOLATILE_P (lhstype)))
 	    warning_at (loc, OPT_Wvolatile,
 			"compound assignment with %<volatile%>-qualified left "
 			"operand is deprecated");
@@ -9036,18 +9052,15 @@ build_ptrmemfunc (tree type, tree pfn, int force, bool c_cast_p,
       if (n == error_mark_node)
 	return error_mark_node;
 
+      STRIP_ANY_LOCATION_WRAPPER (pfn);
+
       /* We don't have to do any conversion to convert a
 	 pointer-to-member to its own type.  But, we don't want to
 	 just return a PTRMEM_CST if there's an explicit cast; that
 	 cast should make the expression an invalid template argument.  */
-      if (TREE_CODE (pfn) != PTRMEM_CST)
-	{
-	  if (same_type_p (to_type, pfn_type))
-	    return pfn;
-	  else if (integer_zerop (n) && TREE_CODE (pfn) != CONSTRUCTOR)
-	    return build_reinterpret_cast (input_location, to_type, pfn, 
-                                           complain);
-	}
+      if (TREE_CODE (pfn) != PTRMEM_CST
+	  && same_type_p (to_type, pfn_type))
+	return pfn;
 
       if (TREE_SIDE_EFFECTS (pfn))
 	pfn = save_expr (pfn);
@@ -9079,7 +9092,9 @@ build_ptrmemfunc (tree type, tree pfn, int force, bool c_cast_p,
   /* Handle null pointer to member function conversions.  */
   if (null_ptr_cst_p (pfn))
     {
-      pfn = cp_build_c_cast (input_location, type, pfn, complain);
+      pfn = cp_build_c_cast (input_location,
+			     TYPE_PTRMEMFUNC_FN_TYPE_RAW (to_type),
+			     pfn, complain);
       return build_ptrmemfunc1 (to_type,
 				integer_zero_node,
 				pfn);

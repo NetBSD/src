@@ -66,7 +66,7 @@ namespace __detail
 		const typename _TraitsT::locale_type& __traits, _FlagT __flags);
 
       shared_ptr<const _RegexT>
-      _M_get_nfa()
+      _M_get_nfa() noexcept
       { return std::move(_M_nfa); }
 
     private:
@@ -122,13 +122,45 @@ namespace __detail
 	void
 	_M_insert_bracket_matcher(bool __neg);
 
-      // Returns true if successfully matched one term and should continue.
+      // Cache of the last atom seen in a bracketed range expression.
+      struct _BracketState
+      {
+	enum class _Type : char { _None, _Char, _Class } _M_type = _Type::_None;
+	_CharT _M_char;
+
+	void
+	set(_CharT __c) noexcept { _M_type = _Type::_Char; _M_char = __c; }
+
+	_GLIBCXX_NODISCARD _CharT
+	get() const noexcept { return _M_char; }
+
+	void
+	reset(_Type __t = _Type::_None) noexcept { _M_type = __t; }
+
+	explicit operator bool() const noexcept
+	{ return _M_type != _Type::_None; }
+
+	// Previous token was a single character.
+	_GLIBCXX_NODISCARD bool
+	_M_is_char() const noexcept { return _M_type == _Type::_Char; }
+
+	// Previous token was a character class, equivalent class,
+	// collating symbol etc.
+	_GLIBCXX_NODISCARD bool
+	_M_is_class() const noexcept { return _M_type == _Type::_Class; }
+      };
+
+      template<bool __icase, bool __collate>
+	using _BracketMatcher
+	  = std::__detail::_BracketMatcher<_TraitsT, __icase, __collate>;
+
+      // Returns true if successfully parsed one term and should continue
+      // compiling a bracket expression.
       // Returns false if the compiler should move on.
       template<bool __icase, bool __collate>
 	bool
-	_M_expression_term(pair<bool, _CharT>& __last_char,
-			   _BracketMatcher<_TraitsT, __icase, __collate>&
-			   __matcher);
+	_M_expression_term(_BracketState& __last_char,
+			   _BracketMatcher<__icase, __collate>& __matcher);
 
       int
       _M_cur_int_value(int __radix);
@@ -142,6 +174,26 @@ namespace __detail
 	auto ret = _M_stack.top();
 	_M_stack.pop();
 	return ret;
+      }
+
+      static _FlagT
+      _S_validate(_FlagT __f)
+      {
+	using namespace regex_constants;
+	switch (__f & (ECMAScript|basic|extended|awk|grep|egrep))
+	  {
+	  case ECMAScript:
+	  case basic:
+	  case extended:
+	  case awk:
+	  case grep:
+	  case egrep:
+	    return __f;
+	  case _FlagT(0):
+	    return __f | ECMAScript;
+	  default:
+	    std::__throw_regex_error(_S_grammar, "conflicting grammar options");
+	  }
       }
 
       _FlagT              _M_flags;

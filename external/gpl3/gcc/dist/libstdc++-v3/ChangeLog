@@ -1,3 +1,412 @@
+2023-07-07  Release Manager
+
+	* GCC 10.5.0 released.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-10-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/18_support/numeric_limits/lowest.cc: Use
+	numeric_limits<T>::is_integer instead of is_integral<T>::value.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2023-06-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/evolution.xml: Document removal of implicit
+	allocator rebinding extensions in strict mode and for C++20.
+	* doc/html/*: Regenerate.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-12-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/108118
+	* include/bits/shared_ptr_base.h (weak_ptr::operator=):
+	Implement as move-and-swap exactly as specified in the standard.
+	* testsuite/20_util/weak_ptr/cons/self_move.cc: New test.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2020-06-17  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/94540
+	* include/bits/stl_uninitialized.h (__uninitialized_default_1<true>):
+	Construct the first value at *__first instead of on the stack.
+	(__uninitialized_default_n_1<true>): Likewise.
+	Improve comments on several of the non-standard algorithms.
+	* testsuite/20_util/specialized_algorithms/uninitialized_default/94540.cc:
+	New test.
+	* testsuite/20_util/specialized_algorithms/uninitialized_default_n/94540.cc:
+	New test.
+	* testsuite/20_util/specialized_algorithms/uninitialized_value_construct/94540.cc:
+	New test.
+	* testsuite/20_util/specialized_algorithms/uninitialized_value_construct_n/94540.cc:
+	New test.
+	* testsuite/23_containers/vector/cons/94540.cc: New test.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-08-22  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/106607
+	* include/bits/regex_compiler.tcc (_Compiler::_M_cur_int_value):
+	Use built-ins to check for integer overflow in back-reference
+	number.
+	* testsuite/28_regex/basic_regex/106607.cc: New test.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-09-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/regex.h (basic_regex, swap): Add noexcept to
+	non-throwing functions.
+	* include/bits/regex_automaton.h (_State_base, _State)
+	(_NFA_base): Likewise.
+	* include/bits/regex_compiler.h (_Compiler): Likewise.
+	* include/bits/regex_error.h (regex_error::code()): Likewise.
+	* include/bits/regex_scanner.h (_Scanner): Likewise.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-12-14  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/102447
+	* include/bits/regex_compiler.h (_Compiler::_BracketState): New
+	class.
+	(_Compiler::_BrackeyMatcher): New alias template.
+	(_Compiler::_M_expression_term): Change pair<bool, CharT>
+	parameter to _BracketState. Process first character for
+	ECMAScript syntax as well as POSIX.
+	* include/bits/regex_compiler.tcc
+	(_Compiler::_M_insert_bracket_matcher): Pass _BracketState.
+	(_Compiler::_M_expression_term): Use _BracketState to store
+	state between calls. Improve handling of dashes in ranges.
+	* testsuite/28_regex/algorithms/regex_match/cstring_bracket_01.cc:
+	Add more tests for ranges containing dashes. Check invalid
+	ranges with character class at the beginning.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-09-29  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/regex_compiler.h (_Compiler::_S_validate): New
+	function.
+	* include/bits/regex_compiler.tcc (_Compiler::_Compiler): Use
+	_S_validate to check flags.
+	* include/bits/regex_error.h (_S_grammar): New error code for
+	internal use.
+	* testsuite/28_regex/basic_regex/ctors/grammar.cc: New test.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-09-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/regex_compiler.tcc: Add line break in empty while
+	statement.
+	* include/bits/regex_executor.tcc: Avoid unused parameter
+	warning.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-12-13  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/103664
+	* include/bits/regex.h (__regex_replace): Declare.
+	(regex_replace): Use it.
+	* include/bits/regex.tcc (__regex_replace): Replace regex_replace
+	definition with __regex_replace.
+	* testsuite/28_regex/algorithms/regex_replace/char/103664.cc: New test.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-09-29  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/84110
+	* include/bits/regex_error.h (regex_constants::_S_null): New
+	error code for internal use.
+	* include/bits/regex_scanner.tcc (_Scanner::_M_scan_normal()):
+	Check for null character.
+	* testsuite/28_regex/basic_regex/84110.cc: New test.
+
+2023-06-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2020-09-11  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/regex_error.h (__throw_regex_error): Fix
+	parameter declaration and use reserved attribute names.
+
+2023-06-23  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	Backported from master:
+	2020-09-11  Christophe Lyon  <christophe.lyon@linaro.org>
+
+	* include/bits/regex_error.h: Avoid warning with -fno-exceptions.
+
+2023-05-21  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* include/bits/fs_path.h: Rename __null_terminated to __nul_terminated
+	to avoid colliding with a macro in Darwin system headers.
+
+2023-05-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105844
+	* include/std/numeric (lcm): Ensure out-of-range result is
+	detected in constant evaluation.
+	* testsuite/26_numerics/lcm/105844.cc: Adjust dg-error string.
+
+2023-05-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-06-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/105844
+	* include/experimental/numeric (experimental::gcd): Simplify
+	assertions. Use __abs_r instead of __absu.
+	(experimental::lcm): Likewise. Remove use of __detail::__lcm so
+	overflow can be detected.
+	* include/std/numeric (__detail::__absu): Rename to __abs_r and
+	change to allow signed result type, so overflow can be detected.
+	(__detail::__lcm): Remove.
+	(gcd): Simplify assertions. Use __abs_r instead of __absu.
+	(lcm): Likewise. Remove use of __detail::__lcm so overflow can
+	be detected.
+	* testsuite/26_numerics/gcd/gcd_neg.cc: Adjust dg-error lines.
+	* testsuite/26_numerics/lcm/lcm_neg.cc: Likewise.
+	* testsuite/26_numerics/gcd/105844.cc: New test.
+	* testsuite/26_numerics/lcm/105844.cc: New test.
+
+2023-05-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2023-04-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/doxygen/user.cfg.in (STRIP_FROM_PATH): Remove prefixes
+	from header paths.
+
+2023-04-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2020-11-24  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/67791
+	* src/c++11/thread.cc (thread::_M_start_thread(_State_ptr, void (*)())):
+	Check that gthreads is available before calling __gthread_create.
+
+2023-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2023-04-04  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/manual/extensions.xml: Remove std::bad_exception from
+	example program.
+	* doc/html/manual/ext_demangling.html: Regenerate.
+
+2023-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2023-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/doxygen/user.cfg.in (SOURCE_BROWSER): Only set to YES for
+	HTML docs.
+	* include/bits/gslice_array.h (_DEFINE_VALARRAY_OPERATOR): Omit
+	from doxygen docs.
+	* include/bits/indirect_array.h (_DEFINE_VALARRAY_OPERATOR):
+	Likewise.
+	* include/bits/mask_array.h (_DEFINE_VALARRAY_OPERATOR):
+	Likewise.
+	* include/bits/slice_array.h (_DEFINE_VALARRAY_OPERATOR):
+	Likewise.
+	* include/std/valarray (_DEFINE_VALARRAY_UNARY_OPERATOR)
+	(_DEFINE_VALARRAY_AUGMENTED_ASSIGNMENT)
+	(_DEFINE_VALARRAY_EXPR_AUGMENTED_ASSIGNMENT)
+	(_DEFINE_BINARY_OPERATOR): Likewise.
+
+2023-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-10-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/fs_path.h (path::filename()): Fix dangling
+	reference.
+
+2023-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/109064
+	* python/libstdcxx/v6/xmethods.py (SharedPtrUseCountWorker):
+	Remove self-recursion in __init__. Add missing _supports.
+	* testsuite/libstdc++-xmethods/shared_ptr.cc: Check use_count()
+	and unique().
+
+2023-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2023-02-28  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/108952
+	* include/std/memory (uses_allocator_construction_args):
+	Implement LWG 3527.
+	* testsuite/20_util/pair/astuple/get-2.cc: New test.
+	* testsuite/20_util/scoped_allocator/108952.cc: New test.
+	* testsuite/20_util/uses_allocator/lwg3527.cc: New test.
+
+2023-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2023-02-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/experimental/optional: Fix header name in comment.
+
+2023-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-07-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/100823
+	* include/bits/stl_iterator.h (common_iterator): Define move
+	constructor and move assignment operator.
+	(common_iterator::_M_assign): New function implementing
+	assignment.
+	(common_iterator::operator=): Use _M_assign.
+	(common_iterator::_S_valueless): New constant.
+	* testsuite/24_iterators/common_iterator/100823.cc: New test.
+
+2023-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-07-20  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/stl_iterator.h (common_iterator): Fix incorrect
+	uses of is_nothrow_assignable_v. Fix inconsistent constraints on
+	friend declaration. Do not move argument in copy constructor.
+	* testsuite/24_iterators/common_iterator/1.cc: Check for
+	noexcept constructibnle/assignable.
+
+2023-04-27  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-11-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/107814
+	* testsuite/experimental/filesystem/iterators/error_reporting.cc:
+	Use a static buffer with space after it.
+
+2023-03-16  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2023-02-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/108636
+	* include/bits/fs_path.h (path::path(string_view, _Type))
+	(path::_Cmpt::_Cmpt(string_view, _Type, size_t)): Move inline
+	definitions to ...
+	* src/c++17/fs_path.cc: ... here.
+	* testsuite/27_io/filesystem/path/108636.cc: New test.
+
+2022-11-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-11-08  Jonathan Wakely  <jwakely@redhat.com>
+
+	* doc/xml/authors.xml: Remove empty author element.
+	* doc/xml/manual/spine.xml: Likewise.
+	* doc/html/*: Regenerate.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-08-31  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/98421
+	* include/std/span (span(Iter, size_type), span(Iter, Iter)):
+	Add valid range checks.
+	* testsuite/23_containers/span/cons_1_assert_neg.cc: New test.
+	* testsuite/23_containers/span/cons_2_assert_neg.cc: New test.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/list.tcc (list::merge) [!USE_CXX11_ABI]: Remove
+	call to size() and try-catch block.
+
+2022-08-03  Tim Adye  <Tim.Adye@cern.ch>
+
+	Backported from master:
+	2021-06-04  Tim Adye  <Tim.Adye@cern.ch>
+
+	* include/std/any (any::_Manager::_S_access): New static
+	function to access the contained value.
+	(any::emplace, __any_caster): Use _S_access member of the
+	manager type.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-06-15  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/std/ranges (subrange(i, s, n)): Remove assertion.
+	* testsuite/std/ranges/subrange/constexpr.cc: New test.
+
+2022-08-03  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-11-10  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/100748
+	PR libstdc++/103133
+	* config/os/gnu-linux/os_defines.h (_GLIBCXX_GTHREAD_USE_WEAK):
+	Define for glibc 2.34 and later.
+
+2022-07-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2022-07-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/106162
+	* include/Makefile.am (largefile-config.h): Add
+	stamp-${host_alias} prerequisite.
+	* include/Makefile.in: Regenerate.
+
+2022-07-23  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backported from master:
+	2021-11-05  Jonathan Wakely  <jwakely@redhat.com>
+
+	* include/bits/range_access.h (begin(valarray), end(valarray)):
+	Add noexcept.
+
+2022-07-22  Patrick Palka  <ppalka@redhat.com>
+
+	Backported from master:
+	2022-07-22  Patrick Palka  <ppalka@redhat.com>
+
+	PR libstdc++/106320
+	* include/std/ranges (single_view): Relax constraints on
+	default constructor so as to preserve pre-P2325R3 behavior.
+	(filter_view): Likewise.
+	(transform_view): Likewise.
+	(take_while_view): Likewise.
+	(drop_while_view): Likewise.
+	* testsuite/std/ranges/adaptors/join.cc (test13): New test.
+	* testsuite/std/ranges/p2325.cc: Fix S to be only non default
+	constructible and not also non copy constructible.  XFAIL the
+	tests that verify a non default constructible functor makes a
+	view non default constructible (lines 94, 97 and 98).  XFAIL
+	the test that effectively verifies a non default constructible
+	element type makes single_view non default constructible (line
+	114).
+
 2022-06-28  Release Manager
 
 	* GCC 10.4.0 released.

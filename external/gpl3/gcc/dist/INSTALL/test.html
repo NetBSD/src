@@ -1,8 +1,5 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
-<!-- Created by GNU Texinfo 6.8, https://www.gnu.org/software/texinfo/ -->
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <!-- Copyright (C) 1988-2020 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
@@ -22,6 +19,9 @@ A GNU Manual
 You have freedom to copy and modify this GNU Manual, like GNU
      software.  Copies published by the Free Software Foundation raise
      funds for GNU development. -->
+<!-- Created by GNU Texinfo 6.5, http://www.gnu.org/software/texinfo/ -->
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Installing GCC: Testing</title>
 
 <meta name="description" content="Installing GCC: Testing">
@@ -29,24 +29,30 @@ You have freedom to copy and modify this GNU Manual, like GNU
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="Generator" content="makeinfo">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
 <style type="text/css">
 <!--
-a.copiable-anchor {visibility: hidden; text-decoration: none; line-height: 0em}
 a.summary-letter {text-decoration: none}
 blockquote.indentedblock {margin-right: 0em}
+blockquote.smallindentedblock {margin-right: 0em; font-size: smaller}
+blockquote.smallquotation {font-size: smaller}
 div.display {margin-left: 3.2em}
 div.example {margin-left: 3.2em}
+div.lisp {margin-left: 3.2em}
+div.smalldisplay {margin-left: 3.2em}
+div.smallexample {margin-left: 3.2em}
+div.smalllisp {margin-left: 3.2em}
 kbd {font-style: oblique}
 pre.display {font-family: inherit}
 pre.format {font-family: inherit}
 pre.menu-comment {font-family: serif}
 pre.menu-preformatted {font-family: serif}
+pre.smalldisplay {font-family: inherit; font-size: smaller}
+pre.smallexample {font-size: smaller}
+pre.smallformat {font-family: inherit; font-size: smaller}
+pre.smalllisp {font-size: smaller}
 span.nolinebreak {white-space: nowrap}
 span.roman {font-family: initial; font-weight: normal}
 span.sansserif {font-family: sans-serif; font-weight: normal}
-span:hover a.copiable-anchor {visibility: visible}
 ul.no-bullet {list-style: none}
 -->
 </style>
@@ -77,9 +83,9 @@ ul.no-bullet {list-style: none}
 
 
 
-<span id="index-Testing"></span>
-<span id="index-Installing-GCC_003a-Testing"></span>
-<span id="index-Testsuite"></span>
+<a name="index-Testing"></a>
+<a name="index-Installing-GCC_003a-Testing"></a>
+<a name="index-Testsuite"></a>
 
 <p>Before you install GCC, we encourage you to run the testsuites and to
 compare your results with results from a similar configuration that have
@@ -109,8 +115,8 @@ installed are not in the <code>PATH</code>, you may need to set the following
 environment variables appropriately, as in the following example (which
 assumes that DejaGnu has been installed under <samp>/usr/local</samp>):
 </p>
-<div class="example">
-<pre class="example">TCL_LIBRARY = /usr/local/share/tcl8.0
+<div class="smallexample">
+<pre class="smallexample">TCL_LIBRARY = /usr/local/share/tcl8.0
 DEJAGNULIBS = /usr/local/share/dejagnu
 </pre></div>
 
@@ -120,8 +126,8 @@ portability in the DejaGnu code.)
 </p>
 
 <p>Finally, you can run the testsuite (which may take a long time):
-</p><div class="example">
-<pre class="example">cd <var>objdir</var>; make -k check
+</p><div class="smallexample">
+<pre class="smallexample">cd <var>objdir</var>; make -k check
 </pre></div>
 
 <p>This will test various components of GCC, such as compiler
@@ -133,7 +139,7 @@ might emit some harmless messages resembling
 <p>If you are testing a cross-compiler, you may want to run the testsuite
 on a simulator as described at <a href="http://gcc.gnu.org/simtest-howto.html">http://gcc.gnu.org/simtest-howto.html</a>.
 </p>
-<div class="section" id="How-can-you-run-the-testsuite-on-selected-tests_003f">
+<a name="How-can-you-run-the-testsuite-on-selected-tests_003f"></a>
 <h3 class="section">How can you run the testsuite on selected tests?</h3>
 
 <p>In order to run sets of tests selectively, there are targets
@@ -148,15 +154,15 @@ just run &lsquo;<samp>make check</samp>&rsquo; in a subdirectory of the object d
 <p>A more selective way to just run all <code>gcc</code> execute tests in the
 testsuite is to use
 </p>
-<div class="example">
-<pre class="example">make check-gcc RUNTESTFLAGS=&quot;execute.exp <var>other-options</var>&quot;
+<div class="smallexample">
+<pre class="smallexample">make check-gcc RUNTESTFLAGS=&quot;execute.exp <var>other-options</var>&quot;
 </pre></div>
 
 <p>Likewise, in order to run only the <code>g++</code> &ldquo;old-deja&rdquo; tests in
 the testsuite with filenames matching &lsquo;<samp>9805*</samp>&rsquo;, you would use
 </p>
-<div class="example">
-<pre class="example">make check-g++ RUNTESTFLAGS=&quot;old-deja.exp=9805* <var>other-options</var>&quot;
+<div class="smallexample">
+<pre class="smallexample">make check-g++ RUNTESTFLAGS=&quot;old-deja.exp=9805* <var>other-options</var>&quot;
 </pre></div>
 
 <p>The file-matching expression following <var>filename</var><code>.exp=</code> is treated
@@ -164,8 +170,8 @@ as a series of whitespace-delimited glob expressions so that multiple patterns
 may be passed, although any whitespace must either be escaped or surrounded by
 single quotes if multiple expressions are desired. For example,
 </p>
-<div class="example">
-<pre class="example">make check-g++ RUNTESTFLAGS=&quot;old-deja.exp=9805*\ virtual2.c <var>other-options</var>&quot;
+<div class="smallexample">
+<pre class="smallexample">make check-g++ RUNTESTFLAGS=&quot;old-deja.exp=9805*\ virtual2.c <var>other-options</var>&quot;
 make check-g++ RUNTESTFLAGS=&quot;'old-deja.exp=9805* virtual2.c' <var>other-options</var>&quot;
 </pre></div>
 
@@ -176,8 +182,7 @@ To get a list of the possible <samp>*.exp</samp> files, pipe the
 output of &lsquo;<samp>make check</samp>&rsquo; into a file and look at the
 &lsquo;<samp>Running &hellip;  .exp</samp>&rsquo; lines.
 </p>
-</div>
-<div class="section" id="Passing-options-and-running-multiple-testsuites">
+<a name="Passing-options-and-running-multiple-testsuites"></a>
 <h3 class="section">Passing options and running multiple testsuites</h3>
 
 <p>You can pass multiple options to the testsuite using the
@@ -185,8 +190,8 @@ output of &lsquo;<samp>make check</samp>&rsquo; into a file and look at the
 &lsquo;<samp>RUNTESTFLAGS</samp>&rsquo;, or directly to <code>runtest</code> if you prefer to
 work outside the makefiles.  For example,
 </p>
-<div class="example">
-<pre class="example">make check-g++ RUNTESTFLAGS=&quot;--target_board=unix/-O3/-fmerge-constants&quot;
+<div class="smallexample">
+<pre class="smallexample">make check-g++ RUNTESTFLAGS=&quot;--target_board=unix/-O3/-fmerge-constants&quot;
 </pre></div>
 
 <p>will run the standard <code>g++</code> testsuites (&ldquo;unix&rdquo; is the target name
@@ -197,16 +202,16 @@ slashes separate options.
 <p>You can run the testsuites multiple times using combinations of options
 with a syntax similar to the brace expansion of popular shells:
 </p>
-<div class="example">
-<pre class="example">&hellip;&quot;--target_board=arm-sim\{-mhard-float,-msoft-float\}\{-O1,-O2,-O3,\}&quot;
+<div class="smallexample">
+<pre class="smallexample">&hellip;&quot;--target_board=arm-sim\{-mhard-float,-msoft-float\}\{-O1,-O2,-O3,\}&quot;
 </pre></div>
 
 <p>(Note the empty option caused by the trailing comma in the final group.)
 The following will run each testsuite eight times using the &lsquo;<samp>arm-sim</samp>&rsquo;
 target, as if you had specified all possible combinations yourself:
 </p>
-<div class="example">
-<pre class="example">--target_board='arm-sim/-mhard-float/-O1 \
+<div class="smallexample">
+<pre class="smallexample">--target_board='arm-sim/-mhard-float/-O1 \
                 arm-sim/-mhard-float/-O2 \
                 arm-sim/-mhard-float/-O3 \
                 arm-sim/-mhard-float \
@@ -219,8 +224,8 @@ target, as if you had specified all possible combinations yourself:
 <p>They can be combined as many times as you wish, in arbitrary ways.  This
 list:
 </p>
-<div class="example">
-<pre class="example">&hellip;&quot;--target_board=unix/-Wextra\{-O3,-fno-strength\}\{-fomit-frame,\}&quot;
+<div class="smallexample">
+<pre class="smallexample">&hellip;&quot;--target_board=unix/-Wextra\{-O3,-fno-strength\}\{-fomit-frame,\}&quot;
 </pre></div>
 
 <p>will generate four combinations, all involving &lsquo;<samp>-Wextra</samp>&rsquo;.
@@ -232,14 +237,14 @@ parallel by having the shell perform the combinations and <code>make</code>
 do the parallel runs.  Instead of using &lsquo;<samp>--target_board</samp>&rsquo;, use a
 special makefile target:
 </p>
-<div class="example">
-<pre class="example">make -j<var>N</var> check-<var>testsuite</var>//<var>test-target</var>/<var>option1</var>/<var>option2</var>/&hellip;
+<div class="smallexample">
+<pre class="smallexample">make -j<var>N</var> check-<var>testsuite</var>//<var>test-target</var>/<var>option1</var>/<var>option2</var>/&hellip;
 </pre></div>
 
 <p>For example,
 </p>
-<div class="example">
-<pre class="example">make -j3 check-gcc//sh-hms-sim/{-m1,-m2,-m3,-m3e,-m4}/{,-nofpu}
+<div class="smallexample">
+<pre class="smallexample">make -j3 check-gcc//sh-hms-sim/{-m1,-m2,-m3,-m3e,-m4}/{,-nofpu}
 </pre></div>
 
 <p>will run three concurrent &ldquo;make-gcc&rdquo; testsuites, eventually testing all
@@ -248,8 +253,7 @@ supported in the <samp>gcc</samp> subdirectory.  (To see how this works, try
 typing <code>echo</code> before the example given here.)
 </p>
 
-</div>
-<div class="section" id="How-to-interpret-test-results">
+<a name="How-to-interpret-test-results"></a>
 <h3 class="section">How to interpret test results</h3>
 
 <p>The result of running the testsuite are various <samp>*.sum</samp> and <samp>*.log</samp>
@@ -274,15 +278,14 @@ over whether or not a test is expected to fail.  This problem should
 be fixed in future releases.
 </p>
 
-</div>
-<div class="section" id="Submitting-test-results">
+<a name="Submitting-test-results"></a>
 <h3 class="section">Submitting test results</h3>
 
 <p>If you want to report the results to the GCC project, use the
 <samp>contrib/test_summary</samp> shell script.  Start it in the <var>objdir</var> with
 </p>
-<div class="example">
-<pre class="example"><var>srcdir</var>/contrib/test_summary -p your_commentary.txt \
+<div class="smallexample">
+<pre class="smallexample"><var>srcdir</var>/contrib/test_summary -p your_commentary.txt \
     -m gcc-testresults@gcc.gnu.org |sh
 </pre></div>
 
@@ -303,7 +306,7 @@ messages may be automatically processed.
 
 
 
-<hr></div>
+<hr>
 
 
 
