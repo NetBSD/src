@@ -23,6 +23,9 @@
    see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
    <http://www.gnu.org/licenses/>.  */
 
+/* Undef gnu-user.h macro we don't want.  */
+#undef CPLUSPLUS_CPP_SPEC
+
 /* Copy and paste from linux64.h and freebsd64.h */
 #ifdef IN_LIBGCC2
 #undef TARGET_64BIT
@@ -252,7 +255,8 @@
 %{mcpu=821:  %{!Dppc*: %{!Dmpc*: -Dmpc821}  } } \
 %{mcpu=860:  %{!Dppc*: %{!Dmpc*: -Dmpc860}  } } \
 %{mcpu=8540: %{!Dppc*: %{!Dmpc*: -Dppc8540}  } } \
-%{mcpu=e6500: -D__PPC_CPU_E6500__}"
+%{mcpu=e6500: -D__PPC_CPU_E6500__} \
+%{mvrsave: -D__PPC_VRSAVE__}"
 
 #undef	ASM_SPEC
 #define	ASM_SPEC "%{!m64:%(asm_spec32)}%{m64:%(asm_spec64)} %(asm_spec_common)"

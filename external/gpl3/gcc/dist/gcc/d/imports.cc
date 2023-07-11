@@ -97,12 +97,17 @@ public:
     tree type = build_ctype (d->type);
     /* Not all kinds of D enums create a TYPE_DECL.  */
     if (TREE_CODE (type) == ENUMERAL_TYPE)
-      d->isym = this->make_import (TYPE_STUB_DECL (type));
+      {
+	type = TYPE_MAIN_VARIANT (type);
+	d->isym = this->make_import (TYPE_STUB_DECL (type));
+      }
+
   }
 
   void visit (AggregateDeclaration *d)
   {
     tree type = build_ctype (d->type);
+    type = TYPE_MAIN_VARIANT (type);
     d->isym = this->make_import (TYPE_STUB_DECL (type));
   }
 
@@ -110,6 +115,7 @@ public:
   {
     /* Want the RECORD_TYPE, not POINTER_TYPE.  */
     tree type = TREE_TYPE (build_ctype (d->type));
+    type = TYPE_MAIN_VARIANT (type);
     d->isym = this->make_import (TYPE_STUB_DECL (type));
   }
 
@@ -155,6 +161,20 @@ public:
 	d->aliassym->accept (this);
 	d->isym = d->aliassym->isym;
       }
+  }
+
+  /* Build IMPORTED_DECLs for all overloads in a set.  */
+  void visit (OverloadSet *d)
+  {
+    vec<tree, va_gc> *tset = NULL;
+
+    vec_alloc (tset, d->a.dim);
+
+    for (size_t i = 0; i < d->a.dim; i++)
+      vec_safe_push (tset, build_import_decl (d->a[i]));
+
+    d->isym = build_tree_list_vec (tset);
+    tset->truncate (0);
   }
 
   /* Function aliases are the same as alias symbols.  */

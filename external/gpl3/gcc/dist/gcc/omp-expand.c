@@ -2410,7 +2410,7 @@ expand_omp_ordered_source_sink (struct omp_region *region,
 static basic_block
 expand_omp_for_ordered_loops (struct omp_for_data *fd, tree *counts,
 			      basic_block cont_bb, basic_block body_bb,
-			      bool ordered_lastprivate)
+			      basic_block l0_bb, bool ordered_lastprivate)
 {
   if (fd->ordered == fd->collapse)
     return cont_bb;
@@ -2515,7 +2515,7 @@ expand_omp_for_ordered_loops (struct omp_for_data *fd, tree *counts,
 	  class loop *loop = alloc_loop ();
 	  loop->header = new_header;
 	  loop->latch = e2->src;
-	  add_loop (loop, body_bb->loop_father);
+	  add_loop (loop, l0_bb->loop_father);
 	}
     }
 
@@ -3204,9 +3204,15 @@ expand_omp_for_generic (struct omp_region *region,
 	    }
 	  if (i < fd->ordered)
 	    {
+	      if (entry_bb->loop_father != l0_bb->loop_father)
+		{
+		  remove_bb_from_loops (l0_bb);
+		  add_bb_to_loop (l0_bb, entry_bb->loop_father);
+		  gcc_assert (single_succ (l0_bb) == l1_bb);
+		}
 	      cont_bb
 		= create_empty_bb (EXIT_BLOCK_PTR_FOR_FN (cfun)->prev_bb);
-	      add_bb_to_loop (cont_bb, l1_bb->loop_father);
+	      add_bb_to_loop (cont_bb, l0_bb->loop_father);
 	      gimple_stmt_iterator gsi = gsi_after_labels (cont_bb);
 	      gimple *g = gimple_build_omp_continue (fd->loop.v, fd->loop.v);
 	      gsi_insert_before (&gsi, g, GSI_SAME_STMT);
@@ -3218,7 +3224,7 @@ expand_omp_for_generic (struct omp_region *region,
 	}
       expand_omp_ordered_source_sink (region, fd, counts, cont_bb);
       cont_bb = expand_omp_for_ordered_loops (fd, counts, cont_bb, l1_bb,
-					      ordered_lastprivate);
+					      l0_bb, ordered_lastprivate);
       if (counts[fd->collapse - 1])
 	{
 	  gcc_assert (fd->collapse == 1);
@@ -8973,7 +8979,10 @@ build_omp_regions_1 (basic_block bb, struct omp_region *parent,
 		case GF_OMP_TARGET_KIND_OACC_UPDATE:
 		case GF_OMP_TARGET_KIND_OACC_ENTER_EXIT_DATA:
 		case GF_OMP_TARGET_KIND_OACC_DECLARE:
-		  /* ..., other than for those stand-alone directives...  */
+		  /* ..., other than for those stand-alone directives...
+		     To be precise, target data isn't stand-alone, but
+		     gimplifier put the end API call into try finally block
+		     for it, so omp expansion can treat it as such.  */
 		  region = NULL;
 		  break;
 		default:
@@ -8990,6 +8999,11 @@ build_omp_regions_1 (basic_block bb, struct omp_region *parent,
 	  else if (code == GIMPLE_OMP_TASK
 		   && gimple_omp_task_taskwait_p (stmt))
 	    /* #pragma omp taskwait depend(...) is a stand-alone directive.  */
+	    region = NULL;
+	  else if (code == GIMPLE_OMP_TASKGROUP)
+	    /* #pragma omp taskgroup isn't a stand-alone directive, but
+	       gimplifier put the end API call into try finall block
+	       for it, so omp expansion can treat it as such.  */
 	    region = NULL;
 	  /* ..., this directive becomes the parent for a new region.  */
 	  if (region)
@@ -9185,12 +9199,17 @@ omp_make_gimple_edges (basic_block bb, struct omp_region **region,
     case GIMPLE_OMP_SINGLE:
     case GIMPLE_OMP_TEAMS:
     case GIMPLE_OMP_MASTER:
-    case GIMPLE_OMP_TASKGROUP:
     case GIMPLE_OMP_CRITICAL:
     case GIMPLE_OMP_SECTION:
     case GIMPLE_OMP_GRID_BODY:
       cur_region = new_omp_region (bb, code, cur_region);
       fallthru = true;
+      break;
+
+    case GIMPLE_OMP_TASKGROUP:
+      cur_region = new_omp_region (bb, code, cur_region);
+      fallthru = true;
+      cur_region = cur_region->outer;
       break;
 
     case GIMPLE_OMP_TASK:
