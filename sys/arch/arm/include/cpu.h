@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.124 2023/06/25 07:16:14 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.125 2023/07/11 11:01:18 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -150,6 +150,8 @@ static inline void set_curcpl(int);
 static inline void cpu_dosoftints(void);
 #endif
 
+#include <sys/param.h>
+
 #ifdef _KMEMUSER
 #include <sys/intr.h>
 #endif
@@ -157,8 +159,6 @@ static inline void cpu_dosoftints(void);
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
-
-#include <machine/param.h>
 
 /*
  * Cache info variables.
