@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.51 2023/07/11 13:06:23 martin Exp $ */
+/*	$NetBSD: psl.h,v 1.52 2023/07/11 13:10:08 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -232,7 +232,7 @@ typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
 } ipl_cookie_t;
-#endif	/* _KERNEL|_KMEMUSER & !_LOCORE
+#endif	/* _KERNEL|_KMEMUSER & !_LOCORE */
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 
