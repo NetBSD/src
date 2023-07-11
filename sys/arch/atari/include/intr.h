@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2021/04/02 12:11:41 rin Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2023/07/11 10:58:03 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2007 The NetBSD Foundation, Inc.
@@ -48,6 +48,12 @@
 #define	IST_EDGE	2	/* edge-triggered		*/
 #define	IST_LEVEL	3	/* level-triggered		*/
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+typedef struct {
+	uint16_t _psl;
+} ipl_cookie_t;
+#endif
+
 /*
  * spl functions; all but spl0 are done in-line
  */
@@ -71,9 +77,6 @@ extern const uint16_t ipl2psl_table[NIPL];
 extern int idepth;
 
 typedef int ipl_t;
-typedef struct {
-	uint16_t _psl;
-} ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
