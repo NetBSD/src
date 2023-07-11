@@ -130,10 +130,10 @@ namespace __detail
     _Source
     _S_range_begin(_Source __begin) { return __begin; }
 
-  struct __null_terminated { };
+  struct __nul_terminated { };
 
   template<typename _Source>
-    __null_terminated
+    __nul_terminated
     _S_range_end(_Source) { return {}; }
 
   template<typename _CharT, typename _Traits, typename _Alloc>
@@ -515,12 +515,7 @@ namespace __detail
       _Multi = 0, _Root_name, _Root_dir, _Filename
     };
 
-    path(basic_string_view<value_type> __str, _Type __type)
-    : _M_pathname(__str)
-    {
-      __glibcxx_assert(__type != _Type::_Multi);
-      _M_cmpts.type(__type);
-    }
+    path(basic_string_view<value_type> __str, _Type __type);
 
     enum class _Split { _Stem, _Extension };
 
@@ -533,11 +528,11 @@ namespace __detail
       struct _Cvt;
 
     static basic_string_view<value_type>
-    _S_convert(value_type* __src, __detail::__null_terminated)
+    _S_convert(value_type* __src, __detail::__nul_terminated)
     { return __src; }
 
     static basic_string_view<value_type>
-    _S_convert(const value_type* __src, __detail::__null_terminated)
+    _S_convert(const value_type* __src, __detail::__nul_terminated)
     { return __src; }
 
     static basic_string_view<value_type>
@@ -559,7 +554,7 @@ namespace __detail
 
     template<typename _InputIterator>
       static string_type
-      _S_convert(_InputIterator __src, __detail::__null_terminated)
+      _S_convert(_InputIterator __src, __detail::__nul_terminated)
       {
 	// Read from iterator into basic_string until a null value is seen:
 	auto __s = _S_string_from_iter(__src);
@@ -581,7 +576,7 @@ namespace __detail
 
     template<typename _InputIterator>
       static string_type
-      _S_convert_loc(_InputIterator __src, __detail::__null_terminated,
+      _S_convert_loc(_InputIterator __src, __detail::__nul_terminated,
 		     const std::locale& __loc)
       {
 	const std::string __s = _S_string_from_iter(__src);
@@ -766,8 +761,7 @@ namespace __detail
 
   struct path::_Cmpt : path
   {
-    _Cmpt(basic_string_view<value_type> __s, _Type __t, size_t __pos)
-      : path(__s, __t), _M_pos(__pos) { }
+    _Cmpt(basic_string_view<value_type> __s, _Type __t, size_t __pos);
 
     _Cmpt() : _M_pos(-1) { }
 
@@ -1217,9 +1211,9 @@ namespace __detail
       {
 	if (_M_pathname.back() == preferred_separator)
 	  return {};
-	auto& __last = *--end();
-	if (__last._M_type() == _Type::_Filename)
-	  return __last;
+	auto __last = --end();
+	if (__last->_M_type() == _Type::_Filename)
+	  return *__last;
       }
     return {};
   }

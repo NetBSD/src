@@ -6559,7 +6559,10 @@ convert_nontype_argument_function (tree type, tree expr,
   if (value_dependent_expression_p (fn))
     goto accept;
 
-  fn_no_ptr = strip_fnptr_conv (fn);
+  fn_no_ptr = fn;
+  if (REFERENCE_REF_P (fn_no_ptr))
+    fn_no_ptr = TREE_OPERAND (fn_no_ptr, 0);
+  fn_no_ptr = strip_fnptr_conv (fn_no_ptr);
   if (TREE_CODE (fn_no_ptr) == ADDR_EXPR)
     fn_no_ptr = TREE_OPERAND (fn_no_ptr, 0);
   if (BASELINK_P (fn_no_ptr))
@@ -18156,6 +18159,11 @@ tsubst_expr (tree t, tree args, tsubst_flags_t complain, tree in_decl,
 		    tree first = NULL_TREE, ndecl = error_mark_node;
 		    tree asmspec_tree = NULL_TREE;
 		    maybe_push_decl (decl);
+
+		    if (VAR_P (decl)
+			&& DECL_LANG_SPECIFIC (decl)
+			&& DECL_OMP_PRIVATIZED_MEMBER (decl))
+		      break;
 
 		    if (VAR_P (decl)
 			&& DECL_DECOMPOSITION_P (decl)
