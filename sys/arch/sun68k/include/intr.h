@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2008/06/22 17:34:25 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.21 2023/07/11 11:46:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Fredette.
@@ -55,6 +55,12 @@
 #define _IPL_SOFT_LEVEL_MIN	1
 #define _IPL_SOFT_LEVEL_MAX	3
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+typedef struct {
+	uint16_t _psl;
+} ipl_cookie_t;
+#endif
+
 #ifdef _KERNEL
 
 extern int idepth;
@@ -69,9 +75,6 @@ cpu_intr_p(void)
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
-typedef struct {
-	uint16_t _psl;
-} ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
