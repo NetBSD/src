@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.339 2023/06/04 16:14:59 martin Exp $
+$NetBSD: UPDATING,v 1.340 2023/07/11 15:05:17 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -28,6 +28,12 @@ Recent changes:
 20230523:
 	ctfmerge was fixed as macOS host tool. This may require a clean tools
 	rebuild to detect the update to tools/compat/configure.
+
+20230515:
+	New openssl build requires removal of the crypto/external/bsd/openssl
+	and tests/crypto/libcrypto subdirectories in the ${OBJDIR} hierachy.
+	Otherwise test results may be wrong due to wrong "golden" output
+	files being installed.
 
 20230322:
 	Fixes for moved /lib/libisns* mean that builds will complain about
