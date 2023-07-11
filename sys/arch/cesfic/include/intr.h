@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14 2023/07/11 10:47:24 riastradh Exp $	*/
+/*	$NetBSD: intr.h,v 1.15 2023/07/11 10:55:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,7 +46,7 @@
  */
 #include <machine/psl.h>
 
-#ifndef _LOCORE
+#if (defined(_KERNEL) || defined(_KMEMUSER)) && !defined(_LOCORE)
 
 typedef struct {
 	uint16_t _psl;
