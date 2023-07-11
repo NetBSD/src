@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.21 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: intr.h,v 1.22 2023/07/11 11:07:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,6 +44,12 @@
 #define	IPL_HIGH	7
 #define	NIPL		8
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+typedef struct {
+	uint16_t _psl;
+} ipl_cookie_t;
+#endif
+
 #ifdef _KERNEL
 #define spl0()			_spl0()
 #define splsoftclock()		splraise1()
@@ -59,9 +65,6 @@
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;
-typedef struct {
-	uint16_t _psl;
-} ipl_cookie_t;
 
 static __inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
