@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.28 2020/07/27 10:37:58 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.29 2023/07/11 10:42:07 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -71,6 +71,11 @@
 
 #include <sys/queue.h>
 
+typedef uint8_t ipl_t;
+typedef struct {
+	ipl_t _ipl;
+} ipl_cookie_t;
+
 #if defined(_MODULE)
 
 int	_splraise(int);
@@ -123,11 +128,6 @@ void	splx(int);
 #endif	/* ARM_INTR_IMPL */
 
 #endif /* _MODULE */
-
-typedef uint8_t ipl_t;
-typedef struct {
-	ipl_t _ipl;
-} ipl_cookie_t;
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
