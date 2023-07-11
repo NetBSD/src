@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.30 2021/11/02 11:26:05 ryo Exp $	*/
+/* 	$NetBSD: intr.h,v 1.31 2023/07/11 11:48:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -65,6 +65,11 @@
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
 
+#if defined(_KERNEL) || defined(_KMEMUSER)
+typedef struct {
+	uint8_t _ipl;
+} ipl_cookie_t;
+#endif
 
 #ifdef _KERNEL
 typedef int ipl_t;
@@ -88,10 +93,6 @@ splx(ipl_t new_ipl)
 	_splset(new_ipl);
 	return old_ipl;
 }
-
-typedef struct {
-	uint8_t _ipl;
-} ipl_cookie_t;
 
 static inline __always_inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
