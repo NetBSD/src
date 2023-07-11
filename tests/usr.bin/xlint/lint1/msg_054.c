@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_054.c,v 1.4 2022/04/16 09:22:25 rillig Exp $	*/
+/*	$NetBSD: msg_054.c,v 1.5 2023/07/11 20:54:23 rillig Exp $	*/
 # 3 "msg_054.c"
 
-/* Test for message: trailing ',' prohibited in enum declaration [54] */
+/* Test for message: trailing ',' in enum declaration requires C99 or later [54] */
 
 /* lint1-flags: -sw */
 
@@ -10,4 +10,4 @@ enum color {
 	GREEN,
 	BLUE,
 };
-/* expect-1: error: trailing ',' prohibited in enum declaration [54] */
+/* expect-1: error: trailing ',' in enum declaration requires C99 or later [54] */
