@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.210 2023/07/10 19:58:47 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.211 2023/07/11 20:54:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.210 2023/07/10 19:58:47 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.211 2023/07/11 20:54:23 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -109,7 +109,7 @@ static const char *const msgs[] = {
 	"parameter mismatch: %d declared, %d defined",		      /* 51 */
 	"cannot initialize parameter '%s'",			      /* 52 */
 	"declared argument '%s' is missing",			      /* 53 */
-	"trailing ',' prohibited in enum declaration",		      /* 54 */
+	"trailing ',' in enum declaration requires C99 or later",     /* 54 */
 	"integral constant expression expected",		      /* 55 */
 	"integral constant too large",				      /* 56 */
 	"enumeration constant '%s' hides parameter",		      /* 57 */

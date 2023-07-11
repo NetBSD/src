@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_enum_c90.c,v 1.2 2022/06/17 18:54:53 rillig Exp $	*/
+/*	$NetBSD: decl_enum_c90.c,v 1.3 2023/07/11 20:54:23 rillig Exp $	*/
 # 3 "decl_enum_c90.c"
 
 /*
@@ -10,4 +10,4 @@
 enum {
 	A,
 };
-/* expect-1: error: trailing ',' prohibited in enum declaration [54] */
+/* expect-1: error: trailing ',' in enum declaration requires C99 or later [54] */

@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.452 2023/07/10 19:58:47 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.453 2023/07/11 20:54:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.452 2023/07/10 19:58:47 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.453 2023/07/11 20:54:23 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1166,10 +1166,10 @@ enums_with_opt_comma:		/* helper for C99 6.7.2.2 */
 	  enumerator_list
 	| enumerator_list T_COMMA {
 		if (!allow_c99 && !allow_trad) {
-			/* trailing ',' prohibited in enum declaration */
+			/* trailing ',' in enum declaration requires C99 ... */
 			error(54);
 		} else {
-			/* trailing ',' prohibited in enum declaration */
+			/* trailing ',' in enum declaration requires C99 ... */
 			c99ism(54);
 		}
 		$$ = $1;
