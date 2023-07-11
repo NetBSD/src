@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.35 2023/07/11 10:42:26 riastradh Exp $	*/
+/*	$NetBSD: intr.h,v 1.36 2023/07/11 17:54:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -82,6 +82,8 @@ typedef struct {
 	uint16_t _psl;
 } ipl_cookie_t;
 
+#ifdef _KERNEL
+
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
@@ -136,5 +138,7 @@ void	intr_init(void);
 void	*intr_establish(int (*)(void *), void *, int, int);
 void	intr_disestablish(void *);
 void	intr_dispatch(int);
+
+#endif	/* _KERNEL */
 
 #endif /* _HP300_INTR_H_ */
