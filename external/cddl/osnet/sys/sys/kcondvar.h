@@ -1,4 +1,4 @@
-/*	$NetBSD: kcondvar.h,v 1.5 2022/07/30 12:59:31 riastradh Exp $	*/
+/*	$NetBSD: kcondvar.h,v 1.6 2023/07/11 17:03:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ typedef enum {
 #define	cv_init(a, b, c, d)	cv_init(a, #a)
 
 static inline clock_t
-cv_timedwait_hires(kcondvar_t *cvp, kmutex_t *mp, hrtime_t tim, hrtime_t res,
+cv_timedwait_hires(kcondvar_t *cvp, struct kmutex *mp, hrtime_t tim, hrtime_t res,
     int flag)
 {
 	extern int hz;
@@ -58,7 +58,7 @@ cv_timedwait_hires(kcondvar_t *cvp, kmutex_t *mp, hrtime_t tim, hrtime_t res,
 }
 
 static inline clock_t
-cv_reltimedwait(kcondvar_t *cvp, kmutex_t *mp, clock_t delta, time_res_t res)
+cv_reltimedwait(kcondvar_t *cvp, struct kmutex *mp, clock_t delta, time_res_t res)
 {
 
 	cv_wait(cvp, mp);
@@ -67,7 +67,7 @@ cv_reltimedwait(kcondvar_t *cvp, kmutex_t *mp, clock_t delta, time_res_t res)
 
 #else
 
-extern	clock_t cv_timedwait_hires(kcondvar_t *, kmutex_t *, hrtime_t, hrtime_t,
+extern	clock_t cv_timedwait_hires(kcondvar_t *, struct kmutex *, hrtime_t, hrtime_t,
     int);
 
 #endif	/* _KERNEL */
