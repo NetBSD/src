@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.27 2021/12/26 08:41:29 skrll Exp $	*/
+/*	$NetBSD: mutex.h,v 1.28 2023/07/11 10:41:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,6 +31,11 @@
 
 #ifndef _ARM_MUTEX_H_
 #define	_ARM_MUTEX_H_
+
+#ifdef _KERNEL
+#include <machine/intr.h>
+#include <machine/lock.h>
+#endif
 
 /*
  * The ARM mutex implementation is troublesome, because pre-v6 ARM lacks a
