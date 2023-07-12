@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.185 2023/07/11 20:54:23 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.186 2023/07/12 16:07:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -206,8 +206,13 @@ typedef enum {
 	BOOL_CONST,
 	ENUM_CONST,
 	ABSTRACT,	/* abstract symbol (sizeof, casts, unnamed argument) */
-	INLINE		/* only used by the parser */
 } scl_t;
+
+/* C23 6.7.4 */
+typedef enum {
+	FS_INLINE,
+	// TODO: Add FS_NORETURN, for C23.
+} function_specifier;
 
 /*
  * symbol table entry
@@ -250,8 +255,14 @@ typedef	struct sym {
 		} s_member;
 		struct {
 			int sk_token;
-			tspec_t	sk_tspec;	/* only for types */
-			tqual_t	sk_qualifier;	/* only for qualifiers */
+			union {
+				/* if T_TYPE or T_STRUCT_OR_UNION */
+				tspec_t sk_tspec;
+				/* if T_QUAL */
+				tqual_t sk_qualifier;
+				/* if T_FUNCTION_SPECIFIER */
+				function_specifier function_specifier;
+			} u;
 		} s_keyword;
 		struct	sym *s_old_style_args;	/* arguments in an old-style
 						 * function definition */

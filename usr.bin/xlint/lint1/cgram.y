@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.455 2023/07/12 13:00:09 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.456 2023/07/12 16:07:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.455 2023/07/12 13:00:09 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.456 2023/07/12 16:07:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -132,7 +132,7 @@ is_either(const char *s, const char *a, const char *b)
 
 %}
 
-%expect 131
+%expect 132
 
 %union {
 	val_t	*y_val;
@@ -142,6 +142,7 @@ is_either(const char *s, const char *a, const char *b)
 	scl_t	y_scl;
 	tspec_t	y_tspec;
 	tqual_t	y_tqual;
+	function_specifier y_function_specifier;
 	type_t	*y_type;
 	tnode_t	*y_tnode;
 	range_t	y_range;
@@ -166,6 +167,9 @@ is_either(const char *s, const char *a, const char *b)
 %printer { fprintf(yyo, "%s", scl_name($$)); } <y_scl>
 %printer { fprintf(yyo, "%s", tspec_name($$)); } <y_tspec>
 %printer { fprintf(yyo, "%s", tqual_name($$)); } <y_tqual>
+%printer {
+	fprintf(yyo, "%s", function_specifier_name($$));
+} <y_function_specifier>
 %printer { fprintf(yyo, "%s", type_name($$)); } <y_type>
 %printer {
 	if ($$ == NULL)
@@ -223,6 +227,7 @@ is_either(const char *s, const char *a, const char *b)
 
 /* storage classes (extern, static, auto, register and typedef) */
 %token	<y_scl>		T_SCLASS
+%token	<y_function_specifier> T_FUNCTION_SPECIFIER
 
 /*
  * predefined type keywords (char, int, short, long, unsigned, signed,
@@ -847,6 +852,9 @@ begin_type_declmods:		/* see C99 6.7 */
 |	begin_type T_SCLASS {
 		dcs_add_storage_class($2);
 	}
+|	begin_type T_FUNCTION_SPECIFIER {
+		dcs_add_function_specifier($2);
+	}
 |	begin_type_declmods declmod
 ;
 
@@ -895,6 +903,9 @@ declmod:
 	}
 |	T_SCLASS {
 		dcs_add_storage_class($1);
+	}
+|	T_FUNCTION_SPECIFIER {
+		dcs_add_function_specifier($1);
 	}
 |	type_attribute_list
 ;
@@ -2251,6 +2262,8 @@ cgram_to_string(int token, YYSTYPE val)
 		return tspec_name(val.y_tspec);
 	case T_QUAL:
 		return tqual_name(val.y_tqual);
+	case T_FUNCTION_SPECIFIER:
+		return function_specifier_name(val.y_function_specifier);
 	case T_NAME:
 		return val.y_name->sb_name;
 	default:
