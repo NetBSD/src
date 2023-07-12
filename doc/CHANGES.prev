@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.171 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.172 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -12876,11 +12876,9 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	file(1): Upgraded to 5.39. [christos 20200614]
 	blocklist: import current version [christos 20200614]
 	dhcpcd: Import version 9.1.2 [roy 20200615]
-	evbmips: Create an "octeon.img.gz" bootable image for
-		evbmips64-eb release builds. [jmcneill 20200617]
 	evbarm: Add support for loading modules with the bootloader.
-		[jmcneill 20200221]
-	evbarm: Added boot.cfg support to efiboot [jmcneill 20200211]
+		[jmcneill 20200621]
+	evbarm: Added boot.cfg support to efiboot [jmcneill 20200621]
 	evbmips: Add ofctl(8) and /dev/openfirm support for Cavium
 		Octeon devices. [jmcneill 20200624]
 	mv(1): Add -h option to atomically replace a symlink to a
@@ -12916,6 +12914,8 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		ERLITE         -> OCTEON
 		INSTALL_ERLITE -> INSTALL_OCTEON
 		[simonb 20200715]
+	evbmips: Create an "octeon.img.gz" bootable image for
+		evbmips64-eb release builds. [jmcneill 20200717]
 	libc: Added ppoll() wrapper around native pollts(2) [kamil 20200717]
 	openresolv: Import version 3.11.0 [roy 20200722]
 	sun3: Add Xorg-Server-1.20'fied ancient monolithc Xsun servers.
