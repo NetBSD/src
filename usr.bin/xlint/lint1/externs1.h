@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.190 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.191 2023/07/12 16:07:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -123,6 +123,7 @@ const char *decl_level_kind_name(decl_level_kind);
 const char *scl_name(scl_t);
 const char *symt_name(symt_t);
 const char *tqual_name(tqual_t);
+const char *function_specifier_name(function_specifier);
 void	debug_dcs(bool);
 void	debug_node(const tnode_t *);
 void	debug_type(const type_t *);
@@ -192,6 +193,7 @@ type_t	*block_dup_type(const type_t *);
 type_t	*expr_dup_type(const type_t *);
 type_t	*expr_unqualified_type(const type_t *);
 bool	is_incomplete(const type_t *);
+void	dcs_add_function_specifier(function_specifier);
 void	dcs_add_storage_class(scl_t);
 void	dcs_add_type(type_t *);
 void	dcs_add_qualifier(tqual_t);
