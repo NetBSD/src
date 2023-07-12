@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.19 2023/07/12 06:45:24 mrg Exp $	*/
+/*	$NetBSD: mutex.h,v 1.20 2023/07/12 12:50:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
  * So we emulate compare-and-swap by raising IPL to lock out interrupts
  * and (if MP) using BBSSI/BBCCI to lock out the other processors.
  */
+
+#include <sys/types.h>
 
 #ifndef __MUTEX_PRIVATE
 

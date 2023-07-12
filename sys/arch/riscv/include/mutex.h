@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.5 2023/07/09 17:03:10 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.6 2023/07/12 12:50:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _RISCV_MUTEX_H_
 #define	_RISCV_MUTEX_H_
+
+#include <sys/types.h>
 
 #ifndef __MUTEX_PRIVATE
 

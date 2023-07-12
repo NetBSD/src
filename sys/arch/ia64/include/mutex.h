@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.8 2023/07/09 17:03:09 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.9 2023/07/12 12:50:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _IA64_MUTEX_H_
 #define	_IA64_MUTEX_H_
 
+#include <sys/types.h>
+
 #ifndef __MUTEX_PRIVATE
 
 struct kmutex {
@@ -42,7 +44,6 @@ struct kmutex {
 #else
 
 #include <machine/intr.h>
-#include <machine/lock.h>
 
 struct kmutex {
 	volatile uintptr_t	mtx_owner;
