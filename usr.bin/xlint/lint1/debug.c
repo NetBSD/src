@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.50 2023/07/12 16:07:35 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.51 2023/07/12 18:26:04 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.50 2023/07/12 16:07:35 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.51 2023/07/12 18:26:04 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -320,6 +320,7 @@ function_specifier_name(function_specifier spec)
 {
 	static const char *const name[] = {
 		"inline",
+		"_Noreturn",
 	};
 
 	return name[spec];

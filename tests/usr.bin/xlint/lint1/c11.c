@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.1 2023/07/12 18:13:39 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.2 2023/07/12 18:26:04 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -10,9 +10,6 @@
 
 _Noreturn void exit(int);
 void _Noreturn exit(int);
-
-/* XXX: Syntactically invalid, yet lint accepts it. */
-void _Noreturn exit(int) _Noreturn;
 
 _Noreturn void
 noreturn_before_type(void)
@@ -44,3 +41,10 @@ three_times(void)
 {
 	exit(0);
 }
+
+/* The '_Noreturn' must not appear after the declarator. */
+void _Noreturn exit(int) _Noreturn;
+/* expect-1: error: formal parameter #1 lacks name [59] */
+/* expect-2: warning: empty declaration [2] */
+/* expect+2: error: syntax error '' [249] */
+/* expect+1: error: cannot recover from previous errors [224] */
