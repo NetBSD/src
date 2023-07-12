@@ -1,4 +1,4 @@
-/*	$NetBSD: db_syncobj.c,v 1.1 2023/07/09 17:10:47 riastradh Exp $	*/
+/*	$NetBSD: db_syncobj.c,v 1.2 2023/07/12 12:50:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
 #define	__RWLOCK_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_syncobj.c,v 1.1 2023/07/09 17:10:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_syncobj.c,v 1.2 2023/07/12 12:50:46 riastradh Exp $");
 
 #include <sys/types.h>
 
@@ -48,7 +48,7 @@ db_syncobj_owner(struct syncobj *sobj, wchan_t wchan)
 	db_expr_t rw_syncobj_;
 
 	if (db_value_of_name("mutex_syncobj", &mutex_syncobj_) &&
-	    (db_expr_t)sobj == mutex_syncobj_) {
+	    (db_expr_t)(uintptr_t)sobj == mutex_syncobj_) {
 		volatile const struct kmutex *mtx = wchan;
 		uintptr_t owner;
 
@@ -57,7 +57,7 @@ db_syncobj_owner(struct syncobj *sobj, wchan_t wchan)
 		return (struct lwp *)(owner & MUTEX_THREAD);
 
 	} else if (db_value_of_name("rw_syncobj", &rw_syncobj_) &&
-	    (db_expr_t)sobj == rw_syncobj_) {
+	    (db_expr_t)(uintptr_t)sobj == rw_syncobj_) {
 		volatile const struct krwlock *rw = wchan;
 		uintptr_t owner;
 
