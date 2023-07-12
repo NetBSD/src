@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.4 2023/07/09 17:03:09 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.5 2023/07/12 12:50:12 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
 #ifndef _OR1K_MUTEX_H_
 #define	_OR1K_MUTEX_H_
 
+#include <sys/types.h>
+
 #ifndef __MUTEX_PRIVATE
 
 struct kmutex {
@@ -41,7 +43,6 @@ struct kmutex {
 #else	/* __MUTEX_PRIVATE */
 
 #include <machine/intr.h>
-#include <machine/lock.h>
 
 struct kmutex {
 	union {
