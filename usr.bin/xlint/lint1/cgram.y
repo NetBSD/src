@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.454 2023/07/11 21:13:36 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.455 2023/07/12 13:00:09 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.454 2023/07/11 21:13:36 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.455 2023/07/12 13:00:09 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -425,7 +425,7 @@ is_either(const char *s, const char *a, const char *b)
 %%
 
 program:
-	  /* empty */ {
+	/* empty */ {
 		/* TODO: Make this an error in C99 mode as well. */
 		if (!allow_trad && !allow_c99) {
 			/* empty translation unit */
@@ -434,43 +434,43 @@ program:
 			/* empty translation unit */
 			warning(272);
 		}
-	  }
-	| translation_unit
-	;
+	}
+|	translation_unit
+;
 
 identifier_sym:			/* helper for struct/union/enum */
-	  identifier {
+	identifier {
 		$$ = getsym($1);
-	  }
-	;
+	}
+;
 
 /* K&R ???, C90 ???, C99 6.4.2.1, C11 ??? */
 identifier:
-	  T_NAME {
+	T_NAME {
 		debug_step("cgram: name '%s'", $1->sb_name);
 		$$ = $1;
-	  }
-	| T_TYPENAME {
+	}
+|	T_TYPENAME {
 		debug_step("cgram: typename '%s'", $1->sb_name);
 		$$ = $1;
-	  }
-	;
+	}
+;
 
 /* see C99 6.4.5, string literals are joined by 5.1.1.2 */
 string:
-	  T_STRING
-	| string T_STRING {
+	T_STRING
+|	string T_STRING {
 		if (!allow_c90) {
 			/* concatenated strings are illegal in traditional C */
 			warning(219);
 		}
 		$$ = cat_strings($1, $2);
-	  }
-	;
+	}
+;
 
 /* K&R 7.1, C90 ???, C99 6.5.1, C11 6.5.1 */
 primary_expression:
-	  T_NAME {
+	T_NAME {
 		bool sys_name, sys_next;
 		sys_name = in_system_header;
 		if (yychar < 0)
@@ -479,102 +479,102 @@ primary_expression:
 		in_system_header = sys_name;
 		$$ = build_name(getsym($1), yychar == T_LPAREN);
 		in_system_header = sys_next;
-	  }
-	| T_CON {
+	}
+|	T_CON {
 		$$ = build_constant(gettyp($1->v_tspec), $1);
-	  }
-	| string {
+	}
+|	string {
 		$$ = build_string($1);
-	  }
-	| T_LPAREN expression T_RPAREN {
+	}
+|	T_LPAREN expression T_RPAREN {
 		if ($2 != NULL)
 			$2->tn_parenthesized = true;
 		$$ = $2;
-	  }
-	| generic_selection
+	}
+|	generic_selection
 	/* GCC primary-expression, see c_parser_postfix_expression */
 	/* TODO: C99 7.17p3 allows not only an identifier but a designator. */
-	| T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
+|	T_BUILTIN_OFFSETOF T_LPAREN type_name T_COMMA identifier T_RPAREN {
 		set_symtyp(FMEMBER);
 		$$ = build_offsetof($3, getsym($5));
-	  }
-	;
+	}
+;
 
 /* K&R ---, C90 ---, C99 ---, C11 6.5.1.1 */
 generic_selection:
-	  T_GENERIC T_LPAREN assignment_expression T_COMMA
+	T_GENERIC T_LPAREN assignment_expression T_COMMA
 	    generic_assoc_list T_RPAREN {
 		/* generic selection requires C11 or later */
 		c11ism(345);
 		$$ = build_generic_selection($3, $5);
-	  }
-	;
+	}
+;
 
 /* K&R ---, C90 ---, C99 ---, C11 6.5.1.1 */
 generic_assoc_list:
-	  generic_association
-	| generic_assoc_list T_COMMA generic_association {
+	generic_association
+|	generic_assoc_list T_COMMA generic_association {
 		$3->ga_prev = $1;
 		$$ = $3;
-	  }
-	;
+	}
+;
 
 /* K&R ---, C90 ---, C99 ---, C11 6.5.1.1 */
 generic_association:
-	  type_name T_COLON assignment_expression {
+	type_name T_COLON assignment_expression {
 		$$ = block_zero_alloc(sizeof(*$$));
 		$$->ga_arg = $1;
 		$$->ga_result = $3;
-	  }
-	| T_DEFAULT T_COLON assignment_expression {
+	}
+|	T_DEFAULT T_COLON assignment_expression {
 		$$ = block_zero_alloc(sizeof(*$$));
 		$$->ga_arg = NULL;
 		$$->ga_result = $3;
-	  }
-	;
+	}
+;
 
 /* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2, C23 6.5.2 */
 postfix_expression:
-	  primary_expression
-	| postfix_expression T_LBRACK sys expression T_RBRACK {
+	primary_expression
+|	postfix_expression T_LBRACK sys expression T_RBRACK {
 		$$ = build_unary(INDIR, $3, build_binary($1, PLUS, $3, $4));
-	  }
-	| postfix_expression T_LPAREN sys T_RPAREN {
+	}
+|	postfix_expression T_LPAREN sys T_RPAREN {
 		$$ = build_function_call($1, $3, NULL);
-	  }
-	| postfix_expression T_LPAREN sys argument_expression_list T_RPAREN {
+	}
+|	postfix_expression T_LPAREN sys argument_expression_list T_RPAREN {
 		$$ = build_function_call($1, $3, $4);
-	  }
-	| postfix_expression point_or_arrow sys T_NAME {
+	}
+|	postfix_expression point_or_arrow sys T_NAME {
 		$$ = build_member_access($1, $2, $3, $4);
-	  }
-	| postfix_expression T_INCDEC sys {
+	}
+|	postfix_expression T_INCDEC sys {
 		$$ = build_unary($2 == INC ? INCAFT : DECAFT, $3, $1);
-	  }
-	| T_LPAREN type_name T_RPAREN {	/* C99 6.5.2.5 "Compound literals" */
+	}
+|	T_LPAREN type_name T_RPAREN {	/* C99 6.5.2.5 "Compound literals" */
 		sym_t *tmp = mktempsym($2);
 		begin_initialization(tmp);
 		cgram_declare(tmp, true, NULL);
-	  } braced_initializer {
+	} braced_initializer {
 		if (!allow_c99)
 			 /* compound literals are a C99/GCC extension */
 			 gnuism(319);
 		$$ = build_name(current_initsym(), false);
 		end_initialization();
-	  }
-	| T_LPAREN compound_statement_lbrace {
+	}
+|	T_LPAREN compound_statement_lbrace {
 		begin_statement_expr();
-	  } gcc_statement_expr_list {
+	} gcc_statement_expr_list {
 		do_statement_expr($4);
-	  } compound_statement_rbrace T_RPAREN {
+	} compound_statement_rbrace T_RPAREN {
 		$$ = end_statement_expr();
-	  }
-	;
+	}
+;
 
 comma_opt:			/* helper for 'postfix_expression' */
-	  /* empty */
-	| T_COMMA
-	;
+	/* empty */
+|	T_COMMA
+;
 
 /*
  * The inner part of a GCC statement-expression of the form ({ ... }).
@@ -582,26 +582,26 @@ comma_opt:			/* helper for 'postfix_expression' */
  * https://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html
  */
 gcc_statement_expr_list:
-	  gcc_statement_expr_item
-	| gcc_statement_expr_list gcc_statement_expr_item {
+	gcc_statement_expr_item
+|	gcc_statement_expr_list gcc_statement_expr_item {
 		$$ = $2;
-	  }
-	;
+	}
+;
 
 gcc_statement_expr_item:
-	  declaration_or_error {
+	declaration_or_error {
 		clear_warning_flags();
 		$$ = NULL;
-	  }
-	| non_expr_statement {
+	}
+|	non_expr_statement {
 		$$ = expr_alloc_tnode();
 		$$->tn_type = gettyp(VOID);
-	  }
-	| T_SEMI {
+	}
+|	T_SEMI {
 		$$ = expr_alloc_tnode();
 		$$->tn_type = gettyp(VOID);
-	  }
-	| expression T_SEMI {
+	}
+|	expression T_SEMI {
 		if ($1 == NULL) {	/* in case of syntax errors */
 			$$ = expr_alloc_tnode();
 			$$->tn_type = gettyp(VOID);
@@ -613,102 +613,102 @@ gcc_statement_expr_item:
 			seen_fallthrough = false;
 			$$ = $1;
 		}
-	  }
-	;
+	}
+;
 
 point_or_arrow:			/* helper for 'postfix_expression' */
-	  T_POINT {
+	T_POINT {
 		set_symtyp(FMEMBER);
 		$$ = POINT;
-	  }
-	| T_ARROW {
+	}
+|	T_ARROW {
 		set_symtyp(FMEMBER);
 		$$ = ARROW;
-	  }
-	;
+	}
+;
 
 /* K&R 7.1, C90 ???, C99 6.5.2, C11 6.5.2 */
 argument_expression_list:
-	  assignment_expression {
+	assignment_expression {
 		$$ = build_function_argument(NULL, $1);
-	  }
-	| argument_expression_list T_COMMA assignment_expression {
+	}
+|	argument_expression_list T_COMMA assignment_expression {
 		$$ = build_function_argument($1, $3);
-	  }
-	;
+	}
+;
 
 /* K&R 7.2, C90 ???, C99 6.5.3, C11 6.5.3 */
 unary_expression:
-	  postfix_expression
-	| T_INCDEC sys unary_expression {
+	postfix_expression
+|	T_INCDEC sys unary_expression {
 		$$ = build_unary($1 == INC ? INCBEF : DECBEF, $2, $3);
-	  }
-	| T_AMPER sys cast_expression {
+	}
+|	T_AMPER sys cast_expression {
 		$$ = build_unary(ADDR, $2, $3);
-	  }
-	| T_ASTERISK sys cast_expression {
+	}
+|	T_ASTERISK sys cast_expression {
 		$$ = build_unary(INDIR, $2, $3);
-	  }
-	| T_ADDITIVE sys cast_expression {
+	}
+|	T_ADDITIVE sys cast_expression {
 		if (!allow_c90 && $1 == PLUS) {
 			/* unary '+' is illegal in traditional C */
 			warning(100);
 		}
 		$$ = build_unary($1 == PLUS ? UPLUS : UMINUS, $2, $3);
-	  }
-	| T_COMPLEMENT sys cast_expression {
+	}
+|	T_COMPLEMENT sys cast_expression {
 		$$ = build_unary(COMPL, $2, $3);
-	  }
-	| T_LOGNOT sys cast_expression {
+	}
+|	T_LOGNOT sys cast_expression {
 		$$ = build_unary(NOT, $2, $3);
-	  }
-	| T_REAL sys cast_expression {	/* GCC c_parser_unary_expression */
+	}
+|	T_REAL sys cast_expression {	/* GCC c_parser_unary_expression */
 		$$ = build_unary(REAL, $2, $3);
-	  }
-	| T_IMAG sys cast_expression {	/* GCC c_parser_unary_expression */
+	}
+|	T_IMAG sys cast_expression {	/* GCC c_parser_unary_expression */
 		$$ = build_unary(IMAG, $2, $3);
-	  }
-	| T_EXTENSION cast_expression {	/* GCC c_parser_unary_expression */
+	}
+|	T_EXTENSION cast_expression {	/* GCC c_parser_unary_expression */
 		$$ = $2;
-	  }
-	| T_SIZEOF unary_expression {
+	}
+|	T_SIZEOF unary_expression {
 		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
 		if ($$ != NULL)
 			check_expr_misc($2,
 			    false, false, false, false, false, true);
-	  }
-	| T_SIZEOF T_LPAREN type_name T_RPAREN {
+	}
+|	T_SIZEOF T_LPAREN type_name T_RPAREN {
 		$$ = build_sizeof($3);
-	  }
-	| T_ALIGNOF unary_expression {
+	}
+|	T_ALIGNOF unary_expression {
 		/* non type argument to alignof is a GCC extension */
 		gnuism(349);
 		lint_assert($2 != NULL);
 		$$ = build_alignof($2->tn_type);
-	  }
+	}
 	/* K&R ---, C90 ---, C99 ---, C11 6.5.3 */
-	| T_ALIGNOF T_LPAREN type_name T_RPAREN {
+|	T_ALIGNOF T_LPAREN type_name T_RPAREN {
 		/* TODO: c11ism */
 		$$ = build_alignof($3);
-	  }
-	;
+	}
+;
 
 /* The rule 'unary_operator' is inlined into unary_expression. */
 
 /* K&R 7.2, C90 ???, C99 6.5.4, C11 6.5.4 */
 cast_expression:
-	  unary_expression
-	| T_LPAREN type_name T_RPAREN cast_expression {
+	unary_expression
+|	T_LPAREN type_name T_RPAREN cast_expression {
 		$$ = cast($4, $2);
-	  }
-	;
+	}
+;
 
 expression_opt:
-	  /* empty */ {
+	/* empty */ {
 		$$ = NULL;
-	  }
-	| expression
-	;
+	}
+|	expression
+;
 
 /* 'conditional_expression' also implements 'multiplicative_expression'. */
 /* 'conditional_expression' also implements 'additive_expression'. */
@@ -722,79 +722,79 @@ expression_opt:
 /* 'conditional_expression' also implements 'logical_OR_expression'. */
 /* K&R ???, C90 ???, C99 6.5.5 to 6.5.15, C11 6.5.5 to 6.5.15 */
 conditional_expression:
-	  cast_expression
-	| conditional_expression T_ASTERISK sys conditional_expression {
+	cast_expression
+|	conditional_expression T_ASTERISK sys conditional_expression {
 		$$ = build_binary($1, MULT, $3, $4);
-	  }
-	| conditional_expression T_MULTIPLICATIVE sys conditional_expression {
+	}
+|	conditional_expression T_MULTIPLICATIVE sys conditional_expression {
 		$$ = build_binary($1, $2, $3, $4);
-	  }
-	| conditional_expression T_ADDITIVE sys conditional_expression {
+	}
+|	conditional_expression T_ADDITIVE sys conditional_expression {
 		$$ = build_binary($1, $2, $3, $4);
-	  }
-	| conditional_expression T_SHIFT sys conditional_expression {
+	}
+|	conditional_expression T_SHIFT sys conditional_expression {
 		$$ = build_binary($1, $2, $3, $4);
-	  }
-	| conditional_expression T_RELATIONAL sys conditional_expression {
+	}
+|	conditional_expression T_RELATIONAL sys conditional_expression {
 		$$ = build_binary($1, $2, $3, $4);
-	  }
-	| conditional_expression T_EQUALITY sys conditional_expression {
+	}
+|	conditional_expression T_EQUALITY sys conditional_expression {
 		$$ = build_binary($1, $2, $3, $4);
-	  }
-	| conditional_expression T_AMPER sys conditional_expression {
+	}
+|	conditional_expression T_AMPER sys conditional_expression {
 		$$ = build_binary($1, BITAND, $3, $4);
-	  }
-	| conditional_expression T_BITXOR sys conditional_expression {
+	}
+|	conditional_expression T_BITXOR sys conditional_expression {
 		$$ = build_binary($1, BITXOR, $3, $4);
-	  }
-	| conditional_expression T_BITOR sys conditional_expression {
+	}
+|	conditional_expression T_BITOR sys conditional_expression {
 		$$ = build_binary($1, BITOR, $3, $4);
-	  }
-	| conditional_expression T_LOGAND sys conditional_expression {
+	}
+|	conditional_expression T_LOGAND sys conditional_expression {
 		$$ = build_binary($1, LOGAND, $3, $4);
-	  }
-	| conditional_expression T_LOGOR sys conditional_expression {
+	}
+|	conditional_expression T_LOGOR sys conditional_expression {
 		$$ = build_binary($1, LOGOR, $3, $4);
-	  }
-	| conditional_expression T_QUEST sys
+	}
+|	conditional_expression T_QUEST sys
 	    expression T_COLON sys conditional_expression {
 		$$ = build_binary($1, QUEST, $3,
 		    build_binary($4, COLON, $6, $7));
-	  }
-	;
+	}
+;
 
 /* K&R ???, C90 ???, C99 6.5.16, C11 6.5.16 */
 assignment_expression:
-	  conditional_expression
-	| unary_expression T_ASSIGN sys assignment_expression {
+	conditional_expression
+|	unary_expression T_ASSIGN sys assignment_expression {
 		$$ = build_binary($1, ASSIGN, $3, $4);
-	  }
-	| unary_expression T_OPASSIGN sys assignment_expression {
+	}
+|	unary_expression T_OPASSIGN sys assignment_expression {
 		$$ = build_binary($1, $2, $3, $4);
-	  }
-	;
+	}
+;
 
 /* K&R ???, C90 ???, C99 6.5.17, C11 6.5.17 */
 expression:
-	  assignment_expression
-	| expression T_COMMA sys assignment_expression {
+	assignment_expression
+|	expression T_COMMA sys assignment_expression {
 		$$ = build_binary($1, COMMA, $3, $4);
-	  }
-	;
+	}
+;
 
 /* K&R ???, C90 ???, C99 6.6, C11 ???, C23 6.6 */
 constant_expression:
-	  conditional_expression
-	;
+	conditional_expression
+;
 
 declaration_or_error:
-	  declaration
-	| error T_SEMI
-	;
+	declaration
+|	error T_SEMI
+;
 
 /* K&R ???, C90 ???, C99 6.7, C11 ???, C23 6.7 */
 declaration:
-	  begin_type_declmods end_type T_SEMI {
+	begin_type_declmods end_type T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
@@ -802,8 +802,8 @@ declaration:
 			/* empty declaration */
 			warning(2);
 		}
-	  }
-	| begin_type_declmods end_type notype_init_declarators T_SEMI {
+	}
+|	begin_type_declmods end_type notype_init_declarators T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* syntax error '%s' */
 			error(249, "missing base type for typedef");
@@ -811,8 +811,8 @@ declaration:
 			/* old-style declaration; add 'int' */
 			error(1);
 		}
-	  }
-	| begin_type_declaration_specifiers end_type T_SEMI {
+	}
+|	begin_type_declaration_specifiers end_type T_SEMI {
 		if (dcs->d_scl == TYPEDEF) {
 			/* typedef declares no type name */
 			warning(72);
@@ -820,158 +820,158 @@ declaration:
 			/* empty declaration */
 			warning(2);
 		}
-	  }
-	| begin_type_declaration_specifiers end_type
+	}
+|	begin_type_declaration_specifiers end_type
 	    type_init_declarators T_SEMI
-	| static_assert_declaration
-	;
+|	static_assert_declaration
+;
 
 begin_type_declaration_specifiers:	/* see C99 6.7 */
-	  begin_type_typespec {
+	begin_type_typespec {
 		dcs_add_type($1);
-	  }
-	| begin_type_declmods type_specifier {
+	}
+|	begin_type_declmods type_specifier {
 		dcs_add_type($2);
-	  }
-	| type_attribute begin_type_declaration_specifiers
-	| begin_type_declaration_specifiers declmod
-	| begin_type_declaration_specifiers notype_type_specifier {
+	}
+|	type_attribute begin_type_declaration_specifiers
+|	begin_type_declaration_specifiers declmod
+|	begin_type_declaration_specifiers notype_type_specifier {
 		dcs_add_type($2);
-	  }
-	;
+	}
+;
 
 begin_type_declmods:		/* see C99 6.7 */
-	  begin_type type_qualifier {
+	begin_type type_qualifier {
 		dcs_add_qualifier($2);
-	  }
-	| begin_type T_SCLASS {
+	}
+|	begin_type T_SCLASS {
 		dcs_add_storage_class($2);
-	  }
-	| begin_type_declmods declmod
-	;
+	}
+|	begin_type_declmods declmod
+;
 
 begin_type_specifier_qualifier_list:	/* see C11 6.7.2.1 */
-	  begin_type_specifier_qualifier_list_postfix
-	| type_attribute_list begin_type_specifier_qualifier_list_postfix
-	;
+	begin_type_specifier_qualifier_list_postfix
+|	type_attribute_list begin_type_specifier_qualifier_list_postfix
+;
 
 begin_type_specifier_qualifier_list_postfix:
-	  begin_type_typespec {
+	begin_type_typespec {
 		dcs_add_type($1);
-	  }
-	| begin_type_qualifier_list type_specifier {
+	}
+|	begin_type_qualifier_list type_specifier {
 		dcs_add_type($2);
-	  }
-	| begin_type_specifier_qualifier_list_postfix type_qualifier {
+	}
+|	begin_type_specifier_qualifier_list_postfix type_qualifier {
 		dcs_add_qualifier($2);
-	  }
-	| begin_type_specifier_qualifier_list_postfix notype_type_specifier {
+	}
+|	begin_type_specifier_qualifier_list_postfix notype_type_specifier {
 		dcs_add_type($2);
-	  }
-	| begin_type_specifier_qualifier_list_postfix type_attribute
-	;
+	}
+|	begin_type_specifier_qualifier_list_postfix type_attribute
+;
 
 begin_type_typespec:
-	  begin_type notype_type_specifier {
+	begin_type notype_type_specifier {
 		$$ = $2;
-	  }
-	| begin_type T_TYPENAME {
+	}
+|	begin_type T_TYPENAME {
 		$$ = getsym($2)->s_type;
-	  }
-	;
+	}
+;
 
 begin_type_qualifier_list:
-	  begin_type type_qualifier {
+	begin_type type_qualifier {
 		dcs_add_qualifier($2);
-	  }
-	| begin_type_qualifier_list type_qualifier {
+	}
+|	begin_type_qualifier_list type_qualifier {
 		dcs_add_qualifier($2);
-	  }
-	;
+	}
+;
 
 declmod:
-	  type_qualifier {
+	type_qualifier {
 		dcs_add_qualifier($1);
-	  }
-	| T_SCLASS {
+	}
+|	T_SCLASS {
 		dcs_add_storage_class($1);
-	  }
-	| type_attribute_list
-	;
+	}
+|	type_attribute_list
+;
 
 type_attribute_list_opt:
-	  /* empty */
-	| type_attribute_list
-	;
+	/* empty */
+|	type_attribute_list
+;
 
 type_attribute_list:
-	  type_attribute
-	| type_attribute_list type_attribute
-	;
+	type_attribute
+|	type_attribute_list type_attribute
+;
 
 type_attribute_opt:
-	  /* empty */
-	| type_attribute
-	;
+	/* empty */
+|	type_attribute
+;
 
 type_attribute:			/* See C11 6.7 declaration-specifiers */
-	  gcc_attribute_specifier
-	| T_ALIGNAS T_LPAREN type_specifier T_RPAREN	/* C11 6.7.5 */
-	| T_ALIGNAS T_LPAREN constant_expression T_RPAREN	/* C11 6.7.5 */
-	| T_PACKED {
+	gcc_attribute_specifier
+|	T_ALIGNAS T_LPAREN type_specifier T_RPAREN	/* C11 6.7.5 */
+|	T_ALIGNAS T_LPAREN constant_expression T_RPAREN	/* C11 6.7.5 */
+|	T_PACKED {
 		dcs_add_packed();
-	  }
-	| T_NORETURN
-	;
+	}
+|	T_NORETURN
+;
 
 begin_type:
-	  /* empty */ {
+	/* empty */ {
 		dcs_begin_type();
-	  }
-	;
+	}
+;
 
 end_type:
-	  /* empty */ {
+	/* empty */ {
 		dcs_end_type();
-	  }
-	;
+	}
+;
 
 type_specifier:			/* C99 6.7.2 */
-	  notype_type_specifier
-	| T_TYPENAME {
+	notype_type_specifier
+|	T_TYPENAME {
 		$$ = getsym($1)->s_type;
-	  }
-	;
+	}
+;
 
 notype_type_specifier:		/* see C99 6.7.2 */
-	  T_TYPE {
+	T_TYPE {
 		$$ = gettyp($1);
-	  }
-	| T_TYPEOF T_LPAREN expression T_RPAREN {	/* GCC extension */
+	}
+|	T_TYPEOF T_LPAREN expression T_RPAREN {	/* GCC extension */
 		$$ = $3 != NULL ? block_dup_type($3->tn_type) : gettyp(INT);
 		$$->t_typeof = true;
-	  }
-	| atomic_type_specifier
-	| struct_or_union_specifier {
+	}
+|	atomic_type_specifier
+|	struct_or_union_specifier {
 		end_declaration_level();
 		$$ = $1;
-	  }
-	| enum_specifier {
+	}
+|	enum_specifier {
 		end_declaration_level();
 		$$ = $1;
-	  }
-	;
+	}
+;
 
 /* K&R ---, C90 ---, C99 ---, C11 6.7.2.4 */
 atomic_type_specifier:
-	  atomic T_LPAREN type_name T_RPAREN {
+	atomic T_LPAREN type_name T_RPAREN {
 		$$ = $3;
-	  }
-	;
+	}
+;
 
 /* K&R ---, C90 ---, C99 6.7.2.1, C11 ???, C23 6.7.2.1 */
 struct_or_union_specifier:
-	  struct_or_union identifier_sym {
+	struct_or_union identifier_sym {
 		/*
 		 * STDC requires that "struct a;" always introduces
 		 * a new tag if "a" is not declared at current level
@@ -980,87 +980,87 @@ struct_or_union_specifier:
 		 * have been able to decide if it must shift or reduce
 		 */
 		$$ = make_tag_type($2, $1, false, yychar == T_SEMI);
-	  }
-	| struct_or_union identifier_sym {
+	}
+|	struct_or_union identifier_sym {
 		dcs->d_tag_type = make_tag_type($2, $1, true, false);
-	  } braced_member_declaration_list {
+	} braced_member_declaration_list {
 		$$ = complete_struct_or_union($4);
-	  }
-	| struct_or_union {
+	}
+|	struct_or_union {
 		dcs->d_tag_type = make_tag_type(NULL, $1, true, false);
-	  } braced_member_declaration_list {
+	} braced_member_declaration_list {
 		$$ = complete_struct_or_union($3);
-	  }
-	| struct_or_union error {
+	}
+|	struct_or_union error {
 		set_symtyp(FVFT);
 		$$ = gettyp(INT);
-	  }
-	;
+	}
+;
 
 /* K&R ---, C90 ---, C99 6.7.2.1, C11 ???, C23 6.7.2.1 */
 struct_or_union:
-	  T_STRUCT_OR_UNION {
+	T_STRUCT_OR_UNION {
 		set_symtyp(FTAG);
 		begin_declaration_level($1 == STRUCT ? DLK_STRUCT : DLK_UNION);
 		dcs->d_sou_size_in_bits = 0;
 		dcs->d_sou_align_in_bits = CHAR_SIZE;
 		$$ = $1;
-	  }
-	| struct_or_union type_attribute
-	;
+	}
+|	struct_or_union type_attribute
+;
 
 braced_member_declaration_list:	/* see C99 6.7.2.1 */
-	  member_declaration_lbrace member_declaration_list_with_rbrace {
+	member_declaration_lbrace member_declaration_list_with_rbrace {
 		$$ = $2;
-	  }
-	;
+	}
+;
 
 member_declaration_lbrace:	/* see C99 6.7.2.1 */
-	  T_LBRACE {
+	T_LBRACE {
 		set_symtyp(FVFT);
-	  }
-	;
+	}
+;
 
 member_declaration_list_with_rbrace:	/* see C99 6.7.2.1 */
-	  member_declaration_list T_RBRACE
-	| T_RBRACE {
+	member_declaration_list T_RBRACE
+|	T_RBRACE {
 		/* XXX: This is not allowed by any C standard. */
 		$$ = NULL;
-	  }
-	;
+	}
+;
 
 /* K&R ???, C90 ???, C99 6.7.2.1, C11 6.7.2.1, C23 6.7.2.1 */
 /* Was named struct_declaration_list until C11. */
 member_declaration_list:
-	  member_declaration
-	| member_declaration_list member_declaration {
+	member_declaration
+|	member_declaration_list member_declaration {
 		$$ = concat_symbols($1, $2);
-	  }
-	;
+	}
+;
 
 /* Was named struct_declaration until C11. */
 /* K&R ???, C90 ???, C99 6.7.2.1, C11 6.7.2.1, C23 6.7.2.1 */
 member_declaration:
-	  begin_type_qualifier_list end_type {
+	begin_type_qualifier_list end_type {
 		/* ^^ There is no check for the missing type-specifier. */
 		/* too late, i know, but getsym() compensates it */
 		set_symtyp(FMEMBER);
-	  } notype_member_declarators type_attribute_opt T_SEMI {
+	} notype_member_declarators type_attribute_opt T_SEMI {
 		set_symtyp(FVFT);
 		$$ = $4;
-	  }
-	| begin_type_specifier_qualifier_list end_type {
+	}
+|	begin_type_specifier_qualifier_list end_type {
 		set_symtyp(FMEMBER);
-	  } type_member_declarators type_attribute_opt T_SEMI {
+	} type_member_declarators type_attribute_opt T_SEMI {
 		set_symtyp(FVFT);
 		$$ = $4;
-	  }
-	| begin_type_qualifier_list end_type type_attribute_opt T_SEMI {
+	}
+|	begin_type_qualifier_list end_type type_attribute_opt T_SEMI {
 		/* syntax error '%s' */
 		error(249, "member without type");
 		$$ = NULL;
-	  }
-	| begin_type_specifier_qualifier_list end_type type_attribute_opt
+	}
+|	begin_type_specifier_qualifier_list end_type type_attribute_opt
 	    T_SEMI {
 		set_symtyp(FVFT);
 		if (!allow_c11 && !allow_gcc)
@@ -1073,112 +1073,112 @@ member_declaration:
 			error(249, "unnamed member");
 			$$ = NULL;
 		}
-	  }
-	| static_assert_declaration {
+	}
+|	static_assert_declaration {
 		$$ = NULL;
-	  }
-	| error T_SEMI {
+	}
+|	error T_SEMI {
 		set_symtyp(FVFT);
 		$$ = NULL;
-	  }
-	;
+	}
+;
 
 /* Was named struct_declarators until C11. */
 notype_member_declarators:
-	  notype_member_declarator {
+	notype_member_declarator {
 		$$ = declare_member($1);
-	  }
-	| notype_member_declarators {
+	}
+|	notype_member_declarators {
 		set_symtyp(FMEMBER);
-	  } T_COMMA type_member_declarator {
+	} T_COMMA type_member_declarator {
 		$$ = concat_symbols($1, declare_member($4));
-	  }
-	;
+	}
+;
 
 /* Was named struct_declarators until C11. */
 type_member_declarators:
-	  type_member_declarator {
+	type_member_declarator {
 		$$ = declare_member($1);
-	  }
-	| type_member_declarators {
+	}
+|	type_member_declarators {
 		set_symtyp(FMEMBER);
-	  } T_COMMA type_member_declarator {
+	} T_COMMA type_member_declarator {
 		$$ = concat_symbols($1, declare_member($4));
-	  }
-	;
+	}
+;
 
 /* Was named struct_declarator until C11. */
 notype_member_declarator:
-	  notype_declarator
+	notype_declarator
 	/* C99 6.7.2.1 */
-	| notype_declarator T_COLON constant_expression {
+|	notype_declarator T_COLON constant_expression {
 		$$ = set_bit_field_width($1, to_int_constant($3, true));
-	  }
+	}
 	/* C99 6.7.2.1 */
-	| {
+|	{
 		set_symtyp(FVFT);
-	  } T_COLON constant_expression {
+	} T_COLON constant_expression {
 		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
-	  }
-	;
+	}
+;
 
 /* Was named struct_declarator until C11. */
 type_member_declarator:
-	  type_declarator
-	| type_declarator T_COLON constant_expression {
+	type_declarator
+|	type_declarator T_COLON constant_expression {
 		$$ = set_bit_field_width($1, to_int_constant($3, true));
-	  }
-	| {
+	}
+|	{
 		set_symtyp(FVFT);
-	  } T_COLON constant_expression {
+	} T_COLON constant_expression {
 		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
-	  }
-	;
+	}
+;
 
 /* K&R ---, C90 6.5.2.2, C99 6.7.2.2, C11 6.7.2.2 */
 enum_specifier:
-	  enum gcc_attribute_specifier_list_opt identifier_sym {
+	enum gcc_attribute_specifier_list_opt identifier_sym {
 		$$ = make_tag_type($3, ENUM, false, false);
-	  }
-	| enum gcc_attribute_specifier_list_opt identifier_sym {
+	}
+|	enum gcc_attribute_specifier_list_opt identifier_sym {
 		dcs->d_tag_type = make_tag_type($3, ENUM, true, false);
-	  } enum_declaration /*gcc_attribute_specifier_list_opt*/ {
+	} enum_declaration /*gcc_attribute_specifier_list_opt*/ {
 		$$ = complete_enum($5);
-	  }
-	| enum gcc_attribute_specifier_list_opt {
+	}
+|	enum gcc_attribute_specifier_list_opt {
 		dcs->d_tag_type = make_tag_type(NULL, ENUM, true, false);
-	  } enum_declaration /*gcc_attribute_specifier_list_opt*/ {
+	} enum_declaration /*gcc_attribute_specifier_list_opt*/ {
 		$$ = complete_enum($4);
-	  }
-	| enum error {
+	}
+|	enum error {
 		set_symtyp(FVFT);
 		$$ = gettyp(INT);
-	  }
-	;
+	}
+;
 
 enum:				/* helper for C99 6.7.2.2 */
-	  T_ENUM {
+	T_ENUM {
 		set_symtyp(FTAG);
 		begin_declaration_level(DLK_ENUM);
-	  }
-	;
+	}
+;
 
 enum_declaration:		/* helper for C99 6.7.2.2 */
-	  enum_decl_lbrace enums_with_opt_comma T_RBRACE {
+	enum_decl_lbrace enums_with_opt_comma T_RBRACE {
 		$$ = $2;
-	  }
-	;
+	}
+;
 
 enum_decl_lbrace:		/* helper for C99 6.7.2.2 */
-	  T_LBRACE {
+	T_LBRACE {
 		set_symtyp(FVFT);
 		enumval = 0;
-	  }
-	;
+	}
+;
 
 enums_with_opt_comma:		/* helper for C99 6.7.2.2 */
-	  enumerator_list
-	| enumerator_list T_COMMA {
+	enumerator_list
+|	enumerator_list T_COMMA {
 		if (!allow_c99 && !allow_trad) {
 			/* trailing ',' in enum declaration requires C99 ... */
 			error(54);
@@ -1187,76 +1187,76 @@ enums_with_opt_comma:		/* helper for C99 6.7.2.2 */
 			c99ism(54);
 		}
 		$$ = $1;
-	  }
-	;
+	}
+;
 
 enumerator_list:		/* C99 6.7.2.2 */
-	  enumerator
-	| enumerator_list T_COMMA enumerator {
+	enumerator
+|	enumerator_list T_COMMA enumerator {
 		$$ = concat_symbols($1, $3);
-	  }
-	| error {
+	}
+|	error {
 		$$ = NULL;
-	  }
-	;
+	}
+;
 
 enumerator:			/* C99 6.7.2.2 */
-	  identifier_sym gcc_attribute_specifier_list_opt {
+	identifier_sym gcc_attribute_specifier_list_opt {
 		$$ = enumeration_constant($1, enumval, true);
-	  }
-	| identifier_sym gcc_attribute_specifier_list_opt
+	}
+|	identifier_sym gcc_attribute_specifier_list_opt
 	    T_ASSIGN constant_expression {
 		$$ = enumeration_constant($1, to_int_constant($4, true),
 		    false);
-	  }
-	;
+	}
+;
 
 type_qualifier:			/* C99 6.7.3 */
-	  T_QUAL
-	| atomic {
+	T_QUAL
+|	atomic {
 		$$ = ATOMIC;
-	  }
-	;
+	}
+;
 
 atomic:				/* helper */
-	  T_ATOMIC {
+	T_ATOMIC {
 		/* TODO: First fix c11ism, then use it here. */
 		if (!allow_c11)
 			/* '_Atomic' requires C11 or later */
 			error(350);
-	  }
-	;
+	}
+;
 
 pointer:			/* C99 6.7.5 */
-	  asterisk type_qualifier_list_opt {
+	asterisk type_qualifier_list_opt {
 		$$ = merge_qualified_pointer($1, $2);
-	  }
-	| asterisk type_qualifier_list_opt pointer {
+	}
+|	asterisk type_qualifier_list_opt pointer {
 		$$ = merge_qualified_pointer($1, $2);
 		$$ = merge_qualified_pointer($$, $3);
-	  }
-	;
+	}
+;
 
 asterisk:			/* helper for 'pointer' */
-	  T_ASTERISK {
+	T_ASTERISK {
 		$$ = xcalloc(1, sizeof(*$$));
 		$$->p_pointer = true;
-	  }
-	;
+	}
+;
 
 type_qualifier_list_opt:	/* see C99 6.7.5 */
-	  /* empty */ {
+	/* empty */ {
 		$$ = NULL;
-	  }
-	| type_qualifier_list
-	;
+	}
+|	type_qualifier_list
+;
 
 type_qualifier_list:		/* C99 6.7.5 */
-	  type_qualifier_list_elem
-	| type_qualifier_list type_qualifier_list_elem {
+	type_qualifier_list_elem
+|	type_qualifier_list type_qualifier_list_elem {
 		$$ = merge_qualified_pointer($1, $2);
-	  }
-	;
+	}
+;
 
 type_qualifier_list_elem:	/* helper for 'pointer' */
 	type_qualifier {
@@ -1265,8 +1265,8 @@ type_qualifier_list_elem:	/* helper for 'pointer' */
 			$$->p_const = true;
 		if ($1 == VOLATILE)
 			$$->p_volatile = true;
-	  }
-	;
+	}
+;
 
 /*
  * For an explanation of 'notype' in the following rules, see
@@ -1274,92 +1274,92 @@ type_qualifier_list_elem:	/* helper for 'pointer' */
  */
 
 notype_init_declarators:
-	  notype_init_declarator
-	| notype_init_declarators T_COMMA type_init_declarator
-	;
+	notype_init_declarator
+|	notype_init_declarators T_COMMA type_init_declarator
+;
 
 type_init_declarators:
-	  type_init_declarator
-	| type_init_declarators T_COMMA type_init_declarator
-	;
+	type_init_declarator
+|	type_init_declarators T_COMMA type_init_declarator
+;
 
 notype_init_declarator:
-	  notype_declarator asm_or_symbolrename_opt {
+	notype_declarator asm_or_symbolrename_opt {
 		cgram_declare($1, false, $2);
 		check_size($1);
-	  }
-	| notype_declarator asm_or_symbolrename_opt {
+	}
+|	notype_declarator asm_or_symbolrename_opt {
 		begin_initialization($1);
 		cgram_declare($1, true, $2);
-	  } T_ASSIGN initializer {
+	} T_ASSIGN initializer {
 		check_size($1);
 		end_initialization();
-	  }
-	;
+	}
+;
 
 type_init_declarator:
-	  type_declarator asm_or_symbolrename_opt {
+	type_declarator asm_or_symbolrename_opt {
 		cgram_declare($1, false, $2);
 		check_size($1);
-	  }
-	| type_declarator asm_or_symbolrename_opt {
+	}
+|	type_declarator asm_or_symbolrename_opt {
 		begin_initialization($1);
 		cgram_declare($1, true, $2);
-	  } T_ASSIGN initializer {
+	} T_ASSIGN initializer {
 		check_size($1);
 		end_initialization();
-	  }
-	;
+	}
+;
 
 notype_declarator:
-	  notype_direct_declarator
-	| pointer notype_direct_declarator {
+	notype_direct_declarator
+|	pointer notype_direct_declarator {
 		$$ = add_pointer($2, $1);
-	  }
-	;
+	}
+;
 
 type_declarator:
-	  type_direct_declarator
-	| pointer type_direct_declarator {
+	type_direct_declarator
+|	pointer type_direct_declarator {
 		$$ = add_pointer($2, $1);
-	  }
-	;
+	}
+;
 
 notype_direct_declarator:
-	  type_attribute_list_opt T_NAME {
+	type_attribute_list_opt T_NAME {
 		$$ = declarator_name(getsym($2));
-	  }
-	| type_attribute_list_opt T_LPAREN type_declarator T_RPAREN {
+	}
+|	type_attribute_list_opt T_LPAREN type_declarator T_RPAREN {
 		$$ = $3;
-	  }
-	| notype_direct_declarator T_LBRACK array_size_opt T_RBRACK {
+	}
+|	notype_direct_declarator T_LBRACK array_size_opt T_RBRACK {
 		$$ = add_array($1, $3.has_dim, $3.dim);
-	  }
-	| notype_direct_declarator param_list asm_or_symbolrename_opt {
+	}
+|	notype_direct_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
-	  }
-	| notype_direct_declarator type_attribute
-	;
+	}
+|	notype_direct_declarator type_attribute
+;
 
 type_direct_declarator:
-	  type_attribute_list_opt identifier {
+	type_attribute_list_opt identifier {
 		$$ = declarator_name(getsym($2));
-	  }
-	| type_attribute_list_opt T_LPAREN type_declarator T_RPAREN {
+	}
+|	type_attribute_list_opt T_LPAREN type_declarator T_RPAREN {
 		$$ = $3;
-	  }
-	| type_direct_declarator T_LBRACK array_size_opt T_RBRACK {
+	}
+|	type_direct_declarator T_LBRACK array_size_opt T_RBRACK {
 		$$ = add_array($1, $3.has_dim, $3.dim);
-	  }
-	| type_direct_declarator param_list asm_or_symbolrename_opt {
+	}
+|	type_direct_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
-	  }
-	| type_direct_declarator type_attribute
-	;
+	}
+|	type_direct_declarator type_attribute
+;
 
 /*
  * The two distinct rules type_param_declarator and notype_param_declarator
@@ -1369,213 +1369,213 @@ type_direct_declarator:
  * "f(int (double));", not "f(int a);".
  */
 type_param_declarator:
-	  direct_param_declarator
-	| pointer direct_param_declarator {
+	direct_param_declarator
+|	pointer direct_param_declarator {
 		$$ = add_pointer($2, $1);
-	  }
-	;
+	}
+;
 
 notype_param_declarator:
-	  direct_notype_param_declarator
-	| pointer direct_notype_param_declarator {
+	direct_notype_param_declarator
+|	pointer direct_notype_param_declarator {
 		$$ = add_pointer($2, $1);
-	  }
-	;
+	}
+;
 
 direct_param_declarator:
-	  identifier type_attribute_list {
+	identifier type_attribute_list {
 		$$ = declarator_name(getsym($1));
-	  }
-	| identifier {
+	}
+|	identifier {
 		$$ = declarator_name(getsym($1));
-	  }
-	| T_LPAREN notype_param_declarator T_RPAREN {
+	}
+|	T_LPAREN notype_param_declarator T_RPAREN {
 		$$ = $2;
-	  }
-	| direct_param_declarator T_LBRACK array_size_opt T_RBRACK
+	}
+|	direct_param_declarator T_LBRACK array_size_opt T_RBRACK
 	    gcc_attribute_specifier_list_opt {
 		$$ = add_array($1, $3.has_dim, $3.dim);
-	  }
-	| direct_param_declarator param_list asm_or_symbolrename_opt {
+	}
+|	direct_param_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
-	  }
-	;
+	}
+;
 
 direct_notype_param_declarator:
-	  identifier {
+	identifier {
 		$$ = declarator_name(getsym($1));
-	  }
-	| T_LPAREN notype_param_declarator T_RPAREN {
+	}
+|	T_LPAREN notype_param_declarator T_RPAREN {
 		$$ = $2;
-	  }
-	| direct_notype_param_declarator T_LBRACK array_size_opt T_RBRACK {
+	}
+|	direct_notype_param_declarator T_LBRACK array_size_opt T_RBRACK {
 		$$ = add_array($1, $3.has_dim, $3.dim);
-	  }
-	| direct_notype_param_declarator param_list asm_or_symbolrename_opt {
+	}
+|	direct_notype_param_declarator param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
-	  }
-	;
+	}
+;
 
 param_list:
-	  id_list_lparen identifier_list T_RPAREN {
+	id_list_lparen identifier_list T_RPAREN {
 		$$ = $2;
-	  }
-	| abstract_decl_param_list
-	;
+	}
+|	abstract_decl_param_list
+;
 
 id_list_lparen:
-	  T_LPAREN {
+	T_LPAREN {
 		block_level++;
 		begin_declaration_level(DLK_PROTO_PARAMS);
-	  }
-	;
+	}
+;
 
 array_size_opt:
-	  /* empty */ {
+	/* empty */ {
 		$$.has_dim = false;
 		$$.dim = 0;
-	  }
-	| T_ASTERISK {
+	}
+|	T_ASTERISK {
 		/* since C99; variable length array of unspecified size */
 		$$.has_dim = false; /* TODO: maybe change to true */
 		$$.dim = 0;	/* just as a placeholder */
-	  }
-	| array_size {
+	}
+|	array_size {
 		$$.has_dim = true;
 		$$.dim = $1 == NULL ? 0 : to_int_constant($1, false);
-	  }
-	;
+	}
+;
 
 array_size:
-	  type_qualifier_list_opt T_SCLASS constant_expression {
+	type_qualifier_list_opt T_SCLASS constant_expression {
 		/* C11 6.7.6.3p7 */
 		if ($2 != STATIC)
 			yyerror("Bad attribute");
 		/* static array size is a C11 extension */
 		c11ism(343);
 		$$ = $3;
-	  }
-	| type_qualifier {
+	}
+|	type_qualifier {
 		/* C11 6.7.6.2 */
 		if ($1 != RESTRICT)
 			yyerror("Bad attribute");
 		$$ = NULL;
-	  }
-	| constant_expression
-	;
+	}
+|	constant_expression
+;
 
 identifier_list:		/* C99 6.7.5 */
-	  T_NAME {
+	T_NAME {
 		$$ = old_style_function_parameter_name(getsym($1));
-	  }
-	| identifier_list T_COMMA T_NAME {
+	}
+|	identifier_list T_COMMA T_NAME {
 		$$ = concat_symbols($1,
 		    old_style_function_parameter_name(getsym($3)));
-	  }
-	| identifier_list error
-	;
+	}
+|	identifier_list error
+;
 
 /* XXX: C99 requires an additional specifier-qualifier-list. */
 type_name:			/* C99 6.7.6 */
-	  {
+	{
 		begin_declaration_level(DLK_ABSTRACT);
-	  } abstract_declaration {
+	} abstract_declaration {
 		end_declaration_level();
 		$$ = $2->s_type;
-	  }
-	;
+	}
+;
 
 abstract_declaration:		/* specific to lint */
-	  begin_type_qualifier_list end_type {
+	begin_type_qualifier_list end_type {
 		$$ = declare_abstract_type(abstract_name());
-	  }
-	| begin_type_specifier_qualifier_list end_type {
+	}
+|	begin_type_specifier_qualifier_list end_type {
 		$$ = declare_abstract_type(abstract_name());
-	  }
-	| begin_type_qualifier_list end_type abstract_declarator {
+	}
+|	begin_type_qualifier_list end_type abstract_declarator {
 		$$ = declare_abstract_type($3);
-	  }
-	| begin_type_specifier_qualifier_list end_type abstract_declarator {
+	}
+|	begin_type_specifier_qualifier_list end_type abstract_declarator {
 		$$ = declare_abstract_type($3);
-	  }
-	;
+	}
+;
 
 /* K&R 8.7, C90 ???, C99 6.7.6, C11 6.7.7 */
 /* In K&R, abstract-declarator could be empty and was still simpler. */
 abstract_declarator:
-	  pointer {
+	pointer {
 		$$ = add_pointer(abstract_name(), $1);
-	  }
-	| direct_abstract_declarator
-	| pointer direct_abstract_declarator {
+	}
+|	direct_abstract_declarator
+|	pointer direct_abstract_declarator {
 		$$ = add_pointer($2, $1);
-	  }
-	| type_attribute_list direct_abstract_declarator {
+	}
+|	type_attribute_list direct_abstract_declarator {
 		$$ = $2;
-	  }
-	| pointer type_attribute_list direct_abstract_declarator {
+	}
+|	pointer type_attribute_list direct_abstract_declarator {
 		$$ = add_pointer($3, $1);
-	  }
-	;
+	}
+;
 
 /* K&R ---, C90 ???, C99 6.7.6, C11 6.7.7 */
 direct_abstract_declarator:
 	/* TODO: sort rules according to C99 */
-	  T_LPAREN abstract_declarator T_RPAREN {
+	T_LPAREN abstract_declarator T_RPAREN {
 		$$ = $2;
-	  }
-	| T_LBRACK array_size_opt T_RBRACK {
+	}
+|	T_LBRACK array_size_opt T_RBRACK {
 		$$ = add_array(abstract_name(), $2.has_dim, $2.dim);
-	  }
-	| direct_abstract_declarator T_LBRACK array_size_opt T_RBRACK {
+	}
+|	direct_abstract_declarator T_LBRACK array_size_opt T_RBRACK {
 		$$ = add_array($1, $3.has_dim, $3.dim);
-	  }
-	| abstract_decl_param_list asm_or_symbolrename_opt {
+	}
+|	abstract_decl_param_list asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename(abstract_name(), $2), $1);
 		end_declaration_level();
 		block_level--;
-	  }
-	| direct_abstract_declarator abstract_decl_param_list
+	}
+|	direct_abstract_declarator abstract_decl_param_list
 	    asm_or_symbolrename_opt {
 		$$ = add_function(symbolrename($1, $3), $2);
 		end_declaration_level();
 		block_level--;
-	  }
-	| direct_abstract_declarator type_attribute_list
-	;
+	}
+|	direct_abstract_declarator type_attribute_list
+;
 
 abstract_decl_param_list:	/* specific to lint */
-	  abstract_decl_lparen T_RPAREN type_attribute_opt {
+	abstract_decl_lparen T_RPAREN type_attribute_opt {
 		$$ = NULL;
-	  }
-	| abstract_decl_lparen vararg_parameter_type_list T_RPAREN
+	}
+|	abstract_decl_lparen vararg_parameter_type_list T_RPAREN
 	    type_attribute_opt {
 		dcs->d_prototype = true;
 		$$ = $2;
-	  }
-	| abstract_decl_lparen error T_RPAREN type_attribute_opt {
+	}
+|	abstract_decl_lparen error T_RPAREN type_attribute_opt {
 		$$ = NULL;
-	  }
-	;
+	}
+;
 
 abstract_decl_lparen:		/* specific to lint */
-	  T_LPAREN {
+	T_LPAREN {
 		block_level++;
 		begin_declaration_level(DLK_PROTO_PARAMS);
-	  }
-	;
+	}
+;
 
 vararg_parameter_type_list:	/* specific to lint */
-	  parameter_type_list
-	| parameter_type_list T_COMMA T_ELLIPSIS {
+	parameter_type_list
+|	parameter_type_list T_COMMA T_ELLIPSIS {
 		dcs->d_vararg = true;
 		$$ = $1;
-	  }
-	| T_ELLIPSIS {
+	}
+|	T_ELLIPSIS {
 		/* TODO: C99 6.7.5 makes this an error as well. */
 		if (!allow_trad && !allow_c99) {
 			/* ANSI C requires formal parameter before '...' */
@@ -1586,30 +1586,30 @@ vararg_parameter_type_list:	/* specific to lint */
 		}
 		dcs->d_vararg = true;
 		$$ = NULL;
-	  }
-	;
+	}
+;
 
 /* XXX: C99 6.7.5 defines the same name, but it looks different. */
 parameter_type_list:
-	  parameter_declaration
-	| parameter_type_list T_COMMA parameter_declaration {
+	parameter_declaration
+|	parameter_type_list T_COMMA parameter_declaration {
 		$$ = concat_symbols($1, $3);
-	  }
-	;
+	}
+;
 
 /* XXX: C99 6.7.5 defines the same name, but it looks completely different. */
 parameter_declaration:
-	  begin_type_declmods end_type {
+	begin_type_declmods end_type {
 		/* ^^ There is no check for the missing type-specifier. */
 		$$ = declare_argument(abstract_name(), false);
-	  }
-	| begin_type_declaration_specifiers end_type {
+	}
+|	begin_type_declaration_specifiers end_type {
 		$$ = declare_argument(abstract_name(), false);
-	  }
-	| begin_type_declmods end_type notype_param_declarator {
+	}
+|	begin_type_declmods end_type notype_param_declarator {
 		/* ^^ There is no check for the missing type-specifier. */
 		$$ = declare_argument($3, false);
-	  }
+	}
 	/*
 	 * type_param_declarator is needed because of following conflict:
 	 * "typedef int a; f(int (a));" could be parsed as
@@ -1617,339 +1617,339 @@ parameter_declaration:
 	 * "function with an abstract argument of type function".
 	 * This grammar realizes the second case.
 	 */
-	| begin_type_declaration_specifiers end_type type_param_declarator {
+|	begin_type_declaration_specifiers end_type type_param_declarator {
 		$$ = declare_argument($3, false);
-	  }
-	| begin_type_declmods end_type abstract_declarator {
+	}
+|	begin_type_declmods end_type abstract_declarator {
 		/* ^^ There is no check for the missing type-specifier. */
 		$$ = declare_argument($3, false);
-	  }
-	| begin_type_declaration_specifiers end_type abstract_declarator {
+	}
+|	begin_type_declaration_specifiers end_type abstract_declarator {
 		$$ = declare_argument($3, false);
-	  }
-	;
+	}
+;
 
 braced_initializer:
 	/* K&R ---, C90 ---, C99 ---, C11 ---, C23 6.7.10 */
-	  init_lbrace init_rbrace {
+	init_lbrace init_rbrace {
 		/* empty initializer braces require C23 or later */
 		c23ism(353);
 	}
 	/* K&R ---, C90 ---, C99 6.7.8, C11 6.7.9, C23 6.7.10 */
-	| init_lbrace initializer_list comma_opt init_rbrace
-	;
+|	init_lbrace initializer_list comma_opt init_rbrace
+;
 
 initializer:			/* C99 6.7.8 "Initialization" */
-	  assignment_expression {
+	assignment_expression {
 		init_expr($1);
-	  }
-	| init_lbrace init_rbrace {
+	}
+|	init_lbrace init_rbrace {
 		/* XXX: Empty braces are not covered by C99 6.7.8. */
-	  }
-	| init_lbrace initializer_list comma_opt init_rbrace
-	  /* XXX: What is this error handling for? */
-	| error
-	;
+	}
+|	init_lbrace initializer_list comma_opt init_rbrace
+	/* XXX: What is this error handling for? */
+|	error
+;
 
 initializer_list:		/* C99 6.7.8 "Initialization" */
-	  initializer_list_item
-	| initializer_list T_COMMA initializer_list_item
-	;
+	initializer_list_item
+|	initializer_list T_COMMA initializer_list_item
+;
 
 initializer_list_item:		/* helper */
-	  designation initializer
-	| initializer
-	;
+	designation initializer
+|	initializer
+;
 
 designation:			/* C99 6.7.8 "Initialization" */
-	  begin_designation designator_list T_ASSIGN
-	| identifier T_COLON {
+	begin_designation designator_list T_ASSIGN
+|	identifier T_COLON {
 		/* GCC style struct or union member name in initializer */
 		gnuism(315);
 		begin_designation();
 		add_designator_member($1);
-	  }
-	;
+	}
+;
 
 begin_designation:		/* lint-specific helper */
-	  /* empty */ {
+	/* empty */ {
 		begin_designation();
-	  }
-	;
+	}
+;
 
 designator_list:		/* C99 6.7.8 "Initialization" */
-	  designator
-	| designator_list designator
-	;
+	designator
+|	designator_list designator
+;
 
 designator:			/* C99 6.7.8 "Initialization" */
-	  T_LBRACK range T_RBRACK {
+	T_LBRACK range T_RBRACK {
 		if (!allow_c99)
 			/* array initializer with designators is a C99 ... */
 			warning(321);
 		add_designator_subscript($2);
-	  }
-	| T_POINT identifier {
+	}
+|	T_POINT identifier {
 		if (!allow_c99)
 			/* struct or union member name in initializer is ... */
 			warning(313);
 		add_designator_member($2);
-	  }
-	;
+	}
+;
 
 static_assert_declaration:
-	  T_STATIC_ASSERT T_LPAREN
+	T_STATIC_ASSERT T_LPAREN
 	    constant_expression T_COMMA T_STRING T_RPAREN T_SEMI /* C11 */
-	| T_STATIC_ASSERT T_LPAREN constant_expression T_RPAREN T_SEMI /* C23 */
-	;
+|	T_STATIC_ASSERT T_LPAREN constant_expression T_RPAREN T_SEMI /* C23 */
+;
 
 range:
-	  constant_expression {
+	constant_expression {
 		$$.lo = to_int_constant($1, true);
 		$$.hi = $$.lo;
-	  }
-	| constant_expression T_ELLIPSIS constant_expression {
+	}
+|	constant_expression T_ELLIPSIS constant_expression {
 		$$.lo = to_int_constant($1, true);
 		$$.hi = to_int_constant($3, true);
 		/* initialization with '[a...b]' is a GCC extension */
 		gnuism(340);
-	  }
-	;
+	}
+;
 
 init_lbrace:			/* helper */
-	  T_LBRACE {
+	T_LBRACE {
 		init_lbrace();
-	  }
-	;
+	}
+;
 
 init_rbrace:			/* helper */
-	  T_RBRACE {
+	T_RBRACE {
 		init_rbrace();
-	  }
-	;
+	}
+;
 
 asm_or_symbolrename_opt:	/* GCC extensions */
-	  /* empty */ {
+	/* empty */ {
 		$$ = NULL;
-	  }
-	| T_ASM T_LPAREN T_STRING T_RPAREN gcc_attribute_specifier_list_opt {
+	}
+|	T_ASM T_LPAREN T_STRING T_RPAREN gcc_attribute_specifier_list_opt {
 		freeyyv(&$3, T_STRING);
 		$$ = NULL;
-	  }
-	| T_SYMBOLRENAME T_LPAREN T_NAME T_RPAREN
+	}
+|	T_SYMBOLRENAME T_LPAREN T_NAME T_RPAREN
 	    gcc_attribute_specifier_list_opt {
 		$$ = $3;
-	  }
-	;
+	}
+;
 
 /* K&R ???, C90 ???, C99 6.8, C11 ???, C23 6.8 */
 statement:
-	  expression_statement
-	| non_expr_statement
-	;
+	expression_statement
+|	non_expr_statement
+;
 
 non_expr_statement:		/* helper for C99 6.8 */
-	  gcc_attribute_specifier /* ((__fallthrough__)) */ T_SEMI
-	| labeled_statement
-	| compound_statement
-	| selection_statement
-	| iteration_statement
-	| jump_statement {
+	gcc_attribute_specifier /* ((__fallthrough__)) */ T_SEMI
+|	labeled_statement
+|	compound_statement
+|	selection_statement
+|	iteration_statement
+|	jump_statement {
 		seen_fallthrough = false;
-	  }
-	| asm_statement
-	;
+	}
+|	asm_statement
+;
 
 labeled_statement:		/* C99 6.8.1 */
-	  label gcc_attribute_specifier_list_opt statement
-	;
+	label gcc_attribute_specifier_list_opt statement
+;
 
 label:
-	  T_NAME T_COLON {
+	T_NAME T_COLON {
 		set_symtyp(FLABEL);
 		named_label(getsym($1));
-	  }
-	| T_CASE constant_expression T_COLON {
+	}
+|	T_CASE constant_expression T_COLON {
 		case_label($2);
 		seen_fallthrough = true;
-	  }
-	| T_CASE constant_expression T_ELLIPSIS constant_expression T_COLON {
+	}
+|	T_CASE constant_expression T_ELLIPSIS constant_expression T_COLON {
 		/* XXX: We don't fill all cases */
 		case_label($2);
 		seen_fallthrough = true;
-	  }
-	| T_DEFAULT T_COLON {
+	}
+|	T_DEFAULT T_COLON {
 		default_label();
 		seen_fallthrough = true;
-	  }
-	;
+	}
+;
 
 compound_statement:		/* C99 6.8.2 */
-	  compound_statement_lbrace compound_statement_rbrace
-	| compound_statement_lbrace block_item_list compound_statement_rbrace
-	;
+	compound_statement_lbrace compound_statement_rbrace
+|	compound_statement_lbrace block_item_list compound_statement_rbrace
+;
 
 compound_statement_lbrace:
-	  T_LBRACE {
+	T_LBRACE {
 		block_level++;
 		mem_block_level++;
 		begin_declaration_level(DLK_AUTO);
-	  }
-	;
+	}
+;
 
 compound_statement_rbrace:
-	  T_RBRACE {
+	T_RBRACE {
 		end_declaration_level();
 		level_free_all(mem_block_level);
 		mem_block_level--;
 		block_level--;
 		seen_fallthrough = false;
-	  }
-	;
+	}
+;
 
 block_item_list:		/* C99 6.8.2 */
-	  block_item
-	| block_item_list block_item {
+	block_item
+|	block_item_list block_item {
 		if ($1 && !$2)
 			/* declarations after statements is a C99 feature */
 			c99ism(327);
 		$$ = $1 || $2;
-	  }
-	;
+	}
+;
 
 block_item:			/* C99 6.8.2 */
-	  declaration_or_error {
+	declaration_or_error {
 		$$ = false;
 		restore_warning_flags();
-	  }
-	| statement {
+	}
+|	statement {
 		$$ = true;
 		restore_warning_flags();
-	  }
-	;
+	}
+;
 
 expression_statement:		/* C99 6.8.3 */
-	  expression T_SEMI {
+	expression T_SEMI {
 		expr($1, false, false, false, false);
 		seen_fallthrough = false;
-	  }
-	| T_SEMI {
+	}
+|	T_SEMI {
 		check_statement_reachable();
 		seen_fallthrough = false;
-	  }
-	;
+	}
+;
 
 selection_statement:		/* C99 6.8.4 */
-	  if_without_else %prec T_THEN {
+	if_without_else %prec T_THEN {
 		save_warning_flags();
 		stmt_if_then_stmt();
 		stmt_if_else_stmt(false);
-	  }
-	| if_without_else T_ELSE {
+	}
+|	if_without_else T_ELSE {
 		save_warning_flags();
 		stmt_if_then_stmt();
-	  } statement {
+	} statement {
 		clear_warning_flags();
 		stmt_if_else_stmt(true);
-	  }
-	| if_without_else T_ELSE error {
+	}
+|	if_without_else T_ELSE error {
 		clear_warning_flags();
 		stmt_if_else_stmt(false);
-	  }
-	| switch_expr statement {
+	}
+|	switch_expr statement {
 		clear_warning_flags();
 		stmt_switch_expr_stmt();
-	  }
-	| switch_expr error {
+	}
+|	switch_expr error {
 		clear_warning_flags();
 		stmt_switch_expr_stmt();
-	  }
-	;
+	}
+;
 
 if_without_else:		/* see C99 6.8.4 */
-	  if_expr statement
-	| if_expr error
-	;
+	if_expr statement
+|	if_expr error
+;
 
 if_expr:			/* see C99 6.8.4 */
-	  T_IF T_LPAREN expression T_RPAREN {
+	T_IF T_LPAREN expression T_RPAREN {
 		stmt_if_expr($3);
 		clear_warning_flags();
-	  }
-	;
+	}
+;
 
 switch_expr:			/* see C99 6.8.4 */
-	  T_SWITCH T_LPAREN expression T_RPAREN {
+	T_SWITCH T_LPAREN expression T_RPAREN {
 		stmt_switch_expr($3);
 		clear_warning_flags();
-	  }
-	;
+	}
+;
 
 iteration_statement:		/* C99 6.8.5 */
-	  while_expr statement {
+	while_expr statement {
 		clear_warning_flags();
 		stmt_while_expr_stmt();
-	  }
-	| while_expr error {
+	}
+|	while_expr error {
 		clear_warning_flags();
 		stmt_while_expr_stmt();
-	  }
-	| do_statement do_while_expr {
+	}
+|	do_statement do_while_expr {
 		stmt_do_while_expr($2);
 		seen_fallthrough = false;
-	  }
-	| do error {
+	}
+|	do error {
 		clear_warning_flags();
 		stmt_do_while_expr(NULL);
-	  }
-	| for_exprs statement {
+	}
+|	for_exprs statement {
 		clear_warning_flags();
 		stmt_for_exprs_stmt();
 		end_declaration_level();
 		block_level--;
-	  }
-	| for_exprs error {
+	}
+|	for_exprs error {
 		clear_warning_flags();
 		stmt_for_exprs_stmt();
 		end_declaration_level();
 		block_level--;
-	  }
-	;
+	}
+;
 
 while_expr:			/* see C99 6.8.5 */
-	  T_WHILE T_LPAREN expression T_RPAREN {
+	T_WHILE T_LPAREN expression T_RPAREN {
 		stmt_while_expr($3);
 		clear_warning_flags();
-	  }
-	;
+	}
+;
 
 do_statement:			/* see C99 6.8.5 */
-	  do statement {
+	do statement {
 		clear_warning_flags();
-	  }
-	;
+	}
+;
 
 do:				/* see C99 6.8.5 */
-	  T_DO {
+	T_DO {
 		stmt_do();
-	  }
-	;
+	}
+;
 
 do_while_expr:			/* see C99 6.8.5 */
-	  T_WHILE T_LPAREN expression T_RPAREN T_SEMI {
+	T_WHILE T_LPAREN expression T_RPAREN T_SEMI {
 		$$ = $3;
-	  }
-	;
+	}
+;
 
 for_start:			/* see C99 6.8.5 */
-	  T_FOR T_LPAREN {
+	T_FOR T_LPAREN {
 		begin_declaration_level(DLK_AUTO);
 		block_level++;
-	  }
-	;
+	}
+;
 
 for_exprs:			/* see C99 6.8.5 */
-	  for_start
+	for_start
 	    begin_type_declaration_specifiers end_type
 	    notype_init_declarators T_SEMI
 	    expression_opt T_SEMI
@@ -1959,74 +1959,74 @@ for_exprs:			/* see C99 6.8.5 */
 		stmt_for_exprs(NULL, $6, $8);
 		clear_warning_flags();
 	    }
-	| for_start
+|	for_start
 	    expression_opt T_SEMI
 	    expression_opt T_SEMI
 	    expression_opt T_RPAREN {
 		stmt_for_exprs($2, $4, $6);
 		clear_warning_flags();
-	  }
-	;
+	}
+;
 
 jump_statement:			/* C99 6.8.6 */
-	  goto identifier T_SEMI {
+	goto identifier T_SEMI {
 		stmt_goto(getsym($2));
-	  }
-	| goto error T_SEMI {
+	}
+|	goto error T_SEMI {
 		set_symtyp(FVFT);
-	  }
-	| T_CONTINUE T_SEMI {
+	}
+|	T_CONTINUE T_SEMI {
 		stmt_continue();
-	  }
-	| T_BREAK T_SEMI {
+	}
+|	T_BREAK T_SEMI {
 		stmt_break();
-	  }
-	| T_RETURN sys T_SEMI {
+	}
+|	T_RETURN sys T_SEMI {
 		stmt_return($2, NULL);
-	  }
-	| T_RETURN sys expression T_SEMI {
+	}
+|	T_RETURN sys expression T_SEMI {
 		stmt_return($2, $3);
-	  }
-	;
+	}
+;
 
 goto:				/* see C99 6.8.6 */
-	  T_GOTO {
+	T_GOTO {
 		set_symtyp(FLABEL);
-	  }
-	;
+	}
+;
 
 asm_statement:			/* GCC extension */
-	  T_ASM T_LPAREN read_until_rparen T_SEMI {
+	T_ASM T_LPAREN read_until_rparen T_SEMI {
 		dcs_set_asm();
-	  }
-	| T_ASM type_qualifier T_LPAREN read_until_rparen T_SEMI {
+	}
+|	T_ASM type_qualifier T_LPAREN read_until_rparen T_SEMI {
 		dcs_set_asm();
-	  }
-	| T_ASM error
-	;
+	}
+|	T_ASM error
+;
 
 read_until_rparen:		/* helper for 'asm_statement' */
-	  /* empty */ {
+	/* empty */ {
 		read_until_rparen();
-	  }
-	;
+	}
+;
 
 translation_unit:		/* C99 6.9 */
-	  external_declaration
-	| translation_unit external_declaration
-	;
+	external_declaration
+|	translation_unit external_declaration
+;
 
 external_declaration:		/* C99 6.9 */
-	  function_definition {
+	function_definition {
 		global_clean_up_decl(false);
 		clear_warning_flags();
-	  }
-	| top_level_declaration {
+	}
+|	top_level_declaration {
 		global_clean_up_decl(false);
 		clear_warning_flags();
-	  }
-	| asm_statement		/* GCC extension */
-	| T_SEMI {		/* GCC extension */
+	}
+|	asm_statement		/* GCC extension */
+|	T_SEMI {		/* GCC extension */
 		/*
 		 * TODO: Only allow this in GCC mode, not in plain C99.
 		 * This is one of the top 10 warnings in the NetBSD build.
@@ -2038,8 +2038,8 @@ external_declaration:		/* C99 6.9 */
 			/* empty declaration */
 			warning(0);
 		}
-	  }
-	;
+	}
+;
 
 /*
  * On the top level, lint allows several forms of declarations that it doesn't
@@ -2051,7 +2051,7 @@ external_declaration:		/* C99 6.9 */
  * See 'declaration' for all other declarations.
  */
 top_level_declaration:		/* C99 6.9 calls this 'declaration' */
-	  begin_type end_type notype_init_declarators T_SEMI {
+	begin_type end_type notype_init_declarators T_SEMI {
 		/* TODO: Make this an error in C99 mode as well. */
 		if (!allow_trad && !allow_c99) {
 			/* old-style declaration; add 'int' */
@@ -2060,18 +2060,18 @@ top_level_declaration:		/* C99 6.9 calls this 'declaration' */
 			/* old-style declaration; add 'int' */
 			warning(1);
 		}
-	  }
-	| declaration
-	| error T_SEMI {
+	}
+|	declaration
+|	error T_SEMI {
 		global_clean_up();
-	  }
-	| error T_RBRACE {
+	}
+|	error T_RBRACE {
 		global_clean_up();
-	  }
-	;
+	}
+;
 
 function_definition:		/* C99 6.9.1 */
-	  func_declarator {
+	func_declarator {
 		if ($1->s_type->t_tspec != FUNC) {
 			/* syntax error '%s' */
 			error(249, yytext);
@@ -2088,61 +2088,61 @@ function_definition:		/* C99 6.9.1 */
 		begin_declaration_level(DLK_OLD_STYLE_ARGS);
 		if (lwarn == LWARN_NONE)
 			$1->s_used = true;
-	  } arg_declaration_list_opt {
+	} arg_declaration_list_opt {
 		end_declaration_level();
 		block_level--;
 		check_func_lint_directives();
 		check_func_old_style_arguments();
 		begin_control_statement(CS_FUNCTION_BODY);
-	  } compound_statement {
+	} compound_statement {
 		end_function();
 		end_control_statement(CS_FUNCTION_BODY);
-	  }
-	;
+	}
+;
 
 func_declarator:
-	  begin_type end_type notype_declarator {
+	begin_type end_type notype_declarator {
 		if (!allow_trad) {
 			/* old-style declaration; add 'int' */
 			error(1);
 		}
 		$$ = $3;
-	  }
-	| begin_type_declmods end_type notype_declarator {
+	}
+|	begin_type_declmods end_type notype_declarator {
 		if (!allow_trad) {
 			/* old-style declaration; add 'int' */
 			error(1);
 		}
 		$$ = $3;
-	  }
-	| begin_type_declaration_specifiers end_type type_declarator {
+	}
+|	begin_type_declaration_specifiers end_type type_declarator {
 		$$ = $3;
-	  }
-	;
+	}
+;
 
 arg_declaration_list_opt:	/* C99 6.9.1p13 example 1 */
-	  /* empty */
-	| arg_declaration_list
-	;
+	/* empty */
+|	arg_declaration_list
+;
 
 arg_declaration_list:		/* C99 6.9.1p13 example 1 */
-	  arg_declaration
-	| arg_declaration_list arg_declaration
+	arg_declaration
+|	arg_declaration_list arg_declaration
 	/* XXX or better "arg_declaration error" ? */
-	| error
-	;
+|	error
+;
 
 /*
  * "arg_declaration" is separated from "declaration" because it
  * needs other error handling.
  */
 arg_declaration:
-	  begin_type_declmods end_type T_SEMI {
+	begin_type_declmods end_type T_SEMI {
 		/* empty declaration */
 		warning(2);
-	  }
-	| begin_type_declmods end_type notype_init_declarators T_SEMI
-	| begin_type_declaration_specifiers end_type T_SEMI {
+	}
+|	begin_type_declmods end_type notype_init_declarators T_SEMI
+|	begin_type_declaration_specifiers end_type T_SEMI {
 		if (!dcs->d_nonempty_decl) {
 			/* empty declaration */
 			warning(2);
@@ -2150,45 +2150,45 @@ arg_declaration:
 			/* '%s' declared in argument declaration list */
 			warning(3, type_name(dcs->d_type));
 		}
-	  }
-	| begin_type_declaration_specifiers end_type
+	}
+|	begin_type_declaration_specifiers end_type
 	    type_init_declarators T_SEMI {
 		if (dcs->d_nonempty_decl) {
 			/* '%s' declared in argument declaration list */
 			warning(3, type_name(dcs->d_type));
 		}
-	  }
-	| begin_type_declmods error
-	| begin_type_declaration_specifiers error
-	;
+	}
+|	begin_type_declmods error
+|	begin_type_declaration_specifiers error
+;
 
 /* https://gcc.gnu.org/onlinedocs/gcc/Attribute-Syntax.html */
 gcc_attribute_specifier_list_opt:
-	  /* empty */
-	| gcc_attribute_specifier_list
-	;
+	/* empty */
+|	gcc_attribute_specifier_list
+;
 
 gcc_attribute_specifier_list:
-	  gcc_attribute_specifier
-	| gcc_attribute_specifier_list gcc_attribute_specifier
-	;
+	gcc_attribute_specifier
+|	gcc_attribute_specifier_list gcc_attribute_specifier
+;
 
 gcc_attribute_specifier:
-	  T_ATTRIBUTE T_LPAREN T_LPAREN {
+	T_ATTRIBUTE T_LPAREN T_LPAREN {
 		in_gcc_attribute = true;
-	  } gcc_attribute_list {
+	} gcc_attribute_list {
 		in_gcc_attribute = false;
-	  } T_RPAREN T_RPAREN
-	;
+	} T_RPAREN T_RPAREN
+;
 
 gcc_attribute_list:
-	  gcc_attribute
-	| gcc_attribute_list T_COMMA gcc_attribute
-	;
+	gcc_attribute
+|	gcc_attribute_list T_COMMA gcc_attribute
+;
 
 gcc_attribute:
-	  /* empty */
-	| T_NAME {
+	/* empty */
+|	T_NAME {
 		const char *name = $1->sb_name;
 		if (is_either(name, "packed", "__packed__"))
 			dcs_add_packed();
@@ -2198,24 +2198,24 @@ gcc_attribute:
 		else if (is_either(name, "fallthrough", "__fallthrough__"))
 			fallthru(1);
 	}
-	| T_NAME T_LPAREN T_RPAREN
-	| T_NAME T_LPAREN gcc_attribute_parameters T_RPAREN
-	| type_qualifier {
+|	T_NAME T_LPAREN T_RPAREN
+|	T_NAME T_LPAREN gcc_attribute_parameters T_RPAREN
+|	type_qualifier {
 		if ($1 != CONST)
 			yyerror("Bad attribute");
-	  }
-	;
+	}
+;
 
 gcc_attribute_parameters:
-	  constant_expression
-	| gcc_attribute_parameters T_COMMA constant_expression
-	;
+	constant_expression
+|	gcc_attribute_parameters T_COMMA constant_expression
+;
 
 sys:
-	  /* empty */ {
+	/* empty */ {
 		$$ = in_system_header;
-	  }
-	;
+	}
+;
 
 %%
 
