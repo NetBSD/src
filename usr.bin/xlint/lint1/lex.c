@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.175 2023/07/12 10:08:11 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.176 2023/07/12 16:07:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.175 2023/07/12 10:08:11 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.176 2023/07/12 16:07:35 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -97,13 +97,15 @@ bool in_system_header;
 /* During initialization, these keywords are written to the symbol table. */
 static const struct keyword {
 	const	char *kw_name;
-	int	kw_token;	/* token returned by yylex() */
+	int	kw_token;	/* token to be returned by yylex() */
 	union {
 		bool kw_dummy;
 		scl_t kw_scl;		/* if kw_token is T_SCLASS */
 		tspec_t kw_tspec;	/* if kw_token is T_TYPE or
 					 * T_STRUCT_OR_UNION */
 		tqual_t kw_tqual;	/* if kw_token is T_QUAL */
+		function_specifier kw_fs;	/* if kw_token is
+						 * T_FUNCTION_SPECIFIER */
 	} u;
 	bool	kw_c90:1;	/* available in C90 mode */
 	bool	kw_c99_or_c11:1; /* available in C99 or C11 mode */
@@ -140,7 +142,7 @@ static const struct keyword {
 	kwdef_keyword(	"goto",		T_GOTO),
 	kwdef_keyword(	"if",		T_IF),
 	kwdef_token(	"__imag__",	T_IMAG,			78,1,1),
-	kwdef_sclass(	"inline",	INLINE,			99,0,7),
+	kwdef("inline",	T_FUNCTION_SPECIFIER, .u.kw_fs = FS_INLINE, 99,0,7),
 	kwdef_type(	"int",		INT,			78),
 #ifdef INT128_SIZE
 	kwdef_type(	"__int128_t",	INT128,			99),
@@ -348,11 +350,13 @@ add_keyword(const struct keyword *kw, bool leading, bool trailing)
 	int tok = kw->kw_token;
 	sym->u.s_keyword.sk_token = tok;
 	if (tok == T_TYPE || tok == T_STRUCT_OR_UNION)
-		sym->u.s_keyword.sk_tspec = kw->u.kw_tspec;
+		sym->u.s_keyword.u.sk_tspec = kw->u.kw_tspec;
 	if (tok == T_SCLASS)
 		sym->s_scl = kw->u.kw_scl;
 	if (tok == T_QUAL)
-		sym->u.s_keyword.sk_qualifier = kw->u.kw_tqual;
+		sym->u.s_keyword.u.sk_qualifier = kw->u.kw_tqual;
+	if (tok == T_FUNCTION_SPECIFIER)
+		sym->u.s_keyword.u.function_specifier = kw->u.kw_fs;
 
 	symtab_add(sym);
 }
@@ -427,9 +431,12 @@ lex_keyword(sym_t *sym)
 	if (tok == T_SCLASS)
 		yylval.y_scl = sym->s_scl;
 	if (tok == T_TYPE || tok == T_STRUCT_OR_UNION)
-		yylval.y_tspec = sym->u.s_keyword.sk_tspec;
+		yylval.y_tspec = sym->u.s_keyword.u.sk_tspec;
 	if (tok == T_QUAL)
-		yylval.y_tqual = sym->u.s_keyword.sk_qualifier;
+		yylval.y_tqual = sym->u.s_keyword.u.sk_qualifier;
+	if (tok == T_FUNCTION_SPECIFIER)
+		yylval.y_function_specifier =
+		    sym->u.s_keyword.u.function_specifier;
 	return tok;
 }
 

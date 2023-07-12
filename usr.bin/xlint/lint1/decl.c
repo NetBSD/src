@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.348 2023/07/09 12:15:07 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.349 2023/07/12 16:07:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.348 2023/07/09 12:15:07 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.349 2023/07/12 16:07:35 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -200,6 +200,18 @@ is_incomplete(const type_t *tp)
 	return false;
 }
 
+void
+dcs_add_function_specifier(function_specifier fs)
+{
+	debug_step("%s: %s", __func__, function_specifier_name(fs));
+	if (fs == FS_INLINE) {
+		if (dcs->d_inline)
+			/* duplicate '%s' */
+			warning(10, "inline");
+		dcs->d_inline = true;
+	}
+}
+
 /*
  * Remember the storage class of the current declaration and detect multiple
  * storage classes.
@@ -207,14 +219,6 @@ is_incomplete(const type_t *tp)
 void
 dcs_add_storage_class(scl_t sc)
 {
-
-	if (sc == INLINE) {
-		if (dcs->d_inline)
-			/* duplicate '%s' */
-			warning(10, "inline");
-		dcs->d_inline = true;
-		return;
-	}
 
 	if (dcs->d_type != NULL || dcs->d_abstract_type != NO_TSPEC ||
 	    dcs->d_sign_mod != NO_TSPEC || dcs->d_rank_mod != NO_TSPEC) {
@@ -619,6 +623,7 @@ void
 dcs_begin_type(void)
 {
 
+	debug_step("%s", __func__);
 	dcs->d_abstract_type = NO_TSPEC;
 	dcs->d_complex_mod = NO_TSPEC;
 	dcs->d_sign_mod = NO_TSPEC;
@@ -723,6 +728,7 @@ void
 dcs_end_type(void)
 {
 
+	debug_step("%s", __func__);
 	dcs_merge_declaration_specifiers();
 
 	if (dcs->d_multiple_storage_classes) {

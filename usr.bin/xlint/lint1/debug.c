@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.49 2023/07/10 19:47:12 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.50 2023/07/12 16:07:35 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.49 2023/07/10 19:47:12 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.50 2023/07/12 16:07:35 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -227,7 +227,7 @@ debug_node(const tnode_t *tn) // NOLINT(misc-no-recursion)
 		debug_node(tn->tn_left);
 		if (op != INCBEF && op != INCAFT
 		    && op != DECBEF && op != DECAFT
-		    && op != PUSH)
+		    && op != CALL && op != PUSH)
 			lint_assert(is_binary(tn) == (tn->tn_right != NULL));
 		if (tn->tn_right != NULL)
 			debug_node(tn->tn_right);
@@ -283,7 +283,6 @@ scl_name(scl_t scl)
 		"abstract",
 		"old-style-function-argument",
 		"prototype-argument",
-		"inline",
 	};
 
 	return name[scl];
@@ -314,6 +313,16 @@ tqual_name(tqual_t qual)
 	};
 
 	return name[qual];
+}
+
+const char *
+function_specifier_name(function_specifier spec)
+{
+	static const char *const name[] = {
+		"inline",
+	};
+
+	return name[spec];
 }
 
 static void
@@ -380,10 +389,13 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 		int t = sym->u.s_keyword.sk_token;
 		if (t == T_TYPE || t == T_STRUCT_OR_UNION)
 			debug_printf(" %s",
-			    tspec_name(sym->u.s_keyword.sk_tspec));
+			    tspec_name(sym->u.s_keyword.u.sk_tspec));
 		if (t == T_QUAL)
 			debug_printf(" %s",
-			    tqual_name(sym->u.s_keyword.sk_qualifier));
+			    tqual_name(sym->u.s_keyword.u.sk_qualifier));
+		if (t == T_FUNCTION_SPECIFIER)
+			debug_printf(" %s", function_specifier_name(
+			    sym->u.s_keyword.u.function_specifier));
 	}
 
 	debug_word(sym->s_osdef && sym->u.s_old_style_args != NULL,
