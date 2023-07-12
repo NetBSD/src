@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.456 2023/07/12 16:07:35 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.457 2023/07/12 18:26:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.456 2023/07/12 16:07:35 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.457 2023/07/12 18:26:04 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -132,7 +132,7 @@ is_either(const char *s, const char *a, const char *b)
 
 %}
 
-%expect 132
+%expect 104
 
 %union {
 	val_t	*y_val;
@@ -223,7 +223,6 @@ is_either(const char *s, const char *a, const char *b)
 %token			T_REAL
 %token			T_IMAG
 %token			T_GENERIC
-%token			T_NORETURN
 
 /* storage classes (extern, static, auto, register and typedef) */
 %token	<y_scl>		T_SCLASS
@@ -932,7 +931,6 @@ type_attribute:			/* See C11 6.7 declaration-specifiers */
 |	T_PACKED {
 		dcs_add_packed();
 	}
-|	T_NORETURN
 ;
 
 begin_type:
@@ -1969,7 +1967,7 @@ for_exprs:			/* see C99 6.8.5 */
 		c99ism(325);
 		stmt_for_exprs(NULL, $6, $8);
 		clear_warning_flags();
-	    }
+	}
 |	for_start
 	    expression_opt T_SEMI
 	    expression_opt T_SEMI

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.186 2023/07/12 16:07:35 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.187 2023/07/12 18:26:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -210,8 +210,8 @@ typedef enum {
 
 /* C23 6.7.4 */
 typedef enum {
-	FS_INLINE,
-	// TODO: Add FS_NORETURN, for C23.
+	FS_INLINE,		/* since C99 */
+	FS_NORETURN,		/* since C11 */
 } function_specifier;
 
 /*
