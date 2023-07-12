@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.174 2023/07/10 19:00:33 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.175 2023/07/12 10:08:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.174 2023/07/10 19:00:33 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.175 2023/07/12 10:08:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -75,33 +75,36 @@ bool in_system_header;
  * not defined, it would be interpreted as an implicit function call, leading
  * to a parse error.
  */
-#define kwdef(name, token, scl, tspec, tqual,	since, gcc, deco) \
+#define kwdef(name, token, detail,	since, gcc, deco) \
 	{ \
-		name, token, scl, tspec, tqual, \
+		name, token, detail, \
 		(since) == 90, \
 		/* CONSTCOND */ (since) == 99 || (since) == 11, \
 		(gcc) > 0, \
 		((deco) & 1) != 0, ((deco) & 2) != 0, ((deco) & 4) != 0, \
 	}
 #define kwdef_token(name, token,		since, gcc, deco) \
-	kwdef(name, token, 0, 0, 0,		since, gcc, deco)
+	kwdef(name, token, {false},		since, gcc, deco)
 #define kwdef_sclass(name, sclass,		since, gcc, deco) \
-	kwdef(name, T_SCLASS, sclass, 0, 0,	since, gcc, deco)
+	kwdef(name, T_SCLASS, .u.kw_scl = (sclass), since, gcc, deco)
 #define kwdef_type(name, tspec,			since) \
-	kwdef(name, T_TYPE, 0, tspec, 0,	since, 0, 1)
+	kwdef(name, T_TYPE, .u.kw_tspec = (tspec), since, 0, 1)
 #define kwdef_tqual(name, tqual,		since, gcc, deco) \
-	kwdef(name, T_QUAL, 0, 0, tqual,	since, gcc, deco)
+	kwdef(name, T_QUAL, .u.kw_tqual = (tqual), since, gcc, deco)
 #define kwdef_keyword(name, token) \
-	kwdef(name, token, 0, 0, 0,		78, 0, 1)
+	kwdef(name, token, {false},		78, 0, 1)
 
 /* During initialization, these keywords are written to the symbol table. */
 static const struct keyword {
 	const	char *kw_name;
 	int	kw_token;	/* token returned by yylex() */
-	scl_t	kw_scl;		/* storage class if kw_token is T_SCLASS */
-	tspec_t	kw_tspec;	/* type specifier if kw_token is T_TYPE or
-				 * T_STRUCT_OR_UNION */
-	tqual_t	kw_tqual;	/* type qualifier if kw_token is T_QUAL */
+	union {
+		bool kw_dummy;
+		scl_t kw_scl;		/* if kw_token is T_SCLASS */
+		tspec_t kw_tspec;	/* if kw_token is T_TYPE or
+					 * T_STRUCT_OR_UNION */
+		tqual_t kw_tqual;	/* if kw_token is T_QUAL */
+	} u;
 	bool	kw_c90:1;	/* available in C90 mode */
 	bool	kw_c99_or_c11:1; /* available in C99 or C11 mode */
 	bool	kw_gcc:1;	/* available in GCC mode */
@@ -150,11 +153,11 @@ static const struct keyword {
 	kwdef_tqual(	"restrict",	RESTRICT,		99,0,7),
 	kwdef_keyword(	"return",	T_RETURN),
 	kwdef_type(	"short",	SHORT,			78),
-	kwdef(		"signed",	T_TYPE, 0, SIGNED, 0,	90,0,3),
+	kwdef(		"signed", T_TYPE, .u.kw_tspec = SIGNED,	90,0,3),
 	kwdef_keyword(	"sizeof",	T_SIZEOF),
 	kwdef_sclass(	"static",	STATIC,			78,0,1),
 	kwdef_keyword(	"_Static_assert",	T_STATIC_ASSERT),
-	kwdef("struct",	T_STRUCT_OR_UNION, 0,	STRUCT,	0,	78,0,1),
+	kwdef("struct",	T_STRUCT_OR_UNION, .u.kw_tspec = STRUCT, 78,0,1),
 	kwdef_keyword(	"switch",	T_SWITCH),
 	kwdef_token(	"__symbolrename",	T_SYMBOLRENAME,	78,0,1),
 	kwdef_tqual(	"__thread",	THREAD,			78,1,1),
@@ -165,7 +168,7 @@ static const struct keyword {
 #ifdef INT128_SIZE
 	kwdef_type(	"__uint128_t",	UINT128,		99),
 #endif
-	kwdef("union",	T_STRUCT_OR_UNION, 0,	UNION,	0,	78,0,1),
+	kwdef("union",	T_STRUCT_OR_UNION, .u.kw_tspec = UNION,	78,0,1),
 	kwdef_type(	"unsigned",	UNSIGN,			78),
 	kwdef_type(	"void",		VOID,			78),
 	kwdef_tqual(	"volatile",	VOLATILE,		90,0,7),
@@ -345,11 +348,11 @@ add_keyword(const struct keyword *kw, bool leading, bool trailing)
 	int tok = kw->kw_token;
 	sym->u.s_keyword.sk_token = tok;
 	if (tok == T_TYPE || tok == T_STRUCT_OR_UNION)
-		sym->u.s_keyword.sk_tspec = kw->kw_tspec;
+		sym->u.s_keyword.sk_tspec = kw->u.kw_tspec;
 	if (tok == T_SCLASS)
-		sym->s_scl = kw->kw_scl;
+		sym->s_scl = kw->u.kw_scl;
 	if (tok == T_QUAL)
-		sym->u.s_keyword.sk_qualifier = kw->kw_tqual;
+		sym->u.s_keyword.sk_qualifier = kw->u.kw_tqual;
 
 	symtab_add(sym);
 }
