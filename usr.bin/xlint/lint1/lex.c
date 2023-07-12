@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.177 2023/07/12 18:26:04 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.178 2023/07/12 20:13:28 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.177 2023/07/12 18:26:04 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.178 2023/07/12 20:13:28 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -96,7 +96,7 @@ bool in_system_header;
 
 /* During initialization, these keywords are written to the symbol table. */
 static const struct keyword {
-	const	char *kw_name;
+	const	char kw_name[20];
 	int	kw_token;	/* token to be returned by yylex() */
 	union {
 		bool kw_dummy;
