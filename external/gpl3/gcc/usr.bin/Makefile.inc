@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.35 2023/02/01 19:38:20 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.36 2023/07/12 07:35:15 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_INC_=1
@@ -40,8 +40,6 @@ FRONTENDOBJ!=		cd ${.CURDIR}/../frontend && ${PRINTOBJDIR}
 .if ${USETOOLS} == "yes"
 NBCOMPATLIB=   -L${TOOLDIR}/lib -lnbcompat
 .endif
-
-CXXFLAGS+=	-std=gnu++98
 
 # Reduce debugging for these extremely large objects.
 .if ${MKDEBUG:Uno} != "no"
