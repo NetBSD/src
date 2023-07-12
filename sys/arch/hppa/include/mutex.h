@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.16 2023/07/09 17:03:09 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.17 2023/07/12 06:45:24 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ struct kmutex {
 #define	MUTEX_SPIN_FLAG			0xffffff10
 #define	MUTEX_UNOWNED_OR_SPIN(x)	(((x) & 0xffffffef) == 0xffffff00)
 
-#ifndef __ASSEMBLER__
+#if !defined(__ASSEMBLER__) && defined(_KERNEL)
 
 static inline uintptr_t
 MUTEX_OWNER(uintptr_t owner)
@@ -180,7 +180,7 @@ MUTEX_CLEAR_WAITERS(struct kmutex *mtx)
 	mtx->mtx_waiters = 0;
 }
 
-#endif	/* __ASSEMBLER__ */
+#endif	/* !__ASSEMBLER__ && _KERNEL */
 
 #endif	/* __MUTEX_PRIVATE */
 
