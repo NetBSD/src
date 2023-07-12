@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.176 2023/07/12 16:07:35 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.177 2023/07/12 18:26:04 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.176 2023/07/12 16:07:35 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.177 2023/07/12 18:26:04 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -148,7 +148,7 @@ static const struct keyword {
 	kwdef_type(	"__int128_t",	INT128,			99),
 #endif
 	kwdef_type(	"long",		LONG,			78),
-	kwdef_token(	"_Noreturn",	T_NORETURN,		11,0,1),
+	kwdef("_Noreturn", T_FUNCTION_SPECIFIER, .u.kw_fs = FS_NORETURN, 11,0,1),
 	kwdef_token(	"__packed",	T_PACKED,		78,0,1),
 	kwdef_token(	"__real__",	T_REAL,			78,1,1),
 	kwdef_sclass(	"register",	REG,			78,0,1),
