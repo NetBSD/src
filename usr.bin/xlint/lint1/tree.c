@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.560 2023/07/10 19:47:12 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.561 2023/07/12 19:34:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.560 2023/07/10 19:47:12 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.561 2023/07/12 19:34:01 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1391,19 +1391,16 @@ build_real_imag(op_t op, bool sys, tnode_t *ln)
 		mark_as_set(ln->tn_sym);
 	}
 
-	tnode_t *cn;
+	tspec_t t;
 	switch (ln->tn_type->t_tspec) {
 	case LCOMPLEX:
-		/* XXX: integer and LDOUBLE don't match. */
-		cn = build_integer_constant(LDOUBLE, (int64_t)1);
+		t = LDOUBLE;
 		break;
 	case DCOMPLEX:
-		/* XXX: integer and DOUBLE don't match. */
-		cn = build_integer_constant(DOUBLE, (int64_t)1);
+		t = DOUBLE;
 		break;
 	case FCOMPLEX:
-		/* XXX: integer and FLOAT don't match. */
-		cn = build_integer_constant(FLOAT, (int64_t)1);
+		t = FLOAT;
 		break;
 	default:
 		/* '__%s__' is illegal for type '%s' */
@@ -1412,7 +1409,7 @@ build_real_imag(op_t op, bool sys, tnode_t *ln)
 		return NULL;
 	}
 
-	tnode_t *ntn = new_tnode(op, sys, cn->tn_type, ln, cn);
+	tnode_t *ntn = new_tnode(op, sys, gettyp(t), ln, NULL);
 	ntn->tn_lvalue = true;
 	return ntn;
 }
