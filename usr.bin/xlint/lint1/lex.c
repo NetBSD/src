@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.183 2023/07/13 19:59:08 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.184 2023/07/13 20:30:21 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.183 2023/07/13 19:59:08 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.184 2023/07/13 20:30:21 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -68,18 +68,22 @@ bool in_gcc_attribute;
 bool in_system_header;
 
 /*
- * Valid values for 'since' are 78, 90, 99, 11.
+ * Valid values for 'since' are 78, 90, 99, 11, 23.
  *
- * The C11 keywords are added in C99 mode as well, to provide good error
- * messages instead of a simple parse error.  If the keyword '_Generic' were
- * not defined, it would be interpreted as an implicit function call, leading
- * to a parse error.
+ * The C11 keywords are all taken from the reserved namespace.  They are added
+ * in C99 mode as well, to make the parse error messages more useful.  For
+ * example, if the keyword '_Generic' were not defined, it would be interpreted
+ * as an implicit function call, leading to a parse error.
+ *
+ * The C23 keywords are not made available in earlier modes, as they may
+ * conflict with user-defined identifiers.
  */
 #define kwdef(name, token, detail,	since, gcc, deco) \
-	{ \
+	{ /* CONSTCOND */ \
 		name, token, detail, \
 		(since) == 90, \
-		/* CONSTCOND */ (since) == 99 || (since) == 11, \
+		(since) == 99 || (since) == 11, \
+		(since) == 23, \
 		(gcc) > 0, \
 		((deco) & 1) != 0, ((deco) & 2) != 0, ((deco) & 4) != 0, \
 	}
@@ -107,8 +111,9 @@ static const struct keyword {
 		function_specifier kw_fs;	/* if kw_token is
 						 * T_FUNCTION_SPECIFIER */
 	} u;
-	bool	kw_c90:1;	/* available in C90 mode */
-	bool	kw_c99_or_c11:1; /* available in C99 or C11 mode */
+	bool	kw_added_in_c90:1;
+	bool	kw_added_in_c99_or_c11:1;
+	bool	kw_added_in_c23:1;
 	bool	kw_gcc:1;	/* available in GCC mode */
 	bool	kw_plain:1;	/* 'name' */
 	bool	kw_leading:1;	/* '__name' */
@@ -164,6 +169,7 @@ static const struct keyword {
 	kwdef_token(	"__symbolrename",	T_SYMBOLRENAME,	78,0,1),
 	kwdef_sclass(	"__thread",	THREAD_LOCAL,		78,1,1),
 	kwdef_sclass(	"_Thread_local", THREAD_LOCAL,		11,0,1),
+	kwdef_sclass(	"thread_local", THREAD_LOCAL,		23,0,1),
 	kwdef_sclass(	"typedef",	TYPEDEF,		78,0,1),
 	kwdef_token(	"typeof",	T_TYPEOF,		78,1,7),
 #ifdef INT128_SIZE
@@ -364,7 +370,9 @@ static bool
 is_keyword_known(const struct keyword *kw)
 {
 
-	if ((kw->kw_c90 || kw->kw_c99_or_c11) && !allow_c90)
+	if (kw->kw_added_in_c23 && !allow_c23)
+		return false;
+	if ((kw->kw_added_in_c90 || kw->kw_added_in_c99_or_c11) && !allow_c90)
 		return false;
 
 	/*
@@ -378,7 +386,7 @@ is_keyword_known(const struct keyword *kw)
 	if (kw->kw_gcc)
 		return false;
 
-	if (kw->kw_c99_or_c11 && !allow_c99)
+	if (kw->kw_added_in_c99_or_c11 && !allow_c99)
 		return false;
 	return true;
 }
