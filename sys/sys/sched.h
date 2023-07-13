@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.91 2022/10/26 23:24:09 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.92 2023/07/13 12:06:20 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019, 2020
@@ -142,9 +142,10 @@ __END_DECLS
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 
-#include <sys/mutex.h>
 #include <sys/time.h>
 #include <sys/queue.h>
+
+struct kmutex;
 
 /*
  * Per-CPU scheduler state.  Field markings and the corresponding locks: 
@@ -155,8 +156,8 @@ __END_DECLS
  * c:	cpu_lock
  */
 struct schedstate_percpu {
-	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
-	kmutex_t	*spc_lwplock;	/* (: general purpose lock for LWPs */
+	struct kmutex	*spc_mutex;	/* (: lock on below, runnable LWPs */
+	struct kmutex	*spc_lwplock;	/* (: general purpose lock for LWPs */
 	struct lwp	*spc_migrating;	/* (: migrating LWP */
 	struct cpu_info *spc_nextpkg;	/* (: next package 1st for RR */
 	psetid_t	spc_psid;	/* c: processor-set ID */

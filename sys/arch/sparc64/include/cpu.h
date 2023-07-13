@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.133 2021/08/14 17:51:19 ryo Exp $ */
+/*	$NetBSD: cpu.h,v 1.134 2023/07/13 12:06:20 riastradh Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,6 +89,7 @@ struct cacheinfo {
 #endif
 
 #include <sys/cpu_data.h>
+#include <sys/mutex.h>
 #include <sys/evcnt.h>
 
 /*

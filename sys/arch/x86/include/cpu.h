@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.133 2022/09/07 00:40:18 knakahara Exp $	*/
+/*	$NetBSD: cpu.h,v 1.134 2023/07/13 12:06:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,6 +64,10 @@
 #include <sys/cpu_data.h>
 #include <sys/evcnt.h>
 #include <sys/device_if.h> /* for device_t */
+
+#ifdef SVS
+#include <sys/mutex.h>
+#endif
 
 #ifdef XEN
 #include <xen/include/public/xen.h>
