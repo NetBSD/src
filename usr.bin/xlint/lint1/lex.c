@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.180 2023/07/13 07:19:24 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.181 2023/07/13 08:18:17 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.180 2023/07/13 07:19:24 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.181 2023/07/13 08:18:17 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1086,7 +1086,6 @@ lex_comment(void)
 
 	bool seen_end_of_comment = false;
 
-	/* Skip whitespace after the start of the comment */
 	while (c = read_byte(), isspace(c))
 		continue;
 
@@ -1104,14 +1103,12 @@ lex_comment(void)
 	keywd[l] = '\0';
 
 	/* look for the keyword */
-	for (i = 0; i < sizeof(keywtab) / sizeof(keywtab[0]); i++) {
+	for (i = 0; i < sizeof(keywtab) / sizeof(keywtab[0]); i++)
 		if (strcmp(keywtab[i].name, keywd) == 0)
-			break;
-	}
-	if (i == sizeof(keywtab) / sizeof(keywtab[0]))
-		goto skip_rest;
+			goto found_keyword;
+	goto skip_rest;
 
-	/* skip whitespace after the keyword */
+found_keyword:
 	while (isspace(c))
 		c = read_byte();
 
@@ -1126,7 +1123,6 @@ lex_comment(void)
 	arg[l] = '\0';
 	a = l != 0 ? atoi(arg) : -1;
 
-	/* skip whitespace after the argument */
 	while (isspace(c))
 		c = read_byte();
 
