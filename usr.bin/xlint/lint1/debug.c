@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.52 2023/07/12 19:34:01 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.53 2023/07/13 19:59:08 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.52 2023/07/12 19:34:01 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.53 2023/07/13 19:59:08 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -275,6 +275,7 @@ scl_name(scl_t scl)
 		"auto",
 		"register",
 		"typedef",
+		"thread_local",
 		"struct",
 		"union",
 		"enum",
@@ -308,7 +309,6 @@ tqual_name(tqual_t qual)
 		"const",
 		"volatile",
 		"restrict",
-		"_Thread_local",
 		"_Atomic",
 	};
 
