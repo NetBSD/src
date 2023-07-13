@@ -1,4 +1,4 @@
-This is gfortran.info, produced by makeinfo version 6.8 from
+This is gfortran.info, produced by makeinfo version 6.5 from
 gfortran.texi.
 
 Copyright (C) 1999-2020 Free Software Foundation, Inc.
@@ -1549,7 +1549,7 @@ the other form by either removing 'no-' or adding it.
 
      Use of '-fno-underscoring' is not recommended unless you are
      experimenting with issues such as integration of GNU Fortran into
-     existing system environments (vis-à-vis existing libraries, tools,
+     existing system environments (vis-a`-vis existing libraries, tools,
      and so on).
 
      For example, with '-funderscoring', and assuming that 'j()' and
@@ -19968,7 +19968,7 @@ significant help to the GNU Fortran project (in alphabetical order):
    - Steven Bosscher
    - Paul Brook
    - Tobias Burnus
-   - François-Xavier Coudert
+   - Franc,ois-Xavier Coudert
    - Bud Davis
    - Jerry DeLisle
    - Erik Edelmann
@@ -19990,7 +19990,7 @@ significant help to the GNU Fortran project (in alphabetical order):
    - Tim Prince
    - Christopher D. Rickett
    - Richard Sandiford
-   - Tobias Schlüter
+   - Tobias Schlu"ter
    - Roger Sayle
    - Paul Thomas
    - Andy Vaught
@@ -20003,7 +20003,7 @@ patches, and much needed feedback and encouragement for the GNU Fortran
 project:
 
    - Bill Clodius
-   - Dominique d'Humières
+   - Dominique d'Humie`res
    - Kate Hedstrom
    - Erik Schnetter
    - Joost VandeVondele
@@ -23580,8 +23580,3 @@ Node: Option Index780098
 Node: Keyword Index799159
 
 End Tag Table
-
-
-Local Variables:
-coding: utf-8
-End:

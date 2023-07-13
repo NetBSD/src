@@ -1,3 +1,68 @@
+2023-07-07  Release Manager
+
+	* GCC 10.5.0 released.
+
+2023-05-21  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2023-05-19  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config.host: Arrange to set min Darwin OS versions from
+	the configured host version.
+	* config/darwin10-unwind-find-enc-func.c: Do not use current
+	headers, but declare the nexessary structures locally to the
+	versions in use for Mac OSX 10.6.
+	* config/t-darwin: Amend to handle configured min OS
+	versions.
+	* config/t-darwin-min-1: New.
+	* config/t-darwin-min-5: New.
+	* config/t-darwin-min-8: New.
+
+2023-05-21  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2021-11-05  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config/darwin10-unwind-find-enc-func.c: Include libgcc_tm.h.
+
+2023-05-21  Iain Sandoe  <iain@sandoe.co.uk>
+
+	Backported from master:
+	2022-12-24  Iain Sandoe  <iain@sandoe.co.uk>
+
+	* config/t-slibgcc-darwin (install-darwin-libgcc-stubs): Skip the
+	install of libgcc_s.1.dylib when the installation is into the build
+	gcc directory.
+
+2023-05-03  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2023-02-09  Jakub Jelinek  <jakub@redhat.com>
+
+	PR target/100758
+	* config/i386/cpuinfo.c (cpu_indicator_init): Call
+	get_available_features for all CPUs with max_level >= 1, rather
+	than just Intel or AMD.
+
+2023-02-20  Nelson Chu  <nelson.chu@sifive.com>
+
+	Backported from master:
+	2021-12-06  Nelson Chu  <nelson.chu@sifive.com>
+
+	PR target/108339
+	* config/riscv/div.S: Add the hidden alias symbol for __udivdi3, and
+	then use HIDDEN_JUMPTARGET to target it since it is non-preemptible.
+	* config/riscv/riscv-asm.h: Added new macros HIDDEN_JUMPTARGET and
+	HIDDEN_DEF.
+
+2023-02-20  Jim Wilson  <jimw@sifive.com>
+
+	Backported from master:
+	2020-06-02  Jim Wilson  <jimw@sifive.com>
+
+	* config/riscv/div.S (__divdi3): For negative arguments, change bgez
+	to bgtz.
+
 2022-06-28  Release Manager
 
 	* GCC 10.4.0 released.

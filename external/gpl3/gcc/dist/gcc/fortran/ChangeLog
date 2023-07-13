@@ -1,3 +1,443 @@
+2023-07-07  Release Manager
+
+	* GCC 10.5.0 released.
+
+2023-06-09  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2023-06-09  Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/96024
+	* primary.c (gfc_convert_to_structure_constructor): Only do
+	constant string ctor length verification and truncation/padding
+	if constant length has INTEGER type.
+
+2023-05-03  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2023-02-03  Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/108451
+	* trans-decl.c (gfc_trans_use_stmts): Call clear_slot before
+	doing continue.
+
+2023-05-03  Jakub Jelinek  <jakub@redhat.com>
+
+	Backported from master:
+	2023-01-11  Jakub Jelinek  <jakub@redhat.com>
+
+	PR fortran/108349
+	* f95-lang.c (gfc_init_builtin_function): Fix up function types
+	for BUILT_IN_REALLOC and BUILT_IN_SINCOS{F,,L}.  Formatting fixes.
+
+2023-04-16  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-04-14  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/109511
+	* simplify.c (gfc_simplify_set_exponent): Fix implementation of
+	compile-time simplification of intrinsic SET_EXPONENT for argument
+	X < 1 and for I < 0.
+
+2023-03-24  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-03-20  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/109186
+	* simplify.c (gfc_simplify_nearest): Fix off-by-one error in setting
+	up real kind-specific maximum exponent for mpfr.
+
+2023-03-24  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-03-19  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/85877
+	* resolve.c (resolve_fl_procedure): Check for an explicit interface
+	of procedures with the BIND(C) attribute (F2018:15.4.2.2).
+
+2023-03-17  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-03-11  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/106945
+	* trans-expr.c (gfc_copy_class_to_class): Convert element counts in
+	bounds check to common type for comparison.
+
+2023-03-17  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-03-10  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/104332
+	* resolve.c (resolve_symbol): Avoid NULL pointer dereference while
+	checking a symbol with the BIND(C) attribute.
+
+2023-03-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-02-27  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/108937
+	* trans-intrinsic.c (gfc_conv_intrinsic_ibits): Handle corner case
+	LEN argument of IBITS equal to BITSIZE(I).
+
+2023-03-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-02-22  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/96024
+	* resolve.c (resolve_component): The type of a CHARACTER length
+	expression must be INTEGER.
+
+2023-03-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-02-21  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/96025
+	* parse.c (check_function_result_typed): Improve type check of
+	specification expression for character length and return status.
+	(parse_spec): Use status from above.
+	* resolve.c (resolve_fntype): Prevent use of invalid specification
+	expression for character length.
+
+2023-02-11  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-02-07  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/95107
+	* trans-decl.c (gfc_finish_var_decl): With -fno-automatic, do not
+	make ASSOCIATE variables TREE_STATIC.
+
+2023-02-11  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-02-01  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/108609
+	* expr.c (find_array_section): Add check to prevent interpreting an
+	mpz non-integer constant as an integer.
+
+2023-02-11  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-01-28  Harald Anlauf  <anlauf@gmx.de>
+		    Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/108527
+	* resolve.c (compare_bound_int): Expression to compare must be of
+	type INTEGER.
+	(compare_bound_mpz_t): Likewise.
+	(check_dimension): Fix comment on checks applied to array section
+	and clean up associated logic.
+
+2023-02-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-01-24  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/108529
+	* simplify.c (simplify_transformation): Do not try to simplify
+	transformational intrinsic when the ARRAY argument has a NULL shape.
+
+2023-02-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-07-14  Harald Anlauf  <anlauf@gmx.de>
+		    Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/106209
+	* decl.c (add_init_expr_to_sym): Handle bad initializers for
+	implied-shape arrays.
+
+2023-02-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-01-23  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/108501
+	* interface.c (get_expr_storage_size): Check array subscript triplets
+	that we actually have integer values before trying to extract with
+	mpz_get_si.
+
+2023-02-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-01-23  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/108502
+	* dependency.c (gfc_check_dependency): Prevent NULL pointer
+	dereference while recursively checking expressions.
+
+2023-02-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-01-17  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/108421
+	* interface.c (get_expr_storage_size): Check that we actually have
+	an integer value before trying to extract it with mpz_get_si.
+
+2023-02-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-01-23  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/108420
+	* iresolve.c (check_charlen_present): Preserve character length if
+	there is no array constructor.
+
+2023-02-05  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2023-01-28  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/108453
+	* match.c (gfc_match_common): A USE associated name shall not appear
+	in a COMMON block (F2018:C8121).
+
+2023-01-08  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-12-23  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/108131
+	* array.c (match_array_element_spec): Avoid too early simplification
+	of matched array element specs that can lead to a misinterpretation
+	when used as array bounds in array declarations.
+
+2022-12-18  Paul Thomas  <pault@gcc.gnu.org>
+
+	Backported from master:
+	2022-12-09  Paul Thomas  <pault@gcc.gnu.org>
+
+	PR fortran/107872
+	* resolve.c (derived_inaccessible): Skip over allocatable components
+	to prevent an infinite loop.
+
+2022-11-25  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-11-18  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/107576
+	* interface.c (gfc_procedure_use): Reject NULL as actual argument
+	when there is no explicit procedure interface.
+
+2022-10-28  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-10-26  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/103413
+	* symbol.c (gfc_type_compatible): A boz-literal-constant has no type
+	and thus is not considered compatible to any type.
+
+2022-10-23  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-10-20  Harald Anlauf  <anlauf@gmx.de>
+		    Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/105633
+	* expr.c (find_array_section): Move check for NULL pointers so
+	that both subscript triplets and vector subscripts are covered.
+
+2022-10-10  Mikael Morin  <mikael@gcc.gnu.org>
+
+	Backported from master:
+	2022-09-25  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/106817
+	* trans-expr.c (gfc_conv_procedure_call): Collect all clobbers
+	to their own separate block.  Append the block of clobbers to
+	the procedure preliminary block after the argument evaluation
+	codes for all the arguments.
+
+2022-10-10  Mikael Morin  <mikael@gcc.gnu.org>
+
+	Backported from master:
+	2022-09-25  Mikael Morin  <mikael@gcc.gnu.org>
+
+	PR fortran/105012
+	* trans-expr.c (gfc_conv_procedure_call): Retrieve variable
+	from the just calculated variable reference.
+
+2022-10-10  Mikael Morin  <mikael@gcc.gnu.org>
+
+	Backported from master:
+	2022-09-25  Mikael Morin  <mikael@gcc.gnu.org>
+
+	* trans.h (gfc_conv_expr_reference): Remove add_clobber
+	argument.
+	* trans-expr.c (gfc_conv_expr_reference): Ditto. Inline code
+	depending on add_clobber and conditions controlling it ...
+	(gfc_conv_procedure_call): ... to here.
+
+2022-10-08  José Rui Faustino de Sousa  <jrfsousa@gmail.com>
+
+	Backported from master:
+	2022-10-01  José Rui Faustino de Sousa  <jrfsousa@gmail.com>
+
+	PR fortran/100040
+	PR fortran/100029
+	* trans-expr.c (gfc_conv_class_to_class): Add code to have
+	assumed-rank arrays recognized as full arrays and fix the type
+	of the array assignment.
+	(gfc_conv_procedure_call): Change order of code blocks such that
+	the free of ALLOCATABLE dummy arguments with INTENT(OUT) occurs
+	first.
+
+2022-10-01  José Rui Faustino de Sousa  <jrfsousa@gmail.com>
+
+	Backported from master:
+	2022-09-20  José Rui Faustino de Sousa  <jrfsousa@gmail.com>
+
+	PR fortran/100132
+	* trans-types.c (create_fn_spec): Fix function attributes when
+	passing polymorphic pointers.
+
+2022-09-30  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-09-27  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/107054
+	* simplify.c (gfc_simplify_unpack): Replace assert by condition
+	that terminates simplification when there are not enough elements
+	in the constructor of argument VECTOR.
+
+2022-09-30  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-09-22  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/82868
+	* trans-decl.c (generate_coarray_sym_init): Skip symbol
+	if attr.associate_var.
+
+2022-09-30  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-09-20  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/106985
+	* expr.c (gfc_simplify_expr): Avoid NULL pointer dereference.
+
+2022-09-30  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-08-24  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/103694
+	* simplify.c (simplify_size): The size expression of an array cannot
+	be simplified if an error occurs while resolving the array spec.
+
+2022-09-26  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-09-20  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/106986
+	* simplify.c (gfc_simplify_findloc): Do not try to simplify
+	intrinsic FINDLOC when the ARRAY argument has a NULL shape.
+
+2022-09-24  José Rui Faustino de Sousa  <jrfsousa@gmail.com>
+
+	Backported from master:
+	2022-09-03  José Rui Faustino de Sousa  <jrfsousa@gmail.com>
+
+	PR fortran/100245
+	* trans-expr.c (trans_class_assignment): Add if clause to handle
+	derived type in the LHS.
+
+2022-09-22  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-09-15  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/106857
+	* simplify.c (gfc_simplify_pack): Check for NULL pointer dereferences
+	while walking through constructors (error recovery).
+
+2022-07-26  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-07-26  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/103504
+	* interface.c (get_sym_storage_size): Array bounds and character
+	length can only be of integer type.
+
+2022-07-16  Steve Kargl  <kargl@gcc.gnu.org>
+
+	Backported from master:
+	2022-07-15  Steve Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/104313
+	* trans-decl.c (gfc_generate_return): Do not generate conflicting
+	fake results for functions with no result variable under -ff2c.
+
+2022-07-03  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-06-30  Harald Anlauf  <anlauf@gmx.de>
+		    Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/103137
+	PR fortran/103138
+	PR fortran/103693
+	PR fortran/105243
+	* decl.c (gfc_match_data_decl): Reject CLASS entity declaration
+	when it is given the PARAMETER attribute.
+
+2022-07-03  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-06-29  Harald Anlauf  <anlauf@gmx.de>
+		    Steven G. Kargl  <kargl@gcc.gnu.org>
+
+	PR fortran/106121
+	* simplify.c (gfc_simplify_extends_type_of): Do not attempt to
+	simplify when one of the arguments is a CLASS variable that was
+	not properly declared.
+
+2022-07-01  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-06-26  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/105954
+	* decl.c (variable_decl): Adjust upper bounds for explicit-shape
+	specs with constant bound expressions to ensure non-negative
+	extents.
+
+2022-07-01  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-06-26  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/105691
+	* simplify.c (gfc_simplify_index): Replace old simplification
+	code by the equivalent of the runtime library implementation.  Use
+	HOST_WIDE_INT instead of int for string index, length variables.
+
+2022-07-01  Harald Anlauf  <anlauf@gmx.de>
+
+	Backported from master:
+	2022-06-24  Harald Anlauf  <anlauf@gmx.de>
+
+	PR fortran/105813
+	* check.c (gfc_check_unpack): Try to simplify MASK argument to
+	UNPACK so that checking of the VECTOR argument can work when MASK
+	is a variable.
+
 2022-06-28  Release Manager
 
 	* GCC 10.4.0 released.
