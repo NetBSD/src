@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.191 2023/07/13 23:11:11 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.192 2023/07/13 23:27:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -363,8 +363,7 @@ typedef	struct decl_level {
 						 * trailing padding */
 	unsigned int d_sou_align_in_bits;	/* alignment of the structure
 						 * or union being built */
-	bool	d_const:1;	/* const in declaration specifiers */
-	bool	d_volatile:1;	/* volatile in declaration specifiers */
+	type_qualifiers d_qual;	/* in declaration specifiers */
 	bool	d_inline:1;	/* inline in declaration specifiers */
 	bool	d_multiple_storage_classes:1; /* reported in dcs_end_type */
 	bool	d_invalid_type_combination:1;
