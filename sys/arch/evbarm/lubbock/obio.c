@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.12 2021/08/07 16:18:50 thorpej Exp $ */
+/*	$NetBSD: obio.c,v 1.13 2023/07/13 19:42:24 riastradh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec Corporation.  All rights reserved.
@@ -35,13 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.12 2021/08/07 16:18:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.13 2023/07/13 19:42:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
+#include <sys/bitops.h>
 
 #include <machine/cpu.h>
 #include <sys/bus.h>
@@ -163,7 +164,7 @@ obio_softintr(void *arg)
 	int spl_save = curcpl();
 
 	psw = disable_interrupts(I32_bit);
-	while ((irqno = find_first_bit(sc->sc_obio_intr_pending)) >= 0) {
+	while ((irqno = fls32(sc->sc_obio_intr_pending) - 1) >= 0) {
 		sc->sc_obio_intr_pending &= ~(1U<<irqno);
 
 		restore_interrupts(psw);

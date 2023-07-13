@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.c,v 1.25 2022/10/31 21:22:05 andvar Exp $	*/
+/*	$NetBSD: pxa2x0_intr.c,v 1.26 2023/07/13 19:42:24 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -39,12 +39,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.25 2022/10/31 21:22:05 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_intr.c,v 1.26 2023/07/13 19:42:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <sys/bus.h>
+#include <sys/bitops.h>
+
 #include <machine/intr.h>
 #include <machine/lock.h>
 
@@ -161,7 +163,7 @@ pxa2x0_irq_handler(void *arg)
 	/* get pending IRQs */
 	irqbits = read_icu(SAIPIC_IP);
 
-	while ((irqno = find_first_bit(irqbits)) >= 0) {
+	while ((irqno = fls32(irqbits) - 1) >= 0) {
 		/* XXX: Should we handle IRQs in priority order? */
 
 		/* raise spl to stop interrupts of lower priorities */
