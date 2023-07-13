@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.354 2023/07/13 23:11:11 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.355 2023/07/13 23:27:20 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.354 2023/07/13 23:11:11 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.355 2023/07/13 23:27:20 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -501,21 +501,7 @@ dcs_set_used(void)
 void
 dcs_add_qualifiers(type_qualifiers qs)
 {
-
-	if (qs.tq_const) {
-		if (dcs->d_const) {
-			/* duplicate '%s' */
-			warning(10, "const");
-		}
-		dcs->d_const = true;
-	}
-	if (qs.tq_volatile) {
-		if (dcs->d_volatile) {
-			/* duplicate '%s' */
-			warning(10, "volatile");
-		}
-		dcs->d_volatile = true;
-	}
+	add_type_qualifiers(&dcs->d_qual, qs);
 }
 
 void
@@ -628,8 +614,7 @@ dcs_begin_type(void)
 	dcs->d_rank_mod = NO_TSPEC;
 	dcs->d_scl = NOSCL;
 	dcs->d_type = NULL;
-	dcs->d_const = false;
-	dcs->d_volatile = false;
+	dcs->d_qual = (type_qualifiers) { .tq_const = false };
 	dcs->d_inline = false;
 	dcs->d_multiple_storage_classes = false;
 	dcs->d_invalid_type_combination = false;
@@ -740,22 +725,23 @@ dcs_end_type(void)
 
 	dcs_adjust_storage_class();
 
-	if (dcs->d_const && dcs->d_type->t_const && !dcs->d_type->t_typeof) {
+	if (dcs->d_qual.tq_const && dcs->d_type->t_const
+	    && !dcs->d_type->t_typeof) {
 		lint_assert(dcs->d_type->t_typedef);
 		/* typedef already qualified with '%s' */
 		warning(68, "const");
 	}
-	if (dcs->d_volatile && dcs->d_type->t_volatile &&
+	if (dcs->d_qual.tq_volatile && dcs->d_type->t_volatile &&
 	    !dcs->d_type->t_typeof) {
 		lint_assert(dcs->d_type->t_typedef);
 		/* typedef already qualified with '%s' */
 		warning(68, "volatile");
 	}
 
-	if (dcs->d_const || dcs->d_volatile) {
+	if (dcs->d_qual.tq_const || dcs->d_qual.tq_volatile) {
 		dcs->d_type = block_dup_type(dcs->d_type);
-		dcs->d_type->t_const |= dcs->d_const;
-		dcs->d_type->t_volatile |= dcs->d_volatile;
+		dcs->d_type->t_const |= dcs->d_qual.tq_const;
+		dcs->d_type->t_volatile |= dcs->d_qual.tq_volatile;
 	}
 }
 
@@ -1172,10 +1158,6 @@ qual_ptr *
 append_qualified_pointer(qual_ptr *p1, qual_ptr *p2)
 {
 
-	if (p2 == NULL)
-		return p1;
-
-	/* append p1 to p2, keeping p2 */
 	qual_ptr *tail = p2;
 	while (tail->p_next != NULL)
 		tail = tail->p_next;
