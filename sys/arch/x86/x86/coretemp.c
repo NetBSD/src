@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.38 2021/10/07 12:52:27 msaitoh Exp $ */
+/* $NetBSD: coretemp.c,v 1.39 2023/07/13 09:12:23 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.38 2021/10/07 12:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.39 2023/07/13 09:12:23 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -101,6 +101,10 @@ __KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.38 2021/10/07 12:52:27 msaitoh Exp $"
 #define MSR_THERM_INTR_TRIP2		__BIT(23)
 
 #define MSR_TEMP_TARGET_READOUT		__BITS(16, 23)
+
+#define TJMAX_DEFAULT		100
+#define TJMAX_LIMIT_LOW		60
+#define TJMAX_LIMIT_HIGH	120
 
 static int	coretemp_match(device_t, cfdata_t, void *);
 static void	coretemp_attach(device_t, device_t, void *);
@@ -259,16 +263,15 @@ coretemp_tjmax(device_t self)
 {
 	struct coretemp_softc *sc = device_private(self);
 	struct cpu_info *ci = sc->sc_ci;
-	uint32_t model, stepping;
 	uint64_t msr;
+	uint32_t model, stepping;
+	int tjmax;
 
 	model = CPUID_TO_MODEL(ci->ci_signature);
 	stepping = CPUID_TO_STEPPING(ci->ci_signature);
 
-	/*
-	 * Use 100C as the initial value.
-	 */
-	sc->sc_tjmax = 100;
+	/* Set the initial value. */
+	sc->sc_tjmax = TJMAX_DEFAULT;
 
 	if ((model == 0x0f && stepping >= 2) || (model == 0x0e)) {
 		/*
@@ -304,20 +307,20 @@ coretemp_tjmax(device_t self)
 			sc->sc_tjmax = 90;
 	} else {
 notee:
-		/*
-		 * Attempt to get Tj(max) from IA32_TEMPERATURE_TARGET,
-		 * but only consider the interval [70, 110] C as valid.
-		 * It is not fully known which CPU models have the MSR.
-		 */
-		if (rdmsr_safe(MSR_TEMPERATURE_TARGET, &msr) == EFAULT)
-			return;
-
-		msr = __SHIFTOUT(msr, MSR_TEMP_TARGET_READOUT);
-
-		if (msr >= 70 && msr <= 110) {
-			sc->sc_tjmax = msr;
+		/* Attempt to get Tj(max) from IA32_TEMPERATURE_TARGET. */
+		if (rdmsr_safe(MSR_TEMPERATURE_TARGET, &msr) == EFAULT) {
+			aprint_error_dev(sc->sc_dev,
+			    "Failed to read TEMPERATURE_TARGET MSR. "
+			    "Use the default (%d)\n", sc->sc_tjmax);
 			return;
 		}
+
+		tjmax = __SHIFTOUT(msr, MSR_TEMP_TARGET_READOUT);
+		if ((tjmax < TJMAX_LIMIT_LOW) || (tjmax > TJMAX_LIMIT_HIGH))
+			aprint_error_dev(sc->sc_dev,
+			    "WARNING: Tjmax(%d) might exceeded the limit.\n",
+			    tjmax);
+		sc->sc_tjmax = tjmax;
 	}
 }
 
