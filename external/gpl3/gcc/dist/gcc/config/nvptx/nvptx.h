@@ -27,7 +27,7 @@
 
 /* Run-time Target.  */
 
-#define STARTFILE_SPEC "%{mmainkernel:crt0.o}"
+#define STARTFILE_SPEC "%{mmainkernel:crt0.o%s}"
 
 #define ASM_SPEC "%{misa=*:-m %*}"
 
@@ -94,6 +94,9 @@
 #define STACK_SIZE_MODE Pmode
 
 #define TARGET_SM35 (ptx_isa_option >= PTX_ISA_SM35)
+
+/* 'TARGET_PTX_*' not applicable before GCC 12.  */
+#define TARGET_PTX_6_0 false
 
 /* Registers.  Since ptx is a virtual target, we just define a few
    hard registers for special purposes and leave pseudos unallocated.
