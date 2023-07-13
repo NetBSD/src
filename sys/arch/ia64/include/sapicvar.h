@@ -29,6 +29,10 @@
 #ifndef _MACHINE_SAPICVAR_H_
 #define _MACHINE_SAPICVAR_H_
 
+#include <sys/types.h>
+
+#include <sys/mutex.h>
+
 struct sapic {
 	kmutex_t	sa_mtx;
 	vaddr_t		sa_registers;	/* virtual address of sapic */
