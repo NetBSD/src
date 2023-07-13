@@ -1,4 +1,4 @@
-/*	$NetBSD: marvellvar.h,v 1.6 2017/01/07 14:26:37 kiyohara Exp $	*/
+/*	$NetBSD: marvellvar.h,v 1.7 2023/07/13 16:51:33 riastradh Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -71,8 +71,21 @@ struct marvell_attach_args {
 #define MVA_OFFSET_DEFAULT	GTCF_OFFSET_DEFAULT
 #define MVA_IRQ_DEFAULT		GTCF_IRQ_DEFAULT
 
-
+#ifdef __powerpc__
+/*
+ * Note: arm and powerpc Marvell platforms have a conflicting idea of
+ * marvell_intr_establish.
+ *
+ * On arm-based Marvell platforms, there is a static inline
+ * marvell_intr_establish defined in mvsoc_intr.h.
+ *
+ * On powerpc-based Marvell platforms, there is an out-of-line
+ * marvell_intr_establish defined in a SoC-specific gt_mainbus.c
+ * (evbppc/ev64260, ofppc) and declared in dev/marvell/marvellvar.h.
+ */
 void *marvell_intr_establish(int, int, int (*)(void *), void *);
+#endif
+
 int marvell_winparams_by_tag(device_t, int, int *, int *, uint64_t *,
 			     uint32_t *);
 

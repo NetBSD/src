@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsoc_intr.h,v 1.8 2022/06/25 13:24:35 jmcneill Exp $	*/
+/*	$NetBSD: mvsoc_intr.h,v 1.9 2023/07/13 16:51:33 riastradh Exp $	*/
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -47,6 +47,17 @@ void mvsoc_irq_handler(void *);
 
 #include <arm/pic/picvar.h>
 
+/*
+ * Note: arm and powerpc Marvell platforms have a conflicting idea of
+ * marvell_intr_establish.
+ *
+ * On arm-based Marvell platforms, there is a static inline
+ * marvell_intr_establish defined in mvsoc_intr.h.
+ *
+ * On powerpc-based Marvell platforms, there is an out-of-line
+ * marvell_intr_establish defined in a SoC-specific gt_mainbus.c
+ * (evbppc/ev64260, ofppc) and declared in dev/marvell/marvellvar.h.
+ */
 static __inline void *
 marvell_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
 {
