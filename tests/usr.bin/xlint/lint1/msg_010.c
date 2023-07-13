@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_010.c,v 1.6 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: msg_010.c,v 1.7 2023/07/13 19:59:08 rillig Exp $	*/
 # 3 "msg_010.c"
 
 // Test for message: duplicate '%s' [10]
@@ -34,8 +34,9 @@ restrict_pointer(const int *restrict p)
 _Thread_local int thread_local_int;
 _Thread_local int *pointer_to_thread_local;
 
+/* expect+2: error: only 'register' is valid as storage class in parameter [9] */
 int
-thread_local_parameter(_Thread_local int i) /* caught by the compiler */
+thread_local_parameter(_Thread_local int i)
 {
 	return i;
 }

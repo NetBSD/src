@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.189 2023/07/13 08:40:38 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.190 2023/07/13 19:59:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -79,14 +79,11 @@ typedef	struct strg {
 	void	*st_mem;	/* char[] for st_char, or wchar_t[] */
 } strg_t;
 
-/*
- * qualifiers (only for lex/yacc interface)
- */
+/* type qualifiers (only used during parsing) */
 typedef enum {
 	CONST,
 	VOLATILE,
 	RESTRICT,
-	THREAD,			/* XXX: storage-class-qualifier */
 	ATOMIC,
 } tqual_t;
 
@@ -198,6 +195,7 @@ typedef enum {
 	AUTO,		/* automatic symbols (except register) */
 	REG,		/* register */
 	TYPEDEF,	/* typedef */
+	THREAD_LOCAL,
 	STRUCT_TAG,
 	UNION_TAG,
 	ENUM_TAG,

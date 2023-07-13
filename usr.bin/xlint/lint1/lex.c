@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.182 2023/07/13 08:40:38 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.183 2023/07/13 19:59:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.182 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.183 2023/07/13 19:59:08 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -162,9 +162,8 @@ static const struct keyword {
 	kwdef("struct",	T_STRUCT_OR_UNION, .u.kw_tspec = STRUCT, 78,0,1),
 	kwdef_keyword(	"switch",	T_SWITCH),
 	kwdef_token(	"__symbolrename",	T_SYMBOLRENAME,	78,0,1),
-	kwdef_tqual(	"__thread",	THREAD,			78,1,1),
-	/* XXX: _Thread_local is a storage-class-specifier, not tqual. */
-	kwdef_tqual(	"_Thread_local", THREAD,		11,0,1),
+	kwdef_sclass(	"__thread",	THREAD_LOCAL,		78,1,1),
+	kwdef_sclass(	"_Thread_local", THREAD_LOCAL,		11,0,1),
 	kwdef_sclass(	"typedef",	TYPEDEF,		78,0,1),
 	kwdef_token(	"typeof",	T_TYPEOF,		78,1,7),
 #ifdef INT128_SIZE

@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.351 2023/07/13 08:40:38 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.352 2023/07/13 19:59:08 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.351 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.352 2023/07/13 19:59:08 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -515,7 +515,7 @@ dcs_add_qualifier(tqual_t q)
 		}
 		dcs->d_volatile = true;
 	} else {
-		lint_assert(q == RESTRICT || q == THREAD || q == ATOMIC);
+		lint_assert(q == RESTRICT || q == ATOMIC);
 		/* Silently ignore these qualifiers. */
 	}
 }
@@ -1448,10 +1448,7 @@ check_function_definition(sym_t *sym, bool msg)
 	}
 }
 
-/*
- * Process the name in a declarator. The symbol gets one of the storage classes
- * EXTERN, STATIC, AUTO or TYPEDEF, as well as a definedness in 's_def'.
- */
+/* The symbol gets a storage class and a definedness. */
 sym_t *
 declarator_name(sym_t *sym)
 {
@@ -1476,13 +1473,13 @@ declarator_name(sym_t *sym)
 		break;
 	case DLK_EXTERN:
 		/*
-		 * static and external symbols without "extern" are considered
-		 * to be tentatively defined, external symbols with "extern"
-		 * are declared, and typedef names are defined. Tentatively
-		 * defined and declared symbols may become defined if an
-		 * initializer is present or this is a function definition.
+		 * Symbols that are 'static' or without any storage class are
+		 * tentatively defined. Symbols that are tentatively defined or
+		 * declared may later become defined if an initializer is seen
+		 * or this is a function definition.
 		 */
-		if ((sc = dcs->d_scl) == NOSCL) {
+		sc = dcs->d_scl;
+		if (sc == NOSCL || sc == THREAD_LOCAL) {
 			sc = EXTERN;
 			sym->s_def = TDEF;
 		} else if (sc == STATIC)
