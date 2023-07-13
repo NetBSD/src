@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.194 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.195 2023/07/13 23:11:11 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -122,7 +122,7 @@ void	expr_restore_memory(memory_pool);
 const char *decl_level_kind_name(decl_level_kind);
 const char *scl_name(scl_t);
 const char *symt_name(symt_t);
-const char *tqual_name(tqual_t);
+const char *type_qualifiers_string(type_qualifiers);
 const char *function_specifier_name(function_specifier);
 void	debug_dcs(bool);
 void	debug_node(const tnode_t *);
@@ -196,7 +196,7 @@ bool	is_incomplete(const type_t *);
 void	dcs_add_function_specifier(function_specifier);
 void	dcs_add_storage_class(scl_t);
 void	dcs_add_type(type_t *);
-void	dcs_add_qualifier(tqual_t);
+void	dcs_add_qualifiers(type_qualifiers);
 void	dcs_add_packed(void);
 void	dcs_set_used(void);
 void	begin_declaration_level(decl_level_kind);
@@ -211,7 +211,8 @@ void	check_type(sym_t *);
 sym_t	*declare_unnamed_member(void);
 sym_t	*declare_member(sym_t *);
 sym_t	*set_bit_field_width(sym_t *, int);
-qual_ptr *merge_qualified_pointer(qual_ptr *, qual_ptr *);
+void	add_type_qualifiers(type_qualifiers *, type_qualifiers);
+qual_ptr *append_qualified_pointer(qual_ptr *, qual_ptr *);
 sym_t	*add_pointer(sym_t *, qual_ptr *);
 sym_t	*add_array(sym_t *, bool, int);
 sym_t	*add_function(sym_t *, sym_t *);
