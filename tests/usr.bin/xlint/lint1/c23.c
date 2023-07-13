@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.1 2023/07/02 23:45:10 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.2 2023/07/13 20:30:21 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -16,7 +16,27 @@ c23(void)
 		int member;
 	} s;
 
+	// Empty initializer braces were introduced in C23.
 	s = (struct s){};
 	s = (struct s){s.member};
 	return s.member;
+}
+
+// The keyword 'thread_local' was introduced in C23.
+thread_local int globally_visible;
+
+// Thread-local functions don't make sense; they are syntactically allowed,
+// though.
+thread_local void
+thread_local_function(void)
+{
+}
+
+void
+function(void)
+{
+	// Not sure whether it makes sense to have a function-scoped
+	// thread-local variable.  Don't warn for now, let the compilers handle
+	// this case.
+	thread_local int function_scoped_thread_local;
 }
