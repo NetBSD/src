@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.22 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.23 2023/07/13 22:44:10 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -183,3 +183,10 @@ cover_func_declarator(void)
 /* expect+2: error: syntax error 'goto' [249] */
 /* expect+1: warning: empty array declaration for 'void_array_error' [190] */
 void void_array_error[] goto;
+
+const volatile int
+/* expect+1: warning: duplicate 'const' [10] */
+    *const volatile const
+/* expect+1: warning: duplicate 'volatile' [10] */
+    *volatile const volatile
+    *duplicate_ptr;
