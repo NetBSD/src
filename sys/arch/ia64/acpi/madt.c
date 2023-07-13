@@ -1,4 +1,4 @@
-/*	$NetBSD: madt.c,v 1.5 2022/12/12 01:07:52 gutteridge Exp $	*/
+/*	$NetBSD: madt.c,v 1.6 2023/07/13 18:43:34 mrg Exp $	*/
 /*-
  * Copyright (c) 2001 Doug Rabson
  * All rights reserved.
@@ -29,6 +29,7 @@
 
 #include <sys/param.h>
 #include <sys/reboot.h>
+#include <sys/mutex.h>
 
 #include <machine/md_var.h>
 #include <machine/sapicvar.h>
