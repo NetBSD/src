@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.2 2023/07/12 18:26:04 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.3 2023/07/13 20:30:21 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -41,6 +41,12 @@ three_times(void)
 {
 	exit(0);
 }
+
+// In C11 mode, 'thread_local' is not yet known, but '_Thread_local' is.
+/* expect+2: error: old-style declaration; add 'int' [1] */
+/* expect+1: error: syntax error 'int' [249] */
+thread_local int thread_local_variable_c23;
+_Thread_local int thread_local_variable_c11;
 
 /* The '_Noreturn' must not appear after the declarator. */
 void _Noreturn exit(int) _Noreturn;
