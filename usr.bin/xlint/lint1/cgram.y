@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.460 2023/07/13 08:40:38 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.461 2023/07/13 23:11:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.460 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.461 2023/07/13 23:11:11 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -141,7 +141,7 @@ is_either(const char *s, const char *a, const char *b)
 	op_t	y_op;
 	scl_t	y_scl;
 	tspec_t	y_tspec;
-	tqual_t	y_tqual;
+	type_qualifiers y_type_qualifiers;
 	function_specifier y_function_specifier;
 	type_t	*y_type;
 	tnode_t	*y_tnode;
@@ -166,7 +166,7 @@ is_either(const char *s, const char *a, const char *b)
 %printer { fprintf(yyo, "%s", op_name($$)); } <y_op>
 %printer { fprintf(yyo, "%s", scl_name($$)); } <y_scl>
 %printer { fprintf(yyo, "%s", tspec_name($$)); } <y_tspec>
-%printer { fprintf(yyo, "%s", tqual_name($$)); } <y_tqual>
+%printer { fprintf(yyo, "%s", type_qualifiers_string($$)); } <y_type_qualifiers>
 %printer {
 	fprintf(yyo, "%s", function_specifier_name($$));
 } <y_function_specifier>
@@ -181,10 +181,7 @@ is_either(const char *s, const char *a, const char *b)
 %printer { fprintf(yyo, "%zu to %zu", $$.lo, $$.hi); } <y_range>
 %printer { fprintf(yyo, "length %zu", $$->st_len); } <y_string>
 %printer {
-	fprintf(yyo, "%s%s%s",
-	    $$->p_const ? "const " : "",
-	    $$->p_volatile ? "volatile " : "",
-	    $$->p_pointer ? "*" : "");
+	fprintf(yyo, "%s *", type_qualifiers_string($$->qualifiers));
 } <y_qual_ptr>
 %printer { fprintf(yyo, "%s", $$ ? "yes" : "no"); } <y_seen_statement>
 %printer { fprintf(yyo, "%s", type_name($$->ga_arg)); } <y_generic>
@@ -234,9 +231,8 @@ is_either(const char *s, const char *a, const char *b)
  */
 %token	<y_tspec>	T_TYPE
 
-/* qualifiers (const, volatile, restrict, _Thread_local) */
-%token	<y_tqual>	T_QUAL
-%token	<y_tqual>	T_ATOMIC
+%token	<y_type_qualifiers>	T_QUAL
+%token	<y_type_qualifiers>	T_ATOMIC
 
 /* struct or union */
 %token	<y_tspec>	T_STRUCT_OR_UNION
@@ -338,13 +334,11 @@ is_either(const char *s, const char *a, const char *b)
 %type	<y_sym>		enums_with_opt_comma
 %type	<y_sym>		enumerator_list
 %type	<y_sym>		enumerator
-%type	<y_tqual>	type_qualifier
+%type	<y_type_qualifiers>	type_qualifier
 /* No type for atomic. */
 %type	<y_qual_ptr>	pointer
-%type	<y_qual_ptr>	asterisk
-%type	<y_qual_ptr>	type_qualifier_list_opt
-%type	<y_qual_ptr>	type_qualifier_list
-%type	<y_qual_ptr>	type_qualifier_list_elem
+%type	<y_type_qualifiers>	type_qualifier_list_opt
+%type	<y_type_qualifiers>	type_qualifier_list
 /* No type for notype_init_declarators. */
 /* No type for type_init_declarators. */
 /* No type for notype_init_declarator. */
@@ -846,7 +840,7 @@ begin_type_declaration_specifiers:	/* see C99 6.7 */
 
 begin_type_declmods:		/* see C99 6.7 */
 	begin_type type_qualifier {
-		dcs_add_qualifier($2);
+		dcs_add_qualifiers($2);
 	}
 |	begin_type T_SCLASS {
 		dcs_add_storage_class($2);
@@ -870,7 +864,7 @@ begin_type_specifier_qualifier_list_postfix:
 		dcs_add_type($2);
 	}
 |	begin_type_specifier_qualifier_list_postfix type_qualifier {
-		dcs_add_qualifier($2);
+		dcs_add_qualifiers($2);
 	}
 |	begin_type_specifier_qualifier_list_postfix notype_type_specifier {
 		dcs_add_type($2);
@@ -889,16 +883,16 @@ begin_type_typespec:
 
 begin_type_qualifier_list:
 	begin_type type_qualifier {
-		dcs_add_qualifier($2);
+		dcs_add_qualifiers($2);
 	}
 |	begin_type_qualifier_list type_qualifier {
-		dcs_add_qualifier($2);
+		dcs_add_qualifiers($2);
 	}
 ;
 
 declmod:
 	type_qualifier {
-		dcs_add_qualifier($1);
+		dcs_add_qualifiers($1);
 	}
 |	T_SCLASS {
 		dcs_add_storage_class($1);
@@ -1223,7 +1217,7 @@ enumerator:			/* C99 6.7.2.2 */
 type_qualifier:			/* C99 6.7.3 */
 	T_QUAL
 |	atomic {
-		$$ = ATOMIC;
+		$$ = (type_qualifiers){ .tq_atomic = true };
 	}
 ;
 
@@ -1237,43 +1231,29 @@ atomic:				/* helper */
 ;
 
 pointer:			/* C99 6.7.5 */
-	asterisk type_qualifier_list_opt {
-		$$ = merge_qualified_pointer($1, $2);
-	}
-|	asterisk type_qualifier_list_opt pointer {
-		$$ = merge_qualified_pointer($1, $2);
-		$$ = merge_qualified_pointer($$, $3);
-	}
-;
-
-asterisk:			/* helper for 'pointer' */
-	T_ASTERISK {
+	T_ASTERISK type_qualifier_list_opt {
 		$$ = xcalloc(1, sizeof(*$$));
-		$$->p_pointer = true;
+		add_type_qualifiers(&$$->qualifiers, $2);
+	}
+|	T_ASTERISK type_qualifier_list_opt pointer {
+		$$ = xcalloc(1, sizeof(*$$));
+		add_type_qualifiers(&$$->qualifiers, $2);
+		$$ = append_qualified_pointer($$, $3);
 	}
 ;
 
 type_qualifier_list_opt:	/* see C99 6.7.5 */
 	/* empty */ {
-		$$ = NULL;
+		$$ = (type_qualifiers){ .tq_const = false };
 	}
 |	type_qualifier_list
 ;
 
 type_qualifier_list:		/* C99 6.7.5 */
-	type_qualifier_list_elem
-|	type_qualifier_list type_qualifier_list_elem {
-		$$ = merge_qualified_pointer($1, $2);
-	}
-;
-
-type_qualifier_list_elem:	/* helper for 'pointer' */
-	type_qualifier {
-		$$ = xcalloc(1, sizeof(*$$));
-		if ($1 == CONST)
-			$$->p_const = true;
-		if ($1 == VOLATILE)
-			$$->p_volatile = true;
+	type_qualifier
+|	type_qualifier_list type_qualifier {
+		$$ = $1;
+		add_type_qualifiers(&$$, $2);
 	}
 ;
 
@@ -1470,7 +1450,7 @@ array_size:
 	}
 |	type_qualifier {
 		/* C11 6.7.6.2 */
-		if ($1 != RESTRICT)
+		if (!$1.tq_restrict)
 			yyerror("Bad attribute");
 		$$ = NULL;
 	}
@@ -2210,7 +2190,7 @@ gcc_attribute:
 |	T_NAME T_LPAREN T_RPAREN
 |	T_NAME T_LPAREN gcc_attribute_parameters T_RPAREN
 |	type_qualifier {
-		if ($1 != CONST)
+		if (!$1.tq_const)
 			yyerror("Bad attribute");
 	}
 ;
@@ -2259,7 +2239,7 @@ cgram_to_string(int token, YYSTYPE val)
 	case T_STRUCT_OR_UNION:
 		return tspec_name(val.y_tspec);
 	case T_QUAL:
-		return tqual_name(val.y_tqual);
+		return type_qualifiers_string(val.y_type_qualifiers);
 	case T_FUNCTION_SPECIFIER:
 		return function_specifier_name(val.y_function_specifier);
 	case T_NAME:

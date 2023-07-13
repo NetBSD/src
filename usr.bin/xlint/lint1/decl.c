@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.353 2023/07/13 20:30:21 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.354 2023/07/13 23:11:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.353 2023/07/13 20:30:21 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.354 2023/07/13 23:11:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -499,24 +499,22 @@ dcs_set_used(void)
  * declarators.
  */
 void
-dcs_add_qualifier(tqual_t q)
+dcs_add_qualifiers(type_qualifiers qs)
 {
 
-	if (q == CONST) {
+	if (qs.tq_const) {
 		if (dcs->d_const) {
 			/* duplicate '%s' */
 			warning(10, "const");
 		}
 		dcs->d_const = true;
-	} else if (q == VOLATILE) {
+	}
+	if (qs.tq_volatile) {
 		if (dcs->d_volatile) {
 			/* duplicate '%s' */
 			warning(10, "volatile");
 		}
 		dcs->d_volatile = true;
-	} else {
-		lint_assert(q == RESTRICT || q == ATOMIC);
-		/* Silently ignore these qualifiers. */
 	}
 }
 
@@ -1153,45 +1151,36 @@ set_bit_field_width(sym_t *dsym, int bit_field_width)
 	return dsym;
 }
 
-/*
- * A sequence of asterisks and qualifiers, from right to left.  For example,
- * 'const ***volatile **const volatile' results in [cvp, p, vp, p, p].  The
- * leftmost 'const' is not included in this list, it is stored in dcs->d_const
- * instead.
- */
+void
+add_type_qualifiers(type_qualifiers *dst, type_qualifiers src)
+{
+
+	if (src.tq_const && dst->tq_const)
+		/* duplicate '%s' */
+		warning(10, "const");
+	if (src.tq_volatile && dst->tq_volatile)
+		/* duplicate '%s' */
+		warning(10, "volatile");
+
+	dst->tq_const = dst->tq_const || src.tq_const;
+	dst->tq_restrict = dst->tq_restrict || src.tq_restrict;
+	dst->tq_volatile = dst->tq_volatile || src.tq_volatile;
+	dst->tq_atomic = dst->tq_atomic || src.tq_atomic;
+}
+
 qual_ptr *
-merge_qualified_pointer(qual_ptr *p1, qual_ptr *p2)
+append_qualified_pointer(qual_ptr *p1, qual_ptr *p2)
 {
 
 	if (p2 == NULL)
-		return p1;	/* for optional qualifiers */
+		return p1;
 
-	if (p2->p_pointer) {
-		/* append p1 to p2, keeping p2 */
-		qual_ptr *tail = p2;
-		while (tail->p_next != NULL)
-			tail = tail->p_next;
-		tail->p_next = p1;
-		return p2;
-	}
-
-	/* merge p2 into p1, keeping p1 */
-	if (p2->p_const) {
-		if (p1->p_const) {
-			/* duplicate '%s' */
-			warning(10, "const");
-		}
-		p1->p_const = true;
-	}
-	if (p2->p_volatile) {
-		if (p1->p_volatile) {
-			/* duplicate '%s' */
-			warning(10, "volatile");
-		}
-		p1->p_volatile = true;
-	}
-	free(p2);
-	return p1;
+	/* append p1 to p2, keeping p2 */
+	qual_ptr *tail = p2;
+	while (tail->p_next != NULL)
+		tail = tail->p_next;
+	tail->p_next = p1;
+	return p2;
 }
 
 static type_t *
@@ -1229,7 +1218,7 @@ add_pointer(sym_t *decl, qual_ptr *p)
 
 	while (p != NULL) {
 		*tpp = block_derive_pointer(dcs->d_type,
-		    p->p_const, p->p_volatile);
+		    p->qualifiers.tq_const, p->qualifiers.tq_volatile);
 
 		tpp = &(*tpp)->t_subt;
 

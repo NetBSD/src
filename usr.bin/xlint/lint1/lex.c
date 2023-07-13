@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.184 2023/07/13 20:30:21 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.185 2023/07/13 23:11:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.184 2023/07/13 20:30:21 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.185 2023/07/13 23:11:11 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -94,7 +94,7 @@ bool in_system_header;
 #define kwdef_type(name, tspec,			since) \
 	kwdef(name, T_TYPE, .u.kw_tspec = (tspec), since, 0, 1)
 #define kwdef_tqual(name, tqual,		since, gcc, deco) \
-	kwdef(name, T_QUAL, .u.kw_tqual = (tqual), since, gcc, deco)
+	kwdef(name, T_QUAL, .u.kw_tqual = {.tqual = true}, since, gcc, deco)
 #define kwdef_keyword(name, token) \
 	kwdef(name, token, {false},		78, 0, 1)
 
@@ -107,7 +107,7 @@ static const struct keyword {
 		scl_t kw_scl;		/* if kw_token is T_SCLASS */
 		tspec_t kw_tspec;	/* if kw_token is T_TYPE or
 					 * T_STRUCT_OR_UNION */
-		tqual_t kw_tqual;	/* if kw_token is T_QUAL */
+		type_qualifiers kw_tqual;	/* if kw_token is T_QUAL */
 		function_specifier kw_fs;	/* if kw_token is
 						 * T_FUNCTION_SPECIFIER */
 	} u;
@@ -132,7 +132,7 @@ static const struct keyword {
 	kwdef_keyword(	"case",		T_CASE),
 	kwdef_type(	"char",		CHAR,			78),
 	kwdef_type(	"_Complex",	COMPLEX,		99),
-	kwdef_tqual(	"const",	CONST,			90,0,7),
+	kwdef_tqual(	"const",	tq_const,		90,0,7),
 	kwdef_keyword(	"continue",	T_CONTINUE),
 	kwdef_keyword(	"default",	T_DEFAULT),
 	kwdef_keyword(	"do",		T_DO),
@@ -157,7 +157,7 @@ static const struct keyword {
 	kwdef_token(	"__packed",	T_PACKED,		78,0,1),
 	kwdef_token(	"__real__",	T_REAL,			78,1,1),
 	kwdef_sclass(	"register",	REG,			78,0,1),
-	kwdef_tqual(	"restrict",	RESTRICT,		99,0,7),
+	kwdef_tqual(	"restrict",	tq_restrict,		99,0,7),
 	kwdef_keyword(	"return",	T_RETURN),
 	kwdef_type(	"short",	SHORT,			78),
 	kwdef(		"signed", T_TYPE, .u.kw_tspec = SIGNED,	90,0,3),
@@ -178,7 +178,7 @@ static const struct keyword {
 	kwdef("union",	T_STRUCT_OR_UNION, .u.kw_tspec = UNION,	78,0,1),
 	kwdef_type(	"unsigned",	UNSIGN,			78),
 	kwdef_type(	"void",		VOID,			78),
-	kwdef_tqual(	"volatile",	VOLATILE,		90,0,7),
+	kwdef_tqual(	"volatile",	tq_volatile,		90,0,7),
 	kwdef_keyword(	"while",	T_WHILE),
 #undef kwdef
 #undef kwdef_token
@@ -359,7 +359,7 @@ add_keyword(const struct keyword *kw, bool leading, bool trailing)
 	if (tok == T_SCLASS)
 		sym->s_scl = kw->u.kw_scl;
 	if (tok == T_QUAL)
-		sym->u.s_keyword.u.sk_qualifier = kw->u.kw_tqual;
+		sym->u.s_keyword.u.sk_type_qualifier = kw->u.kw_tqual;
 	if (tok == T_FUNCTION_SPECIFIER)
 		sym->u.s_keyword.u.function_specifier = kw->u.kw_fs;
 
@@ -440,7 +440,8 @@ lex_keyword(sym_t *sym)
 	if (tok == T_TYPE || tok == T_STRUCT_OR_UNION)
 		yylval.y_tspec = sym->u.s_keyword.u.sk_tspec;
 	if (tok == T_QUAL)
-		yylval.y_tqual = sym->u.s_keyword.u.sk_qualifier;
+		yylval.y_type_qualifiers =
+		    sym->u.s_keyword.u.sk_type_qualifier;
 	if (tok == T_FUNCTION_SPECIFIER)
 		yylval.y_function_specifier =
 		    sym->u.s_keyword.u.function_specifier;
