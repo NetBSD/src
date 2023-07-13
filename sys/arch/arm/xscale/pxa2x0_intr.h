@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.15 2018/01/24 09:04:45 skrll Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.16 2023/07/13 19:42:24 riastradh Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -113,21 +113,6 @@ pxa2x0_spllower(int ipl)
 	restore_interrupts(psw);
 	return old;
 }
-
-/*
- * An useful function for interrupt handlers.
- * XXX: This shouldn't be here.
- */
-static inline int
-find_first_bit(uint32_t bits)
-{
-	/*
-	 * Since CLZ is available only on ARMv5, this isn't portable
-	 * to all ARM CPUs.  This file is for PXA2[15]0 processor. 
-	 */
-	return 31 - __builtin_clz(bits);
-}
-
 
 int	_splraise(int);
 int	_spllower(int);
