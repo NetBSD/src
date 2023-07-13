@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.53 2023/07/13 19:59:08 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.54 2023/07/13 23:11:11 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.53 2023/07/13 19:59:08 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.54 2023/07/13 23:11:11 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -303,16 +303,16 @@ symt_name(symt_t kind)
 }
 
 const char *
-tqual_name(tqual_t qual)
+type_qualifiers_string(type_qualifiers tq)
 {
-	static const char *const name[] = {
-		"const",
-		"volatile",
-		"restrict",
-		"_Atomic",
-	};
+	static char buf[32];
 
-	return name[qual];
+	snprintf(buf, sizeof(buf), "%s%s%s%s",
+	    tq.tq_const ? " const" : "",
+	    tq.tq_restrict ? " restrict" : "",
+	    tq.tq_volatile ? " volatile" : "",
+	    tq.tq_atomic ? " atomic" : "");
+	return buf[0] != '\0' ? buf + 1 : "none";
 }
 
 const char *
@@ -392,8 +392,8 @@ debug_sym(const char *prefix, const sym_t *sym, const char *suffix)
 			debug_printf(" %s",
 			    tspec_name(sym->u.s_keyword.u.sk_tspec));
 		if (t == T_QUAL)
-			debug_printf(" %s",
-			    tqual_name(sym->u.s_keyword.u.sk_qualifier));
+			debug_printf(" %s", type_qualifiers_string(
+			    sym->u.s_keyword.u.sk_type_qualifier));
 		if (t == T_FUNCTION_SPECIFIER)
 			debug_printf(" %s", function_specifier_name(
 			    sym->u.s_keyword.u.function_specifier));

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.190 2023/07/13 19:59:08 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.191 2023/07/13 23:11:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -79,13 +79,12 @@ typedef	struct strg {
 	void	*st_mem;	/* char[] for st_char, or wchar_t[] */
 } strg_t;
 
-/* type qualifiers (only used during parsing) */
-typedef enum {
-	CONST,
-	VOLATILE,
-	RESTRICT,
-	ATOMIC,
-} tqual_t;
+typedef struct {
+	bool tq_const:1;
+	bool tq_restrict:1;
+	bool tq_volatile:1;
+	bool tq_atomic:1;
+} type_qualifiers;
 
 /* An integer or floating-point value. */
 typedef struct {
@@ -257,7 +256,7 @@ typedef	struct sym {
 				/* if T_TYPE or T_STRUCT_OR_UNION */
 				tspec_t sk_tspec;
 				/* if T_QUAL */
-				tqual_t sk_qualifier;
+				type_qualifiers sk_type_qualifier;
 				/* if T_FUNCTION_SPECIFIER */
 				function_specifier function_specifier;
 			} u;
@@ -390,11 +389,14 @@ typedef	struct decl_level {
 	struct decl_level *d_enclosing; /* the enclosing declaration level */
 } decl_level;
 
-/* One level of pointer indirection in declarators, including qualifiers. */
+/*
+ * A sequence of asterisks and qualifiers, from right to left.  For example,
+ * 'const ***volatile **const volatile' results in [c-v-, ----, --v-, ----,
+ * ----].  The leftmost 'const' is not included in this list, it is stored in
+ * dcs->d_const instead.
+ */
 typedef	struct qual_ptr {
-	bool	p_const:1;
-	bool	p_volatile:1;
-	bool	p_pointer:1;
+	type_qualifiers qualifiers;
 	struct	qual_ptr *p_next;
 } qual_ptr;
 
