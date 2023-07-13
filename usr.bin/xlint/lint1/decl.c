@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.349 2023/07/12 16:07:35 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.350 2023/07/13 06:41:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.349 2023/07/12 16:07:35 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.350 2023/07/13 06:41:27 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -303,7 +303,7 @@ dcs_add_type(type_t *tp)
 		/* "long long" or "long ... long" */
 		t = LLONG;
 		dcs->d_rank_mod = NO_TSPEC;
-		if (!long_long_flag)
+		if (!suppress_longlong)
 			/* %s does not support 'long long' */
 			c99ism(265, allow_c90 ? "C90" : "traditional C");
 	}
@@ -962,7 +962,7 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 
 	if (t == CHAR || t == UCHAR || t == SCHAR ||
 	    t == SHORT || t == USHORT || t == ENUM) {
-		if (!bitfieldtype_ok) {
+		if (!suppress_bitfieldtype) {
 			/* TODO: Make this an error in C99 mode as well. */
 			if (!allow_trad && !allow_c99) {
 				type_t *btp = block_dup_type(tp);
@@ -977,19 +977,18 @@ check_bit_field_type(sym_t *dsym, type_t **const inout_tp, tspec_t *inout_t)
 			}
 		}
 	} else if (t == INT && dcs->d_sign_mod == NO_TSPEC) {
-		if (pflag && !bitfieldtype_ok) {
+		if (pflag && !suppress_bitfieldtype) {
 			/* bit-field of type plain 'int' has ... */
 			warning(344);
 		}
-	} else if (!(t == INT || t == UINT || t == BOOL ||
-		     (is_integer(t) && (bitfieldtype_ok || allow_gcc)))) {
+	} else if (!(t == INT || t == UINT || t == BOOL
+		|| (is_integer(t) && (suppress_bitfieldtype || allow_gcc)))) {
 
 		type_t *btp = block_dup_type(tp);
 		btp->t_bitfield = false;
 		/* illegal bit-field type '%s' */
 		warning(35, type_name(btp));
 
-		// XXX: What about _Bool bit-fields since C99 6.7.2.1?
 		unsigned int width = tp->t_bit_field_width;
 		dsym->s_type = tp = block_dup_type(gettyp(t = INT));
 		if ((tp->t_bit_field_width = width) > size_in_bits(t))
@@ -1067,7 +1066,7 @@ declare_unnamed_member(void)
 	mem->s_block_level = -1;
 
 	dcs_add_member(mem);
-	bitfieldtype_ok = false;
+	suppress_bitfieldtype = false;
 	return mem;
 }
 
@@ -1115,11 +1114,7 @@ declare_member(sym_t *dsym)
 
 	check_function_definition(dsym, false);
 
-	/*
-	 * Clear the BITFIELDTYPE indicator after processing each
-	 * structure element.
-	 */
-	bitfieldtype_ok = false;
+	suppress_bitfieldtype = false;
 
 	return dsym;
 }

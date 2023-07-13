@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.457 2023/07/12 18:26:04 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.458 2023/07/13 06:41:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.457 2023/07/12 18:26:04 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.458 2023/07/13 06:41:27 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -614,7 +614,7 @@ gcc_statement_expr_item:
 			if ($1->tn_op == NAME)
 				$1->tn_sym->s_used = true;
 			expr($1, false, false, false, false);
-			seen_fallthrough = false;
+			suppress_fallthrough = false;
 			$$ = $1;
 		}
 	}
@@ -1764,7 +1764,7 @@ non_expr_statement:		/* helper for C99 6.8 */
 |	selection_statement
 |	iteration_statement
 |	jump_statement {
-		seen_fallthrough = false;
+		suppress_fallthrough = false;
 	}
 |	asm_statement
 ;
@@ -1780,16 +1780,16 @@ label:
 	}
 |	T_CASE constant_expression T_COLON {
 		case_label($2);
-		seen_fallthrough = true;
+		suppress_fallthrough = true;
 	}
 |	T_CASE constant_expression T_ELLIPSIS constant_expression T_COLON {
 		/* XXX: We don't fill all cases */
 		case_label($2);
-		seen_fallthrough = true;
+		suppress_fallthrough = true;
 	}
 |	T_DEFAULT T_COLON {
 		default_label();
-		seen_fallthrough = true;
+		suppress_fallthrough = true;
 	}
 ;
 
@@ -1812,7 +1812,7 @@ compound_statement_rbrace:
 		level_free_all(mem_block_level);
 		mem_block_level--;
 		block_level--;
-		seen_fallthrough = false;
+		suppress_fallthrough = false;
 	}
 ;
 
@@ -1840,11 +1840,11 @@ block_item:			/* C99 6.8.2 */
 expression_statement:		/* C99 6.8.3 */
 	expression T_SEMI {
 		expr($1, false, false, false, false);
-		seen_fallthrough = false;
+		suppress_fallthrough = false;
 	}
 |	T_SEMI {
 		check_statement_reachable();
-		seen_fallthrough = false;
+		suppress_fallthrough = false;
 	}
 ;
 
@@ -1905,7 +1905,7 @@ iteration_statement:		/* C99 6.8.5 */
 	}
 |	do_statement do_while_expr {
 		stmt_do_while_expr($2);
-		seen_fallthrough = false;
+		suppress_fallthrough = false;
 	}
 |	do error {
 		clear_warning_flags();

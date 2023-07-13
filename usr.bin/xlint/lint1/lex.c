@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.178 2023/07/12 20:13:28 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.179 2023/07/13 06:41:27 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.178 2023/07/12 20:13:28 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.179 2023/07/13 06:41:27 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1181,8 +1181,8 @@ clear_warn_flags(void)
 {
 
 	lwarn = LWARN_ALL;
-	long_long_flag = false;
-	constcond_flag = false;
+	suppress_longlong = false;
+	suppress_constcond = false;
 }
 
 int
