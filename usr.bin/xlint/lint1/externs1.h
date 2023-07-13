@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.192 2023/07/13 06:41:27 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.193 2023/07/13 07:19:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -333,18 +333,7 @@ void	stmt_continue(void);
 void	stmt_break(void);
 void	stmt_return(bool, tnode_t *);
 void	global_clean_up_decl(bool);
-void	argsused(int);
-void	constcond(int);
-void	fallthru(int);
-void	not_reached(int);
-void	lintlib(int);
-void	linted(int);
-void	varargs(int);
-void	printflike(int);
-void	scanflike(int);
-void	protolib(int);
-void	longlong(int);
-void	bitfieldtype(int);
+void	handle_lint_comment(lint_comment, int);
 
 /*
  * init.c

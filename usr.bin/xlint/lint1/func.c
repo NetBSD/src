@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.168 2023/07/13 06:41:27 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.169 2023/07/13 07:19:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.168 2023/07/13 06:41:27 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.169 2023/07/13 07:19:24 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1123,12 +1123,10 @@ global_clean_up_decl(bool silent)
 }
 
 /*
- * ARGSUSED comment
- *
- * Only the first n arguments of the following function are checked
- * for usage. A missing argument is taken to be 0.
+ * Only the first n arguments of the following function are checked for usage.
+ * A missing argument is taken to be 0.
  */
-void
+static void
 argsused(int n)
 {
 
@@ -1148,7 +1146,7 @@ argsused(int n)
 	argsused_pos = curr_pos;
 }
 
-void
+static void
 varargs(int n)
 {
 
@@ -1172,7 +1170,7 @@ varargs(int n)
  * Check all arguments until the (n-1)-th as usual. The n-th argument is
  * used the check the types of remaining arguments.
  */
-void
+static void
 printflike(int n)
 {
 
@@ -1196,7 +1194,7 @@ printflike(int n)
  * Check all arguments until the (n-1)-th as usual. The n-th argument is
  * used the check the types of remaining arguments.
  */
-void
+static void
 scanflike(int n)
 {
 
@@ -1216,34 +1214,8 @@ scanflike(int n)
 	scanflike_pos = curr_pos;
 }
 
-/* ARGSUSED */
-void
-constcond(int n)
-{
-
-	suppress_constcond = true;
-}
-
-/* ARGSUSED */
-void
-fallthru(int n)
-{
-
-	suppress_fallthrough = true;
-}
-
-/* ARGSUSED */
-void
-not_reached(int n)
-{
-
-	set_reached(false);
-	warn_about_unreachable = false;
-}
-
-/* ARGSUSED */
-void
-lintlib(int n)
+static void
+lintlib(void)
 {
 
 	if (dcs->d_kind != DLK_EXTERN) {
@@ -1255,30 +1227,12 @@ lintlib(int n)
 	vflag = true;
 }
 
-void
-linted(int n)
-{
-
-	debug_step("set lwarn %d", n);
-	lwarn = n;
-}
-
-/* ARGSUSED */
-void
-bitfieldtype(int n)
-{
-
-	debug_step("%s:%d: suppress_bitfieldtype = true",
-	    curr_pos.p_file, curr_pos.p_line);
-	suppress_bitfieldtype = true;
-}
-
 /*
  * PROTOLIB in conjunction with LINTLIBRARY can be used to handle
  * prototypes like function definitions. This is done if the argument
  * to PROTOLIB is nonzero. Otherwise, prototypes are handled normally.
  */
-void
+static void
 protolib(int n)
 {
 
@@ -1290,10 +1244,23 @@ protolib(int n)
 	plibflg = n != 0;
 }
 
-/* ARGSUSED */
 void
-longlong(int n)
+handle_lint_comment(lint_comment comment, int arg)
 {
-
-	suppress_longlong = true;
+	switch (comment) {
+	case LC_ARGSUSED:	argsused(arg);			break;
+	case LC_BITFIELDTYPE:	suppress_bitfieldtype = true;	break;
+	case LC_CONSTCOND:	suppress_constcond = true;	break;
+	case LC_FALLTHROUGH:	suppress_fallthrough = true;	break;
+	case LC_LINTLIBRARY:	lintlib();			break;
+	case LC_LINTED:		debug_step("set lwarn %d", arg);
+				lwarn = arg;			break;
+	case LC_LONGLONG:	suppress_longlong = true;	break;
+	case LC_NOTREACHED:	set_reached(false);
+				warn_about_unreachable = false;	break;
+	case LC_PRINTFLIKE:	printflike(arg);		break;
+	case LC_PROTOLIB:	protolib(arg);			break;
+	case LC_SCANFLIKE:	scanflike(arg);			break;
+	case LC_VARARGS:	varargs(arg);			break;
+	}
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.179 2023/07/13 06:41:27 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.180 2023/07/13 07:19:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.179 2023/07/13 06:41:27 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.180 2023/07/13 07:19:24 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -1050,39 +1050,34 @@ lex_directive(const char *yytext)
 	}
 }
 
-/*
- * Handle lint comments such as ARGSUSED.
- *
- * If one of these comments is recognized, the argument, if any, is
- * parsed and a function which handles this comment is called.
- */
+/* Handle lint comments such as ARGSUSED. */
 void
 lex_comment(void)
 {
 	int c;
 	static const struct {
-		const	char *keywd;
+		const	char name[18];
 		bool	arg;
-		void	(*func)(int);
+		lint_comment comment;
 	} keywtab[] = {
-		{ "ARGSUSED",		true,	argsused	},
-		{ "BITFIELDTYPE",	false,	bitfieldtype	},
-		{ "CONSTCOND",		false,	constcond	},
-		{ "CONSTANTCOND",	false,	constcond	},
-		{ "CONSTANTCONDITION",	false,	constcond	},
-		{ "FALLTHRU",		false,	fallthru	},
-		{ "FALLTHROUGH",	false,	fallthru	},
-		{ "FALL THROUGH",	false,	fallthru	},
-		{ "fallthrough",	false,	fallthru	},
-		{ "LINTLIBRARY",	false,	lintlib		},
-		{ "LINTED",		true,	linted		},
-		{ "LONGLONG",		false,	longlong	},
-		{ "NOSTRICT",		true,	linted		},
-		{ "NOTREACHED",		false,	not_reached	},
-		{ "PRINTFLIKE",		true,	printflike	},
-		{ "PROTOLIB",		true,	protolib	},
-		{ "SCANFLIKE",		true,	scanflike	},
-		{ "VARARGS",		true,	varargs		},
+		{ "ARGSUSED",		true,	LC_ARGSUSED	},
+		{ "BITFIELDTYPE",	false,	LC_BITFIELDTYPE	},
+		{ "CONSTCOND",		false,	LC_CONSTCOND	},
+		{ "CONSTANTCOND",	false,	LC_CONSTCOND	},
+		{ "CONSTANTCONDITION",	false,	LC_CONSTCOND	},
+		{ "FALLTHRU",		false,	LC_FALLTHROUGH	},
+		{ "FALLTHROUGH",	false,	LC_FALLTHROUGH	},
+		{ "FALL THROUGH",	false,	LC_FALLTHROUGH	},
+		{ "fallthrough",	false,	LC_FALLTHROUGH	},
+		{ "LINTLIBRARY",	false,	LC_LINTLIBRARY	},
+		{ "LINTED",		true,	LC_LINTED	},
+		{ "LONGLONG",		false,	LC_LONGLONG	},
+		{ "NOSTRICT",		true,	LC_LINTED	},
+		{ "NOTREACHED",		false,	LC_NOTREACHED	},
+		{ "PRINTFLIKE",		true,	LC_PRINTFLIKE	},
+		{ "PROTOLIB",		true,	LC_PROTOLIB	},
+		{ "SCANFLIKE",		true,	LC_SCANFLIKE	},
+		{ "VARARGS",		true,	LC_VARARGS	},
 	};
 	char keywd[32];
 	char arg[32];
@@ -1110,7 +1105,7 @@ lex_comment(void)
 
 	/* look for the keyword */
 	for (i = 0; i < sizeof(keywtab) / sizeof(keywtab[0]); i++) {
-		if (strcmp(keywtab[i].keywd, keywd) == 0)
+		if (strcmp(keywtab[i].name, keywd) == 0)
 			break;
 	}
 	if (i == sizeof(keywtab) / sizeof(keywtab[0]))
@@ -1136,12 +1131,11 @@ lex_comment(void)
 		c = read_byte();
 
 	seen_end_of_comment = c == '*' && (c = read_byte()) == '/';
-	if (!seen_end_of_comment && keywtab[i].func != linted)
+	if (!seen_end_of_comment && keywtab[i].comment != LC_LINTED)
 		/* extra characters in lint comment */
 		warning(257);
 
-	if (keywtab[i].func != NULL)
-		keywtab[i].func(a);
+	handle_lint_comment(keywtab[i].comment, a);
 
 skip_rest:
 	while (!seen_end_of_comment) {
