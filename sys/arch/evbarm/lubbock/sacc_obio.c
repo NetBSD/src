@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.16 2023/07/13 19:42:24 riastradh Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.17 2023/07/13 21:29:49 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.16 2023/07/13 19:42:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.17 2023/07/13 21:29:49 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ sacc_obio_intr(void *arg)
 		intstat.lo &= ~(1U<<i);
 	}
 
-	while ((i = find_first_bit(intstat.hi)) >= 0) {
+	while ((i = fls32(intstat.hi) - 1) >= 0) {
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 				  SACCIC_INTSTATCLR1, 1U<<i);
 
