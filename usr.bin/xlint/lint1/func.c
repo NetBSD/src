@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.167 2023/07/09 12:15:07 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.168 2023/07/13 06:41:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.167 2023/07/09 12:15:07 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.168 2023/07/13 06:41:27 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -67,13 +67,14 @@ bool	warn_about_unreachable;
  * Reset by each statement and set by FALLTHROUGH, stmt_switch_expr and
  * case_label.
  *
- * Control statements if, for, while and switch do not reset seen_fallthrough
- * because this must be done by the controlled statement. At least for if this
- * is important because ** FALLTHROUGH ** after "if (expr) statement" is
- * evaluated before the following token, which causes reduction of above.
- * This means that ** FALLTHROUGH ** after "if ..." would always be ignored.
+ * The control statements 'if', 'for', 'while' and 'switch' do not reset
+ * suppress_fallthrough because this must be done by the controlled statement.
+ * At least for 'if', this is important because ** FALLTHROUGH ** after "if
+ * (expr) statement" is evaluated before the following token, which causes
+ * reduction of above. This means that ** FALLTHROUGH ** after "if ..." would
+ * always be ignored.
  */
-bool	seen_fallthrough;
+bool	suppress_fallthrough;
 
 /* The innermost control statement */
 static control_statement *cstmt;
@@ -115,11 +116,8 @@ pos_t	scanflike_pos;
  */
 bool	plibflg;
 
-/*
- * True means that no warnings about constants in conditional
- * context are printed.
- */
-bool	constcond_flag;
+/* Temporarily suppress warnings about constants in conditional context. */
+bool	suppress_constcond;
 
 /*
  * Whether a lint library shall be created. The effect of this flag is that
@@ -138,17 +136,11 @@ bool	llibflg;
  */
 int	lwarn = LWARN_ALL;
 
-/*
- * Whether bitfield type errors are suppressed by a BITFIELDTYPE
- * directive.
- */
-bool	bitfieldtype_ok;
+/* Temporarily suppress warnings about wrong types for bit-fields. */
+bool	suppress_bitfieldtype;
 
-/*
- * Whether complaints about use of "long long" are suppressed in
- * the next statement or declaration.
- */
-bool	long_long_flag;
+/* Temporarily suppress warnings about use of 'long long'. */
+bool	suppress_longlong;
 
 void
 begin_control_statement(control_statement_kind kind)
@@ -514,7 +506,7 @@ check_case_label(tnode_t *tn, control_statement *cs)
 
 	lint_assert(cs->c_switch_type != NULL);
 
-	if (reached && !seen_fallthrough) {
+	if (reached && !suppress_fallthrough) {
 		if (hflag)
 			/* fallthrough on case statement */
 			warning(220);
@@ -591,7 +583,7 @@ default_label(void)
 		/* duplicate default in switch */
 		error(202);
 	} else {
-		if (reached && !seen_fallthrough) {
+		if (reached && !suppress_fallthrough) {
 			if (hflag)
 				/* fallthrough on default statement */
 				warning(284);
@@ -718,7 +710,7 @@ stmt_switch_expr(tnode_t *tn)
 	cstmt->c_switch_expr = tn;
 
 	set_reached(false);
-	seen_fallthrough = true;
+	suppress_fallthrough = true;
 }
 
 void
@@ -1156,12 +1148,6 @@ argsused(int n)
 	argsused_pos = curr_pos;
 }
 
-/*
- * VARARGS comment
- *
- * Causes lint2 to check only the first n arguments for compatibility
- * with the function definition. A missing argument is taken to be 0.
- */
 void
 varargs(int n)
 {
@@ -1183,8 +1169,6 @@ varargs(int n)
 }
 
 /*
- * PRINTFLIKE comment
- *
  * Check all arguments until the (n-1)-th as usual. The n-th argument is
  * used the check the types of remaining arguments.
  */
@@ -1209,8 +1193,6 @@ printflike(int n)
 }
 
 /*
- * SCANFLIKE comment
- *
  * Check all arguments until the (n-1)-th as usual. The n-th argument is
  * used the check the types of remaining arguments.
  */
@@ -1234,34 +1216,22 @@ scanflike(int n)
 	scanflike_pos = curr_pos;
 }
 
-/*
- * Set the line number for a CONSTCOND comment. At this and the following
- * line no warnings about constants in conditional contexts are printed.
- */
 /* ARGSUSED */
 void
 constcond(int n)
 {
 
-	constcond_flag = true;
+	suppress_constcond = true;
 }
 
-/*
- * Suppress printing of "fallthrough on ..." warnings until next
- * statement.
- */
 /* ARGSUSED */
 void
 fallthru(int n)
 {
 
-	seen_fallthrough = true;
+	suppress_fallthrough = true;
 }
 
-/*
- * Stop warnings about statements which cannot be reached. Also tells lint
- * that the following statements cannot be reached (e.g. after exit()).
- */
 /* ARGSUSED */
 void
 not_reached(int n)
@@ -1285,7 +1255,6 @@ lintlib(int n)
 	vflag = true;
 }
 
-/* Suppress one or most warnings at the current and the following line. */
 void
 linted(int n)
 {
@@ -1294,17 +1263,14 @@ linted(int n)
 	lwarn = n;
 }
 
-/*
- * Suppress bitfield type errors on the current line.
- */
 /* ARGSUSED */
 void
 bitfieldtype(int n)
 {
 
-	debug_step("%s, %d: bitfieldtype_ok = true",
+	debug_step("%s:%d: suppress_bitfieldtype = true",
 	    curr_pos.p_file, curr_pos.p_line);
-	bitfieldtype_ok = true;
+	suppress_bitfieldtype = true;
 }
 
 /*
@@ -1324,11 +1290,10 @@ protolib(int n)
 	plibflg = n != 0;
 }
 
-/* The next statement/declaration may use "long long" without a diagnostic. */
 /* ARGSUSED */
 void
 longlong(int n)
 {
 
-	long_long_flag = true;
+	suppress_longlong = true;
 }

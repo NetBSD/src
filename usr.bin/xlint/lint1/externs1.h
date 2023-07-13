@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.191 2023/07/12 16:07:35 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.192 2023/07/13 06:41:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -293,7 +293,7 @@ tnode_t *end_statement_expr(void);
 extern	sym_t	*funcsym;
 extern	bool	reached;
 extern	bool	warn_about_unreachable;
-extern	bool	seen_fallthrough;
+extern	bool	suppress_fallthrough;
 extern	int	nargusg;
 extern	pos_t	argsused_pos;
 extern	int	nvararg;
@@ -302,12 +302,12 @@ extern	int	printflike_argnum;
 extern	pos_t	printflike_pos;
 extern	int	scanflike_argnum;
 extern	pos_t	scanflike_pos;
-extern	bool	constcond_flag;
+extern	bool	suppress_constcond;
 extern	bool	llibflg;
 extern	int	lwarn;
-extern	bool	bitfieldtype_ok;
+extern	bool	suppress_bitfieldtype;
 extern	bool	plibflg;
-extern	bool	long_long_flag;
+extern	bool	suppress_longlong;
 
 void	begin_control_statement(control_statement_kind);
 void	end_control_statement(control_statement_kind);

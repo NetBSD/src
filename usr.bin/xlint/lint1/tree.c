@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.561 2023/07/12 19:34:01 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.562 2023/07/13 06:41:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.561 2023/07/12 19:34:01 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.562 2023/07/13 06:41:27 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1497,7 +1497,7 @@ fold_bool(tnode_t *tn)
 
 	switch (tn->tn_op) {
 	case NOT:
-		if (hflag && !constcond_flag)
+		if (hflag && !suppress_constcond)
 			/* constant argument to '!' */
 			warning(239);
 		v->u.integer = !l ? 1 : 0;
@@ -1794,7 +1794,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	 * Print a warning if one of the operands is in a context where
 	 * it is compared with zero and if this operand is a constant.
 	 */
-	if (hflag && !constcond_flag &&
+	if (hflag && !suppress_constcond &&
 	    mp->m_compares_with_zero &&
 	    (ln->tn_op == CON ||
 	     ((mp->m_binary && op != QUEST) && rn->tn_op == CON)) &&
@@ -4397,7 +4397,7 @@ expr(tnode_t *tn, bool vctx, bool cond, bool dofreeblk, bool is_do_while)
 			/* assignment in conditional context */
 			warning(159);
 	} else if (tn->tn_op == CON) {
-		if (hflag && cond && !constcond_flag &&
+		if (hflag && cond && !suppress_constcond &&
 		    !tn->tn_system_dependent &&
 		    !(is_do_while &&
 		      is_constcond_false(tn, tn->tn_type->t_tspec)))
