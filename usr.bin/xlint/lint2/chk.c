@@ -1,4 +1,4 @@
-/* $NetBSD: chk.c,v 1.59 2023/07/10 14:13:19 rillig Exp $ */
+/* $NetBSD: chk.c,v 1.60 2023/07/13 08:40:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -15,7 +15,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Jochen Pohl for
+ *	This product includes software developed by Jochen Pohl for
  *	The NetBSD Project.
  * 4. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: chk.c,v 1.59 2023/07/10 14:13:19 rillig Exp $");
+__RCSID("$NetBSD: chk.c,v 1.60 2023/07/13 08:40:38 rillig Exp $");
 #endif
 
 #include <ctype.h>
