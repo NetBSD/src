@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.54 2023/07/13 23:11:11 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.55 2023/07/13 23:27:20 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.54 2023/07/13 23:11:11 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.55 2023/07/13 23:27:20 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -432,8 +432,10 @@ debug_decl_level(const decl_level *dl)
 	if (dl->d_sou_align_in_bits != 0)
 		debug_printf(" align=%u", dl->d_sou_align_in_bits);
 
-	debug_word(dl->d_const, "const");
-	debug_word(dl->d_volatile, "volatile");
+	debug_word(dl->d_qual.tq_const, "const");
+	debug_word(dl->d_qual.tq_restrict, "restrict");
+	debug_word(dl->d_qual.tq_volatile, "volatile");
+	debug_word(dl->d_qual.tq_atomic, "atomic");
 	debug_word(dl->d_inline, "inline");
 	debug_word(dl->d_multiple_storage_classes, "multiple_storage_classes");
 	debug_word(dl->d_invalid_type_combination, "invalid_type_combination");
