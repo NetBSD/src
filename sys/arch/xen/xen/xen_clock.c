@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.10 2023/07/07 15:13:41 bouyer Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.11 2023/07/13 13:34:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.10 2023/07/07 15:13:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.11 2023/07/13 13:34:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -111,6 +111,11 @@ SDT_PROBE_DEFINE7(sdt, xen, clock, systime__backward,
     "uint64_t"/*delta_ns*/,
     "uint64_t"/*tsc*/,
     "uint64_t"/*systime_ns*/);
+
+SDT_PROBE_DEFINE3(sdt, xen, timecounter, backward,
+    "uint64_t"/*local*/,
+    "uint64_t"/*skew*/,
+    "uint64_t"/*global*/);
 
 SDT_PROBE_DEFINE2(sdt, xen, hardclock, systime__backward,
     "uint64_t"/*last_systime_ns*/,
@@ -510,7 +515,7 @@ static uint64_t
 xen_global_systime_ns(void)
 {
 	struct cpu_info *ci;
-	uint64_t local, global, result;
+	uint64_t local, global, skew, result;
 
 	/*
 	 * Find the local timecount on this CPU, and make sure it does
@@ -524,13 +529,24 @@ xen_global_systime_ns(void)
 	ci = curcpu();
 	do {
 		local = xen_vcputime_systime_ns();
-		local += ci->ci_xen_systime_ns_skew;
+		skew = ci->ci_xen_systime_ns_skew;
 		global = xen_global_systime_ns_stamp;
-		if (__predict_false(local < global + 1)) {
+		if (__predict_false(local + skew < global + 1)) {
+			SDT_PROBE3(sdt, xen, timecounter, backward,
+			    local, skew, global);
+#if XEN_CLOCK_DEBUG
+			device_printf(ci->ci_dev,
+			    "xen timecounter went backwards:"
+			    " local=%"PRIu64" skew=%"PRIu64" global=%"PRIu64","
+			    " adding %"PRIu64" to skew\n",
+			    local, skew, global, global + 1 - (local + skew));
+#endif
+			ci->ci_xen_timecounter_backwards_evcnt.ev_count++;
 			result = global + 1;
-			ci->ci_xen_systime_ns_skew += global + 1 - local;
+			ci->ci_xen_systime_ns_skew += global + 1 -
+			    (local + skew);
 		} else {
-			result = local;
+			result = local + skew;
 		}
 	} while (atomic_cas_64(&xen_global_systime_ns_stamp, global, result)
 	    != global);
@@ -831,6 +847,9 @@ xen_initclocks(void)
 	evcnt_attach_dynamic(&ci->ci_xen_missed_hardclock_evcnt,
 	    EVCNT_TYPE_INTR, NULL, device_xname(ci->ci_dev),
 	    "missed hardclock");
+	evcnt_attach_dynamic(&ci->ci_xen_timecounter_backwards_evcnt,
+	    EVCNT_TYPE_INTR, NULL, device_xname(ci->ci_dev),
+	    "timecounter went backwards");
 
 	/* Fire up the clocks.  */
 	xen_resumeclocks(ci);
