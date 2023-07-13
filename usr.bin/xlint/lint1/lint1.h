@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.187 2023/07/12 18:26:04 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.188 2023/07/13 07:19:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -456,6 +456,21 @@ typedef struct {
 	size_t lo;			/* inclusive */
 	size_t hi;			/* inclusive */
 } range_t;
+
+typedef enum {
+	LC_ARGSUSED,
+	LC_BITFIELDTYPE,
+	LC_CONSTCOND,
+	LC_FALLTHROUGH,
+	LC_LINTLIBRARY,
+	LC_LINTED,
+	LC_LONGLONG,
+	LC_NOTREACHED,
+	LC_PRINTFLIKE,
+	LC_PROTOLIB,
+	LC_SCANFLIKE,
+	LC_VARARGS,
+} lint_comment;
 
 #include "externs1.h"
 
