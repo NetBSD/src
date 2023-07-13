@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.356 2023/06/23 22:49:38 riastradh Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.357 2023/07/13 13:33:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,9 +69,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.356 2023/06/23 22:49:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.357 2023/07/13 13:33:55 riastradh Exp $");
 
 #include "opt_kstack.h"
+#include "opt_ddb.h"
 #include "opt_dtrace.h"
 
 #define	__MUTEX_PRIVATE
@@ -102,6 +103,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.356 2023/06/23 22:49:38 riastradh E
 #include <sys/dtrace_bsd.h>
 int                             dtrace_vtime_active=0;
 dtrace_vtime_switch_func_t      dtrace_vtime_switch_func;
+
+#ifdef DDB
+#include <ddb/ddb.h>
+#endif
 
 static void	sched_unsleep(struct lwp *, bool);
 static void	sched_changepri(struct lwp *, pri_t);
@@ -500,9 +505,37 @@ kpreempt_enable(void)
 void
 updatertime(lwp_t *l, const struct bintime *now)
 {
+	static bool backwards = false;
 
 	if (__predict_false(l->l_flag & LW_IDLE))
 		return;
+
+	if (__predict_false(bintimecmp(now, &l->l_stime, <)) && !backwards) {
+		char caller[128];
+
+#ifdef DDB
+		db_symstr(caller, sizeof(caller),
+		    (db_expr_t)(intptr_t)__builtin_return_address(0),
+		    DB_STGY_PROC);
+#else
+		snprintf(caller, sizeof(caller), "%p",
+		    __builtin_return_address(0));
+#endif
+		backwards = true;
+		printf("WARNING: lwp %ld (%s%s%s) flags 0x%x:"
+		    " timecounter went backwards"
+		    " from (%jd + 0x%016"PRIx64"/2^64) sec"
+		    " to (%jd + 0x%016"PRIx64"/2^64) sec"
+		    " in %s\n",
+		    (long)l->l_lid,
+		    l->l_proc->p_comm,
+		    l->l_name ? " " : "",
+		    l->l_name ? l->l_name : "",
+		    l->l_pflag,
+		    (intmax_t)l->l_stime.sec, l->l_stime.frac,
+		    (intmax_t)now->sec, now->frac,
+		    caller);
+	}
 
 	/* rtime += now - stime */
 	bintime_add(&l->l_rtime, now);
@@ -1109,7 +1142,8 @@ sched_pstats(void)
 {
 	struct loadavg *avg = &averunnable;
 	const int clkhz = (stathz != 0 ? stathz : hz);
-	static bool backwards = false;
+	static bool backwardslwp = false;
+	static bool backwardsproc = false;
 	static u_int lavg_count = 0;
 	struct proc *p;
 	int nrun;
@@ -1136,6 +1170,19 @@ sched_pstats(void)
 			if (__predict_false((l->l_flag & LW_IDLE) != 0))
 				continue;
 			lwp_lock(l);
+			if (__predict_false(l->l_rtime.sec < 0) &&
+			    !backwardslwp) {
+				backwardslwp = true;
+				printf("WARNING: lwp %ld (%s%s%s): "
+				    "negative runtime: "
+				    "(%jd + 0x%016"PRIx64"/2^64) sec\n",
+				    (long)l->l_lid,
+				    l->l_proc->p_comm,
+				    l->l_name ? " " : "",
+				    l->l_name ? l->l_name : "",
+				    (intmax_t)l->l_rtime.sec,
+				    l->l_rtime.frac);
+			}
 			runtm += l->l_rtime.sec;
 			l->l_swtime++;
 			sched_lwp_stats(l);
@@ -1171,10 +1218,12 @@ sched_pstats(void)
 		p->p_pctcpu = (p->p_pctcpu * ccpu) >> FSHIFT;
 
 		if (__predict_false(runtm < 0)) {
-			if (!backwards) {
-				backwards = true;
-				printf("WARNING: negative runtime; "
-				    "monotonic clock has gone backwards\n");
+			if (!backwardsproc) {
+				backwardsproc = true;
+				printf("WARNING: pid %ld (%s): "
+				    "negative runtime; "
+				    "monotonic clock has gone backwards\n",
+				    (long)p->p_pid, p->p_comm);
 			}
 			mutex_exit(p->p_lock);
 			continue;
