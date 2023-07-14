@@ -1,0 +1,104 @@
+# Top level -*- makefile -*- fragment for LTO
+#   Copyright (C) 2009-2020 Free Software Foundation, Inc.
+
+#This file is part of GCC.
+
+#GCC is free software; you can redistribute it and/or modify
+#it under the terms of the GNU General Public License as published by
+#the Free Software Foundation; either version 3, or (at your option)
+#any later version.
+
+#GCC is distributed in the hope that it will be useful,
+#but WITHOUT ANY WARRANTY; without even the implied warranty of
+#MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#GNU General Public License for more details.
+
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+# Variables
+
+# The name of the LTO compiler.
+LTO_EXE = lto1$(exeext)
+LTO_DUMP_EXE = lto-dump$(exeext)
+LTO_DUMP_INSTALL_NAME := $(shell echo lto-dump|sed '$(program_transform_name)')
+# The LTO-specific object files inclued in $(LTO_EXE).
+LTO_OBJS = lto/lto-lang.o lto/lto.o lto/lto-object.o attribs.o lto/lto-partition.o lto/lto-symtab.o lto/lto-common.o
+lto_OBJS = $(LTO_OBJS)
+LTO_DUMP_OBJS = lto/lto-lang.o lto/lto-object.o attribs.o lto/lto-partition.o lto/lto-symtab.o lto/lto-dump.o lto/lto-common.o
+lto_dump_OBJS = $(LTO_DUMP_OBJS)
+
+# this is only useful in a LTO bootstrap, but this does not work right
+# now. Should reenable after this is fixed, but only when LTO bootstrap
+# is enabled.
+
+#ifeq ($(if $(wildcard ../stage_current),$(shell cat \
+#  ../stage_current)),stageautofeedback)
+#$(LTO_OBJS): CFLAGS += -fauto-profile=lto1.fda
+#$(LTO_OBJS): lto1.fda
+#endif
+
+# Rules
+
+# These hooks are used by the main GCC Makefile.  Consult that
+# Makefile for documentation.
+lto.all.cross: $(LTO_EXE) $(LTO_DUMP_EXE)
+lto.start.encap: $(LTO_EXE) $(LTO_DUMP_EXE)
+lto.rest.encap:
+lto.tags:
+lto.install-common: installdirs
+	$(INSTALL_PROGRAM) $(LTO_DUMP_EXE) \
+	$(DESTDIR)$(bindir)/$(LTO_DUMP_INSTALL_NAME)$(exeext)
+
+lto.install-man:
+lto.install-info:
+lto.dvi:
+lto.pdf:
+lto.install-pdf:
+lto.html:
+lto.install-html:
+lto.uninstall:
+lto.info:
+lto.man:
+lto.srcextra:
+lto.srcman:
+lto.srcinfo:
+lto.install-plugin:
+
+lto.mostlyclean:
+	rm -f $(LTO_OBJS) $(LTO_EXE) lto1.fda $(LTO_DUMP_OBJS) $(LTO_DUMP_EXE) lto-dump.fda
+
+lto.clean:
+lto.distclean:
+lto.maintainer-clean:
+lto.stage1:
+lto.stage2:
+lto.stage3:
+lto.stage4:
+lto.stageprofile:
+lto.stagefeedback:
+
+# LTO rules.
+
+# Use strict warnings for this front end.
+lto-warn = $(STRICT_WARN)
+
+$(LTO_EXE): $(LTO_OBJS) $(BACKEND) $(LIBDEPS)
+	+$(LLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
+		$(LTO_OBJS) $(BACKEND) $(BACKENDLIBS) $(LIBS)
+
+$(LTO_DUMP_EXE): $(LTO_DUMP_OBJS) $(BACKEND) $(LIBDEPS)
+	+$(LLINKER) $(ALL_LINKERFLAGS) $(LDFLAGS) -o $@ \
+		$(LTO_DUMP_OBJS) $(BACKEND) $(BACKENDLIBS) $(LIBS)
+
+lto/lto-dump.o: $(LTO_OBJS)
+
+lto1.fda: ../prev-gcc/lto1$(exeext) ../prev-gcc/$(PERF_DATA)
+	$(CREATE_GCOV) -binary ../prev-gcc/lto1$(exeext) -gcov lto1.fda -profile ../prev-gcc/$(PERF_DATA) -gcov_version 1
+
+# LTO testing is done as part of C/C++/Fortran etc. testing.
+check-lto:
+
+# No LTO-specific selftests
+selftest-lto:
