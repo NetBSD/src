@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.563 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.564 2023/07/14 08:53:52 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.563 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.564 2023/07/14 08:53:52 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -343,9 +343,7 @@ expr_derive_type(type_t *tp, tspec_t t)
 	return tp2;
 }
 
-/*
- * Build and initialize a new node.
- */
+/* Create an expression from a unary or binary operator and its operands. */
 static tnode_t *
 new_tnode(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
 {
@@ -367,9 +365,6 @@ new_tnode(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
 	return ntn;
 }
 
-/*
- * Create a node for a constant.
- */
 tnode_t *
 build_constant(type_t *tp, val_t *v)
 {
@@ -408,6 +403,7 @@ fallback_symbol(sym_t *sym)
 			   strcmp(sym->s_name, "__PRETTY_FUNCTION__") == 0)) {
 		/* __FUNCTION__/__PRETTY_FUNCTION__ is a GCC extension */
 		gnuism(316);
+		// XXX: Should probably be ARRAY instead of PTR.
 		sym->s_type = block_derive_type(gettyp(CHAR), PTR);
 		sym->s_type->t_const = true;
 		return;
@@ -1159,6 +1155,9 @@ build_bit_shift(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 {
 
 	if (!allow_c90 && rn->tn_type->t_tspec != INT)
+		// XXX: C1978 7.5 says: "Both [operators] perform the usual
+		// arithmetic conversions on their operands."
+		// TODO: Add a test to exercise this part of the code.
 		rn = convert(NOOP, 0, gettyp(INT), rn);
 	return new_tnode(op, sys, ln->tn_type, ln, rn);
 }
@@ -1168,6 +1167,9 @@ is_null_pointer(const tnode_t *tn)
 {
 	tspec_t t = tn->tn_type->t_tspec;
 
+	// TODO: Investigate how other pointers are stored, in particular,
+	// whether a pointer constant can have a non-zero value.
+	// If not, simplify the code below.
 	return ((t == PTR && tn->tn_type->t_subt->t_tspec == VOID) ||
 		is_integer(t))
 	       && (tn->tn_op == CON && tn->tn_val.u.integer == 0);
@@ -1624,6 +1626,7 @@ fold_float(tnode_t *tn)
 		lint_assert(/*CONSTCOND*/false);
 	}
 
+	// XXX: Must not access u.floating after setting u.integer.
 	lint_assert(fpe != 0 || isnan(v->u.floating) == 0);
 	if (is_complex(v->v_tspec)) {
 		/*
@@ -2285,7 +2288,7 @@ typeok_shr(op_t op,
 		   !is_uinteger(olt) && !is_uinteger(ort) &&
 	    portable_rank_cmp(lt, rt) < 0) {
 		/*
-		 * In traditional C the left operand would be extended
+		 * In traditional C, the left operand would be extended
 		 * (possibly sign-extended) and then shifted.
 		 */
 		if (hflag && (ln->tn_op != CON || ln->tn_val.u.integer < 0)) {
