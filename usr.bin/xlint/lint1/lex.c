@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.185 2023/07/13 23:11:11 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.186 2023/07/14 09:32:42 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.185 2023/07/13 23:11:11 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.186 2023/07/14 09:32:42 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -119,8 +119,11 @@ static const struct keyword {
 	bool	kw_leading:1;	/* '__name' */
 	bool	kw_both:1;	/* '__name__' */
 } keywords[] = {
+	// TODO: _Alignas is not available in C99.
 	kwdef_keyword(	"_Alignas",	T_ALIGNAS),
+	// TODO: _Alignof is not available in C99.
 	kwdef_keyword(	"_Alignof",	T_ALIGNOF),
+	// TODO: alignof is not available in C99.
 	kwdef_token(	"alignof",	T_ALIGNOF,		78,0,6),
 	kwdef_token(	"asm",		T_ASM,			78,1,7),
 	kwdef_token(	"_Atomic",	T_ATOMIC,		11,0,1),
@@ -138,6 +141,7 @@ static const struct keyword {
 	kwdef_keyword(	"do",		T_DO),
 	kwdef_type(	"double",	DOUBLE,			78),
 	kwdef_keyword(	"else",		T_ELSE),
+	// XXX: enum is not available in traditional C.
 	kwdef_keyword(	"enum",		T_ENUM),
 	kwdef_token(	"__extension__",T_EXTENSION,		78,1,1),
 	kwdef_sclass(	"extern",	EXTERN,			78,0,1),
@@ -154,6 +158,7 @@ static const struct keyword {
 #endif
 	kwdef_type(	"long",		LONG,			78),
 	kwdef("_Noreturn", T_FUNCTION_SPECIFIER, .u.kw_fs = FS_NORETURN, 11,0,1),
+	// XXX: __packed is GCC-specific.
 	kwdef_token(	"__packed",	T_PACKED,		78,0,1),
 	kwdef_token(	"__real__",	T_REAL,			78,1,1),
 	kwdef_sclass(	"register",	REG,			78,0,1),
@@ -163,6 +168,7 @@ static const struct keyword {
 	kwdef(		"signed", T_TYPE, .u.kw_tspec = SIGNED,	90,0,3),
 	kwdef_keyword(	"sizeof",	T_SIZEOF),
 	kwdef_sclass(	"static",	STATIC,			78,0,1),
+	// XXX: _Static_assert was added in C11.
 	kwdef_keyword(	"_Static_assert",	T_STATIC_ASSERT),
 	kwdef("struct",	T_STRUCT_OR_UNION, .u.kw_tspec = STRUCT, 78,0,1),
 	kwdef_keyword(	"switch",	T_SWITCH),
@@ -177,6 +183,7 @@ static const struct keyword {
 #endif
 	kwdef("union",	T_STRUCT_OR_UNION, .u.kw_tspec = UNION,	78,0,1),
 	kwdef_type(	"unsigned",	UNSIGN,			78),
+	// XXX: void is not available in traditional C.
 	kwdef_type(	"void",		VOID,			78),
 	kwdef_tqual(	"volatile",	tq_volatile,		90,0,7),
 	kwdef_keyword(	"while",	T_WHILE),
