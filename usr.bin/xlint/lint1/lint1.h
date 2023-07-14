@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.192 2023/07/13 23:27:20 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.193 2023/07/14 08:53:52 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -86,7 +86,7 @@ typedef struct {
 	bool tq_atomic:1;
 } type_qualifiers;
 
-/* An integer or floating-point value. */
+/* A bool, integer or floating-point value. */
 typedef struct {
 	tspec_t	v_tspec;
 	/*
@@ -293,11 +293,10 @@ typedef	struct tnode {
 	bool	tn_lvalue:1;	/* node is lvalue */
 	bool	tn_cast:1;	/* if tn_op == CVT, it's an explicit cast */
 	bool	tn_parenthesized:1;
-	bool	tn_sys:1;	/* in strict bool mode, allow mixture between
-				 * bool and scalar, for code from system
-				 * headers that may be a mixture between
-				 * scalar types and bool
-				 */
+	bool	tn_sys:1;	/* the operator comes from a system header;
+				 * used in strict bool mode to allow mixing
+				 * bool and scalar, as these places are not
+				 * considered fixable */
 	bool	tn_system_dependent:1; /* depends on sizeof or offsetof */
 	union {
 		struct {
@@ -392,7 +391,7 @@ typedef	struct decl_level {
  * A sequence of asterisks and qualifiers, from right to left.  For example,
  * 'const ***volatile **const volatile' results in [c-v-, ----, --v-, ----,
  * ----].  The leftmost 'const' is not included in this list, it is stored in
- * dcs->d_const instead.
+ * dcs->d_qual instead.
  */
 typedef	struct qual_ptr {
 	type_qualifiers qualifiers;

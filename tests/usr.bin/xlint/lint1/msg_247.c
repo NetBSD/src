@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_247.c,v 1.31 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.32 2023/07/14 08:53:52 rillig Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to '%s' may be troublesome [247]
@@ -59,7 +59,7 @@ cast_to_char_pointer(struct Other *arg)
 }
 
 /*
- * In traditional C there was 'unsigned char' as well, so the same reasoning
+ * In traditional C, there was 'unsigned char' as well, so the same reasoning
  * as for plain 'char' applies here.
  */
 unsigned char *
