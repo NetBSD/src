@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_binary.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: expr_binary.c,v 1.8 2023/07/14 08:53:52 rillig Exp $	*/
 # 3 "expr_binary.c"
 
 /*
@@ -127,4 +127,39 @@ cover_balance(void)
 	sink((__uint128_t)1 + (__int128_t)1);
 	/* expect+1: ... '__uint128_t' ... */
 	sink((__int128_t)1 + (__uint128_t)1);
+}
+
+struct point {
+	int x, y;
+};
+
+static struct point
+returning_struct(void)
+{
+	return (struct point){ 0, 0 };
+}
+
+static void
+returning_void(void)
+{
+}
+
+static inline void
+op_colon(_Bool cond)
+{
+	// FIXME: GCC doesn't warn, as the 'type mismatch' is not wrong.
+	/* expect+1: warning: incompatible types 'struct point' and 'void' in conditional [126] */
+	cond ? returning_struct() : returning_void();
+
+	// TODO: Test the other combinations as well.
+	// |         | void | bool | arith | sou | int | flt | ptr | nullptr |
+	// |---------|------|------|-------|-----|-----|-----|-----|---------|
+	// | void    | ok   |      |       |     |     |     |     |         |
+	// | bool    |      | ok   |       |     |     |     |     |         |
+	// | arith   |      |      | ok    |     |     |     |     |         |
+	// | sou     |      |      |       | ok  |     |     |     |         |
+	// | int     |      |      |       |     |     |     | ok  |         |
+	// | flt     |      |      |       |     |     |     |     |         |
+	// | ptr     |      |      |       |     | ok  |     |     | ok      |
+	// | nullptr |      |      |       |     |     |     | ok  |         |
 }
