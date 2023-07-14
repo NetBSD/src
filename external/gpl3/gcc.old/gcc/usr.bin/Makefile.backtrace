@@ -1,0 +1,12 @@
+#	$NetBSD: Makefile.backtrace,v 1.1.1.1 2023/07/14 06:34:27 mrg Exp $
+
+.ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKTRACE_
+_EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_BACKTRACE_=1
+
+.include <bsd.own.mk>
+
+LIBBACKTRACEOBJ!=	cd ${.CURDIR}/../../lib/libbacktrace && ${PRINTOBJDIR}
+DPADD+=			${LIBBACKTRACEOBJ}/libbacktrace.a
+LDADD+=			${LIBBACKTRACEOBJ}/libbacktrace.a
+
+.endif
