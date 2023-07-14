@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.52 2022/04/19 20:32:17 rillig Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.53 2023/07/14 23:28:01 lukem Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -48,7 +48,7 @@
 #define HAVE_UNISTD_H 1
 #define HAVE_UTIMENSAT 1
 #define HAVE___QUOTACTL 1
-#define PACKAGE_BUGREPORT "http://rumpkernel.org/"
+#define PACKAGE_BUGREPORT "https://github.com/rumpkernel/"
 #define PACKAGE_NAME "rumpuser-posix"
 #define PACKAGE_STRING "rumpuser-posix 999"
 #define PACKAGE_TARNAME "rumpuser-posix"
