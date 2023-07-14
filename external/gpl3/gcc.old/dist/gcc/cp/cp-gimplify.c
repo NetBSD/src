@@ -42,6 +42,14 @@ along with GCC; see the file COPYING3.  If not see
 #include "cgraph.h"
 #include "omp-general.h"
 
+struct cp_fold_data
+{
+  hash_set<tree> pset;
+  bool genericize; // called from cp_fold_function?
+
+  cp_fold_data (bool g): genericize (g) {}
+};
+
 /* Forward declarations.  */
 
 static tree cp_genericize_r (tree *, int *, void *);
@@ -750,8 +758,8 @@ cp_gimplify_expr (tree *expr_p, gimple_seq *pre_p, gimple_seq *post_p)
 				  init, VEC_INIT_EXPR_VALUE_INIT (*expr_p),
 				  from_array,
 				  tf_warning_or_error);
-	hash_set<tree> pset;
-	cp_walk_tree (expr_p, cp_fold_r, &pset, NULL);
+	cp_fold_data data (/*genericize*/true);
+	cp_walk_tree (expr_p, cp_fold_r, &data, NULL);
 	cp_genericize_tree (expr_p, false);
 	copy_if_shared (expr_p);
 	ret = GS_OK;
@@ -1172,14 +1180,35 @@ struct cp_genericize_data
      GIMPLE-form.  */
 
 static tree
-cp_fold_r (tree *stmt_p, int *walk_subtrees, void *data)
+cp_fold_r (tree *stmt_p, int *walk_subtrees, void *data_)
 {
-  tree stmt;
-  enum tree_code code;
+  cp_fold_data *data = (cp_fold_data*)data_;
+  tree stmt = *stmt_p;
+  enum tree_code code = TREE_CODE (stmt);
+
+  switch (code)
+    {
+    case VAR_DECL:
+      /* In initializers replace anon union artificial VAR_DECLs
+	 with their DECL_VALUE_EXPRs, as nothing will do it later.
+	 Ditto for structured bindings.  */
+      if (!data->genericize
+	  && DECL_HAS_VALUE_EXPR_P (stmt)
+	  && (DECL_ANON_UNION_VAR_P (stmt)
+	      || (DECL_DECOMPOSITION_P (stmt) && DECL_DECOMP_BASE (stmt))))
+	{
+	  *stmt_p = stmt = unshare_expr (DECL_VALUE_EXPR (stmt));
+	  break;
+	}
+      break;
+
+    default:
+      break;
+    }
 
   *stmt_p = stmt = cp_fold (*stmt_p);
 
-  if (((hash_set<tree> *) data)->add (stmt))
+  if (data->pset.add (stmt))
     {
       /* Don't walk subtrees of stmts we've already walked once, otherwise
 	 we can have exponential complexity with e.g. lots of nested
@@ -1246,8 +1275,8 @@ cp_fold_r (tree *stmt_p, int *walk_subtrees, void *data)
 void
 cp_fold_function (tree fndecl)
 {
-  hash_set<tree> pset;
-  cp_walk_tree (&DECL_SAVED_TREE (fndecl), cp_fold_r, &pset, NULL);
+  cp_fold_data data (/*genericize*/true);
+  cp_walk_tree (&DECL_SAVED_TREE (fndecl), cp_fold_r, &data, NULL);
 }
 
 /* Turn SPACESHIP_EXPR EXPR into GENERIC.  */
@@ -1561,6 +1590,8 @@ cp_genericize_r (tree *stmt_p, int *walk_subtrees, void *data)
 	      {
 		tree using_directive = make_node (IMPORTED_DECL);
 		TREE_TYPE (using_directive) = void_type_node;
+		DECL_SOURCE_LOCATION (using_directive)
+		  = cp_expr_loc_or_input_loc (stmt);
 
 		IMPORTED_DECL_ASSOCIATED_DECL (using_directive) = decl;
 		DECL_CHAIN (using_directive) = BLOCK_VARS (block);
@@ -2525,8 +2556,8 @@ cp_fully_fold_init (tree x)
   if (processing_template_decl)
     return x;
   x = cp_fully_fold (x);
-  hash_set<tree> pset;
-  cp_walk_tree (&x, cp_fold_r, &pset, NULL);
+  cp_fold_data data (/*genericize*/false);
+  cp_walk_tree (&x, cp_fold_r, &data, NULL);
   return x;
 }
 

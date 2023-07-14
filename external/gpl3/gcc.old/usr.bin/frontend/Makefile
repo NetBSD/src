@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.1.1.6 2023/02/20 02:01:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.7 2023/07/14 19:36:39 mrg Exp $
 
+HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
 
 # For ../Makefile.inc and bsd.own.mk
@@ -8,8 +9,6 @@ LIBISPRIVATE=	yes
 LIB=		frontend
 
 SRCS=		gcc.c version.c prefix.c
-
-HOSTPROG_CXX=	1
 
 .include "../Makefile.driver"
 .include "../Makefile.target-defines"

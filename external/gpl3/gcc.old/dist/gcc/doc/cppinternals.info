@@ -1,4 +1,4 @@
-This is cppinternals.info, produced by makeinfo version 6.8 from
+This is cppinternals.info, produced by makeinfo version 6.5 from
 cppinternals.texi.
 
 INFO-DIR-SECTION Software development
@@ -137,7 +137,7 @@ will be removed, so I'll not discuss it further here.
    The job of '_cpp_lex_direct' is simply to lex a token.  It is not
 responsible for issues like directive handling, returning lookahead
 tokens directly, multiple-include optimization, or conditional block
-skipping.  It necessarily has a minor rôle to play in memory management
+skipping.  It necessarily has a minor ro^le to play in memory management
 of lexed lines.  I discuss these issues in a separate section (*note
 Lexing a line::).
 
@@ -1039,8 +1039,3 @@ Node: Files44873
 Node: Concept Index48339
 
 End Tag Table
-
-
-Local Variables:
-coding: utf-8
-End:

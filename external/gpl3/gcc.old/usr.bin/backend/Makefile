@@ -1,6 +1,10 @@
-#	$NetBSD: Makefile,v 1.1.1.10 2023/02/20 02:01:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.11 2023/07/14 19:36:39 mrg Exp $
 
+HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes
+
+# For ../Makefile.inc and bsd.own.mk
+.include <bsd.init.mk>
 
 LIB=		backend
 
@@ -27,10 +31,6 @@ CPPFLAGS.cppdefault.c+=	-DPREFIX=\"/usr\" \
 CPPFLAGS.lto-streamer-in.c+=	-DTARGET_MACHINE=\"${MACHINE_GNU_PLATFORM}\"
 
 HOST_CXXFLAGS+=	-std=gnu++98
-
-HOSTPROG_CXX=	1
-
-.include <bsd.init.mk>
 
 HOST_LIBIBERTYOBJ!=	cd ${.CURDIR}/../host-libiberty && ${PRINTOBJDIR}
 
@@ -601,7 +601,7 @@ COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
 
 CFLAGS+=	-Wno-stack-protector
 
-COPTS.dwarf2out.c+=-Wno-error=maybe-uninitialized
+COPTS.dwarf2out.c+=${CC_WNO_MAYBE_UNINITIALIZED}
 
 .if ${GCC_MACHINE_ARCH} == "m68000" || ${GCC_MACHINE_ARCH} == "m68k" || \
 	${GCC_MACHINE_ARCH} == "coldfire"

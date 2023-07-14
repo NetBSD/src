@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.6 2023/02/20 02:01:02 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.7 2023/07/14 19:36:39 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 LIBISCXX = yes
@@ -38,6 +38,6 @@ LIBDPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 CPPFLAGS+=-DCAN_SANITIZE_UB=1
 
 # XXX
-COPTS.ubsan_handlers.cc+=-Wno-error=maybe-uninitialized
+COPTS.ubsan_handlers.cc+=${CC_WNO_MAYBE_UNINITIALIZED}
 
 .include <bsd.lib.mk>
