@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.565 2023/07/14 09:04:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.566 2023/07/14 09:20:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.565 2023/07/14 09:04:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.566 2023/07/14 09:20:23 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -358,8 +358,7 @@ build_op(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
 	if (op == INDIR || op == FSEL) {
 		lint_assert(ln->tn_type->t_tspec == PTR);
 		tspec_t t = ln->tn_type->t_subt->t_tspec;
-		if (t != FUNC && t != VOID)
-			ntn->tn_lvalue = true;
+		ntn->tn_lvalue = t != FUNC && t != VOID;
 	}
 
 	return ntn;
@@ -937,11 +936,7 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	lint_assert(rn->tn_op == NAME);
 	lint_assert(is_member(rn->tn_sym));
 
-	/*
-	 * Remember if the left operand is an lvalue (structure members
-	 * are lvalues if and only if the structure itself is an lvalue).
-	 */
-	bool nolval = op == POINT && !ln->tn_lvalue;
+	bool lvalue = op == ARROW || ln->tn_lvalue;
 
 	if (op == POINT) {
 		ln = build_address(sys, ln, true);
@@ -959,13 +954,9 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	if (ln->tn_op == CON)
 		ntn = fold(ntn);
 
-	if (rn->tn_type->t_bitfield) {
-		ntn = build_op(FSEL, sys, ntn->tn_type->t_subt, ntn, NULL);
-	} else {
-		ntn = build_op(INDIR, sys, ntn->tn_type->t_subt, ntn, NULL);
-	}
-
-	if (nolval)
+	op_t nop = rn->tn_type->t_bitfield ? FSEL : INDIR;
+	ntn = build_op(nop, sys, ntn->tn_type->t_subt, ntn, NULL);
+	if (!lvalue)
 		ntn->tn_lvalue = false;
 
 	return ntn;

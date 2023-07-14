@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.355 2023/07/13 23:27:20 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.356 2023/07/14 09:20:23 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.355 2023/07/13 23:27:20 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.356 2023/07/14 09:20:23 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -104,7 +104,6 @@ initdecl(void)
 				ttab[i].tt_rank_value =
 				    ttab[i].tt_size_in_bits;
 		}
-		ttab[BOOL].tt_rank_kind = RK_INTEGER;
 		ttab[BOOL].tt_rank_value = 1;
 	}
 
@@ -607,7 +606,7 @@ void
 dcs_begin_type(void)
 {
 
-	debug_step("%s", __func__);
+	debug_enter();
 	dcs->d_abstract_type = NO_TSPEC;
 	dcs->d_complex_mod = NO_TSPEC;
 	dcs->d_sign_mod = NO_TSPEC;
@@ -711,7 +710,6 @@ void
 dcs_end_type(void)
 {
 
-	debug_step("%s", __func__);
 	dcs_merge_declaration_specifiers();
 
 	if (dcs->d_multiple_storage_classes) {
@@ -743,6 +741,8 @@ dcs_end_type(void)
 		dcs->d_type->t_const |= dcs->d_qual.tq_const;
 		dcs->d_type->t_volatile |= dcs->d_qual.tq_volatile;
 	}
+
+	debug_leave();
 }
 
 /*
@@ -1148,10 +1148,10 @@ add_type_qualifiers(type_qualifiers *dst, type_qualifiers src)
 		/* duplicate '%s' */
 		warning(10, "volatile");
 
-	dst->tq_const = dst->tq_const || src.tq_const;
-	dst->tq_restrict = dst->tq_restrict || src.tq_restrict;
-	dst->tq_volatile = dst->tq_volatile || src.tq_volatile;
-	dst->tq_atomic = dst->tq_atomic || src.tq_atomic;
+	dst->tq_const = dst->tq_const | src.tq_const;
+	dst->tq_restrict = dst->tq_restrict | src.tq_restrict;
+	dst->tq_volatile = dst->tq_volatile | src.tq_volatile;
+	dst->tq_atomic = dst->tq_atomic | src.tq_atomic;
 }
 
 qual_ptr *
