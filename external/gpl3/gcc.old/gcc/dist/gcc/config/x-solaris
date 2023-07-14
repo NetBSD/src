@@ -1,0 +1,3 @@
+host-solaris.o: $(srcdir)/config/host-solaris.c
+	$(COMPILE) $<
+	$(POSTCOMPILE)

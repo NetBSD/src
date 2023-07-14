@@ -1,0 +1,17 @@
+# NetBSD has (will have) "non-native" libraries in /usr/lib/<arch>.
+
+MULTILIB_OPTIONS = mabi=n32/mabi=64/mabi=32
+MULTILIB_DIRNAMES = n32 n64 o32
+
+# For NetBSD/mips64 we thus have /usr/lib (n32), /usr/lib/o32 and /usr/lib/64.
+ifneq ($(filter MIPS_ABI_DEFAULT=ABI_N32,$(tm_defines)),)
+MULTILIB_OSDIRNAMES = . ../lib/64 ../lib/o32
+endif
+
+# For NetBSD/mipsn64 we thus have /usr/lib (64), /usr/lib/o32 and /usr/lib/n32.
+ifneq ($(filter MIPS_ABI_DEFAULT=ABI_64,$(tm_defines)),)
+MULTILIB_OSDIRNAMES = ../lib/n32 . ../lib/o32
+endif
+
+LIBGCC = stmp-multilib
+INSTALL_LIBGCC = install-multilib
