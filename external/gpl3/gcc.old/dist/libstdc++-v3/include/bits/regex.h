@@ -420,7 +420,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
        * Constructs a basic regular expression that does not match any
        * character sequence.
        */
-      basic_regex()
+      basic_regex() noexcept
       : _M_flags(ECMAScript), _M_loc(), _M_automaton(nullptr)
       { }
 
@@ -696,7 +696,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
        * expression.
        */
       unsigned int
-      mark_count() const
+      mark_count() const noexcept
       {
 	if (_M_automaton)
 	  return _M_automaton->_M_sub_count() - 1;
@@ -708,7 +708,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
        * or in the last call to assign().
        */
       flag_type
-      flags() const
+      flags() const noexcept
       { return _M_flags; }
 
       // [7.8.5] locale
@@ -730,7 +730,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
        *        object.
        */
       locale_type
-      getloc() const
+      getloc() const noexcept
       { return _M_loc; }
 
       // [7.8.6] swap
@@ -740,7 +740,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
        * @param __rhs Another regular expression object.
        */
       void
-      swap(basic_regex& __rhs)
+      swap(basic_regex& __rhs) noexcept
       {
 	std::swap(_M_flags, __rhs._M_flags);
 	std::swap(_M_loc, __rhs._M_loc);
@@ -847,7 +847,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CXX11
   template<typename _Ch_type, typename _Rx_traits>
     inline void
     swap(basic_regex<_Ch_type, _Rx_traits>& __lhs,
-	 basic_regex<_Ch_type, _Rx_traits>& __rhs)
+	 basic_regex<_Ch_type, _Rx_traits>& __rhs) noexcept
     { __lhs.swap(__rhs); }
 
 
@@ -2457,6 +2457,15 @@ _GLIBCXX_END_NAMESPACE_CXX11
 		 = regex_constants::match_default) = delete;
 
   // std [28.11.4] Function template regex_replace
+
+  template<typename _Out_iter, typename _Bi_iter,
+	   typename _Rx_traits, typename _Ch_type>
+    _Out_iter
+    __regex_replace(_Out_iter __out, _Bi_iter __first, _Bi_iter __last,
+		    const basic_regex<_Ch_type, _Rx_traits>& __e,
+		    const _Ch_type* __fmt, size_t __len,
+		    regex_constants::match_flag_type __flags);
+
   /**
    * @brief Search for a regular expression within a range for multiple times,
    and replace the matched parts through filling a format string.
@@ -2480,7 +2489,8 @@ _GLIBCXX_END_NAMESPACE_CXX11
 		  regex_constants::match_flag_type __flags
 		  = regex_constants::match_default)
     {
-      return regex_replace(__out, __first, __last, __e, __fmt.c_str(), __flags);
+      return std::__regex_replace(__out, __first, __last, __e, __fmt.c_str(),
+				  __fmt.length(), __flags);
     }
 
   /**
@@ -2503,7 +2513,13 @@ _GLIBCXX_END_NAMESPACE_CXX11
 		  const basic_regex<_Ch_type, _Rx_traits>& __e,
 		  const _Ch_type* __fmt,
 		  regex_constants::match_flag_type __flags
-		  = regex_constants::match_default);
+		  = regex_constants::match_default)
+    {
+      return std::__regex_replace(__out, __first, __last, __e, __fmt,
+				  char_traits<_Ch_type>::length(__fmt),
+				  __flags);
+    }
+
 
   /**
    * @brief Search for a regular expression within a string for multiple times,

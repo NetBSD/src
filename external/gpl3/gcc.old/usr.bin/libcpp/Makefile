@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2023/05/19 23:28:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.13 2023/07/14 19:46:45 mrg Exp $
 
 HOSTPROG_CXX=	1
 LIBISPRIVATE=	yes

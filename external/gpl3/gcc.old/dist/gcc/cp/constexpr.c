@@ -5248,6 +5248,18 @@ cxx_eval_increment_expression (const constexpr_ctx *ctx, tree t,
 	offset = fold_build1 (NEGATE_EXPR, TREE_TYPE (offset), offset);
       mod = fold_build2 (POINTER_PLUS_EXPR, type, val, offset);
     }
+  else if (c_promoting_integer_type_p (type)
+	   && !TYPE_UNSIGNED (type)
+	   && TYPE_PRECISION (type) < TYPE_PRECISION (integer_type_node))
+    {
+      offset = fold_convert (integer_type_node, offset);
+      mod = fold_convert (integer_type_node, val);
+      tree t = fold_build2 (inc ? PLUS_EXPR : MINUS_EXPR, integer_type_node,
+			    mod, offset);
+      mod = fold_convert (type, t);
+      if (TREE_OVERFLOW_P (mod) && !TREE_OVERFLOW_P (t))
+	TREE_OVERFLOW (mod) = false;
+    }
   else
     mod = fold_build2 (inc ? PLUS_EXPR : MINUS_EXPR, type, val, offset);
   if (!ptr)
@@ -6706,6 +6718,49 @@ cxx_eval_constant_expression (const constexpr_ctx *ctx, tree t,
       *non_constant_p = true;
       return t;
 
+    case OMP_PARALLEL:
+    case OMP_TASK:
+    case OMP_FOR:
+    case OMP_SIMD:
+    case OMP_DISTRIBUTE:
+    case OMP_TASKLOOP:
+    case OMP_LOOP:
+    case OMP_TEAMS:
+    case OMP_TARGET_DATA:
+    case OMP_TARGET:
+    case OMP_SECTIONS:
+    case OMP_ORDERED:
+    case OMP_CRITICAL:
+    case OMP_SINGLE:
+    case OMP_SCAN:
+    case OMP_SECTION:
+    case OMP_MASTER:
+    case OMP_TASKGROUP:
+    case OMP_TARGET_UPDATE:
+    case OMP_TARGET_ENTER_DATA:
+    case OMP_TARGET_EXIT_DATA:
+    case OMP_ATOMIC:
+    case OMP_ATOMIC_READ:
+    case OMP_ATOMIC_CAPTURE_OLD:
+    case OMP_ATOMIC_CAPTURE_NEW:
+    case OMP_DEPOBJ:
+    case OACC_PARALLEL:
+    case OACC_KERNELS:
+    case OACC_SERIAL:
+    case OACC_DATA:
+    case OACC_HOST_DATA:
+    case OACC_LOOP:
+    case OACC_CACHE:
+    case OACC_DECLARE:
+    case OACC_ENTER_DATA:
+    case OACC_EXIT_DATA:
+    case OACC_UPDATE:
+      if (!ctx->quiet)
+	error_at (EXPR_LOCATION (t),
+		  "statement is not a constant expression");
+      *non_constant_p = true;
+      break;
+
     default:
       if (STATEMENT_CODE_P (TREE_CODE (t)))
 	{
@@ -8137,6 +8192,7 @@ potential_constant_expression_1 (tree t, bool want_rval, bool strict, bool now,
     case OMP_ORDERED:
     case OMP_CRITICAL:
     case OMP_SINGLE:
+    case OMP_SCAN:
     case OMP_SECTION:
     case OMP_MASTER:
     case OMP_TASKGROUP:
@@ -8425,13 +8481,18 @@ potential_constant_expression_1 (tree t, bool want_rval, bool strict, bool now,
       tmp = boolean_false_node;
     truth:
       {
-	tree op = TREE_OPERAND (t, 0);
-	if (!RECUR (op, rval))
+	tree op0 = TREE_OPERAND (t, 0);
+	tree op1 = TREE_OPERAND (t, 1);
+	if (!RECUR (op0, rval))
 	  return false;
+	if (!(flags & tf_error) && RECUR (op1, rval))
+	  /* When quiet, try to avoid expensive trial evaluation by first
+	     checking potentiality of the second operand.  */
+	  return true;
 	if (!processing_template_decl)
-	  op = cxx_eval_outermost_constant_expr (op, true);
-	if (tree_int_cst_equal (op, tmp))
-	  return RECUR (TREE_OPERAND (t, 1), rval);
+	  op0 = cxx_eval_outermost_constant_expr (op0, true);
+	if (tree_int_cst_equal (op0, tmp))
+	  return (flags & tf_error) ? RECUR (op1, rval) : false;
 	else
 	  return true;
       }
@@ -8611,6 +8672,17 @@ bool
 potential_constant_expression_1 (tree t, bool want_rval, bool strict, bool now,
 				 tsubst_flags_t flags)
 {
+  if (flags & tf_error)
+    {
+      /* Check potentiality quietly first, as that could be performed more
+	 efficiently in some cases (currently only for TRUTH_*_EXPR).  If
+	 that fails, replay the check noisily to give errors.  */
+      flags &= ~tf_error;
+      if (potential_constant_expression_1 (t, want_rval, strict, now, flags))
+	return true;
+      flags |= tf_error;
+    }
+
   tree target = NULL_TREE;
   return potential_constant_expression_1 (t, want_rval, strict, now,
 					  flags, &target);
