@@ -3,6 +3,6 @@
 /* Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp  */
 
 #define BUILDING_GCC_MAJOR 10
-#define BUILDING_GCC_MINOR 4
+#define BUILDING_GCC_MINOR 5
 #define BUILDING_GCC_PATCHLEVEL 0
 #define BUILDING_GCC_VERSION (BUILDING_GCC_MAJOR * 1000 + BUILDING_GCC_MINOR)
