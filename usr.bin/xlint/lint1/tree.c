@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.564 2023/07/14 08:53:52 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.565 2023/07/14 09:04:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.564 2023/07/14 08:53:52 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.565 2023/07/14 09:04:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -345,7 +345,7 @@ expr_derive_type(type_t *tp, tspec_t t)
 
 /* Create an expression from a unary or binary operator and its operands. */
 static tnode_t *
-new_tnode(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
+build_op(op_t op, bool sys, type_t *type, tnode_t *ln, tnode_t *rn)
 {
 
 	tnode_t *ntn = expr_alloc_tnode();
@@ -774,7 +774,7 @@ build_address(bool sys, tnode_t *tn, bool noign)
 		return tn->tn_left;
 	}
 
-	return new_tnode(ADDR, sys, expr_derive_type(tn->tn_type, PTR),
+	return build_op(ADDR, sys, expr_derive_type(tn->tn_type, PTR),
 	    tn, NULL);
 }
 
@@ -955,14 +955,14 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	    rn->tn_sym->u.s_member.sm_offset_in_bits / CHAR_SIZE);
 
 	type_t *ptr_tp = expr_derive_type(rn->tn_type, PTR);
-	tnode_t *ntn = new_tnode(PLUS, sys, ptr_tp, ln, ctn);
+	tnode_t *ntn = build_op(PLUS, sys, ptr_tp, ln, ctn);
 	if (ln->tn_op == CON)
 		ntn = fold(ntn);
 
 	if (rn->tn_type->t_bitfield) {
-		ntn = new_tnode(FSEL, sys, ntn->tn_type->t_subt, ntn, NULL);
+		ntn = build_op(FSEL, sys, ntn->tn_type->t_subt, ntn, NULL);
 	} else {
-		ntn = new_tnode(INDIR, sys, ntn->tn_type->t_subt, ntn, NULL);
+		ntn = build_op(INDIR, sys, ntn->tn_type->t_subt, ntn, NULL);
 	}
 
 	if (nolval)
@@ -1043,7 +1043,7 @@ build_prepost_incdec(op_t op, bool sys, tnode_t *ln)
 	tnode_t *cn = ln->tn_type->t_tspec == PTR
 	    ? subt_size_in_bytes(ln->tn_type)
 	    : build_integer_constant(INT, 1);
-	return new_tnode(op, sys, ln->tn_type, ln, cn);
+	return build_op(op, sys, ln->tn_type, ln, cn);
 }
 
 static void
@@ -1121,11 +1121,11 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		if (rn->tn_type->t_tspec != elsz->tn_type->t_tspec)
 			rn = convert(NOOP, 0, elsz->tn_type, rn);
 
-		tnode_t *prod = new_tnode(MULT, sys, rn->tn_type, rn, elsz);
+		tnode_t *prod = build_op(MULT, sys, rn->tn_type, rn, elsz);
 		if (rn->tn_op == CON)
 			prod = fold(prod);
 
-		return new_tnode(op, sys, ln->tn_type, ln, prod);
+		return build_op(op, sys, ln->tn_type, ln, prod);
 	}
 
 	/* pointer - pointer */
@@ -1134,17 +1134,17 @@ build_plus_minus(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		lint_assert(op == MINUS);
 
 		type_t *ptrdiff = gettyp(PTRDIFF_TSPEC);
-		tnode_t *raw_diff = new_tnode(op, sys, ptrdiff, ln, rn);
+		tnode_t *raw_diff = build_op(op, sys, ptrdiff, ln, rn);
 		if (ln->tn_op == CON && rn->tn_op == CON)
 			raw_diff = fold(raw_diff);
 
 		tnode_t *elsz = subt_size_in_bytes(ln->tn_type);
 		balance(NOOP, &raw_diff, &elsz);
 
-		return new_tnode(DIV, sys, ptrdiff, raw_diff, elsz);
+		return build_op(DIV, sys, ptrdiff, raw_diff, elsz);
 	}
 
-	return new_tnode(op, sys, ln->tn_type, ln, rn);
+	return build_op(op, sys, ln->tn_type, ln, rn);
 }
 
 /*
@@ -1159,7 +1159,7 @@ build_bit_shift(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		// arithmetic conversions on their operands."
 		// TODO: Add a test to exercise this part of the code.
 		rn = convert(NOOP, 0, gettyp(INT), rn);
-	return new_tnode(op, sys, ln->tn_type, ln, rn);
+	return build_op(op, sys, ln->tn_type, ln, rn);
 }
 
 static bool
@@ -1252,7 +1252,7 @@ build_colon(bool sys, tnode_t *ln, tnode_t *rn)
 		tp = merge_qualifiers(ln->tn_type, rn->tn_type);
 	}
 
-	return new_tnode(COLON, sys, tp, ln, rn);
+	return build_op(COLON, sys, tp, ln, rn);
 }
 
 /* TODO: check for varargs */
@@ -1332,7 +1332,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		tnode_t *ctn = subt_size_in_bytes(ln->tn_type);
 		if (rn->tn_type->t_tspec != ctn->tn_type->t_tspec)
 			rn = convert(NOOP, 0, ctn->tn_type, rn);
-		rn = new_tnode(MULT, sys, rn->tn_type, rn, ctn);
+		rn = build_op(MULT, sys, rn->tn_type, rn, ctn);
 		if (rn->tn_left->tn_op == CON)
 			rn = fold(rn);
 	}
@@ -1373,7 +1373,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		    type_name(rn->tn_left->tn_type), type_name(rn->tn_type));
 	}
 
-	return new_tnode(op, sys, ln->tn_type, ln, rn);
+	return build_op(op, sys, ln->tn_type, ln, rn);
 }
 
 /*
@@ -1411,7 +1411,7 @@ build_real_imag(op_t op, bool sys, tnode_t *ln)
 		return NULL;
 	}
 
-	tnode_t *ntn = new_tnode(op, sys, gettyp(t), ln, NULL);
+	tnode_t *ntn = build_op(op, sys, gettyp(t), ln, NULL);
 	ntn->tn_lvalue = true;
 	return ntn;
 }
@@ -1735,7 +1735,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 		ntn = build_address(sys, ln, false);
 		break;
 	case INDIR:
-		ntn = new_tnode(INDIR, sys, ln->tn_type->t_subt, ln, NULL);
+		ntn = build_op(INDIR, sys, ln->tn_type->t_subt, ln, NULL);
 		break;
 	case PLUS:
 	case MINUS:
@@ -1771,7 +1771,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 		}
 		/* FALLTHROUGH */
 	case QUEST:
-		ntn = new_tnode(op, sys, rn->tn_type, ln, rn);
+		ntn = build_op(op, sys, rn->tn_type, ln, rn);
 		break;
 	case REAL:
 	case IMAG:
@@ -1781,7 +1781,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 		lint_assert(mp->m_binary == (rn != NULL));
 		type_t *rettp = mp->m_returns_bool
 		    ? gettyp(Tflag ? BOOL : INT) : ln->tn_type;
-		ntn = new_tnode(op, sys, rettp, ln, rn);
+		ntn = build_op(op, sys, rettp, ln, rn);
 		break;
 	}
 
@@ -2050,7 +2050,7 @@ cconv(tnode_t *tn)
 			/* %soperand of '%s' must be lvalue */
 			gnuism(114, "", op_name(ADDR));
 		}
-		tn = new_tnode(ADDR, tn->tn_sys,
+		tn = build_op(ADDR, tn->tn_sys,
 		    expr_derive_type(tn->tn_type->t_subt, PTR), tn, NULL);
 	}
 
@@ -2067,7 +2067,7 @@ cconv(tnode_t *tn)
 		type_t *tp = expr_dup_type(tn->tn_type);
 		/* C99 6.3.2.1p2 sentence 2 says to remove the qualifiers. */
 		tp->t_const = tp->t_volatile = false;
-		tn = new_tnode(LOAD, tn->tn_sys, tp, tn, NULL);
+		tn = build_op(LOAD, tn->tn_sys, tp, tn, NULL);
 	}
 
 	return tn;
@@ -4186,7 +4186,7 @@ build_function_argument(tnode_t *args, tnode_t *arg)
 	if (arg == NULL)
 		arg = build_integer_constant(INT, 0);
 
-	return new_tnode(PUSH, arg->tn_sys, arg->tn_type, arg, args);
+	return build_op(PUSH, arg->tn_sys, arg->tn_type, arg, args);
 }
 
 /*
@@ -4311,7 +4311,7 @@ build_function_call(tnode_t *func, bool sys, tnode_t *args)
 
 	args = check_function_arguments(func->tn_type->t_subt, args);
 
-	return new_tnode(fcop, sys, func->tn_type->t_subt->t_subt, func, args);
+	return build_op(fcop, sys, func->tn_type->t_subt->t_subt, func, args);
 }
 
 /*
