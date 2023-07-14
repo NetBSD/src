@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 2019/11/11 22:45:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.97 2023/07/14 23:28:01 lukem Exp $
 #
 
 NOSANITIZER=	# defined
@@ -45,7 +45,7 @@ CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${.CURDIR}/../libc
 
 # providing alternative MI implementations for creating an lwp is
 # possible by setting PTHREAD_MAKELWP.  Currently, alternatives are
-# set by the rumprun software stacks (see repo.rumpkernel.org)
+# set by the rumprun software stacks (see https://github.com/rumpkernel/rumprun )
 PTHREAD_MAKELWP?=	pthread_makelwp_netbsd.c
 
 #
