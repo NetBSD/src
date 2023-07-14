@@ -1,4 +1,4 @@
-/* $NetBSD: fs.c,v 1.1 2022/01/22 08:09:40 pho Exp $ */
+/* $NetBSD: fs.c,v 1.2 2023/07/14 02:43:50 pho Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: fs.c,v 1.1 2022/01/22 08:09:40 pho Exp $");
+__RCSID("$NetBSD: fs.c,v 1.2 2023/07/14 02:43:50 pho Exp $");
 #endif /* !lint */
 
 /*
@@ -154,6 +154,7 @@ fuse_fs_getattr_v30(struct fuse_fs* fs, const char* path,
             return -ENOSYS
         CALL_GETATTR(30);
         CALL_GETATTR(34);
+        CALL_GETATTR(35);
         CALL_GETATTR(38);
 #undef CALL_GETATTR
     default:
@@ -190,6 +191,7 @@ fuse_fs_fgetattr(struct fuse_fs* fs, const char* path, struct stat* buf,
 
     case 30:
     case 34:
+    case 35:
     case 38:
         return fuse_fs_getattr_v30(fs, path, buf, fi);
     default:
@@ -231,6 +233,7 @@ fuse_fs_rename_v30(struct fuse_fs* fs, const char* oldpath,
             return -ENOSYS
         CALL_RENAME(30);
         CALL_RENAME(34);
+        CALL_RENAME(35);
         CALL_RENAME(38);
 #undef CALL_RENAME
     default:
@@ -258,6 +261,7 @@ fuse_fs_unlink(struct fuse_fs* fs, const char* path) {
         CALL_UNLINK(29);
         CALL_UNLINK(30);
         CALL_UNLINK(34);
+        CALL_UNLINK(35);
         CALL_UNLINK(38);
 #undef CALL_UNLINK
     default:
@@ -285,6 +289,7 @@ fuse_fs_rmdir(struct fuse_fs* fs, const char* path) {
         CALL_RMDIR(29);
         CALL_RMDIR(30);
         CALL_RMDIR(34);
+        CALL_RMDIR(35);
         CALL_RMDIR(38);
 #undef CALL_RMDIR
     default:
@@ -312,6 +317,7 @@ fuse_fs_symlink(struct fuse_fs* fs, const char* linkname, const char* path) {
         CALL_SYMLINK(29);
         CALL_SYMLINK(30);
         CALL_SYMLINK(34);
+        CALL_SYMLINK(35);
         CALL_SYMLINK(38);
 #undef CALL_SYMLINK
     default:
@@ -339,6 +345,7 @@ fuse_fs_link(struct fuse_fs* fs, const char* oldpath, const char* newpath) {
         CALL_LINK(29);
         CALL_LINK(30);
         CALL_LINK(34);
+        CALL_LINK(35);
         CALL_LINK(38);
 #undef CALL_LINK
     default:
@@ -374,6 +381,7 @@ fuse_fs_release(struct fuse_fs* fs, const char* path, struct fuse_file_info* fi)
         CALL_RELEASE(29);
         CALL_RELEASE(30);
         CALL_RELEASE(34);
+        CALL_RELEASE(35);
         CALL_RELEASE(38);
 #undef CALL_RELEASE
     default:
@@ -409,6 +417,7 @@ fuse_fs_open(struct fuse_fs* fs, const char* path, struct fuse_file_info* fi) {
         CALL_OPEN(29);
         CALL_OPEN(30);
         CALL_OPEN(34);
+        CALL_OPEN(35);
         CALL_OPEN(38);
 #undef CALL_OPEN
     default:
@@ -445,6 +454,7 @@ fuse_fs_read(struct fuse_fs* fs, const char* path, char* buf,
         CALL_READ(29);
         CALL_READ(30);
         CALL_READ(34);
+        CALL_READ(35);
         CALL_READ(38);
 #undef CALL_READ
     default:
@@ -476,6 +486,7 @@ fuse_fs_read_buf(struct fuse_fs* fs, const char* path,
         CALL_READ_BUF(29);
         CALL_READ_BUF(30);
         CALL_READ_BUF(34);
+        CALL_READ_BUF(35);
         CALL_READ_BUF(38);
 #undef CALL_READ_BUF
     default:
@@ -512,6 +523,7 @@ fuse_fs_write(struct fuse_fs* fs, const char* path, const char* buf,
         CALL_WRITE(29);
         CALL_WRITE(30);
         CALL_WRITE(34);
+        CALL_WRITE(35);
         CALL_WRITE(38);
 #undef CALL_WRITE
     default:
@@ -543,6 +555,7 @@ fuse_fs_write_buf(struct fuse_fs* fs, const char* path,
         CALL_WRITE_BUF(29);
         CALL_WRITE_BUF(30);
         CALL_WRITE_BUF(34);
+        CALL_WRITE_BUF(35);
         CALL_WRITE_BUF(38);
 #undef CALL_WRITE_BUF
     default:
@@ -578,6 +591,7 @@ fuse_fs_fsync(struct fuse_fs* fs, const char* path, int datasync, struct fuse_fi
         CALL_FSYNC(29);
         CALL_FSYNC(30);
         CALL_FSYNC(34);
+        CALL_FSYNC(35);
         CALL_FSYNC(38);
 #undef CALL_FSYNC
     default:
@@ -613,6 +627,7 @@ fuse_fs_flush(struct fuse_fs* fs, const char* path, struct fuse_file_info* fi) {
         CALL_FLUSH(29);
         CALL_FLUSH(30);
         CALL_FLUSH(34);
+        CALL_FLUSH(35);
         CALL_FLUSH(38);
 #undef CALL_FLUSH
     default:
@@ -706,6 +721,7 @@ fuse_fs_statfs(struct fuse_fs* fs, const char* path, struct statvfs* buf) {
         CALL_STATFS(29);
         CALL_STATFS(30);
         CALL_STATFS(34);
+        CALL_STATFS(35);
         CALL_STATFS(38);
 #undef CALL_STATFS
     default:
@@ -737,6 +753,7 @@ fuse_fs_opendir(struct fuse_fs* fs, const char* path, struct fuse_file_info* fi)
         CALL_OPENDIR(29);
         CALL_OPENDIR(30);
         CALL_OPENDIR(34);
+        CALL_OPENDIR(35);
         CALL_OPENDIR(38);
 #undef CALL_OPENDIR
     default:
@@ -902,6 +919,7 @@ fuse_fs_readdir_v30(struct fuse_fs* fs, const char* path, void* buf,
                     return -ENOSYS
             CALL_READDIR(30);
             CALL_READDIR(34);
+            CALL_READDIR(35);
             CALL_READDIR(38);
 #undef CALL_READDIR
         default:
@@ -937,6 +955,7 @@ fuse_fs_fsyncdir(struct fuse_fs* fs, const char* path, int datasync, struct fuse
         CALL_FSYNCDIR(29);
         CALL_FSYNCDIR(30);
         CALL_FSYNCDIR(34);
+        CALL_FSYNCDIR(35);
         CALL_FSYNCDIR(38);
 #undef CALL_FSYNCDIR
     default:
@@ -968,6 +987,7 @@ fuse_fs_releasedir(struct fuse_fs* fs, const char* path, struct fuse_file_info* 
         CALL_RELEASEDIR(29);
         CALL_RELEASEDIR(30);
         CALL_RELEASEDIR(34);
+        CALL_RELEASEDIR(35);
         CALL_RELEASEDIR(38);
 #undef CALL_RELEASEDIR
     default:
@@ -998,6 +1018,7 @@ fuse_fs_create(struct fuse_fs* fs, const char* path, mode_t mode, struct fuse_fi
         CALL_CREATE(29);
         CALL_CREATE(30);
         CALL_CREATE(34);
+        CALL_CREATE(35);
         CALL_CREATE(38);
 #undef CALL_CREATE
     default:
@@ -1029,6 +1050,7 @@ fuse_fs_lock(struct fuse_fs* fs, const char* path, struct fuse_file_info* fi,
         CALL_LOCK(29);
         CALL_LOCK(30);
         CALL_LOCK(34);
+        CALL_LOCK(35);
         CALL_LOCK(38);
 #undef CALL_LOCK
     default:
@@ -1059,6 +1081,7 @@ fuse_fs_flock(struct fuse_fs* fs, const char* path, struct fuse_file_info* fi, i
         CALL_FLOCK(29);
         CALL_FLOCK(30);
         CALL_FLOCK(34);
+        CALL_FLOCK(35);
         CALL_FLOCK(38);
 #undef CALL_FLOCK
     default:
@@ -1100,6 +1123,7 @@ fuse_fs_chmod_v30(struct fuse_fs* fs, const char* path,
             return -ENOSYS
         CALL_CHMOD(30);
         CALL_CHMOD(34);
+        CALL_CHMOD(35);
         CALL_CHMOD(38);
 #undef CALL_CHMOD
     default:
@@ -1140,6 +1164,7 @@ fuse_fs_chown_v30(struct fuse_fs* fs, const char* path,
             return -ENOSYS
         CALL_CHOWN(30);
         CALL_CHOWN(34);
+        CALL_CHOWN(35);
         CALL_CHOWN(38);
 #undef CALL_CHOWN
     default:
@@ -1179,6 +1204,7 @@ fuse_fs_truncate_v30(struct fuse_fs* fs, const char* path, off_t size, struct fu
             return -ENOSYS
         CALL_TRUNCATE(30);
         CALL_TRUNCATE(34);
+        CALL_TRUNCATE(35);
         CALL_TRUNCATE(38);
 #undef CALL_TRUNCATE
     default:
@@ -1231,6 +1257,7 @@ fuse_fs_ftruncate(struct fuse_fs* fs, const char* path, off_t size, struct fuse_
             return -ENOSYS
         CALL_TRUNCATE(30);
         CALL_TRUNCATE(34);
+        CALL_TRUNCATE(35);
         CALL_TRUNCATE(38);
 #undef CALL_TRUNCATE
     default:
@@ -1293,6 +1320,7 @@ fuse_fs_utimens_v30(struct fuse_fs* fs, const char* path,
             return -ENOSYS
         CALL_UTIMENS(30);
         CALL_UTIMENS(34);
+        CALL_UTIMENS(35);
         CALL_UTIMENS(38);
 #undef CALL_UTIMENS
     default:
@@ -1322,6 +1350,7 @@ fuse_fs_access(struct fuse_fs* fs, const char* path, int mask) {
         CALL_ACCESS(29);
         CALL_ACCESS(30);
         CALL_ACCESS(34);
+        CALL_ACCESS(35);
         CALL_ACCESS(38);
 #undef CALL_ACCESS
     default:
@@ -1349,6 +1378,7 @@ fuse_fs_readlink(struct fuse_fs* fs, const char* path, char* buf, size_t len) {
         CALL_READLINK(29);
         CALL_READLINK(30);
         CALL_READLINK(34);
+        CALL_READLINK(35);
         CALL_READLINK(38);
 #undef CALL_READLINK
     default:
@@ -1376,6 +1406,7 @@ fuse_fs_mknod(struct fuse_fs* fs, const char* path, mode_t mode, dev_t rdev) {
         CALL_MKNOD(29);
         CALL_MKNOD(30);
         CALL_MKNOD(34);
+        CALL_MKNOD(35);
         CALL_MKNOD(38);
 #undef CALL_MKNOD
     default:
@@ -1403,6 +1434,7 @@ fuse_fs_mkdir(struct fuse_fs* fs, const char* path, mode_t mode) {
         CALL_MKDIR(29);
         CALL_MKDIR(30);
         CALL_MKDIR(34);
+        CALL_MKDIR(35);
         CALL_MKDIR(38);
 #undef CALL_MKDIR
     default:
@@ -1432,6 +1464,7 @@ int fuse_fs_setxattr(struct fuse_fs* fs, const char* path, const char* name,
         CALL_SETXATTR(29);
         CALL_SETXATTR(30);
         CALL_SETXATTR(34);
+        CALL_SETXATTR(35);
         CALL_SETXATTR(38);
 #undef CALL_SETXATTR
     default:
@@ -1462,6 +1495,7 @@ fuse_fs_getxattr(struct fuse_fs* fs, const char* path, const char* name,
         CALL_GETXATTR(29);
         CALL_GETXATTR(30);
         CALL_GETXATTR(34);
+        CALL_GETXATTR(35);
         CALL_GETXATTR(38);
 #undef CALL_GETXATTR
     default:
@@ -1490,6 +1524,7 @@ int fuse_fs_listxattr(struct fuse_fs* fs, const char* path, char* list, size_t s
         CALL_LISTXATTR(29);
         CALL_LISTXATTR(30);
         CALL_LISTXATTR(34);
+        CALL_LISTXATTR(35);
         CALL_LISTXATTR(38);
 #undef CALL_LISTXATTR
     default:
@@ -1519,6 +1554,7 @@ fuse_fs_removexattr(struct fuse_fs* fs, const char* path, const char* name) {
         CALL_REMOVEXATTR(29);
         CALL_REMOVEXATTR(30);
         CALL_REMOVEXATTR(34);
+        CALL_REMOVEXATTR(35);
         CALL_REMOVEXATTR(38);
 #undef CALL_REMOVEXATTR
     default:
@@ -1547,6 +1583,7 @@ fuse_fs_bmap(struct fuse_fs* fs, const char* path, size_t blocksize, uint64_t *i
         CALL_BMAP(29);
         CALL_BMAP(30);
         CALL_BMAP(34);
+        CALL_BMAP(35);
         CALL_BMAP(38);
 #undef CALL_BMAP
     default:
@@ -1619,6 +1656,7 @@ fuse_fs_poll(struct fuse_fs* fs, const char* path, struct fuse_file_info* fi,
         CALL_POLL(29);
         CALL_POLL(30);
         CALL_POLL(34);
+        CALL_POLL(35);
         CALL_POLL(38);
 #undef CALL_POLL
     default:
@@ -1648,6 +1686,7 @@ fuse_fs_fallocate(struct fuse_fs* fs, const char* path, int mode, off_t offset,
         CALL_FALLOCATE(29);
         CALL_FALLOCATE(30);
         CALL_FALLOCATE(34);
+        CALL_FALLOCATE(35);
         CALL_FALLOCATE(38);
 #undef CALL_FALLOCATE
     default:
@@ -1679,6 +1718,7 @@ fuse_fs_copy_file_range(struct fuse_fs *fs,
         else                                                            \
             return -ENOSYS
         CALL_COPY_FILE_RANGE(34);
+        CALL_COPY_FILE_RANGE(35);
         CALL_COPY_FILE_RANGE(38);
 #undef CALL_COPY_FILE_RANGE
     default:
@@ -1701,6 +1741,7 @@ fuse_fs_lseek(struct fuse_fs* fs, const char* path, off_t off, int whence,
     case 29:
     case 30:
     case 34:
+    case 35:
         return -ENOSYS;
 #define CALL_LSEEK(VER)                         \
     case VER:                                   \
@@ -1761,6 +1802,7 @@ fuse_fs_init_v30(struct fuse_fs* fs, struct fuse_conn_info* conn,
         break
         CALL_BINARY_INIT(30);
         CALL_BINARY_INIT(34);
+        CALL_BINARY_INIT(35);
         CALL_BINARY_INIT(38);
 #undef CALL_BINARY_INIT
     default:
@@ -1790,6 +1832,7 @@ fuse_fs_destroy(struct fuse_fs *fs) {
         CALL_DESTROY(29);
         CALL_DESTROY(30);
         CALL_DESTROY(34);
+        CALL_DESTROY(35);
         CALL_DESTROY(38);
 #undef CALL_DESTROY
     default:
