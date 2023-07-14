@@ -6534,6 +6534,12 @@ rs6000_function_arg_advance_1 (CUMULATIVE_ARGS *cum, machine_mode mode,
 	{
 	  cum->vregno += n_elts;
 
+	  /* If we are not splitting Complex IEEE128 args then account for the
+	     fact that they are passed in 2 VSX regs. */
+	  if (!targetm.calls.split_complex_arg && type
+	      && TREE_CODE (type) == COMPLEX_TYPE && elt_mode == KCmode)
+	    cum->vregno++;
+
 	  if (!TARGET_ALTIVEC)
 	    error ("cannot pass argument in vector register because"
 		   " altivec instructions are disabled, use %qs"
@@ -10855,7 +10861,12 @@ rs6000_gimple_fold_mma_builtin (gimple_stmt_iterator *gsi)
       push_gimplify_context (true);
       tree dst_ptr = gimple_call_arg (stmt, 0);
       tree src_ptr = gimple_call_arg (stmt, 1);
-      tree src_type = TREE_TYPE (src_ptr);
+      tree src_type = (fncode == MMA_BUILTIN_DISASSEMBLE_ACC)
+		      ? build_pointer_type (vector_quad_type_node)
+		      : build_pointer_type (vector_pair_type_node);
+      if (TREE_TYPE (src_ptr) != src_type)
+	src_ptr = build1 (NOP_EXPR, src_type, src_ptr);
+
       tree src = create_tmp_reg_or_ssa_name (TREE_TYPE (src_type));
       gimplify_assign (src, build_simple_mem_ref (src_ptr), &new_seq);
 

@@ -502,6 +502,15 @@ convert_expr (tree exp, Type *etype, Type *totype)
 	  gcc_assert (totype->size () == etype->size ());
 	  result = build_vconvert (build_ctype (totype), exp);
 	}
+      else if (tbtype->ty == Tvector && tbtype->size () == ebtype->size ())
+	{
+	  /* Allow casting from array to vector as if its an unaligned load.  */
+	  tree type = build_ctype (totype);
+	  tree unaligned_type = build_variant_type_copy (type);
+	  SET_TYPE_ALIGN (unaligned_type, 1 * BITS_PER_UNIT);
+	  TYPE_USER_ALIGN (unaligned_type) = 1;
+	  result = convert (type, build_vconvert (unaligned_type, exp));
+	}
       else
 	{
 	  error ("cannot cast expression of type %qs to type %qs",
@@ -600,7 +609,7 @@ convert_expr (tree exp, Type *etype, Type *totype)
   return result ? result : convert (build_ctype (totype), exp);
 }
 
-/* Return a TREE represenwation of EXPR, whose type has been converted from
+/* Return a TREE representation of EXPR, whose type has been converted from
  * ETYPE to TOTYPE, and is being used in an rvalue context.  */
 
 tree
@@ -616,22 +625,62 @@ convert_for_rvalue (tree expr, Type *etype, Type *totype)
     case Tbool:
       /* If casting from bool, the result is either 0 or 1, any other value
 	 violates @safe code, so enforce that it is never invalid.  */
-      if (CONSTANT_CLASS_P (expr))
-	result = d_truthvalue_conversion (expr);
-      else
+      for (tree ref = expr; TREE_CODE (ref) == COMPONENT_REF;
+	   ref = TREE_OPERAND (ref, 0))
 	{
-	  /* Reinterpret the boolean as an integer and test the first bit.
-	     The generated code should end up being equivalent to:
+	  /* If the expression is a field that's part of a union, reinterpret
+	     the boolean as an integer and test the first bit.  The generated
+	     code should end up being equivalent to:
 		*cast(ubyte *)&expr & 1;  */
-	  machine_mode bool_mode = TYPE_MODE (TREE_TYPE (expr));
-	  tree mtype = lang_hooks.types.type_for_mode (bool_mode, 1);
-	  result = fold_build2 (BIT_AND_EXPR, mtype,
-				build_vconvert (mtype, expr),
-				build_one_cst (mtype));
+	  if (TREE_CODE (TREE_TYPE (TREE_OPERAND (ref, 0))) == UNION_TYPE)
+	    {
+	      machine_mode bool_mode = TYPE_MODE (TREE_TYPE (expr));
+	      tree mtype = lang_hooks.types.type_for_mode (bool_mode, 1);
+	      result = fold_build2 (BIT_AND_EXPR, mtype,
+				    build_vconvert (mtype, expr),
+				    build_one_cst (mtype));
+	      break;
+	    }
 	}
+
+      if (result == NULL_TREE)
+	result = d_truthvalue_conversion (expr);
 
       result = convert (build_ctype (tbtype), result);
       break;
+    }
+
+  if (tbtype->ty == Tsarray
+      && ebtype->ty == Tsarray
+      && tbtype->nextOf ()->ty == ebtype->nextOf ()->ty
+      && INDIRECT_REF_P (expr)
+      && CONVERT_EXPR_CODE_P (TREE_CODE (TREE_OPERAND (expr, 0)))
+      && TREE_CODE (TREE_OPERAND (TREE_OPERAND (expr, 0), 0)) == ADDR_EXPR)
+    {
+      /* If expression is a vector that was casted to an array either by
+	 explicit type cast or by taking the vector's `.array' value, strip the
+	 reinterpret cast and build a constructor instead.  */
+      tree ptr = TREE_OPERAND (TREE_OPERAND (expr, 0), 0);
+
+      if (VECTOR_TYPE_P (TREE_TYPE (TREE_TYPE (ptr))))
+	{
+	  /* Rewrite: `*(Array *)&vector'
+		into: `{ vector[0], vector[1], ... }'  */
+	  tree array = d_save_expr (TREE_OPERAND (ptr, 0));
+	  array = build1 (VIEW_CONVERT_EXPR, TREE_TYPE (expr), array);
+
+	  uinteger_t dim = ((TypeSArray *)tbtype)->dim->toUInteger ();
+	  vec <constructor_elt, va_gc> *elms = NULL;
+	  for (uinteger_t i = 0; i < dim; i++)
+	    {
+	      tree index = size_int (i);
+	      tree value = build4 (ARRAY_REF, TREE_TYPE (TREE_TYPE (array)),
+				   array, index, NULL_TREE, NULL_TREE);
+	      CONSTRUCTOR_APPEND_ELT (elms, index, value);
+	    }
+
+	  return build_constructor (build_ctype (totype), elms);
+	}
     }
 
   return result ? result : convert_expr (expr, etype, totype);
@@ -694,7 +743,7 @@ convert_for_assignment (tree expr, Type *etype, Type *totype)
       return expr;
     }
 
-  return convert_expr (expr, etype, totype);
+  return convert_for_rvalue (expr, etype, totype);
 }
 
 /* Return a TREE representation of EXPR converted to represent
@@ -784,7 +833,7 @@ convert_for_condition (tree expr, Type *type)
       }
 
     default:
-      result = expr;
+      result = convert_for_rvalue (expr, type, type);
       break;
     }
 
