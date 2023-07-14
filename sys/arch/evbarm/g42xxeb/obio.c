@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.15 2023/07/13 20:22:29 mrg Exp $ */
+/*	$NetBSD: obio.c,v 1.16 2023/07/14 12:57:10 riastradh Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec corp.  All rights reserved.
@@ -156,7 +156,7 @@ obio_softint(void *arg)
 	int psw;
 
 	psw = disable_interrupts(I32_bit);
-	while ((irqno = fls32(sc->sc_intr_pending)) >= 0) {
+	while ((irqno = fls32(sc->sc_intr_pending) - 1) >= 0) {
 		sc->sc_intr_pending &= ~(1U<<irqno);
 
 		restore_interrupts(psw);
