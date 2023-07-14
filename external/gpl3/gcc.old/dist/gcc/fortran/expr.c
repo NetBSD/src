@@ -1549,6 +1549,16 @@ find_array_section (gfc_expr *expr, gfc_ref *ref)
       lower = ref->u.ar.as->lower[d];
       upper = ref->u.ar.as->upper[d];
 
+      if (!lower || !upper
+	  || lower->expr_type != EXPR_CONSTANT
+	  || upper->expr_type != EXPR_CONSTANT
+	  || lower->ts.type != BT_INTEGER
+	  || upper->ts.type != BT_INTEGER)
+	{
+	  t = false;
+	  goto cleanup;
+	}
+
       if (ref->u.ar.dimen_type[d] == DIMEN_VECTOR)  /* Vector subscript.  */
 	{
 	  gfc_constructor *ci;
@@ -1591,9 +1601,7 @@ find_array_section (gfc_expr *expr, gfc_ref *ref)
 	{
 	  if ((begin && begin->expr_type != EXPR_CONSTANT)
 	      || (finish && finish->expr_type != EXPR_CONSTANT)
-	      || (step && step->expr_type != EXPR_CONSTANT)
-	      || !lower
-	      || !upper)
+	      || (step && step->expr_type != EXPR_CONSTANT))
 	    {
 	      t = false;
 	      goto cleanup;
@@ -2277,7 +2285,8 @@ gfc_simplify_expr (gfc_expr *p, int type)
 	 initialization expression, or we want a subsection.  */
       if (p->symtree->n.sym->attr.flavor == FL_PARAMETER
 	  && (gfc_init_expr_flag || p->ref
-	      || p->symtree->n.sym->value->expr_type != EXPR_ARRAY))
+	      || (p->symtree->n.sym->value
+		  && p->symtree->n.sym->value->expr_type != EXPR_ARRAY)))
 	{
 	  if (!simplify_parameter_variable (p, type))
 	    return false;
