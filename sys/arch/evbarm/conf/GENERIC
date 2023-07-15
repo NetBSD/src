@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.119 2023/05/04 13:39:51 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.120 2023/07/15 22:30:19 riastradh Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -41,6 +41,10 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	LOCKDEBUG
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+
+# Heartbeat checks
+options 	HEARTBEAT
+options 	HEARTBEAT_MAX_PERIOD_DEFAULT=15
 
 options 	MSGBUFSIZE=32768
 
