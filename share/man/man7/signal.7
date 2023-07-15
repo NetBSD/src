@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.7,v 1.26 2021/05/30 07:17:01 dholland Exp $
+.\"	$NetBSD: signal.7,v 1.27 2023/07/15 13:49:26 riastradh Exp $
 .\"
 .\" Copyright (c) 1999, 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -401,18 +401,24 @@ immediate children exits and can be waited for using one of the
 .Xr wait 2
 family of functions.
 The default action is to do nothing.
+.Pp
 As a special case hack, if
 .Dv SIGCHLD
 is ignored (not merely blocked) when a process is
 .Em created ,
-it is detached from its parent immediately so it need not be waited
-for.
+it is detached from its parent immediately so it need not
+.Pq and cannot
+be waited for.
 This behavior is a System V historic wart, implemented in
 .Nx
 only for compatibility.
 It is not portable, not recommended, and should not be used by new
 code.
-.\" XXX should refer to something that can be used by new code...
+New code should use the portable technique of forking a child to fork
+or spawn a grandchild, and letting the child exit immediately
+afterward.
+The grandchild process will then be detached.
+.Pp
 The number for
 .Dv SIGCHLD
 is\~20.
