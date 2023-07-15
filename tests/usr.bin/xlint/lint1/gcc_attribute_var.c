@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute_var.c,v 1.9 2023/07/07 06:03:31 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute_var.c,v 1.10 2023/07/15 21:40:03 rillig Exp $	*/
 # 3 "gcc_attribute_var.c"
 
 /*
@@ -72,3 +72,16 @@ attribute_after_array_brackets(
 )
 {
 }
+
+struct attribute_in_member_declaration {
+	int __attribute__(())
+	    x __attribute__(()),
+	    y __attribute__(());
+
+	unsigned int __attribute__(())
+/* FIXME */
+/* expect+1: error: syntax error ',' [249] */
+	    bit1:1 __attribute__(()),
+	    bit2:2 __attribute__(()),
+	    bit3:3 __attribute__(());
+};
