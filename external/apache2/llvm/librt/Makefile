@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2021/05/30 01:56:58 joerg Exp $
+#	$NetBSD: Makefile,v 1.5 2023/07/15 21:14:01 rjs Exp $
 
 .include <bsd.own.mk>
 
@@ -92,6 +92,7 @@ SUBDIR+= \
 	libLLVMAMDGPUMCTargetDesc \
 	libLLVMAMDGPUTargetInfo \
 	libLLVMAMDGPUAsmParser \
+	libLLVMAMDGPUDisassembler \
 	libLLVMAMDGPUUtils
 .endif
 
