@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.186 2023/07/14 09:32:42 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.187 2023/07/15 09:40:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.186 2023/07/14 09:32:42 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.187 2023/07/15 09:40:36 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -306,6 +306,7 @@ debug_symtab(void)
 {
 	struct syms syms = { xcalloc(64, sizeof(syms.items[0])), 0, 64 };
 
+	debug_enter();
 	for (int level = -1;; level++) {
 		bool more = false;
 		size_t n = sizeof(symtab) / sizeof(symtab[0]);
@@ -323,7 +324,7 @@ debug_symtab(void)
 		}
 
 		if (syms.len > 0) {
-			debug_printf("symbol table level %d\n", level);
+			debug_step("symbol table level %d", level);
 			debug_indent_inc();
 			qsort(syms.items, syms.len, sizeof(syms.items[0]),
 			    sym_by_name);
@@ -337,6 +338,7 @@ debug_symtab(void)
 		if (!more)
 			break;
 	}
+	debug_leave();
 
 	free(syms.items);
 }
@@ -1278,7 +1280,7 @@ lex_next_line(void)
 {
 	curr_pos.p_line++;
 	curr_pos.p_uniq = 0;
-	debug_step("parsing %s:%d", curr_pos.p_file, curr_pos.p_line);
+	debug_printf("parsing %s:%d\n", curr_pos.p_file, curr_pos.p_line);
 	if (curr_pos.p_file == csrc_pos.p_file) {
 		csrc_pos.p_line++;
 		csrc_pos.p_uniq = 0;
@@ -1423,12 +1425,16 @@ void
 symtab_remove_level(sym_t *syms)
 {
 
+	if (syms != NULL)
+		debug_step("%s %d", __func__, syms->s_block_level);
+
 	/* Note the use of s_level_next instead of s_symtab_next. */
 	for (sym_t *sym = syms; sym != NULL; sym = sym->s_level_next) {
 		if (sym->s_block_level != -1) {
-			debug_step("symtab_remove_level '%s' %s '%s'",
+			debug_step("%s '%s' %s '%s' %d", __func__,
 			    sym->s_name, symt_name(sym->s_kind),
-			    type_name(sym->s_type));
+			    type_name(sym->s_type),
+			    sym->s_block_level);
 			symtab_remove(sym);
 			sym->s_symtab_ref = NULL;
 		}
@@ -1440,10 +1446,11 @@ void
 inssym(int level, sym_t *sym)
 {
 
-	debug_step("inssym '%s' %s '%s'",
-	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type));
-	symtab_add(sym);
+	debug_step("%s '%s' %s '%s' %d", __func__,
+	    sym->s_name, symt_name(sym->s_kind), type_name(sym->s_type),
+	    level);
 	sym->s_block_level = level;
+	symtab_add(sym);
 
 	/*
 	 * Placing the inner symbols to the beginning of the list ensures

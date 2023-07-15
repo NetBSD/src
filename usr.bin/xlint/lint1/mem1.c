@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.68 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.69 2023/07/15 09:40:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.68 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.69 2023/07/15 09:40:36 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -235,6 +235,7 @@ void
 level_free_all(size_t level)
 {
 
+	debug_step("%s %zu", __func__, level);
 	mpool_free(mpool_at(level));
 }
 
@@ -283,6 +284,7 @@ void
 expr_free_all(void)
 {
 
+	debug_step("%s", __func__);
 	mpool_free(&expr_pool);
 }
 
