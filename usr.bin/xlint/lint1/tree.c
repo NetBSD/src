@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.569 2023/07/15 13:51:36 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.570 2023/07/15 14:50:47 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.569 2023/07/15 13:51:36 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.570 2023/07/15 14:50:47 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1891,6 +1891,31 @@ find_member(const type_t *tp, const char *name)
 }
 
 /*
+ * Remove the member if it was unknown until now, which means
+ * that no defined struct or union has a member with the same name.
+ */
+static void
+remove_unknown_member(tnode_t *tn, sym_t *msym)
+{
+	/* type '%s' does not have member '%s' */
+	error(101, type_name(tn->tn_type), msym->s_name);
+	rmsym(msym);
+	msym->s_kind = FMEMBER;
+	msym->s_scl = STRUCT_MEMBER;
+
+	struct_or_union *sou = expr_zero_alloc(sizeof(*sou),
+	    "struct_or_union");
+	sou->sou_tag = expr_zero_alloc(sizeof(*sou->sou_tag), "sym");
+	sou->sou_tag->s_name = unnamed;
+
+	msym->u.s_member.sm_containing_type = sou;
+	/*
+	 * The member sm_offset_in_bits is not needed here since this
+	 * symbol can only be used for error reporting.
+	 */
+}
+
+/*
  * Returns a symbol which has the same name as the msym argument and is a
  * member of the struct or union specified by the tn argument.
  */
@@ -1898,27 +1923,8 @@ static sym_t *
 struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 {
 
-	/*
-	 * Remove the member if it was unknown until now, which means
-	 * that no defined struct or union has a member with the same name.
-	 */
 	if (msym->s_scl == NOSCL) {
-		/* type '%s' does not have member '%s' */
-		error(101, type_name(tn->tn_type), msym->s_name);
-		rmsym(msym);
-		msym->s_kind = FMEMBER;
-		msym->s_scl = STRUCT_MEMBER;
-
-		struct_or_union *sou = expr_zero_alloc(sizeof(*sou),
-		    "struct_or_union");
-		sou->sou_tag = expr_zero_alloc(sizeof(*sou->sou_tag), "sym");
-		sou->sou_tag->s_name = unnamed;
-
-		msym->u.s_member.sm_containing_type = sou;
-		/*
-		 * The member sm_offset_in_bits is not needed here since this
-		 * symbol can only be used for error reporting.
-		 */
+		remove_unknown_member(tn, msym);
 		return msym;
 	}
 
