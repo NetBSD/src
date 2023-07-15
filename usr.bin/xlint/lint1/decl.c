@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.356 2023/07/14 09:20:23 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.357 2023/07/15 09:40:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.356 2023/07/14 09:20:23 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.357 2023/07/15 09:40:36 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -521,7 +521,6 @@ end_declaration_level(void)
 {
 
 	debug_dcs(true);
-	debug_leave();
 
 	decl_level *dl = dcs;
 	dcs = dl->d_enclosing;
@@ -578,6 +577,7 @@ end_declaration_level(void)
 		lint_assert(/*CONSTCOND*/false);
 	}
 	free(dl);
+	debug_leave();
 }
 
 /*
@@ -2789,6 +2789,7 @@ global_clean_up(void)
 	clean_up_after_error();
 	block_level = 0;
 	mem_block_level = 0;
+	debug_step("%s: mem_block_level = %zu", __func__, mem_block_level);
 	global_clean_up_decl(true);
 }
 
