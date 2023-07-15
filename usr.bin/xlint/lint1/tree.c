@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.568 2023/07/15 13:35:24 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.569 2023/07/15 13:51:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.568 2023/07/15 13:35:24 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.569 2023/07/15 13:51:36 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4838,4 +4838,10 @@ end_statement_expr(void)
 end:
 	debug_leave();
 	return tn;
+}
+
+bool
+in_statement_expr(void)
+{
+	return stmt_exprs != NULL;
 }
