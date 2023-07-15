@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_statement_expression.c,v 1.1 2023/07/15 12:24:57 rillig Exp $	*/
+/*	$NetBSD: gcc_statement_expression.c,v 1.2 2023/07/15 13:51:36 rillig Exp $	*/
 # 3 "gcc_statement_expression.c"
 
 /*
@@ -19,9 +19,14 @@ use_inner_type_from_outside(void)
 				int member;
 			} inner;
 		} outer = { { 3 } };
-		// TODO: Move the '.inner.member' out of the statement
-		//  expression, without a use-after-free crash.
-		outer.inner.member;
-	});
+		outer;
+	}).inner.member;
+	/* expect-1: error: type 'struct outer' does not have member 'inner' [101] */
+	/* expect-2: error: type 'int' does not have member 'member' [101] */
+	/*
+	 * FIXME: The above types must not be removed from the symbol table
+	 * yet; at least, their member names must still be known.
+	 */
+
 	return x;
 }
