@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2023/07/02 23:56:12 rillig Exp $
+# $NetBSD: Makefile,v 1.7 2023/07/15 21:24:46 rjs Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -449,8 +449,8 @@ LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel
 LIBDPLIBS+= 	drm_radeon	${.CURDIR}/../libdrm_radeon
 
 MESA_SRC_MODULES=  main math math_xform vbo tnl swrast ss common asm_c program asm_s
-.include "../libmesa.old.mk"
-.include "../libglsl.old.mk"
+.include "../libmesa${OLD_SUFFIX}.mk"
+.include "../libglsl${OLD_SUFFIX}.mk"
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 SRCS+=	streaming-load-memcpy.c
@@ -460,7 +460,7 @@ CPPFLAGS.isl_tiled_memcpy_sse41.c+=	-msse4.1
 
 CFLAGS+= ${${ACTIVE_CC} == "clang":? -Wno-error=atomic-alignment :}
 
-.include "../driver.mk"
+.include "../driver${OLD_SUFFIX}.mk"
 
 .for _d in ${DRIVERS}
 SYMLINKS+= mesa_dri_drivers.so.${SHLIB_MAJOR} ${DRIDIR}/${_d}_dri.so.${SHLIB_MAJOR} 
@@ -474,7 +474,7 @@ SYMLINKS+= mesa_dri_drivers.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.
 
 PKGCONFIG=	dri
 PKGDIST.dri=	${X11SRCDIR.Mesa}/../src/pkgconfig
-.include "${.CURDIR}/../libGL/mesa-ver.mk"
+.include "${.CURDIR}/../libGL${OLD_SUFFIX}/mesa-ver.mk"
 PKGCONFIG_VERSION.dri=	${MESA_VER}
 
 # XXX remove these from bsd.x11.mk

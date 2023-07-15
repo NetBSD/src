@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2022/09/29 18:58:04 rjs Exp $
+#	$NetBSD: Makefile,v 1.4 2023/07/15 21:24:47 rjs Exp $
 
 .include <bsd.own.mk>
 
@@ -53,7 +53,7 @@ LIBDPLIBS+=	expat	${NETBSDSRCDIR}/external/mit/expat/lib/libexpat
 
 PKGCONFIG=	gbm
 PKGDIST.gbm=	${X11SRCDIR.Mesa}/../src/pkgconfig
-.include "${.CURDIR}/../libGL/mesa-ver.mk"
+.include "${.CURDIR}/../libGL.old/mesa-ver.mk"
 PKGCONFIG_VERSION.gbm=	${MESA_VER}
 
 .include "../libdrm/Makefile.defines"
