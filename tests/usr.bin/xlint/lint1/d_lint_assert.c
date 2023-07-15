@@ -1,4 +1,4 @@
-/*	$NetBSD: d_lint_assert.c,v 1.7 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: d_lint_assert.c,v 1.8 2023/07/15 09:40:37 rillig Exp $	*/
 # 3 "d_lint_assert.c"
 
 /*
@@ -23,3 +23,23 @@ enum {
  */
 /* expect+1: warning: old-style declaration; add 'int' [1] */
 c(void());
+
+
+// As of 2023-07-15, the following code leads to a crash, due to the word
+// 'unknown_type_modifier'.  The parser then goes into error recovery mode and
+// discards the declaration in the 'for' loop.  In the end, the symbol table
+// still contains symbols that were already freed when parsing the '}' from the
+// 'switch' statement.  To reproduce the crash, run 'make -DDEBUG DBG="-O0 -g"'
+// and run with -Sy.
+//
+// static inline void
+// f(void)
+// {
+//	int i = 3;
+//
+//	for (unknown_type_modifier char *p = "";; ) {
+//		switch (i) {
+//		case 3:;
+//		}
+//	}
+// }
