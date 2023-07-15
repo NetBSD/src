@@ -1,4 +1,4 @@
-/*	$NetBSD: winblk.c,v 1.7 2011/09/23 16:00:15 nonaka Exp $	*/
+/*	$NetBSD: winblk.c,v 1.8 2023/07/15 21:41:25 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura.
@@ -134,7 +134,7 @@ winblkopen(struct open_file *f, ...)
         va_end(ap);
 
 	/*
-	 *  Windows' device name must be 3 uppper letters and 1 digit
+	 *  Windows' device name must be 3 upper letters and 1 digit
 	 *  following a semicolon like "DSK1:".
 	 */
 	if (strlen(devname) != 3 || unit < 0 || 9 < unit) {

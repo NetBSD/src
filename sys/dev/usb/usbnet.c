@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.113 2022/09/22 07:02:21 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.114 2023/07/15 21:41:26 andvar Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.113 2022/09/22 07:02:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.114 2023/07/15 21:41:26 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1402,7 +1402,7 @@ usbnet_empty_eaddr(struct usbnet * const un)
  * are connected and commands can be sent), and the second connects the
  * device to the system networking.
  *
- * Always call usbnet_detach(), even if usbnet_attach_ifp() is skippped.
+ * Always call usbnet_detach(), even if usbnet_attach_ifp() is skipped.
  * Also usable as driver detach directly.
  *
  * To skip ethernet configuration (eg, point-to-point), make sure that
