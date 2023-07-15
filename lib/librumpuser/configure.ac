@@ -13,7 +13,7 @@ AC_INIT([rumpuser-posix], [999], [https://github.com/rumpkernel/])
 
 AC_CONFIG_HEADERS([rumpuser_config.h])
 AC_CONFIG_AUX_DIR([build-aux])
-AC_CONFIG_MACRO_DIR([m4])
+AC_CONFIG_MACRO_DIR([build-aux])
 
 AC_LANG([C])
 
