@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.570 2023/07/15 14:50:47 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.571 2023/07/15 14:54:31 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.570 2023/07/15 14:50:47 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.571 2023/07/15 14:54:31 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1923,11 +1923,6 @@ static sym_t *
 struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 {
 
-	if (msym->s_scl == NOSCL) {
-		remove_unknown_member(tn, msym);
-		return msym;
-	}
-
 	/* Determine the tag type of which msym is expected to be a member. */
 	const type_t *tp = NULL;
 	if (op == POINT && is_struct_or_union(tn->tn_type->t_tspec))
@@ -1954,6 +1949,11 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		sym_t *nested_mem = find_member(tp, msym->s_name);
 		if (nested_mem != NULL)
 			return nested_mem;
+	}
+
+	if (msym->s_scl == NOSCL) {
+		remove_unknown_member(tn, msym);
+		return msym;
 	}
 
 	bool eq = all_members_compatible(msym);
