@@ -1,4 +1,4 @@
-/*	$NetBSD: d_lint_assert.c,v 1.8 2023/07/15 09:40:37 rillig Exp $	*/
+/*	$NetBSD: d_lint_assert.c,v 1.9 2023/07/15 09:53:46 rillig Exp $	*/
 # 3 "d_lint_assert.c"
 
 /*
@@ -25,21 +25,21 @@ enum {
 c(void());
 
 
-// As of 2023-07-15, the following code leads to a crash, due to the word
-// 'unknown_type_modifier'.  The parser then goes into error recovery mode and
-// discards the declaration in the 'for' loop.  In the end, the symbol table
-// still contains symbols that were already freed when parsing the '}' from the
-// 'switch' statement.  To reproduce the crash, run 'make -DDEBUG DBG="-O0 -g"'
-// and run with -Sy.
-//
-// static inline void
-// f(void)
-// {
-//	int i = 3;
-//
-//	for (unknown_type_modifier char *p = "";; ) {
-//		switch (i) {
-//		case 3:;
-//		}
-//	}
-// }
+// As of 2023-07-15, replacing 'const' with 'unknown_type_modifier' leads to a
+// crash.  When the '}' from the 'switch' statement is processed, symbols that
+// are already freed are still in the symbol table.  To reproduce the crash,
+// run:
+//	make -s -DDEBUG DBG="-O0 -g"
+//	MALLOC_OPTIONS='JA' MALLOC_CONF='junk:true' ./lint1 -Sy \
+//	    ../../../tests/usr.bin/xlint/lint1/d_lint_assert.c
+ static inline void
+ f(void)
+ {
+	int i = 3;
+
+	for (const char *p = "";; ) {
+		switch (i) {
+		case 3:;
+		}
+	}
+ }
