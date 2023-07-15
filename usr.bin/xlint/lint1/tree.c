@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.571 2023/07/15 14:54:31 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.572 2023/07/15 15:38:03 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.571 2023/07/15 14:54:31 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.572 2023/07/15 15:38:03 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1875,6 +1875,8 @@ find_member(const type_t *tp, const char *name)
 {
 	for (sym_t *mem = tp->t_sou->sou_first_member;
 	     mem != NULL; mem = mem->s_next) {
+		lint_assert(is_member(mem));
+		lint_assert(mem->u.s_member.sm_containing_type == tp->t_sou);
 		if (strcmp(mem->s_name, name) == 0)
 			return mem;
 	}

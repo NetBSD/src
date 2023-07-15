@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.358 2023/07/15 13:35:24 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.359 2023/07/15 15:38:03 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.358 2023/07/15 13:35:24 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.359 2023/07/15 15:38:03 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1045,9 +1045,10 @@ declare_unnamed_member(void)
 	sym_t *mem = block_zero_alloc(sizeof(*mem), "sym");
 	mem->s_name = unnamed;
 	mem->s_kind = FMEMBER;
-	mem->s_scl = STRUCT_MEMBER;
-	mem->s_type = dcs->d_type;
+	mem->s_scl = dcs->d_kind == DLK_STRUCT ? STRUCT_MEMBER : UNION_MEMBER;
 	mem->s_block_level = -1;
+	mem->s_type = dcs->d_type;
+	mem->u.s_member.sm_containing_type = dcs->d_tag_type->t_sou;
 
 	dcs_add_member(mem);
 	suppress_bitfieldtype = false;
