@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1276 2023/07/12 18:13:39 rillig Exp $
+# $NetBSD: mi,v 1.1277 2023/07/15 12:24:57 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6681,6 +6681,7 @@
 ./usr/tests/usr.bin/xlint/lint1/gcc_cast_union.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_init_compound_literal.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_init_compound_literal.exp	tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/gcc_statement_expression.c	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_stmt_asm.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_stmt_asm.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/gcc_typeof.c			tests-usr.bin-tests	compattestfile,atf
