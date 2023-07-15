@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.567 2023/07/15 12:24:57 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.568 2023/07/15 13:35:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.567 2023/07/15 12:24:57 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.568 2023/07/15 13:35:24 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -322,7 +322,7 @@ block_derive_type(type_t *tp, tspec_t t)
 {
 	type_t *tp2;
 
-	tp2 = block_zero_alloc(sizeof(*tp2));
+	tp2 = block_zero_alloc(sizeof(*tp2), "type");
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
 	return tp2;
@@ -337,7 +337,7 @@ expr_derive_type(type_t *tp, tspec_t t)
 {
 	type_t *tp2;
 
-	tp2 = expr_zero_alloc(sizeof(*tp2));
+	tp2 = expr_zero_alloc(sizeof(*tp2), "type");
 	tp2->t_tspec = t;
 	tp2->t_subt = tp;
 	return tp2;
@@ -526,7 +526,7 @@ build_string(strg_t *strg)
 {
 	size_t len = strg->st_len;
 
-	type_t *tp = expr_zero_alloc(sizeof(*tp));
+	type_t *tp = expr_zero_alloc(sizeof(*tp), "type");
 	tp->t_tspec = ARRAY;
 	tp->t_subt = gettyp(strg->st_char ? CHAR : WCHAR_TSPEC);
 	tp->t_dim = (int)(len + 1);
@@ -536,13 +536,13 @@ build_string(strg_t *strg)
 	n->tn_type = tp;
 	n->tn_lvalue = true;
 
-	n->tn_string = expr_zero_alloc(sizeof(*n->tn_string));
+	n->tn_string = expr_zero_alloc(sizeof(*n->tn_string), "type.string");
 	n->tn_string->st_char = strg->st_char;
 	n->tn_string->st_len = len;
 
 	size_t chsize = strg->st_char ? sizeof(char) : sizeof(wchar_t);
 	size_t size = (len + 1) * chsize;
-	n->tn_string->st_mem = expr_zero_alloc(size);
+	n->tn_string->st_mem = expr_zero_alloc(size, "type.string.data");
 	(void)memcpy(n->tn_string->st_mem, strg->st_mem, size);
 	free(strg->st_mem);
 	free(strg);
@@ -1909,8 +1909,9 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		msym->s_kind = FMEMBER;
 		msym->s_scl = STRUCT_MEMBER;
 
-		struct_or_union *sou = expr_zero_alloc(sizeof(*sou));
-		sou->sou_tag = expr_zero_alloc(sizeof(*sou->sou_tag));
+		struct_or_union *sou = expr_zero_alloc(sizeof(*sou),
+		    "struct_or_union");
+		sou->sou_tag = expr_zero_alloc(sizeof(*sou->sou_tag), "sym");
 		sou->sou_tag->s_name = unnamed;
 
 		msym->u.s_member.sm_containing_type = sou;

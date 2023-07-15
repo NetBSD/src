@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.193 2023/07/14 08:53:52 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.194 2023/07/15 13:35:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -43,7 +43,13 @@
  * - the end of the translation unit.
  */
 typedef struct memory_pool {
-	void	**items;
+	struct memory_pool_item {
+		void *p;
+#ifdef DEBUG_MEM
+		size_t size;
+		const char *descr;
+#endif
+	} *items;
 	size_t	len;
 	size_t	cap;
 } memory_pool;

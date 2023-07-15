@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.357 2023/07/15 09:40:36 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.358 2023/07/15 13:35:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.357 2023/07/15 09:40:36 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.358 2023/07/15 13:35:24 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -138,7 +138,7 @@ type_t *
 block_dup_type(const type_t *tp)
 {
 
-	type_t *ntp = block_zero_alloc(sizeof(*ntp));
+	type_t *ntp = block_zero_alloc(sizeof(*ntp), "type");
 	*ntp = *tp;
 	return ntp;
 }
@@ -148,7 +148,7 @@ type_t *
 expr_dup_type(const type_t *tp)
 {
 
-	type_t *ntp = expr_zero_alloc(sizeof(*ntp));
+	type_t *ntp = expr_zero_alloc(sizeof(*ntp), "type");
 	*ntp = *tp;
 	return ntp;
 }
@@ -163,7 +163,7 @@ type_t *
 expr_unqualified_type(const type_t *tp)
 {
 
-	type_t *ntp = expr_zero_alloc(sizeof(*ntp));
+	type_t *ntp = expr_zero_alloc(sizeof(*ntp), "type");
 	*ntp = *tp;
 	ntp->t_const = false;
 	ntp->t_volatile = false;
@@ -1042,7 +1042,7 @@ sym_t *
 declare_unnamed_member(void)
 {
 
-	sym_t *mem = block_zero_alloc(sizeof(*mem));
+	sym_t *mem = block_zero_alloc(sizeof(*mem), "sym");
 	mem->s_name = unnamed;
 	mem->s_kind = FMEMBER;
 	mem->s_scl = STRUCT_MEMBER;
@@ -1123,7 +1123,7 @@ set_bit_field_width(sym_t *dsym, int bit_field_width)
 {
 
 	if (dsym == NULL) {
-		dsym = block_zero_alloc(sizeof(*dsym));
+		dsym = block_zero_alloc(sizeof(*dsym), "sym");
 		dsym->s_name = unnamed;
 		dsym->s_kind = FMEMBER;
 		dsym->s_scl = STRUCT_MEMBER;
@@ -1568,19 +1568,20 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 		}
 		if (tag->s_scl == NOSCL) {
 			tag->s_scl = scl;
-			tag->s_type = tp = block_zero_alloc(sizeof(*tp));
+			tag->s_type = tp =
+			    block_zero_alloc(sizeof(*tp), "type");
 			tp->t_packed = dcs->d_packed;
 		} else
 			tp = tag->s_type;
 
 	} else {
-		tag = block_zero_alloc(sizeof(*tag));
+		tag = block_zero_alloc(sizeof(*tag), "sym");
 		tag->s_name = unnamed;
 		tag->s_def_pos = unique_curr_pos();
 		tag->s_kind = FTAG;
 		tag->s_scl = scl;
 		tag->s_block_level = -1;
-		tag->s_type = tp = block_zero_alloc(sizeof(*tp));
+		tag->s_type = tp = block_zero_alloc(sizeof(*tp), "type");
 		tp->t_packed = dcs->d_packed;
 		dcs->d_enclosing->d_nonempty_decl = true;
 	}
@@ -1588,13 +1589,15 @@ make_tag_type(sym_t *tag, tspec_t kind, bool decl, bool semi)
 	if (tp->t_tspec == NO_TSPEC) {
 		tp->t_tspec = kind;
 		if (kind != ENUM) {
-			tp->t_sou = block_zero_alloc(sizeof(*tp->t_sou));
+			tp->t_sou = block_zero_alloc(sizeof(*tp->t_sou),
+			    "struct_or_union");
 			tp->t_sou->sou_align_in_bits = CHAR_SIZE;
 			tp->t_sou->sou_tag = tag;
 			tp->t_sou->sou_incomplete = true;
 		} else {
 			tp->t_is_enum = true;
-			tp->t_enum = block_zero_alloc(sizeof(*tp->t_enum));
+			tp->t_enum = block_zero_alloc(sizeof(*tp->t_enum),
+			    "enumeration");
 			tp->t_enum->en_tag = tag;
 			tp->t_enum->en_incomplete = true;
 		}
@@ -1823,7 +1826,7 @@ declare_extern(sym_t *dsym, bool has_initializer, sbuf_t *renaming)
 	if (renaming != NULL) {
 		lint_assert(dsym->s_rename == NULL);
 
-		char *s = level_zero_alloc(1, renaming->sb_len + 1);
+		char *s = level_zero_alloc(1, renaming->sb_len + 1, "string");
 		(void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);
 		dsym->s_rename = s;
 	}
@@ -2754,7 +2757,7 @@ abstract_name(void)
 	lint_assert(dcs->d_kind == DLK_ABSTRACT
 	    || dcs->d_kind == DLK_PROTO_PARAMS);
 
-	sym_t *sym = block_zero_alloc(sizeof(*sym));
+	sym_t *sym = block_zero_alloc(sizeof(*sym), "sym");
 	sym->s_name = unnamed;
 	sym->s_def = DEF;
 	sym->s_scl = ABSTRACT;

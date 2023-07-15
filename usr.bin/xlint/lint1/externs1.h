@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.195 2023/07/13 23:11:11 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.196 2023/07/15 13:35:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -104,11 +104,23 @@ int	get_filename_id(const char *);
 void	add_directory_replacement(char *);
 const char *transform_filename(const char *, size_t);
 
+#ifdef DEBUG_MEM
+void	*block_zero_alloc(size_t, const char *);
+void	*level_zero_alloc(size_t, size_t, const char *);
+#else
 void	*block_zero_alloc(size_t);
 void	*level_zero_alloc(size_t, size_t);
+#define block_zero_alloc(size, descr) (block_zero_alloc)(size)
+#define level_zero_alloc(level, size, descr) (level_zero_alloc)(level, size)
+#endif
 void	level_free_all(size_t);
 
+#ifdef DEBUG_MEM
+void	*expr_zero_alloc(size_t, const char *);
+#else
 void	*expr_zero_alloc(size_t);
+#define expr_zero_alloc(size, descr) (expr_zero_alloc)(size)
+#endif
 tnode_t	*expr_alloc_tnode(void);
 void	expr_free_all(void);
 memory_pool expr_save_memory(void);

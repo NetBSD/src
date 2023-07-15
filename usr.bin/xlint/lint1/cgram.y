@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.462 2023/07/15 09:40:36 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.463 2023/07/15 13:35:24 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.462 2023/07/15 09:40:36 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.463 2023/07/15 13:35:24 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -520,12 +520,12 @@ generic_assoc_list:
 /* K&R ---, C90 ---, C99 ---, C11 6.5.1.1 */
 generic_association:
 	type_name T_COLON assignment_expression {
-		$$ = block_zero_alloc(sizeof(*$$));
+		$$ = block_zero_alloc(sizeof(*$$), "generic");
 		$$->ga_arg = $1;
 		$$->ga_result = $3;
 	}
 |	T_DEFAULT T_COLON assignment_expression {
-		$$ = block_zero_alloc(sizeof(*$$));
+		$$ = block_zero_alloc(sizeof(*$$), "generic");
 		$$->ga_arg = NULL;
 		$$->ga_result = $3;
 	}

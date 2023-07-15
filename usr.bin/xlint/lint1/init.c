@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.246 2023/07/13 08:40:38 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.247 2023/07/15 13:35:24 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.246 2023/07/13 08:40:38 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.247 2023/07/15 13:35:24 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -304,7 +304,7 @@ check_init_expr(const type_t *ltp, sym_t *lsym, tnode_t *rn)
 	type_t *lutp = expr_unqualified_type(ltp);
 
 	/* Create a temporary node for the left side. */
-	tnode_t *ln = expr_zero_alloc(sizeof(*ln));
+	tnode_t *ln = expr_zero_alloc(sizeof(*ln), "tnode");
 	ln->tn_op = NAME;
 	ln->tn_type = lutp;
 	ln->tn_lvalue = true;
