@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.464 2023/07/15 13:51:36 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.465 2023/07/15 21:47:35 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.464 2023/07/15 13:51:36 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.465 2023/07/15 21:47:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1048,13 +1048,13 @@ member_declaration:
 		/* ^^ There is no check for the missing type-specifier. */
 		/* too late, i know, but getsym() compensates it */
 		set_symtyp(FMEMBER);
-	} notype_member_declarators type_attribute_opt T_SEMI {
+	} notype_member_declarators T_SEMI {
 		set_symtyp(FVFT);
 		$$ = $4;
 	}
 |	begin_type_specifier_qualifier_list end_type {
 		set_symtyp(FMEMBER);
-	} type_member_declarators type_attribute_opt T_SEMI {
+	} type_member_declarators T_SEMI {
 		set_symtyp(FVFT);
 		$$ = $4;
 	}
@@ -1128,12 +1128,12 @@ notype_member_declarator:
 /* Was named struct_declarator until C11. */
 type_member_declarator:
 	type_declarator
-|	type_declarator T_COLON constant_expression {
+|	type_declarator T_COLON constant_expression type_attribute_list_opt {
 		$$ = set_bit_field_width($1, to_int_constant($3, true));
 	}
 |	{
 		set_symtyp(FVFT);
-	} T_COLON constant_expression {
+	} T_COLON constant_expression type_attribute_list_opt {
 		$$ = set_bit_field_width(NULL, to_int_constant($3, true));
 	}
 ;
