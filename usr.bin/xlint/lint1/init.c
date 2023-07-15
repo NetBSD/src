@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.247 2023/07/15 13:35:24 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.248 2023/07/15 15:51:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.247 2023/07/15 13:35:24 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.248 2023/07/15 15:51:22 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -837,20 +837,17 @@ initialization_add_designator_member(initialization *in, const char *name)
 	const type_t *tp = brace_level_sub_type(bl);
 	if (is_struct_or_union(tp->t_tspec))
 		goto proceed;
-	else if (tp->t_tspec == ARRAY) {
+	else if (tp->t_tspec == ARRAY)
 		/* syntax error '%s' */
 		error(249, "designator '.member' is only for struct/union");
-		in->in_err = true;
-		return;
-	} else {
+	else
 		/* syntax error '%s' */
 		error(249, "scalar type cannot use designator");
-		in->in_err = true;
-		return;
-	}
+	in->in_err = true;
+	return;
 
 proceed:;
-	const sym_t *member = find_member(tp, name);
+	const sym_t *member = find_member(tp->t_sou, name);
 	if (member == NULL) {
 		/* type '%s' does not have member '%s' */
 		error(101, type_name(tp), name);

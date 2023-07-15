@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.572 2023/07/15 15:38:03 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.573 2023/07/15 15:51:22 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.572 2023/07/15 15:38:03 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.573 2023/07/15 15:51:22 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1871,20 +1871,22 @@ all_members_compatible(const sym_t *msym)
 }
 
 sym_t *
-find_member(const type_t *tp, const char *name)
+find_member(const struct_or_union *sou, const char *name)
 {
-	for (sym_t *mem = tp->t_sou->sou_first_member;
+	for (sym_t *mem = sou->sou_first_member;
 	     mem != NULL; mem = mem->s_next) {
 		lint_assert(is_member(mem));
-		lint_assert(mem->u.s_member.sm_containing_type == tp->t_sou);
+		lint_assert(mem->u.s_member.sm_containing_type == sou);
 		if (strcmp(mem->s_name, name) == 0)
 			return mem;
 	}
-	for (sym_t *mem = tp->t_sou->sou_first_member;
+
+	for (sym_t *mem = sou->sou_first_member;
 	     mem != NULL; mem = mem->s_next) {
-		if (is_struct_or_union(mem->s_type->t_tspec) &&
-		    mem->s_name == unnamed) {
-			sym_t *nested_mem = find_member(mem->s_type, name);
+		if (is_struct_or_union(mem->s_type->t_tspec)
+		    && mem->s_name == unnamed) {
+			sym_t *nested_mem =
+			    find_member(mem->s_type->t_sou, name);
 			if (nested_mem != NULL)
 				return nested_mem;
 		}
@@ -1934,21 +1936,8 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		tp = tn->tn_type->t_subt;
 	struct_or_union *sou = tp != NULL ? tp->t_sou : NULL;
 
-	/*
-	 * If this struct/union has a member with the name of msym, return it.
-	 */
 	if (sou != NULL) {
-		for (sym_t *sym = msym;
-		     sym != NULL; sym = sym->s_symtab_next) {
-			if (is_member(sym) &&
-			    sym->u.s_member.sm_containing_type == sou &&
-			    strcmp(sym->s_name, msym->s_name) == 0)
-				return sym;
-		}
-	}
-
-	if (tp != NULL) {
-		sym_t *nested_mem = find_member(tp, msym->s_name);
+		sym_t *nested_mem = find_member(sou, msym->s_name);
 		if (nested_mem != NULL)
 			return nested_mem;
 	}
