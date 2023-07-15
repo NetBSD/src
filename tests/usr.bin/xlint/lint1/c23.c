@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.3 2023/07/14 08:53:52 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.4 2023/07/15 16:11:32 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -39,3 +39,10 @@ function(void)
 	// this case.
 	thread_local int function_scoped_thread_local;
 }
+
+/* FIXME: 'thread_local' and 'extern' can be combined. */
+/* expect+1: error: only one storage class allowed [7] */
+extern thread_local int extern_thread_local_1;
+/* FIXME: 'thread_local' and 'extern' can be combined. */
+/* expect+1: error: only one storage class allowed [7] */
+thread_local extern int extern_thread_local_2;
