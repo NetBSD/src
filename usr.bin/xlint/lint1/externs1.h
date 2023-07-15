@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.196 2023/07/15 13:35:24 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.197 2023/07/15 13:51:36 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -299,6 +299,7 @@ sym_t	*find_member(const type_t *, const char *);
 void begin_statement_expr(void);
 void do_statement_expr(tnode_t *);
 tnode_t *end_statement_expr(void);
+bool in_statement_expr(void);
 
 /*
  * func.c

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 2023/07/11 17:33:45 rillig Exp $
+#	$NetBSD: Makefile,v 1.99 2023/07/15 13:51:36 rillig Exp $
 
 .include <bsd.own.mk>
 
@@ -27,6 +27,7 @@ LINTFLAGS.scan.c+=	-X 351		# 'extern' declaration in .c file
 CPPFLAGS+=	-DIS_LINT1
 CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR}
 CPPFLAGS+=	${DEBUG:D-DDEBUG -DYYDEBUG}
+CPPFLAGS+=	${DEBUG_MEM:D-DDEBUG_MEM}
 
 COPTS.err.c+=	${${ACTIVE_CC} == "clang":? -Wno-format-nonliteral :}
 

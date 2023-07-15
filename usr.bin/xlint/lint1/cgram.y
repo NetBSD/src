@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.463 2023/07/15 13:35:24 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.464 2023/07/15 13:51:36 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.463 2023/07/15 13:35:24 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.464 2023/07/15 13:51:36 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1791,7 +1791,8 @@ compound_statement_lbrace:
 compound_statement_rbrace:
 	T_RBRACE {
 		end_declaration_level();
-		level_free_all(mem_block_level);
+		if (!in_statement_expr())
+			level_free_all(mem_block_level);	/* leak */
 		mem_block_level--;
 		debug_step("%s: mem_block_level = %zu",
 		    "compound_statement_rbrace", mem_block_level);
