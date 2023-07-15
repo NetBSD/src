@@ -1,4 +1,4 @@
-/*	$NetBSD: mem1.c,v 1.70 2023/07/15 13:35:24 rillig Exp $	*/
+/*	$NetBSD: mem1.c,v 1.71 2023/07/15 15:56:17 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: mem1.c,v 1.70 2023/07/15 13:35:24 rillig Exp $");
+__RCSID("$NetBSD: mem1.c,v 1.71 2023/07/15 15:56:17 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -187,21 +187,26 @@ mpool_free(memory_pool *pool)
 
 	for (; pool->len > 0; pool->len--) {
 		struct memory_pool_item *item = pool->items + pool->len - 1;
+		void *p = item->p;
 #ifdef DEBUG_MEM
 		if (strcmp(item->descr, "string") == 0)
 			debug_step("%s: freeing string '%s'",
-			    __func__, (const char *)item->p);
+			    __func__, (const char *)p);
 		else if (strcmp(item->descr, "sym") == 0)
 			debug_step("%s: freeing symbol '%s'",
-			    __func__, ((const sym_t *)item->p)->s_name);
+			    __func__, ((const sym_t *)p)->s_name);
 		else if (strcmp(item->descr, "type") == 0)
 			debug_step("%s: freeing type '%s'",
-			    __func__, type_name(item->p));
+			    __func__, type_name(p));
+		else if (strcmp(item->descr, "tnode") == 0)
+			debug_step("%s: freeing node '%s' with type '%s'",
+			    __func__, op_name(((const tnode_t *)p)->tn_op),
+			    type_name(((const tnode_t *)p)->tn_type));
 		else
 			debug_step("%s: freeing '%s' with %zu bytes",
 			    __func__, item->descr, item->size);
 #endif
-		free(item->p);
+		free(p);
 	}
 }
 
@@ -245,6 +250,7 @@ void *
 level_zero_alloc(size_t level, size_t size, const char *descr)
 {
 
+	debug_step("%s: %s at level %zu", __func__, descr, level);
 	return mpool_zero_alloc(mpool_at(level), size, descr);
 }
 #else
