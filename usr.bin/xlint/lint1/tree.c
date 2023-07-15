@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.566 2023/07/14 09:20:23 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.567 2023/07/15 12:24:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.566 2023/07/14 09:20:23 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.567 2023/07/15 12:24:57 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4794,6 +4794,8 @@ static stmt_expr *stmt_exprs;
 void
 begin_statement_expr(void)
 {
+	debug_enter();
+
 	stmt_expr *se = xmalloc(sizeof(*se));
 	se->se_mem = expr_save_memory();
 	se->se_sym = NULL;
@@ -4818,13 +4820,21 @@ do_statement_expr(tnode_t *tn)
 tnode_t *
 end_statement_expr(void)
 {
+	tnode_t *tn;
+
 	stmt_expr *se = stmt_exprs;
-	if (se->se_sym == NULL)
-		return NULL;	/* after a syntax error */
-	tnode_t *tn = build_name(se->se_sym, false);
+	if (se->se_sym == NULL) {
+		tn = NULL;	/* after a syntax error */
+		goto end;
+	}
+
+	tn = build_name(se->se_sym, false);
 	(void)expr_save_memory();	/* leak */
 	expr_restore_memory(se->se_mem);
 	stmt_exprs = se->se_enclosing;
 	free(se);
+
+end:
+	debug_leave();
 	return tn;
 }
