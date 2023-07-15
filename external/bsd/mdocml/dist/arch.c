@@ -25,7 +25,7 @@ arch_valid(const char *arch, enum mandoc_os os)
 {
 	const char *openbsd_arch[] = {
 		"alpha", "amd64", "arm64", "armv7", "hppa", "i386",
-		"landisk", "loongson", "luna88k", "macppc", "mips64",
+		"landisk", "loongson", "luna88k", "soft68k", "macppc", "mips64",
 		"octeon", "sgi", "socppc", "sparc64", NULL
 	};
 	const char *netbsd_arch[] = {
@@ -34,7 +34,7 @@ arch_valid(const char *arch, enum mandoc_os os)
 		"bebox", "cats", "cesfic", "cobalt", "dreamcast",
 		"emips", "evbarm", "evbmips", "evbppc", "evbsh3", "evbsh5",
 		"hp300", "hpcarm", "hpcmips", "hpcsh", "hppa",
-		"i386", "ibmnws", "luna68k",
+		"i386", "ibmnws", "luna68k", "soft68k",
 		"mac68k", "macppc", "mipsco", "mmeye", "mvme68k", "mvmeppc",
 		"netwinder", "news68k", "newsmips", "next68k",
 		"pc532", "playstation2", "pmax", "pmppc", "prep",

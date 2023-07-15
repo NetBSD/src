@@ -281,6 +281,7 @@
 .ds doc-volume-as-hppa         hppa
 .ds doc-volume-as-i386         i386
 .ds doc-volume-as-luna68k      luna68k
+.ds doc-volume-as-soft68k      soft68k
 .ds doc-volume-as-m68k         m68k
 .ds doc-volume-as-mac68k       mac68k
 .ds doc-volume-as-macppc       macppc

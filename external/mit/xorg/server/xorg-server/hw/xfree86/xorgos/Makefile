@@ -94,6 +94,7 @@ CPPFLAGS.${_FN}=	-DWSCONS_SUPPORT -DUSESTDRES -DHAVE_SYSV_IPC
 
 .if ${MACHINE} == "amiga" || \
     ${MACHINE} == "hp300" || \
+    ${MACHINE} == "soft68k" || \
     ${MACHINE} == "luna68k" || \
     ${MACHINE} == "mac68k"
 SRCS.bsd+=	ppc_video.c agp_noop.c

@@ -33,6 +33,7 @@ port-ia64
 port-ibmnws
 port-iyonix
 port-luna68k
+port-soft68k
 port-m68k
 port-mac68k
 port-macppc

@@ -1002,6 +1002,7 @@
 ./usr/share/man/cat4/hppa
 ./usr/share/man/cat4/i386
 ./usr/share/man/cat4/luna68k
+./usr/share/man/cat4/soft68k
 ./usr/share/man/cat4/mac68k
 ./usr/share/man/cat4/macppc
 ./usr/share/man/cat4/mvme68k
@@ -1045,6 +1046,7 @@
 ./usr/share/man/cat8/i386
 ./usr/share/man/cat8/ibmnws
 ./usr/share/man/cat8/luna68k
+./usr/share/man/cat8/soft68k
 ./usr/share/man/cat8/mac68k
 ./usr/share/man/cat8/macppc
 ./usr/share/man/cat8/mipsco
@@ -1112,6 +1114,7 @@
 ./usr/share/man/html4/hppa
 ./usr/share/man/html4/i386
 ./usr/share/man/html4/luna68k
+./usr/share/man/html4/soft68k
 ./usr/share/man/html4/mac68k
 ./usr/share/man/html4/macppc
 ./usr/share/man/html4/mvme68k
@@ -1155,6 +1158,7 @@
 ./usr/share/man/html8/i386
 ./usr/share/man/html8/ibmnws
 ./usr/share/man/html8/luna68k
+./usr/share/man/html8/soft68k
 ./usr/share/man/html8/mac68k
 ./usr/share/man/html8/macppc
 ./usr/share/man/html8/mipsco
@@ -1222,6 +1226,7 @@
 ./usr/share/man/man4/hppa
 ./usr/share/man/man4/i386
 ./usr/share/man/man4/luna68k
+./usr/share/man/man4/soft68k
 ./usr/share/man/man4/mac68k
 ./usr/share/man/man4/macppc
 ./usr/share/man/man4/mvme68k
@@ -1265,6 +1270,7 @@
 ./usr/share/man/man8/i386
 ./usr/share/man/man8/ibmnws
 ./usr/share/man/man8/luna68k
+./usr/share/man/man8/soft68k
 ./usr/share/man/man8/mac68k
 ./usr/share/man/man8/macppc
 ./usr/share/man/man8/mipsco

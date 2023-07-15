@@ -214,6 +214,7 @@ static const struct disklabel_params {
 	{ "algor",	0, 0,  8, 2, 0,  64, LITTLE_ENDIAN },	/* mips */
 	{ "alpha",	0, 0,  8, 2, 0,  64, LITTLE_ENDIAN },	/* alpha */
 	{ "luna68k",	0, 0,  8, 2, 0,  64, BIG_ENDIAN },	/* m68k */
+	{ "soft68k",	0, 0,  8, 2, 0,  64, BIG_ENDIAN },	/* m68k */
 	{ "mac68k",	0, 0,  8, 2, 0,  64, BIG_ENDIAN },	/* m68k */
 	{ "news68k",	0, 0,  8, 2, 0,  64, BIG_ENDIAN },	/* m68k */
 	{ "newsmips",	0, 0,  8, 2, 0,  64, BIG_ENDIAN },	/* mips */
