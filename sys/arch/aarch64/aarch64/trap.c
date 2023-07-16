@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.48 2023/02/25 00:40:22 riastradh Exp $ */
+/* $NetBSD: trap.c,v 1.49 2023/07/16 21:36:40 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.48 2023/02/25 00:40:22 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.49 2023/07/16 21:36:40 riastradh Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -274,7 +274,7 @@ trap_el1h_sync(struct trapframe *tf)
 	(CTR_EL0_DIC | CTR_EL0_IDC | CTR_EL0_DMIN_LINE | CTR_EL0_IMIN_LINE)
 uint64_t ctr_el0_usr __read_mostly;
 
-static xcfunc_t
+static void
 configure_cpu_traps0(void *arg1, void *arg2)
 {
 	struct cpu_info * const ci = curcpu();
@@ -307,7 +307,7 @@ configure_cpu_traps0(void *arg1, void *arg2)
 		goto need_ctr_trap;
 #endif
 
-	return 0;
+	return;
 
  need_ctr_trap:
 	evcnt_attach_dynamic(&ci->ci_uct_trap, EVCNT_TYPE_MISC, NULL,
@@ -317,8 +317,6 @@ configure_cpu_traps0(void *arg1, void *arg2)
 	sctlr = reg_sctlr_el1_read();
 	sctlr &= ~SCTLR_UCT;
 	reg_sctlr_el1_write(sctlr);
-
-	return 0;
 }
 
 void
@@ -374,8 +372,7 @@ configure_cpu_traps(void)
 		}
 	}
 
-	where = xc_broadcast(0,
-	    (xcfunc_t)configure_cpu_traps0, NULL, NULL);
+	where = xc_broadcast(0, configure_cpu_traps0, NULL, NULL);
 	xc_wait(where);
 }
 
