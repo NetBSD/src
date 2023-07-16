@@ -1,4 +1,4 @@
-/* $NetBSD: pckbdreg.h,v 1.3 2013/03/06 03:26:17 christos Exp $ */
+/* $NetBSD: pckbdreg.h,v 1.4 2023/07/16 19:09:07 christos Exp $ */
 
 /*
  * Keyboard definitions
@@ -11,6 +11,7 @@
 #define	KBC_DISABLE	0xF5	/* as per KBC_SETDEFAULT, but also disable key scanning */
 #define	KBC_ENABLE	0xF4	/* enable key scanning */
 #define	KBC_TYPEMATIC	0xF3	/* set typematic rate and delay */
+#define	KBC_GETID	0xF2	/* get keyboard ID */
 #define	KBC_SETTABLE	0xF0	/* set scancode translation table */
 #define	KBC_MODEIND	0xED	/* set mode indicators (i.e. LEDs) */
 #define	KBC_ECHO	0xEE	/* request an echo from the keyboard */
