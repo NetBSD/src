@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.423 2022/09/24 11:05:47 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.424 2023/07/16 19:55:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.423 2022/09/24 11:05:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.424 2023/07/16 19:55:43 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1351,7 +1351,19 @@ pmap_bootstrap(vaddr_t kva_start)
 #endif
 
 	/*
-	 * Allocate space for the IDT, GDT and LDT.
+	 * Allocate space for the Interrupt Descriptor Table (IDT),
+	 * Global Descriptor Table (GDT), and Local Descriptor Table
+	 * (LDT).
+	 *
+	 * Currently there is an initial temporary GDT allocated on the
+	 * stack by the caller of init386/init_x86_64, which is (among
+	 * other things) needed on i386 for %fs-relative addressing for
+	 * CPU-local data (CPUVAR(...), curcpu(), curlwp).  This
+	 * initial temporary GDT will be popped off the stack before we
+	 * can enter main, so we need to make sure there is space for a
+	 * second temporary GDT to continue existing when we enter main
+	 * before we allocate space for the permanent GDT with
+	 * uvm_km(9) in gdt_init via cpu_startup and switch to that.
 	 */
 	idt_vaddr = pmap_bootstrap_valloc(1);
 	idt_paddr = pmap_bootstrap_palloc(1);

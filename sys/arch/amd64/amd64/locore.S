@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.222 2023/06/24 05:31:04 msaitoh Exp $	*/
+/*	$NetBSD: locore.S,v 1.223 2023/07/16 19:55:43 riastradh Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -974,6 +974,20 @@ longmode_hi:
 
 	movl	$VM_GUEST_XENPV, _C_LABEL(vm_guest)
 
+	/*
+	 * Initialize cpu_info_primary.ci_self := &cpu_info_primary,
+	 * and initialize some MSRs with
+	 * cpu_init_msrs(&cpu_info_primary, full=true).  This sets up
+	 * SYSCALL/SYSRET (XXX why?) and %fs/%gs, which is needed for
+	 * the %gs-relative addressing used by CPUVAR(...), curcpu(),
+	 * and curlwp.
+	 *
+	 * XXX Is it necessary to set cpu_info_primary.ci_self here?
+	 * Isn't it statically initialized in x86/cpu.c?
+	 *
+	 * XXX Why do we immediately clear the segment registers just
+	 * afterward?
+	 */
 	movq	$cpu_info_primary,%rdi
 	movq	%rdi,CPU_INFO_SELF(%rdi) /* ci->ci_self = ci */
 	movq	$1,%rsi
