@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.195 2023/05/14 09:05:38 riastradh Exp $	*/
+/*	$NetBSD: locore.S,v 1.196 2023/07/16 19:55:43 riastradh Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.195 2023/05/14 09:05:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.196 2023/07/16 19:55:43 riastradh Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1071,6 +1071,31 @@ begin:
 	call 	_C_LABEL(multiboot2_post_reloc)
 #endif
 
+	/*
+	 * Initialize a temporary GDT (Global Descriptor Table) on the
+	 * stack and make the segment registers to use it.
+	 *
+	 * This creates a segment descriptor for the CPU-local segment
+	 * and loads %fs with its segment selector to set up addressing
+	 * for %fs.  Thus, after this point, CPUVAR(...), curcpu(), and
+	 * curlwp will work.
+	 *
+	 * Later, we will replace this temporary GDT on the stack by a
+	 * permanent GDT allocated with uvm_km in gdt_init.
+	 *
+	 * XXX Intel recommends ensuring the GDT address is aligned on
+	 * an 8-byte boundary for performance.  Perhaps not an issue
+	 * early at boot, but maybe worth doing?
+	 *
+	 *	Intel 64 and IA-32 Architectures, Software Developer's
+	 *	Manual, Volume 3: System Programming Guide, Order
+	 *	Number 325383, April 2022, Sec. 3.5.1 `Segment
+	 *	Descriptor Tables', p. 3-15:
+	 *
+	 *		The base address of the GDT should be aligned
+	 *		on an eight-byte boundary to yield the best
+	 *		processor performance.
+	 */
 	subl	$NGDT*8, %esp		/* space for temporary gdt */
 	pushl	%esp
 	call	_C_LABEL(initgdt)
