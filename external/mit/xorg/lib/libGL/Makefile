@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2023/06/03 21:33:02 lukem Exp $
+#	$NetBSD: Makefile,v 1.34 2023/07/16 22:20:54 rjs Exp $
 
 .include <bsd.own.mk>
 
@@ -50,10 +50,11 @@ CPPFLAGS.UTILdebug.c+=	-I${X11SRCDIR.Mesa}/src/util \
 			-I${X11SRCDIR.Mesa}/src \
 			-I${X11SRCDIR.Mesa}/src/gallium/include
 
-BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/../src/mapi/glapi/indirect_init.c MESAindirect_init.c
+
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/../src/mapi/glapi/gen/indirect_init.c MESAindirect_init.c
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/glx/indirect_window_pos.c MESAindirect_window_pos.c
-BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/../src/mapi/glapi/indirect.c MESAindirect.c
-BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/../src/mapi/glapi/indirect_size.c MESAindirect_size.c
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/../src/mapi/glapi/gen/indirect.c MESAindirect.c
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/../src/mapi/glapi/gen/indirect_size.c MESAindirect_size.c
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/util/debug.c UTILdebug.c
 
 # glapi
@@ -90,15 +91,16 @@ SRCS.glx += ${SRCS.${XORG_MACHINE_ARCH:U${MACHINE_ARCH}}.glx}
 SRCS.glapi+=			entry.c
 
 .for _f in ${SRCS.glx}
-CPPFLAGS.${_f}= -I${X11SRCDIR.Mesa}/../src/mapi/glapi \
+CPPFLAGS.${_f}= -I${X11SRCDIR.Mesa}/../src/mapi/glapi/gen \
 		-I${X11SRCDIR.Mesa}/src \
+		-I${X11SRCDIR.Mesa}/src/mesa \
 		-I${X11SRCDIR.Mesa}/../src/mesa \
 		-DGLX_SHARED_GLAPI
 .endfor
 
 .for _f in ${SRCS.glapi}
 CPPFLAGS.${_f}= -DMAPI_MODE_BRIDGE \
-		-DMAPI_ABI_HEADER=\"glapi/glapi_mapi_tmp.h\" \
+		-DMAPI_ABI_HEADER=\"glapi/gen/glapi_mapi_tmp.h\" \
 		-I${X11SRCDIR.Mesa}/src \
 		-I${X11SRCDIR.Mesa}/../src/mapi
 .endfor
@@ -113,9 +115,7 @@ SRCS.dri=	\
 	xfont.c \
 	drisw_glx.c \
 	dri2.c \
-	dri2_glx.c \
-	dri_glx.c \
-	XF86dri.c
+	dri2_glx.c
 
 .for fn in ${SRCS.dri}
 CPPFLAGS.${fn}= \
@@ -124,15 +124,23 @@ CPPFLAGS.${fn}= \
 .endfor
 .endif
 
-SRCS.util+=	u_process.c
+SRCS.util+= \
+	ralloc.c \
+	os_file.c \
+	mesa-sha1.c \
+	u_printf.cpp \
+	u_process.c 
+
+CPPFLAGS.ralloc.c += -I${X11SRCDIR.Mesa}/src
+CPPFLAGS.u_printf.cpp += -I${X11SRCDIR.Mesa}/src
 
 .include "../libloader.mk"
 
 .PATH:		${X11SRCDIR.Mesa}/src/glw
 .PATH:		${X11SRCDIR.Mesa}/include/GL
 .PATH:		${X11SRCDIR.Mesa}/src/mesa/drivers/x11
-INCS=	gl.h gl_mangle.h glcorearb.h glext.h \
-	glx.h glx_mangle.h glxext.h \
+INCS=	gl.h glcorearb.h glext.h \
+	glx.h glxext.h \
 	osmesa.h wglext.h
 INCSDIR=${X11INCDIR}/GL
 
@@ -208,6 +216,7 @@ LIBDPLIBS=	Xext		${.CURDIR}/../libXext \
 		X11-xcb		${.CURDIR}/../libX11/libX11-xcb \
 		xcb-dri2	${.CURDIR}/../libxcb/dri2 \
 		xcb-glx		${.CURDIR}/../libxcb/glx \
+		xcb-shm		${.CURDIR}/../libxcb/shm \
 		expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat \
 		m		${NETBSDSRCDIR}/lib/libm \
 		pthread		${NETBSDSRCDIR}/lib/libpthread
@@ -216,7 +225,7 @@ MKLINT=no
 
 PKGCONFIG=	gl
 PKGDIST.gl=	${X11SRCDIR.Mesa}/../src/pkgconfig
-.include "${.CURDIR}/../libGL/mesa-ver.mk"
+.include "${.CURDIR}/../libGL${OLD_SUFFIX}/mesa-ver.mk"
 PKGCONFIG_VERSION.gl=	${MESA_VER}
 
 # XXX remove these from bsd.x11.mk

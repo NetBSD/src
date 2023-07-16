@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.14 2021/04/12 03:57:06 mrg Exp $
+#	$NetBSD: libmesa.mk,v 1.15 2023/07/16 22:20:54 rjs Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -8,12 +8,13 @@ CPPFLAGS.ac_surface.c+=	${${ACTIVE_CC} == "clang":? -Wno-error=enum-conversion :
 # Please keep the organization in line with those files.
 
 # Main sources
-PATHS.main=	mesa/main ../../src/mesa/main ../../src/mapi/glapi
-INCLUDES.main=	glsl mesa/main ../../src/compiler/nir
+PATHS.main=	mesa/main mapi/glapi
+PATHS.main+=	../../src/mesa ../../src/mesa/main ../../src/mapi/glapi/gen
+INCLUDES.main=	glsl mesa/main ../../src/compiler/nir ../../src/mesa
+INCLUDES.main+= gallium/auxiliary ../../src
 SRCS.main= \
 	accum.c \
 	api_arrayelt.c \
-	api_loopback.c \
 	api_exec.c \
 	arbprogram.c \
 	arrayobj.c \
@@ -57,8 +58,6 @@ SRCS.main= \
 	ffvertex_prog.c \
 	fog.c \
 	format_fallback.c \
-	format_pack.c \
-	format_unpack.c \
 	format_utils.c \
 	formatquery.c \
 	formats.c \
@@ -69,18 +68,28 @@ SRCS.main= \
 	glformats.c \
 	glspirv.c \
 	glthread.c \
+	glthread_bufferobj.c \
+	glthread_draw.c \
+	glthread_get.c \
+	glthread_list.c \
+	glthread_shaderobj.c \
+	glthread_varray.c \
 	hash.c \
 	hint.c \
 	histogram.c \
 	image.c \
-	imports.c \
 	light.c \
 	lines.c \
-	marshal.c \
-	marshal_generated.c \
+	marshal_generated0.c \
+	marshal_generated1.c \
+	marshal_generated2.c \
+	marshal_generated3.c \
+	marshal_generated4.c \
+	marshal_generated5.c \
+	marshal_generated6.c \
+	marshal_generated7.c \
 	matrix.c \
 	mipmap.c \
-	mm.c \
 	multisample.c \
 	objectlabel.c \
 	objectpurge.c \
@@ -110,11 +119,11 @@ SRCS.main= \
 	shaderobj.c \
 	shader_query.cpp \
 	shared.c \
+	spirv_extensions.c \
 	state.c \
 	stencil.c \
 	syncobj.c \
 	texcompress.c \
-	texcompress_astc.cpp \
 	texcompress_bptc.c \
 	texcompress_cpal.c \
 	texcompress_etc.c \
@@ -127,6 +136,7 @@ SRCS.main= \
 	texgetimage.c \
 	teximage.c \
 	texobj.c \
+	texcompress_astc.cpp \
 	texparam.c \
 	texstate.c \
 	texstorage.c \
@@ -145,14 +155,18 @@ SRCS.main= \
 
 # AMD common code
 PATHS.amd=	amd/common amd/addrlib/src amd/addrlib/src/core \
-		amd/addrlib/src/gfx9 amd/addrlib/src/r800
+		amd/addrlib/src/gfx9 amd/addrlib/src/r800 \
+		amd/addrlib/src/gfx10 amd/llvm ../../src/amd/common
 INCLUDES.amd=	amd amd/common ../../src/amd/common \
 		amd/addrlib amd/addrlib/inc \
 		amd/addrlib/src amd/addrlib/src/core \
 		amd/addrlib/src/r800 \
 		amd/addrlib/src/chip/r800 \
 		amd/addrlib/src/gfx9 \
-		amd/addrlib/src/chip/gfx9
+		amd/addrlib/src/chip/gfx9 \
+		amd/addrlib/src/gfx10 \
+		amd/addrlib/src/chip/gfx10 \
+		amd/llvm ../src/util
 
 SRCS.amd+= \
 	addrinterface.cpp \
@@ -163,18 +177,30 @@ SRCS.amd+= \
 	addrobject.cpp \
 	coord.cpp \
 	gfx9addrlib.cpp \
+	gfx10addrlib.cpp \
+	gfx10_format_table.c \
 	ciaddrlib.cpp \
 	egbaddrlib.cpp \
 	siaddrlib.cpp \
 	ac_binary.c \
+	ac_debug.c \
+	ac_gpu_info.c \
 	ac_llvm_build.c \
+	ac_llvm_cull.c \
 	ac_llvm_helper.cpp \
 	ac_llvm_util.c \
-	ac_shader_util.c \
+	ac_msgpack.c \
+	ac_nir.c \
 	ac_nir_to_llvm.c \
-	ac_gpu_info.c \
+	ac_perfcounter.c \
+	ac_rgp.c \
+	ac_rgp_elf_object_pack.c \
+	ac_shader_args.c \
+	ac_shader_util.c \
+	ac_shadowed_regs.c \
+	ac_sqtt.c \
 	ac_surface.c \
-	ac_debug.c
+	ac_rtld.c
 
 # XXX  avoid source name clashes with glx
 .PATH:		${X11SRCDIR.Mesa}/src/mesa/main
@@ -210,7 +236,6 @@ SRCS.vbo= \
 	vbo_exec_eval.c \
 	vbo_minmax_index.c \
 	vbo_noop.c \
-	vbo_primitive_restart.c \
 	vbo_save_api.c \
 	vbo_save.c \
 	vbo_save_draw.c \
@@ -345,7 +370,7 @@ COPTS.sse_minmax.c+= -msse4.1
 PATHS.state_tracker=	mesa/state_tracker
 INCLUDES.state_tracker=	glsl mesa/main
 SRCS.state_tracker= \
-	st_atifs_to_tgsi.c \
+	st_atifs_to_nir.c \
 	st_atom.c \
 	st_atom_array.c \
 	st_atom_atomicbuf.c \
@@ -384,6 +409,7 @@ SRCS.state_tracker= \
 	st_cb_memoryobjects.c \
 	st_cb_msaa.c \
 	st_cb_perfmon.c \
+	st_cb_perfquery.c \
 	st_cb_program.c \
 	st_cb_queryobj.c \
 	st_cb_rasterpos.c \
@@ -409,9 +435,7 @@ SRCS.state_tracker= \
 	st_glsl_to_tgsi_array_merge.cpp \
 	st_glsl_to_tgsi_private.cpp \
 	st_glsl_to_tgsi_temprename.cpp \
-	st_glsl_types.cpp \
 	st_manager.c \
-	st_mesa_to_tgsi.c \
 	st_nir_builtins.c \
 	st_nir_lower_builtin.c \
 	st_nir_lower_tex_src_plane.c \
@@ -421,6 +445,7 @@ SRCS.state_tracker= \
 	st_scissor.c \
 	st_shader_cache.c \
 	st_texture.c \
+	st_tgsi_lower_depth_clamp.c \
 	st_tgsi_lower_yuv.c
 
 # Program sources
@@ -514,6 +539,7 @@ CPPFLAGS+=	\
 	-D__STDC_LIMIT_MACROS \
 	-DUSE_GCC_ATOMIC_BUILTINS \
 	-DNDEBUG \
+	-DHAVE_COMPRESSION \
 	-DHAVE_SYS_SYSCTL_H \
 	-DHAVE_DLFCN_H \
 	-DHAVE_STRTOF \
@@ -537,8 +563,12 @@ LLVM_VERSION!=		cd ${NETBSDSRCDIR}/external/apache2/llvm && ${MAKE} -V LLVM_VERS
 HAVE_LLVM_VERSION!=	expr ${LLVM_VERSION:R:R} \* 256 + ${LLVM_VERSION:R:E} \* 16
 CPPFLAGS+=	\
 	-DHAVE_LLVM=${HAVE_LLVM_VERSION}
+CPPFLAGS+=	-DLLVM_AVAILABLE -DDRAW_LLVM_AVAILABLE
 CXXFLAGS+=	-fno-rtti
 .endif
+
+CPPFLAGS+=	\
+	-DLITTLEENDIAN_CPU
 
 .include "../asm.mk"
 

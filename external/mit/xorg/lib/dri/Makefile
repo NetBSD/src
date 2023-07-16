@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.38 2021/07/11 20:52:06 mrg Exp $
+# $NetBSD: Makefile,v 1.39 2023/07/16 22:20:54 rjs Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -54,6 +54,8 @@ DRIVERS=	r200 radeon
 
 DRI_SUBDIRS= ${DRIVERS}
 
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+
 DRI_SOURCES.i915+= \
 	i830_context.c \
 	i830_state.c \
@@ -107,28 +109,23 @@ CPPFLAGS.i915_${_f}+=	-I${X11SRCDIR.Mesa}/src/mesa/drivers/dri/i915
 .PATH: ${X11SRCDIR.Mesa}/src/intel/common
 .PATH: ${X11SRCDIR.Mesa}/src/intel/compiler
 .PATH: ${X11SRCDIR.Mesa}/src/intel/dev
+.PATH: ${X11SRCDIR.Mesa}/src/intel/ds
 .PATH: ${X11SRCDIR.Mesa}/src/intel/isl
 .PATH: ${X11SRCDIR.Mesa}/src/intel/perf
 .PATH: ${X11SRCDIR.Mesa}/../src/intel/
+.PATH: ${X11SRCDIR.Mesa}/../src/intel/compiler
+.PATH: ${X11SRCDIR.Mesa}/../src/intel/isl
 .PATH: ${X11SRCDIR.Mesa}/../src/intel/perf
 
 DRI_SOURCES.i965+= \
 	blorp.c \
 	blorp_blit.c \
 	blorp_clear.c \
-	gen_batch_decoder.c \
-	gen_debug.c \
-	gen_decoder.c \
-	gen_device_info.c \
-	gen_disasm.c \
-	gen_l3_config.c \
-	gen_perf.c \
-	gen_perf_mdapi.c \
-	gen_perf_metrics.c \
-	gen_urb_config.c \
-	intel_log.c \
 	brw_binding_tables.c \
+	brw_blit.c \
 	brw_blorp.c \
+	brw_buffer_objects.c \
+	brw_buffers.c \
 	brw_bufmgr.c \
 	brw_cfg.cpp \
 	brw_clear.c \
@@ -139,11 +136,13 @@ DRI_SOURCES.i965+= \
 	brw_clip_unfilled.c \
 	brw_clip_util.c \
 	brw_compile_clip.c \
+	brw_compile_ff_gs.c \
 	brw_compile_sf.c \
 	brw_compiler.c \
 	brw_compute.c \
 	brw_conditional_render.c \
 	brw_context.c \
+	brw_copy_image.c \
 	brw_cs.c \
 	brw_curbe.c \
 	brw_dead_control_flow.cpp \
@@ -153,14 +152,12 @@ DRI_SOURCES.i965+= \
 	brw_disk_cache.c \
 	brw_draw.c \
 	brw_draw_upload.c \
-	brw_eu.c \
+	brw_eu.cpp \
 	brw_eu_compact.c \
 	brw_eu_emit.c \
 	brw_eu_util.c \
 	brw_eu_validate.c \
-	brw_ff_gs.c \
-	brw_ff_gs_emit.c \
-	brw_formatquery.c \
+	brw_extensions.c \
 	brw_fs.cpp \
 	brw_fs_bank_conflicts.cpp \
 	brw_fs_cmod_propagation.cpp \
@@ -176,33 +173,46 @@ DRI_SOURCES.i965+= \
 	brw_fs_reg_allocate.cpp \
 	brw_fs_register_coalesce.cpp \
 	brw_fs_saturate_propagation.cpp \
+	brw_fs_scoreboard.cpp \
 	brw_fs_sel_peephole.cpp \
 	brw_fs_validate.cpp \
 	brw_fs_visitor.cpp \
+	brw_ff_gs.c \
+	brw_formatquery.c \
 	brw_generate_mipmap.c \
 	brw_gs.c \
 	brw_gs_surface_state.c \
 	brw_interpolation_map.c \
-	brw_link.cpp \
+	brw_ir_performance.cpp \
 	brw_meta_util.c \
 	brw_misc_state.c \
 	brw_nir.c \
 	brw_nir_analyze_boolean_resolves.c \
 	brw_nir_analyze_ubo_ranges.c \
 	brw_nir_attribute_workarounds.c \
+	brw_nir_clamp_image_1d_2d_array_sizes.c \
+	brw_nir_lower_alpha_to_coverage.c \
 	brw_nir_lower_conversions.c \
 	brw_nir_lower_cs_intrinsics.c \
-	brw_nir_lower_image_load_store.c \
+	brw_nir_lower_intersection_shader.c \
 	brw_nir_lower_mem_access_bit_sizes.c \
+	brw_nir_lower_rt_intrinsics.c \
+	brw_nir_lower_scoped_barriers.c \
+	brw_nir_lower_shader_calls.c \
+	brw_nir_lower_storage_image.c \
 	brw_nir_opt_peephole_ffma.c \
+	brw_nir_rt.c \
 	brw_nir_tcs_workarounds.c \
 	brw_nir_trig_workarounds.c \
-	brw_nir_uniforms.cpp \
 	brw_object_purgeable.c \
 	brw_packed_float.c \
 	brw_performance_query.c \
-	brw_performance_query_mdapi.c \
 	brw_pipe_control.c \
+	brw_pixel.c \
+	brw_pixel_bitmap.c \
+	brw_pixel_copy.c \
+	brw_pixel_draw.c \
+	brw_pixel_read.c \
 	brw_predicated_break.cpp \
 	brw_primitive_restart.c \
 	brw_program.c \
@@ -211,9 +221,11 @@ DRI_SOURCES.i965+= \
 	brw_queryobj.c \
 	brw_reg_type.c \
 	brw_reset.c \
-	brw_schedule_instructions.cpp \
+	brw_screen.c \
 	brw_sf.c \
+	brw_schedule_instructions.cpp \
 	brw_shader.cpp \
+	brw_state.c \
 	brw_state_upload.c \
 	brw_surface_formats.c \
 	brw_sync.c \
@@ -221,6 +233,11 @@ DRI_SOURCES.i965+= \
 	brw_tcs_surface_state.c \
 	brw_tes.c \
 	brw_tes_surface_state.c \
+	brw_tex.c \
+	brw_tex_copy.c \
+	brw_tex_image.c \
+	brw_tex_validate.c \
+	brw_upload.c \
 	brw_urb.c \
 	brw_util.c \
 	brw_vec4.cpp \
@@ -245,59 +262,59 @@ DRI_SOURCES.i965+= \
 	brw_wm.c \
 	brw_wm_iz.cpp \
 	brw_wm_surface_state.c \
-	gen6_clip_state.c \
-	gen6_constant_state.c \
-	gen6_gs_visitor.cpp \
-	gen6_multisample_state.c \
-	gen6_queryobj.c \
-	gen6_sampler_state.c \
-	gen6_sol.c \
-	gen6_urb.c \
-	gen7_l3_state.c \
-	gen7_sol_state.c \
-	gen7_urb.c \
-	gen8_depth_state.c \
-	gen8_multisample_state.c \
+	gfx6_clip_state.c \
+	gfx6_constant_state.c \
+	gfx6_gs_visitor.cpp \
+	gfx6_multisample_state.c \
+	gfx6_queryobj.c \
+	gfx6_sampler_state.c \
+	gfx6_sol.c \
+	gfx6_urb.c \
+	gfx7_l3_state.c \
+	gfx7_sol_state.c \
+	gfx7_urb.c \
+	gfx8_depth_state.c \
+	gfx8_multisample_state.c \
 	hsw_queryobj.c \
 	hsw_sol.c \
 	isl.c \
+	isl_aux_info.c \
 	isl_drm.c \
 	isl_format.c \
 	isl_format_layout.c \
-	isl_gen4.c \
-	isl_gen6.c \
-	isl_gen7.c \
-	isl_gen8.c \
-	isl_gen9.c \
+	isl_gfx4.c \
+	isl_gfx6.c \
+	isl_gfx7.c \
+	isl_gfx8.c \
+	isl_gfx9.c \
+	isl_gfx12.c \
 	isl_storage_image.c \
 	isl_tiled_memcpy.c \
 	isl_tiled_memcpy_normal.c \
 	isl_tiled_memcpy_sse41.c
 
-I965_INTEL_FILES = \
-	intel_batchbuffer.c \
-	intel_blit.c \
-	intel_buffer_objects.c \
-	intel_buffers.c \
-	intel_copy_image.c \
-	intel_extensions.c \
-	intel_fbo.c \
-	intel_mipmap_tree.c \
-	intel_pixel.c \
-	intel_pixel_bitmap.c \
-	intel_pixel_copy.c \
-	intel_pixel_draw.c \
-	intel_pixel_read.c \
-	intel_screen.c \
-	intel_state.c \
-	intel_tex.c \
-	intel_tex_copy.c \
-	intel_tex_image.c \
-	intel_tex_validate.c \
-	intel_upload.c
+I965_INTEL_COMMON_FILES = \
+	intel_aux_map.c \
+	intel_batch_decoder.c \
+	intel_decoder.c \
+	intel_disasm.c \
+	intel_gem.c \
+	intel_l3_config.c \
+	intel_measure.c \
+	intel_sample_positions.c \
+	intel_urb_config.c \
+	intel_uuid.c
 
+I965_INTEL_DEV_FILES = \
+	intel_debug.c \
+	intel_dev_info.c \
+	intel_device_info.c
 
-INTEL_GENS_BLORP=	40 45 50 60 70 75 80 90 100 110
+I965_INTEL_PERF_FILES = \
+	intel_pps_driver.cc \
+	intel_pps_perf.cc
+
+INTEL_GENS_BLORP=	40 45 50 60 70 75 80 90 110
 
 .for _gen in ${INTEL_GENS_BLORP}
 BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/mesa/drivers/dri/i965/genX_state_upload.c ${_gen}_state_upload.c
@@ -305,38 +322,47 @@ BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/mesa/drivers/dri/i965/genX_blorp_exec.c $
 BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/mesa/drivers/dri/i965/genX_pipe_control.c ${_gen}_pipe_control.c
 DRI_SOURCES.i965+=	${_gen}_state_upload.c ${_gen}_blorp_exec.c ${_gen}_pipe_control.c
 
-CPPFLAGS.${_gen}_state_upload.c+=	-DGEN_VERSIONx10=${_gen}
-CPPFLAGS.${_gen}_blorp_exec.c+=		-DGEN_VERSIONx10=${_gen}
-CPPFLAGS.${_gen}_pipe_control.c+=	-DGEN_VERSIONx10=${_gen}
+CPPFLAGS.${_gen}_state_upload.c+=	-DGFX_VERx10=${_gen}
+CPPFLAGS.${_gen}_blorp_exec.c+=		-DGFX_VERx10=${_gen}
+CPPFLAGS.${_gen}_pipe_control.c+=	-DGFX_VERx10=${_gen}
 .endfor
 
-INTEL_GENS_ISL=	40 50 60 70 75 80 90 100 110
+INTEL_GENS_ISL=	40 50 60 70 75 80 90 110 120 125
 
 .for _gen in ${INTEL_GENS_ISL}
 BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/intel/isl/isl_emit_depth_stencil.c ${_gen}_isl_emit_depth_stencil.c
 BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/intel/isl/isl_surface_state.c ${_gen}_isl_surface_state.c
 DRI_SOURCES.i965+=	${_gen}_isl_emit_depth_stencil.c ${_gen}_isl_surface_state.c
 
-CPPFLAGS.${_gen}_isl_emit_depth_stencil.c+=	-DGEN_VERSIONx10=${_gen} -I${X11SRCDIR.Mesa}/src/intel/isl/
-CPPFLAGS.${_gen}_isl_surface_state.c+=		-DGEN_VERSIONx10=${_gen} -I${X11SRCDIR.Mesa}/src/intel/isl/
+CPPFLAGS.${_gen}_isl_emit_depth_stencil.c+=	-DGFX_VERx10=${_gen} -I${X11SRCDIR.Mesa}/src/intel/isl/
+CPPFLAGS.${_gen}_isl_surface_state.c+=		-DGFX_VERx10=${_gen} -I${X11SRCDIR.Mesa}/src/intel/isl/
 .endfor
 
-.for _f in ${I965_INTEL_FILES}
-BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/mesa/drivers/dri/i965/${_f} i965_${_f}
+.for _f in ${I965_INTEL_COMMON_FILES}
+BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/intel/common/${_f} i965_${_f}
+DRI_SOURCES.i965+=	i965_${_f}
+.endfor
+.for _f in ${I965_INTEL_DEV_FILES}
+BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/intel/dev/${_f} i965_${_f}
 DRI_SOURCES.i965+=	i965_${_f}
 .endfor
 
 .for _f in ${DRI_SOURCES.i965}
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/mesa/drivers/dri/i965 \
 			-I${X11SRCDIR.Mesa}/src/intel \
+			-I${X11SRCDIR.Mesa}/src/intel/common \
 			-I${X11SRCDIR.Mesa}/src/intel/compiler \
+			-I${X11SRCDIR.Mesa}/src/intel/dev \
 			-I${X11SRCDIR.Mesa}/../src/intel \
 			-I${X11SRCDIR.Mesa}/src/compiler/nir \
-			-I${X11SRCDIR.Mesa}/../src/compiler/nir
+			-I${X11SRCDIR.Mesa}/../src/compiler/nir \
+			-I${X11SRCDIR.Mesa}/../src
 .endfor
 
 # Needs mfence
 CPPFLAGS.brw_bufmgr.c+=	-msse2
+
+.endif
 
 DRI_SOURCES.r200 = \
 	r200_context.c \
