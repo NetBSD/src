@@ -1,4 +1,4 @@
-/*	$NetBSD: rndio.h,v 1.2 2015/09/06 06:01:02 dholland Exp $	*/
+/*	$NetBSD: rndio.h,v 1.3 2023/07/16 10:36:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -50,8 +50,7 @@ typedef struct {
 } rndsave_t;
 
 /* Statistics exposed by RNDGETPOOLSTAT */
-typedef struct
-{
+typedef struct {
 	uint32_t	poolsize;
 	uint32_t 	threshold;
 	uint32_t	maxentropy;
