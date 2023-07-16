@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.4 2023/07/16 10:18:07 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.5 2023/07/16 10:18:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.4 2023/07/16 10:18:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.5 2023/07/16 10:18:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -157,7 +157,7 @@ heartbeat_resume_cpu(struct cpu_info *ci)
 	KASSERT(__predict_false(cold) || ci == curcpu());
 
 	ci->ci_heartbeat_count = 0;
-	ci->ci_heartbeat_uptime_cache = atomic_load_relaxed(&time_uptime);
+	ci->ci_heartbeat_uptime_cache = time_uptime;
 	ci->ci_heartbeat_uptime_stamp = 0;
 }
 
@@ -352,7 +352,7 @@ static void
 heartbeat_intr(void *cookie)
 {
 	unsigned count = atomic_load_relaxed(&curcpu()->ci_heartbeat_count);
-	unsigned uptime = atomic_load_relaxed(&time_uptime);
+	unsigned uptime = time_uptime;
 
 	atomic_store_relaxed(&curcpu()->ci_heartbeat_uptime_stamp, count);
 	atomic_store_relaxed(&curcpu()->ci_heartbeat_uptime_cache, uptime);
@@ -579,7 +579,7 @@ heartbeat(void)
 	 * changed, and stop here -- we only do the cross-CPU work once
 	 * per second.
 	 */
-	uptime = atomic_load_relaxed(&time_uptime);
+	uptime = time_uptime;
 	cache = atomic_load_relaxed(&curcpu()->ci_heartbeat_uptime_cache);
 	if (__predict_true(cache == uptime)) {
 		/*
