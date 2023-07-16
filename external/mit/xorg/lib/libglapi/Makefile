@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2020/10/31 13:28:22 nia Exp $
+#	$NetBSD: Makefile,v 1.10 2023/07/16 22:20:54 rjs Exp $
 
 .include <bsd.own.mk>
 
@@ -21,7 +21,7 @@ SRCS.mapi=	\
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/mapi/entry.c shared_entry.c
 
 .for _f in ${SRCS.mapi}
-CPPFLAGS.${_f}=	-DMAPI_MODE_GLAPI -DMAPI_ABI_HEADER=\"shared-glapi_glapi_mapi_tmp.h\"
+CPPFLAGS.${_f}=	-DMAPI_MODE_GLAPI -DMAPI_ABI_HEADER=\"shared-glapi/glapi_mapi_tmp.h\"
 .endfor
 
 # above is shared/libglapi.la

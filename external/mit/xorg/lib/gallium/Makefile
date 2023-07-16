@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.49 2023/02/07 06:19:03 mrg Exp $
+# $NetBSD: Makefile,v 1.50 2023/07/16 22:20:54 rjs Exp $
 
 # Link the gallium mega driver.
 
@@ -30,8 +30,8 @@ LDFLAGS+=	-pthread
 
 # Reduce debugging for these extremely large objects.
 .if ${MKDEBUG:Uno} != "no"
-CXXFLAGS+=	-g1
-CFLAGS+=	-g1
+#CXXFLAGS+=	-g1
+#CFLAGS+=	-g1
 .endif
 
 GALLIUM_SUBDIRS= \
@@ -52,6 +52,7 @@ GALLIUM_SUBDIRS= \
 	auxiliary/rbug \
 	auxiliary/renderonly \
 	auxiliary/rtasm \
+	auxiliary/tessellator \
 	auxiliary/tgsi \
 	auxiliary/translate \
 	auxiliary/util \
@@ -63,10 +64,10 @@ GALLIUM_SUBDIRS= \
 	winsys/sw/kms-dri \
 	winsys/sw/null \
 	winsys/sw/wrapper \
-	state_trackers/dri
+	frontends/dri
 
 GALLIUM_SUBDIRS_VDPAU=	\
-	state_trackers/vdpau
+	frontends/vdpau
 
 GALLIUM_SUBDIRS_LLVMPIPE= \
 	auxiliary/gallivm \
@@ -79,12 +80,21 @@ GALLIUM_SUBDIRS_ATI= \
 	drivers/r300/compiler \
 	drivers/r600 \
 	drivers/r600/sb \
+	drivers/r600/sfn \
 	winsys/radeon/drm \
 	winsys/amdgpu/drm
 
 GALLIUM_SUBDIRS_I915= \
 	drivers/i915 \
 	winsys/i915/drm
+
+GALLIUM_SUBDIRS_IRIS= \
+	drivers/iris \
+	winsys/iris/drm
+
+GALLIUM_SUBDIRS_CROCUS= \
+	drivers/crocus \
+	winsys/crocus/drm
 
 GALLIUM_SUBDIRS_NOUVEAU= \
 	drivers/nouveau \
@@ -99,8 +109,12 @@ BUILD_NOUVEAU=0
 BUILD_VDPAU=0
 BUILD_LLVMPIPE=0
 BUILD_I915=0
+BUILD_IRIS=0
+BUILD_CROCUS=0
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 BUILD_I915=1
+#BUILD_IRIS=1
+#BUILD_CROCUS=1
 .endif
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
 BUILD_NOUVEAU=1
@@ -138,6 +152,12 @@ GALLIUM_SUBDIRS+=	${GALLIUM_SUBDIRS_VDPAU}
 .if ${BUILD_I915} == 1
 GALLIUM_SUBDIRS+=	${GALLIUM_SUBDIRS_I915}
 .endif
+.if ${BUILD_IRIS} == 1
+GALLIUM_SUBDIRS+=	${GALLIUM_SUBDIRS_IRIS}
+.endif
+.if ${BUILD_CROCUS} == 1
+GALLIUM_SUBDIRS+=	${GALLIUM_SUBDIRS_CROCUS}
+.endif
 .if ${BUILD_LLVMPIPE} == 1
 GALLIUM_SUBDIRS+=	${GALLIUM_SUBDIRS_LLVMPIPE}
 .endif
@@ -162,6 +182,7 @@ GALLIUM_SOURCES.auxiliary/draw= \
 	draw_pipe_stipple.c \
 	draw_pipe_twoside.c \
 	draw_pipe_unfilled.c \
+	draw_pipe_user_cull.c \
 	draw_pipe_util.c \
 	draw_pipe_validate.c \
 	draw_pipe_vbuf.c \
@@ -171,13 +192,13 @@ GALLIUM_SOURCES.auxiliary/draw= \
 	draw_pt.c \
 	draw_pt_emit.c \
 	draw_pt_fetch.c \
-	draw_pt_fetch_emit.c \
 	draw_pt_fetch_shade_emit.c \
 	draw_pt_fetch_shade_pipeline.c \
 	draw_pt_post_vs.c \
 	draw_pt_so_emit.c \
 	draw_pt_util.c \
 	draw_pt_vsplit.c \
+	draw_tess.c \
 	draw_vertex.c \
 	draw_vs.c \
 	draw_vs_exec.c \
@@ -246,6 +267,9 @@ GALLIUM_SOURCES.auxiliary/rtasm= \
 	rtasm_cpu.c \
 	rtasm_execmem.c \
 	rtasm_x86sse.c
+GALLIUM_SOURCES.auxiliary/tessellator= \
+	p_tessellator.cpp \
+	tessellator.cpp
 GALLIUM_SOURCES.auxiliary/tgsi= \
 	tgsi_aa_point.c \
 	tgsi_build.c \
@@ -275,64 +299,50 @@ GALLIUM_SOURCES.auxiliary/util= \
 	os_misc.c \
 	u_async_debug.c \
 	u_bitmask.c \
-	u_blit.c \
 	u_blitter.c \
 	u_cache.c \
-	u_debug.c \
-	u_debug_describe.c \
+	u_compute.c \
 	u_debug_flush.c \
-	u_debug_gallium.c \
 	u_debug_image.c \
-	u_debug_memory.c \
-	u_debug_refcnt.c \
-	u_debug_stack.c \
-	u_debug_symbol.c \
 	u_dl.c \
 	u_draw.c \
 	u_draw_quad.c \
+	u_driconf.c \
 	u_dump_defines.c \
 	u_dump_state.c \
-	u_format.c \
-	u_format_bptc.c \
-	u_format_etc.c \
-	u_format_latc.c \
-	u_format_other.c \
-	u_format_rgtc.c \
-	u_format_s3tc.c \
-	u_format_tests.c \
-	u_format_yuv.c \
-	u_format_zs.c \
 	u_framebuffer.c \
 	u_gen_mipmap.c \
 	u_handle_table.c \
-	u_hash_table.c \
 	u_helpers.c \
-	u_idalloc.c \
 	u_index_modify.c \
 	u_linear.c \
+	u_live_shader_cache.c \
 	u_log.c \
-	u_mm.c \
 	u_network.c \
 	u_prim.c \
 	u_prim_restart.c \
 	u_pstipple.c \
 	u_resource.c \
-	u_ringbuffer.c \
 	u_sampler.c \
 	u_screen.c \
 	u_simple_shaders.c \
+	u_split_draw.c \
 	u_suballoc.c \
 	u_surface.c \
-	u_surfaces.c \
 	u_tests.c \
 	u_texture.c \
 	u_tile.c \
+	u_trace_gallium.c \
 	u_transfer.c \
 	u_transfer_helper.c \
 	u_threaded_context.c \
 	u_upload_mgr.c \
-	u_vbuf.c
+	u_vbuf.c \
+	u_vertex_state_cache.c
 GALLIUM_SOURCES.auxiliary/nir = \
+	nir_draw_helpers.c \
+	nir_to_tgsi.c \
+	nir_to_tgsi_info.c \
 	tgsi_to_nir.c
 GALLIUM_SOURCES.auxiliary/vl= \
 	vl_bicubic_filter.c \
@@ -357,10 +367,13 @@ GALLIUM_SOURCES.auxiliary/vl= \
 .PATH: ${X11SRCDIR.Mesa}/../src/gallium/auxiliary
 GALLIUM_SOURCES.auxiliary= \
 	u_indices_gen.c \
-	u_unfilled_gen.c \
-	u_format_table.c
+	u_tracepoints.c \
+	u_unfilled_gen.c
 .for _f in ${GALLIUM_SOURCES.auxiliary/vl}
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/loader
+.endfor
+.for _f in ${GALLIUM_SOURCES.auxiliary/util}
+CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/../src/gallium/auxiliary
 .endfor
 .for _f in ${GALLIUM_SOURCES.auxiliary}
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/gallium/auxiliary/util
@@ -377,6 +390,7 @@ GALLIUM_SOURCES.auxiliary/gallivm= \
 	lp_bld_bitarit.c \
 	lp_bld_const.c \
 	lp_bld_conv.c \
+	lp_bld_coro.c \
 	lp_bld_flow.c \
 	lp_bld_format_aos_array.c \
 	lp_bld_format_aos.c \
@@ -389,8 +403,11 @@ GALLIUM_SOURCES.auxiliary/gallivm= \
 	lp_bld_gather.c \
 	lp_bld_init.c \
 	lp_bld_intr.c \
+	lp_bld_ir_common.c \
 	lp_bld_logic.c \
 	lp_bld_misc.cpp \
+	lp_bld_nir.c \
+	lp_bld_nir_soa.c \
 	lp_bld_pack.c \
 	lp_bld_printf.c \
 	lp_bld_quad.c \
@@ -411,6 +428,7 @@ GALLIUM_SOURCES.auxiliary/gallivm= \
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/gallium/auxiliary/util
 .endfor
 
+CPPFLAGS.lp_texture.c += -I${X11SRCDIR.Mesa}/../src
 
 GALLIUM_SOURCES.auxiliary/driver_ddebug = \
         dd_context.c \
@@ -455,6 +473,7 @@ GALLIUM_SOURCES.drivers/i915= \
 	i915_fpc_emit.c \
 	i915_fpc_optimize.c \
 	i915_fpc_translate.c \
+	i915_nir.c \
 	i915_prim_emit.c \
 	i915_prim_vbuf.c \
 	i915_query.c \
@@ -477,6 +496,95 @@ GALLIUM_SOURCES.winsys/i915/drm= \
 	i915_drm_buffer.c \
 	i915_drm_fence.c \
 	i915_drm_winsys.c
+
+GALLIUM_SOURCES.drivers/iris= \
+	iris_batch.c \
+	iris_binder.c \
+	iris_blit.c \
+	iris_border_color.c \
+	iris_bufmgr.c \
+	iris_clear.c \
+	iris_context.c \
+	iris_disk_cache.c \
+	iris_draw.c \
+	iris_fence.c \
+	iris_fine_fence.c \
+	iris_formats.c \
+	iris_measure.c \
+	iris_monitor.c \
+	iris_perf.c \
+	iris_performance_query.c \
+	iris_pipe_control.c \
+	iris_program.c \
+	iris_program_cache.c \
+	iris_resolve.c \
+	iris_resource.c \
+	iris_screen.c
+
+GALLIUM_SOURCES.winsys/iris/drm= \
+	iris_drm_winsys.c
+
+IRIS_GENS_BLORP=	80 90 110 120 125
+
+.for _gen in ${IRIS_GENS_BLORP}
+BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/gallium/drivers/iris/iris_blorp.c ${_gen}_iris_blorp.c
+BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/gallium/drivers/iris/iris_query.c ${_gen}_iris_query.c
+BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/gallium/drivers/iris/iris_state.c ${_gen}_iris_state.c
+GALLIIUM_SOURCES.drivers/iris+=	${_gen}_iris_blorp.c ${_gen}_iris_query.c ${_gen}_iris_state.c
+
+CPPFLAGS.${_gen}_iris_blorp.c+=		-DGFX_VERx10=${_gen}
+CPPFLAGS.${_gen}_iris_query.c+=		-DGFX_VERx10=${_gen}
+CPPFLAGS.${_gen}_iris_state.c+=		-DGFX_VERx10=${_gen}
+.endfor
+
+.for _f in ${GALLIUM_SOURCES.drivers/iris}
+CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/intel
+.endfor
+
+GALLIUM_SOURCES.drivers/crocus= \
+	crocus_batch.c \
+	crocus_blit.c \
+	crocus_blorp.c \
+	crocus_blt.c \
+	crocus_bufmgr.c \
+	crocus_clear.c \
+	crocus_context.c \
+	crocus_disk_cache.c \
+	crocus_draw.c \
+	crocus_fence.c \
+	crocus_fine_fence.c \
+	crocus_formats.c \
+	crocus_monitor.c \
+	crocus_pipe_control.c \
+	crocus_program.c \
+	crocus_program_cache.c \
+	crocus_query.c \
+	crocus_resolve.c \
+	crocus_resource.c \
+	crocus_screen.c \
+	crocus_state.c
+
+GALLIUM_SOURCES.winsys/crocus/drm= \
+	crocus_drm_winsys.c
+
+CROCUS_GENS_BLORP=	40 45 50 60 70 75 80
+
+.for _gen in ${CROCUS_GENS_BLORP}
+BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/gallium/drivers/crocus/crocus_blorp.c ${_gen}_crocus_blorp.c
+BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/gallium/drivers/crocus/crocus_query.c ${_gen}_crocus_query.c
+BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/gallium/drivers/crocus/crocus_state.c ${_gen}_crocus_state.c
+BUILDSYMLINKS+=		${X11SRCDIR.Mesa}/src/gallium/drivers/crocus/crocus_blt.c ${_gen}_crocus_bltec
+GALLIIUM_SOURCES.drivers/iris+=	${_gen}_crocus_blorp.c ${_gen}_crocus_query.c ${_gen}_crocus_state.c ${_gen}_crocus_blt.c 
+
+CPPFLAGS.${_gen}_crocus_blorp.c+=	-DGFX_VERx10=${_gen}
+CPPFLAGS.${_gen}_crocus_query.c+=	-DGFX_VERx10=${_gen}
+CPPFLAGS.${_gen}_crocus_state.c+=	-DGFX_VERx10=${_gen}
+CPPFLAGS.${_gen}_crocus_blt.c+=		-DGFX_VERx10=${_gen}
+.endfor
+
+.for _f in ${GALLIUM_SOURCES.drivers/crocus}
+CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/intel
+.endfor
 
 # Conflicts with r600/radeon_video.c and radeon/radeon_video.c
 BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/r600/radeon_video.c r600_radeon_video.c
@@ -503,6 +611,8 @@ GALLIUM_SOURCES.drivers/radeon = \
 	radeon_vcn_dec_jpeg.c \
 	radeon_vcn_enc.c \
 	radeon_vcn_enc_1_2.c \
+	radeon_vcn_enc_2_0.c \
+	radeon_vcn_enc_3_0.c \
         radeon_radeon_vce.c \
         radeon_radeon_video.c \
 
@@ -520,6 +630,7 @@ GALLIUM_SOURCES.drivers/r600 = \
         evergreen_state.c \
         r600_asm.c \
         r600_blit.c \
+	r600_dump.c \
         r600_hw_context.c \
         r600_isa.c \
         r600_pipe.c \
@@ -557,6 +668,47 @@ GALLIUM_SOURCES.drivers/r600/sb = \
         sb_shader.cpp \
         sb_ssa_builder.cpp \
         sb_valtable.cpp
+GALLIUM_SOURCES.drivers/r600/sfn = \
+	sfn_nir_vectorize_vs_inputs.c \
+	sfn_alu_defines.cpp \
+	sfn_liverange.cpp \
+	sfn_callstack.cpp \
+	sfn_nir.cpp \
+	sfn_conditionaljumptracker.cpp \
+	sfn_nir_legalize_image_load_store.cpp \
+	sfn_debug.cpp \
+	sfn_nir_lower_64bit.cpp \
+	sfn_emitaluinstruction.cpp \
+	sfn_nir_lower_alu.cpp \
+	sfn_emitinstruction.cpp \
+	sfn_nir_lower_fs_out_to_vector.cpp \
+	sfn_emitssboinstruction.cpp \
+	sfn_nir_lower_tess_io.cpp \
+	sfn_emittexinstruction.cpp \
+	sfn_instruction_alu.cpp \
+	sfn_shader_base.cpp \
+	sfn_instruction_base.cpp \
+	sfn_shader_compute.cpp \
+	sfn_instruction_block.cpp \
+	sfn_shader_fragment.cpp \
+	sfn_instruction_cf.cpp \
+	sfn_shader_geometry.cpp \
+	sfn_instruction_export.cpp \
+	sfn_shader_tcs.cpp \
+	sfn_instruction_fetch.cpp \
+	sfn_shader_tess_eval.cpp \
+	sfn_instruction_gds.cpp \
+	sfn_shader_vertex.cpp \
+	sfn_instruction_lds.cpp \
+	sfn_shaderio.cpp \
+	sfn_instruction_misc.cpp \
+	sfn_value.cpp \
+	sfn_instruction_tex.cpp \
+	sfn_value_gpr.cpp \
+	sfn_instructionvisitor.cpp \
+	sfn_valuepool.cpp \
+	sfn_ir_to_assembly.cpp \
+	sfn_vertexstageexport.cpp
 
 GALLIUM_SOURCES.drivers/r300 = \
 	r300_blit.c \
@@ -620,17 +772,17 @@ GALLIUM_SOURCES.drivers/r300/compiler = \
 	radeon_vert_fc.c
 
 GALLIUM_SOURCES.drivers/radeonsi = \
-	cik_sdma.c \
+	gfx10_query.c \
+	gfx10_shader_ngg.c \
 	si_blit.c \
 	si_buffer.c \
 	si_clear.c \
 	si_compute.c \
 	si_compute_blit.c \
 	si_cp_dma.c \
+	si_cp_reg_shadowing.c \
 	si_debug.c \
 	si_descriptors.c \
-	si_dma.c \
-	si_dma_cs.c \
 	si_fence.c \
 	si_get.c \
 	si_gfx_cs.c \
@@ -639,23 +791,50 @@ GALLIUM_SOURCES.drivers/radeonsi = \
 	si_pm4.c \
 	si_perfcounter.c \
 	si_query.c \
+	si_nir_optim.c \
 	si_shader.c \
+	si_sdma_copy_image.c \
+	si_shader_llvm.c \
+	si_shader_llvm_gs.c \
+	si_shader_llvm_ps.c \
+	si_shader_llvm_resources.c \
+	si_shader_llvm_tess.c \
+	si_shader_llvm_vs.c \
 	si_shader_nir.c \
-	si_shader_tgsi_alu.c \
-	si_shader_tgsi_mem.c \
-	si_shader_tgsi_setup.c \
+	si_shaderlib_nir.c \
 	si_shaderlib_tgsi.c \
+	si_sqtt.c \
 	si_state.c \
 	si_state_binning.c \
-	si_state_draw.c \
+	si_state_draw_gfx6.cpp \
+	si_state_draw_gfx7.cpp \
+	si_state_draw_gfx8.cpp \
+	si_state_draw_gfx9.cpp \
+	si_state_draw_gfx10.cpp \
+	si_state_draw_gfx103.cpp \
 	si_state_msaa.c \
 	si_state_shaders.c \
 	si_state_streamout.c \
 	si_state_viewport.c \
-	si_test_dma.c \
+	si_test_blit.c \
 	si_test_dma_perf.c \
 	si_texture.c \
 	si_uvd.c
+
+.PATH:		${X11SRCDIR.Mesa}/src/gallium/drivers/radeonsi
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/radeonsi/si_state_draw.cpp si_state_draw_gfx6.cpp
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/radeonsi/si_state_draw.cpp si_state_draw_gfx7.cpp
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/radeonsi/si_state_draw.cpp si_state_draw_gfx8.cpp
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/radeonsi/si_state_draw.cpp si_state_draw_gfx9.cpp
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/radeonsi/si_state_draw.cpp si_state_draw_gfx10.cpp
+BUILDSYMLINKS+=	${X11SRCDIR.Mesa}/src/gallium/drivers/radeonsi/si_state_draw.cpp si_state_draw_gfx103.cpp
+
+CPPFLAGS.si_state_draw_gfx6.cpp += -DGFX_VER=6
+CPPFLAGS.si_state_draw_gfx7.cpp += -DGFX_VER=7
+CPPFLAGS.si_state_draw_gfx8.cpp += -DGFX_VER=8
+CPPFLAGS.si_state_draw_gfx9.cpp += -DGFX_VER=9
+CPPFLAGS.si_state_draw_gfx10.cpp += -DGFX_VER=10
+CPPFLAGS.si_state_draw_gfx103.cpp += -DGFX_VER=103
 
 .for _f in ${GALLIUM_SOURCES.drivers/radeon}
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/gallium/drivers/radeon
@@ -666,16 +845,18 @@ CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/gallium/drivers/r300 \
 			-I${X11SRCDIR.Mesa}/src/gallium/drivers/r300/compiler
 .endfor
 
-.for _f in ${GALLIUM_SOURCES.drivers/r600} ${GALLIUM_SOURCES.drivers/r600/sb} ${GALLIUM_SOURCES.drivers/radeonsi}
+.for _f in ${GALLIUM_SOURCES.drivers/r600} ${GALLIUM_SOURCES.drivers/r600/sb} ${GALLIUM_SOURCES.drivers/radeonsi} ${GALLIUM_SOURCES.drivers/r600/sfn}
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/gallium/drivers/r600
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/../src/gallium/drivers/r600
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/amd/common
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/../src/amd/common
+CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/amd/llvm
 .endfor
 
 .for _f in ${GALLIUM_SOURCES.drivers/radeon}
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/gallium/drivers/radeonsi
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/amd/common
+CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/amd/llvm
 .endfor
 
 GALLIUM_SOURCES.drivers/nouveau = \
@@ -745,6 +926,7 @@ GALLIUM_SOURCES.drivers/nouveau/codegen = \
 	nv50_ir_build_util.cpp \
 	nv50_ir_emit_gk110.cpp \
 	nv50_ir_emit_gm107.cpp \
+	nv50_ir_emit_gv100.cpp \
 	nv50_ir_emit_nv50.cpp \
 	nv50_ir_emit_nvc0.cpp \
 	nv50_ir_from_common.cpp \
@@ -752,14 +934,17 @@ GALLIUM_SOURCES.drivers/nouveau/codegen = \
 	nv50_ir_from_tgsi.cpp \
 	nv50_ir_graph.cpp \
 	nv50_ir_lowering_gm107.cpp \
+	nv50_ir_lowering_gv100.cpp \
 	nv50_ir_lowering_helper.cpp \
 	nv50_ir_lowering_nv50.cpp \
 	nv50_ir_lowering_nvc0.cpp \
 	nv50_ir_peephole.cpp \
 	nv50_ir_print.cpp \
 	nv50_ir_ra.cpp \
+	nv50_ir_serialize.cpp \
 	nv50_ir_ssa.cpp \
 	nv50_ir_target.cpp \
+	nv50_ir_target_gv100.cpp \
 	nv50_ir_target_nv50.cpp \
 	nv50_ir_util.cpp \
 	nv50_ir_target_gm107.cpp \
@@ -792,7 +977,6 @@ GALLIUM_SOURCES.drivers/nouveau/nvc0 = \
 	nvc0_video_vp.c \
 	nvc0_video_ppp.c
 
-
 GALLIUM_SOURCES.winsys/nouveau/drm = \
         nouveau_drm_winsys.c
 
@@ -820,9 +1004,12 @@ GALLIUM_SOURCES.winsys/amdgpu/drm = \
 
 .for _f in ${GALLIUM_SOURCES.winsys/amdgpu/drm}
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/amd
+CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/amd/common
+CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/../src/amd/common
+CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/amd/llvm
 .endfor
 
-GALLIUM_SOURCES.state_trackers/vdpau = \
+GALLIUM_SOURCES.frontends/vdpau = \
 	bitmap.c \
 	decode.c \
 	device.c \
@@ -844,34 +1031,50 @@ GALLIUM_SOURCES.drivers/llvmpipe = \
 	lp_bld_interp.c \
 	lp_clear.c \
 	lp_context.c \
+	lp_cs_tpool.c \
 	lp_draw_arrays.c \
 	lp_fence.c \
 	lp_flush.c \
 	lp_jit.c \
+	lp_linear.c \
+	lp_linear_fastpath.c \
+	lp_linear_interp.c \
+	lp_linear_sampler.c \
 	lp_memory.c \
 	lp_perf.c \
 	lp_query.c \
 	lp_rast.c \
 	lp_rast_debug.c \
+	lp_rast_linear.c \
+	lp_rast_linear_fallback.c \
+	lp_rast_rect.c \
 	lp_rast_tri.c \
 	lp_scene.c \
 	lp_scene_queue.c \
 	lp_screen.c \
 	lp_setup.c \
+	lp_setup_analysis.c \
 	lp_setup_line.c \
 	lp_setup_point.c \
+	lp_setup_rect.c \
 	lp_setup_tri.c \
 	lp_setup_vbuf.c \
 	lp_state_blend.c \
 	lp_state_clip.c \
+	lp_state_cs.c \
 	lp_state_derived.c \
 	lp_state_fs.c \
+	lp_state_fs_analysis.c \
+	lp_state_fs_fastpath.c \
+	lp_state_fs_linear.c \
+	lp_state_fs_linear_llvm.c \
 	lp_state_gs.c \
 	lp_state_rasterizer.c \
 	lp_state_sampler.c \
 	lp_state_setup.c \
 	lp_state_so.c \
 	lp_state_surface.c \
+	lp_state_tess.c \
 	lp_state_vertex.c \
 	lp_state_vs.c \
 	lp_surface.c \
@@ -925,7 +1128,7 @@ GALLIUM_SOURCES.winsys/sw/dri = \
 GALLIUM_SOURCES.winsys/sw/kms-dri = \
 	kms_dri_sw_winsys.c
 
-GALLIUM_SOURCES.state_trackers/dri = \
+GALLIUM_SOURCES.frontends/dri = \
         dri_context.c \
         dri_drawable.c \
 	dri_helpers.c \
@@ -933,9 +1136,6 @@ GALLIUM_SOURCES.state_trackers/dri = \
         dri_screen.c \
 	drisw.c \
 	dri2.c
-.for _f in ${GALLIUM_SOURCES.state_trackers/dri}
-CPPFLAGS.${_f} +=	-I${X11SRCDIR.Mesa}/src/gallium/state_trackers/dri/common
-.endfor
 
 # missing
 CPPFLAGS+=	\
@@ -968,6 +1168,12 @@ LIBDPLIBS+=	xcb		${.CURDIR}/../libxcb/libxcb
 .if ${BUILD_RADEON} == 1 || ${BUILD_NOUVEAU} == 1
 LIBDPLIBS+= 	drm		${.CURDIR}/../libdrm
 .if ${BUILD_I915} == 1
+LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel
+.endif
+.if ${BUILD_IRIS} == 1
+LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel
+.endif
+.if ${BUILD_CROCUS} == 1
 LIBDPLIBS+= 	drm_intel	${.CURDIR}/../libdrm_intel
 .endif
 .if ${BUILD_RADEON} == 1
@@ -1004,6 +1210,7 @@ LLVMRT_LIBS+=	\
 		AMDGPUMCTargetDesc \
 		AMDGPUTargetInfo \
 		AMDGPUAsmParser \
+		AMDGPUDisassembler \
 		AMDGPUUtils
 .endif
 
@@ -1129,6 +1336,9 @@ CPPFLAGS+=	${CPPFLAGS.${XORG_MACHINE_ARCH:U${MACHINE_ARCH}}}
 
 CPPFLAGS.r600_pipe_common.c+=	-DMESA_LLVM_VERSION_STRING=\"${LLVM_VERSION}\"
 CPPFLAGS.si_get.c+=	-DMESA_LLVM_VERSION_STRING=\"${LLVM_VERSION}\"
+CPPFLAGS.lp_screen.c+=	-DMESA_LLVM_VERSION_STRING=\"${LLVM_VERSION}\"
+CPPFLAGS.lp_bld_intr.c+=	-DMESA_LLVM_VERSION_STRING=\"${LLVM_VERSION}\"
+CPPFLAGS.lp_bld_type.c+=	-DMESA_LLVM_VERSION_STRING=\"${LLVM_VERSION}\"
 
 .include "../driver.mk"
 
@@ -1148,7 +1358,7 @@ CPPFLAGS.target.c += \
 	-DGALLIUM_RBUG \
 	-DGALLIUM_TRACE \
 	-DGALLIUM_SOFTPIPE \
-	-I${X11SRCDIR.Mesa}/src/gallium/state_trackers/dri \
+	-I${X11SRCDIR.Mesa}/src/gallium/frontends/dri \
 	-I${X11SRCDIR.Mesa}/src/loader \
 	-I${X11SRCDIR.Mesa}/../src/util \
 	-I${X11SRCDIR.Mesa}/../src/gallium/drivers \
@@ -1163,6 +1373,16 @@ CPPFLAGS.target.c += \
 CPPFLAGS.target.c += \
 	-DGALLIUM_I915 \
 	-DGALLIUM_ILO
+.endif
+
+.if ${BUILD_IRIS} == 1
+CPPFLAGS.target.c += \
+	-DGALLIUM_IRIS
+.endif
+
+.if ${BUILD_CROCUS} == 1
+CPPFLAGS.target.c += \
+	-DGALLIUM_CROCUS
 .endif
 
 .if ${BUILD_RADEON} == 1
