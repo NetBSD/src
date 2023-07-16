@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.37 2022/10/28 23:40:37 riastradh Exp $ */
+/* $NetBSD: pckbd.c,v 1.38 2023/07/16 19:09:07 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.37 2022/10/28 23:40:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.38 2023/07/16 19:09:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,8 +124,6 @@ struct pckbd_softc {
 #endif
 };
 
-static int pckbd_is_console(pckbport_tag_t, pckbport_slot_t);
-
 int pckbdprobe(device_t, cfdata_t, void *);
 void pckbdattach(device_t, device_t, void *);
 
@@ -177,10 +175,6 @@ int	pckbd_init(struct pckbd_internal *, pckbport_tag_t, pckbport_slot_t,
 			int);
 void	pckbd_input(void *, int);
 
-static int	pckbd_decode(struct pckbd_internal *, int, u_int *, int *);
-static int	pckbd_led_encode(int);
-static int	pckbd_led_decode(int);
-
 struct pckbd_internal pckbd_consdata;
 
 int
@@ -212,7 +206,7 @@ pckbd_set_xtscancode(pckbport_tag_t kbctag, pckbport_slot_t kbcslot,
 		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 		if (res) {
 			u_char cmdb[1];
-			aprint_debug("pckbd: error setting scanset 2\n");
+			aprint_debug("%s: error setting scanset 2\n", __func__);
 			/*
 			 * XXX at least one keyboard is reported to lock up
 			 * if a "set table" is attempted, thus the "reset".
@@ -220,7 +214,8 @@ pckbd_set_xtscancode(pckbport_tag_t kbctag, pckbport_slot_t kbcslot,
 			 * default anyway.
 			 */
 			cmdb[0] = KBC_RESET;
-			(void)pckbport_poll_cmd(kbctag, kbcslot, cmdb, 1, 1, 0, 1);
+			(void)pckbport_poll_cmd(kbctag, kbcslot, cmdb, 1, 1,
+			    0, 1);
 			pckbport_flush(kbctag, kbcslot);
 			res = 0;
 		}
@@ -236,7 +231,7 @@ pckbd_set_xtscancode(pckbport_tag_t kbctag, pckbport_slot_t kbcslot,
 		cmd[1] = 1;
 		res = pckbport_poll_cmd(kbctag, kbcslot, cmd, 2, 0, 0, 0);
 		if (res)
-			aprint_debug("pckbd: error setting scanset 1\n");
+			aprint_debug("%s: error setting scanset 1\n", __func__);
 		if (id != NULL)
 			id->t_translating = 1;
 	}
@@ -262,8 +257,8 @@ pckbd_suspend(device_t dv, const pmf_qual_t *qual)
 	 *     it even if it's the console kbd
 	 */
 	cmd[0] = KBC_DISABLE;
-	res = pckbport_enqueue_cmd(sc->id->t_kbctag,
-	    sc->id->t_kbcslot, cmd, 1, 0, 1, 0);
+	res = pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+	    cmd, 1, 0, 1, 0);
 	if (res)
 		return false;
 
@@ -300,8 +295,33 @@ pckbd_resume(device_t dv, const pmf_qual_t *qual)
 }
 
 /*
- * these are both bad jokes
+ * these are three bad jokes
  */
+static bool
+check_keyboard_by_id(struct pckbport_attach_args *pa)
+{
+	u_char cmd[1], resp[2];
+	int res;
+
+	cmd[0] = KBC_GETID;
+	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 0);
+	if (res) {
+		aprint_debug("%s: getid failed with %d\n", __func__, res);
+		return false;
+	}
+
+	switch (resp[0]) {
+	case 0xab: case 0xac:	/* Regular and NCD Sun keyboards */
+	case 0x2b: case 0x5d:	/* Trust keyboard, raw and translated */
+	case 0x60: case 0x47:	/* NMB SGI keyboard, raw and translated */
+		return true;
+	default:
+		aprint_debug("%s: getid returned %#x\n", __func__, resp[0]);
+		return false;
+	}
+
+}
+
 int
 pckbdprobe(device_t parent, cfdata_t cf, void *aux)
 {
@@ -326,7 +346,22 @@ pckbdprobe(device_t parent, cfdata_t cf, void *aux)
 	cmd[0] = KBC_RESET;
 	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 1, resp, 1);
 	if (res) {
-		aprint_debug("pckbdprobe: reset error %d\n", res);
+		aprint_debug("%s: reset error %d\n", __func__, res);
+
+		/*
+		 * On Chromebooks reset fails but otherwise the controller
+		 * works fine.
+		 * Check keyboard IDs similar to Linux and Haiku.
+		 * FreeBSD's approach here is to skip probing if
+		 * coreboot is detected which is suboptimal as coreboot
+		 * also supports some mac models which have no PC controller
+		 */
+		if (check_keyboard_by_id(pa)) {
+			if (pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot, NULL))
+				return 0;
+			return 2;
+		}
+
 		/*
 		 * There is probably no keyboard connected.
 		 * Let the probe succeed if the keyboard is used
@@ -335,7 +370,14 @@ pckbdprobe(device_t parent, cfdata_t cf, void *aux)
 		return pckbd_is_console(pa->pa_tag, pa->pa_slot) ? 1 : 0;
 	}
 	if (resp[0] != KBR_RSTDONE) {
-		printf("pckbdprobe: reset response 0x%x\n", resp[0]);
+		printf("%s: reset response %#x\n", __func__, resp[0]);
+
+		if (check_keyboard_by_id(pa)) {
+			if (pckbd_set_xtscancode(pa->pa_tag, pa->pa_slot, NULL))
+				return 0;
+			return 2;
+		}
+
 		return 0;
 	}
 
@@ -376,17 +418,16 @@ pckbdattach(device_t parent, device_t self, void *aux)
 		 */
 		cmd[0] = KBC_ENABLE;
 		(void) pckbport_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-				      cmd, 1, 0, 0, 0);
+		    cmd, 1, 0, 0, 0);
 		sc->sc_enabled = 1;
 	} else {
-		sc->id = malloc(sizeof(struct pckbd_internal),
-				M_DEVBUF, M_WAITOK);
+		sc->id = malloc(sizeof(*sc->id), M_DEVBUF, M_WAITOK);
 		(void) pckbd_init(sc->id, pa->pa_tag, pa->pa_slot, 0);
 
 		/* no interrupts until enabled */
 		cmd[0] = KBC_DISABLE;
 		(void) pckbport_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-				      cmd, 1, 0, 0, 0);
+		    cmd, 1, 0, 0, 0);
 		sc->sc_enabled = 0;
 	}
 
@@ -421,7 +462,7 @@ pckbd_enable(void *v, int on)
 
 	if (on) {
 		if (sc->sc_enabled) {
-			aprint_debug("pckbd_enable: bad enable\n");
+			aprint_debug("%s: bad enable\n", __func__);
 			return EBUSY;
 		}
 
@@ -429,14 +470,14 @@ pckbd_enable(void *v, int on)
 
 		cmd[0] = KBC_ENABLE;
 		res = pckbport_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-					cmd, 1, 0, NULL, 0);
+		    cmd, 1, 0, NULL, 0);
 		if (res) {
-			printf("pckbd_enable: command error\n");
-			return (res);
+			printf("%s: command error\n", __func__);
+			return res;
 		}
 
 		res = pckbd_set_xtscancode(sc->id->t_kbctag,
-					   sc->id->t_kbcslot, sc->id);
+		    sc->id->t_kbcslot, sc->id);
 		if (res)
 			return res;
 
@@ -447,9 +488,9 @@ pckbd_enable(void *v, int on)
 
 		cmd[0] = KBC_DISABLE;
 		res = pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-					cmd, 1, 0, 1, 0);
+		    cmd, 1, 0, 1, 0);
 		if (res) {
-			printf("pckbd_disable: command error\n");
+			printf("%s: command error\n", __func__);
 			return res;
 		}
 
@@ -831,7 +872,7 @@ pckbd_scancode_translate(struct pckbd_internal *id, int datain)
 	return datain | id->t_releasing;
 }
 
-static int
+static bool
 pckbd_decode(struct pckbd_internal *id, int datain, u_int *type, int *dataout)
 {
 	int key;
@@ -839,10 +880,10 @@ pckbd_decode(struct pckbd_internal *id, int datain, u_int *type, int *dataout)
 
 	if (datain == KBR_EXTENDED0) {
 		id->t_extended0 = 0x80;
-		return 0;
+		return false;
 	} else if (datain == KBR_EXTENDED1) {
 		id->t_extended1 = 2;
-		return 0;
+		return false;
 	}
 
 	releasing = datain & 0x80;
@@ -853,7 +894,7 @@ pckbd_decode(struct pckbd_internal *id, int datain, u_int *type, int *dataout)
 		case 0x2a:
 		case 0x36:
 			id->t_extended0 = 0;
-			return 0;
+			return false;
 		default:
 			break;
 		}
@@ -869,7 +910,7 @@ pckbd_decode(struct pckbd_internal *id, int datain, u_int *type, int *dataout)
 	 */
 	if (id->t_extended1 == 2 && (datain == 0x1d || datain == 0x9d)) {
 		id->t_extended1 = 1;
-		return 0;
+		return false;
 	} else if (id->t_extended1 == 1 &&
 		   (datain == 0x45 || datain == 0xc5)) {
 		id->t_extended1 = 0;
@@ -891,13 +932,13 @@ pckbd_decode(struct pckbd_internal *id, int datain, u_int *type, int *dataout)
 	} else {
 		/* Always ignore typematic keys */
 		if (key == id->t_lastchar)
-			return 0;
+			return false;
 		id->t_lastchar = key;
 		*type = WSCONS_EVENT_KEY_DOWN;
 	}
 
 	*dataout = key;
-	return 1;
+	return true;
 }
 
 int
@@ -956,7 +997,7 @@ pckbd_set_leds(void *v, int leds)
 	sc->sc_ledstate = cmd[1];
 
 	(void)pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-				 cmd, 2, 0, 0, 0);
+	    cmd, 2, 0, 0, 0);
 }
 
 /*
@@ -986,27 +1027,21 @@ pckbd_input(void *vsc, int data)
 }
 
 int
-pckbd_ioctl(void *v, u_long cmd, void *data, int flag,
-    struct lwp *l)
+pckbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct pckbd_softc *sc = v;
+	u_char cmdb[2];
 
 	switch (cmd) {
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_PC_XT;
 		return 0;
 	case WSKBDIO_SETLEDS:
-	{
-		int res;
-		u_char cmdb[2];
-
 		cmdb[0] = KBC_MODEIND;
 		cmdb[1] = pckbd_led_encode(*(int *)data);
 		sc->sc_ledstate = cmdb[1];
-		res = pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-					cmdb, 2, 0, 1, 0);
-		return res;
-	}
+		return pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
+		    cmdb, 2, 0, 1, 0);
 	case WSKBDIO_GETLEDS:
 		*(int *)data = pckbd_led_decode(sc->sc_ledstate);
 		return 0;
