@@ -1,4 +1,4 @@
-/*	$NetBSD: rndsource.h,v 1.8 2023/07/16 10:36:02 riastradh Exp $	*/
+/*	$NetBSD: rndsource.h,v 1.9 2023/07/16 10:36:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -67,14 +67,14 @@ typedef struct rnd_delta_estimator {
  */
 struct krndsource {
 	LIST_ENTRY(krndsource) list;	/* the linked list */
-        char            name[16];       /* device name */
+	char		name[16];	/* device name */
 	rnd_delta_t	time_delta;	/* time samples added while cold */
 	rnd_delta_t	value_delta;	/* value samples added whiel cold */
-        uint32_t        total;          /* number of bits added while cold */
-        uint32_t        type;           /* type, RND_TYPE_* */
-        uint32_t        flags;          /* flags, RND_FLAG_* */
-        void            *state;         /* percpu (struct rndsource_cpu *) */
-        size_t          test_cnt;       /* unused */
+	uint32_t	total;		/* number of bits added while cold */
+	uint32_t	type;		/* type, RND_TYPE_* */
+	uint32_t	flags;		/* flags, RND_FLAG_* */
+	void		*state;		/* percpu (struct rndsource_cpu *) */
+	size_t		test_cnt;	/* unused */
 	void		(*get)(size_t, void *);	/* pool wants N bytes (badly) */
 	void		*getarg;	/* argument to get-function */
 	void		(*enable)(struct krndsource *, bool); /* unused */
