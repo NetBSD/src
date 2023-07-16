@@ -680,7 +680,7 @@ MACHINES.i386=		i386
 MACHINES.ia64=		ia64
 MACHINES.hppa=		hppa
 MACHINES.m68000=	sun2
-MACHINES.m68k=		amiga atari cesfic hp300 luna68k mac68k \
+MACHINES.m68k=		amiga atari cesfic hp300 luna68k soft68k mac68k \
 			news68k next68k sun3 x68k
 MACHINES.mips=		algor arc cobalt emips evbmips ews4800mips \
 			hpcmips mipsco newsmips pmax sbmips sgimips
@@ -1416,6 +1416,7 @@ MKSLJIT=	yes
     ${MACHINE} == "ibmnws"	|| \
     ${MACHINE} == "iyonix"	|| \
     ${MACHINE} == "luna68k"	|| \
+    ${MACHINE} == "soft68k"	|| \
     ${MACHINE} == "mac68k"	|| \
     ${MACHINE} == "macppc"	|| \
     ${MACHINE} == "netwinder"	|| \

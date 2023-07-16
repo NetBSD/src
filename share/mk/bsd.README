@@ -1027,7 +1027,7 @@ MKXORG_SERVER	Can be set to "yes" or "no".  Indicates whether the
 		Default: "yes" on alpha, amd64, amiga, bebox, cats,
 		dreamcast, ews4800mips, evbarm, evbmips, evbppc, hp300,
 		hpcarm, hpcmips, hpcsh, hppa, i386, ibmnws, iyonix,
-		luna68k, mac68k, macppc, netwinder, newsmips, pmax, prep,
+		luna68k, soft68k, mac68k, macppc, netwinder, newsmips, pmax, prep,
 		ofppc, sgimips, shark, sparc, sparc64, vax, and zaurus;
 		"no" on other platforms.
 

@@ -256,6 +256,7 @@ clock			amigappc
 clock			atari
 clock			cats
 clock			luna68k
+clock			soft68k
 clock			mvme68k
 clock			netwinder
 clock			sparc
@@ -426,6 +427,7 @@ event			x68k		Attribute
 ex			MI
 exphy			MI
 fb			luna68k
+fb			soft68k
 fb			news68k
 fb			newsmips
 fb			sparc		Attribute
@@ -794,6 +796,7 @@ mainbus			i386
 mainbus			i386		Attribute
 mainbus			iyonix
 mainbus			luna68k
+mainbus			soft68k
 mainbus			mac68k
 mainbus			macppc
 mainbus			macppc		Attribute
@@ -1244,12 +1247,14 @@ siisata			MI
 simide			acorn32
 sio			alpha
 sio			luna68k
+sio			soft68k
 sio16			sparc
 sio16			sparc64
 siop			MI
 siop_common		MI		Attribute
 siopng			amiga		Attribute
 siotty			luna68k
+siotty			soft8k
 sip			MI
 siside			MI
 sk			MI
@@ -1495,6 +1500,7 @@ wi			MI
 wlan			MI		Attribute
 wm			MI
 ws			luna68k
+ws			soft68k
 wsdisplay		MI
 wsdisplaydev		MI		Attribute
 wsemuldisplaydev	MI		Attribute

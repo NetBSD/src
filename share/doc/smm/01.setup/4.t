@@ -109,6 +109,7 @@ hp300	HP 9000/300 series of Motorola 68000-based machines
 hp	code common to both HP 68k and (non-existent) PA-RISC ports
 i386	Intel 386/486-based PC machines
 luna68k	Omron 68000-based workstations
+soft68k SoftBSD lab
 news3400	Sony News MIPS-based workstations
 pmax	Digital 3100/5000 MIPS-based workstations
 sparc	Sun Microsystems SPARCstation 1, 1+, and 2

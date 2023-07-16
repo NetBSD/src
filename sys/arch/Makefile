@@ -50,7 +50,7 @@ SUBDIR+= xen
 #	emips epoc32 evbarm evbmips evbppc evbsh3 ews4800mips\
 #	hp300 hpc hpcarm hpcmips hpcsh \
 #	i386 iyonix \
-#	luna68k \
+#	luna68k soft68k \
 #	m68k mac68k macppc mips mipsco mmeye mvme68k \
 #	netwinder news68k newsmips next68k \
 #	ofppc or1k \

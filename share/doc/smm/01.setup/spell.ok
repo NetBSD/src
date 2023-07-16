@@ -91,6 +91,7 @@ LK201
 LOGFILE
 Leffler
 Luna
+Soft
 MAKEDEV.local
 MB
 MC68040
@@ -354,6 +355,7 @@ loopback
 lq
 lun
 luna68k
+soft68k
 magtape
 mail.local
 mail.rc

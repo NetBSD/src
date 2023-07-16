@@ -55,7 +55,7 @@ SUBDIR += arch/zaurus
 # XXX notyet SUBDIR += arch/iyonix
 
 # These dirs are present in sys/arch but not here:
-#    amigappc cesfic dreamcast epoc32 evbsh3 ia64 ibmnws iyonix luna68k
+#    amigappc cesfic dreamcast epoc32 evbsh3 ia64 ibmnws iyonix luna68k soft68k
 #    mmeye mvmeppc netwinder next68k rs6000 sbmips sun2 sun3
 # (also evbsh5, but it doesn't really exist)
 SUBDIR += arch/dummy

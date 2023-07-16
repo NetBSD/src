@@ -130,6 +130,9 @@ __KERNEL_RCSID(0, "$NetBSD: mb89352.c,v 1.63 2023/05/10 00:10:54 riastradh Exp $
 #ifdef luna68k	/* XXX old drives like DK312C in LUNAs require this */
 #define NO_MANUAL_XFER
 #endif
+#ifdef soft68k	/* duplicate from luna for soft */
+#define NO_MANUAL_XFER
+#endif
 #ifdef x68k	/* XXX it seems x68k SPC SCSI hardware has some quirks */
 #define NEED_DREQ_ON_HARDWARE_XFER
 #define NO_MANUAL_XFER

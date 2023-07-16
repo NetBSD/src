@@ -115,7 +115,7 @@ static const struct disklabel_location {
 } disklabel_locations[] = {
 	{ 0,	0 },	/* mvme68k, next68k */
 	{ 0,	64 },	/* algor, alpha, amiga, amigappc, evbmips, evbppc,
-			   luna68k, mac68k, macppc, news68k, newsmips,
+			   luna68k, soft68k, mac68k, macppc, news68k, newsmips,
 			   pc532, pdp11, pmax, vax, x68k */
 	{ 0,	128 },	/* sparc, sun68k */
 	{ 1,	0 },	/* amd64, arc, arm, bebox, cobalt, evbppc, hppa,
