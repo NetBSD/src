@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_heartbeat.c,v 1.3 2023/07/08 13:59:05 riastradh Exp $	*/
+/*	$NetBSD: kern_heartbeat.c,v 1.4 2023/07/16 10:18:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.3 2023/07/08 13:59:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.4 2023/07/16 10:18:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_heartbeat.c,v 1.3 2023/07/08 13:59:05 riastradh
 #include <sys/errno.h>
 #include <sys/heartbeat.h>
 #include <sys/ipi.h>
+#include <sys/kernel.h>
 #include <sys/mutex.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -140,6 +141,27 @@ heartbeat_suspend(void)
 }
 
 /*
+ * heartbeat_resume_cpu(ci)
+ *
+ *	Resume heartbeat monitoring of ci.
+ *
+ *	Called at startup while cold, and whenever heartbeat monitoring
+ *	is re-enabled after being disabled or the period is changed.
+ *	When not cold, ci must be the current CPU.
+ */
+static void
+heartbeat_resume_cpu(struct cpu_info *ci)
+{
+
+	KASSERT(__predict_false(cold) || curcpu_stable());
+	KASSERT(__predict_false(cold) || ci == curcpu());
+
+	ci->ci_heartbeat_count = 0;
+	ci->ci_heartbeat_uptime_cache = atomic_load_relaxed(&time_uptime);
+	ci->ci_heartbeat_uptime_stamp = 0;
+}
+
+/*
  * heartbeat_resume()
  *
  *	Resume heartbeat monitoring of the current CPU.
@@ -163,9 +185,7 @@ heartbeat_resume(void)
 	 * resetting the count and the uptime stamp.
 	 */
 	s = splsched();
-	ci->ci_heartbeat_count = 0;
-	ci->ci_heartbeat_uptime_cache = atomic_load_relaxed(&time_uptime);
-	ci->ci_heartbeat_uptime_stamp = 0;
+	heartbeat_resume_cpu(ci);
 	splx(s);
 }
 
@@ -212,8 +232,19 @@ set_max_period(unsigned max_period)
 	 * reasonably up-to-date time_uptime cache on all CPUs so we
 	 * don't think we had an instant heart attack.
 	 */
-	if (heartbeat_max_period_secs == 0 && max_period != 0)
-		xc_wait(xc_broadcast(0, &heartbeat_reset_xc, NULL, NULL));
+	if (heartbeat_max_period_secs == 0 && max_period != 0) {
+		if (cold) {
+			CPU_INFO_ITERATOR cii;
+			struct cpu_info *ci;
+
+			for (CPU_INFO_FOREACH(cii, ci))
+				heartbeat_resume_cpu(ci);
+		} else {
+			const uint64_t ticket =
+			    xc_broadcast(0, &heartbeat_reset_xc, NULL, NULL);
+			xc_wait(ticket);
+		}
+	}
 
 	/*
 	 * Once the heartbeat state has been updated on all (online)
