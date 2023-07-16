@@ -1,4 +1,4 @@
-/*	$NetBSD: wsemul_vt100.c,v 1.50 2023/02/23 02:48:06 riastradh Exp $	*/
+/*	$NetBSD: wsemul_vt100.c,v 1.51 2023/07/16 17:43:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.50 2023/02/23 02:48:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_vt100.c,v 1.51 2023/07/16 17:43:50 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsmsgattrs.h"
@@ -628,7 +628,7 @@ wsemul_vt100_output_esc(struct wsemul_vt100_emuldata *edp, u_char c)
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("ESC%c unknown\n", c);
+		printf("%s: ESC%c unknown\n", __func__, c);
 #endif
 		break;
 	}
@@ -659,7 +659,8 @@ wsemul_vt100_output_scs94(struct wsemul_vt100_emuldata *edp, u_char c)
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("ESC%c%c unknown\n", edp->designating + '(', c);
+		printf("%s: ESC%c%c unknown\n", __func__, 
+		    edp->designating + '(', c);
 #endif
 		break;
 	}
@@ -676,7 +677,8 @@ wsemul_vt100_output_scs94_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("ESC%c%%%c unknown\n", edp->designating + '(', c);
+		printf("%s: ESC%c%%%c unknown\n",
+		    __func__, edp->designating + '(', c);
 #endif
 		break;
 	}
@@ -728,7 +730,8 @@ setnrc:
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("ESC%c%c unknown\n", edp->designating + '-' - 1, c);
+		printf("%s: ESC%c%c unknown\n",
+		    __func__, edp->designating + '-' - 1, c);
 #endif
 		break;
 	}
@@ -744,7 +747,8 @@ wsemul_vt100_output_scs96_percent(struct wsemul_vt100_emuldata *edp, u_char c)
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("ESC%c%%%c unknown\n", edp->designating + '-', c);
+		printf("%s: ESC%c%%%c unknown\n",
+		    __func__, edp->designating + '-', c);
 #endif
 		break;
 	}
@@ -759,12 +763,12 @@ wsemul_vt100_output_esc_spc(struct wsemul_vt100_emuldata *edp,
 	case 'F': /* 7-bit controls */
 	case 'G': /* 8-bit controls */
 #ifdef VT100_PRINTNOTIMPL
-		printf("ESC<SPC>%c ignored\n", c);
+		printf("%s: ESC<SPC>%c ignored\n", __func__, c);
 #endif
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("ESC<SPC>%c unknown\n", c);
+		printf("%s: ESC<SPC>%c unknown\n", __func__, c);
 #endif
 		break;
 	}
@@ -807,17 +811,16 @@ wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp, u_char c)
 		vd->args[vd->nargs] = (vd->args[vd->nargs] * 10) +
 		    (c - '0');
 		break;
-	case ';': /* argument terminator */
-		vd->nargs++;
-		break;
 	default:
 		vd->nargs++;
 		if (vd->nargs > VT100_EMUL_NARGS) {
 #ifdef VT100_DEBUG
-			printf("vt100: too many arguments\n");
+			printf("%s: too many arguments\n", __func__);
 #endif
 			vd->nargs = VT100_EMUL_NARGS;
 		}
+		if (c == ';')	/* argument terminator */
+			break;
 		switch (c) {
 		case '$':
 			return VT100_EMUL_STATE_DCS_DOLLAR;
@@ -826,12 +829,13 @@ wsemul_vt100_output_dcs(struct wsemul_vt100_emuldata *edp, u_char c)
 			/* 'u' must follow - need another state */
 		case '|': /* DECUDK program F6..F20 */
 #ifdef VT100_PRINTNOTIMPL
-			printf("DCS%c ignored\n", c);
+			printf("%s: DCS%c ignored\n", __func__, c);
 #endif
 			break;
 		default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("DCS%c (%d, %d) unknown\n", c, ARG(vd, 0), ARG(vd, 1));
+			printf("%s: DCS%c (%d, %d) unknown\n",
+			    __func__, c, ARG(vd, 0), ARG(vd, 1));
 #endif
 			break;
 		}
@@ -850,7 +854,7 @@ wsemul_vt100_output_dcs_dollar(struct wsemul_vt100_emuldata *edp, u_char c)
 	case 'p': /* DECRSTS terminal state restore */
 	case 'q': /* DECRQSS control function request */
 #ifdef VT100_PRINTNOTIMPL
-		printf("DCS$%c ignored\n", c);
+		printf("%s: DCS$%c ignored\n", __func__, c);
 #endif
 		break;
 	case 't': /* DECRSPS restore presentation state */
@@ -859,7 +863,7 @@ wsemul_vt100_output_dcs_dollar(struct wsemul_vt100_emuldata *edp, u_char c)
 			break;
 		case 1: /* cursor information restore */
 #ifdef VT100_PRINTNOTIMPL
-			printf("DCS1$t ignored\n");
+			printf("%s: DCS1$t ignored\n", __func__);
 #endif
 			break;
 		case 2: /* tab stop restore */
@@ -868,14 +872,15 @@ wsemul_vt100_output_dcs_dollar(struct wsemul_vt100_emuldata *edp, u_char c)
 			break;
 		default:
 #ifdef VT100_PRINTUNKNOWN
-			printf("DCS%d$t unknown\n", ARG(vd, 0));
+			printf("%s: DCS%d$t unknown\n", __func__, ARG(vd, 0));
 #endif
 			break;
 		}
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("DCS$%c (%d, %d) unknown\n", c, ARG(vd, 0), ARG(vd, 1));
+		printf("%s: DCS$%c (%d, %d) unknown\n",
+		    __func__, c, ARG(vd, 0), ARG(vd, 1));
 #endif
 		break;
 	}
@@ -931,7 +936,7 @@ wsemul_vt100_output_esc_hash(struct wsemul_vt100_emuldata *edp, u_char c)
 		break;
 	default:
 #ifdef VT100_PRINTUNKNOWN
-		printf("ESC#%c unknown\n", c);
+		printf("%s: ESC#%c unknown\n", __func__, c);
 #endif
 		break;
 	}
@@ -952,9 +957,6 @@ wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 		vd->args[vd->nargs] = (vd->args[vd->nargs] * 10) +
 		    (c - '0');
 		break;
-	case ';': /* argument terminator */
-		vd->nargs++;
-		break;
 	case '?': /* DEC specific */
 	case '>': /* DA query */
 		vd->modif1 = c;
@@ -965,14 +967,16 @@ wsemul_vt100_output_csi(struct wsemul_vt100_emuldata *edp, u_char c)
 	case '&':
 		vd->modif2 = c;
 		break;
-	default: /* end of escape sequence */
+	default: /* end of escape sequence, argument terminator */
 		vd->nargs++;
 		if (vd->nargs > VT100_EMUL_NARGS) {
 #ifdef VT100_DEBUG
-			printf("vt100: too many arguments\n");
+			printf("%s: too many arguments\n", __func__);
 #endif
 			vd->nargs = VT100_EMUL_NARGS;
 		}
+		if (c == ';')	/* argument terminator */
+			break;
 		wsemul_vt100_handle_csi(vd, c);
 		return VT100_EMUL_STATE_NORMAL;
 	}
@@ -1048,8 +1052,8 @@ wsemul_vt100_setmsgattrs(void *cookie, const struct wsscreen_descr *type,
 	__USE(error);
 #else
 	if (error)
-		printf("vt100: failed to allocate attribute for default "
-		       "messages\n");
+		printf("%s: failed to allocate attribute for default "
+		    "messages\n", __func__);
 	else
 #endif
 	{
@@ -1077,8 +1081,8 @@ wsemul_vt100_setmsgattrs(void *cookie, const struct wsscreen_descr *type,
 	                                   &tmp);
 #ifdef VT100_DEBUG
 	if (error)
-		printf("vt100: failed to allocate attribute for kernel "
-		       "messages\n");
+		printf("%s: failed to allocate attribute for kernel "
+		    "messages\n", __func__);
 	else
 #endif
 	{
