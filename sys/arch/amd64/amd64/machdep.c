@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.366 2022/10/26 23:38:06 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.367 2023/07/16 19:55:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.366 2022/10/26 23:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.367 2023/07/16 19:55:43 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1721,7 +1721,26 @@ init_x86_64(paddr_t first_avail)
 #ifdef SVS
 	svs_init();
 #endif
+
+	/*
+	 * Initialize MSRs on cpu0:
+	 *
+	 * - Enables SYSCALL/SYSRET.
+	 *
+	 * - Sets up %fs and %gs so that %gs points to the current
+	 *   struct cpu_info as needed for CPUVAR(...), curcpu(), and
+	 *   curlwp.
+	 *
+	 * - Enables the no-execute bit if supported.
+	 *
+	 * Thus, after this point, CPUVAR(...), curcpu(), and curlwp
+	 * will work on cpu0.
+	 *
+	 * Note: The call to cpu_init_msrs for secondary CPUs happens
+	 * in cpu_hatch.
+	 */
 	cpu_init_msrs(&cpu_info_primary, true);
+
 #ifndef XENPV
 	cpu_speculation_init(&cpu_info_primary);
 #endif

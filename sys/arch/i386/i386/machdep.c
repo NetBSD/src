@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.839 2022/10/26 23:38:07 riastradh Exp $	*/
+/*	$NetBSD: machdep.c,v 1.840 2023/07/16 19:55:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.839 2022/10/26 23:38:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.840 2023/07/16 19:55:43 riastradh Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -969,6 +969,41 @@ cpu_init_idt(struct cpu_info *ci)
 	lidt(&region);
 }
 
+/*
+ * initgdt(tgdt)
+ *
+ *	Initialize a temporary Global Descriptor Table (GDT) using
+ *	storage space at tgdt.
+ *
+ *	1. Set up segment descriptors for our purposes, including a
+ *	   CPU-local segment descriptor pointing at &cpu_info_primary.
+ *
+ *	2. Load the address into the Global Descriptor Table Register.
+ *
+ *	3. Set up segment selectors for all the segment registers using
+ *	   it so that %fs-relative addressing works for the CPU-local
+ *	   data.
+ *
+ *	After this put, CPUVAR(...), curcpu(), and curlwp will work.
+ *
+ *	Eventually the kernel will switch to a second temporary GDT
+ *	allocated with pmap_bootstrap_valloc in pmap_bootstrap, and
+ *	then to permanent GDT allocated with uvm_km(9) in gdt_init.
+ *	But the first temporary GDT is needed now to get us going with
+ *	early access to curcpu() and curlwp before we enter kernel
+ *	main.
+ *
+ *	XXX The purpose of each of the segment descriptors should be
+ *	written down somewhere in a single place that can be cross-
+ *	referenced.
+ *
+ *	References:
+ *
+ *	- Intel 64 and IA-32 Architectures Software Developer's Manual,
+ *	  Volume 3: System Programming Guide, Order Number 325384,
+ *	  April 2022, Sec. 3.5.1 `Segment Descriptor Tables',
+ *	  pp. 3-14 through 3-16.
+ */
 void
 initgdt(union descriptor *tgdt)
 {
@@ -1165,7 +1200,15 @@ init386(paddr_t first_avail)
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
 	cpu_probe(&cpu_info_primary);
+
+	/*
+	 * Initialize the no-execute bit on cpu0, if supported.
+	 *
+	 * Note: The call to cpu_init_msrs for secondary CPUs happens
+	 * in cpu_hatch.
+	 */
 	cpu_init_msrs(&cpu_info_primary, true);
+
 #ifndef XENPV
 	cpu_speculation_init(&cpu_info_primary);
 #endif
@@ -1332,7 +1375,25 @@ init386(paddr_t first_avail)
 	idt_vec_init_cpu_md(iv, cpu_index(&cpu_info_primary));
 	idt = (idt_descriptor_t *)iv->iv_idt;
 
-#ifndef XENPV	
+#ifndef XENPV
+	/*
+	 * Switch from the initial temporary GDT that was allocated on
+	 * the stack by our caller, start.  That temporary GDT will be
+	 * popped off the stack when init386 returns before start calls
+	 * main, so we need to use a second temporary GDT allocated in
+	 * pmap_bootstrap with pmap_bootstrap_valloc/palloc to make
+	 * sure at least the CPU-local data area, used by CPUVAR(...),
+	 * curcpu(), and curlwp via %fs-relative addressing, will
+	 * continue to work.
+	 *
+	 * Later, in gdt_init via cpu_startup, we will finally allocate
+	 * a permanent GDT with uvm_km(9).
+	 *
+	 * The content of the second temporary GDT is the same as the
+	 * content of the initial GDT, initialized in initgdt, except
+	 * for the address of the LDT, which is also that we are also
+	 * switching to a new temporary LDT at a new address.
+	 */
 	tgdt = gdtstore;
 	gdtstore = (union descriptor *)gdt_vaddr;
 	ldtstore = (union descriptor *)ldt_vaddr;
@@ -1390,10 +1451,22 @@ init386(paddr_t first_avail)
 	    GSEL(GCODE_SEL, SEL_KPL));
 
 #ifndef XENPV
+	/*
+	 * Activate the second temporary GDT, allocated in
+	 * pmap_bootstrap with pmap_bootstrap_valloc/palloc, and
+	 * initialized with the content of the initial temporary GDT in
+	 * initgdt, plus an updated LDT.
+	 *
+	 * This ensures the %fs-relative addressing for the CPU-local
+	 * area used by CPUVAR(...), curcpu(), and curlwp will continue
+	 * to work after init386 returns and the initial temporary GDT
+	 * is popped off, before we call main and later create a
+	 * permanent GDT in gdt_init via cpu_startup.
+	 */
 	setregion(&region, gdtstore, NGDT * sizeof(gdtstore[0]) - 1);
 	lgdt(&region);
 #endif
-	
+
 	lldt(GSEL(GLDT_SEL, SEL_KPL));
 	cpu_init_idt(&cpu_info_primary);
 

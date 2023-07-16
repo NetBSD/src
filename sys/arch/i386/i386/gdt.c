@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.73 2022/08/20 23:48:50 riastradh Exp $	*/
+/*	$NetBSD: gdt.c,v 1.74 2023/07/16 19:55:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.73 2022/08/20 23:48:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.74 2023/07/16 19:55:43 riastradh Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -115,8 +115,30 @@ setgdt(int slot, const void *base, size_t limit, int type, int dpl, int def32,
 #endif
 
 /*
- * Initialize the GDT. We already have a gdtstore, which was temporarily used
- * by the bootstrap code. Now, we allocate a new gdtstore, and put it in cpu0.
+ * gdt_init()
+ *
+ *	Create a permanent Global Descriptor Table (GDT) for the
+ *	primary CPU.  This replaces the second tepmorary GDT that was
+ *	allocated in pmap_bootstrap with pmap_bootstrap_valloc and
+ *	pmap_bootstrap_palloc -- which in turn replaced the initial
+ *	temporary GDT allocated on the stack early at boot and
+ *	initialized with initgdt.
+ *
+ *	1. Allocate permanent space for the primary CPU's GDT with
+ *	   uvm_km(9).
+ *
+ *	2. Copy the temporary GDT's contents over.  See initgdt for the
+ *	   original initialization; it was copied from the initial
+ *	   temporary GDT to the second temporary GDT in init386.
+ *
+ *	3. Make sure the GCPU_SEL segment descriptor points to
+ *	   &cpu_info_primary.
+ *
+ *	   XXX Is this necessary?  It appears to be redundant with
+ *	   initgdt.
+ *
+ *	4. Load the permanent GDT address into the Global Descriptor
+ *	   Table Register (GDTR) with LGDT (via gdt_init_cpu).
  */
 void
 gdt_init(void)
