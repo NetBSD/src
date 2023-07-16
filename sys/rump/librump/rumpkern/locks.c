@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.84 2023/04/12 06:35:40 riastradh Exp $	*/
+/*	$NetBSD: locks.c,v 1.85 2023/07/16 23:05:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.84 2023/04/12 06:35:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.85 2023/07/16 23:05:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -395,7 +395,7 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 
 	UNLOCKED(mtx, false);
 
-	l->l_private = cv;
+	l->l_sched.info = cv;
 	rv = 0;
 	if (ts) {
 		if (rumpuser_cv_timedwait(RUMPCV(cv), RUMPMTX(mtx),
@@ -430,7 +430,7 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 		mutex_enter(mtx);
 		rv = EINTR;
 	}
-	l->l_private = NULL;
+	l->l_sched.info = NULL;
 
 	return rv;
 }

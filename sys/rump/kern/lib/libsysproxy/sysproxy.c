@@ -1,4 +1,4 @@
-/*	$NetBSD: sysproxy.c,v 1.9 2022/08/21 10:24:23 riastradh Exp $	*/
+/*	$NetBSD: sysproxy.c,v 1.10 2023/07/16 23:05:53 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.9 2022/08/21 10:24:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysproxy.c,v 1.10 2023/07/16 23:05:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
@@ -180,17 +180,17 @@ hyp_lwpexit(void)
 	/*
 	 * Ok, all lwps are either:
 	 *  1) not in the cv code
-	 *  2) sleeping on l->l_private
+	 *  2) sleeping on l->l_sched.info
 	 *  3) sleeping on p->p_waitcv
 	 *
-	 * Either way, l_private is stable until we set PS_RUMP_LWPEXIT
-	 * in p->p_sflag.
+	 * Either way, l_sched.info is stable until we set
+	 * PS_RUMP_LWPEXIT in p->p_sflag.
 	 */
 
 	mutex_enter(p->p_lock);
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		if (l->l_private)
-			cv_broadcast(l->l_private);
+		if (l->l_sched.info)
+			cv_broadcast(l->l_sched.info);
 	}
 	p->p_sflag |= PS_RUMP_LWPEXIT;
 	cv_broadcast(&p->p_waitcv);
