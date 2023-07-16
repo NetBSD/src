@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.4 2023/06/02 08:51:46 andvar Exp $
+#	$NetBSD: GENERIC.common,v 1.5 2023/07/16 07:30:54 skrll Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -15,6 +15,10 @@ options 	FPE		# Floating-point extension support
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
+
+# Heartbeat checks
+options 	HEARTBEAT
+options 	HEARTBEAT_MAX_PERIOD_DEFAULT=15
 
 # Note: SysV IPC parameters could be changed dynamically, see sysctl(8).
 options 	SYSVMSG		# System V-like message queues
