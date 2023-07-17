@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.64 2023/07/17 13:29:12 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.65 2023/07/17 13:35:07 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.64 2023/07/17 13:29:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.65 2023/07/17 13:35:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -172,6 +172,7 @@ setrealuptime(time_t second, time_t uptime)
 {
 	uint32_t seclo = second & 0xffffffff, sechi = second >> 32;
 	uint32_t uplo = uptime & 0xffffffff, uphi = uptime >> 32;
+	int s;
 
 	KDASSERT(mutex_owned(&timecounter_lock));
 
@@ -186,6 +187,7 @@ setrealuptime(time_t second, time_t uptime)
 		return;
 	}
 
+	s = splhigh();
 	atomic_store_relaxed(&time__second32.hi, 0xffffffff);
 	atomic_store_relaxed(&time__uptime32.hi, 0xffffffff);
 	membar_producer();
@@ -194,6 +196,7 @@ setrealuptime(time_t second, time_t uptime)
 	membar_producer();
 	atomic_store_relaxed(&time__second32.hi, sechi);
 	atomic_store_relaxed(&time__uptime32.hi, uphi);
+	splx(s);
 }
 
 time_t
