@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.68 2023/07/17 13:44:24 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.69 2023/07/17 13:48:14 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.68 2023/07/17 13:44:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.69 2023/07/17 13:48:14 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -135,8 +135,8 @@ struct timecounter *timecounter = &dummy_timecounter;
 static struct timecounter *timecounters = &dummy_timecounter;
 
 #ifdef __HAVE_ATOMIC64_LOADSTORE
-static volatile time_t time__second __cacheline_aligned = 1;
-static volatile time_t time__uptime __cacheline_aligned = 1;
+volatile time_t time__second __cacheline_aligned = 1;
+volatile time_t time__uptime __cacheline_aligned = 1;
 #else
 static volatile struct {
 	uint32_t lo, hi;
