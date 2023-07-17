@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.11 2023/07/13 13:34:15 riastradh Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.12 2023/07/17 10:12:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.11 2023/07/13 13:34:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.12 2023/07/17 10:12:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -729,12 +729,12 @@ xen_resumeclocks(struct cpu_info *ci)
 	/* Pretend the last hardclock happened right now.  */
 	ci->ci_xen_hardclock_systime_ns = xen_vcputime_systime_ns();
 
-	hypervisor_unmask_event(evtch);
 
 	/* Arm the one-shot timer.  */
 	error = HYPERVISOR_set_timer_op(ci->ci_xen_hardclock_systime_ns +
 	    NS_PER_TICK);
 	KASSERT(error == 0);
+	hypervisor_unmask_event(evtch);
 
 	/* We'd better not have switched CPUs.  */
 	KASSERT(ci == curcpu());
