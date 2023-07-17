@@ -1,4 +1,4 @@
-.\"	$NetBSD: signal.7,v 1.27 2023/07/15 13:49:26 riastradh Exp $
+.\"	$NetBSD: signal.7,v 1.28 2023/07/17 14:20:19 riastradh Exp $
 .\"
 .\" Copyright (c) 1999, 2016 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -402,22 +402,23 @@ immediate children exits and can be waited for using one of the
 family of functions.
 The default action is to do nothing.
 .Pp
-As a special case hack, if
+As a special case, if a child exits when its parent process has
 .Dv SIGCHLD
-is ignored (not merely blocked) when a process is
-.Em created ,
-it is detached from its parent immediately so it need not
-.Pq and cannot
-be waited for.
-This behavior is a System V historic wart, implemented in
-.Nx
-only for compatibility.
-It is not portable, not recommended, and should not be used by new
-code.
-New code should use the portable technique of forking a child to fork
-or spawn a grandchild, and letting the child exit immediately
-afterward.
-The grandchild process will then be detached.
+ignored
+.Pq not merely blocked
+by having its signal handler set to
+.Dv SIG_IGN ,
+or if the signal action has the
+.Dv SA_NOCLDWAIT
+flag set
+.Pq Xr sigaction 2 ,
+then the child is detached so that
+.Xr wait 2
+in the parent will wait for
+.Em all
+children to exit and then fail with
+.Er ECHILD
+without returning any information about any specific child processes.
 .Pp
 The number for
 .Dv SIGCHLD
