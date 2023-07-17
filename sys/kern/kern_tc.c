@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.66 2023/07/17 13:42:02 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.67 2023/07/17 13:42:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.66 2023/07/17 13:42:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.67 2023/07/17 13:42:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.66 2023/07/17 13:42:02 riastradh Exp $
 
 #include <sys/atomic.h>
 #include <sys/evcnt.h>
+#include <sys/ipi.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
@@ -167,6 +168,24 @@ setrealuptime(time_t second, time_t uptime)
 
 #else
 
+static void
+nullipi(void *cookie)
+{
+}
+
+/*
+ * Issue membar_release on this CPU, and force membar_acquire on all
+ * CPUs.
+ */
+static void
+ipi_barrier(void)
+{
+	ipi_msg_t msg = { .func = nullipi };
+
+	ipi_broadcast(&msg, /*skip_self*/true);
+	ipi_wait(&msg);
+}
+
 static inline void
 setrealuptime(time_t second, time_t uptime)
 {
@@ -188,10 +207,10 @@ setrealuptime(time_t second, time_t uptime)
 
 	atomic_store_relaxed(&time__second32.hi, 0xffffffff);
 	atomic_store_relaxed(&time__uptime32.hi, 0xffffffff);
-	membar_producer();
+	ipi_barrier();
 	atomic_store_relaxed(&time__second32.lo, seclo);
 	atomic_store_relaxed(&time__uptime32.lo, uplo);
-	membar_producer();
+	ipi_barrier();
 	atomic_store_relaxed(&time__second32.hi, sechi);
 	atomic_store_relaxed(&time__uptime32.hi, uphi);
 }
@@ -208,9 +227,9 @@ getrealtime(void)
 				break;
 			SPINLOCK_BACKOFF_HOOK;
 		}
-		membar_consumer();
+		__insn_barrier();
 		lo = atomic_load_relaxed(&time__second32.lo);
-		membar_consumer();
+		__insn_barrier();
 	} while (hi != atomic_load_relaxed(&time__second32.hi));
 
 	return ((time_t)hi << 32) | lo;
@@ -228,9 +247,9 @@ getuptime(void)
 				break;
 			SPINLOCK_BACKOFF_HOOK;
 		}
-		membar_consumer();
+		__insn_barrier();
 		lo = atomic_load_relaxed(&time__uptime32.lo);
-		membar_consumer();
+		__insn_barrier();
 	} while (hi != atomic_load_relaxed(&time__uptime32.hi));
 
 	return ((time_t)hi << 32) | lo;
