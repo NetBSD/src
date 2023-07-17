@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.71 2023/07/17 21:51:20 riastradh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.72 2023/07/17 21:51:30 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.71 2023/07/17 21:51:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.72 2023/07/17 21:51:30 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -466,7 +466,7 @@ binuptime(struct bintime *bt)
 	__insn_barrier();
 
 	do {
-		th = timehands;
+		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
 		*bt = th->th_offset;
 		bintime_addx(bt, th->th_scale * tc_delta(th));
@@ -535,7 +535,7 @@ getbinuptime(struct bintime *bt)
 
 	TC_COUNT(ngetbinuptime);
 	do {
-		th = timehands;
+		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
 		*bt = th->th_offset;
 	} while (gen == 0 || gen != th->th_generation);
@@ -549,7 +549,7 @@ getnanouptime(struct timespec *tsp)
 
 	TC_COUNT(ngetnanouptime);
 	do {
-		th = timehands;
+		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
 		bintime2timespec(&th->th_offset, tsp);
 	} while (gen == 0 || gen != th->th_generation);
@@ -563,7 +563,7 @@ getmicrouptime(struct timeval *tvp)
 
 	TC_COUNT(ngetmicrouptime);
 	do {
-		th = timehands;
+		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
 		bintime2timeval(&th->th_offset, tvp);
 	} while (gen == 0 || gen != th->th_generation);
@@ -578,7 +578,7 @@ getbintime(struct bintime *bt)
 
 	TC_COUNT(ngetbintime);
 	do {
-		th = timehands;
+		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
 		*bt = th->th_offset;
 	} while (gen == 0 || gen != th->th_generation);
@@ -594,7 +594,7 @@ dogetnanotime(struct timespec *tsp)
 
 	TC_COUNT(ngetnanotime);
 	do {
-		th = timehands;
+		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
 		*tsp = th->th_nanotime;
 	} while (gen == 0 || gen != th->th_generation);
@@ -624,7 +624,7 @@ getmicrotime(struct timeval *tvp)
 
 	TC_COUNT(ngetmicrotime);
 	do {
-		th = timehands;
+		th = atomic_load_consume(&timehands);
 		gen = th->th_generation;
 		*tvp = th->th_microtime;
 	} while (gen == 0 || gen != th->th_generation);
@@ -839,7 +839,7 @@ uint64_t
 tc_getfrequency(void)
 {
 
-	return timehands->th_counter->tc_frequency;
+	return atomic_load_consume(&timehands)->th_counter->tc_frequency;
 }
 
 /*
@@ -1015,8 +1015,7 @@ tc_windup(void)
 	 * globally visible before changing.
 	 */
 	setrealuptime(th->th_microtime.tv_sec, th->th_offset.sec);
-	membar_producer();
-	timehands = th;
+	atomic_store_release(&timehands, th);
 
 	/*
 	 * Force users of the old timehand to move on.  This is
