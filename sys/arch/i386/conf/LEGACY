@@ -1,4 +1,4 @@
-#	$NetBSD: LEGACY,v 1.1 2015/03/07 07:28:37 mrg Exp $
+#	$NetBSD: LEGACY,v 1.2 2023/07/17 21:12:29 riastradh Exp $
 
 # LEGACY kernel -- includes vga@isa and pcdisplay@isa for pre-PCI
 # systems, due to significant pain making them fail to attach when
@@ -9,6 +9,9 @@ include "arch/i386/conf/GENERIC"
 vga0		at isa?
 pcdisplay0	at isa?			# CGA, MDA, EGA, HGA
 wsdisplay*	at pcdisplay? console ?
+
+# Enable DMA -> PIO downgrade after a certain number of DMA errors.
+options 	ATA_DOWNGRADE_MODE
 
 # XXX we could turn off all sorts of other modern features in this
 # configuration, but that is left for future work.
