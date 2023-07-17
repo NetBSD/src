@@ -1,4 +1,4 @@
-#	$NetBSD: files.ata,v 1.30 2018/10/24 07:42:12 jdolecek Exp $
+#	$NetBSD: files.ata,v 1.31 2023/07/17 21:12:19 riastradh Exp $
 #
 # Config file and device description for machine-independent devices
 # which attach to ATA busses.  Included by ports that need it.  Ports
@@ -13,6 +13,8 @@ file	dev/ata/ata_wdc.c		wd & atabus & wdc_common
 
 defflag	opt_wd.h	WD_SOFTBADSECT
 defflag	opt_wd.h	WD_CHAOS_MONKEY
+
+defflag	opt_ata.h	ATA_DOWNGRADE_MODE
 
 file	dev/ata/ata.c			(ata_hl | atapi) & atabus
 file	dev/ata/ata_subr.c		(ata_hl | atapi) & atabus
