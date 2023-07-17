@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.70 2023/02/24 11:11:10 riastradh Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.71 2023/07/17 12:54:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.70 2023/02/24 11:11:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.71 2023/07/17 12:54:29 riastradh Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -121,6 +121,7 @@ lockops_t rwlock_lockops = {
 };
 
 syncobj_t rw_syncobj = {
+	.sobj_name	= "rw",
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
 	.sobj_unsleep	= turnstile_unsleep,
 	.sobj_changepri	= turnstile_changepri,

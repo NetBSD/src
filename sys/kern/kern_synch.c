@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.357 2023/07/13 13:33:55 riastradh Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.358 2023/07/17 12:54:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.357 2023/07/13 13:33:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.358 2023/07/17 12:54:29 riastradh Exp $");
 
 #include "opt_kstack.h"
 #include "opt_ddb.h"
@@ -113,6 +113,7 @@ static void	sched_changepri(struct lwp *, pri_t);
 static void	sched_lendpri(struct lwp *, pri_t);
 
 syncobj_t sleep_syncobj = {
+	.sobj_name	= "sleep",
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,
@@ -121,6 +122,7 @@ syncobj_t sleep_syncobj = {
 };
 
 syncobj_t sched_syncobj = {
+	.sobj_name	= "sched",
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
 	.sobj_unsleep	= sched_unsleep,
 	.sobj_changepri	= sched_changepri,
@@ -129,6 +131,7 @@ syncobj_t sched_syncobj = {
 };
 
 syncobj_t kpause_syncobj = {
+	.sobj_name	= "kpause",
 	.sobj_flag	= SOBJ_SLEEPQ_NULL,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.54 2022/06/29 22:27:01 riastradh Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.55 2023/07/17 12:54:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.54 2022/06/29 22:27:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.55 2023/07/17 12:54:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ static inline void	cv_wakeup_one(kcondvar_t *);
 static inline void	cv_wakeup_all(kcondvar_t *);
 
 syncobj_t cv_syncobj = {
+	.sobj_name	= "cv",
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
 	.sobj_unsleep	= cv_unsleep,
 	.sobj_changepri	= sleepq_changepri,

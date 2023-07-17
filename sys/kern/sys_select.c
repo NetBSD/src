@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.60 2022/06/29 22:27:01 riastradh Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.61 2023/07/17 12:54:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019, 2020 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.60 2022/06/29 22:27:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.61 2023/07/17 12:54:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ static const int sel_flag[] = {
  * enqueue LWPs at all, unless subject to a collision.
  */
 syncobj_t select_sobj = {
+	.sobj_name	= "select",
 	.sobj_flag	= SOBJ_SLEEPQ_LIFO,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,
