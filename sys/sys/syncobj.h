@@ -1,4 +1,4 @@
-/*	$NetBSD: syncobj.h,v 1.14 2023/07/17 12:54:29 riastradh Exp $	*/
+/*	$NetBSD: syncobj.h,v 1.15 2023/07/17 12:54:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@ struct lwp;
 
 typedef volatile const void *wchan_t;
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) || defined(_KMEMUSER)
 
 /*
  * Synchronisation object operations set.
