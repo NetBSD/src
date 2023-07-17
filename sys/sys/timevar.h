@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.50 2023/07/17 12:55:20 riastradh Exp $	*/
+/*	$NetBSD: timevar.h,v 1.51 2023/07/17 13:44:24 riastradh Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008, 2020 The NetBSD Foundation, Inc.
@@ -235,14 +235,14 @@ void	itimer_gettime(const struct itimer *, struct itimerspec *);
 void	ptimer_tick(struct lwp *, bool);
 void	ptimers_free(struct proc *, int);
 
-extern volatile time_t time__second;	/* current second in the epoch */
-extern volatile time_t time__uptime;	/* system uptime in seconds */
-
 #define	time_second	getrealtime()
 #define	time_uptime	getuptime()
 #define	time_uptime32	getuptime32()
 
 #ifdef __HAVE_ATOMIC64_LOADSTORE
+
+extern volatile time_t time__second;	/* current second in the epoch */
+extern volatile time_t time__uptime;	/* system uptime in seconds */
 
 static inline time_t
 getrealtime(void)
