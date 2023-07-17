@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.83 2022/06/29 22:27:01 riastradh Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.84 2023/07/17 12:54:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.83 2022/06/29 22:27:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.84 2023/07/17 12:54:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.83 2022/06/29 22:27:01 riastradh Exp $
 static const stack_t lwp_ss_init = SS_INIT;
 
 syncobj_t lwp_park_syncobj = {
+	.sobj_name	= "lwp_park",
 	.sobj_flag	= SOBJ_SLEEPQ_NULL,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,
